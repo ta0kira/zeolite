@@ -1,4 +1,6 @@
+import Resolver
 import Types
+import Unresolved
 import Variance
 
 uWriter = UnresolvedTypeClass {

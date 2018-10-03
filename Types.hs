@@ -1,10 +1,6 @@
 module Types (
   TypeClass,
   TypeInstance,
-  UnresolvedParamFilter(..),
-  UnresolvedType(..),
-  UnresolvedTypeClass(..),
-  UnresolvedTypeParam(..),
   TypeResolver,
   newTypeResolver,
   getTypeClass,
@@ -16,6 +12,7 @@ import qualified Data.Map as Map
 import qualified Data.Set as Set
 
 import Variance
+import Unresolved
 
 data TypeClass =
   TypeClass {
@@ -31,39 +28,6 @@ data TypeInstance =
     tiTypeClass :: ResolvedTypeClass,
     tiParamArgs :: [ResolvedType]
     -- TODO: Extract required filters and type param args?
-  }
-  deriving (Eq, Read, Show)
-
-data UnresolvedTypeClass =
-  UnresolvedTypeClass {
-    utcName :: String,
-    utcParams :: [UnresolvedTypeParam],
-    utcInherits :: [UnresolvedType],
-    utcFilters :: [UnresolvedParamFilter]
-  }
-  deriving (Eq, Read, Show)
-
-data UnresolvedType =
-  UnresolvedType {
-    utTypeClass :: String,
-    utParamArgs :: [UnresolvedType]
-  } |
-  UnresolvedTypeArg {
-    utName :: String
-  }
-  deriving (Eq, Read, Show)
-
-data UnresolvedParamFilter =
-  UnresolvedParamFilter {
-    upfName :: String,
-    upfType :: UnresolvedType
-  }
-  deriving (Eq, Read, Show)
-
-data UnresolvedTypeParam =
-  UnresolvedTypeParam {
-    utpName :: String,
-    utpVariance :: Variance
   }
   deriving (Eq, Read, Show)
 
