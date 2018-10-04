@@ -1,6 +1,7 @@
 module Resolver (
+  TypeClassGraph(..),
   createTypeClassGraph,
-  getTypeClassInstance
+  resolveTypeClassInstance
 ) where
 
 import Control.Arrow (second)
@@ -15,12 +16,14 @@ import Unresolved
 import Variance
 
 
+-- TODO: Put this in a separate file and don't expose the constructor.
 data TypeClassName =
   TypeClassName {
     tcnName :: String
   }
   deriving (Eq, Ord, Read, Show)
 
+-- TODO: Put this in a separate file and don't expose the constructor.
 data TypeClassParamName =
   TypeClassParamName {
     tcpnName :: String
@@ -157,12 +160,68 @@ createTypeClassGraph us = do
     return (TypeClassName (utcName u), TypeClassName (utTypeClass t))
   defaultMap <- return $ Map.fromList $ zip (map (TypeClassName . utcName) us) (repeat Set.empty)
   initialParams <- initialTypeClassParamMap us
-  return TypeClassGraph {
+  initialGraph <- return TypeClassGraph {
       tcgParams = initialParams,
       tcgGraphContravariant = foldr (updateTypeClassMap Contravariant) defaultMap edges,
       tcgGraphInvariant     = foldr (updateTypeClassMap Invariant)     defaultMap edges,
       tcgGraphCovariant     = foldr (updateTypeClassMap Covariant)     defaultMap edges
     }
+  -- TODO: Validate inheritance w.r.t. filters and variance.
+  updateTypeClassFilters initialGraph us
+
+updateTypeClassFilters :: TypeClassGraph -> [UnresolvedTypeClass] -> Either [String] TypeClassGraph
+updateTypeClassFilters g us = updated where
+  oldParams = tcgParams g
+  resolveFilters t []     = do
+    oldParam <- return $ t `Map.lookup` oldParams
+    if (isJust oldParam)
+       then (Right $ fromJust oldParam)
+       else Left ["Type '" ++ tcnName t ++ "' not found"]
+  resolveFilters t (f:fs) = do
+    resolved <- resolveFilters t fs
+    filter <- getTypeClassInstance g [] (upfType f)
+    checkParam (upfName f) (snd filter)
+    filterType <- getFilterType (fst filter)
+    updateSingleParam (upfName f) filterType resolved
+  -- Make sure that the filter isn't another param.
+  getFilterType (TypeClassArgType t) = return t
+  getFilterType _ = Left ["Filter must be a type, not a param"]
+  -- Ensures that the free params in the filter match what is expected.
+  checkParam n [] = Right ()
+  checkParam n (x:[])
+    | n == (tcpnName $ tcpName x) = Right ()
+    | otherwise = Left ["Filter does not apply to param '" ++ n ++ "'"]
+  checkParam _ _ = Left ["Too many free params for filter"]
+  -- Find the correct param in the list (for the type class) and update it.
+  updateSingleParam n a [] = Left ["Param '" ++ n ++ "' not found"]
+  updateSingleParam n a (p:ps)
+    | n /= tcpnName (tcpName p) = do
+      rest <- updateSingleParam n a ps
+      return (p:rest)
+    | otherwise = Right (update:ps) where
+      update = TypeClassParam {
+          tcpName = tcpName p,
+          tcpVariance = tcpVariance p,
+          tcpFilters = (tcpFilters p) ++ [TypeFilter a]
+        }
+  -- Update the map with all filter updates for a single type class.
+  updateParams []     = Right oldParams
+  updateParams (u:us) = do
+    updatedMap <- updateParams us
+    realFilters <- resolveFilters (TypeClassName $ utcName u) (utcFilters u)
+    return $ Map.insert (TypeClassName $ utcName u) realFilters updatedMap
+  -- The fully-updated graph.
+  updated = do
+    newParams <- updateParams us
+    return $ TypeClassGraph {
+        tcgParams = newParams,
+        tcgGraphContravariant = tcgGraphContravariant g,
+        tcgGraphInvariant     = tcgGraphInvariant g,
+        tcgGraphCovariant     = tcgGraphCovariant g
+      }
+
+resolveTypeClassInstance :: TypeClassGraph -> UnresolvedType -> Either [String] (TypeClassArg, [TypeClassParam])
+resolveTypeClassInstance g = getTypeClassInstance g []
 
 getTypeClassInstance :: TypeClassGraph -> [TypeFilter] -> UnresolvedType -> Either [String] (TypeClassArg, [TypeClassParam])
 getTypeClassInstance g fs (UnresolvedTypeArg n) = (Right resolved) where

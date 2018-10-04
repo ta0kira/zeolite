@@ -2,6 +2,28 @@ import Resolver
 import Unresolved
 import Variance
 
+uIterator = UnresolvedTypeClass {
+    utcName = "Iterator",
+    utcParams = [
+        UnresolvedTypeParam { utpName = "x", utpVariance = Covariant }
+      ],
+    utcInherits = [
+        UnresolvedType {
+          utTypeClass = "Reader",
+          utParamArgs = [{-UnresolvedTypeArg { utName = "x" }-}]
+        }
+      ],
+    utcFilters = [
+      UnresolvedParamFilter {
+        upfName = "x",
+        upfType = UnresolvedType {
+            utTypeClass = "Iterator",
+            utParamArgs = [UnresolvedTypeArg { utName = "x" }]
+          }
+      }
+    ]
+  }
+
 uWriter = UnresolvedTypeClass {
     utcName = "Writer",
     utcParams = [
@@ -56,8 +78,7 @@ uFunction = UnresolvedTypeClass {
     utcFilters = []
   }
 
-testType =
-  UnresolvedType {
+testType = resolve $ UnresolvedType {
     utTypeClass = "Writer",
     utParamArgs = [
       UnresolvedType {
@@ -75,4 +96,12 @@ testType =
     ]
   }
 
-(Right graph) = createTypeClassGraph [uWriter, uReader, uQueue, uFunction]
+testType2 = resolve $ UnresolvedType {
+    utTypeClass = "Writer",
+    utParamArgs = [UnresolvedTypeArg { utName = "x" }]
+  }
+
+testType3 = resolve $ UnresolvedTypeArg { utName = "x" }
+
+resolve x = graph >>= \g -> return $ resolveTypeClassInstance g x
+graph = createTypeClassGraph [uWriter, uReader, uQueue, uFunction, uIterator]
