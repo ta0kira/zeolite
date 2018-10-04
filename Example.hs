@@ -1,5 +1,4 @@
 import Resolver
-import Types
 import Unresolved
 import Variance
 
@@ -36,7 +35,31 @@ uQueue = UnresolvedTypeClass {
           utParamArgs = [UnresolvedTypeArg { utName = "x" }]
         }
       ],
-    utcFilters = []
+    utcFilters = [
+      UnresolvedParamFilter {
+        upfName = "x",
+        upfType = UnresolvedType {
+            utTypeClass = "Writer",
+            utParamArgs = [UnresolvedTypeArg { utName = "x" }]
+          }
+      }
+    ]
   }
 
-resolvedTypeClasses = newTypeResolver [uWriter, uReader, uQueue]
+testType =
+  UnresolvedType {
+    utTypeClass = "Writer",
+    utParamArgs = [
+      UnresolvedType {
+        utTypeClass = "Queue",
+        utParamArgs = [
+          UnresolvedType {
+            utTypeClass = "Writer",
+            utParamArgs = [UnresolvedTypeArg { utName = "x" }]
+          }
+        ]
+      }
+    ]
+  }
+
+(Right graph) = createTypeClassGraph [uWriter, uReader, uQueue]
