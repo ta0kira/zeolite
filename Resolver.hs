@@ -184,11 +184,11 @@ getTypeClassInstance g fs u = result where
       tcpVariance = v `composeVariance` (tcpVariance p),
       tcpFilters = tcpFilters p
     }
-  collectTypeClassArgs []     []     _  = Right ([], [])
-  collectTypeClassArgs (_:_)  []     _  = Left ["Too few args for type '" ++ name ++ "'"]
-  collectTypeClassArgs []     (_:_)  _  = Left ["Too many args for type '" ++ name ++ "'"]
-  collectTypeClassArgs (p:ps) (u:us) as = do
-    (args, params) <- as
+  collectTypeClassArgs []     []     = Right ([], [])
+  collectTypeClassArgs (_:_)  []     = Left ["Too few args for type '" ++ name ++ "'"]
+  collectTypeClassArgs []     (_:_)  = Left ["Too many args for type '" ++ name ++ "'"]
+  collectTypeClassArgs (p:ps) (u:us) = do
+    (args, params) <- collectTypeClassArgs ps us
     (arg, newParams) <- getTypeClassInstance g (tcpFilters p) u
     updatedParams <- return $ map (updateVariance $ tcpVariance p) newParams
     return (arg:args, updatedParams ++ params)
@@ -197,7 +197,7 @@ getTypeClassInstance g fs u = result where
     if (isJust typeParams)
       then (Right ())
       else (Left ["Type class '" ++ name ++ "' not found"])
-    (args, params) <- collectTypeClassArgs (fromJust typeParams) (utParamArgs u) (Right ([], []))
+    (args, params) <- collectTypeClassArgs (fromJust typeParams) (utParamArgs u)
     -- TODO: Check that resolved can match all of the filters! (Or, just make
     -- that a second step after resolving the types.)
     -- TODO: Flatten all duplicate params and make sure that they have

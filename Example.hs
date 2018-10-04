@@ -46,6 +46,16 @@ uQueue = UnresolvedTypeClass {
     ]
   }
 
+uFunction = UnresolvedTypeClass {
+    utcName = "Function",
+    utcParams = [
+        UnresolvedTypeParam { utpName = "x", utpVariance = Contravariant },
+        UnresolvedTypeParam { utpName = "y", utpVariance = Covariant }
+      ],
+    utcInherits = [],
+    utcFilters = []
+  }
+
 testType =
   UnresolvedType {
     utTypeClass = "Writer",
@@ -54,12 +64,15 @@ testType =
         utTypeClass = "Queue",
         utParamArgs = [
           UnresolvedType {
-            utTypeClass = "Writer",
-            utParamArgs = [UnresolvedTypeArg { utName = "x" }]
+            utTypeClass = "Function",
+            utParamArgs = [
+              UnresolvedTypeArg { utName = "x" },
+              UnresolvedTypeArg { utName = "y" }
+            ]
           }
         ]
       }
     ]
   }
 
-(Right graph) = createTypeClassGraph [uWriter, uReader, uQueue]
+(Right graph) = createTypeClassGraph [uWriter, uReader, uQueue, uFunction]
