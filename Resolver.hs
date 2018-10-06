@@ -38,7 +38,10 @@ data TypeFilter =
 
 data TypeClassInstance =
   TypeClassInstance {
-    tciFreeParams :: [TypeClassParam],
+    -- TODO: Is this needed? It's tedious to keep up to date. Maybe it can be
+    -- used to prune the substitution list before traversing. A map might
+    -- actually be easier to work with and update.
+    tciFreeParams :: [TypeClassParam], -- TODO: Make this a set?
     tciClassName :: TypeClassName,
     tciArgs :: [TypeClassArg]
   }
@@ -48,7 +51,7 @@ data TypeClassParam =
   TypeClassParam {
     tcpName :: TypeClassParamName,
     tcpVariance :: Variance,
-    tcpFilters :: [TypeFilter]
+    tcpFilters :: [TypeFilter] -- TODO: Make this a set?
   }
   deriving (Eq, Read, Show)
 
@@ -61,13 +64,6 @@ data TypeClassArg =
   }
   deriving (Eq, Read, Show)
 
-data TypeClassConverter =
-  TypeClassConverter {
-    tccFrom :: TypeClassName,
-    tccTo :: TypeClassName,
-    tccConvert :: TypeClassInstance -> TypeClassInstance
-  }
-
 
 type TypeClassParamMap = Map.Map TypeClassName [TypeClassParam]
 
@@ -76,9 +72,7 @@ type TypeClassMap = Map.Map TypeClassName (Set.Set TypeClassName)
 data TypeClassGraph =
   TypeClassGraph {
     tcgParams :: TypeClassParamMap,
-    tcgGraphContravariant :: TypeClassMap,
-    tcgGraphInvariant :: TypeClassMap,
-    tcgGraphCovariant :: TypeClassMap
+    tcgGraph :: TypeClassMap
   }
   deriving (Eq, Read, Show)
 
@@ -125,17 +119,10 @@ getTypeClassCycleErrors us = checked where
   typeMap = Map.fromList typeTuples
   checked = errors ++ (join $ map (checkTypeClassCycles typeMap) typeTuples)
 
-updateTypeClassMap :: Variance -> (TypeClassName, TypeClassName) -> TypeClassMap -> TypeClassMap
-updateTypeClassMap Contravariant (f, t) m = updated where
-  old = Map.findWithDefault Set.empty t m
-  updated = Map.insert t (f `Set.insert` old) m
-updateTypeClassMap Invariant    (f, _)  m = updated where
-  old = Map.findWithDefault Set.empty f m
-  updated = Map.insert f old m
-updateTypeClassMap Covariant    (f, t)  m = updated where
+updateTypeClassMap :: (TypeClassName, TypeClassName) -> TypeClassMap -> TypeClassMap
+updateTypeClassMap (f, t)  m = updated where
   old = Map.findWithDefault Set.empty f m
   updated = Map.insert f (t `Set.insert` old) m
-updateTypeClassMap _ _ m = m
 
 -- TODO: Also check for duplicate param names!
 initialTypeClassParamMap :: [UnresolvedTypeClass] -> Either [String] TypeClassParamMap
@@ -162,9 +149,7 @@ createTypeClassGraph us = do
   initialParams <- initialTypeClassParamMap us
   initialGraph <- return TypeClassGraph {
       tcgParams = initialParams,
-      tcgGraphContravariant = foldr (updateTypeClassMap Contravariant) defaultMap edges,
-      tcgGraphInvariant     = foldr (updateTypeClassMap Invariant)     defaultMap edges,
-      tcgGraphCovariant     = foldr (updateTypeClassMap Covariant)     defaultMap edges
+      tcgGraph = foldr updateTypeClassMap defaultMap edges
     }
   -- TODO: Validate inheritance w.r.t. filters and variance.
   updateTypeClassFilters initialGraph us
@@ -215,13 +200,24 @@ updateTypeClassFilters g us = updated where
     newParams <- updateParams us
     return $ TypeClassGraph {
         tcgParams = newParams,
-        tcgGraphContravariant = tcgGraphContravariant g,
-        tcgGraphInvariant     = tcgGraphInvariant g,
-        tcgGraphCovariant     = tcgGraphCovariant g
+        tcgGraph = tcgGraph g
       }
 
 resolveTypeClassInstance :: TypeClassGraph -> UnresolvedType -> Either [String] (TypeClassArg, [TypeClassParam])
 resolveTypeClassInstance g = getTypeClassInstance g []
+
+flattenTypeClassParams :: [TypeClassParam] -> [TypeClassParam]
+flattenTypeClassParams = map snd . Map.toList . foldr process Map.empty where
+  process x m = update previous where
+    name = tcpName x
+    previous = Map.lookup name m
+    update Nothing  = Map.insert name x m
+    update (Just y) = flip (Map.insert name) m $
+      TypeClassParam {
+        tcpName = name,
+        tcpVariance = (tcpVariance x) `composeVariance` (tcpVariance y),
+        tcpFilters = (tcpFilters x) ++ (tcpFilters y)
+      }
 
 getTypeClassInstance :: TypeClassGraph -> [TypeFilter] -> UnresolvedType -> Either [String] (TypeClassArg, [TypeClassParam])
 getTypeClassInstance g fs (UnresolvedTypeArg n) = (Right resolved) where
@@ -259,13 +255,53 @@ getTypeClassInstance g fs u = result where
     (args, params) <- collectTypeClassArgs (fromJust typeParams) (utParamArgs u)
     -- TODO: Check that resolved can match all of the filters! (Or, just make
     -- that a second step after resolving the types.)
-    -- TODO: Flatten all duplicate params and make sure that they have
-    -- compatible variances.
     resolved <- return $ TypeClassArgType {
         tcatInstance = TypeClassInstance {
-          tciFreeParams = params,
+          tciFreeParams = flattenTypeClassParams params,
           tciClassName = properName,
           tciArgs = args
         }
       }
     return (resolved, params)
+
+uncheckedSubTypeClassArgs :: Map.Map TypeClassParamName TypeClassArg -> TypeClassArg -> Either [String] TypeClassArg
+uncheckedSubTypeClassArgs ps = update (Map.toList ps) where
+  update [] t = return t
+  -- TODO: Also need to update free params based on a.
+  update ((p,a):ps) t@(TypeClassArgParam pt) = do
+    if (tcpName pt) == p
+       then return a
+       else update ps t
+  update ps (TypeClassArgType t) = do
+    prunedArgs <- return $ Map.fromList $ ps `pruneArgs` (tciFreeParams t)
+    newArgs <- foldr (subAll prunedArgs) (Right []) (tciArgs t)
+    return $ TypeClassArgType $ TypeClassInstance {
+        -- TODO: Also need to update free params based recursion. (Specifically,
+        -- accounting for free params in ps, and also variance updates, like is
+        -- done in getTypeClassInstance.)
+        tciFreeParams = (tciFreeParams t) `pruneParams` (Map.fromList ps),
+        tciClassName = tciClassName t,
+        tciArgs = newArgs
+      }
+  subAll ps t ts = do
+    previous <- ts
+    new <- uncheckedSubTypeClassArgs ps t
+    return (new:previous)
+  -- Remove provided args from free params.
+  pruneParams os ps = do
+    o <- os
+    guard $ not $ (tcpName o) `Map.member` ps
+    return o
+  -- Remove unused args from those provided.
+  pruneArgs [] _ = []
+  pruneArgs ((p,a):ps) os
+    | any ((p ==) . tcpName) os = (p,a) : (pruneArgs ps os)
+    | otherwise = pruneArgs ps os
+
+getTypeClassPaths :: TypeClassMap -> TypeClassName -> TypeClassName -> [[TypeClassName]]
+getTypeClassPaths g x y
+  | x == y = return [y]
+  | otherwise = do
+    z <- Set.toList $ Map.findWithDefault Set.empty x g
+    ts <- getTypeClassPaths g z y
+    return (x:ts)

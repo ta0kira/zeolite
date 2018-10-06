@@ -10,7 +10,7 @@ uIterator = UnresolvedTypeClass {
     utcInherits = [
         UnresolvedType {
           utTypeClass = "Reader",
-          utParamArgs = [{-UnresolvedTypeArg { utName = "x" }-}]
+          utParamArgs = [UnresolvedTypeArg { utName = "x" }]
         }
       ],
     utcFilters = [
