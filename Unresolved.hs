@@ -1,10 +1,10 @@
-module Unresolved {-(
+module Unresolved (
   unresolvedParser,
   UnresolvedParamFilter(..),
   UnresolvedType(..),
   UnresolvedTypeClass(..),
   UnresolvedTypeParam(..),
-)-} where
+) where
 
 import Control.Applicative ((<|>))
 import Control.Monad.Fix (fix)
@@ -14,8 +14,10 @@ import qualified Data.Set as Set
 
 import Variance
 
+
 class UnresolvedParsable a where
     unresolvedParser :: ReadP a
+
 
 reservedWords = Set.fromList $ [
     "inherits",
@@ -49,9 +51,13 @@ typeParamName = do
 listOf p = sepBy p (skipSpaces >> string ",")
 
 
+data TypeClassType = InterfaceTypeClass | ConcreteTypeClass deriving (Eq, Show)
+
 data UnresolvedTypeClass =
   UnresolvedTypeClass {
     utcName :: String,
+    -- TODO: Use this in type resolution.
+    utcType :: TypeClassType,
     utcParams :: [UnresolvedTypeParam],
     utcInherits :: [UnresolvedType],
     utcFilters :: [UnresolvedParamFilter]
@@ -60,6 +66,7 @@ data UnresolvedTypeClass =
 
 instance UnresolvedParsable UnresolvedTypeClass where
   unresolvedParser = do
+    classType <- interfaceType <|> concreteType
     name <- between skipSpaces parseNull typeClassName
     params <- option [] typeParamList
     skipSpaces >> string "{"
@@ -68,10 +75,19 @@ instance UnresolvedParsable UnresolvedTypeClass where
     skipSpaces >> string "}"
     return $ UnresolvedTypeClass {
         utcName = name,
+        utcType = classType,
         utcParams = params,
         utcInherits = inherits,
         utcFilters = filters
       }
+
+interfaceType = do
+  between parseNull whitespace (string "interface")
+  return InterfaceTypeClass
+
+concreteType = do
+  between parseNull whitespace (string "concrete")
+  return ConcreteTypeClass
 
 singleInherit :: ReadP UnresolvedType
 singleInherit = do

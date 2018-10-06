@@ -1,107 +1,30 @@
+import Control.Monad
+import System.IO
+import Text.ParserCombinators.ReadP
+import qualified Control.Monad.Trans.Class as Trans
+
 import Resolver
 import Unresolved
 import Variance
 
-uIterator = UnresolvedTypeClass {
-    utcName = "Iterator",
-    utcParams = [
-        UnresolvedTypeParam { utpName = "x", utpVariance = Covariant }
-      ],
-    utcInherits = [
-        UnresolvedType {
-          utTypeClass = "Reader",
-          utParamArgs = [UnresolvedTypeArg { utaName = "x" }]
-        }
-      ],
-    utcFilters = [
-      UnresolvedParamFilter {
-        upfName = "x",
-        upfType = UnresolvedType {
-            utTypeClass = "Iterator",
-            utParamArgs = [UnresolvedTypeArg { utaName = "x" }]
-          }
-      }
-    ]
-  }
+testType = resolve "Writer<Queue<Function<x,y>>>"
+testType2 = resolve "Writer<x>"
+testType3 = resolve "x"
 
-uWriter = UnresolvedTypeClass {
-    utcName = "Writer",
-    utcParams = [
-        UnresolvedTypeParam { utpName = "x", utpVariance = Contravariant }
-      ],
-    utcInherits = [],
-    utcFilters = []
-  }
+manyTypeClasses = between skipSpaces
+                          skipSpaces $
+                          sepBy (unresolvedParser :: ReadP UnresolvedTypeClass) skipSpaces
 
-uReader = UnresolvedTypeClass {
-    utcName = "Reader",
-    utcParams = [
-        UnresolvedTypeParam { utpName = "x", utpVariance = Covariant }
-      ],
-    utcInherits = [],
-    utcFilters = []
-  }
+onlyComplete ((a,[]):xs) f = f a
+onlyComplete (_:x:xs)    f = onlyComplete (x:xs) f
+onlyComplete ((_,x):[])  _ = Left ["Incomplete parse: " ++ x]
+onlyComplete _           _ = Left ["Failed to parse"]
 
-uQueue = UnresolvedTypeClass {
-    utcName = "Queue",
-    utcParams = [
-        UnresolvedTypeParam { utpName = "x", utpVariance = Invariant }
-      ],
-    utcInherits = [
-        UnresolvedType {
-          utTypeClass = "Writer",
-          utParamArgs = [UnresolvedTypeArg { utaName = "x" }]
-        },
-        UnresolvedType {
-          utTypeClass = "Reader",
-          utParamArgs = [UnresolvedTypeArg { utaName = "x" }]
-        }
-      ],
-    utcFilters = [
-      UnresolvedParamFilter {
-        upfName = "x",
-        upfType = UnresolvedType {
-            utTypeClass = "Writer",
-            utParamArgs = [UnresolvedTypeArg { utaName = "x" }]
-          }
-      }
-    ]
-  }
+graph = do
+  contents <- readFile "examples.txt"
+  parsed <- return $ readP_to_S manyTypeClasses $ contents
+  return $ onlyComplete parsed createTypeClassGraph
 
-uFunction = UnresolvedTypeClass {
-    utcName = "Function",
-    utcParams = [
-        UnresolvedTypeParam { utpName = "x", utpVariance = Contravariant },
-        UnresolvedTypeParam { utpName = "y", utpVariance = Covariant }
-      ],
-    utcInherits = [],
-    utcFilters = []
-  }
-
-testType = resolve $ UnresolvedType {
-    utTypeClass = "Writer",
-    utParamArgs = [
-      UnresolvedType {
-        utTypeClass = "Queue",
-        utParamArgs = [
-          UnresolvedType {
-            utTypeClass = "Function",
-            utParamArgs = [
-              UnresolvedTypeArg { utaName = "x" },
-              UnresolvedTypeArg { utaName = "y" }
-            ]
-          }
-        ]
-      }
-    ]
-  }
-
-testType2 = resolve $ UnresolvedType {
-    utTypeClass = "Writer",
-    utParamArgs = [UnresolvedTypeArg { utaName = "x" }]
-  }
-
-testType3 = resolve $ UnresolvedTypeArg { utaName = "x" }
-
-resolve x = graph >>= \g -> return $ resolveTypeClassInstance g x
-graph = createTypeClassGraph [uWriter, uReader, uQueue, uFunction, uIterator]
+resolve x = unresolved `liftM` graph where
+  parsed = readP_to_S (unresolvedParser :: ReadP UnresolvedType) x
+  unresolved = flip (>>=) $ \g -> onlyComplete parsed (resolveTypeClassInstance g)

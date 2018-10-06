@@ -1,0 +1,20 @@
+interface Iterator<|x> {
+  inherits Reader<x>
+  inherits Writer<x>
+  x requires Iterator<x>
+}
+
+interface Writer<x|> {
+}
+
+interface Reader<|x> {
+}
+
+concrete Queue<x> {
+  inherits Writer<x>
+  inherits Reader<x>
+  x requires Writer<x>
+}
+
+interface Function<x|y> {
+}
