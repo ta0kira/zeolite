@@ -1,7 +1,12 @@
 module Resolver (
-  TypeClassGraph(..),
+  TypeClassGraph,
+  TypeClassArg,
   createTypeClassGraph,
-  resolveTypeClassInstance
+  resolveTypeClassInstance,
+  -- For testing...
+  TypeClassName,
+  getTypeClassPaths,
+  getTypePaths
 ) where
 
 import Control.Arrow (second)
@@ -116,25 +121,36 @@ instance Show TypeClassArg where
 data TypeClassGraph =
   TypeClassGraph {
     tcgParams :: TypeClassParamMap,
-    tcgGraph :: TypeClassMap
+    tcgGraph :: TypeClassMap,
+    tcgInherits :: TypeClassInheritsMap
   }
   deriving (Eq)
 
+-- TODO: Show tcgInherits.
 instance Show TypeClassGraph where
-  show (TypeClassGraph ps gs) = showParams ++ "\n" ++ showGraph where
+  show (TypeClassGraph ps gs is) = showParams ++ "\n" ++
+                                   showGraph ++ "\n" ++
+                                   showInherits where
     showParams = "params {\n" ++ join params ++ "}"
     params = do
       (n,p) <- Map.toList ps
       ["  " ++ show n ++ " ~ " ++ show p ++ "\n"]
-    showGraph = "typeclass graph {\n" ++ join inherits ++ "}"
-    inherits = do
+    showGraph = "typeclass graph {\n" ++ join simpleInherits ++ "}"
+    simpleInherits = do
       (n,is) <- Map.toList gs
       ["  " ++ show n ++ " -> " ++ show (Set.toList is) ++ "\n"]
+    showInherits = "typeclass inherits {\n" ++ join fullInherits ++ "}"
+    fullInherits = do
+      (n,ts) <- Map.toList is
+      t <- Set.toList ts
+      ["  " ++ show n ++ " -> " ++ show t ++ "\n"]
 
 
 type TypeClassParamMap = Map.Map TypeClassName [TypeClassParam]
 
 type TypeClassMap = Map.Map TypeClassName (Set.Set TypeClassName)
+
+type TypeClassInheritsMap = Map.Map TypeClassName (Set.Set TypeClassArg)
 
 
 -- TODO: Cool, but probably not needed.
@@ -209,11 +225,13 @@ createTypeClassGraph us = do
   initialParams <- initialTypeClassParamMap us
   initialGraph <- return TypeClassGraph {
       tcgParams = initialParams,
-      tcgGraph = foldr updateTypeClassMap defaultMap edges
+      tcgGraph = foldr updateTypeClassMap defaultMap edges,
+      tcgInherits = Map.empty
     }
   -- TODO: Validate inheritance w.r.t. filters and variance.
   updateTypeClassFilters initialGraph us
 
+-- TODO: Rename this.
 updateTypeClassFilters :: TypeClassGraph -> [UnresolvedTypeClass] -> Either [String] TypeClassGraph
 updateTypeClassFilters g us = updated where
   oldParams = tcgParams g
@@ -255,12 +273,25 @@ updateTypeClassFilters g us = updated where
     updatedMap <- updateParams us
     realFilters <- resolveFilters (tcnFromUTC u) (utcFilters u)
     return $ Map.insert (tcnFromUTC u) realFilters updatedMap
+  -- Update the inheritance graph.
+  updateInherits [] = return []
+  updateInherits (u:us) = do
+    rest <- updateInherits us
+    inherits <- getInherits (utcInherits u)
+    return $ (tcnFromUTC u,Set.fromList inherits):rest
+  getInherits [] = return []
+  getInherits (i:is) = do
+    rest <- getInherits is
+    inherit <- getTypeClassInstance g Set.empty i
+    return (fst inherit:rest)
   -- The fully-updated graph.
   updated = do
     newParams <- updateParams us
+    newInherits <- updateInherits us
     return $ TypeClassGraph {
         tcgParams = newParams,
-        tcgGraph = tcgGraph g
+        tcgGraph = tcgGraph g,
+        tcgInherits = Map.fromList newInherits
       }
 
 resolveTypeClassInstance :: TypeClassGraph -> UnresolvedType -> Either [String] (TypeClassArg, [TypeClassParam])
@@ -358,10 +389,55 @@ uncheckedSubTypeClassArgs ps = update (Map.toList ps) where
     | any ((p ==) . tcpName) os = (p,a) : (pruneArgs ps os)
     | otherwise = pruneArgs ps os
 
-getTypeClassPaths :: TypeClassMap -> TypeClassName -> TypeClassName -> [[TypeClassName]]
-getTypeClassPaths g x y
-  | x == y = return [y]
-  | otherwise = do
-    z <- Set.toList $ Map.findWithDefault Set.empty x g
-    ts <- getTypeClassPaths g z y
-    return (x:ts)
+getTypeClassPaths :: TypeClassInheritsMap -> Variance -> TypeClassName -> TypeClassName -> [[TypeClassArg]]
+getTypeClassPaths m Contravariant x y = getTypeClassPaths m Covariant y x
+getTypeClassPaths m Covariant x y
+  | x == y = return [] -- Empty path, not a lack of paths.
+  | otherwise = expanded where
+    expanded = do
+      z <- Set.toList $ Map.findWithDefault Set.empty x m
+      ts <- getTypeClassPaths m Covariant (tciClassName $ tcatInstance z) y
+      return (z:ts)
+getTypeClassPaths _ _ x y
+  | x == y = return [] -- Empty path, not a lack of paths.
+  | otherwise = []
+
+checkStrictConversion :: TypeClassGraph -> Variance -> TypeClassArg -> TypeClassArg -> Either [String] TypeClassArg
+checkStrictConversion _ _ (TypeClassArgType _) (TypeClassArgParam _) =
+  Left ["Cannot convert param to instance"]
+checkStrictConversion _ _ (TypeClassArgParam _) (TypeClassArgType _) =
+  Left ["Cannot convert instance to param"]
+checkStrictConversion _ _ (TypeClassArgParam p1) t@(TypeClassArgParam p2)
+  -- TODO: Actually check the filters.
+  | p1 == p2 = return t
+  | otherwise = Left ["Mismatch between params"]
+-- TODO: Implement this.
+-- checkStrictConversion g v (TypeClassArgType t1) (TypeClassArgType t2) = checked where
+--   allParams <- tcgParams g
+--   allInherits <- tcgInherits g
+--   checked = do
+--     paths <- getTypeClassPaths (tcgGraph g) v (tciClassName t1) (tciClassName t2)
+--     checkPaths paths
+--   checkPaths = foldr firstPath (Left ["No paths found"]) . map (checkPath t1 . tail)
+--   checkPathInherits
+--   checkPath x [] = return x
+--   checkPath x (y:ys) = do
+--     params <- return $ (tciClassName x) `Map.lookup` allParams
+--     template <- return $ y `Map.lookup` allInherits
+--     if (isJust params)
+--        then (Right ())
+--        else Left "Type class not found"
+--     args <- return $ Map.fromList $ zip (map tcpName $ fromJust params) (tciArgs x)
+--     updated <- uncheckedSubTypeClassArgs args $
+--       TypeClassArgType $ TypeClassInstance {
+--           tciFreeParams
+--           tciClassName = y,
+--           tci
+--         }
+
+-- TODO: This is temporary.
+getTypePaths :: TypeClassGraph -> (TypeClassArg,a) -> (TypeClassArg,a) -> [[TypeClassArg]]
+getTypePaths g x y = getTypeClassPaths (tcgInherits g)
+                                       Covariant
+                                       (tciClassName $ tcatInstance $ fst x)
+                                       (tciClassName $ tcatInstance $ fst y)

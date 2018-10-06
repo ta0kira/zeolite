@@ -10,6 +10,8 @@ import Variance
 testType = resolve "Writer<Queue<Function<x,y>>>"
 testType2 = resolve "Writer<x>"
 testType3 = resolve "x"
+testType4 = resolve "Iterator<x>"
+testType5 = resolve "Function<x,y>"
 
 manyTypeClasses = between skipSpaces
                           skipSpaces $
@@ -28,3 +30,6 @@ graph = do
 resolve x = unresolved `liftM` graph where
   parsed = readP_to_S (unresolvedParser :: ReadP UnresolvedType) x
   unresolved = flip (>>=) $ \g -> onlyComplete parsed (resolveTypeClassInstance g)
+
+checkPath :: (Monad m1, Monad m2) => m1 (m2 TypeClassGraph) -> m1 (m2 (TypeClassArg,a)) -> m1 (m2 (TypeClassArg,a)) -> m1 (m2 [[TypeClassArg]])
+checkPath = liftM3 $ liftM3 getTypePaths

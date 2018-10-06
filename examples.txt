@@ -17,4 +17,6 @@ concrete Queue<x> {
 }
 
 interface Function<x|y> {
+  inherits Iterator<y>
+  inherits Writer<x>
 }
