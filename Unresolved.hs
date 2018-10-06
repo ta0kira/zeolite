@@ -26,7 +26,7 @@ data UnresolvedType =
     utParamArgs :: [UnresolvedType]
   } |
   UnresolvedTypeArg {
-    utName :: String
+    utaName :: String
   }
   deriving (Eq, Read, Show)
 

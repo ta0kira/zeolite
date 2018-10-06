@@ -10,7 +10,7 @@ uIterator = UnresolvedTypeClass {
     utcInherits = [
         UnresolvedType {
           utTypeClass = "Reader",
-          utParamArgs = [UnresolvedTypeArg { utName = "x" }]
+          utParamArgs = [UnresolvedTypeArg { utaName = "x" }]
         }
       ],
     utcFilters = [
@@ -18,7 +18,7 @@ uIterator = UnresolvedTypeClass {
         upfName = "x",
         upfType = UnresolvedType {
             utTypeClass = "Iterator",
-            utParamArgs = [UnresolvedTypeArg { utName = "x" }]
+            utParamArgs = [UnresolvedTypeArg { utaName = "x" }]
           }
       }
     ]
@@ -50,11 +50,11 @@ uQueue = UnresolvedTypeClass {
     utcInherits = [
         UnresolvedType {
           utTypeClass = "Writer",
-          utParamArgs = [UnresolvedTypeArg { utName = "x" }]
+          utParamArgs = [UnresolvedTypeArg { utaName = "x" }]
         },
         UnresolvedType {
           utTypeClass = "Reader",
-          utParamArgs = [UnresolvedTypeArg { utName = "x" }]
+          utParamArgs = [UnresolvedTypeArg { utaName = "x" }]
         }
       ],
     utcFilters = [
@@ -62,7 +62,7 @@ uQueue = UnresolvedTypeClass {
         upfName = "x",
         upfType = UnresolvedType {
             utTypeClass = "Writer",
-            utParamArgs = [UnresolvedTypeArg { utName = "x" }]
+            utParamArgs = [UnresolvedTypeArg { utaName = "x" }]
           }
       }
     ]
@@ -87,8 +87,8 @@ testType = resolve $ UnresolvedType {
           UnresolvedType {
             utTypeClass = "Function",
             utParamArgs = [
-              UnresolvedTypeArg { utName = "x" },
-              UnresolvedTypeArg { utName = "y" }
+              UnresolvedTypeArg { utaName = "x" },
+              UnresolvedTypeArg { utaName = "y" }
             ]
           }
         ]
@@ -98,10 +98,10 @@ testType = resolve $ UnresolvedType {
 
 testType2 = resolve $ UnresolvedType {
     utTypeClass = "Writer",
-    utParamArgs = [UnresolvedTypeArg { utName = "x" }]
+    utParamArgs = [UnresolvedTypeArg { utaName = "x" }]
   }
 
-testType3 = resolve $ UnresolvedTypeArg { utName = "x" }
+testType3 = resolve $ UnresolvedTypeArg { utaName = "x" }
 
 resolve x = graph >>= \g -> return $ resolveTypeClassInstance g x
 graph = createTypeClassGraph [uWriter, uReader, uQueue, uFunction, uIterator]
