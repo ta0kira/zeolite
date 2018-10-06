@@ -31,12 +31,26 @@ checkReserved w =
      then pfail
      else return w
 
-parseNull = return () :: ReadP ()
+nullParse = return () :: ReadP ()
 whitespace = satisfy (\c -> c == ' ' || c == '\n' || c == '\t')
 upperChar = satisfy (\c -> c >= 'A' && c <= 'Z')
 lowerChar = satisfy (\c -> c >= 'a' && c <= 'z')
 digit = satisfy (\c -> c >= '0' && c <= '9')
 alphaNumChar = upperChar <|> lowerChar <|> digit
+
+lineComment = between (skipSpaces >> string "//")
+                      (satisfy (== '\n') >> skipSpaces)
+                      (many $ satisfy (/= '\n'))
+
+blockComment = between (skipSpaces >> string "/*")
+                       (string "*/" >> skipSpaces)
+                       (many $ satisfy $ const True)
+
+comment = lineComment <|> blockComment
+
+separator = skipMany1 whitespace <|> skipMany1 comment
+
+deadSpace = skipSpaces <|> skipMany1 comment
 
 typeClassName = do
   c1 <- upperChar
@@ -48,7 +62,7 @@ typeParamName = do
   rest <- many alphaNumChar
   checkReserved (c1:rest)
 
-listOf p = sepBy p (skipSpaces >> string ",")
+listOf p = sepBy p (deadSpace >> string ",")
 
 
 data TypeClassType = InterfaceTypeClass | ConcreteTypeClass deriving (Eq, Show)
@@ -67,12 +81,13 @@ data UnresolvedTypeClass =
 instance UnresolvedParsable UnresolvedTypeClass where
   unresolvedParser = do
     classType <- interfaceType <|> concreteType
-    name <- between skipSpaces parseNull typeClassName
+    name <- between deadSpace nullParse typeClassName
     params <- option [] typeParamList
-    skipSpaces >> string "{"
-    inherits <- between skipSpaces parseNull $ sepBy singleInherit skipSpaces
-    filters <- between skipSpaces parseNull $ sepBy singleFilter skipSpaces
-    skipSpaces >> string "}"
+    between deadSpace deadSpace (string "{")
+    inherits <- sepBy singleInherit deadSpace
+    deadSpace
+    filters <- sepBy singleFilter deadSpace
+    between deadSpace deadSpace (string "}")
     return $ UnresolvedTypeClass {
         utcName = name,
         utcType = classType,
@@ -82,16 +97,16 @@ instance UnresolvedParsable UnresolvedTypeClass where
       }
 
 interfaceType = do
-  between parseNull whitespace (string "interface")
+  between deadSpace separator (string "interface")
   return InterfaceTypeClass
 
 concreteType = do
-  between parseNull whitespace (string "concrete")
+  between deadSpace separator (string "concrete")
   return ConcreteTypeClass
 
 singleInherit :: ReadP UnresolvedType
 singleInherit = do
-  between skipSpaces whitespace (string "inherits")
+  between deadSpace separator (string "inherits")
   unresolvedParser :: ReadP UnresolvedType
 
 
@@ -104,9 +119,10 @@ data UnresolvedParamFilter =
 
 singleFilter :: ReadP UnresolvedParamFilter
 singleFilter = do
-  name <- between skipSpaces parseNull typeParamName
-  between whitespace whitespace (string "requires")
-  requires <- skipSpaces >> unresolvedParser :: ReadP UnresolvedType
+  deadSpace
+  name <- typeParamName
+  between deadSpace separator (string "requires")
+  requires <- unresolvedParser :: ReadP UnresolvedType
   return $ UnresolvedParamFilter {
       upfName = name,
       upfType = requires
@@ -126,16 +142,16 @@ data UnresolvedType =
 instance UnresolvedParsable UnresolvedType where
   unresolvedParser = typeInstance <|> typeArg where
     typeInstance = do
-      name <- between skipSpaces parseNull typeClassName
-      args <- option [] $ between (skipSpaces >> string "<")
-                          (skipSpaces >> string ">")
+      name <- between deadSpace nullParse typeClassName
+      args <- option [] $ between (deadSpace >> string "<")
+                          (deadSpace >> string ">")
                           (listOf (unresolvedParser :: ReadP UnresolvedType))
       return $ UnresolvedType {
           utTypeClass = name,
           utParamArgs = args
         }
     typeArg = do
-      name <- between skipSpaces parseNull typeParamName
+      name <- between deadSpace nullParse typeParamName
       return $ UnresolvedTypeArg {
           utaName = name
         }
@@ -149,8 +165,8 @@ data UnresolvedTypeParam =
 
 typeParamList = types where
   types = do
-    (con, fixed, cov) <- between (skipSpaces >> string "<")
-                                 (skipSpaces >> string ">")
+    (con, fixed, cov) <- between (deadSpace >> string "<")
+                                 (deadSpace >> string ">")
                                  split
     return $ (map (createParam Contravariant) con) ++
              (map (createParam Invariant) fixed) ++
@@ -161,14 +177,14 @@ typeParamList = types where
     }
   split = fixedOnly <|> noFixed <|> explicitFixed
   fixedOnly = do -- T<a,b,c>
-    fixed <- between skipSpaces parseNull (listOf typeParamName)
+    fixed <- between deadSpace nullParse (listOf typeParamName)
     return ([], fixed, [])
   noFixed = do -- T<a,b|c,d>
-    con   <- between skipSpaces (skipSpaces >> string "|") (listOf typeParamName)
-    cov   <- between skipSpaces parseNull                  (listOf typeParamName)
+    con   <- between deadSpace (deadSpace >> string "|") (listOf typeParamName)
+    cov   <- between deadSpace nullParse                  (listOf typeParamName)
     return (con, [], cov)
   explicitFixed = do -- T<a,b|c,d|e,f>
-    con   <- between skipSpaces (skipSpaces >> string "|") (listOf typeParamName)
-    fixed <- between skipSpaces (skipSpaces >> string "|") (listOf typeParamName)
-    cov   <- between skipSpaces parseNull                  (listOf typeParamName)
+    con   <- between deadSpace (deadSpace >> string "|") (listOf typeParamName)
+    fixed <- between deadSpace (deadSpace >> string "|") (listOf typeParamName)
+    cov   <- between deadSpace nullParse                  (listOf typeParamName)
     return (con, fixed, cov)

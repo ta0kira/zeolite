@@ -13,9 +13,9 @@ testType3 = resolve "x"
 testType4 = resolve "Iterator<x>"
 testType5 = resolve "Function<x,y>"
 
-manyTypeClasses = between skipSpaces
+manyTypeClasses = between (return ())
                           skipSpaces $
-                          sepBy (unresolvedParser :: ReadP UnresolvedTypeClass) skipSpaces
+                          sepBy (unresolvedParser :: ReadP UnresolvedTypeClass) (return ())
 
 onlyComplete ((a,[]):xs) f = f a
 onlyComplete (_:x:xs)    f = onlyComplete (x:xs) f
