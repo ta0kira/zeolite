@@ -56,7 +56,7 @@ data TypeFilter =
   TypeFilter {
     tfType :: TypeClassInstance
   }
-  deriving (Eq)
+  deriving (Eq, Ord)
 
 instance Show TypeFilter where
   show (TypeFilter t) = show t
@@ -66,17 +66,18 @@ data TypeClassParam =
   TypeClassParam {
     tcpName :: TypeClassParamName,
     tcpVariance :: Variance,
-    tcpFilters :: [TypeFilter] -- TODO: Make this a set?
+    tcpFilters :: Set.Set TypeFilter
   }
-  deriving (Eq)
+  deriving (Eq, Ord)
 
 instance Show TypeClassParam where
   show (TypeClassParam n v f) = (showName v) ++ (showFilters f) where
     showName Contravariant = "+" ++ show n
     showName Covariant     = show n ++ "+"
     showName _             = show n
-    showFilters [] = ""
-    showFilters fs = " -> " ++ show fs
+    showFilters fs
+      | null (Set.toList fs) = ""
+      | otherwise = " -> " ++ show (Set.toList fs)
 
 
 data TypeClassInstance =
@@ -88,7 +89,7 @@ data TypeClassInstance =
     tciClassName :: TypeClassName,
     tciArgs :: [TypeClassArg]
   }
-  deriving (Eq)
+  deriving (Eq, Ord)
 
 instance Show TypeClassInstance where
   show (TypeClassInstance p n a) = show n ++ (showArgs a) ++ (showParams p) where
@@ -105,7 +106,7 @@ data TypeClassArg =
   TypeClassArgParam {
     tcapParam :: TypeClassParam
   }
-  deriving (Eq)
+  deriving (Eq, Ord)
 
 instance Show TypeClassArg where
   show (TypeClassArgType t)  = show t
@@ -124,11 +125,11 @@ instance Show TypeClassGraph where
     showParams = "params {\n" ++ join params ++ "}"
     params = do
       (n,p) <- Map.toList ps
-      ["  " ++ show n ++ ": " ++ show p ++ "\n"]
-    showGraph = "graph {\n" ++ join inherits ++ "}"
+      ["  " ++ show n ++ " ~ " ++ show p ++ "\n"]
+    showGraph = "typeclass graph {\n" ++ join inherits ++ "}"
     inherits = do
       (n,is) <- Map.toList gs
-      ["  " ++ show n ++ ": " ++ show (Set.toList is) ++ "\n"]
+      ["  " ++ show n ++ " -> " ++ show (Set.toList is) ++ "\n"]
 
 
 type TypeClassParamMap = Map.Map TypeClassName [TypeClassParam]
@@ -191,7 +192,7 @@ initialTypeClassParamMap us = (Right params) where
   convertParam p = TypeClassParam {
     tcpName = tcpnFromUTP p,
     tcpVariance = utpVariance p,
-    tcpFilters = [] -- Resolved later on.
+    tcpFilters = Set.empty -- Resolved later on.
   }
 
 createTypeClassGraph :: [UnresolvedTypeClass] -> Either [String] TypeClassGraph
@@ -223,7 +224,7 @@ updateTypeClassFilters g us = updated where
        else Left ["Type '" ++ show t ++ "' not found"]
   resolveFilters t (f:fs) = do
     resolved <- resolveFilters t fs
-    filter <- getTypeClassInstance g [] (upfType f)
+    filter <- getTypeClassInstance g Set.empty (upfType f)
     checkParam (tcpnFromUPF f) (snd filter)
     filterType <- getFilterType (fst filter)
     updateSingleParam (tcpnFromUPF f) filterType resolved
@@ -246,7 +247,7 @@ updateTypeClassFilters g us = updated where
       update = TypeClassParam {
           tcpName = tcpName p,
           tcpVariance = tcpVariance p,
-          tcpFilters = (tcpFilters p) ++ [TypeFilter a]
+          tcpFilters = Set.insert (TypeFilter a) (tcpFilters p)
         }
   -- Update the map with all filter updates for a single type class.
   updateParams []     = Right oldParams
@@ -263,7 +264,7 @@ updateTypeClassFilters g us = updated where
       }
 
 resolveTypeClassInstance :: TypeClassGraph -> UnresolvedType -> Either [String] (TypeClassArg, [TypeClassParam])
-resolveTypeClassInstance g = getTypeClassInstance g []
+resolveTypeClassInstance g = getTypeClassInstance g Set.empty
 
 flattenTypeClassParams :: [TypeClassParam] -> [TypeClassParam]
 flattenTypeClassParams = map snd . Map.toList . foldr process Map.empty where
@@ -275,10 +276,10 @@ flattenTypeClassParams = map snd . Map.toList . foldr process Map.empty where
       TypeClassParam {
         tcpName = name,
         tcpVariance = (tcpVariance x) `composeVariance` (tcpVariance y),
-        tcpFilters = (tcpFilters x) ++ (tcpFilters y)
+        tcpFilters = (tcpFilters x) `Set.union` (tcpFilters y)
       }
 
-getTypeClassInstance :: TypeClassGraph -> [TypeFilter] -> UnresolvedType -> Either [String] (TypeClassArg, [TypeClassParam])
+getTypeClassInstance :: TypeClassGraph -> Set.Set TypeFilter -> UnresolvedType -> Either [String] (TypeClassArg, [TypeClassParam])
 getTypeClassInstance g fs a@(UnresolvedTypeArg _) = (Right resolved) where
   resolved = (arg, [param])
   param = TypeClassParam {

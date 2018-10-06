@@ -9,7 +9,7 @@ data Variance =
   Invariant |
   Covariant |
   IgnoreVariance
-  deriving (Eq, Read, Show)
+  deriving (Eq, Ord, Read, Show)
 
 composeVariance :: Variance -> Variance -> Variance
 composeVariance IgnoreVariance x              = x
