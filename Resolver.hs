@@ -228,12 +228,10 @@ createTypeClassGraph us = do
       tcgGraph = foldr updateTypeClassMap defaultMap edges,
       tcgInherits = Map.empty
     }
-  -- TODO: Validate inheritance w.r.t. filters and variance.
-  updateTypeClassFilters initialGraph us
+  updateTypeClassGraph initialGraph us
 
--- TODO: Rename this.
-updateTypeClassFilters :: TypeClassGraph -> [UnresolvedTypeClass] -> Either [String] TypeClassGraph
-updateTypeClassFilters g us = updated where
+updateTypeClassGraph :: TypeClassGraph -> [UnresolvedTypeClass] -> Either [String] TypeClassGraph
+updateTypeClassGraph g us = updated where
   oldParams = tcgParams g
   resolveFilters t []     = do
     oldParam <- return $ t `Map.lookup` oldParams
@@ -274,20 +272,26 @@ updateTypeClassFilters g us = updated where
     realFilters <- resolveFilters (tcnFromUTC u) (utcFilters u)
     return $ Map.insert (tcnFromUTC u) realFilters updatedMap
   -- Update the inheritance graph.
-  updateInherits [] = return []
-  updateInherits (u:us) = do
-    rest <- updateInherits us
-    inherits <- getInherits (utcInherits u)
+  updateInherits g2 [] = return []
+  updateInherits g2 (u:us) = do
+    rest <- updateInherits g2 us
+    inherits <- getInherits g2 (utcInherits u)
     return $ (tcnFromUTC u,Set.fromList inherits):rest
-  getInherits [] = return []
-  getInherits (i:is) = do
-    rest <- getInherits is
-    inherit <- getTypeClassInstance g Set.empty i
+  getInherits g2 [] = return []
+  getInherits g2 (i:is) = do
+    rest <- getInherits g2 is
+    inherit <- getTypeClassInstance g2 Set.empty i
     return (fst inherit:rest)
   -- The fully-updated graph.
   updated = do
     newParams <- updateParams us
-    newInherits <- updateInherits us
+    partial <- return $ TypeClassGraph {
+        tcgParams = newParams,
+        tcgGraph = tcgGraph g,
+        tcgInherits = Map.empty
+      }
+    -- TODO: Check variance and filters for inheritance.
+    newInherits <- updateInherits partial us
     return $ TypeClassGraph {
         tcgParams = newParams,
         tcgGraph = tcgGraph g,

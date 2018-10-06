@@ -13,10 +13,10 @@ interface Reader<|x> {
 concrete Queue<x> {
   inherits Writer<x>
   inherits Reader<x>
-  x requires Writer<x>
+  x requires Writer<Writer<x>>
 }
 
 interface Function<x|y> {
-  inherits Iterator<y>
+  inherits Iterator<Iterator<y>>
   inherits Writer<x>
 }
