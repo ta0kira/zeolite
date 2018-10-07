@@ -25,5 +25,6 @@ IgnoreVariance `paramAllowsUsage` _              = True
 Covariant      `paramAllowsUsage` Covariant      = True
 Contravariant  `paramAllowsUsage` Contravariant  = True
 Invariant      `paramAllowsUsage` Covariant      = True
+Invariant      `paramAllowsUsage` Invariant      = True
 Invariant      `paramAllowsUsage` Contravariant  = True
 paramAllowsUsage _ _ = False

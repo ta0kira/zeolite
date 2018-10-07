@@ -1,8 +1,8 @@
 // A contrived Iterator.
-interface Iterator<|xx> {
+interface Iterator<xx> {
   inherits Reader<xx>
   inherits Writer<xx>
-  xx requires Iterator<xx>
+  xx requires Writer<xx>
 }
 
 interface Writer<x|> {
@@ -23,7 +23,8 @@ concrete Queue<x> {
   x requires Writer<Writer<x>>
 }
 
-interface Function<x|y> {
+interface Function<x,y> {
   inherits Iterator<Iterator<y>>
   inherits Writer<x>
+  y requires Iterator<y>
 }

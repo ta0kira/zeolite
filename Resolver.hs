@@ -11,7 +11,7 @@ module Resolver (
 import Control.Arrow (second)
 import Control.Monad (guard, join, liftM3)
 import Control.Monad.Fix (fix)
-import Data.Either (isLeft, partitionEithers)
+import Data.Either (isLeft, isRight, partitionEithers)
 import Data.List (intercalate)
 import Data.Maybe (fromJust, isJust)
 import qualified Data.Map as Map
@@ -297,6 +297,7 @@ updateTypeClassGraph g us = updated where
         tcgInherits = Map.fromList newInherits
       }
     validateParamVariance full
+    validateParamFilters full
     return full
 
 validateParamVariance :: TypeClassGraph -> Either [String] ()
@@ -314,7 +315,7 @@ validateParamVariance g = checkVariances (Map.toList $ tcgInherits g) where
     required <- return $ Map.fromList $ mapParams params
     -- Params as used in inheritance.
     freeParams <- return $ mapParams $ tciFreeParams $ tcatInstance i
-    checkAllVariances (t,i) required freeParams
+    checkAllVariances (t,tcatInstance i) required freeParams
     checkVariance t is
   checkAllVariances _ m [] = Right ()
   checkAllVariances (t,i) m ((p,v1):ps) = do
@@ -326,7 +327,51 @@ validateParamVariance g = checkVariances (Map.toList $ tcgInherits g) where
        then (return ())
        else Left ["Param '" ++ show p ++ "' cannot be " ++
                   show v1 ++ " in '" ++ show t ++ "' -> '" ++ show i ++ "'"]
-  mapParams = map (\p -> (tcpName p, tcpVariance p))
+  mapParams = map (\p -> (tcpName p,tcpVariance p))
+
+-- TODO: Get rid of this duplication with validateParamVariance.
+validateParamFilters :: TypeClassGraph -> Either [String] ()
+validateParamFilters g = checkFilters (Map.toList $ tcgInherits g) where
+  allParams = tcgParams g
+  checkFilters [] = Right ()
+  checkFilters ((t,is):ts) = do
+    checkFilter t (Set.toList is)
+    checkFilters ts
+  checkFilter _ [] = Right ()
+  checkFilter t (i:is) = do
+    -- Params available from the typeclass doing the inheriting.
+    -- TODO: Missing value should be an error.
+    params <- return $ Map.findWithDefault [] t allParams
+    required <- return $ Map.fromList $ mapParams params
+    -- Params as used in inheritance.
+    freeParams <- return $ mapParams $ tciFreeParams $ tcatInstance i
+    checkAllFilters (t,tciClassName $ tcatInstance i) required freeParams
+    checkFilter t is
+  checkAllFilters _ m [] = Right ()
+  checkAllFilters (t,i) m ((p,f1):ps) = checked where
+    checked = do
+      f0 <- return $ p `Map.lookup` m
+      if (isJust f0)
+        then (return ())
+        else Left ["Param '" ++ show p ++ "' does not exist"]
+      findCompatFilter g (Set.toList $ fromJust f0) $ Set.toList f1
+    findCompatFilter _ _ [] = return ()
+    findCompatFilter g rs (a:as) = checked where
+      checked = do
+        if (check a)
+          then (return ())
+          else Left ["Param '" ++ show p ++ "' does not support required filter " ++
+                    show a ++ " in '" ++ show t ++ "' -> '" ++
+                    show i ++ "'"]
+        findCompatFilter g rs as
+      check a = foldr (||) False $ do
+        r <- rs
+        -- NOTE: Filter conversion is always covariant.
+        allowed <- return $ guessInstanceConversions g Covariant
+                            (TypeClassArgType $ tfType r)
+                            (TypeClassArgType $ tfType a)
+        return $ isRight allowed
+  mapParams = map (\p -> (tcpName p,tcpFilters p))
 
 flattenTypeClassParams :: [TypeClassParam] -> [TypeClassParam]
 flattenTypeClassParams = map snd . Map.toList . foldr process Map.empty where
@@ -341,6 +386,29 @@ flattenTypeClassParams = map snd . Map.toList . foldr process Map.empty where
         tcpFilters = (tcpFilters x) `Set.union` (tcpFilters y)
       }
 
+-- NOTE: This only works because filters can only have one free param each.
+renameFilters :: TypeClassParamName -> Set.Set TypeFilter -> Set.Set TypeFilter
+renameFilters n fs = Set.fromList $ map renameFilter $ Set.toList fs where
+  renameFilter f = TypeFilter {
+      tfType = renameTypeInstance $ tfType f
+    }
+  renameTypeInstance t = TypeClassInstance {
+      tciFreeParams = map renameParam $ tciFreeParams t,
+      tciClassName = tciClassName t,
+      tciArgs = map renameArg $ tciArgs t
+    }
+  renameParam p = TypeClassParam {
+      tcpName = n,
+      tcpVariance = tcpVariance p,
+      tcpFilters = renameFilters n $ tcpFilters p
+    }
+  renameArg (TypeClassArgType t) = TypeClassArgType {
+      tcatInstance = renameTypeInstance t
+    }
+  renameArg (TypeClassArgParam p) = TypeClassArgParam {
+      tcapParam = renameParam p
+    }
+
 getTypeClassInstance :: TypeClassGraph -> Set.Set TypeFilter -> UnresolvedType -> Either [String] (TypeClassArg, [TypeClassParam])
 getTypeClassInstance g fs a@(UnresolvedTypeArg _) = (Right resolved) where
   resolved = (arg, [param])
@@ -348,7 +416,7 @@ getTypeClassInstance g fs a@(UnresolvedTypeArg _) = (Right resolved) where
       tcpName = tcpnFromUTA a,
       -- This variance is in the context of this particular TypeClassArg.
       tcpVariance = IgnoreVariance,
-      tcpFilters = fs
+      tcpFilters = renameFilters (tcpnFromUTA a) fs
     }
   arg = TypeClassArgParam {
       tcapParam = param
@@ -455,14 +523,17 @@ guessInstanceConversions _ _ (TypeClassArgParam _) (TypeClassArgType _) =
   Left ["Cannot convert instance to param"]
 guessInstanceConversions _ _ t@(TypeClassArgParam p1) (TypeClassArgParam p2)
   -- TODO: Actually check the filters.
-  | p1 == p2 = return [t]
+  | (tcpName p1) == (tcpName p2) = return [t]
   | otherwise = Left ["Mismatch between params"]
 guessInstanceConversions g v t1@(TypeClassArgType x) t2@(TypeClassArgType y) = checked where
   allParams = tcgParams g
   allInherits = tcgInherits g
   checked = do
     paths <- return $ getTypeClassPaths allInherits v (tciClassName x) (tciClassName y)
-    checkPaths $ map (checkConversion . flattenPath g t1) paths
+    remaining <- checkPaths $ map (checkConversion . flattenPath g t1) paths
+    if (null remaining)
+       then Left ["No conversions found"]
+       else (return remaining)
   checkConversion t = do
     ok <- t
     checkInstanceConversion g ok t2
