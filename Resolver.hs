@@ -211,6 +211,8 @@ initialTypeClassParamMap us = (Right params) where
     tcpFilters = Set.empty -- Resolved later on.
   }
 
+-- TODO: Update this and updateTypeClassGraph so that an additional "module" of
+-- unresolved type classes can be appended to the graph.
 createTypeClassGraph :: [UnresolvedTypeClass] -> Either [String] TypeClassGraph
 createTypeClassGraph us = do
   errors <- return $ getTypeClassCycleErrors us
@@ -240,7 +242,7 @@ updateTypeClassGraph g us = updated where
        else Left ["Type '" ++ show t ++ "' not found"]
   resolveFilters t (f:fs) = do
     resolved <- resolveFilters t fs
-    filter <- uncheckedGetTypeClassInstance g Set.empty (upfType f)
+    filter <- tryTypeClassInstance True g Map.empty Set.empty (upfType f)
     checkParam (tcpnFromUPF f) (snd filter)
     filterType <- getFilterType (fst filter)
     updateSingleParam (tcpnFromUPF f) filterType resolved
@@ -275,12 +277,16 @@ updateTypeClassGraph g us = updated where
   updateInherits g2 [] = return []
   updateInherits g2 (u:us) = do
     rest <- updateInherits g2 us
-    inherits <- getInherits g2 (utcInherits u)
+    params <- return $ Map.findWithDefault [] (tcnFromUTC u) (tcgParams g2)
+    extras <- return $ Map.fromList $ map (\p -> (tcpName p, tcpFilters p)) params
+    inherits <- getInherits g2 extras (utcInherits u)
     return $ (tcnFromUTC u,Set.fromList inherits):rest
-  getInherits g2 [] = return []
-  getInherits g2 (i:is) = do
-    rest <- getInherits g2 is
-    inherit <- uncheckedGetTypeClassInstance g2 Set.empty i
+  getInherits g2 e [] = return []
+  getInherits g2 e (i:is) = do
+    rest <- getInherits g2 e is
+    -- Filters cannot be checked here because that depends on the graph having
+    -- updated inherits. Filters are validated later with validateParamFilters.
+    inherit <- tryTypeClassInstance False g2 e Set.empty i
     return (fst inherit:rest)
   -- The fully-updated graph.
   updated = do
@@ -414,22 +420,25 @@ renameFilters n fs = Set.fromList $ map renameFilter $ Set.toList fs where
       tcapParam = renameParam p
     }
 
-uncheckedGetTypeClassInstance = tryTypeClassInstance False
-getTypeClassInstance          = tryTypeClassInstance True
-
-tryTypeClassInstance :: Bool -> TypeClassGraph -> Set.Set TypeFilter -> UnresolvedType -> Either [String] (TypeClassArg, [TypeClassParam])
-tryTypeClassInstance c g fs a@(UnresolvedTypeArg _) = (Right resolved) where
+tryTypeClassInstance :: Bool -> TypeClassGraph ->
+                        Map.Map TypeClassParamName (Set.Set TypeFilter) ->
+                        Set.Set TypeFilter ->
+                        UnresolvedType ->
+                        Either [String] (TypeClassArg, [TypeClassParam])
+tryTypeClassInstance _ _ pm fs a@(UnresolvedTypeArg _) = (Right resolved) where
   resolved = (arg, [param])
+  extras = Map.findWithDefault Set.empty (tcpnFromUTA a) pm
+  newFilters = renameFilters (tcpnFromUTA a) fs
   param = TypeClassParam {
       tcpName = tcpnFromUTA a,
       -- This variance is in the context of this particular TypeClassArg.
       tcpVariance = IgnoreVariance,
-      tcpFilters = renameFilters (tcpnFromUTA a) fs
+      tcpFilters = newFilters `Set.union` extras
     }
   arg = TypeClassArgParam {
       tcapParam = param
     }
-tryTypeClassInstance c g fs u = result where
+tryTypeClassInstance c g pm fs u = result where
   name = utTypeClass u
   properName = tcnFromUT u
   updateVariance v p = TypeClassParam {
@@ -442,7 +451,7 @@ tryTypeClassInstance c g fs u = result where
   collectTypeClassArgs []     (_:_)  = Left ["Too many args for type '" ++ name ++ "'"]
   collectTypeClassArgs (p:ps) (u:us) = do
     (args, params) <- collectTypeClassArgs ps us
-    (arg, newParams) <- tryTypeClassInstance c g (tcpFilters p) u
+    (arg, newParams) <- tryTypeClassInstance c g pm (tcpFilters p) u
     updatedParams <- return $ map (updateVariance $ tcpVariance p) newParams
     return (arg:args, updatedParams ++ params)
   result = do
@@ -456,22 +465,14 @@ tryTypeClassInstance c g fs u = result where
         tciClassName = properName,
         tciArgs = args
       }
+    -- TODO: Maybe just make this a callback.
     if (c)
        then (checkInstanceFilters g resolved)
        else (return ())
     return (TypeClassArgType resolved, params)
 
-checkInstanceFilters :: TypeClassGraph -> TypeClassInstance -> Either [String] ()
-checkInstanceFilters g (TypeClassInstance ps t as) = checked where
-  allParams = tcgParams g
-  checked = do
-    params <- return $ t `Map.lookup` allParams
-    if (isJust params)
-       then (return ())
-       else Left ["Type '" ++ show t ++ "' does not exist"]
-    -- Assumes that counts were previously matched.
-    pairs <- return $ zip (fromJust params) as
-    check pairs
+checkTypeFilters :: TypeClassGraph -> [TypeClassParam] -> [TypeClassArg] -> Either [String] ()
+checkTypeFilters g ps as = check (zip ps as) where
   check [] = return ()
   check ((p,a):ps) = do
     checkFilters (tcpName p) (map (TypeClassArgType . tfType) $ Set.toList $ tcpFilters p) a
@@ -482,6 +483,16 @@ checkInstanceFilters g (TypeClassInstance ps t as) = checked where
     -- Yes, a is on the left and the right, just like the filter.
     guessInstanceConversions g Covariant a subbed
     checkFilters n fs a
+
+checkInstanceFilters :: TypeClassGraph -> TypeClassInstance -> Either [String] ()
+checkInstanceFilters g (TypeClassInstance _ t as) = checked where
+  allParams = tcgParams g
+  checked = do
+    params <- return $ t `Map.lookup` allParams
+    if (isJust params)
+       then (return ())
+       else Left ["Type '" ++ show t ++ "' does not exist"]
+    checkTypeFilters g (fromJust params) as
 
 -- TODO: Check filters somewhere in here.
 uncheckedSubTypeClassArgs :: Map.Map TypeClassParamName TypeClassArg -> TypeClassArg -> Either [String] TypeClassArg
@@ -498,7 +509,7 @@ uncheckedSubTypeClassArgs ps = update (Map.toList ps) where
     return $ TypeClassArgType $ TypeClassInstance {
         -- TODO: Also need to update free params based recursion. (Specifically,
         -- accounting for free params in ps, and also variance updates, like is
-        -- done in uncheckedGetTypeClassInstance.)
+        -- done in tryTypeClassInstance.)
         tciFreeParams = (tciFreeParams t) `pruneParams` (Map.fromList ps),
         tciClassName = tciClassName t,
         tciArgs = newArgs
@@ -548,13 +559,12 @@ flattenPath g (TypeClassArgType x)   (y:ys) = flattened where
 guessInstanceConversions :: TypeClassGraph -> Variance -> TypeClassArg -> TypeClassArg -> Either [String] [TypeClassArg]
 guessInstanceConversions g Contravariant t1 t2 =
   guessInstanceConversions g Covariant t2 t1
-guessInstanceConversions _ _ (TypeClassArgType _) (TypeClassArgParam _) =
-  Left ["Cannot convert param to instance"]
-guessInstanceConversions _ _ (TypeClassArgParam _) (TypeClassArgType _) =
-  Left ["Cannot convert instance to param"]
-guessInstanceConversions _ _ t@(TypeClassArgParam p1) (TypeClassArgParam p2)
-  -- TODO: Actually check the filters.
-  | (tcpName p1) == (tcpName p2) = return [t]
+guessInstanceConversions g _ t1@(TypeClassArgType _)  t2@(TypeClassArgParam _) =
+  checkInstanceConversion g t1 t2 >>= return . (:[])
+guessInstanceConversions g _ t1@(TypeClassArgParam _) t2@(TypeClassArgType _)  =
+  checkInstanceConversion g t1 t2 >>= return . (:[])
+guessInstanceConversions g _ t1@(TypeClassArgParam p1) t2@(TypeClassArgParam p2)
+  | (tcpName p1) == (tcpName p2) = checkInstanceConversion g t1 t2 >>= return . (:[])
   | otherwise = Left ["Mismatch between params"]
 guessInstanceConversions g v t1@(TypeClassArgType x) t2@(TypeClassArgType y) = checked where
   allParams = tcgParams g
@@ -567,6 +577,7 @@ guessInstanceConversions g v t1@(TypeClassArgType x) t2@(TypeClassArgType y) = c
        else (return remaining)
   checkConversion t = do
     ok <- t
+    -- This check assumes non-contravariance.
     checkInstanceConversion g ok t2
   checkPaths [] = return []
   checkPaths (p:ps)
@@ -576,11 +587,22 @@ guessInstanceConversions g v t1@(TypeClassArgType x) t2@(TypeClassArgType y) = c
       rest <- checkPaths ps
       return (ok:rest)
 
+-- TODO: Should the returned value have the stricter of the two filter sets?
+-- TODO: This needs very specific test cases.
 checkInstanceConversion :: TypeClassGraph -> TypeClassArg -> TypeClassArg -> Either [String] TypeClassArg
-checkInstanceConversion _ _ (TypeClassArgParam _) =
-  Left ["Cannot convert from param"]
-checkInstanceConversion _ (TypeClassArgParam _) _ =
-  Left ["Cannot convert to param"]
+checkInstanceConversion g t1 t2@(TypeClassArgParam p2) = checked where
+  checked = fullCheck $ Set.toList $ tcpFilters p2
+  fullCheck [] = return t2
+  fullCheck (f:fs) = do
+    checkInstanceConversion g t1 (TypeClassArgType $ tfType f)
+    fullCheck fs
+checkInstanceConversion g (TypeClassArgParam p) t@(TypeClassArgType _) = check (Set.toList $ tcpFilters p) where
+  check [] = Left ["No filter guarantees conversion"]
+  check (f:fs) = do
+    checked <- return $ guessInstanceConversions g Covariant (TypeClassArgType $ tfType f) t
+    if (isRight checked)
+       then return t
+       else check fs
 checkInstanceConversion g (TypeClassArgType x) t@(TypeClassArgType y)
   | tciClassName x /= tciClassName y =
     Left ["Typeclass mismatch: '" ++ show (tciClassName x) ++ "' != '" ++ show (tciClassName y) ++ "'"]
@@ -597,8 +619,10 @@ checkInstanceConversion g (TypeClassArgType x) t@(TypeClassArgType y)
       checkAll ys
 
 -- TODO: This is temporary.
+-- TODO: Update this to allow tests to pass in filters taken from the context,
+-- to simulate a param being defined by an enclosing type class.
 resolveTypeClassInstance :: TypeClassGraph -> UnresolvedType -> Either [String] (TypeClassArg, [TypeClassParam])
-resolveTypeClassInstance g = getTypeClassInstance g Set.empty
+resolveTypeClassInstance g = tryTypeClassInstance True g Map.empty Set.empty
 
 -- TODO: This is temporary.
 checkConversion :: TypeClassGraph -> (TypeClassArg, [TypeClassParam]) -> (TypeClassArg, [TypeClassParam]) -> Either [String] ()

@@ -101,7 +101,7 @@ expectParsed b x f g = check (tryParse x g) where
   check (Right _) =
     if b
       then (return ())
-      else Left $ "Expected parse failure in " ++ f
+      else Left $ "Expected parse failure in " ++ f ++ " [\"" ++ x ++ "\"]"
   check (Left e) =
     if b
       then Left $ "Unexpected parse failure in " ++ f ++ ": " ++ show e
@@ -124,7 +124,8 @@ expectConverted b x y f g = check (tryParse x g) (tryParse y g) where
   recheck (Right _) =
     if b
       then (return ())
-      else Left $ "Expected conversion failure in " ++ f
+      else Left $ "Expected conversion failure in " ++ f ++
+                  " [\"" ++ x ++ "\" -> \"" ++ y ++ "\"]"
   recheck (Left e) =
     if b
       then Left $ "Unexpected conversion failure in " ++ f ++ ": " ++ show e
