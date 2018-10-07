@@ -5,14 +5,13 @@ module Resolver (
   resolveTypeClassInstance,
   -- For testing...
   TypeClassName,
-  getTypeClassPaths,
-  getTypePaths
+  checkConversion
 ) where
 
 import Control.Arrow (second)
-import Control.Monad (guard, join)
+import Control.Monad (guard, join, liftM3)
 import Control.Monad.Fix (fix)
-import Data.Either (partitionEithers)
+import Data.Either (isLeft, partitionEithers)
 import Data.List (intercalate)
 import Data.Maybe (fromJust, isJust)
 import qualified Data.Map as Map
@@ -359,6 +358,7 @@ getTypeClassInstance g fs u = result where
       }
     return (resolved, params)
 
+-- TODO: Check filters somewhere in here.
 uncheckedSubTypeClassArgs :: Map.Map TypeClassParamName TypeClassArg -> TypeClassArg -> Either [String] TypeClassArg
 uncheckedSubTypeClassArgs ps = update (Map.toList ps) where
   update [] t = return t
@@ -406,42 +406,74 @@ getTypeClassPaths _ _ x y
   | x == y = return [] -- Empty path, not a lack of paths.
   | otherwise = []
 
-checkStrictConversion :: TypeClassGraph -> Variance -> TypeClassArg -> TypeClassArg -> Either [String] TypeClassArg
-checkStrictConversion _ _ (TypeClassArgType _) (TypeClassArgParam _) =
+flattenPath :: TypeClassGraph -> TypeClassArg -> [TypeClassArg] -> Either [String] TypeClassArg
+flattenPath _ (TypeClassArgParam _)   _     = Left ["Cannot convert a param"]
+flattenPath _ t@(TypeClassArgType _) []     = return t
+flattenPath g (TypeClassArgType x)   (y:ys) = flattened where
+  allParams = tcgParams g
+  flattened = do
+    params <- return $ (tciClassName x) `Map.lookup` allParams
+    if (isJust params)
+       then (Right ())
+       else Left ["Type class '" ++ show (tciClassName x) ++ "' not found"]
+    args <- return $ Map.fromList $ zip (map tcpName $ fromJust params) (tciArgs x)
+    subbed <- uncheckedSubTypeClassArgs args y
+    flattenPath g subbed ys
+
+guessInstanceConversions :: TypeClassGraph -> Variance -> TypeClassArg -> TypeClassArg -> Either [String] [TypeClassArg]
+guessInstanceConversions _ _ (TypeClassArgType _) (TypeClassArgParam _) =
   Left ["Cannot convert param to instance"]
-checkStrictConversion _ _ (TypeClassArgParam _) (TypeClassArgType _) =
+guessInstanceConversions _ _ (TypeClassArgParam _) (TypeClassArgType _) =
   Left ["Cannot convert instance to param"]
-checkStrictConversion _ _ (TypeClassArgParam p1) t@(TypeClassArgParam p2)
+guessInstanceConversions _ _ t@(TypeClassArgParam p1) (TypeClassArgParam p2)
   -- TODO: Actually check the filters.
-  | p1 == p2 = return t
+  | p1 == p2 = return [t]
   | otherwise = Left ["Mismatch between params"]
--- TODO: Implement this.
--- checkStrictConversion g v (TypeClassArgType t1) (TypeClassArgType t2) = checked where
---   allParams <- tcgParams g
---   allInherits <- tcgInherits g
---   checked = do
---     paths <- getTypeClassPaths (tcgGraph g) v (tciClassName t1) (tciClassName t2)
---     checkPaths paths
---   checkPaths = foldr firstPath (Left ["No paths found"]) . map (checkPath t1 . tail)
---   checkPathInherits
---   checkPath x [] = return x
---   checkPath x (y:ys) = do
---     params <- return $ (tciClassName x) `Map.lookup` allParams
---     template <- return $ y `Map.lookup` allInherits
---     if (isJust params)
---        then (Right ())
---        else Left "Type class not found"
---     args <- return $ Map.fromList $ zip (map tcpName $ fromJust params) (tciArgs x)
---     updated <- uncheckedSubTypeClassArgs args $
---       TypeClassArgType $ TypeClassInstance {
---           tciFreeParams
---           tciClassName = y,
---           tci
---         }
+guessInstanceConversions g v t1@(TypeClassArgType x) t2@(TypeClassArgType y) = checked where
+  allParams = tcgParams g
+  allInherits = tcgInherits g
+  checked = do
+    paths <- return $ getTypeClassPaths allInherits v (tciClassName x) (tciClassName y)
+    checkPaths $ map (checkConversion . flattenPath g t1) paths
+  checkConversion t = do
+    ok <- t
+    checkInstanceConversion g ok t2
+  checkPaths [] = return []
+  checkPaths (p:ps)
+    | isLeft p = checkPaths ps
+    | otherwise = do
+      ok <- p
+      rest <- checkPaths ps
+      return (ok:rest)
+
+checkInstanceConversion :: TypeClassGraph -> TypeClassArg -> TypeClassArg -> Either [String] TypeClassArg
+checkInstanceConversion _ _ (TypeClassArgParam _) =
+  Left ["Cannot convert from param"]
+checkInstanceConversion _ (TypeClassArgParam _) _ =
+  Left ["Cannot convert to param"]
+checkInstanceConversion g (TypeClassArgType x) t@(TypeClassArgType y)
+  | tciClassName x /= tciClassName y =
+    Left ["Typeclass mismatch: '" ++ show (tciClassName x) ++ "' != '" ++ show (tciClassName y) ++ "'"]
+  | otherwise = checked typeClass where
+    typeClass = (tciClassName x) `Map.lookup` (tcgParams g)
+    checked Nothing   = Left ["Type class '" ++ show (tciClassName x) ++ "' not found"]
+    checked (Just ps) = checkAll (zip3 (map tcpVariance ps) (tciArgs x) (tciArgs y))
+    checkAll [] = return t
+    checkAll ((v,x,y):ys) = do
+      convs <- guessInstanceConversions g v x y
+      if (null convs)
+         then Left ["Conversion failed"]
+         else (Right ())
+      checkAll ys
 
 -- TODO: This is temporary.
-getTypePaths :: TypeClassGraph -> (TypeClassArg,a) -> (TypeClassArg,a) -> [[TypeClassArg]]
-getTypePaths g x y = getTypeClassPaths (tcgInherits g)
-                                       Covariant
-                                       (tciClassName $ tcatInstance $ fst x)
-                                       (tciClassName $ tcatInstance $ fst y)
+checkConversion :: Monad m => m (Either [String] TypeClassGraph) ->
+                              m (Either [String] (TypeClassArg,a)) ->
+                              m (Either [String] (TypeClassArg,a)) ->
+                              m (Either [String] [TypeClassArg])
+checkConversion = liftM3 check where
+  check gg xx yy = do
+    g <- gg
+    (x,_) <- xx
+    (y,_) <- yy
+    guessInstanceConversions g Covariant x y

@@ -1,8 +1,8 @@
 // A contrived Iterator.
-interface Iterator<|x> {
-  inherits Reader<x>
-  inherits Writer<x>
-  x requires Iterator<x>
+interface Iterator<|xx> {
+  inherits Reader<xx>
+  inherits Writer<xx>
+  xx requires Iterator<xx>
 }
 
 interface Writer<x|> {

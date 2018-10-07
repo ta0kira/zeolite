@@ -39,7 +39,7 @@ digit = satisfy (\c -> c >= '0' && c <= '9')
 alphaNumChar = upperChar <|> lowerChar <|> digit
 
 lineComment = between (skipSpaces >> string "//")
-                      (satisfy (== '\n') >> skipSpaces)
+                      (char '\n' >> skipSpaces)
                       (many $ satisfy (/= '\n'))
 
 blockComment = between (skipSpaces >> string "/*")
@@ -121,7 +121,7 @@ singleFilter :: ReadP UnresolvedParamFilter
 singleFilter = do
   deadSpace
   name <- typeParamName
-  between deadSpace separator (string "requires")
+  between separator separator (string "requires")
   requires <- unresolvedParser :: ReadP UnresolvedType
   return $ UnresolvedParamFilter {
       upfName = name,
@@ -168,9 +168,9 @@ typeParamList = types where
     (con, fixed, cov) <- between (deadSpace >> string "<")
                                  (deadSpace >> string ">")
                                  split
-    return $ (map (createParam Contravariant) con) ++
-             (map (createParam Invariant) fixed) ++
-             (map (createParam Covariant) cov)
+    return $ (map (createParam Contravariant) con)   ++
+             (map (createParam Invariant)     fixed) ++
+             (map (createParam Covariant)     cov)
   createParam v n = UnresolvedTypeParam {
       utpName = n,
       utpVariance = v
@@ -181,10 +181,10 @@ typeParamList = types where
     return ([], fixed, [])
   noFixed = do -- T<a,b|c,d>
     con   <- between deadSpace (deadSpace >> string "|") (listOf typeParamName)
-    cov   <- between deadSpace nullParse                  (listOf typeParamName)
+    cov   <- between deadSpace nullParse                 (listOf typeParamName)
     return (con, [], cov)
   explicitFixed = do -- T<a,b|c,d|e,f>
     con   <- between deadSpace (deadSpace >> string "|") (listOf typeParamName)
     fixed <- between deadSpace (deadSpace >> string "|") (listOf typeParamName)
-    cov   <- between deadSpace nullParse                  (listOf typeParamName)
+    cov   <- between deadSpace nullParse                 (listOf typeParamName)
     return (con, fixed, cov)

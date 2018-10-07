@@ -30,6 +30,3 @@ graph = do
 resolve x = unresolved `liftM` graph where
   parsed = readP_to_S (unresolvedParser :: ReadP UnresolvedType) x
   unresolved = flip (>>=) $ \g -> onlyComplete parsed (resolveTypeClassInstance g)
-
-checkPath :: (Monad m1, Monad m2) => m1 (m2 TypeClassGraph) -> m1 (m2 (TypeClassArg,a)) -> m1 (m2 (TypeClassArg,a)) -> m1 (m2 [[TypeClassArg]])
-checkPath = liftM3 $ liftM3 getTypePaths
