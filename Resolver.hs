@@ -291,14 +291,42 @@ updateTypeClassGraph g us = updated where
       }
     -- TODO: Check variance and filters for inheritance.
     newInherits <- updateInherits partial us
-    return $ TypeClassGraph {
+    full <- return $ TypeClassGraph {
         tcgParams = newParams,
         tcgGraph = tcgGraph g,
         tcgInherits = Map.fromList newInherits
       }
+    validateParamVariance full
+    return full
 
-resolveTypeClassInstance :: TypeClassGraph -> UnresolvedType -> Either [String] (TypeClassArg, [TypeClassParam])
-resolveTypeClassInstance g = getTypeClassInstance g Set.empty
+validateParamVariance :: TypeClassGraph -> Either [String] ()
+validateParamVariance g = checkVariances (Map.toList $ tcgInherits g) where
+  allParams = tcgParams g
+  checkVariances [] = Right ()
+  checkVariances ((t,is):ts) = do
+    checkVariance t (Set.toList is)
+    checkVariances ts
+  checkVariance _ [] = Right ()
+  checkVariance t (i:is) = do
+    -- Params available from the typeclass doing the inheriting.
+    -- TODO: Missing value should be an error.
+    params <- return $ Map.findWithDefault [] t allParams
+    required <- return $ Map.fromList $ mapParams params
+    -- Params as used in inheritance.
+    freeParams <- return $ mapParams $ tciFreeParams $ tcatInstance i
+    checkAllVariances (t,i) required freeParams
+    checkVariance t is
+  checkAllVariances _ m [] = Right ()
+  checkAllVariances (t,i) m ((p,v1):ps) = do
+    v0 <- return $ p `Map.lookup` m
+    if (isJust v0)
+       then (return ())
+       else Left ["Param '" ++ show p ++ "' does not exist"]
+    if ((fromJust v0) `paramAllowsUsage` v1)
+       then (return ())
+       else Left ["Param '" ++ show p ++ "' cannot be " ++
+                  show v1 ++ " in '" ++ show t ++ "' -> '" ++ show i ++ "'"]
+  mapParams = map (\p -> (tcpName p, tcpVariance p))
 
 flattenTypeClassParams :: [TypeClassParam] -> [TypeClassParam]
 flattenTypeClassParams = map snd . Map.toList . foldr process Map.empty where
@@ -465,6 +493,10 @@ checkInstanceConversion g (TypeClassArgType x) t@(TypeClassArgType y)
          then Left ["Conversion failed"]
          else (Right ())
       checkAll ys
+
+-- TODO: This is temporary.
+resolveTypeClassInstance :: TypeClassGraph -> UnresolvedType -> Either [String] (TypeClassArg, [TypeClassParam])
+resolveTypeClassInstance g = getTypeClassInstance g Set.empty
 
 -- TODO: This is temporary.
 checkConversion :: Monad m => m (Either [String] TypeClassGraph) ->
