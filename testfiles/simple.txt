@@ -1,0 +1,5 @@
+interface Read<|x,y> {}
+
+interface Write<x,y|> {}
+
+concrete Something<w|x,y|z> {}

@@ -1,0 +1,33 @@
+interface Read<|x> {
+  x requires Read<x>
+}
+
+interface Write<x|> {
+  x requires Write<x>
+}
+
+interface Write2<x|> {
+  inherits Write<x>
+  x requires Write<x>
+}
+
+interface Queue<x> {
+  inherits Write<x>
+  inherits Read<x>
+  x requires Write<x>
+  x requires Read<x>
+}
+
+interface Queue2<x> {
+  inherits Write<x>
+  inherits Read<x>
+  x requires Write2<x>
+  x requires Read<x>
+}
+
+concrete Value {
+  inherits Read<Value>
+  inherits Write2<Value>
+}
+
+concrete Value2 {}

@@ -1,0 +1,7 @@
+interface Read<|x> {}
+
+interface Write<x|> {}
+
+interface Function<x|y> {
+  inherits Read<x>
+}

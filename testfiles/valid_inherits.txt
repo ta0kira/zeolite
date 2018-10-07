@@ -1,0 +1,13 @@
+interface Read<|x> {}
+
+interface Write<x|> {}
+
+interface Function<x|y> {
+  inherits Write<x>
+  inherits Read<y>
+}
+
+interface Queue<x> {
+  inherits Write<x>
+  inherits Read<x>
+}

@@ -5,7 +5,8 @@ module Resolver (
   resolveTypeClassInstance,
   -- For testing...
   TypeClassName,
-  checkConversion
+  checkConversion,
+  checkAllFilters
 ) where
 
 import Control.Arrow (second)
@@ -239,7 +240,7 @@ updateTypeClassGraph g us = updated where
        else Left ["Type '" ++ show t ++ "' not found"]
   resolveFilters t (f:fs) = do
     resolved <- resolveFilters t fs
-    filter <- getTypeClassInstance g Set.empty (upfType f)
+    filter <- uncheckedGetTypeClassInstance g Set.empty (upfType f)
     checkParam (tcpnFromUPF f) (snd filter)
     filterType <- getFilterType (fst filter)
     updateSingleParam (tcpnFromUPF f) filterType resolved
@@ -279,7 +280,7 @@ updateTypeClassGraph g us = updated where
   getInherits g2 [] = return []
   getInherits g2 (i:is) = do
     rest <- getInherits g2 is
-    inherit <- getTypeClassInstance g2 Set.empty i
+    inherit <- uncheckedGetTypeClassInstance g2 Set.empty i
     return (fst inherit:rest)
   -- The fully-updated graph.
   updated = do
@@ -329,6 +330,33 @@ validateParamVariance g = checkVariances (Map.toList $ tcgInherits g) where
                   show v1 ++ " in '" ++ show t ++ "' -> '" ++ show i ++ "'"]
   mapParams = map (\p -> (tcpName p,tcpVariance p))
 
+checkAllFilters :: TypeClassGraph -> String ->
+                   Map.Map TypeClassParamName (Set.Set TypeFilter) ->
+                   [(TypeClassParamName, (Set.Set TypeFilter))] -> Either [String] ()
+checkAllFilters g _ m [] = Right ()
+checkAllFilters g e m ((p,f1):ps) = checked where
+  checked = do
+    f0 <- return $ p `Map.lookup` m
+    if (isJust f0)
+      then (return ())
+      else Left ["Param '" ++ show p ++ "' does not exist"]
+    findCompatFilter g (Set.toList $ fromJust f0) $ Set.toList f1
+  findCompatFilter _ _ [] = return ()
+  findCompatFilter g rs (a:as) = checked where
+    checked = do
+      if (check a)
+        then (return ())
+        else Left ["Param '" ++ show p ++
+                   "' does not support required filter " ++ show a ++ e]
+      findCompatFilter g rs as
+    check a = foldr (||) False $ do
+      r <- rs
+      -- NOTE: Filter conversion is always covariant.
+      allowed <- return $ guessInstanceConversions g Covariant
+                          (TypeClassArgType $ tfType r)
+                          (TypeClassArgType $ tfType a)
+      return $ isRight allowed
+
 -- TODO: Get rid of this duplication with validateParamVariance.
 validateParamFilters :: TypeClassGraph -> Either [String] ()
 validateParamFilters g = checkFilters (Map.toList $ tcgInherits g) where
@@ -345,32 +373,9 @@ validateParamFilters g = checkFilters (Map.toList $ tcgInherits g) where
     required <- return $ Map.fromList $ mapParams params
     -- Params as used in inheritance.
     freeParams <- return $ mapParams $ tciFreeParams $ tcatInstance i
-    checkAllFilters (t,tciClassName $ tcatInstance i) required freeParams
+    message <- return $ " in '" ++ show t ++ "' -> '" ++ show (tcatInstance i) ++ "'"
+    checkAllFilters g message required freeParams
     checkFilter t is
-  checkAllFilters _ m [] = Right ()
-  checkAllFilters (t,i) m ((p,f1):ps) = checked where
-    checked = do
-      f0 <- return $ p `Map.lookup` m
-      if (isJust f0)
-        then (return ())
-        else Left ["Param '" ++ show p ++ "' does not exist"]
-      findCompatFilter g (Set.toList $ fromJust f0) $ Set.toList f1
-    findCompatFilter _ _ [] = return ()
-    findCompatFilter g rs (a:as) = checked where
-      checked = do
-        if (check a)
-          then (return ())
-          else Left ["Param '" ++ show p ++ "' does not support required filter " ++
-                    show a ++ " in '" ++ show t ++ "' -> '" ++
-                    show i ++ "'"]
-        findCompatFilter g rs as
-      check a = foldr (||) False $ do
-        r <- rs
-        -- NOTE: Filter conversion is always covariant.
-        allowed <- return $ guessInstanceConversions g Covariant
-                            (TypeClassArgType $ tfType r)
-                            (TypeClassArgType $ tfType a)
-        return $ isRight allowed
   mapParams = map (\p -> (tcpName p,tcpFilters p))
 
 flattenTypeClassParams :: [TypeClassParam] -> [TypeClassParam]
@@ -409,8 +414,11 @@ renameFilters n fs = Set.fromList $ map renameFilter $ Set.toList fs where
       tcapParam = renameParam p
     }
 
-getTypeClassInstance :: TypeClassGraph -> Set.Set TypeFilter -> UnresolvedType -> Either [String] (TypeClassArg, [TypeClassParam])
-getTypeClassInstance g fs a@(UnresolvedTypeArg _) = (Right resolved) where
+uncheckedGetTypeClassInstance = tryTypeClassInstance False
+getTypeClassInstance          = tryTypeClassInstance True
+
+tryTypeClassInstance :: Bool -> TypeClassGraph -> Set.Set TypeFilter -> UnresolvedType -> Either [String] (TypeClassArg, [TypeClassParam])
+tryTypeClassInstance c g fs a@(UnresolvedTypeArg _) = (Right resolved) where
   resolved = (arg, [param])
   param = TypeClassParam {
       tcpName = tcpnFromUTA a,
@@ -421,7 +429,7 @@ getTypeClassInstance g fs a@(UnresolvedTypeArg _) = (Right resolved) where
   arg = TypeClassArgParam {
       tcapParam = param
     }
-getTypeClassInstance g fs u = result where
+tryTypeClassInstance c g fs u = result where
   name = utTypeClass u
   properName = tcnFromUT u
   updateVariance v p = TypeClassParam {
@@ -434,7 +442,7 @@ getTypeClassInstance g fs u = result where
   collectTypeClassArgs []     (_:_)  = Left ["Too many args for type '" ++ name ++ "'"]
   collectTypeClassArgs (p:ps) (u:us) = do
     (args, params) <- collectTypeClassArgs ps us
-    (arg, newParams) <- getTypeClassInstance g (tcpFilters p) u
+    (arg, newParams) <- tryTypeClassInstance c g (tcpFilters p) u
     updatedParams <- return $ map (updateVariance $ tcpVariance p) newParams
     return (arg:args, updatedParams ++ params)
   result = do
@@ -443,16 +451,37 @@ getTypeClassInstance g fs u = result where
       then (Right ())
       else (Left ["Type class '" ++ name ++ "' not found"])
     (args, params) <- collectTypeClassArgs (fromJust typeParams) (utParamArgs u)
-    -- TODO: Check that resolved can match all of the filters! (Or, just make
-    -- that a second step after resolving the types.)
-    resolved <- return $ TypeClassArgType {
-        tcatInstance = TypeClassInstance {
-          tciFreeParams = flattenTypeClassParams params,
-          tciClassName = properName,
-          tciArgs = args
-        }
+    resolved <- return $ TypeClassInstance {
+        tciFreeParams = flattenTypeClassParams params,
+        tciClassName = properName,
+        tciArgs = args
       }
-    return (resolved, params)
+    if (c)
+       then (checkInstanceFilters g resolved)
+       else (return ())
+    return (TypeClassArgType resolved, params)
+
+checkInstanceFilters :: TypeClassGraph -> TypeClassInstance -> Either [String] ()
+checkInstanceFilters g (TypeClassInstance ps t as) = checked where
+  allParams = tcgParams g
+  checked = do
+    params <- return $ t `Map.lookup` allParams
+    if (isJust params)
+       then (return ())
+       else Left ["Type '" ++ show t ++ "' does not exist"]
+    -- Assumes that counts were previously matched.
+    pairs <- return $ zip (fromJust params) as
+    check pairs
+  check [] = return ()
+  check ((p,a):ps) = do
+    checkFilters (tcpName p) (map (TypeClassArgType . tfType) $ Set.toList $ tcpFilters p) a
+    check ps
+  checkFilters _ [] _ = return ()
+  checkFilters n (f:fs) a = do
+    subbed <- uncheckedSubTypeClassArgs (Map.fromList [(n,a)]) f
+    -- Yes, a is on the left and the right, just like the filter.
+    guessInstanceConversions g Covariant a subbed
+    checkFilters n fs a
 
 -- TODO: Check filters somewhere in here.
 uncheckedSubTypeClassArgs :: Map.Map TypeClassParamName TypeClassArg -> TypeClassArg -> Either [String] TypeClassArg
@@ -469,7 +498,7 @@ uncheckedSubTypeClassArgs ps = update (Map.toList ps) where
     return $ TypeClassArgType $ TypeClassInstance {
         -- TODO: Also need to update free params based recursion. (Specifically,
         -- accounting for free params in ps, and also variance updates, like is
-        -- done in getTypeClassInstance.)
+        -- done in uncheckedGetTypeClassInstance.)
         tciFreeParams = (tciFreeParams t) `pruneParams` (Map.fromList ps),
         tciClassName = tciClassName t,
         tciArgs = newArgs
@@ -517,6 +546,8 @@ flattenPath g (TypeClassArgType x)   (y:ys) = flattened where
     flattenPath g subbed ys
 
 guessInstanceConversions :: TypeClassGraph -> Variance -> TypeClassArg -> TypeClassArg -> Either [String] [TypeClassArg]
+guessInstanceConversions g Contravariant t1 t2 =
+  guessInstanceConversions g Covariant t2 t1
 guessInstanceConversions _ _ (TypeClassArgType _) (TypeClassArgParam _) =
   Left ["Cannot convert param to instance"]
 guessInstanceConversions _ _ (TypeClassArgParam _) (TypeClassArgType _) =
@@ -532,7 +563,7 @@ guessInstanceConversions g v t1@(TypeClassArgType x) t2@(TypeClassArgType y) = c
     paths <- return $ getTypeClassPaths allInherits v (tciClassName x) (tciClassName y)
     remaining <- checkPaths $ map (checkConversion . flattenPath g t1) paths
     if (null remaining)
-       then Left ["No conversions found"]
+       then Left ["No conversions found from '" ++ show t1 ++ "' to '" ++ show t2 ++ "'"]
        else (return remaining)
   checkConversion t = do
     ok <- t
@@ -570,13 +601,5 @@ resolveTypeClassInstance :: TypeClassGraph -> UnresolvedType -> Either [String] 
 resolveTypeClassInstance g = getTypeClassInstance g Set.empty
 
 -- TODO: This is temporary.
-checkConversion :: Monad m => m (Either [String] TypeClassGraph) ->
-                              m (Either [String] (TypeClassArg,a)) ->
-                              m (Either [String] (TypeClassArg,a)) ->
-                              m (Either [String] [TypeClassArg])
-checkConversion = liftM3 check where
-  check gg xx yy = do
-    g <- gg
-    (x,_) <- xx
-    (y,_) <- yy
-    guessInstanceConversions g Covariant x y
+checkConversion :: TypeClassGraph -> (TypeClassArg, [TypeClassParam]) -> (TypeClassArg, [TypeClassParam]) -> Either [String] ()
+checkConversion g x y = guessInstanceConversions g Covariant (fst x) (fst y) >> return ()
