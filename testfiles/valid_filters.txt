@@ -6,6 +6,7 @@ interface Write<y|> {
   y requires Write<y>
 }
 
+// Extending inheritance a bit.
 interface Write2<k|> {
   inherits Write<k>
   k requires Write<k>
@@ -21,9 +22,11 @@ interface Queue<z> {
 interface Queue2<q> {
   inherits Write<q>
   inherits Read<q>
+  // Meets Write<q> requirement, but not directly.
   q requires Write2<q>
   q requires Read<q>
 }
+
 
 concrete Value {
   inherits Read<Value>
@@ -32,14 +35,18 @@ concrete Value {
 
 concrete Value2 {}
 
+
+// Just a context for parsing instances.
 concrete Test<x> {
   x requires Write<x>
   x requires Read<x>
 }
 
+// Just a context for parsing instances.
 concrete Test2<x> {
   x requires Write2<x>
   x requires Read<x>
 }
 
+// Just a context for parsing instances.
 concrete Test3<x> {}

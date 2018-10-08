@@ -9,5 +9,6 @@ interface Write<x|> {
 interface Queue<x> {
   inherits Write<x>
   inherits Read<x>
+  // Missing Write<x>.
   x requires Read<x>
 }

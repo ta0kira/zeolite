@@ -14,5 +14,7 @@ interface Write2<x|> {
 interface Queue<x> {
   inherits Write<x>
   inherits Read<x>
+  // Requires Write2<x>, not Write<x>.
+  x requires Write<x>
   x requires Read<x>
 }

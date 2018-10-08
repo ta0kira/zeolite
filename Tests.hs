@@ -27,6 +27,8 @@ testCases = [
     ("testfiles/simple.txt", expectParsed False "Write<a,b,c>"),
     ("testfiles/simple.txt", expectParsed False "Something<a,b>"),
     -- Instantiation with Filters.
+    ("testfiles/valid_filters.txt", expectParsed True  "Value"),
+    ("testfiles/valid_filters.txt", expectParsed True  "Value2"),
     ("testfiles/valid_filters.txt", expectParsed True  "Read<Value>"),
     ("testfiles/valid_filters.txt", expectParsed True  "Queue<Value>"),
     ("testfiles/valid_filters.txt", expectParsed False "Read<Value2>"),
@@ -34,9 +36,10 @@ testCases = [
     ("testfiles/valid_filters.txt", expectParsed False "Read<x>"),
     ("testfiles/valid_filters.txt", expectParsed False "Queue<x>"),
     ("testfiles/valid_filters.txt", expectParsedInContext True  "Test"  "Read<x>"),
+    ("testfiles/valid_filters.txt", expectParsedInContext True  "Test2" "Queue<x>"),
+    ("testfiles/valid_filters.txt", expectParsedInContext True  "Test2" "Queue2<x>"),
     ("testfiles/valid_filters.txt", expectParsedInContext False "Test"  "Queue2<x>"),
     ("testfiles/valid_filters.txt", expectParsedInContext False "Test3" "Queue<x>"),
-    ("testfiles/valid_filters.txt", expectParsedInContext True  "Test2" "Queue<x>"),
     -- Simple Conversion.
     ("testfiles/valid_inherits.txt",
      expectConverted True  "Queue<x>" "Queue<x>"),
