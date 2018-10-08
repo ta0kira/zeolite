@@ -425,10 +425,20 @@ tryTypeClassInstance :: Bool -> TypeClassGraph ->
                         Set.Set TypeFilter ->
                         UnresolvedType ->
                         Either [String] (TypeClassArg, [TypeClassParam])
-tryTypeClassInstance _ _ pm fs a@(UnresolvedTypeArg _) = (Right resolved) where
-  resolved = (arg, [param])
+tryTypeClassInstance c g pm fs a@(UnresolvedTypeArg _) = resolved where
+  resolved = do
+    if (c)
+      then checkInstanceConversion g (TypeClassArgParam external) (TypeClassArgParam param) >> return ()
+      else (return ())
+    return (arg, [param])
+  -- TODO: Make it a failure for this to be not found?
   extras = Map.findWithDefault Set.empty (tcpnFromUTA a) pm
   newFilters = renameFilters (tcpnFromUTA a) fs
+  external = TypeClassParam {
+      tcpName = tcpnFromUTA a,
+      tcpVariance = IgnoreVariance,
+      tcpFilters = extras
+    }
   param = TypeClassParam {
       tcpName = tcpnFromUTA a,
       -- This variance is in the context of this particular TypeClassArg.
@@ -475,14 +485,15 @@ checkTypeFilters :: TypeClassGraph -> [TypeClassParam] -> [TypeClassArg] -> Eith
 checkTypeFilters g ps as = check (zip ps as) where
   check [] = return ()
   check ((p,a):ps) = do
-    checkFilters (tcpName p) (map (TypeClassArgType . tfType) $ Set.toList $ tcpFilters p) a
+    checkFilters (tcpName p,a) (map (TypeClassArgType . tfType) $ Set.toList $ tcpFilters p) a
     check ps
-  checkFilters _ [] _ = return ()
-  checkFilters n (f:fs) a = do
-    subbed <- uncheckedSubTypeClassArgs (Map.fromList [(n,a)]) f
-    -- Yes, a is on the left and the right, just like the filter.
+  checkFilters s [] _ = return ()
+  checkFilters s (f:fs) a = do
+    -- Sub a into the filter, since we're also subbing on the left side. For
+    -- example, with x = N<y> the check x -> T<x> becomes N<y> -> T<N<y>>.
+    (subbed,_) <- uncheckedSubTypeClassArgs (Map.fromList [s]) f
     guessInstanceConversions g Covariant a subbed
-    checkFilters n fs a
+    checkFilters s fs a
 
 checkInstanceFilters :: TypeClassGraph -> TypeClassInstance -> Either [String] ()
 checkInstanceFilters g (TypeClassInstance _ t as) = checked where
@@ -490,34 +501,35 @@ checkInstanceFilters g (TypeClassInstance _ t as) = checked where
   checked = do
     params <- return $ t `Map.lookup` allParams
     if (isJust params)
-       then (return ())
+       then checkTypeFilters g (fromJust params) as
        else Left ["Type '" ++ show t ++ "' does not exist"]
-    checkTypeFilters g (fromJust params) as
 
--- TODO: Check filters somewhere in here.
-uncheckedSubTypeClassArgs :: Map.Map TypeClassParamName TypeClassArg -> TypeClassArg -> Either [String] TypeClassArg
+-- TODO: Check filters somewhere in here?
+uncheckedSubTypeClassArgs :: Map.Map TypeClassParamName TypeClassArg -> TypeClassArg -> Either [String] (TypeClassArg, [TypeClassParam])
 uncheckedSubTypeClassArgs ps = update (Map.toList ps) where
-  update [] t = return t
-  -- TODO: Also need to update free params based on a.
+  update [] t = return (t,getFreeParams t)
   update ((p,a):ps) t@(TypeClassArgParam pt) = do
     if (tcpName pt) == p
-       then return a
+       then return (a,getFreeParams a)
        else update ps t
   update ps (TypeClassArgType t) = do
     prunedArgs <- return $ Map.fromList $ ps `pruneArgs` (tciFreeParams t)
-    newArgs <- foldr (subAll prunedArgs) (Right []) (tciArgs t)
-    return $ TypeClassArgType $ TypeClassInstance {
-        -- TODO: Also need to update free params based recursion. (Specifically,
-        -- accounting for free params in ps, and also variance updates, like is
-        -- done in tryTypeClassInstance.)
-        tciFreeParams = (tciFreeParams t) `pruneParams` (Map.fromList ps),
+    (newArgs,newFree) <- foldr (subAll prunedArgs) (Right ([],[])) (tciArgs t)
+    updatedParams <- return $ (tciFreeParams t) `pruneParams` (Map.fromList ps)
+    -- Append newFree after pruning in case an update added back the same param.
+    newParams <- return $ flattenTypeClassParams $ updatedParams ++ newFree
+    updated <- return $ TypeClassArgType $ TypeClassInstance {
+        tciFreeParams = newParams,
         tciClassName = tciClassName t,
         tciArgs = newArgs
       }
+    return (updated,getFreeParams updated)
+  getFreeParams (TypeClassArgParam p) = [p]
+  getFreeParams (TypeClassArgType t)  = tciFreeParams t
   subAll ps t ts = do
-    previous <- ts
-    new <- uncheckedSubTypeClassArgs ps t
-    return (new:previous)
+    (prevNew,prevFree) <- ts
+    (new,freeParams) <- uncheckedSubTypeClassArgs ps t
+    return (new:prevNew,freeParams ++ prevFree)
   -- Remove provided args from free params.
   pruneParams os ps = do
     o <- os
@@ -553,7 +565,7 @@ flattenPath g (TypeClassArgType x)   (y:ys) = flattened where
        then (Right ())
        else Left ["Type class '" ++ show (tciClassName x) ++ "' not found"]
     args <- return $ Map.fromList $ zip (map tcpName $ fromJust params) (tciArgs x)
-    subbed <- uncheckedSubTypeClassArgs args y
+    (subbed,_) <- uncheckedSubTypeClassArgs args y
     flattenPath g subbed ys
 
 guessInstanceConversions :: TypeClassGraph -> Variance -> TypeClassArg -> TypeClassArg -> Either [String] [TypeClassArg]
@@ -596,33 +608,51 @@ checkInstanceConversion g t1 t2@(TypeClassArgParam p2) = checked where
   fullCheck (f:fs) = do
     checkInstanceConversion g t1 (TypeClassArgType $ tfType f)
     fullCheck fs
-checkInstanceConversion g (TypeClassArgParam p) t@(TypeClassArgType _) = check (Set.toList $ tcpFilters p) where
-  check [] = Left ["No filter guarantees conversion"]
+checkInstanceConversion g t1@(TypeClassArgParam p) t2@(TypeClassArgType y) = checked where
+  checked = check (Set.toList $ tcpFilters p)
+  check [] = Left ["No filter guarantees conversion: " ++ show (Set.toList $ tcpFilters p) ++ " vs " ++ show t2]
   check (f:fs) = do
-    checked <- return $ guessInstanceConversions g Covariant (TypeClassArgType $ tfType f) t
+    -- Leave the filter untouched for the first attempt.
+    -- TODO: Doing an arg sub shouldn't break things; it shouldn't be necessary
+    -- to do this check first. It only seems to be required when the arg is a
+    -- param in the context of a type class.
+    checked <- return $ guessInstanceConversions g Covariant (TypeClassArgType $ tfType f) t2
     if (isRight checked)
-       then return t
-       else check fs
+      then return t2
+      else do
+        -- Insert the full param into its own filters in case multiple filters
+        -- are needed at once inside of any one of the required filters.
+        (updated,_) <- uncheckedSubTypeClassArgs (Map.fromList [(tcpName p,t1)]) (TypeClassArgType $ tfType f)
+        checked2 <- return $ guessInstanceConversions g Covariant updated t2
+        if (isRight checked2)
+          then return t2
+          else check fs
 checkInstanceConversion g (TypeClassArgType x) t@(TypeClassArgType y)
+  | x == y = return t
   | tciClassName x /= tciClassName y =
     Left ["Typeclass mismatch: '" ++ show (tciClassName x) ++ "' != '" ++ show (tciClassName y) ++ "'"]
-  | otherwise = checked typeClass where
-    typeClass = (tciClassName x) `Map.lookup` (tcgParams g)
+  | length (tciArgs x) /= length (tciArgs y) =
+    Left ["Arg count: '" ++ show (tciArgs x) ++ "' vs '" ++ show (tciArgs y) ++ "'"]
+  | otherwise = checked params where
+    params = (tciClassName x) `Map.lookup` (tcgParams g)
     checked Nothing   = Left ["Type class '" ++ show (tciClassName x) ++ "' not found"]
-    checked (Just ps) = checkAll (zip3 (map tcpVariance ps) (tciArgs x) (tciArgs y))
+    checked (Just ps) = do
+      checkAll (zip3 (map tcpVariance ps) (tciArgs x) (tciArgs y))
     checkAll [] = return t
     checkAll ((v,x,y):ys) = do
-      convs <- guessInstanceConversions g v x y
-      if (null convs)
-         then Left ["Conversion failed"]
-         else (Right ())
+      guessInstanceConversions g v x y
       checkAll ys
 
 -- TODO: This is temporary.
--- TODO: Update this to allow tests to pass in filters taken from the context,
--- to simulate a param being defined by an enclosing type class.
-resolveTypeClassInstance :: TypeClassGraph -> UnresolvedType -> Either [String] (TypeClassArg, [TypeClassParam])
-resolveTypeClassInstance g = tryTypeClassInstance True g Map.empty Set.empty
+resolveTypeClassInstance :: TypeClassGraph -> Maybe String -> UnresolvedType -> Either [String] (TypeClassArg, [TypeClassParam])
+resolveTypeClassInstance g Nothing  u = tryTypeClassInstance True g Map.empty Set.empty u
+resolveTypeClassInstance g (Just t) u = do
+  params <- return $ (TypeClassName t) `Map.lookup` (tcgParams g)
+  if (isJust params)
+     then (return ())
+     else Left ["Unknown type class '" ++ t ++ "'"]
+  mapped <- return $ Map.fromList $ map (\p -> (tcpName p,tcpFilters p)) (fromJust params)
+  tryTypeClassInstance True g mapped Set.empty u
 
 -- TODO: This is temporary.
 checkConversion :: TypeClassGraph -> (TypeClassArg, [TypeClassParam]) -> (TypeClassArg, [TypeClassParam]) -> Either [String] ()

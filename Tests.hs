@@ -33,6 +33,10 @@ testCases = [
     ("testfiles/valid_filters.txt", expectParsed False "Queue<Value2>"),
     ("testfiles/valid_filters.txt", expectParsed False "Read<x>"),
     ("testfiles/valid_filters.txt", expectParsed False "Queue<x>"),
+    ("testfiles/valid_filters.txt", expectParsedInContext True  "Test"  "Read<x>"),
+    ("testfiles/valid_filters.txt", expectParsedInContext False "Test"  "Queue2<x>"),
+    ("testfiles/valid_filters.txt", expectParsedInContext False "Test3" "Queue<x>"),
+    ("testfiles/valid_filters.txt", expectParsedInContext True  "Test2" "Queue<x>"),
     -- Simple Conversion.
     ("testfiles/valid_inherits.txt",
      expectConverted True  "Queue<x>" "Queue<x>"),
@@ -93,28 +97,41 @@ expectLoaded b f (Left e) =
      then Left $ "Unexpected load failure in " ++ f ++ ": " ++ show e
      else (return ())
 
-tryParse x = resolved where
+tryParse c x = resolved where
   parsed = readP_to_S (unresolvedParser :: ReadP UnresolvedType) x
-  resolved = flip (>>=) $ \g -> onlyComplete parsed (resolveTypeClassInstance g)
+  resolved = flip (>>=) $ \g -> onlyComplete parsed (resolveTypeClassInstance g c)
 
-expectParsed b x f g = check (tryParse x g) where
+tryParseNoContext = tryParse Nothing
+tryParseWithContext s = tryParse (Just s)
+
+expectParsed b x f g = check (tryParseNoContext x g) where
   check (Right _) =
     if b
       then (return ())
-      else Left $ "Expected parse failure in " ++ f ++ " [\"" ++ x ++ "\"]"
+      else Left $ "Expected parse failure for \"" ++ x ++ "\""
   check (Left e) =
     if b
-      then Left $ "Unexpected parse failure in " ++ f ++ ": " ++ show e
+      then Left $ "Unexpected parse failure for \"" ++ x ++ "\": " ++ show e
       else (return ())
 
-expectConverted b x y f g = check (tryParse x g) (tryParse y g) where
+expectParsedInContext b s x f g = check (tryParseWithContext s x g) where
+  check (Right _) =
+    if b
+      then (return ())
+      else Left $ "Expected parse failure for \"" ++ x ++ "\""
+  check (Left e) =
+    if b
+      then Left $ "Unexpected parse failure for \"" ++ x ++ "\": " ++ show e
+      else (return ())
+
+expectConverted b x y f g = check (tryParseNoContext x g) (tryParseNoContext y g) where
   check (Left e) _ =
     if b
-      then Left $ "Unexpected parse failure in " ++ f ++ ": " ++ show e
+      then Left $ "Unexpected parse failure for \"" ++ x ++ "\": " ++ show e
       else (return ())
   check _ (Left e) =
     if b
-      then Left $ "Unexpected parse failure in " ++ f ++ ": " ++ show e
+      then Left $ "Unexpected parse failure for \"" ++ y ++ "\": " ++ show e
       else (return ())
   check (Right x) (Right y) = do
     expectLoaded True f g
@@ -124,9 +141,10 @@ expectConverted b x y f g = check (tryParse x g) (tryParse y g) where
   recheck (Right _) =
     if b
       then (return ())
-      else Left $ "Expected conversion failure in " ++ f ++
-                  " [\"" ++ x ++ "\" -> \"" ++ y ++ "\"]"
+      else Left $ "Expected conversion failure for \"" ++ x ++ "\" -> \"" ++
+                  y ++ "\": [\"" ++ x ++ "\" -> \"" ++ y ++ "\"]"
   recheck (Left e) =
     if b
-      then Left $ "Unexpected conversion failure in " ++ f ++ ": " ++ show e
+      then Left $ "Unexpected conversion failure for \"" ++ x ++ "\" -> \"" ++
+                  y ++ "\": " ++ show e
       else (return ())

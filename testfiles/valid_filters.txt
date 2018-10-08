@@ -31,3 +31,15 @@ concrete Value {
 }
 
 concrete Value2 {}
+
+concrete Test<x> {
+  x requires Write<x>
+  x requires Read<x>
+}
+
+concrete Test2<x> {
+  x requires Write2<x>
+  x requires Read<x>
+}
+
+concrete Test3<x> {}
