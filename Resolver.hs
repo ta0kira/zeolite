@@ -126,7 +126,6 @@ data TypeClassGraph =
   }
   deriving (Eq)
 
--- TODO: Show tcgInherits.
 instance Show TypeClassGraph where
   show (TypeClassGraph ps gs is) = showParams ++ "\n" ++
                                    showGraph ++ "\n" ++
@@ -151,11 +150,6 @@ type TypeClassParamMap = Map.Map TypeClassName [TypeClassParam]
 type TypeClassMap = Map.Map TypeClassName (Set.Set TypeClassName)
 
 type TypeClassInheritsMap = Map.Map TypeClassName (Set.Set TypeClassArg)
-
-
--- TODO: Cool, but probably not needed.
-composeGraph :: Ord a => [Map.Map a b -> (a, b)] -> Map.Map a b
-composeGraph xs = fix (\m -> Map.fromList $ map ($m) xs)
 
 
 checkTypeClassCycles :: Map.Map String [String] -> (String, [String]) -> [String]
@@ -296,7 +290,6 @@ updateTypeClassGraph g us = updated where
         tcgGraph = tcgGraph g,
         tcgInherits = Map.empty
       }
-    -- TODO: Check variance and filters for inheritance.
     newInherits <- updateInherits partial us
     full <- return $ TypeClassGraph {
         tcgParams = newParams,
@@ -475,7 +468,6 @@ tryTypeClassInstance c g pm fs u = result where
         tciClassName = properName,
         tciArgs = args
       }
-    -- TODO: Maybe just make this a callback.
     if (c)
        then (checkInstanceFilters g resolved)
        else (return ())
@@ -504,7 +496,6 @@ checkInstanceFilters g (TypeClassInstance _ t as) = checked where
        then checkTypeFilters g (fromJust params) as
        else Left ["Type '" ++ show t ++ "' does not exist"]
 
--- TODO: Check filters somewhere in here?
 uncheckedSubTypeClassArgs :: Map.Map TypeClassParamName TypeClassArg -> TypeClassArg -> Either [String] (TypeClassArg, [TypeClassParam])
 uncheckedSubTypeClassArgs ps = update (Map.toList ps) where
   update [] t = return (t,getFreeParams t)
@@ -600,7 +591,6 @@ guessInstanceConversions g v t1@(TypeClassArgType x) t2@(TypeClassArgType y) = c
       return (ok:rest)
 
 -- TODO: Should the returned value have the stricter of the two filter sets?
--- TODO: This needs very specific test cases.
 checkInstanceConversion :: TypeClassGraph -> TypeClassArg -> TypeClassArg -> Either [String] TypeClassArg
 checkInstanceConversion g t1 t2@(TypeClassArgParam p2) = checked where
   checked = fullCheck $ Set.toList $ tcpFilters p2
@@ -612,10 +602,10 @@ checkInstanceConversion g t1@(TypeClassArgParam p) t2@(TypeClassArgType y) = che
   checked = check (Set.toList $ tcpFilters p)
   check [] = Left ["No filter guarantees conversion: " ++ show (Set.toList $ tcpFilters p) ++ " vs " ++ show t2]
   check (f:fs) = do
-    -- Leave the filter untouched for the first attempt.
-    -- TODO: Doing an arg sub shouldn't break things; it shouldn't be necessary
-    -- to do this check first. It only seems to be required when the arg is a
-    -- param in the context of a type class.
+    -- Leave the filter untouched for the first attempt. This is required
+    -- because inserting the param into its own filters in some cases actually
+    -- *removes* nested filter information. (For example, if the param is
+    -- inherited from a type class.)
     checked <- return $ guessInstanceConversions g Covariant (TypeClassArgType $ tfType f) t2
     if (isRight checked)
       then return t2

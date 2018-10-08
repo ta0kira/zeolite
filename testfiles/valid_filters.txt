@@ -2,27 +2,27 @@ interface Read<|x> {
   x requires Read<x>
 }
 
-interface Write<x|> {
-  x requires Write<x>
+interface Write<y|> {
+  y requires Write<y>
 }
 
-interface Write2<x|> {
-  inherits Write<x>
-  x requires Write<x>
+interface Write2<k|> {
+  inherits Write<k>
+  k requires Write<k>
 }
 
-interface Queue<x> {
-  inherits Write<x>
-  inherits Read<x>
-  x requires Write<x>
-  x requires Read<x>
+interface Queue<z> {
+  inherits Write<z>
+  inherits Read<z>
+  z requires Write<z>
+  z requires Read<z>
 }
 
-interface Queue2<x> {
-  inherits Write<x>
-  inherits Read<x>
-  x requires Write2<x>
-  x requires Read<x>
+interface Queue2<q> {
+  inherits Write<q>
+  inherits Read<q>
+  q requires Write2<q>
+  q requires Read<q>
 }
 
 concrete Value {
