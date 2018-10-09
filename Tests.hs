@@ -10,7 +10,9 @@ import Variance
 
 testCases = [
     -- Basics.
-    ("testfiles/simple.txt", expectLoaded True),
+    ("testfiles/simple.txt",              expectLoaded True),
+    ("testfiles/duplicate_typeclass.txt", expectLoaded False),
+    ("testfiles/duplicate_param.txt",     expectLoaded False),
     -- Inheritance.
     ("testfiles/valid_inherits.txt",       expectLoaded True),
     ("testfiles/covariance_error.txt",     expectLoaded False),
