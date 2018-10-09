@@ -11,6 +11,7 @@ import Variance
 testCases = [
     -- Basics.
     ("testfiles/simple.txt",              expectLoaded True),
+    ("testfiles/crazy_formatting.txt",    expectLoaded True),
     ("testfiles/duplicate_typeclass.txt", expectLoaded False),
     ("testfiles/duplicate_param.txt",     expectLoaded False),
     -- Inheritance.
@@ -28,6 +29,9 @@ testCases = [
     ("testfiles/simple.txt", expectParsed False "Read<b>"),
     ("testfiles/simple.txt", expectParsed False "Write<a,b,c>"),
     ("testfiles/simple.txt", expectParsed False "Something<a,b>"),
+    ("testfiles/crazy_formatting.txt", expectParsed True  "Read<a,b>"),
+    ("testfiles/crazy_formatting.txt", expectParsed False "Read<b>"),
+    ("testfiles/crazy_formatting.txt", expectParsed False "Read<a,b,c>"),
     -- Instantiation with Filters.
     ("testfiles/valid_filters.txt", expectParsed True  "Value"),
     ("testfiles/valid_filters.txt", expectParsed True  "Value2"),

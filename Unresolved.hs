@@ -62,7 +62,7 @@ typeParamName = do
   rest <- many alphaNumChar
   checkReserved (c1:rest)
 
-listOf p = sepBy p (deadSpace >> string ",")
+listOf p = sepBy p (deadSpace >> string "," >> deadSpace)
 
 
 data TypeClassType = InterfaceTypeClass | ConcreteTypeClass deriving (Eq, Show)

@@ -1,0 +1,26 @@
+/**//**/
+
+interface/*
+
+
+*//*interface interface
+
+*/ Read //
+
+  < /*
+
+
+*/| /*
+
+interface
+concrete
+
+*/ //concrete
+  x   ,
+
+
+  /*fdgg dfgdf*/y> {/*concrete concrete interface*/
+
+
+
+  }
