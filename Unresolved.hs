@@ -4,6 +4,8 @@ module Unresolved (
   UnresolvedType(..),
   UnresolvedTypeClass(..),
   UnresolvedTypeParam(..),
+  -- For testing...
+  UnresolvedTypeClassFunction
 ) where
 
 import Control.Applicative ((<|>))
@@ -20,6 +22,8 @@ class UnresolvedParsable a where
 
 
 reservedWords = Set.fromList $ [
+    "maps",
+    "to",
     "inherits",
     "requires",
     "interface",
@@ -65,6 +69,11 @@ typeParamName = do
   rest <- many alphaNumChar
   checkReserved (c1:rest)
 
+functionName = do
+  c1 <- lowerChar
+  rest <- many alphaNumChar
+  checkReserved (c1:rest)
+
 listOf p = sepBy p (deadSpace >> string "," >> deadSpace)
 
 
@@ -78,7 +87,8 @@ data UnresolvedTypeClass =
     utcMissing :: Missingness,
     utcParams :: [UnresolvedTypeParam],
     utcInherits :: [UnresolvedType],
-    utcFilters :: [UnresolvedParamFilter]
+    utcFilters :: [UnresolvedParamFilter],
+    utcFunctions :: [UnresolvedTypeClassFunction]
   }
   deriving (Eq, Show)
 
@@ -90,8 +100,8 @@ instance UnresolvedParsable UnresolvedTypeClass where
     between deadSpace deadSpace (string "{")
     missing <- allowsMissing <|> return DisallowsMissing
     inherits <- sepBy singleInherit deadSpace
-    deadSpace
     filters <- sepBy (singleFilter <|> singleMissing) deadSpace
+    functions <- sepBy (unresolvedParser :: ReadP UnresolvedTypeClassFunction) deadSpace
     between deadSpace deadSpace (string "}")
     return $ UnresolvedTypeClass {
         utcName = name,
@@ -99,7 +109,8 @@ instance UnresolvedParsable UnresolvedTypeClass where
         utcMissing = missing,
         utcParams = params,
         utcInherits = inherits,
-        utcFilters = filters
+        utcFilters = filters,
+        utcFunctions = functions
       }
 
 interfaceType = do
@@ -223,3 +234,38 @@ typeParamList = types where
     fixed <- between deadSpace (deadSpace >> string "|") (listOf typeParamName)
     cov   <- between deadSpace nullParse                 (listOf typeParamName)
     return (con, fixed, cov)
+
+data UnresolvedTypeClassFunction =
+  UnresolvedTypeClassFunction {
+    utcfName :: String,
+    utcfParams :: [UnresolvedTypeParam],
+    utcfFilters :: [UnresolvedParamFilter],
+    utcfArgs :: [UnresolvedType],
+    utcfReturns :: [UnresolvedType]
+  }
+  deriving (Eq, Show)
+
+instance UnresolvedParsable UnresolvedTypeClassFunction where
+  unresolvedParser = function where
+    function = do
+      name <- between deadSpace nullParse functionName
+      params <- option [] functionParamList
+      args <- getArgs
+      returns <- getReturns
+      filters <- sepBy (singleFilter <|> singleMissing) deadSpace
+      return $ UnresolvedTypeClassFunction {
+          utcfName = name,
+          utcfParams = map (\n -> UnresolvedTypeParam n IgnoreVariance) params,
+          utcfFilters = filters,
+          utcfArgs = args,
+          utcfReturns= returns
+        }
+    functionParamList = between (deadSpace >> string "<")
+                                (deadSpace >> string ">")
+                                getParams
+    getParams = between deadSpace nullParse (listOf typeParamName)
+    getArgs = between deadSpace nullParse (string "maps" >> collectTypes)
+    getReturns = between deadSpace nullParse (string "to" >> collectTypes)
+    collectTypes = between (deadSpace >> string "(")
+                           (string ")")
+                           (listOf unresolvedParser :: ReadP [UnresolvedType])
