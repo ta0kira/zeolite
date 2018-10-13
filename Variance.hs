@@ -10,6 +10,7 @@ module Variance (
 data Missingness =
   AllowsMissing |
   DisallowsMissing |
+  RequiresMissing |
   UnspecifiedMissing
   deriving (Eq, Ord, Read, Show)
 
@@ -17,6 +18,8 @@ paramAllowsMissing :: Missingness -> Missingness -> Bool
 AllowsMissing      `paramAllowsMissing` _                = True
 DisallowsMissing   `paramAllowsMissing` DisallowsMissing = True
 UnspecifiedMissing `paramAllowsMissing` _                = True
+RequiresMissing    `paramAllowsMissing` RequiresMissing  = True
+RequiresMissing    `paramAllowsMissing` AllowsMissing    = True
 paramAllowsMissing _ _ = False
 
 

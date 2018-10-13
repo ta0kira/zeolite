@@ -2,11 +2,9 @@ module Resolver (
   TypeClassGraph,
   TypeClassArg,
   createTypeClassGraph,
-  resolveTypeClassInstance,
   -- For testing...
-  TypeClassName,
-  checkConversion,
-  checkAllFilters
+  resolveTypeClassInstance,
+  checkConversion
 ) where
 
 import Control.Applicative ((<|>))

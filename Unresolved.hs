@@ -23,7 +23,10 @@ reservedWords = Set.fromList $ [
     "inherits",
     "requires",
     "interface",
-    "concrete"
+    "concrete",
+    "allows",
+    "disallows",
+    "missing"
   ]
 
 checkReserved w =
@@ -112,6 +115,11 @@ allowsMissing = do
   between nullParse deadSpace (string "missing")
   return AllowsMissing
 
+requiresMissing = do
+  between deadSpace separator (string "allows")
+  between nullParse deadSpace (string "missing")
+  return RequiresMissing
+
 disallowsMissing = do
   between deadSpace separator (string "disallows")
   between nullParse deadSpace (string "missing")
@@ -149,7 +157,7 @@ singleMissing :: ReadP UnresolvedParamFilter
 singleMissing = do
   deadSpace
   name <- typeParamName
-  missing <- allowsMissing <|> disallowsMissing
+  missing <- requiresMissing <|> disallowsMissing
   return $ UnresolvedParamMissing {
       upmName = name,
       upmMissing = missing

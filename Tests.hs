@@ -18,6 +18,8 @@ testCases = [
     ("testfiles/missing_after_nonmissing.txt", expectNotLoaded),
     ("testfiles/requires_nonmissing.txt",      expectNotLoaded),
     ("testfiles/requires_nonmissing2.txt",     expectNotLoaded),
+    ("testfiles/requires_missing.txt",         expectNotLoaded),
+    ("testfiles/requires_missing2.txt",        expectNotLoaded),
     -- Inheritance.
     ("testfiles/valid_inherits.txt",       expectLoaded),
     ("testfiles/covariance_error.txt",     expectNotLoaded),
@@ -56,40 +58,52 @@ testCases = [
     -- Instantiation with Missingness.
     ("testfiles/valid_missing.txt", expectParsed    "Value2"),
     ("testfiles/valid_missing.txt", expectParsed    "Queue<Value>"),
-    ("testfiles/valid_missing.txt", expectParsed    "Read<Value>"),
+    ("testfiles/valid_missing.txt", expectParsed    "Write<Value>"),
     ("testfiles/valid_missing.txt", expectParsed    "Read<Value2>"),
-    ("testfiles/valid_missing.txt", expectParsed    "Read<Queue<Value>>"),
-    ("testfiles/valid_missing.txt", expectParsed    "Read<x>"),
     ("testfiles/valid_missing.txt", expectParsed    "Queue<Read<Value2>>"),
+    ("testfiles/valid_missing.txt", expectNotParsed "Read<x>"),
+    ("testfiles/valid_missing.txt", expectNotParsed "Read<Value>"),
+    ("testfiles/valid_missing.txt", expectNotParsed "Read<Queue<Value>>"),
     ("testfiles/valid_missing.txt", expectNotParsed "Queue<Value2>"),
     ("testfiles/valid_missing.txt", expectNotParsed "Read<Queue<Value2>>"),
     ("testfiles/valid_missing.txt", expectNotParsed "Queue<x>"),
     ("testfiles/valid_missing.txt", expectParsedInContext    "Queue" "Queue<y>"),
     ("testfiles/valid_missing.txt", expectParsedInContext    "Read"  "Read<x>"),
-    ("testfiles/valid_missing.txt", expectParsedInContext    "Queue" "Read<y>"),
+    ("testfiles/valid_missing.txt", expectNotParsedInContext "Queue" "Read<y>"),
     ("testfiles/valid_missing.txt", expectNotParsedInContext "Read"  "Queue<x>"),
     -- Simple Conversion.
-    ("testfiles/valid_inherits.txt",
-     expectConverted    "Queue<x>" "Queue<x>"),
-    ("testfiles/valid_inherits.txt",
-     expectConverted    "Queue<x>" "Read<x>"),
-    ("testfiles/valid_inherits.txt",
-     expectNotConverted "Read<x>"  "Queue<x>"),
+    ("testfiles/valid_inherits.txt", expectConverted    "Queue<x>" "Queue<x>"),
+    ("testfiles/valid_inherits.txt", expectConverted    "Queue<x>" "Read<x>"),
+    ("testfiles/valid_inherits.txt", expectNotConverted "Read<x>"  "Queue<x>"),
     -- Nested Conversion.
     ("testfiles/valid_inherits.txt",
-     expectConverted    "Function<Read<x>,y>"  "Function<Read<x>,y>"),
+     expectConverted
+       "Function<Read<x>,y>"
+       "Function<Read<x>,y>"),
     ("testfiles/valid_inherits.txt",
-     expectConverted    "Function<Read<x>,y>"  "Function<Queue<x>,y>"),
+     expectConverted
+       "Function<Read<x>,y>"
+       "Function<Queue<x>,y>"),
     ("testfiles/valid_inherits.txt",
-     expectNotConverted "Function<Queue<x>,y>" "Function<Read<x>,y>"),
+     expectNotConverted
+       "Function<Queue<x>,y>"
+       "Function<Read<x>,y>"),
     ("testfiles/valid_inherits.txt",
-     expectConverted    "Function<Write<Queue<x>>,y>" "Function<Queue<Write<x>>,y>"),
+     expectConverted
+       "Function<Write<Queue<x>>,y>"
+       "Function<Queue<Write<x>>,y>"),
     ("testfiles/valid_inherits.txt",
-     expectConverted    "Function<Read<Queue<x>>,y>"  "Function<Queue<Queue<x>>,y>"),
+     expectConverted
+       "Function<Read<Queue<x>>,y>"
+       "Function<Queue<Queue<x>>,y>"),
     ("testfiles/valid_inherits.txt",
-     expectNotConverted "Queue<Read<x>>"  "Queue<Queue<x>>"),
+     expectNotConverted
+       "Queue<Read<x>>"
+       "Queue<Queue<x>>"),
     ("testfiles/valid_inherits.txt",
-     expectNotConverted "Queue<Queue<x>>" "Queue<Read<x>>")
+     expectNotConverted
+       "Queue<Queue<x>>"
+       "Queue<Read<x>>")
     -- TODO: Test conversion with filters.
   ]
 

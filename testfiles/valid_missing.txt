@@ -12,8 +12,6 @@ interface Function<q|z> {
 }
 
 interface Queue<y> {
-  inherits Write<y>
-  inherits Read<y>
   y disallows missing
 }
 
