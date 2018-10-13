@@ -1,0 +1,9 @@
+interface Value<x> {
+  x disallows missing
+}
+
+interface Value2<x> {
+  inherits Value<x>
+  // Value does not allow x to be missing.
+  x allows missing
+}

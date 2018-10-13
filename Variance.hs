@@ -1,8 +1,24 @@
 module Variance (
+  Missingness(..),
+  paramAllowsMissing,
   Variance(..),
   composeVariance,
-  paramAllowsUsage,
+  paramAllowsVariance,
 ) where
+
+-- TODO: Move this.
+data Missingness =
+  AllowsMissing |
+  DisallowsMissing |
+  UnspecifiedMissing
+  deriving (Eq, Ord, Read, Show)
+
+paramAllowsMissing :: Missingness -> Missingness -> Bool
+AllowsMissing      `paramAllowsMissing` _                = True
+DisallowsMissing   `paramAllowsMissing` DisallowsMissing = True
+UnspecifiedMissing `paramAllowsMissing` _                = True
+paramAllowsMissing _ _ = False
+
 
 data Variance =
   Contravariant |
@@ -20,11 +36,11 @@ composeVariance Contravariant  Covariant      = Contravariant
 composeVariance Covariant      Contravariant  = Contravariant
 composeVariance _              _              = Invariant
 
-paramAllowsUsage :: Variance -> Variance -> Bool
-IgnoreVariance `paramAllowsUsage` _              = True
-Covariant      `paramAllowsUsage` Covariant      = True
-Contravariant  `paramAllowsUsage` Contravariant  = True
-Invariant      `paramAllowsUsage` Covariant      = True
-Invariant      `paramAllowsUsage` Invariant      = True
-Invariant      `paramAllowsUsage` Contravariant  = True
-paramAllowsUsage _ _ = False
+paramAllowsVariance :: Variance -> Variance -> Bool
+IgnoreVariance `paramAllowsVariance` _              = True
+Covariant      `paramAllowsVariance` Covariant      = True
+Contravariant  `paramAllowsVariance` Contravariant  = True
+Invariant      `paramAllowsVariance` Covariant      = True
+Invariant      `paramAllowsVariance` Invariant      = True
+Invariant      `paramAllowsVariance` Contravariant  = True
+paramAllowsVariance _ _ = False

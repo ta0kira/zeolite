@@ -1,0 +1,7 @@
+interface Value {}
+
+interface Value2 {
+  // Value implicitly does not allow missing.
+  allows missing
+  inherits Value
+}

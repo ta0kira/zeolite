@@ -72,6 +72,7 @@ data UnresolvedTypeClass =
     utcName :: String,
     -- TODO: Use this in type resolution.
     utcType :: TypeClassType,
+    utcMissing :: Missingness,
     utcParams :: [UnresolvedTypeParam],
     utcInherits :: [UnresolvedType],
     utcFilters :: [UnresolvedParamFilter]
@@ -84,13 +85,15 @@ instance UnresolvedParsable UnresolvedTypeClass where
     name <- between deadSpace nullParse typeClassName
     params <- option [] typeParamList
     between deadSpace deadSpace (string "{")
+    missing <- allowsMissing <|> return DisallowsMissing
     inherits <- sepBy singleInherit deadSpace
     deadSpace
-    filters <- sepBy singleFilter deadSpace
+    filters <- sepBy (singleFilter <|> singleMissing) deadSpace
     between deadSpace deadSpace (string "}")
     return $ UnresolvedTypeClass {
         utcName = name,
         utcType = classType,
+        utcMissing = missing,
         utcParams = params,
         utcInherits = inherits,
         utcFilters = filters
@@ -104,6 +107,16 @@ concreteType = do
   between deadSpace separator (string "concrete")
   return ConcreteTypeClass
 
+allowsMissing = do
+  between deadSpace separator (string "allows")
+  between nullParse deadSpace (string "missing")
+  return AllowsMissing
+
+disallowsMissing = do
+  between deadSpace separator (string "disallows")
+  between nullParse deadSpace (string "missing")
+  return DisallowsMissing
+
 singleInherit :: ReadP UnresolvedType
 singleInherit = do
   between deadSpace separator (string "inherits")
@@ -114,6 +127,10 @@ data UnresolvedParamFilter =
   UnresolvedParamFilter {
     upfName :: String,
     upfType :: UnresolvedType
+  } |
+  UnresolvedParamMissing {
+    upmName :: String,
+    upmMissing :: Missingness
   }
   deriving (Eq, Show)
 
@@ -126,6 +143,16 @@ singleFilter = do
   return $ UnresolvedParamFilter {
       upfName = name,
       upfType = requires
+    }
+
+singleMissing :: ReadP UnresolvedParamFilter
+singleMissing = do
+  deadSpace
+  name <- typeParamName
+  missing <- allowsMissing <|> disallowsMissing
+  return $ UnresolvedParamMissing {
+      upmName = name,
+      upmMissing = missing
     }
 
 
