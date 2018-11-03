@@ -53,11 +53,11 @@ blockComment = between (skipSpaces >> string "/*")
                        (string "*/" >> skipSpaces)
                        (many $ satisfy $ const True)
 
-comment = lineComment <|> blockComment
+comment = blockComment <|> lineComment
 
-separator = skipMany1 whitespace <|> skipMany1 comment
+separator = skipMany1 comment <++ skipMany1 whitespace
 
-deadSpace = skipSpaces <|> skipMany1 comment
+deadSpace = skipMany1 comment <++ skipSpaces
 
 typeClassName = do
   c1 <- upperChar

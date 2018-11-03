@@ -14,6 +14,7 @@ testCases = [
     ("testfiles/crazy_formatting.txt",         expectLoaded),
     ("testfiles/valid_missing.txt",            expectLoaded),
     ("testfiles/valid_functions.txt",          expectLoaded),
+    ("testfiles/type_to_instance.txt",         expectLoaded),
     ("testfiles/duplicate_typeclass.txt",      expectNotLoaded),
     ("testfiles/duplicate_param.txt",          expectNotLoaded),
     ("testfiles/missing_after_nonmissing.txt", expectNotLoaded),
