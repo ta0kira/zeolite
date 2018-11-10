@@ -104,6 +104,10 @@ data TypeResolver m p =
     trVariance :: TypeName -> m [Variance]
   }
 
+-- NOTE: This doesn't verify the filters required to create an instance of a
+-- type category. That should be done during instantiation of the instances and
+-- during validation of the category system. (This does verify filters imposed
+-- by individual free params, though.)
 checkGeneralMatch :: (Mergeable (m ()), Mergeable (m p), CompileErrorM m, Monad m) =>
   TypeResolver m p -> Variance ->
   GeneralInstance -> GeneralInstance -> m p

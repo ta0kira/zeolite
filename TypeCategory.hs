@@ -28,6 +28,12 @@ type CategoryMain = CategoryConnect (Set.Set TypeName)
 
 type Refinements = CategoryConnect CategoryRefine
 
+type CategoryMissing = CategoryConnect Missingness
+
+type CategoryVariance = CategoryConnect (ParamSet Variance)
+
+type CategoryParams = CategoryConnect (ParamSet TypeParam)
+
 categoryLookup :: (CompileErrorM m, Monad m) => TypeName -> CategoryConnect a -> m a
 categoryLookup n (CategoryConnect cs) = resolve $ n `Map.lookup` cs where
   resolve (Just x) = return x
@@ -37,6 +43,66 @@ checkCategory :: (Mergeable b) => (TypeName -> a -> b) -> CategoryConnect a -> b
 checkCategory f (CategoryConnect cs) = mergeAll $ map (\(k,v) -> f k v) (Map.toList cs)
 
 
+data CategorySystem =
+  CategorySystem {
+    csMain :: CategoryMain,
+    csRefine :: Refinements,
+    csMissing :: CategoryMissing,
+    csVariance :: CategoryVariance,
+    csParams :: CategoryParams
+  }
+
+validateCategory :: (Mergeable (m ()), Mergeable (m p),
+                     Mergeable p, CompileErrorM m, Monad m, MonadFix m) =>
+  TypeResolver m p -> CategorySystem -> m CategorySystem
+validateCategory r cs = do
+  checkCycles (csMain cs)
+  refine <- flattenRefines r (csRefine cs)
+  checkRefines refine
+  labeledVars <- labelParamVals (csParams cs) (csVariance cs)
+  checkVariances labeledVars (csVariance cs) refine
+  return $ CategorySystem {
+      csMain = csMain cs,
+      -- TODO: Check refines w.r.t. missingness and param filters.
+      csRefine = refine,
+      csMissing = csMissing cs,
+      csVariance = csVariance cs,
+      csParams = csParams cs
+    }
+
+
+labelParamVals :: (Mergeable (m ()), CompileErrorM m, Monad m) =>
+  CategoryParams -> CategoryConnect (ParamSet a) ->
+  m (CategoryConnect (Map.Map ParamName a))
+labelParamVals (CategoryConnect pa) va@(CategoryConnect _) = paired where
+  paired = do
+    pairs <- collectOrErrorM $ map pairType (Map.toList pa)
+    return $ CategoryConnect $ Map.fromList pairs
+  pairType (n,ps) = do
+    vs <- n `categoryLookup` va
+    checkParamsMatch (\_ _ -> return ()) ps vs
+    return (n,Map.fromList $ zip (map tpName $ psParams ps) (psParams vs))
+
+checkVariances :: (Mergeable (m ()), CompileErrorM m, Monad m) =>
+  (CategoryConnect (Map.Map ParamName Variance)) ->
+  CategoryVariance -> Refinements -> m ()
+checkVariances va vs = checkCategory checkAll where
+  checkAll n (CategoryRefine gs) = do
+    as <- n `categoryLookup` va
+    mergeAll $ map (checkSingle as Covariant) gs
+  checkSingle as v (TypeInstance (TypeCategoryInstance t ps)) = do
+    vs2 <- t `categoryLookup` vs
+    checkParamsMatch (\_ _ -> return ()) vs2 ps
+    mergeAll $ map (\(v2,p) -> checkSingle as (v `composeVariance` v2) p) (zip (psParams vs2) (psParams ps))
+  checkSingle as v (TypeMerge MergeUnion     ts) = mergeAll $ map (checkSingle as v) ts
+  checkSingle as v (TypeMerge MergeIntersect ts) = mergeAll $ map (checkSingle as v) ts
+  checkSingle as v (TypeInstance (TypeCategoryParam (TypeParam n _))) = check (n `Map.lookup` as) where
+    check Nothing   = compileError $ "Param " ++ show n ++ " is undefined"
+    check (Just v0) =
+      if v0 `paramAllowsVariance` v
+         then return ()
+         else compileError $ "Param " ++ show n ++ " does not allow variance " ++ show v
+
 checkCycles :: (Mergeable (m ()), CompileErrorM m, Monad m) => CategoryMain -> m ()
 checkCycles ca@(CategoryConnect cs) = checkCategory (checker []) ca where
   checker ns n ts
@@ -44,7 +110,13 @@ checkCycles ca@(CategoryConnect cs) = checkCategory (checker []) ca where
       compileError $ "Cycle found: " ++ intercalate " -> " (map show (ns ++ [n]))
     | otherwise =
       mergeAll $ map (\(n2,ts2) -> ts2 >>= checker (ns ++ [n]) n2) (map find $ Set.toList ts) where
-        find t = (t,t `categoryLookup` ca)
+        find t = (t,suppress $ t `categoryLookup` ca)
+        -- The error is suppressed, since a missing reference will be detected
+        -- during later checks. This allows incremental construction of the
+        -- type resolver, e.g., using multiple modules.
+        suppress cs
+          | isCompileError cs = return Set.empty
+          | otherwise         = cs
 
 mergeInstances :: (Mergeable (m ()), Mergeable (m p), CompileErrorM m, Monad m) =>
   TypeResolver m p -> [GeneralInstance] -> [GeneralInstance]
@@ -68,6 +140,9 @@ flattenRefines r (CategoryConnect gs) = mfix flattenAll where
   flattenSingle ca _ ta@(TypeInstance (TypeCategoryInstance t ps)) = do
     params <- (trParams r) t ps
     refines <- t `categoryLookup` ca
+    -- TODO: This should preserve the path (fst from the sub call) since it
+    -- might be needed to keep track of conversion information.
+    -- TODO: Should substitution be unchecked here?
     collectOrErrorM $ map (checkedSubAllParams r params >=> return . snd) (crRefines refines)
   flattenSingle _ n (TypeMerge MergeUnion _) =
     compileError $ "Type " ++ show n ++ " cannot refine a union"
