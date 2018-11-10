@@ -30,7 +30,7 @@ data TypeInstance a =
   }
   deriving (Eq,Show)
 
-data ParamSet a =
+newtype ParamSet a =
   ParamSet {
     psParams :: [a]
   }
