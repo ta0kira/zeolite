@@ -26,6 +26,12 @@ newtype TypeName =
   }
   deriving (Eq,Ord,Show)
 
+newtype ParamName =
+  ParamName {
+    pnName :: String
+  }
+  deriving (Eq,Ord,Show)
+
 data TypeConstraint =
   TypeFilter {
     tfType :: GeneralInstance
@@ -37,7 +43,7 @@ data TypeConstraint =
 
 data TypeParam =
   TypeParam {
-    tpName :: String,
+    tpName :: ParamName,
     tpConstraint :: [TypeConstraint]
   }
   deriving (Eq,Show)
