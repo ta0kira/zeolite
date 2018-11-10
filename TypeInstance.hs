@@ -54,8 +54,6 @@ data TypeCategoryInstance =
 
 data TypeResolver m p =
   TypeResolver {
-    -- Default path type for finds.
-    trPathDefault :: p,
     -- Convert an instance of one category to an instance of the other.
     trFind :: TypeName -> TypeName -> InstanceParams -> m (p,InstanceParams),
     -- Get the missingness for the category.
@@ -64,7 +62,8 @@ data TypeResolver m p =
     trVariance :: TypeName -> m [Variance]
   }
 
-checkGeneralMatch :: (Mergeable (m p), CompileError (m p), Monad m) =>
+checkGeneralMatch :: (Mergeable (m ()), CompileError (m ()),
+                      Mergeable (m p), CompileError (m p), Monad m) =>
   Variance -> TypeResolver m p ->
   GeneralInstance -> GeneralInstance -> m p
 checkGeneralMatch v r ts1 ts2 = checkTypeInstance checkSingleMatch ts1 ts2 where
@@ -77,14 +76,15 @@ checkGeneralMatch v r ts1 ts2 = checkTypeInstance checkSingleMatch ts1 ts2 where
   checkSingleMatch (TypeCategoryParam p1) (TypeCategoryParam p2) =
     checkParamToParam v r p1 p2
 
-checkInstanceToInstance :: (Mergeable (m p), CompileError (m p), Monad m) =>
+checkInstanceToInstance :: (Mergeable (m ()), CompileError (m ()),
+                            Mergeable (m p), CompileError (m p), Monad m) =>
   Variance -> TypeResolver m p ->
   (TypeName,InstanceParams) -> (TypeName,InstanceParams) -> m p
 checkInstanceToInstance Contravariant r (n1,ps1) (n2,ps2) =
   checkInstanceToInstance Covariant r (n2,ps2) (n1,ps1)
 checkInstanceToInstance v r (n1,ps1) (n2,ps2)
   | n1 == n2 = do
-    checkParamsMatch (\_ _ -> return $ trPathDefault r) ps1 ps2
+    checkParamsMatch (\_ _ -> return ()) ps1 ps2
     zipped <- return $ ParamSet $ zip (psParams ps1) (psParams ps2)
     variance <- trVariance r n1
     checkParamsMatch (\v2 (p1,p2) -> checkGeneralMatch v2 r p1 p2) (ParamSet variance) zipped
@@ -93,7 +93,8 @@ checkInstanceToInstance v r (n1,ps1) (n2,ps2)
     (p2,ps1') <- (trFind r) n2 n1 ps1
     (return p2) `mergeNested` (checkInstanceToInstance v r (n2,ps1') (n2,ps2))
 
-checkParamToInstance :: (Mergeable (m p), CompileError (m p), Monad m) =>
+checkParamToInstance :: (Mergeable (m ()), CompileError (m ()),
+                         Mergeable (m p), CompileError (m p), Monad m) =>
   Variance -> TypeResolver m p ->
   TypeParam -> (TypeName,InstanceParams) -> m p
 checkParamToInstance Invariant _ _ _ = compileError "No path found (param -> instance)"
@@ -105,9 +106,10 @@ checkParamToInstance v r (TypeParam _ cs1) (n2,ps2) = checked where
     checkGeneralMatch v r t (TypeInstance $ TypeCategoryInstance n ps)
   checkConstraintToInstance (TypeMissing q1) (n,_) = do
     q2 <- trMissing r n
-    canBecomeMissing (trPathDefault r) q1 q2
+    q1 `canBecomeMissing` q2
 
-checkInstanceToParam :: (Mergeable (m p), CompileError (m p), Monad m) =>
+checkInstanceToParam :: (Mergeable (m ()), CompileError (m ()),
+                         Mergeable (m p), CompileError (m p), Monad m) =>
   Variance -> TypeResolver m p ->
   (TypeName,InstanceParams) -> TypeParam -> m p
 checkInstanceToParam Invariant _ _ _ = compileError "No path found (instance -> param)"
@@ -119,15 +121,17 @@ checkInstanceToParam v r (n1,ps1) (TypeParam _ cs2) = checked where
     checkGeneralMatch v r (TypeInstance $ TypeCategoryInstance n ps) t
   checkInstanceToConstraint (n,_) (TypeMissing q2) = do
     q1 <- trMissing r n
-    canBecomeMissing (trPathDefault r) q1 q2
+    q1 `canBecomeMissing` q2
 
-checkParamToParam :: (Mergeable (m p), CompileError (m p), Monad m) =>
+checkParamToParam :: (Mergeable (m ()), CompileError (m ()),
+                      Mergeable (m p), CompileError (m p), Monad m) =>
   Variance -> TypeResolver m p ->
   TypeParam -> TypeParam -> m p
 checkParamToParam Contravariant r p1 p2 =
   checkParamToParam Covariant r p1 p2
 checkParamToParam v r (TypeParam n1 cs1) (TypeParam n2 cs2)
-  | n1 /= n2 && v == Invariant = compileError "No path found (param -> param)"
+  -- Substitution should have happened already => names should be the same.
+  | n1 /= n2 = compileError "No path found (param -> param)"
   | otherwise = checked where
     checked = mergeAny $ map (\c1 -> mergeAll $ map (\c2 -> checkConstraintToConstraint c1 c2) cs2) cs1
     checkConstraintToConstraint (TypeFilter t1) (TypeFilter t2) =
@@ -137,8 +141,8 @@ checkParamToParam v r (TypeParam n1 cs1) (TypeParam n2 cs2)
     checkConstraintToConstraint (TypeFilter  t1) m2@(TypeMissing _) =
       checkGeneralMatch v r t1 (TypeInstance $ TypeCategoryParam $ TypeParam n2 [m2])
     checkConstraintToConstraint (TypeMissing q1) (TypeMissing q2) =
-      canBecomeMissing (trPathDefault r) q1 q2
+      q1 `canBecomeMissing` q2
 
-canBecomeMissing :: (CompileError (m p), Monad m) => p -> Missingness -> Missingness -> m p
-canBecomeMissing _ AllowMissing DisallowMissing = compileError "Missingness disallowed"
-canBecomeMissing p _ _ = return p
+canBecomeMissing :: (Mergeable (m p), CompileError (m p), Monad m) =>  Missingness -> Missingness -> m p
+AllowMissing `canBecomeMissing` DisallowMissing = compileError "Missingness disallowed"
+_ `canBecomeMissing` _ = mergeDefault

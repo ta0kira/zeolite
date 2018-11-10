@@ -10,6 +10,7 @@ module TypesBase (
 
 
 class Mergeable a where
+  mergeDefault :: a
   mergeAny :: [a] -> a
   mergeAll :: [a] -> a
   mergeNested :: a -> a -> a
