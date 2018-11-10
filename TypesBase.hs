@@ -12,6 +12,7 @@ module TypesBase (
 class Mergeable a where
   mergeAny :: [a] -> a
   mergeAll :: [a] -> a
+  mergeNested :: a -> a -> a
 
 class CompileError a where
   compileError :: String -> a
