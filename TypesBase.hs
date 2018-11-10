@@ -1,5 +1,9 @@
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE Safe #-}
+
 module TypesBase (
   CompileError(..),
+  CompileErrorM(..),
   Mergeable(..),
   MergeType(..),
   ParamSet(..),
@@ -17,6 +21,13 @@ class Mergeable a where
 
 class CompileError a where
   compileError :: String -> a
+
+class CompileErrorM m where
+  compileErrorM :: String -> m a
+  isCompileError :: m a -> Bool
+
+instance CompileErrorM m => CompileError (m a) where
+  compileError = compileErrorM
 
 data MergeType = MergeUnion | MergeIntersect deriving (Eq,Ord,Show)
 

@@ -1,15 +1,16 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE Safe #-}
 
 module CompileInfo (
   CompileInfo(..),
   CompileMessage(..),
 ) where
 
-import Data.Either (partitionEithers)
+import Data.Either (isLeft,partitionEithers)
 import Control.Monad (join)
 
-import TypesBase (CompileError(..),Mergeable(..))
+import TypesBase (CompileErrorM(..),Mergeable(..))
 
 
 data CompileMessage =
@@ -32,16 +33,17 @@ joinMessages = foldr joinPair (CompileNested []) where
 nestMessages m@(CompileMessage _) m2 = CompileNested (m:[m2])
 nestMessages (CompileNested ms)   m2 = CompileNested (ms ++ [m2])
 
-type CompileInfo a = Either CompileMessage a
+type CompileInfo = Either CompileMessage
 
-instance CompileError (CompileInfo a) where
-  compileError e = Left $ CompileMessage e
+instance CompileErrorM CompileInfo where
+  compileErrorM e = Left $ CompileMessage e
+  isCompileError = isLeft
 
 instance Mergeable a => Mergeable (CompileInfo a) where
   mergeDefault = return mergeDefault
   mergeAny = result . partitionEithers . foldr (:) [] where
     result (_,xs@(x:_)) = return $ mergeAny xs
-    result ([],_)       = compileError "No successes in the empty set"
+    result ([],_)       = compileErrorM "No successes in the empty set"
     result (es,_)       = Left $ joinMessages es  -- Take all errors.
   mergeAll = result . partitionEithers . foldr (:) [] where
     result ([],xs) = return $ mergeAll xs
