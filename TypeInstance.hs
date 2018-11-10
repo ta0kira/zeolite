@@ -1,6 +1,7 @@
 {-# LANGUAGE Safe #-}
 
 module TypeInstance (
+  AssignedParams,
   GeneralInstance,
   InstanceParams,
   Missingness(..),
@@ -12,14 +13,40 @@ module TypeInstance (
   TypeResolver(..),
   Variance(..),
   checkGeneralMatch,
+  composeVariance,
+  paramAllowsVariance,
 ) where
+
+import qualified Data.Map as Map
 
 import TypesBase
 
 
 data Variance = Covariant | Contravariant | Invariant deriving (Eq,Ord,Show)
 
-data Missingness = AllowMissing | DisallowMissing deriving (Eq,Ord,Show)
+composeVariance :: Variance -> Variance -> Variance
+composeVariance Covariant      Covariant      = Covariant
+composeVariance Contravariant  Contravariant  = Covariant
+composeVariance Contravariant  Covariant      = Contravariant
+composeVariance Covariant      Contravariant  = Contravariant
+composeVariance _              _              = Invariant
+
+paramAllowsVariance :: Variance -> Variance -> Bool
+Covariant      `paramAllowsVariance` Covariant      = True
+Contravariant  `paramAllowsVariance` Contravariant  = True
+Invariant      `paramAllowsVariance` Covariant      = True
+Invariant      `paramAllowsVariance` Invariant      = True
+Invariant      `paramAllowsVariance` Contravariant  = True
+_              `paramAllowsVariance` _              = False
+
+data Missingness = AllowsMissing | DisallowsMissing | RequiresMissing deriving (Eq,Ord,Show)
+
+paramAllowsMissing :: Missingness -> Missingness -> Bool
+AllowsMissing    `paramAllowsMissing` _                = True
+DisallowsMissing `paramAllowsMissing` DisallowsMissing = True
+RequiresMissing  `paramAllowsMissing` RequiresMissing  = True
+RequiresMissing  `paramAllowsMissing` AllowsMissing    = True
+_                `paramAllowsMissing` _                = False
 
 type GeneralInstance = TypeInstance TypeCategoryInstance
 
@@ -63,10 +90,14 @@ data TypeCategoryInstance =
   }
   deriving (Eq,Show)
 
+type AssignedParams = Map.Map ParamName GeneralInstance
+
 data TypeResolver m p =
   TypeResolver {
     -- Convert an instance of one category to an instance of the other.
     trFind :: TypeName -> TypeName -> InstanceParams -> m (p,InstanceParams),
+    -- Labels params for an instance using the category's param names.
+    trParams :: TypeName -> InstanceParams -> m AssignedParams,
     -- Get the missingness for the category.
     trMissing :: TypeName -> m Missingness,
     -- Get the parameter variances for the category.
@@ -97,7 +128,7 @@ checkInstanceToInstance r v (n1,ps1) (n2,ps2)
     zipped <- return $ ParamSet $ zip (psParams ps1) (psParams ps2)
     variance <- trVariance r n1
     checkParamsMatch (\v2 (p1,p2) -> checkGeneralMatch r v2 p1 p2) (ParamSet variance) zipped
-  | v == Invariant = compileErrorM $ "No path found (" ++ show n1 ++ " -> " ++ show n2 ++ ")"
+  | v == Invariant = compileError $ "No path found (" ++ show n1 ++ " -> " ++ show n2 ++ ")"
   | otherwise = do
     (p2,ps1') <- (trFind r) n2 n1 ps1
     (return p2) `mergeNested` (checkInstanceToInstance r v (n2,ps1') (n2,ps2))
@@ -106,7 +137,7 @@ checkParamToInstance :: (Mergeable (m ()), Mergeable (m p), CompileErrorM m, Mon
   TypeResolver m p -> Variance ->
   TypeParam -> (TypeName,InstanceParams) -> m p
 checkParamToInstance _ Invariant (TypeParam n1 _) (n2,ps2) =
-  compileErrorM $ "No path found (" ++ show n1 ++ " -> " ++ show n2 ++ ")"
+  compileError $ "No path found (" ++ show n1 ++ " -> " ++ show n2 ++ ")"
 checkParamToInstance r Contravariant p1 (n2,ps2) =
   checkInstanceToParam r Covariant (n2,ps2) p1
 checkParamToInstance r v (TypeParam _ cs1) (n2,ps2) = checked where
@@ -121,7 +152,7 @@ checkInstanceToParam :: (Mergeable (m ()), Mergeable (m p), CompileErrorM m, Mon
   TypeResolver m p -> Variance ->
   (TypeName,InstanceParams) -> TypeParam -> m p
 checkInstanceToParam _ Invariant (n1,ps1) (TypeParam n2 _) =
-  compileErrorM $ "No path found (" ++ show n1 ++ " -> " ++ show n2 ++ ")"
+  compileError $ "No path found (" ++ show n1 ++ " -> " ++ show n2 ++ ")"
 checkInstanceToParam r Contravariant (n1,ps1) p2 =
   checkParamToInstance r Covariant p2 (n1,ps1)
 checkInstanceToParam r v (n1,ps1) (TypeParam _ cs2) = checked where
@@ -152,6 +183,6 @@ checkParamToParam r v (TypeParam n1 cs1) (TypeParam n2 cs2) = checked where
 
 canBecomeMissing :: (Mergeable (m p), CompileErrorM m, Monad m) =>
   Missingness -> Missingness -> m p
-AllowMissing `canBecomeMissing` DisallowMissing =
-  compileErrorM $ "Missingness disallowed (" ++ show AllowMissing ++ " -> " ++ show DisallowMissing ++ ")"
-_ `canBecomeMissing` _ = mergeDefault
+canBecomeMissing m1 m2 = check $ paramAllowsMissing m1 m2 where
+  check False = compileError $ "Missingness disallowed (" ++ show m1 ++ " -> " ++ show m2 ++ ")"
+  check _     = mergeDefault

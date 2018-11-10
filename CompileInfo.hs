@@ -37,7 +37,10 @@ type CompileInfo = Either CompileMessage
 
 instance CompileErrorM CompileInfo where
   compileErrorM e = Left $ CompileMessage e
-  isCompileError = isLeft
+  isCompileErrorM = isLeft
+  collectOrErrorM = result . partitionEithers . foldr (:) [] where
+    result ([],xs) = return xs
+    result (es,_)  = Left $ joinMessages es  -- Take all errors.
 
 instance Mergeable a => Mergeable (CompileInfo a) where
   mergeDefault = return mergeDefault

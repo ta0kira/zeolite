@@ -21,13 +21,16 @@ class Mergeable a where
 
 class CompileError a where
   compileError :: String -> a
+  isCompileError :: a -> Bool
 
 class CompileErrorM m where
   compileErrorM :: String -> m a
-  isCompileError :: m a -> Bool
+  isCompileErrorM :: m a -> Bool
+  collectOrErrorM :: Foldable f => f (m a) -> m [a]
 
 instance CompileErrorM m => CompileError (m a) where
   compileError = compileErrorM
+  isCompileError = isCompileErrorM
 
 data MergeType = MergeUnion | MergeIntersect deriving (Eq,Ord,Show)
 
