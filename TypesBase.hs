@@ -11,8 +11,8 @@ module TypesBase (
 
 class Mergeable a where
   mergeDefault :: a
-  mergeAny :: [a] -> a
-  mergeAll :: [a] -> a
+  mergeAny :: Foldable f => f a -> a
+  mergeAll :: Foldable f => f a -> a
   mergeNested :: a -> a -> a
 
 class CompileError a where
@@ -28,13 +28,13 @@ data TypeInstance a =
     tmMerge :: MergeType,
     tmTypes :: [TypeInstance a]
   }
-  deriving (Eq)
+  deriving (Eq,Show)
 
 data ParamSet a =
   ParamSet {
     psParams :: [a]
   }
-  deriving (Eq)
+  deriving (Eq,Show)
 
 checkTypeInstance :: Mergeable c => (a -> b -> c) -> TypeInstance a -> TypeInstance b -> c
 checkTypeInstance f ti1 ti2 = singleCheck ti1 ti2 where
