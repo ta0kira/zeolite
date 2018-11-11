@@ -141,6 +141,7 @@ class Interface_Function {
 /*
 
 concrete CountedId<x> {
+  x requires missing
   refines Function<x,x>
   count takes () to (Int)
 }
@@ -151,7 +152,7 @@ Members:
 
 Implementations:
 
-call(val) { counter += 1; return val; }
+call(val) { if (!is_missing(val)) counter += 1; return val; }
 count() { return counter; }
 
 */
@@ -180,11 +181,17 @@ class Interface_CountedId : public Interface_Function<x,x> {
 };
 
 template<class x>
+struct Param_Filters_CountedId {
+  virtual bool x_is_missing(x) const = 0;
+  virtual ~Param_Filters_CountedId() = default;
+};
+
+template<class x>
 class Concrete_CountedId : public Interface_CountedId<x> {
  public:
   // (Not sure how this construction should actually happen.)
-  static R<Interface_CountedId<x>> create() {
-    return R_get(new Concrete_CountedId<x>);
+  static R<Interface_CountedId<x>> create(R<const Param_Filters_CountedId<x>> filters) {
+    return R_get(new Concrete_CountedId<x>(std::move(filters)));
   }
 
  protected:
@@ -197,7 +204,8 @@ class Concrete_CountedId : public Interface_CountedId<x> {
   }
 
  private:
-  Concrete_CountedId() = default;
+  Concrete_CountedId(R<const Param_Filters_CountedId<x>> filters)
+      : filters_(std::move(filters)) {}
 
   class Implemented_CountedId_call : public Caller_Function_call<x,x> {
    public:
@@ -209,7 +217,9 @@ class Concrete_CountedId : public Interface_CountedId<x> {
 
     void execute() final {
       // Implementation of CountedId.call.
-      self_->member_counter_.set(self_->member_counter_.get()+1);
+      if (!self_->filters_->x_is_missing(a0_.get())) {
+        self_->member_counter_.set(self_->member_counter_.get()+1);
+      }
       r0_.set(a0_.get());
     }
 
@@ -219,11 +229,6 @@ class Concrete_CountedId : public Interface_CountedId<x> {
 
    private:
     Concrete_CountedId* const self_;
-    // TODO: We should use a special variable for when the member depends on a
-    // param, e.g., if we need to reason about filters. Maybe we need some sort
-    // of param wrapper that converts based on filters? Better yet, require the
-    // caller to provide a converter. For example, if we have x -> Value then
-    // the caller should pass something that converts their type for x to Value.
     CopiedVariable<x> a0_;
     CopiedVariable<x> r0_;
   };
@@ -246,6 +251,8 @@ class Concrete_CountedId : public Interface_CountedId<x> {
     // TODO: We really shouldn't be storing a raw type here.
     CopiedVariable<int> r0_;
   };
+
+  const R<const Param_Filters_CountedId<x>> filters_;
 
   // Member variable CountedId.counter.
   CopiedVariable<int> member_counter_;
@@ -301,13 +308,22 @@ struct Coadapter_int_to_long : public Coadapter<int,long> {
   }
 };
 
+// This corresponds to the variable named "counted" (in main below), rather than
+// to the parameter type.
+struct Param_Filters_CountedId_counted : public Param_Filters_CountedId<int> {
+  bool x_is_missing(int value) const final {
+    return value == 0;
+  }
+};
+
 int main() {
   const R<Interface_CountedId<int>> counted =
-    Concrete_CountedId<int>::create();
+    Concrete_CountedId<int>::create(R_get(new Param_Filters_CountedId_counted));
   const R<Interface_Function<long,std::string>> function =
     counted->Convert_Function(Coadapter_int_to_long::create(), Adapter_int_to_string::create());
   std::cerr << "Count: " << counted->Call_CountedId_count() << std::endl;
   std::cerr << "Call: " << counted->Call_Function_call(3) << std::endl;
+  std::cerr << "Call: " << counted->Call_Function_call(0) << std::endl;
   std::cerr << "Call: " << function->Call_Function_call(4L).append("!") << std::endl;
   std::cerr << "Count: " << counted->Call_CountedId_count() << std::endl;
 }
