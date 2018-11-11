@@ -4,7 +4,9 @@ import System.IO
 import Text.ParserCombinators.ReadP
 import qualified Control.Monad.Trans.Class as Trans
 
+import CompileInfo
 import Resolver
+import TypesBase
 import Unresolved
 
 testCases = [
@@ -111,7 +113,7 @@ testCases = [
 main = do
   results <- sequence $ map (\(f,t) -> testFile f t) testCases
   (es,_) <- return $ partitionEithers $ zipWith numberError [1..] results
-  mapM_ (\(n,e) -> hPutStr stderr ("Test " ++ show n ++ ": " ++ e ++ "\n")) es
+  mapM_ (\(n,e) -> hPutStr stderr ("Test " ++ show n ++ ": " ++ show e ++ "\n")) es
 
 numberError :: a -> Either b c -> Either (a,b) c
 numberError n (Left e)  = Left (n,e)
@@ -123,19 +125,19 @@ manyTypeCategoryes = between (return ())
 
 onlyComplete ((a,[]):xs) f = f a
 onlyComplete (_:x:xs)    f = onlyComplete (x:xs) f
-onlyComplete ((_,x):[])  _ = Left ["Incomplete parse: " ++ x]
-onlyComplete _           _ = Left ["Failed to parse"]
+onlyComplete ((_,x):[])  _ = compileError $ "Incomplete parse: " ++ x
+onlyComplete _           _ = compileError $ "Failed to parse"
 
-testFile :: String -> (String -> Either [String] TypeCategoryGraph -> Either String ()) -> IO (Either String ())
+testFile :: String -> (String -> CompileInfo TypeCategoryGraph -> CompileInfo ()) -> IO (CompileInfo ())
 testFile n f = do
   contents <- readFile n
   parsed <- return $ onlyComplete (readP_to_S manyTypeCategoryes contents) return
   errors <- return $ checkParsed n parsed
-  if (isLeft errors)
+  if (isCompileError errors)
      then (return errors)
      else return $ f n (parsed >>= createTypeCategoryGraph)
 
-checkParsed n (Left es) = Left $ "Parse error in " ++ n ++ ": " ++ show es
+checkParsed n (Left es) = compileError $ "Parse error in " ++ n ++ ": " ++ show es
 checkParsed n _         = return ()
 
 expectLoaded    = tryLoading True
@@ -144,10 +146,10 @@ expectNotLoaded = tryLoading False
 tryLoading b f (Right v) =
   if b
     then (return ())
-    else Left $ "Expected load failure in " ++ f ++ ": " ++ show v
+    else compileError $ "Expected load failure in " ++ f ++ ": " ++ show v
 tryLoading b f (Left e) =
   if b
-     then Left $ "Unexpected load failure in " ++ f ++ ": " ++ show e
+     then compileError $ "Unexpected load failure in " ++ f ++ ": " ++ show e
      else (return ())
 
 showDebugGraph f (Right g) = Left (show g)
@@ -168,10 +170,10 @@ tryParsing b x f g = check (tryParseNoContext x g) where
   check (Right v) =
     if b
       then (return ())
-      else Left $ "Expected parse failure for \"" ++ x ++ "\": " ++ show v
+      else compileError $ "Expected parse failure for \"" ++ x ++ "\": " ++ show v
   check (Left e) =
     if b
-      then Left $ "Unexpected parse failure for \"" ++ x ++ "\": " ++ show e
+      then compileError $ "Unexpected parse failure for \"" ++ x ++ "\": " ++ show e
       else (return ())
 
 expectParsedInContext    = tryParsingInContext True
@@ -181,10 +183,10 @@ tryParsingInContext b s x f g = check (tryParseWithContext s x g) where
   check (Right v) =
     if b
       then (return ())
-      else Left $ "Expected parse failure for \"" ++ x ++ "\": " ++ show v
+      else compileError $ "Expected parse failure for \"" ++ x ++ "\": " ++ show v
   check (Left e) =
     if b
-      then Left $ "Unexpected parse failure for \"" ++ x ++ "\": " ++ show e
+      then compileError $ "Unexpected parse failure for \"" ++ x ++ "\": " ++ show e
       else (return ())
 
 expectConverted    = tryConverting True
@@ -193,11 +195,11 @@ expectNotConverted = tryConverting False
 tryConverting b x y f g = check (tryParseNoContext x g) (tryParseNoContext y g) where
   check (Left e) _ =
     if b
-      then Left $ "Unexpected parse failure for \"" ++ x ++ "\": " ++ show e
+      then compileError $ "Unexpected parse failure for \"" ++ x ++ "\": " ++ show e
       else (return ())
   check _ (Left e) =
     if b
-      then Left $ "Unexpected parse failure for \"" ++ y ++ "\": " ++ show e
+      then compileError $ "Unexpected parse failure for \"" ++ y ++ "\": " ++ show e
       else (return ())
   check (Right x) (Right y) = do
     expectLoaded f g
@@ -207,10 +209,10 @@ tryConverting b x y f g = check (tryParseNoContext x g) (tryParseNoContext y g) 
   recheck (Right _) =
     if b
       then (return ())
-      else Left $ "Expected conversion failure for \"" ++ x ++ "\" -> \"" ++
+      else compileError $ "Expected conversion failure for \"" ++ x ++ "\" -> \"" ++
                   y ++ "\": [\"" ++ x ++ "\" -> \"" ++ y ++ "\"]"
   recheck (Left e) =
     if b
-      then Left $ "Unexpected conversion failure for \"" ++ x ++ "\" -> \"" ++
+      then compileError $ "Unexpected conversion failure for \"" ++ x ++ "\" -> \"" ++
                   y ++ "\": " ++ show e
       else (return ())

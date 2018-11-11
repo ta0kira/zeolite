@@ -1,4 +1,3 @@
-{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE Safe #-}
 
@@ -8,7 +7,6 @@ module CompileInfo (
 ) where
 
 import Data.Either (isLeft,partitionEithers)
-import Control.Monad (join)
 
 import TypesBase (CompileErrorM(..),Mergeable(..))
 
@@ -20,7 +18,44 @@ data CompileMessage =
   CompileNested {
     cnNested :: [CompileMessage]
   }
-  deriving (Show)
+
+instance Show CompileMessage where
+  show (CompileMessage m) = m
+  show (CompileNested ms) = show ms
+
+type CompileInfo = Either CompileMessage
+
+instance CompileErrorM CompileInfo where
+  compileErrorM = Left . CompileMessage
+  isCompileErrorM = isLeft
+  collectAllOrErrorM = result . splitErrorsAndData where
+    result ([],xs) = return xs
+    result (e:_,_) = Left e  -- Take first error.
+  collectOneOrErrorM = result . splitErrorsAndData where
+    result (_,x:_) = return x
+    result ([],_)  = compileErrorM "No values in the empty set"
+    result (es,_)  = Left $ joinMessages es  -- Take all errors.
+
+instance Mergeable () where
+  mergeAny = const ()
+  mergeAll = const ()
+
+instance Mergeable Bool where
+  mergeAny = any id
+  mergeAll = all id
+
+instance Mergeable a => Mergeable (CompileInfo a) where
+  mergeAny = result . splitErrorsAndData where
+    result (_,xs@(x:_)) = return $ mergeAny xs
+    result ([],_)       = compileErrorM "No values in the empty set"
+    result (es,_)       = Left $ joinMessages es  -- Take all errors.
+  mergeAll = result . splitErrorsAndData where
+    result ([],xs) = return $ mergeAll xs
+    result (e:_,_) = Left e  -- Take first error.
+  (Right x)  `mergeNested` (Right y)  = return $ x `mergeNested` y
+  e@(Left _) `mergeNested` (Right _)  = e
+  (Right _)  `mergeNested` e@(Left _) = e
+  (Left e1)  `mergeNested` (Left e2)  = Left $ e1 `nestMessages` e2
 
 joinMessages = foldr joinPair (CompileNested []) where
   joinPair m                     (CompileNested [])    = m
@@ -33,32 +68,5 @@ joinMessages = foldr joinPair (CompileNested []) where
 nestMessages m@(CompileMessage _) m2 = CompileNested (m:[m2])
 nestMessages (CompileNested ms)   m2 = CompileNested (ms ++ [m2])
 
-type CompileInfo = Either CompileMessage
-
-instance CompileErrorM CompileInfo where
-  compileErrorM e = Left $ CompileMessage e
-  isCompileErrorM = isLeft
-  collectOrErrorM = result . partitionEithers . foldr (:) [] where
-    result ([],xs) = return xs
-    result (es,_)  = Left $ joinMessages es  -- Take all errors.
-
-instance Mergeable a => Mergeable (CompileInfo a) where
-  mergeAny = result . partitionEithers . foldr (:) [] where
-    result (_,xs@(x:_)) = return $ mergeAny xs
-    result ([],_)       = compileErrorM "No successes in the empty set"
-    result (es,_)       = Left $ joinMessages es  -- Take all errors.
-  mergeAll = result . partitionEithers . foldr (:) [] where
-    result ([],xs) = return $ mergeAll xs
-    result (e:_,_) = Left e  -- Take first error.
-  (Right x)  `mergeNested` (Right y)  = return $ x `mergeNested` y
-  e@(Left _) `mergeNested` (Right _)  = e
-  (Right _)  `mergeNested` e@(Left _) = e
-  (Left e1)  `mergeNested` (Left e2)  = Left $ e1 `nestMessages` e2
-
-instance Mergeable () where
-  mergeAny = const ()
-  mergeAll = const ()
-
-instance Mergeable Bool where
-  mergeAny = any id
-  mergeAll = all id
+splitErrorsAndData :: Foldable f => f (Either a b) -> ([a],[b])
+splitErrorsAndData = partitionEithers . foldr (:) []

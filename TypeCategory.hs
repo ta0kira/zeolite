@@ -9,7 +9,6 @@ import Data.List (group,intercalate)
 import qualified Data.Map as Map
 import qualified Data.Set as Set
 
-import CompileInfo
 import TypeInstance
 import TypesBase
 
@@ -91,7 +90,7 @@ labelParamVals :: (Mergeable (m ()), CompileErrorM m, Monad m) =>
   m (CategoryConnect (Map.Map ParamName a))
 labelParamVals (CategoryConnect pa) va@(CategoryConnect _) = paired where
   paired = do
-    pairs <- collectOrErrorM $ map pairType (Map.toList pa)
+    pairs <- collectAllOrErrorM $ map pairType (Map.toList pa)
     return $ CategoryConnect $ Map.fromList pairs
   pairType (n,ps) = do
     vs <- n `categoryLookup` va
@@ -175,10 +174,10 @@ flattenRefines :: (Mergeable (m ()), Mergeable (m p),
   TypeResolver m p -> Refinements -> m Refinements
 flattenRefines r (CategoryConnect gs) = mfix flattenAll where
   flattenAll ca@(CategoryConnect _) = do
-    items <- collectOrErrorM $ map (flattenCategory ca) (Map.toList gs)
+    items <- collectAllOrErrorM $ map (flattenCategory ca) (Map.toList gs)
     return $ CategoryConnect $ Map.fromList items
   flattenCategory ca (n,(CategoryRefine gs)) = do
-    gs2 <- collectOrErrorM $ map (flattenSingle ca n) gs
+    gs2 <- collectAllOrErrorM $ map (flattenSingle ca n) gs
     return (n,CategoryRefine (mergeInstances r $ join gs2))
   flattenSingle ca _ ta@(SingleType (TypeCategoryInstance t ps)) = do
     params <- (trParams r) t ps
@@ -186,7 +185,7 @@ flattenRefines r (CategoryConnect gs) = mfix flattenAll where
     -- TODO: This should preserve the path (fst from the sub call) since it
     -- might be needed to keep track of conversion information.
     -- TODO: Should substitution be unchecked here?
-    collectOrErrorM $ map (checkedSubAllParams r (paramLookup params) >=> return . snd) (crRefines refines)
+    collectAllOrErrorM $ map (checkedSubAllParams r (paramLookup params) >=> return . snd) (crRefines refines)
   flattenSingle _ n (TypeMerge MergeUnion _) =
     compileError $ "Type " ++ show n ++ " cannot refine a union"
   flattenSingle _ n (TypeMerge MergeIntersect _) =
@@ -197,7 +196,7 @@ flattenRefines r (CategoryConnect gs) = mfix flattenAll where
 checkRefines :: (Mergeable (m ()), CompileErrorM m, Monad m) => Refinements -> m ()
 checkRefines = checkCategory checkAll where
   checkAll n (CategoryRefine gs) = do
-    ts <- collectOrErrorM $ map (getTypeName n) gs
+    ts <- collectAllOrErrorM $ map (getTypeName n) gs
     mergeAll $ map (checkGroup n) $ group ts
   getTypeName _ (SingleType (TypeCategoryInstance t _)) = return t
   getTypeName n (TypeMerge MergeUnion _) =
@@ -227,14 +226,14 @@ subAllParams :: (Mergeable (m ()), Mergeable (m p),
   (TypeParam -> m GeneralInstance) -> GeneralInstance -> m (p,GeneralInstance)
 subAllParams find replace = subAll where
   subAll (TypeMerge MergeUnion ts) = do
-    gs <- collectOrErrorM $ map subAll ts
+    gs <- collectAllOrErrorM $ map subAll ts
     return (mergeAll $ map fst gs,TypeMerge MergeUnion $ map snd gs)
   subAll (TypeMerge MergeIntersect ts) = do
-    gs <- collectOrErrorM $ map subAll ts
+    gs <- collectAllOrErrorM $ map subAll ts
     return (mergeAll $ map fst gs,TypeMerge MergeIntersect $ map snd gs)
   subAll (SingleType t) = subInstance t
   subInstance (TypeCategoryInstance n (ParamSet ts)) = do
-    gs <- collectOrErrorM $ map subAll ts
+    gs <- collectAllOrErrorM $ map subAll ts
     return (mergeAll $ map fst gs,SingleType $ TypeCategoryInstance n $ (ParamSet $ map snd gs))
   subInstance (TypeCategoryParam t) = subParam t
   subParam pa@(TypeParam _ _) = do
