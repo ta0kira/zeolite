@@ -7,13 +7,13 @@ interface Write<x|> {
 }
 
 interface Write2<x|> {
-  inherits Write<x>
+  refines Write<x>
   x requires Write<x>
 }
 
 interface Queue<x> {
-  inherits Write<x>
-  inherits Read<x>
+  refines Write<x>
+  refines Read<x>
   // Requires Write2<x>, not Write<x>.
   x requires Write<x>
   x requires Read<x>

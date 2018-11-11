@@ -8,20 +8,20 @@ interface Write<y|> {
 
 // Extending inheritance a bit.
 interface Write2<k|> {
-  inherits Write<k>
+  refines Write<k>
   k requires Write<k>
 }
 
 interface Queue<z> {
-  inherits Write<z>
-  inherits Read<z>
+  refines Write<z>
+  refines Read<z>
   z requires Write<z>
   z requires Read<z>
 }
 
 interface Queue2<q> {
-  inherits Write<q>
-  inherits Read<q>
+  refines Write<q>
+  refines Read<q>
   // Meets Write<q> requirement, but not directly.
   q requires Write2<q>
   q requires Read<q>
@@ -29,8 +29,8 @@ interface Queue2<q> {
 
 
 concrete Value {
-  inherits Read<Value>
-  inherits Write2<Value>
+  refines Read<Value>
+  refines Write2<Value>
 }
 
 concrete Value2 {}

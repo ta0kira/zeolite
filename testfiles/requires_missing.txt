@@ -3,7 +3,7 @@ interface Value<x> {
 }
 
 interface Value2<x> {
-  inherits Value<x>
+  refines Value<x>
   // Value requires that x allows missing.
   x disallows missing
 }

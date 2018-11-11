@@ -14,26 +14,26 @@ interface LessThan<x|> {
 
 // Arbitrary key type.
 interface AnyKey<k|> {
-  inherits Equals<k>
+  refines Equals<k>
   k requires AnyKey<k>
 }
 
 // A key for a specific instance type.
 interface Key<k|x> {
-  inherits AnyKey<k>
+  refines AnyKey<k>
   k requires AnyKey<k>
 }
 
 // Identifier for an arbitrary Feature.
 interface AnyFeatureId {
-  inherits AnyKey<AnyFeatureId>
-  inherits LessThan<AnyFeatureId>
+  refines AnyKey<AnyFeatureId>
+  refines LessThan<AnyFeatureId>
 }
 
 // Identifier for a feature of a specific type.
 concrete FeatureId<|x> {
-  inherits AnyFeatureId
-  inherits Key<AnyFeatureId,x>
+  refines AnyFeatureId
+  refines Key<AnyFeatureId,x>
 }
 
 /* Ideas for later ...
@@ -49,7 +49,7 @@ concrete Optional<|x> {
 }
 
 concrete Value<k|x|> {
-  inherits AnyValue<x>
+  refines AnyValue<x>
 
   new<y>
     // How does variance work here? Can x be covariant?

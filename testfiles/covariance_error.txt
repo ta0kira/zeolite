@@ -4,5 +4,5 @@ interface Write<x|> {}
 
 interface Function<x|y> {
   // y is covariant, but in Write<y> it's contravariant.
-  inherits Write<y>
+  refines Write<y>
 }

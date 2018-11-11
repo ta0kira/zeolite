@@ -118,23 +118,23 @@ numberError :: a -> Either b c -> Either (a,b) c
 numberError n (Left e)  = Left (n,e)
 numberError _ (Right x) = Right x -- Not the same Either!
 
-manyTypeClasses = between (return ())
-                          skipSpaces $
-                          sepBy (unresolvedParser :: ReadP UnresolvedTypeClass) (return ())
+manyTypeCategoryes = between (return ())
+                         skipSpaces $
+                         sepBy (unresolvedParser :: ReadP UnresolvedTypeCategory) (return ())
 
 onlyComplete ((a,[]):xs) f = f a
 onlyComplete (_:x:xs)    f = onlyComplete (x:xs) f
 onlyComplete ((_,x):[])  _ = Left ["Incomplete parse: " ++ x]
 onlyComplete _           _ = Left ["Failed to parse"]
 
-testFile :: String -> (String -> Either [String] TypeClassGraph -> Either String ()) -> IO (Either String ())
+testFile :: String -> (String -> Either [String] TypeCategoryGraph -> Either String ()) -> IO (Either String ())
 testFile n f = do
   contents <- readFile n
-  parsed <- return $ onlyComplete (readP_to_S manyTypeClasses contents) return
+  parsed <- return $ onlyComplete (readP_to_S manyTypeCategoryes contents) return
   errors <- return $ checkParsed n parsed
   if (isLeft errors)
      then (return errors)
-     else return $ f n (parsed >>= createTypeClassGraph)
+     else return $ f n (parsed >>= createTypeCategoryGraph)
 
 checkParsed n (Left es) = Left $ "Parse error in " ++ n ++ ": " ++ show es
 checkParsed n _         = return ()
@@ -157,7 +157,7 @@ showDebugGraph f (Left e) =
 
 tryParse c x = resolved where
   parsed = readP_to_S (unresolvedParser :: ReadP UnresolvedType) x
-  resolved = flip (>>=) $ \g -> onlyComplete parsed (resolveTypeClassInstance g c)
+  resolved = flip (>>=) $ \g -> onlyComplete parsed (resolveTypeCategoryInstance g c)
 
 tryParseNoContext = tryParse Nothing
 tryParseWithContext s = tryParse (Just s)

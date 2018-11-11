@@ -2,10 +2,10 @@ module Unresolved (
   unresolvedParser,
   UnresolvedParamFilter(..),
   UnresolvedType(..),
-  UnresolvedTypeClass(..),
+  UnresolvedTypeCategory(..),
   UnresolvedTypeParam(..),
   -- For testing...
-  UnresolvedTypeClassFunction
+  UnresolvedTypeCategoryFunction
 ) where
 
 import Control.Applicative ((<|>))
@@ -24,7 +24,7 @@ class UnresolvedParsable a where
 reservedWords = Set.fromList $ [
     "maps",
     "to",
-    "inherits",
+    "refines",
     "requires",
     "interface",
     "concrete",
@@ -77,49 +77,49 @@ functionName = do
 listOf p = sepBy p (deadSpace >> string "," >> deadSpace)
 
 
-data TypeClassType = InterfaceTypeClass | ConcreteTypeClass deriving (Eq, Show)
+data TypeCategoryType = InterfaceTypeCategory | ConcreteTypeCategory deriving (Eq, Show)
 
-data UnresolvedTypeClass =
-  UnresolvedTypeClass {
+data UnresolvedTypeCategory =
+  UnresolvedTypeCategory {
     utcName :: String,
     -- TODO: Use this in type resolution.
-    utcType :: TypeClassType,
+    utcType :: TypeCategoryType,
     utcMissing :: Missingness,
     utcParams :: [UnresolvedTypeParam],
-    utcInherits :: [UnresolvedType],
+    utcRefines :: [UnresolvedType],
     utcFilters :: [UnresolvedParamFilter],
-    utcFunctions :: [UnresolvedTypeClassFunction]
+    utcFunctions :: [UnresolvedTypeCategoryFunction]
   }
   deriving (Eq, Show)
 
-instance UnresolvedParsable UnresolvedTypeClass where
+instance UnresolvedParsable UnresolvedTypeCategory where
   unresolvedParser = do
     classType <- interfaceType <|> concreteType
     name <- between deadSpace nullParse typeClassName
     params <- option [] typeParamList
     between deadSpace deadSpace (string "{")
     missing <- allowsMissing <|> return DisallowsMissing
-    inherits <- sepBy singleInherit deadSpace
+    refines <- sepBy singleRefine deadSpace
     filters <- sepBy (singleFilter <|> singleMissing) deadSpace
-    functions <- sepBy (unresolvedParser :: ReadP UnresolvedTypeClassFunction) deadSpace
+    functions <- sepBy (unresolvedParser :: ReadP UnresolvedTypeCategoryFunction) deadSpace
     between deadSpace deadSpace (string "}")
-    return $ UnresolvedTypeClass {
+    return $ UnresolvedTypeCategory {
         utcName = name,
         utcType = classType,
         utcMissing = missing,
         utcParams = params,
-        utcInherits = inherits,
+        utcRefines = refines,
         utcFilters = filters,
         utcFunctions = functions
       }
 
 interfaceType = do
   between deadSpace separator (string "interface")
-  return InterfaceTypeClass
+  return InterfaceTypeCategory
 
 concreteType = do
   between deadSpace separator (string "concrete")
-  return ConcreteTypeClass
+  return ConcreteTypeCategory
 
 allowsMissing = do
   between deadSpace separator (string "allows")
@@ -136,9 +136,9 @@ disallowsMissing = do
   between nullParse deadSpace (string "missing")
   return DisallowsMissing
 
-singleInherit :: ReadP UnresolvedType
-singleInherit = do
-  between deadSpace separator (string "inherits")
+singleRefine :: ReadP UnresolvedType
+singleRefine = do
+  between deadSpace separator (string "refines")
   unresolvedParser :: ReadP UnresolvedType
 
 
@@ -177,7 +177,7 @@ singleMissing = do
 
 data UnresolvedType =
   UnresolvedType {
-    utTypeClass :: String,
+    utTypeCategory :: String,
     utParamArgs :: [UnresolvedType]
   } |
   UnresolvedTypeArg {
@@ -193,7 +193,7 @@ instance UnresolvedParsable UnresolvedType where
                           (deadSpace >> string ">")
                           (listOf (unresolvedParser :: ReadP UnresolvedType))
       return $ UnresolvedType {
-          utTypeClass = name,
+          utTypeCategory = name,
           utParamArgs = args
         }
     typeArg = do
@@ -235,8 +235,8 @@ typeParamList = types where
     cov   <- between deadSpace nullParse                 (listOf typeParamName)
     return (con, fixed, cov)
 
-data UnresolvedTypeClassFunction =
-  UnresolvedTypeClassFunction {
+data UnresolvedTypeCategoryFunction =
+  UnresolvedTypeCategoryFunction {
     utcfName :: String,
     utcfParams :: [UnresolvedTypeParam],
     utcfFilters :: [UnresolvedParamFilter],
@@ -245,7 +245,7 @@ data UnresolvedTypeClassFunction =
   }
   deriving (Eq, Show)
 
-instance UnresolvedParsable UnresolvedTypeClassFunction where
+instance UnresolvedParsable UnresolvedTypeCategoryFunction where
   unresolvedParser = function where
     function = do
       name <- between deadSpace nullParse functionName
@@ -253,7 +253,7 @@ instance UnresolvedParsable UnresolvedTypeClassFunction where
       args <- getArgs
       returns <- getReturns
       filters <- sepBy (singleFilter <|> singleMissing) deadSpace
-      return $ UnresolvedTypeClassFunction {
+      return $ UnresolvedTypeCategoryFunction {
           utcfName = name,
           utcfParams = map (\n -> UnresolvedTypeParam n IgnoreVariance) params,
           utcfFilters = filters,

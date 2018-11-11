@@ -3,11 +3,11 @@ interface Read<|x> {}
 interface Write<w|> {}
 
 interface Function<q|z> {
-  inherits Write<q>
-  inherits Read<z>
+  refines Write<q>
+  refines Read<z>
 }
 
 interface Queue<y> {
-  inherits Write<y>
-  inherits Read<y>
+  refines Write<y>
+  refines Read<y>
 }

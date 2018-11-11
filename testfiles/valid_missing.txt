@@ -5,8 +5,8 @@ interface Read<|x> {
 interface Write<w|> {}
 
 interface Function<q|z> {
-  inherits Write<q>
-  inherits Read<z>
+  refines Write<q>
+  refines Read<z>
   z allows missing
   q disallows missing
 }

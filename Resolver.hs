@@ -1,9 +1,9 @@
 module Resolver (
-  TypeClassGraph,
-  TypeClassArg,
-  createTypeClassGraph,
+  TypeCategoryGraph,
+  TypeCategoryArg,
+  createTypeCategoryGraph,
   -- For testing...
-  resolveTypeClassInstance,
+  resolveTypeCategoryInstance,
   checkConversion
 ) where
 
@@ -21,45 +21,45 @@ import Unresolved
 import Variance
 
 
-data TypeClassName =
-  TypeClassName {
+data TypeCategoryName =
+  TypeCategoryName {
     tcnName :: String
   }
   deriving (Eq, Ord)
 
-instance Show TypeClassName where
-  show (TypeClassName n) = n
+instance Show TypeCategoryName where
+  show (TypeCategoryName n) = n
 
-tcnFromUTC :: UnresolvedTypeClass -> TypeClassName
-tcnFromUTC = TypeClassName . utcName
+tcnFromUTC :: UnresolvedTypeCategory -> TypeCategoryName
+tcnFromUTC = TypeCategoryName . utcName
 
-tcnFromUT :: UnresolvedType -> TypeClassName
-tcnFromUT = TypeClassName . utTypeClass
+tcnFromUT :: UnresolvedType -> TypeCategoryName
+tcnFromUT = TypeCategoryName . utTypeCategory
 
 
-data TypeClassParamName =
-  TypeClassParamName {
+data TypeCategoryParamName =
+  TypeCategoryParamName {
     tcpnName :: String
   }
   deriving (Eq, Ord)
 
-instance Show TypeClassParamName where
-  show (TypeClassParamName n) = n
+instance Show TypeCategoryParamName where
+  show (TypeCategoryParamName n) = n
 
-tcpnFromUTP :: UnresolvedTypeParam -> TypeClassParamName
-tcpnFromUTP = TypeClassParamName . utpName
+tcpnFromUTP :: UnresolvedTypeParam -> TypeCategoryParamName
+tcpnFromUTP = TypeCategoryParamName . utpName
 
-tcpnFromUTA :: UnresolvedType -> TypeClassParamName
-tcpnFromUTA = TypeClassParamName . utaName
+tcpnFromUTA :: UnresolvedType -> TypeCategoryParamName
+tcpnFromUTA = TypeCategoryParamName . utaName
 
-tcpnFromUPF :: UnresolvedParamFilter -> TypeClassParamName
-tcpnFromUPF (UnresolvedParamFilter  n _) = TypeClassParamName n
-tcpnFromUPF (UnresolvedParamMissing n _) = TypeClassParamName n
+tcpnFromUPF :: UnresolvedParamFilter -> TypeCategoryParamName
+tcpnFromUPF (UnresolvedParamFilter  n _) = TypeCategoryParamName n
+tcpnFromUPF (UnresolvedParamMissing n _) = TypeCategoryParamName n
 
 
 data TypeFilter =
   TypeFilter {
-    tfType :: TypeClassInstance
+    tfType :: TypeCategoryInstance
   }
   deriving (Eq, Ord)
 
@@ -67,17 +67,17 @@ instance Show TypeFilter where
   show (TypeFilter t) = show t
 
 
-data TypeClassParam =
-  TypeClassParam {
-    tcpName :: TypeClassParamName,
+data TypeCategoryParam =
+  TypeCategoryParam {
+    tcpName :: TypeCategoryParamName,
     tcpVariance :: Variance,
     tcpMissing :: Missingness,
     tcpFilters :: Set.Set TypeFilter
   }
   deriving (Eq, Ord)
 
-instance Show TypeClassParam where
-  show (TypeClassParam n v m f) = (showName v) ++ (showFilters f) where
+instance Show TypeCategoryParam where
+  show (TypeCategoryParam n v m f) = (showName v) ++ (showFilters f) where
     showName Contravariant = "-" ++ show n ++ showMissing
     showName Covariant     = "+" ++ show n ++ showMissing
     showName _             = show n ++ showMissing
@@ -89,63 +89,63 @@ instance Show TypeClassParam where
                        DisallowsMissing -> "!"
                        _ -> ""
 
-data TypeClassInstance =
-  TypeClassInstance {
+data TypeCategoryInstance =
+  TypeCategoryInstance {
     -- TODO: Is this needed? It's tedious to keep up to date. Maybe it can be
     -- used to prune the substitution list before traversing. A map might
     -- actually be easier to work with and update.
-    tciFreeParams :: [TypeClassParam], -- TODO: Make this a set?
-    tciClassName :: TypeClassName,
-    tciArgs :: [TypeClassArg]
+    tciFreeParams :: [TypeCategoryParam], -- TODO: Make this a set?
+    tciClassName :: TypeCategoryName,
+    tciArgs :: [TypeCategoryArg]
   }
   deriving (Eq, Ord)
 
-instance Show TypeClassInstance where
-  show (TypeClassInstance p n a) = show n ++ (showArgs a) ++ (showParams p) where
+instance Show TypeCategoryInstance where
+  show (TypeCategoryInstance p n a) = show n ++ (showArgs a) ++ (showParams p) where
     showArgs [] = ""
     showArgs as = "<" ++ intercalate "," (map show as) ++ ">"
     showParams [] = ""
     showParams ps = " " ++ show ps
 
 
-data TypeClassArg =
-  TypeClassArgType {
-    tcatInstance :: TypeClassInstance
+data TypeCategoryArg =
+  TypeCategoryArgType {
+    tcatInstance :: TypeCategoryInstance
   } |
-  TypeClassArgParam {
-    tcapParam :: TypeClassParam
+  TypeCategoryArgParam {
+    tcapParam :: TypeCategoryParam
   }
   deriving (Eq, Ord)
 
-instance Show TypeClassArg where
-  show (TypeClassArgType t)  = show t
-  show (TypeClassArgParam p) = show p
+instance Show TypeCategoryArg where
+  show (TypeCategoryArgType t)  = show t
+  show (TypeCategoryArgParam p) = show p
 
 
-data TypeClassGraph =
-  TypeClassGraph {
-    tcgParams :: TypeClassParamMap,
-    tcgGraph :: TypeClassMap,
-    tcgMissing :: TypeClassMissingMap,
-    tcgInherits :: TypeClassInheritsMap
+data TypeCategoryGraph =
+  TypeCategoryGraph {
+    tcgParams :: TypeCategoryParamMap,
+    tcgGraph :: TypeCategoryMap,
+    tcgMissing :: TypeCategoryMissingMap,
+    tcgRefines :: TypeCategoryRefinesMap
   }
   deriving (Eq)
 
-instance Show TypeClassGraph where
-  show (TypeClassGraph ps gs ms is) = showParams ++ "\n" ++
+instance Show TypeCategoryGraph where
+  show (TypeCategoryGraph ps gs ms is) = showParams ++ "\n" ++
                                       showGraph ++ "\n" ++
-                                      showInherits where
+                                      showRefines where
     showParams = "params {\n" ++ join params ++ "}"
     params = do
       (n,p) <- Map.toList ps
       ["  " ++ show n ++ " ~ " ++ show p ++ "\n"]
-    showGraph = "typeclass graph {\n" ++ join simpleInherits ++ "}"
-    simpleInherits = do
+    showGraph = "typeclass graph {\n" ++ join simpleRefines ++ "}"
+    simpleRefines = do
       (n,is) <- Map.toList gs
       ["  " ++ showWithMissing n ++ " -> [" ++
        intercalate "," (map showWithMissing $ Set.toList is) ++ "]\n"]
-    showInherits = "typeclass inherits {\n" ++ join fullInherits ++ "}"
-    fullInherits = do
+    showRefines = "typeclass refines {\n" ++ join fullRefines ++ "}"
+    fullRefines = do
       (n,ts) <- Map.toList is
       t <- Set.toList ts
       ["  " ++ show n ++ " -> " ++ show t ++ "\n"]
@@ -156,13 +156,13 @@ instance Show TypeClassGraph where
          else return (show n)
 
 
-type TypeClassParamMap = Map.Map TypeClassName [TypeClassParam]
+type TypeCategoryParamMap = Map.Map TypeCategoryName [TypeCategoryParam]
 
-type TypeClassMap = Map.Map TypeClassName (Set.Set TypeClassName)
+type TypeCategoryMap = Map.Map TypeCategoryName (Set.Set TypeCategoryName)
 
-type TypeClassInheritsMap = Map.Map TypeClassName (Set.Set TypeClassArg)
+type TypeCategoryRefinesMap = Map.Map TypeCategoryName (Set.Set TypeCategoryArg)
 
-type TypeClassMissingMap = Map.Map TypeClassName Missingness
+type TypeCategoryMissingMap = Map.Map TypeCategoryName Missingness
 
 
 requireAll :: [Either [e] a] -> Either [e] [a]
@@ -182,28 +182,28 @@ requireAny_ :: [Either [e] a] -> Either [e] ()
 requireAny_ = (>> return ()) . requireAny
 
 
-checkTypeClassCycles :: Map.Map String [String] -> (String, [String]) -> Either [String] ()
-checkTypeClassCycles m (n,is) = checked where
+checkTypeCategoryCycles :: Map.Map String [String] -> (String, [String]) -> Either [String] ()
+checkTypeCategoryCycles m (n,is) = checked where
   checked = requireAll_ $ map (checkRecursion n $ Set.fromList [n]) is
   checkRecursion n ts i = do
     if i `Set.member` ts
-       then Left ["Inheritance cycle found for type '" ++ n ++ "'"]
+       then Left ["Refineance cycle found for type '" ++ n ++ "'"]
        else return ()
-    maybeInherited <- return $ i `Map.lookup` m
-    inherited <- if isJust maybeInherited
-                    then return $ fromJust maybeInherited
-                    else Left ["Type '" ++ i ++ "' not found, used in '" ++ n ++ "'"]
+    maybeRefined <- return $ i `Map.lookup` m
+    refined <- if isJust maybeRefined
+                   then return $ fromJust maybeRefined
+                   else Left ["Type '" ++ i ++ "' not found, used in '" ++ n ++ "'"]
     -- TODO: This is quadratic and might not scale well.
-    requireAll_ $ map (checkRecursion i $ i `Set.insert` ts) inherited
+    requireAll_ $ map (checkRecursion i $ i `Set.insert` ts) refined
 
--- TODO: Also check for *identical* inherits (including params).
-getTypeClassInherits :: UnresolvedTypeClass -> Either [String] (String, [UnresolvedType])
-getTypeClassInherits u = inherits >>= \ts -> return (name, ts) where
+-- TODO: Also check for *identical* refines (including params).
+getTypeCategoryRefines :: UnresolvedTypeCategory -> Either [String] (String, [UnresolvedType])
+getTypeCategoryRefines u = refines >>= \ts -> return (name, ts) where
   name = utcName u
-  inherits = foldr collectInherits (return []) (utcInherits u)
-  collectInherits (UnresolvedTypeArg p) _ =
-    Left ["Type '" ++ name ++ "' cannot inherit param '" ++ p ++ "'"]
-  collectInherits t c = do
+  refines = foldr collectRefines (return []) (utcRefines u)
+  collectRefines (UnresolvedTypeArg p) _ =
+    Left ["Type '" ++ name ++ "' cannot refine param '" ++ p ++ "'"]
+  collectRefines t c = do
     l <- c
     return $ t:l
 
@@ -212,12 +212,12 @@ checkDuplicates xs = requireAll_ $ map check $ group xs where
   check (x:y:_) = Left ["Duplicate definition of '" ++ show x ++ "'"]
   check _       = return ()
 
-checkAllTypeClassCycles :: [UnresolvedTypeClass] -> Either [String] ()
-checkAllTypeClassCycles us = do
-  types <- requireAll $ map getTypeClassInherits us
-  typeTuples <- return $ map (second (map utTypeClass)) types
+checkAllTypeCategoryCycles :: [UnresolvedTypeCategory] -> Either [String] ()
+checkAllTypeCategoryCycles us = do
+  types <- requireAll $ map getTypeCategoryRefines us
+  typeTuples <- return $ map (second (map utTypeCategory)) types
   typeMap <- return $ Map.fromList typeTuples
-  requireAll_ $ map (checkTypeClassCycles typeMap) typeTuples
+  requireAll_ $ map (checkTypeCategoryCycles typeMap) typeTuples
 
 checkMissingMatch :: Missingness -> Missingness -> Either [String] ()
 checkMissingMatch m1 m2 =
@@ -225,49 +225,49 @@ checkMissingMatch m1 m2 =
       then return ()
       else Left ["Missingness " ++ show m1 ++ " does not allow " ++ show m2]
 
-updateTypeClassMap :: (TypeClassName, TypeClassName) -> TypeClassMap -> TypeClassMap
-updateTypeClassMap (f, t)  m = updated where
+updateTypeCategoryMap :: (TypeCategoryName, TypeCategoryName) -> TypeCategoryMap -> TypeCategoryMap
+updateTypeCategoryMap (f, t)  m = updated where
   old = Map.findWithDefault Set.empty f m
   updated = Map.insert f (t `Set.insert` old) m
 
-initialTypeClassParamMap :: [UnresolvedTypeClass] -> Either [String] TypeClassParamMap
-initialTypeClassParamMap us = allParams where
+initialTypeCategoryParamMap :: [UnresolvedTypeCategory] -> Either [String] TypeCategoryParamMap
+initialTypeCategoryParamMap us = allParams where
   allParams = do
     checked <- requireAll $ map collectParams us
     return $ Map.fromList checked
   collectParams u = do
     checkDuplicates $ map tcpnFromUTP $ utcParams u
     return (tcnFromUTC u, map convertParam $ utcParams u)
-  convertParam p = TypeClassParam {
+  convertParam p = TypeCategoryParam {
     tcpName = tcpnFromUTP p,
     tcpVariance = utpVariance p,
     tcpMissing = UnspecifiedMissing,
     tcpFilters = Set.empty -- Resolved later on.
   }
 
--- TODO: Update this and updateTypeClassGraph so that an additional "module" of
+-- TODO: Update this and updateTypeCategoryGraph so that an additional "module" of
 -- unresolved type classes can be appended to the graph.
-createTypeClassGraph :: [UnresolvedTypeClass] -> Either [String] TypeClassGraph
-createTypeClassGraph us = do
-  checkAllTypeClassCycles us
+createTypeCategoryGraph :: [UnresolvedTypeCategory] -> Either [String] TypeCategoryGraph
+createTypeCategoryGraph us = do
+  checkAllTypeCategoryCycles us
   checkDuplicates $ map utcName us
   edges <- return $ do
     u <- us
-    t <- utcInherits u
+    t <- utcRefines u
     return (tcnFromUTC u, tcnFromUT t)
   defaultMap <- return $ Map.fromList $ zip (map tcnFromUTC us) (repeat Set.empty)
-  initialParams <- initialTypeClassParamMap us
+  initialParams <- initialTypeCategoryParamMap us
   missingMap <- return $ Map.fromList $ zip (map tcnFromUTC us) (map utcMissing us)
-  initialGraph <- return TypeClassGraph {
+  initialGraph <- return TypeCategoryGraph {
       tcgParams = initialParams,
-      tcgGraph = foldr updateTypeClassMap defaultMap edges,
+      tcgGraph = foldr updateTypeCategoryMap defaultMap edges,
       tcgMissing = missingMap,
-      tcgInherits = Map.empty
+      tcgRefines = Map.empty
     }
-  updateTypeClassGraph initialGraph us
+  updateTypeCategoryGraph initialGraph us
 
-updateTypeClassGraph :: TypeClassGraph -> [UnresolvedTypeClass] -> Either [String] TypeClassGraph
-updateTypeClassGraph g us = updated where
+updateTypeCategoryGraph :: TypeCategoryGraph -> [UnresolvedTypeCategory] -> Either [String] TypeCategoryGraph
+updateTypeCategoryGraph g us = updated where
   oldParams = tcgParams g
   resolveFilters t fs = do
     oldParam <- return $ t `Map.lookup` oldParams
@@ -275,14 +275,14 @@ updateTypeClassGraph g us = updated where
        then foldM singleFilter (fromJust oldParam) fs
        else Left ["Type '" ++ show t ++ "' not found"]
   singleFilter fs f@(UnresolvedParamFilter _ t) = do
-    filter <- tryTypeClassInstance True g Map.empty UnspecifiedMissing Set.empty t
+    filter <- tryTypeCategoryInstance True g Map.empty UnspecifiedMissing Set.empty t
     checkParam (tcpnFromUPF f) (snd filter)
     filterType <- getFilterType (fst filter)
     updateParamFilter (tcpnFromUPF f) filterType fs
   singleFilter fs f@(UnresolvedParamMissing _ m) = do
     updateParamMissing (tcpnFromUPF f) m fs
   -- Make sure that the filter isn't another param.
-  getFilterType (TypeClassArgType t) = return t
+  getFilterType (TypeCategoryArgType t) = return t
   getFilterType _ = Left ["Filter must be a type, not a param"]
   -- Ensures that the free params in the filter match what is expected.
   checkParam n [] = return ()
@@ -297,7 +297,7 @@ updateTypeClassGraph g us = updated where
       rest <- updateParamFilter n a ps
       return (p:rest)
     | otherwise = return (update:ps) where
-      update = TypeClassParam {
+      update = TypeCategoryParam {
           tcpName = tcpName p,
           tcpVariance = tcpVariance p,
           tcpMissing = tcpMissing p,
@@ -312,7 +312,7 @@ updateTypeClassGraph g us = updated where
     | (tcpMissing p) /= UnspecifiedMissing =
       Left ["Missingness for param '" ++ show n ++ "' was set more than once"]
     | otherwise = return (update:ps) where
-      update = TypeClassParam {
+      update = TypeCategoryParam {
           tcpName = tcpName p,
           tcpVariance = tcpVariance p,
           tcpMissing = m,
@@ -323,40 +323,40 @@ updateTypeClassGraph g us = updated where
     realFilters <- resolveFilters (tcnFromUTC u) (utcFilters u)
     return $ Map.insert (tcnFromUTC u) realFilters us
   -- Update the inheritance graph.
-  updateInherit g2 us u = do
+  updateRefine g2 us u = do
     params <- return $ Map.findWithDefault [] (tcnFromUTC u) (tcgParams g2)
     extras <- return $ Map.fromList $ map (\p -> (tcpName p,p)) params
-    inherits <- foldM (getInherit g2 extras) [] (utcInherits u)
-    return $ (tcnFromUTC u,Set.fromList inherits):us
-  getInherit g2 e is i = do
+    refines <- foldM (getRefine g2 extras) [] (utcRefines u)
+    return $ (tcnFromUTC u,Set.fromList refines):us
+  getRefine g2 e is i = do
     -- Filters cannot be checked here because that depends on the graph having
-    -- updated inherits. Filters are validated later with validateParamFilters.
-    inherit <- tryTypeClassInstance False g2 e UnspecifiedMissing Set.empty i
-    return (fst inherit:is)
+    -- updated refines. Filters are validated later with validateParamFilters.
+    refine <- tryTypeCategoryInstance False g2 e UnspecifiedMissing Set.empty i
+    return (fst refine:is)
   -- The fully-updated graph.
   updated = do
     newParams <- foldM updateParam oldParams us
-    partial <- return $ TypeClassGraph {
+    partial <- return $ TypeCategoryGraph {
         tcgParams = newParams,
         tcgGraph = tcgGraph g,
         tcgMissing = tcgMissing g,
-        tcgInherits = Map.empty
+        tcgRefines = Map.empty
       }
-    newInherits <- foldM (updateInherit partial) [] us
-    full <- return $ TypeClassGraph {
+    newRefines <- foldM (updateRefine partial) [] us
+    full <- return $ TypeCategoryGraph {
         tcgParams = newParams,
         tcgGraph = tcgGraph g,
         tcgMissing = tcgMissing g,
-        tcgInherits = Map.fromList newInherits
+        tcgRefines = Map.fromList newRefines
       }
     validateParamVariance full
     validateParamFilters full
     validateParamMissing full
     return full
 
-validateParamVariance :: TypeClassGraph -> Either [String] ()
+validateParamVariance :: TypeCategoryGraph -> Either [String] ()
 validateParamVariance g = checked where
-  checked = requireAll_ $ map checkVariances (Map.toList $ tcgInherits g)
+  checked = requireAll_ $ map checkVariances (Map.toList $ tcgRefines g)
   checkVariances (t,is) = requireAll_ $ map (checkVariance t) (Set.toList is)
   checkVariance t i = do
     -- Params available from the typeclass doing the inheriting.
@@ -377,9 +377,9 @@ validateParamVariance g = checked where
                   show v1 ++ " in '" ++ show t ++ "' -> '" ++ show i ++ "'"]
   mapParams = map (\p -> (tcpName p,tcpVariance p))
 
-validateParamFilters :: TypeClassGraph -> Either [String] ()
+validateParamFilters :: TypeCategoryGraph -> Either [String] ()
 validateParamFilters g = checked where
-  checked = requireAll_ $ map checkFilters (Map.toList $ tcgInherits g)
+  checked = requireAll_ $ map checkFilters (Map.toList $ tcgRefines g)
   checkFilters (t,is) = requireAll_ $ map (checkFilter t) (Set.toList is)
   checkFilter t i = do
     -- Params available from the typeclass doing the inheriting.
@@ -392,13 +392,13 @@ validateParamFilters g = checked where
     checkAllFilters g message required freeParams
   mapParams = map (\p -> (tcpName p,tcpFilters p))
 
-validateParamMissing :: TypeClassGraph -> Either [String] ()
+validateParamMissing :: TypeCategoryGraph -> Either [String] ()
 validateParamMissing g = checked where
   checked = do
-    requireAll_ $ map checkInheritMissings (Map.toList $ tcgGraph g)
-    requireAll_ $ map checkParamMissings (Map.toList $ tcgInherits g)
-  checkInheritMissings (t,is) = requireAll_ $ map (checkInheritMissing t) (Set.toList is)
-  checkInheritMissing t i = do
+    requireAll_ $ map checkRefineMissings (Map.toList $ tcgGraph g)
+    requireAll_ $ map checkParamMissings (Map.toList $ tcgRefines g)
+  checkRefineMissings (t,is) = requireAll_ $ map (checkRefineMissing t) (Set.toList is)
+  checkRefineMissing t i = do
     -- TODO: Missing value should be an error.
     m1 <- return $ Map.findWithDefault DisallowsMissing i (tcgMissing g)
     m2 <- return $ Map.findWithDefault DisallowsMissing t (tcgMissing g)
@@ -414,9 +414,9 @@ validateParamMissing g = checked where
     checkAllMissings required freeParams
   mapParams = map (\p -> (tcpName p,tcpMissing p))
 
-checkAllFilters :: TypeClassGraph -> String ->
-                   Map.Map TypeClassParamName (Set.Set TypeFilter) ->
-                   [(TypeClassParamName, (Set.Set TypeFilter))] -> Either [String] ()
+checkAllFilters :: TypeCategoryGraph -> String ->
+                   Map.Map TypeCategoryParamName (Set.Set TypeFilter) ->
+                   [(TypeCategoryParamName, (Set.Set TypeFilter))] -> Either [String] ()
 checkAllFilters g e m ps = requireAll_ $ map checkFilter ps where
   checkFilter (p,fs) = do
     f0 <- return $ p `Map.lookup` m
@@ -429,10 +429,10 @@ checkAllFilters g e m ps = requireAll_ $ map checkFilter ps where
       (Left ["Param '" ++ show p ++ "' does not support required filter " ++ show a ++ e])
       : (map (check a) rs)
   check a r = guessInstanceConversion g Covariant
-                (TypeClassArgType $ tfType r) (TypeClassArgType $ tfType a)
+                (TypeCategoryArgType $ tfType r) (TypeCategoryArgType $ tfType a)
 
-checkAllMissings :: Map.Map TypeClassParamName Missingness ->
-                    [(TypeClassParamName, Missingness)] -> Either [String] ()
+checkAllMissings :: Map.Map TypeCategoryParamName Missingness ->
+                    [(TypeCategoryParamName, Missingness)] -> Either [String] ()
 checkAllMissings m ps = requireAll_ $ map checkMissing ps where
   checkMissing (p,m1) = do
     m2 <- return $ p `Map.lookup` m
@@ -441,14 +441,14 @@ checkAllMissings m ps = requireAll_ $ map checkMissing ps where
       then m1 `checkMissingMatch` (fromJust m2)
       else Left ["Param '" ++ show p ++ "' does not exist"]
 
-flattenTypeClassParams :: [TypeClassParam] -> [TypeClassParam]
-flattenTypeClassParams = map snd . Map.toList . foldr process Map.empty where
+flattenTypeCategoryParams :: [TypeCategoryParam] -> [TypeCategoryParam]
+flattenTypeCategoryParams = map snd . Map.toList . foldr process Map.empty where
   process x m = update previous where
     name = tcpName x
     previous = Map.lookup name m
     update Nothing  = Map.insert name x m
     update (Just y) = flip (Map.insert name) m $
-      TypeClassParam {
+      TypeCategoryParam {
         tcpName = name,
         tcpVariance = (tcpVariance x) `composeVariance` (tcpVariance y),
         -- TODO: Check for conflicts here.
@@ -457,39 +457,39 @@ flattenTypeClassParams = map snd . Map.toList . foldr process Map.empty where
       }
 
 -- NOTE: This only works because filters can only have one free param each.
-renameFilters :: TypeClassParamName -> Set.Set TypeFilter -> Set.Set TypeFilter
+renameFilters :: TypeCategoryParamName -> Set.Set TypeFilter -> Set.Set TypeFilter
 renameFilters n fs = Set.fromList $ map renameFilter $ Set.toList fs where
   renameFilter f = TypeFilter {
       tfType = renameTypeInstance $ tfType f
     }
-  renameTypeInstance t = TypeClassInstance {
+  renameTypeInstance t = TypeCategoryInstance {
       tciFreeParams = map renameParam $ tciFreeParams t,
       tciClassName = tciClassName t,
       tciArgs = map renameArg $ tciArgs t
     }
-  renameParam p = TypeClassParam {
+  renameParam p = TypeCategoryParam {
       tcpName = n,
       tcpVariance = tcpVariance p,
       tcpMissing = tcpMissing p,
       tcpFilters = renameFilters n $ tcpFilters p
     }
-  renameArg (TypeClassArgType t) = TypeClassArgType {
+  renameArg (TypeCategoryArgType t) = TypeCategoryArgType {
       tcatInstance = renameTypeInstance t
     }
-  renameArg (TypeClassArgParam p) = TypeClassArgParam {
+  renameArg (TypeCategoryArgParam p) = TypeCategoryArgParam {
       tcapParam = renameParam p
     }
 
-tryTypeClassInstance :: Bool -> TypeClassGraph ->
-                        Map.Map TypeClassParamName TypeClassParam ->
+tryTypeCategoryInstance :: Bool -> TypeCategoryGraph ->
+                        Map.Map TypeCategoryParamName TypeCategoryParam ->
                         Missingness ->
                         Set.Set TypeFilter ->
                         UnresolvedType ->
-                        Either [String] (TypeClassArg, [TypeClassParam])
-tryTypeClassInstance c g pm m fs a@(UnresolvedTypeArg _) = resolved where
+                        Either [String] (TypeCategoryArg, [TypeCategoryParam])
+tryTypeCategoryInstance c g pm m fs a@(UnresolvedTypeArg _) = resolved where
   resolved = do
     if c
-      then checkInstanceConversion g (TypeClassArgParam external) (TypeClassArgParam param) >> return ()
+      then checkInstanceConversion g (TypeCategoryArgParam external) (TypeCategoryArgParam param) >> return ()
       else return ()
     return (arg, [param])
   -- TODO: Make it a failure for this to be not found?
@@ -501,26 +501,26 @@ tryTypeClassInstance c g pm m fs a@(UnresolvedTypeArg _) = resolved where
     param <- (tcpnFromUTA a) `Map.lookup` pm
     return (tcpMissing param)
   newFilters = renameFilters (tcpnFromUTA a) fs
-  external = TypeClassParam {
+  external = TypeCategoryParam {
       tcpName = tcpnFromUTA a,
       tcpVariance = IgnoreVariance,
       tcpMissing = missing,
       tcpFilters = extras
     }
-  param = TypeClassParam {
+  param = TypeCategoryParam {
       tcpName = tcpnFromUTA a,
-      -- This variance is in the context of this particular TypeClassArg.
+      -- This variance is in the context of this particular TypeCategoryArg.
       tcpVariance = IgnoreVariance,
       tcpMissing = m,
       tcpFilters = newFilters `Set.union` extras
     }
-  arg = TypeClassArgParam {
+  arg = TypeCategoryArgParam {
       tcapParam = param
     }
-tryTypeClassInstance c g pm m fs u = result where
-  name = utTypeClass u
+tryTypeCategoryInstance c g pm m fs u = result where
+  name = utTypeCategory u
   properName = tcnFromUT u
-  updateVariance v p = TypeClassParam {
+  updateVariance v p = TypeCategoryParam {
       tcpName = tcpName p,
       tcpVariance = v `composeVariance` (tcpVariance p),
       tcpMissing = tcpMissing p,
@@ -530,48 +530,48 @@ tryTypeClassInstance c g pm m fs u = result where
     | length ps > length us = Left ["Too few args for type '" ++ name ++ "'"]
     | length ps < length us = Left ["Too many args for type '" ++ name ++ "'"]
     | otherwise = return ()
-  collectTypeClassArgs ps us = do
+  collectTypeCategoryArgs ps us = do
     checkSize ps us
     aps <- requireAll $ map collectArgs (zip ps us)
     return $ (map fst aps,join $ map snd aps)
   collectArgs (p,u) = do
-    (arg,newParams) <- tryTypeClassInstance c g pm (tcpMissing p) (tcpFilters p) u
+    (arg,newParams) <- tryTypeCategoryInstance c g pm (tcpMissing p) (tcpFilters p) u
     checkArgMissing p arg
     updatedParams <- return $ map (updateVariance $ tcpVariance p) newParams
     return (arg,updatedParams)
-  checkArgMissing p (TypeClassArgType t) = do
+  checkArgMissing p (TypeCategoryArgType t) = do
     missing <- return $ Map.findWithDefault DisallowsMissing (tciClassName t) (tcgMissing g)
     (tcpMissing p) `checkMissingMatch` missing
-  checkArgMissing p1 (TypeClassArgParam p2) =
+  checkArgMissing p1 (TypeCategoryArgParam p2) =
     (tcpMissing p1) `checkMissingMatch` (tcpMissing p2)
   result = do
     typeParams <- return $ properName `Map.lookup` (tcgParams g)
     if isJust typeParams
       then return ()
       else Left ["Type class '" ++ name ++ "' not found"]
-    (args, params) <- collectTypeClassArgs (fromJust typeParams) (utParamArgs u)
-    resolved <- return $ TypeClassInstance {
-        tciFreeParams = flattenTypeClassParams params,
+    (args, params) <- collectTypeCategoryArgs (fromJust typeParams) (utParamArgs u)
+    resolved <- return $ TypeCategoryInstance {
+        tciFreeParams = flattenTypeCategoryParams params,
         tciClassName = properName,
         tciArgs = args
       }
     if c
        then checkInstanceFilters g resolved
        else return ()
-    return (TypeClassArgType resolved,params)
+    return (TypeCategoryArgType resolved,params)
 
-checkTypeFilters :: TypeClassGraph -> [TypeClassParam] -> [TypeClassArg] -> Either [String] ()
+checkTypeFilters :: TypeCategoryGraph -> [TypeCategoryParam] -> [TypeCategoryArg] -> Either [String] ()
 checkTypeFilters g ps as = requireAll_ $ map check (zip ps as) where
   check (p,a) = requireAll_ $ map (checkFilters (tcpName p,a) a) $
-                  map (TypeClassArgType . tfType) $ Set.toList $ tcpFilters p
+                  map (TypeCategoryArgType . tfType) $ Set.toList $ tcpFilters p
   checkFilters s a f = do
     -- Sub a into the filter, since we're also subbing on the left side. For
     -- example, with x = N<y> the check x -> T<x> becomes N<y> -> T<N<y>>.
-    (subbed,_) <- uncheckedSubTypeClassArgs g (Map.fromList [s]) f
+    (subbed,_) <- uncheckedSubTypeCategoryArgs g (Map.fromList [s]) f
     guessInstanceConversion g Covariant a subbed
 
-checkInstanceFilters :: TypeClassGraph -> TypeClassInstance -> Either [String] ()
-checkInstanceFilters g (TypeClassInstance _ t as) = checked where
+checkInstanceFilters :: TypeCategoryGraph -> TypeCategoryInstance -> Either [String] ()
+checkInstanceFilters g (TypeCategoryInstance _ t as) = checked where
   allParams = tcgParams g
   checked = do
     params <- return $ t `Map.lookup` allParams
@@ -579,39 +579,39 @@ checkInstanceFilters g (TypeClassInstance _ t as) = checked where
        then checkTypeFilters g (fromJust params) as
        else Left ["Type '" ++ show t ++ "' does not exist"]
 
-uncheckedSubTypeClassArgs :: TypeClassGraph ->
-                             Map.Map TypeClassParamName TypeClassArg ->
-                             TypeClassArg ->
-                             Either [String] (TypeClassArg, [TypeClassParam])
-uncheckedSubTypeClassArgs g ps = update (Map.toList ps) where
+uncheckedSubTypeCategoryArgs :: TypeCategoryGraph ->
+                             Map.Map TypeCategoryParamName TypeCategoryArg ->
+                             TypeCategoryArg ->
+                             Either [String] (TypeCategoryArg, [TypeCategoryParam])
+uncheckedSubTypeCategoryArgs g ps = update (Map.toList ps) where
   update [] t = return (t,getFreeParams t)
-  update ((p,a):ps) t@(TypeClassArgParam pt) =
+  update ((p,a):ps) t@(TypeCategoryArgParam pt) =
     if (tcpName pt) /= p
        then update ps t
        else do
          checkMissing pt a
          return (a,getFreeParams a)
-  update ps (TypeClassArgType t) = do
+  update ps (TypeCategoryArgType t) = do
     prunedArgs <- return $ Map.fromList $ ps `pruneArgs` (tciFreeParams t)
     (newArgs,newFree) <- foldr (subAll prunedArgs) (return ([],[])) (tciArgs t)
     updatedParams <- return $ (tciFreeParams t) `pruneParams` (Map.fromList ps)
     -- Append newFree after pruning in case an update added back the same param.
-    newParams <- return $ flattenTypeClassParams $ updatedParams ++ newFree
-    updated <- return $ TypeClassArgType $ TypeClassInstance {
+    newParams <- return $ flattenTypeCategoryParams $ updatedParams ++ newFree
+    updated <- return $ TypeCategoryArgType $ TypeCategoryInstance {
         tciFreeParams = newParams,
         tciClassName = tciClassName t,
         tciArgs = newArgs
       }
     return (updated,getFreeParams updated)
-  checkMissing p1 (TypeClassArgParam p2) = (tcpMissing p1) `checkMissingMatch` (tcpMissing p2)
-  checkMissing p (TypeClassArgType t) = do
+  checkMissing p1 (TypeCategoryArgParam p2) = (tcpMissing p1) `checkMissingMatch` (tcpMissing p2)
+  checkMissing p (TypeCategoryArgType t) = do
     missing <- return $ Map.findWithDefault UnspecifiedMissing (tciClassName t) (tcgMissing g)
     (tcpMissing p) `checkMissingMatch` missing
-  getFreeParams (TypeClassArgParam p) = [p]
-  getFreeParams (TypeClassArgType t)  = tciFreeParams t
+  getFreeParams (TypeCategoryArgParam p) = [p]
+  getFreeParams (TypeCategoryArgType t)  = tciFreeParams t
   subAll ps t ts = do
     (prevNew,prevFree) <- ts
-    (new,freeParams) <- uncheckedSubTypeClassArgs g ps t
+    (new,freeParams) <- uncheckedSubTypeCategoryArgs g ps t
     return (new:prevNew,freeParams ++ prevFree)
   -- Remove provided args from free params.
   pruneParams os ps = do
@@ -624,24 +624,24 @@ uncheckedSubTypeClassArgs g ps = update (Map.toList ps) where
     | any ((p ==) . tcpName) os = (p,a) : (pruneArgs ps os)
     | otherwise = pruneArgs ps os
 
-getTypeClassPaths :: TypeClassInheritsMap -> Variance -> TypeClassName -> TypeClassName -> [[TypeClassArg]]
-getTypeClassPaths m Contravariant x y = getTypeClassPaths m Covariant y x
-getTypeClassPaths m Covariant x y
+getTypeCategoryPaths :: TypeCategoryRefinesMap -> Variance -> TypeCategoryName -> TypeCategoryName -> [[TypeCategoryArg]]
+getTypeCategoryPaths m Contravariant x y = getTypeCategoryPaths m Covariant y x
+getTypeCategoryPaths m Covariant x y
   | x == y = [[]] -- Empty path, not a lack of paths.
   | otherwise = expanded where
     expanded = do
       z <- Set.toList $ Map.findWithDefault Set.empty x m
-      ts <- getTypeClassPaths m Covariant (tciClassName $ tcatInstance z) y
+      ts <- getTypeCategoryPaths m Covariant (tciClassName $ tcatInstance z) y
       return (z:ts)
-getTypeClassPaths _ _ x y
+getTypeCategoryPaths _ _ x y
   | x == y = [[]] -- Empty path, not a lack of paths.
   | otherwise = []
 
 -- TODO: use foldM here.
-flattenPath :: TypeClassGraph -> TypeClassArg -> [TypeClassArg] -> Either [String] TypeClassArg
-flattenPath _ (TypeClassArgParam _)   _     = Left ["Cannot convert a param"]
-flattenPath _ t@(TypeClassArgType _) []     = return t
-flattenPath g (TypeClassArgType x)   (y:ys) = flattened where
+flattenPath :: TypeCategoryGraph -> TypeCategoryArg -> [TypeCategoryArg] -> Either [String] TypeCategoryArg
+flattenPath _ (TypeCategoryArgParam _)   _     = Left ["Cannot convert a param"]
+flattenPath _ t@(TypeCategoryArgType _) []     = return t
+flattenPath g (TypeCategoryArgType x)   (y:ys) = flattened where
   allParams = tcgParams g
   flattened = do
     params <- return $ (tciClassName x) `Map.lookup` allParams
@@ -649,42 +649,42 @@ flattenPath g (TypeClassArgType x)   (y:ys) = flattened where
        then return ()
        else Left ["Type class '" ++ show (tciClassName x) ++ "' not found"]
     args <- return $ Map.fromList $ zip (map tcpName $ fromJust params) (tciArgs x)
-    (subbed,_) <- uncheckedSubTypeClassArgs g args y
+    (subbed,_) <- uncheckedSubTypeCategoryArgs g args y
     flattenPath g subbed ys
 
-guessInstanceConversion :: TypeClassGraph -> Variance -> TypeClassArg -> TypeClassArg -> Either [String] TypeClassArg
+guessInstanceConversion :: TypeCategoryGraph -> Variance -> TypeCategoryArg -> TypeCategoryArg -> Either [String] TypeCategoryArg
 guessInstanceConversion g Contravariant t1 t2 =
   guessInstanceConversion g Covariant t2 t1
-guessInstanceConversion g _ t1@(TypeClassArgType _)  t2@(TypeClassArgParam _) =
+guessInstanceConversion g _ t1@(TypeCategoryArgType _)  t2@(TypeCategoryArgParam _) =
   checkInstanceConversion g t1 t2 >>= return
-guessInstanceConversion g _ t1@(TypeClassArgParam _) t2@(TypeClassArgType _)  =
+guessInstanceConversion g _ t1@(TypeCategoryArgParam _) t2@(TypeCategoryArgType _)  =
   checkInstanceConversion g t1 t2 >>= return
-guessInstanceConversion g _ t1@(TypeClassArgParam p1) t2@(TypeClassArgParam p2)
+guessInstanceConversion g _ t1@(TypeCategoryArgParam p1) t2@(TypeCategoryArgParam p2)
   | (tcpName p1) == (tcpName p2) = checkInstanceConversion g t1 t2 >>= return
   | otherwise = Left ["Mismatch between params"]
-guessInstanceConversion g v t1@(TypeClassArgType x) t2@(TypeClassArgType y) = checked where
+guessInstanceConversion g v t1@(TypeCategoryArgType x) t2@(TypeCategoryArgType y) = checked where
   allParams = tcgParams g
-  allInherits = tcgInherits g
+  allRefines = tcgRefines g
   checked = do
-    paths <- return $ getTypeClassPaths allInherits v (tciClassName x) (tciClassName y)
+    paths <- return $ getTypeCategoryPaths allRefines v (tciClassName x) (tciClassName y)
     requireAny $
       (Left ["No conversions found from '" ++ show t1 ++ "' to '" ++ show t2 ++ "'"])
       : (map (checkConversion . flattenPath g t1) paths)
   checkConversion = (>>= flip (checkInstanceConversion g) t2)
 
-checkInstanceConversion :: TypeClassGraph -> TypeClassArg -> TypeClassArg -> Either [String] TypeClassArg
+checkInstanceConversion :: TypeCategoryGraph -> TypeCategoryArg -> TypeCategoryArg -> Either [String] TypeCategoryArg
 checkInstanceConversion g t1 t2 = checked where
   checked = do
     checkMissing t1 t2
     checkConversion t1 t2
-  checkMissing (TypeClassArgType t) (TypeClassArgParam p) = do
+  checkMissing (TypeCategoryArgType t) (TypeCategoryArgParam p) = do
     m1 <- return $ tcpMissing p
     m2 <- return $ Map.findWithDefault UnspecifiedMissing (tciClassName t) (tcgMissing g)
     m1 `checkMissingMatch` m2
-  checkMissing (TypeClassArgParam p2) (TypeClassArgParam p1) =
+  checkMissing (TypeCategoryArgParam p2) (TypeCategoryArgParam p1) =
     (tcpMissing p1) `checkMissingMatch` (tcpMissing p2)
   checkMissing _ _ = return ()
-  checkConversion t1 t2@(TypeClassArgParam p2) = checked where
+  checkConversion t1 t2@(TypeCategoryArgParam p2) = checked where
     checked = do
       requireAll_ $ map fullCheck $ Set.toList $ tcpFilters p2
       -- TODO: Can't decide if this should be t1 if t1 is a param. t1 will have
@@ -692,8 +692,8 @@ checkInstanceConversion g t1 t2 = checked where
       -- Maybe the filters should always be limited to what is required by the
       -- typeclass, rather than the current restrictions on the param.
       return t2
-    fullCheck f = checkInstanceConversion g t1 (TypeClassArgType $ tfType f)
-  checkConversion t1@(TypeClassArgParam p) t2@(TypeClassArgType y) = checked where
+    fullCheck f = checkInstanceConversion g t1 (TypeCategoryArgType $ tfType f)
+  checkConversion t1@(TypeCategoryArgParam p) t2@(TypeCategoryArgType y) = checked where
     checked = requireAny $
       (Left ["No filter guarantees conversion: " ++ show (Set.toList $ tcpFilters p) ++ " vs " ++ show t2])
       : (map check (Set.toList $ tcpFilters p))
@@ -702,17 +702,17 @@ checkInstanceConversion g t1 t2 = checked where
       -- because inserting the param into its own filters in some cases actually
       -- *removes* nested filter information. (For example, if the param is
       -- inherited from a type class.)
-      checked <- return $ guessInstanceConversion g Covariant (TypeClassArgType $ tfType f) t2
+      checked <- return $ guessInstanceConversion g Covariant (TypeCategoryArgType $ tfType f) t2
       if isRight checked
         -- NOTE: This returns the result of conversion!
         then checked
         else do
           -- Insert the full param into its own filters in case multiple filters
           -- are needed at once inside of any one of the required filters.
-          (updated,_) <- uncheckedSubTypeClassArgs g (Map.fromList [(tcpName p,t1)]) (TypeClassArgType $ tfType f)
+          (updated,_) <- uncheckedSubTypeCategoryArgs g (Map.fromList [(tcpName p,t1)]) (TypeCategoryArgType $ tfType f)
           -- NOTE: This returns the result of conversion!
           guessInstanceConversion g Covariant updated t2
-  checkConversion (TypeClassArgType x) t@(TypeClassArgType y)
+  checkConversion (TypeCategoryArgType x) t@(TypeCategoryArgType y)
     | x == y = return t
     | tciClassName x /= tciClassName y =
       Left ["Typeclass mismatch: '" ++ show (tciClassName x) ++ "' != '" ++ show (tciClassName y) ++ "'"]
@@ -723,7 +723,7 @@ checkInstanceConversion g t1 t2 = checked where
       checked Nothing   = Left ["Type class '" ++ show (tciClassName x) ++ "' not found"]
       checked (Just ps) = do
         updated <- requireAll $ map check (zip3 (map tcpVariance ps) (tciArgs x) (tciArgs y))
-        return $ TypeClassArgType $ TypeClassInstance {
+        return $ TypeCategoryArgType $ TypeCategoryInstance {
             -- TODO: This should be updated from the args.
             tciFreeParams = tciFreeParams y,
             tciClassName = tciClassName y,
@@ -732,16 +732,16 @@ checkInstanceConversion g t1 t2 = checked where
       check (v,x,y) = guessInstanceConversion g v x y
 
 -- TODO: This is temporary.
-resolveTypeClassInstance :: TypeClassGraph -> Maybe String -> UnresolvedType -> Either [String] (TypeClassArg, [TypeClassParam])
-resolveTypeClassInstance g Nothing  u = tryTypeClassInstance True g Map.empty UnspecifiedMissing Set.empty u
-resolveTypeClassInstance g (Just t) u = do
-  params <- return $ (TypeClassName t) `Map.lookup` (tcgParams g)
+resolveTypeCategoryInstance :: TypeCategoryGraph -> Maybe String -> UnresolvedType -> Either [String] (TypeCategoryArg, [TypeCategoryParam])
+resolveTypeCategoryInstance g Nothing  u = tryTypeCategoryInstance True g Map.empty UnspecifiedMissing Set.empty u
+resolveTypeCategoryInstance g (Just t) u = do
+  params <- return $ (TypeCategoryName t) `Map.lookup` (tcgParams g)
   if isJust params
      then return ()
      else Left ["Unknown type class '" ++ t ++ "'"]
   mapped <- return $ Map.fromList $ map (\p -> (tcpName p,p)) (fromJust params)
-  tryTypeClassInstance True g mapped UnspecifiedMissing Set.empty u
+  tryTypeCategoryInstance True g mapped UnspecifiedMissing Set.empty u
 
 -- TODO: This is temporary.
-checkConversion :: TypeClassGraph -> (TypeClassArg, [TypeClassParam]) -> (TypeClassArg, [TypeClassParam]) -> Either [String] ()
+checkConversion :: TypeCategoryGraph -> (TypeCategoryArg, [TypeCategoryParam]) -> (TypeCategoryArg, [TypeCategoryParam]) -> Either [String] ()
 checkConversion g x y = guessInstanceConversion g Covariant (fst x) (fst y) >> return ()
