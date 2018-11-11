@@ -17,8 +17,8 @@ import Data.Maybe (fromJust, isJust)
 import qualified Data.Map as Map
 import qualified Data.Set as Set
 
+import TypesBase
 import Unresolved
-import Variance
 
 
 data TypeCategoryName =
@@ -503,14 +503,14 @@ tryTypeCategoryInstance c g pm m fs a@(UnresolvedTypeArg _) = resolved where
   newFilters = renameFilters (tcpnFromUTA a) fs
   external = TypeCategoryParam {
       tcpName = tcpnFromUTA a,
-      tcpVariance = IgnoreVariance,
+      tcpVariance = Covariant,
       tcpMissing = missing,
       tcpFilters = extras
     }
   param = TypeCategoryParam {
       tcpName = tcpnFromUTA a,
       -- This variance is in the context of this particular TypeCategoryArg.
-      tcpVariance = IgnoreVariance,
+      tcpVariance = Covariant,
       tcpMissing = m,
       tcpFilters = newFilters `Set.union` extras
     }

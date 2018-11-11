@@ -7,9 +7,14 @@ module TypesBase (
   GeneralType(..),
   Mergeable(..),
   MergeType(..),
+  Missingness(..),
   ParamSet(..),
+  Variance(..),
   checkParamsMatch,
   checkGeneralType,
+  composeVariance,
+  paramAllowsMissing,
+  paramAllowsVariance,
 ) where
 
 
@@ -49,6 +54,42 @@ newtype ParamSet a =
     psParams :: [a]
   }
   deriving (Eq,Show)
+
+data Variance =
+  Covariant |
+  Contravariant |
+  Invariant
+  deriving (Eq,Ord,Show)
+
+composeVariance :: Variance -> Variance -> Variance
+composeVariance Covariant      Covariant      = Covariant
+composeVariance Contravariant  Contravariant  = Covariant
+composeVariance Contravariant  Covariant      = Contravariant
+composeVariance Covariant      Contravariant  = Contravariant
+composeVariance _              _              = Invariant
+
+paramAllowsVariance :: Variance -> Variance -> Bool
+Covariant      `paramAllowsVariance` Covariant      = True
+Contravariant  `paramAllowsVariance` Contravariant  = True
+Invariant      `paramAllowsVariance` Covariant      = True
+Invariant      `paramAllowsVariance` Invariant      = True
+Invariant      `paramAllowsVariance` Contravariant  = True
+_              `paramAllowsVariance` _              = False
+
+data Missingness =
+  AllowsMissing |
+  DisallowsMissing |
+  RequiresMissing |
+  UnspecifiedMissing  -- TODO: Remove this. (No longer needed.)
+  deriving (Eq,Ord,Show)
+
+paramAllowsMissing :: Missingness -> Missingness -> Bool
+AllowsMissing      `paramAllowsMissing` _                = True
+DisallowsMissing   `paramAllowsMissing` DisallowsMissing = True
+UnspecifiedMissing `paramAllowsMissing` _                = True
+RequiresMissing    `paramAllowsMissing` RequiresMissing  = True
+RequiresMissing    `paramAllowsMissing` AllowsMissing    = True
+_                  `paramAllowsMissing` _                = False
 
 checkGeneralType :: Mergeable c => (a -> b -> c) -> GeneralType a -> GeneralType b -> c
 checkGeneralType f ti1 ti2 = singleCheck ti1 ti2 where

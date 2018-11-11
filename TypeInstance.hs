@@ -4,7 +4,6 @@ module TypeInstance (
   AssignedParams,
   GeneralInstance,
   InstanceParams,
-  Missingness(..),
   ParamName,
   TypeCategoryInstance(..),
   TypeConstraint(..),
@@ -12,7 +11,6 @@ module TypeInstance (
   TypeParam(..),
   TypeResolver(..),
   TypeSystem(..),
-  Variance(..),
   checkGeneralMatch,
   composeVariance,
   paramAllowsVariance,
@@ -22,32 +20,6 @@ import qualified Data.Map as Map
 
 import TypesBase
 
-
-data Variance = Covariant | Contravariant | Invariant deriving (Eq,Ord,Show)
-
-composeVariance :: Variance -> Variance -> Variance
-composeVariance Covariant      Covariant      = Covariant
-composeVariance Contravariant  Contravariant  = Covariant
-composeVariance Contravariant  Covariant      = Contravariant
-composeVariance Covariant      Contravariant  = Contravariant
-composeVariance _              _              = Invariant
-
-paramAllowsVariance :: Variance -> Variance -> Bool
-Covariant      `paramAllowsVariance` Covariant      = True
-Contravariant  `paramAllowsVariance` Contravariant  = True
-Invariant      `paramAllowsVariance` Covariant      = True
-Invariant      `paramAllowsVariance` Invariant      = True
-Invariant      `paramAllowsVariance` Contravariant  = True
-_              `paramAllowsVariance` _              = False
-
-data Missingness = AllowsMissing | DisallowsMissing | RequiresMissing deriving (Eq,Ord,Show)
-
-paramAllowsMissing :: Missingness -> Missingness -> Bool
-AllowsMissing    `paramAllowsMissing` _                = True
-DisallowsMissing `paramAllowsMissing` DisallowsMissing = True
-RequiresMissing  `paramAllowsMissing` RequiresMissing  = True
-RequiresMissing  `paramAllowsMissing` AllowsMissing    = True
-_                `paramAllowsMissing` _                = False
 
 type GeneralInstance = GeneralType TypeCategoryInstance
 

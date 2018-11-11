@@ -6,7 +6,6 @@ import qualified Control.Monad.Trans.Class as Trans
 
 import Resolver
 import Unresolved
-import Variance
 
 testCases = [
     -- Loading Type Specs.

@@ -14,7 +14,7 @@ import Text.ParserCombinators.ReadP
 import qualified Data.Map as Map
 import qualified Data.Set as Set
 
-import Variance
+import TypesBase
 
 
 class UnresolvedParsable a where
@@ -255,7 +255,7 @@ instance UnresolvedParsable UnresolvedTypeCategoryFunction where
       filters <- sepBy (singleFilter <|> singleMissing) deadSpace
       return $ UnresolvedTypeCategoryFunction {
           utcfName = name,
-          utcfParams = map (\n -> UnresolvedTypeParam n IgnoreVariance) params,
+          utcfParams = map (\n -> UnresolvedTypeParam n Covariant) params,
           utcfFilters = filters,
           utcfArgs = args,
           utcfReturns= returns
