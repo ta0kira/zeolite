@@ -8,7 +8,7 @@ struct Adapter {
 
 template<class x, class y>
 struct Coadapter {
-  virtual x operator ()(y&) const = 0;
+  virtual x operator ()(y) const = 0;
   virtual ~Coadapter() = default;
 };
 
@@ -23,27 +23,30 @@ struct Variable : public ReadVariable<x> {
   virtual ~Variable() = default;
 };
 
-// TODO: Decide when/how to share pointers to objects, rather than always
-// passing ownership.
-
 template<class T>
 using R = std::unique_ptr<T>;
 
 template<class T>
 inline R<T> R_get(T* val) { return R<T>(val); }
 
+template<class T>
+using S = std::shared_ptr<T>;
+
+template<class T>
+inline S<T> S_get(T* val) { return S<T>(val); }
+
 template<class x>
 struct IdAdapter : public Adapter<x,x> {
-  static R<const Adapter<x,x>> create() { return R_get(new IdAdapter); }
+  static S<const Adapter<x,x>> create() { return S_get(new IdAdapter); }
   // Ownership is passed.
   x operator ()(x value) const final { return std::move(value); }
 };
 
 template<class x>
 struct IdCoadapter : public Coadapter<x,x> {
-  static R<const Coadapter<x,x>> create() { return R_get(new IdCoadapter); }
+  static S<const Coadapter<x,x>> create() { return S_get(new IdCoadapter); }
   // Ownership is not passed.
-  x operator ()(x& value) const final { return value; }
+  x operator ()(x value) const final { return value; }
 };
 
 template<class x>
@@ -79,10 +82,10 @@ class Interface_Function {
   virtual ~Interface_Function() = default;
 
   template<class x2, class y2>
-  R<Interface_Function<x2,y2>> Convert_Function(
-    R<const Coadapter<x,x2>> conv_x,
-    R<const Adapter<y,y2>> conv_y) {
-    return R_get(new Adapter_Function<x2,y2>(this, std::move(conv_x), std::move(conv_y)));
+  S<Interface_Function<x2,y2>> Convert_Function(
+    S<const Coadapter<x,x2>> conv_x,
+    S<const Adapter<y,y2>> conv_y) {
+    return S_get(new Adapter_Function<x2,y2>(this, conv_x, conv_y));
   }
 
   y Call_Function_call(x a0) {
@@ -100,21 +103,21 @@ class Interface_Function {
    public:
     Adapter_Function(
       Interface_Function* object,
-      R<const Coadapter<x,x2>> conv_x,
-      R<const Adapter<y,y2>> conv_y)
-        : object_(object), conv_x_(std::move(conv_x)), conv_y_(std::move(conv_y)) {}
+      S<const Coadapter<x,x2>> conv_x,
+      S<const Adapter<y,y2>> conv_y)
+        : object_(object), conv_x_(conv_x), conv_y_(conv_y) {}
 
    protected:
     R<Caller_Function_call<x2,y2>> New_Caller_Function_call() final {
       return R_get(new Adapter_Function_call<x2,y2>(
-        object_->New_Caller_Function_call(), conv_x_.get(), conv_y_.get()));
+        object_->New_Caller_Function_call(), conv_x_, conv_y_));
     }
 
    private:
     Interface_Function<x,y>* const object_;
     // Converters are per free param, but only those that can vary.
-    const R<const Coadapter<x,x2>> conv_x_;
-    const R<const Adapter<y,y2>> conv_y_;
+    const S<const Coadapter<x,x2>> conv_x_;
+    const S<const Adapter<y,y2>> conv_y_;
   };
 
   template<class x2, class y2>
@@ -122,8 +125,8 @@ class Interface_Function {
    public:
     Adapter_Function_call(
       R<Caller_Function_call<x,y>> caller,
-      const Coadapter<x,x2>* conv_a0,
-      const Adapter<y,y2>* conv_r0)
+      S<const Coadapter<x,x2>> conv_a0,
+      S<const Adapter<y,y2>> conv_r0)
         : caller_(std::move(caller)), conv_a0_(conv_a0), conv_r0_(conv_r0) {}
 
     void set_a0(x2 a0) final { caller_->set_a0((*conv_a0_)(a0)); }
@@ -133,8 +136,8 @@ class Interface_Function {
    private:
     const R<Caller_Function_call<x,y>> caller_;
     // Converters are per arg and return value.
-    const Coadapter<x,x2>* const conv_a0_;
-    const Adapter<y,y2>* const conv_r0_;
+    const S<const Coadapter<x,x2>> conv_a0_;
+    const S<const Adapter<y,y2>> conv_r0_;
   };
 };
 
@@ -190,8 +193,8 @@ template<class x>
 class Concrete_CountedId : public Interface_CountedId<x> {
  public:
   // (Not sure how this construction should actually happen.)
-  static R<Interface_CountedId<x>> create(R<const Param_Filters_CountedId<x>> filters) {
-    return R_get(new Concrete_CountedId<x>(std::move(filters)));
+  static S<Interface_CountedId<x>> create(S<const Param_Filters_CountedId<x>> filters) {
+    return S_get(new Concrete_CountedId<x>(filters));
   }
 
  protected:
@@ -204,8 +207,8 @@ class Concrete_CountedId : public Interface_CountedId<x> {
   }
 
  private:
-  Concrete_CountedId(R<const Param_Filters_CountedId<x>> filters)
-      : filters_(std::move(filters)) {}
+  Concrete_CountedId(S<const Param_Filters_CountedId<x>> filters)
+      : filters_(filters) {}
 
   class Implemented_CountedId_call : public Caller_Function_call<x,x> {
    public:
@@ -252,33 +255,31 @@ class Concrete_CountedId : public Interface_CountedId<x> {
     CopiedVariable<int> r0_;
   };
 
-  const R<const Param_Filters_CountedId<x>> filters_;
+  const S<const Param_Filters_CountedId<x>> filters_;
 
   // Member variable CountedId.counter.
   CopiedVariable<int> member_counter_;
 };
 
-// For use with returned objects, i.e., ownership is passed.
 template<class x>
-struct Adapter_CountedId_to_Function : public Adapter<R<Interface_CountedId<x>>,R<Interface_Function<x,x>>> {
-  static R<const Adapter<R<Interface_CountedId<x>>,R<Interface_Function<x,x>>>> create() {
-    return R_get(new Adapter_CountedId_to_Function);
+struct Adapter_CountedId_to_Function : public Adapter<S<Interface_CountedId<x>>,S<Interface_Function<x,x>>> {
+  static S<const Adapter<S<Interface_CountedId<x>>,S<Interface_Function<x,x>>>> create() {
+    return S_get(new Adapter_CountedId_to_Function);
   }
 
-  virtual R<Interface_Function<x,x>> operator ()(R<Interface_CountedId<x>> object) const {
+  virtual S<Interface_Function<x,x>> operator ()(S<Interface_CountedId<x>> object) const {
     return object;
   }
 };
 
-// For use with arg objects, i.e., ownership is not passed.
 template<class x>
-struct Coadapter_CountedId_to_Function : public Coadapter<R<Interface_Function<x,x>>,R<Interface_CountedId<x>>> {
-  static R<const Coadapter<R<Interface_Function<x,x>>,R<Interface_CountedId<x>>>> create() {
-    return R_get(new Coadapter_CountedId_to_Function);
+struct Coadapter_CountedId_to_Function : public Coadapter<S<Interface_Function<x,x>>,S<Interface_CountedId<x>>> {
+  static S<const Coadapter<S<Interface_Function<x,x>>,S<Interface_CountedId<x>>>> create() {
+    return S_get(new Coadapter_CountedId_to_Function);
   }
 
-  virtual R<Interface_Function<x,x>> operator ()(R<Interface_CountedId<x>>& object) const {
-    return object->Convert_Function(IdCoadapter<x>::create(), IdAdapter<x>::create());
+  virtual S<Interface_Function<x,x>> operator ()(S<Interface_CountedId<x>> object) const {
+    return object;
   }
 };
 
@@ -291,7 +292,7 @@ Testing
 #include <string>
 
 struct Adapter_int_to_string : public Adapter<int,std::string> {
-  static R<const Adapter<int,std::string>> create() { return R_get(new Adapter_int_to_string); }
+  static S<const Adapter<int,std::string>> create() { return S_get(new Adapter_int_to_string); }
 
   virtual std::string operator ()(int value) const {
     std::ostringstream out;
@@ -301,25 +302,25 @@ struct Adapter_int_to_string : public Adapter<int,std::string> {
 };
 
 struct Coadapter_int_to_long : public Coadapter<int,long> {
-  static R<const Coadapter<int,long>> create() { return R_get(new Coadapter_int_to_long); }
+  static S<const Coadapter<int,long>> create() { return S_get(new Coadapter_int_to_long); }
 
-  virtual int operator ()(long& value) const {
+  virtual int operator ()(long value) const {
     return value;
   }
 };
 
 // This corresponds to the variable named "counted" (in main below), rather than
 // to the parameter type.
-struct Param_Filters_CountedId_counted : public Param_Filters_CountedId<int> {
+struct Filters_main_counted : public Param_Filters_CountedId<int> {
   bool x_is_missing(int value) const final {
     return value == 0;
   }
 };
 
 int main() {
-  const R<Interface_CountedId<int>> counted =
-    Concrete_CountedId<int>::create(R_get(new Param_Filters_CountedId_counted));
-  const R<Interface_Function<long,std::string>> function =
+  const S<Interface_CountedId<int>> counted =
+    Concrete_CountedId<int>::create(S_get(new Filters_main_counted));
+  const S<Interface_Function<long,std::string>> function =
     counted->Convert_Function(Coadapter_int_to_long::create(), Adapter_int_to_string::create());
   std::cerr << "Count: " << counted->Call_CountedId_count() << std::endl;
   std::cerr << "Call: " << counted->Call_Function_call(3) << std::endl;
