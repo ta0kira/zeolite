@@ -7,6 +7,7 @@ module CompileInfo (
 ) where
 
 import Data.Either (isLeft,partitionEithers)
+import Data.List (intercalate)
 
 import TypesBase (CompileErrorM(..),Mergeable(..))
 
@@ -21,7 +22,7 @@ data CompileMessage =
 
 instance Show CompileMessage where
   show (CompileMessage m) = m
-  show (CompileNested ms) = show ms
+  show (CompileNested ms) = "[ " ++ (intercalate " | " (map show ms)) ++ " ]"
 
 type CompileInfo = Either CompileMessage
 
