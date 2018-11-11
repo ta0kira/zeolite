@@ -4,12 +4,12 @@
 module TypesBase (
   CompileError(..),
   CompileErrorM(..),
+  GeneralType(..),
   Mergeable(..),
   MergeType(..),
   ParamSet(..),
-  TypeInstance(..),
   checkParamsMatch,
-  checkTypeInstance,
+  checkGeneralType,
 ) where
 
 
@@ -34,13 +34,13 @@ instance CompileErrorM m => CompileError (m a) where
 
 data MergeType = MergeUnion | MergeIntersect deriving (Eq,Ord,Show)
 
-data TypeInstance a =
-  TypeInstance {
+data GeneralType a =
+  SingleType {
     tiType :: a
   } |
   TypeMerge {
     tmMerge :: MergeType,
-    tmTypes :: [TypeInstance a]
+    tmTypes :: [GeneralType a]
   }
   deriving (Eq,Show)
 
@@ -50,9 +50,9 @@ newtype ParamSet a =
   }
   deriving (Eq,Show)
 
-checkTypeInstance :: Mergeable c => (a -> b -> c) -> TypeInstance a -> TypeInstance b -> c
-checkTypeInstance f ti1 ti2 = singleCheck ti1 ti2 where
-  singleCheck (TypeInstance t1) (TypeInstance t2) = t1 `f` t2
+checkGeneralType :: Mergeable c => (a -> b -> c) -> GeneralType a -> GeneralType b -> c
+checkGeneralType f ti1 ti2 = singleCheck ti1 ti2 where
+  singleCheck (SingleType t1) (SingleType t2) = t1 `f` t2
   singleCheck (TypeMerge MergeUnion     t1) ti2 = mergeAll $ map (`singleCheck` ti2) t1
   singleCheck (TypeMerge MergeIntersect t1) ti2 = mergeAny $ map (`singleCheck` ti2) t1
   singleCheck ti1 (TypeMerge MergeUnion     t2) = mergeAny $ map (ti1 `singleCheck`) t2

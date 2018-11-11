@@ -11,6 +11,7 @@ module TypeInstance (
   TypeName,
   TypeParam(..),
   TypeResolver(..),
+  TypeSystem(..),
   Variance(..),
   checkGeneralMatch,
   composeVariance,
@@ -48,7 +49,7 @@ RequiresMissing  `paramAllowsMissing` RequiresMissing  = True
 RequiresMissing  `paramAllowsMissing` AllowsMissing    = True
 _                `paramAllowsMissing` _                = False
 
-type GeneralInstance = TypeInstance TypeCategoryInstance
+type GeneralInstance = GeneralType TypeCategoryInstance
 
 newtype TypeName =
   TypeName {
@@ -104,6 +105,12 @@ data TypeResolver m p =
     trVariance :: TypeName -> m [Variance]
   }
 
+data TypeSystem m p =
+  TypeSystem {
+    tsValidate :: [TypeParam] -> GeneralInstance -> m GeneralInstance,
+    tsConvert :: Variance -> GeneralInstance -> GeneralInstance -> m p
+  }
+
 -- NOTE: This doesn't verify the filters required to create an instance of a
 -- type category. That should be done during instantiation of the instances and
 -- during validation of the category system. (This does verify filters imposed
@@ -111,7 +118,7 @@ data TypeResolver m p =
 checkGeneralMatch :: (Mergeable (m ()), Mergeable (m p), CompileErrorM m, Monad m) =>
   TypeResolver m p -> Variance ->
   GeneralInstance -> GeneralInstance -> m p
-checkGeneralMatch r v ts1 ts2 = checkTypeInstance checkSingleMatch ts1 ts2 where
+checkGeneralMatch r v ts1 ts2 = checkGeneralType checkSingleMatch ts1 ts2 where
   checkSingleMatch (TypeCategoryInstance n1 ps1) (TypeCategoryInstance n2 ps2) =
     checkInstanceToInstance r v (n1,ps1) (n2,ps2)
   checkSingleMatch (TypeCategoryParam p1) (TypeCategoryInstance n2 ps2) =
@@ -147,7 +154,7 @@ checkParamToInstance r Contravariant p1 (n2,ps2) =
 checkParamToInstance r v (TypeParam _ cs1) (n2,ps2) = checked where
   checked = mergeAny $ map (\c -> checkConstraintToInstance c (n2,ps2)) cs1
   checkConstraintToInstance (TypeFilter t) (n,ps) =
-    checkGeneralMatch r v t (TypeInstance $ TypeCategoryInstance n ps)
+    checkGeneralMatch r v t (SingleType $ TypeCategoryInstance n ps)
   checkConstraintToInstance (TypeMissing q1) (n,_) = do
     q2 <- trMissing r n
     q1 `canBecomeMissing` q2
@@ -162,7 +169,7 @@ checkInstanceToParam r Contravariant (n1,ps1) p2 =
 checkInstanceToParam r v (n1,ps1) (TypeParam _ cs2) = checked where
   checked = mergeAll $ map (\c -> checkInstanceToConstraint (n1,ps1) c) cs2
   checkInstanceToConstraint (n,ps) (TypeFilter t) =
-    checkGeneralMatch r v (TypeInstance $ TypeCategoryInstance n ps) t
+    checkGeneralMatch r v (SingleType $ TypeCategoryInstance n ps) t
   checkInstanceToConstraint (n,_) (TypeMissing q2) = do
     q1 <- trMissing r n
     q1 `canBecomeMissing` q2
@@ -179,14 +186,14 @@ checkParamToParam r v (TypeParam n1 cs1) (TypeParam n2 cs2) = checked where
   checkConstraintToConstraint (TypeFilter t1) (TypeFilter t2) =
     checkGeneralMatch r v t1 t2
   checkConstraintToConstraint m1@(TypeMissing _) (TypeFilter t2) =
-    checkGeneralMatch r v (TypeInstance $ TypeCategoryParam $ TypeParam n1 [m1]) t2
+    checkGeneralMatch r v (SingleType $ TypeCategoryParam $ TypeParam n1 [m1]) t2
   checkConstraintToConstraint (TypeFilter  t1) m2@(TypeMissing _) =
-    checkGeneralMatch r v t1 (TypeInstance $ TypeCategoryParam $ TypeParam n2 [m2])
+    checkGeneralMatch r v t1 (SingleType $ TypeCategoryParam $ TypeParam n2 [m2])
   checkConstraintToConstraint (TypeMissing q1) (TypeMissing q2) =
     q1 `canBecomeMissing` q2
 
 canBecomeMissing :: (Mergeable (m p), CompileErrorM m, Monad m) =>
   Missingness -> Missingness -> m p
 canBecomeMissing m1 m2 = check $ paramAllowsMissing m1 m2 where
-  check False = compileError $ "Missingness disallowed (" ++ show m1 ++ " -> " ++ show m2 ++ ")"
+  check False = compileError $ "Missingness conflict (" ++ show m1 ++ " -> " ++ show m2 ++ ")"
   check _     = mergeDefault

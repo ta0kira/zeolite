@@ -61,3 +61,9 @@ instance Mergeable () where
   mergeAny = const ()
   mergeAll = const ()
   () `mergeNested` () = ()
+
+instance Mergeable Bool where
+  mergeDefault = True
+  mergeAny = any id
+  mergeAll = all id
+  mergeNested = (&&)
