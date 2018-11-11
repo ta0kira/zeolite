@@ -26,6 +26,14 @@ class Mergeable a where
   mergeDefault :: a
   mergeDefault = mergeAll Nothing
 
+instance Mergeable () where
+  mergeAny = const ()
+  mergeAll = const ()
+
+instance Mergeable Bool where
+  mergeAny = any id
+  mergeAll = all id
+
 class CompileError a where
   compileError :: String -> a
   isCompileError :: a -> Bool

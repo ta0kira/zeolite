@@ -36,14 +36,6 @@ instance CompileErrorM CompileInfo where
     result ([],_)  = compileErrorM "No values in the empty set"
     result (es,_)  = Left $ joinMessages es  -- Take all errors.
 
-instance Mergeable () where
-  mergeAny = const ()
-  mergeAll = const ()
-
-instance Mergeable Bool where
-  mergeAny = any id
-  mergeAll = all id
-
 instance Mergeable a => Mergeable (CompileInfo a) where
   mergeAny = result . splitErrorsAndData where
     result (_,xs@(x:_)) = return $ mergeAny xs

@@ -182,16 +182,18 @@ flattenRefines r (CategoryConnect gs) = mfix flattenAll where
   flattenSingle ca _ ta@(SingleType (TypeCategoryInstance t ps)) = do
     params <- (trParams r) t ps
     refines <- t `categoryLookup` ca
-    -- TODO: This should preserve the path (fst from the sub call) since it
-    -- might be needed to keep track of conversion information.
-    -- TODO: Should substitution be unchecked here?
-    collectAllOrErrorM $ map (checkedSubAllParams r (paramLookup params) >=> return . snd) (crRefines refines)
+    collectAllOrErrorM $ map (substitute params) (crRefines refines)
   flattenSingle _ n (TypeMerge MergeUnion _) =
     compileError $ "Type " ++ show n ++ " cannot refine a union"
   flattenSingle _ n (TypeMerge MergeIntersect _) =
     compileError $ "Type " ++ show n ++ " cannot refine an intersection"
   flattenSingle _ n (SingleType (TypeCategoryParam _)) =
     compileError $ "Type " ++ show n ++ " cannot refine a param"
+  substitute params t = do
+    -- TODO: This should preserve the path (fst from the sub call) since it
+    -- might be needed to keep track of conversion information.
+    ((),x) <- uncheckedSubAllParams (paramLookup params) t
+    return x
 
 checkRefines :: (Mergeable (m ()), CompileErrorM m, Monad m) => Refinements -> m ()
 checkRefines = checkCategory checkAll where
