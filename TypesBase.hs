@@ -19,10 +19,12 @@ module TypesBase (
 
 
 class Mergeable a where
-  mergeDefault :: a
   mergeAny :: Foldable f => f a -> a
   mergeAll :: Foldable f => f a -> a
   mergeNested :: a -> a -> a
+  mergeNested x y = mergeAll [x,y]
+  mergeDefault :: a
+  mergeDefault = mergeAll Nothing
 
 class CompileError a where
   compileError :: String -> a
@@ -69,12 +71,12 @@ composeVariance Covariant      Contravariant  = Contravariant
 composeVariance _              _              = Invariant
 
 paramAllowsVariance :: Variance -> Variance -> Bool
-Covariant      `paramAllowsVariance` Covariant      = True
-Contravariant  `paramAllowsVariance` Contravariant  = True
-Invariant      `paramAllowsVariance` Covariant      = True
-Invariant      `paramAllowsVariance` Invariant      = True
-Invariant      `paramAllowsVariance` Contravariant  = True
-_              `paramAllowsVariance` _              = False
+Covariant     `paramAllowsVariance` Covariant     = True
+Contravariant `paramAllowsVariance` Contravariant = True
+Invariant     `paramAllowsVariance` Covariant     = True
+Invariant     `paramAllowsVariance` Invariant     = True
+Invariant     `paramAllowsVariance` Contravariant = True
+_             `paramAllowsVariance` _             = False
 
 data Missingness =
   AllowsMissing |

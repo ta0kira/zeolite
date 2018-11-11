@@ -11,6 +11,7 @@ module TypeInstance (
   TypeParam(..),
   TypeResolver(..),
   TypeSystem(..),
+  canBecomeMissing,
   checkGeneralMatch,
   composeVariance,
   paramAllowsVariance,

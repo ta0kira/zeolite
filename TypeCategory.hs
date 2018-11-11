@@ -34,6 +34,8 @@ type CategoryVariance = CategoryConnect (ParamSet Variance)
 
 type CategoryParams = CategoryConnect (ParamSet TypeParam)
 
+type CategoryConcrete = CategoryConnect Bool
+
 categoryLookup :: (CompileErrorM m, Monad m) => TypeName -> CategoryConnect a -> m a
 categoryLookup n (CategoryConnect cs) = resolve $ n `Map.lookup` cs where
   resolve (Just x) = return x
@@ -55,26 +57,33 @@ data CategorySystem =
     csRefine :: Refinements,
     csMissing :: CategoryMissing,
     csVariance :: CategoryVariance,
-    csParams :: CategoryParams
+    csParams :: CategoryParams,
+    csConcrete :: CategoryConcrete
   }
 
 validateCategory :: (Mergeable (m ()), Mergeable (m p),
                      Mergeable p, CompileErrorM m, Monad m, MonadFix m) =>
   TypeResolver m p -> CategorySystem -> m CategorySystem
 validateCategory r cs = do
+  -- Basic structural checks.
   checkCycles (csMain cs)
+  checkConcrete (csConcrete cs) (csMain cs)
+  checkMissing (csMissing cs) (csMain cs)
+  -- Refine the structure.
   refine <- flattenRefines r (csRefine cs)
   checkRefines refine
+  -- Check finer structural semantics.
   labeledVars <- labelParamVals (csParams cs) (csVariance cs)
   checkVariances labeledVars (csVariance cs) refine
   return $ CategorySystem {
       csMain = csMain cs,
-      -- TODO: Check refines w.r.t. missingness and param filters.
+      -- TODO: Check refines w.r.t. param filters.
       csRefine = refine,
       csMissing = csMissing cs,
       csVariance = csVariance cs,
       -- TODO: Check params w.r.t. compatible missingness requirements.
-      csParams = csParams cs
+      csParams = csParams cs,
+      csConcrete = csConcrete cs
     }
 
 labelParamVals :: (Mergeable (m ()), CompileErrorM m, Monad m) =>
@@ -110,7 +119,7 @@ checkVariances va vs = checkCategory checkAll where
          else compileError $ "Param " ++ show n ++ " does not allow variance " ++ show v
 
 checkCycles :: (Mergeable (m ()), CompileErrorM m, Monad m) => CategoryMain -> m ()
-checkCycles ca@(CategoryConnect cs) = checkCategory (checker []) ca where
+checkCycles ca = checkCategory (checker []) ca where
   checker ns n ts
     | n `Set.member` (Set.fromList ns) =
       compileError $ "Cycle found: " ++ intercalate " -> " (map show (ns ++ [n]))
@@ -123,6 +132,34 @@ checkCycles ca@(CategoryConnect cs) = checkCategory (checker []) ca where
         suppress cs
           | isCompileError cs = return Set.empty
           | otherwise         = cs
+
+checkConcrete :: (Mergeable (m ()), CompileErrorM m, Monad m) =>
+  CategoryConcrete -> CategoryMain -> m ()
+checkConcrete cc = checkCategory checkAll where
+  checkAll n = mergeAll . map (checkSingle n) . Set.toList
+  checkSingle n n2 = do
+    concrete <- n2 `categoryLookup` cc
+    if concrete
+       then compileError $ "Category " ++ show n ++ " cannot refine concrete " ++ show n2
+       else return ()
+
+checkMissing :: (Mergeable (m ()), CompileErrorM m, Monad m) =>
+  CategoryMissing -> CategoryMain -> m ()
+checkMissing ms ca = checked where
+  checked = do
+    checkCategory checkSpecified ms
+    checkCategory checkAllowed ca
+  checkSpecified n m
+    | m == AllowsMissing    = return ()
+    | m == DisallowsMissing = return ()
+    | otherwise =
+      compileError $ "Category " ++ show n ++ " cannot have missing type " ++ show m
+  checkAllowed n ts = do
+    m <- n `categoryLookup` ms
+    mergeAll $ map (checkSingle n m) $ Set.toList ts
+  checkSingle n m1 n2 = do
+    m2 <- n2 `categoryLookup` ms
+    m2 `canBecomeMissing` m1
 
 mergeInstances :: (Mergeable (m ()), Mergeable (m p), CompileErrorM m, Monad m) =>
   TypeResolver m p -> [GeneralInstance] -> [GeneralInstance]

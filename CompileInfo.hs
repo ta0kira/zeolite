@@ -43,7 +43,6 @@ instance CompileErrorM CompileInfo where
     result (es,_)  = Left $ joinMessages es  -- Take all errors.
 
 instance Mergeable a => Mergeable (CompileInfo a) where
-  mergeDefault = return mergeDefault
   mergeAny = result . partitionEithers . foldr (:) [] where
     result (_,xs@(x:_)) = return $ mergeAny xs
     result ([],_)       = compileErrorM "No successes in the empty set"
@@ -57,13 +56,9 @@ instance Mergeable a => Mergeable (CompileInfo a) where
   (Left e1)  `mergeNested` (Left e2)  = Left $ e1 `nestMessages` e2
 
 instance Mergeable () where
-  mergeDefault = ()
   mergeAny = const ()
   mergeAll = const ()
-  () `mergeNested` () = ()
 
 instance Mergeable Bool where
-  mergeDefault = True
   mergeAny = any id
   mergeAll = all id
-  mergeNested = (&&)
