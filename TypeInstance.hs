@@ -39,7 +39,7 @@ newtype ParamName =
 data TypeFilter =
   TypeFilter {
     tfVariance :: Variance,
-    tfType :: GeneralInstance
+    tfType :: TypeCategoryInstance
   }
   deriving (Eq,Show)
 
@@ -140,7 +140,7 @@ checkParamToInstance r Covariant (TypeParam n1 q1 cs1) (n2,ps2) = checked where
     mergeAny $ map (\c -> checkConstraintToInstance c (n2,ps2)) cs1
   checkConstraintToInstance (TypeFilter Covariant t) (n,ps) =
     -- x -> F implies x -> T iff F -> T
-    checkGeneralMatch r Covariant t (SingleType $ TypeCategoryInstance n ps)
+    checkSingleMatch r Covariant t (TypeCategoryInstance n ps)
   checkConstraintToInstance (TypeFilter _ t) _ =
     compileError $ "Cannot convert param to instance (" ++ show n1 ++ " -> " ++ show n2 ++ ")"
 
@@ -157,7 +157,7 @@ checkInstanceToParam r Covariant (n1,ps1) (TypeParam n2 q2 cs2) = checked where
     mergeAll $ map (\c -> checkInstanceToConstraint (n1,ps1) c) cs2
   checkInstanceToConstraint (n,ps) (TypeFilter Contravariant t) =
     -- F -> x implies T -> x iff T -> F
-    checkGeneralMatch r Contravariant t (SingleType $ TypeCategoryInstance n ps)
+    checkSingleMatch r Contravariant t (TypeCategoryInstance n ps)
   checkInstanceToConstraint _ (TypeFilter _ t) =
     compileError $ "Cannot convert instance to param (" ++ show n1 ++ " -> " ++ show n2 ++ ")"
 
@@ -193,10 +193,10 @@ checkParamToParam r Covariant (TypeParam n1 q1 cs1) (TypeParam n2 q2 cs2) = chec
       mergeAny $ map (\c1 -> mergeAll $ map (\c2 -> checkConstraintToConstraint c1 c2) cs2') cs1'
   checkConstraintToConstraint (TypeFilter Covariant t1) (TypeFilter Covariant t2) =
     -- x -> F1 implies x -> F2 iff F1 -> F2
-    checkGeneralMatch r Covariant t1 t2
+    checkSingleMatch r Covariant t1 t2
   checkConstraintToConstraint (TypeFilter Contravariant t1) (TypeFilter Contravariant t2) =
     -- F1 -> x implies F2 -> x iff F2 -> F1
-    checkGeneralMatch r Contravariant t1 t2
+    checkSingleMatch r Contravariant t1 t2
   checkConstraintToConstraint (TypeFilter _ _) (TypeFilter _ _) =
     compileError $ "Cannot convert param to param (" ++ show n1 ++ " -> " ++ show n2 ++ ")"
 
