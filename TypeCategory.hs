@@ -242,9 +242,9 @@ subAllParams find replace = subAll where
     t <- replace pa
     p <- find t (SingleType $ TypeCategoryParam pa)
     return (p,t)
-  subConstraint (TypeFilter t) = do
+  subConstraint (TypeFilter v t) = do
     (p,t2) <- subAll t
-    return (p,TypeFilter t2)
+    return (p,TypeFilter v t2)
   subConstraint f = return (mergeDefault,f)
 
 typeSystemFromResolver :: (Mergeable (m ()), Mergeable (m p),

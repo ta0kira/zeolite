@@ -157,6 +157,7 @@ singleFilter :: ReadP UnresolvedParamFilter
 singleFilter = do
   deadSpace
   name <- typeParamName
+  -- TODO: Update this to allow "allows", for Contravariant filters.
   between separator separator (string "requires")
   requires <- unresolvedParser :: ReadP UnresolvedType
   return $ UnresolvedParamFilter {

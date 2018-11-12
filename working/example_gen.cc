@@ -114,6 +114,8 @@ class Interface_Function {
     }
 
    private:
+    // TODO: This should also be shared, in case this adapter outlives the
+    // original object, e.g., is used for returning a local value.
     Interface_Function<x,y>* const object_;
     // Converters are per free param, but only those that can vary.
     const S<const Coadapter<x,x2>> conv_x_;
@@ -144,7 +146,10 @@ class Interface_Function {
 /*
 
 concrete CountedId<x> {
-  x requires missing
+  x allows missing
+  // TODO: This is contrived, but is just for demo. Since Int is concrete, x
+  // can't really be anything else.
+  x allows Int
   refines Function<x,x>
   count takes () to (Int)
 }
@@ -155,7 +160,14 @@ Members:
 
 Implementations:
 
-call(val) { if (!is_missing(val)) counter += 1; return val; }
+call(val) {
+  if (!is_missing(val)) {  // <- x allows missing
+    counter += 1;
+    return val;
+  } else {
+    return -1;  // <- x allows Int
+  }
+}
 count() { return counter; }
 
 */
@@ -186,6 +198,8 @@ class Interface_CountedId : public Interface_Function<x,x> {
 template<class x>
 struct Param_Filters_CountedId {
   virtual bool x_is_missing(x) const = 0;
+  virtual x Int_to_x(int) const = 0;
+
   virtual ~Param_Filters_CountedId() = default;
 };
 
@@ -222,8 +236,10 @@ class Concrete_CountedId : public Interface_CountedId<x> {
       // Implementation of CountedId.call.
       if (!self_->filters_->x_is_missing(a0_.get())) {
         self_->member_counter_.set(self_->member_counter_.get()+1);
+        r0_.set(a0_.get());
+      } else {
+        r0_.set(self_->filters_->Int_to_x(-1));
       }
-      r0_.set(a0_.get());
     }
 
     x get_r0() const final {
@@ -314,6 +330,10 @@ struct Coadapter_int_to_long : public Coadapter<int,long> {
 struct Filters_main_counted : public Param_Filters_CountedId<int> {
   bool x_is_missing(int value) const final {
     return value == 0;
+  }
+
+  int Int_to_x(int value) const final {
+    return value;
   }
 };
 
