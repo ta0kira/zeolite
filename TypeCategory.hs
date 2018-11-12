@@ -241,6 +241,9 @@ subAllParams find replace = subAll where
   subParam pa@(TypeParam _ _ _) = do
     -- NOTE: No need to handle replacement in filters, since we require that
     -- *all* params be substituted.
+    -- TODO: Maybe this should sub t into the filters and then check t against
+    -- those filters? Maybe not, since they should be checked where the param
+    -- is actually assigned a value.
     t <- replace pa
     p <- find t (SingleType $ TypeCategoryParam pa)
     return (p,t)

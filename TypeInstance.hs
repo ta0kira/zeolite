@@ -139,7 +139,7 @@ checkParamToInstance r Covariant (TypeParam n1 q1 cs1) (n2,ps2) = checked where
     () <- q1 `canBecomeMissing` q2
     mergeAny $ map (\c -> checkConstraintToInstance c (n2,ps2)) cs1
   checkConstraintToInstance (TypeFilter Covariant t) (n,ps) =
-    -- x -> F implies x -> T iff F -> T
+    -- x -> F implies x -> T only if F -> T
     checkSingleMatch r Covariant t (TypeCategoryInstance n ps)
   checkConstraintToInstance (TypeFilter _ t) _ =
     compileError $ "Cannot convert param to instance (" ++ show n1 ++ " -> " ++ show n2 ++ ")"
@@ -156,7 +156,7 @@ checkInstanceToParam r Covariant (n1,ps1) (TypeParam n2 q2 cs2) = checked where
     () <- q1 `canBecomeMissing` q2
     mergeAll $ map (\c -> checkInstanceToConstraint (n1,ps1) c) cs2
   checkInstanceToConstraint (n,ps) (TypeFilter Contravariant t) =
-    -- F -> x implies T -> x iff T -> F
+    -- F -> x implies T -> x only if T -> F
     checkSingleMatch r Contravariant t (TypeCategoryInstance n ps)
   checkInstanceToConstraint _ (TypeFilter _ t) =
     compileError $ "Cannot convert instance to param (" ++ show n1 ++ " -> " ++ show n2 ++ ")"
@@ -176,33 +176,21 @@ checkParamToParam r Invariant p1 p2 = fixMessage check where
 checkParamToParam r Contravariant p1 p2 =
   checkParamToParam r Covariant p1 p2
 checkParamToParam r Covariant (TypeParam n1 q1 cs1) (TypeParam n2 q2 cs2) = checked where
-  cs1' = addSelfToConstraints n1 cs1
-  cs2' = addSelfToConstraints n2 cs2
   checked
-    -- These two cases short-circuit pass/fail, since we might otherwise end up
-    -- with infinite recursion due to adding self to the constraints.
-    | null cs2 && n1 == n2 = do
-      () <- q1 `canBecomeMissing` q2
-      mergeDefault
-    | null cs1 && n1 /= n2 =
+    | n1 /= n2 =
+      -- TODO: Need to account for checking x to y when x -> y.
       compileError $ "Param conflict (" ++ show n1 ++ " -> " ++ show n2 ++ ")"
-    -- Names can differ, as long as the constraints match up. (Assumes that
-    -- param substitution has already happened.)
     | otherwise = do
       () <- q1 `canBecomeMissing` q2
-      mergeAny $ map (\c1 -> mergeAll $ map (\c2 -> checkConstraintToConstraint c1 c2) cs2') cs1'
+      mergeAny $ map (\c1 -> mergeAll $ map (\c2 -> checkConstraintToConstraint c1 c2) cs2) cs1
   checkConstraintToConstraint (TypeFilter Covariant t1) (TypeFilter Covariant t2) =
-    -- x -> F1 implies x -> F2 iff F1 -> F2
+    -- x -> F1 implies x -> F2 only if F1 -> F2
     checkSingleMatch r Covariant t1 t2
   checkConstraintToConstraint (TypeFilter Contravariant t1) (TypeFilter Contravariant t2) =
-    -- F1 -> x implies F2 -> x iff F2 -> F1
+    -- F1 -> x implies F2 -> x only if F2 -> F1
     checkSingleMatch r Contravariant t1 t2
   checkConstraintToConstraint (TypeFilter _ _) (TypeFilter _ _) =
     compileError $ "Cannot convert param to param (" ++ show n1 ++ " -> " ++ show n2 ++ ")"
-
--- TODO: Adding Contravariant constraints broke this.
-addSelfToConstraints :: ParamName -> [TypeFilter] -> [TypeFilter]
-addSelfToConstraints n cs = cs
 
 canBecomeMissing :: (Mergeable (m p), CompileErrorM m, Monad m) =>
   Missingness -> Missingness -> m p
