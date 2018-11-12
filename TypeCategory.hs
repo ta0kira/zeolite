@@ -42,7 +42,7 @@ categoryLookup n (CategoryConnect cs) = resolve $ n `Map.lookup` cs where
 
 paramLookup :: (CompileErrorM m, Monad m) =>
   AssignedParams -> TypeParam -> m GeneralInstance
-paramLookup ps (TypeParam n _) = resolve $ n `Map.lookup` ps where
+paramLookup ps (TypeParam n _ _) = resolve $ n `Map.lookup` ps where
   -- TODO: Should this check constraints?
   resolve (Just x) = return x
   resolve _        = compileError $ "Param " ++ show n ++ " not found"
@@ -110,7 +110,7 @@ checkVariances va vs = checkCategory checkAll where
     mergeAll $ map (\(v2,p) -> checkSingle as (v `composeVariance` v2) p) (zip (psParams vs2) (psParams ps))
   checkSingle as v (TypeMerge MergeUnion     ts) = mergeAll $ map (checkSingle as v) ts
   checkSingle as v (TypeMerge MergeIntersect ts) = mergeAll $ map (checkSingle as v) ts
-  checkSingle as v (SingleType (TypeCategoryParam (TypeParam n _))) = check (n `Map.lookup` as) where
+  checkSingle as v (SingleType (TypeCategoryParam (TypeParam n _ _))) = check (n `Map.lookup` as) where
     check Nothing   = compileError $ "Param " ++ show n ++ " is undefined"
     check (Just v0) =
       if v0 `paramAllowsVariance` v
@@ -238,14 +238,12 @@ subAllParams find replace = subAll where
     gs <- collectAllOrErrorM $ map subAll ts
     return (mergeAll $ map fst gs,SingleType $ TypeCategoryInstance n $ (ParamSet $ map snd gs))
   subInstance (TypeCategoryParam t) = subParam t
-  subParam pa@(TypeParam _ _) = do
+  subParam pa@(TypeParam _ _ _) = do
+    -- NOTE: No need to handle replacement in filters, since we require that
+    -- *all* params be substituted.
     t <- replace pa
     p <- find t (SingleType $ TypeCategoryParam pa)
     return (p,t)
-  subConstraint (TypeFilter v t) = do
-    (p,t2) <- subAll t
-    return (p,TypeFilter v t2)
-  subConstraint f = return (mergeDefault,f)
 
 typeSystemFromResolver :: (Mergeable (m ()), Mergeable (m p),
                            Mergeable p, CompileErrorM m, Monad m) =>

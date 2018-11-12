@@ -107,14 +107,11 @@ _             `paramAllowsVariance` _             = False
 data Missingness =
   AllowsMissing |
   DisallowsMissing |
-  RequiresMissing |
-  UnspecifiedMissing  -- TODO: Remove this. (No longer needed.)
+  UnspecifiedMissing
   deriving (Eq,Ord,Show)
 
 paramAllowsMissing :: Missingness -> Missingness -> Bool
 AllowsMissing      `paramAllowsMissing` _                = True
 DisallowsMissing   `paramAllowsMissing` DisallowsMissing = True
 UnspecifiedMissing `paramAllowsMissing` _                = True
-RequiresMissing    `paramAllowsMissing` RequiresMissing  = True
-RequiresMissing    `paramAllowsMissing` AllowsMissing    = True
 _                  `paramAllowsMissing` _                = False

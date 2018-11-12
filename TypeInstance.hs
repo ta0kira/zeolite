@@ -6,7 +6,7 @@ module TypeInstance (
   InstanceParams,
   ParamName,
   TypeCategoryInstance(..),
-  TypeConstraint(..),
+  TypeFilter(..),
   TypeName,
   TypeParam(..),
   TypeResolver(..),
@@ -36,20 +36,18 @@ newtype ParamName =
   }
   deriving (Eq,Ord,Show)
 
-data TypeConstraint =
+data TypeFilter =
   TypeFilter {
     tfVariance :: Variance,
     tfType :: GeneralInstance
-  } |
-  TypeMissing {
-    tmMissing :: Missingness
   }
   deriving (Eq,Show)
 
 data TypeParam =
   TypeParam {
     tpName :: ParamName,
-    tpConstraint :: [TypeConstraint]
+    tmMissing :: Missingness,
+    tpConstraint :: [TypeFilter]
   }
   deriving (Eq,Show)
 
@@ -91,15 +89,18 @@ data TypeSystem m p =
 -- by individual free params, though.)
 checkGeneralMatch :: (Mergeable (m ()), Mergeable (m p), CompileErrorM m, Monad m) =>
   TypeResolver m p -> Variance -> GeneralInstance -> GeneralInstance -> m p
-checkGeneralMatch r v ts1 ts2 = checkGeneralType checkSingleMatch ts1 ts2 where
-  checkSingleMatch (TypeCategoryInstance n1 ps1) (TypeCategoryInstance n2 ps2) =
-    checkInstanceToInstance r v (n1,ps1) (n2,ps2)
-  checkSingleMatch (TypeCategoryParam p1) (TypeCategoryInstance n2 ps2) =
-    checkParamToInstance r v p1 (n2,ps2)
-  checkSingleMatch (TypeCategoryInstance n1 ps1) (TypeCategoryParam p2) =
-    checkInstanceToParam r v (n1,ps1) p2
-  checkSingleMatch (TypeCategoryParam p1) (TypeCategoryParam p2) =
-    checkParamToParam r v p1 p2
+checkGeneralMatch r v ts1 ts2 = checkGeneralType (checkSingleMatch r v) ts1 ts2
+
+checkSingleMatch :: (Mergeable (m ()), Mergeable (m p), CompileErrorM m, Monad m) =>
+  TypeResolver m p -> Variance -> TypeCategoryInstance -> TypeCategoryInstance -> m p
+checkSingleMatch r v (TypeCategoryInstance n1 ps1) (TypeCategoryInstance n2 ps2) =
+  checkInstanceToInstance r v (n1,ps1) (n2,ps2)
+checkSingleMatch r v (TypeCategoryParam p1) (TypeCategoryInstance n2 ps2) =
+  checkParamToInstance r v p1 (n2,ps2)
+checkSingleMatch r v (TypeCategoryInstance n1 ps1) (TypeCategoryParam p2) =
+  checkInstanceToParam r v (n1,ps1) p2
+checkSingleMatch r v (TypeCategoryParam p1) (TypeCategoryParam p2) =
+  checkParamToParam r v p1 p2
 
 checkInstanceToInstance :: (Mergeable (m ()), Mergeable (m p), CompileErrorM m, Monad m) =>
   TypeResolver m p -> Variance -> (TypeName,InstanceParams) -> (TypeName,InstanceParams) -> m p
@@ -128,37 +129,37 @@ checkInstanceToInstance r Covariant (n1,ps1) (n2,ps2)
 
 checkParamToInstance :: (Mergeable (m ()), Mergeable (m p), CompileErrorM m, Monad m) =>
   TypeResolver m p -> Variance -> TypeParam -> (TypeName,InstanceParams) -> m p
-checkParamToInstance _ Invariant (TypeParam n1 _) (n2,ps2) =
+checkParamToInstance _ Invariant (TypeParam n1 _ _) (n2,ps2) =
   compileError $ "Not isomorphic (" ++ show n1 ++ " / " ++ show n2 ++ ")"
 checkParamToInstance r Contravariant p1 (n2,ps2) =
   checkInstanceToParam r Covariant (n2,ps2) p1
-checkParamToInstance r Covariant (TypeParam n1 cs1) (n2,ps2) = checked where
-  checked = mergeAny $ map (\c -> checkConstraintToInstance c (n2,ps2)) cs1
+checkParamToInstance r Covariant (TypeParam n1 q1 cs1) (n2,ps2) = checked where
+  checked = do
+    q2 <- trMissing r n2
+    () <- q1 `canBecomeMissing` q2
+    mergeAny $ map (\c -> checkConstraintToInstance c (n2,ps2)) cs1
   checkConstraintToInstance (TypeFilter Covariant t) (n,ps) =
     -- x -> F implies x -> T iff F -> T
     checkGeneralMatch r Covariant t (SingleType $ TypeCategoryInstance n ps)
   checkConstraintToInstance (TypeFilter _ t) _ =
     compileError $ "Cannot convert param to instance (" ++ show n1 ++ " -> " ++ show n2 ++ ")"
-  checkConstraintToInstance (TypeMissing q1) (n,_) = do
-    q2 <- trMissing r n
-    q1 `canBecomeMissing` q2
 
 checkInstanceToParam :: (Mergeable (m ()), Mergeable (m p), CompileErrorM m, Monad m) =>
   TypeResolver m p -> Variance -> (TypeName,InstanceParams) -> TypeParam -> m p
-checkInstanceToParam _ Invariant (n1,ps1) (TypeParam n2 _) =
+checkInstanceToParam _ Invariant (n1,ps1) (TypeParam n2 _ _) =
   compileError $ "Not isomorphic (" ++ show n1 ++ " / " ++ show n2 ++ ")"
 checkInstanceToParam r Contravariant (n1,ps1) p2 =
   checkParamToInstance r Covariant p2 (n1,ps1)
-checkInstanceToParam r Covariant (n1,ps1) (TypeParam n2 cs2) = checked where
-  checked = mergeAll $ map (\c -> checkInstanceToConstraint (n1,ps1) c) cs2
+checkInstanceToParam r Covariant (n1,ps1) (TypeParam n2 q2 cs2) = checked where
+  checked = do
+    q1 <- trMissing r n1
+    () <- q1 `canBecomeMissing` q2
+    mergeAll $ map (\c -> checkInstanceToConstraint (n1,ps1) c) cs2
   checkInstanceToConstraint (n,ps) (TypeFilter Contravariant t) =
     -- F -> x implies T -> x iff T -> F
     checkGeneralMatch r Contravariant t (SingleType $ TypeCategoryInstance n ps)
   checkInstanceToConstraint _ (TypeFilter _ t) =
     compileError $ "Cannot convert instance to param (" ++ show n1 ++ " -> " ++ show n2 ++ ")"
-  checkInstanceToConstraint (n,_) (TypeMissing q2) = do
-    q1 <- trMissing r n
-    q1 `canBecomeMissing` q2
 
 checkParamToParam :: (Mergeable (m ()), Mergeable (m p), CompileErrorM m, Monad m) =>
   TypeResolver m p -> Variance -> TypeParam -> TypeParam -> m p
@@ -174,18 +175,22 @@ checkParamToParam r Invariant p1 p2 = fixMessage check where
     | otherwise = p
 checkParamToParam r Contravariant p1 p2 =
   checkParamToParam r Covariant p1 p2
-checkParamToParam r Covariant (TypeParam n1 cs1) (TypeParam n2 cs2) = checked where
+checkParamToParam r Covariant (TypeParam n1 q1 cs1) (TypeParam n2 q2 cs2) = checked where
   cs1' = addSelfToConstraints n1 cs1
   cs2' = addSelfToConstraints n2 cs2
   checked
     -- These two cases short-circuit pass/fail, since we might otherwise end up
     -- with infinite recursion due to adding self to the constraints.
-    | null cs2 && n1 == n2 = mergeDefault
+    | null cs2 && n1 == n2 = do
+      () <- q1 `canBecomeMissing` q2
+      mergeDefault
     | null cs1 && n1 /= n2 =
       compileError $ "Param conflict (" ++ show n1 ++ " -> " ++ show n2 ++ ")"
     -- Names can differ, as long as the constraints match up. (Assumes that
     -- param substitution has already happened.)
-    | otherwise = mergeAny $ map (\c1 -> mergeAll $ map (\c2 -> checkConstraintToConstraint c1 c2) cs2') cs1'
+    | otherwise = do
+      () <- q1 `canBecomeMissing` q2
+      mergeAny $ map (\c1 -> mergeAll $ map (\c2 -> checkConstraintToConstraint c1 c2) cs2') cs1'
   checkConstraintToConstraint (TypeFilter Covariant t1) (TypeFilter Covariant t2) =
     -- x -> F1 implies x -> F2 iff F1 -> F2
     checkGeneralMatch r Covariant t1 t2
@@ -194,12 +199,9 @@ checkParamToParam r Covariant (TypeParam n1 cs1) (TypeParam n2 cs2) = checked wh
     checkGeneralMatch r Contravariant t1 t2
   checkConstraintToConstraint (TypeFilter _ _) (TypeFilter _ _) =
     compileError $ "Cannot convert param to param (" ++ show n1 ++ " -> " ++ show n2 ++ ")"
-  checkConstraintToConstraint (TypeMissing q1) (TypeMissing q2) =
-    q1 `canBecomeMissing` q2
-  checkConstraintToConstraint _ _ = mergeDefault
 
 -- TODO: Adding Contravariant constraints broke this.
-addSelfToConstraints :: ParamName -> [TypeConstraint] -> [TypeConstraint]
+addSelfToConstraints :: ParamName -> [TypeFilter] -> [TypeFilter]
 addSelfToConstraints n cs = cs
 
 canBecomeMissing :: (Mergeable (m p), CompileErrorM m, Monad m) =>
