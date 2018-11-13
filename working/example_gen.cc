@@ -1,53 +1,6 @@
 #include <memory>
 
-template<class x, class y>
-struct Adapter {
-  virtual y operator ()(x) const = 0;
-  virtual ~Adapter() = default;
-};
-
-template<class x, class y>
-struct Coadapter {
-  virtual x operator ()(y) const = 0;
-  virtual ~Coadapter() = default;
-};
-
-template<class x>
-struct ReadVariable {
-  virtual x get() const = 0;
-};
-
-template<class x>
-struct Variable : public ReadVariable<x> {
-  virtual void set(x) = 0;
-  virtual ~Variable() = default;
-};
-
-template<class T>
-using R = std::unique_ptr<T>;
-
-template<class T>
-inline R<T> R_get(T* val) { return R<T>(val); }
-
-template<class T>
-using S = std::shared_ptr<T>;
-
-template<class T>
-inline S<T> S_get(T* val) { return S<T>(val); }
-
-template<class x>
-struct IdAdapter : public Adapter<x,x> {
-  static S<const Adapter<x,x>> create() { return S_get(new IdAdapter); }
-  // Ownership is passed.
-  x operator ()(x value) const final { return std::move(value); }
-};
-
-template<class x>
-struct IdCoadapter : public Coadapter<x,x> {
-  static S<const Coadapter<x,x>> create() { return S_get(new IdCoadapter); }
-  // Ownership is not passed.
-  x operator ()(x value) const final { return value; }
-};
+#include "base.h"
 
 template<class x>
 class CopiedVariable : public Variable<x> {
@@ -82,10 +35,8 @@ class Interface_Function {
   virtual ~Interface_Function() = default;
 
   template<class x2, class y2>
-  S<Interface_Function<x2,y2>> Convert_Function(
-    S<const Coadapter<x,x2>> conv_x,
-    S<const Adapter<y,y2>> conv_y) {
-    return S_get(new Adapter_Function<x2,y2>(this, conv_x, conv_y));
+  S<Interface_Function<x2,y2>> Convert_Function() {
+    return S_get(new Adapter_Function<x2,y2>(this));
   }
 
   y Call_Function_call(x a0) {
@@ -101,46 +52,50 @@ class Interface_Function {
   template<class x2, class y2>
   class Adapter_Function : public Interface_Function<x2,y2> {
    public:
-    Adapter_Function(
-      Interface_Function* object,
-      S<const Coadapter<x,x2>> conv_x,
-      S<const Adapter<y,y2>> conv_y)
-        : object_(object), conv_x_(conv_x), conv_y_(conv_y) {}
+    Adapter_Function(Interface_Function* object)
+        : object_(object) {}
 
    protected:
     R<Caller_Function_call<x2,y2>> New_Caller_Function_call() final {
       return R_get(new Adapter_Function_call<x2,y2>(
-        object_->New_Caller_Function_call(), conv_x_, conv_y_));
+        object_->New_Caller_Function_call()));
     }
 
    private:
     // TODO: This should also be shared, in case this adapter outlives the
     // original object, e.g., is used for returning a local value.
     Interface_Function<x,y>* const object_;
-    // Converters are per free param, but only those that can vary.
-    const S<const Coadapter<x,x2>> conv_x_;
-    const S<const Adapter<y,y2>> conv_y_;
   };
 
   template<class x2, class y2>
   class Adapter_Function_call : public Caller_Function_call<x2,y2> {
    public:
     Adapter_Function_call(
-      R<Caller_Function_call<x,y>> caller,
-      S<const Coadapter<x,x2>> conv_a0,
-      S<const Adapter<y,y2>> conv_r0)
-        : caller_(std::move(caller)), conv_a0_(conv_a0), conv_r0_(conv_r0) {}
+      R<Caller_Function_call<x,y>> caller)
+        : caller_(std::move(caller)) {}
 
-    void set_a0(x2 a0) final { caller_->set_a0((*conv_a0_)(a0)); }
+    void set_a0(x2 a0) final {
+      caller_->set_a0(ConvertTo<x>::From(a0));
+    }
+
     void execute() final { caller_->execute(); }
-    y2 get_r0() const final { return (*conv_r0_)(caller_->get_r0()); }
+
+    y2 get_r0() const final {
+      return ConvertTo<y2>::From(caller_->get_r0());
+    }
 
    private:
     const R<Caller_Function_call<x,y>> caller_;
-    // Converters are per arg and return value.
-    const S<const Coadapter<x,x2>> conv_a0_;
-    const S<const Adapter<y,y2>> conv_r0_;
   };
+};
+
+template<class x1, class y1, class x2, class y2>
+struct Adapter<S<Interface_Function<x1,y1>>,S<Interface_Function<x2,y2>>> {
+  static constexpr bool defined = true;
+  static S<Interface_Function<x2,y2>> convert(S<Interface_Function<x1,y1>> value) {
+    // Same type => convert with a wrapper.
+    return value->template Convert_Function<x2,y2>();
+  }
 };
 
 /*
@@ -195,20 +150,27 @@ class Interface_CountedId : public Interface_Function<x,x> {
   virtual R<Caller_CountedId_count> New_Caller_CountedId_count() = 0;
 };
 
-template<class x>
-struct Param_Filters_CountedId {
-  virtual bool x_is_missing(x) const = 0;
-  virtual x Int_to_x(int) const = 0;
+template<class x1, class x2>
+struct Adapter<S<Interface_CountedId<x1>>,S<Interface_CountedId<x2>>> {
+  static constexpr bool defined = false;
+  // No possible conversions => explicitly make it unimplemented.
+};
 
-  virtual ~Param_Filters_CountedId() = default;
+template<class x1, class x2, class y2>
+struct Adapter<S<Interface_CountedId<x1>>,S<Interface_Function<x2,y2>>> {
+  static constexpr bool defined = true;
+  static S<Interface_Function<x2,y2>> convert(S<S<Interface_CountedId<x1>>> value) {
+    // Different type => cast first, then convert.
+    return Adapter<S<Interface_Function<x1,x1>>,S<Interface_Function<x2,y2>>>::Convert(value);
+  }
 };
 
 template<class x>
 class Concrete_CountedId : public Interface_CountedId<x> {
  public:
   // (Not sure how this construction should actually happen.)
-  static S<Interface_CountedId<x>> create(S<const Param_Filters_CountedId<x>> filters) {
-    return S_get(new Concrete_CountedId<x>(filters));
+  static S<Interface_CountedId<x>> create() {
+    return S_get(new Concrete_CountedId<x>());
   }
 
  protected:
@@ -221,8 +183,7 @@ class Concrete_CountedId : public Interface_CountedId<x> {
   }
 
  private:
-  Concrete_CountedId(S<const Param_Filters_CountedId<x>> filters)
-      : filters_(filters) {}
+  Concrete_CountedId() {}
 
   class Implemented_CountedId_call : public Caller_Function_call<x,x> {
    public:
@@ -234,11 +195,11 @@ class Concrete_CountedId : public Interface_CountedId<x> {
 
     void execute() final {
       // Implementation of CountedId.call.
-      if (!self_->filters_->x_is_missing(a0_.get())) {
+      if (!Missing<x>::IsMissing(a0_.get())) {
         self_->member_counter_.set(self_->member_counter_.get()+1);
         r0_.set(a0_.get());
       } else {
-        r0_.set(self_->filters_->Int_to_x(-1));
+        r0_.set(ConvertTo<x>::From(-1));
       }
     }
 
@@ -271,32 +232,8 @@ class Concrete_CountedId : public Interface_CountedId<x> {
     CopiedVariable<int> r0_;
   };
 
-  const S<const Param_Filters_CountedId<x>> filters_;
-
   // Member variable CountedId.counter.
   CopiedVariable<int> member_counter_;
-};
-
-template<class x>
-struct Adapter_CountedId_to_Function : public Adapter<S<Interface_CountedId<x>>,S<Interface_Function<x,x>>> {
-  static S<const Adapter<S<Interface_CountedId<x>>,S<Interface_Function<x,x>>>> create() {
-    return S_get(new Adapter_CountedId_to_Function);
-  }
-
-  virtual S<Interface_Function<x,x>> operator ()(S<Interface_CountedId<x>> object) const {
-    return object;
-  }
-};
-
-template<class x>
-struct Coadapter_CountedId_to_Function : public Coadapter<S<Interface_Function<x,x>>,S<Interface_CountedId<x>>> {
-  static S<const Coadapter<S<Interface_Function<x,x>>,S<Interface_CountedId<x>>>> create() {
-    return S_get(new Coadapter_CountedId_to_Function);
-  }
-
-  virtual S<Interface_Function<x,x>> operator ()(S<Interface_CountedId<x>> object) const {
-    return object;
-  }
 };
 
 /*
@@ -307,41 +244,41 @@ Testing
 #include <sstream>
 #include <string>
 
-struct Adapter_int_to_string : public Adapter<int,std::string> {
-  static S<const Adapter<int,std::string>> create() { return S_get(new Adapter_int_to_string); }
-
-  virtual std::string operator ()(int value) const {
+template<>
+struct Adapter<int,std::string> {
+  static constexpr bool defined = true;
+  static std::string Convert(int value) {
     std::ostringstream out;
     out << value;
     return out.str();
   }
 };
 
-struct Coadapter_int_to_long : public Coadapter<int,long> {
-  static S<const Coadapter<int,long>> create() { return S_get(new Coadapter_int_to_long); }
-
-  virtual int operator ()(long value) const {
-    return value;
-  }
+template<>
+struct Adapter<long,int> {
+  static constexpr bool defined = true;
+  static int Convert(long value) { return value; }
 };
 
-// This corresponds to the variable named "counted" (in main below), rather than
-// to the parameter type.
-struct Filters_main_counted : public Param_Filters_CountedId<int> {
-  bool x_is_missing(int value) const final {
-    return value == 0;
-  }
+template<>
+struct Missing<int> {
+  static constexpr bool defined = false;
+  static bool IsMissing(int value) { return value == 0; }
+};
 
-  int Int_to_x(int value) const final {
-    return value;
-  }
+template<>
+struct Missing<long> {
+  static constexpr bool defined = false;
+  static bool IsMissing(long value) { return value == 0L; }
 };
 
 int main() {
   const S<Interface_CountedId<int>> counted =
-    Concrete_CountedId<int>::create(S_get(new Filters_main_counted));
+    Concrete_CountedId<int>::create();
+
   const S<Interface_Function<long,std::string>> function =
-    counted->Convert_Function(Coadapter_int_to_long::create(), Adapter_int_to_string::create());
+    counted->Convert_Function<long,std::string>();
+
   std::cerr << "Count: " << counted->Call_CountedId_count() << std::endl;
   std::cerr << "Call: " << counted->Call_Function_call(3) << std::endl;
   std::cerr << "Call: " << counted->Call_Function_call(0) << std::endl;
