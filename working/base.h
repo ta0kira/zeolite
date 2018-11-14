@@ -27,12 +27,14 @@ struct Adapter {
 template<class x>
 struct Adapter<x,x> {
   static constexpr bool defined = true;
+  // Passed by value, for things that cannot be copied.
   static x Convert(x value) { return value; }
 };
 
 template<class y>
 struct ConvertTo {
   template<class x>
+  // Passed by value, for things that cannot be copied.
   static y From(x value) {
     return Adapter<x,y>::Convert(value);
   }
@@ -59,24 +61,64 @@ struct Variable : public ReadVariable<x> {
 
 
 template<class...Ts>
-struct I {};
+class I {};
 
-template<>
-struct I<> {
-  virtual ~I() = default;
-};
+template<bool D>
+class Intersect {};
 
-template<class T0, class...Ts>
-struct I<T0,Ts...> : virtual protected I<Ts...> {
-  virtual void get(T0&) const = 0;
+template<class T0>
+class I<T0> {
+ public:
   virtual ~I() = default;
+
+  template<class X>
+  void get(X& var) const {
+    Intersect<Adapter<T0,X>::defined>::Convert(*this, var);
+  }
+
+ private:
+  virtual void exact(T0&) const = 0;
+  template<bool D> friend class Intersect;
 };
 
 template<class T0, class T1, class...Ts>
-struct I<T0,T1,Ts...> : virtual protected I<T1,Ts...> {
+class I<T0,T1,Ts...> : virtual protected I<T1,Ts...> {
+ public:
   using I<T1,Ts...>::get;
-  virtual void get(T0&) const = 0;
   virtual ~I() = default;
+
+  template<class X>
+  void get(X& var) const {
+    Intersect<Adapter<T0,X>::defined>::Convert(*this, var);
+  }
+
+ private:
+  virtual void exact(T0&) const = 0;
+  template<bool D> friend class Intersect;
+};
+
+template<>
+class Intersect<true> {
+  template<class X, class T0, class...Ts>
+  static void Convert(const I<T0,Ts...>& from, X& var) {
+    T0 val0;
+    from.exact(val0);
+    var = ConvertTo<X>::From(val0);
+  }
+
+  template<class...Ts> friend class I;
+  template<bool D> friend class Intersect;
+};
+
+template<>
+struct Intersect<false> {
+  template<class X, class T0, class T1, class...Ts>
+  static void Convert(const I<T0,T1,Ts...>&from, X& var) {
+    // NOTE: This does a cast I<T0,T1,Ts...> -> I<T1,Ts...>.
+    Intersect<Adapter<T1,X>::defined>::template Convert<X,T1,Ts...>(from, var);
+  }
+
+  template<class...Ts> friend class I;
 };
 
 template<class X, class...Ts>
@@ -95,12 +137,24 @@ class I_val<X> : virtual public I<> {
 
 template<class X, class T0, class...Ts>
 class I_val<X,T0,Ts...> : public I_val<X,Ts...>, virtual public I<T0,Ts...> {
- public:
-  void get(T0& var) const final {
+ private:
+  void exact(T0& var) const final {
     var = ConvertTo<T0>::From(I_val<X>::value_);
   }
 };
 
+// When converting from, use Adapter.
+template<class X, class...Ts>
+struct Adapter<S<I<Ts...>>,X> {
+  static constexpr bool defined = true;
+  static X Convert(S<I<Ts...>> value) {
+    X var;
+    value->get(var);
+    return var;
+  }
+};
+
+// When converting to, construct a new instance.
 template<class...Ts>
 struct I_get {
   template<class X>
@@ -114,7 +168,7 @@ struct I_get {
 template<class...Ts>
 struct ConvertTo<S<I<Ts...>>> {
   template<class x>
-  static S<I<Ts...>> From(x value) {
+  static S<I<Ts...>> From(const x& value) {
     return I_get<Ts...>::From(value);
   }
 };
@@ -188,10 +242,22 @@ struct U_get {
   }
 };
 
+// When converting from, use Adapter.
+template<class X, class...Ts>
+struct Adapter<S<U<Ts...>>,X> {
+  static constexpr bool defined = true;
+  static X Convert(S<U<Ts...>> value) {
+    X var;
+    value->get(var);
+    return var;
+  }
+};
+
+// When converting to, construct a new instance.
 template<class...Ts>
 struct ConvertTo<S<U<Ts...>>> {
   template<class x>
-  static S<U<Ts...>> From(x value) {
+  static S<U<Ts...>> From(const x& value) {
     return U_get<Ts...>::From(value);
   }
 };
