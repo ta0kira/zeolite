@@ -20,7 +20,7 @@ newtype CategoryConnect a =
 
 newtype CategoryRefine =
   CategoryRefine {
-    crRefines :: [GeneralInstance]
+    crRefines :: [TypeCategoryInstance]
   }
 
 type CategoryMain = CategoryConnect (Set.Set TypeName)
@@ -103,7 +103,7 @@ checkVariances :: (Mergeable (m ()), CompileErrorM m, Monad m) =>
 checkVariances va vs = checkCategory checkAll where
   checkAll n (CategoryRefine gs) = do
     as <- n `categoryLookup` va
-    mergeAll $ map (checkSingle as Covariant) gs
+    mergeAll $ map (checkSingle as Covariant . SingleType) gs
   checkSingle as v (SingleType (TypeCategoryInstance t ps)) = do
     vs2 <- t `categoryLookup` vs
     checkParamsMatch (\_ _ -> return ()) vs2 ps
@@ -161,11 +161,12 @@ checkMissing ms ca = checked where
     m2 `canBecomeMissing` m1
 
 mergeInstances :: (Mergeable (m ()), Mergeable (m p), CompileErrorM m, Monad m) =>
-  TypeResolver m p -> [GeneralInstance] -> [GeneralInstance]
+  TypeResolver m p -> [TypeCategoryInstance] -> [TypeCategoryInstance]
 mergeInstances r gs = merge [] gs where
   merge cs [] = cs
   merge cs (x:xs) = merge (cs ++ ys) xs where
-    ys = if isCompileError $ mergeAny $ map (\x2 -> checkGeneralMatch r Covariant x2 x) (cs ++ xs)
+    checker x2 = checkGeneralMatch r Covariant (SingleType x2) (SingleType x)
+    ys = if isCompileError $ mergeAny $ map checker (cs ++ xs)
        then [x] -- x is not redundant => keep.
        else []  -- x is redundant => remove.
 
@@ -179,20 +180,14 @@ flattenRefines r (CategoryConnect gs) = mfix flattenAll where
   flattenCategory ca (n,(CategoryRefine gs)) = do
     gs2 <- collectAllOrErrorM $ map (flattenSingle ca n) gs
     return (n,CategoryRefine (mergeInstances r $ join gs2))
-  flattenSingle ca _ ta@(SingleType (TypeCategoryInstance t ps)) = do
+  flattenSingle ca _ ta@(TypeCategoryInstance t ps) = do
     params <- (trParams r) t ps
     refines <- t `categoryLookup` ca
     collectAllOrErrorM $ map (substitute params) (crRefines refines)
-  flattenSingle _ n (TypeMerge MergeUnion _) =
-    compileError $ "Type " ++ show n ++ " cannot refine a union"
-  flattenSingle _ n (TypeMerge MergeIntersect _) =
-    compileError $ "Type " ++ show n ++ " cannot refine an intersection"
-  flattenSingle _ n (SingleType (TypeCategoryParam _)) =
-    compileError $ "Type " ++ show n ++ " cannot refine a param"
   substitute params t = do
     -- TODO: This should preserve the path (fst from the sub call) since it
     -- might be needed to keep track of conversion information.
-    ((),x) <- uncheckedSubAllParams (paramLookup params) t
+    ((),SingleType x) <- uncheckedSubAllParams (paramLookup params) (SingleType t)
     return x
 
 checkRefines :: (Mergeable (m ()), CompileErrorM m, Monad m) => Refinements -> m ()
@@ -200,12 +195,8 @@ checkRefines = checkCategory checkAll where
   checkAll n (CategoryRefine gs) = do
     ts <- collectAllOrErrorM $ map (getTypeName n) gs
     mergeAll $ map (checkGroup n) $ group ts
-  getTypeName _ (SingleType (TypeCategoryInstance t _)) = return t
-  getTypeName n (TypeMerge MergeUnion _) =
-    compileError $ "Type " ++ show n ++ " cannot refine a union"
-  getTypeName n (TypeMerge MergeIntersect _) =
-    compileError $ "Type " ++ show n ++ " cannot refine an intersection"
-  getTypeName n (SingleType (TypeCategoryParam _)) =
+  getTypeName _ (TypeCategoryInstance t _) = return t
+  getTypeName n (TypeCategoryParam _) =
     compileError $ "Type " ++ show n ++ " cannot refine a param"
   checkGroup n (t:t2:ts) =
     compileError $ "Type " ++ show n ++ " has conflicting refinements of type " ++ show t
