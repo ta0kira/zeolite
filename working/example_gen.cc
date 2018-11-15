@@ -34,10 +34,7 @@ class Interface_Function {
  public:
   virtual ~Interface_Function() = default;
 
-  template<class x2, class y2>
-  S<Interface_Function<x2,y2>> Convert_Function() {
-    return S_get(new Adapter_Function<x2,y2>(this));
-  }
+  // This would also include abstract functions to convert to bases of Function.
 
   y Call_Function_call(x a0) {
     const auto caller = New_Caller_Function_call();
@@ -49,33 +46,31 @@ class Interface_Function {
  protected:
   virtual R<Caller_Function_call<x,y>> New_Caller_Function_call() = 0;
 
-  template<class x2, class y2>
-  class Adapter_Function : public Interface_Function<x2,y2> {
-   public:
-    Adapter_Function(Interface_Function* object)
-        : object_(object) {}
+  template<class x1, class y1, class x2, class y2>
+  friend class Adapter_Function;
+};
 
-   protected:
-    R<Caller_Function_call<x2,y2>> New_Caller_Function_call() final {
-      return R_get(new Adapter_Function_call<x2,y2>(
-        object_->New_Caller_Function_call()));
-    }
+template<class x1, class y1, class x2, class y2>
+class Adapter_Function : public Interface_Function<x2,y2> {
+ public:
+  Adapter_Function(S<Interface_Function<x1,y1>> object)
+      : object_(object) {}
 
-   private:
-    // TODO: This should also be shared, in case this adapter outlives the
-    // original object, e.g., is used for returning a local value.
-    Interface_Function<x,y>* const object_;
-  };
+ protected:
+  R<Caller_Function_call<x2,y2>> New_Caller_Function_call() final {
+    return R_get(new Adapter_Function_call(
+      object_->New_Caller_Function_call()));
+  }
 
-  template<class x2, class y2>
+ private:
   class Adapter_Function_call : public Caller_Function_call<x2,y2> {
    public:
     Adapter_Function_call(
-      R<Caller_Function_call<x,y>> caller)
+      R<Caller_Function_call<x1,y1>> caller)
         : caller_(std::move(caller)) {}
 
     void set_a0(x2 a0) final {
-      caller_->set_a0(ConvertTo<x>::From(a0));
+      caller_->set_a0(ConvertTo<x1>::From(a0));
     }
 
     void execute() final { caller_->execute(); }
@@ -85,16 +80,17 @@ class Interface_Function {
     }
 
    private:
-    const R<Caller_Function_call<x,y>> caller_;
+    const R<Caller_Function_call<x1,y1>> caller_;
   };
+
+  const S<Interface_Function<x1,y1>> object_;
 };
 
 template<class x1, class y1, class x2, class y2>
 struct Adapter<S<Interface_Function<x1,y1>>,S<Interface_Function<x2,y2>>> {
   static constexpr bool defined = true;
-  static S<Interface_Function<x2,y2>> convert(S<Interface_Function<x1,y1>> value) {
-    // Same type => convert with a wrapper.
-    return value->template Convert_Function<x2,y2>();
+  static S<Interface_Function<x2,y2>> Convert(S<Interface_Function<x1,y1>> value) {
+    return S_get(new Adapter_Function<x1,y1,x2,y2>(value));
   }
 };
 
@@ -127,6 +123,12 @@ count() { return counter; }
 
 */
 
+// NOTE: If the function types get refined, inheritance won't work, and we'll
+// actually need two implementations of the function.
+template<class x>
+struct Caller_CountedId_call : public Caller_Function_call<x,x> {};
+
+template<class x>
 struct Caller_CountedId_count {
   virtual void execute() = 0;
   virtual int get_r0() const = 0;
@@ -134,11 +136,18 @@ struct Caller_CountedId_count {
 };
 
 template<class x>
-class Interface_CountedId : public Interface_Function<x,x> {
+class Interface_CountedId {
  public:
   virtual ~Interface_CountedId() = default;
 
-  // Concrete class with no variant params => no conversions gets generated.
+  virtual S<Interface_Function<x,x>> Convert_Function() = 0;
+
+  x Call_CountedId_call(x a0) {
+    const auto caller = New_Caller_CountedId_call();
+    caller->set_a0(a0);
+    caller->execute();
+    return caller->get_r0();
+  }
 
   x Call_CountedId_count() {
     const auto caller = New_Caller_CountedId_count();
@@ -147,7 +156,8 @@ class Interface_CountedId : public Interface_Function<x,x> {
   }
 
  protected:
-  virtual R<Caller_CountedId_count> New_Caller_CountedId_count() = 0;
+  virtual R<Caller_CountedId_call<x>> New_Caller_CountedId_call() = 0;
+  virtual R<Caller_CountedId_count<x>> New_Caller_CountedId_count() = 0;
 };
 
 template<class x1, class x2>
@@ -159,9 +169,8 @@ struct Adapter<S<Interface_CountedId<x1>>,S<Interface_CountedId<x2>>> {
 template<class x1, class x2, class y2>
 struct Adapter<S<Interface_CountedId<x1>>,S<Interface_Function<x2,y2>>> {
   static constexpr bool defined = true;
-  static S<Interface_Function<x2,y2>> convert(S<S<Interface_CountedId<x1>>> value) {
-    // Different type => cast first, then convert.
-    return Adapter<S<Interface_Function<x1,x1>>,S<Interface_Function<x2,y2>>>::Convert(value);
+  static S<Interface_Function<x2,y2>> Convert(const S<Interface_CountedId<x1>>& value) {
+    return ConvertTo<S<Interface_Function<x2,y2>>>::From(value->Convert_Function());
   }
 };
 
@@ -173,21 +182,44 @@ class Concrete_CountedId : public Interface_CountedId<x> {
     return S_get(new Concrete_CountedId<x>());
   }
 
- protected:
-  R<Caller_Function_call<x,x>> New_Caller_Function_call() final {
-    return R_get(new Implemented_CountedId_call(this));
+  S<Interface_Function<x,x>> Convert_Function() final {
+    return S_get(new Implemented_Function(data_));
   }
 
-  R<Caller_CountedId_count> New_Caller_CountedId_count() final {
-    return R_get(new Implemented_CountedId_count(this));
+ protected:
+  R<Caller_CountedId_call<x>> New_Caller_CountedId_call() final {
+    return R_get(new Implemented_CountedId_call(data_));
+  }
+
+  R<Caller_CountedId_count<x>> New_Caller_CountedId_count() final {
+    return R_get(new Implemented_CountedId_count(data_));
   }
 
  private:
   Concrete_CountedId() {}
 
-  class Implemented_CountedId_call : public Caller_Function_call<x,x> {
+  struct Data_CountedId {
+    // Member variable CountedId.counter.
+    // TODO: We really shouldn't be storing a raw type here.
+    CopiedVariable<int> member_counter_;
+  };
+
+  class Implemented_Function : public Interface_Function<x,x> {
    public:
-    Implemented_CountedId_call(Concrete_CountedId* self) : self_(self) {}
+    Implemented_Function(const S<Data_CountedId> data) : data_(data) {}
+
+   protected:
+    R<Caller_Function_call<x,x>> New_Caller_Function_call() final {
+      return R_get(new Implemented_CountedId_call(data_));
+    }
+
+   private:
+    const S<Data_CountedId> data_;
+  };
+
+  class Implemented_CountedId_call : public Caller_CountedId_call<x> {
+   public:
+    Implemented_CountedId_call(const S<Data_CountedId> data) : data_(data) {}
 
     void set_a0(x a0) final {
       a0_.set(a0);
@@ -196,7 +228,7 @@ class Concrete_CountedId : public Interface_CountedId<x> {
     void execute() final {
       // Implementation of CountedId.call.
       if (!Missing<x>::IsMissing(a0_.get())) {
-        self_->member_counter_.set(self_->member_counter_.get()+1);
+        data_->member_counter_.set(data_->member_counter_.get()+1);
         r0_.set(a0_.get());
       } else {
         r0_.set(ConvertTo<x>::From(-1));
@@ -208,18 +240,18 @@ class Concrete_CountedId : public Interface_CountedId<x> {
     }
 
    private:
-    Concrete_CountedId* const self_;
+    const S<Data_CountedId> data_;
     CopiedVariable<x> a0_;
     CopiedVariable<x> r0_;
   };
 
-  class Implemented_CountedId_count : public Caller_CountedId_count {
+  class Implemented_CountedId_count : public Caller_CountedId_count<x> {
    public:
-    Implemented_CountedId_count(Concrete_CountedId* self) : self_(self) {}
+    Implemented_CountedId_count(const S<Data_CountedId> data) : data_(data) {}
 
     void execute() final {
       // Implementation of CountedId.call.
-      r0_.set(self_->member_counter_.get());
+      r0_.set(data_->member_counter_.get());
     }
 
     int get_r0() const final {
@@ -227,13 +259,12 @@ class Concrete_CountedId : public Interface_CountedId<x> {
     }
 
    private:
-    Concrete_CountedId* const self_;
+    const S<Data_CountedId> data_;
     // TODO: We really shouldn't be storing a raw type here.
     CopiedVariable<int> r0_;
   };
 
-  // Member variable CountedId.counter.
-  CopiedVariable<int> member_counter_;
+  const S<Data_CountedId> data_ = S_get(new Data_CountedId);
 };
 
 /*
@@ -277,11 +308,11 @@ int main() {
     Concrete_CountedId<int>::create();
 
   const S<Interface_Function<long,std::string>> function =
-    counted->Convert_Function<long,std::string>();
+    ConvertTo<S<Interface_Function<long,std::string>>>::From(counted);
 
   std::cerr << "Count: " << counted->Call_CountedId_count() << std::endl;
-  std::cerr << "Call: " << counted->Call_Function_call(3) << std::endl;
-  std::cerr << "Call: " << counted->Call_Function_call(0) << std::endl;
+  std::cerr << "Call: " << counted->Call_CountedId_call(3) << std::endl;
+  std::cerr << "Call: " << counted->Call_CountedId_call(0) << std::endl;
   std::cerr << "Call: " << function->Call_Function_call(4L).append("!") << std::endl;
   std::cerr << "Count: " << counted->Call_CountedId_count() << std::endl;
 }

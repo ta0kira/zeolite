@@ -27,16 +27,14 @@ struct Adapter {
 template<class x>
 struct Adapter<x,x> {
   static constexpr bool defined = true;
-  // Passed by value, for things that cannot be copied.
-  static x Convert(x value) { return value; }
+  static const x& Convert(const x& value) { return value; }
 };
 
 template<class y>
 struct ConvertTo {
   template<class x>
-  // Passed by value, for things that cannot be copied.
   static y From(x value) {
-    return Adapter<x,y>::Convert(value);
+    return Adapter<x,y>::Convert(std::move(value));
   }
 };
 
@@ -113,7 +111,7 @@ class Intersect<true> {
 template<>
 struct Intersect<false> {
   template<class X, class T0, class T1, class...Ts>
-  static void Convert(const I<T0,T1,Ts...>&from, X& var) {
+  static void Convert(const I<T0,T1,Ts...>& from, X& var) {
     // NOTE: This does a cast I<T0,T1,Ts...> -> I<T1,Ts...>.
     Intersect<Adapter<T1,X>::defined>::template Convert<X,T1,Ts...>(from, var);
   }
@@ -147,7 +145,7 @@ class I_val<X,T0,Ts...> : public I_val<X,Ts...>, virtual public I<T0,Ts...> {
 template<class X, class...Ts>
 struct Adapter<S<I<Ts...>>,X> {
   static constexpr bool defined = true;
-  static X Convert(S<I<Ts...>> value) {
+  static X Convert(const S<I<Ts...>>& value) {
     X var;
     value->get(var);
     return var;
@@ -246,7 +244,7 @@ struct U_get {
 template<class X, class...Ts>
 struct Adapter<S<U<Ts...>>,X> {
   static constexpr bool defined = true;
-  static X Convert(S<U<Ts...>> value) {
+  static X Convert(const S<U<Ts...>>& value) {
     X var;
     value->get(var);
     return var;
