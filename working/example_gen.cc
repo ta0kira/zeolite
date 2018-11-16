@@ -21,8 +21,7 @@ interface Function<x|y> {
 */
 
 template<class x, class y>
-class Caller_Function_call {
- public:
+struct Caller_Function_call {
   virtual void Set_a0(const x& a0) = 0;
   virtual void Execute() = 0;
   virtual y Get_r0() const = 0;
@@ -37,19 +36,20 @@ class Interface_Function {
   // This would also include abstract functions to convert to bases of Function.
 
   y Call_Function_call(const x& a0) {
-    const auto caller = New_Caller_Function_call();
+    const auto caller = Create_Function_call();
     caller->Set_a0(a0);
     caller->Execute();
     return caller->Get_r0();
   }
 
  protected:
-  virtual R<Caller_Function_call<x,y>> New_Caller_Function_call() = 0;
+  virtual R<Caller_Function_call<x,y>> Create_Function_call() = 0;
 
   template<class x1, class y1, class x2, class y2>
   friend class Adapter_Function;
 };
 
+// Only present because there are variant params.
 template<class x1, class y1, class x2, class y2>
 class Adapter_Function : public Interface_Function<x2,y2> {
  public:
@@ -57,9 +57,9 @@ class Adapter_Function : public Interface_Function<x2,y2> {
       : object_(object) {}
 
  protected:
-  R<Caller_Function_call<x2,y2>> New_Caller_Function_call() final {
+  R<Caller_Function_call<x2,y2>> Create_Function_call() final {
     return R_get(new Adapter_Function_call(
-      object_->New_Caller_Function_call()));
+      object_->Create_Function_call()));
   }
 
  private:
@@ -86,6 +86,7 @@ class Adapter_Function : public Interface_Function<x2,y2> {
   const S<Interface_Function<x1,y1>> object_;
 };
 
+// Only present because there are variant params.
 template<class x1, class y1, class x2, class y2>
 struct Adapter<S<Interface_Function<x1,y1>>,S<Interface_Function<x2,y2>>> {
   static constexpr bool defined = true;
@@ -102,6 +103,7 @@ concrete CountedId<x> {
   // can't really be anything else.
   x allows Int
   refines Function<x,x>
+  static create takes () to (CountedId<x>)
   count takes () to (Int)
 }
 
@@ -111,6 +113,12 @@ Members:
 
 Implementations:
 
+create() {
+  // TODO: Not really sure how this should be expressed, as far as syntax. Only
+  // CountedId should be allowed to create instances.
+  return new CountedId<x>
+}
+
 call(val) {
   if (!is_missing(val)) {  // <- x allows missing
     counter += 1;
@@ -119,13 +127,13 @@ call(val) {
     return -1;  // <- x allows Int
   }
 }
+
 count() { return counter; }
 
 */
 
 template<class x>
 struct Caller_CountedId_call {
- public:
   virtual void Set_a0(const x& a0) = 0;
   virtual void Execute() = 0;
   virtual x Get_r0() const = 0;
@@ -144,24 +152,24 @@ class Interface_CountedId {
  public:
   virtual ~Interface_CountedId() = default;
 
-  virtual S<Interface_Function<x,x>> Convert_Function() = 0;
+  virtual S<Interface_Function<x,x>> As_Function() = 0;
 
   x Call_CountedId_call(const x& a0) {
-    const auto caller = New_Caller_CountedId_call();
+    const auto caller = Create_CountedId_call();
     caller->Set_a0(a0);
     caller->Execute();
     return caller->Get_r0();
   }
 
   x Call_CountedId_count() {
-    const auto caller = New_Caller_CountedId_count();
+    const auto caller = Create_CountedId_count();
     caller->Execute();
     return caller->Get_r0();
   }
 
  protected:
-  virtual R<Caller_CountedId_call<x>> New_Caller_CountedId_call() = 0;
-  virtual R<Caller_CountedId_count<x>> New_Caller_CountedId_count() = 0;
+  virtual R<Caller_CountedId_call<x>> Create_CountedId_call() = 0;
+  virtual R<Caller_CountedId_count<x>> Create_CountedId_count() = 0;
 };
 
 template<class x1, class x2>
@@ -174,28 +182,28 @@ template<class x1, class x2, class y2>
 struct Adapter<S<Interface_CountedId<x1>>,S<Interface_Function<x2,y2>>> {
   static constexpr bool defined = true;
   static S<Interface_Function<x2,y2>> Convert(const S<Interface_CountedId<x1>>& value) {
-    return ConvertTo<S<Interface_Function<x2,y2>>>::From(value->Convert_Function());
+    return ConvertTo<S<Interface_Function<x2,y2>>>::From(value->As_Function());
   }
 };
 
 template<class x>
 class Concrete_CountedId : public Interface_CountedId<x> {
  public:
-  // (Not sure how this construction should actually happen.)
   static S<Interface_CountedId<x>> create() {
+    // Implementation of CountedId.create.
     return S_get(new Concrete_CountedId<x>());
   }
 
-  S<Interface_Function<x,x>> Convert_Function() final {
+  S<Interface_Function<x,x>> As_Function() final {
     return S_get(new Implemented_Function(data_));
   }
 
  protected:
-  R<Caller_CountedId_call<x>> New_Caller_CountedId_call() final {
+  R<Caller_CountedId_call<x>> Create_CountedId_call() final {
     return R_get(new Implemented_CountedId_call(data_));
   }
 
-  R<Caller_CountedId_count<x>> New_Caller_CountedId_count() final {
+  R<Caller_CountedId_count<x>> Create_CountedId_count() final {
     return R_get(new Implemented_CountedId_count(data_));
   }
 
@@ -213,7 +221,7 @@ class Concrete_CountedId : public Interface_CountedId<x> {
     Implemented_Function(const S<Data_CountedId> data) : data_(data) {}
 
    protected:
-    R<Caller_Function_call<x,x>> New_Caller_Function_call() final {
+    R<Caller_Function_call<x,x>> Create_Function_call() final {
       return R_get(new Implemented_Function_call(data_));
     }
 
