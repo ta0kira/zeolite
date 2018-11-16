@@ -19,13 +19,13 @@ inline S<T> S_get(T* val) { return S<T>(val); }
 template<class X, class Y>
 struct Adapter {
   static constexpr bool defined = false;
-  // static Y Convert(X value) { ... }
+  // static Y Convert(const X& value) { ... }
 };
 
 template<class X>
 struct Adapter<X,X> {
   static constexpr bool defined = true;
-  static const X& Convert(const X& value) { return value; }
+  static const X& Convert(X value) { return std::move(value); }
 };
 
 template<class Y>

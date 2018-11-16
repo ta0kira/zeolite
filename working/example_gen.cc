@@ -23,7 +23,7 @@ interface Function<x|y> {
 template<class x, class y>
 class Caller_Function_call {
  public:
-  virtual void Set_a0(x a0) = 0;
+  virtual void Set_a0(const x& a0) = 0;
   virtual void Execute() = 0;
   virtual y Get_r0() const = 0;
   virtual ~Caller_Function_call() = default;
@@ -36,7 +36,7 @@ class Interface_Function {
 
   // This would also include abstract functions to convert to bases of Function.
 
-  y Call_Function_call(x a0) {
+  y Call_Function_call(const x& a0) {
     const auto caller = New_Caller_Function_call();
     caller->Set_a0(a0);
     caller->Execute();
@@ -69,7 +69,7 @@ class Adapter_Function : public Interface_Function<x2,y2> {
       R<Caller_Function_call<x1,y1>> caller)
         : caller_(std::move(caller)) {}
 
-    void Set_a0(x2 a0) final {
+    void Set_a0(const x2& a0) final {
       caller_->Set_a0(ConvertTo<x1>::From(a0));
     }
 
@@ -126,7 +126,7 @@ count() { return counter; }
 template<class x>
 struct Caller_CountedId_call {
  public:
-  virtual void Set_a0(x a0) = 0;
+  virtual void Set_a0(const x& a0) = 0;
   virtual void Execute() = 0;
   virtual x Get_r0() const = 0;
   virtual ~Caller_CountedId_call() = default;
@@ -146,7 +146,7 @@ class Interface_CountedId {
 
   virtual S<Interface_Function<x,x>> Convert_Function() = 0;
 
-  x Call_CountedId_call(x a0) {
+  x Call_CountedId_call(const x& a0) {
     const auto caller = New_Caller_CountedId_call();
     caller->Set_a0(a0);
     caller->Execute();
@@ -225,7 +225,7 @@ class Concrete_CountedId : public Interface_CountedId<x> {
    public:
     Implemented_CountedId_call(const S<Data_CountedId> data) : data_(data) {}
 
-    void Set_a0(x a0) final {
+    void Set_a0(const x& a0) final {
       a0_.Set(a0);
     }
 
@@ -253,7 +253,7 @@ class Concrete_CountedId : public Interface_CountedId<x> {
    public:
     Implemented_Function_call(const S<Data_CountedId> data) : caller_(data) {}
 
-    void Set_a0(x a0) final {
+    void Set_a0(const x& a0) final {
       caller_.Set_a0(ConvertTo<x>::From(a0));
     }
 
@@ -328,15 +328,16 @@ struct Missing<long> {
 };
 
 int main() {
-  const S<Interface_CountedId<int>> counted =
-    Concrete_CountedId<int>::create();
+  const auto counted = Concrete_CountedId<int>::create();
 
-  const S<Interface_Function<long,std::string>> function =
-    ConvertTo<S<Interface_Function<long,std::string>>>::From(counted);
+  const auto function =
+    ConvertTo<S<Interface_Function<S<U<long,int>>,std::string>>>::From(counted);
 
   std::cerr << "Count: " << counted->Call_CountedId_count() << std::endl;
   std::cerr << "Call: " << counted->Call_CountedId_call(3) << std::endl;
   std::cerr << "Call: " << counted->Call_CountedId_call(0) << std::endl;
-  std::cerr << "Call: " << function->Call_Function_call(4L).append("!") << std::endl;
+  std::cerr << "Call: "
+            << function->Call_Function_call(ConvertTo<S<U<long,int>>>::From(4L)).append("!")
+            << std::endl;
   std::cerr << "Count: " << counted->Call_CountedId_count() << std::endl;
 }
