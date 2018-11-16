@@ -123,10 +123,14 @@ count() { return counter; }
 
 */
 
-// NOTE: If the function types get refined, inheritance won't work, and we'll
-// actually need two implementations of the function.
 template<class x>
-struct Caller_CountedId_call : public Caller_Function_call<x,x> {};
+struct Caller_CountedId_call {
+ public:
+  virtual void Set_a0(x a0) = 0;
+  virtual void Execute() = 0;
+  virtual x Get_r0() const = 0;
+  virtual ~Caller_CountedId_call() = default;
+};
 
 template<class x>
 struct Caller_CountedId_count {
@@ -210,7 +214,7 @@ class Concrete_CountedId : public Interface_CountedId<x> {
 
    protected:
     R<Caller_Function_call<x,x>> New_Caller_Function_call() final {
-      return R_get(new Implemented_CountedId_call(data_));
+      return R_get(new Implemented_Function_call(data_));
     }
 
    private:
@@ -243,6 +247,26 @@ class Concrete_CountedId : public Interface_CountedId<x> {
     const S<Data_CountedId> data_;
     CopiedVariable<x> a0_;
     CopiedVariable<x> r0_;
+  };
+
+  class Implemented_Function_call : public Caller_Function_call<x,x> {
+   public:
+    Implemented_Function_call(const S<Data_CountedId> data) : caller_(data) {}
+
+    void Set_a0(x a0) final {
+      caller_.Set_a0(ConvertTo<x>::From(a0));
+    }
+
+    void Execute() final {
+      caller_.Execute();
+    }
+
+    x Get_r0() const final {
+      return ConvertTo<x>::From(caller_.Get_r0());
+    }
+
+   private:
+    Implemented_CountedId_call caller_;
   };
 
   class Implemented_CountedId_count : public Caller_CountedId_count<x> {
