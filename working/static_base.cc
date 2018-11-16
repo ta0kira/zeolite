@@ -1,6 +1,6 @@
 #include <iostream>
 
-#include "base.h"
+#include "static_base.h"
 
 template<>
 struct Adapter<int,char> {

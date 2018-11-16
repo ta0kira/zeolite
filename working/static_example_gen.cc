@@ -1,6 +1,6 @@
 #include <memory>
 
-#include "base.h"
+#include "static_base.h"
 
 template<class X>
 class CopiedVariable : public Variable<X> {
