@@ -2,14 +2,14 @@
 
 #include "base.h"
 
-template<class x>
-class CopiedVariable : public Variable<x> {
+template<class X>
+class CopiedVariable : public Variable<X> {
  public:
-  x get() const final { return value_; }
-  void set(x value) final { value_ = value; }
+  X Get() const final { return value_; }
+  void Set(const X& value) final { value_ = value; }
 
  private:
-  x value_;
+  X value_;
 };
 
 /*
@@ -23,9 +23,9 @@ interface Function<x|y> {
 template<class x, class y>
 class Caller_Function_call {
  public:
-  virtual void set_a0(x a0) = 0;
-  virtual void execute() = 0;
-  virtual y get_r0() const = 0;
+  virtual void Set_a0(x a0) = 0;
+  virtual void Execute() = 0;
+  virtual y Get_r0() const = 0;
   virtual ~Caller_Function_call() = default;
 };
 
@@ -38,9 +38,9 @@ class Interface_Function {
 
   y Call_Function_call(x a0) {
     const auto caller = New_Caller_Function_call();
-    caller->set_a0(a0);
-    caller->execute();
-    return caller->get_r0();
+    caller->Set_a0(a0);
+    caller->Execute();
+    return caller->Get_r0();
   }
 
  protected:
@@ -69,14 +69,14 @@ class Adapter_Function : public Interface_Function<x2,y2> {
       R<Caller_Function_call<x1,y1>> caller)
         : caller_(std::move(caller)) {}
 
-    void set_a0(x2 a0) final {
-      caller_->set_a0(ConvertTo<x1>::From(a0));
+    void Set_a0(x2 a0) final {
+      caller_->Set_a0(ConvertTo<x1>::From(a0));
     }
 
-    void execute() final { caller_->execute(); }
+    void Execute() final { caller_->Execute(); }
 
-    y2 get_r0() const final {
-      return ConvertTo<y2>::From(caller_->get_r0());
+    y2 Get_r0() const final {
+      return ConvertTo<y2>::From(caller_->Get_r0());
     }
 
    private:
@@ -130,8 +130,8 @@ struct Caller_CountedId_call : public Caller_Function_call<x,x> {};
 
 template<class x>
 struct Caller_CountedId_count {
-  virtual void execute() = 0;
-  virtual int get_r0() const = 0;
+  virtual void Execute() = 0;
+  virtual int Get_r0() const = 0;
   virtual ~Caller_CountedId_count() = default;
 };
 
@@ -144,15 +144,15 @@ class Interface_CountedId {
 
   x Call_CountedId_call(x a0) {
     const auto caller = New_Caller_CountedId_call();
-    caller->set_a0(a0);
-    caller->execute();
-    return caller->get_r0();
+    caller->Set_a0(a0);
+    caller->Execute();
+    return caller->Get_r0();
   }
 
   x Call_CountedId_count() {
     const auto caller = New_Caller_CountedId_count();
-    caller->execute();
-    return caller->get_r0();
+    caller->Execute();
+    return caller->Get_r0();
   }
 
  protected:
@@ -221,22 +221,22 @@ class Concrete_CountedId : public Interface_CountedId<x> {
    public:
     Implemented_CountedId_call(const S<Data_CountedId> data) : data_(data) {}
 
-    void set_a0(x a0) final {
-      a0_.set(a0);
+    void Set_a0(x a0) final {
+      a0_.Set(a0);
     }
 
-    void execute() final {
+    void Execute() final {
       // Implementation of CountedId.call.
-      if (!Missing<x>::IsMissing(a0_.get())) {
-        data_->member_counter_.set(data_->member_counter_.get()+1);
-        r0_.set(a0_.get());
+      if (!Missing<x>::IsMissing(a0_.Get())) {
+        data_->member_counter_.Set(data_->member_counter_.Get()+1);
+        r0_.Set(a0_.Get());
       } else {
-        r0_.set(ConvertTo<x>::From(-1));
+        r0_.Set(ConvertTo<x>::From(-1));
       }
     }
 
-    x get_r0() const final {
-      return r0_.get();
+    x Get_r0() const final {
+      return r0_.Get();
     }
 
    private:
@@ -249,13 +249,13 @@ class Concrete_CountedId : public Interface_CountedId<x> {
    public:
     Implemented_CountedId_count(const S<Data_CountedId> data) : data_(data) {}
 
-    void execute() final {
+    void Execute() final {
       // Implementation of CountedId.call.
-      r0_.set(data_->member_counter_.get());
+      r0_.Set(data_->member_counter_.Get());
     }
 
-    int get_r0() const final {
-      return r0_.get();
+    int Get_r0() const final {
+      return r0_.Get();
     }
 
    private:

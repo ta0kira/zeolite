@@ -21,8 +21,6 @@ newtype CategoryConnect a =
 newtype CategoryRefine =
   CategoryRefine {
     crRefines :: [TypeCategoryInstance]
-    -- TODO: Add a list of hidden refinements, i.e., those removed by
-    -- mergeInstances. (Also exclude identical matches.)
   }
 
 type CategoryMain = CategoryConnect (Set.Set TypeName)

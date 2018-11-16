@@ -3,8 +3,6 @@
 
 #include <memory>
 
-// TODO: Be consistent with case for base functions and template params.
-
 template<class T>
 using R = std::unique_ptr<T>;
 
@@ -18,42 +16,42 @@ template<class T>
 inline S<T> S_get(T* val) { return S<T>(val); }
 
 
-template<class x, class y>
+template<class X, class Y>
 struct Adapter {
   static constexpr bool defined = false;
-  // static y Convert(x value) { ... }
+  // static Y Convert(X value) { ... }
 };
 
-template<class x>
-struct Adapter<x,x> {
+template<class X>
+struct Adapter<X,X> {
   static constexpr bool defined = true;
-  static const x& Convert(const x& value) { return value; }
+  static const X& Convert(const X& value) { return value; }
 };
 
-template<class y>
+template<class Y>
 struct ConvertTo {
-  template<class x>
-  static y From(x value) {
-    return Adapter<x,y>::Convert(std::move(value));
+  template<class X>
+  static Y From(X value) {
+    return Adapter<X,Y>::Convert(std::move(value));
   }
 };
 
 
-template<class x>
+template<class X>
 struct Missing {
   static constexpr bool defined = false;
-  // static bool IsMissing(x value) { ... }
+  // static bool IsMissing(const X& value) { ... }
 };
 
 
-template<class x>
+template<class X>
 struct ReadVariable {
-  virtual x get() const = 0;
+  virtual X Get() const = 0;
 };
 
-template<class x>
-struct Variable : public ReadVariable<x> {
-  virtual void set(x) = 0;
+template<class X>
+struct Variable : public ReadVariable<X> {
+  virtual void Set(const X&) = 0;
   virtual ~Variable() = default;
 };
 
@@ -70,28 +68,28 @@ class I<T0> {
   virtual ~I() = default;
 
   template<class X>
-  void get(X& var) const {
+  void Get(X& var) const {
     Intersect<Adapter<T0,X>::defined>::Convert(*this, var);
   }
 
  private:
-  virtual void exact(T0&) const = 0;
+  virtual void Exact(T0&) const = 0;
   template<bool D> friend class Intersect;
 };
 
 template<class T0, class T1, class...Ts>
 class I<T0,T1,Ts...> : virtual protected I<T1,Ts...> {
  public:
-  using I<T1,Ts...>::get;
+  using I<T1,Ts...>::Get;
   virtual ~I() = default;
 
   template<class X>
-  void get(X& var) const {
+  void Get(X& var) const {
     Intersect<Adapter<T0,X>::defined>::Convert(*this, var);
   }
 
  private:
-  virtual void exact(T0&) const = 0;
+  virtual void Exact(T0&) const = 0;
   template<bool D> friend class Intersect;
 };
 
@@ -100,7 +98,7 @@ class Intersect<true> {
   template<class X, class T0, class...Ts>
   static void Convert(const I<T0,Ts...>& from, X& var) {
     T0 val0;
-    from.exact(val0);
+    from.Exact(val0);
     var = ConvertTo<X>::From(val0);
   }
 
@@ -125,7 +123,7 @@ class I_val {};
 template<class X>
 class I_val<X> : virtual public I<> {
  public:
-  void set(X value) {
+  void Set(const X& value) {
     value_ = value;
   }
 
@@ -136,7 +134,7 @@ class I_val<X> : virtual public I<> {
 template<class X, class T0, class...Ts>
 class I_val<X,T0,Ts...> : public I_val<X,Ts...>, virtual public I<T0,Ts...> {
  private:
-  void exact(T0& var) const final {
+  void Exact(T0& var) const final {
     var = ConvertTo<T0>::From(I_val<X>::value_);
   }
 };
@@ -147,7 +145,7 @@ struct Adapter<S<I<Ts...>>,X> {
   static constexpr bool defined = true;
   static X Convert(const S<I<Ts...>>& value) {
     X var;
-    value->get(var);
+    value->Get(var);
     return var;
   }
 };
@@ -158,15 +156,15 @@ struct I_get {
   template<class X>
   static S<I<Ts...>> From(X value) {
     auto val = S<I_val<X,Ts...>>(new I_val<X,Ts...>);
-    val->set(value);
+    val->Set(value);
     return val;
   }
 };
 
 template<class...Ts>
 struct ConvertTo<S<I<Ts...>>> {
-  template<class x>
-  static S<I<Ts...>> From(const x& value) {
+  template<class X>
+  static S<I<Ts...>> From(const X& value) {
     return I_get<Ts...>::From(value);
   }
 };
@@ -178,12 +176,12 @@ class U_val {};
 template<class T0, class...Ts>
 class U_val<T0,Ts...> {
  public:
-  void set(T0 value) {
+  void Set(const T0& value) {
     value_ = value;
   }
 
   template<class X>
-  void get(X& var) const {
+  void Get(X& var) const {
     var = ConvertTo<X>::From(value_);
   }
 
@@ -194,20 +192,20 @@ class U_val<T0,Ts...> {
 template<class T0, class T1, class...Ts>
 class U_val<T0,T1,Ts...> : protected U_val<T1,Ts...> {
  public:
-  using U_val<T1,Ts...>::get;
-  using U_val<T1,Ts...>::set;
+  using U_val<T1,Ts...>::Get;
+  using U_val<T1,Ts...>::Set;
 
-  void set(T0 value) {
+  void Set(const T0& value) {
     value_ = value;
   }
 
   template<class X>
-  void get(X& var) const {
+  void Get(X& var) const {
     // NOTE: This only works if set has been called exactly once!
     if (value_) {
       var = ConvertTo<X>::From(value_);
     } else {
-      U_val<T1,Ts...>::get(var);
+      U_val<T1,Ts...>::Get(var);
     }
   }
 
@@ -219,13 +217,13 @@ template<class...Ts>
 class U {
  public:
   template<class X>
-  U(X value) {
-    stored_.set(value);
+  U(const X& value) {
+    stored_.Set(value);
   }
 
   template<class X>
-  void get(X& var) const {
-    stored_.get(var);
+  void Get(X& var) const {
+    stored_.Get(var);
   }
 
  private:
@@ -235,7 +233,7 @@ class U {
 template<class...Ts>
 struct U_get {
   template<class X>
-  static S<U<Ts...>> From(X value) {
+  static S<U<Ts...>> From(const X& value) {
     return S<U<Ts...>>(new U<Ts...>(value));
   }
 };
@@ -246,7 +244,7 @@ struct Adapter<S<U<Ts...>>,X> {
   static constexpr bool defined = true;
   static X Convert(const S<U<Ts...>>& value) {
     X var;
-    value->get(var);
+    value->Get(var);
     return var;
   }
 };
@@ -254,8 +252,8 @@ struct Adapter<S<U<Ts...>>,X> {
 // When converting to, construct a new instance.
 template<class...Ts>
 struct ConvertTo<S<U<Ts...>>> {
-  template<class x>
-  static S<U<Ts...>> From(const x& value) {
+  template<class X>
+  static S<U<Ts...>> From(const X& value) {
     return U_get<Ts...>::From(value);
   }
 };
