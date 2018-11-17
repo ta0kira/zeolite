@@ -1,20 +1,7 @@
-#ifndef BASE_H_
-#define BASE_H_
+#ifndef STATIC_BASE_H_
+#define STATIC_BASE_H_
 
-#include <memory>
-
-template<class T>
-using R = std::unique_ptr<T>;
-
-template<class T>
-inline R<T> R_get(T* val) { return R<T>(val); }
-
-template<class T>
-using S = std::shared_ptr<T>;
-
-template<class T>
-inline S<T> S_get(T* val) { return S<T>(val); }
-
+#include "base.h"
 
 template<class X, class Y>
 struct Adapter {
@@ -258,4 +245,4 @@ struct ConvertTo<S<U<Ts...>>> {
   }
 };
 
-#endif  // BASE_H_
+#endif  // STATIC_BASE_H_
