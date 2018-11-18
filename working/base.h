@@ -55,7 +55,7 @@ class LogThenCrash {
 template<int K, class V, class T>
 struct ArgsToTuple {
   static void Set(const V& vals, T& tuple) {
-    std::get<K-1>(tuple) = vals[K];
+    std::get<K-1>(tuple) = vals[K-1];
     ArgsToTuple<K-1,V,T>::Set(vals, tuple);
   }
 };

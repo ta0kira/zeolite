@@ -14,7 +14,8 @@ interface Function<x|y> {
 
 */
 
-extern const S<ParamInstance<2>::Type> Category_Function;
+class Constructor_Function;
+extern const S<Constructor_Function> Category_Function;
 
 struct Interface_Function {
   virtual T<S<TypeValue>> Call_Function_call(const T<S<TypeValue>>&) = 0;
@@ -32,7 +33,8 @@ interface Data<x> {
 
 */
 
-extern const S<ParamInstance<1>::Type> Category_Data;
+class Constructor_Data;
+extern const S<Constructor_Data> Category_Data;
 
 struct Interface_Data {
   virtual T<> Call_Data_set(const T<S<TypeValue>>&) = 0;
@@ -52,10 +54,10 @@ concrete Value {
 
 */
 
-extern const S<ParamInstance<0>::Type> Category_Value;
+class Constructor_Value;
+extern const S<Constructor_Value> Category_Value;
 
 struct Interface_Value {
-  virtual S<TypeValue> Convert_Data(const S<const TypeInstance>&) = 0;
   virtual T<> Call_Value_set(const T<S<TypeValue>>&) = 0;
   virtual T<S<TypeValue>> Call_Value_get(const T<>&) = 0;
   virtual ~Interface_Value() = default;

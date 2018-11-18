@@ -16,9 +16,9 @@ using InstanceCache = std::map<InstanceCacheKey,S<TypeInstance>>;
 // referenced in conversion wrappers.
 using TypeArgs = std::vector<const TypeInstance*>;
 
-class TypeId {
+class CategoryId {
  public:
-  inline TypeId(const std::string& name) : name_(name) {}
+  inline CategoryId(const std::string& name) : name_(name) {}
 
   inline std::string TypeName() const {
     return name_;
@@ -54,7 +54,7 @@ using FunctionReturns = std::vector<S<TypeValue>>;
 template<class...Ts>
 struct TypeConstructor {
   virtual S<TypeInstance> BindAll(const T<Ts...>&) = 0;
-  virtual const TypeId* BaseType() const = 0;
+  virtual const CategoryId* CategoryType() const = 0;
 
   virtual S<TypeInstance> Build(Ts... ts) {
     return BindAll(T_get(ts...));
@@ -63,7 +63,7 @@ struct TypeConstructor {
   virtual FunctionReturns CallCategoryFunction(
       const FunctionId<FunctionScope::CATEGORY>& id, const FunctionArgs&) {
     FAIL() << "Function " << id.FunctionName()
-           << " not supported in type-value " << BaseType()->TypeName();
+           << " not supported in type-value " << CategoryType()->TypeName();
     return FunctionReturns();
   }
 
@@ -73,7 +73,7 @@ struct TypeConstructor {
 
 struct TypeInstance {
   virtual std::string TypeName() const = 0;
-  virtual const TypeId* BaseType() const = 0;
+  virtual const CategoryId* CategoryType() const = 0;
   virtual TypeArgs ConstructorArgs() const = 0;
   virtual FunctionReturns CallInstanceFunction(
       const FunctionId<FunctionScope::INSTANCE>& id, const FunctionArgs&);
@@ -110,8 +110,8 @@ struct Select : public ParamInstance<N>::Type {
     return std::get<K>(args);
   }
 
-  const TypeId* BaseType() const final {
-    static const TypeId type("Select");
+  const CategoryId* CategoryType() const final {
+    static const CategoryId type("Select");
     return &type;
   }
 
@@ -131,8 +131,8 @@ class Composer : public ParamInstance<N>::Type {
              })
       {}
 
-  const TypeId* BaseType() const final {
-    return outer_->BaseType();
+  const CategoryId* CategoryType() const final {
+    return outer_->CategoryType();
   }
 
   S<TypeInstance> BindAll(const typename ParamInstance<N>::Args& args) final {
