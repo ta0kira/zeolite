@@ -13,6 +13,15 @@ S<TypeValue> TypeValue::ConvertTo(const S<const TypeInstance>& type) {
   return nullptr;
 }
 
+S<TypeValue> TypeValue::ConvertTo(const S<TypeValue>& self,
+                                  const S<const TypeInstance>& type) {
+  if (type.get() == self->ValueType()) {
+    return self;
+  } else {
+    return self->ConvertTo(type);
+  }
+}
+
 FunctionReturns TypeValue::CallValueFunction(
     const FunctionId<FunctionScope::VALUE>& id, const FunctionArgs&) {
   FAIL() << "Function " << id.FunctionName()

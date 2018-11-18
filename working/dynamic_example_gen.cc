@@ -404,6 +404,7 @@ int main() {
   S<TypeValue> v = v_type->CallInstanceFunction(Function_Value_create, FunctionArgs{})[0];
   std::cerr << v->ValueType()->TypeName() << std::endl;
   auto v2 = v->ConvertTo(Category_Data->Build(Category_Value->Build()));
+  TypeValue::ConvertTo(v,Category_Value->Build());  // Convert to same type.
   std::cerr << v2->ValueType()->TypeName() << std::endl;
   v2->CallValueFunction(Function_Data_set, FunctionArgs{S<TypeValue>()});
   v2->CallValueFunction(Function_Data_get, FunctionArgs{});
