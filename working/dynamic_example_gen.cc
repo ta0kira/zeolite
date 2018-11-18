@@ -31,32 +31,27 @@ class Instance_Function : public TypeInstance {
   const S<const TypeInstance> y_;
 };
 
-class Constructor_Function : public ParamInstance<2>::Type {
- public:
-  S<TypeInstance> BindAll(const ParamInstance<2>::Args& args) final {
-    S<TypeInstance>& instance =
-        instance_cache_[InstanceCacheKey{std::get<0>(args).get(),
-                                         std::get<1>(args).get()}];
-    if (!instance) {
-      instance = S_get(new Instance_Function(*this,
-                                             std::get<0>(args),
-                                             std::get<1>(args)));
-      std::cerr << "New: " << instance->TypeName() << std::endl;
-      return instance;
-    } else {
-      std::cerr << "From cache: " << instance->TypeName() << std::endl;
-    }
+
+S<TypeInstance> Constructor_Function::BindAll(const ParamInstance<2>::Args& args) {
+  S<TypeInstance>& instance =
+      instance_cache_[InstanceCacheKey{std::get<0>(args).get(),
+                                        std::get<1>(args).get()}];
+  if (!instance) {
+    instance = S_get(new Instance_Function(*this,
+                                            std::get<0>(args),
+                                            std::get<1>(args)));
+    std::cerr << "New: " << instance->TypeName() << std::endl;
     return instance;
+  } else {
+    std::cerr << "From cache: " << instance->TypeName() << std::endl;
   }
+  return instance;
+}
 
-  const CategoryId* CategoryType() const final {
-    static const CategoryId type("Function");
-    return &type;
-  }
-
- private:
-  InstanceCache instance_cache_;
-};
+const CategoryId* Constructor_Function::CategoryType() const {
+  static const CategoryId type("Function");
+  return &type;
+}
 
 const S<Constructor_Function> Category_Function(new Constructor_Function);
 
@@ -120,40 +115,31 @@ class Instance_Data : public TypeInstance {
   const S<const TypeInstance> x_;
 };
 
-class Constructor_Data : public ParamInstance<1>::Type {
- public:
-  Constructor_Data()
-      : instance_functions_(),
-        value_functions_(std::move(
-            FunctionRouter<Interface_Data,FunctionScope::VALUE>()
-                .AddFunction(Function_Data_set, &Interface_Data::Call_Data_set)
-                .AddFunction(Function_Data_get, &Interface_Data::Call_Data_get))) {}
 
-  S<TypeInstance> BindAll(const ParamInstance<1>::Args& args) final {
-    S<TypeInstance>& instance =
-        instance_cache_[InstanceCacheKey{std::get<0>(args).get()}];
-    if (!instance) {
-      instance = S_get(new Instance_Data(*this,std::get<0>(args)));
-      std::cerr << "New: " << instance->TypeName() << std::endl;
-      return instance;
-    } else {
-      std::cerr << "From cache: " << instance->TypeName() << std::endl;
-    }
+Constructor_Data::Constructor_Data()
+    : instance_functions_(),
+      value_functions_(std::move(
+          FunctionRouter<Interface_Data,FunctionScope::VALUE>()
+              .AddFunction(Function_Data_set, &Interface_Data::Call_Data_set)
+              .AddFunction(Function_Data_get, &Interface_Data::Call_Data_get))) {}
+
+S<TypeInstance> Constructor_Data::BindAll(const ParamInstance<1>::Args& args) {
+  S<TypeInstance>& instance =
+      instance_cache_[InstanceCacheKey{std::get<0>(args).get()}];
+  if (!instance) {
+    instance = S_get(new Instance_Data(*this,std::get<0>(args)));
+    std::cerr << "New: " << instance->TypeName() << std::endl;
     return instance;
+  } else {
+    std::cerr << "From cache: " << instance->TypeName() << std::endl;
   }
+  return instance;
+}
 
-  const CategoryId* CategoryType() const final {
-    static const CategoryId type("Data");
-    return &type;
-  }
-
- private:
-  const FunctionRouter<Instance_Data,FunctionScope::INSTANCE> instance_functions_;
-  const FunctionRouter<Interface_Data,FunctionScope::VALUE> value_functions_;
-  InstanceCache instance_cache_;
-
-  friend class Value_Data;
-};
+const CategoryId* Constructor_Data::CategoryType() const {
+  static const CategoryId type("Data");
+  return &type;
+}
 
 const S<Constructor_Data> Category_Data(new Constructor_Data);
 
@@ -251,34 +237,25 @@ class Instance_Value : public TypeInstance {
   const Constructor_Value& parent_;
 };
 
-class Constructor_Value : public ParamInstance<0>::Type {
- public:
-  Constructor_Value()
-      : instance_functions_(std::move(
-            FunctionRouter<Instance_Value,FunctionScope::INSTANCE>()
-                .AddFunction(Function_Value_create, &Instance_Value::create))),
-        value_functions_(std::move(
-            FunctionRouter<Interface_Value,FunctionScope::VALUE>()
-                .AddFunction(Function_Value_set, &Interface_Value::Call_Value_set)
-                .AddFunction(Function_Value_get, &Interface_Value::Call_Value_get))) {}
 
-  S<TypeInstance> BindAll(const ParamInstance<0>::Args& args) final {
-    return only_instance_;
-  }
+Constructor_Value::Constructor_Value()
+    : instance_functions_(std::move(
+          FunctionRouter<Instance_Value,FunctionScope::INSTANCE>()
+              .AddFunction(Function_Value_create, &Instance_Value::create))),
+      value_functions_(std::move(
+          FunctionRouter<Interface_Value,FunctionScope::VALUE>()
+              .AddFunction(Function_Value_set, &Interface_Value::Call_Value_set)
+              .AddFunction(Function_Value_get, &Interface_Value::Call_Value_get))),
+      only_instance_(new Instance_Value(*this)) {}
 
-  const CategoryId* CategoryType() const final {
-    static const CategoryId type("Value");
-    return &type;
-  }
+S<TypeInstance> Constructor_Value::BindAll(const ParamInstance<0>::Args& args) {
+  return only_instance_;
+}
 
- private:
-  const FunctionRouter<Instance_Value,FunctionScope::INSTANCE> instance_functions_;
-  const FunctionRouter<Interface_Value,FunctionScope::VALUE> value_functions_;
-  const S<TypeInstance> only_instance_ = S_get(new Instance_Value(*this));
-
-  friend class Instance_Value;
-  friend class Value_Value;
-};
+const CategoryId* Constructor_Value::CategoryType() const {
+  static const CategoryId type("Value");
+  return &type;
+}
 
 const S<Constructor_Value> Category_Value(new Constructor_Value);
 

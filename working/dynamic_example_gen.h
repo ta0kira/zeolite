@@ -10,18 +10,28 @@
 /*
 
 interface Function<x|y> {
+  call takes (x) to (y)
 }
 
 */
 
-class Constructor_Function;
-extern const S<Constructor_Function> Category_Function;
+class Instance_Function;
 
 struct Interface_Function {
   virtual T<S<TypeValue>> Call_Function_call(const T<S<TypeValue>>&) = 0;
   virtual ~Interface_Function() = default;
 };
 
+class Constructor_Function : public ParamInstance<2>::Type {
+ public:
+  S<TypeInstance> BindAll(const ParamInstance<2>::Args& args) final;
+  const CategoryId* CategoryType() const final;
+
+ private:
+  InstanceCache instance_cache_;
+};
+
+extern const S<Constructor_Function> Category_Function;
 extern const FunctionId<FunctionScope::VALUE> Function_Function_call;
 
 /*
@@ -33,8 +43,7 @@ interface Data<x> {
 
 */
 
-class Constructor_Data;
-extern const S<Constructor_Data> Category_Data;
+class Instance_Data;
 
 struct Interface_Data {
   virtual T<> Call_Data_set(const T<S<TypeValue>>&) = 0;
@@ -42,6 +51,21 @@ struct Interface_Data {
   virtual ~Interface_Data() = default;
 };
 
+class Constructor_Data : public ParamInstance<1>::Type {
+ public:
+  Constructor_Data();
+  S<TypeInstance> BindAll(const ParamInstance<1>::Args& args) final;
+  const CategoryId* CategoryType() const final;
+
+ private:
+  const FunctionRouter<Instance_Data,FunctionScope::INSTANCE> instance_functions_;
+  const FunctionRouter<Interface_Data,FunctionScope::VALUE> value_functions_;
+  InstanceCache instance_cache_;
+
+  friend class Value_Data;
+};
+
+extern const S<Constructor_Data> Category_Data;
 extern const FunctionId<FunctionScope::VALUE> Function_Data_set;
 extern const FunctionId<FunctionScope::VALUE> Function_Data_get;
 
@@ -49,13 +73,12 @@ extern const FunctionId<FunctionScope::VALUE> Function_Data_get;
 
 concrete Value {
   inherits Data<Value>
-  static create takes () to (Value)
+  in instance create takes () to (Value)
 }
 
 */
 
-class Constructor_Value;
-extern const S<Constructor_Value> Category_Value;
+class Instance_Value;
 
 struct Interface_Value {
   virtual T<> Call_Value_set(const T<S<TypeValue>>&) = 0;
@@ -63,6 +86,22 @@ struct Interface_Value {
   virtual ~Interface_Value() = default;
 };
 
+class Constructor_Value : public ParamInstance<0>::Type {
+ public:
+  Constructor_Value();
+  S<TypeInstance> BindAll(const ParamInstance<0>::Args& args) final;
+  const CategoryId* CategoryType() const final;
+
+ private:
+  const FunctionRouter<Instance_Value,FunctionScope::INSTANCE> instance_functions_;
+  const FunctionRouter<Interface_Value,FunctionScope::VALUE> value_functions_;
+  const S<TypeInstance> only_instance_;
+
+  friend class Instance_Value;
+  friend class Value_Value;
+};
+
+extern const S<Constructor_Value> Category_Value;
 extern const FunctionId<FunctionScope::INSTANCE> Function_Value_create;
 extern const FunctionId<FunctionScope::VALUE> Function_Value_set;
 extern const FunctionId<FunctionScope::VALUE> Function_Value_get;
