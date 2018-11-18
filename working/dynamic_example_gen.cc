@@ -4,6 +4,7 @@
 #include <sstream>
 #include <string>
 #include <tuple>
+#include <unordered_map>
 #include <vector>
 
 #include "base.h"
@@ -24,11 +25,128 @@ using InstanceCache = std::map<InstanceCacheKey,S<const TypeInstance>>;
 // referenced in conversion wrappers.
 using TypeArgs = std::vector<const TypeInstance*>;
 
-using FunctionId = std::string;
+struct TypeId {};
+
+struct FunctionId {
+  virtual std::string FunctionName() const = 0;
+};
+
 using FunctionArgs = std::vector<S<TypeValue>>;
 using FunctionReturns = std::vector<S<TypeValue>>;
 
-struct TypeId {};
+
+template<int K, class V, class T>
+struct ArgsToTuple {
+  static void Set(const V& vals, T& tuple) {
+    std::get<K-1>(tuple) = vals[K];
+    ArgsToTuple<K-1,V,T>::Set(vals, tuple);
+  }
+};
+
+template<class V, class T>
+struct ArgsToTuple<0,V,T> {
+  static void Set(const V& vals, T& tuple) {}
+};
+
+template<class X, class...Ts>
+T<Ts...> V_to_T(const std::vector<X>& vals) {
+  static constexpr int tuple_size = std::tuple_size<T<Ts...>>::value;
+  FAIL_IF(vals.size() != tuple_size) << "Expected " << tuple_size << " elements";
+  T<Ts...> tuple;
+  ArgsToTuple<tuple_size,std::vector<X>,T<Ts...>>::Set(vals, tuple);
+  return tuple;
+}
+
+
+template<int K, class T, class V>
+struct TupleToArgs {
+  static void Set(const T& tuple, V& vals) {
+    vals.push_back(std::get<K-1>(tuple));
+    TupleToArgs<K-1,T,V>::Set(tuple, vals);
+  }
+};
+
+template<class T, class V>
+struct TupleToArgs<0,T,V> {
+  static void Set(const T& tuple, V& vals) {}
+};
+
+template<class X, class...Ts>
+std::vector<X> T_to_V(const T<Ts...>& tuple) {
+  static constexpr int tuple_size = std::tuple_size<T<Ts...>>::value;
+  std::vector<X> vals;
+  vals.reserve(tuple_size);
+  TupleToArgs<tuple_size,T<Ts...>,std::vector<X>>::Set(tuple, vals);
+  return vals;
+}
+
+
+template<class C>
+struct FunctionCaller {
+  virtual FunctionReturns Call(C*, const FunctionArgs&) const = 0;
+  virtual ~FunctionCaller() = default;
+};
+
+template<class C, class A, class R>
+class FixedCaller : public FunctionCaller<C> {
+ public:
+  FixedCaller(const std::function<R(C*,const A&)>& function)
+      : function_(function) {}
+
+  FunctionReturns Call(C* object, const FunctionArgs& args) const {
+    return T_to_V<S<TypeValue>>(function_(object, V_to_T<S<TypeValue>>(args)));
+  }
+
+ private:
+  const std::function<R(C*,const A&)> function_;
+};
+
+
+template<class C>
+class FunctionRouter {
+ public:
+  template<class A, class R>
+  FunctionRouter& AddFunction(const FunctionId& id, R(C::*function)(const A&)) {
+    mapped_[&id] = R_get(new FixedCaller<C,A,R>(
+        [function](C* object, const A& args) {
+          return (object->*function)(args);
+        }));
+    return *this;
+  }
+
+  FunctionReturns Call(const FunctionId& id, C* object, const FunctionArgs& args) const {
+    const auto caller = mapped_.find(&id);
+    FAIL_IF(caller == mapped_.end()) << "Function " << id.FunctionName() << " not supported";
+    return caller->second->Call(object, args);
+  }
+
+ private:
+  std::unordered_map<const FunctionId*,R<const FunctionCaller<C>>> mapped_;
+};
+
+
+template<class C>
+class FunctionRouter<const C> {
+ public:
+  template<class A, class R>
+  FunctionRouter& AddFunction(const FunctionId& id, R(C::*function)(const A&) const) {
+    mapped_[&id] = R_get(new FixedCaller<const C,A,R>(
+        [function](const C* object, const A& args) {
+          return (object->*function)(args);
+        }));
+    return *this;
+  }
+
+  FunctionReturns Call(const FunctionId& id, const C* object, const FunctionArgs& args) const {
+    const auto caller = mapped_.find(&id);
+    FAIL_IF(caller == mapped_.end()) << "Function " << id.FunctionName() << " not supported";
+    return caller->second->Call(object, args);
+  }
+
+ private:
+  std::unordered_map<const FunctionId*,R<const FunctionCaller<const C>>> mapped_;
+};
+
 
 struct TypeInstance {
   virtual std::string TypeName() const = 0;
@@ -36,7 +154,8 @@ struct TypeInstance {
   virtual TypeArgs ConstructorArgs() const = 0;
 
   virtual FunctionReturns CallStaticFunction(const FunctionId& id, const FunctionArgs&) const {
-    FAIL() << "Static function " << id << " not supported in " << TypeName();
+    FAIL() << "Static function " << id.FunctionName()
+           << " not supported in " << TypeName();
     return FunctionReturns();
   }
 
@@ -53,7 +172,8 @@ struct TypeValue {
   }
 
   virtual FunctionReturns CallInstanceFunction(const FunctionId& id, const FunctionArgs&) {
-    FAIL() << "Instance function " << id << " not supported in " << ValueType()->TypeName();
+    FAIL() << "Instance function " << id.FunctionName()
+           << " not supported in " << ValueType()->TypeName();
     return FunctionReturns();
   }
 
@@ -262,6 +382,12 @@ class : public TypeId {} value_type;
 
 class ValueT : public ParamInstance<0>::Type {
  public:
+  static const FunctionId& CREATE;
+
+  ValueT() {
+    static_router_.AddFunction(CREATE, &Instance::create);
+  }
+
   S<const TypeInstance> BindAll(const ParamInstance<0>::Args& args) final {
     return only_instance_;
   }
@@ -273,33 +399,42 @@ class ValueT : public ParamInstance<0>::Type {
  private:
   class Instance : public TypeInstance {
    public:
+    Instance(const ValueT& parent) : parent_(parent) {}
+
     std::string TypeName() const final {
       return "Value";
     }
 
     const TypeId* BaseType() const final {
-      return &value_type;
+      return parent_.BaseType();
     }
 
     FunctionReturns CallStaticFunction(const FunctionId& id, const FunctionArgs& args) const final {
-      if (id == "create") {
-        FAIL_IF(args.size() != 0) << "Too many args passed to 'Value.create'";
-        return FunctionReturns{S_get(new Value(*this))};
-      }
-      return TypeInstance::CallStaticFunction(id, args);
+      return parent_.static_router_.Call(id, this, args);
     }
 
     TypeArgs ConstructorArgs() const final {
       return TypeArgs{};
     }
+
+    T<S<TypeValue>> create(const T<>& args) const {
+      return T_get(S_get(new Value(parent_,*this)));
+    }
+
+   private:
+    const ValueT& parent_;
   };
 
   class Value : public TypeValue {
    public:
-    Value(const Instance& type) : type_(type) {}
+    Value(const ValueT& parent, const Instance& type) : parent_(parent), type_(type) {}
 
     const TypeInstance* ValueType() const final {
       return &type_;
+    }
+
+    FunctionReturns CallInstanceFunction(const FunctionId& id, const FunctionArgs& args) final {
+      return parent_.instance_router_.Call(id, this, args);
     }
 
     S<TypeValue> ConvertTo(const S<const TypeInstance>& type) override {
@@ -311,6 +446,7 @@ class ValueT : public ParamInstance<0>::Type {
     }
 
    private:
+    const ValueT& parent_;
     const Instance& type_;
   };
 
@@ -328,8 +464,18 @@ class ValueT : public ParamInstance<0>::Type {
     const TypeInstance& type_;
   };
 
-  const S<const TypeInstance> only_instance_ = S_get(new Instance());
+  FunctionRouter<const Instance> static_router_;
+  FunctionRouter<Value> instance_router_;
+  const S<const TypeInstance> only_instance_ = S_get(new Instance(*this));
 };
+
+struct : FunctionId {
+  std::string FunctionName() const final {
+    return "Value.create";
+  }
+} ValueT_CREATE;
+
+const FunctionId& ValueT::CREATE = ValueT_CREATE;
 
 const S<ParamInstance<0>::Type> Value(new ValueT);
 
@@ -358,8 +504,10 @@ int main() {
   std::cerr << ValueDataFunction->TypeName() << std::endl;
   std::cerr << ValueDataFunction2->TypeName() << std::endl;
   const S<const TypeInstance> v_type = Value->Build();
-  S<TypeValue> v = v_type->CallStaticFunction("create", FunctionArgs{})[0];
+  S<TypeValue> v = v_type->CallStaticFunction(ValueT::CREATE, FunctionArgs{})[0];
   std::cerr << v->ValueType()->TypeName() << std::endl;
   auto v2 = v->ConvertTo(Data->Build(Value->Build()));
   std::cerr << v2->ValueType()->TypeName() << std::endl;
+  // Error! Not an instance function.
+  v2->CallInstanceFunction(ValueT::CREATE, FunctionArgs{});
 }
