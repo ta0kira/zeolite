@@ -10,7 +10,8 @@ struct TypeValue;
 struct TypeInstance;
 
 using InstanceCacheKey = std::vector<TypeInstance*>;
-using InstanceCache = std::map<InstanceCacheKey,S<TypeInstance>>;
+template<class T>
+using InstanceCache = std::map<InstanceCacheKey,S<T>>;
 
 // TODO: Probably needs to use shared_ptr elements so that the types can be
 // referenced in conversion wrappers.

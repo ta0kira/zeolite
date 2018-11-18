@@ -28,7 +28,10 @@ class Constructor_Function : public ParamInstance<2>::Type {
   const CategoryId* CategoryType() const final;
 
  private:
-  InstanceCache instance_cache_;
+  S<Instance_Function> BindInternal(const S<TypeInstance>& x,
+                                    const S<TypeInstance>& y);
+
+  InstanceCache<Instance_Function> instance_cache_;
 };
 
 extern const S<Constructor_Function> Category_Function;
@@ -57,10 +60,15 @@ class Constructor_Data : public ParamInstance<1>::Type {
   S<TypeInstance> BindAll(const ParamInstance<1>::Args& args) final;
   const CategoryId* CategoryType() const final;
 
+  S<TypeValue> Create_Value(const S<TypeInstance>& x,
+                            const S<Interface_Data>& interface);
+
  private:
+  S<Instance_Data> BindInternal(const S<TypeInstance>& x);
+
   const FunctionRouter<Instance_Data,FunctionScope::INSTANCE> instance_functions_;
   const FunctionRouter<Interface_Data,FunctionScope::VALUE> value_functions_;
-  InstanceCache instance_cache_;
+  InstanceCache<Instance_Data> instance_cache_;
 
   friend class Value_Data;
 };
@@ -95,7 +103,7 @@ class Constructor_Value : public ParamInstance<0>::Type {
  private:
   const FunctionRouter<Instance_Value,FunctionScope::INSTANCE> instance_functions_;
   const FunctionRouter<Interface_Value,FunctionScope::VALUE> value_functions_;
-  const S<TypeInstance> only_instance_;
+  const S<Instance_Value> only_instance_;
 
   friend class Instance_Value;
   friend class Value_Value;

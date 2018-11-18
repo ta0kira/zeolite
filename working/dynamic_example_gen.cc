@@ -33,24 +33,25 @@ class Instance_Function : public TypeInstance {
 
 
 S<TypeInstance> Constructor_Function::BindAll(const ParamInstance<2>::Args& args) {
-  S<TypeInstance>& instance =
-      instance_cache_[InstanceCacheKey{std::get<0>(args).get(),
-                                        std::get<1>(args).get()}];
-  if (!instance) {
-    instance = S_get(new Instance_Function(*this,
-                                            std::get<0>(args),
-                                            std::get<1>(args)));
-    std::cerr << "New: " << instance->TypeName() << std::endl;
-    return instance;
-  } else {
-    std::cerr << "From cache: " << instance->TypeName() << std::endl;
-  }
-  return instance;
+  return BindInternal(std::get<0>(args),std::get<1>(args));
 }
 
 const CategoryId* Constructor_Function::CategoryType() const {
   static const CategoryId type("Function");
   return &type;
+}
+
+S<Instance_Function> Constructor_Function::BindInternal(
+    const S<TypeInstance>& x, const S<TypeInstance>& y) {
+  S<Instance_Function>& instance =
+      instance_cache_[InstanceCacheKey{x.get(),y.get()}];
+  if (!instance) {
+    instance = S_get(new Instance_Function(*this,x,y));
+    std::cerr << "New: " << instance->TypeName() << std::endl;
+  } else {
+    std::cerr << "From cache: " << instance->TypeName() << std::endl;
+  }
+  return instance;
 }
 
 const S<Constructor_Function> Category_Function(new Constructor_Function);
@@ -85,7 +86,7 @@ class Constructor_Data;
 class Value_Data : public TypeValue {
  public:
   Value_Data(const Constructor_Data& parent,
-             const TypeInstance& type,
+             const Instance_Data& type,
              const S<Interface_Data>& interface)
       : parent_(parent), type_(type), interface_(interface) {}
 
@@ -96,7 +97,7 @@ class Value_Data : public TypeValue {
 
  private:
   const Constructor_Data& parent_;
-  const TypeInstance& type_;
+  const Instance_Data& type_;
   const S<Interface_Data> interface_;
 };
 
@@ -124,21 +125,29 @@ Constructor_Data::Constructor_Data()
               .AddFunction(Function_Data_get, &Interface_Data::Call_Data_get))) {}
 
 S<TypeInstance> Constructor_Data::BindAll(const ParamInstance<1>::Args& args) {
-  S<TypeInstance>& instance =
-      instance_cache_[InstanceCacheKey{std::get<0>(args).get()}];
-  if (!instance) {
-    instance = S_get(new Instance_Data(*this,std::get<0>(args)));
-    std::cerr << "New: " << instance->TypeName() << std::endl;
-    return instance;
-  } else {
-    std::cerr << "From cache: " << instance->TypeName() << std::endl;
-  }
-  return instance;
+  return BindInternal(std::get<0>(args));
 }
 
 const CategoryId* Constructor_Data::CategoryType() const {
   static const CategoryId type("Data");
   return &type;
+}
+
+S<TypeValue> Constructor_Data::Create_Value(
+    const S<TypeInstance>& x, const S<Interface_Data>& interface) {
+  return S_get(new Value_Data(*this,*BindInternal(x),interface));
+}
+
+S<Instance_Data> Constructor_Data::BindInternal(const S<TypeInstance>& x) {
+  S<Instance_Data>& instance =
+      instance_cache_[InstanceCacheKey{x.get()}];
+  if (!instance) {
+    instance = S_get(new Instance_Data(*this,x));
+    std::cerr << "New: " << instance->TypeName() << std::endl;
+  } else {
+    std::cerr << "From cache: " << instance->TypeName() << std::endl;
+  }
+  return instance;
 }
 
 const S<Constructor_Data> Category_Data(new Constructor_Data);
@@ -244,6 +253,8 @@ Constructor_Value::Constructor_Value()
               .AddFunction(Function_Value_create, &Instance_Value::create))),
       value_functions_(std::move(
           FunctionRouter<Interface_Value,FunctionScope::VALUE>()
+              .AddFunction(Function_Data_set, &Interface_Value::Call_Value_set)
+              .AddFunction(Function_Data_get, &Interface_Value::Call_Value_get)
               .AddFunction(Function_Value_set, &Interface_Value::Call_Value_set)
               .AddFunction(Function_Value_get, &Interface_Value::Call_Value_get))),
       only_instance_(new Instance_Value(*this)) {}
@@ -302,18 +313,15 @@ S<TypeValue> Value_Value::ConvertTo(const S<const TypeInstance>& type) {
 S<TypeValue> Value_Value::Convert_Data(const S<const TypeInstance>& type) {
   FAIL_IF(type->ConstructorArgs() != TypeArgs{&type_})
       << type->TypeName() << " parameters does not match " << type_.TypeName();
-  // TODO: The caller shouldn't be allowed to pass the Constructor_Data here,
-  // and Constructor_Data should probably sanity-check the type instance.
-  return S_get(new Value_Data(*Category_Data,
-                              *type,
-                              S_get(new Wrap_Value_Data(interface_))));
+  return Category_Data->Create_Value(
+      Category_Value->Build(), S_get(new Wrap_Value_Data(interface_)));
 }
 
 T<> Concrete_Value::Call_Value_set(const T<S<TypeValue>>& args) {
   std::cerr << "Call_Value_set" << std::endl;
   // TODO: There should be a way to convert the type of the arg to what the
   // function definition uses.
-  value_ = std::get<0>(args);
+  value_ = TypeValue::ConvertTo(std::get<0>(args),Category_Value->Build());
   return T_get();
 }
 
@@ -383,6 +391,6 @@ int main() {
   auto v2 = v->ConvertTo(Category_Data->Build(Category_Value->Build()));
   TypeValue::ConvertTo(v,Category_Value->Build());  // Convert to same type.
   std::cerr << v2->ValueType()->TypeName() << std::endl;
-  v2->CallValueFunction(Function_Data_set, FunctionArgs{S<TypeValue>()});
+  v->CallValueFunction(Function_Data_set, FunctionArgs{v});
   v2->CallValueFunction(Function_Data_get, FunctionArgs{});
 }
