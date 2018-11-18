@@ -29,6 +29,8 @@ class FixedCaller : public FunctionCaller<C> {
 template<class C, FunctionScope S>
 class FunctionRouter {
  public:
+  FunctionRouter(const std::string& name) : name_(name) {}
+
   template<class A, class R>
   FunctionRouter& AddFunction(const FunctionId<S>& id, R(C::*function)(const A&)) {
     mapped_[&id] = R_get(new FixedCaller<C,A,R>(
@@ -42,11 +44,12 @@ class FunctionRouter {
                        const FunctionArgs& args) const {
     const auto caller = mapped_.find(&id);
     FAIL_IF(caller == mapped_.end())
-        << "Function " << id.FunctionName() << " not supported";
+        << "Function " << id.FunctionName() << " not supported by " << name_;
     return caller->second->Call(object, args);
   }
 
  private:
+  const std::string name_;
   std::unordered_map<const FunctionId<S>*,R<const FunctionCaller<C>>> mapped_;
 };
 

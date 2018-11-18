@@ -118,9 +118,9 @@ class Instance_Data : public TypeInstance {
 
 
 Constructor_Data::Constructor_Data()
-    : instance_functions_(),
+    : instance_functions_(CategoryType()->TypeName()),
       value_functions_(std::move(
-          FunctionRouter<Interface_Data,FunctionScope::VALUE>()
+          FunctionRouter<Interface_Data,FunctionScope::VALUE>(CategoryType()->TypeName())
               .AddFunction(Function_Data_set, &Interface_Data::Call_Data_set)
               .AddFunction(Function_Data_get, &Interface_Data::Call_Data_get))) {}
 
@@ -249,10 +249,10 @@ class Instance_Value : public TypeInstance {
 
 Constructor_Value::Constructor_Value()
     : instance_functions_(std::move(
-          FunctionRouter<Instance_Value,FunctionScope::INSTANCE>()
+          FunctionRouter<Instance_Value,FunctionScope::INSTANCE>(CategoryType()->TypeName())
               .AddFunction(Function_Value_create, &Instance_Value::create))),
       value_functions_(std::move(
-          FunctionRouter<Interface_Value,FunctionScope::VALUE>()
+          FunctionRouter<Interface_Value,FunctionScope::VALUE>(CategoryType()->TypeName())
               .AddFunction(Function_Data_set, &Interface_Value::Call_Value_set)
               .AddFunction(Function_Data_get, &Interface_Value::Call_Value_get)
               .AddFunction(Function_Value_set, &Interface_Value::Call_Value_set)
@@ -393,4 +393,7 @@ int main() {
   std::cerr << v2->ValueType()->TypeName() << std::endl;
   v->CallValueFunction(Function_Data_set, FunctionArgs{v});
   v2->CallValueFunction(Function_Data_get, FunctionArgs{});
+  // Error! Even though the underlying type of v2 is Value, it is treated as
+  // Data<Value>; you cannot down-cast.
+  v2->CallValueFunction(Function_Value_get, FunctionArgs{});
 }
