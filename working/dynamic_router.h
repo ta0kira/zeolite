@@ -19,7 +19,7 @@ class FixedCaller : public FunctionCaller<C> {
       : function_(function) {}
 
   FunctionReturns Call(C* object, const FunctionArgs& args) const {
-    return T_to_V<S<TypeValue>>(function_(object, V_to_T<S<TypeValue>>(args)));
+    return T_to_V<S<TypeValue>>(function_(object, V_to_T<S<TypeValue>,A>(args)));
   }
 
  private:

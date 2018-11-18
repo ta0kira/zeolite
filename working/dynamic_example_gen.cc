@@ -156,7 +156,7 @@ const FunctionId<FunctionScope::VALUE> Function_Value_get("Value.get");
 class Constructor_Value;
 class Instance_Value;
 
-class Value_Value : public TypeValue {
+class Value_Value : public TypeValue, public Interface_Value {
  public:
   Value_Value(const Constructor_Value& parent, const Instance_Value& type)
       : parent_(parent), type_(type) {}
@@ -166,6 +166,10 @@ class Value_Value : public TypeValue {
       const FunctionId<FunctionScope::VALUE>& id,
       const FunctionArgs& args) final;
   S<TypeValue> ConvertTo(const S<const TypeInstance>& type) final;
+
+  S<TypeValue> Convert_Data(const S<const TypeInstance>&) final;
+  T<> Call_Value_set(const T<S<TypeValue>>&) final;
+  T<S<TypeValue>> Call_Value_get(const T<>&) final;
 
  private:
   const Constructor_Value& parent_;
@@ -193,6 +197,9 @@ class Constructor_Value : public ParamInstance<0>::Type {
  public:
   Constructor_Value() {
     instance_functions_.AddFunction(Function_Value_create, &Instance_Value::create);
+    value_functions_
+        .AddFunction(Function_Value_set, &Interface_Value::Call_Value_set)
+        .AddFunction(Function_Value_get, &Interface_Value::Call_Value_get);
   }
 
   S<TypeInstance> BindAll(const ParamInstance<0>::Args& args) final {
@@ -206,7 +213,7 @@ class Constructor_Value : public ParamInstance<0>::Type {
 
  private:
   FunctionRouter<Instance_Value,FunctionScope::INSTANCE> instance_functions_;
-  FunctionRouter<Value_Value,FunctionScope::VALUE> value_functions_;
+  FunctionRouter<Interface_Value,FunctionScope::VALUE> value_functions_;
   const S<TypeInstance> only_instance_ = S_get(new Instance_Value(*this));
 
   friend class Instance_Value;
@@ -218,12 +225,22 @@ const S<ParamInstance<0>::Type> Category_Value(new Constructor_Value);
 
 // TODO: Does Data need to provide this wrapper (or an abstract interface)
 // for its own conversions?
-class Value_Value_Data : public TypeValue {
+class Value_Value_Data : public TypeValue, public Interface_Data {
   public:
   Value_Value_Data(const TypeInstance& type) : type_(type) {}
 
   const TypeInstance* ValueType() const final {
     return &type_;
+  }
+
+  T<> Call_Data_set(const T<S<TypeValue>>&) final {
+    FAIL() << "Not implemented";
+    return T_get();
+  }
+
+  T<S<TypeValue>> Call_Data_get(const T<>&) final {
+    FAIL() << "Not implemented";
+    return T_get(S<TypeValue>());
   }
 
   private:
@@ -243,11 +260,26 @@ FunctionReturns Value_Value::CallValueFunction(
 
 S<TypeValue> Value_Value::ConvertTo(const S<const TypeInstance>& type) {
   // TODO: This is fairly hackish.
-  if (type->BaseType() == Category_Data->BaseType() &&
-      type->ConstructorArgs() == TypeArgs{&type_}) {
-    return S_get(new Value_Value_Data(*type));
+  if (type->BaseType() == Category_Data->BaseType()) {
+    return Convert_Data(type);
   }
   return TypeValue::ConvertTo(type);
+}
+
+S<TypeValue> Value_Value::Convert_Data(const S<const TypeInstance>& type) {
+  FAIL_IF(type->ConstructorArgs() != TypeArgs{&type_})
+      << type->TypeName() << " parameters does not match " << type_.TypeName();
+  return S_get(new Value_Value_Data(*type));
+}
+
+T<> Value_Value::Call_Value_set(const T<S<TypeValue>>&) {
+  FAIL() << "Not implemented";
+  return T_get();
+}
+
+T<S<TypeValue>> Value_Value::Call_Value_get(const T<>&) {
+  FAIL() << "Not implemented";
+  return T_get(S<TypeValue>());
 }
 
 

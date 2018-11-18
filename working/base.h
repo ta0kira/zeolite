@@ -65,12 +65,12 @@ struct ArgsToTuple<0,V,T> {
   static void Set(const V& vals, T& tuple) {}
 };
 
-template<class X, class...Ts>
-T<Ts...> V_to_T(const std::vector<X>& vals) {
-  static constexpr int tuple_size = std::tuple_size<T<Ts...>>::value;
+template<class X, class Tx>
+Tx V_to_T(const std::vector<X>& vals) {
+  static constexpr int tuple_size = std::tuple_size<Tx>::value;
   FAIL_IF(vals.size() != tuple_size) << "Expected " << tuple_size << " elements";
-  T<Ts...> tuple;
-  ArgsToTuple<tuple_size,std::vector<X>,T<Ts...>>::Set(vals, tuple);
+  Tx tuple;
+  ArgsToTuple<tuple_size,std::vector<X>,Tx>::Set(vals, tuple);
   return tuple;
 }
 
