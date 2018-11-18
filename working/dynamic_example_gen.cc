@@ -5,6 +5,7 @@
 /*
 
 interface Function<x|y> {
+  call takes (x) to (y)
 }
 
 */
@@ -58,6 +59,7 @@ class FunctionT : public ParamInstance<2>::Type {
 };
 
 const S<ParamInstance<2>::Type> Function(new FunctionT);
+const FunctionId Function_call("Function.call");
 
 /*
 
@@ -114,6 +116,8 @@ class DataT : public ParamInstance<1>::Type {
 };
 
 const S<ParamInstance<1>::Type> Data(new DataT);
+const FunctionId Data_set("Data.set");
+const FunctionId Data_get("Data.get");
 
 /*
 
@@ -212,15 +216,10 @@ class ValueT : public ParamInstance<0>::Type {
   const S<const TypeInstance> only_instance_ = S_get(new Instance(*this));
 };
 
-struct : FunctionId {
-  std::string FunctionName() const final {
-    return "Value.create";
-  }
-} Id_Value_create;
-
-const FunctionId& Value_create = Id_Value_create;
-
 const S<ParamInstance<0>::Type> Value(new ValueT);
+const FunctionId Value_create("Value.create");
+const FunctionId Value_set("Value.set");
+const FunctionId Value_get("Value.get");
 
 /*
 

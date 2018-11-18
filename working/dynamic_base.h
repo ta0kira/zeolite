@@ -18,8 +18,16 @@ using TypeArgs = std::vector<const TypeInstance*>;
 
 struct TypeId {};
 
-struct FunctionId {
-  virtual std::string FunctionName() const = 0;
+class FunctionId {
+ public:
+  inline FunctionId(const std::string& name) : name_(name) {}
+
+  inline std::string FunctionName() const {
+    return name_;
+  }
+
+ private:
+  const std::string name_;
 };
 
 using FunctionArgs = std::vector<S<TypeValue>>;
