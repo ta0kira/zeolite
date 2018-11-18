@@ -26,12 +26,11 @@ class FixedCaller : public FunctionCaller<C> {
   const std::function<R(C*,const A&)> function_;
 };
 
-
-template<class C>
+template<class C, FunctionScope S>
 class FunctionRouter {
  public:
   template<class A, class R>
-  FunctionRouter& AddFunction(const FunctionId& id, R(C::*function)(const A&)) {
+  FunctionRouter& AddFunction(const FunctionId<S>& id, R(C::*function)(const A&)) {
     mapped_[&id] = R_get(new FixedCaller<C,A,R>(
         [function](C* object, const A& args) {
           return (object->*function)(args);
@@ -39,37 +38,16 @@ class FunctionRouter {
     return *this;
   }
 
-  FunctionReturns Call(const FunctionId& id, C* object, const FunctionArgs& args) const {
+  FunctionReturns Call(const FunctionId<S>& id, C* object,
+                       const FunctionArgs& args) const {
     const auto caller = mapped_.find(&id);
-    FAIL_IF(caller == mapped_.end()) << "Function " << id.FunctionName() << " not supported";
+    FAIL_IF(caller == mapped_.end())
+        << "Function " << id.FunctionName() << " not supported";
     return caller->second->Call(object, args);
   }
 
  private:
-  std::unordered_map<const FunctionId*,R<const FunctionCaller<C>>> mapped_;
-};
-
-
-template<class C>
-class FunctionRouter<const C> {
- public:
-  template<class A, class R>
-  FunctionRouter& AddFunction(const FunctionId& id, R(C::*function)(const A&) const) {
-    mapped_[&id] = R_get(new FixedCaller<const C,A,R>(
-        [function](const C* object, const A& args) {
-          return (object->*function)(args);
-        }));
-    return *this;
-  }
-
-  FunctionReturns Call(const FunctionId& id, const C* object, const FunctionArgs& args) const {
-    const auto caller = mapped_.find(&id);
-    FAIL_IF(caller == mapped_.end()) << "Function " << id.FunctionName() << " not supported";
-    return caller->second->Call(object, args);
-  }
-
- private:
-  std::unordered_map<const FunctionId*,R<const FunctionCaller<const C>>> mapped_;
+  std::unordered_map<const FunctionId<S>*,R<const FunctionCaller<C>>> mapped_;
 };
 
 #endif  // DYNAMIC_ROUTER_H_

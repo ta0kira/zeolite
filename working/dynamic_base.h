@@ -9,15 +9,32 @@
 struct TypeValue;
 struct TypeInstance;
 
-using InstanceCacheKey = std::vector<const TypeInstance*>;
-using InstanceCache = std::map<InstanceCacheKey,S<const TypeInstance>>;
+using InstanceCacheKey = std::vector<TypeInstance*>;
+using InstanceCache = std::map<InstanceCacheKey,S<TypeInstance>>;
 
 // TODO: Probably needs to use shared_ptr elements so that the types can be
 // referenced in conversion wrappers.
 using TypeArgs = std::vector<const TypeInstance*>;
 
-struct TypeId {};
+class TypeId {
+ public:
+  inline TypeId(const std::string& name) : name_(name) {}
 
+  inline std::string TypeName() const {
+    return name_;
+  }
+
+ private:
+  const std::string name_;
+};
+
+enum class FunctionScope {
+  CATEGORY,
+  INSTANCE,
+  VALUE,
+};
+
+template<FunctionScope>
 class FunctionId {
  public:
   inline FunctionId(const std::string& name) : name_(name) {}
@@ -36,11 +53,18 @@ using FunctionReturns = std::vector<S<TypeValue>>;
 
 template<class...Ts>
 struct TypeConstructor {
-  virtual S<const TypeInstance> BindAll(const T<Ts...>&) = 0;
+  virtual S<TypeInstance> BindAll(const T<Ts...>&) = 0;
   virtual const TypeId* BaseType() const = 0;
 
-  virtual S<const TypeInstance> Build(Ts... ts) {
+  virtual S<TypeInstance> Build(Ts... ts) {
     return BindAll(T_get(ts...));
+  }
+
+  virtual FunctionReturns CallCategoryFunction(
+      const FunctionId<FunctionScope::CATEGORY>& id, const FunctionArgs&) {
+    FAIL() << "Function " << id.FunctionName()
+           << " not supported in type-value " << BaseType()->TypeName();
+    return FunctionReturns();
   }
 
   virtual ~TypeConstructor() = default;
@@ -51,7 +75,8 @@ struct TypeInstance {
   virtual std::string TypeName() const = 0;
   virtual const TypeId* BaseType() const = 0;
   virtual TypeArgs ConstructorArgs() const = 0;
-  virtual FunctionReturns CallStaticFunction(const FunctionId& id, const FunctionArgs&) const;
+  virtual FunctionReturns CallInstanceFunction(
+      const FunctionId<FunctionScope::INSTANCE>& id, const FunctionArgs&);
   virtual ~TypeInstance() = default;
 };
 
@@ -59,7 +84,8 @@ struct TypeInstance {
 struct TypeValue {
   virtual const TypeInstance* ValueType() const = 0;
   virtual S<TypeValue> ConvertTo(const S<const TypeInstance>& type);
-  virtual FunctionReturns CallInstanceFunction(const FunctionId& id, const FunctionArgs&);
+  virtual FunctionReturns CallValueFunction(
+      const FunctionId<FunctionScope::VALUE>& id, const FunctionArgs&);
   virtual ~TypeValue() = default;
 };
 
@@ -67,8 +93,8 @@ struct TypeValue {
 
 template<int N, class...Ts>
 struct ParamInstance {
-  using Type = typename ParamInstance<N-1, S<const TypeInstance>, Ts...>::Type;
-  using Args = typename ParamInstance<N-1, S<const TypeInstance>, Ts...>::Args;
+  using Type = typename ParamInstance<N-1, S<TypeInstance>, Ts...>::Type;
+  using Args = typename ParamInstance<N-1, S<TypeInstance>, Ts...>::Args;
 };
 
 template<class...Ts>
@@ -80,12 +106,12 @@ struct ParamInstance<0, Ts...> {
 
 template<int N, int K>
 struct Select : public ParamInstance<N>::Type {
-  S<const TypeInstance> BindAll(const typename ParamInstance<N>::Args& args) final {
+  S<TypeInstance> BindAll(const typename ParamInstance<N>::Args& args) final {
     return std::get<K>(args);
   }
 
   const TypeId* BaseType() const final {
-    static class : public TypeId {} type;
+    static const TypeId type("Select");
     return &type;
   }
 
@@ -109,7 +135,7 @@ class Composer : public ParamInstance<N>::Type {
     return outer_->BaseType();
   }
 
-  S<const TypeInstance> BindAll(const typename ParamInstance<N>::Args& args) final {
+  S<TypeInstance> BindAll(const typename ParamInstance<N>::Args& args) final {
     return outer_->BindAll(inner_(args));
   }
 
