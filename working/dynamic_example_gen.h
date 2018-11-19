@@ -81,7 +81,6 @@ class Constructor_Data : public ParamInstance<1>::Type {
  private:
   S<Instance_Data> BindInternal(const S<TypeInstance>& x);
 
-  const FunctionDispatcher<Instance_Data,FunctionScope::INSTANCE> instance_functions_;
   const FunctionDispatcher<Interface_Data,FunctionScope::VALUE> value_functions_;
   InstanceCache<Instance_Data> instance_cache_;
 

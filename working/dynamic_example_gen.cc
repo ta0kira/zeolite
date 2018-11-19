@@ -159,8 +159,7 @@ class Instance_Data : public TypeInstance {
 
 
 Constructor_Data::Constructor_Data()
-    : instance_functions_(CategoryType()->TypeName()),
-      value_functions_(std::move(
+    : value_functions_(std::move(
           FunctionDispatcher<Interface_Data,FunctionScope::VALUE>(CategoryType()->TypeName())
               .AddFunction(Function_Data_set, &Interface_Data::Call_Data_set)
               .AddFunction(Function_Data_get, &Interface_Data::Call_Data_get))) {}
