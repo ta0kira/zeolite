@@ -85,10 +85,9 @@ class Constructor_Data;
 
 class Value_Data : public TypeValue {
  public:
-  Value_Data(const Constructor_Data& parent,
-             const Instance_Data& type,
+  Value_Data(const Instance_Data& type,
              const S<Interface_Data>& interface)
-      : parent_(parent), type_(type), interface_(interface) {}
+      : type_(type), interface_(interface) {}
 
   const TypeInstance* ValueType() const final;
   FunctionReturns CallValueFunction(
@@ -96,7 +95,6 @@ class Value_Data : public TypeValue {
       const FunctionArgs& args) final;
 
  private:
-  const Constructor_Data& parent_;
   const Instance_Data& type_;
   const S<Interface_Data> interface_;
 };
@@ -114,6 +112,8 @@ class Instance_Data : public TypeInstance {
  private:
   const Constructor_Data& parent_;
   const S<const TypeInstance> x_;
+
+  friend class Value_Data;
 };
 
 
@@ -135,7 +135,7 @@ const CategoryId* Constructor_Data::CategoryType() const {
 
 S<TypeValue> Constructor_Data::Create_Value(
     const S<TypeInstance>& x, const S<Interface_Data>& interface) {
-  return S_get(new Value_Data(*this,*BindInternal(x),interface));
+  return S_get(new Value_Data(*BindInternal(x),interface));
 }
 
 S<Instance_Data> Constructor_Data::BindInternal(const S<TypeInstance>& x) {
@@ -160,7 +160,7 @@ const TypeInstance* Value_Data::ValueType() const {
 FunctionReturns Value_Data::CallValueFunction(
     const FunctionId<FunctionScope::VALUE>& id,
     const FunctionArgs& args) {
-  return parent_.value_functions_.Call(id,interface_.get(),args);
+  return type_.parent_.value_functions_.Call(id,interface_.get(),args);
 }
 
 
@@ -192,12 +192,13 @@ const FunctionId<FunctionScope::VALUE> Function_Value_get("Value.get");
 
 class Concrete_Value : public Interface_Value {
  public:
-  Concrete_Value() {}
+  Concrete_Value(const Instance_Value& type) : type_(type) {}
 
   T<> Call_Value_set(const T<S<TypeValue>>&) final;
   T<S<TypeValue>> Call_Value_get(const T<>&) final;
 
  private:
+  const Instance_Value& type_;
   // Corresponds to a member variable in Value.
   // TODO: There should be a variable wrapper that handles converting to/from
   // the static type used where it's defined in the code. There also needs to be
@@ -210,10 +211,9 @@ class Instance_Value;
 
 class Value_Value : public TypeValue {
  public:
-  Value_Value(const Constructor_Value& parent,
-              const TypeInstance& type,
+  Value_Value(const Instance_Value& type,
               const S<Interface_Value>& interface)
-      : parent_(parent), type_(type), interface_(interface) {}
+      : type_(type), interface_(interface) {}
 
   const TypeInstance* ValueType() const final;
   FunctionReturns CallValueFunction(
@@ -224,8 +224,7 @@ class Value_Value : public TypeValue {
  private:
   S<TypeValue> Convert_Data(const S<const TypeInstance>&);
 
-  const Constructor_Value& parent_;
-  const TypeInstance& type_;
+  const Instance_Value& type_;
   const S<Interface_Value> interface_;
 };
 
@@ -244,6 +243,8 @@ class Instance_Value : public TypeInstance {
 
  private:
   const Constructor_Value& parent_;
+
+  friend class Value_Value;
 };
 
 
@@ -298,7 +299,7 @@ const TypeInstance* Value_Value::ValueType() const {
 FunctionReturns Value_Value::CallValueFunction(
     const FunctionId<FunctionScope::VALUE>& id,
     const FunctionArgs& args) {
-  return parent_.value_functions_.Call(id,interface_.get(),args);
+  return type_.parent_.value_functions_.Call(id,interface_.get(),args);
 }
 
 S<TypeValue> Value_Value::ConvertTo(const S<const TypeInstance>& type) {
@@ -350,7 +351,7 @@ TypeArgs Instance_Value::ConstructorArgs() const {
 }
 
 T<S<TypeValue>> Instance_Value::create(const T<>& args) {
-  return T_get(S_get(new Value_Value(parent_,*this,S_get(new Concrete_Value()))));
+  return T_get(S_get(new Value_Value(*this,S_get(new Concrete_Value(*this)))));
 }
 
 /*
