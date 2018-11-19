@@ -83,12 +83,12 @@ struct TypeInstance {
 
 
 struct TypeValue {
-  virtual const TypeInstance* ValueType() const = 0;
+  virtual const TypeInstance* InstanceType() const = 0;
   // TODO: Maybe this should be protected so that the static version is used?
   // Otherwise, no-op conversions won't work.
-  virtual S<TypeValue> ConvertTo(const S<const TypeInstance>& type);
+  virtual S<TypeValue> ConvertTo(const CategoryId* category);
   static S<TypeValue> ConvertTo(const S<TypeValue>& self,
-                                const S<const TypeInstance>& type);
+                                const CategoryId* category);
   virtual FunctionReturns CallValueFunction(
       const FunctionId<FunctionScope::VALUE>& id, const FunctionArgs&);
   virtual ~TypeValue() = default;

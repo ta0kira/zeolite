@@ -12,11 +12,27 @@ interface Function<x|y> {
 
 const FunctionId<FunctionScope::VALUE> Function_Function_call("Function.call");
 
-class Constructor_Function;
+class Value_Function : public TypeValue {
+ public:
+  const TypeInstance* InstanceType() const final;
+  FunctionReturns CallValueFunction(
+      const FunctionId<FunctionScope::VALUE>& id,
+      const FunctionArgs& args) final;
+
+ private:
+  Value_Function(Instance_Function& type,
+                 const S<Interface_Function>& interface)
+      : type_(type), interface_(interface) {}
+
+  Instance_Function& type_;
+  const S<Interface_Function> interface_;
+
+  friend class Constructor_Function;
+};
 
 class Instance_Function : public TypeInstance {
  public:
-  Instance_Function(const Constructor_Function& parent,
+  Instance_Function(Constructor_Function& parent,
                     const S<const TypeInstance>& x,
                     const S<const TypeInstance>& y)
       : parent_(parent), x_(x), y_(y) {}
@@ -26,11 +42,18 @@ class Instance_Function : public TypeInstance {
   TypeArgs ConstructorArgs() const final;
 
  private:
-  const Constructor_Function& parent_;
+  Constructor_Function& parent_;
   const S<const TypeInstance> x_;
   const S<const TypeInstance> y_;
+
+  friend class Value_Function;
 };
 
+
+Constructor_Function::Constructor_Function()
+    : value_functions_(std::move(
+          FunctionDispatcher<Interface_Function,FunctionScope::VALUE>(CategoryType()->TypeName())
+              .AddFunction(Function_Function_call, &Interface_Function::Call_Function_call))) {}
 
 S<TypeInstance> Constructor_Function::BindAll(const ParamInstance<2>::Args& args) {
   return BindInternal(std::get<0>(args),std::get<1>(args));
@@ -39,6 +62,13 @@ S<TypeInstance> Constructor_Function::BindAll(const ParamInstance<2>::Args& args
 const CategoryId* Constructor_Function::CategoryType() const {
   static const CategoryId type("Function");
   return &type;
+}
+
+S<TypeValue> Constructor_Function::CreateValue(
+    const S<TypeInstance>& x,
+    const S<TypeInstance>& y,
+    const S<Interface_Function>& interface) {
+  return S_get(new Value_Function(*BindInternal(x,y),interface));
 }
 
 S<Instance_Function> Constructor_Function::BindInternal(
@@ -55,6 +85,17 @@ S<Instance_Function> Constructor_Function::BindInternal(
 }
 
 const S<Constructor_Function> Category_Function(new Constructor_Function);
+
+
+const TypeInstance* Value_Function::InstanceType() const {
+  return &type_;
+}
+
+FunctionReturns Value_Function::CallValueFunction(
+    const FunctionId<FunctionScope::VALUE>& id,
+    const FunctionArgs& args) {
+  return type_.parent_.value_functions_.Call(id,interface_.get(),args);
+}
 
 
 std::string Instance_Function::TypeName() const {
@@ -85,23 +126,23 @@ class Constructor_Data;
 
 class Value_Data : public TypeValue {
  public:
-  Value_Data(const Instance_Data& type,
+  Value_Data(Instance_Data& type,
              const S<Interface_Data>& interface)
       : type_(type), interface_(interface) {}
 
-  const TypeInstance* ValueType() const final;
+  const TypeInstance* InstanceType() const final;
   FunctionReturns CallValueFunction(
       const FunctionId<FunctionScope::VALUE>& id,
       const FunctionArgs& args) final;
 
  private:
-  const Instance_Data& type_;
+  Instance_Data& type_;
   const S<Interface_Data> interface_;
 };
 
 class Instance_Data : public TypeInstance {
  public:
-  Instance_Data(const Constructor_Data& parent,
+  Instance_Data(Constructor_Data& parent,
                 const S<const TypeInstance>& x)
       : parent_(parent), x_(x) {}
 
@@ -110,7 +151,7 @@ class Instance_Data : public TypeInstance {
   TypeArgs ConstructorArgs() const final;
 
  private:
-  const Constructor_Data& parent_;
+  Constructor_Data& parent_;
   const S<const TypeInstance> x_;
 
   friend class Value_Data;
@@ -120,7 +161,7 @@ class Instance_Data : public TypeInstance {
 Constructor_Data::Constructor_Data()
     : instance_functions_(CategoryType()->TypeName()),
       value_functions_(std::move(
-          FunctionRouter<Interface_Data,FunctionScope::VALUE>(CategoryType()->TypeName())
+          FunctionDispatcher<Interface_Data,FunctionScope::VALUE>(CategoryType()->TypeName())
               .AddFunction(Function_Data_set, &Interface_Data::Call_Data_set)
               .AddFunction(Function_Data_get, &Interface_Data::Call_Data_get))) {}
 
@@ -133,7 +174,7 @@ const CategoryId* Constructor_Data::CategoryType() const {
   return &type;
 }
 
-S<TypeValue> Constructor_Data::Create_Value(
+S<TypeValue> Constructor_Data::CreateValue(
     const S<TypeInstance>& x, const S<Interface_Data>& interface) {
   return S_get(new Value_Data(*BindInternal(x),interface));
 }
@@ -153,7 +194,7 @@ S<Instance_Data> Constructor_Data::BindInternal(const S<TypeInstance>& x) {
 const S<Constructor_Data> Category_Data(new Constructor_Data);
 
 
-const TypeInstance* Value_Data::ValueType() const {
+const TypeInstance* Value_Data::InstanceType() const {
   return &type_;
 }
 
@@ -187,50 +228,30 @@ interface Value {
 */
 
 const FunctionId<FunctionScope::INSTANCE> Function_Value_create("Value.create");
-const FunctionId<FunctionScope::VALUE> Function_Value_set("Value.set");
-const FunctionId<FunctionScope::VALUE> Function_Value_get("Value.get");
-
-class Concrete_Value : public Interface_Value {
- public:
-  Concrete_Value(const Instance_Value& type) : type_(type) {}
-
-  T<> Call_Value_set(const T<S<TypeValue>>&) final;
-  T<S<TypeValue>> Call_Value_get(const T<>&) final;
-
- private:
-  const Instance_Value& type_;
-  // Corresponds to a member variable in Value.
-  // TODO: There should be a variable wrapper that handles converting to/from
-  // the static type used where it's defined in the code. There also needs to be
-  // a non-missing variant with enforcement.
-  S<TypeValue> value_;
-};
-
-class Constructor_Value;
-class Instance_Value;
+const FunctionId<FunctionScope::VALUE> Function_Value_log("Value.log");
 
 class Value_Value : public TypeValue {
  public:
-  Value_Value(const Instance_Value& type,
-              const S<Interface_Value>& interface)
-      : type_(type), interface_(interface) {}
-
-  const TypeInstance* ValueType() const final;
+  const TypeInstance* InstanceType() const final;
   FunctionReturns CallValueFunction(
       const FunctionId<FunctionScope::VALUE>& id,
       const FunctionArgs& args) final;
-  S<TypeValue> ConvertTo(const S<const TypeInstance>& type) final;
+  S<TypeValue> ConvertTo(const CategoryId* category) final;
 
  private:
-  S<TypeValue> Convert_Data(const S<const TypeInstance>&);
+  Value_Value(Instance_Value& type,
+              const S<Interface_Value>& interface)
+      : type_(type), interface_(interface) {}
 
-  const Instance_Value& type_;
+  Instance_Value& type_;
   const S<Interface_Value> interface_;
+
+  friend class Constructor_Value;
 };
 
 class Instance_Value : public TypeInstance {
  public:
-  Instance_Value(const Constructor_Value& parent)
+  Instance_Value(Constructor_Value& parent)
       : parent_(parent) {}
 
   std::string TypeName() const final;
@@ -242,7 +263,7 @@ class Instance_Value : public TypeInstance {
   T<S<TypeValue>> create(const T<>& args);
 
  private:
-  const Constructor_Value& parent_;
+  Constructor_Value& parent_;
 
   friend class Value_Value;
 };
@@ -250,14 +271,13 @@ class Instance_Value : public TypeInstance {
 
 Constructor_Value::Constructor_Value()
     : instance_functions_(std::move(
-          FunctionRouter<Instance_Value,FunctionScope::INSTANCE>(CategoryType()->TypeName())
+          FunctionDispatcher<Instance_Value,FunctionScope::INSTANCE>(CategoryType()->TypeName())
               .AddFunction(Function_Value_create, &Instance_Value::create))),
       value_functions_(std::move(
-          FunctionRouter<Interface_Value,FunctionScope::VALUE>(CategoryType()->TypeName())
-              .AddFunction(Function_Data_set, &Interface_Value::Call_Value_set)
-              .AddFunction(Function_Data_get, &Interface_Value::Call_Value_get)
-              .AddFunction(Function_Value_set, &Interface_Value::Call_Value_set)
-              .AddFunction(Function_Value_get, &Interface_Value::Call_Value_get))),
+          FunctionDispatcher<Interface_Value,FunctionScope::VALUE>(CategoryType()->TypeName())
+              .AddFunction(Function_Data_set, &Interface_Value::Call_Data_set)
+              .AddFunction(Function_Data_get, &Interface_Value::Call_Data_get)
+              .AddFunction(Function_Value_log, &Interface_Value::Call_Value_log))),
       only_instance_(new Instance_Value(*this)) {}
 
 S<TypeInstance> Constructor_Value::BindAll(const ParamInstance<0>::Args& args) {
@@ -269,30 +289,32 @@ const CategoryId* Constructor_Value::CategoryType() const {
   return &type;
 }
 
+S<TypeValue> Constructor_Value::CreateValue(const S<Interface_Value>& interface) {
+  return S_get(new Value_Value(*only_instance_,interface));
+}
+
 const S<Constructor_Value> Category_Value(new Constructor_Value);
 
 
-class Wrap_Value_Data : public Interface_Data {
+class Concrete_Value : public Interface_Value {
  public:
-  Wrap_Value_Data(const S<Interface_Value>& interface)
-      : interface_(interface) {}
+  Concrete_Value(Instance_Value& type) : type_(type) {}
 
-  T<> Call_Data_set(const T<S<TypeValue>>& args) final {
-    std::cerr << "Call_Data_set" << std::endl;
-    return interface_->Call_Value_set(args);
-  }
-
-  T<S<TypeValue>> Call_Data_get(const T<>& args) final {
-    std::cerr << "Call_Data_get" << std::endl;
-    return interface_->Call_Value_get(args);
-  }
+  T<> Call_Data_set(const T<S<TypeValue>>&) final;
+  T<S<TypeValue>> Call_Data_get(const T<>&) final;
+  T<> Call_Value_log(const T<>&) final;
 
  private:
-  const S<Interface_Value> interface_;
+  Instance_Value& type_;
+  // Corresponds to a member variable in Value.
+  // TODO: There should be a variable wrapper that handles converting to/from
+  // the static type used where it's defined in the code. There also needs to be
+  // a non-missing variant with enforcement.
+  S<TypeValue> value_;
 };
 
 
-const TypeInstance* Value_Value::ValueType() const {
+const TypeInstance* Value_Value::InstanceType() const {
   return &type_;
 }
 
@@ -302,33 +324,39 @@ FunctionReturns Value_Value::CallValueFunction(
   return type_.parent_.value_functions_.Call(id,interface_.get(),args);
 }
 
-S<TypeValue> Value_Value::ConvertTo(const S<const TypeInstance>& type) {
-  // TODO: This is fairly hackish. Maybe type conversion also needs routing
-  // based on the base-type.
-  if (type->CategoryType() == Category_Data->CategoryType()) {
-    return Convert_Data(type);
+S<TypeValue> Value_Value::ConvertTo(const CategoryId* category) {
+  // TODO: Use a map here? That might require naming each converter, though.
+  // (Also, this converter is specific to the instance, not to the value.)
+  if (category == Category_Data->CategoryType()) {
+    // NOTE: The param passed here (x=Value) is based on inheritance used when
+    // defining Value.
+    return Category_Data->CreateValue(Category_Value->Build(),interface_);
   }
-  return TypeValue::ConvertTo(type);
+  return TypeValue::ConvertTo(category);
 }
 
-S<TypeValue> Value_Value::Convert_Data(const S<const TypeInstance>& type) {
-  FAIL_IF(type->ConstructorArgs() != TypeArgs{&type_})
-      << type->TypeName() << " parameters does not match " << type_.TypeName();
-  return Category_Data->Create_Value(
-      Category_Value->Build(), S_get(new Wrap_Value_Data(interface_)));
-}
-
-T<> Concrete_Value::Call_Value_set(const T<S<TypeValue>>& args) {
-  std::cerr << "Call_Value_set" << std::endl;
-  // TODO: There should be a way to convert the type of the arg to what the
-  // function definition uses.
-  value_ = TypeValue::ConvertTo(std::get<0>(args),Category_Value->Build());
+T<> Concrete_Value::Call_Data_set(const T<S<TypeValue>>& args) {
+  std::cerr << "Call_Data_set" << std::endl;
+  // Convert the arg to the declared type for Value.set. (This could be more
+  // *general* than Data.set.)
+  // TODO: The variable "value" should also verify that only valid values are
+  // assigned, to include params if there are any.
+  value_ = TypeValue::ConvertTo(std::get<0>(args),
+                                Category_Value->CategoryType());
   return T_get();
 }
 
-T<S<TypeValue>> Concrete_Value::Call_Value_get(const T<>&) {
-  std::cerr << "Call_Value_get" << std::endl;
-  return T_get(value_);
+T<S<TypeValue>> Concrete_Value::Call_Data_get(const T<>&) {
+  std::cerr << "Call_Data_get" << std::endl;
+  // Convert the return to the declared type for Value.get. (This could be more
+  // *specific* than Data.get.)
+  return T_get(TypeValue::ConvertTo(value_,
+               Category_Value->CategoryType()));
+}
+
+T<> Concrete_Value::Call_Value_log(const T<>&) {
+  std::cerr << "Call_Value_log" << std::endl;
+  return T_get();
 }
 
 
@@ -351,7 +379,7 @@ TypeArgs Instance_Value::ConstructorArgs() const {
 }
 
 T<S<TypeValue>> Instance_Value::create(const T<>& args) {
-  return T_get(S_get(new Value_Value(*this,S_get(new Concrete_Value(*this)))));
+  return T_get(parent_.CreateValue(S_get(new Concrete_Value(*this))));
 }
 
 /*
@@ -388,13 +416,13 @@ int main() {
   std::cerr << ValueDataFunction2->TypeName() << std::endl;
   const S<TypeInstance> v_type = Category_Value->Build();
   S<TypeValue> v = v_type->CallInstanceFunction(Function_Value_create, FunctionArgs{})[0];
-  std::cerr << v->ValueType()->TypeName() << std::endl;
-  auto v2 = v->ConvertTo(Category_Data->Build(Category_Value->Build()));
-  TypeValue::ConvertTo(v,Category_Value->Build());  // Convert to same type.
-  std::cerr << v2->ValueType()->TypeName() << std::endl;
+  std::cerr << v->InstanceType()->TypeName() << std::endl;
+  auto v2 = v->ConvertTo(Category_Data->CategoryType());
+  TypeValue::ConvertTo(v,Category_Value->CategoryType());  // Convert to same type.
+  std::cerr << v2->InstanceType()->TypeName() << std::endl;
   v->CallValueFunction(Function_Data_set, FunctionArgs{v});
   v2->CallValueFunction(Function_Data_get, FunctionArgs{});
-  // Error! Even though the underlying type of v2 is Value, it is treated as
-  // Data<Value>; you cannot down-cast.
-  v2->CallValueFunction(Function_Value_get, FunctionArgs{});
+  v->CallValueFunction(Function_Value_log, FunctionArgs{});
+  // Error! Even though the underlying type is Value, v2 is of type Data.
+  v2->CallValueFunction(Function_Value_log, FunctionArgs{});
 }

@@ -7,24 +7,24 @@ FunctionReturns TypeInstance::CallInstanceFunction(
   return FunctionReturns();
 }
 
-S<TypeValue> TypeValue::ConvertTo(const S<const TypeInstance>& type) {
-  FAIL() << "Cannot convert " << ValueType()->TypeName()
-         << " to " << type->TypeName();
+S<TypeValue> TypeValue::ConvertTo(const CategoryId* category) {
+  FAIL() << "Cannot convert " << InstanceType()->TypeName()
+         << " to " << category->TypeName();
   return nullptr;
 }
 
 S<TypeValue> TypeValue::ConvertTo(const S<TypeValue>& self,
-                                  const S<const TypeInstance>& type) {
-  if (type.get() == self->ValueType()) {
+                                  const CategoryId* category) {
+  if (category == self->InstanceType()->CategoryType()) {
     return self;
   } else {
-    return self->ConvertTo(type);
+    return self->ConvertTo(category);
   }
 }
 
 FunctionReturns TypeValue::CallValueFunction(
     const FunctionId<FunctionScope::VALUE>& id, const FunctionArgs&) {
   FAIL() << "Function " << id.FunctionName()
-         << " not supported in type-instance " << ValueType()->TypeName();
+         << " not supported in type-instance " << InstanceType()->TypeName();
   return FunctionReturns();
 }

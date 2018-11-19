@@ -1,5 +1,5 @@
-#ifndef DYNAMIC_ROUTER_H_
-#define DYNAMIC_ROUTER_H_
+#ifndef DYNAMIC_DISPATCH_H_
+#define DYNAMIC_DISPATCH_H_
 
 #include <functional>
 #include <unordered_map>
@@ -27,12 +27,13 @@ class FixedCaller : public FunctionCaller<C> {
 };
 
 template<class C, FunctionScope S>
-class FunctionRouter {
+class FunctionDispatcher {
  public:
-  FunctionRouter(const std::string& name) : name_(name) {}
+  FunctionDispatcher(const std::string& name) : name_(name) {}
 
-  template<class A, class R>
-  FunctionRouter& AddFunction(const FunctionId<S>& id, R(C::*function)(const A&)) {
+  template<class A, class R, class C2>
+  FunctionDispatcher& AddFunction(const FunctionId<S>& id,
+                                  R(C2::*function)(const A&)) {
     mapped_[&id] = R_get(new FixedCaller<C,A,R>(
         [function](C* object, const A& args) {
           return (object->*function)(args);
@@ -53,4 +54,4 @@ class FunctionRouter {
   std::unordered_map<const FunctionId<S>*,R<const FunctionCaller<C>>> mapped_;
 };
 
-#endif  // DYNAMIC_ROUTER_H_
+#endif  // DYNAMIC_DISPATCH_H_
