@@ -31,6 +31,8 @@ type CategoryVariance = CategoryConnect (ParamSet Variance)
 
 type CategoryParams = CategoryConnect (ParamSet TypeParam)
 
+type CategoryFilters = CategoryConnect ParamFilters
+
 type CategoryConcrete = CategoryConnect Bool
 
 categoryLookup :: (CompileErrorM m, Monad m) => TypeName -> CategoryConnect a -> m a
@@ -40,7 +42,7 @@ categoryLookup n (CategoryConnect cs) = resolve $ n `Map.lookup` cs where
 
 paramLookup :: (CompileErrorM m, Monad m) =>
   AssignedParams -> TypeParam -> m GeneralInstance
-paramLookup ps (TypeParam n _) = resolve $ n `Map.lookup` ps where
+paramLookup ps (TypeParam n) = resolve $ n `Map.lookup` ps where
   -- TODO: Should this check constraints?
   resolve (Just x) = return x
   resolve _        = compileError $ "Param " ++ show n ++ " not found"
@@ -54,6 +56,7 @@ data CategorySystem =
     csRefine :: Refinements,
     csVariance :: CategoryVariance,
     csParams :: CategoryParams,
+    csFilters :: CategoryFilters,
     csConcrete :: CategoryConcrete
   }
 
@@ -65,18 +68,18 @@ validateCategory r cs = do
   checkCycles (csMain cs)
   checkConcrete (csConcrete cs) (csMain cs)
   -- Refine the structure.
-  refine <- flattenRefines r (csRefine cs)
+  refine <- flattenRefines r (csFilters cs) (csRefine cs)
   checkRefines refine
   -- Check finer structural semantics.
   labeledVars <- labelParamVals (csParams cs) (csVariance cs)
   checkVariances labeledVars (csVariance cs) refine
   return $ CategorySystem {
       csMain = csMain cs,
-      -- TODO: Check refines w.r.t. param filters.
       csRefine = refine,
       csVariance = csVariance cs,
       -- TODO: Check params w.r.t. compatible missingness requirements.
       csParams = csParams cs,
+      csFilters = csFilters cs,
       csConcrete = csConcrete cs
     }
 
@@ -105,7 +108,7 @@ checkVariances va vs = checkCategory checkAll where
     mergeAll $ map (\(v2,p) -> checkSingle as (v `composeVariance` v2) p) (zip (psParams vs2) (psParams ps))
   checkSingle as v (TypeMerge MergeUnion     ts) = mergeAll $ map (checkSingle as v) ts
   checkSingle as v (TypeMerge MergeIntersect ts) = mergeAll $ map (checkSingle as v) ts
-  checkSingle as v (SingleType (TypeCategoryParam (TypeParam n _))) = check (n `Map.lookup` as) where
+  checkSingle as v (SingleType (TypeCategoryParam (TypeParam n))) = check (n `Map.lookup` as) where
     check Nothing   = compileError $ "Param " ++ show n ++ " is undefined"
     check (Just v0) =
       if v0 `paramAllowsVariance` v
@@ -138,25 +141,26 @@ checkConcrete cc = checkCategory checkAll where
        else return ()
 
 mergeInstances :: (Mergeable (m ()), Mergeable (m p), CompileErrorM m, Monad m) =>
-  TypeResolver m p -> [TypeCategoryInstance] -> [TypeCategoryInstance]
-mergeInstances r gs = merge [] gs where
+  TypeResolver m p -> ParamFilters -> [TypeCategoryInstance] -> [TypeCategoryInstance]
+mergeInstances r f gs = merge [] gs where
   merge cs [] = cs
   merge cs (x:xs) = merge (cs ++ ys) xs where
-    checker x2 = checkGeneralMatch r Covariant (SingleType x2) (SingleType x)
+    checker x2 = checkGeneralMatch r f Covariant (SingleType x2) (SingleType x)
     ys = if isCompileError $ mergeAny $ map checker (cs ++ xs)
        then [x] -- x is not redundant => keep.
        else []  -- x is redundant => remove.
 
 flattenRefines :: (Mergeable (m ()), Mergeable (m p),
                    Mergeable p, CompileErrorM m, Monad m, MonadFix m) =>
-  TypeResolver m p -> Refinements -> m Refinements
-flattenRefines r (CategoryConnect gs) = mfix flattenAll where
+  TypeResolver m p -> CategoryFilters -> Refinements -> m Refinements
+flattenRefines r fs (CategoryConnect gs) = mfix flattenAll where
   flattenAll ca@(CategoryConnect _) = do
     items <- collectAllOrErrorM $ map (flattenCategory ca) (Map.toList gs)
     return $ CategoryConnect $ Map.fromList items
   flattenCategory ca (n,(CategoryRefine gs)) = do
     gs2 <- collectAllOrErrorM $ map (flattenSingle ca n) gs
-    return (n,CategoryRefine (mergeInstances r $ join gs2))
+    filters <- n `categoryLookup` fs
+    return (n,CategoryRefine (mergeInstances r filters $ join gs2))
   flattenSingle ca _ ta@(TypeCategoryInstance t ps) = do
     params <- (trParams r) t ps
     refines <- t `categoryLookup` ca
@@ -181,9 +185,9 @@ checkRefines = checkCategory checkAll where
 
 checkedSubAllParams :: (Mergeable (m ()), Mergeable (m p),
                         Mergeable p, CompileErrorM m, Monad m) =>
-  TypeResolver m p -> (TypeParam -> m GeneralInstance) ->
+  TypeResolver m p -> ParamFilters -> (TypeParam -> m GeneralInstance) ->
   GeneralInstance -> m (p,GeneralInstance)
-checkedSubAllParams r = subAllParams (checkGeneralMatch r Covariant)
+checkedSubAllParams r f = subAllParams (checkGeneralMatch r f Covariant)
 
 uncheckedSubAllParams :: (Mergeable (m ()), Mergeable (m p),
                           Mergeable p, CompileErrorM m, Monad m) =>
@@ -206,24 +210,7 @@ subAllParams find replace = subAll where
     gs <- collectAllOrErrorM $ map subAll ts
     return (mergeAll $ map fst gs,SingleType $ TypeCategoryInstance n $ (ParamSet $ map snd gs))
   subInstance (TypeCategoryParam t) = subParam t
-  subParam pa@(TypeParam _ _) = do
-    -- NOTE: No need to handle replacement in filters, since we require that
-    -- *all* params be substituted.
-    -- TODO: Maybe this should sub t into the filters and then check t against
-    -- those filters? Maybe not, since they should be checked where the param
-    -- is actually assigned a value.
+  subParam pa@(TypeParam _) = do
     t <- replace pa
     p <- find t (SingleType $ TypeCategoryParam pa)
     return (p,t)
-
-typeSystemFromResolver :: (Mergeable (m ()), Mergeable (m p),
-                           Mergeable p, CompileErrorM m, Monad m) =>
-  TypeResolver m p -> TypeSystem m p
-typeSystemFromResolver r = system where
-  system = TypeSystem {
-      tsValidate = validate,
-      tsConvert = convert
-    }
-  convert = checkGeneralMatch r
-  validate ps = checkedSubAllParams r (paramLookup $ toMap ps) >=>  return . snd
-  toMap = Map.fromList . map (\p -> (tpName p,SingleType $ TypeCategoryParam p))
