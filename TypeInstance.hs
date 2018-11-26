@@ -11,7 +11,6 @@ module TypeInstance (
   TypeParam(..),
   TypeResolver(..),
   TypeSystem(..),
-  canBecomeMissing,
   checkGeneralMatch,
   composeVariance,
   paramAllowsVariance,
@@ -46,7 +45,7 @@ data TypeFilter =
 data TypeParam =
   TypeParam {
     tpName :: ParamName,
-    tmMissing :: Missingness,
+    -- TODO: Store filters outside of the type instance.
     tpConstraint :: [TypeFilter]
   }
   deriving (Eq,Show)
@@ -71,8 +70,6 @@ data TypeResolver m p =
     trFind :: TypeName -> TypeName -> InstanceParams -> m (p,InstanceParams),
     -- Labels params for an instance using the category's param names.
     trParams :: TypeName -> InstanceParams -> m AssignedParams,
-    -- Get the missingness for the category.
-    trMissing :: TypeName -> m Missingness,
     -- Get the parameter variances for the category.
     trVariance :: TypeName -> m [Variance]
   }
@@ -129,15 +126,12 @@ checkInstanceToInstance r Covariant (n1,ps1) (n2,ps2)
 
 checkParamToInstance :: (Mergeable (m ()), Mergeable (m p), CompileErrorM m, Monad m) =>
   TypeResolver m p -> Variance -> TypeParam -> (TypeName,InstanceParams) -> m p
-checkParamToInstance _ Invariant (TypeParam n1 _ _) (n2,ps2) =
+checkParamToInstance _ Invariant (TypeParam n1 _) (n2,ps2) =
   compileError $ "Not isomorphic (" ++ show n1 ++ " / " ++ show n2 ++ ")"
 checkParamToInstance r Contravariant p1 (n2,ps2) =
   checkInstanceToParam r Covariant (n2,ps2) p1
-checkParamToInstance r Covariant (TypeParam n1 q1 cs1) (n2,ps2) = checked where
-  checked = do
-    q2 <- trMissing r n2
-    () <- q1 `canBecomeMissing` q2
-    mergeAny $ map (\c -> checkConstraintToInstance c (n2,ps2)) cs1
+checkParamToInstance r Covariant (TypeParam n1 cs1) (n2,ps2) = checked where
+  checked = mergeAny $ map (\c -> checkConstraintToInstance c (n2,ps2)) cs1
   checkConstraintToInstance (TypeFilter Covariant t) (n,ps) =
     -- x -> F implies x -> T only if F -> T
     checkSingleMatch r Covariant t (TypeCategoryInstance n ps)
@@ -146,15 +140,12 @@ checkParamToInstance r Covariant (TypeParam n1 q1 cs1) (n2,ps2) = checked where
 
 checkInstanceToParam :: (Mergeable (m ()), Mergeable (m p), CompileErrorM m, Monad m) =>
   TypeResolver m p -> Variance -> (TypeName,InstanceParams) -> TypeParam -> m p
-checkInstanceToParam _ Invariant (n1,ps1) (TypeParam n2 _ _) =
+checkInstanceToParam _ Invariant (n1,ps1) (TypeParam n2 _) =
   compileError $ "Not isomorphic (" ++ show n1 ++ " / " ++ show n2 ++ ")"
 checkInstanceToParam r Contravariant (n1,ps1) p2 =
   checkParamToInstance r Covariant p2 (n1,ps1)
-checkInstanceToParam r Covariant (n1,ps1) (TypeParam n2 q2 cs2) = checked where
-  checked = do
-    q1 <- trMissing r n1
-    () <- q1 `canBecomeMissing` q2
-    mergeAll $ map (\c -> checkInstanceToConstraint (n1,ps1) c) cs2
+checkInstanceToParam r Covariant (n1,ps1) (TypeParam n2 cs2) = checked where
+  checked = mergeAll $ map (\c -> checkInstanceToConstraint (n1,ps1) c) cs2
   checkInstanceToConstraint (n,ps) (TypeFilter Contravariant t) =
     -- F -> x implies T -> x only if T -> F
     checkSingleMatch r Contravariant t (TypeCategoryInstance n ps)
@@ -175,13 +166,12 @@ checkParamToParam r Invariant p1 p2 = fixMessage check where
     | otherwise = p
 checkParamToParam r Contravariant p1 p2 =
   checkParamToParam r Covariant p1 p2
-checkParamToParam r Covariant (TypeParam n1 q1 cs1) (TypeParam n2 q2 cs2) = checked where
+checkParamToParam r Covariant (TypeParam n1 cs1) (TypeParam n2 cs2) = checked where
   checked
     | n1 /= n2 =
       -- TODO: Need to account for checking x to y when x -> y.
       compileError $ "Param conflict (" ++ show n1 ++ " -> " ++ show n2 ++ ")"
-    | otherwise = do
-      () <- q1 `canBecomeMissing` q2
+    | otherwise =
       mergeAny $ map (\c1 -> mergeAll $ map (\c2 -> checkConstraintToConstraint c1 c2) cs2) cs1
   checkConstraintToConstraint (TypeFilter Covariant t1) (TypeFilter Covariant t2) =
     -- x -> F1 implies x -> F2 only if F1 -> F2
@@ -191,9 +181,3 @@ checkParamToParam r Covariant (TypeParam n1 q1 cs1) (TypeParam n2 q2 cs2) = chec
     checkSingleMatch r Contravariant t1 t2
   checkConstraintToConstraint (TypeFilter _ _) (TypeFilter _ _) =
     compileError $ "Cannot convert param to param (" ++ show n1 ++ " -> " ++ show n2 ++ ")"
-
-canBecomeMissing :: (Mergeable (m p), CompileErrorM m, Monad m) =>
-  Missingness -> Missingness -> m p
-canBecomeMissing m1 m2 = check $ paramAllowsMissing m1 m2 where
-  check False = compileError $ "Missingness conflict (" ++ show m1 ++ " -> " ++ show m2 ++ ")"
-  check _     = mergeDefault

@@ -27,8 +27,6 @@ type CategoryMain = CategoryConnect (Set.Set TypeName)
 
 type Refinements = CategoryConnect CategoryRefine
 
-type CategoryMissing = CategoryConnect Missingness
-
 type CategoryVariance = CategoryConnect (ParamSet Variance)
 
 type CategoryParams = CategoryConnect (ParamSet TypeParam)
@@ -42,7 +40,7 @@ categoryLookup n (CategoryConnect cs) = resolve $ n `Map.lookup` cs where
 
 paramLookup :: (CompileErrorM m, Monad m) =>
   AssignedParams -> TypeParam -> m GeneralInstance
-paramLookup ps (TypeParam n _ _) = resolve $ n `Map.lookup` ps where
+paramLookup ps (TypeParam n _) = resolve $ n `Map.lookup` ps where
   -- TODO: Should this check constraints?
   resolve (Just x) = return x
   resolve _        = compileError $ "Param " ++ show n ++ " not found"
@@ -54,7 +52,6 @@ data CategorySystem =
   CategorySystem {
     csMain :: CategoryMain,
     csRefine :: Refinements,
-    csMissing :: CategoryMissing,
     csVariance :: CategoryVariance,
     csParams :: CategoryParams,
     csConcrete :: CategoryConcrete
@@ -67,7 +64,6 @@ validateCategory r cs = do
   -- Basic structural checks.
   checkCycles (csMain cs)
   checkConcrete (csConcrete cs) (csMain cs)
-  checkMissing (csMissing cs) (csMain cs)
   -- Refine the structure.
   refine <- flattenRefines r (csRefine cs)
   checkRefines refine
@@ -78,7 +74,6 @@ validateCategory r cs = do
       csMain = csMain cs,
       -- TODO: Check refines w.r.t. param filters.
       csRefine = refine,
-      csMissing = csMissing cs,
       csVariance = csVariance cs,
       -- TODO: Check params w.r.t. compatible missingness requirements.
       csParams = csParams cs,
@@ -110,7 +105,7 @@ checkVariances va vs = checkCategory checkAll where
     mergeAll $ map (\(v2,p) -> checkSingle as (v `composeVariance` v2) p) (zip (psParams vs2) (psParams ps))
   checkSingle as v (TypeMerge MergeUnion     ts) = mergeAll $ map (checkSingle as v) ts
   checkSingle as v (TypeMerge MergeIntersect ts) = mergeAll $ map (checkSingle as v) ts
-  checkSingle as v (SingleType (TypeCategoryParam (TypeParam n _ _))) = check (n `Map.lookup` as) where
+  checkSingle as v (SingleType (TypeCategoryParam (TypeParam n _))) = check (n `Map.lookup` as) where
     check Nothing   = compileError $ "Param " ++ show n ++ " is undefined"
     check (Just v0) =
       if v0 `paramAllowsVariance` v
@@ -141,24 +136,6 @@ checkConcrete cc = checkCategory checkAll where
     if concrete
        then compileError $ "Category " ++ show n ++ " cannot refine concrete " ++ show n2
        else return ()
-
-checkMissing :: (Mergeable (m ()), CompileErrorM m, Monad m) =>
-  CategoryMissing -> CategoryMain -> m ()
-checkMissing ms ca = checked where
-  checked = do
-    checkCategory checkSpecified ms
-    checkCategory checkAllowed ca
-  checkSpecified n m
-    | m == AllowsMissing    = return ()
-    | m == DisallowsMissing = return ()
-    | otherwise =
-      compileError $ "Category " ++ show n ++ " cannot have missing type " ++ show m
-  checkAllowed n ts = do
-    m <- n `categoryLookup` ms
-    mergeAll $ map (checkSingle n m) $ Set.toList ts
-  checkSingle n m1 n2 = do
-    m2 <- n2 `categoryLookup` ms
-    m2 `canBecomeMissing` m1
 
 mergeInstances :: (Mergeable (m ()), Mergeable (m p), CompileErrorM m, Monad m) =>
   TypeResolver m p -> [TypeCategoryInstance] -> [TypeCategoryInstance]
@@ -229,7 +206,7 @@ subAllParams find replace = subAll where
     gs <- collectAllOrErrorM $ map subAll ts
     return (mergeAll $ map fst gs,SingleType $ TypeCategoryInstance n $ (ParamSet $ map snd gs))
   subInstance (TypeCategoryParam t) = subParam t
-  subParam pa@(TypeParam _ _ _) = do
+  subParam pa@(TypeParam _ _) = do
     -- NOTE: No need to handle replacement in filters, since we require that
     -- *all* params be substituted.
     -- TODO: Maybe this should sub t into the filters and then check t against

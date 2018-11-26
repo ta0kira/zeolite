@@ -7,13 +7,11 @@ module TypesBase (
   GeneralType(..),
   Mergeable(..),
   MergeType(..),
-  Missingness(..),
   ParamSet(..),
   Variance(..),
   checkParamsMatch,
   checkGeneralType,
   composeVariance,
-  paramAllowsMissing,
   paramAllowsVariance,
 ) where
 
@@ -103,15 +101,3 @@ Invariant     `paramAllowsVariance` Covariant     = True
 Invariant     `paramAllowsVariance` Invariant     = True
 Invariant     `paramAllowsVariance` Contravariant = True
 _             `paramAllowsVariance` _             = False
-
-data Missingness =
-  AllowsMissing |
-  DisallowsMissing |
-  UnspecifiedMissing
-  deriving (Eq,Ord,Show)
-
-paramAllowsMissing :: Missingness -> Missingness -> Bool
-AllowsMissing      `paramAllowsMissing` _                = True
-DisallowsMissing   `paramAllowsMissing` DisallowsMissing = True
-UnspecifiedMissing `paramAllowsMissing` _                = True
-_                  `paramAllowsMissing` _                = False
