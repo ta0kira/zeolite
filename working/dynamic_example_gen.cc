@@ -1,6 +1,7 @@
 #include "dynamic_example_gen.h"
 
 #include <iostream>
+#include <unordered_map>
 
 /*
 
@@ -10,13 +11,13 @@ interface Function<x|y> {
 
 */
 
-const FunctionId<FunctionScope::VALUE> Function_Function_call("Function.call");
+const FunctionId<MemberScope::VALUE> Function_Function_call("Function.call");
 
 class Value_Function : public TypeValue {
  public:
   const TypeInstance* InstanceType() const final;
   FunctionReturns CallValueFunction(
-      const FunctionId<FunctionScope::VALUE>& id,
+      const FunctionId<MemberScope::VALUE>& id,
       const FunctionArgs& args) final;
 
  private:
@@ -38,8 +39,6 @@ class Instance_Function : public TypeInstance {
       : parent_(parent), x_(x), y_(y) {}
 
   std::string TypeName() const final;
-  const CategoryId* CategoryType() const final;
-  TypeArgs ConstructorArgs() const final;
 
  private:
   Constructor_Function& parent_;
@@ -52,7 +51,7 @@ class Instance_Function : public TypeInstance {
 
 Constructor_Function::Constructor_Function()
     : value_functions_(std::move(
-          FunctionDispatcher<Interface_Function,FunctionScope::VALUE>(CategoryType()->TypeName())
+          FunctionDispatcher<Interface_Function,MemberScope::VALUE>(CategoryType()->TypeName())
               .AddFunction(Function_Function_call, &Interface_Function::Call_Function_call))) {}
 
 S<TypeInstance> Constructor_Function::BindAll(const ParamInstance<2>::Args& args) {
@@ -92,7 +91,7 @@ const TypeInstance* Value_Function::InstanceType() const {
 }
 
 FunctionReturns Value_Function::CallValueFunction(
-    const FunctionId<FunctionScope::VALUE>& id,
+    const FunctionId<MemberScope::VALUE>& id,
     const FunctionArgs& args) {
   return type_.parent_.value_functions_.Call(id,interface_.get(),args);
 }
@@ -104,23 +103,17 @@ std::string Instance_Function::TypeName() const {
   return formatted.str();
 }
 
-const CategoryId* Instance_Function::CategoryType() const {
-  return parent_.CategoryType();
-}
-
-TypeArgs Instance_Function::ConstructorArgs() const {
-  return TypeArgs{x_.get(),y_.get()};
-}
-
 /*
 
 interface Data<x> {
+  set takes (x) to ()
+  get takes () to (x)
 }
 
 */
 
-const FunctionId<FunctionScope::VALUE> Function_Data_set("Data.set");
-const FunctionId<FunctionScope::VALUE> Function_Data_get("Data.get");
+const FunctionId<MemberScope::VALUE> Function_Data_set("Data.set");
+const FunctionId<MemberScope::VALUE> Function_Data_get("Data.get");
 
 class Constructor_Data;
 
@@ -132,7 +125,7 @@ class Value_Data : public TypeValue {
 
   const TypeInstance* InstanceType() const final;
   FunctionReturns CallValueFunction(
-      const FunctionId<FunctionScope::VALUE>& id,
+      const FunctionId<MemberScope::VALUE>& id,
       const FunctionArgs& args) final;
 
  private:
@@ -147,8 +140,6 @@ class Instance_Data : public TypeInstance {
       : parent_(parent), x_(x) {}
 
   std::string TypeName() const final;
-  const CategoryId* CategoryType() const final;
-  TypeArgs ConstructorArgs() const final;
 
  private:
   Constructor_Data& parent_;
@@ -160,7 +151,7 @@ class Instance_Data : public TypeInstance {
 
 Constructor_Data::Constructor_Data()
     : value_functions_(std::move(
-          FunctionDispatcher<Interface_Data,FunctionScope::VALUE>(CategoryType()->TypeName())
+          FunctionDispatcher<Interface_Data,MemberScope::VALUE>(CategoryType()->TypeName())
               .AddFunction(Function_Data_set, &Interface_Data::Call_Data_set)
               .AddFunction(Function_Data_get, &Interface_Data::Call_Data_get))) {}
 
@@ -198,7 +189,7 @@ const TypeInstance* Value_Data::InstanceType() const {
 }
 
 FunctionReturns Value_Data::CallValueFunction(
-    const FunctionId<FunctionScope::VALUE>& id,
+    const FunctionId<MemberScope::VALUE>& id,
     const FunctionArgs& args) {
   return type_.parent_.value_functions_.Call(id,interface_.get(),args);
 }
@@ -210,30 +201,24 @@ std::string Instance_Data::TypeName() const {
   return formatted.str();
 }
 
-const CategoryId* Instance_Data::CategoryType() const {
-  return parent_.CategoryType();
-}
-
-TypeArgs Instance_Data::ConstructorArgs() const {
-  return TypeArgs{x_.get()};
-}
-
 /*
 
 interface Value {
-  inherits Data<Value>
+  refines Data<Value>
+  in instance create takes () to (Value)
+  log takes () to ()
 }
 
 */
 
-const FunctionId<FunctionScope::INSTANCE> Function_Value_create("Value.create");
-const FunctionId<FunctionScope::VALUE> Function_Value_log("Value.log");
+const FunctionId<MemberScope::INSTANCE> Function_Value_create("Value.create");
+const FunctionId<MemberScope::VALUE> Function_Value_log("Value.log");
 
 class Value_Value : public TypeValue {
  public:
   const TypeInstance* InstanceType() const final;
   FunctionReturns CallValueFunction(
-      const FunctionId<FunctionScope::VALUE>& id,
+      const FunctionId<MemberScope::VALUE>& id,
       const FunctionArgs& args) final;
   S<TypeValue> ConvertTo(const CategoryId* category) final;
 
@@ -251,18 +236,21 @@ class Value_Value : public TypeValue {
 class Instance_Value : public TypeInstance {
  public:
   Instance_Value(Constructor_Value& parent)
-      : parent_(parent) {}
+      : parent_(parent),
+        refines_({Category_Data->CategoryType(),{this}}) {}
 
   std::string TypeName() const final;
-  const CategoryId* CategoryType() const final;
+  const TypeArgs& TypeArgsForCategory(const CategoryId*) const final;
   FunctionReturns CallInstanceFunction(
-      const FunctionId<FunctionScope::INSTANCE>& id,
+      const FunctionId<MemberScope::INSTANCE>& id,
       const FunctionArgs& args) final;
-  TypeArgs ConstructorArgs() const final;
-  T<S<TypeValue>> create(const T<>& args);
+
+ protected:
+  bool CheckConversionTo(const TypeInstance*) const final;
 
  private:
   Constructor_Value& parent_;
+  const std::unordered_map<const CategoryId*,TypeArgs&> refines_;
 
   friend class Value_Value;
 };
@@ -270,10 +258,10 @@ class Instance_Value : public TypeInstance {
 
 Constructor_Value::Constructor_Value()
     : instance_functions_(std::move(
-          FunctionDispatcher<Instance_Value,FunctionScope::INSTANCE>(CategoryType()->TypeName())
+          FunctionDispatcher<Instance_Value,MemberScope::INSTANCE>(CategoryType()->TypeName())
               .AddFunction(Function_Value_create, &Instance_Value::create))),
       value_functions_(std::move(
-          FunctionDispatcher<Interface_Value,FunctionScope::VALUE>(CategoryType()->TypeName())
+          FunctionDispatcher<Interface_Value,MemberScope::VALUE>(CategoryType()->TypeName())
               .AddFunction(Function_Data_set, &Interface_Value::Call_Data_set)
               .AddFunction(Function_Data_get, &Interface_Value::Call_Data_get)
               .AddFunction(Function_Value_log, &Interface_Value::Call_Value_log))),
@@ -318,7 +306,7 @@ const TypeInstance* Value_Value::InstanceType() const {
 }
 
 FunctionReturns Value_Value::CallValueFunction(
-    const FunctionId<FunctionScope::VALUE>& id,
+    const FunctionId<MemberScope::VALUE>& id,
     const FunctionArgs& args) {
   return type_.parent_.value_functions_.Call(id,interface_.get(),args);
 }
@@ -363,14 +351,21 @@ std::string Instance_Value::TypeName() const {
   return "Value";
 }
 
-const CategoryId* Instance_Value::CategoryType() const {
-  return parent_.CategoryType();
+const TypeArgs& Instance_Value::TypeArgsForCategory(const CategoryId*) const {
+    const auto refine = refines_.find(&id);
+    FAIL_IF(refine == refines_.end())
+        << "Category " << id.TypeName() << " not refined by " << TypeName();
+    return refine->second;
 }
 
 FunctionReturns Instance_Value::CallInstanceFunction(
-    const FunctionId<FunctionScope::INSTANCE>& id,
+    const FunctionId<MemberScope::INSTANCE>& id,
     const FunctionArgs& args) {
   return parent_.instance_functions_.Call(id,this,args);
+}
+
+bool Instance_Value::CheckConversionTo(const TypeInstance*) const {
+  return false;  // TODO: Fix this.
 }
 
 TypeArgs Instance_Value::ConstructorArgs() const {

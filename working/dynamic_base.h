@@ -13,8 +13,6 @@ using InstanceCacheKey = std::vector<TypeInstance*>;
 template<class T>
 using InstanceCache = std::map<InstanceCacheKey,S<T>>;
 
-// TODO: Probably needs to use shared_ptr elements so that the types can be
-// referenced in conversion wrappers.
 using TypeArgs = std::vector<const TypeInstance*>;
 
 class CategoryId {
@@ -29,18 +27,46 @@ class CategoryId {
   const std::string name_;
 };
 
-enum class FunctionScope {
+enum class MemberScope {
   CATEGORY,
   INSTANCE,
   VALUE,
 };
 
-template<FunctionScope>
+template<MemberScope>
 class FunctionId {
  public:
   inline FunctionId(const std::string& name) : name_(name) {}
 
   inline std::string FunctionName() const {
+    return name_;
+  }
+
+ private:
+  const std::string name_;
+};
+
+// NOTE: Even though variables can exist at the category/instance level, there
+// should be no non-local access.
+class ValueVariableId {
+ public:
+  inline ValueVariableId(const std::string& name) : name_(name) {}
+
+  inline std::string ValueName() const {
+    return name_;
+  }
+
+ private:
+  const std::string name_;
+};
+
+// NOTE: Even though variables can exist at the category/instance level, there
+// should be no non-local access.
+class TypeVariableId {
+ public:
+  inline TypeVariableId(const std::string& name) : name_(name) {}
+
+  inline std::string TypeName() const {
     return name_;
   }
 
@@ -62,7 +88,7 @@ struct TypeConstructor {
   }
 
   virtual FunctionReturns CallCategoryFunction(
-      const FunctionId<FunctionScope::CATEGORY>& id, const FunctionArgs&) {
+      const FunctionId<MemberScope::CATEGORY>& id, const FunctionArgs&) {
     FAIL() << "Function " << id.FunctionName()
            << " not supported in type-value " << CategoryType()->TypeName();
     return FunctionReturns();
@@ -72,28 +98,59 @@ struct TypeConstructor {
 };
 
 
-struct TypeInstance {
+enum class MergeType {
+  SINGLE,
+  UNION,
+  INTERSECT,
+};
+
+class TypeInstance {
+ public:
   virtual std::string TypeName() const = 0;
-  virtual const CategoryId* CategoryType() const = 0;
-  virtual TypeArgs ConstructorArgs() const = 0;
+  virtual const TypeArgs& TypeArgsForCategory(const CategoryId*) const;
   virtual FunctionReturns CallInstanceFunction(
-      const FunctionId<FunctionScope::INSTANCE>& id, const FunctionArgs&);
+      const FunctionId<MemberScope::INSTANCE>& id, const FunctionArgs&);
+
+  static bool CheckConversionBetween(const TypeInstance*, const TypeInstance*);
+
   virtual ~TypeInstance() = default;
+
+ protected:
+  virtual bool CheckConversionTo(const TypeInstance*) const;
+  virtual MergeType MergedType() const;
+  virtual std::vector<const TypeInstance*> MergedInstanceTypes() const;
 };
 
+using IntType = signed long long;
+using FloatType = double;
+using StringType = std::string;
 
-struct TypeValue {
-  virtual const TypeInstance* InstanceType() const = 0;
-  // TODO: Maybe this should be protected so that the static version is used?
-  // Otherwise, no-op conversions won't work.
-  virtual S<TypeValue> ConvertTo(const CategoryId* category);
-  static S<TypeValue> ConvertTo(const S<TypeValue>& self,
-                                const CategoryId* category);
+class ValueVariable {};
+
+class TypeValue {
+ public:
   virtual FunctionReturns CallValueFunction(
-      const FunctionId<FunctionScope::VALUE>& id, const FunctionArgs&);
-  virtual ~TypeValue() = default;
-};
+      const FunctionId<MemberScope::VALUE>& id, const FunctionArgs&);
+  virtual ValueVariable& GetValueVariable(const ValueVariableId& id);
+  virtual S<TypeInstance> GetTypeVariable(const TypeVariableId& id);
 
+  virtual bool IsOptional() const;
+//   virtual IntType& AsInt();
+//   virtual FloatType& AsFloat();
+//   virtual StringType& AsFloat();
+
+  static S<TypeValue> ConvertTo(const S<TypeValue>& self,
+                                const S<TypeInstance>& category);
+
+  static S<TypeValue> ReduceTo(const S<TypeValue>& self,
+                               const S<TypeInstance>& category);
+
+  virtual ~TypeValue() = default;
+
+ protected:
+  virtual const TypeInstance* InstanceType() const = 0;
+  virtual S<TypeValue> ConvertTo(const S<TypeInstance>& category);
+};
 
 
 template<int N, class...Ts>

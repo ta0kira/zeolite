@@ -39,7 +39,7 @@ class Constructor_Function : public ParamInstance<2>::Type {
   S<Instance_Function> BindInternal(const S<TypeInstance>& x,
                                     const S<TypeInstance>& y);
 
-  const FunctionDispatcher<Interface_Function,FunctionScope::VALUE> value_functions_;
+  const FunctionDispatcher<Interface_Function,MemberScope::VALUE> value_functions_;
   InstanceCache<Instance_Function> instance_cache_;
 
   friend class Instance_Function;
@@ -47,7 +47,7 @@ class Constructor_Function : public ParamInstance<2>::Type {
 };
 
 extern const S<Constructor_Function> Category_Function;
-extern const FunctionId<FunctionScope::VALUE> Function_Function_call;
+extern const FunctionId<MemberScope::VALUE> Function_Function_call;
 
 /*
 
@@ -81,7 +81,7 @@ class Constructor_Data : public ParamInstance<1>::Type {
  private:
   S<Instance_Data> BindInternal(const S<TypeInstance>& x);
 
-  const FunctionDispatcher<Interface_Data,FunctionScope::VALUE> value_functions_;
+  const FunctionDispatcher<Interface_Data,MemberScope::VALUE> value_functions_;
   InstanceCache<Instance_Data> instance_cache_;
 
   friend class Instance_Data;
@@ -89,13 +89,13 @@ class Constructor_Data : public ParamInstance<1>::Type {
 };
 
 extern const S<Constructor_Data> Category_Data;
-extern const FunctionId<FunctionScope::VALUE> Function_Data_set;
-extern const FunctionId<FunctionScope::VALUE> Function_Data_get;
+extern const FunctionId<MemberScope::VALUE> Function_Data_set;
+extern const FunctionId<MemberScope::VALUE> Function_Data_get;
 
 /*
 
 concrete Value {
-  inherits Data<Value>
+  refines Data<Value>
   in instance create takes () to (Value)
   log takes () to ()
 }
@@ -124,8 +124,8 @@ class Constructor_Value : public ParamInstance<0>::Type {
   S<TypeValue> CreateValue(const S<Interface_Value>& interface);
 
  private:
-  const FunctionDispatcher<Instance_Value,FunctionScope::INSTANCE> instance_functions_;
-  const FunctionDispatcher<Interface_Value,FunctionScope::VALUE> value_functions_;
+  const FunctionDispatcher<Instance_Value,MemberScope::INSTANCE> instance_functions_;
+  const FunctionDispatcher<Interface_Value,MemberScope::VALUE> value_functions_;
   const S<Instance_Value> only_instance_;
 
   friend class Instance_Value;
@@ -134,7 +134,7 @@ class Constructor_Value : public ParamInstance<0>::Type {
 };
 
 extern const S<Constructor_Value> Category_Value;
-extern const FunctionId<FunctionScope::INSTANCE> Function_Value_create;
-extern const FunctionId<FunctionScope::VALUE> Function_Value_log;
+extern const FunctionId<MemberScope::INSTANCE> Function_Value_create;
+extern const FunctionId<MemberScope::VALUE> Function_Value_log;
 
 #endif  // DYNAMIC_EXAMPLE_GEN_H_
