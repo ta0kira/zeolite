@@ -183,6 +183,7 @@ checkRefines = checkCategory checkAll where
     compileError $ "Type " ++ show n ++ " has conflicting refinements of type " ++ show t
   checkGroup _ _ = return ()
 
+-- NOTE: The param filters here correspond to the *new* instances.
 checkedSubAllParams :: (Mergeable (m ()), Mergeable (m p),
                         Mergeable p, CompileErrorM m, Monad m) =>
   TypeResolver m p -> ParamFilters -> (TypeParam -> m GeneralInstance) ->
