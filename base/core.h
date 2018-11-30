@@ -1,5 +1,5 @@
-#ifndef BASE_H_
-#define BASE_H_
+#ifndef CORE_H_
+#define CORE_H_
 
 #include <memory>
 #include <sstream>
@@ -97,4 +97,4 @@ std::vector<X> T_to_V(const T<Ts...>& tuple) {
   return vals;
 }
 
-#endif  // BASE_H_
+#endif  // CORE_H_
