@@ -75,9 +75,8 @@ class TypeValue {
       const FunctionId<MemberScope::VALUE>&, const FunctionArgs&);
   virtual ValueVariable& GetValueVariable(const ValueVariableId<MemberScope::VALUE>&);
 
-  // TODO: Add accessors for primitive types.
-
-  bool GetBool() const;
+  // TODO: Add accessors for remaining primitive types.
+  virtual bool GetBool() const;
 
   static S<TypeValue> ConvertTo(const S<TypeValue>&, const TypeInstance&);
 

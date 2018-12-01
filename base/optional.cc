@@ -2,6 +2,7 @@
 
 #include <sstream>
 
+#include "bool.h"
 #include "dispatch.h"
 
 namespace {
@@ -148,7 +149,7 @@ FunctionReturns Value_Optional::CallValueFunction(
 }
 
 T<S<TypeValue>> Value_Optional::Call_Optional_present(const T<>&) const {
-  // TODO: Need a boolean type.
+  return AsBool(!!value_);
 }
 
 T<S<TypeValue>> Value_Optional::Call_Optional_require(const T<>&) const {
