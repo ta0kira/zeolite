@@ -138,7 +138,7 @@ S<TypeValue> Instance_Optional::Skip() {
 bool Instance_Optional::CheckConversionFrom(const TypeInstance& type) const {
   const TypeArgs& args = type.TypeArgsForCategory(Category_Optional);
   FAIL_IF(args.size() != 1) << "Wrong number of type args";
-  return CheckConversionBetween(*args[0],x_);  // covariant
+  return CheckConversionBetween(*SafeGet<0>(args),x_);  // covariant
 }
 
 

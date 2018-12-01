@@ -90,6 +90,11 @@ ValueVariable& TypeValue::GetValueVariable(
   return failed;
 }
 
+bool TypeValue::GetBool() const {
+  FAIL() << "Cannot convert type-value " << InstanceType().InstanceName() << " to Bool";
+  return false;
+}
+
 S<TypeValue> TypeValue::ConvertTo(const S<TypeValue>& self,
                                   const TypeInstance& instance) {
   if (&instance == &self->InstanceType()) {

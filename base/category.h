@@ -15,6 +15,12 @@ using FunctionArgs = std::vector<S<TypeValue>>;
 using FunctionReturns = std::vector<S<TypeValue>>;
 using TypeArgs = std::vector<const TypeInstance*>;
 
+template<int I, class T>
+const T& SafeGet(const std::vector<T>& values) {
+  FAIL_IF(I < 0 || I >= values.size()) << "Index " << I << " out of range";
+  return values[I];
+}
+
 enum class MergeType {
   SINGLE,
   UNION,
@@ -70,6 +76,8 @@ class TypeValue {
   virtual ValueVariable& GetValueVariable(const ValueVariableId<MemberScope::VALUE>&);
 
   // TODO: Add accessors for primitive types.
+
+  bool GetBool() const;
 
   static S<TypeValue> ConvertTo(const S<TypeValue>&, const TypeInstance&);
 
