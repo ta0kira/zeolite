@@ -50,7 +50,7 @@ class Instance_Optional : public TypeInstance {
   TypeInstance& x_;
   const std::string name_;
   const TypeArgs types_{this};
-  const TypeArgs args_{&x_};
+  const TypeArgs args_self_{&x_};
 };
 
 
@@ -121,7 +121,7 @@ Instance_Optional& Constructor_Optional::BuildInternal(TypeInstance& x) {
 
 const TypeArgs& Instance_Optional::TypeArgsForCategory(const TypeCategory& category) const {
   if (&category == &Category_Optional) {
-    return args_;
+    return args_self_;
   }
   // Can implicitly convert from y to optional x if y -> x.
   return x_.TypeArgsForCategory(category);

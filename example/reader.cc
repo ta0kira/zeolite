@@ -1,6 +1,7 @@
 #include "reader.h"
 
 #include "base/dispatch.h"
+#include "base/optional.h"
 
 namespace {
 
@@ -32,6 +33,7 @@ class Instance_Reader : public TypeInstance {
  public:
   Instance_Reader(TypeInstance& arg_x)
       : param_x(arg_x),
+        Type_read_r0(Category_Optional.Build(arg_x)),
         name_(ConstructInstanceName(Category_Reader,arg_x)) {}
 
   const std::string& InstanceName() const final { return name_; }
@@ -39,6 +41,7 @@ class Instance_Reader : public TypeInstance {
   const TypeArgs& TypeArgsForCategory(const TypeCategory& category) const final;
 
   TypeInstance& param_x;
+  TypeInstance& Type_read_r0;
 
  private:
   bool CheckConversionFrom(const TypeInstance& type) const final;
@@ -47,7 +50,7 @@ class Instance_Reader : public TypeInstance {
 
   const std::string name_;
   const TypeArgs types_{this};
-  const TypeArgs args_{&param_x};
+  const TypeArgs args_self_{&param_x};
 };
 
 
@@ -108,7 +111,7 @@ Instance_Reader& Constructor_Reader::BuildInternal(TypeInstance& arg_x) {
 const TypeArgs& Instance_Reader::TypeArgsForCategory(const TypeCategory& category) const {
   // TODO: Generalize this better.
   if (&category == &Category_Reader) {
-    return args_;
+    return args_self_;
   }
   return TypeInstance::TypeArgsForCategory(category);
 }

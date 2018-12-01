@@ -20,14 +20,6 @@ concrete Queue<x> {
 
 */
 
-struct Interface_Queue
-    : virtual public Interface_Reader,
-      virtual public Interface_Writer {
-  using Interface_Reader::Call_Reader_read;
-  using Interface_Writer::Call_Writer_write;
-  virtual ~Interface_Queue() = default;
-};
-
 extern ParamInstance<1>::Type& Category_Queue;
 
 extern const FunctionId<MemberScope::INSTANCE>& Function_Queue_create;

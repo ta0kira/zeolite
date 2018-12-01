@@ -32,6 +32,7 @@ class Instance_Writer : public TypeInstance {
  public:
   Instance_Writer(TypeInstance& arg_x)
       : param_x(arg_x),
+        Type_write_a0(arg_x),
         name_(ConstructInstanceName(Category_Writer,arg_x)) {}
 
   const std::string& InstanceName() const final { return name_; }
@@ -39,6 +40,7 @@ class Instance_Writer : public TypeInstance {
   const TypeArgs& TypeArgsForCategory(const TypeCategory& category) const final;
 
   TypeInstance& param_x;
+  TypeInstance& Type_write_a0;
 
  private:
   bool CheckConversionFrom(const TypeInstance& type) const final;
@@ -47,7 +49,7 @@ class Instance_Writer : public TypeInstance {
 
   const std::string name_;
   const TypeArgs types_{this};
-  const TypeArgs args_{&param_x};
+  const TypeArgs args_self_{&param_x};
 };
 
 
@@ -108,7 +110,7 @@ Instance_Writer& Constructor_Writer::BuildInternal(TypeInstance& arg_x) {
 const TypeArgs& Instance_Writer::TypeArgsForCategory(const TypeCategory& category) const {
   // TODO: Generalize this better.
   if (&category == &Category_Writer) {
-    return args_;
+    return args_self_;
   }
   return TypeInstance::TypeArgsForCategory(category);
 }
@@ -127,7 +129,7 @@ FunctionReturns Value_Writer::CallValueFunction(
 
 T<> Value_Writer::Call_write(const T<S<TypeValue>>& args) const {
   const T<> results = interface_->Call_Writer_write(
-    TypeValue::ConvertTo(std::get<0>(args),parent_.param_x));
+    TypeValue::ConvertTo(std::get<0>(args),parent_.Type_write_a0));
   return T_get();
 }
 
