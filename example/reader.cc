@@ -126,7 +126,7 @@ FunctionReturns Value_Reader::CallValueFunction(
 }
 
 T<S<TypeValue>> Value_Reader::Call_read(const T<>& args) const {
-  const T<S<TypeValue>> results = interface_->Call_Reader_read(T_get());
+  const T<S<TypeValue>> results = interface_->Call_Reader_read();
   return T_get(
     TypeValue::ConvertTo(std::get<0>(results),parent_.param_x));
 }

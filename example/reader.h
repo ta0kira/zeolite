@@ -14,7 +14,7 @@ interface Reader<|x> {
 */
 
 struct Interface_Reader {
-  virtual T<S<TypeValue>> Call_Reader_read(const T<>&) = 0;
+  virtual T<S<TypeValue>> Call_Reader_read() = 0;
   virtual ~Interface_Reader() = default;
 };
 
