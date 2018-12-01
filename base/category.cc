@@ -1,5 +1,7 @@
 #include "category.h"
 
+#include "optional.h"
+
 FunctionReturns TypeCategory::CallCategoryFunction(
     const FunctionId<MemberScope::CATEGORY>& id, const FunctionArgs&) {
   FAIL() << "Function " << id.FunctionName()
@@ -28,7 +30,7 @@ bool TypeInstance::CheckConversionBetween(
   for (const TypeInstance* left : from->MergedInstanceTypes()) {
     bool can_convert_to = to->InstanceMergeType() != MergeType::UNION;
     for (const TypeInstance* right : to->MergedInstanceTypes()) {
-      bool can_convert_single = left->CheckConversionTo(right);
+      bool can_convert_single = right->CheckConversionFrom(left);
       switch (to->InstanceMergeType()) {
         case MergeType::SINGLE:
           can_convert_to = can_convert_single;
@@ -64,7 +66,7 @@ bool TypeInstance::CheckConversionBetween(
   return can_convert;
 }
 
-bool TypeInstance::CheckConversionTo(const TypeInstance*) const {
+bool TypeInstance::CheckConversionFrom(const TypeInstance*) const {
   return false;
 }
 
@@ -72,8 +74,8 @@ MergeType TypeInstance::InstanceMergeType() const {
   return MergeType::SINGLE;
 }
 
-std::vector<const TypeInstance*> TypeInstance::MergedInstanceTypes() const {
-  return std::vector<const TypeInstance*>{this};
+TypeArgs TypeInstance::MergedInstanceTypes() const {
+  return TypeArgs{this};
 }
 
 
@@ -103,11 +105,6 @@ bool TypeValue::IsOptional() const {
   return false;
 }
 
-S<TypeValue> TypeValue::RequireValue() {
-  FAIL() << "Cannot use require with type-value " << InstanceType()->TypeName();
-  return nullptr;
-}
-
 S<TypeValue> TypeValue::ConvertTo(const S<TypeValue>& self,
                                   const S<TypeInstance>& instance) {
   if (instance.get() == self->InstanceType()) {
@@ -120,14 +117,16 @@ S<TypeValue> TypeValue::ConvertTo(const S<TypeValue>& self,
 S<TypeValue> TypeValue::ReduceTo(const S<TypeValue>& self,
                                  const S<TypeInstance>& instance) {
   if (instance.get() == self->InstanceType()) {
-    // TODO: Wrap with optional.
-    return self;
-  }
-  if (TypeInstance::CheckConversionBetween(self->InstanceType(), instance.get())) {
-    // TODO: Wrap with optional.
-    return ConvertTo(self, instance);
+    return AsOptional(instance,self);
+  } else if (TypeInstance::CheckConversionBetween(self->InstanceType(), instance.get())) {
+    return AsOptional(instance,ConvertTo(self,instance));
   } else {
-    // TODO: return `skip` (optional x)
-    return nullptr;
+    return SkipOptional(instance);
   }
+}
+
+S<TypeValue> TypeValue::ConvertTo(const S<TypeInstance>& instance) {
+  FAIL() << "Cannot convert " << InstanceType()->TypeName()
+         << " to type " << instance->TypeName();
+  return nullptr;
 }

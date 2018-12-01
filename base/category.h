@@ -45,9 +45,9 @@ class TypeInstance {
   static bool CheckConversionBetween(const TypeInstance*, const TypeInstance*);
 
  protected:
-  virtual bool CheckConversionTo(const TypeInstance*) const;
+  virtual bool CheckConversionFrom(const TypeInstance*) const;
   virtual MergeType InstanceMergeType() const;
-  virtual std::vector<const TypeInstance*> MergedInstanceTypes() const;
+  virtual TypeArgs MergedInstanceTypes() const;
 };
 
 
@@ -61,19 +61,18 @@ class TypeValue {
   virtual S<TypeInstance> GetTypeVariable(const TypeVariableId<MemberScope::VALUE>& id);
 
   virtual bool IsOptional() const;
-  virtual S<TypeValue> RequireValue();
 
   // TODO: Add accessors for primitive types.
 
   static S<TypeValue> ConvertTo(const S<TypeValue>& self,
-                                const S<TypeInstance>& category);
+                                const S<TypeInstance>& instance);
 
   static S<TypeValue> ReduceTo(const S<TypeValue>& self,
-                               const S<TypeInstance>& category);
+                               const S<TypeInstance>& instance);
 
  protected:
   virtual const TypeInstance* InstanceType() const = 0;
-  virtual S<TypeValue> ConvertTo(const S<TypeInstance>& category);
+  virtual S<TypeValue> ConvertTo(const S<TypeInstance>& instance);
 };
 
 

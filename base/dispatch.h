@@ -1,10 +1,11 @@
-#ifndef DYNAMIC_DISPATCH_H_
-#define DYNAMIC_DISPATCH_H_
+#ifndef DISPATCH_H_
+#define DISPATCH_H_
 
 #include <functional>
 #include <unordered_map>
 
-#include "dynamic_base.h"
+#include "core.h"
+#include "ids.h"
 
 template<class C>
 struct FunctionCaller {
@@ -26,13 +27,13 @@ class FixedCaller : public FunctionCaller<C> {
   const std::function<R(C*,const A&)> function_;
 };
 
-template<class C, MemberScope S>
+template<class C, MemberScope M>
 class FunctionDispatcher {
  public:
   FunctionDispatcher(const std::string& name) : name_(name) {}
 
   template<class A, class R, class C2>
-  FunctionDispatcher& AddFunction(const FunctionId<S>& id,
+  FunctionDispatcher& AddFunction(const FunctionId<M>& id,
                                   R(C2::*function)(const A&)) {
     mapped_[&id] = R_get(new FixedCaller<C,A,R>(
         [function](C* object, const A& args) {
@@ -41,7 +42,17 @@ class FunctionDispatcher {
     return *this;
   }
 
-  FunctionReturns Call(const FunctionId<S>& id, C* object,
+  template<class A, class R, class C2>
+  FunctionDispatcher& AddFunction(const FunctionId<M>& id,
+                                  R(C2::*function)(const A&) const) {
+    mapped_[&id] = R_get(new FixedCaller<C,A,R>(
+        [function](C* object, const A& args) {
+          return (object->*function)(args);
+        }));
+    return *this;
+  }
+
+  FunctionReturns Call(const FunctionId<M>& id, C* object,
                        const FunctionArgs& args) const {
     const auto caller = mapped_.find(&id);
     FAIL_IF(caller == mapped_.end())
@@ -51,21 +62,21 @@ class FunctionDispatcher {
 
  private:
   const std::string name_;
-  std::unordered_map<const FunctionId<S>*,R<const FunctionCaller<C>>> mapped_;
+  std::unordered_map<const FunctionId<M>*,R<const FunctionCaller<C>>> mapped_;
 };
 
-template<class C>
+template<class C, MemberScope M>
 class GetValueDispatcher {
  public:
   GetValueDispatcher(const std::string& name) : name_(name) {}
 
-  GetValueDispatcher& AddMember(const ValueVariableId& id,
+  GetValueDispatcher& AddMember(const ValueVariableId<M>& id,
                                 ValueVariable C::*member) {
     mapped_[&id] = member;
     return *this;
   }
 
-  ValueVariable Get(const ValueVariableId& id, C* object) const {
+  ValueVariable Get(const ValueVariableId<M>& id, C* object) const {
     const auto member = mapped_.find(&id);
     FAIL_IF(member == mapped_.end())
         << "Member variable " << id.ValueName() << " not supported by " << name_;
@@ -74,21 +85,21 @@ class GetValueDispatcher {
 
  private:
   const std::string name_;
-  std::unordered_map<const ValueVariableId*,ValueVariable C::*> mapped_;
+  std::unordered_map<const ValueVariableId<M>*,ValueVariable C::*> mapped_;
 };
 
-template<class C>
+template<class C, MemberScope M>
 class GetTypeDispatcher {
  public:
   GetTypeDispatcher(const std::string& name) : name_(name) {}
 
-  GetTypeDispatcher& AddMember(const TypeVariableId& id,
+  GetTypeDispatcher& AddMember(const TypeVariableId<M>& id,
                                const S<TypeInstance> C::*member) {
     mapped_[&id] = member;
     return *this;
   }
 
-  ValueVariable Get(const TypeVariableId& id, C* object) const {
+  ValueVariable Get(const TypeVariableId<M>& id, C* object) const {
     const auto member = mapped_.find(&id);
     FAIL_IF(member == mapped_.end())
         << "Member type " << id.TypeName() << " not supported by " << name_;
@@ -97,7 +108,7 @@ class GetTypeDispatcher {
 
  private:
   const std::string name_;
-  std::unordered_map<const TypeVariableId*,const S<TypeInstance> C::*> mapped_;
+  std::unordered_map<const TypeVariableId<M>*,const S<TypeInstance> C::*> mapped_;
 };
 
-#endif  // DYNAMIC_DISPATCH_H_
+#endif  // DISPATCH_H_
