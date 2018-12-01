@@ -9,15 +9,6 @@ enum class MemberScope {
   VALUE,
 };
 
-class CategoryId {
- public:
-  inline CategoryId(const std::string& name) : name_(name) {}
-  inline std::string TypeName() const { return name_; }
-
- private:
-  const std::string name_;
-};
-
 template<MemberScope>
 class FunctionId {
  public:

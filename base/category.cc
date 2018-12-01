@@ -5,14 +5,14 @@
 FunctionReturns TypeCategory::CallCategoryFunction(
     const FunctionId<MemberScope::CATEGORY>& id, const FunctionArgs&) {
   FAIL() << "Function " << id.FunctionName()
-          << " not supported in type-value " << CategoryType().TypeName();
+          << " not supported in type-category " << CategoryName();
   return FunctionReturns();
 }
 
 
-const TypeArgs& TypeInstance::TypeArgsForCategory(const CategoryId& id) const {
-  FAIL() << "Category " << id.TypeName()
-         << " is not a base of type-instance " << TypeName();
+const TypeArgs& TypeInstance::TypeArgsForCategory(const TypeCategory& category) const {
+  FAIL() << "Category " << category.CategoryName()
+         << " is not a base of type-instance " << InstanceName();
   static const TypeArgs failed;
   return failed;
 }
@@ -20,8 +20,12 @@ const TypeArgs& TypeInstance::TypeArgsForCategory(const CategoryId& id) const {
 FunctionReturns TypeInstance::CallInstanceFunction(
     const FunctionId<MemberScope::INSTANCE>& id, const FunctionArgs&) {
   FAIL() << "Function " << id.FunctionName()
-         << " not supported in type-instance " << TypeName();
+         << " not supported in type-instance " << InstanceName();
   return FunctionReturns();
+}
+
+bool TypeInstance::IsOptional() const {
+  return false;
 }
 
 bool TypeInstance::CheckConversionBetween(
@@ -70,32 +74,20 @@ bool TypeInstance::CheckConversionFrom(const TypeInstance&) const {
   return false;
 }
 
-MergeType TypeInstance::InstanceMergeType() const {
-  return MergeType::SINGLE;
-}
-
-TypeArgs TypeInstance::MergedInstanceTypes() const {
-  return TypeArgs{this};
-}
-
 
 FunctionReturns TypeValue::CallValueFunction(
     const FunctionId<MemberScope::VALUE>& id, const FunctionArgs&) {
   FAIL() << "Function " << id.FunctionName()
-         << " not supported in type-value " << InstanceType().TypeName();
+         << " not supported in type-value " << InstanceType().InstanceName();
   return FunctionReturns();
 }
 
 ValueVariable& TypeValue::GetValueVariable(
     const ValueVariableId<MemberScope::VALUE>& id) {
   FAIL() << "Member variable " << id.VariableName()
-         << " not supported in type-value " << InstanceType().TypeName();
+         << " not supported in type-value " << InstanceType().InstanceName();
   static ValueVariable failed;
   return failed;
-}
-
-bool TypeValue::IsOptional() const {
-  return false;
 }
 
 S<TypeValue> TypeValue::ConvertTo(const S<TypeValue>& self,
@@ -119,7 +111,7 @@ S<TypeValue> TypeValue::ReduceTo(const S<TypeValue>& self,
 }
 
 S<TypeValue> TypeValue::ConvertTo(const TypeInstance& instance) {
-  FAIL() << "Cannot convert " << InstanceType().TypeName()
-         << " to type " << instance.TypeName();
+  FAIL() << "Cannot convert " << InstanceType().InstanceName()
+         << " to type " << instance.InstanceName();
   return nullptr;
 }
