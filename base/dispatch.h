@@ -79,7 +79,7 @@ class GetValueDispatcher {
   ValueVariable Get(const ValueVariableId<M>& id, C* object) const {
     const auto member = mapped_.find(&id);
     FAIL_IF(member == mapped_.end())
-        << "Member variable " << id.ValueName() << " not supported by " << name_;
+        << "Variable " << id.ValueName() << " not present in " << name_;
     return object->*member;
   }
 
