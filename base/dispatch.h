@@ -88,27 +88,4 @@ class GetValueDispatcher {
   std::unordered_map<const ValueVariableId<M>*,ValueVariable C::*> mapped_;
 };
 
-template<class C, MemberScope M>
-class GetTypeDispatcher {
- public:
-  GetTypeDispatcher(const std::string& name) : name_(name) {}
-
-  GetTypeDispatcher& AddMember(const TypeVariableId<M>& id,
-                               const S<TypeInstance> C::*member) {
-    mapped_[&id] = member;
-    return *this;
-  }
-
-  ValueVariable Get(const TypeVariableId<M>& id, C* object) const {
-    const auto member = mapped_.find(&id);
-    FAIL_IF(member == mapped_.end())
-        << "Member type " << id.TypeName() << " not supported by " << name_;
-    return object->*member;
-  }
-
- private:
-  const std::string name_;
-  std::unordered_map<const TypeVariableId<M>*,const S<TypeInstance> C::*> mapped_;
-};
-
 #endif  // DISPATCH_H_

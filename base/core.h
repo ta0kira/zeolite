@@ -51,6 +51,12 @@ class LogThenCrash {
 
 #define FAIL_IF(p) LogThenCrash(p,#p)
 
+#define ALWAYS_UNIQUE(type) \
+  type(const type&) = delete; \
+  type(type&&) = delete; \
+  type& operator =(const type&) = delete; \
+  type& operator =(type&&) = delete;
+
 
 template<int K, class V, class T>
 struct ArgsToTuple {

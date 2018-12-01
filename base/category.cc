@@ -5,13 +5,13 @@
 FunctionReturns TypeCategory::CallCategoryFunction(
     const FunctionId<MemberScope::CATEGORY>& id, const FunctionArgs&) {
   FAIL() << "Function " << id.FunctionName()
-          << " not supported in type-value " << CategoryType()->TypeName();
+          << " not supported in type-value " << CategoryType().TypeName();
   return FunctionReturns();
 }
 
 
-const TypeArgs& TypeInstance::TypeArgsForCategory(const CategoryId* id) const {
-  FAIL() << "Category " << id->TypeName()
+const TypeArgs& TypeInstance::TypeArgsForCategory(const CategoryId& id) const {
+  FAIL() << "Category " << id.TypeName()
          << " is not a base of type-instance " << TypeName();
   static const TypeArgs failed;
   return failed;
@@ -25,13 +25,13 @@ FunctionReturns TypeInstance::CallInstanceFunction(
 }
 
 bool TypeInstance::CheckConversionBetween(
-    const TypeInstance* from, const TypeInstance* to) {
-  bool can_convert = from->InstanceMergeType() != MergeType::INTERSECT;
-  for (const TypeInstance* left : from->MergedInstanceTypes()) {
-    bool can_convert_to = to->InstanceMergeType() != MergeType::UNION;
-    for (const TypeInstance* right : to->MergedInstanceTypes()) {
-      bool can_convert_single = right->CheckConversionFrom(left);
-      switch (to->InstanceMergeType()) {
+    const TypeInstance& from, const TypeInstance& to) {
+  bool can_convert = from.InstanceMergeType() != MergeType::INTERSECT;
+  for (const TypeInstance* left : from.MergedInstanceTypes()) {
+    bool can_convert_to = to.InstanceMergeType() != MergeType::UNION;
+    for (const TypeInstance* right : to.MergedInstanceTypes()) {
+      bool can_convert_single = right->CheckConversionFrom(*left);
+      switch (to.InstanceMergeType()) {
         case MergeType::SINGLE:
           can_convert_to = can_convert_single;
           break;
@@ -42,12 +42,12 @@ bool TypeInstance::CheckConversionBetween(
           can_convert_to &= can_convert_single;
           break;
       }
-      if ((from->InstanceMergeType() == MergeType::UNION     && can_convert_to) ||
-          (from->InstanceMergeType() == MergeType::INTERSECT && !can_convert_to)) {
+      if ((from.InstanceMergeType() == MergeType::UNION     && can_convert_to) ||
+          (from.InstanceMergeType() == MergeType::INTERSECT && !can_convert_to)) {
         break;
       }
     }
-    switch (from->InstanceMergeType()) {
+    switch (from.InstanceMergeType()) {
       case MergeType::SINGLE:
         can_convert = can_convert_to;
         break;
@@ -58,15 +58,15 @@ bool TypeInstance::CheckConversionBetween(
         can_convert |= can_convert_to;
         break;
     }
-    if ((from->InstanceMergeType() == MergeType::UNION     && !can_convert) ||
-        (from->InstanceMergeType() == MergeType::INTERSECT && can_convert)) {
+    if ((from.InstanceMergeType() == MergeType::UNION     && !can_convert) ||
+        (from.InstanceMergeType() == MergeType::INTERSECT && can_convert)) {
       break;
     }
   }
   return can_convert;
 }
 
-bool TypeInstance::CheckConversionFrom(const TypeInstance*) const {
+bool TypeInstance::CheckConversionFrom(const TypeInstance&) const {
   return false;
 }
 
@@ -82,23 +82,16 @@ TypeArgs TypeInstance::MergedInstanceTypes() const {
 FunctionReturns TypeValue::CallValueFunction(
     const FunctionId<MemberScope::VALUE>& id, const FunctionArgs&) {
   FAIL() << "Function " << id.FunctionName()
-         << " not supported in type-value " << InstanceType()->TypeName();
+         << " not supported in type-value " << InstanceType().TypeName();
   return FunctionReturns();
 }
 
 ValueVariable& TypeValue::GetValueVariable(
     const ValueVariableId<MemberScope::VALUE>& id) {
   FAIL() << "Member variable " << id.VariableName()
-         << " not supported in type-value " << InstanceType()->TypeName();
+         << " not supported in type-value " << InstanceType().TypeName();
   static ValueVariable failed;
   return failed;
-}
-
-S<TypeInstance> TypeValue::GetTypeVariable(
-    const TypeVariableId<MemberScope::VALUE>& id) {
-  FAIL() << "Member type " << id.VariableName()
-         << " not supported in type-value " << InstanceType()->TypeName();
-  return nullptr;
 }
 
 bool TypeValue::IsOptional() const {
@@ -106,8 +99,8 @@ bool TypeValue::IsOptional() const {
 }
 
 S<TypeValue> TypeValue::ConvertTo(const S<TypeValue>& self,
-                                  const S<TypeInstance>& instance) {
-  if (instance.get() == self->InstanceType()) {
+                                  const TypeInstance& instance) {
+  if (&instance == &self->InstanceType()) {
     return self;
   } else {
     return self->ConvertTo(instance);
@@ -115,18 +108,18 @@ S<TypeValue> TypeValue::ConvertTo(const S<TypeValue>& self,
 }
 
 S<TypeValue> TypeValue::ReduceTo(const S<TypeValue>& self,
-                                 const S<TypeInstance>& instance) {
-  if (instance.get() == self->InstanceType()) {
+                                 const  TypeInstance& instance) {
+  if (&instance == &self->InstanceType()) {
     return AsOptional(instance,self);
-  } else if (TypeInstance::CheckConversionBetween(self->InstanceType(), instance.get())) {
+  } else if (TypeInstance::CheckConversionBetween(self->InstanceType(),instance)) {
     return AsOptional(instance,ConvertTo(self,instance));
   } else {
     return SkipOptional(instance);
   }
 }
 
-S<TypeValue> TypeValue::ConvertTo(const S<TypeInstance>& instance) {
-  FAIL() << "Cannot convert " << InstanceType()->TypeName()
-         << " to type " << instance->TypeName();
+S<TypeValue> TypeValue::ConvertTo(const TypeInstance& instance) {
+  FAIL() << "Cannot convert " << InstanceType().TypeName()
+         << " to type " << instance.TypeName();
   return nullptr;
 }
