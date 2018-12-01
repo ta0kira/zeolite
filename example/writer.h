@@ -18,7 +18,7 @@ struct Interface_Writer {
   virtual ~Interface_Writer() = default;
 };
 
-extern ParamInstance<1>::Type& Category_Writer;
+ParamInstance<1>::Type& Category_Writer();
 
 extern const FunctionId<MemberScope::VALUE>& Function_Writer_write;
 

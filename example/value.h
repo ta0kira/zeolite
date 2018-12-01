@@ -17,12 +17,7 @@ concrete Value {
 
 */
 
-struct Interface_Value {
-  virtual T<> Call_Value_print(const T<>&) = 0;
-  virtual ~Interface_Value() = default;
-};
-
-extern ParamInstance<0>::Type& Category_Value;
+ParamInstance<0>::Type& Category_Value();
 
 extern const FunctionId<MemberScope::INSTANCE>& Function_Value_create;
 extern const FunctionId<MemberScope::VALUE>& Function_Value_print;

@@ -31,24 +31,31 @@ class Constructor_Queue : public ParamInstance<1>::Type {
   InstanceCache<Instance_Queue> instance_cache_;
 };
 
-Constructor_Queue& Internal_Queue = *new Constructor_Queue;
+Constructor_Queue& Internal_Queue() {
+  static Constructor_Queue*const constructor = new Constructor_Queue;
+  return *constructor;
+}
 
 
 class Instance_Queue : public TypeInstance {
  public:
   Instance_Queue(TypeInstance& arg_x)
       : param_x(arg_x),
-        Type_read_r0(Category_Optional.Build(arg_x)),
+        Type_create_r0(*this),
+        Type_read_r0(Category_Optional().Build(arg_x)),
         Type_write_a0(arg_x),
-        name_(ConstructInstanceName(Category_Queue,arg_x)) {}
+        name_(ConstructInstanceName(Category_Queue(),arg_x)) {}
 
   const std::string& InstanceName() const final { return name_; }
-  const TypeCategory& CategoryType() const final { return Category_Queue; }
+  const TypeCategory& CategoryType() const final { return Category_Queue(); }
   const TypeArgs& TypeArgsForCategory(const TypeCategory& category) const final;
+  FunctionReturns CallInstanceFunction(
+      const FunctionId<MemberScope::INSTANCE>&, const FunctionArgs&) final;
 
   T<S<TypeValue>> Call_create(const T<>&);
 
   TypeInstance& param_x;
+  TypeInstance& Type_create_r0;
   TypeInstance& Type_read_r0;
   TypeInstance& Type_write_a0;
 
@@ -100,17 +107,10 @@ struct Concrete_Queue
   std::queue<S<TypeValue>> queue_;
 };
 
-}  // namespace
-
-
-ParamInstance<1>::Type& Category_Queue = Internal_Queue;
-
 S<TypeValue> AsQueue(const S<Concrete_Queue>& value, TypeInstance& instance) {
-  return S_get(new Value_Queue(Internal_Queue.BuildInternal(instance),value));
+  return S_get(new Value_Queue(Internal_Queue().BuildInternal(instance),value));
 }
 
-
-namespace {
 
 Constructor_Queue::Constructor_Queue()
     : instance_functions(instance_functions_),
@@ -138,24 +138,30 @@ Instance_Queue& Constructor_Queue::BuildInternal(TypeInstance& arg_x) {
 
 const TypeArgs& Instance_Queue::TypeArgsForCategory(const TypeCategory& category) const {
   // TODO: Generalize this better.
-  if (&category == &Category_Queue) {
+  if (&category == &Category_Queue()) {
     return args_self_;
   }
-  if (&category == &Category_Reader) {
+  if (&category == &Category_Reader()) {
     return args_reader_;
   }
-  if (&category == &Category_Writer) {
+  if (&category == &Category_Writer()) {
     return args_writer_;
   }
   return TypeInstance::TypeArgsForCategory(category);
 }
 
+FunctionReturns Instance_Queue::CallInstanceFunction(
+    const FunctionId<MemberScope::INSTANCE>& id, const FunctionArgs& args) {
+  return Internal_Queue().instance_functions.Call(id,this,args);
+}
+
 T<S<TypeValue>> Instance_Queue::Call_create(const T<>&) {
-  return T_get(S_get(new Value_Queue(*this,S_get(new Concrete_Queue(*this)))));
+  return T_get(TypeValue::ConvertTo(S_get(new Value_Queue(*this,S_get(new Concrete_Queue(*this)))),
+               Type_create_r0));
 }
 
 bool Instance_Queue::CheckConversionFrom(const TypeInstance& instance) const {
-  const TypeArgs& args = instance.TypeArgsForCategory(Category_Queue);
+  const TypeArgs& args = instance.TypeArgsForCategory(Category_Queue());
   FAIL_IF(args.size() != 1) << "Wrong number of type args";
   return SafeGet<0>(args) == &param_x;  // invariant
 }
@@ -163,7 +169,7 @@ bool Instance_Queue::CheckConversionFrom(const TypeInstance& instance) const {
 
 FunctionReturns Value_Queue::CallValueFunction(
     const FunctionId<MemberScope::VALUE>& id, const FunctionArgs& args) {
-  return Internal_Queue.value_functions.Call(id,this,args);
+  return Internal_Queue().value_functions.Call(id,this,args);
 }
 
 T<S<TypeValue>> Value_Queue::Call_read(const T<>& args) const {
@@ -180,15 +186,15 @@ T<> Value_Queue::Call_write(const T<S<TypeValue>>& args) const {
 
 S<TypeValue> Value_Queue::ConvertTo(TypeInstance& instance) {
   // TODO: Generalize this better.
-  if (&instance.CategoryType() == &Category_Queue) {
-    const TypeArgs& args = instance.TypeArgsForCategory(Category_Queue);
+  if (&instance.CategoryType() == &Category_Queue()) {
+    const TypeArgs& args = instance.TypeArgsForCategory(Category_Queue());
     FAIL_IF(args.size() != 1) << "Wrong number of type args";
     return AsQueue(interface_,*SafeGet<0>(args));
   }
-  if (&instance.CategoryType() == &Category_Reader) {
+  if (&instance.CategoryType() == &Category_Reader()) {
     return AsReader(interface_,parent_.param_x);
   }
-  if (&instance.CategoryType() == &Category_Writer) {
+  if (&instance.CategoryType() == &Category_Writer()) {
     return AsWriter(interface_,parent_.param_x);
   }
   return TypeValue::ConvertTo(instance);
@@ -211,3 +217,11 @@ T<> Concrete_Queue::Call_Writer_write(const S<TypeValue>& value) {
 }
 
 }  // namespace
+
+
+ParamInstance<1>::Type& Category_Queue() {
+  return Internal_Queue();
+}
+
+const FunctionId<MemberScope::INSTANCE>& Function_Queue_create =
+    *new FunctionId<MemberScope::INSTANCE>("Queue.create");

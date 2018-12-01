@@ -1,3 +1,5 @@
+#include <iostream>
+
 #include "base/core.h"
 #include "base/optional.h"
 
@@ -29,20 +31,20 @@ while (true) {
 
 int main() {
   S<TypeValue> queue =
-      SafeGet<0>(Category_Queue
-          .Build(Category_Value.Build())
+      SafeGet<0>(Category_Queue()
+          .Build(Category_Value().Build())
           .CallInstanceFunction(Function_Queue_create,FunctionArgs{}));
 
   for (int i = 0; i < 5; ++i) {
     S<TypeValue> value =
-        SafeGet<0>(Category_Value
+        SafeGet<0>(Category_Value()
             .Build()
             .CallInstanceFunction(Function_Value_create,FunctionArgs{}));
     queue->CallValueFunction(Function_Writer_write,FunctionArgs{value});
   }
 
   S<TypeValue> reader =
-      TypeValue::ConvertTo(queue,Category_Reader.Build(Category_Value.Build()));
+      TypeValue::ConvertTo(queue,Category_Reader().Build(Category_Value().Build()));
 
   while (true) {
     S<TypeValue> value =

@@ -5,7 +5,7 @@
 #include "constructor.h"
 #include "core.h"
 
-extern ParamInstance<1>::Type& Category_Optional;
+ParamInstance<1>::Type& Category_Optional();
 
 extern const FunctionId<MemberScope::VALUE>& Function_Optional_present;
 extern const FunctionId<MemberScope::VALUE>& Function_Optional_require;

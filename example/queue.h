@@ -20,7 +20,7 @@ concrete Queue<x> {
 
 */
 
-extern ParamInstance<1>::Type& Category_Queue;
+ParamInstance<1>::Type& Category_Queue();
 
 extern const FunctionId<MemberScope::INSTANCE>& Function_Queue_create;
 

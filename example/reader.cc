@@ -26,18 +26,21 @@ class Constructor_Reader : public ParamInstance<1>::Type {
   InstanceCache<Instance_Reader> instance_cache_;
 };
 
-Constructor_Reader& Internal_Reader = *new Constructor_Reader;
+Constructor_Reader& Internal_Reader() {
+  static Constructor_Reader*const constructor = new Constructor_Reader;
+  return *constructor;
+}
 
 
 class Instance_Reader : public TypeInstance {
  public:
   Instance_Reader(TypeInstance& arg_x)
       : param_x(arg_x),
-        Type_read_r0(Category_Optional.Build(arg_x)),
-        name_(ConstructInstanceName(Category_Reader,arg_x)) {}
+        Type_read_r0(Category_Optional().Build(arg_x)),
+        name_(ConstructInstanceName(Category_Reader(),arg_x)) {}
 
   const std::string& InstanceName() const final { return name_; }
-  const TypeCategory& CategoryType() const final { return Category_Reader; }
+  const TypeCategory& CategoryType() const final { return Category_Reader(); }
   const TypeArgs& TypeArgsForCategory(const TypeCategory& category) const final;
 
   TypeInstance& param_x;
@@ -74,20 +77,6 @@ class Value_Reader : public TypeValue {
   const S<Interface_Reader> interface_;
 };
 
-}  // namespace
-
-
-ParamInstance<1>::Type& Category_Reader = Internal_Reader;
-
-const FunctionId<MemberScope::VALUE>& Function_Reader_read =
-    *new FunctionId<MemberScope::VALUE>("Reader.read");
-
-S<TypeValue> AsReader(const S<Interface_Reader>& value, TypeInstance& instance) {
-  return S_get(new Value_Reader(Internal_Reader.BuildInternal(instance),value));
-}
-
-
-namespace {
 
 Constructor_Reader::Constructor_Reader()
     : value_functions(value_functions_),
@@ -110,14 +99,14 @@ Instance_Reader& Constructor_Reader::BuildInternal(TypeInstance& arg_x) {
 
 const TypeArgs& Instance_Reader::TypeArgsForCategory(const TypeCategory& category) const {
   // TODO: Generalize this better.
-  if (&category == &Category_Reader) {
+  if (&category == &Category_Reader()) {
     return args_self_;
   }
   return TypeInstance::TypeArgsForCategory(category);
 }
 
 bool Instance_Reader::CheckConversionFrom(const TypeInstance& instance) const {
-  const TypeArgs& args = instance.TypeArgsForCategory(Category_Reader);
+  const TypeArgs& args = instance.TypeArgsForCategory(Category_Reader());
   FAIL_IF(args.size() != 1) << "Wrong number of type args";
   return CheckConversionBetween(*SafeGet<0>(args),param_x);  // covariant
 }
@@ -125,19 +114,19 @@ bool Instance_Reader::CheckConversionFrom(const TypeInstance& instance) const {
 
 FunctionReturns Value_Reader::CallValueFunction(
     const FunctionId<MemberScope::VALUE>& id, const FunctionArgs& args) {
-  return Internal_Reader.value_functions.Call(id,this,args);
+  return Internal_Reader().value_functions.Call(id,this,args);
 }
 
 T<S<TypeValue>> Value_Reader::Call_read(const T<>& args) const {
   const T<S<TypeValue>> results = interface_->Call_Reader_read();
   return T_get(
-    TypeValue::ConvertTo(std::get<0>(results),parent_.param_x));
+    TypeValue::ConvertTo(std::get<0>(results),parent_.Type_read_r0));
 }
 
 S<TypeValue> Value_Reader::ConvertTo(TypeInstance& instance) {
   // TODO: Generalize this better.
-  if (&instance.CategoryType() == &Category_Reader) {
-    const TypeArgs& args = instance.TypeArgsForCategory(Category_Reader);
+  if (&instance.CategoryType() == &Category_Reader()) {
+    const TypeArgs& args = instance.TypeArgsForCategory(Category_Reader());
     FAIL_IF(args.size() != 1) << "Wrong number of type args";
     return AsReader(interface_,*SafeGet<0>(args));
   }
@@ -145,3 +134,15 @@ S<TypeValue> Value_Reader::ConvertTo(TypeInstance& instance) {
 }
 
 }  // namespace
+
+
+ParamInstance<1>::Type& Category_Reader() {
+  return Internal_Reader();
+}
+
+const FunctionId<MemberScope::VALUE>& Function_Reader_read =
+    *new FunctionId<MemberScope::VALUE>("Reader.read");
+
+S<TypeValue> AsReader(const S<Interface_Reader>& value, TypeInstance& instance) {
+  return S_get(new Value_Reader(Internal_Reader().BuildInternal(instance),value));
+}

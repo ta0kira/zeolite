@@ -5,7 +5,7 @@
 #include "constructor.h"
 #include "core.h"
 
-extern ParamInstance<0>::Type& Category_Bool;
+ParamInstance<0>::Type& Category_Bool();
 
 S<TypeValue> AsBool(bool);
 

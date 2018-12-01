@@ -18,7 +18,7 @@ struct Interface_Reader {
   virtual ~Interface_Reader() = default;
 };
 
-extern ParamInstance<1>::Type& Category_Reader;
+ParamInstance<1>::Type& Category_Reader();
 
 extern const FunctionId<MemberScope::VALUE>& Function_Reader_read;
 

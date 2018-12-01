@@ -25,7 +25,10 @@ class Constructor_Writer : public ParamInstance<1>::Type {
   InstanceCache<Instance_Writer> instance_cache_;
 };
 
-Constructor_Writer& Internal_Writer = *new Constructor_Writer;
+Constructor_Writer& Internal_Writer() {
+  static Constructor_Writer*const constructor = new Constructor_Writer;
+  return *constructor;
+}
 
 
 class Instance_Writer : public TypeInstance {
@@ -33,10 +36,10 @@ class Instance_Writer : public TypeInstance {
   Instance_Writer(TypeInstance& arg_x)
       : param_x(arg_x),
         Type_write_a0(arg_x),
-        name_(ConstructInstanceName(Category_Writer,arg_x)) {}
+        name_(ConstructInstanceName(Category_Writer(),arg_x)) {}
 
   const std::string& InstanceName() const final { return name_; }
-  const TypeCategory& CategoryType() const final { return Category_Writer; }
+  const TypeCategory& CategoryType() const final { return Category_Writer(); }
   const TypeArgs& TypeArgsForCategory(const TypeCategory& category) const final;
 
   TypeInstance& param_x;
@@ -73,20 +76,6 @@ class Value_Writer : public TypeValue {
   const S<Interface_Writer> interface_;
 };
 
-}  // namespace
-
-
-ParamInstance<1>::Type& Category_Writer = Internal_Writer;
-
-const FunctionId<MemberScope::VALUE>& Function_Writer_write =
-    *new FunctionId<MemberScope::VALUE>("Writer.write");
-
-S<TypeValue> AsWriter(const S<Interface_Writer>& value, TypeInstance& instance) {
-  return S_get(new Value_Writer(Internal_Writer.BuildInternal(instance),value));
-}
-
-
-namespace {
 
 Constructor_Writer::Constructor_Writer()
     : value_functions(value_functions_),
@@ -109,14 +98,14 @@ Instance_Writer& Constructor_Writer::BuildInternal(TypeInstance& arg_x) {
 
 const TypeArgs& Instance_Writer::TypeArgsForCategory(const TypeCategory& category) const {
   // TODO: Generalize this better.
-  if (&category == &Category_Writer) {
+  if (&category == &Category_Writer()) {
     return args_self_;
   }
   return TypeInstance::TypeArgsForCategory(category);
 }
 
 bool Instance_Writer::CheckConversionFrom(const TypeInstance& instance) const {
-  const TypeArgs& args = instance.TypeArgsForCategory(Category_Writer);
+  const TypeArgs& args = instance.TypeArgsForCategory(Category_Writer());
   FAIL_IF(args.size() != 1) << "Wrong number of type args";
   return CheckConversionBetween(param_x,*SafeGet<0>(args));  // contravariant
 }
@@ -124,7 +113,7 @@ bool Instance_Writer::CheckConversionFrom(const TypeInstance& instance) const {
 
 FunctionReturns Value_Writer::CallValueFunction(
     const FunctionId<MemberScope::VALUE>& id, const FunctionArgs& args) {
-  return Internal_Writer.value_functions.Call(id,this,args);
+  return Internal_Writer().value_functions.Call(id,this,args);
 }
 
 T<> Value_Writer::Call_write(const T<S<TypeValue>>& args) const {
@@ -135,8 +124,8 @@ T<> Value_Writer::Call_write(const T<S<TypeValue>>& args) const {
 
 S<TypeValue> Value_Writer::ConvertTo(TypeInstance& instance) {
   // TODO: Generalize this better.
-  if (&instance.CategoryType() == &Category_Writer) {
-    const TypeArgs& args = instance.TypeArgsForCategory(Category_Writer);
+  if (&instance.CategoryType() == &Category_Writer()) {
+    const TypeArgs& args = instance.TypeArgsForCategory(Category_Writer());
     FAIL_IF(args.size() != 1) << "Wrong number of type args";
     return AsWriter(interface_,*SafeGet<0>(args));
   }
@@ -144,3 +133,15 @@ S<TypeValue> Value_Writer::ConvertTo(TypeInstance& instance) {
 }
 
 }  // namespace
+
+
+ParamInstance<1>::Type& Category_Writer() {
+  return Internal_Writer();
+}
+
+const FunctionId<MemberScope::VALUE>& Function_Writer_write =
+    *new FunctionId<MemberScope::VALUE>("Writer.write");
+
+S<TypeValue> AsWriter(const S<Interface_Writer>& value, TypeInstance& instance) {
+  return S_get(new Value_Writer(Internal_Writer().BuildInternal(instance),value));
+}
