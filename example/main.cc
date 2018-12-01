@@ -15,8 +15,9 @@ for (i = 0:5) {
   queue.write(value);
 }
 
+Reader<Value> reader = queue;
 while (true) {
-  Value value = queue.read();
+  Value value = reader.read();
   if (present(value)) {
     value.print();
   } else {
@@ -40,9 +41,12 @@ int main() {
     queue->CallValueFunction(Function_Writer_write,FunctionArgs{value});
   }
 
+  S<TypeValue> reader =
+      TypeValue::ConvertTo(queue,Category_Reader.Build(Category_Value.Build()));
+
   while (true) {
     S<TypeValue> value =
-        SafeGet<0>(queue->CallValueFunction(Function_Reader_read,FunctionArgs{}));
+        SafeGet<0>(reader->CallValueFunction(Function_Reader_read,FunctionArgs{}));
     if (SafeGet<0>(value->CallValueFunction(Function_Optional_present,FunctionArgs{}))->GetBool()) {
       SafeGet<0>(value
           ->CallValueFunction(Function_Optional_require,FunctionArgs{}))

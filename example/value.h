@@ -23,6 +23,7 @@ struct Interface_Value {
 };
 
 extern ParamInstance<0>::Type& Category_Value;
+
 extern const FunctionId<MemberScope::INSTANCE>& Function_Value_create;
 extern const FunctionId<MemberScope::VALUE>& Function_Value_print;
 

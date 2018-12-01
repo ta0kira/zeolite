@@ -96,7 +96,7 @@ bool TypeValue::GetBool() const {
 }
 
 S<TypeValue> TypeValue::ConvertTo(const S<TypeValue>& self,
-                                  const TypeInstance& instance) {
+                                  TypeInstance& instance) {
   if (&instance == &self->InstanceType()) {
     return self;
   } else {
@@ -105,17 +105,17 @@ S<TypeValue> TypeValue::ConvertTo(const S<TypeValue>& self,
 }
 
 S<TypeValue> TypeValue::ReduceTo(const S<TypeValue>& self,
-                                 const  TypeInstance& instance) {
+                                 TypeInstance& instance) {
   if (&instance == &self->InstanceType()) {
-    return AsOptional(instance,self);
+    return AsOptional(self,instance);
   } else if (TypeInstance::CheckConversionBetween(self->InstanceType(),instance)) {
-    return AsOptional(instance,ConvertTo(self,instance));
+    return AsOptional(ConvertTo(self,instance),instance);
   } else {
     return SkipOptional(instance);
   }
 }
 
-S<TypeValue> TypeValue::ConvertTo(const TypeInstance& instance) {
+S<TypeValue> TypeValue::ConvertTo(TypeInstance& instance) {
   FAIL() << "Cannot convert " << InstanceType().InstanceName()
          << " to type " << instance.InstanceName();
   return nullptr;

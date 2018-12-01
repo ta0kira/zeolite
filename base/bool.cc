@@ -11,6 +11,7 @@ class Constructor_Bool
   TypeInstance& Build() final { return *this; }
   const std::string& CategoryName() const final { return name_; }
   const std::string& InstanceName() const final { return name_; }
+  const TypeCategory& CategoryType() const final { return Category_Bool; }
 
  private:
   MergeType InstanceMergeType() const final { return MergeType::SINGLE; }

@@ -29,6 +29,7 @@ struct Interface_Queue
 };
 
 extern ParamInstance<1>::Type& Category_Queue;
+
 extern const FunctionId<MemberScope::INSTANCE>& Function_Queue_create;
 
 #endif  // QUEUE_H_

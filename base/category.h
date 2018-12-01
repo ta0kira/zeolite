@@ -13,7 +13,7 @@ class ValueVariable;
 
 using FunctionArgs = std::vector<S<TypeValue>>;
 using FunctionReturns = std::vector<S<TypeValue>>;
-using TypeArgs = std::vector<const TypeInstance*>;
+using TypeArgs = std::vector<TypeInstance*>;
 
 template<int I, class T>
 const T& SafeGet(const std::vector<T>& values) {
@@ -49,6 +49,7 @@ class TypeInstance {
   virtual ~TypeInstance() = default;
 
   virtual const std::string& InstanceName() const = 0;
+  virtual const TypeCategory& CategoryType() const = 0;
   virtual const TypeArgs& TypeArgsForCategory(const TypeCategory&) const;
   virtual FunctionReturns CallInstanceFunction(
       const FunctionId<MemberScope::INSTANCE>&, const FunctionArgs&);
@@ -78,13 +79,13 @@ class TypeValue {
   // TODO: Add accessors for remaining primitive types.
   virtual bool GetBool() const;
 
-  static S<TypeValue> ConvertTo(const S<TypeValue>&, const TypeInstance&);
+  static S<TypeValue> ConvertTo(const S<TypeValue>&, TypeInstance&);
 
-  static S<TypeValue> ReduceTo(const S<TypeValue>&, const TypeInstance&);
+  static S<TypeValue> ReduceTo(const S<TypeValue>&, TypeInstance&);
 
  protected:
   TypeValue() = default;
-  virtual S<TypeValue> ConvertTo(const TypeInstance&);
+  virtual S<TypeValue> ConvertTo(TypeInstance&);
 };
 
 

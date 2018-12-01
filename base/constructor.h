@@ -32,7 +32,7 @@ template<class I>
 class InstanceCache {
  public:
   template<class...Ts>
-  R<I>& Create(const Ts&... ts) {
+  R<I>& Create(Ts&... ts) {
     return cache_[TypeArgs{&ts...}];
   }
 
