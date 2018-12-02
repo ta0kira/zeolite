@@ -82,15 +82,16 @@ class TypeValue {
       const FunctionArgs&);
   virtual ValueVariable& GetValueVariable(const ValueVariableId<MemberScope::VALUE>&);
 
-  // TODO: Add accessors for remaining primitive types.
+  virtual bool IsPresent() const;
   virtual bool GetBool() const;
 
+  static S<TypeValue> Require(const S<TypeValue>&);
   static S<TypeValue> ConvertTo(const S<TypeValue>&, TypeInstance&);
-
   static S<TypeValue> ReduceTo(const S<TypeValue>&, TypeInstance&);
 
  protected:
   TypeValue() = default;
+  virtual S<TypeValue> GetNestedValue();
   virtual S<TypeValue> ConvertTo(TypeInstance&);
 };
 

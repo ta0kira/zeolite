@@ -79,6 +79,7 @@ class Value_Intersect : public TypeValue {
   bool GetBool() const final;
 
  private:
+  S<TypeValue> GetNestedValue() final { return value_; }
   S<TypeValue> ConvertTo(TypeInstance&) final;
 
   TypeInstance& parent_;

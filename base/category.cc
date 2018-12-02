@@ -110,9 +110,24 @@ ValueVariable& TypeValue::GetValueVariable(
   return failed;
 }
 
+bool TypeValue::IsPresent() const {
+  return true;
+}
+
 bool TypeValue::GetBool() const {
   FAIL() << "Cannot convert type-value " << InstanceType().InstanceName() << " to Bool";
   return false;
+}
+
+S<TypeValue> TypeValue::Require(const S<TypeValue>& self) {
+  if (!self->IsPresent()) {
+    FAIL() << self->InstanceType().InstanceName() << " value is not present";
+  }
+  if (&self->InstanceType().CategoryType() == &Category_Optional()) {
+    return self->GetNestedValue();
+  } else {
+    return self;
+  }
 }
 
 S<TypeValue> TypeValue::ConvertTo(const S<TypeValue>& self,
@@ -132,6 +147,11 @@ S<TypeValue> TypeValue::ConvertTo(const S<TypeValue>& self,
         << " -> " << instance.InstanceName();
     return self->ConvertTo(instance);
   }
+}
+
+S<TypeValue> TypeValue::GetNestedValue() {
+  FAIL() << "No nested value in " << InstanceType().InstanceName();
+  return nullptr;
 }
 
 S<TypeValue> TypeValue::ReduceTo(const S<TypeValue>& self,

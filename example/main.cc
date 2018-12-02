@@ -60,10 +60,9 @@ int main() {
     S<TypeValue> value =
         SafeGet<0>(reader->CallValueFunction(Function_Reader_read,TypeArgs{},FunctionArgs{}));
     trace.SetLocal("main:10");
-    if (SafeGet<0>(value->CallValueFunction(Function_Optional_present,TypeArgs{},FunctionArgs{}))->GetBool()) {
+    if (value->IsPresent()) {
       trace.SetLocal("main:11");
-      SafeGet<0>(value
-          ->CallValueFunction(Function_Optional_require,TypeArgs{},FunctionArgs{}))
+      TypeValue::Require(value)
           ->CallValueFunction(Function_Printable_print,TypeArgs{},FunctionArgs{});
     } else {
       trace.SetLocal("main:13");

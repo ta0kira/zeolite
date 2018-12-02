@@ -1,6 +1,5 @@
 #include "optional.h"
 
-#include "bool.h"
 #include "dispatch.h"
 
 namespace {
@@ -12,17 +11,12 @@ class Value_Optional;
 
 class Constructor_Optional : public ParamInstance<1>::Type {
  public:
-  Constructor_Optional();
-
   TypeInstance& Build(TypeInstance& x) final;
   const std::string& CategoryName() const final { return name_; }
   Instance_Optional& BuildInternal(TypeInstance& x);
 
-  const FunctionDispatcher<Value_Optional,MemberScope::VALUE>& value_functions;
-
  private:
   const std::string name_{"Optional"};
-  FunctionDispatcher<Value_Optional,MemberScope::VALUE> value_functions_;
   InstanceCache<Instance_Optional> instance_cache_;
 };
 
@@ -32,18 +26,25 @@ Constructor_Optional& Internal_Optional() {
 }
 
 
+std::string ConstructOptionalName(const TypeInstance& x) {
+  std::ostringstream formatted;
+  formatted << "optional " << x.InstanceName();
+  return formatted.str();
+}
+
+
 class Instance_Optional : public TypeInstance {
  public:
   Instance_Optional(TypeInstance& x)
       : x_(x),
-        name_(ConstructInstanceName(Category_Optional(),x)) {}
+        name_(ConstructOptionalName(x)) {}
 
   const std::string& InstanceName() const final { return name_; }
   const TypeCategory& CategoryType() const final { return Category_Optional(); }
   const TypeArgs& TypeArgsForCategory(const TypeCategory& category) const final;
   bool IsOptional() const final { return true; }
   S<TypeValue> Create(const S<TypeValue>& value);
-  S<TypeValue> Skip_();
+  S<TypeValue> Skip();
 
  private:
   bool CheckConversionFrom(const TypeInstance& type) const final;
@@ -64,29 +65,16 @@ class Value_Optional : public TypeValue {
       : parent_(parent), value_(value) {}
 
   const TypeInstance& InstanceType() const final { return parent_; }
-  FunctionReturns CallValueFunction(
-      const FunctionId<MemberScope::VALUE>& id,
-      const TypeArgs&,
-      const FunctionArgs& args) final;
-
-  T<S<TypeValue>> Call_present(const T<>&, const T<>&) const;
-  T<S<TypeValue>> Call_require(const T<>&, const T<>&) const;
+  bool IsPresent() const final { return !!value_; }
 
  private:
+  S<TypeValue> GetNestedValue() final { return value_; }
   S<TypeValue> ConvertTo(TypeInstance&) final;
 
   TypeInstance& parent_;
   const S<TypeValue> value_;
 };
 
-
-Constructor_Optional::Constructor_Optional()
-    : value_functions(value_functions_),
-      value_functions_("Optional") {
-  value_functions_
-      .AddFunction(Function_Optional_present,&Value_Optional::Call_present)
-      .AddFunction(Function_Optional_require,&Value_Optional::Call_require);
-}
 
 TypeInstance& Constructor_Optional::Build(TypeInstance& x) {
   return BuildInternal(x);
@@ -113,7 +101,7 @@ S<TypeValue> Instance_Optional::Create(const S<TypeValue>& value) {
   return S_get(new Value_Optional(*this,converted));
 }
 
-S<TypeValue> Instance_Optional::Skip_() {
+S<TypeValue> Instance_Optional::Skip() {
   return S_get(new Value_Optional(*this,nullptr));
 }
 
@@ -123,24 +111,6 @@ bool Instance_Optional::CheckConversionFrom(const TypeInstance& instance) const 
   return CheckConversionBetween(*SafeGet<0>(args),x_);  // covariant
 }
 
-
-FunctionReturns Value_Optional::CallValueFunction(
-    const FunctionId<MemberScope::VALUE>& id,
-    const TypeArgs& types,
-    const FunctionArgs& args) {
-  return Internal_Optional().value_functions.Call(id,this,types,args);
-}
-
-T<S<TypeValue>> Value_Optional::Call_present(const T<>&, const T<>&) const {
-  return As_Bool(!!value_);
-}
-
-T<S<TypeValue>> Value_Optional::Call_require(const T<>&, const T<>&) const {
-  if (!value_) {
-    FAIL() << InstanceType().InstanceName() << " value is not present";
-  }
-  return value_;
-}
 
 S<TypeValue> Value_Optional::ConvertTo(TypeInstance& instance) {
   // TODO: Generalize this better.
@@ -159,11 +129,6 @@ ParamInstance<1>::Type& Category_Optional() {
   return Internal_Optional();
 }
 
-const FunctionId<MemberScope::VALUE>& Function_Optional_present =
-    *new FunctionId<MemberScope::VALUE>("Optional.present");
-const FunctionId<MemberScope::VALUE>& Function_Optional_require =
-    *new FunctionId<MemberScope::VALUE>("Optional.require");
-
 S<TypeValue> As_Optional(const S<TypeValue>& value, TypeInstance& type) {
   if (value->InstanceType().IsOptional()) {
     return value;
@@ -173,5 +138,5 @@ S<TypeValue> As_Optional(const S<TypeValue>& value, TypeInstance& type) {
 }
 
 S<TypeValue> Skip_Optional(TypeInstance& type) {
-  return Internal_Optional().BuildInternal(type).Skip_();
+  return Internal_Optional().BuildInternal(type).Skip();
 }
