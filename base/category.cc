@@ -147,28 +147,26 @@ S<TypeValue> TypeValue::Require(const S<TypeValue>& self) {
 
 S<TypeValue> TypeValue::ConvertTo(const S<TypeValue>& self,
                                   TypeInstance& instance) {
-  if (&instance == &self->InstanceType()) {
+  if (&instance.CategoryType() == &self->InstanceType().CategoryType()) {
+    // NOTE: We assume that the compiler has done its job, and that the params
+    // can be converted lazily. We only need a full check when reduce is used.
+    // TODO: Maybe check instances instead of categories for debug builds.
     return self;
   } else if (&instance.CategoryType() == &Category_Union()) {
     return As_Union(self,instance.TypeArgsForCategory(Category_Union()));
   } else if (&instance.CategoryType() == &Category_Intersect()) {
     return As_Intersect(self,instance.TypeArgsForCategory(Category_Intersect()));
   } else {
-    // TODO: We can probably disable this for non-debug builds, since the main
-    // compiler should prevent bad type conversions. Right now this behavior is
-    // the same as require(reduce<t>(value)), but we can optimize it.
-    FAIL_IF(!TypeInstance::CheckConversionBetween(self->InstanceType(),instance))
-        << "Bad conversion: " << self->InstanceType().InstanceName()
-        << " -> " << instance.InstanceName();
     return self->ConvertTo(instance);
   }
 }
 
 S<TypeValue> TypeValue::ReduceTo(const S<TypeValue>& self,
+                                 TypeInstance& nominal,
                                  TypeInstance& instance) {
   if (&instance == &self->InstanceType()) {
     return As_Optional(self,instance);
-  } else if (TypeInstance::CheckConversionBetween(self->InstanceType(),instance)) {
+  } else if (TypeInstance::CheckConversionBetween(nominal,instance)) {
     return As_Optional(ConvertTo(self,instance),instance);
   } else {
     return Skip_Optional(instance);

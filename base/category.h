@@ -124,7 +124,7 @@ class TypeValue {
 
   static S<TypeValue> Require(const S<TypeValue>&);
   static S<TypeValue> ConvertTo(const S<TypeValue>&, TypeInstance&);
-  static S<TypeValue> ReduceTo(const S<TypeValue>&, TypeInstance&);
+  static S<TypeValue> ReduceTo(const S<TypeValue>&, TypeInstance&, TypeInstance&);
 
  protected:
   TypeValue() = default;

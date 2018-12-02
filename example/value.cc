@@ -250,7 +250,7 @@ T<> Concrete_Value::Call_Printable_print() {
   SourceContext trace("Value.print");
   trace.SetLocal("value:8");
   S<TypeValue> string =
-      TypeValue::ReduceTo(value_.GetValue(),Category_String().Build());
+      TypeValue::ReduceTo(value_.GetValue(),x_,Category_String().Build());
   trace.SetLocal("value:9");
   if (string->IsPresent()) {
     trace.SetLocal("value:10");
