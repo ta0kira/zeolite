@@ -75,7 +75,7 @@ class Value_Union : public TypeValue {
       const FunctionId<MemberScope::VALUE>& id,
       const TypeArgs&,
       const FunctionArgs& args) final;
-  ValueVariable& GetValueVariable(const ValueVariableId<MemberScope::VALUE>&) final;
+  ValueVariable* GetValueVariable(const ValueVariableId<MemberScope::VALUE>&) final;
   bool GetBool() const final;
 
  private:
@@ -121,7 +121,7 @@ FunctionReturns Value_Union::CallValueFunction(
   return value_->CallValueFunction(id,types,args);
 }
 
-ValueVariable& Value_Union::GetValueVariable(
+ValueVariable* Value_Union::GetValueVariable(
     const ValueVariableId<MemberScope::VALUE>& id) {
   return value_->GetValueVariable(id);
 }

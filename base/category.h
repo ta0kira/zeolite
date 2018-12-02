@@ -80,7 +80,7 @@ class TypeValue {
       const FunctionId<MemberScope::VALUE>&,
       const TypeArgs&,
       const FunctionArgs&);
-  virtual ValueVariable& GetValueVariable(const ValueVariableId<MemberScope::VALUE>&);
+  virtual ValueVariable* GetValueVariable(const ValueVariableId<MemberScope::VALUE>&);
 
   virtual bool IsPresent() const;
   virtual bool GetBool() const;
@@ -99,8 +99,20 @@ class TypeValue {
 
 class ValueVariable {
  public:
-  ValueVariable() = default;
+  inline ValueVariable(TypeInstance& instance, const S<TypeValue>& value)
+      : instance_(instance), value_(value) {}
+
   ALWAYS_UNIQUE(ValueVariable)
+
+  inline const S<TypeValue>& GetValue() const { return value_; }
+
+  inline void SetValue(const S<TypeValue>& value) {
+    value_ = TypeValue::ConvertTo(value,instance_);
+  }
+
+ private:
+  TypeInstance& instance_;
+  S<TypeValue> value_;
 };
 
 #endif  // CATEGORY_H_

@@ -75,7 +75,7 @@ class Value_Intersect : public TypeValue {
       const FunctionId<MemberScope::VALUE>& id,
       const TypeArgs&,
       const FunctionArgs& args) final;
-  ValueVariable& GetValueVariable(const ValueVariableId<MemberScope::VALUE>&) final;
+  ValueVariable* GetValueVariable(const ValueVariableId<MemberScope::VALUE>&) final;
   bool GetBool() const final;
 
  private:
@@ -121,7 +121,7 @@ FunctionReturns Value_Intersect::CallValueFunction(
   return value_->CallValueFunction(id,types,args);
 }
 
-ValueVariable& Value_Intersect::GetValueVariable(
+ValueVariable* Value_Intersect::GetValueVariable(
     const ValueVariableId<MemberScope::VALUE>& id) {
   return value_->GetValueVariable(id);
 }

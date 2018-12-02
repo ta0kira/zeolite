@@ -54,6 +54,10 @@ class Instance_Value : public TypeInstance {
   // TODO: Use integers to specify arg/return counts.
   T<S<TypeValue>> Call_create(const T<>&, const T<S<TypeValue>>&);
 
+  TypeInstance& Type_Var_value() const {
+    return Category_String().Build();
+  }
+
   TypeInstance& Type_create_a0() const {
     return Category_String().Build();
   }
@@ -100,13 +104,14 @@ class Value_Value : public TypeValue {
 struct Concrete_Value : virtual public Interface_Printable {
  public:
   Concrete_Value(Instance_Value& parent, const S<TypeValue>& value)
-      : parent_(parent), value_(value) {}
+      : parent_(parent),
+        value_(parent.Type_Var_value(),value) {}
+
   T<> Call_Printable_print() final;
 
  private:
   Instance_Value& parent_;
-  // TODO: This should be a ValueVariable.
-  const S<TypeValue> value_;
+  ValueVariable value_;
 };
 
 S<TypeValue> As_Value(const S<Concrete_Value>& value) {
@@ -167,7 +172,7 @@ FunctionReturns Instance_Value::CallInstanceFunction(
 
 T<S<TypeValue>> Instance_Value::Call_create(const T<>& types, const T<S<TypeValue>>& args) {
   SourceContext trace("Value.create");
-  trace.SetLocal("value:2");
+  trace.SetLocal("value:0");
   S<TypeValue> value = TypeValue::ConvertTo(std::get<0>(args),Type_create_a0());
   trace.SetLocal("value:1");
   return
@@ -223,7 +228,8 @@ S<TypeValue> Value_Value::ConvertTo(TypeInstance& instance) {
 T<> Concrete_Value::Call_Printable_print() {
   SourceContext trace("Value.print");
   trace.SetLocal("value:7");
-  std::cout << "A Value has been printed: " << value_->GetString() << std::endl;
+  std::cout << "A Value has been printed: "
+            << value_.GetValue()->GetString() << std::endl;
   return T_get();
 }
 

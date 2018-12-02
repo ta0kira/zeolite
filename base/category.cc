@@ -102,12 +102,11 @@ FunctionReturns TypeValue::CallValueFunction(
   return FunctionReturns();
 }
 
-ValueVariable& TypeValue::GetValueVariable(
+ValueVariable* TypeValue::GetValueVariable(
     const ValueVariableId<MemberScope::VALUE>& id) {
   FAIL() << "Member variable " << id.VariableName()
          << " not supported in type-value " << InstanceType().InstanceName();
-  static ValueVariable failed;
-  return failed;
+  return nullptr;
 }
 
 bool TypeValue::IsPresent() const {
