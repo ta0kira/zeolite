@@ -102,7 +102,7 @@ checkVariances va vs = checkCategory checkAll where
   checkAll n (CategoryRefine gs) = do
     as <- n `categoryLookup` va
     mergeAll $ map (checkSingle as Covariant . SingleType) gs
-  checkSingle as v (SingleType (TypeCategoryInstance t ps)) = do
+  checkSingle as v (SingleType (TypeCategoryInstance t _ ps)) = do
     vs2 <- t `categoryLookup` vs
     checkParamsMatch (\_ _ -> return ()) vs2 ps
     mergeAll $ map (\(v2,p) -> checkSingle as (v `composeVariance` v2) p) (zip (psParams vs2) (psParams ps))
@@ -161,7 +161,7 @@ flattenRefines r fs (CategoryConnect gs) = mfix flattenAll where
     gs2 <- collectAllOrErrorM $ map (flattenSingle ca n) gs
     filters <- n `categoryLookup` fs
     return (n,CategoryRefine (mergeInstances r filters $ join gs2))
-  flattenSingle ca _ ta@(TypeCategoryInstance t ps) = do
+  flattenSingle ca _ ta@(TypeCategoryInstance t _ ps) = do
     params <- (trParams r) t ps
     refines <- t `categoryLookup` ca
     collectAllOrErrorM $ map (substitute params) (crRefines refines)
@@ -176,7 +176,9 @@ checkRefines = checkCategory checkAll where
   checkAll n (CategoryRefine gs) = do
     ts <- collectAllOrErrorM $ map (getTypeName n) gs
     mergeAll $ map (checkGroup n) $ group ts
-  getTypeName _ (TypeCategoryInstance t _) = return t
+  getTypeName _ (TypeCategoryInstance t False _) = return t
+  getTypeName n (TypeCategoryInstance t True _) =
+    compileError $ "Type " ++ show n ++ " cannot refine an optional type"
   getTypeName n (TypeCategoryParam _) =
     compileError $ "Type " ++ show n ++ " cannot refine a param"
   checkGroup n (t:t2:ts) =
@@ -207,9 +209,9 @@ subAllParams find replace = subAll where
     gs <- collectAllOrErrorM $ map subAll ts
     return (mergeAll $ map fst gs,TypeMerge MergeIntersect $ map snd gs)
   subAll (SingleType t) = subInstance t
-  subInstance (TypeCategoryInstance n (ParamSet ts)) = do
+  subInstance (TypeCategoryInstance n o (ParamSet ts)) = do
     gs <- collectAllOrErrorM $ map subAll ts
-    return (mergeAll $ map fst gs,SingleType $ TypeCategoryInstance n $ (ParamSet $ map snd gs))
+    return (mergeAll $ map fst gs,SingleType $ TypeCategoryInstance n o $ (ParamSet $ map snd gs))
   subInstance (TypeCategoryParam t) = subParam t
   subParam pa@(TypeParam _) = do
     t <- replace pa

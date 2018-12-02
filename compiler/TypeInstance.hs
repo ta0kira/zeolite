@@ -53,6 +53,7 @@ type InstanceParams = ParamSet GeneralInstance
 data TypeCategoryInstance =
   TypeCategoryInstance {
     tciName :: TypeName,
+    tciOptional :: Bool,
     tciParams :: InstanceParams
   } |
   TypeCategoryParam {
@@ -92,12 +93,15 @@ checkGeneralMatch r f v ts1 ts2 = checkGeneralType (checkSingleMatch r f v) ts1 
 checkSingleMatch :: (Mergeable (m ()), Mergeable (m p), CompileErrorM m, Monad m) =>
   TypeResolver m p -> ParamFilters -> Variance -> TypeCategoryInstance ->
   TypeCategoryInstance -> m p
-checkSingleMatch r f v (TypeCategoryInstance n1 ps1) (TypeCategoryInstance n2 ps2) =
-  checkInstanceToInstance r f v (n1,ps1) (n2,ps2)
-checkSingleMatch r f v (TypeCategoryParam p1) (TypeCategoryInstance n2 ps2) =
+checkSingleMatch r f v (TypeCategoryInstance n1 o1 ps1) (TypeCategoryInstance n2 o2 ps2)
+  | o1 && not o2 = compileError $ "Cannot convert from optional to non-optional"
+  | otherwise = checkInstanceToInstance r f v (n1,ps1) (n2,ps2)
+checkSingleMatch r f v (TypeCategoryParam p1) (TypeCategoryInstance n2 _ ps2) =
+  -- Can convert to optional if the types are compatible.
   checkParamToInstance r f v p1 (n2,ps2)
-checkSingleMatch r f v (TypeCategoryInstance n1 ps1) (TypeCategoryParam p2) =
-  checkInstanceToParam r f v (n1,ps1) p2
+checkSingleMatch r f v (TypeCategoryInstance n1 o1 ps1) (TypeCategoryParam p2)
+  | o1 = compileError $ "Cannot convert from optional to param " ++ show p2
+  | otherwise = checkInstanceToParam r f v (n1,ps1) p2
 checkSingleMatch r f v (TypeCategoryParam p1) (TypeCategoryParam p2) =
   checkParamToParam r f v p1 p2
 
@@ -140,7 +144,7 @@ checkParamToInstance r f Covariant (TypeParam n1) (n2,ps2) = checked where
     mergeAny $ map (\c -> checkConstraintToInstance c (n2,ps2)) cs1
   checkConstraintToInstance (TypeFilter Covariant t) (n,ps) =
     -- x -> F implies x -> T only if F -> T
-    checkSingleMatch r f Covariant t (TypeCategoryInstance n ps)
+    checkSingleMatch r f Covariant t (TypeCategoryInstance n False ps)
   checkConstraintToInstance (TypeFilter _ t) _ =
     compileError $ "Cannot convert param to instance (" ++ show n1 ++ " -> " ++ show n2 ++ ")"
 
@@ -157,7 +161,7 @@ checkInstanceToParam r f Covariant (n1,ps1) (TypeParam n2) = checked where
     mergeAll $ map (\c -> checkInstanceToConstraint (n1,ps1) c) cs2
   checkInstanceToConstraint (n,ps) (TypeFilter Contravariant t) =
     -- F -> x implies T -> x only if T -> F
-    checkSingleMatch r f Contravariant t (TypeCategoryInstance n ps)
+    checkSingleMatch r f Contravariant t (TypeCategoryInstance n False ps)
   checkInstanceToConstraint _ (TypeFilter _ t) =
     compileError $ "Cannot convert instance to param (" ++ show n1 ++ " -> " ++ show n2 ++ ")"
 
