@@ -7,6 +7,17 @@
 #include <tuple>
 #include <vector>
 
+#define FAIL() LogThenCrash(true)
+
+#define FAIL_IF(p) LogThenCrash(p,#p)
+
+#define ALWAYS_UNIQUE(type) \
+  type(const type&) = delete; \
+  type(type&&) = delete; \
+  type& operator =(const type&) = delete; \
+  type& operator =(type&&) = delete;
+
+
 template<class T>
 using R = std::unique_ptr<T>;
 
@@ -31,6 +42,7 @@ T<Ts...> T_get(Ts... ts) { return std::make_tuple(ts...); }
 class LogThenCrash {
  public:
   LogThenCrash(bool fail, const std::string& condition = "");
+  LogThenCrash(bool fail, int signal);
   ~LogThenCrash();
 
   template<class T>
@@ -43,19 +55,10 @@ class LogThenCrash {
 
  private:
   const bool fail_;
+  const int signal_;
   const std::string condition_;
   std::ostringstream output_;
 };
-
-#define FAIL() LogThenCrash(true)
-
-#define FAIL_IF(p) LogThenCrash(p,#p)
-
-#define ALWAYS_UNIQUE(type) \
-  type(const type&) = delete; \
-  type(type&&) = delete; \
-  type& operator =(const type&) = delete; \
-  type& operator =(type&&) = delete;
 
 
 template<int K, class V, class T>
@@ -102,5 +105,9 @@ std::vector<X> T_to_V(const T<Ts...>& tuple) {
   TupleToArgs<tuple_size,T<Ts...>,std::vector<X>>::Set(tuple, vals);
   return vals;
 }
+
+
+void TraceOnSignal(int signal);
+void SetSignalHandler();
 
 #endif  // CORE_H_

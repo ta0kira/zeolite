@@ -36,7 +36,6 @@ class Instance_Reader : public TypeInstance {
  public:
   Instance_Reader(TypeInstance& arg_x)
       : param_x(arg_x),
-        Type_read_r0(Category_Optional().Build(arg_x)),
         name_(ConstructInstanceName(Category_Reader(),arg_x)) {}
 
   const std::string& InstanceName() const final { return name_; }
@@ -44,7 +43,10 @@ class Instance_Reader : public TypeInstance {
   const TypeArgs& TypeArgsForCategory(const TypeCategory& category) const final;
 
   TypeInstance& param_x;
-  TypeInstance& Type_read_r0;
+
+  TypeInstance& Type_read_r0() const {
+    return Category_Optional().Build(param_x);
+  }
 
  private:
   bool CheckConversionFrom(const TypeInstance& type) const final;
@@ -124,7 +126,7 @@ FunctionReturns Value_Reader::CallValueFunction(
 T<S<TypeValue>> Value_Reader::Call_read(const T<>& types, const T<>& args) const {
   const T<S<TypeValue>> results = interface_->Call_Reader_read();
   return T_get(
-    TypeValue::ConvertTo(std::get<0>(results),parent_.Type_read_r0));
+    TypeValue::ConvertTo(std::get<0>(results),parent_.Type_read_r0()));
 }
 
 S<TypeValue> Value_Reader::ConvertTo(TypeInstance& instance) {

@@ -40,8 +40,7 @@ Constructor_Value& Internal_Value() {
 class Instance_Value : public TypeInstance {
  public:
   Instance_Value()
-      : Type_create_r0(*this),
-        name_(ConstructInstanceName(Category_Value())) {}
+      : name_(ConstructInstanceName(Category_Value())) {}
 
   const std::string& InstanceName() const final { return name_; }
   const TypeCategory& CategoryType() const final { return Category_Value(); }
@@ -53,7 +52,9 @@ class Instance_Value : public TypeInstance {
 
   T<S<TypeValue>> Call_create(const T<>&, const T<>&);
 
-  TypeInstance& Type_create_r0;
+  TypeInstance& Type_create_r0() const {
+    return Category_Value().Build();
+  }
 
  private:
   bool CheckConversionFrom(const TypeInstance& type) const final;
@@ -147,7 +148,7 @@ FunctionReturns Instance_Value::CallInstanceFunction(
 
 T<S<TypeValue>> Instance_Value::Call_create(const T<>& types, const T<>&) {
   return T_get(TypeValue::ConvertTo(S_get(new Value_Value(*this,S_get(new Concrete_Value(*this)))),
-               Type_create_r0));
+               Type_create_r0()));
 }
 
 bool Instance_Value::CheckConversionFrom(const TypeInstance& instance) const {

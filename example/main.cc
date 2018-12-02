@@ -21,7 +21,7 @@
 06:
 07: Reader<Printable> reader = queue;
 08: while (true) {  // <- fake syntax for now
-09:   Value value = reader.read();
+09:   optional Value value = reader.read();
 10:   if (present(value)) {
 11:     require(value).print();
 12:   } else {
@@ -32,6 +32,7 @@
 */
 
 int main() {
+  SetSignalHandler();
   SourceContext trace("Example.execute");
 
   trace.SetLocal("main:0");
