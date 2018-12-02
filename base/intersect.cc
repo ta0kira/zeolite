@@ -152,18 +152,16 @@ TypeInstance& Build_Intersect(const TypeArgs& types) {
 }
 
 S<TypeValue> As_Intersect(const S<TypeValue>& value, const TypeArgs& types) {
+#ifdef OPT_TYPE_CHECKING
+  return value;
+#else
   if (types.size() == 1) {
     return TypeValue::ConvertTo(value,*SafeGet<0>(types));
   }
-
   TypeInstance& intersect_type = Build_Intersect(types);
   FAIL_IF(!TypeInstance::CheckConversionBetween(value->InstanceType(),intersect_type))
       << "Cannot assign type-value " << value->InstanceType().InstanceName()
       << " to " << intersect_type.InstanceName();
-
-#ifdef OPT_TYPE_CHECKING
-  return value;
-#else
   if (&value->InstanceType().CategoryType() == &Category_Intersect() ||
       &value->InstanceType().CategoryType() == &Category_Union()) {
     return S_get(new Value_Intersect(intersect_type,value->GetNestedValue()));

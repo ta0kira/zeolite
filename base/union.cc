@@ -152,18 +152,16 @@ TypeInstance& Build_Union(const TypeArgs& types) {
 }
 
 S<TypeValue> As_Union(const S<TypeValue>& value, const TypeArgs& types) {
+#ifdef OPT_TYPE_CHECKING
+  return value;
+#else
   if (types.size() == 1) {
     return TypeValue::ConvertTo(value,*SafeGet<0>(types));
   }
-
   TypeInstance& union_type = Build_Union(types);
   FAIL_IF(!TypeInstance::CheckConversionBetween(value->InstanceType(),union_type))
       << "Cannot assign type-value " << value->InstanceType().InstanceName()
       << " to " << union_type.InstanceName();
-
-#ifdef OPT_TYPE_CHECKING
-  return value;
-#else
   if (&value->InstanceType().CategoryType() == &Category_Intersect() ||
       &value->InstanceType().CategoryType() == &Category_Union()) {
     return S_get(new Value_Union(union_type,value->GetNestedValue()));

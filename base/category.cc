@@ -148,12 +148,14 @@ S<TypeValue> TypeValue::Require(const S<TypeValue>& self) {
 S<TypeValue> TypeValue::ConvertTo(const S<TypeValue>& self,
                                   TypeInstance& instance) {
 #ifdef OPT_TYPE_CHECKING
-  if (&instance.CategoryType() == &self->InstanceType().CategoryType()) {
-    return self;
+  // Conversions aren't actually necessary, as long as the compiler did its job
+  // ensuring correct type usage. Types really only matter when calling value
+  // functions. The exception is the use of reduce, which actually performs a
+  // full check of the nominal type.
+  return self;
 #else
   if (&instance == &self->InstanceType()) {
     return self;
-#endif
   } else if (&instance.CategoryType() == &Category_Optional()) {
     return As_Optional(self,*SafeGet<0>(instance.TypeArgsForCategory(Category_Optional())));
   } else if (&instance.CategoryType() == &Category_Union()) {
@@ -163,6 +165,7 @@ S<TypeValue> TypeValue::ConvertTo(const S<TypeValue>& self,
   } else {
     return self->ConvertTo(instance);
   }
+#endif
 }
 
 S<TypeValue> TypeValue::ReduceTo(const S<TypeValue>& self,
