@@ -1,0 +1,3 @@
+[submodule "capture-thread"]
+	path = capture-thread
+	url = https://github.com/google/capture-thread
