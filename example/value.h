@@ -13,7 +13,8 @@ concrete Value {
   refines Printable
 
   with instance
-  create takes (String) to (Value)
+  <x>
+  create takes (x) to (Value)
 }
 
 */

@@ -1,5 +1,6 @@
 #include <iostream>
 
+#include "base/bool.h"
 #include "base/core.h"
 #include "base/optional.h"
 #include "base/string.h"
@@ -15,10 +16,10 @@
 
 00: Queue<Value> queue = Queue<Value>.create();
 01:
-02: queue.write(Value.create("one"));
-03: queue.write(Value.create("two"));
-04: queue.write(Value.create("three"));
-05: queue.write(Value.create("four"));
+02: queue.write(Value.create<String>("one"));
+03: queue.write(Value.create<String>("two"));
+04: queue.write(Value.create<String>("three"));
+05: queue.write(Value.create<Bool>(false));
 06:
 07: Reader<Printable> reader = queue;
 08: while (true) {  // <- fake syntax for now
@@ -52,7 +53,7 @@ int main() {
                   .Build()
                   .CallInstanceFunction(
                         Function_Value_create,
-                        TypeArgs{},
+                        TypeArgs{&Category_String().Build()},
                         FunctionArgs{As_String("one")}))});
 
   trace.SetLocal("main:3");
@@ -65,7 +66,7 @@ int main() {
                   .Build()
                   .CallInstanceFunction(
                         Function_Value_create,
-                        TypeArgs{},
+                        TypeArgs{&Category_String().Build()},
                         FunctionArgs{As_String("two")}))});
 
   trace.SetLocal("main:4");
@@ -78,7 +79,7 @@ int main() {
                   .Build()
                   .CallInstanceFunction(
                         Function_Value_create,
-                        TypeArgs{},
+                        TypeArgs{&Category_String().Build()},
                         FunctionArgs{As_String("three")}))});
 
   trace.SetLocal("main:5");
@@ -91,8 +92,8 @@ int main() {
                   .Build()
                   .CallInstanceFunction(
                         Function_Value_create,
-                        TypeArgs{},
-                        FunctionArgs{As_String("four")}))});
+                        TypeArgs{&Category_Bool().Build()},
+                        FunctionArgs{As_Bool(false)}))});
 
   trace.SetLocal("main:7");
   S<TypeValue> reader =
