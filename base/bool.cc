@@ -46,6 +46,6 @@ const S<TypeValue>& FALSE = *new S<TypeValue>(S_get(new Value_Bool(false)));
 
 ParamInstance<0>::Type& Category_Bool() { return Internal_Bool(); }
 
-S<TypeValue> AsBool(bool value) {
+S<TypeValue> As_Bool(bool value) {
   return value? TRUE : FALSE;
 }

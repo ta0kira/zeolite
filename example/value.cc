@@ -61,6 +61,7 @@ class Instance_Value : public TypeInstance {
   const std::string name_;
   const TypeArgs types_{this};
   const TypeArgs args_self_{};
+  const TypeArgs args_printable_{};
 };
 
 
@@ -85,16 +86,16 @@ class Value_Value : public TypeValue {
 };
 
 
-struct Concrete_Value {
+struct Concrete_Value : virtual public Interface_Printable {
  public:
   Concrete_Value(Instance_Value& parent) : parent_(parent) {}
-  T<> Call_Value_print();
+  T<> Call_Printable_print() final;
 
  private:
   Instance_Value& parent_;
 };
 
-S<TypeValue> AsValue(const S<Concrete_Value>& value) {
+S<TypeValue> As_Value(const S<Concrete_Value>& value) {
   return S_get(new Value_Value(Internal_Value().BuildInternal(),value));
 }
 
@@ -107,7 +108,7 @@ Constructor_Value::Constructor_Value()
   instance_functions_
       .AddFunction(Function_Value_create,&Instance_Value::Call_create);
   value_functions_
-      .AddFunction(Function_Value_print,&Value_Value::Call_print);
+      .AddFunction(Function_Printable_print,&Value_Value::Call_print);
 }
 
 TypeInstance& Constructor_Value::Build() {
@@ -126,6 +127,9 @@ const TypeArgs& Instance_Value::TypeArgsForCategory(const TypeCategory& category
   // TODO: Generalize this better.
   if (&category == &Category_Value()) {
     return args_self_;
+  }
+  if (&category == &Category_Printable()) {
+    return args_printable_;
   }
   return TypeInstance::TypeArgsForCategory(category);
 }
@@ -153,7 +157,7 @@ FunctionReturns Value_Value::CallValueFunction(
 }
 
 T<> Value_Value::Call_print(const T<>& args) const {
-  const T<> results = interface_->Call_Value_print();
+  const T<> results = interface_->Call_Printable_print();
   return T_get();
 }
 
@@ -162,13 +166,16 @@ S<TypeValue> Value_Value::ConvertTo(TypeInstance& instance) {
   if (&instance.CategoryType() == &Category_Value()) {
     const TypeArgs& args = instance.TypeArgsForCategory(Category_Value());
     FAIL_IF(args.size() != 0) << "Wrong number of type args";
-    return AsValue(interface_);
+    return As_Value(interface_);
+  }
+  if (&instance.CategoryType() == &Category_Printable()) {
+    return As_Printable(interface_);
   }
   return TypeValue::ConvertTo(instance);
 }
 
 
-T<> Concrete_Value::Call_Value_print() {
+T<> Concrete_Value::Call_Printable_print() {
   std::cout << "A Value has been printed" << std::endl;
   return T_get();
 }

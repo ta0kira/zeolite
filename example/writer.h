@@ -22,6 +22,6 @@ ParamInstance<1>::Type& Category_Writer();
 
 extern const FunctionId<MemberScope::VALUE>& Function_Writer_write;
 
-S<TypeValue> AsWriter(const S<Interface_Writer>&, TypeInstance&);
+S<TypeValue> As_Writer(const S<Interface_Writer>&, TypeInstance&);
 
 #endif  // WRITER_H_

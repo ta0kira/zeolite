@@ -127,7 +127,7 @@ S<TypeValue> Value_Writer::ConvertTo(TypeInstance& instance) {
   if (&instance.CategoryType() == &Category_Writer()) {
     const TypeArgs& args = instance.TypeArgsForCategory(Category_Writer());
     FAIL_IF(args.size() != 1) << "Wrong number of type args";
-    return AsWriter(interface_,*SafeGet<0>(args));
+    return As_Writer(interface_,*SafeGet<0>(args));
   }
   return TypeValue::ConvertTo(instance);
 }
@@ -142,6 +142,6 @@ ParamInstance<1>::Type& Category_Writer() {
 const FunctionId<MemberScope::VALUE>& Function_Writer_write =
     *new FunctionId<MemberScope::VALUE>("Writer.write");
 
-S<TypeValue> AsWriter(const S<Interface_Writer>& value, TypeInstance& instance) {
+S<TypeValue> As_Writer(const S<Interface_Writer>& value, TypeInstance& instance) {
   return S_get(new Value_Writer(Internal_Writer().BuildInternal(instance),value));
 }

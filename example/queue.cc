@@ -107,7 +107,7 @@ struct Concrete_Queue
   std::queue<S<TypeValue>> queue_;
 };
 
-S<TypeValue> AsQueue(const S<Concrete_Queue>& value, TypeInstance& instance) {
+S<TypeValue> As_Queue(const S<Concrete_Queue>& value, TypeInstance& instance) {
   return S_get(new Value_Queue(Internal_Queue().BuildInternal(instance),value));
 }
 
@@ -189,13 +189,13 @@ S<TypeValue> Value_Queue::ConvertTo(TypeInstance& instance) {
   if (&instance.CategoryType() == &Category_Queue()) {
     const TypeArgs& args = instance.TypeArgsForCategory(Category_Queue());
     FAIL_IF(args.size() != 1) << "Wrong number of type args";
-    return AsQueue(interface_,*SafeGet<0>(args));
+    return As_Queue(interface_,*SafeGet<0>(args));
   }
   if (&instance.CategoryType() == &Category_Reader()) {
-    return AsReader(interface_,parent_.param_x);
+    return As_Reader(interface_,parent_.param_x);
   }
   if (&instance.CategoryType() == &Category_Writer()) {
-    return AsWriter(interface_,parent_.param_x);
+    return As_Writer(interface_,parent_.param_x);
   }
   return TypeValue::ConvertTo(instance);
 }
@@ -203,9 +203,9 @@ S<TypeValue> Value_Queue::ConvertTo(TypeInstance& instance) {
 
 T<S<TypeValue>> Concrete_Queue::Call_Reader_read() {
   if (queue_.empty()) {
-    return T_get(SkipOptional(parent_.param_x));
+    return T_get(Skip_Optional(parent_.param_x));
   } else {
-    const S<TypeValue> result = AsOptional(queue_.front(),parent_.param_x);
+    const S<TypeValue> result = As_Optional(queue_.front(),parent_.param_x);
     queue_.pop();
     return T_get(result);
   }

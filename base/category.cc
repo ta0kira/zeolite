@@ -107,11 +107,11 @@ S<TypeValue> TypeValue::ConvertTo(const S<TypeValue>& self,
 S<TypeValue> TypeValue::ReduceTo(const S<TypeValue>& self,
                                  TypeInstance& instance) {
   if (&instance == &self->InstanceType()) {
-    return AsOptional(self,instance);
+    return As_Optional(self,instance);
   } else if (TypeInstance::CheckConversionBetween(self->InstanceType(),instance)) {
-    return AsOptional(ConvertTo(self,instance),instance);
+    return As_Optional(ConvertTo(self,instance),instance);
   } else {
-    return SkipOptional(instance);
+    return Skip_Optional(instance);
   }
 }
 

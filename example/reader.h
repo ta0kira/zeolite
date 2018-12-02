@@ -22,6 +22,6 @@ ParamInstance<1>::Type& Category_Reader();
 
 extern const FunctionId<MemberScope::VALUE>& Function_Reader_read;
 
-S<TypeValue> AsReader(const S<Interface_Reader>&, TypeInstance&);
+S<TypeValue> As_Reader(const S<Interface_Reader>&, TypeInstance&);
 
 #endif  // READER_H_

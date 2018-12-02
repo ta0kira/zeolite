@@ -128,7 +128,7 @@ S<TypeValue> Value_Reader::ConvertTo(TypeInstance& instance) {
   if (&instance.CategoryType() == &Category_Reader()) {
     const TypeArgs& args = instance.TypeArgsForCategory(Category_Reader());
     FAIL_IF(args.size() != 1) << "Wrong number of type args";
-    return AsReader(interface_,*SafeGet<0>(args));
+    return As_Reader(interface_,*SafeGet<0>(args));
   }
   return TypeValue::ConvertTo(instance);
 }
@@ -143,6 +143,6 @@ ParamInstance<1>::Type& Category_Reader() {
 const FunctionId<MemberScope::VALUE>& Function_Reader_read =
     *new FunctionId<MemberScope::VALUE>("Reader.read");
 
-S<TypeValue> AsReader(const S<Interface_Reader>& value, TypeInstance& instance) {
+S<TypeValue> As_Reader(const S<Interface_Reader>& value, TypeInstance& instance) {
   return S_get(new Value_Reader(Internal_Reader().BuildInternal(instance),value));
 }

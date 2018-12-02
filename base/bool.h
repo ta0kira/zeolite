@@ -7,6 +7,6 @@
 
 ParamInstance<0>::Type& Category_Bool();
 
-S<TypeValue> AsBool(bool);
+S<TypeValue> As_Bool(bool);
 
 #endif  // BOOL_H_

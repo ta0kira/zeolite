@@ -4,6 +4,7 @@
 #include "base/optional.h"
 
 #include "queue.h"
+#include "printable.h"
 #include "reader.h"
 #include "writer.h"
 #include "value.h"
@@ -12,18 +13,18 @@
 
 Queue<Value> queue = Queue<Value>.create();
 
-for (i = 0:5) {
+for (i = 0:5) {  // <- fake syntax for now
   Value value = Value.create();
   queue.write(value);
 }
 
-Reader<Value> reader = queue;
-while (true) {
+Reader<Printable> reader = queue;
+while (true) {  // <- fake syntax for now
   Value value = reader.read();
   if (present(value)) {
-    value.print();
+    require(value).print();
   } else {
-    break;
+    break;  // <- fake syntax for now
   }
 }
 
@@ -44,7 +45,7 @@ int main() {
   }
 
   S<TypeValue> reader =
-      TypeValue::ConvertTo(queue,Category_Reader().Build(Category_Value().Build()));
+      TypeValue::ConvertTo(queue,Category_Reader().Build(Category_Printable().Build()));
 
   while (true) {
     S<TypeValue> value =
@@ -52,7 +53,7 @@ int main() {
     if (SafeGet<0>(value->CallValueFunction(Function_Optional_present,FunctionArgs{}))->GetBool()) {
       SafeGet<0>(value
           ->CallValueFunction(Function_Optional_require,FunctionArgs{}))
-          ->CallValueFunction(Function_Value_print,FunctionArgs{});
+          ->CallValueFunction(Function_Printable_print,FunctionArgs{});
     } else {
       break;
     }

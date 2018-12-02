@@ -43,7 +43,7 @@ class Instance_Optional : public TypeInstance {
   const TypeArgs& TypeArgsForCategory(const TypeCategory& category) const final;
   bool IsOptional() const final { return true; }
   S<TypeValue> Create(const S<TypeValue>& value);
-  S<TypeValue> Skip();
+  S<TypeValue> Skip_();
 
  private:
   bool CheckConversionFrom(const TypeInstance& type) const final;
@@ -111,7 +111,7 @@ S<TypeValue> Instance_Optional::Create(const S<TypeValue>& value) {
   return S_get(new Value_Optional(*this,converted));
 }
 
-S<TypeValue> Instance_Optional::Skip() {
+S<TypeValue> Instance_Optional::Skip_() {
   return S_get(new Value_Optional(*this,nullptr));
 }
 
@@ -128,7 +128,7 @@ FunctionReturns Value_Optional::CallValueFunction(
 }
 
 T<S<TypeValue>> Value_Optional::Call_present(const T<>&) const {
-  return AsBool(!!value_);
+  return As_Bool(!!value_);
 }
 
 T<S<TypeValue>> Value_Optional::Call_require(const T<>&) const {
@@ -143,7 +143,7 @@ S<TypeValue> Value_Optional::ConvertTo(TypeInstance& instance) {
   if (&instance.CategoryType() == &Category_Optional()) {
     const TypeArgs& args = instance.TypeArgsForCategory(Category_Optional());
     FAIL_IF(args.size() != 1) << "Wrong number of type args";
-    return AsOptional(value_,*SafeGet<0>(args));
+    return As_Optional(value_,*SafeGet<0>(args));
   }
   return TypeValue::ConvertTo(instance);
 }
@@ -160,7 +160,7 @@ const FunctionId<MemberScope::VALUE>& Function_Optional_present =
 const FunctionId<MemberScope::VALUE>& Function_Optional_require =
     *new FunctionId<MemberScope::VALUE>("Optional.require");
 
-S<TypeValue> AsOptional(const S<TypeValue>& value, TypeInstance& type) {
+S<TypeValue> As_Optional(const S<TypeValue>& value, TypeInstance& type) {
   if (value->InstanceType().IsOptional()) {
     return value;
   } else {
@@ -168,6 +168,6 @@ S<TypeValue> AsOptional(const S<TypeValue>& value, TypeInstance& type) {
   }
 }
 
-S<TypeValue> SkipOptional(TypeInstance& type) {
-  return Internal_Optional().BuildInternal(type).Skip();
+S<TypeValue> Skip_Optional(TypeInstance& type) {
+  return Internal_Optional().BuildInternal(type).Skip_();
 }
