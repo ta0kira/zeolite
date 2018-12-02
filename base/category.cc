@@ -115,8 +115,15 @@ bool TypeValue::IsPresent() const {
 }
 
 bool TypeValue::GetBool() const {
-  FAIL() << "Cannot convert type-value " << InstanceType().InstanceName() << " to Bool";
+  FAIL() << "Cannot convert type-value " << InstanceType().InstanceName()
+         << " to primitive bool";
   return false;
+}
+
+std::string TypeValue::GetString() const {
+  FAIL() << "Cannot convert type-value " << InstanceType().InstanceName()
+         << " to primitive string";
+  return "";
 }
 
 S<TypeValue> TypeValue::Require(const S<TypeValue>& self) {

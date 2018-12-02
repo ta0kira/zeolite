@@ -84,6 +84,7 @@ class TypeValue {
 
   virtual bool IsPresent() const;
   virtual bool GetBool() const;
+  virtual std::string GetString() const;
 
   static S<TypeValue> Require(const S<TypeValue>&);
   static S<TypeValue> ConvertTo(const S<TypeValue>&, TypeInstance&);

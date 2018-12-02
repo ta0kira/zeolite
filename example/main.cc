@@ -2,6 +2,7 @@
 
 #include "base/core.h"
 #include "base/optional.h"
+#include "base/string.h"
 #include "base/trace.h"
 
 #include "queue.h"
@@ -14,10 +15,10 @@
 
 00: Queue<Value> queue = Queue<Value>.create();
 01:
-02: for (i = 0:5) {  // <- fake syntax for now
-03:   Value value = Value.create();
-04:   queue.write(value);
-05: }
+02: queue.write(Value.create("one"));
+03: queue.write(Value.create("two"));
+04: queue.write(Value.create("three"));
+05: queue.write(Value.create("four"));
 06:
 07: Reader<Printable> reader = queue;
 08: while (true) {  // <- fake syntax for now
@@ -41,15 +42,57 @@ int main() {
           .Build(Category_Value().Build())
           .CallInstanceFunction(Function_Queue_create,TypeArgs{},FunctionArgs{}));
 
-  for (int i = 0; i < 5; ++i) {
-    trace.SetLocal("main:3");
-    S<TypeValue> value =
-        SafeGet<0>(Category_Value()
-            .Build()
-            .CallInstanceFunction(Function_Value_create,TypeArgs{},FunctionArgs{}));
-    trace.SetLocal("main:4");
-    queue->CallValueFunction(Function_Writer_write,TypeArgs{},FunctionArgs{value});
-  }
+  trace.SetLocal("main:2");
+  queue->CallValueFunction(
+      Function_Writer_write,
+      TypeArgs{},
+      FunctionArgs{
+          SafeGet<0>(
+              Category_Value()
+                  .Build()
+                  .CallInstanceFunction(
+                        Function_Value_create,
+                        TypeArgs{},
+                        FunctionArgs{As_String("one")}))});
+
+  trace.SetLocal("main:3");
+  queue->CallValueFunction(
+      Function_Writer_write,
+      TypeArgs{},
+      FunctionArgs{
+          SafeGet<0>(
+              Category_Value()
+                  .Build()
+                  .CallInstanceFunction(
+                        Function_Value_create,
+                        TypeArgs{},
+                        FunctionArgs{As_String("two")}))});
+
+  trace.SetLocal("main:4");
+  queue->CallValueFunction(
+      Function_Writer_write,
+      TypeArgs{},
+      FunctionArgs{
+          SafeGet<0>(
+              Category_Value()
+                  .Build()
+                  .CallInstanceFunction(
+                        Function_Value_create,
+                        TypeArgs{},
+                        FunctionArgs{As_String("three")}))});
+
+  trace.SetLocal("main:5");
+  queue->CallValueFunction(
+      Function_Writer_write,
+      TypeArgs{},
+      FunctionArgs{
+          SafeGet<0>(
+              Category_Value()
+                  .Build()
+                  .CallInstanceFunction(
+                        Function_Value_create,
+                        TypeArgs{},
+                        FunctionArgs{As_String("four")}))});
 
   trace.SetLocal("main:7");
   S<TypeValue> reader =

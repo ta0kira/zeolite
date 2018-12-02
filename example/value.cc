@@ -3,7 +3,8 @@
 #include <iostream>
 
 #include "base/dispatch.h"
-#include "base/optional.h"
+#include "base/string.h"
+#include "base/trace.h"
 
 namespace {
 
@@ -50,7 +51,12 @@ class Instance_Value : public TypeInstance {
       const TypeArgs&,
       const FunctionArgs&) final;
 
-  T<S<TypeValue>> Call_create(const T<>&, const T<>&);
+  // TODO: Use integers to specify arg/return counts.
+  T<S<TypeValue>> Call_create(const T<>&, const T<S<TypeValue>>&);
+
+  TypeInstance& Type_create_a0() const {
+    return Category_String().Build();
+  }
 
   TypeInstance& Type_create_r0() const {
     return Category_Value().Build();
@@ -93,11 +99,14 @@ class Value_Value : public TypeValue {
 
 struct Concrete_Value : virtual public Interface_Printable {
  public:
-  Concrete_Value(Instance_Value& parent) : parent_(parent) {}
+  Concrete_Value(Instance_Value& parent, const S<TypeValue>& value)
+      : parent_(parent), value_(value) {}
   T<> Call_Printable_print() final;
 
  private:
   Instance_Value& parent_;
+  // TODO: This should be a ValueVariable.
+  const S<TypeValue> value_;
 };
 
 S<TypeValue> As_Value(const S<Concrete_Value>& value) {
@@ -146,9 +155,28 @@ FunctionReturns Instance_Value::CallInstanceFunction(
   return Internal_Value().instance_functions.Call(id,this,types,args);
 }
 
-T<S<TypeValue>> Instance_Value::Call_create(const T<>& types, const T<>&) {
-  return T_get(TypeValue::ConvertTo(S_get(new Value_Value(*this,S_get(new Concrete_Value(*this)))),
-               Type_create_r0()));
+/*
+
+00: create (value) {
+01:   return Value{
+02:     value = value,
+03:   };
+04: }
+
+*/
+
+T<S<TypeValue>> Instance_Value::Call_create(const T<>& types, const T<S<TypeValue>>& args) {
+  SourceContext trace("Value.create");
+  trace.SetLocal("value:2");
+  S<TypeValue> value = TypeValue::ConvertTo(std::get<0>(args),Type_create_a0());
+  trace.SetLocal("value:1");
+  return
+      T_get(
+          TypeValue::ConvertTo(
+              S_get(
+                  new Value_Value(
+                      *this,
+                      S_get(new Concrete_Value(*this,value)))),Type_create_r0()));
 }
 
 bool Instance_Value::CheckConversionFrom(const TypeInstance& instance) const {
@@ -184,8 +212,18 @@ S<TypeValue> Value_Value::ConvertTo(TypeInstance& instance) {
 }
 
 
+/*
+
+06: print () {
+07:   print(value);  // <- fake syntax for now
+08: }
+
+*/
+
 T<> Concrete_Value::Call_Printable_print() {
-  std::cout << "A Value has been printed" << std::endl;
+  SourceContext trace("Value.print");
+  trace.SetLocal("value:7");
+  std::cout << "A Value has been printed: " << value_->GetString() << std::endl;
   return T_get();
 }
 

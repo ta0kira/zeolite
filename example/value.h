@@ -12,9 +12,8 @@
 concrete Value {
   refines Printable
 
-  // TODO: Maybe make this take a String.
   with instance
-  create takes () to (Value)
+  create takes (String) to (Value)
 }
 
 */
