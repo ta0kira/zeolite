@@ -65,7 +65,7 @@ class Value_Printable : public TypeValue {
       const TypeArgs&,
       const FunctionArgs& args) final;
 
-  T<> Call_print(const T<>&, const T<>&) const;
+  ParamReturns<0>::Type Call_print(ParamTypes<0>::Type, ParamArgs<0>::Type) const;
 
  private:
   S<TypeValue> ConvertTo(TypeInstance&) final;
@@ -116,7 +116,8 @@ FunctionReturns Value_Printable::CallValueFunction(
   return Internal_Printable().value_functions.Call(id,this,types,args);
 }
 
-T<> Value_Printable::Call_print(const T<>&, const T<>& args) const {
+ParamReturns<0>::Type Value_Printable::Call_print(
+    ParamTypes<0>::Type, ParamArgs<0>::Type) const {
   const T<> results = interface_->Call_Printable_print();
   return T_get();
 }

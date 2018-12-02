@@ -9,6 +9,9 @@ enum class MemberScope {
   VALUE,
 };
 
+// TODO: Update this to specify type/arg/return counts and add a wrapper around
+// the function callers to enforce those counts. (Should also enforce them when
+// functions are registered with FunctionDispatcher.)
 template<MemberScope>
 class FunctionId {
  public:

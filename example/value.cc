@@ -51,8 +51,7 @@ class Instance_Value : public TypeInstance {
       const TypeArgs&,
       const FunctionArgs&) final;
 
-  // TODO: Use integers to specify arg/return counts.
-  T<S<TypeValue>> Call_create(const T<TypeInstance*>&, const T<S<TypeValue>>&);
+  ParamReturns<1>::Type Call_create(ParamTypes<1>::Type, ParamArgs<1>::Type);
 
   TypeInstance& Type_Var_value(TypeInstance& x) const {
     return x;
@@ -91,7 +90,7 @@ class Value_Value : public TypeValue {
       const TypeArgs&,
       const FunctionArgs& args) final;
 
-  T<> Call_print(const T<>&, const T<>&) const;
+  ParamReturns<0>::Type Call_print(ParamTypes<0>::Type, ParamArgs<0>::Type) const;
 
  private:
   S<TypeValue> ConvertTo(TypeInstance&) final;
@@ -175,8 +174,8 @@ FunctionReturns Instance_Value::CallInstanceFunction(
 
 */
 
-T<S<TypeValue>> Instance_Value::Call_create(
-      const T<TypeInstance*>& types, const T<S<TypeValue>>& args) {
+ParamReturns<1>::Type Instance_Value::Call_create(
+      ParamTypes<1>::Type types, ParamArgs<1>::Type args) {
   SourceContext trace("Value.create");
   trace.SetLocal("value:0");
   S<TypeValue> value = TypeValue::ConvertTo(std::get<0>(args),Type_create_a0(*std::get<0>(types)));
@@ -204,7 +203,8 @@ FunctionReturns Value_Value::CallValueFunction(
   return Internal_Value().value_functions.Call(id,this,types,args);
 }
 
-T<> Value_Value::Call_print(const T<>& types, const T<>& args) const {
+ParamReturns<0>::Type Value_Value::Call_print(
+    ParamTypes<0>::Type types, ParamArgs<0>::Type args) const {
   const T<> results = interface_->Call_Printable_print();
   return T_get();
 }

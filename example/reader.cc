@@ -72,7 +72,7 @@ class Value_Reader : public TypeValue {
       const TypeArgs&,
       const FunctionArgs& args) final;
 
-  T<S<TypeValue>> Call_read(const T<>&, const T<>&) const;
+  ParamReturns<1>::Type Call_read(ParamTypes<0>::Type, ParamArgs<0>::Type) const;
 
  private:
   S<TypeValue> ConvertTo(TypeInstance&) final;
@@ -123,7 +123,8 @@ FunctionReturns Value_Reader::CallValueFunction(
   return Internal_Reader().value_functions.Call(id,this,types,args);
 }
 
-T<S<TypeValue>> Value_Reader::Call_read(const T<>& types, const T<>& args) const {
+ParamReturns<1>::Type Value_Reader::Call_read(
+    ParamTypes<0>::Type types, ParamArgs<0>::Type args) const {
   const T<S<TypeValue>> results = interface_->Call_Reader_read();
   return T_get(
     TypeValue::ConvertTo(std::get<0>(results),parent_.Type_read_r0()));

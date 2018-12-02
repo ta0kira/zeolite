@@ -71,7 +71,7 @@ class Value_Writer : public TypeValue {
       const TypeArgs&,
       const FunctionArgs& args) final;
 
-  T<> Call_write(const T<>&, const T<S<TypeValue>>&) const;
+  ParamReturns<0>::Type Call_write(ParamTypes<0>::Type, ParamArgs<1>::Type) const;
 
  private:
   S<TypeValue> ConvertTo(TypeInstance&) final;
@@ -122,7 +122,8 @@ FunctionReturns Value_Writer::CallValueFunction(
   return Internal_Writer().value_functions.Call(id,this,types,args);
 }
 
-T<> Value_Writer::Call_write(const T<>& types, const T<S<TypeValue>>& args) const {
+ParamReturns<0>::Type Value_Writer::Call_write(
+    ParamTypes<0>::Type types, ParamArgs<1>::Type args) const {
   const T<> results = interface_->Call_Writer_write(
     TypeValue::ConvertTo(std::get<0>(args),parent_.Type_write_a0()));
   return T_get();

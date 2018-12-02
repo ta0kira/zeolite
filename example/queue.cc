@@ -52,7 +52,7 @@ class Instance_Queue : public TypeInstance {
       const TypeArgs&,
       const FunctionArgs&) final;
 
-  T<S<TypeValue>> Call_create(const T<>&, const T<>&);
+  ParamReturns<1>::Type Call_create(ParamTypes<0>::Type, ParamArgs<0>::Type);
 
   TypeInstance& param_x;
 
@@ -94,8 +94,8 @@ class Value_Queue : public TypeValue {
       const TypeArgs&,
       const FunctionArgs& args) final;
 
-  T<S<TypeValue>> Call_read(const T<>&, const T<>&) const;
-  T<> Call_write(const T<>&, const T<S<TypeValue>>&) const;
+  ParamReturns<1>::Type Call_read(ParamTypes<0>::Type, ParamArgs<0>::Type) const;
+  ParamReturns<0>::Type Call_write(ParamTypes<0>::Type, ParamArgs<1>::Type) const;
 
  private:
   S<TypeValue> ConvertTo(TypeInstance&) final;
@@ -168,7 +168,8 @@ FunctionReturns Instance_Queue::CallInstanceFunction(
   return Internal_Queue().instance_functions.Call(id,this,types,args);
 }
 
-T<S<TypeValue>> Instance_Queue::Call_create(const T<>& types, const T<>&) {
+ParamReturns<1>::Type Instance_Queue::Call_create(
+    ParamTypes<0>::Type types, ParamArgs<0>::Type) {
   return T_get(TypeValue::ConvertTo(S_get(new Value_Queue(*this,S_get(new Concrete_Queue(*this)))),
                Type_create_r0()));
 }
@@ -187,13 +188,15 @@ FunctionReturns Value_Queue::CallValueFunction(
   return Internal_Queue().value_functions.Call(id,this,types,args);
 }
 
-T<S<TypeValue>> Value_Queue::Call_read(const T<>& types, const T<>& args) const {
+ParamReturns<1>::Type Value_Queue::Call_read(
+    ParamTypes<0>::Type types, ParamArgs<0>::Type) const {
   const T<S<TypeValue>> results = interface_->Call_Reader_read();
   return T_get(
     TypeValue::ConvertTo(std::get<0>(results),parent_.Type_read_r0()));
 }
 
-T<> Value_Queue::Call_write(const T<>& types, const T<S<TypeValue>>& args) const {
+ParamReturns<0>::Type Value_Queue::Call_write(
+    ParamTypes<0>::Type types, ParamArgs<1>::Type args) const {
   const T<> results = interface_->Call_Writer_write(
     TypeValue::ConvertTo(std::get<0>(args),parent_.Type_write_a0()));
   return T_get();
