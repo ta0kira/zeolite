@@ -147,11 +147,13 @@ S<TypeValue> TypeValue::Require(const S<TypeValue>& self) {
 
 S<TypeValue> TypeValue::ConvertTo(const S<TypeValue>& self,
                                   TypeInstance& instance) {
+#ifdef OPT_TYPE_CHECKING
   if (&instance.CategoryType() == &self->InstanceType().CategoryType()) {
-    // NOTE: We assume that the compiler has done its job, and that the params
-    // can be converted lazily. We only need a full check when reduce is used.
-    // TODO: Maybe check instances instead of categories for debug builds.
     return self;
+#else
+  if (&instance == &self->InstanceType()) {
+    return self;
+#endif
   } else if (&instance.CategoryType() == &Category_Optional()) {
     return As_Optional(self,*SafeGet<0>(instance.TypeArgsForCategory(Category_Optional())));
   } else if (&instance.CategoryType() == &Category_Union()) {

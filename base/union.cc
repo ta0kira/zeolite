@@ -161,10 +161,14 @@ S<TypeValue> As_Union(const S<TypeValue>& value, const TypeArgs& types) {
       << "Cannot assign type-value " << value->InstanceType().InstanceName()
       << " to " << union_type.InstanceName();
 
+#ifdef OPT_TYPE_CHECKING
+  return value;
+#else
   if (&value->InstanceType().CategoryType() == &Category_Intersect() ||
       &value->InstanceType().CategoryType() == &Category_Union()) {
     return S_get(new Value_Union(union_type,value->GetNestedValue()));
   } else {
     return S_get(new Value_Union(union_type,value));
   }
+#endif
 }
