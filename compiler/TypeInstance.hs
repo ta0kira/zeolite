@@ -141,10 +141,13 @@ checkParamToInstance r f Contravariant p1 (n2,ps2) =
 checkParamToInstance r f Covariant (TypeParam n1) (n2,ps2) = checked where
   checked = do
     cs1 <- f `filterLookup` n1
-    mergeAny $ map (\c -> checkConstraintToInstance c (n2,ps2)) cs1
+    mergeAll $ map (\c -> checkConstraintToInstance c (n2,ps2)) cs1
   checkConstraintToInstance (TypeFilter Covariant t) (n,ps) =
     -- x -> F implies x -> T only if F -> T
     checkSingleMatch r f Covariant t (TypeCategoryInstance n False ps)
+  checkConstraintToInstance (TypeFilter Contravariant t) (n,ps) =
+    -- F -> x implies T -> x only if T -> F
+    checkSingleMatch r f Contravariant t (TypeCategoryInstance n False ps)
   checkConstraintToInstance (TypeFilter _ t) _ =
     compileError $ "Cannot convert param to instance (" ++ show n1 ++ " -> " ++ show n2 ++ ")"
 
@@ -158,9 +161,12 @@ checkInstanceToParam r f Contravariant (n1,ps1) p2 =
 checkInstanceToParam r f Covariant (n1,ps1) (TypeParam n2) = checked where
   checked = do
     cs2 <- f `filterLookup` n2
-    mergeAll $ map (\c -> checkInstanceToConstraint (n1,ps1) c) cs2
-  checkInstanceToConstraint (n,ps) (TypeFilter Contravariant t) =
+    mergeAny $ map (\c -> checkInstanceToConstraint (n1,ps1) c) cs2
+  checkInstanceToConstraint (n,ps) (TypeFilter Covariant t) =
     -- F -> x implies T -> x only if T -> F
+    checkSingleMatch r f Covariant t (TypeCategoryInstance n False ps)
+  checkInstanceToConstraint (n,ps) (TypeFilter Contravariant t) =
+    -- x -> F implies x -> T only if F -> T
     checkSingleMatch r f Contravariant t (TypeCategoryInstance n False ps)
   checkInstanceToConstraint _ (TypeFilter _ t) =
     compileError $ "Cannot convert instance to param (" ++ show n1 ++ " -> " ++ show n2 ++ ")"
@@ -185,7 +191,7 @@ checkParamToParam r f Covariant (TypeParam n1) (TypeParam n2) = checked where
     | otherwise = do
       cs1 <- f `filterLookup` n1
       cs2 <- f `filterLookup` n2
-      mergeAny $ map (\c1 -> mergeAll $ map (\c2 -> checkConstraintToConstraint c1 c2) cs2) cs1
+      mergeAll $ map (\c1 -> mergeAny $ map (\c2 -> checkConstraintToConstraint c1 c2) cs2) cs1
   checkConstraintToConstraint (TypeFilter Covariant t1) (TypeFilter Covariant t2) =
     -- x -> F1 implies x -> F2 only if F1 -> F2
     checkSingleMatch r f Covariant t1 t2
@@ -193,4 +199,6 @@ checkParamToParam r f Covariant (TypeParam n1) (TypeParam n2) = checked where
     -- F1 -> x implies F2 -> x only if F2 -> F1
     checkSingleMatch r f Contravariant t1 t2
   checkConstraintToConstraint (TypeFilter _ _) (TypeFilter _ _) =
+    -- F1 -> x cannot imply x -> F2
+    -- x -> F1 cannot imply F2 -> x
     compileError $ "Cannot convert param to param (" ++ show n1 ++ " -> " ++ show n2 ++ ")"
