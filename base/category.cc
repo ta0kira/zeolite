@@ -152,6 +152,8 @@ S<TypeValue> TypeValue::ConvertTo(const S<TypeValue>& self,
     // can be converted lazily. We only need a full check when reduce is used.
     // TODO: Maybe check instances instead of categories for debug builds.
     return self;
+  } else if (&instance.CategoryType() == &Category_Optional()) {
+    return As_Optional(self,*SafeGet<0>(instance.TypeArgsForCategory(Category_Optional())));
   } else if (&instance.CategoryType() == &Category_Union()) {
     return As_Union(self,instance.TypeArgsForCategory(Category_Union()));
   } else if (&instance.CategoryType() == &Category_Intersect()) {
