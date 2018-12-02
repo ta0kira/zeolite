@@ -147,6 +147,10 @@ TypeCategory& Category_Union() {
   return Internal_Union();
 }
 
+TypeInstance& Union_All() {
+  return Build_Union(TypeArgs{});
+}
+
 TypeInstance& Build_Union(const TypeArgs& types) {
   return Internal_Union().BuildInternal(types);
 }

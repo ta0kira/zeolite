@@ -171,12 +171,12 @@ S<TypeValue> TypeValue::ConvertTo(const S<TypeValue>& self,
 S<TypeValue> TypeValue::ReduceTo(const S<TypeValue>& self,
                                  TypeInstance& nominal,
                                  TypeInstance& instance) {
-  if (&instance == &self->InstanceType()) {
+  if (&nominal == &instance) {
     return As_Optional(self,instance);
   } else if (TypeInstance::CheckConversionBetween(nominal,instance)) {
     return As_Optional(ConvertTo(self,instance),instance);
   } else {
-    return Skip_Optional(instance);
+    return TypeValue::ConvertTo(Optional_Skip(),Category_Optional().Build(instance));
   }
 }
 

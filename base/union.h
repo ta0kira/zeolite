@@ -6,6 +6,7 @@
 
 TypeCategory& Category_Union();
 
+TypeInstance& Union_All();
 TypeInstance& Build_Union(const TypeArgs&);
 S<TypeValue> As_Union(const S<TypeValue>&, const TypeArgs&);
 

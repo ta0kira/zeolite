@@ -1,6 +1,7 @@
 #include "optional.h"
 
 #include "dispatch.h"
+#include "intersect.h"
 
 namespace {
 
@@ -132,11 +133,14 @@ S<TypeValue> Value_Optional::ConvertTo(TypeInstance& instance) {
     if (value_) {
       return As_Optional(value_,*SafeGet<0>(args));
     } else {
-      return Skip_Optional(*SafeGet<0>(args));
+      return Internal_Optional().BuildInternal(*SafeGet<0>(args)).Skip();
     }
   }
   return TypeValue::ConvertTo(instance);
 }
+
+const S<TypeValue>& OPTIONAL_ANY =
+    *new S<TypeValue>(Internal_Optional().BuildInternal(Intersect_Any()).Skip());
 
 }  // namespace
 
@@ -145,20 +149,20 @@ ParamInstance<1>::Type& Category_Optional() {
   return Internal_Optional();
 }
 
+S<TypeValue> Optional_Skip() {
+  return OPTIONAL_ANY;
+}
+
 S<TypeValue> As_Optional(const S<TypeValue>& value, TypeInstance& type) {
   // NOTE: Assumes that value is not nullptr. The caller needs to explicitly use
-  // Skip_Optional if appropriate.
+  // Optional_Skip if appropriate.
   if (value->InstanceType().IsOptional()) {
     if (value->GetNestedValue()) {
       return Internal_Optional().BuildInternal(type).Create(value->GetNestedValue());
     } else {
-      return Internal_Optional().BuildInternal(type).Skip();
+    return Internal_Optional().BuildInternal(type).Skip();
     }
   } else {
     return Internal_Optional().BuildInternal(type).Create(value);
   }
-}
-
-S<TypeValue> Skip_Optional(TypeInstance& type) {
-  return Internal_Optional().BuildInternal(type).Skip();
 }

@@ -147,6 +147,10 @@ TypeCategory& Category_Intersect() {
   return Internal_Intersect();
 }
 
+TypeInstance& Intersect_Any() {
+  return Build_Intersect(TypeArgs{});
+}
+
 TypeInstance& Build_Intersect(const TypeArgs& types) {
   return Internal_Intersect().BuildInternal(types);
 }

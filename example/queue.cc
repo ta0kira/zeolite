@@ -247,7 +247,7 @@ T<S<TypeValue>> Concrete_Queue::Call_Reader_read() {
   trace.SetLocal("queue:1");
   if (queue_.empty()) {
     trace.SetLocal("queue:2");
-    return T_get(Skip_Optional(parent_.param_x));
+    return T_get(TypeValue::ConvertTo(Optional_Skip(),parent_.Type_read_r0()));
   } else {
     trace.SetLocal("queue:4");
     const S<TypeValue> result = As_Optional(queue_.front(),parent_.param_x);

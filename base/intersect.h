@@ -6,6 +6,7 @@
 
 TypeCategory& Category_Intersect();
 
+TypeInstance& Intersect_Any();
 TypeInstance& Build_Intersect(const TypeArgs&);
 S<TypeValue> As_Intersect(const S<TypeValue>&, const TypeArgs&);
 

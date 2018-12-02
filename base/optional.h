@@ -7,7 +7,7 @@
 
 ParamInstance<1>::Type& Category_Optional();
 
+S<TypeValue> Optional_Skip();
 S<TypeValue> As_Optional(const S<TypeValue>&, TypeInstance&);
-S<TypeValue> Skip_Optional(TypeInstance&);
 
 #endif  // OPTIONAL_H_
