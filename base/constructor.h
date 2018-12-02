@@ -33,7 +33,10 @@ class InstanceCache {
  public:
   template<class...Ts>
   R<I>& Create(Ts&... ts) {
-    const auto key = TypeArgs{&ts...};
+    return Create(TypeArgs{&ts...});
+  }
+
+  R<I>& Create(const TypeArgs& key) {
     const auto cached = cache_.find(key);
     if (cached != cache_.end()) {
       FAIL_IF(!cached->second) << "Cycle while creating type instance";

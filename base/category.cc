@@ -1,6 +1,8 @@
 #include "category.h"
 
+#include "intersect.h"
 #include "optional.h"
+#include "union.h"
 
 FunctionReturns TypeCategory::CallCategoryFunction(
     const FunctionId<MemberScope::CATEGORY>& id,
@@ -33,13 +35,25 @@ bool TypeInstance::IsOptional() const {
 }
 
 bool TypeInstance::CheckConversionBetween(
-    const TypeInstance& from, const TypeInstance& to) {
-  bool can_convert = from.InstanceMergeType() != MergeType::INTERSECT;
-  for (const TypeInstance* left : from.MergedInstanceTypes()) {
-    bool can_convert_to = to.InstanceMergeType() != MergeType::UNION;
-    for (const TypeInstance* right : to.MergedInstanceTypes()) {
-      bool can_convert_single = right->CheckConversionFrom(*left);
-      switch (to.InstanceMergeType()) {
+    const TypeInstance& x, const TypeInstance& y) {
+  bool can_convert = x.InstanceMergeType() != MergeType::INTERSECT;
+  for (const TypeInstance* left : x.MergedInstanceTypes()) {
+    bool can_convert_to = y.InstanceMergeType() != MergeType::UNION;
+    for (const TypeInstance* right : y.MergedInstanceTypes()) {
+      bool can_convert_single = false;
+      switch (left->InstanceMergeType()) {
+        case MergeType::SINGLE:
+          can_convert_single = right->CheckConversionFrom(*left);
+          break;
+        case MergeType::UNION:
+        case MergeType::INTERSECT:
+          // Union/Intersect are implemented to not provide type params when
+          // calling TypeArgsForCategory, which prevents CheckConversionFrom
+          // from being useful when passing *left.
+          can_convert_single = CheckConversionBetween(*left,*right);
+          break;
+      }
+      switch (y.InstanceMergeType()) {
         case MergeType::SINGLE:
           can_convert_to = can_convert_single;
           break;
@@ -50,12 +64,12 @@ bool TypeInstance::CheckConversionBetween(
           can_convert_to &= can_convert_single;
           break;
       }
-      if ((from.InstanceMergeType() == MergeType::UNION     && can_convert_to) ||
-          (from.InstanceMergeType() == MergeType::INTERSECT && !can_convert_to)) {
+      if ((x.InstanceMergeType() == MergeType::UNION     && can_convert_to) ||
+          (x.InstanceMergeType() == MergeType::INTERSECT && !can_convert_to)) {
         break;
       }
     }
-    switch (from.InstanceMergeType()) {
+    switch (x.InstanceMergeType()) {
       case MergeType::SINGLE:
         can_convert = can_convert_to;
         break;
@@ -66,8 +80,8 @@ bool TypeInstance::CheckConversionBetween(
         can_convert |= can_convert_to;
         break;
     }
-    if ((from.InstanceMergeType() == MergeType::UNION     && !can_convert) ||
-        (from.InstanceMergeType() == MergeType::INTERSECT && can_convert)) {
+    if ((x.InstanceMergeType() == MergeType::UNION     && !can_convert) ||
+        (x.InstanceMergeType() == MergeType::INTERSECT && can_convert)) {
       break;
     }
   }
@@ -105,6 +119,10 @@ S<TypeValue> TypeValue::ConvertTo(const S<TypeValue>& self,
                                   TypeInstance& instance) {
   if (&instance == &self->InstanceType()) {
     return self;
+  } else if (&instance.CategoryType() == &Category_Union()) {
+    return As_Union(self,instance.TypeArgsForCategory(Category_Union()));
+  } else if (&instance.CategoryType() == &Category_Intersect()) {
+    return As_Intersect(self,instance.TypeArgsForCategory(Category_Intersect()));
   } else {
     // TODO: We can probably disable this for non-debug builds, since the main
     // compiler should prevent bad type conversions. Right now this behavior is
