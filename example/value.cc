@@ -41,7 +41,11 @@ Constructor_Value& Internal_Value() {
 class Instance_Value : public TypeInstance {
  public:
   Instance_Value()
-      : name_(ConstructInstanceName(Category_Value())) {}
+      : name_(ConstructInstanceName(Category_Value())) {
+    parents_
+        .AddParent(Category_Value())
+        .AddParent(Category_Printable());
+  }
 
   const std::string& InstanceName() const final { return name_; }
   const TypeCategory& CategoryType() const final { return Category_Value(); }
@@ -73,8 +77,7 @@ class Instance_Value : public TypeInstance {
 
   const std::string name_;
   const TypeArgs types_{this};
-  const TypeArgs args_self_{};
-  const TypeArgs args_printable_{};
+  ParentTypes parents_;
 };
 
 
@@ -147,20 +150,15 @@ Instance_Value& Constructor_Value::BuildInternal() {
 }
 
 bool Instance_Value::IsParentCategory(const TypeCategory& category) const {
-  // TODO: Generalize this better.
-  if (&category == &Category_Printable()) {
+  if (parents_.HasParent(category)) {
     return true;
   }
   return TypeInstance::IsParentCategory(category);
 }
 
 const TypeArgs& Instance_Value::TypeArgsForCategory(const TypeCategory& category) const {
-  // TODO: Generalize this better.
-  if (&category == &Category_Value()) {
-    return args_self_;
-  }
-  if (&category == &Category_Printable()) {
-    return args_printable_;
+  if (parents_.HasParent(category)) {
+    return parents_.GetParent(category);
   }
   return TypeInstance::TypeArgsForCategory(category);
 }
@@ -229,7 +227,7 @@ S<TypeValue> Value_Value::ConvertTo(TypeInstance& instance) {
     return As_Value(interface_);
   }
   if (&instance.CategoryType() == &Category_Printable()) {
-    return As_Printable(interface_);
+    return TypeValue::ConvertTo(As_Printable(interface_),instance);
   }
   return TypeValue::ConvertTo(instance);
 }

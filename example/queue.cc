@@ -42,7 +42,12 @@ class Instance_Queue : public TypeInstance {
  public:
   Instance_Queue(TypeInstance& arg_x)
       : param_x(arg_x),
-        name_(ConstructInstanceName(Category_Queue(),arg_x)) {}
+        name_(ConstructInstanceName(Category_Queue(),arg_x)) {
+    parents_
+        .AddParent(Category_Queue(),param_x)
+        .AddParent(Category_Writer(),param_x)
+        .AddParent(Category_Reader(),param_x);
+  }
 
   const std::string& InstanceName() const final { return name_; }
   const TypeCategory& CategoryType() const final { return Category_Queue(); }
@@ -76,9 +81,7 @@ class Instance_Queue : public TypeInstance {
 
   const std::string name_;
   const TypeArgs types_{this};
-  const TypeArgs args_self_{&param_x};
-  const TypeArgs args_reader_{&param_x};
-  const TypeArgs args_writer_{&param_x};
+  ParentTypes parents_;
 };
 
 
@@ -149,26 +152,15 @@ Instance_Queue& Constructor_Queue::BuildInternal(TypeInstance& arg_x) {
 }
 
 bool Instance_Queue::IsParentCategory(const TypeCategory& category) const {
-  // TODO: Generalize this better.
-  if (&category == &Category_Reader()) {
-    return true;
-  }
-  if (&category == &Category_Writer()) {
+  if (parents_.HasParent(category)) {
     return true;
   }
   return TypeInstance::IsParentCategory(category);
 }
 
 const TypeArgs& Instance_Queue::TypeArgsForCategory(const TypeCategory& category) const {
-  // TODO: Generalize this better.
-  if (&category == &Category_Queue()) {
-    return args_self_;
-  }
-  if (&category == &Category_Reader()) {
-    return args_reader_;
-  }
-  if (&category == &Category_Writer()) {
-    return args_writer_;
+  if (parents_.HasParent(category)) {
+    return parents_.GetParent(category);
   }
   return TypeInstance::TypeArgsForCategory(category);
 }
@@ -225,10 +217,10 @@ S<TypeValue> Value_Queue::ConvertTo(TypeInstance& instance) {
     return As_Queue(interface_,*SafeGet<0>(args));
   }
   if (&instance.CategoryType() == &Category_Reader()) {
-    return As_Reader(interface_,parent_.param_x);
+    return TypeValue::ConvertTo(As_Reader(interface_,parent_.param_x),instance);
   }
   if (&instance.CategoryType() == &Category_Writer()) {
-    return As_Writer(interface_,parent_.param_x);
+    return TypeValue::ConvertTo(As_Writer(interface_,parent_.param_x),instance);
   }
   return TypeValue::ConvertTo(instance);
 }

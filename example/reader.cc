@@ -36,10 +36,13 @@ class Instance_Reader : public TypeInstance {
  public:
   Instance_Reader(TypeInstance& arg_x)
       : param_x(arg_x),
-        name_(ConstructInstanceName(Category_Reader(),arg_x)) {}
+        name_(ConstructInstanceName(Category_Reader(),arg_x)) {
+    parents_.AddParent(Category_Reader(),param_x);
+  }
 
   const std::string& InstanceName() const final { return name_; }
   const TypeCategory& CategoryType() const final { return Category_Reader(); }
+  bool IsParentCategory(const TypeCategory&) const final;
   const TypeArgs& TypeArgsForCategory(const TypeCategory& category) const final;
 
   TypeInstance& param_x;
@@ -55,7 +58,7 @@ class Instance_Reader : public TypeInstance {
 
   const std::string name_;
   const TypeArgs types_{this};
-  const TypeArgs args_self_{&param_x};
+  ParentTypes parents_;
 };
 
 
@@ -101,10 +104,16 @@ Instance_Reader& Constructor_Reader::BuildInternal(TypeInstance& arg_x) {
   return *instance;
 }
 
+bool Instance_Reader::IsParentCategory(const TypeCategory& category) const {
+  if (parents_.HasParent(category)) {
+    return true;
+  }
+  return TypeInstance::IsParentCategory(category);
+}
+
 const TypeArgs& Instance_Reader::TypeArgsForCategory(const TypeCategory& category) const {
-  // TODO: Generalize this better.
-  if (&category == &Category_Reader()) {
-    return args_self_;
+  if (parents_.HasParent(category)) {
+    return parents_.GetParent(category);
   }
   return TypeInstance::TypeArgsForCategory(category);
 }

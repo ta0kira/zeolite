@@ -153,5 +153,6 @@ S<TypeValue> As_Union(const S<TypeValue>& value, const TypeArgs& types) {
   FAIL_IF(!TypeInstance::CheckConversionBetween(value->InstanceType(),union_type))
       << "Cannot assign type-value " << value->InstanceType().InstanceName()
       << " to " << union_type.InstanceName();
+  // TODO: This should probably use value->GetNestedValue() if it has one.
   return S_get(new Value_Union(union_type,value));
 }

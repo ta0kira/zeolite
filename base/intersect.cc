@@ -153,5 +153,6 @@ S<TypeValue> As_Intersect(const S<TypeValue>& value, const TypeArgs& types) {
   FAIL_IF(!TypeInstance::CheckConversionBetween(value->InstanceType(),intersect_type))
       << "Cannot assign type-value " << value->InstanceType().InstanceName()
       << " to " << intersect_type.InstanceName();
+  // TODO: This should probably use value->GetNestedValue() if it has one.
   return S_get(new Value_Intersect(intersect_type,value));
 }

@@ -37,7 +37,9 @@ class Instance_Optional : public TypeInstance {
  public:
   Instance_Optional(TypeInstance& x)
       : x_(x),
-        name_(ConstructOptionalName(x)) {}
+        name_(ConstructOptionalName(x)) {
+    parents_.AddParent(Category_Optional(),x_);
+  }
 
   const std::string& InstanceName() const final { return name_; }
   const TypeCategory& CategoryType() const final { return Category_Optional(); }
@@ -53,8 +55,8 @@ class Instance_Optional : public TypeInstance {
 
   TypeInstance& x_;
   const std::string name_;
+  ParentTypes parents_;
   const TypeArgs types_{this};
-  const TypeArgs args_self_{&x_};
 };
 
 
@@ -89,8 +91,8 @@ Instance_Optional& Constructor_Optional::BuildInternal(TypeInstance& x) {
 }
 
 const TypeArgs& Instance_Optional::TypeArgsForCategory(const TypeCategory& category) const {
-  if (&category == &Category_Optional()) {
-    return args_self_;
+  if (parents_.HasParent(category)) {
+    return parents_.GetParent(category);
   }
   // Can implicitly convert from y to optional x if y -> x.
   return x_.TypeArgsForCategory(category);
@@ -120,7 +122,11 @@ S<TypeValue> Value_Optional::ConvertTo(TypeInstance& instance) {
   if (&instance.CategoryType() == &Category_Optional()) {
     const TypeArgs& args = instance.TypeArgsForCategory(Category_Optional());
     FAIL_IF(args.size() != 1) << "Wrong number of type args";
-    return As_Optional(value_,*SafeGet<0>(args));
+    if (value_) {
+      return As_Optional(value_,*SafeGet<0>(args));
+    } else {
+      return Skip_Optional(*SafeGet<0>(args));
+    }
   }
   return TypeValue::ConvertTo(instance);
 }

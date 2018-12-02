@@ -35,7 +35,9 @@ Constructor_Printable& Internal_Printable() {
 class Instance_Printable : public TypeInstance {
  public:
   Instance_Printable()
-      : name_(ConstructInstanceName(Category_Printable())) {}
+      : name_(ConstructInstanceName(Category_Printable())) {
+    parents_.AddParent(Category_Printable());
+  }
 
   const std::string& InstanceName() const final { return name_; }
   const TypeCategory& CategoryType() const final { return Category_Printable(); }
@@ -48,7 +50,7 @@ class Instance_Printable : public TypeInstance {
 
   const std::string name_;
   const TypeArgs types_{this};
-  const TypeArgs args_self_{};
+  ParentTypes parents_;
 };
 
 
@@ -95,9 +97,8 @@ Instance_Printable& Constructor_Printable::BuildInternal() {
 }
 
 const TypeArgs& Instance_Printable::TypeArgsForCategory(const TypeCategory& category) const {
-  // TODO: Generalize this better.
-  if (&category == &Category_Printable()) {
-    return args_self_;
+  if (parents_.HasParent(category)) {
+    return parents_.GetParent(category);
   }
   return TypeInstance::TypeArgsForCategory(category);
 }

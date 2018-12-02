@@ -35,10 +35,13 @@ class Instance_Writer : public TypeInstance {
  public:
   Instance_Writer(TypeInstance& arg_x)
       : param_x(arg_x),
-        name_(ConstructInstanceName(Category_Writer(),arg_x)) {}
+        name_(ConstructInstanceName(Category_Writer(),arg_x)) {
+    parents_.AddParent(Category_Writer(),param_x);
+  }
 
   const std::string& InstanceName() const final { return name_; }
   const TypeCategory& CategoryType() const final { return Category_Writer(); }
+  bool IsParentCategory(const TypeCategory&) const final;
   const TypeArgs& TypeArgsForCategory(const TypeCategory& category) const final;
 
   TypeInstance& param_x;
@@ -54,7 +57,7 @@ class Instance_Writer : public TypeInstance {
 
   const std::string name_;
   const TypeArgs types_{this};
-  const TypeArgs args_self_{&param_x};
+  ParentTypes parents_;
 };
 
 
@@ -100,10 +103,16 @@ Instance_Writer& Constructor_Writer::BuildInternal(TypeInstance& arg_x) {
   return *instance;
 }
 
+bool Instance_Writer::IsParentCategory(const TypeCategory& category) const {
+  if (parents_.HasParent(category)) {
+    return true;
+  }
+  return TypeInstance::IsParentCategory(category);
+}
+
 const TypeArgs& Instance_Writer::TypeArgsForCategory(const TypeCategory& category) const {
-  // TODO: Generalize this better.
-  if (&category == &Category_Writer()) {
-    return args_self_;
+  if (parents_.HasParent(category)) {
+    return parents_.GetParent(category);
   }
   return TypeInstance::TypeArgsForCategory(category);
 }

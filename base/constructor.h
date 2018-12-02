@@ -51,6 +51,31 @@ class InstanceCache {
 };
 
 
+class ParentTypes {
+ public:
+  template<class...Ts>
+  ParentTypes& AddParent(const TypeCategory& parent, Ts&... ts) {
+    return AddParent(parent,TypeArgs{&ts...});
+  }
+
+  inline ParentTypes& AddParent(const TypeCategory& parent, const TypeArgs& types) {
+    parents_[&parent] = types;
+    return *this;
+  }
+
+  inline bool HasParent(const TypeCategory& parent) const {
+    return parents_.find(&parent) != parents_.end();
+  }
+
+  inline const TypeArgs& GetParent(const TypeCategory& parent) const {
+    return parents_.find(&parent)->second;
+  }
+
+ private:
+  std::map<const TypeCategory*,TypeArgs> parents_;
+};
+
+
 template<class...Ts>
 std::string ConstructInstanceName(const TypeCategory& category, const Ts&... types) {
   const std::vector<const TypeInstance*> args{&types...};
