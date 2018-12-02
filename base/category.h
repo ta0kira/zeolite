@@ -86,6 +86,7 @@ class TypeInstance {
 
   virtual const std::string& InstanceName() const = 0;
   virtual const TypeCategory& CategoryType() const = 0;
+  virtual bool IsParentCategory(const TypeCategory&) const;
   virtual const TypeArgs& TypeArgsForCategory(const TypeCategory&) const;
   virtual FunctionReturns CallInstanceFunction(
       const FunctionId<MemberScope::INSTANCE>&,

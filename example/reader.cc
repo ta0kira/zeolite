@@ -110,6 +110,9 @@ const TypeArgs& Instance_Reader::TypeArgsForCategory(const TypeCategory& categor
 }
 
 bool Instance_Reader::CheckConversionFrom(const TypeInstance& instance) const {
+  if (!instance.IsParentCategory(Category_Reader())) {
+    return false;
+  }
   const TypeArgs& args = instance.TypeArgsForCategory(Category_Reader());
   FAIL_IF(args.size() != 1) << "Wrong number of type args";
   return CheckConversionBetween(*SafeGet<0>(args),param_x);  // covariant

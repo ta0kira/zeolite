@@ -103,6 +103,9 @@ const TypeArgs& Instance_Printable::TypeArgsForCategory(const TypeCategory& cate
 }
 
 bool Instance_Printable::CheckConversionFrom(const TypeInstance& instance) const {
+  if (!instance.IsParentCategory(Category_Printable())) {
+    return false;
+  }
   const TypeArgs& args = instance.TypeArgsForCategory(Category_Printable());
   FAIL_IF(args.size() != 0) << "Wrong number of type args";
   return true;

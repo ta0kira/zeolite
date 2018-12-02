@@ -45,6 +45,7 @@ class Instance_Value : public TypeInstance {
 
   const std::string& InstanceName() const final { return name_; }
   const TypeCategory& CategoryType() const final { return Category_Value(); }
+  bool IsParentCategory(const TypeCategory&) const final;
   const TypeArgs& TypeArgsForCategory(const TypeCategory& category) const final;
   FunctionReturns CallInstanceFunction(
       const FunctionId<MemberScope::INSTANCE>&,
@@ -145,6 +146,14 @@ Instance_Value& Constructor_Value::BuildInternal() {
   return *instance;
 }
 
+bool Instance_Value::IsParentCategory(const TypeCategory& category) const {
+  // TODO: Generalize this better.
+  if (&category == &Category_Printable()) {
+    return true;
+  }
+  return TypeInstance::IsParentCategory(category);
+}
+
 const TypeArgs& Instance_Value::TypeArgsForCategory(const TypeCategory& category) const {
   // TODO: Generalize this better.
   if (&category == &Category_Value()) {
@@ -190,6 +199,9 @@ ParamReturns<1>::Type Instance_Value::Call_create(
 }
 
 bool Instance_Value::CheckConversionFrom(const TypeInstance& instance) const {
+  if (!instance.IsParentCategory(Category_Value())) {
+    return false;
+  }
   const TypeArgs& args = instance.TypeArgsForCategory(Category_Value());
   FAIL_IF(args.size() != 0) << "Wrong number of type args";
   return true;

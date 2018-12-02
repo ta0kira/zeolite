@@ -109,6 +109,9 @@ const TypeArgs& Instance_Writer::TypeArgsForCategory(const TypeCategory& categor
 }
 
 bool Instance_Writer::CheckConversionFrom(const TypeInstance& instance) const {
+  if (!instance.IsParentCategory(Category_Writer())) {
+    return false;
+  }
   const TypeArgs& args = instance.TypeArgsForCategory(Category_Writer());
   FAIL_IF(args.size() != 1) << "Wrong number of type args";
   return CheckConversionBetween(param_x,*SafeGet<0>(args));  // contravariant

@@ -46,6 +46,7 @@ class Instance_Queue : public TypeInstance {
 
   const std::string& InstanceName() const final { return name_; }
   const TypeCategory& CategoryType() const final { return Category_Queue(); }
+  bool IsParentCategory(const TypeCategory&) const final;
   const TypeArgs& TypeArgsForCategory(const TypeCategory& category) const final;
   FunctionReturns CallInstanceFunction(
       const FunctionId<MemberScope::INSTANCE>&,
@@ -147,6 +148,17 @@ Instance_Queue& Constructor_Queue::BuildInternal(TypeInstance& arg_x) {
   return *instance;
 }
 
+bool Instance_Queue::IsParentCategory(const TypeCategory& category) const {
+  // TODO: Generalize this better.
+  if (&category == &Category_Reader()) {
+    return true;
+  }
+  if (&category == &Category_Writer()) {
+    return true;
+  }
+  return TypeInstance::IsParentCategory(category);
+}
+
 const TypeArgs& Instance_Queue::TypeArgsForCategory(const TypeCategory& category) const {
   // TODO: Generalize this better.
   if (&category == &Category_Queue()) {
@@ -175,6 +187,9 @@ ParamReturns<1>::Type Instance_Queue::Call_create(
 }
 
 bool Instance_Queue::CheckConversionFrom(const TypeInstance& instance) const {
+  if (!instance.IsParentCategory(Category_Queue())) {
+    return false;
+  }
   const TypeArgs& args = instance.TypeArgsForCategory(Category_Queue());
   FAIL_IF(args.size() != 1) << "Wrong number of type args";
   return SafeGet<0>(args) == &param_x;  // invariant

@@ -21,6 +21,10 @@ const TypeArgs& TypeInstance::TypeArgsForCategory(const TypeCategory& category) 
   return failed;
 }
 
+bool TypeInstance::IsParentCategory(const TypeCategory& category) const {
+  return &CategoryType() == &category;
+}
+
 FunctionReturns TypeInstance::CallInstanceFunction(
     const FunctionId<MemberScope::INSTANCE>& id,
     const TypeArgs&,
