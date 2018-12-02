@@ -1,6 +1,15 @@
 {-# LANGUAGE Safe #-}
 
 module TypeCategory (
+  CategoryConcrete,
+  CategoryConnect(..),
+  CategoryFilters,
+  CategoryMain,
+  CategoryParams,
+  CategoryRefines,
+  CategorySystem(..),
+  CategoryVariance,
+  validateCategory,
 ) where
 
 import Control.Monad (join,(>=>))
@@ -25,7 +34,7 @@ newtype CategoryRefine =
 
 type CategoryMain = CategoryConnect (Set.Set TypeName)
 
-type Refinements = CategoryConnect CategoryRefine
+type CategoryRefines = CategoryConnect CategoryRefine
 
 type CategoryVariance = CategoryConnect (ParamSet Variance)
 
@@ -34,6 +43,16 @@ type CategoryParams = CategoryConnect (ParamSet TypeParam)
 type CategoryFilters = CategoryConnect (ParamSet [TypeFilter])
 
 type CategoryConcrete = CategoryConnect Bool
+
+data CategorySystem =
+  CategorySystem {
+    csMain :: CategoryMain,
+    csRefine :: CategoryRefines,
+    csVariance :: CategoryVariance,
+    csParams :: CategoryParams,
+    csFilters :: CategoryFilters,
+    csConcrete :: CategoryConcrete
+  }
 
 categoryLookup :: (CompileErrorM m, Monad m) => TypeName -> CategoryConnect a -> m a
 categoryLookup n (CategoryConnect cs) = resolve $ n `Map.lookup` cs where
@@ -50,21 +69,6 @@ paramLookup ps (TypeParam n) = resolve $ n `Map.lookup` ps where
 checkCategory :: (Mergeable b) => (TypeName -> a -> b) -> CategoryConnect a -> b
 checkCategory f (CategoryConnect cs) = mergeAll $ map (\(k,v) -> f k v) (Map.toList cs)
 
-data CategorySystem =
-  CategorySystem {
-    csMain :: CategoryMain,
-    csRefine :: Refinements,
-    csVariance :: CategoryVariance,
-    csParams :: CategoryParams,
-    csFilters :: CategoryFilters,
-    csConcrete :: CategoryConcrete
-  }
-
-uncheckedZipFilters ::
-  ParamSet TypeParam -> ParamSet [TypeFilter] -> Map.Map ParamName [TypeFilter]
-uncheckedZipFilters (ParamSet pa) (ParamSet fa) =
-  Map.fromList $ zip (map tpName pa) fa
-
 validateCategory :: (MergeableM m, Mergeable p, CompileErrorM m,
                      Monad m, MonadFix m) =>
   TypeResolver m p -> CategorySystem -> m CategorySystem
@@ -72,9 +76,13 @@ validateCategory r cs = do
   -- Basic structural checks.
   checkCycles (csMain cs)
   checkConcrete (csConcrete cs) (csMain cs)
+  -- TODO: Need to check that filters are actually valid type instances. Before
+  -- checking refines w.r.t. filters: just ensure that all categories and params
+  -- are defined. After that: ensure that the filters themselves have valid type
+  -- instances w.r.t. the category of the filter itself.
   -- Refine the structure.
   refine <- flattenRefines r (csParams cs) (csFilters cs) (csRefine cs)
-  checkRefines refine
+  checkRefines r (csParams cs) (csFilters cs) refine
   -- Check finer structural semantics.
   labeledVars <- labelParamVals (csParams cs) (csVariance cs)
   checkVariances labeledVars (csVariance cs) refine
@@ -87,6 +95,11 @@ validateCategory r cs = do
       csFilters = csFilters cs,
       csConcrete = csConcrete cs
     }
+
+uncheckedZipFilters ::
+  ParamSet TypeParam -> ParamSet [TypeFilter] -> Map.Map ParamName [TypeFilter]
+uncheckedZipFilters (ParamSet pa) (ParamSet fa) =
+  Map.fromList $ zip (map tpName pa) fa
 
 labelParamVals :: (MergeableM m, CompileErrorM m, Monad m) =>
   CategoryParams -> CategoryConnect (ParamSet a) ->
@@ -102,7 +115,7 @@ labelParamVals (CategoryConnect pa) va@(CategoryConnect _) = paired where
 
 checkVariances :: (MergeableM m, CompileErrorM m, Monad m) =>
   (CategoryConnect (Map.Map ParamName Variance)) ->
-  CategoryVariance -> Refinements -> m ()
+  CategoryVariance -> CategoryRefines -> m ()
 checkVariances va vs = checkCategory checkAll where
   checkAll n (CategoryRefine gs) = do
     as <- n `categoryLookup` va
@@ -157,7 +170,7 @@ mergeInstances r f gs = merge [] gs where
 
 flattenRefines :: (MergeableM m, Mergeable p, CompileErrorM m,
                    Monad m, MonadFix m) =>
-  TypeResolver m p -> CategoryParams -> CategoryFilters -> Refinements -> m Refinements
+  TypeResolver m p -> CategoryParams -> CategoryFilters -> CategoryRefines -> m CategoryRefines
 flattenRefines r ps fs (CategoryConnect gs) = mfix flattenAll where
   flattenAll ca@(CategoryConnect _) = do
     items <- collectAllOrErrorM $ map (flattenCategory ca) (Map.toList gs)
@@ -166,8 +179,8 @@ flattenRefines r ps fs (CategoryConnect gs) = mfix flattenAll where
     gs2 <- collectAllOrErrorM $ map (flattenSingle ca n) gs
     params <- n `categoryLookup` ps
     filters <- n `categoryLookup` fs
-    subbed <- return $ uncheckedZipFilters params filters
-    return (n,CategoryRefine (mergeInstances r subbed $ join gs2))
+    mapped <- return $ uncheckedZipFilters params filters
+    return (n,CategoryRefine (mergeInstances r mapped $ join gs2))
   flattenSingle ca _ ta@(TypeCategoryInstance t _ ps) = do
     params <- (trParams r) t ps
     refines <- t `categoryLookup` ca
@@ -178,15 +191,18 @@ flattenRefines r ps fs (CategoryConnect gs) = mfix flattenAll where
     ((),SingleType x) <- uncheckedSubAllParams (paramLookup params) (SingleType t)
     return x
 
--- TODO: This needs to check the filters of the refined category. In general,
--- there needs to be a way to validate instances, e.g., a "validate" function in
--- TypeResolver to check args against params for the category.
-checkRefines :: (MergeableM m, CompileErrorM m, Monad m) => Refinements -> m ()
-checkRefines = checkCategory checkAll where
+checkRefines :: (MergeableM m, CompileErrorM m, Monad m) =>
+  TypeResolver m p -> CategoryParams -> CategoryFilters -> CategoryRefines -> m ()
+checkRefines r ps fs = checkCategory checkAll where
   checkAll n (CategoryRefine gs) = do
     ts <- collectAllOrErrorM $ map (getTypeName n) gs
     mergeAll $ map (checkGroup n) $ group ts
-  getTypeName _ (TypeCategoryInstance t False _) = return t
+  getTypeName n ta@(TypeCategoryInstance t False _) = do
+    params <- n `categoryLookup` ps
+    filters <- n `categoryLookup` fs
+    mapped <- return $ uncheckedZipFilters params filters
+    tfValidate r mapped ta
+    return t
   getTypeName n (TypeCategoryInstance t True _) =
     compileError $ "Type " ++ show n ++ " cannot refine an optional type"
   getTypeName n (TypeCategoryParam _) =

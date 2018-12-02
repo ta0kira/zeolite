@@ -67,6 +67,8 @@ type ParamFilters = Map.Map ParamName [TypeFilter]
 
 data TypeResolver m p =
   TypeResolver {
+    -- Validates an instance's param args against required filters.
+    tfValidate :: ParamFilters -> TypeCategoryInstance -> m(),
     -- Convert an instance of one category to an instance of the other.
     trFind :: TypeName -> TypeName -> InstanceParams -> m (p,InstanceParams),
     -- Labels params for an instance using the category's param names.
