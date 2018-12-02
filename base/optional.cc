@@ -83,9 +83,15 @@ TypeInstance& Constructor_Optional::Build(TypeInstance& x) {
 }
 
 Instance_Optional& Constructor_Optional::BuildInternal(TypeInstance& x) {
-  R<Instance_Optional>& instance = instance_cache_.Create(x);
+  TypeInstance* unwrapped = &x;
+  // The compiler should take care of preventing optional optional x, but this
+  // is mostly for redundant checking.
+  while (&unwrapped->CategoryType() == &Category_Optional()) {
+    unwrapped = SafeGet<0>(unwrapped->TypeArgsForCategory(Category_Optional()));
+  }
+  R<Instance_Optional>& instance = instance_cache_.Create(*unwrapped);
   if (!instance) {
-    instance = R_get(new Instance_Optional(x));
+    instance = R_get(new Instance_Optional(*unwrapped));
   }
   return *instance;
 }
@@ -94,8 +100,7 @@ const TypeArgs& Instance_Optional::TypeArgsForCategory(const TypeCategory& categ
   if (parents_.HasParent(category)) {
     return parents_.GetParent(category);
   }
-  // Can implicitly convert from y to optional x if y -> x.
-  return x_.TypeArgsForCategory(category);
+  return TypeInstance::TypeArgsForCategory(category);
 }
 
 S<TypeValue> Instance_Optional::Create(const S<TypeValue>& value) {
@@ -108,6 +113,9 @@ S<TypeValue> Instance_Optional::Skip() {
 }
 
 bool Instance_Optional::CheckConversionFrom(const TypeInstance& instance) const {
+  if (CheckConversionBetween(instance,x_)) {
+    return true;
+  }
   if (!instance.IsParentCategory(Category_Optional())) {
     return false;
   }
@@ -118,7 +126,6 @@ bool Instance_Optional::CheckConversionFrom(const TypeInstance& instance) const 
 
 
 S<TypeValue> Value_Optional::ConvertTo(TypeInstance& instance) {
-  // TODO: Generalize this better.
   if (&instance.CategoryType() == &Category_Optional()) {
     const TypeArgs& args = instance.TypeArgsForCategory(Category_Optional());
     FAIL_IF(args.size() != 1) << "Wrong number of type args";
@@ -139,8 +146,14 @@ ParamInstance<1>::Type& Category_Optional() {
 }
 
 S<TypeValue> As_Optional(const S<TypeValue>& value, TypeInstance& type) {
+  // NOTE: Assumes that value is not nullptr. The caller needs to explicitly use
+  // Skip_Optional if appropriate.
   if (value->InstanceType().IsOptional()) {
-    return value;
+    if (value->GetNestedValue()) {
+      return Internal_Optional().BuildInternal(type).Create(value->GetNestedValue());
+    } else {
+      return Internal_Optional().BuildInternal(type).Skip();
+    }
   } else {
     return Internal_Optional().BuildInternal(type).Create(value);
   }
