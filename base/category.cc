@@ -3,7 +3,9 @@
 #include "optional.h"
 
 FunctionReturns TypeCategory::CallCategoryFunction(
-    const FunctionId<MemberScope::CATEGORY>& id, const FunctionArgs&) {
+    const FunctionId<MemberScope::CATEGORY>& id,
+    const TypeArgs&,
+    const FunctionArgs&) {
   FAIL() << "Function " << id.FunctionName()
           << " not supported in type-category " << CategoryName();
   return FunctionReturns();
@@ -18,7 +20,9 @@ const TypeArgs& TypeInstance::TypeArgsForCategory(const TypeCategory& category) 
 }
 
 FunctionReturns TypeInstance::CallInstanceFunction(
-    const FunctionId<MemberScope::INSTANCE>& id, const FunctionArgs&) {
+    const FunctionId<MemberScope::INSTANCE>& id,
+    const TypeArgs&,
+    const FunctionArgs&) {
   FAIL() << "Function " << id.FunctionName()
          << " not supported in type-instance " << InstanceName();
   return FunctionReturns();
@@ -76,7 +80,9 @@ bool TypeInstance::CheckConversionFrom(const TypeInstance&) const {
 
 
 FunctionReturns TypeValue::CallValueFunction(
-    const FunctionId<MemberScope::VALUE>& id, const FunctionArgs&) {
+    const FunctionId<MemberScope::VALUE>& id,
+    const TypeArgs&,
+    const FunctionArgs&) {
   FAIL() << "Function " << id.FunctionName()
          << " not supported in type-value " << InstanceType().InstanceName();
   return FunctionReturns();

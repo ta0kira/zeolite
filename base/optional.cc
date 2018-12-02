@@ -65,10 +65,12 @@ class Value_Optional : public TypeValue {
 
   const TypeInstance& InstanceType() const final { return parent_; }
   FunctionReturns CallValueFunction(
-      const FunctionId<MemberScope::VALUE>& id, const FunctionArgs& args) final;
+      const FunctionId<MemberScope::VALUE>& id,
+      const TypeArgs&,
+      const FunctionArgs& args) final;
 
-  T<S<TypeValue>> Call_present(const T<>&) const;
-  T<S<TypeValue>> Call_require(const T<>&) const;
+  T<S<TypeValue>> Call_present(const T<>&, const T<>&) const;
+  T<S<TypeValue>> Call_require(const T<>&, const T<>&) const;
 
  private:
   S<TypeValue> ConvertTo(TypeInstance&) final;
@@ -123,15 +125,17 @@ bool Instance_Optional::CheckConversionFrom(const TypeInstance& instance) const 
 
 
 FunctionReturns Value_Optional::CallValueFunction(
-    const FunctionId<MemberScope::VALUE>& id, const FunctionArgs& args) {
-  return Internal_Optional().value_functions.Call(id,this,args);
+    const FunctionId<MemberScope::VALUE>& id,
+    const TypeArgs& types,
+    const FunctionArgs& args) {
+  return Internal_Optional().value_functions.Call(id,this,types,args);
 }
 
-T<S<TypeValue>> Value_Optional::Call_present(const T<>&) const {
+T<S<TypeValue>> Value_Optional::Call_present(const T<>&, const T<>&) const {
   return As_Bool(!!value_);
 }
 
-T<S<TypeValue>> Value_Optional::Call_require(const T<>&) const {
+T<S<TypeValue>> Value_Optional::Call_require(const T<>&, const T<>&) const {
   if (!value_) {
     FAIL() << InstanceType().InstanceName() << " value is not present";
   }

@@ -47,9 +47,11 @@ class Instance_Value : public TypeInstance {
   const TypeCategory& CategoryType() const final { return Category_Value(); }
   const TypeArgs& TypeArgsForCategory(const TypeCategory& category) const final;
   FunctionReturns CallInstanceFunction(
-      const FunctionId<MemberScope::INSTANCE>&, const FunctionArgs&) final;
+      const FunctionId<MemberScope::INSTANCE>&,
+      const TypeArgs&,
+      const FunctionArgs&) final;
 
-  T<S<TypeValue>> Call_create(const T<>&);
+  T<S<TypeValue>> Call_create(const T<>&, const T<>&);
 
   TypeInstance& Type_create_r0;
 
@@ -74,9 +76,11 @@ class Value_Value : public TypeValue {
 
   const TypeInstance& InstanceType() const final { return parent_; }
   FunctionReturns CallValueFunction(
-      const FunctionId<MemberScope::VALUE>& id, const FunctionArgs& args) final;
+      const FunctionId<MemberScope::VALUE>& id,
+      const TypeArgs&,
+      const FunctionArgs& args) final;
 
-  T<> Call_print(const T<>&) const;
+  T<> Call_print(const T<>&, const T<>&) const;
 
  private:
   S<TypeValue> ConvertTo(TypeInstance&) final;
@@ -135,11 +139,13 @@ const TypeArgs& Instance_Value::TypeArgsForCategory(const TypeCategory& category
 }
 
 FunctionReturns Instance_Value::CallInstanceFunction(
-    const FunctionId<MemberScope::INSTANCE>& id, const FunctionArgs& args) {
-  return Internal_Value().instance_functions.Call(id,this,args);
+    const FunctionId<MemberScope::INSTANCE>& id,
+    const TypeArgs& types,
+    const FunctionArgs& args) {
+  return Internal_Value().instance_functions.Call(id,this,types,args);
 }
 
-T<S<TypeValue>> Instance_Value::Call_create(const T<>&) {
+T<S<TypeValue>> Instance_Value::Call_create(const T<>& types, const T<>&) {
   return T_get(TypeValue::ConvertTo(S_get(new Value_Value(*this,S_get(new Concrete_Value(*this)))),
                Type_create_r0));
 }
@@ -152,11 +158,13 @@ bool Instance_Value::CheckConversionFrom(const TypeInstance& instance) const {
 
 
 FunctionReturns Value_Value::CallValueFunction(
-    const FunctionId<MemberScope::VALUE>& id, const FunctionArgs& args) {
-  return Internal_Value().value_functions.Call(id,this,args);
+    const FunctionId<MemberScope::VALUE>& id,
+    const TypeArgs& types,
+    const FunctionArgs& args) {
+  return Internal_Value().value_functions.Call(id,this,types,args);
 }
 
-T<> Value_Value::Call_print(const T<>& args) const {
+T<> Value_Value::Call_print(const T<>& types, const T<>& args) const {
   const T<> results = interface_->Call_Printable_print();
   return T_get();
 }

@@ -66,9 +66,11 @@ class Value_Reader : public TypeValue {
 
   const TypeInstance& InstanceType() const final { return parent_; }
   FunctionReturns CallValueFunction(
-      const FunctionId<MemberScope::VALUE>& id, const FunctionArgs& args) final;
+      const FunctionId<MemberScope::VALUE>& id,
+      const TypeArgs&,
+      const FunctionArgs& args) final;
 
-  T<S<TypeValue>> Call_read(const T<>&) const;
+  T<S<TypeValue>> Call_read(const T<>&, const T<>&) const;
 
  private:
   S<TypeValue> ConvertTo(TypeInstance&) final;
@@ -113,11 +115,13 @@ bool Instance_Reader::CheckConversionFrom(const TypeInstance& instance) const {
 
 
 FunctionReturns Value_Reader::CallValueFunction(
-    const FunctionId<MemberScope::VALUE>& id, const FunctionArgs& args) {
-  return Internal_Reader().value_functions.Call(id,this,args);
+    const FunctionId<MemberScope::VALUE>& id,
+    const TypeArgs& types,
+    const FunctionArgs& args) {
+  return Internal_Reader().value_functions.Call(id,this,types,args);
 }
 
-T<S<TypeValue>> Value_Reader::Call_read(const T<>& args) const {
+T<S<TypeValue>> Value_Reader::Call_read(const T<>& types, const T<>& args) const {
   const T<S<TypeValue>> results = interface_->Call_Reader_read();
   return T_get(
     TypeValue::ConvertTo(std::get<0>(results),parent_.Type_read_r0));

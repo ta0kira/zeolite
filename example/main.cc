@@ -38,16 +38,16 @@ int main() {
   S<TypeValue> queue =
       SafeGet<0>(Category_Queue()
           .Build(Category_Value().Build())
-          .CallInstanceFunction(Function_Queue_create,FunctionArgs{}));
+          .CallInstanceFunction(Function_Queue_create,TypeArgs{},FunctionArgs{}));
 
   for (int i = 0; i < 5; ++i) {
     trace.SetLocal("main:3");
     S<TypeValue> value =
         SafeGet<0>(Category_Value()
             .Build()
-            .CallInstanceFunction(Function_Value_create,FunctionArgs{}));
+            .CallInstanceFunction(Function_Value_create,TypeArgs{},FunctionArgs{}));
     trace.SetLocal("main:4");
-    queue->CallValueFunction(Function_Writer_write,FunctionArgs{value});
+    queue->CallValueFunction(Function_Writer_write,TypeArgs{},FunctionArgs{value});
   }
 
   trace.SetLocal("main:7");
@@ -57,13 +57,13 @@ int main() {
   while (true) {
     trace.SetLocal("main:9");
     S<TypeValue> value =
-        SafeGet<0>(reader->CallValueFunction(Function_Reader_read,FunctionArgs{}));
+        SafeGet<0>(reader->CallValueFunction(Function_Reader_read,TypeArgs{},FunctionArgs{}));
     trace.SetLocal("main:10");
-    if (SafeGet<0>(value->CallValueFunction(Function_Optional_present,FunctionArgs{}))->GetBool()) {
+    if (SafeGet<0>(value->CallValueFunction(Function_Optional_present,TypeArgs{},FunctionArgs{}))->GetBool()) {
       trace.SetLocal("main:11");
       SafeGet<0>(value
-          ->CallValueFunction(Function_Optional_require,FunctionArgs{}))
-          ->CallValueFunction(Function_Printable_print,FunctionArgs{});
+          ->CallValueFunction(Function_Optional_require,TypeArgs{},FunctionArgs{}))
+          ->CallValueFunction(Function_Printable_print,TypeArgs{},FunctionArgs{});
     } else {
       trace.SetLocal("main:13");
       break;

@@ -34,7 +34,9 @@ class TypeCategory {
 
   virtual const std::string& CategoryName() const = 0;
   virtual FunctionReturns CallCategoryFunction(
-      const FunctionId<MemberScope::CATEGORY>&, const FunctionArgs&);
+      const FunctionId<MemberScope::CATEGORY>&,
+      const TypeArgs&,
+      const FunctionArgs&);
 
  protected:
   TypeCategory() = default;
@@ -52,7 +54,9 @@ class TypeInstance {
   virtual const TypeCategory& CategoryType() const = 0;
   virtual const TypeArgs& TypeArgsForCategory(const TypeCategory&) const;
   virtual FunctionReturns CallInstanceFunction(
-      const FunctionId<MemberScope::INSTANCE>&, const FunctionArgs&);
+      const FunctionId<MemberScope::INSTANCE>&,
+      const TypeArgs&,
+      const FunctionArgs&);
   virtual bool IsOptional() const;
 
   static bool CheckConversionBetween(const TypeInstance&, const TypeInstance&);
@@ -73,7 +77,9 @@ class TypeValue {
 
   virtual const TypeInstance& InstanceType() const = 0;
   virtual FunctionReturns CallValueFunction(
-      const FunctionId<MemberScope::VALUE>&, const FunctionArgs&);
+      const FunctionId<MemberScope::VALUE>&,
+      const TypeArgs&,
+      const FunctionArgs&);
   virtual ValueVariable& GetValueVariable(const ValueVariableId<MemberScope::VALUE>&);
 
   // TODO: Add accessors for remaining primitive types.

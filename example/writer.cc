@@ -65,9 +65,11 @@ class Value_Writer : public TypeValue {
 
   const TypeInstance& InstanceType() const final { return parent_; }
   FunctionReturns CallValueFunction(
-      const FunctionId<MemberScope::VALUE>& id, const FunctionArgs& args) final;
+      const FunctionId<MemberScope::VALUE>& id,
+      const TypeArgs&,
+      const FunctionArgs& args) final;
 
-  T<> Call_write(const T<S<TypeValue>>&) const;
+  T<> Call_write(const T<>&, const T<S<TypeValue>>&) const;
 
  private:
   S<TypeValue> ConvertTo(TypeInstance&) final;
@@ -112,11 +114,13 @@ bool Instance_Writer::CheckConversionFrom(const TypeInstance& instance) const {
 
 
 FunctionReturns Value_Writer::CallValueFunction(
-    const FunctionId<MemberScope::VALUE>& id, const FunctionArgs& args) {
-  return Internal_Writer().value_functions.Call(id,this,args);
+    const FunctionId<MemberScope::VALUE>& id,
+    const TypeArgs& types,
+    const FunctionArgs& args) {
+  return Internal_Writer().value_functions.Call(id,this,types,args);
 }
 
-T<> Value_Writer::Call_write(const T<S<TypeValue>>& args) const {
+T<> Value_Writer::Call_write(const T<>& types, const T<S<TypeValue>>& args) const {
   const T<> results = interface_->Call_Writer_write(
     TypeValue::ConvertTo(std::get<0>(args),parent_.Type_write_a0));
   return T_get();

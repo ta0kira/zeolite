@@ -61,9 +61,11 @@ class Value_Printable : public TypeValue {
 
   const TypeInstance& InstanceType() const final { return parent_; }
   FunctionReturns CallValueFunction(
-      const FunctionId<MemberScope::VALUE>& id, const FunctionArgs& args) final;
+      const FunctionId<MemberScope::VALUE>& id,
+      const TypeArgs&,
+      const FunctionArgs& args) final;
 
-  T<> Call_print(const T<>&) const;
+  T<> Call_print(const T<>&, const T<>&) const;
 
  private:
   S<TypeValue> ConvertTo(TypeInstance&) final;
@@ -108,11 +110,13 @@ bool Instance_Printable::CheckConversionFrom(const TypeInstance& instance) const
 
 
 FunctionReturns Value_Printable::CallValueFunction(
-    const FunctionId<MemberScope::VALUE>& id, const FunctionArgs& args) {
-  return Internal_Printable().value_functions.Call(id,this,args);
+    const FunctionId<MemberScope::VALUE>& id,
+    const TypeArgs& types,
+    const FunctionArgs& args) {
+  return Internal_Printable().value_functions.Call(id,this,types,args);
 }
 
-T<> Value_Printable::Call_print(const T<>& args) const {
+T<> Value_Printable::Call_print(const T<>&, const T<>& args) const {
   const T<> results = interface_->Call_Printable_print();
   return T_get();
 }
