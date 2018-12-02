@@ -4,6 +4,7 @@
 
 #include "base/dispatch.h"
 #include "base/optional.h"
+#include "base/trace.h"
 
 namespace {
 
@@ -201,10 +202,30 @@ S<TypeValue> Value_Queue::ConvertTo(TypeInstance& instance) {
 }
 
 
+/*
+
+00: read () {
+01:   if (queue.empty()) {
+02:     return skip;
+03:   } else {
+04:     return queue.pop();
+05:   }
+06: }
+07:
+08: write (value) {
+09:   queue.push(value);
+10: }
+
+*/
+
 T<S<TypeValue>> Concrete_Queue::Call_Reader_read() {
+  SourceContext trace("Queue.read");
+  trace.SetLocal("queue:1");
   if (queue_.empty()) {
+    trace.SetLocal("queue:2");
     return T_get(Skip_Optional(parent_.param_x));
   } else {
+    trace.SetLocal("queue:4");
     const S<TypeValue> result = As_Optional(queue_.front(),parent_.param_x);
     queue_.pop();
     return T_get(result);
@@ -212,6 +233,8 @@ T<S<TypeValue>> Concrete_Queue::Call_Reader_read() {
 }
 
 T<> Concrete_Queue::Call_Writer_write(const S<TypeValue>& value) {
+  SourceContext trace("Queue.write");
+  trace.SetLocal("queue:9");
   queue_.push(value);
   return T_get();
 }
