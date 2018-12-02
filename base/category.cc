@@ -113,6 +113,11 @@ ValueVariable* TypeValue::GetValueVariable(
   return nullptr;
 }
 
+S<TypeValue> TypeValue::GetNestedValue() {
+  FAIL() << "No nested value in " << InstanceType().InstanceName();
+  return nullptr;
+}
+
 bool TypeValue::IsPresent() const {
   return true;
 }
@@ -157,11 +162,6 @@ S<TypeValue> TypeValue::ConvertTo(const S<TypeValue>& self,
         << " -> " << instance.InstanceName();
     return self->ConvertTo(instance);
   }
-}
-
-S<TypeValue> TypeValue::GetNestedValue() {
-  FAIL() << "No nested value in " << InstanceType().InstanceName();
-  return nullptr;
 }
 
 S<TypeValue> TypeValue::ReduceTo(const S<TypeValue>& self,

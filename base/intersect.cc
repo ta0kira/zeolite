@@ -2,6 +2,7 @@
 
 #include "bool.h"
 #include "dispatch.h"
+#include "union.h"
 
 namespace {
 
@@ -76,10 +77,11 @@ class Value_Intersect : public TypeValue {
       const TypeArgs&,
       const FunctionArgs& args) final;
   ValueVariable* GetValueVariable(const ValueVariableId<MemberScope::VALUE>&) final;
+  S<TypeValue> GetNestedValue() final { return value_; }
   bool GetBool() const final;
+  std::string GetString() const final;
 
  private:
-  S<TypeValue> GetNestedValue() final { return value_; }
   S<TypeValue> ConvertTo(TypeInstance&) final;
 
   TypeInstance& parent_;
@@ -130,6 +132,10 @@ bool Value_Intersect::GetBool() const {
   return value_->GetBool();
 }
 
+std::string Value_Intersect::GetString() const {
+  return value_->GetString();
+}
+
 S<TypeValue> Value_Intersect::ConvertTo(TypeInstance& instance) {
   return TypeValue::ConvertTo(value_,instance);
 }
@@ -149,10 +155,16 @@ S<TypeValue> As_Intersect(const S<TypeValue>& value, const TypeArgs& types) {
   if (types.size() == 1) {
     return TypeValue::ConvertTo(value,*SafeGet<0>(types));
   }
+
   TypeInstance& intersect_type = Build_Intersect(types);
   FAIL_IF(!TypeInstance::CheckConversionBetween(value->InstanceType(),intersect_type))
       << "Cannot assign type-value " << value->InstanceType().InstanceName()
       << " to " << intersect_type.InstanceName();
-  // TODO: This should probably use value->GetNestedValue() if it has one.
-  return S_get(new Value_Intersect(intersect_type,value));
+
+  if (&value->InstanceType().CategoryType() == &Category_Intersect() ||
+      &value->InstanceType().CategoryType() == &Category_Union()) {
+    return S_get(new Value_Intersect(intersect_type,value->GetNestedValue()));
+  } else {
+    return S_get(new Value_Intersect(intersect_type,value));
+  }
 }

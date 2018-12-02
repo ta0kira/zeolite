@@ -2,6 +2,7 @@
 
 #include "bool.h"
 #include "dispatch.h"
+#include "intersect.h"
 
 namespace {
 
@@ -76,10 +77,11 @@ class Value_Union : public TypeValue {
       const TypeArgs&,
       const FunctionArgs& args) final;
   ValueVariable* GetValueVariable(const ValueVariableId<MemberScope::VALUE>&) final;
+  S<TypeValue> GetNestedValue() final { return value_; }
   bool GetBool() const final;
+  std::string GetString() const final;
 
  private:
-  S<TypeValue> GetNestedValue() final { return value_; }
   S<TypeValue> ConvertTo(TypeInstance&) final;
 
   TypeInstance& parent_;
@@ -130,6 +132,10 @@ bool Value_Union::GetBool() const {
   return value_->GetBool();
 }
 
+std::string Value_Union::GetString() const {
+  return value_->GetString();
+}
+
 S<TypeValue> Value_Union::ConvertTo(TypeInstance& instance) {
   return TypeValue::ConvertTo(value_,instance);
 }
@@ -149,10 +155,16 @@ S<TypeValue> As_Union(const S<TypeValue>& value, const TypeArgs& types) {
   if (types.size() == 1) {
     return TypeValue::ConvertTo(value,*SafeGet<0>(types));
   }
+
   TypeInstance& union_type = Build_Union(types);
   FAIL_IF(!TypeInstance::CheckConversionBetween(value->InstanceType(),union_type))
       << "Cannot assign type-value " << value->InstanceType().InstanceName()
       << " to " << union_type.InstanceName();
-  // TODO: This should probably use value->GetNestedValue() if it has one.
-  return S_get(new Value_Union(union_type,value));
+
+  if (&value->InstanceType().CategoryType() == &Category_Intersect() ||
+      &value->InstanceType().CategoryType() == &Category_Union()) {
+    return S_get(new Value_Union(union_type,value->GetNestedValue()));
+  } else {
+    return S_get(new Value_Union(union_type,value));
+  }
 }

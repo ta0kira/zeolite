@@ -117,6 +117,7 @@ class TypeValue {
       const FunctionArgs&);
   virtual ValueVariable* GetValueVariable(const ValueVariableId<MemberScope::VALUE>&);
 
+  virtual S<TypeValue> GetNestedValue();
   virtual bool IsPresent() const;
   virtual bool GetBool() const;
   virtual std::string GetString() const;
@@ -127,7 +128,6 @@ class TypeValue {
 
  protected:
   TypeValue() = default;
-  virtual S<TypeValue> GetNestedValue();
   virtual S<TypeValue> ConvertTo(TypeInstance&);
 };
 
