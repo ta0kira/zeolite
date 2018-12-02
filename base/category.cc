@@ -100,6 +100,12 @@ S<TypeValue> TypeValue::ConvertTo(const S<TypeValue>& self,
   if (&instance == &self->InstanceType()) {
     return self;
   } else {
+    // TODO: We can probably disable this for non-debug builds, since the main
+    // compiler should prevent bad type conversions. Right now this behavior is
+    // the same as require(reduce<t>(value)), but we can optimize it.
+    FAIL_IF(!TypeInstance::CheckConversionBetween(self->InstanceType(),instance))
+        << "Bad conversion: " << self->InstanceType().InstanceName()
+        << " -> " << instance.InstanceName();
     return self->ConvertTo(instance);
   }
 }
