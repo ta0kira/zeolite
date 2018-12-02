@@ -31,7 +31,7 @@ type CategoryVariance = CategoryConnect (ParamSet Variance)
 
 type CategoryParams = CategoryConnect (ParamSet TypeParam)
 
-type CategoryFilters = CategoryConnect ParamFilters
+type CategoryFilters = CategoryConnect (ParamSet [TypeFilter])
 
 type CategoryConcrete = CategoryConnect Bool
 
@@ -60,15 +60,20 @@ data CategorySystem =
     csConcrete :: CategoryConcrete
   }
 
-validateCategory :: (Mergeable (m ()), Mergeable (m p),
-                     Mergeable p, CompileErrorM m, Monad m, MonadFix m) =>
+uncheckedZipFilters ::
+  ParamSet TypeParam -> ParamSet [TypeFilter] -> Map.Map ParamName [TypeFilter]
+uncheckedZipFilters (ParamSet pa) (ParamSet fa) =
+  Map.fromList $ zip (map tpName pa) fa
+
+validateCategory :: (MergeableM m, Mergeable p, CompileErrorM m,
+                     Monad m, MonadFix m) =>
   TypeResolver m p -> CategorySystem -> m CategorySystem
 validateCategory r cs = do
   -- Basic structural checks.
   checkCycles (csMain cs)
   checkConcrete (csConcrete cs) (csMain cs)
   -- Refine the structure.
-  refine <- flattenRefines r (csFilters cs) (csRefine cs)
+  refine <- flattenRefines r (csParams cs) (csFilters cs) (csRefine cs)
   checkRefines refine
   -- Check finer structural semantics.
   labeledVars <- labelParamVals (csParams cs) (csVariance cs)
@@ -83,7 +88,7 @@ validateCategory r cs = do
       csConcrete = csConcrete cs
     }
 
-labelParamVals :: (Mergeable (m ()), CompileErrorM m, Monad m) =>
+labelParamVals :: (MergeableM m, CompileErrorM m, Monad m) =>
   CategoryParams -> CategoryConnect (ParamSet a) ->
   m (CategoryConnect (Map.Map ParamName a))
 labelParamVals (CategoryConnect pa) va@(CategoryConnect _) = paired where
@@ -95,7 +100,7 @@ labelParamVals (CategoryConnect pa) va@(CategoryConnect _) = paired where
     checkParamsMatch (\_ _ -> return ()) ps vs
     return (n,Map.fromList $ zip (map tpName $ psParams ps) (psParams vs))
 
-checkVariances :: (Mergeable (m ()), CompileErrorM m, Monad m) =>
+checkVariances :: (MergeableM m, CompileErrorM m, Monad m) =>
   (CategoryConnect (Map.Map ParamName Variance)) ->
   CategoryVariance -> Refinements -> m ()
 checkVariances va vs = checkCategory checkAll where
@@ -115,7 +120,7 @@ checkVariances va vs = checkCategory checkAll where
          then return ()
          else compileError $ "Param " ++ show n ++ " does not allow variance " ++ show v
 
-checkCycles :: (Mergeable (m ()), CompileErrorM m, Monad m) => CategoryMain -> m ()
+checkCycles :: (MergeableM m, CompileErrorM m, Monad m) => CategoryMain -> m ()
 checkCycles ca = checkCategory (checker []) ca where
   checker ns n ts
     | n `Set.member` (Set.fromList ns) =
@@ -130,7 +135,7 @@ checkCycles ca = checkCategory (checker []) ca where
           | isCompileError cs = return Set.empty
           | otherwise         = cs
 
-checkConcrete :: (Mergeable (m ()), CompileErrorM m, Monad m) =>
+checkConcrete :: (MergeableM m, CompileErrorM m, Monad m) =>
   CategoryConcrete -> CategoryMain -> m ()
 checkConcrete cc = checkCategory checkAll where
   checkAll n = mergeAll . map (checkSingle n) . Set.toList
@@ -140,7 +145,7 @@ checkConcrete cc = checkCategory checkAll where
        then compileError $ "Category " ++ show n ++ " cannot refine concrete " ++ show n2
        else return ()
 
-mergeInstances :: (Mergeable (m ()), Mergeable (m p), CompileErrorM m, Monad m) =>
+mergeInstances :: (MergeableM m, Mergeable p, CompileErrorM m, Monad m) =>
   TypeResolver m p -> ParamFilters -> [TypeCategoryInstance] -> [TypeCategoryInstance]
 mergeInstances r f gs = merge [] gs where
   merge cs [] = cs
@@ -150,17 +155,19 @@ mergeInstances r f gs = merge [] gs where
        then [x] -- x is not redundant => keep.
        else []  -- x is redundant => remove.
 
-flattenRefines :: (Mergeable (m ()), Mergeable (m p),
-                   Mergeable p, CompileErrorM m, Monad m, MonadFix m) =>
-  TypeResolver m p -> CategoryFilters -> Refinements -> m Refinements
-flattenRefines r fs (CategoryConnect gs) = mfix flattenAll where
+flattenRefines :: (MergeableM m, Mergeable p, CompileErrorM m,
+                   Monad m, MonadFix m) =>
+  TypeResolver m p -> CategoryParams -> CategoryFilters -> Refinements -> m Refinements
+flattenRefines r ps fs (CategoryConnect gs) = mfix flattenAll where
   flattenAll ca@(CategoryConnect _) = do
     items <- collectAllOrErrorM $ map (flattenCategory ca) (Map.toList gs)
     return $ CategoryConnect $ Map.fromList items
   flattenCategory ca (n,(CategoryRefine gs)) = do
     gs2 <- collectAllOrErrorM $ map (flattenSingle ca n) gs
+    params <- n `categoryLookup` ps
     filters <- n `categoryLookup` fs
-    return (n,CategoryRefine (mergeInstances r filters $ join gs2))
+    subbed <- return $ uncheckedZipFilters params filters
+    return (n,CategoryRefine (mergeInstances r subbed $ join gs2))
   flattenSingle ca _ ta@(TypeCategoryInstance t _ ps) = do
     params <- (trParams r) t ps
     refines <- t `categoryLookup` ca
@@ -171,7 +178,10 @@ flattenRefines r fs (CategoryConnect gs) = mfix flattenAll where
     ((),SingleType x) <- uncheckedSubAllParams (paramLookup params) (SingleType t)
     return x
 
-checkRefines :: (Mergeable (m ()), CompileErrorM m, Monad m) => Refinements -> m ()
+-- TODO: This needs to check the filters of the refined category. In general,
+-- there needs to be a way to validate instances, e.g., a "validate" function in
+-- TypeResolver to check args against params for the category.
+checkRefines :: (MergeableM m, CompileErrorM m, Monad m) => Refinements -> m ()
 checkRefines = checkCategory checkAll where
   checkAll n (CategoryRefine gs) = do
     ts <- collectAllOrErrorM $ map (getTypeName n) gs
@@ -185,20 +195,29 @@ checkRefines = checkCategory checkAll where
     compileError $ "Type " ++ show n ++ " has conflicting refinements of type " ++ show t
   checkGroup _ _ = return ()
 
+uncheckedSubFilterParams :: (MergeableM m, CompileErrorM m, Monad m) =>
+  (TypeParam -> m GeneralInstance) -> ParamSet [TypeFilter] ->
+  m (ParamSet [TypeFilter])
+uncheckedSubFilterParams replace pa = subbed where
+  subbed = do
+    updated <- collectAllOrErrorM $ map subAllFilters (psParams pa)
+    return (ParamSet updated)
+  subAllFilters ps = collectAllOrErrorM $ map subSingleFilter ps
+  subSingleFilter (TypeFilter v t) = do
+    ((),SingleType t2) <- uncheckedSubAllParams replace (SingleType t)
+    return (TypeFilter v t2)
+
 -- NOTE: The param filters here correspond to the *new* instances.
-checkedSubAllParams :: (Mergeable (m ()), Mergeable (m p),
-                        Mergeable p, CompileErrorM m, Monad m) =>
+checkedSubAllParams :: (MergeableM m, Mergeable p, CompileErrorM m, Monad m) =>
   TypeResolver m p -> ParamFilters -> (TypeParam -> m GeneralInstance) ->
   GeneralInstance -> m (p,GeneralInstance)
 checkedSubAllParams r f = subAllParams (checkGeneralMatch r f Covariant)
 
-uncheckedSubAllParams :: (Mergeable (m ()), Mergeable (m p),
-                          Mergeable p, CompileErrorM m, Monad m) =>
+uncheckedSubAllParams :: (MergeableM m, Mergeable p, CompileErrorM m, Monad m) =>
   (TypeParam -> m GeneralInstance) -> GeneralInstance -> m (p,GeneralInstance)
 uncheckedSubAllParams = subAllParams (\_ _ -> return mergeDefault)
 
-subAllParams :: (Mergeable (m ()), Mergeable (m p),
-                 Mergeable p, CompileErrorM m, Monad m) =>
+subAllParams :: (MergeableM m, Mergeable p, CompileErrorM m, Monad m) =>
   (GeneralInstance -> GeneralInstance -> m p) ->
   (TypeParam -> m GeneralInstance) -> GeneralInstance -> m (p,GeneralInstance)
 subAllParams find replace = subAll where

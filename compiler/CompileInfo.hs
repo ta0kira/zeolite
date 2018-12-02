@@ -9,7 +9,7 @@ module CompileInfo (
 import Data.Either (isLeft,partitionEithers)
 import Data.List (intercalate)
 
-import TypesBase (CompileErrorM(..),Mergeable(..))
+import TypesBase (CompileErrorM(..),Mergeable(..),MergeableM(..))
 
 
 data CompileMessage =
@@ -37,18 +37,18 @@ instance CompileErrorM CompileInfo where
     result ([],_)  = compileErrorM "No values in the empty set"
     result (es,_)  = Left $ joinMessages es  -- Take all errors.
 
-instance Mergeable a => Mergeable (CompileInfo a) where
-  mergeAny = result . splitErrorsAndData where
+instance MergeableM CompileInfo where
+  mergeAnyM = result . splitErrorsAndData where
     result (_,xs@(x:_)) = return $ mergeAny xs
     result ([],_)       = compileErrorM "No values in the empty set"
     result (es,_)       = Left $ joinMessages es  -- Take all errors.
-  mergeAll = result . splitErrorsAndData where
+  mergeAllM = result . splitErrorsAndData where
     result ([],xs) = return $ mergeAll xs
     result (e:_,_) = Left e  -- Take first error.
-  (Right x)  `mergeNested` (Right y)  = return $ x `mergeNested` y
-  e@(Left _) `mergeNested` (Right _)  = e
-  (Right _)  `mergeNested` e@(Left _) = e
-  (Left e1)  `mergeNested` (Left e2)  = Left $ e1 `nestMessages` e2
+  (Right x)  `mergeNestedM` (Right y)  = return $ x `mergeNested` y
+  e@(Left _) `mergeNestedM` (Right _)  = e
+  (Right _)  `mergeNestedM` e@(Left _) = e
+  (Left e1)  `mergeNestedM` (Left e2)  = Left $ e1 `nestMessages` e2
 
 joinMessages = foldr joinPair (CompileNested []) where
   joinPair m                     (CompileNested [])    = m

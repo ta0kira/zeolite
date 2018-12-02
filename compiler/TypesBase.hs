@@ -6,6 +6,7 @@ module TypesBase (
   CompileErrorM(..),
   GeneralType(..),
   Mergeable(..),
+  MergeableM(..),
   MergeType(..),
   ParamSet(..),
   Variance(..),
@@ -23,6 +24,20 @@ class Mergeable a where
   mergeNested x y = mergeAll [x,y]
   mergeDefault :: a
   mergeDefault = mergeAll Nothing
+
+class MergeableM m where
+  mergeAnyM :: (Mergeable a, Foldable f) => f (m a) -> m a
+  mergeAllM :: (Mergeable a, Foldable f) => f (m a) -> m a
+  mergeNestedM :: Mergeable a => m a -> m a -> m a
+  mergeNestedM x y = mergeAllM [x,y]
+  mergeDefaultM :: Mergeable a => m a
+  mergeDefaultM = mergeAllM Nothing
+
+instance (MergeableM m, Mergeable a) => Mergeable (m a) where
+  mergeAny = mergeAnyM
+  mergeAll = mergeAllM
+  mergeNested = mergeNestedM
+  mergeDefault = mergeDefaultM
 
 instance Mergeable () where
   mergeAny = const ()
@@ -75,7 +90,10 @@ newtype ParamSet a =
   }
   deriving (Eq,Show)
 
-checkParamsMatch :: (Mergeable c, CompileError c) => (a -> b -> c) -> ParamSet a -> ParamSet b -> c
+-- TODO: This is broken because c isn't really that useful for returning
+-- results; it's really only useful for summarizing errors.
+checkParamsMatch :: (Mergeable c, CompileError c) =>
+  (a -> b -> c) -> ParamSet a -> ParamSet b -> c
 checkParamsMatch f (ParamSet ps1) (ParamSet ps2) = checkedMerge ps1 ps2 where
   checkedMerge []      []      = mergeAll $ map (\(p1,p2) -> (p1 `f` p2)) (zip ps1 ps2)
   checkedMerge (_:ps1) (_:ps2) = checkedMerge ps1 ps2

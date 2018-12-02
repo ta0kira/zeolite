@@ -85,12 +85,12 @@ filterLookup ps n = resolve $ n `Map.lookup` ps where
 -- type category. That should be done during instantiation of the instances and
 -- during validation of the category system. (This does verify filters imposed
 -- by individual free params, though.)
-checkGeneralMatch :: (Mergeable (m ()), Mergeable (m p), CompileErrorM m, Monad m) =>
+checkGeneralMatch :: (MergeableM m, Mergeable p, CompileErrorM m, Monad m) =>
   TypeResolver m p -> ParamFilters -> Variance -> GeneralInstance ->
   GeneralInstance -> m p
 checkGeneralMatch r f v ts1 ts2 = checkGeneralType (checkSingleMatch r f v) ts1 ts2
 
-checkSingleMatch :: (Mergeable (m ()), Mergeable (m p), CompileErrorM m, Monad m) =>
+checkSingleMatch :: (MergeableM m, Mergeable p, CompileErrorM m, Monad m) =>
   TypeResolver m p -> ParamFilters -> Variance -> TypeCategoryInstance ->
   TypeCategoryInstance -> m p
 checkSingleMatch r f v (TypeCategoryInstance n1 o1 ps1) (TypeCategoryInstance n2 o2 ps2)
@@ -105,7 +105,7 @@ checkSingleMatch r f v (TypeCategoryInstance n1 o1 ps1) (TypeCategoryParam p2)
 checkSingleMatch r f v (TypeCategoryParam p1) (TypeCategoryParam p2) =
   checkParamToParam r f v p1 p2
 
-checkInstanceToInstance :: (Mergeable (m ()), Mergeable (m p), CompileErrorM m, Monad m) =>
+checkInstanceToInstance :: (MergeableM m, Mergeable p, CompileErrorM m, Monad m) =>
   TypeResolver m p -> ParamFilters -> Variance -> (TypeName,InstanceParams) ->
   (TypeName,InstanceParams) -> m p
 checkInstanceToInstance r f Invariant (n1,ps1) (n2,ps2) = fixMessage check where
@@ -131,7 +131,7 @@ checkInstanceToInstance r f Covariant (n1,ps1) (n2,ps2)
     (p2,ps1') <- (trFind r) n2 n1 ps1
     (return p2) `mergeNested` (checkInstanceToInstance r f Covariant (n2,ps1') (n2,ps2))
 
-checkParamToInstance :: (Mergeable (m ()), Mergeable (m p), CompileErrorM m, Monad m) =>
+checkParamToInstance :: (MergeableM m, Mergeable p, CompileErrorM m, Monad m) =>
   TypeResolver m p -> ParamFilters -> Variance -> TypeParam ->
   (TypeName,InstanceParams) -> m p
 checkParamToInstance r _ Invariant (TypeParam n1) (n2,ps2) =
@@ -151,7 +151,7 @@ checkParamToInstance r f Covariant (TypeParam n1) (n2,ps2) = checked where
   checkConstraintToInstance (TypeFilter _ t) _ =
     compileError $ "Cannot convert param to instance (" ++ show n1 ++ " -> " ++ show n2 ++ ")"
 
-checkInstanceToParam :: (Mergeable (m ()), Mergeable (m p), CompileErrorM m, Monad m) =>
+checkInstanceToParam :: (MergeableM m, Mergeable p, CompileErrorM m, Monad m) =>
   TypeResolver m p -> ParamFilters -> Variance -> (TypeName,InstanceParams) ->
   TypeParam -> m p
 checkInstanceToParam _ _ Invariant (n1,ps1) (TypeParam n2) =
@@ -171,7 +171,7 @@ checkInstanceToParam r f Covariant (n1,ps1) (TypeParam n2) = checked where
   checkInstanceToConstraint _ (TypeFilter _ t) =
     compileError $ "Cannot convert instance to param (" ++ show n1 ++ " -> " ++ show n2 ++ ")"
 
-checkParamToParam :: (Mergeable (m ()), Mergeable (m p), CompileErrorM m, Monad m) =>
+checkParamToParam :: (MergeableM m, Mergeable p, CompileErrorM m, Monad m) =>
   TypeResolver m p -> ParamFilters -> Variance -> TypeParam -> TypeParam -> m p
 checkParamToParam r f Invariant p1 p2 = fixMessage check where
   check = do
