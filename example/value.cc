@@ -223,22 +223,24 @@ FunctionReturns Instance_Value::CallInstanceFunction(
 
 ParamReturns<1>::Type Instance_Value::Call_create(
       ParamTypes<1>::Type types, ParamArgs<1>::Type args) {
+  ParamReturns<1>::Type returned;
   TRACE_FUNCTION("Value.create")
   SET_CONTEXT_POINT("value:0")
   TypeInstance& x = *std::get<0>(types);
   ValueVariable value(Type_create_a0(x),std::get<0>(args));
   SET_CONTEXT_POINT("value:1")
-  return
-      T_get(
-          TypeValue::ConvertTo(
-              S_get(
-                  new Value_Value(
-                      *this,
-                      S_get(new Concrete_Value(*this,x,value.GetValue())))),Type_create_r0()));
+  std::get<0>(returned) =
+      TypeValue::ConvertTo(
+          S_get(
+              new Value_Value(
+                  *this,
+                  S_get(new Concrete_Value(*this,x,value.GetValue())))),Type_create_r0());
+  return returned;
 }
 
 ParamReturns<0>::Type Instance_Value::Call_view(
       ParamTypes<0>::Type types, ParamArgs<1>::Type args) {
+  ParamReturns<0>::Type returned;
   TRACE_FUNCTION("Value.view")
   SET_CONTEXT_POINT("value:7")
   ValueVariable obj(Type_view_a0(),std::get<0>(args));
@@ -260,7 +262,7 @@ ParamReturns<0>::Type Instance_Value::Call_view(
     SET_CONTEXT_POINT("value:10")
     std::cout << "View: " << TypeValue::Require(string.GetValue())->GetString() << std::endl;
   }
-  return T_get();
+  return returned;
 }
 
 bool Instance_Value::CheckConversionFrom(const TypeInstance& instance) const {
@@ -332,6 +334,7 @@ S<TypeValue> Value_Value::ConvertTo(TypeInstance& instance) {
 */
 
 T<> Concrete_Value::Call_Printable_print() {
+  T<> returned;
   TRACE_FUNCTION("Value.print")
   SET_CONTEXT_POINT("value:14")
   ValueVariable string(
@@ -348,7 +351,7 @@ T<> Concrete_Value::Call_Printable_print() {
     SET_CONTEXT_POINT("value:18")
     std::cout << "(not a string)" << std::endl;
   }
-  return T_get();
+  return returned;
 }
 
 }  // namespace

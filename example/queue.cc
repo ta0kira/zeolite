@@ -176,8 +176,11 @@ FunctionReturns Instance_Queue::CallInstanceFunction(
 
 ParamReturns<1>::Type Instance_Queue::Call_create(
     ParamTypes<0>::Type types, ParamArgs<0>::Type) {
-  return T_get(TypeValue::ConvertTo(S_get(new Value_Queue(*this,S_get(new Concrete_Queue(*this)))),
-               Type_create_r0()));
+  ParamReturns<1>::Type returned;
+  std::get<0>(returned) =
+    TypeValue::ConvertTo(S_get(new Value_Queue(*this,S_get(new Concrete_Queue(*this)))),
+                         Type_create_r0());
+  return returned;
 }
 
 bool Instance_Queue::CheckConversionFrom(const TypeInstance& instance) const {
@@ -230,39 +233,41 @@ S<TypeValue> Value_Queue::ConvertTo(TypeInstance& instance) {
 
 /*
 
-00: read () {
-01:   if (queue.empty()) {
-02:     return skip;
-03:   } else {
-04:     return queue.pop();
-05:   }
-06: }
-07:
-08: write (value) {
-09:   queue.push(value);
-10: }
+00: read () (value) {
+01:   value = skip;
+02:   if (!queue.empty()) {
+03:     value = queue.pop();
+04:   }
+05: }
+06:
+07: write (value) {
+08:   queue.push(value);
+09: }
 
 */
 
 T<S<TypeValue>> Concrete_Queue::Call_Reader_read() {
+  T<S<TypeValue>> returned;
   TRACE_FUNCTION("Queue.read")
   SET_CONTEXT_POINT("queue:1")
-  if (queue_.empty()) {
-    SET_CONTEXT_POINT("queue:2")
-    return T_get(TypeValue::ConvertTo(Optional_Skip(),parent_.Type_read_r0()));
-  } else {
-    SET_CONTEXT_POINT("queue:4")
-    const S<TypeValue> result = As_Optional(queue_.front(),parent_.param_x);
+  std::get<0>(returned) = TypeValue::ConvertTo(Optional_Skip(),parent_.Type_read_r0());
+  SET_CONTEXT_POINT("queue:2")
+  if (!queue_.empty()) {
+    SET_CONTEXT_POINT("queue:3")
+    std::get<0>(returned) = TypeValue::ConvertTo(queue_.front(),parent_.Type_read_r0());
     queue_.pop();
-    return T_get(result);
   }
+  return returned;
 }
 
-T<> Concrete_Queue::Call_Writer_write(const S<TypeValue>& value) {
+T<> Concrete_Queue::Call_Writer_write(const S<TypeValue>& a0) {
+  T<> returned;
   TRACE_FUNCTION("Queue.write")
-  SET_CONTEXT_POINT("queue:9")
-  queue_.push(value);
-  return T_get();
+  SET_CONTEXT_POINT("queue:7")
+  ValueVariable value(parent_.Type_write_a0(),a0);
+  SET_CONTEXT_POINT("queue:8")
+  queue_.push(value.GetValue());
+  return returned;
 }
 
 }  // namespace
