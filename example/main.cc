@@ -36,15 +36,15 @@
 
 int main() {
   SetSignalHandler();
-  SourceContext trace("Example.execute");
+  TRACE_FUNCTION("Example.execute")
 
-  trace.SetLocal("main:0");
+  SET_CONTEXT_POINT("main:0")
   S<TypeValue> queue =
       SafeGet<0>(Category_Queue()
           .Build(Category_Value().Build())
           .CallInstanceFunction(Function_Queue_create,TypeArgs{},FunctionArgs{}));
 
-  trace.SetLocal("main:2");
+  SET_CONTEXT_POINT("main:2")
   queue->CallValueFunction(
       Function_Writer_write,
       TypeArgs{},
@@ -57,7 +57,7 @@ int main() {
                         TypeArgs{&Category_String().Build()},
                         FunctionArgs{As_String("one")}))});
 
-  trace.SetLocal("main:3");
+  SET_CONTEXT_POINT("main:3")
   queue->CallValueFunction(
       Function_Writer_write,
       TypeArgs{},
@@ -70,7 +70,7 @@ int main() {
                         TypeArgs{&Category_String().Build()},
                         FunctionArgs{As_String("two")}))});
 
-  trace.SetLocal("main:4");
+  SET_CONTEXT_POINT("main:4")
   queue->CallValueFunction(
       Function_Writer_write,
       TypeArgs{},
@@ -83,7 +83,7 @@ int main() {
                         TypeArgs{&Category_String().Build()},
                         FunctionArgs{As_String("three")}))});
 
-  trace.SetLocal("main:5");
+  SET_CONTEXT_POINT("main:5")
   queue->CallValueFunction(
       Function_Writer_write,
       TypeArgs{},
@@ -96,24 +96,24 @@ int main() {
                         TypeArgs{&Category_Bool().Build()},
                         FunctionArgs{As_Bool(false)}))});
 
-  trace.SetLocal("main:7");
+  SET_CONTEXT_POINT("main:7")
   ValueVariable reader(Category_Reader().Build(Category_Value().Build()),queue);
 
   while (true) {
-    trace.SetLocal("main:9");
+    SET_CONTEXT_POINT("main:9")
     ValueVariable value(
         Category_Value().Build(),
         SafeGet<0>(reader.GetValue()->CallValueFunction(Function_Reader_read,TypeArgs{},FunctionArgs{})));
-    trace.SetLocal("main:10");
+    SET_CONTEXT_POINT("main:10")
     if (value.GetValue()->IsPresent()) {
-      trace.SetLocal("main:11");
+      SET_CONTEXT_POINT("main:11")
       TypeValue::Require(value.GetValue())
           ->CallValueFunction(Function_Printable_print,TypeArgs{},FunctionArgs{});
     } else {
-      trace.SetLocal("main:13");
+      SET_CONTEXT_POINT("main:13")
       break;
     }
-    trace.SetLocal("main:15");
+    SET_CONTEXT_POINT("main:15")
     Category_Value().Build().CallInstanceFunction(
         Function_Value_show,TypeArgs{},FunctionArgs{TypeValue::Require(value.GetValue())});
   }

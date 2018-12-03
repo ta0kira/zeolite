@@ -223,11 +223,11 @@ FunctionReturns Instance_Value::CallInstanceFunction(
 
 ParamReturns<1>::Type Instance_Value::Call_create(
       ParamTypes<1>::Type types, ParamArgs<1>::Type args) {
-  SourceContext trace("Value.create");
-  trace.SetLocal("value:0");
+  TRACE_FUNCTION("Value.create")
+  SET_CONTEXT_POINT("value:0")
   TypeInstance& x = *std::get<0>(types);
   ValueVariable value(Type_create_a0(x),std::get<0>(args));
-  trace.SetLocal("value:1");
+  SET_CONTEXT_POINT("value:1")
   return
       T_get(
           TypeValue::ConvertTo(
@@ -239,10 +239,10 @@ ParamReturns<1>::Type Instance_Value::Call_create(
 
 ParamReturns<0>::Type Instance_Value::Call_show(
       ParamTypes<0>::Type types, ParamArgs<1>::Type args) {
-  SourceContext trace("Value.show");
-  trace.SetLocal("value:7");
+  TRACE_FUNCTION("Value.show")
+  SET_CONTEXT_POINT("value:7")
   ValueVariable obj(Type_show_a0(),std::get<0>(args));
-  trace.SetLocal("value:8");
+  SET_CONTEXT_POINT("value:8");
   ValueVariable string(
       Category_Optional().Build(Category_String().Build()),
       TypeValue::ReduceTo(
@@ -255,9 +255,9 @@ ParamReturns<0>::Type Instance_Value::Call_show(
           *TypeValue::ConvertTo(obj.GetValue(),Type_show_a0())
               ->GetTypeVariable(*this,Variable_Value_x),
           Category_String().Build()));
-  trace.SetLocal("value:9");
+  SET_CONTEXT_POINT("value:9")
   if (string.GetValue()->IsPresent()) {
-    trace.SetLocal("value:10");
+    SET_CONTEXT_POINT("value:10")
     std::cout << "Show: " << TypeValue::Require(string.GetValue())->GetString() << std::endl;
   }
   return T_get();
@@ -332,20 +332,20 @@ S<TypeValue> Value_Value::ConvertTo(TypeInstance& instance) {
 */
 
 T<> Concrete_Value::Call_Printable_print() {
-  SourceContext trace("Value.print");
-  trace.SetLocal("value:14");
+  TRACE_FUNCTION("Value.print")
+  SET_CONTEXT_POINT("value:14")
   ValueVariable string(
       Category_Optional().Build(Category_String().Build()),
       TypeValue::ReduceTo(
           value_.GetValue(),
           *x_,
           Category_String().Build()));
-  trace.SetLocal("value:5");
+  SET_CONTEXT_POINT("value:5")
   if (string.GetValue()->IsPresent()) {
-    trace.SetLocal("value:16");
+    SET_CONTEXT_POINT("value:16")
     std::cout << TypeValue::Require(string.GetValue())->GetString() << std::endl;
   } else {
-    trace.SetLocal("value:18");
+    SET_CONTEXT_POINT("value:18")
     std::cout << "(not a string)" << std::endl;
   }
   return T_get();

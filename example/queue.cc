@@ -245,13 +245,13 @@ S<TypeValue> Value_Queue::ConvertTo(TypeInstance& instance) {
 */
 
 T<S<TypeValue>> Concrete_Queue::Call_Reader_read() {
-  SourceContext trace("Queue.read");
-  trace.SetLocal("queue:1");
+  TRACE_FUNCTION("Queue.read")
+  SET_CONTEXT_POINT("queue:1")
   if (queue_.empty()) {
-    trace.SetLocal("queue:2");
+    SET_CONTEXT_POINT("queue:2")
     return T_get(TypeValue::ConvertTo(Optional_Skip(),parent_.Type_read_r0()));
   } else {
-    trace.SetLocal("queue:4");
+    SET_CONTEXT_POINT("queue:4")
     const S<TypeValue> result = As_Optional(queue_.front(),parent_.param_x);
     queue_.pop();
     return T_get(result);
@@ -259,8 +259,8 @@ T<S<TypeValue>> Concrete_Queue::Call_Reader_read() {
 }
 
 T<> Concrete_Queue::Call_Writer_write(const S<TypeValue>& value) {
-  SourceContext trace("Queue.write");
-  trace.SetLocal("queue:9");
+  TRACE_FUNCTION("Queue.write")
+  SET_CONTEXT_POINT("queue:9")
   queue_.push(value);
   return T_get();
 }
