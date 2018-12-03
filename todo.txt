@@ -1,0 +1,57 @@
+Roughly in order of execution:
+
+- Reimplement parser for categories.
+- Implement instance interfaces.
+- Test category system.
+
+- Write parser for function signatures.
+- Type-check function signatures.
+- Test function-signature system.
+
+- Unit tests for C++ base.
+- General testing system for generated C++.
+
+- Output everything but implementations.
+- Test output with hand-written implementations.
+
+- Write parser for implementations.
+- Compile implementations, e.g., type-check and resolve symbols.
+- Test implementation compilation.
+- Output implementations.
+
+- Integration tests for full compilation.
+
+- Implement module system in compiler.
+- Create modules for "standard library" stuff, e.g., Queue.
+- Streamline compilation process.
+- Streamline compiler installation.
+
+
+Supported in implementation, roughly in order of simplicity+importance:
+
+- variable creation and assignment
+- variable init is always required
+
+- inference of expression type
+- bool/string/int literals
+- bool/string/int expressions
+- optional
+- skip/present/require
+
+- while
+- if/elif/else
+
+- category/instance/value function calls
+- named return values
+- receiving multiple return values
+- using return is always required (_ to ignore)
+- function calls with explicit type args
+
+- category/instance/value variables
+- internal type variables (value only)
+- no access to internal variables if they have variance
+- no access to internal types if any constraint uses a variant param
+
+- scoped, e.g., scoped { ... } while { ... }
+
+- reduce, e.g., reduce<t>(value)
