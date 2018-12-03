@@ -1,7 +1,7 @@
 #include "optional.h"
 
 #include "dispatch.h"
-#include "intersect.h"
+#include "union.h"
 
 namespace {
 
@@ -139,8 +139,8 @@ S<TypeValue> Value_Optional::ConvertTo(TypeInstance& instance) {
   return TypeValue::ConvertTo(instance);
 }
 
-const S<TypeValue>& OPTIONAL_ANY =
-    *new S<TypeValue>(Internal_Optional().BuildInternal(Intersect_Any()).Skip());
+const S<TypeValue>& OPTIONAL_ALL =
+    *new S<TypeValue>(Internal_Optional().BuildInternal(Union_All()).Skip());
 
 }  // namespace
 
@@ -150,7 +150,7 @@ ParamInstance<1>::Type& Category_Optional() {
 }
 
 S<TypeValue> Optional_Skip() {
-  return OPTIONAL_ANY;
+  return OPTIONAL_ALL;
 }
 
 S<TypeValue> As_Optional(const S<TypeValue>& value, TypeInstance& type) {

@@ -107,6 +107,7 @@ const TypeArgs& Instance_Union::TypeArgsForCategory(const TypeCategory& category
 }
 
 bool Instance_Union::CheckConversionFrom(const TypeInstance& instance) const {
+  // CheckConversionBetween handles expansion of instance.
   for (const TypeInstance* type : types_) {
     if (TypeInstance::CheckConversionBetween(instance,*type)) {
       return true;

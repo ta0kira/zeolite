@@ -40,56 +40,32 @@ bool TypeInstance::IsOptional() const {
 
 bool TypeInstance::CheckConversionBetween(
     const TypeInstance& x, const TypeInstance& y) {
-  bool can_convert = x.InstanceMergeType() != MergeType::INTERSECT;
-  for (const TypeInstance* left : x.MergedInstanceTypes()) {
-    bool can_convert_to = y.InstanceMergeType() != MergeType::UNION;
-    for (const TypeInstance* right : y.MergedInstanceTypes()) {
-      bool can_convert_single = false;
-      switch (left->InstanceMergeType()) {
+    if (&x == &y) {
+      return true;
+    }
+
+    for (const TypeInstance* left : x.MergedInstanceTypes()) {
+      switch (x.InstanceMergeType()) {
         case MergeType::SINGLE:
-          can_convert_single = right->CheckConversionFrom(*left);
-          break;
+          return y.CheckConversionFrom(*left);
         case MergeType::UNION:
-        case MergeType::INTERSECT:
-          // Union/Intersect are implemented to not provide type params when
-          // calling TypeArgsForCategory, which prevents CheckConversionFrom
-          // from being useful when passing *left.
-          can_convert_single = CheckConversionBetween(*left,*right);
-          break;
-      }
-      switch (y.InstanceMergeType()) {
-        case MergeType::SINGLE:
-          can_convert_to = can_convert_single;
-          break;
-        case MergeType::UNION:
-          can_convert_to |= can_convert_single;
+          if (!y.CheckConversionFrom(*left)) {
+            return false;
+          }
           break;
         case MergeType::INTERSECT:
-          can_convert_to &= can_convert_single;
+          if (y.CheckConversionFrom(*left)) {
+            return true;
+          }
           break;
-      }
-      if ((x.InstanceMergeType() == MergeType::UNION     && can_convert_to) ||
-          (x.InstanceMergeType() == MergeType::INTERSECT && !can_convert_to)) {
-        break;
       }
     }
+
     switch (x.InstanceMergeType()) {
-      case MergeType::SINGLE:
-        can_convert = can_convert_to;
-        break;
-      case MergeType::UNION:
-        can_convert &= can_convert_to;
-        break;
-      case MergeType::INTERSECT:
-        can_convert |= can_convert_to;
-        break;
+      case MergeType::SINGLE:    return true;
+      case MergeType::UNION:     return true;
+      case MergeType::INTERSECT: return false;
     }
-    if ((x.InstanceMergeType() == MergeType::UNION     && !can_convert) ||
-        (x.InstanceMergeType() == MergeType::INTERSECT && can_convert)) {
-      break;
-    }
-  }
-  return can_convert;
 }
 
 bool TypeInstance::CheckConversionFrom(const TypeInstance&) const {
@@ -156,7 +132,11 @@ S<TypeValue> TypeValue::ConvertTo(const S<TypeValue>& self,
 #else
   if (&instance == &self->InstanceType()) {
     return self;
-  } else if (&instance.CategoryType() == &Category_Optional()) {
+  }
+  FAIL_IF(!TypeInstance::CheckConversionBetween(self->InstanceType(),instance))
+      << "Bad conversion from " << self->InstanceType().InstanceName()
+      << " to " << instance.InstanceName();
+  if (&instance.CategoryType() == &Category_Optional()) {
     return As_Optional(self,*SafeGet<0>(instance.TypeArgsForCategory(Category_Optional())));
   } else if (&instance.CategoryType() == &Category_Union()) {
     return As_Union(self,instance.TypeArgsForCategory(Category_Union()));

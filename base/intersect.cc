@@ -57,7 +57,7 @@ class Instance_Intersect : public TypeInstance {
 
  private:
   bool CheckConversionFrom(const TypeInstance& type) const final;
-  MergeType InstanceMergeType() const final { return MergeType::UNION; }
+  MergeType InstanceMergeType() const final { return MergeType::INTERSECT; }
   const TypeArgs& MergedInstanceTypes() const final { return types_; }
 
   const std::string name_;
@@ -107,6 +107,7 @@ const TypeArgs& Instance_Intersect::TypeArgsForCategory(const TypeCategory& cate
 }
 
 bool Instance_Intersect::CheckConversionFrom(const TypeInstance& instance) const {
+  // CheckConversionBetween handles expansion of instance.
   for (const TypeInstance* type : types_) {
     if (!TypeInstance::CheckConversionBetween(instance,*type)) {
       return false;
