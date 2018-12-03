@@ -64,7 +64,7 @@ class Instance_Value : public TypeInstance {
       const FunctionArgs&) final;
 
   ParamReturns<1>::Type Call_create(ParamTypes<1>::Type, ParamArgs<1>::Type);
-  ParamReturns<0>::Type Call_show(ParamTypes<0>::Type, ParamArgs<1>::Type);
+  ParamReturns<0>::Type Call_view(ParamTypes<0>::Type, ParamArgs<1>::Type);
 
   TypeInstance& Type_Var_value(TypeInstance& x) const {
     return x;
@@ -78,7 +78,7 @@ class Instance_Value : public TypeInstance {
     return Category_Value().Build();
   }
 
-  TypeInstance& Type_show_a0() const {
+  TypeInstance& Type_view_a0() const {
     return Category_Value().Build();
   }
 
@@ -161,7 +161,7 @@ Constructor_Value::Constructor_Value()
       type_variables_("Value") {
   instance_functions_
       .AddFunction(Function_Value_create,&Instance_Value::Call_create)
-      .AddFunction(Function_Value_show,&Instance_Value::Call_show);
+      .AddFunction(Function_Viewer_view,&Instance_Value::Call_view);
   value_functions_
       .AddFunction(Function_Printable_print,&Value_Value::Call_print);
   value_variables_
@@ -212,10 +212,10 @@ FunctionReturns Instance_Value::CallInstanceFunction(
 04:   };
 05: }
 06:
-07: show (obj) {
+07: view (obj) {
 08:   optional String string = reduce<String>(obj.value);
 09:   if (present(string)) {
-10:     print("Show: " + require(string));  // <- fake syntax for now
+10:     print("View: " + require(string));  // <- fake syntax for now
 11:   }
 12: }
 
@@ -237,11 +237,11 @@ ParamReturns<1>::Type Instance_Value::Call_create(
                       S_get(new Concrete_Value(*this,x,value.GetValue())))),Type_create_r0()));
 }
 
-ParamReturns<0>::Type Instance_Value::Call_show(
+ParamReturns<0>::Type Instance_Value::Call_view(
       ParamTypes<0>::Type types, ParamArgs<1>::Type args) {
-  TRACE_FUNCTION("Value.show")
+  TRACE_FUNCTION("Value.view")
   SET_CONTEXT_POINT("value:7")
-  ValueVariable obj(Type_show_a0(),std::get<0>(args));
+  ValueVariable obj(Type_view_a0(),std::get<0>(args));
   SET_CONTEXT_POINT("value:8");
   ValueVariable string(
       Category_Optional().Build(Category_String().Build()),
@@ -252,13 +252,13 @@ ParamReturns<0>::Type Instance_Value::Call_show(
           // NOTE: This assumes that the compiler is going to infer that the
           // expression type is obj.x, and not whatever the runtime type of
           // obj.value happens to be.
-          *TypeValue::ConvertTo(obj.GetValue(),Type_show_a0())
+          *TypeValue::ConvertTo(obj.GetValue(),Type_view_a0())
               ->GetTypeVariable(*this,Variable_Value_x),
           Category_String().Build()));
   SET_CONTEXT_POINT("value:9")
   if (string.GetValue()->IsPresent()) {
     SET_CONTEXT_POINT("value:10")
-    std::cout << "Show: " << TypeValue::Require(string.GetValue())->GetString() << std::endl;
+    std::cout << "View: " << TypeValue::Require(string.GetValue())->GetString() << std::endl;
   }
   return T_get();
 }
@@ -360,5 +360,3 @@ ParamInstance<0>::Type& Category_Value() {
 
 const FunctionId<MemberScope::INSTANCE>& Function_Value_create =
     *new FunctionId<MemberScope::INSTANCE>("Value.create");
-const FunctionId<MemberScope::INSTANCE>& Function_Value_show =
-    *new FunctionId<MemberScope::INSTANCE>("Value.show");

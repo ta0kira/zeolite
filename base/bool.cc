@@ -40,15 +40,13 @@ class Value_Bool : public TypeValue {
   const bool value_;
 };
 
-
-const S<TypeValue>& TRUE = *new S<TypeValue>(S_get(new Value_Bool(true)));
-const S<TypeValue>& FALSE = *new S<TypeValue>(S_get(new Value_Bool(false)));
-
 }  // namespace
 
 
 ParamInstance<0>::Type& Category_Bool() { return Internal_Bool(); }
 
 S<TypeValue> As_Bool(bool value) {
-  return value? TRUE : FALSE;
+  static const S<TypeValue>& BOOL_TRUE = *new S<TypeValue>(S_get(new Value_Bool(true)));
+  static const S<TypeValue>& BOOL_FALSE = *new S<TypeValue>(S_get(new Value_Bool(false)));
+  return value? BOOL_TRUE : BOOL_FALSE;
 }

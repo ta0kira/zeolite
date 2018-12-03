@@ -138,9 +138,6 @@ S<TypeValue> Value_Optional::ConvertTo(TypeInstance& instance) {
   return TypeValue::ConvertTo(instance);
 }
 
-const S<TypeValue>& OPTIONAL_ALL =
-    *new S<TypeValue>(Internal_Optional().BuildInternal(Union_All()).Skip());
-
 }  // namespace
 
 
@@ -149,6 +146,8 @@ ParamInstance<1>::Type& Category_Optional() {
 }
 
 S<TypeValue> Optional_Skip() {
+  static const S<TypeValue>& OPTIONAL_ALL =
+      *new S<TypeValue>(Internal_Optional().BuildInternal(Union_All()).Skip());
   return OPTIONAL_ALL;
 }
 

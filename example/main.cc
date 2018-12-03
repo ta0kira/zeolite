@@ -11,6 +11,7 @@
 #include "reader.h"
 #include "writer.h"
 #include "value.h"
+#include "viewer.h"
 
 /*
 
@@ -29,7 +30,7 @@
 12:   } else {
 13:     break;  // <- fake syntax for now
 14:   }
-15:   Value.show(require(value));
+15:   Value.view(require(value));
 16: }
 
 */
@@ -115,6 +116,6 @@ int main() {
     }
     SET_CONTEXT_POINT("main:15")
     Category_Value().Build().CallInstanceFunction(
-        Function_Value_show,TypeArgs{},FunctionArgs{TypeValue::Require(value.GetValue())});
+        Function_Viewer_view,TypeArgs{},FunctionArgs{TypeValue::Require(value.GetValue())});
   }
 }

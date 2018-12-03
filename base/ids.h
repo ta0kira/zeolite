@@ -3,6 +3,8 @@
 
 #include <string>
 
+#include "core.h"
+
 enum class MemberScope {
   CATEGORY,
   INSTANCE,

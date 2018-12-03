@@ -6,18 +6,17 @@
 #include "base/core.h"
 
 #include "printable.h"
+#include "viewer.h"
 
 /*
 
 concrete Value {
   refines Printable
+  defines Viewer<Value>
 
   with instance
   <x>
   create takes (x) to (Value)
-
-  with instance
-  show takes (Value) to ()
 }
 
 */
@@ -25,6 +24,5 @@ concrete Value {
 ParamInstance<0>::Type& Category_Value();
 
 extern const FunctionId<MemberScope::INSTANCE>& Function_Value_create;
-extern const FunctionId<MemberScope::INSTANCE>& Function_Value_show;
 
 #endif  // VALUE_H_
