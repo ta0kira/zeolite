@@ -17,6 +17,8 @@ class Constructor_Intersect : public TypeCategory {
   Instance_Intersect& BuildInternal(const TypeArgs& types);
 
  private:
+  ~Constructor_Intersect() = default;
+
   const std::string name_{"Intersect"};
   InstanceCache<Instance_Intersect> instance_cache_;
 };

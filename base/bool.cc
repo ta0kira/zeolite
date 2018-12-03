@@ -14,6 +14,8 @@ class Constructor_Bool
   const TypeCategory& CategoryType() const final { return Category_Bool(); }
 
  private:
+  ~Constructor_Bool() = default;
+
   MergeType InstanceMergeType() const final { return MergeType::SINGLE; }
   const TypeArgs& MergedInstanceTypes() const final { return types_; }
 

@@ -26,6 +26,8 @@ class Constructor_Queue : public ParamInstance<1>::Type {
   const FunctionDispatcher<Value_Queue,MemberScope::VALUE>& value_functions;
 
  private:
+  ~Constructor_Queue() = default;
+
   const std::string name_{"Queue"};
   FunctionDispatcher<Instance_Queue,MemberScope::INSTANCE> instance_functions_;
   FunctionDispatcher<Value_Queue,MemberScope::VALUE> value_functions_;

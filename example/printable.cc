@@ -21,6 +21,8 @@ class Constructor_Printable : public ParamInstance<0>::Type {
   const FunctionDispatcher<Value_Printable,MemberScope::VALUE>& value_functions;
 
  private:
+  ~Constructor_Printable() = default;
+
   const std::string name_{"Printable"};
   FunctionDispatcher<Value_Printable,MemberScope::VALUE> value_functions_;
   InstanceCache<Instance_Printable> instance_cache_;

@@ -21,6 +21,8 @@ class Constructor_Reader : public ParamInstance<1>::Type {
   const FunctionDispatcher<Value_Reader,MemberScope::VALUE>& value_functions;
 
  private:
+  ~Constructor_Reader() = default;
+
   const std::string name_{"Reader"};
   FunctionDispatcher<Value_Reader,MemberScope::VALUE> value_functions_;
   InstanceCache<Instance_Reader> instance_cache_;

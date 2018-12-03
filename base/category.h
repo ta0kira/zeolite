@@ -125,6 +125,8 @@ class TypeValue {
 
 class ValueVariable {
  public:
+  // NOTE: Do not make the instance type accessible. This forces the compiler to
+  // know where to get the type from if it's needed, e.g., for reduce.
   inline ValueVariable(TypeInstance& instance, const S<TypeValue>& value)
       : instance_(instance), value_(value) {}
 

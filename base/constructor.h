@@ -108,7 +108,9 @@ class ParentTypes {
   }
 
   inline const TypeArgs& GetParent(const TypeCategory& parent) const {
-    return parents_.find(&parent)->second;
+    const auto args = parents_.find(&parent);
+    FAIL_IF(args == parents_.end()) << "Invalid parent category";
+    return args->second;
   }
 
  private:

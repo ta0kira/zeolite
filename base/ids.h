@@ -20,6 +20,7 @@ class FunctionId {
   inline std::string FunctionName() const { return name_; }
 
  private:
+  ~FunctionId() = default;
   const std::string name_;
 };
 
@@ -31,6 +32,7 @@ class ValueVariableId {
   inline std::string VariableName() const { return name_; }
 
  private:
+  ~ValueVariableId() = default;
   const std::string name_;
 };
 
@@ -42,6 +44,7 @@ class TypeVariableId {
   inline std::string VariableName() const { return name_; }
 
  private:
+  ~TypeVariableId() = default;
   const std::string name_;
 };
 

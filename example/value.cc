@@ -29,6 +29,8 @@ class Constructor_Value : public ParamInstance<0>::Type {
   const GetTypeDispatcher<Concrete_Value,MemberScope::VALUE>& type_variables;
 
  private:
+  ~Constructor_Value() = default;
+
   const std::string name_{"Value"};
   FunctionDispatcher<Instance_Value,MemberScope::INSTANCE> instance_functions_;
   FunctionDispatcher<Value_Value,MemberScope::VALUE> value_functions_;

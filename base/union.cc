@@ -17,6 +17,8 @@ class Constructor_Union : public TypeCategory {
   Instance_Union& BuildInternal(const TypeArgs& types);
 
  private:
+  ~Constructor_Union() = default;
+
   const std::string name_{"Union"};
   InstanceCache<Instance_Union> instance_cache_;
 };

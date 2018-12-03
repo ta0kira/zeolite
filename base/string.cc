@@ -12,6 +12,8 @@ class Constructor_String
   const TypeCategory& CategoryType() const final { return Category_String(); }
 
  private:
+  ~Constructor_String() = default;
+
   MergeType InstanceMergeType() const final { return MergeType::SINGLE; }
   const TypeArgs& MergedInstanceTypes() const final { return types_; }
 

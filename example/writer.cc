@@ -20,6 +20,8 @@ class Constructor_Writer : public ParamInstance<1>::Type {
   const FunctionDispatcher<Value_Writer,MemberScope::VALUE>& value_functions;
 
  private:
+  ~Constructor_Writer() = default;
+
   const std::string name_{"Writer"};
   FunctionDispatcher<Value_Writer,MemberScope::VALUE> value_functions_;
   InstanceCache<Instance_Writer> instance_cache_;

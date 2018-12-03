@@ -17,6 +17,8 @@ class Constructor_Optional : public ParamInstance<1>::Type {
   Instance_Optional& BuildInternal(TypeInstance& x);
 
  private:
+  ~Constructor_Optional() = default;
+
   const std::string name_{"Optional"};
   InstanceCache<Instance_Optional> instance_cache_;
 };
