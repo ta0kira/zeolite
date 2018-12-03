@@ -72,6 +72,7 @@ class FunctionDispatcher {
   std::unordered_map<const FunctionId<M>*,R<const FunctionCaller<C>>> mapped_;
 };
 
+
 template<class C, MemberScope M>
 class GetValueDispatcher {
  public:
@@ -79,22 +80,54 @@ class GetValueDispatcher {
 
   ALWAYS_UNIQUE(GetValueDispatcher)
 
-  GetValueDispatcher& AddMember(const ValueVariableId<M>& id,
-                                ValueVariable C::*member) {
-    mapped_[&id] = member;
+  GetValueDispatcher& AddVariable(const ValueVariableId<M>& id,
+                                  ValueVariable C::*member) {
+    mapped_[&id] =
+        [member](C* object) {
+          return &(object->*member);
+        };
     return *this;
   }
 
-  ValueVariable Get(const ValueVariableId<M>& id, C* object) const {
-    const auto member = mapped_.find(&id);
-    FAIL_IF(member == mapped_.end())
-        << "Variable " << id.ValueName() << " not present in " << name_;
-    return object->*member;
+  ValueVariable* GetVariable(const ValueVariableId<M>& id, C* object) const {
+    const auto getter = mapped_.find(&id);
+    FAIL_IF(getter == mapped_.end())
+        << "Variable " << id.VariableName() << " not present in " << name_;
+    return getter->second(object);
   }
 
  private:
   const std::string name_;
-  std::unordered_map<const ValueVariableId<M>*,ValueVariable C::*> mapped_;
+  std::unordered_map<const ValueVariableId<M>*,std::function<ValueVariable*(C*)>> mapped_;
+};
+
+
+template<class C, MemberScope M>
+class GetTypeDispatcher {
+ public:
+  GetTypeDispatcher(const std::string& name) : name_(name) {}
+
+  ALWAYS_UNIQUE(GetTypeDispatcher)
+
+  GetTypeDispatcher& AddVariable(const TypeVariableId<M>& id,
+                                 TypeInstance* const C::*member) {
+    mapped_[&id] =
+        [member](C* object) {
+          return object->*member;
+        };
+    return *this;
+  }
+
+  TypeInstance* GetVariable(const TypeVariableId<M>& id, C* object) const {
+    const auto getter = mapped_.find(&id);
+    FAIL_IF(getter == mapped_.end())
+        << "Variable " << id.VariableName() << " not present in " << name_;
+    return getter->second(object);
+  }
+
+ private:
+  const std::string name_;
+  std::unordered_map<const TypeVariableId<M>*,std::function<TypeInstance*(C*)>> mapped_;
 };
 
 #endif  // DISPATCH_H_

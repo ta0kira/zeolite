@@ -25,11 +25,15 @@ class Constructor_Value : public ParamInstance<0>::Type {
 
   const FunctionDispatcher<Instance_Value,MemberScope::INSTANCE>& instance_functions;
   const FunctionDispatcher<Value_Value,MemberScope::VALUE>& value_functions;
+  const GetValueDispatcher<Concrete_Value,MemberScope::VALUE>& value_variables;
+  const GetTypeDispatcher<Concrete_Value,MemberScope::VALUE>& type_variables;
 
  private:
   const std::string name_{"Value"};
   FunctionDispatcher<Instance_Value,MemberScope::INSTANCE> instance_functions_;
   FunctionDispatcher<Value_Value,MemberScope::VALUE> value_functions_;
+  GetValueDispatcher<Concrete_Value,MemberScope::VALUE> value_variables_;
+  GetTypeDispatcher<Concrete_Value,MemberScope::VALUE> type_variables_;
   InstanceCache<Instance_Value> instance_cache_;
 };
 
@@ -129,13 +133,13 @@ struct Concrete_Value : virtual public Interface_Printable {
                  TypeInstance& x,
                  const S<TypeValue>& value)
       : parent_(parent),
-        x_(x),
+        x_(&x),
         value_(parent.Type_Var_value(x),value) {}
 
   T<> Call_Printable_print() final;
 
   Instance_Value& parent_;
-  TypeInstance& x_;
+  TypeInstance* const x_;
   ValueVariable value_;
 };
 
@@ -147,13 +151,21 @@ S<TypeValue> As_Value(const S<Concrete_Value>& value) {
 Constructor_Value::Constructor_Value()
     : instance_functions(instance_functions_),
       value_functions(value_functions_),
+      value_variables(value_variables_),
+      type_variables(type_variables_),
       instance_functions_("Value"),
-      value_functions_("Value") {
+      value_functions_("Value"),
+      value_variables_("Value"),
+      type_variables_("Value") {
   instance_functions_
       .AddFunction(Function_Value_create,&Instance_Value::Call_create)
       .AddFunction(Function_Value_show,&Instance_Value::Call_show);
   value_functions_
       .AddFunction(Function_Printable_print,&Value_Value::Call_print);
+  value_variables_
+      .AddVariable(Variable_Value_value,&Concrete_Value::value_);
+  type_variables_
+      .AddVariable(Variable_Value_x,&Concrete_Value::x_);
 }
 
 TypeInstance& Constructor_Value::Build() {
@@ -270,10 +282,7 @@ ValueVariable* Value_Value::GetValueVariable(
     const TypeInstance& instance,
     const ValueVariableId<MemberScope::VALUE>& id) {
   if (&instance == &InstanceType()) {
-    // TODO: Generalize this better.
-    if (&id == &Variable_Value_value) {
-      return &interface_->value_;
-    }
+    return Internal_Value().value_variables.GetVariable(id,interface_.get());
   }
   return TypeValue::GetValueVariable(instance,id);
 }
@@ -282,10 +291,7 @@ TypeInstance* Value_Value::GetTypeVariable(
     const TypeInstance& instance,
     const TypeVariableId<MemberScope::VALUE>& id) {
   if (&instance == &InstanceType()) {
-    // TODO: Generalize this better.
-    if (&id == &Variable_Value_x) {
-      return &interface_->x_;
-    }
+    return Internal_Value().type_variables.GetVariable(id,interface_.get());
   }
   return TypeValue::GetTypeVariable(instance,id);
 }
@@ -330,7 +336,7 @@ T<> Concrete_Value::Call_Printable_print() {
       Category_Optional().Build(Category_String().Build()),
       TypeValue::ReduceTo(
           value_.GetValue(),
-          x_,
+          *x_,
           Category_String().Build()));
   trace.SetLocal("value:5");
   if (string.GetValue()->IsPresent()) {
