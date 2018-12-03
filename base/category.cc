@@ -34,10 +34,6 @@ FunctionReturns TypeInstance::CallInstanceFunction(
   return FunctionReturns();
 }
 
-bool TypeInstance::IsOptional() const {
-  return false;
-}
-
 bool TypeInstance::CheckConversionBetween(
     const TypeInstance& x, const TypeInstance& y) {
     if (&x == &y) {
@@ -114,7 +110,7 @@ S<TypeValue> TypeValue::Require(const S<TypeValue>& self) {
   if (!self->IsPresent()) {
     FAIL() << self->InstanceType().InstanceName() << " value is not present";
   }
-  if (&self->InstanceType().CategoryType() == &Category_Optional()) {
+  if (&self->CategoryType() == &Category_Optional()) {
     return self->GetNestedValue();
   } else {
     return self;
@@ -133,7 +129,7 @@ S<TypeValue> TypeValue::ConvertTo(const S<TypeValue>& self,
   if (&instance == &self->InstanceType()) {
     return self;
   }
-  FAIL_IF(!TypeInstance::CheckConversionBetween(self->InstanceType(),instance))
+  FAIL_IF(!CheckConversionTo(self,instance))
       << "Bad conversion from " << self->InstanceType().InstanceName()
       << " to " << instance.InstanceName();
   if (&instance.CategoryType() == &Category_Optional()) {
@@ -151,9 +147,11 @@ S<TypeValue> TypeValue::ConvertTo(const S<TypeValue>& self,
 S<TypeValue> TypeValue::ReduceTo(const S<TypeValue>& self,
                                  TypeInstance& nominal,
                                  TypeInstance& instance) {
+  // NOTE: The runtime type of self should never be checked here, since reduce
+  // is meant to operate like a compile-time operation.
   if (&nominal == &instance) {
     return As_Optional(self,instance);
-  } else if (TypeInstance::CheckConversionBetween(nominal,instance)) {
+  } if (TypeInstance::CheckConversionBetween(nominal,instance)) {
     return As_Optional(ConvertTo(self,instance),instance);
   } else {
     return TypeValue::ConvertTo(Optional_Skip(),Category_Optional().Build(instance));

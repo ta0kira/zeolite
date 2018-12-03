@@ -28,10 +28,11 @@ Constructor_String& Internal_String() {
 class Value_String : public TypeValue {
  public:
   Value_String(const std::string& value) : value_(value) {}
-  const TypeInstance& InstanceType() const final { return Internal_String(); }
   std::string GetString() const final { return value_; }
 
  private:
+  const TypeInstance& InstanceType() const final { return Internal_String(); }
+
   const std::string value_;
 };
 

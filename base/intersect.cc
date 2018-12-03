@@ -69,9 +69,14 @@ class Value_Intersect : public TypeValue {
  public:
   Value_Intersect(TypeInstance& parent,
               const S<TypeValue>& value)
-      : parent_(parent), value_(value) {}
+      : parent_(parent), value_(value) {
+#ifdef OPT_TYPE_CHECKING
+    FAIL_IF(!TypeValue::CheckConversionTo(value_,parent_))
+        << "Cannot assign type-value " << value_->InstanceName()
+        << " to " << parent_.InstanceName();
+#endif
+  }
 
-  const TypeInstance& InstanceType() const final { return parent_; }
   FunctionReturns CallValueFunction(
       const FunctionId<MemberScope::VALUE>& id,
       const TypeArgs&,
@@ -82,6 +87,7 @@ class Value_Intersect : public TypeValue {
   std::string GetString() const final;
 
  private:
+  const TypeInstance& InstanceType() const final { return parent_; }
   S<TypeValue> ConvertTo(TypeInstance&) final;
 
   TypeInstance& parent_;
@@ -104,6 +110,15 @@ const TypeArgs& Instance_Intersect::TypeArgsForCategory(const TypeCategory& cate
   // NOTE: CheckConversionBetween is designed to allow this to skip checking
   // types_ so that we don't need to iterate.
   return TypeInstance::TypeArgsForCategory(category);
+}
+
+S<TypeValue> Instance_Intersect::Create(const S<TypeValue>& value) {
+  if (&value->CategoryType() == &Category_Intersect() ||
+      &value->CategoryType() == &Category_Union()) {
+    return S_get(new Value_Intersect(*this,value->GetNestedValue()));
+  } else {
+    return S_get(new Value_Intersect(*this,value));
+  }
 }
 
 bool Instance_Intersect::CheckConversionFrom(const TypeInstance& instance) const {
@@ -162,16 +177,8 @@ S<TypeValue> As_Intersect(const S<TypeValue>& value, const TypeArgs& types) {
 #else
   if (types.size() == 1) {
     return TypeValue::ConvertTo(value,*SafeGet<0>(types));
-  }
-  TypeInstance& intersect_type = Build_Intersect(types);
-  FAIL_IF(!TypeInstance::CheckConversionBetween(value->InstanceType(),intersect_type))
-      << "Cannot assign type-value " << value->InstanceType().InstanceName()
-      << " to " << intersect_type.InstanceName();
-  if (&value->InstanceType().CategoryType() == &Category_Intersect() ||
-      &value->InstanceType().CategoryType() == &Category_Union()) {
-    return S_get(new Value_Intersect(intersect_type,value->GetNestedValue()));
   } else {
-    return S_get(new Value_Intersect(intersect_type,value));
+    return Internal_Intersect().BuildInternal(types).Create(value);
   }
 #endif
 }

@@ -69,9 +69,14 @@ class Value_Union : public TypeValue {
  public:
   Value_Union(TypeInstance& parent,
               const S<TypeValue>& value)
-      : parent_(parent), value_(value) {}
+      : parent_(parent), value_(value) {
+#ifdef OPT_TYPE_CHECKING
+    FAIL_IF(!TypeValue::CheckConversionTo(value_,parent_))
+        << "Cannot assign type-value " << value_->InstanceName()
+        << " to " << parent_.InstanceName();
+#endif
+  }
 
-  const TypeInstance& InstanceType() const final { return parent_; }
   FunctionReturns CallValueFunction(
       const FunctionId<MemberScope::VALUE>& id,
       const TypeArgs&,
@@ -82,6 +87,7 @@ class Value_Union : public TypeValue {
   std::string GetString() const final;
 
  private:
+  const TypeInstance& InstanceType() const final { return parent_; }
   S<TypeValue> ConvertTo(TypeInstance&) final;
 
   TypeInstance& parent_;
@@ -104,6 +110,15 @@ const TypeArgs& Instance_Union::TypeArgsForCategory(const TypeCategory& category
   // NOTE: CheckConversionBetween is designed to allow this to skip checking
   // types_ so that we don't need to iterate.
   return TypeInstance::TypeArgsForCategory(category);
+}
+
+S<TypeValue> Instance_Union::Create(const S<TypeValue>& value) {
+  if (&value->CategoryType() == &Category_Union() ||
+      &value->CategoryType() == &Category_Union()) {
+    return S_get(new Value_Union(*this,value->GetNestedValue()));
+  } else {
+    return S_get(new Value_Union(*this,value));
+  }
 }
 
 bool Instance_Union::CheckConversionFrom(const TypeInstance& instance) const {
@@ -162,16 +177,8 @@ S<TypeValue> As_Union(const S<TypeValue>& value, const TypeArgs& types) {
 #else
   if (types.size() == 1) {
     return TypeValue::ConvertTo(value,*SafeGet<0>(types));
-  }
-  TypeInstance& union_type = Build_Union(types);
-  FAIL_IF(!TypeInstance::CheckConversionBetween(value->InstanceType(),union_type))
-      << "Cannot assign type-value " << value->InstanceType().InstanceName()
-      << " to " << union_type.InstanceName();
-  if (&value->InstanceType().CategoryType() == &Category_Intersect() ||
-      &value->InstanceType().CategoryType() == &Category_Union()) {
-    return S_get(new Value_Union(union_type,value->GetNestedValue()));
   } else {
-    return S_get(new Value_Union(union_type,value));
+    return Internal_Union().BuildInternal(types).Create(value);
   }
 #endif
 }

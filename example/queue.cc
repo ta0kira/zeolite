@@ -92,7 +92,6 @@ class Value_Queue : public TypeValue {
       : parent_(parent),
         interface_(interface) {}
 
-  const TypeInstance& InstanceType() const final { return parent_; }
   FunctionReturns CallValueFunction(
       const FunctionId<MemberScope::VALUE>& id,
       const TypeArgs&,
@@ -102,6 +101,7 @@ class Value_Queue : public TypeValue {
   ParamReturns<0>::Type Call_write(ParamTypes<0>::Type, ParamArgs<1>::Type) const;
 
  private:
+  const TypeInstance& InstanceType() const final { return parent_; }
   S<TypeValue> ConvertTo(TypeInstance&) final;
 
   Instance_Queue& parent_;

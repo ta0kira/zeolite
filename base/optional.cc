@@ -45,7 +45,6 @@ class Instance_Optional : public TypeInstance {
   const std::string& InstanceName() const final { return name_; }
   const TypeCategory& CategoryType() const final { return Category_Optional(); }
   const TypeArgs& TypeArgsForCategory(const TypeCategory& category) const final;
-  bool IsOptional() const final { return true; }
   S<TypeValue> Create(const S<TypeValue>& value);
   S<TypeValue> Skip();
 
@@ -67,11 +66,11 @@ class Value_Optional : public TypeValue {
                  const S<TypeValue>& value)
       : parent_(parent), value_(value) {}
 
-  const TypeInstance& InstanceType() const final { return parent_; }
+  S<TypeValue> GetNestedValue() final { return value_; }
   bool IsPresent() const final { return !!value_; }
 
  private:
-  S<TypeValue> GetNestedValue() final { return value_; }
+  const TypeInstance& InstanceType() const final { return parent_; }
   S<TypeValue> ConvertTo(TypeInstance&) final;
 
   TypeInstance& parent_;
@@ -156,7 +155,7 @@ S<TypeValue> Optional_Skip() {
 S<TypeValue> As_Optional(const S<TypeValue>& value, TypeInstance& type) {
   // NOTE: Assumes that value is not nullptr. The caller needs to explicitly use
   // Optional_Skip if appropriate.
-  if (value->InstanceType().IsOptional()) {
+  if (&value->CategoryType() == &Category_Optional()) {
     if (value->GetNestedValue()) {
       return Internal_Optional().BuildInternal(type).Create(value->GetNestedValue());
     } else {

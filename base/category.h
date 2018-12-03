@@ -92,7 +92,6 @@ class TypeInstance {
       const FunctionId<MemberScope::INSTANCE>&,
       const TypeArgs&,
       const FunctionArgs&);
-  virtual bool IsOptional() const;
 
   static bool CheckConversionBetween(const TypeInstance&, const TypeInstance&);
 
@@ -110,7 +109,6 @@ class TypeValue {
 
   virtual ~TypeValue() = default;
 
-  virtual const TypeInstance& InstanceType() const = 0;
   virtual FunctionReturns CallValueFunction(
       const FunctionId<MemberScope::VALUE>&,
       const TypeArgs&,
@@ -122,13 +120,27 @@ class TypeValue {
   virtual bool GetBool() const;
   virtual std::string GetString() const;
 
+  inline const TypeCategory& CategoryType() const {
+    return InstanceType().CategoryType();
+  }
+
+  inline const std::string& InstanceName() const {
+    return InstanceType().InstanceName();
+  }
+
   static S<TypeValue> Require(const S<TypeValue>&);
   static S<TypeValue> ConvertTo(const S<TypeValue>&, TypeInstance&);
   static S<TypeValue> ReduceTo(const S<TypeValue>&, TypeInstance&, TypeInstance&);
 
  protected:
   TypeValue() = default;
+  virtual const TypeInstance& InstanceType() const = 0;
   virtual S<TypeValue> ConvertTo(TypeInstance&);
+
+  inline static bool CheckConversionTo(
+      const S<TypeValue>& self, const TypeInstance& instance) {
+    return TypeInstance::CheckConversionBetween(self->InstanceType(),instance);
+  }
 };
 
 

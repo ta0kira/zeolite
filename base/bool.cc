@@ -30,10 +30,11 @@ Constructor_Bool& Internal_Bool() {
 class Value_Bool : public TypeValue {
  public:
   Value_Bool(bool value) : value_(value) {}
-  const TypeInstance& InstanceType() const final { return Internal_Bool(); }
   bool GetBool() const final { return value_; }
 
  private:
+  const TypeInstance& InstanceType() const final { return Internal_Bool(); }
+
   const bool value_;
 };
 

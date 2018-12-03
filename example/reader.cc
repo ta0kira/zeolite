@@ -69,7 +69,6 @@ class Value_Reader : public TypeValue {
       : parent_(parent),
         interface_(interface) {}
 
-  const TypeInstance& InstanceType() const final { return parent_; }
   FunctionReturns CallValueFunction(
       const FunctionId<MemberScope::VALUE>& id,
       const TypeArgs&,
@@ -78,6 +77,7 @@ class Value_Reader : public TypeValue {
   ParamReturns<1>::Type Call_read(ParamTypes<0>::Type, ParamArgs<0>::Type) const;
 
  private:
+  const TypeInstance& InstanceType() const final { return parent_; }
   S<TypeValue> ConvertTo(TypeInstance&) final;
 
   Instance_Reader& parent_;

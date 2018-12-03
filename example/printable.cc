@@ -61,7 +61,6 @@ class Value_Printable : public TypeValue {
       : parent_(parent),
         interface_(interface) {}
 
-  const TypeInstance& InstanceType() const final { return parent_; }
   FunctionReturns CallValueFunction(
       const FunctionId<MemberScope::VALUE>& id,
       const TypeArgs&,
@@ -70,6 +69,7 @@ class Value_Printable : public TypeValue {
   ParamReturns<0>::Type Call_print(ParamTypes<0>::Type, ParamArgs<0>::Type) const;
 
  private:
+  const TypeInstance& InstanceType() const final { return parent_; }
   S<TypeValue> ConvertTo(TypeInstance&) final;
 
   Instance_Printable& parent_;
