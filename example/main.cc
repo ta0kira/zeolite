@@ -40,13 +40,14 @@ int main() {
   TRACE_FUNCTION("Example.execute")
 
   SET_CONTEXT_POINT("main:0")
-  S<TypeValue> queue =
+  ValueVariable queue(
+      Category_Queue().Build(Category_Value().Build()),
       SafeGet<0>(Category_Queue()
           .Build(Category_Value().Build())
-          .CallInstanceFunction(Function_Queue_create,TypeArgs{},FunctionArgs{}));
+          .CallInstanceFunction(Function_Queue_create,TypeArgs{},FunctionArgs{})));
 
   SET_CONTEXT_POINT("main:2")
-  queue->CallValueFunction(
+  queue.GetValue()->CallValueFunction(
       Function_Writer_write,
       TypeArgs{},
       FunctionArgs{
@@ -59,7 +60,7 @@ int main() {
                         FunctionArgs{As_String("one")}))});
 
   SET_CONTEXT_POINT("main:3")
-  queue->CallValueFunction(
+  queue.GetValue()->CallValueFunction(
       Function_Writer_write,
       TypeArgs{},
       FunctionArgs{
@@ -72,7 +73,7 @@ int main() {
                         FunctionArgs{As_String("two")}))});
 
   SET_CONTEXT_POINT("main:4")
-  queue->CallValueFunction(
+  queue.GetValue()->CallValueFunction(
       Function_Writer_write,
       TypeArgs{},
       FunctionArgs{
@@ -85,7 +86,7 @@ int main() {
                         FunctionArgs{As_String("three")}))});
 
   SET_CONTEXT_POINT("main:5")
-  queue->CallValueFunction(
+  queue.GetValue()->CallValueFunction(
       Function_Writer_write,
       TypeArgs{},
       FunctionArgs{
@@ -98,7 +99,7 @@ int main() {
                         FunctionArgs{As_Bool(false)}))});
 
   SET_CONTEXT_POINT("main:7")
-  ValueVariable reader(Category_Reader().Build(Category_Value().Build()),queue);
+  ValueVariable reader(Category_Reader().Build(Category_Value().Build()),queue.GetValue());
 
   while (true) {
     SET_CONTEXT_POINT("main:9")
