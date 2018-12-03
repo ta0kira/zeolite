@@ -118,10 +118,10 @@ const TypeArgs& Instance_Writer::TypeArgsForCategory(const TypeCategory& categor
 }
 
 bool Instance_Writer::CheckConversionFrom(const TypeInstance& instance) const {
-  if (!instance.IsParentCategory(Category_Writer())) {
+  if (!CategoryIsParentOf(instance)) {
     return false;
   }
-  const TypeArgs& args = instance.TypeArgsForCategory(Category_Writer());
+  const TypeArgs& args = CategoryTypeArgsFrom(instance);
   FAIL_IF(args.size() != 1) << "Wrong number of type args";
   return CheckConversionBetween(param_x,*SafeGet<0>(args));  // contravariant
 }
@@ -144,7 +144,7 @@ ParamReturns<0>::Type Value_Writer::Call_write(
 S<TypeValue> Value_Writer::ConvertTo(TypeInstance& instance) {
   // TODO: Generalize this better.
   if (&instance.CategoryType() == &Category_Writer()) {
-    const TypeArgs& args = instance.TypeArgsForCategory(Category_Writer());
+    const TypeArgs& args = InstanceType().CategoryTypeArgsFrom(instance);
     FAIL_IF(args.size() != 1) << "Wrong number of type args";
     return As_Writer(interface_,*SafeGet<0>(args));
   }

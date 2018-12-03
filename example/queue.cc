@@ -179,10 +179,10 @@ ParamReturns<1>::Type Instance_Queue::Call_create(
 }
 
 bool Instance_Queue::CheckConversionFrom(const TypeInstance& instance) const {
-  if (!instance.IsParentCategory(Category_Queue())) {
+  if (!CategoryIsParentOf(instance)) {
     return false;
   }
-  const TypeArgs& args = instance.TypeArgsForCategory(Category_Queue());
+  const TypeArgs& args = CategoryTypeArgsFrom(instance);
   FAIL_IF(args.size() != 1) << "Wrong number of type args";
   return SafeGet<0>(args) == &param_x;  // invariant
 }
@@ -212,7 +212,7 @@ ParamReturns<0>::Type Value_Queue::Call_write(
 S<TypeValue> Value_Queue::ConvertTo(TypeInstance& instance) {
   // TODO: Generalize this better.
   if (&instance.CategoryType() == &Category_Queue()) {
-    const TypeArgs& args = instance.TypeArgsForCategory(Category_Queue());
+    const TypeArgs& args = InstanceType().CategoryTypeArgsFrom(instance);
     FAIL_IF(args.size() != 1) << "Wrong number of type args";
     return As_Queue(interface_,*SafeGet<0>(args));
   }

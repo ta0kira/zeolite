@@ -14,17 +14,6 @@ FunctionReturns TypeCategory::CallCategoryFunction(
 }
 
 
-const TypeArgs& TypeInstance::TypeArgsForCategory(const TypeCategory& category) const {
-  FAIL() << "Category " << category.CategoryName()
-         << " is not a base of type-instance " << InstanceName();
-  static const TypeArgs failed;
-  return failed;
-}
-
-bool TypeInstance::IsParentCategory(const TypeCategory& category) const {
-  return &CategoryType() == &category;
-}
-
 FunctionReturns TypeInstance::CallInstanceFunction(
     const FunctionId<MemberScope::INSTANCE>& id,
     const TypeArgs&,
@@ -44,6 +33,17 @@ bool TypeInstance::CheckConversionBetween(
     return y.CheckConversionFrom(x);
   }
   return ExpandCheckLeft(x,y);
+}
+
+bool TypeInstance::IsParentCategory(const TypeCategory& category) const {
+  return &CategoryType() == &category;
+}
+
+const TypeArgs& TypeInstance::TypeArgsForCategory(const TypeCategory& category) const {
+  FAIL() << "Category " << category.CategoryName()
+         << " is not a base of type-instance " << InstanceName();
+  static const TypeArgs failed;
+  return failed;
 }
 
 bool TypeInstance::ExpandCheckLeft(
@@ -167,11 +167,11 @@ S<TypeValue> TypeValue::ConvertTo(const S<TypeValue>& self,
       << "Bad conversion from " << self->InstanceType().InstanceName()
       << " to " << instance.InstanceName();
   if (&instance.CategoryType() == &Category_Optional()) {
-    return As_Optional(self,*SafeGet<0>(instance.TypeArgsForCategory(Category_Optional())));
+    return As_Optional(self,*SafeGet<0>(instance.CategoryTypeArgsFrom(instance)));
   } else if (&instance.CategoryType() == &Category_Union()) {
-    return As_Union(self,instance.TypeArgsForCategory(Category_Union()));
+    return As_Union(self,instance.CategoryTypeArgsFrom(instance));
   } else if (&instance.CategoryType() == &Category_Intersect()) {
-    return As_Intersect(self,instance.TypeArgsForCategory(Category_Intersect()));
+    return As_Intersect(self,instance.CategoryTypeArgsFrom(instance));
   } else {
     return self->ConvertTo(instance);
   }

@@ -104,10 +104,10 @@ const TypeArgs& Instance_Printable::TypeArgsForCategory(const TypeCategory& cate
 }
 
 bool Instance_Printable::CheckConversionFrom(const TypeInstance& instance) const {
-  if (!instance.IsParentCategory(Category_Printable())) {
+  if (!CategoryIsParentOf(instance)) {
     return false;
   }
-  const TypeArgs& args = instance.TypeArgsForCategory(Category_Printable());
+  const TypeArgs& args = CategoryTypeArgsFrom(instance);
   FAIL_IF(args.size() != 0) << "Wrong number of type args";
   return true;
 }
@@ -129,7 +129,7 @@ ParamReturns<0>::Type Value_Printable::Call_print(
 S<TypeValue> Value_Printable::ConvertTo(TypeInstance& instance) {
   // TODO: Generalize this better.
   if (&instance.CategoryType() == &Category_Printable()) {
-    const TypeArgs& args = instance.TypeArgsForCategory(Category_Printable());
+    const TypeArgs& args = InstanceType().CategoryTypeArgsFrom(instance);
     FAIL_IF(args.size() != 0) << "Wrong number of type args";
     return As_Printable(interface_);
   }

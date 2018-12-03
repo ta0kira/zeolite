@@ -44,11 +44,11 @@ class Instance_Optional : public TypeInstance {
 
   const std::string& InstanceName() const final { return name_; }
   const TypeCategory& CategoryType() const final { return Category_Optional(); }
-  const TypeArgs& TypeArgsForCategory(const TypeCategory& category) const final;
   S<TypeValue> Create(const S<TypeValue>& value);
   S<TypeValue> Skip();
 
  private:
+  const TypeArgs& TypeArgsForCategory(const TypeCategory& category) const final;
   bool CheckConversionFrom(const TypeInstance& type) const final;
   MergeType InstanceMergeType() const final { return MergeType::SINGLE; }
   const TypeArgs& MergedInstanceTypes() const final { return types_; }
@@ -83,24 +83,15 @@ TypeInstance& Constructor_Optional::Build(TypeInstance& x) {
 }
 
 Instance_Optional& Constructor_Optional::BuildInternal(TypeInstance& x) {
-  TypeInstance* unwrapped = &x;
-  // The compiler should take care of preventing optional optional x, but this
-  // is mostly for redundant checking.
-  while (&unwrapped->CategoryType() == &Category_Optional()) {
-    unwrapped = SafeGet<0>(unwrapped->TypeArgsForCategory(Category_Optional()));
+  TypeInstance* flattened = &x;
+  while (&flattened->CategoryType() == &Category_Optional()) {
+    flattened = SafeGet<0>(flattened->CategoryTypeArgsFrom(*flattened));
   }
-  R<Instance_Optional>& instance = instance_cache_.Create(*unwrapped);
+  R<Instance_Optional>& instance = instance_cache_.Create(*flattened);
   if (!instance) {
-    instance = R_get(new Instance_Optional(*unwrapped));
+    instance = R_get(new Instance_Optional(*flattened));
   }
   return *instance;
-}
-
-const TypeArgs& Instance_Optional::TypeArgsForCategory(const TypeCategory& category) const {
-  if (parents_.HasParent(category)) {
-    return parents_.GetParent(category);
-  }
-  return TypeInstance::TypeArgsForCategory(category);
 }
 
 S<TypeValue> Instance_Optional::Create(const S<TypeValue>& value) {
@@ -116,18 +107,25 @@ bool Instance_Optional::CheckConversionFrom(const TypeInstance& instance) const 
   if (CheckConversionBetween(instance,x_)) {
     return true;
   }
-  if (!instance.IsParentCategory(Category_Optional())) {
+  if (!CategoryIsParentOf(instance)) {
     return false;
   }
-  const TypeArgs& args = instance.TypeArgsForCategory(Category_Optional());
+  const TypeArgs& args = CategoryTypeArgsFrom(instance);
   FAIL_IF(args.size() != 1) << "Wrong number of type args";
   return CheckConversionBetween(*SafeGet<0>(args),x_);  // covariant
+}
+
+const TypeArgs& Instance_Optional::TypeArgsForCategory(const TypeCategory& category) const {
+  if (parents_.HasParent(category)) {
+    return parents_.GetParent(category);
+  }
+  return TypeInstance::TypeArgsForCategory(category);
 }
 
 
 S<TypeValue> Value_Optional::ConvertTo(TypeInstance& instance) {
   if (&instance.CategoryType() == &Category_Optional()) {
-    const TypeArgs& args = instance.TypeArgsForCategory(Category_Optional());
+    const TypeArgs& args = InstanceType().CategoryTypeArgsFrom(instance);
     FAIL_IF(args.size() != 1) << "Wrong number of type args";
     if (value_) {
       return As_Optional(value_,*SafeGet<0>(args));

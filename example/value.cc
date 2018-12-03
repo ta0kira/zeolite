@@ -197,10 +197,10 @@ ParamReturns<1>::Type Instance_Value::Call_create(
 }
 
 bool Instance_Value::CheckConversionFrom(const TypeInstance& instance) const {
-  if (!instance.IsParentCategory(Category_Value())) {
+  if (!CategoryIsParentOf(instance)) {
     return false;
   }
-  const TypeArgs& args = instance.TypeArgsForCategory(Category_Value());
+  const TypeArgs& args = CategoryTypeArgsFrom(instance);
   FAIL_IF(args.size() != 0) << "Wrong number of type args";
   return true;
 }
@@ -222,7 +222,7 @@ ParamReturns<0>::Type Value_Value::Call_print(
 S<TypeValue> Value_Value::ConvertTo(TypeInstance& instance) {
   // TODO: Generalize this better.
   if (&instance.CategoryType() == &Category_Value()) {
-    const TypeArgs& args = instance.TypeArgsForCategory(Category_Value());
+    const TypeArgs& args = InstanceType().CategoryTypeArgsFrom(instance);
     FAIL_IF(args.size() != 0) << "Wrong number of type args";
     return As_Value(interface_);
   }

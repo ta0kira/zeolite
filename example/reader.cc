@@ -119,10 +119,10 @@ const TypeArgs& Instance_Reader::TypeArgsForCategory(const TypeCategory& categor
 }
 
 bool Instance_Reader::CheckConversionFrom(const TypeInstance& instance) const {
-  if (!instance.IsParentCategory(Category_Reader())) {
+  if (!CategoryIsParentOf(instance)) {
     return false;
   }
-  const TypeArgs& args = instance.TypeArgsForCategory(Category_Reader());
+  const TypeArgs& args = CategoryTypeArgsFrom(instance);
   FAIL_IF(args.size() != 1) << "Wrong number of type args";
   return CheckConversionBetween(*SafeGet<0>(args),param_x);  // covariant
 }
@@ -145,7 +145,7 @@ ParamReturns<1>::Type Value_Reader::Call_read(
 S<TypeValue> Value_Reader::ConvertTo(TypeInstance& instance) {
   // TODO: Generalize this better.
   if (&instance.CategoryType() == &Category_Reader()) {
-    const TypeArgs& args = instance.TypeArgsForCategory(Category_Reader());
+    const TypeArgs& args = InstanceType().CategoryTypeArgsFrom(instance);
     FAIL_IF(args.size() != 1) << "Wrong number of type args";
     return As_Reader(interface_,*SafeGet<0>(args));
   }

@@ -84,12 +84,18 @@ class TypeInstance {
 
   virtual const std::string& InstanceName() const = 0;
   virtual const TypeCategory& CategoryType() const = 0;
-  virtual bool IsParentCategory(const TypeCategory&) const;
-  virtual const TypeArgs& TypeArgsForCategory(const TypeCategory&) const;
   virtual FunctionReturns CallInstanceFunction(
       const FunctionId<MemberScope::INSTANCE>&,
       const TypeArgs&,
       const FunctionArgs&);
+
+  inline bool CategoryIsParentOf(const TypeInstance& instance) const {
+    return instance.IsParentCategory(CategoryType());
+  }
+
+  inline const TypeArgs& CategoryTypeArgsFrom(const TypeInstance& instance) const {
+    return instance.TypeArgsForCategory(CategoryType());
+  }
 
   static bool CheckConversionBetween(const TypeInstance&, const TypeInstance&);
 
@@ -97,6 +103,8 @@ class TypeInstance {
   TypeInstance() = default;
   virtual ~TypeInstance() = default;
 
+  virtual bool IsParentCategory(const TypeCategory&) const;
+  virtual const TypeArgs& TypeArgsForCategory(const TypeCategory&) const;
   virtual bool CheckConversionFrom(const TypeInstance&) const;
   virtual MergeType InstanceMergeType() const = 0;
   virtual const TypeArgs& MergedInstanceTypes() const = 0;
