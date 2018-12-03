@@ -36,6 +36,8 @@ class FunctionDispatcher {
  public:
   FunctionDispatcher(const std::string& name) : name_(name) {}
 
+  ALWAYS_UNIQUE(FunctionDispatcher)
+
   template<class A, class T, class R, class C2>
   FunctionDispatcher& AddFunction(const FunctionId<M>& id,
                                   R(C2::*function)(const T&,const A&)) {
@@ -74,6 +76,8 @@ template<class C, MemberScope M>
 class GetValueDispatcher {
  public:
   GetValueDispatcher(const std::string& name) : name_(name) {}
+
+  ALWAYS_UNIQUE(GetValueDispatcher)
 
   GetValueDispatcher& AddMember(const ValueVariableId<M>& id,
                                 ValueVariable C::*member) {

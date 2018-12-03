@@ -16,19 +16,29 @@ template<MemberScope>
 class FunctionId {
  public:
   inline FunctionId(const std::string& name) : name_(name) {}
+  ALWAYS_PERMANENT(FunctionId)
   inline std::string FunctionName() const { return name_; }
 
  private:
   const std::string name_;
 };
 
-// NOTE: Even though variables can exist at the category/instance level,
-// categories and instances are singletons and therefore won't access variables
-// from another object of the same type.
 template<MemberScope>
 class ValueVariableId {
  public:
   inline ValueVariableId(const std::string& name) : name_(name) {}
+  ALWAYS_PERMANENT(ValueVariableId)
+  inline std::string VariableName() const { return name_; }
+
+ private:
+  const std::string name_;
+};
+
+template<MemberScope>
+class TypeVariableId {
+ public:
+  inline TypeVariableId(const std::string& name) : name_(name) {}
+  ALWAYS_PERMANENT(TypeVariableId)
   inline std::string VariableName() const { return name_; }
 
  private:

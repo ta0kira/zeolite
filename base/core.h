@@ -11,11 +11,15 @@
 
 #define FAIL_IF(p) LogThenCrash(p,#p)
 
-#define ALWAYS_UNIQUE(type) \
+#define ALWAYS_PERMANENT(type) \
   type(const type&) = delete; \
   type(type&&) = delete; \
   type& operator =(const type&) = delete; \
   type& operator =(type&&) = delete;
+
+#define ALWAYS_UNIQUE(type) \
+  ALWAYS_PERMANENT(type) \
+  void* operator new(std::size_t size) = delete;
 
 
 template<class T>

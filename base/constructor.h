@@ -28,6 +28,46 @@ struct ParamInstance<0, Ts...> {
 };
 
 
+template<int N, class...Ts>
+struct ParamArgs {
+  using Type = typename ParamArgs<N-1, S<TypeValue>, Ts...>::Type;
+};
+
+template<class...Ts>
+struct ParamArgs<0, Ts...> {
+  using Type = const T<Ts...>&;
+};
+
+
+template<int N, class...Ts>
+struct ParamReturns {
+  using Type = typename ParamReturns<N-1, S<TypeValue>, Ts...>::Type;
+};
+
+template<class...Ts>
+struct ParamReturns<0, Ts...> {
+  using Type = T<Ts...>;
+};
+
+
+template<int N, class...Ts>
+struct ParamTypes {
+  using Type = typename ParamTypes<N-1, TypeInstance*, Ts...>::Type;
+};
+
+template<class...Ts>
+struct ParamTypes<0, Ts...> {
+  using Type = const T<Ts...>&;
+};
+
+
+template<int I, class T>
+const T& SafeGet(const std::vector<T>& values) {
+  FAIL_IF(I < 0 || I >= values.size()) << "Index " << I << " out of range";
+  return values[I];
+}
+
+
 template<class I>
 class InstanceCache {
  public:

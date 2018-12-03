@@ -79,7 +79,6 @@ class Value_Intersect : public TypeValue {
       const FunctionId<MemberScope::VALUE>& id,
       const TypeArgs&,
       const FunctionArgs& args) final;
-  ValueVariable* GetValueVariable(const ValueVariableId<MemberScope::VALUE>&) final;
   S<TypeValue> GetNestedValue() final { return value_; }
   bool GetBool() const final;
   std::string GetString() const final;
@@ -116,11 +115,6 @@ FunctionReturns Value_Intersect::CallValueFunction(
     const TypeArgs& types,
     const FunctionArgs& args) {
   return value_->CallValueFunction(id,types,args);
-}
-
-ValueVariable* Value_Intersect::GetValueVariable(
-    const ValueVariableId<MemberScope::VALUE>& id) {
-  return value_->GetValueVariable(id);
 }
 
 bool Value_Intersect::GetBool() const {

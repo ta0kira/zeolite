@@ -3,6 +3,7 @@
 #include <iostream>
 
 #include "base/dispatch.h"
+#include "base/optional.h"
 #include "base/string.h"
 #include "base/trace.h"
 
@@ -57,6 +58,7 @@ class Instance_Value : public TypeInstance {
       const FunctionArgs&) final;
 
   ParamReturns<1>::Type Call_create(ParamTypes<1>::Type, ParamArgs<1>::Type);
+  ParamReturns<0>::Type Call_show(ParamTypes<0>::Type, ParamArgs<1>::Type);
 
   TypeInstance& Type_Var_value(TypeInstance& x) const {
     return x;
@@ -67,6 +69,10 @@ class Instance_Value : public TypeInstance {
   }
 
   TypeInstance& Type_create_r0() const {
+    return Category_Value().Build();
+  }
+
+  TypeInstance& Type_show_a0() const {
     return Category_Value().Build();
   }
 
@@ -93,6 +99,14 @@ class Value_Value : public TypeValue {
       const TypeArgs&,
       const FunctionArgs& args) final;
 
+  ValueVariable* GetValueVariable(
+      const TypeInstance&,
+      const ValueVariableId<MemberScope::VALUE>&) final;
+
+  TypeInstance* GetTypeVariable(
+      const TypeInstance&,
+      const TypeVariableId<MemberScope::VALUE>&) final;
+
   ParamReturns<0>::Type Call_print(ParamTypes<0>::Type, ParamArgs<0>::Type) const;
 
  private:
@@ -103,6 +117,11 @@ class Value_Value : public TypeValue {
   const S<Concrete_Value> interface_;
 };
 
+
+const ValueVariableId<MemberScope::VALUE>& Variable_Value_value =
+    *new ValueVariableId<MemberScope::VALUE>("Value.value");
+const TypeVariableId<MemberScope::VALUE>& Variable_Value_x =
+    *new TypeVariableId<MemberScope::VALUE>("Value.x");
 
 struct Concrete_Value : virtual public Interface_Printable {
  public:
@@ -115,9 +134,8 @@ struct Concrete_Value : virtual public Interface_Printable {
 
   T<> Call_Printable_print() final;
 
- private:
-  TypeInstance& x_;
   Instance_Value& parent_;
+  TypeInstance& x_;
   ValueVariable value_;
 };
 
@@ -132,7 +150,8 @@ Constructor_Value::Constructor_Value()
       instance_functions_("Value"),
       value_functions_("Value") {
   instance_functions_
-      .AddFunction(Function_Value_create,&Instance_Value::Call_create);
+      .AddFunction(Function_Value_create,&Instance_Value::Call_create)
+      .AddFunction(Function_Value_show,&Instance_Value::Call_show);
   value_functions_
       .AddFunction(Function_Printable_print,&Value_Value::Call_print);
 }
@@ -178,6 +197,13 @@ FunctionReturns Instance_Value::CallInstanceFunction(
 03:     value = value,
 04:   };
 05: }
+06:
+07: show (obj) {
+08:   optional String string = reduce<String>(obj.value);
+09:   if (present(string)) {
+10:     print("Show: " + require(string));  // <- fake syntax for now
+11:   }
+12: }
 
 */
 
@@ -185,7 +211,8 @@ ParamReturns<1>::Type Instance_Value::Call_create(
       ParamTypes<1>::Type types, ParamArgs<1>::Type args) {
   SourceContext trace("Value.create");
   trace.SetLocal("value:0");
-  S<TypeValue> value = TypeValue::ConvertTo(std::get<0>(args),Type_create_a0(*std::get<0>(types)));
+  TypeInstance& x = *std::get<0>(types);
+  ValueVariable value(Type_create_a0(x),std::get<0>(args));
   trace.SetLocal("value:1");
   return
       T_get(
@@ -193,7 +220,33 @@ ParamReturns<1>::Type Instance_Value::Call_create(
               S_get(
                   new Value_Value(
                       *this,
-                      S_get(new Concrete_Value(*this,*std::get<0>(types),value)))),Type_create_r0()));
+                      S_get(new Concrete_Value(*this,x,value.GetValue())))),Type_create_r0()));
+}
+
+ParamReturns<0>::Type Instance_Value::Call_show(
+      ParamTypes<0>::Type types, ParamArgs<1>::Type args) {
+  SourceContext trace("Value.show");
+  trace.SetLocal("value:7");
+  ValueVariable obj(Type_show_a0(),std::get<0>(args));
+  trace.SetLocal("value:8");
+  ValueVariable string(
+      Category_Optional().Build(Category_String().Build()),
+      TypeValue::ReduceTo(
+          obj.GetValue()
+              ->GetValueVariable(*this,Variable_Value_value)
+              ->GetValue(),
+          // NOTE: This assumes that the compiler is going to infer that the
+          // expression type is obj.x, and not whatever the runtime type of
+          // obj.value happens to be.
+          *TypeValue::ConvertTo(obj.GetValue(),Type_show_a0())
+              ->GetTypeVariable(*this,Variable_Value_x),
+          Category_String().Build()));
+  trace.SetLocal("value:9");
+  if (string.GetValue()->IsPresent()) {
+    trace.SetLocal("value:10");
+    std::cout << "Show: " << TypeValue::Require(string.GetValue())->GetString() << std::endl;
+  }
+  return T_get();
 }
 
 bool Instance_Value::CheckConversionFrom(const TypeInstance& instance) const {
@@ -211,6 +264,30 @@ FunctionReturns Value_Value::CallValueFunction(
     const TypeArgs& types,
     const FunctionArgs& args) {
   return Internal_Value().value_functions.Call(id,this,types,args);
+}
+
+ValueVariable* Value_Value::GetValueVariable(
+    const TypeInstance& instance,
+    const ValueVariableId<MemberScope::VALUE>& id) {
+  if (&instance == &InstanceType()) {
+    // TODO: Generalize this better.
+    if (&id == &Variable_Value_value) {
+      return &interface_->value_;
+    }
+  }
+  return TypeValue::GetValueVariable(instance,id);
+}
+
+TypeInstance* Value_Value::GetTypeVariable(
+    const TypeInstance& instance,
+    const TypeVariableId<MemberScope::VALUE>& id) {
+  if (&instance == &InstanceType()) {
+    // TODO: Generalize this better.
+    if (&id == &Variable_Value_x) {
+      return &interface_->x_;
+    }
+  }
+  return TypeValue::GetTypeVariable(instance,id);
 }
 
 ParamReturns<0>::Type Value_Value::Call_print(
@@ -235,28 +312,32 @@ S<TypeValue> Value_Value::ConvertTo(TypeInstance& instance) {
 
 /*
 
-07: print () {
-08:   optional String string = reduce<String>(value);
-09:   if (present(string)) {
-10:     print(require(string));  // <- fake syntax for now
-11:   } else {
-12:     print("(not a string)");
-13:   }
-14: }
+13: print () {
+14:   optional String string = reduce<String>(value);
+15:   if (present(string)) {
+16:     print(require(string));  // <- fake syntax for now
+17:   } else {
+18:     print("(not a string)");
+19:   }
+10: }
 
 */
 
 T<> Concrete_Value::Call_Printable_print() {
   SourceContext trace("Value.print");
-  trace.SetLocal("value:8");
-  S<TypeValue> string =
-      TypeValue::ReduceTo(value_.GetValue(),x_,Category_String().Build());
-  trace.SetLocal("value:9");
-  if (string->IsPresent()) {
-    trace.SetLocal("value:10");
-    std::cout << TypeValue::Require(string)->GetString() << std::endl;
+  trace.SetLocal("value:14");
+  ValueVariable string(
+      Category_Optional().Build(Category_String().Build()),
+      TypeValue::ReduceTo(
+          value_.GetValue(),
+          x_,
+          Category_String().Build()));
+  trace.SetLocal("value:5");
+  if (string.GetValue()->IsPresent()) {
+    trace.SetLocal("value:16");
+    std::cout << TypeValue::Require(string.GetValue())->GetString() << std::endl;
   } else {
-    trace.SetLocal("value:12");
+    trace.SetLocal("value:18");
     std::cout << "(not a string)" << std::endl;
   }
   return T_get();
@@ -271,5 +352,5 @@ ParamInstance<0>::Type& Category_Value() {
 
 const FunctionId<MemberScope::INSTANCE>& Function_Value_create =
     *new FunctionId<MemberScope::INSTANCE>("Value.create");
-const FunctionId<MemberScope::VALUE>& Function_Value_print =
-    *new FunctionId<MemberScope::VALUE>("Value.print");
+const FunctionId<MemberScope::INSTANCE>& Function_Value_show =
+    *new FunctionId<MemberScope::INSTANCE>("Value.show");

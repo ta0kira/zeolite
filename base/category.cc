@@ -108,19 +108,34 @@ FunctionReturns TypeValue::CallValueFunction(
     const TypeArgs&,
     const FunctionArgs&) {
   FAIL() << "Function " << id.FunctionName()
-         << " not supported in type-value " << InstanceType().InstanceName();
+         << " not supported in type-value " << InstanceName();
   return FunctionReturns();
 }
 
 ValueVariable* TypeValue::GetValueVariable(
+    const TypeInstance& instance,
     const ValueVariableId<MemberScope::VALUE>& id) {
+  FAIL_IF(&instance != &InstanceType())
+      << "Member variables in type-value " << InstanceName()
+      << " not visible from " << instance.InstanceName();
   FAIL() << "Member variable " << id.VariableName()
-         << " not supported in type-value " << InstanceType().InstanceName();
+         << " not supported in type-value " << InstanceName();
+  return nullptr;
+}
+
+TypeInstance* TypeValue::GetTypeVariable(
+    const TypeInstance& instance,
+    const TypeVariableId<MemberScope::VALUE>& id) {
+  FAIL_IF(&instance != &InstanceType())
+      << "Member types in type-value " << InstanceName()
+      << " not visible from " << instance.InstanceName();
+  FAIL() << "Member type " << id.VariableName()
+         << " not supported in type-value " << InstanceName();
   return nullptr;
 }
 
 S<TypeValue> TypeValue::GetNestedValue() {
-  FAIL() << "No nested value in " << InstanceType().InstanceName();
+  FAIL() << "No nested value in " << InstanceName();
   return nullptr;
 }
 
@@ -129,20 +144,20 @@ bool TypeValue::IsPresent() const {
 }
 
 bool TypeValue::GetBool() const {
-  FAIL() << "Cannot convert type-value " << InstanceType().InstanceName()
+  FAIL() << "Cannot convert type-value " << InstanceName()
          << " to primitive bool";
   return false;
 }
 
 std::string TypeValue::GetString() const {
-  FAIL() << "Cannot convert type-value " << InstanceType().InstanceName()
+  FAIL() << "Cannot convert type-value " << InstanceName()
          << " to primitive string";
   return "";
 }
 
 S<TypeValue> TypeValue::Require(const S<TypeValue>& self) {
   if (!self->IsPresent()) {
-    FAIL() << self->InstanceType().InstanceName() << " value is not present";
+    FAIL() << self->InstanceName() << " value is not present";
   }
   if (&self->CategoryType() == &Category_Optional()) {
     return self->GetNestedValue();
@@ -164,7 +179,7 @@ S<TypeValue> TypeValue::ConvertTo(const S<TypeValue>& self,
     return self;
   }
   FAIL_IF(!CheckConversionTo(self,instance))
-      << "Bad conversion from " << self->InstanceType().InstanceName()
+      << "Bad conversion from " << self->InstanceName()
       << " to " << instance.InstanceName();
   if (&instance.CategoryType() == &Category_Optional()) {
     return As_Optional(self,*SafeGet<0>(instance.CategoryTypeArgsFrom(instance)));
@@ -193,7 +208,7 @@ S<TypeValue> TypeValue::ReduceTo(const S<TypeValue>& self,
 }
 
 S<TypeValue> TypeValue::ConvertTo(TypeInstance& instance) {
-  FAIL() << "Cannot convert " << InstanceType().InstanceName()
+  FAIL() << "Cannot convert " << InstanceName()
          << " to type " << instance.InstanceName();
   return nullptr;
 }

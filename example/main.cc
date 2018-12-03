@@ -21,7 +21,7 @@
 04: queue.write(Value.create<String>("three"));
 05: queue.write(Value.create<Bool>(false));
 06:
-07: Reader<Printable> reader = queue;
+07: Reader<Value> reader = queue;
 08: while (true) {  // <- fake syntax for now
 09:   optional Value value = reader.read();
 10:   if (present(value)) {
@@ -29,7 +29,8 @@
 12:   } else {
 13:     break;  // <- fake syntax for now
 14:   }
-15: }
+15:   Value.show(require(value));
+16: }
 
 */
 
@@ -96,21 +97,24 @@ int main() {
                         FunctionArgs{As_Bool(false)}))});
 
   trace.SetLocal("main:7");
-  S<TypeValue> reader =
-      TypeValue::ConvertTo(queue,Category_Reader().Build(Category_Printable().Build()));
+  ValueVariable reader(Category_Reader().Build(Category_Value().Build()),queue);
 
   while (true) {
     trace.SetLocal("main:9");
-    S<TypeValue> value =
-        SafeGet<0>(reader->CallValueFunction(Function_Reader_read,TypeArgs{},FunctionArgs{}));
+    ValueVariable value(
+        Category_Value().Build(),
+        SafeGet<0>(reader.GetValue()->CallValueFunction(Function_Reader_read,TypeArgs{},FunctionArgs{})));
     trace.SetLocal("main:10");
-    if (value->IsPresent()) {
+    if (value.GetValue()->IsPresent()) {
       trace.SetLocal("main:11");
-      TypeValue::Require(value)
+      TypeValue::Require(value.GetValue())
           ->CallValueFunction(Function_Printable_print,TypeArgs{},FunctionArgs{});
     } else {
       trace.SetLocal("main:13");
       break;
     }
+    trace.SetLocal("main:15");
+    Category_Value().Build().CallInstanceFunction(
+        Function_Value_show,TypeArgs{},FunctionArgs{TypeValue::Require(value.GetValue())});
   }
 }
