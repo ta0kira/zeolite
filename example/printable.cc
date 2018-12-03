@@ -123,9 +123,8 @@ FunctionReturns Value_Printable::CallValueFunction(
 }
 
 ParamReturns<0>::Type Value_Printable::Call_print(
-    ParamTypes<0>::Type, ParamArgs<0>::Type) const {
-  const T<> results = interface_->Call_Printable_print();
-  return T_get();
+    ParamTypes<0>::Type types, ParamArgs<0>::Type args) const {
+  return interface_->Call_Printable_print(types,args);
 }
 
 S<TypeValue> Value_Printable::ConvertTo(TypeInstance& instance) {

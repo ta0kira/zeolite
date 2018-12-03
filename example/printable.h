@@ -14,7 +14,7 @@ interface Printable {
 */
 
 struct Interface_Printable {
-  virtual T<> Call_Printable_print() = 0;
+  virtual ParamReturns<0>::Type Call_Printable_print(ParamTypes<0>::Type, ParamArgs<0>::Type) = 0;
   virtual ~Interface_Printable() = default;
 };
 

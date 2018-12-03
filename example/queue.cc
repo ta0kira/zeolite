@@ -116,8 +116,8 @@ struct Concrete_Queue
       virtual public Interface_Writer {
  public:
   Concrete_Queue(Instance_Queue& parent) : parent_(parent) {}
-  T<S<TypeValue>> Call_Reader_read() final;
-  T<> Call_Writer_write(const S<TypeValue>&) final;
+  ParamReturns<1>::Type Call_Reader_read(ParamTypes<0>::Type, ParamArgs<0>::Type) final;
+  ParamReturns<0>::Type Call_Writer_write(ParamTypes<0>::Type, ParamArgs<1>::Type) final;
 
  private:
   Instance_Queue& parent_;
@@ -201,17 +201,13 @@ FunctionReturns Value_Queue::CallValueFunction(
 }
 
 ParamReturns<1>::Type Value_Queue::Call_read(
-    ParamTypes<0>::Type types, ParamArgs<0>::Type) const {
-  const T<S<TypeValue>> results = interface_->Call_Reader_read();
-  return T_get(
-    TypeValue::ConvertTo(std::get<0>(results),parent_.Type_read_r0()));
+    ParamTypes<0>::Type types, ParamArgs<0>::Type args) const {
+  return interface_->Call_Reader_read(types,args);
 }
 
 ParamReturns<0>::Type Value_Queue::Call_write(
     ParamTypes<0>::Type types, ParamArgs<1>::Type args) const {
-  const T<> results = interface_->Call_Writer_write(
-    TypeValue::ConvertTo(std::get<0>(args),parent_.Type_write_a0()));
-  return T_get();
+  return interface_->Call_Writer_write(types,args);
 }
 
 S<TypeValue> Value_Queue::ConvertTo(TypeInstance& instance) {
@@ -246,8 +242,9 @@ S<TypeValue> Value_Queue::ConvertTo(TypeInstance& instance) {
 
 */
 
-T<S<TypeValue>> Concrete_Queue::Call_Reader_read() {
-  T<S<TypeValue>> returned;
+ParamReturns<1>::Type Concrete_Queue::Call_Reader_read(
+    ParamTypes<0>::Type types, ParamArgs<0>::Type args) {
+  ParamReturns<1>::Type returned;
   TRACE_FUNCTION("Queue.read")
   SET_CONTEXT_POINT("queue:1")
   std::get<0>(returned) = TypeValue::ConvertTo(Optional_Skip(),parent_.Type_read_r0());
@@ -260,11 +257,12 @@ T<S<TypeValue>> Concrete_Queue::Call_Reader_read() {
   return returned;
 }
 
-T<> Concrete_Queue::Call_Writer_write(const S<TypeValue>& a0) {
-  T<> returned;
+ParamReturns<0>::Type Concrete_Queue::Call_Writer_write(
+    ParamTypes<0>::Type types, ParamArgs<1>::Type args) {
+  ParamReturns<0>::Type returned;
   TRACE_FUNCTION("Queue.write")
   SET_CONTEXT_POINT("queue:7")
-  ValueVariable value(parent_.Type_write_a0(),a0);
+  ValueVariable value(parent_.Type_write_a0(),std::get<0>(args));
   SET_CONTEXT_POINT("queue:8")
   queue_.push(value.GetValue());
   return returned;

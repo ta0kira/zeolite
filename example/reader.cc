@@ -139,9 +139,7 @@ FunctionReturns Value_Reader::CallValueFunction(
 
 ParamReturns<1>::Type Value_Reader::Call_read(
     ParamTypes<0>::Type types, ParamArgs<0>::Type args) const {
-  const T<S<TypeValue>> results = interface_->Call_Reader_read();
-  return T_get(
-    TypeValue::ConvertTo(std::get<0>(results),parent_.Type_read_r0()));
+  return interface_->Call_Reader_read(types,args);
 }
 
 S<TypeValue> Value_Reader::ConvertTo(TypeInstance& instance) {

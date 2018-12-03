@@ -138,7 +138,7 @@ struct Concrete_Value : virtual public Interface_Printable {
         x_(&x),
         value_(parent.Type_Var_value(x),value) {}
 
-  T<> Call_Printable_print() final;
+  ParamReturns<0>::Type Call_Printable_print(ParamTypes<0>::Type, ParamArgs<0>::Type) final;
 
   Instance_Value& parent_;
   TypeInstance* const x_;
@@ -302,8 +302,7 @@ TypeInstance* Value_Value::GetTypeVariable(
 
 ParamReturns<0>::Type Value_Value::Call_print(
     ParamTypes<0>::Type types, ParamArgs<0>::Type args) const {
-  const T<> results = interface_->Call_Printable_print();
-  return T_get();
+  return interface_->Call_Printable_print(types,args);
 }
 
 S<TypeValue> Value_Value::ConvertTo(TypeInstance& instance) {
@@ -333,7 +332,8 @@ S<TypeValue> Value_Value::ConvertTo(TypeInstance& instance) {
 
 */
 
-T<> Concrete_Value::Call_Printable_print() {
+ParamReturns<0>::Type Concrete_Value::Call_Printable_print(
+    ParamTypes<0>::Type types, ParamArgs<0>::Type args) {
   T<> returned;
   TRACE_FUNCTION("Value.print")
   SET_CONTEXT_POINT("value:14")

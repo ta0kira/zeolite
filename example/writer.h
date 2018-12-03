@@ -14,7 +14,7 @@ interface Writer<x|> {
 */
 
 struct Interface_Writer {
-  virtual T<> Call_Writer_write(const S<TypeValue>&) = 0;
+  virtual ParamReturns<0>::Type Call_Writer_write(ParamTypes<0>::Type, ParamArgs<1>::Type) = 0;
   virtual ~Interface_Writer() = default;
 };
 

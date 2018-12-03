@@ -14,7 +14,7 @@ interface Reader<|x> {
 */
 
 struct Interface_Reader {
-  virtual T<S<TypeValue>> Call_Reader_read() = 0;
+  virtual ParamReturns<1>::Type Call_Reader_read(ParamTypes<0>::Type, ParamArgs<0>::Type) = 0;
   virtual ~Interface_Reader() = default;
 };
 
