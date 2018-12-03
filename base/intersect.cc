@@ -52,11 +52,9 @@ class Instance_Intersect : public TypeInstance {
 
   const std::string& InstanceName() const final { return name_; }
   const TypeCategory& CategoryType() const final { return Category_Intersect(); }
-  const TypeArgs& TypeArgsForCategory(const TypeCategory& category) const final;
   S<TypeValue> Create(const S<TypeValue>& value);
 
  private:
-  bool CheckConversionFrom(const TypeInstance& type) const final;
   MergeType InstanceMergeType() const final { return MergeType::INTERSECT; }
   const TypeArgs& MergedInstanceTypes() const final { return types_; }
 
@@ -103,15 +101,6 @@ Instance_Intersect& Constructor_Intersect::BuildInternal(const TypeArgs& types) 
   return *instance;
 }
 
-const TypeArgs& Instance_Intersect::TypeArgsForCategory(const TypeCategory& category) const {
-  if (&category == &Category_Intersect()) {
-    return types_;
-  }
-  // NOTE: CheckConversionBetween is designed to allow this to skip checking
-  // types_ so that we don't need to iterate.
-  return TypeInstance::TypeArgsForCategory(category);
-}
-
 S<TypeValue> Instance_Intersect::Create(const S<TypeValue>& value) {
   if (&value->CategoryType() == &Category_Intersect() ||
       &value->CategoryType() == &Category_Union()) {
@@ -119,16 +108,6 @@ S<TypeValue> Instance_Intersect::Create(const S<TypeValue>& value) {
   } else {
     return S_get(new Value_Intersect(*this,value));
   }
-}
-
-bool Instance_Intersect::CheckConversionFrom(const TypeInstance& instance) const {
-  // CheckConversionBetween handles expansion of instance.
-  for (const TypeInstance* type : types_) {
-    if (!TypeInstance::CheckConversionBetween(instance,*type)) {
-      return false;
-    }
-  }
-  return true;
 }
 
 

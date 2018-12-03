@@ -82,8 +82,6 @@ class TypeInstance {
  public:
   ALWAYS_UNIQUE(TypeInstance)
 
-  virtual ~TypeInstance() = default;
-
   virtual const std::string& InstanceName() const = 0;
   virtual const TypeCategory& CategoryType() const = 0;
   virtual bool IsParentCategory(const TypeCategory&) const;
@@ -97,9 +95,15 @@ class TypeInstance {
 
  protected:
   TypeInstance() = default;
+  virtual ~TypeInstance() = default;
+
   virtual bool CheckConversionFrom(const TypeInstance&) const;
   virtual MergeType InstanceMergeType() const = 0;
   virtual const TypeArgs& MergedInstanceTypes() const = 0;
+
+ private:
+  static bool ExpandCheckLeft(const TypeInstance&, const TypeInstance&);
+  static bool ExpandCheckRight(const TypeInstance&, const TypeInstance&);
 };
 
 
@@ -134,6 +138,7 @@ class TypeValue {
 
  protected:
   TypeValue() = default;
+
   virtual const TypeInstance& InstanceType() const = 0;
   virtual S<TypeValue> ConvertTo(TypeInstance&);
 

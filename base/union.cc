@@ -52,11 +52,9 @@ class Instance_Union : public TypeInstance {
 
   const std::string& InstanceName() const final { return name_; }
   const TypeCategory& CategoryType() const final { return Category_Union(); }
-  const TypeArgs& TypeArgsForCategory(const TypeCategory& category) const final;
   S<TypeValue> Create(const S<TypeValue>& value);
 
  private:
-  bool CheckConversionFrom(const TypeInstance& type) const final;
   MergeType InstanceMergeType() const final { return MergeType::UNION; }
   const TypeArgs& MergedInstanceTypes() const final { return types_; }
 
@@ -103,15 +101,6 @@ Instance_Union& Constructor_Union::BuildInternal(const TypeArgs& types) {
   return *instance;
 }
 
-const TypeArgs& Instance_Union::TypeArgsForCategory(const TypeCategory& category) const {
-  if (&category == &Category_Union()) {
-    return types_;
-  }
-  // NOTE: CheckConversionBetween is designed to allow this to skip checking
-  // types_ so that we don't need to iterate.
-  return TypeInstance::TypeArgsForCategory(category);
-}
-
 S<TypeValue> Instance_Union::Create(const S<TypeValue>& value) {
   if (&value->CategoryType() == &Category_Union() ||
       &value->CategoryType() == &Category_Union()) {
@@ -119,16 +108,6 @@ S<TypeValue> Instance_Union::Create(const S<TypeValue>& value) {
   } else {
     return S_get(new Value_Union(*this,value));
   }
-}
-
-bool Instance_Union::CheckConversionFrom(const TypeInstance& instance) const {
-  // CheckConversionBetween handles expansion of instance.
-  for (const TypeInstance* type : types_) {
-    if (TypeInstance::CheckConversionBetween(instance,*type)) {
-      return true;
-    }
-  }
-  return false;
 }
 
 

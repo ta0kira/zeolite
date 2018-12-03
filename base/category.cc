@@ -36,32 +36,66 @@ FunctionReturns TypeInstance::CallInstanceFunction(
 
 bool TypeInstance::CheckConversionBetween(
     const TypeInstance& x, const TypeInstance& y) {
-    if (&x == &y) {
-      return true;
-    }
+  if (&x == &y) {
+    return true;
+  }
+  if (x.InstanceMergeType() == MergeType::SINGLE &&
+      y.InstanceMergeType() == MergeType::SINGLE) {
+    return y.CheckConversionFrom(x);
+  }
+  return ExpandCheckLeft(x,y);
+}
 
-    for (const TypeInstance* left : x.MergedInstanceTypes()) {
-      switch (x.InstanceMergeType()) {
-        case MergeType::SINGLE:
-          return y.CheckConversionFrom(*left);
-        case MergeType::UNION:
-          if (!y.CheckConversionFrom(*left)) {
-            return false;
-          }
-          break;
-        case MergeType::INTERSECT:
-          if (y.CheckConversionFrom(*left)) {
-            return true;
-          }
-          break;
-      }
-    }
-
+bool TypeInstance::ExpandCheckLeft(
+    const TypeInstance& x, const TypeInstance& y) {
+  for (const TypeInstance* left : x.MergedInstanceTypes()) {
+    const bool result = ExpandCheckRight(*left,y);
     switch (x.InstanceMergeType()) {
-      case MergeType::SINGLE:    return true;
-      case MergeType::UNION:     return true;
-      case MergeType::INTERSECT: return false;
+      case MergeType::SINGLE:
+        return result;
+      case MergeType::UNION:
+        if (!result) {
+          return false;
+        }
+        break;
+      case MergeType::INTERSECT:
+        if (result) {
+          return true;
+        }
+        break;
     }
+  }
+  switch (x.InstanceMergeType()) {
+    case MergeType::SINGLE:    return false;
+    case MergeType::UNION:     return true;
+    case MergeType::INTERSECT: return false;
+  }
+}
+
+bool TypeInstance::ExpandCheckRight(
+    const TypeInstance& x, const TypeInstance& y) {
+  for (const TypeInstance* right : y.MergedInstanceTypes()) {
+    const bool result = TypeInstance::CheckConversionBetween(x,*right);
+    switch (y.InstanceMergeType()) {
+      case MergeType::SINGLE:
+        return result;
+      case MergeType::UNION:
+        if (result) {
+          return true;
+        }
+        break;
+      case MergeType::INTERSECT:
+        if (!result) {
+          return false;
+        }
+        break;
+    }
+  }
+  switch (y.InstanceMergeType()) {
+    case MergeType::SINGLE:    return false;
+    case MergeType::UNION:     return false;
+    case MergeType::INTERSECT: return true;
+  }
 }
 
 bool TypeInstance::CheckConversionFrom(const TypeInstance&) const {
