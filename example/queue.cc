@@ -246,12 +246,14 @@ ParamReturns<1>::Type Concrete_Queue::Call_Reader_read(
     ParamTypes<0>::Type types, ParamArgs<0>::Type args) {
   ParamReturns<1>::Type returned;
   TRACE_FUNCTION("Queue.read")
+  SET_CONTEXT_POINT("queue:0")
+  ProxyVariable value(parent_.Type_read_r0(),std::get<0>(returned));
   SET_CONTEXT_POINT("queue:1")
-  std::get<0>(returned) = TypeValue::ConvertTo(Optional_Skip(),parent_.Type_read_r0());
+  value.SetValue(Optional_Skip());
   SET_CONTEXT_POINT("queue:2")
   if (!queue_.empty()) {
     SET_CONTEXT_POINT("queue:3")
-    std::get<0>(returned) = TypeValue::ConvertTo(queue_.front(),parent_.Type_read_r0());
+    value.SetValue(TypeValue::ConvertTo(queue_.front(),parent_.Type_read_r0()));
     queue_.pop();
   }
   return returned;

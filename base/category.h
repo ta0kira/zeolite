@@ -143,4 +143,23 @@ class ValueVariable {
   S<TypeValue> value_;
 };
 
+
+class ProxyVariable {
+ public:
+  inline ProxyVariable(TypeInstance& instance, S<TypeValue>& value)
+      : instance_(instance), value_(value) {}
+
+  ALWAYS_UNIQUE(ProxyVariable)
+
+  inline const S<TypeValue>& GetValue() const { return value_; }
+
+  inline void SetValue(const S<TypeValue>& value) {
+    value_ = TypeValue::ConvertTo(value,instance_);
+  }
+
+ private:
+  TypeInstance& instance_;
+  S<TypeValue>& value_;
+};
+
 #endif  // CATEGORY_H_
