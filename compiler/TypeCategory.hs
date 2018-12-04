@@ -79,7 +79,8 @@ validateCategory r cs = do
   -- TODO: Need to check that filters are actually valid type instances. Before
   -- checking refines w.r.t. filters: just ensure that all categories and params
   -- are defined. After that: ensure that the filters themselves have valid type
-  -- instances w.r.t. the category of the filter itself.
+  -- instances w.r.t. the category of the filter itself. Also, disallow optional
+  -- in filters.
   -- Refine the structure.
   refine <- flattenRefines r (csParams cs) (csFilters cs) (csRefine cs)
   checkRefines r (csParams cs) (csFilters cs) refine

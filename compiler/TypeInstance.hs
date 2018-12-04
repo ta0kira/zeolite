@@ -92,37 +92,31 @@ checkGeneralMatch :: (MergeableM m, Mergeable p, CompileErrorM m, Monad m) =>
   GeneralInstance -> m p
 checkGeneralMatch r f v ts1 ts2 = checkGeneralType (checkSingleMatch r f v) ts1 ts2
 
+-- TODO: An error message here should include both type names in full.
 checkSingleMatch :: (MergeableM m, Mergeable p, CompileErrorM m, Monad m) =>
-  TypeResolver m p -> ParamFilters -> Variance -> TypeCategoryInstance ->
-  TypeCategoryInstance -> m p
-checkSingleMatch r f v (TypeCategoryInstance n1 o1 ps1) (TypeCategoryInstance n2 o2 ps2)
-  | o1 && not o2 = compileError $ "Cannot convert from optional to non-optional"
-  | otherwise = checkInstanceToInstance r f v (n1,ps1) (n2,ps2)
-checkSingleMatch r f v (TypeCategoryParam p1) (TypeCategoryInstance n2 _ ps2) =
-  -- Can convert to optional if the types are compatible.
-  checkParamToInstance r f v p1 (n2,ps2)
-checkSingleMatch r f v (TypeCategoryInstance n1 o1 ps1) (TypeCategoryParam p2)
-  | o1 = compileError $ "Cannot convert from optional to param " ++ show p2
-  | otherwise = checkInstanceToParam r f v (n1,ps1) p2
+  TypeResolver m p -> ParamFilters -> Variance ->
+  TypeCategoryInstance -> TypeCategoryInstance -> m p
+checkSingleMatch r f v (TypeCategoryInstance n1 o1 ps1) (TypeCategoryInstance n2 o2 ps2) =
+  checkInstanceToInstance r f v (o1,n1,ps1) (o2,n2,ps2)
+checkSingleMatch r f v (TypeCategoryParam p1) (TypeCategoryInstance n2 o2 ps2) =
+  checkParamToInstance r f v p1 (o2,n2,ps2)
+checkSingleMatch r f v (TypeCategoryInstance n1 o1 ps1) (TypeCategoryParam p2) =
+  checkInstanceToParam r f v (o1,n1,ps1) p2
 checkSingleMatch r f v (TypeCategoryParam p1) (TypeCategoryParam p2) =
   checkParamToParam r f v p1 p2
 
 checkInstanceToInstance :: (MergeableM m, Mergeable p, CompileErrorM m, Monad m) =>
-  TypeResolver m p -> ParamFilters -> Variance -> (TypeName,InstanceParams) ->
-  (TypeName,InstanceParams) -> m p
-checkInstanceToInstance r f Invariant (n1,ps1) (n2,ps2) = fixMessage check where
-  check = do
-    -- Check for isomorphism, but not necessarily equality.
-    checkInstanceToInstance r f Covariant     (n1,ps1) (n2,ps2)
-    checkInstanceToInstance r f Contravariant (n1,ps1) (n2,ps2)
-    mergeDefault
-  fixMessage p
-    | isCompileError p =
-      compileError $ "Not isomorphic (" ++ show n1 ++ " / " ++ show n2 ++ ")"
-    | otherwise = p
-checkInstanceToInstance r f Contravariant (n1,ps1) (n2,ps2) =
-  checkInstanceToInstance r f Covariant (n2,ps2) (n1,ps1)
-checkInstanceToInstance r f Covariant (n1,ps1) (n2,ps2)
+  TypeResolver m p -> ParamFilters -> Variance ->
+  (Bool,TypeName,InstanceParams) -> (Bool,TypeName,InstanceParams) -> m p
+checkInstanceToInstance r f Invariant t1@(_,n1,_) t2@(_,n2,_)
+  | t1 == t2 = mergeDefault
+  | otherwise =
+    compileError $ "Cannot convert instance to instance (" ++ show n1 ++ " -> " ++ show n2 ++ ")"
+checkInstanceToInstance r f Contravariant t1 t2 =
+  checkInstanceToInstance r f Covariant t2 t1
+checkInstanceToInstance r f Covariant (True,n1,_) (False,n2,_) =
+  compileError $ "Cannot convert instance to instance (optional " ++ show n1 ++ " -> " ++ show n2 ++ ")"
+checkInstanceToInstance r f Covariant (_,n1,ps1) (_,n2,ps2)
   | n1 == n2 = do
     checkParamsMatch (\_ _ -> return ()) ps1 ps2
     zipped <- return $ ParamSet $ zip (psParams ps1) (psParams ps2)
@@ -131,16 +125,16 @@ checkInstanceToInstance r f Covariant (n1,ps1) (n2,ps2)
     checkParamsMatch (\v2 (p1,p2) -> checkGeneralMatch r f v2 p1 p2) (ParamSet variance) zipped
   | otherwise = do
     (p2,ps1') <- (trFind r) n2 n1 ps1
-    (return p2) `mergeNested` (checkInstanceToInstance r f Covariant (n2,ps1') (n2,ps2))
+    (return p2) `mergeNested` (checkInstanceToInstance r f Covariant (False,n2,ps1') (False,n2,ps2))
 
 checkParamToInstance :: (MergeableM m, Mergeable p, CompileErrorM m, Monad m) =>
-  TypeResolver m p -> ParamFilters -> Variance -> TypeParam ->
-  (TypeName,InstanceParams) -> m p
-checkParamToInstance r _ Invariant (TypeParam n1) (n2,ps2) =
-  compileError $ "Not isomorphic (" ++ show n1 ++ " / " ++ show n2 ++ ")"
-checkParamToInstance r f Contravariant p1 (n2,ps2) =
-  checkInstanceToParam r f Covariant (n2,ps2) p1
-checkParamToInstance r f Covariant (TypeParam n1) (n2,ps2) = checked where
+  TypeResolver m p -> ParamFilters -> Variance ->
+  TypeParam -> (Bool,TypeName,InstanceParams) -> m p
+checkParamToInstance r _ Invariant (TypeParam n1) (_,n2,_) =
+  compileError $ "Cannot convert param to instance (" ++ show n1 ++ " -> " ++ show n2 ++ ")"
+checkParamToInstance r f Contravariant p1 t2 =
+  checkInstanceToParam r f Covariant t2 p1
+checkParamToInstance r f Covariant (TypeParam n1) (_,n2,ps2) = checked where
   checked = do
     cs1 <- f `filterLookup` n1
     mergeAll $ map (\c -> checkConstraintToInstance c (n2,ps2)) cs1
@@ -152,13 +146,15 @@ checkParamToInstance r f Covariant (TypeParam n1) (n2,ps2) = checked where
     compileError $ "Cannot convert param to instance (" ++ show n1 ++ " -> " ++ show n2 ++ ")"
 
 checkInstanceToParam :: (MergeableM m, Mergeable p, CompileErrorM m, Monad m) =>
-  TypeResolver m p -> ParamFilters -> Variance -> (TypeName,InstanceParams) ->
-  TypeParam -> m p
-checkInstanceToParam _ _ Invariant (n1,ps1) (TypeParam n2) =
-  compileError $ "Not isomorphic (" ++ show n1 ++ " / " ++ show n2 ++ ")"
-checkInstanceToParam r f Contravariant (n1,ps1) p2 =
-  checkParamToInstance r f Covariant p2 (n1,ps1)
-checkInstanceToParam r f Covariant (n1,ps1) (TypeParam n2) = checked where
+  TypeResolver m p -> ParamFilters -> Variance ->
+  (Bool,TypeName,InstanceParams) -> TypeParam -> m p
+checkInstanceToParam _ _ Invariant (_,n1,_) (TypeParam n2) =
+  compileError $ "Cannot convert instance to param (" ++ show n1 ++ " -> " ++ show n2 ++ ")"
+checkInstanceToParam r f Contravariant t1 p2 =
+  checkParamToInstance r f Covariant p2 t1
+checkInstanceToParam r f Covariant (True,n1,_) (TypeParam n2) =
+  compileError $ "Cannot convert instance to param (optional " ++ show n1 ++ " -> " ++ show n2 ++ ")"
+checkInstanceToParam r f Covariant (_,n1,ps1) (TypeParam n2) = checked where
   checked = do
     cs2 <- f `filterLookup` n2
     mergeAny $ map (\c -> checkInstanceToConstraint (n1,ps1) c) cs2
