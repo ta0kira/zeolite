@@ -147,10 +147,8 @@ checkParamToInstance r f Covariant (TypeParam n1) (n2,ps2) = checked where
   checkConstraintToInstance (TypeFilter Covariant t) (n,ps) =
     -- x -> F implies x -> T only if F -> T
     checkSingleMatch r f Covariant t (TypeCategoryInstance n False ps)
-  checkConstraintToInstance (TypeFilter Contravariant t) (n,ps) =
-    -- F -> x implies T -> x only if T -> F
-    checkSingleMatch r f Contravariant t (TypeCategoryInstance n False ps)
   checkConstraintToInstance (TypeFilter _ t) _ =
+    -- F -> x cannot imply x -> T
     compileError $ "Cannot convert param to instance (" ++ show n1 ++ " -> " ++ show n2 ++ ")"
 
 checkInstanceToParam :: (MergeableM m, Mergeable p, CompileErrorM m, Monad m) =>
@@ -164,27 +162,21 @@ checkInstanceToParam r f Covariant (n1,ps1) (TypeParam n2) = checked where
   checked = do
     cs2 <- f `filterLookup` n2
     mergeAny $ map (\c -> checkInstanceToConstraint (n1,ps1) c) cs2
-  checkInstanceToConstraint (n,ps) (TypeFilter Covariant t) =
-    -- F -> x implies T -> x only if T -> F
-    checkSingleMatch r f Covariant t (TypeCategoryInstance n False ps)
   checkInstanceToConstraint (n,ps) (TypeFilter Contravariant t) =
-    -- x -> F implies x -> T only if F -> T
-    checkSingleMatch r f Contravariant t (TypeCategoryInstance n False ps)
+    -- F -> x implies T -> x only if T -> F
+    checkSingleMatch r f Contravariant (TypeCategoryInstance n False ps) t
   checkInstanceToConstraint _ (TypeFilter _ t) =
+    -- x -> F cannot imply T -> x
     compileError $ "Cannot convert instance to param (" ++ show n1 ++ " -> " ++ show n2 ++ ")"
 
 checkParamToParam :: (MergeableM m, Mergeable p, CompileErrorM m, Monad m) =>
   TypeResolver m p -> ParamFilters -> Variance -> TypeParam -> TypeParam -> m p
-checkParamToParam r f Invariant p1 p2 = fixMessage check where
-  check = do
-    -- Check for isomorphism, but not necessarily equality.
-    checkParamToParam r f Covariant     p1 p2
-    checkParamToParam r f Contravariant p1 p2
-    mergeDefault
-  fixMessage p
-    | isCompileError p =
-      compileError $ "Not isomorphic (" ++ show (tpName p1) ++ " -> " ++ show (tpName p2) ++ ")"
-    | otherwise = p
+checkParamToParam r f Invariant (TypeParam n1) (TypeParam n2)
+    | n1 == n2 = mergeDefault
+    | otherwise =
+      -- Even with identical fiters, if the names are different then it's
+      -- possible that the substituted types will be different.
+      compileError $ "Cannot convert param to param (" ++ show n1 ++ " -> " ++ show n2 ++ ")"
 checkParamToParam r f Contravariant p1 p2 =
   checkParamToParam r f Covariant p1 p2
 checkParamToParam r f Covariant (TypeParam n1) (TypeParam n2) = checked where
@@ -194,13 +186,11 @@ checkParamToParam r f Covariant (TypeParam n1) (TypeParam n2) = checked where
       cs1 <- f `filterLookup` n1
       cs2 <- f `filterLookup` n2
       mergeAll $ map (\c1 -> mergeAny $ map (\c2 -> checkConstraintToConstraint c1 c2) cs2) cs1
-  checkConstraintToConstraint (TypeFilter Covariant t1) (TypeFilter Covariant t2) =
-    -- x -> F1 implies x -> F2 only if F1 -> F2
+  checkConstraintToConstraint (TypeFilter Covariant t1) (TypeFilter Contravariant t2) =
+    -- x -> F1, F2 -> y implies x -> y only if F1 -> F2
     checkSingleMatch r f Covariant t1 t2
-  checkConstraintToConstraint (TypeFilter Contravariant t1) (TypeFilter Contravariant t2) =
-    -- F1 -> x implies F2 -> x only if F2 -> F1
-    checkSingleMatch r f Contravariant t1 t2
   checkConstraintToConstraint (TypeFilter _ _) (TypeFilter _ _) =
-    -- F1 -> x cannot imply x -> F2
-    -- x -> F1 cannot imply F2 -> x
+    -- x -> F1, y -> F2 cannot imply x -> y
+    -- F1 -> x, F1 -> y cannot imply x -> y
+    -- F1 -> x, y -> F2 cannot imply x -> y
     compileError $ "Cannot convert param to param (" ++ show n1 ++ " -> " ++ show n2 ++ ")"
