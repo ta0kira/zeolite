@@ -80,8 +80,7 @@ class Value_Printable : public TypeValue {
 
 
 Constructor_Printable::Constructor_Printable()
-    : value_functions(value_functions_),
-      value_functions_("Printable") {
+    : value_functions(value_functions_) {
   value_functions_
       .AddFunction(Function_Printable_print,&Value_Printable::Call_print);
 }
@@ -119,7 +118,7 @@ FunctionReturns Value_Printable::CallValueFunction(
     const FunctionId<MemberScope::VALUE>& id,
     const TypeArgs& types,
     const FunctionArgs& args) {
-  return Internal_Printable().value_functions.Call(id,this,types,args);
+  return Internal_Printable().value_functions.Call(InstanceName(),id,this,types,args);
 }
 
 ParamReturns<0>::Type Value_Printable::Call_print(

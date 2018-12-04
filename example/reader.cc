@@ -88,8 +88,7 @@ class Value_Reader : public TypeValue {
 
 
 Constructor_Reader::Constructor_Reader()
-    : value_functions(value_functions_),
-      value_functions_("Reader") {
+    : value_functions(value_functions_) {
   value_functions_
       .AddFunction(Function_Reader_read,&Value_Reader::Call_read);
 }
@@ -134,7 +133,7 @@ FunctionReturns Value_Reader::CallValueFunction(
     const FunctionId<MemberScope::VALUE>& id,
     const TypeArgs& types,
     const FunctionArgs& args) {
-  return Internal_Reader().value_functions.Call(id,this,types,args);
+  return Internal_Reader().value_functions.Call(InstanceName(),id,this,types,args);
 }
 
 ParamReturns<1>::Type Value_Reader::Call_read(

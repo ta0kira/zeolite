@@ -37,8 +37,7 @@ class FixedCaller : public FunctionCaller<C> {
 template<class C, MemberScope M>
 class FunctionDispatcher {
  public:
-  FunctionDispatcher(const std::string& name) : name_(name) {}
-
+  FunctionDispatcher() = default;
   ALWAYS_UNIQUE(FunctionDispatcher)
 
   template<class A, class T, class R, class C2>
@@ -61,26 +60,55 @@ class FunctionDispatcher {
     return *this;
   }
 
-  FunctionReturns Call(const FunctionId<M>& id, C* object,
+  FunctionReturns Call(const std::string& name,
+                       const FunctionId<M>& id,
+                       C* object,
                        const TypeArgs& types,
                        const FunctionArgs& args) const {
     const auto caller = mapped_.find(&id);
     FAIL_IF(caller == mapped_.end())
-        << "Function " << id.FunctionName() << " not supported by " << name_;
+        << "Function " << id.FunctionName() << " not supported by " << name;
     return caller->second->Call(object,types,args);
   }
 
  private:
-  const std::string name_;
   std::unordered_map<const FunctionId<M>*,R<const FunctionCaller<C>>> mapped_;
+};
+
+
+template<class C>
+class ConvertToDispatcher {
+ public:
+  ConvertToDispatcher() = default;
+  ALWAYS_UNIQUE(ConvertToDispatcher)
+
+  ConvertToDispatcher& AddCategory(const TypeCategory& category,
+                                   S<TypeValue>(C::*function)() const) {
+    mapped_[&category] =
+        [function](C* object) {
+          return (object->*function)();
+        };
+    return *this;
+  }
+
+  S<TypeValue> ConvertTo(const std::string& name,
+                         const TypeCategory& id,
+                         C* object) const {
+    const auto convert = mapped_.find(&id);
+    FAIL_IF(convert == mapped_.end())
+        << "Category " << id.CategoryName() << " not supported by " << name;
+    return convert->second(object);
+  }
+
+ private:
+  std::unordered_map<const TypeCategory*,std::function<S<TypeValue>(C*)>> mapped_;
 };
 
 
 template<class C, MemberScope M>
 class GetValueDispatcher {
  public:
-  GetValueDispatcher(const std::string& name) : name_(name) {}
-
+  GetValueDispatcher() = default;
   ALWAYS_UNIQUE(GetValueDispatcher)
 
   GetValueDispatcher& AddVariable(const ValueVariableId<M>& id,
@@ -92,15 +120,16 @@ class GetValueDispatcher {
     return *this;
   }
 
-  ValueVariable* GetVariable(const ValueVariableId<M>& id, C* object) const {
+  ValueVariable* GetVariable(const std::string& name,
+                             const ValueVariableId<M>& id,
+                             C* object) const {
     const auto getter = mapped_.find(&id);
     FAIL_IF(getter == mapped_.end())
-        << "Variable " << id.VariableName() << " not present in " << name_;
+        << "Variable " << id.VariableName() << " not present in " << name;
     return getter->second(object);
   }
 
  private:
-  const std::string name_;
   std::unordered_map<const ValueVariableId<M>*,std::function<ValueVariable*(C*)>> mapped_;
 };
 
@@ -108,8 +137,7 @@ class GetValueDispatcher {
 template<class C, MemberScope M>
 class GetTypeDispatcher {
  public:
-  GetTypeDispatcher(const std::string& name) : name_(name) {}
-
+  GetTypeDispatcher() = default;
   ALWAYS_UNIQUE(GetTypeDispatcher)
 
   GetTypeDispatcher& AddVariable(const TypeVariableId<M>& id,
@@ -121,15 +149,16 @@ class GetTypeDispatcher {
     return *this;
   }
 
-  TypeInstance* GetVariable(const TypeVariableId<M>& id, C* object) const {
+  TypeInstance* GetVariable(const std::string& name,
+                            const TypeVariableId<M>& id,
+                            C* object) const {
     const auto getter = mapped_.find(&id);
     FAIL_IF(getter == mapped_.end())
-        << "Variable " << id.VariableName() << " not present in " << name_;
+        << "Variable " << id.VariableName() << " not present in " << name;
     return getter->second(object);
   }
 
  private:
-  const std::string name_;
   std::unordered_map<const TypeVariableId<M>*,std::function<TypeInstance*(C*)>> mapped_;
 };
 

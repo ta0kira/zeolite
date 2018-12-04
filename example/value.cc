@@ -27,6 +27,7 @@ class Constructor_Value : public ParamInstance<0>::Type {
   const FunctionDispatcher<Value_Value,MemberScope::VALUE>& value_functions;
   const GetValueDispatcher<Concrete_Value,MemberScope::VALUE>& value_variables;
   const GetTypeDispatcher<Concrete_Value,MemberScope::VALUE>& type_variables;
+  const ConvertToDispatcher<Value_Value>& convert_functions;
 
  private:
   ~Constructor_Value() = default;
@@ -36,6 +37,7 @@ class Constructor_Value : public ParamInstance<0>::Type {
   FunctionDispatcher<Value_Value,MemberScope::VALUE> value_functions_;
   GetValueDispatcher<Concrete_Value,MemberScope::VALUE> value_variables_;
   GetTypeDispatcher<Concrete_Value,MemberScope::VALUE> type_variables_;
+  ConvertToDispatcher<Value_Value> convert_functions_;
   InstanceCache<Instance_Value> instance_cache_;
 };
 
@@ -115,6 +117,8 @@ class Value_Value : public TypeValue {
 
   ParamReturns<0>::Type Call_print(ParamTypes<0>::Type, ParamArgs<0>::Type) const;
 
+  S<TypeValue> Convert_Printable() const;
+
  private:
   const TypeInstance& InstanceType() const final { return parent_; }
   S<TypeValue> ConvertTo(TypeInstance&) final;
@@ -155,10 +159,7 @@ Constructor_Value::Constructor_Value()
       value_functions(value_functions_),
       value_variables(value_variables_),
       type_variables(type_variables_),
-      instance_functions_("Value"),
-      value_functions_("Value"),
-      value_variables_("Value"),
-      type_variables_("Value") {
+      convert_functions(convert_functions_) {
   instance_functions_
       .AddFunction(Function_Value_create,&Instance_Value::Call_create)
       .AddFunction(Function_Viewer_view,&Instance_Value::Call_view);
@@ -168,6 +169,8 @@ Constructor_Value::Constructor_Value()
       .AddVariable(Variable_Value_value,&Concrete_Value::value_);
   type_variables_
       .AddVariable(Variable_Value_x,&Concrete_Value::x_);
+  convert_functions_
+      .AddCategory(Category_Printable(),&Value_Value::Convert_Printable);
 }
 
 TypeInstance& Constructor_Value::Build() {
@@ -200,7 +203,7 @@ FunctionReturns Instance_Value::CallInstanceFunction(
     const FunctionId<MemberScope::INSTANCE>& id,
     const TypeArgs& types,
     const FunctionArgs& args) {
-  return Internal_Value().instance_functions.Call(id,this,types,args);
+  return Internal_Value().instance_functions.Call(InstanceName(),id,this,types,args);
 }
 
 /*
@@ -279,14 +282,14 @@ FunctionReturns Value_Value::CallValueFunction(
     const FunctionId<MemberScope::VALUE>& id,
     const TypeArgs& types,
     const FunctionArgs& args) {
-  return Internal_Value().value_functions.Call(id,this,types,args);
+  return Internal_Value().value_functions.Call(InstanceName(),id,this,types,args);
 }
 
 ValueVariable* Value_Value::GetValueVariable(
     const TypeInstance& instance,
     const ValueVariableId<MemberScope::VALUE>& id) {
   if (&instance == &InstanceType()) {
-    return Internal_Value().value_variables.GetVariable(id,interface_.get());
+    return Internal_Value().value_variables.GetVariable(InstanceName(),id,interface_.get());
   }
   return TypeValue::GetValueVariable(instance,id);
 }
@@ -295,7 +298,7 @@ TypeInstance* Value_Value::GetTypeVariable(
     const TypeInstance& instance,
     const TypeVariableId<MemberScope::VALUE>& id) {
   if (&instance == &InstanceType()) {
-    return Internal_Value().type_variables.GetVariable(id,interface_.get());
+    return Internal_Value().type_variables.GetVariable(InstanceName(),id,interface_.get());
   }
   return TypeValue::GetTypeVariable(instance,id);
 }
@@ -305,6 +308,10 @@ ParamReturns<0>::Type Value_Value::Call_print(
   return interface_->Call_Printable_print(types,args);
 }
 
+S<TypeValue> Value_Value::Convert_Printable() const {
+  return As_Printable(interface_);
+}
+
 S<TypeValue> Value_Value::ConvertTo(TypeInstance& instance) {
   // TODO: Generalize this better.
   if (&instance.CategoryType() == &Category_Value()) {
@@ -312,10 +319,9 @@ S<TypeValue> Value_Value::ConvertTo(TypeInstance& instance) {
     FAIL_IF(args.size() != 0) << "Wrong number of type args";
     return As_Value(interface_);
   }
-  if (&instance.CategoryType() == &Category_Printable()) {
-    return TypeValue::ConvertTo(As_Printable(interface_),instance);
-  }
-  return TypeValue::ConvertTo(instance);
+  return TypeValue::ConvertTo(
+      Internal_Value().convert_functions.ConvertTo(InstanceName(),instance.CategoryType(),this),
+      instance);
 }
 
 

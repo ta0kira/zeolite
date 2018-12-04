@@ -87,8 +87,7 @@ class Value_Writer : public TypeValue {
 
 
 Constructor_Writer::Constructor_Writer()
-    : value_functions(value_functions_),
-      value_functions_("Writer") {
+    : value_functions(value_functions_) {
   value_functions_
       .AddFunction(Function_Writer_write,&Value_Writer::Call_write);
 }
@@ -133,7 +132,7 @@ FunctionReturns Value_Writer::CallValueFunction(
     const FunctionId<MemberScope::VALUE>& id,
     const TypeArgs& types,
     const FunctionArgs& args) {
-  return Internal_Writer().value_functions.Call(id,this,types,args);
+  return Internal_Writer().value_functions.Call(InstanceName(),id,this,types,args);
 }
 
 ParamReturns<0>::Type Value_Writer::Call_write(

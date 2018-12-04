@@ -24,6 +24,7 @@ class Constructor_Queue : public ParamInstance<1>::Type {
 
   const FunctionDispatcher<Instance_Queue,MemberScope::INSTANCE>& instance_functions;
   const FunctionDispatcher<Value_Queue,MemberScope::VALUE>& value_functions;
+  const ConvertToDispatcher<Value_Queue>& convert_functions;
 
  private:
   ~Constructor_Queue() = default;
@@ -31,6 +32,7 @@ class Constructor_Queue : public ParamInstance<1>::Type {
   const std::string name_{"Queue"};
   FunctionDispatcher<Instance_Queue,MemberScope::INSTANCE> instance_functions_;
   FunctionDispatcher<Value_Queue,MemberScope::VALUE> value_functions_;
+  ConvertToDispatcher<Value_Queue> convert_functions_;
   InstanceCache<Instance_Queue> instance_cache_;
 };
 
@@ -102,6 +104,9 @@ class Value_Queue : public TypeValue {
   ParamReturns<1>::Type Call_read(ParamTypes<0>::Type, ParamArgs<0>::Type) const;
   ParamReturns<0>::Type Call_write(ParamTypes<0>::Type, ParamArgs<1>::Type) const;
 
+  S<TypeValue> Convert_Reader() const;
+  S<TypeValue> Convert_Writer() const;
+
  private:
   const TypeInstance& InstanceType() const final { return parent_; }
   S<TypeValue> ConvertTo(TypeInstance&) final;
@@ -132,13 +137,15 @@ S<TypeValue> As_Queue(const S<Concrete_Queue>& value, TypeInstance& instance) {
 Constructor_Queue::Constructor_Queue()
     : instance_functions(instance_functions_),
       value_functions(value_functions_),
-      instance_functions_("Queue"),
-      value_functions_("Queue") {
+      convert_functions(convert_functions_) {
   instance_functions_
       .AddFunction(Function_Queue_create,&Instance_Queue::Call_create);
   value_functions_
       .AddFunction(Function_Reader_read,&Value_Queue::Call_read)
       .AddFunction(Function_Writer_write,&Value_Queue::Call_write);
+  convert_functions_
+      .AddCategory(Category_Reader(),&Value_Queue::Convert_Reader)
+      .AddCategory(Category_Writer(),&Value_Queue::Convert_Writer);
 }
 
 TypeInstance& Constructor_Queue::Build(TypeInstance& arg_x) {
@@ -171,7 +178,7 @@ FunctionReturns Instance_Queue::CallInstanceFunction(
     const FunctionId<MemberScope::INSTANCE>& id,
     const TypeArgs& types,
     const FunctionArgs& args) {
-  return Internal_Queue().instance_functions.Call(id,this,types,args);
+  return Internal_Queue().instance_functions.Call(InstanceName(),id,this,types,args);
 }
 
 ParamReturns<1>::Type Instance_Queue::Call_create(
@@ -197,7 +204,7 @@ FunctionReturns Value_Queue::CallValueFunction(
     const FunctionId<MemberScope::VALUE>& id,
     const TypeArgs& types,
     const FunctionArgs& args) {
-  return Internal_Queue().value_functions.Call(id,this,types,args);
+  return Internal_Queue().value_functions.Call(InstanceName(),id,this,types,args);
 }
 
 ParamReturns<1>::Type Value_Queue::Call_read(
@@ -210,6 +217,14 @@ ParamReturns<0>::Type Value_Queue::Call_write(
   return interface_->Call_Writer_write(types,args);
 }
 
+S<TypeValue> Value_Queue::Convert_Reader() const {
+  return As_Reader(interface_,parent_.param_x);
+}
+
+S<TypeValue> Value_Queue::Convert_Writer() const {
+  return As_Writer(interface_,parent_.param_x);
+}
+
 S<TypeValue> Value_Queue::ConvertTo(TypeInstance& instance) {
   // TODO: Generalize this better.
   if (&instance.CategoryType() == &Category_Queue()) {
@@ -217,13 +232,9 @@ S<TypeValue> Value_Queue::ConvertTo(TypeInstance& instance) {
     FAIL_IF(args.size() != 1) << "Wrong number of type args";
     return As_Queue(interface_,*SafeGet<0>(args));
   }
-  if (&instance.CategoryType() == &Category_Reader()) {
-    return TypeValue::ConvertTo(As_Reader(interface_,parent_.param_x),instance);
-  }
-  if (&instance.CategoryType() == &Category_Writer()) {
-    return TypeValue::ConvertTo(As_Writer(interface_,parent_.param_x),instance);
-  }
-  return TypeValue::ConvertTo(instance);
+  return TypeValue::ConvertTo(
+      Internal_Queue().convert_functions.ConvertTo(InstanceName(),instance.CategoryType(),this),
+      instance);
 }
 
 
