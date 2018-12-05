@@ -9,6 +9,7 @@ module TypesBase (
   MergeableM(..),
   MergeType(..),
   ParamSet(..),
+  Tangibility(..),
   Variance(..),
   checkParamsMatch,
   checkGeneralType,
@@ -119,3 +120,9 @@ Invariant     `paramAllowsVariance` Covariant     = True
 Invariant     `paramAllowsVariance` Invariant     = True
 Invariant     `paramAllowsVariance` Contravariant = True
 _             `paramAllowsVariance` _             = False
+
+data Tangibility =
+  WeakValue |
+  OptionalValue |
+  RequiredValue
+  deriving (Eq,Ord,Show)
