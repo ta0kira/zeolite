@@ -4,7 +4,6 @@ module TypeInstance (
   AssignedParams,
   GeneralInstance,
   InstanceParams,
-  OptionalTypeInstance(..),
   ParamFilters,
   ParamName,
   TypeFilter(..),
@@ -19,6 +18,7 @@ module TypeInstance (
 ) where
 
 import qualified Data.Map as Map
+import Data.List (intercalate)
 
 import TypesBase
 
@@ -30,26 +30,42 @@ data ValueType =
     vtRequired :: Tangibility,
     vtType :: GeneralInstance
   }
-  deriving (Eq,Show)
+  deriving (Eq)
+
+instance Show ValueType where
+  show (ValueType WeakValue t)     = "weak " ++ show t
+  show (ValueType OptionalValue t) = "optional " ++ show t
+  show (ValueType RequiredValue t) = show t
 
 newtype TypeName =
   TypeName {
     tnName :: String
   }
-  deriving (Eq,Ord,Show)
+  deriving (Eq,Ord)
+
+instance Show TypeName where
+  show (TypeName n) = n
 
 newtype ParamName =
   ParamName {
     pnName :: String
   }
-  deriving (Eq,Ord,Show)
+  deriving (Eq,Ord)
+
+instance Show ParamName where
+  show (ParamName n) = n
 
 data TypeInstance =
   TypeInstance {
     tiName :: TypeName,
     tiParams :: InstanceParams
   }
-  deriving (Eq,Show)
+  deriving (Eq)
+
+instance Show TypeInstance where
+  show (TypeInstance n (ParamSet [])) = show n
+  show (TypeInstance n (ParamSet ts)) =
+    show n ++ "<" ++ intercalate "," (map show ts) ++ ">"
 
 data TypeInstanceOrParam =
   JustTypeInstance {
@@ -58,21 +74,23 @@ data TypeInstanceOrParam =
   JustParamName {
     jpnName :: ParamName
   }
-  deriving (Eq,Show)
+  deriving (Eq)
 
-data OptionalTypeInstance =
-  OptionalTypeInstance {
-    motOptional :: Bool,
-    motType :: TypeInstanceOrParam
-  }
-  deriving (Eq,Show)
+instance Show TypeInstanceOrParam where
+  show (JustTypeInstance t) = show t
+  show (JustParamName n)    = show n
 
 data TypeFilter =
   TypeFilter {
     tfVariance :: Variance,
     tfType :: TypeInstanceOrParam
   }
-  deriving (Eq,Show)
+  deriving (Eq)
+
+viewTypeFilter :: ParamName -> TypeFilter -> String
+viewTypeFilter n (TypeFilter Covariant t)     = show n ++ " -> " ++ show t
+viewTypeFilter n (TypeFilter Contravariant t) = show n ++ " <- " ++ show t
+viewTypeFilter n (TypeFilter Invariant t)     = show n ++ " = "  ++ show t
 
 type InstanceParams = ParamSet GeneralInstance
 
