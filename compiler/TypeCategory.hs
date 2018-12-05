@@ -27,14 +27,9 @@ newtype CategoryConnect a =
     ccMap :: Map.Map TypeName a
   }
 
-newtype CategoryRefine =
-  CategoryRefine {
-    crRefines :: [TypeInstance]
-  }
-
 type CategoryMain = CategoryConnect (Set.Set TypeName)
 
-type CategoryRefines = CategoryConnect CategoryRefine
+type CategoryRefines = CategoryConnect [TypeInstance]
 
 type CategoryVariance = CategoryConnect (ParamSet Variance)
 
@@ -118,7 +113,7 @@ checkVariances :: (MergeableM m, CompileErrorM m, Monad m) =>
   (CategoryConnect (Map.Map ParamName Variance)) ->
   CategoryVariance -> CategoryRefines -> m ()
 checkVariances va vs = checkCategory checkAll where
-  checkAll n (CategoryRefine gs) = do
+  checkAll n gs = do
     as <- n `categoryLookup` va
     mergeAll $ map (checkSingle as Covariant . SingleType . JustTypeInstance) gs
   checkSingle as v (SingleType (JustTypeInstance (TypeInstance t ps))) = do
@@ -179,16 +174,16 @@ flattenRefines r ps fs (CategoryConnect gs) = mfix flattenAll where
   flattenAll ca@(CategoryConnect _) = do
     items <- collectAllOrErrorM $ map (flattenCategory ca) (Map.toList gs)
     return $ CategoryConnect $ Map.fromList items
-  flattenCategory ca (n,(CategoryRefine gs)) = do
+  flattenCategory ca (n,gs) = do
     gs2 <- collectAllOrErrorM $ map (flattenSingle ca n) gs
     params <- n `categoryLookup` ps
     filters <- n `categoryLookup` fs
     mapped <- return $ uncheckedZipFilters params filters
-    return (n,CategoryRefine (mergeInstances r mapped $ join gs2))
+    return (n,mergeInstances r mapped $ join gs2)
   flattenSingle ca _ ta@(TypeInstance t ps) = do
     params <- (trParams r) t ps
     refines <- t `categoryLookup` ca
-    collectAllOrErrorM $ map (substitute params) (crRefines refines)
+    collectAllOrErrorM $ map (substitute params) refines
   substitute params t = do
     ((),SingleType (JustTypeInstance t2)) <-
         uncheckedSubAllParams (paramLookup params) (SingleType $ JustTypeInstance t)
@@ -197,7 +192,7 @@ flattenRefines r ps fs (CategoryConnect gs) = mfix flattenAll where
 checkRefines :: (MergeableM m, CompileErrorM m, Monad m) =>
   TypeResolver m p -> CategoryParams -> CategoryFilters -> CategoryRefines -> m ()
 checkRefines r ps fs = checkCategory checkAll where
-  checkAll n (CategoryRefine gs) = do
+  checkAll n gs = do
     ts <- collectAllOrErrorM $ map (getTypeName n) gs
     mergeAll $ map (checkGroup n) $ group ts
   getTypeName n ta@(TypeInstance t _) = do
