@@ -4,12 +4,13 @@ module TypeInstance (
   AssignedParams,
   GeneralInstance,
   InstanceParams,
+  InstanceVariances,
   ParamFilters,
-  ParamName,
+  ParamName(..),
   TypeFilter(..),
   TypeInstance(..),
   TypeInstanceOrParam(..),
-  TypeName,
+  TypeName(..),
   TypeResolver(..),
   ValueType(..),
   checkGeneralMatch,
@@ -17,8 +18,8 @@ module TypeInstance (
   paramAllowsVariance,
 ) where
 
-import qualified Data.Map as Map
 import Data.List (intercalate)
+import qualified Data.Map as Map
 
 import TypesBase
 
@@ -94,20 +95,23 @@ viewTypeFilter n (TypeFilter Invariant t)     = show n ++ " = "  ++ show t
 
 type InstanceParams = ParamSet GeneralInstance
 
+type InstanceVariances = ParamSet Variance
+
 type AssignedParams = Map.Map ParamName GeneralInstance
 
 type ParamFilters = Map.Map ParamName [TypeFilter]
 
 data TypeResolver m p =
   TypeResolver {
-    -- Validates an instance's param args against required filters.
-    tfValidate :: ParamFilters -> TypeInstance -> m(),
     -- Convert an instance of one category to an instance of the other.
+    -- NOTE: Destination type comes first here.
     trFind :: TypeName -> TypeName -> InstanceParams -> m (p,InstanceParams),
-    -- Labels params for an instance using the category's param names.
-    trParams :: TypeName -> InstanceParams -> m AssignedParams,
     -- Get the parameter variances for the category.
-    trVariance :: TypeName -> m [Variance]
+    trVariance :: TypeName -> m InstanceVariances,
+    -- Validates an instance's param args against required filters.
+    tfValidate :: ParamFilters -> TypeInstance -> m (),
+    -- Labels params for an instance using the category's param names.
+    trParams :: TypeName -> InstanceParams -> m AssignedParams
   }
 
 filterLookup :: (CompileErrorM m, Monad m) =>
@@ -159,7 +163,7 @@ checkInstanceToInstance r f Covariant (TypeInstance n1 ps1) t2@(TypeInstance n2 
     zipped <- return $ ParamSet $ zip (psParams ps1) (psParams ps2)
     variance <- trVariance r n1
     -- NOTE: Covariant is identity, so v2 has technically been composed with it.
-    checkParamsMatch (\v2 (p1,p2) -> checkGeneralMatch r f v2 p1 p2) (ParamSet variance) zipped
+    checkParamsMatch (\v2 (p1,p2) -> checkGeneralMatch r f v2 p1 p2) variance zipped
   | otherwise = do
     (p2,ps1') <- (trFind r) n2 n1 ps1
     (return p2) `mergeNested` (checkInstanceToInstance r f Covariant (TypeInstance n2 ps1') t2)
