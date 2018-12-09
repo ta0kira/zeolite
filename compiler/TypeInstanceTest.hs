@@ -11,6 +11,7 @@ import qualified Control.Monad.Trans.Class as Trans
 import qualified Data.Map as Map
 
 import CompileInfo
+import ParseInstance
 import ParserBase
 import TypeInstance
 import TypesBase

@@ -17,8 +17,6 @@ module TypesBase (
   paramAllowsVariance,
 ) where
 
-import Data.List (intercalate)
-
 
 class Mergeable a where
   mergeAny :: Foldable f => f a -> a
@@ -78,13 +76,6 @@ data GeneralType a =
     tmTypes :: [GeneralType a]
   }
   deriving (Eq)
-
-instance Show a => Show (GeneralType a) where
-  show (SingleType t) = show t
-  show (TypeMerge MergeUnion []) = "all"
-  show (TypeMerge MergeUnion ts) = "(" ++ intercalate "|" (map show ts) ++ ")"
-  show (TypeMerge MergeIntersect []) = "any"
-  show (TypeMerge MergeIntersect ts) = "(" ++ intercalate "&" (map show ts) ++ ")"
 
 checkGeneralType :: Mergeable c => (a -> b -> c) -> GeneralType a -> GeneralType b -> c
 checkGeneralType f ti1 ti2 = singleCheck ti1 ti2 where

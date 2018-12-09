@@ -18,42 +18,20 @@ module TypeInstance (
   checkValueTypeMatch,
 ) where
 
-import Control.Applicative ((<|>))
-import Data.Monoid ((<>))
 import Data.List (intercalate)
-import Text.Parsec hiding ((<|>))
-import Text.Parsec.Char
-import Text.Parsec.String
 import qualified Data.Map as Map
 
-import ParserBase
 import TypesBase
 
 
 type GeneralInstance = GeneralType TypeInstanceOrParam
 
-instance ParseFromSource GeneralInstance where
-  sourceParser = try all <|> try any <|> try intersect <|> try union <|> single where
-    all = labeled "all" $ do
-      keyword "all"
-      return $ TypeMerge MergeUnion []
-    any = labeled "any" $ do
-      keyword "any"
-      return $ TypeMerge MergeIntersect []
-    single = do
-      t <- sourceParser
-      return $ SingleType t
-    intersect = labeled "intersection" $ do
-      ts <- between (sepAfter $ string "(")
-                    (sepAfter $ string ")")
-                    (sepBy sourceParser (sepAfter $ string "&"))
-      return $ TypeMerge MergeIntersect ts
-    union = labeled "union" $ do
-      ts <- between (sepAfter $ string "(")
-                    (sepAfter $ string ")")
-                    (sepBy sourceParser (sepAfter $ string "|"))
-      return $ TypeMerge MergeUnion ts
-
+instance Show GeneralInstance where
+  show (SingleType t) = show t
+  show (TypeMerge MergeUnion []) = "all"
+  show (TypeMerge MergeUnion ts) = "(" ++ intercalate "|" (map show ts) ++ ")"
+  show (TypeMerge MergeIntersect []) = "any"
+  show (TypeMerge MergeIntersect ts) = "(" ++ intercalate "&" (map show ts) ++ ")"
 
 data ValueType =
   ValueType {
@@ -67,21 +45,6 @@ instance Show ValueType where
   show (ValueType OptionalValue t) = "optional " ++ show t
   show (ValueType RequiredValue t) = show t
 
-instance ParseFromSource ValueType where
-  sourceParser = value where
-    value = do
-      r <- try getWeak <|> try getOptional <|> getRequired
-      t <- sourceParser
-      return $ ValueType r t
-    getWeak = labeled "weak" $ do
-      keyword "weak"
-      return WeakValue
-    getOptional = labeled "optional" $ do
-      keyword "optional"
-      return OptionalValue
-    getRequired = return RequiredValue
-
-
 newtype TypeName =
   TypeName {
     tnName :: String
@@ -91,14 +54,6 @@ newtype TypeName =
 instance Show TypeName where
   show (TypeName n) = n
 
-instance ParseFromSource TypeName where
-  sourceParser = labeled "type name" $ do
-    noKeywords
-    b <- upper
-    e <- sepAfter $ many alphaNum
-    return $ TypeName (b:e)
-
-
 newtype ParamName =
   ParamName {
     pnName :: String
@@ -107,14 +62,6 @@ newtype ParamName =
 
 instance Show ParamName where
   show (ParamName n) = n
-
-instance ParseFromSource ParamName where
-  sourceParser = labeled "param name" $ do
-    noKeywords
-    b <- lower
-    e <- sepAfter $ many alphaNum
-    return $ ParamName (b:e)
-
 
 data TypeInstance =
   TypeInstance {
@@ -127,17 +74,6 @@ instance Show TypeInstance where
   show (TypeInstance n (ParamSet [])) = show n
   show (TypeInstance n (ParamSet ts)) =
     show n ++ "<" ++ intercalate "," (map show ts) ++ ">"
-
-instance ParseFromSource TypeInstance where
-  sourceParser = parsed where
-    args = between (sepAfter $ string "<")
-                   (sepAfter $ string ">")
-                   (sepBy sourceParser (sepAfter $ string ","))
-    parsed = do
-      n <- sourceParser
-      as <- labeled "type args" $ try args <|> return []
-      return $ TypeInstance n (ParamSet as)
-
 
 data TypeInstanceOrParam =
   JustTypeInstance {
@@ -152,16 +88,6 @@ instance Show TypeInstanceOrParam where
   show (JustTypeInstance t) = show t
   show (JustParamName n)    = show n
 
-instance ParseFromSource TypeInstanceOrParam where
-  sourceParser = try param <|> inst where
-    param = labeled "param" $ do
-      n <- sourceParser
-      return $ JustParamName n
-    inst = labeled "type" $ do
-      t <- sourceParser
-      return $ JustTypeInstance t
-
-
 data TypeFilter =
   TypeFilter {
     tfVariance :: Variance,
@@ -173,18 +99,6 @@ viewTypeFilter :: ParamName -> TypeFilter -> String
 viewTypeFilter n (TypeFilter Covariant t)     = show n ++ " -> " ++ show t
 viewTypeFilter n (TypeFilter Contravariant t) = show n ++ " <- " ++ show t
 viewTypeFilter n (TypeFilter Invariant t)     = show n ++ " = "  ++ show t
-
-instance ParseFromSource TypeFilter where
-  sourceParser = try requires <|> allows where
-    requires = labeled "requires filter" $ do
-      keyword "requires"
-      t <- sourceParser
-      return $ TypeFilter Covariant t
-    allows = labeled "allows filter" $ do
-      keyword "allows"
-      t <- sourceParser
-      return $ TypeFilter Contravariant t
-
 
 type InstanceParams = ParamSet GeneralInstance
 
