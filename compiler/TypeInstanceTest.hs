@@ -4,6 +4,7 @@ module TypeInstanceTest where
 
 import Control.Monad
 import Data.Either
+import Data.List (intercalate)
 import System.IO
 import Text.Parsec
 import qualified Control.Monad.Trans.Class as Trans
@@ -63,8 +64,8 @@ testCases = [
       "(Type0&Type3)"
       "Type3",
     checkSimpleConvertSuccess
-      "(Type0&Type3)"
-      "(Type0|Type3)",
+      "(Type1<Type0>&Type3)"
+      "(Type1<Type0>|Type3)",
     checkSimpleConvertFail
       "(Type0|Type3)"
       "Type3",
@@ -73,7 +74,160 @@ testCases = [
       "(Type0&Type3)",
     checkSimpleConvertFail
       "(Type0|Type3)"
-      "(Type0&Type3)"
+      "(Type0&Type3)",
+
+    checkConvertSuccess
+       [("x",[])]
+       "x" "x",
+    checkConvertFail
+       [("x",[]),
+        ("y",[])]
+       "x" "y",
+    checkConvertSuccess
+       [("x",["requires y"]),
+        ("y",["allows x"])]
+       "x" "y",
+    checkConvertSuccess
+       [("x",["requires y"]),
+        ("y",[])]
+       "x" "y",
+    checkConvertSuccess
+       [("x",[]),
+        ("y",["allows x"])]
+       "x" "y",
+
+    checkConvertSuccess
+       [("x",["requires z"]),
+        ("y",["allows z"]),
+        ("z",[])]
+       "x" "y",
+    checkConvertSuccess
+       [("x",["requires z"]),
+        ("y",[]),
+        ("z",["requires y"])]
+       "x" "y",
+    -- NOTE: This is technically valid, but the checking mechanism doesn't do
+    -- a full graph search, so the writer needs to be explicit about implied
+    -- additional filters, e.g., "x requires y" => "y allows x".
+    checkConvertFail
+       [("w",["allows x"]),
+        ("x",[]),
+        ("y",[]),
+        ("z",["allows w","requires y"])]
+       "x" "y",
+    checkConvertSuccess
+       [("x",["requires Type3"]),
+        ("y",["allows Type0"])]
+       "x" "y",
+    checkConvertSuccess
+       [("x",["requires y"]),
+        ("y",["requires Type3"])]
+       "x" "Type0",
+    checkConvertSuccess
+       [("x",["allows y"]),
+        ("y",["allows Type0"])]
+       "Type3" "x",
+
+    checkConvertSuccess
+       [("x",[])]
+       "Type2<Type0,Type0,x>" "Type2<Type0,Type0,x>",
+    checkConvertFail
+       [("x",[]),
+        ("y",[])]
+       "Type2<Type0,Type0,x>" "Type2<Type0,Type0,y>",
+    checkConvertSuccess
+       [("x",["requires y"]),
+        ("y",["allows x"])]
+       "Type2<Type0,Type0,x>" "Type2<Type0,Type0,y>",
+    checkConvertSuccess
+       [("x",["requires y"]),
+        ("y",[])]
+       "Type2<Type0,Type0,x>" "Type2<Type0,Type0,y>",
+    checkConvertSuccess
+       [("x",[]),
+        ("y",["allows x"])]
+       "Type2<Type0,Type0,x>" "Type2<Type0,Type0,y>",
+
+    checkConvertSuccess
+       [("x",[])]
+       "Type2<x,Type0,Type0>" "Type2<x,Type0,Type0>",
+    checkConvertFail
+       [("x",[]),
+        ("y",[])]
+       "Type2<x,Type0,Type0>" "Type2<y,Type0,Type0>",
+    checkConvertFail
+       [("x",["requires y"]),
+        ("y",["allows x"])]
+       "Type2<x,Type0,Type0>" "Type2<y,Type0,Type0>",
+    checkConvertFail
+       [("x",["requires y"]),
+        ("y",[])]
+       "Type2<x,Type0,Type0>" "Type2<y,Type0,Type0>",
+    checkConvertFail
+       [("x",[]),
+        ("y",["allows x"])]
+       "Type2<x,Type0,Type0>" "Type2<y,Type0,Type0>",
+    checkConvertSuccess
+       [("x",["allows y"]),
+        ("y",["requires x"])]
+       "Type2<x,Type0,Type0>" "Type2<y,Type0,Type0>",
+    checkConvertSuccess
+       [("x",["allows y"]),
+        ("y",[])]
+       "Type2<x,Type0,Type0>" "Type2<y,Type0,Type0>",
+    checkConvertSuccess
+       [("x",[]),
+        ("y",["requires x"])]
+       "Type2<x,Type0,Type0>" "Type2<y,Type0,Type0>",
+
+    checkConvertFail
+       [("x",[])]
+       "x" "Type0",
+    checkConvertSuccess
+       [("x",["requires Type0"])]
+       "x" "Type0",
+    checkConvertSuccess
+       [("x",["requires Type3"])]
+       "x" "Type0",
+    checkConvertFail
+       [("x",[])]
+       "Type0" "x",
+    checkConvertSuccess
+       [("x",["allows Type0"])]
+       "Type0" "x",
+    checkConvertSuccess
+       [("x",["allows Type0"])]
+       "Type3" "x",
+
+    checkConvertFail
+       [("x",[])]
+       "Type2<x,Type0,Type0>" "Type2<Type0,Type0,Type0>",
+    checkConvertSuccess
+       [("x",["allows Type0"])]
+       "Type2<x,Type0,Type0>" "Type2<Type0,Type0,Type0>",
+    checkConvertSuccess
+       [("x",["allows Type0"])]
+       "Type2<x,Type0,Type0>" "Type2<Type3,Type0,Type0>",
+    checkConvertFail
+       [("x",[])]
+       "Type2<Type0,Type0,Type0>" "Type2<x,Type0,Type0>",
+    checkConvertSuccess
+       [("x",["requires Type0"])]
+       "Type2<Type0,Type0,Type0>" "Type2<x,Type0,Type0>",
+    checkConvertSuccess
+       [("x",["requires Type3"])]
+       "Type2<Type0,Type0,Type0>" "Type2<x,Type0,Type0>",
+
+    checkConvertSuccess
+       [("x",["requires y"]),
+        ("y",["requires z"]),
+        ("z",[])]
+       "x" "y",
+    checkConvertSuccess
+       [("x",["allows z"]),
+        ("y",["allows x"]),
+        ("z",[])]
+       "x" "y"
   ]
 
 main = do
@@ -120,22 +274,46 @@ refines = Map.fromList $ [
   ]
 
 
-checkSimpleConvertSuccess = checkConvertSuccess Map.empty
+checkSimpleConvertSuccess = checkConvertSuccess []
 
-checkSimpleConvertFail = checkConvertFail Map.empty
+checkSimpleConvertFail = checkConvertFail []
 
-checkConvertSuccess ps x y = return $ checked $ tryConvert ps x y where
-  checked (Left es) = compileError $ x ++ " -> " ++ y ++ ": " ++ show es
-  checked _ = return ()
+checkConvertSuccess pa x y = return checked where
+  prefix = x ++ " -> " ++ y ++ " " ++ showParams pa
+  checked = do
+    (t1,t2,pa2) <- parseTheTest pa x y
+    check $ checkGeneralMatch resolver pa2 Covariant t1 t2
+  check (Left es) = compileError $ prefix ++ ": " ++ show es
+  check _ = return ()
 
-checkConvertFail ps x y = return $ checked $ tryConvert ps x y where
-  checked (Right _) = compileError $ x ++ " /> " ++ y ++ ": Expected failure"
-  checked _ = return ()
+checkConvertFail pa x y = return checked where
+  prefix = x ++ " /> " ++ y ++ " " ++ showParams pa
+  checked = do
+    (t1,t2,pa2) <- parseTheTest pa x y
+    check $ checkGeneralMatch resolver pa2 Covariant t1 t2
+  check (Right _) = compileError $ prefix ++ ": Expected failure"
+  check _ = return ()
 
-tryConvert ps x y = do
+showParams pa = "[" ++ intercalate "," (concat $ map expand pa) ++ "]" where
+  expand (n,ps) = map (\p -> n ++ " " ++ p) ps
+
+parseTheTest :: [(String,[String])] -> String -> String ->
+                CompileInfo (GeneralInstance,GeneralInstance,ParamFilters)
+parseTheTest pa x y = parsed where
+  parsed = do
     t1 <- getInstance x
     t2 <- getInstance y
-    checkGeneralMatch resolver Map.empty Covariant t1 t2
+    pa2 <- collectAllOrErrorM $ map parseFilters pa
+    return (t1,t2,Map.fromList pa2)
+  parseFilters :: (String,[String]) -> CompileInfo (ParamName,[TypeFilter])
+  parseFilters (n,fs) = do
+    fs2 <- collectAllOrErrorM $ map parseFilter fs
+    return (ParamName n,fs2)
+  parseFilter :: String -> CompileInfo TypeFilter
+  parseFilter s = checked parsed where
+    parsed = parse (between (return ()) eof sourceParser) "(string)" s
+    checked (Right t) = return t
+    checked (Left e)  = compileError (show e)
 
 resolver :: TypeResolver CompileInfo ()
 resolver = TypeResolver {
@@ -145,10 +323,10 @@ resolver = TypeResolver {
     trParams = undefined -- TODO: Define this with an error.
   }
 
-getParams ma t2 t1 ps = do
-  ra <- mapLookup ma t1
-  f <- mapLookup ra t2
-  return ((),f ps)
+getParams ma (TypeInstance n1 ps1) n2 = do
+  ra <- mapLookup ma n1
+  f <- mapLookup ra n2
+  return ((),f ps1)
 
 
 numberError :: a -> Either b c -> Either (a,b) c
@@ -162,6 +340,6 @@ mapLookup ma n = resolve $ n `Map.lookup` ma where
 
 getInstance :: (CompileErrorM m, Monad m) => String -> m GeneralInstance
 getInstance s = checked parsed where
+  parsed = parse (between (return ()) eof sourceParser) "(string)" s
   checked (Right t) = return t
   checked (Left e)  = compileError (show e)
-  parsed = parse sourceParser "(string)" s

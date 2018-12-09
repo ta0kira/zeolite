@@ -151,6 +151,18 @@ viewTypeFilter n (TypeFilter Covariant t)     = show n ++ " -> " ++ show t
 viewTypeFilter n (TypeFilter Contravariant t) = show n ++ " <- " ++ show t
 viewTypeFilter n (TypeFilter Invariant t)     = show n ++ " = "  ++ show t
 
+instance ParseFromSource TypeFilter where
+  sourceParser = try requires <|> allows where
+    requires = do
+      string "requires "
+      t <- sourceParser
+      return $ TypeFilter Covariant t
+    allows = do
+      string "allows "
+      t <- sourceParser
+      return $ TypeFilter Contravariant t
+
+
 type InstanceParams = ParamSet GeneralInstance
 
 type InstanceVariances = ParamSet Variance
@@ -162,8 +174,7 @@ type ParamFilters = Map.Map ParamName [TypeFilter]
 data TypeResolver m p =
   TypeResolver {
     -- Convert an instance of one category to an instance of the other.
-    -- NOTE: Destination type comes first here.
-    trFind :: TypeName -> TypeName -> InstanceParams -> m (p,InstanceParams),
+    trFind :: TypeInstance -> TypeName -> m (p,InstanceParams),
     -- Get the parameter variances for the category.
     trVariance :: TypeName -> m InstanceVariances,
     -- Validates an instance's param args against required filters.
@@ -215,7 +226,7 @@ checkInstanceToInstance r f Invariant t1@(TypeInstance n1 _) t2@(TypeInstance n2
     compileError $ "Invariance requires equality: " ++ show t1 ++ " vs. " ++ show t2
 checkInstanceToInstance r f Contravariant t1 t2 =
   checkInstanceToInstance r f Covariant t2 t1
-checkInstanceToInstance r f Covariant (TypeInstance n1 ps1) t2@(TypeInstance n2 ps2)
+checkInstanceToInstance r f Covariant t1@(TypeInstance n1 ps1) t2@(TypeInstance n2 ps2)
   | n1 == n2 = do
     checkParamsMatch (\_ _ -> return ()) ps1 ps2
     zipped <- return $ ParamSet $ zip (psParams ps1) (psParams ps2)
@@ -223,7 +234,7 @@ checkInstanceToInstance r f Covariant (TypeInstance n1 ps1) t2@(TypeInstance n2 
     -- NOTE: Covariant is identity, so v2 has technically been composed with it.
     checkParamsMatch (\v2 (p1,p2) -> checkGeneralMatch r f v2 p1 p2) variance zipped
   | otherwise = do
-    (p2,ps1') <- (trFind r) n2 n1 ps1
+    (p2,ps1') <- (trFind r) t1 n2
     (return p2) `mergeNested` (checkInstanceToInstance r f Covariant (TypeInstance n2 ps1') t2)
 
 checkParamToInstance :: (MergeableM m, Mergeable p, CompileErrorM m, Monad m) =>
@@ -235,7 +246,7 @@ checkParamToInstance r f Contravariant p1 t2 =
 checkParamToInstance r f Covariant n1 t2@(TypeInstance n2 ps2) = checked where
   checked = do
     cs1 <- f `filterLookup` n1
-    mergeAll $ map checkConstraintToInstance cs1
+    mergeAny $ map checkConstraintToInstance cs1
   checkConstraintToInstance (TypeFilter Covariant t) =
     -- x -> F implies x -> T only if F -> T
     checkSingleMatch r f Covariant t (JustTypeInstance t2)
@@ -256,7 +267,7 @@ checkInstanceToParam r f Covariant t1@(TypeInstance n1 ps1) n2 = checked where
     mergeAny $ map checkInstanceToConstraint cs2
   checkInstanceToConstraint (TypeFilter Contravariant t) =
     -- F -> x implies T -> x only if T -> F
-    checkSingleMatch r f Contravariant (JustTypeInstance t1) t
+    checkSingleMatch r f Covariant (JustTypeInstance t1) t
   checkInstanceToConstraint f =
     -- x -> F cannot imply T -> x
     compileError $ "Constraint " ++ viewTypeFilter n2 f ++
@@ -271,17 +282,24 @@ checkParamToParam r f Invariant n1 n2
       -- possible that the substituted types will be different.
     compileError $ "Invariance requires equality: " ++ show n1 ++ " vs. " ++ show n2
 checkParamToParam r f Contravariant p1 p2 =
-  checkParamToParam r f Covariant p1 p2
+  checkParamToParam r f Covariant p2 p1
 checkParamToParam r f Covariant n1 n2 = checked where
+  self1 = TypeFilter Covariant     (JustParamName n1)
+  self2 = TypeFilter Contravariant (JustParamName n2)
   checked
     | n1 == n2 = mergeDefault
     | otherwise = do
       cs1 <- f `filterLookup` n1
       cs2 <- f `filterLookup` n2
-      mergeAll $ map (\c1 -> mergeAny $ map (\c2 -> checkConstraintToConstraint c1 c2) cs2) cs1
-  checkConstraintToConstraint (TypeFilter Covariant t1) (TypeFilter Contravariant t2) =
+      pairs <- return $ [(c1,c2) | c1 <- cs1, c2 <- cs2] ++
+                        [(self1,c2) | c2 <- cs2] ++
+                        [(c1,self2) | c1 <- cs1]
+      mergeAny $ map (\(c1,c2) -> checkConstraintToConstraint c1 c2) pairs
+  checkConstraintToConstraint (TypeFilter Covariant t1) (TypeFilter Contravariant t2)
+    | t1 == (JustParamName n1) && t2 == (JustParamName n2) =
+      compileError $ "Infinite recursion in " ++ show n1 ++ " -> " ++ show n2
     -- x -> F1, F2 -> y implies x -> y only if F1 -> F2
-    checkSingleMatch r f Covariant t1 t2
+    | otherwise = checkSingleMatch r f Covariant t1 t2
   checkConstraintToConstraint f1 f2 =
     -- x -> F1, y -> F2 cannot imply x -> y
     -- F1 -> x, F1 -> y cannot imply x -> y

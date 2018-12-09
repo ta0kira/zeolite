@@ -1,6 +1,5 @@
 Roughly in order of execution:
 
-- Test basic type system
 - Reimplement parser for categories.
 - Implement instance interfaces.
 - Test category system.

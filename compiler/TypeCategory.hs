@@ -97,7 +97,7 @@ uncheckedZipFilters ::
 uncheckedZipFilters (ParamSet pa) (ParamSet fa) =
   Map.fromList $ zip pa fa
 
-labelParamVals :: (MergeableM m, CompileErrorM m, Monad m) =>
+labelParamVals :: (Show a, MergeableM m, CompileErrorM m, Monad m) =>
   CategoryParams -> CategoryConnect (ParamSet a) ->
   m (CategoryConnect (Map.Map ParamName a))
 labelParamVals (CategoryConnect pa) va@(CategoryConnect _) = paired where
