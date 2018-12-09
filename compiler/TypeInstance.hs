@@ -1,3 +1,4 @@
+{-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE Safe #-}
 
 module TypeInstance (
@@ -18,13 +19,32 @@ module TypeInstance (
   paramAllowsVariance,
 ) where
 
+import Control.Applicative ((<|>))
+import Data.Monoid ((<>))
 import Data.List (intercalate)
+import Text.Parsec hiding ((<|>))
+import Text.Parsec.Char
+import Text.Parsec.String
 import qualified Data.Map as Map
 
+import ParserBase
 import TypesBase
 
 
 type GeneralInstance = GeneralType TypeInstanceOrParam
+
+instance ParseFromSource (GeneralType TypeInstanceOrParam) where
+  sourceParser = try intersect <|> try union <|> single where
+    single = do
+      t <- sourceParser
+      return $ SingleType t
+    intersect = do
+      ts <- between (string "(") (string ")") (sepBy sourceParser (string "&"))
+      return $ TypeMerge MergeIntersect ts
+    union = do
+      ts <- between (string "(") (string ")") (sepBy sourceParser (string "|"))
+      return $ TypeMerge MergeUnion ts
+
 
 data ValueType =
   ValueType {
@@ -38,6 +58,11 @@ instance Show ValueType where
   show (ValueType OptionalValue t) = "optional " ++ show t
   show (ValueType RequiredValue t) = show t
 
+instance ParseFromSource ValueType where
+  sourceParser = do
+    undefined
+
+
 newtype TypeName =
   TypeName {
     tnName :: String
@@ -47,6 +72,13 @@ newtype TypeName =
 instance Show TypeName where
   show (TypeName n) = n
 
+instance ParseFromSource TypeName where
+  sourceParser = do
+    b <- upper
+    e <- many alphaNum
+    return $ TypeName (b:e)
+
+
 newtype ParamName =
   ParamName {
     pnName :: String
@@ -55,6 +87,13 @@ newtype ParamName =
 
 instance Show ParamName where
   show (ParamName n) = n
+
+instance ParseFromSource ParamName where
+  sourceParser = do
+    b <- lower
+    e <- many alphaNum
+    return $ ParamName (b:e)
+
 
 data TypeInstance =
   TypeInstance {
@@ -68,6 +107,15 @@ instance Show TypeInstance where
   show (TypeInstance n (ParamSet ts)) =
     show n ++ "<" ++ intercalate "," (map show ts) ++ ">"
 
+instance ParseFromSource TypeInstance where
+  sourceParser = parsed where
+    args = between (string "<") (string ">") (sepBy sourceParser (string ","))
+    parsed = do
+      n <- sourceParser
+      as <- try args <|> return []
+      return $ TypeInstance n (ParamSet as)
+
+
 data TypeInstanceOrParam =
   JustTypeInstance {
     jtiType :: TypeInstance
@@ -80,6 +128,16 @@ data TypeInstanceOrParam =
 instance Show TypeInstanceOrParam where
   show (JustTypeInstance t) = show t
   show (JustParamName n)    = show n
+
+instance ParseFromSource TypeInstanceOrParam where
+  sourceParser = try param <|> inst where
+    param = do
+      n <- sourceParser
+      return $ JustParamName n
+    inst = do
+      t <- sourceParser
+      return $ JustTypeInstance t
+
 
 data TypeFilter =
   TypeFilter {
@@ -181,9 +239,10 @@ checkParamToInstance r f Covariant n1 t2@(TypeInstance n2 ps2) = checked where
   checkConstraintToInstance (TypeFilter Covariant t) =
     -- x -> F implies x -> T only if F -> T
     checkSingleMatch r f Covariant t (JustTypeInstance t2)
-  checkConstraintToInstance _ =
+  checkConstraintToInstance f =
     -- F -> x cannot imply x -> T
-    compileError $ "Constraint does not allow " ++ show n1 ++ " -> " ++ show t2
+    compileError $ "Constraint " ++ viewTypeFilter n1 f ++
+                   " does not imply " ++ show n1 ++ " -> " ++ show t2
 
 checkInstanceToParam :: (MergeableM m, Mergeable p, CompileErrorM m, Monad m) =>
   TypeResolver m p -> ParamFilters -> Variance -> TypeInstance -> ParamName -> m p
@@ -198,9 +257,10 @@ checkInstanceToParam r f Covariant t1@(TypeInstance n1 ps1) n2 = checked where
   checkInstanceToConstraint (TypeFilter Contravariant t) =
     -- F -> x implies T -> x only if T -> F
     checkSingleMatch r f Contravariant (JustTypeInstance t1) t
-  checkInstanceToConstraint _ =
+  checkInstanceToConstraint f =
     -- x -> F cannot imply T -> x
-    compileError $ "Constraint does not allow " ++ show t1 ++ " -> " ++ show n2
+    compileError $ "Constraint " ++ viewTypeFilter n2 f ++
+                   " does not imply " ++ show t1 ++ " -> " ++ show n2
 
 checkParamToParam :: (MergeableM m, Mergeable p, CompileErrorM m, Monad m) =>
   TypeResolver m p -> ParamFilters -> Variance -> ParamName -> ParamName -> m p
@@ -222,8 +282,10 @@ checkParamToParam r f Covariant n1 n2 = checked where
   checkConstraintToConstraint (TypeFilter Covariant t1) (TypeFilter Contravariant t2) =
     -- x -> F1, F2 -> y implies x -> y only if F1 -> F2
     checkSingleMatch r f Covariant t1 t2
-  checkConstraintToConstraint _ _ =
+  checkConstraintToConstraint f1 f2 =
     -- x -> F1, y -> F2 cannot imply x -> y
     -- F1 -> x, F1 -> y cannot imply x -> y
     -- F1 -> x, y -> F2 cannot imply x -> y
-    compileError $ "Constraint does not allow " ++ show n1 ++ " -> " ++ show n2
+    compileError $ "Constraints " ++ viewTypeFilter n1 f1 ++ " and " ++
+                   viewTypeFilter n2 f2 ++ " do not imply " ++
+                   show n1 ++ " -> " ++ show n2
