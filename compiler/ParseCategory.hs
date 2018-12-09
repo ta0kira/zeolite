@@ -47,9 +47,8 @@ instance ParseFromSource (AnyCategory SourcePos) where
       ps <- parseCategoryParams
       open
       rs <- parseCategoryRefines
-      notAllowed parseCategoryDefines      "defines not allowed in interfaces"
-      notAllowed parseParamValueFilters    "filters not allowed in interfaces"
-      notAllowed parseParamInstanceFilters "filters not allowed in interfaces"
+      notAllowed parseRefinesDefinesFilters
+                 "defines and filters only allowed in concrete categories"
       close
       return $ ValueInterface c n ps rs
     parseInstance = do
@@ -59,9 +58,8 @@ instance ParseFromSource (AnyCategory SourcePos) where
       ps <- parseCategoryParams
       open
       rs <- parseCategoryRefines
-      notAllowed parseCategoryDefines      "defines not allowed in interfaces"
-      notAllowed parseParamValueFilters    "filters not allowed in interfaces"
-      notAllowed parseParamInstanceFilters "filters not allowed in interfaces"
+      notAllowed parseRefinesDefinesFilters
+                 "defines and filters only allowed in concrete categories"
       close
       return $ InstanceInterface c n ps rs
     parseConcrete = do
@@ -70,11 +68,7 @@ instance ParseFromSource (AnyCategory SourcePos) where
       n <- sourceParser
       ps <- parseCategoryParams
       open
-      -- TODO: Allow arbitrary ordering here?
-      rs <- parseCategoryRefines
-      ds <- parseCategoryDefines
-      vs <- parseParamValueFilters
-      is <- parseParamInstanceFilters
+      (rs,ds,vs,is) <- parseRefinesDefinesFilters
       close
       return $ ValueConcrete c n ps rs ds vs is
 
@@ -167,32 +161,35 @@ parseCategoryRefines = parsed where
     t <- sourceParser
     return $ ValueRefine c t
 
-parseCategoryDefines :: Parser [ValueRefine SourcePos]
-parseCategoryDefines = parsed where
-  parsed = sepAfter $ sepBy singleDefine optionalSpace
+parseRefinesDefinesFilters :: Parser ([ValueRefine SourcePos],
+                                      [ValueRefine SourcePos],
+                                      [ParamValueFilter SourcePos],
+                                      [ParamInstanceFilter SourcePos])
+parseRefinesDefinesFilters = parsed >>= return . foldr merge empty where
+  empty = ([],[],[],[])
+  merge (rs1,ds1,vs1,is1) (rs2,ds2,vs2,is2) = (rs1++rs2,ds1++ds2,vs1++vs2,is1++is2)
+  parsed = sepBy anyType optionalSpace
+  anyType = labeled "" $ singleRefine <|> singleDefine <|> singleValue <|> singleInstance
+  singleRefine = do
+    c <- getPosition
+    try $ keyword "refines"
+    t <- sourceParser
+    return ([ValueRefine c t],[],[],[])
   singleDefine = do
     c <- getPosition
     try $ keyword "defines"
     t <- sourceParser
-    return $ ValueRefine c t
-
-parseParamValueFilters :: Parser [ParamValueFilter SourcePos]
-parseParamValueFilters = parsed where
-  parsed = sepAfter $ sepBy singleFilter optionalSpace
-  singleFilter = try $ do
+    return ([],[ValueRefine c t],[],[])
+  singleValue = try $ do
     c <- getPosition
     n <- sourceParser
     f <- sourceParser
-    return $ ParamValueFilter c n f
-
-parseParamInstanceFilters :: Parser [ParamInstanceFilter SourcePos]
-parseParamInstanceFilters = parsed where
-  parsed = sepAfter $ sepBy singleFilter optionalSpace
-  singleFilter = do
+    return ([],[],[ParamValueFilter c n f],[])
+  singleInstance = do
     c <- getPosition
     n <- try $ sourceParser
     try $ keyword "defines"
     notAllowed (sourceParser :: Parser ParamName) $
                "param " ++ show n ++ " cannot define another param"
     t <- sourceParser
-    return $ ParamInstanceFilter c n t
+    return ([],[],[],[ParamInstanceFilter c n t])
