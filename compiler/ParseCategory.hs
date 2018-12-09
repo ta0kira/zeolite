@@ -14,19 +14,19 @@ import TypesBase
 
 data AnyCategory c =
   ValueInterface {
-    viContext :: c,
+    viContext :: [c],
     viName :: TypeName,
     viParams :: [ValueParam c],
     viRefines :: [ValueRefine c]
   } |
   InstanceInterface {
-    iiContext :: c,
+    iiContext :: [c],
     iiName :: TypeName,
     iiParams :: [ValueParam c],
     iiRefines :: [ValueRefine c]
   } |
   ValueConcrete {
-    vcContext :: c,
+    vcContext :: [c],
     vcName :: TypeName,
     vcParams :: [ValueParam c],
     vcRefines :: [ValueRefine c],
@@ -50,7 +50,7 @@ instance ParseFromSource (AnyCategory SourcePos) where
       notAllowed parseRefinesDefinesFilters
                  "defines and filters only allowed in concrete categories"
       close
-      return $ ValueInterface c n ps rs
+      return $ ValueInterface [c] n ps rs
     parseInstance = do
       c <- getPosition
       try $ keyword "type" >> keyword "interface"
@@ -61,7 +61,7 @@ instance ParseFromSource (AnyCategory SourcePos) where
       notAllowed parseRefinesDefinesFilters
                  "defines and filters only allowed in concrete categories"
       close
-      return $ InstanceInterface c n ps rs
+      return $ InstanceInterface [c] n ps rs
     parseConcrete = do
       c <- getPosition
       try $ keyword "concrete"
@@ -70,26 +70,26 @@ instance ParseFromSource (AnyCategory SourcePos) where
       open
       (rs,ds,vs,is) <- parseRefinesDefinesFilters
       close
-      return $ ValueConcrete c n ps rs ds vs is
+      return $ ValueConcrete [c] n ps rs ds vs is
 
 
 data DefineConcrete c =
   DefineConcrete {
-    dcContext :: c,
+    dcContext :: [c],
     dcName :: TypeName
   }
   deriving (Eq,Show)
 
 data ValueRefine c =
   ValueRefine {
-    vrContext :: c,
+    vrContext :: [c],
     vrType :: TypeInstance
   }
   deriving (Eq,Show)
 
 data ValueParam c =
   ValueParam {
-    vpContext :: c,
+    vpContext :: [c],
     vpParam :: ParamName,
     vpVariance :: Variance
   }
@@ -97,7 +97,7 @@ data ValueParam c =
 
 data ParamValueFilter c =
   ParamValueFilter {
-    pfContext :: c,
+    pfContext :: [c],
     pfParam :: ParamName,
     pfFilter :: TypeFilter
   }
@@ -105,7 +105,7 @@ data ParamValueFilter c =
 
 data ParamInstanceFilter c =
   ParamInstanceFilter {
-    pdContext :: c,
+    pdContext :: [c],
     pdParam :: ParamName,
     pdDefines :: TypeInstance
   }
@@ -150,7 +150,7 @@ parseCategoryParams = parsed where
     c <- getPosition
     n <- sourceParser
     return (c,n)
-  apply v (c,n) = ValueParam c n v
+  apply v (c,n) = ValueParam [c] n v
 
 parseCategoryRefines :: Parser [ValueRefine SourcePos]
 parseCategoryRefines = parsed where
@@ -159,7 +159,7 @@ parseCategoryRefines = parsed where
     c <- getPosition
     try $ keyword "refines"
     t <- sourceParser
-    return $ ValueRefine c t
+    return $ ValueRefine [c] t
 
 parseRefinesDefinesFilters :: Parser ([ValueRefine SourcePos],
                                       [ValueRefine SourcePos],
@@ -174,17 +174,17 @@ parseRefinesDefinesFilters = parsed >>= return . foldr merge empty where
     c <- getPosition
     try $ keyword "refines"
     t <- sourceParser
-    return ([ValueRefine c t],[],[],[])
+    return ([ValueRefine [c] t],[],[],[])
   singleDefine = do
     c <- getPosition
     try $ keyword "defines"
     t <- sourceParser
-    return ([],[ValueRefine c t],[],[])
+    return ([],[ValueRefine [c] t],[],[])
   singleValue = try $ do
     c <- getPosition
     n <- sourceParser
     f <- sourceParser
-    return ([],[],[ParamValueFilter c n f],[])
+    return ([],[],[ParamValueFilter [c] n f],[])
   singleInstance = do
     c <- getPosition
     n <- try $ sourceParser
@@ -192,4 +192,4 @@ parseRefinesDefinesFilters = parsed >>= return . foldr merge empty where
     notAllowed (sourceParser :: Parser ParamName) $
                "param " ++ show n ++ " cannot define another param"
     t <- sourceParser
-    return ([],[],[],[ParamInstanceFilter c n t])
+    return ([],[],[],[ParamInstanceFilter [c] n t])
