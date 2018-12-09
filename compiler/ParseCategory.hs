@@ -22,8 +22,7 @@ data AnyCategory c =
   InstanceInterface {
     iiContext :: [c],
     iiName :: TypeName,
-    iiParams :: [ValueParam c],
-    iiRefines :: [ValueRefine c]
+    iiParams :: [ValueParam c]
   } |
   ValueConcrete {
     vcContext :: [c],
@@ -42,7 +41,7 @@ instance ParseFromSource (AnyCategory SourcePos) where
     close = sepAfter $ string "}"
     parseValue = do
       c <- getPosition
-      try $ optional (keyword "value") >> keyword "interface"
+      try $ keyword "value" >> keyword "interface"
       n <- sourceParser
       ps <- parseCategoryParams
       open
@@ -57,11 +56,10 @@ instance ParseFromSource (AnyCategory SourcePos) where
       n <- sourceParser
       ps <- parseCategoryParams
       open
-      rs <- parseCategoryRefines
       notAllowed parseRefinesDefinesFilters
-                 "defines and filters only allowed in concrete categories"
+                 "refines, defines and filters only allowed in concrete categories"
       close
-      return $ InstanceInterface [c] n ps rs
+      return $ InstanceInterface [c] n ps
     parseConcrete = do
       c <- getPosition
       try $ keyword "concrete"
