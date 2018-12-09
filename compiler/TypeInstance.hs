@@ -91,8 +91,7 @@ instance Show TypeInstanceOrParam where
 
 data FilterDirection =
   FilterRequires |
-  FilterAllows |
-  FilterDefines
+  FilterAllows
   deriving (Eq,Show)
 
 data TypeFilter =
@@ -103,9 +102,8 @@ data TypeFilter =
   deriving (Eq)
 
 instance Show TypeFilter where
-  show (TypeFilter FilterRequires t) = "-> " ++ show t
-  show (TypeFilter FilterAllows t)   = "<- " ++ show t
-  show (TypeFilter FilterDefines t)  = "-> " ++ show t -- TODO: Make this distinct.
+  show (TypeFilter FilterRequires t) = "requires " ++ show t
+  show (TypeFilter FilterAllows t)   = "allows "   ++ show t
 
 viewTypeFilter :: ParamName -> TypeFilter -> String
 viewTypeFilter n f = show n ++ " " ++ show f

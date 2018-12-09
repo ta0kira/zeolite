@@ -20,9 +20,6 @@ instance ParseFromSource GeneralInstance where
     any = labeled "any" $ do
       keyword "any"
       return $ TypeMerge MergeIntersect []
-    single = do
-      t <- sourceParser
-      return $ SingleType t
     intersect = labeled "intersection" $ do
       ts <- between (sepAfter $ string "(")
                     (sepAfter $ string ")")
@@ -33,18 +30,21 @@ instance ParseFromSource GeneralInstance where
                     (sepAfter $ string ")")
                     (sepBy sourceParser (sepAfter $ string "|"))
       return $ TypeMerge MergeUnion ts
+    single = do
+      t <- sourceParser
+      return $ SingleType t
 
 instance ParseFromSource ValueType where
   sourceParser = value where
     value = do
-      r <- try getWeak <|> try getOptional <|> getRequired
+      r <- getWeak <|> getOptional <|> getRequired
       t <- sourceParser
       return $ ValueType r t
     getWeak = labeled "weak" $ do
-      keyword "weak"
+      try $ keyword "weak"
       return WeakValue
     getOptional = labeled "optional" $ do
-      keyword "optional"
+      try $ keyword "optional"
       return OptionalValue
     getRequired = return RequiredValue
 
@@ -67,7 +67,7 @@ instance ParseFromSource TypeInstance where
     args = between (sepAfter $ string "<")
                    (sepAfter $ string ">")
                    (sepBy sourceParser (sepAfter $ string ","))
-    parsed = do
+    parsed = labeled "type" $ do
       n <- sourceParser
       as <- labeled "type args" $ try args <|> return []
       return $ TypeInstance n (ParamSet as)
@@ -82,16 +82,12 @@ instance ParseFromSource TypeInstanceOrParam where
       return $ JustTypeInstance t
 
 instance ParseFromSource TypeFilter where
-  sourceParser = try requires <|> try allows <|> defines where
+  sourceParser = requires <|> allows where
     requires = labeled "requires filter" $ do
-      keyword "requires"
+      try $ keyword "requires"
       t <- sourceParser
       return $ TypeFilter FilterRequires t
     allows = labeled "allows filter" $ do
-      keyword "allows"
+      try $ keyword "allows"
       t <- sourceParser
       return $ TypeFilter FilterAllows t
-    defines = labeled "defines filter" $ do
-      keyword "defines"
-      t <- sourceParser
-      return $ TypeFilter FilterDefines t

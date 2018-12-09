@@ -9,6 +9,7 @@ module ParserBase (
   labeled,
   lineComment,
   noKeywords,
+  notAllowed,
   nullParse,
   optionalSpace,
   requiredSpace,
@@ -75,4 +76,8 @@ noKeywords :: Parser ()
 noKeywords = notFollowedBy isKeyword
 
 endOfDoc :: Parser ()
-endOfDoc = optionalSpace >> eof
+endOfDoc = labeled "" $ optionalSpace >> eof
+
+notAllowed :: Parser a -> String -> Parser ()
+-- Based on implementation of notFollowedBy.
+notAllowed p s = (try p >> fail s) <|> return ()
