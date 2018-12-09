@@ -31,9 +31,12 @@ isKeyword = foldr (<|>) nullParse $ map (try . keyword) [
     "all",
     "allows",
     "any",
+    "concrete",
+    "defines",
     "optional",
     "refines",
     "requires",
+    "type",
     "weak"
   ]
 

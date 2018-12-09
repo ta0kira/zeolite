@@ -17,42 +17,78 @@ data ValueInterface c =
     viContext :: c,
     viName :: TypeName,
     viParams :: [ValueParam c],
-    viRefines :: [ValueRefine c],
-    viFilters :: [ParamFilter c]
+    viRefines :: [ValueRefine c]
   }
   deriving (Eq,Show)
 
 instance ParseFromSource (ValueInterface SourcePos) where
   sourceParser = parsed where
-    short = keyword "interface"
-    long = keyword "value" >> short
     open = sepAfter $ string "{"
     close = sepAfter $ string "}"
     parsed = do
       c <- getPosition
-      short <|> long
+      optional (keyword "value") >> keyword "interface"
       n <- sourceParser
       ps <- parseCategoryParams
       open
       rs <- parseCategoryRefines
+      notFollowedBy parseParamFilters <?> "filters not allowed in interfaces"
+      close
+      return $ ValueInterface c n ps rs
+
+
+data ValueConcrete c =
+  ValueConcrete {
+    vcContext :: c,
+    vcName :: TypeName,
+    vcParams :: [ValueParam c],
+    vcRefines :: [ValueRefine c],
+    vcDefines :: [ValueRefine c],
+    vcFilters :: [ParamFilter c]
+  }
+  deriving (Eq,Show)
+
+instance ParseFromSource (ValueConcrete SourcePos) where
+  sourceParser = parsed where
+    open = sepAfter $ string "{"
+    close = sepAfter $ string "}"
+    parsed = do
+      c <- getPosition
+      keyword "concrete"
+      n <- sourceParser
+      ps <- parseCategoryParams
+      open
+      rs <- parseCategoryRefines
+      ds <- parseCategoryDefines
       fs <- parseParamFilters
       close
-      return $ ValueInterface c n ps rs fs
+      return $ ValueConcrete c n ps rs ds fs
 
 
 data InstanceInterface c =
   InstanceInterface {
     iiContext :: c,
-    iiName :: TypeName
+    iiName :: TypeName,
+    iiParams :: [ValueParam c],
+    iiRefines :: [ValueRefine c]
   }
   deriving (Eq,Show)
 
-data ValueConcrete c =
-  ValueConcrete {
-    vcContext :: c,
-    vcName :: TypeName
-  }
-  deriving (Eq,Show)
+instance ParseFromSource (InstanceInterface SourcePos) where
+  sourceParser = parsed where
+    open = sepAfter $ string "{"
+    close = sepAfter $ string "}"
+    parsed = do
+      c <- getPosition
+      keyword "type" >> keyword "interface"
+      n <- sourceParser
+      ps <- parseCategoryParams
+      open
+      rs <- parseCategoryRefines
+      notFollowedBy parseParamFilters <?> "filters not allowed in interfaces"
+      close
+      return $ InstanceInterface c n ps rs
+
 
 data DefineConcrete c =
   DefineConcrete {
@@ -131,6 +167,15 @@ parseCategoryRefines = parsed where
   singleRefine = do
     c <- getPosition
     keyword "refines"
+    t <- sourceParser
+    return $ ValueRefine c t
+
+parseCategoryDefines :: Parser [ValueRefine SourcePos]
+parseCategoryDefines = parsed where
+  parsed = sepAfter $ sepBy singleRefine optionalSpace
+  singleRefine = do
+    c <- getPosition
+    keyword "defines"
     t <- sourceParser
     return $ ValueRefine c t
 

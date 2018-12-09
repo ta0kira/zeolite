@@ -3,6 +3,7 @@
 
 module TypeInstance (
   AssignedParams,
+  FilterDirection(..),
   GeneralInstance,
   InstanceParams,
   InstanceVariances,
@@ -88,17 +89,23 @@ instance Show TypeInstanceOrParam where
   show (JustTypeInstance t) = show t
   show (JustParamName n)    = show n
 
+data FilterDirection =
+  FilterRequires |
+  FilterAllows |
+  FilterDefines
+  deriving (Eq,Show)
+
 data TypeFilter =
   TypeFilter {
-    tfVariance :: Variance,
+    tfDirection :: FilterDirection,
     tfType :: TypeInstanceOrParam
   }
   deriving (Eq)
 
 instance Show TypeFilter where
-  show (TypeFilter Covariant t)     = "-> " ++ show t
-  show (TypeFilter Contravariant t) = "<- " ++ show t
-  show (TypeFilter Invariant t)     = "= "  ++ show t
+  show (TypeFilter FilterRequires t) = "-> " ++ show t
+  show (TypeFilter FilterAllows t)   = "<- " ++ show t
+  show (TypeFilter FilterDefines t)  = "-> " ++ show t -- TODO: Make this distinct.
 
 viewTypeFilter :: ParamName -> TypeFilter -> String
 viewTypeFilter n f = show n ++ " " ++ show f
@@ -188,7 +195,7 @@ checkParamToInstance r f Covariant n1 t2@(TypeInstance n2 ps2) = checked where
   checked = do
     cs1 <- f `filterLookup` n1
     mergeAny $ map checkConstraintToInstance cs1
-  checkConstraintToInstance (TypeFilter Covariant t) =
+  checkConstraintToInstance (TypeFilter FilterRequires t) =
     -- x -> F implies x -> T only if F -> T
     checkSingleMatch r f Covariant t (JustTypeInstance t2)
   checkConstraintToInstance f =
@@ -206,7 +213,7 @@ checkInstanceToParam r f Covariant t1@(TypeInstance n1 ps1) n2 = checked where
   checked = do
     cs2 <- f `filterLookup` n2
     mergeAny $ map checkInstanceToConstraint cs2
-  checkInstanceToConstraint (TypeFilter Contravariant t) =
+  checkInstanceToConstraint (TypeFilter FilterAllows t) =
     -- F -> x implies T -> x only if T -> F
     checkSingleMatch r f Covariant (JustTypeInstance t1) t
   checkInstanceToConstraint f =
@@ -225,8 +232,8 @@ checkParamToParam r f Invariant n1 n2
 checkParamToParam r f Contravariant p1 p2 =
   checkParamToParam r f Covariant p2 p1
 checkParamToParam r f Covariant n1 n2 = checked where
-  self1 = TypeFilter Covariant     (JustParamName n1)
-  self2 = TypeFilter Contravariant (JustParamName n2)
+  self1 = TypeFilter FilterRequires (JustParamName n1)
+  self2 = TypeFilter FilterAllows   (JustParamName n2)
   checked
     | n1 == n2 = mergeDefault
     | otherwise = do
@@ -236,7 +243,7 @@ checkParamToParam r f Covariant n1 n2 = checked where
                         [(self1,c2) | c2 <- cs2] ++
                         [(c1,self2) | c1 <- cs1]
       mergeAny $ map (\(c1,c2) -> checkConstraintToConstraint c1 c2) pairs
-  checkConstraintToConstraint (TypeFilter Covariant t1) (TypeFilter Contravariant t2)
+  checkConstraintToConstraint (TypeFilter FilterRequires t1) (TypeFilter FilterAllows t2)
     | t1 == (JustParamName n1) && t2 == (JustParamName n2) =
       compileError $ "Infinite recursion in " ++ show n1 ++ " -> " ++ show n2
     -- x -> F1, F2 -> y implies x -> y only if F1 -> F2

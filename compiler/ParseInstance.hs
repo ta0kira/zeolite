@@ -82,12 +82,16 @@ instance ParseFromSource TypeInstanceOrParam where
       return $ JustTypeInstance t
 
 instance ParseFromSource TypeFilter where
-  sourceParser = try requires <|> allows where
+  sourceParser = try requires <|> try allows <|> defines where
     requires = labeled "requires filter" $ do
       keyword "requires"
       t <- sourceParser
-      return $ TypeFilter Covariant t
+      return $ TypeFilter FilterRequires t
     allows = labeled "allows filter" $ do
       keyword "allows"
       t <- sourceParser
-      return $ TypeFilter Contravariant t
+      return $ TypeFilter FilterAllows t
+    defines = labeled "defines filter" $ do
+      keyword "defines"
+      t <- sourceParser
+      return $ TypeFilter FilterDefines t
