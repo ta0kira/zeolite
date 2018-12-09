@@ -95,10 +95,13 @@ data TypeFilter =
   }
   deriving (Eq)
 
+instance Show TypeFilter where
+  show (TypeFilter Covariant t)     = "-> " ++ show t
+  show (TypeFilter Contravariant t) = "<- " ++ show t
+  show (TypeFilter Invariant t)     = "= "  ++ show t
+
 viewTypeFilter :: ParamName -> TypeFilter -> String
-viewTypeFilter n (TypeFilter Covariant t)     = show n ++ " -> " ++ show t
-viewTypeFilter n (TypeFilter Contravariant t) = show n ++ " <- " ++ show t
-viewTypeFilter n (TypeFilter Invariant t)     = show n ++ " = "  ++ show t
+viewTypeFilter n f = show n ++ " " ++ show f
 
 type InstanceParams = ParamSet GeneralInstance
 
