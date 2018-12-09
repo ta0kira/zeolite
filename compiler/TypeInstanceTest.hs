@@ -77,157 +77,192 @@ testCases = [
       "(Type0&Type3)",
 
     checkConvertSuccess
-       [("x",[])]
-       "x" "x",
+      [("x",[])]
+      "x" "x",
     checkConvertFail
-       [("x",[]),
-        ("y",[])]
-       "x" "y",
+      [("x",[]),
+       ("y",[])]
+      "x" "y",
     checkConvertSuccess
-       [("x",["requires y"]),
-        ("y",["allows x"])]
-       "x" "y",
+      [("x",["requires y"]),
+       ("y",["allows x"])]
+      "x" "y",
     checkConvertSuccess
-       [("x",["requires y"]),
-        ("y",[])]
-       "x" "y",
+      [("x",["requires y"]),
+       ("y",[])]
+      "x" "y",
     checkConvertSuccess
-       [("x",[]),
-        ("y",["allows x"])]
-       "x" "y",
+      [("x",[]),
+       ("y",["allows x"])]
+      "x" "y",
 
     checkConvertSuccess
-       [("x",["requires z"]),
-        ("y",["allows z"]),
-        ("z",[])]
-       "x" "y",
+      [("x",["requires z"]),
+       ("y",["allows z"]),
+       ("z",[])]
+      "x" "y",
     checkConvertSuccess
-       [("x",["requires z"]),
-        ("y",[]),
-        ("z",["requires y"])]
-       "x" "y",
+      [("x",["requires z"]),
+       ("y",[]),
+       ("z",["requires y"])]
+      "x" "y",
     -- NOTE: This is technically valid, but the checking mechanism doesn't do
     -- a full graph search, so the writer needs to be explicit about implied
     -- additional filters, e.g., "x requires y" => "y allows x".
     checkConvertFail
-       [("w",["allows x"]),
-        ("x",[]),
-        ("y",[]),
-        ("z",["allows w","requires y"])]
-       "x" "y",
+      [("w",["allows x"]),
+       ("x",[]),
+       ("y",[]),
+       ("z",["allows w","requires y"])]
+      "x" "y",
     checkConvertSuccess
-       [("x",["requires Type3"]),
-        ("y",["allows Type0"])]
-       "x" "y",
+      [("x",["requires Type3"]),
+       ("y",["allows Type0"])]
+      "x" "y",
     checkConvertSuccess
-       [("x",["requires y"]),
-        ("y",["requires Type3"])]
-       "x" "Type0",
+      [("x",["requires y"]),
+       ("y",["requires Type3"])]
+      "x" "Type0",
     checkConvertSuccess
-       [("x",["allows y"]),
-        ("y",["allows Type0"])]
-       "Type3" "x",
+      [("x",["allows y"]),
+       ("y",["allows Type0"])]
+      "Type3" "x",
 
     checkConvertSuccess
-       [("x",[])]
-       "Type2<Type0,Type0,x>" "Type2<Type0,Type0,x>",
+      [("x",[])]
+      "Type2<Type0,Type0,x>" "Type2<Type0,Type0,x>",
     checkConvertFail
-       [("x",[]),
-        ("y",[])]
-       "Type2<Type0,Type0,x>" "Type2<Type0,Type0,y>",
+      [("x",[]),
+       ("y",[])]
+      "Type2<Type0,Type0,x>" "Type2<Type0,Type0,y>",
     checkConvertSuccess
-       [("x",["requires y"]),
-        ("y",["allows x"])]
-       "Type2<Type0,Type0,x>" "Type2<Type0,Type0,y>",
+      [("x",["requires y"]),
+       ("y",["allows x"])]
+      "Type2<Type0,Type0,x>" "Type2<Type0,Type0,y>",
     checkConvertSuccess
-       [("x",["requires y"]),
-        ("y",[])]
-       "Type2<Type0,Type0,x>" "Type2<Type0,Type0,y>",
+      [("x",["requires y"]),
+       ("y",[])]
+      "Type2<Type0,Type0,x>" "Type2<Type0,Type0,y>",
     checkConvertSuccess
-       [("x",[]),
-        ("y",["allows x"])]
-       "Type2<Type0,Type0,x>" "Type2<Type0,Type0,y>",
+      [("x",[]),
+       ("y",["allows x"])]
+      "Type2<Type0,Type0,x>" "Type2<Type0,Type0,y>",
 
     checkConvertSuccess
-       [("x",[])]
-       "Type2<x,Type0,Type0>" "Type2<x,Type0,Type0>",
+      [("x",[])]
+      "Type2<x,Type0,Type0>" "Type2<x,Type0,Type0>",
     checkConvertFail
-       [("x",[]),
-        ("y",[])]
-       "Type2<x,Type0,Type0>" "Type2<y,Type0,Type0>",
+      [("x",[]),
+       ("y",[])]
+      "Type2<x,Type0,Type0>" "Type2<y,Type0,Type0>",
     checkConvertFail
-       [("x",["requires y"]),
-        ("y",["allows x"])]
-       "Type2<x,Type0,Type0>" "Type2<y,Type0,Type0>",
+      [("x",["requires y"]),
+       ("y",["allows x"])]
+      "Type2<x,Type0,Type0>" "Type2<y,Type0,Type0>",
     checkConvertFail
-       [("x",["requires y"]),
-        ("y",[])]
-       "Type2<x,Type0,Type0>" "Type2<y,Type0,Type0>",
+      [("x",["requires y"]),
+       ("y",[])]
+      "Type2<x,Type0,Type0>" "Type2<y,Type0,Type0>",
     checkConvertFail
-       [("x",[]),
-        ("y",["allows x"])]
-       "Type2<x,Type0,Type0>" "Type2<y,Type0,Type0>",
+      [("x",[]),
+       ("y",["allows x"])]
+      "Type2<x,Type0,Type0>" "Type2<y,Type0,Type0>",
     checkConvertSuccess
-       [("x",["allows y"]),
-        ("y",["requires x"])]
-       "Type2<x,Type0,Type0>" "Type2<y,Type0,Type0>",
+      [("x",["allows y"]),
+       ("y",["requires x"])]
+      "Type2<x,Type0,Type0>" "Type2<y,Type0,Type0>",
     checkConvertSuccess
-       [("x",["allows y"]),
-        ("y",[])]
-       "Type2<x,Type0,Type0>" "Type2<y,Type0,Type0>",
+      [("x",["allows y"]),
+       ("y",[])]
+      "Type2<x,Type0,Type0>" "Type2<y,Type0,Type0>",
     checkConvertSuccess
-       [("x",[]),
-        ("y",["requires x"])]
-       "Type2<x,Type0,Type0>" "Type2<y,Type0,Type0>",
+      [("x",[]),
+       ("y",["requires x"])]
+      "Type2<x,Type0,Type0>" "Type2<y,Type0,Type0>",
 
     checkConvertFail
-       [("x",[])]
-       "x" "Type0",
+      [("x",[])]
+      "x" "Type0",
     checkConvertSuccess
-       [("x",["requires Type0"])]
-       "x" "Type0",
+      [("x",["requires Type0"])]
+      "x" "Type0",
     checkConvertSuccess
-       [("x",["requires Type3"])]
-       "x" "Type0",
+      [("x",["requires Type3"])]
+      "x" "Type0",
     checkConvertFail
-       [("x",[])]
-       "Type0" "x",
+      [("x",[])]
+      "Type0" "x",
     checkConvertSuccess
-       [("x",["allows Type0"])]
-       "Type0" "x",
+      [("x",["allows Type0"])]
+      "Type0" "x",
     checkConvertSuccess
-       [("x",["allows Type0"])]
-       "Type3" "x",
+      [("x",["allows Type0"])]
+      "Type3" "x",
 
     checkConvertFail
-       [("x",[])]
-       "Type2<x,Type0,Type0>" "Type2<Type0,Type0,Type0>",
+      [("x",[])]
+      "Type2<x,Type0,Type0>" "Type2<Type0,Type0,Type0>",
     checkConvertSuccess
-       [("x",["allows Type0"])]
-       "Type2<x,Type0,Type0>" "Type2<Type0,Type0,Type0>",
+      [("x",["allows Type0"])]
+      "Type2<x,Type0,Type0>" "Type2<Type0,Type0,Type0>",
     checkConvertSuccess
-       [("x",["allows Type0"])]
-       "Type2<x,Type0,Type0>" "Type2<Type3,Type0,Type0>",
+      [("x",["allows Type0"])]
+      "Type2<x,Type0,Type0>" "Type2<Type3,Type0,Type0>",
     checkConvertFail
-       [("x",[])]
-       "Type2<Type0,Type0,Type0>" "Type2<x,Type0,Type0>",
+      [("x",[])]
+      "Type2<Type0,Type0,Type0>" "Type2<x,Type0,Type0>",
     checkConvertSuccess
-       [("x",["requires Type0"])]
-       "Type2<Type0,Type0,Type0>" "Type2<x,Type0,Type0>",
+      [("x",["requires Type0"])]
+      "Type2<Type0,Type0,Type0>" "Type2<x,Type0,Type0>",
     checkConvertSuccess
-       [("x",["requires Type3"])]
-       "Type2<Type0,Type0,Type0>" "Type2<x,Type0,Type0>",
+      [("x",["requires Type3"])]
+      "Type2<Type0,Type0,Type0>" "Type2<x,Type0,Type0>",
 
     checkConvertSuccess
-       [("x",["requires y"]),
-        ("y",["requires z"]),
-        ("z",[])]
-       "x" "y",
+      [("x",["requires y"]),
+       ("y",["requires z"]),
+       ("z",[])]
+      "x" "y",
     checkConvertSuccess
-       [("x",["allows z"]),
-        ("y",["allows x"]),
-        ("z",[])]
-       "x" "y"
+      [("x",["allows z"]),
+       ("y",["allows x"]),
+       ("z",[])]
+      "x" "y",
+
+    checkSimpleConvertSuccess
+      "optional Type0"
+      "optional Type0",
+    checkSimpleConvertSuccess
+      "weak Type0"
+      "weak Type0",
+    checkSimpleConvertSuccess
+      "Type0"
+      "optional Type0",
+    checkSimpleConvertSuccess
+      "Type0"
+      "weak Type0",
+    checkSimpleConvertSuccess
+      "optional Type0"
+      "weak Type0",
+    checkSimpleConvertFail
+      "optional Type0"
+      "Type0",
+    checkSimpleConvertFail
+      "weak Type0"
+      "Type0",
+    checkSimpleConvertFail
+      "weak Type0"
+      "optional Type0",
+
+    checkSimpleConvertSuccess
+      "Type3"
+      "optional Type0",
+    checkSimpleConvertSuccess
+      "Type3"
+      "weak Type0",
+    checkSimpleConvertSuccess
+      "optional Type3"
+      "weak Type0"
   ]
 
 main = do
@@ -282,7 +317,7 @@ checkConvertSuccess pa x y = return checked where
   prefix = x ++ " -> " ++ y ++ " " ++ showParams pa
   checked = do
     (t1,t2,pa2) <- parseTheTest pa x y
-    check $ checkGeneralMatch resolver pa2 Covariant t1 t2
+    check $ checkValueTypeMatch resolver pa2 t1 t2
   check (Left es) = compileError $ prefix ++ ": " ++ show es
   check _ = return ()
 
@@ -290,7 +325,7 @@ checkConvertFail pa x y = return checked where
   prefix = x ++ " /> " ++ y ++ " " ++ showParams pa
   checked = do
     (t1,t2,pa2) <- parseTheTest pa x y
-    check $ checkGeneralMatch resolver pa2 Covariant t1 t2
+    check $ checkValueTypeMatch resolver pa2 t1 t2
   check (Right _) = compileError $ prefix ++ ": Expected failure"
   check _ = return ()
 
@@ -298,11 +333,11 @@ showParams pa = "[" ++ intercalate "," (concat $ map expand pa) ++ "]" where
   expand (n,ps) = map (\p -> n ++ " " ++ p) ps
 
 parseTheTest :: [(String,[String])] -> String -> String ->
-                CompileInfo (GeneralInstance,GeneralInstance,ParamFilters)
+                CompileInfo (ValueType,ValueType,ParamFilters)
 parseTheTest pa x y = parsed where
   parsed = do
-    t1 <- getInstance x
-    t2 <- getInstance y
+    t1 <- getValueType x
+    t2 <- getValueType y
     pa2 <- collectAllOrErrorM $ map parseFilters pa
     return (t1,t2,Map.fromList pa2)
   parseFilters :: (String,[String]) -> CompileInfo (ParamName,[TypeFilter])
@@ -338,8 +373,8 @@ mapLookup ma n = resolve $ n `Map.lookup` ma where
   resolve (Just x) = return x
   resolve _        = compileError $ "Map key " ++ show n ++ " not found"
 
-getInstance :: (CompileErrorM m, Monad m) => String -> m GeneralInstance
-getInstance s = checked parsed where
+getValueType :: (CompileErrorM m, Monad m) => String -> m ValueType
+getValueType s = checked parsed where
   parsed = parse (between (return ()) eof sourceParser) "(string)" s
   checked (Right t) = return t
   checked (Left e)  = compileError (show e)

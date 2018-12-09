@@ -15,8 +15,7 @@ module TypeInstance (
   TypeResolver(..),
   ValueType(..),
   checkGeneralMatch,
-  composeVariance,
-  paramAllowsVariance,
+  checkValueTypeMatch,
 ) where
 
 import Control.Applicative ((<|>))
@@ -59,8 +58,18 @@ instance Show ValueType where
   show (ValueType RequiredValue t) = show t
 
 instance ParseFromSource ValueType where
-  sourceParser = do
-    undefined
+  sourceParser = try weak <|> try optional <|> required where
+    weak = do
+      string "weak "
+      t <- sourceParser
+      return $ ValueType WeakValue t
+    optional = do
+      string "optional "
+      t <- sourceParser
+      return $ ValueType OptionalValue t
+    required = do
+      t <- sourceParser
+      return $ ValueType RequiredValue t
 
 
 newtype TypeName =
