@@ -76,6 +76,31 @@ testCases = [
       "(Type0|Type3)"
       "(Type0&Type3)",
 
+    checkSimpleConvertSuccess
+      "any"
+      "any",
+    checkSimpleConvertSuccess
+      "Type0"
+      "any",
+    checkSimpleConvertFail
+      "any"
+      "Type0",
+    checkSimpleConvertSuccess
+      "all"
+      "all",
+    checkSimpleConvertFail
+      "Type0"
+      "all",
+    checkSimpleConvertSuccess
+      "all"
+      "Type0",
+    checkSimpleConvertSuccess
+      "all"
+      "any",
+    checkSimpleConvertFail
+      "any"
+      "all",
+
     checkConvertSuccess
       [("x",[])]
       "x" "x",
@@ -268,7 +293,17 @@ testCases = [
       "weak Type0",
     checkSimpleConvertSuccess
       "optional Type3"
-      "weak Type0"
+      "weak Type0",
+
+    checkSimpleConvertSuccess
+      "any"
+      "optional any",
+    checkSimpleConvertSuccess
+      "Type3"
+      "optional any",
+    checkSimpleConvertSuccess
+      "optional all"
+      "optional Type3"
   ]
 
 main = do

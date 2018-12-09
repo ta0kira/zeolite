@@ -34,13 +34,13 @@ instance CompileErrorM CompileInfo where
     result (e:_,_) = Left e  -- Take first error.
   collectOneOrErrorM = result . splitErrorsAndData where
     result (_,x:_) = return x
-    result ([],_)  = compileErrorM "No values in the empty set"
+    result ([],_)  = compileErrorM "No choices found"
     result (es,_)  = Left $ joinMessages es  -- Take all errors.
 
 instance MergeableM CompileInfo where
   mergeAnyM = result . splitErrorsAndData where
     result (_,xs@(x:_)) = return $ mergeAny xs
-    result ([],_)       = compileErrorM "No values in the empty set"
+    result ([],_)       = compileErrorM "No choices found"
     result (es,_)       = Left $ joinMessages es  -- Take all errors.
   mergeAllM = result . splitErrorsAndData where
     result ([],xs) = return $ mergeAll xs

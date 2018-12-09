@@ -32,17 +32,23 @@ import TypesBase
 
 type GeneralInstance = GeneralType TypeInstanceOrParam
 
-instance ParseFromSource (GeneralType TypeInstanceOrParam) where
-  sourceParser = try intersect <|> try union <|> single where
+instance ParseFromSource GeneralInstance where
+  sourceParser = try all <|> try any <|> try intersect <|> try union <|> single where
+    all = labeled "all" $ do
+      keyword "all"
+      return $ TypeMerge MergeUnion []
+    any = labeled "any" $ do
+      keyword "any"
+      return $ TypeMerge MergeIntersect []
     single = do
       t <- sourceParser
       return $ SingleType t
-    intersect = do
+    intersect = labeled "intersection" $ do
       ts <- between (sepAfter $ string "(")
                     (sepAfter $ string ")")
                     (sepBy sourceParser (sepAfter $ string "&"))
       return $ TypeMerge MergeIntersect ts
-    union = do
+    union = labeled "union" $ do
       ts <- between (sepAfter $ string "(")
                     (sepAfter $ string ")")
                     (sepBy sourceParser (sepAfter $ string "|"))
@@ -62,18 +68,18 @@ instance Show ValueType where
   show (ValueType RequiredValue t) = show t
 
 instance ParseFromSource ValueType where
-  sourceParser = try weak <|> try optional <|> required where
-    weak = do
+  sourceParser = value where
+    value = do
+      r <- try getWeak <|> try getOptional <|> getRequired
+      t <- sourceParser
+      return $ ValueType r t
+    getWeak = labeled "weak" $ do
       keyword "weak"
-      t <- sourceParser
-      return $ ValueType WeakValue t
-    optional = do
+      return WeakValue
+    getOptional = labeled "optional" $ do
       keyword "optional"
-      t <- sourceParser
-      return $ ValueType OptionalValue t
-    required = do
-      t <- sourceParser
-      return $ ValueType RequiredValue t
+      return OptionalValue
+    getRequired = return RequiredValue
 
 
 newtype TypeName =
@@ -86,7 +92,7 @@ instance Show TypeName where
   show (TypeName n) = n
 
 instance ParseFromSource TypeName where
-  sourceParser = do
+  sourceParser = labeled "type name" $ do
     noKeywords
     b <- upper
     e <- sepAfter $ many alphaNum
@@ -103,7 +109,7 @@ instance Show ParamName where
   show (ParamName n) = n
 
 instance ParseFromSource ParamName where
-  sourceParser = do
+  sourceParser = labeled "param name" $ do
     noKeywords
     b <- lower
     e <- sepAfter $ many alphaNum
@@ -129,7 +135,7 @@ instance ParseFromSource TypeInstance where
                    (sepBy sourceParser (sepAfter $ string ","))
     parsed = do
       n <- sourceParser
-      as <- try args <|> return []
+      as <- labeled "type args" $ try args <|> return []
       return $ TypeInstance n (ParamSet as)
 
 
@@ -147,11 +153,11 @@ instance Show TypeInstanceOrParam where
   show (JustParamName n)    = show n
 
 instance ParseFromSource TypeInstanceOrParam where
-  sourceParser = try param <|> inst <?> "type or param" where
-    param = do
+  sourceParser = try param <|> inst where
+    param = labeled "param" $ do
       n <- sourceParser
       return $ JustParamName n
-    inst = do
+    inst = labeled "type" $ do
       t <- sourceParser
       return $ JustTypeInstance t
 
@@ -170,11 +176,11 @@ viewTypeFilter n (TypeFilter Invariant t)     = show n ++ " = "  ++ show t
 
 instance ParseFromSource TypeFilter where
   sourceParser = try requires <|> allows where
-    requires = do
+    requires = labeled "requires filter" $ do
       keyword "requires"
       t <- sourceParser
       return $ TypeFilter Covariant t
-    allows = do
+    allows = labeled "allows filter" $ do
       keyword "allows"
       t <- sourceParser
       return $ TypeFilter Contravariant t
@@ -220,9 +226,10 @@ checkValueTypeMatch r f ts1@(ValueType r1 t1) ts2@(ValueType r2 t2)
 checkGeneralMatch :: (MergeableM m, Mergeable p, CompileErrorM m, Monad m) =>
   TypeResolver m p -> ParamFilters -> Variance ->
   GeneralInstance -> GeneralInstance -> m p
+-- Necessary so that any -> any.
+checkGeneralMatch _ _ _ (TypeMerge MergeIntersect []) (TypeMerge MergeIntersect []) = mergeDefault
 checkGeneralMatch r f v ts1 ts2 = checkGeneralType (checkSingleMatch r f v) ts1 ts2
 
--- TODO: An error message here should include both type names in full.
 checkSingleMatch :: (MergeableM m, Mergeable p, CompileErrorM m, Monad m) =>
   TypeResolver m p -> ParamFilters -> Variance ->
   TypeInstanceOrParam -> TypeInstanceOrParam -> m p
