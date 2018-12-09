@@ -255,6 +255,12 @@ testCases = [
       "optional Type0",
 
     checkSimpleConvertSuccess
+      "optional Type3"
+      "optional Type0",
+    checkSimpleConvertSuccess
+      "weak Type3"
+      "weak Type0",
+    checkSimpleConvertSuccess
       "Type3"
       "optional Type0",
     checkSimpleConvertSuccess
@@ -336,17 +342,15 @@ parseTheTest :: [(String,[String])] -> String -> String ->
                 CompileInfo (ValueType,ValueType,ParamFilters)
 parseTheTest pa x y = parsed where
   parsed = do
-    t1 <- getValueType x
-    t2 <- getValueType y
+    t1 <- parseObject x
+    t2 <- parseObject y
     pa2 <- collectAllOrErrorM $ map parseFilters pa
     return (t1,t2,Map.fromList pa2)
-  parseFilters :: (String,[String]) -> CompileInfo (ParamName,[TypeFilter])
   parseFilters (n,fs) = do
-    fs2 <- collectAllOrErrorM $ map parseFilter fs
+    fs2 <- collectAllOrErrorM $ map parseObject fs
     return (ParamName n,fs2)
-  parseFilter :: String -> CompileInfo TypeFilter
-  parseFilter s = checked parsed where
-    parsed = parse (between (return ()) eof sourceParser) "(string)" s
+  parseObject s = checked parsed where
+    parsed = parse (between optionalSpace endOfDoc sourceParser) "(string)" s
     checked (Right t) = return t
     checked (Left e)  = compileError (show e)
 
@@ -372,9 +376,3 @@ mapLookup :: (Ord n, Show n, CompileErrorM m, Monad m) => Map.Map n a -> n -> m 
 mapLookup ma n = resolve $ n `Map.lookup` ma where
   resolve (Just x) = return x
   resolve _        = compileError $ "Map key " ++ show n ++ " not found"
-
-getValueType :: (CompileErrorM m, Monad m) => String -> m ValueType
-getValueType s = checked parsed where
-  parsed = parse (between (return ()) eof sourceParser) "(string)" s
-  checked (Right t) = return t
-  checked (Left e)  = compileError (show e)

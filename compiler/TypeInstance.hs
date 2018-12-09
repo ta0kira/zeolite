@@ -38,10 +38,14 @@ instance ParseFromSource (GeneralType TypeInstanceOrParam) where
       t <- sourceParser
       return $ SingleType t
     intersect = do
-      ts <- between (string "(") (string ")") (sepBy sourceParser (string "&"))
+      ts <- between (sepAfter $ string "(")
+                    (sepAfter $ string ")")
+                    (sepBy sourceParser (sepAfter $ string "&"))
       return $ TypeMerge MergeIntersect ts
     union = do
-      ts <- between (string "(") (string ")") (sepBy sourceParser (string "|"))
+      ts <- between (sepAfter $ string "(")
+                    (sepAfter $ string ")")
+                    (sepBy sourceParser (sepAfter $ string "|"))
       return $ TypeMerge MergeUnion ts
 
 
@@ -60,11 +64,11 @@ instance Show ValueType where
 instance ParseFromSource ValueType where
   sourceParser = try weak <|> try optional <|> required where
     weak = do
-      string "weak "
+      keyword "weak"
       t <- sourceParser
       return $ ValueType WeakValue t
     optional = do
-      string "optional "
+      keyword "optional"
       t <- sourceParser
       return $ ValueType OptionalValue t
     required = do
@@ -83,8 +87,9 @@ instance Show TypeName where
 
 instance ParseFromSource TypeName where
   sourceParser = do
+    noKeywords
     b <- upper
-    e <- many alphaNum
+    e <- sepAfter $ many alphaNum
     return $ TypeName (b:e)
 
 
@@ -99,8 +104,9 @@ instance Show ParamName where
 
 instance ParseFromSource ParamName where
   sourceParser = do
+    noKeywords
     b <- lower
-    e <- many alphaNum
+    e <- sepAfter $ many alphaNum
     return $ ParamName (b:e)
 
 
@@ -118,7 +124,9 @@ instance Show TypeInstance where
 
 instance ParseFromSource TypeInstance where
   sourceParser = parsed where
-    args = between (string "<") (string ">") (sepBy sourceParser (string ","))
+    args = between (sepAfter $ string "<")
+                   (sepAfter $ string ">")
+                   (sepBy sourceParser (sepAfter $ string ","))
     parsed = do
       n <- sourceParser
       as <- try args <|> return []
@@ -139,7 +147,7 @@ instance Show TypeInstanceOrParam where
   show (JustParamName n)    = show n
 
 instance ParseFromSource TypeInstanceOrParam where
-  sourceParser = try param <|> inst where
+  sourceParser = try param <|> inst <?> "type or param" where
     param = do
       n <- sourceParser
       return $ JustParamName n
@@ -163,11 +171,11 @@ viewTypeFilter n (TypeFilter Invariant t)     = show n ++ " = "  ++ show t
 instance ParseFromSource TypeFilter where
   sourceParser = try requires <|> allows where
     requires = do
-      string "requires "
+      keyword "requires"
       t <- sourceParser
       return $ TypeFilter Covariant t
     allows = do
-      string "allows "
+      keyword "allows"
       t <- sourceParser
       return $ TypeFilter Contravariant t
 
