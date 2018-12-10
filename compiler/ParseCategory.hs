@@ -3,6 +3,7 @@
 
 module ParseCategory () where
 
+import Data.List (intercalate)
 import Text.Parsec
 import Text.Parsec.String
 
@@ -33,7 +34,41 @@ data AnyCategory c =
     vcParamValue :: [ParamValueFilter c],
     vcParamInstance :: [ParamInstanceFilter c]
   }
-  deriving (Eq,Show)
+  deriving (Eq)
+
+instance Show c => Show (AnyCategory c) where
+  show = format where
+    format (ValueInterface cs n ps rs) =
+      "value interface " ++ show n ++ formatParams (foldr partitionParam ([],[],[]) ps) ++
+      " { " ++ formatContext cs ++ "\n" ++
+      concat (map (\r -> "  " ++ formatRefine r ++ "\n") rs) ++ "}\n"
+    format (InstanceInterface cs n ps) =
+      "type interface " ++ show n ++ formatParams (foldr partitionParam ([],[],[]) ps) ++
+      " { " ++ formatContext cs ++ "}\n"
+    format (ValueConcrete cs n ps rs ds vs is) =
+      "concrete " ++ show n ++ formatParams (foldr partitionParam ([],[],[]) ps) ++
+      " { " ++ formatContext cs ++ "\n" ++
+      concat (map (\r -> "  " ++ formatRefine r ++ "\n") rs) ++
+      concat (map (\d -> "  " ++ formatDefine d ++ "\n") ds) ++
+      concat (map (\v -> "  " ++ formatValue v ++ "\n") vs) ++
+      concat (map (\i -> "  " ++ formatInstance i ++ "\n") is) ++
+      "}\n"
+    formatContext cs = "/*" ++ intercalate " -> " (map show cs) ++ "*/"
+    formatParams (con,inv,cov) = "<" ++ intercalate "," con ++ "|" ++
+                                        intercalate "," inv ++ "|" ++
+                                        intercalate "," cov ++ ">"
+    -- NOTE: This assumes that the params are ordered by contravariant,
+    -- invariant, and covariant.
+    partitionParam p (con,inv,cov)
+      | vpVariance p == Contravariant = (con ++ [show $ vpParam p],inv,cov)
+      | vpVariance p == Invariant     = (con,inv ++ [show $ vpParam p],cov)
+      | vpVariance p == Covariant     = (con,inv,cov ++ [show $ vpParam p])
+    formatRefine r = "refines " ++ show (vrType r) ++ " " ++ formatContext (vrContext r)
+    formatDefine d = "defines " ++ show (vrType d) ++ " " ++ formatContext (vrContext d)
+    formatValue v = show (pfParam v) ++ " " ++ show (pfFilter v) ++
+                    " " ++ formatContext (pfContext v)
+    formatInstance i = show (pdParam i) ++ " defines " ++ show (pdType i) ++
+                       " " ++ formatContext (pdContext i)
 
 instance ParseFromSource (AnyCategory SourcePos) where
   sourceParser = parseValue <|> parseInstance <|> parseConcrete where
@@ -105,7 +140,7 @@ data ParamInstanceFilter c =
   ParamInstanceFilter {
     pdContext :: [c],
     pdParam :: ParamName,
-    pdDefines :: TypeInstance
+    pdType :: TypeInstance
   }
   deriving (Eq,Show)
 

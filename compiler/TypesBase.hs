@@ -100,9 +100,9 @@ checkParamsMatch f (ParamSet ps1) (ParamSet ps2)
   | otherwise = compileError $ "Parameter count mismatch: " ++ show ps1 ++ " vs. " ++ show ps2
 
 data Variance =
-  Covariant |
   Contravariant |
-  Invariant
+  Invariant |
+  Covariant
   deriving (Eq,Ord,Show)
 
 composeVariance :: Variance -> Variance -> Variance
