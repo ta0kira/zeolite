@@ -2,23 +2,19 @@
 
 module TypeInstanceTest where
 
-import Control.Monad
-import Data.Either
 import Data.List (intercalate)
-import System.IO
 import Text.Parsec
-import qualified Control.Monad.Trans.Class as Trans
 import qualified Data.Map as Map
 
 import CompileInfo
 import ParseInstance
 import ParserBase
+import TestBase
 import TypeInstance
 import TypesBase
 
 
-testCases :: [IO (CompileInfo ())]
-testCases = [
+main = runAllTests [
     checkSimpleConvertSuccess
       "Type0"
       "Type0",
@@ -307,12 +303,6 @@ testCases = [
       "optional Type3"
   ]
 
-main = do
-  results <- sequence testCases
-  (es,ps) <- return $ partitionEithers $ zipWith numberError [1..] results
-  mapM_ (\(n,e) -> hPutStr stderr ("Test " ++ show n ++ ": " ++ show e ++ "\n")) es
-  hPutStr stderr $ show (length ps) ++ " tests passed\n"
-
 
 type0 = TypeName "Type0"
 type1 = TypeName "Type1"
@@ -403,10 +393,6 @@ getParams ma (TypeInstance n1 ps1) n2 = do
   f <- mapLookup ra n2
   return ((),f ps1)
 
-
-numberError :: a -> Either b c -> Either (a,b) c
-numberError n (Left e)  = Left (n,e)
-numberError _ (Right x) = Right x -- Not the same Either!
 
 mapLookup :: (Ord n, Show n, CompileErrorM m, Monad m) => Map.Map n a -> n -> m a
 mapLookup ma n = resolve $ n `Map.lookup` ma where

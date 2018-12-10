@@ -1,0 +1,8 @@
+concrete Type<a,b|c,d|e,f> {
+  refines Parent
+  refines Other<Type2<a>,f>
+  defines Equals<Type<a,b,c,d,e,f>>
+  a allows Parent
+  b requires Type2<a>
+  c defines Equals<c>
+}

@@ -1,8 +1,0 @@
-interface Read<|x> {}
-
-interface Write<x|> {}
-
-interface Function<x|y> {
-  // y is covariant, but in Write<y> it's contravariant.
-  refines Write<y>
-}

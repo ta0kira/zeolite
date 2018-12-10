@@ -1,7 +1,9 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE Safe #-}
 
-module ParseCategory () where
+module ParseCategory (
+  AnyCategory(..),
+) where
 
 import Data.List (intercalate)
 import Text.Parsec
@@ -39,30 +41,28 @@ data AnyCategory c =
 instance Show c => Show (AnyCategory c) where
   show = format where
     format (ValueInterface cs n ps rs) =
-      "value interface " ++ show n ++ formatParams (foldr partitionParam ([],[],[]) ps) ++
-      " { " ++ formatContext cs ++ "\n" ++
+      "value interface " ++ show n ++ formatParams ps ++ " { " ++ formatContext cs ++ "\n" ++
       concat (map (\r -> "  " ++ formatRefine r ++ "\n") rs) ++ "}\n"
     format (InstanceInterface cs n ps) =
-      "type interface " ++ show n ++ formatParams (foldr partitionParam ([],[],[]) ps) ++
-      " { " ++ formatContext cs ++ "}\n"
+      "type interface " ++ show n ++ formatParams ps ++ " { " ++ formatContext cs ++ "}\n"
     format (ValueConcrete cs n ps rs ds vs is) =
-      "concrete " ++ show n ++ formatParams (foldr partitionParam ([],[],[]) ps) ++
-      " { " ++ formatContext cs ++ "\n" ++
+      "concrete " ++ show n ++ formatParams ps ++ " { " ++ formatContext cs ++ "\n" ++
       concat (map (\r -> "  " ++ formatRefine r ++ "\n") rs) ++
       concat (map (\d -> "  " ++ formatDefine d ++ "\n") ds) ++
       concat (map (\v -> "  " ++ formatValue v ++ "\n") vs) ++
       concat (map (\i -> "  " ++ formatInstance i ++ "\n") is) ++
       "}\n"
     formatContext cs = "/*" ++ intercalate " -> " (map show cs) ++ "*/"
-    formatParams (con,inv,cov) = "<" ++ intercalate "," con ++ "|" ++
-                                        intercalate "," inv ++ "|" ++
-                                        intercalate "," cov ++ ">"
+    formatParams ps = let (con,inv,cov) = (foldr partitionParam ([],[],[]) ps) in
+      "<" ++ intercalate "," con ++ "|" ++
+             intercalate "," inv ++ "|" ++
+             intercalate "," cov ++ ">"
     -- NOTE: This assumes that the params are ordered by contravariant,
     -- invariant, and covariant.
     partitionParam p (con,inv,cov)
-      | vpVariance p == Contravariant = (con ++ [show $ vpParam p],inv,cov)
-      | vpVariance p == Invariant     = (con,inv ++ [show $ vpParam p],cov)
-      | vpVariance p == Covariant     = (con,inv,cov ++ [show $ vpParam p])
+      | vpVariance p == Contravariant = ((show $ vpParam p):con,inv,cov)
+      | vpVariance p == Invariant     = (con,(show $ vpParam p):inv,cov)
+      | vpVariance p == Covariant     = (con,inv,(show $ vpParam p):cov)
     formatRefine r = "refines " ++ show (vrType r) ++ " " ++ formatContext (vrContext r)
     formatDefine d = "defines " ++ show (vrType d) ++ " " ++ formatContext (vrContext d)
     formatValue v = show (pfParam v) ++ " " ++ show (pfFilter v) ++
@@ -74,7 +74,7 @@ instance ParseFromSource (AnyCategory SourcePos) where
   sourceParser = parseValue <|> parseInstance <|> parseConcrete where
     open = sepAfter $ string "{"
     close = sepAfter $ string "}"
-    parseValue = do
+    parseValue = labeled "value interface" $ do
       c <- getPosition
       try $ keyword "value" >> keyword "interface"
       n <- sourceParser
@@ -85,7 +85,7 @@ instance ParseFromSource (AnyCategory SourcePos) where
                  "defines and filters only allowed in concrete categories"
       close
       return $ ValueInterface [c] n ps rs
-    parseInstance = do
+    parseInstance = labeled "type interface" $ do
       c <- getPosition
       try $ keyword "type" >> keyword "interface"
       n <- sourceParser
@@ -95,7 +95,7 @@ instance ParseFromSource (AnyCategory SourcePos) where
                  "refines, defines and filters only allowed in concrete categories"
       close
       return $ InstanceInterface [c] n ps
-    parseConcrete = do
+    parseConcrete = labeled "concrete type" $ do
       c <- getPosition
       try $ keyword "concrete"
       n <- sourceParser

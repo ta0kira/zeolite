@@ -1,3 +1,0 @@
-interface Read<x> {}
-
-interface Read<y> {}
