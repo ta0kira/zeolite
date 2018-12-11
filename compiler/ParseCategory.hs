@@ -82,7 +82,7 @@ instance ParseFromSource (AnyCategory SourcePos) where
       open
       rs <- parseCategoryRefines
       notAllowed parseRefinesDefinesFilters
-                 "defines and filters only allowed in concrete categories"
+                 "defines and filters not allowed in value interfaces"
       close
       return $ ValueInterface [c] n ps rs
     parseInstance = labeled "type interface" $ do
@@ -92,7 +92,7 @@ instance ParseFromSource (AnyCategory SourcePos) where
       ps <- parseCategoryParams
       open
       notAllowed parseRefinesDefinesFilters
-                 "refines, defines and filters only allowed in concrete categories"
+                 "refines, defines and filters not allowed in type interfaces"
       close
       return $ InstanceInterface [c] n ps
     parseConcrete = labeled "concrete type" $ do
