@@ -1,6 +1,7 @@
 {-# LANGUAGE Safe #-}
 
 module TypeCategory (
+  AnyCategory(..),
   CategoryConcrete,
   CategoryConnect(..),
   CategoryFilters,
@@ -9,6 +10,11 @@ module TypeCategory (
   CategoryRefines,
   CategorySystem(..),
   CategoryVariance,
+  DefineConcrete(..),
+  ParamInstanceFilter(..),
+  ParamValueFilter(..),
+  ValueParam(..),
+  ValueRefine(..),
   validateCategory,
 ) where
 
@@ -20,6 +26,100 @@ import qualified Data.Set as Set
 
 import TypeInstance
 import TypesBase
+
+
+data AnyCategory c =
+  ValueInterface {
+    viContext :: [c],
+    viName :: TypeName,
+    viParams :: [ValueParam c],
+    viRefines :: [ValueRefine c]
+  } |
+  InstanceInterface {
+    iiContext :: [c],
+    iiName :: TypeName,
+    iiParams :: [ValueParam c]
+  } |
+  ValueConcrete {
+    vcContext :: [c],
+    vcName :: TypeName,
+    vcParams :: [ValueParam c],
+    vcRefines :: [ValueRefine c],
+    vcDefines :: [ValueRefine c],
+    vcParamValue :: [ParamValueFilter c],
+    vcParamInstance :: [ParamInstanceFilter c]
+  }
+  deriving (Eq)
+
+instance Show c => Show (AnyCategory c) where
+  show = format where
+    format (ValueInterface cs n ps rs) =
+      "value interface " ++ show n ++ formatParams ps ++ " { " ++ formatContext cs ++ "\n" ++
+      concat (map (\r -> "  " ++ formatRefine r ++ "\n") rs) ++ "}\n"
+    format (InstanceInterface cs n ps) =
+      "type interface " ++ show n ++ formatParams ps ++ " { " ++ formatContext cs ++ "}\n"
+    format (ValueConcrete cs n ps rs ds vs is) =
+      "concrete " ++ show n ++ formatParams ps ++ " { " ++ formatContext cs ++ "\n" ++
+      concat (map (\r -> "  " ++ formatRefine r ++ "\n") rs) ++
+      concat (map (\d -> "  " ++ formatDefine d ++ "\n") ds) ++
+      concat (map (\v -> "  " ++ formatValue v ++ "\n") vs) ++
+      concat (map (\i -> "  " ++ formatInstance i ++ "\n") is) ++
+      "}\n"
+    formatContext cs = "/*" ++ intercalate " -> " (map show cs) ++ "*/"
+    formatParams ps = let (con,inv,cov) = (foldr partitionParam ([],[],[]) ps) in
+      "<" ++ intercalate "," con ++ "|" ++
+             intercalate "," inv ++ "|" ++
+             intercalate "," cov ++ ">"
+    -- NOTE: This assumes that the params are ordered by contravariant,
+    -- invariant, and covariant.
+    partitionParam p (con,inv,cov)
+      | vpVariance p == Contravariant = ((show $ vpParam p):con,inv,cov)
+      | vpVariance p == Invariant     = (con,(show $ vpParam p):inv,cov)
+      | vpVariance p == Covariant     = (con,inv,(show $ vpParam p):cov)
+    formatRefine r = "refines " ++ show (vrType r) ++ " " ++ formatContext (vrContext r)
+    formatDefine d = "defines " ++ show (vrType d) ++ " " ++ formatContext (vrContext d)
+    formatValue v = show (pfParam v) ++ " " ++ show (pfFilter v) ++
+                    " " ++ formatContext (pfContext v)
+    formatInstance i = show (pdParam i) ++ " defines " ++ show (pdType i) ++
+                       " " ++ formatContext (pdContext i)
+
+data DefineConcrete c =
+  DefineConcrete {
+    dcContext :: [c],
+    dcName :: TypeName
+  }
+  deriving (Eq,Show)
+
+data ValueRefine c =
+  ValueRefine {
+    vrContext :: [c],
+    vrType :: TypeInstance
+  }
+  deriving (Eq,Show)
+
+data ValueParam c =
+  ValueParam {
+    vpContext :: [c],
+    vpParam :: ParamName,
+    vpVariance :: Variance
+  }
+  deriving (Eq,Show)
+
+data ParamValueFilter c =
+  ParamValueFilter {
+    pfContext :: [c],
+    pfParam :: ParamName,
+    pfFilter :: TypeFilter
+  }
+  deriving (Eq,Show)
+
+data ParamInstanceFilter c =
+  ParamInstanceFilter {
+    pdContext :: [c],
+    pdParam :: ParamName,
+    pdType :: TypeInstance
+  }
+  deriving (Eq,Show)
 
 
 newtype CategoryConnect a =

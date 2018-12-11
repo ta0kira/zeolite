@@ -10,6 +10,7 @@ import CompileInfo
 import ParseCategory
 import ParserBase
 import TestBase
+import TypeCategory
 import TypesBase
 
 
