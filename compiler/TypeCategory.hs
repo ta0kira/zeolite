@@ -269,18 +269,18 @@ flattenAllConnections tm0 ts = updated where
     rs2 <- collectAllOrErrorM $ map (getRefines tm) rs
     return $ ValueConcrete c n ps (concat rs2) ds vs is
   updateSingle _ t = return t
-  getRefines tm ra@(ValueRefine c (TypeInstance n ps))
+  getRefines tm ra@(ValueRefine c t@(TypeInstance n ps))
     | n `Map.member` tm0 = do
-      pa <- assignParams tm c n ps
+      pa <- assignParams tm c t
       (_,v) <- getCategory tm (c,n)
       -- Assume that tm0 has already been fully processed.
       (collectAllOrErrorM $ map (subAll c pa) (viRefines v)) >>= return . (ra:)
     | otherwise = do
-      pa <- assignParams tm c n ps
+      pa <- assignParams tm c t
       (_,v) <- getCategory tm (c,n)
-      -- NOTE: Can't use mfix for this because that would require full evaluation
-      -- before evaluation actually starts.
-      -- Assumes that v is a ValueInterface.
+      -- NOTE: Can't use mfix for this because that would require full
+      -- evaluation before that same evaluation actually starts.
+      -- Assumes that checkConnectedTypes already checked the types.
       rs <- collectAllOrErrorM $ map (getRefines tm) (viRefines v)
       (collectAllOrErrorM $ map (subAll c pa) (concat rs)) >>= return . (ra:)
   subAll c pa (ValueRefine c1 t1) = do
@@ -291,11 +291,12 @@ flattenAllConnections tm0 ts = updated where
     case n `Map.lookup` pa of
          (Just x) -> return x
          _ -> compileError $ "Param " ++ show n ++ " does not exist"
-  assignParams tm c n ps = do
+  assignParams tm c (TypeInstance n ps) = do
     (_,v) <- getCategory tm (c,n)
+    -- TODO: From here down should be a top-level function.
     ns <- return $ map vpParam $ viParams v
-    checkParamsMatch (\_ _ -> return ()) (ParamSet ns) ps
-    return $ Map.fromList $ zip ns (psParams ps)
+    paired <- checkParamsMatch alwaysPairParams (ParamSet ns) ps
+    return $ Map.fromList paired
 
 
 newtype CategoryConnect a =
@@ -379,8 +380,8 @@ labelParamVals (CategoryConnect pa) va@(CategoryConnect _) = paired where
     return $ CategoryConnect $ Map.fromList pairs
   pairType (n,ps) = do
     vs <- n `categoryLookup` va
-    checkParamsMatch (\_ _ -> return ()) ps vs
-    return (n,Map.fromList $ zip (psParams ps) (psParams vs))
+    paired <- checkParamsMatch alwaysPairParams ps vs
+    return (n,Map.fromList paired)
 
 checkVariances :: (MergeableM m, CompileErrorM m, Monad m) =>
   (CategoryConnect (Map.Map ParamName Variance)) ->
@@ -391,8 +392,8 @@ checkVariances va vs = checkCategory checkAll where
     mergeAll $ map (checkSingle as Covariant . SingleType . JustTypeInstance) gs
   checkSingle as v (SingleType (JustTypeInstance (TypeInstance t ps))) = do
     vs2 <- t `categoryLookup` vs
-    checkParamsMatch (\_ _ -> return ()) vs2 ps
-    mergeAll $ map (\(v2,p) -> checkSingle as (v `composeVariance` v2) p) (zip (psParams vs2) (psParams ps))
+    paired <- checkParamsMatch alwaysPairParams vs2 ps
+    mergeAll $ map (\(v2,p) -> checkSingle as (v `composeVariance` v2) p) paired
   checkSingle as v (TypeMerge MergeUnion     ts) = mergeAll $ map (checkSingle as v) ts
   checkSingle as v (TypeMerge MergeIntersect ts) = mergeAll $ map (checkSingle as v) ts
   checkSingle as v (SingleType (JustParamName n)) = check (n `Map.lookup` as) where

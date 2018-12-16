@@ -174,11 +174,11 @@ checkInstanceToInstance r f Contravariant t1 t2 =
   checkInstanceToInstance r f Covariant t2 t1
 checkInstanceToInstance r f Covariant t1@(TypeInstance n1 ps1) t2@(TypeInstance n2 ps2)
   | n1 == n2 = do
-    checkParamsMatch (\_ _ -> return ()) ps1 ps2
+    checkParamsMatch alwaysPairParams ps1 ps2
     zipped <- return $ ParamSet $ zip (psParams ps1) (psParams ps2)
     variance <- trVariance r n1
     -- NOTE: Covariant is identity, so v2 has technically been composed with it.
-    checkParamsMatch (\v2 (p1,p2) -> checkGeneralMatch r f v2 p1 p2) variance zipped
+    checkParamsMatch (\v2 (p1,p2) -> checkGeneralMatch r f v2 p1 p2) variance zipped >> mergeDefault
   | otherwise = do
     (p2,ps1') <- (trFind r) t1 n2
     (return p2) `mergeNested` (checkInstanceToInstance r f Covariant (TypeInstance n2 ps1') t2)

@@ -11,6 +11,7 @@ module TypesBase (
   ParamSet(..),
   StorageType(..),
   Variance(..),
+  alwaysPairParams,
   checkParamsMatch,
   checkGeneralType,
   composeVariance,
@@ -91,13 +92,16 @@ newtype ParamSet a =
   }
   deriving (Eq,Ord,Show)
 
--- TODO: This is broken because c isn't really that useful for returning
--- results; it's really only useful for summarizing errors.
-checkParamsMatch :: (Show a, Show b, Mergeable c, CompileError c) =>
-  (a -> b -> c) -> ParamSet a -> ParamSet b -> c
+alwaysPairParams :: Monad m => a -> b -> m (a,b)
+alwaysPairParams x y = return (x,y)
+
+checkParamsMatch :: (Show a, Show b, CompileErrorM m, Monad m) =>
+  (a -> b -> m c) -> ParamSet a -> ParamSet b -> m [c]
 checkParamsMatch f (ParamSet ps1) (ParamSet ps2)
-  | length ps1 == length ps2 = mergeAll $ map (\(p1,p2) -> (p1 `f` p2)) (zip ps1 ps2)
-  | otherwise = compileError $ "Parameter count mismatch: " ++ show ps1 ++ " vs. " ++ show ps2
+  | length ps1 == length ps2 =
+    collectAllOrErrorM $ map (uncurry f) (zip ps1 ps2)
+  | otherwise =
+    compileError $ "Parameter count mismatch: " ++ show ps1 ++ " vs. " ++ show ps2
 
 data Variance =
   Contravariant |
