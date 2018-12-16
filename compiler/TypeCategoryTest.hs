@@ -46,9 +46,36 @@ main = runAllTests [
     checkShortParseSuccess "value interface Type {}",
     checkShortParseSuccess "value interface Type { refines T }",
     checkShortParseFail "value interface Type { defines T }",
-    checkShortParseFail "value interface Type<x> { x allows T }"
+    checkShortParseFail "value interface Type<x> { x allows T }",
+
+    checkOperationSuccess "testfiles/value_refines_value.txt" checkConnectedTypes,
+    checkOperationFail "testfiles/value_refines_instance.txt" checkConnectedTypes,
+    checkOperationFail "testfiles/value_refines_concrete.txt" checkConnectedTypes,
+
+    checkOperationSuccess "testfiles/concrete_refines_value.txt" checkConnectedTypes,
+    checkOperationFail "testfiles/concrete_refines_instance.txt" checkConnectedTypes,
+    checkOperationFail "testfiles/concrete_refines_concrete.txt" checkConnectedTypes,
+    checkOperationSuccess "testfiles/concrete_defines_instance.txt" checkConnectedTypes,
+    checkOperationFail "testfiles/concrete_defines_value.txt" checkConnectedTypes,
+    checkOperationFail "testfiles/concrete_defines_concrete.txt" checkConnectedTypes
   ]
 
+
+checkOperationSuccess f o = checked where
+  checked = do
+    contents <- readFile f
+    parsed <- readMultiCategory f contents
+    return $ check (parsed >>= o)
+  check (Left es) = compileError $ "Check " ++ f ++ ": " ++ show es
+  check _ = return ()
+
+checkOperationFail f o = checked where
+  checked = do
+    contents <- readFile f
+    parsed <- readMultiCategory f contents
+    return $ check (parsed >>= o)
+  check (Right t) = compileError $ "Check " ++ f ++ ": Expected failure but got\n" ++ show t
+  check _ = return ()
 
 checkSingleParseSuccess f = checked where
   checked = do
@@ -84,5 +111,12 @@ readSingleCategory :: String -> String -> IO (CompileInfo (AnyCategory SourcePos
 readSingleCategory f s = parsed where
   parsed =
     return $ unwrap $ parse (between optionalSpace endOfDoc sourceParser) f s
+  unwrap (Left e)  = compileError (show e)
+  unwrap (Right t) = return t
+
+readMultiCategory :: String -> String -> IO (CompileInfo [AnyCategory SourcePos])
+readMultiCategory f s = parsed where
+  parsed =
+    return $ unwrap $ parse (between optionalSpace endOfDoc (sepBy sourceParser optionalSpace)) f s
   unwrap (Left e)  = compileError (show e)
   unwrap (Right t) = return t

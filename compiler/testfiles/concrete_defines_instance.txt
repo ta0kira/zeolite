@@ -1,0 +1,5 @@
+type interface Parent {}
+
+concrete Child {
+  defines Parent
+}

@@ -15,7 +15,7 @@ module TypeCategory (
   ParamValueFilter(..),
   ValueParam(..),
   ValueRefine(..),
-  validateCategory,
+  checkConnectedTypes,
 ) where
 
 import Control.Monad (join,(>=>))
@@ -51,6 +51,9 @@ data AnyCategory c =
   }
   deriving (Eq)
 
+formatFullContext :: Show a => [a] -> String
+formatFullContext cs = intercalate " -> " (map show cs)
+
 instance Show c => Show (AnyCategory c) where
   show = format where
     format (ValueInterface cs n ps rs) =
@@ -65,7 +68,7 @@ instance Show c => Show (AnyCategory c) where
       concat (map (\v -> "  " ++ formatValue v ++ "\n") vs) ++
       concat (map (\i -> "  " ++ formatInstance i ++ "\n") is) ++
       "}\n"
-    formatContext cs = "/*" ++ intercalate " -> " (map show cs) ++ "*/"
+    formatContext cs = "/*" ++ formatFullContext cs ++ "*/"
     formatParams ps = let (con,inv,cov) = (foldr partitionParam ([],[],[]) ps) in
       "<" ++ intercalate "," con ++ "|" ++
              intercalate "," inv ++ "|" ++
@@ -82,6 +85,23 @@ instance Show c => Show (AnyCategory c) where
                     " " ++ formatContext (pfContext v)
     formatInstance i = show (pdParam i) ++ " defines " ++ show (pdType i) ++
                        " " ++ formatContext (pdContext i)
+
+getCategoryName :: AnyCategory c -> TypeName
+getCategoryName (ValueInterface _ n _ _) = n
+getCategoryName (InstanceInterface _ n _) = n
+getCategoryName (ValueConcrete _ n _ _ _ _ _) = n
+
+isValueInterface :: AnyCategory c -> Bool
+isValueInterface (ValueInterface _ _ _ _) = True
+isValueInterface _ = False
+
+isInstanceInterface :: AnyCategory c -> Bool
+isInstanceInterface (InstanceInterface _ _ _) = True
+isInstanceInterface _ = False
+
+isValueConcrete :: AnyCategory c -> Bool
+isValueConcrete (ValueConcrete _ _ _ _ _ _ _) = True
+isValueConcrete _ = False
 
 data DefineConcrete c =
   DefineConcrete {
@@ -120,6 +140,71 @@ data ParamInstanceFilter c =
     pdType :: TypeInstance
   }
   deriving (Eq,Show)
+
+
+checkConnectedTypes :: (Show c, MergeableM m, CompileErrorM m, Monad m) =>
+  [AnyCategory c] -> m ()
+checkConnectedTypes ts = checked where
+  checked = mergeAllM $ map checkSingle ts
+  tm = Map.fromList $ zip (map getCategoryName ts) ts
+  getCategory (c,n) = let x = n `Map.lookup` tm in
+                          case x of
+                               (Just t) -> return (c,t)
+                               _ -> compileError $ "Type " ++ show n ++
+                                    " [" ++ formatFullContext c ++ "] not found"
+  checkSingle (ValueInterface c n _ rs) = do
+    ts <- return $ map (\r -> (vrContext r,tiName $ vrType r)) rs
+    is <- collectAllOrErrorM $ map getCategory ts
+    mergeAllM $ map (valueRefinesInstanceError c n) is
+    mergeAllM $ map (valueRefinesConcreteError c n) is
+  checkSingle (ValueConcrete c n _ rs ds _ _) = do
+    ts1 <- return $ map (\r -> (vrContext r,tiName $ vrType r)) rs
+    ts2 <- return $ map (\d -> (vrContext d,tiName $ vrType d)) ds
+    is1 <- collectAllOrErrorM $ map getCategory ts1
+    is2 <- collectAllOrErrorM $ map getCategory ts2
+    mergeAllM $ map (concreteRefinesInstanceError c n) is1
+    mergeAllM $ map (concreteDefinesValueError c n) is2
+    mergeAllM $ map (concreteRefinesConcreteError c n) is1
+    mergeAllM $ map (concreteDefinesConcreteError c n) is2
+  checkSingle _ = return ()
+  valueRefinesInstanceError c n (c2,t)
+    | isInstanceInterface t =
+      compileError $ "value interface " ++ show n ++ " [" ++ formatFullContext c ++ "]" ++
+                     " cannot refine type interface " ++
+                     show (iiName t) ++ " [" ++ formatFullContext c2 ++ "]"
+    | otherwise = return ()
+  valueRefinesConcreteError c n (c2,t)
+    | isValueConcrete t =
+      compileError $ "value interface " ++ show n ++ " [" ++ formatFullContext c ++ "]" ++
+                     " cannot refine concrete type " ++
+                     show (iiName t) ++ " [" ++ formatFullContext c2 ++ "]"
+    | otherwise = return ()
+  concreteRefinesInstanceError c n (c2,t)
+    | isInstanceInterface t =
+      compileError $ "concrete type " ++ show n ++ " [" ++ formatFullContext c ++ "]" ++
+                     " cannot refine instance interface " ++
+                     show (iiName t) ++ " [" ++ formatFullContext c2 ++ "]" ++
+                     " => use defines instead"
+    | otherwise = return ()
+  concreteDefinesValueError c n (c2,t)
+    | isValueInterface t =
+      compileError $ "concrete type " ++ show n ++ " [" ++ formatFullContext c ++ "]" ++
+                     " cannot define value interface " ++
+                     show (iiName t) ++ " [" ++ formatFullContext c2 ++ "]" ++
+                     " => use refines instead"
+    | otherwise = return ()
+  concreteRefinesConcreteError c n (c2,t)
+    | isValueConcrete t =
+      compileError $ "concrete type " ++ show n ++ " [" ++ formatFullContext c ++ "]" ++
+                     " cannot refine concrete type " ++
+                     show (iiName t) ++ " [" ++ formatFullContext c2 ++ "]"
+    | otherwise = return ()
+  concreteDefinesConcreteError c n (c2,t)
+    | isValueConcrete t =
+      compileError $ "concrete type " ++ show n ++ " [" ++ formatFullContext c ++ "]" ++
+                     " cannot define concrete type " ++
+                     show (iiName t) ++ " [" ++ formatFullContext c2 ++ "]"
+    | otherwise = return ()
 
 
 newtype CategoryConnect a =

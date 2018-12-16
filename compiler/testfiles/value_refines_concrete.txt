@@ -1,0 +1,5 @@
+concrete Parent {}
+
+value interface Child {
+  refines Parent
+}
