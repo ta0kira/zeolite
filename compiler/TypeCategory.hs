@@ -17,6 +17,7 @@ module TypeCategory (
   ValueRefine(..),
   checkConnectedTypes,
   checkConnectionCycles,
+  flattenAllConnections,
 ) where
 
 import Control.Monad (join,(>=>))
@@ -151,7 +152,6 @@ getCategory tm (c,n) =
        _ -> compileError $ "Type " ++ show n ++
                            " [" ++ formatFullContext c ++ "] not found"
 
-
 checkConnectedTypes :: (Show c, MergeableM m, CompileErrorM m, Monad m) =>
   [AnyCategory c] -> m ()
 checkConnectedTypes ts = checked where
@@ -211,7 +211,6 @@ checkConnectedTypes ts = checked where
                      show (getCategoryName t) ++ " [" ++ formatFullContext c2 ++ "]"
     | otherwise = return ()
 
-
 checkConnectionCycles :: (Show c, MergeableM m, CompileErrorM m, Monad m) =>
   [AnyCategory c] -> m ()
 checkConnectionCycles ts = checked where
@@ -237,6 +236,37 @@ checkConnectionCycles ts = checked where
                            formatFullContext c ++ "] refers back to itself: " ++
                            intercalate " -> " (map show (us ++ [n]))
        else return ()
+
+flattenAllConnections :: (Show c, MergeableM m, CompileErrorM m, Monad m) =>
+  [AnyCategory c] -> m [AnyCategory c]
+flattenAllConnections ts = updated where
+  updated = collectAllOrErrorM $ map updateSingle ts
+  tm = Map.fromList $ zip (map getCategoryName ts) ts
+  updateSingle (ValueInterface c n ps rs) = do
+    rs2 <- collectAllOrErrorM $ map getRefines rs
+    return $ ValueInterface c n ps (concat rs2)
+  updateSingle (ValueConcrete c n ps rs ds vs is) = do
+    rs2 <- collectAllOrErrorM $ map getRefines rs
+    return $ ValueConcrete c n ps (concat rs2) ds vs is
+  updateSingle t = return t
+  getRefines (ValueRefine c (TypeInstance n ps)) = do
+    pa <- assignParams c n ps
+    (_,v) <- getCategory tm (c,n)
+    -- Assumes that v is a ValueInterface.
+    collectAllOrErrorM $ map (subAll c pa) (viRefines v)
+  subAll c pa (ValueRefine c1 t1) = do
+    ((),SingleType (JustTypeInstance t2)) <-
+      uncheckedSubAllParams (getParam pa) (SingleType (JustTypeInstance t1))
+    return $ ValueRefine (c ++ c1) t2
+  getParam pa n =
+    case n `Map.lookup` pa of
+         (Just x) -> return x
+         _ -> compileError $ "Param " ++ show n ++ " does not exist"
+  assignParams c n ps = do
+    (_,v) <- getCategory tm (c,n)
+    ns <- return $ map vpParam $ viParams v
+    checkParamsMatch (\_ _ -> return ()) (ParamSet ns) ps
+    return $ Map.fromList $ zip ns (psParams ps)
 
 
 newtype CategoryConnect a =
@@ -285,9 +315,6 @@ validateCategory :: (MergeableM m, Mergeable p, CompileErrorM m,
                      Monad m, MonadFix m) =>
   TypeResolver m p -> CategorySystem -> m CategorySystem
 validateCategory r cs = do
-  -- Basic structural checks.
-  checkCycles (csMain cs)
-  checkConcrete (csConcrete cs) (csMain cs)
   -- TODO: Need to check that filters are actually valid type instances. Before
   -- checking refines w.r.t. filters: just ensure that all categories and params
   -- are defined. After that: ensure that the filters themselves have valid type
@@ -346,31 +373,6 @@ checkVariances va vs = checkCategory checkAll where
          then return ()
          else compileError $ "Param " ++ show n ++ " does not allow variance " ++ show v
 
-checkCycles :: (MergeableM m, CompileErrorM m, Monad m) => CategoryMain -> m ()
-checkCycles ca = checkCategory (checker []) ca where
-  checker ns n ts
-    | n `Set.member` (Set.fromList ns) =
-      compileError $ "Cycle found: " ++ intercalate " -> " (map show (ns ++ [n]))
-    | otherwise =
-      mergeAll $ map (\(n2,ts2) -> ts2 >>= checker (ns ++ [n]) n2) (map find $ Set.toList ts) where
-        find t = (t,suppress $ t `categoryLookup` ca)
-        -- The error is suppressed, since a missing reference will be detected
-        -- during later checks. This allows incremental construction of the
-        -- type resolver, e.g., using multiple modules.
-        suppress cs
-          | isCompileError cs = return Set.empty
-          | otherwise         = cs
-
-checkConcrete :: (MergeableM m, CompileErrorM m, Monad m) =>
-  CategoryConcrete -> CategoryMain -> m ()
-checkConcrete cc = checkCategory checkAll where
-  checkAll n = mergeAll . map (checkSingle n) . Set.toList
-  checkSingle n n2 = do
-    concrete <- n2 `categoryLookup` cc
-    if concrete
-       then compileError $ "Category " ++ show n ++ " cannot refine concrete " ++ show n2
-       else return ()
-
 mergeInstances :: (MergeableM m, Mergeable p, CompileErrorM m, Monad m) =>
   TypeResolver m p -> ParamFilters -> [TypeInstance] -> [TypeInstance]
 mergeInstances r f gs = merge [] gs where
@@ -398,7 +400,7 @@ flattenRefines r ps fs (CategoryConnect gs) = mfix flattenAll where
     mapped <- return $ uncheckedZipFilters params filters
     return (n,mergeInstances r mapped $ join gs2)
   flattenSingle ca _ ta@(TypeInstance t ps) = do
-    params <- (trParams r) t ps
+    params <- (trAssignParams r) ta
     refines <- t `categoryLookup` ca
     collectAllOrErrorM $ map (substitute params) refines
   substitute params t = do

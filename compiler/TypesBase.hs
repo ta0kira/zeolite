@@ -9,7 +9,7 @@ module TypesBase (
   MergeableM(..),
   MergeType(..),
   ParamSet(..),
-  Tangibility(..),
+  StorageType(..),
   Variance(..),
   checkParamsMatch,
   checkGeneralType,
@@ -69,13 +69,13 @@ data MergeType =
 
 data GeneralType a =
   SingleType {
-    tiType :: a
+    stType :: a
   } |
   TypeMerge {
     tmMerge :: MergeType,
     tmTypes :: [GeneralType a]
   }
-  deriving (Eq)
+  deriving (Eq,Ord)
 
 checkGeneralType :: Mergeable c => (a -> b -> c) -> GeneralType a -> GeneralType b -> c
 checkGeneralType f ti1 ti2 = singleCheck ti1 ti2 where
@@ -89,7 +89,7 @@ newtype ParamSet a =
   ParamSet {
     psParams :: [a]
   }
-  deriving (Eq,Show)
+  deriving (Eq,Ord,Show)
 
 -- TODO: This is broken because c isn't really that useful for returning
 -- results; it's really only useful for summarizing errors.
@@ -120,7 +120,7 @@ Invariant     `paramAllowsVariance` Invariant     = True
 Invariant     `paramAllowsVariance` Contravariant = True
 _             `paramAllowsVariance` _             = False
 
-data Tangibility =
+data StorageType =
   WeakValue |
   OptionalValue |
   RequiredValue

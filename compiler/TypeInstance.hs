@@ -36,10 +36,10 @@ instance Show GeneralInstance where
 
 data ValueType =
   ValueType {
-    vtRequired :: Tangibility,
+    vtRequired :: StorageType,
     vtType :: GeneralInstance
   }
-  deriving (Eq)
+  deriving (Eq,Ord)
 
 instance Show ValueType where
   show (ValueType WeakValue t)     = "weak " ++ show t
@@ -69,7 +69,7 @@ data TypeInstance =
     tiName :: TypeName,
     tiParams :: InstanceParams
   }
-  deriving (Eq)
+  deriving (Eq,Ord)
 
 instance Show TypeInstance where
   show (TypeInstance n (ParamSet [])) = show n
@@ -83,7 +83,7 @@ data TypeInstanceOrParam =
   JustParamName {
     jpnName :: ParamName
   }
-  deriving (Eq)
+  deriving (Eq,Ord)
 
 instance Show TypeInstanceOrParam where
   show (JustTypeInstance t) = show t
@@ -92,14 +92,14 @@ instance Show TypeInstanceOrParam where
 data FilterDirection =
   FilterRequires |
   FilterAllows
-  deriving (Eq,Show)
+  deriving (Eq,Ord,Show)
 
 data TypeFilter =
   TypeFilter {
     tfDirection :: FilterDirection,
     tfType :: TypeInstanceOrParam
   }
-  deriving (Eq)
+  deriving (Eq,Ord)
 
 instance Show TypeFilter where
   show (TypeFilter FilterRequires t) = "requires " ++ show t
@@ -125,7 +125,7 @@ data TypeResolver m p =
     -- Validates an instance's param args against required filters.
     tfValidate :: ParamFilters -> TypeInstance -> m (),
     -- Labels params for an instance using the category's param names.
-    trParams :: TypeName -> InstanceParams -> m AssignedParams
+    trAssignParams :: TypeInstance -> m AssignedParams
   }
 
 filterLookup :: (CompileErrorM m, Monad m) =>

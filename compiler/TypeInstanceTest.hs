@@ -385,7 +385,7 @@ resolver = TypeResolver {
     trFind = getParams refines,
     trVariance = mapLookup variances,
     tfValidate = undefined, -- TODO: Define this with an error.
-    trParams = undefined -- TODO: Define this with an error.
+    trAssignParams = undefined -- TODO: Define this with an error.
   }
 
 getParams ma (TypeInstance n1 ps1) n2 = do

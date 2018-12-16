@@ -1,0 +1,17 @@
+@value interface Object1<x,y> {
+  refines Object3<y>
+}
+
+@value interface Object2 {}
+
+@value interface Object3<x> {
+  refines Object2
+}
+
+@value interface Parent<x> {
+  refines Object1<x,Object2>
+}
+
+concrete Child {
+  refines Parent<Child>
+}

@@ -2,9 +2,11 @@
 
 module TypeCategoryTest where
 
+import Control.Arrow
 import System.IO
 import Text.Parsec
 import Text.Parsec.String
+import qualified Data.Set as Set
 
 import CompileInfo
 import ParseCategory
@@ -62,9 +64,37 @@ main = runAllTests [
     checkOperationSuccess "testfiles/value_refines_value.txt" checkConnectionCycles,
     checkOperationSuccess "testfiles/concrete_refines_value.txt" checkConnectionCycles,
     checkOperationSuccess "testfiles/concrete_defines_instance.txt" checkConnectionCycles,
-    checkOperationFail "testfiles/value_cycle.txt" checkConnectionCycles
+    checkOperationFail "testfiles/value_cycle.txt" checkConnectionCycles,
+
+    checkOperationSuccess
+      "testfiles/flatten.txt"
+      (\ts -> do
+        ts2 <- flattenAllConnections ts
+        matchAll (map (show *** show) $ scrapeAllRefines ts2) [
+            ("Child","Object1<Child,Object2>"),
+            ("Object1","Object2"),
+            ("Parent","Object3<Object2>")
+          ])
   ]
 
+
+scrapeAllRefines = concat . map scrapeSingle where
+  scrapeSingle (ValueInterface _ n _ rs) = map ((,) n . vrType) rs
+  scrapeSingle (ValueConcrete _ n _ rs _ _ _) = map ((,) n . vrType) rs
+  scrapeSingle _ = []
+
+matchAll actual expected = checked where
+  checked = do
+    mergeAll $ map (checkInExpected $ Set.fromList expected) actual
+    mergeAll $ map (checkInActual $ Set.fromList actual) expected
+  checkInExpected va v =
+    if v `Set.member` va
+       then return ()
+       else compileError $ "Item " ++ show v ++ " is unexpected"
+  checkInActual va v =
+    if v `Set.member` va
+       then return ()
+       else compileError $ "Item " ++ show v ++ " was expected but not present"
 
 checkOperationSuccess f o = checked where
   checked = do
