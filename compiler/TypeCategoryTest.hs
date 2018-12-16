@@ -70,31 +70,50 @@ main = runAllTests [
       "testfiles/flatten.txt"
       (\ts -> do
         ts2 <- flattenAllConnections ts
-        matchAll (map (show *** show) $ scrapeAllRefines ts2) [
-            ("Child","Object1<Child,Object2>"),
+        scrapeAllRefines ts2 `containsExactly` [
+            ("Object1","Object3<y>"),
             ("Object1","Object2"),
-            ("Parent","Object3<Object2>")
+            ("Object3","Object2"),
+            ("Parent","Object1<x,Object3<Object2>>"),
+            ("Parent","Object3<Object3<Object2>>"),
+            ("Parent","Object2"),
+            ("Child","Parent<Child>"),
+            ("Child","Object1<Child,Object3<Object2>>"),
+            ("Child","Object3<Object3<Object2>>"),
+            ("Child","Object2")
+          ]
+        scrapeAllDefines ts2 `containsExactly` [
+            ("Child","Type<Child>")
           ])
   ]
 
 
-scrapeAllRefines = concat . map scrapeSingle where
+scrapeAllRefines = map (show *** show) . concat . map scrapeSingle where
   scrapeSingle (ValueInterface _ n _ rs) = map ((,) n . vrType) rs
   scrapeSingle (ValueConcrete _ n _ rs _ _ _) = map ((,) n . vrType) rs
   scrapeSingle _ = []
 
-matchAll actual expected = checked where
-  checked = do
-    mergeAll $ map (checkInExpected $ Set.fromList expected) actual
-    mergeAll $ map (checkInActual $ Set.fromList actual) expected
-  checkInExpected va v =
-    if v `Set.member` va
-       then return ()
-       else compileError $ "Item " ++ show v ++ " is unexpected"
+scrapeAllDefines = map (show *** show) . concat . map scrapeSingle where
+  scrapeSingle (ValueConcrete _ n _ _ ds _ _) = map ((,) n . vrType) ds
+  scrapeSingle _ = []
+
+containsExactly expected actual = do
+  containsAtLeast expected actual
+  containsAtMost expected actual
+
+containsAtLeast actual expected = checked where
+  checked = mergeAll $ map (checkInActual $ Set.fromList actual) expected
   checkInActual va v =
     if v `Set.member` va
        then return ()
        else compileError $ "Item " ++ show v ++ " was expected but not present"
+
+containsAtMost actual expected = checked where
+  checked = mergeAll $ map (checkInExpected $ Set.fromList expected) actual
+  checkInExpected va v =
+    if v `Set.member` va
+       then return ()
+       else compileError $ "Item " ++ show v ++ " is unexpected"
 
 checkOperationSuccess f o = checked where
   checked = do

@@ -249,11 +249,14 @@ flattenAllConnections ts = updated where
     rs2 <- collectAllOrErrorM $ map getRefines rs
     return $ ValueConcrete c n ps (concat rs2) ds vs is
   updateSingle t = return t
-  getRefines (ValueRefine c (TypeInstance n ps)) = do
+  getRefines ra@(ValueRefine c (TypeInstance n ps)) = do
     pa <- assignParams c n ps
     (_,v) <- getCategory tm (c,n)
+    -- NOTE: Can't use mfix for this because that would require full evaluation
+    -- before evaluation actually starts.
     -- Assumes that v is a ValueInterface.
-    collectAllOrErrorM $ map (subAll c pa) (viRefines v)
+    rs <- collectAllOrErrorM $ map getRefines (viRefines v)
+    (collectAllOrErrorM $ map (subAll c pa) (concat rs)) >>= return . (ra:)
   subAll c pa (ValueRefine c1 t1) = do
     ((),SingleType (JustTypeInstance t2)) <-
       uncheckedSubAllParams (getParam pa) (SingleType (JustTypeInstance t1))
