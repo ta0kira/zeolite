@@ -3,9 +3,11 @@
 module TypeCategoryTest where
 
 import Control.Arrow
+import Data.List
 import System.IO
 import Text.Parsec
 import Text.Parsec.String
+import qualified Data.Map as Map
 import qualified Data.Set as Set
 
 import CompileInfo
@@ -13,6 +15,7 @@ import ParseCategory
 import ParserBase
 import TestBase
 import TypeCategory
+import TypeInstance
 import TypesBase
 
 
@@ -50,16 +53,43 @@ main = runAllTests [
     checkShortParseFail "@value interface Type { defines T }",
     checkShortParseFail "@value interface Type<x> { x allows T }",
 
-    checkOperationSuccess "testfiles/value_refines_value.txt" checkConnectedTypes,
-    checkOperationFail "testfiles/value_refines_instance.txt" checkConnectedTypes,
-    checkOperationFail "testfiles/value_refines_concrete.txt" checkConnectedTypes,
+    checkOperationSuccess "testfiles/value_refines_value.txt" (checkConnectedTypes Map.empty),
+    checkOperationFail "testfiles/value_refines_instance.txt" (checkConnectedTypes Map.empty),
+    checkOperationFail "testfiles/value_refines_concrete.txt" (checkConnectedTypes Map.empty),
 
-    checkOperationSuccess "testfiles/concrete_refines_value.txt" checkConnectedTypes,
-    checkOperationFail "testfiles/concrete_refines_instance.txt" checkConnectedTypes,
-    checkOperationFail "testfiles/concrete_refines_concrete.txt" checkConnectedTypes,
-    checkOperationSuccess "testfiles/concrete_defines_instance.txt" checkConnectedTypes,
-    checkOperationFail "testfiles/concrete_defines_value.txt" checkConnectedTypes,
-    checkOperationFail "testfiles/concrete_defines_concrete.txt" checkConnectedTypes,
+    checkOperationSuccess "testfiles/concrete_refines_value.txt" (checkConnectedTypes Map.empty),
+    checkOperationFail "testfiles/concrete_refines_instance.txt" (checkConnectedTypes Map.empty),
+    checkOperationFail "testfiles/concrete_refines_concrete.txt" (checkConnectedTypes Map.empty),
+    checkOperationSuccess "testfiles/concrete_defines_instance.txt" (checkConnectedTypes Map.empty),
+    checkOperationFail "testfiles/concrete_defines_value.txt" (checkConnectedTypes Map.empty),
+    checkOperationFail "testfiles/concrete_defines_concrete.txt" (checkConnectedTypes Map.empty),
+
+    checkOperationSuccess
+      "testfiles/concrete_refines_value.txt"
+      (checkConnectedTypes $ Map.fromList [
+          (TypeName "Parent2",InstanceInterface [] (TypeName "Parent2") [])
+        ]),
+    checkOperationFail
+      "testfiles/concrete_refines_value.txt"
+      (checkConnectedTypes $ Map.fromList [
+          (TypeName "Parent",InstanceInterface [] (TypeName "Parent") [])
+        ]),
+
+    checkOperationSuccess
+      "testfiles/partial.txt"
+      (checkConnectedTypes $ Map.fromList [
+          (TypeName "Parent",ValueInterface [] (TypeName "Parent") [] [])
+        ]),
+    checkOperationFail
+      "testfiles/partial.txt"
+      (checkConnectedTypes $ Map.fromList [
+          (TypeName "Parent",InstanceInterface [] (TypeName "Parent") [])
+        ]),
+    checkOperationFail
+      "testfiles/partial.txt"
+      (checkConnectedTypes $ Map.fromList [
+          (TypeName "Parent",ValueConcrete [] (TypeName "Parent") [] [] [] [] [])
+        ]),
 
     checkOperationSuccess "testfiles/value_refines_value.txt" checkConnectionCycles,
     checkOperationSuccess "testfiles/concrete_refines_value.txt" checkConnectionCycles,
@@ -69,7 +99,7 @@ main = runAllTests [
     checkOperationSuccess
       "testfiles/flatten.txt"
       (\ts -> do
-        ts2 <- flattenAllConnections ts
+        ts2 <- flattenAllConnections Map.empty ts
         scrapeAllRefines ts2 `containsExactly` [
             ("Object1","Object3<y>"),
             ("Object1","Object2"),
@@ -84,9 +114,39 @@ main = runAllTests [
           ]
         scrapeAllDefines ts2 `containsExactly` [
             ("Child","Type<Child>")
+          ]),
+
+    checkOperationSuccess
+      "testfiles/flatten.txt"
+      (flattenAllConnections $ Map.fromList [
+          (TypeName "Parent2",InstanceInterface [] (TypeName "Parent2") [])
+        ]),
+    checkOperationFail
+      "testfiles/flatten.txt"
+      (flattenAllConnections $ Map.fromList [
+          (TypeName "Parent",InstanceInterface [] (TypeName "Parent") [])
+        ]),
+
+    checkOperationSuccess
+      "testfiles/partial.txt"
+      (\ts -> do
+        ts2 <- (flip flattenAllConnections ts)
+                 (Map.fromList [
+                   (TypeName "Parent",
+                    ValueInterface [] (TypeName "Parent") []
+                                   [ValueRefine [] $ TypeInstance (TypeName "Object1") (ParamSet []),
+                                    ValueRefine [] $ TypeInstance (TypeName "Object2") (ParamSet [])]),
+                   -- NOTE: Object1 deliberately excluded here so that we catch
+                   -- unnecessary recursion in existing categories.
+                   (TypeName "Object2",
+                    ValueInterface [] (TypeName "Object2") [] [])
+                 ])
+        scrapeAllRefines ts2 `containsExactly` [
+            ("Child","Parent"),
+            ("Child","Object1"),
+            ("Child","Object2")
           ])
   ]
-
 
 scrapeAllRefines = map (show *** show) . concat . map scrapeSingle where
   scrapeSingle (ValueInterface _ n _ rs) = map ((,) n . vrType) rs
@@ -97,16 +157,23 @@ scrapeAllDefines = map (show *** show) . concat . map scrapeSingle where
   scrapeSingle (ValueConcrete _ n _ _ ds _ _) = map ((,) n . vrType) ds
   scrapeSingle _ = []
 
-containsExactly expected actual = do
-  containsAtLeast expected actual
-  containsAtMost expected actual
+containsExactly actual expected = do
+  containsNoDuplicates actual
+  containsAtLeast actual expected
+  containsAtMost actual expected
+
+containsNoDuplicates expected = checked where
+  checked = mergeAll $ map checkSingle $ group expected
+  checkSingle xa@(x:_:_) = compileError $ "Item " ++ show x ++ " occurs " ++
+                                          show (length xa) ++ " times"
+  checkSingle _ = return ()
 
 containsAtLeast actual expected = checked where
   checked = mergeAll $ map (checkInActual $ Set.fromList actual) expected
   checkInActual va v =
     if v `Set.member` va
        then return ()
-       else compileError $ "Item " ++ show v ++ " was expected but not present"
+       else compileError $ "Item " ++ show v ++ " was expected but not present "
 
 containsAtMost actual expected = checked where
   checked = mergeAll $ map (checkInExpected $ Set.fromList expected) actual

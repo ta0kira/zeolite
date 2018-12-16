@@ -1,8 +1,6 @@
 Roughly in order of execution:
 
-- Reimplement parser for categories.
-- Implement instance interfaces.
-- Test category system.
+- Implement remaining category checks.
 
 - Write parser for function signatures.
 - Type-check function signatures.

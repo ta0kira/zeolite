@@ -93,6 +93,11 @@ getCategoryName (ValueInterface _ n _ _) = n
 getCategoryName (InstanceInterface _ n _) = n
 getCategoryName (ValueConcrete _ n _ _ _ _ _) = n
 
+getCategoryContext :: AnyCategory c -> [c]
+getCategoryContext (ValueInterface c _ _ _) = c
+getCategoryContext (InstanceInterface c _ _) = c
+getCategoryContext (ValueConcrete c _ _ _ _ _ _) = c
+
 isValueInterface :: AnyCategory c -> Bool
 isValueInterface (ValueInterface _ _ _ _) = True
 isValueInterface _ = False
@@ -144,25 +149,39 @@ data ParamInstanceFilter c =
   deriving (Eq,Show)
 
 
+type CategoryMap c = Map.Map TypeName (AnyCategory c)
+
 getCategory :: (Show c, CompileErrorM m, Monad m) =>
-  Map.Map TypeName (AnyCategory c) -> ([c],TypeName) -> m ([c],AnyCategory c)
+  CategoryMap c -> ([c],TypeName) -> m ([c],AnyCategory c)
 getCategory tm (c,n) =
   case n `Map.lookup` tm of
        (Just t) -> return (c,t)
        _ -> compileError $ "Type " ++ show n ++
                            " [" ++ formatFullContext c ++ "] not found"
 
+declareAllTypes :: (Show c, CompileErrorM m, Monad m) =>
+  CategoryMap c -> [AnyCategory c] -> m (CategoryMap c)
+declareAllTypes tm0 = foldr (\t tm -> tm >>= update t) (return tm0) where
+  update t tm =
+    case getCategoryName t `Map.lookup` tm of
+        (Just t2) -> compileError $ "Type " ++ show (getCategoryName t) ++
+                                    " [" ++ formatFullContext (getCategoryContext t) ++
+                                    "] has already been declared [" ++
+                                    formatFullContext (getCategoryContext t2) ++ "]"
+        _ -> return $ Map.insert (getCategoryName t) t tm
+
 checkConnectedTypes :: (Show c, MergeableM m, CompileErrorM m, Monad m) =>
-  [AnyCategory c] -> m ()
-checkConnectedTypes ts = checked where
-  checked = mergeAll $ map checkSingle ts
-  tm = Map.fromList $ zip (map getCategoryName ts) ts
-  checkSingle (ValueInterface c n _ rs) = do
+  CategoryMap c -> [AnyCategory c] -> m ()
+checkConnectedTypes tm0 ts = checked where
+  checked = do
+    tm <- declareAllTypes tm0 ts
+    mergeAll $ map (checkSingle tm) ts
+  checkSingle tm (ValueInterface c n _ rs) = do
     ts <- return $ map (\r -> (vrContext r,tiName $ vrType r)) rs
     is <- collectAllOrErrorM $ map (getCategory tm) ts
     mergeAll $ map (valueRefinesInstanceError c n) is
     mergeAll $ map (valueRefinesConcreteError c n) is
-  checkSingle (ValueConcrete c n _ rs ds _ _) = do
+  checkSingle tm (ValueConcrete c n _ rs ds _ _) = do
     ts1 <- return $ map (\r -> (vrContext r,tiName $ vrType r)) rs
     ts2 <- return $ map (\d -> (vrContext d,tiName $ vrType d)) ds
     is1 <- collectAllOrErrorM $ map (getCategory tm) ts1
@@ -171,7 +190,7 @@ checkConnectedTypes ts = checked where
     mergeAll $ map (concreteDefinesValueError c n) is2
     mergeAll $ map (concreteRefinesConcreteError c n) is1
     mergeAll $ map (concreteDefinesConcreteError c n) is2
-  checkSingle _ = return ()
+  checkSingle _ _ = return ()
   valueRefinesInstanceError c n (c2,t)
     | isInstanceInterface t =
       compileError $ "value interface " ++ show n ++ " [" ++ formatFullContext c ++ "]" ++
@@ -238,25 +257,32 @@ checkConnectionCycles ts = checked where
        else return ()
 
 flattenAllConnections :: (Show c, MergeableM m, CompileErrorM m, Monad m) =>
-  [AnyCategory c] -> m [AnyCategory c]
-flattenAllConnections ts = updated where
-  updated = collectAllOrErrorM $ map updateSingle ts
-  tm = Map.fromList $ zip (map getCategoryName ts) ts
-  updateSingle (ValueInterface c n ps rs) = do
-    rs2 <- collectAllOrErrorM $ map getRefines rs
+  CategoryMap c -> [AnyCategory c] -> m [AnyCategory c]
+flattenAllConnections tm0 ts = updated where
+  updated = do
+    tm <- declareAllTypes tm0 ts
+    collectAllOrErrorM $ map (updateSingle tm) ts
+  updateSingle tm (ValueInterface c n ps rs) = do
+    rs2 <- collectAllOrErrorM $ map (getRefines tm) rs
     return $ ValueInterface c n ps (concat rs2)
-  updateSingle (ValueConcrete c n ps rs ds vs is) = do
-    rs2 <- collectAllOrErrorM $ map getRefines rs
+  updateSingle tm (ValueConcrete c n ps rs ds vs is) = do
+    rs2 <- collectAllOrErrorM $ map (getRefines tm) rs
     return $ ValueConcrete c n ps (concat rs2) ds vs is
-  updateSingle t = return t
-  getRefines ra@(ValueRefine c (TypeInstance n ps)) = do
-    pa <- assignParams c n ps
-    (_,v) <- getCategory tm (c,n)
-    -- NOTE: Can't use mfix for this because that would require full evaluation
-    -- before evaluation actually starts.
-    -- Assumes that v is a ValueInterface.
-    rs <- collectAllOrErrorM $ map getRefines (viRefines v)
-    (collectAllOrErrorM $ map (subAll c pa) (concat rs)) >>= return . (ra:)
+  updateSingle _ t = return t
+  getRefines tm ra@(ValueRefine c (TypeInstance n ps))
+    | n `Map.member` tm0 = do
+      pa <- assignParams tm c n ps
+      (_,v) <- getCategory tm (c,n)
+      -- Assume that tm0 has already been fully processed.
+      (collectAllOrErrorM $ map (subAll c pa) (viRefines v)) >>= return . (ra:)
+    | otherwise = do
+      pa <- assignParams tm c n ps
+      (_,v) <- getCategory tm (c,n)
+      -- NOTE: Can't use mfix for this because that would require full evaluation
+      -- before evaluation actually starts.
+      -- Assumes that v is a ValueInterface.
+      rs <- collectAllOrErrorM $ map (getRefines tm) (viRefines v)
+      (collectAllOrErrorM $ map (subAll c pa) (concat rs)) >>= return . (ra:)
   subAll c pa (ValueRefine c1 t1) = do
     ((),SingleType (JustTypeInstance t2)) <-
       uncheckedSubAllParams (getParam pa) (SingleType (JustTypeInstance t1))
@@ -265,7 +291,7 @@ flattenAllConnections ts = updated where
     case n `Map.lookup` pa of
          (Just x) -> return x
          _ -> compileError $ "Param " ++ show n ++ " does not exist"
-  assignParams c n ps = do
+  assignParams tm c n ps = do
     (_,v) <- getCategory tm (c,n)
     ns <- return $ map vpParam $ viParams v
     checkParamsMatch (\_ _ -> return ()) (ParamSet ns) ps

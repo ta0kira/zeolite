@@ -1,0 +1,5 @@
+concrete Child {
+  refines Parent
+  // -> Object1
+  // -> Object2
+}
