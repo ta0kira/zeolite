@@ -15,10 +15,10 @@ import TypesBase
 instance ParseFromSource GeneralInstance where
   sourceParser = try all <|> try any <|> try intersect <|> try union <|> single where
     all = labeled "all" $ do
-      keyword "all"
+      kwAll
       return $ TypeMerge MergeUnion []
     any = labeled "any" $ do
-      keyword "any"
+      kwAny
       return $ TypeMerge MergeIntersect []
     intersect = labeled "intersection" $ do
       ts <- between (sepAfter $ string "(")
@@ -41,10 +41,10 @@ instance ParseFromSource ValueType where
       t <- sourceParser
       return $ ValueType r t
     getWeak = labeled "weak" $ do
-      try $ keyword "weak"
+      try kwWeak
       return WeakValue
     getOptional = labeled "optional" $ do
-      try $ keyword "optional"
+      try kwOptional
       return OptionalValue
     getRequired = return RequiredValue
 
@@ -84,10 +84,10 @@ instance ParseFromSource TypeInstanceOrParam where
 instance ParseFromSource TypeFilter where
   sourceParser = requires <|> allows where
     requires = labeled "requires filter" $ do
-      try $ keyword "requires"
+      try kwRequires
       t <- sourceParser
       return $ TypeFilter FilterRequires t
     allows = labeled "allows filter" $ do
-      try $ keyword "allows"
+      try kwAllows
       t <- sourceParser
       return $ TypeFilter FilterAllows t

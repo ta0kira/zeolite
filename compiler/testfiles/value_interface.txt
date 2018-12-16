@@ -1,4 +1,4 @@
-value interface Type<a,b|c,d|e,f> {
+@value interface Type<a,b|c,d|e,f> {
   refines Parent
   refines Other<Type2<a>,f>
 }

@@ -1,5 +1,5 @@
-value interface Parent {}
+@value interface Parent {}
 
-value interface Child {
+@value interface Child {
   refines Parent
 }

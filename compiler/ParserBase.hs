@@ -6,6 +6,19 @@ module ParserBase (
   blockComment,
   endOfDoc,
   keyword,
+  kwAll,
+  kwAllows,
+  kwAny,
+  kwCategory,
+  kwConcrete,
+  kwDefines,
+  kwInterface,
+  kwOptional,
+  kwRefines,
+  kwRequires,
+  kwType,
+  kwValue,
+  kwWeak,
   labeled,
   lineComment,
   noKeywords,
@@ -27,18 +40,35 @@ class ParseFromSource a where
 
 labeled = flip label
 
+kwAll = keyword "all"
+kwAllows = keyword "allows"
+kwAny = keyword "any"
+kwCategory = keyword "@category"
+kwConcrete = keyword "concrete"
+kwDefines = keyword "defines"
+kwInterface = keyword "interface"
+kwOptional = keyword "optional"
+kwRefines = keyword "refines"
+kwRequires = keyword "requires"
+kwType = keyword "@type"
+kwValue = keyword "@value"
+kwWeak = keyword "weak"
+
 isKeyword :: Parser ()
-isKeyword = foldr (<|>) nullParse $ map (try . keyword) [
-    "all",
-    "allows",
-    "any",
-    "concrete",
-    "defines",
-    "optional",
-    "refines",
-    "requires",
-    "type",
-    "weak"
+isKeyword = foldr (<|>) nullParse $ map try [
+    kwAll,
+    kwAllows,
+    kwAny,
+    kwCategory,
+    kwConcrete,
+    kwDefines,
+    kwInterface,
+    kwOptional,
+    kwRefines,
+    kwRequires,
+    kwType,
+    kwValue,
+    kwWeak
   ]
 
 nullParse :: Parser ()
@@ -70,7 +100,7 @@ sepAfter1 :: Parser a -> Parser a
 sepAfter1 = between nullParse requiredSpace
 
 keyword :: String -> Parser ()
-keyword s = sepAfter $ string s >> (labeled "" $ notFollowedBy (many alphaNum))
+keyword s = labeled s $ sepAfter $ string s >> (labeled "" $ notFollowedBy (many alphaNum))
 
 noKeywords :: Parser ()
 noKeywords = notFollowedBy isKeyword

@@ -1,4 +1,4 @@
-type interface Parent {}
+@type interface Parent {}
 
 concrete Child {
   defines Parent

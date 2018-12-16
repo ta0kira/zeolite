@@ -57,10 +57,10 @@ formatFullContext cs = intercalate " -> " (map show cs)
 instance Show c => Show (AnyCategory c) where
   show = format where
     format (ValueInterface cs n ps rs) =
-      "value interface " ++ show n ++ formatParams ps ++ " { " ++ formatContext cs ++ "\n" ++
+      "@value interface " ++ show n ++ formatParams ps ++ " { " ++ formatContext cs ++ "\n" ++
       concat (map (\r -> "  " ++ formatRefine r ++ "\n") rs) ++ "}\n"
     format (InstanceInterface cs n ps) =
-      "type interface " ++ show n ++ formatParams ps ++ " { " ++ formatContext cs ++ "}\n"
+      "@type interface " ++ show n ++ formatParams ps ++ " { " ++ formatContext cs ++ "}\n"
     format (ValueConcrete cs n ps rs ds vs is) =
       "concrete " ++ show n ++ formatParams ps ++ " { " ++ formatContext cs ++ "\n" ++
       concat (map (\r -> "  " ++ formatRefine r ++ "\n") rs) ++

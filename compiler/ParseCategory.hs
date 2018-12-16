@@ -20,7 +20,7 @@ instance ParseFromSource (AnyCategory SourcePos) where
     close = sepAfter $ string "}"
     parseValue = labeled "value interface" $ do
       c <- getPosition
-      try $ keyword "value" >> keyword "interface"
+      try $ kwValue >> kwInterface
       n <- sourceParser
       ps <- parseCategoryParams
       open
@@ -31,7 +31,7 @@ instance ParseFromSource (AnyCategory SourcePos) where
       return $ ValueInterface [c] n ps rs
     parseInstance = labeled "type interface" $ do
       c <- getPosition
-      try $ keyword "type" >> keyword "interface"
+      try $ kwType >> kwInterface
       n <- sourceParser
       ps <- parseCategoryParams
       open
@@ -41,7 +41,7 @@ instance ParseFromSource (AnyCategory SourcePos) where
       return $ InstanceInterface [c] n ps
     parseConcrete = labeled "concrete type" $ do
       c <- getPosition
-      try $ keyword "concrete"
+      try kwConcrete
       n <- sourceParser
       ps <- parseCategoryParams
       open
@@ -94,7 +94,7 @@ parseCategoryRefines = parsed where
   parsed = sepAfter $ sepBy singleRefine optionalSpace
   singleRefine = do
     c <- getPosition
-    try $ keyword "refines"
+    try kwRefines
     t <- sourceParser
     return $ ValueRefine [c] t
 
@@ -109,12 +109,12 @@ parseRefinesDefinesFilters = parsed >>= return . foldr merge empty where
   anyType = labeled "" $ singleRefine <|> singleDefine <|> singleValue <|> singleInstance
   singleRefine = do
     c <- getPosition
-    try $ keyword "refines"
+    try kwRefines
     t <- sourceParser
     return ([ValueRefine [c] t],[],[],[])
   singleDefine = do
     c <- getPosition
-    try $ keyword "defines"
+    try kwDefines
     t <- sourceParser
     return ([],[ValueRefine [c] t],[],[])
   singleValue = try $ do
@@ -125,7 +125,7 @@ parseRefinesDefinesFilters = parsed >>= return . foldr merge empty where
   singleInstance = do
     c <- getPosition
     n <- try $ sourceParser
-    try $ keyword "defines"
+    try kwDefines
     notAllowed (sourceParser :: Parser ParamName) $
                "param " ++ show n ++ " cannot define another param"
     t <- sourceParser
