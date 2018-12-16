@@ -15,7 +15,8 @@ runAllTests ts = do
   results <- sequence ts
   (es,ps) <- return $ partitionEithers $ zipWith numberError [1..] results
   mapM_ (\(n,e) -> hPutStr stderr ("Test " ++ show n ++ ": " ++ show e ++ "\n")) es
-  hPutStr stderr $ show (length ps) ++ " tests passed\n"
+  hPutStr stderr $ show (length ps) ++ " tests passed + " ++
+                   show (length es) ++ " tests failed\n"
 
 numberError :: a -> Either b c -> Either (a,b) c
 numberError n (Left e)  = Left (n,e)

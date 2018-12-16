@@ -16,6 +16,7 @@ module TypeCategory (
   ValueParam(..),
   ValueRefine(..),
   checkConnectedTypes,
+  checkConnectionCycles,
 ) where
 
 import Control.Monad (join,(>=>))
@@ -142,30 +143,34 @@ data ParamInstanceFilter c =
   deriving (Eq,Show)
 
 
+getCategory :: (Show c, CompileErrorM m, Monad m) =>
+  Map.Map TypeName (AnyCategory c) -> ([c],TypeName) -> m ([c],AnyCategory c)
+getCategory tm (c,n) =
+  case n `Map.lookup` tm of
+       (Just t) -> return (c,t)
+       _ -> compileError $ "Type " ++ show n ++
+                           " [" ++ formatFullContext c ++ "] not found"
+
+
 checkConnectedTypes :: (Show c, MergeableM m, CompileErrorM m, Monad m) =>
   [AnyCategory c] -> m ()
 checkConnectedTypes ts = checked where
-  checked = mergeAllM $ map checkSingle ts
+  checked = mergeAll $ map checkSingle ts
   tm = Map.fromList $ zip (map getCategoryName ts) ts
-  getCategory (c,n) = let x = n `Map.lookup` tm in
-                          case x of
-                               (Just t) -> return (c,t)
-                               _ -> compileError $ "Type " ++ show n ++
-                                    " [" ++ formatFullContext c ++ "] not found"
   checkSingle (ValueInterface c n _ rs) = do
     ts <- return $ map (\r -> (vrContext r,tiName $ vrType r)) rs
-    is <- collectAllOrErrorM $ map getCategory ts
-    mergeAllM $ map (valueRefinesInstanceError c n) is
-    mergeAllM $ map (valueRefinesConcreteError c n) is
+    is <- collectAllOrErrorM $ map (getCategory tm) ts
+    mergeAll $ map (valueRefinesInstanceError c n) is
+    mergeAll $ map (valueRefinesConcreteError c n) is
   checkSingle (ValueConcrete c n _ rs ds _ _) = do
     ts1 <- return $ map (\r -> (vrContext r,tiName $ vrType r)) rs
     ts2 <- return $ map (\d -> (vrContext d,tiName $ vrType d)) ds
-    is1 <- collectAllOrErrorM $ map getCategory ts1
-    is2 <- collectAllOrErrorM $ map getCategory ts2
-    mergeAllM $ map (concreteRefinesInstanceError c n) is1
-    mergeAllM $ map (concreteDefinesValueError c n) is2
-    mergeAllM $ map (concreteRefinesConcreteError c n) is1
-    mergeAllM $ map (concreteDefinesConcreteError c n) is2
+    is1 <- collectAllOrErrorM $ map (getCategory tm) ts1
+    is2 <- collectAllOrErrorM $ map (getCategory tm) ts2
+    mergeAll $ map (concreteRefinesInstanceError c n) is1
+    mergeAll $ map (concreteDefinesValueError c n) is2
+    mergeAll $ map (concreteRefinesConcreteError c n) is1
+    mergeAll $ map (concreteDefinesConcreteError c n) is2
   checkSingle _ = return ()
   valueRefinesInstanceError c n (c2,t)
     | isInstanceInterface t =
@@ -177,34 +182,61 @@ checkConnectedTypes ts = checked where
     | isValueConcrete t =
       compileError $ "value interface " ++ show n ++ " [" ++ formatFullContext c ++ "]" ++
                      " cannot refine concrete type " ++
-                     show (iiName t) ++ " [" ++ formatFullContext c2 ++ "]"
+                     show (getCategoryName t) ++ " [" ++ formatFullContext c2 ++ "]"
     | otherwise = return ()
   concreteRefinesInstanceError c n (c2,t)
     | isInstanceInterface t =
       compileError $ "concrete type " ++ show n ++ " [" ++ formatFullContext c ++ "]" ++
                      " cannot refine instance interface " ++
-                     show (iiName t) ++ " [" ++ formatFullContext c2 ++ "]" ++
+                     show (getCategoryName t) ++ " [" ++ formatFullContext c2 ++ "]" ++
                      " => use defines instead"
     | otherwise = return ()
   concreteDefinesValueError c n (c2,t)
     | isValueInterface t =
       compileError $ "concrete type " ++ show n ++ " [" ++ formatFullContext c ++ "]" ++
                      " cannot define value interface " ++
-                     show (iiName t) ++ " [" ++ formatFullContext c2 ++ "]" ++
+                     show (getCategoryName t) ++ " [" ++ formatFullContext c2 ++ "]" ++
                      " => use refines instead"
     | otherwise = return ()
   concreteRefinesConcreteError c n (c2,t)
     | isValueConcrete t =
       compileError $ "concrete type " ++ show n ++ " [" ++ formatFullContext c ++ "]" ++
                      " cannot refine concrete type " ++
-                     show (iiName t) ++ " [" ++ formatFullContext c2 ++ "]"
+                     show (getCategoryName t) ++ " [" ++ formatFullContext c2 ++ "]"
     | otherwise = return ()
   concreteDefinesConcreteError c n (c2,t)
     | isValueConcrete t =
       compileError $ "concrete type " ++ show n ++ " [" ++ formatFullContext c ++ "]" ++
                      " cannot define concrete type " ++
-                     show (iiName t) ++ " [" ++ formatFullContext c2 ++ "]"
+                     show (getCategoryName t) ++ " [" ++ formatFullContext c2 ++ "]"
     | otherwise = return ()
+
+
+checkConnectionCycles :: (Show c, MergeableM m, CompileErrorM m, Monad m) =>
+  [AnyCategory c] -> m ()
+checkConnectionCycles ts = checked where
+  checked = mergeAll $ map (checker []) ts
+  tm = Map.fromList $ zip (map getCategoryName ts) ts
+  checker us (ValueInterface c n _ rs) = do
+    failIfCycle n c us
+    ts <- return $ map (\r -> (vrContext r,tiName $ vrType r)) rs
+    is <- collectAllOrErrorM $ map (getCategory tm) ts
+    mergeAll $ map (checker (us ++ [n]) . snd) is
+  checker us (ValueConcrete c n _ rs ds _ _) = do
+    failIfCycle n c us
+    ts1 <- return $ map (\r -> (vrContext r,tiName $ vrType r)) rs
+    ts2 <- return $ map (\d -> (vrContext d,tiName $ vrType d)) ds
+    is1 <- collectAllOrErrorM $ map (getCategory tm) ts1
+    is2 <- collectAllOrErrorM $ map (getCategory tm) ts2
+    mergeAll $ map (checker (us ++ [n]) . snd) is1
+    mergeAll $ map (checker (us ++ [n]) . snd) is2
+  checker _ _ = return ()
+  failIfCycle n c us =
+    if n `Set.member` (Set.fromList us)
+       then compileError $ "Category " ++ show n ++ " [" ++
+                           formatFullContext c ++ "] refers back to itself: " ++
+                           intercalate " -> " (map show (us ++ [n]))
+       else return ()
 
 
 newtype CategoryConnect a =

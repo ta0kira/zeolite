@@ -1,0 +1,11 @@
+@value interface Type1 {
+  refines Type2
+}
+
+@value interface Type2 {
+  refines Type3
+}
+
+@value interface Type3 {
+  refines Type1
+}

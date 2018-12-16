@@ -57,7 +57,12 @@ main = runAllTests [
     checkOperationFail "testfiles/concrete_refines_concrete.txt" checkConnectedTypes,
     checkOperationSuccess "testfiles/concrete_defines_instance.txt" checkConnectedTypes,
     checkOperationFail "testfiles/concrete_defines_value.txt" checkConnectedTypes,
-    checkOperationFail "testfiles/concrete_defines_concrete.txt" checkConnectedTypes
+    checkOperationFail "testfiles/concrete_defines_concrete.txt" checkConnectedTypes,
+
+    checkOperationSuccess "testfiles/value_refines_value.txt" checkConnectionCycles,
+    checkOperationSuccess "testfiles/concrete_refines_value.txt" checkConnectionCycles,
+    checkOperationSuccess "testfiles/concrete_defines_instance.txt" checkConnectionCycles,
+    checkOperationFail "testfiles/value_cycle.txt" checkConnectionCycles
   ]
 
 
@@ -74,7 +79,7 @@ checkOperationFail f o = checked where
     contents <- readFile f
     parsed <- readMultiCategory f contents
     return $ check (parsed >>= o)
-  check (Right t) = compileError $ "Check " ++ f ++ ": Expected failure but got\n" ++ show t
+  check (Right x) = compileError $ "Check " ++ f ++ ": Expected failure but got\n" ++ show x
   check _ = return ()
 
 checkSingleParseSuccess f = checked where
