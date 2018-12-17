@@ -99,7 +99,7 @@ parseCategoryRefines = parsed where
     return $ ValueRefine [c] t
 
 parseRefinesDefinesFilters :: Parser ([ValueRefine SourcePos],
-                                      [ValueRefine SourcePos],
+                                      [ValueDefine SourcePos],
                                       [ParamValueFilter SourcePos],
                                       [ParamInstanceFilter SourcePos])
 parseRefinesDefinesFilters = parsed >>= return . foldr merge empty where
@@ -116,7 +116,7 @@ parseRefinesDefinesFilters = parsed >>= return . foldr merge empty where
     c <- getPosition
     try kwDefines
     t <- sourceParser
-    return ([],[ValueRefine [c] t],[],[])
+    return ([],[ValueDefine [c] t],[],[])
   singleValue = try $ do
     c <- getPosition
     n <- sourceParser

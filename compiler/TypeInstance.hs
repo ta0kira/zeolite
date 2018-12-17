@@ -3,6 +3,7 @@
 
 module TypeInstance (
   AssignedParams,
+  DefinesInstance(..),
   FilterDirection(..),
   GeneralInstance,
   InstanceParams,
@@ -74,6 +75,18 @@ data TypeInstance =
 instance Show TypeInstance where
   show (TypeInstance n (ParamSet [])) = show n
   show (TypeInstance n (ParamSet ts)) =
+    show n ++ "<" ++ intercalate "," (map show ts) ++ ">"
+
+data DefinesInstance =
+  DefinesInstance {
+    diName :: TypeName,
+    diParams :: InstanceParams
+  }
+  deriving (Eq,Ord)
+
+instance Show DefinesInstance where
+  show (DefinesInstance n (ParamSet [])) = show n
+  show (DefinesInstance n (ParamSet ts)) =
     show n ++ "<" ++ intercalate "," (map show ts) ++ ">"
 
 data TypeInstanceOrParam =

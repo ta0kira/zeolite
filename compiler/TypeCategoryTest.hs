@@ -148,10 +148,14 @@ main = runAllTests [
           ]),
 
     checkOperationSuccess "testfiles/valid_variances.txt" (checkParamVariances Map.empty),
-    checkOperationFail "testfiles/contravariant_to_covariant.txt" (checkParamVariances Map.empty),
-    checkOperationFail "testfiles/contravariant_to_invariant.txt" (checkParamVariances Map.empty),
-    checkOperationFail "testfiles/covariant_to_contravariant.txt" (checkParamVariances Map.empty),
-    checkOperationFail "testfiles/covariant_to_invariant.txt" (checkParamVariances Map.empty),
+    checkOperationFail "testfiles/contravariant_refines_covariant.txt" (checkParamVariances Map.empty),
+    checkOperationFail "testfiles/contravariant_refines_invariant.txt" (checkParamVariances Map.empty),
+    checkOperationFail "testfiles/covariant_refines_contravariant.txt" (checkParamVariances Map.empty),
+    checkOperationFail "testfiles/covariant_refines_invariant.txt" (checkParamVariances Map.empty),
+    checkOperationFail "testfiles/contravariant_defines_covariant.txt" (checkParamVariances Map.empty),
+    checkOperationFail "testfiles/contravariant_defines_invariant.txt" (checkParamVariances Map.empty),
+    checkOperationFail "testfiles/covariant_defines_contravariant.txt" (checkParamVariances Map.empty),
+    checkOperationFail "testfiles/covariant_defines_invariant.txt" (checkParamVariances Map.empty),
 
     checkOperationSuccess
       "testfiles/concrete_refines_value.txt"
@@ -197,7 +201,7 @@ scrapeAllRefines = map (show *** show) . concat . map scrapeSingle where
   scrapeSingle _ = []
 
 scrapeAllDefines = map (show *** show) . concat . map scrapeSingle where
-  scrapeSingle (ValueConcrete _ n _ _ ds _ _) = map ((,) n . vrType) ds
+  scrapeSingle (ValueConcrete _ n _ _ ds _ _) = map ((,) n . vdType) ds
   scrapeSingle _ = []
 
 

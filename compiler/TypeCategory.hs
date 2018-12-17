@@ -10,9 +10,9 @@ module TypeCategory (
   CategoryRefines,
   CategorySystem(..),
   CategoryVariance,
-  DefineConcrete(..),
   ParamInstanceFilter(..),
   ParamValueFilter(..),
+  ValueDefine(..),
   ValueParam(..),
   ValueRefine(..),
   checkConnectedTypes,
@@ -38,7 +38,6 @@ data AnyCategory c =
     viParams :: [ValueParam c],
     viRefines :: [ValueRefine c]
   } |
-  -- TODO: Instance interfaces should not be allowed in TypeInstance.
   InstanceInterface {
     iiContext :: [c],
     iiName :: TypeName,
@@ -49,7 +48,7 @@ data AnyCategory c =
     vcName :: TypeName,
     vcParams :: [ValueParam c],
     vcRefines :: [ValueRefine c],
-    vcDefines :: [ValueRefine c],
+    vcDefines :: [ValueDefine c],
     vcParamValue :: [ParamValueFilter c],
     vcParamInstance :: [ParamInstanceFilter c]
   }
@@ -84,7 +83,7 @@ instance Show c => Show (AnyCategory c) where
       | vpVariance p == Invariant     = (con,(show $ vpParam p):inv,cov)
       | vpVariance p == Covariant     = (con,inv,(show $ vpParam p):cov)
     formatRefine r = "refines " ++ show (vrType r) ++ " " ++ formatContext (vrContext r)
-    formatDefine d = "defines " ++ show (vrType d) ++ " " ++ formatContext (vrContext d)
+    formatDefine d = "defines " ++ show (vdType d) ++ " " ++ formatContext (vdContext d)
     formatValue v = show (pfParam v) ++ " " ++ show (pfFilter v) ++
                     " " ++ formatContext (pfContext v)
     formatInstance i = show (pdParam i) ++ " defines " ++ show (pdType i) ++
@@ -117,19 +116,19 @@ isValueConcrete :: AnyCategory c -> Bool
 isValueConcrete (ValueConcrete _ _ _ _ _ _ _) = True
 isValueConcrete _ = False
 
-data DefineConcrete c =
-  DefineConcrete {
-    dcContext :: [c],
-    dcName :: TypeName
-  }
-  deriving (Eq,Show)
-
 data ValueRefine c =
   ValueRefine {
     vrContext :: [c],
     vrType :: TypeInstance
   }
   deriving (Eq,Show)
+
+data ValueDefine c =
+  ValueDefine {
+    vdContext :: [c],
+    vdType :: DefinesInstance
+  }
+  deriving (Eq)
 
 data ValueParam c =
   ValueParam {
@@ -151,7 +150,7 @@ data ParamInstanceFilter c =
   ParamInstanceFilter {
     pdContext :: [c],
     pdParam :: ParamName,
-    pdType :: TypeInstance
+    pdType :: DefinesInstance
   }
   deriving (Eq,Show)
 
@@ -165,6 +164,26 @@ getCategory tm (c,n) =
        (Just t) -> return (c,t)
        _ -> compileError $ "type " ++ show n ++
                            " [" ++ formatFullContext c ++ "] not found"
+
+getValueCategory :: (Show c, CompileErrorM m, Monad m) =>
+  CategoryMap c -> ([c],TypeName) -> m ([c],AnyCategory c)
+getValueCategory tm (c,n) = do
+  (c2,t) <- getCategory tm (c,n)
+  if isValueInterface t || isValueConcrete t
+     then return (c2,t)
+     else compileError $ "category " ++ show n ++
+                         " cannot be used as a value [" ++
+                         formatFullContext c ++ "]"
+
+getInstanceCategory :: (Show c, CompileErrorM m, Monad m) =>
+  CategoryMap c -> ([c],TypeName) -> m ([c],AnyCategory c)
+getInstanceCategory tm (c,n) = do
+  (c2,t) <- getCategory tm (c,n)
+  if isInstanceInterface t
+     then return (c2,t)
+     else compileError $ "category " ++ show n ++
+                         " cannot be used as a type interface [" ++
+                         formatFullContext c ++ "]"
 
 declareAllTypes :: (Show c, CompileErrorM m, Monad m) =>
   CategoryMap c -> [AnyCategory c] -> m (CategoryMap c)
@@ -190,7 +209,7 @@ checkConnectedTypes tm0 ts = checked where
     mergeAll $ map (valueRefinesConcreteError c n) is
   checkSingle tm (ValueConcrete c n _ rs ds _ _) = do
     ts1 <- return $ map (\r -> (vrContext r,tiName $ vrType r)) rs
-    ts2 <- return $ map (\d -> (vrContext d,tiName $ vrType d)) ds
+    ts2 <- return $ map (\d -> (vdContext d,diName $ vdType d)) ds
     is1 <- collectAllOrErrorM $ map (getCategory tm) ts1
     is2 <- collectAllOrErrorM $ map (getCategory tm) ts2
     mergeAll $ map (concreteRefinesInstanceError c n) is1
@@ -245,16 +264,13 @@ checkConnectionCycles ts = checked where
   checker us (ValueInterface c n _ rs) = do
     failIfCycle n c us
     ts <- return $ map (\r -> (vrContext r,tiName $ vrType r)) rs
-    is <- collectAllOrErrorM $ map (getCategory tm) ts
+    is <- collectAllOrErrorM $ map (getValueCategory tm) ts
     mergeAll $ map (checker (us ++ [n]) . snd) is
-  checker us (ValueConcrete c n _ rs ds _ _) = do
+  checker us (ValueConcrete c n _ rs _ _ _) = do
     failIfCycle n c us
-    ts1 <- return $ map (\r -> (vrContext r,tiName $ vrType r)) rs
-    ts2 <- return $ map (\d -> (vrContext d,tiName $ vrType d)) ds
-    is1 <- collectAllOrErrorM $ map (getCategory tm) ts1
-    is2 <- collectAllOrErrorM $ map (getCategory tm) ts2
-    mergeAll $ map (checker (us ++ [n]) . snd) is1
-    mergeAll $ map (checker (us ++ [n]) . snd) is2
+    ts <- return $ map (\r -> (vrContext r,tiName $ vrType r)) rs
+    is <- collectAllOrErrorM $ map (getValueCategory tm) ts
+    mergeAll $ map (checker (us ++ [n]) . snd) is
   checker _ _ = return ()
   failIfCycle n c us =
     if n `Set.member` (Set.fromList us)
@@ -279,12 +295,12 @@ flattenAllConnections tm0 ts = updated where
   getRefines tm ra@(ValueRefine c t@(TypeInstance n ps))
     | n `Map.member` tm0 = do
       pa <- assignParams tm c t
-      (_,v) <- getCategory tm (c,n)
+      (_,v) <- getValueCategory tm (c,n)
       -- Assume that tm0 has already been fully processed.
       (collectAllOrErrorM $ map (subAll c pa) (viRefines v)) >>= return . (ra:)
     | otherwise = do
       pa <- assignParams tm c t
-      (_,v) <- getCategory tm (c,n)
+      (_,v) <- getValueCategory tm (c,n)
       -- NOTE: Can't use mfix for this because that would require full
       -- evaluation before that same evaluation actually starts.
       -- Assumes that checkConnectedTypes already checked the types.
@@ -299,7 +315,7 @@ flattenAllConnections tm0 ts = updated where
          (Just x) -> return x
          _ -> compileError $ "param " ++ show n ++ " does not exist"
   assignParams tm c (TypeInstance n ps) = do
-    (_,v) <- getCategory tm (c,n)
+    (_,v) <- getValueCategory tm (c,n)
     -- TODO: From here down should be a top-level function.
     ns <- return $ map vpParam $ viParams v
     paired <- checkParamsMatch alwaysPairParams (ParamSet ns) ps
@@ -313,17 +329,22 @@ checkParamVariances tm0 ts = updated where
     mergeAll $ map (checkCategory tm) ts
   checkCategory tm (ValueInterface c n ps rs) = do
     vm <- return $ Map.fromList $ map (\p -> (vpParam p,vpVariance p)) ps
-    mergeAll $ map (checkSingle tm vm) rs
+    mergeAll $ map (checkRefine tm vm) rs
   checkCategory tm (ValueConcrete c n ps rs ds _ _) = do
     vm <- return $ Map.fromList $ map (\p -> (vpParam p,vpVariance p)) ps
-    mergeAll $ map (checkSingle tm vm) rs
-    mergeAll $ map (checkSingle tm vm) ds
+    mergeAll $ map (checkRefine tm vm) rs
+    mergeAll $ map (checkDefine tm vm) ds
   checkCategory _ _ = return ()
   getVariances tm c n = do
-    (_,t) <- getCategory tm (c,n)
+    (_,t) <- getValueCategory tm (c,n)
     return $ map vpVariance (getCategoryParams t)
-  checkSingle tm vm (ValueRefine c t) =
-    checkParam c t tm vm Covariant (SingleType $ JustTypeInstance t)
+  checkRefine tm vm (ValueRefine c t) =
+    checkParam c (show t) tm vm Covariant (SingleType $ JustTypeInstance t)
+  checkDefine tm vm (ValueDefine c t@(DefinesInstance n ps)) = do
+    (_,t2) <- getInstanceCategory tm (c,n)
+    vs <- return $ map vpVariance (getCategoryParams t2)
+    paired <- checkParamsMatch alwaysPairParams (ParamSet vs) ps
+    mergeAll $ map (\(v,p) -> checkParam c (show t) tm vm v p) paired
   checkParam c t tm vm v (SingleType (JustTypeInstance (TypeInstance n ps))) = do
     vs <- getVariances tm c n
     paired <- checkParamsMatch alwaysPairParams (ParamSet vs) ps
@@ -340,7 +361,7 @@ checkParamVariances tm0 ts = updated where
                          then return ()
                          else compileError $ "param " ++ show n ++
                                              " cannot be " ++ show v ++
-                                             " in " ++ show t ++
+                                             " in " ++ t ++
                                              " [" ++ formatFullContext c ++ "]"
 
 

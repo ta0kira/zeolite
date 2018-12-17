@@ -15,3 +15,10 @@
   // Variance reversed twice by Object1.
   refines Object1<Object1<q>>
 }
+
+@type interface Object6<|x> {}
+
+concrete Object7<|s> {
+  // Variance reversed twice by Object1.
+  defines Object6<Object1<Object1<s>>>
+}
