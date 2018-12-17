@@ -1,0 +1,1 @@
+@type interface Type<x|y|x> {}

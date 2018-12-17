@@ -13,7 +13,7 @@ module TypeCategory (
   flattenAllConnections,
 ) where
 
-import Data.List (group,intercalate)
+import Data.List (group,intercalate,sort)
 import qualified Data.Map as Map
 import qualified Data.Set as Set
 
@@ -301,18 +301,25 @@ flattenAllConnections tm0 ts = updated where
 
 checkParamVariances :: (Show c, MergeableM m, CompileErrorM m, Monad m) =>
   CategoryMap c -> [AnyCategory c] -> m ()
-checkParamVariances tm0 ts = updated where
-  updated = do
+checkParamVariances tm0 ts = checked where
+  checked = do
     tm <- declareAllTypes tm0 ts
     mergeAll $ map (checkCategory tm) ts
   checkCategory tm (ValueInterface c n ps rs) = do
+    noDuplicates c n ps
     vm <- return $ Map.fromList $ map (\p -> (vpParam p,vpVariance p)) ps
     mergeAll $ map (checkRefine tm vm) rs
   checkCategory tm (ValueConcrete c n ps rs ds _) = do
+    noDuplicates c n ps
     vm <- return $ Map.fromList $ map (\p -> (vpParam p,vpVariance p)) ps
     mergeAll $ map (checkRefine tm vm) rs
     mergeAll $ map (checkDefine tm vm) ds
-  checkCategory _ _ = return ()
+  checkCategory _ (InstanceInterface c n ps) = noDuplicates c n ps
+  noDuplicates c n ps = mergeAll $ map checkCount $ group $ sort $ map vpParam ps where
+    checkCount xa@(x:_:_) =
+      compileError $ "Param " ++ show x ++ " occurs " ++ show (length xa) ++
+                     " times in " ++ show n ++ " [" ++ formatFullContext c ++ "]"
+    checkCount _ = return ()
   getVariances tm c n = do
     (_,t) <- getValueCategory tm (c,n)
     return $ map vpVariance (getCategoryParams t)

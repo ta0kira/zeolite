@@ -156,6 +156,9 @@ main = runAllTests [
     checkOperationFail "testfiles/contravariant_defines_invariant.txt" (checkParamVariances Map.empty),
     checkOperationFail "testfiles/covariant_defines_contravariant.txt" (checkParamVariances Map.empty),
     checkOperationFail "testfiles/covariant_defines_invariant.txt" (checkParamVariances Map.empty),
+    checkOperationFail "testfiles/concrete_duplicate_param.txt" (checkParamVariances Map.empty),
+    checkOperationFail "testfiles/type_duplicate_param.txt" (checkParamVariances Map.empty),
+    checkOperationFail "testfiles/value_duplicate_param.txt" (checkParamVariances Map.empty),
 
     checkOperationSuccess
       "testfiles/concrete_refines_value.txt"
@@ -211,9 +214,9 @@ containsExactly actual expected = do
   containsAtMost actual expected
 
 containsNoDuplicates expected = checked where
-  checked = mergeAll $ map checkSingle $ group expected
-  checkSingle xa@(x:_:_) = compileError $ "Item " ++ show x ++ " occurs " ++
-                                          show (length xa) ++ " times"
+  checked = mergeAll $ map checkSingle $ group $ sort expected
+  checkSingle xa@(x:_:_) =
+    compileError $ "Item " ++ show x ++ " occurs " ++ show (length xa) ++ " times"
   checkSingle _ = return ()
 
 containsAtLeast actual expected = checked where
