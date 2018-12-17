@@ -145,8 +145,51 @@ main = runAllTests [
             ("Child","Parent"),
             ("Child","Object1"),
             ("Child","Object2")
-          ])
+          ]),
+
+    checkOperationSuccess "testfiles/valid_variances.txt" (checkParamVariances Map.empty),
+    checkOperationFail "testfiles/contravariant_to_covariant.txt" (checkParamVariances Map.empty),
+    checkOperationFail "testfiles/contravariant_to_invariant.txt" (checkParamVariances Map.empty),
+    checkOperationFail "testfiles/covariant_to_contravariant.txt" (checkParamVariances Map.empty),
+    checkOperationFail "testfiles/covariant_to_invariant.txt" (checkParamVariances Map.empty),
+
+    checkOperationSuccess
+      "testfiles/concrete_refines_value.txt"
+      (checkParamVariances $ Map.fromList [
+          (TypeName "Parent2",InstanceInterface [] (TypeName "Parent2") [])
+        ]),
+    checkOperationFail
+      "testfiles/concrete_refines_value.txt"
+      (checkParamVariances $ Map.fromList [
+          (TypeName "Parent",InstanceInterface [] (TypeName "Parent") [])
+        ]),
+
+    checkOperationSuccess
+      "testfiles/partial_params.txt"
+      (checkParamVariances $ Map.fromList [
+          (TypeName "Parent",
+           ValueInterface [] (TypeName "Parent")
+                          [ValueParam [] (ParamName "w") Contravariant,
+                           ValueParam [] (ParamName "z") Covariant] [])
+      ]),
+    checkOperationFail
+      "testfiles/partial_params.txt"
+      (checkParamVariances $ Map.fromList [
+          (TypeName "Parent",
+           ValueInterface [] (TypeName "Parent")
+                          [ValueParam [] (ParamName "w") Invariant,
+                           ValueParam [] (ParamName "z") Covariant] [])
+      ]),
+    checkOperationFail
+      "testfiles/partial_params.txt"
+      (checkParamVariances $ Map.fromList [
+          (TypeName "Parent",
+           ValueInterface [] (TypeName "Parent")
+                          [ValueParam [] (ParamName "w") Contravariant,
+                           ValueParam [] (ParamName "z") Invariant] [])
+      ])
   ]
+
 
 scrapeAllRefines = map (show *** show) . concat . map scrapeSingle where
   scrapeSingle (ValueInterface _ n _ rs) = map ((,) n . vrType) rs
@@ -156,6 +199,7 @@ scrapeAllRefines = map (show *** show) . concat . map scrapeSingle where
 scrapeAllDefines = map (show *** show) . concat . map scrapeSingle where
   scrapeSingle (ValueConcrete _ n _ _ ds _ _) = map ((,) n . vrType) ds
   scrapeSingle _ = []
+
 
 containsExactly actual expected = do
   containsNoDuplicates actual

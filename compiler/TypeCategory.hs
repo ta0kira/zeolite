@@ -17,6 +17,7 @@ module TypeCategory (
   ValueRefine(..),
   checkConnectedTypes,
   checkConnectionCycles,
+  checkParamVariances,
   flattenAllConnections,
 ) where
 
@@ -37,6 +38,7 @@ data AnyCategory c =
     viParams :: [ValueParam c],
     viRefines :: [ValueRefine c]
   } |
+  -- TODO: Instance interfaces should not be allowed in TypeInstance.
   InstanceInterface {
     iiContext :: [c],
     iiName :: TypeName,
@@ -98,6 +100,11 @@ getCategoryContext (ValueInterface c _ _ _) = c
 getCategoryContext (InstanceInterface c _ _) = c
 getCategoryContext (ValueConcrete c _ _ _ _ _ _) = c
 
+getCategoryParams :: AnyCategory c -> [ValueParam c]
+getCategoryParams (ValueInterface _ _ ps _) = ps
+getCategoryParams (InstanceInterface _ _ ps) = ps
+getCategoryParams (ValueConcrete _ _ ps _ _ _ _) = ps
+
 isValueInterface :: AnyCategory c -> Bool
 isValueInterface (ValueInterface _ _ _ _) = True
 isValueInterface _ = False
@@ -156,7 +163,7 @@ getCategory :: (Show c, CompileErrorM m, Monad m) =>
 getCategory tm (c,n) =
   case n `Map.lookup` tm of
        (Just t) -> return (c,t)
-       _ -> compileError $ "Type " ++ show n ++
+       _ -> compileError $ "type " ++ show n ++
                            " [" ++ formatFullContext c ++ "] not found"
 
 declareAllTypes :: (Show c, CompileErrorM m, Monad m) =>
@@ -164,7 +171,7 @@ declareAllTypes :: (Show c, CompileErrorM m, Monad m) =>
 declareAllTypes tm0 = foldr (\t tm -> tm >>= update t) (return tm0) where
   update t tm =
     case getCategoryName t `Map.lookup` tm of
-        (Just t2) -> compileError $ "Type " ++ show (getCategoryName t) ++
+        (Just t2) -> compileError $ "type " ++ show (getCategoryName t) ++
                                     " [" ++ formatFullContext (getCategoryContext t) ++
                                     "] has already been declared [" ++
                                     formatFullContext (getCategoryContext t2) ++ "]"
@@ -251,7 +258,7 @@ checkConnectionCycles ts = checked where
   checker _ _ = return ()
   failIfCycle n c us =
     if n `Set.member` (Set.fromList us)
-       then compileError $ "Category " ++ show n ++ " [" ++
+       then compileError $ "category " ++ show n ++ " [" ++
                            formatFullContext c ++ "] refers back to itself: " ++
                            intercalate " -> " (map show (us ++ [n]))
        else return ()
@@ -290,13 +297,51 @@ flattenAllConnections tm0 ts = updated where
   getParam pa n =
     case n `Map.lookup` pa of
          (Just x) -> return x
-         _ -> compileError $ "Param " ++ show n ++ " does not exist"
+         _ -> compileError $ "param " ++ show n ++ " does not exist"
   assignParams tm c (TypeInstance n ps) = do
     (_,v) <- getCategory tm (c,n)
     -- TODO: From here down should be a top-level function.
     ns <- return $ map vpParam $ viParams v
     paired <- checkParamsMatch alwaysPairParams (ParamSet ns) ps
     return $ Map.fromList paired
+
+checkParamVariances :: (Show c, MergeableM m, CompileErrorM m, Monad m) =>
+  CategoryMap c -> [AnyCategory c] -> m ()
+checkParamVariances tm0 ts = updated where
+  updated = do
+    tm <- declareAllTypes tm0 ts
+    mergeAll $ map (checkCategory tm) ts
+  checkCategory tm (ValueInterface c n ps rs) = do
+    vm <- return $ Map.fromList $ map (\p -> (vpParam p,vpVariance p)) ps
+    mergeAll $ map (checkSingle tm vm) rs
+  checkCategory tm (ValueConcrete c n ps rs ds _ _) = do
+    vm <- return $ Map.fromList $ map (\p -> (vpParam p,vpVariance p)) ps
+    mergeAll $ map (checkSingle tm vm) rs
+    mergeAll $ map (checkSingle tm vm) ds
+  checkCategory _ _ = return ()
+  getVariances tm c n = do
+    (_,t) <- getCategory tm (c,n)
+    return $ map vpVariance (getCategoryParams t)
+  checkSingle tm vm (ValueRefine c t) =
+    checkParam c t tm vm Covariant (SingleType $ JustTypeInstance t)
+  checkParam c t tm vm v (SingleType (JustTypeInstance (TypeInstance n ps))) = do
+    vs <- getVariances tm c n
+    paired <- checkParamsMatch alwaysPairParams (ParamSet vs) ps
+    mergeAll $ map (\(v2,p) -> checkParam c t tm vm (v `composeVariance` v2) p) paired
+  checkParam c t tm vm v (TypeMerge MergeUnion ts) =
+    mergeAll $ map (checkParam c t tm vm v) ts
+  checkParam c t tm vm v (TypeMerge MergeIntersect ts) =
+    mergeAll $ map (checkParam c t tm vm v) ts
+  checkParam c t tm vm v (SingleType (JustParamName n)) =
+    case n `Map.lookup` vm of
+         Nothing -> compileError $ "param " ++ show n ++ " [" ++
+                                   formatFullContext c ++ "] is undefined"
+         (Just v0) -> if v0 `paramAllowsVariance` v
+                         then return ()
+                         else compileError $ "param " ++ show n ++
+                                             " cannot be " ++ show v ++
+                                             " in " ++ show t ++
+                                             " [" ++ formatFullContext c ++ "]"
 
 
 newtype CategoryConnect a =

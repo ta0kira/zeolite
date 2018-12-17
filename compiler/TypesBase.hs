@@ -107,7 +107,12 @@ data Variance =
   Contravariant |
   Invariant |
   Covariant
-  deriving (Eq,Ord,Show)
+  deriving (Eq,Ord)
+
+instance Show Variance where
+  show Contravariant = "contravariant"
+  show Invariant     = "invariant"
+  show Covariant     = "covariant"
 
 composeVariance :: Variance -> Variance -> Variance
 composeVariance Covariant      Covariant      = Covariant
