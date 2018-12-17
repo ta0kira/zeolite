@@ -3,7 +3,6 @@
 module TypeCategory (
   AnyCategory(..),
   CategoryConnect(..),
-  ParamInstanceFilter(..),
   ParamValueFilter(..),
   ValueDefine(..),
   ValueParam(..),
@@ -40,8 +39,7 @@ data AnyCategory c =
     vcParams :: [ValueParam c],
     vcRefines :: [ValueRefine c],
     vcDefines :: [ValueDefine c],
-    vcParamValue :: [ParamValueFilter c],
-    vcParamInstance :: [ParamInstanceFilter c]
+    vcParamValue :: [ParamValueFilter c]
   }
   deriving (Eq)
 
@@ -55,12 +53,11 @@ instance Show c => Show (AnyCategory c) where
       concat (map (\r -> "  " ++ formatRefine r ++ "\n") rs) ++ "}\n"
     format (InstanceInterface cs n ps) =
       "@type interface " ++ show n ++ formatParams ps ++ " { " ++ formatContext cs ++ "}\n"
-    format (ValueConcrete cs n ps rs ds vs is) =
+    format (ValueConcrete cs n ps rs ds vs) =
       "concrete " ++ show n ++ formatParams ps ++ " { " ++ formatContext cs ++ "\n" ++
       concat (map (\r -> "  " ++ formatRefine r ++ "\n") rs) ++
       concat (map (\d -> "  " ++ formatDefine d ++ "\n") ds) ++
       concat (map (\v -> "  " ++ formatValue v ++ "\n") vs) ++
-      concat (map (\i -> "  " ++ formatInstance i ++ "\n") is) ++
       "}\n"
     formatContext cs = "/*" ++ formatFullContext cs ++ "*/"
     formatParams ps = let (con,inv,cov) = (foldr partitionParam ([],[],[]) ps) in
@@ -77,23 +74,21 @@ instance Show c => Show (AnyCategory c) where
     formatDefine d = "defines " ++ show (vdType d) ++ " " ++ formatContext (vdContext d)
     formatValue v = show (pfParam v) ++ " " ++ show (pfFilter v) ++
                     " " ++ formatContext (pfContext v)
-    formatInstance i = show (pdParam i) ++ " defines " ++ show (pdType i) ++
-                       " " ++ formatContext (pdContext i)
 
 getCategoryName :: AnyCategory c -> TypeName
 getCategoryName (ValueInterface _ n _ _) = n
 getCategoryName (InstanceInterface _ n _) = n
-getCategoryName (ValueConcrete _ n _ _ _ _ _) = n
+getCategoryName (ValueConcrete _ n _ _ _ _) = n
 
 getCategoryContext :: AnyCategory c -> [c]
 getCategoryContext (ValueInterface c _ _ _) = c
 getCategoryContext (InstanceInterface c _ _) = c
-getCategoryContext (ValueConcrete c _ _ _ _ _ _) = c
+getCategoryContext (ValueConcrete c _ _ _ _ _) = c
 
 getCategoryParams :: AnyCategory c -> [ValueParam c]
 getCategoryParams (ValueInterface _ _ ps _) = ps
 getCategoryParams (InstanceInterface _ _ ps) = ps
-getCategoryParams (ValueConcrete _ _ ps _ _ _ _) = ps
+getCategoryParams (ValueConcrete _ _ ps _ _ _) = ps
 
 isValueInterface :: AnyCategory c -> Bool
 isValueInterface (ValueInterface _ _ _ _) = True
@@ -104,7 +99,7 @@ isInstanceInterface (InstanceInterface _ _ _) = True
 isInstanceInterface _ = False
 
 isValueConcrete :: AnyCategory c -> Bool
-isValueConcrete (ValueConcrete _ _ _ _ _ _ _) = True
+isValueConcrete (ValueConcrete _ _ _ _ _ _) = True
 isValueConcrete _ = False
 
 data ValueRefine c =
@@ -134,14 +129,6 @@ data ParamValueFilter c =
     pfContext :: [c],
     pfParam :: ParamName,
     pfFilter :: TypeFilter
-  }
-  deriving (Eq,Show)
-
-data ParamInstanceFilter c =
-  ParamInstanceFilter {
-    pdContext :: [c],
-    pdParam :: ParamName,
-    pdType :: DefinesInstance
   }
   deriving (Eq,Show)
 
@@ -198,7 +185,7 @@ checkConnectedTypes tm0 ts = checked where
     is <- collectAllOrErrorM $ map (getCategory tm) ts
     mergeAll $ map (valueRefinesInstanceError c n) is
     mergeAll $ map (valueRefinesConcreteError c n) is
-  checkSingle tm (ValueConcrete c n _ rs ds _ _) = do
+  checkSingle tm (ValueConcrete c n _ rs ds _) = do
     ts1 <- return $ map (\r -> (vrContext r,tiName $ vrType r)) rs
     ts2 <- return $ map (\d -> (vdContext d,diName $ vdType d)) ds
     is1 <- collectAllOrErrorM $ map (getCategory tm) ts1
@@ -257,7 +244,7 @@ checkConnectionCycles ts = checked where
     ts <- return $ map (\r -> (vrContext r,tiName $ vrType r)) rs
     is <- collectAllOrErrorM $ map (getValueCategory tm) ts
     mergeAll $ map (checker (us ++ [n]) . snd) is
-  checker us (ValueConcrete c n _ rs _ _ _) = do
+  checker us (ValueConcrete c n _ rs _ _) = do
     failIfCycle n c us
     ts <- return $ map (\r -> (vrContext r,tiName $ vrType r)) rs
     is <- collectAllOrErrorM $ map (getValueCategory tm) ts
@@ -279,9 +266,9 @@ flattenAllConnections tm0 ts = updated where
   updateSingle tm (ValueInterface c n ps rs) = do
     rs2 <- collectAllOrErrorM $ map (getRefines tm) rs
     return $ ValueInterface c n ps (concat rs2)
-  updateSingle tm (ValueConcrete c n ps rs ds vs is) = do
+  updateSingle tm (ValueConcrete c n ps rs ds vs) = do
     rs2 <- collectAllOrErrorM $ map (getRefines tm) rs
-    return $ ValueConcrete c n ps (concat rs2) ds vs is
+    return $ ValueConcrete c n ps (concat rs2) ds vs
   updateSingle _ t = return t
   getRefines tm ra@(ValueRefine c t@(TypeInstance n ps))
     | n `Map.member` tm0 = do
@@ -321,7 +308,7 @@ checkParamVariances tm0 ts = updated where
   checkCategory tm (ValueInterface c n ps rs) = do
     vm <- return $ Map.fromList $ map (\p -> (vpParam p,vpVariance p)) ps
     mergeAll $ map (checkRefine tm vm) rs
-  checkCategory tm (ValueConcrete c n ps rs ds _ _) = do
+  checkCategory tm (ValueConcrete c n ps rs ds _) = do
     vm <- return $ Map.fromList $ map (\p -> (vpParam p,vpVariance p)) ps
     mergeAll $ map (checkRefine tm vm) rs
     mergeAll $ map (checkDefine tm vm) ds
@@ -400,7 +387,7 @@ checkRefines r ps fs = checkCategory checkAll where
     params <- n `categoryLookup` ps
     filters <- n `categoryLookup` fs
     mapped <- return $ uncheckedZipFilters params filters
-    tfValidate r mapped ta
+    -- tfValidate r mapped ta
     return t
   checkGroup n (t:t2:ts) =
     compileError $ "Type " ++ show n ++ " has conflicting refinements of type " ++ show t

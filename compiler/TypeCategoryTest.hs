@@ -88,7 +88,7 @@ main = runAllTests [
     checkOperationFail
       "testfiles/partial.txt"
       (checkConnectedTypes $ Map.fromList [
-          (TypeName "Parent",ValueConcrete [] (TypeName "Parent") [] [] [] [] [])
+          (TypeName "Parent",ValueConcrete [] (TypeName "Parent") [] [] [] [])
         ]),
 
     checkOperationSuccess "testfiles/value_refines_value.txt" checkConnectionCycles,
@@ -197,11 +197,11 @@ main = runAllTests [
 
 scrapeAllRefines = map (show *** show) . concat . map scrapeSingle where
   scrapeSingle (ValueInterface _ n _ rs) = map ((,) n . vrType) rs
-  scrapeSingle (ValueConcrete _ n _ rs _ _ _) = map ((,) n . vrType) rs
+  scrapeSingle (ValueConcrete _ n _ rs _ _) = map ((,) n . vrType) rs
   scrapeSingle _ = []
 
 scrapeAllDefines = map (show *** show) . concat . map scrapeSingle where
-  scrapeSingle (ValueConcrete _ n _ _ ds _ _) = map ((,) n . vdType) ds
+  scrapeSingle (ValueConcrete _ n _ _ ds _) = map ((,) n . vdType) ds
   scrapeSingle _ = []
 
 

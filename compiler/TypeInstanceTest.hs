@@ -119,6 +119,50 @@ main = runAllTests [
       "x" "y",
 
     checkConvertSuccess
+      [("x",["requires y","defines Instance0"]),
+       ("y",["allows x"])]
+      "x" "y",
+    checkConvertFail
+      [("x",["requires y"]),
+       ("y",["allows x","defines Instance0"])]
+      "x" "y",
+    checkConvertSuccess
+      [("x",["requires y","defines Instance0"]),
+       ("y",["allows x","defines Instance0"])]
+      "x" "y",
+    checkConvertSuccess
+      [("x",["requires y","defines Instance1<Type0>"]),
+       ("y",["allows x","defines Instance1<Type0>"])]
+      "x" "y",
+    checkConvertSuccess
+      [("x",["requires y","defines Instance1<Type3>"]),
+       ("y",["allows x","defines Instance1<Type0>"])]
+      "x" "y",
+    checkConvertFail
+      [("x",["requires y","defines Instance1<Type0>"]),
+       ("y",["allows x","defines Instance1<Type3>"])]
+      "x" "y",
+    checkConvertSuccess
+      [("x",["requires y","defines Instance0","defines Instance1<Type0>"]),
+       ("y",["allows x","defines Instance1<Type0>"])]
+      "x" "y",
+    checkConvertFail
+      [("x",["requires y","defines Instance0"]),
+       ("y",["allows x","defines Instance0","defines Instance1<Type0>"])]
+      "x" "y",
+    checkConvertSuccess
+      [("x",["requires y","defines Instance0","defines Instance1<Type3>"]),
+       ("y",["allows x","defines Instance0","defines Instance1<Type0>"])]
+      "x" "y",
+
+    checkConvertSuccess
+      [("x",["allows Type0","defines Instance0"])]
+      "Type0" "x",
+    checkConvertFail
+      [("x",["allows Type0","defines Instance0","defines Instance1<Type0>"])]
+      "Type0" "x",
+
+    checkConvertSuccess
       [("x",["requires z"]),
        ("y",["allows z"]),
        ("z",[])]
@@ -308,18 +352,26 @@ type0 = TypeName "Type0"
 type1 = TypeName "Type1"
 type2 = TypeName "Type2"
 type3 = TypeName "Type3"
+instance0 = TypeName "Instance0"
+instance1 = TypeName "Instance1"
 
 variances :: Map.Map TypeName InstanceVariances
 variances = Map.fromList $ [
     (type0,ParamSet []), -- Type0<>
     (type1,ParamSet [Invariant]), -- Type1<x>
     (type2,ParamSet [Contravariant,Invariant,Covariant]), -- Type2<x|y|z>
-    (type3,ParamSet []) -- Type3<>
+    (type3,ParamSet []), -- Type3<>
+    (instance0,ParamSet []), -- Instance0<>
+    (instance1,ParamSet [Covariant]) -- Instance2<|x>
   ]
 
 refines :: Map.Map TypeName (Map.Map TypeName (InstanceParams -> InstanceParams))
 refines = Map.fromList $ [
-    (type0,Map.fromList $ []),
+    (type0,Map.fromList $ [
+        -- Type0 defines Instance0
+        (instance0,\(ParamSet []) ->
+               ParamSet [])
+      ]),
     (type1,Map.fromList $ [
         -- Type1<x> -> Type0
         (type0,\(ParamSet [_]) ->
@@ -337,7 +389,9 @@ refines = Map.fromList $ [
         -- Type3 -> Type0
         (type0,\(ParamSet []) ->
                ParamSet [])
-      ])
+      ]),
+    (instance0,Map.fromList $ []),
+    (instance1,Map.fromList $ [])
   ]
 
 
@@ -382,10 +436,11 @@ parseTheTest pa x y = parsed where
 
 resolver :: TypeResolver CompileInfo ()
 resolver = TypeResolver {
-    trFind = getParams refines,
-    trVariance = mapLookup variances,
-    tfValidate = undefined, -- TODO: Define this with an error.
-    trAssignParams = undefined -- TODO: Define this with an error.
+    trRefines = getParams refines,
+    -- NOTE: In these tests, we just treat value and instance types the same for
+    -- the purposes of lookup.
+    trDefines = getParams refines,
+    trVariance = mapLookup variances
   }
 
 getParams ma (TypeInstance n1 ps1) n2 = do

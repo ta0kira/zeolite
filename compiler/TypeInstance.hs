@@ -111,12 +111,24 @@ data TypeFilter =
   TypeFilter {
     tfDirection :: FilterDirection,
     tfType :: TypeInstanceOrParam
+  } |
+  DefinesFilter {
+    dfType :: DefinesInstance
   }
   deriving (Eq,Ord)
 
 instance Show TypeFilter where
   show (TypeFilter FilterRequires t) = "requires " ++ show t
   show (TypeFilter FilterAllows t)   = "allows "   ++ show t
+  show (DefinesFilter t)             = "defines "  ++ show t
+
+isTypeFilter :: TypeFilter -> Bool
+isTypeFilter (TypeFilter _ _) = True
+isTypeFilter _                = False
+
+isDefinesFilter :: TypeFilter -> Bool
+isDefinesFilter (DefinesFilter _) = True
+isDefinesFilter _                 = False
 
 viewTypeFilter :: ParamName -> TypeFilter -> String
 viewTypeFilter n f = show n ++ " " ++ show f
@@ -131,14 +143,12 @@ type ParamFilters = Map.Map ParamName [TypeFilter]
 
 data TypeResolver m p =
   TypeResolver {
-    -- Convert an instance of one category to an instance of the other.
-    trFind :: TypeInstance -> TypeName -> m (p,InstanceParams),
+    -- Performs parameter substitution for refines.
+    trRefines :: TypeInstance -> TypeName -> m (p,InstanceParams),
+    -- Performs parameter substitution for defines.
+    trDefines :: TypeInstance -> TypeName -> m (p,InstanceParams),
     -- Get the parameter variances for the category.
-    trVariance :: TypeName -> m InstanceVariances,
-    -- Validates an instance's param args against required filters.
-    tfValidate :: ParamFilters -> TypeInstance -> m (),
-    -- Labels params for an instance using the category's param names.
-    trAssignParams :: TypeInstance -> m AssignedParams
+    trVariance :: TypeName -> m InstanceVariances
   }
 
 filterLookup :: (CompileErrorM m, Monad m) =>
@@ -187,13 +197,13 @@ checkInstanceToInstance r f Contravariant t1 t2 =
   checkInstanceToInstance r f Covariant t2 t1
 checkInstanceToInstance r f Covariant t1@(TypeInstance n1 ps1) t2@(TypeInstance n2 ps2)
   | n1 == n2 = do
-    checkParamsMatch alwaysPairParams ps1 ps2
-    zipped <- return $ ParamSet $ zip (psParams ps1) (psParams ps2)
+    paired <- checkParamsMatch alwaysPairParams ps1 ps2
+    zipped <- return $ ParamSet paired
     variance <- trVariance r n1
     -- NOTE: Covariant is identity, so v2 has technically been composed with it.
     checkParamsMatch (\v2 (p1,p2) -> checkGeneralMatch r f v2 p1 p2) variance zipped >> mergeDefault
   | otherwise = do
-    (p2,ps1') <- (trFind r) t1 n2
+    (p2,ps1') <- trRefines r t1 n2
     (return p2) `mergeNested` (checkInstanceToInstance r f Covariant (TypeInstance n2 ps1') t2)
 
 checkParamToInstance :: (MergeableM m, Mergeable p, CompileErrorM m, Monad m) =>
@@ -211,6 +221,7 @@ checkParamToInstance r f Covariant n1 t2@(TypeInstance n2 ps2) = checked where
     checkSingleMatch r f Covariant t (JustTypeInstance t2)
   checkConstraintToInstance f =
     -- F -> x cannot imply x -> T
+    -- DefinesInstance cannot be converted to TypeInstance
     compileError $ "Constraint " ++ viewTypeFilter n1 f ++
                    " does not imply " ++ show n1 ++ " -> " ++ show t2
 
@@ -223,10 +234,18 @@ checkInstanceToParam r f Contravariant t1 p2 =
 checkInstanceToParam r f Covariant t1@(TypeInstance n1 ps1) n2 = checked where
   checked = do
     cs2 <- f `filterLookup` n2
-    mergeAny $ map checkInstanceToConstraint cs2
+    mergeAny $ map checkInstanceToConstraint (filter isTypeFilter cs2)
+    mergeAll $ map checkInstanceToConstraint (filter isDefinesFilter cs2)
   checkInstanceToConstraint (TypeFilter FilterAllows t) =
     -- F -> x implies T -> x only if T -> F
     checkSingleMatch r f Covariant (JustTypeInstance t1) t
+  checkInstanceToConstraint (DefinesFilter (DefinesInstance n3 ps3)) = do
+    -- Recursively check params of defines.
+    (p2,ps1') <- trDefines r t1 n3
+    paired <- checkParamsMatch alwaysPairParams ps1' ps3
+    zipped <- return $ ParamSet paired
+    variance <- trVariance r n3
+    checkParamsMatch (\v2 (p1,p2) -> checkGeneralMatch r f v2 p1 p2) variance zipped >> mergeDefault
   checkInstanceToConstraint f =
     -- x -> F cannot imply T -> x
     compileError $ "Constraint " ++ viewTypeFilter n2 f ++
@@ -250,15 +269,28 @@ checkParamToParam r f Covariant n1 n2 = checked where
     | otherwise = do
       cs1 <- f `filterLookup` n1
       cs2 <- f `filterLookup` n2
-      pairs <- return $ [(c1,c2) | c1 <- cs1, c2 <- cs2] ++
-                        [(self1,c2) | c2 <- cs2] ++
-                        [(c1,self2) | c1 <- cs1]
-      mergeAny $ map (\(c1,c2) -> checkConstraintToConstraint c1 c2) pairs
+      typeFilters <- return $ [(c1,c2) | c1 <- (filter isTypeFilter cs1),
+                                         c2 <- (filter isTypeFilter cs2)] ++
+                              [(self1,c2) | c2 <- (filter isTypeFilter cs2)] ++
+                              [(c1,self2) | c1 <- (filter isTypeFilter cs1)]
+      mergeAny $ map (\(c1,c2) -> checkConstraintToConstraint c1 c2) typeFilters
+      mergeAll $ map (\c2 -> mergeAny $ map (\c1 -> checkConstraintToConstraint c1 c2)
+                                            (filter isDefinesFilter cs1))
+                     (filter isDefinesFilter cs2)
   checkConstraintToConstraint (TypeFilter FilterRequires t1) (TypeFilter FilterAllows t2)
     | t1 == (JustParamName n1) && t2 == (JustParamName n2) =
       compileError $ "Infinite recursion in " ++ show n1 ++ " -> " ++ show n2
     -- x -> F1, F2 -> y implies x -> y only if F1 -> F2
     | otherwise = checkSingleMatch r f Covariant t1 t2
+  checkConstraintToConstraint f1@(DefinesFilter (DefinesInstance n3 ps3)) f2@(DefinesFilter (DefinesInstance n4 ps4))
+    | n3 /= n4 = compileError $ "Constraints " ++ viewTypeFilter n1 f1 ++ " and " ++
+                   viewTypeFilter n2 f2 ++ " are not compatible"
+    | otherwise = do
+      -- Recursively check params of defines.
+      paired <- checkParamsMatch alwaysPairParams ps3 ps4
+      zipped <- return $ ParamSet paired
+      variance <- trVariance r n3
+      checkParamsMatch (\v2 (p1,p2) -> checkGeneralMatch r f v2 p1 p2) variance zipped >> mergeDefault
   checkConstraintToConstraint f1 f2 =
     -- x -> F1, y -> F2 cannot imply x -> y
     -- F1 -> x, F1 -> y cannot imply x -> y

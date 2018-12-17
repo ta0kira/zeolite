@@ -45,9 +45,9 @@ instance ParseFromSource (AnyCategory SourcePos) where
       n <- sourceParser
       ps <- parseCategoryParams
       open
-      (rs,ds,vs,is) <- parseRefinesDefinesFilters
+      (rs,ds,vs) <- parseRefinesDefinesFilters
       close
-      return $ ValueConcrete [c] n ps rs ds vs is
+      return $ ValueConcrete [c] n ps rs ds vs
 
 parseCategoryParams :: Parser [ValueParam SourcePos]
 parseCategoryParams = parsed where
@@ -100,33 +100,24 @@ parseCategoryRefines = parsed where
 
 parseRefinesDefinesFilters :: Parser ([ValueRefine SourcePos],
                                       [ValueDefine SourcePos],
-                                      [ParamValueFilter SourcePos],
-                                      [ParamInstanceFilter SourcePos])
+                                      [ParamValueFilter SourcePos])
 parseRefinesDefinesFilters = parsed >>= return . foldr merge empty where
-  empty = ([],[],[],[])
-  merge (rs1,ds1,vs1,is1) (rs2,ds2,vs2,is2) = (rs1++rs2,ds1++ds2,vs1++vs2,is1++is2)
+  empty = ([],[],[])
+  merge (rs1,ds1,vs1) (rs2,ds2,vs2) = (rs1++rs2,ds1++ds2,vs1++vs2)
   parsed = sepBy anyType optionalSpace
-  anyType = labeled "" $ singleRefine <|> singleDefine <|> singleValue <|> singleInstance
+  anyType = labeled "" $ singleRefine <|> singleDefine <|> singleValue
   singleRefine = do
     c <- getPosition
     try kwRefines
     t <- sourceParser
-    return ([ValueRefine [c] t],[],[],[])
+    return ([ValueRefine [c] t],[],[])
   singleDefine = do
     c <- getPosition
     try kwDefines
     t <- sourceParser
-    return ([],[ValueDefine [c] t],[],[])
+    return ([],[ValueDefine [c] t],[])
   singleValue = try $ do
     c <- getPosition
     n <- sourceParser
     f <- sourceParser
-    return ([],[],[ParamValueFilter [c] n f],[])
-  singleInstance = do
-    c <- getPosition
-    n <- try $ sourceParser
-    try kwDefines
-    notAllowed (sourceParser :: Parser ParamName) $
-               "param " ++ show n ++ " cannot define another param"
-    t <- sourceParser
-    return ([],[],[],[ParamInstanceFilter [c] n t])
+    return ([],[],[ParamValueFilter [c] n f])
