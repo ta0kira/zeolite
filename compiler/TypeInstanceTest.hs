@@ -118,11 +118,12 @@ main = runAllTests [
        ("y",["allows x"])]
       "x" "y",
 
+    -- NOTE: defines are not checked for instance conversions.
     checkConvertSuccess
       [("x",["requires y","defines Instance0"]),
        ("y",["allows x"])]
       "x" "y",
-    checkConvertFail
+    checkConvertSuccess
       [("x",["requires y"]),
        ("y",["allows x","defines Instance0"])]
       "x" "y",
@@ -130,37 +131,6 @@ main = runAllTests [
       [("x",["requires y","defines Instance0"]),
        ("y",["allows x","defines Instance0"])]
       "x" "y",
-    checkConvertSuccess
-      [("x",["requires y","defines Instance1<Type0>"]),
-       ("y",["allows x","defines Instance1<Type0>"])]
-      "x" "y",
-    checkConvertSuccess
-      [("x",["requires y","defines Instance1<Type3>"]),
-       ("y",["allows x","defines Instance1<Type0>"])]
-      "x" "y",
-    checkConvertFail
-      [("x",["requires y","defines Instance1<Type0>"]),
-       ("y",["allows x","defines Instance1<Type3>"])]
-      "x" "y",
-    checkConvertSuccess
-      [("x",["requires y","defines Instance0","defines Instance1<Type0>"]),
-       ("y",["allows x","defines Instance1<Type0>"])]
-      "x" "y",
-    checkConvertFail
-      [("x",["requires y","defines Instance0"]),
-       ("y",["allows x","defines Instance0","defines Instance1<Type0>"])]
-      "x" "y",
-    checkConvertSuccess
-      [("x",["requires y","defines Instance0","defines Instance1<Type3>"]),
-       ("y",["allows x","defines Instance0","defines Instance1<Type0>"])]
-      "x" "y",
-
-    checkConvertSuccess
-      [("x",["allows Type0","defines Instance0"])]
-      "Type0" "x",
-    checkConvertFail
-      [("x",["allows Type0","defines Instance0","defines Instance1<Type0>"])]
-      "Type0" "x",
 
     checkConvertSuccess
       [("x",["requires z"]),
@@ -440,7 +410,8 @@ resolver = TypeResolver {
     -- NOTE: In these tests, we just treat value and instance types the same for
     -- the purposes of lookup.
     trDefines = getParams refines,
-    trVariance = mapLookup variances
+    trVariance = mapLookup variances,
+    trFilters = undefined
   }
 
 getParams ma (TypeInstance n1 ps1) n2 = do

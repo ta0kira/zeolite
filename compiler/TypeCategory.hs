@@ -296,7 +296,7 @@ flattenAllConnections tm0 ts = updated where
     (_,v) <- getValueCategory tm (c,n)
     -- TODO: From here down should be a top-level function.
     ns <- return $ map vpParam $ viParams v
-    paired <- checkParamsMatch alwaysPairParams (ParamSet ns) ps
+    paired <- processParamPairs alwaysPairParams (ParamSet ns) ps
     return $ Map.fromList paired
 
 checkParamVariances :: (Show c, MergeableM m, CompileErrorM m, Monad m) =>
@@ -328,11 +328,11 @@ checkParamVariances tm0 ts = checked where
   checkDefine tm vm (ValueDefine c t@(DefinesInstance n ps)) = do
     (_,t2) <- getInstanceCategory tm (c,n)
     vs <- return $ map vpVariance (getCategoryParams t2)
-    paired <- checkParamsMatch alwaysPairParams (ParamSet vs) ps
+    paired <- processParamPairs alwaysPairParams (ParamSet vs) ps
     mergeAll $ map (\(v,p) -> checkParam c (show t) tm vm v p) paired
   checkParam c t tm vm v (SingleType (JustTypeInstance (TypeInstance n ps))) = do
     vs <- getVariances tm c n
-    paired <- checkParamsMatch alwaysPairParams (ParamSet vs) ps
+    paired <- processParamPairs alwaysPairParams (ParamSet vs) ps
     mergeAll $ map (\(v2,p) -> checkParam c t tm vm (v `composeVariance` v2) p) paired
   checkParam c t tm vm v (TypeMerge MergeUnion ts) =
     mergeAll $ map (checkParam c t tm vm v) ts
