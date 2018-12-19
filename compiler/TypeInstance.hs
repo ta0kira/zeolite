@@ -5,6 +5,7 @@ module TypeInstance (
   DefinesInstance(..),
   FilterDirection(..),
   GeneralInstance,
+  InstanceFilters,
   InstanceParams,
   InstanceVariances,
   ParamFilters,

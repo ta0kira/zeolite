@@ -131,6 +131,16 @@ main = runAllTests [
       [("x",["requires y","defines Instance0"]),
        ("y",["allows x","defines Instance0"])]
       "x" "y",
+    checkConvertFail
+      [("x",["defines Instance0"]),
+       ("y",["defines Instance0"])]
+      "x" "y",
+    checkConvertSuccess
+      [("x",["requires Type0","defines Instance0"])]
+      "x" "Type0",
+    checkConvertSuccess
+      [("x",["allows Type0","defines Instance0"])]
+      "Type0" "x",
 
     checkConvertSuccess
       [("x",["requires z"]),
@@ -314,7 +324,71 @@ main = runAllTests [
       "optional any",
     checkSimpleConvertSuccess
       "optional all"
-      "optional Type3"
+      "optional Type3",
+
+    checkValidSuccess
+      [("x",[])]
+      "x",
+    checkValidFail
+      [("x",[])]
+      "Type1<x>",
+    checkValidFail
+      [("x",["requires Type3"])]
+      "Type1<x>",
+    checkValidFail
+      [("x",["defines Instance0"])]
+      "Type1<x>",
+    checkValidSuccess
+      [("x",["requires Type3","defines Instance0"])]
+      "Type1<x>",
+    checkValidSuccess
+      []
+      "Type1<Type3>",
+    checkValidFail
+      []
+      "Type1<Type1<Type3>>",
+    checkValidSuccess
+      []
+      "Type2<Type0,Type0,Type0>",
+
+    checkValidSuccess
+      [("x",["defines Instance1<Type0>",
+             "defines Instance1<x>",
+             "defines Instance1<Type3>"])]
+      "Type2<x,x,x>",
+    checkValidFail
+      [("x",["defines Instance1<x>",
+             "defines Instance1<Type3>"])]
+      "Type2<x,x,x>",
+    checkValidFail
+      [("x",["defines Instance1<Type0>",
+             "defines Instance1<Type3>"])]
+      "Type2<x,x,x>",
+    checkValidSuccess
+      [("x",["defines Instance1<Type0>",
+             "defines Instance1<x>"])]
+      "Type2<x,x,x>",
+    checkValidSuccess
+      [("x",["allows Type0", -- Type0 -> x implies Type3 -> x
+             "defines Instance1<x>"])]
+      "Type2<x,x,x>",
+    checkValidFail
+      [("x",["allows Type3", -- Type3 -> x doesn't imply Type0 -> x
+             "defines Instance1<x>"])]
+      "Type2<x,x,x>",
+
+    checkValidFail
+      [("x",["requires Type3","defines Instance0"])]
+      "Type1<(x|Type0)>",
+    checkValidSuccess
+      [("x",["requires Type3","defines Instance0"])]
+      "Type1<(x&Type0)>",
+    checkValidSuccess
+      [("x",[])]
+      "Type1<(x&Type3)>",
+    checkValidSuccess
+      [("x",["defines Instance0"])]
+      "Type1<(x&Type3)>"
   ]
 
 
@@ -322,6 +396,7 @@ type0 = TypeName "Type0"
 type1 = TypeName "Type1"
 type2 = TypeName "Type2"
 type3 = TypeName "Type3"
+type4 = TypeName "Type4"
 instance0 = TypeName "Instance0"
 instance1 = TypeName "Instance1"
 
@@ -331,17 +406,14 @@ variances = Map.fromList $ [
     (type1,ParamSet [Invariant]), -- Type1<x>
     (type2,ParamSet [Contravariant,Invariant,Covariant]), -- Type2<x|y|z>
     (type3,ParamSet []), -- Type3<>
+    (type4,ParamSet [Invariant]), -- Type4<x>
     (instance0,ParamSet []), -- Instance0<>
-    (instance1,ParamSet [Covariant]) -- Instance2<|x>
+    (instance1,ParamSet [Contravariant]) -- Instance2<x|>
   ]
 
 refines :: Map.Map TypeName (Map.Map TypeName (InstanceParams -> InstanceParams))
 refines = Map.fromList $ [
-    (type0,Map.fromList $ [
-        -- Type0 defines Instance0
-        (instance0,\(ParamSet []) ->
-               ParamSet [])
-      ]),
+    (type0,Map.fromList $ []),
     (type1,Map.fromList $ [
         -- Type1<x> -> Type0
         (type0,\(ParamSet [_]) ->
@@ -360,8 +432,50 @@ refines = Map.fromList $ [
         (type0,\(ParamSet []) ->
                ParamSet [])
       ]),
-    (instance0,Map.fromList $ []),
-    (instance1,Map.fromList $ [])
+    (type4,Map.fromList $ [])
+  ]
+
+defines :: Map.Map TypeName (Map.Map TypeName (InstanceParams -> InstanceParams))
+defines = Map.fromList $ [
+    (type0,Map.fromList $ [
+        -- Type0 defines Instance1<Type0>
+        (instance1,\(ParamSet []) ->
+                   ParamSet [forceParse "Type0"])
+      ]),
+    (type1,Map.fromList $ []),
+    (type2,Map.fromList $ []),
+    (type3,Map.fromList $ [
+        -- Type3 defines Instance0
+        (instance0,\(ParamSet []) ->
+                   ParamSet [])
+      ]),
+    (type4,Map.fromList $ [])
+  ]
+
+filters :: Map.Map TypeName (InstanceParams -> InstanceFilters)
+filters = Map.fromList $ [
+    (type0,\(ParamSet []) -> ParamSet []),
+    (type1,\(ParamSet [_]) ->
+           ParamSet [
+             -- x requires Type0
+             -- x defines Instance0
+             [forceParse "requires Type0",forceParse "defines Instance0"]
+           ]),
+    (type2,\(ParamSet [_,y,_]) ->
+           ParamSet [
+             -- x defines Instance1<Type3>
+             [forceParse $ "defines Instance1<Type3>"],
+             -- y defines Instance1<y>
+             [forceParse $ "defines Instance1<" ++ show y ++ ">"],
+             -- z defines Instance1<Type0>
+             [forceParse $ "defines Instance1<Type0>"]
+           ]),
+    (type3,\(ParamSet []) -> ParamSet []),
+    (type4,\(ParamSet [_]) ->
+           ParamSet [
+             -- x allows Type0
+             [forceParse "allows Type0"]
+           ])
   ]
 
 
@@ -372,7 +486,7 @@ checkSimpleConvertFail = checkConvertFail []
 checkConvertSuccess pa x y = return checked where
   prefix = x ++ " -> " ++ y ++ " " ++ showParams pa
   checked = do
-    (t1,t2,pa2) <- parseTheTest pa x y
+    ([t1,t2],pa2) <- parseTheTest pa [x,y]
     check $ checkValueTypeMatch resolver pa2 t1 t2
   check (Left es) = compileError $ prefix ++ ": " ++ show es
   check _ = return ()
@@ -380,22 +494,37 @@ checkConvertSuccess pa x y = return checked where
 checkConvertFail pa x y = return checked where
   prefix = x ++ " /> " ++ y ++ " " ++ showParams pa
   checked = do
-    (t1,t2,pa2) <- parseTheTest pa x y
+    ([t1,t2],pa2) <- parseTheTest pa [x,y]
     check $ checkValueTypeMatch resolver pa2 t1 t2
+  check (Right _) = compileError $ prefix ++ ": Expected failure"
+  check _ = return ()
+
+checkValidSuccess pa x = return checked where
+  prefix = x ++ " [pass?] " ++ showParams pa
+  checked = do
+    ([t],pa2) <- parseTheTest pa [x]
+    check $ validateGeneralInstance resolver pa2 t
+  check (Left es) = compileError $ prefix ++ ": " ++ show es
+  check _ = return ()
+
+checkValidFail pa x = return checked where
+  prefix = x ++ " [fail?] " ++ showParams pa
+  checked = do
+    ([t],pa2) <- parseTheTest pa [x]
+    check $ validateGeneralInstance resolver pa2 t
   check (Right _) = compileError $ prefix ++ ": Expected failure"
   check _ = return ()
 
 showParams pa = "[" ++ intercalate "," (concat $ map expand pa) ++ "]" where
   expand (n,ps) = map (\p -> n ++ " " ++ p) ps
 
-parseTheTest :: [(String,[String])] -> String -> String ->
-                CompileInfo (ValueType,ValueType,ParamFilters)
-parseTheTest pa x y = parsed where
+parseTheTest :: ParseFromSource a =>
+  [(String,[String])] -> [String] -> CompileInfo ([a],ParamFilters)
+parseTheTest pa xs = parsed where
   parsed = do
-    t1 <- parseObject x
-    t2 <- parseObject y
+    ts <- collectAllOrErrorM $ map parseObject xs
     pa2 <- collectAllOrErrorM $ map parseFilters pa
-    return (t1,t2,Map.fromList pa2)
+    return (ts,Map.fromList pa2)
   parseFilters (n,fs) = do
     fs2 <- collectAllOrErrorM $ map parseObject fs
     return (ParamName n,fs2)
@@ -404,20 +533,26 @@ parseTheTest pa x y = parsed where
     checked (Right t) = return t
     checked (Left e)  = compileError (show e)
 
+forceParse :: ParseFromSource a => String -> a
+forceParse s = force $ parse sourceParser "(string)" s where
+  force (Right x) = x
+
 resolver :: TypeResolver CompileInfo ()
 resolver = TypeResolver {
     trRefines = getParams refines,
-    -- NOTE: In these tests, we just treat value and instance types the same for
-    -- the purposes of lookup.
-    trDefines = getParams refines,
+    trDefines = getParams defines,
     trVariance = mapLookup variances,
-    trFilters = undefined
+    trFilters = getFilters filters
   }
 
 getParams ma (TypeInstance n1 ps1) n2 = do
   ra <- mapLookup ma n1
   f <- mapLookup ra n2
   return ((),f ps1)
+
+getFilters ma (TypeInstance n ps) = do
+  f <- mapLookup ma n
+  return ((),f ps)
 
 
 mapLookup :: (Ord n, Show n, CompileErrorM m, Monad m) => Map.Map n a -> n -> m a
