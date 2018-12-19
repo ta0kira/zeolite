@@ -315,7 +315,7 @@ checkParamVariances tm0 ts = checked where
     mergeAll (map (checkRefine tm vm) rs)
     mergeAll (map (checkDefine tm vm) ds)
   checkCategory _ (InstanceInterface c n ps) = noDuplicates c n ps
-  noDuplicates c n ps = mergeAll (map checkCount $ group $ sort $ map vpParam ps where)
+  noDuplicates c n ps = mergeAll (map checkCount $ group $ sort $ map vpParam ps) where
     checkCount xa@(x:_:_) =
       compileError $ "Param " ++ show x ++ " occurs " ++ show (length xa) ++
                      " times in " ++ show n ++ " [" ++ formatFullContext c ++ "]"

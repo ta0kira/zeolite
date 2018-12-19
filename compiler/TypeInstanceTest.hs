@@ -386,10 +386,26 @@ main = runAllTests [
     checkValidSuccess
       [("x",[])]
       "Type1<(x&Type3)>",
+    checkValidSuccess
+      [("x",[])]
+      "Type1<((x|Type0)&Type3)>",
     -- Both x and Type3 define Instance0, which is not allowed here.
     checkValidFail
       [("x",["defines Instance0"])]
-      "Type1<(x&Type3)>",
+      "Type1<(x&Type3&Type0)>",
+    checkValidFail
+      [("x",["defines Instance0"])]
+      "Type1<(x&(Type3&Type0))>",
+    checkValidSuccess
+      [("x",["defines Instance0"])]
+      "Type1<(x&(Type3|Type0))>",
+    checkValidSuccess
+      [("x",["defines Instance0"])]
+      "Type1<(Type0&(x&Type0))>",
+    checkValidFail
+      [("x",[]),
+       ("y",[])]
+      "Type1<(x&y)>",
     checkValidFail
       []
       "Type1<(Type0|Type3)>",
