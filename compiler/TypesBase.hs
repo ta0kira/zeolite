@@ -52,16 +52,21 @@ instance Mergeable Bool where
 class CompileError a where
   compileError :: String -> a
   isCompileError :: a -> Bool
+  reviseError :: a -> String -> a
+  reviseError e _ = e
 
 class CompileErrorM m where
   compileErrorM :: String -> m a
   isCompileErrorM :: m a -> Bool
   collectAllOrErrorM :: Foldable f => f (m a) -> m [a]
   collectOneOrErrorM :: Foldable f => f (m a) -> m a
+  reviseErrorM :: m a -> String -> m a
+  reviseErrorM e _ = e
 
 instance CompileErrorM m => CompileError (m a) where
   compileError = compileErrorM
   isCompileError = isCompileErrorM
+  reviseError = reviseErrorM
 
 data MergeType =
   MergeUnion |

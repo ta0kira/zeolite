@@ -36,6 +36,9 @@ instance CompileErrorM CompileInfo where
     result (_,x:_) = return x
     result ([],_)  = compileErrorM "No choices found"
     result (es,_)  = Left $ joinMessages es  -- Take all errors.
+  reviseErrorM x@(Right _) _ = x
+  reviseErrorM x@(Left e) s = Left $ (CompileMessage s) `nestMessages` e
+
 
 instance MergeableM CompileInfo where
   mergeAnyM = result . splitErrorsAndData where

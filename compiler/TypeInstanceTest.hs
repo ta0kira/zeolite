@@ -386,9 +386,26 @@ main = runAllTests [
     checkValidSuccess
       [("x",[])]
       "Type1<(x&Type3)>",
-    checkValidSuccess
+    -- Both x and Type3 define Instance0, which is not allowed here.
+    checkValidFail
       [("x",["defines Instance0"])]
-      "Type1<(x&Type3)>"
+      "Type1<(x&Type3)>",
+    checkValidFail
+      []
+      "Type1<(Type0|Type3)>",
+
+    checkValidSuccess
+      []
+      "Type4<Type0>",
+    checkValidSuccess
+      [("x",["allows Type0"])]
+      "Type4<(x&Type0)>",
+    checkValidSuccess
+      [("x",["allows Type0"])]
+      "Type4<(x|Type0)>",
+    checkValidFail
+      [("x",["allows Type0"])]
+      "Type4<(x|Type3)>"
   ]
 
 
@@ -500,7 +517,7 @@ checkConvertFail pa x y = return checked where
   check _ = return ()
 
 checkValidSuccess pa x = return checked where
-  prefix = x ++ " [pass?] " ++ showParams pa
+  prefix = x ++ " " ++ showParams pa
   checked = do
     ([t],pa2) <- parseTheTest pa [x]
     check $ validateGeneralInstance resolver pa2 t
@@ -508,7 +525,7 @@ checkValidSuccess pa x = return checked where
   check _ = return ()
 
 checkValidFail pa x = return checked where
-  prefix = x ++ " [fail?] " ++ showParams pa
+  prefix = x ++ " " ++ showParams pa
   checked = do
     ([t],pa2) <- parseTheTest pa [x]
     check $ validateGeneralInstance resolver pa2 t
