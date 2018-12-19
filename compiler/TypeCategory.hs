@@ -90,6 +90,21 @@ getCategoryParams (ValueInterface _ _ ps _) = ps
 getCategoryParams (InstanceInterface _ _ ps) = ps
 getCategoryParams (ValueConcrete _ _ ps _ _ _) = ps
 
+getCategoryRefines :: AnyCategory c -> [ValueRefine c]
+getCategoryRefines (ValueInterface _ _ _ rs) = rs
+getCategoryRefines (InstanceInterface _ _ _) = []
+getCategoryRefines (ValueConcrete _ _ _ rs _ _) = rs
+
+getCategoryDefines :: AnyCategory c -> [ValueDefine c]
+getCategoryDefines (ValueInterface _ _ _ _) = []
+getCategoryDefines (InstanceInterface _ _ _) = []
+getCategoryDefines (ValueConcrete _ _ _ _ ds _) = ds
+
+getCategoryFilters :: AnyCategory c -> [ParamValueFilter c]
+getCategoryFilters (ValueInterface _ _ _ _) = []
+getCategoryFilters (InstanceInterface _ _ _) = []
+getCategoryFilters (ValueConcrete _ _ _ _ _ vs) = vs
+
 isValueInterface :: AnyCategory c -> Bool
 isValueInterface (ValueInterface _ _ _ _) = True
 isValueInterface _ = False
@@ -257,6 +272,13 @@ checkConnectionCycles ts = checked where
                            intercalate " -> " (map show (us ++ [n]))
        else return ()
 
+getValueForParam :: (CompileErrorM m, Monad m) =>
+  Map.Map ParamName GeneralInstance -> ParamName -> m GeneralInstance
+getValueForParam pa n =
+  case n `Map.lookup` pa of
+        (Just x) -> return x
+        _ -> compileError $ "param " ++ show n ++ " does not exist"
+
 flattenAllConnections :: (Show c, MergeableM m, CompileErrorM m, Monad m) =>
   CategoryMap c -> [AnyCategory c] -> m [AnyCategory c]
 flattenAllConnections tm0 ts = updated where
@@ -286,12 +308,8 @@ flattenAllConnections tm0 ts = updated where
       (collectAllOrErrorM $ map (subAll c pa) (concat rs)) >>= return . (ra:)
   subAll c pa (ValueRefine c1 t1) = do
     (SingleType (JustTypeInstance t2)) <-
-      uncheckedSubAllParams (getParam pa) (SingleType (JustTypeInstance t1))
+      uncheckedSubAllParams (getValueForParam pa) (SingleType (JustTypeInstance t1))
     return $ ValueRefine (c ++ c1) t2
-  getParam pa n =
-    case n `Map.lookup` pa of
-         (Just x) -> return x
-         _ -> compileError $ "param " ++ show n ++ " does not exist"
   assignParams tm c (TypeInstance n ps) = do
     (_,v) <- getValueCategory tm (c,n)
     -- TODO: From here down should be a top-level function.
@@ -338,7 +356,7 @@ checkParamVariances tm0 ts = checked where
     mergeAll (map (checkParam c t tm vm v) ts)
   checkParam c t tm vm v (TypeMerge MergeIntersect ts) =
     mergeAll (map (checkParam c t tm vm v) ts)
-  checkParam c t tm vm v (SingleType (JustParamName n)) =
+  checkParam c t _ vm v (SingleType (JustParamName n)) =
     case n `Map.lookup` vm of
          Nothing -> compileError $ "param " ++ show n ++ " [" ++
                                    formatFullContext c ++ "] is undefined"
@@ -348,6 +366,76 @@ checkParamVariances tm0 ts = checked where
                                              " cannot be " ++ show v ++
                                              " in " ++ t ++
                                              " [" ++ formatFullContext c ++ "]"
+
+categoriesToTypeResolver :: (Show c, MergeableM m, CompileErrorM m, Monad m) =>
+  CategoryMap c -> TypeResolver m ()
+categoriesToTypeResolver tm = resolver where
+  resolver = TypeResolver {
+      trRefines = refines,
+      trDefines = defines,
+      trVariance = variance,
+      trFilters = filters
+    }
+  refines (TypeInstance n1 ps1) n2 = do
+    (_,t) <- getValueCategory tm ([],n1)
+    params <- return $ map vpParam $ getCategoryParams t
+    assigned <- fmap Map.fromList $ processParamPairs alwaysPairParams (ParamSet params) ps1
+    pa <- return $ Map.fromList $ map (\r -> (tiName r,tiParams r)) $ map vrType $ getCategoryRefines t
+    ps2 <- case n2 `Map.lookup` pa of
+                (Just x) -> return x
+                _ -> compileError $ "Category " ++ show n1 ++ " does not refine " ++ show n2
+    (collectAllOrErrorM $ map (subAllParams assigned) $ psParams ps2) >>= return . (,) () . ParamSet
+  defines (TypeInstance n1 ps1) n2 = do
+    (_,t) <- getInstanceCategory tm ([],n1)
+    params <- return $ map vpParam $ getCategoryParams t
+    assigned <- fmap Map.fromList $ processParamPairs alwaysPairParams (ParamSet params) ps1
+    pa <- return $ Map.fromList $ map (\r -> (diName r,diParams r)) $ map vdType $ getCategoryDefines t
+    ps2 <- case n2 `Map.lookup` pa of
+                (Just x) -> return x
+                _ -> compileError $ "Category " ++ show n1 ++ " does not define " ++ show n2
+    (collectAllOrErrorM $ map (subAllParams assigned) $ psParams ps2) >>= return . (,) () . ParamSet
+  variance n = do
+    (_,t) <- getCategory tm ([],n)
+    return $ ParamSet $ map vpVariance $ getCategoryParams t
+  filters (TypeInstance n ps) = do
+    (_,t) <- getValueCategory tm ([],n)
+    params <- return $ map vpParam $ getCategoryParams t
+    assigned <- fmap Map.fromList $ processParamPairs alwaysPairParams (ParamSet params) ps
+    -- TODO:
+    -- 1. Apply uncheckedSubFilterParams to all filters.
+    -- 2. Group filters by param.
+    -- 3. Flatten into a list of filter lists matching param order in category.
+    undefined
+  subAllParams pa = uncheckedSubAllParams (getValueForParam pa)
+
+uncheckedSubAllParams :: (MergeableM m, CompileErrorM m, Monad m) =>
+  (ParamName -> m GeneralInstance) -> GeneralInstance -> m GeneralInstance
+uncheckedSubAllParams replace = subAll where
+  subAll (TypeMerge MergeUnion ts) = do
+    gs <- collectAllOrErrorM $ map subAll ts
+    return (TypeMerge MergeUnion gs)
+  subAll (TypeMerge MergeIntersect ts) = do
+    gs <- collectAllOrErrorM $ map subAll ts
+    return (TypeMerge MergeIntersect gs)
+  subAll (SingleType t) = subInstance t
+  subInstance (JustTypeInstance (TypeInstance n (ParamSet ts))) = do
+    gs <- collectAllOrErrorM $ map subAll ts
+    t2 <- return $ SingleType $ JustTypeInstance $ TypeInstance n (ParamSet gs)
+    return (t2)
+  subInstance (JustParamName n) = replace n
+
+uncheckedSubFilterParams :: (MergeableM m, CompileErrorM m, Monad m) =>
+  (ParamName -> m GeneralInstance) -> ParamSet [TypeFilter] ->
+  m (ParamSet [TypeFilter])
+uncheckedSubFilterParams replace pa = subbed where
+  subbed = do
+    updated <- collectAllOrErrorM $ map subAllFilters (psParams pa)
+    return (ParamSet updated)
+  subAllFilters ps = collectAllOrErrorM $ map subSingleFilter ps
+  -- TODO: This also needs to handle DefinesFilter!
+  subSingleFilter (TypeFilter v t) = do
+    (SingleType t2) <- uncheckedSubAllParams replace (SingleType t)
+    return (TypeFilter v t2)
 
 
 newtype CategoryConnect a =
@@ -399,31 +487,3 @@ checkRefines r ps fs = checkCategory checkAll where
   checkGroup n (t:t2:ts) =
     compileError $ "Type " ++ show n ++ " has conflicting refinements of type " ++ show t
   checkGroup _ _ = return ()
-
-uncheckedSubFilterParams :: (MergeableM m, CompileErrorM m, Monad m) =>
-  (ParamName -> m GeneralInstance) -> ParamSet [TypeFilter] ->
-  m (ParamSet [TypeFilter])
-uncheckedSubFilterParams replace pa = subbed where
-  subbed = do
-    updated <- collectAllOrErrorM $ map subAllFilters (psParams pa)
-    return (ParamSet updated)
-  subAllFilters ps = collectAllOrErrorM $ map subSingleFilter ps
-  subSingleFilter (TypeFilter v t) = do
-    (SingleType t2) <- uncheckedSubAllParams replace (SingleType t)
-    return (TypeFilter v t2)
-
-uncheckedSubAllParams :: (MergeableM m, CompileErrorM m, Monad m) =>
-  (ParamName -> m GeneralInstance) -> GeneralInstance -> m GeneralInstance
-uncheckedSubAllParams replace = subAll where
-  subAll (TypeMerge MergeUnion ts) = do
-    gs <- collectAllOrErrorM $ map subAll ts
-    return (TypeMerge MergeUnion gs)
-  subAll (TypeMerge MergeIntersect ts) = do
-    gs <- collectAllOrErrorM $ map subAll ts
-    return (TypeMerge MergeIntersect gs)
-  subAll (SingleType t) = subInstance t
-  subInstance (JustTypeInstance (TypeInstance n (ParamSet ts))) = do
-    gs <- collectAllOrErrorM $ map subAll ts
-    t2 <- return $ SingleType $ JustTypeInstance $ TypeInstance n (ParamSet gs)
-    return (t2)
-  subInstance (JustParamName n) = replace n
