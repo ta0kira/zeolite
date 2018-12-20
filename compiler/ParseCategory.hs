@@ -100,7 +100,7 @@ parseCategoryRefines = parsed where
 
 parseRefinesDefinesFilters :: Parser ([ValueRefine SourcePos],
                                       [ValueDefine SourcePos],
-                                      [ParamValueFilter SourcePos])
+                                      [ParamFilter SourcePos])
 parseRefinesDefinesFilters = parsed >>= return . foldr merge empty where
   empty = ([],[],[])
   merge (rs1,ds1,vs1) (rs2,ds2,vs2) = (rs1++rs2,ds1++ds2,vs1++vs2)
@@ -120,4 +120,4 @@ parseRefinesDefinesFilters = parsed >>= return . foldr merge empty where
     c <- getPosition
     n <- sourceParser
     f <- sourceParser
-    return ([],[],[ParamValueFilter [c] n f])
+    return ([],[],[ParamFilter [c] n f])
