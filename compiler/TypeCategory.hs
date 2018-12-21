@@ -7,9 +7,11 @@ module TypeCategory (
   ValueDefine(..),
   ValueParam(..),
   ValueRefine(..),
+  categoriesToTypeResolver,
   checkConnectedTypes,
   checkConnectionCycles,
   checkParamVariances,
+  declareAllTypes, -- TODO: Remove?
   flattenAllConnections,
 ) where
 
@@ -377,17 +379,19 @@ categoriesToTypeResolver tm = resolver where
       trVariance = variance,
       trFilters = filters
     }
-  refines (TypeInstance n1 ps1) n2 = do
-    (_,t) <- getValueCategory tm ([],n1)
-    params <- return $ map vpParam $ getCategoryParams t
-    assigned <- fmap Map.fromList $ processParamPairs alwaysPairParams (ParamSet params) ps1
-    pa <- return $ Map.fromList $ map (\r -> (tiName r,tiParams r)) $ map vrType $ getCategoryRefines t
-    ps2 <- case n2 `Map.lookup` pa of
-                (Just x) -> return x
-                _ -> compileError $ "Category " ++ show n1 ++ " does not refine " ++ show n2
-    fmap ((,) () . ParamSet) $ collectAllOrErrorM $ map (subAllParams assigned) $ psParams ps2
+  refines (TypeInstance n1 ps1) n2
+    | n1 == n2 = return ((),ps1)
+    | otherwise = do
+      (_,t) <- getValueCategory tm ([],n1)
+      params <- return $ map vpParam $ getCategoryParams t
+      assigned <- fmap Map.fromList $ processParamPairs alwaysPairParams (ParamSet params) ps1
+      pa <- return $ Map.fromList $ map (\r -> (tiName r,tiParams r)) $ map vrType $ getCategoryRefines t
+      ps2 <- case n2 `Map.lookup` pa of
+                  (Just x) -> return x
+                  _ -> compileError $ "Category " ++ show n1 ++ " does not refine " ++ show n2
+      fmap ((,) () . ParamSet) $ collectAllOrErrorM $ map (subAllParams assigned) $ psParams ps2
   defines (TypeInstance n1 ps1) n2 = do
-    (_,t) <- getInstanceCategory tm ([],n1)
+    (_,t) <- getValueCategory tm ([],n1)
     params <- return $ map vpParam $ getCategoryParams t
     assigned <- fmap Map.fromList $ processParamPairs alwaysPairParams (ParamSet params) ps1
     pa <- return $ Map.fromList $ map (\r -> (diName r,diParams r)) $ map vdType $ getCategoryDefines t
@@ -416,7 +420,7 @@ categoriesToTypeResolver tm = resolver where
   assignFilter fa n =
     case n `Map.lookup` fa of
          (Just x) -> return x
-         _ -> compileError $ "this should really not have happened"
+         _ -> return []
 
 uncheckedSubAllParams :: (MergeableM m, CompileErrorM m, Monad m) =>
   (ParamName -> m GeneralInstance) -> GeneralInstance -> m GeneralInstance

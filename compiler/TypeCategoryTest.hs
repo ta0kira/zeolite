@@ -194,9 +194,138 @@ main = runAllTests [
            ValueInterface [] (TypeName "Parent")
                           [ValueParam [] (ParamName "w") Contravariant,
                            ValueParam [] (ParamName "z") Invariant] [])
-      ])
+      ]),
+
+    checkOperationSuccess
+      "testfiles/concrete.txt"
+      (\ts -> do
+        rs <- getRefines ts "Type<a,b,c,d,e,f>" "Type"
+        rs `containsPaired` ["a","b","c","d","e","f"]
+        ),
+    checkOperationSuccess
+      "testfiles/flatten.txt"
+      (\ts -> do
+        ts2 <- flattenAllConnections Map.empty ts
+        rs <- getRefines ts2 "Object1<a,b>" "Object1"
+        rs `containsPaired` ["a","b"]
+        ),
+    checkOperationSuccess
+      "testfiles/flatten.txt"
+      (\ts -> do
+        ts2 <- flattenAllConnections Map.empty ts
+        rs <- getRefines ts2 "Object1<a,b>" "Object3"
+        rs `containsPaired` ["b"]
+        ),
+    checkOperationSuccess
+      "testfiles/flatten.txt"
+      (\ts -> do
+        ts2 <- flattenAllConnections Map.empty ts
+        rs <- getRefines ts2 "Parent<t>" "Object1"
+        rs `containsPaired` ["t","Object3<Object2>"]
+        ),
+    checkOperationFail
+      "testfiles/flatten.txt"
+      (\ts -> do
+        ts2 <- flattenAllConnections Map.empty ts
+        getRefines ts2 "Parent<t>" "Child"
+        ),
+    checkOperationFail
+      "testfiles/flatten.txt"
+      (\ts -> do
+        ts2 <- flattenAllConnections Map.empty ts
+        getRefines ts2 "Child" "Type"
+        ),
+    checkOperationFail
+      "testfiles/flatten.txt"
+      (\ts -> do
+        ts2 <- flattenAllConnections Map.empty ts
+        getRefines ts2 "Child" "Missing"
+        ),
+
+    checkOperationSuccess
+      "testfiles/flatten.txt"
+      (\ts -> do
+        rs <- getDefines ts "Child" "Type"
+        rs `containsPaired` ["Child"]
+        ),
+    checkOperationFail
+      "testfiles/flatten.txt"
+      (\ts -> do
+        getDefines ts "Child" "Parent"
+        ),
+    checkOperationFail
+      "testfiles/flatten.txt"
+      (\ts -> do
+        getDefines ts "Child" "Missing"
+        ),
+
+    checkOperationSuccess
+      "testfiles/concrete.txt"
+      (\ts -> do
+        vs <- getVariance ts "Type"
+        vs `containsPaired` [Contravariant,Contravariant,
+                             Invariant,Invariant,
+                             Covariant,Covariant]
+        ),
+    checkOperationFail
+      "testfiles/flatten.txt"
+      (\ts -> do
+        getVariance ts "Missing"
+        ),
+
+    checkOperationSuccess
+      "testfiles/concrete.txt"
+      (\ts -> do
+        rs <- getFilters ts "Type<a,b,c,d,e,f>"
+        checkPaired containsExactly rs [
+            ["allows Parent"],
+            ["requires Type2<a>"],
+            ["defines Equals<c>"],
+            [],
+            [],
+            []
+          ]),
+    checkOperationSuccess
+      "testfiles/concrete.txt"
+      (\ts -> do
+        rs <- getFilters ts "Type<Type<t>,b,Type3<x>,d,e,f>"
+        checkPaired containsExactly rs [
+            ["allows Parent"],
+            ["requires Type2<Type<t>>"],
+            ["defines Equals<Type3<x>>"],
+            [],
+            [],
+            []
+          ])
   ]
 
+
+getRefines ts s n = do
+  ta <- declareAllTypes Map.empty ts
+  r <- return $ categoriesToTypeResolver ta
+  t <- readSingle "(string)" s
+  ((),ParamSet rs) <- trRefines r t (TypeName n)
+  return $ map show rs
+
+getDefines ts s n = do
+  ta <- declareAllTypes Map.empty ts
+  r <- return $ categoriesToTypeResolver ta
+  t <- readSingle "(string)" s
+  ((),ParamSet ds) <- trDefines r t (TypeName n)
+  return $ map show ds
+
+getVariance ts n = do
+  ta <- declareAllTypes Map.empty ts
+  r <- return $ categoriesToTypeResolver ta
+  (ParamSet vs) <- trVariance r (TypeName n)
+  return vs
+
+getFilters ts s = do
+  ta <- declareAllTypes Map.empty ts
+  r <- return $ categoriesToTypeResolver ta
+  t <- readSingle "(string)" s
+  ((),ParamSet vs) <- trFilters r t
+  return $ map (map show) vs
 
 scrapeAllRefines = map (show *** show) . concat . map scrapeSingle where
   scrapeSingle (ValueInterface _ n _ rs) = map ((,) n . vrType) rs
@@ -233,10 +362,26 @@ containsAtMost actual expected = checked where
        then return ()
        else compileError $ "Item " ++ show v ++ " is unexpected"
 
+checkPaired :: (Show a, CompileErrorM m, MergeableM m, Monad m) =>
+  (a -> a -> m ()) -> [a] -> [a] -> m ()
+checkPaired f actual expected
+  | length actual /= length expected =
+    compileError $ "Different item counts: " ++ show actual ++ " (actual) vs. " ++
+                   show expected ++ " (expected)"
+  | otherwise = mergeAll $ map check (zip3 actual expected [1..]) where
+    check (a,e,n) = f a e `reviseError` ("Item " ++ show n ++ " mismatch")
+
+containsPaired :: (Eq a, Show a, CompileErrorM m, MergeableM m, Monad m) =>
+  [a] -> [a] -> m ()
+containsPaired = checkPaired checkSingle where
+  checkSingle a e
+    | a == e = return ()
+    | otherwise = compileError $ show a ++ " (actual) vs. " ++ show e ++ " (expected)"
+
 checkOperationSuccess f o = checked where
   checked = do
     contents <- readFile f
-    parsed <- readMultiCategory f contents
+    parsed <- return $ readMulti f contents :: IO (CompileInfo [AnyCategory SourcePos])
     return $ check (parsed >>= o)
   check (Left es) = compileError $ "Check " ++ f ++ ": " ++ show es
   check _ = return ()
@@ -244,7 +389,7 @@ checkOperationSuccess f o = checked where
 checkOperationFail f o = checked where
   checked = do
     contents <- readFile f
-    parsed <- readMultiCategory f contents
+    parsed <- return $ readMulti f contents :: IO (CompileInfo [AnyCategory SourcePos])
     return $ check (parsed >>= o)
   check (Right x) = compileError $ "Check " ++ f ++ ": Expected failure but got\n" ++ show x
   check _ = return ()
@@ -252,7 +397,7 @@ checkOperationFail f o = checked where
 checkSingleParseSuccess f = checked where
   checked = do
     contents <- readFile f
-    parsed <- readSingleCategory f contents
+    parsed <- return $ readSingle f contents :: IO (CompileInfo (AnyCategory SourcePos))
     return $ check parsed
   check (Left es) = compileError $ "Parse " ++ f ++ ": " ++ show es
   check _ = return ()
@@ -260,35 +405,34 @@ checkSingleParseSuccess f = checked where
 checkSingleParseFail f = checked where
   checked = do
     contents <- readFile f
-    parsed <- readSingleCategory f contents
+    parsed <- return $ readSingle f contents :: IO (CompileInfo (AnyCategory SourcePos))
     return $ check parsed
   check (Right t) = compileError $ "Parse " ++ f ++ ": Expected failure but got\n" ++ show t
   check _ = return ()
 
 checkShortParseSuccess s = checked where
   checked = do
-    parsed <- readSingleCategory "(string)" s
+    parsed <- return $ readSingle "(string)" s :: IO (CompileInfo (AnyCategory SourcePos))
     return $ check parsed
   check (Left es) = compileError $ "Parse '" ++ s ++ "': " ++ show es
   check _ = return ()
 
 checkShortParseFail s = checked where
   checked = do
-    parsed <- readSingleCategory "(string)" s
+    parsed <- return $ readSingle "(string)" s :: IO (CompileInfo (AnyCategory SourcePos))
     return $ check parsed
   check (Right t) = compileError $ "Parse '" ++ s ++ "': Expected failure but got\n" ++ show t
   check _ = return ()
 
-readSingleCategory :: String -> String -> IO (CompileInfo (AnyCategory SourcePos))
-readSingleCategory f s = parsed where
-  parsed =
-    return $ unwrap $ parse (between optionalSpace endOfDoc sourceParser) f s
+readSingle :: ParseFromSource a => String -> String -> CompileInfo a
+readSingle f s = parsed where
+  parsed = unwrap $ parse (between optionalSpace endOfDoc sourceParser) f s
   unwrap (Left e)  = compileError (show e)
   unwrap (Right t) = return t
 
-readMultiCategory :: String -> String -> IO (CompileInfo [AnyCategory SourcePos])
-readMultiCategory f s = parsed where
+readMulti :: ParseFromSource a => String -> String -> CompileInfo [a]
+readMulti f s = parsed where
   parsed =
-    return $ unwrap $ parse (between optionalSpace endOfDoc (sepBy sourceParser optionalSpace)) f s
+    unwrap $ parse (between optionalSpace endOfDoc (sepBy sourceParser optionalSpace)) f s
   unwrap (Left e)  = compileError (show e)
   unwrap (Right t) = return t
