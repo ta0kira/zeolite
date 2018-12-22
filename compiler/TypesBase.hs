@@ -23,7 +23,6 @@ class Mergeable a where
   mergeAny :: Foldable f => f a -> a
   mergeAll :: Foldable f => f a -> a
   mergeNested :: a -> a -> a
-  -- TODO: Get rid of this or properly utilize it.
   mergeNested x y = mergeAll [x,y]
   mergeDefault :: a
   mergeDefault = mergeAll Nothing

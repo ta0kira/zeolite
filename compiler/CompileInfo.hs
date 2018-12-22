@@ -21,7 +21,7 @@ data CompileMessage =
 instance Show CompileMessage where
   show = format "" where
     format indent (CompileMessage [] ms) =
-      concat (map (format $ indent ++ "  ") ms)
+      concat (map (format indent) ms)
     format indent (CompileMessage m ms) =
       indent ++ m ++ "\n" ++ concat (map (format $ indent ++ "  ") ms)
 
@@ -54,9 +54,9 @@ instance MergeableM CompileInfo where
   (Right _)  `mergeNestedM` e@(Left _) = e
   (Left e1)  `mergeNestedM` (Left e2)  = Left $ e1 `nestMessages` e2
 
-nestMessages (CompileMessage m1 ms1) ma@(CompileMessage [] ms2) =
+nestMessages (CompileMessage m1 ms1) (CompileMessage [] ms2) =
   CompileMessage m1 (ms1 ++ ms2)
-nestMessages (CompileMessage [] ms1) ma@(CompileMessage m2 ms2) =
+nestMessages (CompileMessage [] ms1) (CompileMessage m2 ms2) =
   CompileMessage m2 (ms1 ++ ms2)
 nestMessages (CompileMessage m1 ms1) ma@(CompileMessage _ _) =
   CompileMessage m1 (ms1 ++ [ma])

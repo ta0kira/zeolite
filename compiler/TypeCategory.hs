@@ -464,16 +464,18 @@ checkInstanceDuplicates :: (Show c, MergeableM m, CompileErrorM m, Monad m) =>
   [AnyCategory c] -> m ()
 checkInstanceDuplicates ts = mergeAll $ map checkSingle ts where
   checkSingle t = do
-    checkDuplicateRefines $ getCategoryRefines t
-    checkDuplicateDefines $ getCategoryDefines t
-  checkDuplicateRefines rs = do
+    checkDuplicateRefines t $ getCategoryRefines t
+    checkDuplicateDefines t $ getCategoryDefines t
+  checkDuplicateRefines t rs = do
     let grouped = groupBy (\x y -> (tiName . vrType) x == (tiName . vrType) y) $
                   sortBy  (\x y -> (tiName . vrType) x `compare` (tiName . vrType) y) rs
-    mergeAll $ map (requireSingle (tiName . vrType)) grouped
-  checkDuplicateDefines ds = do
+    (mergeAll $ map (requireSingle (tiName . vrType)) grouped) `reviseError`
+      ("In " ++ show (getCategoryName t) ++ " [" ++ formatFullContext (getCategoryContext t) ++ "]")
+  checkDuplicateDefines t ds = do
     let grouped = groupBy (\x y -> (diName . vdType) x == (diName . vdType) y) $
                   sortBy  (\x y -> (diName . vdType) x `compare` (diName . vdType) y) ds
-    mergeAll $ map (requireSingle (diName . vdType)) grouped
+    (mergeAll $ map (requireSingle (diName . vdType)) grouped) `reviseError`
+      ("In " ++ show (getCategoryName t) ++ " [" ++ formatFullContext (getCategoryContext t) ++ "]")
   requireSingle fn xs
     | length xs == 1 = return ()
     | otherwise =
