@@ -403,7 +403,47 @@ main = runAllTests [
           "Value0<x,y>"),
 
     checkOperationSuccess
-      "testfiles/valid_instances.txt"
+      "testfiles/concrete_instances.txt"
+      (\ts -> do
+        ts2 <- flattenAllConnections Map.empty ts
+        checkCategoryInstances Map.empty ts2),
+    checkOperationFail
+      "testfiles/concrete_missing_define.txt"
+      (\ts -> do
+        ts2 <- flattenAllConnections Map.empty ts
+        checkCategoryInstances Map.empty ts2),
+    checkOperationFail
+      "testfiles/concrete_missing_refine.txt"
+      (\ts -> do
+        ts2 <- flattenAllConnections Map.empty ts
+        checkCategoryInstances Map.empty ts2),
+    checkOperationSuccess
+      "testfiles/value_instances.txt"
+      (\ts -> do
+        ts2 <- flattenAllConnections Map.empty ts
+        checkCategoryInstances Map.empty ts2),
+    checkOperationFail
+      "testfiles/value_missing_define.txt"
+      (\ts -> do
+        ts2 <- flattenAllConnections Map.empty ts
+        checkCategoryInstances Map.empty ts2),
+    checkOperationFail
+      "testfiles/value_missing_refine.txt"
+      (\ts -> do
+        ts2 <- flattenAllConnections Map.empty ts
+        checkCategoryInstances Map.empty ts2),
+    checkOperationSuccess
+      "testfiles/type_instances.txt"
+      (\ts -> do
+        ts2 <- flattenAllConnections Map.empty ts
+        checkCategoryInstances Map.empty ts2),
+    checkOperationFail
+      "testfiles/type_missing_define.txt"
+      (\ts -> do
+        ts2 <- flattenAllConnections Map.empty ts
+        checkCategoryInstances Map.empty ts2),
+    checkOperationFail
+      "testfiles/type_missing_refine.txt"
       (\ts -> do
         ts2 <- flattenAllConnections Map.empty ts
         checkCategoryInstances Map.empty ts2)

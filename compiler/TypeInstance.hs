@@ -341,7 +341,7 @@ validateAssignment r f t fs = mergeAll (map (checkFilter t) fs) where
   checkDefinesFilter f2 (JustParamName n1) = do
       fs1 <- fmap (map dfType . filter isDefinesFilter) $ f `filterLookup` n1
       mergeAny (map (checkDefines f2) fs1) `reviseError`
-        ("No filters imply " ++ show n1 ++ " " ++ show f2)
+        ("No filters imply " ++ show n1 ++ " defines " ++ show f2)
   checkDefines f2@(DefinesInstance n2 ps2) f1@(DefinesInstance n1 ps1)
     | n1 == n2 = do
       paired <- processParamPairs alwaysPairParams ps1 ps2

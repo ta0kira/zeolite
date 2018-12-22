@@ -1,0 +1,23 @@
+// Setup.
+
+@type interface Type<x|> {
+  x requires Value0
+}
+
+@value interface Value0 {}
+
+@value interface Value1<|y> {
+  y requires Value0
+}
+
+@value interface Value2 {
+  refines Value0
+}
+
+
+// Tests.
+
+@type interface Object0<x> {
+  x defines Type<x>
+  x requires Value1<x>
+}
