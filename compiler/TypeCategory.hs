@@ -10,6 +10,7 @@ module TypeCategory (
   checkCategoryInstances,
   checkConnectedTypes,
   checkConnectionCycles,
+  checkInstanceDuplicates,
   checkParamVariances,
   declareAllTypes, -- TODO: Remove?
   flattenAllConnections,
@@ -27,7 +28,7 @@ module TypeCategory (
 
 import Control.Arrow (second)
 import Control.Monad (when)
-import Data.List (group,intercalate,sort)
+import Data.List (group,groupBy,intercalate,sort,sortBy)
 import qualified Data.Map as Map
 import qualified Data.Set as Set
 
@@ -142,7 +143,10 @@ data ValueRefine c =
     vrContext :: [c],
     vrType :: TypeInstance
   }
-  deriving (Eq,Show)
+  deriving (Eq)
+
+instance Show c => Show (ValueRefine c) where
+  show (ValueRefine c t) = show t ++ " [" ++ formatFullContext c ++ "]"
 
 data ValueDefine c =
   ValueDefine {
@@ -151,13 +155,19 @@ data ValueDefine c =
   }
   deriving (Eq)
 
+instance Show c => Show (ValueDefine c) where
+  show (ValueDefine c t) = show t ++ " [" ++ formatFullContext c ++ "]"
+
 data ValueParam c =
   ValueParam {
     vpContext :: [c],
     vpParam :: ParamName,
     vpVariance :: Variance
   }
-  deriving (Eq,Show)
+  deriving (Eq)
+
+instance Show c => Show (ValueParam c) where
+  show (ValueParam c t v) = show t ++ " (" ++ show v ++ ") [" ++ formatFullContext c ++ "]"
 
 data ParamFilter c =
   ParamFilter {
@@ -165,7 +175,10 @@ data ParamFilter c =
     pfParam :: ParamName,
     pfFilter :: TypeFilter
   }
-  deriving (Eq,Show)
+  deriving (Eq)
+
+instance Show c => Show (ParamFilter c) where
+  show (ParamFilter c n f) = show n ++ " " ++ show f ++ " [" ++ formatFullContext c ++ "]"
 
 
 type CategoryMap c = Map.Map TypeName (AnyCategory c)
@@ -432,6 +445,26 @@ mergeCategoryInstances tm0 ts = do
       return $ ValueConcrete c n ps rs2 ds2 vs
     updateSingle _ t = return t
 
+checkInstanceDuplicates :: (Show c, MergeableM m, CompileErrorM m, Monad m) =>
+  [AnyCategory c] -> m ()
+checkInstanceDuplicates ts = mergeAll $ map checkSingle ts where
+  checkSingle t = do
+    checkDuplicateRefines $ getCategoryRefines t
+    checkDuplicateDefines $ getCategoryDefines t
+  checkDuplicateRefines rs = do
+    let grouped = groupBy (\x y -> (tiName . vrType) x == (tiName . vrType) y) $
+                  sortBy  (\x y -> (tiName . vrType) x `compare` (tiName . vrType) y) rs
+    mergeAll $ map (requireSingle (tiName . vrType)) grouped
+  checkDuplicateDefines ds = do
+    let grouped = groupBy (\x y -> (diName . vdType) x == (diName . vdType) y) $
+                  sortBy  (\x y -> (diName . vdType) x `compare` (diName . vdType) y) ds
+    mergeAll $ map (requireSingle (diName . vdType)) grouped
+  requireSingle fn xs
+    | length xs == 1 = return ()
+    | otherwise =
+      compileError $ "Cannot merge instances of " ++ show (fn $ head xs) ++
+                     ": " ++ intercalate ", " (map show xs)
+
 getFilterMap :: AnyCategory c -> ParamFilters
 getFilterMap t = getFilterMap t $ zip (Set.toList pa) (repeat []) where
   pa = Set.fromList $ map vpParam $ getCategoryParams t
@@ -443,10 +476,12 @@ mergeObjects :: (MergeableM m, CompileErrorM m, Monad m) =>
 mergeObjects f = return . merge [] where
   merge cs [] = cs
   merge cs (x:xs) = merge (cs ++ ys) xs where
+    -- TODO: Should f just perform merging? In case we want to preserve info
+    -- about what was merged, e.g., return m [(p,a)].
     checker x2 = f x2 x
     ys = if isCompileError $ mergeAny (map checker (cs ++ xs))
-       then [x] -- x is not redundant => keep.
-       else []  -- x is redundant => remove.
+            then [x] -- x is not redundant => keep.
+            else []  -- x is redundant => remove.
 
 mergeRefines :: (MergeableM m, Mergeable p, CompileErrorM m, Monad m) =>
   TypeResolver m p -> ParamFilters -> [ValueRefine c] -> m [ValueRefine c]

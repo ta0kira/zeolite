@@ -453,17 +453,36 @@ main = runAllTests [
     checkOperationSuccess
       "testfiles/merged.txt"
       (\ts -> do
-        ts2 <- flattenAllConnections Map.empty ts
-        ts3 <- mergeCategoryInstances Map.empty ts2
-        rs <- getRefines ts3 "Test"
+        ts2 <- mergeCategoryInstances Map.empty ts
+        rs <- getRefines ts2 "Test"
         rs `containsExactly` ["Value2","Value3","Value4<Value1,Value1>","Value4<Value3,Value1>"]),
     checkOperationSuccess
       "testfiles/merged.txt"
       (\ts -> do
-        ts2 <- flattenAllConnections Map.empty ts
-        ts3 <- mergeCategoryInstances Map.empty ts2
-        rs <- getDefines ts3 "Test"
-        rs `containsExactly` ["Type0<Value1,Value1>","Type0<Value3,Value1>"])
+        ts2 <- mergeCategoryInstances Map.empty ts
+        rs <- getDefines ts2 "Test"
+        rs `containsExactly` ["Type0<Value1,Value1>","Type0<Value3,Value1>"]),
+
+    checkOperationFail
+      "testfiles/merged.txt"
+      (\ts -> do
+        ts2 <- mergeCategoryInstances Map.empty ts
+        checkInstanceDuplicates ts2),
+    checkOperationSuccess
+      "testfiles/no_duplicates.txt"
+      (\ts -> do
+        ts2 <- mergeCategoryInstances Map.empty ts
+        checkInstanceDuplicates ts2),
+    checkOperationFail
+      "testfiles/duplicate_refine.txt"
+      (\ts -> do
+        ts2 <- mergeCategoryInstances Map.empty ts
+        checkInstanceDuplicates ts2),
+    checkOperationFail
+      "testfiles/duplicate_define.txt"
+      (\ts -> do
+        ts2 <- mergeCategoryInstances Map.empty ts
+        checkInstanceDuplicates ts2)
   ]
 
 
