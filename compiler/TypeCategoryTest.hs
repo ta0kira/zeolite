@@ -454,14 +454,17 @@ main = runAllTests [
       "testfiles/merged.txt"
       (\ts -> do
         ts2 <- mergeCategoryInstances Map.empty ts
-        rs <- getRefines ts2 "Test"
-        rs `containsExactly` ["Value2","Value3","Value4<Value1,Value1>","Value4<Value3,Value1>"]),
+        tm <- declareAllTypes Map.empty ts2
+        rs <- getRefines tm "Test"
+        rs `containsExactly` ["Value0","Value1","Value2","Value3",
+                              "Value4<Value1,Value1>","Value4<Value3,Value1>"]),
     checkOperationSuccess
       "testfiles/merged.txt"
       (\ts -> do
         ts2 <- mergeCategoryInstances Map.empty ts
-        rs <- getDefines ts2 "Test"
-        rs `containsExactly` ["Type0<Value1,Value1>","Type0<Value3,Value1>"]),
+        tm <- declareAllTypes Map.empty ts2
+        ds <- getDefines tm "Test"
+        ds `containsExactly` ["Type0<Value1,Value1>","Type0<Value3,Value1>"]),
 
     checkOperationFail
       "testfiles/merged.txt"
@@ -482,18 +485,40 @@ main = runAllTests [
       "testfiles/duplicate_define.txt"
       (\ts -> do
         ts2 <- mergeCategoryInstances Map.empty ts
-        checkInstanceDuplicates ts2)
+        checkInstanceDuplicates ts2),
+
+    checkOperationSuccess
+      "testfiles/flatten.txt"
+      (\ts -> do
+        let tm0 = Map.fromList [
+                    (TypeName "Parent2",InstanceInterface [] (TypeName "Parent2") [] [])
+                  ]
+        tm <- includeNewTypes tm0 ts
+        rs <- getRefines tm "Child"
+        rs `containsExactly` ["Parent<Child>","Object2",
+                              "Object1<Child,Object3<Object2>>",
+                              "Object3<Object3<Object2>>"]),
+    checkOperationSuccess
+      "testfiles/no_duplicates.txt"
+      (\ts -> do
+        tm <- includeNewTypes Map.empty ts
+        rs <- getRefines tm "Object2"
+        rs `containsExactly` ["Value0","Value1","Value2<Value1>"]),
+    checkOperationSuccess
+      "testfiles/no_duplicates.txt"
+      (\ts -> do
+        tm <- includeNewTypes Map.empty ts
+        rs <- getDefines tm "Object"
+        rs `containsExactly` ["Type0<Value1>"])
   ]
 
 
-getRefines ts n = do
-  tm <- declareAllTypes Map.empty ts
+getRefines tm n =
   case (TypeName n) `Map.lookup` tm of
        (Just t) -> return $ map (show . vrType) (getCategoryRefines t)
        _ -> compileError $ "Type " ++ n ++ " not found"
 
-getDefines ts n = do
-  tm <- declareAllTypes Map.empty ts
+getDefines tm n =
   case (TypeName n) `Map.lookup` tm of
        (Just t) -> return $ map (show . vdType) (getCategoryDefines t)
        _ -> compileError $ "Type " ++ n ++ " not found"

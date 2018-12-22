@@ -1,9 +1,8 @@
 Roughly in order of execution:
 
-- Implement remaining category checks.
-
 - Write parser for function signatures.
 - Type-check function signatures.
+- Merge function signatures.
 - Test function-signature system.
 
 - Unit tests for C++ base.

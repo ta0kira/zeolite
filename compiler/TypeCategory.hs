@@ -20,6 +20,7 @@ module TypeCategory (
   getCategoryName,
   getCategoryParams,
   getCategoryRefines,
+  includeNewTypes,
   isInstanceInterface,
   isValueConcrete,
   isValueInterface,
@@ -210,6 +211,20 @@ getInstanceCategory tm (c,n) = do
      else compileError $ "Category " ++ show n ++
                          " cannot be used as a type interface [" ++
                          formatFullContext c ++ "]"
+
+
+includeNewTypes :: (Show c, MergeableM m, CompileErrorM m, Monad m) =>
+  CategoryMap c -> [AnyCategory c] -> m (CategoryMap c)
+includeNewTypes tm0 ts = do
+  checkConnectionCycles ts
+  checkConnectedTypes tm0 ts
+  checkParamVariances tm0 ts
+  ts2 <- flattenAllConnections tm0 ts
+  checkCategoryInstances tm0 ts2
+  -- TODO: Will also need to merge/check functions once they are available.
+  ts3 <- mergeCategoryInstances tm0 ts2
+  checkInstanceDuplicates ts3
+  declareAllTypes tm0 ts3
 
 declareAllTypes :: (Show c, CompileErrorM m, Monad m) =>
   CategoryMap c -> [AnyCategory c] -> m (CategoryMap c)
@@ -486,10 +501,12 @@ mergeObjects f = return . merge [] where
 mergeRefines :: (MergeableM m, Mergeable p, CompileErrorM m, Monad m) =>
   TypeResolver m p -> ParamFilters -> [ValueRefine c] -> m [ValueRefine c]
 mergeRefines r f = mergeObjects check where
-  check x y = do
-    checkGeneralMatch r f Covariant (SingleType $ JustTypeInstance $ vrType x)
-                                    (SingleType $ JustTypeInstance $ vrType y)
-    return ()
+  check (ValueRefine _ t1@(TypeInstance n1 _)) (ValueRefine _ t2@(TypeInstance n2 _))
+    | n1 /= n2 = compileError $ show t1 ++ " and " ++ show t2 ++ " are incompatible"
+    | otherwise = do
+      checkGeneralMatch r f Covariant (SingleType $ JustTypeInstance $ t1)
+                                      (SingleType $ JustTypeInstance $ t2)
+      return ()
 
 mergeDefines :: (MergeableM m, Mergeable p, CompileErrorM m, Monad m) =>
   TypeResolver m p -> ParamFilters -> [ValueDefine c] -> m [ValueDefine c]

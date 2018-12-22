@@ -17,3 +17,11 @@ concrete Object {
   defines Type0<Value0>
   defines Type0<Value1>
 }
+
+concrete Object2 {
+  refines Value1
+  refines Value2<Value0>
+  refines Value2<Value1>
+  defines Type0<Value0>
+  defines Type0<Value1>
+}
