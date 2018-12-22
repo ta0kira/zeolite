@@ -199,79 +199,80 @@ main = runAllTests [
     checkOperationSuccess
       "testfiles/concrete.txt"
       (\ts -> do
-        rs <- getRefines ts "Type<a,b,c,d,e,f>" "Type"
+        rs <- getTypeRefines ts "Type<a,b,c,d,e,f>" "Type"
         rs `containsPaired` ["a","b","c","d","e","f"]
         ),
     checkOperationSuccess
       "testfiles/flatten.txt"
       (\ts -> do
         ts2 <- flattenAllConnections Map.empty ts
-        rs <- getRefines ts2 "Object1<a,b>" "Object1"
-        rs `containsPaired` ["a","b"]
-        ),
+        rs <- getTypeRefines ts2 "Object1<a,b>" "Object1"
+        rs `containsPaired` ["a","b"]),
     checkOperationSuccess
       "testfiles/flatten.txt"
       (\ts -> do
         ts2 <- flattenAllConnections Map.empty ts
-        rs <- getRefines ts2 "Object1<a,b>" "Object3"
-        rs `containsPaired` ["b"]
-        ),
+        rs <- getTypeRefines ts2 "Object1<a,b>" "Object3"
+        rs `containsPaired` ["b"]),
+    checkOperationFail
+      "testfiles/flatten.txt"
+      (\ts -> do
+        ts2 <- flattenAllConnections Map.empty ts
+        rs <- getTypeRefines ts2 "Undefined<a,b>" "Undefined"
+        rs `containsPaired` ["a","b"]),
+    checkOperationFail
+      "testfiles/flatten.txt"
+      (\ts -> do
+        ts2 <- flattenAllConnections Map.empty ts
+        rs <- getTypeRefines ts2 "Object1<a>" "Object1"
+        rs `containsPaired` ["a"]),
     checkOperationSuccess
       "testfiles/flatten.txt"
       (\ts -> do
         ts2 <- flattenAllConnections Map.empty ts
-        rs <- getRefines ts2 "Parent<t>" "Object1"
-        rs `containsPaired` ["t","Object3<Object2>"]
-        ),
+        rs <- getTypeRefines ts2 "Parent<t>" "Object1"
+        rs `containsPaired` ["t","Object3<Object2>"]),
     checkOperationFail
       "testfiles/flatten.txt"
       (\ts -> do
         ts2 <- flattenAllConnections Map.empty ts
-        getRefines ts2 "Parent<t>" "Child"
-        ),
+        getTypeRefines ts2 "Parent<t>" "Child"),
     checkOperationFail
       "testfiles/flatten.txt"
       (\ts -> do
         ts2 <- flattenAllConnections Map.empty ts
-        getRefines ts2 "Child" "Type"
-        ),
+        getTypeRefines ts2 "Child" "Type"),
     checkOperationFail
       "testfiles/flatten.txt"
       (\ts -> do
         ts2 <- flattenAllConnections Map.empty ts
-        getRefines ts2 "Child" "Missing"
-        ),
+        getTypeRefines ts2 "Child" "Missing"),
 
     checkOperationSuccess
       "testfiles/flatten.txt"
       (\ts -> do
-        rs <- getDefines ts "Child" "Type"
-        rs `containsPaired` ["Child"]
-        ),
+        rs <- getTypeDefines ts "Child" "Type"
+        rs `containsPaired` ["Child"]),
     checkOperationFail
       "testfiles/flatten.txt"
       (\ts -> do
-        getDefines ts "Child" "Parent"
-        ),
+        getTypeDefines ts "Child" "Parent"),
     checkOperationFail
       "testfiles/flatten.txt"
       (\ts -> do
-        getDefines ts "Child" "Missing"
-        ),
+        getTypeDefines ts "Child" "Missing"),
 
     checkOperationSuccess
       "testfiles/concrete.txt"
       (\ts -> do
-        vs <- getVariance ts "Type"
+        vs <- getTypeVariance ts "Type"
         vs `containsPaired` [Contravariant,Contravariant,
                              Invariant,Invariant,
-                             Covariant,Covariant]
-        ),
+                             Covariant,Covariant]),
     checkOperationFail
       "testfiles/flatten.txt"
       (\ts -> do
-        getVariance ts "Missing"
-        ),
+        getTypeVariance ts "Missing"),
 
     checkOperationSuccess
       "testfiles/concrete.txt"
@@ -326,7 +327,7 @@ main = runAllTests [
     checkOperationSuccess
       "testfiles/type_interface.txt"
       (\ts -> do
-        rs <- getDefinesFilters ts "Type<a,b,c,d,e,f>"
+        rs <- getTypeDefinesFilters ts "Type<a,b,c,d,e,f>"
         checkPaired containsExactly rs [
             ["allows Parent"],
             ["requires Type2<a>"],
@@ -338,7 +339,7 @@ main = runAllTests [
     checkOperationSuccess
       "testfiles/type_interface.txt"
       (\ts -> do
-        rs <- getDefinesFilters ts "Type<Type<t>,b,Type3<x>,d,e,f>"
+        rs <- getTypeDefinesFilters ts "Type<Type<t>,b,Type3<x>,d,e,f>"
         checkPaired containsExactly rs [
             ["allows Parent"],
             ["requires Type2<Type<t>>"],
@@ -446,24 +447,53 @@ main = runAllTests [
       "testfiles/type_missing_refine.txt"
       (\ts -> do
         ts2 <- flattenAllConnections Map.empty ts
-        checkCategoryInstances Map.empty ts2)
+        checkCategoryInstances Map.empty ts2),
+
+    -- TODO: Clean these tests up.
+    checkOperationSuccess
+      "testfiles/merged.txt"
+      (\ts -> do
+        ts2 <- flattenAllConnections Map.empty ts
+        ts3 <- mergeCategoryInstances Map.empty ts2
+        rs <- getRefines ts3 "Test"
+        rs `containsExactly` ["Value2","Value3","Value4<Value1,Value1>","Value4<Value3,Value1>"]),
+    checkOperationSuccess
+      "testfiles/merged.txt"
+      (\ts -> do
+        ts2 <- flattenAllConnections Map.empty ts
+        ts3 <- mergeCategoryInstances Map.empty ts2
+        rs <- getDefines ts3 "Test"
+        rs `containsExactly` ["Type0<Value1,Value1>","Type0<Value3,Value1>"])
   ]
 
-getRefines ts s n = do
+
+getRefines ts n = do
+  tm <- declareAllTypes Map.empty ts
+  case (TypeName n) `Map.lookup` tm of
+       (Just t) -> return $ map (show . vrType) (getCategoryRefines t)
+       _ -> compileError $ "Type " ++ n ++ " not found"
+
+getDefines ts n = do
+  tm <- declareAllTypes Map.empty ts
+  case (TypeName n) `Map.lookup` tm of
+       (Just t) -> return $ map (show . vdType) (getCategoryDefines t)
+       _ -> compileError $ "Type " ++ n ++ " not found"
+
+getTypeRefines ts s n = do
   ta <- declareAllTypes Map.empty ts
   let r = categoriesToTypeResolver ta
   t <- readSingle "(string)" s
   ((),ParamSet rs) <- trRefines r t (TypeName n)
   return $ map show rs
 
-getDefines ts s n = do
+getTypeDefines ts s n = do
   ta <- declareAllTypes Map.empty ts
   let r = categoriesToTypeResolver ta
   t <- readSingle "(string)" s
   ((),ParamSet ds) <- trDefines r t (TypeName n)
   return $ map show ds
 
-getVariance ts n = do
+getTypeVariance ts n = do
   ta <- declareAllTypes Map.empty ts
   let r = categoriesToTypeResolver ta
   (ParamSet vs) <- trVariance r (TypeName n)
@@ -476,7 +506,7 @@ getTypeFilters ts s = do
   ((),ParamSet vs) <- trTypeFilters r t
   return $ map (map show) vs
 
-getDefinesFilters ts s = do
+getTypeDefinesFilters ts s = do
   ta <- declareAllTypes Map.empty ts
   let r = categoriesToTypeResolver ta
   t <- readSingle "(string)" s
@@ -499,22 +529,24 @@ containsExactly actual expected = do
   containsAtMost actual expected
 
 containsNoDuplicates expected =
-  mergeAll $ map checkSingle $ group $ sort expected
+  (mergeAll $ map checkSingle $ group $ sort expected) `reviseError` (show expected)
   where
     checkSingle xa@(x:_:_) =
       compileError $ "Item " ++ show x ++ " occurs " ++ show (length xa) ++ " times"
     checkSingle _ = return ()
 
 containsAtLeast actual expected =
-  mergeAll $ map (checkInActual $ Set.fromList actual) expected
+  (mergeAll $ map (checkInActual $ Set.fromList actual) expected) `reviseError`
+        (show actual ++ " (actual) vs. " ++ show expected ++ " (expected)")
   where
     checkInActual va v =
       if v `Set.member` va
          then return ()
-         else compileError $ "Item " ++ show v ++ " was expected but not present "
+         else compileError $ "Item " ++ show v ++ " was expected but not present"
 
 containsAtMost actual expected =
-  mergeAll $ map (checkInExpected $ Set.fromList expected) actual
+  (mergeAll $ map (checkInExpected $ Set.fromList expected) actual) `reviseError`
+        (show actual ++ " (actual) vs. " ++ show expected ++ " (expected)")
   where
     checkInExpected va v =
       if v `Set.member` va

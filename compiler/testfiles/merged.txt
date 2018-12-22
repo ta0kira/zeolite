@@ -1,0 +1,32 @@
+@value interface Value0 {}
+
+@value interface Value1 {
+  refines Value0
+}
+
+@value interface Value2 {
+  refines Value1
+}
+
+@value interface Value3 {
+  refines Value0
+}
+
+@value interface Value4<x|y> {}
+
+@type interface Type0<x|y> {}
+
+concrete Test {
+  refines Value0
+  refines Value1
+  refines Value2 // -> Value1 -> Value0
+  refines Value3 // -> Value0
+
+  refines Value4<Value1,Value1> // -> Value4<Value2,Value0>
+  refines Value4<Value2,Value0>
+  refines Value4<Value3,Value1>
+
+  defines Type0<Value1,Value1> // -> Type0<Value2,Value0>
+  defines Type0<Value2,Value0>
+  defines Type0<Value3,Value1>
+}
