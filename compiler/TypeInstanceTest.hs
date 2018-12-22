@@ -326,108 +326,124 @@ main = runAllTests [
       "optional all"
       "optional Type3",
 
-    return $ checkValidSuccess resolver
+    return $ checkTypeSuccess resolver
       [("x",[])]
       "x",
-    return $ checkValidFail resolver
+    return $ checkTypeFail resolver
       [("x",[])]
       "Type1<x>",
-    return $ checkValidFail resolver
+    return $ checkTypeFail resolver
       [("x",["requires Type3"])]
       "Type1<x>",
-    return $ checkValidFail resolver
+    return $ checkTypeFail resolver
       [("x",["defines Instance0"])]
       "Type1<x>",
-    return $ checkValidSuccess resolver
+    return $ checkTypeSuccess resolver
       [("x",["requires Type3","defines Instance0"])]
       "Type1<x>",
-    return $ checkValidSuccess resolver
+    return $ checkTypeSuccess resolver
       []
       "Type1<Type3>",
-    return $ checkValidFail resolver
+    return $ checkTypeFail resolver
       []
       "Type1<Type1<Type3>>",
-    return $ checkValidSuccess resolver
+    return $ checkTypeSuccess resolver
       []
       "Type2<Type0,Type0,Type0>",
 
-    return $ checkValidSuccess resolver
+    return $ checkTypeSuccess resolver
       [("x",["defines Instance1<Type0>",
              "defines Instance1<x>",
              "defines Instance1<Type3>"])]
       "Type2<x,x,x>",
-    return $ checkValidFail resolver
+    return $ checkTypeFail resolver
       [("x",["defines Instance1<x>",
              "defines Instance1<Type3>"])]
       "Type2<x,x,x>",
-    return $ checkValidFail resolver
+    return $ checkTypeFail resolver
       [("x",["defines Instance1<Type0>",
              "defines Instance1<Type3>"])]
       "Type2<x,x,x>",
-    return $ checkValidSuccess resolver
+    return $ checkTypeSuccess resolver
       [("x",["defines Instance1<Type0>",
              "defines Instance1<x>"])]
       "Type2<x,x,x>",
-    return $ checkValidSuccess resolver
+    return $ checkTypeSuccess resolver
       [("x",["allows Type0", -- Type0 -> x implies Type3 -> x
              "defines Instance1<x>"])]
       "Type2<x,x,x>",
-    return $ checkValidFail resolver
+    return $ checkTypeFail resolver
       [("x",["allows Type3", -- Type3 -> x doesn't imply Type0 -> x
              "defines Instance1<x>"])]
       "Type2<x,x,x>",
 
-    return $ checkValidFail resolver
+    return $ checkTypeFail resolver
       [("x",["requires Type3","defines Instance0"])]
       "Type1<(x|Type0)>",
-    return $ checkValidSuccess resolver
+    return $ checkTypeSuccess resolver
       [("x",["requires Type3","defines Instance0"])]
       "Type1<(x&Type0)>",
-    return $ checkValidSuccess resolver
+    return $ checkTypeSuccess resolver
       [("x",[])]
       "Type1<(x&Type3)>",
-    return $ checkValidSuccess resolver
+    return $ checkTypeSuccess resolver
       [("x",[])]
       "Type1<((x|Type0)&Type3)>",
     -- Both x and Type3 define Instance0, which is not allowed here.
-    return $ checkValidFail resolver
+    return $ checkTypeFail resolver
       [("x",["defines Instance0"])]
       "Type1<(x&Type3&Type0)>",
-    return $ checkValidFail resolver
+    return $ checkTypeFail resolver
       [("x",["defines Instance0"])]
       "Type1<(x&(Type3&Type0))>",
-    return $ checkValidSuccess resolver
+    return $ checkTypeSuccess resolver
       [("x",["defines Instance0"])]
       "Type1<(x&(Type3|Type0))>",
-    return $ checkValidSuccess resolver
+    return $ checkTypeSuccess resolver
       [("x",["defines Instance0"])]
       "Type1<(Type0&(x&Type0))>",
-    return $ checkValidFail resolver
+    return $ checkTypeFail resolver
       [("x",[]),
        ("y",[])]
       "Type1<(x&y)>",
-    return $ checkValidFail resolver
+    return $ checkTypeFail resolver
       []
       "Type1<(Type0|Type3)>",
 
-    return $ checkValidSuccess resolver
+    return $ checkTypeSuccess resolver
       []
       "Type4<Type0>",
-    return $ checkValidSuccess resolver
+    return $ checkTypeSuccess resolver
       [("x",["allows Type0"])]
       "Type4<(x&Type0)>",
-    return $ checkValidSuccess resolver
+    return $ checkTypeSuccess resolver
       [("x",["allows Type0"])]
       "Type4<(x|Type0)>",
-    return $ checkValidFail resolver
+    return $ checkTypeFail resolver
       [("x",["allows Type0"])]
       "Type4<(x|Type3)>",
-    return $ checkValidFail resolver
+    return $ checkTypeFail resolver
       []
       "Type5<x>",
-    return $ checkValidSuccess resolver
+    return $ checkTypeSuccess resolver
       [("x",[])]
-      "Type5<x>"
+      "Type5<x>",
+
+    return $ checkDefinesFail resolver
+      [("x",[])]
+      "Instance1<x>",
+    return $ checkDefinesSuccess resolver
+      [("x",["requires Type3"])]
+      "Instance1<x>",
+    return $ checkDefinesFail resolver
+      [("x",["defines Instance1<x>"])]
+      "Instance1<x>",
+    return $ checkDefinesSuccess resolver
+      []
+      "Instance1<Type3>",
+    return $ checkDefinesSuccess resolver
+      []
+      "Instance1<Type1<Type3>>"
   ]
 
 
@@ -449,7 +465,7 @@ variances = Map.fromList $ [
     (type4,ParamSet [Invariant]), -- Type4<x>
     (type5,ParamSet [Invariant]), -- Type5<x>
     (instance0,ParamSet []), -- Instance0<>
-    (instance1,ParamSet [Contravariant]) -- Instance2<x|>
+    (instance1,ParamSet [Contravariant]) -- Instance1<x|>
   ]
 
 refines :: Map.Map TypeName (Map.Map TypeName (InstanceParams -> InstanceParams))
@@ -495,8 +511,8 @@ defines = Map.fromList $ [
     (type5,Map.fromList $ [])
   ]
 
-filters :: Map.Map TypeName (InstanceParams -> InstanceFilters)
-filters = Map.fromList $ [
+typeFilters :: Map.Map TypeName (InstanceParams -> InstanceFilters)
+typeFilters = Map.fromList $ [
     (type0,\(ParamSet []) -> ParamSet []),
     (type1,\(ParamSet [_]) ->
            ParamSet [
@@ -520,6 +536,16 @@ filters = Map.fromList $ [
              [forceParse "allows Type0"]
            ]),
     (type5,\(ParamSet [_]) -> ParamSet [[]])
+  ]
+
+definesFilters :: Map.Map TypeName (InstanceParams -> InstanceFilters)
+definesFilters = Map.fromList $ [
+    (instance0,\(ParamSet []) -> ParamSet []),
+    (instance1,\(ParamSet [_]) ->
+           ParamSet [
+             -- x requires Type0
+             [forceParse "requires Type0"]
+           ])
   ]
 
 
@@ -548,7 +574,8 @@ resolver = TypeResolver {
     trRefines = getParams refines,
     trDefines = getParams defines,
     trVariance = mapLookup variances,
-    trFilters = getFilters filters
+    trTypeFilters = getTypeFilters,
+    trDefinesFilters = getDefinesFilters
   }
 
 getParams ma (TypeInstance n1 ps1) n2 = do
@@ -556,8 +583,12 @@ getParams ma (TypeInstance n1 ps1) n2 = do
   f <- mapLookup ra n2
   return ((),f ps1)
 
-getFilters ma (TypeInstance n ps) = do
-  f <- mapLookup ma n
+getTypeFilters (TypeInstance n ps) = do
+  f <- mapLookup typeFilters n
+  return ((),f ps)
+
+getDefinesFilters (DefinesInstance n ps) = do
+  f <- mapLookup definesFilters n
   return ((),f ps)
 
 

@@ -1,0 +1,47 @@
+// Setup.
+
+@value interface View {}
+
+@type interface Equals<x|> {
+  x requires View
+}
+
+@value interface Function<y|z> {}
+
+@value interface Type0 {
+  refines View
+}
+
+concrete Type1<t> {
+  t requires View
+  t defines Equals<t>
+}
+
+concrete Type2<v> {
+  v defines Equals<Type3>
+}
+
+concrete Type3 {
+  refines Type0
+}
+
+concrete Type4<w> {
+  w allows Type3
+}
+
+concrete Type5<q> {
+  q requires Type0
+}
+
+
+// Tests.
+
+concrete Test1 {
+  refines Type2<Test1>
+  defines Equals<Type0> // -> Equals<Type3>
+}
+
+concrete Test2<n> {
+  defines Equals<n>
+  n requires View
+}

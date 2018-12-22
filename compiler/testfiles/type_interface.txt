@@ -1,2 +1,5 @@
 @type interface Type<a,b|c,d|e,f> {
+  a allows Parent
+  b requires Type2<a>
+  c defines Equals<c>
 }

@@ -24,21 +24,18 @@ instance ParseFromSource (AnyCategory SourcePos) where
       n <- sourceParser
       ps <- parseCategoryParams
       open
-      rs <- parseCategoryRefines
-      notAllowed parseRefinesDefinesFilters
-                 "defines and filters not allowed in value interfaces"
+      (rs,vs) <- parseRefinesFilters
       close
-      return $ ValueInterface [c] n ps rs
+      return $ ValueInterface [c] n ps rs vs
     parseInstance = labeled "type interface" $ do
       c <- getPosition
       try $ kwType >> kwInterface
       n <- sourceParser
       ps <- parseCategoryParams
       open
-      notAllowed parseRefinesDefinesFilters
-                 "refines, defines and filters not allowed in type interfaces"
+      vs <- parseFilters
       close
-      return $ InstanceInterface [c] n ps
+      return $ InstanceInterface [c] n ps vs
     parseConcrete = labeled "concrete type" $ do
       c <- getPosition
       try kwConcrete
@@ -97,6 +94,31 @@ parseCategoryRefines = sepAfter $ sepBy singleRefine optionalSpace where
     t <- sourceParser
     return $ ValueRefine [c] t
 
+parseFilters :: Parser [ParamFilter SourcePos]
+parseFilters = sepBy singleFilter optionalSpace where
+  singleFilter = labeled "param filter" $ try $ do
+    c <- getPosition
+    n <- sourceParser
+    f <- sourceParser
+    return $ ParamFilter [c] n f
+
+parseRefinesFilters :: Parser ([ValueRefine SourcePos],[ParamFilter SourcePos])
+parseRefinesFilters = parsed >>= return . foldr merge empty where
+  empty = ([],[])
+  merge (rs1,vs1) (rs2,vs2) = (rs1++rs2,vs1++vs2)
+  parsed = sepBy anyType optionalSpace
+  anyType = labeled "refine or param filter" $ singleRefine <|> singleFilter
+  singleRefine = do
+    c <- getPosition
+    try kwRefines
+    t <- sourceParser
+    return ([ValueRefine [c] t],[])
+  singleFilter = try $ do
+    c <- getPosition
+    n <- sourceParser
+    f <- sourceParser
+    return ([],[ParamFilter [c] n f])
+
 parseRefinesDefinesFilters :: Parser ([ValueRefine SourcePos],
                                       [ValueDefine SourcePos],
                                       [ParamFilter SourcePos])
@@ -104,7 +126,8 @@ parseRefinesDefinesFilters = parsed >>= return . foldr merge empty where
   empty = ([],[],[])
   merge (rs1,ds1,vs1) (rs2,ds2,vs2) = (rs1++rs2,ds1++ds2,vs1++vs2)
   parsed = sepBy anyType optionalSpace
-  anyType = labeled "" $ singleRefine <|> singleDefine <|> singleValue
+  anyType =
+    labeled "refine or define or param filter" $ singleRefine <|> singleDefine <|> singleFilter
   singleRefine = do
     c <- getPosition
     try kwRefines
@@ -115,7 +138,7 @@ parseRefinesDefinesFilters = parsed >>= return . foldr merge empty where
     try kwDefines
     t <- sourceParser
     return ([],[ValueDefine [c] t],[])
-  singleValue = try $ do
+  singleFilter = try $ do
     c <- getPosition
     n <- sourceParser
     f <- sourceParser

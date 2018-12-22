@@ -1,8 +1,10 @@
 {-# LANGUAGE Safe #-}
 
 module TestBase (
-  checkValidSuccess,
-  checkValidFail,
+  checkDefinesFail,
+  checkDefinesSuccess,
+  checkTypeFail,
+  checkTypeSuccess,
   forceParse,
   parseFilterMap,
   parseTheTest,
@@ -78,9 +80,9 @@ showParams :: [(String,[String])] -> String
 showParams pa = "[" ++ intercalate "," (concat $ map expand pa) ++ "]" where
   expand (n,ps) = map (\p -> n ++ " " ++ p) ps
 
-checkValidSuccess :: TypeResolver CompileInfo () -> [(String,[String])] ->
+checkTypeSuccess :: TypeResolver CompileInfo () -> [(String,[String])] ->
                      String -> CompileInfo ()
-checkValidSuccess r pa x = do
+checkTypeSuccess r pa x = do
   ([t],pa2) <- parseTheTest pa [x]
   check $ validateGeneralInstance r pa2 t
   where
@@ -88,11 +90,31 @@ checkValidSuccess r pa x = do
     check (Left es) = compileError $ prefix ++ ": " ++ show es
     check _ = return ()
 
-checkValidFail :: TypeResolver CompileInfo () -> [(String,[String])] ->
+checkTypeFail :: TypeResolver CompileInfo () -> [(String,[String])] ->
                   String -> CompileInfo ()
-checkValidFail r pa x = do
+checkTypeFail r pa x = do
   ([t],pa2) <- parseTheTest pa [x]
   check $ validateGeneralInstance r pa2 t
+  where
+    prefix = x ++ " " ++ showParams pa
+    check (Right _) = compileError $ prefix ++ ": Expected failure"
+    check _ = return ()
+
+checkDefinesSuccess :: TypeResolver CompileInfo () -> [(String,[String])] ->
+                     String -> CompileInfo ()
+checkDefinesSuccess r pa x = do
+  ([t],pa2) <- parseTheTest pa [x]
+  check $ validateDefinesInstance r pa2 t
+  where
+    prefix = x ++ " " ++ showParams pa
+    check (Left es) = compileError $ prefix ++ ": " ++ show es
+    check _ = return ()
+
+checkDefinesFail :: TypeResolver CompileInfo () -> [(String,[String])] ->
+                  String -> CompileInfo ()
+checkDefinesFail r pa x = do
+  ([t],pa2) <- parseTheTest pa [x]
+  check $ validateDefinesInstance r pa2 t
   where
     prefix = x ++ " " ++ showParams pa
     check (Right _) = compileError $ prefix ++ ": Expected failure"

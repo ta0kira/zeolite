@@ -31,12 +31,14 @@ data AnyCategory c =
     viContext :: [c],
     viName :: TypeName,
     viParams :: [ValueParam c],
-    viRefines :: [ValueRefine c]
+    viRefines :: [ValueRefine c],
+    viParamFilter :: [ParamFilter c]
   } |
   InstanceInterface {
     iiContext :: [c],
     iiName :: TypeName,
-    iiParams :: [ValueParam c]
+    iiParams :: [ValueParam c],
+    iiParamFilter :: [ParamFilter c]
   } |
   ValueConcrete {
     vcContext :: [c],
@@ -44,7 +46,7 @@ data AnyCategory c =
     vcParams :: [ValueParam c],
     vcRefines :: [ValueRefine c],
     vcDefines :: [ValueDefine c],
-    vcParamValue :: [ParamFilter c]
+    vcParamFilter :: [ParamFilter c]
   }
   deriving (Eq)
 
@@ -53,11 +55,15 @@ formatFullContext cs = intercalate " -> " (map show cs)
 
 instance Show c => Show (AnyCategory c) where
   show = format where
-    format (ValueInterface cs n ps rs) =
+    format (ValueInterface cs n ps rs vs) =
       "@value interface " ++ show n ++ formatParams ps ++ " { " ++ formatContext cs ++ "\n" ++
-      concat (map (\r -> "  " ++ formatRefine r ++ "\n") rs) ++ "}\n"
-    format (InstanceInterface cs n ps) =
-      "@type interface " ++ show n ++ formatParams ps ++ " { " ++ formatContext cs ++ "}\n"
+      concat (map (\r -> "  " ++ formatRefine r ++ "\n") rs) ++
+      concat (map (\v -> "  " ++ formatValue v ++ "\n") vs) ++
+      "}\n"
+    format (InstanceInterface cs n ps vs) =
+      "@type interface " ++ show n ++ formatParams ps ++ " { " ++ formatContext cs ++
+      concat (map (\v -> "  " ++ formatValue v ++ "\n") vs) ++
+      "}\n"
     format (ValueConcrete cs n ps rs ds vs) =
       "concrete " ++ show n ++ formatParams ps ++ " { " ++ formatContext cs ++ "\n" ++
       concat (map (\r -> "  " ++ formatRefine r ++ "\n") rs) ++
@@ -81,41 +87,41 @@ instance Show c => Show (AnyCategory c) where
                     " " ++ formatContext (pfContext v)
 
 getCategoryName :: AnyCategory c -> TypeName
-getCategoryName (ValueInterface _ n _ _) = n
-getCategoryName (InstanceInterface _ n _) = n
+getCategoryName (ValueInterface _ n _ _ _) = n
+getCategoryName (InstanceInterface _ n _ _) = n
 getCategoryName (ValueConcrete _ n _ _ _ _) = n
 
 getCategoryContext :: AnyCategory c -> [c]
-getCategoryContext (ValueInterface c _ _ _) = c
-getCategoryContext (InstanceInterface c _ _) = c
+getCategoryContext (ValueInterface c _ _ _ _) = c
+getCategoryContext (InstanceInterface c _ _ _) = c
 getCategoryContext (ValueConcrete c _ _ _ _ _) = c
 
 getCategoryParams :: AnyCategory c -> [ValueParam c]
-getCategoryParams (ValueInterface _ _ ps _) = ps
-getCategoryParams (InstanceInterface _ _ ps) = ps
+getCategoryParams (ValueInterface _ _ ps _ _) = ps
+getCategoryParams (InstanceInterface _ _ ps _) = ps
 getCategoryParams (ValueConcrete _ _ ps _ _ _) = ps
 
 getCategoryRefines :: AnyCategory c -> [ValueRefine c]
-getCategoryRefines (ValueInterface _ _ _ rs) = rs
-getCategoryRefines (InstanceInterface _ _ _) = []
+getCategoryRefines (ValueInterface _ _ _ rs _) = rs
+getCategoryRefines (InstanceInterface _ _ _ _) = []
 getCategoryRefines (ValueConcrete _ _ _ rs _ _) = rs
 
 getCategoryDefines :: AnyCategory c -> [ValueDefine c]
-getCategoryDefines (ValueInterface _ _ _ _) = []
-getCategoryDefines (InstanceInterface _ _ _) = []
+getCategoryDefines (ValueInterface _ _ _ _ _) = []
+getCategoryDefines (InstanceInterface _ _ _ _) = []
 getCategoryDefines (ValueConcrete _ _ _ _ ds _) = ds
 
 getCategoryFilters :: AnyCategory c -> [ParamFilter c]
-getCategoryFilters (ValueInterface _ _ _ _) = []
-getCategoryFilters (InstanceInterface _ _ _) = []
+getCategoryFilters (ValueInterface _ _ _ _ vs) = vs
+getCategoryFilters (InstanceInterface _ _ _ vs) = vs
 getCategoryFilters (ValueConcrete _ _ _ _ _ vs) = vs
 
 isValueInterface :: AnyCategory c -> Bool
-isValueInterface (ValueInterface _ _ _ _) = True
+isValueInterface (ValueInterface _ _ _ _ _) = True
 isValueInterface _ = False
 
 isInstanceInterface :: AnyCategory c -> Bool
-isInstanceInterface (InstanceInterface _ _ _) = True
+isInstanceInterface (InstanceInterface _ _ _ _) = True
 isInstanceInterface _ = False
 
 isValueConcrete :: AnyCategory c -> Bool
@@ -200,7 +206,7 @@ checkConnectedTypes tm0 ts = do
   tm <- declareAllTypes tm0 ts
   mergeAll (map (checkSingle tm) ts)
   where
-    checkSingle tm (ValueInterface c n _ rs) = do
+    checkSingle tm (ValueInterface c n _ rs _) = do
       let ts = map (\r -> (vrContext r,tiName $ vrType r)) rs
       is <- collectAllOrErrorM $ map (getCategory tm) ts
       mergeAll (map (valueRefinesInstanceError c n) is)
@@ -258,7 +264,7 @@ checkConnectionCycles :: (Show c, MergeableM m, CompileErrorM m, Monad m) =>
   [AnyCategory c] -> m ()
 checkConnectionCycles ts = mergeAll (map (checker []) ts) where
   tm = Map.fromList $ zip (map getCategoryName ts) ts
-  checker us (ValueInterface c n _ rs) = do
+  checker us (ValueInterface c n _ rs _) = do
     failIfCycle n c us
     let ts = map (\r -> (vrContext r,tiName $ vrType r)) rs
     is <- collectAllOrErrorM $ map (getValueCategory tm) ts
@@ -288,9 +294,9 @@ flattenAllConnections tm0 ts = do
   tm <- declareAllTypes tm0 ts
   collectAllOrErrorM $ map (updateSingle tm) ts
   where
-    updateSingle tm (ValueInterface c n ps rs) = do
+    updateSingle tm (ValueInterface c n ps rs vs) = do
       rs2 <- collectAllOrErrorM $ map (getRefines tm) rs
-      return $ ValueInterface c n ps (concat rs2)
+      return $ ValueInterface c n ps (concat rs2) vs
     updateSingle tm (ValueConcrete c n ps rs ds vs) = do
       rs2 <- collectAllOrErrorM $ map (getRefines tm) rs
       return $ ValueConcrete c n ps (concat rs2) ds vs
@@ -326,7 +332,7 @@ checkParamVariances tm0 ts = do
   tm <- declareAllTypes tm0 ts
   mergeAll (map (checkCategory tm) ts)
   where
-    checkCategory tm (ValueInterface c n ps rs) = do
+    checkCategory tm (ValueInterface c n ps rs _) = do
       noDuplicates c n ps
       let vm = Map.fromList $ map (\p -> (vpParam p,vpVariance p)) ps
       mergeAll (map (checkRefine tm vm) rs)
@@ -335,7 +341,7 @@ checkParamVariances tm0 ts = do
       let vm = Map.fromList $ map (\p -> (vpParam p,vpVariance p)) ps
       mergeAll (map (checkRefine tm vm) rs)
       mergeAll (map (checkDefine tm vm) ds)
-    checkCategory _ (InstanceInterface c n ps) = noDuplicates c n ps
+    checkCategory _ (InstanceInterface c n ps _) = noDuplicates c n ps
     noDuplicates c n ps = mergeAll (map checkCount $ group $ sort $ map vpParam ps) where
       checkCount xa@(x:_:_) =
         compileError $ "Param " ++ show x ++ " occurs " ++ show (length xa) ++
@@ -369,13 +375,6 @@ checkParamVariances tm0 ts = do
                                         " in " ++ t ++
                                         " [" ++ formatFullContext c ++ "]"
 
-validateDefinesInstance :: (Show c, MergeableM m, Mergeable p, CompileErrorM m, Monad m) =>
-  CategoryMap c -> TypeResolver m p -> ParamFilters -> [c] -> DefinesInstance -> m ()
-validateDefinesInstance tm r f c t@(DefinesInstance n ps) = do
-  (_,t2) <- getInstanceCategory tm (c,n)
-  processParamPairs alwaysPairParams ps (ParamSet $ getCategoryParams t2)
-  mergeAll $ map (validateGeneralInstance r f) (psParams ps)
-
 checkCategoryInstances :: (Show c, MergeableM m, CompileErrorM m, Monad m) =>
   CategoryMap c -> [AnyCategory c] -> m ()
 checkCategoryInstances tm0 ts = do
@@ -397,13 +396,13 @@ checkCategoryInstances tm0 ts = do
       validateTypeInstance r fs t `reviseError`
         (show t ++ " [" ++ formatFullContext c ++ "]")
     checkDefine r fs tm (ValueDefine c t) =
-      validateDefinesInstance tm r fs c t `reviseError`
+      validateDefinesInstance r fs t `reviseError`
         (show t ++ " [" ++ formatFullContext c ++ "]")
     checkFilter r fs _ (ParamFilter c n fa@(TypeFilter _ t)) =
       validateGeneralInstance r fs (SingleType t) `reviseError`
         (show n ++ " " ++ show fa ++ " [" ++ formatFullContext c ++ "]")
     checkFilter r fs tm (ParamFilter c n fa@(DefinesFilter t)) = do
-      validateDefinesInstance tm r fs c t `reviseError`
+      validateDefinesInstance r fs t `reviseError`
         (show n ++ " " ++ show fa ++ " [" ++ formatFullContext c ++ "]")
     getFilterMap t ps = let fs = map (\f -> (pfParam f,pfFilter f)) (getCategoryFilters t) in
                             Map.fromListWith (++) $ map (second (:[])) fs ++ ps
@@ -415,7 +414,8 @@ categoriesToTypeResolver tm =
     trRefines = refines,
     trDefines = defines,
     trVariance = variance,
-    trFilters = filters
+    trTypeFilters = typeFilters,
+    trDefinesFilters = definesFilters
   } where
     refines (TypeInstance n1 ps1) n2
       | n1 == n2 = return ((),ps1)
@@ -440,12 +440,17 @@ categoriesToTypeResolver tm =
     variance n = do
       (_,t) <- getCategory tm ([],n)
       return $ ParamSet $ map vpVariance $ getCategoryParams t
-    filters (TypeInstance n ps) = do
+    typeFilters (TypeInstance n ps) = do
       (_,t) <- getValueCategory tm ([],n)
+      checkFilters t ps
+    definesFilters (DefinesInstance n ps) = do
+      (_,t) <- getInstanceCategory tm ([],n)
+      checkFilters t ps
+    checkFilters t ps = do
       let params = map vpParam $ getCategoryParams t
       assigned <- fmap Map.fromList $ processParamPairs alwaysPairParams (ParamSet params) ps
       fs <- collectAllOrErrorM $ map (subSingleFilter assigned . \f -> (pfParam f,pfFilter f))
-                                    (getCategoryFilters t)
+                                     (getCategoryFilters t)
       let fa = Map.fromListWith (++) $ map (second (:[])) fs
       fmap ((,) () . ParamSet) $ collectAllOrErrorM $ map (assignFilter fa) params
     subAllParams pa = uncheckedSubAllParams (getValueForParam pa)

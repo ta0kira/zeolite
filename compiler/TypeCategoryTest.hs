@@ -45,13 +45,13 @@ main = runAllTests [
     checkShortParseSuccess "@type interface Type {}",
     checkShortParseFail "@type interface Type { refines T }",
     checkShortParseFail "@type interface Type { defines T }",
-    checkShortParseFail "@type interface Type<x> { x allows T }",
+    checkShortParseSuccess "@type interface Type<x> { x allows T }",
 
     checkShortParseSuccess "@value interface Type<x> {}",
     checkShortParseSuccess "@value interface Type {}",
     checkShortParseSuccess "@value interface Type { refines T }",
     checkShortParseFail "@value interface Type { defines T }",
-    checkShortParseFail "@value interface Type<x> { x allows T }",
+    checkShortParseSuccess "@value interface Type<x> { x allows T }",
 
     checkOperationSuccess "testfiles/value_refines_value.txt" (checkConnectedTypes Map.empty),
     checkOperationFail "testfiles/value_refines_instance.txt" (checkConnectedTypes Map.empty),
@@ -67,23 +67,23 @@ main = runAllTests [
     checkOperationSuccess
       "testfiles/concrete_refines_value.txt"
       (checkConnectedTypes $ Map.fromList [
-          (TypeName "Parent2",InstanceInterface [] (TypeName "Parent2") [])
+          (TypeName "Parent2",InstanceInterface [] (TypeName "Parent2") [] [])
         ]),
     checkOperationFail
       "testfiles/concrete_refines_value.txt"
       (checkConnectedTypes $ Map.fromList [
-          (TypeName "Parent",InstanceInterface [] (TypeName "Parent") [])
+          (TypeName "Parent",InstanceInterface [] (TypeName "Parent") [] [])
         ]),
 
     checkOperationSuccess
       "testfiles/partial.txt"
       (checkConnectedTypes $ Map.fromList [
-          (TypeName "Parent",ValueInterface [] (TypeName "Parent") [] [])
+          (TypeName "Parent",ValueInterface [] (TypeName "Parent") [] [] [])
         ]),
     checkOperationFail
       "testfiles/partial.txt"
       (checkConnectedTypes $ Map.fromList [
-          (TypeName "Parent",InstanceInterface [] (TypeName "Parent") [])
+          (TypeName "Parent",InstanceInterface [] (TypeName "Parent") [] [])
         ]),
     checkOperationFail
       "testfiles/partial.txt"
@@ -119,12 +119,12 @@ main = runAllTests [
     checkOperationSuccess
       "testfiles/flatten.txt"
       (flattenAllConnections $ Map.fromList [
-          (TypeName "Parent2",InstanceInterface [] (TypeName "Parent2") [])
+          (TypeName "Parent2",InstanceInterface [] (TypeName "Parent2") [] [])
         ]),
     checkOperationFail
       "testfiles/flatten.txt"
       (flattenAllConnections $ Map.fromList [
-          (TypeName "Parent",InstanceInterface [] (TypeName "Parent") [])
+          (TypeName "Parent",InstanceInterface [] (TypeName "Parent") [] [])
         ]),
 
     checkOperationSuccess
@@ -135,11 +135,11 @@ main = runAllTests [
                    (TypeName "Parent",
                     ValueInterface [] (TypeName "Parent") []
                                    [ValueRefine [] $ TypeInstance (TypeName "Object1") (ParamSet []),
-                                    ValueRefine [] $ TypeInstance (TypeName "Object2") (ParamSet [])]),
+                                    ValueRefine [] $ TypeInstance (TypeName "Object2") (ParamSet [])] []),
                    -- NOTE: Object1 deliberately excluded here so that we catch
                    -- unnecessary recursion in existing categories.
                    (TypeName "Object2",
-                    ValueInterface [] (TypeName "Object2") [] [])
+                    ValueInterface [] (TypeName "Object2") [] [] [])
                  ])
         scrapeAllRefines ts2 `containsExactly` [
             ("Child","Parent"),
@@ -163,12 +163,12 @@ main = runAllTests [
     checkOperationSuccess
       "testfiles/concrete_refines_value.txt"
       (checkParamVariances $ Map.fromList [
-          (TypeName "Parent2",InstanceInterface [] (TypeName "Parent2") [])
+          (TypeName "Parent2",InstanceInterface [] (TypeName "Parent2") [] [])
         ]),
     checkOperationFail
       "testfiles/concrete_refines_value.txt"
       (checkParamVariances $ Map.fromList [
-          (TypeName "Parent",InstanceInterface [] (TypeName "Parent") [])
+          (TypeName "Parent",InstanceInterface [] (TypeName "Parent") [] [])
         ]),
 
     checkOperationSuccess
@@ -177,7 +177,7 @@ main = runAllTests [
           (TypeName "Parent",
            ValueInterface [] (TypeName "Parent")
                           [ValueParam [] (ParamName "w") Contravariant,
-                           ValueParam [] (ParamName "z") Covariant] [])
+                           ValueParam [] (ParamName "z") Covariant] [] [])
       ]),
     checkOperationFail
       "testfiles/partial_params.txt"
@@ -185,7 +185,7 @@ main = runAllTests [
           (TypeName "Parent",
            ValueInterface [] (TypeName "Parent")
                           [ValueParam [] (ParamName "w") Invariant,
-                           ValueParam [] (ParamName "z") Covariant] [])
+                           ValueParam [] (ParamName "z") Covariant] [] [])
       ]),
     checkOperationFail
       "testfiles/partial_params.txt"
@@ -193,7 +193,7 @@ main = runAllTests [
           (TypeName "Parent",
            ValueInterface [] (TypeName "Parent")
                           [ValueParam [] (ParamName "w") Contravariant,
-                           ValueParam [] (ParamName "z") Invariant] [])
+                           ValueParam [] (ParamName "z") Invariant] [] [])
       ]),
 
     checkOperationSuccess
@@ -276,7 +276,7 @@ main = runAllTests [
     checkOperationSuccess
       "testfiles/concrete.txt"
       (\ts -> do
-        rs <- getFilters ts "Type<a,b,c,d,e,f>"
+        rs <- getTypeFilters ts "Type<a,b,c,d,e,f>"
         checkPaired containsExactly rs [
             ["allows Parent"],
             ["requires Type2<a>"],
@@ -288,7 +288,57 @@ main = runAllTests [
     checkOperationSuccess
       "testfiles/concrete.txt"
       (\ts -> do
-        rs <- getFilters ts "Type<Type<t>,b,Type3<x>,d,e,f>"
+        rs <- getTypeFilters ts "Type<Type<t>,b,Type3<x>,d,e,f>"
+        checkPaired containsExactly rs [
+            ["allows Parent"],
+            ["requires Type2<Type<t>>"],
+            ["defines Equals<Type3<x>>"],
+            [],
+            [],
+            []
+          ]),
+
+    checkOperationSuccess
+      "testfiles/value_interface.txt"
+      (\ts -> do
+        rs <- getTypeFilters ts "Type<a,b,c,d,e,f>"
+        checkPaired containsExactly rs [
+            ["allows Parent"],
+            ["requires Type2<a>"],
+            ["defines Equals<c>"],
+            [],
+            [],
+            []
+          ]),
+    checkOperationSuccess
+      "testfiles/value_interface.txt"
+      (\ts -> do
+        rs <- getTypeFilters ts "Type<Type<t>,b,Type3<x>,d,e,f>"
+        checkPaired containsExactly rs [
+            ["allows Parent"],
+            ["requires Type2<Type<t>>"],
+            ["defines Equals<Type3<x>>"],
+            [],
+            [],
+            []
+          ]),
+
+    checkOperationSuccess
+      "testfiles/type_interface.txt"
+      (\ts -> do
+        rs <- getDefinesFilters ts "Type<a,b,c,d,e,f>"
+        checkPaired containsExactly rs [
+            ["allows Parent"],
+            ["requires Type2<a>"],
+            ["defines Equals<c>"],
+            [],
+            [],
+            []
+          ]),
+    checkOperationSuccess
+      "testfiles/type_interface.txt"
+      (\ts -> do
+        rs <- getDefinesFilters ts "Type<Type<t>,b,Type3<x>,d,e,f>"
         checkPaired containsExactly rs [
             ["allows Parent"],
             ["requires Type2<Type<t>>"],
@@ -304,25 +354,25 @@ main = runAllTests [
       (\ts -> do
         ta <- flattenAllConnections Map.empty ts >>= declareAllTypes Map.empty
         let r = categoriesToTypeResolver ta
-        checkValidSuccess r [] "Value0<Value1,Value2>"),
+        checkTypeSuccess r [] "Value0<Value1,Value2>"),
     checkOperationFail
       "testfiles/filters.txt"
       (\ts -> do
         ta <- flattenAllConnections Map.empty ts >>= declareAllTypes Map.empty
         let r = categoriesToTypeResolver ta
-        checkValidSuccess r [] "Value0<Value1,Value1>"),
+        checkTypeSuccess r [] "Value0<Value1,Value1>"),
     checkOperationSuccess
       "testfiles/filters.txt"
       (\ts -> do
         ta <- flattenAllConnections Map.empty ts >>= declareAllTypes Map.empty
         let r = categoriesToTypeResolver ta
-        checkValidSuccess r [] "Value0<Value3,Value2>"),
+        checkTypeSuccess r [] "Value0<Value3,Value2>"),
     checkOperationFail
       "testfiles/filters.txt"
       (\ts -> do
         ta <- flattenAllConnections Map.empty ts >>= declareAllTypes Map.empty
         let r = categoriesToTypeResolver ta
-        checkValidSuccess r
+        checkTypeSuccess r
           [("x",[]),("y",[])]
           "Value0<x,y>"),
     checkOperationSuccess
@@ -330,7 +380,7 @@ main = runAllTests [
       (\ts -> do
         ta <- flattenAllConnections Map.empty ts >>= declareAllTypes Map.empty
         let r = categoriesToTypeResolver ta
-        checkValidSuccess r
+        checkTypeSuccess r
           [("x",["allows y","requires Function<x,y>"]),
            ("y",["requires x","defines Equals<y>"])]
           "Value0<x,y>"),
@@ -339,7 +389,7 @@ main = runAllTests [
       (\ts -> do
         ta <- flattenAllConnections Map.empty ts >>= declareAllTypes Map.empty
         let r = categoriesToTypeResolver ta
-        checkValidSuccess r
+        checkTypeSuccess r
           [("x",["allows Value2","requires Function<x,Value2>"])]
           "Value0<x,Value2>"),
     checkOperationFail
@@ -347,14 +397,13 @@ main = runAllTests [
       (\ts -> do
         ta <- flattenAllConnections Map.empty ts >>= declareAllTypes Map.empty
         let r = categoriesToTypeResolver ta
-        checkValidSuccess r
+        checkTypeSuccess r
           [("x",["allows Value2","requires Function<x,Value2>"]),
            ("y",["requires x","defines Equals<y>"])]
           "Value0<x,y>"),
 
     checkOperationSuccess
-      -- TODO: This isn't a very good file to use for this test.
-      "testfiles/filters.txt"
+      "testfiles/valid_instances.txt"
       (\ts -> do
         ts2 <- flattenAllConnections Map.empty ts
         checkCategoryInstances Map.empty ts2)
@@ -380,15 +429,22 @@ getVariance ts n = do
   (ParamSet vs) <- trVariance r (TypeName n)
   return vs
 
-getFilters ts s = do
+getTypeFilters ts s = do
   ta <- declareAllTypes Map.empty ts
   let r = categoriesToTypeResolver ta
   t <- readSingle "(string)" s
-  ((),ParamSet vs) <- trFilters r t
+  ((),ParamSet vs) <- trTypeFilters r t
+  return $ map (map show) vs
+
+getDefinesFilters ts s = do
+  ta <- declareAllTypes Map.empty ts
+  let r = categoriesToTypeResolver ta
+  t <- readSingle "(string)" s
+  ((),ParamSet vs) <- trDefinesFilters r t
   return $ map (map show) vs
 
 scrapeAllRefines = map (show *** show) . concat . map scrapeSingle where
-  scrapeSingle (ValueInterface _ n _ rs) = map ((,) n . vrType) rs
+  scrapeSingle (ValueInterface _ n _ rs _) = map ((,) n . vrType) rs
   scrapeSingle (ValueConcrete _ n _ rs _ _) = map ((,) n . vrType) rs
   scrapeSingle _ = []
 

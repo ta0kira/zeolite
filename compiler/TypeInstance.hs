@@ -18,6 +18,7 @@ module TypeInstance (
   ValueType(..),
   checkGeneralMatch,
   checkValueTypeMatch,
+  validateDefinesInstance,
   validateGeneralInstance,
   validateTypeInstance,
 ) where
@@ -152,7 +153,9 @@ data TypeResolver m p =
     -- Get the parameter variances for the category.
     trVariance :: TypeName -> m InstanceVariances,
     -- Gets filters for the assigned parameters.
-    trFilters :: TypeInstance -> m (p,InstanceFilters)
+    trTypeFilters :: TypeInstance -> m (p,InstanceFilters),
+    -- Gets filters for the assigned parameters.
+    trDefinesFilters :: DefinesInstance -> m (p,InstanceFilters)
   }
 
 filterLookup :: (CompileErrorM m, Monad m) =>
@@ -300,39 +303,49 @@ validateGeneralInstance _ f (SingleType (JustParamName n)) =
 validateTypeInstance :: (MergeableM m, Mergeable p, CompileErrorM m, Monad m) =>
   TypeResolver m p -> ParamFilters -> TypeInstance -> m ()
 validateTypeInstance r f t@(TypeInstance n ps) = do
-  (_,fa) <- trFilters r t
-  processParamPairs validateAssignment ps fa
+  (_,fa) <- trTypeFilters r t
+  processParamPairs (validateAssignment r f) ps fa
   mergeAll (map (validateGeneralInstance r f) (psParams ps)) `reviseError`
     ("Recursive error in " ++ show t)
-  where
-    validateAssignment t fs = mergeAll (map (checkFilter t) fs)
-    checkFilter t1 (TypeFilter FilterRequires t2) = do
-      checkGeneralMatch r f Covariant t1 (SingleType t2)
-    checkFilter t1 (TypeFilter FilterAllows t2) = do
-      checkGeneralMatch r f Contravariant t1 (SingleType t2)
-    checkFilter t1@(TypeMerge MergeUnion _) (DefinesFilter t) =
-      compileError $ "Unions cannot satisfy defines constraint " ++ show t
-    checkFilter (TypeMerge MergeIntersect ts) f@(DefinesFilter t) = do
-      let rs = zip ts (map (flip checkFilter f) ts)
-      requireExactlyOne t $ map fst $ filter (not . isCompileError . snd) rs
-    checkFilter t1@(SingleType t) (DefinesFilter f) = checkDefinesFilter f t
-    requireExactlyOne t [_] = mergeDefault
-    requireExactlyOne t []  =
-      compileError $ "No types in intersection define " ++ show t
-    requireExactlyOne t ts  =
-      compileError $ "Multiple types in intersection define " ++ show t ++ ": " ++
-                    intercalate ", " (map show ts)
-    checkDefinesFilter f2@(DefinesInstance n2 _) (JustTypeInstance t1) = do
-      (_,ps1') <- trDefines r t1 n2 `reviseError` (show (tiName t1) ++ " does not define " ++ show n2)
-      checkDefines f2 (DefinesInstance n2 ps1')
-    checkDefinesFilter f2 (JustParamName n1) = do
-        fs1 <- fmap (map dfType . filter isDefinesFilter) $ f `filterLookup` n1
-        mergeAny (map (checkDefines f2) fs1) `reviseError`
-          ("No filters imply " ++ show n1 ++ " " ++ show f2)
-    checkDefines f2@(DefinesInstance n2 ps2) f1@(DefinesInstance n1 ps1)
-      | n1 == n2 = do
-        paired <- processParamPairs alwaysPairParams ps1 ps2
-        variance <- trVariance r n2
-        processParamPairs (\v2 (p1,p2) -> checkGeneralMatch r f v2 p1 p2) variance (ParamSet paired)
-        mergeDefault
-      | otherwise = compileError $ "Constraint " ++ show f1 ++ " does not imply " ++ show f2
+
+validateDefinesInstance :: (MergeableM m, Mergeable p, CompileErrorM m, Monad m) =>
+  TypeResolver m p -> ParamFilters -> DefinesInstance -> m ()
+validateDefinesInstance r f t@(DefinesInstance n ps) = do
+  (_,fa) <- trDefinesFilters r t
+  processParamPairs (validateAssignment r f) ps fa
+  mergeAll (map (validateGeneralInstance r f) (psParams ps)) `reviseError`
+    ("Recursive error in " ++ show t)
+
+validateAssignment :: (MergeableM m, Mergeable p, CompileErrorM m, Monad m) =>
+  TypeResolver m p -> ParamFilters -> GeneralInstance -> [TypeFilter] -> m p
+validateAssignment r f t fs = mergeAll (map (checkFilter t) fs) where
+  checkFilter t1 (TypeFilter FilterRequires t2) = do
+    checkGeneralMatch r f Covariant t1 (SingleType t2)
+  checkFilter t1 (TypeFilter FilterAllows t2) = do
+    checkGeneralMatch r f Contravariant t1 (SingleType t2)
+  checkFilter t1@(TypeMerge MergeUnion _) (DefinesFilter t) =
+    compileError $ "Unions cannot satisfy defines constraint " ++ show t
+  checkFilter (TypeMerge MergeIntersect ts) f@(DefinesFilter t) = do
+    let rs = zip ts (map (flip checkFilter f) ts)
+    requireExactlyOne t $ map fst $ filter (not . isCompileError . snd) rs
+  checkFilter t1@(SingleType t) (DefinesFilter f) = checkDefinesFilter f t
+  requireExactlyOne t [_] = mergeDefault
+  requireExactlyOne t []  =
+    compileError $ "No types in intersection define " ++ show t
+  requireExactlyOne t ts  =
+    compileError $ "Multiple types in intersection define " ++ show t ++ ": " ++
+                   intercalate ", " (map show ts)
+  checkDefinesFilter f2@(DefinesInstance n2 _) (JustTypeInstance t1) = do
+    (_,ps1') <- trDefines r t1 n2 `reviseError` (show (tiName t1) ++ " does not define " ++ show n2)
+    checkDefines f2 (DefinesInstance n2 ps1')
+  checkDefinesFilter f2 (JustParamName n1) = do
+      fs1 <- fmap (map dfType . filter isDefinesFilter) $ f `filterLookup` n1
+      mergeAny (map (checkDefines f2) fs1) `reviseError`
+        ("No filters imply " ++ show n1 ++ " " ++ show f2)
+  checkDefines f2@(DefinesInstance n2 ps2) f1@(DefinesInstance n1 ps1)
+    | n1 == n2 = do
+      paired <- processParamPairs alwaysPairParams ps1 ps2
+      variance <- trVariance r n2
+      processParamPairs (\v2 (p1,p2) -> checkGeneralMatch r f v2 p1 p2) variance (ParamSet paired)
+      mergeDefault
+    | otherwise = compileError $ "Constraint " ++ show f1 ++ " does not imply " ++ show f2
