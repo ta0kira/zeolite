@@ -616,17 +616,17 @@ containsPaired = checkPaired checkSingle where
 checkOperationSuccess f o = do
   contents <- readFile f
   let parsed = readMulti f contents :: CompileInfo [AnyCategory SourcePos]
-  return $ check (parsed >>= o)
+  return $ check (parsed >>= o >> return ())
   where
-    check (Left es) = compileError $ "Check " ++ f ++ ": " ++ show es
-    check _ = return ()
+    check = flip reviseError ("Check " ++ f ++ ":")
 
 checkOperationFail f o = do
   contents <- readFile f
   let parsed = readMulti f contents :: CompileInfo [AnyCategory SourcePos]
-  return $ check (parsed >>= o)
+  return $ check (parsed >>= o >> return ())
   where
-    check (Right x) = compileError $ "Check " ++ f ++ ": Expected failure but got\n" ++ show x
+    check (Right x) =
+      compileError $ "Check " ++ f ++ ": Expected failure but got\n" ++ show x ++ "\n"
     check _ = return ()
 
 checkSingleParseSuccess f = do
@@ -634,7 +634,7 @@ checkSingleParseSuccess f = do
   let parsed = readSingle f contents :: CompileInfo (AnyCategory SourcePos)
   return $ check parsed
   where
-    check (Left es) = compileError $ "Parse " ++ f ++ ": " ++ show es
+    check (Left es) = compileError $ "Parse " ++ f ++ ":\n" ++ show es
     check _ = return ()
 
 checkSingleParseFail f = do
@@ -642,19 +642,21 @@ checkSingleParseFail f = do
   let parsed = readSingle f contents :: CompileInfo (AnyCategory SourcePos)
   return $ check parsed
   where
-    check (Right t) = compileError $ "Parse " ++ f ++ ": Expected failure but got\n" ++ show t
+    check (Right t) =
+      compileError $ "Parse " ++ f ++ ": Expected failure but got\n" ++ show t ++ "\n"
     check _ = return ()
 
 checkShortParseSuccess s = do
   let parsed = readSingle "(string)" s :: CompileInfo (AnyCategory SourcePos)
   return $ check parsed
   where
-    check (Left es) = compileError $ "Parse '" ++ s ++ "': " ++ show es
+    check (Left es) = compileError $ "Parse '" ++ s ++ "':\n" ++ show es
     check _ = return ()
 
 checkShortParseFail s = do
   let parsed = readSingle "(string)" s :: CompileInfo (AnyCategory SourcePos)
   return $ check parsed
   where
-    check (Right t) = compileError $ "Parse '" ++ s ++ "': Expected failure but got\n" ++ show t
+    check (Right t) =
+      compileError $ "Parse '" ++ s ++ "': Expected failure but got\n" ++ show t ++ "\n"
     check _ = return ()

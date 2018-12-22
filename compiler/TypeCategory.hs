@@ -477,8 +477,8 @@ checkInstanceDuplicates ts = mergeAll $ map checkSingle ts where
   requireSingle fn xs
     | length xs == 1 = return ()
     | otherwise =
-      compileError $ "Cannot merge instances of " ++ show (fn $ head xs) ++
-                     ": " ++ intercalate ", " (map show xs)
+      (compileError $ "Cannot merge instances of " ++ show (fn $ head xs)) `mergeNested`
+        (mergeAll $ map (compileError . show) xs)
 
 getFilterMap :: AnyCategory c -> ParamFilters
 getFilterMap t = getFilterMap t $ zip (Set.toList pa) (repeat []) where

@@ -14,55 +14,52 @@ import TypesBase (CompileErrorM(..),Mergeable(..),MergeableM(..))
 
 data CompileMessage =
   CompileMessage {
-    cmMessage :: String
-  } |
-  CompileNested {
-    cnNested :: [CompileMessage]
+    cmMessage :: String,
+    ccNested :: [CompileMessage]
   }
 
 instance Show CompileMessage where
-  show (CompileMessage m) = m
-  show (CompileNested ms) = "[ " ++ (intercalate " | " (map show ms)) ++ " ]"
+  show = format "" where
+    format indent (CompileMessage [] ms) =
+      concat (map (format $ indent ++ "  ") ms)
+    format indent (CompileMessage m ms) =
+      indent ++ m ++ "\n" ++ concat (map (format $ indent ++ "  ") ms)
 
 type CompileInfo = Either CompileMessage
 
 instance CompileErrorM CompileInfo where
-  compileErrorM = Left . CompileMessage
+  compileErrorM = Left . flip CompileMessage []
   isCompileErrorM = isLeft
   collectAllOrErrorM = result . splitErrorsAndData where
     result ([],xs) = return xs
-    result (e:_,_) = Left e  -- Take first error.
+    result (es,_) = Left $ CompileMessage "" es
   collectOneOrErrorM = result . splitErrorsAndData where
     result (_,x:_) = return x
     result ([],_)  = compileErrorM "No choices found"
-    result (es,_)  = Left $ joinMessages es  -- Take all errors.
+    result (es,_)  = Left $ CompileMessage "" es
   reviseErrorM x@(Right _) _ = x
-  reviseErrorM x@(Left e) s = Left $ (CompileMessage s) `nestMessages` e
-
+  reviseErrorM x@(Left (CompileMessage [] ms)) s = Left $ CompileMessage s ms
+  reviseErrorM x@(Left e) s = Left $ CompileMessage s [e]
 
 instance MergeableM CompileInfo where
   mergeAnyM = result . splitErrorsAndData where
     result (_,xs@(x:_)) = return $ mergeAny xs
     result ([],_)       = compileErrorM "No choices found"
-    result (es,_)       = Left $ joinMessages es  -- Take all errors.
+    result (es,_)       = Left $ CompileMessage "" es
   mergeAllM = result . splitErrorsAndData where
     result ([],xs) = return $ mergeAll xs
-    result (e:_,_) = Left e  -- Take first error.
+    result (es,_)  = Left $ CompileMessage "" es
   (Right x)  `mergeNestedM` (Right y)  = return $ x `mergeNested` y
   e@(Left _) `mergeNestedM` (Right _)  = e
   (Right _)  `mergeNestedM` e@(Left _) = e
   (Left e1)  `mergeNestedM` (Left e2)  = Left $ e1 `nestMessages` e2
 
-joinMessages = foldr joinPair (CompileNested []) where
-  joinPair m                     (CompileNested [])    = m
-  joinPair (CompileNested [])    m                     = m
-  joinPair m@(CompileMessage _)  (CompileNested ms)    = CompileNested (m:ms)
-  joinPair (CompileNested ms)    m@(CompileMessage _)  = CompileNested (ms ++ [m])
-  joinPair m1@(CompileMessage _) m2@(CompileMessage _) = CompileNested [m1,m2]
-  joinPair (CompileNested ms1)   (CompileNested ms2)   = CompileNested (ms1 ++ ms2)
-
-nestMessages m@(CompileMessage _) m2 = CompileNested (m:[m2])
-nestMessages (CompileNested ms)   m2 = CompileNested (ms ++ [m2])
+nestMessages (CompileMessage m1 ms1) ma@(CompileMessage [] ms2) =
+  CompileMessage m1 (ms1 ++ ms2)
+nestMessages (CompileMessage [] ms1) ma@(CompileMessage m2 ms2) =
+  CompileMessage m2 (ms1 ++ ms2)
+nestMessages (CompileMessage m1 ms1) ma@(CompileMessage _ _) =
+  CompileMessage m1 (ms1 ++ [ma])
 
 splitErrorsAndData :: Foldable f => f (Either a b) -> ([a],[b])
 splitErrorsAndData = partitionEithers . foldr (:) []

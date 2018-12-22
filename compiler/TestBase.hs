@@ -31,7 +31,7 @@ runAllTests :: [IO (CompileInfo ())] -> IO ()
 runAllTests ts = do
   results <- sequence ts
   let (es,ps) = partitionEithers $ zipWith numberError [1..] results
-  mapM_ (\(n,e) -> hPutStr stderr ("Test " ++ show n ++ ": " ++ show e ++ "\n")) es
+  mapM_ (\(n,e) -> hPutStr stderr ("Test " ++ show n ++ ": " ++ show e)) es
   hPutStr stderr $ show (length ps) ++ " tests passed + " ++
                    show (length es) ++ " tests failed\n"
 
@@ -87,8 +87,7 @@ checkTypeSuccess r pa x = do
   check $ validateGeneralInstance r pa2 t
   where
     prefix = x ++ " " ++ showParams pa
-    check (Left es) = compileError $ prefix ++ ": " ++ show es
-    check _ = return ()
+    check = flip reviseError (prefix ++ ":")
 
 checkTypeFail :: TypeResolver CompileInfo () -> [(String,[String])] ->
                   String -> CompileInfo ()
@@ -97,7 +96,7 @@ checkTypeFail r pa x = do
   check $ validateGeneralInstance r pa2 t
   where
     prefix = x ++ " " ++ showParams pa
-    check (Right _) = compileError $ prefix ++ ": Expected failure"
+    check (Right _) = compileError $ prefix ++ ": Expected failure\n"
     check _ = return ()
 
 checkDefinesSuccess :: TypeResolver CompileInfo () -> [(String,[String])] ->
@@ -107,8 +106,7 @@ checkDefinesSuccess r pa x = do
   check $ validateDefinesInstance r pa2 t
   where
     prefix = x ++ " " ++ showParams pa
-    check (Left es) = compileError $ prefix ++ ": " ++ show es
-    check _ = return ()
+    check = flip reviseError (prefix ++ ":")
 
 checkDefinesFail :: TypeResolver CompileInfo () -> [(String,[String])] ->
                   String -> CompileInfo ()
@@ -117,5 +115,5 @@ checkDefinesFail r pa x = do
   check $ validateDefinesInstance r pa2 t
   where
     prefix = x ++ " " ++ showParams pa
-    check (Right _) = compileError $ prefix ++ ": Expected failure"
+    check (Right _) = compileError $ prefix ++ ": Expected failure\n"
     check _ = return ()

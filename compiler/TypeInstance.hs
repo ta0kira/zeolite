@@ -333,8 +333,8 @@ validateAssignment r f t fs = mergeAll (map (checkFilter t) fs) where
   requireExactlyOne t []  =
     compileError $ "No types in intersection define " ++ show t
   requireExactlyOne t ts  =
-    compileError $ "Multiple types in intersection define " ++ show t ++ ": " ++
-                   intercalate ", " (map show ts)
+    (compileError $ "Multiple types in intersection define " ++ show t) `mergeNested`
+      (mergeAll $ map (compileError . show) ts)
   checkDefinesFilter f2@(DefinesInstance n2 _) (JustTypeInstance t1) = do
     (_,ps1') <- trDefines r t1 n2 `reviseError` (show (tiName t1) ++ " does not define " ++ show n2)
     checkDefines f2 (DefinesInstance n2 ps1')

@@ -558,7 +558,7 @@ checkConvertSuccess pa x y = return checked where
   checked = do
     ([t1,t2],pa2) <- parseTheTest pa [x,y]
     check $ checkValueTypeMatch resolver pa2 t1 t2
-  check (Left es) = compileError $ prefix ++ ": " ++ show es
+  check (Left es) = compileError $ prefix ++ ":\n" ++ show es
   check _ = return ()
 
 checkConvertFail pa x y = return checked where
@@ -566,7 +566,7 @@ checkConvertFail pa x y = return checked where
   checked = do
     ([t1,t2],pa2) <- parseTheTest pa [x,y]
     check $ checkValueTypeMatch resolver pa2 t1 t2
-  check (Right _) = compileError $ prefix ++ ": Expected failure"
+  check (Right _) = compileError $ prefix ++ ": Expected failure\n"
   check _ = return ()
 
 resolver :: TypeResolver CompileInfo ()
