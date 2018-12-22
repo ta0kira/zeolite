@@ -8,6 +8,7 @@ module TypeCategory (
   ValueParam(..),
   ValueRefine(..),
   categoriesToTypeResolver,
+  checkCategoryInstances,
   checkConnectedTypes,
   checkConnectionCycles,
   checkParamVariances,
@@ -369,6 +370,46 @@ checkParamVariances tm0 ts = checked where
                                              " cannot be " ++ show v ++
                                              " in " ++ t ++
                                              " [" ++ formatFullContext c ++ "]"
+
+validateDefinesInstance :: (Show c, MergeableM m, Mergeable p, CompileErrorM m, Monad m) =>
+  CategoryMap c -> TypeResolver m p -> ParamFilters -> [c] -> DefinesInstance -> m ()
+validateDefinesInstance tm r f c t@(DefinesInstance n ps) = do
+  (_,t2) <- getInstanceCategory tm (c,n)
+  processParamPairs alwaysPairParams ps (ParamSet $ getCategoryParams t2)
+  mergeAll $ map (validateGeneralInstance r f) (psParams ps)
+
+checkCategoryInstances :: (Show c, MergeableM m, CompileErrorM m, Monad m) =>
+  CategoryMap c -> [AnyCategory c] -> m ()
+checkCategoryInstances tm0 ts = checked where
+  checked = do
+    tm <- declareAllTypes tm0 ts
+    r <- return $ categoriesToTypeResolver tm
+    mergeAll $ map (checkSingle r tm) ts
+  checkSingle r tm t = do
+    pa <- return $ Set.fromList $ map vpParam $ getCategoryParams t
+    fs <- return $ getFilterMap t $ zip (Set.toList pa) (repeat [])
+    mergeAll $ map (checkFilterParam pa) (getCategoryFilters t)
+    mergeAll $ map (checkRefine r fs) (getCategoryRefines t)
+    mergeAll $ map (checkDefine r fs tm) (getCategoryDefines t)
+    mergeAll $ map (checkFilter r fs tm) (getCategoryFilters t)
+  checkFilterParam pa (ParamFilter c n _) =
+    if n `Set.member` pa
+       then return ()
+       else compileError $ "param " ++ show n ++ " [" ++ formatFullContext c ++ "] does not exist"
+  checkRefine r fs (ValueRefine c t) =
+    validateTypeInstance r fs t `reviseError`
+      (show t ++ " [" ++ formatFullContext c ++ "]")
+  checkDefine r fs tm (ValueDefine c t) =
+    validateDefinesInstance tm r fs c t `reviseError`
+      (show t ++ " [" ++ formatFullContext c ++ "]")
+  checkFilter r fs _ (ParamFilter c n fa@(TypeFilter _ t)) =
+    validateGeneralInstance r fs (SingleType t) `reviseError`
+      (show n ++ " " ++ show fa ++ " [" ++ formatFullContext c ++ "]")
+  checkFilter r fs tm (ParamFilter c n fa@(DefinesFilter t)) = do
+    validateDefinesInstance tm r fs c t `reviseError`
+      (show n ++ " " ++ show fa ++ " [" ++ formatFullContext c ++ "]")
+  getFilterMap t ps = let fs = map (\f -> (pfParam f,pfFilter f)) (getCategoryFilters t) in
+                          Map.fromListWith (++) $ map (second (:[])) fs ++ ps
 
 categoriesToTypeResolver :: (Show c, MergeableM m, CompileErrorM m, Monad m) =>
   CategoryMap c -> TypeResolver m ()

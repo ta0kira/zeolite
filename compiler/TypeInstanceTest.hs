@@ -421,7 +421,13 @@ main = runAllTests [
       "Type4<(x|Type0)>",
     return $ checkValidFail resolver
       [("x",["allows Type0"])]
-      "Type4<(x|Type3)>"
+      "Type4<(x|Type3)>",
+    return $ checkValidFail resolver
+      []
+      "Type5<x>",
+    return $ checkValidSuccess resolver
+      [("x",[])]
+      "Type5<x>"
   ]
 
 
@@ -430,6 +436,7 @@ type1 = TypeName "Type1"
 type2 = TypeName "Type2"
 type3 = TypeName "Type3"
 type4 = TypeName "Type4"
+type5 = TypeName "Type5"
 instance0 = TypeName "Instance0"
 instance1 = TypeName "Instance1"
 
@@ -440,6 +447,7 @@ variances = Map.fromList $ [
     (type2,ParamSet [Contravariant,Invariant,Covariant]), -- Type2<x|y|z>
     (type3,ParamSet []), -- Type3<>
     (type4,ParamSet [Invariant]), -- Type4<x>
+    (type5,ParamSet [Invariant]), -- Type5<x>
     (instance0,ParamSet []), -- Instance0<>
     (instance1,ParamSet [Contravariant]) -- Instance2<x|>
   ]
@@ -465,7 +473,8 @@ refines = Map.fromList $ [
         (type0,\(ParamSet []) ->
                ParamSet [])
       ]),
-    (type4,Map.fromList $ [])
+    (type4,Map.fromList $ []),
+    (type5,Map.fromList $ [])
   ]
 
 defines :: Map.Map TypeName (Map.Map TypeName (InstanceParams -> InstanceParams))
@@ -482,7 +491,8 @@ defines = Map.fromList $ [
         (instance0,\(ParamSet []) ->
                    ParamSet [])
       ]),
-    (type4,Map.fromList $ [])
+    (type4,Map.fromList $ []),
+    (type5,Map.fromList $ [])
   ]
 
 filters :: Map.Map TypeName (InstanceParams -> InstanceFilters)
@@ -508,7 +518,8 @@ filters = Map.fromList $ [
            ParamSet [
              -- x allows Type0
              [forceParse "allows Type0"]
-           ])
+           ]),
+    (type5,\(ParamSet [_]) -> ParamSet [[]])
   ]
 
 

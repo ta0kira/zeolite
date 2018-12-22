@@ -292,7 +292,10 @@ validateGeneralInstance r f ta@(TypeMerge _ ts) =
 validateGeneralInstance r f (SingleType (JustTypeInstance t)) =
   validateTypeInstance r f t `reviseError`
     (show t ++ " fails to meet required parameter constraints")
-validateGeneralInstance _ _ _ = return ()
+validateGeneralInstance _ f (SingleType (JustParamName n)) =
+  if n `Map.member` f
+     then return ()
+     else compileError $ "Param " ++ show n ++ " does not exist"
 
 validateTypeInstance :: (MergeableM m, Mergeable p, CompileErrorM m, Monad m) =>
   TypeResolver m p -> ParamFilters -> TypeInstance -> m ()

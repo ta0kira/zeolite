@@ -350,7 +350,13 @@ main = runAllTests [
         checkValidSuccess r
           [("x",["allows Value2","requires Function<x,Value2>"]),
            ("y",["requires x","defines Equals<y>"])]
-          "Value0<x,y>")
+          "Value0<x,y>"),
+
+    checkOperationSuccess
+      "testfiles/filters.txt"
+      (\ts -> do
+        ts2 <- flattenAllConnections Map.empty ts
+        checkCategoryInstances Map.empty ts2)
   ]
 
 getRefines ts s n = do
