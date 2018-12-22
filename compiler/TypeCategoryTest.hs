@@ -303,25 +303,25 @@ main = runAllTests [
       "testfiles/filters.txt"
       (\ts -> do
         ta <- flattenAllConnections Map.empty ts >>= declareAllTypes Map.empty
-        r <- return $ categoriesToTypeResolver ta
+        let r = categoriesToTypeResolver ta
         checkValidSuccess r [] "Value0<Value1,Value2>"),
     checkOperationFail
       "testfiles/filters.txt"
       (\ts -> do
         ta <- flattenAllConnections Map.empty ts >>= declareAllTypes Map.empty
-        r <- return $ categoriesToTypeResolver ta
+        let r = categoriesToTypeResolver ta
         checkValidSuccess r [] "Value0<Value1,Value1>"),
     checkOperationSuccess
       "testfiles/filters.txt"
       (\ts -> do
         ta <- flattenAllConnections Map.empty ts >>= declareAllTypes Map.empty
-        r <- return $ categoriesToTypeResolver ta
+        let r = categoriesToTypeResolver ta
         checkValidSuccess r [] "Value0<Value3,Value2>"),
     checkOperationFail
       "testfiles/filters.txt"
       (\ts -> do
         ta <- flattenAllConnections Map.empty ts >>= declareAllTypes Map.empty
-        r <- return $ categoriesToTypeResolver ta
+        let r = categoriesToTypeResolver ta
         checkValidSuccess r
           [("x",[]),("y",[])]
           "Value0<x,y>"),
@@ -329,7 +329,7 @@ main = runAllTests [
       "testfiles/filters.txt"
       (\ts -> do
         ta <- flattenAllConnections Map.empty ts >>= declareAllTypes Map.empty
-        r <- return $ categoriesToTypeResolver ta
+        let r = categoriesToTypeResolver ta
         checkValidSuccess r
           [("x",["allows y","requires Function<x,y>"]),
            ("y",["requires x","defines Equals<y>"])]
@@ -338,7 +338,7 @@ main = runAllTests [
       "testfiles/filters.txt"
       (\ts -> do
         ta <- flattenAllConnections Map.empty ts >>= declareAllTypes Map.empty
-        r <- return $ categoriesToTypeResolver ta
+        let r = categoriesToTypeResolver ta
         checkValidSuccess r
           [("x",["allows Value2","requires Function<x,Value2>"])]
           "Value0<x,Value2>"),
@@ -346,13 +346,14 @@ main = runAllTests [
       "testfiles/filters.txt"
       (\ts -> do
         ta <- flattenAllConnections Map.empty ts >>= declareAllTypes Map.empty
-        r <- return $ categoriesToTypeResolver ta
+        let r = categoriesToTypeResolver ta
         checkValidSuccess r
           [("x",["allows Value2","requires Function<x,Value2>"]),
            ("y",["requires x","defines Equals<y>"])]
           "Value0<x,y>"),
 
     checkOperationSuccess
+      -- TODO: This isn't a very good file to use for this test.
       "testfiles/filters.txt"
       (\ts -> do
         ts2 <- flattenAllConnections Map.empty ts
@@ -361,27 +362,27 @@ main = runAllTests [
 
 getRefines ts s n = do
   ta <- declareAllTypes Map.empty ts
-  r <- return $ categoriesToTypeResolver ta
+  let r = categoriesToTypeResolver ta
   t <- readSingle "(string)" s
   ((),ParamSet rs) <- trRefines r t (TypeName n)
   return $ map show rs
 
 getDefines ts s n = do
   ta <- declareAllTypes Map.empty ts
-  r <- return $ categoriesToTypeResolver ta
+  let r = categoriesToTypeResolver ta
   t <- readSingle "(string)" s
   ((),ParamSet ds) <- trDefines r t (TypeName n)
   return $ map show ds
 
 getVariance ts n = do
   ta <- declareAllTypes Map.empty ts
-  r <- return $ categoriesToTypeResolver ta
+  let r = categoriesToTypeResolver ta
   (ParamSet vs) <- trVariance r (TypeName n)
   return vs
 
 getFilters ts s = do
   ta <- declareAllTypes Map.empty ts
-  r <- return $ categoriesToTypeResolver ta
+  let r = categoriesToTypeResolver ta
   t <- readSingle "(string)" s
   ((),ParamSet vs) <- trFilters r t
   return $ map (map show) vs
@@ -401,25 +402,28 @@ containsExactly actual expected = do
   containsAtLeast actual expected
   containsAtMost actual expected
 
-containsNoDuplicates expected = checked where
-  checked = mergeAll $ map checkSingle $ group $ sort expected
-  checkSingle xa@(x:_:_) =
-    compileError $ "Item " ++ show x ++ " occurs " ++ show (length xa) ++ " times"
-  checkSingle _ = return ()
+containsNoDuplicates expected =
+  mergeAll $ map checkSingle $ group $ sort expected
+  where
+    checkSingle xa@(x:_:_) =
+      compileError $ "Item " ++ show x ++ " occurs " ++ show (length xa) ++ " times"
+    checkSingle _ = return ()
 
-containsAtLeast actual expected = checked where
-  checked = mergeAll $ map (checkInActual $ Set.fromList actual) expected
-  checkInActual va v =
-    if v `Set.member` va
-       then return ()
-       else compileError $ "Item " ++ show v ++ " was expected but not present "
+containsAtLeast actual expected =
+  mergeAll $ map (checkInActual $ Set.fromList actual) expected
+  where
+    checkInActual va v =
+      if v `Set.member` va
+         then return ()
+         else compileError $ "Item " ++ show v ++ " was expected but not present "
 
-containsAtMost actual expected = checked where
-  checked = mergeAll $ map (checkInExpected $ Set.fromList expected) actual
-  checkInExpected va v =
-    if v `Set.member` va
-       then return ()
-       else compileError $ "Item " ++ show v ++ " is unexpected"
+containsAtMost actual expected =
+  mergeAll $ map (checkInExpected $ Set.fromList expected) actual
+  where
+    checkInExpected va v =
+      if v `Set.member` va
+         then return ()
+         else compileError $ "Item " ++ show v ++ " is unexpected"
 
 checkPaired :: (Show a, CompileErrorM m, MergeableM m, Monad m) =>
   (a -> a -> m ()) -> [a] -> [a] -> m ()
@@ -437,48 +441,48 @@ containsPaired = checkPaired checkSingle where
     | a == e = return ()
     | otherwise = compileError $ show a ++ " (actual) vs. " ++ show e ++ " (expected)"
 
-checkOperationSuccess f o = checked where
-  checked = do
-    contents <- readFile f
-    parsed <- return $ readMulti f contents :: IO (CompileInfo [AnyCategory SourcePos])
-    return $ check (parsed >>= o)
-  check (Left es) = compileError $ "Check " ++ f ++ ": " ++ show es
-  check _ = return ()
+checkOperationSuccess f o = do
+  contents <- readFile f
+  let parsed = readMulti f contents :: CompileInfo [AnyCategory SourcePos]
+  return $ check (parsed >>= o)
+  where
+    check (Left es) = compileError $ "Check " ++ f ++ ": " ++ show es
+    check _ = return ()
 
-checkOperationFail f o = checked where
-  checked = do
-    contents <- readFile f
-    parsed <- return $ readMulti f contents :: IO (CompileInfo [AnyCategory SourcePos])
-    return $ check (parsed >>= o)
-  check (Right x) = compileError $ "Check " ++ f ++ ": Expected failure but got\n" ++ show x
-  check _ = return ()
+checkOperationFail f o = do
+  contents <- readFile f
+  let parsed = readMulti f contents :: CompileInfo [AnyCategory SourcePos]
+  return $ check (parsed >>= o)
+  where
+    check (Right x) = compileError $ "Check " ++ f ++ ": Expected failure but got\n" ++ show x
+    check _ = return ()
 
-checkSingleParseSuccess f = checked where
-  checked = do
-    contents <- readFile f
-    parsed <- return $ readSingle f contents :: IO (CompileInfo (AnyCategory SourcePos))
-    return $ check parsed
-  check (Left es) = compileError $ "Parse " ++ f ++ ": " ++ show es
-  check _ = return ()
+checkSingleParseSuccess f = do
+  contents <- readFile f
+  let parsed = readSingle f contents :: CompileInfo (AnyCategory SourcePos)
+  return $ check parsed
+  where
+    check (Left es) = compileError $ "Parse " ++ f ++ ": " ++ show es
+    check _ = return ()
 
-checkSingleParseFail f = checked where
-  checked = do
-    contents <- readFile f
-    parsed <- return $ readSingle f contents :: IO (CompileInfo (AnyCategory SourcePos))
-    return $ check parsed
-  check (Right t) = compileError $ "Parse " ++ f ++ ": Expected failure but got\n" ++ show t
-  check _ = return ()
+checkSingleParseFail f = do
+  contents <- readFile f
+  let parsed = readSingle f contents :: CompileInfo (AnyCategory SourcePos)
+  return $ check parsed
+  where
+    check (Right t) = compileError $ "Parse " ++ f ++ ": Expected failure but got\n" ++ show t
+    check _ = return ()
 
-checkShortParseSuccess s = checked where
-  checked = do
-    parsed <- return $ readSingle "(string)" s :: IO (CompileInfo (AnyCategory SourcePos))
-    return $ check parsed
-  check (Left es) = compileError $ "Parse '" ++ s ++ "': " ++ show es
-  check _ = return ()
+checkShortParseSuccess s = do
+  let parsed = readSingle "(string)" s :: CompileInfo (AnyCategory SourcePos)
+  return $ check parsed
+  where
+    check (Left es) = compileError $ "Parse '" ++ s ++ "': " ++ show es
+    check _ = return ()
 
-checkShortParseFail s = checked where
-  checked = do
-    parsed <- return $ readSingle "(string)" s :: IO (CompileInfo (AnyCategory SourcePos))
-    return $ check parsed
-  check (Right t) = compileError $ "Parse '" ++ s ++ "': Expected failure but got\n" ++ show t
-  check _ = return ()
+checkShortParseFail s = do
+  let parsed = readSingle "(string)" s :: CompileInfo (AnyCategory SourcePos)
+  return $ check parsed
+  where
+    check (Right t) = compileError $ "Parse '" ++ s ++ "': Expected failure but got\n" ++ show t
+    check _ = return ()

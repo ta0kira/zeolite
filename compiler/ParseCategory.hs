@@ -50,48 +50,47 @@ instance ParseFromSource (AnyCategory SourcePos) where
       return $ ValueConcrete [c] n ps rs ds vs
 
 parseCategoryParams :: Parser [ValueParam SourcePos]
-parseCategoryParams = parsed where
-  parsed = do
-    (con,inv,cov) <- none <|> try fixedOnly <|> try noFixed <|> try explicitFixed
-    return $ map (apply Contravariant) con ++
-             map (apply Invariant) inv ++
-             map (apply Covariant) cov
-  none = do
-    notFollowedBy (string "<")
-    return ([],[],[])
-  fixedOnly = do -- T<a,b,c>
-    inv <- between (sepAfter $ string "<")
-                   (sepAfter $ string ">")
-                   (sepBy singleParam (sepAfter $ string ","))
-    return ([],inv,[])
-  noFixed = do -- T<a,b|c,d>
-    con <- between (sepAfter $ string "<")
-                   (sepAfter $ string "|")
-                   (sepBy singleParam (sepAfter $ string ","))
-    cov <- between nullParse
-                   (sepAfter $ string ">")
-                   (sepBy singleParam (sepAfter $ string ","))
-    return (con,[],cov)
-  explicitFixed = do -- T<a,b|c,d|e,f>
-    con <- between (sepAfter $ string "<")
-                   (sepAfter $ string "|")
-                   (sepBy singleParam (sepAfter $ string ","))
-    inv <- between nullParse
-                   (sepAfter $ string "|")
-                   (sepBy singleParam (sepAfter $ string ","))
-    cov <- between nullParse
-                   (sepAfter $ string ">")
-                   (sepBy singleParam (sepAfter $ string ","))
-    return (con,inv,cov)
-  singleParam = labeled "param declaration" $ do
-    c <- getPosition
-    n <- sourceParser
-    return (c,n)
-  apply v (c,n) = ValueParam [c] n v
+parseCategoryParams = do
+  (con,inv,cov) <- none <|> try fixedOnly <|> try noFixed <|> try explicitFixed
+  return $ map (apply Contravariant) con ++
+           map (apply Invariant) inv ++
+           map (apply Covariant) cov
+  where
+    none = do
+      notFollowedBy (string "<")
+      return ([],[],[])
+    fixedOnly = do -- T<a,b,c>
+      inv <- between (sepAfter $ string "<")
+                     (sepAfter $ string ">")
+                     (sepBy singleParam (sepAfter $ string ","))
+      return ([],inv,[])
+    noFixed = do -- T<a,b|c,d>
+      con <- between (sepAfter $ string "<")
+                     (sepAfter $ string "|")
+                     (sepBy singleParam (sepAfter $ string ","))
+      cov <- between nullParse
+                     (sepAfter $ string ">")
+                     (sepBy singleParam (sepAfter $ string ","))
+      return (con,[],cov)
+    explicitFixed = do -- T<a,b|c,d|e,f>
+      con <- between (sepAfter $ string "<")
+                     (sepAfter $ string "|")
+                     (sepBy singleParam (sepAfter $ string ","))
+      inv <- between nullParse
+                     (sepAfter $ string "|")
+                     (sepBy singleParam (sepAfter $ string ","))
+      cov <- between nullParse
+                     (sepAfter $ string ">")
+                     (sepBy singleParam (sepAfter $ string ","))
+      return (con,inv,cov)
+    singleParam = labeled "param declaration" $ do
+      c <- getPosition
+      n <- sourceParser
+      return (c,n)
+    apply v (c,n) = ValueParam [c] n v
 
 parseCategoryRefines :: Parser [ValueRefine SourcePos]
-parseCategoryRefines = parsed where
-  parsed = sepAfter $ sepBy singleRefine optionalSpace
+parseCategoryRefines = sepAfter $ sepBy singleRefine optionalSpace where
   singleRefine = do
     c <- getPosition
     try kwRefines

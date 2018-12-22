@@ -35,18 +35,18 @@ instance ParseFromSource GeneralInstance where
       return $ SingleType t
 
 instance ParseFromSource ValueType where
-  sourceParser = value where
-    value = do
-      r <- getWeak <|> getOptional <|> getRequired
-      t <- sourceParser
-      return $ ValueType r t
-    getWeak = labeled "weak" $ do
-      try kwWeak
-      return WeakValue
-    getOptional = labeled "optional" $ do
-      try kwOptional
-      return OptionalValue
-    getRequired = return RequiredValue
+  sourceParser = do
+    r <- getWeak <|> getOptional <|> getRequired
+    t <- sourceParser
+    return $ ValueType r t
+    where
+      getWeak = labeled "weak" $ do
+        try kwWeak
+        return WeakValue
+      getOptional = labeled "optional" $ do
+        try kwOptional
+        return OptionalValue
+      getRequired = return RequiredValue
 
 instance ParseFromSource TypeName where
   sourceParser = labeled "type name" $ do
@@ -63,24 +63,24 @@ instance ParseFromSource ParamName where
     return $ ParamName (b:e)
 
 instance ParseFromSource TypeInstance where
-  sourceParser = parsed where
-    args = between (sepAfter $ string "<")
-                   (sepAfter $ string ">")
-                   (sepBy sourceParser (sepAfter $ string ","))
-    parsed = labeled "type" $ do
-      n <- sourceParser
-      as <- labeled "type args" $ try args <|> return []
-      return $ TypeInstance n (ParamSet as)
+  sourceParser = labeled "type" $ do
+    n <- sourceParser
+    as <- labeled "type args" $ try args <|> return []
+    return $ TypeInstance n (ParamSet as)
+    where
+      args = between (sepAfter $ string "<")
+                     (sepAfter $ string ">")
+                     (sepBy sourceParser (sepAfter $ string ","))
 
 instance ParseFromSource DefinesInstance where
-  sourceParser = parsed where
-    args = between (sepAfter $ string "<")
-                   (sepAfter $ string ">")
-                   (sepBy sourceParser (sepAfter $ string ","))
-    parsed = labeled "type" $ do
-      n <- sourceParser
-      as <- labeled "type args" $ try args <|> return []
-      return $ DefinesInstance n (ParamSet as)
+  sourceParser = labeled "type" $ do
+    n <- sourceParser
+    as <- labeled "type args" $ try args <|> return []
+    return $ DefinesInstance n (ParamSet as)
+    where
+      args = between (sepAfter $ string "<")
+                     (sepAfter $ string ">")
+                     (sepBy sourceParser (sepAfter $ string ","))
 
 instance ParseFromSource TypeInstanceOrParam where
   sourceParser = try param <|> inst where
