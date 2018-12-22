@@ -2,7 +2,7 @@
 
 module TypeInstanceTest where
 
-import Data.List (intercalate)
+import Data.List
 import Text.Parsec
 import qualified Data.Map as Map
 
@@ -326,100 +326,100 @@ main = runAllTests [
       "optional all"
       "optional Type3",
 
-    checkValidSuccess
+    return $ checkValidSuccess resolver
       [("x",[])]
       "x",
-    checkValidFail
+    return $ checkValidFail resolver
       [("x",[])]
       "Type1<x>",
-    checkValidFail
+    return $ checkValidFail resolver
       [("x",["requires Type3"])]
       "Type1<x>",
-    checkValidFail
+    return $ checkValidFail resolver
       [("x",["defines Instance0"])]
       "Type1<x>",
-    checkValidSuccess
+    return $ checkValidSuccess resolver
       [("x",["requires Type3","defines Instance0"])]
       "Type1<x>",
-    checkValidSuccess
+    return $ checkValidSuccess resolver
       []
       "Type1<Type3>",
-    checkValidFail
+    return $ checkValidFail resolver
       []
       "Type1<Type1<Type3>>",
-    checkValidSuccess
+    return $ checkValidSuccess resolver
       []
       "Type2<Type0,Type0,Type0>",
 
-    checkValidSuccess
+    return $ checkValidSuccess resolver
       [("x",["defines Instance1<Type0>",
              "defines Instance1<x>",
              "defines Instance1<Type3>"])]
       "Type2<x,x,x>",
-    checkValidFail
+    return $ checkValidFail resolver
       [("x",["defines Instance1<x>",
              "defines Instance1<Type3>"])]
       "Type2<x,x,x>",
-    checkValidFail
+    return $ checkValidFail resolver
       [("x",["defines Instance1<Type0>",
              "defines Instance1<Type3>"])]
       "Type2<x,x,x>",
-    checkValidSuccess
+    return $ checkValidSuccess resolver
       [("x",["defines Instance1<Type0>",
              "defines Instance1<x>"])]
       "Type2<x,x,x>",
-    checkValidSuccess
+    return $ checkValidSuccess resolver
       [("x",["allows Type0", -- Type0 -> x implies Type3 -> x
              "defines Instance1<x>"])]
       "Type2<x,x,x>",
-    checkValidFail
+    return $ checkValidFail resolver
       [("x",["allows Type3", -- Type3 -> x doesn't imply Type0 -> x
              "defines Instance1<x>"])]
       "Type2<x,x,x>",
 
-    checkValidFail
+    return $ checkValidFail resolver
       [("x",["requires Type3","defines Instance0"])]
       "Type1<(x|Type0)>",
-    checkValidSuccess
+    return $ checkValidSuccess resolver
       [("x",["requires Type3","defines Instance0"])]
       "Type1<(x&Type0)>",
-    checkValidSuccess
+    return $ checkValidSuccess resolver
       [("x",[])]
       "Type1<(x&Type3)>",
-    checkValidSuccess
+    return $ checkValidSuccess resolver
       [("x",[])]
       "Type1<((x|Type0)&Type3)>",
     -- Both x and Type3 define Instance0, which is not allowed here.
-    checkValidFail
+    return $ checkValidFail resolver
       [("x",["defines Instance0"])]
       "Type1<(x&Type3&Type0)>",
-    checkValidFail
+    return $ checkValidFail resolver
       [("x",["defines Instance0"])]
       "Type1<(x&(Type3&Type0))>",
-    checkValidSuccess
+    return $ checkValidSuccess resolver
       [("x",["defines Instance0"])]
       "Type1<(x&(Type3|Type0))>",
-    checkValidSuccess
+    return $ checkValidSuccess resolver
       [("x",["defines Instance0"])]
       "Type1<(Type0&(x&Type0))>",
-    checkValidFail
+    return $ checkValidFail resolver
       [("x",[]),
        ("y",[])]
       "Type1<(x&y)>",
-    checkValidFail
+    return $ checkValidFail resolver
       []
       "Type1<(Type0|Type3)>",
 
-    checkValidSuccess
+    return $ checkValidSuccess resolver
       []
       "Type4<Type0>",
-    checkValidSuccess
+    return $ checkValidSuccess resolver
       [("x",["allows Type0"])]
       "Type4<(x&Type0)>",
-    checkValidSuccess
+    return $ checkValidSuccess resolver
       [("x",["allows Type0"])]
       "Type4<(x|Type0)>",
-    checkValidFail
+    return $ checkValidFail resolver
       [("x",["allows Type0"])]
       "Type4<(x|Type3)>"
   ]
@@ -531,44 +531,6 @@ checkConvertFail pa x y = return checked where
     check $ checkValueTypeMatch resolver pa2 t1 t2
   check (Right _) = compileError $ prefix ++ ": Expected failure"
   check _ = return ()
-
-checkValidSuccess pa x = return checked where
-  prefix = x ++ " " ++ showParams pa
-  checked = do
-    ([t],pa2) <- parseTheTest pa [x]
-    check $ validateGeneralInstance resolver pa2 t
-  check (Left es) = compileError $ prefix ++ ": " ++ show es
-  check _ = return ()
-
-checkValidFail pa x = return checked where
-  prefix = x ++ " " ++ showParams pa
-  checked = do
-    ([t],pa2) <- parseTheTest pa [x]
-    check $ validateGeneralInstance resolver pa2 t
-  check (Right _) = compileError $ prefix ++ ": Expected failure"
-  check _ = return ()
-
-showParams pa = "[" ++ intercalate "," (concat $ map expand pa) ++ "]" where
-  expand (n,ps) = map (\p -> n ++ " " ++ p) ps
-
-parseTheTest :: ParseFromSource a =>
-  [(String,[String])] -> [String] -> CompileInfo ([a],ParamFilters)
-parseTheTest pa xs = parsed where
-  parsed = do
-    ts <- collectAllOrErrorM $ map parseObject xs
-    pa2 <- collectAllOrErrorM $ map parseFilters pa
-    return (ts,Map.fromList pa2)
-  parseFilters (n,fs) = do
-    fs2 <- collectAllOrErrorM $ map parseObject fs
-    return (ParamName n,fs2)
-  parseObject s = checked parsed where
-    parsed = parse (between optionalSpace endOfDoc sourceParser) "(string)" s
-    checked (Right t) = return t
-    checked (Left e)  = compileError (show e)
-
-forceParse :: ParseFromSource a => String -> a
-forceParse s = force $ parse sourceParser "(string)" s where
-  force (Right x) = x
 
 resolver :: TypeResolver CompileInfo ()
 resolver = TypeResolver {

@@ -296,9 +296,62 @@ main = runAllTests [
             [],
             [],
             []
-          ])
-  ]
+          ]),
 
+    -- TODO: Clean these tests up.
+    checkOperationSuccess
+      "testfiles/filters.txt"
+      (\ts -> do
+        ta <- flattenAllConnections Map.empty ts >>= declareAllTypes Map.empty
+        r <- return $ categoriesToTypeResolver ta
+        checkValidSuccess r [] "Value0<Value1,Value2>"),
+    checkOperationFail
+      "testfiles/filters.txt"
+      (\ts -> do
+        ta <- flattenAllConnections Map.empty ts >>= declareAllTypes Map.empty
+        r <- return $ categoriesToTypeResolver ta
+        checkValidSuccess r [] "Value0<Value1,Value1>"),
+    checkOperationSuccess
+      "testfiles/filters.txt"
+      (\ts -> do
+        ta <- flattenAllConnections Map.empty ts >>= declareAllTypes Map.empty
+        r <- return $ categoriesToTypeResolver ta
+        checkValidSuccess r [] "Value0<Value3,Value2>"),
+    checkOperationFail
+      "testfiles/filters.txt"
+      (\ts -> do
+        ta <- flattenAllConnections Map.empty ts >>= declareAllTypes Map.empty
+        r <- return $ categoriesToTypeResolver ta
+        checkValidSuccess r
+          [("x",[]),("y",[])]
+          "Value0<x,y>"),
+    checkOperationSuccess
+      "testfiles/filters.txt"
+      (\ts -> do
+        ta <- flattenAllConnections Map.empty ts >>= declareAllTypes Map.empty
+        r <- return $ categoriesToTypeResolver ta
+        checkValidSuccess r
+          [("x",["allows y","requires Function<x,y>"]),
+           ("y",["requires x","defines Equals<y>"])]
+          "Value0<x,y>"),
+    checkOperationSuccess
+      "testfiles/filters.txt"
+      (\ts -> do
+        ta <- flattenAllConnections Map.empty ts >>= declareAllTypes Map.empty
+        r <- return $ categoriesToTypeResolver ta
+        checkValidSuccess r
+          [("x",["allows Value2","requires Function<x,Value2>"])]
+          "Value0<x,Value2>"),
+    checkOperationFail
+      "testfiles/filters.txt"
+      (\ts -> do
+        ta <- flattenAllConnections Map.empty ts >>= declareAllTypes Map.empty
+        r <- return $ categoriesToTypeResolver ta
+        checkValidSuccess r
+          [("x",["allows Value2","requires Function<x,Value2>"]),
+           ("y",["requires x","defines Equals<y>"])]
+          "Value0<x,y>")
+  ]
 
 getRefines ts s n = do
   ta <- declareAllTypes Map.empty ts
@@ -423,16 +476,3 @@ checkShortParseFail s = checked where
     return $ check parsed
   check (Right t) = compileError $ "Parse '" ++ s ++ "': Expected failure but got\n" ++ show t
   check _ = return ()
-
-readSingle :: ParseFromSource a => String -> String -> CompileInfo a
-readSingle f s = parsed where
-  parsed = unwrap $ parse (between optionalSpace endOfDoc sourceParser) f s
-  unwrap (Left e)  = compileError (show e)
-  unwrap (Right t) = return t
-
-readMulti :: ParseFromSource a => String -> String -> CompileInfo [a]
-readMulti f s = parsed where
-  parsed =
-    unwrap $ parse (between optionalSpace endOfDoc (sepBy sourceParser optionalSpace)) f s
-  unwrap (Left e)  = compileError (show e)
-  unwrap (Right t) = return t

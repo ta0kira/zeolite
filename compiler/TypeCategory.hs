@@ -300,14 +300,14 @@ flattenAllConnections tm0 ts = updated where
       pa <- assignParams tm c t
       (_,v) <- getValueCategory tm (c,n)
       -- Assume that tm0 has already been fully processed.
-      (collectAllOrErrorM $ map (subAll c pa) (viRefines v)) >>= return . (ra:)
+      (collectAllOrErrorM $ map (subAll c pa) (getCategoryRefines v)) >>= return . (ra:)
     | otherwise = do
       pa <- assignParams tm c t
       (_,v) <- getValueCategory tm (c,n)
       -- NOTE: Can't use mfix for this because that would require full
       -- evaluation before that same evaluation actually starts.
       -- Assumes that checkConnectedTypes already checked the types.
-      rs <- collectAllOrErrorM $ map (getRefines tm) (viRefines v)
+      rs <- collectAllOrErrorM $ map (getRefines tm) (getCategoryRefines v)
       (collectAllOrErrorM $ map (subAll c pa) (concat rs)) >>= return . (ra:)
   subAll c pa (ValueRefine c1 t1) = do
     (SingleType (JustTypeInstance t2)) <-
@@ -316,7 +316,7 @@ flattenAllConnections tm0 ts = updated where
   assignParams tm c (TypeInstance n ps) = do
     (_,v) <- getValueCategory tm (c,n)
     -- TODO: From here down should be a top-level function.
-    ns <- return $ map vpParam $ viParams v
+    ns <- return $ map vpParam $ getCategoryParams v
     paired <- processParamPairs alwaysPairParams (ParamSet ns) ps
     return $ Map.fromList paired
 
