@@ -155,7 +155,9 @@ data TypeResolver m p =
     -- Gets filters for the assigned parameters.
     trTypeFilters :: TypeInstance -> m (p,InstanceFilters),
     -- Gets filters for the assigned parameters.
-    trDefinesFilters :: DefinesInstance -> m (p,InstanceFilters)
+    trDefinesFilters :: DefinesInstance -> m (p,InstanceFilters),
+    -- Returns true if the type is a value interface.
+    trInterface :: TypeName -> m Bool
   }
 
 filterLookup :: (CompileErrorM m, Monad m) =>
@@ -290,9 +292,26 @@ checkParamToParam r f Covariant n1 n2
 
 validateGeneralInstance :: (MergeableM m, Mergeable p, CompileErrorM m, Monad m) =>
   TypeResolver m p -> ParamFilters -> GeneralInstance -> m ()
-validateGeneralInstance r f ta@(TypeMerge _ ts) =
+validateGeneralInstance r f ta@(TypeMerge m ts) = do
+  mergeAll (map checkConcrete ts)
   mergeAll (map (validateGeneralInstance r f) ts) `reviseError`
     (show ta ++ " fails to meet required parameter constraints")
+  where
+    checkConcrete (SingleType (JustParamName n))
+      | m == MergeUnion =
+        compileError $ "Param " ++ show n ++ " is not allowed in a union"
+      | m == MergeIntersect =
+        compileError $ "Param " ++ show n ++ " is not allowed in an intersection"
+    checkConcrete (SingleType (JustTypeInstance (TypeInstance n _)))
+      | m == MergeUnion = do
+        i <- trInterface r n
+        when (not i) $ compileError $
+          "Non-interface type " ++ show n ++ " is not allowed in a union"
+      | m == MergeIntersect = do
+        i <- trInterface r n
+        when (not i) $ compileError $
+          "Non-interface type " ++ show n ++ " is not allowed in an intersection"
+    checkConcrete _ = return ()
 validateGeneralInstance r f (SingleType (JustTypeInstance t)) =
   validateTypeInstance r f t `reviseError`
     (show t ++ " fails to meet required parameter constraints")
@@ -325,9 +344,8 @@ validateAssignment r f t fs = mergeAll (map (checkFilter t) fs) where
     checkGeneralMatch r f Contravariant t1 (SingleType t2)
   checkFilter t1@(TypeMerge MergeUnion _) (DefinesFilter t) =
     compileError $ "Unions cannot satisfy defines constraint " ++ show t
-  checkFilter (TypeMerge MergeIntersect ts) f@(DefinesFilter t) = do
-    let rs = zip ts (map (flip checkFilter f) ts)
-    requireExactlyOne t $ map fst $ filter (not . isCompileError . snd) rs
+  checkFilter (TypeMerge MergeIntersect ts) f@(DefinesFilter t) =
+    compileError $ "Intersections cannot satisfy defines constraint " ++ show t
   checkFilter t1@(SingleType t) (DefinesFilter f) = checkDefinesFilter f t
   requireExactlyOne t [_] = mergeDefault
   requireExactlyOne t []  =

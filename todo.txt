@@ -3,17 +3,17 @@ Roughly in order of execution:
 - Write parser for function signatures.
 - Type-check function signatures.
 - Merge function signatures.
-- Test function-signature system.
 
+- Implement Weak in C++.
 - Unit tests for C++ base.
-- General testing system for generated C++.
+- Implement instance-function dispatching for intersections.
 
 - Output everything but implementations.
+- General testing system for generated C++.
 - Test output with hand-written implementations.
 
 - Write parser for implementations.
 - Compile implementations, e.g., type-check and resolve symbols.
-- Test implementation compilation.
 - Output implementations.
 
 - Integration tests for full compilation.

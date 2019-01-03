@@ -531,7 +531,8 @@ categoriesToTypeResolver tm =
     trDefines = defines,
     trVariance = variance,
     trTypeFilters = typeFilters,
-    trDefinesFilters = definesFilters
+    trDefinesFilters = definesFilters,
+    trInterface = interface
   } where
     refines (TypeInstance n1 ps1) n2
       | n1 == n2 = do
@@ -583,6 +584,9 @@ categoriesToTypeResolver tm =
       case n `Map.lookup` fa of
            (Just x) -> return x
            _ -> return []
+    interface n = do
+      (_,t) <- getValueCategory tm ([],n)
+      return $ isValueInterface t
 
 uncheckedSubAllParams :: (MergeableM m, CompileErrorM m, Monad m) =>
   (ParamName -> m GeneralInstance) -> GeneralInstance -> m GeneralInstance

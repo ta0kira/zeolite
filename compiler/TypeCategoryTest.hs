@@ -351,6 +351,62 @@ main = runAllTests [
 
     -- TODO: Clean these tests up.
     checkOperationSuccess
+      "testfiles/flatten.txt"
+      (\ts -> do
+        ta <- flattenAllConnections Map.empty ts >>= declareAllTypes Map.empty
+        let r = categoriesToTypeResolver ta
+        checkTypeSuccess r [] "Child"),
+    checkOperationSuccess
+      "testfiles/flatten.txt"
+      (\ts -> do
+        ta <- flattenAllConnections Map.empty ts >>= declareAllTypes Map.empty
+        let r = categoriesToTypeResolver ta
+        checkTypeFail r [] "(Child|Child)"),
+    checkOperationSuccess
+      "testfiles/flatten.txt"
+      (\ts -> do
+        ta <- flattenAllConnections Map.empty ts >>= declareAllTypes Map.empty
+        let r = categoriesToTypeResolver ta
+        checkTypeFail r [] "(Child&Child)"),
+    checkOperationSuccess
+      "testfiles/flatten.txt"
+      (\ts -> do
+        ta <- flattenAllConnections Map.empty ts >>= declareAllTypes Map.empty
+        let r = categoriesToTypeResolver ta
+        checkTypeSuccess r [] "Object2"),
+    checkOperationSuccess
+      "testfiles/flatten.txt"
+      (\ts -> do
+        ta <- flattenAllConnections Map.empty ts >>= declareAllTypes Map.empty
+        let r = categoriesToTypeResolver ta
+        checkTypeSuccess r [] "(Object2|Object2)"),
+    checkOperationSuccess
+      "testfiles/flatten.txt"
+      (\ts -> do
+        ta <- flattenAllConnections Map.empty ts >>= declareAllTypes Map.empty
+        let r = categoriesToTypeResolver ta
+        checkTypeSuccess r [] "(Object2&Object2)"),
+    checkOperationSuccess
+      "testfiles/flatten.txt"
+      (\ts -> do
+        ta <- flattenAllConnections Map.empty ts >>= declareAllTypes Map.empty
+        let r = categoriesToTypeResolver ta
+        checkTypeFail r [] "Type<Child>"),
+    checkOperationSuccess
+      "testfiles/flatten.txt"
+      (\ts -> do
+        ta <- flattenAllConnections Map.empty ts >>= declareAllTypes Map.empty
+        let r = categoriesToTypeResolver ta
+        checkTypeFail r [] "(Type<Child>|Type<Child>)"),
+    checkOperationSuccess
+      "testfiles/flatten.txt"
+      (\ts -> do
+        ta <- flattenAllConnections Map.empty ts >>= declareAllTypes Map.empty
+        let r = categoriesToTypeResolver ta
+        checkTypeFail r [] "(Type<Child>&Type<Child>)"),
+
+    -- TODO: Clean these tests up.
+    checkOperationSuccess
       "testfiles/filters.txt"
       (\ts -> do
         ta <- flattenAllConnections Map.empty ts >>= declareAllTypes Map.empty

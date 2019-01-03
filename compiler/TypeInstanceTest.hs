@@ -377,57 +377,53 @@ main = runAllTests [
              "defines Instance1<x>"])]
       "Type2<x,x,x>",
 
-    return $ checkTypeFail resolver
-      [("x",["requires Type3","defines Instance0"])]
-      "Type1<(x|Type0)>",
-    return $ checkTypeSuccess resolver
-      [("x",["requires Type3","defines Instance0"])]
-      "Type1<(x&Type0)>",
-    return $ checkTypeSuccess resolver
-      [("x",[])]
-      "Type1<(x&Type3)>",
-    return $ checkTypeSuccess resolver
-      [("x",[])]
-      "Type1<((x|Type0)&Type3)>",
-    -- Both x and Type3 define Instance0, which is not allowed here.
-    return $ checkTypeFail resolver
-      [("x",["defines Instance0"])]
-      "Type1<(x&Type3&Type0)>",
-    return $ checkTypeFail resolver
-      [("x",["defines Instance0"])]
-      "Type1<(x&(Type3&Type0))>",
-    return $ checkTypeSuccess resolver
-      [("x",["defines Instance0"])]
-      "Type1<(x&(Type3|Type0))>",
-    return $ checkTypeSuccess resolver
-      [("x",["defines Instance0"])]
-      "Type1<(Type0&(x&Type0))>",
-    return $ checkTypeFail resolver
-      [("x",[]),
-       ("y",[])]
-      "Type1<(x&y)>",
-    return $ checkTypeFail resolver
-      []
-      "Type1<(Type0|Type3)>",
-
     return $ checkTypeSuccess resolver
       []
       "Type4<Type0>",
-    return $ checkTypeSuccess resolver
-      [("x",["allows Type0"])]
-      "Type4<(x&Type0)>",
-    return $ checkTypeSuccess resolver
-      [("x",["allows Type0"])]
-      "Type4<(x|Type0)>",
-    return $ checkTypeFail resolver
-      [("x",["allows Type0"])]
-      "Type4<(x|Type3)>",
     return $ checkTypeFail resolver
       []
       "Type5<x>",
     return $ checkTypeSuccess resolver
       [("x",[])]
       "Type5<x>",
+
+    return $ checkTypeSuccess resolver
+      []
+      "(Type4<Type0>|Type1<Type3>)",
+    return $ checkTypeSuccess resolver
+      []
+      "(Type4<Type0>&Type1<Type3>)",
+    return $ checkTypeFail resolver
+      [("x",[])]
+      "(Type5<x>|Type1<Type3>)",
+    return $ checkTypeFail resolver
+      [("x",[])]
+      "(Type5<x>&Type1<Type3>)",
+    return $ checkTypeFail resolver
+      [("x",[])]
+      "(x|Type1<Type3>)",
+    return $ checkTypeFail resolver
+      [("x",[])]
+      "(x&Type1<Type3>)",
+    return $ checkTypeFail resolver
+      [("x",[])]
+      "(Type4<Type0>|Instance0)",
+    return $ checkTypeFail resolver
+      [("x",[])]
+      "(Type4<Type0>&Instance0)",
+
+    return $ checkTypeSuccess resolver
+      []
+      "((Type4<Type0>&Type1<Type3>)|Type1<Type3>)",
+    return $ checkTypeSuccess resolver
+      []
+      "((Type4<Type0>|Type1<Type3>)&Type1<Type3>)",
+    return $ checkTypeFail resolver
+      [("x",[])]
+      "((Type4<Type0>&x)|Type1<Type3>)",
+    return $ checkTypeFail resolver
+      [("x",[])]
+      "((Type4<Type0>|x)&Type1<Type3>)",
 
     return $ checkDefinesFail resolver
       [("x",[])]
@@ -575,7 +571,8 @@ resolver = TypeResolver {
     trDefines = getParams defines,
     trVariance = mapLookup variances,
     trTypeFilters = getTypeFilters,
-    trDefinesFilters = getDefinesFilters
+    trDefinesFilters = getDefinesFilters,
+    trInterface = getInterface
   }
 
 getParams ma (TypeInstance n1 ps1) n2 = do
@@ -590,6 +587,14 @@ getTypeFilters (TypeInstance n ps) = do
 getDefinesFilters (DefinesInstance n ps) = do
   f <- mapLookup definesFilters n
   return ((),f ps)
+
+getInterface t
+  | t == type0 = return True
+  | t == type1 = return True
+  | t == type2 = return True
+  | t == type3 = return True
+  | t == type4 = return True
+  | otherwise = return False
 
 
 mapLookup :: (Ord n, Show n, CompileErrorM m, Monad m) => Map.Map n a -> n -> m a
