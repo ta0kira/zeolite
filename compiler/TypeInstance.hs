@@ -20,6 +20,7 @@ module TypeInstance (
   checkValueTypeMatch,
   validateDefinesInstance,
   validateGeneralInstance,
+  validateTypeFilter,
   validateTypeInstance,
 ) where
 
@@ -155,9 +156,7 @@ data TypeResolver m p =
     -- Gets filters for the assigned parameters.
     trTypeFilters :: TypeInstance -> m (p,InstanceFilters),
     -- Gets filters for the assigned parameters.
-    trDefinesFilters :: DefinesInstance -> m (p,InstanceFilters),
-    -- Returns true if the type is a value interface.
-    trInterface :: TypeName -> m Bool
+    trDefinesFilters :: DefinesInstance -> m (p,InstanceFilters)
   }
 
 filterLookup :: (CompileErrorM m, Monad m) =>
@@ -180,8 +179,6 @@ checkValueTypeMatch r f ts1@(ValueType r1 t1) ts2@(ValueType r2 t2)
 checkGeneralMatch :: (MergeableM m, Mergeable p, CompileErrorM m, Monad m) =>
   TypeResolver m p -> ParamFilters -> Variance ->
   GeneralInstance -> GeneralInstance -> m p
--- Necessary so that any -> any.
-checkGeneralMatch _ _ _ (TypeMerge MergeIntersect []) (TypeMerge MergeIntersect []) = mergeDefault
 checkGeneralMatch r f v ts1 ts2 = checkGeneralType (checkSingleMatch r f v) ts1 ts2
 
 checkSingleMatch :: (MergeableM m, Mergeable p, CompileErrorM m, Monad m) =>
@@ -292,26 +289,9 @@ checkParamToParam r f Covariant n1 n2
 
 validateGeneralInstance :: (MergeableM m, Mergeable p, CompileErrorM m, Monad m) =>
   TypeResolver m p -> ParamFilters -> GeneralInstance -> m ()
-validateGeneralInstance r f ta@(TypeMerge m ts) = do
-  mergeAll (map checkConcrete ts)
+validateGeneralInstance r f ta@(TypeMerge m ts) =
   mergeAll (map (validateGeneralInstance r f) ts) `reviseError`
     (show ta ++ " fails to meet required parameter constraints")
-  where
-    checkConcrete (SingleType (JustParamName n))
-      | m == MergeUnion =
-        compileError $ "Param " ++ show n ++ " is not allowed in a union"
-      | m == MergeIntersect =
-        compileError $ "Param " ++ show n ++ " is not allowed in an intersection"
-    checkConcrete (SingleType (JustTypeInstance (TypeInstance n _)))
-      | m == MergeUnion = do
-        i <- trInterface r n
-        when (not i) $ compileError $
-          "Non-interface type " ++ show n ++ " is not allowed in a union"
-      | m == MergeIntersect = do
-        i <- trInterface r n
-        when (not i) $ compileError $
-          "Non-interface type " ++ show n ++ " is not allowed in an intersection"
-    checkConcrete _ = return ()
 validateGeneralInstance r f (SingleType (JustTypeInstance t)) =
   validateTypeInstance r f t `reviseError`
     (show t ++ " fails to meet required parameter constraints")
@@ -335,6 +315,13 @@ validateDefinesInstance r f t@(DefinesInstance n ps) = do
   mergeAll (map (validateGeneralInstance r f) (psParams ps)) `reviseError`
     ("Recursive error in " ++ show t)
 
+validateTypeFilter :: (MergeableM m, Mergeable p, CompileErrorM m, Monad m) =>
+  TypeResolver m p -> ParamFilters -> TypeFilter -> m ()
+validateTypeFilter r f (TypeFilter _ t) =
+  validateGeneralInstance r f (SingleType t)
+validateTypeFilter r f (DefinesFilter t) =
+  validateDefinesInstance r f t
+
 validateAssignment :: (MergeableM m, Mergeable p, CompileErrorM m, Monad m) =>
   TypeResolver m p -> ParamFilters -> GeneralInstance -> [TypeFilter] -> m p
 validateAssignment r f t fs = mergeAll (map (checkFilter t) fs) where
@@ -342,10 +329,8 @@ validateAssignment r f t fs = mergeAll (map (checkFilter t) fs) where
     checkGeneralMatch r f Covariant t1 (SingleType t2)
   checkFilter t1 (TypeFilter FilterAllows t2) = do
     checkGeneralMatch r f Contravariant t1 (SingleType t2)
-  checkFilter t1@(TypeMerge MergeUnion _) (DefinesFilter t) =
-    compileError $ "Unions cannot satisfy defines constraint " ++ show t
-  checkFilter (TypeMerge MergeIntersect ts) f@(DefinesFilter t) =
-    compileError $ "Intersections cannot satisfy defines constraint " ++ show t
+  checkFilter t1@(TypeMerge _ _) (DefinesFilter t) =
+    compileError $ "Merged type " ++ show t1 ++ " cannot satisfy defines constraint " ++ show t
   checkFilter t1@(SingleType t) (DefinesFilter f) = checkDefinesFilter f t
   requireExactlyOne t [_] = mergeDefault
   requireExactlyOne t []  =

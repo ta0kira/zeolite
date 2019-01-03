@@ -435,12 +435,9 @@ checkCategoryInstances tm0 ts = do
     checkDefine r fs tm (ValueDefine c t) =
       validateDefinesInstance r fs t `reviseError`
         (show t ++ " [" ++ formatFullContext c ++ "]")
-    checkFilter r fs _ (ParamFilter c n fa@(TypeFilter _ t)) =
-      validateGeneralInstance r fs (SingleType t) `reviseError`
-        (show n ++ " " ++ show fa ++ " [" ++ formatFullContext c ++ "]")
-    checkFilter r fs tm (ParamFilter c n fa@(DefinesFilter t)) = do
-      validateDefinesInstance r fs t `reviseError`
-        (show n ++ " " ++ show fa ++ " [" ++ formatFullContext c ++ "]")
+    checkFilter r fs _ (ParamFilter c n f) =
+      validateTypeFilter r fs f `reviseError`
+        (show n ++ " " ++ show f ++ " [" ++ formatFullContext c ++ "]")
 
 mergeCategoryInstances :: (Show c, MergeableM m, CompileErrorM m, Monad m) =>
   CategoryMap c -> [AnyCategory c] -> m [AnyCategory c]
@@ -531,8 +528,7 @@ categoriesToTypeResolver tm =
     trDefines = defines,
     trVariance = variance,
     trTypeFilters = typeFilters,
-    trDefinesFilters = definesFilters,
-    trInterface = interface
+    trDefinesFilters = definesFilters
   } where
     refines (TypeInstance n1 ps1) n2
       | n1 == n2 = do
@@ -584,9 +580,6 @@ categoriesToTypeResolver tm =
       case n `Map.lookup` fa of
            (Just x) -> return x
            _ -> return []
-    interface n = do
-      (_,t) <- getValueCategory tm ([],n)
-      return $ isValueInterface t
 
 uncheckedSubAllParams :: (MergeableM m, CompileErrorM m, Monad m) =>
   (ParamName -> m GeneralInstance) -> GeneralInstance -> m GeneralInstance

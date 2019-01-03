@@ -361,13 +361,13 @@ main = runAllTests [
       (\ts -> do
         ta <- flattenAllConnections Map.empty ts >>= declareAllTypes Map.empty
         let r = categoriesToTypeResolver ta
-        checkTypeFail r [] "(Child|Child)"),
+        checkTypeSuccess r [] "(Child|Child)"),
     checkOperationSuccess
       "testfiles/flatten.txt"
       (\ts -> do
         ta <- flattenAllConnections Map.empty ts >>= declareAllTypes Map.empty
         let r = categoriesToTypeResolver ta
-        checkTypeFail r [] "(Child&Child)"),
+        checkTypeSuccess r [] "(Child&Child)"),
     checkOperationSuccess
       "testfiles/flatten.txt"
       (\ts -> do

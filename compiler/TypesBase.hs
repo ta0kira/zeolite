@@ -86,10 +86,11 @@ data GeneralType a =
 checkGeneralType :: Mergeable c => (a -> b -> c) -> GeneralType a -> GeneralType b -> c
 checkGeneralType f ti1 ti2 = singleCheck ti1 ti2 where
   singleCheck (SingleType t1) (SingleType t2) = t1 `f` t2
+  -- NOTE: The merge-alls must be expanded strictly before the merge-anys.
+  singleCheck ti1 (TypeMerge MergeIntersect t2) = mergeAll $ map (ti1 `singleCheck`) t2
   singleCheck (TypeMerge MergeUnion     t1) ti2 = mergeAll $ map (`singleCheck` ti2) t1
   singleCheck (TypeMerge MergeIntersect t1) ti2 = mergeAny $ map (`singleCheck` ti2) t1
   singleCheck ti1 (TypeMerge MergeUnion     t2) = mergeAny $ map (ti1 `singleCheck`) t2
-  singleCheck ti1 (TypeMerge MergeIntersect t2) = mergeAll $ map (ti1 `singleCheck`) t2
 
 newtype ParamSet a =
   ParamSet {

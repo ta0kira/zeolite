@@ -61,6 +61,9 @@ main = runAllTests [
       "(Type0&Type3)"
       "Type3",
     checkSimpleConvertSuccess
+      "(Type3|Type3)"
+      "Type3",
+    checkSimpleConvertSuccess
       "(Type1<Type0>&Type3)"
       "(Type1<Type0>|Type3)",
     checkSimpleConvertFail
@@ -264,6 +267,25 @@ main = runAllTests [
       [("x",["requires Type3"])]
       "Type2<Type0,Type0,Type0>" "Type2<x,Type0,Type0>",
 
+    return $ checkTypeSuccess resolver
+      []
+      "Type4<Type0>",
+    return $ checkTypeSuccess resolver
+      [("x",["allows Type0"])]
+      "Type4<(x&Type0)>",
+    return $ checkTypeSuccess resolver
+      [("x",["allows Type0"])]
+      "Type4<(x|Type0)>",
+    return $ checkTypeFail resolver
+      [("x",["allows Type0"])]
+      "Type4<(x|Type3)>",
+    return $ checkTypeFail resolver
+      []
+      "Type5<x>",
+    return $ checkTypeSuccess resolver
+      [("x",[])]
+      "Type5<x>",
+
     checkConvertSuccess
       [("x",["requires y"]),
        ("y",["requires z"]),
@@ -274,6 +296,61 @@ main = runAllTests [
        ("y",["allows x"]),
        ("z",[])]
       "x" "y",
+
+    checkSimpleConvertSuccess
+      "any"
+      "any",
+    checkSimpleConvertSuccess
+      "all"
+      "all",
+    checkSimpleConvertSuccess
+      "all"
+      "any",
+    checkConvertSuccess
+      [("x",[]),
+       ("y",[])]
+      "(x&y)" "(x&y)",
+    checkConvertSuccess
+      [("x",[]),
+       ("y",[])]
+      "(x&y)" "(x|y)",
+    checkConvertSuccess
+      [("x",[]),
+       ("y",[])]
+      "(x|y)" "(x|y)",
+    checkConvertSuccess
+      [("x",[]),
+       ("y",["defines Instance0"])]
+      "(x&y)" "(x|y)",
+    checkConvertSuccess
+      [("x",[]),
+       ("y",["defines Instance0"])]
+      "(x&y)" "y",
+    checkConvertFail
+      [("x",[]),
+       ("y",["defines Instance0"])]
+      "(x|y)" "y",
+    checkConvertSuccess
+      [("x",[]),
+       ("y",["requires Type3"])]
+      "(x&y)" "(x|y)",
+    checkConvertSuccess
+      [("x",[]),
+       ("y",["requires Type3"])]
+      "(x&y)" "y",
+    checkConvertFail
+      [("x",[]),
+       ("y",["requires Type3"])]
+      "(x|y)" "y",
+    checkConvertSuccess
+      [("x",[])]
+      "all" "x",
+    checkConvertSuccess
+      [("x",["defines Instance0"])]
+      "all" "x",
+    checkConvertSuccess
+      [("x",["requires Type3"])]
+      "all" "x",
 
     checkSimpleConvertSuccess
       "optional Type0"
@@ -338,6 +415,9 @@ main = runAllTests [
     return $ checkTypeFail resolver
       [("x",["defines Instance0"])]
       "Type1<x>",
+    return $ checkTypeFail resolver
+      []
+      "Type1<all>",
     return $ checkTypeSuccess resolver
       [("x",["requires Type3","defines Instance0"])]
       "Type1<x>",
@@ -350,6 +430,18 @@ main = runAllTests [
     return $ checkTypeSuccess resolver
       []
       "Type2<Type0,Type0,Type0>",
+    return $ checkTypeFail resolver
+      []
+      "Type2<all,Type0,Type0>",
+    return $ checkTypeFail resolver
+      []
+      "Type2<any,Type0,Type0>",
+    return $ checkTypeSuccess resolver
+      []
+      "Type4<all>",
+    return $ checkTypeFail resolver
+      []
+      "Type4<any>",
 
     return $ checkTypeSuccess resolver
       [("x",["defines Instance1<Type0>",
@@ -393,16 +485,16 @@ main = runAllTests [
     return $ checkTypeSuccess resolver
       []
       "(Type4<Type0>&Type1<Type3>)",
-    return $ checkTypeFail resolver
+    return $ checkTypeSuccess resolver
       [("x",[])]
       "(Type5<x>|Type1<Type3>)",
-    return $ checkTypeFail resolver
+    return $ checkTypeSuccess resolver
       [("x",[])]
       "(Type5<x>&Type1<Type3>)",
-    return $ checkTypeFail resolver
+    return $ checkTypeSuccess resolver
       [("x",[])]
       "(x|Type1<Type3>)",
-    return $ checkTypeFail resolver
+    return $ checkTypeSuccess resolver
       [("x",[])]
       "(x&Type1<Type3>)",
     return $ checkTypeFail resolver
@@ -418,10 +510,10 @@ main = runAllTests [
     return $ checkTypeSuccess resolver
       []
       "((Type4<Type0>|Type1<Type3>)&Type1<Type3>)",
-    return $ checkTypeFail resolver
+    return $ checkTypeSuccess resolver
       [("x",[])]
       "((Type4<Type0>&x)|Type1<Type3>)",
-    return $ checkTypeFail resolver
+    return $ checkTypeSuccess resolver
       [("x",[])]
       "((Type4<Type0>|x)&Type1<Type3>)",
 
@@ -571,8 +663,7 @@ resolver = TypeResolver {
     trDefines = getParams defines,
     trVariance = mapLookup variances,
     trTypeFilters = getTypeFilters,
-    trDefinesFilters = getDefinesFilters,
-    trInterface = getInterface
+    trDefinesFilters = getDefinesFilters
   }
 
 getParams ma (TypeInstance n1 ps1) n2 = do
@@ -587,14 +678,6 @@ getTypeFilters (TypeInstance n ps) = do
 getDefinesFilters (DefinesInstance n ps) = do
   f <- mapLookup definesFilters n
   return ((),f ps)
-
-getInterface t
-  | t == type0 = return True
-  | t == type1 = return True
-  | t == type2 = return True
-  | t == type3 = return True
-  | t == type4 = return True
-  | otherwise = return False
 
 
 mapLookup :: (Ord n, Show n, CompileErrorM m, Monad m) => Map.Map n a -> n -> m a
