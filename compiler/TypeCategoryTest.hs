@@ -504,6 +504,11 @@ main = runAllTests [
       (\ts -> do
         ts2 <- flattenAllConnections Map.empty ts
         checkCategoryInstances Map.empty ts2),
+    checkOperationFail
+      "testfiles/requires_concrete.txt"
+      (\ts -> do
+        ts2 <- flattenAllConnections Map.empty ts
+        checkCategoryInstances Map.empty ts2),
 
     -- TODO: Clean these tests up.
     checkOperationSuccess

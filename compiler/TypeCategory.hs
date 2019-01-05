@@ -435,9 +435,12 @@ checkCategoryInstances tm0 ts = do
     checkDefine r fs tm (ValueDefine c t) =
       validateDefinesInstance r fs t `reviseError`
         (show t ++ " [" ++ formatFullContext c ++ "]")
-    checkFilter r fs _ (ParamFilter c n f) =
-      validateTypeFilter r fs f `reviseError`
+    checkFilter r fs tm (ParamFilter c n f) =
+      validateTypeFilter r fs (isConcrete tm) f `reviseError`
         (show n ++ " " ++ show f ++ " [" ++ formatFullContext c ++ "]")
+    isConcrete tm n = do
+      (_,t) <- getCategory tm ([],n)
+      return (isValueConcrete t)
 
 mergeCategoryInstances :: (Show c, MergeableM m, CompileErrorM m, Monad m) =>
   CategoryMap c -> [AnyCategory c] -> m [AnyCategory c]

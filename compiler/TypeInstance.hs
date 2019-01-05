@@ -316,10 +316,14 @@ validateDefinesInstance r f t@(DefinesInstance n ps) = do
     ("Recursive error in " ++ show t)
 
 validateTypeFilter :: (MergeableM m, Mergeable p, CompileErrorM m, Monad m) =>
-  TypeResolver m p -> ParamFilters -> TypeFilter -> m ()
-validateTypeFilter r f (TypeFilter _ t) =
+  TypeResolver m p -> ParamFilters -> (TypeName -> m Bool) -> TypeFilter -> m ()
+validateTypeFilter r f concrete (TypeFilter FilterRequires ta@(JustTypeInstance t)) = do
+  c <- concrete (tiName t)
+  when c $ compileError $ "Concrete type " ++ show (tiName t) ++ " cannot be used in a requires filter"
+  validateGeneralInstance r f (SingleType ta)
+validateTypeFilter r f _ (TypeFilter _ t) =
   validateGeneralInstance r f (SingleType t)
-validateTypeFilter r f (DefinesFilter t) =
+validateTypeFilter r f _ (DefinesFilter t) =
   validateDefinesInstance r f t
 
 validateAssignment :: (MergeableM m, Mergeable p, CompileErrorM m, Monad m) =>
