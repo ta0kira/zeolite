@@ -156,7 +156,9 @@ data TypeResolver m p =
     -- Gets filters for the assigned parameters.
     trTypeFilters :: TypeInstance -> m (p,InstanceFilters),
     -- Gets filters for the assigned parameters.
-    trDefinesFilters :: DefinesInstance -> m (p,InstanceFilters)
+    trDefinesFilters :: DefinesInstance -> m (p,InstanceFilters),
+    -- Returns True if the type is concrete.
+    trConcrete :: TypeName -> m Bool
   }
 
 filterLookup :: (CompileErrorM m, Monad m) =>
@@ -289,7 +291,17 @@ checkParamToParam r f Covariant n1 n2
 
 validateGeneralInstance :: (MergeableM m, Mergeable p, CompileErrorM m, Monad m) =>
   TypeResolver m p -> ParamFilters -> GeneralInstance -> m ()
-validateGeneralInstance r f ta@(TypeMerge m ts) =
+validateGeneralInstance r f ta@(TypeMerge MergeIntersect ts) = do
+  mergeAll (map checkConcrete ts)
+  mergeAll (map (validateGeneralInstance r f) ts) `reviseError`
+    (show ta ++ " fails to meet required parameter constraints")
+  where
+    checkConcrete (SingleType (JustTypeInstance t)) = do
+      c <- trConcrete r (tiName t)
+      when c $ compileError $ "Concrete type " ++ show (tiName t) ++
+                              " cannot be used in intersection " ++ show ta
+    checkConcrete _ = return ()
+validateGeneralInstance r f ta@(TypeMerge _ ts) =
   mergeAll (map (validateGeneralInstance r f) ts) `reviseError`
     (show ta ++ " fails to meet required parameter constraints")
 validateGeneralInstance r f (SingleType (JustTypeInstance t)) =
@@ -316,14 +328,15 @@ validateDefinesInstance r f t@(DefinesInstance n ps) = do
     ("Recursive error in " ++ show t)
 
 validateTypeFilter :: (MergeableM m, Mergeable p, CompileErrorM m, Monad m) =>
-  TypeResolver m p -> ParamFilters -> (TypeName -> m Bool) -> TypeFilter -> m ()
-validateTypeFilter r f concrete (TypeFilter FilterRequires ta@(JustTypeInstance t)) = do
-  c <- concrete (tiName t)
-  when c $ compileError $ "Concrete type " ++ show (tiName t) ++ " cannot be used in a requires filter"
+  TypeResolver m p -> ParamFilters -> TypeFilter -> m ()
+validateTypeFilter r f (TypeFilter FilterRequires ta@(JustTypeInstance t)) = do
+  c <- trConcrete r (tiName t)
+  when c $ compileError $ "Concrete type " ++ show (tiName t) ++
+                          " cannot be used in a requires filter"
   validateGeneralInstance r f (SingleType ta)
-validateTypeFilter r f _ (TypeFilter _ t) =
+validateTypeFilter r f (TypeFilter _ t) =
   validateGeneralInstance r f (SingleType t)
-validateTypeFilter r f _ (DefinesFilter t) =
+validateTypeFilter r f (DefinesFilter t) =
   validateDefinesInstance r f t
 
 validateAssignment :: (MergeableM m, Mergeable p, CompileErrorM m, Monad m) =>

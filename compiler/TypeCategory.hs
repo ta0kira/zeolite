@@ -436,11 +436,8 @@ checkCategoryInstances tm0 ts = do
       validateDefinesInstance r fs t `reviseError`
         (show t ++ " [" ++ formatFullContext c ++ "]")
     checkFilter r fs tm (ParamFilter c n f) =
-      validateTypeFilter r fs (isConcrete tm) f `reviseError`
+      validateTypeFilter r fs f `reviseError`
         (show n ++ " " ++ show f ++ " [" ++ formatFullContext c ++ "]")
-    isConcrete tm n = do
-      (_,t) <- getCategory tm ([],n)
-      return (isValueConcrete t)
 
 mergeCategoryInstances :: (Show c, MergeableM m, CompileErrorM m, Monad m) =>
   CategoryMap c -> [AnyCategory c] -> m [AnyCategory c]
@@ -531,7 +528,8 @@ categoriesToTypeResolver tm =
     trDefines = defines,
     trVariance = variance,
     trTypeFilters = typeFilters,
-    trDefinesFilters = definesFilters
+    trDefinesFilters = definesFilters,
+    trConcrete = concrete
   } where
     refines (TypeInstance n1 ps1) n2
       | n1 == n2 = do
@@ -583,6 +581,9 @@ categoriesToTypeResolver tm =
       case n `Map.lookup` fa of
            (Just x) -> return x
            _ -> return []
+    concrete n = do
+      (_,t) <- getCategory tm ([],n)
+      return (isValueConcrete t)
 
 uncheckedSubAllParams :: (MergeableM m, CompileErrorM m, Monad m) =>
   (ParamName -> m GeneralInstance) -> GeneralInstance -> m GeneralInstance

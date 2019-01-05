@@ -488,7 +488,7 @@ main = runAllTests [
     return $ checkTypeSuccess resolver
       [("x",[])]
       "(Type5<x>|Type1<Type3>)",
-    return $ checkTypeSuccess resolver
+    return $ checkTypeFail resolver
       [("x",[])]
       "(Type5<x>&Type1<Type3>)",
     return $ checkTypeSuccess resolver
@@ -663,7 +663,9 @@ resolver = TypeResolver {
     trDefines = getParams defines,
     trVariance = mapLookup variances,
     trTypeFilters = getTypeFilters,
-    trDefinesFilters = getDefinesFilters
+    trDefinesFilters = getDefinesFilters,
+    -- Type5 is concrete, somewhat arbitrarily.
+    trConcrete = \t -> return (t == type5)
   }
 
 getParams ma (TypeInstance n1 ps1) n2 = do
