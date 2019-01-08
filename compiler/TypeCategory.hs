@@ -367,50 +367,30 @@ checkParamVariances :: (Show c, MergeableM m, CompileErrorM m, Monad m) =>
   CategoryMap c -> [AnyCategory c] -> m ()
 checkParamVariances tm0 ts = do
   tm <- declareAllTypes tm0 ts
-  mergeAll (map (checkCategory tm) ts)
+  let r = categoriesToTypeResolver tm
+  mergeAll (map (checkCategory r) ts)
   where
-    checkCategory tm (ValueInterface c n ps rs _) = do
+    checkCategory r (ValueInterface c n ps rs _) = do
       noDuplicates c n ps
       let vm = Map.fromList $ map (\p -> (vpParam p,vpVariance p)) ps
-      mergeAll (map (checkRefine tm vm) rs)
-    checkCategory tm (ValueConcrete c n ps rs ds _) = do
+      mergeAll (map (checkRefine r vm) rs)
+    checkCategory r (ValueConcrete c n ps rs ds _) = do
       noDuplicates c n ps
       let vm = Map.fromList $ map (\p -> (vpParam p,vpVariance p)) ps
-      mergeAll (map (checkRefine tm vm) rs)
-      mergeAll (map (checkDefine tm vm) ds)
+      mergeAll (map (checkRefine r vm) rs)
+      mergeAll (map (checkDefine r vm) ds)
     checkCategory _ (InstanceInterface c n ps _) = noDuplicates c n ps
     noDuplicates c n ps = mergeAll (map checkCount $ group $ sort $ map vpParam ps) where
       checkCount xa@(x:_:_) =
         compileError $ "Param " ++ show x ++ " occurs " ++ show (length xa) ++
                       " times in " ++ show n ++ " [" ++ formatFullContext c ++ "]"
       checkCount _ = return ()
-    getVariances tm c n = do
-      (_,t) <- getValueCategory tm (c,n)
-      return $ map vpVariance (getCategoryParams t)
-    checkRefine tm vm (ValueRefine c t) =
-      checkParam c (show t) tm vm Covariant (SingleType $ JustTypeInstance t)
-    checkDefine tm vm (ValueDefine c t@(DefinesInstance n ps)) = do
-      (_,t2) <- getInstanceCategory tm (c,n)
-      let vs = map vpVariance (getCategoryParams t2)
-      paired <- processParamPairs alwaysPairParams (ParamSet vs) ps
-      mergeAll (map (\(v,p) -> checkParam c (show t) tm vm v p) paired)
-    checkParam c t tm vm v (SingleType (JustTypeInstance (TypeInstance n ps))) = do
-      vs <- getVariances tm c n
-      paired <- processParamPairs alwaysPairParams (ParamSet vs) ps
-      mergeAll (map (\(v2,p) -> checkParam c t tm vm (v `composeVariance` v2) p) paired)
-    checkParam c t tm vm v (TypeMerge MergeUnion ts) =
-      mergeAll (map (checkParam c t tm vm v) ts)
-    checkParam c t tm vm v (TypeMerge MergeIntersect ts) =
-      mergeAll (map (checkParam c t tm vm v) ts)
-    checkParam c t _ vm v (SingleType (JustParamName n)) =
-      case n `Map.lookup` vm of
-          Nothing -> compileError $ "Param " ++ show n ++ " [" ++
-                                    formatFullContext c ++ "] is undefined"
-          (Just v0) -> when (not $ v0 `paramAllowsVariance` v) $
-                         compileError $ "Param " ++ show n ++
-                                        " cannot be " ++ show v ++
-                                        " in " ++ t ++
-                                        " [" ++ formatFullContext c ++ "]"
+    checkRefine r vm (ValueRefine c t) =
+      validateInstanceVariance r vm Covariant (SingleType $ JustTypeInstance t) `reviseError`
+        (show t ++ " [" ++ formatFullContext c ++ "]")
+    checkDefine r vm (ValueDefine c t) =
+      validateDefinesVariance r vm Covariant t `reviseError`
+        (show t ++ " [" ++ formatFullContext c ++ "]")
 
 checkCategoryInstances :: (Show c, MergeableM m, CompileErrorM m, Monad m) =>
   CategoryMap c -> [AnyCategory c] -> m ()

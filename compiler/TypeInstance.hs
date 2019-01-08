@@ -19,7 +19,9 @@ module TypeInstance (
   checkGeneralMatch,
   checkValueTypeMatch,
   validateDefinesInstance,
+  validateDefinesVariance,
   validateGeneralInstance,
+  validateInstanceVariance,
   validateTypeFilter,
   validateTypeInstance,
 ) where
@@ -143,6 +145,7 @@ type InstanceVariances = ParamSet Variance
 type InstanceFilters = ParamSet [TypeFilter]
 
 type ParamFilters = Map.Map ParamName [TypeFilter]
+type ParamVariance = Map.Map ParamName Variance
 
 -- TODO: Get rid of p here?
 data TypeResolver m p =
@@ -369,3 +372,26 @@ validateAssignment r f t fs = mergeAll (map (checkFilter t) fs) where
       processParamPairs (\v2 (p1,p2) -> checkGeneralMatch r f v2 p1 p2) variance (ParamSet paired)
       mergeDefault
     | otherwise = compileError $ "Constraint " ++ show f1 ++ " does not imply " ++ show f2
+
+validateInstanceVariance :: (MergeableM m, CompileErrorM m, Monad m) =>
+  TypeResolver m p -> ParamVariance -> Variance -> GeneralInstance -> m ()
+validateInstanceVariance r vm v (SingleType (JustTypeInstance (TypeInstance n ps))) = do
+  vs <- trVariance r n
+  paired <- processParamPairs alwaysPairParams vs ps
+  mergeAll (map (\(v2,p) -> validateInstanceVariance r vm (v `composeVariance` v2) p) paired)
+validateInstanceVariance r vm v (TypeMerge MergeUnion ts) =
+  mergeAll (map (validateInstanceVariance r vm v) ts)
+validateInstanceVariance r vm v (TypeMerge MergeIntersect ts) =
+  mergeAll (map (validateInstanceVariance r vm v) ts)
+validateInstanceVariance r vm v (SingleType (JustParamName n)) =
+  case n `Map.lookup` vm of
+      Nothing -> compileError $ "Param " ++ show n ++ " is undefined"
+      (Just v0) -> when (not $ v0 `paramAllowsVariance` v) $
+                        compileError $ "Param " ++ show n ++ " cannot be " ++ show v
+
+validateDefinesVariance :: (MergeableM m, CompileErrorM m, Monad m) =>
+  TypeResolver m p -> ParamVariance -> Variance -> DefinesInstance -> m ()
+validateDefinesVariance r vm v (DefinesInstance n ps) = do
+  vs <- trVariance r n
+  paired <- processParamPairs alwaysPairParams vs ps
+  mergeAll (map (\(v2,p) -> validateInstanceVariance r vm (v `composeVariance` v2) p) paired)

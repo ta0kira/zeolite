@@ -10,6 +10,7 @@ module TypesBase (
   MergeType(..),
   ParamSet(..),
   StorageType(..),
+  SymbolScope(..),
   Variance(..),
   alwaysPairParams,
   processParamPairs,
@@ -139,4 +140,10 @@ data StorageType =
   WeakValue |
   OptionalValue |
   RequiredValue
+  deriving (Eq,Ord,Show)
+
+data SymbolScope =
+  CategoryScope |
+  TypeScope |
+  ValueScope
   deriving (Eq,Ord,Show)
