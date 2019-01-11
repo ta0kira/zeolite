@@ -9,6 +9,7 @@ module TypeInstance (
   InstanceParams,
   InstanceVariances,
   ParamFilters,
+  ParamVariances,
   ParamName(..),
   TypeFilter(..),
   TypeInstance(..),
@@ -18,6 +19,12 @@ module TypeInstance (
   ValueType(..),
   checkGeneralMatch,
   checkValueTypeMatch,
+  uncheckedSubFilter,
+  uncheckedSubFilters,
+  uncheckedSubInstance,
+  uncheckedSubValueType,
+  getValueForParam,
+  validateAssignment,
   validateDefinesInstance,
   validateDefinesVariance,
   validateGeneralInstance,
@@ -145,7 +152,7 @@ type InstanceVariances = ParamSet Variance
 type InstanceFilters = ParamSet [TypeFilter]
 
 type ParamFilters = Map.Map ParamName [TypeFilter]
-type ParamVariance = Map.Map ParamName Variance
+type ParamVariances = Map.Map ParamName Variance
 
 -- TODO: Get rid of p here?
 data TypeResolver m p =
@@ -169,6 +176,13 @@ filterLookup :: (CompileErrorM m, Monad m) =>
 filterLookup ps n = resolve $ n `Map.lookup` ps where
   resolve (Just x) = return x
   resolve _        = compileError $ "Param " ++ show n ++ " not found"
+
+getValueForParam :: (CompileErrorM m, Monad m) =>
+  Map.Map ParamName GeneralInstance -> ParamName -> m GeneralInstance
+getValueForParam pa n =
+  case n `Map.lookup` pa of
+        (Just x) -> return x
+        _ -> compileError $ "Param " ++ show n ++ " does not exist"
 
 checkValueTypeMatch :: (MergeableM m, Mergeable p, CompileErrorM m, Monad m) =>
   TypeResolver m p -> ParamFilters -> ValueType -> ValueType -> m p
@@ -374,7 +388,7 @@ validateAssignment r f t fs = mergeAll (map (checkFilter t) fs) where
     | otherwise = compileError $ "Constraint " ++ show f1 ++ " does not imply " ++ show f2
 
 validateInstanceVariance :: (MergeableM m, CompileErrorM m, Monad m) =>
-  TypeResolver m p -> ParamVariance -> Variance -> GeneralInstance -> m ()
+  TypeResolver m p -> ParamVariances -> Variance -> GeneralInstance -> m ()
 validateInstanceVariance r vm v (SingleType (JustTypeInstance (TypeInstance n ps))) = do
   vs <- trVariance r n
   paired <- processParamPairs alwaysPairParams vs ps
@@ -390,8 +404,49 @@ validateInstanceVariance r vm v (SingleType (JustParamName n)) =
                         compileError $ "Param " ++ show n ++ " cannot be " ++ show v
 
 validateDefinesVariance :: (MergeableM m, CompileErrorM m, Monad m) =>
-  TypeResolver m p -> ParamVariance -> Variance -> DefinesInstance -> m ()
+  TypeResolver m p -> ParamVariances -> Variance -> DefinesInstance -> m ()
 validateDefinesVariance r vm v (DefinesInstance n ps) = do
   vs <- trVariance r n
   paired <- processParamPairs alwaysPairParams vs ps
   mergeAll (map (\(v2,p) -> validateInstanceVariance r vm (v `composeVariance` v2) p) paired)
+
+uncheckedSubValueType :: (MergeableM m, CompileErrorM m, Monad m) =>
+  (ParamName -> m GeneralInstance) -> ValueType -> m ValueType
+uncheckedSubValueType replace (ValueType s t) = do
+  t' <- uncheckedSubInstance replace t
+  return $ ValueType s t'
+
+uncheckedSubInstance :: (MergeableM m, CompileErrorM m, Monad m) =>
+  (ParamName -> m GeneralInstance) -> GeneralInstance -> m GeneralInstance
+uncheckedSubInstance replace = subAll where
+  subAll (TypeMerge MergeUnion ts) = do
+    gs <- collectAllOrErrorM $ map subAll ts
+    return (TypeMerge MergeUnion gs)
+  subAll (TypeMerge MergeIntersect ts) = do
+    gs <- collectAllOrErrorM $ map subAll ts
+    return (TypeMerge MergeIntersect gs)
+  subAll (SingleType t) = subInstance t
+  subInstance (JustTypeInstance (TypeInstance n (ParamSet ts))) = do
+    gs <- collectAllOrErrorM $ map subAll ts
+    let t2 = SingleType $ JustTypeInstance $ TypeInstance n (ParamSet gs)
+    return (t2)
+  subInstance (JustParamName n) = replace n
+
+uncheckedSubFilter :: (MergeableM m, CompileErrorM m, Monad m) =>
+  (ParamName -> m GeneralInstance) -> TypeFilter -> m TypeFilter
+uncheckedSubFilter replace (TypeFilter d t) = do
+  t' <- uncheckedSubInstance replace (SingleType t)
+  return (TypeFilter d (stType t'))
+uncheckedSubFilter replace (DefinesFilter (DefinesInstance n ts)) = do
+  ts' <- collectAllOrErrorM $ map (uncheckedSubInstance replace) (psParams ts)
+  return (DefinesFilter (DefinesInstance n (ParamSet ts')))
+
+uncheckedSubFilters :: (MergeableM m, CompileErrorM m, Monad m) =>
+  (ParamName -> m GeneralInstance) -> ParamFilters -> m ParamFilters
+uncheckedSubFilters replace fa = do
+  fa' <- collectAllOrErrorM $ map subParam $ Map.toList fa
+  return $ Map.fromList fa'
+  where
+    subParam (n,fs) = do
+      fs' <- collectAllOrErrorM $ map (uncheckedSubFilter replace) fs
+      return (n,fs')
