@@ -611,7 +611,8 @@ data ScopedFunction c =
     sfArgs :: [PassedValue c],
     sfReturns :: [PassedValue c],
     sfParams :: [ValueParam c],
-    sfFilters :: [ParamFilter c]
+    sfFilters :: [ParamFilter c],
+    sfMerges :: [ScopedFunction c]
   }
   deriving (Eq)
 
@@ -623,18 +624,20 @@ instance Show c => Show (ScopedFunction c) where
       showScope ValueScope    = "@value "
 
 showFunctionInContext :: Show c => String -> String -> ScopedFunction c -> String
-showFunctionInContext s indent (ScopedFunction cs n t _ as rs ps fa) =
+showFunctionInContext s indent (ScopedFunction cs n t _ as rs ps fa ms) =
   indent ++ s ++ "/*" ++ show t ++ "*/ " ++ show n ++
   showParams ps ++ " " ++ formatContext cs ++ "\n" ++
   concat (map (\v -> indent ++ formatValue v ++ "\n") fa) ++
   indent ++ "(" ++ intercalate "," (map (show . pvType) as) ++ ") -> " ++
-  "(" ++ intercalate "," (map (show . pvType) rs) ++ ")"
+  "(" ++ intercalate "," (map (show . pvType) rs) ++ ")" ++ showMerges ms
   where
     showParams [] = ""
     showParams ps = "<" ++ intercalate "," (map (show . vpParam) ps) ++ ">"
     formatContext cs = "/*" ++ formatFullContext cs ++ "*/"
     formatValue v = "  " ++ show (pfParam v) ++ " " ++ show (pfFilter v) ++
                     " " ++ formatContext (pfContext v)
+    showMerges [] = " /*not merged*/"
+    showMerges ms = " /*merged from: " ++ intercalate ", " (map (show . sfType) ms) ++ "*/"
 
 data PassedValue c =
   PassedValue {
@@ -648,7 +651,7 @@ instance Show c => Show (PassedValue c) where
 
 parsedToFunctionType :: (Show c, MergeableM m, CompileErrorM m, Monad m) =>
   ScopedFunction c -> m FunctionType
-parsedToFunctionType (ScopedFunction c n t _ as rs ps fa) = do
+parsedToFunctionType (ScopedFunction c n t _ as rs ps fa _) = do
   let as' = ParamSet $ map pvType as
   let rs' = ParamSet $ map pvType rs
   let ps' = ParamSet $ map vpParam ps

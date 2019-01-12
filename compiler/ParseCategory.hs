@@ -171,7 +171,7 @@ parseScopedFunction sp tp = labeled "function" $ do
   as <- typeList "argument type"
   sepAfter $ string "->"
   rs <- typeList "return type"
-  return $ ScopedFunction [c] n t s as rs ps fa
+  return $ ScopedFunction [c] n t s as rs ps fa []
   where
     noParams = notFollowedBy (string "<") >> return []
     someParams = between (sepAfter $ string "<")
