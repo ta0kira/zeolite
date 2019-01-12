@@ -1,9 +1,5 @@
 Roughly in order of execution:
 
-- Write parser for function signatures.
-- Type-check function signatures.
-- Merge function signatures.
-
 - Implement Weak in C++.
 - Unit tests for C++ base.
 - Implement instance-function dispatching for intersections.

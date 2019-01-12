@@ -609,7 +609,39 @@ main = runAllTests [
       (\ts -> checkCategoryInstances Map.empty ts),
     checkOperationFail
       "testfiles/function_defines_missed.txt"
-      (\ts -> checkCategoryInstances Map.empty ts)
+      (\ts -> checkCategoryInstances Map.empty ts),
+
+    checkOperationFail
+      "testfiles/conflicting_declaration.txt"
+      (\ts -> do
+        ts2 <- mergeCategoryInstances Map.empty ts
+        mergeCategoryFunctions Map.empty ts2 >> return ()),
+    checkOperationFail
+      "testfiles/conflicting_inherited.txt"
+      (\ts -> do
+        ts2 <- mergeCategoryInstances Map.empty ts
+        mergeCategoryFunctions Map.empty ts2 >> return ()),
+    checkOperationSuccess
+      "testfiles/successful_merge.txt"
+      (\ts -> do
+        ts2 <- mergeCategoryInstances Map.empty ts
+        mergeCategoryFunctions Map.empty ts2 >> return ()),
+    checkOperationFail
+      "testfiles/failed_merge.txt"
+      (\ts -> do
+        ts2 <- mergeCategoryInstances Map.empty ts
+        mergeCategoryFunctions Map.empty ts2 >> return ()),
+
+    checkOperationSuccess
+      "testfiles/successful_merge_params.txt"
+      (\ts -> do
+        ts2 <- mergeCategoryInstances Map.empty ts
+        mergeCategoryFunctions Map.empty ts2 >> return ()),
+    checkOperationFail
+      "testfiles/failed_merge_params.txt"
+      (\ts -> do
+        ts2 <- mergeCategoryInstances Map.empty ts
+        mergeCategoryFunctions Map.empty ts2 >> return ())
   ]
 
 

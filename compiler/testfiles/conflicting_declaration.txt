@@ -1,0 +1,4 @@
+concrete Type {
+  @value something () -> ()
+  @value something () -> (Type)
+}

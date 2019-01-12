@@ -73,14 +73,15 @@ validatateFunctionType r fm vm (FunctionType as rs ps fa) = do
 assignFunctionParams :: (MergeableM m, Mergeable p, CompileErrorM m, Monad m) =>
   TypeResolver m p -> ParamFilters -> ParamSet GeneralInstance ->
   FunctionType -> m FunctionType
-assignFunctionParams r fm ts (FunctionType as rs ps fa) = do
+assignFunctionParams r fm ts ff@(FunctionType as rs ps fa) = flip reviseError (show ff) $ do
   assigned <- fmap Map.fromList $ processParamPairs alwaysPairParams ps ts
-  fa' <- fmap ParamSet $ collectAllOrErrorM $ map (assignFilters assigned) (psParams fa)
+  let allAssigned = Map.union assigned (Map.fromList $ map (\n -> (n,SingleType $ JustParamName n)) $ Map.keys fm)
+  fa' <- fmap ParamSet $ collectAllOrErrorM $ map (assignFilters allAssigned) (psParams fa)
   processParamPairs (validateAssignment r fm) ts fa'
   as' <- fmap ParamSet $ collectAllOrErrorM $
-         map (uncheckedSubValueType $getValueForParam assigned) (psParams as)
+         map (uncheckedSubValueType $ getValueForParam allAssigned) (psParams as)
   rs' <- fmap ParamSet $ collectAllOrErrorM $
-         map (uncheckedSubValueType $getValueForParam assigned) (psParams rs)
+         map (uncheckedSubValueType $ getValueForParam allAssigned) (psParams rs)
   return $ FunctionType as' rs' (ParamSet []) (ParamSet [])
   where
     assignFilters fm fs = collectAllOrErrorM $ map (uncheckedSubFilter $ getValueForParam fm) fs
@@ -93,6 +94,8 @@ checkFunctionConvert r fm ff1 ff2@(FunctionType as2 rs2 ps2 fa2) = do
   let asTypes = ParamSet $ map (SingleType . JustParamName) $ psParams ps2
   -- Substitute params from ff2 into ff1.
   (FunctionType as1 rs1 _ _) <- assignFunctionParams r fm' asTypes ff1
+  fixed <- processParamPairs alwaysPairParams ps2 fa2
+  let fm' = Map.union fm (Map.fromList fixed)
   processParamPairs (validateArg fm') as1 as2
   processParamPairs (validateReturn fm') rs1 rs2
   return ()
