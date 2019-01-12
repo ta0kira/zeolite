@@ -9,4 +9,17 @@ concrete/*!!!*/Type<a,b // <- contravariant params
   b requires Type2<a>
   c defines // <- used with type-interface filters
     Equals<c /* <- a type arg */>
+
+  @category create<x>
+  x requires Type1<Type3>
+  () -> (optional Type1<Type3>)
+
+  @type create2<y>
+    y requires x
+    y allows T2
+    y defines T3
+  () -> (optional x)
+
+  @value get () -> (Type1<Type3>)
+  @value set (Type1<Type3>) -> ()
 }

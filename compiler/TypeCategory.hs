@@ -2,7 +2,10 @@
 
 module TypeCategory (
   AnyCategory(..),
+  FunctionName(..),
   ParamFilter(..),
+  PassedValue(..),
+  ScopedFunction(..),
   ValueDefine(..),
   ValueParam(..),
   ValueRefine(..),
@@ -25,6 +28,7 @@ module TypeCategory (
   isValueConcrete,
   isValueInterface,
   mergeCategoryInstances,
+  parsedToFunctionType,
 ) where
 
 import Control.Arrow (second)
@@ -33,9 +37,16 @@ import Data.List (group,groupBy,intercalate,sort,sortBy)
 import qualified Data.Map as Map
 import qualified Data.Set as Set
 
+import Function
 import TypeInstance
 import TypesBase
 
+
+newtype FunctionName =
+  FunctionName {
+    fnName :: String
+  }
+  deriving (Eq,Ord)
 
 data AnyCategory c =
   ValueInterface {
@@ -43,13 +54,15 @@ data AnyCategory c =
     viName :: TypeName,
     viParams :: [ValueParam c],
     viRefines :: [ValueRefine c],
-    viParamFilter :: [ParamFilter c]
+    viParamFilter :: [ParamFilter c],
+    viFunctions :: [ScopedFunction c]
   } |
   InstanceInterface {
     iiContext :: [c],
     iiName :: TypeName,
     iiParams :: [ValueParam c],
-    iiParamFilter :: [ParamFilter c]
+    iiParamFilter :: [ParamFilter c],
+    viFunctions :: [ScopedFunction c]
   } |
   ValueConcrete {
     vcContext :: [c],
@@ -57,7 +70,8 @@ data AnyCategory c =
     vcParams :: [ValueParam c],
     vcRefines :: [ValueRefine c],
     vcDefines :: [ValueDefine c],
-    vcParamFilter :: [ParamFilter c]
+    vcParamFilter :: [ParamFilter c],
+    viFunctions :: [ScopedFunction c]
   }
   deriving (Eq)
 
@@ -66,20 +80,23 @@ formatFullContext cs = intercalate " -> " (map show cs)
 
 instance Show c => Show (AnyCategory c) where
   show = format where
-    format (ValueInterface cs n ps rs vs) =
+    format (ValueInterface cs n ps rs vs fs) =
       "@value interface " ++ show n ++ formatParams ps ++ " { " ++ formatContext cs ++ "\n" ++
       concat (map (\r -> "  " ++ formatRefine r ++ "\n") rs) ++
       concat (map (\v -> "  " ++ formatValue v ++ "\n") vs) ++
+      concat (map (\f -> "\n" ++ formatInterfaceFunc f ++ "\n") fs) ++
       "}\n"
-    format (InstanceInterface cs n ps vs) =
+    format (InstanceInterface cs n ps vs fs) =
       "@type interface " ++ show n ++ formatParams ps ++ " { " ++ formatContext cs ++
       concat (map (\v -> "  " ++ formatValue v ++ "\n") vs) ++
+      concat (map (\f -> "\n" ++ formatInterfaceFunc f ++ "\n") fs) ++
       "}\n"
-    format (ValueConcrete cs n ps rs ds vs) =
+    format (ValueConcrete cs n ps rs ds vs fs) =
       "concrete " ++ show n ++ formatParams ps ++ " { " ++ formatContext cs ++ "\n" ++
       concat (map (\r -> "  " ++ formatRefine r ++ "\n") rs) ++
       concat (map (\d -> "  " ++ formatDefine d ++ "\n") ds) ++
       concat (map (\v -> "  " ++ formatValue v ++ "\n") vs) ++
+      concat (map (\f -> "\n" ++ formatConcreteFunc f ++ "\n") fs) ++
       "}\n"
     formatContext cs = "/*" ++ formatFullContext cs ++ "*/"
     formatParams ps = let (con,inv,cov) = (foldr partitionParam ([],[],[]) ps) in
@@ -96,47 +113,57 @@ instance Show c => Show (AnyCategory c) where
     formatDefine d = "defines " ++ show (vdType d) ++ " " ++ formatContext (vdContext d)
     formatValue v = show (pfParam v) ++ " " ++ show (pfFilter v) ++
                     " " ++ formatContext (pfContext v)
+    formatInterfaceFunc f = showFunctionInContext "" "  " f
+    formatConcreteFunc f = showFunctionInContext (showScope $ sfScope f) "  " f
+    showScope CategoryScope = "@category "
+    showScope TypeScope     = "@type "
+    showScope ValueScope    = "@value "
 
 getCategoryName :: AnyCategory c -> TypeName
-getCategoryName (ValueInterface _ n _ _ _) = n
-getCategoryName (InstanceInterface _ n _ _) = n
-getCategoryName (ValueConcrete _ n _ _ _ _) = n
+getCategoryName (ValueInterface _ n _ _ _ _) = n
+getCategoryName (InstanceInterface _ n _ _ _) = n
+getCategoryName (ValueConcrete _ n _ _ _ _ _) = n
 
 getCategoryContext :: AnyCategory c -> [c]
-getCategoryContext (ValueInterface c _ _ _ _) = c
-getCategoryContext (InstanceInterface c _ _ _) = c
-getCategoryContext (ValueConcrete c _ _ _ _ _) = c
+getCategoryContext (ValueInterface c _ _ _ _ _) = c
+getCategoryContext (InstanceInterface c _ _ _ _) = c
+getCategoryContext (ValueConcrete c _ _ _ _ _ _) = c
 
 getCategoryParams :: AnyCategory c -> [ValueParam c]
-getCategoryParams (ValueInterface _ _ ps _ _) = ps
-getCategoryParams (InstanceInterface _ _ ps _) = ps
-getCategoryParams (ValueConcrete _ _ ps _ _ _) = ps
+getCategoryParams (ValueInterface _ _ ps _ _ _) = ps
+getCategoryParams (InstanceInterface _ _ ps _ _) = ps
+getCategoryParams (ValueConcrete _ _ ps _ _ _ _) = ps
 
 getCategoryRefines :: AnyCategory c -> [ValueRefine c]
-getCategoryRefines (ValueInterface _ _ _ rs _) = rs
-getCategoryRefines (InstanceInterface _ _ _ _) = []
-getCategoryRefines (ValueConcrete _ _ _ rs _ _) = rs
+getCategoryRefines (ValueInterface _ _ _ rs _ _) = rs
+getCategoryRefines (InstanceInterface _ _ _ _ _) = []
+getCategoryRefines (ValueConcrete _ _ _ rs _ _ _) = rs
 
 getCategoryDefines :: AnyCategory c -> [ValueDefine c]
-getCategoryDefines (ValueInterface _ _ _ _ _) = []
-getCategoryDefines (InstanceInterface _ _ _ _) = []
-getCategoryDefines (ValueConcrete _ _ _ _ ds _) = ds
+getCategoryDefines (ValueInterface _ _ _ _ _ _) = []
+getCategoryDefines (InstanceInterface _ _ _ _ _) = []
+getCategoryDefines (ValueConcrete _ _ _ _ ds _ _) = ds
 
 getCategoryFilters :: AnyCategory c -> [ParamFilter c]
-getCategoryFilters (ValueInterface _ _ _ _ vs) = vs
-getCategoryFilters (InstanceInterface _ _ _ vs) = vs
-getCategoryFilters (ValueConcrete _ _ _ _ _ vs) = vs
+getCategoryFilters (ValueInterface _ _ _ _ vs _) = vs
+getCategoryFilters (InstanceInterface _ _ _ vs _) = vs
+getCategoryFilters (ValueConcrete _ _ _ _ _ vs _) = vs
+
+getCategoryFunctions :: AnyCategory c -> [ScopedFunction c]
+getCategoryFunctions (ValueInterface _ _ _ _ _ fs) = fs
+getCategoryFunctions (InstanceInterface _ _ _ _ fs) = fs
+getCategoryFunctions (ValueConcrete _ _ _ _ _ _ fs) = fs
 
 isValueInterface :: AnyCategory c -> Bool
-isValueInterface (ValueInterface _ _ _ _ _) = True
+isValueInterface (ValueInterface _ _ _ _ _ _) = True
 isValueInterface _ = False
 
 isInstanceInterface :: AnyCategory c -> Bool
-isInstanceInterface (InstanceInterface _ _ _ _) = True
+isInstanceInterface (InstanceInterface _ _ _ _ _) = True
 isInstanceInterface _ = False
 
 isValueConcrete :: AnyCategory c -> Bool
-isValueConcrete (ValueConcrete _ _ _ _ _ _) = True
+isValueConcrete (ValueConcrete _ _ _ _ _ _ _) = True
 isValueConcrete _ = False
 
 data ValueRefine c =
@@ -243,12 +270,12 @@ checkConnectedTypes tm0 ts = do
   tm <- declareAllTypes tm0 ts
   mergeAll (map (checkSingle tm) ts)
   where
-    checkSingle tm (ValueInterface c n _ rs _) = do
+    checkSingle tm (ValueInterface c n _ rs _ _) = do
       let ts = map (\r -> (vrContext r,tiName $ vrType r)) rs
       is <- collectAllOrErrorM $ map (getCategory tm) ts
       mergeAll (map (valueRefinesInstanceError c n) is)
       mergeAll (map (valueRefinesConcreteError c n) is)
-    checkSingle tm (ValueConcrete c n _ rs ds _) = do
+    checkSingle tm (ValueConcrete c n _ rs ds _ _) = do
       let ts1 = map (\r -> (vrContext r,tiName $ vrType r)) rs
       let ts2 = map (\d -> (vdContext d,diName $ vdType d)) ds
       is1 <- collectAllOrErrorM $ map (getCategory tm) ts1
@@ -301,12 +328,12 @@ checkConnectionCycles :: (Show c, MergeableM m, CompileErrorM m, Monad m) =>
   [AnyCategory c] -> m ()
 checkConnectionCycles ts = mergeAll (map (checker []) ts) where
   tm = Map.fromList $ zip (map getCategoryName ts) ts
-  checker us (ValueInterface c n _ rs _) = do
+  checker us (ValueInterface c n _ rs _ _) = do
     failIfCycle n c us
     let ts = map (\r -> (vrContext r,tiName $ vrType r)) rs
     is <- collectAllOrErrorM $ map (getValueCategory tm) ts
     mergeAll (map (checker (us ++ [n]) . snd) is)
-  checker us (ValueConcrete c n _ rs _ _) = do
+  checker us (ValueConcrete c n _ rs _ _ _) = do
     failIfCycle n c us
     let ts = map (\r -> (vrContext r,tiName $ vrType r)) rs
     is <- collectAllOrErrorM $ map (getValueCategory tm) ts
@@ -324,12 +351,14 @@ flattenAllConnections tm0 ts = do
   tm <- declareAllTypes tm0 ts
   collectAllOrErrorM $ map (updateSingle tm) ts
   where
-    updateSingle tm (ValueInterface c n ps rs vs) = do
+    -- TODO: Also collect inherited functions.
+    updateSingle tm (ValueInterface c n ps rs vs fs) = do
       rs2 <- collectAllOrErrorM $ map (getRefines tm) rs
-      return $ ValueInterface c n ps (concat rs2) vs
-    updateSingle tm (ValueConcrete c n ps rs ds vs) = do
+      return $ ValueInterface c n ps (concat rs2) vs fs
+    -- TODO: Also collect inherited functions.
+    updateSingle tm (ValueConcrete c n ps rs ds vs fs) = do
       rs2 <- collectAllOrErrorM $ map (getRefines tm) rs
-      return $ ValueConcrete c n ps (concat rs2) ds vs
+      return $ ValueConcrete c n ps (concat rs2) ds vs fs
     updateSingle _ t = return t
     getRefines tm ra@(ValueRefine c t@(TypeInstance n ps))
       | n `Map.member` tm0 = do
@@ -363,16 +392,19 @@ checkParamVariances tm0 ts = do
   let r = categoriesToTypeResolver tm
   mergeAll (map (checkCategory r) ts)
   where
-    checkCategory r (ValueInterface c n ps rs _) = do
+    -- TODO: Also check function variances.
+    checkCategory r (ValueInterface c n ps rs _ _) = do
       noDuplicates c n ps
       let vm = Map.fromList $ map (\p -> (vpParam p,vpVariance p)) ps
       mergeAll (map (checkRefine r vm) rs)
-    checkCategory r (ValueConcrete c n ps rs ds _) = do
+    -- TODO: Also check function variances.
+    checkCategory r (ValueConcrete c n ps rs ds _ _) = do
       noDuplicates c n ps
       let vm = Map.fromList $ map (\p -> (vpParam p,vpVariance p)) ps
       mergeAll (map (checkRefine r vm) rs)
       mergeAll (map (checkDefine r vm) ds)
-    checkCategory _ (InstanceInterface c n ps _) = noDuplicates c n ps
+    -- TODO: Also check function variances.
+    checkCategory _ (InstanceInterface c n ps _ _) = noDuplicates c n ps
     noDuplicates c n ps = mergeAll (map checkCount $ group $ sort $ map vpParam ps) where
       checkCount xa@(x:_:_) =
         compileError $ "Param " ++ show x ++ " occurs " ++ show (length xa) ++
@@ -412,6 +444,7 @@ checkCategoryInstances tm0 ts = do
       validateTypeFilter r fs f `reviseError`
         (show n ++ " " ++ show f ++ " [" ++ formatFullContext c ++ "]")
 
+-- TODO: Maybe get rid of this and require an explicit override instead.
 mergeCategoryInstances :: (Show c, MergeableM m, CompileErrorM m, Monad m) =>
   CategoryMap c -> [AnyCategory c] -> m [AnyCategory c]
 mergeCategoryInstances tm0 ts = do
@@ -419,15 +452,15 @@ mergeCategoryInstances tm0 ts = do
   let r = categoriesToTypeResolver tm
   collectAllOrErrorM $ map (updateSingle r) ts
   where
-    updateSingle r t@(ValueInterface c n ps rs vs) = do
-      let fs = getFilterMap t
-      rs2 <- mergeRefines r fs rs
-      return $ ValueInterface c n ps rs2 vs
-    updateSingle r t@(ValueConcrete c n ps rs ds vs) = do
-      let fs = getFilterMap t
-      rs2 <- mergeRefines r fs rs
-      ds2 <- mergeDefines r fs ds
-      return $ ValueConcrete c n ps rs2 ds2 vs
+    updateSingle r t@(ValueInterface c n ps rs vs fs) = do
+      let fm = getFilterMap t
+      rs2 <- mergeRefines r fm rs
+      return $ ValueInterface c n ps rs2 vs fs
+    updateSingle r t@(ValueConcrete c n ps rs ds vs fs) = do
+      let fm = getFilterMap t
+      rs2 <- mergeRefines r fm rs
+      ds2 <- mergeDefines r fm ds
+      return $ ValueConcrete c n ps rs2 ds2 vs fs
     updateSingle _ t = return t
 
 checkInstanceDuplicates :: (Show c, MergeableM m, CompileErrorM m, Monad m) =>
@@ -453,10 +486,10 @@ checkInstanceDuplicates ts = mergeAll $ map checkSingle ts where
         (mergeAll $ map (compileError . show) xs)
 
 getFilterMap :: AnyCategory c -> ParamFilters
-getFilterMap t = getFilterMap t $ zip (Set.toList pa) (repeat []) where
+getFilterMap t = getFilters $ zip (Set.toList pa) (repeat []) where
   pa = Set.fromList $ map vpParam $ getCategoryParams t
-  getFilterMap t ps = let fs = map (\f -> (pfParam f,pfFilter f)) (getCategoryFilters t) in
-                          Map.fromListWith (++) $ map (second (:[])) fs ++ ps
+  getFilters ps = let fs = map (\f -> (pfParam f,pfFilter f)) (getCategoryFilters t) in
+                      Map.fromListWith (++) $ map (second (:[])) fs ++ ps
 
 mergeObjects :: (MergeableM m, CompileErrorM m, Monad m) =>
   (a -> a -> m ()) -> [a] -> m [a]
@@ -557,3 +590,73 @@ categoriesToTypeResolver tm =
     concrete n = do
       (_,t) <- getCategory tm ([],n)
       return (isValueConcrete t)
+
+instance Show FunctionName where
+  show (FunctionName n) = n
+
+data ScopedFunction c =
+  ScopedFunction {
+    sfContext :: [c],
+    sfName :: FunctionName,
+    sfType :: TypeName,
+    sfScope :: SymbolScope,
+    sfArgs :: [PassedValue c],
+    sfReturns :: [PassedValue c],
+    sfParams :: [ValueParam c],
+    sfFilters :: [ParamFilter c]
+  }
+  deriving (Eq)
+
+instance Show c => Show (ScopedFunction c) where
+  show f = showFunctionInContext (showScope $ sfScope f) "" f
+    where
+      showScope CategoryScope = "@category "
+      showScope TypeScope     = "@type "
+      showScope ValueScope    = "@value "
+
+showFunctionInContext :: Show c => String -> String -> ScopedFunction c -> String
+showFunctionInContext s indent (ScopedFunction cs n t _ as rs ps fa) =
+  indent ++ s ++ "/*" ++ show t ++ "*/ " ++ show n ++
+  showParams ps ++ " " ++ formatContext cs ++ "\n" ++
+  concat (map (\v -> indent ++ formatValue v ++ "\n") fa) ++
+  indent ++ "(" ++ intercalate "," (map (show . pvType) as) ++ ") -> " ++
+  "(" ++ intercalate "," (map (show . pvType) rs) ++ ")"
+  where
+    showParams [] = ""
+    showParams ps = "<" ++ intercalate "," (map (show . vpParam) ps) ++ ">"
+    formatContext cs = "/*" ++ formatFullContext cs ++ "*/"
+    formatValue v = "  " ++ show (pfParam v) ++ " " ++ show (pfFilter v) ++
+                    " " ++ formatContext (pfContext v)
+
+data PassedValue c =
+  PassedValue {
+    pvContext :: [c],
+    pvType :: ValueType
+  }
+  deriving (Eq)
+
+instance Show c => Show (PassedValue c) where
+  show (PassedValue c t) = show t ++ " [" ++ formatFullContext c ++ "]"
+
+parsedToFunctionType :: (Show c, MergeableM m, CompileErrorM m, Monad m) =>
+  ScopedFunction c -> m FunctionType
+parsedToFunctionType (ScopedFunction c n t _ as rs ps fa) = do
+  let as' = ParamSet $ map pvType as
+  let rs' = ParamSet $ map pvType rs
+  let ps' = ParamSet $ map vpParam ps
+  mergeAll $ map checkFilter fa
+  let fm = Map.fromListWith (++) $ map (\f -> (pfParam f,[pfFilter f])) fa
+  let fa' = ParamSet $ map (getFilters fm) $ psParams ps'
+  return $ FunctionType as' rs' ps' fa'
+  where
+    pa = Set.fromList $ map vpParam ps
+    checkFilter f =
+      when (not $ (pfParam f) `Set.member` pa) $
+      compileError $ "Filtered param " ++ show (pfParam f) ++ " [" ++
+                     formatFullContext (pfContext f) ++
+                     "] is not defined for function " ++ show n ++ "." ++ show t ++
+                     " [" ++ formatFullContext c ++ "]"
+    getFilters fm n =
+      case n `Map.lookup` fm of
+           (Just fs) -> fs
+           _ -> []

@@ -1,7 +1,8 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE Safe #-}
 
-module ParseInstance () where
+module ParseInstance (
+) where
 
 import Control.Applicative ((<|>))
 import Text.Parsec hiding ((<|>))

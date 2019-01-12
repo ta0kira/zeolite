@@ -2,6 +2,7 @@
 {-# LANGUAGE Safe #-}
 
 module ParseCategory (
+  parseScopedFunction,
 ) where
 
 import Text.Parsec
@@ -25,8 +26,9 @@ instance ParseFromSource (AnyCategory SourcePos) where
       ps <- parseCategoryParams
       open
       (rs,vs) <- parseRefinesFilters
+      fs <- flip sepBy optionalSpace $ parseScopedFunction (return ValueScope) (return n)
       close
-      return $ ValueInterface [c] n ps rs vs
+      return $ ValueInterface [c] n ps rs vs fs
     parseInstance = labeled "type interface" $ do
       c <- getPosition
       try $ kwType >> kwInterface
@@ -34,8 +36,9 @@ instance ParseFromSource (AnyCategory SourcePos) where
       ps <- parseCategoryParams
       open
       vs <- parseFilters
+      fs <- flip sepBy optionalSpace $ parseScopedFunction (return TypeScope) (return n)
       close
-      return $ InstanceInterface [c] n ps vs
+      return $ InstanceInterface [c] n ps vs fs
     parseConcrete = labeled "concrete type" $ do
       c <- getPosition
       try kwConcrete
@@ -43,8 +46,13 @@ instance ParseFromSource (AnyCategory SourcePos) where
       ps <- parseCategoryParams
       open
       (rs,ds,vs) <- parseRefinesDefinesFilters
+      fs <- flip sepBy optionalSpace $ parseScopedFunction parseScope (return n)
       close
-      return $ ValueConcrete [c] n ps rs ds vs
+      return $ ValueConcrete [c] n ps rs ds vs fs
+    parseScope = try categoryScope <|> try typeScope <|> valueScope
+    categoryScope = kwCategory >> return CategoryScope
+    typeScope     = kwType     >> return TypeScope
+    valueScope    = kwValue    >> return ValueScope
 
 parseCategoryParams :: Parser [ValueParam SourcePos]
 parseCategoryParams = do
@@ -143,3 +151,40 @@ parseRefinesDefinesFilters = parsed >>= return . foldr merge empty where
     n <- sourceParser
     f <- sourceParser
     return ([],[],[ParamFilter [c] n f])
+
+instance ParseFromSource FunctionName where
+  sourceParser = labeled "function name" $ do
+    noKeywords
+    b <- lower
+    e <- sepAfter $ many alphaNum
+    return $ FunctionName (b:e)
+
+parseScopedFunction :: Parser SymbolScope -> Parser TypeName ->
+                       Parser (ScopedFunction SourcePos)
+parseScopedFunction sp tp = labeled "function" $ do
+  c <- getPosition
+  s <- try sp -- Could be a constant, i.e., nothing consumed.
+  t <- try tp -- Same here.
+  n <- try sourceParser
+  ps <- noParams <|> someParams
+  fa <- parseFilters
+  as <- typeList "argument type"
+  sepAfter $ string "->"
+  rs <- typeList "return type"
+  return $ ScopedFunction [c] n t s as rs ps fa
+  where
+    noParams = notFollowedBy (string "<") >> return []
+    someParams = between (sepAfter $ string "<")
+                         (sepAfter $ string ">")
+                         (sepBy singleParam (sepAfter $ string ","))
+    singleParam = labeled "param declaration" $ do
+      c <- getPosition
+      n <- sourceParser
+      return $ ValueParam [c] n Invariant
+    typeList l = between (sepAfter $ string "(")
+                         (sepAfter $ string ")")
+                         (sepBy (labeled l $ singleType) (sepAfter $ string ","))
+    singleType = do
+      c <- getPosition
+      t <- sourceParser
+      return $ PassedValue [c] t

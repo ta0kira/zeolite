@@ -3,6 +3,7 @@
 module TypeCategoryTest where
 
 import Control.Arrow
+import Control.Monad
 import Data.List
 import System.IO
 import Text.Parsec
@@ -67,28 +68,28 @@ main = runAllTests [
     checkOperationSuccess
       "testfiles/concrete_refines_value.txt"
       (checkConnectedTypes $ Map.fromList [
-          (TypeName "Parent2",InstanceInterface [] (TypeName "Parent2") [] [])
+          (TypeName "Parent2",InstanceInterface [] (TypeName "Parent2") [] [] [])
         ]),
     checkOperationFail
       "testfiles/concrete_refines_value.txt"
       (checkConnectedTypes $ Map.fromList [
-          (TypeName "Parent",InstanceInterface [] (TypeName "Parent") [] [])
+          (TypeName "Parent",InstanceInterface [] (TypeName "Parent") [] [] [])
         ]),
 
     checkOperationSuccess
       "testfiles/partial.txt"
       (checkConnectedTypes $ Map.fromList [
-          (TypeName "Parent",ValueInterface [] (TypeName "Parent") [] [] [])
+          (TypeName "Parent",ValueInterface [] (TypeName "Parent") [] [] [] [])
         ]),
     checkOperationFail
       "testfiles/partial.txt"
       (checkConnectedTypes $ Map.fromList [
-          (TypeName "Parent",InstanceInterface [] (TypeName "Parent") [] [])
+          (TypeName "Parent",InstanceInterface [] (TypeName "Parent") [] [] [])
         ]),
     checkOperationFail
       "testfiles/partial.txt"
       (checkConnectedTypes $ Map.fromList [
-          (TypeName "Parent",ValueConcrete [] (TypeName "Parent") [] [] [] [])
+          (TypeName "Parent",ValueConcrete [] (TypeName "Parent") [] [] [] [] [])
         ]),
 
     checkOperationSuccess "testfiles/value_refines_value.txt" checkConnectionCycles,
@@ -119,12 +120,12 @@ main = runAllTests [
     checkOperationSuccess
       "testfiles/flatten.txt"
       (flattenAllConnections $ Map.fromList [
-          (TypeName "Parent2",InstanceInterface [] (TypeName "Parent2") [] [])
+          (TypeName "Parent2",InstanceInterface [] (TypeName "Parent2") [] [] [])
         ]),
     checkOperationFail
       "testfiles/flatten.txt"
       (flattenAllConnections $ Map.fromList [
-          (TypeName "Parent",InstanceInterface [] (TypeName "Parent") [] [])
+          (TypeName "Parent",InstanceInterface [] (TypeName "Parent") [] [] [])
         ]),
 
     checkOperationSuccess
@@ -135,11 +136,11 @@ main = runAllTests [
                    (TypeName "Parent",
                     ValueInterface [] (TypeName "Parent") []
                                    [ValueRefine [] $ TypeInstance (TypeName "Object1") (ParamSet []),
-                                    ValueRefine [] $ TypeInstance (TypeName "Object2") (ParamSet [])] []),
+                                    ValueRefine [] $ TypeInstance (TypeName "Object2") (ParamSet [])] [] []),
                    -- NOTE: Object1 deliberately excluded here so that we catch
                    -- unnecessary recursion in existing categories.
                    (TypeName "Object2",
-                    ValueInterface [] (TypeName "Object2") [] [] [])
+                    ValueInterface [] (TypeName "Object2") [] [] [] [])
                  ])
         scrapeAllRefines ts2 `containsExactly` [
             ("Child","Parent"),
@@ -163,12 +164,12 @@ main = runAllTests [
     checkOperationSuccess
       "testfiles/concrete_refines_value.txt"
       (checkParamVariances $ Map.fromList [
-          (TypeName "Parent2",InstanceInterface [] (TypeName "Parent2") [] [])
+          (TypeName "Parent2",InstanceInterface [] (TypeName "Parent2") [] [] [])
         ]),
     checkOperationFail
       "testfiles/concrete_refines_value.txt"
       (checkParamVariances $ Map.fromList [
-          (TypeName "Parent",InstanceInterface [] (TypeName "Parent") [] [])
+          (TypeName "Parent",InstanceInterface [] (TypeName "Parent") [] [] [])
         ]),
 
     checkOperationSuccess
@@ -177,7 +178,7 @@ main = runAllTests [
           (TypeName "Parent",
            ValueInterface [] (TypeName "Parent")
                           [ValueParam [] (ParamName "w") Contravariant,
-                           ValueParam [] (ParamName "z") Covariant] [] [])
+                           ValueParam [] (ParamName "z") Covariant] [] [] [])
       ]),
     checkOperationFail
       "testfiles/partial_params.txt"
@@ -185,7 +186,7 @@ main = runAllTests [
           (TypeName "Parent",
            ValueInterface [] (TypeName "Parent")
                           [ValueParam [] (ParamName "w") Invariant,
-                           ValueParam [] (ParamName "z") Covariant] [] [])
+                           ValueParam [] (ParamName "z") Covariant] [] [] [])
       ]),
     checkOperationFail
       "testfiles/partial_params.txt"
@@ -193,7 +194,7 @@ main = runAllTests [
           (TypeName "Parent",
            ValueInterface [] (TypeName "Parent")
                           [ValueParam [] (ParamName "w") Contravariant,
-                           ValueParam [] (ParamName "z") Invariant] [] [])
+                           ValueParam [] (ParamName "z") Invariant] [] [] [])
       ]),
 
     checkOperationSuccess
@@ -552,7 +553,7 @@ main = runAllTests [
       "testfiles/flatten.txt"
       (\ts -> do
         let tm0 = Map.fromList [
-                    (TypeName "Parent2",InstanceInterface [] (TypeName "Parent2") [] [])
+                    (TypeName "Parent2",InstanceInterface [] (TypeName "Parent2") [] [] [])
                   ]
         tm <- includeNewTypes tm0 ts
         rs <- getRefines tm "Child"
@@ -570,7 +571,22 @@ main = runAllTests [
       (\ts -> do
         tm <- includeNewTypes Map.empty ts
         rs <- getDefines tm "Object"
-        rs `containsExactly` ["Type0<Value1>"])
+        rs `containsExactly` ["Type0<Value1>"]),
+
+    checkFunctionParseSuccess
+      "get () -> (optional x)"
+      "<> () -> (optional x)",
+    checkFunctionParseSuccess
+      "set (x) -> ()"
+      "<> (x) -> ()",
+    checkFunctionParseSuccess
+      "set<x> (Type<x>) -> (optional x)"
+      "<x> (Type<x>) -> (optional x)",
+    checkFunctionParseSuccess
+      "set<x> x requires Type<x> (Type<x>) -> (optional x)"
+      "<x> x requires Type<x> (Type<x>) -> (optional x)",
+    checkFunctionParseFail
+      "set<x> z requires Type<x> () -> ()"
   ]
 
 
@@ -619,12 +635,12 @@ getTypeDefinesFilters ts s = do
   return $ map (map show) vs
 
 scrapeAllRefines = map (show *** show) . concat . map scrapeSingle where
-  scrapeSingle (ValueInterface _ n _ rs _) = map ((,) n . vrType) rs
-  scrapeSingle (ValueConcrete _ n _ rs _ _) = map ((,) n . vrType) rs
+  scrapeSingle (ValueInterface _ n _ rs _ _) = map ((,) n . vrType) rs
+  scrapeSingle (ValueConcrete _ n _ rs _ _ _) = map ((,) n . vrType) rs
   scrapeSingle _ = []
 
 scrapeAllDefines = map (show *** show) . concat . map scrapeSingle where
-  scrapeSingle (ValueConcrete _ n _ _ ds _) = map ((,) n . vdType) ds
+  scrapeSingle (ValueConcrete _ n _ _ ds _ _) = map ((,) n . vdType) ds
   scrapeSingle _ = []
 
 
@@ -721,3 +737,35 @@ checkShortParseFail s = do
     check (Right t) =
       compileError $ "Parse '" ++ s ++ "': Expected failure but got\n" ++ show t ++ "\n"
     check _ = return ()
+
+checkFunctionParseSuccess :: (CompileErrorM m, MergeableM m, Monad m) =>
+  String -> String -> IO (m ())
+checkFunctionParseSuccess s e = return $ do
+  let parsed = readFunction "(string)" s :: CompileInfo (ScopedFunction SourcePos)
+  funcType <- check parsed >>= parsedToFunctionType
+  when (show funcType /= e) $
+    compileError $ "Parse '" ++ s ++ "': Expected to have type '" ++ e ++
+                   "' but was '" ++ show funcType ++ "'\n"
+  where
+    check (Right x) = return x
+    check (Left es) = compileError $ "Parse '" ++ s ++ "':\n" ++ show es
+
+checkFunctionParseFail :: (CompileErrorM m, MergeableM m, Monad m) =>
+  String -> IO (m ())
+checkFunctionParseFail s = return $ do
+  let parsed = readFunction "(string)" s :: CompileInfo (ScopedFunction SourcePos)
+  let converted = parsed >>= parsedToFunctionType
+  check converted
+  where
+    check (Right t) =
+      compileError $ "Parse '" ++ s ++ "': Expected failure but got\n" ++ show t ++ "\n"
+    check _ = return ()
+
+readFunction ::  (CompileErrorM m, Monad m) =>
+  String -> String -> m (ScopedFunction SourcePos)
+readFunction f s =
+  unwrap $ parse (between optionalSpace endOfDoc parser) f s
+  where
+    parser = parseScopedFunction (return ValueScope) (return $ TypeName "Type")
+    unwrap (Left e)  = compileError (show e)
+    unwrap (Right t) = return t
