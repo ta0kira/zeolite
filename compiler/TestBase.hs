@@ -31,7 +31,7 @@ runAllTests :: [IO (CompileInfo ())] -> IO ()
 runAllTests ts = do
   results <- sequence ts
   let (es,ps) = partitionEithers $ zipWith numberError [1..] results
-  mapM_ (\(n,e) -> hPutStr stderr ("Test " ++ show n ++ ": " ++ show e)) es
+  mapM_ (\(n,e) -> hPutStr stderr ("Test " ++ show n ++ ": " ++ show e ++ "\n")) es
   hPutStr stderr $ show (length ps) ++ " tests passed + " ++
                    show (length es) ++ " tests failed\n"
 

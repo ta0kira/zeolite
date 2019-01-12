@@ -216,8 +216,11 @@ getCategory :: (Show c, CompileErrorM m, Monad m) =>
 getCategory tm (c,n) =
   case n `Map.lookup` tm of
        (Just t) -> return (c,t)
-       _ -> compileError $ "Type " ++ show n ++
-                           " [" ++ formatFullContext c ++ "] not found"
+       _ -> compileError $ "Type " ++ show n ++ context ++ " not found"
+  where
+    context
+      | null c = ""
+      | otherwise = " [" ++ formatFullContext c ++ "]"
 
 getValueCategory :: (Show c, CompileErrorM m, Monad m) =>
   CategoryMap c -> ([c],TypeName) -> m ([c],AnyCategory c)
@@ -422,27 +425,32 @@ checkCategoryInstances :: (Show c, MergeableM m, CompileErrorM m, Monad m) =>
 checkCategoryInstances tm0 ts = do
   tm <- declareAllTypes tm0 ts
   let r = categoriesToTypeResolver tm
-  mergeAll $ map (checkSingle r tm) ts
+  mergeAll $ map (checkSingle r) ts
   where
-    checkSingle r tm t = do
+    checkSingle r t = do
       let pa = Set.fromList $ map vpParam $ getCategoryParams t
-      let fs = getFilterMap t
+      let fm = getFilterMap t
+      let vm = Map.fromList $ map (\p -> (vpParam p,vpVariance p)) $ getCategoryParams t
       mergeAll $ map (checkFilterParam pa) (getCategoryFilters t)
-      mergeAll $ map (checkRefine r fs) (getCategoryRefines t)
-      mergeAll $ map (checkDefine r fs tm) (getCategoryDefines t)
-      mergeAll $ map (checkFilter r fs tm) (getCategoryFilters t)
+      mergeAll $ map (checkRefine r fm) (getCategoryRefines t)
+      mergeAll $ map (checkDefine r fm) (getCategoryDefines t)
+      mergeAll $ map (checkFilter r fm) (getCategoryFilters t)
+      mergeAll $ map (checkFunction r fm vm) (getCategoryFunctions t)
     checkFilterParam pa (ParamFilter c n _) =
       when (not $ n `Set.member` pa) $
         compileError $ "Param " ++ show n ++ " [" ++ formatFullContext c ++ "] does not exist"
-    checkRefine r fs (ValueRefine c t) =
-      validateTypeInstance r fs t `reviseError`
+    checkRefine r fm (ValueRefine c t) =
+      validateTypeInstance r fm t `reviseError`
         (show t ++ " [" ++ formatFullContext c ++ "]")
-    checkDefine r fs tm (ValueDefine c t) =
-      validateDefinesInstance r fs t `reviseError`
+    checkDefine r fm (ValueDefine c t) =
+      validateDefinesInstance r fm t `reviseError`
         (show t ++ " [" ++ formatFullContext c ++ "]")
-    checkFilter r fs tm (ParamFilter c n f) =
-      validateTypeFilter r fs f `reviseError`
+    checkFilter r fm (ParamFilter c n f) =
+      validateTypeFilter r fm f `reviseError`
         (show n ++ " " ++ show f ++ " [" ++ formatFullContext c ++ "]")
+    checkFunction r fm vm f = flip reviseError (show f) $ do
+      funcType <- parsedToFunctionType f
+      validatateFunctionType r fm vm funcType
 
 -- TODO: Maybe get rid of this and require an explicit override instead.
 mergeCategoryInstances :: (Show c, MergeableM m, CompileErrorM m, Monad m) =>
@@ -654,7 +662,7 @@ parsedToFunctionType (ScopedFunction c n t _ as rs ps fa) = do
       when (not $ (pfParam f) `Set.member` pa) $
       compileError $ "Filtered param " ++ show (pfParam f) ++ " [" ++
                      formatFullContext (pfContext f) ++
-                     "] is not defined for function " ++ show n ++ "." ++ show t ++
+                     "] is not defined for function " ++ show n ++
                      " [" ++ formatFullContext c ++ "]"
     getFilters fm n =
       case n `Map.lookup` fm of

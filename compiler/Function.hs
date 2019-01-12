@@ -7,7 +7,7 @@ module Function (
   validatateFunctionType,
 ) where
 
-import Data.List (intercalate)
+import Data.List (group,intercalate,sort)
 import Control.Monad (when)
 import qualified Data.Map as Map
 
@@ -32,11 +32,11 @@ instance Show FunctionType where
     where
       showFilters (n,fs) = map (\f -> show n ++ " " ++ show f ++ " ") fs
 
-validatateFunctionType ::  (MergeableM m, Mergeable p, CompileErrorM m, Monad m) =>
+validatateFunctionType :: (MergeableM m, Mergeable p, CompileErrorM m, Monad m) =>
   TypeResolver m p -> ParamFilters -> ParamVariances -> FunctionType -> m ()
 validatateFunctionType r fm vm (FunctionType as rs ps fa) = do
-  -- TODO: Also need to check for duplicates within the function.
-  mergeAll $ map checkDuplicate $ psParams ps
+  mergeAll $ map checkCount $ group $ sort $ psParams ps
+  mergeAll $ map checkHides $ psParams ps
   paired <- processParamPairs alwaysPairParams ps fa
   let allFilters = Map.union fm (Map.fromList paired)
   expanded <- fmap concat $ processParamPairs (\n fs -> return $ zip (repeat n) fs) ps fa
@@ -46,9 +46,12 @@ validatateFunctionType r fm vm (FunctionType as rs ps fa) = do
   mergeAll $ map (checkReturn allFilters) $ psParams rs
   where
     allVariances = Map.union vm (Map.fromList $ zip (psParams ps) (repeat Invariant))
-    checkDuplicate n =
+    checkCount xa@(x:_:_) =
+      compileError $ "Param " ++ show x ++ " occurs " ++ show (length xa) ++ " times"
+    checkCount _ = return ()
+    checkHides n =
       when (n `Map.member` fm) $
-        compileError $ "Param " ++ show n ++ " is already defined"
+        compileError $ "Param " ++ show n ++ " hides another param in a higher scope"
     checkFilterType (n,f) =
       validateTypeFilter r fm f `reviseError` ("In filter " ++ show n ++ " " ++ show f)
     checkFilterVariance (n,f@(TypeFilter FilterRequires t)) =

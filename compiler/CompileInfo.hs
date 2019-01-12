@@ -23,7 +23,8 @@ instance Show CompileMessage where
     format indent (CompileMessage [] ms) =
       concat (map (format indent) ms)
     format indent (CompileMessage m ms) =
-      indent ++ m ++ "\n" ++ concat (map (format $ indent ++ "  ") ms)
+      (doIndent indent m) ++ "\n" ++ concat (map (format $ indent ++ "  ") ms)
+    doIndent indent s = intercalate "\n" $ map (indent ++) $ lines s
 
 type CompileInfo = Either CompileMessage
 

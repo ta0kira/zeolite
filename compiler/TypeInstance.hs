@@ -310,8 +310,7 @@ validateGeneralInstance :: (MergeableM m, Mergeable p, CompileErrorM m, Monad m)
   TypeResolver m p -> ParamFilters -> GeneralInstance -> m ()
 validateGeneralInstance r f ta@(TypeMerge MergeIntersect ts) = do
   mergeAll (map checkConcrete ts)
-  mergeAll (map (validateGeneralInstance r f) ts) `reviseError`
-    (show ta ++ " fails to meet required parameter constraints")
+  mergeAll (map (validateGeneralInstance r f) ts)
   where
     checkConcrete (SingleType (JustTypeInstance t)) = do
       c <- trConcrete r (tiName t)
@@ -319,11 +318,9 @@ validateGeneralInstance r f ta@(TypeMerge MergeIntersect ts) = do
                               " cannot be used in intersection " ++ show ta
     checkConcrete _ = return ()
 validateGeneralInstance r f ta@(TypeMerge _ ts) =
-  mergeAll (map (validateGeneralInstance r f) ts) `reviseError`
-    (show ta ++ " fails to meet required parameter constraints")
+  mergeAll (map (validateGeneralInstance r f) ts)
 validateGeneralInstance r f (SingleType (JustTypeInstance t)) =
-  validateTypeInstance r f t `reviseError`
-    (show t ++ " fails to meet required parameter constraints")
+  validateTypeInstance r f t
 validateGeneralInstance _ f (SingleType (JustParamName n)) =
   when (not $ n `Map.member` f) $
     compileError $ "Param " ++ show n ++ " does not exist"

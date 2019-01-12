@@ -573,20 +573,43 @@ main = runAllTests [
         rs <- getDefines tm "Object"
         rs `containsExactly` ["Type0<Value1>"]),
 
-    checkFunctionParseSuccess
-      "get () -> (optional x)"
-      "<> () -> (optional x)",
-    checkFunctionParseSuccess
-      "set (x) -> ()"
-      "<> (x) -> ()",
-    checkFunctionParseSuccess
-      "set<x> (Type<x>) -> (optional x)"
-      "<x> (Type<x>) -> (optional x)",
-    checkFunctionParseSuccess
-      "set<x> x requires Type<x> (Type<x>) -> (optional x)"
-      "<x> x requires Type<x> (Type<x>) -> (optional x)",
-    checkFunctionParseFail
-      "set<x> z requires Type<x> () -> ()"
+    checkOperationFail
+      "testfiles/function_param_clash.txt"
+      (\ts -> checkCategoryInstances Map.empty ts),
+    checkOperationFail
+      "testfiles/function_duplicate_param.txt"
+      (\ts -> checkCategoryInstances Map.empty ts),
+    checkOperationFail
+      "testfiles/function_bad_filter.txt"
+      (\ts -> checkCategoryInstances Map.empty ts),
+    checkOperationFail
+      "testfiles/function_bad_allows.txt"
+      (\ts -> checkCategoryInstances Map.empty ts),
+    checkOperationFail
+      "testfiles/function_bad_requires.txt"
+      (\ts -> checkCategoryInstances Map.empty ts),
+    checkOperationFail
+      "testfiles/function_bad_defines.txt"
+      (\ts -> checkCategoryInstances Map.empty ts),
+    checkOperationFail
+      "testfiles/function_bad_arg.txt"
+      (\ts -> checkCategoryInstances Map.empty ts),
+    checkOperationFail
+      "testfiles/function_bad_return.txt"
+      (\ts -> checkCategoryInstances Map.empty ts),
+
+    checkOperationSuccess
+      "testfiles/function_filters_satisfied.txt"
+      (\ts -> checkCategoryInstances Map.empty ts),
+    checkOperationFail
+      "testfiles/function_requires_missed.txt"
+      (\ts -> checkCategoryInstances Map.empty ts),
+    checkOperationFail
+      "testfiles/function_allows_missed.txt"
+      (\ts -> checkCategoryInstances Map.empty ts),
+    checkOperationFail
+      "testfiles/function_defines_missed.txt"
+      (\ts -> checkCategoryInstances Map.empty ts)
   ]
 
 
@@ -737,35 +760,3 @@ checkShortParseFail s = do
     check (Right t) =
       compileError $ "Parse '" ++ s ++ "': Expected failure but got\n" ++ show t ++ "\n"
     check _ = return ()
-
-checkFunctionParseSuccess :: (CompileErrorM m, MergeableM m, Monad m) =>
-  String -> String -> IO (m ())
-checkFunctionParseSuccess s e = return $ do
-  let parsed = readFunction "(string)" s :: CompileInfo (ScopedFunction SourcePos)
-  funcType <- check parsed >>= parsedToFunctionType
-  when (show funcType /= e) $
-    compileError $ "Parse '" ++ s ++ "': Expected to have type '" ++ e ++
-                   "' but was '" ++ show funcType ++ "'\n"
-  where
-    check (Right x) = return x
-    check (Left es) = compileError $ "Parse '" ++ s ++ "':\n" ++ show es
-
-checkFunctionParseFail :: (CompileErrorM m, MergeableM m, Monad m) =>
-  String -> IO (m ())
-checkFunctionParseFail s = return $ do
-  let parsed = readFunction "(string)" s :: CompileInfo (ScopedFunction SourcePos)
-  let converted = parsed >>= parsedToFunctionType
-  check converted
-  where
-    check (Right t) =
-      compileError $ "Parse '" ++ s ++ "': Expected failure but got\n" ++ show t ++ "\n"
-    check _ = return ()
-
-readFunction ::  (CompileErrorM m, Monad m) =>
-  String -> String -> m (ScopedFunction SourcePos)
-readFunction f s =
-  unwrap $ parse (between optionalSpace endOfDoc parser) f s
-  where
-    parser = parseScopedFunction (return ValueScope) (return $ TypeName "Type")
-    unwrap (Left e)  = compileError (show e)
-    unwrap (Right t) = return t

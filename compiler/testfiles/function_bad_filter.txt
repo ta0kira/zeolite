@@ -1,0 +1,5 @@
+concrete Type {
+  @value something<x>
+    y allows Type
+  () -> ()
+}
