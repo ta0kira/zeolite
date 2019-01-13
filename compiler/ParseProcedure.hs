@@ -149,7 +149,7 @@ instance ParseFromSource (Expression SourcePos) where
     c <- getPosition
     let ts = [] -- Expression type is unknown at parse time.
     s <- sourceParser
-    vs <- many $ symbolGet >> sourceParser
+    vs <- many $ valueSymbolGet >> sourceParser
     return $ Expression [c] (ParamSet ts) s vs
 
 parseFunctionCall :: FunctionName -> Parser (FunctionCall SourcePos)
@@ -176,18 +176,24 @@ instance ParseFromSource (ExpressionStart SourcePos) where
       return $ UnqualifiedCall [c] f
     variableOrUnqualified = do
       n <- sourceParser :: Parser (VariableName SourcePos)
-      asCall n <|> asVariable n
+      asTypeCall n <|> asValueCall n <|> asVariable n
     asVariable n = do
       c <- getPosition
       return $ VariableValue (OutputValue n)
-    asCall n = do
+    asTypeCall n = do
+      typeSymbolGet
+      c <- getPosition
+      n2 <- sourceParser
+      f <- parseFunctionCall n2
+      return $ TypeCall [c] (JustParamName $ ParamName $ vnName n) f
+    asValueCall n = do
       c <- getPosition
       f <- parseFunctionCall (FunctionName (vnName n))
       return $ UnqualifiedCall [c] f
     typeCall = do
       c <- getPosition
       t <- sourceParser -- NOTE: Should not need try here.
-      symbolGet -- TODO: Maybe use a different symbol here?
+      typeSymbolGet
       n <- sourceParser
       f <- parseFunctionCall n
       return $ TypeCall [c] t f

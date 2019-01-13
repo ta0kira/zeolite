@@ -132,10 +132,9 @@ data FunctionCall c =
   deriving (Eq,Show)
 
 data ExpressionStart c =
-  -- NOTE: This could also be a type param.
   VariableValue (OutputValue c) |
   -- NOTE: If the type has no args, it could be a category function.
-  TypeCall [c] TypeInstance (FunctionCall c) |
+  TypeCall [c] TypeInstanceOrParam (FunctionCall c) |
   UnqualifiedCall [c] (FunctionCall c)
   deriving (Eq,Show)
 

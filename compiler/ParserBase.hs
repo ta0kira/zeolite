@@ -43,7 +43,8 @@ module ParserBase (
   sepAfter,
   sepAfter1,
   statementEnd,
-  symbolGet,
+  typeSymbolGet,
+  valueSymbolGet,
 ) where
 
 import Text.Parsec
@@ -83,8 +84,9 @@ kwValue = keyword "@value"
 kwWeak = keyword "weak"
 kwWhile = keyword "while"
 
-statementEnd = sepAfter (string ";")
-symbolGet = sepAfter (string ".")
+statementEnd = sepAfter (string "")
+valueSymbolGet = sepAfter (string ".")
+typeSymbolGet = sepAfter (string "$")
 
 isKeyword :: Parser ()
 isKeyword = foldr (<|>) nullParse $ map try [
