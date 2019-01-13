@@ -40,7 +40,7 @@ validatateFunctionType r fm vm (FunctionType as rs ps fa) = do
   paired <- processParamPairs alwaysPairParams ps fa
   let allFilters = Map.union fm (Map.fromList paired)
   expanded <- fmap concat $ processParamPairs (\n fs -> return $ zip (repeat n) fs) ps fa
-  mergeAll $ map checkFilterType expanded
+  mergeAll $ map (checkFilterType allFilters) expanded
   mergeAll $ map checkFilterVariance expanded
   mergeAll $ map (checkArg allFilters) $ psParams as
   mergeAll $ map (checkReturn allFilters) $ psParams rs
@@ -52,16 +52,16 @@ validatateFunctionType r fm vm (FunctionType as rs ps fa) = do
     checkHides n =
       when (n `Map.member` fm) $
         compileError $ "Param " ++ show n ++ " hides another param in a higher scope"
-    checkFilterType (n,f) =
-      validateTypeFilter r fm f `reviseError` ("In filter " ++ show n ++ " " ++ show f)
+    checkFilterType fa (n,f) =
+      validateTypeFilter r fa f `reviseError` ("In filter " ++ show n ++ " " ++ show f)
     checkFilterVariance (n,f@(TypeFilter FilterRequires t)) =
-      validateInstanceVariance r vm Contravariant (SingleType t) `reviseError`
+      validateInstanceVariance r allVariances Contravariant (SingleType t) `reviseError`
         ("In filter " ++ show n ++ " " ++ show f)
     checkFilterVariance (n,f@(TypeFilter FilterAllows t)) =
-      validateInstanceVariance r vm Covariant (SingleType t) `reviseError`
+      validateInstanceVariance r allVariances Covariant (SingleType t) `reviseError`
         ("In filter " ++ show n ++ " " ++ show f)
     checkFilterVariance (n,f@(DefinesFilter t)) =
-      validateDefinesVariance r vm Contravariant t `reviseError`
+      validateDefinesVariance r allVariances Contravariant t `reviseError`
         ("In filter " ++ show n ++ " " ++ show f)
     checkArg fa ta@(ValueType _ t) = flip reviseError ("In arg " ++ show ta) $ do
       validateGeneralInstance r fa t

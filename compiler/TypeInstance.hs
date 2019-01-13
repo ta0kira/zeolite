@@ -217,7 +217,7 @@ checkInstanceToInstance :: (MergeableM m, Mergeable p, CompileErrorM m, Monad m)
 checkInstanceToInstance r f Invariant t1@(TypeInstance n1 _) t2@(TypeInstance n2 _)
   | t1 == t2 = mergeDefault
   | otherwise =
-    compileError $ "Invariance requires equality: " ++ show t1 ++ " vs. " ++ show t2
+    compileError $ "Invariance requires equality: " ++ show t1 ++ " <-> " ++ show t2
 checkInstanceToInstance r f Contravariant t1 t2 =
   checkInstanceToInstance r f Covariant t2 t1
 checkInstanceToInstance r f Covariant t1@(TypeInstance n1 ps1) t2@(TypeInstance n2 ps2)
@@ -234,7 +234,7 @@ checkInstanceToInstance r f Covariant t1@(TypeInstance n1 ps1) t2@(TypeInstance 
 checkParamToInstance :: (MergeableM m, Mergeable p, CompileErrorM m, Monad m) =>
   TypeResolver m p -> ParamFilters -> Variance -> ParamName -> TypeInstance -> m p
 checkParamToInstance r _ Invariant n1 t2@(TypeInstance n2 _) =
-    compileError $ "Invariance requires equality: " ++ show n1 ++ " vs. " ++ show t2
+    compileError $ "Invariance requires equality: " ++ show n1 ++ " <-> " ++ show t2
 checkParamToInstance r f Contravariant p1 t2 =
   checkInstanceToParam r f Covariant t2 p1
 checkParamToInstance r f Covariant n1 t2@(TypeInstance n2 ps2) = do
@@ -254,7 +254,7 @@ checkParamToInstance r f Covariant n1 t2@(TypeInstance n2 ps2) = do
 checkInstanceToParam :: (MergeableM m, Mergeable p, CompileErrorM m, Monad m) =>
   TypeResolver m p -> ParamFilters -> Variance -> TypeInstance -> ParamName -> m p
 checkInstanceToParam _ _ Invariant t1@(TypeInstance n1 _) n2 =
-    compileError $ "Invariance requires equality: " ++ show t1 ++ " vs. " ++ show n2
+    compileError $ "Invariance requires equality: " ++ show t1 ++ " <-> " ++ show n2
 checkInstanceToParam r f Contravariant t1 p2 =
   checkParamToInstance r f Covariant p2 t1
 checkInstanceToParam r f Covariant t1@(TypeInstance n1 ps1) n2 = do
@@ -275,11 +275,11 @@ checkParamToParam :: (MergeableM m, Mergeable p, CompileErrorM m, Monad m) =>
 checkParamToParam r f Invariant n1 n2
     | n1 == n2 = mergeDefault
     | otherwise =
-      -- Even with identical fiters, if the names are different then it's
-      -- possible that the substituted types will be different.
-    compileError $ "Invariance requires equality: " ++ show n1 ++ " vs. " ++ show n2
-checkParamToParam r f Contravariant p1 p2 =
-  checkParamToParam r f Covariant p2 p1
+      -- Implicit equality, inferred by n1 <-> n2.
+      mergeAll [checkParamToParam r f Covariant     n1 n2,
+                checkParamToParam r f Contravariant n1 n2]
+checkParamToParam r f Contravariant n1 n2 =
+  checkParamToParam r f Covariant n2 n1
 checkParamToParam r f Covariant n1 n2
   | n1 == n2 = mergeDefault
   | otherwise = do

@@ -702,9 +702,8 @@ parsedToFunctionType (ScopedFunction c n t _ as rs ps fa _) = do
     pa = Set.fromList $ map vpParam ps
     checkFilter f =
       when (not $ (pfParam f) `Set.member` pa) $
-      compileError $ "Filtered param " ++ show (pfParam f) ++ " [" ++
-                     formatFullContext (pfContext f) ++
-                     "] is not defined for function " ++ show n ++
+      compileError $ "Filtered param " ++ show (pfParam f) ++
+                     " is not defined for function " ++ show n ++
                      " [" ++ formatFullContext c ++ "]"
     getFilters fm n =
       case n `Map.lookup` fm of

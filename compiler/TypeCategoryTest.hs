@@ -614,7 +614,10 @@ main = runAllTests [
       "testfiles/function_duplicate_param.txt"
       (\ts -> checkCategoryInstances Map.empty ts),
     checkOperationFail
-      "testfiles/function_bad_filter.txt"
+      "testfiles/function_bad_filter_param.txt"
+      (\ts -> checkCategoryInstances Map.empty ts),
+    checkOperationFail
+      "testfiles/function_bad_filter_type.txt"
       (\ts -> checkCategoryInstances Map.empty ts),
     checkOperationFail
       "testfiles/function_bad_allows.txt"
