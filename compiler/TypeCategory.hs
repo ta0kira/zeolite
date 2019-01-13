@@ -13,7 +13,6 @@ module TypeCategory (
   checkCategoryInstances,
   checkConnectedTypes,
   checkConnectionCycles,
-  checkInstanceDuplicates,
   checkParamVariances,
   declareAllTypes, -- TODO: Remove?
   flattenAllConnections,
@@ -27,9 +26,8 @@ module TypeCategory (
   isInstanceInterface,
   isValueConcrete,
   isValueInterface,
-  mergeCategoryFunctions,
-  mergeCategoryInstances,
   parsedToFunctionType,
+  topoSortCategories,
 ) where
 
 import Control.Arrow (second)
@@ -83,22 +81,25 @@ instance Show c => Show (AnyCategory c) where
   show = format where
     format (ValueInterface cs n ps rs vs fs) =
       "@value interface " ++ show n ++ formatParams ps ++ " { " ++ formatContext cs ++ "\n" ++
-      concat (map (\r -> "  " ++ formatRefine r ++ "\n") rs) ++
-      concat (map (\v -> "  " ++ formatValue v ++ "\n") vs) ++
-      concat (map (\f -> "\n" ++ formatInterfaceFunc f ++ "\n") fs) ++
-      "}\n"
+      (intercalate "\n\n" $
+         map (\r -> "  " ++ formatRefine r) rs ++
+         map (\v -> "  " ++ formatValue v) vs ++
+         map (\f -> formatInterfaceFunc f) fs) ++
+      "\n}\n"
     format (InstanceInterface cs n ps vs fs) =
       "@type interface " ++ show n ++ formatParams ps ++ " { " ++ formatContext cs ++
-      concat (map (\v -> "  " ++ formatValue v ++ "\n") vs) ++
-      concat (map (\f -> "\n" ++ formatInterfaceFunc f ++ "\n") fs) ++
-      "}\n"
+      (intercalate "\n\n" $
+         map (\v -> "  " ++ formatValue v) vs ++
+         map (\f -> formatInterfaceFunc f) fs) ++
+      "\n}\n"
     format (ValueConcrete cs n ps rs ds vs fs) =
       "concrete " ++ show n ++ formatParams ps ++ " { " ++ formatContext cs ++ "\n" ++
-      concat (map (\r -> "  " ++ formatRefine r ++ "\n") rs) ++
-      concat (map (\d -> "  " ++ formatDefine d ++ "\n") ds) ++
-      concat (map (\v -> "  " ++ formatValue v ++ "\n") vs) ++
-      concat (map (\f -> "\n" ++ formatConcreteFunc f ++ "\n") fs) ++
-      "}\n"
+      (intercalate "\n\n" $
+         map (\r -> "  " ++ formatRefine r) rs ++
+         map (\d -> "  " ++ formatDefine d) ds ++
+         map (\v -> "  " ++ formatValue v) vs ++
+         map (\f -> formatInterfaceFunc f) fs) ++
+      "\n}\n"
     formatContext cs = "/*" ++ formatFullContext cs ++ "*/"
     formatParams ps = let (con,inv,cov) = (foldr partitionParam ([],[],[]) ps) in
       "<" ++ intercalate "," con ++ "|" ++
@@ -243,20 +244,16 @@ getInstanceCategory tm (c,n) = do
                          " cannot be used as a type interface [" ++
                          formatFullContext c ++ "]"
 
-
 includeNewTypes :: (Show c, MergeableM m, CompileErrorM m, Monad m) =>
   CategoryMap c -> [AnyCategory c] -> m (CategoryMap c)
 includeNewTypes tm0 ts = do
   checkConnectionCycles ts
   checkConnectedTypes tm0 ts
   checkParamVariances tm0 ts
-  ts2 <- flattenAllConnections tm0 ts
-  checkCategoryInstances tm0 ts2
-  -- TODO: Will also need to merge/check functions once they are available.
-  ts3 <- mergeCategoryInstances tm0 ts2
-  checkInstanceDuplicates ts3
-  ts4 <- mergeCategoryFunctions tm0 ts3
-  declareAllTypes tm0 ts4
+  ts <- topoSortCategories tm0 ts
+  ts <- flattenAllConnections tm0 ts
+  checkCategoryInstances tm0 ts
+  declareAllTypes tm0 ts
 
 declareAllTypes :: (Show c, CompileErrorM m, Monad m) =>
   CategoryMap c -> [AnyCategory c] -> m (CategoryMap c)
@@ -268,6 +265,12 @@ declareAllTypes tm0 = foldr (\t tm -> tm >>= update t) (return tm0) where
                                     "] has already been declared [" ++
                                     formatFullContext (getCategoryContext t2) ++ "]"
         _ -> return $ Map.insert (getCategoryName t) t tm
+
+getFilterMap :: AnyCategory c -> ParamFilters
+getFilterMap t = getFilters $ zip (Set.toList pa) (repeat []) where
+  pa = Set.fromList $ map vpParam $ getCategoryParams t
+  getFilters ps = let fs = map (\f -> (pfParam f,pfFilter f)) (getCategoryFilters t) in
+                      Map.fromListWith (++) $ map (second (:[])) fs ++ ps
 
 checkConnectedTypes :: (Show c, MergeableM m, CompileErrorM m, Monad m) =>
   CategoryMap c -> [AnyCategory c] -> m ()
@@ -350,46 +353,6 @@ checkConnectionCycles ts = mergeAll (map (checker []) ts) where
                      formatFullContext c ++ "] refers back to itself: " ++
                      intercalate " -> " (map show (us ++ [n]))
 
-flattenAllConnections :: (Show c, MergeableM m, CompileErrorM m, Monad m) =>
-  CategoryMap c -> [AnyCategory c] -> m [AnyCategory c]
-flattenAllConnections tm0 ts = do
-  tm <- declareAllTypes tm0 ts
-  collectAllOrErrorM $ map (updateSingle tm) ts
-  where
-    -- TODO: Also collect inherited functions.
-    updateSingle tm (ValueInterface c n ps rs vs fs) = do
-      rs2 <- collectAllOrErrorM $ map (getRefines tm) rs
-      return $ ValueInterface c n ps (concat rs2) vs fs
-    -- TODO: Also collect inherited functions.
-    updateSingle tm (ValueConcrete c n ps rs ds vs fs) = do
-      rs2 <- collectAllOrErrorM $ map (getRefines tm) rs
-      return $ ValueConcrete c n ps (concat rs2) ds vs fs
-    updateSingle _ t = return t
-    getRefines tm ra@(ValueRefine c t@(TypeInstance n ps))
-      | n `Map.member` tm0 = do
-        pa <- assignParams tm c t
-        (_,v) <- getValueCategory tm (c,n)
-        -- Assume that tm0 has already been fully processed.
-        (collectAllOrErrorM $ map (subAll c pa) (getCategoryRefines v)) >>= return . (ra:)
-      | otherwise = do
-        pa <- assignParams tm c t
-        (_,v) <- getValueCategory tm (c,n)
-        -- NOTE: Can't use mfix for this because that would require full
-        -- evaluation before that same evaluation actually starts.
-        -- Assumes that checkConnectedTypes already checked the types.
-        rs <- collectAllOrErrorM $ map (getRefines tm) (getCategoryRefines v)
-        (collectAllOrErrorM $ map (subAll c pa) (concat rs)) >>= return . (ra:)
-    subAll c pa (ValueRefine c1 t1) = do
-      (SingleType (JustTypeInstance t2)) <-
-        uncheckedSubInstance (getValueForParam pa) (SingleType (JustTypeInstance t1))
-      return $ ValueRefine (c ++ c1) t2
-    assignParams tm c (TypeInstance n ps) = do
-      (_,v) <- getValueCategory tm (c,n)
-      -- TODO: From here down should be a top-level function.
-      let ns = map vpParam $ getCategoryParams v
-      paired <- processParamPairs alwaysPairParams (ParamSet ns) ps
-      return $ Map.fromList paired
-
 checkParamVariances :: (Show c, MergeableM m, CompileErrorM m, Monad m) =>
   CategoryMap c -> [AnyCategory c] -> m ()
 checkParamVariances tm0 ts = do
@@ -397,18 +360,15 @@ checkParamVariances tm0 ts = do
   let r = categoriesToTypeResolver tm
   mergeAll (map (checkCategory r) ts)
   where
-    -- TODO: Also check function variances.
     checkCategory r (ValueInterface c n ps rs _ _) = do
       noDuplicates c n ps
       let vm = Map.fromList $ map (\p -> (vpParam p,vpVariance p)) ps
       mergeAll (map (checkRefine r vm) rs)
-    -- TODO: Also check function variances.
     checkCategory r (ValueConcrete c n ps rs ds _ _) = do
       noDuplicates c n ps
       let vm = Map.fromList $ map (\p -> (vpParam p,vpVariance p)) ps
       mergeAll (map (checkRefine r vm) rs)
       mergeAll (map (checkDefine r vm) ds)
-    -- TODO: Also check function variances.
     checkCategory _ (InstanceInterface c n ps _ _) = noDuplicates c n ps
     noDuplicates c n ps = mergeAll (map checkCount $ group $ sort $ map vpParam ps) where
       checkCount xa@(x:_:_) =
@@ -454,116 +414,26 @@ checkCategoryInstances tm0 ts = do
       funcType <- parsedToFunctionType f
       validatateFunctionType r fm vm funcType
 
--- TODO: Maybe get rid of this and require an explicit override instead.
-mergeCategoryInstances :: (Show c, MergeableM m, CompileErrorM m, Monad m) =>
+topoSortCategories :: (Show c, MergeableM m, CompileErrorM m, Monad m) =>
   CategoryMap c -> [AnyCategory c] -> m [AnyCategory c]
-mergeCategoryInstances tm0 ts = do
+topoSortCategories tm0 ts = do
   tm <- declareAllTypes tm0 ts
-  let r = categoriesToTypeResolver tm
-  collectAllOrErrorM $ map (updateSingle r) ts
+  (ts',_) <- foldr (update tm) (return ([],Map.keysSet tm0)) ts
+  return ts'
   where
-    updateSingle r t@(ValueInterface c n ps rs vs fs) = do
-      let fm = getFilterMap t
-      rs' <- mergeRefines r fm rs
-      return $ ValueInterface c n ps rs' vs fs
-    updateSingle r t@(ValueConcrete c n ps rs ds vs fs) = do
-      let fm = getFilterMap t
-      rs' <- mergeRefines r fm rs
-      ds' <- mergeDefines r fm ds
-      return $ ValueConcrete c n ps rs' ds' vs fs
-    updateSingle _ t = return t
-
-mergeCategoryFunctions :: (Show c, MergeableM m, CompileErrorM m, Monad m) =>
-  CategoryMap c -> [AnyCategory c] -> m [AnyCategory c]
-mergeCategoryFunctions tm0 ts = do
-  tm <- declareAllTypes tm0 ts
-  let r = categoriesToTypeResolver tm
-  collectAllOrErrorM $ map (updateSingle r tm) ts
-  where
-    updateSingle r tm t@(ValueInterface c n ps rs vs fs) = do
-      let fm = getFilterMap t
-      fs' <- mergeFuncs r tm fm rs [] fs
-      return $ ValueInterface c n ps rs vs fs'
-    updateSingle r tm t@(ValueConcrete c n ps rs ds vs fs) = do
-      let fm = getFilterMap t
-      fs' <- mergeFuncs r tm fm rs ds fs
-      return $ ValueConcrete c n ps rs ds vs fs'
-    updateSingle _ _ t = return t
-    mergeFuncs r tm fm rs ds fs = do
-      -- TODO: This doesn't account for a parent that merges two or more
-      -- functions from grandparents.
-      inheritValue <- fmap concat $ collectAllOrErrorM $ map (getRefinesFuncs tm) rs
-      inheritType  <- fmap concat $ collectAllOrErrorM $ map (getDefinesFuncs tm) ds
-      let inheritByName  = Map.fromListWith (++) $ map (\f -> (sfName f,[f])) $ inheritValue ++ inheritType
-      let explicitByName = Map.fromListWith (++) $ map (\f -> (sfName f,[f])) fs
-      let allNames = Set.toList $ Set.union (Map.keysSet inheritByName) (Map.keysSet explicitByName)
-      collectAllOrErrorM $ map (mergeByName r fm inheritByName explicitByName) allNames
-    getRefinesFuncs tm ra@(ValueRefine c (TypeInstance n ts)) = flip reviseError (show ra) $ do
-      (_,t) <- getValueCategory tm (c,n)
-      let ps = map vpParam $ getCategoryParams t
-      let fs = getCategoryFunctions t
-      paired <- processParamPairs alwaysPairParams (ParamSet ps) ts
-      let assigned = Map.fromList paired
-      collectAllOrErrorM (map (uncheckedSubFunction assigned) fs)
-    getDefinesFuncs tm da@(ValueDefine c (DefinesInstance n ts)) = flip reviseError (show da) $  do
-      (_,t) <- getInstanceCategory tm (c,n)
-      let ps = map vpParam $ getCategoryParams t
-      let fs = getCategoryFunctions t
-      paired <- processParamPairs alwaysPairParams (ParamSet ps) ts
-      let assigned = Map.fromList paired
-      collectAllOrErrorM (map (uncheckedSubFunction assigned) fs)
-    mergeByName r fm im em n =
-      -- TODO: Needs a better error message.
-      (tryMerge r fm n (n `Map.lookup` im) (n `Map.lookup` em)) `reviseError` (show n)
-    tryMerge _ _ n (Just fs) Nothing
-      | length fs == 1 = return $ head fs
-      -- TODO: Make this error show context.
-      | otherwise = compileError $ "Function " ++ show n ++ " is inherited " ++
-                                   show (length fs) ++ " times. " ++
-                                   "An explicit override is required."
-    tryMerge r fm n Nothing fs = tryMerge r fm n (Just []) fs
-    tryMerge r fm n (Just fs1) (Just fs2)
-      -- TODO: Make this error show context.
-      | length fs2 /= 1 = compileError $ "Function " ++ show n ++ " is declared " ++
-                                         show (length fs2) ++ " times. " ++
-                                         "Only one declaration is allowed per function."
-      | otherwise = do
-        let ff@(ScopedFunction c n t s as rs ps fa ms) = head fs2
-        mergeAll $ map (checkMerge r fm ff) fs1
-        return $ ScopedFunction c n t s as rs ps fa (ms ++ fs1)
-        where
-          checkMerge r fm f1 f2 = flip reviseError (show f2 ++ "\n  ->\n" ++ show f1) $ do
-            f1' <- parsedToFunctionType f1
-            f2' <- parsedToFunctionType f2
-            checkFunctionConvert r fm f2' f1'
-
-checkInstanceDuplicates :: (Show c, MergeableM m, CompileErrorM m, Monad m) =>
-  [AnyCategory c] -> m ()
-checkInstanceDuplicates ts = mergeAll $ map checkSingle ts where
-  checkSingle t = do
-    checkDuplicateRefines t $ getCategoryRefines t
-    checkDuplicateDefines t $ getCategoryDefines t
-  checkDuplicateRefines t rs = do
-    let grouped = groupBy (\x y -> (tiName . vrType) x == (tiName . vrType) y) $
-                  sortBy  (\x y -> (tiName . vrType) x `compare` (tiName . vrType) y) rs
-    (mergeAll $ map (requireSingle (tiName . vrType)) grouped) `reviseError`
-      ("In " ++ show (getCategoryName t) ++ " [" ++ formatFullContext (getCategoryContext t) ++ "]")
-  checkDuplicateDefines t ds = do
-    let grouped = groupBy (\x y -> (diName . vdType) x == (diName . vdType) y) $
-                  sortBy  (\x y -> (diName . vdType) x `compare` (diName . vdType) y) ds
-    (mergeAll $ map (requireSingle (diName . vdType)) grouped) `reviseError`
-      ("In " ++ show (getCategoryName t) ++ " [" ++ formatFullContext (getCategoryContext t) ++ "]")
-  requireSingle fn xs
-    | length xs == 1 = return ()
-    | otherwise =
-      (compileError $ "Cannot merge instances of " ++ show (fn $ head xs)) `mergeNested`
-        (mergeAll $ map (compileError . show) xs)
-
-getFilterMap :: AnyCategory c -> ParamFilters
-getFilterMap t = getFilters $ zip (Set.toList pa) (repeat []) where
-  pa = Set.fromList $ map vpParam $ getCategoryParams t
-  getFilters ps = let fs = map (\f -> (pfParam f,pfFilter f)) (getCategoryFilters t) in
-                      Map.fromListWith (++) $ map (second (:[])) fs ++ ps
+    update tm t u = do
+      (ts,ta) <- u
+      if getCategoryName t `Set.member` ta
+         then return (ts,ta)
+         else do
+          refines <- collectAllOrErrorM $
+                    map (\r -> getCategory tm (vrContext r,tiName $ vrType r)) $ getCategoryRefines t
+          defines <- collectAllOrErrorM $
+                    map (\d -> getCategory tm (vdContext d,diName $ vdType d)) $ getCategoryDefines t
+          (ts',ta') <- foldr (update tm) u (map snd $ refines ++ defines)
+          let ts'' = ts' ++ [t]
+          let ta'' = Set.insert (getCategoryName t) ta'
+          return (ts'',ta'')
 
 mergeObjects :: (MergeableM m, CompileErrorM m, Monad m) =>
   (a -> a -> m ()) -> [a] -> m [a]
@@ -587,18 +457,120 @@ mergeRefines r f = mergeObjects check where
                                       (SingleType $ JustTypeInstance $ t2)
       return ()
 
-mergeDefines :: (MergeableM m, Mergeable p, CompileErrorM m, Monad m) =>
-  TypeResolver m p -> ParamFilters -> [ValueDefine c] -> m [ValueDefine c]
-mergeDefines r f = mergeObjects check where
-  check (ValueDefine _ t1@(DefinesInstance n1 ps1)) (ValueDefine _ t2@(DefinesInstance n2 ps2))
-    | n1 /= n2 = compileError $ show t1 ++ " and " ++ show t2 ++ " are incompatible"
-    | otherwise = do
-      vs <- trVariance r n1
-      let paired = zip3 (psParams vs) (psParams ps1) (psParams ps2)
-      mergeAll $ map checkSingle paired
-      return ()
-      where
-        checkSingle (v,t1,t2) = checkGeneralMatch r f v t1 t2
+flattenAllConnections :: (Show c, MergeableM m, CompileErrorM m, Monad m) =>
+  CategoryMap c -> [AnyCategory c] -> m [AnyCategory c]
+flattenAllConnections tm0 ts = do
+  -- We need to process all refines before type-checking can be done.
+  tm1 <- foldr preMerge (return tm0) (reverse ts)
+  let r = categoriesToTypeResolver tm1
+  (ts',_) <- foldr (update r) (return ([],tm0)) (reverse ts)
+  return ts'
+  where
+    preMerge t u = do
+      tm <- u
+      t' <- preMergeSingle tm t
+      return $ Map.insert (getCategoryName t') t' tm
+    preMergeSingle tm t@(ValueInterface c n ps rs vs fs) = do
+      rs' <- fmap concat $ collectAllOrErrorM $ map (getRefines tm) rs
+      return $ ValueInterface c n ps rs' vs fs
+    preMergeSingle _ t = return t
+    update r t u = do
+      (ts,tm) <- u
+      t' <- updateSingle r tm t
+      return (ts ++ [t'],Map.insert (getCategoryName t') t' tm)
+    updateSingle r tm t@(ValueInterface c n ps rs vs fs) = do
+      noDuplicateRefines c n rs
+      let fm = getFilterMap t
+      rs' <- fmap concat $ collectAllOrErrorM $ map (getRefines tm) rs
+      rs'' <- mergeRefines r fm rs'
+      -- Only merge from direct parents.
+      fs' <- mergeFuncs r tm fm rs [] fs
+      return $ ValueInterface c n ps rs'' vs fs'
+    updateSingle r tm t@(ValueConcrete c n ps rs ds vs fs) = do
+      noDuplicateRefines c n rs
+      noDuplicateDefines c n ds
+      let fm = getFilterMap t
+      rs' <- fmap concat $ collectAllOrErrorM $ map (getRefines tm) rs
+      rs'' <- mergeRefines r fm rs'
+      -- Only merge from direct parents.
+      fs' <- mergeFuncs r tm fm rs ds fs
+      return $ ValueConcrete c n ps rs'' ds vs fs'
+    updateSingle _ _ t = return t
+    noDuplicateRefines c n rs = do
+      let names = map (\r -> (tiName $ vrType r,r)) rs
+      noDuplicates c n names
+    noDuplicateDefines c n ds = do
+      let names = map (\d -> (diName $ vdType d,d)) ds
+      noDuplicates c n names
+    noDuplicates c n ns =
+      mergeAll $ map checkCount $ groupBy (\x y -> fst x == fst y) $
+                                  sortBy (\x y -> fst x `compare` fst y) ns where
+        checkCount xa@(x:_:_) =
+          compileError $ "Category " ++ show (fst x) ++ " occurs " ++ show (length xa) ++
+                         " times in " ++ show n ++ " [" ++ formatFullContext c ++ "] :\n" ++
+                         intercalate "\n" (map (show . snd) xa)
+        checkCount _ = return ()
+    getRefines tm ra@(ValueRefine c t@(TypeInstance n ps)) = do
+      (_,v) <- getValueCategory tm (c,n)
+      let refines = getCategoryRefines v
+      pa <- assignParams tm c t
+      fmap (ra:) $ collectAllOrErrorM $ map (subAll c pa) refines
+    subAll c pa (ValueRefine c1 t1) = do
+      (SingleType (JustTypeInstance t2)) <-
+        uncheckedSubInstance (getValueForParam pa) (SingleType (JustTypeInstance t1))
+      return $ ValueRefine (c ++ c1) t2
+    assignParams tm c (TypeInstance n ps) = do
+      (_,v) <- getValueCategory tm (c,n)
+      -- TODO: From here down should be a top-level function.
+      let ns = map vpParam $ getCategoryParams v
+      paired <- processParamPairs alwaysPairParams (ParamSet ns) ps
+      return $ Map.fromList paired
+    mergeFuncs r tm fm rs ds fs = do
+      inheritValue <- fmap concat $ collectAllOrErrorM $ map (getRefinesFuncs tm) rs
+      inheritType  <- fmap concat $ collectAllOrErrorM $ map (getDefinesFuncs tm) ds
+      let inheritByName  = Map.fromListWith (++) $ map (\f -> (sfName f,[f])) $ inheritValue ++ inheritType
+      let explicitByName = Map.fromListWith (++) $ map (\f -> (sfName f,[f])) fs
+      let allNames = Set.toList $ Set.union (Map.keysSet inheritByName) (Map.keysSet explicitByName)
+      collectAllOrErrorM $ map (mergeByName r fm inheritByName explicitByName) allNames
+    getRefinesFuncs tm ra@(ValueRefine c (TypeInstance n ts)) = flip reviseError (show ra) $ do
+      (_,t) <- getValueCategory tm (c,n)
+      let ps = map vpParam $ getCategoryParams t
+      let fs = getCategoryFunctions t
+      paired <- processParamPairs alwaysPairParams (ParamSet ps) ts
+      let assigned = Map.fromList paired
+      collectAllOrErrorM (map (uncheckedSubFunction assigned) fs)
+    getDefinesFuncs tm da@(ValueDefine c (DefinesInstance n ts)) = flip reviseError (show da) $  do
+      (_,t) <- getInstanceCategory tm (c,n)
+      let ps = map vpParam $ getCategoryParams t
+      let fs = getCategoryFunctions t
+      paired <- processParamPairs alwaysPairParams (ParamSet ps) ts
+      let assigned = Map.fromList paired
+      collectAllOrErrorM (map (uncheckedSubFunction assigned) fs)
+    mergeByName r fm im em n =
+      -- TODO: Needs a better error message.
+      (tryMerge r fm n (n `Map.lookup` im) (n `Map.lookup` em)) `reviseError` (show n)
+    -- Inherited without an override.
+    tryMerge _ _ n (Just is) Nothing
+      | length is == 1 = return $ head is
+      | otherwise = compileError $ "Function " ++ show n ++ " is inherited " ++
+                                    show (length is) ++ " times:\n" ++
+                                    intercalate "\n" (map show is)
+    -- Not inherited.
+    tryMerge r fm n Nothing es = tryMerge r fm n (Just []) es
+    -- Explicit override, possibly inherited.
+    tryMerge r fm n (Just is) (Just es)
+      | length es /= 1 = compileError $ "Function " ++ show n ++ " is declared " ++
+                                        show (length es) ++ " times:\n" ++
+                                        intercalate "\n" (map show es)
+      | otherwise = do
+        let ff@(ScopedFunction c n t s as rs ps fa ms) = head es
+        mergeAll $ map (checkMerge r fm ff) is
+        return $ ScopedFunction c n t s as rs ps fa (ms ++ is)
+        where
+          checkMerge r fm f1 f2 = flip reviseError (show f2 ++ "\n  ->\n" ++ show f1) $ do
+            f1' <- parsedToFunctionType f1
+            f2' <- parsedToFunctionType f2
+            checkFunctionConvert r fm f2' f1'
 
 categoriesToTypeResolver :: (Show c, MergeableM m, CompileErrorM m, Monad m) =>
   CategoryMap c -> TypeResolver m ()

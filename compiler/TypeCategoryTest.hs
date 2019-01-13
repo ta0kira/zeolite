@@ -100,8 +100,22 @@ main = runAllTests [
     checkOperationSuccess
       "testfiles/flatten.txt"
       (\ts -> do
-        ts2 <- flattenAllConnections Map.empty ts
-        scrapeAllRefines ts2 `containsExactly` [
+        ts <- topoSortCategories Map.empty ts
+        map (show . getCategoryName) ts `containsPaired` [
+            "Type","Object2","Object3","Object1","Parent","Child"
+          ]),
+    checkOperationSuccess
+      "testfiles/flatten.txt"
+      (\ts -> do
+        ts <- topoSortCategories Map.empty ts
+        flattenAllConnections Map.empty ts),
+
+    checkOperationSuccess
+      "testfiles/flatten.txt"
+      (\ts -> do
+        ts <- topoSortCategories Map.empty ts
+        ts <- flattenAllConnections Map.empty ts
+        scrapeAllRefines ts `containsExactly` [
             ("Object1","Object3<y>"),
             ("Object1","Object2"),
             ("Object3","Object2"),
@@ -113,36 +127,42 @@ main = runAllTests [
             ("Child","Object3<Object3<Object2>>"),
             ("Child","Object2")
           ]
-        scrapeAllDefines ts2 `containsExactly` [
+        scrapeAllDefines ts `containsExactly` [
             ("Child","Type<Child>")
           ]),
 
     checkOperationSuccess
       "testfiles/flatten.txt"
-      (flattenAllConnections $ Map.fromList [
-          (TypeName "Parent2",InstanceInterface [] (TypeName "Parent2") [] [] [])
-        ]),
+      (\ts -> do
+        existing  <- return $ Map.fromList [
+            (TypeName "Parent2",InstanceInterface [] (TypeName "Parent2") [] [] [])
+          ]
+        ts <- topoSortCategories existing ts
+        flattenAllConnections existing ts),
     checkOperationFail
       "testfiles/flatten.txt"
-      (flattenAllConnections $ Map.fromList [
-          (TypeName "Parent",InstanceInterface [] (TypeName "Parent") [] [] [])
-        ]),
+      (\ts -> do
+        existing  <- return $ Map.fromList [
+            (TypeName "Parent",InstanceInterface [] (TypeName "Parent") [] [] [])
+          ]
+        topoSortCategories existing ts),
 
     checkOperationSuccess
       "testfiles/partial.txt"
       (\ts -> do
-        ts2 <- (flip flattenAllConnections ts)
-                 (Map.fromList [
-                   (TypeName "Parent",
-                    ValueInterface [] (TypeName "Parent") []
-                                   [ValueRefine [] $ TypeInstance (TypeName "Object1") (ParamSet []),
-                                    ValueRefine [] $ TypeInstance (TypeName "Object2") (ParamSet [])] [] []),
-                   -- NOTE: Object1 deliberately excluded here so that we catch
-                   -- unnecessary recursion in existing categories.
-                   (TypeName "Object2",
-                    ValueInterface [] (TypeName "Object2") [] [] [] [])
-                 ])
-        scrapeAllRefines ts2 `containsExactly` [
+        existing  <- return $ Map.fromList [
+            (TypeName "Parent",
+            ValueInterface [] (TypeName "Parent") []
+                           [ValueRefine [] $ TypeInstance (TypeName "Object1") (ParamSet []),
+                           ValueRefine [] $ TypeInstance (TypeName "Object2") (ParamSet [])] [] []),
+            -- NOTE: Object1 deliberately excluded here so that we catch
+            -- unnecessary recursion in existing categories.
+            (TypeName "Object2",
+            ValueInterface [] (TypeName "Object2") [] [] [] [])
+          ]
+        ts <- topoSortCategories existing ts
+        ts <- flattenAllConnections existing ts
+        scrapeAllRefines ts `containsExactly` [
             ("Child","Parent"),
             ("Child","Object1"),
             ("Child","Object2")
@@ -206,48 +226,56 @@ main = runAllTests [
     checkOperationSuccess
       "testfiles/flatten.txt"
       (\ts -> do
-        ts2 <- flattenAllConnections Map.empty ts
-        rs <- getTypeRefines ts2 "Object1<a,b>" "Object1"
+        ts <- topoSortCategories Map.empty ts
+        ts <- flattenAllConnections Map.empty ts
+        rs <- getTypeRefines ts "Object1<a,b>" "Object1"
         rs `containsPaired` ["a","b"]),
     checkOperationSuccess
       "testfiles/flatten.txt"
       (\ts -> do
-        ts2 <- flattenAllConnections Map.empty ts
-        rs <- getTypeRefines ts2 "Object1<a,b>" "Object3"
+        ts <- topoSortCategories Map.empty ts
+        ts <- flattenAllConnections Map.empty ts
+        rs <- getTypeRefines ts "Object1<a,b>" "Object3"
         rs `containsPaired` ["b"]),
     checkOperationFail
       "testfiles/flatten.txt"
       (\ts -> do
-        ts2 <- flattenAllConnections Map.empty ts
-        rs <- getTypeRefines ts2 "Undefined<a,b>" "Undefined"
+        ts <- topoSortCategories Map.empty ts
+        ts <- flattenAllConnections Map.empty ts
+        rs <- getTypeRefines ts "Undefined<a,b>" "Undefined"
         rs `containsPaired` ["a","b"]),
     checkOperationFail
       "testfiles/flatten.txt"
       (\ts -> do
-        ts2 <- flattenAllConnections Map.empty ts
-        rs <- getTypeRefines ts2 "Object1<a>" "Object1"
+        ts <- topoSortCategories Map.empty ts
+        ts <- flattenAllConnections Map.empty ts
+        rs <- getTypeRefines ts "Object1<a>" "Object1"
         rs `containsPaired` ["a"]),
     checkOperationSuccess
       "testfiles/flatten.txt"
       (\ts -> do
-        ts2 <- flattenAllConnections Map.empty ts
-        rs <- getTypeRefines ts2 "Parent<t>" "Object1"
+        ts <- topoSortCategories Map.empty ts
+        ts <- flattenAllConnections Map.empty ts
+        rs <- getTypeRefines ts "Parent<t>" "Object1"
         rs `containsPaired` ["t","Object3<Object2>"]),
     checkOperationFail
       "testfiles/flatten.txt"
       (\ts -> do
-        ts2 <- flattenAllConnections Map.empty ts
-        getTypeRefines ts2 "Parent<t>" "Child"),
+        ts <- topoSortCategories Map.empty ts
+        ts <- flattenAllConnections Map.empty ts
+        getTypeRefines ts "Parent<t>" "Child"),
     checkOperationFail
       "testfiles/flatten.txt"
       (\ts -> do
-        ts2 <- flattenAllConnections Map.empty ts
-        getTypeRefines ts2 "Child" "Type"),
+        ts <- topoSortCategories Map.empty ts
+        ts <- flattenAllConnections Map.empty ts
+        getTypeRefines ts "Child" "Type"),
     checkOperationFail
       "testfiles/flatten.txt"
       (\ts -> do
-        ts2 <- flattenAllConnections Map.empty ts
-        getTypeRefines ts2 "Child" "Missing"),
+        ts <- topoSortCategories Map.empty ts
+        ts <- flattenAllConnections Map.empty ts
+        getTypeRefines ts "Child" "Missing"),
 
     checkOperationSuccess
       "testfiles/flatten.txt"
@@ -354,54 +382,63 @@ main = runAllTests [
     checkOperationSuccess
       "testfiles/flatten.txt"
       (\ts -> do
+        ts <- topoSortCategories Map.empty ts
         ta <- flattenAllConnections Map.empty ts >>= declareAllTypes Map.empty
         let r = categoriesToTypeResolver ta
         checkTypeSuccess r [] "Child"),
     checkOperationSuccess
       "testfiles/flatten.txt"
       (\ts -> do
+        ts <- topoSortCategories Map.empty ts
         ta <- flattenAllConnections Map.empty ts >>= declareAllTypes Map.empty
         let r = categoriesToTypeResolver ta
         checkTypeSuccess r [] "(Child|Child)"),
     checkOperationSuccess
       "testfiles/flatten.txt"
       (\ts -> do
+        ts <- topoSortCategories Map.empty ts
         ta <- flattenAllConnections Map.empty ts >>= declareAllTypes Map.empty
         let r = categoriesToTypeResolver ta
         checkTypeFail r [] "(Child&Child)"),
     checkOperationSuccess
       "testfiles/flatten.txt"
       (\ts -> do
+        ts <- topoSortCategories Map.empty ts
         ta <- flattenAllConnections Map.empty ts >>= declareAllTypes Map.empty
         let r = categoriesToTypeResolver ta
         checkTypeSuccess r [] "Object2"),
     checkOperationSuccess
       "testfiles/flatten.txt"
       (\ts -> do
+        ts <- topoSortCategories Map.empty ts
         ta <- flattenAllConnections Map.empty ts >>= declareAllTypes Map.empty
         let r = categoriesToTypeResolver ta
         checkTypeSuccess r [] "(Object2|Object2)"),
     checkOperationSuccess
       "testfiles/flatten.txt"
       (\ts -> do
+        ts <- topoSortCategories Map.empty ts
         ta <- flattenAllConnections Map.empty ts >>= declareAllTypes Map.empty
         let r = categoriesToTypeResolver ta
         checkTypeSuccess r [] "(Object2&Object2)"),
     checkOperationSuccess
       "testfiles/flatten.txt"
       (\ts -> do
+        ts <- topoSortCategories Map.empty ts
         ta <- flattenAllConnections Map.empty ts >>= declareAllTypes Map.empty
         let r = categoriesToTypeResolver ta
         checkTypeFail r [] "Type<Child>"),
     checkOperationSuccess
       "testfiles/flatten.txt"
       (\ts -> do
+        ts <- topoSortCategories Map.empty ts
         ta <- flattenAllConnections Map.empty ts >>= declareAllTypes Map.empty
         let r = categoriesToTypeResolver ta
         checkTypeFail r [] "(Type<Child>|Type<Child>)"),
     checkOperationSuccess
       "testfiles/flatten.txt"
       (\ts -> do
+        ts <- topoSortCategories Map.empty ts
         ta <- flattenAllConnections Map.empty ts >>= declareAllTypes Map.empty
         let r = categoriesToTypeResolver ta
         checkTypeFail r [] "(Type<Child>&Type<Child>)"),
@@ -410,24 +447,28 @@ main = runAllTests [
     checkOperationSuccess
       "testfiles/filters.txt"
       (\ts -> do
+        ts <- topoSortCategories Map.empty ts
         ta <- flattenAllConnections Map.empty ts >>= declareAllTypes Map.empty
         let r = categoriesToTypeResolver ta
         checkTypeSuccess r [] "Value0<Value1,Value2>"),
     checkOperationFail
       "testfiles/filters.txt"
       (\ts -> do
+        ts <- topoSortCategories Map.empty ts
         ta <- flattenAllConnections Map.empty ts >>= declareAllTypes Map.empty
         let r = categoriesToTypeResolver ta
         checkTypeSuccess r [] "Value0<Value1,Value1>"),
     checkOperationSuccess
       "testfiles/filters.txt"
       (\ts -> do
+        ts <- topoSortCategories Map.empty ts
         ta <- flattenAllConnections Map.empty ts >>= declareAllTypes Map.empty
         let r = categoriesToTypeResolver ta
         checkTypeSuccess r [] "Value0<Value3,Value2>"),
     checkOperationFail
       "testfiles/filters.txt"
       (\ts -> do
+        ts <- topoSortCategories Map.empty ts
         ta <- flattenAllConnections Map.empty ts >>= declareAllTypes Map.empty
         let r = categoriesToTypeResolver ta
         checkTypeSuccess r
@@ -436,6 +477,7 @@ main = runAllTests [
     checkOperationSuccess
       "testfiles/filters.txt"
       (\ts -> do
+        ts <- topoSortCategories Map.empty ts
         ta <- flattenAllConnections Map.empty ts >>= declareAllTypes Map.empty
         let r = categoriesToTypeResolver ta
         checkTypeSuccess r
@@ -445,6 +487,7 @@ main = runAllTests [
     checkOperationSuccess
       "testfiles/filters.txt"
       (\ts -> do
+        ts <- topoSortCategories Map.empty ts
         ta <- flattenAllConnections Map.empty ts >>= declareAllTypes Map.empty
         let r = categoriesToTypeResolver ta
         checkTypeSuccess r
@@ -453,6 +496,7 @@ main = runAllTests [
     checkOperationFail
       "testfiles/filters.txt"
       (\ts -> do
+        ts <- topoSortCategories Map.empty ts
         ta <- flattenAllConnections Map.empty ts >>= declareAllTypes Map.empty
         let r = categoriesToTypeResolver ta
         checkTypeSuccess r
@@ -463,91 +507,93 @@ main = runAllTests [
     checkOperationSuccess
       "testfiles/concrete_instances.txt"
       (\ts -> do
-        ts2 <- flattenAllConnections Map.empty ts
-        checkCategoryInstances Map.empty ts2),
+        ts <- topoSortCategories Map.empty ts
+        ts <- flattenAllConnections Map.empty ts
+        checkCategoryInstances Map.empty ts),
     checkOperationFail
       "testfiles/concrete_missing_define.txt"
       (\ts -> do
-        ts2 <- flattenAllConnections Map.empty ts
-        checkCategoryInstances Map.empty ts2),
+        ts <- topoSortCategories Map.empty ts
+        ts <- flattenAllConnections Map.empty ts
+        checkCategoryInstances Map.empty ts),
     checkOperationFail
       "testfiles/concrete_missing_refine.txt"
       (\ts -> do
-        ts2 <- flattenAllConnections Map.empty ts
-        checkCategoryInstances Map.empty ts2),
+        ts <- topoSortCategories Map.empty ts
+        ts <- flattenAllConnections Map.empty ts
+        checkCategoryInstances Map.empty ts),
     checkOperationSuccess
       "testfiles/value_instances.txt"
       (\ts -> do
-        ts2 <- flattenAllConnections Map.empty ts
-        checkCategoryInstances Map.empty ts2),
+        ts <- topoSortCategories Map.empty ts
+        ts <- flattenAllConnections Map.empty ts
+        checkCategoryInstances Map.empty ts),
     checkOperationFail
       "testfiles/value_missing_define.txt"
       (\ts -> do
-        ts2 <- flattenAllConnections Map.empty ts
-        checkCategoryInstances Map.empty ts2),
+        ts <- topoSortCategories Map.empty ts
+        ts <- flattenAllConnections Map.empty ts
+        checkCategoryInstances Map.empty ts),
     checkOperationFail
       "testfiles/value_missing_refine.txt"
       (\ts -> do
-        ts2 <- flattenAllConnections Map.empty ts
-        checkCategoryInstances Map.empty ts2),
+        ts <- topoSortCategories Map.empty ts
+        ts <- flattenAllConnections Map.empty ts
+        checkCategoryInstances Map.empty ts),
     checkOperationSuccess
       "testfiles/type_instances.txt"
       (\ts -> do
-        ts2 <- flattenAllConnections Map.empty ts
-        checkCategoryInstances Map.empty ts2),
+        ts <- topoSortCategories Map.empty ts
+        ts <- flattenAllConnections Map.empty ts
+        checkCategoryInstances Map.empty ts),
     checkOperationFail
       "testfiles/type_missing_define.txt"
       (\ts -> do
-        ts2 <- flattenAllConnections Map.empty ts
-        checkCategoryInstances Map.empty ts2),
+        ts <- topoSortCategories Map.empty ts
+        ts <- flattenAllConnections Map.empty ts
+        checkCategoryInstances Map.empty ts),
     checkOperationFail
       "testfiles/type_missing_refine.txt"
       (\ts -> do
-        ts2 <- flattenAllConnections Map.empty ts
-        checkCategoryInstances Map.empty ts2),
+        ts <- topoSortCategories Map.empty ts
+        ts <- flattenAllConnections Map.empty ts
+        checkCategoryInstances Map.empty ts),
     checkOperationFail
       "testfiles/requires_concrete.txt"
       (\ts -> do
-        ts2 <- flattenAllConnections Map.empty ts
-        checkCategoryInstances Map.empty ts2),
+        ts <- topoSortCategories Map.empty ts
+        ts <- flattenAllConnections Map.empty ts
+        checkCategoryInstances Map.empty ts),
 
     -- TODO: Clean these tests up.
     checkOperationSuccess
       "testfiles/merged.txt"
       (\ts -> do
-        ts2 <- mergeCategoryInstances Map.empty ts
-        tm <- declareAllTypes Map.empty ts2
+        ts <- topoSortCategories Map.empty ts
+        ts <- flattenAllConnections Map.empty ts
+        tm <- declareAllTypes Map.empty ts
         rs <- getRefines tm "Test"
         rs `containsExactly` ["Value0","Value1","Value2","Value3",
-                              "Value4<Value1,Value1>","Value4<Value3,Value1>"]),
-    checkOperationSuccess
-      "testfiles/merged.txt"
-      (\ts -> do
-        ts2 <- mergeCategoryInstances Map.empty ts
-        tm <- declareAllTypes Map.empty ts2
-        ds <- getDefines tm "Test"
-        ds `containsExactly` ["Type0<Value1,Value1>","Type0<Value3,Value1>"]),
+                              "Value4<Value1,Value1>","Inherit1","Inherit2"]),
 
-    checkOperationFail
+    checkOperationSuccess
       "testfiles/merged.txt"
       (\ts -> do
-        ts2 <- mergeCategoryInstances Map.empty ts
-        checkInstanceDuplicates ts2),
-    checkOperationSuccess
-      "testfiles/no_duplicates.txt"
-      (\ts -> do
-        ts2 <- mergeCategoryInstances Map.empty ts
-        checkInstanceDuplicates ts2),
+        ts <- topoSortCategories Map.empty ts
+        flattenAllConnections Map.empty ts
+        return ()),
     checkOperationFail
       "testfiles/duplicate_refine.txt"
       (\ts -> do
-        ts2 <- mergeCategoryInstances Map.empty ts
-        checkInstanceDuplicates ts2),
+        ts <- topoSortCategories Map.empty ts
+        flattenAllConnections Map.empty ts
+        return ()),
     checkOperationFail
       "testfiles/duplicate_define.txt"
       (\ts -> do
-        ts2 <- mergeCategoryInstances Map.empty ts
-        checkInstanceDuplicates ts2),
+        ts <- topoSortCategories Map.empty ts
+        flattenAllConnections Map.empty ts
+        return ()),
 
     checkOperationSuccess
       "testfiles/flatten.txt"
@@ -560,18 +606,6 @@ main = runAllTests [
         rs `containsExactly` ["Parent<Child>","Object2",
                               "Object1<Child,Object3<Object2>>",
                               "Object3<Object3<Object2>>"]),
-    checkOperationSuccess
-      "testfiles/no_duplicates.txt"
-      (\ts -> do
-        tm <- includeNewTypes Map.empty ts
-        rs <- getRefines tm "Object2"
-        rs `containsExactly` ["Value0","Value1","Value2<Value1>"]),
-    checkOperationSuccess
-      "testfiles/no_duplicates.txt"
-      (\ts -> do
-        tm <- includeNewTypes Map.empty ts
-        rs <- getDefines tm "Object"
-        rs `containsExactly` ["Type0<Value1>"]),
 
     checkOperationFail
       "testfiles/function_param_clash.txt"
@@ -614,34 +648,58 @@ main = runAllTests [
     checkOperationFail
       "testfiles/conflicting_declaration.txt"
       (\ts -> do
-        ts2 <- mergeCategoryInstances Map.empty ts
-        mergeCategoryFunctions Map.empty ts2 >> return ()),
+        ts <- topoSortCategories Map.empty ts
+        flattenAllConnections Map.empty ts
+        return ()),
     checkOperationFail
       "testfiles/conflicting_inherited.txt"
       (\ts -> do
-        ts2 <- mergeCategoryInstances Map.empty ts
-        mergeCategoryFunctions Map.empty ts2 >> return ()),
+        ts <- topoSortCategories Map.empty ts
+        flattenAllConnections Map.empty ts
+        return ()),
     checkOperationSuccess
       "testfiles/successful_merge.txt"
       (\ts -> do
-        ts2 <- mergeCategoryInstances Map.empty ts
-        mergeCategoryFunctions Map.empty ts2 >> return ()),
+        ts <- topoSortCategories Map.empty ts
+        flattenAllConnections Map.empty ts
+        return ()),
     checkOperationFail
       "testfiles/failed_merge.txt"
       (\ts -> do
-        ts2 <- mergeCategoryInstances Map.empty ts
-        mergeCategoryFunctions Map.empty ts2 >> return ()),
+        ts <- topoSortCategories Map.empty ts
+        flattenAllConnections Map.empty ts
+        return ()),
 
     checkOperationSuccess
       "testfiles/successful_merge_params.txt"
       (\ts -> do
-        ts2 <- mergeCategoryInstances Map.empty ts
-        mergeCategoryFunctions Map.empty ts2 >> return ()),
+        ts <- topoSortCategories Map.empty ts
+        flattenAllConnections Map.empty ts
+        return ()),
     checkOperationFail
       "testfiles/failed_merge_params.txt"
       (\ts -> do
-        ts2 <- mergeCategoryInstances Map.empty ts
-        mergeCategoryFunctions Map.empty ts2 >> return ())
+        ts <- topoSortCategories Map.empty ts
+        flattenAllConnections Map.empty ts
+        return ()),
+    checkOperationSuccess
+      "testfiles/preserve_merged.txt"
+      (\ts -> do
+        ts <- topoSortCategories Map.empty ts
+        flattenAllConnections Map.empty ts
+        return ()),
+    checkOperationFail
+      "testfiles/conflict_in_preserved.txt"
+      (\ts -> do
+        ts <- topoSortCategories Map.empty ts
+        flattenAllConnections Map.empty ts
+        return ()),
+    checkOperationSuccess
+      "testfiles/resolved_in_preserved.txt"
+      (\ts -> do
+        ts <- topoSortCategories Map.empty ts
+        flattenAllConnections Map.empty ts
+        return ())
   ]
 
 
