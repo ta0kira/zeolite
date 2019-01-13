@@ -4,6 +4,7 @@ module ParserBase (
   ParseFromSource(..),
   anyComment,
   blockComment,
+  builtinFunctions,
   endOfDoc,
   keyword,
   kwAll,
@@ -16,9 +17,11 @@ module ParserBase (
   kwElse,
   kwEmpty,
   kwIf,
+  kwIn,
   kwIgnore,
   kwInterface,
   kwOptional,
+  kwPresent,
   kwReduce,
   kwRefines,
   kwRequire,
@@ -63,9 +66,11 @@ kwElif = keyword "elif"
 kwElse = keyword "else"
 kwEmpty = keyword "empty"
 kwIf = keyword "if"
+kwIn = keyword "in"
 kwIgnore = keyword "_"
 kwInterface = keyword "interface"
 kwOptional = keyword "optional"
+kwPresent = keyword "present"
 kwReduce = keyword "reduce"
 kwRefines = keyword "refines"
 kwRequire = keyword "require"
@@ -78,8 +83,8 @@ kwValue = keyword "@value"
 kwWeak = keyword "weak"
 kwWhile = keyword "while"
 
-statementEnd = keyword ";"
-symbolGet = keyword "."
+statementEnd = sepAfter (string ";")
+symbolGet = sepAfter (string ".")
 
 isKeyword :: Parser ()
 isKeyword = foldr (<|>) nullParse $ map try [
@@ -92,10 +97,12 @@ isKeyword = foldr (<|>) nullParse $ map try [
     kwElse,
     kwEmpty,
     kwIf,
+    kwIn,
     kwDefines,
     kwIgnore,
     kwInterface,
     kwOptional,
+    kwPresent,
     kwReduce,
     kwRefines,
     kwRequire,
@@ -107,6 +114,15 @@ isKeyword = foldr (<|>) nullParse $ map try [
     kwValue,
     kwWeak,
     kwWhile
+  ]
+
+-- TODO: Maybe this should not use strings.
+builtinFunctions :: Parser String
+builtinFunctions = foldr (<|>) (fail "empty") $ map try [
+    kwPresent >> return "present",
+    kwReduce >> return "reduce",
+    kwRequire >> return "require",
+    kwStrong >> return "strong"
   ]
 
 nullParse :: Parser ()

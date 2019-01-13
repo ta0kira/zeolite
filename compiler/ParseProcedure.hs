@@ -72,48 +72,55 @@ instance ParseFromSource (OutputValue SourcePos) where
 instance ParseFromSource (Procedure SourcePos) where
   sourceParser = labeled "procedure" $ do
     c <- getPosition
-    rs <- between nullParse optionalSpace (sepBy sourceParser optionalSpace)
+    rs <- sepBy sourceParser optionalSpace
     return $ Procedure [c] rs
 
 instance ParseFromSource (Statement SourcePos) where
-  sourceParser = try parseAssign <|>
-                 try parseIgnored <|>
-                 try parseReturnVals <|>
-                 try parseReturnNone <|>
-                 parseVoid where
-    parseAssign = labeled "assignment" $ do
+  sourceParser = parseReturn <|>
+                 parseVoid <|>
+                 parseAssign where
+    parseAssign = labeled "statement" $ do
       c <- getPosition
-      as <- sourceParser
-      sepAfter (string "=")
+      as <- multiDest <|> try singleDest <|> return []
       e <- sourceParser
-      return $ Assignment [c] as e
-    parseIgnored = labeled "statement" $ do
+      statementEnd
+      return $ Assignment [c] (ParamSet as) e
+    multiDest = do
+      as <- between (sepAfter $ string "{")
+                    (sepAfter $ string "}")
+                    (sepBy sourceParser (sepAfter $ string ","))
+      sepAfter (string "=")
+      return as
+    singleDest = do
+      a <- sourceParser
+      sepAfter (string "=")
+      return [a]
+    parseReturn = labeled "return" $ do
       c <- getPosition
-      i <- sourceParser
-      return $ NoValueCall [c] i
-    parseReturnVals = labeled "value return" $ do
-      c <- getPosition
-      kwReturn
-      rs <- sepBy1 sourceParser (sepAfter $ string ",")
+      try kwReturn
+      multiReturn c <|> singleReturn c <|> emptyReturn c
+    multiReturn :: SourcePos -> Parser (Statement SourcePos)
+    multiReturn c = do
+      rs <- between (sepAfter $ string "{")
+                    (sepAfter $ string "}")
+                    (sepBy sourceParser (sepAfter $ string ","))
       statementEnd
       return $ ExplicitReturn [c] (ParamSet rs)
-    parseReturnNone = labeled "empty return" $ do
-      c <- getPosition
-      kwReturn
+    singleReturn :: SourcePos -> Parser (Statement SourcePos)
+    singleReturn c = do
+      r <- sourceParser
+      statementEnd
+      return $ ExplicitReturn [c] (ParamSet [r])
+    emptyReturn :: SourcePos -> Parser (Statement SourcePos)
+    emptyReturn c = do
       statementEnd
       return $ EmptyReturn [c]
     parseVoid = do
       e <- sourceParser
       return $ NoValueExpression e
 
-instance ParseFromSource (Destination SourcePos) where
-  sourceParser = labeled "assignment destination" $ do
-    c <- getPosition
-    as <- sepBy1 sourceParser (sepAfter $ string ",")
-    return $ Destination [c] (ParamSet as)
-
 instance ParseFromSource (Assignable SourcePos) where
-  sourceParser = try create <|> existing where
+  sourceParser = existing <|> create where
     create = labeled "variable creation" $ do
       c <- getPosition
       t <- sourceParser
@@ -125,7 +132,7 @@ instance ParseFromSource (Assignable SourcePos) where
       return $ ExistingVariable [c] n
 
 instance ParseFromSource (VoidExpression SourcePos) where
-  sourceParser = try conditional <|> try loop <|> scoped where
+  sourceParser = conditional <|> loop <|> scoped where
     conditional = do
       e <- sourceParser
       return $ Conditional e
@@ -141,66 +148,67 @@ instance ParseFromSource (Expression SourcePos) where
   sourceParser = labeled "expression" $ do
     c <- getPosition
     let ts = [] -- Expression type is unknown at parse time.
-    a <- sourceParser
-    vs <- sepBy sourceParser symbolGet
-    return $ Expression [c] (ParamSet ts) a vs
+    s <- sourceParser
+    vs <- many $ symbolGet >> sourceParser
+    return $ Expression [c] (ParamSet ts) s vs
 
-instance ParseFromSource (CategoryOrSingleton SourcePos) where
-  sourceParser = labeled "category name" $ do
-    noKeywords
-    c <- getPosition
-    b <- upper
-    e <- sepAfter $ many alphaNum
-    return $ CategoryOrSingleton [c] (b:e)
+parseFunctionCall :: FunctionName -> Parser (FunctionCall SourcePos)
+parseFunctionCall n = do
+  c <- getPosition
+  ps <- between (sepAfter $ string "<")
+                (sepAfter $ string ">")
+                (sepBy sourceParser (sepAfter $ string ",")) <|> return []
+  notFollowedBy (string "<") -- In case the failure above was not at "<".
+  es <- between (sepAfter $ string "(")
+                (sepAfter $ string ")")
+                (sepBy sourceParser (sepAfter $ string ","))
+  return $ FunctionCall [c] n (ParamSet ps) (ParamSet es)
 
 instance ParseFromSource (ExpressionStart SourcePos) where
   sourceParser = labeled "expression start" $
-                 try variable <|>
-                 try categoryCall <|>
-                 try typeCall <|>
-                 builtinCall where
-    variable = do
-      v <- sourceParser
-      return $ VariableValue v
-    categoryCall = do
+                 builtinCall <|>
+                 variableOrUnqualified <|>
+                 typeCall where
+    builtinCall = do
       c <- getPosition
-      t <- sourceParser
-      symbolGet
-      n <- sourceParser
-      es <- between (sepAfter $ string "(")
-                    (sepAfter $ string ")")
-                    (sepBy sourceParser (sepAfter $ string ","))
-      return $ TypeCall [c] t n (ParamSet es)
+      n <- builtinFunctions
+      f <- parseFunctionCall (FunctionName n)
+      return $ UnqualifiedCall [c] f
+    variableOrUnqualified = do
+      n <- sourceParser :: Parser (VariableName SourcePos)
+      asCall n <|> asVariable n
+    asVariable n = do
+      c <- getPosition
+      return $ VariableValue (OutputValue n)
+    asCall n = do
+      c <- getPosition
+      f <- parseFunctionCall (FunctionName (vnName n))
+      return $ UnqualifiedCall [c] f
     typeCall = do
       c <- getPosition
-      t <- sourceParser
-      symbolGet
+      t <- sourceParser -- NOTE: Should not need try here.
+      symbolGet -- TODO: Maybe use a different symbol here?
       n <- sourceParser
-      es <- between (sepAfter $ string "(")
-                    (sepAfter $ string ")")
-                    (sepBy sourceParser (sepAfter $ string ","))
-      return $ CategoryOrSingletonCall [c] t n (ParamSet es)
-    builtinCall = sourceParser
+      f <- parseFunctionCall n
+      return $ TypeCall [c] t f
 
 instance ParseFromSource (ValueOperation SourcePos) where
-  sourceParser = try conversion <|> valueCall where
-    conversion = labeled "type conversion" $ do
-      c <- getPosition
-      t <- sourceParser
-      return $ Conversion [c] t
+  sourceParser = valueCall <|> conversion where
     valueCall = labeled "function call" $ do
       c <- getPosition
       let ts = [] -- Expression type is unknown at parse time.
       n <- sourceParser
-      es <- between (sepAfter $ string "(")
-                    (sepAfter $ string ")")
-                    (sepBy sourceParser (sepAfter $ string ","))
-      return $ ValueCall [c] (ParamSet ts) n (ParamSet es)
+      f <- parseFunctionCall n
+      return $ ValueCall [c] (ParamSet ts) f
+    conversion = labeled "type conversion" $ do
+      c <- getPosition
+      t <- sourceParser -- NOTE: Should not need try here.
+      return $ Conversion [c] t
 
 instance ParseFromSource (IfElifElse SourcePos) where
   sourceParser = labeled "if-elif-else" $ do
     c <- getPosition
-    kwIf >> parseIf c
+    try kwIf >> parseIf c
     where
       parseIf c = do
         i <- between (sepAfter $ string "(") (sepAfter $ string ")") sourceParser
@@ -209,17 +217,17 @@ instance ParseFromSource (IfElifElse SourcePos) where
         return $ IfStatement [c] i p next
       parseElif = do
         c <- getPosition
-        kwElif >> parseIf c
+        try kwElif >> parseIf c
       parseElse = do
         c <- getPosition
-        kwElse
+        try kwElse
         p <- between (sepAfter $ string "{") (sepAfter $ string "}") sourceParser
         return $ ElseStatement [c] p
 
 instance ParseFromSource (WhileLoop SourcePos) where
   sourceParser = labeled "while" $ do
     c <- getPosition
-    kwWhile
+    try kwWhile
     i <- between (sepAfter $ string "(") (sepAfter $ string ")") sourceParser
     p <- between (sepAfter $ string "{") (sepAfter $ string "}") sourceParser
     return $ WhileLoop [c] i p
@@ -227,30 +235,8 @@ instance ParseFromSource (WhileLoop SourcePos) where
 instance ParseFromSource (ScopedBlock SourcePos) where
   sourceParser = labeled "scoped" $ do
     c <- getPosition
-    kwScoped
+    try kwScoped
     p <- between (sepAfter $ string "{") (sepAfter $ string "}") sourceParser
+    kwIn
     s <- sourceParser
     return $ ScopedBlock [c] p s
-
-instance ParseFromSource (Builtin SourcePos) where
-  sourceParser = labeled "builtin" $ try reduce <|> try require <|> strong where
-    reduce = do
-      c <- getPosition
-      kwReduce
-      sepAfter (string "<")
-      from <- sourceParser
-      sepAfter (string ",")
-      to <- sourceParser
-      sepAfter (string ">")
-      e <- between (sepAfter $ string "(") (sepAfter $ string ")") sourceParser
-      return $ CallReduce [c] from to e
-    require = do
-      c <- getPosition
-      kwRequire
-      e <- between (sepAfter $ string "(") (sepAfter $ string ")") sourceParser
-      return $ CallRequire [c] e
-    strong = do
-      c <- getPosition
-      kwStrong
-      e <- between (sepAfter $ string "(") (sepAfter $ string ")") sourceParser
-      return $ CallStrong [c] e

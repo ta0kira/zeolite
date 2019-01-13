@@ -1,0 +1,35 @@
+testFunction1 (a,b,c) (d,e,f) {
+  z.call().call();
+  { x, Type y, _ } = z.call();
+  x = z.call();
+  return;
+  return a;
+  return { a, z.call().call(), c };
+
+  if (T.f()) {
+    // do nothing
+  } elif (q) {
+    require(v).g();
+  } elif (zzz) {
+    // sleep
+  }
+
+  scoped {
+    optional T myvar = reduce<x,y>(q);
+  } in if (present(myvar)) {
+    unqualified();
+  } else {
+    // something
+  }
+
+  scoped {
+    optional T myvar = reduce<x,y>(q);
+  } in { v, _ } = x.process(myvar);
+
+  while (true) {
+    fail.to().execute();
+    return x;
+  }
+}
+
+testFunction2 (a,b,c) {}

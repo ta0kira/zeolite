@@ -3,12 +3,10 @@
 module Procedure (
   ArgValues(..),
   Assignable(..),
-  Builtin(..),
-  CategoryOrSingleton(..),
-  Destination(..),
   ExecutableProcedure(..),
   Expression(..),
   ExpressionStart(..),
+  FunctionCall(..),
   IfElifElse(..),
   InputValue(..),
   OutputValue(..),
@@ -40,6 +38,7 @@ data ExecutableProcedure c =
     epReturns :: ReturnValues c,
     epProcedure :: Procedure c
   }
+  deriving (Show) -- TODO: Remove Show? Or add proper formatting.
 
 data ArgValues c =
   ArgValues {
@@ -109,13 +108,8 @@ data Procedure c =
 data Statement c =
   EmptyReturn [c] |
   ExplicitReturn [c] (ParamSet (Expression c)) |
-  Assignment [c] (Destination c) (Expression c) |
-  NoValueCall [c] (Expression c) |
+  Assignment [c] (ParamSet (Assignable c)) (Expression c) |
   NoValueExpression (VoidExpression c)
-  deriving (Eq,Show)
-
-data Destination c =
-  Destination [c] (ParamSet (Assignable c))
   deriving (Eq,Show)
 
 data Assignable c =
@@ -133,23 +127,21 @@ data Expression c =
   Expression [c] (ParamSet ValueType) (ExpressionStart c) [ValueOperation c]
   deriving (Eq,Show)
 
-data CategoryOrSingleton c =
-  CategoryOrSingleton {
-    cosContext :: [c],
-    cosName :: String
-  }
-  deriving (Eq,Ord,Show)
+data FunctionCall c =
+  FunctionCall [c] FunctionName (ParamSet GeneralInstance) (ParamSet (Expression c))
+  deriving (Eq,Show)
 
 data ExpressionStart c =
+  -- NOTE: This could also be a type param.
   VariableValue (OutputValue c) |
-  TypeCall [c] TypeInstance FunctionName (ParamSet (Expression c)) |
-  CategoryOrSingletonCall [c] (CategoryOrSingleton c) FunctionName (ParamSet (Expression c)) |
-  BuiltinCall (Builtin c)
+  -- NOTE: If the type has no args, it could be a category function.
+  TypeCall [c] TypeInstance (FunctionCall c) |
+  UnqualifiedCall [c] (FunctionCall c)
   deriving (Eq,Show)
 
 data ValueOperation c =
   Conversion [c] TypeInstance |
-  ValueCall [c] (ParamSet ValueType) FunctionName (ParamSet (Expression c))
+  ValueCall [c] (ParamSet ValueType) (FunctionCall c)
   deriving (Eq,Show)
 
 data IfElifElse c =
@@ -165,10 +157,4 @@ data WhileLoop c =
 -- TODO: This will likely require some magic if the statement is an assignement.
 data ScopedBlock c =
   ScopedBlock [c] (Procedure c) (Statement c)
-  deriving (Eq,Show)
-
-data Builtin c =
-  CallReduce [c] TypeInstance TypeInstance (Expression c) |
-  CallRequire [c] (Expression c) |
-  CallStrong [c] (Expression c)
   deriving (Eq,Show)
