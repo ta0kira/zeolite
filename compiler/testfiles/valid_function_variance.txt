@@ -1,0 +1,7 @@
+@value interface Type1<x|> {}
+
+@value interface Type2<x|> {
+  // arg:    contravariant * contravariant * contravariant = contravariant
+  // return: contravariant * contravariant = covariant
+  something (Type1<Type1<x>>) -> (Type1<x>)
+}

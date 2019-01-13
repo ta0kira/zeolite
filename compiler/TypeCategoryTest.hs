@@ -645,6 +645,16 @@ main = runAllTests [
       "testfiles/function_defines_missed.txt"
       (\ts -> checkCategoryInstances Map.empty ts),
 
+    checkOperationSuccess
+      "testfiles/valid_function_variance.txt"
+      (\ts -> checkCategoryInstances Map.empty ts),
+    checkOperationFail
+      "testfiles/bad_arg_variance.txt"
+      (\ts -> checkCategoryInstances Map.empty ts),
+    checkOperationFail
+      "testfiles/bad_return_variance.txt"
+      (\ts -> checkCategoryInstances Map.empty ts),
+
     checkOperationFail
       "testfiles/conflicting_declaration.txt"
       (\ts -> do
