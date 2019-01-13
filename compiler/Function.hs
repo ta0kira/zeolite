@@ -63,7 +63,7 @@ validatateFunctionType r fm vm (FunctionType as rs ps fa) = do
     checkFilterVariance (n,f@(DefinesFilter t)) =
       validateDefinesVariance r allVariances Contravariant t `reviseError`
         ("In filter " ++ show n ++ " " ++ show f)
-    checkArg fa ta@(ValueType _ t) = flip reviseError ("In arg " ++ show ta) $ do
+    checkArg fa ta@(ValueType _ t) = flip reviseError ("In argument " ++ show ta) $ do
       validateGeneralInstance r fa t
       validateInstanceVariance r allVariances Contravariant t
     checkReturn fa ta@(ValueType _ t) = flip reviseError ("In return " ++ show ta) $ do
@@ -73,7 +73,7 @@ validatateFunctionType r fm vm (FunctionType as rs ps fa) = do
 assignFunctionParams :: (MergeableM m, Mergeable p, CompileErrorM m, Monad m) =>
   TypeResolver m p -> ParamFilters -> ParamSet GeneralInstance ->
   FunctionType -> m FunctionType
-assignFunctionParams r fm ts ff@(FunctionType as rs ps fa) = flip reviseError (show ff) $ do
+assignFunctionParams r fm ts ff@(FunctionType as rs ps fa) = do
   assigned <- fmap Map.fromList $ processParamPairs alwaysPairParams ps ts
   let allAssigned = Map.union assigned (Map.fromList $ map (\n -> (n,SingleType $ JustParamName n)) $ Map.keys fm)
   fa' <- fmap ParamSet $ collectAllOrErrorM $ map (assignFilters allAssigned) (psParams fa)

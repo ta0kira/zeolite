@@ -191,10 +191,6 @@ checkValueTypeMatch r f ts1@(ValueType r1 t1) ts2@(ValueType r2 t2)
     compileError $ "Cannot convert " ++ show ts1 ++ " to " ++ show ts2
   | otherwise = checkGeneralMatch r f Covariant t1 t2
 
--- NOTE: This doesn't verify the filters required to create an instance of a
--- type category. That should be done during instantiation of the instances and
--- during validation of the category system. (This does verify filters imposed
--- by individual free params, though.)
 checkGeneralMatch :: (MergeableM m, Mergeable p, CompileErrorM m, Monad m) =>
   TypeResolver m p -> ParamFilters -> Variance ->
   GeneralInstance -> GeneralInstance -> m p
@@ -214,10 +210,12 @@ checkSingleMatch r f v (JustParamName p1) (JustParamName p2) =
 
 checkInstanceToInstance :: (MergeableM m, Mergeable p, CompileErrorM m, Monad m) =>
   TypeResolver m p -> ParamFilters -> Variance -> TypeInstance -> TypeInstance -> m p
-checkInstanceToInstance r f Invariant t1@(TypeInstance n1 _) t2@(TypeInstance n2 _)
-  | t1 == t2 = mergeDefault
-  | otherwise =
-    compileError $ "Invariance requires equality: " ++ show t1 ++ " <-> " ++ show t2
+checkInstanceToInstance r f Invariant t1 t2
+    | t1 == t2 = mergeDefault
+    | otherwise =
+      -- Implicit equality, inferred by t1 <-> t2.
+      mergeAll [checkInstanceToInstance r f Covariant     t1 t2,
+                checkInstanceToInstance r f Contravariant t1 t2]
 checkInstanceToInstance r f Contravariant t1 t2 =
   checkInstanceToInstance r f Covariant t2 t1
 checkInstanceToInstance r f Covariant t1@(TypeInstance n1 ps1) t2@(TypeInstance n2 ps2)
@@ -233,8 +231,10 @@ checkInstanceToInstance r f Covariant t1@(TypeInstance n1 ps1) t2@(TypeInstance 
 
 checkParamToInstance :: (MergeableM m, Mergeable p, CompileErrorM m, Monad m) =>
   TypeResolver m p -> ParamFilters -> Variance -> ParamName -> TypeInstance -> m p
-checkParamToInstance r _ Invariant n1 t2@(TypeInstance n2 _) =
-    compileError $ "Invariance requires equality: " ++ show n1 ++ " <-> " ++ show t2
+checkParamToInstance r f Invariant n1 t2 =
+  -- Implicit equality, inferred by n1 <-> t2.
+  mergeAll [checkParamToInstance r f Covariant     n1 t2,
+            checkParamToInstance r f Contravariant n1 t2]
 checkParamToInstance r f Contravariant p1 t2 =
   checkInstanceToParam r f Covariant t2 p1
 checkParamToInstance r f Covariant n1 t2@(TypeInstance n2 ps2) = do
@@ -253,8 +253,10 @@ checkParamToInstance r f Covariant n1 t2@(TypeInstance n2 ps2) = do
 
 checkInstanceToParam :: (MergeableM m, Mergeable p, CompileErrorM m, Monad m) =>
   TypeResolver m p -> ParamFilters -> Variance -> TypeInstance -> ParamName -> m p
-checkInstanceToParam _ _ Invariant t1@(TypeInstance n1 _) n2 =
-    compileError $ "Invariance requires equality: " ++ show t1 ++ " <-> " ++ show n2
+checkInstanceToParam r f Invariant t1 n2 =
+  -- Implicit equality, inferred by t1 <-> n2.
+  mergeAll [checkInstanceToParam r f Covariant     t1 n2,
+            checkInstanceToParam r f Contravariant t1 n2]
 checkInstanceToParam r f Contravariant t1 p2 =
   checkParamToInstance r f Covariant p2 t1
 checkInstanceToParam r f Covariant t1@(TypeInstance n1 ps1) n2 = do

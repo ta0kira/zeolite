@@ -410,9 +410,10 @@ checkCategoryInstances tm0 ts = do
     checkFilter r fm (ParamFilter c n f) =
       validateTypeFilter r fm f `reviseError`
         (show n ++ " " ++ show f ++ " [" ++ formatFullContext c ++ "]")
-    checkFunction r fm vm f = flip reviseError (show f) $ do
-      funcType <- parsedToFunctionType f
-      validatateFunctionType r fm vm funcType
+    checkFunction r fm vm f =
+      flip reviseError ("In function:\n---\n" ++ show f ++ "\n---\n") $ do
+        funcType <- parsedToFunctionType f
+        validatateFunctionType r fm vm funcType
 
 topoSortCategories :: (Show c, MergeableM m, CompileErrorM m, Monad m) =>
   CategoryMap c -> [AnyCategory c] -> m [AnyCategory c]
@@ -476,7 +477,9 @@ flattenAllConnections tm0 ts = do
     preMergeSingle _ t = return t
     update r t u = do
       (ts,tm) <- u
-      t' <- updateSingle r tm t
+      t' <- updateSingle r tm t `reviseError`
+              ("In category " ++ show (getCategoryName t) ++ " [" ++
+               formatFullContext (getCategoryContext t) ++ "]")
       return (ts ++ [t'],Map.insert (getCategoryName t') t' tm)
     updateSingle r tm t@(ValueInterface c n ps rs vs fs) = do
       noDuplicateRefines c n rs
@@ -507,8 +510,8 @@ flattenAllConnections tm0 ts = do
                                   sortBy (\x y -> fst x `compare` fst y) ns where
         checkCount xa@(x:_:_) =
           compileError $ "Category " ++ show (fst x) ++ " occurs " ++ show (length xa) ++
-                         " times in " ++ show n ++ " [" ++ formatFullContext c ++ "] :\n" ++
-                         intercalate "\n" (map (show . snd) xa)
+                         " times in " ++ show n ++ " [" ++ formatFullContext c ++ "] :\n---\n" ++
+                         intercalate "\n---\n" (map (show . snd) xa)
         checkCount _ = return ()
     getRefines tm ra@(ValueRefine c t@(TypeInstance n ps)) = do
       (_,v) <- getValueCategory tm (c,n)
@@ -521,7 +524,6 @@ flattenAllConnections tm0 ts = do
       return $ ValueRefine (c ++ c1) t2
     assignParams tm c (TypeInstance n ps) = do
       (_,v) <- getValueCategory tm (c,n)
-      -- TODO: From here down should be a top-level function.
       let ns = map vpParam $ getCategoryParams v
       paired <- processParamPairs alwaysPairParams (ParamSet ns) ps
       return $ Map.fromList paired
@@ -547,27 +549,28 @@ flattenAllConnections tm0 ts = do
       let assigned = Map.fromList paired
       collectAllOrErrorM (map (uncheckedSubFunction assigned) fs)
     mergeByName r fm im em n =
-      -- TODO: Needs a better error message.
-      (tryMerge r fm n (n `Map.lookup` im) (n `Map.lookup` em)) `reviseError` (show n)
+      tryMerge r fm n (n `Map.lookup` im) (n `Map.lookup` em)
     -- Inherited without an override.
     tryMerge _ _ n (Just is) Nothing
       | length is == 1 = return $ head is
       | otherwise = compileError $ "Function " ++ show n ++ " is inherited " ++
-                                    show (length is) ++ " times:\n" ++
-                                    intercalate "\n" (map show is)
+                                    show (length is) ++ " times:\n---\n" ++
+                                    intercalate "\n---\n" (map show is)
     -- Not inherited.
     tryMerge r fm n Nothing es = tryMerge r fm n (Just []) es
     -- Explicit override, possibly inherited.
     tryMerge r fm n (Just is) (Just es)
       | length es /= 1 = compileError $ "Function " ++ show n ++ " is declared " ++
-                                        show (length es) ++ " times:\n" ++
-                                        intercalate "\n" (map show es)
+                                        show (length es) ++ " times:\n---\n" ++
+                                        intercalate "\n---\n" (map show es)
       | otherwise = do
         let ff@(ScopedFunction c n t s as rs ps fa ms) = head es
         mergeAll $ map (checkMerge r fm ff) is
         return $ ScopedFunction c n t s as rs ps fa (ms ++ is)
         where
-          checkMerge r fm f1 f2 = flip reviseError (show f2 ++ "\n  ->\n" ++ show f1) $ do
+          message f1 f2 =
+            "In function merge:\n---\n" ++ show f2 ++ "\n  ->\n" ++ show f1 ++ "\n---\n"
+          checkMerge r fm f1 f2 = flip reviseError (message f1 f2) $ do
             f1' <- parsedToFunctionType f1
             f2' <- parsedToFunctionType f2
             checkFunctionConvert r fm f2' f1'
@@ -676,7 +679,9 @@ showFunctionInContext s indent (ScopedFunction cs n t _ as rs ps fa ms) =
                     " " ++ formatContext (pfContext v)
     flatten [] = Set.empty
     flatten ms = Set.unions $ (Set.fromList $ map sfType ms):(map (flatten . sfMerges) ms)
-    showMerges ms = " /*merged from: " ++ intercalate ", " (map show $ Set.toList ms) ++ "*/"
+    showMerges ms
+      | null (Set.toList ms) = " /*not merged*/"
+      | otherwise = " /*merged from: " ++ intercalate ", " (map show $ Set.toList ms) ++ "*/"
 
 data PassedValue c =
   PassedValue {
@@ -713,7 +718,7 @@ parsedToFunctionType (ScopedFunction c n t _ as rs ps fa _) = do
 uncheckedSubFunction :: (Show c, MergeableM m, CompileErrorM m, Monad m) =>
   Map.Map ParamName GeneralInstance -> ScopedFunction c -> m (ScopedFunction c)
 uncheckedSubFunction pa ff@(ScopedFunction c n t s as rs ps fa ms) =
-  flip reviseError (show ff) $ do
+  flip reviseError ("In function:\n---\n" ++ show ff ++ "\n---\n") $ do
     let fixed = Map.fromList $ map (\n -> (n,SingleType $ JustParamName n)) $ map vpParam ps
     let pa' = Map.union pa fixed
     as' <- collectAllOrErrorM $ map (subPassed pa') as
