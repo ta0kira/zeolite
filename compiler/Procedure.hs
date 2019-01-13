@@ -1,6 +1,25 @@
 {-# LANGUAGE Safe #-}
 
 module Procedure (
+  ArgValues(..),
+  Assignable(..),
+  Builtin(..),
+  CategoryOrSingleton(..),
+  Destination(..),
+  ExecutableProcedure(..),
+  Expression(..),
+  ExpressionStart(..),
+  IfElifElse(..),
+  InputValue(..),
+  OutputValue(..),
+  Procedure(..),
+  ReturnValues(..),
+  ScopedBlock(..),
+  Statement(..),
+  ValueOperation(..),
+  VariableName(..),
+  VoidExpression(..),
+  WhileLoop(..),
 ) where
 
 import Function
@@ -11,12 +30,12 @@ import TypesBase
 import Data.List (intercalate)
 
 
+-- NOTE: Requires FunctionType and SymbolScope to compile, but those might not
+-- be available when this needs to be parsed.
 data ExecutableProcedure c =
   ExecutableProcedure {
     epContext :: [c],
     epName :: FunctionName,
-    epScope :: SymbolScope,
-    epType :: FunctionType,
     epArgs :: ArgValues c,
     epReturns :: ReturnValues c,
     epProcedure :: Procedure c
@@ -84,14 +103,15 @@ instance Show c => Show (OutputValue c) where
 
 
 data Procedure c =
-  Procedure [Statement c]
+  Procedure [c] [Statement c]
   deriving (Eq,Show)
 
 data Statement c =
   EmptyReturn [c] |
-  ExplicitReturn [c] |
+  ExplicitReturn [c] (ParamSet (Expression c)) |
   Assignment [c] (Destination c) (Expression c) |
-  NoValueExpression [c] (VoidExpression c)
+  NoValueCall [c] (Expression c) |
+  NoValueExpression (VoidExpression c)
   deriving (Eq,Show)
 
 data Destination c =
@@ -104,37 +124,36 @@ data Assignable c =
   deriving (Eq,Show)
 
 data VoidExpression c =
-  Conditional (IfThenElse c) |
+  Conditional (IfElifElse c) |
   Loop (WhileLoop c) |
   WithScope (ScopedBlock c) (VoidExpression c)
   deriving (Eq,Show)
 
 data Expression c =
-  Expression [c] (ParamSet ValueType) (Action c)
+  Expression [c] (ParamSet ValueType) (ExpressionStart c) [ValueOperation c]
   deriving (Eq,Show)
 
-data ParamOrVariable =
-  ParamOrVariable {
-    povName :: String
-  }
-  deriving (Eq,Ord,Show)
-
-data CategoryOrSingleton =
+data CategoryOrSingleton c =
   CategoryOrSingleton {
+    cosContext :: [c],
     cosName :: String
   }
   deriving (Eq,Ord,Show)
 
-data Action c =
+data ExpressionStart c =
   VariableValue (OutputValue c) |
-  ValueCall [c] ParamOrVariable (ParamSet (Expression c)) |
-  TypeCall [c] TypeInstance (ParamSet (Expression c)) |
-  CategoryOrSingletonCall [c] CategoryOrSingleton (ParamSet (Expression c)) |
+  TypeCall [c] TypeInstance FunctionName (ParamSet (Expression c)) |
+  CategoryOrSingletonCall [c] (CategoryOrSingleton c) FunctionName (ParamSet (Expression c)) |
   BuiltinCall (Builtin c)
   deriving (Eq,Show)
 
-data IfThenElse c =
-  IfStatement [c] (Expression c) (Procedure c) (IfThenElse c) |
+data ValueOperation c =
+  Conversion [c] TypeInstance |
+  ValueCall [c] (ParamSet ValueType) FunctionName (ParamSet (Expression c))
+  deriving (Eq,Show)
+
+data IfElifElse c =
+  IfStatement [c] (Expression c) (Procedure c) (IfElifElse c) |
   ElseStatement [c] (Procedure c) |
   TerminateConditional
   deriving (Eq,Show)
@@ -143,8 +162,9 @@ data WhileLoop c =
   WhileLoop [c] (Expression c) (Procedure c)
   deriving (Eq,Show)
 
+-- TODO: This will likely require some magic if the statement is an assignement.
 data ScopedBlock c =
-  ScopedBlock [c] (Procedure c)
+  ScopedBlock [c] (Procedure c) (Statement c)
   deriving (Eq,Show)
 
 data Builtin c =

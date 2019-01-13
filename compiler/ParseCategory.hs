@@ -2,7 +2,6 @@
 {-# LANGUAGE Safe #-}
 
 module ParseCategory (
-  parseScopedFunction,
 ) where
 
 import Text.Parsec
