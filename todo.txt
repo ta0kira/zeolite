@@ -1,15 +1,9 @@
 Roughly in order of execution:
 
-- Implement Weak in C++.
-- Unit tests for C++ base.
-- Implement instance-function dispatching for intersections.
-
-- Output everything but implementations.
-- General testing system for generated C++.
-- Test output with hand-written implementations.
-
 - Write parser for implementations.
 - Compile implementations, e.g., type-check and resolve symbols.
+
+- Rewrite and test C++ base.
 - Output implementations.
 
 - Integration tests for full compilation.
@@ -22,14 +16,22 @@ Roughly in order of execution:
 
 Supported in implementation, roughly in order of simplicity+importance:
 
-- variable creation and assignment
-- variable init is always required
+- function arguments and returns (inside function)
+- value assignment
+- internal data
+- value initialization
+
+- variable creation
+- calling functions (outside function)
+- variable init is always required (even weak/optional?)
+- ignoring return needs to be explicit (e.g., _ = f())?
 
 - inference of expression type
 - bool/string/int literals
 - bool/string/int expressions
 - optional
 - skip/present/require
+- weak/strong
 
 - while
 - if/elif/else
@@ -37,14 +39,13 @@ Supported in implementation, roughly in order of simplicity+importance:
 - category/instance/value function calls
 - named return values
 - receiving multiple return values
-- using return is always required (_ to ignore)
 - function calls with explicit type args
+- explicit type conversion for function call (to avoid ambiguity)
 
-- category/instance/value variables
 - internal type variables (value only)
 - no access to internal variables if they have variance
 - no access to internal types if any constraint uses a variant param
 
 - scoped, e.g., scoped { ... } while { ... }
 
-- reduce, e.g., reduce<t>(value)
+- reduce, e.g., reduce<x,y>(value)
