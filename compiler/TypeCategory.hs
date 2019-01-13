@@ -568,12 +568,20 @@ flattenAllConnections tm0 ts = do
         mergeAll $ map (checkMerge r fm ff) is
         return $ ScopedFunction c n t s as rs ps fa (ms ++ is)
         where
-          message f1 f2 =
-            "In function merge:\n---\n" ++ show f2 ++ "\n  ->\n" ++ show f1 ++ "\n---\n"
-          checkMerge r fm f1 f2 = flip reviseError (message f1 f2) $ do
-            f1' <- parsedToFunctionType f1
-            f2' <- parsedToFunctionType f2
-            checkFunctionConvert r fm f2' f1'
+          showScope CategoryScope = "@category"
+          showScope TypeScope     = "@type"
+          showScope ValueScope    = "@value"
+          checkMerge r fm f1 f2
+            | sfScope f1 /= sfScope f2 =
+              compileError $ "Cannot merge " ++ showScope (sfScope f2) ++ " with " ++
+                             showScope (sfScope f1) ++ " in function merge:\n---\n" ++
+                             show f2 ++ "\n  ->\n" ++ show f1
+            | otherwise =
+              flip reviseError ("In function merge:\n---\n" ++ show f2 ++
+                                "\n  ->\n" ++ show f1 ++ "\n---\n") $ do
+                f1' <- parsedToFunctionType f1
+                f2' <- parsedToFunctionType f2
+                checkFunctionConvert r fm f2' f1'
 
 categoriesToTypeResolver :: (Show c, MergeableM m, CompileErrorM m, Monad m) =>
   CategoryMap c -> TypeResolver m ()

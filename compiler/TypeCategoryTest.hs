@@ -682,6 +682,12 @@ main = runAllTests [
         ts <- topoSortCategories Map.empty ts
         flattenAllConnections Map.empty ts
         return ()),
+    checkOperationFail
+      "testfiles/merge_different_scopes.txt"
+      (\ts -> do
+        ts <- topoSortCategories Map.empty ts
+        flattenAllConnections Map.empty ts
+        return ()),
 
     checkOperationSuccess
       "testfiles/successful_merge_params.txt"
