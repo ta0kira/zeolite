@@ -145,12 +145,25 @@ instance ParseFromSource (VoidExpression SourcePos) where
       return $ WithScope s e
 
 instance ParseFromSource (Expression SourcePos) where
-  sourceParser = labeled "expression" $ do
-    c <- getPosition
-    let ts = [] -- Expression type is unknown at parse time.
-    s <- sourceParser
-    vs <- many $ valueSymbolGet >> sourceParser
-    return $ Expression [c] (ParamSet ts) s vs
+  sourceParser = try initalize <|> expression where
+    expression = labeled "expression" $ do
+      c <- getPosition
+      let ts = [] -- Expression type is unknown at parse time.
+      s <- sourceParser
+      vs <- many $ valueSymbolGet >> sourceParser
+      return $ Expression [c] (ParamSet ts) s vs
+    initalize = do
+      c <- getPosition
+      t <- try sourceParser
+      as <- between (sepAfter $ string "{")
+                    (sepAfter $ string "}")
+                    (sepBy singleAssign optionalSpace)
+      return $ InitializeValue [c] t (ParamSet as)
+    singleAssign = do
+      n <- sourceParser
+      initSeparator
+      e <- sourceParser
+      return (n,e)
 
 parseFunctionCall :: FunctionName -> Parser (FunctionCall SourcePos)
 parseFunctionCall n = do

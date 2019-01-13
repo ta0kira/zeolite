@@ -6,6 +6,7 @@ module ParserBase (
   blockComment,
   builtinFunctions,
   endOfDoc,
+  initSeparator,
   keyword,
   kwAll,
   kwAllows,
@@ -87,6 +88,7 @@ kwWhile = keyword "while"
 statementEnd = sepAfter (string "")
 valueSymbolGet = sepAfter (string ".")
 typeSymbolGet = sepAfter (string "$")
+initSeparator = sepAfter (string ":")
 
 isKeyword :: Parser ()
 isKeyword = foldr (<|>) nullParse $ map try [

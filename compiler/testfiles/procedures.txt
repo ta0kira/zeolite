@@ -14,6 +14,11 @@ testFunction1 (a,b,c) (d,e,f) {
     // sleep
   }
 
+  x = Type<z,T<m>>{
+      v: r
+      qq: Type$new()
+    }
+
   scoped {
     optional T myvar = reduce<x,y>(q)
   } in if (present(myvar)) {
