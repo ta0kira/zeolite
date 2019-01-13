@@ -12,7 +12,8 @@ import TestBase
 import TypesBase
 
 
-main = runAllTests [
+tests :: [IO (CompileInfo ())]
+tests = [
     checkParseSuccess "testfiles/procedures.txt"
   ]
 

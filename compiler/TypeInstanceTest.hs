@@ -14,7 +14,8 @@ import TypeInstance
 import TypesBase
 
 
-main = runAllTests [
+tests :: [IO (CompileInfo ())]
+tests = [
     checkSimpleConvertSuccess
       "Type0"
       "Type0",

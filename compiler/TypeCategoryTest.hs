@@ -20,7 +20,8 @@ import TypeInstance
 import TypesBase
 
 
-main = runAllTests [
+tests :: [IO (CompileInfo ())]
+tests = [
     checkSingleParseSuccess "testfiles/value_interface.txt",
     checkSingleParseSuccess "testfiles/type_interface.txt",
     checkSingleParseSuccess "testfiles/concrete.txt",
