@@ -16,6 +16,7 @@ module TypeCategory (
   checkParamVariances,
   declareAllTypes, -- TODO: Remove?
   flattenAllConnections,
+  formatFullContext,
   getCategoryContext,
   getCategoryDefines,
   getCategoryFilters,
@@ -40,12 +41,6 @@ import Function
 import TypeInstance
 import TypesBase
 
-
-newtype FunctionName =
-  FunctionName {
-    fnName :: String
-  }
-  deriving (Eq,Ord)
 
 data AnyCategory c =
   ValueInterface {
@@ -647,6 +642,12 @@ categoriesToTypeResolver tm =
     concrete n = do
       (_,t) <- getCategory tm ([],n)
       return (isValueConcrete t)
+
+newtype FunctionName =
+  FunctionName {
+    fnName :: String
+  }
+  deriving (Eq,Ord)
 
 instance Show FunctionName where
   show (FunctionName n) = n
