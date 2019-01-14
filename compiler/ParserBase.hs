@@ -75,6 +75,7 @@ kwDefines = keyword "defines"
 kwElif = keyword "elif"
 kwElse = keyword "else"
 kwEmpty = keyword "empty"
+kwFalse = keyword "false"
 kwIf = keyword "if"
 kwIn = keyword "in"
 kwIgnore = keyword "_"
@@ -88,6 +89,7 @@ kwRequires = keyword "requires"
 kwReturn = keyword "return"
 kwScoped = keyword "scoped"
 kwStrong = keyword "strong"
+kwTrue = keyword "true"
 kwType = keyword "@type"
 kwValue = keyword "@value"
 kwWeak = keyword "weak"
@@ -103,6 +105,7 @@ isKeyword = foldr (<|>) nullParse $ map try [
     kwElif,
     kwElse,
     kwEmpty,
+    kwFalse,
     kwIf,
     kwIn,
     kwDefines,
@@ -117,6 +120,7 @@ isKeyword = foldr (<|>) nullParse $ map try [
     kwReturn,
     kwScoped,
     kwStrong,
+    kwTrue,
     kwType,
     kwValue,
     kwWeak,
@@ -135,7 +139,9 @@ builtinFunctions = foldr (<|>) (fail "empty") $ map try [
 -- TODO: Maybe this should not use strings.
 builtinValues :: Parser String
 builtinValues = foldr (<|>) (fail "empty") $ map try [
-    kwEmpty >> return "empty"
+    kwEmpty >> return "empty",
+    kwFalse >> return "false",
+    kwTrue >> return "true"
   ]
 
 nullParse :: Parser ()
