@@ -5,6 +5,7 @@ module ParserBase (
   anyComment,
   blockComment,
   builtinFunctions,
+  builtinValues,
   endOfDoc,
   initSeparator,
   keyword,
@@ -129,6 +130,12 @@ builtinFunctions = foldr (<|>) (fail "empty") $ map try [
     kwReduce >> return "reduce",
     kwRequire >> return "require",
     kwStrong >> return "strong"
+  ]
+
+-- TODO: Maybe this should not use strings.
+builtinValues :: Parser String
+builtinValues = foldr (<|>) (fail "empty") $ map try [
+    kwEmpty >> return "empty"
   ]
 
 nullParse :: Parser ()

@@ -143,9 +143,8 @@ instance ParseFromSource (VoidExpression SourcePos) where
       e <- sourceParser
       return $ Loop e
     scoped = do
-      s <- sourceParser
       e <- sourceParser
-      return $ WithScope s e
+      return $ WithScope e
 
 instance ParseFromSource (Expression SourcePos) where
   sourceParser = expression <|> initalize where
@@ -185,12 +184,17 @@ instance ParseFromSource (ExpressionStart SourcePos) where
   sourceParser = labeled "expression start" $
                  variableOrUnqualified <|>
                  builtinCall <|>
+                 builtinValue <|>
                  typeCall where
     builtinCall = do
       c <- getPosition
       n <- builtinFunctions
       f <- parseFunctionCall (FunctionName n)
       return $ UnqualifiedCall [c] f
+    builtinValue = do
+      c <- getPosition
+      n <- builtinValues
+      return $ VariableValue (OutputValue (VariableName [c] n))
     variableOrUnqualified = do
       n <- sourceParser :: Parser (VariableName SourcePos)
       asUnqualifiedCall n <|> asVariable n

@@ -12,6 +12,8 @@ testFunction1 (a,b,c) (d,e,f) {
       qq: Type$new()
     }
 
+  x = empty
+
   scoped {
     optional T myvar = reduce<`x,`y>(q)
   } in if (present(myvar)) {
