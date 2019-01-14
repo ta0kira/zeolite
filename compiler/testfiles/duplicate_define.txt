@@ -2,7 +2,7 @@
 
 @value interface Value1 {}
 
-@type interface Type0<|x> {}
+@type interface Type0<|`x> {}
 
 concrete Object {
   defines Type0<Value0>

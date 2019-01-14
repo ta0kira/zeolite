@@ -103,200 +103,200 @@ tests = [
       "all",
 
     checkConvertSuccess
-      [("x",[])]
-      "x" "x",
+      [("`x",[])]
+      "`x" "`x",
     checkConvertFail
-      [("x",[]),
-       ("y",[])]
-      "x" "y",
+      [("`x",[]),
+       ("`y",[])]
+      "`x" "`y",
     checkConvertSuccess
-      [("x",["requires y"]),
-       ("y",["allows x"])]
-      "x" "y",
+      [("`x",["requires `y"]),
+       ("`y",["allows `x"])]
+      "`x" "`y",
     checkConvertSuccess
-      [("x",["requires y"]),
-       ("y",[])]
-      "x" "y",
+      [("`x",["requires `y"]),
+       ("`y",[])]
+      "`x" "`y",
     checkConvertSuccess
-      [("x",[]),
-       ("y",["allows x"])]
-      "x" "y",
+      [("`x",[]),
+       ("`y",["allows `x"])]
+      "`x" "`y",
 
     -- NOTE: defines are not checked for instance conversions.
     checkConvertSuccess
-      [("x",["requires y","defines Instance0"]),
-       ("y",["allows x"])]
-      "x" "y",
+      [("`x",["requires `y","defines Instance0"]),
+       ("`y",["allows `x"])]
+      "`x" "`y",
     checkConvertSuccess
-      [("x",["requires y"]),
-       ("y",["allows x","defines Instance0"])]
-      "x" "y",
+      [("`x",["requires `y"]),
+       ("`y",["allows `x","defines Instance0"])]
+      "`x" "`y",
     checkConvertSuccess
-      [("x",["requires y","defines Instance0"]),
-       ("y",["allows x","defines Instance0"])]
-      "x" "y",
+      [("`x",["requires `y","defines Instance0"]),
+       ("`y",["allows `x","defines Instance0"])]
+      "`x" "`y",
     checkConvertFail
-      [("x",["defines Instance0"]),
-       ("y",["defines Instance0"])]
-      "x" "y",
+      [("`x",["defines Instance0"]),
+       ("`y",["defines Instance0"])]
+      "`x" "`y",
     checkConvertSuccess
-      [("x",["requires Type0","defines Instance0"])]
-      "x" "Type0",
+      [("`x",["requires Type0","defines Instance0"])]
+      "`x" "Type0",
     checkConvertSuccess
-      [("x",["allows Type0","defines Instance0"])]
-      "Type0" "x",
+      [("`x",["allows Type0","defines Instance0"])]
+      "Type0" "`x",
 
     checkConvertSuccess
-      [("x",["requires z"]),
-       ("y",["allows z"]),
-       ("z",[])]
-      "x" "y",
+      [("`x",["requires `z"]),
+       ("`y",["allows `z"]),
+       ("`z",[])]
+      "`x" "`y",
     checkConvertSuccess
-      [("x",["requires z"]),
-       ("y",[]),
-       ("z",["requires y"])]
-      "x" "y",
+      [("`x",["requires `z"]),
+       ("`y",[]),
+       ("`z",["requires `y"])]
+      "`x" "`y",
     -- NOTE: This is technically valid, but the checking mechanism doesn't do
     -- a full graph search, so the writer needs to be explicit about implied
-    -- additional filters, e.g., "x requires y" => "y allows x".
+    -- additional filters, e.g., "`x requires `y" => "`y allows `x".
     checkConvertFail
-      [("w",["allows x"]),
-       ("x",[]),
-       ("y",[]),
-       ("z",["allows w","requires y"])]
-      "x" "y",
+      [("`w",["allows `x"]),
+       ("`x",[]),
+       ("`y",[]),
+       ("`z",["allows `w","requires `y"])]
+      "`x" "`y",
     checkConvertSuccess
-      [("x",["requires Type3"]),
-       ("y",["allows Type0"])]
-      "x" "y",
+      [("`x",["requires Type3"]),
+       ("`y",["allows Type0"])]
+      "`x" "`y",
     checkConvertSuccess
-      [("x",["requires y"]),
-       ("y",["requires Type3"])]
-      "x" "Type0",
+      [("`x",["requires `y"]),
+       ("`y",["requires Type3"])]
+      "`x" "Type0",
     checkConvertSuccess
-      [("x",["allows y"]),
-       ("y",["allows Type0"])]
-      "Type3" "x",
+      [("`x",["allows `y"]),
+       ("`y",["allows Type0"])]
+      "Type3" "`x",
 
     checkConvertSuccess
-      [("x",[])]
-      "Type2<Type0,Type0,x>" "Type2<Type0,Type0,x>",
+      [("`x",[])]
+      "Type2<Type0,Type0,`x>" "Type2<Type0,Type0,`x>",
     checkConvertFail
-      [("x",[]),
-       ("y",[])]
-      "Type2<Type0,Type0,x>" "Type2<Type0,Type0,y>",
+      [("`x",[]),
+       ("`y",[])]
+      "Type2<Type0,Type0,`x>" "Type2<Type0,Type0,`y>",
     checkConvertSuccess
-      [("x",["requires y"]),
-       ("y",["allows x"])]
-      "Type2<Type0,Type0,x>" "Type2<Type0,Type0,y>",
+      [("`x",["requires `y"]),
+       ("`y",["allows `x"])]
+      "Type2<Type0,Type0,`x>" "Type2<Type0,Type0,`y>",
     checkConvertSuccess
-      [("x",["requires y"]),
-       ("y",[])]
-      "Type2<Type0,Type0,x>" "Type2<Type0,Type0,y>",
+      [("`x",["requires `y"]),
+       ("`y",[])]
+      "Type2<Type0,Type0,`x>" "Type2<Type0,Type0,`y>",
     checkConvertSuccess
-      [("x",[]),
-       ("y",["allows x"])]
-      "Type2<Type0,Type0,x>" "Type2<Type0,Type0,y>",
+      [("`x",[]),
+       ("`y",["allows `x"])]
+      "Type2<Type0,Type0,`x>" "Type2<Type0,Type0,`y>",
 
     checkConvertSuccess
-      [("x",[])]
-      "Type2<x,Type0,Type0>" "Type2<x,Type0,Type0>",
+      [("`x",[])]
+      "Type2<`x,Type0,Type0>" "Type2<`x,Type0,Type0>",
     checkConvertFail
-      [("x",[]),
-       ("y",[])]
-      "Type2<x,Type0,Type0>" "Type2<y,Type0,Type0>",
+      [("`x",[]),
+       ("`y",[])]
+      "Type2<`x,Type0,Type0>" "Type2<`y,Type0,Type0>",
     checkConvertFail
-      [("x",["requires y"]),
-       ("y",["allows x"])]
-      "Type2<x,Type0,Type0>" "Type2<y,Type0,Type0>",
+      [("`x",["requires `y"]),
+       ("`y",["allows `x"])]
+      "Type2<`x,Type0,Type0>" "Type2<`y,Type0,Type0>",
     checkConvertFail
-      [("x",["requires y"]),
-       ("y",[])]
-      "Type2<x,Type0,Type0>" "Type2<y,Type0,Type0>",
+      [("`x",["requires `y"]),
+       ("`y",[])]
+      "Type2<`x,Type0,Type0>" "Type2<`y,Type0,Type0>",
     checkConvertFail
-      [("x",[]),
-       ("y",["allows x"])]
-      "Type2<x,Type0,Type0>" "Type2<y,Type0,Type0>",
+      [("`x",[]),
+       ("`y",["allows `x"])]
+      "Type2<`x,Type0,Type0>" "Type2<`y,Type0,Type0>",
     checkConvertSuccess
-      [("x",["allows y"]),
-       ("y",["requires x"])]
-      "Type2<x,Type0,Type0>" "Type2<y,Type0,Type0>",
+      [("`x",["allows `y"]),
+       ("`y",["requires `x"])]
+      "Type2<`x,Type0,Type0>" "Type2<`y,Type0,Type0>",
     checkConvertSuccess
-      [("x",["allows y"]),
-       ("y",[])]
-      "Type2<x,Type0,Type0>" "Type2<y,Type0,Type0>",
+      [("`x",["allows `y"]),
+       ("`y",[])]
+      "Type2<`x,Type0,Type0>" "Type2<`y,Type0,Type0>",
     checkConvertSuccess
-      [("x",[]),
-       ("y",["requires x"])]
-      "Type2<x,Type0,Type0>" "Type2<y,Type0,Type0>",
+      [("`x",[]),
+       ("`y",["requires `x"])]
+      "Type2<`x,Type0,Type0>" "Type2<`y,Type0,Type0>",
 
     checkConvertFail
-      [("x",[])]
-      "x" "Type0",
+      [("`x",[])]
+      "`x" "Type0",
     checkConvertSuccess
-      [("x",["requires Type0"])]
-      "x" "Type0",
+      [("`x",["requires Type0"])]
+      "`x" "Type0",
     checkConvertSuccess
-      [("x",["requires Type3"])]
-      "x" "Type0",
+      [("`x",["requires Type3"])]
+      "`x" "Type0",
     checkConvertFail
-      [("x",[])]
-      "Type0" "x",
+      [("`x",[])]
+      "Type0" "`x",
     checkConvertSuccess
-      [("x",["allows Type0"])]
-      "Type0" "x",
+      [("`x",["allows Type0"])]
+      "Type0" "`x",
     checkConvertSuccess
-      [("x",["allows Type0"])]
-      "Type3" "x",
+      [("`x",["allows Type0"])]
+      "Type3" "`x",
 
     checkConvertFail
-      [("x",[])]
-      "Type2<x,Type0,Type0>" "Type2<Type0,Type0,Type0>",
+      [("`x",[])]
+      "Type2<`x,Type0,Type0>" "Type2<Type0,Type0,Type0>",
     checkConvertSuccess
-      [("x",["allows Type0"])]
-      "Type2<x,Type0,Type0>" "Type2<Type0,Type0,Type0>",
+      [("`x",["allows Type0"])]
+      "Type2<`x,Type0,Type0>" "Type2<Type0,Type0,Type0>",
     checkConvertSuccess
-      [("x",["allows Type0"])]
-      "Type2<x,Type0,Type0>" "Type2<Type3,Type0,Type0>",
+      [("`x",["allows Type0"])]
+      "Type2<`x,Type0,Type0>" "Type2<Type3,Type0,Type0>",
     checkConvertFail
-      [("x",[])]
-      "Type2<Type0,Type0,Type0>" "Type2<x,Type0,Type0>",
+      [("`x",[])]
+      "Type2<Type0,Type0,Type0>" "Type2<`x,Type0,Type0>",
     checkConvertSuccess
-      [("x",["requires Type0"])]
-      "Type2<Type0,Type0,Type0>" "Type2<x,Type0,Type0>",
+      [("`x",["requires Type0"])]
+      "Type2<Type0,Type0,Type0>" "Type2<`x,Type0,Type0>",
     checkConvertSuccess
-      [("x",["requires Type3"])]
-      "Type2<Type0,Type0,Type0>" "Type2<x,Type0,Type0>",
+      [("`x",["requires Type3"])]
+      "Type2<Type0,Type0,Type0>" "Type2<`x,Type0,Type0>",
 
     return $ checkTypeSuccess resolver
       []
       "Type4<Type0>",
     return $ checkTypeSuccess resolver
-      [("x",["allows Type0"])]
-      "Type4<(x&Type0)>",
+      [("`x",["allows Type0"])]
+      "Type4<(`x&Type0)>",
     return $ checkTypeSuccess resolver
-      [("x",["allows Type0"])]
-      "Type4<(x|Type0)>",
+      [("`x",["allows Type0"])]
+      "Type4<(`x|Type0)>",
     return $ checkTypeFail resolver
-      [("x",["allows Type0"])]
-      "Type4<(x|Type3)>",
+      [("`x",["allows Type0"])]
+      "Type4<(`x|Type3)>",
     return $ checkTypeFail resolver
       []
-      "Type5<x>",
+      "Type5<`x>",
     return $ checkTypeSuccess resolver
-      [("x",[])]
-      "Type5<x>",
+      [("`x",[])]
+      "Type5<`x>",
 
     checkConvertSuccess
-      [("x",["requires y"]),
-       ("y",["requires z"]),
-       ("z",[])]
-      "x" "y",
+      [("`x",["requires `y"]),
+       ("`y",["requires `z"]),
+       ("`z",[])]
+      "`x" "`y",
     checkConvertSuccess
-      [("x",["allows z"]),
-       ("y",["allows x"]),
-       ("z",[])]
-      "x" "y",
+      [("`x",["allows `z"]),
+       ("`y",["allows `x"]),
+       ("`z",[])]
+      "`x" "`y",
 
     checkSimpleConvertSuccess
       "any"
@@ -308,50 +308,50 @@ tests = [
       "all"
       "any",
     checkConvertSuccess
-      [("x",[]),
-       ("y",[])]
-      "(x&y)" "(x&y)",
+      [("`x",[]),
+       ("`y",[])]
+      "(`x&`y)" "(`x&`y)",
     checkConvertSuccess
-      [("x",[]),
-       ("y",[])]
-      "(x&y)" "(x|y)",
+      [("`x",[]),
+       ("`y",[])]
+      "(`x&`y)" "(`x|`y)",
     checkConvertSuccess
-      [("x",[]),
-       ("y",[])]
-      "(x|y)" "(x|y)",
+      [("`x",[]),
+       ("`y",[])]
+      "(`x|`y)" "(`x|`y)",
     checkConvertSuccess
-      [("x",[]),
-       ("y",["defines Instance0"])]
-      "(x&y)" "(x|y)",
+      [("`x",[]),
+       ("`y",["defines Instance0"])]
+      "(`x&`y)" "(`x|`y)",
     checkConvertSuccess
-      [("x",[]),
-       ("y",["defines Instance0"])]
-      "(x&y)" "y",
+      [("`x",[]),
+       ("`y",["defines Instance0"])]
+      "(`x&`y)" "`y",
     checkConvertFail
-      [("x",[]),
-       ("y",["defines Instance0"])]
-      "(x|y)" "y",
+      [("`x",[]),
+       ("`y",["defines Instance0"])]
+      "(`x|`y)" "`y",
     checkConvertSuccess
-      [("x",[]),
-       ("y",["requires Type3"])]
-      "(x&y)" "(x|y)",
+      [("`x",[]),
+       ("`y",["requires Type3"])]
+      "(`x&`y)" "(`x|`y)",
     checkConvertSuccess
-      [("x",[]),
-       ("y",["requires Type3"])]
-      "(x&y)" "y",
+      [("`x",[]),
+       ("`y",["requires Type3"])]
+      "(`x&`y)" "`y",
     checkConvertFail
-      [("x",[]),
-       ("y",["requires Type3"])]
-      "(x|y)" "y",
+      [("`x",[]),
+       ("`y",["requires Type3"])]
+      "(`x|`y)" "`y",
     checkConvertSuccess
-      [("x",[])]
-      "all" "x",
+      [("`x",[])]
+      "all" "`x",
     checkConvertSuccess
-      [("x",["defines Instance0"])]
-      "all" "x",
+      [("`x",["defines Instance0"])]
+      "all" "`x",
     checkConvertSuccess
-      [("x",["requires Type3"])]
-      "all" "x",
+      [("`x",["requires Type3"])]
+      "all" "`x",
 
     checkSimpleConvertSuccess
       "optional Type0"
@@ -405,23 +405,23 @@ tests = [
       "optional Type3",
 
     return $ checkTypeSuccess resolver
-      [("x",[])]
-      "x",
+      [("`x",[])]
+      "`x",
     return $ checkTypeFail resolver
-      [("x",[])]
-      "Type1<x>",
+      [("`x",[])]
+      "Type1<`x>",
     return $ checkTypeFail resolver
-      [("x",["requires Type3"])]
-      "Type1<x>",
+      [("`x",["requires Type3"])]
+      "Type1<`x>",
     return $ checkTypeFail resolver
-      [("x",["defines Instance0"])]
-      "Type1<x>",
+      [("`x",["defines Instance0"])]
+      "Type1<`x>",
     return $ checkTypeFail resolver
       []
       "Type1<all>",
     return $ checkTypeSuccess resolver
-      [("x",["requires Type3","defines Instance0"])]
-      "Type1<x>",
+      [("`x",["requires Type3","defines Instance0"])]
+      "Type1<`x>",
     return $ checkTypeSuccess resolver
       []
       "Type1<Type3>",
@@ -445,40 +445,40 @@ tests = [
       "Type4<any>",
 
     return $ checkTypeSuccess resolver
-      [("x",["defines Instance1<Type0>",
-             "defines Instance1<x>",
+      [("`x",["defines Instance1<Type0>",
+             "defines Instance1<`x>",
              "defines Instance1<Type3>"])]
-      "Type2<x,x,x>",
+      "Type2<`x,`x,`x>",
     return $ checkTypeFail resolver
-      [("x",["defines Instance1<x>",
+      [("`x",["defines Instance1<`x>",
              "defines Instance1<Type3>"])]
-      "Type2<x,x,x>",
+      "Type2<`x,`x,`x>",
     return $ checkTypeFail resolver
-      [("x",["defines Instance1<Type0>",
+      [("`x",["defines Instance1<Type0>",
              "defines Instance1<Type3>"])]
-      "Type2<x,x,x>",
+      "Type2<`x,`x,`x>",
     return $ checkTypeSuccess resolver
-      [("x",["defines Instance1<Type0>",
-             "defines Instance1<x>"])]
-      "Type2<x,x,x>",
+      [("`x",["defines Instance1<Type0>",
+             "defines Instance1<`x>"])]
+      "Type2<`x,`x,`x>",
     return $ checkTypeSuccess resolver
-      [("x",["allows Type0", -- Type0 -> x implies Type3 -> x
-             "defines Instance1<x>"])]
-      "Type2<x,x,x>",
+      [("`x",["allows Type0", -- Type0 -> `x implies Type3 -> `x
+             "defines Instance1<`x>"])]
+      "Type2<`x,`x,`x>",
     return $ checkTypeFail resolver
-      [("x",["allows Type3", -- Type3 -> x doesn't imply Type0 -> x
-             "defines Instance1<x>"])]
-      "Type2<x,x,x>",
+      [("`x",["allows Type3", -- Type3 -> `x doesn't imply Type0 -> `x
+             "defines Instance1<`x>"])]
+      "Type2<`x,`x,`x>",
 
     return $ checkTypeSuccess resolver
       []
       "Type4<Type0>",
     return $ checkTypeFail resolver
       []
-      "Type5<x>",
+      "Type5<`x>",
     return $ checkTypeSuccess resolver
-      [("x",[])]
-      "Type5<x>",
+      [("`x",[])]
+      "Type5<`x>",
 
     return $ checkTypeSuccess resolver
       []
@@ -487,22 +487,22 @@ tests = [
       []
       "(Type4<Type0>&Type1<Type3>)",
     return $ checkTypeSuccess resolver
-      [("x",[])]
-      "(Type5<x>|Type1<Type3>)",
+      [("`x",[])]
+      "(Type5<`x>|Type1<Type3>)",
     return $ checkTypeFail resolver
-      [("x",[])]
-      "(Type5<x>&Type1<Type3>)",
+      [("`x",[])]
+      "(Type5<`x>&Type1<Type3>)",
     return $ checkTypeSuccess resolver
-      [("x",[])]
-      "(x|Type1<Type3>)",
+      [("`x",[])]
+      "(`x|Type1<Type3>)",
     return $ checkTypeSuccess resolver
-      [("x",[])]
-      "(x&Type1<Type3>)",
+      [("`x",[])]
+      "(`x&Type1<Type3>)",
     return $ checkTypeFail resolver
-      [("x",[])]
+      [("`x",[])]
       "(Type4<Type0>|Instance0)",
     return $ checkTypeFail resolver
-      [("x",[])]
+      [("`x",[])]
       "(Type4<Type0>&Instance0)",
 
     return $ checkTypeSuccess resolver
@@ -512,21 +512,21 @@ tests = [
       []
       "((Type4<Type0>|Type1<Type3>)&Type1<Type3>)",
     return $ checkTypeSuccess resolver
-      [("x",[])]
-      "((Type4<Type0>&x)|Type1<Type3>)",
+      [("`x",[])]
+      "((Type4<Type0>&`x)|Type1<Type3>)",
     return $ checkTypeSuccess resolver
-      [("x",[])]
-      "((Type4<Type0>|x)&Type1<Type3>)",
+      [("`x",[])]
+      "((Type4<Type0>|`x)&Type1<Type3>)",
 
     return $ checkDefinesFail resolver
-      [("x",[])]
-      "Instance1<x>",
+      [("`x",[])]
+      "Instance1<`x>",
     return $ checkDefinesSuccess resolver
-      [("x",["requires Type3"])]
-      "Instance1<x>",
+      [("`x",["requires Type3"])]
+      "Instance1<`x>",
     return $ checkDefinesFail resolver
-      [("x",["defines Instance1<x>"])]
-      "Instance1<x>",
+      [("`x",["defines Instance1<`x>"])]
+      "Instance1<`x>",
     return $ checkDefinesSuccess resolver
       []
       "Instance1<Type3>",

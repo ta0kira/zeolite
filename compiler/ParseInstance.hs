@@ -59,9 +59,10 @@ instance ParseFromSource TypeName where
 instance ParseFromSource ParamName where
   sourceParser = labeled "param name" $ do
     noKeywords
+    char '`'
     b <- lower
     e <- sepAfter $ many alphaNum
-    return $ ParamName (b:e)
+    return $ ParamName ('`':b:e)
 
 instance ParseFromSource TypeInstance where
   sourceParser = labeled "type" $ do

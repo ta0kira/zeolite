@@ -189,16 +189,10 @@ instance ParseFromSource (ExpressionStart SourcePos) where
       return $ UnqualifiedCall [c] f
     variableOrUnqualified = do
       n <- sourceParser :: Parser (VariableName SourcePos)
-      asTypeCall n <|> asUnqualifiedCall n <|> asVariable n
+      asUnqualifiedCall n <|> asVariable n
     asVariable n = do
       c <- getPosition
       return $ VariableValue (OutputValue n)
-    asTypeCall n = do
-      typeSymbolGet
-      c <- getPosition
-      n2 <- sourceParser
-      f <- parseFunctionCall n2
-      return $ TypeCall [c] (JustParamName $ ParamName $ vnName n) f
     asUnqualifiedCall n = do
       c <- getPosition
       f <- parseFunctionCall (FunctionName (vnName n))

@@ -26,34 +26,34 @@ tests = [
     checkSingleParseSuccess "testfiles/type_interface.txt",
     checkSingleParseSuccess "testfiles/concrete.txt",
 
-    checkShortParseSuccess "concrete Type<x> {}",
+    checkShortParseSuccess "concrete Type<`x> {}",
     checkShortParseSuccess "concrete Type {}",
     checkShortParseFail "concrete Type<T> {}",
     checkShortParseFail "concrete Type<optional> {}",
     checkShortParseFail "concrete Type<optional T> {}",
-    checkShortParseFail "concrete Type<T<x>> {}",
+    checkShortParseFail "concrete Type<T<`x>> {}",
     checkShortParseSuccess "concrete Type { refines T }",
-    checkShortParseFail "concrete Type { refines x }",
+    checkShortParseFail "concrete Type { refines `x }",
     checkShortParseSuccess "concrete Type { defines T }",
-    checkShortParseFail "concrete Type { defines x }",
+    checkShortParseFail "concrete Type { defines `x }",
     checkShortParseFail "concrete Type { refines optional }",
     checkShortParseFail "concrete Type { refines optional T }",
-    checkShortParseSuccess "concrete Type<x|y> { x requires y }",
-    checkShortParseSuccess "concrete Type<x|y> { x allows y }",
-    checkShortParseSuccess "concrete Type<x|y> { x defines T }",
-    checkShortParseFail "concrete Type<x|y> { x defines y }",
+    checkShortParseSuccess "concrete Type<`x|`y> { `x requires `y }",
+    checkShortParseSuccess "concrete Type<`x|`y> { `x allows `y }",
+    checkShortParseSuccess "concrete Type<`x|`y> { `x defines T }",
+    checkShortParseFail "concrete Type<`x|`y> { `x defines `y }",
 
-    checkShortParseSuccess "@type interface Type<x> {}",
+    checkShortParseSuccess "@type interface Type<`x> {}",
     checkShortParseSuccess "@type interface Type {}",
     checkShortParseFail "@type interface Type { refines T }",
     checkShortParseFail "@type interface Type { defines T }",
-    checkShortParseSuccess "@type interface Type<x> { x allows T }",
+    checkShortParseSuccess "@type interface Type<`x> { `x allows T }",
 
-    checkShortParseSuccess "@value interface Type<x> {}",
+    checkShortParseSuccess "@value interface Type<`x> {}",
     checkShortParseSuccess "@value interface Type {}",
     checkShortParseSuccess "@value interface Type { refines T }",
     checkShortParseFail "@value interface Type { defines T }",
-    checkShortParseSuccess "@value interface Type<x> { x allows T }",
+    checkShortParseSuccess "@value interface Type<`x> { `x allows T }",
 
     checkOperationSuccess "testfiles/value_refines_value.txt" (checkConnectedTypes Map.empty),
     checkOperationFail "testfiles/value_refines_instance.txt" (checkConnectedTypes Map.empty),
@@ -117,10 +117,10 @@ tests = [
         ts <- topoSortCategories Map.empty ts
         ts <- flattenAllConnections Map.empty ts
         scrapeAllRefines ts `containsExactly` [
-            ("Object1","Object3<y>"),
+            ("Object1","Object3<`y>"),
             ("Object1","Object2"),
             ("Object3","Object2"),
-            ("Parent","Object1<x,Object3<Object2>>"),
+            ("Parent","Object1<`x,Object3<Object2>>"),
             ("Parent","Object3<Object3<Object2>>"),
             ("Parent","Object2"),
             ("Child","Parent<Child>"),
@@ -198,73 +198,73 @@ tests = [
       (checkParamVariances $ Map.fromList [
           (TypeName "Parent",
            ValueInterface [] (TypeName "Parent")
-                          [ValueParam [] (ParamName "w") Contravariant,
-                           ValueParam [] (ParamName "z") Covariant] [] [] [])
+                          [ValueParam [] (ParamName "`w") Contravariant,
+                           ValueParam [] (ParamName "`z") Covariant] [] [] [])
       ]),
     checkOperationFail
       "testfiles/partial_params.txt"
       (checkParamVariances $ Map.fromList [
           (TypeName "Parent",
            ValueInterface [] (TypeName "Parent")
-                          [ValueParam [] (ParamName "w") Invariant,
-                           ValueParam [] (ParamName "z") Covariant] [] [] [])
+                          [ValueParam [] (ParamName "`w") Invariant,
+                           ValueParam [] (ParamName "`z") Covariant] [] [] [])
       ]),
     checkOperationFail
       "testfiles/partial_params.txt"
       (checkParamVariances $ Map.fromList [
           (TypeName "Parent",
            ValueInterface [] (TypeName "Parent")
-                          [ValueParam [] (ParamName "w") Contravariant,
-                           ValueParam [] (ParamName "z") Invariant] [] [] [])
+                          [ValueParam [] (ParamName "`w") Contravariant,
+                           ValueParam [] (ParamName "`z") Invariant] [] [] [])
       ]),
 
     checkOperationSuccess
       "testfiles/concrete.txt"
       (\ts -> do
-        rs <- getTypeRefines ts "Type<a,b,c,d,e,f>" "Type"
-        rs `containsPaired` ["a","b","c","d","e","f"]
+        rs <- getTypeRefines ts "Type<`a,`b,`c,`d,`e,`f>" "Type"
+        rs `containsPaired` ["`a","`b","`c","`d","`e","`f"]
         ),
     checkOperationSuccess
       "testfiles/flatten.txt"
       (\ts -> do
         ts <- topoSortCategories Map.empty ts
         ts <- flattenAllConnections Map.empty ts
-        rs <- getTypeRefines ts "Object1<a,b>" "Object1"
-        rs `containsPaired` ["a","b"]),
+        rs <- getTypeRefines ts "Object1<`a,`b>" "Object1"
+        rs `containsPaired` ["`a","`b"]),
     checkOperationSuccess
       "testfiles/flatten.txt"
       (\ts -> do
         ts <- topoSortCategories Map.empty ts
         ts <- flattenAllConnections Map.empty ts
-        rs <- getTypeRefines ts "Object1<a,b>" "Object3"
-        rs `containsPaired` ["b"]),
+        rs <- getTypeRefines ts "Object1<`a,`b>" "Object3"
+        rs `containsPaired` ["`b"]),
     checkOperationFail
       "testfiles/flatten.txt"
       (\ts -> do
         ts <- topoSortCategories Map.empty ts
         ts <- flattenAllConnections Map.empty ts
-        rs <- getTypeRefines ts "Undefined<a,b>" "Undefined"
-        rs `containsPaired` ["a","b"]),
+        rs <- getTypeRefines ts "Undefined<`a,`b>" "Undefined"
+        rs `containsPaired` ["`a","`b"]),
     checkOperationFail
       "testfiles/flatten.txt"
       (\ts -> do
         ts <- topoSortCategories Map.empty ts
         ts <- flattenAllConnections Map.empty ts
-        rs <- getTypeRefines ts "Object1<a>" "Object1"
-        rs `containsPaired` ["a"]),
+        rs <- getTypeRefines ts "Object1<`a>" "Object1"
+        rs `containsPaired` ["`a"]),
     checkOperationSuccess
       "testfiles/flatten.txt"
       (\ts -> do
         ts <- topoSortCategories Map.empty ts
         ts <- flattenAllConnections Map.empty ts
-        rs <- getTypeRefines ts "Parent<t>" "Object1"
-        rs `containsPaired` ["t","Object3<Object2>"]),
+        rs <- getTypeRefines ts "Parent<`t>" "Object1"
+        rs `containsPaired` ["`t","Object3<Object2>"]),
     checkOperationFail
       "testfiles/flatten.txt"
       (\ts -> do
         ts <- topoSortCategories Map.empty ts
         ts <- flattenAllConnections Map.empty ts
-        getTypeRefines ts "Parent<t>" "Child"),
+        getTypeRefines ts "Parent<`t>" "Child"),
     checkOperationFail
       "testfiles/flatten.txt"
       (\ts -> do
@@ -307,11 +307,11 @@ tests = [
     checkOperationSuccess
       "testfiles/concrete.txt"
       (\ts -> do
-        rs <- getTypeFilters ts "Type<a,b,c,d,e,f>"
+        rs <- getTypeFilters ts "Type<`a,`b,`c,`d,`e,`f>"
         checkPaired containsExactly rs [
             ["allows Parent"],
-            ["requires Type2<a>"],
-            ["defines Equals<c>"],
+            ["requires Type2<`a>"],
+            ["defines Equals<`c>"],
             [],
             [],
             []
@@ -319,11 +319,11 @@ tests = [
     checkOperationSuccess
       "testfiles/concrete.txt"
       (\ts -> do
-        rs <- getTypeFilters ts "Type<Type<t>,b,Type3<x>,d,e,f>"
+        rs <- getTypeFilters ts "Type<Type<`t>,`b,Type3<`x>,`d,`e,`f>"
         checkPaired containsExactly rs [
             ["allows Parent"],
-            ["requires Type2<Type<t>>"],
-            ["defines Equals<Type3<x>>"],
+            ["requires Type2<Type<`t>>"],
+            ["defines Equals<Type3<`x>>"],
             [],
             [],
             []
@@ -332,11 +332,11 @@ tests = [
     checkOperationSuccess
       "testfiles/value_interface.txt"
       (\ts -> do
-        rs <- getTypeFilters ts "Type<a,b,c,d,e,f>"
+        rs <- getTypeFilters ts "Type<`a,`b,`c,`d,`e,`f>"
         checkPaired containsExactly rs [
             ["allows Parent"],
-            ["requires Type2<a>"],
-            ["defines Equals<c>"],
+            ["requires Type2<`a>"],
+            ["defines Equals<`c>"],
             [],
             [],
             []
@@ -344,11 +344,11 @@ tests = [
     checkOperationSuccess
       "testfiles/value_interface.txt"
       (\ts -> do
-        rs <- getTypeFilters ts "Type<Type<t>,b,Type3<x>,d,e,f>"
+        rs <- getTypeFilters ts "Type<Type<`t>,`b,Type3<`x>,`d,`e,`f>"
         checkPaired containsExactly rs [
             ["allows Parent"],
-            ["requires Type2<Type<t>>"],
-            ["defines Equals<Type3<x>>"],
+            ["requires Type2<Type<`t>>"],
+            ["defines Equals<Type3<`x>>"],
             [],
             [],
             []
@@ -357,11 +357,11 @@ tests = [
     checkOperationSuccess
       "testfiles/type_interface.txt"
       (\ts -> do
-        rs <- getTypeDefinesFilters ts "Type<a,b,c,d,e,f>"
+        rs <- getTypeDefinesFilters ts "Type<`a,`b,`c,`d,`e,`f>"
         checkPaired containsExactly rs [
             ["allows Parent"],
-            ["requires Type2<a>"],
-            ["defines Equals<c>"],
+            ["requires Type2<`a>"],
+            ["defines Equals<`c>"],
             [],
             [],
             []
@@ -369,11 +369,11 @@ tests = [
     checkOperationSuccess
       "testfiles/type_interface.txt"
       (\ts -> do
-        rs <- getTypeDefinesFilters ts "Type<Type<t>,b,Type3<x>,d,e,f>"
+        rs <- getTypeDefinesFilters ts "Type<Type<`t>,`b,Type3<`x>,`d,`e,`f>"
         checkPaired containsExactly rs [
             ["allows Parent"],
-            ["requires Type2<Type<t>>"],
-            ["defines Equals<Type3<x>>"],
+            ["requires Type2<Type<`t>>"],
+            ["defines Equals<Type3<`x>>"],
             [],
             [],
             []
@@ -473,8 +473,8 @@ tests = [
         ta <- flattenAllConnections Map.empty ts >>= declareAllTypes Map.empty
         let r = categoriesToTypeResolver ta
         checkTypeSuccess r
-          [("x",[]),("y",[])]
-          "Value0<x,y>"),
+          [("`x",[]),("`y",[])]
+          "Value0<`x,`y>"),
     checkOperationSuccess
       "testfiles/filters.txt"
       (\ts -> do
@@ -482,9 +482,9 @@ tests = [
         ta <- flattenAllConnections Map.empty ts >>= declareAllTypes Map.empty
         let r = categoriesToTypeResolver ta
         checkTypeSuccess r
-          [("x",["allows y","requires Function<x,y>"]),
-           ("y",["requires x","defines Equals<y>"])]
-          "Value0<x,y>"),
+          [("`x",["allows `y","requires Function<`x,`y>"]),
+           ("`y",["requires `x","defines Equals<`y>"])]
+          "Value0<`x,`y>"),
     checkOperationSuccess
       "testfiles/filters.txt"
       (\ts -> do
@@ -492,8 +492,8 @@ tests = [
         ta <- flattenAllConnections Map.empty ts >>= declareAllTypes Map.empty
         let r = categoriesToTypeResolver ta
         checkTypeSuccess r
-          [("x",["allows Value2","requires Function<x,Value2>"])]
-          "Value0<x,Value2>"),
+          [("`x",["allows Value2","requires Function<`x,Value2>"])]
+          "Value0<`x,Value2>"),
     checkOperationFail
       "testfiles/filters.txt"
       (\ts -> do
@@ -501,9 +501,9 @@ tests = [
         ta <- flattenAllConnections Map.empty ts >>= declareAllTypes Map.empty
         let r = categoriesToTypeResolver ta
         checkTypeSuccess r
-          [("x",["allows Value2","requires Function<x,Value2>"]),
-           ("y",["requires x","defines Equals<y>"])]
-          "Value0<x,y>"),
+          [("`x",["allows Value2","requires Function<`x,Value2>"]),
+           ("`y",["requires `x","defines Equals<`y>"])]
+          "Value0<`x,`y>"),
 
     checkOperationSuccess
       "testfiles/concrete_instances.txt"

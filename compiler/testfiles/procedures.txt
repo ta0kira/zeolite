@@ -1,26 +1,26 @@
 testFunction1 (a,b,c) (d,e,f) {
   z.call().call();
   { x, Type y, _ } = z.call();
-  x = z.T<z>.call();
+  x = z.T<`z>.call();
   return;
   return a;
   return { a, z.call().call(), c };
 
   if (T$f()) {
     // do nothing
-  } elif (q$r().f()) {
+  } elif (`q$r().f()) {
     require(v).g();
   } elif (zzz) {
     // sleep
   }
 
-  x = Type<z,T<m>>{
+  x = Type<`z,T<`m>>{
       v: r
       qq: Type$new()
     };
 
   scoped {
-    optional T myvar = reduce<x,y>(q);
+    optional T myvar = reduce<`x,`y>(q);
   } in if (present(myvar)) {
     unqualified();
   } else {
@@ -28,7 +28,7 @@ testFunction1 (a,b,c) (d,e,f) {
   }
 
   scoped {
-    optional T myvar = reduce<x,y>(q);
+    optional T myvar = reduce<`x,`y>(q);
   } in { v, _ } = x.process(myvar);
 
   while (true) {

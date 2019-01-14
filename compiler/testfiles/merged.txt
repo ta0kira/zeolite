@@ -12,9 +12,9 @@
   refines Value0
 }
 
-@value interface Value4<x|y> {}
+@value interface Value4<`x|`y> {}
 
-@type interface Type0<x|y> {}
+@type interface Type0<`x|`y> {}
 
 @value interface Inherit1 {
   refines Value4<Value1,Value1>

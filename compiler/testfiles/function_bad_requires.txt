@@ -1,5 +1,5 @@
-concrete Type<|x> {
-  @value something<y>
-    y requires x
+concrete Type<|`x> {
+  @value something<`y>
+    `y requires `x
   () -> ()
 }
