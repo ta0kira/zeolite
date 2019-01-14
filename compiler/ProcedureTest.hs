@@ -36,6 +36,7 @@ tests = [
     checkShortParseFail "~ var.T<`x>",
     checkShortParseFail "~ T<`x> var",
     checkShortParseSuccess "~ T<`x>{ var: val x: var.T<`x>$func() }",
+    checkShortParseFail "~ T<`x>{ var: valx: var.T<`x>$func() }",
 
     checkShortParseSuccess "x = var.func()",
     checkShortParseFail "x = var.func() var.func()",
@@ -80,7 +81,18 @@ tests = [
     checkShortParseFail "(((x = var.func())))",
     checkShortParseFail "~ (((x = var.func())))",
     checkShortParseSuccess "~ call(((var.func())))",
-    checkShortParseSuccess "if (((var.func()))) { }"
+    checkShortParseSuccess "if (((var.func()))) { }",
+
+    checkShortParseSuccess "~var.T<`x>$func().func2().func3()",
+    checkShortParseSuccess "~T<`x>{var:val x:var.T<`x>$func()}",
+    checkShortParseSuccess "x=var.func()",
+    checkShortParseSuccess "T<`x>x=var.func()",
+    checkShortParseSuccess "{_,weak T<`x>x}=var.func()",
+    checkShortParseSuccess "if(v){~c()}elif(v){~c()}",
+    checkShortParseSuccess "if(v){~c()}elif(v){~c()}else{~c()}",
+    checkShortParseSuccess "if(v){~c()}elif(v){~c()}elif(v){~c()}",
+    checkShortParseSuccess "while(var.func()){~val.call()}",
+    checkShortParseSuccess "scoped{T<`x>x=y}in~var.T<`x>$func()"
   ]
 
 checkParseSuccess f = do
