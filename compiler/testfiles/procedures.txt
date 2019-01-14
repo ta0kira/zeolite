@@ -1,15 +1,8 @@
 testFunction1 (a,b,c) (d,e,f) {
-  z.call().call()
-  { x, weak (`k|Type) y, _ } = z.call()
-  x = z.T<`z>$call().call()
-  return
-  return a
-  return { a, z.call().call(), c }
-
   if (T$f()) {
     // do nothing
   } elif (`q$r().f()) {
-    require(v).g()
+    ~ require(v).g()
   } elif (zzz) {
     // sleep
   }
@@ -22,7 +15,7 @@ testFunction1 (a,b,c) (d,e,f) {
   scoped {
     optional T myvar = reduce<`x,`y>(q)
   } in if (present(myvar)) {
-    unqualified()
+    ~ unqualified()
   } else {
     // something
   }
@@ -31,8 +24,19 @@ testFunction1 (a,b,c) (d,e,f) {
     optional T myvar = reduce<`x,`y>(q)
   } in { v, _ } = x.process(myvar)
 
+  scoped {
+    // ...
+  } in ~ x.process()
+
+  ~ z.call().call()
+  { x, weak (`k|Type) y, _ } = z.call()
+  x = z.T<`z>$call().call()
+  return
+  return a
+  return { a, z.call().call(), c }
+
   while (true) {
-    fail.to().execute()
+    ~ fail.to().execute()
     return x
   }
 }

@@ -120,7 +120,7 @@ data Assignable c =
 data VoidExpression c =
   Conditional (IfElifElse c) |
   Loop (WhileLoop c) |
-  WithScope (ScopedBlock c) (VoidExpression c)
+  WithScope (ScopedBlock c) (Statement c)
   deriving (Eq,Show)
 
 data Expression c =

@@ -81,7 +81,7 @@ instance ParseFromSource (Statement SourcePos) where
                  parseAssign where
     parseAssign = labeled "statement" $ do
       c <- getPosition
-      as <- multiDest <|> try singleDest <|> return []
+      as <- sideEffectOnly <|> multiDest <|> try singleDest
       e <- sourceParser
       statementEnd
       return $ Assignment [c] (ParamSet as) e
@@ -95,6 +95,9 @@ instance ParseFromSource (Statement SourcePos) where
       a <- sourceParser
       sepAfter (string "=")
       return [a]
+    sideEffectOnly = do
+      statementStart
+      return []
     parseReturn = labeled "return" $ do
       c <- getPosition
       try kwReturn

@@ -44,6 +44,7 @@ module ParserBase (
   sepAfter,
   sepAfter1,
   statementEnd,
+  statementStart,
   typeSymbolGet,
   valueSymbolGet,
 ) where
@@ -58,6 +59,7 @@ class ParseFromSource a where
 
 labeled = flip label
 
+statementStart = sepAfter (string "~")
 statementEnd   = sepAfter (string "")
 valueSymbolGet = sepAfter (string ".")
 typeSymbolGet  = sepAfter (string "$")
