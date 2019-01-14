@@ -141,7 +141,7 @@ data ExpressionStart c =
   deriving (Eq,Show)
 
 data ValueOperation c =
-  Conversion [c] TypeInstance |
+  ConvertedCall [c] TypeInstance (FunctionCall c) |
   ValueCall [c] (FunctionCall c)
   deriving (Eq,Show)
 

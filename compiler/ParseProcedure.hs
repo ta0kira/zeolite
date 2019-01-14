@@ -145,11 +145,11 @@ instance ParseFromSource (VoidExpression SourcePos) where
       return $ WithScope s e
 
 instance ParseFromSource (Expression SourcePos) where
-  sourceParser = try expression <|> initalize where
+  sourceParser = expression <|> initalize where
     expression = labeled "expression" $ do
       c <- getPosition
       let ts = [] -- Expression type is unknown at parse time.
-      s <- sourceParser
+      s <- try sourceParser
       vs <- many $ valueSymbolGet >> sourceParser
       return $ Expression [c] (ParamSet ts) s vs
     initalize = do
@@ -173,7 +173,6 @@ parseFunctionCall n = do
   ps <- between (sepAfter $ string "<")
                 (sepAfter $ string ">")
                 (sepBy sourceParser (sepAfter $ string ",")) <|> return []
-  notFollowedBy (string "<") -- In case the failure above was not at "<".
   es <- between (sepAfter $ string "(")
                 (sepAfter $ string ")")
                 (sepBy sourceParser (sepAfter $ string ","))
@@ -181,8 +180,8 @@ parseFunctionCall n = do
 
 instance ParseFromSource (ExpressionStart SourcePos) where
   sourceParser = labeled "expression start" $
-                 builtinCall <|>
                  variableOrUnqualified <|>
+                 builtinCall <|>
                  typeCall where
     builtinCall = do
       c <- getPosition
@@ -217,7 +216,10 @@ instance ParseFromSource (ValueOperation SourcePos) where
     conversion = labeled "type conversion" $ do
       c <- getPosition
       t <- sourceParser -- NOTE: Should not need try here.
-      return $ Conversion [c] t
+      typeSymbolGet
+      n <- sourceParser
+      f <- parseFunctionCall n
+      return $ ConvertedCall [c] t f
 
 instance ParseFromSource (IfElifElse SourcePos) where
   sourceParser = labeled "if-elif-else" $ do

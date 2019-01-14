@@ -58,6 +58,11 @@ class ParseFromSource a where
 
 labeled = flip label
 
+statementEnd   = sepAfter (string "")
+valueSymbolGet = sepAfter (string ".")
+typeSymbolGet  = sepAfter (string "$")
+initSeparator  = sepAfter (string ":")
+
 kwAll = keyword "all"
 kwAllows = keyword "allows"
 kwAny = keyword "any"
@@ -84,11 +89,6 @@ kwType = keyword "@type"
 kwValue = keyword "@value"
 kwWeak = keyword "weak"
 kwWhile = keyword "while"
-
-statementEnd = sepAfter (string ";")
-valueSymbolGet = sepAfter (string ".")
-typeSymbolGet = sepAfter (string "$")
-initSeparator = sepAfter (string ":")
 
 isKeyword :: Parser ()
 isKeyword = foldr (<|>) nullParse $ map try [
