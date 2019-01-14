@@ -189,7 +189,7 @@ instance ParseFromSource (ExpressionStart SourcePos) where
       return $ UnqualifiedCall [c] f
     variableOrUnqualified = do
       n <- sourceParser :: Parser (VariableName SourcePos)
-      asTypeCall n <|> asValueCall n <|> asVariable n
+      asTypeCall n <|> asUnqualifiedCall n <|> asVariable n
     asVariable n = do
       c <- getPosition
       return $ VariableValue (OutputValue n)
@@ -199,7 +199,7 @@ instance ParseFromSource (ExpressionStart SourcePos) where
       n2 <- sourceParser
       f <- parseFunctionCall n2
       return $ TypeCall [c] (JustParamName $ ParamName $ vnName n) f
-    asValueCall n = do
+    asUnqualifiedCall n = do
       c <- getPosition
       f <- parseFunctionCall (FunctionName (vnName n))
       return $ UnqualifiedCall [c] f
@@ -215,10 +215,9 @@ instance ParseFromSource (ValueOperation SourcePos) where
   sourceParser = valueCall <|> conversion where
     valueCall = labeled "function call" $ do
       c <- getPosition
-      let ts = [] -- Expression type is unknown at parse time.
       n <- sourceParser
       f <- parseFunctionCall n
-      return $ ValueCall [c] (ParamSet ts) f
+      return $ ValueCall [c] f
     conversion = labeled "type conversion" $ do
       c <- getPosition
       t <- sourceParser -- NOTE: Should not need try here.

@@ -85,7 +85,7 @@ kwValue = keyword "@value"
 kwWeak = keyword "weak"
 kwWhile = keyword "while"
 
-statementEnd = sepAfter (string "")
+statementEnd = sepAfter (string ";")
 valueSymbolGet = sepAfter (string ".")
 typeSymbolGet = sepAfter (string "$")
 initSeparator = sepAfter (string ":")

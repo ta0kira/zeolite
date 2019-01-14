@@ -50,7 +50,7 @@ data ArgValues c =
 instance Show c => Show (ArgValues c) where
   show (ArgValues c v) =
     "(" ++ intercalate ",\n" (map show $ psParams v) ++ ")" ++
-    "/*" ++ formatFullContext c ++ "*/"
+    " /*" ++ formatFullContext c ++ "*/"
 
 data ReturnValues c =
   NamedReturns {
@@ -65,7 +65,7 @@ data ReturnValues c =
 instance Show c => Show (ReturnValues c) where
   show (NamedReturns c v) =
     "(" ++ intercalate ",\n" (map show $ psParams v) ++ ")" ++
-    "/*" ++ formatFullContext c ++ "*/"
+    " /*" ++ formatFullContext c ++ "*/"
   show (UnnamedReturns c) = "/*unnamed returns: " ++ formatFullContext c ++ "*/"
 
 data VariableName c =
@@ -76,7 +76,7 @@ data VariableName c =
   deriving (Eq,Ord)
 
 instance Show c => Show (VariableName c) where
-  show (VariableName c n) = n ++ "/*" ++ formatFullContext c ++ "*/"
+  show (VariableName c n) = n ++ " /*" ++ formatFullContext c ++ "*/"
 
 data InputValue c =
   InputValue {
@@ -89,7 +89,7 @@ data InputValue c =
 
 instance Show c => Show (InputValue c) where
   show (InputValue v) = show v
-  show (IgnoreValue c) = "_" ++ "/*" ++ formatFullContext c ++ "*/"
+  show (IgnoreValue c) = "_" ++ " /*" ++ formatFullContext c ++ "*/"
 
 data OutputValue c =
   OutputValue {
@@ -142,7 +142,7 @@ data ExpressionStart c =
 
 data ValueOperation c =
   Conversion [c] TypeInstance |
-  ValueCall [c] (ParamSet ValueType) (FunctionCall c)
+  ValueCall [c] (FunctionCall c)
   deriving (Eq,Show)
 
 data IfElifElse c =
@@ -156,6 +156,7 @@ data WhileLoop c =
   deriving (Eq,Show)
 
 -- TODO: This will likely require some magic if the statement is an assignement.
+-- Returns should be fine, however.
 data ScopedBlock c =
   ScopedBlock [c] (Procedure c) (Statement c)
   deriving (Eq,Show)

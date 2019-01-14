@@ -1,15 +1,15 @@
 testFunction1 (a,b,c) (d,e,f) {
-  z.call().call()
-  { x, Type y, _ } = z.call()
-  x = z.call()
-  return
-  return a
-  return { a, z.call().call(), c }
+  z.call().call();
+  { x, Type y, _ } = z.call();
+  x = z.T<z>.call();
+  return;
+  return a;
+  return { a, z.call().call(), c };
 
   if (T$f()) {
     // do nothing
   } elif (q$r().f()) {
-    require(v).g()
+    require(v).g();
   } elif (zzz) {
     // sleep
   }
@@ -17,23 +17,23 @@ testFunction1 (a,b,c) (d,e,f) {
   x = Type<z,T<m>>{
       v: r
       qq: Type$new()
-    }
+    };
 
   scoped {
-    optional T myvar = reduce<x,y>(q)
+    optional T myvar = reduce<x,y>(q);
   } in if (present(myvar)) {
-    unqualified()
+    unqualified();
   } else {
     // something
   }
 
   scoped {
-    optional T myvar = reduce<x,y>(q)
-  } in { v, _ } = x.process(myvar)
+    optional T myvar = reduce<x,y>(q);
+  } in { v, _ } = x.process(myvar);
 
   while (true) {
-    fail.to().execute()
-    return x
+    fail.to().execute();
+    return x;
   }
 }
 
