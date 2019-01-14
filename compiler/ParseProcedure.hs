@@ -145,7 +145,7 @@ instance ParseFromSource (VoidExpression SourcePos) where
       return $ WithScope s e
 
 instance ParseFromSource (Expression SourcePos) where
-  sourceParser = try initalize <|> expression where
+  sourceParser = try expression <|> initalize where
     expression = labeled "expression" $ do
       c <- getPosition
       let ts = [] -- Expression type is unknown at parse time.
@@ -155,7 +155,9 @@ instance ParseFromSource (Expression SourcePos) where
     initalize = do
       c <- getPosition
       t <- try sourceParser
-      as <- between (sepAfter $ string "{")
+      -- Moving this outside of between provides better error messages in {}.
+      sepAfter (string "{")
+      as <- between nullParse
                     (sepAfter $ string "}")
                     (sepBy singleAssign optionalSpace)
       return $ InitializeValue [c] t (ParamSet as)
