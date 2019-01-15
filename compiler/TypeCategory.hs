@@ -481,6 +481,7 @@ flattenAllConnections tm0 ts = do
       let fm = getFilterMap t
       rs' <- fmap concat $ collectAllOrErrorM $ map (getRefines tm) rs
       rs'' <- mergeRefines r fm rs'
+      checkMerged r fm rs rs''
       -- Only merge from direct parents.
       fs' <- mergeFuncs r tm fm rs [] fs
       return $ ValueInterface c n ps rs'' vs fs'
@@ -490,6 +491,7 @@ flattenAllConnections tm0 ts = do
       let fm = getFilterMap t
       rs' <- fmap concat $ collectAllOrErrorM $ map (getRefines tm) rs
       rs'' <- mergeRefines r fm rs'
+      checkMerged r fm rs rs''
       -- Only merge from direct parents.
       fs' <- mergeFuncs r tm fm rs ds fs
       return $ ValueConcrete c n ps rs'' ds vs fs'
@@ -522,6 +524,15 @@ flattenAllConnections tm0 ts = do
       let ns = map vpParam $ getCategoryParams v
       paired <- processParamPairs alwaysPairParams (ParamSet ns) ps
       return $ Map.fromList paired
+    checkMerged r fm rs rs2 = do
+      let rm = Map.fromList $ map (\t -> (tiName $ vrType t,t)) rs
+      mergeAll $ map (\t -> checkConvert r fm (tiName (vrType t) `Map.lookup` rm) t) rs2
+    checkConvert r fm (Just ta1@(ValueRefine _ t1)) ta2@(ValueRefine _ t2) = do
+      checkGeneralMatch r fm Covariant (SingleType $ JustTypeInstance t1)
+                                       (SingleType $ JustTypeInstance t2) `reviseError`
+        ("Cannot refine " ++ show ta1 ++ " from inherited " ++ show ta2)
+      return ()
+    checkConvert _ _ _ _ = return ()
     mergeFuncs r tm fm rs ds fs = do
       inheritValue <- fmap concat $ collectAllOrErrorM $ map (getRefinesFuncs tm) rs
       inheritType  <- fmap concat $ collectAllOrErrorM $ map (getDefinesFuncs tm) ds

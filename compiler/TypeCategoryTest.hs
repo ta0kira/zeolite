@@ -595,6 +595,12 @@ tests = [
         ts <- topoSortCategories Map.empty ts
         flattenAllConnections Map.empty ts
         return ()),
+    checkOperationFail
+      "testfiles/refine_wrong_direction.txt"
+      (\ts -> do
+        ts <- topoSortCategories Map.empty ts
+        flattenAllConnections Map.empty ts
+        return ()),
 
     checkOperationSuccess
       "testfiles/flatten.txt"
