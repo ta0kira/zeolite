@@ -481,16 +481,19 @@ flattenAllConnections tm0 ts = do
       let fm = getFilterMap t
       rs' <- fmap concat $ collectAllOrErrorM $ map (getRefines tm) rs
       rs'' <- mergeRefines r fm rs'
+      noDuplicateRefines c n rs''
       checkMerged r fm rs rs''
       -- Only merge from direct parents.
       fs' <- mergeFuncs r tm fm rs [] fs
       return $ ValueInterface c n ps rs'' vs fs'
+    -- TODO: Remove duplication below and/or have separate tests.
     updateSingle r tm t@(ValueConcrete c n ps rs ds vs fs) = do
       noDuplicateRefines c n rs
       noDuplicateDefines c n ds
       let fm = getFilterMap t
       rs' <- fmap concat $ collectAllOrErrorM $ map (getRefines tm) rs
       rs'' <- mergeRefines r fm rs'
+      noDuplicateRefines c n rs''
       checkMerged r fm rs rs''
       -- Only merge from direct parents.
       fs' <- mergeFuncs r tm fm rs ds fs

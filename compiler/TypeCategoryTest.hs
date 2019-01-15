@@ -601,6 +601,18 @@ tests = [
         ts <- topoSortCategories Map.empty ts
         flattenAllConnections Map.empty ts
         return ()),
+    checkOperationFail
+      "testfiles/inherit_incompatible.txt"
+      (\ts -> do
+        ts <- topoSortCategories Map.empty ts
+        flattenAllConnections Map.empty ts
+        return ()),
+    checkOperationSuccess
+      "testfiles/merge_incompatible.txt"
+      (\ts -> do
+        ts <- topoSortCategories Map.empty ts
+        flattenAllConnections Map.empty ts
+        return ()),
 
     checkOperationSuccess
       "testfiles/flatten.txt"
