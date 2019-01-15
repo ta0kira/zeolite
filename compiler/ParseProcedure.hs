@@ -116,6 +116,7 @@ instance ParseFromSource (Statement SourcePos) where
       return $ ExplicitReturn [c] (ParamSet [r])
     emptyReturn :: SourcePos -> Parser (Statement SourcePos)
     emptyReturn c = do
+      kwIgnore
       statementEnd
       return $ EmptyReturn [c]
     parseVoid = do

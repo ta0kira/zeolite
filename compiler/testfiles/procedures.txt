@@ -33,7 +33,7 @@ testFunction1 (a,b,c) (d,e,f) {
   ~ z.call().call()
   { x, weak (`k|Type) y, _ } = z.call()
   x = z.T<`z>$call().call()
-  return
+  return _
   return a
   return { a, z.call().call(), c }
 

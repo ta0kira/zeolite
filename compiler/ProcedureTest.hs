@@ -16,13 +16,15 @@ tests :: [IO (CompileInfo ())]
 tests = [
     checkParseSuccess "testfiles/procedures.txt",
 
-    checkShortParseSuccess "return",
+    checkShortParseSuccess "return _",
     checkShortParseSuccess "return var",
     checkShortParseFail "return var var",
+    checkShortParseFail "return _ var",
     checkShortParseSuccess "return call()",
     checkShortParseSuccess "return var.T<`x>$func()",
     checkShortParseSuccess "return { var, var.T<`x>$func() }",
     checkShortParseFail "return { var  var.T<`x>$func() }",
+    checkShortParseFail "return { var, _ }",
     checkShortParseFail "return T<`x> var",
     checkShortParseSuccess "return T<`x>{ var: val }",
 
@@ -31,6 +33,8 @@ tests = [
     checkShortParseSuccess "~ var.T<`x>$func().func2().func3()",
     checkShortParseSuccess "~ T<`x>$func().func2().func3()",
     checkShortParseSuccess "~ `x$func().func2().func3()",
+    checkShortParseFail "~ var.T<`x>.T<`x>$func()",
+    checkShortParseFail "~ var.T<`x>$T<`x>$func()",
     checkShortParseFail "~ T<`x>$func()$func2()",
     checkShortParseFail "~ var$func2()",
     checkShortParseFail "~ var.T<`x>",
@@ -68,7 +72,7 @@ tests = [
 
     checkShortParseSuccess "while (var.func()) { ~ val.call() }",
 
-    checkShortParseSuccess "scoped { T<`x> x = y } in return",
+    checkShortParseSuccess "scoped { T<`x> x = y } in return _",
     checkShortParseSuccess "scoped { T<`x> x = y } in return { var, var.T<`x>$func() }",
     checkShortParseSuccess "scoped { T<`x> x = y } in ~ var.T<`x>$func()",
     checkShortParseSuccess "scoped { T<`x> x = y } in { _, weak T<`x> x } = var.func()",
