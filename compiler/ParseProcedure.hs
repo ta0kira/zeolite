@@ -148,12 +148,7 @@ instance ParseFromSource (VoidExpression SourcePos) where
       return $ WithScope e
 
 instance ParseFromSource (Expression SourcePos) where
-  sourceParser = parens <|> expression <|> initalize where
-    parens = do
-      sepAfter (string "(")
-      e <- sourceParser
-      sepAfter (string ")")
-      return e
+  sourceParser = expression <|> initalize where
     expression = labeled "expression" $ do
       c <- getPosition
       let ts = [] -- Expression type is unknown at parse time.
@@ -188,10 +183,17 @@ parseFunctionCall n = do
 
 instance ParseFromSource (ExpressionStart SourcePos) where
   sourceParser = labeled "expression start" $
+                 parens <|>
                  variableOrUnqualified <|>
                  builtinCall <|>
                  builtinValue <|>
                  typeCall where
+    parens = do
+      c <- getPosition
+      sepAfter (string "(")
+      e <- sourceParser
+      sepAfter (string ")")
+      return $ ParensExpression [c] e
     builtinCall = do
       c <- getPosition
       n <- builtinFunctions

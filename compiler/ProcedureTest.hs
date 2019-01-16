@@ -80,12 +80,12 @@ tests = [
     checkShortParseSuccess "scoped { T<`x> x = y } in if (var.func()) { ~ val.call() }",
     checkShortParseSuccess "scoped { T<`x> x = y } in while (var.func()) { ~ val.call() }",
 
-    checkShortParseSuccess "x = (((var.func())))",
+    checkShortParseSuccess "x = (((var.func())).T$call())",
     checkShortParseFail "x = (((var.func()))",
     checkShortParseFail "(((x = var.func())))",
     checkShortParseFail "~ (((x = var.func())))",
-    checkShortParseSuccess "~ call(((var.func())))",
-    checkShortParseSuccess "if (((var.func()))) { }",
+    checkShortParseSuccess "~ call(((var.func())).T$call())",
+    checkShortParseSuccess "if (((var.func()).T$call())) { }",
 
     checkShortParseSuccess "~var.T<`x>$func().func2().func3()",
     checkShortParseSuccess "~T<`x>{var:val x:var.T<`x>$func()}",
