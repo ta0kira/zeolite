@@ -31,6 +31,7 @@ module ParserBase (
   kwRequire,
   kwRequires,
   kwReturn,
+  kwSelf,
   kwScoped,
   kwStrong,
   kwType,
@@ -83,6 +84,7 @@ builtinValues :: Parser String
 builtinValues = foldr (<|>) (fail "empty") $ map try [
     kwEmpty >> return "empty",
     kwFalse >> return "false",
+    kwSelf >> return "self",
     kwTrue >> return "true"
   ]
 
@@ -130,6 +132,7 @@ kwRefines = keyword "refines"
 kwRequire = keyword "require"
 kwRequires = keyword "requires"
 kwReturn = keyword "return"
+kwSelf = keyword "self"
 kwScoped = keyword "scoped"
 kwStrong = keyword "strong"
 kwTrue = keyword "true"
@@ -162,6 +165,7 @@ isKeyword = foldr (<|>) nullParse $ map try [
     kwRequire,
     kwRequires,
     kwReturn,
+    kwSelf,
     kwScoped,
     kwStrong,
     kwTrue,
