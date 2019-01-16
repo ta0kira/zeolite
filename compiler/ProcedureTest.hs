@@ -28,6 +28,11 @@ tests = [
     checkShortParseFail "return T<`x> var",
     checkShortParseSuccess "return T<`x>{ var: val }",
 
+    checkShortParseSuccess "break",
+    checkShortParseFail "break var",
+    checkShortParseFail "break _",
+    checkShortParseFail "break { }",
+
     checkShortParseSuccess "~ var",
     checkShortParseFail "~ var var",
     checkShortParseSuccess "~ var.T<`x>$func().func2().func3()",

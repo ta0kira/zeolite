@@ -108,6 +108,7 @@ data Procedure c =
 data Statement c =
   EmptyReturn [c] |
   ExplicitReturn [c] (ParamSet (Expression c)) |
+  LoopBreak [c] |
   Assignment [c] (ParamSet (Assignable c)) (Expression c) |
   NoValueExpression (VoidExpression c)
   deriving (Eq,Show)

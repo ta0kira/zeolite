@@ -13,6 +13,7 @@ module ParserBase (
   kwAll,
   kwAllows,
   kwAny,
+  kwBreak,
   kwCategory,
   kwConcrete,
   kwDefines,
@@ -110,6 +111,7 @@ binaryOperator = foldr (<|>) (fail "empty") $ map try [
 kwAll = keyword "all"
 kwAllows = keyword "allows"
 kwAny = keyword "any"
+kwBreak = keyword "break"
 kwCategory = keyword "@category"
 kwConcrete = keyword "concrete"
 kwDefines = keyword "defines"
@@ -141,6 +143,7 @@ isKeyword = foldr (<|>) nullParse $ map try [
     kwAll,
     kwAllows,
     kwAny,
+    kwBreak,
     kwCategory,
     kwConcrete,
     kwElif,
