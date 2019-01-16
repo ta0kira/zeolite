@@ -4,6 +4,7 @@ module ParserBase (
   ParseFromSource(..),
   anyComment,
   blockComment,
+  binaryOperator,
   builtinFunctions,
   builtinValues,
   endOfDoc,
@@ -47,6 +48,7 @@ module ParserBase (
   statementEnd,
   statementStart,
   typeSymbolGet,
+  unaryOperator,
   valueSymbolGet,
 ) where
 
@@ -65,6 +67,45 @@ statementEnd   = sepAfter (string "")
 valueSymbolGet = sepAfter (string ".")
 typeSymbolGet  = sepAfter (string "$")
 initSeparator  = sepAfter (string ":")
+
+-- TODO: Maybe this should not use strings.
+builtinFunctions :: Parser String
+builtinFunctions = foldr (<|>) (fail "empty") $ map try [
+    kwPresent >> return "present",
+    kwReduce >> return "reduce",
+    kwRequire >> return "require",
+    kwStrong >> return "strong"
+  ]
+
+-- TODO: Maybe this should not use strings.
+builtinValues :: Parser String
+builtinValues = foldr (<|>) (fail "empty") $ map try [
+    kwEmpty >> return "empty",
+    kwFalse >> return "false",
+    kwTrue >> return "true"
+  ]
+
+-- TODO: Maybe this should not use strings.
+unaryOperator :: Parser String
+unaryOperator = foldr (<|>) (fail "empty") $ map try [
+    sepAfter (string "!") >> return "!"
+  ]
+
+-- TODO: Maybe this should not use strings.
+binaryOperator :: Parser String
+binaryOperator = foldr (<|>) (fail "empty") $ map try [
+    sepAfter (string "+") >> return "+",
+    sepAfter (string "-") >> return "-",
+    sepAfter (string "*") >> return "*",
+    sepAfter (string "/") >> return "/",
+    sepAfter (string "%") >> return "%",
+    sepAfter (string "==") >> return "==",
+    sepAfter (string "!=") >> return "!=",
+    sepAfter (string "<") >> return "<",
+    sepAfter (string "<=") >> return "<=",
+    sepAfter (string ">") >> return ">",
+    sepAfter (string ">=") >> return ">="
+  ]
 
 kwAll = keyword "all"
 kwAllows = keyword "allows"
@@ -125,23 +166,6 @@ isKeyword = foldr (<|>) nullParse $ map try [
     kwValue,
     kwWeak,
     kwWhile
-  ]
-
--- TODO: Maybe this should not use strings.
-builtinFunctions :: Parser String
-builtinFunctions = foldr (<|>) (fail "empty") $ map try [
-    kwPresent >> return "present",
-    kwReduce >> return "reduce",
-    kwRequire >> return "require",
-    kwStrong >> return "strong"
-  ]
-
--- TODO: Maybe this should not use strings.
-builtinValues :: Parser String
-builtinValues = foldr (<|>) (fail "empty") $ map try [
-    kwEmpty >> return "empty",
-    kwFalse >> return "false",
-    kwTrue >> return "true"
   ]
 
 nullParse :: Parser ()

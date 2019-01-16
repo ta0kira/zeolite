@@ -125,6 +125,7 @@ data VoidExpression c =
 
 data Expression c =
   Expression [c] (ParamSet ValueType) (ExpressionStart c) [ValueOperation c] |
+  UnaryExpression [c] String (Expression c) |
   -- TODO: Account for internal params here.
   InitializeValue [c] TypeInstance (ParamSet (VariableName c,Expression c))
   deriving (Eq,Show)

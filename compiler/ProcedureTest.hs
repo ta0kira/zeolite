@@ -96,7 +96,13 @@ tests = [
     checkShortParseSuccess "if(v){~c()}elif(v){~c()}else{~c()}",
     checkShortParseSuccess "if(v){~c()}elif(v){~c()}elif(v){~c()}",
     checkShortParseSuccess "while(var.func()){~val.call()}",
-    checkShortParseSuccess "scoped{T<`x>x=y}in~var.T<`x>$func()"
+    checkShortParseSuccess "scoped{T<`x>x=y}in~var.T<`x>$func()",
+
+    checkShortParseSuccess "x = !y",
+    checkShortParseSuccess "x = !!y",
+    checkShortParseSuccess "x = (!y).func()",
+    checkShortParseSuccess "~ !y",
+    checkShortParseSuccess "if (!y) { }"
   ]
 
 checkParseSuccess f = do

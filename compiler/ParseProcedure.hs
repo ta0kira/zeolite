@@ -148,7 +148,12 @@ instance ParseFromSource (VoidExpression SourcePos) where
       return $ WithScope e
 
 instance ParseFromSource (Expression SourcePos) where
-  sourceParser = expression <|> initalize where
+  sourceParser = unary <|> expression <|> initalize where
+    unary = do
+      c <- getPosition
+      o <- unaryOperator
+      e <- sourceParser
+      return $ UnaryExpression [c] o e
     expression = labeled "expression" $ do
       c <- getPosition
       let ts = [] -- Expression type is unknown at parse time.
