@@ -158,7 +158,7 @@ instance ParseFromSource (Expression SourcePos) where
       c <- getPosition
       let ts = [] -- Expression type is unknown at parse time.
       s <- try sourceParser
-      vs <- many $ valueSymbolGet >> sourceParser
+      vs <- many sourceParser
       return $ Expression [c] (ParamSet ts) s vs
     initalize = do
       c <- getPosition
@@ -227,19 +227,26 @@ instance ParseFromSource (ExpressionStart SourcePos) where
       return $ TypeCall [c] t f
 
 instance ParseFromSource (ValueOperation SourcePos) where
-  sourceParser = valueCall <|> conversion where
+  sourceParser = try valueCall <|> try conversion <|> binary where
     valueCall = labeled "function call" $ do
       c <- getPosition
+      valueSymbolGet
       n <- sourceParser
       f <- parseFunctionCall n
       return $ ValueCall [c] f
     conversion = labeled "type conversion" $ do
       c <- getPosition
+      valueSymbolGet
       t <- sourceParser -- NOTE: Should not need try here.
       typeSymbolGet
       n <- sourceParser
       f <- parseFunctionCall n
       return $ ConvertedCall [c] t f
+    binary = labeled "binary operator" $ do
+      c <- getPosition
+      o <- try binaryOperator -- NOTE: Need try for "/", due to "//" and "/*".
+      e <- sourceParser
+      return $ BinaryOperation [c] o e
 
 instance ParseFromSource (IfElifElse SourcePos) where
   sourceParser = labeled "if-elif-else" $ do

@@ -144,7 +144,8 @@ data ExpressionStart c =
 
 data ValueOperation c =
   ConvertedCall [c] TypeInstance (FunctionCall c) |
-  ValueCall [c] (FunctionCall c)
+  ValueCall [c] (FunctionCall c) |
+  BinaryOperation [c] String (Expression c)
   deriving (Eq,Show)
 
 data IfElifElse c =

@@ -102,7 +102,11 @@ tests = [
     checkShortParseSuccess "x = !!y",
     checkShortParseSuccess "x = (!y).func()",
     checkShortParseSuccess "~ !y",
-    checkShortParseSuccess "if (!y) { }"
+    checkShortParseSuccess "if (!y) { }",
+
+    checkShortParseSuccess "x = y + z",
+    checkShortParseSuccess "x = !!y == !z",
+    checkShortParseSuccess "x = (x + y) / z"
   ]
 
 checkParseSuccess f = do
