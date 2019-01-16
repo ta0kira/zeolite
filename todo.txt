@@ -1,6 +1,5 @@
 Roughly in order of execution:
 
-- Write parser for implementations.
 - Compile implementations, e.g., type-check and resolve symbols.
 
 - Rewrite and test C++ base.
