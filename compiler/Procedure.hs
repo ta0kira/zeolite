@@ -140,7 +140,8 @@ data ExpressionStart c =
   -- NOTE: If the type has no args, it could be a category function.
   TypeCall [c] TypeInstanceOrParam (FunctionCall c) |
   UnqualifiedCall [c] (FunctionCall c) |
-  ParensExpression [c] (Expression c)
+  ParensExpression [c] (Expression c) |
+  InlineAssignment [c] (VariableName c) (Expression c)
   deriving (Eq,Show)
 
 data ValueOperation c =

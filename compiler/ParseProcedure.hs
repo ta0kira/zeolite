@@ -199,8 +199,18 @@ instance ParseFromSource (ExpressionStart SourcePos) where
     parens = do
       c <- getPosition
       sepAfter (string "(")
-      e <- sourceParser
+      e <- try (assign c) <|> expr c
       sepAfter (string ")")
+      return e
+    assign :: SourcePos -> Parser (ExpressionStart SourcePos)
+    assign c = do
+      n <- sourceParser
+      sepAfter (string "=")
+      e <- sourceParser
+      return $ InlineAssignment [c] n e
+    expr :: SourcePos -> Parser (ExpressionStart SourcePos)
+    expr c = do
+      e <- sourceParser
       return $ ParensExpression [c] e
     builtinCall = do
       c <- getPosition
