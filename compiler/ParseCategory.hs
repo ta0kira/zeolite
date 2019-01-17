@@ -2,6 +2,8 @@
 {-# LANGUAGE Safe #-}
 
 module ParseCategory (
+  parseScope,
+  parseScopedFunction,
 ) where
 
 import Text.Parsec
@@ -48,10 +50,6 @@ instance ParseFromSource (AnyCategory SourcePos) where
       fs <- flip sepBy optionalSpace $ parseScopedFunction parseScope (return n)
       close
       return $ ValueConcrete [c] n ps rs ds vs fs
-    parseScope = try categoryScope <|> try typeScope <|> valueScope
-    categoryScope = kwCategory >> return CategoryScope
-    typeScope     = kwType     >> return TypeScope
-    valueScope    = kwValue    >> return ValueScope
 
 parseCategoryParams :: Parser [ValueParam SourcePos]
 parseCategoryParams = do
@@ -187,3 +185,9 @@ parseScopedFunction sp tp = labeled "function" $ do
       c <- getPosition
       t <- sourceParser
       return $ PassedValue [c] t
+
+parseScope :: Parser SymbolScope
+parseScope = try categoryScope <|> try typeScope <|> valueScope
+categoryScope = kwCategory >> return CategoryScope
+typeScope     = kwType     >> return TypeScope
+valueScope    = kwValue    >> return ValueScope
