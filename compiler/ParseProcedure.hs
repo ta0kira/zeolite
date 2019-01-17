@@ -168,11 +168,9 @@ instance ParseFromSource (Expression SourcePos) where
     initalize = do
       c <- getPosition
       t <- try sourceParser
-      -- Moving this outside of between provides better error messages in {}.
       sepAfter (string "{")
-      as <- between nullParse
-                    (sepAfter $ string "}")
-                    (sepBy singleAssign optionalSpace)
+      as <- many (optionalSpace >> singleAssign)
+      sepAfter (string "}")
       return $ InitializeValue [c] t (ParamSet as)
     singleAssign = do
       n <- sourceParser
