@@ -4,6 +4,7 @@
 module ParseDefinition (
 ) where
 
+import Control.Monad (when)
 import Text.Parsec
 import Text.Parsec.String
 
@@ -49,14 +50,17 @@ parseMemberProcedureFunction n = parsed >>= return . foldr merge empty where
   empty = ([],[],[])
   merge (ms1,ps1,fs1) (ms2,ps2,fs2) = (ms1++ms2,ps1++ps2,fs1++fs2)
   parsed = sepBy anyType optionalSpace
-  anyType = labeled "member, procedure, or function" $
-              singleMember <|> singleProcedure <|> singleFunction
-  singleMember = try $ do
-    m <- sourceParser
+  anyType = labeled "" $ singleMember <|> singleProcedure <|> singleFunction
+  singleMember = labeled "member" $ do
+    m <- try $ sourceParser
     return ([m],[],[])
-  singleProcedure = try $ do
-    p <- sourceParser
+  singleProcedure = labeled "procedure" $ do
+    p <- try $ sourceParser
     return ([],[p],[])
-  singleFunction = try $ do
-    f <- parseScopedFunction parseScope (return n)
-    return ([],[],[f])
+  singleFunction = labeled "function" $ do
+    f <- try $ parseScopedFunction parseScope (return n)
+    p <- labeled ("definition of function " ++ show (sfName f)) $ sourceParser
+    when (sfName f /= epName p) $
+      fail $ "expecting definition of function " ++ show (sfName f) ++
+             " but got definition of " ++ show (epName p)
+    return ([],[p],[f])
