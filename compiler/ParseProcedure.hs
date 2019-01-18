@@ -158,7 +158,7 @@ instance ParseFromSource (Expression SourcePos) where
       c <- getPosition
       o <- unaryOperator
       e <- sourceParser
-      return $ UnaryExpression [c] o e
+      return $ UnaryExpression [c] Nothing o e
     expression = labeled "expression" $ do
       c <- getPosition
       let ts = [] -- Expression type is unknown at parse time.
