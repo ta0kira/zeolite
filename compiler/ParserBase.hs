@@ -57,6 +57,7 @@ module ParserBase (
 
 import Text.Parsec
 import Text.Parsec.String
+import qualified Data.Set as Set
 
 
 class ParseFromSource a where
@@ -92,24 +93,21 @@ builtinValues = foldr (<|>) (fail "empty") $ map try [
 -- TODO: Maybe this should not use strings.
 unaryOperator :: Parser String
 unaryOperator = foldr (<|>) (fail "empty") $ map try [
-    sepAfter (string "!") >> return "!"
+    sepAfter (string "!") >> notFollowedBy operatorSymbol0 >> return "!"
   ]
+
+operatorSymbol0 = satisfy (`Set.member` Set.fromList "+-*/%=<>")
+operatorSymbol = labeled "operator symbol" $ satisfy (`Set.member` Set.fromList "+-*/%=!<>")
 
 -- TODO: Maybe this should not use strings.
 binaryOperator :: Parser String
-binaryOperator = foldr (<|>) (fail "empty") $ map try [
-    sepAfter (string "+") >> return "+",
-    sepAfter (string "-") >> return "-",
-    sepAfter (string "*") >> return "*",
-    sepAfter (string "/") >> return "/",
-    sepAfter (string "%") >> return "%",
-    sepAfter (string "==") >> return "==",
-    sepAfter (string "!=") >> return "!=",
-    sepAfter (string "<") >> return "<",
-    sepAfter (string "<=") >> return "<=",
-    sepAfter (string ">") >> return ">",
-    sepAfter (string ">=") >> return ">="
-  ]
+binaryOperator =
+  foldr (<|>) (fail "empty") $
+    map (\o -> try $ do
+          string o
+          notFollowedBy operatorSymbol
+          optionalSpace
+          return o) ["+","-","*","/","%","==","!=","<","<=",">",">="]
 
 kwAll = keyword "all"
 kwAllows = keyword "allows"

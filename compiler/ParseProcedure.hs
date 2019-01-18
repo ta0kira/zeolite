@@ -181,9 +181,11 @@ instance ParseFromSource (Expression SourcePos) where
 parseFunctionCall :: FunctionName -> Parser (FunctionCall SourcePos)
 parseFunctionCall n = do
   c <- getPosition
-  ps <- between (sepAfter $ string "<")
-                (sepAfter $ string ">")
-                (sepBy sourceParser (sepAfter $ string ",")) <|> return []
+  -- NOTE: try is needed here so that < operators work when the left side is
+  -- just a variable name, e.g., x < y.
+  ps <- try $ between (sepAfter $ string "<")
+                      (sepAfter $ string ">")
+                      (sepBy sourceParser (sepAfter $ string ",")) <|> return []
   es <- between (sepAfter $ string "(")
                 (sepAfter $ string ")")
                 (sepBy sourceParser (sepAfter $ string ","))
