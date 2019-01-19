@@ -24,6 +24,7 @@ module TypeInstance (
   uncheckedSubInstance,
   uncheckedSubValueType,
   getValueForParam,
+  isRequiresFilter,
   validateAssignment,
   validateDefinesInstance,
   validateDefinesVariance,
@@ -139,6 +140,10 @@ instance Show TypeFilter where
 isTypeFilter :: TypeFilter -> Bool
 isTypeFilter (TypeFilter _ _) = True
 isTypeFilter _                = False
+
+isRequiresFilter :: TypeFilter -> Bool
+isRequiresFilter (TypeFilter isRequiresFilter _) = True
+isRequiresFilter _                               = False
 
 isDefinesFilter :: TypeFilter -> Bool
 isDefinesFilter (DefinesFilter _) = True

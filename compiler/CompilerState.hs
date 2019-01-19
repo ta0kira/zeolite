@@ -6,6 +6,7 @@
 module CompilerState (
   Compiler(..),
   CompilerContext(..),
+  OutputType(..),
   csAddVariable,
   csAllFilters,
   csCheckReturn,
@@ -37,13 +38,23 @@ class Monad m => CompilerContext c m s a | a -> c s where
   ccResolver :: a -> m (TypeResolver m ())
   ccAllFilters :: a -> m ParamFilters
   ccRequiresType :: a -> TypeName -> m a
-  ccGetFunction :: a -> [c] -> GeneralInstance -> FunctionName -> m (ScopedFunction c)
-  ccGetVariable :: a -> [c] -> VariableName -> m ValueType
-  ccAddVariable :: a -> [c] -> VariableName -> ValueType -> m a
+  ccGetFunction :: a -> [c] -> FunctionName -> Maybe GeneralInstance -> m (ScopedFunction c)
+  ccGetVariable :: a -> [c] -> VariableName -> m (OutputType c)
+  ccAddVariable :: a -> [c] -> VariableName -> OutputType c -> m a
   ccWrite :: a -> s -> m a
   ccGetOutput :: a -> m s
   ccUpdateAssigned :: a -> VariableName -> m a
-  ccCheckReturn :: a -> [c] -> [ValueType] -> m ()
+  ccCheckReturn :: a -> [c] -> ParamSet ValueType -> m ()
+
+data OutputType c =
+  OutputType {
+    otContext :: [c],
+    otType :: ValueType
+  }
+  deriving (Eq,Ord)
+
+instance Show c => Show (OutputType c) where
+  show (OutputType c v) = show v ++ " /*" ++ formatFullContext c ++ "*/"
 
 csResolver :: (Monad m, CompilerContext c m s a) =>
   CompilerState a m (TypeResolver m ())
@@ -58,15 +69,15 @@ csRequiresType :: (Monad m, CompilerContext c m s a) =>
 csRequiresType n = fmap (\x -> ccRequiresType x n) get >>= lift >>= put
 
 csGetFunction :: (Monad m, CompilerContext c m s a) =>
-  [c] -> GeneralInstance -> FunctionName -> CompilerState a m (ScopedFunction c)
-csGetFunction c t n = fmap (\x -> ccGetFunction x c t n) get >>= lift
+  [c] -> FunctionName -> Maybe GeneralInstance -> CompilerState a m (ScopedFunction c)
+csGetFunction c n t = fmap (\x -> ccGetFunction x c n t) get >>= lift
 
 csGetVariable :: (Monad m, CompilerContext c m s a) =>
-  [c] -> VariableName -> CompilerState a m ValueType
+  [c] -> VariableName -> CompilerState a m (OutputType c)
 csGetVariable c n = fmap (\x -> ccGetVariable x c n) get >>= lift
 
 csAddVariable :: (Monad m, CompilerContext c m s a) =>
-  [c] -> VariableName -> ValueType -> CompilerState a m ()
+  [c] -> VariableName -> OutputType c -> CompilerState a m ()
 csAddVariable c n t = fmap (\x -> ccAddVariable x c n t) get >>= lift >>= put
 
 csWrite :: (Monad m, CompilerContext c m s a) => s -> CompilerState a m ()
@@ -76,7 +87,7 @@ csGetOutput :: (Monad m, CompilerContext c m s a) => CompilerState a m s
 csGetOutput = fmap ccGetOutput get >>= lift
 
 csCheckReturn :: (Monad m, CompilerContext c m s a) =>
-  [c] -> [ValueType] -> CompilerState a m ()
+  [c] -> ParamSet ValueType -> CompilerState a m ()
 csCheckReturn c rs = fmap (\x -> ccCheckReturn x c rs) get >>= lift
 
 csUpdateAssigned :: (Monad m, CompilerContext c m s a) =>

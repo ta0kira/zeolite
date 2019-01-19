@@ -99,6 +99,9 @@ newtype ParamSet a =
   }
   deriving (Eq,Ord,Show)
 
+instance Functor ParamSet where
+  fmap f = ParamSet . fmap f . psParams
+
 alwaysPairParams :: Monad m => a -> b -> m (a,b)
 alwaysPairParams x y = return (x,y)
 
