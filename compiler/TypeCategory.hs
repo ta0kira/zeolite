@@ -22,6 +22,7 @@ module TypeCategory (
   getCategoryContext,
   getCategoryDefines,
   getCategoryFilters,
+  getCategoryFunctions,
   getCategoryName,
   getCategoryParams,
   getCategoryRefines,

@@ -18,6 +18,7 @@ module Procedure (
   VariableName(..),
   VoidExpression(..),
   WhileLoop(..),
+  isUnnamedReturns,
 ) where
 
 import Function
@@ -61,6 +62,10 @@ data ReturnValues c =
     urContext :: [c]
   }
   deriving (Eq,Ord)
+
+isUnnamedReturns :: ReturnValues c -> Bool
+isUnnamedReturns (UnnamedReturns _) = True
+isUnnamedReturns _                  = False
 
 instance Show c => Show (ReturnValues c) where
   show (NamedReturns c v) =
