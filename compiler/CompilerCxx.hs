@@ -4,6 +4,8 @@
 {-# LANGUAGE Safe #-}
 
 module CompilerCxx (
+  CxxOutput,
+  compileCategoryDefinition,
 ) where
 
 import Control.Monad (when)
@@ -28,6 +30,7 @@ data CxxOutput =
     coFunctions :: [FunctionLabel],
     coOutput :: CompiledData
   }
+  deriving (Show) -- TODO: Remove this.
 
 data FunctionLabel =
   FunctionLabel {
@@ -37,12 +40,14 @@ data FunctionLabel =
     flArgCount :: Int,
     flReturnCount :: Int
   }
+  deriving (Show) -- TODO: Remove this.
 
 data CompiledData =
   CompiledData {
     cdRequired :: Set.Set TypeName,
     cdOutput :: [String]
   }
+  deriving (Show) -- TODO: Remove this.
 
 instance Mergeable CompiledData where
   mergeAny = foldr update (CompiledData Set.empty []) where
