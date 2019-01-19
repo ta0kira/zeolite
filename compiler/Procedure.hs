@@ -85,7 +85,7 @@ instance Show VariableName where
 data InputValue c =
   InputValue {
     ivContext :: [c],
-    ivVariable :: VariableName
+    ivName :: VariableName
   } |
   DiscardInput {
     iiContext :: [c]
@@ -99,7 +99,7 @@ instance Show c => Show (InputValue c) where
 data OutputValue c =
   OutputValue {
     ovContext :: [c],
-    ovVariable :: VariableName
+    ovName :: VariableName
   }
   deriving (Eq,Ord)
 
