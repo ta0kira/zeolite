@@ -163,11 +163,11 @@ parseScopedFunction sp tp = labeled "function" $ do
   s <- try sp -- Could be a constant, i.e., nothing consumed.
   t <- try tp -- Same here.
   n <- try sourceParser
-  ps <- noParams <|> someParams
+  ps <- fmap ParamSet $ noParams <|> someParams
   fa <- parseFilters
-  as <- typeList "argument type"
+  as <- fmap ParamSet $ typeList "argument type"
   sepAfter $ string "->"
-  rs <- typeList "return type"
+  rs <- fmap ParamSet $ typeList "return type"
   return $ ScopedFunction [c] n t s as rs ps fa []
   where
     noParams = notFollowedBy (string "<") >> return []

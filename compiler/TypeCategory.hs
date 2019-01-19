@@ -688,9 +688,9 @@ data ScopedFunction c =
     sfName :: FunctionName,
     sfType :: TypeName,
     sfScope :: SymbolScope,
-    sfArgs :: [PassedValue c],
-    sfReturns :: [PassedValue c],
-    sfParams :: [ValueParam c],
+    sfArgs :: ParamSet (PassedValue c),
+    sfReturns :: ParamSet (PassedValue c),
+    sfParams :: ParamSet (ValueParam c),
     sfFilters :: [ParamFilter c],
     sfMerges :: [ScopedFunction c]
   }
@@ -706,10 +706,10 @@ instance Show c => Show (ScopedFunction c) where
 showFunctionInContext :: Show c => String -> String -> ScopedFunction c -> String
 showFunctionInContext s indent (ScopedFunction cs n t _ as rs ps fa ms) =
   indent ++ s ++ "/*" ++ show t ++ "*/ " ++ show n ++
-  showParams ps ++ " " ++ formatContext cs ++ "\n" ++
+  showParams (psParams ps) ++ " " ++ formatContext cs ++ "\n" ++
   concat (map (\v -> indent ++ formatValue v ++ "\n") fa) ++
-  indent ++ "(" ++ intercalate "," (map (show . pvType) as) ++ ") -> " ++
-  "(" ++ intercalate "," (map (show . pvType) rs) ++ ")" ++ showMerges (flatten ms)
+  indent ++ "(" ++ intercalate "," (map (show . pvType) $ psParams as) ++ ") -> " ++
+  "(" ++ intercalate "," (map (show . pvType) $ psParams rs) ++ ")" ++ showMerges (flatten ms)
   where
     showParams [] = ""
     showParams ps = "<" ++ intercalate "," (map (show . vpParam) ps) ++ ">"
@@ -735,15 +735,15 @@ instance Show c => Show (PassedValue c) where
 parsedToFunctionType :: (Show c, MergeableM m, CompileErrorM m, Monad m) =>
   ScopedFunction c -> m FunctionType
 parsedToFunctionType (ScopedFunction c n t _ as rs ps fa _) = do
-  let as' = ParamSet $ map pvType as
-  let rs' = ParamSet $ map pvType rs
-  let ps' = ParamSet $ map vpParam ps
+  let as' = ParamSet $ map pvType $ psParams as
+  let rs' = ParamSet $ map pvType $ psParams rs
+  let ps' = ParamSet $ map vpParam $ psParams ps
   mergeAll $ map checkFilter fa
   let fm = Map.fromListWith (++) $ map (\f -> (pfParam f,[pfFilter f])) fa
   let fa' = ParamSet $ map (getFilters fm) $ psParams ps'
   return $ FunctionType as' rs' ps' fa'
   where
-    pa = Set.fromList $ map vpParam ps
+    pa = Set.fromList $ map vpParam $ psParams ps
     checkFilter f =
       when (not $ (pfParam f) `Set.member` pa) $
       compileError $ "Filtered param " ++ show (pfParam f) ++
@@ -758,10 +758,10 @@ uncheckedSubFunction :: (Show c, MergeableM m, CompileErrorM m, Monad m) =>
   Map.Map ParamName GeneralInstance -> ScopedFunction c -> m (ScopedFunction c)
 uncheckedSubFunction pa ff@(ScopedFunction c n t s as rs ps fa ms) =
   flip reviseError ("In function:\n---\n" ++ show ff ++ "\n---\n") $ do
-    let fixed = Map.fromList $ map (\n -> (n,SingleType $ JustParamName n)) $ map vpParam ps
+    let fixed = Map.fromList $ map (\n -> (n,SingleType $ JustParamName n)) $ map vpParam $ psParams ps
     let pa' = Map.union pa fixed
-    as' <- collectAllOrErrorM $ map (subPassed pa') as
-    rs' <- collectAllOrErrorM $ map (subPassed pa') rs
+    as' <- fmap ParamSet $ collectAllOrErrorM $ map (subPassed pa') $ psParams as
+    rs' <- fmap ParamSet $ collectAllOrErrorM $ map (subPassed pa') $ psParams rs
     fa' <- collectAllOrErrorM $ map (subFilter pa') fa
     ms' <- collectAllOrErrorM $ map (uncheckedSubFunction pa) ms
     return $ (ScopedFunction c n t s as' rs' ps fa' ms')
