@@ -119,16 +119,30 @@ tests = [
 
     checkShortParseSuccess "x = !y",
     checkShortParseSuccess "x = !!y",
+    checkShortParseFail "x = !!=y",
     checkShortParseSuccess "x = (!y).func()",
     checkShortParseSuccess "~ !y",
     checkShortParseSuccess "if (!y) { }",
+
+    checkShortParseSuccess "~ !x + !y",
+    checkShortParseSuccess "~ !x - !y",
+    checkShortParseSuccess "~ !x * !y",
+    checkShortParseSuccess "~ !x / !y",
+    checkShortParseSuccess "~ !x % !y",
+    checkShortParseSuccess "~ !x == !y",
+    checkShortParseSuccess "~ !x != !y",
+    checkShortParseSuccess "~ !x < !y",
+    checkShortParseSuccess "~ !x <= !y",
+    checkShortParseSuccess "~ !x > !y",
+    checkShortParseSuccess "~ !x >= !y",
+    checkShortParseSuccess "~ !x && !y",
+    checkShortParseSuccess "~ !x || !y",
 
     checkShortParseSuccess "x = y + z",
     checkShortParseSuccess "x = !!y == !z",
     checkShortParseSuccess "x = (x + y) / z",
     checkShortParseSuccess "~ x <= y",
-    checkShortParseFail "~ x < = y",
-    checkShortParseFail "~ x < `y"
+    checkShortParseFail "~ x < = y"
   ]
 
 checkParseSuccess f = do

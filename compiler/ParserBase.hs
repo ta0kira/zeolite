@@ -107,7 +107,7 @@ binaryOperator =
           string o
           notFollowedBy operatorSymbol
           optionalSpace
-          return o) ["+","-","*","/","%","==","!=","<","<=",">",">="]
+          return o) ["+","-","*","/","%","==","!=","<","<=",">",">=","&&","||"]
 
 kwAll = keyword "all"
 kwAllows = keyword "allows"
