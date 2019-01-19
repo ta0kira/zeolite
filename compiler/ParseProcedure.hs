@@ -46,28 +46,29 @@ instance ParseFromSource (ReturnValues SourcePos) where
       notFollowedBy (string "(")
       return $ UnnamedReturns [c]
 
-instance ParseFromSource (VariableName SourcePos) where
+instance ParseFromSource VariableName where
   sourceParser = labeled "variable name" $ do
     noKeywords
-    c <- getPosition
     b <- lower
     e <- sepAfter $ many alphaNum
-    return $ VariableName [c] (b:e)
+    return $ VariableName (b:e)
 
 instance ParseFromSource (InputValue SourcePos) where
-  sourceParser = labeled "input variable" $ variable <|> ignore where
+  sourceParser = labeled "input variable" $ variable <|> discard where
     variable = do
+      c <- getPosition
       v <- sourceParser
-      return $ InputValue v
-    ignore = do
+      return $ InputValue [c] v
+    discard = do
       c <- getPosition
       sepAfter $ string "_"
-      return $ IgnoreValue [c]
+      return $ DiscardInput [c]
 
 instance ParseFromSource (OutputValue SourcePos) where
   sourceParser = labeled "output variable" $ do
+    c <- getPosition
     v <- sourceParser
-    return $ OutputValue v
+    return $ OutputValue [c] v
 
 instance ParseFromSource (Procedure SourcePos) where
   sourceParser = labeled "procedure" $ do
@@ -222,13 +223,13 @@ instance ParseFromSource (ExpressionStart SourcePos) where
     builtinValue = do
       c <- getPosition
       n <- builtinValues
-      return $ VariableValue (OutputValue (VariableName [c] n))
+      return $ VariableValue (OutputValue [c] (VariableName n))
     variableOrUnqualified = do
-      n <- sourceParser :: Parser (VariableName SourcePos)
+      n <- sourceParser :: Parser VariableName
       asUnqualifiedCall n <|> asVariable n
     asVariable n = do
       c <- getPosition
-      return $ VariableValue (OutputValue n)
+      return $ VariableValue (OutputValue [c] n)
     asUnqualifiedCall n = do
       c <- getPosition
       f <- parseFunctionCall (FunctionName (vnName n))

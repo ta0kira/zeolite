@@ -68,37 +68,38 @@ instance Show c => Show (ReturnValues c) where
     " /*" ++ formatFullContext c ++ "*/"
   show (UnnamedReturns c) = "/*unnamed returns: " ++ formatFullContext c ++ "*/"
 
-data VariableName c =
+data VariableName =
   VariableName {
-    vnContext :: [c],
     vnName :: String
   }
   deriving (Eq,Ord)
 
-instance Show c => Show (VariableName c) where
-  show (VariableName c n) = n ++ " /*" ++ formatFullContext c ++ "*/"
+instance Show VariableName where
+  show (VariableName n) = n
 
 data InputValue c =
   InputValue {
-    ivVariable :: VariableName c
+    ivContext :: [c],
+    ivVariable :: VariableName
   } |
-  IgnoreValue {
-    ivContext :: [c]
+  DiscardInput {
+    iiContext :: [c]
   }
   deriving (Eq,Ord)
 
 instance Show c => Show (InputValue c) where
-  show (InputValue v) = show v
-  show (IgnoreValue c) = "_" ++ " /*" ++ formatFullContext c ++ "*/"
+  show (InputValue c v) = show v ++ " /*" ++ formatFullContext c ++ "*/"
+  show (DiscardInput c) = "_" ++ " /*" ++ formatFullContext c ++ "*/"
 
 data OutputValue c =
   OutputValue {
-    ovVariable :: VariableName c
+    ovContext :: [c],
+    ovVariable :: VariableName
   }
   deriving (Eq,Ord)
 
 instance Show c => Show (OutputValue c) where
-  show (OutputValue v) = show v
+  show (OutputValue c v) = show v ++ " /*" ++ formatFullContext c ++ "*/"
 
 
 data Procedure c =
@@ -114,7 +115,7 @@ data Statement c =
   deriving (Eq,Show)
 
 data Assignable c =
-  CreateVariable [c] ValueType (VariableName c) |
+  CreateVariable [c] ValueType VariableName |
   ExistingVariable [c] (InputValue c)
   deriving (Eq,Show)
 
@@ -128,7 +129,7 @@ data Expression c =
   Expression [c] (ParamSet ValueType) (ExpressionStart c) [ValueOperation c] |
   UnaryExpression [c] (Maybe ValueType) String (Expression c) |
   -- TODO: Account for internal params here.
-  InitializeValue [c] TypeInstance (ParamSet (VariableName c,Expression c))
+  InitializeValue [c] TypeInstance (ParamSet (VariableName,Expression c))
   deriving (Eq,Show)
 
 data FunctionCall c =
@@ -141,7 +142,7 @@ data ExpressionStart c =
   TypeCall [c] TypeInstanceOrParam (FunctionCall c) |
   UnqualifiedCall [c] (FunctionCall c) |
   ParensExpression [c] (Expression c) |
-  InlineAssignment [c] (VariableName c) (Expression c)
+  InlineAssignment [c] VariableName (Expression c)
   deriving (Eq,Show)
 
 data ValueOperation c =

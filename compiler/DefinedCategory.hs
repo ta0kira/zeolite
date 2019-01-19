@@ -27,7 +27,7 @@ data DefinedMember c =
     dmContext :: [c],
     dmScope :: SymbolScope,
     dmType :: ValueType,
-    dmName :: VariableName c,
+    dmName :: VariableName,
     dmInit :: Maybe (Expression c)
   }
   deriving (Show) -- TODO: Implement Show.

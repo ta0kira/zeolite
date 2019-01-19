@@ -2,6 +2,7 @@
 
 module TypeCategory (
   AnyCategory(..),
+  CategoryMap(..),
   FunctionName(..),
   ParamFilter(..),
   PassedValue(..),
@@ -17,12 +18,17 @@ module TypeCategory (
   declareAllTypes, -- TODO: Remove?
   flattenAllConnections,
   formatFullContext,
+  getCategory,
   getCategoryContext,
   getCategoryDefines,
   getCategoryFilters,
   getCategoryName,
   getCategoryParams,
   getCategoryRefines,
+  getConcreteCategory,
+  getFilterMap,
+  getInstanceCategory,
+  getValueCategory,
   includeNewTypes,
   isInstanceInterface,
   isValueConcrete,
@@ -237,6 +243,16 @@ getInstanceCategory tm (c,n) = do
      then return (c2,t)
      else compileError $ "Category " ++ show n ++
                          " cannot be used as a type interface [" ++
+                         formatFullContext c ++ "]"
+
+getConcreteCategory :: (Show c, CompileErrorM m, Monad m) =>
+  CategoryMap c -> ([c],TypeName) -> m ([c],AnyCategory c)
+getConcreteCategory tm (c,n) = do
+  (c2,t) <- getCategory tm (c,n)
+  if isValueConcrete t
+     then return (c2,t)
+     else compileError $ "Category " ++ show n ++
+                         " cannot be used as concrete [" ++
                          formatFullContext c ++ "]"
 
 includeNewTypes :: (Show c, MergeableM m, CompileErrorM m, Monad m) =>
