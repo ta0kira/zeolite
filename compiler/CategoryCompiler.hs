@@ -49,6 +49,7 @@ instance (Show c, MergeableM m, CompileErrorM m, Monad m) =>
       pcRequiredTypes = n `Set.insert` pcRequiredTypes ctx,
       pcOutput = pcOutput ctx
     }
+  ccGetRequired = return . pcRequiredTypes
   ccGetFunction ctx c n (Just t@(TypeMerge MergeUnion _)) =
     compileError $ "Cannot resolve function " ++ show n ++ " for union type " ++ show t
   ccGetFunction ctx c n (Just t@(TypeMerge MergeIntersect ts)) =

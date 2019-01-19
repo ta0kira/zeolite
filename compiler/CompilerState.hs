@@ -4,8 +4,8 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 
 module CompilerState (
-  Compiler(..),
   CompilerContext(..),
+  CompilerState(..),
   OutputType(..),
   csAddVariable,
   csAllFilters,
@@ -31,13 +31,11 @@ import TypesBase
 
 type CompilerState a m = StateT a m
 
-class Compiler a b where
-  compile :: b -> CompilerState a m ()
-
 class Monad m => CompilerContext c m s a | a -> c s where
   ccResolver :: a -> m (TypeResolver m ())
   ccAllFilters :: a -> m ParamFilters
   ccRequiresType :: a -> TypeName -> m a
+  ccGetRequired :: a -> m (Set.Set TypeName)
   ccGetFunction :: a -> [c] -> FunctionName -> Maybe GeneralInstance -> m (ScopedFunction c)
   ccGetVariable :: a -> [c] -> VariableName -> m (OutputType c)
   ccAddVariable :: a -> [c] -> VariableName -> OutputType c -> m a
@@ -67,6 +65,9 @@ csAllFilters = fmap ccAllFilters get >>= lift
 csRequiresType :: (Monad m, CompilerContext c m s a) =>
   TypeName -> CompilerState a m ()
 csRequiresType n = fmap (\x -> ccRequiresType x n) get >>= lift >>= put
+
+csGetRequired :: (Monad m, CompilerContext c m s a) => CompilerState a m (Set.Set TypeName)
+csGetRequired = fmap ccGetRequired get >>= lift
 
 csGetFunction :: (Monad m, CompilerContext c m s a) =>
   [c] -> FunctionName -> Maybe GeneralInstance -> CompilerState a m (ScopedFunction c)

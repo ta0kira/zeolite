@@ -21,13 +21,14 @@ module TypeCategory (
   getCategory,
   getCategoryContext,
   getCategoryDefines,
+  getCategoryFilterMap,
   getCategoryFilters,
   getCategoryFunctions,
   getCategoryName,
   getCategoryParams,
   getCategoryRefines,
   getConcreteCategory,
-  getFilterMap,
+  getFunctionFilterMap,
   getInstanceCategory,
   getValueCategory,
   includeNewTypes,
@@ -278,10 +279,17 @@ declareAllTypes tm0 = foldr (\t tm -> tm >>= update t) (return tm0) where
                                     formatFullContext (getCategoryContext t2) ++ "]"
         _ -> return $ Map.insert (getCategoryName t) t tm
 
-getFilterMap :: AnyCategory c -> ParamFilters
-getFilterMap t = getFilters $ zip (Set.toList pa) (repeat []) where
+getCategoryFilterMap :: AnyCategory c -> ParamFilters
+getCategoryFilterMap t = getFilters $ zip (Set.toList pa) (repeat []) where
   pa = Set.fromList $ map vpParam $ getCategoryParams t
   getFilters ps = let fs = map (\f -> (pfParam f,pfFilter f)) (getCategoryFilters t) in
+                      Map.fromListWith (++) $ map (second (:[])) fs ++ ps
+
+-- TODO: Use this where it's needed in this file.
+getFunctionFilterMap :: ScopedFunction c -> ParamFilters
+getFunctionFilterMap f = getFilters $ zip (Set.toList pa) (repeat []) where
+  pa = Set.fromList $ map vpParam $ psParams $ sfParams f
+  getFilters ps = let fs = map (\f -> (pfParam f,pfFilter f)) (sfFilters f) in
                       Map.fromListWith (++) $ map (second (:[])) fs ++ ps
 
 checkConnectedTypes :: (Show c, MergeableM m, CompileErrorM m, Monad m) =>
@@ -403,7 +411,7 @@ checkCategoryInstances tm0 ts = do
   where
     checkSingle r t = do
       let pa = Set.fromList $ map vpParam $ getCategoryParams t
-      let fm = getFilterMap t
+      let fm = getCategoryFilterMap t
       let vm = Map.fromList $ map (\p -> (vpParam p,vpVariance p)) $ getCategoryParams t
       mergeAll $ map (checkFilterParam pa) (getCategoryFilters t)
       mergeAll $ map (checkRefine r fm) (getCategoryRefines t)
@@ -495,7 +503,7 @@ flattenAllConnections tm0 ts = do
       return (ts ++ [t'],Map.insert (getCategoryName t') t' tm)
     updateSingle r tm t@(ValueInterface c n ps rs vs fs) = do
       noDuplicateRefines c n rs
-      let fm = getFilterMap t
+      let fm = getCategoryFilterMap t
       rs' <- fmap concat $ collectAllOrErrorM $ map (getRefines tm) rs
       rs'' <- mergeRefines r fm rs'
       noDuplicateRefines c n rs''
@@ -507,7 +515,7 @@ flattenAllConnections tm0 ts = do
     updateSingle r tm t@(ValueConcrete c n ps rs ds vs fs) = do
       noDuplicateRefines c n rs
       noDuplicateDefines c n ds
-      let fm = getFilterMap t
+      let fm = getCategoryFilterMap t
       rs' <- fmap concat $ collectAllOrErrorM $ map (getRefines tm) rs
       rs'' <- mergeRefines r fm rs'
       noDuplicateRefines c n rs''
