@@ -18,6 +18,7 @@ module Procedure (
   VariableName(..),
   VoidExpression(..),
   WhileLoop(..),
+  isDiscardedInput,
   isUnnamedReturns,
 ) where
 
@@ -91,6 +92,10 @@ data InputValue c =
     iiContext :: [c]
   }
   deriving (Eq,Ord)
+
+isDiscardedInput :: InputValue c -> Bool
+isDiscardedInput (DiscardInput _) = True
+isDiscardedInput _                = False
 
 instance Show c => Show (InputValue c) where
   show (InputValue c v) = show v ++ " /*" ++ formatFullContext c ++ "*/"

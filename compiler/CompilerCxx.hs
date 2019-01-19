@@ -1,3 +1,6 @@
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE Safe #-}
 
 module CompilerCxx (
@@ -58,6 +61,15 @@ sourceFilename n = "Category_" ++ show n ++ ".cxx"
 functionName :: ScopedFunction c -> String
 functionName f = "Function_" ++ show (sfType f) ++ "_" ++ show (sfName f)
 
+paramName :: ParamName -> String
+paramName p = "Param_" ++ tail (pnName p) -- Remove leading '`'.
+
+variableName :: VariableName -> String
+variableName v = "Var_" ++ show v
+
+callName :: ScopedFunction c -> String
+callName f = "Call_" ++ show (sfType f) ++ "_" ++ show (sfName f)
+
 labelForFunction :: ScopedFunction c -> FunctionLabel
 labelForFunction f = FunctionLabel name scope params args returns where
   name = functionName f
@@ -82,14 +94,14 @@ compileCategoryDefinition tm (DefinedCategory c n ms ps fs) = do
   let labels = map labelForFunction $ filter ((== n) . sfType) $ Map.elems fa
   return $ CxxOutput filename labels output
 
-runCompiler :: (Show c, Monad m, CompileErrorM m, MergeableM m) =>
-  (ProcedureContext c) -> CompilerState (ProcedureContext c) m () -> m CompiledData
-runCompiler ctx s = do
-  ctx' <- execStateT s ctx
-  reqired <- ccGetRequired ctx'
+runCompiler :: (Monad m, CompilerContext c m [String] a, Compiler a m b) =>
+  b -> a -> m CompiledData
+runCompiler x ctx = do
+  ctx' <- execStateT (compile x) ctx
+  required <- ccGetRequired ctx'
   output <- ccGetOutput ctx'
   return $ CompiledData  {
-      cdRequired = reqired,
+      cdRequired = required,
       cdOutput = output
     }
 
@@ -105,22 +117,51 @@ compileExecutableProcedure t tm pa fa ma
   rs' <- if isUnnamedReturns rs2
             then return $ Left rs1
             else fmap (Right . Map.fromList) $ processParamPairs pairOutput rs1 (nrNames rs2)
-  vs <- updateVariables s ma rs1 rs2
+  let va = filterMembers s ma
+  va' <- updateArgVariables va as1 as2
+  va'' <- updateReturnVariables va' rs1 rs2
   let ctx = ProcedureContext {
       pcType = t,
       pcCategories = tm,
       pcFilters = Map.union pa (getFunctionFilterMap ff),
       pcFunctions = fa,
-      pcVariables = vs,
+      pcVariables = va'',
       pcReturns = rs',
       pcRequiredTypes = Set.fromList [tiName t],
       pcOutput = []
     }
-  runCompiler ctx (compileProcedure p)
+  (CompiledData required output) <- runCompiler p ctx
+  return (CompiledData required (wrapProcedure ff as2 rs2 output))
   where
     pairOutput (PassedValue c1 t) (OutputValue c2 n) = return $ (n,PassedValue (c2++c1) t)
+    wrapProcedure f as rs output = open ++ indentCode body ++ close where
+      open = [header]
+      body = defineParams ++ defineArgs ++ defineReturns ++ output
+      close = ["}"]
+      name = callName f
+      header
+        | sfScope f == ValueScope =
+          "void " ++ name ++ "(Value self, " ++
+          "Args<" ++ show (length $ psParams $ sfParams f) ++ ">::Type params, " ++
+          "Args<" ++ show (length $ psParams $ sfArgs f) ++ ">::Type args, " ++
+          "Returns<" ++ show (length $ psParams $ sfReturns f) ++ ">::Type returns) {"
+        | otherwise =
+          "void " ++ name ++ "(" ++
+          "Args<" ++ show (length $ psParams $ sfParams f) ++ ">::Type params, " ++
+          "Args<" ++ show (length $ psParams $ sfArgs f) ++ ">::Type args, " ++
+          "Returns<" ++ show (length $ psParams $ sfReturns f) ++ ">::Type returns) {"
+      defineParams = flip map (zip [0..] $ psParams $ sfParams f) $
+        (\(i,p) -> "auto " ++ paramName (vpParam p) ++ " = std::get<" ++ show i ++ ">(params);")
+      defineArgs = flip map (zip [0..] $ filter (not . isDiscardedInput) $ psParams $ avNames as) $
+        (\(i,n) -> "auto " ++ variableName (ivName n) ++ " = std::get<" ++ show i ++ ">(args);")
+      defineReturns
+        | isUnnamedReturns rs = []
+        | otherwise = flip map (zip [0..] $ psParams $ nrNames rs) $
+        (\(i,n) -> "auto " ++ variableName (ovName n) ++ " = std::get<" ++ show i ++ ">(returns);")
 
-compileProcedure :: (Show c, Monad m, CompileErrorM m, MergeableM m) =>
-  Procedure c -> CompilerState (ProcedureContext c) m ()
-compileProcedure (Procedure c ss) = do
-  undefined
+indentCode = map ("  " ++)
+
+instance (Show c, Monad m, CompileErrorM m, MergeableM m) =>
+  Compiler (ProcedureContext c) m (Procedure c) where
+  compile (Procedure c ss) = do
+    undefined

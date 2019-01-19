@@ -4,10 +4,12 @@
 
 module CategoryCompiler (
   ProcedureContext(..),
+  filterMembers,
   mapMembers,
   pairProceduresToFunctions,
   setInternalFunctions,
-  updateVariables,
+  updateArgVariables,
+  updateReturnVariables,
 ) where
 
 import qualified Data.Map as Map
@@ -28,7 +30,7 @@ data ProcedureContext c =
     pcCategories :: CategoryMap c,
     pcFilters :: ParamFilters,
     pcFunctions :: Map.Map FunctionName (ScopedFunction c),
-    pcVariables :: Map.Map VariableName (OutputType c),
+    pcVariables :: Map.Map VariableName (PassedValue c),
     pcReturns :: Either (ParamSet (PassedValue c)) (Map.Map VariableName (PassedValue c)),
     pcRequiredTypes :: Set.Set TypeName,
     pcOutput :: [String]
@@ -220,22 +222,43 @@ mapMembers ms = foldr update (return Map.empty) ms where
                                      formatFullContext (dmContext m0) ++ "]"
     return $ Map.insert (dmName m) m ma'
 
-updateVariables :: (Show c, Monad m, CompileErrorM m, MergeableM m) =>
-  SymbolScope -> Map.Map VariableName (DefinedMember c) ->
+filterMembers ::
+  SymbolScope -> (Map.Map VariableName (DefinedMember c)) ->
+  (Map.Map VariableName (PassedValue c))
+filterMembers s = Map.map (\m -> PassedValue (dmContext m) (dmType m)) . Map.filter ((<= s) . dmScope)
+
+updateReturnVariables :: (Show c, Monad m, CompileErrorM m, MergeableM m) =>
+  (Map.Map VariableName (PassedValue c)) ->
   ParamSet (PassedValue c) -> ReturnValues c ->
-  m (Map.Map VariableName (OutputType c))
-updateVariables s ma rs1 rs2 = updated where
+  m (Map.Map VariableName (PassedValue c))
+updateReturnVariables ma rs1 rs2 = updated where
   updated
-    | isUnnamedReturns rs2 = return filtered
+    | isUnnamedReturns rs2 = return ma
     | otherwise = do
-      ra <- processParamPairs alwaysPairParams rs1 (nrNames rs2)
-      foldr update (return filtered) ra where
+      rs <- processParamPairs alwaysPairParams rs1 (nrNames rs2)
+      foldr update (return ma) rs where
         update (PassedValue c t,r) va = do
           va' <- va
           case ovName r `Map.lookup` va' of
-               Nothing -> return $ Map.insert (ovName r) (OutputType c t) va'
+               Nothing -> return $ Map.insert (ovName r) (PassedValue c t) va'
                (Just v) -> compileError $ "Variable " ++ show (ovName r) ++
                                           " [" ++ formatFullContext (ovContext r) ++
                                           "] is already defined [" ++
-                                          formatFullContext (otContext v) ++ "]"
-  filtered = Map.map (\m -> OutputType (dmContext m) (dmType m)) $ Map.filter ((<= s) . dmScope) ma
+                                          formatFullContext (pvContext v) ++ "]"
+
+updateArgVariables :: (Show c, Monad m, CompileErrorM m, MergeableM m) =>
+  (Map.Map VariableName (PassedValue c)) ->
+  ParamSet (PassedValue c) -> ArgValues c ->
+  m (Map.Map VariableName (PassedValue c))
+updateArgVariables ma as1 as2 = do
+  as <- processParamPairs alwaysPairParams as1 (avNames as2)
+  let as' = filter (not . isDiscardedInput . snd) as
+  foldr update (return ma) as' where
+    update (PassedValue c t,a) va = do
+      va' <- va
+      case ivName a `Map.lookup` va' of
+            Nothing -> return $ Map.insert (ivName a) (PassedValue c t) va'
+            (Just v) -> compileError $ "Variable " ++ show (ivName a) ++
+                                       " [" ++ formatFullContext (ivContext a) ++
+                                       "] is already defined [" ++
+                                       formatFullContext (pvContext v) ++ "]"
