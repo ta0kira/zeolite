@@ -94,11 +94,11 @@ instance ParseFromSource (Statement SourcePos) where
       as <- between (sepAfter $ string "{")
                     (sepAfter $ string "}")
                     (sepBy sourceParser (sepAfter $ string ","))
-      sepAfter (string "=")
+      assignOperator
       return as
     singleDest = do
       a <- sourceParser
-      sepAfter (string "=")
+      assignOperator
       return [a]
     sideEffectOnly = do
       statementStart
@@ -207,7 +207,7 @@ instance ParseFromSource (ExpressionStart SourcePos) where
     assign :: SourcePos -> Parser (ExpressionStart SourcePos)
     assign c = do
       n <- sourceParser
-      sepAfter (string "=")
+      assignOperator
       e <- sourceParser
       return $ InlineAssignment [c] n e
     expr :: SourcePos -> Parser (ExpressionStart SourcePos)

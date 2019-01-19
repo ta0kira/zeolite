@@ -3,6 +3,7 @@
 module ParserBase (
   ParseFromSource(..),
   anyComment,
+  assignOperator,
   blockComment,
   binaryOperator,
   builtinFunctions,
@@ -71,6 +72,7 @@ statementEnd   = sepAfter (string "")
 valueSymbolGet = sepAfter (string ".")
 typeSymbolGet  = sepAfter (string "$")
 initSeparator  = sepAfter (string ":")
+assignOperator = operator "<-"
 
 -- TODO: Maybe this should not use strings.
 builtinFunctions :: Parser String
@@ -96,18 +98,12 @@ unaryOperator = foldr (<|>) (fail "empty") $ map try [
     sepAfter (string "!") >> notFollowedBy operatorSymbol0 >> return "!"
   ]
 
-operatorSymbol0 = satisfy (`Set.member` Set.fromList "+-*/%=<>")
-operatorSymbol = labeled "operator symbol" $ satisfy (`Set.member` Set.fromList "+-*/%=!<>")
-
 -- TODO: Maybe this should not use strings.
 binaryOperator :: Parser String
 binaryOperator =
-  foldr (<|>) (fail "empty") $
-    map (\o -> try $ do
-          string o
-          notFollowedBy operatorSymbol
-          optionalSpace
-          return o) ["+","-","*","/","%","==","!=","<","<=",">",">=","&&","||"]
+  labeled "binary operator" $ foldr (<|>) (fail "empty") $ map (try . operator) [
+      "+","-","*","/","%","==","!=","<","<=",">",">=","&&","||"
+    ]
 
 kwAll = keyword "all"
 kwAllows = keyword "allows"
@@ -140,6 +136,9 @@ kwType = keyword "@type"
 kwValue = keyword "@value"
 kwWeak = keyword "weak"
 kwWhile = keyword "while"
+
+operatorSymbol0 = satisfy (`Set.member` Set.fromList "+-*/%=<>&|")
+operatorSymbol = labeled "operator symbol" $ satisfy (`Set.member` Set.fromList "+-*/%=!<>&|")
 
 isKeyword :: Parser ()
 isKeyword = foldr (<|>) nullParse $ map try [
@@ -216,3 +215,10 @@ endOfDoc = labeled "" $ optionalSpace >> eof
 notAllowed :: Parser a -> String -> Parser ()
 -- Based on implementation of notFollowedBy.
 notAllowed p s = (try p >> fail s) <|> return ()
+
+operator :: String -> Parser String
+operator o = labeled o $ do
+  string o
+  notFollowedBy operatorSymbol
+  optionalSpace
+  return o

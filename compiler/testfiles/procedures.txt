@@ -7,15 +7,15 @@ testFunction1 (a,b,c) (d,e,f) {
     // sleep
   }
 
-  x = Type<`z,T<`m>>{
+  x <- Type<`z,T<`m>>{
       v: r
       qq: Type$new()
     }
 
-  x = empty
+  x <- empty
 
   scoped {
-    optional T myvar = reduce<`x,`y>(q)
+    optional T myvar <- reduce<`x,`y>(q)
   } in if (present(myvar)) {
     ~ unqualified()
   } else {
@@ -23,16 +23,16 @@ testFunction1 (a,b,c) (d,e,f) {
   }
 
   scoped {
-    optional T myvar = reduce<`x,`y>(q)
-  } in { v, _ } = x.process(myvar)
+    optional T myvar <- reduce<`x,`y>(q)
+  } in { v, _ } <- x.process(myvar)
 
   scoped {
     // ...
   } in ~ x.process()
 
   ~ z.call().call()
-  { x, weak (`k|Type) y, _ } = z.call()
-  x = z.T<`z>$call().call()
+  { x, weak (`k|Type) y, _ } <- z.call()
+  x <- z.T<`z>$call().call()
   return _
   return a
   return { a, z.call().call(), c }

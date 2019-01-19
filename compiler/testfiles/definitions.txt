@@ -1,9 +1,9 @@
 define Type {
   @value T<`x> val
 
-  @type Type<`x> zzz = Type<`x>{ val: T<`x>$create() }
+  @type Type<`x> zzz <- Type<`x>{ val: T<`x>$create() }
 
-  @category optional T<any> something = skip
+  @category optional T<any> something <- skip
 
   get () {
     return val
@@ -11,7 +11,7 @@ define Type {
 
   @value get2 () -> (T<`x>)
   get2 () (v) {
-    v = val
+    v <- val
     return _
   }
 }

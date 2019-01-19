@@ -39,7 +39,7 @@ instance ParseFromSource (DefinedMember SourcePos) where
     return $ DefinedMember [c] s t n e
     where
       parseInit = labeled "member initializer" $ do
-        sepAfter (string "=")
+        assignOperator
         e <- sourceParser
         return $ Just e
 
