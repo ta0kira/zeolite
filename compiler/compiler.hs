@@ -31,7 +31,7 @@ main = do
     merge (cs1,ds1) (cs2,ds2) = (cs1++cs2,ds1++ds2)
     format (Left e) = show e
     format (Right fs) = concat $ map formatFile fs
-    formatFile (CxxOutput f fs os) =
+    formatFile (CxxOutput f os) =
       concat $ map (++ "\n") $ ["/* " ++ f ++ " */"] ++ cdOutput os
 
 parseContents :: (String,String) -> CompileInfo ([AnyCategory SourcePos],[DefinedCategory SourcePos])

@@ -4,7 +4,7 @@
 
 module CategoryCompiler (
   ProcedureContext(..),
-  filterMembers,
+  ReturnValidation(..),
   mapMembers,
   pairProceduresToFunctions,
   setInternalFunctions,
@@ -33,10 +33,19 @@ data ProcedureContext c =
     pcParamScopes :: Map.Map ParamName SymbolScope,
     pcFunctions :: Map.Map FunctionName (ScopedFunction c),
     pcVariables :: Map.Map VariableName (VariableValue c),
-    pcReturns :: Either (ParamSet (PassedValue c)) (Map.Map VariableName (PassedValue c)),
+    pcReturns :: ReturnValidation c,
     pcRequiredTypes :: Set.Set TypeName,
     pcOutput :: [String]
   }
+
+data ReturnValidation c =
+  ValidatePositions {
+    vpReturns :: ParamSet (PassedValue c)
+  } |
+  ValidateNames {
+    vnReturns :: Map.Map VariableName (PassedValue c)
+  } |
+  NoValidation
 
 instance (Show c, MergeableM m, CompileErrorM m, Monad m) =>
   CompilerContext c m [String] (ProcedureContext c) where
@@ -125,8 +134,7 @@ instance (Show c, MergeableM m, CompileErrorM m, Monad m) =>
     }
   ccGetOutput = return . pcOutput
   ccUpdateAssigned ctx n = update (pcReturns ctx) where
-    update (Left _) = return ctx
-    update (Right ra) = return $ ProcedureContext {
+    update (ValidateNames ra) = return $ ProcedureContext {
         pcScope = pcScope ctx,
         pcType = pcType ctx,
         pcCategories = pcCategories ctx,
@@ -134,12 +142,13 @@ instance (Show c, MergeableM m, CompileErrorM m, Monad m) =>
         pcParamScopes = pcParamScopes ctx,
         pcFunctions = pcFunctions ctx,
         pcVariables = pcVariables ctx,
-        pcReturns = Right $ Map.delete n ra,
+        pcReturns = ValidateNames $ Map.delete n ra,
         pcRequiredTypes = pcRequiredTypes ctx,
         pcOutput = pcOutput ctx
       }
+    update _ = return ctx
   ccCheckReturn ctx c vs = check (pcReturns ctx) where
-    check (Left rs) = do
+    check (ValidatePositions rs) = do
       processParamPairs checkReturnType rs (ParamSet $ zip [1..] $ psParams vs)
       return ()
       where
@@ -149,7 +158,7 @@ instance (Show c, MergeableM m, CompileErrorM m, Monad m) =>
           checkValueTypeMatch r pa t t0 `reviseError`
             ("Cannot convert " ++ show t ++ " to " ++ show ta0 ++ " in return " ++
              show n ++ " [" ++ formatFullContext c ++ "]")
-    check (Right ra)
+    check (ValidateNames ra)
       | not $ null $ psParams vs =
         compileError $ "Positional returns not allowed when returns are named [" ++
                        formatFullContext c ++ "]"
@@ -158,6 +167,7 @@ instance (Show c, MergeableM m, CompileErrorM m, Monad m) =>
         where
           alwaysError (n,t) = compileError $ "Named return " ++ show n ++ " (" ++
                                              show t ++ ") might not have been set"
+    check _ = return ()
 
 setInternalFunctions :: (Show c, Monad m, CompileErrorM m, MergeableM m) =>
   TypeResolver m () -> AnyCategory c -> [ScopedFunction c] ->
@@ -226,7 +236,7 @@ pairProceduresToFunctions fa ps = do
       return (f,p)
 
 mapMembers :: (Show c, Monad m, CompileErrorM m, MergeableM m) =>
-  [DefinedMember c] -> m (Map.Map VariableName (DefinedMember c))
+  [DefinedMember c] -> m (Map.Map VariableName (VariableValue c))
 mapMembers ms = foldr update (return Map.empty) ms where
   update m ma = do
     ma' <- ma
@@ -236,14 +246,8 @@ mapMembers ms = foldr update (return Map.empty) ms where
          (Just m0) -> compileError $ "Member " ++ show (dmName m) ++ " [" ++
                                      formatFullContext (dmContext m) ++
                                      "] is already defined [" ++
-                                     formatFullContext (dmContext m0) ++ "]"
-    return $ Map.insert (dmName m) m ma'
-
-filterMembers ::
-  SymbolScope -> (Map.Map VariableName (DefinedMember c)) ->
-  (Map.Map VariableName (VariableValue c))
-filterMembers s = Map.map (\m -> VariableValue (dmContext m) (dmScope m) (dmType m)) .
-                  Map.filter ((<= s) . dmScope)
+                                     formatFullContext (vvContext m0) ++ "]"
+    return $ Map.insert (dmName m) (VariableValue (dmContext m) (dmScope m) (dmType m)) ma'
 
 updateReturnVariables :: (Show c, Monad m, CompileErrorM m, MergeableM m) =>
   (Map.Map VariableName (VariableValue c)) ->
