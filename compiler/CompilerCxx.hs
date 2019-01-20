@@ -67,6 +67,21 @@ sourceFilename n = "Category_" ++ show n ++ ".cxx"
 functionName :: ScopedFunction c -> String
 functionName f = "Function_" ++ show (sfType f) ++ "_" ++ show (sfName f)
 
+typeBase :: String
+typeBase = "TypeInstance"
+
+valueBase :: String
+valueBase = "TypeValue"
+
+paramType :: String
+paramType = typeBase ++ "&"
+
+variableType :: String
+variableType = "S<" ++ valueBase ++ ">"
+
+proxyType :: String
+proxyType = variableType ++ "&"
+
 paramName :: ParamName -> String
 paramName p = "Param_" ++ tail (pnName p) -- Remove leading '`'.
 
@@ -118,34 +133,32 @@ compileCategoryDefinition tm (DefinedCategory c n ms ps fs) = do
     compileCategory t ms tm filters fa ma cp = do
       let ms' = filter ((== CategoryScope) . dmScope) ms
       (CompiledData required output) <- mergeAll $ map (compileExecutableProcedure t tm filters fa ma) cp
-      -- TODO: Add base class.
+      -- TODO: Add base class?
       let open = ["struct " ++ categoryName (tiName t) ++ " {"]
+      -- TODO: Requires member initializers.
       let members = concat $ map createMember ms'
       let close = ["}"]
       return $ CompiledData required (open ++ indentCode (output ++ members) ++ close)
     compileType t ms tm filters fa ma tp = do
       let ms' = filter ((== TypeScope) . dmScope) ms
       (CompiledData required output) <- mergeAll $ map (compileExecutableProcedure t tm filters fa ma) tp
-      -- TODO: Add base class.
-      let open = ["struct " ++ typeName (tiName t) ++ " {"]
+      let open = ["struct " ++ typeName (tiName t) ++ " : public " ++ typeBase ++ " {"]
       let parent = categoryName (tiName t) ++ "& parent;"
-      -- TODO: Add params.
+      -- TODO: Requires member initializers.
       let members = (parent:) $ concat $ map createMember ms'
+      let params = concat $ map createParam $ map (jpnName . stType) $ psParams $ tiParams t
       let close = ["}"]
-      return $ CompiledData required (open ++ indentCode (output ++ members) ++ close)
+      return $ CompiledData required (open ++ indentCode (output ++ members ++ params) ++ close)
     compileValue t ms tm filters fa ma vp = do
       let ms' = filter ((== ValueScope) . dmScope) ms
       (CompiledData required output) <- mergeAll $ map (compileExecutableProcedure t tm filters fa ma) vp
-      -- TODO: Add base class.
-      let open = ["struct " ++ valueName (tiName t) ++ " {"]
+      let open = ["struct " ++ valueName (tiName t) ++ " public " ++ valueBase ++ " {"]
       let parent = typeName (tiName t) ++ "& parent;"
-      -- TODO: Add params.
       let members = (parent:) $ concat $ map createMember ms'
       let close = ["}"]
       return $ CompiledData required (open ++ indentCode (output ++ members) ++ close)
-    createMember m =
-      -- TODO: Requires constructor for initialization.
-      ["Value " ++ variableName (dmName m) ++ " = " ++ initializerName (dmName m) ++ "();"]
+    createMember m = [variableType ++ " " ++ variableName (dmName m) ++ ";"]
+    createParam p = [paramType ++ " " ++ paramName p ++ ";"]
 
 runCompiler :: (Monad m, CompilerContext c m [String] a, Compiler a m b) =>
   b -> a -> m CompiledData
@@ -207,13 +220,13 @@ compileExecutableProcedure t tm pa fa ma
           "Args<" ++ show (length $ psParams $ sfArgs f) ++ ">::Type args, " ++
           "Returns<" ++ show (length $ psParams $ sfReturns f) ++ ">::Type returns) {"
       defineParams = flip map (zip [0..] $ psParams $ sfParams f) $
-        (\(i,p) -> "auto " ++ paramName (vpParam p) ++ " = std::get<" ++ show i ++ ">(params);")
+        (\(i,p) -> paramType ++ " " ++ paramName (vpParam p) ++ " = std::get<" ++ show i ++ ">(params);")
       defineArgs = flip map (zip [0..] $ filter (not . isDiscardedInput) $ psParams $ avNames as) $
-        (\(i,n) -> "auto " ++ variableName (ivName n) ++ " = std::get<" ++ show i ++ ">(args);")
+        (\(i,n) -> proxyType ++ " " ++ variableName (ivName n) ++ " = std::get<" ++ show i ++ ">(args);")
       defineReturns
         | isUnnamedReturns rs = []
         | otherwise = flip map (zip [0..] $ psParams $ nrNames rs) $
-        (\(i,n) -> "auto " ++ variableName (ovName n) ++ " = std::get<" ++ show i ++ ">(returns);")
+        (\(i,n) -> proxyType ++ " " ++ variableName (ovName n) ++ " = std::get<" ++ show i ++ ">(returns);")
 
 indentCode = map ("  " ++)
 
