@@ -26,11 +26,12 @@ import TypesBase
 
 data ProcedureContext c =
   ProcedureContext {
+    pcScope :: SymbolScope,
     pcType :: TypeInstance,
     pcCategories :: CategoryMap c,
     pcFilters :: ParamFilters,
     pcFunctions :: Map.Map FunctionName (ScopedFunction c),
-    pcVariables :: Map.Map VariableName (PassedValue c),
+    pcVariables :: Map.Map VariableName (VariableValue c),
     pcReturns :: Either (ParamSet (PassedValue c)) (Map.Map VariableName (PassedValue c)),
     pcRequiredTypes :: Set.Set TypeName,
     pcOutput :: [String]
@@ -38,10 +39,12 @@ data ProcedureContext c =
 
 instance (Show c, MergeableM m, CompileErrorM m, Monad m) =>
   CompilerContext c m [String] (ProcedureContext c) where
+  ccScope = return . pcScope
   ccResolver = return . categoriesToTypeResolver . pcCategories
   ccAllFilters = return . pcFilters
   ccRequiresType ctx n = return $
     ProcedureContext {
+      pcScope = pcScope ctx,
       pcType = pcType ctx,
       pcCategories = pcCategories ctx,
       pcFilters = pcFilters ctx,
@@ -90,6 +93,7 @@ instance (Show c, MergeableM m, CompileErrorM m, Monad m) =>
                                       formatFullContext c ++
                                       "] is already defined: " ++ show v
       return $ ProcedureContext {
+          pcScope = pcScope ctx,
           pcType = pcType ctx,
           pcCategories = pcCategories ctx,
           pcFilters = pcFilters ctx,
@@ -101,6 +105,7 @@ instance (Show c, MergeableM m, CompileErrorM m, Monad m) =>
         }
   ccWrite ctx ss = return $
     ProcedureContext {
+      pcScope = pcScope ctx,
       pcType = pcType ctx,
       pcCategories = pcCategories ctx,
       pcFilters = pcFilters ctx,
@@ -114,6 +119,7 @@ instance (Show c, MergeableM m, CompileErrorM m, Monad m) =>
   ccUpdateAssigned ctx n = update (pcReturns ctx) where
     update (Left _) = return ctx
     update (Right ra) = return $ ProcedureContext {
+        pcScope = pcScope ctx,
         pcType = pcType ctx,
         pcCategories = pcCategories ctx,
         pcFilters = pcFilters ctx,
@@ -226,13 +232,14 @@ mapMembers ms = foldr update (return Map.empty) ms where
 
 filterMembers ::
   SymbolScope -> (Map.Map VariableName (DefinedMember c)) ->
-  (Map.Map VariableName (PassedValue c))
-filterMembers s = Map.map (\m -> PassedValue (dmContext m) (dmType m)) . Map.filter ((<= s) . dmScope)
+  (Map.Map VariableName (VariableValue c))
+filterMembers s = Map.map (\m -> VariableValue (dmContext m) (dmScope m) (dmType m)) .
+                  Map.filter ((<= s) . dmScope)
 
 updateReturnVariables :: (Show c, Monad m, CompileErrorM m, MergeableM m) =>
-  (Map.Map VariableName (PassedValue c)) ->
+  (Map.Map VariableName (VariableValue c)) ->
   ParamSet (PassedValue c) -> ReturnValues c ->
-  m (Map.Map VariableName (PassedValue c))
+  m (Map.Map VariableName (VariableValue c))
 updateReturnVariables ma rs1 rs2 = updated where
   updated
     | isUnnamedReturns rs2 = return ma
@@ -242,16 +249,16 @@ updateReturnVariables ma rs1 rs2 = updated where
         update (PassedValue c t,r) va = do
           va' <- va
           case ovName r `Map.lookup` va' of
-               Nothing -> return $ Map.insert (ovName r) (PassedValue c t) va'
+               Nothing -> return $ Map.insert (ovName r) (VariableValue c LocalScope t) va'
                (Just v) -> compileError $ "Variable " ++ show (ovName r) ++
                                           " [" ++ formatFullContext (ovContext r) ++
                                           "] is already defined [" ++
-                                          formatFullContext (pvContext v) ++ "]"
+                                          formatFullContext (vvContext v) ++ "]"
 
 updateArgVariables :: (Show c, Monad m, CompileErrorM m, MergeableM m) =>
-  (Map.Map VariableName (PassedValue c)) ->
+  (Map.Map VariableName (VariableValue c)) ->
   ParamSet (PassedValue c) -> ArgValues c ->
-  m (Map.Map VariableName (PassedValue c))
+  m (Map.Map VariableName (VariableValue c))
 updateArgVariables ma as1 as2 = do
   as <- processParamPairs alwaysPairParams as1 (avNames as2)
   let as' = filter (not . isDiscardedInput . snd) as
@@ -259,8 +266,8 @@ updateArgVariables ma as1 as2 = do
     update (PassedValue c t,a) va = do
       va' <- va
       case ivName a `Map.lookup` va' of
-            Nothing -> return $ Map.insert (ivName a) (PassedValue c t) va'
+            Nothing -> return $ Map.insert (ivName a) (VariableValue c LocalScope t) va'
             (Just v) -> compileError $ "Variable " ++ show (ivName a) ++
                                        " [" ++ formatFullContext (ivContext a) ++
                                        "] is already defined [" ++
-                                       formatFullContext (pvContext v) ++ "]"
+                                       formatFullContext (vvContext v) ++ "]"

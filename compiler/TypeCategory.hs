@@ -120,10 +120,13 @@ instance Show c => Show (AnyCategory c) where
     formatValue v = show (pfParam v) ++ " " ++ show (pfFilter v) ++
                     " " ++ formatContext (pfContext v)
     formatInterfaceFunc f = showFunctionInContext "" "  " f
-    formatConcreteFunc f = showFunctionInContext (showScope $ sfScope f) "  " f
-    showScope CategoryScope = "@category "
-    showScope TypeScope     = "@type "
-    showScope ValueScope    = "@value "
+    formatConcreteFunc f = showFunctionInContext (showScope (sfScope f) ++ " ") "  " f
+
+showScope :: SymbolScope -> String
+showScope CategoryScope = "@category"
+showScope TypeScope     = "@type"
+showScope ValueScope    = "@value"
+showScope LocalScope    = "@local"
 
 getCategoryName :: AnyCategory c -> TypeName
 getCategoryName (ValueInterface _ n _ _ _ _) = n
@@ -610,9 +613,6 @@ flattenAllConnections tm0 ts = do
         mergeAll $ map (checkMerge r fm ff) is
         return $ ScopedFunction c n t s as rs ps fa (ms ++ is)
         where
-          showScope CategoryScope = "@category"
-          showScope TypeScope     = "@type"
-          showScope ValueScope    = "@value"
           checkMerge r fm f1 f2
             | sfScope f1 /= sfScope f2 =
               compileError $ "Cannot merge " ++ showScope (sfScope f2) ++ " with " ++
@@ -714,11 +714,7 @@ data ScopedFunction c =
   deriving (Eq)
 
 instance Show c => Show (ScopedFunction c) where
-  show f = showFunctionInContext (showScope $ sfScope f) "" f
-    where
-      showScope CategoryScope = "@category "
-      showScope TypeScope     = "@type "
-      showScope ValueScope    = "@value "
+  show f = showFunctionInContext (showScope (sfScope f) ++ " ") "" f
 
 showFunctionInContext :: Show c => String -> String -> ScopedFunction c -> String
 showFunctionInContext s indent (ScopedFunction cs n t _ as rs ps fa ms) =

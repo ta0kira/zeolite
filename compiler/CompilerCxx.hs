@@ -166,7 +166,7 @@ runCompiler x ctx = do
   ctx' <- execStateT (compile x) ctx
   required <- ccGetRequired ctx'
   output <- ccGetOutput ctx'
-  return $ CompiledData  {
+  return $ CompiledData {
       cdRequired = required,
       cdOutput = output
     }
@@ -190,6 +190,7 @@ compileExecutableProcedure t tm pa fa ma
                then getFunctionFilterMap ff
                else Map.union pa (getFunctionFilterMap ff)
   let ctx = ProcedureContext {
+      pcScope = s,
       pcType = t,
       pcCategories = tm,
       pcFilters = pa',

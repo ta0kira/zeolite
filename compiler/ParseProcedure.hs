@@ -223,13 +223,13 @@ instance ParseFromSource (ExpressionStart SourcePos) where
     builtinValue = do
       c <- getPosition
       n <- builtinValues
-      return $ VariableValue (OutputValue [c] (VariableName n))
+      return $ NamedVariable (OutputValue [c] (VariableName n))
     variableOrUnqualified = do
       n <- sourceParser :: Parser VariableName
       asUnqualifiedCall n <|> asVariable n
     asVariable n = do
       c <- getPosition
-      return $ VariableValue (OutputValue [c] n)
+      return $ NamedVariable (OutputValue [c] n)
     asUnqualifiedCall n = do
       c <- getPosition
       f <- parseFunctionCall (FunctionName (vnName n))

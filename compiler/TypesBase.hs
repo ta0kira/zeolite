@@ -149,7 +149,8 @@ data StorageType =
 data SymbolScope =
   CategoryScope |
   TypeScope |
-  ValueScope
+  ValueScope |
+  LocalScope
   deriving (Eq,Ord,Show)
 
 partitionByScope :: (a -> SymbolScope) -> [a] -> ([a],[a],[a])
@@ -159,3 +160,4 @@ partitionByScope f = foldr bin empty where
     | f x == CategoryScope = (x:cs,ts,vs)
     | f x == TypeScope     = (cs,x:ts,vs)
     | f x == ValueScope    = (cs,ts,x:vs)
+    | otherwise = (cs,ts,vs)
