@@ -115,18 +115,18 @@ compileCategoryDefinition :: (Show c, Monad m, CompileErrorM m, MergeableM m) =>
   CategoryMap c -> DefinedCategory c -> m CxxOutput
 compileCategoryDefinition tm (DefinedCategory c n ms ps fs) = do
   let filename = sourceFilename n
-  (_,ca) <- getConcreteCategory tm (c,n)
-  let filters = getCategoryFilterMap ca
+  (_,t) <- getConcreteCategory tm (c,n)
+  let filters = getCategoryFilterMap t
   let r = categoriesToTypeResolver tm
-  fa <- setInternalFunctions r filters (getCategoryFunctions ca) fs
+  fa <- setInternalFunctions r t fs
   pa <- pairProceduresToFunctions fa ps
   ma <- mapMembers ms
-  let t = TypeInstance (getCategoryName ca)
-                       (ParamSet $ map (SingleType . JustParamName . vpParam) $ getCategoryParams ca)
+  let t' = TypeInstance (getCategoryName t)
+                        (ParamSet $ map (SingleType . JustParamName . vpParam) $ getCategoryParams t)
   let (cp,tp,vp) = partitionByScope (sfScope . fst) pa
-  output <- mergeAll [compileCategory t ms tm filters fa ma cp,
-                      compileType     t ms tm filters fa ma tp,
-                      compileValue    t ms tm filters fa ma vp]
+  output <- mergeAll [compileCategory t' ms tm filters fa ma cp,
+                      compileType     t' ms tm filters fa ma tp,
+                      compileValue    t' ms tm filters fa ma vp]
   let labels = map labelForFunction $ filter ((== n) . sfType) $ Map.elems fa
   return $ CxxOutput filename labels output
   where

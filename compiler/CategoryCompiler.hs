@@ -145,11 +145,13 @@ instance (Show c, MergeableM m, CompileErrorM m, Monad m) =>
                                              show t ++ ") might not have been set"
 
 setInternalFunctions :: (Show c, Monad m, CompileErrorM m, MergeableM m) =>
-  TypeResolver m () -> ParamFilters -> [ScopedFunction c] -> [ScopedFunction c] ->
+  TypeResolver m () -> AnyCategory c -> [ScopedFunction c] ->
   m (Map.Map FunctionName (ScopedFunction c))
-setInternalFunctions r fm fs0 fs = foldr update (return start) fs where
-  start = Map.fromList $ map (\f -> (sfName f,f)) fs0
+setInternalFunctions r t fs = foldr update (return start) fs where
+  start = Map.fromList $ map (\f -> (sfName f,f)) $ getCategoryFunctions t
+  filters = getCategoryFilterMap t
   update f fa = do
+    validateCategoryFunction r t f
     fa' <- fa
     case sfName f `Map.lookup` fa' of
          Nothing -> return $ Map.insert (sfName f) f fa'
@@ -158,7 +160,7 @@ setInternalFunctions r fm fs0 fs = foldr update (return start) fs where
                              "\n  ->\n" ++ show f ++ "\n---\n") $ do
              f0' <- parsedToFunctionType f0
              f' <- parsedToFunctionType f
-             checkFunctionConvert r fm f0' f'
+             checkFunctionConvert r filters f0' f'
            return $ Map.insert (sfName f) f fa'
 
 pairProceduresToFunctions :: (Show c, Monad m, CompileErrorM m, MergeableM m) =>

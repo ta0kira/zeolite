@@ -37,6 +37,7 @@ module TypeCategory (
   isValueInterface,
   parsedToFunctionType,
   topoSortCategories,
+  validateCategoryFunction,
 ) where
 
 import Control.Arrow (second)
@@ -417,7 +418,7 @@ checkCategoryInstances tm0 ts = do
       mergeAll $ map (checkRefine r fm) (getCategoryRefines t)
       mergeAll $ map (checkDefine r fm) (getCategoryDefines t)
       mergeAll $ map (checkFilter r fm) (getCategoryFilters t)
-      mergeAll $ map (checkFunction r fm vm) (getCategoryFunctions t)
+      mergeAll $ map (validateCategoryFunction r t) (getCategoryFunctions t)
     checkFilterParam pa (ParamFilter c n _) =
       when (not $ n `Set.member` pa) $
         compileError $ "Param " ++ show n ++ " [" ++ formatFullContext c ++ "] does not exist"
@@ -430,12 +431,17 @@ checkCategoryInstances tm0 ts = do
     checkFilter r fm (ParamFilter c n f) =
       validateTypeFilter r fm f `reviseError`
         (show n ++ " " ++ show f ++ " [" ++ formatFullContext c ++ "]")
-    checkFunction r fm vm f =
-      flip reviseError ("In function:\n---\n" ++ show f ++ "\n---\n") $ do
-        funcType <- parsedToFunctionType f
-        if sfScope f == CategoryScope
-           then validatateFunctionType r Map.empty vm funcType
-           else validatateFunctionType r fm vm funcType
+
+validateCategoryFunction :: (Show c, MergeableM m, Mergeable p, CompileErrorM m, Monad m) =>
+  TypeResolver m p -> AnyCategory c -> ScopedFunction c -> m ()
+validateCategoryFunction r t f = do
+  let fm = getCategoryFilterMap t
+  let vm = Map.fromList $ map (\p -> (vpParam p,vpVariance p)) $ getCategoryParams t
+  flip reviseError ("In function:\n---\n" ++ show f ++ "\n---\n") $ do
+    funcType <- parsedToFunctionType f
+    if sfScope f == CategoryScope
+        then validatateFunctionType r Map.empty vm funcType
+        else validatateFunctionType r fm vm funcType
 
 topoSortCategories :: (Show c, MergeableM m, CompileErrorM m, Monad m) =>
   CategoryMap c -> [AnyCategory c] -> m [AnyCategory c]
