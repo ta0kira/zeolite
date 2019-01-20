@@ -186,14 +186,21 @@ compileExecutableProcedure t tm pa fa ma
   let va = filterMembers s ma
   va' <- updateArgVariables va as1 as2
   va'' <- updateReturnVariables va' rs1 rs2
+  let localFilters = getFunctionFilterMap ff
   let pa' = if s == CategoryScope
-               then getFunctionFilterMap ff
-               else Map.union pa (getFunctionFilterMap ff)
+               then localFilters
+               else Map.union pa localFilters
+  let typeScopes = Map.map (const TypeScope) pa
+  let localScopes = Map.map (const LocalScope) localFilters
+  let sa = if s == CategoryScope
+              then localScopes
+              else Map.union typeScopes localScopes
   let ctx = ProcedureContext {
       pcScope = s,
       pcType = t,
       pcCategories = tm,
       pcFilters = pa',
+      pcParamScopes = sa,
       pcFunctions = fa,
       pcVariables = va'',
       pcReturns = rs',

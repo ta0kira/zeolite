@@ -30,6 +30,7 @@ data ProcedureContext c =
     pcType :: TypeInstance,
     pcCategories :: CategoryMap c,
     pcFilters :: ParamFilters,
+    pcParamScopes :: Map.Map ParamName SymbolScope,
     pcFunctions :: Map.Map FunctionName (ScopedFunction c),
     pcVariables :: Map.Map VariableName (VariableValue c),
     pcReturns :: Either (ParamSet (PassedValue c)) (Map.Map VariableName (PassedValue c)),
@@ -39,15 +40,20 @@ data ProcedureContext c =
 
 instance (Show c, MergeableM m, CompileErrorM m, Monad m) =>
   CompilerContext c m [String] (ProcedureContext c) where
-  ccScope = return . pcScope
+  ccCurrentScope = return . pcScope
   ccResolver = return . categoriesToTypeResolver . pcCategories
   ccAllFilters = return . pcFilters
+  ccGetParamScope ctx p = do
+    case p `Map.lookup` pcParamScopes ctx of
+            (Just s) -> return s
+            _ -> compileError $ "Param " ++ show p ++ " does not exist"
   ccRequiresType ctx n = return $
     ProcedureContext {
       pcScope = pcScope ctx,
       pcType = pcType ctx,
       pcCategories = pcCategories ctx,
       pcFilters = pcFilters ctx,
+      pcParamScopes = pcParamScopes ctx,
       pcFunctions = pcFunctions ctx,
       pcVariables = pcVariables ctx,
       pcReturns = pcReturns ctx,
@@ -62,7 +68,7 @@ instance (Show c, MergeableM m, CompileErrorM m, Monad m) =>
   ccGetFunction ctx c n (Just (SingleType (JustParamName p))) = do
     fs <- case p `Map.lookup` pcFilters ctx of
                (Just fs) -> return fs
-               _ -> compileError $ "Param " ++ show n ++ " does not exist"
+               _ -> compileError $ "Param " ++ show p ++ " does not exist"
     let ts = map tfType $ filter isRequiresFilter fs
     collectOneOrErrorM $ map (ccGetFunction ctx c n) $ map (Just . SingleType) ts
   ccGetFunction ctx c n (Just (SingleType (JustTypeInstance t)))
@@ -97,6 +103,7 @@ instance (Show c, MergeableM m, CompileErrorM m, Monad m) =>
           pcType = pcType ctx,
           pcCategories = pcCategories ctx,
           pcFilters = pcFilters ctx,
+          pcParamScopes = pcParamScopes ctx,
           pcFunctions = pcFunctions ctx,
           pcVariables = Map.insert n t (pcVariables ctx),
           pcReturns = pcReturns ctx,
@@ -109,6 +116,7 @@ instance (Show c, MergeableM m, CompileErrorM m, Monad m) =>
       pcType = pcType ctx,
       pcCategories = pcCategories ctx,
       pcFilters = pcFilters ctx,
+      pcParamScopes = pcParamScopes ctx,
       pcFunctions = pcFunctions ctx,
       pcVariables = pcVariables ctx,
       pcReturns = pcReturns ctx,
@@ -123,6 +131,7 @@ instance (Show c, MergeableM m, CompileErrorM m, Monad m) =>
         pcType = pcType ctx,
         pcCategories = pcCategories ctx,
         pcFilters = pcFilters ctx,
+        pcParamScopes = pcParamScopes ctx,
         pcFunctions = pcFunctions ctx,
         pcVariables = pcVariables ctx,
         pcReturns = Right $ Map.delete n ra,

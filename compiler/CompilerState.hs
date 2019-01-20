@@ -10,12 +10,13 @@ module CompilerState (
   VariableValue(..),
   csAddVariable,
   csAllFilters,
+  csCurrentScope,
   csCheckReturn,
   csGetFunction,
   csGetOutput,
+  csGetParamScope,
   csGetVariable,
   csResolver,
-  csScope,
   csUpdateAssigned,
   csWrite,
 ) where
@@ -37,9 +38,10 @@ class Compiler a m b where
   compile :: b -> CompilerState a m ()
 
 class Monad m => CompilerContext c m s a | a -> c s where
-  ccScope :: a -> m SymbolScope
+  ccCurrentScope :: a -> m SymbolScope
   ccResolver :: a -> m (TypeResolver m ())
   ccAllFilters :: a -> m ParamFilters
+  ccGetParamScope :: a -> ParamName -> m SymbolScope
   ccRequiresType :: a -> TypeName -> m a
   ccGetRequired :: a -> m (Set.Set TypeName)
   ccGetFunction :: a -> [c] -> FunctionName -> Maybe GeneralInstance -> m (ScopedFunction c)
@@ -61,9 +63,9 @@ data VariableValue c =
 instance Show c => Show (VariableValue c) where
   show (VariableValue c _ t) = show t ++ " [" ++ formatFullContext c ++ "]"
 
-csScope :: (Monad m, CompilerContext c m s a) =>
+csCurrentScope :: (Monad m, CompilerContext c m s a) =>
   CompilerState a m SymbolScope
-csScope = fmap ccScope get >>= lift
+csCurrentScope = fmap ccCurrentScope get >>= lift
 
 csResolver :: (Monad m, CompilerContext c m s a) =>
   CompilerState a m (TypeResolver m ())
@@ -72,6 +74,10 @@ csResolver = fmap ccResolver get >>= lift
 csAllFilters :: (Monad m, CompilerContext c m s a) =>
   CompilerState a m ParamFilters
 csAllFilters = fmap ccAllFilters get >>= lift
+
+csGetParamScope :: (Monad m, CompilerContext c m s a) =>
+  ParamName -> CompilerState a m SymbolScope
+csGetParamScope n = fmap (\x -> ccGetParamScope x n) get >>= lift
 
 csRequiresType :: (Monad m, CompilerContext c m s a) =>
   TypeName -> CompilerState a m ()
