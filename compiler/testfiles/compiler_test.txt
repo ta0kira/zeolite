@@ -9,7 +9,7 @@ define Value {
   @value `x value
 
   create (value) {
-    return Value<`x>{ value: value }
+    return Value<`x>{ value }
   }
 
   create2 (value) {

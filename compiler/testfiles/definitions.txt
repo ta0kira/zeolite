@@ -1,7 +1,7 @@
 define Type {
   @value T<`x> val
 
-  @type Type<`x> zzz <- Type<`x>{ val: T<`x>$create() }
+  @type Type<`x> zzz <- Type<`x>{ T<`x>$create() }
 
   @category optional T<any> something <- skip
 

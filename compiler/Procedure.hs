@@ -139,7 +139,7 @@ data Expression c =
   Expression [c] (ParamSet ValueType) (ExpressionStart c) [ValueOperation c] |
   UnaryExpression [c] (Maybe ValueType) String (Expression c) |
   -- TODO: Account for internal params here.
-  InitializeValue [c] TypeInstance (ParamSet (VariableName,Expression c))
+  InitializeValue [c] TypeInstance (ParamSet (Expression c))
   deriving (Eq,Show)
 
 data FunctionCall c =

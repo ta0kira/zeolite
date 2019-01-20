@@ -26,7 +26,7 @@ tests = [
     checkShortParseFail "return { var  var.T<`x>$func() }",
     checkShortParseFail "return { var, _ }",
     checkShortParseFail "return T<`x> var",
-    checkShortParseSuccess "return T<`x>{ var: val }",
+    checkShortParseSuccess "return T<`x>{ val }",
 
     checkShortParseSuccess "break",
     checkShortParseFail "break var",
@@ -44,8 +44,8 @@ tests = [
     checkShortParseFail "~ var$func2()",
     checkShortParseFail "~ var.T<`x>",
     checkShortParseFail "~ T<`x> var",
-    checkShortParseSuccess "~ T<`x>{ var: val x: var.T<`x>$func() }",
-    checkShortParseFail "~ T<`x>{ var: valx: var.T<`x>$func() }",
+    checkShortParseSuccess "~ T<`x>{ val, var.T<`x>$func() }",
+    checkShortParseFail "~ T<`x>{ val var.T<`x>$func() }",
     checkShortParseFail "~ T<`x>{}.call()",
     checkShortParseSuccess "~ (T<`x>{}).call()",
 
@@ -107,7 +107,7 @@ tests = [
     checkShortParseSuccess "if (((var.func()).T$call())) { }",
 
     checkShortParseSuccess "~var.T<`x>$func().func2().func3()",
-    checkShortParseSuccess "~T<`x>{var:val x:var.T<`x>$func()}",
+    checkShortParseSuccess "~T<`x>{val,var.T<`x>$func()}",
     checkShortParseSuccess "x<-var.func()",
     checkShortParseSuccess "T<`x>x<-var.func()",
     checkShortParseSuccess "{_,weak T<`x>x}<-var.func()",

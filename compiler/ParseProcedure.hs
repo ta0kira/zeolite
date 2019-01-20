@@ -170,14 +170,9 @@ instance ParseFromSource (Expression SourcePos) where
       c <- getPosition
       t <- try sourceParser
       sepAfter (string "{")
-      as <- many (optionalSpace >> singleAssign)
+      as <- sepBy sourceParser (sepAfter $ string ",")
       sepAfter (string "}")
       return $ InitializeValue [c] t (ParamSet as)
-    singleAssign = do
-      n <- sourceParser
-      initSeparator
-      e <- sourceParser
-      return (n,e)
 
 parseFunctionCall :: FunctionName -> Parser (FunctionCall SourcePos)
 parseFunctionCall n = do

@@ -7,10 +7,7 @@ testFunction1 (a,b,c) (d,e,f) {
     // sleep
   }
 
-  x <- Type<`z,T<`m>>{
-      v: r
-      qq: Type$new()
-    }
+  x <- Type<`z,T<`m>>{ r, Type$new() }
 
   x <- empty
 
