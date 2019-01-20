@@ -17,6 +17,7 @@ module TypesBase (
   checkGeneralType,
   composeVariance,
   paramAllowsVariance,
+  partitionByScope,
 ) where
 
 
@@ -150,3 +151,11 @@ data SymbolScope =
   TypeScope |
   ValueScope
   deriving (Eq,Ord,Show)
+
+partitionByScope :: (a -> SymbolScope) -> [a] -> ([a],[a],[a])
+partitionByScope f = foldr bin empty where
+  empty = ([],[],[])
+  bin x (cs,ts,vs)
+    | f x == CategoryScope = (x:cs,ts,vs)
+    | f x == TypeScope     = (cs,x:ts,vs)
+    | f x == ValueScope    = (cs,ts,x:vs)

@@ -1,6 +1,7 @@
 import Text.Parsec
 import Text.Parsec.String
 import System.Environment
+import System.IO
 import qualified Data.Map as Map
 
 import CompileInfo
@@ -18,16 +19,20 @@ main = do
   allContents <- sequence $ map readFile files
   let namedContents = zip files allContents
   results <- return $ processContents namedContents
-  print $ show results
+  hPutStr stderr $ format results
   where
     processContents :: [(String,String)] -> CompileInfo [CxxOutput]
     processContents cs = do
-      parsed <- return $ collectAllOrErrorM $ map parseContents cs
-      let (cs,ds) = foldr merge empty (concat parsed)
+      parsed <- collectAllOrErrorM $ map parseContents cs
+      let (cs,ds) = foldr merge empty parsed
       cm <- includeNewTypes Map.empty cs
       collectAllOrErrorM $ map (compileCategoryDefinition cm) ds
     empty = ([],[])
     merge (cs1,ds1) (cs2,ds2) = (cs1++cs2,ds1++ds2)
+    format (Left e) = show e
+    format (Right fs) = concat $ map formatFile fs
+    formatFile (CxxOutput f fs os) =
+      concat $ map (++ "\n") $ ["/* " ++ f ++ " */"] ++ cdOutput os
 
 parseContents :: (String,String) -> CompileInfo ([AnyCategory SourcePos],[DefinedCategory SourcePos])
 parseContents (f,s) = unwrap parsed where

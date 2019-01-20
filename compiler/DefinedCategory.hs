@@ -3,6 +3,7 @@
 module DefinedCategory (
   DefinedCategory(..),
   DefinedMember(..),
+  isInitialized,
 ) where
 
 import Procedure
@@ -31,3 +32,8 @@ data DefinedMember c =
     dmInit :: Maybe (Expression c)
   }
   deriving (Show) -- TODO: Implement Show.
+
+isInitialized :: DefinedMember c -> Bool
+isInitialized = check . dmInit where
+  check Nothing = False
+  check _       = True

@@ -1,0 +1,26 @@
+concrete Value<`x> {
+  @category create<`x> (`x) -> (Value<`x>)
+  @type create2 (`x) -> (Value<`x>)
+  @value get () -> (`x)
+  @value set (`x) -> ()
+}
+
+define Value {
+  @value `x value
+
+  create (value) {
+    return Value<`x>{ value: value }
+  }
+
+  create2 (value) {
+    return Value$create<`x>(value)
+  }
+
+  get () {
+    return value
+  }
+
+  set (value2) {
+    value <- value2
+  }
+}

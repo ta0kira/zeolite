@@ -4,7 +4,8 @@
 {-# LANGUAGE Safe #-}
 
 module CompilerCxx (
-  CxxOutput,
+  CxxOutput(..), -- TODO: Remove.
+  CompiledData(..), -- TODO: Remove.
   compileCategoryDefinition,
 ) where
 
@@ -72,8 +73,20 @@ paramName p = "Param_" ++ tail (pnName p) -- Remove leading '`'.
 variableName :: VariableName -> String
 variableName v = "Var_" ++ show v
 
+initializerName :: VariableName -> String
+initializerName v = "Init_" ++ show v
+
 callName :: ScopedFunction c -> String
 callName f = "Call_" ++ show (sfType f) ++ "_" ++ show (sfName f)
+
+categoryName :: TypeName -> String
+categoryName n = "Category_" ++ show n
+
+typeName :: TypeName -> String
+typeName n = "Type_" ++ show n
+
+valueName :: TypeName -> String
+valueName n = "Value_" ++ show n
 
 labelForFunction :: ScopedFunction c -> FunctionLabel
 labelForFunction f = FunctionLabel name scope params args returns where
@@ -95,9 +108,42 @@ compileCategoryDefinition tm (DefinedCategory c n ms ps fs) = do
   ma <- mapMembers ms
   let t = TypeInstance (getCategoryName ca)
                        (ParamSet $ map (SingleType . JustParamName . vpParam) $ getCategoryParams ca)
-  output <- mergeAll $ map (compileExecutableProcedure t tm filters fa ma) pa
+  let (cp,tp,vp) = partitionByScope (sfScope . fst) pa
+  output <- mergeAll [compileCategory t ms tm filters fa ma cp,
+                      compileType     t ms tm filters fa ma tp,
+                      compileValue    t ms tm filters fa ma vp]
   let labels = map labelForFunction $ filter ((== n) . sfType) $ Map.elems fa
   return $ CxxOutput filename labels output
+  where
+    compileCategory t ms tm filters fa ma cp = do
+      let ms' = filter ((== CategoryScope) . dmScope) ms
+      (CompiledData required output) <- mergeAll $ map (compileExecutableProcedure t tm filters fa ma) cp
+      -- TODO: Add base class.
+      let open = ["struct " ++ categoryName (tiName t) ++ " {"]
+      let members = map createMember ms'
+      let close = ["}"]
+      return $ CompiledData required (open ++ indentCode output ++ close)
+    compileType t ms tm filters fa ma tp = do
+      let ms' = filter ((== TypeScope) . dmScope) ms
+      (CompiledData required output) <- mergeAll $ map (compileExecutableProcedure t tm filters fa ma) tp
+      -- TODO: Add base class.
+      let open = ["struct " ++ typeName (tiName t) ++ " {"]
+      let members = map createMember ms'
+      let close = ["}"]
+      return $ CompiledData required (open ++ indentCode output ++ close)
+    compileValue t ms tm filters fa ma vp = do
+      let ms' = filter ((== ValueScope) . dmScope) ms
+      (CompiledData required output) <- mergeAll $ map (compileExecutableProcedure t tm filters fa ma) vp
+      -- TODO: Add base class.
+      let open = ["struct " ++ valueName (tiName t) ++ " {"]
+      let members = concat $ map createMember ms'
+      let close = ["}"]
+      return $ CompiledData required (open ++ indentCode (output ++ members) ++ close)
+    createMember m =
+      ["Value " ++ variableName (dmName m) ++ " = " ++ initializerName (dmName m) ++ "();",initializer m]
+    initializer m
+      | isInitialized m = "Value " ++ initializerName (dmName m) ++ "() { /*TODO: compile expression*/ }"
+      | otherwise = "Value " ++ initializerName (dmName m) ++ "() { return nullptr; }"
 
 runCompiler :: (Monad m, CompilerContext c m [String] a, Compiler a m b) =>
   b -> a -> m CompiledData
@@ -125,10 +171,13 @@ compileExecutableProcedure t tm pa fa ma
   let va = filterMembers s ma
   va' <- updateArgVariables va as1 as2
   va'' <- updateReturnVariables va' rs1 rs2
+  let pa' = if s == CategoryScope
+               then getFunctionFilterMap ff
+               else Map.union pa (getFunctionFilterMap ff)
   let ctx = ProcedureContext {
       pcType = t,
       pcCategories = tm,
-      pcFilters = Map.union pa (getFunctionFilterMap ff),
+      pcFilters = pa',
       pcFunctions = fa,
       pcVariables = va'',
       pcReturns = rs',
@@ -136,10 +185,10 @@ compileExecutableProcedure t tm pa fa ma
       pcOutput = []
     }
   (CompiledData required output) <- runCompiler p ctx
-  return (CompiledData required (wrapProcedure ff as2 rs2 output))
+  return (CompiledData required (wrapProcedure (tiName t) ff as2 rs2 output))
   where
     pairOutput (PassedValue c1 t) (OutputValue c2 n) = return $ (n,PassedValue (c2++c1) t)
-    wrapProcedure f as rs output = open ++ indentCode body ++ close where
+    wrapProcedure n f as rs output = open ++ indentCode body ++ close where
       open = [header]
       body = defineParams ++ defineArgs ++ defineReturns ++ output
       close = ["}"]
@@ -147,12 +196,12 @@ compileExecutableProcedure t tm pa fa ma
       header
         | sfScope f == ValueScope =
           "void " ++ name ++ "(Value self, " ++
-          "Args<" ++ show (length $ psParams $ sfParams f) ++ ">::Type params, " ++
+          "Params<" ++ show (length $ psParams $ sfParams f) ++ ">::Type params, " ++
           "Args<" ++ show (length $ psParams $ sfArgs f) ++ ">::Type args, " ++
           "Returns<" ++ show (length $ psParams $ sfReturns f) ++ ">::Type returns) {"
         | otherwise =
           "void " ++ name ++ "(" ++
-          "Args<" ++ show (length $ psParams $ sfParams f) ++ ">::Type params, " ++
+          "Params<" ++ show (length $ psParams $ sfParams f) ++ ">::Type params, " ++
           "Args<" ++ show (length $ psParams $ sfArgs f) ++ ">::Type args, " ++
           "Returns<" ++ show (length $ psParams $ sfReturns f) ++ ">::Type returns) {"
       defineParams = flip map (zip [0..] $ psParams $ sfParams f) $
@@ -169,4 +218,4 @@ indentCode = map ("  " ++)
 instance (Show c, Monad m, CompileErrorM m, MergeableM m) =>
   Compiler (ProcedureContext c) m (Procedure c) where
   compile (Procedure c ss) = do
-    undefined
+    return ()

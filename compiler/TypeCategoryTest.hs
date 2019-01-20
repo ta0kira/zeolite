@@ -626,6 +626,9 @@ tests = [
                               "Object1<Child,Object3<Object2>>",
                               "Object3<Object3<Object2>>"]),
 
+    checkOperationSuccess
+      "testfiles/category_function_param_match.txt"
+      (\ts -> checkCategoryInstances Map.empty ts),
     checkOperationFail
       "testfiles/function_param_clash.txt"
       (\ts -> checkCategoryInstances Map.empty ts),

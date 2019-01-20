@@ -433,7 +433,9 @@ checkCategoryInstances tm0 ts = do
     checkFunction r fm vm f =
       flip reviseError ("In function:\n---\n" ++ show f ++ "\n---\n") $ do
         funcType <- parsedToFunctionType f
-        validatateFunctionType r fm vm funcType
+        if sfScope f == CategoryScope
+           then validatateFunctionType r Map.empty vm funcType
+           else validatateFunctionType r fm vm funcType
 
 topoSortCategories :: (Show c, MergeableM m, CompileErrorM m, Monad m) =>
   CategoryMap c -> [AnyCategory c] -> m [AnyCategory c]
