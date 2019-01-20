@@ -35,7 +35,9 @@ instance ParseFromSource (DefinedMember SourcePos) where
     s <- parseScope
     t <- sourceParser
     n <- sourceParser
-    e <- parseInit <|> return Nothing
+    e <- if s == ValueScope
+            then return Nothing
+            else parseInit
     return $ DefinedMember [c] s t n e
     where
       parseInit = labeled "member initializer" $ do

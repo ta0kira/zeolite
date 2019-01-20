@@ -140,10 +140,8 @@ compileCategoryDefinition tm (DefinedCategory c n ms ps fs) = do
       let close = ["}"]
       return $ CompiledData required (open ++ indentCode (output ++ members) ++ close)
     createMember m =
-      ["Value " ++ variableName (dmName m) ++ " = " ++ initializerName (dmName m) ++ "();",initializer m]
-    initializer m
-      | isInitialized m = "Value " ++ initializerName (dmName m) ++ "() { /*TODO: compile expression*/ }"
-      | otherwise = "Value " ++ initializerName (dmName m) ++ "() { return nullptr; }"
+      -- TODO: Requires constructor for initialization.
+      ["Value " ++ variableName (dmName m) ++ " = " ++ initializerName (dmName m) ++ "();"]
 
 runCompiler :: (Monad m, CompilerContext c m [String] a, Compiler a m b) =>
   b -> a -> m CompiledData
