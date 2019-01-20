@@ -120,23 +120,27 @@ compileCategoryDefinition tm (DefinedCategory c n ms ps fs) = do
       (CompiledData required output) <- mergeAll $ map (compileExecutableProcedure t tm filters fa ma) cp
       -- TODO: Add base class.
       let open = ["struct " ++ categoryName (tiName t) ++ " {"]
-      let members = map createMember ms'
+      let members = concat $ map createMember ms'
       let close = ["}"]
-      return $ CompiledData required (open ++ indentCode output ++ close)
+      return $ CompiledData required (open ++ indentCode (output ++ members) ++ close)
     compileType t ms tm filters fa ma tp = do
       let ms' = filter ((== TypeScope) . dmScope) ms
       (CompiledData required output) <- mergeAll $ map (compileExecutableProcedure t tm filters fa ma) tp
       -- TODO: Add base class.
       let open = ["struct " ++ typeName (tiName t) ++ " {"]
-      let members = map createMember ms'
+      let parent = categoryName (tiName t) ++ "& parent;"
+      -- TODO: Add params.
+      let members = (parent:) $ concat $ map createMember ms'
       let close = ["}"]
-      return $ CompiledData required (open ++ indentCode output ++ close)
+      return $ CompiledData required (open ++ indentCode (output ++ members) ++ close)
     compileValue t ms tm filters fa ma vp = do
       let ms' = filter ((== ValueScope) . dmScope) ms
       (CompiledData required output) <- mergeAll $ map (compileExecutableProcedure t tm filters fa ma) vp
       -- TODO: Add base class.
       let open = ["struct " ++ valueName (tiName t) ++ " {"]
-      let members = concat $ map createMember ms'
+      let parent = typeName (tiName t) ++ "& parent;"
+      -- TODO: Add params.
+      let members = (parent:) $ concat $ map createMember ms'
       let close = ["}"]
       return $ CompiledData required (open ++ indentCode (output ++ members) ++ close)
     createMember m =
