@@ -175,18 +175,18 @@ setInternalFunctions :: (Show c, Monad m, CompileErrorM m, MergeableM m) =>
 setInternalFunctions r t fs = foldr update (return start) fs where
   start = Map.fromList $ map (\f -> (sfName f,f)) $ getCategoryFunctions t
   filters = getCategoryFilterMap t
-  update f fa = do
+  update f@(ScopedFunction c n t2 s as rs ps fs ms) fa = do
     validateCategoryFunction r t f
     fa' <- fa
-    case sfName f `Map.lookup` fa' of
-         Nothing -> return $ Map.insert (sfName f) f fa'
-         (Just f0) -> do
+    case n `Map.lookup` fa' of
+         Nothing -> return $ Map.insert n f fa'
+         (Just f0@(ScopedFunction c2 _ _ _ _ _ _ _ ms2)) -> do
            flip reviseError ("In function merge:\n---\n" ++ show f0 ++
                              "\n  ->\n" ++ show f ++ "\n---\n") $ do
              f0' <- parsedToFunctionType f0
              f' <- parsedToFunctionType f
              checkFunctionConvert r filters f0' f'
-           return $ Map.insert (sfName f) f fa'
+           return $ Map.insert n (ScopedFunction (c++c2) n t2 s as rs ps fs (ms++ms2)) fa'
 
 pairProceduresToFunctions :: (Show c, Monad m, CompileErrorM m, MergeableM m) =>
   Map.Map FunctionName (ScopedFunction c) -> [ExecutableProcedure c] ->

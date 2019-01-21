@@ -26,13 +26,15 @@ main = do
       parsed <- collectAllOrErrorM $ map parseContents cs
       let (cs,ds) = foldr merge empty parsed
       cm <- includeNewTypes Map.empty cs
-      collectAllOrErrorM $ map (compileCategoryDefinition cm) ds
+      hxx <- collectAllOrErrorM $ map (compileCategoryDeclaration cm) cs
+      cxx <- collectAllOrErrorM $ map (compileCategoryDefinition  cm) ds
+      return $ hxx ++ cxx
     empty = ([],[])
     merge (cs1,ds1) (cs2,ds2) = (cs1++cs2,ds1++ds2)
     format (Left e) = show e
     format (Right fs) = concat $ map formatFile fs
     formatFile (CxxOutput f os) =
-      concat $ map (++ "\n") $ ["/* " ++ f ++ " */"] ++ cdOutput os
+      concat $ map (++ "\n") $ ["/* " ++ f ++ " */"] ++ os
 
 parseContents :: (String,String) -> CompileInfo ([AnyCategory SourcePos],[DefinedCategory SourcePos])
 parseContents (f,s) = unwrap parsed where
