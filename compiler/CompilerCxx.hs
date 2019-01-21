@@ -412,17 +412,17 @@ compileStatement (Assignment c as e) = do
     assignVariable _ = return ()
 compileStatement (NoValueExpression v) = compileVoidExpression v
 
--- TODO: This needs to first reorganize based on operator precedence.
--- NOTE: This should not call csWrite.
 compileExpression :: (Show c, Monad m, CompileErrorM m, MergeableM m,
                       CompilerContext c m [String] a) =>
   Expression c -> CompilerState a m (ExpressionType,String)
-compileExpression (Expression c s os) = lift $ do
-  compileErrorM "undefined"
-compileExpression (UnaryExpression c o e) = lift $ do
-  compileErrorM "undefined"
-compileExpression (InitializeValue c t vs) = lift $ do
-  compileErrorM "undefined"
+compileExpression = compile . rewrite where
+  compile (Expression c s os) = lift $ do
+    compileErrorM "undefined"
+  compile (UnaryExpression c o e) = lift $ do
+    compileErrorM "undefined"
+  compile (InitializeValue c t vs) = lift $ do
+    compileErrorM "undefined"
+  rewrite s = s
 
 compileVoidExpression :: (Show c, Monad m, CompileErrorM m, MergeableM m,
                          CompilerContext c m [String] a) =>
@@ -431,7 +431,33 @@ compileVoidExpression (Conditional ie) = lift $ do
   compileErrorM "undefined"
 compileVoidExpression (Loop l) = lift $ do
   compileErrorM "undefined"
--- TODO: If the final statement is an assignment then variable creation needs to
--- happen up front.
-compileVoidExpression (WithScope w) = lift $ do
-  compileErrorM "undefined"
+compileVoidExpression (WithScope s) = compileScopedBlock s
+
+compileScopedBlock :: (Show c, Monad m, CompileErrorM m, MergeableM m,
+                       CompilerContext c m [String] a) =>
+  ScopedBlock c -> CompilerState a m ()
+compileScopedBlock s = do
+  let (vs,p) = rewriteScoped s
+  sequence $ map createVariable vs
+  csWrite ["{"]
+  compileProcedure p
+  csWrite ["}"]
+  where
+    createVariable (c,t,n) = do
+      -- TODO: Call csRequiresTypes for t. (Maybe needs a helper function.)
+      csAddVariable c n (VariableValue c LocalScope t)
+      csWrite [variableType ++ " " ++ show n ++ ";"]
+    -- Merge chained scoped sections into a single section.
+    rewriteScoped w@(ScopedBlock c (Procedure c2 ss1)
+                                 (NoValueExpression (WithScope
+                                 (ScopedBlock _ (Procedure _ ss2) s)))) =
+      rewriteScoped $ ScopedBlock c (Procedure c2 $ ss1 ++ ss2) s
+    -- Gather to-be-created variables.
+    rewriteScoped (ScopedBlock c (Procedure c2 ss) (Assignment c3 vs e)) =
+      (created,Procedure c2 $ ss ++ [Assignment c3 (ParamSet existing) e]) where
+        (created,existing) = foldr update ([],[]) (psParams vs)
+        update (CreateVariable c t n) (cs,es) = ((c,t,n):cs,(ExistingVariable $ InputValue c n):es)
+        update e (cs,es) = (cs,e:es)
+    -- Merge the statement into the scoped block.
+    rewriteScoped (ScopedBlock c (Procedure c2 ss) s) =
+      ([],Procedure c2 $ ss ++ [s])
