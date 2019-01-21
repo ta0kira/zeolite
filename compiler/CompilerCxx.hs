@@ -535,12 +535,14 @@ compileExpression = compile . rewrite where
     let vt = ValueType RequiredValue $ SingleType $ JustTypeInstance t
     lift $ (checkValueTypeMatch r fa vt t') `reviseError`
       ("In conversion at " ++ formatFullContext c)
-    (t2,e2) <- compileFunctionCall (Just $ ParamSet [vt]) f
-    return (t2,e' ++ e2)
+    f' <- lookupFunction (Just t') f
+    (t2,e2) <- compileFunctionCall f' f
+    return (t2,e' ++ "->" ++ e2)
   transform (ValueCall c f) e = do
-    (t',e') <- e
-    (t2,e2) <- compileFunctionCall (Just t') f
-    return (t2,e' ++ e2)
+    (ParamSet [t'],e') <- e -- TODO: Get rid of the ParamSet matching here.
+    f' <- lookupFunction (Just t') f
+    (t2,e2) <- compileFunctionCall f' f
+    return (t2,e' ++ "->" ++ e2)
   transform (BinaryOperation c s e2) e = do
     (t0,e0) <- e
     return (t0,e0 ++ "/*bin*/")
@@ -555,9 +557,11 @@ compileExpressionStart (NamedVariable (OutputValue c n)) = do
   scoped <- autoScope s
   return (ParamSet [t],scoped ++ variableName n)
 compileExpressionStart (TypeCall c t f) = do
-  return (fakeTypeForNow,"/*typecall*/")
+  f' <- lookupFunction (Just $ ValueType RequiredValue $ SingleType t) f
+  compileFunctionCall f' f
 compileExpressionStart (UnqualifiedCall c f) = do
-  lift $ compileError $ "UnqualifiedCall " ++ formatFullContext c
+  f' <- lookupFunction Nothing f
+  compileFunctionCall f' f
 compileExpressionStart (ParensExpression c e) = do
   (t,e') <- compileExpression e
   return (t,"(" ++ e' ++ ")")
@@ -584,8 +588,19 @@ autoScope s = do
       | s1 == s2 = "this->"
       | otherwise = ""
 
+lookupFunction :: (Show c, Monad m, CompileErrorM m, MergeableM m,
+                        CompilerContext c m [String] a) =>
+  Maybe ValueType -> FunctionCall c -> CompilerState a m (ScopedFunction c)
+lookupFunction Nothing (FunctionCall c n ps as) = csGetFunction c n Nothing
+lookupFunction (Just t) (FunctionCall c n ps as)
+  | vtRequired t /= RequiredValue =
+    lift $ compileError $ "Cannot call function " ++ show n ++ " on value of type " ++ show t
+  | otherwise = do
+    let t' = vtType t
+    csGetFunction c n (Just t')
+
 compileFunctionCall :: (Show c, Monad m, CompileErrorM m, MergeableM m,
                         CompilerContext c m [String] a) =>
-  Maybe ExpressionType -> FunctionCall c -> CompilerState a m (ExpressionType,String)
-compileFunctionCall t (FunctionCall c n ps as) = do
-  lift $ compileError $ "FunctionCall " ++ formatFullContext c
+  ScopedFunction c -> FunctionCall c -> CompilerState a m (ExpressionType,String)
+compileFunctionCall f (FunctionCall c n ps as) = do
+  return (fakeTypeForNow,"/*func()*/")
