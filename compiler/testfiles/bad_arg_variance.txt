@@ -1,6 +1,6 @@
-@value interface Type1<`x|> {}
+@value interface Type1<#x|> {}
 
-@value interface Type2<`x|> {
+@value interface Type2<#x|> {
   // contravariant * contravariant = covariant
-  something (Type1<`x>) -> ()
+  something (Type1<#x>) -> ()
 }

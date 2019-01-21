@@ -1,12 +1,12 @@
 // Setup.
 
-@type interface Type<`x|> {
+@type interface Type<#x|> {
   x requires Value0
 }
 
 @value interface Value0 {}
 
-@value interface Value1<|`y> {
+@value interface Value1<|#y> {
   y requires Value0
 }
 

@@ -1,4 +1,4 @@
-concrete Type<`x> {
-  @category something<`x>
+concrete Type<#x> {
+  @category something<#x>
   () -> ()
 }

@@ -1,4 +1,4 @@
-concrete Type<`x> {
-  @value something<`x>
+concrete Type<#x> {
+  @value something<#x>
   () -> ()
 }

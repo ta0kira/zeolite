@@ -1,1 +1,1 @@
-@value interface Type<`x|`y|`x> {}
+@value interface Type<#x|#y|#x> {}

@@ -8,7 +8,7 @@
   refines Base
 }
 
-@value interface Inherit<`x|> {}
+@value interface Inherit<#x|> {}
 
 @value interface Parent1 {
   refines Inherit<Child1>

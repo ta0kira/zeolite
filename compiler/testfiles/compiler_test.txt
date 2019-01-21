@@ -1,31 +1,31 @@
-@value interface Get<|`x> {
-  get () -> (`x)
+@value interface Get<|#x> {
+  get () -> (#x)
 }
 
-@value interface Set<`x|> {
-  set (`x) -> ()
+@value interface Set<#x|> {
+  set (#x) -> ()
 }
 
-concrete Value<`x> {
-  refines Get<`x>
-  refines Set<`x>
+concrete Value<#x> {
+  refines Get<#x>
+  refines Set<#x>
 
-  @category create<`x> (`x) -> (Value<`x>)
-  @type create2 (`x) -> (Value<`x>)
+  @category create<#x> (#x) -> (Value<#x>)
+  @type create2 (#x) -> (Value<#x>)
 
-  @value get () -> (`x)
-  @value set (`x) -> ()
+  @value get () -> (#x)
+  @value set (#x) -> ()
 }
 
 define Value {
-  @value `x value
+  @value #x value
 
   create (value) {
-    return Value<`x>{ value }
+    return Value<#x>{ value }
   }
 
   create2 (value) (created) {
-    created <- Value$create<`x>(value)
+    created <- Value$create<#x>(value)
   }
 
   get () {

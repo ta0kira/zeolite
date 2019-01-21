@@ -4,7 +4,7 @@
   refines Type1
 }
 
-@value interface Inherited<|`x> {}
+@value interface Inherited<|#x> {}
 
 @value interface Parent {
   refines Inherited<Type2>

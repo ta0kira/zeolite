@@ -1,5 +1,5 @@
-@type interface Object1<|`x> {}
+@type interface Object1<|#x> {}
 
-concrete Object2<`y|> {
-  defines Object1<`y>
+concrete Object2<#y|> {
+  defines Object1<#y>
 }

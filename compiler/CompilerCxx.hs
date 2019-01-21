@@ -65,7 +65,7 @@ proxyType :: String
 proxyType = variableType ++ "&"
 
 paramName :: ParamName -> String
-paramName p = "Param_" ++ tail (pnName p) -- Remove leading '`'.
+paramName p = "Param_" ++ tail (pnName p) -- Remove leading '#'.
 
 variableName :: VariableName -> String
 variableName v = "Var_" ++ show v

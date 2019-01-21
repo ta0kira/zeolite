@@ -1,12 +1,12 @@
-@type interface Equals<`x|> {}
+@type interface Equals<#x|> {}
 
-@value interface Function<`y|`z> {}
+@value interface Function<#y|#z> {}
 
-concrete Value0<`t,`w> {
-  `t allows `w
-  `t requires Function<`t,`w>
-  `w requires `t
-  `w defines Equals<`w>
+concrete Value0<#t,#w> {
+  #t allows #w
+  #t requires Function<#t,#w>
+  #w requires #t
+  #w defines Equals<#w>
 }
 
 @value interface Value1 {

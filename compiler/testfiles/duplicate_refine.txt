@@ -2,7 +2,7 @@
 
 @value interface Value1 {}
 
-@value interface Value2<|`x> {}
+@value interface Value2<|#x> {}
 
 concrete Object {
   refines Value2<Value0>

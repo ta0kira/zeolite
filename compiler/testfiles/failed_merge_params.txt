@@ -1,33 +1,33 @@
-@value interface Type1<`a> {}
+@value interface Type1<#a> {}
 
-@value interface Type2<`b> {
-  refines Type1<`b>
+@value interface Type2<#b> {
+  refines Type1<#b>
 }
 
-@value interface Type3<`c> {
-  refines Type2<`c>
+@value interface Type3<#c> {
+  refines Type2<#c>
 }
 
-@value interface Interface1<`j> {
-  something<`x,`y>
-    `x requires Type2<`j>
-    `y allows Type1<`j>
-  (`x) -> (`y)
+@value interface Interface1<#j> {
+  something<#x,#y>
+    #x requires Type2<#j>
+    #y allows Type1<#j>
+  (#x) -> (#y)
 }
 
-@value interface Interface2<`k> {
-  something<`w,`z>
-    `w requires Type3<`k>
-    `z allows Type1<`k>
-  (`w) -> (`z)
+@value interface Interface2<#k> {
+  something<#w,#z>
+    #w requires Type3<#k>
+    #z allows Type1<#k>
+  (#w) -> (#z)
 }
 
-concrete Test<`q> {
-  refines Interface1<`q>
-  refines Interface2<`q>
+concrete Test<#q> {
+  refines Interface1<#q>
+  refines Interface2<#q>
 
-  @value something<`r,`s>
-    `r requires Type1<`q>
-    `s allows Type1<`q>
-  (`r) -> (`s)
+  @value something<#r,#s>
+    #r requires Type1<#q>
+    #s allows Type1<#q>
+  (#r) -> (#s)
 }
