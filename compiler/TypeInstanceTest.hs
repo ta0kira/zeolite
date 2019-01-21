@@ -647,16 +647,18 @@ checkConvertSuccess pa x y = return checked where
   checked = do
     ([t1,t2],pa2) <- parseTheTest pa [x,y]
     check $ checkValueTypeMatch resolver pa2 t1 t2
-  check (Left es) = compileError $ prefix ++ ":\n" ++ show es
-  check _ = return ()
+  check c
+    | isCompileError c = compileError $ prefix ++ ":\n" ++ show (getCompileError c)
+    | otherwise = return ()
 
 checkConvertFail pa x y = return checked where
   prefix = x ++ " /> " ++ y ++ " " ++ showParams pa
   checked = do
     ([t1,t2],pa2) <- parseTheTest pa [x,y]
     check $ checkValueTypeMatch resolver pa2 t1 t2
-  check (Right _) = compileError $ prefix ++ ": Expected failure\n"
-  check _ = return ()
+  check c
+    | isCompileError c = return ()
+    | otherwise = compileError $ prefix ++ ": Expected failure\n"
 
 resolver :: TypeResolver CompileInfo
 resolver = TypeResolver {

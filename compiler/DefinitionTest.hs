@@ -22,14 +22,16 @@ checkParseSuccess f = do
   let parsed = readMulti f contents :: CompileInfo [DefinedCategory SourcePos]
   return $ check parsed
   where
-    check (Left es) = compileError $ "Parse " ++ f ++ ":\n" ++ show es
-    check _ = return ()
+  check c
+    | isCompileError c = compileError $ "Parse " ++ f ++ ":\n" ++ show (getCompileError c)
+    | otherwise = return ()
 
 checkParseFail f = do
   contents <- readFile f
   let parsed = readMulti f contents :: CompileInfo [DefinedCategory SourcePos]
   return $ check parsed
   where
-    check (Right t) =
-      compileError $ "Parse " ++ f ++ ": Expected failure but got\n" ++ show t ++ "\n"
-    check _ = return ()
+  check c
+    | isCompileError c = return ()
+    | otherwise = compileError $ "Parse " ++ f ++ ": Expected failure but got\n" ++
+                                 show (getCompileSuccess c) ++ "\n"

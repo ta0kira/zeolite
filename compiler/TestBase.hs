@@ -35,9 +35,10 @@ runAllTests ts = do
   hPutStr stderr $ show (length ps) ++ " tests passed + " ++
                    show (length es) ++ " tests failed\n"
 
-numberError :: a -> Either b c -> Either (a,b) c
-numberError n (Left e)  = Left (n,e)
-numberError _ (Right x) = Right x -- Not the same Either!
+numberError :: a -> CompileInfo b -> Either (a,CompileMessage) b
+numberError n c
+  | isCompileError c = Left (n,getCompileError c)
+  | otherwise        = Right (getCompileSuccess c)
 
 forceParse :: ParseFromSource a => String -> a
 forceParse s = force $ parse sourceParser "(string)" s where
@@ -81,7 +82,7 @@ showParams pa = "[" ++ intercalate "," (concat $ map expand pa) ++ "]" where
   expand (n,ps) = map (\p -> n ++ " " ++ p) ps
 
 checkTypeSuccess :: TypeResolver CompileInfo -> [(String,[String])] ->
-                     String -> CompileInfo ()
+                    String -> CompileInfo ()
 checkTypeSuccess r pa x = do
   ([t],pa2) <- parseTheTest pa [x]
   check $ validateGeneralInstance r pa2 t
@@ -90,17 +91,18 @@ checkTypeSuccess r pa x = do
     check = flip reviseError (prefix ++ ":")
 
 checkTypeFail :: TypeResolver CompileInfo -> [(String,[String])] ->
-                  String -> CompileInfo ()
+                 String -> CompileInfo ()
 checkTypeFail r pa x = do
   ([t],pa2) <- parseTheTest pa [x]
   check $ validateGeneralInstance r pa2 t
   where
     prefix = x ++ " " ++ showParams pa
-    check (Right _) = compileError $ prefix ++ ": Expected failure\n"
-    check _ = return ()
+    check c
+      | isCompileError c = return ()
+      | otherwise = compileError $ prefix ++ ": Expected failure\n"
 
 checkDefinesSuccess :: TypeResolver CompileInfo -> [(String,[String])] ->
-                     String -> CompileInfo ()
+                       String -> CompileInfo ()
 checkDefinesSuccess r pa x = do
   ([t],pa2) <- parseTheTest pa [x]
   check $ validateDefinesInstance r pa2 t
@@ -109,11 +111,12 @@ checkDefinesSuccess r pa x = do
     check = flip reviseError (prefix ++ ":")
 
 checkDefinesFail :: TypeResolver CompileInfo -> [(String,[String])] ->
-                  String -> CompileInfo ()
+                    String -> CompileInfo ()
 checkDefinesFail r pa x = do
   ([t],pa2) <- parseTheTest pa [x]
   check $ validateDefinesInstance r pa2 t
   where
     prefix = x ++ " " ++ showParams pa
-    check (Right _) = compileError $ prefix ++ ": Expected failure\n"
-    check _ = return ()
+    check c
+      | isCompileError c = return ()
+      | otherwise = compileError $ prefix ++ ": Expected failure\n"

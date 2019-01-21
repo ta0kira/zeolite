@@ -34,12 +34,14 @@ main = do
       return $ hxx ++ cxx ++ cxx2
     empty = ([],[])
     merge (cs1,ds1) (cs2,ds2) = (cs1++cs2,ds1++ds2)
-    format (Left e) = show e
-    format (Right fs) = concat $ map formatFile fs
+    format c
+      | isCompileError c = show $ getCompileError c
+      | otherwise = concat $ map formatFile $ getCompileSuccess c
     formatFile (CxxOutput f os) =
       concat $ map (++ "\n") $ ["/* " ++ f ++ " */"] ++ os
-    writeResults (Right fs) = mapM_ (\(CxxOutput f os) -> writeFile f $ concat $ map (++ "\n") os) fs
-    writeResults _ = return ()
+    writeResults c
+      | isCompileError c = return ()
+      | otherwise = mapM_ (\(CxxOutput f os) -> writeFile f $ concat $ map (++ "\n") os) $ getCompileSuccess c
 
 parseContents :: (String,String) -> CompileInfo ([AnyCategory SourcePos],[DefinedCategory SourcePos])
 parseContents (f,s) = unwrap parsed where
