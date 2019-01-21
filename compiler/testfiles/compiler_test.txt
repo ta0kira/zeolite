@@ -24,8 +24,8 @@ define Value {
     return Value<`x>{ value }
   }
 
-  create2 (value) {
-    return Value$create<`x>(value)
+  create2 (value) (created) {
+    created <- Value$create<`x>(value)
   }
 
   get () {

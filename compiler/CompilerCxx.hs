@@ -351,9 +351,10 @@ compileExecutableProcedure t tm pa fa va
     wrapProcedure n f as rs output =
       mergeAll $ [
           onlyCode header,
-          indentCompiled $ onlyCodes defineParams,
-          indentCompiled $ onlyCodes defineArgs,
-          indentCompiled $ onlyCodes defineReturns,
+          indentCompiled $ defineReturns,
+          indentCompiled $ onlyCodes nameParams,
+          indentCompiled $ onlyCodes nameArgs,
+          indentCompiled $ onlyCodes nameReturns,
           indentCompiled output,
           onlyCode close
         ] where
@@ -361,20 +362,22 @@ compileExecutableProcedure t tm pa fa va
       name = callName f
       header
         | sfScope f == ValueScope =
-          "void " ++ name ++ "(Value self, " ++
+          returnType ++ " " ++ name ++ "(Value self, " ++
           "Params<" ++ show (length $ psParams $ sfParams f) ++ ">::Type params, " ++
-          "Args<" ++ show (length $ psParams $ sfArgs f) ++ ">::Type args, " ++
-          "Returns<" ++ show (length $ psParams $ sfReturns f) ++ ">::Type returns) {"
+          "Args<" ++ show (length $ psParams $ sfArgs f) ++ ">::Type args) {"
         | otherwise =
-          "void " ++ name ++ "(" ++
+          returnType ++ " " ++ name ++ "(" ++
           "Params<" ++ show (length $ psParams $ sfParams f) ++ ">::Type params, " ++
-          "Args<" ++ show (length $ psParams $ sfArgs f) ++ ">::Type args, " ++
-          "Returns<" ++ show (length $ psParams $ sfReturns f) ++ ">::Type returns) {"
-      defineParams = flip map (zip [0..] $ psParams $ sfParams f) $
-        (\(i,p) -> paramType ++ " " ++ paramName (vpParam p) ++ " = std::get<" ++ show i ++ ">(params);")
-      defineArgs = flip map (zip [0..] $ filter (not . isDiscardedInput) $ psParams $ avNames as) $
-        (\(i,n) -> proxyType ++ " " ++ variableName (ivName n) ++ " = std::get<" ++ show i ++ ">(args);")
+          "Args<" ++ show (length $ psParams $ sfArgs f) ++ ">::Type args) {"
+      returnType = "Returns<" ++ show (length $ psParams $ sfReturns f) ++ ">::Type"
       defineReturns
+        | isUnnamedReturns rs = emptyCompiledData
+        | otherwise = onlyCode $ returnType ++ " returns;"
+      nameParams = flip map (zip [0..] $ psParams $ sfParams f) $
+        (\(i,p) -> paramType ++ " " ++ paramName (vpParam p) ++ " = std::get<" ++ show i ++ ">(params);")
+      nameArgs = flip map (zip [0..] $ filter (not . isDiscardedInput) $ psParams $ avNames as) $
+        (\(i,n) -> proxyType ++ " " ++ variableName (ivName n) ++ " = std::get<" ++ show i ++ ">(args);")
+      nameReturns
         | isUnnamedReturns rs = []
         | otherwise = flip map (zip [0..] $ psParams $ nrNames rs) $
         (\(i,n) -> proxyType ++ " " ++ variableName (ovName n) ++ " = std::get<" ++ show i ++ ">(returns);")
