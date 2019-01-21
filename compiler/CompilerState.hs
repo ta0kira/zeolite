@@ -11,12 +11,14 @@ module CompilerState (
   VariableValue(..),
   csAddVariable,
   csAllFilters,
-  csCheckReturn,
+  csRegisterReturn,
   csCurrentScope,
   csGetFunction,
   csGetOutput,
   csGetParamScope,
   csGetVariable,
+  csInheritReturns,
+  csRequiresTypes,
   csResolver,
   csUpdateAssigned,
   csWrite,
@@ -50,8 +52,8 @@ class Monad m => CompilerContext c m s a | a -> c s where
   ccWrite :: a -> s -> m a
   ccGetOutput :: a -> m s
   ccUpdateAssigned :: a -> VariableName -> m a
-  ccCheckReturn :: a -> [c] -> ExpressionType -> m ()
-  -- TODO: Also need to determine if a Procedure has returned in all branches.
+  ccInheritReturns :: a -> [a] -> m a
+  ccRegisterReturn :: a -> [c] -> ExpressionType -> m a
 
 type ExpressionType = ParamSet ValueType
 
@@ -107,13 +109,17 @@ csWrite o = fmap (\x -> ccWrite x o) get >>= lift >>= put
 csGetOutput :: (Monad m, CompilerContext c m s a) => CompilerState a m s
 csGetOutput = fmap ccGetOutput get >>= lift
 
-csCheckReturn :: (Monad m, CompilerContext c m s a) =>
+csRegisterReturn :: (Monad m, CompilerContext c m s a) =>
   [c] -> ParamSet ValueType -> CompilerState a m ()
-csCheckReturn c rs = fmap (\x -> ccCheckReturn x c rs) get >>= lift
+csRegisterReturn c rs = fmap (\x -> ccRegisterReturn x c rs) get >>= lift >>= put
 
 csUpdateAssigned :: (Monad m, CompilerContext c m s a) =>
   VariableName -> CompilerState a m ()
 csUpdateAssigned n = fmap (\x -> ccUpdateAssigned x n) get >>= lift >>= put
+
+csInheritReturns :: (Monad m, CompilerContext c m s a) =>
+  [a] -> CompilerState a m ()
+csInheritReturns xs = fmap (\x -> ccInheritReturns x xs) get >>= lift >>= put
 
 data CompiledData s =
   CompiledData {

@@ -23,7 +23,8 @@ instance ParseFromSource (ExecutableProcedure SourcePos) where
     as <- sourceParser
     rs <- sourceParser
     pp <- between (sepAfter $ string "{") (sepAfter $ string "}") sourceParser
-    return $ ExecutableProcedure [c] n as rs pp
+    c2 <- getPosition
+    return $ ExecutableProcedure [c] [c2] n as rs pp
 
 instance ParseFromSource (ArgValues SourcePos) where
   sourceParser = labeled "procedure arguments" $ do

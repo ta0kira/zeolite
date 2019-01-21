@@ -289,7 +289,7 @@ compileExecutableProcedure :: (Show c, Monad m, CompileErrorM m, MergeableM m) =
   (ScopedFunction c,ExecutableProcedure c) -> m (CompiledData [String])
 compileExecutableProcedure t tm pa fa va
                  (ff@(ScopedFunction _ _ _ s as1 rs1 _ _ _),
-                  (ExecutableProcedure _ _ as2 rs2 p)) = do
+                  (ExecutableProcedure _ c _ as2 rs2 p)) = do
   rs' <- if isUnnamedReturns rs2
             then return $ ValidatePositions rs1
             else fmap (ValidateNames . Map.fromList) $ processParamPairs pairOutput rs1 (nrNames rs2)
@@ -316,9 +316,13 @@ compileExecutableProcedure t tm pa fa va
       pcRequiredTypes = Set.empty,
       pcOutput = []
     }
-  output <- runDataCompiler (compileProcedure p) ctx
+  output <- runDataCompiler (compileProcedure p >> defaultReturn) ctx
   return $ wrapProcedure (tiName t) ff as2 rs2 output
   where
+    -- TODO: There should be an additional error message.
+    defaultReturn = do
+      csRegisterReturn c (ParamSet [])
+      csWrite ["return returns;"]
     pairOutput (PassedValue c1 t) (OutputValue c2 n) = return $ (n,PassedValue (c2++c1) t)
     wrapProcedure n f as rs output =
       mergeAll $ [
@@ -364,7 +368,7 @@ compileStatement :: (Show c, Monad m, CompileErrorM m, MergeableM m,
                      CompilerContext c m [String] a) =>
   Statement c -> CompilerState a m ()
 compileStatement (EmptyReturn c) = do
-  csCheckReturn c (ParamSet [])
+  csRegisterReturn c (ParamSet [])
   csWrite ["return returns;"]
 compileStatement (ExplicitReturn c es) = do
   es' <- sequence $ map compileExpression $ psParams es
@@ -372,12 +376,12 @@ compileStatement (ExplicitReturn c es) = do
   where
     -- Single expression, but possibly multi-return.
     getReturn [(ParamSet ts,e)] = do
-      csCheckReturn c (ParamSet ts)
+      csRegisterReturn c (ParamSet ts)
       csWrite ["return " ++ e ++ ";"]
     -- Multi-expression => must all be singles.
     getReturn rs = do
       lift $ mergeAllM $ map checkArity $ zip [1..] $ map fst rs
-      csCheckReturn c $ ParamSet $ map (head . psParams . fst) rs
+      csRegisterReturn c $ ParamSet $ map (head . psParams . fst) rs
       csWrite $ map bindReturn $ zip [0..] $ map snd rs
       csWrite ["return returns;"]
     checkArity (_,ParamSet [_]) = return ()
@@ -439,8 +443,14 @@ compileScopedBlock :: (Show c, Monad m, CompileErrorM m, MergeableM m,
 compileScopedBlock s = do
   let (vs,p) = rewriteScoped s
   sequence $ map createVariable vs
+  -- Capture context so we can discard scoped variable names.
+  ctx <- compileProcedure p
+  req <- lift $ ccGetRequired ctx
+  csRequiresTypes req
+  csInheritReturns [ctx]
+  out <- lift $ ccGetOutput ctx
   csWrite ["{"]
-  compileProcedure p
+  csWrite out
   csWrite ["}"]
   where
     createVariable (c,t,n) = do

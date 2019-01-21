@@ -35,6 +35,7 @@ import Data.List (intercalate)
 data ExecutableProcedure c =
   ExecutableProcedure {
     epContext :: [c],
+    epEnd :: [c],
     epName :: FunctionName,
     epArgs :: ArgValues c,
     epReturns :: ReturnValues c,

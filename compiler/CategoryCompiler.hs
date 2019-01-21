@@ -147,27 +147,55 @@ instance (Show c, MergeableM m, CompileErrorM m, Monad m) =>
         pcOutput = pcOutput ctx
       }
     update _ = return ctx
-  ccCheckReturn ctx c vs = check (pcReturns ctx) where
-    check (ValidatePositions rs) = do
-      processParamPairs checkReturnType rs (ParamSet $ zip [1..] $ psParams vs)
-      return ()
-      where
-        checkReturnType ta0@(PassedValue c0 t0) (n,t) = do
-          r <- ccResolver ctx
-          pa <- ccAllFilters ctx
-          checkValueTypeMatch r pa t t0 `reviseError`
-            ("Cannot convert " ++ show t ++ " to " ++ show ta0 ++ " in return " ++
-             show n ++ " [" ++ formatFullContext c ++ "]")
-    check (ValidateNames ra)
-      | not $ null $ psParams vs =
-        compileError $ "Positional returns not allowed when returns are named [" ++
-                       formatFullContext c ++ "]"
-      | otherwise =
-        mergeAllM $ map alwaysError $ Map.toList ra
+  ccInheritReturns ctx cs =update (pcReturns ctx) where
+    update (ValidateNames ra) = return $ ProcedureContext {
+        pcScope = pcScope ctx,
+        pcType = pcType ctx,
+        pcCategories = pcCategories ctx,
+        pcFilters = pcFilters ctx,
+        pcParamScopes = pcParamScopes ctx,
+        pcFunctions = pcFunctions ctx,
+        pcVariables = pcVariables ctx,
+        pcReturns = ValidateNames $ Map.unions $ map (vnReturns . pcReturns) cs,
+        pcRequiredTypes = pcRequiredTypes ctx,
+        pcOutput = pcOutput ctx
+      }
+    update _ = return ctx
+  ccRegisterReturn ctx c vs = do
+    check (pcReturns ctx)
+    return $ ProcedureContext {
+        pcScope = pcScope ctx,
+        pcType = pcType ctx,
+        pcCategories = pcCategories ctx,
+        pcFilters = pcFilters ctx,
+        pcParamScopes = pcParamScopes ctx,
+        pcFunctions = pcFunctions ctx,
+        pcVariables = pcVariables ctx,
+        pcReturns = NoValidation,
+        pcRequiredTypes = pcRequiredTypes ctx,
+        pcOutput = pcOutput ctx
+      }
+    where
+      check (ValidatePositions rs) = do
+        processParamPairs checkReturnType rs (ParamSet $ zip [1..] $ psParams vs)
+        return ()
         where
-          alwaysError (n,t) = compileError $ "Named return " ++ show n ++ " (" ++
-                                             show t ++ ") might not have been set"
-    check _ = return ()
+          checkReturnType ta0@(PassedValue c0 t0) (n,t) = do
+            r <- ccResolver ctx
+            pa <- ccAllFilters ctx
+            checkValueTypeMatch r pa t t0 `reviseError`
+              ("Cannot convert " ++ show t ++ " to " ++ show ta0 ++ " in return " ++
+               show n ++ " [" ++ formatFullContext c ++ "]")
+      check (ValidateNames ra)
+        | not $ null $ psParams vs =
+          compileError $ "Positional returns not allowed when returns are named [" ++
+                         formatFullContext c ++ "]"
+        | otherwise =
+          mergeAllM $ map alwaysError $ Map.toList ra
+          where
+            alwaysError (n,t) = compileError $ "Named return " ++ show n ++ " (" ++
+                                               show t ++ ") might not have been set"
+      check _ = return ()
 
 setInternalFunctions :: (Show c, Monad m, CompileErrorM m, MergeableM m) =>
   TypeResolver m -> AnyCategory c -> [ScopedFunction c] ->
