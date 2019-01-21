@@ -7,6 +7,7 @@ module CompilerCxx (
   CxxOutput(..),
   compileCategoryDeclaration,
   compileCategoryDefinition,
+  compileInterfaceDefinition,
 ) where
 
 import Control.Monad (when)
@@ -125,6 +126,11 @@ functionLabelType f =
       | sfScope f == TypeScope     = "TypeScope"
       | sfScope f == ValueScope    = "ValueScope"
 
+createLabelForFunction :: ScopedFunction c -> String
+createLabelForFunction f = "const " ++ functionLabelType f ++ "& " ++ functionName f ++
+                           " = *new " ++ functionLabelType f ++ "(\"" ++
+                           show (sfType f) ++ "\", \"" ++ show (sfName f) ++ "\");"
+
 compileCategoryDeclaration :: Monad m => CategoryMap c -> AnyCategory c -> m CxxOutput
 compileCategoryDeclaration _ t =
   return $ CxxOutput (headerFilename name) $ guardTop ++ content ++ guardBottom where
@@ -135,6 +141,14 @@ compileCategoryDeclaration _ t =
     content = baseHeaderIncludes ++ labels
     labels = map label $ filter ((== name) . sfType) $ getCategoryFunctions t
     label f = "extern const " ++ functionLabelType f ++ "& " ++ functionName f ++ ";"
+
+compileInterfaceDefinition :: Monad m => CategoryMap c -> AnyCategory c -> m CxxOutput
+compileInterfaceDefinition _ t =
+  return $ CxxOutput (sourceFilename name) $ content where
+    name = getCategoryName t
+    content = baseSourceIncludes ++ headers ++ labels
+    headers = ["#include \"" ++ headerFilename name ++ "\""]
+    labels = map createLabelForFunction $ filter ((== name) . sfType) $ getCategoryFunctions t
 
 compileCategoryDefinition :: (Show c, Monad m, CompileErrorM m, MergeableM m) =>
   CategoryMap c -> DefinedCategory c -> m CxxOutput

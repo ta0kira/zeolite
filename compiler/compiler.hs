@@ -20,6 +20,7 @@ main = do
   let namedContents = zip files allContents
   results <- return $ processContents namedContents
   hPutStr stderr $ format results
+  writeResults results
   where
     processContents :: [(String,String)] -> CompileInfo [CxxOutput]
     processContents cs = do
@@ -28,13 +29,17 @@ main = do
       cm <- includeNewTypes Map.empty cs
       hxx <- collectAllOrErrorM $ map (compileCategoryDeclaration cm) cs
       cxx <- collectAllOrErrorM $ map (compileCategoryDefinition  cm) ds
-      return $ hxx ++ cxx
+      let interfaces = filter (not . isValueConcrete) cs
+      cxx2 <- collectAllOrErrorM $ map (compileInterfaceDefinition cm) interfaces
+      return $ hxx ++ cxx ++ cxx2
     empty = ([],[])
     merge (cs1,ds1) (cs2,ds2) = (cs1++cs2,ds1++ds2)
     format (Left e) = show e
     format (Right fs) = concat $ map formatFile fs
     formatFile (CxxOutput f os) =
       concat $ map (++ "\n") $ ["/* " ++ f ++ " */"] ++ os
+    writeResults (Right fs) = mapM_ (\(CxxOutput f os) -> writeFile f $ concat $ map (++ "\n") os) fs
+    writeResults _ = return ()
 
 parseContents :: (String,String) -> CompileInfo ([AnyCategory SourcePos],[DefinedCategory SourcePos])
 parseContents (f,s) = unwrap parsed where
