@@ -406,7 +406,9 @@ compileStatement (Assignment c as e) = do
   csWrite ["}"]
   where
     createVariable r fa (CreateVariable c t1 n) t2 = do
-      lift $ (checkValueTypeMatch r fa t2 t1) `reviseError`
+      -- TODO: Call csRequiresTypes for t1. (Maybe needs a helper function.)
+      lift $ mergeAllM [validateGeneralInstance r fa (vtType t1),
+                        checkValueTypeMatch r fa t2 t1] `reviseError`
         ("In variable assignment at " ++ formatFullContext c)
       csAddVariable c n (VariableValue c LocalScope t1)
       csWrite [variableType ++ " " ++ show n ++ ";"]
