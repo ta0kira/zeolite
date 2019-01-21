@@ -11,7 +11,7 @@ module CompilerCxx (
 ) where
 
 import Control.Monad (when)
-import Control.Monad.Trans.State (get,put)
+import Control.Monad.Trans.State (execStateT,get,put)
 import Control.Monad.Trans (lift)
 import Data.List (intercalate)
 import qualified Data.Map as Map
@@ -171,10 +171,12 @@ compileCategoryDefinition tm dd@(DefinedCategory c n _ ps fs) = do
       let ms = filter ((== CategoryScope) . dmScope) $ dcMembers d
       let pv = ParamSet $ map vpParam $ getCategoryParams t
       ma <- mapMembers ms
+      let ma0 = Map.filter ((\s -> s == LocalScope || s == CategoryScope) . vvScope) $ builtinVariables t'
+      let ma' = Map.union ma0 ma
       mergeAllM [
           return $ onlyCode $ "struct " ++ categoryName (getCategoryName t) ++ " : public " ++ categoryBase ++ " {",
           fmap indentCompiled $ categoryConstructor tm t d ms,
-          fmap indentCompiled $ mergeAllM $ map (compileExecutableProcedure tm pv mv filters fa ma) ps,
+          fmap indentCompiled $ mergeAllM $ map (compileExecutableProcedure tm pv mv filters fa ma') ps,
           fmap indentCompiled $ mergeAllM $ map createMember ms,
           return $ indentCompiled $ onlyCode $ "Dispatcher dispatcher;",
           return $ onlyCode "}"
@@ -192,10 +194,12 @@ compileCategoryDefinition tm dd@(DefinedCategory c n _ ps fs) = do
       let ms = filter ((== TypeScope) . dmScope) $ dcMembers d
       let pv = ParamSet $ map vpParam $ getCategoryParams t
       ma <- mapMembers ms
+      let ma0 = Map.filter ((\s -> s == LocalScope || s == TypeScope) . vvScope) $ builtinVariables t'
+      let ma' = Map.union ma0 ma
       mergeAllM [
           return $ onlyCode $ "struct " ++ typeName (getCategoryName t) ++ " : public " ++ typeBase ++ " {",
           fmap indentCompiled $ typeConstructor tm t d ms,
-          fmap indentCompiled $ mergeAllM $ map (compileExecutableProcedure tm pv mv filters fa ma) ps,
+          fmap indentCompiled $ mergeAllM $ map (compileExecutableProcedure tm pv mv filters fa ma') ps,
           return $ indentCompiled $ onlyCode $ categoryName (getCategoryName t) ++ "& parent;",
           fmap indentCompiled $ mergeAllM $ map createParam $ map (jpnName . stType) $ psParams $ tiParams t',
           fmap indentCompiled $ mergeAllM $ map createMember ms,
@@ -220,10 +224,12 @@ compileCategoryDefinition tm dd@(DefinedCategory c n _ ps fs) = do
       let ms = filter ((== ValueScope) . dmScope) $ dcMembers d
       let pv = ParamSet $ map vpParam $ getCategoryParams t
       ma <- mapMembers ms
+      let ma0 = Map.filter ((\s -> s == LocalScope || s == ValueScope) . vvScope) $ builtinVariables t'
+      let ma' = Map.union ma0 ma
       mergeAllM [
           return $ onlyCode $ "struct " ++ valueName (getCategoryName t) ++ " : public " ++ valueBase ++ " {",
           fmap indentCompiled $ valueConstructor tm t d ms,
-          fmap indentCompiled $ mergeAllM $ map (compileExecutableProcedure tm pv mv filters fa ma) ps,
+          fmap indentCompiled $ mergeAllM $ map (compileExecutableProcedure tm pv mv filters fa ma') ps,
           return $ indentCompiled $ onlyCode $ typeName (getCategoryName t) ++ "& parent;",
           fmap indentCompiled $ mergeAllM $ map createMember ms,
           return $ onlyCode "}"
@@ -320,7 +326,7 @@ compileExecutableProcedure tm ps ms pa fa va
       pcCategories = tm,
       pcFilters = pa',
       pcParamScopes = sa,
-      pcFunctions = fa,
+      pcFunctions = fa, -- TODO: Add builtin functions.
       pcVariables = va'',
       pcReturns = rs',
       pcRequiredTypes = Set.empty,
@@ -330,7 +336,8 @@ compileExecutableProcedure tm ps ms pa fa va
   return $ wrapProcedure t ff as2 rs2 output
   where
     compileWithReturn = do
-      compileProcedure p >>= put
+      ctx0 <- get
+      compileProcedure ctx0 p >>= put
       csRegisterReturn c (ParamSet []) `reviseErrorStateT`
         ("In implicit return from " ++ show n ++ " [" ++ formatFullContext c ++ "]")
       csWrite ["return returns;"]
@@ -370,10 +377,10 @@ compileExecutableProcedure tm ps ms pa fa va
 -- Returns the state so that returns can be properly checked for if/elif/else.
 compileProcedure :: (Show c, Monad m, CompileErrorM m, MergeableM m,
                      CompilerContext c m [String] a) =>
-  Procedure c -> CompilerState a m a
-compileProcedure (Procedure c ss) = do
-  sequence $ map compileStatement ss
-  get
+  a -> Procedure c -> CompilerState a m a
+compileProcedure ctx (Procedure c ss) = do
+  ctx' <- lift $ execStateT (sequence $ map compileStatement ss) ctx
+  return ctx'
 
 compileStatement :: (Show c, Monad m, CompileErrorM m, MergeableM m,
                      CompilerContext c m [String] a) =>
@@ -422,7 +429,7 @@ compileStatement (Assignment c as e) = do
                         checkValueTypeMatch r fa t2 t1] `reviseError`
         ("In variable assignment at " ++ formatFullContext c)
       csAddVariable c n (VariableValue c LocalScope t1)
-      csWrite [variableType ++ " " ++ show n ++ ";"]
+      csWrite [variableType ++ " " ++ variableName n ++ ";"]
     createVariable r fa (ExistingVariable (InputValue c n)) t2 = do
       (VariableValue _ s1 t1) <- csGetVariable c n
       -- TODO: Also show original context.
@@ -452,7 +459,8 @@ compileIfElifElse :: (Show c, Monad m, CompileErrorM m, MergeableM m,
 compileIfElifElse (IfStatement c e p es) = do
   (ts,e') <- compileExpression e
   lift $ checkCondition ts `reviseError` ("In condition at " ++ formatFullContext c)
-  ctx <- compileProcedure p
+  ctx0 <- get
+  ctx <- compileProcedure ctx0 p
   (lift $ ccGetRequired ctx) >>= csRequiresTypes
   csWrite ["if (" ++ e' ++ ") {"]
   (lift $ ccGetOutput ctx) >>= csWrite
@@ -463,7 +471,8 @@ compileIfElifElse (IfStatement c e p es) = do
     unwind (IfStatement c e p es) = do
       (ts,e') <- compileExpression e
       lift $ checkCondition ts `reviseError` ("In condition at " ++ formatFullContext c)
-      ctx <- compileProcedure p
+      ctx0 <- get
+      ctx <- compileProcedure ctx0 p
       (lift $ ccGetRequired ctx) >>= csRequiresTypes
       csWrite ["else if (" ++ e' ++ ") {"]
       (lift $ ccGetOutput ctx) >>= csWrite
@@ -471,7 +480,8 @@ compileIfElifElse (IfStatement c e p es) = do
       cs <- unwind es
       return $ ctx:cs
     unwind (ElseStatement c p) = do
-      ctx <- compileProcedure p
+      ctx0 <- get
+      ctx <- compileProcedure ctx0 p
       (lift $ ccGetRequired ctx) >>= csRequiresTypes
       csWrite ["else {"]
       (lift $ ccGetOutput ctx) >>= csWrite
@@ -487,7 +497,8 @@ compileWhileLoop :: (Show c, Monad m, CompileErrorM m, MergeableM m,
 compileWhileLoop (WhileLoop c e p) = do
   (ts,e') <- compileExpression e
   lift $ checkCondition ts `reviseError` ("In condition at " ++ formatFullContext c)
-  ctx <- compileProcedure p
+  ctx0 <- get
+  ctx <- compileProcedure ctx0 p
   (lift $ ccGetRequired ctx) >>= csRequiresTypes
   csWrite ["while (" ++ e' ++ ") {"]
   (lift $ ccGetOutput ctx) >>= csWrite
@@ -501,34 +512,41 @@ compileScopedBlock :: (Show c, Monad m, CompileErrorM m, MergeableM m,
                        CompilerContext c m [String] a) =>
   ScopedBlock c -> CompilerState a m ()
 compileScopedBlock s = do
-  let (vs,p) = rewriteScoped s
-  sequence $ map createVariable vs
+  let (vs,p,st) = rewriteScoped s
   -- Capture context so we can discard scoped variable names.
-  ctx <- compileProcedure p
-  (lift $ ccGetRequired ctx) >>= csRequiresTypes
+  ctx0 <- get
+  sequence $ map createVariable vs
+  ctx <- compileProcedure ctx0 p
+  -- This needs to come at the end so that statements in the scoped block cannot
+  -- refer variables created in the final statement. Both of the following need
+  -- to compile in the same context as p.
+  ctx' <- lift $ execStateT (sequence $ map showVariable vs) ctx
+  ctx'' <- compileProcedure ctx' (Procedure [] [st])
   csWrite ["{"]
-  (lift $ ccGetOutput ctx) >>= csWrite
+  (lift $ ccGetOutput ctx'') >>= csWrite
   csWrite ["}"]
-  csInheritReturns [ctx]
+  sequence $ map showVariable vs
+  (lift $ ccGetRequired ctx'') >>= csRequiresTypes
+  csInheritReturns [ctx'']
   where
-    createVariable (c,t,n) = do
+    createVariable (c,t,n) = csWrite [variableType ++ " " ++ variableName n ++ ";"]
+    showVariable (c,t,n) = do
       -- TODO: Call csRequiresTypes for t. (Maybe needs a helper function.)
       csAddVariable c n (VariableValue c LocalScope t)
-      csWrite [variableType ++ " " ++ show n ++ ";"]
     -- Merge chained scoped sections into a single section.
     rewriteScoped w@(ScopedBlock c (Procedure c2 ss1)
                                  (NoValueExpression (WithScope
                                  (ScopedBlock _ (Procedure _ ss2) s)))) =
       rewriteScoped $ ScopedBlock c (Procedure c2 $ ss1 ++ ss2) s
     -- Gather to-be-created variables.
-    rewriteScoped (ScopedBlock c (Procedure c2 ss) (Assignment c3 vs e)) =
-      (created,Procedure c2 $ ss ++ [Assignment c3 (ParamSet existing) e]) where
+    rewriteScoped (ScopedBlock c p (Assignment c2 vs e)) =
+      (created,p,Assignment c2 (ParamSet existing) e) where
         (created,existing) = foldr update ([],[]) (psParams vs)
         update (CreateVariable c t n) (cs,es) = ((c,t,n):cs,(ExistingVariable $ InputValue c n):es)
         update e (cs,es) = (cs,e:es)
     -- Merge the statement into the scoped block.
-    rewriteScoped (ScopedBlock c (Procedure c2 ss) s) =
-      ([],Procedure c2 $ ss ++ [s])
+    rewriteScoped (ScopedBlock c p s) =
+      ([],p,s)
 
 compileExpression :: (Show c, Monad m, CompileErrorM m, MergeableM m,
                       CompilerContext c m [String] a) =>
@@ -606,6 +624,8 @@ compileExpressionStart (InlineAssignment c n e) = do
   fa <- csAllFilters
   lift $ (checkValueTypeMatch r fa t t0) `reviseError`
     ("In assignment at " ++ formatFullContext c)
+  -- TODO: This might not be safe when operators are used, since the assignment
+  -- might get short-circuited.
   csUpdateAssigned n
   scoped <- autoScope s
   return (ParamSet [t0],"T_get(" ++ scoped ++ variableName n ++ " = " ++ e' ++ ")")
@@ -694,3 +714,9 @@ expandType (SingleType (JustParamName p)) = do
   s <- csGetParamScope p
   scoped <- autoScope s
   return $ scoped ++ paramName p
+
+builtinVariables :: TypeInstance -> Map.Map VariableName (VariableValue c)
+builtinVariables t = Map.fromList [
+    (VariableName "self",VariableValue [] ValueScope (ValueType RequiredValue $ SingleType $ JustTypeInstance t)),
+    (VariableName "empty",VariableValue [] LocalScope (ValueType OptionalValue $ TypeMerge MergeUnion []))
+  ]

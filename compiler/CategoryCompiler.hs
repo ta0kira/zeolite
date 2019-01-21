@@ -105,7 +105,8 @@ instance (Show c, MergeableM m, CompileErrorM m, Monad m) =>
     ccGetFunction ctx c n (Just $ SingleType $ JustTypeInstance $ TypeInstance (pcType ctx) ps)
   ccGetValueInit ctx c (TypeInstance t as)
     | t /= pcType ctx =
-      compileError $ "Category " ++ show (pcType ctx) ++ " cannot initialize values from " ++ show t
+      compileError $ "Category " ++ show (pcType ctx) ++ " cannot initialize values from " ++
+                     show t ++ " [" ++ formatFullContext c ++ "]"
     | otherwise = do
       let t' = TypeInstance (pcType ctx) as
       r <- ccResolver ctx
@@ -120,7 +121,8 @@ instance (Show c, MergeableM m, CompileErrorM m, Monad m) =>
   ccGetVariable ctx c n =
       case n `Map.lookup` pcVariables ctx of
            (Just v) -> return v
-           _ -> compileError $ "Variable " ++ show n ++ " is not defined"
+           _ -> compileError $ "Variable " ++ show n ++ " is not defined [" ++
+                               formatFullContext c ++ "]"
   ccAddVariable ctx c n t = do
       case n `Map.lookup` pcVariables ctx of
            Nothing -> return ()
