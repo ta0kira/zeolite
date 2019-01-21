@@ -415,8 +415,10 @@ compileStatement (Assignment c as e) = do
     createVariable _ _ _ _ = return ()
     assignVariable (i,CreateVariable _ _ n) =
       csWrite [variableName n ++ " = std::get<" ++ show i ++ ">(r);"]
-    assignVariable (i,ExistingVariable (InputValue _ n)) =
-      csWrite [variableName n ++ " = std::get<" ++ show i ++ ">(r);"]
+    assignVariable (i,ExistingVariable (InputValue _ n)) = do
+      (VariableValue _ s _) <- csGetVariable c n
+      scoped <- autoScope s
+      csWrite [scoped ++ variableName n ++ " = std::get<" ++ show i ++ ">(r);"]
     assignVariable _ = return ()
 compileStatement (NoValueExpression v) = compileVoidExpression v
 
@@ -545,15 +547,37 @@ compileExpressionStart :: (Show c, Monad m, CompileErrorM m, MergeableM m,
                            CompilerContext c m [String] a) =>
   ExpressionStart c -> CompilerState a m (ExpressionType,String)
 compileExpressionStart (NamedVariable (OutputValue c n)) = do
-  v <- csGetVariable c n
-  return (ParamSet [vvType v],variableName n)
+  (VariableValue _ s t) <- csGetVariable c n
+  scoped <- autoScope s
+  return (ParamSet [t],scoped ++ variableName n)
 compileExpressionStart (TypeCall c t f) = do
   return (fakeTypeForNow,"/*typecall*/")
 compileExpressionStart (UnqualifiedCall c f) = do
   lift $ compileError $ "UnqualifiedCall " ++ formatFullContext c
-compileExpressionStart (ParensExpression c e) = compileExpression e
-compileExpressionStart (InlineAssignment c v e) = do
-  lift $ compileError $ "InlineAssignment " ++ formatFullContext c
+compileExpressionStart (ParensExpression c e) = do
+  (t,e') <- compileExpression e
+  return (t,"(" ++ e' ++ ")")
+compileExpressionStart (InlineAssignment c n e) = do
+  (VariableValue c2 s t0) <- csGetVariable c n
+  (ParamSet [t],e') <- compileExpression e -- TODO: Get rid of the ParamSet matching here.
+  r <- csResolver
+  fa <- csAllFilters
+  lift $ (checkValueTypeMatch r fa t t0) `reviseError`
+    ("In assignment at " ++ formatFullContext c)
+  scoped <- autoScope s
+  return (ParamSet [t0],"(" ++ scoped ++ variableName n ++ " = " ++ e' ++ ")")
+
+autoScope :: (Monad m, CompilerContext c m s a) => SymbolScope -> CompilerState a m String
+autoScope s = do
+  s1 <- csCurrentScope
+  return $ scoped s1 s
+  where
+    scoped ValueScope TypeScope     = "parent."
+    scoped ValueScope CategoryScope = "parent.parent."
+    scoped TypeScope  CategoryScope = "parent."
+    scoped s1 s2
+      | s1 == s2 = "this->"
+      | otherwise = ""
 
 compileFunctionCall :: (Show c, Monad m, CompileErrorM m, MergeableM m,
                         CompilerContext c m [String] a) =>
