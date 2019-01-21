@@ -156,6 +156,8 @@ compileCategoryDefinition tm dd@(DefinedCategory c n _ ps fs) = do
   let includes = map (\i -> "#include \"" ++ headerFilename i ++ "\"") $ Set.toList req
   return $ CxxOutput filename (baseSourceIncludes ++ includes ++ out)
   where
+    -- NOTE: This is always ValueScope for initializer checks.
+    mv = filter ((== ValueScope) . dmScope) $ dcMembers dd
     namespaceStart = return $ onlyCode $ "namespace {"
     namespaceEnd   = return $ onlyCode $ "}"
     typeInstance ps =
@@ -167,11 +169,12 @@ compileCategoryDefinition tm dd@(DefinedCategory c n _ ps fs) = do
     compileCategory tm t d filters fa ps = do
       let t' = typeInstance $ getCategoryParams t
       let ms = filter ((== CategoryScope) . dmScope) $ dcMembers d
+      let pv = ParamSet $ map vpParam $ getCategoryParams t
       ma <- mapMembers ms
       mergeAllM [
           return $ onlyCode $ "struct " ++ categoryName (getCategoryName t) ++ " : public " ++ categoryBase ++ " {",
           fmap indentCompiled $ categoryConstructor tm t d ms,
-          fmap indentCompiled $ mergeAllM $ map (compileExecutableProcedure t' tm filters fa ma) ps,
+          fmap indentCompiled $ mergeAllM $ map (compileExecutableProcedure tm pv mv filters fa ma) ps,
           fmap indentCompiled $ mergeAllM $ map createMember ms,
           return $ indentCompiled $ onlyCode $ "Dispatcher dispatcher;",
           return $ onlyCode "}"
@@ -187,11 +190,12 @@ compileCategoryDefinition tm dd@(DefinedCategory c n _ ps fs) = do
     compileType tm t d filters fa ps = do
       let t' = typeInstance $ getCategoryParams t
       let ms = filter ((== TypeScope) . dmScope) $ dcMembers d
+      let pv = ParamSet $ map vpParam $ getCategoryParams t
       ma <- mapMembers ms
       mergeAllM [
           return $ onlyCode $ "struct " ++ typeName (getCategoryName t) ++ " : public " ++ typeBase ++ " {",
           fmap indentCompiled $ typeConstructor tm t d ms,
-          fmap indentCompiled $ mergeAllM $ map (compileExecutableProcedure t' tm filters fa ma) ps,
+          fmap indentCompiled $ mergeAllM $ map (compileExecutableProcedure tm pv mv filters fa ma) ps,
           return $ indentCompiled $ onlyCode $ categoryName (getCategoryName t) ++ "& parent;",
           fmap indentCompiled $ mergeAllM $ map createParam $ map (jpnName . stType) $ psParams $ tiParams t',
           fmap indentCompiled $ mergeAllM $ map createMember ms,
@@ -200,10 +204,10 @@ compileCategoryDefinition tm dd@(DefinedCategory c n _ ps fs) = do
     typeConstructor tm t d ms = do
       let ps = map vpParam $ getCategoryParams t
       let argParent = categoryName (getCategoryName t) ++ "& p"
-      let argsPassed = map (\i -> paramType ++ " a" ++ show i) [0..(length ps)-1]
-      let allArgs = intercalate ", " $ argParent:argsPassed
+      let argsPassed = "Params<" ++ show (length ps) ++ ">::Type params"
+      let allArgs = intercalate ", " [argParent,argsPassed]
       let initParent = "parent(p)"
-      let initPassed = map (\(i,p) -> paramName p ++ "(a" ++ show i ++ ")") $ zip [0..] ps
+      let initPassed = map (\(i,p) -> paramName p ++ "(*std::get<" ++ show i ++ ">(params))") $ zip [0..] ps
       let allInit = intercalate ", " $ initParent:initPassed
       ctx <- getContextForInit tm t d TypeScope
       mergeAllM [
@@ -214,21 +218,22 @@ compileCategoryDefinition tm dd@(DefinedCategory c n _ ps fs) = do
     compileValue tm t d filters fa ps = do
       let t' = typeInstance $ getCategoryParams t
       let ms = filter ((== ValueScope) . dmScope) $ dcMembers d
+      let pv = ParamSet $ map vpParam $ getCategoryParams t
       ma <- mapMembers ms
       mergeAllM [
           return $ onlyCode $ "struct " ++ valueName (getCategoryName t) ++ " : public " ++ valueBase ++ " {",
           fmap indentCompiled $ valueConstructor tm t d ms,
-          fmap indentCompiled $ mergeAllM $ map (compileExecutableProcedure t' tm filters fa ma) ps,
+          fmap indentCompiled $ mergeAllM $ map (compileExecutableProcedure tm pv mv filters fa ma) ps,
           return $ indentCompiled $ onlyCode $ typeName (getCategoryName t) ++ "& parent;",
           fmap indentCompiled $ mergeAllM $ map createMember ms,
           return $ onlyCode "}"
         ]
     valueConstructor tm t d ms = do
       let argParent = typeName (getCategoryName t) ++ "& p"
-      let argsPassed = map (\i -> "const " ++ variableType ++ "& a" ++ show i) [0..(length ms)-1]
-      let allArgs = intercalate ", " $ argParent:argsPassed
+      let argsPassed = "Args<" ++ show (length ms) ++ ">::Type args"
+      let allArgs = intercalate ", " [argParent,argsPassed]
       let initParent = "parent(p)"
-      let initPassed = map (\(i,m) -> variableName (dmName m) ++ "(a" ++ show i ++ ")") $ zip [0..] ms
+      let initPassed = map (\(i,m) -> variableName (dmName m) ++ "(std::get<" ++ show i ++ ">(args))") $ zip [0..] ms
       let allInit = intercalate ", " $ initParent:initPassed
       return $ onlyCode $ valueName (getCategoryName t) ++ "(" ++ allArgs ++ ") : " ++ allInit ++ " {}"
     createMember m = return $ onlyCode $ variableType ++ " " ++ variableName (dmName m) ++ ";"
@@ -261,8 +266,9 @@ compileCategoryDefinition tm dd@(DefinedCategory c n _ ps fs) = do
 getContextForInit :: (Show c, Monad m, CompileErrorM m, MergeableM m) =>
   CategoryMap c -> AnyCategory c -> DefinedCategory c -> SymbolScope -> m (ProcedureContext c)
 getContextForInit tm t d s = do
-  let t' = TypeInstance (getCategoryName t)
-                        (ParamSet $ map (SingleType . JustParamName . vpParam) $ getCategoryParams t)
+  let ps = ParamSet $ map vpParam $ getCategoryParams t
+  -- NOTE: This is always ValueScope for initializer checks.
+  let ms = filter ((== ValueScope) . dmScope) $ dcMembers d
   let pa = if s == CategoryScope
               then Map.empty
               else getCategoryFilterMap t
@@ -271,7 +277,9 @@ getContextForInit tm t d s = do
   fa <- setInternalFunctions r t (dcFunctions d)
   return $ ProcedureContext {
       pcScope = s,
-      pcType = t',
+      pcType = getCategoryName t,
+      pcParams = ps,
+      pcMembers = ms,
       pcCategories = tm,
       pcFilters = pa,
       pcParamScopes = sa,
@@ -283,12 +291,12 @@ getContextForInit tm t d s = do
     }
 
 compileExecutableProcedure :: (Show c, Monad m, CompileErrorM m, MergeableM m) =>
-  TypeInstance -> CategoryMap c -> ParamFilters ->
+  CategoryMap c -> ParamSet ParamName -> [DefinedMember c] -> ParamFilters ->
   Map.Map FunctionName (ScopedFunction c) ->
   Map.Map VariableName (VariableValue c) ->
   (ScopedFunction c,ExecutableProcedure c) -> m (CompiledData [String])
-compileExecutableProcedure t tm pa fa va
-                 (ff@(ScopedFunction _ _ _ s as1 rs1 _ _ _),
+compileExecutableProcedure tm ps ms pa fa va
+                 (ff@(ScopedFunction _ _ t s as1 rs1 _ _ _),
                   (ExecutableProcedure _ c _ as2 rs2 p)) = do
   rs' <- if isUnnamedReturns rs2
             then return $ ValidatePositions rs1
@@ -307,6 +315,8 @@ compileExecutableProcedure t tm pa fa va
   let ctx = ProcedureContext {
       pcScope = s,
       pcType = t,
+      pcParams = ps,
+      pcMembers = ms,
       pcCategories = tm,
       pcFilters = pa',
       pcParamScopes = sa,
@@ -317,7 +327,7 @@ compileExecutableProcedure t tm pa fa va
       pcOutput = []
     }
   output <- runDataCompiler compileWithReturn ctx
-  return $ wrapProcedure (tiName t) ff as2 rs2 output
+  return $ wrapProcedure t ff as2 rs2 output
   where
     compileWithReturn = do
       compileProcedure p >>= put
@@ -348,7 +358,7 @@ compileExecutableProcedure t tm pa fa va
       returnType = "Returns<" ++ show (length $ psParams $ sfReturns f) ++ ">::Type"
       defineReturns = onlyCode $ returnType ++ " returns;"
       nameParams = flip map (zip [0..] $ psParams $ sfParams f) $
-        (\(i,p) -> paramType ++ " " ++ paramName (vpParam p) ++ " = std::get<" ++ show i ++ ">(params);")
+        (\(i,p) -> paramType ++ " " ++ paramName (vpParam p) ++ " = *std::get<" ++ show i ++ ">(params);")
       nameArgs = flip map (zip [0..] $ filter (not . isDiscardedInput) $ psParams $ avNames as) $
         (\(i,n) -> proxyType ++ " " ++ variableName (ivName n) ++ " = std::get<" ++ show i ++ ">(args);")
       nameReturns
@@ -522,14 +532,36 @@ compileScopedBlock s = do
 compileExpression :: (Show c, Monad m, CompileErrorM m, MergeableM m,
                       CompilerContext c m [String] a) =>
   Expression c -> CompilerState a m (ExpressionType,String)
-compileExpression = compile . rewrite where
+compileExpression = compile where -- TODO: Rewrite for operator precedence?
   compile (Expression c s os) = do
     foldr transform (compileExpressionStart s) os
   compile (UnaryExpression c o e) = do
     return (fakeTypeForNow,"/*unary*/")
-  compile (InitializeValue c t vs) = do
-    return (fakeTypeForNow,"/*init*/")
-  rewrite s = s
+  compile (InitializeValue c t es) = do
+    es' <- sequence $ map compileExpression $ psParams es
+    (ts,es'') <- getValues es'
+    ms <- csGetValueInit c t
+    r <- csResolver
+    fa <- csAllFilters
+    lift $ processParamPairs (checkInit r fa) ms (ParamSet $ zip [1..] ts) `reviseError`
+      ("In initialization at " ++ formatFullContext c)
+    return (ParamSet [ValueType RequiredValue $ SingleType $ JustTypeInstance t],
+            "S_get(new " ++ valueName (tiName t) ++ "(" ++ es'' ++ "))")
+    where
+      -- Single expression, but possibly multi-return.
+      getValues [(ParamSet ts,e)] = return (ts,e)
+      -- Multi-expression => must all be singles.
+      getValues rs = do
+        lift $ mergeAllM (map checkArity $ zip [1..] $ map fst rs) `reviseError`
+          ("In return at " ++ formatFullContext c)
+        return (map (head . psParams . fst) rs,
+                "T_get(" ++ intercalate ", " (map ((\e -> "std::get<0>(" ++ e ++ ")") . snd) rs) ++ ")")
+      checkArity (_,ParamSet [_]) = return ()
+      checkArity (i,ParamSet ts)  =
+        compileError $ "Initializer position " ++ show i ++ " has " ++ show (length ts) ++ " values but should have 1"
+      checkInit r fa (MemberValue c n t0) (i,t1) = do
+        checkValueTypeMatch r fa t1 t0 `reviseError`
+          ("In initializer " ++ show i ++ " for " ++ show n ++ " [" ++ formatFullContext c ++ "]")
   transform (ConvertedCall c t f) e = do
     (ParamSet [t'],e') <- e -- TODO: Get rid of the ParamSet matching here.
     r <- csResolver
@@ -539,12 +571,12 @@ compileExpression = compile . rewrite where
       ("In conversion at " ++ formatFullContext c)
     f' <- lookupFunction (Just t') f
     (t2,e2) <- compileFunctionCall f' f
-    return (t2,e' ++ "->" ++ e2)
+    return (t2,"std::get<0>(" ++ e' ++ ")->" ++ e2)
   transform (ValueCall c f) e = do
     (ParamSet [t'],e') <- e -- TODO: Get rid of the ParamSet matching here.
     f' <- lookupFunction (Just t') f
     (t2,e2) <- compileFunctionCall f' f
-    return (t2,e' ++ "->" ++ e2)
+    return (t2,"std::get<0>(" ++ e' ++ ")->" ++ e2)
   transform (BinaryOperation c s e2) e = do
     (t0,e0) <- e
     return (t0,e0 ++ "/*bin*/")
@@ -557,7 +589,7 @@ compileExpressionStart :: (Show c, Monad m, CompileErrorM m, MergeableM m,
 compileExpressionStart (NamedVariable (OutputValue c n)) = do
   (VariableValue _ s t) <- csGetVariable c n
   scoped <- autoScope s
-  return (ParamSet [t],scoped ++ variableName n)
+  return (ParamSet [t],"T_get(" ++ scoped ++ variableName n ++ ")")
 compileExpressionStart (TypeCall c t f) = do
   f' <- lookupFunction (Just $ ValueType RequiredValue $ SingleType t) f
   compileFunctionCall f' f
@@ -576,7 +608,7 @@ compileExpressionStart (InlineAssignment c n e) = do
     ("In assignment at " ++ formatFullContext c)
   csUpdateAssigned n
   scoped <- autoScope s
-  return (ParamSet [t0],"(" ++ scoped ++ variableName n ++ " = " ++ e' ++ ")")
+  return (ParamSet [t0],"T_get(" ++ scoped ++ variableName n ++ " = " ++ e' ++ ")")
 
 autoScope :: (Monad m, CompilerContext c m s a) => SymbolScope -> CompilerState a m String
 autoScope s = do

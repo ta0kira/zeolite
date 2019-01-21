@@ -8,6 +8,7 @@ module CompilerState (
   CompiledData(..),
   CompilerState(..),
   ExpressionType(..),
+  MemberValue(..),
   VariableValue(..),
   csAddVariable,
   csAllFilters,
@@ -16,6 +17,7 @@ module CompilerState (
   csGetFunction,
   csGetOutput,
   csGetParamScope,
+  csGetValueInit,
   csGetVariable,
   csInheritReturns,
   csRequiresTypes,
@@ -48,6 +50,7 @@ class Monad m => CompilerContext c m s a | a -> c s where
   ccRequiresTypes :: a -> Set.Set TypeName -> m a
   ccGetRequired :: a -> m (Set.Set TypeName)
   ccGetFunction :: a -> [c] -> FunctionName -> Maybe GeneralInstance -> m (ScopedFunction c)
+  ccGetValueInit :: a -> [c] -> TypeInstance -> m (ParamSet (MemberValue c))
   ccGetVariable :: a -> [c] -> VariableName -> m (VariableValue c)
   ccAddVariable :: a -> [c] -> VariableName -> VariableValue c -> m a
   ccWrite :: a -> s -> m a
@@ -64,6 +67,14 @@ data VariableValue c =
     vvScope :: SymbolScope,
     vvType :: ValueType
   }
+
+data MemberValue c =
+  MemberValue {
+    mvContext :: [c],
+    mvName :: VariableName,
+    mvType :: ValueType
+  }
+  deriving (Show)
 
 instance Show c => Show (VariableValue c) where
   show (VariableValue c _ t) = show t ++ " [" ++ formatFullContext c ++ "]"
@@ -97,6 +108,10 @@ csGetRequired = fmap ccGetRequired get >>= lift
 csGetFunction :: (Monad m, CompilerContext c m s a) =>
   [c] -> FunctionName -> Maybe GeneralInstance -> CompilerState a m (ScopedFunction c)
 csGetFunction c n t = fmap (\x -> ccGetFunction x c n t) get >>= lift
+
+csGetValueInit :: (Monad m, CompilerContext c m s a) =>
+  [c] -> TypeInstance -> CompilerState a m (ParamSet (MemberValue c))
+csGetValueInit c as = fmap (\x -> ccGetValueInit x c as) get >>= lift
 
 csGetVariable :: (Monad m, CompilerContext c m s a) =>
   [c] -> VariableName -> CompilerState a m (VariableValue c)

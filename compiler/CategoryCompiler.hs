@@ -27,7 +27,9 @@ import TypesBase
 data ProcedureContext c =
   ProcedureContext {
     pcScope :: SymbolScope,
-    pcType :: TypeInstance,
+    pcType :: TypeName,
+    pcParams :: ParamSet ParamName,
+    pcMembers :: [DefinedMember c],
     pcCategories :: CategoryMap c,
     pcFilters :: ParamFilters,
     pcParamScopes :: Map.Map ParamName SymbolScope,
@@ -60,6 +62,8 @@ instance (Show c, MergeableM m, CompileErrorM m, Monad m) =>
     ProcedureContext {
       pcScope = pcScope ctx,
       pcType = pcType ctx,
+      pcParams = pcParams ctx,
+      pcMembers = pcMembers ctx,
       pcCategories = pcCategories ctx,
       pcFilters = pcFilters ctx,
       pcParamScopes = pcParamScopes ctx,
@@ -82,7 +86,7 @@ instance (Show c, MergeableM m, CompileErrorM m, Monad m) =>
     collectOneOrErrorM $ map (ccGetFunction ctx c n) $ map (Just . SingleType) ts
   ccGetFunction ctx c n (Just (SingleType (JustTypeInstance t)))
     -- Same category as the procedure itself.
-    | tiName t == tiName (pcType ctx) =
+    | tiName t == pcType ctx =
       case n `Map.lookup` pcFunctions ctx of
            (Just f) -> return f
            _ -> compileError $ "Category " ++ show (tiName t) ++
@@ -95,8 +99,23 @@ instance (Show c, MergeableM m, CompileErrorM m, Monad m) =>
            (Just f) -> return f
            _ -> compileError $ "Category " ++ show (tiName t) ++
                                " does not have a function named " ++ show n
-  ccGetFunction ctx c n Nothing =
-    ccGetFunction ctx c n (Just $ SingleType $ JustTypeInstance $ pcType ctx)
+  ccGetFunction ctx c n Nothing = do
+    let ps = fmap (SingleType . JustParamName) $ pcParams ctx
+    ccGetFunction ctx c n (Just $ SingleType $ JustTypeInstance $ TypeInstance (pcType ctx) ps)
+  ccGetValueInit ctx c (TypeInstance t as)
+    | t /= pcType ctx =
+      compileError $ "Category " ++ show (pcType ctx) ++ " cannot initialize values from " ++ show t
+    | otherwise = do
+      let t' = TypeInstance (pcType ctx) as
+      r <- ccResolver ctx
+      fa <- ccAllFilters ctx
+      validateTypeInstance r fa t'
+      pa <- fmap Map.fromList $ processParamPairs alwaysPairParams (pcParams ctx) as
+      fmap ParamSet $ collectAllOrErrorM $ map (subSingle pa) (pcMembers ctx)
+      where
+        subSingle pa (DefinedMember c _ t n _) = do
+          t' <- uncheckedSubValueType (getValueForParam pa) t
+          return $ MemberValue c n t'
   ccGetVariable ctx c n =
       case n `Map.lookup` pcVariables ctx of
            (Just v) -> return v
@@ -110,6 +129,8 @@ instance (Show c, MergeableM m, CompileErrorM m, Monad m) =>
       return $ ProcedureContext {
           pcScope = pcScope ctx,
           pcType = pcType ctx,
+          pcParams = pcParams ctx,
+          pcMembers = pcMembers ctx,
           pcCategories = pcCategories ctx,
           pcFilters = pcFilters ctx,
           pcParamScopes = pcParamScopes ctx,
@@ -123,6 +144,8 @@ instance (Show c, MergeableM m, CompileErrorM m, Monad m) =>
     ProcedureContext {
       pcScope = pcScope ctx,
       pcType = pcType ctx,
+      pcParams = pcParams ctx,
+      pcMembers = pcMembers ctx,
       pcCategories = pcCategories ctx,
       pcFilters = pcFilters ctx,
       pcParamScopes = pcParamScopes ctx,
@@ -137,6 +160,8 @@ instance (Show c, MergeableM m, CompileErrorM m, Monad m) =>
     update (ValidateNames ra) = return $ ProcedureContext {
         pcScope = pcScope ctx,
         pcType = pcType ctx,
+        pcParams = pcParams ctx,
+        pcMembers = pcMembers ctx,
         pcCategories = pcCategories ctx,
         pcFilters = pcFilters ctx,
         pcParamScopes = pcParamScopes ctx,
@@ -150,6 +175,8 @@ instance (Show c, MergeableM m, CompileErrorM m, Monad m) =>
   ccInheritReturns ctx cs = return $ ProcedureContext {
       pcScope = pcScope ctx,
       pcType = pcType ctx,
+      pcParams = pcParams ctx,
+      pcMembers = pcMembers ctx,
       pcCategories = pcCategories ctx,
       pcFilters = pcFilters ctx,
       pcParamScopes = pcParamScopes ctx,
@@ -169,6 +196,8 @@ instance (Show c, MergeableM m, CompileErrorM m, Monad m) =>
     return $ ProcedureContext {
         pcScope = pcScope ctx,
         pcType = pcType ctx,
+        pcParams = pcParams ctx,
+        pcMembers = pcMembers ctx,
         pcCategories = pcCategories ctx,
         pcFilters = pcFilters ctx,
         pcParamScopes = pcParamScopes ctx,

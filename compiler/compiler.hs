@@ -1,6 +1,7 @@
 import Text.Parsec
 import Text.Parsec.String
 import System.Environment
+import System.Exit
 import System.IO
 import qualified Data.Map as Map
 
@@ -21,7 +22,11 @@ main = do
   results <- return $ processContents namedContents
   hPutStr stderr $ format results
   writeResults results
+  exit results
   where
+    exit c = if isCompileError c
+                then exitFailure
+                else exitSuccess
     processContents :: [(String,String)] -> CompileInfo [CxxOutput]
     processContents cs = do
       parsed <- collectAllOrErrorM $ map parseContents cs

@@ -77,6 +77,7 @@ data VariableName =
   VariableName {
     vnName :: String
   }
+  deriving (Eq,Ord)
 
 instance Show VariableName where
   show (VariableName n) = n
