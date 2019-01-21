@@ -242,7 +242,7 @@ compileCategoryDefinition tm dd@(DefinedCategory c n _ ps fs) = do
     initMember ctx (DefinedMember c _ _ n (Just e)) = do
         let assign = Assignment c (ParamSet [ExistingVariable (InputValue c n)]) e
         runDataCompiler (compileStatement assign) ctx
-    dispatchInitName = "initDispatcher"
+    dispatchInitName = "init_dispatcher"
     dispatchInit = "Dispatcher " ++ dispatchInitName ++ "()"
     declareDispatchInit = return $ onlyCode $ dispatchInit ++ ";"
     defineDispatchInit n fs = return $ mergeAll [
@@ -297,7 +297,7 @@ compileExecutableProcedure :: (Show c, Monad m, CompileErrorM m, MergeableM m) =
   (ScopedFunction c,ExecutableProcedure c) -> m (CompiledData [String])
 compileExecutableProcedure tm ps ms pa fa va
                  (ff@(ScopedFunction _ _ t s as1 rs1 _ _ _),
-                  (ExecutableProcedure _ c _ as2 rs2 p)) = do
+                  (ExecutableProcedure _ c n as2 rs2 p)) = do
   rs' <- if isUnnamedReturns rs2
             then return $ ValidatePositions rs1
             else fmap (ValidateNames . Map.fromList) $ processParamPairs pairOutput rs1 (nrNames rs2)
@@ -331,7 +331,8 @@ compileExecutableProcedure tm ps ms pa fa va
   where
     compileWithReturn = do
       compileProcedure p >>= put
-      csRegisterReturn c (ParamSet [])
+      csRegisterReturn c (ParamSet []) `reviseErrorStateT`
+        ("In implicit return from " ++ show n ++ " [" ++ formatFullContext c ++ "]")
       csWrite ["return returns;"]
     pairOutput (PassedValue c1 t) (OutputValue c2 n) = return $ (n,PassedValue (c2++c1) t)
     wrapProcedure n f as rs output =
@@ -536,7 +537,7 @@ compileExpression = compile where -- TODO: Rewrite for operator precedence?
   compile (Expression c s os) = do
     foldr transform (compileExpressionStart s) os
   compile (UnaryExpression c o e) = do
-    return (fakeTypeForNow,"/*unary*/")
+    lift $ compileError $ "UnaryExpression " ++ formatFullContext c
   compile (InitializeValue c t es) = do
     es' <- sequence $ map compileExpression $ psParams es
     (ts,es'') <- getValues es'
@@ -545,8 +546,10 @@ compileExpression = compile where -- TODO: Rewrite for operator precedence?
     fa <- csAllFilters
     lift $ processParamPairs (checkInit r fa) ms (ParamSet $ zip [1..] ts) `reviseError`
       ("In initialization at " ++ formatFullContext c)
+    params <- expandParams $ tiParams t
     return (ParamSet [ValueType RequiredValue $ SingleType $ JustTypeInstance t],
-            "S_get(new " ++ valueName (tiName t) ++ "(" ++ es'' ++ "))")
+            -- TODO: This needs a constant.
+            "internal_instance(" ++ params ++ ").create(" ++ es'' ++ ")")
     where
       -- Single expression, but possibly multi-return.
       getValues [(ParamSet ts,e)] = return (ts,e)
@@ -578,10 +581,7 @@ compileExpression = compile where -- TODO: Rewrite for operator precedence?
     (t2,e2) <- compileFunctionCall f' f
     return (t2,"std::get<0>(" ++ e' ++ ")->" ++ e2)
   transform (BinaryOperation c s e2) e = do
-    (t0,e0) <- e
-    return (t0,e0 ++ "/*bin*/")
-
-fakeTypeForNow = ParamSet [ValueType RequiredValue $ TypeMerge MergeUnion []]
+    lift $ compileError $ "BinaryOperation " ++ formatFullContext c
 
 compileExpressionStart :: (Show c, Monad m, CompileErrorM m, MergeableM m,
                            CompilerContext c m [String] a) =>
@@ -610,18 +610,6 @@ compileExpressionStart (InlineAssignment c n e) = do
   scoped <- autoScope s
   return (ParamSet [t0],"T_get(" ++ scoped ++ variableName n ++ " = " ++ e' ++ ")")
 
-autoScope :: (Monad m, CompilerContext c m s a) => SymbolScope -> CompilerState a m String
-autoScope s = do
-  s1 <- csCurrentScope
-  return $ scoped s1 s
-  where
-    scoped ValueScope TypeScope     = "parent."
-    scoped ValueScope CategoryScope = "parent.parent."
-    scoped TypeScope  CategoryScope = "parent."
-    scoped s1 s2
-      | s1 == s2 = "this->"
-      | otherwise = ""
-
 lookupFunction :: (Show c, Monad m, CompileErrorM m, MergeableM m,
                         CompilerContext c m [String] a) =>
   Maybe ValueType -> FunctionCall c -> CompilerState a m (ScopedFunction c)
@@ -636,5 +624,73 @@ lookupFunction (Just t) (FunctionCall c n ps as)
 compileFunctionCall :: (Show c, Monad m, CompileErrorM m, MergeableM m,
                         CompilerContext c m [String] a) =>
   ScopedFunction c -> FunctionCall c -> CompilerState a m (ExpressionType,String)
-compileFunctionCall f (FunctionCall c n ps as) = do
-  return (fakeTypeForNow,"/*func()*/")
+compileFunctionCall f (FunctionCall c _ ps es) = do
+  r <- csResolver
+  fa <- csAllFilters
+  f' <- lift $ parsedToFunctionType f `reviseError`
+          ("In function call at " ++ formatFullContext c)
+  f'' <- lift $ assignFunctionParams r fa ps f' `reviseError`
+          ("In function call at " ++ formatFullContext c)
+  es' <- sequence $ map compileExpression $ psParams es
+  (ts,es'') <- getValues es'
+  lift $ processParamPairs (checkArg r fa) (ftArgs f'') (ParamSet $ zip [1..] ts) `reviseError`
+    ("In function call at " ++ formatFullContext c)
+  -- TODO: Also include param values.
+  csRequiresTypes (Set.fromList [sfType f])
+  scoped <- autoScope $ sfScope f
+  params <- expandParams ps
+  return $ (ftReturns f'',scoped ++ "call(" ++ functionName f ++ ", " ++ params ++ ", " ++ es'' ++ ")")
+  where
+    -- TODO: Lots of duplication with assignments and initialization.
+    -- Single expression, but possibly multi-return.
+    getValues [(ParamSet ts,e)] = return (ts,e)
+    -- Multi-expression => must all be singles.
+    getValues rs = do
+      lift $ mergeAllM (map checkArity $ zip [1..] $ map fst rs) `reviseError`
+        ("In return at " ++ formatFullContext c)
+      return (map (head . psParams . fst) rs,
+              "T_get(" ++ intercalate ", " (map ((\e -> "std::get<0>(" ++ e ++ ")") . snd) rs) ++ ")")
+    checkArity (_,ParamSet [_]) = return ()
+    checkArity (i,ParamSet ts)  =
+      compileError $ "Return position " ++ show i ++ " has " ++ show (length ts) ++ " values but should have 1"
+    checkArg r fa t0 (i,t1) = do
+      checkValueTypeMatch r fa t1 t0 `reviseError` ("In argument " ++ show i)
+
+autoScope :: (Monad m, CompilerContext c m s a) =>
+  SymbolScope -> CompilerState a m String
+autoScope s = do
+  s1 <- csCurrentScope
+  return $ scoped s1 s
+  where
+    scoped ValueScope TypeScope     = "parent."
+    scoped ValueScope CategoryScope = "parent.parent."
+    scoped TypeScope  CategoryScope = "parent."
+    scoped s1 s2
+      | s1 == s2 = "this->"
+      | otherwise = ""
+
+expandParams :: (Monad m, CompilerContext c m s a) =>
+  ParamSet GeneralInstance -> CompilerState a m String
+expandParams ps = do
+  ps' <- sequence $ map expandType $ psParams ps
+  return $ "T_get(" ++ intercalate "," (map ("&" ++) ps') ++ ")"
+  where
+
+expandType :: (Monad m, CompilerContext c m s a) =>
+  GeneralInstance -> CompilerState a m String
+expandType (TypeMerge MergeUnion ps) = do
+  ps' <- sequence $ map expandType ps
+  -- TODO: This needs a helper for reuse.
+  return $ "Merge_Union(L_get(" ++ intercalate "," ps' ++ "))"
+expandType (TypeMerge MergeIntersect ps) = do
+  ps' <- sequence $ map expandType ps
+  -- TODO: This needs a helper for reuse.
+  return $ "Merge_Intersect(L_get(" ++ intercalate "," ps' ++ "))"
+expandType (SingleType (JustTypeInstance (TypeInstance t ps))) = do
+  ps' <- sequence $ map expandType $ psParams ps
+  -- TODO: This needs a helper for reuse.
+  return $ "Instance_" ++ show t ++ "(" ++ intercalate "," ps' ++ ")"
+expandType (SingleType (JustParamName p)) = do
+  s <- csGetParamScope p
+  scoped <- autoScope s
+  return $ scoped ++ paramName p

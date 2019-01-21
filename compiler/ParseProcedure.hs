@@ -215,9 +215,8 @@ instance ParseFromSource (Expression SourcePos) where
       sepAfter (string "}")
       return $ InitializeValue [c] t (ParamSet as)
 
-parseFunctionCall :: FunctionName -> Parser (FunctionCall SourcePos)
-parseFunctionCall n = do
-  c <- getPosition
+parseFunctionCall :: SourcePos -> FunctionName -> Parser (FunctionCall SourcePos)
+parseFunctionCall c n = do
   -- NOTE: try is needed here so that < operators work when the left side is
   -- just a variable name, e.g., x < y.
   ps <- try $ between (sepAfter $ string "<")
@@ -254,28 +253,27 @@ instance ParseFromSource (ExpressionStart SourcePos) where
     builtinCall = do
       c <- getPosition
       n <- builtinFunctions
-      f <- parseFunctionCall (FunctionName n)
+      f <- parseFunctionCall c (FunctionName n)
       return $ UnqualifiedCall [c] f
     builtinValue = do
       c <- getPosition
       n <- builtinValues
       return $ NamedVariable (OutputValue [c] (VariableName n))
     variableOrUnqualified = do
+      c <- getPosition
       n <- sourceParser :: Parser VariableName
-      asUnqualifiedCall n <|> asVariable n
-    asVariable n = do
-      c <- getPosition
+      asUnqualifiedCall c n <|> asVariable c n
+    asVariable c n = do
       return $ NamedVariable (OutputValue [c] n)
-    asUnqualifiedCall n = do
-      c <- getPosition
-      f <- parseFunctionCall (FunctionName (vnName n))
+    asUnqualifiedCall c n = do
+      f <- parseFunctionCall c (FunctionName (vnName n))
       return $ UnqualifiedCall [c] f
     typeCall = do
       c <- getPosition
       t <- sourceParser -- NOTE: Should not need try here.
       typeSymbolGet
       n <- sourceParser
-      f <- parseFunctionCall n
+      f <- parseFunctionCall c n
       return $ TypeCall [c] t f
 
 instance ParseFromSource (ValueOperation SourcePos) where
@@ -284,7 +282,7 @@ instance ParseFromSource (ValueOperation SourcePos) where
       c <- getPosition
       valueSymbolGet
       n <- sourceParser
-      f <- parseFunctionCall n
+      f <- parseFunctionCall c n
       return $ ValueCall [c] f
     conversion = labeled "type conversion" $ do
       c <- getPosition
@@ -292,7 +290,7 @@ instance ParseFromSource (ValueOperation SourcePos) where
       t <- sourceParser -- NOTE: Should not need try here.
       typeSymbolGet
       n <- sourceParser
-      f <- parseFunctionCall n
+      f <- parseFunctionCall c n
       return $ ConvertedCall [c] t f
     binary = labeled "binary operator" $ do
       c <- getPosition

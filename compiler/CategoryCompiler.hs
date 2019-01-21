@@ -90,7 +90,8 @@ instance (Show c, MergeableM m, CompileErrorM m, Monad m) =>
       case n `Map.lookup` pcFunctions ctx of
            (Just f) -> return f
            _ -> compileError $ "Category " ++ show (tiName t) ++
-                               " does not have a function named " ++ show n
+                               " does not have a function named " ++ show n ++ " [" ++
+                               formatFullContext c ++ "]"
     -- A different category than the procedure.
     | otherwise = do
       (_,ca) <- getCategory (pcCategories ctx) (c,tiName t)
