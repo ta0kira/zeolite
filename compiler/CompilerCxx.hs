@@ -11,7 +11,7 @@ module CompilerCxx (
 ) where
 
 import Control.Monad (when)
-import Control.Monad.State (get,put)
+import Control.Monad.Trans.State (get,put)
 import Control.Monad.Trans (lift)
 import Data.List (intercalate)
 import qualified Data.Map as Map
@@ -392,11 +392,15 @@ compileStatement (ExplicitReturn c es) = do
 compileStatement (LoopBreak c) = do
   -- TODO: This can only be used inside of a loop.
   csWrite ["break;"]
+compileStatement (IgnoreValues c e) = do
+  (_,e') <- compileExpression e
+  csWrite [e' ++ ";"]
 compileStatement (Assignment c as e) = do
   (ts,e') <- compileExpression e
   r <- csResolver
   fa <- csAllFilters
-  processParamPairsT (createVariable r fa) as ts
+  processParamPairsT (createVariable r fa) as ts `reviseErrorStateT`
+    ("In assignment at " ++ formatFullContext c)
   csWrite ["{","auto r = " ++ e' ++ ";"]
   sequence $ map assignVariable $ zip [0..] $ psParams as
   csWrite ["}"]
@@ -564,6 +568,7 @@ compileExpressionStart (InlineAssignment c n e) = do
   fa <- csAllFilters
   lift $ (checkValueTypeMatch r fa t t0) `reviseError`
     ("In assignment at " ++ formatFullContext c)
+  csUpdateAssigned n
   scoped <- autoScope s
   return (ParamSet [t0],"(" ++ scoped ++ variableName n ++ " = " ++ e' ++ ")")
 

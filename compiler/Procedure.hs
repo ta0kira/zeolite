@@ -121,6 +121,7 @@ data Statement c =
   EmptyReturn [c] |
   ExplicitReturn [c] (ParamSet (Expression c)) |
   LoopBreak [c] |
+  IgnoreValues [c] (Expression c) |
   Assignment [c] (ParamSet (Assignable c)) (Expression c) |
   NoValueExpression (VoidExpression c)
   deriving (Eq,Show)

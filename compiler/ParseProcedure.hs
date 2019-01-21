@@ -80,13 +80,14 @@ instance ParseFromSource (Procedure SourcePos) where
     return $ Procedure [c] rs
 
 instance ParseFromSource (Statement SourcePos) where
-  sourceParser = parseReturn <|>
+  sourceParser = parseIgnore <|>
+                 parseReturn <|>
                  parseBreak <|>
                  parseVoid <|>
                  parseAssign where
     parseAssign = labeled "statement" $ do
       c <- getPosition
-      as <- sideEffectOnly <|> multiDest <|> try singleDest
+      as <- multiDest <|> try singleDest
       e <- sourceParser
       statementEnd
       return $ Assignment [c] (ParamSet as) e
@@ -104,9 +105,12 @@ instance ParseFromSource (Statement SourcePos) where
       a <- sourceParser
       assignOperator
       return [a]
-    sideEffectOnly = do
+    parseIgnore = do
+      c <- getPosition
       statementStart
-      return []
+      e <- sourceParser
+      statementEnd
+      return $ IgnoreValues [c] e
     parseReturn = labeled "return" $ do
       c <- getPosition
       try kwReturn

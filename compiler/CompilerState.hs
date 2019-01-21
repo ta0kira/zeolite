@@ -22,11 +22,12 @@ module CompilerState (
   csResolver,
   csUpdateAssigned,
   csWrite,
+  reviseErrorStateT,
   runDataCompiler,
 ) where
 
 import Control.Monad.Trans (lift)
-import Control.Monad.Trans.State (StateT(..),execStateT,get,put)
+import Control.Monad.Trans.State (StateT(..),execStateT,get,mapStateT,put)
 import Data.Monoid
 import qualified Data.Set as Set
 
@@ -67,6 +68,9 @@ data VariableValue c =
 
 instance Show c => Show (VariableValue c) where
   show (VariableValue c _ t) = show t ++ " [" ++ formatFullContext c ++ "]"
+
+reviseErrorStateT :: (CompileErrorM m) => CompilerState a m b -> String -> CompilerState a m b
+reviseErrorStateT x s = mapStateT (`reviseError` s) x
 
 csCurrentScope :: (Monad m, CompilerContext c m s a) =>
   CompilerState a m SymbolScope
