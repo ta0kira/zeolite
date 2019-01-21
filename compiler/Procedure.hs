@@ -48,7 +48,6 @@ data ArgValues c =
     avContext :: [c],
     avNames :: ParamSet (InputValue c)
   }
-  deriving (Eq,Ord)
 
 instance Show c => Show (ArgValues c) where
   show (ArgValues c v) =
@@ -63,7 +62,6 @@ data ReturnValues c =
   UnnamedReturns {
     urContext :: [c]
   }
-  deriving (Eq,Ord)
 
 isUnnamedReturns :: ReturnValues c -> Bool
 isUnnamedReturns (UnnamedReturns _) = True
@@ -79,7 +77,6 @@ data VariableName =
   VariableName {
     vnName :: String
   }
-  deriving (Eq,Ord)
 
 instance Show VariableName where
   show (VariableName n) = n
@@ -92,7 +89,6 @@ data InputValue c =
   DiscardInput {
     iiContext :: [c]
   }
-  deriving (Eq,Ord)
 
 isDiscardedInput :: InputValue c -> Bool
 isDiscardedInput (DiscardInput _) = True
@@ -107,7 +103,6 @@ data OutputValue c =
     ovContext :: [c],
     ovName :: VariableName
   }
-  deriving (Eq,Ord)
 
 instance Show c => Show (OutputValue c) where
   show (OutputValue c v) = show v ++ " /*" ++ formatFullContext c ++ "*/"
@@ -115,7 +110,7 @@ instance Show c => Show (OutputValue c) where
 
 data Procedure c =
   Procedure [c] [Statement c]
-  deriving (Eq,Show)
+  deriving (Show)
 
 data Statement c =
   EmptyReturn [c] |
@@ -124,45 +119,45 @@ data Statement c =
   IgnoreValues [c] (Expression c) |
   Assignment [c] (ParamSet (Assignable c)) (Expression c) |
   NoValueExpression (VoidExpression c)
-  deriving (Eq,Show)
+  deriving (Show)
 
 data Assignable c =
   CreateVariable [c] ValueType VariableName |
   ExistingVariable (InputValue c)
-  deriving (Eq,Show)
+  deriving (Show)
 
 data VoidExpression c =
   Conditional (IfElifElse c) |
   Loop (WhileLoop c) |
   WithScope (ScopedBlock c)
-  deriving (Eq,Show)
+  deriving (Show)
 
 data IfElifElse c =
   IfStatement [c] (Expression c) (Procedure c) (IfElifElse c) |
   ElseStatement [c] (Procedure c) |
   TerminateConditional
-  deriving (Eq,Show)
+  deriving (Show)
 
 data WhileLoop c =
   WhileLoop [c] (Expression c) (Procedure c)
-  deriving (Eq,Show)
+  deriving (Show)
 
 -- TODO: This will likely require some magic if the statement is an assignement.
 -- Returns should be fine, however.
 data ScopedBlock c =
   ScopedBlock [c] (Procedure c) (Statement c)
-  deriving (Eq,Show)
+  deriving (Show)
 
 data Expression c =
   Expression [c] (ExpressionStart c) [ValueOperation c] |
   UnaryExpression [c] String (Expression c) |
   -- TODO: Account for internal params here.
   InitializeValue [c] TypeInstance (ParamSet (Expression c))
-  deriving (Eq,Show)
+  deriving (Show)
 
 data FunctionCall c =
   FunctionCall [c] FunctionName (ParamSet GeneralInstance) (ParamSet (Expression c))
-  deriving (Eq,Show)
+  deriving (Show)
 
 data ExpressionStart c =
   NamedVariable (OutputValue c) |
@@ -171,10 +166,10 @@ data ExpressionStart c =
   UnqualifiedCall [c] (FunctionCall c) |
   ParensExpression [c] (Expression c) |
   InlineAssignment [c] VariableName (Expression c)
-  deriving (Eq,Show)
+  deriving (Show)
 
 data ValueOperation c =
   ConvertedCall [c] TypeInstance (FunctionCall c) |
   ValueCall [c] (FunctionCall c) |
   BinaryOperation [c] String (Expression c)
-  deriving (Eq,Show)
+  deriving (Show)

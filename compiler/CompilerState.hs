@@ -64,7 +64,6 @@ data VariableValue c =
     vvScope :: SymbolScope,
     vvType :: ValueType
   }
-  deriving (Eq)
 
 instance Show c => Show (VariableValue c) where
   show (VariableValue c _ t) = show t ++ " [" ++ formatFullContext c ++ "]"

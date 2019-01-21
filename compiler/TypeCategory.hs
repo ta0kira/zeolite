@@ -76,7 +76,6 @@ data AnyCategory c =
     vcParamFilter :: [ParamFilter c],
     viFunctions :: [ScopedFunction c]
   }
-  deriving (Eq)
 
 formatFullContext :: Show a => [a] -> String
 formatFullContext cs = intercalate " -> " (map show cs)
@@ -180,7 +179,6 @@ data ValueRefine c =
     vrContext :: [c],
     vrType :: TypeInstance
   }
-  deriving (Eq)
 
 instance Show c => Show (ValueRefine c) where
   show (ValueRefine c t) = show t ++ " [" ++ formatFullContext c ++ "]"
@@ -190,7 +188,6 @@ data ValueDefine c =
     vdContext :: [c],
     vdType :: DefinesInstance
   }
-  deriving (Eq)
 
 instance Show c => Show (ValueDefine c) where
   show (ValueDefine c t) = show t ++ " [" ++ formatFullContext c ++ "]"
@@ -201,7 +198,6 @@ data ValueParam c =
     vpParam :: ParamName,
     vpVariance :: Variance
   }
-  deriving (Eq)
 
 instance Show c => Show (ValueParam c) where
   show (ValueParam c t v) = show t ++ " (" ++ show v ++ ") [" ++ formatFullContext c ++ "]"
@@ -212,7 +208,6 @@ data ParamFilter c =
     pfParam :: ParamName,
     pfFilter :: TypeFilter
   }
-  deriving (Eq)
 
 instance Show c => Show (ParamFilter c) where
   show (ParamFilter c n f) = show n ++ " " ++ show f ++ " [" ++ formatFullContext c ++ "]"
@@ -711,7 +706,6 @@ data ScopedFunction c =
     sfFilters :: [ParamFilter c],
     sfMerges :: [ScopedFunction c]
   }
-  deriving (Eq)
 
 instance Show c => Show (ScopedFunction c) where
   show f = showFunctionInContext (showScope (sfScope f) ++ " ") "" f
@@ -740,7 +734,6 @@ data PassedValue c =
     pvContext :: [c],
     pvType :: ValueType
   }
-  deriving (Eq)
 
 instance Show c => Show (PassedValue c) where
   show (PassedValue c t) = show t ++ " [" ++ formatFullContext c ++ "]"

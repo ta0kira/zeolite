@@ -74,7 +74,7 @@ instance CompileErrorM m => CompileError (m a) where
 data MergeType =
   MergeUnion |
   MergeIntersect
-  deriving (Eq,Ord,Show)
+  deriving (Eq,Ord)
 
 data GeneralType a =
   SingleType {
@@ -153,7 +153,7 @@ data StorageType =
   WeakValue |
   OptionalValue |
   RequiredValue
-  deriving (Eq,Ord,Show)
+  deriving (Eq,Ord)
 
 data SymbolScope =
   CategoryScope |

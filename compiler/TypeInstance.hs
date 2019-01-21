@@ -120,7 +120,7 @@ instance Show TypeInstanceOrParam where
 data FilterDirection =
   FilterRequires |
   FilterAllows
-  deriving (Eq,Ord,Show)
+  deriving (Eq,Ord)
 
 data TypeFilter =
   TypeFilter {
