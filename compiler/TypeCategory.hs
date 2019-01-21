@@ -37,6 +37,7 @@ module TypeCategory (
   isValueInterface,
   parsedToFunctionType,
   topoSortCategories,
+  uncheckedSubFunction,
   validateCategoryFunction,
 ) where
 

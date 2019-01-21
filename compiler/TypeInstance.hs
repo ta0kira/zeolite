@@ -24,6 +24,7 @@ module TypeInstance (
   uncheckedSubInstance,
   uncheckedSubValueType,
   getValueForParam,
+  isDefinesFilter,
   isRequiresFilter,
   validateAssignment,
   validateDefinesInstance,

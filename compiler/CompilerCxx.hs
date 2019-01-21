@@ -610,10 +610,18 @@ compileExpressionStart (NamedVariable (OutputValue c n)) = do
   return (ParamSet [t],"T_get(" ++ scoped ++ variableName n ++ ")")
 compileExpressionStart (TypeCall c t f) = do
   f' <- lookupFunction (Just $ ValueType RequiredValue $ SingleType t) f
-  compileFunctionCall f' f
+  (ts,f'') <- compileFunctionCall f' f
+  csRequiresTypes $ Set.fromList [sfType f']
+  -- TODO: This will fail if the call is to a category function.
+  t' <- expandType $ SingleType t
+  return (ts,t' ++ "." ++ f'')
 compileExpressionStart (UnqualifiedCall c f) = do
   f' <- lookupFunction Nothing f
-  compileFunctionCall f' f
+  csRequiresTypes $ Set.fromList [sfType f']
+  -- TODO: This will fail if the call is to a category function.
+  scoped <- autoScope $ sfScope f'
+  (ts,f'') <- compileFunctionCall f' f
+  return (ts,scoped ++ f'')
 compileExpressionStart (ParensExpression c e) = do
   (t,e') <- compileExpression e
   return (t,"(" ++ e' ++ ")")

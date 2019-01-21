@@ -1,9 +1,9 @@
 Roughly in order of execution:
 
 - Compile implementations, e.g., type-check and resolve symbols.
+- Output implementations.
 
 - Rewrite and test C++ base.
-- Output implementations.
 
 - Integration tests for full compilation.
 
@@ -15,16 +15,6 @@ Roughly in order of execution:
 
 Supported in implementation, roughly in order of simplicity+importance:
 
-- function arguments and returns (inside function)
-- value assignment
-- internal data
-- value initialization
-
-- variable creation
-- calling functions (outside function)
-- variable init is always required (even weak/optional?)
-- ignoring return needs to be explicit (e.g., _ = f())?
-
 - inference of expression type
 - bool/string/int literals
 - bool/string/int expressions
@@ -32,19 +22,10 @@ Supported in implementation, roughly in order of simplicity+importance:
 - skip/present/require
 - weak/strong
 
-- while
-- if/elif/else
-
-- category/instance/value function calls
-- named return values
-- receiving multiple return values
-- function calls with explicit type args
-- explicit type conversion for function call (to avoid ambiguity)
+- category function calls
 
 - internal type variables (value only)
 - no access to internal variables if they have variance
 - no access to internal types if any constraint uses a variant param
-
-- scoped, e.g., scoped { ... } while { ... }
 
 - reduce, e.g., reduce<x,y>(value)

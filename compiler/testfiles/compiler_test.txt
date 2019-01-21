@@ -1,3 +1,8 @@
+@type interface Create<#x|#y> {
+  #y defines Create<#x,#y>
+  create (#x) -> (#y)
+}
+
 @value interface Get<|#x> {
   get () -> (#x)
 }
@@ -9,25 +14,25 @@
 concrete Value<#x> {
   refines Get<#x>
   refines Set<#x>
+  defines Create<#x,Value<#x>>
 
-  @category create<#x> (#x) -> (Value<#x>)
-  @type create2 (#x) -> (Value<#x>)
+  @type create (#x) -> (Value<#x>)
+  @category create2<#x> (#x) -> (Value<#x>)
 
   @value get () -> (#x)
-  @value set (#x) -> ()
 }
 
 define Value {
   @value #x value
 
-  create (value) {
-    return Value<#x>{ value }
+  create (value) (created) {
+    { created } <- Value$create2<#x>(value)
+    created <- Value$create2<#x>(value)
+    ~ set((created <- Value$create2<#x>(value)).get())
   }
 
-  create2 (value) (created) {
-    { created } <- Value$create<#x>(value)
-    created <- Value$create<#x>(value)
-    ~ set((created <- Value$create<#x>(value)).get())
+  create2 (value) {
+    return Value<#x>{ value }
   }
 
   get () {
@@ -39,7 +44,20 @@ define Value {
     return value
   }
 
+  @value set (#x) -> ()
   set (value2) {
     value <- value2
+  }
+}
+
+concrete CreateProxy {
+  @category create<#x,#y>
+    #y defines Create<#x,#y>
+  (#x) -> (#y)
+}
+
+define CreateProxy {
+  create (value) {
+    return #y$create(value)
   }
 }

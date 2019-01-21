@@ -83,12 +83,35 @@ instance (Show c, MergeableM m, CompileErrorM m, Monad m) =>
                (Just fs) -> return fs
                _ -> compileError $ "Param " ++ show p ++ " does not exist"
     let ts = map tfType $ filter isRequiresFilter fs
-    collectOneOrErrorM $ map (ccGetFunction ctx c n) $ map (Just . SingleType) ts
+    let ds = map dfType $ filter isDefinesFilter fs
+    collectOneOrErrorM $ (map (ccGetFunction ctx c n) $ map (Just . SingleType) ts) ++
+                         (map (checkDefine ctx c n) ds)
+    where
+      checkDefine ctx c n t = do
+        (_,ca) <- getCategory (pcCategories ctx) (c,diName t)
+        let params = ParamSet $ map vpParam $ getCategoryParams ca
+        let fa = Map.fromList $ map (\f -> (sfName f,f)) $ getCategoryFunctions ca
+        case n `Map.lookup` fa of
+            (Just f) -> do
+              paired <- processParamPairs alwaysPairParams params (diParams t) `reviseError`
+                          ("In type function call at " ++ formatFullContext c)
+              let assigned = Map.fromList paired
+              uncheckedSubFunction assigned f
+            _ -> compileError $ "Category " ++ show (diName t) ++
+                                " does not have a function named " ++ show n ++ " [" ++
+                                formatFullContext c ++ "]"
   ccGetFunction ctx c n (Just (SingleType (JustTypeInstance t)))
     -- Same category as the procedure itself.
     | tiName t == pcType ctx =
       case n `Map.lookup` pcFunctions ctx of
-           (Just f) -> return f
+           -- TODO: This is identical to the above.
+           (Just f) -> if sfScope f == CategoryScope
+                          then return f
+                          else do
+                            paired <- processParamPairs alwaysPairParams (pcParams ctx) (tiParams t) `reviseError`
+                              ("In internal function call at " ++ formatFullContext c)
+                            let assigned = Map.fromList paired
+                            uncheckedSubFunction assigned f
            _ -> compileError $ "Category " ++ show (tiName t) ++
                                " does not have a function named " ++ show n ++ " [" ++
                                formatFullContext c ++ "]"
@@ -97,9 +120,17 @@ instance (Show c, MergeableM m, CompileErrorM m, Monad m) =>
       (_,ca) <- getCategory (pcCategories ctx) (c,tiName t)
       let fa = Map.fromList $ map (\f -> (sfName f,f)) $ getCategoryFunctions ca
       case n `Map.lookup` fa of
-           (Just f) -> return f
+           -- TODO: This is identical to the above.
+           (Just f) -> if sfScope f == CategoryScope
+                          then return f
+                          else do
+                            paired <- processParamPairs alwaysPairParams (pcParams ctx) (tiParams t) `reviseError`
+                              ("In external function call at " ++ formatFullContext c)
+                            let assigned = Map.fromList paired
+                            uncheckedSubFunction assigned f
            _ -> compileError $ "Category " ++ show (tiName t) ++
-                               " does not have a function named " ++ show n
+                               " does not have a function named " ++ show n ++ " [" ++
+                               formatFullContext c ++ "]"
   ccGetFunction ctx c n Nothing = do
     let ps = fmap (SingleType . JustParamName) $ pcParams ctx
     ccGetFunction ctx c n (Just $ SingleType $ JustTypeInstance $ TypeInstance (pcType ctx) ps)
