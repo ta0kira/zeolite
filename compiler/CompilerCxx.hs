@@ -516,10 +516,47 @@ compileExpression :: (Show c, Monad m, CompileErrorM m, MergeableM m,
   Expression c -> CompilerState a m (ExpressionType,String)
 compileExpression = compile . rewrite where
   compile (Expression c s os) = do
-    return (fakeTypeForNow,"/*expr*/")
+    foldr transform (compileExpressionStart s) os
   compile (UnaryExpression c o e) = do
     return (fakeTypeForNow,"/*unary*/")
   compile (InitializeValue c t vs) = do
     return (fakeTypeForNow,"/*init*/")
   rewrite s = s
-  fakeTypeForNow = ParamSet [ValueType RequiredValue $ TypeMerge MergeUnion []]
+  transform (ConvertedCall c t f) e = do
+    (ParamSet [t'],e') <- e -- TODO: Get rid of the ParamSet matching here.
+    r <- csResolver
+    fa <- csAllFilters
+    let vt = ValueType RequiredValue $ SingleType $ JustTypeInstance t
+    lift $ (checkValueTypeMatch r fa vt t') `reviseError`
+      ("In conversion at " ++ formatFullContext c)
+    (t2,e2) <- compileFunctionCall (Just $ ParamSet [vt]) f
+    return (t2,e' ++ e2)
+  transform (ValueCall c f) e = do
+    (t',e') <- e
+    (t2,e2) <- compileFunctionCall (Just t') f
+    return (t2,e' ++ e2)
+  transform (BinaryOperation c s e2) e = do
+    (t0,e0) <- e
+    return (t0,e0 ++ "/*bin*/")
+
+fakeTypeForNow = ParamSet [ValueType RequiredValue $ TypeMerge MergeUnion []]
+
+compileExpressionStart :: (Show c, Monad m, CompileErrorM m, MergeableM m,
+                           CompilerContext c m [String] a) =>
+  ExpressionStart c -> CompilerState a m (ExpressionType,String)
+compileExpressionStart (NamedVariable (OutputValue c n)) = do
+  v <- csGetVariable c n
+  return (ParamSet [vvType v],variableName n)
+compileExpressionStart (TypeCall c t f) = do
+  return (fakeTypeForNow,"/*typecall*/")
+compileExpressionStart (UnqualifiedCall c f) = do
+  lift $ compileError $ "UnqualifiedCall " ++ formatFullContext c
+compileExpressionStart (ParensExpression c e) = compileExpression e
+compileExpressionStart (InlineAssignment c v e) = do
+  lift $ compileError $ "InlineAssignment " ++ formatFullContext c
+
+compileFunctionCall :: (Show c, Monad m, CompileErrorM m, MergeableM m,
+                        CompilerContext c m [String] a) =>
+  Maybe ExpressionType -> FunctionCall c -> CompilerState a m (ExpressionType,String)
+compileFunctionCall t (FunctionCall c n ps as) = do
+  lift $ compileError $ "FunctionCall " ++ formatFullContext c
