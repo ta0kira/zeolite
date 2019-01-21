@@ -147,20 +147,23 @@ instance (Show c, MergeableM m, CompileErrorM m, Monad m) =>
         pcOutput = pcOutput ctx
       }
     update _ = return ctx
-  ccInheritReturns ctx cs =update (pcReturns ctx) where
-    update (ValidateNames ra) = return $ ProcedureContext {
-        pcScope = pcScope ctx,
-        pcType = pcType ctx,
-        pcCategories = pcCategories ctx,
-        pcFilters = pcFilters ctx,
-        pcParamScopes = pcParamScopes ctx,
-        pcFunctions = pcFunctions ctx,
-        pcVariables = pcVariables ctx,
-        pcReturns = ValidateNames $ Map.unions $ map (vnReturns . pcReturns) cs,
-        pcRequiredTypes = pcRequiredTypes ctx,
-        pcOutput = pcOutput ctx
-      }
-    update _ = return ctx
+  ccInheritReturns ctx cs = return $ ProcedureContext {
+      pcScope = pcScope ctx,
+      pcType = pcType ctx,
+      pcCategories = pcCategories ctx,
+      pcFilters = pcFilters ctx,
+      pcParamScopes = pcParamScopes ctx,
+      pcFunctions = pcFunctions ctx,
+      pcVariables = pcVariables ctx,
+      pcReturns = foldr update NoValidation (map pcReturns cs),
+      pcRequiredTypes = pcRequiredTypes ctx,
+      pcOutput = pcOutput ctx
+    }
+    where
+      update r@(ValidatePositions _) _ = r
+      update NoValidation r = r
+      update r NoValidation = r
+      update (ValidateNames ra1) (ValidateNames ra2) = ValidateNames $ Map.union ra1 ra2
   ccRegisterReturn ctx c vs = do
     check (pcReturns ctx)
     return $ ProcedureContext {
@@ -185,7 +188,7 @@ instance (Show c, MergeableM m, CompileErrorM m, Monad m) =>
             pa <- ccAllFilters ctx
             checkValueTypeMatch r pa t t0 `reviseError`
               ("Cannot convert " ++ show t ++ " to " ++ show ta0 ++ " in return " ++
-               show n ++ " [" ++ formatFullContext c ++ "]")
+               show n ++ " at " ++ formatFullContext c)
       check (ValidateNames ra)
         | not $ null $ psParams vs =
           compileError $ "Positional returns not allowed when returns are named [" ++
@@ -193,8 +196,9 @@ instance (Show c, MergeableM m, CompileErrorM m, Monad m) =>
         | otherwise =
           mergeAllM $ map alwaysError $ Map.toList ra
           where
-            alwaysError (n,t) = compileError $ "Named return " ++ show n ++ " (" ++
-                                               show t ++ ") might not have been set"
+            alwaysError (n,t) = compileError $ "Named return " ++ show n ++ " (" ++ show t ++
+                                               ") might not have been set before return at " ++
+                                               formatFullContext c
       check _ = return ()
 
 setInternalFunctions :: (Show c, Monad m, CompileErrorM m, MergeableM m) =>

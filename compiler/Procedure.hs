@@ -136,6 +136,22 @@ data VoidExpression c =
   WithScope (ScopedBlock c)
   deriving (Eq,Show)
 
+data IfElifElse c =
+  IfStatement [c] (Expression c) (Procedure c) (IfElifElse c) |
+  ElseStatement [c] (Procedure c) |
+  TerminateConditional
+  deriving (Eq,Show)
+
+data WhileLoop c =
+  WhileLoop [c] (Expression c) (Procedure c)
+  deriving (Eq,Show)
+
+-- TODO: This will likely require some magic if the statement is an assignement.
+-- Returns should be fine, however.
+data ScopedBlock c =
+  ScopedBlock [c] (Procedure c) (Statement c)
+  deriving (Eq,Show)
+
 data Expression c =
   Expression [c] (ExpressionStart c) [ValueOperation c] |
   UnaryExpression [c] String (Expression c) |
@@ -160,20 +176,4 @@ data ValueOperation c =
   ConvertedCall [c] TypeInstance (FunctionCall c) |
   ValueCall [c] (FunctionCall c) |
   BinaryOperation [c] String (Expression c)
-  deriving (Eq,Show)
-
-data IfElifElse c =
-  IfStatement [c] (Expression c) (Procedure c) (IfElifElse c) |
-  ElseStatement [c] (Procedure c) |
-  TerminateConditional
-  deriving (Eq,Show)
-
-data WhileLoop c =
-  WhileLoop [c] (Expression c) (Procedure c)
-  deriving (Eq,Show)
-
--- TODO: This will likely require some magic if the statement is an assignement.
--- Returns should be fine, however.
-data ScopedBlock c =
-  ScopedBlock [c] (Procedure c) (Statement c)
   deriving (Eq,Show)

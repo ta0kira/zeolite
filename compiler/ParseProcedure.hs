@@ -22,8 +22,10 @@ instance ParseFromSource (ExecutableProcedure SourcePos) where
     n <- try sourceParser
     as <- sourceParser
     rs <- sourceParser
-    pp <- between (sepAfter $ string "{") (sepAfter $ string "}") sourceParser
+    sepAfter (string "{")
+    pp <- sourceParser
     c2 <- getPosition
+    sepAfter (string "}")
     return $ ExecutableProcedure [c] [c2] n as rs pp
 
 instance ParseFromSource (ArgValues SourcePos) where
@@ -153,6 +155,42 @@ instance ParseFromSource (VoidExpression SourcePos) where
       e <- sourceParser
       return $ WithScope e
 
+instance ParseFromSource (IfElifElse SourcePos) where
+  sourceParser = labeled "if-elif-else" $ do
+    c <- getPosition
+    try kwIf >> parseIf c
+    where
+      parseIf c = do
+        i <- between (sepAfter $ string "(") (sepAfter $ string ")") sourceParser
+        p <- between (sepAfter $ string "{") (sepAfter $ string "}") sourceParser
+        next <- parseElif <|> parseElse <|> return TerminateConditional
+        return $ IfStatement [c] i p next
+      parseElif = do
+        c <- getPosition
+        try kwElif >> parseIf c
+      parseElse = do
+        c <- getPosition
+        try kwElse
+        p <- between (sepAfter $ string "{") (sepAfter $ string "}") sourceParser
+        return $ ElseStatement [c] p
+
+instance ParseFromSource (WhileLoop SourcePos) where
+  sourceParser = labeled "while" $ do
+    c <- getPosition
+    try kwWhile
+    i <- between (sepAfter $ string "(") (sepAfter $ string ")") sourceParser
+    p <- between (sepAfter $ string "{") (sepAfter $ string "}") sourceParser
+    return $ WhileLoop [c] i p
+
+instance ParseFromSource (ScopedBlock SourcePos) where
+  sourceParser = labeled "scoped" $ do
+    c <- getPosition
+    try kwScoped
+    p <- between (sepAfter $ string "{") (sepAfter $ string "}") sourceParser
+    kwIn
+    s <- sourceParser
+    return $ ScopedBlock [c] p s
+
 instance ParseFromSource (Expression SourcePos) where
   sourceParser = unary <|> expression <|> initalize where
     unary = do
@@ -257,39 +295,3 @@ instance ParseFromSource (ValueOperation SourcePos) where
       o <- try binaryOperator -- NOTE: Need try for "/", due to "//" and "/*".
       e <- sourceParser
       return $ BinaryOperation [c] o e
-
-instance ParseFromSource (IfElifElse SourcePos) where
-  sourceParser = labeled "if-elif-else" $ do
-    c <- getPosition
-    try kwIf >> parseIf c
-    where
-      parseIf c = do
-        i <- between (sepAfter $ string "(") (sepAfter $ string ")") sourceParser
-        p <- between (sepAfter $ string "{") (sepAfter $ string "}") sourceParser
-        next <- parseElif <|> parseElse <|> return TerminateConditional
-        return $ IfStatement [c] i p next
-      parseElif = do
-        c <- getPosition
-        try kwElif >> parseIf c
-      parseElse = do
-        c <- getPosition
-        try kwElse
-        p <- between (sepAfter $ string "{") (sepAfter $ string "}") sourceParser
-        return $ ElseStatement [c] p
-
-instance ParseFromSource (WhileLoop SourcePos) where
-  sourceParser = labeled "while" $ do
-    c <- getPosition
-    try kwWhile
-    i <- between (sepAfter $ string "(") (sepAfter $ string ")") sourceParser
-    p <- between (sepAfter $ string "{") (sepAfter $ string "}") sourceParser
-    return $ WhileLoop [c] i p
-
-instance ParseFromSource (ScopedBlock SourcePos) where
-  sourceParser = labeled "scoped" $ do
-    c <- getPosition
-    try kwScoped
-    p <- between (sepAfter $ string "{") (sepAfter $ string "}") sourceParser
-    kwIn
-    s <- sourceParser
-    return $ ScopedBlock [c] p s

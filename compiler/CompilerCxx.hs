@@ -11,7 +11,7 @@ module CompilerCxx (
 ) where
 
 import Control.Monad (when)
-import Control.Monad.State (get)
+import Control.Monad.State (get,put)
 import Control.Monad.Trans (lift)
 import Data.List (intercalate)
 import qualified Data.Map as Map
@@ -316,11 +316,11 @@ compileExecutableProcedure t tm pa fa va
       pcRequiredTypes = Set.empty,
       pcOutput = []
     }
-  output <- runDataCompiler (compileProcedure p >> defaultReturn) ctx
+  output <- runDataCompiler compileWithReturn ctx
   return $ wrapProcedure (tiName t) ff as2 rs2 output
   where
-    -- TODO: There should be an additional error message.
-    defaultReturn = do
+    compileWithReturn = do
+      compileProcedure p >>= put
       csRegisterReturn c (ParamSet [])
       csWrite ["return returns;"]
     pairOutput (PassedValue c1 t) (OutputValue c2 n) = return $ (n,PassedValue (c2++c1) t)
@@ -411,6 +411,7 @@ compileStatement (Assignment c as e) = do
       -- TODO: Also show original context.
       lift $ (checkValueTypeMatch r fa t2 t1) `reviseError`
         ("In variable assignment at " ++ formatFullContext c)
+      csUpdateAssigned n
     createVariable _ _ _ _ = return ()
     assignVariable (i,CreateVariable _ _ n) =
       csWrite [variableName n ++ " = std::get<" ++ show i ++ ">(r);"]
@@ -419,26 +420,63 @@ compileStatement (Assignment c as e) = do
     assignVariable _ = return ()
 compileStatement (NoValueExpression v) = compileVoidExpression v
 
-compileExpression :: (Show c, Monad m, CompileErrorM m, MergeableM m,
-                      CompilerContext c m [String] a) =>
-  Expression c -> CompilerState a m (ExpressionType,String)
-compileExpression = compile . rewrite where
-  compile (Expression c s os) = lift $ do
-    compileErrorM "undefined"
-  compile (UnaryExpression c o e) = lift $ do
-    compileErrorM "undefined"
-  compile (InitializeValue c t vs) = lift $ do
-    compileErrorM "undefined"
-  rewrite s = s
-
 compileVoidExpression :: (Show c, Monad m, CompileErrorM m, MergeableM m,
                          CompilerContext c m [String] a) =>
   VoidExpression c -> CompilerState a m ()
-compileVoidExpression (Conditional ie) = lift $ do
-  compileErrorM "undefined"
-compileVoidExpression (Loop l) = lift $ do
-  compileErrorM "undefined"
+compileVoidExpression (Conditional ie) = compileIfElifElse ie
+compileVoidExpression (Loop l) = compileWhileLoop l
 compileVoidExpression (WithScope s) = compileScopedBlock s
+
+compileIfElifElse :: (Show c, Monad m, CompileErrorM m, MergeableM m,
+                      CompilerContext c m [String] a) =>
+  IfElifElse c -> CompilerState a m ()
+compileIfElifElse (IfStatement c e p es) = do
+  (ts,e') <- compileExpression e
+  lift $ checkCondition ts `reviseError` ("In condition at " ++ formatFullContext c)
+  ctx <- compileProcedure p
+  (lift $ ccGetRequired ctx) >>= csRequiresTypes
+  csWrite ["if (" ++ e' ++ ") {"]
+  (lift $ ccGetOutput ctx) >>= csWrite
+  csWrite ["}"]
+  cs <- unwind es
+  csInheritReturns (ctx:cs)
+  where
+    unwind (IfStatement c e p es) = do
+      (ts,e') <- compileExpression e
+      lift $ checkCondition ts `reviseError` ("In condition at " ++ formatFullContext c)
+      ctx <- compileProcedure p
+      (lift $ ccGetRequired ctx) >>= csRequiresTypes
+      csWrite ["else if (" ++ e' ++ ") {"]
+      (lift $ ccGetOutput ctx) >>= csWrite
+      csWrite ["}"]
+      cs <- unwind es
+      return $ ctx:cs
+    unwind (ElseStatement c p) = do
+      ctx <- compileProcedure p
+      (lift $ ccGetRequired ctx) >>= csRequiresTypes
+      csWrite ["else {"]
+      (lift $ ccGetOutput ctx) >>= csWrite
+      csWrite ["}"]
+      return [ctx]
+    unwind TerminateConditional = fmap (:[]) get
+    checkCondition (ParamSet [t]) = return () -- TODO: Make sure ts is [Bool].
+    checkCondition _ = compileError "Conditionals must have exactly one Bool return"
+
+compileWhileLoop :: (Show c, Monad m, CompileErrorM m, MergeableM m,
+                     CompilerContext c m [String] a) =>
+  WhileLoop c -> CompilerState a m ()
+compileWhileLoop (WhileLoop c e p) = do
+  (ts,e') <- compileExpression e
+  lift $ checkCondition ts `reviseError` ("In condition at " ++ formatFullContext c)
+  ctx <- compileProcedure p
+  (lift $ ccGetRequired ctx) >>= csRequiresTypes
+  csWrite ["while (" ++ e' ++ ") {"]
+  (lift $ ccGetOutput ctx) >>= csWrite
+  csWrite ["}"]
+  where
+    -- TODO: Maybe make this a helper, or use a special type of Expression.
+    checkCondition (ParamSet [t]) = return () -- TODO: Make sure ts is [Bool].
+    checkCondition _ = compileError "Conditionals must have exactly one Bool return"
 
 compileScopedBlock :: (Show c, Monad m, CompileErrorM m, MergeableM m,
                        CompilerContext c m [String] a) =>
@@ -448,13 +486,11 @@ compileScopedBlock s = do
   sequence $ map createVariable vs
   -- Capture context so we can discard scoped variable names.
   ctx <- compileProcedure p
-  req <- lift $ ccGetRequired ctx
-  csRequiresTypes req
-  csInheritReturns [ctx]
-  out <- lift $ ccGetOutput ctx
+  (lift $ ccGetRequired ctx) >>= csRequiresTypes
   csWrite ["{"]
-  csWrite out
+  (lift $ ccGetOutput ctx) >>= csWrite
   csWrite ["}"]
+  csInheritReturns [ctx]
   where
     createVariable (c,t,n) = do
       -- TODO: Call csRequiresTypes for t. (Maybe needs a helper function.)
@@ -474,3 +510,16 @@ compileScopedBlock s = do
     -- Merge the statement into the scoped block.
     rewriteScoped (ScopedBlock c (Procedure c2 ss) s) =
       ([],Procedure c2 $ ss ++ [s])
+
+compileExpression :: (Show c, Monad m, CompileErrorM m, MergeableM m,
+                      CompilerContext c m [String] a) =>
+  Expression c -> CompilerState a m (ExpressionType,String)
+compileExpression = compile . rewrite where
+  compile (Expression c s os) = do
+    return (fakeTypeForNow,"/*expr*/")
+  compile (UnaryExpression c o e) = do
+    return (fakeTypeForNow,"/*unary*/")
+  compile (InitializeValue c t vs) = do
+    return (fakeTypeForNow,"/*init*/")
+  rewrite s = s
+  fakeTypeForNow = ParamSet [ValueType RequiredValue $ TypeMerge MergeUnion []]
