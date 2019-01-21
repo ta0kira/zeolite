@@ -380,7 +380,8 @@ compileStatement (ExplicitReturn c es) = do
       csWrite ["return " ++ e ++ ";"]
     -- Multi-expression => must all be singles.
     getReturn rs = do
-      lift $ mergeAllM $ map checkArity $ zip [1..] $ map fst rs
+      lift $ mergeAllM (map checkArity $ zip [1..] $ map fst rs) `reviseError`
+        ("In return at " ++ formatFullContext c)
       csRegisterReturn c $ ParamSet $ map (head . psParams . fst) rs
       csWrite $ map bindReturn $ zip [0..] $ map snd rs
       csWrite ["return returns;"]
@@ -401,13 +402,15 @@ compileStatement (Assignment c as e) = do
   csWrite ["}"]
   where
     createVariable r fa (CreateVariable c t1 n) t2 = do
-      lift $ checkValueTypeMatch r fa t2 t1
+      lift $ (checkValueTypeMatch r fa t2 t1) `reviseError`
+        ("In variable assignment at " ++ formatFullContext c)
       csAddVariable c n (VariableValue c LocalScope t1)
       csWrite [variableType ++ " " ++ show n ++ ";"]
     createVariable r fa (ExistingVariable (InputValue c n)) t2 = do
       (VariableValue _ s1 t1) <- csGetVariable c n
       -- TODO: Also show original context.
-      lift $ checkValueTypeMatch r fa t2 t1
+      lift $ (checkValueTypeMatch r fa t2 t1) `reviseError`
+        ("In variable assignment at " ++ formatFullContext c)
     createVariable _ _ _ _ = return ()
     assignVariable (i,CreateVariable _ _ n) =
       csWrite [variableName n ++ " = std::get<" ++ show i ++ ">(r);"]
