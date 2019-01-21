@@ -300,22 +300,22 @@ checkConnectedTypes :: (Show c, MergeableM m, CompileErrorM m, Monad m) =>
   CategoryMap c -> [AnyCategory c] -> m ()
 checkConnectedTypes tm0 ts = do
   tm <- declareAllTypes tm0 ts
-  mergeAll (map (checkSingle tm) ts)
+  mergeAllM (map (checkSingle tm) ts)
   where
     checkSingle tm (ValueInterface c n _ rs _ _) = do
       let ts = map (\r -> (vrContext r,tiName $ vrType r)) rs
       is <- collectAllOrErrorM $ map (getCategory tm) ts
-      mergeAll (map (valueRefinesInstanceError c n) is)
-      mergeAll (map (valueRefinesConcreteError c n) is)
+      mergeAllM (map (valueRefinesInstanceError c n) is)
+      mergeAllM (map (valueRefinesConcreteError c n) is)
     checkSingle tm (ValueConcrete c n _ rs ds _ _) = do
       let ts1 = map (\r -> (vrContext r,tiName $ vrType r)) rs
       let ts2 = map (\d -> (vdContext d,diName $ vdType d)) ds
       is1 <- collectAllOrErrorM $ map (getCategory tm) ts1
       is2 <- collectAllOrErrorM $ map (getCategory tm) ts2
-      mergeAll (map (concreteRefinesInstanceError c n) is1)
-      mergeAll (map (concreteDefinesValueError c n) is2)
-      mergeAll (map (concreteRefinesConcreteError c n) is1)
-      mergeAll (map (concreteDefinesConcreteError c n) is2)
+      mergeAllM (map (concreteRefinesInstanceError c n) is1)
+      mergeAllM (map (concreteDefinesValueError c n) is2)
+      mergeAllM (map (concreteRefinesConcreteError c n) is1)
+      mergeAllM (map (concreteDefinesConcreteError c n) is2)
     checkSingle _ _ = return ()
     valueRefinesInstanceError c n (c2,t)
       | isInstanceInterface t =
@@ -358,18 +358,18 @@ checkConnectedTypes tm0 ts = do
 
 checkConnectionCycles :: (Show c, MergeableM m, CompileErrorM m, Monad m) =>
   [AnyCategory c] -> m ()
-checkConnectionCycles ts = mergeAll (map (checker []) ts) where
+checkConnectionCycles ts = mergeAllM (map (checker []) ts) where
   tm = Map.fromList $ zip (map getCategoryName ts) ts
   checker us (ValueInterface c n _ rs _ _) = do
     failIfCycle n c us
     let ts = map (\r -> (vrContext r,tiName $ vrType r)) rs
     is <- collectAllOrErrorM $ map (getValueCategory tm) ts
-    mergeAll (map (checker (us ++ [n]) . snd) is)
+    mergeAllM (map (checker (us ++ [n]) . snd) is)
   checker us (ValueConcrete c n _ rs _ _ _) = do
     failIfCycle n c us
     let ts = map (\r -> (vrContext r,tiName $ vrType r)) rs
     is <- collectAllOrErrorM $ map (getValueCategory tm) ts
-    mergeAll (map (checker (us ++ [n]) . snd) is)
+    mergeAllM (map (checker (us ++ [n]) . snd) is)
   checker _ _ = return ()
   failIfCycle n c us =
     when (n `Set.member` (Set.fromList us)) $
@@ -382,19 +382,19 @@ checkParamVariances :: (Show c, MergeableM m, CompileErrorM m, Monad m) =>
 checkParamVariances tm0 ts = do
   tm <- declareAllTypes tm0 ts
   let r = categoriesToTypeResolver tm
-  mergeAll (map (checkCategory r) ts)
+  mergeAllM (map (checkCategory r) ts)
   where
     checkCategory r (ValueInterface c n ps rs _ _) = do
       noDuplicates c n ps
       let vm = Map.fromList $ map (\p -> (vpParam p,vpVariance p)) ps
-      mergeAll (map (checkRefine r vm) rs)
+      mergeAllM (map (checkRefine r vm) rs)
     checkCategory r (ValueConcrete c n ps rs ds _ _) = do
       noDuplicates c n ps
       let vm = Map.fromList $ map (\p -> (vpParam p,vpVariance p)) ps
-      mergeAll (map (checkRefine r vm) rs)
-      mergeAll (map (checkDefine r vm) ds)
+      mergeAllM (map (checkRefine r vm) rs)
+      mergeAllM (map (checkDefine r vm) ds)
     checkCategory _ (InstanceInterface c n ps _ _) = noDuplicates c n ps
-    noDuplicates c n ps = mergeAll (map checkCount $ group $ sort $ map vpParam ps) where
+    noDuplicates c n ps = mergeAllM (map checkCount $ group $ sort $ map vpParam ps) where
       checkCount xa@(x:_:_) =
         compileError $ "Param " ++ show x ++ " occurs " ++ show (length xa) ++
                       " times in " ++ show n ++ " [" ++ formatFullContext c ++ "]"
@@ -411,17 +411,17 @@ checkCategoryInstances :: (Show c, MergeableM m, CompileErrorM m, Monad m) =>
 checkCategoryInstances tm0 ts = do
   tm <- declareAllTypes tm0 ts
   let r = categoriesToTypeResolver tm
-  mergeAll $ map (checkSingle r) ts
+  mergeAllM $ map (checkSingle r) ts
   where
     checkSingle r t = do
       let pa = Set.fromList $ map vpParam $ getCategoryParams t
       let fm = getCategoryFilterMap t
       let vm = Map.fromList $ map (\p -> (vpParam p,vpVariance p)) $ getCategoryParams t
-      mergeAll $ map (checkFilterParam pa) (getCategoryFilters t)
-      mergeAll $ map (checkRefine r fm) (getCategoryRefines t)
-      mergeAll $ map (checkDefine r fm) (getCategoryDefines t)
-      mergeAll $ map (checkFilter r fm) (getCategoryFilters t)
-      mergeAll $ map (validateCategoryFunction r t) (getCategoryFunctions t)
+      mergeAllM $ map (checkFilterParam pa) (getCategoryFilters t)
+      mergeAllM $ map (checkRefine r fm) (getCategoryRefines t)
+      mergeAllM $ map (checkDefine r fm) (getCategoryDefines t)
+      mergeAllM $ map (checkFilter r fm) (getCategoryFilters t)
+      mergeAllM $ map (validateCategoryFunction r t) (getCategoryFunctions t)
     checkFilterParam pa (ParamFilter c n _) =
       when (not $ n `Set.member` pa) $
         compileError $ "Param " ++ show n ++ " [" ++ formatFullContext c ++ "] does not exist"
@@ -435,8 +435,8 @@ checkCategoryInstances tm0 ts = do
       validateTypeFilter r fm f `reviseError`
         (show n ++ " " ++ show f ++ " [" ++ formatFullContext c ++ "]")
 
-validateCategoryFunction :: (Show c, MergeableM m, Mergeable p, CompileErrorM m, Monad m) =>
-  TypeResolver m p -> AnyCategory c -> ScopedFunction c -> m ()
+validateCategoryFunction :: (Show c, MergeableM m, CompileErrorM m, Monad m) =>
+  TypeResolver m -> AnyCategory c -> ScopedFunction c -> m ()
 validateCategoryFunction r t f = do
   let fm = getCategoryFilterMap t
   let vm = Map.fromList $ map (\p -> (vpParam p,vpVariance p)) $ getCategoryParams t
@@ -475,12 +475,12 @@ mergeObjects f = return . merge [] where
     -- TODO: Should f just perform merging? In case we want to preserve info
     -- about what was merged, e.g., return m [(p,a)].
     checker x2 = f x2 x
-    ys = if isCompileError $ mergeAny (map checker (cs ++ xs))
+    ys = if isCompileError $ mergeAnyM (map checker (cs ++ xs))
             then [x] -- x is not redundant => keep.
             else []  -- x is redundant => remove.
 
-mergeRefines :: (MergeableM m, Mergeable p, CompileErrorM m, Monad m) =>
-  TypeResolver m p -> ParamFilters -> [ValueRefine c] -> m [ValueRefine c]
+mergeRefines :: (MergeableM m, CompileErrorM m, Monad m) =>
+  TypeResolver m -> ParamFilters -> [ValueRefine c] -> m [ValueRefine c]
 mergeRefines r f = mergeObjects check where
   check (ValueRefine _ t1@(TypeInstance n1 _)) (ValueRefine _ t2@(TypeInstance n2 _))
     | n1 /= n2 = compileError $ show t1 ++ " and " ++ show t2 ++ " are incompatible"
@@ -542,7 +542,7 @@ flattenAllConnections tm0 ts = do
       let names = map (\d -> (diName $ vdType d,d)) ds
       noDuplicates c n names
     noDuplicates c n ns =
-      mergeAll $ map checkCount $ groupBy (\x y -> fst x == fst y) $
+      mergeAllM $ map checkCount $ groupBy (\x y -> fst x == fst y) $
                                   sortBy (\x y -> fst x `compare` fst y) ns where
         checkCount xa@(x:_:_) =
           compileError $ "Category " ++ show (fst x) ++ " occurs " ++ show (length xa) ++
@@ -565,7 +565,7 @@ flattenAllConnections tm0 ts = do
       return $ Map.fromList paired
     checkMerged r fm rs rs2 = do
       let rm = Map.fromList $ map (\t -> (tiName $ vrType t,t)) rs
-      mergeAll $ map (\t -> checkConvert r fm (tiName (vrType t) `Map.lookup` rm) t) rs2
+      mergeAllM $ map (\t -> checkConvert r fm (tiName (vrType t) `Map.lookup` rm) t) rs2
     checkConvert r fm (Just ta1@(ValueRefine _ t1)) ta2@(ValueRefine _ t2) = do
       checkGeneralMatch r fm Covariant (SingleType $ JustTypeInstance t1)
                                        (SingleType $ JustTypeInstance t2) `reviseError`
@@ -610,7 +610,7 @@ flattenAllConnections tm0 ts = do
                                         intercalate "\n---\n" (map show es)
       | otherwise = do
         let ff@(ScopedFunction c n t s as rs ps fa ms) = head es
-        mergeAll $ map (checkMerge r fm ff) is
+        mergeAllM $ map (checkMerge r fm ff) is
         return $ ScopedFunction c n t s as rs ps fa (ms ++ is)
         where
           checkMerge r fm f1 f2
@@ -626,7 +626,7 @@ flattenAllConnections tm0 ts = do
                 checkFunctionConvert r fm f2' f1'
 
 categoriesToTypeResolver :: (Show c, MergeableM m, CompileErrorM m, Monad m) =>
-  CategoryMap c -> TypeResolver m ()
+  CategoryMap c -> TypeResolver m
 categoriesToTypeResolver tm =
   TypeResolver {
     trRefines = refines,
@@ -640,7 +640,7 @@ categoriesToTypeResolver tm =
       | n1 == n2 = do
         (_,t) <- getValueCategory tm ([],n1)
         processParamPairs alwaysPairParams (ParamSet $ map vpParam $ getCategoryParams t) ps1
-        return ((),ps1)
+        return ps1
       | otherwise = do
         (_,t) <- getValueCategory tm ([],n1)
         let params = map vpParam $ getCategoryParams t
@@ -649,7 +649,7 @@ categoriesToTypeResolver tm =
         ps2 <- case n2 `Map.lookup` pa of
                     (Just x) -> return x
                     _ -> compileError $ "Category " ++ show n1 ++ " does not refine " ++ show n2
-        fmap ((,) () . ParamSet) $ collectAllOrErrorM $ map (subAllParams assigned) $ psParams ps2
+        fmap ParamSet $ collectAllOrErrorM $ map (subAllParams assigned) $ psParams ps2
     defines (TypeInstance n1 ps1) n2 = do
       (_,t) <- getValueCategory tm ([],n1)
       let params = map vpParam $ getCategoryParams t
@@ -658,7 +658,7 @@ categoriesToTypeResolver tm =
       ps2 <- case n2 `Map.lookup` pa of
                   (Just x) -> return x
                   _ -> compileError $ "Category " ++ show n1 ++ " does not define " ++ show n2
-      fmap ((,) () . ParamSet) $ collectAllOrErrorM $ map (subAllParams assigned) $ psParams ps2
+      fmap ParamSet $ collectAllOrErrorM $ map (subAllParams assigned) $ psParams ps2
     variance n = do
       (_,t) <- getCategory tm ([],n)
       return $ ParamSet $ map vpVariance $ getCategoryParams t
@@ -674,7 +674,7 @@ categoriesToTypeResolver tm =
       fs <- collectAllOrErrorM $ map (subSingleFilter assigned . \f -> (pfParam f,pfFilter f))
                                      (getCategoryFilters t)
       let fa = Map.fromListWith (++) $ map (second (:[])) fs
-      fmap ((,) () . ParamSet) $ collectAllOrErrorM $ map (assignFilter fa) params
+      fmap ParamSet $ collectAllOrErrorM $ map (assignFilter fa) params
     subAllParams pa = uncheckedSubInstance (getValueForParam pa)
     subSingleFilter pa (n,(TypeFilter v t)) = do
       (SingleType t2) <- uncheckedSubInstance (getValueForParam pa) (SingleType t)
@@ -751,7 +751,7 @@ parsedToFunctionType (ScopedFunction c n t _ as rs ps fa _) = do
   let as' = ParamSet $ map pvType $ psParams as
   let rs' = ParamSet $ map pvType $ psParams rs
   let ps' = ParamSet $ map vpParam $ psParams ps
-  mergeAll $ map checkFilter fa
+  mergeAllM $ map checkFilter fa
   let fm = Map.fromListWith (++) $ map (\f -> (pfParam f,[pfFilter f])) fa
   let fa' = ParamSet $ map (getFilters fm) $ psParams ps'
   return $ FunctionType as' rs' ps' fa'

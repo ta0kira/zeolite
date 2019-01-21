@@ -126,7 +126,7 @@ data Statement c =
 
 data Assignable c =
   CreateVariable [c] ValueType VariableName |
-  ExistingVariable [c] (InputValue c)
+  ExistingVariable (InputValue c)
   deriving (Eq,Show)
 
 data VoidExpression c =
@@ -136,8 +136,8 @@ data VoidExpression c =
   deriving (Eq,Show)
 
 data Expression c =
-  Expression [c] (ParamSet ValueType) (ExpressionStart c) [ValueOperation c] |
-  UnaryExpression [c] (Maybe ValueType) String (Expression c) |
+  Expression [c] (ExpressionStart c) [ValueOperation c] |
+  UnaryExpression [c] String (Expression c) |
   -- TODO: Account for internal params here.
   InitializeValue [c] TypeInstance (ParamSet (Expression c))
   deriving (Eq,Show)

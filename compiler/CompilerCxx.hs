@@ -12,7 +12,6 @@ module CompilerCxx (
 
 import Control.Monad (when)
 import Control.Monad.Trans (lift)
-import Control.Monad.Trans.State (execStateT)
 import Data.List (intercalate)
 import qualified Data.Map as Map
 import qualified Data.Set as Set
@@ -33,33 +32,6 @@ data CxxOutput =
     coOutput :: [String]
   }
   deriving (Show) -- TODO: Remove this.
-
-data CompiledData =
-  CompiledData {
-    cdRequired :: Set.Set TypeName,
-    cdOutput :: [String]
-  }
-  deriving (Show) -- TODO: Remove this.
-
-indentCompiled :: CompiledData -> CompiledData
-indentCompiled (CompiledData r o) = CompiledData r $ map ("  " ++) o
-
-onlyCode :: String -> CompiledData
-onlyCode = onlyCodes . (:[])
-
-onlyCodes :: [String] -> CompiledData
-onlyCodes = CompiledData Set.empty
-
-emptyCompiledData :: CompiledData
-emptyCompiledData = CompiledData Set.empty []
-
-instance Mergeable CompiledData where
-  mergeAny = foldr update (CompiledData Set.empty []) where
-    update (CompiledData r1 o1) (CompiledData r2 o2) =
-      CompiledData (Set.union r1 r2) (o1++o2)
-  mergeAll = foldr update (CompiledData Set.empty []) where
-    update (CompiledData r1 o1) (CompiledData r2 o2) =
-      CompiledData (Set.union r1 r2) (o1++o2)
 
 headerFilename :: TypeName -> String
 headerFilename n = "Category_" ++ show n ++ ".hxx"
@@ -131,6 +103,15 @@ createLabelForFunction f = "const " ++ functionLabelType f ++ "& " ++ functionNa
                            " = *new " ++ functionLabelType f ++ "(\"" ++
                            show (sfType f) ++ "\", \"" ++ show (sfName f) ++ "\");"
 
+indentCompiled :: CompiledData [String] -> CompiledData [String]
+indentCompiled (CompiledData r o) = CompiledData r $ map ("  " ++) o
+
+onlyCode :: String -> CompiledData [String]
+onlyCode = onlyCodes . (:[])
+
+onlyCodes :: [String] -> CompiledData [String]
+onlyCodes = CompiledData Set.empty
+
 compileCategoryDeclaration :: Monad m => CategoryMap c -> AnyCategory c -> m CxxOutput
 compileCategoryDeclaration _ t =
   return $ CxxOutput (headerFilename name) $ guardTop ++ content ++ guardBottom where
@@ -160,15 +141,17 @@ compileCategoryDefinition tm dd@(DefinedCategory c n _ ps fs) = do
   fa <- setInternalFunctions r t fs
   pa <- pairProceduresToFunctions fa ps
   let (cp,tp,vp) = partitionByScope (sfScope . fst) pa
-  (CompiledData req out) <- mergeAll [return $ CompiledData (Set.fromList [n]) [],
-                                      createLabels n (Map.elems fa),
-                                      namespaceStart,
-                                      declareDispatchInit,
-                                      compileCategory tm t dd filters fa cp,
-                                      compileType     tm t dd filters fa tp,
-                                      compileValue    tm t dd filters fa vp,
-                                      defineDispatchInit n (Map.elems fa),
-                                      namespaceEnd]
+  (CompiledData req out) <- mergeAllM [
+      return $ CompiledData (Set.fromList [n]) [],
+      createLabels n (Map.elems fa),
+      namespaceStart,
+      declareDispatchInit,
+      compileCategory tm t dd filters fa cp,
+      compileType     tm t dd filters fa tp,
+      compileValue    tm t dd filters fa vp,
+      defineDispatchInit n (Map.elems fa),
+      namespaceEnd
+    ]
   let includes = map (\i -> "#include \"" ++ headerFilename i ++ "\"") $ Set.toList req
   return $ CxxOutput filename (baseSourceIncludes ++ includes ++ out)
   where
@@ -184,33 +167,33 @@ compileCategoryDefinition tm dd@(DefinedCategory c n _ ps fs) = do
       let t' = typeInstance $ getCategoryParams t
       let ms = filter ((== CategoryScope) . dmScope) $ dcMembers d
       ma <- mapMembers ms
-      mergeAll $ [
+      mergeAllM [
           return $ onlyCode $ "struct " ++ categoryName (getCategoryName t) ++ " : public " ++ categoryBase ++ " {",
           fmap indentCompiled $ categoryConstructor tm t d ms,
-          fmap indentCompiled $ mergeAll $ map (compileExecutableProcedure t' tm filters fa ma) ps,
-          fmap indentCompiled $ mergeAll $ map createMember ms,
+          fmap indentCompiled $ mergeAllM $ map (compileExecutableProcedure t' tm filters fa ma) ps,
+          fmap indentCompiled $ mergeAllM $ map createMember ms,
           return $ indentCompiled $ onlyCode $ "Dispatcher dispatcher;",
           return $ onlyCode "}"
         ]
     categoryConstructor tm t d ms = do
       let dispatcher = "dispatcher(" ++ dispatchInitName ++ "())"
       ctx <- getContextForInit tm t d CategoryScope
-      mergeAll $ [
+      mergeAllM [
           return $ onlyCode $ categoryName (getCategoryName t) ++ "() : " ++ dispatcher ++ " {",
-          fmap indentCompiled $ mergeAll $ map (initMember ctx) ms,
+          fmap indentCompiled $ mergeAllM $ map (initMember ctx) ms,
           return $ onlyCode "}"
         ]
     compileType tm t d filters fa ps = do
       let t' = typeInstance $ getCategoryParams t
       let ms = filter ((== TypeScope) . dmScope) $ dcMembers d
       ma <- mapMembers ms
-      mergeAll $ [
+      mergeAllM [
           return $ onlyCode $ "struct " ++ typeName (getCategoryName t) ++ " : public " ++ typeBase ++ " {",
           fmap indentCompiled $ typeConstructor tm t d ms,
-          fmap indentCompiled $ mergeAll $ map (compileExecutableProcedure t' tm filters fa ma) ps,
+          fmap indentCompiled $ mergeAllM $ map (compileExecutableProcedure t' tm filters fa ma) ps,
           return $ indentCompiled $ onlyCode $ categoryName (getCategoryName t) ++ "& parent;",
-          fmap indentCompiled $ mergeAll $ map createParam $ map (jpnName . stType) $ psParams $ tiParams t',
-          fmap indentCompiled $ mergeAll $ map createMember ms,
+          fmap indentCompiled $ mergeAllM $ map createParam $ map (jpnName . stType) $ psParams $ tiParams t',
+          fmap indentCompiled $ mergeAllM $ map createMember ms,
           return $ onlyCode "}"
         ]
     typeConstructor tm t d ms = do
@@ -222,21 +205,21 @@ compileCategoryDefinition tm dd@(DefinedCategory c n _ ps fs) = do
       let initPassed = map (\(i,p) -> paramName p ++ "(a" ++ show i ++ ")") $ zip [0..] ps
       let allInit = intercalate ", " $ initParent:initPassed
       ctx <- getContextForInit tm t d TypeScope
-      mergeAll $ [
+      mergeAllM [
           return $ onlyCode $ typeName (getCategoryName t) ++ "(" ++ allArgs ++ ") : " ++ allInit ++ " {",
-          fmap indentCompiled $ mergeAll $ map (initMember ctx) ms,
+          fmap indentCompiled $ mergeAllM $ map (initMember ctx) ms,
           return $ onlyCode "}"
         ]
     compileValue tm t d filters fa ps = do
       let t' = typeInstance $ getCategoryParams t
       let ms = filter ((== ValueScope) . dmScope) $ dcMembers d
       ma <- mapMembers ms
-      mergeAll $ [
+      mergeAllM [
           return $ onlyCode $ "struct " ++ valueName (getCategoryName t) ++ " : public " ++ valueBase ++ " {",
           fmap indentCompiled $ valueConstructor tm t d ms,
-          fmap indentCompiled $ mergeAll $ map (compileExecutableProcedure t' tm filters fa ma) ps,
+          fmap indentCompiled $ mergeAllM $ map (compileExecutableProcedure t' tm filters fa ma) ps,
           return $ indentCompiled $ onlyCode $ typeName (getCategoryName t) ++ "& parent;",
-          fmap indentCompiled $ mergeAll $ map createMember ms,
+          fmap indentCompiled $ mergeAllM $ map createMember ms,
           return $ onlyCode "}"
         ]
     valueConstructor tm t d ms = do
@@ -249,11 +232,10 @@ compileCategoryDefinition tm dd@(DefinedCategory c n _ ps fs) = do
       return $ onlyCode $ valueName (getCategoryName t) ++ "(" ++ allArgs ++ ") : " ++ allInit ++ " {}"
     createMember m = return $ onlyCode $ variableType ++ " " ++ variableName (dmName m) ++ ";"
     createParam p = return $ onlyCode $ paramType ++ " " ++ paramName p ++ ";"
-    initMember _   (DefinedMember _ _ _ _ Nothing) = return emptyCompiledData
-    initMember ctx (DefinedMember _ _ _ n (Just e)) = do
-        (CompiledData r [o]) <- runCompiler e ctx
-        let assign = variableName n ++ " = " ++ o ++ ";"
-        return $ CompiledData r [assign]
+    initMember _   (DefinedMember _ _ _ _ Nothing) = return mergeDefault
+    initMember ctx (DefinedMember c _ _ n (Just e)) = do
+        let assign = Assignment c (ParamSet [ExistingVariable (InputValue c n)]) e
+        runDataCompiler (compileStatement assign) ctx
     dispatchInitName = "initDispatcher"
     dispatchInit = "Dispatcher " ++ dispatchInitName ++ "()"
     declareDispatchInit = return $ onlyCode $ dispatchInit ++ ";"
@@ -274,17 +256,6 @@ compileCategoryDefinition tm dd@(DefinedCategory c n _ ps fs) = do
           | sfScope f == CategoryScope = categoryName n ++ "::" ++ callName f
           | sfScope f == TypeScope     = typeName n     ++ "::" ++ callName f
           | sfScope f == ValueScope    = valueName n    ++ "::" ++ callName f
-
-runCompiler :: (Monad m, CompilerContext c m [String] a, Compiler a m b) =>
-  b -> a -> m CompiledData
-runCompiler x ctx = do
-  ctx' <- execStateT (compile x) ctx
-  required <- ccGetRequired ctx'
-  output <- ccGetOutput ctx'
-  return $ CompiledData {
-      cdRequired = required,
-      cdOutput = output
-    }
 
 getContextForInit :: (Show c, Monad m, CompileErrorM m, MergeableM m) =>
   CategoryMap c -> AnyCategory c -> DefinedCategory c -> SymbolScope -> m (ProcedureContext c)
@@ -314,7 +285,7 @@ compileExecutableProcedure :: (Show c, Monad m, CompileErrorM m, MergeableM m) =
   TypeInstance -> CategoryMap c -> ParamFilters ->
   Map.Map FunctionName (ScopedFunction c) ->
   Map.Map VariableName (VariableValue c) ->
-  (ScopedFunction c,ExecutableProcedure c) -> m CompiledData
+  (ScopedFunction c,ExecutableProcedure c) -> m (CompiledData [String])
 compileExecutableProcedure t tm pa fa va
                  (ff@(ScopedFunction _ _ _ s as1 rs1 _ _ _),
                   (ExecutableProcedure _ _ as2 rs2 p)) = do
@@ -344,7 +315,7 @@ compileExecutableProcedure t tm pa fa va
       pcRequiredTypes = Set.empty,
       pcOutput = []
     }
-  output <- runCompiler p ctx
+  output <- runDataCompiler (compileProcedure p) ctx
   return $ wrapProcedure (tiName t) ff as2 rs2 output
   where
     pairOutput (PassedValue c1 t) (OutputValue c2 n) = return $ (n,PassedValue (c2++c1) t)
@@ -371,7 +342,7 @@ compileExecutableProcedure t tm pa fa va
           "Args<" ++ show (length $ psParams $ sfArgs f) ++ ">::Type args) {"
       returnType = "Returns<" ++ show (length $ psParams $ sfReturns f) ++ ">::Type"
       defineReturns
-        | isUnnamedReturns rs = emptyCompiledData
+        | isUnnamedReturns rs = mergeDefault
         | otherwise = onlyCode $ returnType ++ " returns;"
       nameParams = flip map (zip [0..] $ psParams $ sfParams f) $
         (\(i,p) -> paramType ++ " " ++ paramName (vpParam p) ++ " = std::get<" ++ show i ++ ">(params);")
@@ -382,12 +353,20 @@ compileExecutableProcedure t tm pa fa va
         | otherwise = flip map (zip [0..] $ psParams $ nrNames rs) $
         (\(i,n) -> proxyType ++ " " ++ variableName (ovName n) ++ " = std::get<" ++ show i ++ ">(returns);")
 
-instance (Show c, Monad m, CompileErrorM m, MergeableM m) =>
-  Compiler (ProcedureContext c) m (Procedure c) where
-  compile (Procedure c ss) = do
-    csWrite ["// TODO: Compile procedures."]
+compileProcedure :: (Show c, Monad m, CompileErrorM m, MergeableM m) =>
+  Procedure c -> CompilerState (ProcedureContext c) m ()
+compileProcedure (Procedure c ss) = do
+  csWrite ["// TODO: Compile procedures."]
 
-instance (Show c, Monad m, CompileErrorM m, MergeableM m) =>
-  Compiler (ProcedureContext c) m (Expression c) where
-  compile _ = do
-    csWrite ["/* TODO: Compile expressions. */"]
+compileStatement :: (Show c, Monad m, CompileErrorM m, MergeableM m) =>
+  Statement c -> CompilerState (ProcedureContext c) m ()
+compileStatement (EmptyReturn c) = do
+  csWrite ["// TODO: Compile procedures."]
+compileStatement (ExplicitReturn c es) = do
+  csWrite ["// TODO: Compile procedures."]
+compileStatement (LoopBreak c) = do
+  csWrite ["// TODO: Compile procedures."]
+compileStatement (Assignment c as e) = do
+  csWrite ["// TODO: Compile procedures."]
+compileStatement (NoValueExpression v) = do
+  csWrite ["// TODO: Compile procedures."]

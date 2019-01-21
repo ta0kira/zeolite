@@ -758,14 +758,14 @@ getTypeRefines ts s n = do
   ta <- declareAllTypes Map.empty ts
   let r = categoriesToTypeResolver ta
   t <- readSingle "(string)" s
-  ((),ParamSet rs) <- trRefines r t (TypeName n)
+  ParamSet rs <- trRefines r t (TypeName n)
   return $ map show rs
 
 getTypeDefines ts s n = do
   ta <- declareAllTypes Map.empty ts
   let r = categoriesToTypeResolver ta
   t <- readSingle "(string)" s
-  ((),ParamSet ds) <- trDefines r t (TypeName n)
+  ParamSet ds <- trDefines r t (TypeName n)
   return $ map show ds
 
 getTypeVariance ts n = do
@@ -778,14 +778,14 @@ getTypeFilters ts s = do
   ta <- declareAllTypes Map.empty ts
   let r = categoriesToTypeResolver ta
   t <- readSingle "(string)" s
-  ((),ParamSet vs) <- trTypeFilters r t
+  ParamSet vs <- trTypeFilters r t
   return $ map (map show) vs
 
 getTypeDefinesFilters ts s = do
   ta <- declareAllTypes Map.empty ts
   let r = categoriesToTypeResolver ta
   t <- readSingle "(string)" s
-  ((),ParamSet vs) <- trDefinesFilters r t
+  ParamSet vs <- trDefinesFilters r t
   return $ map (map show) vs
 
 scrapeAllRefines = map (show *** show) . concat . map scrapeSingle where
@@ -804,14 +804,14 @@ containsExactly actual expected = do
   containsAtMost actual expected
 
 containsNoDuplicates expected =
-  (mergeAll $ map checkSingle $ group $ sort expected) `reviseError` (show expected)
+  (mergeAllM $ map checkSingle $ group $ sort expected) `reviseError` (show expected)
   where
     checkSingle xa@(x:_:_) =
       compileError $ "Item " ++ show x ++ " occurs " ++ show (length xa) ++ " times"
     checkSingle _ = return ()
 
 containsAtLeast actual expected =
-  (mergeAll $ map (checkInActual $ Set.fromList actual) expected) `reviseError`
+  (mergeAllM $ map (checkInActual $ Set.fromList actual) expected) `reviseError`
         (show actual ++ " (actual) vs. " ++ show expected ++ " (expected)")
   where
     checkInActual va v =
@@ -820,7 +820,7 @@ containsAtLeast actual expected =
          else compileError $ "Item " ++ show v ++ " was expected but not present"
 
 containsAtMost actual expected =
-  (mergeAll $ map (checkInExpected $ Set.fromList expected) actual) `reviseError`
+  (mergeAllM $ map (checkInExpected $ Set.fromList expected) actual) `reviseError`
         (show actual ++ " (actual) vs. " ++ show expected ++ " (expected)")
   where
     checkInExpected va v =
@@ -834,7 +834,7 @@ checkPaired f actual expected
   | length actual /= length expected =
     compileError $ "Different item counts: " ++ show actual ++ " (actual) vs. " ++
                    show expected ++ " (expected)"
-  | otherwise = mergeAll $ map check (zip3 actual expected [1..]) where
+  | otherwise = mergeAllM $ map check (zip3 actual expected [1..]) where
     check (a,e,n) = f a e `reviseError` ("Item " ++ show n ++ " mismatch")
 
 containsPaired :: (Eq a, Show a, CompileErrorM m, MergeableM m, Monad m) =>

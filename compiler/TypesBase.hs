@@ -37,12 +37,6 @@ class MergeableM m where
   mergeDefaultM :: Mergeable a => m a
   mergeDefaultM = mergeAllM Nothing
 
-instance (MergeableM m, Mergeable a) => Mergeable (m a) where
-  mergeAny = mergeAnyM
-  mergeAll = mergeAllM
-  mergeNested = mergeNestedM
-  mergeDefault = mergeDefaultM
-
 instance Mergeable () where
   mergeAny = const ()
   mergeAll = const ()
@@ -50,6 +44,10 @@ instance Mergeable () where
 instance Mergeable Bool where
   mergeAny = any id
   mergeAll = all id
+
+instance Mergeable [a] where
+  mergeAny = foldr (++) []
+  mergeAll = foldr (++) []
 
 class CompileError a where
   compileError :: String -> a
@@ -85,14 +83,14 @@ data GeneralType a =
   }
   deriving (Eq,Ord)
 
-checkGeneralType :: Mergeable c => (a -> b -> c) -> GeneralType a -> GeneralType b -> c
+checkGeneralType :: (MergeableM m, Mergeable c) => (a -> b -> m c) -> GeneralType a -> GeneralType b -> m c
 checkGeneralType f ti1 ti2 = singleCheck ti1 ti2 where
   singleCheck (SingleType t1) (SingleType t2) = t1 `f` t2
   -- NOTE: The merge-alls must be expanded strictly before the merge-anys.
-  singleCheck ti1 (TypeMerge MergeIntersect t2) = mergeAll $ map (ti1 `singleCheck`) t2
-  singleCheck (TypeMerge MergeUnion     t1) ti2 = mergeAll $ map (`singleCheck` ti2) t1
-  singleCheck (TypeMerge MergeIntersect t1) ti2 = mergeAny $ map (`singleCheck` ti2) t1
-  singleCheck ti1 (TypeMerge MergeUnion     t2) = mergeAny $ map (ti1 `singleCheck`) t2
+  singleCheck ti1 (TypeMerge MergeIntersect t2) = mergeAllM $ map (ti1 `singleCheck`) t2
+  singleCheck (TypeMerge MergeUnion     t1) ti2 = mergeAllM $ map (`singleCheck` ti2) t1
+  singleCheck (TypeMerge MergeIntersect t1) ti2 = mergeAnyM $ map (`singleCheck` ti2) t1
+  singleCheck ti1 (TypeMerge MergeUnion     t2) = mergeAnyM $ map (ti1 `singleCheck`) t2
 
 newtype ParamSet a =
   ParamSet {

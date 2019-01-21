@@ -132,14 +132,13 @@ instance ParseFromSource (Statement SourcePos) where
 instance ParseFromSource (Assignable SourcePos) where
   sourceParser = existing <|> create where
     create = labeled "variable creation" $ do
-      c <- getPosition
       t <- sourceParser
+      c <- getPosition
       n <- sourceParser
       return $ CreateVariable [c] t n
     existing = labeled "variable name" $ do
-      c <- getPosition
       n <- sourceParser
-      return $ ExistingVariable [c] n
+      return $ ExistingVariable n
 
 instance ParseFromSource (VoidExpression SourcePos) where
   sourceParser = conditional <|> loop <|> scoped where
@@ -159,13 +158,12 @@ instance ParseFromSource (Expression SourcePos) where
       c <- getPosition
       o <- unaryOperator
       e <- sourceParser
-      return $ UnaryExpression [c] Nothing o e
+      return $ UnaryExpression [c] o e
     expression = labeled "expression" $ do
       c <- getPosition
-      let ts = [] -- Expression type is unknown at parse time.
       s <- try sourceParser
       vs <- many sourceParser
-      return $ Expression [c] (ParamSet ts) s vs
+      return $ Expression [c] s vs
     initalize = do
       c <- getPosition
       t <- try sourceParser

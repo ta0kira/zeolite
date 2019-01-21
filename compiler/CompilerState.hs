@@ -4,14 +4,14 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 
 module CompilerState (
-  Compiler(..),
   CompilerContext(..),
+  CompiledData(..),
   CompilerState(..),
   VariableValue(..),
   csAddVariable,
   csAllFilters,
-  csCurrentScope,
   csCheckReturn,
+  csCurrentScope,
   csGetFunction,
   csGetOutput,
   csGetParamScope,
@@ -19,10 +19,12 @@ module CompilerState (
   csResolver,
   csUpdateAssigned,
   csWrite,
+  runDataCompiler,
 ) where
 
 import Control.Monad.Trans (lift)
-import Control.Monad.Trans.State (StateT(..),get,put)
+import Control.Monad.Trans.State (StateT(..),execStateT,get,put)
+import Data.Monoid
 import qualified Data.Set as Set
 
 import Function
@@ -34,12 +36,9 @@ import TypesBase
 
 type CompilerState a m = StateT a m
 
-class Compiler a m b where
-  compile :: b -> CompilerState a m ()
-
 class Monad m => CompilerContext c m s a | a -> c s where
   ccCurrentScope :: a -> m SymbolScope
-  ccResolver :: a -> m (TypeResolver m ())
+  ccResolver :: a -> m (TypeResolver m)
   ccAllFilters :: a -> m ParamFilters
   ccGetParamScope :: a -> ParamName -> m SymbolScope
   ccRequiresType :: a -> TypeName -> m a
@@ -68,7 +67,7 @@ csCurrentScope :: (Monad m, CompilerContext c m s a) =>
 csCurrentScope = fmap ccCurrentScope get >>= lift
 
 csResolver :: (Monad m, CompilerContext c m s a) =>
-  CompilerState a m (TypeResolver m ())
+  CompilerState a m (TypeResolver m)
 csResolver = fmap ccResolver get >>= lift
 
 csAllFilters :: (Monad m, CompilerContext c m s a) =>
@@ -111,3 +110,30 @@ csCheckReturn c rs = fmap (\x -> ccCheckReturn x c rs) get >>= lift
 csUpdateAssigned :: (Monad m, CompilerContext c m s a) =>
   VariableName -> CompilerState a m ()
 csUpdateAssigned n = fmap (\x -> ccUpdateAssigned x n) get >>= lift >>= put
+
+data CompiledData s =
+  CompiledData {
+    cdRequired :: Set.Set TypeName,
+    cdOutput :: s
+  }
+
+instance Monoid s => Mergeable (CompiledData s) where
+  mergeAny ds = CompiledData req out where
+    flat = foldr (:) [] ds
+    req = Set.unions $ map cdRequired flat
+    out = foldr (<>) mempty $ map cdOutput flat
+  mergeAll ds = CompiledData req out where
+    flat = foldr (:) [] ds
+    req = Set.unions $ map cdRequired flat
+    out = foldr (<>) mempty $ map cdOutput flat
+
+runDataCompiler :: (Monad m, CompilerContext c m s a) =>
+  CompilerState a m () -> a -> m (CompiledData s)
+runDataCompiler x ctx = do
+  ctx' <- execStateT x ctx
+  required <- ccGetRequired ctx'
+  output <- ccGetOutput ctx'
+  return $ CompiledData {
+      cdRequired = required,
+      cdOutput = output
+    }

@@ -80,7 +80,7 @@ showParams :: [(String,[String])] -> String
 showParams pa = "[" ++ intercalate "," (concat $ map expand pa) ++ "]" where
   expand (n,ps) = map (\p -> n ++ " " ++ p) ps
 
-checkTypeSuccess :: TypeResolver CompileInfo () -> [(String,[String])] ->
+checkTypeSuccess :: TypeResolver CompileInfo -> [(String,[String])] ->
                      String -> CompileInfo ()
 checkTypeSuccess r pa x = do
   ([t],pa2) <- parseTheTest pa [x]
@@ -89,7 +89,7 @@ checkTypeSuccess r pa x = do
     prefix = x ++ " " ++ showParams pa
     check = flip reviseError (prefix ++ ":")
 
-checkTypeFail :: TypeResolver CompileInfo () -> [(String,[String])] ->
+checkTypeFail :: TypeResolver CompileInfo -> [(String,[String])] ->
                   String -> CompileInfo ()
 checkTypeFail r pa x = do
   ([t],pa2) <- parseTheTest pa [x]
@@ -99,7 +99,7 @@ checkTypeFail r pa x = do
     check (Right _) = compileError $ prefix ++ ": Expected failure\n"
     check _ = return ()
 
-checkDefinesSuccess :: TypeResolver CompileInfo () -> [(String,[String])] ->
+checkDefinesSuccess :: TypeResolver CompileInfo -> [(String,[String])] ->
                      String -> CompileInfo ()
 checkDefinesSuccess r pa x = do
   ([t],pa2) <- parseTheTest pa [x]
@@ -108,7 +108,7 @@ checkDefinesSuccess r pa x = do
     prefix = x ++ " " ++ showParams pa
     check = flip reviseError (prefix ++ ":")
 
-checkDefinesFail :: TypeResolver CompileInfo () -> [(String,[String])] ->
+checkDefinesFail :: TypeResolver CompileInfo -> [(String,[String])] ->
                   String -> CompileInfo ()
 checkDefinesFail r pa x = do
   ([t],pa2) <- parseTheTest pa [x]

@@ -163,14 +163,14 @@ instance (Show c, MergeableM m, CompileErrorM m, Monad m) =>
         compileError $ "Positional returns not allowed when returns are named [" ++
                        formatFullContext c ++ "]"
       | otherwise =
-        mergeAll $ map alwaysError $ Map.toList ra
+        mergeAllM $ map alwaysError $ Map.toList ra
         where
           alwaysError (n,t) = compileError $ "Named return " ++ show n ++ " (" ++
                                              show t ++ ") might not have been set"
     check _ = return ()
 
 setInternalFunctions :: (Show c, Monad m, CompileErrorM m, MergeableM m) =>
-  TypeResolver m () -> AnyCategory c -> [ScopedFunction c] ->
+  TypeResolver m -> AnyCategory c -> [ScopedFunction c] ->
   m (Map.Map FunctionName (ScopedFunction c))
 setInternalFunctions r t fs = foldr update (return start) fs where
   start = Map.fromList $ map (\f -> (sfName f,f)) $ getCategoryFunctions t

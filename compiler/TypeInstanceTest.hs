@@ -658,7 +658,7 @@ checkConvertFail pa x y = return checked where
   check (Right _) = compileError $ prefix ++ ": Expected failure\n"
   check _ = return ()
 
-resolver :: TypeResolver CompileInfo ()
+resolver :: TypeResolver CompileInfo
 resolver = TypeResolver {
     trRefines = getParams refines,
     trDefines = getParams defines,
@@ -672,15 +672,15 @@ resolver = TypeResolver {
 getParams ma (TypeInstance n1 ps1) n2 = do
   ra <- mapLookup ma n1
   f <- mapLookup ra n2
-  return ((),f ps1)
+  return $ f ps1
 
 getTypeFilters (TypeInstance n ps) = do
   f <- mapLookup typeFilters n
-  return ((),f ps)
+  return $ f ps
 
 getDefinesFilters (DefinesInstance n ps) = do
   f <- mapLookup definesFilters n
-  return ((),f ps)
+  return $ f ps
 
 
 mapLookup :: (Ord n, Show n, CompileErrorM m, Monad m) => Map.Map n a -> n -> m a
