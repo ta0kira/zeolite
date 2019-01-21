@@ -56,7 +56,7 @@ instance (Show c, MergeableM m, CompileErrorM m, Monad m) =>
     case p `Map.lookup` pcParamScopes ctx of
             (Just s) -> return s
             _ -> compileError $ "Param " ++ show p ++ " does not exist"
-  ccRequiresType ctx n = return $
+  ccRequiresTypes ctx ts = return $
     ProcedureContext {
       pcScope = pcScope ctx,
       pcType = pcType ctx,
@@ -66,7 +66,7 @@ instance (Show c, MergeableM m, CompileErrorM m, Monad m) =>
       pcFunctions = pcFunctions ctx,
       pcVariables = pcVariables ctx,
       pcReturns = pcReturns ctx,
-      pcRequiredTypes = n `Set.insert` pcRequiredTypes ctx,
+      pcRequiredTypes = Set.union (pcRequiredTypes ctx) ts,
       pcOutput = pcOutput ctx
     }
   ccGetRequired = return . pcRequiredTypes

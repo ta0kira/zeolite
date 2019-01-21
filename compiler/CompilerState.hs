@@ -7,6 +7,7 @@ module CompilerState (
   CompilerContext(..),
   CompiledData(..),
   CompilerState(..),
+  ExpressionType(..),
   VariableValue(..),
   csAddVariable,
   csAllFilters,
@@ -41,7 +42,7 @@ class Monad m => CompilerContext c m s a | a -> c s where
   ccResolver :: a -> m (TypeResolver m)
   ccAllFilters :: a -> m ParamFilters
   ccGetParamScope :: a -> ParamName -> m SymbolScope
-  ccRequiresType :: a -> TypeName -> m a
+  ccRequiresTypes :: a -> Set.Set TypeName -> m a
   ccGetRequired :: a -> m (Set.Set TypeName)
   ccGetFunction :: a -> [c] -> FunctionName -> Maybe GeneralInstance -> m (ScopedFunction c)
   ccGetVariable :: a -> [c] -> VariableName -> m (VariableValue c)
@@ -49,7 +50,10 @@ class Monad m => CompilerContext c m s a | a -> c s where
   ccWrite :: a -> s -> m a
   ccGetOutput :: a -> m s
   ccUpdateAssigned :: a -> VariableName -> m a
-  ccCheckReturn :: a -> [c] -> ParamSet ValueType -> m ()
+  ccCheckReturn :: a -> [c] -> ExpressionType -> m ()
+  -- TODO: Also need to determine if a Procedure has returned in all branches.
+
+type ExpressionType = ParamSet ValueType
 
 data VariableValue c =
   VariableValue {
@@ -78,9 +82,9 @@ csGetParamScope :: (Monad m, CompilerContext c m s a) =>
   ParamName -> CompilerState a m SymbolScope
 csGetParamScope n = fmap (\x -> ccGetParamScope x n) get >>= lift
 
-csRequiresType :: (Monad m, CompilerContext c m s a) =>
-  TypeName -> CompilerState a m ()
-csRequiresType n = fmap (\x -> ccRequiresType x n) get >>= lift >>= put
+csRequiresTypes :: (Monad m, CompilerContext c m s a) =>
+  Set.Set TypeName -> CompilerState a m ()
+csRequiresTypes n = fmap (\x -> ccRequiresTypes x n) get >>= lift >>= put
 
 csGetRequired :: (Monad m, CompilerContext c m s a) => CompilerState a m (Set.Set TypeName)
 csGetRequired = fmap ccGetRequired get >>= lift
@@ -128,7 +132,7 @@ instance Monoid s => Mergeable (CompiledData s) where
     out = foldr (<>) mempty $ map cdOutput flat
 
 runDataCompiler :: (Monad m, CompilerContext c m s a) =>
-  CompilerState a m () -> a -> m (CompiledData s)
+  CompilerState a m b -> a -> m (CompiledData s)
 runDataCompiler x ctx = do
   ctx' <- execStateT x ctx
   required <- ccGetRequired ctx'

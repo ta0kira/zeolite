@@ -14,11 +14,14 @@ module TypesBase (
   Variance(..),
   alwaysPairParams,
   processParamPairs,
+  processParamPairsT,
   checkGeneralType,
   composeVariance,
   paramAllowsVariance,
   partitionByScope,
 ) where
+
+import Control.Monad.Trans (MonadTrans(..))
 
 
 class Mergeable a where
@@ -111,6 +114,14 @@ processParamPairs f (ParamSet ps1) (ParamSet ps2)
     collectAllOrErrorM $ map (uncurry f) (zip ps1 ps2)
   | otherwise =
     compileError $ "Parameter count mismatch: " ++ show ps1 ++ " vs. " ++ show ps2
+
+processParamPairsT :: (MonadTrans t, Monad (t m), Show a, Show b, CompileErrorM m, Monad m) =>
+  (a -> b -> t m c) -> ParamSet a -> ParamSet b -> t m [c]
+processParamPairsT f (ParamSet ps1) (ParamSet ps2)
+  | length ps1 == length ps2 =
+    sequence $ map (uncurry f) (zip ps1 ps2)
+  | otherwise =
+    lift $ compileError $ "Parameter count mismatch: " ++ show ps1 ++ " vs. " ++ show ps2
 
 data Variance =
   Contravariant |

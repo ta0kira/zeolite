@@ -11,6 +11,7 @@ module CompilerCxx (
 ) where
 
 import Control.Monad (when)
+import Control.Monad.State (get)
 import Control.Monad.Trans (lift)
 import Data.List (intercalate)
 import qualified Data.Map as Map
@@ -341,9 +342,7 @@ compileExecutableProcedure t tm pa fa va
           "Params<" ++ show (length $ psParams $ sfParams f) ++ ">::Type params, " ++
           "Args<" ++ show (length $ psParams $ sfArgs f) ++ ">::Type args) {"
       returnType = "Returns<" ++ show (length $ psParams $ sfReturns f) ++ ">::Type"
-      defineReturns
-        | isUnnamedReturns rs = mergeDefault
-        | otherwise = onlyCode $ returnType ++ " returns;"
+      defineReturns = onlyCode $ returnType ++ " returns;"
       nameParams = flip map (zip [0..] $ psParams $ sfParams f) $
         (\(i,p) -> paramType ++ " " ++ paramName (vpParam p) ++ " = std::get<" ++ show i ++ ">(params);")
       nameArgs = flip map (zip [0..] $ filter (not . isDiscardedInput) $ psParams $ avNames as) $
@@ -353,20 +352,86 @@ compileExecutableProcedure t tm pa fa va
         | otherwise = flip map (zip [0..] $ psParams $ nrNames rs) $
         (\(i,n) -> proxyType ++ " " ++ variableName (ovName n) ++ " = std::get<" ++ show i ++ ">(returns);")
 
-compileProcedure :: (Show c, Monad m, CompileErrorM m, MergeableM m) =>
-  Procedure c -> CompilerState (ProcedureContext c) m ()
+-- Returns the state so that returns can be properly checked for if/elif/else.
+compileProcedure :: (Show c, Monad m, CompileErrorM m, MergeableM m,
+                     CompilerContext c m [String] a) =>
+  Procedure c -> CompilerState a m a
 compileProcedure (Procedure c ss) = do
-  csWrite ["// TODO: Compile procedures."]
+  sequence $ map compileStatement ss
+  get
 
-compileStatement :: (Show c, Monad m, CompileErrorM m, MergeableM m) =>
-  Statement c -> CompilerState (ProcedureContext c) m ()
+compileStatement :: (Show c, Monad m, CompileErrorM m, MergeableM m,
+                     CompilerContext c m [String] a) =>
+  Statement c -> CompilerState a m ()
 compileStatement (EmptyReturn c) = do
-  csWrite ["// TODO: Compile procedures."]
+  csCheckReturn c (ParamSet [])
+  csWrite ["return returns;"]
 compileStatement (ExplicitReturn c es) = do
-  csWrite ["// TODO: Compile procedures."]
+  es' <- sequence $ map compileExpression $ psParams es
+  getReturn es'
+  where
+    -- Single expression, but possibly multi-return.
+    getReturn [(ParamSet ts,e)] = do
+      csCheckReturn c (ParamSet ts)
+      csWrite ["return " ++ e ++ ";"]
+    -- Multi-expression => must all be singles.
+    getReturn rs = do
+      lift $ mergeAllM $ map checkArity $ zip [1..] $ map fst rs
+      csCheckReturn c $ ParamSet $ map (head . psParams . fst) rs
+      csWrite $ map bindReturn $ zip [0..] $ map snd rs
+      csWrite ["return returns;"]
+    checkArity (_,ParamSet [_]) = return ()
+    checkArity (i,ParamSet ts)  =
+      compileError $ "Return position " ++ show i ++ " has " ++ show (length ts) ++ " values but should have 1"
+    bindReturn (i,e) = "std::get<" ++ show i ++ ">(returns) = " ++ "std::get<0>(" ++ e ++ ");"
 compileStatement (LoopBreak c) = do
-  csWrite ["// TODO: Compile procedures."]
+  -- TODO: This can only be used inside of a loop.
+  csWrite ["break;"]
 compileStatement (Assignment c as e) = do
-  csWrite ["// TODO: Compile procedures."]
-compileStatement (NoValueExpression v) = do
-  csWrite ["// TODO: Compile procedures."]
+  (ts,e') <- compileExpression e
+  r <- csResolver
+  fa <- csAllFilters
+  processParamPairsT (createVariable r fa) as ts
+  csWrite ["{","auto r = " ++ e' ++ ";"]
+  sequence $ map assignVariable $ zip [0..] $ psParams as
+  csWrite ["}"]
+  where
+    createVariable r fa (CreateVariable c t1 n) t2 = do
+      lift $ checkValueTypeMatch r fa t2 t1
+      csAddVariable c n (VariableValue c LocalScope t1)
+      csWrite [variableType ++ " " ++ show n ++ ";"]
+    createVariable r fa (ExistingVariable (InputValue c n)) t2 = do
+      (VariableValue _ s1 t1) <- csGetVariable c n
+      -- TODO: Also show original context.
+      lift $ checkValueTypeMatch r fa t2 t1
+    createVariable _ _ _ _ = return ()
+    assignVariable (i,CreateVariable _ _ n) =
+      csWrite [variableName n ++ " = std::get<" ++ show i ++ ">(r);"]
+    assignVariable (i,ExistingVariable (InputValue _ n)) =
+      csWrite [variableName n ++ " = std::get<" ++ show i ++ ">(r);"]
+    assignVariable _ = return ()
+compileStatement (NoValueExpression v) = compileVoidExpression v
+
+-- TODO: This needs to first reorganize based on operator precedence.
+-- NOTE: This should not call csWrite.
+compileExpression :: (Show c, Monad m, CompileErrorM m, MergeableM m,
+                      CompilerContext c m [String] a) =>
+  Expression c -> CompilerState a m (ExpressionType,String)
+compileExpression (Expression c s os) = lift $ do
+  compileErrorM "undefined"
+compileExpression (UnaryExpression c o e) = lift $ do
+  compileErrorM "undefined"
+compileExpression (InitializeValue c t vs) = lift $ do
+  compileErrorM "undefined"
+
+compileVoidExpression :: (Show c, Monad m, CompileErrorM m, MergeableM m,
+                         CompilerContext c m [String] a) =>
+  VoidExpression c -> CompilerState a m ()
+compileVoidExpression (Conditional ie) = lift $ do
+  compileErrorM "undefined"
+compileVoidExpression (Loop l) = lift $ do
+  compileErrorM "undefined"
+-- TODO: If the final statement is an assignment then variable creation needs to
+-- happen up front.
+compileVoidExpression (WithScope w) = lift $ do
+  compileErrorM "undefined"
