@@ -233,6 +233,7 @@ instance ParseFromSource (ExpressionStart SourcePos) where
                  variableOrUnqualified <|>
                  builtinCall <|>
                  builtinValue <|>
+                 try typeOrCategoryCall <|>
                  typeCall where
     parens = do
       c <- getPosition
@@ -254,7 +255,7 @@ instance ParseFromSource (ExpressionStart SourcePos) where
       c <- getPosition
       n <- builtinFunctions
       f <- parseFunctionCall c (FunctionName n)
-      return $ UnqualifiedCall [c] f
+      return $ BuiltinCall [c] f
     builtinValue = do
       c <- getPosition
       n <- builtinValues
@@ -268,10 +269,24 @@ instance ParseFromSource (ExpressionStart SourcePos) where
     asUnqualifiedCall c n = do
       f <- parseFunctionCall c (FunctionName (vnName n))
       return $ UnqualifiedCall [c] f
+    typeOrCategoryCall = do
+      c <- getPosition
+      t <- sourceParser :: Parser TypeName
+      asType c t <|> asCategory c t
+    asType c t = do
+      try typeSymbolGet
+      n <- sourceParser
+      f <- parseFunctionCall c n
+      return $ TypeCall [c] (JustTypeInstance $ TypeInstance t $ ParamSet []) f
+    asCategory c t = do
+      categorySymbolGet
+      n <- sourceParser
+      f <- parseFunctionCall c n
+      return $ CategoryCall [c] t f
     typeCall = do
       c <- getPosition
-      t <- sourceParser -- NOTE: Should not need try here.
-      typeSymbolGet
+      t <- try sourceParser
+      try typeSymbolGet
       n <- sourceParser
       f <- parseFunctionCall c n
       return $ TypeCall [c] t f

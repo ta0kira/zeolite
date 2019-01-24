@@ -590,16 +590,23 @@ compileExpression = compile where -- TODO: Rewrite for operator precedence?
     let vt = ValueType RequiredValue $ SingleType $ JustTypeInstance t
     lift $ (checkValueTypeMatch r fa vt t') `reviseError`
       ("In conversion at " ++ formatFullContext c)
-    f' <- lookupFunction (Just t') f
+    f' <- lookupValueFunction t' f
     (t2,e2) <- compileFunctionCall f' f
     return (t2,"std::get<0>(" ++ e' ++ ")->" ++ e2)
   transform (ValueCall c f) e = do
     (ParamSet [t'],e') <- e -- TODO: Get rid of the ParamSet matching here.
-    f' <- lookupFunction (Just t') f
+    f' <- lookupValueFunction t' f
     (t2,e2) <- compileFunctionCall f' f
     return (t2,"std::get<0>(" ++ e' ++ ")->" ++ e2)
   transform (BinaryOperation c s e2) e = do
     lift $ compileError $ "BinaryOperation " ++ formatFullContext c
+
+lookupValueFunction (ValueType WeakValue t) _ =
+  lift $ compileError $ "Use strong to convert " ++ show t ++ " to optional first"
+lookupValueFunction (ValueType OptionalValue t) _ =
+  lift $ compileError $ "Use require to convert " ++ show t ++ " to required first"
+lookupValueFunction (ValueType RequiredValue t) (FunctionCall c n _ _) =
+  csGetTypeFunction c (Just t) n
 
 compileExpressionStart :: (Show c, Monad m, CompileErrorM m, MergeableM m,
                            CompilerContext c m [String] a) =>
@@ -608,20 +615,38 @@ compileExpressionStart (NamedVariable (OutputValue c n)) = do
   (VariableValue _ s t) <- csGetVariable c n
   scoped <- autoScope s
   return (ParamSet [t],"T_get(" ++ scoped ++ variableName n ++ ")")
-compileExpressionStart (TypeCall c t f) = do
-  f' <- lookupFunction (Just $ ValueType RequiredValue $ SingleType t) f
+compileExpressionStart (CategoryCall c t f@(FunctionCall _ n _ _)) = do
+  f' <- csGetCategoryFunction c (Just t) n
   (ts,f'') <- compileFunctionCall f' f
   csRequiresTypes $ Set.fromList [sfType f']
-  -- TODO: This will fail if the call is to a category function.
+  t' <- expandCategory t
+  return (ts,t' ++ "." ++ f'')
+compileExpressionStart (TypeCall c t f@(FunctionCall _ n _ _)) = do
+  f' <- csGetTypeFunction c (Just $ SingleType t) n
+  when (sfScope f' /= TypeScope) $ lift $ compileError $ "Function " ++ show n ++
+                                          " cannot be used as a type function [" ++
+                                          formatFullContext c ++ "]"
+  (ts,f'') <- compileFunctionCall f' f
+  csRequiresTypes $ Set.fromList [sfType f']
   t' <- expandType $ SingleType t
   return (ts,t' ++ "." ++ f'')
-compileExpressionStart (UnqualifiedCall c f) = do
-  f' <- lookupFunction Nothing f
-  csRequiresTypes $ Set.fromList [sfType f']
-  -- TODO: This will fail if the call is to a category function.
-  scoped <- autoScope $ sfScope f'
+compileExpressionStart (UnqualifiedCall c f@(FunctionCall _ n _ _)) = do
+  ctx <- get
+  f' <- lift $ collectOneOrErrorM [tryCategory ctx,tryNonCategory ctx]
   (ts,f'') <- compileFunctionCall f' f
+  csRequiresTypes $ Set.fromList [sfType f']
+  scoped <- autoScope $ sfScope f'
   return (ts,scoped ++ f'')
+  where
+    tryCategory ctx = ccGetCategoryFunction ctx c Nothing n
+    tryNonCategory ctx = do
+      f' <- ccGetTypeFunction ctx c Nothing n
+      s <- ccCurrentScope ctx
+      when (sfScope f' > s) $ compileError $
+        "Function " ++ show n ++ " is not in scope here [" ++ formatFullContext c ++ "]"
+      return f'
+compileExpressionStart (BuiltinCall c f@(FunctionCall _ n _ _)) = do
+    lift $ compileError $ "BuiltinCall " ++ formatFullContext c
 compileExpressionStart (ParensExpression c e) = do
   (t,e') <- compileExpression e
   return (t,"(" ++ e' ++ ")")
@@ -637,17 +662,6 @@ compileExpressionStart (InlineAssignment c n e) = do
   csUpdateAssigned n
   scoped <- autoScope s
   return (ParamSet [t0],"T_get(" ++ scoped ++ variableName n ++ " = " ++ e' ++ ")")
-
-lookupFunction :: (Show c, Monad m, CompileErrorM m, MergeableM m,
-                        CompilerContext c m [String] a) =>
-  Maybe ValueType -> FunctionCall c -> CompilerState a m (ScopedFunction c)
-lookupFunction Nothing (FunctionCall c n ps as) = csGetFunction c n Nothing
-lookupFunction (Just t) (FunctionCall c n ps as)
-  | vtRequired t /= RequiredValue =
-    lift $ compileError $ "Cannot call function " ++ show n ++ " on value of type " ++ show t
-  | otherwise = do
-    let t' = vtType t
-    csGetFunction c n (Just t')
 
 compileFunctionCall :: (Show c, Monad m, CompileErrorM m, MergeableM m,
                         CompilerContext c m [String] a) =>
@@ -703,6 +717,10 @@ expandParams ps = do
   ps' <- sequence $ map expandType $ psParams ps
   return $ "T_get(" ++ intercalate "," (map ("&" ++) ps') ++ ")"
   where
+
+expandCategory :: (Monad m, CompilerContext c m s a) =>
+  TypeName -> CompilerState a m String
+expandCategory t = return $ "Category_" ++ show t
 
 expandType :: (Monad m, CompilerContext c m s a) =>
   GeneralInstance -> CompilerState a m String

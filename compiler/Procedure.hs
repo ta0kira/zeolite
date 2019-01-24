@@ -162,9 +162,10 @@ data FunctionCall c =
 
 data ExpressionStart c =
   NamedVariable (OutputValue c) |
-  -- NOTE: If the type has no args, it could be a category function.
+  CategoryCall [c] TypeName (FunctionCall c) |
   TypeCall [c] TypeInstanceOrParam (FunctionCall c) |
   UnqualifiedCall [c] (FunctionCall c) |
+  BuiltinCall [c] (FunctionCall c) |
   ParensExpression [c] (Expression c) |
   InlineAssignment [c] VariableName (Expression c)
   deriving (Show)

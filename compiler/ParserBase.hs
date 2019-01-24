@@ -8,6 +8,7 @@ module ParserBase (
   binaryOperator,
   builtinFunctions,
   builtinValues,
+  categorySymbolGet,
   endOfDoc,
   initSeparator,
   keyword,
@@ -67,12 +68,13 @@ class ParseFromSource a where
 
 labeled = flip label
 
-statementStart = sepAfter (string "~")
-statementEnd   = sepAfter (string "")
-valueSymbolGet = sepAfter (string ".")
-typeSymbolGet  = sepAfter (string "$")
-initSeparator  = sepAfter (string ":")
-assignOperator = operator "<-"
+statementStart    = sepAfter (string "~")
+statementEnd      = sepAfter (string "")
+valueSymbolGet    = sepAfter (string ".")
+categorySymbolGet = sepAfter (string "$$")
+typeSymbolGet     = sepAfter (string "$" >> notFollowedBy (string "$"))
+initSeparator     = sepAfter (string ":")
+assignOperator    = operator "<-"
 
 -- TODO: Maybe this should not use strings.
 builtinFunctions :: Parser String

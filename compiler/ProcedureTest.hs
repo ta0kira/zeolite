@@ -27,6 +27,10 @@ tests = [
     checkShortParseFail "return { var, _ }",
     checkShortParseFail "return T<#x> var",
     checkShortParseSuccess "return T<#x>{ val }",
+    checkShortParseSuccess "~ T$$func()",
+    checkShortParseFail "~ T<#x>$$func()",
+    checkShortParseFail "~ var.T$$func()",
+    checkShortParseFail "~ T$ $func()",
 
     checkShortParseSuccess "break",
     checkShortParseFail "break var",

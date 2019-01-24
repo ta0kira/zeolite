@@ -12,14 +12,15 @@ module CompilerState (
   VariableValue(..),
   csAddVariable,
   csAllFilters,
-  csRegisterReturn,
   csCurrentScope,
-  csGetFunction,
+  csGetCategoryFunction,
   csGetOutput,
   csGetParamScope,
+  csGetTypeFunction,
   csGetValueInit,
   csGetVariable,
   csInheritReturns,
+  csRegisterReturn,
   csRequiresTypes,
   csResolver,
   csUpdateAssigned,
@@ -49,7 +50,8 @@ class Monad m => CompilerContext c m s a | a -> c s where
   ccGetParamScope :: a -> ParamName -> m SymbolScope
   ccRequiresTypes :: a -> Set.Set TypeName -> m a
   ccGetRequired :: a -> m (Set.Set TypeName)
-  ccGetFunction :: a -> [c] -> FunctionName -> Maybe GeneralInstance -> m (ScopedFunction c)
+  ccGetCategoryFunction :: a -> [c] -> Maybe TypeName -> FunctionName -> m (ScopedFunction c)
+  ccGetTypeFunction :: a -> [c] -> Maybe GeneralInstance -> FunctionName -> m (ScopedFunction c)
   ccGetValueInit :: a -> [c] -> TypeInstance -> m (ParamSet (MemberValue c))
   ccGetVariable :: a -> [c] -> VariableName -> m (VariableValue c)
   ccAddVariable :: a -> [c] -> VariableName -> VariableValue c -> m a
@@ -105,9 +107,13 @@ csRequiresTypes n = fmap (\x -> ccRequiresTypes x n) get >>= lift >>= put
 csGetRequired :: (Monad m, CompilerContext c m s a) => CompilerState a m (Set.Set TypeName)
 csGetRequired = fmap ccGetRequired get >>= lift
 
-csGetFunction :: (Monad m, CompilerContext c m s a) =>
-  [c] -> FunctionName -> Maybe GeneralInstance -> CompilerState a m (ScopedFunction c)
-csGetFunction c n t = fmap (\x -> ccGetFunction x c n t) get >>= lift
+csGetCategoryFunction :: (Monad m, CompilerContext c m s a) =>
+  [c] -> Maybe TypeName -> FunctionName -> CompilerState a m (ScopedFunction c)
+csGetCategoryFunction c t n = fmap (\x -> ccGetCategoryFunction x c t n) get >>= lift
+
+csGetTypeFunction :: (Monad m, CompilerContext c m s a) =>
+  [c] -> Maybe GeneralInstance -> FunctionName -> CompilerState a m (ScopedFunction c)
+csGetTypeFunction c t n = fmap (\x -> ccGetTypeFunction x c t n) get >>= lift
 
 csGetValueInit :: (Monad m, CompilerContext c m s a) =>
   [c] -> TypeInstance -> CompilerState a m (ParamSet (MemberValue c))

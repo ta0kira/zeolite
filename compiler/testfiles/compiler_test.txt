@@ -26,9 +26,9 @@ define Value {
   @value #x value
 
   create (value) (created) {
-    { created } <- Value$create2<#x>(value)
-    created <- Value$create2<#x>(value)
-    ~ set((created <- Value$create2<#x>(value)).get())
+    { created } <- Value$$create2<#x>(value)
+    created <- Value$$create2<#x>(value)
+    ~ (created <- Value$$create2<#x>(value)).get()
   }
 
   create2 (value) {
