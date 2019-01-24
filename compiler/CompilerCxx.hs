@@ -34,10 +34,10 @@ data CxxOutput =
   }
   deriving (Show) -- TODO: Remove this.
 
-headerFilename :: TypeName -> String
+headerFilename :: CategoryName -> String
 headerFilename n = "Category_" ++ show n ++ ".hxx"
 
-sourceFilename :: TypeName -> String
+sourceFilename :: CategoryName -> String
 sourceFilename n = "Category_" ++ show n ++ ".cxx"
 
 baseHeaderIncludes :: [String]
@@ -73,13 +73,13 @@ variableName v = "Var_" ++ show v
 initializerName :: VariableName -> String
 initializerName v = "Init_" ++ show v
 
-categoryName :: TypeName -> String
+categoryName :: CategoryName -> String
 categoryName n = "Category_" ++ show n
 
-typeName :: TypeName -> String
+typeName :: CategoryName -> String
 typeName n = "Type_" ++ show n
 
-valueName :: TypeName -> String
+valueName :: CategoryName -> String
 valueName n = "Value_" ++ show n
 
 callName :: ScopedFunction c -> String
@@ -719,7 +719,7 @@ expandParams ps = do
   where
 
 expandCategory :: (Monad m, CompilerContext c m s a) =>
-  TypeName -> CompilerState a m String
+  CategoryName -> CompilerState a m String
 expandCategory t = return $ "Category_" ++ show t
 
 expandType :: (Monad m, CompilerContext c m s a) =>

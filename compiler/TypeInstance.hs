@@ -2,6 +2,7 @@
 {-# LANGUAGE Safe #-}
 
 module TypeInstance (
+  CategoryName(..),
   DefinesInstance(..),
   FilterDirection(..),
   GeneralInstance,
@@ -14,7 +15,6 @@ module TypeInstance (
   TypeFilter(..),
   TypeInstance(..),
   TypeInstanceOrParam(..),
-  TypeName(..),
   TypeResolver(..),
   ValueType(..),
   checkGeneralMatch,
@@ -63,14 +63,14 @@ instance Show ValueType where
   show (ValueType OptionalValue t) = "optional " ++ show t
   show (ValueType RequiredValue t) = show t
 
-newtype TypeName =
-  TypeName {
+newtype CategoryName =
+  CategoryName {
     tnName :: String
   }
   deriving (Eq,Ord)
 
-instance Show TypeName where
-  show (TypeName n) = n
+instance Show CategoryName where
+  show (CategoryName n) = n
 
 newtype ParamName =
   ParamName {
@@ -83,7 +83,7 @@ instance Show ParamName where
 
 data TypeInstance =
   TypeInstance {
-    tiName :: TypeName,
+    tiName :: CategoryName,
     tiParams :: InstanceParams
   }
   deriving (Eq,Ord)
@@ -95,7 +95,7 @@ instance Show TypeInstance where
 
 data DefinesInstance =
   DefinesInstance {
-    diName :: TypeName,
+    diName :: CategoryName,
     diParams :: InstanceParams
   }
   deriving (Eq,Ord)
@@ -163,17 +163,17 @@ type ParamVariances = Map.Map ParamName Variance
 data TypeResolver m =
   TypeResolver {
     -- Performs parameter substitution for refines.
-    trRefines :: TypeInstance -> TypeName -> m InstanceParams,
+    trRefines :: TypeInstance -> CategoryName -> m InstanceParams,
     -- Performs parameter substitution for defines.
-    trDefines :: TypeInstance -> TypeName -> m InstanceParams,
+    trDefines :: TypeInstance -> CategoryName -> m InstanceParams,
     -- Get the parameter variances for the category.
-    trVariance :: TypeName -> m InstanceVariances,
+    trVariance :: CategoryName -> m InstanceVariances,
     -- Gets filters for the assigned parameters.
     trTypeFilters :: TypeInstance -> m InstanceFilters,
     -- Gets filters for the assigned parameters.
     trDefinesFilters :: DefinesInstance -> m InstanceFilters,
     -- Returns True if the type is concrete.
-    trConcrete :: TypeName -> m Bool
+    trConcrete :: CategoryName -> m Bool
   }
 
 filterLookup :: (CompileErrorM m, Monad m) =>

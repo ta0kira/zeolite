@@ -28,7 +28,7 @@ import TypesBase
 data ProcedureContext c =
   ProcedureContext {
     pcScope :: SymbolScope,
-    pcType :: TypeName,
+    pcType :: CategoryName,
     pcParams :: ParamSet ParamName,
     pcMembers :: [DefinedMember c],
     pcCategories :: CategoryMap c,
@@ -37,7 +37,7 @@ data ProcedureContext c =
     pcFunctions :: Map.Map FunctionName (ScopedFunction c),
     pcVariables :: Map.Map VariableName (VariableValue c),
     pcReturns :: ReturnValidation c,
-    pcRequiredTypes :: Set.Set TypeName,
+    pcRequiredTypes :: Set.Set CategoryName,
     pcOutput :: [String]
   }
 

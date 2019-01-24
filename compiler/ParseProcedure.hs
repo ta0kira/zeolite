@@ -271,7 +271,7 @@ instance ParseFromSource (ExpressionStart SourcePos) where
       return $ UnqualifiedCall [c] f
     typeOrCategoryCall = do
       c <- getPosition
-      t <- sourceParser :: Parser TypeName
+      t <- sourceParser :: Parser CategoryName
       asType c t <|> asCategory c t
     asType c t = do
       try typeSymbolGet

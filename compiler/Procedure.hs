@@ -162,7 +162,7 @@ data FunctionCall c =
 
 data ExpressionStart c =
   NamedVariable (OutputValue c) |
-  CategoryCall [c] TypeName (FunctionCall c) |
+  CategoryCall [c] CategoryName (FunctionCall c) |
   TypeCall [c] TypeInstanceOrParam (FunctionCall c) |
   UnqualifiedCall [c] (FunctionCall c) |
   BuiltinCall [c] (FunctionCall c) |

@@ -69,28 +69,28 @@ tests = [
     checkOperationSuccess
       "testfiles/concrete_refines_value.txt"
       (checkConnectedTypes $ Map.fromList [
-          (TypeName "Parent2",InstanceInterface [] (TypeName "Parent2") [] [] [])
+          (CategoryName "Parent2",InstanceInterface [] (CategoryName "Parent2") [] [] [])
         ]),
     checkOperationFail
       "testfiles/concrete_refines_value.txt"
       (checkConnectedTypes $ Map.fromList [
-          (TypeName "Parent",InstanceInterface [] (TypeName "Parent") [] [] [])
+          (CategoryName "Parent",InstanceInterface [] (CategoryName "Parent") [] [] [])
         ]),
 
     checkOperationSuccess
       "testfiles/partial.txt"
       (checkConnectedTypes $ Map.fromList [
-          (TypeName "Parent",ValueInterface [] (TypeName "Parent") [] [] [] [])
+          (CategoryName "Parent",ValueInterface [] (CategoryName "Parent") [] [] [] [])
         ]),
     checkOperationFail
       "testfiles/partial.txt"
       (checkConnectedTypes $ Map.fromList [
-          (TypeName "Parent",InstanceInterface [] (TypeName "Parent") [] [] [])
+          (CategoryName "Parent",InstanceInterface [] (CategoryName "Parent") [] [] [])
         ]),
     checkOperationFail
       "testfiles/partial.txt"
       (checkConnectedTypes $ Map.fromList [
-          (TypeName "Parent",ValueConcrete [] (TypeName "Parent") [] [] [] [] [])
+          (CategoryName "Parent",ValueConcrete [] (CategoryName "Parent") [] [] [] [] [])
         ]),
 
     checkOperationSuccess "testfiles/value_refines_value.txt" checkConnectionCycles,
@@ -136,7 +136,7 @@ tests = [
       "testfiles/flatten.txt"
       (\ts -> do
         existing  <- return $ Map.fromList [
-            (TypeName "Parent2",InstanceInterface [] (TypeName "Parent2") [] [] [])
+            (CategoryName "Parent2",InstanceInterface [] (CategoryName "Parent2") [] [] [])
           ]
         ts <- topoSortCategories existing ts
         flattenAllConnections existing ts),
@@ -144,7 +144,7 @@ tests = [
       "testfiles/flatten.txt"
       (\ts -> do
         existing  <- return $ Map.fromList [
-            (TypeName "Parent",InstanceInterface [] (TypeName "Parent") [] [] [])
+            (CategoryName "Parent",InstanceInterface [] (CategoryName "Parent") [] [] [])
           ]
         topoSortCategories existing ts),
 
@@ -152,14 +152,14 @@ tests = [
       "testfiles/partial.txt"
       (\ts -> do
         existing  <- return $ Map.fromList [
-            (TypeName "Parent",
-            ValueInterface [] (TypeName "Parent") []
-                           [ValueRefine [] $ TypeInstance (TypeName "Object1") (ParamSet []),
-                           ValueRefine [] $ TypeInstance (TypeName "Object2") (ParamSet [])] [] []),
+            (CategoryName "Parent",
+            ValueInterface [] (CategoryName "Parent") []
+                           [ValueRefine [] $ TypeInstance (CategoryName "Object1") (ParamSet []),
+                           ValueRefine [] $ TypeInstance (CategoryName "Object2") (ParamSet [])] [] []),
             -- NOTE: Object1 deliberately excluded here so that we catch
             -- unnecessary recursion in existing categories.
-            (TypeName "Object2",
-            ValueInterface [] (TypeName "Object2") [] [] [] [])
+            (CategoryName "Object2",
+            ValueInterface [] (CategoryName "Object2") [] [] [] [])
           ]
         ts <- topoSortCategories existing ts
         ts <- flattenAllConnections existing ts
@@ -185,35 +185,35 @@ tests = [
     checkOperationSuccess
       "testfiles/concrete_refines_value.txt"
       (checkParamVariances $ Map.fromList [
-          (TypeName "Parent2",InstanceInterface [] (TypeName "Parent2") [] [] [])
+          (CategoryName "Parent2",InstanceInterface [] (CategoryName "Parent2") [] [] [])
         ]),
     checkOperationFail
       "testfiles/concrete_refines_value.txt"
       (checkParamVariances $ Map.fromList [
-          (TypeName "Parent",InstanceInterface [] (TypeName "Parent") [] [] [])
+          (CategoryName "Parent",InstanceInterface [] (CategoryName "Parent") [] [] [])
         ]),
 
     checkOperationSuccess
       "testfiles/partial_params.txt"
       (checkParamVariances $ Map.fromList [
-          (TypeName "Parent",
-           ValueInterface [] (TypeName "Parent")
+          (CategoryName "Parent",
+           ValueInterface [] (CategoryName "Parent")
                           [ValueParam [] (ParamName "#w") Contravariant,
                            ValueParam [] (ParamName "#z") Covariant] [] [] [])
       ]),
     checkOperationFail
       "testfiles/partial_params.txt"
       (checkParamVariances $ Map.fromList [
-          (TypeName "Parent",
-           ValueInterface [] (TypeName "Parent")
+          (CategoryName "Parent",
+           ValueInterface [] (CategoryName "Parent")
                           [ValueParam [] (ParamName "#w") Invariant,
                            ValueParam [] (ParamName "#z") Covariant] [] [] [])
       ]),
     checkOperationFail
       "testfiles/partial_params.txt"
       (checkParamVariances $ Map.fromList [
-          (TypeName "Parent",
-           ValueInterface [] (TypeName "Parent")
+          (CategoryName "Parent",
+           ValueInterface [] (CategoryName "Parent")
                           [ValueParam [] (ParamName "#w") Contravariant,
                            ValueParam [] (ParamName "#z") Invariant] [] [] [])
       ]),
@@ -618,7 +618,7 @@ tests = [
       "testfiles/flatten.txt"
       (\ts -> do
         let tm0 = Map.fromList [
-                    (TypeName "Parent2",InstanceInterface [] (TypeName "Parent2") [] [] [])
+                    (CategoryName "Parent2",InstanceInterface [] (CategoryName "Parent2") [] [] [])
                   ]
         tm <- includeNewTypes tm0 ts
         rs <- getRefines tm "Child"
@@ -745,12 +745,12 @@ tests = [
 
 
 getRefines tm n =
-  case (TypeName n) `Map.lookup` tm of
+  case (CategoryName n) `Map.lookup` tm of
        (Just t) -> return $ map (show . vrType) (getCategoryRefines t)
        _ -> compileError $ "Type " ++ n ++ " not found"
 
 getDefines tm n =
-  case (TypeName n) `Map.lookup` tm of
+  case (CategoryName n) `Map.lookup` tm of
        (Just t) -> return $ map (show . vdType) (getCategoryDefines t)
        _ -> compileError $ "Type " ++ n ++ " not found"
 
@@ -758,20 +758,20 @@ getTypeRefines ts s n = do
   ta <- declareAllTypes Map.empty ts
   let r = categoriesToTypeResolver ta
   t <- readSingle "(string)" s
-  ParamSet rs <- trRefines r t (TypeName n)
+  ParamSet rs <- trRefines r t (CategoryName n)
   return $ map show rs
 
 getTypeDefines ts s n = do
   ta <- declareAllTypes Map.empty ts
   let r = categoriesToTypeResolver ta
   t <- readSingle "(string)" s
-  ParamSet ds <- trDefines r t (TypeName n)
+  ParamSet ds <- trDefines r t (CategoryName n)
   return $ map show ds
 
 getTypeVariance ts n = do
   ta <- declareAllTypes Map.empty ts
   let r = categoriesToTypeResolver ta
-  (ParamSet vs) <- trVariance r (TypeName n)
+  (ParamSet vs) <- trVariance r (CategoryName n)
   return vs
 
 getTypeFilters ts s = do

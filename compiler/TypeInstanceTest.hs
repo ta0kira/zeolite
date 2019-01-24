@@ -536,16 +536,16 @@ tests = [
   ]
 
 
-type0 = TypeName "Type0"
-type1 = TypeName "Type1"
-type2 = TypeName "Type2"
-type3 = TypeName "Type3"
-type4 = TypeName "Type4"
-type5 = TypeName "Type5"
-instance0 = TypeName "Instance0"
-instance1 = TypeName "Instance1"
+type0 = CategoryName "Type0"
+type1 = CategoryName "Type1"
+type2 = CategoryName "Type2"
+type3 = CategoryName "Type3"
+type4 = CategoryName "Type4"
+type5 = CategoryName "Type5"
+instance0 = CategoryName "Instance0"
+instance1 = CategoryName "Instance1"
 
-variances :: Map.Map TypeName InstanceVariances
+variances :: Map.Map CategoryName InstanceVariances
 variances = Map.fromList $ [
     (type0,ParamSet []), -- Type0<>
     (type1,ParamSet [Invariant]), -- Type1<x>
@@ -557,7 +557,7 @@ variances = Map.fromList $ [
     (instance1,ParamSet [Contravariant]) -- Instance1<x|>
   ]
 
-refines :: Map.Map TypeName (Map.Map TypeName (InstanceParams -> InstanceParams))
+refines :: Map.Map CategoryName (Map.Map CategoryName (InstanceParams -> InstanceParams))
 refines = Map.fromList $ [
     (type0,Map.fromList $ []),
     (type1,Map.fromList $ [
@@ -582,7 +582,7 @@ refines = Map.fromList $ [
     (type5,Map.fromList $ [])
   ]
 
-defines :: Map.Map TypeName (Map.Map TypeName (InstanceParams -> InstanceParams))
+defines :: Map.Map CategoryName (Map.Map CategoryName (InstanceParams -> InstanceParams))
 defines = Map.fromList $ [
     (type0,Map.fromList $ [
         -- Type0 defines Instance1<Type0>
@@ -600,7 +600,7 @@ defines = Map.fromList $ [
     (type5,Map.fromList $ [])
   ]
 
-typeFilters :: Map.Map TypeName (InstanceParams -> InstanceFilters)
+typeFilters :: Map.Map CategoryName (InstanceParams -> InstanceFilters)
 typeFilters = Map.fromList $ [
     (type0,\(ParamSet []) -> ParamSet []),
     (type1,\(ParamSet [_]) ->
@@ -627,7 +627,7 @@ typeFilters = Map.fromList $ [
     (type5,\(ParamSet [_]) -> ParamSet [[]])
   ]
 
-definesFilters :: Map.Map TypeName (InstanceParams -> InstanceFilters)
+definesFilters :: Map.Map CategoryName (InstanceParams -> InstanceFilters)
 definesFilters = Map.fromList $ [
     (instance0,\(ParamSet []) -> ParamSet []),
     (instance1,\(ParamSet [_]) ->

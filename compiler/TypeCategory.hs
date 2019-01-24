@@ -55,7 +55,7 @@ import TypesBase
 data AnyCategory c =
   ValueInterface {
     viContext :: [c],
-    viName :: TypeName,
+    viName :: CategoryName,
     viParams :: [ValueParam c],
     viRefines :: [ValueRefine c],
     viParamFilter :: [ParamFilter c],
@@ -63,14 +63,14 @@ data AnyCategory c =
   } |
   InstanceInterface {
     iiContext :: [c],
-    iiName :: TypeName,
+    iiName :: CategoryName,
     iiParams :: [ValueParam c],
     iiParamFilter :: [ParamFilter c],
     viFunctions :: [ScopedFunction c]
   } |
   ValueConcrete {
     vcContext :: [c],
-    vcName :: TypeName,
+    vcName :: CategoryName,
     vcParams :: [ValueParam c],
     vcRefines :: [ValueRefine c],
     vcDefines :: [ValueDefine c],
@@ -128,7 +128,7 @@ showScope TypeScope     = "@type"
 showScope ValueScope    = "@value"
 showScope LocalScope    = "@local"
 
-getCategoryName :: AnyCategory c -> TypeName
+getCategoryName :: AnyCategory c -> CategoryName
 getCategoryName (ValueInterface _ n _ _ _ _) = n
 getCategoryName (InstanceInterface _ n _ _ _) = n
 getCategoryName (ValueConcrete _ n _ _ _ _ _) = n
@@ -214,10 +214,10 @@ instance Show c => Show (ParamFilter c) where
   show (ParamFilter c n f) = show n ++ " " ++ show f ++ " [" ++ formatFullContext c ++ "]"
 
 
-type CategoryMap c = Map.Map TypeName (AnyCategory c)
+type CategoryMap c = Map.Map CategoryName (AnyCategory c)
 
 getCategory :: (Show c, CompileErrorM m, Monad m) =>
-  CategoryMap c -> ([c],TypeName) -> m ([c],AnyCategory c)
+  CategoryMap c -> ([c],CategoryName) -> m ([c],AnyCategory c)
 getCategory tm (c,n) =
   case n `Map.lookup` tm of
        (Just t) -> return (c,t)
@@ -228,7 +228,7 @@ getCategory tm (c,n) =
       | otherwise = " [" ++ formatFullContext c ++ "]"
 
 getValueCategory :: (Show c, CompileErrorM m, Monad m) =>
-  CategoryMap c -> ([c],TypeName) -> m ([c],AnyCategory c)
+  CategoryMap c -> ([c],CategoryName) -> m ([c],AnyCategory c)
 getValueCategory tm (c,n) = do
   (c2,t) <- getCategory tm (c,n)
   if isValueInterface t || isValueConcrete t
@@ -238,7 +238,7 @@ getValueCategory tm (c,n) = do
                          formatFullContext c ++ "]"
 
 getInstanceCategory :: (Show c, CompileErrorM m, Monad m) =>
-  CategoryMap c -> ([c],TypeName) -> m ([c],AnyCategory c)
+  CategoryMap c -> ([c],CategoryName) -> m ([c],AnyCategory c)
 getInstanceCategory tm (c,n) = do
   (c2,t) <- getCategory tm (c,n)
   if isInstanceInterface t
@@ -248,7 +248,7 @@ getInstanceCategory tm (c,n) = do
                          formatFullContext c ++ "]"
 
 getConcreteCategory :: (Show c, CompileErrorM m, Monad m) =>
-  CategoryMap c -> ([c],TypeName) -> m ([c],AnyCategory c)
+  CategoryMap c -> ([c],CategoryName) -> m ([c],AnyCategory c)
 getConcreteCategory tm (c,n) = do
   (c2,t) <- getCategory tm (c,n)
   if isValueConcrete t
@@ -699,7 +699,7 @@ data ScopedFunction c =
   ScopedFunction {
     sfContext :: [c],
     sfName :: FunctionName,
-    sfType :: TypeName,
+    sfType :: CategoryName,
     sfScope :: SymbolScope,
     sfArgs :: ParamSet (PassedValue c),
     sfReturns :: ParamSet (PassedValue c),

@@ -49,12 +49,12 @@ instance ParseFromSource ValueType where
         return OptionalValue
       getRequired = return RequiredValue
 
-instance ParseFromSource TypeName where
+instance ParseFromSource CategoryName where
   sourceParser = labeled "type name" $ do
     noKeywords
     b <- upper
     e <- sepAfter $ many alphaNum
-    return $ TypeName (b:e)
+    return $ CategoryName (b:e)
 
 instance ParseFromSource ParamName where
   sourceParser = labeled "param name" $ do

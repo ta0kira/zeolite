@@ -46,7 +46,7 @@ instance ParseFromSource (DefinedMember SourcePos) where
         return $ Just e
 
 parseMemberProcedureFunction ::
-  TypeName ->
+  CategoryName ->
   Parser ([DefinedMember SourcePos],[ExecutableProcedure SourcePos],[ScopedFunction SourcePos])
 parseMemberProcedureFunction n = parsed >>= return . foldr merge empty where
   empty = ([],[],[])

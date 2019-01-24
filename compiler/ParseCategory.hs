@@ -156,7 +156,7 @@ instance ParseFromSource FunctionName where
     e <- sepAfter $ many alphaNum
     return $ FunctionName (b:e)
 
-parseScopedFunction :: Parser SymbolScope -> Parser TypeName ->
+parseScopedFunction :: Parser SymbolScope -> Parser CategoryName ->
                        Parser (ScopedFunction SourcePos)
 parseScopedFunction sp tp = labeled "function" $ do
   c <- getPosition

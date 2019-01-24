@@ -48,9 +48,9 @@ class Monad m => CompilerContext c m s a | a -> c s where
   ccResolver :: a -> m (TypeResolver m)
   ccAllFilters :: a -> m ParamFilters
   ccGetParamScope :: a -> ParamName -> m SymbolScope
-  ccRequiresTypes :: a -> Set.Set TypeName -> m a
-  ccGetRequired :: a -> m (Set.Set TypeName)
-  ccGetCategoryFunction :: a -> [c] -> Maybe TypeName -> FunctionName -> m (ScopedFunction c)
+  ccRequiresTypes :: a -> Set.Set CategoryName -> m a
+  ccGetRequired :: a -> m (Set.Set CategoryName)
+  ccGetCategoryFunction :: a -> [c] -> Maybe CategoryName -> FunctionName -> m (ScopedFunction c)
   ccGetTypeFunction :: a -> [c] -> Maybe GeneralInstance -> FunctionName -> m (ScopedFunction c)
   ccGetValueInit :: a -> [c] -> TypeInstance -> m (ParamSet (MemberValue c))
   ccGetVariable :: a -> [c] -> VariableName -> m (VariableValue c)
@@ -101,14 +101,14 @@ csGetParamScope :: (Monad m, CompilerContext c m s a) =>
 csGetParamScope n = fmap (\x -> ccGetParamScope x n) get >>= lift
 
 csRequiresTypes :: (Monad m, CompilerContext c m s a) =>
-  Set.Set TypeName -> CompilerState a m ()
+  Set.Set CategoryName -> CompilerState a m ()
 csRequiresTypes n = fmap (\x -> ccRequiresTypes x n) get >>= lift >>= put
 
-csGetRequired :: (Monad m, CompilerContext c m s a) => CompilerState a m (Set.Set TypeName)
+csGetRequired :: (Monad m, CompilerContext c m s a) => CompilerState a m (Set.Set CategoryName)
 csGetRequired = fmap ccGetRequired get >>= lift
 
 csGetCategoryFunction :: (Monad m, CompilerContext c m s a) =>
-  [c] -> Maybe TypeName -> FunctionName -> CompilerState a m (ScopedFunction c)
+  [c] -> Maybe CategoryName -> FunctionName -> CompilerState a m (ScopedFunction c)
 csGetCategoryFunction c t n = fmap (\x -> ccGetCategoryFunction x c t n) get >>= lift
 
 csGetTypeFunction :: (Monad m, CompilerContext c m s a) =>
@@ -147,7 +147,7 @@ csInheritReturns xs = fmap (\x -> ccInheritReturns x xs) get >>= lift >>= put
 
 data CompiledData s =
   CompiledData {
-    cdRequired :: Set.Set TypeName,
+    cdRequired :: Set.Set CategoryName,
     cdOutput :: s
   }
 

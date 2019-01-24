@@ -16,7 +16,7 @@ data DefinedCategory c =
   DefinedCategory {
     -- TODO: Add internal type params.
     dcContext :: [c],
-    dcName :: TypeName,
+    dcName :: CategoryName,
     dcMembers :: [DefinedMember c],
     dcProcedures :: [ExecutableProcedure c],
     dcFunctions :: [ScopedFunction c]
