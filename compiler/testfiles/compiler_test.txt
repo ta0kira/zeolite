@@ -41,6 +41,7 @@ define Value {
     } in optional any x <- y
     x <- empty
     optional all y <- empty
+    ~ reduce<Value<#x>,#x>(self)
     return value
   }
 
