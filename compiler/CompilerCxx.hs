@@ -591,13 +591,11 @@ compileExpression = compile where -- TODO: Rewrite for operator precedence?
     lift $ (checkValueTypeMatch r fa vt t') `reviseError`
       ("In conversion at " ++ formatFullContext c)
     f' <- lookupValueFunction t' f
-    (t2,e2) <- compileFunctionCall f' f
-    return (t2,"std::get<0>(" ++ e' ++ ")->" ++ e2)
+    compileFunctionCall (Just $ "std::get<0>(" ++ e' ++ ")") f' f
   transform (ValueCall c f) e = do
     (ParamSet [t'],e') <- e -- TODO: Get rid of the ParamSet matching here.
     f' <- lookupValueFunction t' f
-    (t2,e2) <- compileFunctionCall f' f
-    return (t2,"std::get<0>(" ++ e' ++ ")->" ++ e2)
+    compileFunctionCall (Just $ "std::get<0>(" ++ e' ++ ")") f' f
   transform (BinaryOperation c s e2) e = do
     lift $ compileError $ "BinaryOperation " ++ formatFullContext c
 
@@ -617,26 +615,22 @@ compileExpressionStart (NamedVariable (OutputValue c n)) = do
   return (ParamSet [t],"T_get(" ++ scoped ++ variableName n ++ ")")
 compileExpressionStart (CategoryCall c t f@(FunctionCall _ n _ _)) = do
   f' <- csGetCategoryFunction c (Just t) n
-  (ts,f'') <- compileFunctionCall f' f
   csRequiresTypes $ Set.fromList [sfType f']
   t' <- expandCategory t
-  return (ts,t' ++ "." ++ f'')
+  compileFunctionCall (Just t') f' f
 compileExpressionStart (TypeCall c t f@(FunctionCall _ n _ _)) = do
   f' <- csGetTypeFunction c (Just $ SingleType t) n
   when (sfScope f' /= TypeScope) $ lift $ compileError $ "Function " ++ show n ++
                                           " cannot be used as a type function [" ++
                                           formatFullContext c ++ "]"
-  (ts,f'') <- compileFunctionCall f' f
   csRequiresTypes $ Set.fromList [sfType f']
   t' <- expandType $ SingleType t
-  return (ts,t' ++ "." ++ f'')
+  compileFunctionCall (Just t') f' f
 compileExpressionStart (UnqualifiedCall c f@(FunctionCall _ n _ _)) = do
   ctx <- get
   f' <- lift $ collectOneOrErrorM [tryCategory ctx,tryNonCategory ctx]
-  (ts,f'') <- compileFunctionCall f' f
   csRequiresTypes $ Set.fromList [sfType f']
-  scoped <- autoScope $ sfScope f'
-  return (ts,scoped ++ f'')
+  compileFunctionCall Nothing f' f
   where
     tryCategory ctx = ccGetCategoryFunction ctx c Nothing n
     tryNonCategory ctx = do
@@ -665,8 +659,9 @@ compileExpressionStart (InlineAssignment c n e) = do
 
 compileFunctionCall :: (Show c, Monad m, CompileErrorM m, MergeableM m,
                         CompilerContext c m [String] a) =>
-  ScopedFunction c -> FunctionCall c -> CompilerState a m (ExpressionType,String)
-compileFunctionCall f (FunctionCall c _ ps es) = do
+  Maybe String -> ScopedFunction c -> FunctionCall c ->
+  CompilerState a m (ExpressionType,String)
+compileFunctionCall e f (FunctionCall c _ ps es) = do
   r <- csResolver
   fa <- csAllFilters
   f' <- lift $ parsedToFunctionType f `reviseError`
@@ -679,10 +674,19 @@ compileFunctionCall f (FunctionCall c _ ps es) = do
     ("In function call at " ++ formatFullContext c)
   -- TODO: Also include param values.
   csRequiresTypes (Set.fromList [sfType f])
-  scoped <- autoScope $ sfScope f
   params <- expandParams ps
-  return $ (ftReturns f'',scoped ++ "call(" ++ functionName f ++ ", " ++ params ++ ", " ++ es'' ++ ")")
+  call <- assemble e (sfScope f) (functionName f) params es''
+  return $ (ftReturns f'',call)
   where
+    assemble (Just e) ValueScope n ps es =
+      return $ "TypeValue::call(" ++ e ++ ", " ++ functionName f ++ ", " ++ ps ++ ", " ++ es ++ ")"
+    assemble Nothing ValueScope n ps es =
+      return $ "TypeValue::call(self, " ++ functionName f ++ ", " ++ ps ++ ", " ++ es ++ ")"
+    assemble (Just e) _ n ps es =
+      return $ e ++ ".call(" ++ functionName f ++ ", " ++ ps ++ ", " ++ es ++ ")"
+    assemble _ _ n ps es = do
+      scoped <- autoScope $ sfScope f
+      return $ scoped ++ "call(" ++ functionName f ++ ", " ++ ps ++ ", " ++ es ++ ")"
     -- TODO: Lots of duplication with assignments and initialization.
     -- Single expression, but possibly multi-return.
     getValues [(ParamSet ts,e)] = return (ts,e)
@@ -720,7 +724,7 @@ expandParams ps = do
 
 expandCategory :: (Monad m, CompilerContext c m s a) =>
   CategoryName -> CompilerState a m String
-expandCategory t = return $ "Category_" ++ show t
+expandCategory t = return $ "GetCategory_" ++ show t ++ "()"
 
 expandType :: (Monad m, CompilerContext c m s a) =>
   GeneralInstance -> CompilerState a m String
@@ -735,7 +739,7 @@ expandType (TypeMerge MergeIntersect ps) = do
 expandType (SingleType (JustTypeInstance (TypeInstance t ps))) = do
   ps' <- sequence $ map expandType $ psParams ps
   -- TODO: This needs a helper for reuse.
-  return $ "Instance_" ++ show t ++ "(" ++ intercalate "," ps' ++ ")"
+  return $ "GetInstance_" ++ show t ++ "(" ++ intercalate "," ps' ++ ")"
 expandType (SingleType (JustParamName p)) = do
   s <- csGetParamScope p
   scoped <- autoScope s
