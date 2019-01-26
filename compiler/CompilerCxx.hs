@@ -17,6 +17,7 @@ import Data.List (intercalate)
 import qualified Data.Map as Map
 import qualified Data.Set as Set
 
+import Builtin
 import CategoryCompiler
 import CompilerState
 import DefinedCategory
@@ -77,8 +78,20 @@ initializerName v = "Init_" ++ show v
 categoryName :: CategoryName -> String
 categoryName n = "Category_" ++ show n
 
+categoryGetter :: CategoryName -> String
+categoryGetter n = "GetCategory_" ++ show n
+
 typeName :: CategoryName -> String
 typeName n = "Type_" ++ show n
+
+typeGetter :: CategoryName -> String
+typeGetter n = "GetType_" ++ show n
+
+intersectGetter :: String
+intersectGetter = "Merge_Intersect"
+
+unionGetter:: String
+unionGetter = "Merge_Union"
 
 valueName :: CategoryName -> String
 valueName n = "Value_" ++ show n
@@ -459,20 +472,18 @@ compileIfElifElse :: (Show c, Monad m, CompileErrorM m, MergeableM m,
                       CompilerContext c m [String] a) =>
   IfElifElse c -> CompilerState a m ()
 compileIfElifElse (IfStatement c e p es) = do
-  (ts,e') <- compileExpression e
-  lift $ checkCondition ts `reviseError` ("In condition at " ++ formatFullContext c)
+  e' <- compileCondition c e
   ctx0 <- get
   ctx <- compileProcedure ctx0 p
   (lift $ ccGetRequired ctx) >>= csRequiresTypes
-  csWrite ["if (" ++ e' ++ ") {"]
+  csWrite ["" ++ e' ++ ") {"]
   (lift $ ccGetOutput ctx) >>= csWrite
   csWrite ["}"]
   cs <- unwind es
   csInheritReturns (ctx:cs)
   where
     unwind (IfStatement c e p es) = do
-      (ts,e') <- compileExpression e
-      lift $ checkCondition ts `reviseError` ("In condition at " ++ formatFullContext c)
+      e' <- compileCondition c e
       ctx0 <- get
       ctx <- compileProcedure ctx0 p
       (lift $ ccGetRequired ctx) >>= csRequiresTypes
@@ -490,24 +501,28 @@ compileIfElifElse (IfStatement c e p es) = do
       csWrite ["}"]
       return [ctx]
     unwind TerminateConditional = fmap (:[]) get
-    checkCondition (ParamSet [t]) = return () -- TODO: Make sure ts is [Bool].
-    checkCondition _ = compileError "Conditionals must have exactly one Bool return"
 
 compileWhileLoop :: (Show c, Monad m, CompileErrorM m, MergeableM m,
                      CompilerContext c m [String] a) =>
   WhileLoop c -> CompilerState a m ()
 compileWhileLoop (WhileLoop c e p) = do
-  (ts,e') <- compileExpression e
-  lift $ checkCondition ts `reviseError` ("In condition at " ++ formatFullContext c)
+  e' <- compileCondition c e
   ctx0 <- get
   ctx <- compileProcedure ctx0 p
   (lift $ ccGetRequired ctx) >>= csRequiresTypes
   csWrite ["while (" ++ e' ++ ") {"]
   (lift $ ccGetOutput ctx) >>= csWrite
   csWrite ["}"]
+
+compileCondition :: (Show c, Monad m, CompileErrorM m, MergeableM m,
+                     CompilerContext c m [String] a) =>
+  [c] -> Expression c -> CompilerState a m String
+compileCondition c e = flip reviseErrorStateT ("In condition at " ++ formatFullContext c) $ do
+  (ts,e') <- compileExpression e
+  lift $ checkCondition ts
+  return $ "std::get<0>(" ++ e' ++ ")->as_bool()"
   where
-    -- TODO: Maybe make this a helper, or use a special type of Expression.
-    checkCondition (ParamSet [t]) = return () -- TODO: Make sure ts is [Bool].
+    checkCondition (ParamSet [t]) | t == boolRequiredValue = return ()
     checkCondition _ = compileError "Conditionals must have exactly one Bool return"
 
 compileScopedBlock :: (Show c, Monad m, CompileErrorM m, MergeableM m,
@@ -755,22 +770,19 @@ expandParams ps = do
 
 expandCategory :: (Monad m, CompilerContext c m s a) =>
   CategoryName -> CompilerState a m String
-expandCategory t = return $ "GetCategory_" ++ show t ++ "()"
+expandCategory t = return $ categoryGetter t ++ "()"
 
 expandType :: (Monad m, CompilerContext c m s a) =>
   GeneralInstance -> CompilerState a m String
 expandType (TypeMerge MergeUnion ps) = do
   ps' <- sequence $ map expandType ps
-  -- TODO: This needs a helper for reuse.
-  return $ "Merge_Union(L_get(" ++ intercalate "," ps' ++ "))"
+  return $ unionGetter ++ "(L_get(" ++ intercalate "," ps' ++ "))"
 expandType (TypeMerge MergeIntersect ps) = do
   ps' <- sequence $ map expandType ps
-  -- TODO: This needs a helper for reuse.
-  return $ "Merge_Intersect(L_get(" ++ intercalate "," ps' ++ "))"
+  return $ intersectGetter ++ "Merge_Intersect(L_get(" ++ intercalate "," ps' ++ "))"
 expandType (SingleType (JustTypeInstance (TypeInstance t ps))) = do
   ps' <- sequence $ map expandType $ psParams ps
-  -- TODO: This needs a helper for reuse.
-  return $ "GetInstance_" ++ show t ++ "(" ++ intercalate "," ps' ++ ")"
+  return $ typeGetter t ++ "(" ++ intercalate "," ps' ++ ")"
 expandType (SingleType (JustParamName p)) = do
   s <- csGetParamScope p
   scoped <- autoScope s
@@ -779,5 +791,7 @@ expandType (SingleType (JustParamName p)) = do
 builtinVariables :: TypeInstance -> Map.Map VariableName (VariableValue c)
 builtinVariables t = Map.fromList [
     (VariableName "self",VariableValue [] ValueScope (ValueType RequiredValue $ SingleType $ JustTypeInstance t)),
-    (VariableName "empty",VariableValue [] LocalScope (ValueType OptionalValue $ TypeMerge MergeUnion []))
+    (VariableName "empty",VariableValue [] LocalScope (ValueType OptionalValue $ TypeMerge MergeUnion [])),
+    (VariableName "true",VariableValue [] LocalScope boolRequiredValue),
+    (VariableName "false",VariableValue [] LocalScope boolRequiredValue)
   ]

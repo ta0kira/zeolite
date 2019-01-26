@@ -276,8 +276,11 @@ declareAllTypes tm0 = foldr (\t tm -> tm >>= update t) (return tm0) where
         (Just t2) -> compileError $ "Type " ++ show (getCategoryName t) ++
                                     " [" ++ formatFullContext (getCategoryContext t) ++
                                     "] has already been declared [" ++
-                                    formatFullContext (getCategoryContext t2) ++ "]"
+                                    showExisting t2 ++ "]"
         _ -> return $ Map.insert (getCategoryName t) t tm
+  showExisting t
+    | isBuiltinCategory (getCategoryName t) = "builtin type"
+    | otherwise = formatFullContext (getCategoryContext t)
 
 getCategoryFilterMap :: AnyCategory c -> ParamFilters
 getCategoryFilterMap t = getFilters $ zip (Set.toList pa) (repeat []) where

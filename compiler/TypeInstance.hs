@@ -24,9 +24,11 @@ module TypeInstance (
   uncheckedSubInstance,
   uncheckedSubValueType,
   getValueForParam,
+  isBuiltinCategory,
   isDefinesFilter,
   isRequiresFilter,
   isWeakValue,
+  requiredSingleton,
   validateAssignment,
   validateDefinesInstance,
   validateDefinesVariance,
@@ -67,14 +69,34 @@ instance Show ValueType where
 isWeakValue :: ValueType -> Bool
 isWeakValue = (== WeakValue) . vtRequired
 
-newtype CategoryName =
+requiredSingleton :: CategoryName -> ValueType
+requiredSingleton n = ValueType RequiredValue $ SingleType $ JustTypeInstance $ TypeInstance n (ParamSet [])
+
+data CategoryName =
   CategoryName {
     tnName :: String
-  }
-  deriving (Eq,Ord)
+  } |
+  BuiltinBool |
+  BuiltinString |
+  BuiltinInt |
+  BuiltinFloat
 
 instance Show CategoryName where
   show (CategoryName n) = n
+  show BuiltinBool   = "Bool"
+  show BuiltinString = "String"
+  show BuiltinInt    = "Int"
+  show BuiltinFloat  = "Float"
+
+instance Eq CategoryName where
+  c1 == c2 = show c1 == show c2
+
+instance Ord CategoryName where
+  c1 <= c2 = show c1 <= show c2
+
+isBuiltinCategory :: CategoryName -> Bool
+isBuiltinCategory (CategoryName _) = False
+isBuiltinCategory _                = True
 
 newtype ParamName =
   ParamName {

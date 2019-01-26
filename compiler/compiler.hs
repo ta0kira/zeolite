@@ -5,6 +5,7 @@ import System.Exit
 import System.IO
 import qualified Data.Map as Map
 
+import Builtin
 import CompileInfo
 import CompilerCxx
 import DefinedCategory
@@ -31,7 +32,7 @@ main = do
     processContents cs = do
       parsed <- collectAllOrErrorM $ map parseContents cs
       let (cs,ds) = foldr merge empty parsed
-      cm <- includeNewTypes Map.empty cs
+      cm <- includeNewTypes builtinCategories cs
       hxx <- collectAllOrErrorM $ map (compileCategoryDeclaration cm) cs
       cxx <- collectAllOrErrorM $ map (compileCategoryDefinition  cm) ds
       let interfaces = filter (not . isValueConcrete) cs
