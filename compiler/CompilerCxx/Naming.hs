@@ -5,14 +5,13 @@ module CompilerCxx.Naming (
   baseSourceIncludes,
   callName,
   categoryBase,
+  categoryCreator,
   categoryGetter,
   categoryName,
   functionLabelType,
   functionName,
   headerFilename,
-  headerFilename,
   initializerName,
-  internalCategory,
   intersectGetter,
   paramName,
   paramType,
@@ -83,9 +82,6 @@ categoryName n = "Category_" ++ show n
 categoryGetter :: CategoryName -> String
 categoryGetter n = "GetCategory_" ++ show n
 
-internalCategory :: CategoryName -> String
-internalCategory n = "Internal_" ++ show n
-
 typeName :: CategoryName -> String
 typeName n = "Type_" ++ show n
 
@@ -106,6 +102,9 @@ callName t f = "Call_" ++ show t ++ "_" ++ show f
 
 functionName :: ScopedFunction c -> String
 functionName f = "Function_" ++ show (sfType f) ++ "_" ++ show (sfName f)
+
+categoryCreator :: String
+categoryCreator = "CreateCategory"
 
 typeCreator :: String
 typeCreator = "CreateType"

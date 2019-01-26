@@ -32,9 +32,9 @@ main = do
       let (cs,ds) = foldr merge empty parsed
       cm <- includeNewTypes Map.empty cs
       hxx <- collectAllOrErrorM $ map (compileCategoryDeclaration cm) cs
-      cxx <- collectAllOrErrorM $ map (compileCategoryDefinition  cm) ds
+      cxx <- collectAllOrErrorM $ map (compileConcreteDefinition  cm) ds
       let interfaces = filter (not . isValueConcrete) cs
-      cxx2 <- collectAllOrErrorM $ map (compileInterfaceDefinition cm) interfaces
+      cxx2 <- collectAllOrErrorM $ map compileInterfaceDefinition interfaces
       return $ hxx ++ cxx ++ cxx2
     empty = ([],[])
     merge (cs1,ds1) (cs2,ds2) = (cs1++cs2,ds1++ds2)

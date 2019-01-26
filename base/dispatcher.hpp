@@ -24,8 +24,9 @@ class Dispatcher {
     return *this;
   }
 
-  DReturns Dispatch(const DFunction<SymbolScope::CategoryScope>& label,
-                    C& target, DParams params, DArgs args) const {
+  DReturns Dispatch(C& target,
+                    const DFunction<SymbolScope::CategoryScope>& label,
+                    DParams params, DArgs args) const {
     const auto caller = category_.find(&label);
     FAIL_IF(caller == category_.end())
         << target.CategoryName() << " does not implement " << label.FunctionName();
@@ -45,8 +46,9 @@ class Dispatcher {
     return *this;
   }
 
-  DReturns Dispatch(const DFunction<SymbolScope::TypeScope>& label,
-                    T& target, DParams params, DArgs args) const {
+  DReturns Dispatch(T& target,
+                    const DFunction<SymbolScope::TypeScope>& label,
+                    DParams params, DArgs args) const {
     const auto caller = type_.find(&label);
     FAIL_IF(caller == type_.end())
         << target.CategoryName() << " does not implement " << label.FunctionName();
@@ -68,12 +70,14 @@ class Dispatcher {
     return *this;
   }
 
-  DReturns Dispatch(const DFunction<SymbolScope::TypeScope>& label,
-                    V& target, DParams params, DArgs args) const {
+  DReturns Dispatch(V& target,
+                    const S<TypeValue>& self,
+                    const DFunction<SymbolScope::ValueScope>& label,
+                    DParams params, DArgs args) const {
     const auto caller = value_.find(&label);
     FAIL_IF(caller == value_.end())
         << target.CategoryName() << " does not implement " << label.FunctionName();
-    return caller->second(target, params, args);
+    return caller->second(target, self, params, args);
   }
 
  private:

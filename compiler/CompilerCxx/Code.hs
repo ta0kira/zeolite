@@ -1,6 +1,7 @@
 {-# LANGUAGE Safe #-}
 
 module CompilerCxx.Code (
+  emptyCode,
   indentCompiled,
   onlyCode,
   onlyCodes,
@@ -10,6 +11,9 @@ import qualified Data.Set as Set
 
 import CompilerState
 
+
+emptyCode :: CompiledData [String]
+emptyCode = onlyCodes []
 
 onlyCode :: String -> CompiledData [String]
 onlyCode = onlyCodes . (:[])

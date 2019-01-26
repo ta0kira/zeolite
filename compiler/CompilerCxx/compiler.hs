@@ -34,16 +34,15 @@ main = do
       let (cs,ds) = foldr merge empty parsed
       cm <- includeNewTypes builtinCategories cs
       hxx <- collectAllOrErrorM $ map (compileCategoryDeclaration cm) cs
-      cxx <- collectAllOrErrorM $ map (compileCategoryDefinition  cm) ds
+      cxx <- collectAllOrErrorM $ map (compileConcreteDefinition  cm) ds
       let interfaces = filter (not . isValueConcrete) cs
-      cxx2 <- collectAllOrErrorM $ map (compileInterfaceDefinition cm) interfaces
+      cxx2 <- collectAllOrErrorM $ map compileInterfaceDefinition interfaces
       return $ hxx ++ cxx ++ cxx2
     empty = ([],[])
     merge (cs1,ds1) (cs2,ds2) = (cs1++cs2,ds1++ds2)
     format c
       | isCompileError c = show $ getCompileError c
-      | otherwise = concat $ map formatFile $ getCompileSuccess c
-    formatFile (CxxOutput f os) = ""
+      | otherwise = ""
     writeResults c
       | isCompileError c = return ()
       | otherwise = mapM_ (\(CxxOutput f os) -> writeFile f $ concat $ map (++ "\n") os) $ getCompileSuccess c

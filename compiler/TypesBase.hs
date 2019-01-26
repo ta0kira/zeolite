@@ -156,10 +156,10 @@ data StorageType =
   deriving (Eq,Ord)
 
 data SymbolScope =
+  LocalScope |
   CategoryScope |
   TypeScope |
-  ValueScope |
-  LocalScope
+  ValueScope
   deriving (Eq,Ord,Show)
 
 partitionByScope :: (a -> SymbolScope) -> [a] -> ([a],[a],[a])
