@@ -36,16 +36,16 @@ data CxxOutput =
   deriving (Show) -- TODO: Remove this.
 
 headerFilename :: CategoryName -> String
-headerFilename n = "Category_" ++ show n ++ ".hxx"
+headerFilename n = "Category_" ++ show n ++ ".hpp"
 
 sourceFilename :: CategoryName -> String
-sourceFilename n = "Category_" ++ show n ++ ".cxx"
+sourceFilename n = "Category_" ++ show n ++ ".cpp"
 
 baseHeaderIncludes :: [String]
-baseHeaderIncludes = ["#include \"category-header.hxx\""]
+baseHeaderIncludes = ["#include \"category-header.hpp\""]
 
 baseSourceIncludes :: [String]
-baseSourceIncludes = ["#include \"category-source.hxx\""]
+baseSourceIncludes = ["#include \"category-source.hpp\""]
 
 categoryBase :: String
 categoryBase = "TypeCategory"
@@ -102,6 +102,12 @@ callName f = "Call_" ++ show (sfType f) ++ "_" ++ show (sfName f)
 functionName :: ScopedFunction c -> String
 functionName f = "Function_" ++ show (sfType f) ++ "_" ++ show (sfName f)
 
+typeCreator :: String
+typeCreator = "CreateType"
+
+valueCreator :: String
+valueCreator = "CreateValue"
+
 functionLabelType :: ScopedFunction c -> String
 functionLabelType f =
   "Function<" ++ scope ++ "," ++ show pn ++ "," ++ show an ++ "," ++ show rn ++ ">" where
@@ -109,9 +115,9 @@ functionLabelType f =
     an = length $ psParams $ sfArgs f
     rn = length $ psParams $ sfReturns f
     scope
-      | sfScope f == CategoryScope = "CategoryScope"
-      | sfScope f == TypeScope     = "TypeScope"
-      | sfScope f == ValueScope    = "ValueScope"
+      | sfScope f == CategoryScope = "SymbolScope::CategoryScope"
+      | sfScope f == TypeScope     = "SymbolScope::TypeScope"
+      | sfScope f == ValueScope    = "SymbolScope::ValueScope"
 
 createLabelForFunction :: ScopedFunction c -> String
 createLabelForFunction f = "const " ++ functionLabelType f ++ "& " ++ functionName f ++
@@ -160,7 +166,9 @@ compileCategoryDefinition tm dd@(DefinedCategory c n _ ps fs) = do
       return $ CompiledData (Set.fromList [n]) [],
       createLabels n (Map.elems fa),
       namespaceStart,
+      declareTypes,
       declareDispatchInit,
+      declareCreateType (length $ getCategoryParams t),
       compileCategory tm t dd Map.empty fa cp,
       compileType     tm t dd filters   fa tp,
       compileValue    tm t dd filters   fa vp,
@@ -179,7 +187,10 @@ compileCategoryDefinition tm dd@(DefinedCategory c n _ ps fs) = do
     createLabels n = return . onlyCodes . map createLabelForFunction . filter ((== n) . sfType)
     createLabelForFunction f = "const " ++ functionLabelType f ++ "& " ++ functionName f ++
                                " = *new " ++ functionLabelType f ++ "(\"" ++
-                               show (sfType f) ++ "\", \"" ++ show (sfName f) ++ "\");" where
+                               show (sfType f) ++ "\", \"" ++ show (sfName f) ++ "\");"
+    declareTypes =
+      return $ onlyCodes $ map (\f -> "class " ++ f n ++ ";") [categoryName,typeName,valueName]
+    getName = return $ onlyCode $ "std::string CategoryName() const { return \"" ++ show n ++ "\"; }"
     compileCategory tm t d filters fa ps = do
       let t' = typeInstance $ getCategoryParams t
       let ms = filter ((== CategoryScope) . dmScope) $ dcMembers d
@@ -191,13 +202,14 @@ compileCategoryDefinition tm dd@(DefinedCategory c n _ ps fs) = do
       mergeAllM [
           return $ onlyCode $ "struct " ++ categoryName (getCategoryName t) ++ " : public " ++ categoryBase ++ " {",
           fmap indentCompiled $ categoryConstructor tm t d ms,
+          fmap indentCompiled $ getName,
           fmap indentCompiled $ mergeAllM $ map (compileExecutableProcedure tm pv mv filters fa ma') ps,
           fmap indentCompiled $ mergeAllM $ map (createMember r filters) ms,
-          return $ indentCompiled $ onlyCode $ "Dispatcher dispatcher;",
+          return $ indentCompiled $ onlyCode $ dispatcherType ++ " " ++ dispatcherName ++ ";",
           return $ onlyCode "}"
         ]
     categoryConstructor tm t d ms = do
-      let dispatcher = "dispatcher(" ++ dispatchInitName ++ "())"
+      let dispatcher = dispatcherName ++ "(" ++ dispatchInitName ++ "())"
       ctx <- getContextForInit tm t d CategoryScope
       mergeAllM [
           return $ onlyCode $ categoryName (getCategoryName t) ++ "() : " ++ dispatcher ++ " {",
@@ -207,6 +219,7 @@ compileCategoryDefinition tm dd@(DefinedCategory c n _ ps fs) = do
     compileType tm t d filters fa ps = do
       let t' = typeInstance $ getCategoryParams t
       let ms = filter ((== TypeScope) . dmScope) $ dcMembers d
+      let nv = length $ filter ((== ValueScope) . dmScope) $ dcMembers d
       let pv = ParamSet $ map vpParam $ getCategoryParams t
       ma <- mapMembers ms
       let ma0 = Map.filter ((\s -> s == LocalScope || s == TypeScope) . vvScope) $ builtinVariables t'
@@ -215,11 +228,27 @@ compileCategoryDefinition tm dd@(DefinedCategory c n _ ps fs) = do
       mergeAllM [
           return $ onlyCode $ "struct " ++ typeName (getCategoryName t) ++ " : public " ++ typeBase ++ " {",
           fmap indentCompiled $ typeConstructor tm t d ms,
+          fmap indentCompiled $ getName,
+          fmap indentCompiled $ createValue nv,
           fmap indentCompiled $ mergeAllM $ map (compileExecutableProcedure tm pv mv filters fa ma') ps,
           return $ indentCompiled $ onlyCode $ categoryName (getCategoryName t) ++ "& parent;",
           fmap indentCompiled $ mergeAllM $ map createParam $ map (jpnName . stType) $ psParams $ tiParams t',
           fmap indentCompiled $ mergeAllM $ map (createMember r filters) ms,
-          return $ onlyCode "}"
+          return $ onlyCode "}",
+          defineCreateType (length $ psParams pv)
+        ]
+    declareCreateType np =
+      return $ onlyCode $ typeName n ++ "& " ++ typeCreator ++
+                          "(Params<" ++ show np ++ ">::Type params);"
+    defineCreateType np =
+      return $ onlyCode $ typeName n ++ "& " ++ typeCreator ++
+                          "(Params<" ++ show np ++ ">::Type params) { /*???*/ }"
+    createValue nv =
+      mergeAllM [
+          return $ onlyCode $ typeBase ++ "& " ++ valueCreator ++
+                              "(Args<" ++ show nv ++ ">::Type args) {",
+          return $ onlyCode $ "  return new " ++ valueName n ++ "(*this, args);",
+          return $ onlyCode $ "}"
         ]
     typeConstructor tm t d ms = do
       let ps = map vpParam $ getCategoryParams t
@@ -246,6 +275,7 @@ compileCategoryDefinition tm dd@(DefinedCategory c n _ ps fs) = do
       mergeAllM [
           return $ onlyCode $ "struct " ++ valueName (getCategoryName t) ++ " : public " ++ valueBase ++ " {",
           fmap indentCompiled $ valueConstructor tm t d ms,
+          fmap indentCompiled $ getName,
           fmap indentCompiled $ mergeAllM $ map (compileExecutableProcedure tm pv mv filters fa ma') ps,
           return $ indentCompiled $ onlyCode $ typeName (getCategoryName t) ++ "& parent;",
           fmap indentCompiled $ mergeAllM $ map (createMember r filters) ms,
@@ -268,12 +298,14 @@ compileCategoryDefinition tm dd@(DefinedCategory c n _ ps fs) = do
     initMember ctx (DefinedMember c _ _ n (Just e)) = do
         let assign = Assignment c (ParamSet [ExistingVariable (InputValue c n)]) e
         runDataCompiler (compileStatement assign) ctx
-    dispatchInitName = "init_dispatcher"
-    dispatchInit = "Dispatcher " ++ dispatchInitName ++ "()"
+    dispatchInitName = "InitDispatcher"
+    dispatcherName = "dispatcher_"
+    dispatcherType = "Dispatcher<" ++ categoryName n ++ "," ++ typeName n ++ "," ++ valueName n ++ ">"
+    dispatchInit = dispatcherType ++ " " ++ dispatchInitName ++ "()"
     declareDispatchInit = return $ onlyCode $ dispatchInit ++ ";"
     defineDispatchInit n fs = return $ mergeAll [
         onlyCode $ dispatchInit ++ " {",
-        indentCompiled $ onlyCode "Dispatcher d;",
+        indentCompiled $ onlyCode $ dispatcherType ++ " d;",
         -- TODO: This might contain duplicates.
         indentCompiled $ mergeAll $ map dispatch $ expand fs,
         indentCompiled $ onlyCode "return d;",
@@ -283,7 +315,7 @@ compileCategoryDefinition tm dd@(DefinedCategory c n _ ps fs) = do
         -- NOTE: The first argument can come from another type. The second must
         -- be from this type.
         dispatch f = CompiledData (Set.fromList [sfType f])
-                                  ["d.register(" ++ functionName f ++ ", &" ++ function f ++ ");"]
+                                  ["d.Register(" ++ functionName f ++ ", &" ++ function f ++ ");"]
         function f
           | sfScope f == CategoryScope = categoryName n ++ "::" ++ callName f
           | sfScope f == TypeScope     = typeName n     ++ "::" ++ callName f
@@ -376,7 +408,7 @@ compileExecutableProcedure tm ps ms pa fa va
       name = callName f
       header
         | sfScope f == ValueScope =
-          returnType ++ " " ++ name ++ "(Value self, " ++
+          returnType ++ " " ++ name ++ "(const S<TypeValue>& Var_self, " ++
           "Params<" ++ show (length $ psParams $ sfParams f) ++ ">::Type params, " ++
           "Args<" ++ show (length $ psParams $ sfArgs f) ++ ">::Type args) {"
         | otherwise =
@@ -525,7 +557,7 @@ compileCondition :: (Show c, Monad m, CompileErrorM m, MergeableM m,
 compileCondition c e = flip reviseErrorStateT ("In condition at " ++ formatFullContext c) $ do
   (ts,e') <- compileExpression e
   lift $ checkCondition ts
-  return $ "std::get<0>(" ++ e' ++ ")->as_bool()"
+  return $ "std::get<0>(" ++ e' ++ ")->AsBool()"
   where
     checkCondition (ParamSet [t]) | t == boolRequiredValue = return ()
     checkCondition _ = compileError "Conditionals must have exactly one Bool return"
@@ -594,7 +626,7 @@ compileExpression = compile where -- TODO: Rewrite for operator precedence?
     params <- expandParams $ tiParams t
     return (ParamSet [ValueType RequiredValue $ SingleType $ JustTypeInstance t],
             -- TODO: This needs a constant.
-            "internal_instance(" ++ params ++ ").create(" ++ es'' ++ ")")
+            typeCreator ++ "(" ++ params ++ ")." ++ valueCreator ++ "(" ++ es'' ++ ")")
     where
       -- Single expression, but possibly multi-return.
       getValues [(ParamSet ts,e)] = return (ts,e)
@@ -678,7 +710,7 @@ compileExpressionStart (BuiltinCall c f@(FunctionCall _ BuiltinPresent ps es)) =
   when (isWeakValue t0) $
     lift $ compileError $ "Weak values not allowed here [" ++ formatFullContext c ++ "]"
   return $ (ParamSet [boolRequiredValue],
-            "TypeValue::present(std::get<0>(" ++ e ++ "))")
+            valueBase ++ "::Present(std::get<0>(" ++ e ++ "))")
 compileExpressionStart (BuiltinCall c f@(FunctionCall _ BuiltinReduce ps es)) = do
   when (length (psParams ps) /= 2) $
     lift $ compileError $ "Expected 2 type parameters [" ++ formatFullContext c ++ "]"
@@ -696,7 +728,7 @@ compileExpressionStart (BuiltinCall c f@(FunctionCall _ BuiltinReduce ps es)) = 
   t1' <- expandType t1
   t2' <- expandType t2
   return $ (ParamSet [ValueType OptionalValue t2],
-            "TypeValue::reduce(" ++ t1' ++ ", " ++ t2' ++ ", std::get<0>(" ++ e ++ "))")
+            typeBase ++ "::Reduce(" ++ t1' ++ ", " ++ t2' ++ ", std::get<0>(" ++ e ++ "))")
 compileExpressionStart (BuiltinCall c f@(FunctionCall _ BuiltinRequire ps es)) = do
   when (length (psParams ps) /= 0) $
     lift $ compileError $ "Expected 0 type parameters [" ++ formatFullContext c ++ "]"
@@ -720,7 +752,7 @@ compileExpressionStart (BuiltinCall c f@(FunctionCall _ BuiltinStrong ps es)) = 
   let (ParamSet [t0],e) = head es'
   let t1 = ParamSet [ValueType OptionalValue (vtType t0)]
   if isWeakValue t0
-     then return (t1,"TypeValue::strong(std::get<0>(" ++ e ++ "))")
+     then return (t1,valueBase ++ "::Strong(std::get<0>(" ++ e ++ "))")
      else return (t1,e)
 compileExpressionStart (ParensExpression c e) = do
   (t,e') <- compileExpression e
@@ -760,14 +792,14 @@ compileFunctionCall e f (FunctionCall c _ ps es) = do
   return $ (ftReturns f'',call)
   where
     assemble (Just e) ValueScope n ps es =
-      return $ "TypeValue::call(" ++ e ++ ", " ++ functionName f ++ ", " ++ ps ++ ", " ++ es ++ ")"
+      return $ valueBase ++ "Call(std::get<0>(" ++ e ++ "), " ++ functionName f ++ ", " ++ ps ++ ", " ++ es ++ ")"
     assemble Nothing ValueScope n ps es =
-      return $ "TypeValue::call(self, " ++ functionName f ++ ", " ++ ps ++ ", " ++ es ++ ")"
+      return $ valueBase ++ "Call(Var_self, " ++ functionName f ++ ", " ++ ps ++ ", " ++ es ++ ")"
     assemble (Just e) _ n ps es =
-      return $ e ++ ".call(" ++ functionName f ++ ", " ++ ps ++ ", " ++ es ++ ")"
+      return $ e ++ ".Call(" ++ functionName f ++ ", " ++ ps ++ ", " ++ es ++ ")"
     assemble _ _ n ps es = do
       scoped <- autoScope $ sfScope f
-      return $ scoped ++ "call(" ++ functionName f ++ ", " ++ ps ++ ", " ++ es ++ ")"
+      return $ scoped ++ "Call(" ++ functionName f ++ ", " ++ ps ++ ", " ++ es ++ ")"
     -- TODO: Lots of duplication with assignments and initialization.
     -- Single expression, but possibly multi-return.
     getValues [(ParamSet ts,e)] = return (ts,e)
