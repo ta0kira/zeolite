@@ -639,26 +639,37 @@ compileExpressionStart (UnqualifiedCall c f@(FunctionCall _ n _ _)) = do
       when (sfScope f' > s) $ compileError $
         "Function " ++ show n ++ " is not in scope here [" ++ formatFullContext c ++ "]"
       return f'
-compileExpressionStart (BuiltinCall c f@(FunctionCall _ n ps es))
-  -- TODO: Don't hard-code the function name here.
-  | show n == "reduce" = do
-    when (length (psParams ps) /= 2) $
-      lift $ compileError $ "Expected 2 type parameters [" ++ formatFullContext c ++ "]"
-    es' <- sequence $ map compileExpression $ psParams es
-    when (length es' /= 1) $
-      lift $ compileError $ "Expected single argument [" ++ formatFullContext c ++ "]"
-    when (length (psParams $ fst $ head es') /= 1) $
-      lift $ compileError $ "Expected single return in argument [" ++ formatFullContext c ++ "]"
-    let (ParamSet [t0],e) = head es'
-    let (ParamSet [t1,t2]) = ps
-    r <- csResolver
-    fa <- csAllFilters
-    lift $ (checkValueTypeMatch r fa t0 (ValueType OptionalValue t1)) `reviseError`
-      ("In function call at " ++ formatFullContext c)
-    t1' <- expandType t1
-    t2' <- expandType t2
-    return $ (ParamSet [ValueType OptionalValue t2],
-              "TypeValue::reduce(" ++ t1' ++ ", " ++ t2' ++ ", std::get<0>(" ++ e ++ "))")
+compileExpressionStart (BuiltinCall c f@(FunctionCall _ BuiltinReduce ps es)) = do
+  when (length (psParams ps) /= 2) $
+    lift $ compileError $ "Expected 2 type parameters [" ++ formatFullContext c ++ "]"
+  when (length (psParams es) /= 1) $
+    lift $ compileError $ "Expected 1 argument [" ++ formatFullContext c ++ "]"
+  es' <- sequence $ map compileExpression $ psParams es
+  when (length (psParams $ fst $ head es') /= 1) $
+    lift $ compileError $ "Expected single return in argument [" ++ formatFullContext c ++ "]"
+  let (ParamSet [t0],e) = head es'
+  let (ParamSet [t1,t2]) = ps
+  r <- csResolver
+  fa <- csAllFilters
+  lift $ (checkValueTypeMatch r fa t0 (ValueType OptionalValue t1)) `reviseError`
+    ("In function call at " ++ formatFullContext c)
+  t1' <- expandType t1
+  t2' <- expandType t2
+  return $ (ParamSet [ValueType OptionalValue t2],
+            "TypeValue::reduce(" ++ t1' ++ ", " ++ t2' ++ ", std::get<0>(" ++ e ++ "))")
+compileExpressionStart (BuiltinCall c f@(FunctionCall _ BuiltinRequire ps es)) = do
+  when (length (psParams ps) /= 0) $
+    lift $ compileError $ "Expected 0 type parameters [" ++ formatFullContext c ++ "]"
+  when (length (psParams es) /= 1) $
+    lift $ compileError $ "Expected 1 argument [" ++ formatFullContext c ++ "]"
+  es' <- sequence $ map compileExpression $ psParams es
+  when (length (psParams $ fst $ head es') /= 1) $
+    lift $ compileError $ "Expected single return in argument [" ++ formatFullContext c ++ "]"
+  let (ParamSet [t0],e) = head es'
+  when (isWeakValue t0) $
+    lift $ compileError $ "Weak values not allowed here [" ++ formatFullContext c ++ "]"
+  return $ (ParamSet [ValueType RequiredValue (vtType t0)],
+            "TypeValue::require(std::get<0>(" ++ e ++ "))")
 compileExpressionStart (ParensExpression c e) = do
   (t,e') <- compileExpression e
   return (t,"(" ++ e' ++ ")")

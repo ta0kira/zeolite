@@ -6,7 +6,6 @@ module ParserBase (
   assignOperator,
   blockComment,
   binaryOperator,
-  builtinFunctions,
   builtinValues,
   categorySymbolGet,
   endOfDoc,
@@ -75,15 +74,6 @@ categorySymbolGet = sepAfter (string "$$")
 typeSymbolGet     = sepAfter (string "$" >> notFollowedBy (string "$"))
 initSeparator     = sepAfter (string ":")
 assignOperator    = operator "<-"
-
--- TODO: Maybe this should not use strings.
-builtinFunctions :: Parser String
-builtinFunctions = foldr (<|>) (fail "empty") $ map try [
-    kwPresent >> return "present",
-    kwReduce >> return "reduce",
-    kwRequire >> return "require",
-    kwStrong >> return "strong"
-  ]
 
 -- TODO: Maybe this should not use strings.
 builtinValues :: Parser String

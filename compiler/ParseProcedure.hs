@@ -227,6 +227,14 @@ parseFunctionCall c n = do
                 (sepBy sourceParser (sepAfter $ string ","))
   return $ FunctionCall [c] n (ParamSet ps) (ParamSet es)
 
+builtinFunction :: Parser FunctionName
+builtinFunction = foldr (<|>) (fail "empty") $ map try [
+    kwPresent >> return BuiltinPresent,
+    kwReduce >> return BuiltinReduce,
+    kwRequire >> return BuiltinRequire,
+    kwStrong >> return BuiltinStrong
+  ]
+
 instance ParseFromSource (ExpressionStart SourcePos) where
   sourceParser = labeled "expression start" $
                  parens <|>
@@ -253,8 +261,8 @@ instance ParseFromSource (ExpressionStart SourcePos) where
       return $ ParensExpression [c] e
     builtinCall = do
       c <- getPosition
-      n <- builtinFunctions
-      f <- parseFunctionCall c (FunctionName n)
+      n <- builtinFunction
+      f <- parseFunctionCall c n
       return $ BuiltinCall [c] f
     builtinValue = do
       c <- getPosition

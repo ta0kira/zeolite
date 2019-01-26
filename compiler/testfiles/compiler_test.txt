@@ -42,6 +42,7 @@ define Value {
     x <- empty
     optional all y <- empty
     ~ reduce<Value<#x>,#x>(self)
+    ~ require(self).get()
     return value
   }
 

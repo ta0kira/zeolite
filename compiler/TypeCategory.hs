@@ -686,14 +686,22 @@ categoriesToTypeResolver tm =
       (_,t) <- getCategory tm ([],n)
       return (isValueConcrete t)
 
-newtype FunctionName =
+data FunctionName =
   FunctionName {
     fnName :: String
-  }
+  } |
+  BuiltinPresent |
+  BuiltinReduce |
+  BuiltinRequire |
+  BuiltinStrong
   deriving (Eq,Ord)
 
 instance Show FunctionName where
   show (FunctionName n) = n
+  show BuiltinPresent = "present"
+  show BuiltinReduce = "reduce"
+  show BuiltinRequire = "require"
+  show BuiltinStrong = "strong"
 
 data ScopedFunction c =
   ScopedFunction {

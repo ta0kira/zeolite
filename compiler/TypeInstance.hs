@@ -26,6 +26,7 @@ module TypeInstance (
   getValueForParam,
   isDefinesFilter,
   isRequiresFilter,
+  isWeakValue,
   validateAssignment,
   validateDefinesInstance,
   validateDefinesVariance,
@@ -62,6 +63,9 @@ instance Show ValueType where
   show (ValueType WeakValue t)     = "weak " ++ show t
   show (ValueType OptionalValue t) = "optional " ++ show t
   show (ValueType RequiredValue t) = show t
+
+isWeakValue :: ValueType -> Bool
+isWeakValue = (== WeakValue) . vtRequired
 
 newtype CategoryName =
   CategoryName {
