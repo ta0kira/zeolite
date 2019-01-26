@@ -24,7 +24,7 @@ concrete Value<#x> {
 
 define Value {
   @value #x value
-  @value weak Value self2
+  @value weak Value<#x> self2
 
   create (value) (created) {
     { created } <- Value$$create2<#x>(value)
@@ -44,6 +44,7 @@ define Value {
     optional all y <- empty
     ~ reduce<Value<#x>,#x>(self)
     ~ require(self).get()
+    ~ require(strong(self2)).get()
     return value
   }
 

@@ -161,9 +161,9 @@ compileCategoryDefinition tm dd@(DefinedCategory c n _ ps fs) = do
       createLabels n (Map.elems fa),
       namespaceStart,
       declareDispatchInit,
-      compileCategory tm t dd filters fa cp,
-      compileType     tm t dd filters fa tp,
-      compileValue    tm t dd filters fa vp,
+      compileCategory tm t dd Map.empty fa cp,
+      compileType     tm t dd filters   fa tp,
+      compileValue    tm t dd filters   fa vp,
       defineDispatchInit n (Map.elems fa),
       namespaceEnd
     ]
@@ -187,11 +187,12 @@ compileCategoryDefinition tm dd@(DefinedCategory c n _ ps fs) = do
       ma <- mapMembers ms
       let ma0 = Map.filter ((\s -> s == LocalScope || s == CategoryScope) . vvScope) $ builtinVariables t'
       let ma' = Map.union ma0 ma
+      let r = categoriesToTypeResolver tm
       mergeAllM [
           return $ onlyCode $ "struct " ++ categoryName (getCategoryName t) ++ " : public " ++ categoryBase ++ " {",
           fmap indentCompiled $ categoryConstructor tm t d ms,
           fmap indentCompiled $ mergeAllM $ map (compileExecutableProcedure tm pv mv filters fa ma') ps,
-          fmap indentCompiled $ mergeAllM $ map createMember ms,
+          fmap indentCompiled $ mergeAllM $ map (createMember r filters) ms,
           return $ indentCompiled $ onlyCode $ "Dispatcher dispatcher;",
           return $ onlyCode "}"
         ]
@@ -210,13 +211,14 @@ compileCategoryDefinition tm dd@(DefinedCategory c n _ ps fs) = do
       ma <- mapMembers ms
       let ma0 = Map.filter ((\s -> s == LocalScope || s == TypeScope) . vvScope) $ builtinVariables t'
       let ma' = Map.union ma0 ma
+      let r = categoriesToTypeResolver tm
       mergeAllM [
           return $ onlyCode $ "struct " ++ typeName (getCategoryName t) ++ " : public " ++ typeBase ++ " {",
           fmap indentCompiled $ typeConstructor tm t d ms,
           fmap indentCompiled $ mergeAllM $ map (compileExecutableProcedure tm pv mv filters fa ma') ps,
           return $ indentCompiled $ onlyCode $ categoryName (getCategoryName t) ++ "& parent;",
           fmap indentCompiled $ mergeAllM $ map createParam $ map (jpnName . stType) $ psParams $ tiParams t',
-          fmap indentCompiled $ mergeAllM $ map createMember ms,
+          fmap indentCompiled $ mergeAllM $ map (createMember r filters) ms,
           return $ onlyCode "}"
         ]
     typeConstructor tm t d ms = do
@@ -240,12 +242,13 @@ compileCategoryDefinition tm dd@(DefinedCategory c n _ ps fs) = do
       ma <- mapMembers ms
       let ma0 = Map.filter ((\s -> s == LocalScope || s == ValueScope) . vvScope) $ builtinVariables t'
       let ma' = Map.union ma0 ma
+      let r = categoriesToTypeResolver tm
       mergeAllM [
           return $ onlyCode $ "struct " ++ valueName (getCategoryName t) ++ " : public " ++ valueBase ++ " {",
           fmap indentCompiled $ valueConstructor tm t d ms,
           fmap indentCompiled $ mergeAllM $ map (compileExecutableProcedure tm pv mv filters fa ma') ps,
           return $ indentCompiled $ onlyCode $ typeName (getCategoryName t) ++ "& parent;",
-          fmap indentCompiled $ mergeAllM $ map createMember ms,
+          fmap indentCompiled $ mergeAllM $ map (createMember r filters) ms,
           return $ onlyCode "}"
         ]
     valueConstructor tm t d ms = do
@@ -256,7 +259,9 @@ compileCategoryDefinition tm dd@(DefinedCategory c n _ ps fs) = do
       let initPassed = map (\(i,m) -> variableName (dmName m) ++ "(std::get<" ++ show i ++ ">(args))") $ zip [0..] ms
       let allInit = intercalate ", " $ initParent:initPassed
       return $ onlyCode $ valueName (getCategoryName t) ++ "(" ++ allArgs ++ ") : " ++ allInit ++ " {}"
-    createMember m =
+    createMember r fa m = do
+      validateGeneralInstance r fa (vtType $ dmType m) `reviseError`
+        ("In creation of " ++ show (dmName m) ++ " at " ++ formatFullContext (dmContext m))
       return $ onlyCode $ variableType (vtRequired $ dmType m) ++ " " ++ variableName (dmName m) ++ ";"
     createParam p = return $ onlyCode $ paramType ++ " " ++ paramName p ++ ";"
     initMember _   (DefinedMember _ _ _ _ Nothing) = return mergeDefault
@@ -442,14 +447,14 @@ compileStatement (Assignment c as e) = do
       -- TODO: Call csRequiresTypes for t1. (Maybe needs a helper function.)
       lift $ mergeAllM [validateGeneralInstance r fa (vtType t1),
                         checkValueTypeMatch r fa t2 t1] `reviseError`
-        ("In variable assignment at " ++ formatFullContext c)
+        ("In creation of " ++ show n ++ " at " ++ formatFullContext c)
       csAddVariable c n (VariableValue c LocalScope t1)
       csWrite [variableType (vtRequired t1) ++ " " ++ variableName n ++ ";"]
     createVariable r fa (ExistingVariable (InputValue c n)) t2 = do
       (VariableValue _ s1 t1) <- csGetVariable c n
       -- TODO: Also show original context.
       lift $ (checkValueTypeMatch r fa t2 t1) `reviseError`
-        ("In variable assignment at " ++ formatFullContext c)
+        ("In assignment to " ++ show n ++ " at " ++ formatFullContext c)
       csUpdateAssigned n
     createVariable _ _ _ _ = return ()
     assignVariable (i,CreateVariable _ _ n) =
@@ -532,7 +537,9 @@ compileScopedBlock s = do
   let (vs,p,st) = rewriteScoped s
   -- Capture context so we can discard scoped variable names.
   ctx0 <- get
-  sequence $ map createVariable vs
+  r <- csResolver
+  fa <- csAllFilters
+  sequence $ map (createVariable r fa) vs
   ctx <- compileProcedure ctx0 p
   -- This needs to come at the end so that statements in the scoped block cannot
   -- refer variables created in the final statement. Both of the following need
@@ -546,7 +553,10 @@ compileScopedBlock s = do
   (lift $ ccGetRequired ctx'') >>= csRequiresTypes
   csInheritReturns [ctx'']
   where
-    createVariable (c,t,n) = csWrite [variableType (vtRequired t) ++ " " ++ variableName n ++ ";"]
+    createVariable r fa (c,t,n) = do
+      lift $ validateGeneralInstance r fa (vtType t) `reviseError`
+        ("In creation of " ++ show n ++ " at " ++ formatFullContext c)
+      csWrite [variableType (vtRequired t) ++ " " ++ variableName n ++ ";"]
     showVariable (c,t,n) = do
       -- TODO: Call csRequiresTypes for t. (Maybe needs a helper function.)
       csAddVariable c n (VariableValue c LocalScope t)
@@ -656,6 +666,19 @@ compileExpressionStart (UnqualifiedCall c f@(FunctionCall _ n _ _)) = do
       when (sfScope f' > s) $ compileError $
         "Function " ++ show n ++ " is not in scope here [" ++ formatFullContext c ++ "]"
       return f'
+compileExpressionStart (BuiltinCall c f@(FunctionCall _ BuiltinPresent ps es)) = do
+  when (length (psParams ps) /= 0) $
+    lift $ compileError $ "Expected 0 type parameters [" ++ formatFullContext c ++ "]"
+  when (length (psParams es) /= 1) $
+    lift $ compileError $ "Expected 1 argument [" ++ formatFullContext c ++ "]"
+  es' <- sequence $ map compileExpression $ psParams es
+  when (length (psParams $ fst $ head es') /= 1) $
+    lift $ compileError $ "Expected single return in argument [" ++ formatFullContext c ++ "]"
+  let (ParamSet [t0],e) = head es'
+  when (isWeakValue t0) $
+    lift $ compileError $ "Weak values not allowed here [" ++ formatFullContext c ++ "]"
+  return $ (ParamSet [boolRequiredValue],
+            "TypeValue::present(std::get<0>(" ++ e ++ "))")
 compileExpressionStart (BuiltinCall c f@(FunctionCall _ BuiltinReduce ps es)) = do
   when (length (psParams ps) /= 2) $
     lift $ compileError $ "Expected 2 type parameters [" ++ formatFullContext c ++ "]"
@@ -685,8 +708,20 @@ compileExpressionStart (BuiltinCall c f@(FunctionCall _ BuiltinRequire ps es)) =
   let (ParamSet [t0],e) = head es'
   when (isWeakValue t0) $
     lift $ compileError $ "Weak values not allowed here [" ++ formatFullContext c ++ "]"
-  return $ (ParamSet [ValueType RequiredValue (vtType t0)],
-            "TypeValue::require(std::get<0>(" ++ e ++ "))")
+  return $ (ParamSet [ValueType RequiredValue (vtType t0)],e)
+compileExpressionStart (BuiltinCall c f@(FunctionCall _ BuiltinStrong ps es)) = do
+  when (length (psParams ps) /= 0) $
+    lift $ compileError $ "Expected 0 type parameters [" ++ formatFullContext c ++ "]"
+  when (length (psParams es) /= 1) $
+    lift $ compileError $ "Expected 1 argument [" ++ formatFullContext c ++ "]"
+  es' <- sequence $ map compileExpression $ psParams es
+  when (length (psParams $ fst $ head es') /= 1) $
+    lift $ compileError $ "Expected single return in argument [" ++ formatFullContext c ++ "]"
+  let (ParamSet [t0],e) = head es'
+  let t1 = ParamSet [ValueType OptionalValue (vtType t0)]
+  if isWeakValue t0
+     then return (t1,"TypeValue::strong(std::get<0>(" ++ e ++ "))")
+     else return (t1,e)
 compileExpressionStart (ParensExpression c e) = do
   (t,e') <- compileExpression e
   return (t,"(" ++ e' ++ ")")

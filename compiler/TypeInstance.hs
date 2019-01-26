@@ -186,6 +186,7 @@ type InstanceFilters = ParamSet [TypeFilter]
 type ParamFilters = Map.Map ParamName [TypeFilter]
 type ParamVariances = Map.Map ParamName Variance
 
+-- TODO: Turn this into a class?
 data TypeResolver m =
   TypeResolver {
     -- Performs parameter substitution for refines.
