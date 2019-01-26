@@ -1,0 +1,3 @@
+@value interface Type {
+  get () -> (weak Type)
+}

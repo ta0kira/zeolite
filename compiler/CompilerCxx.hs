@@ -58,11 +58,12 @@ valueBase = "TypeValue"
 paramType :: String
 paramType = typeBase ++ "&"
 
-variableType :: String
-variableType = "S<" ++ valueBase ++ ">"
+variableType :: StorageType -> String
+variableType WeakValue = "W<" ++ valueBase ++ ">"
+variableType _         = "S<" ++ valueBase ++ ">"
 
 proxyType :: String
-proxyType = variableType ++ "&"
+proxyType = "S<" ++ valueBase ++ ">&"
 
 paramName :: ParamName -> String
 paramName p = "Param_" ++ tail (pnName p) -- Remove leading '#'.
@@ -242,7 +243,8 @@ compileCategoryDefinition tm dd@(DefinedCategory c n _ ps fs) = do
       let initPassed = map (\(i,m) -> variableName (dmName m) ++ "(std::get<" ++ show i ++ ">(args))") $ zip [0..] ms
       let allInit = intercalate ", " $ initParent:initPassed
       return $ onlyCode $ valueName (getCategoryName t) ++ "(" ++ allArgs ++ ") : " ++ allInit ++ " {}"
-    createMember m = return $ onlyCode $ variableType ++ " " ++ variableName (dmName m) ++ ";"
+    createMember m =
+      return $ onlyCode $ variableType (vtRequired $ dmType m) ++ " " ++ variableName (dmName m) ++ ";"
     createParam p = return $ onlyCode $ paramType ++ " " ++ paramName p ++ ";"
     initMember _   (DefinedMember _ _ _ _ Nothing) = return mergeDefault
     initMember ctx (DefinedMember c _ _ n (Just e)) = do
@@ -429,7 +431,7 @@ compileStatement (Assignment c as e) = do
                         checkValueTypeMatch r fa t2 t1] `reviseError`
         ("In variable assignment at " ++ formatFullContext c)
       csAddVariable c n (VariableValue c LocalScope t1)
-      csWrite [variableType ++ " " ++ variableName n ++ ";"]
+      csWrite [variableType (vtRequired t1) ++ " " ++ variableName n ++ ";"]
     createVariable r fa (ExistingVariable (InputValue c n)) t2 = do
       (VariableValue _ s1 t1) <- csGetVariable c n
       -- TODO: Also show original context.
@@ -529,7 +531,7 @@ compileScopedBlock s = do
   (lift $ ccGetRequired ctx'') >>= csRequiresTypes
   csInheritReturns [ctx'']
   where
-    createVariable (c,t,n) = csWrite [variableType ++ " " ++ variableName n ++ ";"]
+    createVariable (c,t,n) = csWrite [variableType (vtRequired t) ++ " " ++ variableName n ++ ";"]
     showVariable (c,t,n) = do
       -- TODO: Call csRequiresTypes for t. (Maybe needs a helper function.)
       csAddVariable c n (VariableValue c LocalScope t)

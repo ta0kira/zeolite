@@ -64,9 +64,11 @@ validatateFunctionType r fm vm (FunctionType as rs ps fa) = do
       validateDefinesVariance r allVariances Contravariant t `reviseError`
         ("In filter " ++ show n ++ " " ++ show f)
     checkArg fa ta@(ValueType _ t) = flip reviseError ("In argument " ++ show ta) $ do
+      when (isWeakValue ta) $ compileError "Weak values not allowed as argument types"
       validateGeneralInstance r fa t
       validateInstanceVariance r allVariances Contravariant t
     checkReturn fa ta@(ValueType _ t) = flip reviseError ("In return " ++ show ta) $ do
+      when (isWeakValue ta) $ compileError "Weak values not allowed as return types"
       validateGeneralInstance r fa t
       validateInstanceVariance r allVariances Covariant t
 

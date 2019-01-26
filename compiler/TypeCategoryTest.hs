@@ -656,6 +656,12 @@ tests = [
     checkOperationFail
       "testfiles/function_bad_return.txt"
       (\ts -> checkCategoryInstances Map.empty ts),
+    checkOperationFail
+      "testfiles/weak_arg.txt"
+      (\ts -> checkCategoryInstances Map.empty ts),
+    checkOperationFail
+      "testfiles/weak_return.txt"
+      (\ts -> checkCategoryInstances Map.empty ts),
 
     checkOperationSuccess
       "testfiles/function_filters_satisfied.txt"
