@@ -7,13 +7,13 @@ import qualified Data.Map as Map
 
 import Builtin
 import CompileInfo
-import CompilerCxx
 import DefinedCategory
 import TypeCategory
 import ParseCategory
 import ParseDefinition
 import ParserBase
 import TypesBase
+import CompilerCxx.Category
 
 
 main = do
