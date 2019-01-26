@@ -10,7 +10,7 @@ class OptionalEmpty : public TypeValue {
   DReturns Dispatch(S<TypeValue> self,
                     const DFunction<SymbolScope::ValueScope>& label,
                     DParams params, DArgs args) final {
-    FAIL() << "Function called on an empty value";
+    FAIL() << "Function called on empty value";
     return DReturns();
   }
 

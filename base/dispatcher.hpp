@@ -17,9 +17,9 @@ class Dispatcher {
                                             typename Args<A>::Type)) {
     category_[&label] =
       [function](C& target, DParams params, DArgs args) {
-        return T_to_V<S<TypeValue>>(target.*function(
-                                      V_to_T<TypeCategory*,typename Params<P>::Type>(params),
-                                      V_to_T<S<TypeValue>,typename Args<A>::Type>(args)));
+        return T_to_V<S<TypeValue>>((target.*function)(
+                                      V_to_T<typename Params<P>::Type>(params),
+                                      V_to_T<typename Args<A>::Type>(args)));
       };
     return *this;
   }
@@ -38,9 +38,9 @@ class Dispatcher {
                                             typename Args<A>::Type)) {
     type_[&label] =
       [function](T& target, DParams params, DArgs args) {
-      return T_to_V<S<TypeValue>>(target.*function(
-                                    V_to_T<TypeCategory*,typename Params<P>::Type>(params),
-                                    V_to_T<S<TypeValue>,typename Args<A>::Type>(args)));
+      return T_to_V<S<TypeValue>>((target.*function)(
+                                    V_to_T<typename Params<P>::Type>(params),
+                                    V_to_T<typename Args<A>::Type>(args)));
       };
     return *this;
   }
@@ -60,10 +60,10 @@ class Dispatcher {
                                             typename Args<A>::Type)) {
     value_[&label] =
       [function](V& target, const S<TypeValue>& self, DParams params, DArgs args) {
-        return T_to_V<S<TypeValue>>(target.*function(
+        return T_to_V<S<TypeValue>>((target.*function)(
                                       self,
-                                      V_to_T<TypeCategory*,typename Params<P>::Type>(params),
-                                      V_to_T<S<TypeValue>,typename Args<A>::Type>(args)));
+                                      V_to_T<typename Params<P>::Type>(params),
+                                      V_to_T<typename Args<A>::Type>(args)));
       };
     return *this;
   }

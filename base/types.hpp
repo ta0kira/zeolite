@@ -30,14 +30,21 @@ template<class T>
 using W = std::weak_ptr<T>;
 
 template<class T>
-inline W<T> S_get(T* val) { return W<T>(val); }
+inline W<T> W_get(T* val) { return W<T>(val); }
 
 template<class...Ts>
 using T = std::tuple<Ts...>;
 
-
 template<class...Ts>
 T<Ts...> T_get(Ts... ts) { return std::make_tuple(ts...); }
+
+template<class T>
+using L = std::vector<T>;
+
+template<class T, class...Ts>
+inline L<T> L_get(Ts... ts) { return L<T>{ts...}; }
+
+
 template<int K, class V, class T>
 struct ExpandToTuple {
   static void Set(const V& vals, T& tuple) {
@@ -51,12 +58,12 @@ struct ExpandToTuple<0,V,T> {
   static void Set(const V& vals, T& tuple) {}
 };
 
-template<class X, class Tx>
-Tx V_to_T(const std::vector<X>& vals) {
+template<class Tx, class X>
+Tx V_to_T(const L<X>& vals) {
   static constexpr int tuple_size = std::tuple_size<Tx>::value;
   FAIL_IF(vals.size() != tuple_size) << "Expected " << tuple_size << " elements";
   Tx tuple;
-  ExpandToTuple<tuple_size,std::vector<X>,Tx>::Set(vals, tuple);
+  ExpandToTuple<tuple_size,L<X>,Tx>::Set(vals, tuple);
   return tuple;
 }
 
@@ -75,11 +82,11 @@ struct FlattenFromTuple<0,T,V> {
 };
 
 template<class X, class...Ts>
-std::vector<X> T_to_V(const T<Ts...>& tuple) {
+L<X> T_to_V(const T<Ts...>& tuple) {
   static constexpr int tuple_size = std::tuple_size<T<Ts...>>::value;
-  std::vector<X> vals;
+  L<X> vals;
   vals.reserve(tuple_size);
-  FlattenFromTuple<tuple_size,T<Ts...>,std::vector<X>>::Set(tuple, vals);
+  FlattenFromTuple<tuple_size,T<Ts...>,L<X>>::Set(tuple, vals);
   return vals;
 }
 
@@ -88,7 +95,7 @@ class TypeCategory;
 class TypeInstance;
 class TypeValue;
 
-using DParams = std::vector<TypeInstance*>;
+using DParams = L<TypeInstance*>;
 
 template<int N, class...Ts>
 struct Params {
@@ -100,11 +107,11 @@ struct Params<0, Ts...> {
   using Type = T<Ts...>;
 };
 
-using DReturns = std::vector<S<TypeValue>>;
+using DReturns = L<S<TypeValue>>;
 
 template<int N, class...Ts>
 struct Returns {
-  using Type = typename Params<N-1, S<TypeValue>, Ts...>::Type;
+  using Type = typename Returns<N-1, S<TypeValue>, Ts...>::Type;
 };
 
 template<class...Ts>
@@ -112,11 +119,11 @@ struct Returns<0, Ts...> {
   using Type = T<Ts...>;
 };
 
-using DArgs = std::vector<S<TypeValue>>;
+using DArgs = L<S<TypeValue>>;
 
 template<int N, class...Ts>
 struct Args {
-  using Type = typename Params<N-1, S<TypeValue>, Ts...>::Type;
+  using Type = typename Args<N-1, S<TypeValue>, Ts...>::Type;
 };
 
 template<class...Ts>

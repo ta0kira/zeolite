@@ -4,11 +4,8 @@
 #include "category-header.hpp"
 
 
-template<class...Ts>
-TypeInstance& Merge_Intersect(Ts... ts);
-
-template<class...Ts>
-TypeInstance& Merge_Union(Ts... ts);
+TypeInstance& Merge_Intersect(L<TypeInstance*> params);
+TypeInstance& Merge_Union(L<TypeInstance*> params);
 
 TypeCategory& GetCategory_Bool();
 TypeCategory& GetCategory_String();

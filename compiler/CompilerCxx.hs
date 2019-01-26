@@ -81,6 +81,9 @@ categoryName n = "Category_" ++ show n
 categoryGetter :: CategoryName -> String
 categoryGetter n = "GetCategory_" ++ show n
 
+internalCategory :: CategoryName -> String
+internalCategory n = "Internal_" ++ show n
+
 typeName :: CategoryName -> String
 typeName n = "Type_" ++ show n
 
@@ -96,8 +99,8 @@ unionGetter = "Merge_Union"
 valueName :: CategoryName -> String
 valueName n = "Value_" ++ show n
 
-callName :: ScopedFunction c -> String
-callName f = "Call_" ++ show (sfType f) ++ "_" ++ show (sfName f)
+callName :: CategoryName -> FunctionName -> String
+callName t f = "Call_" ++ show t ++ "_" ++ show f
 
 functionName :: ScopedFunction c -> String
 functionName f = "Function_" ++ show (sfType f) ++ "_" ++ show (sfName f)
@@ -140,9 +143,12 @@ compileCategoryDeclaration _ t =
     guardTop = ["#ifndef " ++ guardName,"#define " ++ guardName]
     guardBottom = ["#endif"]
     guardName = "HEADER_" ++ show name
-    content = baseHeaderIncludes ++ labels
+    content = baseHeaderIncludes ++ labels ++ getCategory ++ getType
     labels = map label $ filter ((== name) . sfType) $ getCategoryFunctions t
     label f = "extern const " ++ functionLabelType f ++ "& " ++ functionName f ++ ";"
+    getCategory = [categoryBase ++ "& " ++ categoryGetter (getCategoryName t) ++ "();"]
+    getType = [typeBase ++ "& " ++ typeGetter (getCategoryName t) ++ "(Params<" ++
+               show (length $getCategoryParams t) ++ ">::Type params);"]
 
 compileInterfaceDefinition :: Monad m => CategoryMap c -> AnyCategory c -> m CxxOutput
 compileInterfaceDefinition _ t =
@@ -151,6 +157,23 @@ compileInterfaceDefinition _ t =
     content = baseSourceIncludes ++ headers ++ labels
     headers = ["#include \"" ++ headerFilename name ++ "\""]
     labels = map createLabelForFunction $ filter ((== name) . sfType) $ getCategoryFunctions t
+
+defineCategoryGetter :: AnyCategory c -> [String]
+defineCategoryGetter t = [
+    categoryBase ++ "& " ++ categoryGetter (getCategoryName t) ++ "() {",
+    "  return " ++ internalCategory (getCategoryName t) ++ "();",
+    "}"
+  ]
+
+defineInternalGetter :: AnyCategory c -> [String]
+defineInternalGetter t = [
+    internal ++ "& " ++ internalCategory (getCategoryName t) ++ "() {",
+    "  static " ++ internal ++ "& category = *new " ++ internal ++ "();",
+    "  return category;",
+    "}"
+  ]
+  where
+    internal = categoryName (getCategoryName t)
 
 compileCategoryDefinition :: (Show c, Monad m, CompileErrorM m, MergeableM m) =>
   CategoryMap c -> DefinedCategory c -> m CxxOutput
@@ -162,21 +185,28 @@ compileCategoryDefinition tm dd@(DefinedCategory c n _ ps fs) = do
   fa <- setInternalFunctions r t fs
   pa <- pairProceduresToFunctions fa ps
   let (cp,tp,vp) = partitionByScope (sfScope . fst) pa
+  let np = length $ getCategoryParams t
+  let nv = length $ filter ((== ValueScope) . dmScope) $ dcMembers dd
   (CompiledData req out) <- mergeAllM [
       return $ CompiledData (Set.fromList [n]) [],
       createLabels n (Map.elems fa),
       namespaceStart,
       declareTypes,
       declareDispatchInit,
-      declareCreateType (length $ getCategoryParams t),
+      declareCreateType np,
+      declareCreateValue nv,
       compileCategory tm t dd Map.empty fa cp,
       compileType     tm t dd filters   fa tp,
       compileValue    tm t dd filters   fa vp,
       defineDispatchInit n (Map.elems fa),
-      namespaceEnd
+      defineCreateType np,
+      defineCreateValue nv,
+      namespaceEnd,
+      return $ onlyCodes $ defineCategoryGetter t
     ]
   let includes = map (\i -> "#include \"" ++ headerFilename i ++ "\"") $ Set.toList req
   return $ CxxOutput filename (baseSourceIncludes ++ includes ++ out)
+  -- TODO: Split all of this up.
   where
     -- NOTE: This is always ValueScope for initializer checks.
     mv = filter ((== ValueScope) . dmScope) $ dcMembers dd
@@ -206,7 +236,8 @@ compileCategoryDefinition tm dd@(DefinedCategory c n _ ps fs) = do
           fmap indentCompiled $ mergeAllM $ map (compileExecutableProcedure tm pv mv filters fa ma') ps,
           fmap indentCompiled $ mergeAllM $ map (createMember r filters) ms,
           return $ indentCompiled $ onlyCode $ dispatcherType ++ " " ++ dispatcherName ++ ";",
-          return $ onlyCode "}"
+          return $ onlyCode "};",
+          return $ onlyCodes $ defineInternalGetter t
         ]
     categoryConstructor tm t d ms = do
       let dispatcher = dispatcherName ++ "(" ++ dispatchInitName ++ "())"
@@ -229,13 +260,11 @@ compileCategoryDefinition tm dd@(DefinedCategory c n _ ps fs) = do
           return $ onlyCode $ "struct " ++ typeName (getCategoryName t) ++ " : public " ++ typeBase ++ " {",
           fmap indentCompiled $ typeConstructor tm t d ms,
           fmap indentCompiled $ getName,
-          fmap indentCompiled $ createValue nv,
           fmap indentCompiled $ mergeAllM $ map (compileExecutableProcedure tm pv mv filters fa ma') ps,
           return $ indentCompiled $ onlyCode $ categoryName (getCategoryName t) ++ "& parent;",
           fmap indentCompiled $ mergeAllM $ map createParam $ map (jpnName . stType) $ psParams $ tiParams t',
           fmap indentCompiled $ mergeAllM $ map (createMember r filters) ms,
-          return $ onlyCode "}",
-          defineCreateType (length $ psParams pv)
+          return $ onlyCode "};"
         ]
     declareCreateType np =
       return $ onlyCode $ typeName n ++ "& " ++ typeCreator ++
@@ -243,11 +272,14 @@ compileCategoryDefinition tm dd@(DefinedCategory c n _ ps fs) = do
     defineCreateType np =
       return $ onlyCode $ typeName n ++ "& " ++ typeCreator ++
                           "(Params<" ++ show np ++ ">::Type params) { /*???*/ }"
-    createValue nv =
+    declareCreateValue nv =
+      return $ onlyCode $ "S<TypeValue> " ++ valueCreator ++
+                          "(" ++ typeName n ++ "& parent, Args<" ++ show nv ++ ">::Type args);"
+    defineCreateValue nv =
       mergeAllM [
-          return $ onlyCode $ typeBase ++ "& " ++ valueCreator ++
-                              "(Args<" ++ show nv ++ ">::Type args) {",
-          return $ onlyCode $ "  return new " ++ valueName n ++ "(*this, args);",
+          return $ onlyCode $ "S<TypeValue> " ++ valueCreator ++
+                              "(" ++ typeName n ++ "& parent, Args<" ++ show nv ++ ">::Type args) {",
+          return $ onlyCode $ "  return S_get(new " ++ valueName n ++ "(parent, args));",
           return $ onlyCode $ "}"
         ]
     typeConstructor tm t d ms = do
@@ -279,7 +311,7 @@ compileCategoryDefinition tm dd@(DefinedCategory c n _ ps fs) = do
           fmap indentCompiled $ mergeAllM $ map (compileExecutableProcedure tm pv mv filters fa ma') ps,
           return $ indentCompiled $ onlyCode $ typeName (getCategoryName t) ++ "& parent;",
           fmap indentCompiled $ mergeAllM $ map (createMember r filters) ms,
-          return $ onlyCode "}"
+          return $ onlyCode "};"
         ]
     valueConstructor tm t d ms = do
       let argParent = typeName (getCategoryName t) ++ "& p"
@@ -317,9 +349,9 @@ compileCategoryDefinition tm dd@(DefinedCategory c n _ ps fs) = do
         dispatch f = CompiledData (Set.fromList [sfType f])
                                   ["d.Register(" ++ functionName f ++ ", &" ++ function f ++ ");"]
         function f
-          | sfScope f == CategoryScope = categoryName n ++ "::" ++ callName f
-          | sfScope f == TypeScope     = typeName n     ++ "::" ++ callName f
-          | sfScope f == ValueScope    = valueName n    ++ "::" ++ callName f
+          | sfScope f == CategoryScope = categoryName n ++ "::" ++ callName n (sfName f)
+          | sfScope f == TypeScope     = typeName n     ++ "::" ++ callName n (sfName f)
+          | sfScope f == ValueScope    = valueName n    ++ "::" ++ callName n (sfName f)
 
 getContextForInit :: (Show c, Monad m, CompileErrorM m, MergeableM m) =>
   CategoryMap c -> AnyCategory c -> DefinedCategory c -> SymbolScope -> m (ProcedureContext c)
@@ -405,7 +437,7 @@ compileExecutableProcedure tm ps ms pa fa va
           onlyCode close
         ] where
       close = "}"
-      name = callName f
+      name = callName n (sfName f)
       header
         | sfScope f == ValueScope =
           returnType ++ " " ++ name ++ "(const S<TypeValue>& Var_self, " ++
@@ -625,8 +657,7 @@ compileExpression = compile where -- TODO: Rewrite for operator precedence?
       ("In initialization at " ++ formatFullContext c)
     params <- expandParams $ tiParams t
     return (ParamSet [ValueType RequiredValue $ SingleType $ JustTypeInstance t],
-            -- TODO: This needs a constant.
-            typeCreator ++ "(" ++ params ++ ")." ++ valueCreator ++ "(" ++ es'' ++ ")")
+            valueCreator ++ "(" ++ typeCreator ++ "(" ++ params ++ ")," ++ es'' ++ ")")
     where
       -- Single expression, but possibly multi-return.
       getValues [(ParamSet ts,e)] = return (ts,e)
@@ -768,7 +799,7 @@ compileExpressionStart (InlineAssignment c n e) = do
   -- might get short-circuited.
   csUpdateAssigned n
   scoped <- autoScope s
-  return (ParamSet [t0],"T_get(" ++ scoped ++ variableName n ++ " = " ++ e' ++ ")")
+  return (ParamSet [t0],"T_get(" ++ scoped ++ variableName n ++ " = std::get<0>(" ++ e' ++ "))")
 
 compileFunctionCall :: (Show c, Monad m, CompileErrorM m, MergeableM m,
                         CompilerContext c m [String] a) =>
@@ -792,9 +823,9 @@ compileFunctionCall e f (FunctionCall c _ ps es) = do
   return $ (ftReturns f'',call)
   where
     assemble (Just e) ValueScope n ps es =
-      return $ valueBase ++ "Call(std::get<0>(" ++ e ++ "), " ++ functionName f ++ ", " ++ ps ++ ", " ++ es ++ ")"
+      return $ valueBase ++ "::Call(" ++ e ++ ", " ++ functionName f ++ ", " ++ ps ++ ", " ++ es ++ ")"
     assemble Nothing ValueScope n ps es =
-      return $ valueBase ++ "Call(Var_self, " ++ functionName f ++ ", " ++ ps ++ ", " ++ es ++ ")"
+      return $ valueBase ++ "::Call(Var_self, " ++ functionName f ++ ", " ++ ps ++ ", " ++ es ++ ")"
     assemble (Just e) _ n ps es =
       return $ e ++ ".Call(" ++ functionName f ++ ", " ++ ps ++ ", " ++ es ++ ")"
     assemble _ _ n ps es = do
@@ -824,9 +855,8 @@ autoScope s = do
     scoped ValueScope TypeScope     = "parent."
     scoped ValueScope CategoryScope = "parent.parent."
     scoped TypeScope  CategoryScope = "parent."
-    scoped s1 s2
-      | s1 == s2 = "this->"
-      | otherwise = ""
+    -- NOTE: Don't use this->; otherwise, self won't work properly.
+    scoped _ _ = ""
 
 expandParams :: (Monad m, CompilerContext c m s a) =>
   ParamSet GeneralInstance -> CompilerState a m String
@@ -841,15 +871,16 @@ expandCategory t = return $ categoryGetter t ++ "()"
 
 expandType :: (Monad m, CompilerContext c m s a) =>
   GeneralInstance -> CompilerState a m String
-expandType (TypeMerge MergeUnion ps) = do
+expandType (TypeMerge m ps) = do
   ps' <- sequence $ map expandType ps
-  return $ unionGetter ++ "(L_get(" ++ intercalate "," ps' ++ "))"
-expandType (TypeMerge MergeIntersect ps) = do
-  ps' <- sequence $ map expandType ps
-  return $ intersectGetter ++ "Merge_Intersect(L_get(" ++ intercalate "," ps' ++ "))"
+  return $ getter ++ "(L_get<" ++ typeBase ++ "*>(" ++ intercalate "," (map ("&" ++) ps') ++ "))"
+  where
+    getter
+      | m == MergeUnion     = unionGetter
+      | m == MergeIntersect = intersectGetter
 expandType (SingleType (JustTypeInstance (TypeInstance t ps))) = do
   ps' <- sequence $ map expandType $ psParams ps
-  return $ typeGetter t ++ "(" ++ intercalate "," ps' ++ ")"
+  return $ typeGetter t ++ "(T_get(" ++ intercalate "," (map ("&" ++) ps') ++ "))"
 expandType (SingleType (JustParamName p)) = do
   s <- csGetParamScope p
   scoped <- autoScope s

@@ -3,6 +3,7 @@
 
 #include "types.hpp"
 #include "function.hpp"
+#include "builtin.hpp"
 #include "dispatcher.hpp"
 
 
@@ -12,7 +13,8 @@ class TypeCategory {
   typename Returns<R>::Type Call(const Function<SymbolScope::CategoryScope,P,A,R>& label,
                                  typename Params<P>::Type params,
                                  typename Args<A>::Type args) {
-    return V_to_T(Dispatch(label, T_to_V(params), T_to_V(args)));
+    return V_to_T<typename Returns<R>::Type>(Dispatch(
+      label, T_to_V<TypeInstance*>(params), T_to_V<S<TypeValue>>(args)));
   }
 
   virtual std::string CategoryName() const = 0;
@@ -33,7 +35,8 @@ class TypeInstance {
   typename Returns<R>::Type Call(const Function<SymbolScope::TypeScope,P,A,R>& label,
                                  typename Params<P>::Type params,
                                  typename Args<A>::Type args) {
-    return V_to_T(Dispatch(label, T_to_V(params), T_to_V(args)));
+    return V_to_T<typename Returns<R>::Type>(Dispatch(
+      label, T_to_V<TypeInstance*>(params), T_to_V<S<TypeValue>>(args)));
   }
 
   virtual std::string CategoryName() const = 0;
@@ -57,14 +60,15 @@ class TypeValue {
                                         const Function<SymbolScope::ValueScope,P,A,R>& label,
                                         typename Params<P>::Type params,
                                         typename Args<A>::Type args) {
-    FAIL_IF(target == nullptr) << "Function called on missing value";
-    return V_to_T(target->Dispatch(target, label, T_to_V(params), T_to_V(args)));
+    FAIL_IF(target == nullptr) << "Function called on null value (internal error)";
+    return V_to_T<typename Returns<R>::Type>(target->Dispatch(
+      target, label, T_to_V<TypeInstance*>(params), T_to_V<S<TypeValue>>(args)));
   }
 
   virtual std::string CategoryName() const = 0;
 
   static bool Present(S<TypeValue> target) { return target->Present(); }
-  static S<TypeValue> Strong(W<TypeValue> target) { return target.lock(); }
+  static Returns<1>::Type Strong(W<TypeValue> target) { return T_get(target.lock()); }
 
   virtual bool AsBool() const;
   virtual std::string AsString() const;

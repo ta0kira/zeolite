@@ -43,7 +43,7 @@ main = do
     format c
       | isCompileError c = show $ getCompileError c
       | otherwise = concat $ map formatFile $ getCompileSuccess c
-    formatFile (CxxOutput f os) = return ()
+    formatFile (CxxOutput f os) = ""
     writeResults c
       | isCompileError c = return ()
       | otherwise = mapM_ (\(CxxOutput f os) -> writeFile f $ concat $ map (++ "\n") os) $ getCompileSuccess c
