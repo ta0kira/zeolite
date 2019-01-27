@@ -8,6 +8,7 @@ module CompilerCxx.Category (
   compileInterfaceDefinition,
 ) where
 
+import Control.Monad (when)
 import Data.List (intercalate)
 import qualified Data.Map as Map
 import qualified Data.Set as Set
@@ -135,10 +136,11 @@ compileConcreteDefinition ta dd@(DefinedCategory c n ms ps fs) = do
     categoryConstructor tm t ms = do
       let dispatcher = dispatcherName ++ "(" ++ dispatchInitName ++ "())"
       ctx <- getContextForInit tm t dd CategoryScope
+      initMembers <- runDataCompiler (sequence $ map initMember ms) ctx
       mergeAllM [
           return $ onlyCode $ categoryName n ++ "() : " ++ dispatcher ++ " {",
           return $ indentCompiled $ onlyCode $ "TRACE_FUNCTION(\"" ++ show n ++ " (init @category)\")",
-          fmap indentCompiled $ mergeAllM $ map (initMember ctx) ms,
+          return $ indentCompiled $ initMembers,
           return $ onlyCode "}"
         ]
     typeConstructor tm t ms = do
@@ -150,10 +152,11 @@ compileConcreteDefinition ta dd@(DefinedCategory c n ms ps fs) = do
       let initPassed = map (\(i,p) -> paramName p ++ "(*std::get<" ++ show i ++ ">(params))") $ zip [0..] ps
       let allInit = intercalate ", " $ initParent:initPassed
       ctx <- getContextForInit tm t dd TypeScope
+      initMembers <- runDataCompiler (sequence $ map initMember ms) ctx
       mergeAllM [
           return $ onlyCode $ typeName n ++ "(" ++ allArgs ++ ") : " ++ allInit ++ " {",
           return $ indentCompiled $ onlyCode $ "TRACE_FUNCTION(\"" ++ show n ++ " (init @type)\")",
-          fmap indentCompiled $ mergeAllM $ map (initMember ctx) ms,
+          return $ indentCompiled $ initMembers,
           return $ onlyCode "}"
         ]
     valueConstructor tm t ms = do
@@ -169,10 +172,11 @@ compileConcreteDefinition ta dd@(DefinedCategory c n ms ps fs) = do
         ("In creation of " ++ show (dmName m) ++ " at " ++ formatFullContext (dmContext m))
       return $ onlyCode $ variableType (vtRequired $ dmType m) ++ " " ++ variableName (dmName m) ++ ";"
     createParam p = return $ onlyCode $ paramType ++ " " ++ paramName p ++ ";"
-    initMember _   (DefinedMember _ _ _ _ Nothing) = return mergeDefault
-    initMember ctx (DefinedMember c _ _ n (Just e)) = do
-        let assign = Assignment c (ParamSet [ExistingVariable (InputValue c n)]) e
-        runDataCompiler (compileStatement assign) ctx
+    initMember (DefinedMember _ _ _ _ Nothing) = return mergeDefault
+    initMember (DefinedMember c s t n (Just e)) = do
+      csAddVariable c n (VariableValue c s t)
+      let assign = Assignment c (ParamSet [ExistingVariable (InputValue c n)]) e
+      compileStatement assign
     categoryDispatch =
       return $ onlyCodes $ [
           "DReturns Dispatch(" ++
@@ -375,7 +379,9 @@ getContextForInit tm t d s = do
   fa <- setInternalFunctions r t (dcFunctions d)
   let typeInstance = TypeInstance (getCategoryName t) $ fmap (SingleType . JustParamName) ps
   let builtin = Map.filter ((== LocalScope) . vvScope) $ builtinVariables typeInstance
-  members <- mapMembers $ filter ((<= s) . dmScope) (dcMembers d)
+  -- Using < ensures that variables can only be referenced after initialization.
+  -- TODO: This doesn't really help if access is done via a function.
+  members <- mapMembers $ filter ((< s) . dmScope) (dcMembers d)
   return $ ProcedureContext {
       pcScope = s,
       pcType = getCategoryName t,
@@ -388,7 +394,8 @@ getContextForInit tm t d s = do
       pcVariables = Map.union builtin members,
       pcReturns = NoValidation,
       pcRequiredTypes = Set.empty,
-      pcOutput = []
+      pcOutput = [],
+      pcDisallowInit = True
     }
 
 builtinVariables :: TypeInstance -> Map.Map VariableName (VariableValue c)

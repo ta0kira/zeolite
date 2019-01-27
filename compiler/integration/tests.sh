@@ -164,19 +164,42 @@ expect_runs '@type to @category' <<END
 concrete Value {}
 
 define Test {
-  @category optional Value value <- empty
   @type optional Value value2 <- value
+  @category optional Value value <- empty
 
   run () {}
 }
 END
 
-expect_error '@category to @type' 'value2' 'line 4' <<END
+expect_error '@category to @type' 'value2' 'line 5' <<END
 concrete Value {}
 
 define Test {
-  @category optional Value value <- value2
   @type optional Value value2 <- empty
+  @category optional Value value <- value2
+
+  run () {}
+}
+END
+
+expect_runs 'init in correct order' <<END
+define Test {
+  @type Bool value <- true
+  @type Bool value2 <- value
+
+  run () {
+    if (value2) {
+    } else {
+      ~ Util\$crash() // force a crash if false
+    }
+  }
+}
+END
+
+expect_error 'init in wrong order' 'value2' 'line 2' <<END
+define Test {
+  @type Bool value <- value2
+  @type Bool value2 <- true
 
   run () {}
 }
@@ -196,10 +219,71 @@ define Test {
 }
 END
 
-expect_crashes 'cycle in init' 'null' 'line 2|line 3' <<END
+expect_error 'init too early' 'value2' 'line 2' <<END
 define Test {
   @type Bool value <- value2
   @type Bool value2 <- value
+
+  run () {}
+}
+END
+
+expect_error 'cycle in @type init' 'disallowed' 'line 2' <<END
+define Test {
+  @type Bool value <- get()
+
+  @type get () -> (Bool)
+  get () {
+    return value
+  }
+
+  run () {}
+}
+END
+
+expect_error 'cycle in @category init' 'disallowed' 'line 2' <<END
+define Test {
+  @category Bool value <- get()
+
+  @category get () -> (Bool)
+  get () {
+    return value
+  }
+
+  run () {}
+}
+END
+
+expect_runs 'init by function' <<END
+define Test {
+  @category Bool value <- true
+  @type Bool value2 <- get()
+
+  @category get () -> (Bool)
+  get () {
+    return value
+  }
+
+  run () {
+    if (value2) {
+    } else {
+      ~ Util\$crash() // force a crash if false
+    }
+  }
+}
+END
+
+expect_error '@value init in @type init' 'not allowed' 'line 2' <<END
+define Test {
+  @type Test value <- Test{}
+
+  run () {}
+}
+END
+
+expect_error '@value init in @category init' 'allowed' 'line 2' <<END
+define Test {
+  @category Test value <- Test{}
 
   run () {}
 }

@@ -59,11 +59,12 @@ compileExecutableProcedure tm t ps ms pa fa va
       pcCategories = tm,
       pcFilters = pa',
       pcParamScopes = sa,
-      pcFunctions = fa, -- TODO: Add builtin functions.
+      pcFunctions = fa,
       pcVariables = va'',
       pcReturns = rs',
       pcRequiredTypes = Set.empty,
-      pcOutput = []
+      pcOutput = [],
+      pcDisallowInit = False
     }
   output <- runDataCompiler compileWithReturn ctx
   return $ wrapProcedure output

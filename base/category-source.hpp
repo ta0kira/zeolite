@@ -12,14 +12,14 @@
 template<int I, class T>
 S<TypeValue>& SafeGet(T& values) {
   S<TypeValue>& value = std::get<I>(values);
-  FAIL_IF(value == nullptr) << "Value is null";
+  FAIL_IF(value == nullptr) << "Value is null (possible cycle in init)";
   return value;
 }
 
 template<int I, class T>
 S<TypeValue> SafeGet(const T& values) {
   S<TypeValue> value = std::get<I>(values);
-  FAIL_IF(value == nullptr) << "Value is null";
+  FAIL_IF(value == nullptr) << "Value is null (possible cycle in init)";
   return value;
 }
 

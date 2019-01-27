@@ -38,7 +38,8 @@ data ProcedureContext c =
     pcVariables :: Map.Map VariableName (VariableValue c),
     pcReturns :: ReturnValidation c,
     pcRequiredTypes :: Set.Set CategoryName,
-    pcOutput :: [String]
+    pcOutput :: [String],
+    pcDisallowInit :: Bool
   }
 
 data ReturnValidation c =
@@ -72,7 +73,8 @@ instance (Show c, MergeableM m, CompileErrorM m, Monad m) =>
       pcVariables = pcVariables ctx,
       pcReturns = pcReturns ctx,
       pcRequiredTypes = Set.union (pcRequiredTypes ctx) ts,
-      pcOutput = pcOutput ctx
+      pcOutput = pcOutput ctx,
+      pcDisallowInit = pcDisallowInit ctx
     }
   ccGetRequired = return . pcRequiredTypes
   ccGetCategoryFunction ctx c Nothing n = ccGetCategoryFunction ctx c (Just $ pcType ctx) n
@@ -87,6 +89,9 @@ instance (Show c, MergeableM m, CompileErrorM m, Monad m) =>
         let fa = Map.fromList $ map (\f -> (sfName f,f)) $ getCategoryFunctions ca
         checkFunction $ n `Map.lookup` fa
     checkFunction (Just f) = do
+      when (pcDisallowInit ctx && t == pcType ctx && pcScope ctx == CategoryScope) $
+        compileError $ "Function " ++ show n ++
+                       " disallowed during initialization [" ++ formatFullContext c ++ "]"
       when (sfScope f /= CategoryScope) $
         compileError $ "Function " ++ show n ++ " in " ++ show t ++ " cannot be used as a category function"
       return f
@@ -125,6 +130,9 @@ instance (Show c, MergeableM m, CompileErrorM m, Monad m) =>
       let fa = Map.fromList $ map (\f -> (sfName f,f)) $ getCategoryFunctions ca
       checkFunction (diName t) params (diParams t) $ n `Map.lookup` fa
     checkFunction t2 ps1 ps2 (Just f) = do
+      when (pcDisallowInit ctx && t2 == pcType ctx) $
+        compileError $ "Function " ++ show n ++
+                       " disallowed during initialization [" ++ formatFullContext c ++ "]"
       when (sfScope f == CategoryScope) $
         compileError $ "Function " ++ show n ++ " in " ++ show t2 ++ " is a category function"
       paired <- processParamPairs alwaysPairParams ps1 ps2 `reviseError`
@@ -136,6 +144,8 @@ instance (Show c, MergeableM m, CompileErrorM m, Monad m) =>
                      " does not have a function named " ++ show n ++ " [" ++
                      formatFullContext c ++ "]"
   ccGetValueInit ctx c (TypeInstance t as)
+    | pcDisallowInit ctx =
+      compileError $ "Value initialization not allowed here [" ++ formatFullContext c ++ "]"
     | t /= pcType ctx =
       compileError $ "Category " ++ show (pcType ctx) ++ " cannot initialize values from " ++
                      show t ++ " [" ++ formatFullContext c ++ "]"
@@ -173,7 +183,8 @@ instance (Show c, MergeableM m, CompileErrorM m, Monad m) =>
           pcVariables = Map.insert n t (pcVariables ctx),
           pcReturns = pcReturns ctx,
           pcRequiredTypes = pcRequiredTypes ctx,
-          pcOutput = pcOutput ctx
+          pcOutput = pcOutput ctx,
+          pcDisallowInit = pcDisallowInit ctx
         }
   ccWrite ctx ss = return $
     ProcedureContext {
@@ -188,7 +199,8 @@ instance (Show c, MergeableM m, CompileErrorM m, Monad m) =>
       pcVariables = pcVariables ctx,
       pcReturns = pcReturns ctx,
       pcRequiredTypes = pcRequiredTypes ctx,
-      pcOutput = pcOutput ctx ++ ss
+      pcOutput = pcOutput ctx ++ ss,
+      pcDisallowInit = pcDisallowInit ctx
     }
   ccGetOutput = return . pcOutput
   ccClearOutput ctx = return $ ProcedureContext {
@@ -203,7 +215,8 @@ instance (Show c, MergeableM m, CompileErrorM m, Monad m) =>
         pcVariables = pcVariables ctx,
         pcReturns = pcReturns ctx,
         pcRequiredTypes = pcRequiredTypes ctx,
-        pcOutput = []
+        pcOutput = [],
+        pcDisallowInit = pcDisallowInit ctx
       }
   ccUpdateAssigned ctx n = update (pcReturns ctx) where
     update (ValidateNames ra) = return $ ProcedureContext {
@@ -218,7 +231,8 @@ instance (Show c, MergeableM m, CompileErrorM m, Monad m) =>
         pcVariables = pcVariables ctx,
         pcReturns = ValidateNames $ Map.delete n ra,
         pcRequiredTypes = pcRequiredTypes ctx,
-        pcOutput = pcOutput ctx
+        pcOutput = pcOutput ctx,
+        pcDisallowInit = pcDisallowInit ctx
       }
     update _ = return ctx
   ccInheritReturns ctx cs = return $ ProcedureContext {
@@ -233,7 +247,8 @@ instance (Show c, MergeableM m, CompileErrorM m, Monad m) =>
       pcVariables = pcVariables ctx,
       pcReturns = foldr update NoValidation (map pcReturns cs),
       pcRequiredTypes = pcRequiredTypes ctx,
-      pcOutput = pcOutput ctx
+      pcOutput = pcOutput ctx,
+      pcDisallowInit = pcDisallowInit ctx
     }
     where
       update r@(ValidatePositions _) _ = r
@@ -254,7 +269,8 @@ instance (Show c, MergeableM m, CompileErrorM m, Monad m) =>
         pcVariables = pcVariables ctx,
         pcReturns = NoValidation,
         pcRequiredTypes = pcRequiredTypes ctx,
-        pcOutput = pcOutput ctx
+        pcOutput = pcOutput ctx,
+        pcDisallowInit = pcDisallowInit ctx
       }
     where
       check (ValidatePositions rs) = do
