@@ -32,6 +32,13 @@ Returns<1>::Type TypeValue::Present(S<TypeValue> target) {
   return target->Present()? T_get(Var_true) : T_get(Var_false);
 }
 
+Returns<1>::Type TypeValue::Require(S<TypeValue> target) {
+  if (!target->Present()) {
+    FAIL() << "Cannot require empty value";
+  }
+  return T_get(target);
+}
+
 bool TypeValue::AsBool() const {
   FAIL() << "Not a Bool value";
   return false;

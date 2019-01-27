@@ -98,7 +98,7 @@ compileExecutableProcedure tm ps ms pa fa va
         "Params<" ++ show (length $ psParams ps1) ++ ">::Type params, " ++
         "Args<" ++ show (length $ psParams as1) ++ ">::Type args) {"
     returnType = "Returns<" ++ show (length $ psParams rs1) ++ ">::Type"
-    setProcedureTrace = "TRACE_FUNCTION(\"" ++ show t ++ ": procedure " ++ show n ++ "\")"
+    setProcedureTrace = "TRACE_FUNCTION(\"" ++ show t ++ "." ++ show n ++ "\")"
     defineReturns = returnType ++ " returns;"
     nameParams = flip map (zip [0..] $ psParams ps1) $
       (\(i,p) -> paramType ++ " " ++ paramName (vpParam p) ++ " = *std::get<" ++ show i ++ ">(params);")
@@ -436,7 +436,8 @@ compileExpressionStart (BuiltinCall c f@(FunctionCall _ BuiltinRequire ps es)) =
   let (ParamSet [t0],e) = head es'
   when (isWeakValue t0) $
     lift $ compileError $ "Weak values not allowed here [" ++ formatFullContext c ++ "]"
-  return $ (ParamSet [ValueType RequiredValue (vtType t0)],e)
+  return $ (ParamSet [ValueType RequiredValue (vtType t0)],
+            valueBase ++ "::Require(std::get<0>(" ++ e ++ "))")
 compileExpressionStart (BuiltinCall c f@(FunctionCall _ BuiltinStrong ps es)) = do
   when (length (psParams ps) /= 0) $
     lift $ compileError $ "Expected 0 type parameters [" ++ formatFullContext c ++ "]"

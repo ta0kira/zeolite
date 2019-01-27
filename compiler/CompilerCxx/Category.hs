@@ -133,7 +133,7 @@ compileConcreteDefinition ta dd@(DefinedCategory c n ms ps fs) = do
       ctx <- getContextForInit tm t dd CategoryScope
       mergeAllM [
           return $ onlyCode $ categoryName n ++ "() : " ++ dispatcher ++ " {",
-          return $ indentCompiled $ onlyCode $ "TRACE_FUNCTION(\"" ++ show n ++ ": init @category\")",
+          return $ indentCompiled $ onlyCode $ "TRACE_FUNCTION(\"" ++ show n ++ " (init @category)\")",
           fmap indentCompiled $ mergeAllM $ map (initMember ctx) ms,
           return $ onlyCode "}"
         ]
@@ -148,7 +148,7 @@ compileConcreteDefinition ta dd@(DefinedCategory c n ms ps fs) = do
       ctx <- getContextForInit tm t dd TypeScope
       mergeAllM [
           return $ onlyCode $ typeName n ++ "(" ++ allArgs ++ ") : " ++ allInit ++ " {",
-          return $ indentCompiled $ onlyCode $ "TRACE_FUNCTION(\"" ++ show n ++ ": init @type\")",
+          return $ indentCompiled $ onlyCode $ "TRACE_FUNCTION(\"" ++ show n ++ " (init @type)\")",
           fmap indentCompiled $ mergeAllM $ map (initMember ctx) ms,
           return $ onlyCode "}"
         ]

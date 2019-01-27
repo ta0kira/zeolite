@@ -75,6 +75,7 @@ class TypeValue {
   virtual std::string CategoryName() const = 0;
 
   static Returns<1>::Type Present(S<TypeValue> target);
+  static Returns<1>::Type Require(S<TypeValue> target);
   static Returns<1>::Type Strong(W<TypeValue> target) { return T_get(target.lock()); }
 
   virtual bool AsBool() const;

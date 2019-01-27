@@ -9,7 +9,7 @@ struct OptionalEmpty : public TypeValue {
   DReturns Dispatch(const S<TypeValue>& self,
                     const DFunction<SymbolScope::ValueScope>& label,
                     DParams params, DArgs args) final {
-    FAIL() << "Function called on empty value";
+    FAIL() << "Function called on empty value (internal error)";
     return DReturns();
   }
 
