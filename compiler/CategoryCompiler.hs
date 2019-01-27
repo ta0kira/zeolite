@@ -111,7 +111,10 @@ instance (Show c, MergeableM m, CompileErrorM m, Monad m) =>
                 _ -> compileError $ "Param " ++ show p ++ " does not exist"
       let ts = map tfType $ filter isRequiresFilter fs
       let ds = map dfType $ filter isDefinesFilter fs
-      collectOneOrErrorM $ (map getFunction $ map (Just . SingleType) ts) ++ (map checkDefine ds)
+      collectOneOrErrorM $
+        [compileError $ "Function " ++ show n ++ " not available for param " ++ show p ++
+         " [" ++ formatFullContext c ++ "]"] ++
+        (map getFunction $ map (Just . SingleType) ts) ++ (map checkDefine ds)
     getFunction (Just (SingleType (JustTypeInstance t)))
       -- Same category as the procedure itself.
       | tiName t == pcType ctx =

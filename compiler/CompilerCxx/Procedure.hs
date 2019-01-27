@@ -495,7 +495,7 @@ compileFunctionCall e f (FunctionCall c _ ps es) = do
   (ts,es'') <- getValues es'
   lift $ processParamPairs (checkArg r fa) (ftArgs f'') (ParamSet $ zip [1..] ts) `reviseError`
     ("In function call at " ++ formatFullContext c)
-  -- TODO: Also include param values.
+  csRequiresTypes $ typesFromParams ps
   csRequiresTypes (Set.fromList [sfType f])
   params <- expandParams ps
   call <- assemble e (sfScope f) (functionName f) params es''
@@ -537,12 +537,17 @@ autoScope s = do
     -- NOTE: Don't use this->; otherwise, self won't work properly.
     scoped _ _ = ""
 
+typesFromParams :: ParamSet GeneralInstance -> Set.Set CategoryName
+typesFromParams = Set.fromList . concat . map getAll . psParams where
+  getAll (TypeMerge _ ps) = concat $ map getAll ps
+  getAll (SingleType (JustTypeInstance (TypeInstance t ps))) = t:(concat $ map getAll $ psParams ps)
+  getAll _ = []
+
 expandParams :: (Monad m, CompilerContext c m s a) =>
   ParamSet GeneralInstance -> CompilerState a m String
 expandParams ps = do
   ps' <- sequence $ map expandType $ psParams ps
   return $ "T_get(" ++ intercalate "," (map ("&" ++) ps') ++ ")"
-  where
 
 expandCategory :: (Monad m, CompilerContext c m s a) =>
   CategoryName -> CompilerState a m String

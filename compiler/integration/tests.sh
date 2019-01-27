@@ -978,5 +978,98 @@ define Test {
 }
 END
 
+expect_runs 'call from param type' <<END
+@type interface Base {
+  call () -> ()
+}
+
+concrete Value {
+  defines Base
+}
+
+define Value {
+  call () {}
+}
+
+define Test {
+  @type check<#x>
+    #x defines Base
+  () -> ()
+  check () {
+    ~ #x\$call()
+  }
+
+  run () {
+    ~ check<Value>()
+  }
+}
+END
+
+expect_error 'call from bad param type' 'call.+param #x' 'line 9' <<END
+@type interface Base {
+  call () -> ()
+}
+
+define Test {
+  @type check<#x>
+  () -> ()
+  check () {
+    ~ #x\$call()
+  }
+
+  run () {}
+}
+END
+
+expect_runs 'call from param value' <<END
+@value interface Base {
+  call () -> ()
+}
+
+concrete Value {
+  refines Base
+
+  @type create () -> (Value)
+}
+
+define Value {
+  call () {}
+
+  create () {
+    return Value{}
+  }
+}
+
+define Test {
+  @type check<#x>
+    #x requires Base
+  (#x) -> ()
+  check (value) {
+    ~ value.call()
+  }
+
+  run () {
+    Value value <- Value\$create()
+    ~ check<Value>(value)
+  }
+}
+END
+
+expect_error 'call from bad param value' 'call.+param #x' 'line 9' <<END
+@value interface Base {
+  call () -> ()
+}
+
+define Test {
+  @type check<#x>
+  (#x) -> ()
+  check (value) {
+    ~ value.call()
+  }
+
+  run () {}
+}
+END
+
 
 echo "All $count tests passed" 1>&2
