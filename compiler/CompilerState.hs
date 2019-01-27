@@ -105,7 +105,7 @@ csGetParamScope n = fmap (\x -> ccGetParamScope x n) get >>= lift
 
 csRequiresTypes :: (Monad m, CompilerContext c m s a) =>
   Set.Set CategoryName -> CompilerState a m ()
-csRequiresTypes n = fmap (\x -> ccRequiresTypes x n) get >>= lift >>= put
+csRequiresTypes ns = fmap (\x -> ccRequiresTypes x ns) get >>= lift >>= put
 
 csGetRequired :: (Monad m, CompilerContext c m s a) => CompilerState a m (Set.Set CategoryName)
 csGetRequired = fmap ccGetRequired get >>= lift

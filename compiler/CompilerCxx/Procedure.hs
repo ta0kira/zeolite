@@ -10,7 +10,7 @@ module CompilerCxx.Procedure (
 ) where
 
 import Control.Monad (when)
-import Control.Monad.Trans.State (execStateT,get,put)
+import Control.Monad.Trans.State (execStateT,get,put,runStateT)
 import Control.Monad.Trans (lift)
 import Data.List (intercalate)
 import qualified Data.Map as Map
@@ -111,6 +111,22 @@ compileExecutableProcedure tm t ps ms pa fa va
       | otherwise = flip map (zip [0..] $ psParams $ nrNames rs2) $
       (\(i,n) -> proxyType ++ " " ++ variableName (ovName n) ++ " = std::get<" ++ show i ++ ">(returns);")
 
+compileCondition :: (Show c, Monad m, CompileErrorM m, MergeableM m,
+                     CompilerContext c m [String] a) =>
+  a -> [c] -> Expression c -> CompilerState a m String
+compileCondition ctx c e = do
+  (e',ctx') <- lift $ runStateT compile ctx
+  lift (ccGetRequired ctx') >>= csRequiresTypes
+  return e'
+  where
+    compile = flip reviseErrorStateT ("In condition at " ++ formatFullContext c) $ do
+      (ts,e') <- compileExpression e
+      lift $ checkCondition ts
+      return $ "std::get<0>(" ++ e' ++ ")->AsBool()"
+      where
+        checkCondition (ParamSet [t]) | t == boolRequiredValue = return ()
+        checkCondition _ = compileError "Conditionals must have exactly one Bool return"
+
 -- Returns the state so that returns can be properly checked for if/elif/else.
 compileProcedure :: (Show c, Monad m, CompileErrorM m, MergeableM m,
                      CompilerContext c m [String] a) =>
@@ -200,8 +216,8 @@ compileIfElifElse :: (Show c, Monad m, CompileErrorM m, MergeableM m,
                       CompilerContext c m [String] a) =>
   IfElifElse c -> CompilerState a m ()
 compileIfElifElse (IfStatement c e p es) = do
-  e' <- compileCondition c e
   ctx0 <- getCleanContext
+  e' <- compileCondition ctx0 c e
   ctx <- compileProcedure ctx0 p
   (lift $ ccGetRequired ctx) >>= csRequiresTypes
   csWrite [setTraceContext c]
@@ -212,8 +228,8 @@ compileIfElifElse (IfStatement c e p es) = do
   csInheritReturns (ctx:cs)
   where
     unwind (IfStatement c e p es) = do
-      e' <- compileCondition c e
       ctx0 <- getCleanContext
+      e' <- compileCondition ctx0 c e
       ctx <- compileProcedure ctx0 p
       (lift $ ccGetRequired ctx) >>= csRequiresTypes
       -- TODO: Figure out how to set the trace context for this expression.
@@ -236,8 +252,8 @@ compileWhileLoop :: (Show c, Monad m, CompileErrorM m, MergeableM m,
                      CompilerContext c m [String] a) =>
   WhileLoop c -> CompilerState a m ()
 compileWhileLoop (WhileLoop c e p) = do
-  e' <- compileCondition c e
-  ctx0 <- get
+  ctx0 <- getCleanContext
+  e' <- compileCondition ctx0 c e
   ctx <- compileProcedure ctx0 p
   (lift $ ccGetRequired ctx) >>= csRequiresTypes
   csWrite [setTraceContext c]
@@ -245,17 +261,6 @@ compileWhileLoop (WhileLoop c e p) = do
   (lift $ ccGetOutput ctx) >>= csWrite
   csWrite [setTraceContext c] -- Set it again for the conditional.
   csWrite ["}"]
-
-compileCondition :: (Show c, Monad m, CompileErrorM m, MergeableM m,
-                     CompilerContext c m [String] a) =>
-  [c] -> Expression c -> CompilerState a m String
-compileCondition c e = flip reviseErrorStateT ("In condition at " ++ formatFullContext c) $ do
-  (ts,e') <- compileExpression e
-  lift $ checkCondition ts
-  return $ "std::get<0>(" ++ e' ++ ")->AsBool()"
-  where
-    checkCondition (ParamSet [t]) | t == boolRequiredValue = return ()
-    checkCondition _ = compileError "Conditionals must have exactly one Bool return"
 
 compileScopedBlock :: (Show c, Monad m, CompileErrorM m, MergeableM m,
                        CompilerContext c m [String] a) =>

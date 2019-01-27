@@ -122,7 +122,7 @@ END
 expect_crashes 'require empty' 'require.+empty' 'line 3' <<END
 define Test {
   run () {
-    ~ Util\$crash()
+    ~ require(empty)
   }
 }
 END
@@ -425,13 +425,45 @@ define Test {
 }
 END
 
-expect_error 'assign while' 'value' 'line 7' <<END
+expect_error 'assign while' 'value' 'line 9' <<END
 @value interface Value {}
 
 define Test {
   @value process () -> (optional Value)
   process () (value) {
-    while (false) {}
+    while (false) {
+      value <- empty
+    }
+  }
+
+  run () {}
+}
+END
+
+expect_error 'assign while condition' 'value' 'line 7' <<END
+@value interface Value {}
+
+define Test {
+  @value process () -> (optional Value)
+  process () (value) {
+    while (present((value <- empty))) {}
+  }
+
+  run () {}
+}
+END
+
+expect_error 'assign if/elif condition' 'value' 'line 11' <<END
+@value interface Value {}
+
+define Test {
+  @value process () -> (optional Value)
+  process () (value) {
+    if (present((value <- empty))) {
+    } elif (present((value <- empty))) {
+    } else {
+      value <- empty
+    }
   }
 
   run () {}
