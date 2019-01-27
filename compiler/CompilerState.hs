@@ -12,6 +12,7 @@ module CompilerState (
   VariableValue(..),
   csAddVariable,
   csAllFilters,
+  csClearOutput,
   csCurrentScope,
   csGetCategoryFunction,
   csGetOutput,
@@ -25,6 +26,7 @@ module CompilerState (
   csResolver,
   csUpdateAssigned,
   csWrite,
+  getCleanContext,
   reviseErrorStateT,
   runDataCompiler,
 ) where
@@ -57,6 +59,7 @@ class Monad m => CompilerContext c m s a | a -> c s where
   ccAddVariable :: a -> [c] -> VariableName -> VariableValue c -> m a
   ccWrite :: a -> s -> m a
   ccGetOutput :: a -> m s
+  ccClearOutput :: a -> m a
   ccUpdateAssigned :: a -> VariableName -> m a
   ccInheritReturns :: a -> [a] -> m a
   ccRegisterReturn :: a -> [c] -> ExpressionType -> m a
@@ -130,6 +133,9 @@ csAddVariable c n t = fmap (\x -> ccAddVariable x c n t) get >>= lift >>= put
 csWrite :: (Monad m, CompilerContext c m s a) => s -> CompilerState a m ()
 csWrite o = fmap (\x -> ccWrite x o) get >>= lift >>= put
 
+csClearOutput :: (Monad m, CompilerContext c m s a) => CompilerState a m ()
+csClearOutput = fmap (\x -> ccClearOutput x) get >>= lift >>= put
+
 csGetOutput :: (Monad m, CompilerContext c m s a) => CompilerState a m s
 csGetOutput = fmap ccGetOutput get >>= lift
 
@@ -171,3 +177,6 @@ runDataCompiler x ctx = do
       cdRequired = required,
       cdOutput = output
     }
+
+getCleanContext :: (Monad m, CompilerContext c m s a) => CompilerState a m a
+getCleanContext = get >>= lift . ccClearOutput

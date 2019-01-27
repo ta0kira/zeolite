@@ -69,7 +69,7 @@ compileExecutableProcedure tm ps ms pa fa va
   return $ wrapProcedure t ff as2 rs2 output
   where
     compileWithReturn = do
-      ctx0 <- get
+      ctx0 <- getCleanContext
       compileProcedure ctx0 p >>= put
       csRegisterReturn c (ParamSet []) `reviseErrorStateT`
         ("In implicit return from " ++ show n ++ " [" ++ formatFullContext c ++ "]")
@@ -152,7 +152,7 @@ compileStatement (Assignment c as e) = do
   fa <- csAllFilters
   processParamPairsT (createVariable r fa) as ts `reviseErrorStateT`
     ("In assignment at " ++ formatFullContext c)
-  csWrite ["{","auto r = " ++ e' ++ ";"]
+  csWrite ["{","const auto r = " ++ e' ++ ";"]
   sequence $ map assignVariable $ zip [0..] $ psParams as
   csWrite ["}"]
   where
@@ -191,10 +191,10 @@ compileIfElifElse :: (Show c, Monad m, CompileErrorM m, MergeableM m,
   IfElifElse c -> CompilerState a m ()
 compileIfElifElse (IfStatement c e p es) = do
   e' <- compileCondition c e
-  ctx0 <- get
+  ctx0 <- getCleanContext
   ctx <- compileProcedure ctx0 p
   (lift $ ccGetRequired ctx) >>= csRequiresTypes
-  csWrite ["" ++ e' ++ ") {"]
+  csWrite ["if (" ++ e' ++ ") {"]
   (lift $ ccGetOutput ctx) >>= csWrite
   csWrite ["}"]
   cs <- unwind es
@@ -202,7 +202,7 @@ compileIfElifElse (IfStatement c e p es) = do
   where
     unwind (IfStatement c e p es) = do
       e' <- compileCondition c e
-      ctx0 <- get
+      ctx0 <- getCleanContext
       ctx <- compileProcedure ctx0 p
       (lift $ ccGetRequired ctx) >>= csRequiresTypes
       csWrite ["else if (" ++ e' ++ ") {"]
@@ -211,7 +211,7 @@ compileIfElifElse (IfStatement c e p es) = do
       cs <- unwind es
       return $ ctx:cs
     unwind (ElseStatement c p) = do
-      ctx0 <- get
+      ctx0 <- getCleanContext
       ctx <- compileProcedure ctx0 p
       (lift $ ccGetRequired ctx) >>= csRequiresTypes
       csWrite ["else {"]
@@ -249,7 +249,7 @@ compileScopedBlock :: (Show c, Monad m, CompileErrorM m, MergeableM m,
 compileScopedBlock s = do
   let (vs,p,st) = rewriteScoped s
   -- Capture context so we can discard scoped variable names.
-  ctx0 <- get
+  ctx0 <- getCleanContext
   r <- csResolver
   fa <- csAllFilters
   sequence $ map (createVariable r fa) vs

@@ -44,7 +44,11 @@ define Value {
     optional all y <- empty
     ~ reduce<Value<#x>,#x>(self)
     ~ require(self).get()
-    ~ require(strong(self2)).get()
+    scoped {
+      optional Value<#x> self3 <- strong(self2)
+    } in if (present(self3)) {
+      ~ require(self3).get()
+    }
     return value
   }
 

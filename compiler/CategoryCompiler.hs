@@ -191,6 +191,20 @@ instance (Show c, MergeableM m, CompileErrorM m, Monad m) =>
       pcOutput = pcOutput ctx ++ ss
     }
   ccGetOutput = return . pcOutput
+  ccClearOutput ctx = return $ ProcedureContext {
+        pcScope = pcScope ctx,
+        pcType = pcType ctx,
+        pcParams = pcParams ctx,
+        pcMembers = pcMembers ctx,
+        pcCategories = pcCategories ctx,
+        pcFilters = pcFilters ctx,
+        pcParamScopes = pcParamScopes ctx,
+        pcFunctions = pcFunctions ctx,
+        pcVariables = pcVariables ctx,
+        pcReturns = pcReturns ctx,
+        pcRequiredTypes = pcRequiredTypes ctx,
+        pcOutput = []
+      }
   ccUpdateAssigned ctx n = update (pcReturns ctx) where
     update (ValidateNames ra) = return $ ProcedureContext {
         pcScope = pcScope ctx,
