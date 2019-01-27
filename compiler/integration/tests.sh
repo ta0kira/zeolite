@@ -673,3 +673,91 @@ define Test {
   }
 }
 END
+
+expect_runs 'multi assign if/elif/else' <<END
+@value interface Value {}
+
+define Test {
+  @value process () -> (optional Value,optional Value)
+  process () (value1,value2) {
+    if (false) {
+      value1 <- empty
+      value2 <- empty
+    } elif (false) {
+      value1 <- empty
+      value2 <- empty
+    } else {
+      value1 <- empty
+      value2 <- empty
+    }
+  }
+
+  run () {}
+}
+END
+
+expect_error 'multi missing in if' 'value2' 'line 15' <<END
+@value interface Value {}
+
+define Test {
+  @value process () -> (optional Value,optional Value)
+  process () (value1,value2) {
+    if (false) {
+      value1 <- empty
+    } elif (false) {
+      value1 <- empty
+      value2 <- empty
+    } else {
+      value1 <- empty
+      value2 <- empty
+    }
+  }
+
+  run () {}
+}
+END
+
+expect_error 'multi missing in elif' 'value2' 'line 15' <<END
+@value interface Value {}
+
+define Test {
+  @value process () -> (optional Value,optional Value)
+  process () (value1,value2) {
+    if (false) {
+      value1 <- empty
+      value2 <- empty
+    } elif (false) {
+      value1 <- empty
+    } else {
+      value1 <- empty
+      value2 <- empty
+    }
+  }
+
+  run () {}
+}
+END
+
+expect_error 'multi missing in else' 'value2' 'line 15' <<END
+@value interface Value {}
+
+define Test {
+  @value process () -> (optional Value,optional Value)
+  process () (value1,value2) {
+    if (false) {
+      value1 <- empty
+      value2 <- empty
+    } elif (false) {
+      value1 <- empty
+      value2 <- empty
+    } else {
+      value1 <- empty
+    }
+  }
+
+  run () {}
+}
+END
+
+
+echo "All $count tests passed" 1>&2
