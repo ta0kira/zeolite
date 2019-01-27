@@ -28,6 +28,8 @@ concrete Test {
 }
 "
 
+count=0
+
 compile() {
   local temp=$1
   local code=$(cat)
@@ -49,6 +51,7 @@ compile() {
 }
 
 expect_error() {
+  ((count++)) || true
   local name=$1
   shift
   local patterns=("$@")
@@ -58,54 +61,56 @@ expect_error() {
     set -e
     cd "$temp" || exit 1
     if "$compiler" /dev/stdin &> "$temp/$errors" < <(echo "$code$test_base"); then
-      echo "Test \"$name\": Expected compile error; see output in $temp" 1>&2
+      echo "Test \"$name\" ($count): Expected compile error; see output in $temp" 1>&2
       return 1
     fi
   )
   for p in "${patterns[@]}"; do
     if ! egrep -q "$p" "$temp/$errors"; then
-      echo "Test \"$name\": Expected pattern '$p' in error; see output in $temp" 1>&2
+      echo "Test \"$name\" ($count): Expected pattern '$p' in error; see output in $temp" 1>&2
       return 1
     fi
   done
-  echo "Test \"$name\" passed (see output in $temp)" 1>&2
+  echo "Test \"$name\" ($count) passed (see output in $temp)" 1>&2
 }
 
 expect_runs() {
+  ((count++)) || true
   local name=$1
   shift
   local patterns=("$@")
   local temp=$(mktemp -d)
   if ! compile "$temp"; then
-    echo "Test \"$name\": Expected compilation; see output in $temp" 1>&2
+    echo "Test \"$name\" ($count): Expected compilation; see output in $temp" 1>&2
     return 1
   fi
   "$temp/compiled" |& tee -a "$temp/$errors"
   if [[ "${PIPESTATUS[0]}" != 0 ]]; then
-    echo "Test \"$name\": Expected execution; see output in $temp" 1>&2
+    echo "Test \"$name\" ($count): Expected execution; see output in $temp" 1>&2
     return 1
   fi
   for p in "${patterns[@]}"; do
     if ! egrep -q "$p" "$temp/$errors"; then
-      echo "Test \"$name\": Expected pattern '$p' in error; see output in $temp" 1>&2
+      echo "Test \"$name\" ($count): Expected pattern '$p' in error; see output in $temp" 1>&2
       return 1
     fi
   done
-  echo "Test \"$name\" passed (see output in $temp)" 1>&2
+  echo "Test \"$name\" ($count) passed (see output in $temp)" 1>&2
 }
 
 expect_crashes() {
+  ((count++)) || true
   local name=$1
   local temp=$(mktemp -d)
   if ! compile "$temp"; then
-    echo "Test \"$name\": Expected compilation; see output in $temp" 1>&2
+    echo "Test \"$name\" ($count): Expected compilation; see output in $temp" 1>&2
     return 1
   fi
   if "$temp/compiled" &> "$temp/$errors"; then
-    echo "Test \"$name\": Expected crash; see output in $temp" 1>&2
+    echo "Test \"$name\" ($count): Expected crash; see output in $temp" 1>&2
     return 1
   fi
-  echo "Test \"$name\" passed (see output in $temp)" 1>&2
+  echo "Test \"$name\" ($count) passed (see output in $temp)" 1>&2
 }
 
 expect_runs 'do nothing' <<END
