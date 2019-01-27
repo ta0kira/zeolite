@@ -11,13 +11,22 @@ compiler="$root/compiler/CompilerCxx/compiler"
 
 ghc -i"$root/compiler" "$compiler.hs"
 
+test_base="
+@type interface Runner {
+  run () -> ()
+}
+concrete Test {
+  defines Runner
+}
+"
+
 compile() {
   local temp=$1
   local code=$(cat)
   (
     set -e
     cd "$temp" || exit 1
-    { "$compiler" /dev/stdin |& tee "$temp/$errors"; } < <(echo "$code")
+    { "$compiler" /dev/stdin |& tee "$temp/$errors"; } < <(echo "$test_base$code")
     [[ "${PIPESTATUS[0]}" = 0 ]] || return 1
     clang++ -std=c++11 -o "$temp/compiled" \
       -I"$root/capture-thread/include" \
@@ -38,7 +47,7 @@ expect_error() {
   (
     set -e
     cd "$temp" || exit 1
-    if "$compiler" /dev/stdin &> "$temp/$errors" < <(echo "$code"); then
+    if "$compiler" /dev/stdin &> "$temp/$errors" < <(echo "$test_base$code"); then
       echo "Test \"$name\": Expected compile error; see output in $temp"
     fi
   )
@@ -70,20 +79,12 @@ expect_crashes() {
 }
 
 expect_runs 'do nothing' <<END
-concrete Test {
-  @category run () -> ()
-}
-
 define Test {
   run () {}
 }
 END
 
 expect_crashes 'require empty' <<END
-concrete Test {
-  @category run () -> ()
-}
-
 define Test {
   run () {
     ~ require(empty)
@@ -91,11 +92,7 @@ define Test {
 }
 END
 
-expect_error 'self in @category' <<END
-concrete Test {
-  @category run () -> ()
-}
-
+expect_error 'self in @type' <<END
 define Test {
   run () {
     ~ self

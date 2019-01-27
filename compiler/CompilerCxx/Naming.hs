@@ -97,8 +97,8 @@ unionGetter = "Merge_Union"
 valueName :: CategoryName -> String
 valueName n = "Value_" ++ show n
 
-callName :: CategoryName -> FunctionName -> String
-callName t f = "Call_" ++ show t ++ "_" ++ show f
+callName :: FunctionName -> String
+callName f = "Call_" ++ show f
 
 functionName :: ScopedFunction c -> String
 functionName f = "Function_" ++ show (sfType f) ++ "_" ++ show (sfName f)

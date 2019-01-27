@@ -216,9 +216,9 @@ compileConcreteDefinition ta dd@(DefinedCategory c n ms ps fs) = do
         dispatch f = CompiledData (Set.fromList [sfType f])
                                   ["d.Register(" ++ functionName f ++ ", &" ++ function f ++ ");"]
         function f
-          | sfScope f == CategoryScope = categoryName n ++ "::" ++ callName n (sfName f)
-          | sfScope f == TypeScope     = typeName n     ++ "::" ++ callName n (sfName f)
-          | sfScope f == ValueScope    = valueName n    ++ "::" ++ callName n (sfName f)
+          | sfScope f == CategoryScope = categoryName n ++ "::" ++ callName (sfName f)
+          | sfScope f == TypeScope     = typeName n     ++ "::" ++ callName (sfName f)
+          | sfScope f == ValueScope    = valueName n    ++ "::" ++ callName (sfName f)
 
 commonDefineAll :: (MergeableM m, Monad m) =>
   AnyCategory c -> CompiledData [String] -> CompiledData [String] ->

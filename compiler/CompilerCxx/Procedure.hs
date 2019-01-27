@@ -87,7 +87,7 @@ compileExecutableProcedure tm ps ms pa fa va
           onlyCode close
         ]
     close = "}"
-    name = callName t n
+    name = callName n
     header
       | s == ValueScope =
         returnType ++ " " ++ name ++ "(const S<TypeValue>& Var_self, " ++
