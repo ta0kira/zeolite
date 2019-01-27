@@ -35,7 +35,7 @@ compileExecutableProcedure :: (Show c, Monad m, CompileErrorM m, MergeableM m) =
   Map.Map VariableName (VariableValue c) ->
   (ScopedFunction c,ExecutableProcedure c) -> m (CompiledData [String])
 compileExecutableProcedure tm ps ms pa fa va
-                 (ff@(ScopedFunction _ _ t s as1 rs1 _ _ _),
+                 (ff@(ScopedFunction _ _ t s as1 rs1 ps1 _ _),
                   (ExecutableProcedure _ c n as2 rs2 p)) = do
   rs' <- if isUnnamedReturns rs2
             then return $ ValidatePositions rs1
@@ -66,7 +66,7 @@ compileExecutableProcedure tm ps ms pa fa va
       pcOutput = []
     }
   output <- runDataCompiler compileWithReturn ctx
-  return $ wrapProcedure t ff as2 rs2 output
+  return $ wrapProcedure output
   where
     compileWithReturn = do
       ctx0 <- getCleanContext
@@ -75,37 +75,39 @@ compileExecutableProcedure tm ps ms pa fa va
         ("In implicit return from " ++ show n ++ " [" ++ formatFullContext c ++ "]")
       csWrite ["return returns;"]
     pairOutput (PassedValue c1 t) (OutputValue c2 n) = return $ (n,PassedValue (c2++c1) t)
-    wrapProcedure n f as rs output =
+    wrapProcedure output =
       mergeAll $ [
           onlyCode header,
-          indentCompiled $ defineReturns,
+          indentCompiled $ onlyCode setProcedureTrace,
+          indentCompiled $ onlyCode defineReturns,
           indentCompiled $ onlyCodes nameParams,
           indentCompiled $ onlyCodes nameArgs,
           indentCompiled $ onlyCodes nameReturns,
           indentCompiled output,
           onlyCode close
-        ] where
-      close = "}"
-      name = callName n (sfName f)
-      header
-        | sfScope f == ValueScope =
-          returnType ++ " " ++ name ++ "(const S<TypeValue>& Var_self, " ++
-          "Params<" ++ show (length $ psParams $ sfParams f) ++ ">::Type params, " ++
-          "Args<" ++ show (length $ psParams $ sfArgs f) ++ ">::Type args) {"
-        | otherwise =
-          returnType ++ " " ++ name ++ "(" ++
-          "Params<" ++ show (length $ psParams $ sfParams f) ++ ">::Type params, " ++
-          "Args<" ++ show (length $ psParams $ sfArgs f) ++ ">::Type args) {"
-      returnType = "Returns<" ++ show (length $ psParams $ sfReturns f) ++ ">::Type"
-      defineReturns = onlyCode $ returnType ++ " returns;"
-      nameParams = flip map (zip [0..] $ psParams $ sfParams f) $
-        (\(i,p) -> paramType ++ " " ++ paramName (vpParam p) ++ " = *std::get<" ++ show i ++ ">(params);")
-      nameArgs = flip map (zip [0..] $ filter (not . isDiscardedInput) $ psParams $ avNames as) $
-        (\(i,n) -> proxyType ++ " " ++ variableName (ivName n) ++ " = std::get<" ++ show i ++ ">(args);")
-      nameReturns
-        | isUnnamedReturns rs = []
-        | otherwise = flip map (zip [0..] $ psParams $ nrNames rs) $
-        (\(i,n) -> proxyType ++ " " ++ variableName (ovName n) ++ " = std::get<" ++ show i ++ ">(returns);")
+        ]
+    close = "}"
+    name = callName t n
+    header
+      | s == ValueScope =
+        returnType ++ " " ++ name ++ "(const S<TypeValue>& Var_self, " ++
+        "Params<" ++ show (length $ psParams ps1) ++ ">::Type params, " ++
+        "Args<" ++ show (length $ psParams as1) ++ ">::Type args) {"
+      | otherwise =
+        returnType ++ " " ++ name ++ "(" ++
+        "Params<" ++ show (length $ psParams ps1) ++ ">::Type params, " ++
+        "Args<" ++ show (length $ psParams as1) ++ ">::Type args) {"
+    returnType = "Returns<" ++ show (length $ psParams rs1) ++ ">::Type"
+    setProcedureTrace = "TRACE_FUNCTION(\"" ++ show t ++ ": procedure " ++ show n ++ "\")"
+    defineReturns = returnType ++ " returns;"
+    nameParams = flip map (zip [0..] $ psParams ps1) $
+      (\(i,p) -> paramType ++ " " ++ paramName (vpParam p) ++ " = *std::get<" ++ show i ++ ">(params);")
+    nameArgs = flip map (zip [0..] $ filter (not . isDiscardedInput) $ psParams $ avNames as2) $
+      (\(i,n) -> proxyType ++ " " ++ variableName (ivName n) ++ " = std::get<" ++ show i ++ ">(args);")
+    nameReturns
+      | isUnnamedReturns rs2 = []
+      | otherwise = flip map (zip [0..] $ psParams $ nrNames rs2) $
+      (\(i,n) -> proxyType ++ " " ++ variableName (ovName n) ++ " = std::get<" ++ show i ++ ">(returns);")
 
 -- Returns the state so that returns can be properly checked for if/elif/else.
 compileProcedure :: (Show c, Monad m, CompileErrorM m, MergeableM m,
@@ -123,28 +125,33 @@ compileStatement (EmptyReturn c) = do
   csWrite ["return returns;"]
 compileStatement (ExplicitReturn c es) = do
   es' <- sequence $ map compileExpression $ psParams es
-  getReturn es'
+  getReturn $ zip (map getExpressionContext $ psParams es) es'
   where
     -- Single expression, but possibly multi-return.
-    getReturn [(ParamSet ts,e)] = do
+    getReturn [(_,(ParamSet ts,e))] = do
       csRegisterReturn c (ParamSet ts)
+      csWrite [setTraceContext c]
       csWrite ["return " ++ e ++ ";"]
     -- Multi-expression => must all be singles.
     getReturn rs = do
-      lift $ mergeAllM (map checkArity $ zip [1..] $ map fst rs) `reviseError`
+      lift $ mergeAllM (map checkArity $ zip [1..] $ map (fst . snd) rs) `reviseError`
         ("In return at " ++ formatFullContext c)
-      csRegisterReturn c $ ParamSet $ map (head . psParams . fst) rs
-      csWrite $ map bindReturn $ zip [0..] $ map snd rs
+      csRegisterReturn c $ ParamSet $ map (head . psParams . fst . snd) rs
+      csWrite $ concat $ map bindReturn $ zip [0..] rs
       csWrite ["return returns;"]
     checkArity (_,ParamSet [_]) = return ()
     checkArity (i,ParamSet ts)  =
       compileError $ "Return position " ++ show i ++ " has " ++ show (length ts) ++ " values but should have 1"
-    bindReturn (i,e) = "std::get<" ++ show i ++ ">(returns) = " ++ "std::get<0>(" ++ e ++ ");"
+    bindReturn (i,(c0,(_,e))) = [
+        setTraceContext c0,
+        "std::get<" ++ show i ++ ">(returns) = " ++ "std::get<0>(" ++ e ++ ");"
+      ]
 compileStatement (LoopBreak c) = do
   -- TODO: This can only be used inside of a loop.
   csWrite ["break;"]
 compileStatement (IgnoreValues c e) = do
   (_,e') <- compileExpression e
+  csWrite [setTraceContext c]
   csWrite [e' ++ ";"]
 compileStatement (Assignment c as e) = do
   (ts,e') <- compileExpression e
@@ -152,6 +159,7 @@ compileStatement (Assignment c as e) = do
   fa <- csAllFilters
   processParamPairsT (createVariable r fa) as ts `reviseErrorStateT`
     ("In assignment at " ++ formatFullContext c)
+  csWrite [setTraceContext c]
   csWrite ["{","const auto r = " ++ e' ++ ";"]
   sequence $ map assignVariable $ zip [0..] $ psParams as
   csWrite ["}"]
@@ -194,6 +202,7 @@ compileIfElifElse (IfStatement c e p es) = do
   ctx0 <- getCleanContext
   ctx <- compileProcedure ctx0 p
   (lift $ ccGetRequired ctx) >>= csRequiresTypes
+  csWrite [setTraceContext c]
   csWrite ["if (" ++ e' ++ ") {"]
   (lift $ ccGetOutput ctx) >>= csWrite
   csWrite ["}"]
@@ -205,9 +214,11 @@ compileIfElifElse (IfStatement c e p es) = do
       ctx0 <- getCleanContext
       ctx <- compileProcedure ctx0 p
       (lift $ ccGetRequired ctx) >>= csRequiresTypes
-      csWrite ["else if (" ++ e' ++ ") {"]
+      csWrite ["else {"]
+      csWrite [setTraceContext c]
+      csWrite ["if (" ++ e' ++ ") {"]
       (lift $ ccGetOutput ctx) >>= csWrite
-      csWrite ["}"]
+      csWrite ["} }"]
       cs <- unwind es
       return $ ctx:cs
     unwind (ElseStatement c p) = do
@@ -228,8 +239,10 @@ compileWhileLoop (WhileLoop c e p) = do
   ctx0 <- get
   ctx <- compileProcedure ctx0 p
   (lift $ ccGetRequired ctx) >>= csRequiresTypes
+  csWrite [setTraceContext c]
   csWrite ["while (" ++ e' ++ ") {"]
   (lift $ ccGetOutput ctx) >>= csWrite
+  csWrite [setTraceContext c] -- Set it again for the conditional.
   csWrite ["}"]
 
 compileCondition :: (Show c, Monad m, CompileErrorM m, MergeableM m,

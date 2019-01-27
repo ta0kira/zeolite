@@ -85,10 +85,10 @@ compileConcreteDefinition ta dd@(DefinedCategory c n ms ps fs) = do
   let tm0 = builtins typeInstance TypeScope
   let vm0 = builtins typeInstance ValueScope
   cm' <- mapMembers cm
-  cm' <- mapMembers tm
+  tm' <- mapMembers tm
   vm' <- mapMembers vm
   let cv = Map.union cm0 cm'
-  let tv = Map.union tm0 cm'
+  let tv = Map.union tm0 tm'
   let vv = Map.union vm0 vm'
   let memberCount = length vm
   top <- mergeAllM [
@@ -133,6 +133,7 @@ compileConcreteDefinition ta dd@(DefinedCategory c n ms ps fs) = do
       ctx <- getContextForInit tm t dd CategoryScope
       mergeAllM [
           return $ onlyCode $ categoryName n ++ "() : " ++ dispatcher ++ " {",
+          return $ indentCompiled $ onlyCode $ "TRACE_FUNCTION(\"" ++ show n ++ ": init @category\")",
           fmap indentCompiled $ mergeAllM $ map (initMember ctx) ms,
           return $ onlyCode "}"
         ]
@@ -147,6 +148,7 @@ compileConcreteDefinition ta dd@(DefinedCategory c n ms ps fs) = do
       ctx <- getContextForInit tm t dd TypeScope
       mergeAllM [
           return $ onlyCode $ typeName n ++ "(" ++ allArgs ++ ") : " ++ allInit ++ " {",
+          return $ indentCompiled $ onlyCode $ "TRACE_FUNCTION(\"" ++ show n ++ ": init @type\")",
           fmap indentCompiled $ mergeAllM $ map (initMember ctx) ms,
           return $ onlyCode "}"
         ]
@@ -360,6 +362,9 @@ getContextForInit tm t d s = do
   let sa = Map.map (const TypeScope) pa
   let r = categoriesToTypeResolver tm
   fa <- setInternalFunctions r t (dcFunctions d)
+  let typeInstance = TypeInstance (getCategoryName t) $ fmap (SingleType . JustParamName) ps
+  let builtin = Map.filter ((== LocalScope) . vvScope) $ builtinVariables typeInstance
+  members <- mapMembers $ filter ((<= s) . dmScope) (dcMembers d)
   return $ ProcedureContext {
       pcScope = s,
       pcType = getCategoryName t,
@@ -369,7 +374,7 @@ getContextForInit tm t d s = do
       pcFilters = pa,
       pcParamScopes = sa,
       pcFunctions = fa,
-      pcVariables = Map.empty,
+      pcVariables = Map.union builtin members,
       pcReturns = NoValidation,
       pcRequiredTypes = Set.empty,
       pcOutput = []

@@ -23,6 +23,7 @@ concrete Value<#x> {
 }
 
 define Value {
+  @type optional Value<#x> nothing <- empty
   @value #x value
   @value weak Value<#x> self2
 

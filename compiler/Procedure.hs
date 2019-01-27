@@ -18,6 +18,7 @@ module Procedure (
   VariableName(..),
   VoidExpression(..),
   WhileLoop(..),
+  getExpressionContext,
   isDiscardedInput,
   isUnnamedReturns,
 ) where
@@ -155,6 +156,12 @@ data Expression c =
   -- TODO: Account for internal params here.
   InitializeValue [c] TypeInstance (ParamSet (Expression c))
   deriving (Show)
+
+getExpressionContext :: Expression c -> [c]
+getExpressionContext (Expression c _ _)      = c
+getExpressionContext (UnaryExpression c _ _) = c
+getExpressionContext (InitializeValue c _ _) = c
+
 
 data FunctionCall c =
   FunctionCall [c] FunctionName (ParamSet GeneralInstance) (ParamSet (Expression c))
