@@ -42,8 +42,12 @@ compileCategoryDeclaration _ t =
     content = baseHeaderIncludes ++ labels ++ getCategory ++ getType
     labels = map label $ filter ((== name) . sfType) $ getCategoryFunctions t
     label f = "extern const " ++ functionLabelType f ++ "& " ++ functionName f ++ ";"
-    getCategory = declareGetCategory t
-    getType = declareGetType t
+    getCategory
+      | isValueConcrete t = declareGetCategory t
+      | otherwise         = []
+    getType
+      | isInstanceInterface t = []
+      | otherwise             = declareGetType t
 
 compileInterfaceDefinition :: (MergeableM m, Monad m) => AnyCategory c -> m CxxOutput
 compileInterfaceDefinition t = do
@@ -102,7 +106,7 @@ compileConcreteDefinition ta dd@(DefinedCategory c n ms ps fs) = do
       fmap indentCompiled $ valueConstructor ta t vm,
       fmap indentCompiled $ valueDispatch,
       return $ indentCompiled $ defineCategoryName n,
-      fmap indentCompiled $ mergeAllM $ map (compileExecutableProcedure ta params vm filters fa vv) vp,
+      fmap indentCompiled $ mergeAllM $ map (compileExecutableProcedure ta n params vm filters fa vv) vp,
       fmap indentCompiled $ mergeAllM $ map (createMember r filters) vm,
       return $ indentCompiled $ onlyCode $ typeName n ++ "& parent;",
       return $ onlyCode "};"
@@ -115,14 +119,14 @@ compileConcreteDefinition ta dd@(DefinedCategory c n ms ps fs) = do
   ce <- mergeAllM [
       categoryConstructor ta t cm,
       categoryDispatch,
-      mergeAllM $ map (compileExecutableProcedure ta params vm filters fa cv) cp,
+      mergeAllM $ map (compileExecutableProcedure ta n params vm filters fa cv) cp,
       mergeAllM $ map (createMember r filters) cm,
       return $ onlyCode $ dispatcherType ++ " " ++ dispatcherName ++ ";"
     ]
   te <- mergeAllM [
       typeConstructor ta t tm,
       typeDispatch,
-      mergeAllM $ map (compileExecutableProcedure ta params vm filters fa tv) tp,
+      mergeAllM $ map (compileExecutableProcedure ta n params vm filters fa tv) tp,
       mergeAllM $ map (createMember r filters) tm
     ]
   commonDefineAll t top bottom ce te
@@ -233,13 +237,13 @@ commonDefineAll t top bottom ce te = do
       declareInternalType name paramCount,
       return top,
       commonDefineCategory t ce,
-      return $ onlyCodes $ defineInternalCategory t,
+      return $ onlyCodes getInternal,
       commonDefineType t te,
       defineInternalType name paramCount,
       return bottom,
       return $ onlyCode $ "}",
-      return $ onlyCodes $ defineGetCatetory t,
-      return $ onlyCodes $ defineGetType t
+      return $ onlyCodes getCategory,
+      return $ onlyCodes getType
     ]
   let includes = map (\i -> "#include \"" ++ headerFilename i ++ "\"") $ Set.toList req
   return $ CxxOutput filename (baseSourceIncludes ++ includes ++ out)
@@ -249,6 +253,13 @@ commonDefineAll t top bottom ce te = do
     paramCount = length $ getCategoryParams t
     name = getCategoryName t
     createLabels = return . onlyCodes . map createLabelForFunction . filter ((== name) . sfType)
+    getInternal = defineInternalCategory t
+    getCategory
+      | isValueConcrete t = defineGetCatetory t
+      | otherwise         = []
+    getType
+      | isInstanceInterface t = []
+      | otherwise             = defineGetType t
 
 createLabelForFunction :: ScopedFunction c -> String
 createLabelForFunction f = "const " ++ functionLabelType f ++ "& " ++ functionName f ++
@@ -303,7 +314,7 @@ declareGetType t = [typeBase ++ "& " ++ typeGetter (getCategoryName t) ++ "(Para
 defineGetType :: AnyCategory c -> [String]
 defineGetType t = [
     typeBase ++ "& " ++ typeGetter (getCategoryName t) ++ "(Params<" ++
-            show (length $getCategoryParams t) ++ ">::Type params) {",
+            show (length $ getCategoryParams t) ++ ">::Type params) {",
     "  return " ++ typeCreator ++ "(params);",
     "}"
   ]

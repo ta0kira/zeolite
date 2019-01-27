@@ -30,12 +30,12 @@ import CompilerCxx.Naming
 
 
 compileExecutableProcedure :: (Show c, Monad m, CompileErrorM m, MergeableM m) =>
-  CategoryMap c -> ParamSet ParamName -> [DefinedMember c] -> ParamFilters ->
-  Map.Map FunctionName (ScopedFunction c) ->
+  CategoryMap c -> CategoryName -> ParamSet ParamName -> [DefinedMember c] ->
+  ParamFilters -> Map.Map FunctionName (ScopedFunction c) ->
   Map.Map VariableName (VariableValue c) ->
   (ScopedFunction c,ExecutableProcedure c) -> m (CompiledData [String])
-compileExecutableProcedure tm ps ms pa fa va
-                 (ff@(ScopedFunction _ _ t s as1 rs1 ps1 _ _),
+compileExecutableProcedure tm t ps ms pa fa va
+                 (ff@(ScopedFunction _ _ _ s as1 rs1 ps1 _ _),
                   (ExecutableProcedure _ c n as2 rs2 p)) = do
   rs' <- if isUnnamedReturns rs2
             then return $ ValidatePositions rs1
@@ -214,11 +214,10 @@ compileIfElifElse (IfStatement c e p es) = do
       ctx0 <- getCleanContext
       ctx <- compileProcedure ctx0 p
       (lift $ ccGetRequired ctx) >>= csRequiresTypes
-      csWrite ["else {"]
-      csWrite [setTraceContext c]
-      csWrite ["if (" ++ e' ++ ") {"]
+      -- TODO: Figure out how to set the trace context for this expression.
+      csWrite ["else if (" ++ e' ++ ") {"]
       (lift $ ccGetOutput ctx) >>= csWrite
-      csWrite ["} }"]
+      csWrite ["}"]
       cs <- unwind es
       return $ ctx:cs
     unwind (ElseStatement c p) = do
@@ -318,8 +317,9 @@ compileExpression = compile where -- TODO: Rewrite for operator precedence?
     lift $ processParamPairs (checkInit r fa) ms (ParamSet $ zip [1..] ts) `reviseError`
       ("In initialization at " ++ formatFullContext c)
     params <- expandParams $ tiParams t
+    -- TODO: This is unsafe if used in a type or category constructor.
     return (ParamSet [ValueType RequiredValue $ SingleType $ JustTypeInstance t],
-            valueCreator ++ "(" ++ typeCreator ++ "(" ++ params ++ ")," ++ es'' ++ ")")
+            "T_get(" ++ valueCreator ++ "(" ++ typeCreator ++ "(" ++ params ++ "), " ++ es'' ++ "))")
     where
       -- Single expression, but possibly multi-return.
       getValues [(ParamSet ts,e)] = return (ts,e)

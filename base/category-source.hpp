@@ -67,7 +67,7 @@ class TypeValue {
                                         const Function<SymbolScope::ValueScope,P,A,R>& label,
                                         typename Params<P>::Type params,
                                         typename Args<A>::Type args) {
-    FAIL_IF(target == nullptr) << "Function called on null value (internal error)";
+    FAIL_IF(target == nullptr) << "Function called on null value";
     return V_to_T<typename Returns<R>::Type>(target->Dispatch(
       target, label, T_to_V<TypeInstance*>(params), T_to_V<S<TypeValue>>(args)));
   }
@@ -76,7 +76,7 @@ class TypeValue {
 
   static Returns<1>::Type Present(S<TypeValue> target);
   static Returns<1>::Type Require(S<TypeValue> target);
-  static Returns<1>::Type Strong(W<TypeValue> target) { return T_get(target.lock()); }
+  static Returns<1>::Type Strong(W<TypeValue> target);
 
   virtual bool AsBool() const;
   virtual std::string AsString() const;

@@ -337,7 +337,7 @@ pairProceduresToFunctions fa ps = do
       if isUnnamedReturns (epReturns p)
          then return ()
          else do
-           processParamPairs alwaysPairParams (sfArgs f) (nrNames $ epReturns p) `reviseError`
+           processParamPairs alwaysPairParams (sfReturns f) (nrNames $ epReturns p) `reviseError`
              ("Procedure for " ++ show (sfName f) ++ " [" ++
               formatFullContext (nrContext $ epReturns p) ++
               "] has the wrong number of returns [" ++

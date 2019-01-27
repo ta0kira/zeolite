@@ -29,14 +29,21 @@ bool TypeInstance::CanConvert(TypeInstance& from, TypeInstance& to) {
 }
 
 Returns<1>::Type TypeValue::Present(S<TypeValue> target) {
+  FAIL_IF(target == nullptr) << "Builtin called on null value";
   return target->Present()? T_get(Var_true) : T_get(Var_false);
 }
 
 Returns<1>::Type TypeValue::Require(S<TypeValue> target) {
+  FAIL_IF(target == nullptr) << "Builtin called on null value";
   if (!target->Present()) {
     FAIL() << "Cannot require empty value";
   }
   return T_get(target);
+}
+
+Returns<1>::Type TypeValue::Strong(W<TypeValue> target) {
+  const auto strong = target.lock();
+  return T_get(strong? strong : Var_empty);
 }
 
 bool TypeValue::AsBool() const {
