@@ -759,5 +759,57 @@ define Test {
 }
 END
 
+expect_error 'multi return to call' 'call.+found 2' 'line 9' <<END
+@value interface Value {
+  get () -> (Value,Value)
+  call () -> ()
+}
+
+define Test {
+  @value process (Value) -> ()
+  process (value) {
+    ~ value.get().call()
+  }
+
+  run () {}
+}
+END
+
+expect_error 'zero return to call' 'call.+found 0' 'line 9' <<END
+@value interface Value {
+  get () -> ()
+  call () -> ()
+}
+
+define Test {
+  @value process (Value) -> ()
+  process (value) {
+    ~ value.get().call()
+  }
+
+  run () {}
+}
+END
+
+expect_runs 'multi return assign' <<END
+define Test {
+  @type create () -> (Test)
+  create () {
+    return Test{}
+  }
+
+  @value double () -> (Test,Test)
+  double () {
+    return { self, self }
+  }
+
+  run () {
+    Test value <- create()
+    { _, Test value2 } <- value.double()
+    { value, _ } <- value2.double()
+  }
+}
+END
+
 
 echo "All $count tests passed" 1>&2

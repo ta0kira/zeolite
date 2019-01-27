@@ -312,7 +312,7 @@ compileExpression :: (Show c, Monad m, CompileErrorM m, MergeableM m,
   Expression c -> CompilerState a m (ExpressionType,String)
 compileExpression = compile where -- TODO: Rewrite for operator precedence?
   compile (Expression c s os) = do
-    foldr transform (compileExpressionStart s) os
+    foldl transform (compileExpressionStart s) os
   compile (UnaryExpression c o e) = do
     lift $ compileError $ "UnaryExpression " ++ formatFullContext c
   compile (InitializeValue c t es) = do
@@ -342,8 +342,9 @@ compileExpression = compile where -- TODO: Rewrite for operator precedence?
       checkInit r fa (MemberValue c n t0) (i,t1) = do
         checkValueTypeMatch r fa t1 t0 `reviseError`
           ("In initializer " ++ show i ++ " for " ++ show n ++ " [" ++ formatFullContext c ++ "]")
-  transform (ConvertedCall c t f) e = do
-    (ParamSet [t'],e') <- e -- TODO: Get rid of the ParamSet matching here.
+  transform e (ConvertedCall c t f) = do
+    (ParamSet ts,e') <- e
+    t' <- requireSingle c ts
     r <- csResolver
     fa <- csAllFilters
     let vt = ValueType RequiredValue $ SingleType $ JustTypeInstance t
@@ -351,12 +352,17 @@ compileExpression = compile where -- TODO: Rewrite for operator precedence?
       ("In conversion at " ++ formatFullContext c)
     f' <- lookupValueFunction t' f
     compileFunctionCall (Just $ "std::get<0>(" ++ e' ++ ")") f' f
-  transform (ValueCall c f) e = do
-    (ParamSet [t'],e') <- e -- TODO: Get rid of the ParamSet matching here.
+  transform e (ValueCall c f) = do
+    (ParamSet ts,e') <- e
+    t' <- requireSingle c ts
     f' <- lookupValueFunction t' f
     compileFunctionCall (Just $ "std::get<0>(" ++ e' ++ ")") f' f
-  transform (BinaryOperation c s e2) e = do
+  transform e (BinaryOperation c s e2) = do
     lift $ compileError $ "BinaryOperation " ++ formatFullContext c
+  requireSingle c [t] = return t
+  requireSingle c ts =
+    lift $ compileError $ "Function call requires 1 return but found " ++
+                          show (length ts) ++ " [" ++ formatFullContext c ++ "]"
 
 lookupValueFunction :: (Show c, Monad m, CompileErrorM m, MergeableM m,
                         CompilerContext c m [String] a) =>
