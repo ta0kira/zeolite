@@ -1071,5 +1071,53 @@ define Test {
 }
 END
 
+expect_runs 'convert arg' <<END
+@value interface Base {
+  call () -> ()
+}
+
+concrete Value {
+  refines Base
+
+  @type create () -> (Value)
+}
+
+define Value {
+  call () {}
+
+  create () {
+    return Value{}
+  }
+}
+
+define Test {
+  @type convert (Value) -> (Base)
+  convert (value) {
+    return value
+  }
+
+  run () {
+   ~ convert(Value\$create()).call()
+  }
+}
+END
+
+expect_error 'bad convert arg' 'does not refine Value' 'line 10' <<END
+@value interface Base {}
+
+concrete Value {}
+
+define Value {}
+
+define Test {
+  @type convert (Base) -> (Value)
+  convert (value) {
+    return value
+  }
+
+  run () {}
+}
+END
+
 
 echo "All $count tests passed" 1>&2
