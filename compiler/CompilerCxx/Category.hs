@@ -231,9 +231,9 @@ commonDefineAll t top bottom ce te = do
       declareInternalType name paramCount,
       return top,
       commonDefineCategory t ce,
-      defineInternalType name paramCount,
       return $ onlyCodes $ defineInternalCategory t,
       commonDefineType t te,
+      defineInternalType name paramCount,
       return bottom,
       return $ onlyCode $ "}",
       return $ onlyCodes $ defineGetCatetory t,
@@ -309,7 +309,7 @@ defineGetType t = [
 defineInternalCategory :: AnyCategory c -> [String]
 defineInternalCategory t = [
     internal ++ "& " ++ categoryCreator ++ "() {",
-    "  static " ++ internal ++ "& category = *new " ++ internal ++ "();",
+    "  static auto& category = *new " ++ internal ++ "();",
     "  return category;",
     "}"
   ]
@@ -324,9 +324,14 @@ declareInternalType t n =
 
 defineInternalType :: Monad m =>
   CategoryName -> Int -> m (CompiledData [String])
-defineInternalType t n =
-  return $ onlyCode $ typeName t ++ "& " ++ typeCreator ++
-                      "(Params<" ++ show n ++ ">::Type params) { /*???*/ }"
+defineInternalType t n = return $ onlyCodes [
+    typeName t ++ "& " ++ typeCreator ++ "(Params<" ++ show n ++ ">::Type params) {",
+    "  static auto& cache = *new InstanceMap<" ++ show n ++ "," ++ typeName t ++ ">();",
+    "  auto& cached = cache[params];",
+    "  if (!cached) { cached = R_get(new " ++ typeName t ++ "(" ++ categoryCreator ++ "(), params)); }",
+    "  return *cached;",
+    "}"
+  ]
 
 declareInternalValue :: Monad m =>
   CategoryName -> Int -> m (CompiledData [String])

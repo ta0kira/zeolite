@@ -21,6 +21,12 @@ enum class SymbolScope {
 };
 
 template<class T>
+using R = std::unique_ptr<T>;
+
+template<class T>
+inline R<T> R_get(T* val) { return R<T>(val); }
+
+template<class T>
 using S = std::shared_ptr<T>;
 
 template<class T>

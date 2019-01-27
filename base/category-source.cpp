@@ -23,9 +23,13 @@ DReturns TypeValue::Dispatch(const S<TypeValue>& self,
   return DReturns();
 }
 
-S<TypeValue> TypeInstance::Reduce(TypeInstance& from, TypeInstance& to, S<TypeValue> target) {
+bool TypeInstance::CanConvert(TypeInstance& from, TypeInstance& to) {
   // TODO: Implement this.
-  return Var_empty;
+  return false;
+}
+
+Returns<1>::Type TypeValue::Present(S<TypeValue> target) {
+  return target->Present()? T_get(Var_true) : T_get(Var_false);
 }
 
 bool TypeValue::AsBool() const {

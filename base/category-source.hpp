@@ -1,6 +1,8 @@
 #ifndef CATEGORY_SOURCE_HXX_
 #define CATEGORY_SOURCE_HXX_
 
+#include <map>
+
 #include "types.hpp"
 #include "function.hpp"
 #include "builtin.hpp"
@@ -41,7 +43,9 @@ class TypeInstance {
 
   virtual std::string CategoryName() const = 0;
 
-  static S<TypeValue> Reduce(TypeInstance& from, TypeInstance& to, S<TypeValue> target);
+  static Returns<1>::Type Reduce(TypeInstance& from, TypeInstance& to, S<TypeValue> target) {
+    return T_get(CanConvert(from, to)? target : Var_empty);
+  }
 
   ALWAYS_PERMANENT(TypeInstance)
   virtual ~TypeInstance() = default;
@@ -51,6 +55,9 @@ class TypeInstance {
 
   virtual DReturns Dispatch(const DFunction<SymbolScope::TypeScope>& label,
                             DParams params, DArgs args);
+
+ private:
+  static bool CanConvert(TypeInstance& from, TypeInstance& to);
 };
 
 class TypeValue {
@@ -67,7 +74,7 @@ class TypeValue {
 
   virtual std::string CategoryName() const = 0;
 
-  static bool Present(S<TypeValue> target) { return target->Present(); }
+  static Returns<1>::Type Present(S<TypeValue> target);
   static Returns<1>::Type Strong(W<TypeValue> target) { return T_get(target.lock()); }
 
   virtual bool AsBool() const;
@@ -87,5 +94,8 @@ class TypeValue {
                             const DFunction<SymbolScope::ValueScope>& label,
                             DParams params, DArgs args);
 };
+
+template<int P, class T>
+using InstanceMap = std::map<typename Params<P>::Type, R<T>>;
 
 #endif  // CATEGORY_SOURCE_HXX_
