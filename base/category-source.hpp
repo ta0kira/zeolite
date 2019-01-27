@@ -1,5 +1,5 @@
-#ifndef CATEGORY_SOURCE_HXX_
-#define CATEGORY_SOURCE_HXX_
+#ifndef CATEGORY_SOURCE_HPP_
+#define CATEGORY_SOURCE_HPP_
 
 #include <map>
 
@@ -7,19 +7,20 @@
 #include "function.hpp"
 #include "builtin.hpp"
 #include "dispatcher.hpp"
+#include "cycle-check.hpp"
 
 
 template<int I, class T>
 S<TypeValue>& SafeGet(T& values) {
   S<TypeValue>& value = std::get<I>(values);
-  FAIL_IF(value == nullptr) << "Value is null (possible cycle in init)";
+  FAIL_IF(value == nullptr) << "Value is null";
   return value;
 }
 
 template<int I, class T>
 S<TypeValue> SafeGet(const T& values) {
   S<TypeValue> value = std::get<I>(values);
-  FAIL_IF(value == nullptr) << "Value is null (possible cycle in init)";
+  FAIL_IF(value == nullptr) << "Value is null";
   return value;
 }
 
@@ -118,4 +119,4 @@ class TypeValue {
 template<int P, class T>
 using InstanceMap = std::map<typename Params<P>::Type, R<T>>;
 
-#endif  // CATEGORY_SOURCE_HXX_
+#endif  // CATEGORY_SOURCE_HPP_

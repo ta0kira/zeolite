@@ -38,7 +38,7 @@ compile() {
     cd "$temp" || exit 1
     { "$compiler" /dev/stdin |& tee -a "$temp/$errors"; } < <(echo "$code$test_base")
     [[ "${PIPESTATUS[0]}" = 0 ]] || return 1
-    clang++ -std=c++11 -o "$temp/compiled" \
+    clang++ -O0 -g -std=c++11 -o "$temp/compiled" \
       -I"$root/capture-thread/include" \
       -I"$root/base" \
       -I"$temp" \
@@ -84,6 +84,7 @@ expect_runs() {
     echo "Test \"$name\" ($count): Expected compilation; see output in $temp" 1>&2
     return 1
   fi
+  ulimit -Sc unlimited 2> /dev/null || true
   "$temp/compiled" |& tee -a "$temp/$errors"
   if [[ "${PIPESTATUS[0]}" != 0 ]]; then
     echo "Test \"$name\" ($count): Expected execution; see output in $temp" 1>&2
@@ -106,6 +107,7 @@ expect_crashes() {
     echo "Test \"$name\" ($count): Expected compilation; see output in $temp" 1>&2
     return 1
   fi
+  ulimit -Sc 0 2> /dev/null || true
   if "$temp/compiled" &> "$temp/$errors"; then
     echo "Test \"$name\" ($count): Expected crash; see output in $temp" 1>&2
     return 1
@@ -256,6 +258,94 @@ define Test {
   }
 
   run () {}
+}
+END
+
+expect_crashes 'real cycle in @type init' 'cycle.+Value[12]' 'line 10|line 18' <<END
+concrete Value1 {
+  @type get () -> (Bool)
+}
+
+concrete Value2 {
+  @type get () -> (Bool)
+}
+
+define Value1 {
+  @type Bool value <- Value2\$get()
+
+  get () {
+    return value
+  }
+}
+
+define Value2 {
+  @type Bool value <- Value1\$get()
+
+  get () {
+    return value
+  }
+}
+
+define Test {
+  run () {
+    ~ require(Value1\$get())
+    ~ require(Value2\$get())
+  }
+}
+END
+
+expect_runs 'fake cycle in @type init' <<END
+concrete Value<#x> {
+  @type done () -> (Bool)
+}
+
+define Value {
+  @type Bool value <- true
+
+  done () {
+    return value
+  }
+}
+
+define Test {
+  run () {
+    ~ Value<Value<Value<Test>>>\$done()
+  }
+}
+END
+
+expect_runs 'better fake cycle in @type init' <<END
+@type interface Done {
+  done () -> (Bool)
+}
+
+concrete Value<#x> {
+  defines Done
+  #x defines Done
+}
+
+define Value {
+  @type Bool value <- #x\$done()
+
+  done () {
+    return value
+  }
+}
+
+concrete Base {
+  defines Done
+}
+
+define Base {
+  done () {
+    return true
+  }
+}
+
+define Test {
+  run () {
+    ~ Value<Value<Value<Base>>>\$done()
+  }
 }
 END
 

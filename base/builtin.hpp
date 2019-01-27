@@ -1,5 +1,5 @@
-#ifndef BUILTIN_HXX_
-#define BUILTIN_HXX_
+#ifndef BUILTIN_HPP_
+#define BUILTIN_HPP_
 
 #include "category-header.hpp"
 
@@ -21,4 +21,4 @@ extern const S<TypeValue>& Var_empty;
 extern const S<TypeValue>& Var_true;
 extern const S<TypeValue>& Var_false;
 
-#endif  // BUILTIN_HXX_
+#endif  // BUILTIN_HPP_

@@ -1,5 +1,5 @@
-#ifndef CATEGORY_HEADER_HXX_
-#define CATEGORY_HEADER_HXX_
+#ifndef CATEGORY_HEADER_HPP_
+#define CATEGORY_HEADER_HPP_
 
 #include <string>
 
@@ -11,4 +11,4 @@ class TypeInstance;
 class TypeValue;
 template<SymbolScope S, int P, int A, int R> class Function;
 
-#endif  // CATEGORY_HEADER_HXX_
+#endif  // CATEGORY_HEADER_HPP_

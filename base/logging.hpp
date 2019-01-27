@@ -1,5 +1,5 @@
-#ifndef LOGGING_HXX_
-#define LOGGING_HXX_
+#ifndef LOGGING_HPP_
+#define LOGGING_HPP_
 
 #include <list>
 #include <sstream>
@@ -76,4 +76,4 @@ class SourceContext : public TraceContext {
   const AutoThreadCrosser cross_and_capture_to_;
 };
 
-#endif  // LOGGING_HXX_
+#endif  // LOGGING_HPP_

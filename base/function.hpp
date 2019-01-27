@@ -1,5 +1,5 @@
-#ifndef FUNCTION_HXX_
-#define FUNCTION_HXX_
+#ifndef FUNCTION_HPP_
+#define FUNCTION_HPP_
 
 #include "types.hpp"
 
@@ -69,4 +69,4 @@ class Function<SymbolScope::ValueScope,P,A,R> : public DFunction<SymbolScope::Va
   using DFunction::DFunction;
 };
 
-#endif  // FUNCTION_HXX_
+#endif  // FUNCTION_HPP_

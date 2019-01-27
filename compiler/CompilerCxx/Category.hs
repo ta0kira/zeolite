@@ -133,12 +133,17 @@ compileConcreteDefinition ta dd@(DefinedCategory c n ms ps fs) = do
   commonDefineAll t top bottom ce te
   where
     builtins t s0 = Map.filter ((<= s0) . vvScope) $ builtinVariables t
+    getCycleCheck n = [
+        "CycleCheck<" ++ n ++ ">::Check();",
+        "CycleCheck<" ++ n ++ "> marker(*this);"
+      ]
     categoryConstructor tm t ms = do
       let dispatcher = dispatcherName ++ "(" ++ dispatchInitName ++ "())"
       ctx <- getContextForInit tm t dd CategoryScope
       initMembers <- runDataCompiler (sequence $ map initMember ms) ctx
       mergeAllM [
           return $ onlyCode $ categoryName n ++ "() : " ++ dispatcher ++ " {",
+          return $ indentCompiled $ onlyCodes $ getCycleCheck (categoryName n),
           return $ indentCompiled $ onlyCode $ "TRACE_FUNCTION(\"" ++ show n ++ " (init @category)\")",
           return $ indentCompiled $ initMembers,
           return $ onlyCode "}"
@@ -155,6 +160,7 @@ compileConcreteDefinition ta dd@(DefinedCategory c n ms ps fs) = do
       initMembers <- runDataCompiler (sequence $ map initMember ms) ctx
       mergeAllM [
           return $ onlyCode $ typeName n ++ "(" ++ allArgs ++ ") : " ++ allInit ++ " {",
+          return $ indentCompiled $ onlyCodes $ getCycleCheck (typeName n),
           return $ indentCompiled $ onlyCode $ "TRACE_FUNCTION(\"" ++ show n ++ " (init @type)\")",
           return $ indentCompiled $ initMembers,
           return $ onlyCode "}"

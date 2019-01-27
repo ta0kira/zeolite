@@ -1,5 +1,5 @@
-#ifndef TYPES_HXX_
-#define TYPES_HXX_
+#ifndef TYPES_HPP_
+#define TYPES_HPP_
 
 #include <memory>
 #include <tuple>
@@ -137,4 +137,4 @@ struct Args<0, Ts...> {
   using Type = T<Ts...>;
 };
 
-#endif  // TYPES_HXX_
+#endif  // TYPES_HPP_

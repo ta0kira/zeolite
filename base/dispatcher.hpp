@@ -1,5 +1,5 @@
-#ifndef DISPATCHER_HXX_
-#define DISPATCHER_HXX_
+#ifndef DISPATCHER_HPP_
+#define DISPATCHER_HPP_
 
 #include <functional>
 #include <unordered_map>
@@ -89,4 +89,4 @@ class Dispatcher {
                      std::function<DReturns(V&,const S<TypeValue>&,DParams,DArgs)>> value_;
 };
 
-#endif  // DISPATCHER_HXX_
+#endif  // DISPATCHER_HPP_

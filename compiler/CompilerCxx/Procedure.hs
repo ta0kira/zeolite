@@ -383,7 +383,7 @@ compileExpressionStart (NamedVariable (OutputValue c n)) = do
   return (ParamSet [t],"T_get(" ++ scoped ++ variableName n ++ ")")
 compileExpressionStart (CategoryCall c t f@(FunctionCall _ n _ _)) = do
   f' <- csGetCategoryFunction c (Just t) n
-  csRequiresTypes $ Set.fromList [sfType f']
+  csRequiresTypes $ Set.fromList [t,sfType f']
   t' <- expandCategory t
   compileFunctionCall (Just t') f' f
 compileExpressionStart (TypeCall c t f@(FunctionCall _ n _ _)) = do
@@ -391,6 +391,7 @@ compileExpressionStart (TypeCall c t f@(FunctionCall _ n _ _)) = do
   when (sfScope f' /= TypeScope) $ lift $ compileError $ "Function " ++ show n ++
                                           " cannot be used as a type function [" ++
                                           formatFullContext c ++ "]"
+  csRequiresTypes $ typesFromParams (ParamSet [SingleType t])
   csRequiresTypes $ Set.fromList [sfType f']
   t' <- expandType $ SingleType t
   compileFunctionCall (Just t') f' f
