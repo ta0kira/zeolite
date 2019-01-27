@@ -811,5 +811,172 @@ define Test {
 }
 END
 
+expect_runs 'converted call' <<END
+@value interface Base {
+  call () -> ()
+}
+
+concrete Value {
+  refines Base
+
+  @type create () -> (Value)
+}
+
+define Value {
+  call () {}
+
+  create () {
+    return Value{}
+  }
+}
+
+define Test {
+  run () {
+    Value value <- Value\$create()
+    ~ value.Base\$call()
+  }
+}
+END
+
+expect_error 'converted call bad type' 'Base' 'line 21' <<END
+@value interface Base {
+  call () -> ()
+}
+
+concrete Value {
+  @value call () -> ()
+  @type create () -> (Value)
+}
+
+define Value {
+  call () {}
+
+  create () {
+    return Value{}
+  }
+}
+
+define Test {
+  run () {
+    Value value <- Value\$create()
+    ~ value.Base\$call()
+  }
+}
+END
+
+expect_error 'call from union' '\(Base\|Value\)' 'line 22' <<END
+@value interface Base {
+  call () -> ()
+}
+
+concrete Value {
+  refines Base
+
+  @type create () -> (Value)
+}
+
+define Value {
+  call () {}
+
+  create () {
+    return Value{}
+  }
+}
+
+define Test {
+  run () {
+    (Base|Value) value <- Value\$create()
+    ~ value.call()
+  }
+}
+END
+
+expect_runs 'call from union with conversion' <<END
+@value interface Base {
+  call () -> ()
+}
+
+concrete Value {
+  refines Base
+
+  @type create () -> (Value)
+}
+
+define Value {
+  call () {}
+
+  create () {
+    return Value{}
+  }
+}
+
+define Test {
+  run () {
+    (Base|Value) value <- Value\$create()
+    ~ value.Base\$call()
+  }
+}
+END
+
+expect_runs 'call from intersect' <<END
+@value interface Base1 {
+  call () -> ()
+}
+
+@value interface Base2 {}
+
+concrete Value {
+  refines Base1
+  refines Base2
+
+  @type create () -> (Value)
+}
+
+define Value {
+  call () {}
+
+  create () {
+    return Value{}
+  }
+}
+
+define Test {
+  run () {
+    (Base1&Base2) value <- Value\$create()
+    ~ value.call()
+  }
+}
+END
+
+expect_runs 'call from intersect with conversion' <<END
+@value interface Base1 {
+  call () -> ()
+}
+
+@value interface Base2 {}
+
+concrete Value {
+  refines Base1
+  refines Base2
+
+  @type create () -> (Value)
+}
+
+define Value {
+  call () {}
+
+  create () {
+    return Value{}
+  }
+}
+
+define Test {
+  run () {
+    (Base1&Base2) value <- Value\$create()
+    ~ value.Base1\$call()
+  }
+}
+END
+
 
 echo "All $count tests passed" 1>&2

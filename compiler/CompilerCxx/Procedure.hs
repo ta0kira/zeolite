@@ -348,9 +348,9 @@ compileExpression = compile where -- TODO: Rewrite for operator precedence?
     r <- csResolver
     fa <- csAllFilters
     let vt = ValueType RequiredValue $ SingleType $ JustTypeInstance t
-    lift $ (checkValueTypeMatch r fa vt t') `reviseError`
+    lift $ (checkValueTypeMatch r fa t' vt) `reviseError`
       ("In conversion at " ++ formatFullContext c)
-    f' <- lookupValueFunction t' f
+    f' <- lookupValueFunction vt f
     compileFunctionCall (Just $ "std::get<0>(" ++ e' ++ ")") f' f
   transform e (ValueCall c f) = do
     (ParamSet ts,e') <- e

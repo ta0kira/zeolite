@@ -101,7 +101,8 @@ instance (Show c, MergeableM m, CompileErrorM m, Monad m) =>
                      formatFullContext c ++ "]"
   ccGetTypeFunction ctx c t n = getFunction t where
     getFunction (Just t@(TypeMerge MergeUnion _)) =
-      compileError $ "Cannot resolve function " ++ show n ++ " for union type " ++ show t
+      compileError $ "Cannot resolve function " ++ show n ++ " for union type " ++
+                     show t ++ " [" ++ formatFullContext c ++ "]"
     getFunction (Just t@(TypeMerge MergeIntersect ts)) =
       collectOneOrErrorM $ map getFunction $ map Just ts
     getFunction (Just (SingleType (JustParamName p))) = do
