@@ -153,14 +153,13 @@ data ScopedBlock c =
 data Expression c =
   Expression [c] (ExpressionStart c) [ValueOperation c] |
   UnaryExpression [c] String (Expression c) |
-  -- TODO: Account for internal params here.
-  InitializeValue [c] TypeInstance (ParamSet (Expression c))
+  InitializeValue [c] TypeInstance (ParamSet GeneralInstance) (ParamSet (Expression c))
   deriving (Show)
 
 getExpressionContext :: Expression c -> [c]
-getExpressionContext (Expression c _ _)      = c
-getExpressionContext (UnaryExpression c _ _) = c
-getExpressionContext (InitializeValue c _ _) = c
+getExpressionContext (Expression c _ _)        = c
+getExpressionContext (UnaryExpression c _ _)   = c
+getExpressionContext (InitializeValue c _ _ _) = c
 
 
 data FunctionCall c =

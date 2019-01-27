@@ -125,22 +125,22 @@ TypeCategory& GetCategory_Float() {
 }
 
 
-TypeInstance& GetType_Bool() {
+TypeInstance& GetType_Bool(Params<0>::Type) {
   static auto& instance = *new Type_Bool();
   return instance;
 }
 
-TypeInstance& GetType_String() {
+TypeInstance& GetType_String(Params<0>::Type) {
   static auto& instance = *new Type_String();
   return instance;
 }
 
-TypeInstance& GetType_Int() {
+TypeInstance& GetType_Int(Params<0>::Type) {
   static auto& instance = *new Type_Int();
   return instance;
 }
 
-TypeInstance& GetType_Float() {
+TypeInstance& GetType_Float(Params<0>::Type) {
   static auto& instance = *new Type_Float();
   return instance;
 }

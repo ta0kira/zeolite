@@ -37,6 +37,7 @@ module ParserBase (
   kwScoped,
   kwStrong,
   kwType,
+  kwTypes,
   kwValue,
   kwWeak,
   kwWhile,
@@ -125,6 +126,7 @@ kwScoped = keyword "scoped"
 kwStrong = keyword "strong"
 kwTrue = keyword "true"
 kwType = keyword "@type"
+kwTypes = keyword "types"
 kwValue = keyword "@value"
 kwWeak = keyword "weak"
 kwWhile = keyword "while"
@@ -162,6 +164,7 @@ isKeyword = foldr (<|>) nullParse $ map try [
     kwStrong,
     kwTrue,
     kwType,
+    kwTypes,
     kwValue,
     kwWeak,
     kwWhile

@@ -2,6 +2,7 @@
 {-# LANGUAGE Safe #-}
 
 module ParseCategory (
+  parseFilters,
   parseScope,
   parseScopedFunction,
 ) where

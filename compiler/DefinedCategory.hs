@@ -14,9 +14,10 @@ import TypesBase
 
 data DefinedCategory c =
   DefinedCategory {
-    -- TODO: Add internal type params.
     dcContext :: [c],
     dcName :: CategoryName,
+    dcParams :: [ValueParam c],
+    dcParamFilter :: [ParamFilter c],
     dcMembers :: [DefinedMember c],
     dcProcedures :: [ExecutableProcedure c],
     dcFunctions :: [ScopedFunction c]

@@ -1,0 +1,3 @@
+define Type {
+  types<#x,#y,#z> {}
+}

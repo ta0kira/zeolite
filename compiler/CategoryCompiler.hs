@@ -29,10 +29,13 @@ data ProcedureContext c =
   ProcedureContext {
     pcScope :: SymbolScope,
     pcType :: CategoryName,
-    pcParams :: ParamSet ParamName,
+    pcExtParams :: ParamSet (ValueParam c),
+    pcIntParams :: ParamSet (ValueParam c),
     pcMembers :: [DefinedMember c],
     pcCategories :: CategoryMap c,
-    pcFilters :: ParamFilters,
+    pcAllFilters :: ParamFilters,
+    pcExtFilters :: [ParamFilter c],
+    pcIntFilters :: [ParamFilter c],
     pcParamScopes :: Map.Map ParamName SymbolScope,
     pcFunctions :: Map.Map FunctionName (ScopedFunction c),
     pcVariables :: Map.Map VariableName (VariableValue c),
@@ -55,7 +58,7 @@ instance (Show c, MergeableM m, CompileErrorM m, Monad m) =>
   CompilerContext c m [String] (ProcedureContext c) where
   ccCurrentScope = return . pcScope
   ccResolver = return . categoriesToTypeResolver . pcCategories
-  ccAllFilters = return . pcFilters
+  ccAllFilters = return . pcAllFilters
   ccGetParamScope ctx p = do
     case p `Map.lookup` pcParamScopes ctx of
             (Just s) -> return s
@@ -64,10 +67,13 @@ instance (Show c, MergeableM m, CompileErrorM m, Monad m) =>
     ProcedureContext {
       pcScope = pcScope ctx,
       pcType = pcType ctx,
-      pcParams = pcParams ctx,
+      pcExtParams = pcExtParams ctx,
+      pcIntParams = pcIntParams ctx,
       pcMembers = pcMembers ctx,
       pcCategories = pcCategories ctx,
-      pcFilters = pcFilters ctx,
+      pcAllFilters = pcAllFilters ctx,
+      pcExtFilters = pcExtFilters ctx,
+      pcIntFilters = pcIntFilters ctx,
       pcParamScopes = pcParamScopes ctx,
       pcFunctions = pcFunctions ctx,
       pcVariables = pcVariables ctx,
@@ -106,11 +112,12 @@ instance (Show c, MergeableM m, CompileErrorM m, Monad m) =>
     getFunction (Just t@(TypeMerge MergeIntersect ts)) =
       collectOneOrErrorM $ map getFunction $ map Just ts
     getFunction (Just (SingleType (JustParamName p))) = do
-      fs <- case p `Map.lookup` pcFilters ctx of
+      fa <- ccAllFilters ctx
+      fs <- case p `Map.lookup` fa of
                 (Just fs) -> return fs
                 _ -> compileError $ "Param " ++ show p ++ " does not exist"
       let ts = map tfType $ filter isRequiresFilter fs
-      let ds = map dfType $ filter isDefinesFilter fs
+      let ds = map dfType $ filter isDefinesFilter  fs
       collectOneOrErrorM $
         [compileError $ "Function " ++ show n ++ " not available for param " ++ show p ++
          " [" ++ formatFullContext c ++ "]"] ++
@@ -118,7 +125,7 @@ instance (Show c, MergeableM m, CompileErrorM m, Monad m) =>
     getFunction (Just (SingleType (JustTypeInstance t)))
       -- Same category as the procedure itself.
       | tiName t == pcType ctx =
-        checkFunction (tiName t) (pcParams ctx) (tiParams t) $ n `Map.lookup` pcFunctions ctx
+        checkFunction (tiName t) (fmap vpParam $ pcExtParams ctx) (tiParams t) $ n `Map.lookup` pcFunctions ctx
       -- A different category than the procedure.
       | otherwise = do
         (_,ca) <- getCategory (pcCategories ctx) (c,tiName t)
@@ -126,7 +133,7 @@ instance (Show c, MergeableM m, CompileErrorM m, Monad m) =>
         let fa = Map.fromList $ map (\f -> (sfName f,f)) $ getCategoryFunctions ca
         checkFunction (tiName t) params (tiParams t) $ n `Map.lookup` fa
     getFunction Nothing = do
-      let ps = fmap (SingleType . JustParamName) $ pcParams ctx
+      let ps = fmap (SingleType . JustParamName . vpParam) $ pcExtParams ctx
       getFunction (Just $ SingleType $ JustTypeInstance $ TypeInstance (pcType ctx) ps)
     checkDefine t = do
       (_,ca) <- getCategory (pcCategories ctx) (c,diName t)
@@ -147,20 +154,40 @@ instance (Show c, MergeableM m, CompileErrorM m, Monad m) =>
       compileError $ "Category " ++ show t2 ++
                      " does not have a function named " ++ show n ++ " [" ++
                      formatFullContext c ++ "]"
-  ccGetValueInit ctx c (TypeInstance t as)
+  ccCheckValueInit ctx c (TypeInstance t as) ts ps
     | pcDisallowInit ctx =
       compileError $ "Value initialization not allowed here [" ++ formatFullContext c ++ "]"
     | t /= pcType ctx =
       compileError $ "Category " ++ show (pcType ctx) ++ " cannot initialize values from " ++
                      show t ++ " [" ++ formatFullContext c ++ "]"
-    | otherwise = do
+    | otherwise = flip reviseError ("In initialization at " ++ formatFullContext c) $ do
       let t' = TypeInstance (pcType ctx) as
       r <- ccResolver ctx
-      fa <- ccAllFilters ctx
-      validateTypeInstance r fa t'
-      pa <- fmap Map.fromList $ processParamPairs alwaysPairParams (pcParams ctx) as
-      fmap ParamSet $ collectAllOrErrorM $ map (subSingle pa) (pcMembers ctx)
+      allFilters <- ccAllFilters ctx
+      pa  <- fmap Map.fromList $ processParamPairs alwaysPairParams (fmap vpParam $ pcExtParams ctx) as
+      pa2 <- fmap Map.fromList $ processParamPairs alwaysPairParams (fmap vpParam $ pcIntParams ctx) ps
+      let pa' = Map.union pa pa2
+      validateTypeInstance r allFilters t'
+      -- Check internal param substitution.
+      let mapped = Map.fromListWith (++) $ map (\f -> (pfParam f,[pfFilter f])) (pcIntFilters ctx)
+      let positional = map (getFilters mapped) (map vpParam $ psParams $ pcIntParams ctx)
+      assigned <- fmap Map.fromList $ processParamPairs alwaysPairParams (fmap vpParam $ pcIntParams ctx) ps
+      subbed <- fmap ParamSet $ collectAllOrErrorM $ map (assignFilters assigned) positional
+      processParamPairs (validateAssignment r allFilters) ps subbed
+      -- Check initializer types.
+      ms <- fmap ParamSet $ collectAllOrErrorM $ map (subSingle pa') (pcMembers ctx)
+      processParamPairs (checkInit r allFilters) ms (ParamSet $ zip [1..] $ psParams ts)
+      return ()
       where
+        getFilters fm n =
+          case n `Map.lookup` fm of
+              (Just fs) -> fs
+              _ -> []
+        assignFilters fm fs = do
+          collectAllOrErrorM $ map (uncheckedSubFilter $ getValueForParam fm) fs
+        checkInit r fa (MemberValue c n t0) (i,t1) = do
+          checkValueTypeMatch r fa t1 t0 `reviseError`
+            ("In initializer " ++ show i ++ " for " ++ show n ++ " [" ++ formatFullContext c ++ "]")
         subSingle pa (DefinedMember c _ t n _) = do
           t' <- uncheckedSubValueType (getValueForParam pa) t
           return $ MemberValue c n t'
@@ -178,10 +205,13 @@ instance (Show c, MergeableM m, CompileErrorM m, Monad m) =>
       return $ ProcedureContext {
           pcScope = pcScope ctx,
           pcType = pcType ctx,
-          pcParams = pcParams ctx,
+          pcExtParams = pcExtParams ctx,
+          pcIntParams = pcIntParams ctx,
           pcMembers = pcMembers ctx,
           pcCategories = pcCategories ctx,
-          pcFilters = pcFilters ctx,
+          pcAllFilters = pcAllFilters ctx,
+          pcExtFilters = pcExtFilters ctx,
+          pcIntFilters = pcIntFilters ctx,
           pcParamScopes = pcParamScopes ctx,
           pcFunctions = pcFunctions ctx,
           pcVariables = Map.insert n t (pcVariables ctx),
@@ -194,10 +224,13 @@ instance (Show c, MergeableM m, CompileErrorM m, Monad m) =>
     ProcedureContext {
       pcScope = pcScope ctx,
       pcType = pcType ctx,
-      pcParams = pcParams ctx,
+      pcExtParams = pcExtParams ctx,
+      pcIntParams = pcIntParams ctx,
       pcMembers = pcMembers ctx,
       pcCategories = pcCategories ctx,
-      pcFilters = pcFilters ctx,
+      pcAllFilters = pcAllFilters ctx,
+      pcExtFilters = pcExtFilters ctx,
+      pcIntFilters = pcIntFilters ctx,
       pcParamScopes = pcParamScopes ctx,
       pcFunctions = pcFunctions ctx,
       pcVariables = pcVariables ctx,
@@ -210,10 +243,13 @@ instance (Show c, MergeableM m, CompileErrorM m, Monad m) =>
   ccClearOutput ctx = return $ ProcedureContext {
         pcScope = pcScope ctx,
         pcType = pcType ctx,
-        pcParams = pcParams ctx,
+        pcExtParams = pcExtParams ctx,
+        pcIntParams = pcIntParams ctx,
         pcMembers = pcMembers ctx,
         pcCategories = pcCategories ctx,
-        pcFilters = pcFilters ctx,
+        pcAllFilters = pcAllFilters ctx,
+        pcExtFilters = pcExtFilters ctx,
+        pcIntFilters = pcIntFilters ctx,
         pcParamScopes = pcParamScopes ctx,
         pcFunctions = pcFunctions ctx,
         pcVariables = pcVariables ctx,
@@ -226,10 +262,13 @@ instance (Show c, MergeableM m, CompileErrorM m, Monad m) =>
     update (ValidateNames ra) = return $ ProcedureContext {
         pcScope = pcScope ctx,
         pcType = pcType ctx,
-        pcParams = pcParams ctx,
+        pcExtParams = pcExtParams ctx,
+        pcIntParams = pcIntParams ctx,
         pcMembers = pcMembers ctx,
         pcCategories = pcCategories ctx,
-        pcFilters = pcFilters ctx,
+        pcAllFilters = pcAllFilters ctx,
+        pcExtFilters = pcExtFilters ctx,
+        pcIntFilters = pcIntFilters ctx,
         pcParamScopes = pcParamScopes ctx,
         pcFunctions = pcFunctions ctx,
         pcVariables = pcVariables ctx,
@@ -242,10 +281,13 @@ instance (Show c, MergeableM m, CompileErrorM m, Monad m) =>
   ccInheritReturns ctx cs = return $ ProcedureContext {
       pcScope = pcScope ctx,
       pcType = pcType ctx,
-      pcParams = pcParams ctx,
+      pcExtParams = pcExtParams ctx,
+      pcIntParams = pcIntParams ctx,
       pcMembers = pcMembers ctx,
       pcCategories = pcCategories ctx,
-      pcFilters = pcFilters ctx,
+      pcAllFilters = pcAllFilters ctx,
+      pcExtFilters = pcExtFilters ctx,
+      pcIntFilters = pcIntFilters ctx,
       pcParamScopes = pcParamScopes ctx,
       pcFunctions = pcFunctions ctx,
       pcVariables = pcVariables ctx,
@@ -264,10 +306,13 @@ instance (Show c, MergeableM m, CompileErrorM m, Monad m) =>
     return $ ProcedureContext {
         pcScope = pcScope ctx,
         pcType = pcType ctx,
-        pcParams = pcParams ctx,
+        pcExtParams = pcExtParams ctx,
+        pcIntParams = pcIntParams ctx,
         pcMembers = pcMembers ctx,
         pcCategories = pcCategories ctx,
-        pcFilters = pcFilters ctx,
+        pcAllFilters = pcAllFilters ctx,
+        pcExtFilters = pcExtFilters ctx,
+        pcIntFilters = pcIntFilters ctx,
         pcParamScopes = pcParamScopes ctx,
         pcFunctions = pcFunctions ctx,
         pcVariables = pcVariables ctx,

@@ -1,3 +1,4 @@
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE Safe #-}
 
@@ -209,11 +210,21 @@ instance ParseFromSource (Expression SourcePos) where
       return $ Expression [c] s vs
     initalize = do
       c <- getPosition
-      t <- try sourceParser
+      t <- try sourceParser :: Parser TypeInstance
       sepAfter (string "{")
+      withParams c t <|> withoutParams c t
+    withParams c t = do
+      try kwTypes
+      ps <- between (sepAfter $ string "<")
+                    (sepAfter $ string ">")
+                    (sepBy sourceParser (sepAfter $ string ","))
+      as <- (sepAfter (string ",") >> sepBy sourceParser (sepAfter $ string ",")) <|> return []
+      sepAfter (string "}")
+      return $ InitializeValue [c] t (ParamSet ps) (ParamSet as)
+    withoutParams c t = do
       as <- sepBy sourceParser (sepAfter $ string ",")
       sepAfter (string "}")
-      return $ InitializeValue [c] t (ParamSet as)
+      return $ InitializeValue [c] t (ParamSet []) (ParamSet as)
 
 parseFunctionCall :: SourcePos -> FunctionName -> Parser (FunctionCall SourcePos)
 parseFunctionCall c n = do

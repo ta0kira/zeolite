@@ -1,0 +1,7 @@
+define Type {
+  types<#x,#y,#z> {
+    #x requires Type1
+    #y allows Type2
+    #z defines Type3
+  }
+}

@@ -70,11 +70,16 @@ compileInterfaceDefinition t = do
 
 compileConcreteDefinition :: (Show c, Monad m, CompileErrorM m, MergeableM m) =>
   CategoryMap c -> DefinedCategory c -> m CxxOutput
-compileConcreteDefinition ta dd@(DefinedCategory c n ms ps fs) = do
+compileConcreteDefinition ta dd@(DefinedCategory c n pi fi ms ps fs) = do
   (_,t) <- getConcreteCategory ta (c,n)
-  let params = ParamSet $ map vpParam $ getCategoryParams t
-  let typeInstance = TypeInstance n $ fmap (SingleType . JustParamName) params
-  let filters = getCategoryFilterMap t
+  let params = ParamSet $ getCategoryParams t
+  -- TODO: Check these for duplicates with params.
+  -- TODO: Check type instances.
+  let params2 = ParamSet pi
+  let typeInstance = TypeInstance n $ fmap (SingleType . JustParamName . vpParam) params
+  let filters = getCategoryFilters t
+  let filters2 = fi
+  let allFilters = getFilterMap (getCategoryParams t ++ pi) $ filters ++ filters2
   let r = categoriesToTypeResolver ta
   fa <- setInternalFunctions r t fs
   -- Functions explicitly declared externally.
@@ -95,43 +100,47 @@ compileConcreteDefinition ta dd@(DefinedCategory c n ms ps fs) = do
   let cv = Map.union cm0 cm'
   let tv = Map.union tm0 tm'
   let vv = Map.union vm0 vm'
+  let internalCount = length pi
   let memberCount = length vm
   top <- mergeAllM [
       return $ onlyCodes $ map createLabelForFunction (Map.elems internalFuncs),
       return $ onlyCode $ "class " ++ valueName n ++ ";",
       declareDispatchInit,
-      declareInternalValue n memberCount
+      declareInternalValue n internalCount memberCount
     ]
   defineValue <- mergeAllM [
       return $ onlyCode $ "struct " ++ valueName n ++ " : public " ++ valueBase ++ " {",
       fmap indentCompiled $ valueConstructor ta t vm,
       fmap indentCompiled $ valueDispatch,
       return $ indentCompiled $ defineCategoryName n,
-      fmap indentCompiled $ mergeAllM $ map (compileExecutableProcedure ta n params vm filters fa vv) vp,
-      fmap indentCompiled $ mergeAllM $ map (createMember r filters) vm,
+      fmap indentCompiled $ mergeAllM $ map (compileExecutableProcedure ta n params params2 vm filters filters2 fa vv) vp,
+      fmap indentCompiled $ mergeAllM $ map (createMember r allFilters) vm,
+      fmap indentCompiled $ createParams,
       return $ indentCompiled $ onlyCode $ typeName n ++ "& parent;",
       return $ onlyCode "};"
     ]
   bottom <- mergeAllM [
       return $ defineValue,
       defineDispatchInit n (Map.elems fa),
-      defineInternalValue n memberCount
+      defineInternalValue n internalCount memberCount
     ]
   ce <- mergeAllM [
       categoryConstructor ta t cm,
       categoryDispatch,
-      mergeAllM $ map (compileExecutableProcedure ta n params vm filters fa cv) cp,
-      mergeAllM $ map (createMember r filters) cm,
+      mergeAllM $ map (compileExecutableProcedure ta n params params2 vm filters filters2 fa cv) cp,
+      mergeAllM $ map (createMember r allFilters) cm,
       return $ onlyCode $ dispatcherType ++ " " ++ dispatcherName ++ ";"
     ]
   te <- mergeAllM [
       typeConstructor ta t tm,
       typeDispatch,
-      mergeAllM $ map (compileExecutableProcedure ta n params vm filters fa tv) tp,
-      mergeAllM $ map (createMember r filters) tm
+      mergeAllM $ map (compileExecutableProcedure ta n params params2 vm filters filters2 fa tv) tp,
+      mergeAllM $ map (createMember r allFilters) tm
     ]
   commonDefineAll t top bottom ce te
   where
+    createParams = mergeAllM $ map createParam pi
+    createParam p = return $ onlyCode $ paramType ++ " " ++ paramName (vpParam p) ++ ";"
     builtins t s0 = Map.filter ((<= s0) . vvScope) $ builtinVariables t
     getCycleCheck n = [
         "CycleCheck<" ++ n ++ ">::Check();",
@@ -151,8 +160,8 @@ compileConcreteDefinition ta dd@(DefinedCategory c n ms ps fs) = do
     typeConstructor tm t ms = do
       let ps = map vpParam $ getCategoryParams t
       let argParent = categoryName n ++ "& p"
-      let argsPassed = "Params<" ++ show (length ps) ++ ">::Type params"
-      let allArgs = intercalate ", " [argParent,argsPassed]
+      let paramsPassed = "Params<" ++ show (length ps) ++ ">::Type params"
+      let allArgs = intercalate ", " [argParent,paramsPassed]
       let initParent = "parent(p)"
       let initPassed = map (\(i,p) -> paramName p ++ "(*std::get<" ++ show i ++ ">(params))") $ zip [0..] ps
       let allInit = intercalate ", " $ initParent:initPassed
@@ -167,17 +176,18 @@ compileConcreteDefinition ta dd@(DefinedCategory c n ms ps fs) = do
         ]
     valueConstructor tm t ms = do
       let argParent = typeName n ++ "& p"
+      let paramsPassed = "Params<" ++ show (length pi) ++ ">::Type params"
       let argsPassed = "Args<" ++ show (length ms) ++ ">::Type args"
-      let allArgs = intercalate ", " [argParent,argsPassed]
+      let allArgs = intercalate ", " [argParent,paramsPassed,argsPassed]
       let initParent = "parent(p)"
-      let initPassed = map (\(i,m) -> variableName (dmName m) ++ "(std::get<" ++ show i ++ ">(args))") $ zip [0..] ms
-      let allInit = intercalate ", " $ initParent:initPassed
+      let initParams = map (\(i,p) -> paramName (vpParam p) ++ "(*std::get<" ++ show i ++ ">(params))") $ zip [0..] pi
+      let initArgs = map (\(i,m) -> variableName (dmName m) ++ "(std::get<" ++ show i ++ ">(args))") $ zip [0..] ms
+      let allInit = intercalate ", " $ initParent:(initParams ++ initArgs)
       return $ onlyCode $ valueName n ++ "(" ++ allArgs ++ ") : " ++ allInit ++ " {}"
     createMember r filters m = do
       validateGeneralInstance r filters (vtType $ dmType m) `reviseError`
         ("In creation of " ++ show (dmName m) ++ " at " ++ formatFullContext (dmContext m))
       return $ onlyCode $ variableType (vtRequired $ dmType m) ++ " " ++ variableName (dmName m) ++ ";"
-    createParam p = return $ onlyCode $ paramType ++ " " ++ paramName p ++ ";"
     initMember (DefinedMember _ _ _ _ Nothing) = return mergeDefault
     initMember (DefinedMember c s t n (Just e)) = do
       csAddVariable c n (VariableValue c s t)
@@ -357,33 +367,35 @@ defineInternalType t n = return $ onlyCodes [
   ]
 
 declareInternalValue :: Monad m =>
-  CategoryName -> Int -> m (CompiledData [String])
-declareInternalValue t n =
+  CategoryName -> Int -> Int -> m (CompiledData [String])
+declareInternalValue t p n =
   return $ onlyCode $ "S<TypeValue> " ++ valueCreator ++
-                      "(" ++ typeName t ++ "& parent, Args<" ++ show n ++ ">::Type args);"
+                      "(" ++ typeName t ++ "& parent, Params<" ++ show p ++
+                      ">::Type params, Args<" ++ show n ++ ">::Type args);"
 
 defineInternalValue :: Monad m =>
-  CategoryName -> Int -> m (CompiledData [String])
-defineInternalValue t n =
+  CategoryName -> Int -> Int -> m (CompiledData [String])
+defineInternalValue t p n =
   return $ onlyCodes [
-      "S<TypeValue> " ++ valueCreator ++ "(" ++ typeName t ++ "& parent, Args<" ++ show n ++ ">::Type args) {",
-      "  return S_get(new " ++ valueName t ++ "(parent, args));",
+      "S<TypeValue> " ++ valueCreator ++ "(" ++ typeName t ++ "& parent, Params<" ++
+      show p ++ ">::Type params, Args<" ++ show n ++ ">::Type args) {",
+      "  return S_get(new " ++ valueName t ++ "(parent, params, args));",
       "}"
     ]
 
 getContextForInit :: (Show c, Monad m, CompileErrorM m, MergeableM m) =>
   CategoryMap c -> AnyCategory c -> DefinedCategory c -> SymbolScope -> m (ProcedureContext c)
 getContextForInit tm t d s = do
-  let ps = ParamSet $ map vpParam $ getCategoryParams t
+  let ps = ParamSet $ getCategoryParams t
   -- NOTE: This is always ValueScope for initializer checks.
   let ms = filter ((== ValueScope) . dmScope) $ dcMembers d
   let pa = if s == CategoryScope
-              then Map.empty
-              else getCategoryFilterMap t
-  let sa = Map.map (const TypeScope) pa
+              then []
+              else getCategoryFilters t
+  let sa = Map.fromList $ zip (map vpParam $ getCategoryParams t) (repeat TypeScope)
   let r = categoriesToTypeResolver tm
   fa <- setInternalFunctions r t (dcFunctions d)
-  let typeInstance = TypeInstance (getCategoryName t) $ fmap (SingleType . JustParamName) ps
+  let typeInstance = TypeInstance (getCategoryName t) $ fmap (SingleType . JustParamName . vpParam) ps
   let builtin = Map.filter ((== LocalScope) . vvScope) $ builtinVariables typeInstance
   -- Using < ensures that variables can only be referenced after initialization.
   -- TODO: This doesn't really help if access is done via a function.
@@ -391,10 +403,13 @@ getContextForInit tm t d s = do
   return $ ProcedureContext {
       pcScope = s,
       pcType = getCategoryName t,
-      pcParams = ps,
+      pcExtParams = ps,
+      pcIntParams = ParamSet [],
       pcMembers = ms,
       pcCategories = tm,
-      pcFilters = pa,
+      pcAllFilters = getFilterMap (psParams ps) pa,
+      pcExtFilters = pa,
+      pcIntFilters = [],
       pcParamScopes = sa,
       pcFunctions = fa,
       pcVariables = Map.union builtin members,

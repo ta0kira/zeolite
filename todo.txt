@@ -1,7 +1,5 @@
 Roughly in order of execution:
 
-- Integration tests for full compilation.
-
 - Implement module system in compiler.
 - Create modules for "standard library" stuff, e.g., Queue.
 - Streamline compilation process.
@@ -10,9 +8,5 @@ Roughly in order of execution:
 
 Supported in implementation, roughly in order of simplicity+importance:
 
-- inference of expression type
 - bool/string/int literals
 - bool/string/int expressions
-
-- internal type variables (value only)
-- no access to internal types if any constraint uses a variant param

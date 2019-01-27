@@ -1209,5 +1209,178 @@ define Test {
 }
 END
 
+expect_runs 'internal params' <<END
+concrete Value {
+  @type create<#x,#y>
+  () -> (Value)
+}
+
+define Value {
+  types<#x,#y> {}
+
+  create () {
+    return Value{ types<#x,#y> }
+  }
+}
+
+@value interface Type1 {}
+@value interface Type2 {}
+
+define Test {
+  run () {
+    ~ Value\$create<Type1,Type2>()
+  }
+}
+END
+
+expect_runs 'internal params with filters' <<END
+@value interface Get<|#x> {
+  get () -> (#x)
+}
+
+@value interface Set<#x|> {
+  set (#x) -> ()
+}
+
+concrete Value {
+  @type create<#x,#y>
+    #x requires Get<#x>
+    #y allows Set<#y>
+  () -> (Value)
+}
+
+define Value {
+  types<#x,#y> {
+    #x requires Get<#x>
+    #y allows Set<#y>
+  }
+
+  create () {
+    return Value{ types<#x,#y> }
+  }
+}
+
+define Test {
+  run () {}
+}
+END
+
+expect_error 'internal params missing filters' 'Get|Set' 'line 21' <<END
+@value interface Get<|#x> {
+  get () -> (#x)
+}
+
+@value interface Set<#x|> {
+  set (#x) -> ()
+}
+
+concrete Value {
+  @type create<#x,#y>
+  () -> (Value)
+}
+
+define Value {
+  types<#x,#y> {
+    #x requires Get<#x>
+    #y allows Set<#y>
+  }
+
+  create () {
+    return Value{ types<#x,#y> }
+  }
+}
+
+define Test {
+  run () {}
+}
+END
+
+expect_runs 'internal params with values' <<END
+concrete Value {
+  @type create<#x,#y>
+  () -> (Value)
+}
+
+define Value {
+  types<#x,#y> {}
+
+  @value Bool value
+
+  create () {
+    return Value{ types<#x,#y>, false }
+  }
+}
+
+define Test {
+  run () {}
+}
+END
+
+expect_runs 'value depends on internal param' <<END
+concrete Type<#y> {
+  @type create () -> (Type<#y>)
+}
+
+define Type {
+  create () {
+    return Type<#y>{}
+  }
+}
+
+concrete Value {
+  @type create<#x>
+  (Type<#x>) -> (Value)
+}
+
+define Value {
+  types<#z> {}
+
+  @value Type<#z> value
+
+  create (value) {
+    return Value{ types<#x>, value }
+  }
+}
+
+define Test {
+  run () {
+    ~ Value\$create<Bool>(Type<Bool>\$create())
+  }
+}
+END
+
+expect_error 'value mismatch with internal param' 'call' 'Bool' 'String' 'line 28' <<END
+concrete Type<#y> {
+  @type create () -> (Type<#y>)
+}
+
+define Type {
+  create () {
+    return Type<#y>{}
+  }
+}
+
+concrete Value {
+  @type create<#x>
+  (Type<#x>) -> (Value)
+}
+
+define Value {
+  types<#z> {}
+
+  @value Type<#z> value
+
+  create (value) {
+    return Value{ types<#x>, value }
+  }
+}
+
+define Test {
+  run () {
+    ~ Value\$create<String>(Type<Bool>\$create())
+  }
+}
+END
+
 
 echo "All $count tests passed" 1>&2

@@ -25,9 +25,27 @@ instance ParseFromSource (DefinedCategory SourcePos) where
     kwDefine
     n <- sourceParser
     sepAfter (string "{")
+    (pi,fi) <- parseInternalParams <|> return ([],[])
     (ms,ps,fs) <- parseMemberProcedureFunction n
     sepAfter (string "}")
-    return $ DefinedCategory [c] n ms ps fs
+    return $ DefinedCategory [c] n pi fi ms ps fs
+    where
+      parseInternalParams = labeled "internal params" $ do
+        try kwTypes
+        pi <- between (sepAfter $ string "<")
+                      (sepAfter $ string ">")
+                      (sepBy singleParam (sepAfter $ string ","))
+        fi <- parseInternalFilters
+        return (pi,fi)
+      parseInternalFilters = do
+        try $ sepAfter (string "{")
+        fi <- parseFilters
+        sepAfter (string "}")
+        return fi
+      singleParam = labeled "param declaration" $ do
+        c <- getPosition
+        n <- sourceParser
+        return $ ValueParam [c] n Invariant
 
 instance ParseFromSource (DefinedMember SourcePos) where
   sourceParser = labeled "defined member" $ do

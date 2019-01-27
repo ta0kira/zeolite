@@ -30,34 +30,46 @@ import CompilerCxx.Naming
 
 
 compileExecutableProcedure :: (Show c, Monad m, CompileErrorM m, MergeableM m) =>
-  CategoryMap c -> CategoryName -> ParamSet ParamName -> [DefinedMember c] ->
-  ParamFilters -> Map.Map FunctionName (ScopedFunction c) ->
+  CategoryMap c -> CategoryName -> ParamSet (ValueParam c) -> ParamSet (ValueParam c) ->
+  [DefinedMember c] -> [ParamFilter c] -> [ParamFilter c] -> Map.Map FunctionName (ScopedFunction c) ->
   Map.Map VariableName (VariableValue c) ->
   (ScopedFunction c,ExecutableProcedure c) -> m (CompiledData [String])
-compileExecutableProcedure tm t ps ms pa fa va
-                 (ff@(ScopedFunction _ _ _ s as1 rs1 ps1 _ _),
+compileExecutableProcedure tm t ps pi ms pa fi fa va
+                 (ff@(ScopedFunction _ _ _ s as1 rs1 ps1 fs _),
                   (ExecutableProcedure _ c n as2 rs2 p)) = do
   rs' <- if isUnnamedReturns rs2
             then return $ ValidatePositions rs1
             else fmap (ValidateNames . Map.fromList) $ processParamPairs pairOutput rs1 (nrNames rs2)
   va' <- updateArgVariables va as1 as2
   va'' <- updateReturnVariables va' rs1 rs2
-  let localFilters = getFunctionFilterMap ff
   let pa' = if s == CategoryScope
-               then localFilters
-               else Map.union pa localFilters
-  let typeScopes = Map.map (const TypeScope) pa
-  let localScopes = Map.map (const LocalScope) localFilters
-  let sa = if s == CategoryScope
-              then localScopes
-              else Map.union typeScopes localScopes
+               then fs
+               else pa ++ fs
+  let localScopes = Map.fromList $ zip (map vpParam $ psParams ps1) (repeat LocalScope)
+  let typeScopes = Map.fromList $ zip (map vpParam $ psParams ps) (repeat TypeScope)
+  let valueScopes = Map.fromList $ zip (map vpParam $ psParams pi) (repeat ValueScope)
+  let sa = case s of
+                CategoryScope -> localScopes
+                TypeScope -> Map.union typeScopes localScopes
+                ValueScope -> Map.unions [localScopes,typeScopes,valueScopes]
+  let localFilters = getFunctionFilterMap ff
+  let typeFilters = getFilterMap (psParams ps) pa
+  let valueFilters = getFilterMap (psParams pi) fi
+  let allFilters = case s of
+                   CategoryScope -> localFilters
+                   TypeScope -> Map.union localFilters typeFilters
+                   ValueScope -> Map.unions [localFilters,typeFilters,valueFilters]
   let ctx = ProcedureContext {
       pcScope = s,
       pcType = t,
-      pcParams = ps,
+      pcExtParams = ps,
+      pcIntParams = pi,
       pcMembers = ms,
       pcCategories = tm,
-      pcFilters = pa',
+      pcAllFilters = allFilters,
+      pcExtFilters = pa',
+      -- fs is duplicated so value initialization checks work properly.
+      pcIntFilters = fi ++ fs,
       pcParamScopes = sa,
       pcFunctions = fa,
       pcVariables = va'',
@@ -315,18 +327,16 @@ compileExpression = compile where -- TODO: Rewrite for operator precedence?
     foldl transform (compileExpressionStart s) os
   compile (UnaryExpression c o e) = do
     lift $ compileError $ "UnaryExpression " ++ formatFullContext c
-  compile (InitializeValue c t es) = do
+  compile (InitializeValue c t ps es) = do
     es' <- sequence $ map compileExpression $ psParams es
     (ts,es'') <- getValues es'
-    ms <- csGetValueInit c t
-    r <- csResolver
-    fa <- csAllFilters
-    lift $ processParamPairs (checkInit r fa) ms (ParamSet $ zip [1..] ts) `reviseError`
-      ("In initialization at " ++ formatFullContext c)
+    csCheckValueInit c t (ParamSet ts) ps
     params <- expandParams $ tiParams t
+    params2 <- expandParams $ ps
     -- TODO: This is unsafe if used in a type or category constructor.
     return (ParamSet [ValueType RequiredValue $ SingleType $ JustTypeInstance t],
-            "T_get(" ++ valueCreator ++ "(" ++ typeCreator ++ "(" ++ params ++ "), " ++ es'' ++ "))")
+            "T_get(" ++ valueCreator ++ "(" ++ typeCreator ++ "(" ++ params ++ "), " ++
+                                          params2 ++ ", " ++ es'' ++ "))")
     where
       -- Single expression, but possibly multi-return.
       getValues [(ParamSet ts,e)] = return (ts,e)
@@ -339,9 +349,6 @@ compileExpression = compile where -- TODO: Rewrite for operator precedence?
       checkArity (_,ParamSet [_]) = return ()
       checkArity (i,ParamSet ts)  =
         compileError $ "Initializer position " ++ show i ++ " has " ++ show (length ts) ++ " values but should have 1"
-      checkInit r fa (MemberValue c n t0) (i,t1) = do
-        checkValueTypeMatch r fa t1 t0 `reviseError`
-          ("In initializer " ++ show i ++ " for " ++ show n ++ " [" ++ formatFullContext c ++ "]")
   transform e (ConvertedCall c t f) = do
     (ParamSet ts,e') <- e
     t' <- requireSingle c ts

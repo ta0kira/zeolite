@@ -28,6 +28,7 @@ module TypeCategory (
   getCategoryParams,
   getCategoryRefines,
   getConcreteCategory,
+  getFilterMap,
   getFunctionFilterMap,
   getInstanceCategory,
   getValueCategory,
@@ -282,18 +283,18 @@ declareAllTypes tm0 = foldr (\t tm -> tm >>= update t) (return tm0) where
     | isBuiltinCategory (getCategoryName t) = "builtin type"
     | otherwise = formatFullContext (getCategoryContext t)
 
+getFilterMap :: [ValueParam c] -> [ParamFilter c] -> ParamFilters
+getFilterMap ps fs = getFilters $ zip (Set.toList pa) (repeat []) where
+  pa = Set.fromList $ map vpParam ps
+  getFilters pa0 = let fs' = map (\f -> (pfParam f,pfFilter f)) fs in
+                       Map.fromListWith (++) $ map (second (:[])) fs' ++ pa0
+
 getCategoryFilterMap :: AnyCategory c -> ParamFilters
-getCategoryFilterMap t = getFilters $ zip (Set.toList pa) (repeat []) where
-  pa = Set.fromList $ map vpParam $ getCategoryParams t
-  getFilters ps = let fs = map (\f -> (pfParam f,pfFilter f)) (getCategoryFilters t) in
-                      Map.fromListWith (++) $ map (second (:[])) fs ++ ps
+getCategoryFilterMap t = getFilterMap (getCategoryParams t) (getCategoryFilters t)
 
 -- TODO: Use this where it's needed in this file.
 getFunctionFilterMap :: ScopedFunction c -> ParamFilters
-getFunctionFilterMap f = getFilters $ zip (Set.toList pa) (repeat []) where
-  pa = Set.fromList $ map vpParam $ psParams $ sfParams f
-  getFilters ps = let fs = map (\f -> (pfParam f,pfFilter f)) (sfFilters f) in
-                      Map.fromListWith (++) $ map (second (:[])) fs ++ ps
+getFunctionFilterMap f = getFilterMap (psParams $ sfParams f) (sfFilters f)
 
 checkConnectedTypes :: (Show c, MergeableM m, CompileErrorM m, Monad m) =>
   CategoryMap c -> [AnyCategory c] -> m ()

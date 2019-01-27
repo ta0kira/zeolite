@@ -12,13 +12,13 @@ module CompilerState (
   VariableValue(..),
   csAddVariable,
   csAllFilters,
+  csCheckValueInit,
   csClearOutput,
   csCurrentScope,
   csGetCategoryFunction,
   csGetOutput,
   csGetParamScope,
   csGetTypeFunction,
-  csGetValueInit,
   csGetVariable,
   csInheritReturns,
   csRegisterReturn,
@@ -54,7 +54,7 @@ class Monad m => CompilerContext c m s a | a -> c s where
   ccGetRequired :: a -> m (Set.Set CategoryName)
   ccGetCategoryFunction :: a -> [c] -> Maybe CategoryName -> FunctionName -> m (ScopedFunction c)
   ccGetTypeFunction :: a -> [c] -> Maybe GeneralInstance -> FunctionName -> m (ScopedFunction c)
-  ccGetValueInit :: a -> [c] -> TypeInstance -> m (ParamSet (MemberValue c))
+  ccCheckValueInit :: a -> [c] -> TypeInstance -> ParamSet ValueType -> ParamSet GeneralInstance -> m ()
   ccGetVariable :: a -> [c] -> VariableName -> m (VariableValue c)
   ccAddVariable :: a -> [c] -> VariableName -> VariableValue c -> m a
   ccWrite :: a -> s -> m a
@@ -118,9 +118,9 @@ csGetTypeFunction :: (Monad m, CompilerContext c m s a) =>
   [c] -> Maybe GeneralInstance -> FunctionName -> CompilerState a m (ScopedFunction c)
 csGetTypeFunction c t n = fmap (\x -> ccGetTypeFunction x c t n) get >>= lift
 
-csGetValueInit :: (Monad m, CompilerContext c m s a) =>
-  [c] -> TypeInstance -> CompilerState a m (ParamSet (MemberValue c))
-csGetValueInit c as = fmap (\x -> ccGetValueInit x c as) get >>= lift
+csCheckValueInit :: (Monad m, CompilerContext c m s a) =>
+  [c] -> TypeInstance -> ParamSet ValueType -> ParamSet GeneralInstance -> CompilerState a m ()
+csCheckValueInit c t as ps = fmap (\x -> ccCheckValueInit x c t as ps) get >>= lift
 
 csGetVariable :: (Monad m, CompilerContext c m s a) =>
   [c] -> VariableName -> CompilerState a m (VariableValue c)
