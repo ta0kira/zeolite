@@ -196,6 +196,15 @@ define Test {
 }
 END
 
+expect_crashes 'cycle in init' 'null' 'line 2|line 3' <<END
+define Test {
+  @type Bool value <- value2
+  @type Bool value2 <- value
+
+  run () {}
+}
+END
+
 expect_error 'missing assign' 'value' 'line 5' <<END
 @value interface Value {}
 

@@ -103,9 +103,10 @@ compileExecutableProcedure tm t ps ms pa fa va
     nameParams = flip map (zip [0..] $ psParams ps1) $
       (\(i,p) -> paramType ++ " " ++ paramName (vpParam p) ++ " = *std::get<" ++ show i ++ ">(params);")
     nameArgs = flip map (zip [0..] $ filter (not . isDiscardedInput) $ psParams $ avNames as2) $
-      (\(i,n) -> proxyType ++ " " ++ variableName (ivName n) ++ " = std::get<" ++ show i ++ ">(args);")
+      (\(i,n) -> proxyType ++ " " ++ variableName (ivName n) ++ " = SafeGet<" ++ show i ++ ">(args);")
     nameReturns
       | isUnnamedReturns rs2 = []
+      -- NOTE: SafeGet is not safe for named returns.
       | otherwise = flip map (zip [0..] $ psParams $ nrNames rs2) $
       (\(i,n) -> proxyType ++ " " ++ variableName (ovName n) ++ " = std::get<" ++ show i ++ ">(returns);")
 
@@ -179,11 +180,11 @@ compileStatement (Assignment c as e) = do
       csUpdateAssigned n
     createVariable _ _ _ _ = return ()
     assignVariable (i,CreateVariable _ _ n) =
-      csWrite [variableName n ++ " = std::get<" ++ show i ++ ">(r);"]
+      csWrite [variableName n ++ " = SafeGet<" ++ show i ++ ">(r);"]
     assignVariable (i,ExistingVariable (InputValue _ n)) = do
       (VariableValue _ s _) <- csGetVariable c n
       scoped <- autoScope s
-      csWrite [scoped ++ variableName n ++ " = std::get<" ++ show i ++ ">(r);"]
+      csWrite [scoped ++ variableName n ++ " = SafeGet<" ++ show i ++ ">(r);"]
     assignVariable _ = return ()
 compileStatement (NoValueExpression v) = compileVoidExpression v
 

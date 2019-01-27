@@ -9,6 +9,25 @@
 #include "dispatcher.hpp"
 
 
+template<int I, class T>
+S<TypeValue>& SafeGet(T& values) {
+  S<TypeValue>& value = std::get<I>(values);
+  FAIL_IF(value == nullptr) << "Value is null";
+  return value;
+}
+
+template<int I, class T>
+S<TypeValue> SafeGet(const T& values) {
+  S<TypeValue> value = std::get<I>(values);
+  FAIL_IF(value == nullptr) << "Value is null";
+  return value;
+}
+
+template<int I>
+W<TypeValue>& SafeGet(typename std::tuple<W<TypeValue>>& values) {
+  return std::get<I>(values);
+}
+
 class TypeCategory {
  public:
   template<int P, int A, int R>
