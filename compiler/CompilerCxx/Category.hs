@@ -44,8 +44,8 @@ compileCategoryDeclaration _ t =
     labels = map label $ filter ((== name) . sfType) $ getCategoryFunctions t
     label f = "extern const " ++ functionLabelType f ++ "& " ++ functionName f ++ ";"
     getCategory
-      | isValueConcrete t = declareGetCategory t
-      | otherwise         = []
+      | isInstanceInterface t = []
+      | otherwise             = declareGetCategory t
     getType
       | isInstanceInterface t = []
       | otherwise             = declareGetType t
@@ -196,7 +196,7 @@ compileConcreteDefinition ta dd@(DefinedCategory c n pi fi ms ps fs) = do
     categoryDispatch =
       return $ onlyCodes $ [
           "DReturns Dispatch(" ++
-          "const DFunction<SymbolScope::CategoryScope>& label, " ++
+          "const DFunction<SymbolScope::CATEGORY>& label, " ++
           "DParams params, " ++
           "DArgs args) final {",
           "  return dispatcher_.Dispatch(*this, label, params, args);",
@@ -205,7 +205,7 @@ compileConcreteDefinition ta dd@(DefinedCategory c n pi fi ms ps fs) = do
     typeDispatch =
       return $ onlyCodes $ [
           "DReturns Dispatch(" ++
-          "const DFunction<SymbolScope::TypeScope>& label, " ++
+          "const DFunction<SymbolScope::TYPE>& label, " ++
           "DParams params, " ++
           "DArgs args) final {",
           "  return parent.dispatcher_.Dispatch(*this, label, params, args);",
@@ -215,7 +215,7 @@ compileConcreteDefinition ta dd@(DefinedCategory c n pi fi ms ps fs) = do
       return $ onlyCodes $ [
           "DReturns Dispatch(" ++
           "const S<TypeValue>& self, " ++
-          "const DFunction<SymbolScope::ValueScope>& label, " ++
+          "const DFunction<SymbolScope::VALUE>& label, " ++
           "DParams params," ++
           "DArgs args) final {",
           "  return parent.parent.dispatcher_.Dispatch(*this, self, label, params, args);",
@@ -265,7 +265,8 @@ commonDefineAll t top bottom ce te = do
       return $ onlyCodes getCategory,
       return $ onlyCodes getType
     ]
-  let includes = map (\i -> "#include \"" ++ headerFilename i ++ "\"") $ Set.toList req
+  let includes = map (\i -> "#include \"" ++ headerFilename i ++ "\"") $
+                   filter (not . isBuiltinCategory) $ Set.toList req
   return $ CxxOutput filename (baseSourceIncludes ++ includes ++ out)
   where
     declareTypes =
@@ -275,8 +276,8 @@ commonDefineAll t top bottom ce te = do
     createLabels = return . onlyCodes . map createLabelForFunction . filter ((== name) . sfType)
     getInternal = defineInternalCategory t
     getCategory
-      | isValueConcrete t = defineGetCatetory t
-      | otherwise         = []
+      | isInstanceInterface t = []
+      | otherwise             = defineGetCatetory t
     getType
       | isInstanceInterface t = []
       | otherwise             = defineGetType t
@@ -302,17 +303,78 @@ commonDefineType :: (MergeableM m, Monad m) =>
   AnyCategory c -> CompiledData [String] -> m (CompiledData [String])
 commonDefineType t extra = do
   mergeAllM [
+      return $ CompiledData depends [],
       return $ onlyCode $ "struct " ++ typeName (getCategoryName t) ++ " : public " ++ typeBase ++ " {",
       return $ indentCompiled $ defineCategoryName name,
       return $ indentCompiled $ onlyCode $ categoryName (getCategoryName t) ++ "& parent;",
-      fmap indentCompiled $ createParams,
+      return $ indentCompiled createParams,
+      return $ indentCompiled canConvertFrom,
+      return $ indentCompiled typeArgsForParent,
       return $ indentCompiled extra,
       return $ onlyCode "};"
     ]
   where
     name = getCategoryName t
-    createParams = mergeAllM $ map createParam $ getCategoryParams t
-    createParam p = return $ onlyCode $ paramType ++ " " ++ paramName (vpParam p) ++ ";"
+    depends = Set.unions $ map (categoriesFromTypes . SingleType . JustTypeInstance . vrType) $ getCategoryRefines t
+    createParams = mergeAll $ map createParam $ getCategoryParams t
+    createParam p = onlyCode $ paramType ++ " " ++ paramName (vpParam p) ++ ";"
+    canConvertFrom
+      | isInstanceInterface t = emptyCode
+      | otherwise = onlyCodes $ [
+          "bool CanConvertFrom(const TypeInstance& from) const final {",
+          -- TODO: This should be a typedef.
+          "  std::vector<const TypeInstance*> args;",
+          "  if (!from.TypeArgsForParent(parent, args)) return false;",
+          -- TODO: Create a helper function for this error.
+          "  FAIL_IF(args.size() != 1) << " ++
+          "\"Wrong number of args (\" << args.size() << \") " ++
+          "for \" << CategoryName();"
+        ] ++ checks ++ ["  return true;","}"]
+    params = map (\p -> (vpParam p,vpVariance p)) $ getCategoryParams t
+    checks = concat $ map singleCheck $ zip [0..] params
+    singleCheck (i,(p,Covariant)) = [
+        "  if (!TypeInstance::CanConvert(*args[" ++ show i ++ "], " ++ paramName p ++ ")) return false;"
+      ]
+    singleCheck (i,(p,Contravariant)) = [
+        "  if (!TypeInstance::CanConvert(" ++ paramName p ++ ", *args[" ++ show i ++ "])) return false;"
+      ]
+    singleCheck (i,(p,Invariant)) = [
+        "  if (!TypeInstance::CanConvert(*args[" ++ show i ++ "], " ++ paramName p ++ ")) return false;",
+        "  if (!TypeInstance::CanConvert(" ++ paramName p ++ ", *args[" ++ show i ++ "])) return false;"
+      ]
+    typeArgsForParent
+      | isInstanceInterface t = emptyCode
+      | otherwise = onlyCodes $ [
+          "bool TypeArgsForParent(" ++
+          "const TypeCategory& category, " ++
+          "std::vector<const TypeInstance*>& args) const final {"
+        ] ++ allCats ++ ["  return false;","}"]
+    myType = (getCategoryName t,map (SingleType . JustParamName . fst) params)
+    refines = map (\r -> (tiName r,psParams $ tiParams r)) $ map vrType $ getCategoryRefines t
+    allCats = concat $ map singleCat (myType:refines)
+    singleCat (t,ps) = [
+        "if (&category == &" ++ categoryGetter t ++ "()) {",
+        "  args = std::vector<const TypeInstance*>{" ++ expanded ++ "};",
+        "  return true;",
+        "}"
+      ]
+      where
+        expanded = intercalate "," $ map ('&':) $ map expandLocalType ps
+
+-- Similar to Procedure.expandGeneralInstance but doesn't account for scope.
+expandLocalType :: GeneralInstance -> String
+expandLocalType (TypeMerge m ps) =
+  getter ++ "(L_get<" ++ typeBase ++ "*>(" ++ intercalate "," (map ("&" ++) ps') ++ "))"
+  where
+    ps' = map expandLocalType ps
+    getter
+      | m == MergeUnion     = unionGetter
+      | m == MergeIntersect = intersectGetter
+expandLocalType (SingleType (JustTypeInstance (TypeInstance t ps))) =
+  typeGetter t ++ "(T_get(" ++ intercalate "," (map ("&" ++) ps') ++ "))"
+  where
+    ps' = map expandLocalType $ psParams ps
+expandLocalType (SingleType (JustParamName p)) = paramName p
 
 defineCategoryName :: CategoryName -> CompiledData [String]
 defineCategoryName t = onlyCode $ "std::string CategoryName() const { return \"" ++ show t ++ "\"; }"

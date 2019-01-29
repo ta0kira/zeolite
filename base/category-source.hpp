@@ -2,6 +2,7 @@
 #define CATEGORY_SOURCE_HPP_
 
 #include <map>
+#include <vector>
 
 #include "types.hpp"
 #include "function.hpp"
@@ -32,7 +33,7 @@ W<TypeValue>& SafeGet(typename std::tuple<W<TypeValue>>& values) {
 class TypeCategory {
  public:
   template<int P, int A, int R>
-  typename Returns<R>::Type Call(const Function<SymbolScope::CategoryScope,P,A,R>& label,
+  typename Returns<R>::Type Call(const Function<SymbolScope::CATEGORY,P,A,R>& label,
                                  typename Params<P>::Type params,
                                  typename Args<A>::Type args) {
     return V_to_T<typename Returns<R>::Type>(Dispatch(
@@ -47,14 +48,14 @@ class TypeCategory {
  protected:
   TypeCategory() = default;
 
-  virtual DReturns Dispatch(const DFunction<SymbolScope::CategoryScope>& label,
+  virtual DReturns Dispatch(const DFunction<SymbolScope::CATEGORY>& label,
                             DParams params, DArgs args);
 };
 
 class TypeInstance {
  public:
   template<int P, int A, int R>
-  typename Returns<R>::Type Call(const Function<SymbolScope::TypeScope,P,A,R>& label,
+  typename Returns<R>::Type Call(const Function<SymbolScope::TYPE,P,A,R>& label,
                                  typename Params<P>::Type params,
                                  typename Args<A>::Type args) {
     return V_to_T<typename Returns<R>::Type>(Dispatch(
@@ -67,24 +68,46 @@ class TypeInstance {
     return T_get(CanConvert(from, to)? target : Var_empty);
   }
 
+  virtual bool TypeArgsForParent(
+    const TypeCategory& category, std::vector<const TypeInstance*>& args) const
+  { return false; }
+
   ALWAYS_PERMANENT(TypeInstance)
   virtual ~TypeInstance() = default;
 
  protected:
   TypeInstance() = default;
 
-  virtual DReturns Dispatch(const DFunction<SymbolScope::TypeScope>& label,
+  virtual DReturns Dispatch(const DFunction<SymbolScope::TYPE>& label,
                             DParams params, DArgs args);
 
+  virtual bool CanConvertFrom(const TypeInstance& from) const
+  { return false; }
+
+  static bool CanConvert(const TypeInstance& from, const TypeInstance& to);
+
  private:
-  static bool CanConvert(TypeInstance& from, TypeInstance& to);
+  enum class MergeType {
+    SINGLE,
+    UNION,
+    INTERSECT,
+  };
+
+  virtual MergeType InstanceMergeType() const
+  { return MergeType::SINGLE; }
+
+  virtual std::vector<const TypeInstance*> MergedTypes() const
+  { return std::vector<const TypeInstance*>{this}; }
+
+  static bool ExpandCheckLeft(const TypeInstance& from, const TypeInstance& to);
+  static bool ExpandCheckRight(const TypeInstance& from, const TypeInstance& to);
 };
 
 class TypeValue {
  public:
   template<int P, int A, int R>
   static typename Returns<R>::Type Call(S<TypeValue> target,
-                                        const Function<SymbolScope::ValueScope,P,A,R>& label,
+                                        const Function<SymbolScope::VALUE,P,A,R>& label,
                                         typename Params<P>::Type params,
                                         typename Args<A>::Type args) {
     FAIL_IF(target == nullptr) << "Function called on null value";
@@ -112,7 +135,7 @@ class TypeValue {
   virtual bool Present() const;
 
   virtual DReturns Dispatch(const S<TypeValue>& self,
-                            const DFunction<SymbolScope::ValueScope>& label,
+                            const DFunction<SymbolScope::VALUE>& label,
                             DParams params, DArgs args);
 };
 

@@ -15,9 +15,9 @@
   type& operator =(type&&) = delete;
 
 enum class SymbolScope {
-  CategoryScope,
-  TypeScope,
-  ValueScope,
+  CATEGORY,
+  TYPE,
+  VALUE,
 };
 
 template<class T>

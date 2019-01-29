@@ -12,7 +12,7 @@ template<class C, class T, class V>
 class Dispatcher {
  public:
   template<int P, int A, int R>
-  Dispatcher& Register(const Function<SymbolScope::CategoryScope,P,A,R>& label,
+  Dispatcher& Register(const Function<SymbolScope::CATEGORY,P,A,R>& label,
     typename Returns<R>::Type(C::*function)(typename Params<P>::Type,
                                             typename Args<A>::Type)) {
     category_[&label] =
@@ -25,7 +25,7 @@ class Dispatcher {
   }
 
   DReturns Dispatch(C& target,
-                    const DFunction<SymbolScope::CategoryScope>& label,
+                    const DFunction<SymbolScope::CATEGORY>& label,
                     DParams params, DArgs args) const {
     const auto caller = category_.find(&label);
     FAIL_IF(caller == category_.end())
@@ -34,7 +34,7 @@ class Dispatcher {
   }
 
   template<int P, int A, int R>
-  Dispatcher& Register(const Function<SymbolScope::TypeScope,P,A,R>& label,
+  Dispatcher& Register(const Function<SymbolScope::TYPE,P,A,R>& label,
     typename Returns<R>::Type(T::*function)(typename Params<P>::Type,
                                             typename Args<A>::Type)) {
     type_[&label] =
@@ -47,7 +47,7 @@ class Dispatcher {
   }
 
   DReturns Dispatch(T& target,
-                    const DFunction<SymbolScope::TypeScope>& label,
+                    const DFunction<SymbolScope::TYPE>& label,
                     DParams params, DArgs args) const {
     const auto caller = type_.find(&label);
     FAIL_IF(caller == type_.end())
@@ -56,7 +56,7 @@ class Dispatcher {
   }
 
   template<int P, int A, int R>
-  Dispatcher& Register(const Function<SymbolScope::ValueScope,P,A,R>& label,
+  Dispatcher& Register(const Function<SymbolScope::VALUE,P,A,R>& label,
     typename Returns<R>::Type(V::*function)(const S<TypeValue>&,
                                             typename Params<P>::Type,
                                             typename Args<A>::Type)) {
@@ -72,7 +72,7 @@ class Dispatcher {
 
   DReturns Dispatch(V& target,
                     const S<TypeValue>& self,
-                    const DFunction<SymbolScope::ValueScope>& label,
+                    const DFunction<SymbolScope::VALUE>& label,
                     DParams params, DArgs args) const {
     const auto caller = value_.find(&label);
     FAIL_IF(caller == value_.end())
@@ -81,11 +81,11 @@ class Dispatcher {
   }
 
  private:
-  std::unordered_map<const DFunction<SymbolScope::CategoryScope>*,
+  std::unordered_map<const DFunction<SymbolScope::CATEGORY>*,
                      std::function<DReturns(C&,DParams,DArgs)>> category_;
-  std::unordered_map<const DFunction<SymbolScope::TypeScope>*,
+  std::unordered_map<const DFunction<SymbolScope::TYPE>*,
                      std::function<DReturns(T&,DParams,DArgs)>> type_;
-  std::unordered_map<const DFunction<SymbolScope::ValueScope>*,
+  std::unordered_map<const DFunction<SymbolScope::VALUE>*,
                      std::function<DReturns(V&,const S<TypeValue>&,DParams,DArgs)>> value_;
 };
 

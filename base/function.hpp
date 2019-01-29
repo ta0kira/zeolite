@@ -7,7 +7,7 @@
 template<SymbolScope S> class DFunction {};
 
 template<>
-class DFunction<SymbolScope::CategoryScope> {
+class DFunction<SymbolScope::CATEGORY> {
  public:
   inline DFunction(std::string category, std::string function) :
       category_(category), function_(function) {}
@@ -21,7 +21,7 @@ class DFunction<SymbolScope::CategoryScope> {
 };
 
 template<>
-class DFunction<SymbolScope::TypeScope> {
+class DFunction<SymbolScope::TYPE> {
  public:
   inline DFunction(std::string category, std::string function) :
       category_(category), function_(function) {}
@@ -35,7 +35,7 @@ class DFunction<SymbolScope::TypeScope> {
 };
 
 template<>
-class DFunction<SymbolScope::ValueScope> {
+class DFunction<SymbolScope::VALUE> {
  public:
   inline DFunction(std::string category, std::string function) :
       category_(category), function_(function) {}
@@ -52,19 +52,19 @@ class DFunction<SymbolScope::ValueScope> {
 template<SymbolScope S, int P, int A, int R> class Function {};
 
 template<int P, int A, int R>
-class Function<SymbolScope::CategoryScope,P,A,R> : public DFunction<SymbolScope::CategoryScope> {
+class Function<SymbolScope::CATEGORY,P,A,R> : public DFunction<SymbolScope::CATEGORY> {
  public:
   using DFunction::DFunction;
 };
 
 template<int P, int A, int R>
-class Function<SymbolScope::TypeScope,P,A,R> : public DFunction<SymbolScope::TypeScope> {
+class Function<SymbolScope::TYPE,P,A,R> : public DFunction<SymbolScope::TYPE> {
  public:
   using DFunction::DFunction;
 };
 
 template<int P, int A, int R>
-class Function<SymbolScope::ValueScope,P,A,R> : public DFunction<SymbolScope::ValueScope> {
+class Function<SymbolScope::VALUE,P,A,R> : public DFunction<SymbolScope::VALUE> {
  public:
   using DFunction::DFunction;
 };

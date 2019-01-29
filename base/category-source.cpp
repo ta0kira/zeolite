@@ -4,28 +4,84 @@
 #include "builtin.hpp"
 
 
-DReturns TypeCategory::Dispatch(const DFunction<SymbolScope::CategoryScope>& label,
+DReturns TypeCategory::Dispatch(const DFunction<SymbolScope::CATEGORY>& label,
                                 DParams params, DArgs args) {
   FAIL() << CategoryName() << " does not implement " << label.FunctionName();
   return DReturns();
 }
 
-DReturns TypeInstance::Dispatch(const DFunction<SymbolScope::TypeScope>& label,
+DReturns TypeInstance::Dispatch(const DFunction<SymbolScope::TYPE>& label,
                                 DParams params, DArgs args) {
   FAIL() << CategoryName() << " does not implement " << label.FunctionName();
   return DReturns();
 }
 
 DReturns TypeValue::Dispatch(const S<TypeValue>& self,
-                             const DFunction<SymbolScope::ValueScope>& label,
+                             const DFunction<SymbolScope::VALUE>& label,
                              DParams params, DArgs args) {
   FAIL() << CategoryName() << " does not implement " << label.FunctionName();
   return DReturns();
 }
 
-bool TypeInstance::CanConvert(TypeInstance& from, TypeInstance& to) {
-  // TODO: Implement this.
-  return false;
+bool TypeInstance::CanConvert(const TypeInstance& x, const TypeInstance& y) {
+  if (&x == &y) {
+    return true;
+  }
+  if (x.InstanceMergeType() == MergeType::SINGLE &&
+      y.InstanceMergeType() == MergeType::SINGLE) {
+    return y.CanConvertFrom(x);
+  }
+  return ExpandCheckLeft(x,y);
+}
+
+bool TypeInstance::ExpandCheckLeft(const TypeInstance& x, const TypeInstance& y) {
+  for (const TypeInstance* left : x.MergedTypes()) {
+    const bool result = ExpandCheckRight(*left,y);
+    switch (x.InstanceMergeType()) {
+      case MergeType::SINGLE:
+        return result;
+      case MergeType::UNION:
+        if (!result) {
+          return false;
+        }
+        break;
+      case MergeType::INTERSECT:
+        if (result) {
+          return true;
+        }
+        break;
+    }
+  }
+  switch (x.InstanceMergeType()) {
+    case MergeType::SINGLE:    return false;
+    case MergeType::UNION:     return true;
+    case MergeType::INTERSECT: return false;
+  }
+}
+
+bool TypeInstance::ExpandCheckRight(const TypeInstance& x, const TypeInstance& y) {
+  for (const TypeInstance* right : y.MergedTypes()) {
+    const bool result = TypeInstance::CanConvert(x,*right);
+    switch (y.InstanceMergeType()) {
+      case MergeType::SINGLE:
+        return result;
+      case MergeType::UNION:
+        if (result) {
+          return true;
+        }
+        break;
+      case MergeType::INTERSECT:
+        if (!result) {
+          return false;
+        }
+        break;
+    }
+  }
+  switch (y.InstanceMergeType()) {
+    case MergeType::SINGLE:    return false;
+    case MergeType::UNION:     return false;
+    case MergeType::INTERSECT: return true;
+  }
 }
 
 Returns<1>::Type TypeValue::Present(S<TypeValue> target) {

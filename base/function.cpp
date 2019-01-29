@@ -3,19 +3,19 @@
 #include <sstream>
 
 
-std::string DFunction<SymbolScope::CategoryScope>::FunctionName() const {
+std::string DFunction<SymbolScope::CATEGORY>::FunctionName() const {
   std::ostringstream output;
   output << category_ << "$$" << function_;
   return output.str();
 }
 
-std::string DFunction<SymbolScope::TypeScope>::FunctionName() const {
+std::string DFunction<SymbolScope::TYPE>::FunctionName() const {
   std::ostringstream output;
   output << category_ << "$" << function_;
   return output.str();
 }
 
-std::string DFunction<SymbolScope::ValueScope>::FunctionName() const {
+std::string DFunction<SymbolScope::VALUE>::FunctionName() const {
   std::ostringstream output;
   output << category_ << "$" << function_;
   return output.str();

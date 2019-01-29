@@ -10,3 +10,5 @@ Supported in implementation, roughly in order of simplicity+importance:
 
 - bool/string/int literals
 - bool/string/int expressions
+
+- support interface and/or function delegation

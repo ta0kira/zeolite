@@ -1382,5 +1382,88 @@ define Test {
 }
 END
 
+expect_runs 'reduce to self' <<END
+concrete Value {
+  @type create () -> (Value)
+}
+
+define Value {
+  create () {
+    return Value{}
+  }
+}
+
+define Test {
+  run () {
+    Value value <- Value\$create()
+    optional Value value2 <- reduce<Value,Value>(value)
+    if (present(value2)) {
+    } else {
+      ~ Util\$crash()
+    }
+  }
+}
+END
+
+expect_runs 'reduce to unrelated' <<END
+concrete Value {
+  @type create () -> (Value)
+}
+
+define Value {
+  create () {
+    return Value{}
+  }
+}
+
+define Test {
+  run () {
+    Value value <- Value\$create()
+    optional Test value2 <- reduce<Value,Test>(value)
+    if (present(value2)) {
+      ~ Util\$crash()
+    }
+  }
+}
+END
+
+expect_error 'reduce wrong arg type' 'argument' 'line 14' <<END
+concrete Value {
+  @type create () -> (Value)
+}
+
+define Value {
+  create () {
+    return Value{}
+  }
+}
+
+define Test {
+  run () {
+    Value value <- Value\$create()
+    optional Value value2 <- reduce<Test,Value>(value)
+  }
+}
+END
+
+expect_error 'reduce wrong return type' 'assignment' 'line 14' <<END
+concrete Value {
+  @type create () -> (Value)
+}
+
+define Value {
+  create () {
+    return Value{}
+  }
+}
+
+define Test {
+  run () {
+    Value value <- Value\$create()
+    optional Value value2 <- reduce<Value,Test>(value)
+  }
+}
+END
+
 
 echo "All $count tests passed" 1>&2

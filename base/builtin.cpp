@@ -7,7 +7,7 @@ namespace {
 
 struct OptionalEmpty : public TypeValue {
   DReturns Dispatch(const S<TypeValue>& self,
-                    const DFunction<SymbolScope::ValueScope>& label,
+                    const DFunction<SymbolScope::VALUE>& label,
                     DParams params, DArgs args) final {
     FAIL() << "Function called on empty value";
     return DReturns();

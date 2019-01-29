@@ -119,6 +119,6 @@ functionLabelType f =
     an = length $ psParams $ sfArgs f
     rn = length $ psParams $ sfReturns f
     scope
-      | sfScope f == CategoryScope = "SymbolScope::CategoryScope"
-      | sfScope f == TypeScope     = "SymbolScope::TypeScope"
-      | sfScope f == ValueScope    = "SymbolScope::ValueScope"
+      | sfScope f == CategoryScope = "SymbolScope::CATEGORY"
+      | sfScope f == TypeScope     = "SymbolScope::TYPE"
+      | sfScope f == ValueScope    = "SymbolScope::VALUE"

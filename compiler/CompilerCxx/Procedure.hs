@@ -4,6 +4,7 @@
 {-# LANGUAGE Safe #-}
 
 module CompilerCxx.Procedure (
+  categoriesFromTypes,
   compileExecutableProcedure,
   compileExpression,
   compileStatement,
@@ -398,9 +399,9 @@ compileExpressionStart (TypeCall c t f@(FunctionCall _ n _ _)) = do
   when (sfScope f' /= TypeScope) $ lift $ compileError $ "Function " ++ show n ++
                                           " cannot be used as a type function [" ++
                                           formatFullContext c ++ "]"
-  csRequiresTypes $ typesFromParams (ParamSet [SingleType t])
+  csRequiresTypes $ Set.unions $ map categoriesFromTypes [SingleType t]
   csRequiresTypes $ Set.fromList [sfType f']
-  t' <- expandType $ SingleType t
+  t' <- expandGeneralInstance $ SingleType t
   compileFunctionCall (Just t') f' f
 compileExpressionStart (UnqualifiedCall c f@(FunctionCall _ n _ _)) = do
   ctx <- get
@@ -441,9 +442,10 @@ compileExpressionStart (BuiltinCall c f@(FunctionCall _ BuiltinReduce ps es)) = 
   r <- csResolver
   fa <- csAllFilters
   lift $ (checkValueTypeMatch r fa t0 (ValueType OptionalValue t1)) `reviseError`
-    ("In function call at " ++ formatFullContext c)
-  t1' <- expandType t1
-  t2' <- expandType t2
+    ("In argument to reduce call at " ++ formatFullContext c)
+  -- TODO: If t1 -> t2 then just return e without a Reduce call.
+  t1' <- expandGeneralInstance t1
+  t2' <- expandGeneralInstance t2
   return $ (ParamSet [ValueType OptionalValue t2],
             typeBase ++ "::Reduce(" ++ t1' ++ ", " ++ t2' ++ ", std::get<0>(" ++ e ++ "))")
 compileExpressionStart (BuiltinCall c f@(FunctionCall _ BuiltinRequire ps es)) = do
@@ -503,7 +505,7 @@ compileFunctionCall e f (FunctionCall c _ ps es) = do
   (ts,es'') <- getValues es'
   lift $ processParamPairs (checkArg r fa) (ftArgs f'') (ParamSet $ zip [1..] ts) `reviseError`
     ("In function call at " ++ formatFullContext c)
-  csRequiresTypes $ typesFromParams ps
+  csRequiresTypes $ Set.unions $ map categoriesFromTypes $ psParams ps
   csRequiresTypes (Set.fromList [sfType f])
   params <- expandParams ps
   call <- assemble e (sfScope f) (functionName f) params es''
@@ -545,8 +547,8 @@ autoScope s = do
     -- NOTE: Don't use this->; otherwise, self won't work properly.
     scoped _ _ = ""
 
-typesFromParams :: ParamSet GeneralInstance -> Set.Set CategoryName
-typesFromParams = Set.fromList . concat . map getAll . psParams where
+categoriesFromTypes :: GeneralInstance -> Set.Set CategoryName
+categoriesFromTypes = Set.fromList . getAll where
   getAll (TypeMerge _ ps) = concat $ map getAll ps
   getAll (SingleType (JustTypeInstance (TypeInstance t ps))) = t:(concat $ map getAll $ psParams ps)
   getAll _ = []
@@ -554,26 +556,26 @@ typesFromParams = Set.fromList . concat . map getAll . psParams where
 expandParams :: (Monad m, CompilerContext c m s a) =>
   ParamSet GeneralInstance -> CompilerState a m String
 expandParams ps = do
-  ps' <- sequence $ map expandType $ psParams ps
+  ps' <- sequence $ map expandGeneralInstance $ psParams ps
   return $ "T_get(" ++ intercalate "," (map ("&" ++) ps') ++ ")"
 
 expandCategory :: (Monad m, CompilerContext c m s a) =>
   CategoryName -> CompilerState a m String
 expandCategory t = return $ categoryGetter t ++ "()"
 
-expandType :: (Monad m, CompilerContext c m s a) =>
+expandGeneralInstance :: (Monad m, CompilerContext c m s a) =>
   GeneralInstance -> CompilerState a m String
-expandType (TypeMerge m ps) = do
-  ps' <- sequence $ map expandType ps
+expandGeneralInstance (TypeMerge m ps) = do
+  ps' <- sequence $ map expandGeneralInstance ps
   return $ getter ++ "(L_get<" ++ typeBase ++ "*>(" ++ intercalate "," (map ("&" ++) ps') ++ "))"
   where
     getter
       | m == MergeUnion     = unionGetter
       | m == MergeIntersect = intersectGetter
-expandType (SingleType (JustTypeInstance (TypeInstance t ps))) = do
-  ps' <- sequence $ map expandType $ psParams ps
+expandGeneralInstance (SingleType (JustTypeInstance (TypeInstance t ps))) = do
+  ps' <- sequence $ map expandGeneralInstance $ psParams ps
   return $ typeGetter t ++ "(T_get(" ++ intercalate "," (map ("&" ++) ps') ++ "))"
-expandType (SingleType (JustParamName p)) = do
+expandGeneralInstance (SingleType (JustParamName p)) = do
   s <- csGetParamScope p
   scoped <- autoScope s
   return $ scoped ++ paramName p
