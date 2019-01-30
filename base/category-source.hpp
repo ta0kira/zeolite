@@ -65,6 +65,7 @@ class TypeInstance {
   virtual std::string CategoryName() const = 0;
 
   static Returns<1>::Type Reduce(TypeInstance& from, TypeInstance& to, S<TypeValue> target) {
+    TRACE_FUNCTION("reduce")
     return T_get(CanConvert(from, to)? target : Var_empty);
   }
 
@@ -86,13 +87,13 @@ class TypeInstance {
 
   static bool CanConvert(const TypeInstance& from, const TypeInstance& to);
 
- private:
   enum class MergeType {
     SINGLE,
     UNION,
     INTERSECT,
   };
 
+ private:
   virtual MergeType InstanceMergeType() const
   { return MergeType::SINGLE; }
 

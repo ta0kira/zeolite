@@ -38,14 +38,17 @@ compile() {
     cd "$temp" || exit 1
     { "$compiler" /dev/stdin |& tee -a "$temp/$errors"; } < <(echo "$code$test_base")
     [[ "${PIPESTATUS[0]}" = 0 ]] || return 1
-    clang++ -O0 -g -std=c++11 -o "$temp/compiled" \
-      -I"$root/capture-thread/include" \
-      -I"$root/base" \
-      -I"$temp" \
-      "$root/capture-thread/src"/*.cc \
-      "$root/base"/*cpp \
-      "$temp"/*cpp \
-      "$main" |& tee -a "$temp/$errors"
+    command=(
+      clang++ -O0 -g -std=c++11 -o "$temp/compiled"
+      -I"$root/capture-thread/include"
+      -I"$root/base"
+      -I"$temp"
+      "$root/capture-thread/src"/*.cc
+      "$root/base"/*cpp
+      "$temp"/*cpp
+      "$main")
+    echo "${command[@]}" >> "$temp/$errors"
+    "${command[@]}" |& tee -a "$temp/$errors"
     [[ "${PIPESTATUS[0]}" = 0 ]] || return 1
   )
 }
@@ -1396,8 +1399,9 @@ define Value {
 define Test {
   run () {
     Value value <- Value\$create()
-    optional Value value2 <- reduce<Value,Value>(value)
-    if (present(value2)) {
+    scoped {
+      optional Value value2 <- reduce<Value,Value>(value)
+    } in if (present(value2)) {
     } else {
       ~ Util\$crash()
     }
@@ -1419,8 +1423,9 @@ define Value {
 define Test {
   run () {
     Value value <- Value\$create()
-    optional Test value2 <- reduce<Value,Test>(value)
-    if (present(value2)) {
+    scoped {
+      optional Test value2 <- reduce<Value,Test>(value)
+    } in if (present(value2)) {
       ~ Util\$crash()
     }
   }
@@ -1461,6 +1466,416 @@ define Test {
   run () {
     Value value <- Value\$create()
     optional Value value2 <- reduce<Value,Test>(value)
+  }
+}
+END
+
+expect_runs 'reduce success with param' <<END
+concrete Value<|#x> {
+  @type create () -> (Value<#x>)
+
+  @value attempt<#y>
+  () -> (optional Value<#y>)
+}
+
+define Value {
+  create () {
+    return Value<#x>{}
+  }
+
+  attempt () {
+    return reduce<Value<#x>,Value<#y>>(self)
+  }
+}
+
+@value interface Type1 {}
+
+@value interface Type2 {
+  refines Type1
+}
+
+define Test {
+  run () {
+    Value<Type2> value <- Value<Type2>\$create()
+    scoped {
+      optional Value<Type1> value2 <- value.attempt<Type1>()
+    } in if (present(value2)) {
+    } else {
+      ~ Util\$crash()
+    }
+  }
+}
+END
+
+expect_runs 'reduce fail with param' <<END
+concrete Value<|#x> {
+  @type create () -> (Value<#x>)
+
+  @value attempt<#y>
+  () -> (optional Value<#y>)
+}
+
+define Value {
+  create () {
+    return Value<#x>{}
+  }
+
+  attempt () {
+    return reduce<Value<#x>,Value<#y>>(self)
+  }
+}
+
+@value interface Type1 {}
+
+@value interface Type2 {
+  refines Type1
+}
+
+define Test {
+  run () {
+    Value<Type1> value <- Value<Type1>\$create()
+    scoped {
+      optional Value<Type2> value2 <- value.attempt<Type2>()
+    } in if (present(value2)) {
+      ~ Util\$crash()
+    }
+  }
+}
+END
+
+expect_runs 'reduce success with contra param' <<END
+concrete Value<#x|> {
+  @type create () -> (Value<#x>)
+
+  @value attempt<#y>
+  () -> (optional Value<#y>)
+}
+
+define Value {
+  create () {
+    return Value<#x>{}
+  }
+
+  attempt () {
+    return reduce<Value<#x>,Value<#y>>(self)
+  }
+}
+
+@value interface Type1 {}
+
+@value interface Type2 {
+  refines Type1
+}
+
+define Test {
+  run () {
+    Value<Value<Type2>> value <- Value<Value<Type2>>\$create()
+    scoped {
+      optional Value<Value<Type1>> value2 <- value.attempt<Value<Type1>>()
+    } in if (present(value2)) {
+    } else {
+      ~ Util\$crash()
+    }
+  }
+}
+END
+
+expect_runs 'reduce fail with contra param' <<END
+concrete Value<#x|> {
+  @type create () -> (Value<#x>)
+
+  @value attempt<#y>
+  () -> (optional Value<#y>)
+}
+
+define Value {
+  create () {
+    return Value<#x>{}
+  }
+
+  attempt () {
+    return reduce<Value<#x>,Value<#y>>(self)
+  }
+}
+
+@value interface Type1 {}
+
+@value interface Type2 {
+  refines Type1
+}
+
+define Test {
+  run () {
+    Value<Value<Type1>> value <- Value<Value<Type1>>\$create()
+    scoped {
+      optional Value<Value<Type2>> value2 <- value.attempt<Value<Type2>>()
+    } in if (present(value2)) {
+      ~ Util\$crash()
+    }
+  }
+}
+END
+
+expect_runs 'reduce success from union' <<END
+@value interface Base {}
+
+concrete Value1 {
+  refines Base
+
+  @type create () -> (Value1)
+}
+
+define Value1 {
+  create () {
+    return Value1{}
+  }
+}
+
+@value interface Value2 {
+  refines Base
+}
+
+define Test {
+  run () {
+    (Value1|Value2) value <- Value1\$create()
+    scoped {
+      optional Base value2 <- reduce<(Value1|Value2),Base>(value)
+    } in if (present(value2)) {
+    } else {
+      ~ Util\$crash()
+    }
+  }
+}
+END
+
+expect_runs 'reduce fail from union' <<END
+@value interface Base {}
+
+concrete Value1 {
+  refines Base
+
+  @type create () -> (Value1)
+}
+
+define Value1 {
+  create () {
+    return Value1{}
+  }
+}
+
+@value interface Value2 {
+  refines Base
+}
+
+define Test {
+  run () {
+    (Value1|Value2) value <- Value1\$create()
+    scoped {
+      optional Value2 value2 <- reduce<(Value1|Value2),Value2>(value)
+    } in if (present(value2)) {
+      ~ Util\$crash()
+    }
+  }
+}
+END
+
+expect_runs 'reduce success to intersect' <<END
+@value interface Base1 {}
+
+@value interface Base2 {}
+
+concrete Value {
+  refines Base1
+  refines Base2
+
+  @type create () -> (Value)
+}
+
+define Value {
+  create () {
+    return Value{}
+  }
+}
+
+define Test {
+  run () {
+    Value value <- Value\$create()
+    scoped {
+      optional (Base1&Base2) value2 <- reduce<Value,(Base1&Base2)>(value)
+    } in if (present(value2)) {
+    } else {
+      ~ Util\$crash()
+    }
+  }
+}
+END
+
+expect_runs 'reduce fail to intersect' <<END
+@value interface Base1 {}
+
+@value interface Base2 {}
+
+concrete Value {
+  refines Base1
+
+  @type create () -> (Value)
+}
+
+define Value {
+  create () {
+    return Value{}
+  }
+}
+
+define Test {
+  run () {
+    Value value <- Value\$create()
+    scoped {
+      optional (Base1&Base2) value2 <- reduce<Value,(Base1&Base2)>(value)
+    } in if (present(value2)) {
+      ~ Util\$crash()
+    }
+  }
+}
+END
+
+expect_runs 'reduce success union to intersect' <<END
+@value interface Base1 {}
+
+@value interface Base2 {}
+
+@value interface Value1 {
+  refines Base1
+  refines Base2
+}
+
+concrete Value2 {
+  refines Base1
+  refines Base2
+
+  @type create () -> (Value2)
+}
+
+define Value2 {
+  create () {
+    return Value2{}
+  }
+}
+
+define Test {
+  run () {
+    (Value1|Value2) value <- Value2\$create()
+    scoped {
+      optional (Base1&Base2) value2 <- reduce<(Value1|Value2),(Base1&Base2)>(value)
+    } in if (present(value2)) {
+    } else {
+      ~ Util\$crash()
+    }
+  }
+}
+END
+
+expect_runs 'reduce fail union to intersect' <<END
+@value interface Base1 {}
+
+@value interface Base2 {}
+
+@value interface Value1 {
+  refines Base1
+  refines Base2
+}
+
+concrete Value2 {
+  refines Base1
+
+  @type create () -> (Value2)
+}
+
+define Value2 {
+  create () {
+    return Value2{}
+  }
+}
+
+define Test {
+  run () {
+    (Value1|Value2) value <- Value2\$create()
+    scoped {
+      optional (Base1&Base2) value2 <- reduce<(Value1|Value2),(Base1&Base2)>(value)
+    } in if (present(value2)) {
+      ~ Util\$crash()
+    }
+  }
+}
+END
+
+expect_runs 'reduce success intersect to union' <<END
+@value interface Base1 {}
+
+@value interface Base2 {}
+
+@value interface Value1 {
+  refines Base1
+}
+
+@value interface Value2 {}
+
+concrete Data {
+  refines Value1
+  refines Value2
+
+  @type create () -> (Data)
+}
+
+define Data {
+  create () {
+    return Data{}
+  }
+}
+
+define Test {
+  run () {
+    (Value1&Value2) value <- Data\$create()
+    scoped {
+      optional (Base1|Base2) value2 <- reduce<(Value1&Value2),(Base1|Base2)>(value)
+    } in if (present(value2)) {
+    } else {
+      ~ Util\$crash()
+    }
+  }
+}
+END
+
+expect_runs 'reduce fail intersect to union' <<END
+@value interface Base1 {}
+
+@value interface Base2 {}
+
+@value interface Value1 {}
+
+@value interface Value2 {}
+
+concrete Data {
+  refines Value1
+  refines Value2
+
+  @type create () -> (Data)
+}
+
+define Data {
+  create () {
+    return Data{}
+  }
+}
+
+define Test {
+  run () {
+    (Value1&Value2) value <- Data\$create()
+    scoped {
+      optional (Base1|Base2) value2 <- reduce<(Value1&Value2),(Base1|Base2)>(value)
+    } in if (present(value2)) {
+      ~ Util\$crash()
+    }
   }
 }
 END

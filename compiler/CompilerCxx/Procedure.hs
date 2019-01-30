@@ -446,6 +446,8 @@ compileExpressionStart (BuiltinCall c f@(FunctionCall _ BuiltinReduce ps es)) = 
   -- TODO: If t1 -> t2 then just return e without a Reduce call.
   t1' <- expandGeneralInstance t1
   t2' <- expandGeneralInstance t2
+  csRequiresTypes $ categoriesFromTypes t1
+  csRequiresTypes $ categoriesFromTypes t2
   return $ (ParamSet [ValueType OptionalValue t2],
             typeBase ++ "::Reduce(" ++ t1' ++ ", " ++ t2' ++ ", std::get<0>(" ++ e ++ "))")
 compileExpressionStart (BuiltinCall c f@(FunctionCall _ BuiltinRequire ps es)) = do

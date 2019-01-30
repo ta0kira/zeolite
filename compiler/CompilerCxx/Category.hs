@@ -326,7 +326,7 @@ commonDefineType t extra = do
           "  std::vector<const TypeInstance*> args;",
           "  if (!from.TypeArgsForParent(parent, args)) return false;",
           -- TODO: Create a helper function for this error.
-          "  FAIL_IF(args.size() != 1) << " ++
+          "  FAIL_IF(args.size() != " ++ show (length params) ++ ") << " ++
           "\"Wrong number of args (\" << args.size() << \") " ++
           "for \" << CategoryName();"
         ] ++ checks ++ ["  return true;","}"]

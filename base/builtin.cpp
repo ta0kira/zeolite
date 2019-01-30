@@ -1,5 +1,7 @@
 #include "builtin.hpp"
 
+#include <map>
+
 #include "category-source.hpp"
 
 
@@ -16,6 +18,34 @@ struct OptionalEmpty : public TypeValue {
   std::string CategoryName() const final { return "empty"; }
 
   bool Present() const final { return false; }
+};
+
+struct Type_Intersect : public TypeInstance {
+  Type_Intersect(L<TypeInstance*> params) : params_(params.begin(), params.end()) {}
+
+  std::string CategoryName() const { return "(intersection)"; }
+
+  MergeType InstanceMergeType() const final
+  { return MergeType::INTERSECT; }
+
+  std::vector<const TypeInstance*> MergedTypes() const final
+  { return params_; }
+
+  const L<const TypeInstance*> params_;
+};
+
+struct Type_Union : public TypeInstance {
+  Type_Union(L<TypeInstance*> params) : params_(params.begin(), params.end()) {}
+
+  std::string CategoryName() const { return "(union)"; }
+
+  MergeType InstanceMergeType() const final
+  { return MergeType::UNION; }
+
+  std::vector<const TypeInstance*> MergedTypes() const final
+  { return params_; }
+
+  const L<const TypeInstance*> params_;
 };
 
 struct Category_Bool : public TypeCategory {
@@ -100,9 +130,19 @@ class Value_Float : public TypeValue {
 
 }  // namespace
 
-// TODO
-// TypeInstance& Merge_Intersect(L<TypeInstance*> params);
-// TypeInstance& Merge_Union(L<TypeInstance*> params);
+TypeInstance& Merge_Intersect(L<TypeInstance*> params) {
+  static auto& cache = *new std::map<L<TypeInstance*>,R<Type_Intersect>>();
+  auto& cached = cache[params];
+  if (!cached) { cached = R_get(new Type_Intersect(params)); }
+  return *cached;
+}
+
+TypeInstance& Merge_Union(L<TypeInstance*> params) {
+  static auto& cache = *new std::map<L<TypeInstance*>,R<Type_Union>>();
+  auto& cached = cache[params];
+  if (!cached) { cached = R_get(new Type_Union(params)); }
+  return *cached;
+}
 
 TypeCategory& GetCategory_Bool() {
   static auto& category = *new Category_Bool();
