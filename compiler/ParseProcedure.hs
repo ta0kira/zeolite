@@ -248,12 +248,16 @@ builtinFunction = foldr (<|>) (fail "empty") $ map try [
 
 instance ParseFromSource (ExpressionStart SourcePos) where
   sourceParser = labeled "expression start" $
+                 literal <|>
                  parens <|>
                  variableOrUnqualified <|>
                  builtinCall <|>
                  builtinValue <|>
                  try typeOrCategoryCall <|>
                  typeCall where
+    literal = do
+      l <- sourceParser
+      return $ Literal l
     parens = do
       c <- getPosition
       sepAfter (string "(")
@@ -309,6 +313,41 @@ instance ParseFromSource (ExpressionStart SourcePos) where
       n <- sourceParser
       f <- parseFunctionCall c n
       return $ TypeCall [c] t f
+
+instance ParseFromSource (ValueLiteral SourcePos) where
+  sourceParser = labeled "literal" $
+                 stringLiteral <|>
+                 hexLiteral <|>
+                 numberLiteral where
+    stringLiteral = do
+      c <- getPosition
+      string "\""
+      ss <- manyTill stringChar (string "\"")
+      optionalSpace
+      return $ StringLiteral [c] $ concat ss
+    stringChar = escaped <|> notEscaped where
+      escaped = do
+        char '\\'
+        v <- anyChar
+        return ['\\',v]
+      notEscaped = fmap (:[]) $ noneOf "\""
+    hexLiteral = do
+      c <- getPosition
+      try (string "0x")
+      ds <- many1 hexDigit
+      return $ HexLiteral [c] ds
+    numberLiteral = do
+      c <- getPosition
+      ds <- many1 digit
+      decimal c ds <|> integer c ds
+    decimal c ds = do
+      try (char '.')
+      ds2 <- many1 digit
+      optionalSpace
+      return $ DecimalLiteral [c] ds ds2
+    integer c ds = do
+      optionalSpace
+      return $ IntegerLiteral [c] ds
 
 instance ParseFromSource (ValueOperation SourcePos) where
   sourceParser = try valueCall <|> try conversion <|> binary where

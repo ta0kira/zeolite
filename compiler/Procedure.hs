@@ -14,6 +14,7 @@ module Procedure (
   ReturnValues(..),
   ScopedBlock(..),
   Statement(..),
+  ValueLiteral(..),
   ValueOperation(..),
   VariableName(..),
   VoidExpression(..),
@@ -161,12 +162,12 @@ getExpressionContext (Expression c _ _)        = c
 getExpressionContext (UnaryExpression c _ _)   = c
 getExpressionContext (InitializeValue c _ _ _) = c
 
-
 data FunctionCall c =
   FunctionCall [c] FunctionName (ParamSet GeneralInstance) (ParamSet (Expression c))
   deriving (Show)
 
 data ExpressionStart c =
+  Literal (ValueLiteral c) |
   NamedVariable (OutputValue c) |
   CategoryCall [c] CategoryName (FunctionCall c) |
   TypeCall [c] TypeInstanceOrParam (FunctionCall c) |
@@ -174,6 +175,14 @@ data ExpressionStart c =
   BuiltinCall [c] (FunctionCall c) |
   ParensExpression [c] (Expression c) |
   InlineAssignment [c] VariableName (Expression c)
+  deriving (Show)
+
+-- TODO: Add character literal, and maybe bool literal.
+data ValueLiteral c =
+  StringLiteral [c] String |
+  IntegerLiteral [c] String |
+  HexLiteral [c] String |
+  DecimalLiteral [c] String String
   deriving (Show)
 
 data ValueOperation c =

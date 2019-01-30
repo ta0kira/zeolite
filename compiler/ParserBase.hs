@@ -87,9 +87,10 @@ builtinValues = foldr (<|>) (fail "empty") $ map try [
 
 -- TODO: Maybe this should not use strings.
 unaryOperator :: Parser String
-unaryOperator = foldr (<|>) (fail "empty") $ map try [
-    sepAfter (string "!") >> notFollowedBy operatorSymbol0 >> return "!"
-  ]
+unaryOperator =
+  labeled "unary operator" $ foldr (<|>) (fail "empty") $ map (try . operator) [
+      "!", "-"
+    ]
 
 -- TODO: Maybe this should not use strings.
 binaryOperator :: Parser String
@@ -131,7 +132,6 @@ kwValue = keyword "@value"
 kwWeak = keyword "weak"
 kwWhile = keyword "while"
 
-operatorSymbol0 = satisfy (`Set.member` Set.fromList "+-*/%=<>&|")
 operatorSymbol = labeled "operator symbol" $ satisfy (`Set.member` Set.fromList "+-*/%=!<>&|")
 
 isKeyword :: Parser ()

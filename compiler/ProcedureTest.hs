@@ -122,7 +122,7 @@ tests = [
     checkShortParseSuccess "scoped{T<#x>x<-y}in~var.T<#x>$func()",
 
     checkShortParseSuccess "x <- !y",
-    checkShortParseSuccess "x <- !!y",
+    checkShortParseSuccess "x <- !y",
     checkShortParseFail "x <- !!=y",
     checkShortParseSuccess "x <- (!y).func()",
     checkShortParseSuccess "~ !y",
@@ -143,10 +143,27 @@ tests = [
     checkShortParseSuccess "~ !x || !y",
 
     checkShortParseSuccess "x <- y + z",
-    checkShortParseSuccess "x <- !!y == !z",
+    checkShortParseSuccess "x <- !y == !z",
     checkShortParseSuccess "x <- (x + y) / z",
     checkShortParseSuccess "~ x <= y",
-    checkShortParseFail "~ x < <- y"
+    checkShortParseFail "~ x < <- y",
+
+    checkShortParseSuccess "x <- 123",
+    checkShortParseSuccess "x <- 123.0",
+    checkShortParseFail "x <- 123.",
+    checkShortParseSuccess "x <- 0.123",
+    checkShortParseFail "x <- .123",
+    checkShortParseSuccess "x <- 12.3",
+    checkShortParseFail "x <- 12.3.",
+    checkShortParseSuccess "x <- 12.3 + -456.7",
+    checkShortParseSuccess "x <- 0x123aBc",
+    checkShortParseFail "x <- 0x123aQc",
+    checkShortParseFail "x <- 0x",
+    checkShortParseFail "x <- 0x1.2",
+    checkShortParseSuccess "x <- \" return \\\"\\\" \" + \"1fds\"",
+    checkShortParseFail "x <- \"fsdfd",
+    checkShortParseFail "x <- \"\"fsdfd",
+    checkShortParseSuccess "x <- 123.0 + z.call()"
   ]
 
 checkParseSuccess f = do
