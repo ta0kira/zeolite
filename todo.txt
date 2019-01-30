@@ -12,3 +12,4 @@ Supported in implementation, roughly in order of simplicity+importance:
 - bool/string/int expressions
 
 - support interface and/or function delegation
+- support for passing functions (not necessarily lambdas)

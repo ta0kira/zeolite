@@ -132,9 +132,9 @@ define Test {
 }
 END
 
-expect_error 'self in @type init' 'self' 'line 2' <<END
+expect_error '@type member not allowed' 'not allowed' 'line 2' <<END
 define Test {
-  @type Test value <- self
+  @type Bool value <- false
 
   run () {}
 }
@@ -143,17 +143,6 @@ END
 expect_error 'self in @category init' 'self' 'line 2' <<END
 define Test {
   @category Test value <- self
-
-  run () {}
-}
-END
-
-expect_error 'self in @type function' 'self' 'line 4' <<END
-define Test {
-  @type call () -> ()
-  call () {
-    Test value <- self
-  }
 
   run () {}
 }
@@ -170,87 +159,6 @@ define Test {
 }
 END
 
-expect_runs '@type to @category' <<END
-concrete Value {}
-
-define Test {
-  @type optional Value value2 <- value
-  @category optional Value value <- empty
-
-  run () {}
-}
-END
-
-expect_error '@category to @type' 'value2' 'line 5' <<END
-concrete Value {}
-
-define Test {
-  @type optional Value value2 <- empty
-  @category optional Value value <- value2
-
-  run () {}
-}
-END
-
-expect_runs 'init in correct order' <<END
-define Test {
-  @type Bool value <- true
-  @type Bool value2 <- value
-
-  run () {
-    if (value2) {
-    } else {
-      ~ Util\$crash() // force a crash if false
-    }
-  }
-}
-END
-
-expect_error 'init in wrong order' 'value2' 'line 2' <<END
-define Test {
-  @type Bool value <- value2
-  @type Bool value2 <- true
-
-  run () {}
-}
-END
-
-expect_runs 'init in @type to @category' <<END
-define Test {
-  @category Bool value <- true
-  @type Bool value2 <- value
-
-  run () {
-    if (value2) {
-    } else {
-      ~ Util\$crash() // force a crash if false
-    }
-  }
-}
-END
-
-expect_error 'init too early' 'value2' 'line 2' <<END
-define Test {
-  @type Bool value <- value2
-  @type Bool value2 <- value
-
-  run () {}
-}
-END
-
-expect_error 'cycle in @type init' 'disallowed' 'line 2' <<END
-define Test {
-  @type Bool value <- get()
-
-  @type get () -> (Bool)
-  get () {
-    return value
-  }
-
-  run () {}
-}
-END
-
 expect_error 'cycle in @category init' 'disallowed' 'line 2' <<END
 define Test {
   @category Bool value <- get()
@@ -259,121 +167,6 @@ define Test {
   get () {
     return value
   }
-
-  run () {}
-}
-END
-
-expect_crashes 'real cycle in @type init' 'cycle.+Value[12]' 'line 10|line 18' <<END
-concrete Value1 {
-  @type get () -> (Bool)
-}
-
-concrete Value2 {
-  @type get () -> (Bool)
-}
-
-define Value1 {
-  @type Bool value <- Value2\$get()
-
-  get () {
-    return value
-  }
-}
-
-define Value2 {
-  @type Bool value <- Value1\$get()
-
-  get () {
-    return value
-  }
-}
-
-define Test {
-  run () {
-    ~ require(Value1\$get())
-    ~ require(Value2\$get())
-  }
-}
-END
-
-expect_runs 'fake cycle in @type init' <<END
-concrete Value<#x> {
-  @type done () -> (Bool)
-}
-
-define Value {
-  @type Bool value <- true
-
-  done () {
-    return value
-  }
-}
-
-define Test {
-  run () {
-    ~ Value<Value<Value<Test>>>\$done()
-  }
-}
-END
-
-expect_runs 'better fake cycle in @type init' <<END
-@type interface Done {
-  done () -> (Bool)
-}
-
-concrete Value<#x> {
-  defines Done
-  #x defines Done
-}
-
-define Value {
-  @type Bool value <- #x\$done()
-
-  done () {
-    return value
-  }
-}
-
-concrete Base {
-  defines Done
-}
-
-define Base {
-  done () {
-    return true
-  }
-}
-
-define Test {
-  run () {
-    ~ Value<Value<Value<Base>>>\$done()
-  }
-}
-END
-
-expect_runs 'init by function' <<END
-define Test {
-  @category Bool value <- true
-  @type Bool value2 <- get()
-
-  @category get () -> (Bool)
-  get () {
-    return value
-  }
-
-  run () {
-    if (value2) {
-    } else {
-      ~ Util\$crash() // force a crash if false
-    }
-  }
-}
-END
-
-expect_error '@value init in @type init' 'not allowed' 'line 2' <<END
-define Test {
-  @type Test value <- Test{}
 
   run () {}
 }

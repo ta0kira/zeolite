@@ -91,6 +91,7 @@ compileConcreteDefinition ta dd@(DefinedCategory c n pi fi ms ps fs) = do
   pa <- pairProceduresToFunctions fa ps
   let (cp,tp,vp) = partitionByScope (sfScope . fst) pa
   let (cm,tm,vm) = partitionByScope dmScope ms
+  disallowTypeMembers tm
   let cm0 = builtins typeInstance CategoryScope
   let tm0 = builtins typeInstance TypeScope
   let vm0 = builtins typeInstance ValueScope
@@ -139,9 +140,18 @@ compileConcreteDefinition ta dd@(DefinedCategory c n pi fi ms ps fs) = do
     ]
   commonDefineAll t top bottom ce te
   where
+    disallowTypeMembers :: (Show c, Monad m, CompileErrorM m, MergeableM m) =>
+      [DefinedMember c] -> m ()
+    disallowTypeMembers tm =
+      mergeAllM $ flip map tm
+        (\m -> compileError $ "Member " ++ show (dmName m) ++
+                              " is not allowed to be @type-scoped [" ++
+                              formatFullContext (dmContext m) ++ "]")
     createParams = mergeAllM $ map createParam pi
     createParam p = return $ onlyCode $ paramType ++ " " ++ paramName (vpParam p) ++ ";"
     builtins t s0 = Map.filter ((<= s0) . vvScope) $ builtinVariables t
+    -- TODO: Can probably remove this if @type members are disallowed. Or, just
+    -- skip it if there are no @type members.
     getCycleCheck n = [
         "CycleCheck<" ++ n ++ ">::Check();",
         "CycleCheck<" ++ n ++ "> marker(*this);"
@@ -249,38 +259,38 @@ commonDefineAll :: (MergeableM m, Monad m) =>
   CompiledData [String] -> CompiledData [String] -> m CxxOutput
 commonDefineAll t top bottom ce te = do
   let filename = sourceFilename name
-  (CompiledData req out) <- mergeAllM [
+  (CompiledData req out) <- mergeAllM $ [
       return $ CompiledData (Set.fromList [name]) [],
-      createLabels (getCategoryFunctions t),
-      return $ onlyCode $ "namespace {",
-      declareTypes,
-      declareInternalType name paramCount,
-      return top,
-      commonDefineCategory t ce,
-      return $ onlyCodes getInternal,
-      commonDefineType t te,
-      defineInternalType name paramCount,
-      return bottom,
-      return $ onlyCode $ "}",
-      return $ onlyCodes getCategory,
-      return $ onlyCodes getType
-    ]
+      createLabels (getCategoryFunctions t)
+    ] ++ conditionalContent
   let includes = map (\i -> "#include \"" ++ headerFilename i ++ "\"") $
                    filter (not . isBuiltinCategory) $ Set.toList req
   return $ CxxOutput filename (baseSourceIncludes ++ includes ++ out)
   where
+    conditionalContent
+      | isInstanceInterface t = []
+      | otherwise = [
+        return $ onlyCode $ "namespace {",
+        declareTypes,
+        declareInternalType name paramCount,
+        return top,
+        commonDefineCategory t ce,
+        return $ onlyCodes getInternal,
+        commonDefineType t te,
+        defineInternalType name paramCount,
+        return bottom,
+        return $ onlyCode $ "}",
+        return $ onlyCodes getCategory,
+        return $ onlyCodes getType
+      ]
     declareTypes =
       return $ onlyCodes $ map (\f -> "class " ++ f name ++ ";") [categoryName,typeName]
     paramCount = length $ getCategoryParams t
     name = getCategoryName t
     createLabels = return . onlyCodes . map createLabelForFunction . filter ((== name) . sfType)
     getInternal = defineInternalCategory t
-    getCategory
-      | isInstanceInterface t = []
-      | otherwise             = defineGetCatetory t
-    getType
-      | isInstanceInterface t = []
-      | otherwise             = defineGetType t
+    getCategory = defineGetCatetory t
+    getType = defineGetType t
 
 createLabelForFunction :: ScopedFunction c -> String
 createLabelForFunction f = "const " ++ functionLabelType f ++ "& " ++ functionName f ++
