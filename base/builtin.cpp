@@ -185,6 +185,23 @@ TypeInstance& GetType_Float(Params<0>::Type) {
   return instance;
 }
 
+S<TypeValue> Box_Bool(bool value) {
+  return value? Var_true : Var_false;
+}
+
+S<TypeValue> Box_String(std::string value) {
+  return S_get(new Value_String(value));
+}
+
+S<TypeValue> Box_Int(int value) {
+  return S_get(new Value_Int(value));
+}
+
+S<TypeValue> Box_Float(double value) {
+  return S_get(new Value_Float(value));
+}
+
+
 const S<TypeValue>& Var_empty = *new S<TypeValue>(new OptionalEmpty());
 const S<TypeValue>& Var_true = *new S<TypeValue>(new Value_Bool(true));
 const S<TypeValue>& Var_false = *new S<TypeValue>(new Value_Bool(false));

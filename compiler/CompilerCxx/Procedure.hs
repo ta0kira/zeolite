@@ -327,7 +327,27 @@ compileExpression = compile where -- TODO: Rewrite for operator precedence?
   compile (Expression c s os) = do
     foldl transform (compileExpressionStart s) os
   compile (UnaryExpression c o e) = do
-    lift $ compileError $ "UnaryExpression " ++ formatFullContext c
+    (ParamSet ts,e') <- compileExpression e
+    t' <- requireSingle c ts
+    doUnary t' e'
+    where
+      doUnary t e
+        | o == "!" = doNot t e
+        | o == "-" = doNeg t e
+        | otherwise = lift $ compileError $ "Unknown unary operator \"" ++ o ++ "\" "++
+                                            " [" ++ formatFullContext c ++ "]"
+      doNot t e = do
+        when (t /= boolRequiredValue) $
+          lift $ compileError $ "Operator ! requires a Bool value "++
+                                " [" ++ formatFullContext c ++ "]"
+        return $ (ParamSet [boolRequiredValue],"T_get(Box_Bool(!std::get<0>(" ++ e ++ ")->AsBool()))")
+      doNeg t e
+        | t == intRequiredValue = return $ (ParamSet [intRequiredValue],
+                                            "T_get(Box_Int(-std::get<0>(" ++ e ++ ")->AsInt()))")
+        | t == floatRequiredValue = return $ (ParamSet [floatRequiredValue],
+                                             "T_get(Box_Float(-std::get<0>(" ++ e ++ ")->AsFloat()))")
+        | otherwise = lift $ compileError $ "Operator - requires an Int or Float value "++
+                                            " [" ++ formatFullContext c ++ "]"
   compile (InitializeValue c t ps es) = do
     es' <- sequence $ map compileExpression $ psParams es
     (ts,es'') <- getValues es'

@@ -526,6 +526,16 @@ define Test {
 }
 END
 
+expect_runs 'not true' <<END
+define Test {
+  run () {
+    if (!true) {
+      ~ Util\$crash()
+    }
+  }
+}
+END
+
 expect_runs 'present required' <<END
 define Test {
   @type create () -> (Test)
@@ -535,8 +545,7 @@ define Test {
 
   run () {
     Test value <- create()
-    if (present(value)) {
-    } else {
+    if (!present(value)) {
       ~ Util\$crash() // force a crash if empty
     }
   }
@@ -1194,8 +1203,7 @@ define Test {
     Value value <- Value\$create()
     scoped {
       optional Value value2 <- reduce<Value,Value>(value)
-    } in if (present(value2)) {
-    } else {
+    } in if (!present(value2)) {
       ~ Util\$crash()
     }
   }
@@ -1292,8 +1300,7 @@ define Test {
     Value<Type2> value <- Value<Type2>\$create()
     scoped {
       optional Value<Type1> value2 <- value.attempt<Type1>()
-    } in if (present(value2)) {
-    } else {
+    } in if (!present(value2)) {
       ~ Util\$crash()
     }
   }
@@ -1365,8 +1372,7 @@ define Test {
     Value<Value<Type2>> value <- Value<Value<Type2>>\$create()
     scoped {
       optional Value<Value<Type1>> value2 <- value.attempt<Value<Type1>>()
-    } in if (present(value2)) {
-    } else {
+    } in if (!present(value2)) {
       ~ Util\$crash()
     }
   }
@@ -1433,8 +1439,7 @@ define Test {
     (Value1|Value2) value <- Value1\$create()
     scoped {
       optional Base value2 <- reduce<(Value1|Value2),Base>(value)
-    } in if (present(value2)) {
-    } else {
+    } in if (!present(value2)) {
       ~ Util\$crash()
     }
   }
@@ -1495,8 +1500,7 @@ define Test {
     Value value <- Value\$create()
     scoped {
       optional (Base1&Base2) value2 <- reduce<Value,(Base1&Base2)>(value)
-    } in if (present(value2)) {
-    } else {
+    } in if (!present(value2)) {
       ~ Util\$crash()
     }
   }
@@ -1560,8 +1564,7 @@ define Test {
     (Value1|Value2) value <- Value2\$create()
     scoped {
       optional (Base1&Base2) value2 <- reduce<(Value1|Value2),(Base1&Base2)>(value)
-    } in if (present(value2)) {
-    } else {
+    } in if (!present(value2)) {
       ~ Util\$crash()
     }
   }
@@ -1631,8 +1634,7 @@ define Test {
     (Value1&Value2) value <- Data\$create()
     scoped {
       optional (Base1|Base2) value2 <- reduce<(Value1&Value2),(Base1|Base2)>(value)
-    } in if (present(value2)) {
-    } else {
+    } in if (!present(value2)) {
       ~ Util\$crash()
     }
   }

@@ -3,6 +3,9 @@
 module Builtin (
   boolRequiredValue,
   builtinCategories,
+  floatRequiredValue,
+  intRequiredValue,
+  stringRequiredValue,
 ) where
 
 
@@ -19,6 +22,15 @@ builtinCategories = Map.fromList $ [
     (BuiltinFloat,builtinFloat)
   ]
 
+boolRequiredValue :: ValueType
+boolRequiredValue = requiredSingleton BuiltinBool
+stringRequiredValue :: ValueType
+stringRequiredValue = requiredSingleton BuiltinString
+intRequiredValue :: ValueType
+intRequiredValue = requiredSingleton BuiltinInt
+floatRequiredValue :: ValueType
+floatRequiredValue = requiredSingleton BuiltinFloat
+
 builtinBool :: AnyCategory c
 builtinBool = ValueConcrete {
     vcContext = [],
@@ -29,9 +41,6 @@ builtinBool = ValueConcrete {
     vcParamFilter = [],
     viFunctions = []
   }
-
-boolRequiredValue :: ValueType
-boolRequiredValue = requiredSingleton BuiltinBool
 
 builtinString :: AnyCategory c
 builtinString = ValueConcrete {

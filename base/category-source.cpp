@@ -86,7 +86,7 @@ bool TypeInstance::ExpandCheckRight(const TypeInstance& x, const TypeInstance& y
 
 Returns<1>::Type TypeValue::Present(S<TypeValue> target) {
   FAIL_IF(target == nullptr) << "Builtin called on null value";
-  return target->Present()? T_get(Var_true) : T_get(Var_false);
+  return T_get(Box_Bool(target->Present()));
 }
 
 Returns<1>::Type TypeValue::Require(S<TypeValue> target) {
