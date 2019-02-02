@@ -22,7 +22,9 @@ builtinCategories = Map.fromList $ [
     (BuiltinBool,builtinBool),
     (BuiltinString,builtinString),
     (BuiltinInt,builtinInt),
-    (BuiltinFloat,builtinFloat)
+    (BuiltinFloat,builtinFloat),
+    (BuiltinLessThan,builtinLessThan),
+    (BuiltinEquals,builtinEquals)
   ]
 
 boolRequiredValue :: ValueType
@@ -44,7 +46,7 @@ builtinBool = ValueConcrete {
     vcRefines = [],
     vcDefines = [],
     vcParamFilter = [],
-    viFunctions = []
+    vcFunctions = []
   }
 
 builtinString :: AnyCategory c
@@ -53,9 +55,11 @@ builtinString = ValueConcrete {
     vcName = BuiltinString,
     vcParams = [],
     vcRefines = [],
-    vcDefines = [],
+    vcDefines = [ValueDefine [] $ DefinesInstance BuiltinLessThan $ ParamSet [vtType stringRequiredValue],
+                 ValueDefine [] $ DefinesInstance BuiltinEquals   $ ParamSet [vtType stringRequiredValue]],
     vcParamFilter = [],
-    viFunctions = []
+    vcFunctions = [functionLessThan stringRequiredValue,
+                   functionEquals stringRequiredValue]
   }
 
 builtinInt :: AnyCategory c
@@ -64,9 +68,11 @@ builtinInt = ValueConcrete {
     vcName = BuiltinInt,
     vcParams = [],
     vcRefines = [],
-    vcDefines = [],
+    vcDefines = [ValueDefine [] $ DefinesInstance BuiltinLessThan $ ParamSet [vtType intRequiredValue],
+                 ValueDefine [] $ DefinesInstance BuiltinEquals   $ ParamSet [vtType intRequiredValue]],
     vcParamFilter = [],
-    viFunctions = []
+    vcFunctions = [functionLessThan intRequiredValue,
+                   functionEquals intRequiredValue]
   }
 
 builtinFloat :: AnyCategory c
@@ -75,7 +81,51 @@ builtinFloat = ValueConcrete {
     vcName = BuiltinFloat,
     vcParams = [],
     vcRefines = [],
-    vcDefines = [],
+    vcDefines = [ValueDefine [] $ DefinesInstance BuiltinLessThan $ ParamSet [vtType floatRequiredValue],
+                 ValueDefine [] $ DefinesInstance BuiltinEquals   $ ParamSet [vtType floatRequiredValue]],
     vcParamFilter = [],
-    viFunctions = []
+    vcFunctions = [functionLessThan floatRequiredValue,
+                   functionEquals floatRequiredValue]
+  }
+
+functionLessThan t = ScopedFunction {
+    sfContext = [],
+    sfName = FunctionName "lessThan",
+    sfType = BuiltinLessThan,
+    sfScope = TypeScope,
+    sfArgs = ParamSet [PassedValue [] t,PassedValue [] t],
+    sfReturns = ParamSet [PassedValue [] boolRequiredValue],
+    sfParams = ParamSet [],
+    sfFilters = [],
+    sfMerges = []
+  }
+
+builtinLessThan :: AnyCategory c
+builtinLessThan = InstanceInterface {
+    iiContext = [],
+    iiName = BuiltinLessThan,
+    iiParams = [ValueParam [] (ParamName "#x") Contravariant],
+    iiParamFilter = [],
+    iiFunctions = [functionLessThan (requiredParam $ ParamName "#x")]
+  }
+
+functionEquals t = ScopedFunction {
+    sfContext = [],
+    sfName = FunctionName "equals",
+    sfType = BuiltinEquals,
+    sfScope = TypeScope,
+    sfArgs = ParamSet [PassedValue [] t,PassedValue [] t],
+    sfReturns = ParamSet [PassedValue [] boolRequiredValue],
+    sfParams = ParamSet [],
+    sfFilters = [],
+    sfMerges = []
+  }
+
+builtinEquals :: AnyCategory c
+builtinEquals = InstanceInterface {
+    iiContext = [],
+    iiName = BuiltinEquals,
+    iiParams = [ValueParam [] (ParamName "#x") Contravariant],
+    iiParamFilter = [],
+    iiFunctions = [functionEquals (requiredParam $ ParamName "#x")]
   }

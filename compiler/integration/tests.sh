@@ -1887,5 +1887,65 @@ define Test {
 }
 END
 
+expect_runs 'string LessThan' <<END
+define Test {
+  run () {
+    if (!String\$lessThan("x","y")) {
+      ~ Util\$crash()
+    }
+  }
+}
+END
+
+expect_runs 'string Equals' <<END
+define Test {
+  run () {
+    if (!String\$equals("x","x")) {
+      ~ Util\$crash()
+    }
+  }
+}
+END
+
+expect_runs 'int LessThan' <<END
+define Test {
+  run () {
+    if (!Int\$lessThan(1,2)) {
+      ~ Util\$crash()
+    }
+  }
+}
+END
+
+expect_runs 'int Equals' <<END
+define Test {
+  run () {
+    if (!Int\$equals(1,1)) {
+      ~ Util\$crash()
+    }
+  }
+}
+END
+
+expect_runs 'float LessThan' <<END
+define Test {
+  run () {
+    if (!Float\$lessThan(1.0,2.0)) {
+      ~ Util\$crash()
+    }
+  }
+}
+END
+
+expect_runs 'float Equals' <<END
+define Test {
+  run () {
+    if (!Float\$equals(1.0,1.0)) {
+      ~ Util\$crash()
+    }
+  }
+}
+END
+
 
 echo "All $count tests passed" 1>&2

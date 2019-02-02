@@ -28,6 +28,7 @@ module TypeInstance (
   isDefinesFilter,
   isRequiresFilter,
   isWeakValue,
+  requiredParam,
   requiredSingleton,
   validateAssignment,
   validateDefinesInstance,
@@ -72,6 +73,9 @@ isWeakValue = (== WeakValue) . vtRequired
 requiredSingleton :: CategoryName -> ValueType
 requiredSingleton n = ValueType RequiredValue $ SingleType $ JustTypeInstance $ TypeInstance n (ParamSet [])
 
+requiredParam :: ParamName -> ValueType
+requiredParam n = ValueType RequiredValue $ SingleType $ JustParamName n
+
 data CategoryName =
   CategoryName {
     tnName :: String
@@ -79,14 +83,18 @@ data CategoryName =
   BuiltinBool |
   BuiltinString |
   BuiltinInt |
-  BuiltinFloat
+  BuiltinFloat |
+  BuiltinLessThan |
+  BuiltinEquals
 
 instance Show CategoryName where
   show (CategoryName n) = n
-  show BuiltinBool   = "Bool"
-  show BuiltinString = "String"
-  show BuiltinInt    = "Int"
-  show BuiltinFloat  = "Float"
+  show BuiltinBool     = "Bool"
+  show BuiltinString   = "String"
+  show BuiltinInt      = "Int"
+  show BuiltinFloat    = "Float"
+  show BuiltinLessThan = "LessThan"
+  show BuiltinEquals   = "Equals"
 
 instance Eq CategoryName where
   c1 == c2 = show c1 == show c2

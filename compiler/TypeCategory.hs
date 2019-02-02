@@ -67,7 +67,7 @@ data AnyCategory c =
     iiName :: CategoryName,
     iiParams :: [ValueParam c],
     iiParamFilter :: [ParamFilter c],
-    viFunctions :: [ScopedFunction c]
+    iiFunctions :: [ScopedFunction c]
   } |
   ValueConcrete {
     vcContext :: [c],
@@ -76,7 +76,7 @@ data AnyCategory c =
     vcRefines :: [ValueRefine c],
     vcDefines :: [ValueDefine c],
     vcParamFilter :: [ParamFilter c],
-    viFunctions :: [ScopedFunction c]
+    vcFunctions :: [ScopedFunction c]
   }
 
 formatFullContext :: Show a => [a] -> String

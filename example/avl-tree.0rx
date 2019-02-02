@@ -4,7 +4,7 @@ concrete Main {
 
 define Main {
   run () {
-    Tree<String> tree <- Tree<String>$new()
+    Tree<Int,String> tree <- Tree<Int,String>$new()
     ~ tree
         .set(2,"c")
         .set(0,"a")
@@ -18,7 +18,7 @@ define Main {
     ~ check(tree,5)
   }
 
-  @type check (Tree<String>,Int) -> ()
+  @type check (Tree<Int,String>,Int) -> ()
   check (tree,key) {
     scoped {
       optional String value <- tree.get(key)
@@ -36,69 +36,73 @@ define Main {
   }
 }
 
-concrete Tree<#x> {
-  @type new () -> (Tree<#x>)
+concrete Tree<#k,#v> {
+  #k defines LessThan<#k>
 
-  @value set (Int,#x) -> (Tree<#x>)
-  @value remove (Int) -> (Tree<#x>)
-  @value get (Int) -> (optional #x)
+  @type new () -> (Tree<#k,#v>)
+
+  @value set (#k,#v) -> (Tree<#k,#v>)
+  @value remove (#k) -> (Tree<#k,#v>)
+  @value get (#k) -> (optional #v)
 }
 
-concrete Node<#x> {
-  @type insert (optional Node<#x>,Int,#x) -> (Node<#x>)
-  @type delete (optional Node<#x>,Int) -> (optional Node<#x>)
-  @type find (optional Node<#x>,Int) -> (optional #x)
+concrete Node<#k,#v> {
+  #k defines LessThan<#k>
+
+  @type insert (optional Node<#k,#v>,#k,#v) -> (Node<#k,#v>)
+  @type delete (optional Node<#k,#v>,#k) -> (optional Node<#k,#v>)
+  @type find (optional Node<#k,#v>,#k) -> (optional #v)
 
   @value getHeight () -> (Int)
   @value setHeight (Int) -> ()
 
-  @value getKey () -> (Int)
+  @value getKey () -> (#k)
 
-  @value getValue () -> (#x)
-  @value setValue (#x) -> ()
+  @value getValue () -> (#v)
+  @value setValue (#v) -> ()
 
-  @value getLeft () -> (optional Node<#x>)
-  @value getRight () -> (optional Node<#x>)
+  @value getLeft () -> (optional Node<#k,#v>)
+  @value getRight () -> (optional Node<#k,#v>)
 
-  @value setLeft (optional Node<#x>) -> ()
-  @value setRight (optional Node<#x>) -> ()
+  @value setLeft (optional Node<#k,#v>) -> ()
+  @value setRight (optional Node<#k,#v>) -> ()
 }
 
 define Tree {
-  @value optional Node<#x> root
+  @value optional Node<#k,#v> root
 
   new () {
-    return Tree<#x>{ empty }
+    return Tree<#k,#v>{ empty }
   }
 
   set (k,v) {
-    root <- Node<#x>$insert(root,k,v)
+    root <- Node<#k,#v>$insert(root,k,v)
     return self
   }
 
   remove (k) {
-    root <- Node<#x>$delete(root,k)
+    root <- Node<#k,#v>$delete(root,k)
     return self
   }
 
   get (k) {
-    return Node<#x>$find(root,k)
+    return Node<#k,#v>$find(root,k)
   }
 }
 
 define Node {
   @value Int height
-  @value Int key
-  @value #x value
-  @value optional Node<#x> left
-  @value optional Node<#x> right
+  @value #k key
+  @value #v value
+  @value optional Node<#k,#v> left
+  @value optional Node<#k,#v> right
 
   insert (node,k,v) {
     if (present(node)) {
-      Node<#x> node2 <- require(node)
-      if (k < node2.getKey()) {
+      Node<#k,#v> node2 <- require(node)
+      if (#k$lessThan(k,node2.getKey())) {
         ~ node2.setLeft(insert(node2.getLeft(),k,v))
-      } elif (k > node2.getKey()) {
+      } elif (#k$lessThan(node2.getKey(),k)) {
         ~ node2.setRight(insert(node2.getRight(),k,v))
       } else {
         ~ node2.setValue(v)
@@ -107,7 +111,7 @@ define Node {
       ~ fixHeight(node2)
       return balance(node2)
     } else {
-      return Node<#x>{ 1, k, v, empty, empty }
+      return Node<#k,#v>{ 1, k, v, empty, empty }
     }
   }
 
@@ -122,10 +126,10 @@ define Node {
   find (node,k) {
     if (present(node)) {
       scoped {
-        Node<#x> node2 <- require(node)
-      } in if (k < node2.getKey()) {
+        Node<#k,#v> node2 <- require(node)
+      } in if (#k$lessThan(k,node2.getKey())) {
         return find(node2.getLeft(),k)
-      } elif (k > node2.getKey()) {
+      } elif (#k$lessThan(node2.getKey(),k)) {
         return find(node2.getRight(),k)
       } else {
         return node2.getValue()
@@ -148,7 +152,7 @@ define Node {
   getRight () { return right }
   setRight (r) { right <- r }
 
-  @type fixHeight (Node<#x>) -> ()
+  @type fixHeight (Node<#k,#v>) -> ()
   fixHeight (node) {
     scoped {
       Int l <- 0
@@ -166,7 +170,7 @@ define Node {
     }
   }
 
-  @type balance (Node<#x>) -> (Node<#x>)
+  @type balance (Node<#k,#v>) -> (Node<#k,#v>)
   balance (node) {
     // TODO: Implement balancing.
     return node

@@ -4,6 +4,9 @@
 #include "category-header.hpp"
 
 
+extern const Function<SymbolScope::TYPE,0,2,1>& Function_LessThan_lessThan;
+extern const Function<SymbolScope::TYPE,0,2,1>& Function_Equals_equals;
+
 TypeInstance& Merge_Intersect(L<TypeInstance*> params);
 TypeInstance& Merge_Union(L<TypeInstance*> params);
 

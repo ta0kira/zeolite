@@ -74,6 +74,19 @@ struct Category_String : public TypeCategory {
 
 struct Type_String : public TypeInstance {
   std::string CategoryName() const final { return "String"; }
+
+  DReturns Dispatch(const DFunction<SymbolScope::TYPE>& label,
+                    DParams params, DArgs args) final {
+    FAIL_IF(args.size() != label.ArgCount());
+    FAIL_IF(params.size() != label.ParamCount());
+    if (&label == &Function_LessThan_lessThan) {
+      return DReturns{Box_Bool(args[0]->AsString()<args[1]->AsString())};
+    }
+    if (&label == &Function_Equals_equals) {
+      return DReturns{Box_Bool(args[0]->AsString()==args[1]->AsString())};
+    }
+    return TypeInstance::Dispatch(label, params, args);
+  }
 };
 
 class Value_String : public TypeValue {
@@ -94,6 +107,19 @@ struct Category_Int : public TypeCategory {
 
 struct Type_Int : public TypeInstance {
   std::string CategoryName() const final { return "Int"; }
+
+  DReturns Dispatch(const DFunction<SymbolScope::TYPE>& label,
+                    DParams params, DArgs args) final {
+    FAIL_IF(args.size() != label.ArgCount());
+    FAIL_IF(params.size() != label.ParamCount());
+    if (&label == &Function_LessThan_lessThan) {
+      return DReturns{Box_Bool(args[0]->AsInt()<args[1]->AsInt())};
+    }
+    if (&label == &Function_Equals_equals) {
+      return DReturns{Box_Bool(args[0]->AsInt()==args[1]->AsInt())};
+    }
+    return TypeInstance::Dispatch(label, params, args);
+  }
 };
 
 class Value_Int : public TypeValue {
@@ -114,6 +140,19 @@ struct Category_Float : public TypeCategory {
 
 struct Type_Float : public TypeInstance {
   std::string CategoryName() const final { return "Float"; }
+
+  DReturns Dispatch(const DFunction<SymbolScope::TYPE>& label,
+                    DParams params, DArgs args) final {
+    FAIL_IF(args.size() != label.ArgCount());
+    FAIL_IF(params.size() != label.ParamCount());
+    if (&label == &Function_LessThan_lessThan) {
+      return DReturns{Box_Bool(args[0]->AsFloat()<args[1]->AsFloat())};
+    }
+    if (&label == &Function_Equals_equals) {
+      return DReturns{Box_Bool(args[0]->AsFloat()==args[1]->AsFloat())};
+    }
+    return TypeInstance::Dispatch(label, params, args);
+  }
 };
 
 class Value_Float : public TypeValue {
@@ -129,6 +168,11 @@ class Value_Float : public TypeValue {
 };
 
 }  // namespace
+
+const Function<SymbolScope::TYPE,0,2,1>& Function_LessThan_lessThan =
+  *new Function<SymbolScope::TYPE,0,2,1>("LessThan", "lessThan");
+const Function<SymbolScope::TYPE,0,2,1>& Function_Equals_equals =
+   *new Function<SymbolScope::TYPE,0,2,1>("Equals", "equals");
 
 TypeInstance& Merge_Intersect(L<TypeInstance*> params) {
   static auto& cache = *new std::map<L<TypeInstance*>,R<Type_Intersect>>();
