@@ -72,6 +72,10 @@ define Value {
 
   @value set (#x) -> ()
   set (value2) {
+    ~ 123.4
+    ~ 123
+    ~ "123.4"
+    ~ 0x123
     value <- value2
   }
 }

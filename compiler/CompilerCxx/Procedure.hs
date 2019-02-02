@@ -138,7 +138,9 @@ compileCondition ctx c e = do
       return $ "std::get<0>(" ++ e' ++ ")->AsBool()"
       where
         checkCondition (ParamSet [t]) | t == boolRequiredValue = return ()
-        checkCondition _ = compileError "Conditionals must have exactly one Bool return"
+        checkCondition (ParamSet ts) =
+          compileError $ "Conditionals must have exactly one Bool return but found {" ++
+                         intercalate "," (map show ts) ++ "}"
 
 -- Returns the state so that returns can be properly checked for if/elif/else.
 compileProcedure :: (Show c, Monad m, CompileErrorM m, MergeableM m,
@@ -323,7 +325,24 @@ compileScopedBlock s = do
 compileExpression :: (Show c, Monad m, CompileErrorM m, MergeableM m,
                       CompilerContext c m [String] a) =>
   Expression c -> CompilerState a m (ExpressionType,String)
-compileExpression = compile where -- TODO: Rewrite for operator precedence?
+compileExpression = compile where
+  compile (Literal (StringLiteral c l)) = do
+    return (ParamSet [stringRequiredValue],"T_get(Box_String(\"" ++ l ++ "\"))")
+  compile (Literal (IntegerLiteral c l)) = do
+    -- TODO: Check bounds.
+    return (ParamSet [intRequiredValue],"T_get(Box_Int(" ++ l ++ "))")
+  compile (Literal (HexLiteral c l)) = do
+    -- TODO: Check bounds.
+    return (ParamSet [intRequiredValue],"T_get(Box_Int(0x" ++ l ++ "))")
+  compile (Literal (DecimalLiteral c l1 l2)) = do
+    -- TODO: Check bounds.
+    return (ParamSet [floatRequiredValue],"T_get(Box_Float(" ++ l1 ++ "." ++ l2 ++ "))")
+  compile (Literal (BoolLiteral c True)) = do
+    return (ParamSet [boolRequiredValue],"T_get(Var_true)")
+  compile (Literal (BoolLiteral c False)) = do
+    return (ParamSet [boolRequiredValue],"T_get(Var_false)")
+  compile (Literal (EmptyLiteral c)) = do
+    return (ParamSet [emptyValue],"T_get(Var_empty)")
   compile (Expression c s os) = do
     foldl transform (compileExpressionStart s) os
   compile (UnaryExpression c o e) = do
@@ -370,6 +389,52 @@ compileExpression = compile where -- TODO: Rewrite for operator precedence?
       checkArity (_,ParamSet [_]) = return ()
       checkArity (i,ParamSet ts)  =
         compileError $ "Initializer position " ++ show i ++ " has " ++ show (length ts) ++ " values but should have 1"
+  compile (InfixExpression c e1 o e2) = do
+    e1' <- compileExpression e1
+    e2' <- compileExpression e2
+    bindInfix c e1' o e2'
+  arithmetic1 = Set.fromList ["*","/"]
+  arithmetic2 = Set.fromList ["%"]
+  arithmetic3 = Set.fromList ["+","-"]
+  arithmetic = Set.union arithmetic1 arithmetic2
+  comparison = Set.fromList ["==","!=","<","<=",">",">="]
+  logical = Set.fromList ["&&","||"]
+  bindInfix c (ParamSet ts1,e1) o (ParamSet ts2,e2) = do
+    -- TODO: Needs better error messages.
+    t1' <- requireSingle c ts1
+    t2' <- requireSingle c ts2
+    bind t1' t2'
+    where
+      bind t1 t2
+        | t1 /= t2 =
+          lift $ compileError $ "Cannot " ++ show o ++ " " ++ show t1 ++ " and " ++
+                                show t2 ++ " [" ++ formatFullContext c ++ "]"
+        | o `Set.member` comparison && t1 == intRequiredValue = do
+          return (ParamSet [boolRequiredValue],glueInfix "Int" "Bool" e1 o e2)
+        | o `Set.member` comparison && t1 == floatRequiredValue = do
+          return (ParamSet [boolRequiredValue],glueInfix "Float" "Bool" e1 o e2)
+        | o `Set.member` comparison && t1 == stringRequiredValue = do
+          return (ParamSet [boolRequiredValue],glueInfix "String" "Bool" e1 o e2)
+        | o `Set.member` arithmetic1 && t1 == intRequiredValue = do
+          return (ParamSet [intRequiredValue],glueInfix "Int" "Int" e1 o e2)
+        | o `Set.member` arithmetic2 && t1 == intRequiredValue = do
+          return (ParamSet [intRequiredValue],glueInfix "Int" "Int" e1 o e2)
+        | o `Set.member` arithmetic3 && t1 == intRequiredValue = do
+          return (ParamSet [intRequiredValue],glueInfix "Int" "Int" e1 o e2)
+        | o `Set.member` arithmetic1 && t1 == floatRequiredValue = do
+          return (ParamSet [floatRequiredValue],glueInfix "Float" "Float" e1 o e2)
+        | o `Set.member` arithmetic3 && t1 == floatRequiredValue = do
+          return (ParamSet [floatRequiredValue],glueInfix "Float" "Float" e1 o e2)
+        | o == "+" && t1 == stringRequiredValue = do
+          return (ParamSet [stringRequiredValue],glueInfix "String" "String" e1 o e2)
+        | o `Set.member` logical && t1 == boolRequiredValue = do
+          return (ParamSet [boolRequiredValue],glueInfix "Bool" "Bool" e1 o e2)
+        | otherwise =
+          lift $ compileError $ "Cannot " ++ show o ++ " " ++ show t1 ++ " and " ++
+                                show t2 ++ " [" ++ formatFullContext c ++ "]"
+      glueInfix t1 t2 e1 o e2 =
+        "T_get(Box_" ++ t2 ++ "(std::get<0>(" ++ e1 ++ ")->As" ++ t1 ++ "()" ++ o ++
+                               "std::get<0>(" ++ e2 ++ ")->As" ++ t1 ++ "()" ++ "))"
   transform e (ConvertedCall c t f) = do
     (ParamSet ts,e') <- e
     t' <- requireSingle c ts
@@ -385,12 +450,10 @@ compileExpression = compile where -- TODO: Rewrite for operator precedence?
     t' <- requireSingle c ts
     f' <- lookupValueFunction t' f
     compileFunctionCall (Just $ "std::get<0>(" ++ e' ++ ")") f' f
-  transform e (BinaryOperation c s e2) = do
-    lift $ compileError $ "BinaryOperation " ++ formatFullContext c
   requireSingle c [t] = return t
   requireSingle c ts =
-    lift $ compileError $ "Function call requires 1 return but found " ++
-                          show (length ts) ++ " [" ++ formatFullContext c ++ "]"
+    lift $ compileError $ "Function call requires 1 return but found but found {" ++
+                          intercalate "," (map show ts) ++ "} [" ++ formatFullContext c ++ "]"
 
 lookupValueFunction :: (Show c, Monad m, CompileErrorM m, MergeableM m,
                         CompilerContext c m [String] a) =>

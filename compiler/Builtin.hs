@@ -3,6 +3,7 @@
 module Builtin (
   boolRequiredValue,
   builtinCategories,
+  emptyValue,
   floatRequiredValue,
   intRequiredValue,
   stringRequiredValue,
@@ -13,6 +14,8 @@ import qualified Data.Map as Map
 
 import TypeCategory
 import TypeInstance
+import TypesBase
+
 
 builtinCategories :: CategoryMap c
 builtinCategories = Map.fromList $ [
@@ -30,6 +33,8 @@ intRequiredValue :: ValueType
 intRequiredValue = requiredSingleton BuiltinInt
 floatRequiredValue :: ValueType
 floatRequiredValue = requiredSingleton BuiltinFloat
+emptyValue :: ValueType
+emptyValue = ValueType OptionalValue $ TypeMerge MergeUnion []
 
 builtinBool :: AnyCategory c
 builtinBool = ValueConcrete {

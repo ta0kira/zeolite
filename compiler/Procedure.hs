@@ -153,7 +153,9 @@ data ScopedBlock c =
 
 data Expression c =
   Expression [c] (ExpressionStart c) [ValueOperation c] |
+  Literal (ValueLiteral c) |
   UnaryExpression [c] String (Expression c) |
+  InfixExpression [c] (Expression c) String (Expression c) |
   InitializeValue [c] TypeInstance (ParamSet GeneralInstance) (ParamSet (Expression c))
   deriving (Show)
 
@@ -167,7 +169,6 @@ data FunctionCall c =
   deriving (Show)
 
 data ExpressionStart c =
-  Literal (ValueLiteral c) |
   NamedVariable (OutputValue c) |
   CategoryCall [c] CategoryName (FunctionCall c) |
   TypeCall [c] TypeInstanceOrParam (FunctionCall c) |
@@ -177,16 +178,17 @@ data ExpressionStart c =
   InlineAssignment [c] VariableName (Expression c)
   deriving (Show)
 
--- TODO: Add character literal, and maybe bool literal.
+-- TODO: Add character literal.
 data ValueLiteral c =
   StringLiteral [c] String |
   IntegerLiteral [c] String |
   HexLiteral [c] String |
-  DecimalLiteral [c] String String
+  DecimalLiteral [c] String String |
+  BoolLiteral [c] Bool |
+  EmptyLiteral [c]
   deriving (Show)
 
 data ValueOperation c =
   ConvertedCall [c] TypeInstance (FunctionCall c) |
-  ValueCall [c] (FunctionCall c) |
-  BinaryOperation [c] String (Expression c)
+  ValueCall [c] (FunctionCall c)
   deriving (Show)

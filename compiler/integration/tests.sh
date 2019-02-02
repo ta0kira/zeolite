@@ -654,7 +654,7 @@ define Test {
 }
 END
 
-expect_error 'multi return to call' 'call.+found 2' 'line 9' <<END
+expect_error 'multi return to call' 'call.+\{Value,Value\}' 'line 9' <<END
 @value interface Value {
   get () -> (Value,Value)
   call () -> ()
@@ -670,7 +670,7 @@ define Test {
 }
 END
 
-expect_error 'zero return to call' 'call.+found 0' 'line 9' <<END
+expect_error 'zero return to call' 'call.+\{\}' 'line 9' <<END
 @value interface Value {
   get () -> ()
   call () -> ()
@@ -1669,6 +1669,175 @@ define Test {
     scoped {
       optional (Base1|Base2) value2 <- reduce<(Value1&Value2),(Base1|Base2)>(value)
     } in if (present(value2)) {
+      ~ Util\$crash()
+    }
+  }
+}
+END
+
+expect_runs 'int arithmetic with precedence' <<END
+define Test {
+  run () {
+    scoped {
+      Int x <- 0x10 + 1 * 2 - 8 / 2 - 3 % 2
+    } in if (x != 13) {
+      ~ Util\$crash()
+    }
+  }
+}
+END
+
+expect_error 'int + bool' 'Int.+Bool' 'line 3' <<END
+define Test {
+  run () {
+    ~ 0x10 + false
+  }
+}
+END
+
+expect_error 'int + string' 'Int.+String' 'line 3' <<END
+define Test {
+  run () {
+    ~ 0x10 + ""
+  }
+}
+END
+
+expect_runs 'string arithmetic' <<END
+define Test {
+  run () {
+    scoped {
+      String x <- "x" + "y" + "z"
+    } in if (x != "xyz") {
+      ~ Util\$crash()
+    }
+  }
+}
+END
+
+expect_runs 'float arithmetic with precedence' <<END
+define Test {
+  run () {
+    scoped {
+      Float x <- 16.0 + 1.0 * 2.0 - 8.0 / 2.0 - 3.0 / 3.0
+    } in if (x != 13.0) {
+      ~ Util\$crash()
+    }
+  }
+}
+END
+
+expect_runs 'int comparison' <<END
+define Test {
+  run () {
+    if (!(1 <  2)) { ~ Util\$crash() }
+    if (!(1 <= 2)) { ~ Util\$crash() }
+    if (!(1 == 1)) { ~ Util\$crash() }
+    if (!(1 != 2)) { ~ Util\$crash() }
+    if (!(2 >  1)) { ~ Util\$crash() }
+    if (!(2 >= 1)) { ~ Util\$crash() }
+  }
+}
+END
+
+expect_runs 'float comparison' <<END
+define Test {
+  run () {
+    if (!(1.0 <  2.0)) { ~ Util\$crash() }
+    if (!(1.0 <= 2.0)) { ~ Util\$crash() }
+    if (!(1.0 == 1.0)) { ~ Util\$crash() }
+    if (!(1.0 != 2.0)) { ~ Util\$crash() }
+    if (!(2.0 >  1.0)) { ~ Util\$crash() }
+    if (!(2.0 >= 1.0)) { ~ Util\$crash() }
+  }
+}
+END
+
+expect_runs 'string comparison' <<END
+define Test {
+  run () {
+    if (!("x" <  "y")) { ~ Util\$crash() }
+    if (!("x" <= "y")) { ~ Util\$crash() }
+    if (!("x" == "x")) { ~ Util\$crash() }
+    if (!("x" != "y")) { ~ Util\$crash() }
+    if (!("y" >  "x")) { ~ Util\$crash() }
+    if (!("y" >= "x")) { ~ Util\$crash() }
+  }
+}
+END
+
+expect_runs 'bool logic with precedence' <<END
+define Test {
+  run () {
+    scoped {
+      Bool x <- false && false || true
+    } in if (!x) {
+      ~ Util\$crash()
+    }
+  }
+}
+END
+
+expect_error 'minus string' 'String.+String' 'line 3' <<END
+define Test {
+  run () {
+    ~ "x" - "x"
+  }
+}
+END
+
+expect_error 'arithmetic bool' 'Bool.+Bool' 'line 3' <<END
+define Test {
+  run () {
+    ~ true - false
+  }
+}
+END
+
+expect_runs 'string plus with comparison' <<END
+define Test {
+  run () {
+    if (!("x" + "w" < "x" + "y")) {
+      ~ Util\$crash()
+    }
+  }
+}
+END
+
+expect_runs 'int arithmetic with comparison' <<END
+define Test {
+  run () {
+    if (!(2 + 1 < 2 + 3)) {
+      ~ Util\$crash()
+    }
+  }
+}
+END
+
+expect_runs 'float arithmetic with comparison' <<END
+define Test {
+  run () {
+    if (!(2.0 + 1.0 < 2.0 + 3.0)) {
+      ~ Util\$crash()
+    }
+  }
+}
+END
+
+expect_error 'bool comparison' 'Bool.+Int' 'line 3' <<END
+define Test {
+  run () {
+    ~ 1 < 2 < 3
+  }
+}
+END
+
+expect_runs 'arithmetic, comparison, logic' <<END
+define Test {
+  run () {
+    scoped {
+      Bool x <- 1 + 2 < 4 && 3 >= 1 * 2 + 1
+    } in if (!x) {
       ~ Util\$crash()
     }
   }

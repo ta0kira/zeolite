@@ -197,34 +197,56 @@ instance ParseFromSource (ScopedBlock SourcePos) where
     return $ ScopedBlock [c] p s
 
 instance ParseFromSource (Expression SourcePos) where
-  sourceParser = unary <|> expression <|> initalize where
-    unary = do
-      c <- getPosition
-      o <- unaryOperator
-      e <- sourceParser
-      return $ UnaryExpression [c] o e
-    expression = labeled "expression" $ do
-      c <- getPosition
-      s <- try sourceParser
-      vs <- many sourceParser
-      return $ Expression [c] s vs
-    initalize = do
-      c <- getPosition
-      t <- try sourceParser :: Parser TypeInstance
-      sepAfter (string "{")
-      withParams c t <|> withoutParams c t
-    withParams c t = do
-      try kwTypes
-      ps <- between (sepAfter $ string "<")
-                    (sepAfter $ string ">")
-                    (sepBy sourceParser (sepAfter $ string ","))
-      as <- (sepAfter (string ",") >> sepBy sourceParser (sepAfter $ string ",")) <|> return []
-      sepAfter (string "}")
-      return $ InitializeValue [c] t (ParamSet ps) (ParamSet as)
-    withoutParams c t = do
-      as <- sepBy sourceParser (sepAfter $ string ",")
-      sepAfter (string "}")
-      return $ InitializeValue [c] t (ParamSet []) (ParamSet as)
+  sourceParser = do
+    e <- notInfix
+    asInfix [e] [] <|> return e
+    where
+      notInfix = literal <|> unary <|> expression <|> initalize
+      asInfix es os = do
+        c <- getPosition
+        o <- binaryOperator
+        e2 <- notInfix
+        let es' = es ++ [e2]
+        let os' = os ++ [([c],o)]
+        asInfix es' os' <|> return (infixToTree [] es' os')
+      infixToTree [(e1,c1,o1)] [e2] [] = InfixExpression c1 e1 o1 e2
+      infixToTree [] (e1:es) ((c1,o1):os) = infixToTree [(e1,c1,o1)] es os
+      infixToTree ((e1,c1,o1):ss) [e2] [] = let e2' = InfixExpression c1 e1 o1 e2 in
+                                                infixToTree ss [e2'] []
+      infixToTree ((e1,c1,o1):ss) (e2:es) ((c2,o2):os)
+        | o1 `infixBefore` o2 = let e1' = InfixExpression c1 e1 o1 e2 in
+                                    infixToTree ss (e1':es) ((c2,o2):os)
+        | otherwise = infixToTree ((e2,c2,o2):(e1,c1,o1):ss) es os
+      literal = do
+        l <- sourceParser
+        return $ Literal l
+      unary = do
+        c <- getPosition
+        o <- unaryOperator
+        e <- sourceParser
+        return $ UnaryExpression [c] o e
+      expression = labeled "expression" $ do
+        c <- getPosition
+        s <- try sourceParser
+        vs <- many sourceParser
+        return $ Expression [c] s vs
+      initalize = do
+        c <- getPosition
+        t <- try sourceParser :: Parser TypeInstance
+        sepAfter (string "{")
+        withParams c t <|> withoutParams c t
+      withParams c t = do
+        try kwTypes
+        ps <- between (sepAfter $ string "<")
+                      (sepAfter $ string ">")
+                      (sepBy sourceParser (sepAfter $ string ","))
+        as <- (sepAfter (string ",") >> sepBy sourceParser (sepAfter $ string ",")) <|> return []
+        sepAfter (string "}")
+        return $ InitializeValue [c] t (ParamSet ps) (ParamSet as)
+      withoutParams c t = do
+        as <- sepBy sourceParser (sepAfter $ string ",")
+        sepAfter (string "}")
+        return $ InitializeValue [c] t (ParamSet []) (ParamSet as)
 
 parseFunctionCall :: SourcePos -> FunctionName -> Parser (FunctionCall SourcePos)
 parseFunctionCall c n = do
@@ -248,16 +270,12 @@ builtinFunction = foldr (<|>) (fail "empty") $ map try [
 
 instance ParseFromSource (ExpressionStart SourcePos) where
   sourceParser = labeled "expression start" $
-                 literal <|>
                  parens <|>
                  variableOrUnqualified <|>
                  builtinCall <|>
                  builtinValue <|>
                  try typeOrCategoryCall <|>
                  typeCall where
-    literal = do
-      l <- sourceParser
-      return $ Literal l
     parens = do
       c <- getPosition
       sepAfter (string "(")
@@ -318,7 +336,9 @@ instance ParseFromSource (ValueLiteral SourcePos) where
   sourceParser = labeled "literal" $
                  stringLiteral <|>
                  hexLiteral <|>
-                 numberLiteral where
+                 numberLiteral <|>
+                 boolLiteral <|>
+                 emptyLiteral where
     stringLiteral = do
       c <- getPosition
       string "\""
@@ -335,6 +355,7 @@ instance ParseFromSource (ValueLiteral SourcePos) where
       c <- getPosition
       try (string "0x")
       ds <- many1 hexDigit
+      optionalSpace
       return $ HexLiteral [c] ds
     numberLiteral = do
       c <- getPosition
@@ -348,9 +369,17 @@ instance ParseFromSource (ValueLiteral SourcePos) where
     integer c ds = do
       optionalSpace
       return $ IntegerLiteral [c] ds
+    boolLiteral = do
+      c <- getPosition
+      b <- try $ (kwTrue >> return True) <|> (kwFalse >> return False)
+      return $ BoolLiteral [c] b
+    emptyLiteral = do
+      c <- getPosition
+      try kwEmpty
+      return $ EmptyLiteral [c]
 
 instance ParseFromSource (ValueOperation SourcePos) where
-  sourceParser = try valueCall <|> try conversion <|> binary where
+  sourceParser = try valueCall <|> try conversion where
     valueCall = labeled "function call" $ do
       c <- getPosition
       valueSymbolGet
@@ -365,8 +394,3 @@ instance ParseFromSource (ValueOperation SourcePos) where
       n <- sourceParser
       f <- parseFunctionCall c n
       return $ ConvertedCall [c] t f
-    binary = labeled "binary operator" $ do
-      c <- getPosition
-      o <- try binaryOperator -- NOTE: Need try for "/", due to "//" and "/*".
-      e <- sourceParser
-      return $ BinaryOperation [c] o e

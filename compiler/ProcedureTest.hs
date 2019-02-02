@@ -2,6 +2,7 @@
 
 module ProcedureTest where
 
+import Control.Monad
 import Text.Parsec
 import Text.Parsec.String
 
@@ -148,22 +149,43 @@ tests = [
     checkShortParseSuccess "~ x <= y",
     checkShortParseFail "~ x < <- y",
 
-    checkShortParseSuccess "x <- 123",
-    checkShortParseSuccess "x <- 123.0",
+    checkShortParseSuccess "x <- 123 + 123",
+    checkShortParseSuccess "x <- 123.0 - 123.0",
     checkShortParseFail "x <- 123.",
-    checkShortParseSuccess "x <- 0.123",
+    checkShortParseSuccess "x <- 0.123 * 0.123",
     checkShortParseFail "x <- .123",
-    checkShortParseSuccess "x <- 12.3",
+    checkShortParseSuccess "x <- 12.3 / 12.3",
     checkShortParseFail "x <- 12.3.",
     checkShortParseSuccess "x <- 12.3 + -456.7",
-    checkShortParseSuccess "x <- 0x123aBc",
+    checkShortParseSuccess "x <- 0x123aBc + 0x123aBc",
     checkShortParseFail "x <- 0x123aQc",
     checkShortParseFail "x <- 0x",
     checkShortParseFail "x <- 0x1.2",
     checkShortParseSuccess "x <- \" return \\\"\\\" \" + \"1fds\"",
     checkShortParseFail "x <- \"fsdfd",
     checkShortParseFail "x <- \"\"fsdfd",
-    checkShortParseSuccess "x <- 123.0 + z.call()"
+    checkShortParseSuccess "x <- 123.0 + z.call()",
+    checkShortParseFail "x <- \"123\".call()",
+    checkShortParseFail "x <- 123.call()",
+
+    checkParsesAs "1 + 2 < 4 && 3 >= 1 * 2 + 1 || true"
+                  (\e -> case e of
+                              (InfixExpression _
+                                (InfixExpression _
+                                  (InfixExpression _
+                                    (InfixExpression _
+                                      (Literal (IntegerLiteral _ "1")) "+"
+                                      (Literal (IntegerLiteral _ "2"))) "<"
+                                    (Literal (IntegerLiteral _ "4"))) "&&"
+                                  (InfixExpression _
+                                    (Literal (IntegerLiteral _ "3")) ">="
+                                    (InfixExpression _
+                                      (InfixExpression _
+                                        (Literal (IntegerLiteral _ "1")) "*"
+                                        (Literal (IntegerLiteral _ "2"))) "+"
+                                      (Literal (IntegerLiteral _ "1"))))) "||"
+                                (Literal (BoolLiteral _ True))) -> True
+                              _ -> False)
   ]
 
 checkParseSuccess f = do
@@ -201,3 +223,14 @@ checkShortParseFail s = do
       | isCompileError c = return ()
       | otherwise = compileError $ "Parse '" ++ s ++ "': Expected failure but got\n" ++
                                    show (getCompileSuccess c) ++ "\n"
+
+checkParsesAs s m = return $ do
+  let parsed = readSingle "(string)" s :: CompileInfo (Expression SourcePos)
+  check parsed
+  e <- parsed
+  when (not $ m e) $
+    compileError $ "No match in '" ++ s ++ "':\n" ++ show e
+  where
+    check c
+      | isCompileError c = compileError $ "Parse '" ++ s ++ "':\n" ++ show (getCompileError c)
+      | otherwise = return ()

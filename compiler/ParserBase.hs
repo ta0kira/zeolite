@@ -9,6 +9,7 @@ module ParserBase (
   builtinValues,
   categorySymbolGet,
   endOfDoc,
+  infixBefore,
   initSeparator,
   keyword,
   kwAll,
@@ -22,6 +23,7 @@ module ParserBase (
   kwElif,
   kwElse,
   kwEmpty,
+  kwFalse,
   kwIf,
   kwIn,
   kwIgnore,
@@ -36,6 +38,7 @@ module ParserBase (
   kwSelf,
   kwScoped,
   kwStrong,
+  kwTrue,
   kwType,
   kwTypes,
   kwValue,
@@ -79,10 +82,7 @@ assignOperator    = operator "<-"
 -- TODO: Maybe this should not use strings.
 builtinValues :: Parser String
 builtinValues = foldr (<|>) (fail "empty") $ map try [
-    kwEmpty >> return "empty",
-    kwFalse >> return "false",
-    kwSelf >> return "self",
-    kwTrue >> return "true"
+    kwSelf >> return "self"
   ]
 
 -- TODO: Maybe this should not use strings.
@@ -98,6 +98,15 @@ binaryOperator =
   labeled "binary operator" $ foldr (<|>) (fail "empty") $ map (try . operator) [
       "+","-","*","/","%","==","!=","<","<=",">",">=","&&","||"
     ]
+
+infixBefore :: String -> String -> Bool
+infixBefore o1 o2 = (infixOrder o1) <= (infixOrder o2) where
+  infixOrder o
+    -- TODO: Don't hard-code this.
+    | o `Set.member` Set.fromList ["*","/","%"] = 1
+    | o `Set.member` Set.fromList ["+","-"] = 2
+    | o `Set.member` Set.fromList ["==","!=","<","<=",">",">="] = 3
+    | o `Set.member` Set.fromList ["&&","||"] = 4
 
 kwAll = keyword "all"
 kwAllows = keyword "allows"

@@ -493,8 +493,5 @@ getContextForInit tm t d s = do
 
 builtinVariables :: TypeInstance -> Map.Map VariableName (VariableValue c)
 builtinVariables t = Map.fromList [
-    (VariableName "self",VariableValue [] ValueScope (ValueType RequiredValue $ SingleType $ JustTypeInstance t)),
-    (VariableName "empty",VariableValue [] LocalScope (ValueType OptionalValue $ TypeMerge MergeUnion [])),
-    (VariableName "true",VariableValue [] LocalScope boolRequiredValue),
-    (VariableName "false",VariableValue [] LocalScope boolRequiredValue)
+    (VariableName "self",VariableValue [] ValueScope (ValueType RequiredValue $ SingleType $ JustTypeInstance t))
   ]
