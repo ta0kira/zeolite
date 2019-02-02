@@ -90,17 +90,17 @@ assignFunctionParams r fm ts ff@(FunctionType as rs ps fa) = do
 
 checkFunctionConvert :: (MergeableM m, CompileErrorM m, Monad m) =>
   TypeResolver m -> ParamFilters -> FunctionType -> FunctionType -> m ()
-checkFunctionConvert r fm ff1 ff2@(FunctionType as2 rs2 ps2 fa2) = do
-  mapped <- fmap Map.fromList $ processParamPairs alwaysPairParams ps2 fa2
+checkFunctionConvert r fm ff1@(FunctionType as1 rs1 ps1 fa1) ff2 = do
+  mapped <- fmap Map.fromList $ processParamPairs alwaysPairParams ps1 fa1
   let fm' = Map.union fm mapped
-  let asTypes = ParamSet $ map (SingleType . JustParamName) $ psParams ps2
+  let asTypes = ParamSet $ map (SingleType . JustParamName) $ psParams ps1
   -- Substitute params from ff2 into ff1.
-  (FunctionType as1 rs1 _ _) <- assignFunctionParams r fm' asTypes ff1
-  fixed <- processParamPairs alwaysPairParams ps2 fa2
+  (FunctionType as2 rs2 _ _) <- assignFunctionParams r fm' asTypes ff2
+  fixed <- processParamPairs alwaysPairParams ps1 fa1
   let fm' = Map.union fm (Map.fromList fixed)
   processParamPairs (validateArg fm') as1 as2
   processParamPairs (validateReturn fm') rs1 rs2
   return ()
   where
-    validateArg fm a1 a2 = checkValueTypeMatch r fm a2 a1
-    validateReturn fm r1 r2 = checkValueTypeMatch r fm r1 r2
+    validateArg fm a1 a2 = checkValueTypeMatch r fm a1 a2
+    validateReturn fm r1 r2 = checkValueTypeMatch r fm r2 r1

@@ -1947,5 +1947,109 @@ define Test {
 }
 END
 
+expect_runs 'internal merge' <<END
+@value interface Interface {
+  call () -> (Interface)
+}
+
+concrete Value {
+  refines Interface
+  @type create () -> (Value)
+}
+
+define Value {
+  create () {
+    return Value{}
+  }
+
+  @value call () -> (Value)
+  call () {
+    return self
+  }
+}
+
+define Test {
+  run () {
+    ~ Value\$create().call().call()
+  }
+}
+END
+
+expect_error 'internal merge failed' 'Interface2' 'line 18' <<END
+@value interface Interface {}
+
+@value interface Interface2 {
+  refines Interface
+  call () -> (Interface2)
+}
+
+concrete Value {
+  refines Interface2
+  @type create () -> (Value)
+}
+
+define Value {
+  create () {
+    return Value{}
+  }
+
+  @value call () -> (Interface)
+  call () {
+    return self
+  }
+}
+
+define Test {
+  run () {}
+}
+END
+
+expect_runs 'external merge' <<END
+@value interface Interface {
+  call () -> (Interface)
+}
+
+concrete Value {
+  refines Interface
+  @type create () -> (Value)
+  @value call () -> (Value)
+}
+
+define Value {
+  create () {
+    return Value{}
+  }
+
+  call () {
+    return self
+  }
+}
+
+define Test {
+  run () {
+    ~ Value\$create().call().call()
+  }
+}
+END
+
+expect_error 'external merge failed' 'Interface2' 'line 11' <<END
+@value interface Interface {}
+
+@value interface Interface2 {
+  refines Interface
+  call () -> (Interface2)
+}
+
+concrete Value {
+  refines Interface2
+  @type create () -> (Value)
+  @value call () -> (Interface)
+}
+
+define Test {
+  run () {}
+}
+END
+
 
 echo "All $count tests passed" 1>&2

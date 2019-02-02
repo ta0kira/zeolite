@@ -361,7 +361,7 @@ setInternalFunctions r t fs = foldr update (return start) fs where
              f0' <- parsedToFunctionType f0
              f' <- parsedToFunctionType f
              checkFunctionConvert r filters f0' f'
-           return $ Map.insert n (ScopedFunction (c++c2) n t2 s as rs ps fs (ms++ms2)) fa'
+           return $ Map.insert n (ScopedFunction (c++c2) n t2 s as rs ps fs ([f0]++ms++ms2)) fa'
 
 pairProceduresToFunctions :: (Show c, Monad m, CompileErrorM m, MergeableM m) =>
   Map.Map FunctionName (ScopedFunction c) -> [ExecutableProcedure c] ->

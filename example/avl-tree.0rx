@@ -18,7 +18,7 @@ define Main {
     ~ check(tree,5)
   }
 
-  @type check (Tree<Int,String>,Int) -> ()
+  @type check (TreeRead<Int,String>,Int) -> ()
   check (tree,key) {
     scoped {
       optional String value <- tree.get(key)
@@ -36,14 +36,24 @@ define Main {
   }
 }
 
-concrete Tree<#k,#v> {
+@value interface TreeWrite<#k,#v|> {
+  set (#k,#v) -> (TreeWrite<#k,#v>)
+  remove (#k) -> (TreeWrite<#k,#v>)
+}
+
+@value interface TreeRead<#k|#v> {
+  get (#k) -> (optional #v)
+}
+
+concrete Tree<#k|#v|> {
+  refines TreeWrite<#k,#v>
+  refines TreeRead<#k,#v>
   #k defines LessThan<#k>
 
   @type new () -> (Tree<#k,#v>)
 
   @value set (#k,#v) -> (Tree<#k,#v>)
   @value remove (#k) -> (Tree<#k,#v>)
-  @value get (#k) -> (optional #v)
 }
 
 concrete Node<#k,#v> {
