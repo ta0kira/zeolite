@@ -450,29 +450,29 @@ tests = [
     checkOperationSuccess
       "testfiles/filters.0rx"
       (\ts -> do
-        ts <- topoSortCategories builtinCategories ts
-        ta <- flattenAllConnections builtinCategories ts >>= declareAllTypes builtinCategories
+        ts <- topoSortCategories Map.empty ts
+        ta <- flattenAllConnections Map.empty ts >>= declareAllTypes Map.empty
         let r = categoriesToTypeResolver ta
         checkTypeSuccess r [] "Value0<Value1,Value2>"),
     checkOperationFail
       "testfiles/filters.0rx"
       (\ts -> do
-        ts <- topoSortCategories builtinCategories ts
-        ta <- flattenAllConnections builtinCategories ts >>= declareAllTypes builtinCategories
+        ts <- topoSortCategories Map.empty ts
+        ta <- flattenAllConnections Map.empty ts >>= declareAllTypes Map.empty
         let r = categoriesToTypeResolver ta
         checkTypeSuccess r [] "Value0<Value1,Value1>"),
     checkOperationSuccess
       "testfiles/filters.0rx"
       (\ts -> do
-        ts <- topoSortCategories builtinCategories ts
-        ta <- flattenAllConnections builtinCategories ts >>= declareAllTypes builtinCategories
+        ts <- topoSortCategories Map.empty ts
+        ta <- flattenAllConnections Map.empty ts >>= declareAllTypes Map.empty
         let r = categoriesToTypeResolver ta
         checkTypeSuccess r [] "Value0<Value3,Value2>"),
     checkOperationFail
       "testfiles/filters.0rx"
       (\ts -> do
-        ts <- topoSortCategories builtinCategories ts
-        ta <- flattenAllConnections builtinCategories ts >>= declareAllTypes builtinCategories
+        ts <- topoSortCategories Map.empty ts
+        ta <- flattenAllConnections Map.empty ts >>= declareAllTypes Map.empty
         let r = categoriesToTypeResolver ta
         checkTypeSuccess r
           [("#x",[]),("#y",[])]
@@ -480,8 +480,8 @@ tests = [
     checkOperationSuccess
       "testfiles/filters.0rx"
       (\ts -> do
-        ts <- topoSortCategories builtinCategories ts
-        ta <- flattenAllConnections builtinCategories ts >>= declareAllTypes builtinCategories
+        ts <- topoSortCategories Map.empty ts
+        ta <- flattenAllConnections Map.empty ts >>= declareAllTypes Map.empty
         let r = categoriesToTypeResolver ta
         checkTypeSuccess r
           [("#x",["allows #y","requires Function<#x,#y>"]),
@@ -490,8 +490,8 @@ tests = [
     checkOperationSuccess
       "testfiles/filters.0rx"
       (\ts -> do
-        ts <- topoSortCategories builtinCategories ts
-        ta <- flattenAllConnections builtinCategories ts >>= declareAllTypes builtinCategories
+        ts <- topoSortCategories Map.empty ts
+        ta <- flattenAllConnections Map.empty ts >>= declareAllTypes Map.empty
         let r = categoriesToTypeResolver ta
         checkTypeSuccess r
           [("#x",["allows Value2","requires Function<#x,Value2>"])]
@@ -499,8 +499,8 @@ tests = [
     checkOperationFail
       "testfiles/filters.0rx"
       (\ts -> do
-        ts <- topoSortCategories builtinCategories ts
-        ta <- flattenAllConnections builtinCategories ts >>= declareAllTypes builtinCategories
+        ts <- topoSortCategories Map.empty ts
+        ta <- flattenAllConnections Map.empty ts >>= declareAllTypes Map.empty
         let r = categoriesToTypeResolver ta
         checkTypeSuccess r
           [("#x",["allows Value2","requires Function<#x,Value2>"]),

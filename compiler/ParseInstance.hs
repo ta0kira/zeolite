@@ -54,7 +54,16 @@ instance ParseFromSource CategoryName where
     noKeywords
     b <- upper
     e <- sepAfter $ many alphaNum
-    return $ CategoryName (b:e)
+    return $ box (b:e)
+    where
+      box n
+        | n == "Bool"     = BuiltinBool
+        | n == "String"   = BuiltinString
+        | n == "Int"      = BuiltinInt
+        | n == "Float"    = BuiltinFloat
+        | n == "LessThan" = BuiltinLessThan
+        | n == "Equals"   = BuiltinEquals
+        | otherwise = CategoryName n
 
 instance ParseFromSource ParamName where
   sourceParser = labeled "param name" $ do
