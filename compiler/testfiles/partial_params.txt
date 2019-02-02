@@ -1,3 +1,0 @@
-concrete Child<#x|#y> {
-  refines Parent<#x,#y>
-}

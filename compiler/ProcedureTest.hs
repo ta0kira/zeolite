@@ -15,7 +15,7 @@ import TypesBase
 
 tests :: [IO (CompileInfo ())]
 tests = [
-    checkParseSuccess "testfiles/procedures.txt",
+    checkParseSuccess "testfiles/procedures.0rx",
 
     checkShortParseSuccess "return _",
     checkShortParseSuccess "return var",

@@ -23,9 +23,9 @@ import TypesBase
 
 tests :: [IO (CompileInfo ())]
 tests = [
-    checkSingleParseSuccess "testfiles/value_interface.txt",
-    checkSingleParseSuccess "testfiles/type_interface.txt",
-    checkSingleParseSuccess "testfiles/concrete.txt",
+    checkSingleParseSuccess "testfiles/value_interface.0rx",
+    checkSingleParseSuccess "testfiles/type_interface.0rx",
+    checkSingleParseSuccess "testfiles/concrete.0rx",
 
     checkShortParseSuccess "concrete Type<#x> {}",
     checkShortParseSuccess "concrete Type {}",
@@ -56,65 +56,65 @@ tests = [
     checkShortParseFail "@value interface Type { defines T }",
     checkShortParseSuccess "@value interface Type<#x> { #x allows T }",
 
-    checkOperationSuccess "testfiles/value_refines_value.txt" (checkConnectedTypes builtinCategories),
-    checkOperationFail "testfiles/value_refines_instance.txt" (checkConnectedTypes builtinCategories),
-    checkOperationFail "testfiles/value_refines_concrete.txt" (checkConnectedTypes builtinCategories),
-    checkOperationFail "testfiles/builtin_clash.txt" (checkConnectedTypes builtinCategories),
+    checkOperationSuccess "testfiles/value_refines_value.0rx" (checkConnectedTypes builtinCategories),
+    checkOperationFail "testfiles/value_refines_instance.0rx" (checkConnectedTypes builtinCategories),
+    checkOperationFail "testfiles/value_refines_concrete.0rx" (checkConnectedTypes builtinCategories),
+    checkOperationFail "testfiles/builtin_clash.0rx" (checkConnectedTypes builtinCategories),
 
-    checkOperationSuccess "testfiles/concrete_refines_value.txt" (checkConnectedTypes builtinCategories),
-    checkOperationFail "testfiles/concrete_refines_instance.txt" (checkConnectedTypes builtinCategories),
-    checkOperationFail "testfiles/concrete_refines_concrete.txt" (checkConnectedTypes builtinCategories),
-    checkOperationSuccess "testfiles/concrete_defines_instance.txt" (checkConnectedTypes builtinCategories),
-    checkOperationFail "testfiles/concrete_defines_value.txt" (checkConnectedTypes builtinCategories),
-    checkOperationFail "testfiles/concrete_defines_concrete.txt" (checkConnectedTypes builtinCategories),
+    checkOperationSuccess "testfiles/concrete_refines_value.0rx" (checkConnectedTypes builtinCategories),
+    checkOperationFail "testfiles/concrete_refines_instance.0rx" (checkConnectedTypes builtinCategories),
+    checkOperationFail "testfiles/concrete_refines_concrete.0rx" (checkConnectedTypes builtinCategories),
+    checkOperationSuccess "testfiles/concrete_defines_instance.0rx" (checkConnectedTypes builtinCategories),
+    checkOperationFail "testfiles/concrete_defines_value.0rx" (checkConnectedTypes builtinCategories),
+    checkOperationFail "testfiles/concrete_defines_concrete.0rx" (checkConnectedTypes builtinCategories),
 
     checkOperationSuccess
-      "testfiles/concrete_refines_value.txt"
+      "testfiles/concrete_refines_value.0rx"
       (checkConnectedTypes $ Map.fromList [
           (CategoryName "Parent2",InstanceInterface [] (CategoryName "Parent2") [] [] [])
         ]),
     checkOperationFail
-      "testfiles/concrete_refines_value.txt"
+      "testfiles/concrete_refines_value.0rx"
       (checkConnectedTypes $ Map.fromList [
           (CategoryName "Parent",InstanceInterface [] (CategoryName "Parent") [] [] [])
         ]),
 
     checkOperationSuccess
-      "testfiles/partial.txt"
+      "testfiles/partial.0rx"
       (checkConnectedTypes $ Map.fromList [
           (CategoryName "Parent",ValueInterface [] (CategoryName "Parent") [] [] [] [])
         ]),
     checkOperationFail
-      "testfiles/partial.txt"
+      "testfiles/partial.0rx"
       (checkConnectedTypes $ Map.fromList [
           (CategoryName "Parent",InstanceInterface [] (CategoryName "Parent") [] [] [])
         ]),
     checkOperationFail
-      "testfiles/partial.txt"
+      "testfiles/partial.0rx"
       (checkConnectedTypes $ Map.fromList [
           (CategoryName "Parent",ValueConcrete [] (CategoryName "Parent") [] [] [] [] [])
         ]),
 
-    checkOperationSuccess "testfiles/value_refines_value.txt" checkConnectionCycles,
-    checkOperationSuccess "testfiles/concrete_refines_value.txt" checkConnectionCycles,
-    checkOperationSuccess "testfiles/concrete_defines_instance.txt" checkConnectionCycles,
-    checkOperationFail "testfiles/value_cycle.txt" checkConnectionCycles,
+    checkOperationSuccess "testfiles/value_refines_value.0rx" checkConnectionCycles,
+    checkOperationSuccess "testfiles/concrete_refines_value.0rx" checkConnectionCycles,
+    checkOperationSuccess "testfiles/concrete_defines_instance.0rx" checkConnectionCycles,
+    checkOperationFail "testfiles/value_cycle.0rx" checkConnectionCycles,
 
     checkOperationSuccess
-      "testfiles/flatten.txt"
+      "testfiles/flatten.0rx"
       (\ts -> do
         ts <- topoSortCategories builtinCategories ts
         map (show . getCategoryName) ts `containsPaired` [
             "Type","Object2","Object3","Object1","Parent","Child"
           ]),
     checkOperationSuccess
-      "testfiles/flatten.txt"
+      "testfiles/flatten.0rx"
       (\ts -> do
         ts <- topoSortCategories builtinCategories ts
         flattenAllConnections builtinCategories ts),
 
     checkOperationSuccess
-      "testfiles/flatten.txt"
+      "testfiles/flatten.0rx"
       (\ts -> do
         ts <- topoSortCategories builtinCategories ts
         ts <- flattenAllConnections builtinCategories ts
@@ -135,7 +135,7 @@ tests = [
           ]),
 
     checkOperationSuccess
-      "testfiles/flatten.txt"
+      "testfiles/flatten.0rx"
       (\ts -> do
         existing  <- return $ Map.fromList [
             (CategoryName "Parent2",InstanceInterface [] (CategoryName "Parent2") [] [] [])
@@ -143,7 +143,7 @@ tests = [
         ts <- topoSortCategories existing ts
         flattenAllConnections existing ts),
     checkOperationFail
-      "testfiles/flatten.txt"
+      "testfiles/flatten.0rx"
       (\ts -> do
         existing  <- return $ Map.fromList [
             (CategoryName "Parent",InstanceInterface [] (CategoryName "Parent") [] [] [])
@@ -151,7 +151,7 @@ tests = [
         topoSortCategories existing ts),
 
     checkOperationSuccess
-      "testfiles/partial.txt"
+      "testfiles/partial.0rx"
       (\ts -> do
         existing  <- return $ Map.fromList [
             (CategoryName "Parent",
@@ -171,32 +171,32 @@ tests = [
             ("Child","Object2")
           ]),
 
-    checkOperationSuccess "testfiles/valid_variances.txt" (checkParamVariances builtinCategories),
-    checkOperationFail "testfiles/contravariant_refines_covariant.txt" (checkParamVariances builtinCategories),
-    checkOperationFail "testfiles/contravariant_refines_invariant.txt" (checkParamVariances builtinCategories),
-    checkOperationFail "testfiles/covariant_refines_contravariant.txt" (checkParamVariances builtinCategories),
-    checkOperationFail "testfiles/covariant_refines_invariant.txt" (checkParamVariances builtinCategories),
-    checkOperationFail "testfiles/contravariant_defines_covariant.txt" (checkParamVariances builtinCategories),
-    checkOperationFail "testfiles/contravariant_defines_invariant.txt" (checkParamVariances builtinCategories),
-    checkOperationFail "testfiles/covariant_defines_contravariant.txt" (checkParamVariances builtinCategories),
-    checkOperationFail "testfiles/covariant_defines_invariant.txt" (checkParamVariances builtinCategories),
-    checkOperationFail "testfiles/concrete_duplicate_param.txt" (checkParamVariances builtinCategories),
-    checkOperationFail "testfiles/type_duplicate_param.txt" (checkParamVariances builtinCategories),
-    checkOperationFail "testfiles/value_duplicate_param.txt" (checkParamVariances builtinCategories),
+    checkOperationSuccess "testfiles/valid_variances.0rx" (checkParamVariances builtinCategories),
+    checkOperationFail "testfiles/contravariant_refines_covariant.0rx" (checkParamVariances builtinCategories),
+    checkOperationFail "testfiles/contravariant_refines_invariant.0rx" (checkParamVariances builtinCategories),
+    checkOperationFail "testfiles/covariant_refines_contravariant.0rx" (checkParamVariances builtinCategories),
+    checkOperationFail "testfiles/covariant_refines_invariant.0rx" (checkParamVariances builtinCategories),
+    checkOperationFail "testfiles/contravariant_defines_covariant.0rx" (checkParamVariances builtinCategories),
+    checkOperationFail "testfiles/contravariant_defines_invariant.0rx" (checkParamVariances builtinCategories),
+    checkOperationFail "testfiles/covariant_defines_contravariant.0rx" (checkParamVariances builtinCategories),
+    checkOperationFail "testfiles/covariant_defines_invariant.0rx" (checkParamVariances builtinCategories),
+    checkOperationFail "testfiles/concrete_duplicate_param.0rx" (checkParamVariances builtinCategories),
+    checkOperationFail "testfiles/type_duplicate_param.0rx" (checkParamVariances builtinCategories),
+    checkOperationFail "testfiles/value_duplicate_param.0rx" (checkParamVariances builtinCategories),
 
     checkOperationSuccess
-      "testfiles/concrete_refines_value.txt"
+      "testfiles/concrete_refines_value.0rx"
       (checkParamVariances $ Map.fromList [
           (CategoryName "Parent2",InstanceInterface [] (CategoryName "Parent2") [] [] [])
         ]),
     checkOperationFail
-      "testfiles/concrete_refines_value.txt"
+      "testfiles/concrete_refines_value.0rx"
       (checkParamVariances $ Map.fromList [
           (CategoryName "Parent",InstanceInterface [] (CategoryName "Parent") [] [] [])
         ]),
 
     checkOperationSuccess
-      "testfiles/partial_params.txt"
+      "testfiles/partial_params.0rx"
       (checkParamVariances $ Map.fromList [
           (CategoryName "Parent",
            ValueInterface [] (CategoryName "Parent")
@@ -204,7 +204,7 @@ tests = [
                            ValueParam [] (ParamName "#z") Covariant] [] [] [])
       ]),
     checkOperationFail
-      "testfiles/partial_params.txt"
+      "testfiles/partial_params.0rx"
       (checkParamVariances $ Map.fromList [
           (CategoryName "Parent",
            ValueInterface [] (CategoryName "Parent")
@@ -212,7 +212,7 @@ tests = [
                            ValueParam [] (ParamName "#z") Covariant] [] [] [])
       ]),
     checkOperationFail
-      "testfiles/partial_params.txt"
+      "testfiles/partial_params.0rx"
       (checkParamVariances $ Map.fromList [
           (CategoryName "Parent",
            ValueInterface [] (CategoryName "Parent")
@@ -221,93 +221,93 @@ tests = [
       ]),
 
     checkOperationSuccess
-      "testfiles/concrete.txt"
+      "testfiles/concrete.0rx"
       (\ts -> do
         rs <- getTypeRefines ts "Type<#a,#b,#c,#d,#e,#f>" "Type"
         rs `containsPaired` ["#a","#b","#c","#d","#e","#f"]
         ),
     checkOperationSuccess
-      "testfiles/flatten.txt"
+      "testfiles/flatten.0rx"
       (\ts -> do
         ts <- topoSortCategories builtinCategories ts
         ts <- flattenAllConnections builtinCategories ts
         rs <- getTypeRefines ts "Object1<#a,#b>" "Object1"
         rs `containsPaired` ["#a","#b"]),
     checkOperationSuccess
-      "testfiles/flatten.txt"
+      "testfiles/flatten.0rx"
       (\ts -> do
         ts <- topoSortCategories builtinCategories ts
         ts <- flattenAllConnections builtinCategories ts
         rs <- getTypeRefines ts "Object1<#a,#b>" "Object3"
         rs `containsPaired` ["#b"]),
     checkOperationFail
-      "testfiles/flatten.txt"
+      "testfiles/flatten.0rx"
       (\ts -> do
         ts <- topoSortCategories builtinCategories ts
         ts <- flattenAllConnections builtinCategories ts
         rs <- getTypeRefines ts "Undefined<#a,#b>" "Undefined"
         rs `containsPaired` ["#a","#b"]),
     checkOperationFail
-      "testfiles/flatten.txt"
+      "testfiles/flatten.0rx"
       (\ts -> do
         ts <- topoSortCategories builtinCategories ts
         ts <- flattenAllConnections builtinCategories ts
         rs <- getTypeRefines ts "Object1<#a>" "Object1"
         rs `containsPaired` ["#a"]),
     checkOperationSuccess
-      "testfiles/flatten.txt"
+      "testfiles/flatten.0rx"
       (\ts -> do
         ts <- topoSortCategories builtinCategories ts
         ts <- flattenAllConnections builtinCategories ts
         rs <- getTypeRefines ts "Parent<#t>" "Object1"
         rs `containsPaired` ["#t","Object3<Object2>"]),
     checkOperationFail
-      "testfiles/flatten.txt"
+      "testfiles/flatten.0rx"
       (\ts -> do
         ts <- topoSortCategories builtinCategories ts
         ts <- flattenAllConnections builtinCategories ts
         getTypeRefines ts "Parent<#t>" "Child"),
     checkOperationFail
-      "testfiles/flatten.txt"
+      "testfiles/flatten.0rx"
       (\ts -> do
         ts <- topoSortCategories builtinCategories ts
         ts <- flattenAllConnections builtinCategories ts
         getTypeRefines ts "Child" "Type"),
     checkOperationFail
-      "testfiles/flatten.txt"
+      "testfiles/flatten.0rx"
       (\ts -> do
         ts <- topoSortCategories builtinCategories ts
         ts <- flattenAllConnections builtinCategories ts
         getTypeRefines ts "Child" "Missing"),
 
     checkOperationSuccess
-      "testfiles/flatten.txt"
+      "testfiles/flatten.0rx"
       (\ts -> do
         rs <- getTypeDefines ts "Child" "Type"
         rs `containsPaired` ["Child"]),
     checkOperationFail
-      "testfiles/flatten.txt"
+      "testfiles/flatten.0rx"
       (\ts -> do
         getTypeDefines ts "Child" "Parent"),
     checkOperationFail
-      "testfiles/flatten.txt"
+      "testfiles/flatten.0rx"
       (\ts -> do
         getTypeDefines ts "Child" "Missing"),
 
     checkOperationSuccess
-      "testfiles/concrete.txt"
+      "testfiles/concrete.0rx"
       (\ts -> do
         vs <- getTypeVariance ts "Type"
         vs `containsPaired` [Contravariant,Contravariant,
                              Invariant,Invariant,
                              Covariant,Covariant]),
     checkOperationFail
-      "testfiles/flatten.txt"
+      "testfiles/flatten.0rx"
       (\ts -> do
         getTypeVariance ts "Missing"),
 
     checkOperationSuccess
-      "testfiles/concrete.txt"
+      "testfiles/concrete.0rx"
       (\ts -> do
         rs <- getTypeFilters ts "Type<#a,#b,#c,#d,#e,#f>"
         checkPaired containsExactly rs [
@@ -319,7 +319,7 @@ tests = [
             []
           ]),
     checkOperationSuccess
-      "testfiles/concrete.txt"
+      "testfiles/concrete.0rx"
       (\ts -> do
         rs <- getTypeFilters ts "Type<Type<#t>,#b,Type3<#x>,#d,#e,#f>"
         checkPaired containsExactly rs [
@@ -332,7 +332,7 @@ tests = [
           ]),
 
     checkOperationSuccess
-      "testfiles/value_interface.txt"
+      "testfiles/value_interface.0rx"
       (\ts -> do
         rs <- getTypeFilters ts "Type<#a,#b,#c,#d,#e,#f>"
         checkPaired containsExactly rs [
@@ -344,7 +344,7 @@ tests = [
             []
           ]),
     checkOperationSuccess
-      "testfiles/value_interface.txt"
+      "testfiles/value_interface.0rx"
       (\ts -> do
         rs <- getTypeFilters ts "Type<Type<#t>,#b,Type3<#x>,#d,#e,#f>"
         checkPaired containsExactly rs [
@@ -357,7 +357,7 @@ tests = [
           ]),
 
     checkOperationSuccess
-      "testfiles/type_interface.txt"
+      "testfiles/type_interface.0rx"
       (\ts -> do
         rs <- getTypeDefinesFilters ts "Type<#a,#b,#c,#d,#e,#f>"
         checkPaired containsExactly rs [
@@ -369,7 +369,7 @@ tests = [
             []
           ]),
     checkOperationSuccess
-      "testfiles/type_interface.txt"
+      "testfiles/type_interface.0rx"
       (\ts -> do
         rs <- getTypeDefinesFilters ts "Type<Type<#t>,#b,Type3<#x>,#d,#e,#f>"
         checkPaired containsExactly rs [
@@ -383,63 +383,63 @@ tests = [
 
     -- TODO: Clean these tests up.
     checkOperationSuccess
-      "testfiles/flatten.txt"
+      "testfiles/flatten.0rx"
       (\ts -> do
         ts <- topoSortCategories builtinCategories ts
         ta <- flattenAllConnections builtinCategories ts >>= declareAllTypes builtinCategories
         let r = categoriesToTypeResolver ta
         checkTypeSuccess r [] "Child"),
     checkOperationSuccess
-      "testfiles/flatten.txt"
+      "testfiles/flatten.0rx"
       (\ts -> do
         ts <- topoSortCategories builtinCategories ts
         ta <- flattenAllConnections builtinCategories ts >>= declareAllTypes builtinCategories
         let r = categoriesToTypeResolver ta
         checkTypeSuccess r [] "(Child|Child)"),
     checkOperationSuccess
-      "testfiles/flatten.txt"
+      "testfiles/flatten.0rx"
       (\ts -> do
         ts <- topoSortCategories builtinCategories ts
         ta <- flattenAllConnections builtinCategories ts >>= declareAllTypes builtinCategories
         let r = categoriesToTypeResolver ta
         checkTypeFail r [] "(Child&Child)"),
     checkOperationSuccess
-      "testfiles/flatten.txt"
+      "testfiles/flatten.0rx"
       (\ts -> do
         ts <- topoSortCategories builtinCategories ts
         ta <- flattenAllConnections builtinCategories ts >>= declareAllTypes builtinCategories
         let r = categoriesToTypeResolver ta
         checkTypeSuccess r [] "Object2"),
     checkOperationSuccess
-      "testfiles/flatten.txt"
+      "testfiles/flatten.0rx"
       (\ts -> do
         ts <- topoSortCategories builtinCategories ts
         ta <- flattenAllConnections builtinCategories ts >>= declareAllTypes builtinCategories
         let r = categoriesToTypeResolver ta
         checkTypeSuccess r [] "(Object2|Object2)"),
     checkOperationSuccess
-      "testfiles/flatten.txt"
+      "testfiles/flatten.0rx"
       (\ts -> do
         ts <- topoSortCategories builtinCategories ts
         ta <- flattenAllConnections builtinCategories ts >>= declareAllTypes builtinCategories
         let r = categoriesToTypeResolver ta
         checkTypeSuccess r [] "(Object2&Object2)"),
     checkOperationSuccess
-      "testfiles/flatten.txt"
+      "testfiles/flatten.0rx"
       (\ts -> do
         ts <- topoSortCategories builtinCategories ts
         ta <- flattenAllConnections builtinCategories ts >>= declareAllTypes builtinCategories
         let r = categoriesToTypeResolver ta
         checkTypeFail r [] "Type<Child>"),
     checkOperationSuccess
-      "testfiles/flatten.txt"
+      "testfiles/flatten.0rx"
       (\ts -> do
         ts <- topoSortCategories builtinCategories ts
         ta <- flattenAllConnections builtinCategories ts >>= declareAllTypes builtinCategories
         let r = categoriesToTypeResolver ta
         checkTypeFail r [] "(Type<Child>|Type<Child>)"),
     checkOperationSuccess
-      "testfiles/flatten.txt"
+      "testfiles/flatten.0rx"
       (\ts -> do
         ts <- topoSortCategories builtinCategories ts
         ta <- flattenAllConnections builtinCategories ts >>= declareAllTypes builtinCategories
@@ -448,28 +448,28 @@ tests = [
 
     -- TODO: Clean these tests up.
     checkOperationSuccess
-      "testfiles/filters.txt"
+      "testfiles/filters.0rx"
       (\ts -> do
         ts <- topoSortCategories builtinCategories ts
         ta <- flattenAllConnections builtinCategories ts >>= declareAllTypes builtinCategories
         let r = categoriesToTypeResolver ta
         checkTypeSuccess r [] "Value0<Value1,Value2>"),
     checkOperationFail
-      "testfiles/filters.txt"
+      "testfiles/filters.0rx"
       (\ts -> do
         ts <- topoSortCategories builtinCategories ts
         ta <- flattenAllConnections builtinCategories ts >>= declareAllTypes builtinCategories
         let r = categoriesToTypeResolver ta
         checkTypeSuccess r [] "Value0<Value1,Value1>"),
     checkOperationSuccess
-      "testfiles/filters.txt"
+      "testfiles/filters.0rx"
       (\ts -> do
         ts <- topoSortCategories builtinCategories ts
         ta <- flattenAllConnections builtinCategories ts >>= declareAllTypes builtinCategories
         let r = categoriesToTypeResolver ta
         checkTypeSuccess r [] "Value0<Value3,Value2>"),
     checkOperationFail
-      "testfiles/filters.txt"
+      "testfiles/filters.0rx"
       (\ts -> do
         ts <- topoSortCategories builtinCategories ts
         ta <- flattenAllConnections builtinCategories ts >>= declareAllTypes builtinCategories
@@ -478,7 +478,7 @@ tests = [
           [("#x",[]),("#y",[])]
           "Value0<#x,#y>"),
     checkOperationSuccess
-      "testfiles/filters.txt"
+      "testfiles/filters.0rx"
       (\ts -> do
         ts <- topoSortCategories builtinCategories ts
         ta <- flattenAllConnections builtinCategories ts >>= declareAllTypes builtinCategories
@@ -488,7 +488,7 @@ tests = [
            ("#y",["requires #x","defines Equals<#y>"])]
           "Value0<#x,#y>"),
     checkOperationSuccess
-      "testfiles/filters.txt"
+      "testfiles/filters.0rx"
       (\ts -> do
         ts <- topoSortCategories builtinCategories ts
         ta <- flattenAllConnections builtinCategories ts >>= declareAllTypes builtinCategories
@@ -497,7 +497,7 @@ tests = [
           [("#x",["allows Value2","requires Function<#x,Value2>"])]
           "Value0<#x,Value2>"),
     checkOperationFail
-      "testfiles/filters.txt"
+      "testfiles/filters.0rx"
       (\ts -> do
         ts <- topoSortCategories builtinCategories ts
         ta <- flattenAllConnections builtinCategories ts >>= declareAllTypes builtinCategories
@@ -508,61 +508,61 @@ tests = [
           "Value0<#x,#y>"),
 
     checkOperationSuccess
-      "testfiles/concrete_instances.txt"
+      "testfiles/concrete_instances.0rx"
       (\ts -> do
         ts <- topoSortCategories builtinCategories ts
         ts <- flattenAllConnections builtinCategories ts
         checkCategoryInstances builtinCategories ts),
     checkOperationFail
-      "testfiles/concrete_missing_define.txt"
+      "testfiles/concrete_missing_define.0rx"
       (\ts -> do
         ts <- topoSortCategories builtinCategories ts
         ts <- flattenAllConnections builtinCategories ts
         checkCategoryInstances builtinCategories ts),
     checkOperationFail
-      "testfiles/concrete_missing_refine.txt"
+      "testfiles/concrete_missing_refine.0rx"
       (\ts -> do
         ts <- topoSortCategories builtinCategories ts
         ts <- flattenAllConnections builtinCategories ts
         checkCategoryInstances builtinCategories ts),
     checkOperationSuccess
-      "testfiles/value_instances.txt"
+      "testfiles/value_instances.0rx"
       (\ts -> do
         ts <- topoSortCategories builtinCategories ts
         ts <- flattenAllConnections builtinCategories ts
         checkCategoryInstances builtinCategories ts),
     checkOperationFail
-      "testfiles/value_missing_define.txt"
+      "testfiles/value_missing_define.0rx"
       (\ts -> do
         ts <- topoSortCategories builtinCategories ts
         ts <- flattenAllConnections builtinCategories ts
         checkCategoryInstances builtinCategories ts),
     checkOperationFail
-      "testfiles/value_missing_refine.txt"
+      "testfiles/value_missing_refine.0rx"
       (\ts -> do
         ts <- topoSortCategories builtinCategories ts
         ts <- flattenAllConnections builtinCategories ts
         checkCategoryInstances builtinCategories ts),
     checkOperationSuccess
-      "testfiles/type_instances.txt"
+      "testfiles/type_instances.0rx"
       (\ts -> do
         ts <- topoSortCategories builtinCategories ts
         ts <- flattenAllConnections builtinCategories ts
         checkCategoryInstances builtinCategories ts),
     checkOperationFail
-      "testfiles/type_missing_define.txt"
+      "testfiles/type_missing_define.0rx"
       (\ts -> do
         ts <- topoSortCategories builtinCategories ts
         ts <- flattenAllConnections builtinCategories ts
         checkCategoryInstances builtinCategories ts),
     checkOperationFail
-      "testfiles/type_missing_refine.txt"
+      "testfiles/type_missing_refine.0rx"
       (\ts -> do
         ts <- topoSortCategories builtinCategories ts
         ts <- flattenAllConnections builtinCategories ts
         checkCategoryInstances builtinCategories ts),
     checkOperationFail
-      "testfiles/requires_concrete.txt"
+      "testfiles/requires_concrete.0rx"
       (\ts -> do
         ts <- topoSortCategories builtinCategories ts
         ts <- flattenAllConnections builtinCategories ts
@@ -570,7 +570,7 @@ tests = [
 
     -- TODO: Clean these tests up.
     checkOperationSuccess
-      "testfiles/merged.txt"
+      "testfiles/merged.0rx"
       (\ts -> do
         ts <- topoSortCategories builtinCategories ts
         ts <- flattenAllConnections builtinCategories ts
@@ -580,44 +580,44 @@ tests = [
                               "Value4<Value1,Value1>","Inherit1","Inherit2"]),
 
     checkOperationSuccess
-      "testfiles/merged.txt"
+      "testfiles/merged.0rx"
       (\ts -> do
         ts <- topoSortCategories builtinCategories ts
         flattenAllConnections builtinCategories ts
         return ()),
     checkOperationFail
-      "testfiles/duplicate_refine.txt"
+      "testfiles/duplicate_refine.0rx"
       (\ts -> do
         ts <- topoSortCategories builtinCategories ts
         flattenAllConnections builtinCategories ts
         return ()),
     checkOperationFail
-      "testfiles/duplicate_define.txt"
+      "testfiles/duplicate_define.0rx"
       (\ts -> do
         ts <- topoSortCategories builtinCategories ts
         flattenAllConnections builtinCategories ts
         return ()),
     checkOperationFail
-      "testfiles/refine_wrong_direction.txt"
+      "testfiles/refine_wrong_direction.0rx"
       (\ts -> do
         ts <- topoSortCategories builtinCategories ts
         flattenAllConnections builtinCategories ts
         return ()),
     checkOperationFail
-      "testfiles/inherit_incompatible.txt"
+      "testfiles/inherit_incompatible.0rx"
       (\ts -> do
         ts <- topoSortCategories builtinCategories ts
         flattenAllConnections builtinCategories ts
         return ()),
     checkOperationSuccess
-      "testfiles/merge_incompatible.txt"
+      "testfiles/merge_incompatible.0rx"
       (\ts -> do
         ts <- topoSortCategories builtinCategories ts
         flattenAllConnections builtinCategories ts
         return ()),
 
     checkOperationSuccess
-      "testfiles/flatten.txt"
+      "testfiles/flatten.0rx"
       (\ts -> do
         let tm0 = Map.fromList [
                     (CategoryName "Parent2",InstanceInterface [] (CategoryName "Parent2") [] [] [])
@@ -629,122 +629,122 @@ tests = [
                               "Object3<Object3<Object2>>"]),
 
     checkOperationSuccess
-      "testfiles/category_function_param_match.txt"
+      "testfiles/category_function_param_match.0rx"
       (\ts -> checkCategoryInstances builtinCategories ts),
     checkOperationFail
-      "testfiles/function_param_clash.txt"
+      "testfiles/function_param_clash.0rx"
       (\ts -> checkCategoryInstances builtinCategories ts),
     checkOperationFail
-      "testfiles/function_duplicate_param.txt"
+      "testfiles/function_duplicate_param.0rx"
       (\ts -> checkCategoryInstances builtinCategories ts),
     checkOperationFail
-      "testfiles/function_bad_filter_param.txt"
+      "testfiles/function_bad_filter_param.0rx"
       (\ts -> checkCategoryInstances builtinCategories ts),
     checkOperationFail
-      "testfiles/function_bad_filter_type.txt"
+      "testfiles/function_bad_filter_type.0rx"
       (\ts -> checkCategoryInstances builtinCategories ts),
     checkOperationFail
-      "testfiles/function_bad_allows.txt"
+      "testfiles/function_bad_allows.0rx"
       (\ts -> checkCategoryInstances builtinCategories ts),
     checkOperationFail
-      "testfiles/function_bad_requires.txt"
+      "testfiles/function_bad_requires.0rx"
       (\ts -> checkCategoryInstances builtinCategories ts),
     checkOperationFail
-      "testfiles/function_bad_defines.txt"
+      "testfiles/function_bad_defines.0rx"
       (\ts -> checkCategoryInstances builtinCategories ts),
     checkOperationFail
-      "testfiles/function_bad_arg.txt"
+      "testfiles/function_bad_arg.0rx"
       (\ts -> checkCategoryInstances builtinCategories ts),
     checkOperationFail
-      "testfiles/function_bad_return.txt"
+      "testfiles/function_bad_return.0rx"
       (\ts -> checkCategoryInstances builtinCategories ts),
     checkOperationFail
-      "testfiles/weak_arg.txt"
+      "testfiles/weak_arg.0rx"
       (\ts -> checkCategoryInstances builtinCategories ts),
     checkOperationFail
-      "testfiles/weak_return.txt"
-      (\ts -> checkCategoryInstances builtinCategories ts),
-
-    checkOperationSuccess
-      "testfiles/function_filters_satisfied.txt"
-      (\ts -> checkCategoryInstances builtinCategories ts),
-    checkOperationFail
-      "testfiles/function_requires_missed.txt"
-      (\ts -> checkCategoryInstances builtinCategories ts),
-    checkOperationFail
-      "testfiles/function_allows_missed.txt"
-      (\ts -> checkCategoryInstances builtinCategories ts),
-    checkOperationFail
-      "testfiles/function_defines_missed.txt"
+      "testfiles/weak_return.0rx"
       (\ts -> checkCategoryInstances builtinCategories ts),
 
     checkOperationSuccess
-      "testfiles/valid_function_variance.txt"
+      "testfiles/function_filters_satisfied.0rx"
       (\ts -> checkCategoryInstances builtinCategories ts),
     checkOperationFail
-      "testfiles/bad_arg_variance.txt"
+      "testfiles/function_requires_missed.0rx"
       (\ts -> checkCategoryInstances builtinCategories ts),
     checkOperationFail
-      "testfiles/bad_return_variance.txt"
+      "testfiles/function_allows_missed.0rx"
+      (\ts -> checkCategoryInstances builtinCategories ts),
+    checkOperationFail
+      "testfiles/function_defines_missed.0rx"
+      (\ts -> checkCategoryInstances builtinCategories ts),
+
+    checkOperationSuccess
+      "testfiles/valid_function_variance.0rx"
+      (\ts -> checkCategoryInstances builtinCategories ts),
+    checkOperationFail
+      "testfiles/bad_arg_variance.0rx"
+      (\ts -> checkCategoryInstances builtinCategories ts),
+    checkOperationFail
+      "testfiles/bad_return_variance.0rx"
       (\ts -> checkCategoryInstances builtinCategories ts),
 
     checkOperationFail
-      "testfiles/conflicting_declaration.txt"
+      "testfiles/conflicting_declaration.0rx"
       (\ts -> do
         ts <- topoSortCategories builtinCategories ts
         flattenAllConnections builtinCategories ts
         return ()),
     checkOperationFail
-      "testfiles/conflicting_inherited.txt"
+      "testfiles/conflicting_inherited.0rx"
       (\ts -> do
         ts <- topoSortCategories builtinCategories ts
         flattenAllConnections builtinCategories ts
         return ()),
     checkOperationSuccess
-      "testfiles/successful_merge.txt"
+      "testfiles/successful_merge.0rx"
       (\ts -> do
         ts <- topoSortCategories builtinCategories ts
         flattenAllConnections builtinCategories ts
         return ()),
     checkOperationFail
-      "testfiles/failed_merge.txt"
+      "testfiles/failed_merge.0rx"
       (\ts -> do
         ts <- topoSortCategories builtinCategories ts
         flattenAllConnections builtinCategories ts
         return ()),
     checkOperationFail
-      "testfiles/merge_different_scopes.txt"
+      "testfiles/merge_different_scopes.0rx"
       (\ts -> do
         ts <- topoSortCategories builtinCategories ts
         flattenAllConnections builtinCategories ts
         return ()),
 
     checkOperationSuccess
-      "testfiles/successful_merge_params.txt"
+      "testfiles/successful_merge_params.0rx"
       (\ts -> do
         ts <- topoSortCategories builtinCategories ts
         flattenAllConnections builtinCategories ts
         return ()),
     checkOperationFail
-      "testfiles/failed_merge_params.txt"
+      "testfiles/failed_merge_params.0rx"
       (\ts -> do
         ts <- topoSortCategories builtinCategories ts
         flattenAllConnections builtinCategories ts
         return ()),
     checkOperationSuccess
-      "testfiles/preserve_merged.txt"
+      "testfiles/preserve_merged.0rx"
       (\ts -> do
         ts <- topoSortCategories builtinCategories ts
         flattenAllConnections builtinCategories ts
         return ()),
     checkOperationFail
-      "testfiles/conflict_in_preserved.txt"
+      "testfiles/conflict_in_preserved.0rx"
       (\ts -> do
         ts <- topoSortCategories builtinCategories ts
         flattenAllConnections builtinCategories ts
         return ()),
     checkOperationSuccess
-      "testfiles/resolved_in_preserved.txt"
+      "testfiles/resolved_in_preserved.0rx"
       (\ts -> do
         ts <- topoSortCategories builtinCategories ts
         flattenAllConnections builtinCategories ts

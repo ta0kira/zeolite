@@ -1,0 +1,27 @@
+define LazyStream {
+  @value optional #x value
+  @value optional LazyStream<#x> next
+
+  new () {
+    return LazyStream<#x>{ empty, empty }
+  }
+
+  append (value2) {
+    return LazyStream<#x>{ value2, self }
+  }
+
+  @value recursive (Writer<#x>) -> ()
+  recursive (writer) {
+    if (present(value)) {
+      ~ writer.write(require(value))
+    }
+    if (present(next)) {
+      return require(next).recursive(writer)
+    }
+  }
+
+  write (writer) {
+    ~ recursive(writer)
+    ~ writer.flush()
+  }
+}

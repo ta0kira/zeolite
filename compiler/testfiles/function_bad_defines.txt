@@ -1,7 +1,0 @@
-@type interface Interface<|#x> {}
-
-concrete Type<|#x> {
-  @value something<#y>
-    #y defines Interface<#x>
-  () -> ()
-}

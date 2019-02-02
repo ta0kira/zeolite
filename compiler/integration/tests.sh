@@ -9,7 +9,13 @@ errors='errors.txt'
 main="$PWD/main.cpp"
 compiler="$root/compiler/CompilerCxx/compiler"
 
+standard_tm=($root/standard/*.0rp)
+standard_inc=($root/standard)
+standard_cpp=($root/standard/*.cpp)
+
 ghc -i"$root/compiler" "$compiler.hs"
+
+( cd "$root/standard" && "$compiler" *.0r{p,x} )
 
 test_base="
 @type interface Runner {
@@ -20,7 +26,7 @@ concrete Util {
 }
 define Util {
   crash () {
-    ~ require(empty)
+    ~ LazyStream<String>\$new().append(\"Failed\").write(SimpleOutput\$fail())
   }
 }
 concrete Test {
@@ -36,15 +42,17 @@ compile() {
   (
     set -e
     cd "$temp" || exit 1
-    { "$compiler" /dev/stdin |& tee -a "$temp/$errors"; } < <(echo "$code$test_base")
+    { "$compiler" "${standard_tm[@]}" -- /dev/stdin |& tee -a "$temp/$errors"; } < <(echo "$code$test_base")
     [[ "${PIPESTATUS[0]}" = 0 ]] || return 1
     command=(
       clang++ -O0 -g -std=c++11 -o "$temp/compiled"
       -I"$root/capture-thread/include"
       -I"$root/base"
       -I"$temp"
+      -I"$standard_inc"
       "$root/capture-thread/src"/*.cc
       "$root/base"/*cpp
+      "${standard_cpp[@]}"
       "$temp"/*cpp
       "$main")
     echo "${command[@]}" >> "$temp/$errors"
@@ -121,6 +129,14 @@ expect_crashes() {
 expect_runs 'do nothing' <<END
 define Test {
   run () {}
+}
+END
+
+expect_crashes 'fail writer' 'Failed' 'line 3' <<END
+define Test {
+  run () {
+    ~ LazyStream<String>\$new().append("Failed").write(SimpleOutput\$fail())
+  }
 }
 END
 

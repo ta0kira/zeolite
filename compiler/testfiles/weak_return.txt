@@ -1,3 +1,0 @@
-@value interface Type {
-  set (weak Type) -> ()
-}

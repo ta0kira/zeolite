@@ -1,4 +1,0 @@
-concrete Type<#x> {
-  @category something<#x>
-  () -> ()
-}

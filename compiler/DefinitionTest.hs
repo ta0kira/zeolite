@@ -14,9 +14,9 @@ import TypesBase
 
 tests :: [IO (CompileInfo ())]
 tests = [
-    checkParseSuccess "testfiles/definitions.txt",
-    checkParseSuccess "testfiles/internal_params.txt",
-    checkParseSuccess "testfiles/internal_filters.txt"
+    checkParseSuccess "testfiles/definitions.0rx",
+    checkParseSuccess "testfiles/internal_params.0rx",
+    checkParseSuccess "testfiles/internal_filters.0rx"
   ]
 
 checkParseSuccess f = do

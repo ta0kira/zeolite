@@ -1,3 +1,4 @@
+import Data.List
 import Text.Parsec
 import Text.Parsec.String
 import System.Environment
@@ -18,9 +19,23 @@ import CompilerCxx.Category
 
 main = do
   files <- getArgs
-  allContents <- sequence $ map readFile files
-  let namedContents = zip files allContents
-  results <- return $ processContents namedContents
+  let (fs0,fs) = case break (== "--") files of
+                      (fs,[]) -> ([],fs)
+                      (fs0,_:fs) -> (fs0,fs)
+  contents0 <- sequence $ map readFile fs0
+  let ps0 = zip fs0 contents0
+  contents <- sequence $ map readFile fs
+  let namedContents = zip fs contents
+  let (ps,xs) = partition ((".0rp" `isSuffixOf`) . fst) namedContents
+  results <- return $ do
+    tm0 <- processExisting ps0
+    -- Everything in .0rp is available to all other files.
+    (tm0,ps') <- processPublic tm0 ps
+    -- All other files are considered internal.
+    -- TODO: There will be an output filename clash if two files use the same
+    -- name for an internal-only category.
+    xs' <- fmap concat $ collectAllOrErrorM $  map (processInternal tm0) xs
+    return $ ps' ++ xs'
   hPutStr stderr $ format results
   writeResults results
   exit results
@@ -28,18 +43,28 @@ main = do
     exit c = if isCompileError c
                 then exitFailure
                 else exitSuccess
-    processContents :: [(String,String)] -> CompileInfo [CxxOutput]
-    processContents cs = do
-      parsed <- collectAllOrErrorM $ map parseContents cs
-      let (cs,ds) = foldr merge empty parsed
-      cm <- includeNewTypes builtinCategories cs
-      hxx <- collectAllOrErrorM $ map (compileCategoryDeclaration cm) cs
-      cxx <- collectAllOrErrorM $ map (compileConcreteDefinition  cm) ds
+    processExisting :: [(String,String)] -> CompileInfo (CategoryMap SourcePos)
+    processExisting cs = do
+      cs <- fmap concat $ collectAllOrErrorM $ map parsePublic cs
+      includeNewTypes builtinCategories cs
+    processPublic :: CategoryMap SourcePos -> [(String,String)] ->
+                     CompileInfo (CategoryMap SourcePos,[CxxOutput])
+    processPublic tm0 cs = do
+      cs <- fmap concat $ collectAllOrErrorM $ map parsePublic cs
+      tm <- includeNewTypes tm0 cs
+      hxx <- collectAllOrErrorM $ map (compileCategoryDeclaration tm) cs
+      let interfaces = filter (not . isValueConcrete) cs
+      cxx <- collectAllOrErrorM $ map compileInterfaceDefinition interfaces
+      return (tm,hxx ++ cxx)
+    processInternal :: CategoryMap SourcePos -> (String,String) -> CompileInfo [CxxOutput]
+    processInternal tm0 c = do
+      (cs,ds) <- parseInternal c
+      tm <- includeNewTypes tm0 cs
+      hxx <- collectAllOrErrorM $ map (compileCategoryDeclaration tm) cs
+      cxx <- collectAllOrErrorM $ map (compileConcreteDefinition  tm) ds
       let interfaces = filter (not . isValueConcrete) cs
       cxx2 <- collectAllOrErrorM $ map compileInterfaceDefinition interfaces
       return $ hxx ++ cxx ++ cxx2
-    empty = ([],[])
-    merge (cs1,ds1) (cs2,ds2) = (cs1++cs2,ds1++ds2)
     format c
       | isCompileError c = show $ getCompileError c
       | otherwise = ""
@@ -47,9 +72,15 @@ main = do
       | isCompileError c = return ()
       | otherwise = mapM_ (\(CxxOutput f os) -> writeFile f $ concat $ map (++ "\n") os) $ getCompileSuccess c
 
-parseContents :: (String,String) -> CompileInfo ([AnyCategory SourcePos],[DefinedCategory SourcePos])
-parseContents (f,s) = unwrap parsed where
+parseInternal :: (String,String) -> CompileInfo ([AnyCategory SourcePos],[DefinedCategory SourcePos])
+parseInternal (f,s) = unwrap parsed where
   parsed = parse (between optionalSpace endOfDoc parseAny) f s
+  unwrap (Left e)  = compileError (show e)
+  unwrap (Right t) = return t
+
+parsePublic :: (String,String) -> CompileInfo [AnyCategory SourcePos]
+parsePublic (f,s) = unwrap parsed where
+  parsed = parse (between optionalSpace endOfDoc (sepBy sourceParser optionalSpace)) f s
   unwrap (Left e)  = compileError (show e)
   unwrap (Right t) = return t
 

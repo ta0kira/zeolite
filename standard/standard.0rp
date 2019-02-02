@@ -1,0 +1,23 @@
+@value interface Writer<#x|> {
+  write (#x) -> ()
+}
+
+@value interface BufferedWriter<#x|> {
+  refines Writer<#x>
+
+  flush () -> ()
+}
+
+concrete LazyStream<#x> {
+  @type new () -> (LazyStream<#x>)
+  @value append (#x) -> (LazyStream<#x>)
+  @value write (BufferedWriter<#x>) -> ()
+}
+
+concrete SimpleOutput {
+  refines BufferedWriter<String>
+
+  @type stdout () -> (SimpleOutput)
+  @type stderr () -> (SimpleOutput)
+  @type fail () -> (SimpleOutput)
+}

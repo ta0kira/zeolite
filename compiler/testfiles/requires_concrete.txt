@@ -1,3 +1,0 @@
-concrete Type<#x> {
-  #x requires Type<#x>
-}

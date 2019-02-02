@@ -1,5 +1,0 @@
-@value interface Parent {}
-
-concrete Child {
-  refines Parent
-}

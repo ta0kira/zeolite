@@ -1,4 +1,0 @@
-concrete Type {
-  @value something<#x,#x>
-  () -> ()
-}

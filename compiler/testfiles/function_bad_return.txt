@@ -1,9 +1,0 @@
-@value interface Type0 {}
-
-@value interface Type1<#x> {
-  #x requires Type0
-}
-
-concrete Type<x> {
-  @value something () -> (Type1<#x>)
-}
