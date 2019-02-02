@@ -21,3 +21,7 @@ concrete SimpleOutput {
   @type stderr () -> (SimpleOutput)
   @type fail () -> (SimpleOutput)
 }
+
+@type interface Runner {
+  run () -> ()
+}

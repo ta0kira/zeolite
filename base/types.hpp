@@ -77,8 +77,8 @@ Tx V_to_T(const L<X>& vals) {
 template<int K, class T, class V>
 struct FlattenFromTuple {
   static void Set(const T& tuple, V& vals) {
-    vals.push_back(std::get<K-1>(tuple));
     FlattenFromTuple<K-1,T,V>::Set(tuple, vals);
+    vals.push_back(std::get<K-1>(tuple));
   }
 };
 

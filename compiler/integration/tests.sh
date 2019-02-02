@@ -18,9 +18,6 @@ ghc -i"$root/compiler" "$compiler.hs"
 ( cd "$root/standard" && "$compiler" *.0r{p,x} )
 
 test_base="
-@type interface Runner {
-  run () -> ()
-}
 concrete Util {
   @type crash () -> ()
 }
@@ -42,9 +39,11 @@ compile() {
   (
     set -e
     cd "$temp" || exit 1
-    { "$compiler" "${standard_tm[@]}" -- /dev/stdin |& tee -a "$temp/$errors"; } < <(echo "$code$test_base")
+    command0=("$compiler" "${standard_tm[@]}" -- /dev/stdin)
+    echo "${command0[@]}" >> "$temp/$errors"
+    { "${command0[@]}" |& tee -a "$temp/$errors"; } < <(echo "$code$test_base")
     [[ "${PIPESTATUS[0]}" = 0 ]] || return 1
-    command=(
+    command1=(
       clang++ -O0 -g -std=c++11 -o "$temp/compiled"
       -I"$root/capture-thread/include"
       -I"$root/base"
@@ -55,8 +54,8 @@ compile() {
       "${standard_cpp[@]}"
       "$temp"/*cpp
       "$main")
-    echo "${command[@]}" >> "$temp/$errors"
-    "${command[@]}" |& tee -a "$temp/$errors"
+    echo "${command1[@]}" >> "$temp/$errors"
+    "${command1[@]}" |& tee -a "$temp/$errors"
     [[ "${PIPESTATUS[0]}" = 0 ]] || return 1
   )
 }
@@ -71,7 +70,9 @@ expect_error() {
   (
     set -e
     cd "$temp" || exit 1
-    if "$compiler" /dev/stdin &> "$temp/$errors" < <(echo "$code$test_base"); then
+    command0=("$compiler" "${standard_tm[@]}" -- /dev/stdin)
+    echo "${command0[@]}" >> "$temp/$errors"
+    if "${command0[@]}" &> "$temp/$errors" < <(echo "$code$test_base"); then
       echo "Test \"$name\" ($count): Expected compile error; see output in $temp" 1>&2
       return 1
     fi
@@ -151,6 +152,32 @@ END
 expect_error '@type member not allowed' 'not allowed' 'line 2' <<END
 define Test {
   @type Bool value <- false
+
+  run () {}
+}
+END
+
+expect_runs '@category member from @type' <<END
+define Test {
+  @category Bool value <- true
+
+  @type call () -> ()
+  call () {
+    ~ value
+  }
+
+  run () {}
+}
+END
+
+expect_runs '@category member from @value' <<END
+define Test {
+  @category Bool value <- true
+
+  @value call () -> ()
+  call () {
+    ~ value
+  }
 
   run () {}
 }

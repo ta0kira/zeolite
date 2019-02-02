@@ -103,22 +103,22 @@ Returns<1>::Type TypeValue::Strong(W<TypeValue> target) {
 }
 
 bool TypeValue::AsBool() const {
-  FAIL() << "Not a Bool value";
+  FAIL() << CategoryName() << " is not a Bool value";
   return false;
 }
 
 std::string TypeValue::AsString() const {
-  FAIL() << "Not a String value";
+  FAIL() << CategoryName() << " is not a String value";
   return "";
 }
 
 int TypeValue::AsInt() const {
-  FAIL() << "Not an Int value";
+  FAIL() << CategoryName() << " is not an Int value";
   return 0;
 }
 
 double TypeValue::AsFloat() const {
-  FAIL() << "Not a Float value";
+  FAIL() << CategoryName() << " is not a Float value";
   return 0.0;
 }
 

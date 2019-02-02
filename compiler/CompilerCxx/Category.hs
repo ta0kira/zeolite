@@ -96,8 +96,8 @@ compileConcreteDefinition ta dd@(DefinedCategory c n pi fi ms ps fs) = do
   let tm0 = builtins typeInstance TypeScope
   let vm0 = builtins typeInstance ValueScope
   cm' <- mapMembers cm
-  tm' <- mapMembers tm
-  vm' <- mapMembers vm
+  tm' <- mapMembers $ cm ++ tm
+  vm' <- mapMembers $ cm ++ tm ++ vm
   let cv = Map.union cm0 cm'
   let tv = Map.union tm0 tm'
   let vv = Map.union vm0 vm'

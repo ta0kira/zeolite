@@ -12,11 +12,11 @@ define LazyStream {
 
   @value recursive (Writer<#x>) -> ()
   recursive (writer) {
+    if (present(next)) {
+      ~ require(next).recursive(writer)
+    }
     if (present(value)) {
       ~ writer.write(require(value))
-    }
-    if (present(next)) {
-      return require(next).recursive(writer)
     }
   }
 

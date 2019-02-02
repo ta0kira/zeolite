@@ -63,8 +63,6 @@ class Value_SimpleOutput : public TypeValue {
       return DReturns{};
     }
     if (&label == &Function_BufferedWriter_flush) {
-      TRACE_FUNCTION("SimpleOutput.flush")
-      output_ << args[0]->AsString();
       return DReturns{};
     }
     return TypeValue::Dispatch(self, label, params, args);

@@ -458,10 +458,12 @@ compileExpression = compile where
 lookupValueFunction :: (Show c, Monad m, CompileErrorM m, MergeableM m,
                         CompilerContext c m [String] a) =>
   ValueType -> FunctionCall c -> CompilerState a m (ScopedFunction c)
-lookupValueFunction (ValueType WeakValue t) _ =
-  lift $ compileError $ "Use strong to convert " ++ show t ++ " to optional first"
-lookupValueFunction (ValueType OptionalValue t) _ =
-  lift $ compileError $ "Use require to convert " ++ show t ++ " to required first"
+lookupValueFunction (ValueType WeakValue t) (FunctionCall c _ _ _) =
+  lift $ compileError $ "Use strong to convert " ++ show t ++
+                        " to optional first [" ++ formatFullContext c ++ "]"
+lookupValueFunction (ValueType OptionalValue t) (FunctionCall c _ _ _) =
+  lift $ compileError $ "Use require to convert " ++ show t ++
+                        " to required first [" ++ formatFullContext c ++ "]"
 lookupValueFunction (ValueType RequiredValue t) (FunctionCall c n _ _) =
   csGetTypeFunction c (Just t) n
 

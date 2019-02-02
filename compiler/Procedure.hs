@@ -145,8 +145,6 @@ data WhileLoop c =
   WhileLoop [c] (Expression c) (Procedure c)
   deriving (Show)
 
--- TODO: This will likely require some magic if the statement is an assignement.
--- Returns should be fine, however.
 data ScopedBlock c =
   ScopedBlock [c] (Procedure c) (Statement c)
   deriving (Show)

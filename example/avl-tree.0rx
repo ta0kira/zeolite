@@ -1,0 +1,174 @@
+concrete Main {
+  defines Runner
+}
+
+define Main {
+  run () {
+    Tree<String> tree <- Tree<String>$new()
+    ~ tree
+        .set(2,"c")
+        .set(0,"a")
+        .set(3,"d")
+        .set(1,"b")
+    ~ check(tree,2)
+    ~ check(tree,0)
+    ~ check(tree,1)
+    ~ check(tree,4)
+    ~ check(tree,3)
+    ~ check(tree,5)
+  }
+
+  @type check (Tree<String>,Int) -> ()
+  check (tree,key) {
+    scoped {
+      optional String value <- tree.get(key)
+    } in if (present(value)) {
+      ~ LazyStream<String>$new()
+          .append("Found: \"")
+          .append(require(value))
+          .append("\"\n")
+          .write(SimpleOutput$stderr())
+    } else {
+      ~ LazyStream<String>$new()
+          .append("Not Found\n")
+          .write(SimpleOutput$stderr())
+    }
+  }
+}
+
+concrete Tree<#x> {
+  @type new () -> (Tree<#x>)
+
+  @value set (Int,#x) -> (Tree<#x>)
+  @value remove (Int) -> (Tree<#x>)
+  @value get (Int) -> (optional #x)
+}
+
+concrete Node<#x> {
+  @type insert (optional Node<#x>,Int,#x) -> (Node<#x>)
+  @type delete (optional Node<#x>,Int) -> (optional Node<#x>)
+  @type find (optional Node<#x>,Int) -> (optional #x)
+
+  @value getHeight () -> (Int)
+  @value setHeight (Int) -> ()
+
+  @value getKey () -> (Int)
+
+  @value getValue () -> (#x)
+  @value setValue (#x) -> ()
+
+  @value getLeft () -> (optional Node<#x>)
+  @value getRight () -> (optional Node<#x>)
+
+  @value setLeft (optional Node<#x>) -> ()
+  @value setRight (optional Node<#x>) -> ()
+}
+
+define Tree {
+  @value optional Node<#x> root
+
+  new () {
+    return Tree<#x>{ empty }
+  }
+
+  set (k,v) {
+    root <- Node<#x>$insert(root,k,v)
+    return self
+  }
+
+  remove (k) {
+    root <- Node<#x>$delete(root,k)
+    return self
+  }
+
+  get (k) {
+    return Node<#x>$find(root,k)
+  }
+}
+
+define Node {
+  @value Int height
+  @value Int key
+  @value #x value
+  @value optional Node<#x> left
+  @value optional Node<#x> right
+
+  insert (node,k,v) {
+    if (present(node)) {
+      Node<#x> node2 <- require(node)
+      if (k < node2.getKey()) {
+        ~ node2.setLeft(insert(node2.getLeft(),k,v))
+      } elif (k > node2.getKey()) {
+        ~ node2.setRight(insert(node2.getRight(),k,v))
+      } else {
+        ~ node2.setValue(v)
+        return node2
+      }
+      ~ fixHeight(node2)
+      return balance(node2)
+    } else {
+      return Node<#x>{ 1, k, v, empty, empty }
+    }
+  }
+
+  delete (node,k) {
+    // TODO: Implement deletion.
+    ~ LazyStream<String>$new()
+        .append("Not Implemented")
+        .write(SimpleOutput$fail())
+    return empty
+  }
+
+  find (node,k) {
+    if (present(node)) {
+      scoped {
+        Node<#x> node2 <- require(node)
+      } in if (k < node2.getKey()) {
+        return find(node2.getLeft(),k)
+      } elif (k > node2.getKey()) {
+        return find(node2.getRight(),k)
+      } else {
+        return node2.getValue()
+      }
+    } else {
+      return empty
+    }
+  }
+
+  getHeight () { return height }
+  setHeight (h) { height <- h }
+
+  getKey () { return key }
+
+  getValue () { return value }
+  setValue (v) { value <- v }
+
+  getLeft () { return left }
+  setLeft (l) { left <- l }
+  getRight () { return right }
+  setRight (r) { right <- r }
+
+  @type fixHeight (Node<#x>) -> ()
+  fixHeight (node) {
+    scoped {
+      Int l <- 0
+      Int r <- 0
+      if (present(node.getLeft())) {
+        l <- require(node.getLeft()).getHeight()
+      }
+      if (present(node.getRight())) {
+        r <- require(node.getRight()).getHeight()
+      }
+    } in if (l > r) {
+      ~ node.setHeight(l)
+    } else {
+      ~ node.setHeight(r)
+    }
+  }
+
+  @type balance (Node<#x>) -> (Node<#x>)
+  balance (node) {
+    // TODO: Implement balancing.
+    return node
+  }
+}
