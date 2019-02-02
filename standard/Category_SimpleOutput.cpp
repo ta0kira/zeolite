@@ -31,19 +31,15 @@ struct Type_SimpleOutput : public TypeInstance {
 
   DReturns Dispatch(const DFunction<SymbolScope::TYPE>& label,
                     DParams params, DArgs args) final {
+    FAIL_IF(args.size() != label.ArgCount());
+    FAIL_IF(params.size() != label.ParamCount());
     if (&label == &Function_SimpleOutput_stdout) {
-      FAIL_IF(params.size() != 0);
-      FAIL_IF(args.size() != 0);
       return DReturns{Var_stdout};
     }
     if (&label == &Function_SimpleOutput_stderr) {
-      FAIL_IF(params.size() != 0);
-      FAIL_IF(args.size() != 0);
       return DReturns{Var_stderr};
     }
     if (&label == &Function_SimpleOutput_fail) {
-      FAIL_IF(params.size() != 0);
-      FAIL_IF(args.size() != 0);
       return DReturns{Var_fail};
     }
     return TypeInstance::Dispatch(label, params, args);
@@ -59,16 +55,14 @@ class Value_SimpleOutput : public TypeValue {
   DReturns Dispatch(const S<TypeValue>& self,
                     const DFunction<SymbolScope::VALUE>& label,
                     DParams params, DArgs args) final {
+    FAIL_IF(args.size() != label.ArgCount());
+    FAIL_IF(params.size() != label.ParamCount());
     if (&label == &Function_Writer_write) {
-      FAIL_IF(params.size() != 0);
-      FAIL_IF(args.size() != 1);
       TRACE_FUNCTION("SimpleOutput.write")
       output_ << args[0]->AsString();
       return DReturns{};
     }
     if (&label == &Function_BufferedWriter_flush) {
-      FAIL_IF(params.size() != 0);
-      FAIL_IF(args.size() != 0);
       TRACE_FUNCTION("SimpleOutput.flush")
       output_ << args[0]->AsString();
       return DReturns{};
@@ -87,16 +81,14 @@ class Value_Fail : public TypeValue {
   DReturns Dispatch(const S<TypeValue>& self,
                     const DFunction<SymbolScope::VALUE>& label,
                     DParams params, DArgs args) final {
+    FAIL_IF(args.size() != label.ArgCount());
+    FAIL_IF(params.size() != label.ParamCount());
     if (&label == &Function_Writer_write) {
-      FAIL_IF(params.size() != 0);
-      FAIL_IF(args.size() != 1);
       TRACE_FUNCTION("SimpleOutput.write")
       output_ << args[0]->AsString();
       return DReturns{};
     }
     if (&label == &Function_BufferedWriter_flush) {
-      FAIL_IF(params.size() != 0);
-      FAIL_IF(args.size() != 0);
       TRACE_FUNCTION("SimpleOutput.flush")
       FAIL() << output_.str();
       return DReturns{};

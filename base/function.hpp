@@ -3,42 +3,17 @@
 
 #include "types.hpp"
 
+#include <sstream>
 
-template<SymbolScope S> class DFunction {};
 
-template<>
-class DFunction<SymbolScope::CATEGORY> {
+template<SymbolScope S> class DFunction {
  public:
   inline DFunction(std::string category, std::string function) :
       category_(category), function_(function) {}
 
-  std::string FunctionName() const;
-
- private:
-  ALWAYS_PERMANENT(DFunction)
-  const std::string category_;
-  const std::string function_;
-};
-
-template<>
-class DFunction<SymbolScope::TYPE> {
- public:
-  inline DFunction(std::string category, std::string function) :
-      category_(category), function_(function) {}
-
-  std::string FunctionName() const;
-
- private:
-  ALWAYS_PERMANENT(DFunction)
-  const std::string category_;
-  const std::string function_;
-};
-
-template<>
-class DFunction<SymbolScope::VALUE> {
- public:
-  inline DFunction(std::string category, std::string function) :
-      category_(category), function_(function) {}
+  virtual int ParamCount() const = 0;
+  virtual int ArgCount() const = 0;
+  virtual int ReturnCount() const = 0;
 
   std::string FunctionName() const;
 
@@ -49,24 +24,27 @@ class DFunction<SymbolScope::VALUE> {
 };
 
 
-template<SymbolScope S, int P, int A, int R> class Function {};
-
-template<int P, int A, int R>
-class Function<SymbolScope::CATEGORY,P,A,R> : public DFunction<SymbolScope::CATEGORY> {
+template<SymbolScope S, int P, int A, int R> class Function : public DFunction<S> {
  public:
-  using DFunction::DFunction;
+  int ParamCount() const final { return P; }
+  int ArgCount() const final { return A; }
+  int ReturnCount() const final { return R; }
+  using DFunction<S>::DFunction;
 };
 
-template<int P, int A, int R>
-class Function<SymbolScope::TYPE,P,A,R> : public DFunction<SymbolScope::TYPE> {
- public:
-  using DFunction::DFunction;
-};
-
-template<int P, int A, int R>
-class Function<SymbolScope::VALUE,P,A,R> : public DFunction<SymbolScope::VALUE> {
- public:
-  using DFunction::DFunction;
-};
+template<SymbolScope S>
+std::string DFunction<S>::FunctionName() const {
+  std::ostringstream output;
+  switch (S) {
+    case SymbolScope::CATEGORY:
+      output << category_ << "$$" << function_;
+      break;
+    case SymbolScope::TYPE:
+    case SymbolScope::VALUE:
+      output << category_ << "$" << function_;
+      break;
+  }
+  return output.str();
+}
 
 #endif  // FUNCTION_HPP_
