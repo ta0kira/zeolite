@@ -1,0 +1,18 @@
+concrete TypeTree {
+  @type new () -> (TypeTree)
+  @value set<#x> (Key<#x>,#x) -> (TypeTree)
+  @value remove (Key<any>) -> (TypeTree)
+  @value get<#x> (Key<#x>) -> (optional #x)
+}
+
+concrete Key<#x> {
+  defines LessThan<Key<#x>>
+  defines Equals<Key<#x>>
+
+  @type new () -> (Key<#x>)
+}
+
+concrete HiddenType {
+  @type create<#y> (Key<#y>,#y) -> (HiddenType)
+  @value check<#y> (Key<#y>) -> (optional #y)
+}

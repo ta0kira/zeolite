@@ -1,0 +1,58 @@
+concrete Main {
+  defines Runner
+}
+
+define Main {
+  @category Key<Int>    one   <- Key<Int>$new()
+  @category Key<Int>    two   <- Key<Int>$new()
+  @category Key<String> three <- Key<String>$new()
+  @category Key<String> four  <- Key<String>$new()
+  @category Key<Float>  five  <- Key<Float>$new()
+
+  run () {
+    TypeTree tree <- TypeTree$new()
+    ~ tree
+        .set<Int>(one,1)
+        .set<Int>(two,1)
+        .set<String>(three,"a")
+        .set<String>(four,"b")
+
+    // TODO: Add serialization of builtin types.
+
+    scoped {
+      optional Int value <- tree.get<Int>(one)
+    } in if (present(value)) {
+      ~ LazyStream<String>$new()
+          .append("Found\n")
+          .write(SimpleOutput$stderr())
+    } else {
+      ~ LazyStream<String>$new()
+          .append("Not Found\n")
+          .write(SimpleOutput$stderr())
+    }
+
+    scoped {
+      optional String value <- tree.get<String>(three)
+    } in if (present(value)) {
+      ~ LazyStream<String>$new()
+          .append("Found\n")
+          .write(SimpleOutput$stderr())
+    } else {
+      ~ LazyStream<String>$new()
+          .append("Not Found\n")
+          .write(SimpleOutput$stderr())
+    }
+
+    scoped {
+      optional Float value <- tree.get<Float>(five)
+    } in if (present(value)) {
+      ~ LazyStream<String>$new()
+          .append("Found\n")
+          .write(SimpleOutput$stderr())
+    } else {
+      ~ LazyStream<String>$new()
+          .append("Not Found\n")
+          .write(SimpleOutput$stderr())
+    }
+  }
+}

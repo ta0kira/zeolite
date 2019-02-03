@@ -1,0 +1,67 @@
+define TypeTree {
+  @value Tree<Key<any>,HiddenType> tree
+
+  new () {
+    return TypeTree { Tree<Key<any>,HiddenType>$new() }
+  }
+
+  set (k,v) {
+    ~ tree.set(k,HiddenType$create<#x>(k,v))
+    return self
+  }
+
+  remove (k) {
+    ~ tree.remove(k)
+    return self
+  }
+
+  get (k) {
+    scoped {
+      optional HiddenType value <- tree.get(k)
+    } in if (present(value)) {
+      return require(value).check<#x>(k)
+    } else {
+      return empty
+    }
+  }
+}
+
+define Key {
+  @category Int counter <- 0
+  @value Int index
+
+  new () {
+    return Key<#x>{ (counter <- counter+1) }
+  }
+
+  lessThan (l,r) {
+    return l.get() < r.get()
+  }
+
+  equals (l,r) {
+    return l.get() == r.get()
+  }
+
+  @value get () -> (Int)
+  get () {
+    return index
+  }
+}
+
+define HiddenType {
+  types<#x> {}
+  @value Key<#x> key
+  @value #x value
+
+  create (k,v) {
+    return HiddenType { types<#y>, k, v }
+  }
+
+  check (k) {
+    if (Key<any>$equals(key,k)) {
+      return reduce<#x,#y>(value)
+    } else {
+      return empty
+    }
+  }
+}
