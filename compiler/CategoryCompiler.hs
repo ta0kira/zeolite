@@ -145,7 +145,8 @@ instance (Show c, MergeableM m, CompileErrorM m, Monad m) =>
         compileError $ "Function " ++ show n ++
                        " disallowed during initialization [" ++ formatFullContext c ++ "]"
       when (sfScope f == CategoryScope) $
-        compileError $ "Function " ++ show n ++ " in " ++ show t2 ++ " is a category function"
+        compileError $ "Function " ++ show n ++ " in " ++ show t2 ++
+                       " is a category function [" ++ formatFullContext c ++ "]"
       paired <- processParamPairs alwaysPairParams ps1 ps2 `reviseError`
         ("In external function call at " ++ formatFullContext c)
       let assigned = Map.fromList paired

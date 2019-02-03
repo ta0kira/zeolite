@@ -183,6 +183,51 @@ define Test {
 }
 END
 
+expect_error '@category to @category' 'get' 'line 2' <<END
+define Test {
+  @category Bool value <- get()
+
+  @category get () -> (Bool)
+  get () {
+    return true
+  }
+
+  run () {}
+}
+END
+
+expect_crashes '@category init cycle' 'Value1|Value2' 'line 10|line 18' <<END
+concrete Value1 {
+  @type get () -> (Bool)
+}
+
+concrete Value2 {
+  @type get () -> (Bool)
+}
+
+define Value1 {
+  @category Bool value <- Value2\$get()
+
+  get () {
+    return value
+  }
+}
+
+define Value2 {
+  @category Bool value <- Value1\$get()
+
+  get () {
+    return value
+  }
+}
+
+define Test {
+  run () {
+    ~ Value1\$get()
+  }
+}
+END
+
 expect_error 'self in @category init' 'self' 'line 2' <<END
 define Test {
   @category Test value <- self
