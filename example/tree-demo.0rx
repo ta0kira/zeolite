@@ -36,11 +36,11 @@ define Main {
           .append("Found '")
           .append(require(value).formatted())
           .append("'\n")
-          .write(SimpleOutput$stderr())
+          .writeTo(SimpleOutput$stderr())
     } else {
       ~ LazyStream<String>$new()
           .append("Not Found\n")
-          .write(SimpleOutput$stderr())
+          .writeTo(SimpleOutput$stderr())
     }
   }
 }

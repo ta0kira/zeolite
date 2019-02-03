@@ -71,7 +71,7 @@ define Node {
     // TODO: Implement deletion.
     ~ LazyStream<String>$new()
         .append("Not Implemented")
-        .write(SimpleOutput$fail())
+        .writeTo(SimpleOutput$fail())
     return empty
   }
 

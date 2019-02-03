@@ -11,7 +11,7 @@
 concrete LazyStream<#x> {
   @type new () -> (LazyStream<#x>)
   @value append (#x) -> (LazyStream<#x>)
-  @value write (BufferedWriter<#x>) -> ()
+  @value writeTo (BufferedWriter<#x>) -> ()
 }
 
 concrete SimpleOutput {

@@ -20,7 +20,7 @@ define LazyStream {
     }
   }
 
-  write (writer) {
+  writeTo (writer) {
     ~ recursive(writer)
     ~ writer.flush()
   }
