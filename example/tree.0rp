@@ -1,0 +1,19 @@
+@value interface TreeWrite<#k,#v|> {
+  set (#k,#v) -> (TreeWrite<#k,#v>)
+  remove (#k) -> (TreeWrite<#k,#v>)
+}
+
+@value interface TreeRead<#k|#v> {
+  get (#k) -> (optional #v)
+}
+
+concrete Tree<#k|#v|> {
+  refines TreeWrite<#k,#v>
+  refines TreeRead<#k,#v>
+  #k defines LessThan<#k>
+
+  @type new () -> (Tree<#k,#v>)
+
+  @value set (#k,#v) -> (Tree<#k,#v>)
+  @value remove (#k) -> (Tree<#k,#v>)
+}
