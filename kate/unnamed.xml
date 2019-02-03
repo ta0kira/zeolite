@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<language
+    name="Kevin's Unnamed Language"
+    section="Sources"
+    version="2.5"
+    kateversion="2.4"
+    indenter="cstyle"
+    style="Kevin's Unnamed Language"
+    extensions="*.0rp;*.0rx"
+    author="Kevin P. Barry (ta0kira@gmail.com)"
+    priority="0"
+  >
+
+  <highlighting>
+    <list name="keywords">
+      <item> allows </item>
+      <item> break </item>
+      <item> concrete </item>
+      <item> define </item>
+      <item> defines </item>
+      <item> elif </item>
+      <item> else </item>
+      <item> empty </item>
+      <item> false </item>
+      <item> if </item>
+      <item> in </item>
+      <item> _ </item>
+      <item> interface </item>
+      <item> present </item>
+      <item> reduce </item>
+      <item> refines </item>
+      <item> require </item>
+      <item> requires </item>
+      <item> return </item>
+      <item> self </item>
+      <item> scoped </item>
+      <item> strong </item>
+      <item> true </item>
+      <item> types </item>
+      <item> while </item>
+    </list>
+
+    <list name="scope">
+      <item> @category </item>
+      <item> @type </item>
+      <item> @value </item>
+    </list>
+
+    <list name="storage">
+      <item> optional </item>
+      <item> weak </item>
+    </list>
+
+    <list name="keywordCategory">
+      <item> all </item>
+      <item> any </item>
+    </list>
+
+    <list name="builtinCategory">
+      <item> Bool </item>
+      <item> String </item>
+      <item> Int </item>
+      <item> Float </item>
+      <item> LessThan </item>
+      <item> Equals </item>
+      <item> Formatted </item>
+    </list>
+
+    <contexts>
+
+      <context name="Normal Text" attribute="Normal Text" lineEndContext="#stay" >
+        <DetectSpaces />
+        <IncludeRules context="Any Comment" />
+        <keyword attribute="Keyword" context="#stay" String="keywords" />
+        <keyword attribute="Scope Qualifier" context="#stay" String="scope" />
+        <keyword attribute="Storage Qualifier" context="#stay" String="storage" />
+        <DetectChar attribute="String" context="String" char="&quot;" />
+        <Detect2Chars attribute="Assign" context="#stay" char="&lt;" char1="-" />
+        <Detect2Chars attribute="Assign" context="#stay" char="-" char1="&gt;" />
+        <DetectChar attribute="Voided" context="#stay" char="~" />
+        <Detect2Chars attribute="Caller" context="#stay" char="$" char1="$" />
+        <Detect2Chars attribute="Operator" context="#stay" char="|" char1="|" />
+        <Detect2Chars attribute="Operator" context="#stay" char="&amp;" char1="&amp;" />
+        <Detect2Chars attribute="Operator" context="#stay" char="=" char1="=" />
+        <Detect2Chars attribute="Operator" context="#stay" char="!" char1="=" />
+        <Detect2Chars attribute="Operator" context="#stay" char="&lt;" char1="=" />
+        <Detect2Chars attribute="Operator" context="#stay" char="&gt;" char1="=" />
+        <AnyChar attribute="Operator" context="#stay" String="&lt;&gt;+-*%/" />
+        <DetectChar attribute="Caller" context="#stay" char="$" />
+        <IncludeRules context="Any Type" />
+      </context>
+
+      <context name="Any Type" attribute="Normal Text" lineEndContext="#stay" >
+        <IncludeRules context="Any Comment" />
+        <DetectChar attribute="Type Delim" context="#stay" char="|" />
+        <DetectChar attribute="Type Delim" context="#stay" char="&amp;" />
+        <keyword attribute="Builtin Category Name" context="Type Name" String="builtinCategory" />
+        <keyword attribute="Keyword" context="#stay" String="keywordCategory" />
+        <RegExpr attribute="Category Name" context="Type Name" String="\b[A-Z][a-zA-Z0-9]*\b" />
+        <RegExpr attribute="Param Name" context="#stay" String="#[a-z][a-zA-Z0-9]*\b" />
+      </context>
+
+      <context name="Any Comment" attribute="Normal Text" lineEndContext="#pop" >
+        <DetectSpaces />
+        <Detect2Chars attribute="Comment" context="Line Comment" char="/" char1="/" />
+        <Detect2Chars attribute="Comment" context="Block Comment" char="/" char1="*" beginRegion="Comment" />
+      </context>
+
+      <context name="Line Comment" attribute="Comment" lineEndContext="#pop" >
+        <LineContinue attribute="Comment" context="#stay" />
+        <DetectIdentifier />
+      </context>
+
+      <context name="Block Comment" attribute="Comment" lineEndContext="#stay">
+        <DetectSpaces />
+        <LineContinue attribute="Comment" context="#stay" />
+        <Detect2Chars attribute="Comment" context="#pop" char="*" char1="/" endRegion="Comment" />
+        <DetectIdentifier />
+      </context>
+
+      <context name="String" attribute="String" lineEndContext="#stay" >
+        <HlCStringChar attribute="String Char" context="#stay" />
+        <DetectChar attribute="String" context="#pop" char="&quot;" />
+      </context>
+
+      <context name="Type Name" attribute="Normal Text" lineEndContext="#stay" >
+        <DetectSpaces />
+        <DetectChar attribute="Params Brace" context="Type Args" char="&lt;" />
+        <RegExpr context="#pop" String=".*" lookAhead="true" />
+      </context>
+
+      <context name="Type Args" attribute="Normal Text" lineEndContext="#stay" >
+        <DetectSpaces />
+        <DetectChar attribute="Params Brace" context="#pop#pop" char="&gt;" />
+        <keyword attribute="Error" context="#stay" String="storage" />
+        <keyword attribute="Error" context="#stay" String="scope" />
+        <AnyChar attribute="Error" context="#stay" String="${}.*@!=%+-/\" />
+        <IncludeRules context="Any Type" />
+      </context>
+
+    </contexts>
+
+    <itemDatas>
+      <itemData name="Normal Text" defStyleNum="dsNormal" />
+      <itemData name="Keyword" defStyleNum="dsKeyword" />
+      <itemData name="Scope Qualifier" defStyleNum="dsFunction" />
+      <itemData name="Storage Qualifier" defStyleNum="dsKeyword" />
+      <itemData name="Builtin Category Name" defStyleNum="dsDataType" italic="true" />
+      <itemData name="Category Name" defStyleNum="dsDataType" />
+      <itemData name="Param Name" defStyleNum="dsDataType" italic="true" />
+      <itemData name="String" defStyleNum="dsString" />
+      <itemData name="Assign" defStyleNum="dsOthers" bold="true" />
+      <itemData name="Params Brace" defStyleNum="dsOperator" bold="false" color="#c02040" selColor="#c02040" />
+      <itemData name="Type Delim" defStyleNum="dsOperator" bold="false" color="#c04040" selColor="#c04040" />
+      <itemData name="Operator" defStyleNum="dsOperator" />
+      <itemData name="Caller" defStyleNum="dsFunction" />
+      <itemData name="Voided" defStyleNum="dsOthers" />
+      <itemData name="Comment" defStyleNum="dsComment" spellChecking="true" />
+      <itemData name="Error" defStyleNum="dsError" spellChecking="false" />
+    </itemDatas>
+
+  </highlighting>
+
+  <general>
+    <comments>
+      <comment name="singleLine" start="//" />
+      <comment name="multiLine" start="/*" end="*/" region="Comment" />
+    </comments>
+    <keywords casesensitive="1" additionalDeliminator="$" />
+  </general>
+
+</language>
+<!-- kate: indent-width 2; tab-width 2; -->
