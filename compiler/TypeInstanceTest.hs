@@ -51,31 +51,31 @@ tests = [
       "Type2<Type0,Type3,Type0>",
     checkSimpleConvertSuccess
       "Type3"
-      "(Type0|Type3)",
+      "[Type0|Type3]",
     checkSimpleConvertSuccess
       "Type3"
-      "(Type0|Type1<Type0>)",
+      "[Type0|Type1<Type0>]",
     checkSimpleConvertSuccess
-      "(Type3|Type1<Type0>)"
+      "[Type3|Type1<Type0>]"
       "Type0",
     checkSimpleConvertSuccess
-      "(Type0&Type3)"
+      "[Type0&Type3]"
       "Type3",
     checkSimpleConvertSuccess
-      "(Type3|Type3)"
+      "[Type3|Type3]"
       "Type3",
     checkSimpleConvertSuccess
-      "(Type1<Type0>&Type3)"
-      "(Type1<Type0>|Type3)",
+      "[Type1<Type0>&Type3]"
+      "[Type1<Type0>|Type3]",
     checkSimpleConvertFail
-      "(Type0|Type3)"
+      "[Type0|Type3]"
       "Type3",
     checkSimpleConvertFail
       "Type0"
-      "(Type0&Type3)",
+      "[Type0&Type3]",
     checkSimpleConvertFail
-      "(Type0|Type3)"
-      "(Type0&Type3)",
+      "[Type0|Type3]"
+      "[Type0&Type3]",
 
     checkSimpleConvertSuccess
       "any"
@@ -279,13 +279,13 @@ tests = [
       "Type4<Type0>",
     return $ checkTypeSuccess resolver
       [("#x",["allows Type0"])]
-      "Type4<(#x&Type0)>",
+      "Type4<[#x&Type0]>",
     return $ checkTypeSuccess resolver
       [("#x",["allows Type0"])]
-      "Type4<(#x|Type0)>",
+      "Type4<[#x|Type0]>",
     return $ checkTypeFail resolver
       [("#x",["allows Type0"])]
-      "Type4<(#x|Type3)>",
+      "Type4<[#x|Type3]>",
     return $ checkTypeFail resolver
       []
       "Type5<#x>",
@@ -316,39 +316,39 @@ tests = [
     checkConvertSuccess
       [("#x",[]),
        ("#y",[])]
-      "(#x&#y)" "(#x&#y)",
+      "[#x&#y]" "[#x&#y]",
     checkConvertSuccess
       [("#x",[]),
        ("#y",[])]
-      "(#x&#y)" "(#x|#y)",
+      "[#x&#y]" "[#x|#y]",
     checkConvertSuccess
       [("#x",[]),
        ("#y",[])]
-      "(#x|#y)" "(#x|#y)",
+      "[#x|#y]" "[#x|#y]",
     checkConvertSuccess
       [("#x",[]),
        ("#y",["defines Instance0"])]
-      "(#x&#y)" "(#x|#y)",
+      "[#x&#y]" "[#x|#y]",
     checkConvertSuccess
       [("#x",[]),
        ("#y",["defines Instance0"])]
-      "(#x&#y)" "#y",
+      "[#x&#y]" "#y",
     checkConvertFail
       [("#x",[]),
        ("#y",["defines Instance0"])]
-      "(#x|#y)" "#y",
+      "[#x|#y]" "#y",
     checkConvertSuccess
       [("#x",[]),
        ("#y",["requires Type3"])]
-      "(#x&#y)" "(#x|#y)",
+      "[#x&#y]" "[#x|#y]",
     checkConvertSuccess
       [("#x",[]),
        ("#y",["requires Type3"])]
-      "(#x&#y)" "#y",
+      "[#x&#y]" "#y",
     checkConvertFail
       [("#x",[]),
        ("#y",["requires Type3"])]
-      "(#x|#y)" "#y",
+      "[#x|#y]" "#y",
     checkConvertSuccess
       [("#x",[])]
       "all" "#x",
@@ -488,41 +488,41 @@ tests = [
 
     return $ checkTypeSuccess resolver
       []
-      "(Type4<Type0>|Type1<Type3>)",
+      "[Type4<Type0>|Type1<Type3>]",
     return $ checkTypeSuccess resolver
       []
-      "(Type4<Type0>&Type1<Type3>)",
+      "[Type4<Type0>&Type1<Type3>]",
     return $ checkTypeSuccess resolver
       [("#x",[])]
-      "(Type5<#x>|Type1<Type3>)",
+      "[Type5<#x>|Type1<Type3>]",
     return $ checkTypeFail resolver
       [("#x",[])]
-      "(Type5<#x>&Type1<Type3>)",
+      "[Type5<#x>&Type1<Type3>]",
     return $ checkTypeSuccess resolver
       [("#x",[])]
-      "(#x|Type1<Type3>)",
+      "[#x|Type1<Type3>]",
     return $ checkTypeSuccess resolver
       [("#x",[])]
-      "(#x&Type1<Type3>)",
+      "[#x&Type1<Type3>]",
     return $ checkTypeFail resolver
       [("#x",[])]
-      "(Type4<Type0>|Instance0)",
+      "[Type4<Type0>|Instance0]",
     return $ checkTypeFail resolver
       [("#x",[])]
-      "(Type4<Type0>&Instance0)",
+      "[Type4<Type0>&Instance0]",
 
     return $ checkTypeSuccess resolver
       []
-      "((Type4<Type0>&Type1<Type3>)|Type1<Type3>)",
+      "[[Type4<Type0>&Type1<Type3>]|Type1<Type3>]",
     return $ checkTypeSuccess resolver
       []
-      "((Type4<Type0>|Type1<Type3>)&Type1<Type3>)",
+      "[[Type4<Type0>|Type1<Type3>]&Type1<Type3>]",
     return $ checkTypeSuccess resolver
       [("#x",[])]
-      "((Type4<Type0>&#x)|Type1<Type3>)",
+      "[[Type4<Type0>&#x]|Type1<Type3>]",
     return $ checkTypeSuccess resolver
       [("#x",[])]
-      "((Type4<Type0>|#x)&Type1<Type3>)",
+      "[[Type4<Type0>|#x]&Type1<Type3>]",
 
     return $ checkDefinesFail resolver
       [("#x",[])]

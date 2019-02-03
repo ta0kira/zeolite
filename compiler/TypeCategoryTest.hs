@@ -395,14 +395,14 @@ tests = [
         ts <- topoSortCategories builtinCategories ts
         ta <- flattenAllConnections builtinCategories ts >>= declareAllTypes builtinCategories
         let r = categoriesToTypeResolver ta
-        checkTypeSuccess r [] "(Child|Child)"),
+        checkTypeSuccess r [] "[Child|Child]"),
     checkOperationSuccess
       "testfiles/flatten.0rx"
       (\ts -> do
         ts <- topoSortCategories builtinCategories ts
         ta <- flattenAllConnections builtinCategories ts >>= declareAllTypes builtinCategories
         let r = categoriesToTypeResolver ta
-        checkTypeFail r [] "(Child&Child)"),
+        checkTypeFail r [] "[Child&Child]"),
     checkOperationSuccess
       "testfiles/flatten.0rx"
       (\ts -> do
@@ -416,14 +416,14 @@ tests = [
         ts <- topoSortCategories builtinCategories ts
         ta <- flattenAllConnections builtinCategories ts >>= declareAllTypes builtinCategories
         let r = categoriesToTypeResolver ta
-        checkTypeSuccess r [] "(Object2|Object2)"),
+        checkTypeSuccess r [] "[Object2|Object2]"),
     checkOperationSuccess
       "testfiles/flatten.0rx"
       (\ts -> do
         ts <- topoSortCategories builtinCategories ts
         ta <- flattenAllConnections builtinCategories ts >>= declareAllTypes builtinCategories
         let r = categoriesToTypeResolver ta
-        checkTypeSuccess r [] "(Object2&Object2)"),
+        checkTypeSuccess r [] "[Object2&Object2]"),
     checkOperationSuccess
       "testfiles/flatten.0rx"
       (\ts -> do
@@ -437,14 +437,14 @@ tests = [
         ts <- topoSortCategories builtinCategories ts
         ta <- flattenAllConnections builtinCategories ts >>= declareAllTypes builtinCategories
         let r = categoriesToTypeResolver ta
-        checkTypeFail r [] "(Type<Child>|Type<Child>)"),
+        checkTypeFail r [] "[Type<Child>|Type<Child>]"),
     checkOperationSuccess
       "testfiles/flatten.0rx"
       (\ts -> do
         ts <- topoSortCategories builtinCategories ts
         ta <- flattenAllConnections builtinCategories ts >>= declareAllTypes builtinCategories
         let r = categoriesToTypeResolver ta
-        checkTypeFail r [] "(Type<Child>&Type<Child>)"),
+        checkTypeFail r [] "[Type<Child>&Type<Child>]"),
 
     -- TODO: Clean these tests up.
     checkOperationSuccess

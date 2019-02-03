@@ -51,9 +51,9 @@ type GeneralInstance = GeneralType TypeInstanceOrParam
 instance Show GeneralInstance where
   show (SingleType t) = show t
   show (TypeMerge MergeUnion []) = "all"
-  show (TypeMerge MergeUnion ts) = "(" ++ intercalate "|" (map show ts) ++ ")"
+  show (TypeMerge MergeUnion ts) = "[" ++ intercalate "|" (map show ts) ++ "]"
   show (TypeMerge MergeIntersect []) = "any"
-  show (TypeMerge MergeIntersect ts) = "(" ++ intercalate "&" (map show ts) ++ ")"
+  show (TypeMerge MergeIntersect ts) = "[" ++ intercalate "&" (map show ts) ++ "]"
 
 data ValueType =
   ValueType {

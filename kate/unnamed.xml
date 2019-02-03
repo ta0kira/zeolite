@@ -16,8 +16,6 @@
     <list name="keywords">
       <item> allows </item>
       <item> break </item>
-      <item> concrete </item>
-      <item> define </item>
       <item> defines </item>
       <item> elif </item>
       <item> else </item>
@@ -26,7 +24,6 @@
       <item> if </item>
       <item> in </item>
       <item> _ </item>
-      <item> interface </item>
       <item> present </item>
       <item> reduce </item>
       <item> refines </item>
@@ -37,8 +34,20 @@
       <item> scoped </item>
       <item> strong </item>
       <item> true </item>
-      <item> types </item>
       <item> while </item>
+    </list>
+
+    <list name="typeDeclare">
+      <item> concrete </item>
+      <item> interface </item>
+    </list>
+
+    <list name="typeDefine">
+      <item> define </item>
+    </list>
+
+    <list name="internalTypes">
+      <item> types </item>
     </list>
 
     <list name="scope">
@@ -75,6 +84,8 @@
         <keyword attribute="Keyword" context="#stay" String="keywords" />
         <keyword attribute="Scope Qualifier" context="#stay" String="scope" />
         <keyword attribute="Storage Qualifier" context="#stay" String="storage" />
+        <keyword attribute="Keyword" context="Declare Type" String="typeDeclare" />
+        <keyword attribute="Keyword" context="Define Type" String="typeDefine" />
         <DetectChar attribute="String" context="String" char="&quot;" />
         <Detect2Chars attribute="Assign" context="#stay" char="&lt;" char1="-" />
         <Detect2Chars attribute="Assign" context="#stay" char="-" char1="&gt;" />
@@ -91,14 +102,31 @@
         <IncludeRules context="Any Type" />
       </context>
 
+      <context name="Declare Type" attribute="Normal Text" lineEndContext="#stay" >
+        <DetectSpaces />
+        <RegExpr attribute="Define Category Name" context="#stay" String="\b[A-Z][a-zA-Z0-9]*\b" />
+        <DetectChar attribute="Params Brace" context="Type Params" char="&lt;" />
+        <IncludeRules context="Any Comment" />
+        <RegExpr context="#pop" String=".*" lookAhead="true" />
+      </context>
+
+      <context name="Define Type" attribute="Normal Text" lineEndContext="#stay" >
+        <DetectSpaces />
+        <RegExpr attribute="Define Category Name" context="#stay" String="\b[A-Z][a-zA-Z0-9]*\b" />
+        <DetectChar context="#pop" char="{" lookAhead="true" />
+        <AnyChar attribute="Error" context="#stay" String="#$}.*@!=%+-/\&lt;&gt;()[]" />
+        <RegExpr attribute="Error" context="#stay" String="[a-z0-9][a-zA-Z0-9]*\b" />
+      </context>
+
       <context name="Any Type" attribute="Normal Text" lineEndContext="#stay" >
         <IncludeRules context="Any Comment" />
-        <DetectChar attribute="Type Delim" context="#stay" char="|" />
-        <DetectChar attribute="Type Delim" context="#stay" char="&amp;" />
+        <DetectChar attribute="Merge Brace" context="Merge Types" char="[" />
         <keyword attribute="Builtin Category Name" context="Type Name" String="builtinCategory" />
+        <keyword attribute="Keyword" context="Type Name" String="internalTypes" />
         <keyword attribute="Keyword" context="#stay" String="keywordCategory" />
         <RegExpr attribute="Category Name" context="Type Name" String="\b[A-Z][a-zA-Z0-9]*\b" />
         <RegExpr attribute="Param Name" context="#stay" String="#[a-z][a-zA-Z0-9]*\b" />
+        <RegExpr attribute="Error" context="#stay" String="#[A-Z0-9][a-zA-Z0-9]*\b" />
       </context>
 
       <context name="Any Comment" attribute="Normal Text" lineEndContext="#pop" >
@@ -137,7 +165,31 @@
         <IncludeRules context="Any Comment" />
         <keyword attribute="Error" context="#stay" String="storage" />
         <keyword attribute="Error" context="#stay" String="scope" />
-        <AnyChar attribute="Error" context="#stay" String="${}.*@!=%+-/\" />
+        <AnyChar attribute="Error" context="#stay" String="${}.&amp;*@!=%+-/\&lt;]|()" />
+        <IncludeRules context="Any Type" />
+        <RegExpr attribute="Error" context="#stay" String="\b[a-z][a-zA-Z0-9]*" />
+      </context>
+
+      <context name="Type Params" attribute="Normal Text" lineEndContext="#stay" >
+        <DetectSpaces />
+        <DetectChar attribute="Params Brace" context="#pop#pop" char="&gt;" />
+        <IncludeRules context="Any Comment" />
+        <DetectChar attribute="Type Delim" context="#stay" char="|" />
+        <RegExpr attribute="Param Name" context="#stay" String="#[a-z][a-zA-Z0-9]*\b" />
+        <AnyChar attribute="Error" context="#stay" String="${}.&amp;*@!=%+-/\&lt;[]()" />
+        <RegExpr attribute="Error" context="#stay" String="\b[a-zA-Z][a-zA-Z0-9]*" />
+      </context>
+
+      <context name="Merge Types" attribute="Normal Text" lineEndContext="#stay" >
+        <DetectSpaces />
+        <DetectChar attribute="Merge Brace" context="#pop" char="]" />
+        <IncludeRules context="Any Comment" />
+        <DetectChar attribute="Merge Delim" context="#stay" char="|" />
+        <DetectChar attribute="Merge Delim" context="#stay" char="&amp;" />
+        <keyword attribute="Error" context="#stay" String="storage" />
+        <keyword attribute="Error" context="#stay" String="scope" />
+        <AnyChar attribute="Error" context="#stay" String="${}.*@!=%+-/\&lt;&gt;()" />
+        <RegExpr attribute="Error" context="#stay" String="\b[a-z][a-zA-Z0-9]*" />
         <IncludeRules context="Any Type" />
       </context>
 
@@ -150,11 +202,14 @@
       <itemData name="Storage Qualifier" defStyleNum="dsKeyword" />
       <itemData name="Builtin Category Name" defStyleNum="dsDataType" italic="true" />
       <itemData name="Category Name" defStyleNum="dsDataType" />
+      <itemData name="Define Category Name" defStyleNum="dsDataType" bold="true" />
       <itemData name="Param Name" defStyleNum="dsDataType" italic="true" />
       <itemData name="String" defStyleNum="dsString" />
       <itemData name="Assign" defStyleNum="dsOthers" bold="true" />
       <itemData name="Params Brace" defStyleNum="dsOperator" bold="false" color="#c02040" selColor="#c02040" />
+      <itemData name="Merge Brace" defStyleNum="dsOthers" bold="true" />
       <itemData name="Type Delim" defStyleNum="dsOperator" bold="false" color="#c04040" selColor="#c04040" />
+      <itemData name="Merge Delim" defStyleNum="dsOthers" />
       <itemData name="Operator" defStyleNum="dsOperator" />
       <itemData name="Caller" defStyleNum="dsFunction" />
       <itemData name="Voided" defStyleNum="dsOthers" />

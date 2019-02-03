@@ -886,7 +886,7 @@ define Test {
 }
 END
 
-expect_error 'call from union' '\(Base\|Value\)' 'line 22' <<END
+expect_error 'call from union' '\[Base\|Value\]' 'line 22' <<END
 @value interface Base {
   call () -> ()
 }
@@ -907,7 +907,7 @@ define Value {
 
 define Test {
   run () {
-    (Base|Value) value <- Value\$create()
+    [Base|Value] value <- Value\$create()
     ~ value.call()
   }
 }
@@ -934,7 +934,7 @@ define Value {
 
 define Test {
   run () {
-    (Base|Value) value <- Value\$create()
+    [Base|Value] value <- Value\$create()
     ~ value.Base\$call()
   }
 }
@@ -964,7 +964,7 @@ define Value {
 
 define Test {
   run () {
-    (Base1&Base2) value <- Value\$create()
+    [Base1&Base2] value <- Value\$create()
     ~ value.call()
   }
 }
@@ -994,7 +994,7 @@ define Value {
 
 define Test {
   run () {
-    (Base1&Base2) value <- Value\$create()
+    [Base1&Base2] value <- Value\$create()
     ~ value.Base1\$call()
   }
 }
@@ -1563,9 +1563,9 @@ define Value1 {
 
 define Test {
   run () {
-    (Value1|Value2) value <- Value1\$create()
+    [Value1|Value2] value <- Value1\$create()
     scoped {
-      optional Base value2 <- reduce<(Value1|Value2),Base>(value)
+      optional Base value2 <- reduce<[Value1|Value2],Base>(value)
     } in if (!present(value2)) {
       ~ Util\$crash()
     }
@@ -1594,9 +1594,9 @@ define Value1 {
 
 define Test {
   run () {
-    (Value1|Value2) value <- Value1\$create()
+    [Value1|Value2] value <- Value1\$create()
     scoped {
-      optional Value2 value2 <- reduce<(Value1|Value2),Value2>(value)
+      optional Value2 value2 <- reduce<[Value1|Value2],Value2>(value)
     } in if (present(value2)) {
       ~ Util\$crash()
     }
@@ -1626,7 +1626,7 @@ define Test {
   run () {
     Value value <- Value\$create()
     scoped {
-      optional (Base1&Base2) value2 <- reduce<Value,(Base1&Base2)>(value)
+      optional [Base1&Base2] value2 <- reduce<Value,[Base1&Base2]>(value)
     } in if (!present(value2)) {
       ~ Util\$crash()
     }
@@ -1655,7 +1655,7 @@ define Test {
   run () {
     Value value <- Value\$create()
     scoped {
-      optional (Base1&Base2) value2 <- reduce<Value,(Base1&Base2)>(value)
+      optional [Base1&Base2] value2 <- reduce<Value,[Base1&Base2]>(value)
     } in if (present(value2)) {
       ~ Util\$crash()
     }
@@ -1688,9 +1688,9 @@ define Value2 {
 
 define Test {
   run () {
-    (Value1|Value2) value <- Value2\$create()
+    [Value1|Value2] value <- Value2\$create()
     scoped {
-      optional (Base1&Base2) value2 <- reduce<(Value1|Value2),(Base1&Base2)>(value)
+      optional [Base1&Base2] value2 <- reduce<[Value1|Value2],[Base1&Base2]>(value)
     } in if (!present(value2)) {
       ~ Util\$crash()
     }
@@ -1722,9 +1722,9 @@ define Value2 {
 
 define Test {
   run () {
-    (Value1|Value2) value <- Value2\$create()
+    [Value1|Value2] value <- Value2\$create()
     scoped {
-      optional (Base1&Base2) value2 <- reduce<(Value1|Value2),(Base1&Base2)>(value)
+      optional [Base1&Base2] value2 <- reduce<[Value1|Value2],[Base1&Base2]>(value)
     } in if (present(value2)) {
       ~ Util\$crash()
     }
@@ -1758,9 +1758,9 @@ define Data {
 
 define Test {
   run () {
-    (Value1&Value2) value <- Data\$create()
+    [Value1&Value2] value <- Data\$create()
     scoped {
-      optional (Base1|Base2) value2 <- reduce<(Value1&Value2),(Base1|Base2)>(value)
+      optional [Base1|Base2] value2 <- reduce<[Value1&Value2],[Base1|Base2]>(value)
     } in if (!present(value2)) {
       ~ Util\$crash()
     }
@@ -1792,9 +1792,9 @@ define Data {
 
 define Test {
   run () {
-    (Value1&Value2) value <- Data\$create()
+    [Value1&Value2] value <- Data\$create()
     scoped {
-      optional (Base1|Base2) value2 <- reduce<(Value1&Value2),(Base1|Base2)>(value)
+      optional [Base1|Base2] value2 <- reduce<[Value1&Value2],[Base1|Base2]>(value)
     } in if (present(value2)) {
       ~ Util\$crash()
     }

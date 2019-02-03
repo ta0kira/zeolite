@@ -2,7 +2,7 @@ define TypeTree {
   @value Tree<TypeKey<any>,HiddenType> tree
 
   new () {
-    return TypeTree { Tree<TypeKey<any>,HiddenType>$new() }
+    return TypeTree{ Tree<TypeKey<any>,HiddenType>$new() }
   }
 
   set (k,v) {
@@ -59,7 +59,7 @@ define HiddenType {
   @value #x value
 
   create (k,v) {
-    return HiddenType { types<#y>, k, v }
+    return HiddenType{ types<#y>, k, v }
   }
 
   check (k) {

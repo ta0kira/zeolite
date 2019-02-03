@@ -22,13 +22,13 @@ instance ParseFromSource GeneralInstance where
       kwAny
       return $ TypeMerge MergeIntersect []
     intersect = labeled "intersection" $ do
-      ts <- between (sepAfter $ string "(")
-                    (sepAfter $ string ")")
+      ts <- between (sepAfter $ string "[")
+                    (sepAfter $ string "]")
                     (sepBy sourceParser (sepAfter $ string "&"))
       return $ TypeMerge MergeIntersect ts
     union = labeled "union" $ do
-      ts <- between (sepAfter $ string "(")
-                    (sepAfter $ string ")")
+      ts <- between (sepAfter $ string "[")
+                    (sepAfter $ string "]")
                     (sepBy sourceParser (sepAfter $ string "|"))
       return $ TypeMerge MergeUnion ts
     single = do
