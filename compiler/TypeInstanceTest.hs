@@ -101,6 +101,12 @@ tests = [
     checkSimpleConvertFail
       "any"
       "all",
+    checkSimpleConvertFail
+      "Type1<Type0>"
+      "Type1<any>",
+    checkSimpleConvertFail
+      "Type1<all>"
+      "Type1<Type0>",
 
     checkConvertSuccess
       [("#x",[])]

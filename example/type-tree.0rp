@@ -5,9 +5,9 @@ concrete TypeTree {
   @value get<#x> (TypeKey<#x>) -> (optional #x)
 }
 
-concrete TypeKey<#x> {
-  defines LessThan<TypeKey<#x>>
-  defines Equals<TypeKey<#x>>
+concrete TypeKey<|#x> {
+  defines LessThan<TypeKey<any>>
+  defines Equals<TypeKey<any>>
 
   @type new () -> (TypeKey<#x>)
 }

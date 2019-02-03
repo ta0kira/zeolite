@@ -1802,6 +1802,52 @@ define Test {
 }
 END
 
+expect_runs 'reduce succeeds to covariant any' <<END
+concrete Value<|#x> {
+  @type create () -> (Value<#x>)
+}
+
+define Value {
+  create () {
+    return Value<#x>{}
+  }
+}
+
+define Test {
+  run () {
+    Value<Test> value <- Value<Test>\$create()
+    scoped {
+      optional Value<any> value2 <- reduce<Value<Test>,Value<any>>(value)
+    } in if (!present(value2)) {
+      ~ Util\$crash()
+    }
+  }
+}
+END
+
+expect_runs 'reduce fails to invariant any' <<END
+concrete Value<#x> {
+  @type create () -> (Value<#x>)
+}
+
+define Value {
+  create () {
+    return Value<#x>{}
+  }
+}
+
+define Test {
+  run () {
+    Value<Test> value <- Value<Test>\$create()
+    scoped {
+      optional Value<any> value2 <- reduce<Value<Test>,Value<any>>(value)
+    } in if (present(value2)) {
+      ~ Util\$crash()
+    }
+  }
+}
+END
+
 expect_runs 'int arithmetic with precedence' <<END
 define Test {
   run () {

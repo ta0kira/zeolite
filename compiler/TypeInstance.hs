@@ -236,6 +236,10 @@ checkValueTypeMatch r f ts1@(ValueType r1 t1) ts2@(ValueType r2 t2)
 checkGeneralMatch :: (MergeableM m, CompileErrorM m, Monad m) =>
   TypeResolver m -> ParamFilters -> Variance ->
   GeneralInstance -> GeneralInstance -> m ()
+checkGeneralMatch r f Invariant ts1 ts2 = do
+  -- This ensures that any and all behave as expected in Invariant positions.
+  checkGeneralType (checkSingleMatch r f Covariant) ts1 ts2
+  checkGeneralType (checkSingleMatch r f Covariant) ts2 ts1
 checkGeneralMatch r f v ts1 ts2 = checkGeneralType (checkSingleMatch r f v) ts1 ts2
 
 checkSingleMatch :: (MergeableM m, CompileErrorM m, Monad m) =>
