@@ -1,8 +1,8 @@
 define TypeTree {
-  @value Tree<Key<any>,HiddenType> tree
+  @value Tree<TypeKey<any>,HiddenType> tree
 
   new () {
-    return TypeTree { Tree<Key<any>,HiddenType>$new() }
+    return TypeTree { Tree<TypeKey<any>,HiddenType>$new() }
   }
 
   set (k,v) {
@@ -26,12 +26,12 @@ define TypeTree {
   }
 }
 
-define Key {
+define TypeKey {
   @category Int counter <- 0
   @value Int index
 
   new () {
-    return Key<#x>{ (counter <- counter+1) }
+    return TypeKey<#x>{ (counter <- counter+1) }
   }
 
   lessThan (l,r) {
@@ -48,9 +48,14 @@ define Key {
   }
 }
 
+concrete HiddenType {
+  @type create<#y> (TypeKey<#y>,#y) -> (HiddenType)
+  @value check<#y> (TypeKey<#y>) -> (optional #y)
+}
+
 define HiddenType {
   types<#x> {}
-  @value Key<#x> key
+  @value TypeKey<#x> key
   @value #x value
 
   create (k,v) {
@@ -58,7 +63,7 @@ define HiddenType {
   }
 
   check (k) {
-    if (Key<any>$equals(key,k)) {
+    if (TypeKey<any>$equals(key,k)) {
       return reduce<#x,#y>(value)
     } else {
       return empty

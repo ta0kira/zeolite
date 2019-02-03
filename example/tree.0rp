@@ -1,15 +1,15 @@
-@value interface TreeWrite<#k,#v|> {
-  set (#k,#v) -> (TreeWrite<#k,#v>)
-  remove (#k) -> (TreeWrite<#k,#v>)
+@value interface TreeWriter<#k,#v|> {
+  set (#k,#v) -> (TreeWriter<#k,#v>)
+  remove (#k) -> (TreeWriter<#k,#v>)
 }
 
-@value interface TreeRead<#k|#v> {
+@value interface TreeReader<#k|#v> {
   get (#k) -> (optional #v)
 }
 
 concrete Tree<#k|#v|> {
-  refines TreeWrite<#k,#v>
-  refines TreeRead<#k,#v>
+  refines TreeWriter<#k,#v>
+  refines TreeReader<#k,#v>
   #k defines LessThan<#k>
 
   @type new () -> (Tree<#k,#v>)

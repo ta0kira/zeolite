@@ -2096,5 +2096,45 @@ define Test {
 }
 END
 
+expect_runs 'string Formatted' <<END
+define Test {
+  run () {
+    if (("x").formatted() != "x") {
+      ~ Util\$crash()
+    }
+  }
+}
+END
+
+expect_runs 'int Formatted' <<END
+define Test {
+  run () {
+    if ((1).formatted() != "1") {
+      ~ Util\$crash()
+    }
+  }
+}
+END
+
+expect_runs 'float Formatted' <<END
+define Test {
+  run () {
+    if ((1.1).formatted() != "1.1") { // precision might vary
+      ~ Util\$crash()
+    }
+  }
+}
+END
+
+expect_runs 'bool Formatted' <<END
+define Test {
+  run () {
+    if ((false).formatted() != "false") {
+      ~ Util\$crash()
+    }
+  }
+}
+END
+
 
 echo "All $count tests passed" 1>&2

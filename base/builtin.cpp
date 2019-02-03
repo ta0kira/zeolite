@@ -1,6 +1,7 @@
 #include "builtin.hpp"
 
 #include <map>
+#include <sstream>
 
 #include "category-source.hpp"
 
@@ -62,7 +63,18 @@ class Value_Bool : public TypeValue {
 
   std::string CategoryName() const final { return "Bool"; }
 
-  virtual bool AsBool() const { return value_; }
+  bool AsBool() const final { return value_; }
+
+  DReturns Dispatch(const S<TypeValue>& self,
+                    const DFunction<SymbolScope::VALUE>& label,
+                    DParams params, DArgs args) final {
+    FAIL_IF(args.size() != label.ArgCount());
+    FAIL_IF(params.size() != label.ParamCount());
+    if (&label == &Function_Formatted_formatted) {
+      return DReturns{Box_String(self->AsBool()? "true" : "false")};
+    }
+    return TypeValue::Dispatch(self, label, params, args);
+  }
 
  private:
   const bool value_;
@@ -95,7 +107,18 @@ class Value_String : public TypeValue {
 
   std::string CategoryName() const final { return "String"; }
 
-  virtual std::string AsString() const { return value_; }
+  std::string AsString() const final { return value_; }
+
+  DReturns Dispatch(const S<TypeValue>& self,
+                    const DFunction<SymbolScope::VALUE>& label,
+                    DParams params, DArgs args) final {
+    FAIL_IF(args.size() != label.ArgCount());
+    FAIL_IF(params.size() != label.ParamCount());
+    if (&label == &Function_Formatted_formatted) {
+      return DReturns{Box_String(self->AsString())};
+    }
+    return TypeValue::Dispatch(self, label, params, args);
+  }
 
  private:
   const std::string value_;
@@ -128,7 +151,20 @@ class Value_Int : public TypeValue {
 
   std::string CategoryName() const final { return "Int"; }
 
-  virtual int AsInt() const { return value_; }
+  int AsInt() const final { return value_; }
+
+  DReturns Dispatch(const S<TypeValue>& self,
+                    const DFunction<SymbolScope::VALUE>& label,
+                    DParams params, DArgs args) final {
+    FAIL_IF(args.size() != label.ArgCount());
+    FAIL_IF(params.size() != label.ParamCount());
+    if (&label == &Function_Formatted_formatted) {
+      std::ostringstream output;
+      output << self->AsInt();
+      return DReturns{Box_String(output.str())};
+    }
+    return TypeValue::Dispatch(self, label, params, args);
+  }
 
  private:
   const int value_;
@@ -161,10 +197,31 @@ class Value_Float : public TypeValue {
 
   std::string CategoryName() const final { return "Float"; }
 
-  virtual double AsFloat() const { return value_; }
+  double AsFloat() const final { return value_; }
+
+  DReturns Dispatch(const S<TypeValue>& self,
+                    const DFunction<SymbolScope::VALUE>& label,
+                    DParams params, DArgs args) final {
+    FAIL_IF(args.size() != label.ArgCount());
+    FAIL_IF(params.size() != label.ParamCount());
+    if (&label == &Function_Formatted_formatted) {
+      std::ostringstream output;
+      output << self->AsFloat();
+      return DReturns{Box_String(output.str())};
+    }
+    return TypeValue::Dispatch(self, label, params, args);
+  }
 
  private:
   const double value_;
+};
+
+struct Category_Formatted : public TypeCategory {
+  std::string CategoryName() const final { return "Formatted"; }
+};
+
+struct Type_Formatted : public TypeInstance {
+  std::string CategoryName() const final { return "Formatted"; }
 };
 
 }  // namespace
@@ -173,6 +230,8 @@ const Function<SymbolScope::TYPE,0,2,1>& Function_LessThan_lessThan =
   *new Function<SymbolScope::TYPE,0,2,1>("LessThan", "lessThan");
 const Function<SymbolScope::TYPE,0,2,1>& Function_Equals_equals =
    *new Function<SymbolScope::TYPE,0,2,1>("Equals", "equals");
+const Function<SymbolScope::VALUE,0,0,1>& Function_Formatted_formatted =
+   *new Function<SymbolScope::VALUE,0,0,1>("Formatted", "formatted");
 
 TypeInstance& Merge_Intersect(L<TypeInstance*> params) {
   static auto& cache = *new std::map<L<TypeInstance*>,R<Type_Intersect>>();
@@ -208,6 +267,11 @@ TypeCategory& GetCategory_Float() {
   return category;
 }
 
+TypeCategory& GetCategory_Formatted() {
+  static auto& category = *new Category_Formatted();
+  return category;
+}
+
 
 TypeInstance& GetType_Bool(Params<0>::Type) {
   static auto& instance = *new Type_Bool();
@@ -226,6 +290,11 @@ TypeInstance& GetType_Int(Params<0>::Type) {
 
 TypeInstance& GetType_Float(Params<0>::Type) {
   static auto& instance = *new Type_Float();
+  return instance;
+}
+
+TypeInstance& GetType_Formatted(Params<0>::Type) {
+  static auto& instance = *new Type_Formatted();
   return instance;
 }
 

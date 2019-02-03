@@ -85,16 +85,18 @@ data CategoryName =
   BuiltinInt |
   BuiltinFloat |
   BuiltinLessThan |
-  BuiltinEquals
+  BuiltinEquals |
+  BuiltinFormatted
 
 instance Show CategoryName where
   show (CategoryName n) = n
-  show BuiltinBool     = "Bool"
-  show BuiltinString   = "String"
-  show BuiltinInt      = "Int"
-  show BuiltinFloat    = "Float"
-  show BuiltinLessThan = "LessThan"
-  show BuiltinEquals   = "Equals"
+  show BuiltinBool      = "Bool"
+  show BuiltinString    = "String"
+  show BuiltinInt       = "Int"
+  show BuiltinFloat     = "Float"
+  show BuiltinLessThan  = "LessThan"
+  show BuiltinEquals    = "Equals"
+  show BuiltinFormatted = "Formatted"
 
 instance Eq CategoryName where
   c1 == c2 = show c1 == show c2

@@ -3,51 +3,39 @@ concrete Main {
 }
 
 define Main {
-  @category Key<Int>    one   <- Key<Int>$new()
-  @category Key<Int>    two   <- Key<Int>$new()
-  @category Key<String> three <- Key<String>$new()
-  @category Key<String> four  <- Key<String>$new()
-  @category Key<Float>  five  <- Key<Float>$new()
+  @category TypeKey<Int>    one   <- TypeKey<Int>$new()
+  @category TypeKey<Int>    two   <- TypeKey<Int>$new()
+  @category TypeKey<String> three <- TypeKey<String>$new()
+  @category TypeKey<String> four  <- TypeKey<String>$new()
+  @category TypeKey<Float>  five  <- TypeKey<Float>$new()
 
   run () {
     TypeTree tree <- TypeTree$new()
     ~ tree
         .set<Int>(one,1)
-        .set<Int>(two,1)
+        .set<Int>(two,2)
         .set<String>(three,"a")
         .set<String>(four,"b")
 
-    // TODO: Add serialization of builtin types.
+    ~ check<Int>(tree,one)
+    ~ check<Int>(tree,two)
+    ~ check<String>(tree,three)
+    ~ check<String>(tree,four)
+    ~ check<Float>(tree,five)
+  }
 
+  @category check<#x>
+    #x requires Formatted
+  (TypeTree,TypeKey<#x>) -> ()
+
+  check (tree,key) {
     scoped {
-      optional Int value <- tree.get<Int>(one)
+      optional #x value <- tree.get<#x>(key)
     } in if (present(value)) {
       ~ LazyStream<String>$new()
-          .append("Found\n")
-          .write(SimpleOutput$stderr())
-    } else {
-      ~ LazyStream<String>$new()
-          .append("Not Found\n")
-          .write(SimpleOutput$stderr())
-    }
-
-    scoped {
-      optional String value <- tree.get<String>(three)
-    } in if (present(value)) {
-      ~ LazyStream<String>$new()
-          .append("Found\n")
-          .write(SimpleOutput$stderr())
-    } else {
-      ~ LazyStream<String>$new()
-          .append("Not Found\n")
-          .write(SimpleOutput$stderr())
-    }
-
-    scoped {
-      optional Float value <- tree.get<Float>(five)
-    } in if (present(value)) {
-      ~ LazyStream<String>$new()
-          .append("Found\n")
+          .append("Found '")
+          .append(require(value).formatted())
+          .append("'\n")
           .write(SimpleOutput$stderr())
     } else {
       ~ LazyStream<String>$new()
