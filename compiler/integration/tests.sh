@@ -279,6 +279,45 @@ define Test {
 }
 END
 
+expect_runs 'returns in correct order' <<END
+define Test {
+  @type get () -> (Int,Int)
+  get () {
+    return { 1, 2 }
+  }
+
+  run () {
+    scoped {
+      { Int x, Int y } <- get()
+    } in if (x != 1) {
+      ~ Util\$crash()
+    } elif (y != 2) {
+      ~ Util\$crash()
+    }
+  }
+}
+END
+
+expect_runs 'assigns in correct order' <<END
+define Test {
+  @type get () -> (Int,Int)
+  get () (x,y) {
+    x <- 1
+    y <- 2
+  }
+
+  run () {
+    scoped {
+      { Int x, Int y } <- get()
+    } in if (x != 1) {
+      ~ Util\$crash()
+    } elif (y != 2) {
+      ~ Util\$crash()
+    }
+  }
+}
+END
+
 expect_error 'missing return' 'Value' 'line 5' <<END
 @value interface Value {}
 

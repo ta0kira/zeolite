@@ -159,7 +159,9 @@ data Expression c =
 
 getExpressionContext :: Expression c -> [c]
 getExpressionContext (Expression c _ _)        = c
+getExpressionContext (Literal l)               = getValueLiteralContext l
 getExpressionContext (UnaryExpression c _ _)   = c
+getExpressionContext (InfixExpression c _ _ _) = c
 getExpressionContext (InitializeValue c _ _ _) = c
 
 data FunctionCall c =
@@ -185,6 +187,14 @@ data ValueLiteral c =
   BoolLiteral [c] Bool |
   EmptyLiteral [c]
   deriving (Show)
+
+getValueLiteralContext :: ValueLiteral c -> [c]
+getValueLiteralContext (StringLiteral c _)    = c
+getValueLiteralContext (IntegerLiteral c _)   = c
+getValueLiteralContext (HexLiteral c _)       = c
+getValueLiteralContext (DecimalLiteral c _ _) = c
+getValueLiteralContext (BoolLiteral c _)      = c
+getValueLiteralContext (EmptyLiteral c)       = c
 
 data ValueOperation c =
   ConvertedCall [c] TypeInstance (FunctionCall c) |
