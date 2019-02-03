@@ -127,12 +127,14 @@
       <context name="Type Name" attribute="Normal Text" lineEndContext="#stay" >
         <DetectSpaces />
         <DetectChar attribute="Params Brace" context="Type Args" char="&lt;" />
+        <IncludeRules context="Any Comment" />
         <RegExpr context="#pop" String=".*" lookAhead="true" />
       </context>
 
       <context name="Type Args" attribute="Normal Text" lineEndContext="#stay" >
         <DetectSpaces />
         <DetectChar attribute="Params Brace" context="#pop#pop" char="&gt;" />
+        <IncludeRules context="Any Comment" />
         <keyword attribute="Error" context="#stay" String="storage" />
         <keyword attribute="Error" context="#stay" String="scope" />
         <AnyChar attribute="Error" context="#stay" String="${}.*@!=%+-/\" />
