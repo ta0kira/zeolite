@@ -1,0 +1,35 @@
+@value interface Type1 {}
+
+@value interface Type2 {
+  refines Type1
+}
+
+@value interface Type3 {
+  refines Type2
+}
+
+@value interface Interface1 {
+  something (Type2) -> (Type1)
+}
+
+@value interface Interface2 {
+  something (Type3) -> (Type2)
+}
+
+@value interface Parent1 {
+  refines Interface1
+  refines Interface2
+
+  something (Type2) -> (Type2)
+}
+
+@value interface Parent2 {
+  refines Interface1
+}
+
+concrete Child {
+  refines Parent1
+  refines Parent2
+
+  @value something (Type2) -> (Type2)
+}

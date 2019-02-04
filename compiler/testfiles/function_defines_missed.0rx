@@ -1,0 +1,16 @@
+@type interface Type1 {}
+
+@value interface Type2 {}
+
+@value interface Type3 {}
+
+concrete Type4<#x> {
+  #x requires Type2
+  #x allows Type3
+  #x defines Type1
+
+  @type something<#y>
+    #y requires Type2
+    #y allows Type3
+  () -> (Type4<#y>)
+}

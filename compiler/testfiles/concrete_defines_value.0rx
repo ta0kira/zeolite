@@ -1,0 +1,5 @@
+@value interface Parent {}
+
+concrete Child {
+  defines Parent
+}

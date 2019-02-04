@@ -1,0 +1,12 @@
+@value interface Type1 {
+  something () -> ()
+}
+
+@value interface Type2 {
+  something () -> (Type)
+}
+
+concrete Type3 {
+  refines Type1
+  refines Type2
+}

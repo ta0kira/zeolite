@@ -1,0 +1,23 @@
+@type interface Equals<#x|> {}
+
+@value interface Function<#y|#z> {}
+
+concrete Value0<#t,#w> {
+  #t allows #w
+  #t requires Function<#t,#w>
+  #w requires #t
+  #w defines Equals<#w>
+}
+
+@value interface Value1 {
+  refines Function<Value1,Value2>
+}
+
+concrete Value2 {
+  refines Value3
+  defines Equals<Value2>
+}
+
+concrete Value3 {
+  refines Value1
+}

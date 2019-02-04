@@ -1,0 +1,5 @@
+concrete Type<|#x> {
+  @value something<#y>
+    #y requires #x
+  () -> ()
+}

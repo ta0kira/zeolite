@@ -1,0 +1,24 @@
+@value interface Object1<#x|> {}
+
+@value interface Object2<|#y> {}
+
+@value interface Object3<#w|#z> {
+  refines Object1<#w>
+  refines Object2<#z>
+}
+
+@value interface Object4<#t> {
+  refines Object3<#t,#t>
+}
+
+@value interface Object5<|#q> {
+  // Variance reversed twice by Object1.
+  refines Object1<Object1<#q>>
+}
+
+@type interface Object6<|#x> {}
+
+concrete Object7<|#s> {
+  // Variance reversed twice by Object1.
+  defines Object6<Object1<Object1<#s>>>
+}

@@ -1,0 +1,93 @@
+@type interface Create<#x|#y> {
+  #y defines Create<#x,#y>
+  create (#x) -> (#y)
+}
+
+@value interface Get<|#x> {
+  get () -> (#x)
+}
+
+@value interface Set<#x|> {
+  set (#x) -> ()
+}
+
+concrete WithTypes {
+  @category create<#x,#y,#z>
+    #x requires Get<#x>
+    #y allows Set<#y>
+  () -> (WithTypes)
+}
+
+define WithTypes {
+  types<#x,#y,#z> {
+    #x requires Get<#x>
+    #y allows Set<#y>
+  }
+
+  create () {
+    return WithTypes{ types<#x,#y,#z> }
+  }
+}
+
+concrete Value<#x> {
+  refines Get<#x>
+  refines Set<#x>
+  defines Create<#x,Value<#x>>
+
+  @type create (#x) -> (Value<#x>)
+  @category create2<#x> (#x) -> (Value<#x>)
+
+  @value get () -> (#x)
+}
+
+define Value {
+  @value #x value
+  @value weak Value<#x> self2
+
+  create (value) (created) {
+    { created } <- Value$$create2<#x>(value)
+    created <- Value$$create2<#x>(value)
+    ~ (created <- Value$$create2<#x>(value)).get()
+  }
+
+  create2 (value) {
+    return Value<#x>{ value, empty }
+  }
+
+  get () {
+    scoped {
+      optional any y <- empty
+    } in optional any x <- y
+    x <- empty
+    optional all y <- empty
+    ~ reduce<Value<#x>,#x>(self)
+    ~ require(self).get()
+    scoped {
+      optional Value<#x> self3 <- strong(self2)
+    } in if (present(self3)) {
+      ~ require(self3).get()
+    }
+    return value
+  }
+
+  @value set (#x) -> ()
+  set (value2) {
+    ~ 123.4
+    ~ 123
+    ~ "123.4"
+    ~ 0x123
+    value <- value2
+  }
+}
+
+concrete CreateProxy {
+  @category create<#x,#y>
+    #y defines Create<#x,#y>
+  (#x) -> (#y)
+}
+
+define CreateProxy {
+  create (value) {
+    return #y$create(value)
+  }
+}
