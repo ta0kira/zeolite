@@ -95,10 +95,10 @@ tests = [
           (CategoryName "Parent",ValueConcrete [] (CategoryName "Parent") [] [] [] [] [])
         ]),
 
-    checkOperationSuccess "testfiles/value_refines_value.0rx" checkConnectionCycles,
-    checkOperationSuccess "testfiles/concrete_refines_value.0rx" checkConnectionCycles,
-    checkOperationSuccess "testfiles/concrete_defines_instance.0rx" checkConnectionCycles,
-    checkOperationFail "testfiles/value_cycle.0rx" checkConnectionCycles,
+    checkOperationSuccess "testfiles/value_refines_value.0rx" (checkConnectionCycles Map.empty),
+    checkOperationSuccess "testfiles/concrete_refines_value.0rx" (checkConnectionCycles Map.empty),
+    checkOperationSuccess "testfiles/concrete_defines_instance.0rx" (checkConnectionCycles Map.empty),
+    checkOperationFail "testfiles/value_cycle.0rx" (checkConnectionCycles Map.empty),
 
     checkOperationSuccess
       "testfiles/flatten.0rx"

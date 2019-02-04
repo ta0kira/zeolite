@@ -324,7 +324,8 @@ instance (Show c, MergeableM m, CompileErrorM m, Monad m) =>
       }
     where
       check (ValidatePositions rs) = do
-        processParamPairs checkReturnType rs (ParamSet $ zip [1..] $ psParams vs)
+        processParamPairs checkReturnType rs (ParamSet $ zip [1..] $ psParams vs) `reviseError`
+          ("In procedure return at " ++ formatFullContext c)
         return ()
         where
           checkReturnType ta0@(PassedValue c0 t0) (n,t) = do
@@ -393,7 +394,7 @@ pairProceduresToFunctions fa ps = do
     getPair Nothing (Just p) =
       compileError $ "Procedure " ++ show (epName p) ++
                      " [" ++ formatFullContext (epContext p) ++
-                     "] has no procedure definition"
+                     "] does not correspond to a function"
     getPair (Just f) (Just p) = do
       processParamPairs alwaysPairParams (sfArgs f) (avNames $ epArgs p) `reviseError`
         ("Procedure for " ++ show (sfName f) ++ " [" ++

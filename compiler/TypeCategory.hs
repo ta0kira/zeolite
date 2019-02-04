@@ -261,7 +261,7 @@ getConcreteCategory tm (c,n) = do
 includeNewTypes :: (Show c, MergeableM m, CompileErrorM m, Monad m) =>
   CategoryMap c -> [AnyCategory c] -> m (CategoryMap c)
 includeNewTypes tm0 ts = do
-  checkConnectionCycles ts
+  checkConnectionCycles tm0 ts
   checkConnectedTypes tm0 ts
   checkParamVariances tm0 ts
   ts <- topoSortCategories tm0 ts
@@ -357,9 +357,9 @@ checkConnectedTypes tm0 ts = do
       | otherwise = return ()
 
 checkConnectionCycles :: (Show c, MergeableM m, CompileErrorM m, Monad m) =>
-  [AnyCategory c] -> m ()
-checkConnectionCycles ts = mergeAllM (map (checker []) ts) where
-  tm = Map.fromList $ zip (map getCategoryName ts) ts
+  CategoryMap c -> [AnyCategory c] -> m ()
+checkConnectionCycles tm0 ts = mergeAllM (map (checker []) ts) where
+  tm = Map.union tm0 $ Map.fromList $ zip (map getCategoryName ts) ts
   checker us (ValueInterface c n _ rs _ _) = do
     failIfCycle n c us
     let ts = map (\r -> (vrContext r,tiName $ vrType r)) rs
@@ -443,7 +443,7 @@ validateCategoryFunction r t f = do
   flip reviseError ("In function:\n---\n" ++ show f ++ "\n---\n") $ do
     funcType <- parsedToFunctionType f
     if sfScope f == CategoryScope
-        then validatateFunctionType r Map.empty vm funcType
+        then validatateFunctionType r Map.empty Map.empty funcType
         else validatateFunctionType r fm vm funcType
 
 topoSortCategories :: (Show c, MergeableM m, CompileErrorM m, Monad m) =>

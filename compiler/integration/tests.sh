@@ -1848,6 +1848,86 @@ define Test {
 }
 END
 
+expect_runs 'reduce Bool to Bool' <<END
+define Test {
+  run () {
+    if (!present(reduce<Bool,Bool>(true))) {
+      ~ Util\$crash()
+    }
+  }
+}
+END
+
+expect_runs 'reduce Bool to Formatted' <<END
+define Test {
+  run () {
+    if (!present(reduce<Bool,Formatted>(true))) {
+      ~ Util\$crash()
+    }
+  }
+}
+END
+
+expect_runs 'reduce Int to Int' <<END
+define Test {
+  run () {
+    if (!present(reduce<Int,Int>(1))) {
+      ~ Util\$crash()
+    }
+  }
+}
+END
+
+expect_runs 'reduce Int to Formatted' <<END
+define Test {
+  run () {
+    if (!present(reduce<Int,Formatted>(1))) {
+      ~ Util\$crash()
+    }
+  }
+}
+END
+
+expect_runs 'reduce String to String' <<END
+define Test {
+  run () {
+    if (!present(reduce<String,String>("x"))) {
+      ~ Util\$crash()
+    }
+  }
+}
+END
+
+expect_runs 'reduce String to Formatted' <<END
+define Test {
+  run () {
+    if (!present(reduce<String,Formatted>("x"))) {
+      ~ Util\$crash()
+    }
+  }
+}
+END
+
+expect_runs 'reduce Float to Float' <<END
+define Test {
+  run () {
+    if (!present(reduce<Float,Float>(1.1))) {
+      ~ Util\$crash()
+    }
+  }
+}
+END
+
+expect_runs 'reduce Float to Formatted' <<END
+define Test {
+  run () {
+    if (!present(reduce<Float,Formatted>(1.1))) {
+      ~ Util\$crash()
+    }
+  }
+}
+END
+
 expect_runs 'int arithmetic with precedence' <<END
 define Test {
   run () {

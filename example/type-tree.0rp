@@ -1,10 +1,31 @@
+/* A key-value map that can hold multiple types of value.
+ *
+ * Each element in the map is keyed by a TypeKey that has a type param that
+ * matches the type of the value.
+ */
 concrete TypeTree {
+  // Creates a new TypeTree, e.g., TypeTree$new().
   @type new () -> (TypeTree)
+
+  // Sets the value for the given key, inserting if necessary.
   @value set<#x> (TypeKey<#x>,#x) -> (TypeTree)
+
+  // Removes the value for the given key.
   @value remove (TypeKey<any>) -> (TypeTree)
+
+  // Returns the value for the given key, or empty if:
+  // - There is no entry for the key.
+  // - The value for the key is not of type #x, i.e., was originally added to
+  //   the tree as a parent of type #x.
   @value get<#x> (TypeKey<#x>) -> (optional #x)
 }
 
+/* A typed key for indexing values in TypeTree.
+ *
+ * A key of type TypeKey<#x> indexes a value of type #x. The key can also be
+ * used as a key for any parent type of #x. For example, if V -> I then
+ * TypeKey<V> can be used as TypeKey<I>.
+ */
 concrete TypeKey<|#x> {
   // Note that TypeKey<#x> as a type argument for some #y can satisfy
   //
@@ -24,5 +45,6 @@ concrete TypeKey<|#x> {
   defines LessThan<TypeKey<any>>
   defines Equals<TypeKey<any>>
 
+  // Creates a new TypeKey, e.g., TypeTree<#x>$new().
   @type new () -> (TypeKey<#x>)
 }

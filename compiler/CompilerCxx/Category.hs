@@ -363,10 +363,10 @@ commonDefineType t extra = do
     refines = map (\r -> (tiName r,psParams $ tiParams r)) $ map vrType $ getCategoryRefines t
     allCats = concat $ map singleCat (myType:refines)
     singleCat (t,ps) = [
-        "if (&category == &" ++ categoryGetter t ++ "()) {",
-        "  args = std::vector<const TypeInstance*>{" ++ expanded ++ "};",
-        "  return true;",
-        "}"
+        "  if (&category == &" ++ categoryGetter t ++ "()) {",
+        "    args = std::vector<const TypeInstance*>{" ++ expanded ++ "};",
+        "    return true;",
+        "  }"
       ]
       where
         expanded = intercalate "," $ map ('&':) $ map expandLocalType ps

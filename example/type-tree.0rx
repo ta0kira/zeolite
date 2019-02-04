@@ -1,12 +1,12 @@
 define TypeTree {
-  @value Tree<TypeKey<any>,LockedType<all>> tree
+  @value Tree<TypeKey<any>,LockedType<any>> tree
 
   new () {
-    return TypeTree{ Tree<TypeKey<any>,LockedType<all>>$new() }
+    return TypeTree{ Tree<TypeKey<any>,LockedType<any>>$new() }
   }
 
   set (k,v) {
-    ~ tree.set(k,LockedType<#x>$create(k,v))
+    ~ tree.set(k,LockedType$$create<#x>(k,v))
     return self
   }
 
@@ -17,7 +17,7 @@ define TypeTree {
 
   get (k) {
     scoped {
-      optional LockedType<all> value <- tree.get(k)
+      optional LockedType<any> value <- tree.get(k)
     } in if (present(value)) {
       return require(value).check<#x>(k)
     } else {
@@ -48,8 +48,20 @@ define TypeKey {
   }
 }
 
-concrete LockedType<#x|> {
-  @type create (TypeKey<#x>,#x) -> (LockedType<#x>)
+/* An internal type used for storing a single value.
+ *
+ * The contained value is only accessible via the check function, which ensures
+ * both that the key and the type match.
+ */
+concrete LockedType<|#x> {
+  // Creates a new LockedType, e.g., LockedType$$create<#x>(k,v).
+  //
+  // Note that this is @category and not @type so that the variance check for #x
+  // is skipped. Since #x is covariant, the compiler would not allow it to be
+  // used in a function argument.
+  @category create<#y> (TypeKey<#y>,#y) -> (LockedType<#y>)
+
+  // Returns the contained value if the key matches.
   @value check<#y> (TypeKey<#y>) -> (optional #y)
 }
 
@@ -58,11 +70,19 @@ define LockedType {
   @value #x value
 
   create (k,v) {
-    return LockedType<#x>{ k, v }
+    return LockedType<#y>{ k, v }
   }
 
   check (k) {
     if (TypeKey<any>$equals(key,k)) {
+      // reduce is a builtin that returns value (as optional #y) iff #x -> #y.
+      // The runtime type of value does not matter here; it just needs to be of
+      // type optional #x at compile time.
+      //
+      // This is more like template meta-programming in C++ than it is like a
+      // runtime type cast in Java. The reduce call could in theory be replaced
+      // at compile time with either value or empty if parameter substitution
+      // happened at compile time. (Like in C++ templates.)
       return reduce<#x,#y>(value)
     } else {
       return empty

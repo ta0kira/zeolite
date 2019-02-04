@@ -178,7 +178,7 @@ data ExpressionStart c =
   InlineAssignment [c] VariableName (Expression c)
   deriving (Show)
 
--- TODO: Add character literal.
+-- TODO: Add character, binary, octal.
 data ValueLiteral c =
   StringLiteral [c] String |
   IntegerLiteral [c] String |

@@ -55,6 +55,26 @@ struct Category_Bool : public TypeCategory {
 
 struct Type_Bool : public TypeInstance {
   std::string CategoryName() const final { return "Bool"; }
+
+  bool TypeArgsForParent(
+    const TypeCategory& category, std::vector<const TypeInstance*>& args) const final {
+    if (&category == &GetCategory_Bool()) {
+      args = std::vector<const TypeInstance*>{};
+      return true;
+    }
+    if (&category == &GetCategory_Formatted()) {
+      args = std::vector<const TypeInstance*>{};
+      return true;
+    }
+    return false;
+  }
+
+  bool CanConvertFrom(const TypeInstance& from) const final {
+    std::vector<const TypeInstance*> args;
+    if (!from.TypeArgsForParent(GetCategory_Bool(), args)) return false;
+    FAIL_IF(args.size() != 0) << "Wrong number of args (" << args.size() << ") for " << CategoryName();
+    return true;
+  }
 };
 
 class Value_Bool : public TypeValue {
@@ -99,6 +119,26 @@ struct Type_String : public TypeInstance {
     }
     return TypeInstance::Dispatch(label, params, args);
   }
+
+  bool TypeArgsForParent(
+    const TypeCategory& category, std::vector<const TypeInstance*>& args) const final {
+    if (&category == &GetCategory_String()) {
+      args = std::vector<const TypeInstance*>{};
+      return true;
+    }
+    if (&category == &GetCategory_Formatted()) {
+      args = std::vector<const TypeInstance*>{};
+      return true;
+    }
+    return false;
+  }
+
+  bool CanConvertFrom(const TypeInstance& from) const final {
+    std::vector<const TypeInstance*> args;
+    if (!from.TypeArgsForParent(GetCategory_String(), args)) return false;
+    FAIL_IF(args.size() != 0) << "Wrong number of args (" << args.size() << ") for " << CategoryName();
+    return true;
+  }
 };
 
 class Value_String : public TypeValue {
@@ -142,6 +182,26 @@ struct Type_Int : public TypeInstance {
       return DReturns{Box_Bool(args[0]->AsInt()==args[1]->AsInt())};
     }
     return TypeInstance::Dispatch(label, params, args);
+  }
+
+  bool TypeArgsForParent(
+    const TypeCategory& category, std::vector<const TypeInstance*>& args) const final {
+    if (&category == &GetCategory_Int()) {
+      args = std::vector<const TypeInstance*>{};
+      return true;
+    }
+    if (&category == &GetCategory_Formatted()) {
+      args = std::vector<const TypeInstance*>{};
+      return true;
+    }
+    return false;
+  }
+
+  bool CanConvertFrom(const TypeInstance& from) const final {
+    std::vector<const TypeInstance*> args;
+    if (!from.TypeArgsForParent(GetCategory_Int(), args)) return false;
+    FAIL_IF(args.size() != 0) << "Wrong number of args (" << args.size() << ") for " << CategoryName();
+    return true;
   }
 };
 
@@ -189,6 +249,26 @@ struct Type_Float : public TypeInstance {
     }
     return TypeInstance::Dispatch(label, params, args);
   }
+
+  bool TypeArgsForParent(
+    const TypeCategory& category, std::vector<const TypeInstance*>& args) const final {
+    if (&category == &GetCategory_Float()) {
+      args = std::vector<const TypeInstance*>{};
+      return true;
+    }
+    if (&category == &GetCategory_Formatted()) {
+      args = std::vector<const TypeInstance*>{};
+      return true;
+    }
+    return false;
+  }
+
+  bool CanConvertFrom(const TypeInstance& from) const final {
+    std::vector<const TypeInstance*> args;
+    if (!from.TypeArgsForParent(GetCategory_Float(), args)) return false;
+    FAIL_IF(args.size() != 0) << "Wrong number of args (" << args.size() << ") for " << CategoryName();
+    return true;
+  }
 };
 
 class Value_Float : public TypeValue {
@@ -222,6 +302,22 @@ struct Category_Formatted : public TypeCategory {
 
 struct Type_Formatted : public TypeInstance {
   std::string CategoryName() const final { return "Formatted"; }
+
+  bool TypeArgsForParent(
+    const TypeCategory& category, std::vector<const TypeInstance*>& args) const final {
+    if (&category == &GetCategory_Formatted()) {
+      args = std::vector<const TypeInstance*>{};
+      return true;
+    }
+    return false;
+  }
+
+  bool CanConvertFrom(const TypeInstance& from) const final {
+    std::vector<const TypeInstance*> args;
+    if (!from.TypeArgsForParent(GetCategory_Formatted(), args)) return false;
+    FAIL_IF(args.size() != 0) << "Wrong number of args (" << args.size() << ") for " << CategoryName();
+    return true;
+  }
 };
 
 }  // namespace

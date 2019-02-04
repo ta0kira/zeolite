@@ -353,7 +353,7 @@ instance ParseFromSource (ValueLiteral SourcePos) where
       notEscaped = fmap (:[]) $ noneOf "\""
     hexLiteral = do
       c <- getPosition
-      try (string "0x")
+      try (char '0' >> (char 'x' <|> char 'X'))
       ds <- many1 hexDigit
       optionalSpace
       return $ HexLiteral [c] ds

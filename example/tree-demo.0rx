@@ -3,34 +3,28 @@ concrete Main {
 }
 
 define Main {
-  @category TypeKey<Int>    one   <- TypeKey<Int>$new()
-  @category TypeKey<Int>    two   <- TypeKey<Int>$new()
-  @category TypeKey<String> three <- TypeKey<String>$new()
-  @category TypeKey<String> four  <- TypeKey<String>$new()
-  @category TypeKey<Float>  five  <- TypeKey<Float>$new()
+  @category TypeKey<Int>    keyInt    <- TypeKey<Int>$new()
+  @category TypeKey<String> keyString <- TypeKey<String>$new()
+  @category TypeKey<Float>  keyFloat  <- TypeKey<Float>$new()
+  @category TypeKey<Value>  keyValue  <- TypeKey<Value>$new()
 
   run () {
     TypeTree tree <- TypeTree$new()
-    ~ tree
-        .set<Int>(one,1)
-        .set<Int>(two,2)
-        .set<String>(three,"a")
-        .set<String>(four,"b")
+    ~ tree.set<Int>(keyInt,1)
+    ~ tree.set<String>(keyString,"a")
 
-    ~ check<Int>(tree,one)
-    ~ check<Int>(tree,two)
-    ~ check<String>(tree,three)
-    ~ check<String>(tree,four)
-    ~ check<Float>(tree,five)
+    ~ check(tree,keyInt)
+    ~ check(tree,keyString)
+    ~ check(tree,keyFloat)
+
+    ~ tree.set<Value>(keyValue,Value$new())
+    ~ check(tree,keyValue)
   }
 
-  @category check<#x>
-    #x requires Formatted
-  (TypeTree,TypeKey<#x>) -> ()
-
+  @category check (TypeTree,TypeKey<Formatted>) -> ()
   check (tree,key) {
     scoped {
-      optional #x value <- tree.get<#x>(key)
+      optional Formatted value <- tree.get<Formatted>(key)
     } in if (present(value)) {
       ~ LazyStream<String>$new()
           .append("Found '")
@@ -43,4 +37,14 @@ define Main {
           .writeTo(SimpleOutput$stderr())
     }
   }
+}
+
+concrete Value {
+  refines Formatted
+  @type new () -> (Value)
+}
+
+define Value {
+  new () { return Value{} }
+  formatted () { return "Value" }
 }

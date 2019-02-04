@@ -30,11 +30,11 @@ main = do
   results <- return $ do
     tm0 <- processExisting ps0
     -- Everything in .0rp is available to all other files.
-    (tm0,ps') <- processPublic tm0 ps
+    (tm0',ps') <- processPublic tm0 ps
     -- All other files are considered internal.
     -- TODO: There will be an output filename clash if two files use the same
     -- name for an internal-only category.
-    xs' <- fmap concat $ collectAllOrErrorM $  map (processInternal tm0) xs
+    xs' <- fmap concat $ collectAllOrErrorM $  map (processInternal tm0') xs
     return $ ps' ++ xs'
   hPutStr stderr $ format results
   writeResults results
