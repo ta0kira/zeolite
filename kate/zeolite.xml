@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <language
-    name="Kevin's Unnamed Language"
+    name="Zeolite"
     section="Sources"
     version="2.5"
     kateversion="2.4"
     indenter="cstyle"
-    style="Kevin's Unnamed Language"
+    style="Zeolite"
     extensions="*.0rp;*.0rx"
     author="Kevin P. Barry (ta0kira@gmail.com)"
     priority="0"
