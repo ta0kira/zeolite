@@ -1,4 +1,10 @@
 define TypeTree {
+  // Since TypeKey and LockedType each have a covariant param, setting the param
+  // to any in Tree means that any param can be used in an assignment.
+  //
+  // The catch is that any cannot be converted to anything else, which means
+  // that type information is no longer directly accessible. LockedType allows
+  // the original type to be recovered via check, given the correct TypeKey.
   @value Tree<TypeKey<any>,LockedType<any>> tree
 
   new () {
@@ -61,7 +67,7 @@ concrete LockedType<|#x> {
   // used in a function argument.
   @category create<#y> (TypeKey<#y>,#y) -> (LockedType<#y>)
 
-  // Returns the contained value if the key matches.
+  // Returns the contained value if the key and type match, or empty otherwise.
   @value check<#y> (TypeKey<#y>) -> (optional #y)
 }
 
@@ -82,7 +88,7 @@ define LockedType {
       // This is more like template meta-programming in C++ than it is like a
       // runtime type cast in Java. The reduce call could in theory be replaced
       // at compile time with either value or empty if parameter substitution
-      // happened at compile time. (Like in C++ templates.)
+      // happened at compile time. (Like C++ does with templates.)
       return reduce<#x,#y>(value)
     } else {
       return empty

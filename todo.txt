@@ -1,9 +1,9 @@
 Roughly in order of execution:
 
-- Implement module system in compiler.
-- Create modules for "standard library" stuff, e.g., Queue.
 - Streamline compilation process.
 - Streamline compiler installation.
+- Implement module system in compiler.
+- Create modules for "standard library" stuff, e.g., Queue.
 
 
 Supported in implementation, roughly in order of simplicity+importance:

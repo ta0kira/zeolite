@@ -3,10 +3,10 @@
 #include "category-source.hpp"
 
 #include "Category_Runner.hpp"
-#include "Category_Main.hpp"
+#include "Category_Demo.hpp"
 
 int main() {
   SetSignalHandler();
   TRACE_FUNCTION("main")
-  GetType_Main(T_get()).Call(Function_Runner_run, T_get(), T_get());
+  GetType_Demo(T_get()).Call(Function_Runner_run, T_get(), T_get());
 }

@@ -20,59 +20,66 @@ define Tree {
   }
 }
 
+/* Represents the root of a subtree.
+ *
+ * Since this category is not declared in the .0rp, it is only visible within
+ * this .0rx file.
+ *
+ * This is separate from Tree so that the root can be empty, but Node otherwise
+ * handles all of the tree logic.
+ */
 concrete Node<#k,#v> {
   #k defines LessThan<#k>
 
-  @type insert (optional Node<#k,#v>,#k,#v) -> (Node<#k,#v>)
+  // The functions below are the only ones visible to Tree. Other functions are
+  // declared in the definition of Node, and are only accessible to other
+  // functions within Node.
+
+  @type insert (optional Node<#k,#v>,#k,#v) -> (optional Node<#k,#v>)
   @type delete (optional Node<#k,#v>,#k) -> (optional Node<#k,#v>)
   @type find (optional Node<#k,#v>,#k) -> (optional #v)
-
-  @value getHeight () -> (Int)
-  @value setHeight (Int) -> ()
-
-  @value getKey () -> (#k)
-
-  @value getValue () -> (#v)
-  @value setValue (#v) -> ()
-
-  @value getLeft () -> (optional Node<#k,#v>)
-  @value getRight () -> (optional Node<#k,#v>)
-
-  @value setLeft (optional Node<#k,#v>) -> ()
-  @value setRight (optional Node<#k,#v>) -> ()
 }
 
 define Node {
   @value Int height
   @value #k key
   @value #v value
-  @value optional Node<#k,#v> left
-  @value optional Node<#k,#v> right
+  @value optional Node<#k,#v> lower
+  @value optional Node<#k,#v> higher
 
-  insert (node,k,v) {
-    if (present(node)) {
-      Node<#k,#v> node2 <- require(node)
-      if (#k$lessThan(k,node2.getKey())) {
-        ~ node2.setLeft(insert(node2.getLeft(),k,v))
-      } elif (#k$lessThan(node2.getKey(),k)) {
-        ~ node2.setRight(insert(node2.getRight(),k,v))
-      } else {
-        ~ node2.setValue(v)
-        return node2
-      }
-      ~ fixHeight(node2)
-      return balance(node2)
+  insert (node,k,v) (newNode) {
+    if (!present(node)) {
+      newNode <- Node<#k,#v>{ 1, k, v, empty, empty }
+      return _
+    }
+    Node<#k,#v> node2 <- require(node)
+    if (#k$lessThan(k,node2.getKey())) {
+      ~ node2.setLower(insert(node2.getLower(),k,v))
+      newNode <- rebalance(node2)
+    } elif (#k$lessThan(node2.getKey(),k)) {
+      ~ node2.setHigher(insert(node2.getHigher(),k,v))
+      newNode <- rebalance(node2)
     } else {
-      return Node<#k,#v>{ 1, k, v, empty, empty }
+      ~ node2.setValue(v)
+      newNode <- node2
     }
   }
 
-  delete (node,k) {
-    // TODO: Implement deletion.
-    ~ LazyStream<String>$new()
-        .append("Not Implemented")
-        .writeTo(SimpleOutput$fail())
-    return empty
+  delete (node,k) (newNode) {
+    if (!present(node)) {
+      newNode <- empty
+      return _
+    }
+    Node<#k,#v> node2 <- require(node)
+    if (#k$lessThan(k,node2.getKey())) {
+      ~ node2.setLower(delete(node2.getLower(),k))
+      newNode <- rebalance(node2)
+    } elif (#k$lessThan(node2.getKey(),k)) {
+      ~ node2.setHigher(delete(node2.getHigher(),k))
+      newNode <- rebalance(node2)
+    } else {
+      newNode <- rebalance(Node<#k,#v>$removeNode(node2))
+    }
   }
 
   find (node,k) {
@@ -80,9 +87,9 @@ define Node {
       scoped {
         Node<#k,#v> node2 <- require(node)
       } in if (#k$lessThan(k,node2.getKey())) {
-        return find(node2.getLeft(),k)
+        return find(node2.getLower(),k)
       } elif (#k$lessThan(node2.getKey(),k)) {
-        return find(node2.getRight(),k)
+        return find(node2.getHigher(),k)
       } else {
         return node2.getValue()
       }
@@ -91,40 +98,175 @@ define Node {
     }
   }
 
-  getHeight () { return height }
-  setHeight (h) { height <- h }
-
-  getKey () { return key }
-
-  getValue () { return value }
-  setValue (v) { value <- v }
-
-  getLeft () { return left }
-  setLeft (l) { left <- l }
-  getRight () { return right }
-  setRight (r) { right <- r }
-
-  @type fixHeight (Node<#k,#v>) -> ()
-  fixHeight (node) {
+  @value updateHeight () -> ()
+  updateHeight () {
     scoped {
       Int l <- 0
       Int r <- 0
-      if (present(node.getLeft())) {
-        l <- require(node.getLeft()).getHeight()
+      if (present(getLower())) {
+        l <- require(getLower()).getHeight()
       }
-      if (present(node.getRight())) {
-        r <- require(node.getRight()).getHeight()
+      if (present(getHigher())) {
+        r <- require(getHigher()).getHeight()
       }
     } in if (l > r) {
-      ~ node.setHeight(l)
+      ~ setHeight(l + 1)
     } else {
-      ~ node.setHeight(r)
+      ~ setHeight(r + 1)
     }
   }
 
-  @type balance (Node<#k,#v>) -> (Node<#k,#v>)
-  balance (node) {
-    // TODO: Implement balancing.
-    return node
+  @value getBalance () -> (Int)
+  getBalance () {
+    scoped {
+      Int l <- 0
+      Int r <- 0
+      if (present(getLower())) {
+        l <- require(getLower()).getHeight()
+      }
+      if (present(getHigher())) {
+        r <- require(getHigher()).getHeight()
+      }
+    } in return r - l
   }
+
+  @type rebalance (optional Node<#k,#v>) -> (optional Node<#k,#v>)
+  rebalance (node) (newNode) {
+    if (!present(node)) {
+      newNode <- empty
+      return _
+    }
+    Node<#k,#v> node2 <- require(node)
+    ~ node2.updateHeight()
+    scoped {
+      Int balance <- node2.getBalance()
+    } in if (balance > 1) {
+      newNode <- pivotLower(node2)
+    } elif (balance < -1) {
+      newNode <- pivotHigher(node2)
+    } else {
+      newNode <- node2
+    }
+  }
+
+  @type pivotHigher (Node<#k,#v>) -> (Node<#k,#v>)
+  pivotHigher (node) (newNode) {
+    if (require(node.getLower()).getBalance() > 0) {
+      ~ node.setLower(pivotLower(require(node.getLower())))
+    }
+    newNode <- require(node.getLower())
+    ~ node.setLower(newNode.getHigher())
+    ~ newNode.setHigher(node)
+    ~ node.updateHeight()
+    ~ newNode.updateHeight()
+  }
+
+  @type pivotLower (Node<#k,#v>) -> (Node<#k,#v>)
+  pivotLower (node) (newNode) {
+    if (require(node.getHigher()).getBalance() < 0) {
+      ~ node.setHigher(pivotHigher(require(node.getHigher())))
+    }
+    newNode <- require(node.getHigher())
+    ~ node.setHigher(newNode.getLower())
+    ~ newNode.setLower(node)
+    ~ node.updateHeight()
+    ~ newNode.updateHeight()
+  }
+
+  @type removeNode (Node<#k,#v>) -> (optional Node<#k,#v>)
+  removeNode (node) (newNode) {
+    if (node.getBalance() < 0) {
+      { optional Node<#k,#v> temp, newNode } <- removeHighest(node.getLower())
+      ~ node.setLower(temp)
+    } else {
+      { optional Node<#k,#v> temp, newNode } <- removeLowest(node.getHigher())
+      ~ node.setHigher(temp)
+    }
+    if (present(newNode)) {
+      ~ swapChildren(node,require(newNode))
+      ~ require(newNode).updateHeight()
+    }
+  }
+
+  @type removeHighest (optional Node<#k,#v>) -> (optional Node<#k,#v>,optional Node<#k,#v>)
+  removeHighest (node) (newNode,removed) {
+    if (!present(node)) {
+      newNode <- empty
+      removed <- empty
+      return _
+    }
+    Node<#k,#v> node2 <- require(node)
+    if (present(node2.getHigher())) {
+      { optional Node<#k,#v> temp, removed } <- removeHighest(node2.getHigher())
+      ~ node2.setHigher(temp)
+      newNode <- rebalance(node2)
+    } else {
+      newNode <- node2.getLower()
+      ~ node2.setLower(empty)
+      removed <- node
+    }
+  }
+
+  @type removeLowest (optional Node<#k,#v>) -> (optional Node<#k,#v>,optional Node<#k,#v>)
+  removeLowest (node) (newNode,removed) {
+    if (!present(node)) {
+      newNode <- empty
+      removed <- empty
+      return _
+    }
+    Node<#k,#v> node2 <- require(node)
+    if (present(node2.getLower())) {
+      { optional Node<#k,#v> temp, removed } <- removeLowest(node2.getLower())
+      ~ node2.setLower(temp)
+      newNode <- rebalance(node2)
+    } else {
+      newNode <- node2.getHigher()
+      ~ node2.setHigher(empty)
+      removed <- node
+    }
+  }
+
+  @type swapChildren (Node<#k,#v>,Node<#k,#v>) -> ()
+  swapChildren (l,r) {
+    scoped {
+      optional Node<#k,#v> temp <- l.getLower()
+      ~ l.setLower(r.getLower())
+    } in ~ r.setLower(temp)
+    scoped {
+      optional Node<#k,#v> temp <- l.getHigher()
+      ~ l.setHigher(r.getHigher())
+    } in ~ r.setHigher(temp)
+  }
+
+  @value getHeight () -> (Int)
+  getHeight () { return height }
+
+  @value setHeight (Int) -> ()
+  setHeight (h) { height <- h }
+
+  // It is unsafe to change the key after construction, so there is no setter.
+  //
+  // Unlike other languages, a member is only accessible by the value that owns
+  // it. More specifically, @type functions in Node can only access @value
+  // members via explicit @value getters and setters.
+  @value getKey () -> (#k)
+  getKey () { return key }
+
+  @value getValue () -> (#v)
+  getValue () { return value }
+
+  @value setValue (#v) -> ()
+  setValue (v) { value <- v }
+
+  @value getLower () -> (optional Node<#k,#v>)
+  getLower () { return lower }
+
+  @value setLower (optional Node<#k,#v>) -> ()
+  setLower (l) { lower <- l }
+
+  @value getHigher () -> (optional Node<#k,#v>)
+  getHigher () { return higher }
+
+  @value setHigher (optional Node<#k,#v>) -> ()
+  setHigher (h) { higher <- h }
 }

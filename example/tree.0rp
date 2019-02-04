@@ -1,18 +1,29 @@
-@value interface TreeWriter<#k,#v|> {
-  set (#k,#v) -> (TreeWriter<#k,#v>)
-  remove (#k) -> (TreeWriter<#k,#v>)
+/* An interface for updating a key-value index.
+ */
+@value interface KVWriter<#k,#v|> {
+  set (#k,#v) -> (KVWriter<#k,#v>)
+  remove (#k) -> (KVWriter<#k,#v>)
 }
 
-@value interface TreeReader<#k|#v> {
+/* An interface for looking up values from a key-value index.
+ */
+@value interface KVReader<#k|#v> {
   get (#k) -> (optional #v)
 }
 
+/* An AVL implementation of KVWriter and KVReader.
+ */
 concrete Tree<#k|#v|> {
-  refines TreeWriter<#k,#v>
-  refines TreeReader<#k,#v>
+  refines KVWriter<#k,#v>
+  refines KVReader<#k,#v>
   #k defines LessThan<#k>
 
+  // Creates a new Tree, e.g., Tree$new().
   @type new () -> (Tree<#k,#v>)
+
+  // Normally you do not need to redeclare functions inherited from interfaces.
+  // The two redeclarations below are used to refine the return type from
+  // KVWriter to Tree.
 
   @value set (#k,#v) -> (Tree<#k,#v>)
   @value remove (#k) -> (Tree<#k,#v>)

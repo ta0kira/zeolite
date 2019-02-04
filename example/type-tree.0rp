@@ -1,6 +1,6 @@
-/* A key-value map that can hold multiple types of value.
+/* A key-value index that can hold multiple types of value.
  *
- * Each element in the map is keyed by a TypeKey that has a type param that
+ * Each element in the index is keyed by a TypeKey that has a type param that
  * matches the type of the value.
  */
 concrete TypeTree {
@@ -15,7 +15,7 @@ concrete TypeTree {
 
   // Returns the value for the given key, or empty if:
   // - There is no entry for the key.
-  // - The value for the key is not of type #x, i.e., was originally added to
+  // - The value for the key is not of type #x, e.g., was originally added to
   //   the tree as a parent of type #x.
   @value get<#x> (TypeKey<#x>) -> (optional #x)
 }

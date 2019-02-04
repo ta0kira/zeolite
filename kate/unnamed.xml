@@ -152,7 +152,7 @@
       </context>
 
       <context name="String" attribute="String" lineEndContext="#stay" >
-        <HlCStringChar attribute="String Char" context="#stay" />
+        <HlCStringChar attribute="Escaped Char" context="#stay" />
         <DetectChar attribute="String" context="#pop" char="&quot;" />
       </context>
 
@@ -201,26 +201,27 @@
     </contexts>
 
     <itemDatas>
-      <itemData name="Normal Text" defStyleNum="dsNormal" />
-      <itemData name="Keyword" defStyleNum="dsKeyword" />
-      <itemData name="Scope Qualifier" defStyleNum="dsFunction" />
-      <itemData name="Storage Qualifier" defStyleNum="dsKeyword" />
-      <itemData name="Builtin Category Name" defStyleNum="dsDataType" italic="true" />
-      <itemData name="Category Name" defStyleNum="dsDataType" />
-      <itemData name="Define Category Name" defStyleNum="dsDataType" bold="true" />
-      <itemData name="Param Name" defStyleNum="dsDataType" italic="true" />
+      <itemData name="Normal Text" defStyleNum="dsNormal" spellChecking="false" />
+      <itemData name="Keyword" defStyleNum="dsKeyword" spellChecking="false" />
+      <itemData name="Scope Qualifier" defStyleNum="dsFunction" spellChecking="false" />
+      <itemData name="Storage Qualifier" defStyleNum="dsKeyword" spellChecking="false" />
+      <itemData name="Builtin Category Name" defStyleNum="dsDataType" italic="true" spellChecking="false" />
+      <itemData name="Category Name" defStyleNum="dsDataType" spellChecking="false" />
+      <itemData name="Define Category Name" defStyleNum="dsDataType" bold="true" spellChecking="false" />
+      <itemData name="Param Name" defStyleNum="dsDataType" italic="true" spellChecking="false" />
       <itemData name="String" defStyleNum="dsString" spellChecking="true" />
-      <itemData name="Assign" defStyleNum="dsOthers" bold="true" />
-      <itemData name="Params Brace" defStyleNum="dsOperator" bold="false" color="#c02040" selColor="#c02040" />
+      <itemData name="Escaped Char" defStyleNum="dsChar" spellChecking="false" />
+      <itemData name="Assign" defStyleNum="dsOthers" bold="true" spellChecking="false" />
+      <itemData name="Params Brace" defStyleNum="dsOperator" bold="false" color="#c02040" selColor="#c02040" spellChecking="false" />
       <itemData name="Merge Brace" defStyleNum="dsOthers" bold="true" />
-      <itemData name="Type Delim" defStyleNum="dsOperator" bold="false" color="#c04040" selColor="#c04040" />
-      <itemData name="Merge Delim" defStyleNum="dsOthers" />
-      <itemData name="Operator" defStyleNum="dsOperator" />
-      <itemData name="Caller" defStyleNum="dsFunction" />
-      <itemData name="Voided" defStyleNum="dsOthers" />
+      <itemData name="Type Delim" defStyleNum="dsOperator" bold="false" color="#c04040" selColor="#c04040" spellChecking="false" />
+      <itemData name="Merge Delim" defStyleNum="dsOthers" spellChecking="false" />
+      <itemData name="Operator" defStyleNum="dsOperator" spellChecking="false" />
+      <itemData name="Caller" defStyleNum="dsFunction" spellChecking="false" />
+      <itemData name="Voided" defStyleNum="dsOthers" spellChecking="false" />
       <itemData name="Comment" defStyleNum="dsComment" spellChecking="true" />
-      <itemData name="Error" defStyleNum="dsError" />
-      <itemData name="Number" defStyleNum="dsDecVal" />
+      <itemData name="Error" defStyleNum="dsError" spellChecking="false" />
+      <itemData name="Number" defStyleNum="dsDecVal" spellChecking="false" />
     </itemDatas>
 
   </highlighting>

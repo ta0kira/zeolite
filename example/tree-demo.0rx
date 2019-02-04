@@ -1,8 +1,18 @@
-concrete Main {
+concrete Demo {
   defines Runner
 }
 
-define Main {
+concrete Value {
+  refines Formatted
+  @type new () -> (Value)
+}
+
+define Value {
+  new () { return Value{} }
+  formatted () { return "Value" }
+}
+
+define Demo {
   @category TypeKey<Int>    keyInt    <- TypeKey<Int>$new()
   @category TypeKey<String> keyString <- TypeKey<String>$new()
   @category TypeKey<Float>  keyFloat  <- TypeKey<Float>$new()
@@ -15,7 +25,7 @@ define Main {
 
     ~ check(tree,keyInt)
     ~ check(tree,keyString)
-    ~ check(tree,keyFloat)
+    ~ check(tree,keyFloat)  // Not found, since we never added a value.
 
     ~ tree.set<Value>(keyValue,Value$new())
     ~ check(tree,keyValue)
@@ -37,14 +47,4 @@ define Main {
           .writeTo(SimpleOutput$stderr())
     }
   }
-}
-
-concrete Value {
-  refines Formatted
-  @type new () -> (Value)
-}
-
-define Value {
-  new () { return Value{} }
-  formatted () { return "Value" }
 }
