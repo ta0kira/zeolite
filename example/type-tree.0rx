@@ -1,12 +1,12 @@
 define TypeTree {
-  @value Tree<TypeKey<any>,HiddenType> tree
+  @value Tree<TypeKey<any>,LockedType<all>> tree
 
   new () {
-    return TypeTree{ Tree<TypeKey<any>,HiddenType>$new() }
+    return TypeTree{ Tree<TypeKey<any>,LockedType<all>>$new() }
   }
 
   set (k,v) {
-    ~ tree.set(k,HiddenType$create<#x>(k,v))
+    ~ tree.set(k,LockedType<#x>$create(k,v))
     return self
   }
 
@@ -17,7 +17,7 @@ define TypeTree {
 
   get (k) {
     scoped {
-      optional HiddenType value <- tree.get(k)
+      optional LockedType<all> value <- tree.get(k)
     } in if (present(value)) {
       return require(value).check<#x>(k)
     } else {
@@ -48,18 +48,17 @@ define TypeKey {
   }
 }
 
-concrete HiddenType {
-  @type create<#y> (TypeKey<#y>,#y) -> (HiddenType)
+concrete LockedType<#x|> {
+  @type create (TypeKey<#x>,#x) -> (LockedType<#x>)
   @value check<#y> (TypeKey<#y>) -> (optional #y)
 }
 
-define HiddenType {
-  types<#x> {}
+define LockedType {
   @value TypeKey<#x> key
   @value #x value
 
   create (k,v) {
-    return HiddenType{ types<#y>, k, v }
+    return LockedType<#x>{ k, v }
   }
 
   check (k) {

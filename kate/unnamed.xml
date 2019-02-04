@@ -188,9 +188,9 @@
         <DetectChar attribute="Merge Delim" context="#stay" char="&amp;" />
         <keyword attribute="Error" context="#stay" String="storage" />
         <keyword attribute="Error" context="#stay" String="scope" />
-        <AnyChar attribute="Error" context="#stay" String="${}.*@!=%+-/\&lt;&gt;()" />
-        <RegExpr attribute="Error" context="#stay" String="\b[a-z][a-zA-Z0-9]*" />
+        <AnyChar attribute="Error" context="#stay" String="${}.*@!=%+-/\&lt;&gt;()," />
         <IncludeRules context="Any Type" />
+        <RegExpr attribute="Error" context="#stay" String="\b[a-z][a-zA-Z0-9]*" />
       </context>
 
     </contexts>

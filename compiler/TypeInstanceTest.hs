@@ -283,7 +283,7 @@ tests = [
     return $ checkTypeSuccess resolver
       [("#x",["allows Type0"])]
       "Type4<[#x|Type0]>",
-    return $ checkTypeFail resolver
+    return $ checkTypeSuccess resolver
       [("#x",["allows Type0"])]
       "Type4<[#x|Type3]>",
     return $ checkTypeFail resolver
@@ -445,10 +445,10 @@ tests = [
       "Type2<any,Type0,Type0>",
     return $ checkTypeSuccess resolver
       []
-      "Type4<all>",
+      "Type4<any>",
     return $ checkTypeFail resolver
       []
-      "Type4<any>",
+      "Type4<all>",
 
     return $ checkTypeSuccess resolver
       [("#x",["defines Instance1<Type0>",
@@ -523,6 +523,10 @@ tests = [
     return $ checkTypeSuccess resolver
       [("#x",[])]
       "[[Type4<Type0>|#x]&Type1<Type3>]",
+
+    return $ checkTypeFail resolver
+      []
+      "[Type0]",
 
     return $ checkDefinesFail resolver
       [("#x",[])]

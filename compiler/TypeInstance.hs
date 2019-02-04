@@ -240,7 +240,10 @@ checkGeneralMatch r f Invariant ts1 ts2 = do
   -- This ensures that any and all behave as expected in Invariant positions.
   checkGeneralType (checkSingleMatch r f Covariant) ts1 ts2
   checkGeneralType (checkSingleMatch r f Covariant) ts2 ts1
-checkGeneralMatch r f v ts1 ts2 = checkGeneralType (checkSingleMatch r f v) ts1 ts2
+checkGeneralMatch r f Contravariant ts1 ts2 =
+  checkGeneralType (checkSingleMatch r f Covariant) ts2 ts1
+checkGeneralMatch r f Covariant ts1 ts2 =
+  checkGeneralType (checkSingleMatch r f Covariant) ts1 ts2
 
 checkSingleMatch :: (MergeableM m, CompileErrorM m, Monad m) =>
   TypeResolver m -> ParamFilters -> Variance ->
@@ -356,6 +359,8 @@ checkParamToParam r f Covariant n1 n2
 
 validateGeneralInstance :: (MergeableM m, CompileErrorM m, Monad m) =>
   TypeResolver m -> ParamFilters -> GeneralInstance -> m ()
+validateGeneralInstance r f ta@(TypeMerge _ ts)
+  | length ts == 1 = compileError $ "Unions and intersections must have at least 2 types to avoid ambiguity"
 validateGeneralInstance r f ta@(TypeMerge MergeIntersect ts) = do
   mergeAllM (map checkConcrete ts)
   mergeAllM (map (validateGeneralInstance r f) ts)

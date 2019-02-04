@@ -5,6 +5,7 @@ module ParseInstance (
 ) where
 
 import Control.Applicative ((<|>))
+import Control.Monad (when)
 import Text.Parsec hiding ((<|>))
 import Text.Parsec.String
 
@@ -14,22 +15,23 @@ import TypesBase
 
 
 instance ParseFromSource GeneralInstance where
-  sourceParser = try all <|> try any <|> try intersect <|> try union <|> single where
+  sourceParser = try all <|> try any <|> intersectOrUnion <|> single where
     all = labeled "all" $ do
       kwAll
       return $ TypeMerge MergeUnion []
     any = labeled "any" $ do
       kwAny
       return $ TypeMerge MergeIntersect []
+    intersectOrUnion = try intersect <|> union
     intersect = labeled "intersection" $ do
       ts <- between (sepAfter $ string "[")
                     (sepAfter $ string "]")
-                    (sepBy sourceParser (sepAfter $ string "&"))
+                    (sepBy1 (labeled "type" $ sourceParser) (sepAfter $ string "&"))
       return $ TypeMerge MergeIntersect ts
     union = labeled "union" $ do
       ts <- between (sepAfter $ string "[")
                     (sepAfter $ string "]")
-                    (sepBy sourceParser (sepAfter $ string "|"))
+                    (sepBy1 (labeled "type" $ sourceParser) (sepAfter $ string "|"))
       return $ TypeMerge MergeUnion ts
     single = do
       t <- sourceParser
