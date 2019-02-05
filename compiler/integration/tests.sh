@@ -1178,9 +1178,26 @@ define Test {
 }
 END
 
+expect_error 'internal param not visible from @type' '#x' 'line 8' <<END
+concrete Value {}
+
+define Value {
+  types<#x> {}
+
+  @type something () -> ()
+  something () {
+    optional #x val <- empty
+  }
+}
+
+define Test {
+  run () {}
+}
+END
+
 expect_runs 'internal params' <<END
 concrete Value {
-  @category create<#x,#y>
+  @type create<#x,#y>
   () -> (Value)
 }
 
@@ -1197,7 +1214,7 @@ define Value {
 
 define Test {
   run () {
-    ~ Value\$\$create<Type1,Type2>()
+    ~ Value\$create<Type1,Type2>()
   }
 }
 END
@@ -1212,7 +1229,7 @@ expect_runs 'internal params with filters' <<END
 }
 
 concrete Value {
-  @category create<#x,#y>
+  @type create<#x,#y>
     #x requires Get<#x>
     #y allows Set<#y>
   () -> (Value)
@@ -1365,7 +1382,7 @@ END
 
 expect_error 'internal param clash with function' '#x' 'line 2' 'line 6' <<END
 concrete Value {
-  @type create<#x> () -> (Value)
+  @value check<#x> () -> ()
 }
 
 define Value {
@@ -1383,10 +1400,8 @@ concrete Value {}
 define Value {
   types<#x> {}
 
-  @type create<#x> () -> (Value)
-  create () {
-    return Value{ types<#x> }
-  }
+  @value check<#x> () -> ()
+  check () {}
 }
 
 define Test {

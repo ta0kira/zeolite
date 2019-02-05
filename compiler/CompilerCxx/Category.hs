@@ -262,7 +262,7 @@ compileConcreteDefinition ta dd@(DefinedCategory c n pi fi ms ps fs) = do
       validateTypeFilter r fa f `reviseError`
         (show n ++ " " ++ show f ++ " [" ++ formatFullContext c ++ "]")
     checkFunction pm f =
-      when (sfScope f /= CategoryScope) $
+      when (sfScope f == ValueScope) $
         mergeAllM $ map (checkParam pm) $ psParams $ sfParams f
     checkParam pm p =
       case vpParam p `Map.lookup` pm of
