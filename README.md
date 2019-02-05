@@ -21,8 +21,9 @@ It's the [any%](https://en.wiktionary.org/wiki/any%25) of programming.
 
 ## Motivation
 
-The basic units of a Zeolite program are *categories* of types, each having a
-fixed number of *type parameters*.
+The basic units of a Zeolite program are
+[*categories*](https://en.wikipedia.org/wiki/Category_%28mathematics%29) of
+types, each having a fixed number of *type parameters*.
 
 For example:
 
@@ -61,7 +62,7 @@ Although this is a powerful feature (vs. C++ templates), it is still suboptimal:
 - In `readItems`, the use of `extends` means that all *write* functionality in
   the `List` is useless.
 - Each user of `List` determines how the type parameter is going to be used,
-  rather than `List` specifying how it can be used.
+  rather than `List` specifying how it should be used.
 
 The theme here is that the Java `List` focuses on appearing as a container of
 objects, and each user chooses a way to make use of that container.
@@ -131,7 +132,9 @@ readItems (<span style='color:#0057ae;'>Reader</span><span style='color:#c02040;
   back `Parent` values.
 
 Importantly, this conversion is handled automatically by the compiler, with no
-additional syntax aside from `|` where the parameter is defined.
+additional syntax aside from `|` where the parameter is defined. (Also note that
+the Java approach discussed in the previous section is *still possible* using
+parameter filters.)
 
 ## Language Overview
 
@@ -143,7 +146,7 @@ theme of these limitations (listed below) is that the program must focus on how
 types and values *can be used*, rather than on *the data they represent*.
 
 The following list can be thought of as *things that are missing* when comparing
-to other languages, which can be a good thing, once you get used to it.
+to other languages, which is a *good thing*, once you get used to it.
 
 - Each type category is either *concrete* or an *interface*. Concrete categories
   *cannot* be further extended, and interfaces *cannot* define procedural code.
@@ -158,7 +161,7 @@ to other languages, which can be a good thing, once you get used to it.
 - Values cannot be missing (like `null` in Java) unless a specific qualifier is
   used for the variable, argument, or return.
 - There are no constructors and there is no default initialization; values can
-  only be created from factory functions.
+  only be created using factory functions or literals.
 
 Zeolite also has a limited meta-type system that operates on types themselves:
 
@@ -312,10 +315,31 @@ A `@type interface` is similar to a `@value interface`, except that:
   }
 }</pre>
 
+### Value Interfaces vs. Type Interfaces
+
+The choice between `@value interface` and `@type interface` should be based on
+two things:
+
+1. Will the functions operate on *values* of the category that defines the
+   procedure? If not, then it should be a `@type interface`. For example,
+   factory functions create *new* values, e.g., `Type$new()`.
+2. Should the procedure be determined by the *runtime* type of a particular
+   value? For example, in Java, `x.equals(y)` might use a different procedure
+   than `y.equals(x)` because the *runtime* types of `x` and `y` (respectively)
+   determine how the call is dispatched.
+
+The second point above is why the `LessThan` and `Equals` built-in categories
+are `@type interface`. This ensures that the procedure is chosen based on a
+*type instance* and not on a *runtime type* of one of its arguments.
+
+The main drawback of type interfaces is that their procedures can only be
+defined for `concrete` categories. This means that, for example, a filter such
+as `#x defines Equals<#x>` cannot be satisfied by a `@value interface`.
+
 ### Parameter Filters
 
-Type parameters provide no information about the type being substituted unless
-filtering is applied.
+Type parameters don't have access to any information about the type being
+substituted unless filtering is applied.
 
 <pre style='color:#1f1c1b;background-color:#ffffff;'>
 <b>concrete</b> <b><span style='color:#0057ae;'>Data</span></b><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span> {
@@ -329,7 +353,7 @@ filtering is applied.
   <span style='color:#644a9b;'>@value</span> <i><span style='color:#0057ae;'>#x</span></i> value
 
   create (v) {
-    <b>return</b> <span style='color:#0057ae;'>Data</span>{ v }
+    <b>return</b> <span style='color:#0057ae;'>Data</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>{ v }
   }
 
   format () {
@@ -356,7 +380,7 @@ from a certain type.
   <span style='color:#644a9b;'>@value</span> <b>optional</b> <i><span style='color:#0057ae;'>#x</span></i> value
 
   create (v) {
-    <b>return</b> <span style='color:#0057ae;'>Data</span>{ v }
+    <b>return</b> <span style='color:#0057ae;'>Data</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>{ v }
   }
 
   orDefault () {
@@ -372,7 +396,7 @@ Filters can also specify required `@type` interfaces.
 
 <pre style='color:#1f1c1b;background-color:#ffffff;'>
 <b>concrete</b> <b><span style='color:#0057ae;'>Data</span></b><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span> {
-  <i><span style='color:#0057ae;'>#x</span></i> <b>defines</b> <i><span style='color:#0057ae;'>LessThan</span></i>  <span style='color:#898887;'>// Built-in @type interface.</span>
+  <i><span style='color:#0057ae;'>#x</span></i> <b>defines</b> <i><span style='color:#0057ae;'>LessThan</span></i><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>  <span style='color:#898887;'>// Built-in @type interface.</span>
 
   <span style='color:#644a9b;'>@type</span> create (<i><span style='color:#0057ae;'>#x</span></i>) <b><span style='color:#006e28;'>-&gt;</span></b> (<span style='color:#0057ae;'>Data</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>)
   <span style='color:#644a9b;'>@value</span> replaceIfLessThan (<i><span style='color:#0057ae;'>#x</span></i>) <b><span style='color:#006e28;'>-&gt;</span></b> ()
@@ -382,7 +406,7 @@ Filters can also specify required `@type` interfaces.
   <span style='color:#644a9b;'>@value</span> <i><span style='color:#0057ae;'>#x</span></i> value
 
   create (v) {
-    <b>return</b> <span style='color:#0057ae;'>Data</span>{ v }
+    <b>return</b> <span style='color:#0057ae;'>Data</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>{ v }
   }
 
   replaceIfLessThan (v) {
@@ -418,6 +442,11 @@ values in `{}` or by naming them.
       v2 <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#b08000;'>3</span>
     }
   }
+
+  <span style='color:#644a9b;'>@category</span> something () <b><span style='color:#006e28;'>-&gt;</span></b> (<i><span style='color:#0057ae;'>Bool</span></i>)
+  something () {
+    <b>return</b> <b>false</b>
+  }
 }</pre>
 
 The choice depends on the situation:
@@ -433,20 +462,20 @@ There are also a few options for *recieving* multiple returns:
 
 <pre style='color:#1f1c1b;background-color:#ffffff;'>
 <b>concrete</b> <b><span style='color:#0057ae;'>Something</span></b> {
-  <span style='color:#644a9b;'>@type</span> func1 () <b><span style='color:#006e28;'>-&gt;</span></b> (<i><span style='color:#0057ae;'>Int</span></i>,<i><span style='color:#0057ae;'>Int</span></i>)
+  <span style='color:#644a9b;'>@type</span> func1 () <b><span style='color:#006e28;'>-&gt;</span></b> ()
 }
 
 <b>define</b> <b><span style='color:#0057ae;'>Something</span></b> {
   func1 () {
-    <b>return</b> { <span style='color:#b08000;'>1</span>, <span style='color:#b08000;'>2</span> }
+    <i><span style='color:#0057ae;'>Int</span></i> x <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#b08000;'>0</span>
+    { x, <i><span style='color:#0057ae;'>Int</span></i> y } <b><span style='color:#006e28;'>&lt;-</span></b> func2()
+    { <b>_</b>, y } <b><span style='color:#006e28;'>&lt;-</span></b> func2()
+    <span style='color:#006e28;'>~</span> func2()
   }
 
-  <span style='color:#644a9b;'>@type</span> func2 () <b><span style='color:#006e28;'>-&gt;</span></b> ()
+  <span style='color:#644a9b;'>@type</span> func2 () <b><span style='color:#006e28;'>-&gt;</span></b> (<i><span style='color:#0057ae;'>Int</span></i>,<i><span style='color:#0057ae;'>Int</span></i>)
   func2 () {
-    <i><span style='color:#0057ae;'>Int</span></i> x <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#b08000;'>0</span>
-    { x, <i><span style='color:#0057ae;'>Int</span></i> y } <b><span style='color:#006e28;'>&lt;-</span></b> func1()
-    { <b>_</b>, y } <b><span style='color:#006e28;'>&lt;-</span></b> func1()
-    <b>_</b> <b><span style='color:#006e28;'>&lt;-</span></b> func1()
+    <b>return</b> { <span style='color:#b08000;'>1</span>, <span style='color:#b08000;'>2</span> }
   }
 }</pre>
 
@@ -461,9 +490,8 @@ Zeolite provides `if`/`elif`/`else` and `while` constructs.
   <span style='color:#898887;'>// something</span>
 } <b>else</b> {
   <span style='color:#898887;'>// something</span>
-}</pre>
+}
 
-<pre style='color:#1f1c1b;background-color:#ffffff;'>
 <b>while</b> (x &gt; <span style='color:#b08000;'>0</span>) {
   <span style='color:#898887;'>// something</span>
 }</pre>
@@ -592,12 +620,14 @@ This can also be useful for debugging code that has type parameters.
         .append(val)
         .append(<span style='color:#bf0303;'>&quot;): &quot;</span>)
         .append(message)
-        .append(<span style='color:#bf0303;'>&quot;</span><span style='color:#924c9d;'>\n</span><span style='color:#bf0303;'>&quot;</span>).writeTo(<span style='color:#0057ae;'>SimpleOutput</span><span style='color:#644a9b;'>$</span>stderr())
+        .append(<span style='color:#bf0303;'>&quot;</span><span style='color:#924c9d;'>\n</span><span style='color:#bf0303;'>&quot;</span>)
+        .writeTo(<span style='color:#0057ae;'>SimpleOutput</span><span style='color:#644a9b;'>$</span>stderr())
   }
 }</pre>
 
 In this example, `x` is `formatted` only if `#x` is something that converts to
-`Formatted`, which might be sufficient for a simple test case, e.g., `Int`.
+`Formatted`, which might be sufficient for a simple test case, e.g.,
+`Something<String>$complicated("test")`.
 
 ### Unions and Intersections
 
@@ -647,5 +677,191 @@ existence is outside of the scope of this intro.
 <span style='color:#898887;'>// ...</span>
 
 <b><span style='color:#006e28;'>[</span></b><span style='color:#0057ae;'>Reader</span><span style='color:#006e28;'>&amp;</span><span style='color:#0057ae;'>Writer</span><b><span style='color:#006e28;'>]</span></b> val <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#0057ae;'>Data</span><span style='color:#644a9b;'>$</span>new()
-<span style='color:#0057ae;'>Reader</span> val2 <b><span style='color:#006e28;'>&lt;-</span></b> val</pre>
+<span style='color:#0057ae;'>Reader</span> val2 <b><span style='color:#006e28;'>&lt;-</span></b> val
+<span style='color:#0057ae;'>Writer</span> val3 <b><span style='color:#006e28;'>&lt;-</span></b> val</pre>
 
+### Internal Types
+
+In some situations, a category might want to hide a type parameter from
+external view.
+
+In C++ or Java, something like this would be achieved with an interface and a
+derived class containing an additional parameter.
+
+```c++
+// C++! Not Zeolite.
+
+struct Value {
+  template<class T>
+  static std::unique_ptr<Value> create(T v) {
+    return std::unique_ptr<Value>(new TypedValue<T>(v));
+  }
+
+  virtual ~Value() = default;
+};
+
+template<class T>
+struct TypedValue : public Value {
+  TypedValue(T v) : value(v) {}
+
+  T value;
+};
+```
+
+This additional indirection is unnecessary in Zeolite because the compiler
+doesn't perform full parameter substitution at compile time.
+
+<pre style='color:#1f1c1b;background-color:#ffffff;'>
+<b>concrete</b> <b><span style='color:#0057ae;'>Value</span></b> {
+  <span style='color:#644a9b;'>@type</span> create&lt;<i><span style='color:#0057ae;'>#x</span></i>&gt;
+    <i><span style='color:#0057ae;'>#x</span></i> <b>requires</b> <i><span style='color:#0057ae;'>Formatted</span></i>
+  (<i><span style='color:#0057ae;'>#x</span></i>) <b><span style='color:#006e28;'>-&gt;</span></b> (<span style='color:#0057ae;'>Value</span>)
+}
+
+<b>define</b> <b><span style='color:#0057ae;'>Value</span></b> {
+  <b>types</b><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#y</span></i><span style='color:#c02040;'>&gt;</span> {
+    <i><span style='color:#0057ae;'>#y</span></i> <b>requires</b> <i><span style='color:#0057ae;'>Formatted</span></i>
+  }
+
+  <span style='color:#644a9b;'>@value</span> <i><span style='color:#0057ae;'>#y</span></i> value
+
+  create (v) {
+    <b>return</b> <span style='color:#0057ae;'>Value</span>{ <b>types</b><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>, v }
+  }
+}</pre>
+
+The `types` keyword specifies additional internal type parameters that are
+*permanent* once the value is initialized. The `{}` following `types<#x>` can be
+used to specify filters to be applied to the types.
+
+## Future Things
+
+### Function Objects
+
+At some point, Zeolite will probably support passing functions as arguments.
+There are three levels of support, which might not happen at the same time:
+
+1. Passing named functions, bound to some context, i.e., a type instance for a
+   `@type` function and a value for a `@value` function.
+2. Locally defined lambda functions that will require ad hoc closures to capture
+   the local variables that they depend on.
+3. Partial application (currying) by binding values to some of the arguments.
+
+The third level will likely not happen, since there is no obvious syntax for
+doing so. (Unlike currying in Haskell.)
+
+### Anonymous Structures
+
+Maybe.
+
+### Exceptions
+
+Probably not.
+
+## Other Discussions
+
+### Implicit Types
+
+Zeolite currently requires that all types be made explicit in places where types
+are actually needed, e.g., creating variables and passing type arguments to
+parameterized functions and categories. In most other places, types are
+implicit. For example, calling a function on a return (e.g., `call1().call2()`)
+doesn't require explicitly specifying the first return type.
+
+Some languages take implicit typing a step further, like `auto` in C++. The
+rationale behind `auto` is that the compiler knows what the type is, so you
+shouldn't need to verify it.
+
+#### C++ `auto`
+
+`auto` was long overdue in C++ when it arrived because it changed this
+
+```c++
+const typename std::map<std::string,std::list<X>>::const_iterator pos = index.find(name);
+if (pos != index.end()) {
+  for (typename std::list<X>::const_iterator x = pos->second.begin(); x != pos->second.end(); ++x) {
+    // ... something with *x
+  }
+}
+```
+
+into this:
+
+```c++
+const auto pos = index.find(name);
+if (pos != index.end()) {
+  for (const auto& x : pos->second) {
+    // ... something with x
+  }
+}
+```
+
+This is now a critical feature of C++; *however*, its usefulness is also a
+reflection of how templates are implemented in C++.
+
+C++ templates use compile-time
+[duck typing](https://en.wikipedia.org/wiki/Duck_typing), which means that the
+compiler will only check validity once it knows the actual types being
+substituted in.
+
+```c++
+template<class T>
+void add(T l, T r) {
+  // What type is sum? For some substitutions of T, the result might *not* be T.
+  // In fact, we don't even know if + is a member function called from l, or if
+  // it's a global function that has 2 arguments.
+  auto sum = l+r;
+}
+```
+
+In other situations, C++ `auto` is simply used to cut down on typing when the
+type is more or less obvious or irrelevant.
+
+#### Implicit Types in Zeolite
+
+Although implicit typing can make code easier to write *and* read, the aspects
+of C++ that make `auto` useful are not applicable in Zeolite. Additionally,
+allowing implicit types when creating variables would likely make Zeolite *less*
+readable, due to the extensive amount of implicit type conversions it supports.
+
+<pre style='color:#1f1c1b;background-color:#ffffff;'>
+<span style='color:#644a9b;'>@type</span> <b>interface</b> <b><span style='color:#0057ae;'>Plus</span></b><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span> {
+  plus (<i><span style='color:#0057ae;'>#x</span></i>,<i><span style='color:#0057ae;'>#x</span></i>) <b><span style='color:#006e28;'>-&gt;</span></b> (<i><span style='color:#0057ae;'>#x</span></i>)
+}
+
+<span style='color:#898887;'>// ...</span>
+
+<span style='color:#644a9b;'>@type</span> add&lt;<i><span style='color:#0057ae;'>#x</span></i>&gt;
+  <i><span style='color:#0057ae;'>#x</span></i> <b>defines</b> <span style='color:#0057ae;'>Plus</span>
+(<i><span style='color:#0057ae;'>#x</span></i>,<i><span style='color:#0057ae;'>#x</span></i>) <b><span style='color:#006e28;'>-&gt;</span></b> ()
+
+add (l,r) {
+  <span style='color:#898887;'>// We can't do anything with #x without a constraint, but constraint also</span>
+  <span style='color:#898887;'>// tells us the type.</span>
+  <i><span style='color:#0057ae;'>#x</span></i> sum <b><span style='color:#006e28;'>&lt;-</span></b> <i><span style='color:#0057ae;'>#x</span></i><span style='color:#644a9b;'>$</span>plus(l,r)
+}</pre>
+
+Automatic type conversions in Zeolite also ensure that explicit types are more
+relevant. This is because you only need to specify what type a value will be
+*used as*, rather than the type it *actually is*.
+
+### Type Inference
+
+Zeolite currently does not infer type arguments in type-parameter substitution.
+This is much different from C++ and Java, both of which allow parameters to be
+skipped when calling functions.
+
+Zeolite will probably *not* have type inference for parameter substitution in
+the future. There are a few reasons for this:
+
+- Automatic type conversions make it harder for the compiler to come up with a
+  "best" match, which also means that the *reader of the code* will also have
+  the same difficulty.
+- Code in Zeolite can call functions on type parameters, and `reduce` can
+  operate on them at runtime, which makes them more like function arguments and
+  less like "type place-holders".
+
+## Conclusion
+
+Please use Zeolite. Installation instructions and a proper build system are
+forthcoming.
