@@ -820,9 +820,7 @@ type is more or less obvious or irrelevant.
 #### Implicit Types in Zeolite
 
 Although implicit typing can make code easier to write *and* read, the aspects
-of C++ that make `auto` useful are not applicable in Zeolite. Additionally,
-allowing implicit types when creating variables would likely make Zeolite *less*
-readable, due to the extensive amount of implicit type conversions it supports.
+of C++ that make `auto` useful are not applicable in Zeolite.
 
 <pre style='color:#1f1c1b;background-color:#ffffff;'>
 <span style='color:#644a9b;'>@type</span> <b>interface</b> <b><span style='color:#0057ae;'>Plus</span></b><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span> {
@@ -836,18 +834,37 @@ readable, due to the extensive amount of implicit type conversions it supports.
 (<i><span style='color:#0057ae;'>#x</span></i>,<i><span style='color:#0057ae;'>#x</span></i>) <b><span style='color:#006e28;'>-&gt;</span></b> ()
 
 add (l,r) {
-  <span style='color:#898887;'>// We can't do anything with #x without a constraint, but constraint also</span>
-  <span style='color:#898887;'>// tells us the type.</span>
+  <span style='color:#898887;'>// We can't do anything with #x without a constraint, but the constraint also</span>
+  <span style='color:#898887;'>// tells us the return type.</span>
   <i><span style='color:#0057ae;'>#x</span></i> sum <b><span style='color:#006e28;'>&lt;-</span></b> <i><span style='color:#0057ae;'>#x</span></i><span style='color:#644a9b;'>$</span>plus(l,r)
 }</pre>
 
-Automatic type conversions in Zeolite also ensure that explicit types are more
-relevant. This is because you only need to specify what type a value will be
-*used as*, rather than the type it *actually is*.
+Automatic type conversions in Zeolite also ensure that explicitly-specified
+types are more relevant in context. This is because you only need to specify
+what type a value will be *used as*, rather than the type it *actually is*.
+
+Additionally, allowing implicit types when creating variables would likely make
+Zeolite *less* readable, due to the extensive amount of implicit type
+conversions it supports.
 
 ### Type Inference
 
 Zeolite currently does not infer type arguments in type-parameter substitution.
+
+For example:
+
+<pre style='color:#1f1c1b;background-color:#ffffff;'>
+<b>concrete</b> <b><span style='color:#0057ae;'>Process</span></b> {
+  <span style='color:#644a9b;'>@type</span> process&lt;<i><span style='color:#0057ae;'>#x</span></i>&gt; (<i><span style='color:#0057ae;'>#x</span></i>) <b><span style='color:#006e28;'>-&gt;</span></b> ()
+}
+
+<span style='color:#898887;'>// ...</span>
+
+<span style='color:#006e28;'>~</span> <span style='color:#0057ae;'>Process</span><span style='color:#644a9b;'>$</span>process&lt;<i><span style='color:#0057ae;'>String</span></i>&gt;(<span style='color:#bf0303;'>&quot;string&quot;</span>)</pre>
+
+In this example, even though `"string"` can be inferred to have type `String`,
+the call still must pass `<String>` to `process`.
+
 This is much different from C++ and Java, both of which allow parameters to be
 skipped when calling functions.
 
@@ -855,11 +872,16 @@ Zeolite will probably *not* have type inference for parameter substitution in
 the future. There are a few reasons for this:
 
 - Automatic type conversions make it harder for the compiler to come up with a
-  "best" match, which also means that the *reader of the code* will also have
-  the same difficulty.
+  "best" match in many situations, which also means that the *reader of the
+  code* would have the same difficulty figuring out the type.
 - Code in Zeolite can call functions on type parameters, and `reduce` can
   operate on them at runtime, which makes them more like function arguments and
   less like "type place-holders".
+
+In Java and C++, type parameters for functions are more of a declaration to the
+compiler that the function relies on to-be-determined types. In both languages,
+the number and order of the parameters is often arbitrary, and parameterized
+functions are often combined with function overloading.
 
 ## Conclusion
 
