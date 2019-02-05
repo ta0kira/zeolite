@@ -2041,6 +2041,62 @@ define Test {
 }
 END
 
+expect_runs 'reduce internal param success' <<END
+concrete Value {
+  @type create<#x> () -> (Value)
+  @value check<#y> (#y) -> (Bool)
+}
+
+define Value {
+  types<#x> {}
+
+  create () {
+    return Value { types<#x> }
+  }
+
+  check (y) {
+    return present(reduce<#y,#x>(y))
+  }
+}
+
+define Test {
+  run () {
+    Value value <- Value\$create<Formatted>()
+    if (!value.check<String>("")) {
+      ~ Util\$crash()
+    }
+  }
+}
+END
+
+expect_runs 'reduce internal param fail' <<END
+concrete Value {
+  @type create<#x> () -> (Value)
+  @value check<#y> (#y) -> (Bool)
+}
+
+define Value {
+  types<#x> {}
+
+  create () {
+    return Value { types<#x> }
+  }
+
+  check (y) {
+    return present(reduce<#y,#x>(y))
+  }
+}
+
+define Test {
+  run () {
+    Value value <- Value\$create<Formatted>()
+    if (value.check<Value>(value)) {
+      ~ Util\$crash()
+    }
+  }
+}
+END
+
 expect_runs 'int arithmetic with precedence' <<END
 define Test {
   run () {
