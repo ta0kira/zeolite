@@ -96,8 +96,11 @@ expect_runs() {
     echo "Test \"$name\" ($count): Expected compilation; see output in $temp" 1>&2
     return 1
   fi
-  ulimit -Sc unlimited 2> /dev/null || true
-  "$temp/compiled" |& tee -a "$temp/$errors"
+  (
+    cd "$temp" # Makes sure core dump is in the right place.
+    ulimit -Sc unlimited 2> /dev/null || true
+    "$temp/compiled" |& tee -a "$temp/$errors"
+  )
   if [[ "${PIPESTATUS[0]}" != 0 ]]; then
     echo "Test \"$name\" ($count): Expected execution; see output in $temp" 1>&2
     return 1
@@ -1177,7 +1180,7 @@ END
 
 expect_runs 'internal params' <<END
 concrete Value {
-  @type create<#x,#y>
+  @category create<#x,#y>
   () -> (Value)
 }
 
@@ -1194,7 +1197,7 @@ define Value {
 
 define Test {
   run () {
-    ~ Value\$create<Type1,Type2>()
+    ~ Value\$\$create<Type1,Type2>()
   }
 }
 END
@@ -1209,7 +1212,7 @@ expect_runs 'internal params with filters' <<END
 }
 
 concrete Value {
-  @type create<#x,#y>
+  @category create<#x,#y>
     #x requires Get<#x>
     #y allows Set<#y>
   () -> (Value)
@@ -1241,7 +1244,7 @@ expect_error 'internal params missing filters' 'Get|Set' 'line 21' <<END
 }
 
 concrete Value {
-  @type create<#x,#y>
+  @category create<#x,#y>
   () -> (Value)
 }
 
@@ -1263,7 +1266,7 @@ END
 
 expect_runs 'internal params with values' <<END
 concrete Value {
-  @type create<#x,#y>
+  @category create<#x,#y>
   () -> (Value)
 }
 
@@ -1345,6 +1348,67 @@ define Test {
   run () {
     ~ Value\$create<String>(Type<Bool>\$create())
   }
+}
+END
+
+expect_error 'internal param clash with external' '#x' 'line 1' 'line 4' <<END
+concrete Value<#x> {}
+
+define Value {
+  types<#x> {}
+}
+
+define Test {
+  run () {}
+}
+END
+
+expect_error 'internal param clash with function' '#x' 'line 2' 'line 6' <<END
+concrete Value {
+  @type create<#x> () -> (Value)
+}
+
+define Value {
+  types<#x> {}
+}
+
+define Test {
+  run () {}
+}
+END
+
+expect_error 'internal param clash with internal function' '#x' 'line 4' 'line 6' <<END
+concrete Value {}
+
+define Value {
+  types<#x> {}
+
+  @type create<#x> () -> (Value)
+  create () {
+    return Value{ types<#x> }
+  }
+}
+
+define Test {
+  run () {}
+}
+END
+
+expect_runs 'internal param no clash with category' <<END
+concrete Value {
+  @category create<#x> () -> (Value)
+}
+
+define Value {
+  types<#x> {}
+
+  create () {
+    return Value { types<#x> }
+  }
+}
+
+define Test {
+  run () {}
 }
 END
 

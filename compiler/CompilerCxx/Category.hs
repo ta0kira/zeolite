@@ -73,8 +73,6 @@ compileConcreteDefinition :: (Show c, Monad m, CompileErrorM m, MergeableM m) =>
 compileConcreteDefinition ta dd@(DefinedCategory c n pi fi ms ps fs) = do
   (_,t) <- getConcreteCategory ta (c,n)
   let params = ParamSet $ getCategoryParams t
-  -- TODO: Check these for duplicates with params.
-  -- TODO: Check type instances.
   let params2 = ParamSet pi
   let typeInstance = TypeInstance n $ fmap (SingleType . JustParamName . vpParam) params
   let filters = getCategoryFilters t
@@ -82,6 +80,7 @@ compileConcreteDefinition ta dd@(DefinedCategory c n pi fi ms ps fs) = do
   let allFilters = getFilterMap (getCategoryParams t ++ pi) $ filters ++ filters2
   let r = categoriesToTypeResolver ta
   fa <- setInternalFunctions r t fs
+  checkInternalParams pi fi (getCategoryParams t) (Map.elems fa) r (getCategoryFilterMap t)
   -- Functions explicitly declared externally.
   let externalFuncs = Set.fromList $ map sfName $ filter ((== n) . sfType) $ getCategoryFunctions t
   -- Functions explicitly declared internally.
@@ -253,6 +252,25 @@ compileConcreteDefinition ta dd@(DefinedCategory c n pi fi ms ps fs) = do
           | sfScope f == CategoryScope = categoryName n ++ "::" ++ callName (sfName f)
           | sfScope f == TypeScope     = typeName n     ++ "::" ++ callName (sfName f)
           | sfScope f == ValueScope    = valueName n    ++ "::" ++ callName (sfName f)
+    checkInternalParams pi fi pe fs r fa = do
+      let pm = Map.fromList $ map (\p -> (vpParam p,vpContext p)) pi
+      mergeAllM $ map (checkFunction pm) fs
+      mergeAllM $ map (checkParam pm) pe
+      let fa' = Map.union fa $ getFilterMap pi fi
+      mergeAllM $ map (checkFilter r fa') fi
+    checkFilter r fa (ParamFilter c n f) =
+      validateTypeFilter r fa f `reviseError`
+        (show n ++ " " ++ show f ++ " [" ++ formatFullContext c ++ "]")
+    checkFunction pm f =
+      when (sfScope f /= CategoryScope) $
+        mergeAllM $ map (checkParam pm) $ psParams $ sfParams f
+    checkParam pm p =
+      case vpParam p `Map.lookup` pm of
+           Nothing -> return ()
+           (Just c) -> compileError $ "Internal param " ++ show (vpParam p) ++
+                                      " [" ++ formatFullContext c ++
+                                      "] is already defined at " ++
+                                      formatFullContext (vpContext p)
 
 commonDefineAll :: (MergeableM m, Monad m) =>
   AnyCategory c -> CompiledData [String] -> CompiledData [String] ->
