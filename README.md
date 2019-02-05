@@ -1,8 +1,8 @@
 # Zeolite Programming Language
 
-Zeolite is a general-purpose, statically-typed programming language. It focuses
-on data objects and their uses, while attempting to avoid pitfalls of
-object-oriented programming.
+Zeolite is a statically-typed, general-purpose programming language. It focuses
+on data objects and their uses, while attempting to avoid some pitfalls of
+object-oriented programming and type parameterization.
 
 ## Hello World
 
@@ -830,7 +830,7 @@ of C++ that make `auto` useful are not applicable in Zeolite.
 <span style='color:#898887;'>// ...</span>
 
 <span style='color:#644a9b;'>@type</span> add&lt;<i><span style='color:#0057ae;'>#x</span></i>&gt;
-  <i><span style='color:#0057ae;'>#x</span></i> <b>defines</b> <span style='color:#0057ae;'>Plus</span>
+  <i><span style='color:#0057ae;'>#x</span></i> <b>defines</b> <span style='color:#0057ae;'>Plus</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>
 (<i><span style='color:#0057ae;'>#x</span></i>,<i><span style='color:#0057ae;'>#x</span></i>) <b><span style='color:#006e28;'>-&gt;</span></b> ()
 
 add (l,r) {
@@ -877,6 +877,10 @@ the future. There are a few reasons for this:
 - Code in Zeolite can call functions on type parameters, and `reduce` can
   operate on them at runtime, which makes them more like function arguments and
   less like "type place-holders".
+- Type parameters are not necessary in Zeolite in many situations where Java or
+  C++ would require them. For example, it is common in C++ to use a template to
+  accept an arbitrary container type, rather than having a common interface that
+  expresses container operations.
 
 In Java and C++, type parameters for functions are more of a declaration to the
 compiler that the function relies on to-be-determined types. In both languages,
