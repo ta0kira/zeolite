@@ -5,6 +5,7 @@ module CompilerCxx.Code (
   indentCompiled,
   onlyCode,
   onlyCodes,
+  predTraceContext,
   setTraceContext,
 ) where
 
@@ -28,3 +29,6 @@ indentCompiled (CompiledData r o) = CompiledData r $ map ("  " ++) o
 
 setTraceContext :: Show c => [c] -> String
 setTraceContext c = "SET_CONTEXT_POINT(" ++ show (formatFullContext c) ++ ")"
+
+predTraceContext :: Show c => [c] -> String
+predTraceContext c = "PRED_CONTEXT_POINT(" ++ show (formatFullContext c) ++ ")"

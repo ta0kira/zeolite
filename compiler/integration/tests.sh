@@ -540,6 +540,40 @@ define Test {
 }
 END
 
+expect_crashes 'crash in if' 'empty' 'line 4' <<END
+define Test {
+  run () {
+    optional Bool test <- empty
+    if (require(test)) {
+      // empty
+    }
+  }
+}
+END
+
+expect_crashes 'crash in elif' 'empty' 'line 5' <<END
+define Test {
+  run () {
+    optional Bool test <- empty
+    if (false) {
+    } elif (require(test)) {
+      // empty
+    }
+  }
+}
+END
+
+expect_crashes 'crash in while' 'empty' 'line 4' <<END
+define Test {
+  run () {
+    optional Bool test <- empty
+    while (require(test)) {
+      // empty
+    }
+  }
+}
+END
+
 expect_runs 'assign inside scope' <<END
 @value interface Value {}
 

@@ -130,7 +130,7 @@ compileCondition :: (Show c, Monad m, CompileErrorM m, MergeableM m,
 compileCondition ctx c e = do
   (e',ctx') <- lift $ runStateT compile ctx
   lift (ccGetRequired ctx') >>= csRequiresTypes
-  return e'
+  return $ predTraceContext c ++ e'
   where
     compile = flip reviseErrorStateT ("In condition at " ++ formatFullContext c) $ do
       (ts,e') <- compileExpression e
@@ -235,7 +235,6 @@ compileIfElifElse (IfStatement c e p es) = do
   e' <- compileCondition ctx0 c e
   ctx <- compileProcedure ctx0 p
   (lift $ ccGetRequired ctx) >>= csRequiresTypes
-  csWrite [setTraceContext c]
   csWrite ["if (" ++ e' ++ ") {"]
   (lift $ ccGetOutput ctx) >>= csWrite
   csWrite ["}"]

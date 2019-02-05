@@ -44,11 +44,16 @@ class LogThenCrash {
   #define SET_CONTEXT_POINT(point) \
     source_context.SetLocal(point);
 
+  #define PRED_CONTEXT_POINT(point) \
+    source_context.SetLocal(point),
+
 #else
 
   #define TRACE_FUNCTION(name)
 
   #define SET_CONTEXT_POINT(point)
+
+  #define PRED_CONTEXT_POINT(point)
 
 #endif
 
