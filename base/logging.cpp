@@ -13,6 +13,7 @@ LogThenCrash::LogThenCrash(bool fail, int signal)
 
 LogThenCrash::~LogThenCrash() {
   if (fail_) {
+    std::signal(signal_, SIG_DFL);
     std::cerr << "Failed condition";
     if (!condition_.empty()) {
       std::cerr << " '" << condition_ << "'";
@@ -23,7 +24,6 @@ LogThenCrash::~LogThenCrash() {
         std::cerr << "  " << trace << std::endl;
       }
     }
-    std::signal(signal_, SIG_DFL);
     std::raise(signal_);
   }
 }

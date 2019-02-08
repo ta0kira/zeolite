@@ -29,6 +29,12 @@ class LogThenCrash {
   }
 
  private:
+  LogThenCrash(const LogThenCrash&) = delete;
+  LogThenCrash(LogThenCrash&&) = delete;
+  LogThenCrash& operator =(const LogThenCrash&) = delete;
+  LogThenCrash& operator =(LogThenCrash&&) = delete;
+  void* operator new(std::size_t size) = delete;
+
   const bool fail_;
   const int signal_;
   const std::string condition_;
