@@ -69,15 +69,21 @@ class TraceContext : public capture_thread::ThreadCapture<TraceContext> {
 
 class SourceContext : public TraceContext {
  public:
-  explicit SourceContext(std::string name);
-  void SetLocal(const std::string& at);
+  template<int S>
+  inline SourceContext(const char(&name)[S])
+    : at_(nullptr), name_(name), cross_and_capture_to_(this) {}
+
+  template<int S>
+  inline void SetLocal(const char(&at)[S]) {
+    at_ = at;
+  }
 
  private:
   void AppendTrace(std::list<std::string>& trace) const final;
   const TraceContext* GetNext() const final;
 
-  std::string at_;
-  const std::string name_;
+  const char* at_;
+  const char* const name_;
   const AutoThreadCrosser cross_and_capture_to_;
 };
 

@@ -61,16 +61,9 @@ std::list<std::string> TraceContext::GetTrace() {
 }
 
 
-SourceContext::SourceContext(std::string name)
-    : name_(std::move(name)), cross_and_capture_to_(this) {}
-
-void SourceContext::SetLocal(const std::string& at) {
-  at_ = at;
-}
-
 void SourceContext::AppendTrace(std::list<std::string>& trace) const {
   std::ostringstream output;
-  if (at_.empty()) {
+  if (at_ == nullptr) {
     output << "From " << name_;
   } else {
     output << "From " << name_ << " at " << at_;
