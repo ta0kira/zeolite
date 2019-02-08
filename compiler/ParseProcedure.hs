@@ -94,7 +94,7 @@ instance ParseFromSource (Statement SourcePos) where
       return $ Assignment [c] (ParamSet as) e
     parseBreak = labeled "break" $ do
       c <- getPosition
-      kwBreak
+      try kwBreak
       return $ LoopBreak [c]
     multiDest = do
       as <- between (sepAfter $ string "{")

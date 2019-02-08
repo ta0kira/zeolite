@@ -102,17 +102,17 @@ define Node {
   updateHeight () {
     scoped {
       Int l <- 0
-      Int r <- 0
+      Int h <- 0
       if (present(getLower())) {
         l <- require(getLower()).getHeight()
       }
       if (present(getHigher())) {
-        r <- require(getHigher()).getHeight()
+        h <- require(getHigher()).getHeight()
       }
-    } in if (l > r) {
+    } in if (l > h) {
       ~ setHeight(l + 1)
     } else {
-      ~ setHeight(r + 1)
+      ~ setHeight(h + 1)
     }
   }
 
@@ -120,14 +120,14 @@ define Node {
   getBalance () {
     scoped {
       Int l <- 0
-      Int r <- 0
+      Int h <- 0
       if (present(getLower())) {
         l <- require(getLower()).getHeight()
       }
       if (present(getHigher())) {
-        r <- require(getHigher()).getHeight()
+        h <- require(getHigher()).getHeight()
       }
-    } in return r - l
+    } in return h - l
   }
 
   @type rebalance (optional Node<#k,#v>) -> (optional Node<#k,#v>)
@@ -156,8 +156,8 @@ define Node {
     }
     newNode <- require(node.getLower())
     ~ node.setLower(newNode.getHigher())
-    ~ newNode.setHigher(node)
     ~ node.updateHeight()
+    ~ newNode.setHigher(node)
     ~ newNode.updateHeight()
   }
 
@@ -168,8 +168,8 @@ define Node {
     }
     newNode <- require(node.getHigher())
     ~ node.setHigher(newNode.getLower())
-    ~ newNode.setLower(node)
     ~ node.updateHeight()
+    ~ newNode.setLower(node)
     ~ newNode.updateHeight()
   }
 
