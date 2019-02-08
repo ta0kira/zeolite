@@ -29,18 +29,18 @@ struct Category_SimpleOutput : public TypeCategory {
 struct Type_SimpleOutput : public TypeInstance {
   std::string CategoryName() const final { return "SimpleOutput"; }
 
-  DReturns Dispatch(const DFunction<SymbolScope::TYPE>& label,
-                    DParams params, DArgs args) final {
-    FAIL_IF(args.size() != label.ArgCount());
-    FAIL_IF(params.size() != label.ParamCount());
+  ReturnTuple Dispatch(const DFunction<SymbolScope::TYPE>& label,
+                       const ParamTuple& params, ValueTuple& args) final {
+    FAIL_IF(args.Size() != label.ArgCount());
+    FAIL_IF(params.Size() != label.ParamCount());
     if (&label == &Function_SimpleOutput_stdout) {
-      return DReturns{Var_stdout};
+      return ReturnTuple(Var_stdout);
     }
     if (&label == &Function_SimpleOutput_stderr) {
-      return DReturns{Var_stderr};
+      return ReturnTuple(Var_stderr);
     }
     if (&label == &Function_SimpleOutput_fail) {
-      return DReturns{Var_fail};
+      return ReturnTuple(Var_fail);
     }
     return TypeInstance::Dispatch(label, params, args);
   }
@@ -52,18 +52,18 @@ class Value_SimpleOutput : public TypeValue {
 
   std::string CategoryName() const final { return "SimpleOutput"; }
 
-  DReturns Dispatch(const S<TypeValue>& self,
-                    const DFunction<SymbolScope::VALUE>& label,
-                    DParams params, DArgs args) final {
-    FAIL_IF(args.size() != label.ArgCount());
-    FAIL_IF(params.size() != label.ParamCount());
+  ReturnTuple Dispatch(const S<TypeValue>& self,
+                       const DFunction<SymbolScope::VALUE>& label,
+                       const ParamTuple& params, ValueTuple& args) final {
+    FAIL_IF(args.Size() != label.ArgCount());
+    FAIL_IF(params.Size() != label.ParamCount());
     if (&label == &Function_Writer_write) {
       TRACE_FUNCTION("SimpleOutput.write")
-      output_ << args[0]->AsString();
-      return DReturns{};
+      output_ << args.At(0)->AsString();
+      return ReturnTuple();
     }
     if (&label == &Function_BufferedWriter_flush) {
-      return DReturns{};
+      return ReturnTuple();
     }
     return TypeValue::Dispatch(self, label, params, args);
   }
@@ -76,20 +76,20 @@ class Value_Fail : public TypeValue {
  public:
   std::string CategoryName() const final { return "SimpleOutput"; }
 
-  DReturns Dispatch(const S<TypeValue>& self,
-                    const DFunction<SymbolScope::VALUE>& label,
-                    DParams params, DArgs args) final {
-    FAIL_IF(args.size() != label.ArgCount());
-    FAIL_IF(params.size() != label.ParamCount());
+  ReturnTuple Dispatch(const S<TypeValue>& self,
+                       const DFunction<SymbolScope::VALUE>& label,
+                       const ParamTuple& params, ValueTuple& args) final {
+    FAIL_IF(args.Size() != label.ArgCount());
+    FAIL_IF(params.Size() != label.ParamCount());
     if (&label == &Function_Writer_write) {
       TRACE_FUNCTION("SimpleOutput.write")
-      output_ << args[0]->AsString();
-      return DReturns{};
+      output_ << args.At(0)->AsString();
+      return ReturnTuple();
     }
     if (&label == &Function_BufferedWriter_flush) {
       TRACE_FUNCTION("SimpleOutput.flush")
       FAIL() << output_.str();
-      return DReturns{};
+      return ReturnTuple();
     }
     return TypeValue::Dispatch(self, label, params, args);
   }

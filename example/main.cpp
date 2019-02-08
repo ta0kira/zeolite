@@ -8,5 +8,5 @@
 int main() {
   SetSignalHandler();
   TRACE_FUNCTION("main")
-  GetType_Demo(T_get()).Call(Function_Runner_run, T_get(), T_get());
+  GetType_Demo(T_get()).Call(Function_Runner_run, ParamTuple(), ArgTuple());
 }

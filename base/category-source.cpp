@@ -4,23 +4,23 @@
 #include "builtin.hpp"
 
 
-DReturns TypeCategory::Dispatch(const DFunction<SymbolScope::CATEGORY>& label,
-                                DParams params, DArgs args) {
+ReturnTuple TypeCategory::Dispatch(const DFunction<SymbolScope::CATEGORY>& label,
+                                   const ParamTuple& params, ValueTuple& args) {
   FAIL() << CategoryName() << " does not implement " << label.FunctionName();
-  return DReturns();
+  return ReturnTuple(label.ReturnCount());
 }
 
-DReturns TypeInstance::Dispatch(const DFunction<SymbolScope::TYPE>& label,
-                                DParams params, DArgs args) {
+ReturnTuple TypeInstance::Dispatch(const DFunction<SymbolScope::TYPE>& label,
+                                   const ParamTuple& params, ValueTuple& args) {
   FAIL() << CategoryName() << " does not implement " << label.FunctionName();
-  return DReturns();
+  return ReturnTuple(label.ReturnCount());
 }
 
-DReturns TypeValue::Dispatch(const S<TypeValue>& self,
-                             const DFunction<SymbolScope::VALUE>& label,
-                             DParams params, DArgs args) {
+ReturnTuple TypeValue::Dispatch(const S<TypeValue>& self,
+                                const DFunction<SymbolScope::VALUE>& label,
+                                const ParamTuple& params, ValueTuple& args) {
   FAIL() << CategoryName() << " does not implement " << label.FunctionName();
-  return DReturns();
+  return ReturnTuple(label.ReturnCount());
 }
 
 bool TypeInstance::CanConvert(const TypeInstance& x, const TypeInstance& y) {
@@ -84,22 +84,22 @@ bool TypeInstance::ExpandCheckRight(const TypeInstance& x, const TypeInstance& y
   }
 }
 
-Returns<1>::Type TypeValue::Present(S<TypeValue> target) {
+ReturnTuple TypeValue::Present(S<TypeValue> target) {
   FAIL_IF(target == nullptr) << "Builtin called on null value";
-  return T_get(Box_Bool(target->Present()));
+  return ReturnTuple(Box_Bool(target->Present()));
 }
 
-Returns<1>::Type TypeValue::Require(S<TypeValue> target) {
+ReturnTuple TypeValue::Require(S<TypeValue> target) {
   FAIL_IF(target == nullptr) << "Builtin called on null value";
   if (!target->Present()) {
     FAIL() << "Cannot require empty value";
   }
-  return T_get(target);
+  return ReturnTuple(target);
 }
 
-Returns<1>::Type TypeValue::Strong(W<TypeValue> target) {
+ReturnTuple TypeValue::Strong(W<TypeValue> target) {
   const auto strong = target.lock();
-  return T_get(strong? strong : Var_empty);
+  return ReturnTuple(strong? strong : Var_empty);
 }
 
 bool TypeValue::AsBool() const {

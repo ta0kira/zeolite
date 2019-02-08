@@ -11,33 +11,18 @@
 #include "cycle-check.hpp"
 
 
-template<int I, class T>
-S<TypeValue>& SafeGet(T& values) {
-  S<TypeValue>& value = std::get<I>(values);
-  FAIL_IF(value == nullptr) << "Value is null";
-  return value;
-}
-
-template<int I, class T>
-S<TypeValue> SafeGet(const T& values) {
-  S<TypeValue> value = std::get<I>(values);
-  FAIL_IF(value == nullptr) << "Value is null";
-  return value;
-}
-
-template<int I>
-W<TypeValue>& SafeGet(typename std::tuple<W<TypeValue>>& values) {
-  return std::get<I>(values);
-}
-
 class TypeCategory {
  public:
-  template<int P, int A, int R>
-  typename Returns<R>::Type Call(const Function<SymbolScope::CATEGORY,P,A,R>& label,
-                                 typename Params<P>::Type params,
-                                 typename Args<A>::Type args) {
-    return V_to_T<typename Returns<R>::Type>(Dispatch(
-      label, T_to_V<TypeInstance*>(params), T_to_V<S<TypeValue>>(args)));
+  inline ReturnTuple Call(const DFunction<SymbolScope::CATEGORY>& label,
+                          const ParamTuple& params, ArgTuple args) {
+    // args is passed as a temporary, but can now be used as an lvalue.
+    return Dispatch(label, params, args);
+  }
+
+  inline ReturnTuple Call(const DFunction<SymbolScope::CATEGORY>& label,
+                          const ParamTuple& params, ReturnTuple args) {
+    // args is passed as a temporary, but can now be used as an lvalue.
+    return Dispatch(label, params, args);
   }
 
   virtual std::string CategoryName() const = 0;
@@ -48,25 +33,29 @@ class TypeCategory {
  protected:
   TypeCategory() = default;
 
-  virtual DReturns Dispatch(const DFunction<SymbolScope::CATEGORY>& label,
-                            DParams params, DArgs args);
+  virtual ReturnTuple Dispatch(const DFunction<SymbolScope::CATEGORY>& label,
+                               const ParamTuple& params, ValueTuple& args);
 };
 
 class TypeInstance {
  public:
-  template<int P, int A, int R>
-  typename Returns<R>::Type Call(const Function<SymbolScope::TYPE,P,A,R>& label,
-                                 typename Params<P>::Type params,
-                                 typename Args<A>::Type args) {
-    return V_to_T<typename Returns<R>::Type>(Dispatch(
-      label, T_to_V<TypeInstance*>(params), T_to_V<S<TypeValue>>(args)));
+  inline ReturnTuple Call(const DFunction<SymbolScope::TYPE>& label,
+                          ParamTuple params, ArgTuple args) {
+    // args is passed as a temporary, but can now be used as an lvalue.
+    return Dispatch(label, params, args);
+  }
+
+  inline ReturnTuple Call(const DFunction<SymbolScope::TYPE>& label,
+                          const ParamTuple& params, ReturnTuple args) {
+    // args is passed as a temporary, but can now be used as an lvalue.
+    return Dispatch(label, params, args);
   }
 
   virtual std::string CategoryName() const = 0;
 
-  static Returns<1>::Type Reduce(TypeInstance& from, TypeInstance& to, S<TypeValue> target) {
+  static ReturnTuple Reduce(TypeInstance& from, TypeInstance& to, S<TypeValue> target) {
     TRACE_FUNCTION("reduce")
-    return T_get(CanConvert(from, to)? target : Var_empty);
+    return ReturnTuple(CanConvert(from, to)? target : Var_empty);
   }
 
   virtual bool TypeArgsForParent(
@@ -79,8 +68,8 @@ class TypeInstance {
  protected:
   TypeInstance() = default;
 
-  virtual DReturns Dispatch(const DFunction<SymbolScope::TYPE>& label,
-                            DParams params, DArgs args);
+  virtual ReturnTuple Dispatch(const DFunction<SymbolScope::TYPE>& label,
+                               const ParamTuple& params, ValueTuple& args);
 
   virtual bool CanConvertFrom(const TypeInstance& from) const
   { return false; }
@@ -106,21 +95,27 @@ class TypeInstance {
 
 class TypeValue {
  public:
-  template<int P, int A, int R>
-  static typename Returns<R>::Type Call(S<TypeValue> target,
-                                        const Function<SymbolScope::VALUE,P,A,R>& label,
-                                        typename Params<P>::Type params,
-                                        typename Args<A>::Type args) {
-    FAIL_IF(target == nullptr) << "Function called on null value";
-    return V_to_T<typename Returns<R>::Type>(target->Dispatch(
-      target, label, T_to_V<TypeInstance*>(params), T_to_V<S<TypeValue>>(args)));
+  inline static ReturnTuple Call(const S<TypeValue>& target,
+                                 const DFunction<SymbolScope::VALUE>& label,
+                                 const ParamTuple& params, ArgTuple args) {
+    FAIL_IF(target == nullptr);
+    // args is passed as a temporary, but can now be used as an lvalue.
+    return target->Dispatch(target, label, params, args);
+  }
+
+  inline static ReturnTuple Call(const S<TypeValue>& target,
+                                 const DFunction<SymbolScope::VALUE>& label,
+                                 const ParamTuple& params, ReturnTuple args) {
+    FAIL_IF(target == nullptr);
+    // args is passed as a temporary, but can now be used as an lvalue.
+    return target->Dispatch(target, label, params, args);
   }
 
   virtual std::string CategoryName() const = 0;
 
-  static Returns<1>::Type Present(S<TypeValue> target);
-  static Returns<1>::Type Require(S<TypeValue> target);
-  static Returns<1>::Type Strong(W<TypeValue> target);
+  static ReturnTuple Present(S<TypeValue> target);
+  static ReturnTuple Require(S<TypeValue> target);
+  static ReturnTuple Strong(W<TypeValue> target);
 
   virtual bool AsBool() const;
   virtual std::string AsString() const;
@@ -135,9 +130,9 @@ class TypeValue {
 
   virtual bool Present() const;
 
-  virtual DReturns Dispatch(const S<TypeValue>& self,
-                            const DFunction<SymbolScope::VALUE>& label,
-                            DParams params, DArgs args);
+  virtual ReturnTuple Dispatch(const S<TypeValue>& self,
+                               const DFunction<SymbolScope::VALUE>& label,
+                               const ParamTuple& params, ValueTuple& args);
 };
 
 template<int P, class T>

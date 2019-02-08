@@ -51,57 +51,9 @@ template<class T, class...Ts>
 inline L<T> L_get(Ts... ts) { return L<T>{ts...}; }
 
 
-template<int K, class V, class T>
-struct ExpandToTuple {
-  static void Set(const V& vals, T& tuple) {
-    std::get<K-1>(tuple) = vals[K-1];
-    ExpandToTuple<K-1,V,T>::Set(vals, tuple);
-  }
-};
-
-template<class V, class T>
-struct ExpandToTuple<0,V,T> {
-  static void Set(const V& vals, T& tuple) {}
-};
-
-template<class Tx, class X>
-Tx V_to_T(const L<X>& vals) {
-  static constexpr int tuple_size = std::tuple_size<Tx>::value;
-  FAIL_IF(vals.size() != tuple_size) << "Expected " << tuple_size << " elements";
-  Tx tuple;
-  ExpandToTuple<tuple_size,L<X>,Tx>::Set(vals, tuple);
-  return tuple;
-}
-
-
-template<int K, class T, class V>
-struct FlattenFromTuple {
-  static void Set(const T& tuple, V& vals) {
-    FlattenFromTuple<K-1,T,V>::Set(tuple, vals);
-    vals.push_back(std::get<K-1>(tuple));
-  }
-};
-
-template<class T, class V>
-struct FlattenFromTuple<0,T,V> {
-  static void Set(const T& tuple, V& vals) {}
-};
-
-template<class X, class...Ts>
-L<X> T_to_V(const T<Ts...>& tuple) {
-  static constexpr int tuple_size = std::tuple_size<T<Ts...>>::value;
-  L<X> vals;
-  vals.reserve(tuple_size);
-  FlattenFromTuple<tuple_size,T<Ts...>,L<X>>::Set(tuple, vals);
-  return vals;
-}
-
-
 class TypeCategory;
 class TypeInstance;
 class TypeValue;
-
-using DParams = L<TypeInstance*>;
 
 template<int N, class...Ts>
 struct Params {
@@ -113,28 +65,76 @@ struct Params<0, Ts...> {
   using Type = T<Ts...>;
 };
 
-using DReturns = L<S<TypeValue>>;
 
-template<int N, class...Ts>
-struct Returns {
-  using Type = typename Returns<N-1, S<TypeValue>, Ts...>::Type;
+class ValueTuple {
+ public:
+  virtual int Size() const = 0;
+  virtual S<TypeValue>& At(int pos) = 0;
+  virtual const S<TypeValue>& At(int pos) const = 0;
+  virtual const S<TypeValue>& Only() const = 0;
+
+ protected:
+  ValueTuple() = default;
+  virtual ~ValueTuple() = default;
+
+ private:
+  void* operator new(std::size_t size) = delete;
 };
 
-template<class...Ts>
-struct Returns<0, Ts...> {
-  using Type = T<Ts...>;
+class ReturnTuple : public ValueTuple {
+ public:
+  ReturnTuple(int size) : returns_(size) {}
+
+  template<class...Ts>
+  ReturnTuple(Ts... returns) : returns_{std::move(returns)...} {}
+
+  int Size() const final;
+  S<TypeValue>& At(int pos) final;
+  const S<TypeValue>& At(int pos) const final;
+  const S<TypeValue>& Only() const final;
+
+ private:
+  ReturnTuple& operator =(const ReturnTuple&) = delete;
+
+  std::vector<S<TypeValue>> returns_;
 };
 
-using DArgs = L<S<TypeValue>>;
+class ArgTuple : public ValueTuple {
+ public:
+  ArgTuple(ArgTuple&& other) : args_(std::move(other.args_)) {}
 
-template<int N, class...Ts>
-struct Args {
-  using Type = typename Args<N-1, S<TypeValue>, Ts...>::Type;
+  template<class...Ts>
+  ArgTuple(Ts... args) : args_{std::move(args)...} {}
+
+  int Size() const final;
+  S<TypeValue>& At(int pos) final;
+  const S<TypeValue>& At(int pos) const final;
+  const S<TypeValue>& Only() const final;
+
+ private:
+  ArgTuple(const ArgTuple&) = delete;
+  ArgTuple& operator =(const ArgTuple&) = delete;
+
+  std::vector<ReturnTuple> args_;
 };
 
-template<class...Ts>
-struct Args<0, Ts...> {
-  using Type = T<Ts...>;
+class ParamTuple {
+ public:
+  ParamTuple(ParamTuple&& other) : params_(std::move(other.params_)) {}
+
+  template<class...Ts>
+  ParamTuple(Ts*... args) : params_{args...} {}
+
+  int Size() const;
+  TypeInstance* At(int pos) const;
+
+ private:
+  ParamTuple(const ParamTuple&) = delete;
+  ParamTuple& operator =(const ParamTuple&) = delete;
+  void* operator new(std::size_t size) = delete;
+
+  std::vector<TypeInstance*> params_;
 };
+
 
 #endif  // TYPES_HPP_

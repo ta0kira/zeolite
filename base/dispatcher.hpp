@@ -8,85 +8,100 @@
 #include "function.hpp"
 
 
-template<class C, class T, class V>
-class Dispatcher {
+template<class C>
+class CategoryDispatcher {
  public:
-  template<int P, int A, int R>
-  Dispatcher& Register(const Function<SymbolScope::CATEGORY,P,A,R>& label,
-    typename Returns<R>::Type(C::*function)(typename Params<P>::Type,
-                                            typename Args<A>::Type)) {
-    category_[&label] =
-      [function](C& target, DParams params, DArgs args) {
-        return T_to_V<S<TypeValue>>((target.*function)(
-                                      V_to_T<typename Params<P>::Type>(params),
-                                      V_to_T<typename Args<A>::Type>(args)));
-      };
+  using CallType = ReturnTuple(C::*)(const ParamTuple&, ValueTuple&);
+
+  CategoryDispatcher() = default;
+  CategoryDispatcher(CategoryDispatcher&& other) : map_(std::move(other.map_)) {}
+
+  CategoryDispatcher& Register(const DFunction<SymbolScope::CATEGORY>& label,
+                               CallType function) {
+    map_[&label] = function;
     return *this;
   }
 
-  DReturns Dispatch(C& target,
-                    const DFunction<SymbolScope::CATEGORY>& label,
-                    DParams params, DArgs args) const {
-    const auto caller = category_.find(&label);
-    FAIL_IF(caller == category_.end())
+  ReturnTuple Dispatch(C& target,
+                       const DFunction<SymbolScope::CATEGORY>& label,
+                       const ParamTuple& params, ValueTuple& args) const {
+    const auto caller = map_.find(&label);
+    FAIL_IF(caller == map_.end())
         << target.CategoryName() << " does not implement " << label.FunctionName();
-    return caller->second(target, params, args);
-  }
-
-  template<int P, int A, int R>
-  Dispatcher& Register(const Function<SymbolScope::TYPE,P,A,R>& label,
-    typename Returns<R>::Type(T::*function)(typename Params<P>::Type,
-                                            typename Args<A>::Type)) {
-    type_[&label] =
-      [function](T& target, DParams params, DArgs args) {
-      return T_to_V<S<TypeValue>>((target.*function)(
-                                    V_to_T<typename Params<P>::Type>(params),
-                                    V_to_T<typename Args<A>::Type>(args)));
-      };
-    return *this;
-  }
-
-  DReturns Dispatch(T& target,
-                    const DFunction<SymbolScope::TYPE>& label,
-                    DParams params, DArgs args) const {
-    const auto caller = type_.find(&label);
-    FAIL_IF(caller == type_.end())
-        << target.CategoryName() << " does not implement " << label.FunctionName();
-    return caller->second(target, params, args);
-  }
-
-  template<int P, int A, int R>
-  Dispatcher& Register(const Function<SymbolScope::VALUE,P,A,R>& label,
-    typename Returns<R>::Type(V::*function)(const S<TypeValue>&,
-                                            typename Params<P>::Type,
-                                            typename Args<A>::Type)) {
-    value_[&label] =
-      [function](V& target, const S<TypeValue>& self, DParams params, DArgs args) {
-        return T_to_V<S<TypeValue>>((target.*function)(
-                                      self,
-                                      V_to_T<typename Params<P>::Type>(params),
-                                      V_to_T<typename Args<A>::Type>(args)));
-      };
-    return *this;
-  }
-
-  DReturns Dispatch(V& target,
-                    const S<TypeValue>& self,
-                    const DFunction<SymbolScope::VALUE>& label,
-                    DParams params, DArgs args) const {
-    const auto caller = value_.find(&label);
-    FAIL_IF(caller == value_.end())
-        << target.CategoryName() << " does not implement " << label.FunctionName();
-    return caller->second(target, self, params, args);
+    return (target.*caller->second)(params, args);
   }
 
  private:
-  std::unordered_map<const DFunction<SymbolScope::CATEGORY>*,
-                     std::function<DReturns(C&,DParams,DArgs)>> category_;
-  std::unordered_map<const DFunction<SymbolScope::TYPE>*,
-                     std::function<DReturns(T&,DParams,DArgs)>> type_;
-  std::unordered_map<const DFunction<SymbolScope::VALUE>*,
-                     std::function<DReturns(V&,const S<TypeValue>&,DParams,DArgs)>> value_;
+  CategoryDispatcher(const CategoryDispatcher&) = delete;
+  CategoryDispatcher& operator =(const CategoryDispatcher&) = delete;
+  void* operator new(std::size_t size) = delete;
+
+  std::unordered_map<const DFunction<SymbolScope::CATEGORY>*,CallType> map_;
+};
+
+
+template<class T>
+class TypeDispatcher {
+ public:
+  using CallType = ReturnTuple(T::*)(const ParamTuple&, ValueTuple&);
+
+  TypeDispatcher() = default;
+  TypeDispatcher(TypeDispatcher&& other) : map_(std::move(other.map_)) {}
+
+  TypeDispatcher& Register(const DFunction<SymbolScope::TYPE>& label,
+                           CallType function) {
+    map_[&label] = function;
+    return *this;
+  }
+
+  ReturnTuple Dispatch(T& target,
+                       const DFunction<SymbolScope::TYPE>& label,
+                       const ParamTuple& params, ValueTuple& args) const {
+    const auto caller = map_.find(&label);
+    FAIL_IF(caller == map_.end())
+        << target.CategoryName() << " does not implement " << label.FunctionName();
+    return (target.*caller->second)(params, args);
+  }
+
+ private:
+  TypeDispatcher(const TypeDispatcher&) = delete;
+  TypeDispatcher& operator =(const TypeDispatcher&) = delete;
+  void* operator new(std::size_t size) = delete;
+
+  std::unordered_map<const DFunction<SymbolScope::TYPE>*,CallType> map_;
+};
+
+
+template<class V>
+class ValueDispatcher {
+ public:
+  using CallType = ReturnTuple(V::*)(const S<TypeValue>&, const ParamTuple&, ValueTuple&);
+
+  ValueDispatcher() = default;
+  ValueDispatcher(ValueDispatcher&& other) : map_(std::move(other.map_)) {}
+
+  ValueDispatcher& Register(const DFunction<SymbolScope::VALUE>& label,
+                            CallType function) {
+    map_[&label] = function;
+    return *this;
+  }
+
+  ReturnTuple Dispatch(V& target,
+                       const S<TypeValue>& self,
+                       const DFunction<SymbolScope::VALUE>& label,
+                       const ParamTuple& params, ValueTuple& args) const {
+    const auto caller = map_.find(&label);
+    FAIL_IF(caller == map_.end())
+        << target.CategoryName() << " does not implement " << label.FunctionName();
+    return (target.*caller->second)(self, params, args);
+  }
+
+ private:
+  ValueDispatcher(const ValueDispatcher&) = delete;
+  ValueDispatcher& operator =(const ValueDispatcher&) = delete;
+  void* operator new(std::size_t size) = delete;
+
+  std::unordered_map<const DFunction<SymbolScope::VALUE>*,CallType> map_;
 };
 
 #endif  // DISPATCHER_HPP_

@@ -93,7 +93,7 @@ compileExecutableProcedure tm t ps pi ms pa fi fa va
       mergeAll $ [
           onlyCode header,
           indentCompiled $ onlyCode setProcedureTrace,
-          indentCompiled $ onlyCode defineReturns,
+          indentCompiled $ onlyCodes defineReturns,
           indentCompiled $ onlyCodes nameParams,
           indentCompiled $ onlyCodes nameArgs,
           indentCompiled $ onlyCodes nameReturns,
@@ -104,25 +104,21 @@ compileExecutableProcedure tm t ps pi ms pa fi fa va
     name = callName n
     header
       | s == ValueScope =
-        returnType ++ " " ++ name ++ "(const S<TypeValue>& Var_self, " ++
-        "Params<" ++ show (length $ psParams ps1) ++ ">::Type params, " ++
-        "Args<" ++ show (length $ psParams as1) ++ ">::Type args) {"
+        returnType ++ " " ++ name ++
+        "(const S<TypeValue>& Var_self, const ParamTuple& params, ValueTuple& args) {"
       | otherwise =
-        returnType ++ " " ++ name ++ "(" ++
-        "Params<" ++ show (length $ psParams ps1) ++ ">::Type params, " ++
-        "Args<" ++ show (length $ psParams as1) ++ ">::Type args) {"
-    returnType = "Returns<" ++ show (length $ psParams rs1) ++ ">::Type"
+        returnType ++ " " ++ name ++ "(const ParamTuple& params, ValueTuple& args) {"
+    returnType = "ReturnTuple"
     setProcedureTrace = "TRACE_FUNCTION(\"" ++ show t ++ "." ++ show n ++ "\")"
-    defineReturns = returnType ++ " returns;"
+    defineReturns = [returnType ++ " returns(" ++ show (length $ psParams rs1) ++ ");"]
     nameParams = flip map (zip [0..] $ psParams ps1) $
-      (\(i,p) -> paramType ++ " " ++ paramName (vpParam p) ++ " = *std::get<" ++ show i ++ ">(params);")
+      (\(i,p) -> paramType ++ " " ++ paramName (vpParam p) ++ " = *params.At(" ++ show i ++ ");")
     nameArgs = flip map (zip [0..] $ filter (not . isDiscardedInput) $ psParams $ avNames as2) $
-      (\(i,n) -> proxyType ++ " " ++ variableName (ivName n) ++ " = SafeGet<" ++ show i ++ ">(args);")
+      (\(i,n) -> proxyType ++ " " ++ variableName (ivName n) ++ " = args.At(" ++ show i ++ ");")
     nameReturns
       | isUnnamedReturns rs2 = []
-      -- NOTE: SafeGet is not safe for named returns.
       | otherwise = flip map (zip [0..] $ psParams $ nrNames rs2) $
-      (\(i,n) -> proxyType ++ " " ++ variableName (ovName n) ++ " = std::get<" ++ show i ++ ">(returns);")
+      (\(i,n) -> proxyType ++ " " ++ variableName (ovName n) ++ " = returns.At(" ++ show i ++ ");")
 
 compileCondition :: (Show c, Monad m, CompileErrorM m, MergeableM m,
                      CompilerContext c m [String] a) =>
@@ -135,7 +131,7 @@ compileCondition ctx c e = do
     compile = flip reviseErrorStateT ("In condition at " ++ formatFullContext c) $ do
       (ts,e') <- compileExpression e
       lift $ checkCondition ts
-      return $ "std::get<0>(" ++ e' ++ ")->AsBool()"
+      return $ "(" ++ e' ++ ").Only()->AsBool()"
       where
         checkCondition (ParamSet [t]) | t == boolRequiredValue = return ()
         checkCondition (ParamSet ts) =
@@ -177,7 +173,7 @@ compileStatement (ExplicitReturn c es) = do
       compileError $ "Return position " ++ show i ++ " has " ++ show (length ts) ++ " values but should have 1"
     bindReturn (i,(c0,(_,e))) = [
         setTraceContext c0,
-        "std::get<" ++ show i ++ ">(returns) = " ++ "std::get<0>(" ++ e ++ ");"
+        "returns.At(" ++ show i ++ ") = (" ++ e ++ ").Only();"
       ]
 compileStatement (LoopBreak c) = do
   -- TODO: This can only be used inside of a loop.
@@ -212,11 +208,11 @@ compileStatement (Assignment c as e) = do
       csUpdateAssigned n
     createVariable _ _ _ _ = return ()
     assignVariable (i,CreateVariable _ _ n) =
-      csWrite [variableName n ++ " = SafeGet<" ++ show i ++ ">(r);"]
+      csWrite [variableName n ++ " = r.At(" ++ show i ++ ");"]
     assignVariable (i,ExistingVariable (InputValue _ n)) = do
       (VariableValue _ s _) <- csGetVariable c n
       scoped <- autoScope s
-      csWrite [scoped ++ variableName n ++ " = SafeGet<" ++ show i ++ ">(r);"]
+      csWrite [scoped ++ variableName n ++ " = r.At(" ++ show i ++ ");"]
     assignVariable _ = return ()
 compileStatement (NoValueExpression v) = compileVoidExpression v
 
@@ -326,22 +322,22 @@ compileExpression :: (Show c, Monad m, CompileErrorM m, MergeableM m,
   Expression c -> CompilerState a m (ExpressionType,String)
 compileExpression = compile where
   compile (Literal (StringLiteral c l)) = do
-    return (ParamSet [stringRequiredValue],"T_get(Box_String(\"" ++ l ++ "\"))")
+    return (ParamSet [stringRequiredValue],"ReturnTuple(Box_String(\"" ++ l ++ "\"))")
   compile (Literal (IntegerLiteral c l)) = do
     -- TODO: Check bounds.
-    return (ParamSet [intRequiredValue],"T_get(Box_Int(" ++ l ++ "))")
+    return (ParamSet [intRequiredValue],"ReturnTuple(Box_Int(" ++ l ++ "))")
   compile (Literal (HexLiteral c l)) = do
     -- TODO: Check bounds.
-    return (ParamSet [intRequiredValue],"T_get(Box_Int(0x" ++ l ++ "))")
+    return (ParamSet [intRequiredValue],"ReturnTuple(Box_Int(0x" ++ l ++ "))")
   compile (Literal (DecimalLiteral c l1 l2)) = do
     -- TODO: Check bounds.
-    return (ParamSet [floatRequiredValue],"T_get(Box_Float(" ++ l1 ++ "." ++ l2 ++ "))")
+    return (ParamSet [floatRequiredValue],"ReturnTuple(Box_Float(" ++ l1 ++ "." ++ l2 ++ "))")
   compile (Literal (BoolLiteral c True)) = do
-    return (ParamSet [boolRequiredValue],"T_get(Var_true)")
+    return (ParamSet [boolRequiredValue],"ReturnTuple(Var_true)")
   compile (Literal (BoolLiteral c False)) = do
-    return (ParamSet [boolRequiredValue],"T_get(Var_false)")
+    return (ParamSet [boolRequiredValue],"ReturnTuple(Var_false)")
   compile (Literal (EmptyLiteral c)) = do
-    return (ParamSet [emptyValue],"T_get(Var_empty)")
+    return (ParamSet [emptyValue],"ReturnTuple(Var_empty)")
   compile (Expression c s os) = do
     foldl transform (compileExpressionStart s) os
   compile (UnaryExpression c o e) = do
@@ -358,12 +354,12 @@ compileExpression = compile where
         when (t /= boolRequiredValue) $
           lift $ compileError $ "Operator ! requires a Bool value "++
                                 " [" ++ formatFullContext c ++ "]"
-        return $ (ParamSet [boolRequiredValue],"T_get(Box_Bool(!std::get<0>(" ++ e ++ ")->AsBool()))")
+        return $ (ParamSet [boolRequiredValue],"ReturnTuple(Box_Bool(!(" ++ e ++ ").Only()->AsBool()))")
       doNeg t e
         | t == intRequiredValue = return $ (ParamSet [intRequiredValue],
-                                            "T_get(Box_Int(-std::get<0>(" ++ e ++ ")->AsInt()))")
+                                            "ReturnTuple(Box_Int(-(" ++ e ++ ").Only()->AsInt()))")
         | t == floatRequiredValue = return $ (ParamSet [floatRequiredValue],
-                                             "T_get(Box_Float(-std::get<0>(" ++ e ++ ")->AsFloat()))")
+                                             "ReturnTuple(Box_Float(-(" ++ e ++ ").Only()->AsFloat()))")
         | otherwise = lift $ compileError $ "Operator - requires an Int or Float value "++
                                             " [" ++ formatFullContext c ++ "]"
   compile (InitializeValue c t ps es) = do
@@ -371,11 +367,11 @@ compileExpression = compile where
     (ts,es'') <- getValues es'
     csCheckValueInit c t (ParamSet ts) ps
     params <- expandParams $ tiParams t
-    params2 <- expandParams $ ps
+    params2 <- expandParams2 $ ps
     -- TODO: This is unsafe if used in a type or category constructor.
     return (ParamSet [ValueType RequiredValue $ SingleType $ JustTypeInstance t],
-            "T_get(" ++ valueCreator ++ "(" ++ typeCreator ++ "(" ++ params ++ "), " ++
-                                          params2 ++ ", " ++ es'' ++ "))")
+            "ReturnTuple(" ++ valueCreator ++ "(" ++ typeCreator ++ "(" ++ params ++ "), " ++
+                                                params2 ++ ", " ++ es'' ++ "))")
     where
       -- Single expression, but possibly multi-return.
       getValues [(ParamSet ts,e)] = return (ts,e)
@@ -384,7 +380,7 @@ compileExpression = compile where
         lift $ mergeAllM (map checkArity $ zip [1..] $ map fst rs) `reviseError`
           ("In return at " ++ formatFullContext c)
         return (map (head . psParams . fst) rs,
-                "T_get(" ++ intercalate ", " (map ((\e -> "std::get<0>(" ++ e ++ ")") . snd) rs) ++ ")")
+                "ArgTuple(" ++ intercalate ", " (map snd rs) ++ ")")
       checkArity (_,ParamSet [_]) = return ()
       checkArity (i,ParamSet ts)  =
         compileError $ "Initializer position " ++ show i ++ " has " ++ show (length ts) ++ " values but should have 1"
@@ -432,8 +428,8 @@ compileExpression = compile where
           lift $ compileError $ "Cannot " ++ show o ++ " " ++ show t1 ++ " and " ++
                                 show t2 ++ " [" ++ formatFullContext c ++ "]"
       glueInfix t1 t2 e1 o e2 =
-        "T_get(Box_" ++ t2 ++ "(std::get<0>(" ++ e1 ++ ")->As" ++ t1 ++ "()" ++ o ++
-                               "std::get<0>(" ++ e2 ++ ")->As" ++ t1 ++ "()" ++ "))"
+        "ReturnTuple(Box_" ++ t2 ++ "((" ++ e1 ++ ").Only()->As" ++ t1 ++ "()" ++ o ++
+                                     "(" ++ e2 ++ ").Only()->As" ++ t1 ++ "()" ++ "))"
   transform e (ConvertedCall c t f) = do
     (ParamSet ts,e') <- e
     t' <- requireSingle c ts
@@ -443,12 +439,12 @@ compileExpression = compile where
     lift $ (checkValueTypeMatch r fa t' vt) `reviseError`
       ("In conversion at " ++ formatFullContext c)
     f' <- lookupValueFunction vt f
-    compileFunctionCall (Just $ "std::get<0>(" ++ e' ++ ")") f' f
+    compileFunctionCall (Just $ "(" ++ e' ++ ").Only()") f' f
   transform e (ValueCall c f) = do
     (ParamSet ts,e') <- e
     t' <- requireSingle c ts
     f' <- lookupValueFunction t' f
-    compileFunctionCall (Just $ "std::get<0>(" ++ e' ++ ")") f' f
+    compileFunctionCall (Just $ "(" ++ e' ++ ").Only()") f' f
   requireSingle c [t] = return t
   requireSingle c ts =
     lift $ compileError $ "Function call requires 1 return but found but found {" ++
@@ -472,7 +468,9 @@ compileExpressionStart :: (Show c, Monad m, CompileErrorM m, MergeableM m,
 compileExpressionStart (NamedVariable (OutputValue c n)) = do
   (VariableValue _ s t) <- csGetVariable c n
   scoped <- autoScope s
-  return (ParamSet [t],"T_get(" ++ scoped ++ variableName n ++ ")")
+  if isWeakValue t
+     then return (ParamSet [t],variableName n)
+     else return (ParamSet [t],"ReturnTuple(" ++ scoped ++ variableName n ++ ")")
 compileExpressionStart (CategoryCall c t f@(FunctionCall _ n _ _)) = do
   f' <- csGetCategoryFunction c (Just t) n
   csRequiresTypes $ Set.fromList [t,sfType f']
@@ -512,7 +510,7 @@ compileExpressionStart (BuiltinCall c f@(FunctionCall _ BuiltinPresent ps es)) =
   when (isWeakValue t0) $
     lift $ compileError $ "Weak values not allowed here [" ++ formatFullContext c ++ "]"
   return $ (ParamSet [boolRequiredValue],
-            valueBase ++ "::Present(std::get<0>(" ++ e ++ "))")
+            valueBase ++ "::Present((" ++ e ++ ").Only())")
 compileExpressionStart (BuiltinCall c f@(FunctionCall _ BuiltinReduce ps es)) = do
   when (length (psParams ps) /= 2) $
     lift $ compileError $ "Expected 2 type parameters [" ++ formatFullContext c ++ "]"
@@ -533,7 +531,7 @@ compileExpressionStart (BuiltinCall c f@(FunctionCall _ BuiltinReduce ps es)) = 
   csRequiresTypes $ categoriesFromTypes t1
   csRequiresTypes $ categoriesFromTypes t2
   return $ (ParamSet [ValueType OptionalValue t2],
-            typeBase ++ "::Reduce(" ++ t1' ++ ", " ++ t2' ++ ", std::get<0>(" ++ e ++ "))")
+            typeBase ++ "::Reduce(" ++ t1' ++ ", " ++ t2' ++ ", (" ++ e ++ ").Only())")
 compileExpressionStart (BuiltinCall c f@(FunctionCall _ BuiltinRequire ps es)) = do
   when (length (psParams ps) /= 0) $
     lift $ compileError $ "Expected 0 type parameters [" ++ formatFullContext c ++ "]"
@@ -546,7 +544,7 @@ compileExpressionStart (BuiltinCall c f@(FunctionCall _ BuiltinRequire ps es)) =
   when (isWeakValue t0) $
     lift $ compileError $ "Weak values not allowed here [" ++ formatFullContext c ++ "]"
   return $ (ParamSet [ValueType RequiredValue (vtType t0)],
-            valueBase ++ "::Require(std::get<0>(" ++ e ++ "))")
+            valueBase ++ "::Require((" ++ e ++ ").Only())")
 compileExpressionStart (BuiltinCall c f@(FunctionCall _ BuiltinStrong ps es)) = do
   when (length (psParams ps) /= 0) $
     lift $ compileError $ "Expected 0 type parameters [" ++ formatFullContext c ++ "]"
@@ -558,7 +556,8 @@ compileExpressionStart (BuiltinCall c f@(FunctionCall _ BuiltinStrong ps es)) = 
   let (ParamSet [t0],e) = head es'
   let t1 = ParamSet [ValueType OptionalValue (vtType t0)]
   if isWeakValue t0
-     then return (t1,valueBase ++ "::Strong(std::get<0>(" ++ e ++ "))")
+     -- Weak values are already unboxed.
+     then return (t1,valueBase ++ "::Strong(" ++ e ++ ")")
      else return (t1,e)
 compileExpressionStart (ParensExpression c e) = do
   (t,e') <- compileExpression e
@@ -574,7 +573,7 @@ compileExpressionStart (InlineAssignment c n e) = do
   -- might get short-circuited.
   csUpdateAssigned n
   scoped <- autoScope s
-  return (ParamSet [t0],"T_get(" ++ scoped ++ variableName n ++ " = std::get<0>(" ++ e' ++ "))")
+  return (ParamSet [t0],"ReturnTuple(" ++ scoped ++ variableName n ++ " = (" ++ e' ++ ").Only())")
 
 compileFunctionCall :: (Show c, Monad m, CompileErrorM m, MergeableM m,
                         CompilerContext c m [String] a) =>
@@ -593,7 +592,7 @@ compileFunctionCall e f (FunctionCall c _ ps es) = do
     ("In function call at " ++ formatFullContext c)
   csRequiresTypes $ Set.unions $ map categoriesFromTypes $ psParams ps
   csRequiresTypes (Set.fromList [sfType f])
-  params <- expandParams ps
+  params <- expandParams2 ps
   call <- assemble e (sfScope f) (functionName f) params es''
   return $ (ftReturns f'',call)
   where
@@ -613,8 +612,7 @@ compileFunctionCall e f (FunctionCall c _ ps es) = do
     getValues rs = do
       lift $ mergeAllM (map checkArity $ zip [1..] $ map fst rs) `reviseError`
         ("In return at " ++ formatFullContext c)
-      return (map (head . psParams . fst) rs,
-              "T_get(" ++ intercalate ", " (map ((\e -> "std::get<0>(" ++ e ++ ")") . snd) rs) ++ ")")
+      return (map (head . psParams . fst) rs, "ArgTuple(" ++ intercalate ", " (map snd rs) ++ ")")
     checkArity (_,ParamSet [_]) = return ()
     checkArity (i,ParamSet ts)  =
       compileError $ "Return position " ++ show i ++ " has " ++ show (length ts) ++ " values but should have 1"
@@ -644,6 +642,12 @@ expandParams :: (Monad m, CompilerContext c m s a) =>
 expandParams ps = do
   ps' <- sequence $ map expandGeneralInstance $ psParams ps
   return $ "T_get(" ++ intercalate "," (map ("&" ++) ps') ++ ")"
+
+expandParams2 :: (Monad m, CompilerContext c m s a) =>
+  ParamSet GeneralInstance -> CompilerState a m String
+expandParams2 ps = do
+  ps' <- sequence $ map expandGeneralInstance $ psParams ps
+  return $ "ParamTuple(" ++ intercalate "," (map ("&" ++) ps') ++ ")"
 
 expandCategory :: (Monad m, CompilerContext c m s a) =>
   CategoryName -> CompilerState a m String

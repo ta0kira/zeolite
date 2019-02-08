@@ -9,11 +9,11 @@
 namespace {
 
 struct OptionalEmpty : public TypeValue {
-  DReturns Dispatch(const S<TypeValue>& self,
-                    const DFunction<SymbolScope::VALUE>& label,
-                    DParams params, DArgs args) final {
+  ReturnTuple Dispatch(const S<TypeValue>& self,
+                       const DFunction<SymbolScope::VALUE>& label,
+                       const ParamTuple& params, ValueTuple& args) final {
     FAIL() << "Function called on empty value";
-    return DReturns();
+    return ReturnTuple(label.ReturnCount());
   }
 
   std::string CategoryName() const final { return "empty"; }
@@ -85,13 +85,13 @@ class Value_Bool : public TypeValue {
 
   bool AsBool() const final { return value_; }
 
-  DReturns Dispatch(const S<TypeValue>& self,
-                    const DFunction<SymbolScope::VALUE>& label,
-                    DParams params, DArgs args) final {
-    FAIL_IF(args.size() != label.ArgCount());
-    FAIL_IF(params.size() != label.ParamCount());
+  ReturnTuple Dispatch(const S<TypeValue>& self,
+                       const DFunction<SymbolScope::VALUE>& label,
+                       const ParamTuple& params, ValueTuple& args) final {
+    FAIL_IF(args.Size() != label.ArgCount());
+    FAIL_IF(params.Size() != label.ParamCount());
     if (&label == &Function_Formatted_formatted) {
-      return DReturns{Box_String(self->AsBool()? "true" : "false")};
+      return ReturnTuple(Box_String(self->AsBool()? "true" : "false"));
     }
     return TypeValue::Dispatch(self, label, params, args);
   }
@@ -107,15 +107,15 @@ struct Category_String : public TypeCategory {
 struct Type_String : public TypeInstance {
   std::string CategoryName() const final { return "String"; }
 
-  DReturns Dispatch(const DFunction<SymbolScope::TYPE>& label,
-                    DParams params, DArgs args) final {
-    FAIL_IF(args.size() != label.ArgCount());
-    FAIL_IF(params.size() != label.ParamCount());
+  ReturnTuple Dispatch(const DFunction<SymbolScope::TYPE>& label,
+                       const ParamTuple& params, ValueTuple& args) final {
+    FAIL_IF(args.Size() != label.ArgCount());
+    FAIL_IF(params.Size() != label.ParamCount());
     if (&label == &Function_LessThan_lessThan) {
-      return DReturns{Box_Bool(args[0]->AsString()<args[1]->AsString())};
+      return ReturnTuple(Box_Bool(args.At(0)->AsString()<args.At(1)->AsString()));
     }
     if (&label == &Function_Equals_equals) {
-      return DReturns{Box_Bool(args[0]->AsString()==args[1]->AsString())};
+      return ReturnTuple(Box_Bool(args.At(0)->AsString()==args.At(1)->AsString()));
     }
     return TypeInstance::Dispatch(label, params, args);
   }
@@ -149,13 +149,13 @@ class Value_String : public TypeValue {
 
   std::string AsString() const final { return value_; }
 
-  DReturns Dispatch(const S<TypeValue>& self,
-                    const DFunction<SymbolScope::VALUE>& label,
-                    DParams params, DArgs args) final {
-    FAIL_IF(args.size() != label.ArgCount());
-    FAIL_IF(params.size() != label.ParamCount());
+  ReturnTuple Dispatch(const S<TypeValue>& self,
+                       const DFunction<SymbolScope::VALUE>& label,
+                       const ParamTuple& params, ValueTuple& args) final {
+    FAIL_IF(args.Size() != label.ArgCount());
+    FAIL_IF(params.Size() != label.ParamCount());
     if (&label == &Function_Formatted_formatted) {
-      return DReturns{Box_String(self->AsString())};
+      return ReturnTuple(Box_String(self->AsString()));
     }
     return TypeValue::Dispatch(self, label, params, args);
   }
@@ -171,15 +171,15 @@ struct Category_Int : public TypeCategory {
 struct Type_Int : public TypeInstance {
   std::string CategoryName() const final { return "Int"; }
 
-  DReturns Dispatch(const DFunction<SymbolScope::TYPE>& label,
-                    DParams params, DArgs args) final {
-    FAIL_IF(args.size() != label.ArgCount());
-    FAIL_IF(params.size() != label.ParamCount());
+  ReturnTuple Dispatch(const DFunction<SymbolScope::TYPE>& label,
+                       const ParamTuple& params, ValueTuple& args) final {
+    FAIL_IF(args.Size() != label.ArgCount());
+    FAIL_IF(params.Size() != label.ParamCount());
     if (&label == &Function_LessThan_lessThan) {
-      return DReturns{Box_Bool(args[0]->AsInt()<args[1]->AsInt())};
+      return ReturnTuple(Box_Bool(args.At(0)->AsInt()<args.At(1)->AsInt()));
     }
     if (&label == &Function_Equals_equals) {
-      return DReturns{Box_Bool(args[0]->AsInt()==args[1]->AsInt())};
+      return ReturnTuple(Box_Bool(args.At(0)->AsInt()==args.At(1)->AsInt()));
     }
     return TypeInstance::Dispatch(label, params, args);
   }
@@ -213,15 +213,15 @@ class Value_Int : public TypeValue {
 
   int AsInt() const final { return value_; }
 
-  DReturns Dispatch(const S<TypeValue>& self,
-                    const DFunction<SymbolScope::VALUE>& label,
-                    DParams params, DArgs args) final {
-    FAIL_IF(args.size() != label.ArgCount());
-    FAIL_IF(params.size() != label.ParamCount());
+  ReturnTuple Dispatch(const S<TypeValue>& self,
+                       const DFunction<SymbolScope::VALUE>& label,
+                       const ParamTuple& params, ValueTuple& args) final {
+    FAIL_IF(args.Size() != label.ArgCount());
+    FAIL_IF(params.Size() != label.ParamCount());
     if (&label == &Function_Formatted_formatted) {
       std::ostringstream output;
       output << self->AsInt();
-      return DReturns{Box_String(output.str())};
+      return ReturnTuple(Box_String(output.str()));
     }
     return TypeValue::Dispatch(self, label, params, args);
   }
@@ -237,15 +237,15 @@ struct Category_Float : public TypeCategory {
 struct Type_Float : public TypeInstance {
   std::string CategoryName() const final { return "Float"; }
 
-  DReturns Dispatch(const DFunction<SymbolScope::TYPE>& label,
-                    DParams params, DArgs args) final {
-    FAIL_IF(args.size() != label.ArgCount());
-    FAIL_IF(params.size() != label.ParamCount());
+  ReturnTuple Dispatch(const DFunction<SymbolScope::TYPE>& label,
+                       const ParamTuple& params, ValueTuple& args) final {
+    FAIL_IF(args.Size() != label.ArgCount());
+    FAIL_IF(params.Size() != label.ParamCount());
     if (&label == &Function_LessThan_lessThan) {
-      return DReturns{Box_Bool(args[0]->AsFloat()<args[1]->AsFloat())};
+      return ReturnTuple(Box_Bool(args.At(0)->AsFloat()<args.At(1)->AsFloat()));
     }
     if (&label == &Function_Equals_equals) {
-      return DReturns{Box_Bool(args[0]->AsFloat()==args[1]->AsFloat())};
+      return ReturnTuple(Box_Bool(args.At(0)->AsFloat()==args.At(1)->AsFloat()));
     }
     return TypeInstance::Dispatch(label, params, args);
   }
@@ -279,15 +279,15 @@ class Value_Float : public TypeValue {
 
   double AsFloat() const final { return value_; }
 
-  DReturns Dispatch(const S<TypeValue>& self,
-                    const DFunction<SymbolScope::VALUE>& label,
-                    DParams params, DArgs args) final {
-    FAIL_IF(args.size() != label.ArgCount());
-    FAIL_IF(params.size() != label.ParamCount());
+  ReturnTuple Dispatch(const S<TypeValue>& self,
+                       const DFunction<SymbolScope::VALUE>& label,
+                       const ParamTuple& params, ValueTuple& args) final {
+    FAIL_IF(args.Size() != label.ArgCount());
+    FAIL_IF(params.Size() != label.ParamCount());
     if (&label == &Function_Formatted_formatted) {
       std::ostringstream output;
       output << self->AsFloat();
-      return DReturns{Box_String(output.str())};
+      return ReturnTuple(Box_String(output.str()));
     }
     return TypeValue::Dispatch(self, label, params, args);
   }
