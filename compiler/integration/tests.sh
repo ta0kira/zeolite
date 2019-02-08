@@ -690,6 +690,28 @@ define Test {
 }
 END
 
+expect_runs 'weak variable to weak variable' <<END
+define Test {
+  @category weak Test one <- empty
+
+  run () {
+    weak Test two <- one
+    one <- two
+  }
+}
+END
+
+expect_runs 'optional variable to weak variable' <<END
+define Test {
+  @category optional Test one <- empty
+
+  run () {
+    weak Test two <- one
+    two <- one
+  }
+}
+END
+
 expect_runs 'not true' <<END
 define Test {
   run () {

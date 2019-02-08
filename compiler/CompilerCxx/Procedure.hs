@@ -190,7 +190,7 @@ compileStatement (Assignment c as e) = do
     ("In assignment at " ++ formatFullContext c)
   csWrite [setTraceContext c]
   csWrite ["{","const auto r = " ++ e' ++ ";"]
-  sequence $ map assignVariable $ zip [0..] $ psParams as
+  sequence $ map assignVariable $ zip3 [0..] (psParams ts) $ psParams as
   csWrite ["}"]
   where
     createVariable r fa (CreateVariable c t1 n) t2 = do
@@ -207,12 +207,15 @@ compileStatement (Assignment c as e) = do
         ("In assignment to " ++ show n ++ " at " ++ formatFullContext c)
       csUpdateAssigned n
     createVariable _ _ _ _ = return ()
-    assignVariable (i,CreateVariable _ _ n) =
-      csWrite [variableName n ++ " = r.At(" ++ show i ++ ");"]
-    assignVariable (i,ExistingVariable (InputValue _ n)) = do
+    assignVariable (i,t,CreateVariable _ _ n)
+      | isWeakValue t = csWrite [variableName n ++ " = r;"]
+      | otherwise = csWrite [variableName n ++ " = r.At(" ++ show i ++ ");"]
+    assignVariable (i,t,ExistingVariable (InputValue _ n)) = do
       (VariableValue _ s _) <- csGetVariable c n
       scoped <- autoScope s
-      csWrite [scoped ++ variableName n ++ " = r.At(" ++ show i ++ ");"]
+      if isWeakValue t
+         then csWrite [scoped ++ variableName n ++ " = r;"]
+         else csWrite [scoped ++ variableName n ++ " = r.At(" ++ show i ++ ");"]
     assignVariable _ = return ()
 compileStatement (NoValueExpression v) = compileVoidExpression v
 
@@ -469,7 +472,7 @@ compileExpressionStart (NamedVariable (OutputValue c n)) = do
   (VariableValue _ s t) <- csGetVariable c n
   scoped <- autoScope s
   if isWeakValue t
-     then return (ParamSet [t],variableName n)
+     then return (ParamSet [t],scoped ++ variableName n)
      else return (ParamSet [t],"ReturnTuple(" ++ scoped ++ variableName n ++ ")")
 compileExpressionStart (CategoryCall c t f@(FunctionCall _ n _ _)) = do
   f' <- csGetCategoryFunction c (Just t) n
