@@ -321,6 +321,47 @@ define Test {
 }
 END
 
+expect_runs 'assigns in correct order with explicit return' <<END
+define Test {
+  @type get () -> (Int,Int)
+  get () (x,y) {
+    x <- 1
+    y <- 2
+    return _
+  }
+
+  run () {
+    scoped {
+      { Int x, Int y } <- get()
+    } in if (x != 1) {
+      ~ Util\$crash()
+    } elif (y != 2) {
+      ~ Util\$crash()
+    }
+  }
+}
+END
+
+expect_runs 'overwrite arg locally' <<END
+define Test {
+  @type call (Int) -> ()
+  call (arg) {
+    arg <- 2
+    if (arg != 2) {
+      ~ Util\$crash()
+    }
+  }
+
+  run () {
+    Int val <- 1
+    ~ call(val)
+    if (val != 1) {
+      ~ Util\$crash()
+    }
+  }
+}
+END
+
 expect_error 'missing return' 'Value' 'line 5' <<END
 @value interface Value {}
 
