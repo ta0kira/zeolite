@@ -271,6 +271,128 @@ define Test {
 }
 END
 
+expect_runs 'init value same type from @type' <<END
+concrete Value<#x> {
+  @type create (#x) -> (Value<#x>)
+  @value get () -> (#x)
+}
+
+define Value {
+  @value #x value
+
+  create (val) {
+    return Value<#x>{ val }
+  }
+
+  get () {
+    return value
+  }
+}
+
+define Test {
+  run () {
+    Value<Int> value <- Value<Int>\$create(1)
+    if (value.get() != 1) {
+      ~ Util\$crash()
+    }
+  }
+}
+END
+
+expect_runs 'init value different type from @type' <<END
+concrete Value<#x> {
+  @type create<#y> (#y) -> (Value<#y>)
+  @value get () -> (#x)
+}
+
+define Value {
+  @value #x value
+
+  create (val) {
+    return Value<#y>{ val }
+  }
+
+  get () {
+    return value
+  }
+}
+
+define Test {
+  run () {
+    Value<Int> value <- Value<String>\$create<Int>(1)
+    if (value.get() != 1) {
+      ~ Util\$crash()
+    }
+  }
+}
+END
+
+expect_runs 'init value same type from @value' <<END
+concrete Value<#x> {
+  @type create (#x) -> (Value<#x>)
+  @value create2 (#x) -> (Value<#x>)
+  @value get () -> (#x)
+}
+
+define Value {
+  @value #x value
+
+  create (val) {
+    return Value<#x>{ val }
+  }
+
+  create2 (val) {
+    return Value<#x>{ val }
+  }
+
+  get () {
+    return value
+  }
+}
+
+define Test {
+  run () {
+    Value<Int> value <- Value<Int>\$create(2).create2(1)
+    if (value.get() != 1) {
+      ~ Util\$crash()
+    }
+  }
+}
+END
+
+expect_runs 'init value different type from @value' <<END
+concrete Value<#x> {
+  @type create (#x) -> (Value<#x>)
+  @value create2<#y> (#y) -> (Value<#y>)
+  @value get () -> (#x)
+}
+
+define Value {
+  @value #x value
+
+  create (val) {
+    return Value<#x>{ val }
+  }
+
+  create2 (val) {
+    return Value<#y>{ val }
+  }
+
+  get () {
+    return value
+  }
+}
+
+define Test {
+  run () {
+    Value<Int> value <- Value<String>\$create("x").create2<Int>(1)
+    if (value.get() != 1) {
+      ~ Util\$crash()
+    }
+  }
+}
+END
+
 expect_error 'missing assign' 'value' 'line 5' <<END
 @value interface Value {}
 

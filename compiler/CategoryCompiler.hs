@@ -58,6 +58,8 @@ instance (Show c, MergeableM m, CompileErrorM m, Monad m) =>
   CompilerContext c m [String] (ProcedureContext c) where
   ccCurrentScope = return . pcScope
   ccResolver = return . categoriesToTypeResolver . pcCategories
+  ccSameType ctx = return . (== same) where
+    same = TypeInstance (pcType ctx) (fmap (SingleType . JustParamName . vpParam) $ pcExtParams ctx)
   ccAllFilters = return . pcAllFilters
   ccGetParamScope ctx p = do
     case p `Map.lookup` pcParamScopes ctx of

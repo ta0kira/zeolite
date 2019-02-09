@@ -24,6 +24,7 @@ module CompilerState (
   csRegisterReturn,
   csRequiresTypes,
   csResolver,
+  csSameType,
   csUpdateAssigned,
   csWrite,
   getCleanContext,
@@ -48,6 +49,7 @@ type CompilerState a m = StateT a m
 class Monad m => CompilerContext c m s a | a -> c s where
   ccCurrentScope :: a -> m SymbolScope
   ccResolver :: a -> m (TypeResolver m)
+  ccSameType :: a -> TypeInstance -> m Bool
   ccAllFilters :: a -> m ParamFilters
   ccGetParamScope :: a -> ParamName -> m SymbolScope
   ccRequiresTypes :: a -> Set.Set CategoryName -> m a
@@ -94,6 +96,10 @@ csCurrentScope = fmap ccCurrentScope get >>= lift
 csResolver :: (Monad m, CompilerContext c m s a) =>
   CompilerState a m (TypeResolver m)
 csResolver = fmap ccResolver get >>= lift
+
+csSameType :: (Monad m, CompilerContext c m s a) =>
+  TypeInstance -> CompilerState a m Bool
+csSameType t = fmap (\x -> ccSameType x t) get >>= lift
 
 csAllFilters :: (Monad m, CompilerContext c m s a) =>
   CompilerState a m ParamFilters

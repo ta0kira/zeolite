@@ -371,11 +371,17 @@ compileExpression = compile where
     csCheckValueInit c t (ParamSet ts) ps
     params <- expandParams $ tiParams t
     params2 <- expandParams2 $ ps
+    sameType <- csSameType t
+    s <- csCurrentScope
+    let typeInstance = getType sameType s params
     -- TODO: This is unsafe if used in a type or category constructor.
     return (ParamSet [ValueType RequiredValue $ SingleType $ JustTypeInstance t],
-            "ReturnTuple(" ++ valueCreator ++ "(" ++ typeCreator ++ "(" ++ params ++ "), " ++
+            "ReturnTuple(" ++ valueCreator ++ "(" ++ typeInstance ++ ", " ++
                                                 params2 ++ ", " ++ es'' ++ "))")
     where
+      getType True TypeScope  _ = "*this"
+      getType True ValueScope _ = "parent"
+      getType _    _ params = typeCreator ++ "(" ++ params ++ ")"
       -- Single expression, but possibly multi-return.
       getValues [(ParamSet ts,e)] = return (ts,e)
       -- Multi-expression => must all be singles.
