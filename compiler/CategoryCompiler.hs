@@ -426,7 +426,7 @@ mapMembers ms = foldr update (return Map.empty) ms where
                                      formatFullContext (dmContext m) ++
                                      "] is already defined [" ++
                                      formatFullContext (vvContext m0) ++ "]"
-    return $ Map.insert (dmName m) (VariableValue (dmContext m) (dmScope m) (dmType m)) ma'
+    return $ Map.insert (dmName m) (VariableValue (dmContext m) (dmScope m) (dmType m) True) ma'
 
 updateReturnVariables :: (Show c, Monad m, CompileErrorM m, MergeableM m) =>
   (Map.Map VariableName (VariableValue c)) ->
@@ -441,7 +441,7 @@ updateReturnVariables ma rs1 rs2 = updated where
         update (PassedValue c t,r) va = do
           va' <- va
           case ovName r `Map.lookup` va' of
-               Nothing -> return $ Map.insert (ovName r) (VariableValue c LocalScope t) va'
+               Nothing -> return $ Map.insert (ovName r) (VariableValue c LocalScope t True) va'
                (Just v) -> compileError $ "Variable " ++ show (ovName r) ++
                                           " [" ++ formatFullContext (ovContext r) ++
                                           "] is already defined [" ++
@@ -458,7 +458,7 @@ updateArgVariables ma as1 as2 = do
     update (PassedValue c t,a) va = do
       va' <- va
       case ivName a `Map.lookup` va' of
-            Nothing -> return $ Map.insert (ivName a) (VariableValue c LocalScope t) va'
+            Nothing -> return $ Map.insert (ivName a) (VariableValue c LocalScope t False) va'
             (Just v) -> compileError $ "Variable " ++ show (ivName a) ++
                                        " [" ++ formatFullContext (ivContext a) ++
                                        "] is already defined [" ++

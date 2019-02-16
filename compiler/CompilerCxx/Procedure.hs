@@ -105,16 +105,16 @@ compileExecutableProcedure tm t ps pi ms pa fi fa va
     header
       | s == ValueScope =
         returnType ++ " " ++ name ++
-        "(const S<TypeValue>& Var_self, const ParamTuple& params, ValueTuple& args) {"
+        "(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) {"
       | otherwise =
-        returnType ++ " " ++ name ++ "(const ParamTuple& params, ValueTuple& args) {"
+        returnType ++ " " ++ name ++ "(const ParamTuple& params, const ValueTuple& args) {"
     returnType = "ReturnTuple"
     setProcedureTrace = "TRACE_FUNCTION(\"" ++ show t ++ "." ++ show n ++ "\")"
     defineReturns = [returnType ++ " returns(" ++ show (length $ psParams rs1) ++ ");"]
     nameParams = flip map (zip [0..] $ psParams ps1) $
       (\(i,p) -> paramType ++ " " ++ paramName (vpParam p) ++ " = *params.At(" ++ show i ++ ");")
     nameArgs = flip map (zip [0..] $ filter (not . isDiscardedInput) $ psParams $ avNames as2) $
-      (\(i,n) -> proxyType ++ " " ++ variableName (ivName n) ++ " = args.At(" ++ show i ++ ");")
+      (\(i,n) -> "const " ++ proxyType ++ " " ++ variableName (ivName n) ++ " = args.At(" ++ show i ++ ");")
     nameReturns
       | isUnnamedReturns rs2 = []
       | otherwise = flip map (zip [0..] $ psParams $ nrNames rs2) $
@@ -131,7 +131,7 @@ compileCondition ctx c e = do
     compile = flip reviseErrorStateT ("In condition at " ++ formatFullContext c) $ do
       (ts,e') <- compileExpression e
       lift $ checkCondition ts
-      return $ "(" ++ e' ++ ").Only()->AsBool()"
+      return $ useAsUnboxed PrimBool e'
       where
         checkCondition (ParamSet [t]) | t == boolRequiredValue = return ()
         checkCondition (ParamSet ts) =
@@ -160,7 +160,7 @@ compileStatement (ExplicitReturn c es) = do
     getReturn [(_,(ParamSet ts,e))] = do
       csRegisterReturn c (ParamSet ts)
       csWrite [setTraceContext c]
-      csWrite ["return " ++ e ++ ";"]
+      csWrite ["return " ++ useAsWrapped e ++ ";"]
     -- Multi-expression => must all be singles.
     getReturn rs = do
       lift $ mergeAllM (map checkArity $ zip [1..] $ map (fst . snd) rs) `reviseError`
@@ -173,7 +173,7 @@ compileStatement (ExplicitReturn c es) = do
       compileError $ "Return position " ++ show i ++ " has " ++ show (length ts) ++ " values but should have 1"
     bindReturn (i,(c0,(_,e))) = [
         setTraceContext c0,
-        "returns.At(" ++ show i ++ ") = (" ++ e ++ ").Only();"
+        "returns.At(" ++ show i ++ ") = " ++ useAsUnwrapped e ++ ";"
       ]
 compileStatement (LoopBreak c) = do
   -- TODO: This can only be used inside of a loop.
@@ -181,7 +181,7 @@ compileStatement (LoopBreak c) = do
 compileStatement (IgnoreValues c e) = do
   (_,e') <- compileExpression e
   csWrite [setTraceContext c]
-  csWrite [e' ++ ";"]
+  csWrite [useAsWhatever e' ++ ";"]
 compileStatement (Assignment c as e) = do
   (ts,e') <- compileExpression e
   r <- csResolver
@@ -189,34 +189,46 @@ compileStatement (Assignment c as e) = do
   processParamPairsT (createVariable r fa) as ts `reviseErrorStateT`
     ("In assignment at " ++ formatFullContext c)
   csWrite [setTraceContext c]
-  csWrite ["{","const auto r = " ++ e' ++ ";"]
-  sequence $ map assignVariable $ zip3 [0..] (psParams ts) $ psParams as
-  csWrite ["}"]
+  assignAll (zip3 [0..] (psParams ts) $ psParams as) e'
   where
+    assignAll [v] e = assignSingle v e
+    assignAll vs e = do
+      csWrite ["{","const auto r = " ++ useAsWrapped e ++ ";"]
+      sequence $ map assignMulti vs
+      csWrite ["}"]
     createVariable r fa (CreateVariable c t1 n) t2 = do
       -- TODO: Call csRequiresTypes for t1. (Maybe needs a helper function.)
       lift $ mergeAllM [validateGeneralInstance r fa (vtType t1),
                         checkValueTypeMatch r fa t2 t1] `reviseError`
         ("In creation of " ++ show n ++ " at " ++ formatFullContext c)
-      csAddVariable c n (VariableValue c LocalScope t1)
+      csAddVariable c n (VariableValue c LocalScope t1 True)
       csWrite [variableType (vtRequired t1) ++ " " ++ variableName n ++ ";"]
     createVariable r fa (ExistingVariable (InputValue c n)) t2 = do
-      (VariableValue _ s1 t1) <- csGetVariable c n
+      (VariableValue _ s1 t1 w) <- csGetVariable c n
+      when (not w) $ lift $ compileError $ "Cannot assign to read-only variable " ++
+                                           show n ++ " [" ++ formatFullContext c ++ "]"
       -- TODO: Also show original context.
       lift $ (checkValueTypeMatch r fa t2 t1) `reviseError`
         ("In assignment to " ++ show n ++ " at " ++ formatFullContext c)
       csUpdateAssigned n
     createVariable _ _ _ _ = return ()
-    assignVariable (i,t,CreateVariable _ _ n)
+    assignSingle (i,t,CreateVariable _ _ n) e =
+      csWrite [variableName n ++ " = " ++ useAsUnwrapped e ++ ";"]
+    assignSingle (i,t,ExistingVariable (InputValue _ n)) e = do
+      (VariableValue _ s _ _) <- csGetVariable c n
+      scoped <- autoScope s
+      csWrite [scoped ++ variableName n ++ " = " ++ useAsUnwrapped e ++ ";"]
+    assignSingle _ _ = return ()
+    assignMulti (i,t,CreateVariable _ _ n)
       | isWeakValue t = csWrite [variableName n ++ " = r;"]
       | otherwise = csWrite [variableName n ++ " = r.At(" ++ show i ++ ");"]
-    assignVariable (i,t,ExistingVariable (InputValue _ n)) = do
-      (VariableValue _ s _) <- csGetVariable c n
+    assignMulti (i,t,ExistingVariable (InputValue _ n)) = do
+      (VariableValue _ s _ _) <- csGetVariable c n
       scoped <- autoScope s
       if isWeakValue t
          then csWrite [scoped ++ variableName n ++ " = r;"]
          else csWrite [scoped ++ variableName n ++ " = r.At(" ++ show i ++ ");"]
-    assignVariable _ = return ()
+    assignMulti _ = return ()
 compileStatement (NoValueExpression v) = compileVoidExpression v
 
 compileVoidExpression :: (Show c, Monad m, CompileErrorM m, MergeableM m,
@@ -304,7 +316,7 @@ compileScopedBlock s = do
       csWrite [variableType (vtRequired t) ++ " " ++ variableName n ++ ";"]
     showVariable (c,t,n) = do
       -- TODO: Call csRequiresTypes for t. (Maybe needs a helper function.)
-      csAddVariable c n (VariableValue c LocalScope t)
+      csAddVariable c n (VariableValue c LocalScope t True)
     -- Merge chained scoped sections into a single section.
     rewriteScoped w@(ScopedBlock c (Procedure c2 ss1)
                                  (NoValueExpression (WithScope
@@ -322,25 +334,25 @@ compileScopedBlock s = do
 
 compileExpression :: (Show c, Monad m, CompileErrorM m, MergeableM m,
                       CompilerContext c m [String] a) =>
-  Expression c -> CompilerState a m (ExpressionType,String)
+  Expression c -> CompilerState a m (ExpressionType,ExprValue)
 compileExpression = compile where
   compile (Literal (StringLiteral c l)) = do
-    return (ParamSet [stringRequiredValue],"ReturnTuple(Box_String(\"" ++ l ++ "\"))")
+    return (ParamSet [stringRequiredValue],UnboxedPrimitive PrimString $ "std::string(\"" ++ l ++ "\")")
   compile (Literal (IntegerLiteral c l)) = do
     -- TODO: Check bounds.
-    return (ParamSet [intRequiredValue],"ReturnTuple(Box_Int(" ++ l ++ "))")
+    return (ParamSet [intRequiredValue],UnboxedPrimitive PrimInt l)
   compile (Literal (HexLiteral c l)) = do
     -- TODO: Check bounds.
-    return (ParamSet [intRequiredValue],"ReturnTuple(Box_Int(0x" ++ l ++ "))")
+    return (ParamSet [intRequiredValue],UnboxedPrimitive PrimInt $ "0x" ++ l)
   compile (Literal (DecimalLiteral c l1 l2)) = do
     -- TODO: Check bounds.
-    return (ParamSet [floatRequiredValue],"ReturnTuple(Box_Float(" ++ l1 ++ "." ++ l2 ++ "))")
+    return (ParamSet [floatRequiredValue],UnboxedPrimitive PrimFloat $ l1 ++ "." ++ l2)
   compile (Literal (BoolLiteral c True)) = do
-    return (ParamSet [boolRequiredValue],"ReturnTuple(Var_true)")
+    return (ParamSet [boolRequiredValue],UnboxedPrimitive PrimBool "true")
   compile (Literal (BoolLiteral c False)) = do
-    return (ParamSet [boolRequiredValue],"ReturnTuple(Var_false)")
+    return (ParamSet [boolRequiredValue],UnboxedPrimitive PrimBool "false")
   compile (Literal (EmptyLiteral c)) = do
-    return (ParamSet [emptyValue],"ReturnTuple(Var_empty)")
+    return (ParamSet [emptyValue],UnwrappedSingle "Var_empty")
   compile (Expression c s os) = do
     foldl transform (compileExpressionStart s) os
   compile (UnaryExpression c o e) = do
@@ -357,12 +369,12 @@ compileExpression = compile where
         when (t /= boolRequiredValue) $
           lift $ compileError $ "Operator ! requires a Bool value "++
                                 " [" ++ formatFullContext c ++ "]"
-        return $ (ParamSet [boolRequiredValue],"ReturnTuple(Box_Bool(!(" ++ e ++ ").Only()->AsBool()))")
+        return $ (ParamSet [boolRequiredValue],UnboxedPrimitive PrimBool $ "!" ++ useAsUnboxed PrimBool e)
       doNeg t e
         | t == intRequiredValue = return $ (ParamSet [intRequiredValue],
-                                            "ReturnTuple(Box_Int(-(" ++ e ++ ").Only()->AsInt()))")
+                                            UnboxedPrimitive PrimInt $ "-" ++ useAsUnboxed PrimInt e)
         | t == floatRequiredValue = return $ (ParamSet [floatRequiredValue],
-                                             "ReturnTuple(Box_Float(-(" ++ e ++ ").Only()->AsFloat()))")
+                                             UnboxedPrimitive PrimFloat $ "-" ++ useAsUnboxed PrimFloat e)
         | otherwise = lift $ compileError $ "Operator - requires an Int or Float value "++
                                             " [" ++ formatFullContext c ++ "]"
   compile (InitializeValue c t ps es) = do
@@ -376,20 +388,19 @@ compileExpression = compile where
     let typeInstance = getType sameType s params
     -- TODO: This is unsafe if used in a type or category constructor.
     return (ParamSet [ValueType RequiredValue $ SingleType $ JustTypeInstance t],
-            "ReturnTuple(" ++ valueCreator ++ "(" ++ typeInstance ++ ", " ++
-                                                params2 ++ ", " ++ es'' ++ "))")
+            UnwrappedSingle $ valueCreator ++ "(" ++ typeInstance ++ ", " ++ params2 ++ ", " ++ es'' ++ ")")
     where
       getType True TypeScope  _ = "*this"
       getType True ValueScope _ = "parent"
       getType _    _ params = typeCreator ++ "(" ++ params ++ ")"
       -- Single expression, but possibly multi-return.
-      getValues [(ParamSet ts,e)] = return (ts,e)
+      getValues [(ParamSet ts,e)] = return (ts,useAsWrapped e)
       -- Multi-expression => must all be singles.
       getValues rs = do
         lift $ mergeAllM (map checkArity $ zip [1..] $ map fst rs) `reviseError`
           ("In return at " ++ formatFullContext c)
         return (map (head . psParams . fst) rs,
-                "ArgTuple(" ++ intercalate ", " (map snd rs) ++ ")")
+                "ArgTuple(" ++ intercalate ", " (map (useAsUnwrapped . snd) rs) ++ ")")
       checkArity (_,ParamSet [_]) = return ()
       checkArity (i,ParamSet ts)  =
         compileError $ "Initializer position " ++ show i ++ " has " ++ show (length ts) ++ " values but should have 1"
@@ -414,31 +425,30 @@ compileExpression = compile where
           lift $ compileError $ "Cannot " ++ show o ++ " " ++ show t1 ++ " and " ++
                                 show t2 ++ " [" ++ formatFullContext c ++ "]"
         | o `Set.member` comparison && t1 == intRequiredValue = do
-          return (ParamSet [boolRequiredValue],glueInfix "Int" "Bool" e1 o e2)
+          return (ParamSet [boolRequiredValue],glueInfix PrimInt PrimBool e1 o e2)
         | o `Set.member` comparison && t1 == floatRequiredValue = do
-          return (ParamSet [boolRequiredValue],glueInfix "Float" "Bool" e1 o e2)
+          return (ParamSet [boolRequiredValue],glueInfix PrimFloat PrimBool e1 o e2)
         | o `Set.member` comparison && t1 == stringRequiredValue = do
-          return (ParamSet [boolRequiredValue],glueInfix "String" "Bool" e1 o e2)
+          return (ParamSet [boolRequiredValue],glueInfix PrimString PrimBool e1 o e2)
         | o `Set.member` arithmetic1 && t1 == intRequiredValue = do
-          return (ParamSet [intRequiredValue],glueInfix "Int" "Int" e1 o e2)
+          return (ParamSet [intRequiredValue],glueInfix PrimInt PrimInt e1 o e2)
         | o `Set.member` arithmetic2 && t1 == intRequiredValue = do
-          return (ParamSet [intRequiredValue],glueInfix "Int" "Int" e1 o e2)
+          return (ParamSet [intRequiredValue],glueInfix PrimInt PrimInt e1 o e2)
         | o `Set.member` arithmetic3 && t1 == intRequiredValue = do
-          return (ParamSet [intRequiredValue],glueInfix "Int" "Int" e1 o e2)
+          return (ParamSet [intRequiredValue],glueInfix PrimInt PrimInt e1 o e2)
         | o `Set.member` arithmetic1 && t1 == floatRequiredValue = do
-          return (ParamSet [floatRequiredValue],glueInfix "Float" "Float" e1 o e2)
+          return (ParamSet [floatRequiredValue],glueInfix PrimFloat PrimFloat e1 o e2)
         | o `Set.member` arithmetic3 && t1 == floatRequiredValue = do
-          return (ParamSet [floatRequiredValue],glueInfix "Float" "Float" e1 o e2)
+          return (ParamSet [floatRequiredValue],glueInfix PrimFloat PrimFloat e1 o e2)
         | o == "+" && t1 == stringRequiredValue = do
-          return (ParamSet [stringRequiredValue],glueInfix "String" "String" e1 o e2)
+          return (ParamSet [stringRequiredValue],glueInfix PrimString PrimString e1 o e2)
         | o `Set.member` logical && t1 == boolRequiredValue = do
-          return (ParamSet [boolRequiredValue],glueInfix "Bool" "Bool" e1 o e2)
+          return (ParamSet [boolRequiredValue],glueInfix PrimBool PrimBool e1 o e2)
         | otherwise =
           lift $ compileError $ "Cannot " ++ show o ++ " " ++ show t1 ++ " and " ++
                                 show t2 ++ " [" ++ formatFullContext c ++ "]"
       glueInfix t1 t2 e1 o e2 =
-        "ReturnTuple(Box_" ++ t2 ++ "((" ++ e1 ++ ").Only()->As" ++ t1 ++ "()" ++ o ++
-                                     "(" ++ e2 ++ ").Only()->As" ++ t1 ++ "()" ++ "))"
+        UnboxedPrimitive t2 $ "(" ++ useAsUnboxed t1 e1 ++ ")" ++ o ++ "(" ++ useAsUnboxed t1 e2 ++ ")"
   transform e (ConvertedCall c t f) = do
     (ParamSet ts,e') <- e
     t' <- requireSingle c ts
@@ -448,12 +458,12 @@ compileExpression = compile where
     lift $ (checkValueTypeMatch r fa t' vt) `reviseError`
       ("In conversion at " ++ formatFullContext c)
     f' <- lookupValueFunction vt f
-    compileFunctionCall (Just $ "(" ++ e' ++ ").Only()") f' f
+    compileFunctionCall (Just $ useAsUnwrapped e') f' f
   transform e (ValueCall c f) = do
     (ParamSet ts,e') <- e
     t' <- requireSingle c ts
     f' <- lookupValueFunction t' f
-    compileFunctionCall (Just $ "(" ++ e' ++ ").Only()") f' f
+    compileFunctionCall (Just $ useAsUnwrapped e') f' f
   requireSingle c [t] = return t
   requireSingle c ts =
     lift $ compileError $ "Function call requires 1 return but found but found {" ++
@@ -473,13 +483,11 @@ lookupValueFunction (ValueType RequiredValue t) (FunctionCall c n _ _) =
 
 compileExpressionStart :: (Show c, Monad m, CompileErrorM m, MergeableM m,
                            CompilerContext c m [String] a) =>
-  ExpressionStart c -> CompilerState a m (ExpressionType,String)
+  ExpressionStart c -> CompilerState a m (ExpressionType,ExprValue)
 compileExpressionStart (NamedVariable (OutputValue c n)) = do
-  (VariableValue _ s t) <- csGetVariable c n
+  (VariableValue _ s t _) <- csGetVariable c n
   scoped <- autoScope s
-  if isWeakValue t
-     then return (ParamSet [t],scoped ++ variableName n)
-     else return (ParamSet [t],"ReturnTuple(" ++ scoped ++ variableName n ++ ")")
+  return (ParamSet [t],UnwrappedSingle $ scoped ++ variableName n)
 compileExpressionStart (CategoryCall c t f@(FunctionCall _ n _ _)) = do
   f' <- csGetCategoryFunction c (Just t) n
   csRequiresTypes $ Set.fromList [t,sfType f']
@@ -519,7 +527,7 @@ compileExpressionStart (BuiltinCall c f@(FunctionCall _ BuiltinPresent ps es)) =
   when (isWeakValue t0) $
     lift $ compileError $ "Weak values not allowed here [" ++ formatFullContext c ++ "]"
   return $ (ParamSet [boolRequiredValue],
-            valueBase ++ "::Present((" ++ e ++ ").Only())")
+            UnboxedPrimitive PrimBool $ valueBase ++ "::Present(" ++ useAsUnwrapped e ++ ")")
 compileExpressionStart (BuiltinCall c f@(FunctionCall _ BuiltinReduce ps es)) = do
   when (length (psParams ps) /= 2) $
     lift $ compileError $ "Expected 2 type parameters [" ++ formatFullContext c ++ "]"
@@ -540,7 +548,7 @@ compileExpressionStart (BuiltinCall c f@(FunctionCall _ BuiltinReduce ps es)) = 
   csRequiresTypes $ categoriesFromTypes t1
   csRequiresTypes $ categoriesFromTypes t2
   return $ (ParamSet [ValueType OptionalValue t2],
-            typeBase ++ "::Reduce(" ++ t1' ++ ", " ++ t2' ++ ", (" ++ e ++ ").Only())")
+            UnwrappedSingle $ typeBase ++ "::Reduce(" ++ t1' ++ ", " ++ t2' ++ ", " ++ useAsUnwrapped e ++ ")")
 compileExpressionStart (BuiltinCall c f@(FunctionCall _ BuiltinRequire ps es)) = do
   when (length (psParams ps) /= 0) $
     lift $ compileError $ "Expected 0 type parameters [" ++ formatFullContext c ++ "]"
@@ -553,7 +561,7 @@ compileExpressionStart (BuiltinCall c f@(FunctionCall _ BuiltinRequire ps es)) =
   when (isWeakValue t0) $
     lift $ compileError $ "Weak values not allowed here [" ++ formatFullContext c ++ "]"
   return $ (ParamSet [ValueType RequiredValue (vtType t0)],
-            valueBase ++ "::Require((" ++ e ++ ").Only())")
+            UnwrappedSingle $ valueBase ++ "::Require(" ++ useAsUnwrapped e ++ ")")
 compileExpressionStart (BuiltinCall c f@(FunctionCall _ BuiltinStrong ps es)) = do
   when (length (psParams ps) /= 0) $
     lift $ compileError $ "Expected 0 type parameters [" ++ formatFullContext c ++ "]"
@@ -566,13 +574,13 @@ compileExpressionStart (BuiltinCall c f@(FunctionCall _ BuiltinStrong ps es)) = 
   let t1 = ParamSet [ValueType OptionalValue (vtType t0)]
   if isWeakValue t0
      -- Weak values are already unboxed.
-     then return (t1,valueBase ++ "::Strong(" ++ e ++ ")")
+     then return (t1,UnwrappedSingle $  valueBase ++ "::Strong(" ++ useAsUnwrapped e ++ ")")
      else return (t1,e)
-compileExpressionStart (ParensExpression c e) = do
-  (t,e') <- compileExpression e
-  return (t,"(" ++ e' ++ ")")
+compileExpressionStart (ParensExpression c e) = compileExpression e
 compileExpressionStart (InlineAssignment c n e) = do
-  (VariableValue c2 s t0) <- csGetVariable c n
+  (VariableValue c2 s t0 w) <- csGetVariable c n
+  when (not w) $ lift $ compileError $ "Cannot assign to read-only variable " ++
+                                        show n ++ " [" ++ formatFullContext c ++ "]"
   (ParamSet [t],e') <- compileExpression e -- TODO: Get rid of the ParamSet matching here.
   r <- csResolver
   fa <- csAllFilters
@@ -582,12 +590,12 @@ compileExpressionStart (InlineAssignment c n e) = do
   -- might get short-circuited.
   csUpdateAssigned n
   scoped <- autoScope s
-  return (ParamSet [t0],"ReturnTuple(" ++ scoped ++ variableName n ++ " = (" ++ e' ++ ").Only())")
+  return (ParamSet [t0],UnwrappedSingle $ "(" ++ scoped ++ variableName n ++ " = " ++ useAsUnwrapped e' ++ ")")
 
 compileFunctionCall :: (Show c, Monad m, CompileErrorM m, MergeableM m,
                         CompilerContext c m [String] a) =>
   Maybe String -> ScopedFunction c -> FunctionCall c ->
-  CompilerState a m (ExpressionType,String)
+  CompilerState a m (ExpressionType,ExprValue)
 compileFunctionCall e f (FunctionCall c _ ps es) = do
   r <- csResolver
   fa <- csAllFilters
@@ -602,26 +610,26 @@ compileFunctionCall e f (FunctionCall c _ ps es) = do
   csRequiresTypes $ Set.unions $ map categoriesFromTypes $ psParams ps
   csRequiresTypes (Set.fromList [sfType f])
   params <- expandParams2 ps
-  call <- assemble e (sfScope f) (functionName f) params es''
-  return $ (ftReturns f'',call)
+  scoped <- autoScope (sfScope f)
+  call <- assemble e scoped (sfScope f) (functionName f) params es''
+  return $ (ftReturns f'',OpaqueMulti call)
   where
-    assemble (Just e) ValueScope n ps es =
+    assemble Nothing _ ValueScope n ps es =
+      return $ callName (sfName f) ++ "(Var_self, " ++ ps ++ ", " ++ es ++ ")"
+    assemble Nothing scoped _ n ps es =
+      return $ scoped ++ callName (sfName f) ++ "(" ++ ps ++ ", " ++ es ++ ")"
+    assemble (Just e) _ ValueScope n ps es =
       return $ valueBase ++ "::Call(" ++ e ++ ", " ++ functionName f ++ ", " ++ ps ++ ", " ++ es ++ ")"
-    assemble Nothing ValueScope n ps es =
-      return $ valueBase ++ "::Call(Var_self, " ++ functionName f ++ ", " ++ ps ++ ", " ++ es ++ ")"
-    assemble (Just e) _ n ps es =
+    assemble (Just e) _ _ n ps es =
       return $ e ++ ".Call(" ++ functionName f ++ ", " ++ ps ++ ", " ++ es ++ ")"
-    assemble _ _ n ps es = do
-      scoped <- autoScope $ sfScope f
-      return $ scoped ++ "Call(" ++ functionName f ++ ", " ++ ps ++ ", " ++ es ++ ")"
     -- TODO: Lots of duplication with assignments and initialization.
     -- Single expression, but possibly multi-return.
-    getValues [(ParamSet ts,e)] = return (ts,e)
+    getValues [(ParamSet ts,e)] = return (ts,useAsWrapped e)
     -- Multi-expression => must all be singles.
     getValues rs = do
       lift $ mergeAllM (map checkArity $ zip [1..] $ map fst rs) `reviseError`
         ("In return at " ++ formatFullContext c)
-      return (map (head . psParams . fst) rs, "ArgTuple(" ++ intercalate ", " (map snd rs) ++ ")")
+      return (map (head . psParams . fst) rs, "ArgTuple(" ++ intercalate ", " (map (useAsUnwrapped . snd) rs) ++ ")")
     checkArity (_,ParamSet [_]) = return ()
     checkArity (i,ParamSet ts)  =
       compileError $ "Return position " ++ show i ++ " has " ++ show (length ts) ++ " values but should have 1"

@@ -8,9 +8,11 @@
 
 template<SymbolScope S> class DFunction {
  public:
-  inline DFunction(std::string category, std::string function) :
-      category_(category), function_(function) {}
+  inline DFunction(std::string category, std::string function, const void* collection, int n) :
+      category_(category), function_(function), collection_(collection), n_(n) {}
 
+  inline int Num() const { return n_; }
+  inline const void* Collection() const { return collection_; }
   virtual int ParamCount() const = 0;
   virtual int ArgCount() const = 0;
   virtual int ReturnCount() const = 0;
@@ -19,6 +21,8 @@ template<SymbolScope S> class DFunction {
 
  private:
   ALWAYS_PERMANENT(DFunction)
+  const void* const collection_;
+  const int n_;
   const std::string category_;
   const std::string function_;
 };

@@ -7,21 +7,13 @@
 #include "types.hpp"
 #include "function.hpp"
 #include "builtin.hpp"
-#include "dispatcher.hpp"
 #include "cycle-check.hpp"
 
 
 class TypeCategory {
  public:
   inline ReturnTuple Call(const DFunction<SymbolScope::CATEGORY>& label,
-                          const ParamTuple& params, ArgTuple args) {
-    // args is passed as a temporary, but can now be used as an lvalue.
-    return Dispatch(label, params, args);
-  }
-
-  inline ReturnTuple Call(const DFunction<SymbolScope::CATEGORY>& label,
-                          const ParamTuple& params, ReturnTuple args) {
-    // args is passed as a temporary, but can now be used as an lvalue.
+                          const ParamTuple& params, const ValueTuple& args) {
     return Dispatch(label, params, args);
   }
 
@@ -34,28 +26,21 @@ class TypeCategory {
   TypeCategory() = default;
 
   virtual ReturnTuple Dispatch(const DFunction<SymbolScope::CATEGORY>& label,
-                               const ParamTuple& params, ValueTuple& args);
+                               const ParamTuple& params, const ValueTuple& args);
 };
 
 class TypeInstance {
  public:
   inline ReturnTuple Call(const DFunction<SymbolScope::TYPE>& label,
-                          ParamTuple params, ArgTuple args) {
-    // args is passed as a temporary, but can now be used as an lvalue.
-    return Dispatch(label, params, args);
-  }
-
-  inline ReturnTuple Call(const DFunction<SymbolScope::TYPE>& label,
-                          const ParamTuple& params, ReturnTuple args) {
-    // args is passed as a temporary, but can now be used as an lvalue.
+                          ParamTuple params, const ValueTuple& args) {
     return Dispatch(label, params, args);
   }
 
   virtual std::string CategoryName() const = 0;
 
-  static ReturnTuple Reduce(TypeInstance& from, TypeInstance& to, S<TypeValue> target) {
+  static S<TypeValue> Reduce(TypeInstance& from, TypeInstance& to, S<TypeValue> target) {
     TRACE_FUNCTION("reduce")
-    return ReturnTuple(CanConvert(from, to)? target : Var_empty);
+    return CanConvert(from, to)? target : Var_empty;
   }
 
   virtual bool TypeArgsForParent(
@@ -69,7 +54,7 @@ class TypeInstance {
   TypeInstance() = default;
 
   virtual ReturnTuple Dispatch(const DFunction<SymbolScope::TYPE>& label,
-                               const ParamTuple& params, ValueTuple& args);
+                               const ParamTuple& params, const ValueTuple& args);
 
   virtual bool CanConvertFrom(const TypeInstance& from) const
   { return false; }
@@ -97,25 +82,16 @@ class TypeValue {
  public:
   inline static ReturnTuple Call(const S<TypeValue>& target,
                                  const DFunction<SymbolScope::VALUE>& label,
-                                 const ParamTuple& params, ArgTuple args) {
+                                 const ParamTuple& params, const ValueTuple& args) {
     FAIL_IF(target == nullptr);
-    // args is passed as a temporary, but can now be used as an lvalue.
-    return target->Dispatch(target, label, params, args);
-  }
-
-  inline static ReturnTuple Call(const S<TypeValue>& target,
-                                 const DFunction<SymbolScope::VALUE>& label,
-                                 const ParamTuple& params, ReturnTuple args) {
-    FAIL_IF(target == nullptr);
-    // args is passed as a temporary, but can now be used as an lvalue.
     return target->Dispatch(target, label, params, args);
   }
 
   virtual std::string CategoryName() const = 0;
 
-  static ReturnTuple Present(S<TypeValue> target);
-  static ReturnTuple Require(S<TypeValue> target);
-  static ReturnTuple Strong(W<TypeValue> target);
+  static bool Present(S<TypeValue> target);
+  static S<TypeValue> Require(S<TypeValue> target);
+  static S<TypeValue> Strong(W<TypeValue> target);
 
   virtual bool AsBool() const;
   virtual std::string AsString() const;
@@ -132,7 +108,7 @@ class TypeValue {
 
   virtual ReturnTuple Dispatch(const S<TypeValue>& self,
                                const DFunction<SymbolScope::VALUE>& label,
-                               const ParamTuple& params, ValueTuple& args);
+                               const ParamTuple& params, const ValueTuple& args);
 };
 
 template<int P, class T>

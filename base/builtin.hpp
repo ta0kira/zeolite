@@ -4,8 +4,13 @@
 #include "category-header.hpp"
 
 
+extern const void* const Functions_LessThan;
 extern const Function<SymbolScope::TYPE,0,2,1>& Function_LessThan_lessThan;
+
+extern const void* const Functions_Equals;
 extern const Function<SymbolScope::TYPE,0,2,1>& Function_Equals_equals;
+
+extern const void* const Functions_Formatted;
 extern const Function<SymbolScope::VALUE,0,0,1>& Function_Formatted_formatted;
 
 TypeInstance& Merge_Intersect(L<TypeInstance*> params);

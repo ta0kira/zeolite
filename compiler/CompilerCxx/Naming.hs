@@ -8,6 +8,7 @@ module CompilerCxx.Naming (
   categoryCreator,
   categoryGetter,
   categoryName,
+  collectionName,
   functionLabelType,
   functionName,
   headerFilename,
@@ -17,6 +18,7 @@ module CompilerCxx.Naming (
   paramType,
   proxyType,
   sourceFilename,
+  tableName,
   typeBase,
   typeCreator,
   typeGetter,
@@ -102,6 +104,12 @@ callName f = "Call_" ++ show f
 
 functionName :: ScopedFunction c -> String
 functionName f = "Function_" ++ show (sfType f) ++ "_" ++ show (sfName f)
+
+collectionName :: CategoryName -> String
+collectionName n = "Functions_" ++ show n
+
+tableName :: CategoryName -> String
+tableName n = "Table_" ++ show n
 
 categoryCreator :: String
 categoryCreator = "CreateCategory"

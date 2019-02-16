@@ -7,22 +7,14 @@ int ArgTuple::Size() const {
   return args_.size();
 }
 
-S<TypeValue>& ArgTuple::At(int pos) {
-  FAIL_IF(pos < 0 || pos >= args_.size());
-  FAIL_IF(args_[pos].Size() != 1);
-  return args_[pos].At(0);
-}
-
 const S<TypeValue>& ArgTuple::At(int pos) const {
   FAIL_IF(pos < 0 || pos >= args_.size());
-  FAIL_IF(args_[pos].Size() != 1);
-  return args_[pos].Only();
+  return *args_[pos];
 }
 
 const S<TypeValue>& ArgTuple::Only() const {
   FAIL_IF(args_.size() != 1);
-  FAIL_IF(args_[0].Size() != 1);
-  return args_[0].Only();
+  return *args_[0];
 }
 
 int ReturnTuple::Size() const {

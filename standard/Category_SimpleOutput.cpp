@@ -9,12 +9,15 @@
 #include "Category_Writer.hpp"
 #include "Category_BufferedWriter.hpp"
 
+const int Collection_SimpleOutput = 0;
+const void* const Functions_SimpleOutput = &Collection_SimpleOutput;
+
 const Function<SymbolScope::TYPE,0,0,1>& Function_SimpleOutput_stdout =
-  *new Function<SymbolScope::TYPE,0,0,1>("SimpleOutput", "stdout");
+  *new Function<SymbolScope::TYPE,0,0,1>("SimpleOutput", "stdout", Functions_SimpleOutput, 0);
 const Function<SymbolScope::TYPE,0,0,1>& Function_SimpleOutput_stderr =
-  *new Function<SymbolScope::TYPE,0,0,1>("SimpleOutput", "stderr");
+  *new Function<SymbolScope::TYPE,0,0,1>("SimpleOutput", "stderr", Functions_SimpleOutput, 1);
 const Function<SymbolScope::TYPE,0,0,1>& Function_SimpleOutput_fail =
-  *new Function<SymbolScope::TYPE,0,0,1>("SimpleOutput", "fail");
+  *new Function<SymbolScope::TYPE,0,0,1>("SimpleOutput", "fail", Functions_SimpleOutput, 2);
 
 namespace {
 
@@ -30,7 +33,7 @@ struct Type_SimpleOutput : public TypeInstance {
   std::string CategoryName() const final { return "SimpleOutput"; }
 
   ReturnTuple Dispatch(const DFunction<SymbolScope::TYPE>& label,
-                       const ParamTuple& params, ValueTuple& args) final {
+                       const ParamTuple& params, const ValueTuple& args) final {
     FAIL_IF(args.Size() != label.ArgCount());
     FAIL_IF(params.Size() != label.ParamCount());
     if (&label == &Function_SimpleOutput_stdout) {
@@ -54,7 +57,7 @@ class Value_SimpleOutput : public TypeValue {
 
   ReturnTuple Dispatch(const S<TypeValue>& self,
                        const DFunction<SymbolScope::VALUE>& label,
-                       const ParamTuple& params, ValueTuple& args) final {
+                       const ParamTuple& params, const ValueTuple& args) final {
     FAIL_IF(args.Size() != label.ArgCount());
     FAIL_IF(params.Size() != label.ParamCount());
     if (&label == &Function_Writer_write) {
@@ -78,7 +81,7 @@ class Value_Fail : public TypeValue {
 
   ReturnTuple Dispatch(const S<TypeValue>& self,
                        const DFunction<SymbolScope::VALUE>& label,
-                       const ParamTuple& params, ValueTuple& args) final {
+                       const ParamTuple& params, const ValueTuple& args) final {
     FAIL_IF(args.Size() != label.ArgCount());
     FAIL_IF(params.Size() != label.ParamCount());
     if (&label == &Function_Writer_write) {

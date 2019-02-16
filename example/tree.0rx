@@ -78,7 +78,7 @@ define Node {
       ~ node2.setHigher(delete(node2.getHigher(),k))
       newNode <- rebalance(node2)
     } else {
-      newNode <- rebalance(Node<#k,#v>$removeNode(node2))
+      newNode <- rebalance(removeNode(node2))
     }
   }
 

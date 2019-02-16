@@ -11,7 +11,7 @@
 template<class C>
 class CategoryDispatcher {
  public:
-  using CallType = ReturnTuple(C::*)(const ParamTuple&, ValueTuple&);
+  using CallType = ReturnTuple(C::*)(const ParamTuple&, const ValueTuple&);
 
   CategoryDispatcher() = default;
   CategoryDispatcher(CategoryDispatcher&& other) : map_(std::move(other.map_)) {}
@@ -24,7 +24,7 @@ class CategoryDispatcher {
 
   ReturnTuple Dispatch(C& target,
                        const DFunction<SymbolScope::CATEGORY>& label,
-                       const ParamTuple& params, ValueTuple& args) const {
+                       const ParamTuple& params, const ValueTuple& args) const {
     const auto caller = map_.find(&label);
     FAIL_IF(caller == map_.end())
         << target.CategoryName() << " does not implement " << label.FunctionName();
@@ -43,7 +43,7 @@ class CategoryDispatcher {
 template<class T>
 class TypeDispatcher {
  public:
-  using CallType = ReturnTuple(T::*)(const ParamTuple&, ValueTuple&);
+  using CallType = ReturnTuple(T::*)(const ParamTuple&, const ValueTuple&);
 
   TypeDispatcher() = default;
   TypeDispatcher(TypeDispatcher&& other) : map_(std::move(other.map_)) {}
@@ -56,7 +56,7 @@ class TypeDispatcher {
 
   ReturnTuple Dispatch(T& target,
                        const DFunction<SymbolScope::TYPE>& label,
-                       const ParamTuple& params, ValueTuple& args) const {
+                       const ParamTuple& params, const ValueTuple& args) const {
     const auto caller = map_.find(&label);
     FAIL_IF(caller == map_.end())
         << target.CategoryName() << " does not implement " << label.FunctionName();
@@ -75,7 +75,7 @@ class TypeDispatcher {
 template<class V>
 class ValueDispatcher {
  public:
-  using CallType = ReturnTuple(V::*)(const S<TypeValue>&, const ParamTuple&, ValueTuple&);
+  using CallType = ReturnTuple(V::*)(const S<TypeValue>&, const ParamTuple&, const ValueTuple&);
 
   ValueDispatcher() = default;
   ValueDispatcher(ValueDispatcher&& other) : map_(std::move(other.map_)) {}
@@ -89,7 +89,7 @@ class ValueDispatcher {
   ReturnTuple Dispatch(V& target,
                        const S<TypeValue>& self,
                        const DFunction<SymbolScope::VALUE>& label,
-                       const ParamTuple& params, ValueTuple& args) const {
+                       const ParamTuple& params, const ValueTuple& args) const {
     const auto caller = map_.find(&label);
     FAIL_IF(caller == map_.end())
         << target.CategoryName() << " does not implement " << label.FunctionName();

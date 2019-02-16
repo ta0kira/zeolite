@@ -11,7 +11,7 @@ namespace {
 struct OptionalEmpty : public TypeValue {
   ReturnTuple Dispatch(const S<TypeValue>& self,
                        const DFunction<SymbolScope::VALUE>& label,
-                       const ParamTuple& params, ValueTuple& args) final {
+                       const ParamTuple& params, const ValueTuple& args) final {
     FAIL() << "Function called on empty value";
     return ReturnTuple(label.ReturnCount());
   }
@@ -87,7 +87,7 @@ class Value_Bool : public TypeValue {
 
   ReturnTuple Dispatch(const S<TypeValue>& self,
                        const DFunction<SymbolScope::VALUE>& label,
-                       const ParamTuple& params, ValueTuple& args) final {
+                       const ParamTuple& params, const ValueTuple& args) final {
     FAIL_IF(args.Size() != label.ArgCount());
     FAIL_IF(params.Size() != label.ParamCount());
     if (&label == &Function_Formatted_formatted) {
@@ -108,7 +108,7 @@ struct Type_String : public TypeInstance {
   std::string CategoryName() const final { return "String"; }
 
   ReturnTuple Dispatch(const DFunction<SymbolScope::TYPE>& label,
-                       const ParamTuple& params, ValueTuple& args) final {
+                       const ParamTuple& params, const ValueTuple& args) final {
     FAIL_IF(args.Size() != label.ArgCount());
     FAIL_IF(params.Size() != label.ParamCount());
     if (&label == &Function_LessThan_lessThan) {
@@ -151,7 +151,7 @@ class Value_String : public TypeValue {
 
   ReturnTuple Dispatch(const S<TypeValue>& self,
                        const DFunction<SymbolScope::VALUE>& label,
-                       const ParamTuple& params, ValueTuple& args) final {
+                       const ParamTuple& params, const ValueTuple& args) final {
     FAIL_IF(args.Size() != label.ArgCount());
     FAIL_IF(params.Size() != label.ParamCount());
     if (&label == &Function_Formatted_formatted) {
@@ -172,7 +172,7 @@ struct Type_Int : public TypeInstance {
   std::string CategoryName() const final { return "Int"; }
 
   ReturnTuple Dispatch(const DFunction<SymbolScope::TYPE>& label,
-                       const ParamTuple& params, ValueTuple& args) final {
+                       const ParamTuple& params, const ValueTuple& args) final {
     FAIL_IF(args.Size() != label.ArgCount());
     FAIL_IF(params.Size() != label.ParamCount());
     if (&label == &Function_LessThan_lessThan) {
@@ -215,7 +215,7 @@ class Value_Int : public TypeValue {
 
   ReturnTuple Dispatch(const S<TypeValue>& self,
                        const DFunction<SymbolScope::VALUE>& label,
-                       const ParamTuple& params, ValueTuple& args) final {
+                       const ParamTuple& params, const ValueTuple& args) final {
     FAIL_IF(args.Size() != label.ArgCount());
     FAIL_IF(params.Size() != label.ParamCount());
     if (&label == &Function_Formatted_formatted) {
@@ -238,7 +238,7 @@ struct Type_Float : public TypeInstance {
   std::string CategoryName() const final { return "Float"; }
 
   ReturnTuple Dispatch(const DFunction<SymbolScope::TYPE>& label,
-                       const ParamTuple& params, ValueTuple& args) final {
+                       const ParamTuple& params, const ValueTuple& args) final {
     FAIL_IF(args.Size() != label.ArgCount());
     FAIL_IF(params.Size() != label.ParamCount());
     if (&label == &Function_LessThan_lessThan) {
@@ -281,7 +281,7 @@ class Value_Float : public TypeValue {
 
   ReturnTuple Dispatch(const S<TypeValue>& self,
                        const DFunction<SymbolScope::VALUE>& label,
-                       const ParamTuple& params, ValueTuple& args) final {
+                       const ParamTuple& params, const ValueTuple& args) final {
     FAIL_IF(args.Size() != label.ArgCount());
     FAIL_IF(params.Size() != label.ParamCount());
     if (&label == &Function_Formatted_formatted) {
@@ -322,12 +322,20 @@ struct Type_Formatted : public TypeInstance {
 
 }  // namespace
 
+const int Collection_LessThan = 0;
+const void* const Functions_LessThan = &Collection_LessThan;
 const Function<SymbolScope::TYPE,0,2,1>& Function_LessThan_lessThan =
-  *new Function<SymbolScope::TYPE,0,2,1>("LessThan", "lessThan");
+  *new Function<SymbolScope::TYPE,0,2,1>("LessThan", "lessThan", Functions_LessThan, 0);
+
+const int Collection_Equals = 0;
+const void* const Functions_Equals = &Collection_Equals;
 const Function<SymbolScope::TYPE,0,2,1>& Function_Equals_equals =
-   *new Function<SymbolScope::TYPE,0,2,1>("Equals", "equals");
+   *new Function<SymbolScope::TYPE,0,2,1>("Equals", "equals", Functions_Equals, 0);
+
+const int Collection_Formatted = 0;
+const void* const Functions_Formatted = &Collection_Formatted;
 const Function<SymbolScope::VALUE,0,0,1>& Function_Formatted_formatted =
-   *new Function<SymbolScope::VALUE,0,0,1>("Formatted", "formatted");
+   *new Function<SymbolScope::VALUE,0,0,1>("Formatted", "formatted", Functions_Formatted, 0);
 
 TypeInstance& Merge_Intersect(L<TypeInstance*> params) {
   static auto& cache = *new std::map<L<TypeInstance*>,R<Type_Intersect>>();

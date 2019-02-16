@@ -464,23 +464,14 @@ define Test {
 }
 END
 
-expect_runs 'overwrite arg locally' <<END
+expect_error 'overwrite arg' 'arg' 'line 4' <<END
 define Test {
   @type call (Int) -> ()
   call (arg) {
     arg <- 2
-    if (arg != 2) {
-      ~ Util\$crash()
-    }
   }
 
-  run () {
-    Int val <- 1
-    ~ call(val)
-    if (val != 1) {
-      ~ Util\$crash()
-    }
-  }
+  run () {}
 }
 END
 

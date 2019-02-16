@@ -5,20 +5,20 @@
 
 
 ReturnTuple TypeCategory::Dispatch(const DFunction<SymbolScope::CATEGORY>& label,
-                                   const ParamTuple& params, ValueTuple& args) {
+                                   const ParamTuple& params, const ValueTuple& args) {
   FAIL() << CategoryName() << " does not implement " << label.FunctionName();
   return ReturnTuple(label.ReturnCount());
 }
 
 ReturnTuple TypeInstance::Dispatch(const DFunction<SymbolScope::TYPE>& label,
-                                   const ParamTuple& params, ValueTuple& args) {
+                                   const ParamTuple& params, const ValueTuple& args) {
   FAIL() << CategoryName() << " does not implement " << label.FunctionName();
   return ReturnTuple(label.ReturnCount());
 }
 
 ReturnTuple TypeValue::Dispatch(const S<TypeValue>& self,
                                 const DFunction<SymbolScope::VALUE>& label,
-                                const ParamTuple& params, ValueTuple& args) {
+                                const ParamTuple& params, const ValueTuple& args) {
   FAIL() << CategoryName() << " does not implement " << label.FunctionName();
   return ReturnTuple(label.ReturnCount());
 }
@@ -84,22 +84,22 @@ bool TypeInstance::ExpandCheckRight(const TypeInstance& x, const TypeInstance& y
   }
 }
 
-ReturnTuple TypeValue::Present(S<TypeValue> target) {
+bool TypeValue::Present(S<TypeValue> target) {
   FAIL_IF(target == nullptr) << "Builtin called on null value";
-  return ReturnTuple(Box_Bool(target->Present()));
+  return target->Present();
 }
 
-ReturnTuple TypeValue::Require(S<TypeValue> target) {
+S<TypeValue> TypeValue::Require(S<TypeValue> target) {
   FAIL_IF(target == nullptr) << "Builtin called on null value";
   if (!target->Present()) {
     FAIL() << "Cannot require empty value";
   }
-  return ReturnTuple(target);
+  return target;
 }
 
-ReturnTuple TypeValue::Strong(W<TypeValue> target) {
+S<TypeValue> TypeValue::Strong(W<TypeValue> target) {
   const auto strong = target.lock();
-  return ReturnTuple(strong? strong : Var_empty);
+  return strong? strong : Var_empty;
 }
 
 bool TypeValue::AsBool() const {

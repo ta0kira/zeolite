@@ -72,7 +72,8 @@ data VariableValue c =
   VariableValue {
     vvContext :: [c],
     vvScope :: SymbolScope,
-    vvType :: ValueType
+    vvType :: ValueType,
+    vvWritable :: Bool
   }
 
 data MemberValue c =
@@ -84,7 +85,7 @@ data MemberValue c =
   deriving (Show)
 
 instance Show c => Show (VariableValue c) where
-  show (VariableValue c _ t) = show t ++ " [" ++ formatFullContext c ++ "]"
+  show (VariableValue c _ t _) = show t ++ " [" ++ formatFullContext c ++ "]"
 
 reviseErrorStateT :: (CompileErrorM m) => CompilerState a m b -> String -> CompilerState a m b
 reviseErrorStateT x s = mapStateT (`reviseError` s) x

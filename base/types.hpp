@@ -69,7 +69,6 @@ struct Params<0, Ts...> {
 class ValueTuple {
  public:
   virtual int Size() const = 0;
-  virtual S<TypeValue>& At(int pos) = 0;
   virtual const S<TypeValue>& At(int pos) const = 0;
   virtual const S<TypeValue>& Only() const = 0;
 
@@ -85,15 +84,19 @@ class ReturnTuple : public ValueTuple {
  public:
   ReturnTuple(int size) : returns_(size) {}
 
+  ReturnTuple(ReturnTuple&&) = default;
+  ReturnTuple& operator =(ReturnTuple&&) = default;
+
   template<class...Ts>
   ReturnTuple(Ts... returns) : returns_{std::move(returns)...} {}
 
   int Size() const final;
-  S<TypeValue>& At(int pos) final;
+  S<TypeValue>& At(int pos);
   const S<TypeValue>& At(int pos) const final;
   const S<TypeValue>& Only() const final;
 
  private:
+  ReturnTuple(const ReturnTuple&) = delete;
   ReturnTuple& operator =(const ReturnTuple&) = delete;
 
   std::vector<S<TypeValue>> returns_;
@@ -101,13 +104,10 @@ class ReturnTuple : public ValueTuple {
 
 class ArgTuple : public ValueTuple {
  public:
-  ArgTuple(ArgTuple&& other) : args_(std::move(other.args_)) {}
-
   template<class...Ts>
-  ArgTuple(Ts... args) : args_{std::move(args)...} {}
+  ArgTuple(const Ts&... args) : args_{&args...} {}
 
   int Size() const final;
-  S<TypeValue>& At(int pos) final;
   const S<TypeValue>& At(int pos) const final;
   const S<TypeValue>& Only() const final;
 
@@ -115,7 +115,7 @@ class ArgTuple : public ValueTuple {
   ArgTuple(const ArgTuple&) = delete;
   ArgTuple& operator =(const ArgTuple&) = delete;
 
-  std::vector<ReturnTuple> args_;
+  std::vector<const S<TypeValue>*> args_;
 };
 
 class ParamTuple {
