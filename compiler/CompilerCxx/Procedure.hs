@@ -257,7 +257,6 @@ compileIfElifElse (IfStatement c e p es) = do
       e' <- compileCondition ctx0 c e
       ctx <- compileProcedure ctx0 p
       (lift $ ccGetRequired ctx) >>= csRequiresTypes
-      -- TODO: Figure out how to set the trace context for this expression.
       csWrite ["else if (" ++ e' ++ ") {"]
       (lift $ ccGetOutput ctx) >>= csWrite
       csWrite ["}"]
@@ -281,10 +280,8 @@ compileWhileLoop (WhileLoop c e p) = do
   e' <- compileCondition ctx0 c e
   ctx <- compileProcedure ctx0 p
   (lift $ ccGetRequired ctx) >>= csRequiresTypes
-  csWrite [setTraceContext c]
   csWrite ["while (" ++ e' ++ ") {"]
   (lift $ ccGetOutput ctx) >>= csWrite
-  csWrite [setTraceContext c] -- Set it again for the conditional.
   csWrite ["}"]
 
 compileScopedBlock :: (Show c, Monad m, CompileErrorM m, MergeableM m,
@@ -363,11 +360,11 @@ compileExpression = compile where
       doUnary t e
         | o == "!" = doNot t e
         | o == "-" = doNeg t e
-        | otherwise = lift $ compileError $ "Unknown unary operator \"" ++ o ++ "\" "++
+        | otherwise = lift $ compileError $ "Unknown unary operator \"" ++ o ++ "\" " ++
                                             " [" ++ formatFullContext c ++ "]"
       doNot t e = do
         when (t /= boolRequiredValue) $
-          lift $ compileError $ "Operator ! requires a Bool value "++
+          lift $ compileError $ "Operator ! requires a Bool value " ++
                                 " [" ++ formatFullContext c ++ "]"
         return $ (ParamSet [boolRequiredValue],UnboxedPrimitive PrimBool $ "!" ++ useAsUnboxed PrimBool e)
       doNeg t e
@@ -375,7 +372,7 @@ compileExpression = compile where
                                             UnboxedPrimitive PrimInt $ "-" ++ useAsUnboxed PrimInt e)
         | t == floatRequiredValue = return $ (ParamSet [floatRequiredValue],
                                              UnboxedPrimitive PrimFloat $ "-" ++ useAsUnboxed PrimFloat e)
-        | otherwise = lift $ compileError $ "Operator - requires an Int or Float value "++
+        | otherwise = lift $ compileError $ "Operator - requires an Int or Float value " ++
                                             " [" ++ formatFullContext c ++ "]"
   compile (InitializeValue c t ps es) = do
     es' <- sequence $ map compileExpression $ psParams es
