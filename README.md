@@ -243,6 +243,102 @@ From top to bottom:
 - An internal-only function `func2` is declared within the definition, with a
   definition immediately following.
 
+### Variables
+
+All variables must be initialized where they are defined *except* for `@value`
+variables and named returns. The compiler still requires initialization in both
+of those cases, but it's done out of line.
+
+<pre style='color:#1f1c1b;background-color:#ffffff;'>
+<b>concrete</b> <b><span style='color:#0057ae;'>Type</span></b> {
+  <span style='color:#644a9b;'>@type</span> create (<i><span style='color:#0057ae;'>Int</span></i>) <b><span style='color:#006e28;'>-&gt;</span></b> (<span style='color:#0057ae;'>Type</span>)
+  <span style='color:#644a9b;'>@value</span> get () <b><span style='color:#006e28;'>-&gt;</span></b> (<i><span style='color:#0057ae;'>Int</span></i>)
+}
+
+<b>define</b> <b><span style='color:#0057ae;'>Type</span></b> {
+  <span style='color:#644a9b;'>@value</span> <i><span style='color:#0057ae;'>Int</span></i> x  <span style='color:#898887;'>// x isn't initialized here.</span>
+  <span style='color:#644a9b;'>@category</span> <i><span style='color:#0057ae;'>Bool</span></i> z <b><span style='color:#006e28;'>&lt;-</span></b> <b>true</b>  <span style='color:#898887;'>// @category variables are initialized in place.</span>
+  <span style='color:#898887;'>// @type Bool w &lt;- true  // @type variables are not allowed.</span>
+
+  create (y) {
+    <b>return</b> <span style='color:#0057ae;'>Type</span>{ y }  <span style='color:#898887;'>// x is initialized here.</span>
+  }
+
+  get () (y) {  <span style='color:#898887;'>// y isn't initialized here.</span>
+    y <b><span style='color:#006e28;'>&lt;-</span></b> x  <span style='color:#898887;'>// y is initialized here.</span>
+  }
+
+  <span style='color:#644a9b;'>@value</span> something () <b><span style='color:#006e28;'>-&gt;</span></b> ()
+  something () {
+    <i><span style='color:#0057ae;'>Int</span></i> y <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#b08000;'>0</span>  <span style='color:#898887;'>// Local variables are initialized in place.</span>
+  }
+}</pre>
+
+Unlike most other languages, variable masking is not allowed. For example, if
+there is a `@value` variable named `x` then no `@value` function can create a
+local variabled named `x`.
+
+### Multiple Returns
+
+Functions can return more than one value. This can either be done by enclosing
+values in `{}` or by naming them.
+
+<pre style='color:#1f1c1b;background-color:#ffffff;'>
+<b>concrete</b> <b><span style='color:#0057ae;'>Something</span></b> {
+  <span style='color:#644a9b;'>@type</span> func1 () <b><span style='color:#006e28;'>-&gt;</span></b> (<i><span style='color:#0057ae;'>Int</span></i>,<i><span style='color:#0057ae;'>Int</span></i>)
+  <span style='color:#644a9b;'>@type</span> func2 () <b><span style='color:#006e28;'>-&gt;</span></b> (<i><span style='color:#0057ae;'>Int</span></i>,<i><span style='color:#0057ae;'>Int</span></i>)
+}
+
+<b>define</b> <b><span style='color:#0057ae;'>Something</span></b> {
+  func1 () {
+    <b>return</b> { <span style='color:#b08000;'>1</span>, <span style='color:#b08000;'>2</span> }
+  }
+
+  func2 () (v1,v2) {
+    v1 <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#b08000;'>1</span>
+    <b>if</b> (something()) {
+      v2 <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#b08000;'>2</span>
+    } <b>else</b> {
+      v2 <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#b08000;'>3</span>
+    }
+  }
+
+  <span style='color:#644a9b;'>@category</span> something () <b><span style='color:#006e28;'>-&gt;</span></b> (<i><span style='color:#0057ae;'>Bool</span></i>)
+  something () {
+    <b>return</b> <b>false</b>
+  }
+}</pre>
+
+The choice depends on the situation:
+
+- Unnamed returns are fine if it's easy to get all of the values in the same
+  place at the same time, and it requires specifying all values at all of the
+  return points.
+- Named returns are helpful when the values are determined separately, and might
+  otherwise require extra temporary variables. Explicit return statements are
+  disallowed other than `return _` to return with the current assignments.
+
+There are also a few options for *receiving* multiple returns:
+
+<pre style='color:#1f1c1b;background-color:#ffffff;'>
+<b>concrete</b> <b><span style='color:#0057ae;'>Something</span></b> {
+  <span style='color:#644a9b;'>@type</span> func1 () <b><span style='color:#006e28;'>-&gt;</span></b> ()
+}
+
+<b>define</b> <b><span style='color:#0057ae;'>Something</span></b> {
+  func1 () {
+    <i><span style='color:#0057ae;'>Int</span></i> x <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#b08000;'>0</span>
+    { x, <i><span style='color:#0057ae;'>Int</span></i> y } <b><span style='color:#006e28;'>&lt;-</span></b> func2()
+    { <b>_</b>, y } <b><span style='color:#006e28;'>&lt;-</span></b> func2()
+    <span style='color:#006e28;'>~</span> func2()
+  }
+
+  <span style='color:#644a9b;'>@type</span> func2 () <b><span style='color:#006e28;'>-&gt;</span></b> (<i><span style='color:#0057ae;'>Int</span></i>,<i><span style='color:#0057ae;'>Int</span></i>)
+  func2 () {
+    <b>return</b> { <span style='color:#b08000;'>1</span>, <span style='color:#b08000;'>2</span> }
+  }
+}</pre>
+
 ### Value Interfaces
 
 Each `@value interface` specifies `@value` functions to be inherited. These are
@@ -271,7 +367,7 @@ Here `Data` refines `Printable`, and so it must provide a procedure for it. Note
 that `@value` is *not* needed in the interface.
 
 Argument and return types can be overridden when refining, as long as the types
-are compatible with the originals. Overridding can be done in either the
+are compatible with the originals. Overriding can be done in either the
 declaration or definition.
 
 <pre style='color:#1f1c1b;background-color:#ffffff;'>
@@ -443,67 +539,6 @@ Filters can also specify required `@type` interfaces.
 }</pre>
 
 In this example, `#x$lessThan(...)` is a type-function call being made on `#x`.
-
-### Multiple Returns
-
-Functions can return more than one value. This can either be done by enclosing
-values in `{}` or by naming them.
-
-<pre style='color:#1f1c1b;background-color:#ffffff;'>
-<b>concrete</b> <b><span style='color:#0057ae;'>Something</span></b> {
-  <span style='color:#644a9b;'>@type</span> func1 () <b><span style='color:#006e28;'>-&gt;</span></b> (<i><span style='color:#0057ae;'>Int</span></i>,<i><span style='color:#0057ae;'>Int</span></i>)
-  <span style='color:#644a9b;'>@type</span> func2 () <b><span style='color:#006e28;'>-&gt;</span></b> (<i><span style='color:#0057ae;'>Int</span></i>,<i><span style='color:#0057ae;'>Int</span></i>)
-}
-
-<b>define</b> <b><span style='color:#0057ae;'>Something</span></b> {
-  func1 () {
-    <b>return</b> { <span style='color:#b08000;'>1</span>, <span style='color:#b08000;'>2</span> }
-  }
-
-  func2 () (v1,v2) {
-    v1 <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#b08000;'>1</span>
-    <b>if</b> (something()) {
-      v2 <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#b08000;'>2</span>
-    } <b>else</b> {
-      v2 <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#b08000;'>3</span>
-    }
-  }
-
-  <span style='color:#644a9b;'>@category</span> something () <b><span style='color:#006e28;'>-&gt;</span></b> (<i><span style='color:#0057ae;'>Bool</span></i>)
-  something () {
-    <b>return</b> <b>false</b>
-  }
-}</pre>
-
-The choice depends on the situation:
-
-- Unnamed returns are fine if it's easy to get all of the values in the same
-  place at the same time, and it requires specifying all values at all of the
-  return points.
-- Named returns are helpful when the values are determined separately, and might
-  otherwise require extra temporary variables. Explicit return statements are
-  disallowed other than `return _` to return with the current assignments.
-
-There are also a few options for *recieving* multiple returns:
-
-<pre style='color:#1f1c1b;background-color:#ffffff;'>
-<b>concrete</b> <b><span style='color:#0057ae;'>Something</span></b> {
-  <span style='color:#644a9b;'>@type</span> func1 () <b><span style='color:#006e28;'>-&gt;</span></b> ()
-}
-
-<b>define</b> <b><span style='color:#0057ae;'>Something</span></b> {
-  func1 () {
-    <i><span style='color:#0057ae;'>Int</span></i> x <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#b08000;'>0</span>
-    { x, <i><span style='color:#0057ae;'>Int</span></i> y } <b><span style='color:#006e28;'>&lt;-</span></b> func2()
-    { <b>_</b>, y } <b><span style='color:#006e28;'>&lt;-</span></b> func2()
-    <span style='color:#006e28;'>~</span> func2()
-  }
-
-  <span style='color:#644a9b;'>@type</span> func2 () <b><span style='color:#006e28;'>-&gt;</span></b> (<i><span style='color:#0057ae;'>Int</span></i>,<i><span style='color:#0057ae;'>Int</span></i>)
-  func2 () {
-    <b>return</b> { <span style='color:#b08000;'>1</span>, <span style='color:#b08000;'>2</span> }
-  }
-}</pre>
 
 ### Control Flow
 
