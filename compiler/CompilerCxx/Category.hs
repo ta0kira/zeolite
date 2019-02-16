@@ -74,6 +74,7 @@ compileInterfaceDefinition t = do
 compileConcreteDefinition :: (Show c, Monad m, CompileErrorM m, MergeableM m) =>
   CategoryMap c -> DefinedCategory c -> m CxxOutput
 compileConcreteDefinition ta dd@(DefinedCategory c n pi fi ms ps fs) = do
+  -- TODO: Move most of this logic to DefinedCategory.
   (_,t) <- getConcreteCategory ta (c,n)
   let params = ParamSet $ getCategoryParams t
   let params2 = ParamSet pi
@@ -129,13 +130,13 @@ compileConcreteDefinition ta dd@(DefinedCategory c n pi fi ms ps fs) = do
   ce <- mergeAllM [
       categoryConstructor ta t cm,
       categoryDispatch allFuncs,
-      mergeAllM $ map (compileExecutableProcedure ta n params params2 vm filters filters2 fa cv) cp,
+      mergeAllM $ map (compileExecutableProcedure ta n params params2 vm [] [] fa cv) cp,
       mergeAllM $ map (createMember r allFilters) cm
     ]
   te <- mergeAllM [
       typeConstructor ta t tm,
       typeDispatch allFuncs,
-      mergeAllM $ map (compileExecutableProcedure ta n params params2 vm filters filters2 fa tv) tp,
+      mergeAllM $ map (compileExecutableProcedure ta n params params2 vm filters [] fa tv) tp,
       mergeAllM $ map (createMember r allFilters) tm
     ]
   commonDefineAll t top bottom ce te fe

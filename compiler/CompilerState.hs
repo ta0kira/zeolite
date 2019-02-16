@@ -9,7 +9,6 @@ module CompilerState (
   CompilerState(..),
   ExpressionType(..),
   MemberValue(..),
-  VariableValue(..),
   csAddVariable,
   csAllFilters,
   csCheckValueInit,
@@ -37,6 +36,7 @@ import Control.Monad.Trans.State (StateT(..),execStateT,get,mapStateT,put)
 import Data.Monoid
 import qualified Data.Set as Set
 
+import DefinedCategory
 import Function
 import Procedure
 import TypeCategory
@@ -67,14 +67,6 @@ class Monad m => CompilerContext c m s a | a -> c s where
   ccRegisterReturn :: a -> [c] -> ExpressionType -> m a
 
 type ExpressionType = ParamSet ValueType
-
-data VariableValue c =
-  VariableValue {
-    vvContext :: [c],
-    vvScope :: SymbolScope,
-    vvType :: ValueType,
-    vvWritable :: Bool
-  }
 
 data MemberValue c =
   MemberValue {
