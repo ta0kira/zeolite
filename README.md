@@ -345,6 +345,23 @@ The main drawback of type interfaces is that their procedures can only be
 defined for `concrete` categories. This means that, for example, a filter such
 as `#x defines Equals<#x>` cannot be satisfied by a `@value interface`.
 
+### Source Files
+
+There are two distinct types of source file used by the Zeolite compiler:
+
+1. `.0rx`: Implementation files that can contain category declarations, i.e.,
+   `concrete`, `@value interface`, `@type interface`, and category definitions,
+   i.e., `define`. Nothing in implementation files is visible to other source
+   files.
+2. `.0rp`: Declaration files that can only contain category declarations; they
+   *cannot* contain `define`. Everything in declaration files is visible to
+   other source files.
+
+If you want to have an entire program in a single source file, use `.0rx`. If
+you need to split it up, you must also use `.0rp` for sharing type declarations.
+
+(Compilation instructions are still in the works.)
+
 ### Parameter Filters
 
 Type parameters don't have access to any information about the type being
