@@ -3,24 +3,38 @@
 module CompilerCxx.Code (
   ExprValue(..),
   PrimitiveType(..),
+  categoryBase,
   emptyCode,
+  functionLabelType,
   indentCompiled,
   onlyCode,
   onlyCodes,
+  paramType,
   predTraceContext,
+  readStoredVariable,
   setTraceContext,
+  typeBase,
+  useAsArgs,
+  useAsReturns,
   useAsUnboxed,
   useAsUnwrapped,
   useAsWhatever,
-  useAsWrapped,
   valueAsUnwrapped,
   valueAsWrapped,
+  valueBase,
+  variableProxyType,
+  variableStoredType,
+  writeStoredVariable,
 ) where
 
 import qualified Data.Set as Set
 
+import Builtin
 import CompilerState
+import DefinedCategory
 import TypeCategory
+import TypeInstance
+import TypesBase
 
 
 emptyCode :: CompiledData [String]
@@ -63,18 +77,31 @@ useAsWhatever (UnwrappedSingle e)    = e
 useAsWhatever (BoxedPrimitive _ e)   = e
 useAsWhatever (UnboxedPrimitive _ e) = e
 
-useAsWrapped :: ExprValue -> String
-useAsWrapped (OpaqueMulti e)                 = "(" ++ e ++ ")"
-useAsWrapped (WrappedSingle e)               = "ReturnTuple(" ++ e ++ ")"
-useAsWrapped (UnwrappedSingle e)             = "ReturnTuple(" ++ e ++ ")"
-useAsWrapped (BoxedPrimitive PrimBool e)     = "ReturnTuple(Box_Bool(" ++ e ++ "))"
-useAsWrapped (BoxedPrimitive PrimString e)   = "ReturnTuple(Box_String(" ++ e ++ "))"
-useAsWrapped (BoxedPrimitive PrimInt e)      = "ReturnTuple(Box_Int(" ++ e ++ "))"
-useAsWrapped (BoxedPrimitive PrimFloat e)    = "ReturnTuple(Box_Float(" ++ e ++ "))"
-useAsWrapped (UnboxedPrimitive PrimBool e)   = "ReturnTuple(Box_Bool(" ++ e ++ "))"
-useAsWrapped (UnboxedPrimitive PrimString e) = "ReturnTuple(Box_String(" ++ e ++ "))"
-useAsWrapped (UnboxedPrimitive PrimInt e)    = "ReturnTuple(Box_Int(" ++ e ++ "))"
-useAsWrapped (UnboxedPrimitive PrimFloat e)  = "ReturnTuple(Box_Float(" ++ e ++ "))"
+useAsReturns :: ExprValue -> String
+useAsReturns (OpaqueMulti e)                 = "(" ++ e ++ ")"
+useAsReturns (WrappedSingle e)               = "ReturnTuple(" ++ e ++ ")"
+useAsReturns (UnwrappedSingle e)             = "ReturnTuple(" ++ e ++ ")"
+useAsReturns (BoxedPrimitive PrimBool e)     = "ReturnTuple(Box_Bool(" ++ e ++ "))"
+useAsReturns (BoxedPrimitive PrimString e)   = "ReturnTuple(Box_String(" ++ e ++ "))"
+useAsReturns (BoxedPrimitive PrimInt e)      = "ReturnTuple(Box_Int(" ++ e ++ "))"
+useAsReturns (BoxedPrimitive PrimFloat e)    = "ReturnTuple(Box_Float(" ++ e ++ "))"
+useAsReturns (UnboxedPrimitive PrimBool e)   = "ReturnTuple(Box_Bool(" ++ e ++ "))"
+useAsReturns (UnboxedPrimitive PrimString e) = "ReturnTuple(Box_String(" ++ e ++ "))"
+useAsReturns (UnboxedPrimitive PrimInt e)    = "ReturnTuple(Box_Int(" ++ e ++ "))"
+useAsReturns (UnboxedPrimitive PrimFloat e)  = "ReturnTuple(Box_Float(" ++ e ++ "))"
+
+useAsArgs :: ExprValue -> String
+useAsArgs (OpaqueMulti e)                 = "(" ++ e ++ ")"
+useAsArgs (WrappedSingle e)               = "ArgTuple(" ++ e ++ ")"
+useAsArgs (UnwrappedSingle e)             = "ArgTuple(" ++ e ++ ")"
+useAsArgs (BoxedPrimitive PrimBool e)     = "ArgTuple(Box_Bool(" ++ e ++ "))"
+useAsArgs (BoxedPrimitive PrimString e)   = "ArgTuple(Box_String(" ++ e ++ "))"
+useAsArgs (BoxedPrimitive PrimInt e)      = "ArgTuple(Box_Int(" ++ e ++ "))"
+useAsArgs (BoxedPrimitive PrimFloat e)    = "ArgTuple(Box_Float(" ++ e ++ "))"
+useAsArgs (UnboxedPrimitive PrimBool e)   = "ArgTuple(Box_Bool(" ++ e ++ "))"
+useAsArgs (UnboxedPrimitive PrimString e) = "ArgTuple(Box_String(" ++ e ++ "))"
+useAsArgs (UnboxedPrimitive PrimInt e)    = "ArgTuple(Box_Int(" ++ e ++ "))"
+useAsArgs (UnboxedPrimitive PrimFloat e)  = "ArgTuple(Box_Float(" ++ e ++ "))"
 
 useAsUnwrapped :: ExprValue -> String
 useAsUnwrapped (OpaqueMulti e)                 = "(" ++ e ++ ").Only()"
@@ -125,3 +152,63 @@ valueAsUnwrapped (UnboxedPrimitive PrimString e) = UnwrappedSingle $ "Box_String
 valueAsUnwrapped (UnboxedPrimitive PrimInt e)    = UnwrappedSingle $ "Box_Int(" ++ e ++ ")"
 valueAsUnwrapped (UnboxedPrimitive PrimFloat e)  = UnwrappedSingle $ "Box_Float(" ++ e ++ ")"
 valueAsUnwrapped v                               = v
+
+variableStoredType :: ValueType -> String
+variableStoredType t
+  | t == boolRequiredValue   = "bool"
+  | t == stringRequiredValue = "PrimString"
+  | t == intRequiredValue    = "PrimInt"
+  | t == floatRequiredValue  = "PrimFloat"
+  | isWeakValue t            = "W<TypeValue>"
+  | otherwise                = "S<TypeValue>"
+
+variableProxyType :: ValueType -> String
+variableProxyType t
+  | t == boolRequiredValue   = "bool"
+  | t == stringRequiredValue = "PrimString"
+  | t == intRequiredValue    = "PrimInt"
+  | t == floatRequiredValue  = "PrimFloat"
+  | isWeakValue t            = "W<TypeValue>&"
+  | otherwise                = "S<TypeValue>&"
+
+readStoredVariable :: ValueType -> String -> ExprValue
+readStoredVariable t s
+  | t == boolRequiredValue   = UnboxedPrimitive PrimBool s
+  | t == stringRequiredValue = UnboxedPrimitive PrimString s
+  | t == intRequiredValue    = UnboxedPrimitive PrimInt s
+  | t == floatRequiredValue  = UnboxedPrimitive PrimFloat s
+  | otherwise                = UnwrappedSingle s
+
+writeStoredVariable :: ValueType -> ExprValue -> String
+writeStoredVariable t e
+  | t == boolRequiredValue   = useAsUnboxed PrimBool e
+  | t == stringRequiredValue = useAsUnboxed PrimString e
+  | t == intRequiredValue    = useAsUnboxed PrimInt e
+  | t == floatRequiredValue  = useAsUnboxed PrimFloat e
+  | otherwise                = useAsUnwrapped e
+
+functionLabelType :: ScopedFunction c -> String
+functionLabelType f =
+  "Function<" ++ scope ++ "," ++ show pn ++ "," ++ show an ++ "," ++ show rn ++ ">" where
+    pn = length $ psParams $ sfParams f
+    an = length $ psParams $ sfArgs f
+    rn = length $ psParams $ sfReturns f
+    scope
+      | sfScope f == CategoryScope = "SymbolScope::CATEGORY"
+      | sfScope f == TypeScope     = "SymbolScope::TYPE"
+      | sfScope f == ValueScope    = "SymbolScope::VALUE"
+
+categoryBase :: String
+categoryBase = "TypeCategory"
+
+typeBase :: String
+typeBase = "TypeInstance"
+
+valueBase :: String
+valueBase = "TypeValue"
+
+paramType :: String
+paramType = typeBase ++ "&"
+
+proxyType :: String
+proxyType = "S<" ++ valueBase ++ ">&"

@@ -60,6 +60,9 @@ compileExecutableProcedure tm t ps pi ms pa fi fa va
                    CategoryScope -> localFilters
                    TypeScope -> Map.union localFilters typeFilters
                    ValueScope -> Map.unions [localFilters,typeFilters,valueFilters]
+  let ns = if isUnnamedReturns rs2
+              then []
+              else filter (isPrimType . snd) $ zip (map ovName $ psParams $ nrNames rs2) (map pvType $ psParams rs1)
   let ctx = ProcedureContext {
       pcScope = s,
       pcType = t,
@@ -75,6 +78,7 @@ compileExecutableProcedure tm t ps pi ms pa fi fa va
       pcFunctions = fa,
       pcVariables = va'',
       pcReturns = rs',
+      pcPrimNamed = ns,
       pcRequiredTypes = Set.empty,
       pcOutput = [],
       pcDisallowInit = False
@@ -87,7 +91,7 @@ compileExecutableProcedure tm t ps pi ms pa fi fa va
       compileProcedure ctx0 p >>= put
       csRegisterReturn c (ParamSet []) `reviseErrorStateT`
         ("In implicit return from " ++ show n ++ " [" ++ formatFullContext c ++ "]")
-      csWrite ["return returns;"]
+      doNamedReturn
     pairOutput (PassedValue c1 t) (OutputValue c2 n) = return $ (n,PassedValue (c2++c1) t)
     wrapProcedure output =
       mergeAll $ [
@@ -113,12 +117,17 @@ compileExecutableProcedure tm t ps pi ms pa fi fa va
     defineReturns = [returnType ++ " returns(" ++ show (length $ psParams rs1) ++ ");"]
     nameParams = flip map (zip [0..] $ psParams ps1) $
       (\(i,p) -> paramType ++ " " ++ paramName (vpParam p) ++ " = *params.At(" ++ show i ++ ");")
-    nameArgs = flip map (zip [0..] $ filter (not . isDiscardedInput) $ psParams $ avNames as2) $
-      (\(i,n) -> "const " ++ proxyType ++ " " ++ variableName (ivName n) ++ " = args.At(" ++ show i ++ ");")
+    nameArgs = flip map (zip [0..] $ filter (not . isDiscardedInput . snd) $ zip (psParams as1) (psParams $ avNames as2)) $
+      (\(i,(t,n)) -> "const " ++ variableProxyType (pvType t) ++ " " ++ variableName (ivName n) ++
+                     " = " ++ writeStoredVariable (pvType t) (UnwrappedSingle $ "args.At(" ++ show i ++ ")") ++ ";")
     nameReturns
       | isUnnamedReturns rs2 = []
-      | otherwise = flip map (zip [0..] $ psParams $ nrNames rs2) $
-      (\(i,n) -> proxyType ++ " " ++ variableName (ovName n) ++ " = returns.At(" ++ show i ++ ");")
+      | otherwise = map (\(i,(t,n)) -> nameReturn i (pvType t) n) (zip [0..] $ zip (psParams rs1) (psParams $ nrNames rs2))
+    nameReturn i t n
+      | isPrimType t = variableProxyType t ++ " " ++ variableName (ovName n) ++ ";"
+      | otherwise =
+        variableProxyType t ++ " " ++ variableName (ovName n) ++
+        " = " ++ writeStoredVariable t (UnwrappedSingle $ "returns.At(" ++ show i ++ ")") ++ ";"
 
 compileCondition :: (Show c, Monad m, CompileErrorM m, MergeableM m,
                      CompilerContext c m [String] a) =>
@@ -151,7 +160,7 @@ compileStatement :: (Show c, Monad m, CompileErrorM m, MergeableM m,
   Statement c -> CompilerState a m ()
 compileStatement (EmptyReturn c) = do
   csRegisterReturn c (ParamSet [])
-  csWrite ["return returns;"]
+  doNamedReturn
 compileStatement (ExplicitReturn c es) = do
   es' <- sequence $ map compileExpression $ psParams es
   getReturn $ zip (map getExpressionContext $ psParams es) es'
@@ -160,14 +169,15 @@ compileStatement (ExplicitReturn c es) = do
     getReturn [(_,(ParamSet ts,e))] = do
       csRegisterReturn c (ParamSet ts)
       csWrite [setTraceContext c]
-      csWrite ["return " ++ useAsWrapped e ++ ";"]
+      csWrite ["return " ++ useAsReturns e ++ ";"]
     -- Multi-expression => must all be singles.
     getReturn rs = do
       lift $ mergeAllM (map checkArity $ zip [1..] $ map (fst . snd) rs) `reviseError`
         ("In return at " ++ formatFullContext c)
       csRegisterReturn c $ ParamSet $ map (head . psParams . fst . snd) rs
       csWrite $ concat $ map bindReturn $ zip [0..] rs
-      csWrite ["return returns;"]
+      -- Still could be using named returns, if the statement is return {}.
+      doNamedReturn
     checkArity (_,ParamSet [_]) = return ()
     checkArity (i,ParamSet ts)  =
       compileError $ "Return position " ++ show i ++ " has " ++ show (length ts) ++ " values but should have 1"
@@ -193,7 +203,7 @@ compileStatement (Assignment c as e) = do
   where
     assignAll [v] e = assignSingle v e
     assignAll vs e = do
-      csWrite ["{","const auto r = " ++ useAsWrapped e ++ ";"]
+      csWrite ["{","const auto r = " ++ useAsReturns e ++ ";"]
       sequence $ map assignMulti vs
       csWrite ["}"]
     createVariable r fa (CreateVariable c t1 n) t2 = do
@@ -202,7 +212,7 @@ compileStatement (Assignment c as e) = do
                         checkValueTypeMatch r fa t2 t1] `reviseError`
         ("In creation of " ++ show n ++ " at " ++ formatFullContext c)
       csAddVariable c n (VariableValue c LocalScope t1 True)
-      csWrite [variableType (vtRequired t1) ++ " " ++ variableName n ++ ";"]
+      csWrite [variableStoredType t1 ++ " " ++ variableName n ++ ";"]
     createVariable r fa (ExistingVariable (InputValue c n)) t2 = do
       (VariableValue _ s1 t1 w) <- csGetVariable c n
       when (not w) $ lift $ compileError $ "Cannot assign to read-only variable " ++
@@ -213,21 +223,22 @@ compileStatement (Assignment c as e) = do
       csUpdateAssigned n
     createVariable _ _ _ _ = return ()
     assignSingle (i,t,CreateVariable _ _ n) e =
-      csWrite [variableName n ++ " = " ++ useAsUnwrapped e ++ ";"]
+      csWrite [variableName n ++ " = " ++ writeStoredVariable t e ++ ";"]
     assignSingle (i,t,ExistingVariable (InputValue _ n)) e = do
       (VariableValue _ s _ _) <- csGetVariable c n
       scoped <- autoScope s
-      csWrite [scoped ++ variableName n ++ " = " ++ useAsUnwrapped e ++ ";"]
+      csWrite [scoped ++ variableName n ++ " = " ++ writeStoredVariable t e ++ ";"]
     assignSingle _ _ = return ()
-    assignMulti (i,t,CreateVariable _ _ n)
-      | isWeakValue t = csWrite [variableName n ++ " = r;"]
-      | otherwise = csWrite [variableName n ++ " = r.At(" ++ show i ++ ");"]
+    assignMulti (i,t,CreateVariable _ _ n) =
+      -- NOTE: Weak values should not exist in multi-type expressions.
+      csWrite [variableName n ++ " = " ++
+               writeStoredVariable t (UnwrappedSingle $ "r.At(" ++ show i ++ ")") ++ ";"]
     assignMulti (i,t,ExistingVariable (InputValue _ n)) = do
       (VariableValue _ s _ _) <- csGetVariable c n
       scoped <- autoScope s
-      if isWeakValue t
-         then csWrite [scoped ++ variableName n ++ " = r;"]
-         else csWrite [scoped ++ variableName n ++ " = r.At(" ++ show i ++ ");"]
+      -- NOTE: Weak values should not exist in multi-type expressions.
+      csWrite [scoped ++ variableName n ++ " = " ++
+               writeStoredVariable t (UnwrappedSingle $ "r.At(" ++ show i ++ ")") ++ ";"]
     assignMulti _ = return ()
 compileStatement (NoValueExpression v) = compileVoidExpression v
 
@@ -310,7 +321,7 @@ compileScopedBlock s = do
     createVariable r fa (c,t,n) = do
       lift $ validateGeneralInstance r fa (vtType t) `reviseError`
         ("In creation of " ++ show n ++ " at " ++ formatFullContext c)
-      csWrite [variableType (vtRequired t) ++ " " ++ variableName n ++ ";"]
+      csWrite [variableStoredType t ++ " " ++ variableName n ++ ";"]
     showVariable (c,t,n) = do
       -- TODO: Call csRequiresTypes for t. (Maybe needs a helper function.)
       csAddVariable c n (VariableValue c LocalScope t True)
@@ -391,7 +402,7 @@ compileExpression = compile where
       getType True ValueScope _ = "parent"
       getType _    _ params = typeCreator ++ "(" ++ params ++ ")"
       -- Single expression, but possibly multi-return.
-      getValues [(ParamSet ts,e)] = return (ts,useAsWrapped e)
+      getValues [(ParamSet ts,e)] = return (ts,useAsArgs e)
       -- Multi-expression => must all be singles.
       getValues rs = do
         lift $ mergeAllM (map checkArity $ zip [1..] $ map fst rs) `reviseError`
@@ -484,7 +495,7 @@ compileExpressionStart :: (Show c, Monad m, CompileErrorM m, MergeableM m,
 compileExpressionStart (NamedVariable (OutputValue c n)) = do
   (VariableValue _ s t _) <- csGetVariable c n
   scoped <- autoScope s
-  return (ParamSet [t],UnwrappedSingle $ scoped ++ variableName n)
+  return (ParamSet [t],readStoredVariable t (scoped ++ variableName n))
 compileExpressionStart (CategoryCall c t f@(FunctionCall _ n _ _)) = do
   f' <- csGetCategoryFunction c (Just t) n
   csRequiresTypes $ Set.fromList [t,sfType f']
@@ -587,7 +598,8 @@ compileExpressionStart (InlineAssignment c n e) = do
   -- might get short-circuited.
   csUpdateAssigned n
   scoped <- autoScope s
-  return (ParamSet [t0],UnwrappedSingle $ "(" ++ scoped ++ variableName n ++ " = " ++ useAsUnwrapped e' ++ ")")
+  return (ParamSet [t0],readStoredVariable t0 $ "(" ++ scoped ++ variableName n ++
+                                                " = " ++ writeStoredVariable t0 e' ++ ")")
 
 compileFunctionCall :: (Show c, Monad m, CompileErrorM m, MergeableM m,
                         CompilerContext c m [String] a) =>
@@ -621,7 +633,7 @@ compileFunctionCall e f (FunctionCall c _ ps es) = do
       return $ e ++ ".Call(" ++ functionName f ++ ", " ++ ps ++ ", " ++ es ++ ")"
     -- TODO: Lots of duplication with assignments and initialization.
     -- Single expression, but possibly multi-return.
-    getValues [(ParamSet ts,e)] = return (ts,useAsWrapped e)
+    getValues [(ParamSet ts,e)] = return (ts,useAsArgs e)
     -- Multi-expression => must all be singles.
     getValues rs = do
       lift $ mergeAllM (map checkArity $ zip [1..] $ map fst rs) `reviseError`
@@ -683,3 +695,13 @@ expandGeneralInstance (SingleType (JustParamName p)) = do
   s <- csGetParamScope p
   scoped <- autoScope s
   return $ scoped ++ paramName p
+
+doNamedReturn :: (Monad m, CompilerContext c m [String] a) => CompilerState a m ()
+doNamedReturn = do
+  vars <- csPrimNamedReturns
+  let vars' = zip [0..] vars
+  sequence $ map (\(i,(n,t)) -> csWrite [assign i n t]) vars'
+  csWrite ["return returns;"]
+  where
+    assign i n t =
+      "returns.At(" ++ show i ++ ") = " ++ useAsUnwrapped (readStoredVariable t $ variableName n) ++ ";"

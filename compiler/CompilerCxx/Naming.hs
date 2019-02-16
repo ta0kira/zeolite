@@ -4,31 +4,24 @@ module CompilerCxx.Naming (
   baseHeaderIncludes,
   baseSourceIncludes,
   callName,
-  categoryBase,
   categoryCreator,
   categoryGetter,
   categoryName,
   collectionName,
-  functionLabelType,
   functionName,
   headerFilename,
   initializerName,
   intersectGetter,
   paramName,
-  paramType,
-  proxyType,
   sourceFilename,
   tableName,
-  typeBase,
   typeCreator,
   typeGetter,
   typeName,
   unionGetter,
-  valueBase,
   valueCreator,
   valueName,
   variableName,
-  variableType,
 ) where
 
 import Function
@@ -49,25 +42,6 @@ baseHeaderIncludes = ["#include \"category-header.hpp\""]
 
 baseSourceIncludes :: [String]
 baseSourceIncludes = ["#include \"category-source.hpp\""]
-
-categoryBase :: String
-categoryBase = "TypeCategory"
-
-typeBase :: String
-typeBase = "TypeInstance"
-
-valueBase :: String
-valueBase = "TypeValue"
-
-paramType :: String
-paramType = typeBase ++ "&"
-
-variableType :: StorageType -> String
-variableType WeakValue = "W<" ++ valueBase ++ ">"
-variableType _         = "S<" ++ valueBase ++ ">"
-
-proxyType :: String
-proxyType = "S<" ++ valueBase ++ ">&"
 
 paramName :: ParamName -> String
 paramName p = "Param_" ++ tail (pnName p) -- Remove leading '#'.
@@ -119,14 +93,3 @@ typeCreator = "CreateType"
 
 valueCreator :: String
 valueCreator = "CreateValue"
-
-functionLabelType :: ScopedFunction c -> String
-functionLabelType f =
-  "Function<" ++ scope ++ "," ++ show pn ++ "," ++ show an ++ "," ++ show rn ++ ">" where
-    pn = length $ psParams $ sfParams f
-    an = length $ psParams $ sfArgs f
-    rn = length $ psParams $ sfReturns f
-    scope
-      | sfScope f == CategoryScope = "SymbolScope::CATEGORY"
-      | sfScope f == TypeScope     = "SymbolScope::TYPE"
-      | sfScope f == ValueScope    = "SymbolScope::VALUE"

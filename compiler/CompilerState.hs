@@ -20,6 +20,7 @@ module CompilerState (
   csGetTypeFunction,
   csGetVariable,
   csInheritReturns,
+  csPrimNamedReturns,
   csRegisterReturn,
   csRequiresTypes,
   csResolver,
@@ -65,6 +66,7 @@ class Monad m => CompilerContext c m s a | a -> c s where
   ccUpdateAssigned :: a -> VariableName -> m a
   ccInheritReturns :: a -> [a] -> m a
   ccRegisterReturn :: a -> [c] -> ExpressionType -> m a
+  ccPrimNamedReturns :: a -> m [(VariableName,ValueType)]
 
 type ExpressionType = ParamSet ValueType
 
@@ -138,10 +140,6 @@ csClearOutput = fmap (\x -> ccClearOutput x) get >>= lift >>= put
 csGetOutput :: (Monad m, CompilerContext c m s a) => CompilerState a m s
 csGetOutput = fmap ccGetOutput get >>= lift
 
-csRegisterReturn :: (Monad m, CompilerContext c m s a) =>
-  [c] -> ParamSet ValueType -> CompilerState a m ()
-csRegisterReturn c rs = fmap (\x -> ccRegisterReturn x c rs) get >>= lift >>= put
-
 csUpdateAssigned :: (Monad m, CompilerContext c m s a) =>
   VariableName -> CompilerState a m ()
 csUpdateAssigned n = fmap (\x -> ccUpdateAssigned x n) get >>= lift >>= put
@@ -149,6 +147,14 @@ csUpdateAssigned n = fmap (\x -> ccUpdateAssigned x n) get >>= lift >>= put
 csInheritReturns :: (Monad m, CompilerContext c m s a) =>
   [a] -> CompilerState a m ()
 csInheritReturns xs = fmap (\x -> ccInheritReturns x xs) get >>= lift >>= put
+
+csRegisterReturn :: (Monad m, CompilerContext c m s a) =>
+  [c] -> ParamSet ValueType -> CompilerState a m ()
+csRegisterReturn c rs = fmap (\x -> ccRegisterReturn x c rs) get >>= lift >>= put
+
+csPrimNamedReturns :: (Monad m, CompilerContext c m s a) =>
+  CompilerState a m [(VariableName,ValueType)]
+csPrimNamedReturns = fmap ccPrimNamedReturns get >>= lift
 
 data CompiledData s =
   CompiledData {

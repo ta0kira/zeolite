@@ -2,24 +2,21 @@ concrete Demo {
   defines Runner
 }
 
-concrete Value {
-  refines Formatted
-  @type new () -> (Value)
-}
-
-define Value {
-  new () { return Value{} }
-  formatted () { return "Value" }
-}
-
 define Demo {
-  @category TypeKey<Int>    keyInt    <- TypeKey<Int>$new()
-  @category TypeKey<String> keyString <- TypeKey<String>$new()
-  @category TypeKey<Float>  keyFloat  <- TypeKey<Float>$new()
-  @category TypeKey<Value>  keyValue  <- TypeKey<Value>$new()
-
   run () {
+    ~ testTree()
+    ~ demoTypeTree()
+  }
+
+  @category demoTypeTree () -> ()
+  demoTypeTree () {
     TypeTree tree <- TypeTree$new()
+
+    TypeKey<Int>    keyInt    <- TypeKey<Int>$new()
+    TypeKey<String> keyString <- TypeKey<String>$new()
+    TypeKey<Float>  keyFloat  <- TypeKey<Float>$new()
+    TypeKey<Value>  keyValue  <- TypeKey<Value>$new()
+
     ~ tree.set<Int>(keyInt,1)
     ~ tree.set<String>(keyString,"a")
 
@@ -47,4 +44,74 @@ define Demo {
           .writeTo(SimpleOutput$stderr())
     }
   }
+
+  @category testTree () -> ()
+  testTree () {
+    Tree<Int,Int> tree <- Tree<Int,Int>$new()
+    Int count <- 30
+
+    // Insert values.
+    scoped {
+      Int i <- 0
+    } in while (i < count) {
+      Int new <- ((i + 13) * 3547) % count
+      ~ LazyStream<String>$new()
+          .append("Inserting ")
+          .append(i.formatted())
+          .append(" at ")
+          .append(new.formatted())
+          .append("\n")
+          .writeTo(SimpleOutput$stderr())
+      ~ tree.set(new,i)
+      i <- i+1
+    }
+
+    // Verify and remove values.
+    scoped {
+      Int i <- 0
+    } in while (i < count) {
+      Int new <- ((i + 13) * 3547) % count
+      scoped {
+        optional Int value <- tree.get(new)
+      } in if (!present(value)) {
+        ~ LazyStream<String>$new()
+            .append("Not found ")
+            .append(new.formatted())
+            .append(" but should have been ")
+            .append(i.formatted())
+            .append("\n")
+            .writeTo(SimpleOutput$fail())
+      } elif (require(value) != i) {
+        ~ LazyStream<String>$new()
+            .append("Element ")
+            .append(new.formatted())
+            .append(" should have been ")
+            .append(i.formatted())
+            .append(" but was ")
+            .append(require(value).formatted())
+            .append("\n")
+            .writeTo(SimpleOutput$fail())
+      } else {
+        ~ LazyStream<String>$new()
+            .append("Element ")
+            .append(new.formatted())
+            .append(" is ")
+            .append(i.formatted())
+            .append("\n")
+            .writeTo(SimpleOutput$stderr())
+      }
+      ~ tree.remove(new)
+      i <- i+1
+    }
+  }
+}
+
+concrete Value {
+  refines Formatted
+  @type new () -> (Value)
+}
+
+define Value {
+  new () { return Value{} }
+  formatted () { return "Value" }
 }

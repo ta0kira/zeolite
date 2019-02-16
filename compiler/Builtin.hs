@@ -6,6 +6,7 @@ module Builtin (
   emptyValue,
   floatRequiredValue,
   intRequiredValue,
+  isPrimType,
   stringRequiredValue,
 ) where
 
@@ -38,6 +39,14 @@ floatRequiredValue :: ValueType
 floatRequiredValue = requiredSingleton BuiltinFloat
 emptyValue :: ValueType
 emptyValue = ValueType OptionalValue $ TypeMerge MergeUnion []
+
+isPrimType :: ValueType -> Bool
+isPrimType t
+  | t == boolRequiredValue   = True
+  | t == stringRequiredValue = True
+  | t == intRequiredValue    = True
+  | t == floatRequiredValue  = True
+  | otherwise                = False
 
 builtinBool :: AnyCategory c
 builtinBool = ValueConcrete {

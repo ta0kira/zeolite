@@ -191,13 +191,14 @@ compileConcreteDefinition ta dd@(DefinedCategory c n pi fi ms ps fs) = do
       let allArgs = intercalate ", " [argParent,paramsPassed,argsPassed]
       let initParent = "parent(p)"
       let initParams = map (\(i,p) -> paramName (vpParam p) ++ "(*params.At(" ++ show i ++ "))") $ zip [0..] pi
-      let initArgs = map (\(i,m) -> variableName (dmName m) ++ "(args.At(" ++ show i ++ "))") $ zip [0..] ms
+      let initArgs = map (\(i,m) -> variableName (dmName m) ++ "(" ++ unwrappedArg i m ++ ")") $ zip [0..] ms
       let allInit = intercalate ", " $ initParent:(initParams ++ initArgs)
       return $ onlyCode $ valueName n ++ "(" ++ allArgs ++ ") : " ++ allInit ++ " {}"
+    unwrappedArg i m = writeStoredVariable (dmType m) (UnwrappedSingle $ "args.At(" ++ show i ++ ")")
     createMember r filters m = do
       validateGeneralInstance r filters (vtType $ dmType m) `reviseError`
         ("In creation of " ++ show (dmName m) ++ " at " ++ formatFullContext (dmContext m))
-      return $ onlyCode $ variableType (vtRequired $ dmType m) ++ " " ++ variableName (dmName m) ++ ";"
+      return $ onlyCode $ variableStoredType (dmType m) ++ " " ++ variableName (dmName m) ++ ";"
     initMember (DefinedMember _ _ _ _ Nothing) = return mergeDefault
     initMember (DefinedMember c s t n (Just e)) = do
       csAddVariable c n (VariableValue c s t True)
@@ -527,6 +528,7 @@ getContextForInit tm t d s = do
       pcFunctions = fa,
       pcVariables = Map.union builtin members,
       pcReturns = NoValidation,
+      pcPrimNamed = [],
       pcRequiredTypes = Set.empty,
       pcOutput = [],
       pcDisallowInit = True

@@ -37,6 +37,7 @@ data ProcedureContext c =
     pcFunctions :: Map.Map FunctionName (ScopedFunction c),
     pcVariables :: Map.Map VariableName (VariableValue c),
     pcReturns :: ReturnValidation c,
+    pcPrimNamed :: [(VariableName,ValueType)],
     pcRequiredTypes :: Set.Set CategoryName,
     pcOutput :: [String],
     pcDisallowInit :: Bool
@@ -77,6 +78,7 @@ instance (Show c, MergeableM m, CompileErrorM m, Monad m) =>
       pcFunctions = pcFunctions ctx,
       pcVariables = pcVariables ctx,
       pcReturns = pcReturns ctx,
+      pcPrimNamed = pcPrimNamed ctx,
       pcRequiredTypes = Set.union (pcRequiredTypes ctx) ts,
       pcOutput = pcOutput ctx,
       pcDisallowInit = pcDisallowInit ctx
@@ -216,6 +218,7 @@ instance (Show c, MergeableM m, CompileErrorM m, Monad m) =>
           pcFunctions = pcFunctions ctx,
           pcVariables = Map.insert n t (pcVariables ctx),
           pcReturns = pcReturns ctx,
+          pcPrimNamed = pcPrimNamed ctx,
           pcRequiredTypes = pcRequiredTypes ctx,
           pcOutput = pcOutput ctx,
           pcDisallowInit = pcDisallowInit ctx
@@ -235,6 +238,7 @@ instance (Show c, MergeableM m, CompileErrorM m, Monad m) =>
       pcFunctions = pcFunctions ctx,
       pcVariables = pcVariables ctx,
       pcReturns = pcReturns ctx,
+      pcPrimNamed = pcPrimNamed ctx,
       pcRequiredTypes = pcRequiredTypes ctx,
       pcOutput = pcOutput ctx ++ ss,
       pcDisallowInit = pcDisallowInit ctx
@@ -254,6 +258,7 @@ instance (Show c, MergeableM m, CompileErrorM m, Monad m) =>
         pcFunctions = pcFunctions ctx,
         pcVariables = pcVariables ctx,
         pcReturns = pcReturns ctx,
+        pcPrimNamed = pcPrimNamed ctx,
         pcRequiredTypes = pcRequiredTypes ctx,
         pcOutput = [],
         pcDisallowInit = pcDisallowInit ctx
@@ -273,6 +278,7 @@ instance (Show c, MergeableM m, CompileErrorM m, Monad m) =>
         pcFunctions = pcFunctions ctx,
         pcVariables = pcVariables ctx,
         pcReturns = ValidateNames $ Map.delete n ra,
+        pcPrimNamed = pcPrimNamed ctx,
         pcRequiredTypes = pcRequiredTypes ctx,
         pcOutput = pcOutput ctx,
         pcDisallowInit = pcDisallowInit ctx
@@ -292,6 +298,7 @@ instance (Show c, MergeableM m, CompileErrorM m, Monad m) =>
       pcFunctions = pcFunctions ctx,
       pcVariables = pcVariables ctx,
       pcReturns = foldr update NoValidation (map pcReturns cs),
+      pcPrimNamed = pcPrimNamed ctx,
       pcRequiredTypes = pcRequiredTypes ctx,
       pcOutput = pcOutput ctx,
       pcDisallowInit = pcDisallowInit ctx
@@ -317,6 +324,7 @@ instance (Show c, MergeableM m, CompileErrorM m, Monad m) =>
         pcFunctions = pcFunctions ctx,
         pcVariables = pcVariables ctx,
         pcReturns = NoValidation,
+        pcPrimNamed = pcPrimNamed ctx,
         pcRequiredTypes = pcRequiredTypes ctx,
         pcOutput = pcOutput ctx,
         pcDisallowInit = pcDisallowInit ctx
@@ -344,6 +352,7 @@ instance (Show c, MergeableM m, CompileErrorM m, Monad m) =>
                                                ") might not have been set before return at " ++
                                                formatFullContext c
       check _ = return ()
+  ccPrimNamedReturns = return . pcPrimNamed
 
 updateReturnVariables :: (Show c, Monad m, CompileErrorM m, MergeableM m) =>
   (Map.Map VariableName (VariableValue c)) ->
