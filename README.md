@@ -19,6 +19,15 @@ It's the [any%](https://en.wiktionary.org/wiki/any%25) of programming.
   }
 }</pre>
 
+## Project Status
+
+The Zeolite compiler is currently a prototype that compiles source files into
+C++, which can then be compiled with a C++ compiler. The primary use-case at the
+moment is to experiment with a new type system, described in the next section.
+
+A full compiler will be written if the language turns out to be useful. Until
+then, please experiment with it and share your thoughts.
+
 ## Motivation
 
 The basic units of a Zeolite program are
