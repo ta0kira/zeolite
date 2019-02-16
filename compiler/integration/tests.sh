@@ -1354,6 +1354,24 @@ define Test {
 }
 END
 
+expect_runs 'external filter not applied in @category' <<END
+concrete Value<#x> {
+  #x defines LessThan<#x>
+
+  @category something<#x> () -> ()
+}
+
+define Value {
+  something () {}
+}
+
+define Test {
+  run () {
+    ~ Value\$\$something<Bool>()
+  }
+}
+END
+
 expect_error 'internal param not visible from @type' '#x' 'line 8' <<END
 concrete Value {}
 
@@ -1368,6 +1386,46 @@ define Value {
 
 define Test {
   run () {}
+}
+END
+
+expect_runs 'internal filter not applied in @type' <<END
+concrete Value {
+  @type something<#x> () -> ()
+}
+
+define Value {
+  types<#x> {
+    #x defines LessThan<#x>
+  }
+
+  something () {}
+}
+
+define Test {
+  run () {
+    ~ Value\$something<Bool>()
+  }
+}
+END
+
+expect_runs 'internal filter not applied in @category' <<END
+concrete Value {
+  @category something<#x> () -> ()
+}
+
+define Value {
+  types<#x> {
+    #x defines LessThan<#x>
+  }
+
+  something () {}
+}
+
+define Test {
+  run () {
+    ~ Value\$\$something<Bool>()
+  }
 }
 END
 

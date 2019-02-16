@@ -130,13 +130,13 @@ compileConcreteDefinition ta dd@(DefinedCategory c n pi fi ms ps fs) = do
   ce <- mergeAllM [
       categoryConstructor ta t cm,
       categoryDispatch allFuncs,
-      mergeAllM $ map (compileExecutableProcedure ta n params params2 vm [] [] fa cv) cp,
+      mergeAllM $ map (compileExecutableProcedure ta n params params2 vm filters filters2 fa cv) cp,
       mergeAllM $ map (createMember r allFilters) cm
     ]
   te <- mergeAllM [
       typeConstructor ta t tm,
       typeDispatch allFuncs,
-      mergeAllM $ map (compileExecutableProcedure ta n params params2 vm filters [] fa tv) tp,
+      mergeAllM $ map (compileExecutableProcedure ta n params params2 vm filters filters2 fa tv) tp,
       mergeAllM $ map (createMember r allFilters) tm
     ]
   commonDefineAll t top bottom ce te fe
