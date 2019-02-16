@@ -29,12 +29,10 @@ TypeInstance& GetType_Float(Params<0>::Type);
 TypeInstance& GetType_Formatted(Params<0>::Type);
 
 S<TypeValue> Box_Bool(bool value);
-S<TypeValue> Box_String(std::string value);
-S<TypeValue> Box_Int(int value);
-S<TypeValue> Box_Float(double value);
+S<TypeValue> Box_String(const PrimString& value);
+S<TypeValue> Box_Int(PrimInt value);
+S<TypeValue> Box_Float(PrimFloat value);
 
 extern const S<TypeValue>& Var_empty;
-extern const S<TypeValue>& Var_true;
-extern const S<TypeValue>& Var_false;
 
 #endif  // BUILTIN_HPP_

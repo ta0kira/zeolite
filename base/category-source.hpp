@@ -94,9 +94,9 @@ class TypeValue {
   static S<TypeValue> Strong(W<TypeValue> target);
 
   virtual bool AsBool() const;
-  virtual std::string AsString() const;
-  virtual int AsInt() const;  // TODO: Use explict precision here.
-  virtual double AsFloat() const;
+  virtual PrimString AsString() const;
+  virtual PrimInt AsInt() const;
+  virtual PrimFloat AsFloat() const;
 
   ALWAYS_PERMANENT(TypeValue)
   virtual ~TypeValue() = default;

@@ -107,17 +107,17 @@ bool TypeValue::AsBool() const {
   return false;
 }
 
-std::string TypeValue::AsString() const {
+PrimString TypeValue::AsString() const {
   FAIL() << CategoryName() << " is not a String value";
   return "";
 }
 
-int TypeValue::AsInt() const {
+PrimInt TypeValue::AsInt() const {
   FAIL() << CategoryName() << " is not an Int value";
   return 0;
 }
 
-double TypeValue::AsFloat() const {
+PrimFloat TypeValue::AsFloat() const {
   FAIL() << CategoryName() << " is not a Float value";
   return 0.0;
 }

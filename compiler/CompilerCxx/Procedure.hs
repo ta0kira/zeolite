@@ -337,16 +337,16 @@ compileExpression :: (Show c, Monad m, CompileErrorM m, MergeableM m,
   Expression c -> CompilerState a m (ExpressionType,ExprValue)
 compileExpression = compile where
   compile (Literal (StringLiteral c l)) = do
-    return (ParamSet [stringRequiredValue],UnboxedPrimitive PrimString $ "std::string(\"" ++ l ++ "\")")
+    return (ParamSet [stringRequiredValue],UnboxedPrimitive PrimString $ "PrimString(\"" ++ l ++ "\")")
   compile (Literal (IntegerLiteral c l)) = do
     -- TODO: Check bounds.
-    return (ParamSet [intRequiredValue],UnboxedPrimitive PrimInt l)
+    return (ParamSet [intRequiredValue],UnboxedPrimitive PrimInt $ "PrimInt(" ++ l ++ ")")
   compile (Literal (HexLiteral c l)) = do
     -- TODO: Check bounds.
-    return (ParamSet [intRequiredValue],UnboxedPrimitive PrimInt $ "0x" ++ l)
+    return (ParamSet [intRequiredValue],UnboxedPrimitive PrimInt $ "PrimInt(0x" ++ l ++ ")")
   compile (Literal (DecimalLiteral c l1 l2)) = do
     -- TODO: Check bounds.
-    return (ParamSet [floatRequiredValue],UnboxedPrimitive PrimFloat $ l1 ++ "." ++ l2)
+    return (ParamSet [floatRequiredValue],UnboxedPrimitive PrimFloat $ "PrimFloat(" ++ l1 ++ "." ++ l2 ++ ")")
   compile (Literal (BoolLiteral c True)) = do
     return (ParamSet [boolRequiredValue],UnboxedPrimitive PrimBool "true")
   compile (Literal (BoolLiteral c False)) = do

@@ -14,6 +14,10 @@
   type& operator =(const type&) = delete; \
   type& operator =(type&&) = delete;
 
+using PrimInt = long;
+using PrimString = std::string;
+using PrimFloat = double;
+
 enum class SymbolScope {
   CATEGORY,
   TYPE,

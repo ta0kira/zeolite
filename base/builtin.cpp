@@ -147,7 +147,7 @@ class Value_String : public TypeValue {
 
   std::string CategoryName() const final { return "String"; }
 
-  std::string AsString() const final { return value_; }
+  PrimString AsString() const final { return value_; }
 
   ReturnTuple Dispatch(const S<TypeValue>& self,
                        const DFunction<SymbolScope::VALUE>& label,
@@ -211,7 +211,7 @@ class Value_Int : public TypeValue {
 
   std::string CategoryName() const final { return "Int"; }
 
-  int AsInt() const final { return value_; }
+  PrimInt AsInt() const final { return value_; }
 
   ReturnTuple Dispatch(const S<TypeValue>& self,
                        const DFunction<SymbolScope::VALUE>& label,
@@ -277,7 +277,7 @@ class Value_Float : public TypeValue {
 
   std::string CategoryName() const final { return "Float"; }
 
-  double AsFloat() const final { return value_; }
+  PrimFloat AsFloat() const final { return value_; }
 
   ReturnTuple Dispatch(const S<TypeValue>& self,
                        const DFunction<SymbolScope::VALUE>& label,
@@ -319,6 +319,9 @@ struct Type_Formatted : public TypeInstance {
     return true;
   }
 };
+
+const S<TypeValue>& Var_true = *new S<TypeValue>(new Value_Bool(true));
+const S<TypeValue>& Var_false = *new S<TypeValue>(new Value_Bool(false));
 
 }  // namespace
 
@@ -406,19 +409,17 @@ S<TypeValue> Box_Bool(bool value) {
   return value? Var_true : Var_false;
 }
 
-S<TypeValue> Box_String(std::string value) {
+S<TypeValue> Box_String(const PrimString& value) {
   return S_get(new Value_String(value));
 }
 
-S<TypeValue> Box_Int(int value) {
+S<TypeValue> Box_Int(PrimInt value) {
   return S_get(new Value_Int(value));
 }
 
-S<TypeValue> Box_Float(double value) {
+S<TypeValue> Box_Float(PrimFloat value) {
   return S_get(new Value_Float(value));
 }
 
 
 const S<TypeValue>& Var_empty = *new S<TypeValue>(new OptionalEmpty());
-const S<TypeValue>& Var_true = *new S<TypeValue>(new Value_Bool(true));
-const S<TypeValue>& Var_false = *new S<TypeValue>(new Value_Bool(false));
