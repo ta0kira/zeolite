@@ -193,6 +193,79 @@ Zeolite also has a limited meta-type system that operates on types themselves:
   out of line so that constraints can contain more complex relationships between
   parameters.
 
+## Getting Started
+
+### Installing Zeolite
+
+Zeolite is currently developed and tested on Linux. It might not work out of the
+box on other operating systems at the moment.
+
+1. Make sure that you have [`git`][git], [`clang`][clang], and [`ghc`][ghc]
+   installed on your system.
+2. Clone this project in a local directory.
+   ```shell
+   git clone https://github.com/ta0kira/zeolite.git
+   ```
+3. Update the submodules used by this project.
+   ```shell
+   cd zeolite && git submodule init && git submodule update
+   ```
+
+The following sections explain the basics of source files and compilation.
+
+### Source Files
+
+There are two distinct types of source file used by the Zeolite compiler:
+
+1. `.0rx`: Implementation files that can contain category declarations, i.e.,
+   `concrete`, `@value interface`, `@type interface`, and category definitions,
+   i.e., `define`. Nothing in implementation files is visible to other source
+   files.
+2. `.0rp`: Declaration files that can only contain category declarations; they
+   *cannot* contain `define`. Everything in declaration files is visible to
+   other source files.
+
+If you want to have an entire program in a single source file, use `.0rx`. If
+you need to split it up, you must also use `.0rp` for sharing type declarations.
+
+### Compiling Programs
+
+The Zeolite compiler is currently extremely simple. It takes the name of a main
+category and a list of source files, and creates a binary with the same name as
+the main category. The main category *must* define `Runner` and implement the
+`@type run () -> ()` function.
+
+<pre style='color:#1f1c1b;background-color:#ffffff;'>
+<span style='color:#898887;'>// your-source.0rx</span>
+
+<b>concrete</b> <b><span style='color:#0057ae;'>YourCategory</span></b> {
+  <b>defines</b> <span style='color:#0057ae;'>Runner</span>
+}
+
+<b>define</b> <b><span style='color:#0057ae;'>YourCategory</span></b> {
+  run () { <span style='color:#898887;'>/*</span><span style='color:#898887;'> your code </span><span style='color:#898887;'>*/</span> }
+}</pre>
+
+```shell
+# Compile.
+./zeolite.sh YourCategory your-source.0rx
+
+# Execute.
+./YourCategory
+```
+
+Zeolite will allow incremental compilation and linking at some point in the
+future, but it currently compiles and links the entire binary in one shot.
+
+`zeolite.sh` was written for Linux systems that have the [`clang`][clang] C++
+compiler and the [`ghc`][ghc] Haskell compiler. The C++ compiler can be changed
+in the script, but the Haskell code might not work without [`ghc`][ghc].
+
+For other operating systems, `zeolite.sh` will likely need some tweaking, or
+complete replacement. The Zeolite compiler `compiler/CompilerCxx/compiler` can
+be called directly to create C++ source files, which can then be compiled into a
+binary with most C++ compilers.
+
 ## Basic Ideas
 
 This section provides a language intro, starting with simple topics and getting
@@ -450,59 +523,6 @@ are `@type interface`. This ensures that the procedure is chosen based on a
 The main drawback of type interfaces is that their procedures can only be
 defined for `concrete` categories. This means that, for example, a filter such
 as `#x defines Equals<#x>` cannot be satisfied by a `@value interface`.
-
-### Source Files
-
-There are two distinct types of source file used by the Zeolite compiler:
-
-1. `.0rx`: Implementation files that can contain category declarations, i.e.,
-   `concrete`, `@value interface`, `@type interface`, and category definitions,
-   i.e., `define`. Nothing in implementation files is visible to other source
-   files.
-2. `.0rp`: Declaration files that can only contain category declarations; they
-   *cannot* contain `define`. Everything in declaration files is visible to
-   other source files.
-
-If you want to have an entire program in a single source file, use `.0rx`. If
-you need to split it up, you must also use `.0rp` for sharing type declarations.
-
-### Compiling Programs
-
-The Zeolite compiler is currently extremely simple. It takes the name of a main
-category and a list of source files, and creates a binary with the same name as
-the main category. The main category *must* define `Runner` and implement the
-`@type run () -> ()` function.
-
-<pre style='color:#1f1c1b;background-color:#ffffff;'>
-<span style='color:#898887;'>// your-source.0rx</span>
-
-<b>concrete</b> <b><span style='color:#0057ae;'>YourCategory</span></b> {
-  <b>defines</b> <span style='color:#0057ae;'>Runner</span>
-}
-
-<b>define</b> <b><span style='color:#0057ae;'>YourCategory</span></b> {
-  run () { <span style='color:#898887;'>/*</span><span style='color:#898887;'> your code </span><span style='color:#898887;'>*/</span> }
-}</pre>
-
-```shell
-# Compile.
-./zeolite.sh YourCategory your-source.0rx
-
-# Execute.
-./YourCategory
-```
-
-Zeolite will allow incremental compilation and linking at some point in the
-future, but it currently compiles and links the entire binary in one shot.
-
-`zeolite.sh` was written for Linux systems that have the [`clang`][clang] C++
-compiler and the [`ghc`][ghc] Haskell compiler. The C++ compiler can be changed
-in the script, but the Haskell code might not work without [`ghc`][ghc].
-
-For other operating systems, `zeolite.sh` will likely need some tweaking, or
-complete replacement. The Zeolite compiler `compiler/CompilerCxx/compiler` can
-be called directly to create C++ source files, which can then be compiled into a
-binary with most C++ compilers.
 
 ### Parameter Filters
 
@@ -998,3 +1018,4 @@ forthcoming.
 
 [clang]: https://clang.llvm.org/
 [ghc]: https://www.haskell.org/ghc/
+[git]: https://git-scm.com/
