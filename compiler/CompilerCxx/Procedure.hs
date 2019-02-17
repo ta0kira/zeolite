@@ -456,7 +456,7 @@ compileExpression = compile where
           lift $ compileError $ "Cannot " ++ show o ++ " " ++ show t1 ++ " and " ++
                                 show t2 ++ " [" ++ formatFullContext c ++ "]"
       glueInfix t1 t2 e1 o e2 =
-        UnboxedPrimitive t2 $ "(" ++ useAsUnboxed t1 e1 ++ ")" ++ o ++ "(" ++ useAsUnboxed t1 e2 ++ ")"
+        UnboxedPrimitive t2 $ useAsUnboxed t1 e1 ++ o ++ useAsUnboxed t1 e2
   transform e (ConvertedCall c t f) = do
     (ParamSet ts,e') <- e
     t' <- requireSingle c ts

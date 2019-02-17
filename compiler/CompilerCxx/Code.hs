@@ -209,6 +209,3 @@ valueBase = "TypeValue"
 
 paramType :: String
 paramType = typeBase ++ "&"
-
-proxyType :: String
-proxyType = "S<" ++ valueBase ++ ">&"
