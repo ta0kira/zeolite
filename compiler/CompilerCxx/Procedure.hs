@@ -200,7 +200,7 @@ compileStatement (Assignment c as e) = do
   processParamPairsT (createVariable r fa) as ts `reviseErrorStateT`
     ("In assignment at " ++ formatFullContext c)
   csWrite [setTraceContext c]
-  variableTypes <- sequence $ map getVariableType $ psParams as
+  variableTypes <- sequence $ map (uncurry getVariableType) $ zip (psParams as) (psParams ts)
   assignAll (zip3 [0..] variableTypes (psParams as)) e'
   where
     assignAll [v] e = assignSingle v e
@@ -208,10 +208,11 @@ compileStatement (Assignment c as e) = do
       csWrite ["{","const auto r = " ++ useAsReturns e ++ ";"]
       sequence $ map assignMulti vs
       csWrite ["}"]
-    getVariableType (CreateVariable _ t _) = return t
-    getVariableType (ExistingVariable (InputValue c n)) = do
+    getVariableType (CreateVariable _ t _) _ = return t
+    getVariableType (ExistingVariable (InputValue c n)) _ = do
       (VariableValue _ _ t _) <- csGetVariable c n
       return t
+    getVariableType (ExistingVariable (DiscardInput _)) t = return t
     createVariable r fa (CreateVariable c t1 n) t2 = do
       -- TODO: Call csRequiresTypes for t1. (Maybe needs a helper function.)
       lift $ mergeAllM [validateGeneralInstance r fa (vtType t1),
@@ -418,8 +419,15 @@ compileExpression = compile where
         compileError $ "Initializer position " ++ show i ++ " has " ++ show (length ts) ++ " values but should have 1"
   compile (InfixExpression c e1 o e2) = do
     e1' <- compileExpression e1
-    e2' <- compileExpression e2
+    e2' <- if o `Set.member` logical
+              then isolateExpression e2 -- Ignore named-return assignments.
+              else compileExpression e2
     bindInfix c e1' o e2'
+  isolateExpression e = do
+    ctx <- getCleanContext
+    (e',ctx') <- lift $ runStateT (compileExpression e) ctx
+    (lift $ ccGetRequired ctx') >>= csRequiresTypes
+    return e'
   arithmetic1 = Set.fromList ["*","/"]
   arithmetic2 = Set.fromList ["%"]
   arithmetic3 = Set.fromList ["+","-"]
@@ -599,8 +607,6 @@ compileExpressionStart (InlineAssignment c n e) = do
   fa <- csAllFilters
   lift $ (checkValueTypeMatch r fa t t0) `reviseError`
     ("In assignment at " ++ formatFullContext c)
-  -- TODO: This might not be safe when operators are used, since the assignment
-  -- might get short-circuited.
   csUpdateAssigned n
   scoped <- autoScope s
   return (ParamSet [t0],readStoredVariable t0 $ "(" ++ scoped ++ variableName n ++

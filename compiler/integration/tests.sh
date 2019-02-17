@@ -404,6 +404,50 @@ define Test {
 }
 END
 
+expect_runs 'assign before logical' <<END
+define Test {
+  @value process () -> (Bool)
+  process () (value) {
+    ~ (value <- true) || false
+  }
+
+  run () {}
+}
+END
+
+expect_error 'assign after logical' 'value' 'line 5' <<END
+define Test {
+  @value process () -> (Bool)
+  process () (value) {
+    ~ false || (value <- true)
+  }
+
+  run () {}
+}
+END
+
+expect_runs 'assign before arithmetic' <<END
+define Test {
+  @value process () -> (Int)
+  process () (value) {
+    ~ (value <- 1) + 2
+  }
+
+  run () {}
+}
+END
+
+expect_runs 'assign after arithmetic' <<END
+define Test {
+  @value process () -> (Int)
+  process () (value) {
+    ~ 2 + (value <- 1)
+  }
+
+  run () {}
+}
+END
+
 expect_error 'return used before assigned' 'value.+initialized' 'line 4' <<END
 define Test {
   @category process () -> (Int)
