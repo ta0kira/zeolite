@@ -9,6 +9,8 @@ object-oriented programming and type parameterization.
 It's the [any%](https://en.wiktionary.org/wiki/any%25) of programming.
 
 <pre style='color:#1f1c1b;background-color:#ffffff;'>
+<span style='color:#898887;'>// hello-world.0rx</span>
+
 <b>concrete</b> <b><span style='color:#0057ae;'>HelloWorld</span></b> {
   <b>defines</b> <span style='color:#0057ae;'>Runner</span>
 }
@@ -18,6 +20,14 @@ It's the [any%](https://en.wiktionary.org/wiki/any%25) of programming.
     <span style='color:#006e28;'>~</span> <span style='color:#0057ae;'>LazyStream</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Formatted</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>$</span>new().append(<span style='color:#bf0303;'>&quot;Hello World</span><span style='color:#924c9d;'>\n</span><span style='color:#bf0303;'>&quot;</span>).writeTo(<span style='color:#0057ae;'>SimpleOutput</span><span style='color:#644a9b;'>$</span>stderr())
   }
 }</pre>
+
+```shell
+# Compile.
+./zeolite.sh HelloWorld hello-world.0rx
+
+# Execute.
+./HelloWorld
+```
 
 ## Project Status
 
@@ -456,7 +466,43 @@ There are two distinct types of source file used by the Zeolite compiler:
 If you want to have an entire program in a single source file, use `.0rx`. If
 you need to split it up, you must also use `.0rp` for sharing type declarations.
 
-(Compilation instructions are still in the works.)
+### Compiling Programs
+
+The Zeolite compiler is currently extremely simple. It takes the name of a main
+category and a list of source files, and creates a binary with the same name as
+the main category. The main category *must* define `Runner` and implement the
+`@type run () -> ()` function.
+
+<pre style='color:#1f1c1b;background-color:#ffffff;'>
+<span style='color:#898887;'>// your-source.0rx</span>
+
+<b>concrete</b> <b><span style='color:#0057ae;'>YourCategory</span></b> {
+  <b>defines</b> <span style='color:#0057ae;'>Runner</span>
+}
+
+<b>define</b> <b><span style='color:#0057ae;'>YourCategory</span></b> {
+  run () { <span style='color:#898887;'>/*</span><span style='color:#898887;'> your code </span><span style='color:#898887;'>*/</span> }
+}</pre>
+
+```shell
+# Compile.
+./zeolite.sh YourCategory your-source.0rx
+
+# Execute.
+./YourCategory
+```
+
+Zeolite will allow incremental compilation and linking at some point in the
+future, but it currently compiles and links the entire binary in one shot.
+
+`zeolite.sh` was written for Linux systems that have the [`clang`][clang] C++
+compiler and the [`ghc`][ghc] Haskell compiler. The C++ compiler can be changed
+in the script, but the Haskell code might not work without [`ghc`][ghc].
+
+For other operating systems, `zeolite.sh` will likely need some tweaking, or
+complete replacement. The Zeolite compiler `compiler/CompilerCxx/compiler` can
+be called directly to create C++ source files, which can then be compiled into a
+binary with most C++ compilers.
 
 ### Parameter Filters
 
@@ -949,3 +995,6 @@ functions are often combined with function overloading.
 
 Please use Zeolite. Installation instructions and a proper build system are
 forthcoming.
+
+[clang]: https://clang.llvm.org/
+[ghc]: https://www.haskell.org/ghc/

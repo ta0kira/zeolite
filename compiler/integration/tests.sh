@@ -4,6 +4,8 @@ set -u -e
 
 cd "$(dirname "$0")"
 
+# TODO: Merge some of this with zeolite.sh?
+
 root=$PWD/../..
 errors='errors.txt'
 main="$PWD/main.cpp"
