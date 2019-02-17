@@ -452,16 +452,28 @@ define Test {
 END
 
 expect_runs 'assigns in correct order' <<END
+concrete Value {
+  @type create () -> (Value)
+}
+
+define Value {
+  create () {
+    return Value{}
+  }
+}
+
 define Test {
-  @type get () -> (Int,Int)
-  get () (x,y) {
+  @type get () -> (Value,Int,Int)
+  get () (v,x,y) {
+    // This makes sure that x and y (primitive) are offset.
+    v <- Value\$create()
     x <- 1
     y <- 2
   }
 
   run () {
     scoped {
-      { Int x, Int y } <- get()
+      { _, Int x, Int y } <- get()
     } in if (x != 1) {
       ~ Util\$crash()
     } elif (y != 2) {

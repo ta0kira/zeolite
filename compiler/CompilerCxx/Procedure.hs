@@ -60,9 +60,10 @@ compileExecutableProcedure tm t ps pi ms pa fi fa va
                    CategoryScope -> localFilters
                    TypeScope -> Map.union localFilters typeFilters
                    ValueScope -> Map.unions [localFilters,typeFilters,valueFilters]
-  let ns = if isUnnamedReturns rs2
-              then []
-              else filter (isPrimType . snd) $ zip (map ovName $ psParams $ nrNames rs2) (map pvType $ psParams rs1)
+  let ns0 = if isUnnamedReturns rs2
+               then []
+               else zipWith3 ReturnVariable [0..] (map ovName $ psParams $ nrNames rs2) (map pvType $ psParams rs1)
+  let ns = filter (isPrimType . rvType) ns0
   let ctx = ProcedureContext {
       pcScope = s,
       pcType = t,
@@ -700,9 +701,8 @@ expandGeneralInstance (SingleType (JustParamName p)) = do
 doNamedReturn :: (Monad m, CompilerContext c m [String] a) => CompilerState a m ()
 doNamedReturn = do
   vars <- csPrimNamedReturns
-  let vars' = zip [0..] vars
-  sequence $ map (\(i,(n,t)) -> csWrite [assign i n t]) vars'
+  sequence $ map (csWrite . (:[]) . assign) vars
   csWrite ["return returns;"]
   where
-    assign i n t =
+    assign (ReturnVariable i n t) =
       "returns.At(" ++ show i ++ ") = " ++ useAsUnwrapped (readStoredVariable t $ variableName n) ++ ";"

@@ -9,6 +9,7 @@ module CompilerState (
   CompilerState(..),
   ExpressionType(..),
   MemberValue(..),
+  ReturnVariable(..),
   csAddVariable,
   csAllFilters,
   csCheckValueInit,
@@ -68,7 +69,7 @@ class Monad m => CompilerContext c m s a | a -> c s where
   ccUpdateAssigned :: a -> VariableName -> m a
   ccInheritReturns :: a -> [a] -> m a
   ccRegisterReturn :: a -> [c] -> ExpressionType -> m a
-  ccPrimNamedReturns :: a -> m [(VariableName,ValueType)]
+  ccPrimNamedReturns :: a -> m [ReturnVariable]
 
 type ExpressionType = ParamSet ValueType
 
@@ -77,6 +78,14 @@ data MemberValue c =
     mvContext :: [c],
     mvName :: VariableName,
     mvType :: ValueType
+  }
+  deriving (Show)
+
+data ReturnVariable =
+  ReturnVariable {
+    rvIndex :: Int,
+    rvName :: VariableName,
+    rvType :: ValueType
   }
   deriving (Show)
 
@@ -159,7 +168,7 @@ csRegisterReturn :: (Monad m, CompilerContext c m s a) =>
 csRegisterReturn c rs = fmap (\x -> ccRegisterReturn x c rs) get >>= lift >>= put
 
 csPrimNamedReturns :: (Monad m, CompilerContext c m s a) =>
-  CompilerState a m [(VariableName,ValueType)]
+  CompilerState a m [ReturnVariable]
 csPrimNamedReturns = fmap ccPrimNamedReturns get >>= lift
 
 data CompiledData s =

@@ -37,7 +37,7 @@ data ProcedureContext c =
     pcFunctions :: Map.Map FunctionName (ScopedFunction c),
     pcVariables :: Map.Map VariableName (VariableValue c),
     pcReturns :: ReturnValidation c,
-    pcPrimNamed :: [(VariableName,ValueType)],
+    pcPrimNamed :: [ReturnVariable],
     pcRequiredTypes :: Set.Set CategoryName,
     pcOutput :: [String],
     pcDisallowInit :: Bool
