@@ -884,6 +884,73 @@ Probably not.
 
 ## Other Discussions
 
+### Inheritance and Overriding
+
+Zeolite doesn't allow one category to inherit procedures from another category,
+unlike classes in Java and C++.
+
+On the other hand, there are three common use-cases where inheriting procedures
+is useful:
+
+1. Extending the functionality of a base category.
+2. Implementing procedures that a base category can call.
+3. Overriding some of the functionality of a base category.
+
+All of these idioms are possible in Zeolite; they just can't be done using
+inheritance.
+
+For example, the base and derived categories can implement the same interface,
+and the derived category can store the base as a data member. The derived
+category can then delegate calls to that data member. (Delegation might have its
+own special syntax in the future.)
+
+Since Zeolite doesn't use constructors, you can often just return a *different*
+type from a factory method. In languages with constructors, the default
+expectation is that there is a way to obtain a new value for any type. In
+Zeolite, the default is that there *isn't* a way to obtain a new value.
+
+This difference in expectations can be useful if the purpose of inheritance
+would have been to implement a function to be called by the base type.
+
+<pre style='color:#1f1c1b;background-color:#ffffff;'>
+<span style='color:#898887;'>// Some interface for threads.</span>
+<span style='color:#644a9b;'>@value</span> <b>interface</b> <b><span style='color:#0057ae;'>Thread</span></b> {
+  start () <b><span style='color:#006e28;'>-&gt;</span></b> ()
+  join () <b><span style='color:#006e28;'>-&gt;</span></b> ()
+}
+
+<span style='color:#898887;'>// Some interface for runnable procedures.</span>
+<span style='color:#644a9b;'>@value</span> <b>interface</b> <b><span style='color:#0057ae;'>Runnable</span></b> {
+  run () <b><span style='color:#006e28;'>-&gt;</span></b> ()
+}
+
+<span style='color:#898887;'>// A Thread implementation that executes a procedure.</span>
+<b>concrete</b> <b><span style='color:#0057ae;'>RunnableThread</span></b> {
+  <b>refines</b> <span style='color:#0057ae;'>Thread</span>
+  <span style='color:#644a9b;'>@type</span> create (<span style='color:#0057ae;'>Runnable</span>) <b><span style='color:#006e28;'>-&gt;</span></b> (<span style='color:#0057ae;'>Thread</span>)
+}
+
+<span style='color:#898887;'>// A procedure that uses RunnableThread internally.</span>
+<b>concrete</b> <b><span style='color:#0057ae;'>MyThread</span></b> {
+  <b>refines</b> <span style='color:#0057ae;'>Runnable</span>
+  <span style='color:#644a9b;'>@type</span> new () <b><span style='color:#006e28;'>-&gt;</span></b> (<span style='color:#0057ae;'>Thread</span>)
+}
+
+<b>define</b> <b><span style='color:#0057ae;'>MyThread</span></b> {
+  new () {
+    <b>return</b> <span style='color:#0057ae;'>RunnableThread</span><span style='color:#644a9b;'>$</span>create(<span style='color:#0057ae;'>MyThread</span>{})
+  }
+
+  run () {
+    <span style='color:#898887;'>// The procedure to run in the thread.</span>
+  }
+}</pre>
+
+In this example, `MyThread$new()` doesn't actually return a value of type
+`MyThread`, but that shouldn't matter to the caller; the caller just needs a
+`Thread`. There is no expectation that a caller should be able to directly get a
+value of type `MyThread`.
+
 ### Implicit Types
 
 Zeolite currently requires that all types be made explicit in places where types
