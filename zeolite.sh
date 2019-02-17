@@ -10,13 +10,23 @@ errors='errors.txt'
 compiler="$root/compiler/CompilerCxx/compiler"
 compile_cxx=(clang++ -O2 -std=c++11 -o)
 
-standard_tm=($root/standard/*.0rp)
-standard_inc=($root/standard)
-standard_cpp=($root/standard/*.cpp)
+standard_src=('standard.0rp' 'standard.0rx')
+standard_tm=("$root/standard/standard.0rp")
+extra_src=(
+  "$root/base/builtin.cpp"
+  "$root/base/category-source.cpp"
+  "$root/base/logging.cpp"
+  "$root/base/types.cpp"
+  "$root/capture-thread/src/thread-crosser.cc"
+  "$root/standard/Category_BufferedWriter.cpp"
+  "$root/standard/Category_LazyStream.cpp"
+  "$root/standard/Category_Runner.cpp"
+  "$root/standard/Category_SimpleOutput.cpp"
+  "$root/standard/Category_Writer.cpp")
 
 init() {
   ghc -i"$root/compiler" "$compiler.hs"
-  ( cd "$root/standard" && "$compiler" *.0r{p,x} )
+  ( cd "$root/standard" && "$compiler" "${standard_src[@]}" )
 }
 
 resolve_files() {
@@ -52,11 +62,9 @@ compile() {
       "${compile_cxx[@]}" "$binary_name"
       -I"$root/capture-thread/include"
       -I"$root/base"
+      -I"$root/standard"
       -I"$temp"
-      -I"$standard_inc"
-      "$root/capture-thread/src"/*.cc
-      "$root/base"/*cpp
-      "${standard_cpp[@]}"
+      "${extra_src[@]}"
       "$temp"/*cpp)
     echo "${command1[@]}" >> "$temp/$errors"
     "${command1[@]}" |& tee -a "$temp/$errors"
