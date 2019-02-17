@@ -7,6 +7,7 @@ module CompilerCxx.Code (
   emptyCode,
   functionLabelType,
   indentCompiled,
+  isPrimType,
   onlyCode,
   onlyCodes,
   paramType,
@@ -61,6 +62,13 @@ data PrimitiveType =
   PrimInt |
   PrimFloat
   deriving (Eq,Show)
+
+isPrimType :: ValueType -> Bool
+isPrimType t
+  | t == boolRequiredValue  = True
+  | t == intRequiredValue   = True
+  | t == floatRequiredValue = True
+  | otherwise               = False
 
 data ExprValue =
   OpaqueMulti String |
@@ -156,7 +164,6 @@ valueAsUnwrapped v                               = v
 variableStoredType :: ValueType -> String
 variableStoredType t
   | t == boolRequiredValue   = "bool"
-  | t == stringRequiredValue = "PrimString"
   | t == intRequiredValue    = "PrimInt"
   | t == floatRequiredValue  = "PrimFloat"
   | isWeakValue t            = "W<TypeValue>"
@@ -165,7 +172,6 @@ variableStoredType t
 variableProxyType :: ValueType -> String
 variableProxyType t
   | t == boolRequiredValue   = "bool"
-  | t == stringRequiredValue = "PrimString"
   | t == intRequiredValue    = "PrimInt"
   | t == floatRequiredValue  = "PrimFloat"
   | isWeakValue t            = "W<TypeValue>&"
@@ -174,7 +180,6 @@ variableProxyType t
 readStoredVariable :: ValueType -> String -> ExprValue
 readStoredVariable t s
   | t == boolRequiredValue   = UnboxedPrimitive PrimBool s
-  | t == stringRequiredValue = UnboxedPrimitive PrimString s
   | t == intRequiredValue    = UnboxedPrimitive PrimInt s
   | t == floatRequiredValue  = UnboxedPrimitive PrimFloat s
   | otherwise                = UnwrappedSingle s
@@ -182,7 +187,6 @@ readStoredVariable t s
 writeStoredVariable :: ValueType -> ExprValue -> String
 writeStoredVariable t e
   | t == boolRequiredValue   = useAsUnboxed PrimBool e
-  | t == stringRequiredValue = useAsUnboxed PrimString e
   | t == intRequiredValue    = useAsUnboxed PrimInt e
   | t == floatRequiredValue  = useAsUnboxed PrimFloat e
   | otherwise                = useAsUnwrapped e

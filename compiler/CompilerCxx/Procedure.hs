@@ -200,13 +200,18 @@ compileStatement (Assignment c as e) = do
   processParamPairsT (createVariable r fa) as ts `reviseErrorStateT`
     ("In assignment at " ++ formatFullContext c)
   csWrite [setTraceContext c]
-  assignAll (zip3 [0..] (psParams ts) $ psParams as) e'
+  variableTypes <- sequence $ map getVariableType $ psParams as
+  assignAll (zip3 [0..] variableTypes (psParams as)) e'
   where
     assignAll [v] e = assignSingle v e
     assignAll vs e = do
       csWrite ["{","const auto r = " ++ useAsReturns e ++ ";"]
       sequence $ map assignMulti vs
       csWrite ["}"]
+    getVariableType (CreateVariable _ t _) = return t
+    getVariableType (ExistingVariable (InputValue c n)) = do
+      (VariableValue _ _ t _) <- csGetVariable c n
+      return t
     createVariable r fa (CreateVariable c t1 n) t2 = do
       -- TODO: Call csRequiresTypes for t1. (Maybe needs a helper function.)
       lift $ mergeAllM [validateGeneralInstance r fa (vtType t1),

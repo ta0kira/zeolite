@@ -100,11 +100,11 @@ expect_runs() {
     cd "$temp" # Makes sure core dump is in the right place.
     ulimit -Sc unlimited 2> /dev/null || true
     "$temp/compiled" |& tee -a "$temp/$errors"
+    if [[ "${PIPESTATUS[0]}" != 0 ]]; then
+      echo "Test \"$name\" ($count): Expected execution; see output in $temp" 1>&2
+      return 1
+    fi
   )
-  if [[ "${PIPESTATUS[0]}" != 0 ]]; then
-    echo "Test \"$name\" ($count): Expected execution; see output in $temp" 1>&2
-    return 1
-  fi
   for p in "${patterns[@]}"; do
     if ! egrep -q "$p" "$temp/$errors"; then
       echo "Test \"$name\" ($count): Expected pattern '$p' in error; see output in $temp" 1>&2
@@ -2644,6 +2644,55 @@ expect_runs 'float Equals' <<END
 define Test {
   run () {
     if (!Float\$equals(1.0,1.0)) {
+      ~ Util\$crash()
+    }
+  }
+}
+END
+
+expect_runs 'bool is shared' <<END
+define Test {
+  run () {
+    Bool value1 <- true
+    // Shared because true and false are boxed constants.
+    weak Bool value2 <- value1
+    if (!present(strong(value2))) {
+      ~ Util\$crash()
+    }
+  }
+}
+END
+
+expect_runs 'string is shared' <<END
+define Test {
+  run () {
+    String value1 <- "x"
+    weak String value2 <- value1
+    if (!present(strong(value2))) {
+      ~ Util\$crash()
+    }
+  }
+}
+END
+
+expect_runs 'int is not shared' <<END
+define Test {
+  run () {
+    Int value1 <- 1
+    weak Int value2 <- value1
+    if (present(strong(value2))) {
+      ~ Util\$crash()
+    }
+  }
+}
+END
+
+expect_runs 'float is not shared' <<END
+define Test {
+  run () {
+    Float value1 <- 1.1
+    weak Float value2 <- value1
+    if (present(strong(value2))) {
       ~ Util\$crash()
     }
   }
