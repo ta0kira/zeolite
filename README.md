@@ -1013,8 +1013,8 @@ functions are often combined with function overloading.
 
 ## Conclusion
 
-Please use Zeolite. Installation instructions and a proper build system are
-forthcoming.
+Please experiment with Zeolite and share your thoughts. Please also contact me
+if you are interested in helping with development.
 
 [clang]: https://clang.llvm.org/cxx_status.html
 [ghc]: https://www.haskell.org/ghc/
