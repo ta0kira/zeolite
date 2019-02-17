@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="Generator" content="Kate, the KDE Advanced Text Editor" />
+<title>type-tree.0rp</title>
+</head>
+<!-- Highlighting: "Zeolite" -->
+<body>
+<pre style='color:#1f1c1b;background-color:#ffffff;'>
+<span style='color:#898887;'>/*</span><span style='color:#898887;'> A key-value index that can hold multiple types of value.</span>
+<span style='color:#898887;'> *</span>
+<span style='color:#898887;'> * Each element in the index is keyed by a TypeKey that has a type param that</span>
+<span style='color:#898887;'> * matches the type of the value.</span>
+<span style='color:#898887;'> </span><span style='color:#898887;'>*/</span>
+<b>concrete</b> <b><span style='color:#0057ae;'>TypeTree</span></b> {
+  <span style='color:#898887;'>// Creates a new TypeTree, e.g., TypeTree$new().</span>
+  <span style='color:#644a9b;'>@type</span> new () <b><span style='color:#006e28;'>-&gt;</span></b> (<span style='color:#0057ae;'>TypeTree</span>)
+
+  <span style='color:#898887;'>// Sets the value for the given key, inserting if necessary.</span>
+  <span style='color:#644a9b;'>@value</span> set&lt;<i><span style='color:#0057ae;'>#x</span></i>&gt; (<span style='color:#0057ae;'>TypeKey</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>,<i><span style='color:#0057ae;'>#x</span></i>) <b><span style='color:#006e28;'>-&gt;</span></b> (<span style='color:#0057ae;'>TypeTree</span>)
+
+  <span style='color:#898887;'>// Removes the value for the given key.</span>
+  <span style='color:#644a9b;'>@value</span> remove (<span style='color:#0057ae;'>TypeKey</span><span style='color:#c02040;'>&lt;</span><b>any</b><span style='color:#c02040;'>&gt;</span>) <b><span style='color:#006e28;'>-&gt;</span></b> (<span style='color:#0057ae;'>TypeTree</span>)
+
+  <span style='color:#898887;'>// Returns the value for the given key, or empty if:</span>
+  <span style='color:#898887;'>// - There is no entry for the key.</span>
+  <span style='color:#898887;'>// - The value for the key is not of type #x, e.g., was originally added to</span>
+  <span style='color:#898887;'>//   the tree as a parent of type #x.</span>
+  <span style='color:#644a9b;'>@value</span> get&lt;<i><span style='color:#0057ae;'>#x</span></i>&gt; (<span style='color:#0057ae;'>TypeKey</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>) <b><span style='color:#006e28;'>-&gt;</span></b> (<b>optional</b> <i><span style='color:#0057ae;'>#x</span></i>)
+}
+
+<span style='color:#898887;'>/*</span><span style='color:#898887;'> A typed key for indexing values in TypeTree.</span>
+<span style='color:#898887;'> *</span>
+<span style='color:#898887;'> * A key of type TypeKey&lt;#x&gt; indexes a value of type #x. The key can also be</span>
+<span style='color:#898887;'> * used as a key for any parent type of #x. For example, if V -&gt; I then</span>
+<span style='color:#898887;'> * TypeKey&lt;V&gt; can be used as TypeKey&lt;I&gt;.</span>
+<span style='color:#898887;'> </span><span style='color:#898887;'>*/</span>
+<b>concrete</b> <b><span style='color:#0057ae;'>TypeKey</span></b><span style='color:#c02040;'>&lt;</span><span style='color:#c04040;'>|</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span> {
+  <span style='color:#898887;'>// Note that TypeKey&lt;#x&gt; as a type argument for some #y can satisfy</span>
+  <span style='color:#898887;'>//</span>
+  <span style='color:#898887;'>//   #y defines LessThan&lt;#y&gt;</span>
+  <span style='color:#898887;'>//</span>
+  <span style='color:#898887;'>// even though we only define LessThan&lt;TypeKey&lt;any&gt;&gt;.</span>
+  <span style='color:#898887;'>//</span>
+  <span style='color:#898887;'>// This is non-trivial:</span>
+  <span style='color:#898887;'>//</span>
+  <span style='color:#898887;'>// - #x -&gt; any, which is trivial.</span>
+  <span style='color:#898887;'>// - TypeKey&lt;#x&gt; -&gt; TypeKey&lt;any&gt;, since TypeKey has a single covariant param.</span>
+  <span style='color:#898887;'>// - LessThan&lt;TypeKey&lt;any&gt;&gt; -&gt; LessThan&lt;TypeKey&lt;#x&gt;&gt;, since LessThan has a</span>
+  <span style='color:#898887;'>//   single contravariant param.</span>
+  <span style='color:#898887;'>// - TypeKey&lt;#x&gt; -&gt; LessThan&lt;TypeKey&lt;any&gt;&gt; -&gt; LessThan&lt;TypeKey&lt;#x&gt;&gt;.</span>
+  <span style='color:#898887;'>//</span>
+  <span style='color:#898887;'>// This means that TypeKey&lt;#x&gt; can be used as a key in Tree. (See tree.0rp.)</span>
+  <b>defines</b> <i><span style='color:#0057ae;'>LessThan</span></i><span style='color:#c02040;'>&lt;</span><span style='color:#0057ae;'>TypeKey</span><span style='color:#c02040;'>&lt;</span><b>any</b><span style='color:#c02040;'>&gt;&gt;</span>
+  <b>defines</b> <i><span style='color:#0057ae;'>Equals</span></i><span style='color:#c02040;'>&lt;</span><span style='color:#0057ae;'>TypeKey</span><span style='color:#c02040;'>&lt;</span><b>any</b><span style='color:#c02040;'>&gt;&gt;</span>
+
+  <span style='color:#898887;'>// Creates a new TypeKey, e.g., TypeTree&lt;#x&gt;$new().</span>
+  <span style='color:#644a9b;'>@type</span> new () <b><span style='color:#006e28;'>-&gt;</span></b> (<span style='color:#0057ae;'>TypeKey</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>)
+}
+</pre>
+</body>
+</html>

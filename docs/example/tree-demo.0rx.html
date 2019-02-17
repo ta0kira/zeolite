@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="Generator" content="Kate, the KDE Advanced Text Editor" />
+<title>tree-demo.0rx</title>
+</head>
+<!-- Highlighting: "Zeolite" -->
+<body>
+<pre style='color:#1f1c1b;background-color:#ffffff;'>
+<b>concrete</b> <b><span style='color:#0057ae;'>Demo</span></b> {
+  <b>defines</b> <span style='color:#0057ae;'>Runner</span>
+}
+
+<b>define</b> <b><span style='color:#0057ae;'>Demo</span></b> {
+  run () {
+    <span style='color:#006e28;'>~</span> testTree()
+    <span style='color:#006e28;'>~</span> demoTypeTree()
+  }
+
+  <span style='color:#644a9b;'>@category</span> demoTypeTree () <b><span style='color:#006e28;'>-&gt;</span></b> ()
+  demoTypeTree () {
+    <span style='color:#0057ae;'>TypeTree</span> tree <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#0057ae;'>TypeTree</span><span style='color:#644a9b;'>$</span>new()
+
+    <span style='color:#0057ae;'>TypeKey</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Int</span></i><span style='color:#c02040;'>&gt;</span>    keyInt    <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#0057ae;'>TypeKey</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Int</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>$</span>new()
+    <span style='color:#0057ae;'>TypeKey</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>String</span></i><span style='color:#c02040;'>&gt;</span> keyString <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#0057ae;'>TypeKey</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>String</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>$</span>new()
+    <span style='color:#0057ae;'>TypeKey</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Float</span></i><span style='color:#c02040;'>&gt;</span>  keyFloat  <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#0057ae;'>TypeKey</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Float</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>$</span>new()
+    <span style='color:#0057ae;'>TypeKey</span><span style='color:#c02040;'>&lt;</span><span style='color:#0057ae;'>Value</span><span style='color:#c02040;'>&gt;</span>  keyValue  <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#0057ae;'>TypeKey</span><span style='color:#c02040;'>&lt;</span><span style='color:#0057ae;'>Value</span><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>$</span>new()
+
+    <span style='color:#006e28;'>~</span> tree.set&lt;<i><span style='color:#0057ae;'>Int</span></i>&gt;(keyInt,<span style='color:#b08000;'>1</span>)
+    <span style='color:#006e28;'>~</span> tree.set&lt;<i><span style='color:#0057ae;'>String</span></i>&gt;(keyString,<span style='color:#bf0303;'>&quot;a&quot;</span>)
+
+    <span style='color:#006e28;'>~</span> check(tree,keyInt)
+    <span style='color:#006e28;'>~</span> check(tree,keyString)
+    <span style='color:#006e28;'>~</span> check(tree,keyFloat)  <span style='color:#898887;'>// Not found, since we never added a value.</span>
+
+    <span style='color:#006e28;'>~</span> tree.set&lt;<span style='color:#0057ae;'>Value</span>&gt;(keyValue,<span style='color:#0057ae;'>Value</span><span style='color:#644a9b;'>$</span>new())
+    <span style='color:#006e28;'>~</span> check(tree,keyValue)
+  }
+
+  <span style='color:#644a9b;'>@category</span> check (<span style='color:#0057ae;'>TypeTree</span>,<span style='color:#0057ae;'>TypeKey</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Formatted</span></i><span style='color:#c02040;'>&gt;</span>) <b><span style='color:#006e28;'>-&gt;</span></b> ()
+  check (tree,key) {
+    <b>scoped</b> {
+      <b>optional</b> <i><span style='color:#0057ae;'>Formatted</span></i> value <b><span style='color:#006e28;'>&lt;-</span></b> tree.get&lt;<i><span style='color:#0057ae;'>Formatted</span></i>&gt;(key)
+    } <b>in</b> <b>if</b> (<b>present</b>(value)) {
+      <span style='color:#006e28;'>~</span> <span style='color:#0057ae;'>LazyStream</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Formatted</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>$</span>new()
+          .append(<span style='color:#bf0303;'>&quot;Found '&quot;</span>)
+          .append(<b>require</b>(value))
+          .append(<span style='color:#bf0303;'>&quot;'</span><span style='color:#924c9d;'>\n</span><span style='color:#bf0303;'>&quot;</span>)
+          .writeTo(<span style='color:#0057ae;'>SimpleOutput</span><span style='color:#644a9b;'>$</span>stderr())
+    } <b>else</b> {
+      <span style='color:#006e28;'>~</span> <span style='color:#0057ae;'>LazyStream</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Formatted</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>$</span>new()
+          .append(<span style='color:#bf0303;'>&quot;Not Found</span><span style='color:#924c9d;'>\n</span><span style='color:#bf0303;'>&quot;</span>)
+          .writeTo(<span style='color:#0057ae;'>SimpleOutput</span><span style='color:#644a9b;'>$</span>stderr())
+    }
+  }
+
+  <span style='color:#644a9b;'>@category</span> testTree () <b><span style='color:#006e28;'>-&gt;</span></b> ()
+  testTree () {
+    <span style='color:#0057ae;'>Tree</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Int</span></i>,<i><span style='color:#0057ae;'>Int</span></i><span style='color:#c02040;'>&gt;</span> tree <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#0057ae;'>Tree</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Int</span></i>,<i><span style='color:#0057ae;'>Int</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>$</span>new()
+    <i><span style='color:#0057ae;'>Int</span></i> count <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#b08000;'>30</span>
+
+    <span style='color:#898887;'>// Insert values.</span>
+    <b>scoped</b> {
+      <i><span style='color:#0057ae;'>Int</span></i> i <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#b08000;'>0</span>
+    } <b>in</b> <b>while</b> (i &lt; count) {
+      <i><span style='color:#0057ae;'>Int</span></i> new <b><span style='color:#006e28;'>&lt;-</span></b> ((i + <span style='color:#b08000;'>13</span>) * <span style='color:#b08000;'>3547</span>) % count
+      <span style='color:#006e28;'>~</span> <span style='color:#0057ae;'>LazyStream</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Formatted</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>$</span>new()
+          .append(<span style='color:#bf0303;'>&quot;Inserting &quot;</span>)
+          .append(i)
+          .append(<span style='color:#bf0303;'>&quot; at &quot;</span>)
+          .append(new)
+          .append(<span style='color:#bf0303;'>&quot;</span><span style='color:#924c9d;'>\n</span><span style='color:#bf0303;'>&quot;</span>)
+          .writeTo(<span style='color:#0057ae;'>SimpleOutput</span><span style='color:#644a9b;'>$</span>stderr())
+      <span style='color:#006e28;'>~</span> tree.set(new,i)
+      i <b><span style='color:#006e28;'>&lt;-</span></b> i+<span style='color:#b08000;'>1</span>
+    }
+
+    <span style='color:#898887;'>// Verify and remove values.</span>
+    <b>scoped</b> {
+      <i><span style='color:#0057ae;'>Int</span></i> i <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#b08000;'>0</span>
+    } <b>in</b> <b>while</b> (i &lt; count) {
+      <i><span style='color:#0057ae;'>Int</span></i> new <b><span style='color:#006e28;'>&lt;-</span></b> ((i + <span style='color:#b08000;'>13</span>) * <span style='color:#b08000;'>3547</span>) % count
+      <b>scoped</b> {
+        <b>optional</b> <i><span style='color:#0057ae;'>Int</span></i> value <b><span style='color:#006e28;'>&lt;-</span></b> tree.get(new)
+      } <b>in</b> <b>if</b> (!<b>present</b>(value)) {
+        <span style='color:#006e28;'>~</span> <span style='color:#0057ae;'>LazyStream</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Formatted</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>$</span>new()
+            .append(<span style='color:#bf0303;'>&quot;Not found &quot;</span>)
+            .append(new)
+            .append(<span style='color:#bf0303;'>&quot; but should have been &quot;</span>)
+            .append(i)
+            .append(<span style='color:#bf0303;'>&quot;</span><span style='color:#924c9d;'>\n</span><span style='color:#bf0303;'>&quot;</span>)
+            .writeTo(<span style='color:#0057ae;'>SimpleOutput</span><span style='color:#644a9b;'>$</span>fail())
+      } <b>elif</b> (<b>require</b>(value) != i) {
+        <span style='color:#006e28;'>~</span> <span style='color:#0057ae;'>LazyStream</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Formatted</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>$</span>new()
+            .append(<span style='color:#bf0303;'>&quot;Element &quot;</span>)
+            .append(new)
+            .append(<span style='color:#bf0303;'>&quot; should have been &quot;</span>)
+            .append(i)
+            .append(<span style='color:#bf0303;'>&quot; but was &quot;</span>)
+            .append(<b>require</b>(value))
+            .append(<span style='color:#bf0303;'>&quot;</span><span style='color:#924c9d;'>\n</span><span style='color:#bf0303;'>&quot;</span>)
+            .writeTo(<span style='color:#0057ae;'>SimpleOutput</span><span style='color:#644a9b;'>$</span>fail())
+      } <b>else</b> {
+        <span style='color:#006e28;'>~</span> <span style='color:#0057ae;'>LazyStream</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Formatted</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>$</span>new()
+            .append(<span style='color:#bf0303;'>&quot;Element &quot;</span>)
+            .append(new)
+            .append(<span style='color:#bf0303;'>&quot; is &quot;</span>)
+            .append(i)
+            .append(<span style='color:#bf0303;'>&quot;</span><span style='color:#924c9d;'>\n</span><span style='color:#bf0303;'>&quot;</span>)
+            .writeTo(<span style='color:#0057ae;'>SimpleOutput</span><span style='color:#644a9b;'>$</span>stderr())
+      }
+      <span style='color:#006e28;'>~</span> tree.remove(new)
+      i <b><span style='color:#006e28;'>&lt;-</span></b> i+<span style='color:#b08000;'>1</span>
+    }
+  }
+}
+
+<b>concrete</b> <b><span style='color:#0057ae;'>Value</span></b> {
+  <b>refines</b> <i><span style='color:#0057ae;'>Formatted</span></i>
+  <span style='color:#644a9b;'>@type</span> new () <b><span style='color:#006e28;'>-&gt;</span></b> (<span style='color:#0057ae;'>Value</span>)
+}
+
+<b>define</b> <b><span style='color:#0057ae;'>Value</span></b> {
+  new () { <b>return</b> <span style='color:#0057ae;'>Value</span>{} }
+  formatted () { <b>return</b> <span style='color:#bf0303;'>&quot;Value&quot;</span> }
+}
+</pre>
+</body>
+</html>
