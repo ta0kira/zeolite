@@ -33,13 +33,13 @@ define Demo {
     scoped {
       optional Formatted value <- tree.get<Formatted>(key)
     } in if (present(value)) {
-      ~ LazyStream<String>$new()
+      ~ LazyStream<Formatted>$new()
           .append("Found '")
-          .append(require(value).formatted())
+          .append(require(value))
           .append("'\n")
           .writeTo(SimpleOutput$stderr())
     } else {
-      ~ LazyStream<String>$new()
+      ~ LazyStream<Formatted>$new()
           .append("Not Found\n")
           .writeTo(SimpleOutput$stderr())
     }
@@ -55,11 +55,11 @@ define Demo {
       Int i <- 0
     } in while (i < count) {
       Int new <- ((i + 13) * 3547) % count
-      ~ LazyStream<String>$new()
+      ~ LazyStream<Formatted>$new()
           .append("Inserting ")
-          .append(i.formatted())
+          .append(i)
           .append(" at ")
-          .append(new.formatted())
+          .append(new)
           .append("\n")
           .writeTo(SimpleOutput$stderr())
       ~ tree.set(new,i)
@@ -74,29 +74,29 @@ define Demo {
       scoped {
         optional Int value <- tree.get(new)
       } in if (!present(value)) {
-        ~ LazyStream<String>$new()
+        ~ LazyStream<Formatted>$new()
             .append("Not found ")
-            .append(new.formatted())
+            .append(new)
             .append(" but should have been ")
-            .append(i.formatted())
+            .append(i)
             .append("\n")
             .writeTo(SimpleOutput$fail())
       } elif (require(value) != i) {
-        ~ LazyStream<String>$new()
+        ~ LazyStream<Formatted>$new()
             .append("Element ")
-            .append(new.formatted())
+            .append(new)
             .append(" should have been ")
-            .append(i.formatted())
+            .append(i)
             .append(" but was ")
-            .append(require(value).formatted())
+            .append(require(value))
             .append("\n")
             .writeTo(SimpleOutput$fail())
       } else {
-        ~ LazyStream<String>$new()
+        ~ LazyStream<Formatted>$new()
             .append("Element ")
-            .append(new.formatted())
+            .append(new)
             .append(" is ")
-            .append(i.formatted())
+            .append(i)
             .append("\n")
             .writeTo(SimpleOutput$stderr())
       }

@@ -62,7 +62,8 @@ class Value_SimpleOutput : public TypeValue {
     FAIL_IF(params.Size() != label.ParamCount());
     if (&label == &Function_Writer_write) {
       TRACE_FUNCTION("SimpleOutput.write")
-      output_ << args.At(0)->AsString();
+      output_ << TypeValue::Call(args.At(0), Function_Formatted_formatted,
+                                 ParamTuple(), ArgTuple()).Only()->AsString();
       return ReturnTuple();
     }
     if (&label == &Function_BufferedWriter_flush) {
@@ -86,7 +87,8 @@ class Value_Fail : public TypeValue {
     FAIL_IF(params.Size() != label.ParamCount());
     if (&label == &Function_Writer_write) {
       TRACE_FUNCTION("SimpleOutput.write")
-      output_ << args.At(0)->AsString();
+      output_ << TypeValue::Call(args.At(0), Function_Formatted_formatted,
+                                 ParamTuple(), ArgTuple()).Only()->AsString();
       return ReturnTuple();
     }
     if (&label == &Function_BufferedWriter_flush) {

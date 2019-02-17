@@ -23,7 +23,7 @@ concrete Util {
 }
 define Util {
   crash () {
-    ~ LazyStream<String>\$new().append(\"Failed\").writeTo(SimpleOutput\$fail())
+    ~ LazyStream<Formatted>\$new().append(\"Failed\").writeTo(SimpleOutput\$fail())
   }
 }
 concrete Test {
@@ -139,7 +139,7 @@ END
 expect_crashes 'fail writer' 'Failed' 'line 3' <<END
 define Test {
   run () {
-    ~ LazyStream<String>\$new().append("Failed").writeTo(SimpleOutput\$fail())
+    ~ LazyStream<Formatted>\$new().append("Failed").writeTo(SimpleOutput\$fail())
   }
 }
 END

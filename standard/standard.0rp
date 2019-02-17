@@ -15,7 +15,7 @@ concrete LazyStream<#x> {
 }
 
 concrete SimpleOutput {
-  refines BufferedWriter<String>
+  refines BufferedWriter<Formatted>
 
   @type stdout () -> (SimpleOutput)
   @type stderr () -> (SimpleOutput)

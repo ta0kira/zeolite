@@ -15,7 +15,7 @@ It's the [any%](https://en.wiktionary.org/wiki/any%25) of programming.
 
 <b>define</b> <b><span style='color:#0057ae;'>HelloWorld</span></b> {
   run () {
-    <span style='color:#006e28;'>~</span> <span style='color:#0057ae;'>LazyStream</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>String</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>$</span>new().append(<span style='color:#bf0303;'>&quot;Hello World</span><span style='color:#924c9d;'>\n</span><span style='color:#bf0303;'>&quot;</span>).writeTo(<span style='color:#0057ae;'>SimpleOutput</span><span style='color:#644a9b;'>$</span>stderr())
+    <span style='color:#006e28;'>~</span> <span style='color:#0057ae;'>LazyStream</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Formatted</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>$</span>new().append(<span style='color:#bf0303;'>&quot;Hello World</span><span style='color:#924c9d;'>\n</span><span style='color:#bf0303;'>&quot;</span>).writeTo(<span style='color:#0057ae;'>SimpleOutput</span><span style='color:#644a9b;'>$</span>stderr())
   }
 }</pre>
 
@@ -670,18 +670,15 @@ This can also be useful for debugging code that has type parameters.
 
   <span style='color:#644a9b;'>@type</span> debugMessage (<i><span style='color:#0057ae;'>String</span></i>,<i><span style='color:#0057ae;'>#x</span></i>) <b><span style='color:#006e28;'>-&gt;</span></b> ()
   debugMessage (message,x) {
-    <i><span style='color:#0057ae;'>String</span></i> val <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#bf0303;'>&quot;?&quot;</span>
+    <i><span style='color:#0057ae;'>Formatted</span></i> val <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#bf0303;'>&quot;?&quot;</span>
     <b>scoped</b> {
       <b>optional</b> <i><span style='color:#0057ae;'>Formatted</span></i> f <b><span style='color:#006e28;'>&lt;-</span></b> <b>reduce</b>&lt;<i><span style='color:#0057ae;'>#x</span></i>,<i><span style='color:#0057ae;'>Formatted</span></i>&gt;(x)
     } <b>in</b> <b>if</b> (<b>present</b>(f)) {
-      val <b><span style='color:#006e28;'>&lt;-</span></b> <b>require</b>(f).formatted()
+      <span style='color:#898887;'>// Only set if #x -&gt; Formatted; otherwise, it stays as &quot;?&quot;.</span>
+      val <b><span style='color:#006e28;'>&lt;-</span></b> <b>require</b>(f)
     }
-    <span style='color:#006e28;'>~</span> <span style='color:#0057ae;'>LazyStream</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>String</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>$</span>new()
-        .append(<span style='color:#bf0303;'>&quot;Debug (&quot;</span>)
-        .append(val)
-        .append(<span style='color:#bf0303;'>&quot;): &quot;</span>)
-        .append(message)
-        .append(<span style='color:#bf0303;'>&quot;</span><span style='color:#924c9d;'>\n</span><span style='color:#bf0303;'>&quot;</span>)
+    <span style='color:#006e28;'>~</span> <span style='color:#0057ae;'>LazyStream</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Formatted</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>$</span>new()
+        .append(<span style='color:#bf0303;'>&quot;Debug (&quot;</span>).append(val).append(<span style='color:#bf0303;'>&quot;): &quot;</span>).append(message).append(<span style='color:#bf0303;'>&quot;</span><span style='color:#924c9d;'>\n</span><span style='color:#bf0303;'>&quot;</span>)
         .writeTo(<span style='color:#0057ae;'>SimpleOutput</span><span style='color:#644a9b;'>$</span>stderr())
   }
 }</pre>
