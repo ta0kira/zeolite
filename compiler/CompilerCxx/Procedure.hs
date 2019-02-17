@@ -231,13 +231,11 @@ compileStatement (Assignment c as e) = do
       csWrite [scoped ++ variableName n ++ " = " ++ writeStoredVariable t e ++ ";"]
     assignSingle _ _ = return ()
     assignMulti (i,t,CreateVariable _ _ n) =
-      -- NOTE: Weak values should not exist in multi-type expressions.
       csWrite [variableName n ++ " = " ++
                writeStoredVariable t (UnwrappedSingle $ "r.At(" ++ show i ++ ")") ++ ";"]
     assignMulti (i,t,ExistingVariable (InputValue _ n)) = do
       (VariableValue _ s _ _) <- csGetVariable c n
       scoped <- autoScope s
-      -- NOTE: Weak values should not exist in multi-type expressions.
       csWrite [scoped ++ variableName n ++ " = " ++
                writeStoredVariable t (UnwrappedSingle $ "r.At(" ++ show i ++ ")") ++ ";"]
     assignMulti _ = return ()

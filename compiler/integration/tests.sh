@@ -906,6 +906,56 @@ define Test {
 }
 END
 
+expect_runs 'weak in multi assign' <<END
+concrete Value {
+  @type create () -> (Value)
+}
+
+define Value {
+  create () {
+    return Value{}
+  }
+}
+
+define Test {
+  @type get () -> (Value,Value)
+  get () {
+    Value value <- Value\$create()
+    return { value, value }
+  }
+
+  run () {
+    // value1 ensures value2 is present.
+    { Value value1, weak Value value2 } <- get()
+    if (!present(strong(value2))) {
+      ~ Util\$crash()
+    }
+  }
+}
+END
+
+expect_runs 'weak in inline assign' <<END
+concrete Value {
+  @type create () -> (Value)
+}
+
+define Value {
+  create () {
+    return Value{}
+  }
+}
+
+define Test {
+  run () {
+    Value value1 <- Value\$create()
+    weak Value value2 <- empty
+    if (!present(strong((value2 <- value1)))) {
+      ~ Util\$crash()
+    }
+  }
+}
+END
+
 expect_runs 'not true' <<END
 define Test {
   run () {
