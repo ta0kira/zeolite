@@ -494,6 +494,7 @@ compileExpressionStart :: (Show c, Monad m, CompileErrorM m, MergeableM m,
   ExpressionStart c -> CompilerState a m (ExpressionType,ExprValue)
 compileExpressionStart (NamedVariable (OutputValue c n)) = do
   (VariableValue _ s t _) <- csGetVariable c n
+  csCheckVariableInit c n
   scoped <- autoScope s
   return (ParamSet [t],readStoredVariable t (scoped ++ variableName n))
 compileExpressionStart (CategoryCall c t f@(FunctionCall _ n _ _)) = do

@@ -404,6 +404,34 @@ define Test {
 }
 END
 
+expect_error 'return used before assigned' 'value.+initialized' 'line 4' <<END
+define Test {
+  @category process () -> (Int)
+  process () (value) {
+    value <- value+1
+  }
+
+  run () {}
+}
+END
+
+expect_runs 'return used after assigned' <<END
+define Test {
+  @category process () -> (Int)
+  process () (value) {
+    value <- 1
+    value <- value+1
+  }
+
+  run () {
+    Int value <- process()
+    if (value != 2) {
+      ~ Util\$crash()
+    }
+  }
+}
+END
+
 expect_runs 'returns in correct order' <<END
 define Test {
   @type get () -> (Int,Int)

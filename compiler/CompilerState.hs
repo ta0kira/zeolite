@@ -12,6 +12,7 @@ module CompilerState (
   csAddVariable,
   csAllFilters,
   csCheckValueInit,
+  csCheckVariableInit,
   csClearOutput,
   csCurrentScope,
   csGetCategoryFunction,
@@ -60,6 +61,7 @@ class Monad m => CompilerContext c m s a | a -> c s where
   ccCheckValueInit :: a -> [c] -> TypeInstance -> ParamSet ValueType -> ParamSet GeneralInstance -> m ()
   ccGetVariable :: a -> [c] -> VariableName -> m (VariableValue c)
   ccAddVariable :: a -> [c] -> VariableName -> VariableValue c -> m a
+  ccCheckVariableInit :: a -> [c] -> VariableName -> m ()
   ccWrite :: a -> s -> m a
   ccGetOutput :: a -> m s
   ccClearOutput :: a -> m a
@@ -130,6 +132,10 @@ csGetVariable c n = fmap (\x -> ccGetVariable x c n) get >>= lift
 csAddVariable :: (Monad m, CompilerContext c m s a) =>
   [c] -> VariableName -> VariableValue c -> CompilerState a m ()
 csAddVariable c n t = fmap (\x -> ccAddVariable x c n t) get >>= lift >>= put
+
+csCheckVariableInit :: (Monad m, CompilerContext c m s a) =>
+  [c] -> VariableName -> CompilerState a m ()
+csCheckVariableInit c n = fmap (\x -> ccCheckVariableInit x c n) get >>= lift
 
 csWrite :: (Monad m, CompilerContext c m s a) => s -> CompilerState a m ()
 csWrite o = fmap (\x -> ccWrite x o) get >>= lift >>= put

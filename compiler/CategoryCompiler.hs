@@ -194,35 +194,40 @@ instance (Show c, MergeableM m, CompileErrorM m, Monad m) =>
           t' <- uncheckedSubValueType (getValueForParam pa) t
           return $ MemberValue c n t'
   ccGetVariable ctx c n =
-      case n `Map.lookup` pcVariables ctx of
-           (Just v) -> return v
-           _ -> compileError $ "Variable " ++ show n ++ " is not defined [" ++
-                               formatFullContext c ++ "]"
+    case n `Map.lookup` pcVariables ctx of
+          (Just v) -> return v
+          _ -> compileError $ "Variable " ++ show n ++ " is not defined [" ++
+                              formatFullContext c ++ "]"
   ccAddVariable ctx c n t = do
-      case n `Map.lookup` pcVariables ctx of
-           Nothing -> return ()
-           (Just v) -> compileError $ "Variable " ++ show n ++ " [" ++
-                                      formatFullContext c ++
-                                      "] is already defined: " ++ show v
-      return $ ProcedureContext {
-          pcScope = pcScope ctx,
-          pcType = pcType ctx,
-          pcExtParams = pcExtParams ctx,
-          pcIntParams = pcIntParams ctx,
-          pcMembers = pcMembers ctx,
-          pcCategories = pcCategories ctx,
-          pcAllFilters = pcAllFilters ctx,
-          pcExtFilters = pcExtFilters ctx,
-          pcIntFilters = pcIntFilters ctx,
-          pcParamScopes = pcParamScopes ctx,
-          pcFunctions = pcFunctions ctx,
-          pcVariables = Map.insert n t (pcVariables ctx),
-          pcReturns = pcReturns ctx,
-          pcPrimNamed = pcPrimNamed ctx,
-          pcRequiredTypes = pcRequiredTypes ctx,
-          pcOutput = pcOutput ctx,
-          pcDisallowInit = pcDisallowInit ctx
-        }
+    case n `Map.lookup` pcVariables ctx of
+          Nothing -> return ()
+          (Just v) -> compileError $ "Variable " ++ show n ++ " [" ++
+                                    formatFullContext c ++
+                                    "] is already defined: " ++ show v
+    return $ ProcedureContext {
+        pcScope = pcScope ctx,
+        pcType = pcType ctx,
+        pcExtParams = pcExtParams ctx,
+        pcIntParams = pcIntParams ctx,
+        pcMembers = pcMembers ctx,
+        pcCategories = pcCategories ctx,
+        pcAllFilters = pcAllFilters ctx,
+        pcExtFilters = pcExtFilters ctx,
+        pcIntFilters = pcIntFilters ctx,
+        pcParamScopes = pcParamScopes ctx,
+        pcFunctions = pcFunctions ctx,
+        pcVariables = Map.insert n t (pcVariables ctx),
+        pcReturns = pcReturns ctx,
+        pcPrimNamed = pcPrimNamed ctx,
+        pcRequiredTypes = pcRequiredTypes ctx,
+        pcOutput = pcOutput ctx,
+        pcDisallowInit = pcDisallowInit ctx
+      }
+  ccCheckVariableInit ctx c n =
+    case pcReturns ctx of
+         ValidateNames na -> when (n `Map.member` na) $
+           compileError $ "Named return " ++ show n ++ " might not be initialized [" ++ formatFullContext c ++ "]"
+         _ -> return ()
   ccWrite ctx ss = return $
     ProcedureContext {
       pcScope = pcScope ctx,
