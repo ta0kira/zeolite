@@ -200,7 +200,7 @@ Zeolite also has a limited meta-type system that operates on types themselves:
 Zeolite is currently developed and tested on Linux. It might not work out of the
 box on other operating systems at the moment.
 
-1. Make sure that you have [`git`][git], [`clang`][clang], and [`ghc`][ghc]
+1. Make sure that you have [`git`][git], [`clang++`][clang], and [`ghc`][ghc]
    installed on your system.
 2. Clone this project in a local directory.
    ```shell
@@ -257,7 +257,7 @@ the main category. The main category *must* define `Runner` and implement the
 Zeolite will allow incremental compilation and linking at some point in the
 future, but it currently compiles and links the entire binary in one shot.
 
-`zeolite.sh` was written for Linux systems that have the [`clang`][clang] C++
+`zeolite.sh` was written for Linux systems that have the [`clang++`][clang] C++
 compiler and the [`ghc`][ghc] Haskell compiler. The C++ compiler can be changed
 in the script, but the Haskell code might not work without [`ghc`][ghc].
 
@@ -1016,6 +1016,6 @@ functions are often combined with function overloading.
 Please use Zeolite. Installation instructions and a proper build system are
 forthcoming.
 
-[clang]: https://clang.llvm.org/
+[clang]: https://clang.llvm.org/cxx_status.html
 [ghc]: https://www.haskell.org/ghc/
 [git]: https://git-scm.com/
