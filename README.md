@@ -975,6 +975,37 @@ Zeolite provides type-union and type-intersection meta-types.
 <span style='color:#0057ae;'>Reader</span> val2 <b><span style='color:#006e28;'>&lt;-</span></b> val
 <span style='color:#0057ae;'>Writer</span> val3 <b><span style='color:#006e28;'>&lt;-</span></b> val</pre>
 
+### Function Merging
+
+Each category can only have one function with a given name. In some cases, it's
+possible to merge functions with the same name inherited from different parent
+interfaces, however.
+
+<pre style='color:#1f1c1b;background-color:#ffffff;'>
+<span style='color:#644a9b;'>@value</span> <b>interface</b> <b><span style='color:#0057ae;'>Getter</span></b><span style='color:#c02040;'>&lt;</span><span style='color:#c04040;'>|</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span> {
+  get () <b><span style='color:#006e28;'>-&gt;</span></b> (<i><span style='color:#0057ae;'>#x</span></i>)
+}
+
+<span style='color:#644a9b;'>@value</span> <b>interface</b> <b><span style='color:#0057ae;'>Storage</span></b><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span> {
+  get () <b><span style='color:#006e28;'>-&gt;</span></b> (<i><span style='color:#0057ae;'>#x</span></i>)
+  set (<i><span style='color:#0057ae;'>#x</span></i>) <b><span style='color:#006e28;'>-&gt;</span></b> ()
+}
+
+<b>concrete</b> <b><span style='color:#0057ae;'>Data</span></b> {
+  <b>refines</b> <span style='color:#0057ae;'>Getter</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Formatted</span></i><span style='color:#c02040;'>&gt;</span> <span style='color:#898887;'>// String -&gt; Formatted</span>
+  <b>refines</b> <span style='color:#0057ae;'>Storage</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>String</span></i><span style='color:#c02040;'>&gt;</span>
+
+  <span style='color:#898887;'>// get is inherited from both Getter and Storage. The two can be merged with</span>
+  <span style='color:#898887;'>// an explicit override, as long as it is compatible with all other versions</span>
+  <span style='color:#898887;'>// of get that were inherited.</span>
+  <span style='color:#644a9b;'>@value</span> get () <b><span style='color:#006e28;'>-&gt;</span></b> (<i><span style='color:#0057ae;'>String</span></i>)
+}</pre>
+
+The *minimum* requirement for merging is that all versions of the function have
+matching argument, return, and type-parameter counts, and are "compatible" when
+pairing each of those by position. (Parameter filters determine the "type" of
+each type parameter.)
+
 ## Future Things
 
 ### Function Objects
