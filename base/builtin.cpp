@@ -72,7 +72,9 @@ struct Type_Bool : public TypeInstance {
   bool CanConvertFrom(const TypeInstance& from) const final {
     std::vector<const TypeInstance*> args;
     if (!from.TypeArgsForParent(GetCategory_Bool(), args)) return false;
-    FAIL_IF(args.size() != 0) << "Wrong number of args (" << args.size() << ") for " << CategoryName();
+    if (args.size() != 0) {
+      FAIL() << "Wrong number of args (" << args.size() << ") for " << CategoryName();
+    }
     return true;
   }
 };
@@ -88,8 +90,12 @@ class Value_Bool : public TypeValue {
   ReturnTuple Dispatch(const S<TypeValue>& self,
                        const DFunction<SymbolScope::VALUE>& label,
                        const ParamTuple& params, const ValueTuple& args) final {
-    FAIL_IF(args.Size() != label.ArgCount());
-    FAIL_IF(params.Size() != label.ParamCount());
+    if (args.Size() != label.ArgCount()) {
+      FAIL() << "Wrong number of args";
+    }
+    if (params.Size() != label.ParamCount()){
+      FAIL() << "Wrong number of params";
+    }
     if (&label == &Function_Formatted_formatted) {
       return ReturnTuple(Box_String(self->AsBool()? "true" : "false"));
     }
@@ -109,8 +115,12 @@ struct Type_String : public TypeInstance {
 
   ReturnTuple Dispatch(const DFunction<SymbolScope::TYPE>& label,
                        const ParamTuple& params, const ValueTuple& args) final {
-    FAIL_IF(args.Size() != label.ArgCount());
-    FAIL_IF(params.Size() != label.ParamCount());
+    if (args.Size() != label.ArgCount()) {
+      FAIL() << "Wrong number of args";
+    }
+    if (params.Size() != label.ParamCount()){
+      FAIL() << "Wrong number of params";
+    }
     if (&label == &Function_LessThan_lessThan) {
       return ReturnTuple(Box_Bool(args.At(0)->AsString()<args.At(1)->AsString()));
     }
@@ -136,7 +146,9 @@ struct Type_String : public TypeInstance {
   bool CanConvertFrom(const TypeInstance& from) const final {
     std::vector<const TypeInstance*> args;
     if (!from.TypeArgsForParent(GetCategory_String(), args)) return false;
-    FAIL_IF(args.size() != 0) << "Wrong number of args (" << args.size() << ") for " << CategoryName();
+    if (args.size() != 0) {
+      FAIL() << "Wrong number of args (" << args.size() << ") for " << CategoryName();
+    }
     return true;
   }
 };
@@ -152,8 +164,12 @@ class Value_String : public TypeValue {
   ReturnTuple Dispatch(const S<TypeValue>& self,
                        const DFunction<SymbolScope::VALUE>& label,
                        const ParamTuple& params, const ValueTuple& args) final {
-    FAIL_IF(args.Size() != label.ArgCount());
-    FAIL_IF(params.Size() != label.ParamCount());
+    if (args.Size() != label.ArgCount()) {
+      FAIL() << "Wrong number of args";
+    }
+    if (params.Size() != label.ParamCount()){
+      FAIL() << "Wrong number of params";
+    }
     if (&label == &Function_Formatted_formatted) {
       return ReturnTuple(Box_String(self->AsString()));
     }
@@ -173,8 +189,12 @@ struct Type_Int : public TypeInstance {
 
   ReturnTuple Dispatch(const DFunction<SymbolScope::TYPE>& label,
                        const ParamTuple& params, const ValueTuple& args) final {
-    FAIL_IF(args.Size() != label.ArgCount());
-    FAIL_IF(params.Size() != label.ParamCount());
+    if (args.Size() != label.ArgCount()) {
+      FAIL() << "Wrong number of args";
+    }
+    if (params.Size() != label.ParamCount()){
+      FAIL() << "Wrong number of params";
+    }
     if (&label == &Function_LessThan_lessThan) {
       return ReturnTuple(Box_Bool(args.At(0)->AsInt()<args.At(1)->AsInt()));
     }
@@ -200,7 +220,9 @@ struct Type_Int : public TypeInstance {
   bool CanConvertFrom(const TypeInstance& from) const final {
     std::vector<const TypeInstance*> args;
     if (!from.TypeArgsForParent(GetCategory_Int(), args)) return false;
-    FAIL_IF(args.size() != 0) << "Wrong number of args (" << args.size() << ") for " << CategoryName();
+    if (args.size() != 0) {
+      FAIL() << "Wrong number of args (" << args.size() << ") for " << CategoryName();
+    }
     return true;
   }
 };
@@ -216,8 +238,12 @@ class Value_Int : public TypeValue {
   ReturnTuple Dispatch(const S<TypeValue>& self,
                        const DFunction<SymbolScope::VALUE>& label,
                        const ParamTuple& params, const ValueTuple& args) final {
-    FAIL_IF(args.Size() != label.ArgCount());
-    FAIL_IF(params.Size() != label.ParamCount());
+    if (args.Size() != label.ArgCount()) {
+      FAIL() << "Wrong number of args";
+    }
+    if (params.Size() != label.ParamCount()){
+      FAIL() << "Wrong number of params";
+    }
     if (&label == &Function_Formatted_formatted) {
       std::ostringstream output;
       output << self->AsInt();
@@ -239,8 +265,12 @@ struct Type_Float : public TypeInstance {
 
   ReturnTuple Dispatch(const DFunction<SymbolScope::TYPE>& label,
                        const ParamTuple& params, const ValueTuple& args) final {
-    FAIL_IF(args.Size() != label.ArgCount());
-    FAIL_IF(params.Size() != label.ParamCount());
+    if (args.Size() != label.ArgCount()) {
+      FAIL() << "Wrong number of args";
+    }
+    if (params.Size() != label.ParamCount()){
+      FAIL() << "Wrong number of params";
+    }
     if (&label == &Function_LessThan_lessThan) {
       return ReturnTuple(Box_Bool(args.At(0)->AsFloat()<args.At(1)->AsFloat()));
     }
@@ -266,7 +296,9 @@ struct Type_Float : public TypeInstance {
   bool CanConvertFrom(const TypeInstance& from) const final {
     std::vector<const TypeInstance*> args;
     if (!from.TypeArgsForParent(GetCategory_Float(), args)) return false;
-    FAIL_IF(args.size() != 0) << "Wrong number of args (" << args.size() << ") for " << CategoryName();
+    if (args.size() != 0) {
+      FAIL() << "Wrong number of args (" << args.size() << ") for " << CategoryName();
+    }
     return true;
   }
 };
@@ -282,8 +314,12 @@ class Value_Float : public TypeValue {
   ReturnTuple Dispatch(const S<TypeValue>& self,
                        const DFunction<SymbolScope::VALUE>& label,
                        const ParamTuple& params, const ValueTuple& args) final {
-    FAIL_IF(args.Size() != label.ArgCount());
-    FAIL_IF(params.Size() != label.ParamCount());
+    if (args.Size() != label.ArgCount()) {
+      FAIL() << "Wrong number of args";
+    }
+    if (params.Size() != label.ParamCount()){
+      FAIL() << "Wrong number of params";
+    }
     if (&label == &Function_Formatted_formatted) {
       std::ostringstream output;
       output << self->AsFloat();
@@ -315,7 +351,9 @@ struct Type_Formatted : public TypeInstance {
   bool CanConvertFrom(const TypeInstance& from) const final {
     std::vector<const TypeInstance*> args;
     if (!from.TypeArgsForParent(GetCategory_Formatted(), args)) return false;
-    FAIL_IF(args.size() != 0) << "Wrong number of args (" << args.size() << ") for " << CategoryName();
+    if (args.size() != 0) {
+      FAIL() << "Wrong number of args (" << args.size() << ") for " << CategoryName();
+    }
     return true;
   }
 };

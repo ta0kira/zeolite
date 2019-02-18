@@ -85,12 +85,16 @@ bool TypeInstance::ExpandCheckRight(const TypeInstance& x, const TypeInstance& y
 }
 
 bool TypeValue::Present(S<TypeValue> target) {
-  FAIL_IF(target == nullptr) << "Builtin called on null value";
+  if (target == nullptr) {
+    FAIL() << "Builtin called on null value";
+  }
   return target->Present();
 }
 
 S<TypeValue> TypeValue::Require(S<TypeValue> target) {
-  FAIL_IF(target == nullptr) << "Builtin called on null value";
+  if (target == nullptr) {
+    FAIL() << "Builtin called on null value";
+  }
   if (!target->Present()) {
     FAIL() << "Cannot require empty value";
   }

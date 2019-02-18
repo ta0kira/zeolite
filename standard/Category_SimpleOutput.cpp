@@ -34,8 +34,12 @@ struct Type_SimpleOutput : public TypeInstance {
 
   ReturnTuple Dispatch(const DFunction<SymbolScope::TYPE>& label,
                        const ParamTuple& params, const ValueTuple& args) final {
-    FAIL_IF(args.Size() != label.ArgCount());
-    FAIL_IF(params.Size() != label.ParamCount());
+    if (args.Size() != label.ArgCount()) {
+      FAIL() << "Wrong number of args";
+    }
+    if (params.Size() != label.ParamCount()){
+      FAIL() << "Wrong number of params";
+    }
     if (&label == &Function_SimpleOutput_stdout) {
       return ReturnTuple(Var_stdout);
     }
@@ -58,8 +62,12 @@ class Value_SimpleOutput : public TypeValue {
   ReturnTuple Dispatch(const S<TypeValue>& self,
                        const DFunction<SymbolScope::VALUE>& label,
                        const ParamTuple& params, const ValueTuple& args) final {
-    FAIL_IF(args.Size() != label.ArgCount());
-    FAIL_IF(params.Size() != label.ParamCount());
+    if (args.Size() != label.ArgCount()) {
+      FAIL() << "Wrong number of args";
+    }
+    if (params.Size() != label.ParamCount()){
+      FAIL() << "Wrong number of params";
+    }
     if (&label == &Function_Writer_write) {
       TRACE_FUNCTION("SimpleOutput.write")
       output_ << TypeValue::Call(args.At(0), Function_Formatted_formatted,
@@ -83,8 +91,12 @@ class Value_Fail : public TypeValue {
   ReturnTuple Dispatch(const S<TypeValue>& self,
                        const DFunction<SymbolScope::VALUE>& label,
                        const ParamTuple& params, const ValueTuple& args) final {
-    FAIL_IF(args.Size() != label.ArgCount());
-    FAIL_IF(params.Size() != label.ParamCount());
+    if (args.Size() != label.ArgCount()) {
+      FAIL() << "Wrong number of args";
+    }
+    if (params.Size() != label.ParamCount()){
+      FAIL() << "Wrong number of params";
+    }
     if (&label == &Function_Writer_write) {
       TRACE_FUNCTION("SimpleOutput.write")
       output_ << TypeValue::Call(args.At(0), Function_Formatted_formatted,

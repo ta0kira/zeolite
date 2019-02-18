@@ -83,7 +83,9 @@ class TypeValue {
   inline static ReturnTuple Call(const S<TypeValue>& target,
                                  const DFunction<SymbolScope::VALUE>& label,
                                  const ParamTuple& params, const ValueTuple& args) {
-    FAIL_IF(target == nullptr);
+    if (target == nullptr) {
+      FAIL() << "Function called on null value";
+    }
     return target->Dispatch(target, label, params, args);
   }
 

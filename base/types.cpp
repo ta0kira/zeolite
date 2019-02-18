@@ -8,12 +8,16 @@ int ArgTuple::Size() const {
 }
 
 const S<TypeValue>& ArgTuple::At(int pos) const {
-  FAIL_IF(pos < 0 || pos >= args_.size());
+  if (pos < 0 || pos >= args_.size()) {
+    FAIL() << "Bad ArgTuple index";
+  }
   return *args_[pos];
 }
 
 const S<TypeValue>& ArgTuple::Only() const {
-  FAIL_IF(args_.size() != 1);
+  if (args_.size() != 1) {
+    FAIL() << "Bad ArgTuple index";
+  }
   return *args_[0];
 }
 
@@ -22,17 +26,23 @@ int ReturnTuple::Size() const {
 }
 
 S<TypeValue>& ReturnTuple::At(int pos) {
-  FAIL_IF(pos < 0 || pos >= returns_.size());
+  if (pos < 0 || pos >= returns_.size()) {
+    FAIL() << "Bad ReturnTuple index";
+  }
   return returns_[pos];
 }
 
 const S<TypeValue>& ReturnTuple::At(int pos) const {
-  FAIL_IF(pos < 0 || pos >= returns_.size());
+  if (pos < 0 || pos >= returns_.size()) {
+    FAIL() << "Bad ReturnTuple index";
+  }
   return returns_[pos];
 }
 
 const S<TypeValue>& ReturnTuple::Only() const {
-  FAIL_IF(returns_.size() != 1);
+  if (returns_.size() != 1) {
+    FAIL() << "Bad ReturnTuple index";
+  }
   return returns_[0];
 }
 
@@ -41,6 +51,8 @@ int ParamTuple::Size() const {
 }
 
 TypeInstance* ParamTuple::At(int pos) const {
-  FAIL_IF(pos < 0 || pos >= params_.size());
+  if (pos < 0 || pos >= params_.size()) {
+    FAIL() << "Bad ParamTuple index";
+  }
   return params_[pos];
 }

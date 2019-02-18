@@ -10,8 +10,6 @@
 
 #define FAIL() LogThenCrash(true)
 
-#define FAIL_IF(p) LogThenCrash(p,#p)
-
 void SetSignalHandler();
 
 class LogThenCrash {

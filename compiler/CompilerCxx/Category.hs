@@ -325,7 +325,9 @@ createFunctionDispatch n s fs = [typedef] ++ concat (map table $ byCategory) ++
     ["  };"]
   dispatch (n2,fs) = [
       "  if (label.Collection() == " ++ collectionName n2 ++ ") {",
-      "    FAIL_IF(label.Num() < 0 || label.Num() >= " ++ show (length fs) ++ ");",
+      "    if (label.Num() < 0 || label.Num() >= " ++ show (length fs) ++ ") {",
+      "      FAIL() << \"Bad function call \" << label.FunctionName();",
+      "    }",
       "    return (this->*" ++ tableName n2 ++ "[label.Num()])(" ++ args ++ ");",
       "  }"
     ]
@@ -377,9 +379,9 @@ commonDefineType t extra = do
           "  std::vector<const TypeInstance*> args;",
           "  if (!from.TypeArgsForParent(parent, args)) return false;",
           -- TODO: Create a helper function for this error.
-          "  FAIL_IF(args.size() != " ++ show (length params) ++ ") << " ++
-          "\"Wrong number of args (\" << args.size() << \") " ++
-          "for \" << CategoryName();"
+          "  if(args.size() != " ++ show (length params) ++ ") {",
+          "    FAIL() << \"Wrong number of args (\" << args.size() << \")  for \" << CategoryName();",
+          "  }"
         ] ++ checks ++ ["  return true;","}"]
     params = map (\p -> (vpParam p,vpVariance p)) $ getCategoryParams t
     checks = concat $ map singleCheck $ zip [0..] params
