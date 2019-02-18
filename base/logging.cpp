@@ -35,18 +35,39 @@ void TraceOnSignal(int signal) {
 
 // TODO: Should only be available used if POSIX is defined.
 void SetSignalHandler() {
+#ifdef SIGINT
   std::signal(SIGINT, &TraceOnSignal);
-  std::signal(SIGQUIT, &TraceOnSignal);
+#endif
+#ifdef SIGILL
   std::signal(SIGILL, &TraceOnSignal);
+#endif
+#ifdef SIGABRT
   std::signal(SIGABRT, &TraceOnSignal);
+#endif
+#ifdef SIGFPE
   std::signal(SIGFPE, &TraceOnSignal);
+#endif
+#ifdef SIGQUIT
   std::signal(SIGQUIT, &TraceOnSignal);
+#endif
+#ifdef SIGSEGV
   std::signal(SIGSEGV, &TraceOnSignal);
+#endif
+#ifdef SIGPIPE
   std::signal(SIGPIPE, &TraceOnSignal);
+#endif
+#ifdef SIGALRM
   std::signal(SIGALRM, &TraceOnSignal);
+#endif
+#ifdef SIGTERM
   std::signal(SIGTERM, &TraceOnSignal);
+#endif
+#ifdef SIGUSR1
   std::signal(SIGUSR1, &TraceOnSignal);
+#endif
+#ifdef SIGUSR2
   std::signal(SIGUSR2, &TraceOnSignal);
+#endif
 }
 
 
