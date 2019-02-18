@@ -1,7 +1,5 @@
 {-# LANGUAGE Safe #-}
 
-module AllTests where
-
 import CompileInfo
 import TestBase
 import TypesBase

@@ -1,3 +1,5 @@
+{-# LANGUAGE Safe #-}
+
 import Data.List
 import Text.Parsec
 import Text.Parsec.String

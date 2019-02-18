@@ -219,6 +219,18 @@ box on other operating systems at the moment.
    cd zeolite && git submodule init && git submodule update
    ```
 
+If you feel like running the unit and integration tests, you can run the
+commands below. (This isn't required, but it might be useful if you modify the
+compiler.)
+
+```shell
+# Unit Tests.
+( cd compiler && ghc all-tests.hs && ./all-tests )
+
+# Integration Tests. (SLOW)
+compiler/integration/tests.sh
+```
+
 The following sections explain the basics of source files and compilation.
 
 ### Source Files
