@@ -352,6 +352,10 @@ All variables must be initialized where they are defined *except* for `@value`
 variables and named returns. The compiler still requires initialization in both
 of those cases, but it's done out of line.
 
+Variables are assigned values with `<-`, or are assigned positionally when
+initializing `@value` members. (`=` is not used because that would imply that
+the left and right could be swapped.)
+
 <pre style='color:#1f1c1b;background-color:#ffffff;'>
 <b>concrete</b> <b><span style='color:#0057ae;'>Type</span></b> {
   <span style='color:#644a9b;'>@type</span> create (<i><span style='color:#0057ae;'>Int</span></i>) <b><span style='color:#006e28;'>-&gt;</span></b> (<span style='color:#0057ae;'>Type</span>)
@@ -544,88 +548,6 @@ The main drawback of type interfaces is that their procedures can only be
 defined for `concrete` categories. This means that, for example, a filter such
 as `#x defines Equals<#x>` cannot be satisfied by a `@value interface`.
 
-### Parameter Filters
-
-Type parameters don't have access to any information about the type being
-substituted unless filtering is applied.
-
-<pre style='color:#1f1c1b;background-color:#ffffff;'>
-<b>concrete</b> <b><span style='color:#0057ae;'>Data</span></b><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span> {
-  <i><span style='color:#0057ae;'>#x</span></i> <b>requires</b> <i><span style='color:#0057ae;'>Formatted</span></i>  <span style='color:#898887;'>// Built-in @value interface.</span>
-
-  <span style='color:#644a9b;'>@type</span> create (<i><span style='color:#0057ae;'>#x</span></i>) <b><span style='color:#006e28;'>-&gt;</span></b> (<span style='color:#0057ae;'>Data</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>)
-  <span style='color:#644a9b;'>@value</span> format () <b><span style='color:#006e28;'>-&gt;</span></b> (<i><span style='color:#0057ae;'>String</span></i>)
-}
-
-<b>define</b> <b><span style='color:#0057ae;'>Data</span></b> {
-  <span style='color:#644a9b;'>@value</span> <i><span style='color:#0057ae;'>#x</span></i> value
-
-  create (v) {
-    <b>return</b> <span style='color:#0057ae;'>Data</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>{ v }
-  }
-
-  format () {
-    <b>return</b> value.formatted()
-  }
-}</pre>
-
-In the above example, `formatted` is a function from `Formatted`, and can be
-used because the filter `#x requires Formatted` prevents type substitution if
-`Formatted` is not available.
-
-The reverse is also possible; you can require that a parameter be *assignable*
-from a certain type.
-
-<pre style='color:#1f1c1b;background-color:#ffffff;'>
-<b>concrete</b> <b><span style='color:#0057ae;'>Data</span></b><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span> {
-  <i><span style='color:#0057ae;'>#x</span></i> <b>allows</b> <i><span style='color:#0057ae;'>String</span></i>
-
-  <span style='color:#644a9b;'>@type</span> create (<b>optional</b> <i><span style='color:#0057ae;'>#x</span></i>) <b><span style='color:#006e28;'>-&gt;</span></b> (<span style='color:#0057ae;'>Data</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>)
-  <span style='color:#644a9b;'>@value</span> orDefault () <b><span style='color:#006e28;'>-&gt;</span></b> (<i><span style='color:#0057ae;'>#x</span></i>)
-}
-
-<b>define</b> <b><span style='color:#0057ae;'>Data</span></b> {
-  <span style='color:#644a9b;'>@value</span> <b>optional</b> <i><span style='color:#0057ae;'>#x</span></i> value
-
-  create (v) {
-    <b>return</b> <span style='color:#0057ae;'>Data</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>{ v }
-  }
-
-  orDefault () {
-    <b>if</b> (<b>present</b>(value)) {
-      <b>return</b> <b>require</b>(value)
-    } <b>else</b> {
-      <b>return</b> <span style='color:#bf0303;'>&quot;Not Found&quot;</span>
-    }
-  }
-}</pre>
-
-Filters can also specify required `@type` interfaces.
-
-<pre style='color:#1f1c1b;background-color:#ffffff;'>
-<b>concrete</b> <b><span style='color:#0057ae;'>Data</span></b><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span> {
-  <i><span style='color:#0057ae;'>#x</span></i> <b>defines</b> <i><span style='color:#0057ae;'>LessThan</span></i><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>  <span style='color:#898887;'>// Built-in @type interface.</span>
-
-  <span style='color:#644a9b;'>@type</span> create (<i><span style='color:#0057ae;'>#x</span></i>) <b><span style='color:#006e28;'>-&gt;</span></b> (<span style='color:#0057ae;'>Data</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>)
-  <span style='color:#644a9b;'>@value</span> replaceIfLessThan (<i><span style='color:#0057ae;'>#x</span></i>) <b><span style='color:#006e28;'>-&gt;</span></b> ()
-}
-
-<b>define</b> <b><span style='color:#0057ae;'>Data</span></b> {
-  <span style='color:#644a9b;'>@value</span> <i><span style='color:#0057ae;'>#x</span></i> value
-
-  create (v) {
-    <b>return</b> <span style='color:#0057ae;'>Data</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>{ v }
-  }
-
-  replaceIfLessThan (v) {
-    <b>if</b> (<i><span style='color:#0057ae;'>#x</span></i><span style='color:#644a9b;'>$</span>lessThan(v,value)) {
-      value <b><span style='color:#006e28;'>&lt;-</span></b> v
-    }
-  }
-}</pre>
-
-In this example, `#x$lessThan(...)` is a type-function call being made on `#x`.
-
 ### Control Flow
 
 Zeolite provides `if`/`elif`/`else` and `while` constructs.
@@ -719,6 +641,174 @@ turns the value into an `optional`.
 they can be created locally or as members. Required and optional values can
 automatically covert to `weak`.
 
+## Type Parameters
+
+Type parameters allow you to create a category that applies the same semantics
+to different types of value. Categories and functions can both have type
+parameters. Parameter names *must* start with `#` and a lowercase letter, e.g.,
+`#x`.
+
+When using type parameters for `concrete` categories, *do not* redeclare the
+parameters in the `define`.
+
+<pre style='color:#1f1c1b;background-color:#ffffff;'>
+<b>concrete</b> <b><span style='color:#0057ae;'>Type</span></b><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span> {}
+
+<b>define</b> <b><span style='color:#0057ae;'>Type</span></b> <span style='color:#898887;'>/*</span><span style='color:#898887;'>Do not use &lt;#x&gt; here.</span><span style='color:#898887;'>*/</span> {}</pre>
+
+Type parameters in functions directly follow the function name.
+
+<pre style='color:#1f1c1b;background-color:#ffffff;'>
+<span style='color:#644a9b;'>@category</span> create&lt;<i><span style='color:#0057ae;'>#x</span></i>&gt; (<i><span style='color:#0057ae;'>#x</span></i>) <b><span style='color:#006e28;'>-&gt;</span></b> (<span style='color:#0057ae;'>Type</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>)</pre>
+
+### Parameter Variance
+
+Parameter variance allows a value of a parameterized category to be converted to
+a value from the same category with a different parameter. You can specify
+*which direction* conversions are allowed for each parameter of a type category.
+
+<pre style='color:#1f1c1b;background-color:#ffffff;'>
+<span style='color:#898887;'>// Can convert #x to a parent type, e.g., Reader&lt;Child&gt; -&gt; Reader&lt;Parent&gt;.</span>
+<span style='color:#644a9b;'>@value</span> <b>interface</b> <b><span style='color:#0057ae;'>Reader</span></b><span style='color:#c02040;'>&lt;</span><span style='color:#c04040;'>|</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span> {}
+
+<span style='color:#898887;'>// Can convert #x to a child type, e.g., Writer&lt;Parent&gt; -&gt; Writer&lt;Child&gt;.</span>
+<span style='color:#644a9b;'>@value</span> <b>interface</b> <b><span style='color:#0057ae;'>Writer</span></b><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c04040;'>|</span><span style='color:#c02040;'>&gt;</span> {}
+
+<span style='color:#898887;'>// Can convert #x to a child type and #y to a parent type.</span>
+<span style='color:#644a9b;'>@value</span> <b>interface</b> <b><span style='color:#0057ae;'>Function</span></b><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c04040;'>|</span><i><span style='color:#0057ae;'>#y</span></i><span style='color:#c02040;'>&gt;</span> {}
+
+<span style='color:#898887;'>// Different possibilities for disallowing conversion of #x.</span>
+<span style='color:#644a9b;'>@value</span> <b>interface</b> <b><span style='color:#0057ae;'>Type1</span></b><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span> {}
+<span style='color:#644a9b;'>@value</span> <b>interface</b> <b><span style='color:#0057ae;'>Type2</span></b><span style='color:#c02040;'>&lt;</span><span style='color:#c04040;'>|</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c04040;'>|</span><span style='color:#c02040;'>&gt;</span> {}
+<span style='color:#644a9b;'>@value</span> <b>interface</b> <b><span style='color:#0057ae;'>Type3</span></b><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#w</span></i><span style='color:#c04040;'>|</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c04040;'>|</span><i><span style='color:#0057ae;'>#y</span></i><span style='color:#c02040;'>&gt;</span> {}</pre>
+
+Type parameters for functions *cannot* specify variance.
+
+When a parameter is either covariant (`<|#x>`) or contravariant (`<#x|>`),
+there are certain additional limitations that apply to how it can be used within
+a category:
+
+- A covariant parameter cannot be used for callers to *write* with, e.g., as a
+  function argument.
+- A contravariant parameter cannot be used for callers to *read* with, e.g., as
+  a function return.
+
+These rules are applied recursively when a parameter is used in `refines`,
+`defines`, and function arguments and returns.
+
+<pre style='color:#1f1c1b;background-color:#ffffff;'>
+<span style='color:#644a9b;'>@value</span> <b>interface</b> <b><span style='color:#0057ae;'>Reader</span></b><span style='color:#c02040;'>&lt;</span><span style='color:#c04040;'>|</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span> {
+  read () <b><span style='color:#006e28;'>-&gt;</span></b> (<b>optional</b> <i><span style='color:#0057ae;'>#x</span></i>)
+}
+
+<span style='color:#644a9b;'>@value</span> <b>interface</b> <b><span style='color:#0057ae;'>Writer</span></b><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c04040;'>|</span><span style='color:#c02040;'>&gt;</span> {
+  write (<i><span style='color:#0057ae;'>#x</span></i>) <b><span style='color:#006e28;'>-&gt;</span></b> ()
+}
+
+<span style='color:#644a9b;'>@value</span> <b>interface</b> <b><span style='color:#0057ae;'>Queue</span></b><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#y</span></i><span style='color:#c02040;'>&gt;</span> {
+  <span style='color:#898887;'>// Fine, since #y cannot vary.</span>
+  <b>refines</b> <span style='color:#0057ae;'>Reader</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#y</span></i><span style='color:#c02040;'>&gt;</span>
+  <b>refines</b> <span style='color:#0057ae;'>Writer</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#y</span></i><span style='color:#c02040;'>&gt;</span>
+}
+
+<span style='color:#644a9b;'>@value</span> <b>interface</b> <b><span style='color:#0057ae;'>Data</span></b><span style='color:#c02040;'>&lt;</span><span style='color:#c04040;'>|</span><i><span style='color:#0057ae;'>#z</span></i><span style='color:#c02040;'>&gt;</span> {
+  <span style='color:#898887;'>// NOT ALLOWED, since #z would be used for writing.</span>
+  <span style='color:#898887;'>// refines Writer&lt;#z&gt;</span>
+
+  <span style='color:#898887;'>// Fine, because #z is actually used for reading here, i.e., readAll allows</span>
+  <span style='color:#898887;'>// the caller to read the data by passing it to the Writer.</span>
+  readAll (<span style='color:#0057ae;'>Writer</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#z</span></i><span style='color:#c02040;'>&gt;</span>) <b><span style='color:#006e28;'>-&gt;</span></b> ()
+
+  <span style='color:#898887;'>// NOT ALLOWED, since #z would be used for writing, i.e., the caller is</span>
+  <span style='color:#898887;'>// writing data by passing it inside of a Reader.</span>
+  <span style='color:#898887;'>// writeAll (Reader&lt;#z&gt;) -&gt; ()</span>
+}</pre>
+
+Also see the discussion of covariance and contravariance
+[on Wikipedia][cov-con].
+
+### Parameter Filters
+
+Type parameters don't have access to any information about the type being
+substituted unless filtering is applied.
+
+<pre style='color:#1f1c1b;background-color:#ffffff;'>
+<b>concrete</b> <b><span style='color:#0057ae;'>Data</span></b><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span> {
+  <i><span style='color:#0057ae;'>#x</span></i> <b>requires</b> <i><span style='color:#0057ae;'>Formatted</span></i>  <span style='color:#898887;'>// Built-in @value interface.</span>
+
+  <span style='color:#644a9b;'>@type</span> create (<i><span style='color:#0057ae;'>#x</span></i>) <b><span style='color:#006e28;'>-&gt;</span></b> (<span style='color:#0057ae;'>Data</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>)
+  <span style='color:#644a9b;'>@value</span> format () <b><span style='color:#006e28;'>-&gt;</span></b> (<i><span style='color:#0057ae;'>String</span></i>)
+}
+
+<b>define</b> <b><span style='color:#0057ae;'>Data</span></b> {
+  <span style='color:#644a9b;'>@value</span> <i><span style='color:#0057ae;'>#x</span></i> value
+
+  create (v) {
+    <b>return</b> <span style='color:#0057ae;'>Data</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>{ v }
+  }
+
+  format () {
+    <b>return</b> value.formatted()
+  }
+}</pre>
+
+In the above example, `formatted` is a function from `Formatted`, and can be
+used because the filter `#x requires Formatted` prevents type substitution if
+`Formatted` is not available.
+
+The reverse is also possible; you can require that a parameter be *assignable*
+from a certain type.
+
+<pre style='color:#1f1c1b;background-color:#ffffff;'>
+<b>concrete</b> <b><span style='color:#0057ae;'>Data</span></b><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span> {
+  <i><span style='color:#0057ae;'>#x</span></i> <b>allows</b> <i><span style='color:#0057ae;'>String</span></i>
+
+  <span style='color:#644a9b;'>@type</span> create (<b>optional</b> <i><span style='color:#0057ae;'>#x</span></i>) <b><span style='color:#006e28;'>-&gt;</span></b> (<span style='color:#0057ae;'>Data</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>)
+  <span style='color:#644a9b;'>@value</span> orDefault () <b><span style='color:#006e28;'>-&gt;</span></b> (<i><span style='color:#0057ae;'>#x</span></i>)
+}
+
+<b>define</b> <b><span style='color:#0057ae;'>Data</span></b> {
+  <span style='color:#644a9b;'>@value</span> <b>optional</b> <i><span style='color:#0057ae;'>#x</span></i> value
+
+  create (v) {
+    <b>return</b> <span style='color:#0057ae;'>Data</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>{ v }
+  }
+
+  orDefault () {
+    <b>if</b> (<b>present</b>(value)) {
+      <b>return</b> <b>require</b>(value)
+    } <b>else</b> {
+      <b>return</b> <span style='color:#bf0303;'>&quot;Not Found&quot;</span>
+    }
+  }
+}</pre>
+
+Filters can also specify required `@type` interfaces.
+
+<pre style='color:#1f1c1b;background-color:#ffffff;'>
+<b>concrete</b> <b><span style='color:#0057ae;'>Data</span></b><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span> {
+  <i><span style='color:#0057ae;'>#x</span></i> <b>defines</b> <i><span style='color:#0057ae;'>LessThan</span></i><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>  <span style='color:#898887;'>// Built-in @type interface.</span>
+
+  <span style='color:#644a9b;'>@type</span> create (<i><span style='color:#0057ae;'>#x</span></i>) <b><span style='color:#006e28;'>-&gt;</span></b> (<span style='color:#0057ae;'>Data</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>)
+  <span style='color:#644a9b;'>@value</span> replaceIfLessThan (<i><span style='color:#0057ae;'>#x</span></i>) <b><span style='color:#006e28;'>-&gt;</span></b> ()
+}
+
+<b>define</b> <b><span style='color:#0057ae;'>Data</span></b> {
+  <span style='color:#644a9b;'>@value</span> <i><span style='color:#0057ae;'>#x</span></i> value
+
+  create (v) {
+    <b>return</b> <span style='color:#0057ae;'>Data</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>{ v }
+  }
+
+  replaceIfLessThan (v) {
+    <b>if</b> (<i><span style='color:#0057ae;'>#x</span></i><span style='color:#644a9b;'>$</span>lessThan(v,value)) {
+      value <b><span style='color:#006e28;'>&lt;-</span></b> v
+    }
+  }
+}</pre>
+
+In this example, `#x$lessThan(...)` is a type-function call being made on `#x`.
+
 ### Type Reduction
 
 There are no explicit type casts in Zeolite, but the `reduce` built-in provides
@@ -772,57 +862,6 @@ This can also be useful for debugging code that has type parameters.
 In this example, `x` is `formatted` only if `#x` is something that converts to
 `Formatted`, which might be sufficient for a simple test case, e.g.,
 `Something<String>$complicated("test")`.
-
-### Unions and Intersections
-
-Zeolite provides type-union and type-intersection meta-types. Justifying their
-existence is outside of the scope of this intro.
-
-- A value with a *union type* `[A|B]` can be assigned from *either* `A` or `B`,
-  but can only be assigned to something that *both* `A` and `B` can be assigned
-  to. There is a special *empty union* named `all` that cannot ever be assigned
-  a value but that can be assigned to everything. (`empty` is actually of type
-  `optional all`.)
-
-<pre style='color:#1f1c1b;background-color:#ffffff;'>
-<span style='color:#644a9b;'>@value</span> <b>interface</b> <b><span style='color:#0057ae;'>Printable</span></b> {}
-
-<b>concrete</b> <b><span style='color:#0057ae;'>Newspaper</span></b> {
-  <b>refines</b> <span style='color:#0057ae;'>Printable</span>
-  <span style='color:#644a9b;'>@type</span> new () <b><span style='color:#006e28;'>-&gt;</span></b> (<span style='color:#0057ae;'>Newspaper</span>)
-}
-
-<b>concrete</b> <b><span style='color:#0057ae;'>Magazine</span></b> {
-  <b>refines</b> <span style='color:#0057ae;'>Printable</span>
-  <span style='color:#644a9b;'>@type</span> new () <b><span style='color:#006e28;'>-&gt;</span></b> (<span style='color:#0057ae;'>Magazine</span>)
-}
-
-<span style='color:#898887;'>// ...</span>
-
-<b><span style='color:#006e28;'>[</span></b><span style='color:#0057ae;'>Newspaper</span><span style='color:#006e28;'>|</span><span style='color:#0057ae;'>Magazine</span><b><span style='color:#006e28;'>]</span></b> val <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#0057ae;'>Newspaper</span><span style='color:#644a9b;'>$</span>new()
-<span style='color:#0057ae;'>Printable</span> val2 <b><span style='color:#006e28;'>&lt;-</span></b> val</pre>
-
-- A value with an *intersection type* `[A&B]` can be assigned from something
-  that is *both* `A` and `B`, and can be assigned to *either* an `A` or `B`.
-  There is a special *empty intersection* named `any` that can be assigned from
-  any value but cannot be assigned to any other type.
-
-<pre style='color:#1f1c1b;background-color:#ffffff;'>
-<span style='color:#644a9b;'>@value</span> <b>interface</b> <b><span style='color:#0057ae;'>Reader</span></b> {}
-
-<span style='color:#644a9b;'>@value</span> <b>interface</b> <b><span style='color:#0057ae;'>Writer</span></b> {}
-
-<b>concrete</b> <b><span style='color:#0057ae;'>Data</span></b> {
-  <b>refines</b> <span style='color:#0057ae;'>Reader</span>
-  <b>refines</b> <span style='color:#0057ae;'>Writer</span>
-  <span style='color:#644a9b;'>@type</span> new () <b><span style='color:#006e28;'>-&gt;</span></b> (<span style='color:#0057ae;'>Data</span>)
-}
-
-<span style='color:#898887;'>// ...</span>
-
-<b><span style='color:#006e28;'>[</span></b><span style='color:#0057ae;'>Reader</span><span style='color:#006e28;'>&amp;</span><span style='color:#0057ae;'>Writer</span><b><span style='color:#006e28;'>]</span></b> val <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#0057ae;'>Data</span><span style='color:#644a9b;'>$</span>new()
-<span style='color:#0057ae;'>Reader</span> val2 <b><span style='color:#006e28;'>&lt;-</span></b> val
-<span style='color:#0057ae;'>Writer</span> val3 <b><span style='color:#006e28;'>&lt;-</span></b> val</pre>
 
 ### Internal Types
 
@@ -878,6 +917,64 @@ The `types` keyword specifies additional internal type parameters that are
 *permanent* once the value is initialized. The `{}` following `types<#x>` can be
 used to specify filters to be applied to the types.
 
+## Other Features
+
+### Unions and Intersections
+
+Zeolite provides type-union and type-intersection meta-types.
+
+- A value with a *union type* `[A|B]` can be assigned from *either* `A` or `B`,
+  but can only be assigned to something that *both* `A` and `B` can be assigned
+  to. There is a special *empty union* named `all` that cannot ever be assigned
+  a value but that can be assigned to everything. (`empty` is actually of type
+  `optional all`.)
+
+  Unions can be useful for limiting the types that can be assigned to a more
+  general variable.
+
+<pre style='color:#1f1c1b;background-color:#ffffff;'>
+<span style='color:#644a9b;'>@value</span> <b>interface</b> <b><span style='color:#0057ae;'>Printable</span></b> {}
+
+<b>concrete</b> <b><span style='color:#0057ae;'>Newspaper</span></b> {
+  <b>refines</b> <span style='color:#0057ae;'>Printable</span>
+  <span style='color:#644a9b;'>@type</span> new () <b><span style='color:#006e28;'>-&gt;</span></b> (<span style='color:#0057ae;'>Newspaper</span>)
+}
+
+<b>concrete</b> <b><span style='color:#0057ae;'>Magazine</span></b> {
+  <b>refines</b> <span style='color:#0057ae;'>Printable</span>
+  <span style='color:#644a9b;'>@type</span> new () <b><span style='color:#006e28;'>-&gt;</span></b> (<span style='color:#0057ae;'>Magazine</span>)
+}
+
+<span style='color:#898887;'>// ...</span>
+
+<b><span style='color:#006e28;'>[</span></b><span style='color:#0057ae;'>Newspaper</span><span style='color:#006e28;'>|</span><span style='color:#0057ae;'>Magazine</span><b><span style='color:#006e28;'>]</span></b> val <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#0057ae;'>Newspaper</span><span style='color:#644a9b;'>$</span>new()
+<span style='color:#0057ae;'>Printable</span> val2 <b><span style='color:#006e28;'>&lt;-</span></b> val</pre>
+
+- A value with an *intersection type* `[A&B]` can be assigned from something
+  that is *both* `A` and `B`, and can be assigned to *either* an `A` or `B`.
+  There is a special *empty intersection* named `any` that can be assigned from
+  any value but cannot be assigned to any other type.
+
+  Intersections can be useful for requiring multiple interfaces without creating
+  a new category that refines all of those interfaces.
+
+<pre style='color:#1f1c1b;background-color:#ffffff;'>
+<span style='color:#644a9b;'>@value</span> <b>interface</b> <b><span style='color:#0057ae;'>Reader</span></b> {}
+
+<span style='color:#644a9b;'>@value</span> <b>interface</b> <b><span style='color:#0057ae;'>Writer</span></b> {}
+
+<b>concrete</b> <b><span style='color:#0057ae;'>Data</span></b> {
+  <b>refines</b> <span style='color:#0057ae;'>Reader</span>
+  <b>refines</b> <span style='color:#0057ae;'>Writer</span>
+  <span style='color:#644a9b;'>@type</span> new () <b><span style='color:#006e28;'>-&gt;</span></b> (<span style='color:#0057ae;'>Data</span>)
+}
+
+<span style='color:#898887;'>// ...</span>
+
+<b><span style='color:#006e28;'>[</span></b><span style='color:#0057ae;'>Reader</span><span style='color:#006e28;'>&amp;</span><span style='color:#0057ae;'>Writer</span><b><span style='color:#006e28;'>]</span></b> val <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#0057ae;'>Data</span><span style='color:#644a9b;'>$</span>new()
+<span style='color:#0057ae;'>Reader</span> val2 <b><span style='color:#006e28;'>&lt;-</span></b> val
+<span style='color:#0057ae;'>Writer</span> val3 <b><span style='color:#006e28;'>&lt;-</span></b> val</pre>
+
 ## Future Things
 
 ### Function Objects
@@ -901,6 +998,11 @@ Maybe.
 ### Exceptions
 
 Probably not.
+
+### Packages and Name Scoping
+
+At some point Zeolite will need a package system, or some other way to scope
+category names to avoid name clashes. This is largely a syntactic consideration.
 
 ## Other Discussions
 
@@ -1121,5 +1223,6 @@ Please experiment with Zeolite and share your thoughts. Please also contact me
 if you are interested in helping with development.
 
 [clang]: https://clang.llvm.org/cxx_status.html
+[cov-con]: https://en.wikipedia.org/wiki/Covariance_and_contravariance_%28computer_science%29
 [ghc]: https://www.haskell.org/ghc/
 [git]: https://git-scm.com/

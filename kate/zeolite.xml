@@ -118,6 +118,7 @@
         <DetectSpaces />
         <RegExpr attribute="Define Category Name" context="#stay" String="\b[A-Z][a-zA-Z0-9]*\b" />
         <DetectChar context="#pop" char="{" lookAhead="true" />
+        <IncludeRules context="Any Comment" />
         <AnyChar attribute="Error" context="#stay" String="#$}.*@!=%+-/\&lt;&gt;()[]" />
         <RegExpr attribute="Error" context="#stay" String="[a-z0-9][a-zA-Z0-9]*\b" />
       </context>
