@@ -323,8 +323,9 @@ createFunctionDispatch n s fs = [typedef] ++ concat (map table $ byCategory) ++
     ["  static const CallType " ++ tableName n2 ++ "[] = {"] ++
     map (\f -> "    &" ++ name f ++ ",") (Set.toList $ Set.fromList $ map sfName fs) ++
     ["  };"]
-  dispatch (n2,_) = [
+  dispatch (n2,fs) = [
       "  if (label.Collection() == " ++ collectionName n2 ++ ") {",
+      "    FAIL_IF(label.Num() < 0 || label.Num() >= " ++ show (length fs) ++ ");",
       "    return (this->*" ++ tableName n2 ++ "[label.Num()])(" ++ args ++ ");",
       "  }"
     ]
