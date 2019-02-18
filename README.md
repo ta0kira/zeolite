@@ -4,6 +4,14 @@ Zeolite is a statically-typed, general-purpose programming language. It focuses
 on data objects and their uses, while attempting to avoid some pitfalls of
 object-oriented programming and type parameterization.
 
+Zeolite prioritizes making code written with it simple to understand for readers
+who didn't write the original code. This is done by disallowing certain idioms
+that tend to lead to code decay over time.
+
+The design of the type system and the language itself is influenced by positive
+and negative experiences with Java, C++, Haskell, Python, and Go, and with
+collaborative development.
+
 ## Hello World
 
 It's the [any%](https://en.wiktionary.org/wiki/any%25) of programming.
@@ -165,7 +173,7 @@ theme of these limitations (listed below) is that the program must focus on how
 types and values *can be used*, rather than on *the data they represent*.
 
 The following list can be thought of as *things that are missing* when comparing
-to other languages, which is a *good thing*, once you get used to it.
+to other languages, which is a good thing, once you get used to it.
 
 - Each type category is either *concrete* or an *interface*. Concrete categories
   *cannot* be further extended, and interfaces *cannot* define procedural code.
@@ -1038,6 +1046,13 @@ Additionally, allowing implicit types when creating variables would likely make
 Zeolite *less* readable, due to the extensive amount of implicit type
 conversions it supports.
 
+Another thing to consider is the experience of the programmer when their code is
+actually *incorrect* or needs refactoring. For example, in Go (the programming
+language) the use of implicit types can actually make refactoring a procedure
+into smaller functions more difficult for the programmer. (Go uses automatic
+typing for local variables and explicit typing for function arguments and
+returns.)
+
 ### Type Inference
 
 Zeolite currently does not infer type arguments in type-parameter substitution.
@@ -1077,6 +1092,16 @@ In Java and C++, type parameters for functions are more of a declaration to the
 compiler that the function relies on to-be-determined types. In both languages,
 the number and order of the parameters is often arbitrary, and parameterized
 functions are often combined with function overloading.
+
+Again, you also need to consider what happens when the code itself is incorrect.
+Haskell (which is what Zeolite is written in) uses *extensive* type inference.
+This cleans up the code quite a bit, but it's quite common for the compiler to
+show a type error in a function other than the one containing the error, and
+show *no errors* in the function that actually contains one.
+
+Explicit types are a way to tell the compiler and *readers of your code* what
+you *meant* to do. This forces compile-time errors to be localized, which makes
+them easier to investigate and understand.
 
 ## Conclusion
 
