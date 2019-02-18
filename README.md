@@ -9,8 +9,8 @@ who didn't write the original code. This is done by disallowing certain idioms
 that tend to lead to code decay over time.
 
 The design of the type system and the language itself is influenced by positive
-and negative experiences with Java, C++, Haskell, Python, and Go, and with
-collaborative development.
+and negative experiences with Java, C++, Haskell, Python, and Go, with
+collaborative development, and with various systems of code-quality enforcement.
 
 ## Hello World
 
@@ -644,10 +644,9 @@ automatically covert to `weak`.
 
 ## Type Parameters
 
-Type parameters allow you to create a category that applies the same semantics
-to different types of value. Categories and functions can both have type
-parameters. Parameter names *must* start with `#` and a lowercase letter, e.g.,
-`#x`.
+Type parameters allow you consistently apply the same semantics to different
+types of value. Categories and functions can both have type parameters.
+Parameter names *must* start with `#` and a lowercase letter, e.g., `#x`.
 
 When using type parameters for `concrete` categories, *do not* redeclare the
 parameters in the `define`.
@@ -660,7 +659,13 @@ parameters in the `define`.
 Type parameters in functions directly follow the function name.
 
 <pre style='color:#1f1c1b;background-color:#ffffff;'>
-<span style='color:#644a9b;'>@category</span> create&lt;<i><span style='color:#0057ae;'>#x</span></i>&gt; (<i><span style='color:#0057ae;'>#x</span></i>) <b><span style='color:#006e28;'>-&gt;</span></b> (<span style='color:#0057ae;'>Type</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>)</pre>
+<b>concrete</b> <b><span style='color:#0057ae;'>Type</span></b><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span> {
+  <span style='color:#644a9b;'>@category</span> create&lt;<i><span style='color:#0057ae;'>#y</span></i>&gt; (<i><span style='color:#0057ae;'>#y</span></i>) <b><span style='color:#006e28;'>-&gt;</span></b> (<span style='color:#0057ae;'>Type</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#y</span></i><span style='color:#c02040;'>&gt;</span>)
+}
+
+<span style='color:#898887;'>// ...</span>
+
+<span style='color:#0057ae;'>Type</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>String</span></i><span style='color:#c02040;'>&gt;</span> val <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#0057ae;'>Type</span><span style='color:#644a9b;'>$$</span>create&lt;<i><span style='color:#0057ae;'>String</span></i>&gt;(<span style='color:#bf0303;'>&quot;string&quot;</span>)</pre>
 
 ### Parameter Variance
 
@@ -681,7 +686,10 @@ a value from the same category with a different parameter. You can specify
 <span style='color:#898887;'>// Different possibilities for disallowing conversion of #x.</span>
 <span style='color:#644a9b;'>@value</span> <b>interface</b> <b><span style='color:#0057ae;'>Type1</span></b><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span> {}
 <span style='color:#644a9b;'>@value</span> <b>interface</b> <b><span style='color:#0057ae;'>Type2</span></b><span style='color:#c02040;'>&lt;</span><span style='color:#c04040;'>|</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c04040;'>|</span><span style='color:#c02040;'>&gt;</span> {}
-<span style='color:#644a9b;'>@value</span> <b>interface</b> <b><span style='color:#0057ae;'>Type3</span></b><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#w</span></i><span style='color:#c04040;'>|</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c04040;'>|</span><i><span style='color:#0057ae;'>#y</span></i><span style='color:#c02040;'>&gt;</span> {}</pre>
+<span style='color:#644a9b;'>@value</span> <b>interface</b> <b><span style='color:#0057ae;'>Type3</span></b><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#w</span></i><span style='color:#c04040;'>|</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c04040;'>|</span><i><span style='color:#0057ae;'>#y</span></i><span style='color:#c02040;'>&gt;</span> {}
+
+<span style='color:#898887;'>// Multiple parameters are separated by &quot;,&quot;.</span>
+<span style='color:#644a9b;'>@value</span> <b>interface</b> <b><span style='color:#0057ae;'>Type4</span></b><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#u</span></i>,<i><span style='color:#0057ae;'>#v</span></i><span style='color:#c04040;'>|</span><i><span style='color:#0057ae;'>#w</span></i>,<i><span style='color:#0057ae;'>#x</span></i><span style='color:#c04040;'>|</span><i><span style='color:#0057ae;'>#y</span></i>,<i><span style='color:#0057ae;'>#z</span></i><span style='color:#c02040;'>&gt;</span> {}</pre>
 
 Type parameters for functions *cannot* specify variance.
 
@@ -689,10 +697,10 @@ When a parameter is either covariant (`<|#x>`) or contravariant (`<#x|>`),
 there are certain additional limitations that apply to how it can be used within
 a category:
 
-- A covariant parameter cannot be used for callers to *write* with, e.g., as a
+- A covariant parameter cannot be used by callers to *write* with, e.g., as a
   function argument.
-- A contravariant parameter cannot be used for callers to *read* with, e.g., as
-  a function return.
+- A contravariant parameter cannot be used by callers to *read* with, e.g., as a
+  function return.
 
 These rules are applied recursively when a parameter is used in `refines`,
 `defines`, and function arguments and returns.
@@ -993,7 +1001,7 @@ interfaces, however.
 }
 
 <b>concrete</b> <b><span style='color:#0057ae;'>Data</span></b> {
-  <b>refines</b> <span style='color:#0057ae;'>Getter</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Formatted</span></i><span style='color:#c02040;'>&gt;</span> <span style='color:#898887;'>// String -&gt; Formatted</span>
+  <b>refines</b> <span style='color:#0057ae;'>Getter</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Formatted</span></i><span style='color:#c02040;'>&gt;</span>  <span style='color:#898887;'>// String -&gt; Formatted</span>
   <b>refines</b> <span style='color:#0057ae;'>Storage</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>String</span></i><span style='color:#c02040;'>&gt;</span>
 
   <span style='color:#898887;'>// get is inherited from both Getter and Storage. The two can be merged with</span>
@@ -1005,7 +1013,7 @@ interfaces, however.
 The *minimum* requirement for merging is that all versions of the function have
 matching argument, return, and type-parameter counts, and are "compatible" when
 pairing each of those by position. (Parameter filters determine the "type" of
-each type parameter.)
+each type parameter, and parameter names don't matter.)
 
 ## Future Things
 
@@ -1029,12 +1037,14 @@ Maybe.
 
 ### Exceptions
 
-Probably not.
+Probably not, but Zeolite already has stack traces for crashes.
 
 ### Packages and Name Scoping
 
 At some point Zeolite will need a package system, or some other way to scope
-category names to avoid name clashes. This is largely a syntactic consideration.
+category names to avoid name clashes. This is largely a syntactic consideration,
+but it also requires some changes at the binary level to avoid name clashes
+when linking.
 
 ## Other Discussions
 
@@ -1239,10 +1249,10 @@ compiler that the function relies on to-be-determined types. In both languages,
 the number and order of the parameters is often arbitrary, and parameterized
 functions are often combined with function overloading.
 
-Again, you also need to consider what happens when the code itself is incorrect.
+Again, you should also consider what happens when the code itself is incorrect.
 Haskell (which is what Zeolite is written in) uses *extensive* type inference.
-This cleans up the code quite a bit, but it's quite common for the compiler to
-show a type error in a function other than the one containing the error, and
+This cleans up the code quite a bit, but it's very common for the compiler to
+show a type error in a function other than the one containing the mistake, and
 show *no errors* in the function that actually contains one.
 
 Explicit types are a way to tell the compiler and *readers of your code* what
