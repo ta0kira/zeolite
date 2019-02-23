@@ -832,10 +832,11 @@ substituted unless filtering is applied.
 
 In the above example, `formatted` is a function from `Formatted`, and can be
 used because the filter `#x requires Formatted` prevents type substitution if
-`Formatted` is not available.
+the type doesn't refine `Formatted`.
 
 The reverse is also possible; you can require that a parameter be *assignable*
-from a certain type.
+from a certain type. (This is arguably less useful, but mostly exists for
+completeness.)
 
 <pre style='color:#1f1c1b;background-color:#ffffff;'>
 <b>concrete</b> <b><span style='color:#0057ae;'>Data</span></b><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span> {
@@ -859,6 +860,13 @@ from a certain type.
       <b>return</b> <span style='color:#bf0303;'>&quot;Not Found&quot;</span>
     }
   }
+}</pre>
+
+Both can also be applied to other parameters:
+
+<pre style='color:#1f1c1b;background-color:#ffffff;'>
+<b>concrete</b> <b><span style='color:#0057ae;'>Type</span></b><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i>,<i><span style='color:#0057ae;'>#y</span></i><span style='color:#c02040;'>&gt;</span> {
+  <i><span style='color:#0057ae;'>#x</span></i> <b>requires</b> <i><span style='color:#0057ae;'>#y</span></i>
 }</pre>
 
 Filters can also specify required `@type` interfaces.
@@ -1121,13 +1129,13 @@ Random access as a language primitive (e.g., arrays in C++ and Java) probably
 won't happen. Arrays are most useful when you need to allocate a fixed number of
 values up front and then access positions using arithmetic operations.
 
-Random access will instead probably handled via a standard-library category that
-doesn't have its own special syntax. This can provide equivalent functionality
-without needing to worry about the details of allocation.
+Random access will instead probably be handled via a standard-library category
+that doesn't have its own special syntax. This can provide equivalent
+functionality without needing to worry about the details of allocation.
 
 ### Immutable Types
 
-A value of an immutable type cannot be modified by any caller after
+A value of an immutable type cannot be modified by any procedure after
 initialization. This can be useful for concurrency, and to otherwise limit the
 possible places a bug can occur in the code.
 
@@ -1135,23 +1143,25 @@ Zeolite will eventually have immutable categories, where immutability is
 enforced for the entire category; not just for selected values or for specific
 references to values. This should be an easy addition to the type system.
 
-A related concept is C++ `const`, which is used to protect specific instances
+A related concept is C++ `const`, which is used to protect *specific instances*
 from modification, either locally or by specific functions.
 
-An incorrect intuition of `const` is that it makes the entire object appear to
-be immutable. In order to achieve that intuition, the code author needs to
+An *incorrect* intuition of `const` is that it makes the entire object appear to
+be immutable. In order to achieve those semantics, the code author needs to
 understand C++ best-practices enough to design a `class` that has an "immutable
 view" (i.e., `const` member functions) that protects things that are accessible
 via indirection.
 
 For example, `std::vector` was designed such that a `const std::vector<X>`
 contains `const X` values. Poor design (i.e., default behavior) would allow
-callers to modify elements of a `const std::vector<X>`.
+callers to modify elements of a `const std::vector<X>`. On the other hand, a
+`const std::unique_ptr<X>` provides access to a non-`const` `X`, which can be
+counter-intuitive for new C++ users.
 
-This can be confusing for the reader and writer, can often be misapplied, and
-can require quite a bit of extra boilerplate to get it right. It's therefore
-unlikely that Zeolite will also have a concept of an "immutable view" of a value
-that can otherwise be modified.
+This can be confusing for the reader and writer, it can be inconsistently
+applied, and it can require quite a bit of extra boilerplate to get it right.
+It's therefore unlikely that Zeolite will also have a concept of an "immutable
+view" of a value that can otherwise be modified.
 
 ## Other Discussions
 
@@ -1309,12 +1319,13 @@ Additionally, allowing implicit types when creating variables would likely make
 Zeolite *less* readable, due to the extensive amount of implicit type
 conversions it supports.
 
-Another thing to consider is the experience of the programmer when their code is
-actually *incorrect* or needs refactoring. For example, in Go (the programming
-language) the use of implicit types can actually make refactoring a procedure
-into smaller functions more difficult for the programmer. (Go uses automatic
-typing for local variables and explicit typing for function arguments and
-returns.)
+Another point to consider is the experience of the programmer when their code is
+actually *incorrect* or needs refactoring.
+
+For example, in Go the use of implicit types can actually make refactoring a
+procedure into smaller functions more difficult for the programmer. (Go uses
+implicit typing for local variables and explicit typing for function arguments
+and returns.)
 
 ### Type Inference
 
@@ -1356,15 +1367,17 @@ compiler that the function relies on to-be-determined types. In both languages,
 the number and order of the parameters is often arbitrary, and parameterized
 functions are often combined with function overloading.
 
-Again, you should also consider what happens when the code itself is incorrect.
-Haskell (which is what Zeolite is written in) uses *extensive* type inference.
-This cleans up the code quite a bit, but it's very common for the compiler to
-show a type error in a function other than the one containing the mistake, and
-show *no errors* in the function that actually contains one.
-
 Explicit types are a way to tell the compiler and *readers of your code* what
 you *meant* to do. This forces compile-time errors to be localized, which makes
-them easier to investigate and understand.
+them easier to investigate and understand. Again, considering what happens when
+the code itself is *incorrect* is sometimes more important than streamlining
+*correct* code.
+
+Haskell (which is what Zeolite is written in) uses *extensive* type inference
+that spans multiple function calls. This cleans up the code quite a bit, but
+it's very common for the compiler to show a type error in a function other than
+the one containing the mistake, while showing *no errors* in the function that
+actually contains one.
 
 ## Conclusion
 
