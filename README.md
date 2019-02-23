@@ -37,21 +37,25 @@ It's the [any%](https://en.wiktionary.org/wiki/any%25) of programming.
 ./HelloWorld
 ```
 
+Also see a [full example][example] for more complete feature usage.
+
 ## Project Status
 
 The Zeolite compiler is currently a prototype that compiles source files into
 C++, which can then be compiled with a C++ compiler. The primary use-case at the
 moment is to experiment with a new type system, described in the next section.
-(A full write-up of the type system might be made available in the future.)
+A full compiler will be written if the language turns out to be useful.
 
-A full compiler will be written if the language turns out to be useful. Until
-then, please experiment with it and share your thoughts.
+The project is currently lacking most standard-library functionality, but it can
+be easily extended using C++ to access C and C++ libraries. Since a compiler
+rewrite will change how extension is done, standard-library work will likely be
+minimal.
 
 ## Motivation
 
 The basic units of a Zeolite program are
-[*categories*](https://en.wikipedia.org/wiki/Category_%28mathematics%29) of
-types, each having a fixed number of *type parameters*.
+[**categories**](https://en.wikipedia.org/wiki/Category_%28mathematics%29) of
+types, each having a fixed number of **type parameters**.
 
 For example:
 
@@ -61,9 +65,9 @@ For example:
 }</pre>
 
 The category `Type` has a single type parameter `#x`. Passing a type to `Type`
-gives you a *type instance*, e.g., `Type<Value>`. Here `Type` can be thought of
-as a "function" that turns one type (`Value`) into another type (`Type<Value>`),
-where `#x` is the name of the "type argument".
+gives you a **type instance**, e.g., `Type<Value>`. Here `Type` can be thought
+of as a function that turns one type (`Value`) into another type
+(`Type<Value>`), where `#x` is the name of the type argument.
 
 ### Parameter Variance - Java
 
@@ -176,10 +180,10 @@ types and values *can be used*, rather than on *the data they represent*.
 The following list can be thought of as *things that are missing* when comparing
 to other languages, which is a good thing, once you get used to it.
 
-- Each type category is either *concrete* or an *interface*. Concrete categories
-  *cannot* be further extended, and interfaces *cannot* define procedural code.
-  This means that the inheritance graph of types primarily consists of
-  interfaces, with all procedural code living at the very bottom.
+- Each type category is either **concrete** or an **interface**. Concrete
+  categories *cannot* be further extended, and interfaces *cannot* define
+  procedural code. This means that the inheritance graph of types primarily
+  consists of interfaces, with all procedural code living at the very bottom.
 - All data members have *internal* visibility. This is more restrictive than
   `private` visibility in Java and C++ in that objects *cannot* directly access
   the data members of other objects of the same type.
@@ -193,7 +197,7 @@ to other languages, which is a good thing, once you get used to it.
 
 Zeolite also has a limited meta-type system that operates on types themselves:
 
-- A special type of interface called a *type interface* can be used for
+- A special type of interface called a **type interface** can be used for
   requiring type-level functions. This allows procedures to call functions on
   type parameters themselves.
 - Constraints on type parameters can be used when declaring categories or
@@ -209,8 +213,8 @@ Zeolite also has a limited meta-type system that operates on types themselves:
 Zeolite is currently developed and tested on Linux. It might not work out of the
 box on other operating systems at the moment.
 
-1. Make sure that you have [`git`][git], [`clang++`][clang], and [`ghc`][ghc]
-   installed on your system.
+1. Make sure that you have [`git`][git], [`clang++`][clang] (possibly installed
+   via a package just named "clang"), and [`ghc`][ghc] installed on your system.
 2. Clone this project in a local directory.
    ```shell
    git clone https://github.com/ta0kira/zeolite.git
@@ -295,7 +299,7 @@ more advanced.
 ### Concrete Types, and Procedures
 
 If you learn nothing else here, you at least need to be able to write something
-that will execute. *Concrete* categories are the only place you can define
+that will execute. **Concrete** categories are the only place you can define
 procedural code.
 
 <pre style='color:#1f1c1b;background-color:#ffffff;'>
@@ -326,10 +330,10 @@ From top to bottom:
 - `concrete` followed by a name that starts with an *uppercase* letter lets the
   compiler know that a new category is being declared. This category has no
   type parameters.
-- `@value` means that what follows is specific to *allocated values* from the
+- `@value` means that what follows is specific to **allocated values** from the
   category. (Like instances in Java and C++.)
 - The function `func` takes no arguments and returns nothing.
-- `@type` means that what follows applies to *type instances*. In this case,
+- `@type` means that what follows applies to **type instances**. In this case,
   `new` returns an allocated `MyType`. (This is like a static function in C++.)
   There are no constructors in Zeolite, so you need a function like this if you
   want to create values.
@@ -346,6 +350,36 @@ From top to bottom:
   `@type` function has direct access to `@value` members.
 - An internal-only function `func2` is declared within the definition, with a
   definition immediately following.
+
+### `@category`, `@type`, and `@value`
+
+Functions and non-local variables in Zeolite can have scoping rules that are
+similar to `static` in C++ and Java. (Note that `static` has different semantics
+in C++ vs. Java.)
+
+Take the following category as an example:
+
+<pre style='color:#1f1c1b;background-color:#ffffff;'>
+<b>concrete</b> <b><span style='color:#0057ae;'>Category</span></b><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span> {
+  <span style='color:#644a9b;'>@category</span> create&lt;<i><span style='color:#0057ae;'>#y</span></i>&gt; (<i><span style='color:#0057ae;'>#y</span></i>) <b><span style='color:#006e28;'>-&gt;</span></b> (<span style='color:#0057ae;'>Category</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#y</span></i><span style='color:#c02040;'>&gt;</span>)
+  <span style='color:#644a9b;'>@type</span>     new () <b><span style='color:#006e28;'>-&gt;</span></b> (<span style='color:#0057ae;'>Category</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>)
+  <span style='color:#644a9b;'>@value</span>    get () <b><span style='color:#006e28;'>-&gt;</span></b> (<i><span style='color:#0057ae;'>#x</span></i>)
+}</pre>
+
+- `create` is a `@category` function, which means that you call it from the
+  category name *without* a type parameter. This is done with `$$`, e.g.,
+  `Category$$create<String>("string")`. `@category` functions don't have access
+  to the type parameters, much like `static` methods in Java.
+
+- `new` is a `@type` function, which means that you call it from a type instance
+  *with* all type parameters. This is done with `$`, e.g.,
+  `Category<String>$new()`. This is more like `static` in C++.
+
+- `get` is a `@value` function, which requires an allocated value to call, e.g.,
+  `String y <- x.get()`. This is like member functions in C++ and Java.
+
+This scoping can also be applied to variables, which are discussed in the next
+section.
 
 ### Variables
 
@@ -386,6 +420,12 @@ Unlike most other languages, variable masking is not allowed. For example, if
 there is a `@value` variable named `x` then no `@value` function can create a
 local variabled named `x`.
 
+Variables *cannot* be accessed with a qualifier. For example, the syntax
+`val.member` (to access the `member` variable in `val`) isn't valid in Zeolite.
+This is because it's unsafe to access members of another object without first
+ensuring that variance rules are respected. (Also see the section about
+parameter variance.)
+
 ### Multiple Returns
 
 Functions can return more than one value. This can either be done by enclosing
@@ -420,11 +460,11 @@ values in `{}` or by naming them.
 The choice depends on the situation:
 
 - Unnamed returns are fine if it's easy to get all of the values in the same
-  place at the same time, and it requires specifying all values at all of the
+  place at the same time. This also requires specifying all values at all of the
   return points.
-- Named returns are helpful when the values are determined separately, and might
-  otherwise require extra temporary variables. Explicit return statements are
-  disallowed other than `return _` to return with the current assignments.
+- Named returns are helpful when the values are determined separately, which
+  might otherwise require extra temporary variables. Explicit return statements
+  are disallowed other than `return _` to return with the current assignments.
 
 There are also a few options for *receiving* multiple returns:
 
@@ -436,8 +476,11 @@ There are also a few options for *receiving* multiple returns:
 <b>define</b> <b><span style='color:#0057ae;'>Something</span></b> {
   func1 () {
     <i><span style='color:#0057ae;'>Int</span></i> x <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#b08000;'>0</span>
+    <span style='color:#898887;'>// Assign to existing (x) and new (y) variables.</span>
     { x, <i><span style='color:#0057ae;'>Int</span></i> y } <b><span style='color:#006e28;'>&lt;-</span></b> func2()
+    <span style='color:#898887;'>// Ignore the first return value.</span>
     { <b>_</b>, y } <b><span style='color:#006e28;'>&lt;-</span></b> func2()
+    <span style='color:#898887;'>// Ignore all return values.</span>
     <span style='color:#006e28;'>~</span> func2()
   }
 
@@ -458,6 +501,9 @@ function that takes *n* arguments:
 <span style='color:#898887;'>// ...</span>
 
 <span style='color:#006e28;'>~</span> call(get())</pre>
+
+Concatenation of multiple returns with other arguments *isn't* done, just to
+avoid confusing function calls.
 
 ### Value Interfaces
 
@@ -547,11 +593,13 @@ two things:
 
 1. Will the functions operate on *values* of the category that defines the
    procedure? If not, then it should be a `@type interface`. For example,
-   factory functions create *new* values, e.g., `Type$new()`.
+   factory functions create *new* values (e.g., `Type$new()`) and are therefore
+   called before a value exists.
 2. Should the procedure be determined by the *runtime* type of a particular
-   value? For example, in Java, `x.equals(y)` might use a different procedure
-   than `y.equals(x)` because the *runtime* types of `x` and `y` (respectively)
-   determine how the call is dispatched.
+   value? That might not always be desirable. For example, in Java,
+   `x.equals(y)` might use a different procedure than `y.equals(x)` because the
+   *runtime* types of `x` and `y` (respectively) determine how the call is
+   dispatched.
 
 The second point above is why the `LessThan` and `Equals` built-in categories
 are `@type interface`. This ensures that the procedure is chosen based on a
@@ -559,7 +607,8 @@ are `@type interface`. This ensures that the procedure is chosen based on a
 
 The main drawback of type interfaces is that their procedures can only be
 defined for `concrete` categories. This means that, for example, a filter such
-as `#x defines Equals<#x>` cannot be satisfied by a `@value interface`.
+as `#x defines Equals<#x>` cannot be satisfied by a `@value interface`. (Also
+see the section about parameter filters.)
 
 ### Control Flow
 
@@ -578,8 +627,10 @@ Zeolite provides `if`/`elif`/`else` and `while` constructs.
   <span style='color:#898887;'>// something</span>
 }</pre>
 
-These can (and should) be combined with `scoped` statements discussed in the
-following section
+`for` loops are not a built-in syntax because such loops are a very specialized
+case of `while`, and can become ugly very quickly if additional flexibility is
+required. The same functionality can be achieved with `scoped` statements,
+discussed in the next section.
 
 ### Scoped Statements
 
@@ -613,10 +664,6 @@ and `while`.
   <span style='color:#898887;'>// ...</span>
   i <b><span style='color:#006e28;'>&lt;-</span></b> i+<span style='color:#b08000;'>1</span>
 }</pre>
-
-`for` loops are not a built-in syntax because such loops are a very specialized
-case of `while`, and can become ugly very quickly if additional flexibility is
-required.
 
 ### Optional and Weak Values
 
@@ -1058,6 +1105,44 @@ category names to avoid name clashes. This is largely a syntactic consideration,
 but it also requires some changes at the binary level to avoid name clashes
 when linking.
 
+### Random Access Primitives
+
+Random access as a language primitive (e.g., arrays in C++ and Java) probably
+won't happen. Arrays are most useful when you need to allocate a fixed number of
+values up front and then access positions using arithmetic operations.
+
+Random access will instead probably handled via a standard-library category that
+doesn't have its own special syntax. This can provide equivalent functionality
+without needing to worry about the details of allocation.
+
+### Immutable Types
+
+A value of an immutable type cannot be modified by any caller after
+initialization. This can be useful for concurrency, and to otherwise limit the
+possible places a bug can occur in the code.
+
+Zeolite will eventually have immutable categories, where immutability is
+enforced for the entire category; not just for selected values or for specific
+references to values. This should be an easy addition to the type system.
+
+A related concept is C++ `const`, which is used to protect specific instances
+from modification, either locally or by specific functions.
+
+An incorrect intuition of `const` is that it makes the entire object appear to
+be immutable. In order to achieve that intuition, the code author needs to
+understand C++ best-practices enough to design a `class` that has an "immutable
+view" (i.e., `const` member functions) that protects things that are accessible
+via indirection.
+
+For example, `std::vector` was designed such that a `const std::vector<X>`
+contains `const X` values. Poor design (i.e., default behavior) would allow
+callers to modify elements of a `const std::vector<X>`.
+
+This can be confusing for the reader and writer, can often be misapplied, and
+can require quite a bit of extra boilerplate to get it right. It's therefore
+unlikely that Zeolite will also have a concept of an "immutable view" of a value
+that can otherwise be modified.
+
 ## Other Discussions
 
 ### Inheritance and Overriding
@@ -1278,5 +1363,6 @@ if you are interested in helping with development.
 
 [clang]: https://clang.llvm.org/cxx_status.html
 [cov-con]: https://en.wikipedia.org/wiki/Covariance_and_contravariance_%28computer_science%29
+[example]: https://github.com/ta0kira/zeolite/tree/master/example
 [ghc]: https://www.haskell.org/ghc/
 [git]: https://git-scm.com/
