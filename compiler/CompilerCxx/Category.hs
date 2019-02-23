@@ -534,7 +534,8 @@ getContextForInit tm t d s = do
       pcPrimNamed = [],
       pcRequiredTypes = Set.empty,
       pcOutput = [],
-      pcDisallowInit = True
+      pcDisallowInit = True,
+      pcLoopSetup = NotInLoop
     }
 
 builtinVariables :: TypeInstance -> Map.Map VariableName (VariableValue c)

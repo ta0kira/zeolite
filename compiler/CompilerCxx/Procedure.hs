@@ -82,7 +82,8 @@ compileExecutableProcedure tm t ps pi ms pa fi fa va
       pcPrimNamed = ns,
       pcRequiredTypes = Set.empty,
       pcOutput = [],
-      pcDisallowInit = False
+      pcDisallowInit = False,
+      pcLoopSetup = NotInLoop
     }
   output <- runDataCompiler compileWithReturn ctx
   return $ wrapProcedure output
@@ -187,8 +188,19 @@ compileStatement (ExplicitReturn c es) = do
         "returns.At(" ++ show i ++ ") = " ++ useAsUnwrapped e ++ ";"
       ]
 compileStatement (LoopBreak c) = do
-  -- TODO: This can only be used inside of a loop.
+  loop <- csGetLoop
+  case loop of
+       NotInLoop ->
+         lift $ compileError $ "Using break outside of while is no allowed [" ++ formatFullContext c ++ "]"
+       _ -> return ()
   csWrite ["break;"]
+compileStatement (LoopContinue c) = do
+  loop <- csGetLoop
+  case loop of
+       NotInLoop ->
+         lift $ compileError $ "Using next outside of while is no allowed [" ++ formatFullContext c ++ "]"
+       _ -> return ()
+  csWrite $ ["{"] ++ lsUpdate loop ++ ["}","continue;"]
 compileStatement (IgnoreValues c e) = do
   (_,e') <- compileExpression e
   csWrite [setTraceContext c]
@@ -291,13 +303,22 @@ compileIfElifElse (IfStatement c e p es) = do
 compileWhileLoop :: (Show c, Monad m, CompileErrorM m, MergeableM m,
                      CompilerContext c m [String] a) =>
   WhileLoop c -> CompilerState a m ()
-compileWhileLoop (WhileLoop c e p) = do
+compileWhileLoop (WhileLoop c e p u) = do
   ctx0 <- getCleanContext
   e' <- compileCondition ctx0 c e
-  ctx <- compileProcedure ctx0 p
+  ctx0' <- case u of
+                Just p2 -> do
+                  ctx2 <- compileProcedure ctx0 p2
+                  (lift $ ccGetRequired ctx2) >>= csRequiresTypes
+                  p2' <- lift $ ccGetOutput ctx2
+                  lift $ ccStartLoop ctx0 (LoopSetup p2')
+                _ -> lift $ ccStartLoop ctx0 (LoopSetup [])
+  (LoopSetup u') <- lift $ ccGetLoop ctx0'
+  ctx <- compileProcedure ctx0' p
   (lift $ ccGetRequired ctx) >>= csRequiresTypes
   csWrite ["while (" ++ e' ++ ") {"]
   (lift $ ccGetOutput ctx) >>= csWrite
+  csWrite u'
   csWrite ["}"]
 
 compileScopedBlock :: (Show c, Monad m, CompileErrorM m, MergeableM m,

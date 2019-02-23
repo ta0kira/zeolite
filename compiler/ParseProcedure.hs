@@ -84,6 +84,7 @@ instance ParseFromSource (Statement SourcePos) where
   sourceParser = parseIgnore <|>
                  parseReturn <|>
                  parseBreak <|>
+                 parseContinue <|>
                  parseVoid <|>
                  parseAssign where
     parseAssign = labeled "statement" $ do
@@ -96,6 +97,10 @@ instance ParseFromSource (Statement SourcePos) where
       c <- getPosition
       try kwBreak
       return $ LoopBreak [c]
+    parseContinue = labeled "continue" $ do
+      c <- getPosition
+      try kwContinue
+      return $ LoopContinue [c]
     multiDest = do
       as <- between (sepAfter $ string "{")
                     (sepAfter $ string "}")
@@ -185,7 +190,12 @@ instance ParseFromSource (WhileLoop SourcePos) where
     try kwWhile
     i <- between (sepAfter $ string "(") (sepAfter $ string ")") sourceParser
     p <- between (sepAfter $ string "{") (sepAfter $ string "}") sourceParser
-    return $ WhileLoop [c] i p
+    u <- fmap Just parseUpdate <|> return Nothing
+    return $ WhileLoop [c] i p u
+    where
+      parseUpdate = do
+        try kwUpdate
+        between (sepAfter $ string "{") (sepAfter $ string "}") sourceParser
 
 instance ParseFromSource (ScopedBlock SourcePos) where
   sourceParser = labeled "scoped" $ do

@@ -8,6 +8,7 @@ module CompilerState (
   CompiledData(..),
   CompilerState(..),
   ExpressionType(..),
+  LoopSetup(..),
   MemberValue(..),
   ReturnVariable(..),
   csAddVariable,
@@ -17,6 +18,7 @@ module CompilerState (
   csClearOutput,
   csCurrentScope,
   csGetCategoryFunction,
+  csGetLoop,
   csGetOutput,
   csGetParamScope,
   csGetTypeFunction,
@@ -27,6 +29,7 @@ module CompilerState (
   csRequiresTypes,
   csResolver,
   csSameType,
+  csStartLoop,
   csUpdateAssigned,
   csWrite,
   getCleanContext,
@@ -70,6 +73,8 @@ class Monad m => CompilerContext c m s a | a -> c s where
   ccInheritReturns :: a -> [a] -> m a
   ccRegisterReturn :: a -> [c] -> ExpressionType -> m a
   ccPrimNamedReturns :: a -> m [ReturnVariable]
+  ccStartLoop :: a -> LoopSetup s -> m a
+  ccGetLoop :: a -> m (LoopSetup s)
 
 type ExpressionType = ParamSet ValueType
 
@@ -88,6 +93,12 @@ data ReturnVariable =
     rvType :: ValueType
   }
   deriving (Show)
+
+data LoopSetup s =
+  LoopSetup {
+    lsUpdate :: s
+  } |
+  NotInLoop
 
 instance Show c => Show (VariableValue c) where
   show (VariableValue c _ t _) = show t ++ " [" ++ formatFullContext c ++ "]"
@@ -170,6 +181,14 @@ csRegisterReturn c rs = fmap (\x -> ccRegisterReturn x c rs) get >>= lift >>= pu
 csPrimNamedReturns :: (Monad m, CompilerContext c m s a) =>
   CompilerState a m [ReturnVariable]
 csPrimNamedReturns = fmap ccPrimNamedReturns get >>= lift
+
+csStartLoop :: (Monad m, CompilerContext c m s a) =>
+  LoopSetup s -> CompilerState a m ()
+csStartLoop l = fmap (\x -> ccStartLoop x l) get >>= lift >>= put
+
+csGetLoop :: (Monad m, CompilerContext c m s a) =>
+  CompilerState a m (LoopSetup s)
+csGetLoop = fmap ccGetLoop get >>= lift
 
 data CompiledData s =
   CompiledData {

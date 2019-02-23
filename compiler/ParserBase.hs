@@ -18,6 +18,7 @@ module ParserBase (
   kwBreak,
   kwCategory,
   kwConcrete,
+  kwContinue,
   kwDefine,
   kwDefines,
   kwElif,
@@ -41,6 +42,7 @@ module ParserBase (
   kwTrue,
   kwType,
   kwTypes,
+  kwUpdate,
   kwValue,
   kwWeak,
   kwWhile,
@@ -114,6 +116,7 @@ kwAny = keyword "any"
 kwBreak = keyword "break"
 kwCategory = keyword "@category"
 kwConcrete = keyword "concrete"
+kwContinue = keyword "continue"
 kwDefine = keyword "define"
 kwDefines = keyword "defines"
 kwElif = keyword "elif"
@@ -137,6 +140,7 @@ kwStrong = keyword "strong"
 kwTrue = keyword "true"
 kwType = keyword "@type"
 kwTypes = keyword "types"
+kwUpdate = keyword "update"
 kwValue = keyword "@value"
 kwWeak = keyword "weak"
 kwWhile = keyword "while"
@@ -151,6 +155,7 @@ isKeyword = foldr (<|>) nullParse $ map try [
     kwBreak,
     kwCategory,
     kwConcrete,
+    kwContinue,
     kwDefine,
     kwDefines,
     kwElif,
@@ -174,6 +179,7 @@ isKeyword = foldr (<|>) nullParse $ map try [
     kwTrue,
     kwType,
     kwTypes,
+    kwUpdate,
     kwValue,
     kwWeak,
     kwWhile

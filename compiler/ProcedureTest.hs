@@ -92,6 +92,7 @@ tests = [
     checkShortParseSuccess "if (v) { ~ c() } elif (v) { ~ c() } elif (v) { ~ c() }",
 
     checkShortParseSuccess "while (var.func()) { ~ val.call() }",
+    checkShortParseSuccess "while (var.func()) { ~ val.call() } update { ~ call() }",
 
     checkShortParseSuccess "scoped { T<#x> x <- y } in return _",
     checkShortParseSuccess "scoped { T<#x> x <- y } in return { var, var.T<#x>$func() }",

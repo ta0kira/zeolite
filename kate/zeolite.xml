@@ -16,6 +16,7 @@
     <list name="keywords">
       <item> allows </item>
       <item> break </item>
+      <item> continue </item>
       <item> defines </item>
       <item> elif </item>
       <item> else </item>
@@ -34,6 +35,7 @@
       <item> scoped </item>
       <item> strong </item>
       <item> true </item>
+      <item> update </item>
       <item> while </item>
     </list>
 

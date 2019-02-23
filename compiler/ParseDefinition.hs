@@ -50,8 +50,7 @@ instance ParseFromSource (DefinedCategory SourcePos) where
 instance ParseFromSource (DefinedMember SourcePos) where
   sourceParser = labeled "defined member" $ do
     c <- getPosition
-    s <- parseScope
-    t <- sourceParser
+    (s,t) <- try parseType
     n <- sourceParser
     e <- if s == ValueScope
             then return Nothing
@@ -62,6 +61,10 @@ instance ParseFromSource (DefinedMember SourcePos) where
         assignOperator
         e <- sourceParser
         return $ Just e
+      parseType = do
+        s <- parseScope
+        t <- sourceParser
+        return (s,t)
 
 parseMemberProcedureFunction ::
   CategoryName ->
@@ -72,10 +75,10 @@ parseMemberProcedureFunction n = parsed >>= return . foldr merge empty where
   parsed = sepBy anyType optionalSpace
   anyType = labeled "" $ singleMember <|> singleProcedure <|> singleFunction
   singleMember = labeled "member" $ do
-    m <- try $ sourceParser
+    m <- sourceParser
     return ([m],[],[])
   singleProcedure = labeled "procedure" $ do
-    p <- try $ sourceParser
+    p <- sourceParser
     return ([],[p],[])
   singleFunction = labeled "function" $ do
     f <- try $ parseScopedFunction parseScope (return n)

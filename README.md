@@ -625,12 +625,20 @@ Zeolite provides `if`/`elif`/`else` and `while` constructs.
 
 <b>while</b> (x &gt; <span style='color:#b08000;'>0</span>) {
   <span style='color:#898887;'>// something</span>
+  <b>break</b>    <span style='color:#898887;'>// exit the loop</span>
+  <b>continue</b> <span style='color:#898887;'>// next iteration</span>
+}
+
+<b>while</b> (x &gt; <span style='color:#b08000;'>0</span>) {
+  <span style='color:#898887;'>// something</span>
+} <b>update</b> {
+  <span style='color:#898887;'>// before next iteration</span>
 }</pre>
 
 `for` loops are not a built-in syntax because such loops are a very specialized
 case of `while`, and can become ugly very quickly if additional flexibility is
-required. The same functionality can be achieved with `scoped` statements,
-discussed in the next section.
+required. The same functionality can be achieved with `update` and `scoped`
+statements, discussed in the next section.
 
 ### Scoped Statements
 
@@ -650,7 +658,7 @@ use a `scoped` statement.
 
 <b>scoped</b> {
   { <i><span style='color:#0057ae;'>Int</span></i> x, <i><span style='color:#0057ae;'>Int</span></i> y } <b><span style='color:#006e28;'>&lt;-</span></b> getVals()
-} <b>in</b> <span style='color:#006e28;'>~</span> callWithSum(x + y)
+} <b>in</b> <i><span style='color:#0057ae;'>Int</span></i> z <b><span style='color:#006e28;'>&lt;-</span></b> x+y
 <span style='color:#898887;'>// x and y don't exist here</span></pre>
 
 There is currently no `for` loop syntax, but one can be created using `scoped`
@@ -661,14 +669,16 @@ and `while`.
   <i><span style='color:#0057ae;'>Int</span></i> i <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#b08000;'>0</span>
   <i><span style='color:#0057ae;'>Int</span></i> limit <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#b08000;'>10</span>
 } <b>in</b> <b>while</b> (i &lt; limit) {
-  <span style='color:#898887;'>// ...</span>
+  <span style='color:#898887;'>// something with i</span>
+} <b>update</b> {
   i <b><span style='color:#006e28;'>&lt;-</span></b> i+<span style='color:#b08000;'>1</span>
 }</pre>
 
 ### Optional and Weak Values
 
-In Java, all values can be `null`. In C++, all pointers can be `nullptr`. In
-most cases, such values are invalid and must be checked for in "clean" code.
+In Java, all (boxed) values can be `null`. In C++, all pointers can be
+`nullptr`. In most cases, such values are invalid and must be checked for in
+"clean" code.
 
 Zeolite mitigates this by disallowing missing values unless the `optional`
 storage modifier is used. Values with this qualifier *cannot* be used without

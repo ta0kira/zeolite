@@ -783,6 +783,118 @@ define Test {
 }
 END
 
+expect_error 'break outside of while' 'while' 'line 3' <<END
+define Test {
+  run () {
+    break
+  }
+}
+END
+
+expect_error 'continue outside of while' 'while' 'line 3' <<END
+define Test {
+  run () {
+    continue
+  }
+}
+END
+
+expect_runs 'while with break' <<END
+define Test {
+  run () {
+    Int output <- -1
+    scoped {
+      Int i <- 0
+      Int limit <- 5
+    } in while (i < limit) {
+      output <- i
+      break
+    }
+    if (output != 0) {
+      ~ Util\$crash()
+    }
+  }
+}
+END
+
+expect_runs 'while with update' <<END
+define Test {
+  run () {
+    Int output <- -1
+    scoped {
+      Int i <- 0
+      Int limit <- 5
+    } in while (i < limit) {
+      output <- i
+    } update {
+      i <- i+1
+    }
+    if (output != 4) {
+      ~ Util\$crash()
+    }
+  }
+}
+END
+
+expect_runs 'while without update' <<END
+define Test {
+  run () {
+    Int output <- -1
+    scoped {
+      Int i <- 0
+      Int limit <- 5
+    } in while (i < limit) {
+      output <- i
+      i <- i+1
+    }
+    if (output != 4) {
+      ~ Util\$crash()
+    }
+  }
+}
+END
+
+expect_runs 'while with continue and update' <<END
+define Test {
+  run () {
+    Int output <- -1
+    scoped {
+      Int i <- 0
+      Int limit <- 5
+    } in while (i < limit) {
+      output <- i
+      continue
+      i <- 10
+    } update {
+      i <- i+1
+    }
+    if (output != 4) {
+      ~ Util\$crash()
+    }
+  }
+}
+END
+
+expect_runs 'while with continue and without update' <<END
+define Test {
+  run () {
+    Int output <- -1
+    scoped {
+      Int i <- 0
+      Int limit <- 5
+    } in while (i < limit) {
+      output <- i
+      i <- i+1
+      continue
+      i <- 10
+    }
+    if (output != 4) {
+      ~ Util\$crash()
+    }
+  }
+}
+END
+
 expect_crashes 'crash in if' 'empty' 'line 4' <<END
 define Test {
   run () {
@@ -896,7 +1008,7 @@ define Test {
     scoped {
       optional Test self3 <- strong(self2)
     } in if (present(self3)) {
-      ~ Util\$crash() // force a crash if present
+      ~ Util\$crash()
     }
   }
 
@@ -919,7 +1031,7 @@ define Test {
   check () {
     weak Test value <- create()
     if (present(strong(value))) { // value should be nullptr here
-      ~ Util\$crash() // force a crash if present
+      ~ Util\$crash()
     }
   }
 
@@ -1022,7 +1134,7 @@ define Test {
   run () {
     Test value <- create()
     if (!present(value)) {
-      ~ Util\$crash() // force a crash if empty
+      ~ Util\$crash()
     }
   }
 }

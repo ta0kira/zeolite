@@ -119,6 +119,7 @@ data Statement c =
   EmptyReturn [c] |
   ExplicitReturn [c] (ParamSet (Expression c)) |
   LoopBreak [c] |
+  LoopContinue [c] |
   IgnoreValues [c] (Expression c) |
   Assignment [c] (ParamSet (Assignable c)) (Expression c) |
   NoValueExpression (VoidExpression c)
@@ -142,7 +143,7 @@ data IfElifElse c =
   deriving (Show)
 
 data WhileLoop c =
-  WhileLoop [c] (Expression c) (Procedure c)
+  WhileLoop [c] (Expression c) (Procedure c) (Maybe (Procedure c))
   deriving (Show)
 
 data ScopedBlock c =
