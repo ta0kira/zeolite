@@ -837,6 +837,27 @@ define Test {
 }
 END
 
+expect_runs 'break and continue in if/else' <<END
+define Test {
+  run () {
+    Int i <- 0
+    while (true) {
+      if (i > 5) {
+        break
+      } else {
+        continue
+      }
+      ~ Util\$crash()
+    } update {
+      i <- i+1
+    }
+    if (i != 6) {
+      ~ Util\$crash()
+    }
+  }
+}
+END
+
 expect_runs 'update clashes with while' <<END
 define Test {
   run () {
