@@ -115,7 +115,8 @@ run() {
   init
   create_main "$main" "$main_category"
   compile "$temp" "$here/$main_category" "${all_files[@]}"
-  rm -rf "$temp" || true
+  echo "Created binary $main_category." 1>&2
+  echo "Also check out intermediate output in $temp." 1>&2
 }
 
 run "$@"

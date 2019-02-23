@@ -318,7 +318,7 @@ compileWhileLoop (WhileLoop c e p u) = do
   (lift $ ccGetRequired ctx) >>= csRequiresTypes
   csWrite ["while (" ++ e' ++ ") {"]
   (lift $ ccGetOutput ctx) >>= csWrite
-  csWrite u'
+  csWrite $ ["{"] ++ u' ++ ["}"]
   csWrite ["}"]
 
 compileScopedBlock :: (Show c, Monad m, CompileErrorM m, MergeableM m,

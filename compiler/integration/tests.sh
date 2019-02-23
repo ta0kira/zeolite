@@ -837,6 +837,31 @@ define Test {
 }
 END
 
+expect_runs 'update clashes with while' <<END
+define Test {
+  run () {
+    while (false) {
+      Int x <- 2
+    } update {
+      Int x <- 1
+    }
+  }
+}
+END
+
+expect_error 'update clashes with scoped' 'x' 'line 7' <<END
+define Test {
+  run () {
+    scoped {
+      Int x <- 2
+    } in while (false) {
+    } update {
+      Int x <- 1
+    }
+  }
+}
+END
+
 expect_runs 'while without update' <<END
 define Test {
   run () {
