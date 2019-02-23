@@ -809,6 +809,7 @@ define Test {
     } in while (i < limit) {
       output <- i
       break
+      ~ Util\$crash()
     }
     if (output != 0) {
       ~ Util\$crash()
@@ -864,7 +865,7 @@ define Test {
     } in while (i < limit) {
       output <- i
       continue
-      i <- 10
+      ~ Util\$crash()
     } update {
       i <- i+1
     }
@@ -886,7 +887,7 @@ define Test {
       output <- i
       i <- i+1
       continue
-      i <- 10
+      ~ Util\$crash()
     }
     if (output != 4) {
       ~ Util\$crash()
