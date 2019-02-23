@@ -1182,6 +1182,29 @@ define Test {
 }
 END
 
+expect_runs 'multi return as args' <<END
+define Test {
+  @type get () -> (Int,Int)
+  get () {
+    return { 1, 2 }
+  }
+
+  @type call (Int,Int) -> ()
+  call (x,y) {
+    if (x != 1) {
+      ~ Util\$crash()
+    }
+    if (y != 2) {
+      ~ Util\$crash()
+    }
+  }
+
+  run () {
+    ~ call(get())
+  }
+}
+END
+
 expect_runs 'converted call' <<END
 @value interface Base {
   call () -> ()

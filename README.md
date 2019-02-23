@@ -447,6 +447,18 @@ There are also a few options for *receiving* multiple returns:
   }
 }</pre>
 
+Lastly, if a function returns _n_ values, you can directly pass those to another
+function that takes *n* arguments:
+
+<pre style='color:#1f1c1b;background-color:#ffffff;'>
+<span style='color:#644a9b;'>@type</span> get () <b><span style='color:#006e28;'>-&gt;</span></b> (<i><span style='color:#0057ae;'>Int</span></i>,<i><span style='color:#0057ae;'>Int</span></i>)
+
+<span style='color:#644a9b;'>@type</span> call (<i><span style='color:#0057ae;'>Int</span></i>,<i><span style='color:#0057ae;'>Int</span></i>) <b><span style='color:#006e28;'>-&gt;</span></b> ()
+
+<span style='color:#898887;'>// ...</span>
+
+<span style='color:#006e28;'>~</span> call(get())</pre>
+
 ### Value Interfaces
 
 Each `@value interface` specifies `@value` functions to be inherited. These are
