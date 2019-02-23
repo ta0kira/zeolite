@@ -63,6 +63,7 @@ define Demo {
           .append("\n")
           .writeTo(SimpleOutput$stderr())
       ~ tree.set(new,i)
+    } update {
       i <- i+1
     }
 
@@ -101,6 +102,7 @@ define Demo {
             .writeTo(SimpleOutput$stderr())
       }
       ~ tree.remove(new)
+    } update {
       i <- i+1
     }
   }

@@ -74,6 +74,7 @@
           .append(<span style='color:#bf0303;'>&quot;</span><span style='color:#924c9d;'>\n</span><span style='color:#bf0303;'>&quot;</span>)
           .writeTo(<span style='color:#0057ae;'>SimpleOutput</span><span style='color:#644a9b;'>$</span>stderr())
       <span style='color:#006e28;'>~</span> tree.set(new,i)
+    } <b>update</b> {
       i <b><span style='color:#006e28;'>&lt;-</span></b> i+<span style='color:#b08000;'>1</span>
     }
 
@@ -112,6 +113,7 @@
             .writeTo(<span style='color:#0057ae;'>SimpleOutput</span><span style='color:#644a9b;'>$</span>stderr())
       }
       <span style='color:#006e28;'>~</span> tree.remove(new)
+    } <b>update</b> {
       i <b><span style='color:#006e28;'>&lt;-</span></b> i+<span style='color:#b08000;'>1</span>
     }
   }
