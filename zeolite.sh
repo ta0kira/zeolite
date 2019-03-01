@@ -2,13 +2,17 @@
 
 set -u -e
 
+[[ -r ~/.zeoliterc ]] && . ~/.zeoliterc || true
+
 here=$PWD
 cd "$(dirname "$0")"
 
 root=$PWD
 errors='errors.txt'
 compiler="$root/compiler/CompilerCxx/compiler"
-compile_cxx=(clang++ -O2 -std=c++11 -o)
+
+[[ "${COMPILER_CXX-}" ]] || COMPILER_CXX=clang++
+[[ "${COMPILE_CXX-}" ]] || COMPILE_CXX=("$COMPILER_CXX" -O2 -std=c++11 -o)
 
 standard_src=('standard.0rp' 'standard.0rx')
 standard_tm=("$root/standard/standard.0rp")
@@ -59,7 +63,7 @@ compile() {
       return 1
     fi
     command1=(
-      "${compile_cxx[@]}" "$binary_name"
+      "${COMPILE_CXX[@]}" "$binary_name"
       -I"$root/capture-thread/include"
       -I"$root/base"
       -I"$root/standard"

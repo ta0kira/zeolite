@@ -223,6 +223,11 @@ box on other operating systems at the moment.
    ```shell
    cd zeolite && git submodule init && git submodule update
    ```
+4. If you want to use a different C++ compiler (such as `g++`), you can override
+   the default in `~/.zeoliterc`:
+   ```shell
+   echo 'COMPILER_CXX=g++' >> ~/.zeoliterc
+   ```
 
 If you feel like running the unit and integration tests, you can run the
 commands below. (This isn't required, but it might be useful if you modify the

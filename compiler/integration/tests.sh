@@ -2,20 +2,24 @@
 
 set -u -e
 
-cd "$(dirname "$0")"
+[[ -r ~/.zeoliterc ]] && . ~/.zeoliterc || true
 
-# TODO: Merge some of this with zeolite.sh?
+cd "$(dirname "$0")"
 
 root=$PWD/../..
 errors='errors.txt'
 main="$PWD/main.cpp"
-compiler="$root/compiler/CompilerCxx/compiler"
+compiler_hs="$root/compiler/CompilerCxx/compiler.hs"
+compiler="$PWD/compiler"
+
+[[ "${COMPILER_CXX-}" ]] || COMPILER_CXX=clang++
+[[ "${COMPILE_CXX-}" ]] || COMPILE_CXX=("$COMPILER_CXX" -O0 -g -std=c++11 -o)
 
 standard_tm=($root/standard/*.0rp)
 standard_inc=($root/standard)
 standard_cpp=($root/standard/*.cpp)
 
-ghc -i"$root/compiler" "$compiler.hs"
+ghc -i"$root/compiler" "$compiler_hs" -o "$compiler"
 
 ( cd "$root/standard" && "$compiler" *.0r{p,x} )
 
@@ -46,7 +50,7 @@ compile() {
     { "${command0[@]}" |& tee -a "$temp/$errors"; } < <(echo "$code$test_base")
     [[ "${PIPESTATUS[0]}" = 0 ]] || return 1
     command1=(
-      clang++ -O0 -g -std=c++11 -o "$temp/compiled"
+      "${COMPILE_CXX[@]}" "$temp/compiled"
       -I"$root/capture-thread/include"
       -I"$root/base"
       -I"$temp"
