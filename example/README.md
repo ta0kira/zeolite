@@ -1,5 +1,8 @@
 # Zeolite Example
 
+*Also see
+[a highlighted version of the example code](https://ta0kira.github.io/zeolite/example/index.html).*
+
 To run the example:
 
 ```shell
