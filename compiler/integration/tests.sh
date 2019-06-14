@@ -31,13 +31,13 @@ compiler="$PWD/compiler"
 [[ "${COMPILER_CXX-}" ]] || COMPILER_CXX=clang++
 [[ "${COMPILE_CXX-}" ]] || COMPILE_CXX=("$COMPILER_CXX" -O0 -g -std=c++11 -o)
 
-standard_tm=($root/standard/*.0rp)
-standard_inc=($root/standard)
-standard_cpp=($root/standard/*.cpp)
-
 ghc -i"$root/compiler" "$compiler_hs" -o "$compiler"
 
 ( cd "$root/standard" && "$compiler" *.0r{p,x} )
+
+standard_tm=($root/standard/*.0rp)
+standard_inc=($root/standard)
+standard_cpp=($root/standard/*.cpp)
 
 test_base="
 concrete Util {

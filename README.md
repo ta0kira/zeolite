@@ -223,7 +223,13 @@ box on other operating systems at the moment.
    ```shell
    cd zeolite && git submodule init && git submodule update
    ```
-4. If you want to use a different C++ compiler (such as `g++`), you can override
+4. Install a few Haskell dependencies via `cabal`.
+   ```shell
+   sudo apt-get install cabal-install
+   cabal update
+   cabal install mtl parsec
+   ```
+5. If you want to use a different C++ compiler (such as `g++`), you can override
    the default in `~/.zeoliterc`:
    ```shell
    echo 'COMPILER_CXX=g++' >> ~/.zeoliterc
