@@ -127,7 +127,7 @@ expect_runs() {
       return 1
     fi
   )
-  for p in "${patterns[@]}"; do
+  [[ -z "${patterns-}" ]] || for p in "${patterns[@]}"; do
     if ! egrep -q "$p" "$temp/$errors"; then
       echo "Test \"$name\" ($count): Expected pattern '$p' in error; see output in $temp" 1>&2
       return 1
