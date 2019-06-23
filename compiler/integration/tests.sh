@@ -94,7 +94,7 @@ expect_error() {
     cd "$temp" || exit 1
     command0=("$compiler" "${standard_tm[@]}" -- /dev/stdin)
     echo "${command0[@]}" >> "$temp/$errors"
-    if "${command0[@]}" &> "$temp/$errors" < <(echo "$code$test_base"); then
+    if "${command0[@]}" &>> "$temp/$errors" < <(echo "$code$test_base"); then
       echo "Test \"$name\" ($count): Expected compile error; see output in $temp" 1>&2
       return 1
     fi
@@ -145,7 +145,7 @@ expect_crashes() {
     return 1
   fi
   ulimit -Sc 0 2> /dev/null || true
-  if "$temp/compiled" &> "$temp/$errors"; then
+  if "$temp/compiled" &>> "$temp/$errors"; then
     echo "Test \"$name\" ($count): Expected crash; see output in $temp" 1>&2
     return 1
   fi
