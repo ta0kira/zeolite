@@ -99,7 +99,7 @@ expect_error() {
       return 1
     fi
   )
-  for p in "${patterns[@]}"; do
+  [[ -z "${patterns-}" ]] || for p in "${patterns[@]}"; do
     if ! egrep -q "$p" "$temp/$errors"; then
       echo "Test \"$name\" ($count): Expected pattern '$p' in error; see output in $temp" 1>&2
       return 1
@@ -121,15 +121,14 @@ expect_runs() {
   (
     cd "$temp" # Makes sure core dump is in the right place.
     ulimit -Sc unlimited 2> /dev/null || true
-    "$temp/compiled" |& tee -a "$temp/$errors"
-    if [[ "${PIPESTATUS[0]}" != 0 ]]; then
+    if ! "$temp/compiled" &>> "$temp/$errors"; then
       echo "Test \"$name\" ($count): Expected execution; see output in $temp" 1>&2
       return 1
     fi
   )
   [[ -z "${patterns-}" ]] || for p in "${patterns[@]}"; do
     if ! egrep -q "$p" "$temp/$errors"; then
-      echo "Test \"$name\" ($count): Expected pattern '$p' in error; see output in $temp" 1>&2
+      echo "Test \"$name\" ($count): Expected pattern '$p' in output; see output in $temp" 1>&2
       return 1
     fi
   done
@@ -139,6 +138,8 @@ expect_runs() {
 expect_crashes() {
   ((count++)) || true
   local name=$1
+  shift
+  local patterns=("$@")
   local temp=$(mktemp -d)
   if ! compile "$temp"; then
     echo "Test \"$name\" ($count): Expected compilation; see output in $temp" 1>&2
@@ -149,6 +150,12 @@ expect_crashes() {
     echo "Test \"$name\" ($count): Expected crash; see output in $temp" 1>&2
     return 1
   fi
+  [[ -z "${patterns-}" ]] || for p in "${patterns[@]}"; do
+    if ! egrep -q "$p" "$temp/$errors"; then
+      echo "Test \"$name\" ($count): Expected pattern '$p' in error; see output in $temp" 1>&2
+      return 1
+    fi
+  done
   echo "Test \"$name\" ($count) passed (see output in $temp)" 1>&2
 }
 
