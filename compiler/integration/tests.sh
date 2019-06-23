@@ -2510,6 +2510,29 @@ define Test {
 }
 END
 
+expect_runs 'reduce succeeds to contravariant all' <<END
+concrete Value<#x|> {
+  @type create () -> (Value<#x>)
+}
+
+define Value {
+  create () {
+    return Value<#x>{}
+  }
+}
+
+define Test {
+  run () {
+    Value<Test> value <- Value<Test>\$create()
+    scoped {
+      optional Value<all> value2 <- reduce<Value<Test>,Value<all>>(value)
+    } in if (!present(value2)) {
+      ~ Util\$crash()
+    }
+  }
+}
+END
+
 expect_runs 'reduce fails to invariant any' <<END
 concrete Value<#x> {
   @type create () -> (Value<#x>)
@@ -2526,6 +2549,75 @@ define Test {
     Value<Test> value <- Value<Test>\$create()
     scoped {
       optional Value<any> value2 <- reduce<Value<Test>,Value<any>>(value)
+    } in if (present(value2)) {
+      ~ Util\$crash()
+    }
+  }
+}
+END
+
+expect_runs 'reduce succeeds from covariant all' <<END
+concrete Value<|#x> {
+  @type create () -> (Value<#x>)
+}
+
+define Value {
+  create () {
+    return Value<#x>{}
+  }
+}
+
+define Test {
+  run () {
+    Value<all> value <- Value<all>\$create()
+    scoped {
+      optional Value<Test> value2 <- reduce<Value<all>,Value<Test>>(value)
+    } in if (!present(value2)) {
+      ~ Util\$crash()
+    }
+  }
+}
+END
+
+expect_runs 'reduce succeeds from contravariant any' <<END
+concrete Value<#x|> {
+  @type create () -> (Value<#x>)
+}
+
+define Value {
+  create () {
+    return Value<#x>{}
+  }
+}
+
+define Test {
+  run () {
+    Value<any> value <- Value<any>\$create()
+    scoped {
+      optional Value<Test> value2 <- reduce<Value<any>,Value<Test>>(value)
+    } in if (!present(value2)) {
+      ~ Util\$crash()
+    }
+  }
+}
+END
+
+expect_runs 'reduce fails from invariant all' <<END
+concrete Value<#x> {
+  @type create () -> (Value<#x>)
+}
+
+define Value {
+  create () {
+    return Value<#x>{}
+  }
+}
+
+define Test {
+  run () {
+    Value<all> value <- Value<all>\$create()
+    scoped {
+      optional Value<Test> value2 <- reduce<Value<all>,Value<Test>>(value)
     } in if (present(value2)) {
       ~ Util\$crash()
     }
