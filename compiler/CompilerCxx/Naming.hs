@@ -19,6 +19,8 @@ limitations under the License.
 {-# LANGUAGE Safe #-}
 
 module CompilerCxx.Naming (
+  allGetter,
+  anyGetter,
   baseHeaderIncludes,
   baseSourceIncludes,
   callName,
@@ -87,6 +89,12 @@ intersectGetter = "Merge_Intersect"
 
 unionGetter:: String
 unionGetter = "Merge_Union"
+
+allGetter :: String
+allGetter = "GetMerged_All"
+
+anyGetter :: String
+anyGetter = "GetMerged_Any"
 
 valueName :: CategoryName -> String
 valueName n = "Value_" ++ show n

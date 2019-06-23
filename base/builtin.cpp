@@ -410,6 +410,16 @@ TypeInstance& Merge_Union(L<TypeInstance*> params) {
   return *cached;
 }
 
+TypeInstance& GetMerged_Any() {
+  static auto& instance = Merge_Intersect(L_get<TypeInstance*>());
+  return instance;
+}
+
+TypeInstance& GetMerged_All() {
+  static auto& instance = Merge_Union(L_get<TypeInstance*>());
+  return instance;
+}
+
 TypeCategory& GetCategory_Bool() {
   static auto& category = *new Category_Bool();
   return category;

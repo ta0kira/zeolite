@@ -731,6 +731,8 @@ expandCategory t = return $ categoryGetter t ++ "()"
 
 expandGeneralInstance :: (Monad m, CompilerContext c m s a) =>
   GeneralInstance -> CompilerState a m String
+expandGeneralInstance (TypeMerge MergeUnion     []) = return $ allGetter ++ "()"
+expandGeneralInstance (TypeMerge MergeIntersect []) = return $ anyGetter ++ "()"
 expandGeneralInstance (TypeMerge m ps) = do
   ps' <- sequence $ map expandGeneralInstance ps
   return $ getter ++ "(L_get<" ++ typeBase ++ "*>(" ++ intercalate "," (map ("&" ++) ps') ++ "))"

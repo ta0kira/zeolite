@@ -34,6 +34,9 @@ extern const Function<SymbolScope::VALUE,0,0,1>& Function_Formatted_formatted;
 TypeInstance& Merge_Intersect(L<TypeInstance*> params);
 TypeInstance& Merge_Union(L<TypeInstance*> params);
 
+TypeInstance& GetMerged_Any();
+TypeInstance& GetMerged_All();
+
 TypeCategory& GetCategory_Bool();
 TypeCategory& GetCategory_String();
 TypeCategory& GetCategory_Int();
