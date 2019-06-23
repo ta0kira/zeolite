@@ -1,3 +1,6 @@
+<!-- Copy or link this file to $HOME/.local/share/katepart5/syntax/zeolite.xml
+     to enable syntax highlighting in Kate (https://kate-editor.org/). -->
+
 <?xml version="1.0" encoding="UTF-8"?>
 
 <language
@@ -105,6 +108,7 @@
         <AnyChar attribute="Operator" context="#stay" String="&lt;&gt;+-*%/" />
         <DetectChar attribute="Caller" context="#stay" char="$" />
         <IncludeRules context="Any Type" />
+        <AnyChar attribute="Error" context="#stay" String="]|&amp;" />
       </context>
 
       <context name="Declare Type" attribute="Normal Text" lineEndContext="#stay" >
@@ -190,10 +194,32 @@
 
       <context name="Merge Types" attribute="Normal Text" lineEndContext="#stay" >
         <DetectSpaces />
-        <DetectChar attribute="Merge Brace" context="#pop" char="]" />
         <IncludeRules context="Any Comment" />
+        <DetectChar attribute="Merge Delim" context="Merge Union" char="|" />
+        <DetectChar attribute="Merge Delim" context="Merge Intersect" char="&amp;" />
+        <DetectChar attribute="Error" context="#pop" char="]" />
+        <IncludeRules context="Merge Common" />
+      </context>
+
+      <context name="Merge Union" attribute="Normal Text" lineEndContext="#stay" >
+        <DetectSpaces />
         <DetectChar attribute="Merge Delim" context="#stay" char="|" />
+        <DetectChar attribute="Error" context="#stay" char="&amp;" />
+        <DetectChar attribute="Merge Brace" context="#pop#pop" char="]" />
+        <IncludeRules context="Merge Common" />
+      </context>
+
+      <context name="Merge Intersect" attribute="Normal Text" lineEndContext="#stay" >
+        <DetectSpaces />
         <DetectChar attribute="Merge Delim" context="#stay" char="&amp;" />
+        <DetectChar attribute="Error" context="#stay" char="|" />
+        <DetectChar attribute="Merge Brace" context="#pop#pop" char="]" />
+        <IncludeRules context="Merge Common" />
+      </context>
+
+      <context name="Merge Common" attribute="Normal Text" lineEndContext="#stay" >
+        <DetectSpaces />
+        <IncludeRules context="Any Comment" />
         <keyword attribute="Error" context="#stay" String="storage" />
         <keyword attribute="Error" context="#stay" String="scope" />
         <AnyChar attribute="Error" context="#stay" String="${}.*@!=%+-/\&lt;&gt;()," />
