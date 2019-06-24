@@ -47,38 +47,36 @@ define Node {
   @value optional Node<#k,#v> lower
   @value optional Node<#k,#v> higher
 
-  insert (node,k,v) (newNode) {
+  insert (node,k,v) {
     if (!present(node)) {
-      newNode <- Node<#k,#v>{ 1, k, v, empty, empty }
-      return _
+      return Node<#k,#v>{ 1, k, v, empty, empty }
     }
     Node<#k,#v> node2 <- require(node)
     if (#k$lessThan(k,node2.getKey())) {
       ~ node2.setLower(insert(node2.getLower(),k,v))
-      newNode <- rebalance(node2)
+      return rebalance(node2)
     } elif (#k$lessThan(node2.getKey(),k)) {
       ~ node2.setHigher(insert(node2.getHigher(),k,v))
-      newNode <- rebalance(node2)
+      return rebalance(node2)
     } else {
       ~ node2.setValue(v)
-      newNode <- node2
+      return node2
     }
   }
 
-  delete (node,k) (newNode) {
+  delete (node,k) {
     if (!present(node)) {
-      newNode <- empty
-      return _
+      return empty
     }
     Node<#k,#v> node2 <- require(node)
     if (#k$lessThan(k,node2.getKey())) {
       ~ node2.setLower(delete(node2.getLower(),k))
-      newNode <- rebalance(node2)
+      return rebalance(node2)
     } elif (#k$lessThan(node2.getKey(),k)) {
       ~ node2.setHigher(delete(node2.getHigher(),k))
-      newNode <- rebalance(node2)
+      return rebalance(node2)
     } else {
-      newNode <- rebalance(removeNode(node2))
+      return rebalance(removeNode(node2))
     }
   }
 
@@ -103,16 +101,16 @@ define Node {
     scoped {
       Int l <- 0
       Int h <- 0
-      if (present(getLower())) {
-        l <- require(getLower()).getHeight()
+      if (present(lower)) {
+        l <- require(lower).getHeight()
       }
-      if (present(getHigher())) {
-        h <- require(getHigher()).getHeight()
+      if (present(higher)) {
+        h <- require(higher).getHeight()
       }
     } in if (l > h) {
-      ~ setHeight(l + 1)
+      height <- l + 1
     } else {
-      ~ setHeight(h + 1)
+      height <- h + 1
     }
   }
 
@@ -121,31 +119,30 @@ define Node {
     scoped {
       Int l <- 0
       Int h <- 0
-      if (present(getLower())) {
-        l <- require(getLower()).getHeight()
+      if (present(lower)) {
+        l <- require(lower).getHeight()
       }
-      if (present(getHigher())) {
-        h <- require(getHigher()).getHeight()
+      if (present(higher)) {
+        h <- require(higher).getHeight()
       }
     } in return h - l
   }
 
   @type rebalance (optional Node<#k,#v>) -> (optional Node<#k,#v>)
-  rebalance (node) (newNode) {
+  rebalance (node) {
     if (!present(node)) {
-      newNode <- empty
-      return _
+      return empty
     }
     Node<#k,#v> node2 <- require(node)
     ~ node2.updateHeight()
     scoped {
       Int balance <- node2.getBalance()
     } in if (balance > 1) {
-      newNode <- pivotLower(node2)
+      return pivotLower(node2)
     } elif (balance < -1) {
-      newNode <- pivotHigher(node2)
+      return pivotHigher(node2)
     } else {
-      newNode <- node2
+      return node2
     }
   }
 
@@ -240,9 +237,6 @@ define Node {
 
   @value getHeight () -> (Int)
   getHeight () { return height }
-
-  @value setHeight (Int) -> ()
-  setHeight (h) { height <- h }
 
   // It is unsafe to change the key after construction, so there is no setter.
   //
