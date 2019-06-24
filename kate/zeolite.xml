@@ -1,7 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
 <!-- Copy or link this file to $HOME/.local/share/katepart5/syntax/zeolite.xml
      to enable syntax highlighting in Kate (https://kate-editor.org/). -->
-
-<?xml version="1.0" encoding="UTF-8"?>
 
 <language
     name="Zeolite"
