@@ -102,9 +102,9 @@ class Value_SimpleOutput : public TypeValue {
   std::ostream& output_;
 };
 
-class Value_Fail : public TypeValue {
+class Value_SimpleFailure : public TypeValue {
  public:
-  std::string CategoryName() const final { return "SimpleOutput"; }
+  std::string CategoryName() const final { return "SimpleFailure"; }
 
   ReturnTuple Dispatch(const S<TypeValue>& self,
                        const DFunction<SymbolScope::VALUE>& label,
@@ -135,7 +135,7 @@ class Value_Fail : public TypeValue {
 
 const S<TypeValue>& Var_stdout = *new S<TypeValue>(new Value_SimpleOutput(std::cout));
 const S<TypeValue>& Var_stderr = *new S<TypeValue>(new Value_SimpleOutput(std::cerr));
-const S<TypeValue>& Var_fail   = *new S<TypeValue>(new Value_Fail());
+const S<TypeValue>& Var_fail   = *new S<TypeValue>(new Value_SimpleFailure());
 
 }  // namespace
 

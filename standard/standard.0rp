@@ -33,11 +33,9 @@ concrete LazyStream<#x> {
 }
 
 concrete SimpleOutput {
-  refines BufferedWriter<Formatted>
-
-  @type stdout () -> (SimpleOutput)
-  @type stderr () -> (SimpleOutput)
-  @type fail () -> (SimpleOutput)
+  @type stdout () -> (BufferedWriter<Formatted>)
+  @type stderr () -> (BufferedWriter<Formatted>)
+  @type fail () -> (BufferedWriter<Formatted>)
 }
 
 @type interface Runner {
