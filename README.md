@@ -1018,7 +1018,33 @@ used to specify filters to be applied to the types.
 
 ### Unions and Intersections
 
-Zeolite provides type-union and type-intersection meta-types.
+Zeolite provides type-union and type-intersection meta-types. The types used in
+these meta-types act as "criteria" for any object that will be stored in them.
+
+- A value with an *intersection type* `[A&B]` can be assigned from something
+  that is *both* `A` and `B`, and can be assigned to *either* an `A` or `B`.
+  There is a special *empty intersection* named `any` that can be assigned from
+  any value but cannot be assigned to any other type.
+
+  Intersections can be useful for requiring multiple interfaces without creating
+  a new category that refines all of those interfaces.
+
+<pre style='color:#1f1c1b;background-color:#ffffff;'>
+<span style='color:#644a9b;'>@value</span> <b>interface</b> <b><span style='color:#0057ae;'>Reader</span></b> {}
+
+<span style='color:#644a9b;'>@value</span> <b>interface</b> <b><span style='color:#0057ae;'>Writer</span></b> {}
+
+<b>concrete</b> <b><span style='color:#0057ae;'>Data</span></b> {
+  <b>refines</b> <span style='color:#0057ae;'>Reader</span>
+  <b>refines</b> <span style='color:#0057ae;'>Writer</span>
+  <span style='color:#644a9b;'>@type</span> new () <b><span style='color:#006e28;'>-&gt;</span></b> (<span style='color:#0057ae;'>Data</span>)
+}
+
+<span style='color:#898887;'>// ...</span>
+
+<b><span style='color:#006e28;'>[</span></b><span style='color:#0057ae;'>Reader</span><span style='color:#006e28;'>&amp;</span><span style='color:#0057ae;'>Writer</span><b><span style='color:#006e28;'>]</span></b> val <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#0057ae;'>Data</span><span style='color:#644a9b;'>$</span>new()
+<span style='color:#0057ae;'>Reader</span> val2 <b><span style='color:#006e28;'>&lt;-</span></b> val
+<span style='color:#0057ae;'>Writer</span> val3 <b><span style='color:#006e28;'>&lt;-</span></b> val</pre>
 
 - A value with a *union type* `[A|B]` can be assigned from *either* `A` or `B`,
   but can only be assigned to something that *both* `A` and `B` can be assigned
@@ -1046,31 +1072,6 @@ Zeolite provides type-union and type-intersection meta-types.
 
 <b><span style='color:#006e28;'>[</span></b><span style='color:#0057ae;'>Newspaper</span><span style='color:#006e28;'>|</span><span style='color:#0057ae;'>Magazine</span><b><span style='color:#006e28;'>]</span></b> val <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#0057ae;'>Newspaper</span><span style='color:#644a9b;'>$</span>new()
 <span style='color:#0057ae;'>Printable</span> val2 <b><span style='color:#006e28;'>&lt;-</span></b> val</pre>
-
-- A value with an *intersection type* `[A&B]` can be assigned from something
-  that is *both* `A` and `B`, and can be assigned to *either* an `A` or `B`.
-  There is a special *empty intersection* named `any` that can be assigned from
-  any value but cannot be assigned to any other type.
-
-  Intersections can be useful for requiring multiple interfaces without creating
-  a new category that refines all of those interfaces.
-
-<pre style='color:#1f1c1b;background-color:#ffffff;'>
-<span style='color:#644a9b;'>@value</span> <b>interface</b> <b><span style='color:#0057ae;'>Reader</span></b> {}
-
-<span style='color:#644a9b;'>@value</span> <b>interface</b> <b><span style='color:#0057ae;'>Writer</span></b> {}
-
-<b>concrete</b> <b><span style='color:#0057ae;'>Data</span></b> {
-  <b>refines</b> <span style='color:#0057ae;'>Reader</span>
-  <b>refines</b> <span style='color:#0057ae;'>Writer</span>
-  <span style='color:#644a9b;'>@type</span> new () <b><span style='color:#006e28;'>-&gt;</span></b> (<span style='color:#0057ae;'>Data</span>)
-}
-
-<span style='color:#898887;'>// ...</span>
-
-<b><span style='color:#006e28;'>[</span></b><span style='color:#0057ae;'>Reader</span><span style='color:#006e28;'>&amp;</span><span style='color:#0057ae;'>Writer</span><b><span style='color:#006e28;'>]</span></b> val <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#0057ae;'>Data</span><span style='color:#644a9b;'>$</span>new()
-<span style='color:#0057ae;'>Reader</span> val2 <b><span style='color:#006e28;'>&lt;-</span></b> val
-<span style='color:#0057ae;'>Writer</span> val3 <b><span style='color:#006e28;'>&lt;-</span></b> val</pre>
 
 ### Function Merging
 
