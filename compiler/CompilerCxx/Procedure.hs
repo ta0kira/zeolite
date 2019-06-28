@@ -326,7 +326,8 @@ compileWhileLoop (WhileLoop c e p u) = do
   e' <- compileCondition ctx0 c e
   ctx0' <- case u of
                 Just p2 -> do
-                  ctx2 <- compileProcedure ctx0 p2
+                  ctx1 <- lift $ ccStartLoop ctx0 (LoopSetup [])
+                  ctx2 <- compileProcedure ctx1 p2
                   (lift $ ccGetRequired ctx2) >>= csRequiresTypes
                   p2' <- lift $ ccGetOutput ctx2
                   lift $ ccStartLoop ctx0 (LoopSetup p2')

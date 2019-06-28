@@ -864,6 +864,48 @@ define Test {
 }
 END
 
+expect_runs 'break in update' <<END
+define Test {
+  run () {
+    Int output <- 0
+    while (true) {
+    } update {
+      if (output > 5) {
+        break
+        ~ Util\$crash()
+      }
+      output <- output+1
+    }
+    if (output != 6) {
+      ~ Util\$crash()
+    }
+  }
+}
+END
+
+expect_runs 'return in update' <<END
+define Test {
+  @type test () -> (Int)
+  test () {
+    Int output <- 0
+    while ((output <- output+1) > 0) {
+    } update {
+      if (output > 5) {
+        return output
+        ~ Util\$crash()
+      }
+    }
+    return -1
+  }
+
+  run () {
+    if (test() != 6) {
+      ~ Util\$crash()
+    }
+  }
+}
+END
+
 expect_runs 'break and continue in if/else' <<END
 define Test {
   run () {
