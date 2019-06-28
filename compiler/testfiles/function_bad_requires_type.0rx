@@ -1,0 +1,9 @@
+@type interface Interface<#x> {
+  #x requires Formatted
+}
+
+concrete Type<#x> {
+  @type something<#y>
+    #y requires Interface<#x>
+  () -> ()
+}

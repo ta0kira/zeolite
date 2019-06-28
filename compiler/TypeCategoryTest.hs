@@ -194,10 +194,10 @@ tests = [
     checkOperationFail "testfiles/contravariant_refines_invariant.0rx" (checkParamVariances builtinCategories),
     checkOperationFail "testfiles/covariant_refines_contravariant.0rx" (checkParamVariances builtinCategories),
     checkOperationFail "testfiles/covariant_refines_invariant.0rx" (checkParamVariances builtinCategories),
-    checkOperationFail "testfiles/contravariant_defines_covariant.0rx" (checkParamVariances builtinCategories),
-    checkOperationFail "testfiles/contravariant_defines_invariant.0rx" (checkParamVariances builtinCategories),
-    checkOperationFail "testfiles/covariant_defines_contravariant.0rx" (checkParamVariances builtinCategories),
-    checkOperationFail "testfiles/covariant_defines_invariant.0rx" (checkParamVariances builtinCategories),
+    checkOperationSuccess "testfiles/contravariant_defines_covariant.0rx" (checkParamVariances builtinCategories),
+    checkOperationSuccess "testfiles/contravariant_defines_invariant.0rx" (checkParamVariances builtinCategories),
+    checkOperationSuccess "testfiles/covariant_defines_contravariant.0rx" (checkParamVariances builtinCategories),
+    checkOperationSuccess "testfiles/covariant_defines_invariant.0rx" (checkParamVariances builtinCategories),
     checkOperationFail "testfiles/concrete_duplicate_param.0rx" (checkParamVariances builtinCategories),
     checkOperationFail "testfiles/type_duplicate_param.0rx" (checkParamVariances builtinCategories),
     checkOperationFail "testfiles/value_duplicate_param.0rx" (checkParamVariances builtinCategories),
@@ -659,16 +659,22 @@ tests = [
       "testfiles/function_bad_filter_param.0rx"
       (\ts -> checkCategoryInstances builtinCategories ts),
     checkOperationFail
-      "testfiles/function_bad_filter_type.0rx"
+      "testfiles/function_bad_allows_type.0rx"
       (\ts -> checkCategoryInstances builtinCategories ts),
     checkOperationFail
-      "testfiles/function_bad_allows.0rx"
+      "testfiles/function_bad_allows_variance.0rx"
       (\ts -> checkCategoryInstances builtinCategories ts),
     checkOperationFail
-      "testfiles/function_bad_requires.0rx"
+      "testfiles/function_bad_requires_type.0rx"
       (\ts -> checkCategoryInstances builtinCategories ts),
     checkOperationFail
-      "testfiles/function_bad_defines.0rx"
+      "testfiles/function_bad_requires_variance.0rx"
+      (\ts -> checkCategoryInstances builtinCategories ts),
+    checkOperationFail
+      "testfiles/function_bad_defines_type.0rx"
+      (\ts -> checkCategoryInstances builtinCategories ts),
+    checkOperationFail
+      "testfiles/function_bad_defines_variance.0rx"
       (\ts -> checkCategoryInstances builtinCategories ts),
     checkOperationFail
       "testfiles/function_bad_arg.0rx"

@@ -1,0 +1,7 @@
+@value interface Interface<|#x> {}
+
+concrete Type<|#x> {
+  @value something<#y>
+    #y requires Interface<#x>
+  () -> ()
+}

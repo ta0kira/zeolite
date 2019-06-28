@@ -12,7 +12,7 @@ define TypeTree {
   }
 
   set (k,v) {
-    ~ tree.set(k,LockedType$$create<#x>(k,v))
+    ~ tree.set(k,LockedType<#x>$create(k,v))
     return self
   }
 
@@ -60,12 +60,8 @@ define TypeKey {
  * both that the key and the type match.
  */
 concrete LockedType<|#x> {
-  // Creates a new LockedType, e.g., LockedType$$create<#x>(k,v).
-  //
-  // Note that this is @category and not @type so that the variance check for #x
-  // is skipped. Since #x is covariant, the compiler would not allow it to be
-  // used in a function argument.
-  @category create<#y> (TypeKey<#y>,#y) -> (LockedType<#y>)
+  // Creates a new LockedType, e.g., LockedType<#x>$create(k,v).
+  @type create (TypeKey<#x>,#x) -> (LockedType<#x>)
 
   // Returns the contained value if the key and type match, or empty otherwise.
   @value check<#y> (TypeKey<#y>) -> (optional #y)
@@ -76,7 +72,7 @@ define LockedType {
   @value #x value
 
   create (k,v) {
-    return LockedType<#y>{ k, v }
+    return LockedType<#x>{ k, v }
   }
 
   check (k) {
