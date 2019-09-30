@@ -33,7 +33,7 @@ compiler="$PWD/compiler"
 
 ghc -i"$root/compiler" "$compiler_hs" -o "$compiler"
 
-( cd "$root/standard" && "$compiler" *.0r{p,x} )
+( cd "$root/standard" && "$compiler" "" *.0r{p,x} )
 
 standard_tm=($root/standard/*.0rp)
 standard_inc=($root/standard)
@@ -61,7 +61,7 @@ compile() {
   (
     set -e
     cd "$temp" || exit 1
-    command0=("$compiler" "${standard_tm[@]}" -- /dev/stdin)
+    command0=("$compiler" "" "${standard_tm[@]}" -- /dev/stdin)
     echo "${command0[@]}" >> "$temp/$errors"
     { "${command0[@]}" |& tee -a "$temp/$errors"; } < <(echo "$code$test_base")
     [[ "${PIPESTATUS[0]}" = 0 ]] || return 1
@@ -92,7 +92,7 @@ expect_error() {
   (
     set -e
     cd "$temp" || exit 1
-    command0=("$compiler" "${standard_tm[@]}" -- /dev/stdin)
+    command0=("$compiler" "" "${standard_tm[@]}" -- /dev/stdin)
     echo "${command0[@]}" >> "$temp/$errors"
     if "${command0[@]}" &>> "$temp/$errors" < <(echo "$code$test_base"); then
       echo "Test \"$name\" ($count): Expected compile error; see output in $temp" 1>&2

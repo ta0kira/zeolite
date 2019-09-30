@@ -37,14 +37,15 @@ import TypesBase
 import CompilerCxx.Category
 
 
+-- $ compiler [path prefix] [existing sources] -- [new sources]
 main = do
-  files <- getArgs
+  (prefix:files) <- getArgs
   let (fs0,fs) = case break (== "--") files of
                       (fs,[]) -> ([],fs)
                       (fs0,_:fs) -> (fs0,fs)
   contents0 <- sequence $ map readFile fs0
   let ps0 = zip fs0 contents0
-  contents <- sequence $ map readFile fs
+  contents <- sequence $ map (readFile . setPrefix prefix) fs
   let namedContents = zip fs contents
   let (ps,xs) = partition ((".0rp" `isSuffixOf`) . fst) namedContents
   results <- return $ do
@@ -60,6 +61,9 @@ main = do
   writeResults results
   exit results
   where
+    setPrefix "" f = f
+    setPrefix p f@('/':_) = f
+    setPrefix p f = p ++ "/" ++ f
     exit c = if isCompileError c
                 then exitFailure
                 else exitSuccess

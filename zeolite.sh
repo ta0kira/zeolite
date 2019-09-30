@@ -30,7 +30,7 @@ compiler="$root/compiler/CompilerCxx/compiler"
 [[ "${COMPILER_CXX-}" ]] || COMPILER_CXX=clang++
 [[ "${COMPILE_CXX-}" ]] || COMPILE_CXX=("$COMPILER_CXX" -O2 -std=c++11 -o)
 
-standard_src=('standard.0rp' 'standard.0rx')
+standard_src=('standard/standard.0rp' 'standard/standard.0rx')
 standard_tm=("$root/standard/standard.0rp")
 extra_src=(
   "$root/base/builtin.cpp"
@@ -46,16 +46,7 @@ extra_src=(
 
 init() {
   ghc -i"$root/compiler" "$compiler.hs"
-  ( cd "$root/standard" && "$compiler" "${standard_src[@]}" )
-}
-
-resolve_files() {
-  for f in "$@"; do
-    case "$f" in
-      /*) ls -d "$f";;
-      *)  ls -d "$here/$f";;
-    esac
-  done
+  ( cd "$root/standard" && "$compiler" "$root" "${standard_src[@]}" )
 }
 
 general_help() {
@@ -70,7 +61,7 @@ compile() {
   (
     set -e
     cd "$temp" || exit 1
-    command0=("$compiler" "${standard_tm[@]}" -- "${files[@]}")
+    command0=("$compiler" "$here" "${standard_tm[@]}" -- "${files[@]}")
     echo "${command0[@]}" >> "$temp/$errors"
     "${command0[@]}" |& tee -a "$temp/$errors"
     if [[ "${PIPESTATUS[0]}" != 0 ]]; then
@@ -128,7 +119,7 @@ run() {
     exit 1
   fi
 
-  local all_files=($(resolve_files "$@"))
+  local all_files=("$@")
   local temp=$(mktemp -d)
   local main="$temp/main.cpp"
 
