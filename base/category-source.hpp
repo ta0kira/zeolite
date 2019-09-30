@@ -82,10 +82,10 @@ class TypeInstance {
   static bool CanConvert(const TypeInstance& from, const TypeInstance& to);
 
   template<class...Ts>
-  static std::string TypeNameFrom(const std::string& name, const Ts&... params) {
+  static std::string TypeNameFrom(const TypeCategory& category, const Ts&... params) {
     std::vector<const TypeInstance*> params2{&params...};
     std::ostringstream output;
-    output << name;
+    output << category.CategoryName();
     if (params2.empty()) return output.str();
     output << "<";
     bool first = true;

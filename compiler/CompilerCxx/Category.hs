@@ -134,7 +134,7 @@ compileConcreteDefinition ta dd@(DefinedCategory c n pi fi ms ps fs) = do
       return $ onlyCode $ "struct " ++ valueName n ++ " : public " ++ valueBase ++ " {",
       fmap indentCompiled $ valueConstructor ta t vm,
       fmap indentCompiled $ valueDispatch allFuncs,
-      return $ indentCompiled $ defineCategoryName n,
+      return $ indentCompiled $ defineCategoryName2 n,
       fmap indentCompiled $ mergeAllM $ map (compileExecutableProcedure ta n params params2 vm filters filters2 fa vv) vp,
       fmap indentCompiled $ mergeAllM $ map (createMember r allFilters) vm,
       fmap indentCompiled $ createParams,
@@ -376,7 +376,7 @@ commonDefineType t extra = do
   mergeAllM [
       return $ CompiledData depends [],
       return $ onlyCode $ "struct " ++ typeName (getCategoryName t) ++ " : public " ++ typeBase ++ " {",
-      return $ indentCompiled $ defineCategoryName name,
+      return $ indentCompiled $ defineCategoryName2 name,
       return $ indentCompiled $ defineTypeName name (map vpParam $ getCategoryParams t),
       return $ indentCompiled $ onlyCode $ categoryName (getCategoryName t) ++ "& parent;",
       return $ indentCompiled createParams,
@@ -453,11 +453,14 @@ expandLocalType (SingleType (JustParamName p)) = paramName p
 defineCategoryName :: CategoryName -> CompiledData [String]
 defineCategoryName t = onlyCode $ "std::string CategoryName() const final { return \"" ++ show t ++ "\"; }"
 
+defineCategoryName2 :: CategoryName -> CompiledData [String]
+defineCategoryName2 t = onlyCode $ "std::string CategoryName() const final { return parent.CategoryName(); }"
+
 defineTypeName :: CategoryName -> [ParamName] -> CompiledData [String]
 defineTypeName t ps =
   onlyCodes [
       "std::string TypeName() const final {",
-      "  return TypeInstance::TypeNameFrom(\"" ++ show t ++ "\"" ++ concat (map (("," ++) . paramName) ps) ++ ");",
+      "  return TypeInstance::TypeNameFrom(parent" ++ concat (map ((", " ++) . paramName) ps) ++ ");",
       "}"
     ]
 

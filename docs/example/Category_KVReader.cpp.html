@@ -28,9 +28,9 @@ Category_KVReader&amp; CreateCategory() {
   <b>return</b> category;
 }
 <b>struct</b> Type_KVReader : <b>public</b> TypeInstance {
-  <b><span style='color:#644a9b;'>std::string</span></b> CategoryName() <span style='color:#0057ae;'>const</span> <b>final</b> { <b>return</b> <span style='color:#bf0303;'>&quot;KVReader&quot;</span>; }
+  <b><span style='color:#644a9b;'>std::string</span></b> CategoryName() <span style='color:#0057ae;'>const</span> <b>final</b> { <b>return</b> parent.CategoryName(); }
   <b><span style='color:#644a9b;'>std::string</span></b> TypeName() <span style='color:#0057ae;'>const</span> <b>final</b> {
-    <b>return</b> TypeInstance::TypeNameFrom(<span style='color:#bf0303;'>&quot;KVReader&quot;</span>,Param_k,Param_v);
+    <b>return</b> TypeInstance::TypeNameFrom(parent, Param_k, Param_v);
   }
   Category_KVReader&amp; parent;
   TypeInstance&amp; Param_k;

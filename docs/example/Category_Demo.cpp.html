@@ -177,9 +177,9 @@ Category_Demo&amp; CreateCategory() {
   <b>return</b> category;
 }
 <b>struct</b> Type_Demo : <b>public</b> TypeInstance {
-  <b><span style='color:#644a9b;'>std::string</span></b> CategoryName() <span style='color:#0057ae;'>const</span> <b>final</b> { <b>return</b> <span style='color:#bf0303;'>&quot;Demo&quot;</span>; }
+  <b><span style='color:#644a9b;'>std::string</span></b> CategoryName() <span style='color:#0057ae;'>const</span> <b>final</b> { <b>return</b> parent.CategoryName(); }
   <b><span style='color:#644a9b;'>std::string</span></b> TypeName() <span style='color:#0057ae;'>const</span> <b>final</b> {
-    <b>return</b> TypeInstance::TypeNameFrom(<span style='color:#bf0303;'>&quot;Demo&quot;</span>);
+    <b>return</b> TypeInstance::TypeNameFrom(parent);
   }
   Category_Demo&amp; parent;
   <span style='color:#0057ae;'>bool</span> CanConvertFrom(<span style='color:#0057ae;'>const</span> TypeInstance&amp; from) <span style='color:#0057ae;'>const</span> <b>final</b> {
@@ -237,7 +237,7 @@ Type_Demo&amp; CreateType(Params&lt;<span style='color:#b08000;'>0</span>&gt;::T
     <b>using</b> CallType = ReturnTuple(Value_Demo::*)(<span style='color:#0057ae;'>const</span> S&lt;TypeValue&gt;&amp;, <span style='color:#0057ae;'>const</span> ParamTuple&amp;, <span style='color:#0057ae;'>const</span> ValueTuple&amp;);
     <b>return</b> TypeValue::Dispatch(self, label, params, args);
   }
-  <b><span style='color:#644a9b;'>std::string</span></b> CategoryName() <span style='color:#0057ae;'>const</span> <b>final</b> { <b>return</b> <span style='color:#bf0303;'>&quot;Demo&quot;</span>; }
+  <b><span style='color:#644a9b;'>std::string</span></b> CategoryName() <span style='color:#0057ae;'>const</span> <b>final</b> { <b>return</b> parent.CategoryName(); }
   Type_Demo&amp; parent;
 };
 S&lt;TypeValue&gt; CreateValue(Type_Demo&amp; parent, <span style='color:#0057ae;'>const</span> ParamTuple&amp; params, <span style='color:#0057ae;'>const</span> ValueTuple&amp; args) {
