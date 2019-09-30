@@ -3343,14 +3343,11 @@ define Test {
 END
 
 expect_runs 'param typename' <<END
-define Test {
-  @type getTypename<#x> () -> (String)
-  getTypename () {
-    return typename<Equals<#x>>()
-  }
+@value interface Type<#x,#y> {}
 
+define Test {
   run () {
-    if (getTypename<LessThan<Int>>() != "Equals<LessThan<Int>>") {
+    if (typename<Type<String,LessThan<Int>>>() != "Type<String,LessThan<Int>>") {
       ~ Util\$crash()
     }
   }

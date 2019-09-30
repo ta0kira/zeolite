@@ -643,6 +643,7 @@ compileExpressionStart (BuiltinCall c f@(FunctionCall _ BuiltinTypename ps es)) 
   when (length (psParams es) /= 0) $
     lift $ compileError $ "Expected 0 arguments [" ++ formatFullContext c ++ "]"
   t <- expandGeneralInstance (head $ psParams ps)
+  csRequiresTypes $ Set.unions $ map categoriesFromTypes $ psParams ps
   return $ (ParamSet [stringRequiredValue],
             UnboxedPrimitive PrimString $ "(" ++ t ++ ").TypeName()")
 compileExpressionStart (ParensExpression c e) = compileExpression e

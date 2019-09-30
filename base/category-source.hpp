@@ -91,6 +91,7 @@ class TypeInstance {
     bool first = true;
     for (const auto param : params2) {
       if (!first) output << ",";
+      first = false;
       output << param->TypeName();
     }
     output << ">";

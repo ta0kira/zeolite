@@ -51,6 +51,7 @@ struct Type_Intersect : public TypeInstance {
     bool first = true;
     for (const auto param : params_) {
       if (!first) output << "&";
+      first = false;
       output << param->TypeName();
     }
     output << "]";
@@ -78,6 +79,7 @@ struct Type_Union : public TypeInstance {
     bool first = true;
     for (const auto param : params_) {
       if (!first) output << "|";
+      first = false;
       output << param->TypeName();
     }
     output << "]";
