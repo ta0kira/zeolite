@@ -33,7 +33,7 @@ define Demo {
   (TypeTree,TypeKey<#x>) -> ()
   check (tree,key) {
     scoped {
-      optional Formatted value <- tree.get<Formatted>(key)
+      optional #x value <- tree.get<#x>(key)
     } in if (present(value)) {
       ~ LazyStream<Formatted>$new()
           .append("Found '")
