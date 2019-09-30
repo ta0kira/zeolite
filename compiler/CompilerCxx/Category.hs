@@ -377,6 +377,7 @@ commonDefineType t extra = do
       return $ CompiledData depends [],
       return $ onlyCode $ "struct " ++ typeName (getCategoryName t) ++ " : public " ++ typeBase ++ " {",
       return $ indentCompiled $ defineCategoryName name,
+      return $ indentCompiled $ defineTypeName name (map vpParam $ getCategoryParams t),
       return $ indentCompiled $ onlyCode $ categoryName (getCategoryName t) ++ "& parent;",
       return $ indentCompiled createParams,
       return $ indentCompiled canConvertFrom,
@@ -450,7 +451,15 @@ expandLocalType (SingleType (JustTypeInstance (TypeInstance t ps))) =
 expandLocalType (SingleType (JustParamName p)) = paramName p
 
 defineCategoryName :: CategoryName -> CompiledData [String]
-defineCategoryName t = onlyCode $ "std::string CategoryName() const { return \"" ++ show t ++ "\"; }"
+defineCategoryName t = onlyCode $ "std::string CategoryName() const final { return \"" ++ show t ++ "\"; }"
+
+defineTypeName :: CategoryName -> [ParamName] -> CompiledData [String]
+defineTypeName t ps =
+  onlyCodes [
+      "std::string TypeName() const final {",
+      "  return TypeInstance::TypeNameFrom(\"" ++ show t ++ "\"" ++ concat (map (("," ++) . paramName) ps) ++ ");",
+      "}"
+    ]
 
 declareGetCategory :: AnyCategory c -> [String]
 declareGetCategory t = [categoryBase ++ "& " ++ categoryGetter (getCategoryName t) ++ "();"]

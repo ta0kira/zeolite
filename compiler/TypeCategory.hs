@@ -714,7 +714,8 @@ data FunctionName =
   BuiltinPresent |
   BuiltinReduce |
   BuiltinRequire |
-  BuiltinStrong
+  BuiltinStrong |
+  BuiltinTypename
   deriving (Eq,Ord)
 
 instance Show FunctionName where
@@ -723,6 +724,7 @@ instance Show FunctionName where
   show BuiltinReduce = "reduce"
   show BuiltinRequire = "require"
   show BuiltinStrong = "strong"
+  show BuiltinTypename = "typename"
 
 data ScopedFunction c =
   ScopedFunction {

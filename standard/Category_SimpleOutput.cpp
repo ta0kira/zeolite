@@ -49,6 +49,7 @@ struct Category_SimpleOutput : public TypeCategory {
 
 struct Type_SimpleOutput : public TypeInstance {
   std::string CategoryName() const final { return "SimpleOutput"; }
+  std::string TypeName() const final { return "SimpleOutput"; }
 
   ReturnTuple Dispatch(const DFunction<SymbolScope::TYPE>& label,
                        const ParamTuple& params, const ValueTuple& args) final {

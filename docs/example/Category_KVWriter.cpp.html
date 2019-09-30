@@ -22,14 +22,17 @@
 <b>class</b> Type_KVWriter;
 Type_KVWriter&amp; CreateType(Params&lt;<span style='color:#b08000;'>2</span>&gt;::Type params);
 <b>struct</b> Category_KVWriter : <b>public</b> TypeCategory {
-  <b><span style='color:#644a9b;'>std::string</span></b> CategoryName() <span style='color:#0057ae;'>const</span> { <b>return</b> <span style='color:#bf0303;'>&quot;KVWriter&quot;</span>; }
+  <b><span style='color:#644a9b;'>std::string</span></b> CategoryName() <span style='color:#0057ae;'>const</span> <b>final</b> { <b>return</b> <span style='color:#bf0303;'>&quot;KVWriter&quot;</span>; }
 };
 Category_KVWriter&amp; CreateCategory() {
   <span style='color:#0057ae;'>static</span> <b>auto</b>&amp; category = *<b>new</b> Category_KVWriter();
   <b>return</b> category;
 }
 <b>struct</b> Type_KVWriter : <b>public</b> TypeInstance {
-  <b><span style='color:#644a9b;'>std::string</span></b> CategoryName() <span style='color:#0057ae;'>const</span> { <b>return</b> <span style='color:#bf0303;'>&quot;KVWriter&quot;</span>; }
+  <b><span style='color:#644a9b;'>std::string</span></b> CategoryName() <span style='color:#0057ae;'>const</span> <b>final</b> { <b>return</b> <span style='color:#bf0303;'>&quot;KVWriter&quot;</span>; }
+  <b><span style='color:#644a9b;'>std::string</span></b> TypeName() <span style='color:#0057ae;'>const</span> <b>final</b> {
+    <b>return</b> TypeInstance::TypeNameFrom(<span style='color:#bf0303;'>&quot;KVWriter&quot;</span>,Param_k,Param_v);
+  }
   Category_KVWriter&amp; parent;
   TypeInstance&amp; Param_k;
   TypeInstance&amp; Param_v;

@@ -42,12 +42,16 @@ TypeCategory& GetCategory_String();
 TypeCategory& GetCategory_Int();
 TypeCategory& GetCategory_Float();
 TypeCategory& GetCategory_Formatted();
+TypeCategory& GetCategory_LessThan();
+TypeCategory& GetCategory_Equals();
 
 TypeInstance& GetType_Bool(Params<0>::Type);
 TypeInstance& GetType_String(Params<0>::Type);
 TypeInstance& GetType_Int(Params<0>::Type);
 TypeInstance& GetType_Float(Params<0>::Type);
 TypeInstance& GetType_Formatted(Params<0>::Type);
+TypeInstance& GetType_LessThan(Params<1>::Type params);
+TypeInstance& GetType_Equals(Params<1>::Type params);
 
 S<TypeValue> Box_Bool(bool value);
 S<TypeValue> Box_String(const PrimString& value);

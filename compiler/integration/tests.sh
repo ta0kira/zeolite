@@ -3232,5 +3232,130 @@ define Test {
 }
 END
 
+expect_runs 'string typename' <<END
+define Test {
+  run () {
+    if (typename<String>() != "String") {
+      ~ Util\$crash()
+    }
+  }
+}
+END
+
+expect_runs 'int typename' <<END
+define Test {
+  run () {
+    if (typename<Int>() != "Int") {
+      ~ Util\$crash()
+    }
+  }
+}
+END
+
+expect_runs 'float typename' <<END
+define Test {
+  run () {
+    if (typename<Float>() != "Float") {
+      ~ Util\$crash()
+    }
+  }
+}
+END
+
+expect_runs 'bool typename' <<END
+define Test {
+  run () {
+    if (typename<Bool>() != "Bool") {
+      ~ Util\$crash()
+    }
+  }
+}
+END
+
+expect_runs 'Formatted typename' <<END
+define Test {
+  run () {
+    if (typename<Formatted>() != "Formatted") {
+      ~ Util\$crash()
+    }
+  }
+}
+END
+
+expect_runs 'LessThan typename' <<END
+define Test {
+  run () {
+    if (typename<LessThan<Int>>() != "LessThan<Int>") {
+      ~ Util\$crash()
+    }
+  }
+}
+END
+
+expect_runs 'Equals typename' <<END
+define Test {
+  run () {
+    if (typename<Equals<Int>>() != "Equals<Int>") {
+      ~ Util\$crash()
+    }
+  }
+}
+END
+
+expect_runs 'any typename' <<END
+define Test {
+  run () {
+    if (typename<any>() != "any") {
+      ~ Util\$crash()
+    }
+  }
+}
+END
+
+expect_runs 'all typename' <<END
+define Test {
+  run () {
+    if (typename<all>() != "all") {
+      ~ Util\$crash()
+    }
+  }
+}
+END
+
+expect_runs 'intersect typename' <<END
+define Test {
+  run () {
+    if (typename<[String&Int]>() != "[String&Int]") {
+      ~ Util\$crash()
+    }
+  }
+}
+END
+
+expect_runs 'union typename' <<END
+define Test {
+  run () {
+    if (typename<[String|Int]>() != "[String|Int]") {
+      ~ Util\$crash()
+    }
+  }
+}
+END
+
+expect_runs 'param typename' <<END
+define Test {
+  @type getTypename<#x> () -> (String)
+  getTypename () {
+    return typename<Equals<#x>>()
+  }
+
+  run () {
+    if (getTypename<LessThan<Int>>() != "Equals<LessThan<Int>>") {
+      ~ Util\$crash()
+    }
+  }
+}
+END
+
 
 echo "All $count tests passed" 1>&2

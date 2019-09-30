@@ -42,7 +42,7 @@ Type_Node&amp; CreateType(Params&lt;<span style='color:#b08000;'>2</span>&gt;::T
 <b>class</b> Value_Node;
 S&lt;TypeValue&gt; CreateValue(Type_Node&amp; parent, <span style='color:#0057ae;'>const</span> ParamTuple&amp; params, <span style='color:#0057ae;'>const</span> ValueTuple&amp; args);
 <b>struct</b> Category_Node : <b>public</b> TypeCategory {
-  <b><span style='color:#644a9b;'>std::string</span></b> CategoryName() <span style='color:#0057ae;'>const</span> { <b>return</b> <span style='color:#bf0303;'>&quot;Node&quot;</span>; }
+  <b><span style='color:#644a9b;'>std::string</span></b> CategoryName() <span style='color:#0057ae;'>const</span> <b>final</b> { <b>return</b> <span style='color:#bf0303;'>&quot;Node&quot;</span>; }
   Category_Node() {
     CycleCheck&lt;Category_Node&gt;::Check();
     CycleCheck&lt;Category_Node&gt; marker(*<b>this</b>);
@@ -58,7 +58,10 @@ Category_Node&amp; CreateCategory() {
   <b>return</b> category;
 }
 <b>struct</b> Type_Node : <b>public</b> TypeInstance {
-  <b><span style='color:#644a9b;'>std::string</span></b> CategoryName() <span style='color:#0057ae;'>const</span> { <b>return</b> <span style='color:#bf0303;'>&quot;Node&quot;</span>; }
+  <b><span style='color:#644a9b;'>std::string</span></b> CategoryName() <span style='color:#0057ae;'>const</span> <b>final</b> { <b>return</b> <span style='color:#bf0303;'>&quot;Node&quot;</span>; }
+  <b><span style='color:#644a9b;'>std::string</span></b> TypeName() <span style='color:#0057ae;'>const</span> <b>final</b> {
+    <b>return</b> TypeInstance::TypeNameFrom(<span style='color:#bf0303;'>&quot;Node&quot;</span>,Param_k,Param_v);
+  }
   Category_Node&amp; parent;
   TypeInstance&amp; Param_k;
   TypeInstance&amp; Param_v;
@@ -444,7 +447,7 @@ Type_Node&amp; CreateType(Params&lt;<span style='color:#b08000;'>2</span>&gt;::T
     }
     <b>return</b> TypeValue::Dispatch(self, label, params, args);
   }
-  <b><span style='color:#644a9b;'>std::string</span></b> CategoryName() <span style='color:#0057ae;'>const</span> { <b>return</b> <span style='color:#bf0303;'>&quot;Node&quot;</span>; }
+  <b><span style='color:#644a9b;'>std::string</span></b> CategoryName() <span style='color:#0057ae;'>const</span> <b>final</b> { <b>return</b> <span style='color:#bf0303;'>&quot;Node&quot;</span>; }
   ReturnTuple Call_getBalance(<span style='color:#0057ae;'>const</span> S&lt;TypeValue&gt;&amp; Var_self, <span style='color:#0057ae;'>const</span> ParamTuple&amp; params, <span style='color:#0057ae;'>const</span> ValueTuple&amp; args) {
     TRACE_FUNCTION(<span style='color:#bf0303;'>&quot;Node.getBalance&quot;</span>)
     ReturnTuple returns(<span style='color:#b08000;'>1</span>);

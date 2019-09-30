@@ -293,7 +293,8 @@ builtinFunction = foldr (<|>) (fail "empty") $ map try [
     kwPresent >> return BuiltinPresent,
     kwReduce >> return BuiltinReduce,
     kwRequire >> return BuiltinRequire,
-    kwStrong >> return BuiltinStrong
+    kwStrong >> return BuiltinStrong,
+    kwTypename >> return BuiltinTypename
   ]
 
 instance ParseFromSource (ExpressionStart SourcePos) where

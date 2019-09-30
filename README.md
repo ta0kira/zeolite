@@ -931,10 +931,6 @@ then it will return `value` here. Otherwise, it will return `empty`.
 This can also be useful for debugging code that has type parameters.
 
 <pre style='color:#1f1c1b;background-color:#ffffff;'>
-<b>concrete</b> <b><span style='color:#0057ae;'>Something</span></b><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span> {
-  <span style='color:#644a9b;'>@type</span> complicated (<i><span style='color:#0057ae;'>#x</span></i>) <b><span style='color:#006e28;'>-&gt;</span></b> ()
-}
-
 <b>define</b> <b><span style='color:#0057ae;'>Something</span></b> {
   complicated (x) {
     <span style='color:#006e28;'>~</span> debugMessage(<span style='color:#bf0303;'>&quot;start&quot;</span>,x)
@@ -943,7 +939,7 @@ This can also be useful for debugging code that has type parameters.
 
   <span style='color:#644a9b;'>@type</span> debugMessage (<i><span style='color:#0057ae;'>String</span></i>,<i><span style='color:#0057ae;'>#x</span></i>) <b><span style='color:#006e28;'>-&gt;</span></b> ()
   debugMessage (message,x) {
-    <i><span style='color:#0057ae;'>Formatted</span></i> val <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#bf0303;'>&quot;?&quot;</span>
+    <i><span style='color:#0057ae;'>Formatted</span></i> val <b><span style='color:#006e28;'>&lt;-</span></b> <b>typename</b>&lt;<i><span style='color:#0057ae;'>#x</span></i>&gt;()
     <b>scoped</b> {
       <b>optional</b> <i><span style='color:#0057ae;'>Formatted</span></i> f <b><span style='color:#006e28;'>&lt;-</span></b> <b>reduce</b>&lt;<i><span style='color:#0057ae;'>#x</span></i>,<i><span style='color:#0057ae;'>Formatted</span></i>&gt;(x)
     } <b>in</b> <b>if</b> (<b>present</b>(f)) {
@@ -958,7 +954,8 @@ This can also be useful for debugging code that has type parameters.
 
 In this example, `x` is `formatted` only if `#x` is something that converts to
 `Formatted`, which might be sufficient for a simple test case, e.g.,
-`Something<String>$complicated("test")`.
+`Something<String>$complicated("test")`. (The fallback above is just the name of
+the type assigned to the parameter.)
 
 ### Internal Types
 

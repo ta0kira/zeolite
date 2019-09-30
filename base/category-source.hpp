@@ -20,6 +20,7 @@ limitations under the License.
 #define CATEGORY_SOURCE_HPP_
 
 #include <map>
+#include <sstream>
 #include <vector>
 
 #include "types.hpp"
@@ -55,6 +56,7 @@ class TypeInstance {
   }
 
   virtual std::string CategoryName() const = 0;
+  virtual std::string TypeName() const = 0;
 
   static S<TypeValue> Reduce(TypeInstance& from, TypeInstance& to, S<TypeValue> target) {
     TRACE_FUNCTION("reduce")
@@ -78,6 +80,22 @@ class TypeInstance {
   { return false; }
 
   static bool CanConvert(const TypeInstance& from, const TypeInstance& to);
+
+  template<class...Ts>
+  static std::string TypeNameFrom(const std::string& name, const Ts&... params) {
+    std::vector<const TypeInstance*> params2{&params...};
+    std::ostringstream output;
+    output << name;
+    if (params2.empty()) return output.str();
+    output << "<";
+    bool first = true;
+    for (const auto param : params2) {
+      if (!first) output << ",";
+      output << param->TypeName();
+    }
+    output << ">";
+    return output.str();
+  }
 
   enum class MergeType {
     SINGLE,

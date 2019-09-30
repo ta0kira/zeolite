@@ -20,15 +20,17 @@ define Demo {
     ~ tree.set<Int>(keyInt,1)
     ~ tree.set<String>(keyString,"a")
 
-    ~ check(tree,keyInt)
-    ~ check(tree,keyString)
-    ~ check(tree,keyFloat)  // Not found, since we never added a value.
+    ~ check<Int>(tree,keyInt)
+    ~ check<String>(tree,keyString)
+    ~ check<Float>(tree,keyFloat)  // Not found, since we never added a value.
 
     ~ tree.set<Value>(keyValue,Value$new())
-    ~ check(tree,keyValue)
+    ~ check<Value>(tree,keyValue)
   }
 
-  @category check (TypeTree,TypeKey<Formatted>) -> ()
+  @category check<#x>
+    #x requires Formatted
+  (TypeTree,TypeKey<#x>) -> ()
   check (tree,key) {
     scoped {
       optional Formatted value <- tree.get<Formatted>(key)
@@ -40,7 +42,8 @@ define Demo {
           .writeTo(SimpleOutput$stderr())
     } else {
       ~ LazyStream<Formatted>$new()
-          .append("Not Found\n")
+          .append(typename<TypeKey<#x>>())
+          .append(" Not Found\n")
           .writeTo(SimpleOutput$stderr())
     }
   }

@@ -25,7 +25,7 @@ Type_LockedType&amp; CreateType(Params&lt;<span style='color:#b08000;'>1</span>&
 <b>class</b> Value_LockedType;
 S&lt;TypeValue&gt; CreateValue(Type_LockedType&amp; parent, <span style='color:#0057ae;'>const</span> ParamTuple&amp; params, <span style='color:#0057ae;'>const</span> ValueTuple&amp; args);
 <b>struct</b> Category_LockedType : <b>public</b> TypeCategory {
-  <b><span style='color:#644a9b;'>std::string</span></b> CategoryName() <span style='color:#0057ae;'>const</span> { <b>return</b> <span style='color:#bf0303;'>&quot;LockedType&quot;</span>; }
+  <b><span style='color:#644a9b;'>std::string</span></b> CategoryName() <span style='color:#0057ae;'>const</span> <b>final</b> { <b>return</b> <span style='color:#bf0303;'>&quot;LockedType&quot;</span>; }
   Category_LockedType() {
     CycleCheck&lt;Category_LockedType&gt;::Check();
     CycleCheck&lt;Category_LockedType&gt; marker(*<b>this</b>);
@@ -41,7 +41,10 @@ Category_LockedType&amp; CreateCategory() {
   <b>return</b> category;
 }
 <b>struct</b> Type_LockedType : <b>public</b> TypeInstance {
-  <b><span style='color:#644a9b;'>std::string</span></b> CategoryName() <span style='color:#0057ae;'>const</span> { <b>return</b> <span style='color:#bf0303;'>&quot;LockedType&quot;</span>; }
+  <b><span style='color:#644a9b;'>std::string</span></b> CategoryName() <span style='color:#0057ae;'>const</span> <b>final</b> { <b>return</b> <span style='color:#bf0303;'>&quot;LockedType&quot;</span>; }
+  <b><span style='color:#644a9b;'>std::string</span></b> TypeName() <span style='color:#0057ae;'>const</span> <b>final</b> {
+    <b>return</b> TypeInstance::TypeNameFrom(<span style='color:#bf0303;'>&quot;LockedType&quot;</span>,Param_x);
+  }
   Category_LockedType&amp; parent;
   TypeInstance&amp; Param_x;
   <span style='color:#0057ae;'>bool</span> CanConvertFrom(<span style='color:#0057ae;'>const</span> TypeInstance&amp; from) <span style='color:#0057ae;'>const</span> <b>final</b> {
@@ -109,7 +112,7 @@ Type_LockedType&amp; CreateType(Params&lt;<span style='color:#b08000;'>1</span>&
     }
     <b>return</b> TypeValue::Dispatch(self, label, params, args);
   }
-  <b><span style='color:#644a9b;'>std::string</span></b> CategoryName() <span style='color:#0057ae;'>const</span> { <b>return</b> <span style='color:#bf0303;'>&quot;LockedType&quot;</span>; }
+  <b><span style='color:#644a9b;'>std::string</span></b> CategoryName() <span style='color:#0057ae;'>const</span> <b>final</b> { <b>return</b> <span style='color:#bf0303;'>&quot;LockedType&quot;</span>; }
   ReturnTuple Call_check(<span style='color:#0057ae;'>const</span> S&lt;TypeValue&gt;&amp; Var_self, <span style='color:#0057ae;'>const</span> ParamTuple&amp; params, <span style='color:#0057ae;'>const</span> ValueTuple&amp; args) {
     TRACE_FUNCTION(<span style='color:#bf0303;'>&quot;LockedType.check&quot;</span>)
     ReturnTuple returns(<span style='color:#b08000;'>1</span>);

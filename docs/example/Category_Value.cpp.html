@@ -23,7 +23,7 @@ Type_Value&amp; CreateType(Params&lt;<span style='color:#b08000;'>0</span>&gt;::
 <b>class</b> Value_Value;
 S&lt;TypeValue&gt; CreateValue(Type_Value&amp; parent, <span style='color:#0057ae;'>const</span> ParamTuple&amp; params, <span style='color:#0057ae;'>const</span> ValueTuple&amp; args);
 <b>struct</b> Category_Value : <b>public</b> TypeCategory {
-  <b><span style='color:#644a9b;'>std::string</span></b> CategoryName() <span style='color:#0057ae;'>const</span> { <b>return</b> <span style='color:#bf0303;'>&quot;Value&quot;</span>; }
+  <b><span style='color:#644a9b;'>std::string</span></b> CategoryName() <span style='color:#0057ae;'>const</span> <b>final</b> { <b>return</b> <span style='color:#bf0303;'>&quot;Value&quot;</span>; }
   Category_Value() {
     CycleCheck&lt;Category_Value&gt;::Check();
     CycleCheck&lt;Category_Value&gt; marker(*<b>this</b>);
@@ -39,7 +39,10 @@ Category_Value&amp; CreateCategory() {
   <b>return</b> category;
 }
 <b>struct</b> Type_Value : <b>public</b> TypeInstance {
-  <b><span style='color:#644a9b;'>std::string</span></b> CategoryName() <span style='color:#0057ae;'>const</span> { <b>return</b> <span style='color:#bf0303;'>&quot;Value&quot;</span>; }
+  <b><span style='color:#644a9b;'>std::string</span></b> CategoryName() <span style='color:#0057ae;'>const</span> <b>final</b> { <b>return</b> <span style='color:#bf0303;'>&quot;Value&quot;</span>; }
+  <b><span style='color:#644a9b;'>std::string</span></b> TypeName() <span style='color:#0057ae;'>const</span> <b>final</b> {
+    <b>return</b> TypeInstance::TypeNameFrom(<span style='color:#bf0303;'>&quot;Value&quot;</span>);
+  }
   Category_Value&amp; parent;
   <span style='color:#0057ae;'>bool</span> CanConvertFrom(<span style='color:#0057ae;'>const</span> TypeInstance&amp; from) <span style='color:#0057ae;'>const</span> <b>final</b> {
     <b><span style='color:#644a9b;'>std::vector</span></b>&lt;<span style='color:#0057ae;'>const</span> TypeInstance*&gt; args;
@@ -81,7 +84,7 @@ Category_Value&amp; CreateCategory() {
   ReturnTuple Call_new(<span style='color:#0057ae;'>const</span> ParamTuple&amp; params, <span style='color:#0057ae;'>const</span> ValueTuple&amp; args) {
     TRACE_FUNCTION(<span style='color:#bf0303;'>&quot;Value.new&quot;</span>)
     ReturnTuple returns(<span style='color:#b08000;'>1</span>);
-    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree-demo.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 117, column 12)&quot;</span>)
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree-demo.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 120, column 12)&quot;</span>)
     <b>return</b> ReturnTuple(CreateValue(*<b>this</b>, ParamTuple(), ArgTuple()));
     <b>return</b> returns;
   }
@@ -107,11 +110,11 @@ Type_Value&amp; CreateType(Params&lt;<span style='color:#b08000;'>0</span>&gt;::
     }
     <b>return</b> TypeValue::Dispatch(self, label, params, args);
   }
-  <b><span style='color:#644a9b;'>std::string</span></b> CategoryName() <span style='color:#0057ae;'>const</span> { <b>return</b> <span style='color:#bf0303;'>&quot;Value&quot;</span>; }
+  <b><span style='color:#644a9b;'>std::string</span></b> CategoryName() <span style='color:#0057ae;'>const</span> <b>final</b> { <b>return</b> <span style='color:#bf0303;'>&quot;Value&quot;</span>; }
   ReturnTuple Call_formatted(<span style='color:#0057ae;'>const</span> S&lt;TypeValue&gt;&amp; Var_self, <span style='color:#0057ae;'>const</span> ParamTuple&amp; params, <span style='color:#0057ae;'>const</span> ValueTuple&amp; args) {
     TRACE_FUNCTION(<span style='color:#bf0303;'>&quot;Value.formatted&quot;</span>)
     ReturnTuple returns(<span style='color:#b08000;'>1</span>);
-    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree-demo.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 118, column 18)&quot;</span>)
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree-demo.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 121, column 18)&quot;</span>)
     <b>return</b> ReturnTuple(Box_String(PrimString(<span style='color:#bf0303;'>&quot;Value&quot;</span>)));
     <b>return</b> returns;
   }

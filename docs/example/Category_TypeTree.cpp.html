@@ -30,7 +30,7 @@ Type_TypeTree&amp; CreateType(Params&lt;<span style='color:#b08000;'>0</span>&gt
 <b>class</b> Value_TypeTree;
 S&lt;TypeValue&gt; CreateValue(Type_TypeTree&amp; parent, <span style='color:#0057ae;'>const</span> ParamTuple&amp; params, <span style='color:#0057ae;'>const</span> ValueTuple&amp; args);
 <b>struct</b> Category_TypeTree : <b>public</b> TypeCategory {
-  <b><span style='color:#644a9b;'>std::string</span></b> CategoryName() <span style='color:#0057ae;'>const</span> { <b>return</b> <span style='color:#bf0303;'>&quot;TypeTree&quot;</span>; }
+  <b><span style='color:#644a9b;'>std::string</span></b> CategoryName() <span style='color:#0057ae;'>const</span> <b>final</b> { <b>return</b> <span style='color:#bf0303;'>&quot;TypeTree&quot;</span>; }
   Category_TypeTree() {
     CycleCheck&lt;Category_TypeTree&gt;::Check();
     CycleCheck&lt;Category_TypeTree&gt; marker(*<b>this</b>);
@@ -46,7 +46,10 @@ Category_TypeTree&amp; CreateCategory() {
   <b>return</b> category;
 }
 <b>struct</b> Type_TypeTree : <b>public</b> TypeInstance {
-  <b><span style='color:#644a9b;'>std::string</span></b> CategoryName() <span style='color:#0057ae;'>const</span> { <b>return</b> <span style='color:#bf0303;'>&quot;TypeTree&quot;</span>; }
+  <b><span style='color:#644a9b;'>std::string</span></b> CategoryName() <span style='color:#0057ae;'>const</span> <b>final</b> { <b>return</b> <span style='color:#bf0303;'>&quot;TypeTree&quot;</span>; }
+  <b><span style='color:#644a9b;'>std::string</span></b> TypeName() <span style='color:#0057ae;'>const</span> <b>final</b> {
+    <b>return</b> TypeInstance::TypeNameFrom(<span style='color:#bf0303;'>&quot;TypeTree&quot;</span>);
+  }
   Category_TypeTree&amp; parent;
   <span style='color:#0057ae;'>bool</span> CanConvertFrom(<span style='color:#0057ae;'>const</span> TypeInstance&amp; from) <span style='color:#0057ae;'>const</span> <b>final</b> {
     <b><span style='color:#644a9b;'>std::vector</span></b>&lt;<span style='color:#0057ae;'>const</span> TypeInstance*&gt; args;
@@ -112,7 +115,7 @@ Type_TypeTree&amp; CreateType(Params&lt;<span style='color:#b08000;'>0</span>&gt
     }
     <b>return</b> TypeValue::Dispatch(self, label, params, args);
   }
-  <b><span style='color:#644a9b;'>std::string</span></b> CategoryName() <span style='color:#0057ae;'>const</span> { <b>return</b> <span style='color:#bf0303;'>&quot;TypeTree&quot;</span>; }
+  <b><span style='color:#644a9b;'>std::string</span></b> CategoryName() <span style='color:#0057ae;'>const</span> <b>final</b> { <b>return</b> <span style='color:#bf0303;'>&quot;TypeTree&quot;</span>; }
   ReturnTuple Call_get(<span style='color:#0057ae;'>const</span> S&lt;TypeValue&gt;&amp; Var_self, <span style='color:#0057ae;'>const</span> ParamTuple&amp; params, <span style='color:#0057ae;'>const</span> ValueTuple&amp; args) {
     TRACE_FUNCTION(<span style='color:#bf0303;'>&quot;TypeTree.get&quot;</span>)
     ReturnTuple returns(<span style='color:#b08000;'>1</span>);

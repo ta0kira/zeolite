@@ -42,7 +42,20 @@ struct OptionalEmpty : public TypeValue {
 struct Type_Intersect : public TypeInstance {
   Type_Intersect(L<TypeInstance*> params) : params_(params.begin(), params.end()) {}
 
-  std::string CategoryName() const { return "(intersection)"; }
+  std::string CategoryName() const final { return "(intersection)"; }
+
+  std::string TypeName() const final {
+    if (params_.empty()) return "any";
+    std::ostringstream output;
+    output << "[";
+    bool first = true;
+    for (const auto param : params_) {
+      if (!first) output << "&";
+      output << param->TypeName();
+    }
+    output << "]";
+    return output.str();
+  }
 
   MergeType InstanceMergeType() const final
   { return MergeType::INTERSECT; }
@@ -56,7 +69,20 @@ struct Type_Intersect : public TypeInstance {
 struct Type_Union : public TypeInstance {
   Type_Union(L<TypeInstance*> params) : params_(params.begin(), params.end()) {}
 
-  std::string CategoryName() const { return "(union)"; }
+  std::string CategoryName() const final { return "(union)"; }
+
+  std::string TypeName() const final {
+    if (params_.empty()) return "all";
+    std::ostringstream output;
+    output << "[";
+    bool first = true;
+    for (const auto param : params_) {
+      if (!first) output << "|";
+      output << param->TypeName();
+    }
+    output << "]";
+    return output.str();
+  }
 
   MergeType InstanceMergeType() const final
   { return MergeType::UNION; }
@@ -73,6 +99,7 @@ struct Category_Bool : public TypeCategory {
 
 struct Type_Bool : public TypeInstance {
   std::string CategoryName() const final { return "Bool"; }
+  std::string TypeName() const final { return "Bool"; }
 
   bool TypeArgsForParent(
     const TypeCategory& category, std::vector<const TypeInstance*>& args) const final {
@@ -130,6 +157,7 @@ struct Category_String : public TypeCategory {
 
 struct Type_String : public TypeInstance {
   std::string CategoryName() const final { return "String"; }
+  std::string TypeName() const final { return "String"; }
 
   ReturnTuple Dispatch(const DFunction<SymbolScope::TYPE>& label,
                        const ParamTuple& params, const ValueTuple& args) final {
@@ -204,6 +232,7 @@ struct Category_Int : public TypeCategory {
 
 struct Type_Int : public TypeInstance {
   std::string CategoryName() const final { return "Int"; }
+  std::string TypeName() const final { return "Int"; }
 
   ReturnTuple Dispatch(const DFunction<SymbolScope::TYPE>& label,
                        const ParamTuple& params, const ValueTuple& args) final {
@@ -280,6 +309,7 @@ struct Category_Float : public TypeCategory {
 
 struct Type_Float : public TypeInstance {
   std::string CategoryName() const final { return "Float"; }
+  std::string TypeName() const final { return "Float"; }
 
   ReturnTuple Dispatch(const DFunction<SymbolScope::TYPE>& label,
                        const ParamTuple& params, const ValueTuple& args) final {
@@ -356,6 +386,7 @@ struct Category_Formatted : public TypeCategory {
 
 struct Type_Formatted : public TypeInstance {
   std::string CategoryName() const final { return "Formatted"; }
+  std::string TypeName() const final { return "Formatted"; }
 
   bool TypeArgsForParent(
     const TypeCategory& category, std::vector<const TypeInstance*>& args) const final {
@@ -374,6 +405,30 @@ struct Type_Formatted : public TypeInstance {
     }
     return true;
   }
+};
+
+struct Category_LessThan : public TypeCategory {
+  std::string CategoryName() const final { return "LessThan"; }
+};
+
+struct Type_LessThan : public TypeInstance {
+  Type_LessThan(Params<1>::Type params) : Param_x(*std::get<0>(params)) {}
+  std::string CategoryName() const final { return "LessThan"; }
+  std::string TypeName() const final { return TypeInstance::TypeNameFrom("LessThan", Param_x); }
+
+  TypeInstance& Param_x;
+};
+
+struct Category_Equals : public TypeCategory {
+  std::string CategoryName() const final { return "Equals"; }
+};
+
+struct Type_Equals : public TypeInstance {
+  Type_Equals(Params<1>::Type params) : Param_x(*std::get<0>(params)) {}
+  std::string CategoryName() const final { return "Equals"; }
+  std::string TypeName() const final { return TypeInstance::TypeNameFrom("Equals", Param_x); }
+
+  TypeInstance& Param_x;
 };
 
 const S<TypeValue>& Var_true = *new S<TypeValue>(new Value_Bool(true));
@@ -445,6 +500,16 @@ TypeCategory& GetCategory_Formatted() {
   return category;
 }
 
+TypeCategory& GetCategory_LessThan() {
+  static auto& category = *new Category_LessThan();
+  return category;
+}
+
+TypeCategory& GetCategory_Equals() {
+  static auto& category = *new Category_Equals();
+  return category;
+}
+
 
 TypeInstance& GetType_Bool(Params<0>::Type) {
   static auto& instance = *new Type_Bool();
@@ -469,6 +534,20 @@ TypeInstance& GetType_Float(Params<0>::Type) {
 TypeInstance& GetType_Formatted(Params<0>::Type) {
   static auto& instance = *new Type_Formatted();
   return instance;
+}
+
+TypeInstance& GetType_LessThan(Params<1>::Type params){
+  static auto& cache = *new InstanceMap<1,Type_LessThan>();
+  auto& cached = cache[params];
+  if (!cached) { cached = R_get(new Type_LessThan(params)); }
+  return *cached;
+}
+
+TypeInstance& GetType_Equals(Params<1>::Type params){
+  static auto& cache = *new InstanceMap<1,Type_Equals>();
+  auto& cached = cache[params];
+  if (!cached) { cached = R_get(new Type_Equals(params)); }
+  return *cached;
 }
 
 S<TypeValue> Box_Bool(bool value) {

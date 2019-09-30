@@ -637,6 +637,14 @@ compileExpressionStart (BuiltinCall c f@(FunctionCall _ BuiltinStrong ps es)) = 
      -- Weak values are already unboxed.
      then return (t1,UnwrappedSingle $  valueBase ++ "::Strong(" ++ useAsUnwrapped e ++ ")")
      else return (t1,e)
+compileExpressionStart (BuiltinCall c f@(FunctionCall _ BuiltinTypename ps es)) = do
+  when (length (psParams ps) /= 1) $
+    lift $ compileError $ "Expected 1 type parameter [" ++ formatFullContext c ++ "]"
+  when (length (psParams es) /= 0) $
+    lift $ compileError $ "Expected 0 arguments [" ++ formatFullContext c ++ "]"
+  t <- expandGeneralInstance (head $ psParams ps)
+  return $ (ParamSet [stringRequiredValue],
+            UnboxedPrimitive PrimString $ "(" ++ t ++ ").TypeName()")
 compileExpressionStart (ParensExpression c e) = compileExpression e
 compileExpressionStart (InlineAssignment c n e) = do
   (VariableValue c2 s t0 w) <- csGetVariable c n
