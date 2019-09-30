@@ -1,0 +1,251 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="Generator" content="Kate, the KDE Advanced Text Editor" />
+<title>Category_Demo.cpp</title>
+</head>
+<!-- Highlighting: "C++" -->
+<body>
+<pre style='color:#1f1c1b;background-color:#ffffff;'>
+<span style='color:#006e28;'>#include </span><span style='color:#ff5500;'>&quot;category-source.hpp&quot;</span>
+<span style='color:#006e28;'>#include </span><span style='color:#ff5500;'>&quot;Category_Demo.hpp&quot;</span>
+<span style='color:#006e28;'>#include </span><span style='color:#ff5500;'>&quot;Category_KVReader.hpp&quot;</span>
+<span style='color:#006e28;'>#include </span><span style='color:#ff5500;'>&quot;Category_LazyStream.hpp&quot;</span>
+<span style='color:#006e28;'>#include </span><span style='color:#ff5500;'>&quot;Category_Runner.hpp&quot;</span>
+<span style='color:#006e28;'>#include </span><span style='color:#ff5500;'>&quot;Category_SimpleOutput.hpp&quot;</span>
+<span style='color:#006e28;'>#include </span><span style='color:#ff5500;'>&quot;Category_Tree.hpp&quot;</span>
+<span style='color:#006e28;'>#include </span><span style='color:#ff5500;'>&quot;Category_TypeKey.hpp&quot;</span>
+<span style='color:#006e28;'>#include </span><span style='color:#ff5500;'>&quot;Category_TypeTree.hpp&quot;</span>
+<span style='color:#006e28;'>#include </span><span style='color:#ff5500;'>&quot;Category_Value.hpp&quot;</span>
+<b>namespace</b> {
+<span style='color:#0057ae;'>const</span> <span style='color:#0057ae;'>int</span> collection = <span style='color:#b08000;'>0</span>;
+}
+<span style='color:#0057ae;'>const</span> <span style='color:#0057ae;'>void</span>* <span style='color:#0057ae;'>const</span> Functions_Demo = &amp;collection;
+<span style='color:#0057ae;'>const</span> Function&lt;SymbolScope::CATEGORY,<span style='color:#b08000;'>0</span>,<span style='color:#b08000;'>2</span>,<span style='color:#b08000;'>0</span>&gt;&amp; Function_Demo_check = *<b>new</b> Function&lt;SymbolScope::CATEGORY,<span style='color:#b08000;'>0</span>,<span style='color:#b08000;'>2</span>,<span style='color:#b08000;'>0</span>&gt;(<span style='color:#bf0303;'>&quot;Demo&quot;</span>, <span style='color:#bf0303;'>&quot;check&quot;</span>, Functions_Demo, <span style='color:#b08000;'>0</span>);
+<span style='color:#0057ae;'>const</span> Function&lt;SymbolScope::CATEGORY,<span style='color:#b08000;'>0</span>,<span style='color:#b08000;'>0</span>,<span style='color:#b08000;'>0</span>&gt;&amp; Function_Demo_demoTypeTree = *<b>new</b> Function&lt;SymbolScope::CATEGORY,<span style='color:#b08000;'>0</span>,<span style='color:#b08000;'>0</span>,<span style='color:#b08000;'>0</span>&gt;(<span style='color:#bf0303;'>&quot;Demo&quot;</span>, <span style='color:#bf0303;'>&quot;demoTypeTree&quot;</span>, Functions_Demo, <span style='color:#b08000;'>1</span>);
+<span style='color:#0057ae;'>const</span> Function&lt;SymbolScope::CATEGORY,<span style='color:#b08000;'>0</span>,<span style='color:#b08000;'>0</span>,<span style='color:#b08000;'>0</span>&gt;&amp; Function_Demo_testTree = *<b>new</b> Function&lt;SymbolScope::CATEGORY,<span style='color:#b08000;'>0</span>,<span style='color:#b08000;'>0</span>,<span style='color:#b08000;'>0</span>&gt;(<span style='color:#bf0303;'>&quot;Demo&quot;</span>, <span style='color:#bf0303;'>&quot;testTree&quot;</span>, Functions_Demo, <span style='color:#b08000;'>2</span>);
+<b>namespace</b> {
+<b>class</b> Category_Demo;
+<b>class</b> Type_Demo;
+Type_Demo&amp; CreateType(Params&lt;<span style='color:#b08000;'>0</span>&gt;::Type params);
+<b>class</b> Value_Demo;
+S&lt;TypeValue&gt; CreateValue(Type_Demo&amp; parent, <span style='color:#0057ae;'>const</span> ParamTuple&amp; params, <span style='color:#0057ae;'>const</span> ValueTuple&amp; args);
+<b>struct</b> Category_Demo : <b>public</b> TypeCategory {
+  <b><span style='color:#644a9b;'>std::string</span></b> CategoryName() <span style='color:#0057ae;'>const</span> { <b>return</b> <span style='color:#bf0303;'>&quot;Demo&quot;</span>; }
+  Category_Demo() {
+    CycleCheck&lt;Category_Demo&gt;::Check();
+    CycleCheck&lt;Category_Demo&gt; marker(*<b>this</b>);
+    TRACE_FUNCTION(<span style='color:#bf0303;'>&quot;Demo (init @category)&quot;</span>)
+  }
+  ReturnTuple Dispatch(<span style='color:#0057ae;'>const</span> DFunction&lt;SymbolScope::CATEGORY&gt;&amp; label, <span style='color:#0057ae;'>const</span> ParamTuple&amp; params, <span style='color:#0057ae;'>const</span> ValueTuple&amp; args) <b>final</b> {
+    <b>using</b> CallType = ReturnTuple(Category_Demo::*)(<span style='color:#0057ae;'>const</span> ParamTuple&amp;, <span style='color:#0057ae;'>const</span> ValueTuple&amp;);
+    <span style='color:#0057ae;'>static</span> <span style='color:#0057ae;'>const</span> CallType Table_Demo[] = {
+      &amp;Category_Demo::Call_check,
+      &amp;Category_Demo::Call_demoTypeTree,
+      &amp;Category_Demo::Call_testTree,
+    };
+    <b>if</b> (label.Collection() == Functions_Demo) {
+      <b>if</b> (label.Num() &lt; <span style='color:#b08000;'>0</span> || label.Num() &gt;= <span style='color:#b08000;'>3</span>) {
+        FAIL() &lt;&lt; <span style='color:#bf0303;'>&quot;Bad function call &quot;</span> &lt;&lt; label.FunctionName();
+      }
+      <b>return</b> (<b>this</b>-&gt;*Table_Demo[label.Num()])(params, args);
+    }
+    <b>return</b> TypeCategory::Dispatch(label, params, args);
+  }
+  ReturnTuple Call_check(<span style='color:#0057ae;'>const</span> ParamTuple&amp; params, <span style='color:#0057ae;'>const</span> ValueTuple&amp; args) {
+    TRACE_FUNCTION(<span style='color:#bf0303;'>&quot;Demo.check&quot;</span>)
+    ReturnTuple returns(<span style='color:#b08000;'>0</span>);
+    <span style='color:#0057ae;'>const</span> S&lt;TypeValue&gt;&amp; Var_tree = (args.At(<span style='color:#b08000;'>0</span>));
+    <span style='color:#0057ae;'>const</span> S&lt;TypeValue&gt;&amp; Var_key = (args.At(<span style='color:#b08000;'>1</span>));
+    {
+    S&lt;TypeValue&gt; Var_value;
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree-demo.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 34, column 7)&quot;</span>)
+    Var_value = (TypeValue::Call((Var_tree), Function_TypeTree_get, ParamTuple(&amp;GetType_Formatted(T_get())), ArgTuple(Var_key))).Only();
+    <b>if</b> (PRED_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree-demo.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 35, column 10)&quot;</span>)(TypeValue::Present((Var_value)))) {
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree-demo.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 36, column 7)&quot;</span>)
+    TypeValue::Call((TypeValue::Call((TypeValue::Call((TypeValue::Call((GetType_LazyStream(T_get(&amp;GetType_Formatted(T_get()))).Call(Function_LazyStream_new, ParamTuple(), ArgTuple())).Only(), Function_LazyStream_append, ParamTuple(), ArgTuple(Box_String(PrimString(<span style='color:#bf0303;'>&quot;Found '&quot;</span>))))).Only(), Function_LazyStream_append, ParamTuple(), ArgTuple(TypeValue::Require((Var_value))))).Only(), Function_LazyStream_append, ParamTuple(), ArgTuple(Box_String(PrimString(<span style='color:#bf0303;'>&quot;'</span><span style='color:#3daee9;'>\n</span><span style='color:#bf0303;'>&quot;</span>))))).Only(), Function_LazyStream_writeTo, ParamTuple(), (GetType_SimpleOutput(T_get()).Call(Function_SimpleOutput_stderr, ParamTuple(), ArgTuple())));
+    }
+    <b>else</b> {
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree-demo.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 42, column 7)&quot;</span>)
+    TypeValue::Call((TypeValue::Call((GetType_LazyStream(T_get(&amp;GetType_Formatted(T_get()))).Call(Function_LazyStream_new, ParamTuple(), ArgTuple())).Only(), Function_LazyStream_append, ParamTuple(), ArgTuple(Box_String(PrimString(<span style='color:#bf0303;'>&quot;Not Found</span><span style='color:#3daee9;'>\n</span><span style='color:#bf0303;'>&quot;</span>))))).Only(), Function_LazyStream_writeTo, ParamTuple(), (GetType_SimpleOutput(T_get()).Call(Function_SimpleOutput_stderr, ParamTuple(), ArgTuple())));
+    }
+    }
+    <b>return</b> returns;
+  }
+  ReturnTuple Call_demoTypeTree(<span style='color:#0057ae;'>const</span> ParamTuple&amp; params, <span style='color:#0057ae;'>const</span> ValueTuple&amp; args) {
+    TRACE_FUNCTION(<span style='color:#bf0303;'>&quot;Demo.demoTypeTree&quot;</span>)
+    ReturnTuple returns(<span style='color:#b08000;'>0</span>);
+    S&lt;TypeValue&gt; Var_tree;
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree-demo.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 13, column 5)&quot;</span>)
+    Var_tree = (GetType_TypeTree(T_get()).Call(Function_TypeTree_new, ParamTuple(), ArgTuple())).Only();
+    S&lt;TypeValue&gt; Var_keyInt;
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree-demo.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 15, column 5)&quot;</span>)
+    Var_keyInt = (GetType_TypeKey(T_get(&amp;GetType_Int(T_get()))).Call(Function_TypeKey_new, ParamTuple(), ArgTuple())).Only();
+    S&lt;TypeValue&gt; Var_keyString;
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree-demo.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 16, column 5)&quot;</span>)
+    Var_keyString = (GetType_TypeKey(T_get(&amp;GetType_String(T_get()))).Call(Function_TypeKey_new, ParamTuple(), ArgTuple())).Only();
+    S&lt;TypeValue&gt; Var_keyFloat;
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree-demo.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 17, column 5)&quot;</span>)
+    Var_keyFloat = (GetType_TypeKey(T_get(&amp;GetType_Float(T_get()))).Call(Function_TypeKey_new, ParamTuple(), ArgTuple())).Only();
+    S&lt;TypeValue&gt; Var_keyValue;
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree-demo.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 18, column 5)&quot;</span>)
+    Var_keyValue = (GetType_TypeKey(T_get(&amp;GetType_Value(T_get()))).Call(Function_TypeKey_new, ParamTuple(), ArgTuple())).Only();
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree-demo.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 20, column 5)&quot;</span>)
+    TypeValue::Call((Var_tree), Function_TypeTree_set, ParamTuple(&amp;GetType_Int(T_get())), ArgTuple((Var_keyInt), Box_Int(PrimInt(<span style='color:#b08000;'>1</span>))));
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree-demo.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 21, column 5)&quot;</span>)
+    TypeValue::Call((Var_tree), Function_TypeTree_set, ParamTuple(&amp;GetType_String(T_get())), ArgTuple((Var_keyString), Box_String(PrimString(<span style='color:#bf0303;'>&quot;a&quot;</span>))));
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree-demo.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 23, column 5)&quot;</span>)
+    Call_check(ParamTuple(), ArgTuple((Var_tree), (Var_keyInt)));
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree-demo.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 24, column 5)&quot;</span>)
+    Call_check(ParamTuple(), ArgTuple((Var_tree), (Var_keyString)));
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree-demo.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 25, column 5)&quot;</span>)
+    Call_check(ParamTuple(), ArgTuple((Var_tree), (Var_keyFloat)));
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree-demo.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 27, column 5)&quot;</span>)
+    TypeValue::Call((Var_tree), Function_TypeTree_set, ParamTuple(&amp;GetType_Value(T_get())), ArgTuple((Var_keyValue), (GetType_Value(T_get()).Call(Function_Value_new, ParamTuple(), ArgTuple())).Only()));
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree-demo.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 28, column 5)&quot;</span>)
+    Call_check(ParamTuple(), ArgTuple((Var_tree), (Var_keyValue)));
+    <b>return</b> returns;
+  }
+  ReturnTuple Call_testTree(<span style='color:#0057ae;'>const</span> ParamTuple&amp; params, <span style='color:#0057ae;'>const</span> ValueTuple&amp; args) {
+    TRACE_FUNCTION(<span style='color:#bf0303;'>&quot;Demo.testTree&quot;</span>)
+    ReturnTuple returns(<span style='color:#b08000;'>0</span>);
+    S&lt;TypeValue&gt; Var_tree;
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree-demo.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 50, column 5)&quot;</span>)
+    Var_tree = (GetType_Tree(T_get(&amp;GetType_Int(T_get()),&amp;GetType_Int(T_get()))).Call(Function_Tree_new, ParamTuple(), ArgTuple())).Only();
+    PrimInt Var_count;
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree-demo.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 51, column 5)&quot;</span>)
+    Var_count = (PrimInt(<span style='color:#b08000;'>30</span>));
+    {
+    PrimInt Var_i;
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree-demo.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 55, column 7)&quot;</span>)
+    Var_i = (PrimInt(<span style='color:#b08000;'>0</span>));
+    <b>while</b> (PRED_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree-demo.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 56, column 10)&quot;</span>)((Var_i)&lt;(Var_count))) {
+    PrimInt Var_new;
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree-demo.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 57, column 7)&quot;</span>)
+    Var_new = ((((Var_i)+(PrimInt(<span style='color:#b08000;'>13</span>)))*(PrimInt(<span style='color:#b08000;'>3547</span>)))%(Var_count));
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree-demo.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 58, column 7)&quot;</span>)
+    TypeValue::Call((TypeValue::Call((TypeValue::Call((TypeValue::Call((TypeValue::Call((TypeValue::Call((GetType_LazyStream(T_get(&amp;GetType_Formatted(T_get()))).Call(Function_LazyStream_new, ParamTuple(), ArgTuple())).Only(), Function_LazyStream_append, ParamTuple(), ArgTuple(Box_String(PrimString(<span style='color:#bf0303;'>&quot;Inserting &quot;</span>))))).Only(), Function_LazyStream_append, ParamTuple(), ArgTuple(Box_Int(Var_i)))).Only(), Function_LazyStream_append, ParamTuple(), ArgTuple(Box_String(PrimString(<span style='color:#bf0303;'>&quot; at &quot;</span>))))).Only(), Function_LazyStream_append, ParamTuple(), ArgTuple(Box_Int(Var_new)))).Only(), Function_LazyStream_append, ParamTuple(), ArgTuple(Box_String(PrimString(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\n</span><span style='color:#bf0303;'>&quot;</span>))))).Only(), Function_LazyStream_writeTo, ParamTuple(), (GetType_SimpleOutput(T_get()).Call(Function_SimpleOutput_stderr, ParamTuple(), ArgTuple())));
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree-demo.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 65, column 7)&quot;</span>)
+    TypeValue::Call((Var_tree), Function_Tree_set, ParamTuple(), ArgTuple(Box_Int(Var_new), Box_Int(Var_i)));
+    {
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree-demo.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 67, column 7)&quot;</span>)
+    Var_i = ((Var_i)+(PrimInt(<span style='color:#b08000;'>1</span>)));
+    }
+    }
+    }
+    {
+    PrimInt Var_i;
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree-demo.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 72, column 7)&quot;</span>)
+    Var_i = (PrimInt(<span style='color:#b08000;'>0</span>));
+    <b>while</b> (PRED_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree-demo.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 73, column 10)&quot;</span>)((Var_i)&lt;(Var_count))) {
+    PrimInt Var_new;
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree-demo.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 74, column 7)&quot;</span>)
+    Var_new = ((((Var_i)+(PrimInt(<span style='color:#b08000;'>13</span>)))*(PrimInt(<span style='color:#b08000;'>3547</span>)))%(Var_count));
+    {
+    S&lt;TypeValue&gt; Var_value;
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree-demo.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 76, column 9)&quot;</span>)
+    Var_value = (TypeValue::Call((Var_tree), Function_KVReader_get, ParamTuple(), ArgTuple(Box_Int(Var_new)))).Only();
+    <b>if</b> (PRED_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree-demo.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 77, column 12)&quot;</span>)(!(TypeValue::Present((Var_value))))) {
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree-demo.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 78, column 9)&quot;</span>)
+    TypeValue::Call((TypeValue::Call((TypeValue::Call((TypeValue::Call((TypeValue::Call((TypeValue::Call((GetType_LazyStream(T_get(&amp;GetType_Formatted(T_get()))).Call(Function_LazyStream_new, ParamTuple(), ArgTuple())).Only(), Function_LazyStream_append, ParamTuple(), ArgTuple(Box_String(PrimString(<span style='color:#bf0303;'>&quot;Not found &quot;</span>))))).Only(), Function_LazyStream_append, ParamTuple(), ArgTuple(Box_Int(Var_new)))).Only(), Function_LazyStream_append, ParamTuple(), ArgTuple(Box_String(PrimString(<span style='color:#bf0303;'>&quot; but should have been &quot;</span>))))).Only(), Function_LazyStream_append, ParamTuple(), ArgTuple(Box_Int(Var_i)))).Only(), Function_LazyStream_append, ParamTuple(), ArgTuple(Box_String(PrimString(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\n</span><span style='color:#bf0303;'>&quot;</span>))))).Only(), Function_LazyStream_writeTo, ParamTuple(), (GetType_SimpleOutput(T_get()).Call(Function_SimpleOutput_fail, ParamTuple(), ArgTuple())));
+    }
+    <b>else</b> <b>if</b> (PRED_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree-demo.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 85, column 9)&quot;</span>)((TypeValue::Require((Var_value)))-&gt;AsInt()!=(Var_i))) {
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree-demo.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 86, column 9)&quot;</span>)
+    TypeValue::Call((TypeValue::Call((TypeValue::Call((TypeValue::Call((TypeValue::Call((TypeValue::Call((TypeValue::Call((TypeValue::Call((GetType_LazyStream(T_get(&amp;GetType_Formatted(T_get()))).Call(Function_LazyStream_new, ParamTuple(), ArgTuple())).Only(), Function_LazyStream_append, ParamTuple(), ArgTuple(Box_String(PrimString(<span style='color:#bf0303;'>&quot;Element &quot;</span>))))).Only(), Function_LazyStream_append, ParamTuple(), ArgTuple(Box_Int(Var_new)))).Only(), Function_LazyStream_append, ParamTuple(), ArgTuple(Box_String(PrimString(<span style='color:#bf0303;'>&quot; should have been &quot;</span>))))).Only(), Function_LazyStream_append, ParamTuple(), ArgTuple(Box_Int(Var_i)))).Only(), Function_LazyStream_append, ParamTuple(), ArgTuple(Box_String(PrimString(<span style='color:#bf0303;'>&quot; but was &quot;</span>))))).Only(), Function_LazyStream_append, ParamTuple(), ArgTuple(TypeValue::Require((Var_value))))).Only(), Function_LazyStream_append, ParamTuple(), ArgTuple(Box_String(PrimString(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\n</span><span style='color:#bf0303;'>&quot;</span>))))).Only(), Function_LazyStream_writeTo, ParamTuple(), (GetType_SimpleOutput(T_get()).Call(Function_SimpleOutput_fail, ParamTuple(), ArgTuple())));
+    }
+    <b>else</b> {
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree-demo.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 96, column 9)&quot;</span>)
+    TypeValue::Call((TypeValue::Call((TypeValue::Call((TypeValue::Call((TypeValue::Call((TypeValue::Call((GetType_LazyStream(T_get(&amp;GetType_Formatted(T_get()))).Call(Function_LazyStream_new, ParamTuple(), ArgTuple())).Only(), Function_LazyStream_append, ParamTuple(), ArgTuple(Box_String(PrimString(<span style='color:#bf0303;'>&quot;Element &quot;</span>))))).Only(), Function_LazyStream_append, ParamTuple(), ArgTuple(Box_Int(Var_new)))).Only(), Function_LazyStream_append, ParamTuple(), ArgTuple(Box_String(PrimString(<span style='color:#bf0303;'>&quot; is &quot;</span>))))).Only(), Function_LazyStream_append, ParamTuple(), ArgTuple(Box_Int(Var_i)))).Only(), Function_LazyStream_append, ParamTuple(), ArgTuple(Box_String(PrimString(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\n</span><span style='color:#bf0303;'>&quot;</span>))))).Only(), Function_LazyStream_writeTo, ParamTuple(), (GetType_SimpleOutput(T_get()).Call(Function_SimpleOutput_stderr, ParamTuple(), ArgTuple())));
+    }
+    }
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree-demo.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 104, column 7)&quot;</span>)
+    TypeValue::Call((Var_tree), Function_Tree_remove, ParamTuple(), ArgTuple(Box_Int(Var_new)));
+    {
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree-demo.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 106, column 7)&quot;</span>)
+    Var_i = ((Var_i)+(PrimInt(<span style='color:#b08000;'>1</span>)));
+    }
+    }
+    }
+    <b>return</b> returns;
+  }
+};
+Category_Demo&amp; CreateCategory() {
+  <span style='color:#0057ae;'>static</span> <b>auto</b>&amp; category = *<b>new</b> Category_Demo();
+  <b>return</b> category;
+}
+<b>struct</b> Type_Demo : <b>public</b> TypeInstance {
+  <b><span style='color:#644a9b;'>std::string</span></b> CategoryName() <span style='color:#0057ae;'>const</span> { <b>return</b> <span style='color:#bf0303;'>&quot;Demo&quot;</span>; }
+  Category_Demo&amp; parent;
+  <span style='color:#0057ae;'>bool</span> CanConvertFrom(<span style='color:#0057ae;'>const</span> TypeInstance&amp; from) <span style='color:#0057ae;'>const</span> <b>final</b> {
+    <b><span style='color:#644a9b;'>std::vector</span></b>&lt;<span style='color:#0057ae;'>const</span> TypeInstance*&gt; args;
+    <b>if</b> (!from.TypeArgsForParent(parent, args)) <b>return</b> <b>false</b>;
+    <b>if</b>(args.size() != <span style='color:#b08000;'>0</span>) {
+      FAIL() &lt;&lt; <span style='color:#bf0303;'>&quot;Wrong number of args (&quot;</span> &lt;&lt; args.size() &lt;&lt; <span style='color:#bf0303;'>&quot;)  for &quot;</span> &lt;&lt; CategoryName();
+    }
+    <b>return</b> <b>true</b>;
+  }
+  <span style='color:#0057ae;'>bool</span> TypeArgsForParent(<span style='color:#0057ae;'>const</span> TypeCategory&amp; category, <b><span style='color:#644a9b;'>std::vector</span></b>&lt;<span style='color:#0057ae;'>const</span> TypeInstance*&gt;&amp; args) <span style='color:#0057ae;'>const</span> <b>final</b> {
+    <b>if</b> (&amp;category == &amp;GetCategory_Demo()) {
+      args = <b><span style='color:#644a9b;'>std::vector</span></b>&lt;<span style='color:#0057ae;'>const</span> TypeInstance*&gt;{};
+      <b>return</b> <b>true</b>;
+    }
+    <b>return</b> <b>false</b>;
+  }
+  Type_Demo(Category_Demo&amp; p, Params&lt;<span style='color:#b08000;'>0</span>&gt;::Type params) : parent(p) {
+    CycleCheck&lt;Type_Demo&gt;::Check();
+    CycleCheck&lt;Type_Demo&gt; marker(*<b>this</b>);
+    TRACE_FUNCTION(<span style='color:#bf0303;'>&quot;Demo (init @type)&quot;</span>)
+  }
+  ReturnTuple Dispatch(<span style='color:#0057ae;'>const</span> DFunction&lt;SymbolScope::TYPE&gt;&amp; label, <span style='color:#0057ae;'>const</span> ParamTuple&amp; params, <span style='color:#0057ae;'>const</span> ValueTuple&amp; args) <b>final</b> {
+    <b>using</b> CallType = ReturnTuple(Type_Demo::*)(<span style='color:#0057ae;'>const</span> ParamTuple&amp;, <span style='color:#0057ae;'>const</span> ValueTuple&amp;);
+    <span style='color:#0057ae;'>static</span> <span style='color:#0057ae;'>const</span> CallType Table_Runner[] = {
+      &amp;Type_Demo::Call_run,
+    };
+    <b>if</b> (label.Collection() == Functions_Runner) {
+      <b>if</b> (label.Num() &lt; <span style='color:#b08000;'>0</span> || label.Num() &gt;= <span style='color:#b08000;'>1</span>) {
+        FAIL() &lt;&lt; <span style='color:#bf0303;'>&quot;Bad function call &quot;</span> &lt;&lt; label.FunctionName();
+      }
+      <b>return</b> (<b>this</b>-&gt;*Table_Runner[label.Num()])(params, args);
+    }
+    <b>return</b> TypeInstance::Dispatch(label, params, args);
+  }
+  ReturnTuple Call_run(<span style='color:#0057ae;'>const</span> ParamTuple&amp; params, <span style='color:#0057ae;'>const</span> ValueTuple&amp; args) {
+    TRACE_FUNCTION(<span style='color:#bf0303;'>&quot;Demo.run&quot;</span>)
+    ReturnTuple returns(<span style='color:#b08000;'>0</span>);
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree-demo.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 7, column 5)&quot;</span>)
+    parent.Call_testTree(ParamTuple(), ArgTuple());
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree-demo.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 8, column 5)&quot;</span>)
+    parent.Call_demoTypeTree(ParamTuple(), ArgTuple());
+    <b>return</b> returns;
+  }
+};
+Type_Demo&amp; CreateType(Params&lt;<span style='color:#b08000;'>0</span>&gt;::Type params) {
+  <span style='color:#0057ae;'>static</span> <b>auto</b>&amp; cache = *<b>new</b> InstanceMap&lt;<span style='color:#b08000;'>0</span>,Type_Demo&gt;();
+  <b>auto</b>&amp; cached = cache[params];
+  <b>if</b> (!cached) { cached = R_get(<b>new</b> Type_Demo(CreateCategory(), params)); }
+  <b>return</b> *cached;
+}
+<b>struct</b> Value_Demo : <b>public</b> TypeValue {
+  Value_Demo(Type_Demo&amp; p, <span style='color:#0057ae;'>const</span> ParamTuple&amp; params, <span style='color:#0057ae;'>const</span> ValueTuple&amp; args) : parent(p) {}
+  ReturnTuple Dispatch(<span style='color:#0057ae;'>const</span> S&lt;TypeValue&gt;&amp; self, <span style='color:#0057ae;'>const</span> DFunction&lt;SymbolScope::VALUE&gt;&amp; label, <span style='color:#0057ae;'>const</span> ParamTuple&amp; params,<span style='color:#0057ae;'>const</span> ValueTuple&amp; args) <b>final</b> {
+    <b>using</b> CallType = ReturnTuple(Value_Demo::*)(<span style='color:#0057ae;'>const</span> S&lt;TypeValue&gt;&amp;, <span style='color:#0057ae;'>const</span> ParamTuple&amp;, <span style='color:#0057ae;'>const</span> ValueTuple&amp;);
+    <b>return</b> TypeValue::Dispatch(self, label, params, args);
+  }
+  <b><span style='color:#644a9b;'>std::string</span></b> CategoryName() <span style='color:#0057ae;'>const</span> { <b>return</b> <span style='color:#bf0303;'>&quot;Demo&quot;</span>; }
+  Type_Demo&amp; parent;
+};
+S&lt;TypeValue&gt; CreateValue(Type_Demo&amp; parent, <span style='color:#0057ae;'>const</span> ParamTuple&amp; params, <span style='color:#0057ae;'>const</span> ValueTuple&amp; args) {
+  <b>return</b> S_get(<b>new</b> Value_Demo(parent, params, args));
+}
+}
+TypeCategory&amp; GetCategory_Demo() {
+  <b>return</b> CreateCategory();
+}
+TypeInstance&amp; GetType_Demo(Params&lt;<span style='color:#b08000;'>0</span>&gt;::Type params) {
+  <b>return</b> CreateType(params);
+}
+</pre>
+</body>
+</html>
