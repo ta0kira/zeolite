@@ -92,10 +92,24 @@ compile() {
   )
 }
 
+SKIP_TESTS=0
+
+start_skipping() {
+  SKIP_TESTS=1
+}
+
+stop_skipping() {
+  SKIP_TESTS=0
+}
+
 expect_error() {
   ((count++)) || true
   local name=$1
   shift
+  if ((SKIP_TESTS)); then
+    echo "Test \"$name\" ($count) skipped without compiling or executing" 1>&2
+    return
+  fi
   local patterns=("$@")
   local temp=$(mktemp -d)
   local code=$(cat)
@@ -122,6 +136,10 @@ expect_runs() {
   ((count++)) || true
   local name=$1
   shift
+  if ((SKIP_TESTS)); then
+    echo "Test \"$name\" ($count) skipped without compiling or executing" 1>&2
+    return
+  fi
   local patterns=("$@")
   local temp=$(mktemp -d)
   if ! compile "$temp"; then
@@ -149,6 +167,10 @@ expect_crashes() {
   ((count++)) || true
   local name=$1
   shift
+  if ((SKIP_TESTS)); then
+    echo "Test \"$name\" ($count) skipped without compiling or executing" 1>&2
+    return
+  fi
   local patterns=("$@")
   local temp=$(mktemp -d)
   if ! compile "$temp"; then
@@ -168,6 +190,7 @@ expect_crashes() {
   done
   echo "Test \"$name\" ($count) passed (see output in $temp)" 1>&2
 }
+
 
 expect_runs 'do nothing' <<END
 define Test {
@@ -3380,6 +3403,5 @@ define Test {
   }
 }
 END
-
 
 echo "All $count tests passed" 1>&2
