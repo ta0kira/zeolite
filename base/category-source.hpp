@@ -56,7 +56,14 @@ class TypeInstance {
   }
 
   virtual std::string CategoryName() const = 0;
-  virtual std::string TypeName() const = 0;
+  virtual void BuildTypeName(std::ostream& output) const = 0;
+
+
+  static std::string TypeName(const TypeInstance& type) {
+    std::ostringstream output;
+    type.BuildTypeName(output);
+    return output.str();
+  }
 
   static S<TypeValue> Reduce(TypeInstance& from, TypeInstance& to, S<TypeValue> target) {
     TRACE_FUNCTION("reduce")
@@ -82,20 +89,20 @@ class TypeInstance {
   static bool CanConvert(const TypeInstance& from, const TypeInstance& to);
 
   template<class...Ts>
-  static std::string TypeNameFrom(const TypeCategory& category, const Ts&... params) {
+  static void TypeNameFrom(std::ostream& output, const TypeCategory& category,
+                           const Ts&... params) {
     std::vector<const TypeInstance*> params2{&params...};
-    std::ostringstream output;
     output << category.CategoryName();
-    if (params2.empty()) return output.str();
-    output << "<";
-    bool first = true;
-    for (const auto param : params2) {
-      if (!first) output << ",";
-      first = false;
-      output << param->TypeName();
+    if (!params2.empty()) {
+      output << "<";
+      bool first = true;
+      for (const auto param : params2) {
+        if (!first) output << ",";
+        first = false;
+        param->BuildTypeName(output);
+      }
+      output << ">";
     }
-    output << ">";
-    return output.str();
   }
 
   enum class MergeType {

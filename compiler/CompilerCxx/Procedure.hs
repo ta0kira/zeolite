@@ -644,8 +644,8 @@ compileExpressionStart (BuiltinCall c f@(FunctionCall _ BuiltinTypename ps es)) 
     lift $ compileError $ "Expected 0 arguments [" ++ formatFullContext c ++ "]"
   t <- expandGeneralInstance (head $ psParams ps)
   csRequiresTypes $ Set.unions $ map categoriesFromTypes $ psParams ps
-  return $ (ParamSet [stringRequiredValue],
-            UnboxedPrimitive PrimString $ "(" ++ t ++ ").TypeName()")
+  return $ (ParamSet [formattedRequiredValue],
+            valueAsWrapped $ UnboxedPrimitive PrimString $ typeBase ++ "::TypeName(" ++ t ++ ")")
 compileExpressionStart (ParensExpression c e) = compileExpression e
 compileExpressionStart (InlineAssignment c n e) = do
   (VariableValue c2 s t0 w) <- csGetVariable c n

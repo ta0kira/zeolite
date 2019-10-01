@@ -23,6 +23,7 @@ module Builtin (
   builtinCategories,
   emptyValue,
   floatRequiredValue,
+  formattedRequiredValue,
   intRequiredValue,
   stringRequiredValue,
 ) where
@@ -54,6 +55,8 @@ intRequiredValue :: ValueType
 intRequiredValue = requiredSingleton BuiltinInt
 floatRequiredValue :: ValueType
 floatRequiredValue = requiredSingleton BuiltinFloat
+formattedRequiredValue :: ValueType
+formattedRequiredValue = requiredSingleton BuiltinFormatted
 emptyValue :: ValueType
 emptyValue = ValueType OptionalValue $ TypeMerge MergeUnion []
 

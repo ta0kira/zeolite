@@ -44,18 +44,19 @@ struct Type_Intersect : public TypeInstance {
 
   std::string CategoryName() const final { return "(intersection)"; }
 
-  std::string TypeName() const final {
-    if (params_.empty()) return "any";
-    std::ostringstream output;
-    output << "[";
-    bool first = true;
-    for (const auto param : params_) {
-      if (!first) output << "&";
-      first = false;
-      output << param->TypeName();
+  void BuildTypeName(std::ostream& output) const final {
+    if (params_.empty()) {
+      output << "any";
+    } else {
+      output << "[";
+      bool first = true;
+      for (const auto param : params_) {
+        if (!first) output << "&";
+        first = false;
+        param->BuildTypeName(output);
+      }
+      output << "]";
     }
-    output << "]";
-    return output.str();
   }
 
   MergeType InstanceMergeType() const final
@@ -72,18 +73,19 @@ struct Type_Union : public TypeInstance {
 
   std::string CategoryName() const final { return "(union)"; }
 
-  std::string TypeName() const final {
-    if (params_.empty()) return "all";
-    std::ostringstream output;
-    output << "[";
-    bool first = true;
-    for (const auto param : params_) {
-      if (!first) output << "|";
-      first = false;
-      output << param->TypeName();
+  void BuildTypeName(std::ostream& output) const final {
+    if (params_.empty()) {
+      output << "all";
+    } else {
+      output << "[";
+      bool first = true;
+      for (const auto param : params_) {
+        if (!first) output << "|";
+        first = false;
+        param->BuildTypeName(output);
+      }
+      output << "]";
     }
-    output << "]";
-    return output.str();
   }
 
   MergeType InstanceMergeType() const final
@@ -101,7 +103,7 @@ struct Category_Bool : public TypeCategory {
 
 struct Type_Bool : public TypeInstance {
   std::string CategoryName() const final { return "Bool"; }
-  std::string TypeName() const final { return CategoryName(); }
+  void BuildTypeName(std::ostream& output) const final { output << CategoryName(); }
 
   bool TypeArgsForParent(
     const TypeCategory& category, std::vector<const TypeInstance*>& args) const final {
@@ -159,7 +161,7 @@ struct Category_String : public TypeCategory {
 
 struct Type_String : public TypeInstance {
   std::string CategoryName() const final { return "String"; }
-  std::string TypeName() const final { return CategoryName(); }
+  void BuildTypeName(std::ostream& output) const final { output << CategoryName(); }
 
   ReturnTuple Dispatch(const DFunction<SymbolScope::TYPE>& label,
                        const ParamTuple& params, const ValueTuple& args) final {
@@ -234,7 +236,7 @@ struct Category_Int : public TypeCategory {
 
 struct Type_Int : public TypeInstance {
   std::string CategoryName() const final { return "Int"; }
-  std::string TypeName() const final { return CategoryName(); }
+  void BuildTypeName(std::ostream& output) const final { output << CategoryName(); }
 
   ReturnTuple Dispatch(const DFunction<SymbolScope::TYPE>& label,
                        const ParamTuple& params, const ValueTuple& args) final {
@@ -311,7 +313,7 @@ struct Category_Float : public TypeCategory {
 
 struct Type_Float : public TypeInstance {
   std::string CategoryName() const final { return "Float"; }
-  std::string TypeName() const final { return CategoryName(); }
+  void BuildTypeName(std::ostream& output) const final { output << CategoryName(); }
 
   ReturnTuple Dispatch(const DFunction<SymbolScope::TYPE>& label,
                        const ParamTuple& params, const ValueTuple& args) final {
@@ -388,7 +390,7 @@ struct Category_Formatted : public TypeCategory {
 
 struct Type_Formatted : public TypeInstance {
   std::string CategoryName() const final { return "Formatted"; }
-  std::string TypeName() const final { return CategoryName(); }
+  void BuildTypeName(std::ostream& output) const final { output << CategoryName(); }
 
   bool TypeArgsForParent(
     const TypeCategory& category, std::vector<const TypeInstance*>& args) const final {
@@ -416,7 +418,10 @@ struct Category_LessThan : public TypeCategory {
 struct Type_LessThan : public TypeInstance {
   Type_LessThan(Params<1>::Type params) : Param_x(*std::get<0>(params)) {}
   std::string CategoryName() const final { return "LessThan"; }
-  std::string TypeName() const final { return TypeInstance::TypeNameFrom(GetCategory_LessThan(), Param_x); }
+
+  void BuildTypeName(std::ostream& output) const final {
+    TypeInstance::TypeNameFrom(output, GetCategory_LessThan(), Param_x);
+  }
 
   TypeInstance& Param_x;
 };
@@ -428,7 +433,10 @@ struct Category_Equals : public TypeCategory {
 struct Type_Equals : public TypeInstance {
   Type_Equals(Params<1>::Type params) : Param_x(*std::get<0>(params)) {}
   std::string CategoryName() const final { return "Equals"; }
-  std::string TypeName() const final { return TypeInstance::TypeNameFrom(GetCategory_Equals(), Param_x); }
+
+  void BuildTypeName(std::ostream& output) const final {
+    TypeInstance::TypeNameFrom(output, GetCategory_Equals(), Param_x);
+  }
 
   TypeInstance& Param_x;
 };

@@ -459,8 +459,8 @@ defineCategoryName2 t = onlyCode $ "std::string CategoryName() const final { ret
 defineTypeName :: CategoryName -> [ParamName] -> CompiledData [String]
 defineTypeName t ps =
   onlyCodes [
-      "std::string TypeName() const final {",
-      "  return TypeInstance::TypeNameFrom(parent" ++ concat (map ((", " ++) . paramName) ps) ++ ");",
+      "void BuildTypeName(std::ostream& output) const final {",
+      "  return TypeInstance::TypeNameFrom(output, parent" ++ concat (map ((", " ++) . paramName) ps) ++ ");",
       "}"
     ]
 

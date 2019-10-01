@@ -42,12 +42,22 @@ standard_cpp=($root/standard/*.cpp)
 test_base="
 concrete Util {
   @type crash () -> ()
+  @type crashWith(Formatted) -> ()
 }
+
 define Util {
   crash () {
-    ~ LazyStream<Formatted>\$new().append(\"Failed\").writeTo(SimpleOutput\$fail())
+    ~ crashWith(\"Failed\")
+  }
+
+  crashWith (message) {
+    ~ LazyStream<Formatted>\$new()
+        .append(message)
+        .append(\"\n\")
+        .writeTo(SimpleOutput\$fail())
   }
 }
+
 concrete Test {
   defines Runner
 }
@@ -3235,8 +3245,9 @@ END
 expect_runs 'string typename' <<END
 define Test {
   run () {
-    if (typename<String>() != "String") {
-      ~ Util\$crash()
+    Formatted name <- typename<String>()
+    if (name.formatted() != "String") {
+      ~ Util\$crashWith(name)
     }
   }
 }
@@ -3245,8 +3256,9 @@ END
 expect_runs 'int typename' <<END
 define Test {
   run () {
-    if (typename<Int>() != "Int") {
-      ~ Util\$crash()
+    Formatted name <- typename<Int>()
+    if (name.formatted() != "Int") {
+      ~ Util\$crashWith(name)
     }
   }
 }
@@ -3255,8 +3267,9 @@ END
 expect_runs 'float typename' <<END
 define Test {
   run () {
-    if (typename<Float>() != "Float") {
-      ~ Util\$crash()
+    Formatted name <- typename<Float>()
+    if (name.formatted() != "Float") {
+      ~ Util\$crashWith(name)
     }
   }
 }
@@ -3265,8 +3278,9 @@ END
 expect_runs 'bool typename' <<END
 define Test {
   run () {
-    if (typename<Bool>() != "Bool") {
-      ~ Util\$crash()
+    Formatted name <- typename<Bool>()
+    if (name.formatted() != "Bool") {
+      ~ Util\$crashWith(name)
     }
   }
 }
@@ -3275,8 +3289,9 @@ END
 expect_runs 'Formatted typename' <<END
 define Test {
   run () {
-    if (typename<Formatted>() != "Formatted") {
-      ~ Util\$crash()
+    Formatted name <- typename<Formatted>()
+    if (name.formatted() != "Formatted") {
+      ~ Util\$crashWith(name)
     }
   }
 }
@@ -3285,8 +3300,9 @@ END
 expect_runs 'LessThan typename' <<END
 define Test {
   run () {
-    if (typename<LessThan<Int>>() != "LessThan<Int>") {
-      ~ Util\$crash()
+    Formatted name <- typename<LessThan<Int>>()
+    if (name.formatted() != "LessThan<Int>") {
+      ~ Util\$crashWith(name)
     }
   }
 }
@@ -3295,8 +3311,9 @@ END
 expect_runs 'Equals typename' <<END
 define Test {
   run () {
-    if (typename<Equals<Int>>() != "Equals<Int>") {
-      ~ Util\$crash()
+    Formatted name <- typename<Equals<Int>>()
+    if (name.formatted() != "Equals<Int>") {
+      ~ Util\$crashWith(name)
     }
   }
 }
@@ -3305,8 +3322,9 @@ END
 expect_runs 'any typename' <<END
 define Test {
   run () {
-    if (typename<any>() != "any") {
-      ~ Util\$crash()
+    Formatted name <- typename<any>()
+    if (name.formatted() != "any") {
+      ~ Util\$crashWith(name)
     }
   }
 }
@@ -3315,8 +3333,9 @@ END
 expect_runs 'all typename' <<END
 define Test {
   run () {
-    if (typename<all>() != "all") {
-      ~ Util\$crash()
+    Formatted name <- typename<all>()
+    if (name.formatted() != "all") {
+      ~ Util\$crashWith(name)
     }
   }
 }
@@ -3325,8 +3344,9 @@ END
 expect_runs 'intersect typename' <<END
 define Test {
   run () {
-    if (typename<[String&Int]>() != "[String&Int]") {
-      ~ Util\$crash()
+    Formatted name <- typename<[String&Int]>()
+    if (name.formatted() != "[String&Int]") {
+      ~ Util\$crashWith(name)
     }
   }
 }
@@ -3335,8 +3355,9 @@ END
 expect_runs 'union typename' <<END
 define Test {
   run () {
-    if (typename<[String|Int]>() != "[String|Int]") {
-      ~ Util\$crash()
+    Formatted name <- typename<[String|Int]>()
+    if (name.formatted() != "[String|Int]") {
+      ~ Util\$crashWith(name)
     }
   }
 }
@@ -3346,9 +3367,15 @@ expect_runs 'param typename' <<END
 @value interface Type<#x,#y> {}
 
 define Test {
+  @category getTypename<#x,#y> () -> (Formatted)
+  getTypename () {
+    return typename<Type<#x,#y>>()
+  }
+
   run () {
-    if (typename<Type<String,LessThan<Int>>>() != "Type<String,LessThan<Int>>") {
-      ~ Util\$crash()
+    Formatted name <- getTypename<String,LessThan<Int>>()
+    if (name.formatted() != "Type<String,LessThan<Int>>") {
+      ~ Util\$crashWith(name)
     }
   }
 }

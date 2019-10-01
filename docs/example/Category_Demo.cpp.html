@@ -70,7 +70,7 @@ S&lt;TypeValue&gt; CreateValue(Type_Demo&amp; parent, <span style='color:#0057ae
     }
     <b>else</b> {
     SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree-demo.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 44, column 7)&quot;</span>)
-    TypeValue::Call((TypeValue::Call((TypeValue::Call((GetType_LazyStream(T_get(&amp;GetType_Formatted(T_get()))).Call(Function_LazyStream_new, ParamTuple(), ArgTuple())).Only(), Function_LazyStream_append, ParamTuple(), ArgTuple(Box_String((GetType_TypeKey(T_get(&amp;Param_x))).TypeName())))).Only(), Function_LazyStream_append, ParamTuple(), ArgTuple(Box_String(PrimString(<span style='color:#bf0303;'>&quot; Not Found</span><span style='color:#3daee9;'>\n</span><span style='color:#bf0303;'>&quot;</span>))))).Only(), Function_LazyStream_writeTo, ParamTuple(), (GetType_SimpleOutput(T_get()).Call(Function_SimpleOutput_stderr, ParamTuple(), ArgTuple())));
+    TypeValue::Call((TypeValue::Call((TypeValue::Call((GetType_LazyStream(T_get(&amp;GetType_Formatted(T_get()))).Call(Function_LazyStream_new, ParamTuple(), ArgTuple())).Only(), Function_LazyStream_append, ParamTuple(), ArgTuple(Box_String(TypeInstance::TypeName(GetType_TypeKey(T_get(&amp;Param_x))))))).Only(), Function_LazyStream_append, ParamTuple(), ArgTuple(Box_String(PrimString(<span style='color:#bf0303;'>&quot; Not Found</span><span style='color:#3daee9;'>\n</span><span style='color:#bf0303;'>&quot;</span>))))).Only(), Function_LazyStream_writeTo, ParamTuple(), (GetType_SimpleOutput(T_get()).Call(Function_SimpleOutput_stderr, ParamTuple(), ArgTuple())));
     }
     }
     <b>return</b> returns;
@@ -178,8 +178,8 @@ Category_Demo&amp; CreateCategory() {
 }
 <b>struct</b> Type_Demo : <b>public</b> TypeInstance {
   <b><span style='color:#644a9b;'>std::string</span></b> CategoryName() <span style='color:#0057ae;'>const</span> <b>final</b> { <b>return</b> parent.CategoryName(); }
-  <b><span style='color:#644a9b;'>std::string</span></b> TypeName() <span style='color:#0057ae;'>const</span> <b>final</b> {
-    <b>return</b> TypeInstance::TypeNameFrom(parent);
+  <span style='color:#0057ae;'>void</span> BuildTypeName(<b><span style='color:#644a9b;'>std::ostream</span></b>&amp; output) <span style='color:#0057ae;'>const</span> <b>final</b> {
+    <b>return</b> TypeInstance::TypeNameFrom(output, parent);
   }
   Category_Demo&amp; parent;
   <span style='color:#0057ae;'>bool</span> CanConvertFrom(<span style='color:#0057ae;'>const</span> TypeInstance&amp; from) <span style='color:#0057ae;'>const</span> <b>final</b> {
