@@ -58,7 +58,7 @@ compileExecutableProcedure tm t ps pi ms pa fi fa va
                   (ExecutableProcedure _ c n as2 rs2 p)) = do
   rs' <- if isUnnamedReturns rs2
             then return $ ValidatePositions rs1
-            else fmap (ValidateNames . Map.fromList) $ processParamPairs pairOutput rs1 (nrNames rs2)
+            else fmap (ValidateNames rs1 . Map.fromList) $ processParamPairs pairOutput rs1 (nrNames rs2)
   va' <- updateArgVariables va as1 as2
   va'' <- updateReturnVariables va' rs1 rs2
   let pa' = if s == CategoryScope
@@ -185,6 +185,8 @@ compileStatement (ExplicitReturn c es) = do
   es' <- sequence $ map compileExpression $ psParams es
   getReturn $ zip (map getExpressionContext $ psParams es) es'
   where
+    -- Empty return statement.
+    getReturn [] = doNamedReturn
     -- Single expression, but possibly multi-return.
     getReturn [(_,(ParamSet ts,e))] = do
       csRegisterReturn c (ParamSet ts)
@@ -196,8 +198,7 @@ compileStatement (ExplicitReturn c es) = do
         ("In return at " ++ formatFullContext c)
       csRegisterReturn c $ ParamSet $ map (head . psParams . fst . snd) rs
       csWrite $ concat $ map bindReturn $ zip [0..] rs
-      -- Still could be using named returns, if the statement is return {}.
-      doNamedReturn
+      csWrite ["return returns;"]
     checkArity (_,ParamSet [_]) = return ()
     checkArity (i,ParamSet ts)  =
       compileError $ "Return position " ++ show i ++ " has " ++ show (length ts) ++ " values but should have 1"

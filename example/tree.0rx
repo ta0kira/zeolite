@@ -188,9 +188,7 @@ define Node {
   @type removeHighest (optional Node<#k,#v>) -> (optional Node<#k,#v>,optional Node<#k,#v>)
   removeHighest (node) (newNode,removed) {
     if (!present(node)) {
-      newNode <- empty
-      removed <- empty
-      return _
+      return { empty, empty }
     }
     Node<#k,#v> node2 <- require(node)
     if (present(node2.getHigher())) {
@@ -207,9 +205,7 @@ define Node {
   @type removeLowest (optional Node<#k,#v>) -> (optional Node<#k,#v>,optional Node<#k,#v>)
   removeLowest (node) (newNode,removed) {
     if (!present(node)) {
-      newNode <- empty
-      removed <- empty
-      return _
+      return { empty, empty }
     }
     Node<#k,#v> node2 <- require(node)
     if (present(node2.getLower())) {

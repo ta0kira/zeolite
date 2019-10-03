@@ -67,6 +67,7 @@ data ReturnValidation c =
     vpReturns :: ParamSet (PassedValue c)
   } |
   ValidateNames {
+    vnTypes :: ParamSet (PassedValue c),
     vnReturns :: Map.Map VariableName (PassedValue c)
   } |
   NoValidation
@@ -246,7 +247,7 @@ instance (Show c, MergeableM m, CompileErrorM m, Monad m) =>
       }
   ccCheckVariableInit ctx c n =
     case pcReturns ctx of
-         ValidateNames na -> when (n `Map.member` na) $
+         ValidateNames _ na -> when (n `Map.member` na) $
            compileError $ "Named return " ++ show n ++ " might not be initialized [" ++ formatFullContext c ++ "]"
          _ -> return ()
   ccWrite ctx ss = return $
@@ -292,7 +293,7 @@ instance (Show c, MergeableM m, CompileErrorM m, Monad m) =>
         pcLoopSetup = pcLoopSetup ctx
       }
   ccUpdateAssigned ctx n = update (pcReturns ctx) where
-    update (ValidateNames ra) = return $ ProcedureContext {
+    update (ValidateNames ts ra) = return $ ProcedureContext {
         pcScope = pcScope ctx,
         pcType = pcType ctx,
         pcExtParams = pcExtParams ctx,
@@ -305,7 +306,7 @@ instance (Show c, MergeableM m, CompileErrorM m, Monad m) =>
         pcParamScopes = pcParamScopes ctx,
         pcFunctions = pcFunctions ctx,
         pcVariables = pcVariables ctx,
-        pcReturns = ValidateNames $ Map.delete n ra,
+        pcReturns = ValidateNames ts $ Map.delete n ra,
         pcPrimNamed = pcPrimNamed ctx,
         pcRequiredTypes = pcRequiredTypes ctx,
         pcOutput = pcOutput ctx,
@@ -337,7 +338,7 @@ instance (Show c, MergeableM m, CompileErrorM m, Monad m) =>
       update r@(ValidatePositions _) _ = r
       update NoValidation r = r
       update r NoValidation = r
-      update (ValidateNames ra1) (ValidateNames ra2) = ValidateNames $ Map.union ra1 ra2
+      update (ValidateNames ts ra1) (ValidateNames _ ra2) = ValidateNames ts $ Map.union ra1 ra2
   ccRegisterReturn ctx c vs = do
     check (pcReturns ctx)
     return $ ProcedureContext {
@@ -372,10 +373,8 @@ instance (Show c, MergeableM m, CompileErrorM m, Monad m) =>
             checkValueTypeMatch r pa t t0 `reviseError`
               ("Cannot convert " ++ show t ++ " to " ++ show ta0 ++ " in return " ++
                show n ++ " at " ++ formatFullContext c)
-      check (ValidateNames ra)
-        | not $ null $ psParams vs =
-          compileError $ "Positional returns not allowed when returns are named [" ++
-                         formatFullContext c ++ "]"
+      check (ValidateNames ts ra)
+        | not $ null $ psParams vs = check (ValidatePositions ts)
         | otherwise =
           mergeAllM $ map alwaysError $ Map.toList ra
           where

@@ -199,9 +199,7 @@
   <span style='color:#644a9b;'>@type</span> removeHighest (<b>optional</b> <span style='color:#0057ae;'>Node</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#k</span></i>,<i><span style='color:#0057ae;'>#v</span></i><span style='color:#c02040;'>&gt;</span>) <b><span style='color:#006e28;'>-&gt;</span></b> (<b>optional</b> <span style='color:#0057ae;'>Node</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#k</span></i>,<i><span style='color:#0057ae;'>#v</span></i><span style='color:#c02040;'>&gt;</span>,<b>optional</b> <span style='color:#0057ae;'>Node</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#k</span></i>,<i><span style='color:#0057ae;'>#v</span></i><span style='color:#c02040;'>&gt;</span>)
   removeHighest (node) (newNode,removed) {
     <b>if</b> (!<b>present</b>(node)) {
-      newNode <b><span style='color:#006e28;'>&lt;-</span></b> <b>empty</b>
-      removed <b><span style='color:#006e28;'>&lt;-</span></b> <b>empty</b>
-      <b>return</b> <b>_</b>
+      <b>return</b> { <b>empty</b>, <b>empty</b> }
     }
     <span style='color:#0057ae;'>Node</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#k</span></i>,<i><span style='color:#0057ae;'>#v</span></i><span style='color:#c02040;'>&gt;</span> node2 <b><span style='color:#006e28;'>&lt;-</span></b> <b>require</b>(node)
     <b>if</b> (<b>present</b>(node2.getHigher())) {
@@ -218,9 +216,7 @@
   <span style='color:#644a9b;'>@type</span> removeLowest (<b>optional</b> <span style='color:#0057ae;'>Node</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#k</span></i>,<i><span style='color:#0057ae;'>#v</span></i><span style='color:#c02040;'>&gt;</span>) <b><span style='color:#006e28;'>-&gt;</span></b> (<b>optional</b> <span style='color:#0057ae;'>Node</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#k</span></i>,<i><span style='color:#0057ae;'>#v</span></i><span style='color:#c02040;'>&gt;</span>,<b>optional</b> <span style='color:#0057ae;'>Node</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#k</span></i>,<i><span style='color:#0057ae;'>#v</span></i><span style='color:#c02040;'>&gt;</span>)
   removeLowest (node) (newNode,removed) {
     <b>if</b> (!<b>present</b>(node)) {
-      newNode <b><span style='color:#006e28;'>&lt;-</span></b> <b>empty</b>
-      removed <b><span style='color:#006e28;'>&lt;-</span></b> <b>empty</b>
-      <b>return</b> <b>_</b>
+      <b>return</b> { <b>empty</b>, <b>empty</b> }
     }
     <span style='color:#0057ae;'>Node</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#k</span></i>,<i><span style='color:#0057ae;'>#v</span></i><span style='color:#c02040;'>&gt;</span> node2 <b><span style='color:#006e28;'>&lt;-</span></b> <b>require</b>(node)
     <b>if</b> (<b>present</b>(node2.getLower())) {

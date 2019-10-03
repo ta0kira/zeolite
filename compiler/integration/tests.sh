@@ -632,6 +632,73 @@ define Test {
 }
 END
 
+expect_runs 'positional return with no names assigned' <<END
+define Test {
+  @type get () -> (Int,Int)
+  get () (x,y) {
+    if (false) {
+      x <- 1
+    } else {
+      return { 3, 4 }
+    }
+    y <- 2
+  }
+
+  run () {
+    scoped {
+      { Int x, Int y } <- get()
+    } in if (x != 3) {
+      ~ Util\$crash()
+    } elif (y != 4) {
+      ~ Util\$crash()
+    }
+  }
+}
+END
+
+expect_runs 'positional return instead of names' <<END
+define Test {
+  @type get () -> (Int,Int)
+  get () (x,y) {
+    return { 1, 2 }
+  }
+
+  run () {
+    scoped {
+      { Int x, Int y } <- get()
+    } in if (x != 1) {
+      ~ Util\$crash()
+    } elif (y != 2) {
+      ~ Util\$crash()
+    }
+  }
+}
+END
+
+expect_runs 'positional return with some names assigned' <<END
+define Test {
+  @type get () -> (Int,Int)
+  get () (x,y) {
+    y <- 2
+    if (false) {
+      x <- 1
+    } else {
+      return { 3, 4 }
+    }
+  }
+
+  run () {
+    scoped {
+      { Int x, Int y } <- get()
+    } in if (x != 3) {
+      ~ Util\$crash()
+    } elif (y != 4) {
+      ~ Util\$crash()
+    }
+  }
+}
+END
+
 expect_runs 'return if/elif/else' <<END
 @value interface Value {}
 
@@ -795,19 +862,6 @@ define Test {
     while (false) {
       return empty
     }
-  }
-
-  run () {}
-}
-END
-
-expect_error 'return with name' 'return' 'line 6' <<END
-@value interface Value {}
-
-define Test {
-  @value process () -> (optional Value)
-  process () (value) {
-    return empty
   }
 
   run () {}

@@ -446,6 +446,7 @@ values in `{}` or by naming them.
 <b>concrete</b> <b><span style='color:#0057ae;'>Something</span></b> {
   <span style='color:#644a9b;'>@type</span> func1 () <b><span style='color:#006e28;'>-&gt;</span></b> (<i><span style='color:#0057ae;'>Int</span></i>,<i><span style='color:#0057ae;'>Int</span></i>)
   <span style='color:#644a9b;'>@type</span> func2 () <b><span style='color:#006e28;'>-&gt;</span></b> (<i><span style='color:#0057ae;'>Int</span></i>,<i><span style='color:#0057ae;'>Int</span></i>)
+  <span style='color:#644a9b;'>@type</span> func3 () <b><span style='color:#006e28;'>-&gt;</span></b> (<i><span style='color:#0057ae;'>Int</span></i>,<i><span style='color:#0057ae;'>Int</span></i>)
 }
 
 <b>define</b> <b><span style='color:#0057ae;'>Something</span></b> {
@@ -460,6 +461,13 @@ values in `{}` or by naming them.
     } <b>else</b> {
       v2 <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#b08000;'>3</span>
     }
+    <span style='color:#898887;'>// All names must be assigned by the time the function returns. To return</span>
+    <span style='color:#898887;'>// early, use return _.</span>
+  }
+
+  func3 () (v1,v2) {
+    <span style='color:#898887;'>// Positional returns are still fine even when names are used.</span>
+    <b>return</b> { <span style='color:#b08000;'>3</span>, <span style='color:#b08000;'>4</span> }
   }
 
   <span style='color:#644a9b;'>@category</span> something () <b><span style='color:#006e28;'>-&gt;</span></b> (<i><span style='color:#0057ae;'>Bool</span></i>)
@@ -476,6 +484,7 @@ The choice depends on the situation:
 - Named returns are helpful when the values are determined separately, which
   might otherwise require extra temporary variables. Explicit return statements
   are disallowed other than `return _` to return with the current assignments.
+  You still have the option to use the semantics for unnamed returns.
 
 There are also a few options for *receiving* multiple returns:
 
