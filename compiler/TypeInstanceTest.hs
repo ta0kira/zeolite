@@ -513,7 +513,7 @@ tests = [
     return $ checkTypeSuccess resolver
       [("#x",[])]
       "[Type5<#x>|Type1<Type3>]",
-    return $ checkTypeFail resolver
+    return $ checkTypeSuccess resolver
       [("#x",[])]
       "[Type5<#x>&Type1<Type3>]",
     return $ checkTypeSuccess resolver

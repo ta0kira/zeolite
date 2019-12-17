@@ -191,7 +191,6 @@ expect_crashes() {
   echo "Test \"$name\" ($count) passed (see output in $temp)" 1>&2
 }
 
-
 expect_runs 'do nothing' <<END
 define Test {
   run () {}
@@ -1627,7 +1626,7 @@ define Test {
 }
 END
 
-expect_runs 'call from intersect' <<END
+expect_error 'call from intersect' '\[Base1\&Base2\]' 'line 25' <<END
 @value interface Base1 {
   call () -> ()
 }
@@ -1653,6 +1652,36 @@ define Test {
   run () {
     [Base1&Base2] value <- Value\$create()
     ~ value.call()
+  }
+}
+END
+
+expect_runs 'call from intersect with conversion' <<END
+@value interface Base1 {
+  call () -> ()
+}
+
+@value interface Base2 {}
+
+concrete Value {
+  refines Base1
+  refines Base2
+
+  @type create () -> (Value)
+}
+
+define Value {
+  call () {}
+
+  create () {
+    return Value{}
+  }
+}
+
+define Test {
+  run () {
+    [Base1&Base2] value <- Value\$create()
+    ~ value.Base1\$call()
   }
 }
 END

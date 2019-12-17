@@ -420,7 +420,7 @@ tests = [
         ts <- topoSortCategories builtinCategories ts
         ta <- flattenAllConnections builtinCategories ts >>= declareAllTypes builtinCategories
         let r = categoriesToTypeResolver ta
-        checkTypeFail r [] "[Child&Child]"),
+        checkTypeSuccess r [] "[Child&Child]"),
     checkOperationSuccess
       "testfiles/flatten.0rx"
       (\ts -> do
@@ -579,7 +579,7 @@ tests = [
         ts <- topoSortCategories builtinCategories ts
         ts <- flattenAllConnections builtinCategories ts
         checkCategoryInstances builtinCategories ts),
-    checkOperationFail
+    checkOperationSuccess
       "testfiles/requires_concrete.0rx"
       (\ts -> do
         ts <- topoSortCategories builtinCategories ts

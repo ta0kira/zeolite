@@ -379,15 +379,8 @@ validateGeneralInstance :: (MergeableM m, CompileErrorM m, Monad m) =>
   TypeResolver m -> ParamFilters -> GeneralInstance -> m ()
 validateGeneralInstance r f ta@(TypeMerge _ ts)
   | length ts == 1 = compileError $ "Unions and intersections must have at least 2 types to avoid ambiguity"
-validateGeneralInstance r f ta@(TypeMerge MergeIntersect ts) = do
-  mergeAllM (map checkConcrete ts)
+validateGeneralInstance r f ta@(TypeMerge MergeIntersect ts) =
   mergeAllM (map (validateGeneralInstance r f) ts)
-  where
-    checkConcrete (SingleType (JustTypeInstance t)) = do
-      c <- trConcrete r (tiName t)
-      when c $ compileError $ "Concrete type " ++ show (tiName t) ++
-                              " cannot be used in intersection " ++ show ta
-    checkConcrete _ = return ()
 validateGeneralInstance r f ta@(TypeMerge _ ts) =
   mergeAllM (map (validateGeneralInstance r f) ts)
 validateGeneralInstance r f (SingleType (JustTypeInstance t)) =
@@ -414,11 +407,6 @@ validateDefinesInstance r f t@(DefinesInstance n ps) = do
 
 validateTypeFilter :: (MergeableM m, CompileErrorM m, Monad m) =>
   TypeResolver m -> ParamFilters -> TypeFilter -> m ()
-validateTypeFilter r f (TypeFilter FilterRequires ta@(JustTypeInstance t)) = do
-  c <- trConcrete r (tiName t)
-  when c $ compileError $ "Concrete type " ++ show (tiName t) ++
-                          " cannot be used in a requires filter"
-  validateGeneralInstance r f (SingleType ta)
 validateTypeFilter r f (TypeFilter _ t) =
   validateGeneralInstance r f (SingleType t)
 validateTypeFilter r f (DefinesFilter t) =

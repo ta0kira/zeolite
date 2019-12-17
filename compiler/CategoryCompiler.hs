@@ -129,10 +129,11 @@ instance (Show c, MergeableM m, CompileErrorM m, Monad m) =>
                      formatFullContext c ++ "]"
   ccGetTypeFunction ctx c t n = getFunction t where
     getFunction (Just t@(TypeMerge MergeUnion _)) =
-      compileError $ "Cannot resolve function " ++ show n ++ " for union type " ++
+      compileError $ "Use explicit type conversion to call " ++ show n ++ " for union type " ++
                      show t ++ " [" ++ formatFullContext c ++ "]"
     getFunction (Just t@(TypeMerge MergeIntersect ts)) =
-      collectOneOrErrorM $ map getFunction $ map Just ts
+      compileError $ "Use explicit type conversion to call " ++ show n ++ " for intersection type " ++
+                     show t ++ " [" ++ formatFullContext c ++ "]"
     getFunction (Just (SingleType (JustParamName p))) = do
       fa <- ccAllFilters ctx
       fs <- case p `Map.lookup` fa of
