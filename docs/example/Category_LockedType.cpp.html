@@ -16,7 +16,7 @@
 <span style='color:#0057ae;'>const</span> <span style='color:#0057ae;'>int</span> collection = <span style='color:#b08000;'>0</span>;
 }
 <span style='color:#0057ae;'>const</span> <span style='color:#0057ae;'>void</span>* <span style='color:#0057ae;'>const</span> Functions_LockedType = &amp;collection;
-<span style='color:#0057ae;'>const</span> Function&lt;SymbolScope::TYPE,<span style='color:#b08000;'>0</span>,<span style='color:#b08000;'>2</span>,<span style='color:#b08000;'>1</span>&gt;&amp; Function_LockedType_create = *<b>new</b> Function&lt;SymbolScope::TYPE,<span style='color:#b08000;'>0</span>,<span style='color:#b08000;'>2</span>,<span style='color:#b08000;'>1</span>&gt;(<span style='color:#bf0303;'>&quot;LockedType&quot;</span>, <span style='color:#bf0303;'>&quot;create&quot;</span>, Functions_LockedType, <span style='color:#b08000;'>0</span>);
+<span style='color:#0057ae;'>const</span> Function&lt;SymbolScope::CATEGORY,<span style='color:#b08000;'>1</span>,<span style='color:#b08000;'>2</span>,<span style='color:#b08000;'>1</span>&gt;&amp; Function_LockedType_create = *<b>new</b> Function&lt;SymbolScope::CATEGORY,<span style='color:#b08000;'>1</span>,<span style='color:#b08000;'>2</span>,<span style='color:#b08000;'>1</span>&gt;(<span style='color:#bf0303;'>&quot;LockedType&quot;</span>, <span style='color:#bf0303;'>&quot;create&quot;</span>, Functions_LockedType, <span style='color:#b08000;'>0</span>);
 <span style='color:#0057ae;'>const</span> Function&lt;SymbolScope::VALUE,<span style='color:#b08000;'>1</span>,<span style='color:#b08000;'>1</span>,<span style='color:#b08000;'>1</span>&gt;&amp; Function_LockedType_check = *<b>new</b> Function&lt;SymbolScope::VALUE,<span style='color:#b08000;'>1</span>,<span style='color:#b08000;'>1</span>,<span style='color:#b08000;'>1</span>&gt;(<span style='color:#bf0303;'>&quot;LockedType&quot;</span>, <span style='color:#bf0303;'>&quot;check&quot;</span>, Functions_LockedType, <span style='color:#b08000;'>0</span>);
 <b>namespace</b> {
 <b>class</b> Category_LockedType;
@@ -33,7 +33,26 @@ S&lt;TypeValue&gt; CreateValue(Type_LockedType&amp; parent, <span style='color:#
   }
   ReturnTuple Dispatch(<span style='color:#0057ae;'>const</span> DFunction&lt;SymbolScope::CATEGORY&gt;&amp; label, <span style='color:#0057ae;'>const</span> ParamTuple&amp; params, <span style='color:#0057ae;'>const</span> ValueTuple&amp; args) <b>final</b> {
     <b>using</b> CallType = ReturnTuple(Category_LockedType::*)(<span style='color:#0057ae;'>const</span> ParamTuple&amp;, <span style='color:#0057ae;'>const</span> ValueTuple&amp;);
+    <span style='color:#0057ae;'>static</span> <span style='color:#0057ae;'>const</span> CallType Table_LockedType[] = {
+      &amp;Category_LockedType::Call_create,
+    };
+    <b>if</b> (label.Collection() == Functions_LockedType) {
+      <b>if</b> (label.Num() &lt; <span style='color:#b08000;'>0</span> || label.Num() &gt;= <span style='color:#b08000;'>1</span>) {
+        FAIL() &lt;&lt; <span style='color:#bf0303;'>&quot;Bad function call &quot;</span> &lt;&lt; label.FunctionName();
+      }
+      <b>return</b> (<b>this</b>-&gt;*Table_LockedType[label.Num()])(params, args);
+    }
     <b>return</b> TypeCategory::Dispatch(label, params, args);
+  }
+  ReturnTuple Call_create(<span style='color:#0057ae;'>const</span> ParamTuple&amp; params, <span style='color:#0057ae;'>const</span> ValueTuple&amp; args) {
+    TRACE_FUNCTION(<span style='color:#bf0303;'>&quot;LockedType.create&quot;</span>)
+    ReturnTuple returns(<span style='color:#b08000;'>1</span>);
+    TypeInstance&amp; Param_x = *params.At(<span style='color:#b08000;'>0</span>);
+    <span style='color:#0057ae;'>const</span> S&lt;TypeValue&gt;&amp; Var_k = (args.At(<span style='color:#b08000;'>0</span>));
+    <span style='color:#0057ae;'>const</span> S&lt;TypeValue&gt;&amp; Var_v = (args.At(<span style='color:#b08000;'>1</span>));
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>type-tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 75, column 5)&quot;</span>)
+    <b>return</b> ReturnTuple(CreateValue(CreateType(T_get(&amp;Param_x)), ParamTuple(), ArgTuple((Var_k), (Var_v))));
+    <b>return</b> returns;
   }
 };
 Category_LockedType&amp; CreateCategory() {
@@ -70,25 +89,7 @@ Category_LockedType&amp; CreateCategory() {
   }
   ReturnTuple Dispatch(<span style='color:#0057ae;'>const</span> DFunction&lt;SymbolScope::TYPE&gt;&amp; label, <span style='color:#0057ae;'>const</span> ParamTuple&amp; params, <span style='color:#0057ae;'>const</span> ValueTuple&amp; args) <b>final</b> {
     <b>using</b> CallType = ReturnTuple(Type_LockedType::*)(<span style='color:#0057ae;'>const</span> ParamTuple&amp;, <span style='color:#0057ae;'>const</span> ValueTuple&amp;);
-    <span style='color:#0057ae;'>static</span> <span style='color:#0057ae;'>const</span> CallType Table_LockedType[] = {
-      &amp;Type_LockedType::Call_create,
-    };
-    <b>if</b> (label.Collection() == Functions_LockedType) {
-      <b>if</b> (label.Num() &lt; <span style='color:#b08000;'>0</span> || label.Num() &gt;= <span style='color:#b08000;'>1</span>) {
-        FAIL() &lt;&lt; <span style='color:#bf0303;'>&quot;Bad function call &quot;</span> &lt;&lt; label.FunctionName();
-      }
-      <b>return</b> (<b>this</b>-&gt;*Table_LockedType[label.Num()])(params, args);
-    }
     <b>return</b> TypeInstance::Dispatch(label, params, args);
-  }
-  ReturnTuple Call_create(<span style='color:#0057ae;'>const</span> ParamTuple&amp; params, <span style='color:#0057ae;'>const</span> ValueTuple&amp; args) {
-    TRACE_FUNCTION(<span style='color:#bf0303;'>&quot;LockedType.create&quot;</span>)
-    ReturnTuple returns(<span style='color:#b08000;'>1</span>);
-    <span style='color:#0057ae;'>const</span> S&lt;TypeValue&gt;&amp; Var_k = (args.At(<span style='color:#b08000;'>0</span>));
-    <span style='color:#0057ae;'>const</span> S&lt;TypeValue&gt;&amp; Var_v = (args.At(<span style='color:#b08000;'>1</span>));
-    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/type-tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 75, column 5)&quot;</span>)
-    <b>return</b> ReturnTuple(CreateValue(*<b>this</b>, ParamTuple(), ArgTuple((Var_k), (Var_v))));
-    <b>return</b> returns;
   }
 };
 Type_LockedType&amp; CreateType(Params&lt;<span style='color:#b08000;'>1</span>&gt;::Type params) {
@@ -118,12 +119,12 @@ Type_LockedType&amp; CreateType(Params&lt;<span style='color:#b08000;'>1</span>&
     ReturnTuple returns(<span style='color:#b08000;'>1</span>);
     TypeInstance&amp; Param_y = *params.At(<span style='color:#b08000;'>0</span>);
     <span style='color:#0057ae;'>const</span> S&lt;TypeValue&gt;&amp; Var_k = (args.At(<span style='color:#b08000;'>0</span>));
-    <b>if</b> (PRED_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/type-tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 79, column 5)&quot;</span>)(GetType_TypeKey(T_get(&amp;GetMerged_Any())).Call(Function_Equals_equals, ParamTuple(), ArgTuple((Var_key), (Var_k)))).Only()-&gt;AsBool()) {
-    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/type-tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 88, column 7)&quot;</span>)
+    <b>if</b> (PRED_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>type-tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 79, column 5)&quot;</span>)(GetType_TypeKey(T_get(&amp;GetMerged_Any())).Call(Function_Equals_equals, ParamTuple(), ArgTuple((Var_key), (Var_k)))).Only()-&gt;AsBool()) {
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>type-tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 88, column 7)&quot;</span>)
     <b>return</b> ReturnTuple(TypeInstance::Reduce(parent.Param_x, Param_y, (Var_value)));
     }
     <b>else</b> {
-    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/type-tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 90, column 7)&quot;</span>)
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>type-tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 90, column 7)&quot;</span>)
     <b>return</b> ReturnTuple(Var_empty);
     }
     <b>return</b> returns;

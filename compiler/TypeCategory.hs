@@ -410,7 +410,7 @@ checkParamVariances tm0 ts = do
       noDuplicates c n ps
       let vm = Map.fromList $ map (\p -> (vpParam p,vpVariance p)) ps
       mergeAllM (map (checkRefine r vm) rs)
-      -- NOTE: Don't check defines; variance doesn't matter for type functions.
+      mergeAllM (map (checkDefine r vm) ds)
     checkCategory _ (InstanceInterface c n ps _ _) = noDuplicates c n ps
     noDuplicates c n ps = mergeAllM (map checkCount $ group $ sort $ map vpParam ps) where
       checkCount xa@(x:_:_) =
@@ -419,6 +419,9 @@ checkParamVariances tm0 ts = do
       checkCount _ = return ()
     checkRefine r vm (ValueRefine c t) =
       validateInstanceVariance r vm Covariant (SingleType $ JustTypeInstance t) `reviseError`
+        (show t ++ " [" ++ formatFullContext c ++ "]")
+    checkDefine r vm (ValueDefine c t) =
+      validateDefinesVariance r vm Covariant t `reviseError`
         (show t ++ " [" ++ formatFullContext c ++ "]")
 
 checkCategoryInstances :: (Show c, MergeableM m, CompileErrorM m, Monad m) =>
@@ -459,8 +462,7 @@ validateCategoryFunction r t f = do
     funcType <- parsedToFunctionType f
     case sfScope f of
          CategoryScope -> validatateFunctionType r Map.empty Map.empty funcType
-         -- Variance doesn't matter for type functions.
-         TypeScope     -> validatateFunctionType r fm (fmap (const Invariant) vm) funcType
+         TypeScope     -> validatateFunctionType r fm vm funcType
          ValueScope    -> validatateFunctionType r fm vm funcType
 
 topoSortCategories :: (Show c, MergeableM m, CompileErrorM m, Monad m) =>

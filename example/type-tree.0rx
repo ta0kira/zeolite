@@ -12,7 +12,7 @@ define TypeTree {
   }
 
   set (k,v) {
-    ~ tree.set(k,LockedType<#x>$create(k,v))
+    ~ tree.set(k,LockedType$$create<#x>(k,v))
     return self
   }
 
@@ -60,8 +60,8 @@ define TypeKey {
  * both that the key and the type match.
  */
 concrete LockedType<|#x> {
-  // Creates a new LockedType, e.g., LockedType<#x>$create(k,v).
-  @type create (TypeKey<#x>,#x) -> (LockedType<#x>)
+  // Creates a new LockedType, e.g., LockedType$$create<#x>(k,v).
+  @category create<#x> (TypeKey<#x>,#x) -> (LockedType<#x>)
 
   // Returns the contained value if the key and type match, or empty otherwise.
   @value check<#y> (TypeKey<#y>) -> (optional #y)
