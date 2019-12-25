@@ -61,7 +61,8 @@
 
   <span style='color:#644a9b;'>@category</span> testTree () <b><span style='color:#006e28;'>-&gt;</span></b> ()
   testTree () {
-    <span style='color:#0057ae;'>Tree</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Int</span></i>,<i><span style='color:#0057ae;'>Int</span></i><span style='color:#c02040;'>&gt;</span> tree <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#0057ae;'>Tree</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Int</span></i>,<i><span style='color:#0057ae;'>Int</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>$</span>new()
+    <span style='color:#898887;'>// Just select the required usage patterns with an intersection.</span>
+    <b><span style='color:#006e28;'>[</span></b><span style='color:#0057ae;'>KVWriter</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Int</span></i>,<i><span style='color:#0057ae;'>Int</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#006e28;'>&amp;</span><span style='color:#0057ae;'>KVReader</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Int</span></i>,<i><span style='color:#0057ae;'>Int</span></i><span style='color:#c02040;'>&gt;</span><b><span style='color:#006e28;'>]</span></b> tree <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#0057ae;'>Tree</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Int</span></i>,<i><span style='color:#0057ae;'>Int</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>$</span>new()
     <i><span style='color:#0057ae;'>Int</span></i> count <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#b08000;'>30</span>
 
     <span style='color:#898887;'>// Insert values.</span>

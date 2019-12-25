@@ -50,7 +50,8 @@ define Demo {
 
   @category testTree () -> ()
   testTree () {
-    Tree<Int,Int> tree <- Tree<Int,Int>$new()
+    // Just select the required usage patterns with an intersection.
+    [KVWriter<Int,Int>&KVReader<Int,Int>] tree <- Tree<Int,Int>$new()
     Int count <- 30
 
     // Insert values.

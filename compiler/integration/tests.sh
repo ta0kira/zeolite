@@ -1626,7 +1626,7 @@ define Test {
 }
 END
 
-expect_error 'call from intersect' '\[Base1\&Base2\]' 'line 25' <<END
+expect_runs 'call from intersect' <<END
 @value interface Base1 {
   call () -> ()
 }
