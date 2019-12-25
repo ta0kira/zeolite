@@ -1,0 +1,5 @@
+@type interface Interface {}
+
+concrete Type<#x|> {
+  #x defines Interface
+}

@@ -24,7 +24,7 @@
 
 <span style='color:#898887;'>/*</span><span style='color:#898887;'> An AVL implementation of KVWriter and KVReader.</span>
 <span style='color:#898887;'> </span><span style='color:#898887;'>*/</span>
-<b>concrete</b> <b><span style='color:#0057ae;'>Tree</span></b><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#k</span></i><span style='color:#c04040;'>|</span><i><span style='color:#0057ae;'>#v</span></i><span style='color:#c04040;'>|</span><span style='color:#c02040;'>&gt;</span> {
+<b>concrete</b> <b><span style='color:#0057ae;'>Tree</span></b><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#k</span></i>,<i><span style='color:#0057ae;'>#v</span></i><span style='color:#c02040;'>&gt;</span> {
   <b>refines</b> <span style='color:#0057ae;'>KVWriter</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#k</span></i>,<i><span style='color:#0057ae;'>#v</span></i><span style='color:#c02040;'>&gt;</span>
   <b>refines</b> <span style='color:#0057ae;'>KVReader</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#k</span></i>,<i><span style='color:#0057ae;'>#v</span></i><span style='color:#c02040;'>&gt;</span>
   <i><span style='color:#0057ae;'>#k</span></i> <b>defines</b> <i><span style='color:#0057ae;'>LessThan</span></i><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#k</span></i><span style='color:#c02040;'>&gt;</span>

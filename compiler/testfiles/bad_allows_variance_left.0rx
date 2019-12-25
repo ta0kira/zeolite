@@ -1,0 +1,5 @@
+@value interface Interface {}
+
+concrete Type<|#x> {
+  #x allows Interface
+}

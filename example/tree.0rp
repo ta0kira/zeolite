@@ -13,7 +13,7 @@
 
 /* An AVL implementation of KVWriter and KVReader.
  */
-concrete Tree<#k|#v|> {
+concrete Tree<#k,#v> {
   refines KVWriter<#k,#v>
   refines KVReader<#k,#v>
   #k defines LessThan<#k>

@@ -718,6 +718,28 @@ tests = [
       "testfiles/bad_type_return_variance.0rx"
       (\ts -> checkCategoryInstances builtinCategories ts),
 
+    checkOperationSuccess
+      "testfiles/valid_filter_variance.0rx"
+      (\ts -> checkParamVariances builtinCategories ts),
+    checkOperationFail
+      "testfiles/bad_allows_variance_right.0rx"
+      (\ts -> checkParamVariances builtinCategories ts),
+    checkOperationFail
+      "testfiles/bad_defines_variance_right.0rx"
+      (\ts -> checkParamVariances builtinCategories ts),
+    checkOperationFail
+      "testfiles/bad_requires_variance_right.0rx"
+      (\ts -> checkParamVariances builtinCategories ts),
+    checkOperationFail
+      "testfiles/bad_allows_variance_left.0rx"
+      (\ts -> checkParamVariances builtinCategories ts),
+    checkOperationFail
+      "testfiles/bad_defines_variance_left.0rx"
+      (\ts -> checkParamVariances builtinCategories ts),
+    checkOperationFail
+      "testfiles/bad_requires_variance_left.0rx"
+      (\ts -> checkParamVariances builtinCategories ts),
+
     checkOperationFail
       "testfiles/conflicting_declaration.0rx"
       (\ts -> do

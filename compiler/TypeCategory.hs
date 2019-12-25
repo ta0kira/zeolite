@@ -402,16 +402,21 @@ checkParamVariances tm0 ts = do
   let r = categoriesToTypeResolver tm
   mergeAllM (map (checkCategory r) ts)
   where
-    checkCategory r (ValueInterface c n ps rs _ _) = do
+    checkCategory r (ValueInterface c n ps rs fa _) = do
       noDuplicates c n ps
       let vm = Map.fromList $ map (\p -> (vpParam p,vpVariance p)) ps
       mergeAllM (map (checkRefine r vm) rs)
-    checkCategory r (ValueConcrete c n ps rs ds _ _) = do
+      mergeAllM $ map (checkFilterVariance r vm) fa
+    checkCategory r (ValueConcrete c n ps rs ds fa _) = do
       noDuplicates c n ps
       let vm = Map.fromList $ map (\p -> (vpParam p,vpVariance p)) ps
       mergeAllM (map (checkRefine r vm) rs)
       mergeAllM (map (checkDefine r vm) ds)
-    checkCategory _ (InstanceInterface c n ps _ _) = noDuplicates c n ps
+      mergeAllM $ map (checkFilterVariance r vm) fa
+    checkCategory r (InstanceInterface c n ps fa _) = do
+      noDuplicates c n ps
+      let vm = Map.fromList $ map (\p -> (vpParam p,vpVariance p)) ps
+      mergeAllM $ map (checkFilterVariance r vm) fa
     noDuplicates c n ps = mergeAllM (map checkCount $ group $ sort $ map vpParam ps) where
       checkCount xa@(x:_:_) =
         compileError $ "Param " ++ show x ++ " occurs " ++ show (length xa) ++
@@ -423,6 +428,30 @@ checkParamVariances tm0 ts = do
     checkDefine r vm (ValueDefine c t) =
       validateDefinesVariance r vm Covariant t `reviseError`
         (show t ++ " [" ++ formatFullContext c ++ "]")
+    checkFilterVariance r vs (ParamFilter c n f@(TypeFilter FilterRequires t)) =
+      flip reviseError ("In filter " ++ show n ++ " " ++ show f ++ " [" ++ formatFullContext c ++ "]") $ do
+        case n `Map.lookup` vs of
+             Just Contravariant -> compileError $ "Contravariant param " ++ show n ++
+                                                  " cannot have a requires filter"
+             Nothing -> compileError $ "Param " ++ show n ++ " is undefined"
+             _ -> return ()
+        validateInstanceVariance r vs Contravariant (SingleType t)
+    checkFilterVariance r vs (ParamFilter c n f@(TypeFilter FilterAllows t)) =
+      flip reviseError ("In filter " ++ show n ++ " " ++ show f ++ " [" ++ formatFullContext c ++ "]") $ do
+        case n `Map.lookup` vs of
+             Just Covariant -> compileError $ "Covariant param " ++ show n ++
+                                              " cannot have an allows filter"
+             Nothing -> compileError $ "Param " ++ show n ++ " is undefined"
+             _ -> return ()
+        validateInstanceVariance r vs Covariant (SingleType t)
+    checkFilterVariance r vs (ParamFilter c n f@(DefinesFilter t)) =
+      flip reviseError ("In filter " ++ show n ++ " " ++ show f ++ " [" ++ formatFullContext c ++ "]") $ do
+        case n `Map.lookup` vs of
+             Just Contravariant -> compileError $ "Contravariant param " ++ show n ++
+                                                  " cannot have a defines filter"
+             Nothing -> compileError $ "Param " ++ show n ++ " is undefined"
+             _ -> return ()
+        validateDefinesVariance r vs Contravariant t
 
 checkCategoryInstances :: (Show c, MergeableM m, CompileErrorM m, Monad m) =>
   CategoryMap c -> [AnyCategory c] -> m ()
