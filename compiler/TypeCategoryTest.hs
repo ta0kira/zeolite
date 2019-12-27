@@ -765,6 +765,12 @@ tests = [
         flattenAllConnections builtinCategories ts
         return ()),
     checkOperationFail
+      "testfiles/ambiguous_merge_inherit.0rx"
+      (\ts -> do
+        ts <- topoSortCategories builtinCategories ts
+        flattenAllConnections builtinCategories ts
+        return ()),
+    checkOperationFail
       "testfiles/merge_different_scopes.0rx"
       (\ts -> do
         ts <- topoSortCategories builtinCategories ts

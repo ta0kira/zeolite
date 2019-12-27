@@ -27,5 +27,5 @@
   refines Interface1<Type3>
   refines Test1
 
-  something (Type2) -> (Type2)
+  // something must be merged again, since Interface1 is inherited again.
 }
