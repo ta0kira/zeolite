@@ -16,6 +16,53 @@ limitations under the License.
 
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
+define ReadIterator {
+  @value ReadPosition<#x> reader
+  @value Int position
+
+  fromReadPosition (reader) {
+    return fromReadPositionAt<#y>(reader,0)
+  }
+
+  fromReadPositionAt (reader,position) {
+    Int position2 <- position
+    if (position < 0) {
+      position2 <- -1
+    }
+    if (position >= reader.readSize() || reader.readSize() == 0) {
+      position2 <- reader.readSize()
+    }
+    return ReadIterator<#y>{ reader, position }
+  }
+
+  readCurrent () {
+    if (pastForwardEnd() || pastReverseEnd()) {
+      ~ LazyStream<Formatted>$new()
+          .append("Position ")
+          .append(position)
+          .append(" is out of bounds")
+          .writeTo(SimpleOutput$error())
+    }
+    return reader.readPosition(position)
+  }
+
+  forward () {
+    return fromReadPositionAt<#x>(reader,position+1)
+  }
+
+  pastForwardEnd () {
+    return position >= reader.readSize()
+  }
+
+  reverse () {
+    return fromReadPositionAt<#x>(reader,position-1)
+  }
+
+  pastReverseEnd () {
+    return position < 0 || reader.readSize() == 0
+  }
+}
+
 define LazyStream {
   @value optional #x value
   @value optional LazyStream<#x> next

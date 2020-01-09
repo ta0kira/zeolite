@@ -34,7 +34,7 @@ compiler="$PWD/compiler"
 standard_src=('standard.0rp' 'standard.0rx')
 
 ghc -i"$root/compiler" "$compiler_hs" -o "$compiler"
-(cd "$root/standard" || "$compiler" "$root" "" "${standard_src[@]}")
+(cd "$root/standard" && "$compiler" "$root" "" "${standard_src[@]}")
 
 standard_tm=($root/standard/*.0rp)
 standard_inc=($root/standard)
@@ -3671,6 +3671,50 @@ define Test {
     Formatted name <- getTypename<String,LessThan<Int>>()
     if (name.formatted() != "Type<String,LessThan<Int>>") {
       ~ fail(name)
+    }
+  }
+}
+END
+
+expect_runs 'iterate string forward' <<END
+define Test {
+  run () {
+    String s <- "abcde"
+    Int count <- 0
+    scoped {
+      ReadIterator<Char> iter <- ReadIterator\$\$fromReadPosition<Char>(s)
+    } in while (!iter.pastForwardEnd()) {
+      if (iter.readCurrent() != s.readPosition(count)) {
+        ~ fail(iter.readCurrent())
+      }
+    } update {
+      count <- count+1
+      iter <- iter.forward()
+    }
+    if (count != s.readSize()) {
+     ~ fail(count)
+    }
+  }
+}
+END
+
+expect_runs 'iterate string reverse' <<END
+define Test {
+  run () {
+    String s <- "abcde"
+    Int count <- s.readSize()-1
+    scoped {
+      ReadIterator<Char> iter <- ReadIterator\$\$fromReadPositionAt<Char>(s,count)
+    } in while (!iter.pastReverseEnd()) {
+      if (iter.readCurrent() != s.readPosition(count)) {
+        ~ fail(iter.readCurrent())
+      }
+    } update {
+      count <- count-1
+      iter <- iter.reverse()
+    }
+    if (count != -1) {
+     ~ fail(count)
     }
   }
 }

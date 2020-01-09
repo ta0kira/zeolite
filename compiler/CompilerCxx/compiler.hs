@@ -98,7 +98,10 @@ main = do
       | otherwise = ""
     writeResults c
       | isCompileError c = return ()
-      | otherwise = mapM_ (\(CxxOutput f os) -> writeFile f $ concat $ map (++ "\n") os) $ getCompileSuccess c
+      | otherwise = mapM_ (\(CxxOutput f os) -> writeSingleFile f $ concat $ map (++ "\n") os) $ getCompileSuccess c
+    writeSingleFile f c = do
+      hPutStrLn stderr $ "Writing file " ++ f
+      writeFile f c
 
 parseInternal :: (String,String) -> CompileInfo ([AnyCategory SourcePos],[DefinedCategory SourcePos])
 parseInternal (f,s) = unwrap parsed where

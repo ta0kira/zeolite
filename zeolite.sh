@@ -46,7 +46,7 @@ extra_src=(
 
 init() {
   ghc -i"$root/compiler" "$compiler.hs"
-  (cd "$root/standard" || "$compiler" "$root" "" "${standard_src[@]}")
+  (cd "$root/standard" && "$compiler" "$root" "" "${standard_src[@]}")
 }
 
 general_help() {

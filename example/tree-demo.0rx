@@ -84,7 +84,6 @@ define Demo {
             .append(new)
             .append(" but should have been ")
             .append(i)
-            .append("\n")
             .writeTo(SimpleOutput$error())
       } elif (require(value) != i) {
         ~ LazyStream<Formatted>$new()
@@ -94,7 +93,6 @@ define Demo {
             .append(i)
             .append(" but was ")
             .append(require(value))
-            .append("\n")
             .writeTo(SimpleOutput$error())
       } else {
         ~ LazyStream<Formatted>$new()
