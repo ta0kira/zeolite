@@ -491,6 +491,8 @@ compileExpression = compile where
           return (ParamSet [boolRequiredValue],glueInfix PrimFloat PrimBool e1 o e2)
         | o `Set.member` comparison && t1 == stringRequiredValue = do
           return (ParamSet [boolRequiredValue],glueInfix PrimString PrimBool e1 o e2)
+        | o `Set.member` comparison && t1 == charRequiredValue = do
+          return (ParamSet [boolRequiredValue],glueInfix PrimChar PrimBool e1 o e2)
         | o `Set.member` arithmetic1 && t1 == intRequiredValue = do
           return (ParamSet [intRequiredValue],glueInfix PrimInt PrimInt e1 o e2)
         | o `Set.member` arithmetic2 && t1 == intRequiredValue = do
@@ -506,7 +508,7 @@ compileExpression = compile where
         | o `Set.member` logical && t1 == boolRequiredValue = do
           return (ParamSet [boolRequiredValue],glueInfix PrimBool PrimBool e1 o e2)
         | o == "-" && t1 == charRequiredValue = do
-          return (ParamSet [intRequiredValue],glueInfix PrimChar PrimChar e1 o e2)
+          return (ParamSet [intRequiredValue],glueInfix PrimChar PrimInt e1 o e2)
         | o `Set.member` equals && t1 == boolRequiredValue = do
           return (ParamSet [boolRequiredValue],glueInfix PrimBool PrimBool e1 o e2)
         | otherwise =

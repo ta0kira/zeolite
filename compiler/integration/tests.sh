@@ -107,7 +107,7 @@ expect_error() {
     fi
   )
   [[ -z "${patterns-}" ]] || for p in "${patterns[@]}"; do
-    if ! egrep -q "$p" "$temp/$errors"; then
+    if ! egrep -q -- "$p" "$temp/$errors"; then
       echo "Test \"$name\" ($count): Expected pattern '$p' in error; see output in $temp" 1>&2
       return 1
     fi
@@ -138,7 +138,7 @@ expect_runs() {
     fi
   )
   [[ -z "${patterns-}" ]] || for p in "${patterns[@]}"; do
-    if ! egrep -q "$p" "$temp/$errors"; then
+    if ! egrep -q -- "$p" "$temp/$errors"; then
       echo "Test \"$name\" ($count): Expected pattern '$p' in output; see output in $temp" 1>&2
       return 1
     fi
@@ -166,7 +166,7 @@ expect_crashes() {
     return 1
   fi
   [[ -z "${patterns-}" ]] || for p in "${patterns[@]}"; do
-    if ! egrep -q "$p" "$temp/$errors"; then
+    if ! egrep -q -- "$p" "$temp/$errors"; then
       echo "Test \"$name\" ($count): Expected pattern '$p' in error; see output in $temp" 1>&2
       return 1
     fi
@@ -2884,6 +2884,26 @@ define Test {
 }
 END
 
+expect_runs 'reduce ReadPosition success' <<END
+define Test {
+  run () {
+    if (!present(reduce<ReadPosition<Char>,ReadPosition<Formatted>>("x"))) {
+      ~ fail("Failed")
+    }
+  }
+}
+END
+
+expect_runs 'reduce ReadPosition fail' <<END
+define Test {
+  run () {
+    if (present(reduce<ReadPosition<Formatted>,ReadPosition<Char>>("x"))) {
+      ~ fail("Failed")
+    }
+  }
+}
+END
+
 expect_runs 'reduce internal param success' <<END
 concrete Value {
   @type create<#x> () -> (Value)
@@ -3037,6 +3057,19 @@ define Test {
     if (!("x" != "y")) { ~ fail("Failed") }
     if (!("y" >  "x")) { ~ fail("Failed") }
     if (!("y" >= "x")) { ~ fail("Failed") }
+  }
+}
+END
+
+expect_runs 'char comparison' <<END
+define Test {
+  run () {
+    if (!('x' <  'y')) { ~ fail("Failed") }
+    if (!('x' <= 'y')) { ~ fail("Failed") }
+    if (!('x' == 'x')) { ~ fail("Failed") }
+    if (!('x' != 'y')) { ~ fail("Failed") }
+    if (!('y' >  'x')) { ~ fail("Failed") }
+    if (!('y' >= 'x')) { ~ fail("Failed") }
   }
 }
 END
@@ -3381,6 +3414,38 @@ concrete Value {
 
 define Test {
   run () {}
+}
+END
+
+expect_runs 'string access' <<END
+define Test {
+  run () {
+    String s <- "abcde"
+    Char c <- s.readPosition(3)
+    if (c != 'd') {
+      ~ fail(c)
+    }
+    Int size <- s.readSize()
+    if (size != 5) {
+      ~ fail(size)
+    }
+  }
+}
+END
+
+expect_crashes 'string access negative' '-10' 'bounds' 'line 3' <<END
+define Test {
+  run () {
+    ~ ("abc").readPosition(-10)
+  }
+}
+END
+
+expect_crashes 'string access past end' '100' 'bounds' 'line 3' <<END
+define Test {
+  run () {
+    ~ ("abc").readPosition(100)
+  }
 }
 END
 

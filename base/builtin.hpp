@@ -33,6 +33,10 @@ extern const Function<SymbolScope::TYPE,0,2,1>& Function_Equals_equals;
 extern const void* const Functions_Formatted;
 extern const Function<SymbolScope::VALUE,0,0,1>& Function_Formatted_formatted;
 
+extern const void* const Functions_ReadPosition;
+extern const Function<SymbolScope::VALUE,0,1,1>& Function_ReadPosition_readPosition;
+extern const Function<SymbolScope::VALUE,0,0,1>& Function_ReadPosition_readSize;
+
 TypeInstance& Merge_Intersect(L<TypeInstance*> params);
 TypeInstance& Merge_Union(L<TypeInstance*> params);
 
@@ -45,6 +49,7 @@ TypeCategory& GetCategory_Char();
 TypeCategory& GetCategory_Int();
 TypeCategory& GetCategory_Float();
 TypeCategory& GetCategory_Formatted();
+TypeCategory& GetCategory_ReadPosition();
 TypeCategory& GetCategory_LessThan();
 TypeCategory& GetCategory_Equals();
 
@@ -54,6 +59,7 @@ TypeInstance& GetType_Char(Params<0>::Type);
 TypeInstance& GetType_Int(Params<0>::Type);
 TypeInstance& GetType_Float(Params<0>::Type);
 TypeInstance& GetType_Formatted(Params<0>::Type);
+TypeInstance& GetType_ReadPosition(Params<1>::Type);
 TypeInstance& GetType_LessThan(Params<1>::Type params);
 TypeInstance& GetType_Equals(Params<1>::Type params);
 

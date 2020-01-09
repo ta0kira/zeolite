@@ -210,6 +210,10 @@ struct Type_String : public TypeInstance {
       args = std::vector<const TypeInstance*>{};
       return true;
     }
+    if (&category == &GetCategory_ReadPosition()) {
+      args = std::vector<const TypeInstance*>{&GetType_Char(Params<0>::Type())};
+      return true;
+    }
     return false;
   }
 
@@ -242,6 +246,16 @@ class Value_String : public TypeValue {
     }
     if (&label == &Function_Formatted_formatted) {
       return ReturnTuple(Box_String(self->AsString()));
+    }
+    if (&label == &Function_ReadPosition_readPosition) {
+      const int position = args.At(0)->AsInt();
+      if (position < 0 || position >= value_.size()) {
+        FAIL() << "Position " << position << " is out of bounds";
+      }
+      return Box_Char(value_[position]);
+    }
+    if (&label == &Function_ReadPosition_readSize) {
+      return Box_Int(value_.size());
     }
     return TypeValue::Dispatch(self, label, params, args);
   }
@@ -508,6 +522,37 @@ struct Type_Formatted : public TypeInstance {
   }
 };
 
+struct Category_ReadPosition : public TypeCategory {
+  std::string CategoryName() const final { return "ReadPosition"; }
+};
+
+struct Type_ReadPosition : public TypeInstance {
+  Type_ReadPosition(Params<1>::Type params) : Param_x(*std::get<0>(params)) {}
+  std::string CategoryName() const final { return "ReadPosition"; }
+  void BuildTypeName(std::ostream& output) const final { output << CategoryName(); }
+
+  bool TypeArgsForParent(
+    const TypeCategory& category, std::vector<const TypeInstance*>& args) const final {
+    if (&category == &GetCategory_ReadPosition()) {
+      args = std::vector<const TypeInstance*>{&Param_x};
+      return true;
+    }
+    return false;
+  }
+
+  bool CanConvertFrom(const TypeInstance& from) const final {
+    std::vector<const TypeInstance*> args;
+    if (!from.TypeArgsForParent(GetCategory_ReadPosition(), args)) return false;
+    if (args.size() != 1) {
+      FAIL() << "Wrong number of args (" << args.size() << ") for " << CategoryName();
+    }
+    if (!TypeInstance::CanConvert(*args[0], Param_x)) return false;
+    return true;
+  }
+
+  TypeInstance& Param_x;
+};
+
 struct Category_LessThan : public TypeCategory {
   std::string CategoryName() const final { return "LessThan"; }
 };
@@ -557,6 +602,13 @@ const int Collection_Formatted = 0;
 const void* const Functions_Formatted = &Collection_Formatted;
 const Function<SymbolScope::VALUE,0,0,1>& Function_Formatted_formatted =
    *new Function<SymbolScope::VALUE,0,0,1>("Formatted", "formatted", Functions_Formatted, 0);
+
+const int Collection_ReadPosition = 0;
+const void* const Functions_ReadPosition = &Collection_ReadPosition;
+const Function<SymbolScope::VALUE,0,1,1>& Function_ReadPosition_readPosition =
+   *new Function<SymbolScope::VALUE,0,1,1>("ReadPosition", "readPosition", Functions_ReadPosition, 0);
+const Function<SymbolScope::VALUE,0,0,1>& Function_ReadPosition_readSize =
+   *new Function<SymbolScope::VALUE,0,0,1>("ReadPosition", "readSize", Functions_ReadPosition, 0);
 
 TypeInstance& Merge_Intersect(L<TypeInstance*> params) {
   static auto& cache = *new std::map<L<TypeInstance*>,R<Type_Intersect>>();
@@ -612,6 +664,11 @@ TypeCategory& GetCategory_Formatted() {
   return category;
 }
 
+TypeCategory& GetCategory_ReadPosition() {
+  static auto& category = *new Category_ReadPosition();
+  return category;
+}
+
 TypeCategory& GetCategory_LessThan() {
   static auto& category = *new Category_LessThan();
   return category;
@@ -651,6 +708,13 @@ TypeInstance& GetType_Float(Params<0>::Type) {
 TypeInstance& GetType_Formatted(Params<0>::Type) {
   static auto& instance = *new Type_Formatted();
   return instance;
+}
+
+TypeInstance& GetType_ReadPosition(Params<1>::Type params){
+  static auto& cache = *new InstanceMap<1,Type_ReadPosition>();
+  auto& cached = cache[params];
+  if (!cached) { cached = R_get(new Type_ReadPosition(params)); }
+  return *cached;
 }
 
 TypeInstance& GetType_LessThan(Params<1>::Type params){

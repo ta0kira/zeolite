@@ -77,14 +77,15 @@ instance ParseFromSource CategoryName where
     return $ box (b:e)
     where
       box n
-        | n == "Bool"      = BuiltinBool
-        | n == "String"    = BuiltinString
-        | n == "Char"      = BuiltinChar
-        | n == "Int"       = BuiltinInt
-        | n == "Float"     = BuiltinFloat
-        | n == "LessThan"  = BuiltinLessThan
-        | n == "Equals"    = BuiltinEquals
-        | n == "Formatted" = BuiltinFormatted
+        | n == "Bool"         = BuiltinBool
+        | n == "String"       = BuiltinString
+        | n == "Char"         = BuiltinChar
+        | n == "Int"          = BuiltinInt
+        | n == "Float"        = BuiltinFloat
+        | n == "LessThan"     = BuiltinLessThan
+        | n == "Equals"       = BuiltinEquals
+        | n == "Formatted"    = BuiltinFormatted
+        | n == "ReadPosition" = BuiltinReadPosition
         | otherwise = CategoryName n
 
 instance ParseFromSource ParamName where

@@ -45,6 +45,7 @@ concrete Float {
 
 concrete String {
   refines Formatted
+  refines ReadPosition<Char>
 
   defines Equals<String>
   defines LessThan<String>
@@ -61,4 +62,9 @@ concrete String {
 
 @value interface Formatted {
   formatted () -> (String)
+}
+
+@value interface ReadPosition<|#x> {
+  readPosition (Int) -> (#x)
+  readSize () -> (Int)
 }
