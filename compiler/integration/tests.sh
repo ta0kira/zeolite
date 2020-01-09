@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Copyright 2019 Kevin P. Barry
+# Copyright 2019-2020 Kevin P. Barry
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -31,13 +31,16 @@ compiler="$PWD/compiler"
 [[ "${COMPILER_CXX-}" ]] || COMPILER_CXX=clang++
 [[ "${COMPILE_CXX-}" ]] || COMPILE_CXX=("$COMPILER_CXX" -O0 -g -std=c++11 -o)
 
-ghc -i"$root/compiler" "$compiler_hs" -o "$compiler"
+standard_src=('standard/standard.0rp' 'standard/standard.0rx')
 
-( cd "$root/standard" && "$compiler" "" *.0r{p,x} )
+ghc -i"$root/compiler" "$compiler_hs" -o "$compiler"
+"$compiler" "$root" "$root" "${standard_src[@]}"
 
 standard_tm=($root/standard/*.0rp)
 standard_inc=($root/standard)
 standard_cpp=($root/standard/*.cpp)
+
+command0=("$compiler" "$root" "" "${standard_tm[@]}" -- /dev/stdin)
 
 test_base="
 concrete Util {
@@ -71,7 +74,6 @@ compile() {
   (
     set -e
     cd "$temp" || exit 1
-    command0=("$compiler" "" "${standard_tm[@]}" -- /dev/stdin)
     echo "${command0[@]}" >> "$temp/$errors"
     { "${command0[@]}" |& tee -a "$temp/$errors"; } < <(echo "$code$test_base")
     [[ "${PIPESTATUS[0]}" = 0 ]] || return 1
@@ -116,7 +118,6 @@ expect_error() {
   (
     set -e
     cd "$temp" || exit 1
-    command0=("$compiler" "" "${standard_tm[@]}" -- /dev/stdin)
     echo "${command0[@]}" >> "$temp/$errors"
     if "${command0[@]}" &>> "$temp/$errors" < <(echo "$code$test_base"); then
       echo "Test \"$name\" ($count): Expected compile error; see output in $temp" 1>&2

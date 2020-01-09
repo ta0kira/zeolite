@@ -44,6 +44,8 @@ tests = [
     checkSingleParseSuccess "testfiles/value_interface.0rx",
     checkSingleParseSuccess "testfiles/type_interface.0rx",
     checkSingleParseSuccess "testfiles/concrete.0rx",
+    -- Checks that the builtin categories parse.
+    withBuiltinCategories (const $ return $ return ()),
 
     checkShortParseSuccess "concrete Type<#x> {}",
     checkShortParseSuccess "concrete Type {}",
@@ -74,17 +76,18 @@ tests = [
     checkShortParseFail "@value interface Type { defines T }",
     checkShortParseSuccess "@value interface Type<#x> { #x allows T }",
 
-    checkOperationSuccess "testfiles/value_refines_value.0rx" (checkConnectedTypes builtinCategories),
-    checkOperationFail "testfiles/value_refines_instance.0rx" (checkConnectedTypes builtinCategories),
-    checkOperationFail "testfiles/value_refines_concrete.0rx" (checkConnectedTypes builtinCategories),
-    checkOperationFail "testfiles/builtin_clash.0rx" (checkConnectedTypes builtinCategories),
+    checkOperationSuccess "testfiles/value_refines_value.0rx" (checkConnectedTypes defaultCategories),
+    checkOperationFail "testfiles/value_refines_instance.0rx" (checkConnectedTypes defaultCategories),
+    checkOperationFail "testfiles/value_refines_concrete.0rx" (checkConnectedTypes defaultCategories),
 
-    checkOperationSuccess "testfiles/concrete_refines_value.0rx" (checkConnectedTypes builtinCategories),
-    checkOperationFail "testfiles/concrete_refines_instance.0rx" (checkConnectedTypes builtinCategories),
-    checkOperationFail "testfiles/concrete_refines_concrete.0rx" (checkConnectedTypes builtinCategories),
-    checkOperationSuccess "testfiles/concrete_defines_instance.0rx" (checkConnectedTypes builtinCategories),
-    checkOperationFail "testfiles/concrete_defines_value.0rx" (checkConnectedTypes builtinCategories),
-    checkOperationFail "testfiles/concrete_defines_concrete.0rx" (checkConnectedTypes builtinCategories),
+    withBuiltinCategories $ \bs -> checkOperationFail "testfiles/builtin_clash.0rx" (checkConnectedTypes bs),
+
+    checkOperationSuccess "testfiles/concrete_refines_value.0rx" (checkConnectedTypes defaultCategories),
+    checkOperationFail "testfiles/concrete_refines_instance.0rx" (checkConnectedTypes defaultCategories),
+    checkOperationFail "testfiles/concrete_refines_concrete.0rx" (checkConnectedTypes defaultCategories),
+    checkOperationSuccess "testfiles/concrete_defines_instance.0rx" (checkConnectedTypes defaultCategories),
+    checkOperationFail "testfiles/concrete_defines_value.0rx" (checkConnectedTypes defaultCategories),
+    checkOperationFail "testfiles/concrete_defines_concrete.0rx" (checkConnectedTypes defaultCategories),
 
     checkOperationSuccess
       "testfiles/concrete_refines_value.0rx"
@@ -121,21 +124,21 @@ tests = [
     checkOperationSuccess
       "testfiles/flatten.0rx"
       (\ts -> do
-        ts <- topoSortCategories builtinCategories ts
+        ts <- topoSortCategories defaultCategories ts
         map (show . getCategoryName) ts `containsPaired` [
             "Type","Object2","Object3","Object1","Parent","Child"
           ]),
     checkOperationSuccess
       "testfiles/flatten.0rx"
       (\ts -> do
-        ts <- topoSortCategories builtinCategories ts
-        flattenAllConnections builtinCategories ts),
+        ts <- topoSortCategories defaultCategories ts
+        flattenAllConnections defaultCategories ts),
 
     checkOperationSuccess
       "testfiles/flatten.0rx"
       (\ts -> do
-        ts <- topoSortCategories builtinCategories ts
-        ts <- flattenAllConnections builtinCategories ts
+        ts <- topoSortCategories defaultCategories ts
+        ts <- flattenAllConnections defaultCategories ts
         scrapeAllRefines ts `containsExactly` [
             ("Object1","Object3<#y>"),
             ("Object1","Object2"),
@@ -189,18 +192,18 @@ tests = [
             ("Child","Object2")
           ]),
 
-    checkOperationSuccess "testfiles/valid_variances.0rx" (checkParamVariances builtinCategories),
-    checkOperationFail "testfiles/contravariant_refines_covariant.0rx" (checkParamVariances builtinCategories),
-    checkOperationFail "testfiles/contravariant_refines_invariant.0rx" (checkParamVariances builtinCategories),
-    checkOperationFail "testfiles/covariant_refines_contravariant.0rx" (checkParamVariances builtinCategories),
-    checkOperationFail "testfiles/covariant_refines_invariant.0rx" (checkParamVariances builtinCategories),
-    checkOperationFail "testfiles/contravariant_defines_covariant.0rx" (checkParamVariances builtinCategories),
-    checkOperationFail "testfiles/contravariant_defines_invariant.0rx" (checkParamVariances builtinCategories),
-    checkOperationFail "testfiles/covariant_defines_contravariant.0rx" (checkParamVariances builtinCategories),
-    checkOperationFail "testfiles/covariant_defines_invariant.0rx" (checkParamVariances builtinCategories),
-    checkOperationFail "testfiles/concrete_duplicate_param.0rx" (checkParamVariances builtinCategories),
-    checkOperationFail "testfiles/type_duplicate_param.0rx" (checkParamVariances builtinCategories),
-    checkOperationFail "testfiles/value_duplicate_param.0rx" (checkParamVariances builtinCategories),
+    checkOperationSuccess "testfiles/valid_variances.0rx" (checkParamVariances defaultCategories),
+    checkOperationFail "testfiles/contravariant_refines_covariant.0rx" (checkParamVariances defaultCategories),
+    checkOperationFail "testfiles/contravariant_refines_invariant.0rx" (checkParamVariances defaultCategories),
+    checkOperationFail "testfiles/covariant_refines_contravariant.0rx" (checkParamVariances defaultCategories),
+    checkOperationFail "testfiles/covariant_refines_invariant.0rx" (checkParamVariances defaultCategories),
+    checkOperationFail "testfiles/contravariant_defines_covariant.0rx" (checkParamVariances defaultCategories),
+    checkOperationFail "testfiles/contravariant_defines_invariant.0rx" (checkParamVariances defaultCategories),
+    checkOperationFail "testfiles/covariant_defines_contravariant.0rx" (checkParamVariances defaultCategories),
+    checkOperationFail "testfiles/covariant_defines_invariant.0rx" (checkParamVariances defaultCategories),
+    checkOperationFail "testfiles/concrete_duplicate_param.0rx" (checkParamVariances defaultCategories),
+    checkOperationFail "testfiles/type_duplicate_param.0rx" (checkParamVariances defaultCategories),
+    checkOperationFail "testfiles/value_duplicate_param.0rx" (checkParamVariances defaultCategories),
 
     checkOperationSuccess
       "testfiles/concrete_refines_value.0rx"
@@ -247,55 +250,55 @@ tests = [
     checkOperationSuccess
       "testfiles/flatten.0rx"
       (\ts -> do
-        ts <- topoSortCategories builtinCategories ts
-        ts <- flattenAllConnections builtinCategories ts
+        ts <- topoSortCategories defaultCategories ts
+        ts <- flattenAllConnections defaultCategories ts
         rs <- getTypeRefines ts "Object1<#a,#b>" "Object1"
         rs `containsPaired` ["#a","#b"]),
     checkOperationSuccess
       "testfiles/flatten.0rx"
       (\ts -> do
-        ts <- topoSortCategories builtinCategories ts
-        ts <- flattenAllConnections builtinCategories ts
+        ts <- topoSortCategories defaultCategories ts
+        ts <- flattenAllConnections defaultCategories ts
         rs <- getTypeRefines ts "Object1<#a,#b>" "Object3"
         rs `containsPaired` ["#b"]),
     checkOperationFail
       "testfiles/flatten.0rx"
       (\ts -> do
-        ts <- topoSortCategories builtinCategories ts
-        ts <- flattenAllConnections builtinCategories ts
+        ts <- topoSortCategories defaultCategories ts
+        ts <- flattenAllConnections defaultCategories ts
         rs <- getTypeRefines ts "Undefined<#a,#b>" "Undefined"
         rs `containsPaired` ["#a","#b"]),
     checkOperationFail
       "testfiles/flatten.0rx"
       (\ts -> do
-        ts <- topoSortCategories builtinCategories ts
-        ts <- flattenAllConnections builtinCategories ts
+        ts <- topoSortCategories defaultCategories ts
+        ts <- flattenAllConnections defaultCategories ts
         rs <- getTypeRefines ts "Object1<#a>" "Object1"
         rs `containsPaired` ["#a"]),
     checkOperationSuccess
       "testfiles/flatten.0rx"
       (\ts -> do
-        ts <- topoSortCategories builtinCategories ts
-        ts <- flattenAllConnections builtinCategories ts
+        ts <- topoSortCategories defaultCategories ts
+        ts <- flattenAllConnections defaultCategories ts
         rs <- getTypeRefines ts "Parent<#t>" "Object1"
         rs `containsPaired` ["#t","Object3<Object2>"]),
     checkOperationFail
       "testfiles/flatten.0rx"
       (\ts -> do
-        ts <- topoSortCategories builtinCategories ts
-        ts <- flattenAllConnections builtinCategories ts
+        ts <- topoSortCategories defaultCategories ts
+        ts <- flattenAllConnections defaultCategories ts
         getTypeRefines ts "Parent<#t>" "Child"),
     checkOperationFail
       "testfiles/flatten.0rx"
       (\ts -> do
-        ts <- topoSortCategories builtinCategories ts
-        ts <- flattenAllConnections builtinCategories ts
+        ts <- topoSortCategories defaultCategories ts
+        ts <- flattenAllConnections defaultCategories ts
         getTypeRefines ts "Child" "Type"),
     checkOperationFail
       "testfiles/flatten.0rx"
       (\ts -> do
-        ts <- topoSortCategories builtinCategories ts
-        ts <- flattenAllConnections builtinCategories ts
+        ts <- topoSortCategories defaultCategories ts
+        ts <- flattenAllConnections defaultCategories ts
         getTypeRefines ts "Child" "Missing"),
 
     checkOperationSuccess
@@ -403,64 +406,64 @@ tests = [
     checkOperationSuccess
       "testfiles/flatten.0rx"
       (\ts -> do
-        ts <- topoSortCategories builtinCategories ts
-        ta <- flattenAllConnections builtinCategories ts >>= declareAllTypes builtinCategories
+        ts <- topoSortCategories defaultCategories ts
+        ta <- flattenAllConnections defaultCategories ts >>= declareAllTypes defaultCategories
         let r = categoriesToTypeResolver ta
         checkTypeSuccess r [] "Child"),
     checkOperationSuccess
       "testfiles/flatten.0rx"
       (\ts -> do
-        ts <- topoSortCategories builtinCategories ts
-        ta <- flattenAllConnections builtinCategories ts >>= declareAllTypes builtinCategories
+        ts <- topoSortCategories defaultCategories ts
+        ta <- flattenAllConnections defaultCategories ts >>= declareAllTypes defaultCategories
         let r = categoriesToTypeResolver ta
         checkTypeSuccess r [] "[Child|Child]"),
     checkOperationSuccess
       "testfiles/flatten.0rx"
       (\ts -> do
-        ts <- topoSortCategories builtinCategories ts
-        ta <- flattenAllConnections builtinCategories ts >>= declareAllTypes builtinCategories
+        ts <- topoSortCategories defaultCategories ts
+        ta <- flattenAllConnections defaultCategories ts >>= declareAllTypes defaultCategories
         let r = categoriesToTypeResolver ta
         checkTypeSuccess r [] "[Child&Child]"),
     checkOperationSuccess
       "testfiles/flatten.0rx"
       (\ts -> do
-        ts <- topoSortCategories builtinCategories ts
-        ta <- flattenAllConnections builtinCategories ts >>= declareAllTypes builtinCategories
+        ts <- topoSortCategories defaultCategories ts
+        ta <- flattenAllConnections defaultCategories ts >>= declareAllTypes defaultCategories
         let r = categoriesToTypeResolver ta
         checkTypeSuccess r [] "Object2"),
     checkOperationSuccess
       "testfiles/flatten.0rx"
       (\ts -> do
-        ts <- topoSortCategories builtinCategories ts
-        ta <- flattenAllConnections builtinCategories ts >>= declareAllTypes builtinCategories
+        ts <- topoSortCategories defaultCategories ts
+        ta <- flattenAllConnections defaultCategories ts >>= declareAllTypes defaultCategories
         let r = categoriesToTypeResolver ta
         checkTypeSuccess r [] "[Object2|Object2]"),
     checkOperationSuccess
       "testfiles/flatten.0rx"
       (\ts -> do
-        ts <- topoSortCategories builtinCategories ts
-        ta <- flattenAllConnections builtinCategories ts >>= declareAllTypes builtinCategories
+        ts <- topoSortCategories defaultCategories ts
+        ta <- flattenAllConnections defaultCategories ts >>= declareAllTypes defaultCategories
         let r = categoriesToTypeResolver ta
         checkTypeSuccess r [] "[Object2&Object2]"),
     checkOperationSuccess
       "testfiles/flatten.0rx"
       (\ts -> do
-        ts <- topoSortCategories builtinCategories ts
-        ta <- flattenAllConnections builtinCategories ts >>= declareAllTypes builtinCategories
+        ts <- topoSortCategories defaultCategories ts
+        ta <- flattenAllConnections defaultCategories ts >>= declareAllTypes defaultCategories
         let r = categoriesToTypeResolver ta
         checkTypeFail r [] "Type<Child>"),
     checkOperationSuccess
       "testfiles/flatten.0rx"
       (\ts -> do
-        ts <- topoSortCategories builtinCategories ts
-        ta <- flattenAllConnections builtinCategories ts >>= declareAllTypes builtinCategories
+        ts <- topoSortCategories defaultCategories ts
+        ta <- flattenAllConnections defaultCategories ts >>= declareAllTypes defaultCategories
         let r = categoriesToTypeResolver ta
         checkTypeFail r [] "[Type<Child>|Type<Child>]"),
     checkOperationSuccess
       "testfiles/flatten.0rx"
       (\ts -> do
-        ts <- topoSortCategories builtinCategories ts
-        ta <- flattenAllConnections builtinCategories ts >>= declareAllTypes builtinCategories
+        ts <- topoSortCategories defaultCategories ts
+        ta <- flattenAllConnections defaultCategories ts >>= declareAllTypes defaultCategories
         let r = categoriesToTypeResolver ta
         checkTypeFail r [] "[Type<Child>&Type<Child>]"),
 
@@ -528,71 +531,71 @@ tests = [
     checkOperationSuccess
       "testfiles/concrete_instances.0rx"
       (\ts -> do
-        ts <- topoSortCategories builtinCategories ts
-        ts <- flattenAllConnections builtinCategories ts
-        checkCategoryInstances builtinCategories ts),
+        ts <- topoSortCategories defaultCategories ts
+        ts <- flattenAllConnections defaultCategories ts
+        checkCategoryInstances defaultCategories ts),
     checkOperationFail
       "testfiles/concrete_missing_define.0rx"
       (\ts -> do
-        ts <- topoSortCategories builtinCategories ts
-        ts <- flattenAllConnections builtinCategories ts
-        checkCategoryInstances builtinCategories ts),
+        ts <- topoSortCategories defaultCategories ts
+        ts <- flattenAllConnections defaultCategories ts
+        checkCategoryInstances defaultCategories ts),
     checkOperationFail
       "testfiles/concrete_missing_refine.0rx"
       (\ts -> do
-        ts <- topoSortCategories builtinCategories ts
-        ts <- flattenAllConnections builtinCategories ts
-        checkCategoryInstances builtinCategories ts),
+        ts <- topoSortCategories defaultCategories ts
+        ts <- flattenAllConnections defaultCategories ts
+        checkCategoryInstances defaultCategories ts),
     checkOperationSuccess
       "testfiles/value_instances.0rx"
       (\ts -> do
-        ts <- topoSortCategories builtinCategories ts
-        ts <- flattenAllConnections builtinCategories ts
-        checkCategoryInstances builtinCategories ts),
+        ts <- topoSortCategories defaultCategories ts
+        ts <- flattenAllConnections defaultCategories ts
+        checkCategoryInstances defaultCategories ts),
     checkOperationFail
       "testfiles/value_missing_define.0rx"
       (\ts -> do
-        ts <- topoSortCategories builtinCategories ts
-        ts <- flattenAllConnections builtinCategories ts
-        checkCategoryInstances builtinCategories ts),
+        ts <- topoSortCategories defaultCategories ts
+        ts <- flattenAllConnections defaultCategories ts
+        checkCategoryInstances defaultCategories ts),
     checkOperationFail
       "testfiles/value_missing_refine.0rx"
       (\ts -> do
-        ts <- topoSortCategories builtinCategories ts
-        ts <- flattenAllConnections builtinCategories ts
-        checkCategoryInstances builtinCategories ts),
+        ts <- topoSortCategories defaultCategories ts
+        ts <- flattenAllConnections defaultCategories ts
+        checkCategoryInstances defaultCategories ts),
     checkOperationSuccess
       "testfiles/type_instances.0rx"
       (\ts -> do
-        ts <- topoSortCategories builtinCategories ts
-        ts <- flattenAllConnections builtinCategories ts
-        checkCategoryInstances builtinCategories ts),
+        ts <- topoSortCategories defaultCategories ts
+        ts <- flattenAllConnections defaultCategories ts
+        checkCategoryInstances defaultCategories ts),
     checkOperationFail
       "testfiles/type_missing_define.0rx"
       (\ts -> do
-        ts <- topoSortCategories builtinCategories ts
-        ts <- flattenAllConnections builtinCategories ts
-        checkCategoryInstances builtinCategories ts),
+        ts <- topoSortCategories defaultCategories ts
+        ts <- flattenAllConnections defaultCategories ts
+        checkCategoryInstances defaultCategories ts),
     checkOperationFail
       "testfiles/type_missing_refine.0rx"
       (\ts -> do
-        ts <- topoSortCategories builtinCategories ts
-        ts <- flattenAllConnections builtinCategories ts
-        checkCategoryInstances builtinCategories ts),
+        ts <- topoSortCategories defaultCategories ts
+        ts <- flattenAllConnections defaultCategories ts
+        checkCategoryInstances defaultCategories ts),
     checkOperationSuccess
       "testfiles/requires_concrete.0rx"
       (\ts -> do
-        ts <- topoSortCategories builtinCategories ts
-        ts <- flattenAllConnections builtinCategories ts
-        checkCategoryInstances builtinCategories ts),
+        ts <- topoSortCategories defaultCategories ts
+        ts <- flattenAllConnections defaultCategories ts
+        checkCategoryInstances defaultCategories ts),
 
     -- TODO: Clean these tests up.
     checkOperationSuccess
       "testfiles/merged.0rx"
       (\ts -> do
-        ts <- topoSortCategories builtinCategories ts
-        ts <- flattenAllConnections builtinCategories ts
-        tm <- declareAllTypes builtinCategories ts
+        ts <- topoSortCategories defaultCategories ts
+        ts <- flattenAllConnections defaultCategories ts
+        tm <- declareAllTypes defaultCategories ts
         rs <- getRefines tm "Test"
         rs `containsExactly` ["Value0","Value1","Value2","Value3",
                               "Value4<Value1,Value1>","Inherit1","Inherit2"]),
@@ -600,38 +603,38 @@ tests = [
     checkOperationSuccess
       "testfiles/merged.0rx"
       (\ts -> do
-        ts <- topoSortCategories builtinCategories ts
-        flattenAllConnections builtinCategories ts
+        ts <- topoSortCategories defaultCategories ts
+        flattenAllConnections defaultCategories ts
         return ()),
     checkOperationFail
       "testfiles/duplicate_refine.0rx"
       (\ts -> do
-        ts <- topoSortCategories builtinCategories ts
-        flattenAllConnections builtinCategories ts
+        ts <- topoSortCategories defaultCategories ts
+        flattenAllConnections defaultCategories ts
         return ()),
     checkOperationFail
       "testfiles/duplicate_define.0rx"
       (\ts -> do
-        ts <- topoSortCategories builtinCategories ts
-        flattenAllConnections builtinCategories ts
+        ts <- topoSortCategories defaultCategories ts
+        flattenAllConnections defaultCategories ts
         return ()),
     checkOperationFail
       "testfiles/refine_wrong_direction.0rx"
       (\ts -> do
-        ts <- topoSortCategories builtinCategories ts
-        flattenAllConnections builtinCategories ts
+        ts <- topoSortCategories defaultCategories ts
+        flattenAllConnections defaultCategories ts
         return ()),
     checkOperationFail
       "testfiles/inherit_incompatible.0rx"
       (\ts -> do
-        ts <- topoSortCategories builtinCategories ts
-        flattenAllConnections builtinCategories ts
+        ts <- topoSortCategories defaultCategories ts
+        flattenAllConnections defaultCategories ts
         return ()),
     checkOperationSuccess
       "testfiles/merge_incompatible.0rx"
       (\ts -> do
-        ts <- topoSortCategories builtinCategories ts
-        flattenAllConnections builtinCategories ts
+        ts <- topoSortCategories defaultCategories ts
+        flattenAllConnections defaultCategories ts
         return ()),
 
     checkOperationSuccess
@@ -648,164 +651,164 @@ tests = [
 
     checkOperationSuccess
       "testfiles/category_function_param_match.0rx"
-      (\ts -> checkCategoryInstances builtinCategories ts),
+      (\ts -> checkCategoryInstances defaultCategories ts),
     checkOperationFail
       "testfiles/function_param_clash.0rx"
-      (\ts -> checkCategoryInstances builtinCategories ts),
+      (\ts -> checkCategoryInstances defaultCategories ts),
     checkOperationFail
       "testfiles/function_duplicate_param.0rx"
-      (\ts -> checkCategoryInstances builtinCategories ts),
+      (\ts -> checkCategoryInstances defaultCategories ts),
     checkOperationFail
       "testfiles/function_bad_filter_param.0rx"
-      (\ts -> checkCategoryInstances builtinCategories ts),
+      (\ts -> checkCategoryInstances defaultCategories ts),
     checkOperationFail
       "testfiles/function_bad_allows_type.0rx"
-      (\ts -> checkCategoryInstances builtinCategories ts),
+      (\ts -> checkCategoryInstances defaultCategories ts),
     checkOperationFail
       "testfiles/function_bad_allows_variance.0rx"
-      (\ts -> checkCategoryInstances builtinCategories ts),
+      (\ts -> checkCategoryInstances defaultCategories ts),
     checkOperationFail
       "testfiles/function_bad_requires_type.0rx"
-      (\ts -> checkCategoryInstances builtinCategories ts),
+      (\ts -> checkCategoryInstances defaultCategories ts),
     checkOperationFail
       "testfiles/function_bad_requires_variance.0rx"
-      (\ts -> checkCategoryInstances builtinCategories ts),
+      (\ts -> checkCategoryInstances defaultCategories ts),
     checkOperationFail
       "testfiles/function_bad_defines_type.0rx"
-      (\ts -> checkCategoryInstances builtinCategories ts),
+      (\ts -> checkCategoryInstances defaultCategories ts),
     checkOperationFail
       "testfiles/function_bad_defines_variance.0rx"
-      (\ts -> checkCategoryInstances builtinCategories ts),
+      (\ts -> checkCategoryInstances defaultCategories ts),
     checkOperationFail
       "testfiles/function_bad_arg.0rx"
-      (\ts -> checkCategoryInstances builtinCategories ts),
+      (\ts -> checkCategoryInstances defaultCategories ts),
     checkOperationFail
       "testfiles/function_bad_return.0rx"
-      (\ts -> checkCategoryInstances builtinCategories ts),
+      (\ts -> checkCategoryInstances defaultCategories ts),
     checkOperationFail
       "testfiles/weak_arg.0rx"
-      (\ts -> checkCategoryInstances builtinCategories ts),
+      (\ts -> checkCategoryInstances defaultCategories ts),
     checkOperationFail
       "testfiles/weak_return.0rx"
-      (\ts -> checkCategoryInstances builtinCategories ts),
+      (\ts -> checkCategoryInstances defaultCategories ts),
 
     checkOperationSuccess
       "testfiles/function_filters_satisfied.0rx"
-      (\ts -> checkCategoryInstances builtinCategories ts),
+      (\ts -> checkCategoryInstances defaultCategories ts),
     checkOperationFail
       "testfiles/function_requires_missed.0rx"
-      (\ts -> checkCategoryInstances builtinCategories ts),
+      (\ts -> checkCategoryInstances defaultCategories ts),
     checkOperationFail
       "testfiles/function_allows_missed.0rx"
-      (\ts -> checkCategoryInstances builtinCategories ts),
+      (\ts -> checkCategoryInstances defaultCategories ts),
     checkOperationFail
       "testfiles/function_defines_missed.0rx"
-      (\ts -> checkCategoryInstances builtinCategories ts),
+      (\ts -> checkCategoryInstances defaultCategories ts),
 
     checkOperationSuccess
       "testfiles/valid_function_variance.0rx"
-      (\ts -> checkCategoryInstances builtinCategories ts),
+      (\ts -> checkCategoryInstances defaultCategories ts),
     checkOperationFail
       "testfiles/bad_value_arg_variance.0rx"
-      (\ts -> checkCategoryInstances builtinCategories ts),
+      (\ts -> checkCategoryInstances defaultCategories ts),
     checkOperationFail
       "testfiles/bad_value_return_variance.0rx"
-      (\ts -> checkCategoryInstances builtinCategories ts),
+      (\ts -> checkCategoryInstances defaultCategories ts),
     checkOperationFail
       "testfiles/bad_type_arg_variance.0rx"
-      (\ts -> checkCategoryInstances builtinCategories ts),
+      (\ts -> checkCategoryInstances defaultCategories ts),
     checkOperationFail
       "testfiles/bad_type_return_variance.0rx"
-      (\ts -> checkCategoryInstances builtinCategories ts),
+      (\ts -> checkCategoryInstances defaultCategories ts),
 
     checkOperationSuccess
       "testfiles/valid_filter_variance.0rx"
-      (\ts -> checkParamVariances builtinCategories ts),
+      (\ts -> checkParamVariances defaultCategories ts),
     checkOperationFail
       "testfiles/bad_allows_variance_right.0rx"
-      (\ts -> checkParamVariances builtinCategories ts),
+      (\ts -> checkParamVariances defaultCategories ts),
     checkOperationFail
       "testfiles/bad_defines_variance_right.0rx"
-      (\ts -> checkParamVariances builtinCategories ts),
+      (\ts -> checkParamVariances defaultCategories ts),
     checkOperationFail
       "testfiles/bad_requires_variance_right.0rx"
-      (\ts -> checkParamVariances builtinCategories ts),
+      (\ts -> checkParamVariances defaultCategories ts),
     checkOperationFail
       "testfiles/bad_allows_variance_left.0rx"
-      (\ts -> checkParamVariances builtinCategories ts),
+      (\ts -> checkParamVariances defaultCategories ts),
     checkOperationFail
       "testfiles/bad_defines_variance_left.0rx"
-      (\ts -> checkParamVariances builtinCategories ts),
+      (\ts -> checkParamVariances defaultCategories ts),
     checkOperationFail
       "testfiles/bad_requires_variance_left.0rx"
-      (\ts -> checkParamVariances builtinCategories ts),
+      (\ts -> checkParamVariances defaultCategories ts),
 
     checkOperationFail
       "testfiles/conflicting_declaration.0rx"
       (\ts -> do
-        ts <- topoSortCategories builtinCategories ts
-        flattenAllConnections builtinCategories ts
+        ts <- topoSortCategories defaultCategories ts
+        flattenAllConnections defaultCategories ts
         return ()),
     checkOperationFail
       "testfiles/conflicting_inherited.0rx"
       (\ts -> do
-        ts <- topoSortCategories builtinCategories ts
-        flattenAllConnections builtinCategories ts
+        ts <- topoSortCategories defaultCategories ts
+        flattenAllConnections defaultCategories ts
         return ()),
     checkOperationSuccess
       "testfiles/successful_merge.0rx"
       (\ts -> do
-        ts <- topoSortCategories builtinCategories ts
-        flattenAllConnections builtinCategories ts
+        ts <- topoSortCategories defaultCategories ts
+        flattenAllConnections defaultCategories ts
         return ()),
     checkOperationFail
       "testfiles/failed_merge.0rx"
       (\ts -> do
-        ts <- topoSortCategories builtinCategories ts
-        flattenAllConnections builtinCategories ts
+        ts <- topoSortCategories defaultCategories ts
+        flattenAllConnections defaultCategories ts
         return ()),
     checkOperationFail
       "testfiles/ambiguous_merge_inherit.0rx"
       (\ts -> do
-        ts <- topoSortCategories builtinCategories ts
-        flattenAllConnections builtinCategories ts
+        ts <- topoSortCategories defaultCategories ts
+        flattenAllConnections defaultCategories ts
         return ()),
     checkOperationFail
       "testfiles/merge_different_scopes.0rx"
       (\ts -> do
-        ts <- topoSortCategories builtinCategories ts
-        flattenAllConnections builtinCategories ts
+        ts <- topoSortCategories defaultCategories ts
+        flattenAllConnections defaultCategories ts
         return ()),
 
     checkOperationSuccess
       "testfiles/successful_merge_params.0rx"
       (\ts -> do
-        ts <- topoSortCategories builtinCategories ts
-        flattenAllConnections builtinCategories ts
+        ts <- topoSortCategories defaultCategories ts
+        flattenAllConnections defaultCategories ts
         return ()),
     checkOperationFail
       "testfiles/failed_merge_params.0rx"
       (\ts -> do
-        ts <- topoSortCategories builtinCategories ts
-        flattenAllConnections builtinCategories ts
+        ts <- topoSortCategories defaultCategories ts
+        flattenAllConnections defaultCategories ts
         return ()),
     checkOperationSuccess
       "testfiles/preserve_merged.0rx"
       (\ts -> do
-        ts <- topoSortCategories builtinCategories ts
-        flattenAllConnections builtinCategories ts
+        ts <- topoSortCategories defaultCategories ts
+        flattenAllConnections defaultCategories ts
         return ()),
     checkOperationFail
       "testfiles/conflict_in_preserved.0rx"
       (\ts -> do
-        ts <- topoSortCategories builtinCategories ts
-        flattenAllConnections builtinCategories ts
+        ts <- topoSortCategories defaultCategories ts
+        flattenAllConnections defaultCategories ts
         return ()),
     checkOperationSuccess
       "testfiles/resolved_in_preserved.0rx"
       (\ts -> do
-        ts <- topoSortCategories builtinCategories ts
-        flattenAllConnections builtinCategories ts
+        ts <- topoSortCategories defaultCategories ts
+        flattenAllConnections defaultCategories ts
         return ())
   ]
 
@@ -821,34 +824,34 @@ getDefines tm n =
        _ -> compileError $ "Type " ++ n ++ " not found"
 
 getTypeRefines ts s n = do
-  ta <- declareAllTypes builtinCategories ts
+  ta <- declareAllTypes defaultCategories ts
   let r = categoriesToTypeResolver ta
   t <- readSingle "(string)" s
   ParamSet rs <- trRefines r t (CategoryName n)
   return $ map show rs
 
 getTypeDefines ts s n = do
-  ta <- declareAllTypes builtinCategories ts
+  ta <- declareAllTypes defaultCategories ts
   let r = categoriesToTypeResolver ta
   t <- readSingle "(string)" s
   ParamSet ds <- trDefines r t (CategoryName n)
   return $ map show ds
 
 getTypeVariance ts n = do
-  ta <- declareAllTypes builtinCategories ts
+  ta <- declareAllTypes defaultCategories ts
   let r = categoriesToTypeResolver ta
   (ParamSet vs) <- trVariance r (CategoryName n)
   return vs
 
 getTypeFilters ts s = do
-  ta <- declareAllTypes builtinCategories ts
+  ta <- declareAllTypes defaultCategories ts
   let r = categoriesToTypeResolver ta
   t <- readSingle "(string)" s
   ParamSet vs <- trTypeFilters r t
   return $ map (map show) vs
 
 getTypeDefinesFilters ts s = do
-  ta <- declareAllTypes builtinCategories ts
+  ta <- declareAllTypes defaultCategories ts
   let r = categoriesToTypeResolver ta
   t <- readSingle "(string)" s
   ParamSet vs <- trDefinesFilters r t
@@ -909,6 +912,15 @@ containsPaired = checkPaired checkSingle where
   checkSingle a e
     | a == e = return ()
     | otherwise = compileError $ show a ++ " (actual) vs. " ++ show e ++ " (expected)"
+
+withBuiltinCategories :: (CategoryMap SourcePos -> IO (CompileInfo ())) ->
+                         IO (CompileInfo ())
+withBuiltinCategories o = do
+  contents <- readFile builtinBasename
+  let parsed = builtinCategories builtinBasename contents
+  if isCompileError parsed
+     then return $ reviseError (parsed >> return ()) $ "Loading " ++ builtinBasename ++ ":"
+     else o $ getCompileSuccess parsed
 
 checkOperationSuccess f o = do
   contents <- readFile f

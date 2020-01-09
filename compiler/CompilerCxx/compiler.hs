@@ -1,5 +1,5 @@
 {- -----------------------------------------------------------------------------
-Copyright 2019 Kevin P. Barry
+Copyright 2019-2020 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -37,19 +37,22 @@ import TypesBase
 import CompilerCxx.Category
 
 
--- $ compiler [path prefix] [existing sources] -- [new sources]
+-- $ compiler [root prefix] [path prefix] [abs. existing sources] -- [rel. new sources]
 main = do
-  (prefix:files) <- getArgs
+  (root:prefix:files) <- getArgs
+  builtinContents <- readFile $ setPrefix root builtinFilename
+  let bs = builtinCategories builtinBasename builtinContents
   let (fs0,fs) = case break (== "--") files of
                       (fs,[]) -> ([],fs)
                       (fs0,_:fs) -> (fs0,fs)
-  contents0 <- sequence $ map readFile fs0
+  contents0 <- sequence $ map (readFile . setPrefix prefix) fs0
   let ps0 = zip fs0 contents0
   contents <- sequence $ map (readFile . setPrefix prefix) fs
   let namedContents = zip fs contents
   let (ps,xs) = partition ((".0rp" `isSuffixOf`) . fst) namedContents
   results <- return $ do
-    tm0 <- processExisting ps0
+    bs0 <- bs
+    tm0 <- processExisting bs0 ps0
     -- Everything in .0rp is available to all other files.
     (tm0',ps') <- processPublic tm0 ps
     -- All other files are considered internal.
@@ -67,10 +70,11 @@ main = do
     exit c = if isCompileError c
                 then exitFailure
                 else exitSuccess
-    processExisting :: [(String,String)] -> CompileInfo (CategoryMap SourcePos)
-    processExisting cs = do
+    processExisting :: (CategoryMap SourcePos) -> [(String,String)] ->
+                       CompileInfo (CategoryMap SourcePos)
+    processExisting bs cs = do
       cs <- fmap concat $ collectAllOrErrorM $ map parsePublic cs
-      includeNewTypes builtinCategories cs
+      includeNewTypes bs cs
     processPublic :: CategoryMap SourcePos -> [(String,String)] ->
                      CompileInfo (CategoryMap SourcePos,[CxxOutput])
     processPublic tm0 cs = do

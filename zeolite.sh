@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Copyright 2019 Kevin P. Barry
+# Copyright 2019-2020 Kevin P. Barry
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -46,7 +46,7 @@ extra_src=(
 
 init() {
   ghc -i"$root/compiler" "$compiler.hs"
-  ( cd "$root/standard" && "$compiler" "$root" "${standard_src[@]}" )
+  "$compiler" "$root" "$root" "${standard_src[@]}"
 }
 
 general_help() {
@@ -61,7 +61,7 @@ compile() {
   (
     set -e
     cd "$temp" || exit 1
-    command0=("$compiler" "$here" "${standard_tm[@]}" -- "${files[@]}")
+    command0=("$compiler" "$root" "$here" "${standard_tm[@]}" -- "${files[@]}")
     echo "${command0[@]}" >> "$temp/$errors"
     "${command0[@]}" |& tee -a "$temp/$errors"
     if [[ "${PIPESTATUS[0]}" != 0 ]]; then
