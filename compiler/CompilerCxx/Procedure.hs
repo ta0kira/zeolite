@@ -636,7 +636,7 @@ compileExpressionStart (BuiltinCall c f@(FunctionCall _ BuiltinStrong ps es)) = 
   let t1 = ParamSet [ValueType OptionalValue (vtType t0)]
   if isWeakValue t0
      -- Weak values are already unboxed.
-     then return (t1,UnwrappedSingle $  valueBase ++ "::Strong(" ++ useAsUnwrapped e ++ ")")
+     then return (t1,UnwrappedSingle $ valueBase ++ "::Strong(" ++ useAsUnwrapped e ++ ")")
      else return (t1,e)
 compileExpressionStart (BuiltinCall c f@(FunctionCall _ BuiltinTypename ps es)) = do
   when (length (psParams ps) /= 1) $
@@ -647,6 +647,22 @@ compileExpressionStart (BuiltinCall c f@(FunctionCall _ BuiltinTypename ps es)) 
   csRequiresTypes $ Set.unions $ map categoriesFromTypes $ psParams ps
   return $ (ParamSet [formattedRequiredValue],
             valueAsWrapped $ UnboxedPrimitive PrimString $ typeBase ++ "::TypeName(" ++ t ++ ")")
+compileExpressionStart (BuiltinCall c f@(FunctionCall _ BuiltinFail ps es)) = do
+  when (length (psParams ps) /= 0) $
+    lift $ compileError $ "Expected 0 type parameters [" ++ formatFullContext c ++ "]"
+  when (length (psParams es) /= 1) $
+    lift $ compileError $ "Expected 1 argument [" ++ formatFullContext c ++ "]"
+  es' <- sequence $ map compileExpression $ psParams es
+  when (length (psParams $ fst $ head es') /= 1) $
+    lift $ compileError $ "Expected single return in argument [" ++ formatFullContext c ++ "]"
+  let (ParamSet [t0],e) = head es'
+  r <- csResolver
+  fa <- csAllFilters
+  lift $ (checkValueTypeMatch r fa t0 formattedRequiredValue) `reviseError`
+    ("In assignment at " ++ formatFullContext c)
+  csSetNoReturn
+  return $ (ParamSet [],
+            OpaqueMulti $ "BuiltinFail(" ++ useAsUnwrapped e ++ ")")
 compileExpressionStart (ParensExpression c e) = compileExpression e
 compileExpressionStart (InlineAssignment c n e) = do
   (VariableValue c2 s t0 w) <- csGetVariable c n

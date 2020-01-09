@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-Copyright 2019 Kevin P. Barry
+Copyright 2019-2020 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -34,14 +34,14 @@ const Function<SymbolScope::TYPE,0,0,1>& Function_SimpleOutput_stdout =
   *new Function<SymbolScope::TYPE,0,0,1>("SimpleOutput", "stdout", Functions_SimpleOutput, 0);
 const Function<SymbolScope::TYPE,0,0,1>& Function_SimpleOutput_stderr =
   *new Function<SymbolScope::TYPE,0,0,1>("SimpleOutput", "stderr", Functions_SimpleOutput, 1);
-const Function<SymbolScope::TYPE,0,0,1>& Function_SimpleOutput_fail =
-  *new Function<SymbolScope::TYPE,0,0,1>("SimpleOutput", "fail", Functions_SimpleOutput, 2);
+const Function<SymbolScope::TYPE,0,0,1>& Function_SimpleOutput_error =
+  *new Function<SymbolScope::TYPE,0,0,1>("SimpleOutput", "error", Functions_SimpleOutput, 2);
 
 namespace {
 
 extern const S<TypeValue>& Var_stdout;
 extern const S<TypeValue>& Var_stderr;
-extern const S<TypeValue>& Var_fail;
+extern const S<TypeValue>& Var_error;
 
 struct Category_SimpleOutput : public TypeCategory {
   std::string CategoryName() const final { return "SimpleOutput"; }
@@ -65,8 +65,8 @@ struct Type_SimpleOutput : public TypeInstance {
     if (&label == &Function_SimpleOutput_stderr) {
       return ReturnTuple(Var_stderr);
     }
-    if (&label == &Function_SimpleOutput_fail) {
-      return ReturnTuple(Var_fail);
+    if (&label == &Function_SimpleOutput_error) {
+      return ReturnTuple(Var_error);
     }
     return TypeInstance::Dispatch(label, params, args);
   }
@@ -103,9 +103,9 @@ class Value_SimpleOutput : public TypeValue {
   std::ostream& output_;
 };
 
-class Value_SimpleFailure : public TypeValue {
+class Value_SimpleError : public TypeValue {
  public:
-  std::string CategoryName() const final { return "SimpleFailure"; }
+  std::string CategoryName() const final { return "SimpleError"; }
 
   ReturnTuple Dispatch(const S<TypeValue>& self,
                        const DFunction<SymbolScope::VALUE>& label,
@@ -136,7 +136,7 @@ class Value_SimpleFailure : public TypeValue {
 
 const S<TypeValue>& Var_stdout = *new S<TypeValue>(new Value_SimpleOutput(std::cout));
 const S<TypeValue>& Var_stderr = *new S<TypeValue>(new Value_SimpleOutput(std::cerr));
-const S<TypeValue>& Var_fail   = *new S<TypeValue>(new Value_SimpleFailure());
+const S<TypeValue>& Var_error  = *new S<TypeValue>(new Value_SimpleError());
 
 }  // namespace
 

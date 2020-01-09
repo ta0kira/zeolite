@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-Copyright 2019 Kevin P. Barry
+Copyright 2019-2020 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -23,6 +23,12 @@ limitations under the License.
 
 #include "category-source.hpp"
 
+
+void BuiltinFail(const S<TypeValue>& formatted) {
+  FAIL() << TypeValue::Call(formatted, Function_Formatted_formatted,
+                            ParamTuple(), ArgTuple()).Only()->AsString();
+  __builtin_unreachable();
+}
 
 namespace {
 

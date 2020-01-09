@@ -30,7 +30,7 @@ compiler="$root/compiler/CompilerCxx/compiler"
 [[ "${COMPILER_CXX-}" ]] || COMPILER_CXX=clang++
 [[ "${COMPILE_CXX-}" ]] || COMPILE_CXX=("$COMPILER_CXX" -O2 -std=c++11 -o)
 
-standard_src=('standard/standard.0rp' 'standard/standard.0rx')
+standard_src=('standard.0rp' 'standard.0rx')
 standard_tm=("$root/standard/standard.0rp")
 extra_src=(
   "$root/base/builtin.cpp"
@@ -46,7 +46,7 @@ extra_src=(
 
 init() {
   ghc -i"$root/compiler" "$compiler.hs"
-  "$compiler" "$root" "$root" "${standard_src[@]}"
+  (cd "$root/standard" || "$compiler" "$root" "" "${standard_src[@]}")
 }
 
 general_help() {

@@ -35,7 +35,7 @@ testFunction1 (a,b,c) (d,e,f) {
   return { a, z.call().call(), c }
 
   while (true) {
-    ~ fail.to().execute()
+    ~ failure.to().execute()
     return x
   }
 }

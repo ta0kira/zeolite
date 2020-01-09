@@ -31,10 +31,10 @@ compiler="$PWD/compiler"
 [[ "${COMPILER_CXX-}" ]] || COMPILER_CXX=clang++
 [[ "${COMPILE_CXX-}" ]] || COMPILE_CXX=("$COMPILER_CXX" -O0 -g -std=c++11 -o)
 
-standard_src=('standard/standard.0rp' 'standard/standard.0rx')
+standard_src=('standard.0rp' 'standard.0rx')
 
 ghc -i"$root/compiler" "$compiler_hs" -o "$compiler"
-"$compiler" "$root" "$root" "${standard_src[@]}"
+(cd "$root/standard" || "$compiler" "$root" "" "${standard_src[@]}")
 
 standard_tm=($root/standard/*.0rp)
 standard_inc=($root/standard)
@@ -57,7 +57,7 @@ define Util {
     ~ LazyStream<Formatted>\$new()
         .append(message)
         .append(\"\n\")
-        .writeTo(SimpleOutput\$fail())
+        .writeTo(SimpleOutput\$error())
   }
 }
 
@@ -198,10 +198,23 @@ define Test {
 }
 END
 
+expect_crashes 'fail builtin' 'Failed' 'line 4' <<END
+define Test {
+  @category failedReturn () -> (Int)
+  failedReturn () {
+    ~ fail("Failed")
+  }
+
+  run () {
+    Int value <- failedReturn()
+  }
+}
+END
+
 expect_crashes 'fail writer' 'Failed' 'line 3' <<END
 define Test {
   run () {
-    ~ LazyStream<Formatted>\$new().append("Failed").writeTo(SimpleOutput\$fail())
+    ~ LazyStream<Formatted>\$new().append("Failed").writeTo(SimpleOutput\$error())
   }
 }
 END

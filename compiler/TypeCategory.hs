@@ -1,5 +1,5 @@
 {- -----------------------------------------------------------------------------
-Copyright 2019 Kevin P. Barry
+Copyright 2019-2020 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -746,7 +746,8 @@ data FunctionName =
   BuiltinReduce |
   BuiltinRequire |
   BuiltinStrong |
-  BuiltinTypename
+  BuiltinTypename |
+  BuiltinFail
   deriving (Eq,Ord)
 
 instance Show FunctionName where
@@ -756,6 +757,7 @@ instance Show FunctionName where
   show BuiltinRequire = "require"
   show BuiltinStrong = "strong"
   show BuiltinTypename = "typename"
+  show BuiltinFail = "fail"
 
 data ScopedFunction c =
   ScopedFunction {

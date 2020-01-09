@@ -1,5 +1,5 @@
 {- -----------------------------------------------------------------------------
-Copyright 2019 Kevin P. Barry
+Copyright 2019-2020 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -47,6 +47,7 @@ module CompilerState (
   csRequiresTypes,
   csResolver,
   csSameType,
+  csSetNoReturn,
   csStartLoop,
   csUpdateAssigned,
   csWrite,
@@ -91,6 +92,7 @@ class Monad m => CompilerContext c m s a | a -> c s where
   ccInheritReturns :: a -> [a] -> m a
   ccRegisterReturn :: a -> [c] -> ExpressionType -> m a
   ccPrimNamedReturns :: a -> m [ReturnVariable]
+  ccSetNoReturn :: a -> m a
   ccStartLoop :: a -> LoopSetup s -> m a
   ccGetLoop :: a -> m (LoopSetup s)
 
@@ -199,6 +201,9 @@ csRegisterReturn c rs = fmap (\x -> ccRegisterReturn x c rs) get >>= lift >>= pu
 csPrimNamedReturns :: (Monad m, CompilerContext c m s a) =>
   CompilerState a m [ReturnVariable]
 csPrimNamedReturns = fmap ccPrimNamedReturns get >>= lift
+
+csSetNoReturn :: (Monad m, CompilerContext c m s a) => CompilerState a m ()
+csSetNoReturn = fmap ccSetNoReturn get >>= lift >>= put
 
 csStartLoop :: (Monad m, CompilerContext c m s a) =>
   LoopSetup s -> CompilerState a m ()

@@ -1,5 +1,5 @@
 {- -----------------------------------------------------------------------------
-Copyright 2019 Kevin P. Barry
+Copyright 2019-2020 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -383,6 +383,27 @@ instance (Show c, MergeableM m, CompileErrorM m, Monad m) =>
                                                formatFullContext c
       check _ = return ()
   ccPrimNamedReturns = return . pcPrimNamed
+  ccSetNoReturn ctx =
+    return $ ProcedureContext {
+        pcScope = pcScope ctx,
+        pcType = pcType ctx,
+        pcExtParams = pcExtParams ctx,
+        pcIntParams = pcIntParams ctx,
+        pcMembers = pcMembers ctx,
+        pcCategories = pcCategories ctx,
+        pcAllFilters = pcAllFilters ctx,
+        pcExtFilters = pcExtFilters ctx,
+        pcIntFilters = pcIntFilters ctx,
+        pcParamScopes = pcParamScopes ctx,
+        pcFunctions = pcFunctions ctx,
+        pcVariables = pcVariables ctx,
+        pcReturns = NoValidation,
+        pcPrimNamed = pcPrimNamed ctx,
+        pcRequiredTypes = pcRequiredTypes ctx,
+        pcOutput = pcOutput ctx,
+        pcDisallowInit = pcDisallowInit ctx,
+        pcLoopSetup = pcLoopSetup ctx
+      }
   ccStartLoop ctx l =
     return $ ProcedureContext {
         pcScope = pcScope ctx,

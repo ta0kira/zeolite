@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-Copyright 2019 Kevin P. Barry
+Copyright 2019-2020 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -21,6 +21,8 @@ limitations under the License.
 
 #include "category-header.hpp"
 
+
+void BuiltinFail(const S<TypeValue>& formatted) __attribute__ ((noreturn));
 
 extern const void* const Functions_LessThan;
 extern const Function<SymbolScope::TYPE,0,2,1>& Function_LessThan_lessThan;

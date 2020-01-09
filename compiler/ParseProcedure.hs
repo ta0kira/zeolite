@@ -1,5 +1,5 @@
 {- -----------------------------------------------------------------------------
-Copyright 2019 Kevin P. Barry
+Copyright 2019-2020 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -294,7 +294,8 @@ builtinFunction = foldr (<|>) (fail "empty") $ map try [
     kwReduce >> return BuiltinReduce,
     kwRequire >> return BuiltinRequire,
     kwStrong >> return BuiltinStrong,
-    kwTypename >> return BuiltinTypename
+    kwTypename >> return BuiltinTypename,
+    kwFail >> return BuiltinFail
   ]
 
 instance ParseFromSource (ExpressionStart SourcePos) where
