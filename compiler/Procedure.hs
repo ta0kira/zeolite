@@ -1,5 +1,5 @@
 {- -----------------------------------------------------------------------------
-Copyright 2019 Kevin P. Barry
+Copyright 2019-2020 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -200,8 +200,8 @@ data ExpressionStart c =
 -- TODO: Add character, binary, octal.
 data ValueLiteral c =
   StringLiteral [c] String |
+  CharLiteral [c] String |
   IntegerLiteral [c] String |
-  HexLiteral [c] String |
   DecimalLiteral [c] String String |
   BoolLiteral [c] Bool |
   EmptyLiteral [c]
@@ -209,8 +209,8 @@ data ValueLiteral c =
 
 getValueLiteralContext :: ValueLiteral c -> [c]
 getValueLiteralContext (StringLiteral c _)    = c
+getValueLiteralContext (CharLiteral c _)      = c
 getValueLiteralContext (IntegerLiteral c _)   = c
-getValueLiteralContext (HexLiteral c _)       = c
 getValueLiteralContext (DecimalLiteral c _ _) = c
 getValueLiteralContext (BoolLiteral c _)      = c
 getValueLiteralContext (EmptyLiteral c)       = c

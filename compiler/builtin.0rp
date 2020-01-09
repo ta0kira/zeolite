@@ -18,6 +18,8 @@ limitations under the License.
 
 concrete Bool {
   refines Formatted
+
+  defines Equals<Bool>
 }
 
 concrete Int {
@@ -25,6 +27,13 @@ concrete Int {
 
   defines Equals<Int>
   defines LessThan<Int>
+}
+
+concrete Char {
+  refines Formatted
+
+  defines Equals<Char>
+  defines LessThan<Char>
 }
 
 concrete Float {
@@ -40,6 +49,7 @@ concrete String {
   defines Equals<String>
   defines LessThan<String>
 }
+
 
 @type interface LessThan<#x|> {
   lessThan (#x,#x) -> (Bool)

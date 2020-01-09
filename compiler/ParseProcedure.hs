@@ -365,6 +365,7 @@ instance ParseFromSource (ExpressionStart SourcePos) where
 instance ParseFromSource (ValueLiteral SourcePos) where
   sourceParser = labeled "literal" $
                  stringLiteral <|>
+                 charLiteral <|>
                  hexLiteral <|>
                  numberLiteral <|>
                  boolLiteral <|>
@@ -375,6 +376,29 @@ instance ParseFromSource (ValueLiteral SourcePos) where
       ss <- manyTill stringChar (string "\"")
       optionalSpace
       return $ StringLiteral [c] $ concat ss
+    charLiteral = do
+      c <- getPosition
+      string "'"
+      ch <- escapedChar <|> singleChar
+      string "'"
+      optionalSpace
+      return $ CharLiteral [c] ch
+      where
+        singleChar = try anyChar >>= return . (:[])
+        escapedChar = do
+          char '\\'
+          cs <- octChar <|> hexChar <|> singleChar
+          return ('\\':cs)
+        octChar = do
+          o1 <- octDigit
+          o2 <- octDigit
+          o3 <- octDigit
+          return [o1,o2,o3]
+        hexChar = do
+          char 'x' <|> char 'X'
+          h1 <- hexDigit
+          h2 <- hexDigit
+          return ['x',h1,h2]
     stringChar = escaped <|> notEscaped where
       escaped = do
         char '\\'
@@ -386,7 +410,7 @@ instance ParseFromSource (ValueLiteral SourcePos) where
       try (char '0' >> (char 'x' <|> char 'X'))
       ds <- many1 hexDigit
       optionalSpace
-      return $ HexLiteral [c] ds
+      return $ IntegerLiteral [c] $ "0x" ++ ds
     numberLiteral = do
       c <- getPosition
       ds <- many1 digit

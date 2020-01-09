@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-Copyright 2019 Kevin P. Barry
+Copyright 2019-2020 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -25,20 +25,20 @@ limitations under the License.
 ReturnTuple TypeCategory::Dispatch(const DFunction<SymbolScope::CATEGORY>& label,
                                    const ParamTuple& params, const ValueTuple& args) {
   FAIL() << CategoryName() << " does not implement " << label.FunctionName();
-  return ReturnTuple(label.ReturnCount());
+  __builtin_unreachable();
 }
 
 ReturnTuple TypeInstance::Dispatch(const DFunction<SymbolScope::TYPE>& label,
                                    const ParamTuple& params, const ValueTuple& args) {
   FAIL() << CategoryName() << " does not implement " << label.FunctionName();
-  return ReturnTuple(label.ReturnCount());
+  __builtin_unreachable();
 }
 
 ReturnTuple TypeValue::Dispatch(const S<TypeValue>& self,
                                 const DFunction<SymbolScope::VALUE>& label,
                                 const ParamTuple& params, const ValueTuple& args) {
   FAIL() << CategoryName() << " does not implement " << label.FunctionName();
-  return ReturnTuple(label.ReturnCount());
+  __builtin_unreachable();
 }
 
 bool TypeInstance::CanConvert(const TypeInstance& x, const TypeInstance& y) {
@@ -126,22 +126,27 @@ S<TypeValue> TypeValue::Strong(W<TypeValue> target) {
 
 bool TypeValue::AsBool() const {
   FAIL() << CategoryName() << " is not a Bool value";
-  return false;
+  __builtin_unreachable();
 }
 
 PrimString TypeValue::AsString() const {
   FAIL() << CategoryName() << " is not a String value";
-  return "";
+  __builtin_unreachable();
+}
+
+PrimChar TypeValue::AsChar() const {
+  FAIL() << CategoryName() << " is not a Char value";
+  __builtin_unreachable();
 }
 
 PrimInt TypeValue::AsInt() const {
   FAIL() << CategoryName() << " is not an Int value";
-  return 0;
+  __builtin_unreachable();
 }
 
 PrimFloat TypeValue::AsFloat() const {
   FAIL() << CategoryName() << " is not a Float value";
-  return 0.0;
+  __builtin_unreachable();
 }
 
 bool TypeValue::Present() const {

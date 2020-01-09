@@ -1,5 +1,5 @@
 {- -----------------------------------------------------------------------------
-Copyright 2019 Kevin P. Barry
+Copyright 2019-2020 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -79,6 +79,7 @@ instance ParseFromSource CategoryName where
       box n
         | n == "Bool"      = BuiltinBool
         | n == "String"    = BuiltinString
+        | n == "Char"      = BuiltinChar
         | n == "Int"       = BuiltinInt
         | n == "Float"     = BuiltinFloat
         | n == "LessThan"  = BuiltinLessThan

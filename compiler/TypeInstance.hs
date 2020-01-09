@@ -1,5 +1,5 @@
 {- -----------------------------------------------------------------------------
-Copyright 2019 Kevin P. Barry
+Copyright 2019-2020 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -100,6 +100,7 @@ data CategoryName =
   } |
   BuiltinBool |
   BuiltinString |
+  BuiltinChar |
   BuiltinInt |
   BuiltinFloat |
   BuiltinLessThan |
@@ -110,6 +111,7 @@ instance Show CategoryName where
   show (CategoryName n) = n
   show BuiltinBool      = "Bool"
   show BuiltinString    = "String"
+  show BuiltinChar      = "Char"
   show BuiltinInt       = "Int"
   show BuiltinFloat     = "Float"
   show BuiltinLessThan  = "LessThan"

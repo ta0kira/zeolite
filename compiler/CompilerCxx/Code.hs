@@ -1,5 +1,5 @@
 {- -----------------------------------------------------------------------------
-Copyright 2019 Kevin P. Barry
+Copyright 2019-2020 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -77,6 +77,7 @@ predTraceContext c = "PRED_CONTEXT_POINT(" ++ show (formatFullContext c) ++ ")"
 data PrimitiveType =
   PrimBool |
   PrimString |
+  PrimChar |
   PrimInt |
   PrimFloat
   deriving (Eq,Show)
@@ -86,6 +87,7 @@ isPrimType t
   | t == boolRequiredValue  = True
   | t == intRequiredValue   = True
   | t == floatRequiredValue = True
+  | t == charRequiredValue  = True
   | otherwise               = False
 
 data ExprValue =
@@ -109,10 +111,12 @@ useAsReturns (WrappedSingle e)               = "ReturnTuple(" ++ e ++ ")"
 useAsReturns (UnwrappedSingle e)             = "ReturnTuple(" ++ e ++ ")"
 useAsReturns (BoxedPrimitive PrimBool e)     = "ReturnTuple(Box_Bool(" ++ e ++ "))"
 useAsReturns (BoxedPrimitive PrimString e)   = "ReturnTuple(Box_String(" ++ e ++ "))"
+useAsReturns (BoxedPrimitive PrimChar e)     = "ReturnTuple(Box_Char(" ++ e ++ "))"
 useAsReturns (BoxedPrimitive PrimInt e)      = "ReturnTuple(Box_Int(" ++ e ++ "))"
 useAsReturns (BoxedPrimitive PrimFloat e)    = "ReturnTuple(Box_Float(" ++ e ++ "))"
 useAsReturns (UnboxedPrimitive PrimBool e)   = "ReturnTuple(Box_Bool(" ++ e ++ "))"
 useAsReturns (UnboxedPrimitive PrimString e) = "ReturnTuple(Box_String(" ++ e ++ "))"
+useAsReturns (UnboxedPrimitive PrimChar e)   = "ReturnTuple(Box_Char(" ++ e ++ "))"
 useAsReturns (UnboxedPrimitive PrimInt e)    = "ReturnTuple(Box_Int(" ++ e ++ "))"
 useAsReturns (UnboxedPrimitive PrimFloat e)  = "ReturnTuple(Box_Float(" ++ e ++ "))"
 
@@ -122,10 +126,12 @@ useAsArgs (WrappedSingle e)               = "ArgTuple(" ++ e ++ ")"
 useAsArgs (UnwrappedSingle e)             = "ArgTuple(" ++ e ++ ")"
 useAsArgs (BoxedPrimitive PrimBool e)     = "ArgTuple(Box_Bool(" ++ e ++ "))"
 useAsArgs (BoxedPrimitive PrimString e)   = "ArgTuple(Box_String(" ++ e ++ "))"
+useAsArgs (BoxedPrimitive PrimChar e)     = "ArgTuple(Box_Char(" ++ e ++ "))"
 useAsArgs (BoxedPrimitive PrimInt e)      = "ArgTuple(Box_Int(" ++ e ++ "))"
 useAsArgs (BoxedPrimitive PrimFloat e)    = "ArgTuple(Box_Float(" ++ e ++ "))"
 useAsArgs (UnboxedPrimitive PrimBool e)   = "ArgTuple(Box_Bool(" ++ e ++ "))"
 useAsArgs (UnboxedPrimitive PrimString e) = "ArgTuple(Box_String(" ++ e ++ "))"
+useAsArgs (UnboxedPrimitive PrimChar e)   = "ArgTuple(Box_Char(" ++ e ++ "))"
 useAsArgs (UnboxedPrimitive PrimInt e)    = "ArgTuple(Box_Int(" ++ e ++ "))"
 useAsArgs (UnboxedPrimitive PrimFloat e)  = "ArgTuple(Box_Float(" ++ e ++ "))"
 
@@ -135,10 +141,12 @@ useAsUnwrapped (WrappedSingle e)               = "(" ++ e ++ ")"
 useAsUnwrapped (UnwrappedSingle e)             = "(" ++ e ++ ")"
 useAsUnwrapped (BoxedPrimitive PrimBool e)     = "Box_Bool(" ++ e ++ ")"
 useAsUnwrapped (BoxedPrimitive PrimString e)   = "Box_String(" ++ e ++ ")"
+useAsUnwrapped (BoxedPrimitive PrimChar e)     = "Box_Char(" ++ e ++ ")"
 useAsUnwrapped (BoxedPrimitive PrimInt e)      = "Box_Int(" ++ e ++ ")"
 useAsUnwrapped (BoxedPrimitive PrimFloat e)    = "Box_Float(" ++ e ++ ")"
 useAsUnwrapped (UnboxedPrimitive PrimBool e)   = "Box_Bool(" ++ e ++ ")"
 useAsUnwrapped (UnboxedPrimitive PrimString e) = "Box_String(" ++ e ++ ")"
+useAsUnwrapped (UnboxedPrimitive PrimChar e) = "Box_Char(" ++ e ++ ")"
 useAsUnwrapped (UnboxedPrimitive PrimInt e)    = "Box_Int(" ++ e ++ ")"
 useAsUnwrapped (UnboxedPrimitive PrimFloat e)  = "Box_Float(" ++ e ++ ")"
 
@@ -146,16 +154,19 @@ useAsUnboxed :: PrimitiveType -> ExprValue -> String
 useAsUnboxed t (OpaqueMulti e)
   | t == PrimBool   = "(" ++ e ++ ").Only()->AsBool()"
   | t == PrimString = "(" ++ e ++ ").Only()->AsString()"
+  | t == PrimChar   = "(" ++ e ++ ").Only()->AsChar()"
   | t == PrimInt    = "(" ++ e ++ ").Only()->AsInt()"
   | t == PrimFloat  = "(" ++ e ++ ").Only()->AsFloat()"
 useAsUnboxed t (WrappedSingle e)
   | t == PrimBool   = "(" ++ e ++ ")->AsBool()"
   | t == PrimString = "(" ++ e ++ ")->AsString()"
+  | t == PrimChar   = "(" ++ e ++ ")->AsChar()"
   | t == PrimInt    = "(" ++ e ++ ")->AsInt()"
   | t == PrimFloat  = "(" ++ e ++ ")->AsFloat()"
 useAsUnboxed t (UnwrappedSingle e)
   | t == PrimBool   = "(" ++ e ++ ")->AsBool()"
   | t == PrimString = "(" ++ e ++ ")->AsString()"
+  | t == PrimChar   = "(" ++ e ++ ")->AsChar()"
   | t == PrimInt    = "(" ++ e ++ ")->AsInt()"
   | t == PrimFloat  = "(" ++ e ++ ")->AsFloat()"
 useAsUnboxed _ (BoxedPrimitive _ e)   = "(" ++ e ++ ")"
@@ -166,6 +177,7 @@ valueAsWrapped (UnwrappedSingle e)             = WrappedSingle e
 valueAsWrapped (BoxedPrimitive _ e)            = WrappedSingle e
 valueAsWrapped (UnboxedPrimitive PrimBool e)   = WrappedSingle $ "Box_Bool(" ++ e ++ ")"
 valueAsWrapped (UnboxedPrimitive PrimString e) = WrappedSingle $ "Box_String(" ++ e ++ ")"
+valueAsWrapped (UnboxedPrimitive PrimChar e)   = WrappedSingle $ "Box_Char(" ++ e ++ ")"
 valueAsWrapped (UnboxedPrimitive PrimInt e)    = WrappedSingle $ "Box_Int(" ++ e ++ ")"
 valueAsWrapped (UnboxedPrimitive PrimFloat e)  = WrappedSingle $ "Box_Float(" ++ e ++ ")"
 valueAsWrapped v                               = v
@@ -175,6 +187,7 @@ valueAsUnwrapped (OpaqueMulti e)                 = UnwrappedSingle $ "(" ++ e ++
 valueAsUnwrapped (WrappedSingle e)               = UnwrappedSingle e
 valueAsUnwrapped (UnboxedPrimitive PrimBool e)   = UnwrappedSingle $ "Box_Bool(" ++ e ++ ")"
 valueAsUnwrapped (UnboxedPrimitive PrimString e) = UnwrappedSingle $ "Box_String(" ++ e ++ ")"
+valueAsUnwrapped (UnboxedPrimitive PrimChar e)   = UnwrappedSingle $ "Box_Char(" ++ e ++ ")"
 valueAsUnwrapped (UnboxedPrimitive PrimInt e)    = UnwrappedSingle $ "Box_Int(" ++ e ++ ")"
 valueAsUnwrapped (UnboxedPrimitive PrimFloat e)  = UnwrappedSingle $ "Box_Float(" ++ e ++ ")"
 valueAsUnwrapped v                               = v
@@ -184,6 +197,7 @@ variableStoredType t
   | t == boolRequiredValue   = "bool"
   | t == intRequiredValue    = "PrimInt"
   | t == floatRequiredValue  = "PrimFloat"
+  | t == charRequiredValue   = "PrimChar"
   | isWeakValue t            = "W<TypeValue>"
   | otherwise                = "S<TypeValue>"
 
@@ -192,6 +206,7 @@ variableProxyType t
   | t == boolRequiredValue   = "bool"
   | t == intRequiredValue    = "PrimInt"
   | t == floatRequiredValue  = "PrimFloat"
+  | t == charRequiredValue   = "PrimChar"
   | isWeakValue t            = "W<TypeValue>&"
   | otherwise                = "S<TypeValue>&"
 
@@ -200,6 +215,7 @@ readStoredVariable t s
   | t == boolRequiredValue   = UnboxedPrimitive PrimBool s
   | t == intRequiredValue    = UnboxedPrimitive PrimInt s
   | t == floatRequiredValue  = UnboxedPrimitive PrimFloat s
+  | t == charRequiredValue   = UnboxedPrimitive PrimChar s
   | otherwise                = UnwrappedSingle s
 
 writeStoredVariable :: ValueType -> ExprValue -> String
@@ -207,6 +223,7 @@ writeStoredVariable t e
   | t == boolRequiredValue   = useAsUnboxed PrimBool e
   | t == intRequiredValue    = useAsUnboxed PrimInt e
   | t == floatRequiredValue  = useAsUnboxed PrimFloat e
+  | t == charRequiredValue   = useAsUnboxed PrimChar e
   | otherwise                = useAsUnwrapped e
 
 functionLabelType :: ScopedFunction c -> String

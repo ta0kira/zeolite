@@ -1,5 +1,5 @@
 {- -----------------------------------------------------------------------------
-Copyright 2019 Kevin P. Barry
+Copyright 2019-2020 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -392,12 +392,11 @@ compileExpression :: (Show c, Monad m, CompileErrorM m, MergeableM m,
 compileExpression = compile where
   compile (Literal (StringLiteral c l)) = do
     return (ParamSet [stringRequiredValue],UnboxedPrimitive PrimString $ "PrimString(\"" ++ l ++ "\")")
+  compile (Literal (CharLiteral c l)) = do
+    return (ParamSet [charRequiredValue],UnboxedPrimitive PrimChar $ "PrimChar('" ++ l ++ "')")
   compile (Literal (IntegerLiteral c l)) = do
     -- TODO: Check bounds.
     return (ParamSet [intRequiredValue],UnboxedPrimitive PrimInt $ "PrimInt(" ++ l ++ ")")
-  compile (Literal (HexLiteral c l)) = do
-    -- TODO: Check bounds.
-    return (ParamSet [intRequiredValue],UnboxedPrimitive PrimInt $ "PrimInt(0x" ++ l ++ ")")
   compile (Literal (DecimalLiteral c l1 l2)) = do
     -- TODO: Check bounds.
     return (ParamSet [floatRequiredValue],UnboxedPrimitive PrimFloat $ "PrimFloat(" ++ l1 ++ "." ++ l2 ++ ")")
@@ -473,6 +472,7 @@ compileExpression = compile where
   arithmetic2 = Set.fromList ["%"]
   arithmetic3 = Set.fromList ["+","-"]
   arithmetic = Set.union arithmetic1 arithmetic2
+  equals = Set.fromList ["==","!="]
   comparison = Set.fromList ["==","!=","<","<=",">",">="]
   logical = Set.fromList ["&&","||"]
   bindInfix c (ParamSet ts1,e1) o (ParamSet ts2,e2) = do
@@ -504,6 +504,10 @@ compileExpression = compile where
         | o == "+" && t1 == stringRequiredValue = do
           return (ParamSet [stringRequiredValue],glueInfix PrimString PrimString e1 o e2)
         | o `Set.member` logical && t1 == boolRequiredValue = do
+          return (ParamSet [boolRequiredValue],glueInfix PrimBool PrimBool e1 o e2)
+        | o == "-" && t1 == charRequiredValue = do
+          return (ParamSet [intRequiredValue],glueInfix PrimChar PrimChar e1 o e2)
+        | o `Set.member` equals && t1 == boolRequiredValue = do
           return (ParamSet [boolRequiredValue],glueInfix PrimBool PrimBool e1 o e2)
         | otherwise =
           lift $ compileError $ "Cannot " ++ show o ++ " " ++ show t1 ++ " and " ++
@@ -659,7 +663,7 @@ compileExpressionStart (BuiltinCall c f@(FunctionCall _ BuiltinFail ps es)) = do
   r <- csResolver
   fa <- csAllFilters
   lift $ (checkValueTypeMatch r fa t0 formattedRequiredValue) `reviseError`
-    ("In assignment at " ++ formatFullContext c)
+    ("In fail call at " ++ formatFullContext c)
   csSetNoReturn
   return $ (ParamSet [],
             OpaqueMulti $ "BuiltinFail(" ++ useAsUnwrapped e ++ ")")

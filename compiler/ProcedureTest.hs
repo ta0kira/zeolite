@@ -1,5 +1,5 @@
 {- -----------------------------------------------------------------------------
-Copyright 2019 Kevin P. Barry
+Copyright 2019-2020 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -186,6 +186,15 @@ tests = [
     checkShortParseSuccess "x <- 123.0 + z.call()",
     checkShortParseFail "x <- \"123\".call()",
     checkShortParseFail "x <- 123.call()",
+    checkShortParseSuccess " x <- 'x'",
+    checkShortParseSuccess " x <- '\\xAA'",
+    checkShortParseFail " x <- '\\xAAZ'",
+    checkShortParseSuccess " x <- '\076'",
+    checkShortParseFail " x <- '\\07'",
+    checkShortParseSuccess " x <- '\\n'",
+    checkShortParseFail " x <- 'x",
+    checkShortParseFail " x <- 'xx'",
+    checkShortParseSuccess " x <- \"'xx\"",
 
     checkParsesAs "1 + 2 < 4 && 3 >= 1 * 2 + 1 || true"
                   (\e -> case e of

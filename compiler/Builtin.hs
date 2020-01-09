@@ -23,6 +23,7 @@ module Builtin (
   builtinBasename,
   builtinCategories,
   builtinFilename,
+  charRequiredValue,
   defaultCategories,
   emptyValue,
   floatRequiredValue,
@@ -59,6 +60,8 @@ boolRequiredValue :: ValueType
 boolRequiredValue = requiredSingleton BuiltinBool
 stringRequiredValue :: ValueType
 stringRequiredValue = requiredSingleton BuiltinString
+charRequiredValue :: ValueType
+charRequiredValue = requiredSingleton BuiltinChar
 intRequiredValue :: ValueType
 intRequiredValue = requiredSingleton BuiltinInt
 floatRequiredValue :: ValueType
