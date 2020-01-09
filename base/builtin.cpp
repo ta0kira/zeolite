@@ -608,7 +608,7 @@ const void* const Functions_ReadPosition = &Collection_ReadPosition;
 const Function<SymbolScope::VALUE,0,1,1>& Function_ReadPosition_readPosition =
    *new Function<SymbolScope::VALUE,0,1,1>("ReadPosition", "readPosition", Functions_ReadPosition, 0);
 const Function<SymbolScope::VALUE,0,0,1>& Function_ReadPosition_readSize =
-   *new Function<SymbolScope::VALUE,0,0,1>("ReadPosition", "readSize", Functions_ReadPosition, 0);
+   *new Function<SymbolScope::VALUE,0,0,1>("ReadPosition", "readSize", Functions_ReadPosition, 1);
 
 TypeInstance& Merge_Intersect(L<TypeInstance*> params) {
   static auto& cache = *new std::map<L<TypeInstance*>,R<Type_Intersect>>();

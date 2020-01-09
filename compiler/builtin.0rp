@@ -51,7 +51,6 @@ concrete String {
   defines LessThan<String>
 }
 
-
 @type interface LessThan<#x|> {
   lessThan (#x,#x) -> (Bool)
 }
