@@ -99,6 +99,7 @@
         <RegExpr attribute="Number" context="#stay" String="[0-9]+(\.[0-9]+)" />
         <Int attribute="Number" context="#stay" />
         <DetectChar attribute="String" context="String" char="&quot;" />
+        <DetectChar attribute="Char" context="Char" char="'" />
         <Detect2Chars attribute="Assign" context="#stay" char="&lt;" char1="-" />
         <Detect2Chars attribute="Assign" context="#stay" char="-" char1="&gt;" />
         <DetectChar attribute="Voided" context="#stay" char="~" />
@@ -165,6 +166,11 @@
       <context name="String" attribute="String" lineEndContext="#stay" >
         <HlCStringChar attribute="Escaped Char" context="#stay" />
         <DetectChar attribute="String" context="#pop" char="&quot;" />
+      </context>
+
+      <context name="Char" attribute="Char" lineEndContext="#stay" >
+        <HlCChar attribute="Escaped Char" context="#stay" />
+        <DetectChar attribute="Char" context="#pop" char="'" />
       </context>
 
       <context name="Type Name" attribute="Normal Text" lineEndContext="#stay" >
@@ -243,6 +249,7 @@
       <itemData name="Define Category Name" defStyleNum="dsDataType" bold="true" spellChecking="false" />
       <itemData name="Param Name" defStyleNum="dsDataType" italic="true" spellChecking="false" />
       <itemData name="String" defStyleNum="dsString" spellChecking="true" />
+      <itemData name="Char" defStyleNum="dsChar" spellChecking="true" />
       <itemData name="Escaped Char" defStyleNum="dsChar" spellChecking="false" />
       <itemData name="Assign" defStyleNum="dsOthers" bold="true" spellChecking="false" />
       <itemData name="Params Brace" defStyleNum="dsOperator" bold="false" color="#c02040" selColor="#c02040" spellChecking="false" />
