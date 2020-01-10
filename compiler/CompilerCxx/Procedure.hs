@@ -715,6 +715,9 @@ compileFunctionCall e f (FunctionCall c _ ps es) = do
           ("In function call at " ++ formatFullContext c)
   es' <- sequence $ map compileExpression $ psParams es
   (ts,es'') <- getValues es'
+  -- Called an extra time so arg count mismatches have reasonable errors.
+  lift $ processParamPairs (\_ _ -> return ()) (ftArgs f'') (ParamSet ts) `reviseError`
+    ("In function call at " ++ formatFullContext c)
   lift $ processParamPairs (checkArg r fa) (ftArgs f'') (ParamSet $ zip [1..] ts) `reviseError`
     ("In function call at " ++ formatFullContext c)
   csRequiresTypes $ Set.unions $ map categoriesFromTypes $ psParams ps
