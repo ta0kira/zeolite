@@ -1,0 +1,75 @@
+concrete MatchState {
+  refines Formatted
+  defines Equals<MatchState>
+  defines LessThan<MatchState>
+
+  // Ordered from lowest to highest.
+
+  @type matchFail     () -> (MatchState) // Matching has failed.
+  @type matchContinue () -> (MatchState) // Matching must continue.
+  @type matchEnd      () -> (MatchState) // End of the match but not the data.
+  @type matchComplete () -> (MatchState) // End of the pattern and the data.
+}
+
+@value interface Matcher<#x> {
+  copyWithReset () -> (Matcher<#x>)
+  tryNextMatch (#x) -> (MatchState,#x,optional LinkedNode<Matcher<#x>>)
+}
+
+concrete MatchSingleChar<#c> {
+  #c defines Equals<#c>
+
+  refines Matcher<ReadIterator<#c>>
+
+  @type create (#c) -> (MatchSingleChar<#c>)
+  @value copyWithReset () -> (MatchSingleChar<#c>)
+}
+
+concrete MatchCharRange<#c> {
+  #c defines LessThan<#c>
+
+  refines Matcher<ReadIterator<#c>>
+
+  @type create (#c,#c) -> (MatchCharRange<#c>)
+  @value copyWithReset () -> (MatchCharRange<#c>)
+}
+
+concrete MatchAnyChar<#c> {
+  refines Matcher<ReadIterator<#c>>
+
+  @type create () -> (MatchAnyChar<#c>)
+  @value copyWithReset () -> (MatchAnyChar<#c>)
+}
+
+concrete RepeatMatcher<#x> {
+  refines Matcher<#x>
+
+  @type createZeroPlus (Matcher<#x>) -> (Matcher<#x>)
+  @type createOnePlus (Matcher<#x>) -> (Matcher<#x>)
+  @type createRange (Int,Int,Matcher<#x>) -> (Matcher<#x>)
+  @value copyWithReset () -> (RepeatMatcher<#x>)
+}
+
+concrete SequenceMatcher<#x> {
+  refines Matcher<#x>
+
+  @type create (Matcher<#x>) -> (SequenceMatcher<#x>)
+  @value copyWithReset () -> (SequenceMatcher<#x>)
+  @value appendMatcher (Matcher<#x>) -> (SequenceMatcher<#x>)
+}
+
+concrete AlternativeMatcher<#x> {
+  refines Matcher<#x>
+
+  @type create (Matcher<#x>) -> (AlternativeMatcher<#x>)
+  @value copyWithReset () -> (AlternativeMatcher<#x>)
+  @value addAlternative (Matcher<#x>) -> (AlternativeMatcher<#x>)
+}
+
+concrete LinkedNode<#x> {
+  @type create (#x,optional LinkedNode<#x>) -> (LinkedNode<#x>)
+  @type appendTail (optional LinkedNode<#x>,optional LinkedNode<#x>) -> (optional LinkedNode<#x>)
+  @value value () -> (#x)
+  @value next () -> (optional LinkedNode<#x>)
+  @value setNext(optional LinkedNode<#x>) -> ()
+}
