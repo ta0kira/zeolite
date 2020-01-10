@@ -39,7 +39,11 @@ extra_src=(
   "$root/base/types.cpp"
   "$root/capture-thread/src/thread-crosser.cc"
   "$root/standard/Category_BufferedWriter.cpp"
+  "$root/standard/Category_IterateForward.cpp"
+  "$root/standard/Category_IterateReverse.cpp"
   "$root/standard/Category_LazyStream.cpp"
+  "$root/standard/Category_ReadCurrent.cpp"
+  "$root/standard/Category_ReadIterator.cpp"
   "$root/standard/Category_Runner.cpp"
   "$root/standard/Category_SimpleOutput.cpp"
   "$root/standard/Category_Writer.cpp")
