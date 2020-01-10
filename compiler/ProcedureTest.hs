@@ -213,6 +213,20 @@ tests = [
                                         (Literal (IntegerLiteral _ "2"))) "+"
                                       (Literal (IntegerLiteral _ "1"))))) "||"
                                 (Literal (BoolLiteral _ True))) -> True
+                              _ -> False),
+
+    -- This expression isn't really valid, but it ensures that the first ! is
+    -- applied only to x and not x*!y.
+    checkParsesAs "!x * !y + !z"
+                  (\e -> case e of
+                              (InfixExpression _
+                                (InfixExpression _
+                                  (UnaryExpression _ "!"
+                                    (Expression _ (NamedVariable (OutputValue _ (VariableName "x"))) [])) "*"
+                                  (UnaryExpression _ "!"
+                                    (Expression _ (NamedVariable (OutputValue _ (VariableName "y"))) []))) "+"
+                                (UnaryExpression _ "!"
+                                  (Expression _ (NamedVariable (OutputValue _ (VariableName "z"))) []))) -> True
                               _ -> False)
   ]
 
