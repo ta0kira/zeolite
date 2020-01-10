@@ -76,11 +76,13 @@
     <list name="builtinCategory">
       <item> Bool </item>
       <item> String </item>
+      <item> Char </item>
       <item> Int </item>
       <item> Float </item>
       <item> LessThan </item>
       <item> Equals </item>
       <item> Formatted </item>
+      <item> ReadPosition </item>
     </list>
 
     <contexts>
