@@ -56,7 +56,8 @@ general_help() {
 compile() {
   local temp=$1
   local binary_name=$2
-  shift 2
+  local main_category=$3
+  shift 3
   local files=("$@")
   (
     set -e
@@ -67,6 +68,10 @@ compile() {
     if [[ "${PIPESTATUS[0]}" != 0 ]]; then
       echo "$0: Failed to compile Zeolite sources. See $temp for more details." 1>&2
       general_help
+      return 1
+    fi
+    if [ ! -r "$temp/Category_$main_category.hpp" ]; then
+      echo "$0: $main_category has not been defined." 1>&2
       return 1
     fi
     command1=(
@@ -125,7 +130,7 @@ run() {
 
   init
   create_main "$main" "$main_category"
-  compile "$temp" "$here/$main_category" "${all_files[@]}"
+  compile "$temp" "$here/$main_category" "$main_category" "${all_files[@]}"
   echo "Created binary $main_category." 1>&2
   echo "Also check out intermediate output in $temp." 1>&2
 }

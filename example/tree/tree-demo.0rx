@@ -1,8 +1,8 @@
-concrete TreeDemo {
+concrete Demo {
   defines Runner
 }
 
-define TreeDemo {
+define Demo {
   run () {
     ~ testTree()
     ~ demoTypeTree()
