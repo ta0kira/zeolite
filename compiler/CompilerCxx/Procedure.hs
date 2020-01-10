@@ -25,6 +25,7 @@ module CompilerCxx.Procedure (
   categoriesFromTypes,
   compileExecutableProcedure,
   compileExpression,
+  compileLazyInit,
   compileStatement,
 ) where
 
@@ -277,6 +278,21 @@ compileStatement (Assignment c as e) = do
                writeStoredVariable t (UnwrappedSingle $ "r.At(" ++ show i ++ ")") ++ ";"]
     assignMulti _ = return ()
 compileStatement (NoValueExpression v) = compileVoidExpression v
+
+compileLazyInit :: (Show c, Monad m, CompileErrorM m, MergeableM m,
+                   CompilerContext c m [String] a) =>
+  DefinedMember c -> CompilerState a m ()
+compileLazyInit (DefinedMember _ _ _ _ Nothing) = return mergeDefault
+compileLazyInit (DefinedMember c _ t1 n (Just e)) = do
+  (ts,e') <- compileExpression e
+  when (length (psParams ts) /= 1) $
+    lift $ compileError $ "Expected single return in initializer [" ++ formatFullContext (getExpressionContext e) ++ "]"
+  r <- csResolver
+  fa <- csAllFilters
+  let ParamSet [t2] = ts
+  lift $ (checkValueTypeMatch r fa t2 t1) `reviseError`
+    ("In initialization of " ++ show n ++ " at " ++ formatFullContext c)
+  csWrite [variableName n ++ "([]() { return " ++ writeStoredVariable t1 e' ++ "; })"]
 
 compileVoidExpression :: (Show c, Monad m, CompileErrorM m, MergeableM m,
                          CompilerContext c m [String] a) =>
@@ -555,7 +571,8 @@ compileExpressionStart (NamedVariable (OutputValue c n)) = do
   (VariableValue _ s t _) <- csGetVariable c n
   csCheckVariableInit c n
   scoped <- autoScope s
-  return (ParamSet [t],readStoredVariable t (scoped ++ variableName n))
+  let lazy = s == CategoryScope
+  return (ParamSet [t],readStoredVariable lazy t (scoped ++ variableName n))
 compileExpressionStart (CategoryCall c t f@(FunctionCall _ n _ _)) = do
   f' <- csGetCategoryFunction c (Just t) n
   csRequiresTypes $ Set.fromList [t,sfType f']
@@ -681,8 +698,9 @@ compileExpressionStart (InlineAssignment c n e) = do
     ("In assignment at " ++ formatFullContext c)
   csUpdateAssigned n
   scoped <- autoScope s
-  return (ParamSet [t0],readStoredVariable t0 $ "(" ++ scoped ++ variableName n ++
-                                                " = " ++ writeStoredVariable t0 e' ++ ")")
+  let lazy = s == CategoryScope
+  return (ParamSet [t0],readStoredVariable lazy t0 $ "(" ++ scoped ++ variableName n ++
+                                                     " = " ++ writeStoredVariable t0 e' ++ ")")
 
 compileFunctionCall :: (Show c, Monad m, CompileErrorM m, MergeableM m,
                         CompilerContext c m [String] a) =>
@@ -788,4 +806,4 @@ doNamedReturn = do
   csWrite ["return returns;"]
   where
     assign (ReturnVariable i n t) =
-      "returns.At(" ++ show i ++ ") = " ++ useAsUnwrapped (readStoredVariable t $ variableName n) ++ ";"
+      "returns.At(" ++ show i ++ ") = " ++ useAsUnwrapped (readStoredVariable False t $ variableName n) ++ ";"

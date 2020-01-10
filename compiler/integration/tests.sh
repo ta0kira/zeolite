@@ -76,7 +76,7 @@ compile() {
   )
 }
 
-SKIP_TESTS=0
+SKIP_TESTS=${SKIP_TESTS-0}
 
 start_skipping() {
   SKIP_TESTS=1
@@ -160,11 +160,14 @@ expect_crashes() {
     echo "Test \"$name\" ($count): Expected compilation; see output in $temp" 1>&2
     return 1
   fi
-  ulimit -Sc 0 2> /dev/null || true
-  if "$temp/compiled" &>> "$temp/$errors"; then
-    echo "Test \"$name\" ($count): Expected crash; see output in $temp" 1>&2
-    return 1
-  fi
+  (
+    cd "$temp" # Makes sure core dump is in the right place.
+    ulimit -Sc unlimited 2> /dev/null || true
+    if "$temp/compiled" &>> "$temp/$errors"; then
+      echo "Test \"$name\" ($count): Expected crash; see output in $temp" 1>&2
+      return 1
+    fi
+  )
   [[ -z "${patterns-}" ]] || for p in "${patterns[@]}"; do
     if ! egrep -q -- "$p" "$temp/$errors"; then
       echo "Test \"$name\" ($count): Expected pattern '$p' in error; see output in $temp" 1>&2
@@ -282,7 +285,7 @@ define Test {
 }
 END
 
-expect_crashes '@category init cycle' 'Value1|Value2' 'line 10|line 18' <<END
+expect_crashes '@category init cycle' 'Value1|Value2' 'line 13|line 21' <<END
 concrete Value1 {
   @type get () -> (Bool)
 }
@@ -346,11 +349,21 @@ define Test {
 }
 END
 
-expect_error '@value init in @category init' 'allowed' 'line 2' <<END
+expect_runs 'value init in @category member' <<END
 define Test {
-  @category Test value <- Test{}
+  @value Int value
+  @category Test singleton <- Test{ 3 }
 
-  run () {}
+  @value get () -> (Int)
+  get () {
+    return value
+  }
+
+  run () {
+    if (singleton.get() != 3) {
+      ~fail(singleton.get())
+    }
+  }
 }
 END
 

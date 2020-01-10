@@ -149,7 +149,7 @@ compileConcreteDefinition ta dd@(DefinedCategory c n pi fi ms ps fs) = do
       categoryConstructor ta t cm,
       categoryDispatch allFuncs,
       mergeAllM $ map (compileExecutableProcedure ta n params params2 vm filters filters2 fa cv) cp,
-      mergeAllM $ map (createMember r allFilters) cm
+      mergeAllM $ map (createMemberLazy r allFilters) cm
     ]
   te <- mergeAllM [
       typeConstructor ta t tm,
@@ -177,13 +177,15 @@ compileConcreteDefinition ta dd@(DefinedCategory c n pi fi ms ps fs) = do
       ]
     categoryConstructor tm t ms = do
       ctx <- getContextForInit tm t dd CategoryScope
-      initMembers <- runDataCompiler (sequence $ map initMember ms) ctx
+      initMembers <- runDataCompiler (sequence $ map compileLazyInit ms) ctx
+      let initMembersStr = intercalate ", " $ cdOutput initMembers
+      let initColon = if null initMembersStr then "" else " : "
       mergeAllM [
-          return $ onlyCode $ categoryName n ++ "() {",
+          return $ onlyCode $ categoryName n ++ "()" ++ initColon ++ initMembersStr ++ " {",
           return $ indentCompiled $ onlyCodes $ getCycleCheck (categoryName n),
           return $ indentCompiled $ onlyCode $ "TRACE_FUNCTION(\"" ++ show n ++ " (init @category)\")",
-          return $ indentCompiled $ initMembers,
-          return $ onlyCode "}"
+          return $ onlyCode "}",
+          return $ clearCompiled initMembers -- Inherit required types.
         ]
     typeConstructor tm t ms = do
       let ps = map vpParam $ getCategoryParams t
@@ -217,6 +219,10 @@ compileConcreteDefinition ta dd@(DefinedCategory c n pi fi ms ps fs) = do
       validateGeneralInstance r filters (vtType $ dmType m) `reviseError`
         ("In creation of " ++ show (dmName m) ++ " at " ++ formatFullContext (dmContext m))
       return $ onlyCode $ variableStoredType (dmType m) ++ " " ++ variableName (dmName m) ++ ";"
+    createMemberLazy r filters m = do
+      validateGeneralInstance r filters (vtType $ dmType m) `reviseError`
+        ("In creation of " ++ show (dmName m) ++ " at " ++ formatFullContext (dmContext m))
+      return $ onlyCode $ variableLazyType (dmType m) ++ " " ++ variableName (dmName m) ++ ";"
     initMember (DefinedMember _ _ _ _ Nothing) = return mergeDefault
     initMember (DefinedMember c s t n (Just e)) = do
       csAddVariable c n (VariableValue c s t True)

@@ -19,6 +19,7 @@ limitations under the License.
 #ifndef TYPES_HPP_
 #define TYPES_HPP_
 
+#include <functional>
 #include <memory>
 #include <tuple>
 #include <vector>
@@ -72,6 +73,45 @@ using L = std::vector<T>;
 
 template<class T, class...Ts>
 inline L<T> L_get(Ts... ts) { return L<T>{ts...}; }
+
+template<class T>
+class LazyInit {
+ public:
+  LazyInit(const std::function<T()>& create)
+    : initialized_(false), pending_(false), value_(), create_(create) {}
+
+  const T& Get() {
+    InitValue();
+    return value_;
+  }
+
+  const T& operator = (const T& value) {
+    InitValue();
+    return (value_ = value);
+  }
+
+ private:
+  LazyInit(const LazyInit&) = delete;
+  LazyInit(LazyInit&&) = delete;
+  LazyInit& operator = (const LazyInit&) = delete;
+  LazyInit& operator = (LazyInit&&) = delete;
+
+  void InitValue() {
+    if (pending_) {
+      FAIL() << "Cycle in lazy initialization";
+    }
+    if (!initialized_) {
+      pending_ = true;
+      value_ = create_();
+      pending_ = false;
+      initialized_ = true;
+    }
+  }
+
+  bool initialized_, pending_;
+  T value_;
+  const std::function<T()> create_;
+};
 
 
 class TypeCategory;
@@ -158,6 +198,5 @@ class ParamTuple {
 
   std::vector<TypeInstance*> params_;
 };
-
 
 #endif  // TYPES_HPP_

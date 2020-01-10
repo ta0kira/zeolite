@@ -178,8 +178,6 @@ instance (Show c, MergeableM m, CompileErrorM m, Monad m) =>
                      " does not have a function named " ++ show n ++ " [" ++
                      formatFullContext c ++ "]"
   ccCheckValueInit ctx c (TypeInstance t as) ts ps
-    | pcDisallowInit ctx =
-      compileError $ "Value initialization not allowed here [" ++ formatFullContext c ++ "]"
     | t /= pcType ctx =
       compileError $ "Category " ++ show (pcType ctx) ++ " cannot initialize values from " ++
                      show t ++ " [" ++ formatFullContext c ++ "]"
