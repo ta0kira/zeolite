@@ -116,27 +116,27 @@ Category_Node&amp; CreateCategory() {
     ReturnTuple returns(<span style='color:#b08000;'>1</span>);
     <span style='color:#0057ae;'>const</span> S&lt;TypeValue&gt;&amp; Var_node = (args.At(<span style='color:#b08000;'>0</span>));
     <span style='color:#0057ae;'>const</span> S&lt;TypeValue&gt;&amp; Var_k = (args.At(<span style='color:#b08000;'>1</span>));
-    <b>if</b> (PRED_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 68, column 5)&quot;</span>)(!(TypeValue::Present((Var_node))))) {
-    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 69, column 7)&quot;</span>)
+    <b>if</b> (PRED_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 68, column 5)&quot;</span>)(!(TypeValue::Present((Var_node))))) {
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 69, column 7)&quot;</span>)
     <b>return</b> ReturnTuple(Var_empty);
     }
     S&lt;TypeValue&gt; Var_node2;
-    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 71, column 5)&quot;</span>)
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 71, column 5)&quot;</span>)
     Var_node2 = (TypeValue::Require((Var_node)));
-    <b>if</b> (PRED_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 72, column 5)&quot;</span>)(Param_k.Call(Function_LessThan_lessThan, ParamTuple(), ArgTuple((Var_k), (TypeValue::Call((Var_node2), Function_Node_getKey, ParamTuple(), ArgTuple())).Only()))).Only()-&gt;AsBool()) {
-    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 73, column 7)&quot;</span>)
+    <b>if</b> (PRED_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 72, column 5)&quot;</span>)(Param_k.Call(Function_LessThan_lessThan, ParamTuple(), ArgTuple((Var_k), (TypeValue::Call((Var_node2), Function_Node_getKey, ParamTuple(), ArgTuple())).Only()))).Only()-&gt;AsBool()) {
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 73, column 7)&quot;</span>)
     TypeValue::Call((Var_node2), Function_Node_setLower, ParamTuple(), (Call_delete(ParamTuple(), ArgTuple((TypeValue::Call((Var_node2), Function_Node_getLower, ParamTuple(), ArgTuple())).Only(), (Var_k)))));
-    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 74, column 7)&quot;</span>)
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 74, column 7)&quot;</span>)
     <b>return</b> (Call_rebalance(ParamTuple(), ArgTuple(Var_node2)));
     }
-    <b>else</b> <b>if</b> (PRED_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 75, column 7)&quot;</span>)(Param_k.Call(Function_LessThan_lessThan, ParamTuple(), ArgTuple((TypeValue::Call((Var_node2), Function_Node_getKey, ParamTuple(), ArgTuple())).Only(), (Var_k)))).Only()-&gt;AsBool()) {
-    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 76, column 7)&quot;</span>)
+    <b>else</b> <b>if</b> (PRED_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 75, column 7)&quot;</span>)(Param_k.Call(Function_LessThan_lessThan, ParamTuple(), ArgTuple((TypeValue::Call((Var_node2), Function_Node_getKey, ParamTuple(), ArgTuple())).Only(), (Var_k)))).Only()-&gt;AsBool()) {
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 76, column 7)&quot;</span>)
     TypeValue::Call((Var_node2), Function_Node_setHigher, ParamTuple(), (Call_delete(ParamTuple(), ArgTuple((TypeValue::Call((Var_node2), Function_Node_getHigher, ParamTuple(), ArgTuple())).Only(), (Var_k)))));
-    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 77, column 7)&quot;</span>)
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 77, column 7)&quot;</span>)
     <b>return</b> (Call_rebalance(ParamTuple(), ArgTuple(Var_node2)));
     }
     <b>else</b> {
-    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 79, column 7)&quot;</span>)
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 79, column 7)&quot;</span>)
     <b>return</b> (Call_rebalance(ParamTuple(), (Call_removeNode(ParamTuple(), ArgTuple(Var_node2)))));
     }
     <b>return</b> returns;
@@ -146,27 +146,27 @@ Category_Node&amp; CreateCategory() {
     ReturnTuple returns(<span style='color:#b08000;'>1</span>);
     <span style='color:#0057ae;'>const</span> S&lt;TypeValue&gt;&amp; Var_node = (args.At(<span style='color:#b08000;'>0</span>));
     <span style='color:#0057ae;'>const</span> S&lt;TypeValue&gt;&amp; Var_k = (args.At(<span style='color:#b08000;'>1</span>));
-    <b>if</b> (PRED_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 84, column 5)&quot;</span>)(TypeValue::Present((Var_node)))) {
+    <b>if</b> (PRED_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 84, column 5)&quot;</span>)(TypeValue::Present((Var_node)))) {
     {
     S&lt;TypeValue&gt; Var_node2;
-    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 86, column 9)&quot;</span>)
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 86, column 9)&quot;</span>)
     Var_node2 = (TypeValue::Require((Var_node)));
-    <b>if</b> (PRED_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 87, column 12)&quot;</span>)(Param_k.Call(Function_LessThan_lessThan, ParamTuple(), ArgTuple((Var_k), (TypeValue::Call((Var_node2), Function_Node_getKey, ParamTuple(), ArgTuple())).Only()))).Only()-&gt;AsBool()) {
-    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 88, column 9)&quot;</span>)
+    <b>if</b> (PRED_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 87, column 12)&quot;</span>)(Param_k.Call(Function_LessThan_lessThan, ParamTuple(), ArgTuple((Var_k), (TypeValue::Call((Var_node2), Function_Node_getKey, ParamTuple(), ArgTuple())).Only()))).Only()-&gt;AsBool()) {
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 88, column 9)&quot;</span>)
     <b>return</b> (Call_find(ParamTuple(), ArgTuple((TypeValue::Call((Var_node2), Function_Node_getLower, ParamTuple(), ArgTuple())).Only(), (Var_k))));
     }
-    <b>else</b> <b>if</b> (PRED_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 89, column 9)&quot;</span>)(Param_k.Call(Function_LessThan_lessThan, ParamTuple(), ArgTuple((TypeValue::Call((Var_node2), Function_Node_getKey, ParamTuple(), ArgTuple())).Only(), (Var_k)))).Only()-&gt;AsBool()) {
-    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 90, column 9)&quot;</span>)
+    <b>else</b> <b>if</b> (PRED_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 89, column 9)&quot;</span>)(Param_k.Call(Function_LessThan_lessThan, ParamTuple(), ArgTuple((TypeValue::Call((Var_node2), Function_Node_getKey, ParamTuple(), ArgTuple())).Only(), (Var_k)))).Only()-&gt;AsBool()) {
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 90, column 9)&quot;</span>)
     <b>return</b> (Call_find(ParamTuple(), ArgTuple((TypeValue::Call((Var_node2), Function_Node_getHigher, ParamTuple(), ArgTuple())).Only(), (Var_k))));
     }
     <b>else</b> {
-    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 92, column 9)&quot;</span>)
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 92, column 9)&quot;</span>)
     <b>return</b> (TypeValue::Call((Var_node2), Function_Node_getValue, ParamTuple(), ArgTuple()));
     }
     }
     }
     <b>else</b> {
-    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 95, column 7)&quot;</span>)
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 95, column 7)&quot;</span>)
     <b>return</b> ReturnTuple(Var_empty);
     }
     <b>return</b> returns;
@@ -177,29 +177,29 @@ Category_Node&amp; CreateCategory() {
     <span style='color:#0057ae;'>const</span> S&lt;TypeValue&gt;&amp; Var_node = (args.At(<span style='color:#b08000;'>0</span>));
     <span style='color:#0057ae;'>const</span> S&lt;TypeValue&gt;&amp; Var_k = (args.At(<span style='color:#b08000;'>1</span>));
     <span style='color:#0057ae;'>const</span> S&lt;TypeValue&gt;&amp; Var_v = (args.At(<span style='color:#b08000;'>2</span>));
-    <b>if</b> (PRED_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 51, column 5)&quot;</span>)(!(TypeValue::Present((Var_node))))) {
-    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 52, column 7)&quot;</span>)
+    <b>if</b> (PRED_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 51, column 5)&quot;</span>)(!(TypeValue::Present((Var_node))))) {
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 52, column 7)&quot;</span>)
     <b>return</b> ReturnTuple(CreateValue(*<b>this</b>, ParamTuple(), ArgTuple(Box_Int(PrimInt(<span style='color:#b08000;'>1</span>)), (Var_k), (Var_v), (Var_empty), (Var_empty))));
     }
     S&lt;TypeValue&gt; Var_node2;
-    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 54, column 5)&quot;</span>)
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 54, column 5)&quot;</span>)
     Var_node2 = (TypeValue::Require((Var_node)));
-    <b>if</b> (PRED_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 55, column 5)&quot;</span>)(Param_k.Call(Function_LessThan_lessThan, ParamTuple(), ArgTuple((Var_k), (TypeValue::Call((Var_node2), Function_Node_getKey, ParamTuple(), ArgTuple())).Only()))).Only()-&gt;AsBool()) {
-    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 56, column 7)&quot;</span>)
+    <b>if</b> (PRED_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 55, column 5)&quot;</span>)(Param_k.Call(Function_LessThan_lessThan, ParamTuple(), ArgTuple((Var_k), (TypeValue::Call((Var_node2), Function_Node_getKey, ParamTuple(), ArgTuple())).Only()))).Only()-&gt;AsBool()) {
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 56, column 7)&quot;</span>)
     TypeValue::Call((Var_node2), Function_Node_setLower, ParamTuple(), (Call_insert(ParamTuple(), ArgTuple((TypeValue::Call((Var_node2), Function_Node_getLower, ParamTuple(), ArgTuple())).Only(), (Var_k), (Var_v)))));
-    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 57, column 7)&quot;</span>)
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 57, column 7)&quot;</span>)
     <b>return</b> (Call_rebalance(ParamTuple(), ArgTuple(Var_node2)));
     }
-    <b>else</b> <b>if</b> (PRED_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 58, column 7)&quot;</span>)(Param_k.Call(Function_LessThan_lessThan, ParamTuple(), ArgTuple((TypeValue::Call((Var_node2), Function_Node_getKey, ParamTuple(), ArgTuple())).Only(), (Var_k)))).Only()-&gt;AsBool()) {
-    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 59, column 7)&quot;</span>)
+    <b>else</b> <b>if</b> (PRED_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 58, column 7)&quot;</span>)(Param_k.Call(Function_LessThan_lessThan, ParamTuple(), ArgTuple((TypeValue::Call((Var_node2), Function_Node_getKey, ParamTuple(), ArgTuple())).Only(), (Var_k)))).Only()-&gt;AsBool()) {
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 59, column 7)&quot;</span>)
     TypeValue::Call((Var_node2), Function_Node_setHigher, ParamTuple(), (Call_insert(ParamTuple(), ArgTuple((TypeValue::Call((Var_node2), Function_Node_getHigher, ParamTuple(), ArgTuple())).Only(), (Var_k), (Var_v)))));
-    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 60, column 7)&quot;</span>)
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 60, column 7)&quot;</span>)
     <b>return</b> (Call_rebalance(ParamTuple(), ArgTuple(Var_node2)));
     }
     <b>else</b> {
-    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 62, column 7)&quot;</span>)
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 62, column 7)&quot;</span>)
     TypeValue::Call((Var_node2), Function_Node_setValue, ParamTuple(), ArgTuple(Var_v));
-    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 63, column 7)&quot;</span>)
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 63, column 7)&quot;</span>)
     <b>return</b> ReturnTuple(Var_node2);
     }
     <b>return</b> returns;
@@ -209,19 +209,19 @@ Category_Node&amp; CreateCategory() {
     ReturnTuple returns(<span style='color:#b08000;'>1</span>);
     <span style='color:#0057ae;'>const</span> S&lt;TypeValue&gt;&amp; Var_node = (args.At(<span style='color:#b08000;'>0</span>));
     S&lt;TypeValue&gt;&amp; Var_newNode = (returns.At(<span style='color:#b08000;'>0</span>));
-    <b>if</b> (PRED_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 151, column 5)&quot;</span>)((TypeValue::Call((TypeValue::Require((TypeValue::Call((Var_node), Function_Node_getLower, ParamTuple(), ArgTuple())).Only())), Function_Node_getBalance, ParamTuple(), ArgTuple())).Only()-&gt;AsInt()&gt;(PrimInt(<span style='color:#b08000;'>0</span>)))) {
-    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 152, column 7)&quot;</span>)
+    <b>if</b> (PRED_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 151, column 5)&quot;</span>)((TypeValue::Call((TypeValue::Require((TypeValue::Call((Var_node), Function_Node_getLower, ParamTuple(), ArgTuple())).Only())), Function_Node_getBalance, ParamTuple(), ArgTuple())).Only()-&gt;AsInt()&gt;(PrimInt(<span style='color:#b08000;'>0</span>)))) {
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 152, column 7)&quot;</span>)
     TypeValue::Call((Var_node), Function_Node_setLower, ParamTuple(), (Call_pivotLower(ParamTuple(), ArgTuple(TypeValue::Require((TypeValue::Call((Var_node), Function_Node_getLower, ParamTuple(), ArgTuple())).Only())))));
     }
-    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 154, column 5)&quot;</span>)
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 154, column 5)&quot;</span>)
     Var_newNode = (TypeValue::Require((TypeValue::Call((Var_node), Function_Node_getLower, ParamTuple(), ArgTuple())).Only()));
-    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 155, column 5)&quot;</span>)
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 155, column 5)&quot;</span>)
     TypeValue::Call((Var_node), Function_Node_setLower, ParamTuple(), (TypeValue::Call((Var_newNode), Function_Node_getHigher, ParamTuple(), ArgTuple())));
-    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 156, column 5)&quot;</span>)
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 156, column 5)&quot;</span>)
     TypeValue::Call((Var_node), Function_Node_updateHeight, ParamTuple(), ArgTuple());
-    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 157, column 5)&quot;</span>)
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 157, column 5)&quot;</span>)
     TypeValue::Call((Var_newNode), Function_Node_setHigher, ParamTuple(), ArgTuple(Var_node));
-    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 158, column 5)&quot;</span>)
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 158, column 5)&quot;</span>)
     TypeValue::Call((Var_newNode), Function_Node_updateHeight, ParamTuple(), ArgTuple());
     <b>return</b> returns;
   }
@@ -230,19 +230,19 @@ Category_Node&amp; CreateCategory() {
     ReturnTuple returns(<span style='color:#b08000;'>1</span>);
     <span style='color:#0057ae;'>const</span> S&lt;TypeValue&gt;&amp; Var_node = (args.At(<span style='color:#b08000;'>0</span>));
     S&lt;TypeValue&gt;&amp; Var_newNode = (returns.At(<span style='color:#b08000;'>0</span>));
-    <b>if</b> (PRED_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 163, column 5)&quot;</span>)((TypeValue::Call((TypeValue::Require((TypeValue::Call((Var_node), Function_Node_getHigher, ParamTuple(), ArgTuple())).Only())), Function_Node_getBalance, ParamTuple(), ArgTuple())).Only()-&gt;AsInt()&lt;(PrimInt(<span style='color:#b08000;'>0</span>)))) {
-    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 164, column 7)&quot;</span>)
+    <b>if</b> (PRED_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 163, column 5)&quot;</span>)((TypeValue::Call((TypeValue::Require((TypeValue::Call((Var_node), Function_Node_getHigher, ParamTuple(), ArgTuple())).Only())), Function_Node_getBalance, ParamTuple(), ArgTuple())).Only()-&gt;AsInt()&lt;(PrimInt(<span style='color:#b08000;'>0</span>)))) {
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 164, column 7)&quot;</span>)
     TypeValue::Call((Var_node), Function_Node_setHigher, ParamTuple(), (Call_pivotHigher(ParamTuple(), ArgTuple(TypeValue::Require((TypeValue::Call((Var_node), Function_Node_getHigher, ParamTuple(), ArgTuple())).Only())))));
     }
-    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 166, column 5)&quot;</span>)
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 166, column 5)&quot;</span>)
     Var_newNode = (TypeValue::Require((TypeValue::Call((Var_node), Function_Node_getHigher, ParamTuple(), ArgTuple())).Only()));
-    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 167, column 5)&quot;</span>)
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 167, column 5)&quot;</span>)
     TypeValue::Call((Var_node), Function_Node_setHigher, ParamTuple(), (TypeValue::Call((Var_newNode), Function_Node_getLower, ParamTuple(), ArgTuple())));
-    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 168, column 5)&quot;</span>)
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 168, column 5)&quot;</span>)
     TypeValue::Call((Var_node), Function_Node_updateHeight, ParamTuple(), ArgTuple());
-    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 169, column 5)&quot;</span>)
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 169, column 5)&quot;</span>)
     TypeValue::Call((Var_newNode), Function_Node_setLower, ParamTuple(), ArgTuple(Var_node));
-    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 170, column 5)&quot;</span>)
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 170, column 5)&quot;</span>)
     TypeValue::Call((Var_newNode), Function_Node_updateHeight, ParamTuple(), ArgTuple());
     <b>return</b> returns;
   }
@@ -250,29 +250,29 @@ Category_Node&amp; CreateCategory() {
     TRACE_FUNCTION(<span style='color:#bf0303;'>&quot;Node.rebalance&quot;</span>)
     ReturnTuple returns(<span style='color:#b08000;'>1</span>);
     <span style='color:#0057ae;'>const</span> S&lt;TypeValue&gt;&amp; Var_node = (args.At(<span style='color:#b08000;'>0</span>));
-    <b>if</b> (PRED_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 133, column 5)&quot;</span>)(!(TypeValue::Present((Var_node))))) {
-    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 134, column 7)&quot;</span>)
+    <b>if</b> (PRED_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 133, column 5)&quot;</span>)(!(TypeValue::Present((Var_node))))) {
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 134, column 7)&quot;</span>)
     <b>return</b> ReturnTuple(Var_empty);
     }
     S&lt;TypeValue&gt; Var_node2;
-    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 136, column 5)&quot;</span>)
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 136, column 5)&quot;</span>)
     Var_node2 = (TypeValue::Require((Var_node)));
-    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 137, column 5)&quot;</span>)
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 137, column 5)&quot;</span>)
     TypeValue::Call((Var_node2), Function_Node_updateHeight, ParamTuple(), ArgTuple());
     {
     PrimInt Var_balance;
-    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 139, column 7)&quot;</span>)
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 139, column 7)&quot;</span>)
     Var_balance = (TypeValue::Call((Var_node2), Function_Node_getBalance, ParamTuple(), ArgTuple())).Only()-&gt;AsInt();
-    <b>if</b> (PRED_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 140, column 10)&quot;</span>)((Var_balance)&gt;(PrimInt(<span style='color:#b08000;'>1</span>)))) {
-    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 141, column 7)&quot;</span>)
+    <b>if</b> (PRED_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 140, column 10)&quot;</span>)((Var_balance)&gt;(PrimInt(<span style='color:#b08000;'>1</span>)))) {
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 141, column 7)&quot;</span>)
     <b>return</b> (Call_pivotLower(ParamTuple(), ArgTuple(Var_node2)));
     }
-    <b>else</b> <b>if</b> (PRED_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 142, column 7)&quot;</span>)((Var_balance)&lt;(-(PrimInt(<span style='color:#b08000;'>1</span>))))) {
-    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 143, column 7)&quot;</span>)
+    <b>else</b> <b>if</b> (PRED_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 142, column 7)&quot;</span>)((Var_balance)&lt;(-(PrimInt(<span style='color:#b08000;'>1</span>))))) {
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 143, column 7)&quot;</span>)
     <b>return</b> (Call_pivotHigher(ParamTuple(), ArgTuple(Var_node2)));
     }
     <b>else</b> {
-    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 145, column 7)&quot;</span>)
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 145, column 7)&quot;</span>)
     <b>return</b> ReturnTuple(Var_node2);
     }
     }
@@ -284,35 +284,35 @@ Category_Node&amp; CreateCategory() {
     <span style='color:#0057ae;'>const</span> S&lt;TypeValue&gt;&amp; Var_node = (args.At(<span style='color:#b08000;'>0</span>));
     S&lt;TypeValue&gt;&amp; Var_newNode = (returns.At(<span style='color:#b08000;'>0</span>));
     S&lt;TypeValue&gt;&amp; Var_removed = (returns.At(<span style='color:#b08000;'>1</span>));
-    <b>if</b> (PRED_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 190, column 5)&quot;</span>)(!(TypeValue::Present((Var_node))))) {
-    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 191, column 16)&quot;</span>)
+    <b>if</b> (PRED_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 190, column 5)&quot;</span>)(!(TypeValue::Present((Var_node))))) {
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 191, column 16)&quot;</span>)
     returns.At(<span style='color:#b08000;'>0</span>) = (Var_empty);
-    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 191, column 23)&quot;</span>)
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 191, column 23)&quot;</span>)
     returns.At(<span style='color:#b08000;'>1</span>) = (Var_empty);
     <b>return</b> returns;
     }
     S&lt;TypeValue&gt; Var_node2;
-    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 193, column 5)&quot;</span>)
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 193, column 5)&quot;</span>)
     Var_node2 = (TypeValue::Require((Var_node)));
-    <b>if</b> (PRED_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 194, column 5)&quot;</span>)(TypeValue::Present((TypeValue::Call((Var_node2), Function_Node_getHigher, ParamTuple(), ArgTuple())).Only()))) {
+    <b>if</b> (PRED_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 194, column 5)&quot;</span>)(TypeValue::Present((TypeValue::Call((Var_node2), Function_Node_getHigher, ParamTuple(), ArgTuple())).Only()))) {
     S&lt;TypeValue&gt; Var_temp;
-    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 195, column 7)&quot;</span>)
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 195, column 7)&quot;</span>)
     {
     <span style='color:#0057ae;'>const</span> <b>auto</b> r = (Call_removeHighest(ParamTuple(), (TypeValue::Call((Var_node2), Function_Node_getHigher, ParamTuple(), ArgTuple()))));
     Var_temp = (r.At(<span style='color:#b08000;'>0</span>));
     Var_removed = (r.At(<span style='color:#b08000;'>1</span>));
     }
-    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 196, column 7)&quot;</span>)
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 196, column 7)&quot;</span>)
     TypeValue::Call((Var_node2), Function_Node_setHigher, ParamTuple(), ArgTuple(Var_temp));
-    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 197, column 7)&quot;</span>)
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 197, column 7)&quot;</span>)
     Var_newNode = (Call_rebalance(ParamTuple(), ArgTuple(Var_node2))).Only();
     }
     <b>else</b> {
-    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 199, column 7)&quot;</span>)
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 199, column 7)&quot;</span>)
     Var_newNode = (TypeValue::Call((Var_node2), Function_Node_getLower, ParamTuple(), ArgTuple())).Only();
-    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 200, column 7)&quot;</span>)
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 200, column 7)&quot;</span>)
     TypeValue::Call((Var_node2), Function_Node_setLower, ParamTuple(), ArgTuple(Var_empty));
-    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 201, column 7)&quot;</span>)
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 201, column 7)&quot;</span>)
     Var_removed = (Var_node);
     }
     <b>return</b> returns;
@@ -323,35 +323,35 @@ Category_Node&amp; CreateCategory() {
     <span style='color:#0057ae;'>const</span> S&lt;TypeValue&gt;&amp; Var_node = (args.At(<span style='color:#b08000;'>0</span>));
     S&lt;TypeValue&gt;&amp; Var_newNode = (returns.At(<span style='color:#b08000;'>0</span>));
     S&lt;TypeValue&gt;&amp; Var_removed = (returns.At(<span style='color:#b08000;'>1</span>));
-    <b>if</b> (PRED_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 207, column 5)&quot;</span>)(!(TypeValue::Present((Var_node))))) {
-    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 208, column 16)&quot;</span>)
+    <b>if</b> (PRED_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 207, column 5)&quot;</span>)(!(TypeValue::Present((Var_node))))) {
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 208, column 16)&quot;</span>)
     returns.At(<span style='color:#b08000;'>0</span>) = (Var_empty);
-    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 208, column 23)&quot;</span>)
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 208, column 23)&quot;</span>)
     returns.At(<span style='color:#b08000;'>1</span>) = (Var_empty);
     <b>return</b> returns;
     }
     S&lt;TypeValue&gt; Var_node2;
-    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 210, column 5)&quot;</span>)
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 210, column 5)&quot;</span>)
     Var_node2 = (TypeValue::Require((Var_node)));
-    <b>if</b> (PRED_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 211, column 5)&quot;</span>)(TypeValue::Present((TypeValue::Call((Var_node2), Function_Node_getLower, ParamTuple(), ArgTuple())).Only()))) {
+    <b>if</b> (PRED_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 211, column 5)&quot;</span>)(TypeValue::Present((TypeValue::Call((Var_node2), Function_Node_getLower, ParamTuple(), ArgTuple())).Only()))) {
     S&lt;TypeValue&gt; Var_temp;
-    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 212, column 7)&quot;</span>)
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 212, column 7)&quot;</span>)
     {
     <span style='color:#0057ae;'>const</span> <b>auto</b> r = (Call_removeLowest(ParamTuple(), (TypeValue::Call((Var_node2), Function_Node_getLower, ParamTuple(), ArgTuple()))));
     Var_temp = (r.At(<span style='color:#b08000;'>0</span>));
     Var_removed = (r.At(<span style='color:#b08000;'>1</span>));
     }
-    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 213, column 7)&quot;</span>)
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 213, column 7)&quot;</span>)
     TypeValue::Call((Var_node2), Function_Node_setLower, ParamTuple(), ArgTuple(Var_temp));
-    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 214, column 7)&quot;</span>)
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 214, column 7)&quot;</span>)
     Var_newNode = (Call_rebalance(ParamTuple(), ArgTuple(Var_node2))).Only();
     }
     <b>else</b> {
-    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 216, column 7)&quot;</span>)
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 216, column 7)&quot;</span>)
     Var_newNode = (TypeValue::Call((Var_node2), Function_Node_getHigher, ParamTuple(), ArgTuple())).Only();
-    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 217, column 7)&quot;</span>)
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 217, column 7)&quot;</span>)
     TypeValue::Call((Var_node2), Function_Node_setHigher, ParamTuple(), ArgTuple(Var_empty));
-    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 218, column 7)&quot;</span>)
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 218, column 7)&quot;</span>)
     Var_removed = (Var_node);
     }
     <b>return</b> returns;
@@ -361,32 +361,32 @@ Category_Node&amp; CreateCategory() {
     ReturnTuple returns(<span style='color:#b08000;'>1</span>);
     <span style='color:#0057ae;'>const</span> S&lt;TypeValue&gt;&amp; Var_node = (args.At(<span style='color:#b08000;'>0</span>));
     S&lt;TypeValue&gt;&amp; Var_newNode = (returns.At(<span style='color:#b08000;'>0</span>));
-    <b>if</b> (PRED_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 175, column 5)&quot;</span>)((TypeValue::Call((Var_node), Function_Node_getBalance, ParamTuple(), ArgTuple())).Only()-&gt;AsInt()&lt;(PrimInt(<span style='color:#b08000;'>0</span>)))) {
+    <b>if</b> (PRED_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 175, column 5)&quot;</span>)((TypeValue::Call((Var_node), Function_Node_getBalance, ParamTuple(), ArgTuple())).Only()-&gt;AsInt()&lt;(PrimInt(<span style='color:#b08000;'>0</span>)))) {
     S&lt;TypeValue&gt; Var_temp;
-    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 176, column 7)&quot;</span>)
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 176, column 7)&quot;</span>)
     {
     <span style='color:#0057ae;'>const</span> <b>auto</b> r = (Call_removeHighest(ParamTuple(), (TypeValue::Call((Var_node), Function_Node_getLower, ParamTuple(), ArgTuple()))));
     Var_temp = (r.At(<span style='color:#b08000;'>0</span>));
     Var_newNode = (r.At(<span style='color:#b08000;'>1</span>));
     }
-    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 177, column 7)&quot;</span>)
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 177, column 7)&quot;</span>)
     TypeValue::Call((Var_node), Function_Node_setLower, ParamTuple(), ArgTuple(Var_temp));
     }
     <b>else</b> {
     S&lt;TypeValue&gt; Var_temp;
-    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 179, column 7)&quot;</span>)
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 179, column 7)&quot;</span>)
     {
     <span style='color:#0057ae;'>const</span> <b>auto</b> r = (Call_removeLowest(ParamTuple(), (TypeValue::Call((Var_node), Function_Node_getHigher, ParamTuple(), ArgTuple()))));
     Var_temp = (r.At(<span style='color:#b08000;'>0</span>));
     Var_newNode = (r.At(<span style='color:#b08000;'>1</span>));
     }
-    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 180, column 7)&quot;</span>)
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 180, column 7)&quot;</span>)
     TypeValue::Call((Var_node), Function_Node_setHigher, ParamTuple(), ArgTuple(Var_temp));
     }
-    <b>if</b> (PRED_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 182, column 5)&quot;</span>)(TypeValue::Present((Var_newNode)))) {
-    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 183, column 7)&quot;</span>)
+    <b>if</b> (PRED_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 182, column 5)&quot;</span>)(TypeValue::Present((Var_newNode)))) {
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 183, column 7)&quot;</span>)
     Call_swapChildren(ParamTuple(), ArgTuple((Var_node), (TypeValue::Require((Var_newNode)))));
-    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 184, column 7)&quot;</span>)
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 184, column 7)&quot;</span>)
     TypeValue::Call((TypeValue::Require((Var_newNode))), Function_Node_updateHeight, ParamTuple(), ArgTuple());
     }
     <b>return</b> returns;
@@ -398,20 +398,20 @@ Category_Node&amp; CreateCategory() {
     <span style='color:#0057ae;'>const</span> S&lt;TypeValue&gt;&amp; Var_r = (args.At(<span style='color:#b08000;'>1</span>));
     {
     S&lt;TypeValue&gt; Var_temp;
-    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 225, column 7)&quot;</span>)
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 225, column 7)&quot;</span>)
     Var_temp = (TypeValue::Call((Var_l), Function_Node_getLower, ParamTuple(), ArgTuple())).Only();
-    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 226, column 7)&quot;</span>)
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 226, column 7)&quot;</span>)
     TypeValue::Call((Var_l), Function_Node_setLower, ParamTuple(), (TypeValue::Call((Var_r), Function_Node_getLower, ParamTuple(), ArgTuple())));
-    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 227, column 10)&quot;</span>)
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 227, column 10)&quot;</span>)
     TypeValue::Call((Var_r), Function_Node_setLower, ParamTuple(), ArgTuple(Var_temp));
     }
     {
     S&lt;TypeValue&gt; Var_temp;
-    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 229, column 7)&quot;</span>)
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 229, column 7)&quot;</span>)
     Var_temp = (TypeValue::Call((Var_l), Function_Node_getHigher, ParamTuple(), ArgTuple())).Only();
-    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 230, column 7)&quot;</span>)
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 230, column 7)&quot;</span>)
     TypeValue::Call((Var_l), Function_Node_setHigher, ParamTuple(), (TypeValue::Call((Var_r), Function_Node_getHigher, ParamTuple(), ArgTuple())));
-    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 231, column 10)&quot;</span>)
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 231, column 10)&quot;</span>)
     TypeValue::Call((Var_r), Function_Node_setHigher, ParamTuple(), ArgTuple(Var_temp));
     }
     <b>return</b> returns;
@@ -453,20 +453,20 @@ Type_Node&amp; CreateType(Params&lt;<span style='color:#b08000;'>2</span>&gt;::T
     ReturnTuple returns(<span style='color:#b08000;'>1</span>);
     {
     PrimInt Var_l;
-    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 120, column 7)&quot;</span>)
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 120, column 7)&quot;</span>)
     Var_l = (PrimInt(<span style='color:#b08000;'>0</span>));
     PrimInt Var_h;
-    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 121, column 7)&quot;</span>)
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 121, column 7)&quot;</span>)
     Var_h = (PrimInt(<span style='color:#b08000;'>0</span>));
-    <b>if</b> (PRED_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 122, column 7)&quot;</span>)(TypeValue::Present((Var_lower)))) {
-    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 123, column 9)&quot;</span>)
+    <b>if</b> (PRED_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 122, column 7)&quot;</span>)(TypeValue::Present((Var_lower)))) {
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 123, column 9)&quot;</span>)
     Var_l = (TypeValue::Call((TypeValue::Require((Var_lower))), Function_Node_getHeight, ParamTuple(), ArgTuple())).Only()-&gt;AsInt();
     }
-    <b>if</b> (PRED_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 125, column 7)&quot;</span>)(TypeValue::Present((Var_higher)))) {
-    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 126, column 9)&quot;</span>)
+    <b>if</b> (PRED_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 125, column 7)&quot;</span>)(TypeValue::Present((Var_higher)))) {
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 126, column 9)&quot;</span>)
     Var_h = (TypeValue::Call((TypeValue::Require((Var_higher))), Function_Node_getHeight, ParamTuple(), ArgTuple())).Only()-&gt;AsInt();
     }
-    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 128, column 10)&quot;</span>)
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 128, column 10)&quot;</span>)
     <b>return</b> ReturnTuple(Box_Int((Var_h)-(Var_l)));
     }
     <b>return</b> returns;
@@ -474,35 +474,35 @@ Type_Node&amp; CreateType(Params&lt;<span style='color:#b08000;'>2</span>&gt;::T
   ReturnTuple Call_getHeight(<span style='color:#0057ae;'>const</span> S&lt;TypeValue&gt;&amp; Var_self, <span style='color:#0057ae;'>const</span> ParamTuple&amp; params, <span style='color:#0057ae;'>const</span> ValueTuple&amp; args) {
     TRACE_FUNCTION(<span style='color:#bf0303;'>&quot;Node.getHeight&quot;</span>)
     ReturnTuple returns(<span style='color:#b08000;'>1</span>);
-    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 235, column 18)&quot;</span>)
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 235, column 18)&quot;</span>)
     <b>return</b> ReturnTuple(Box_Int(Var_height));
     <b>return</b> returns;
   }
   ReturnTuple Call_getHigher(<span style='color:#0057ae;'>const</span> S&lt;TypeValue&gt;&amp; Var_self, <span style='color:#0057ae;'>const</span> ParamTuple&amp; params, <span style='color:#0057ae;'>const</span> ValueTuple&amp; args) {
     TRACE_FUNCTION(<span style='color:#bf0303;'>&quot;Node.getHigher&quot;</span>)
     ReturnTuple returns(<span style='color:#b08000;'>1</span>);
-    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 258, column 18)&quot;</span>)
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 258, column 18)&quot;</span>)
     <b>return</b> ReturnTuple(Var_higher);
     <b>return</b> returns;
   }
   ReturnTuple Call_getKey(<span style='color:#0057ae;'>const</span> S&lt;TypeValue&gt;&amp; Var_self, <span style='color:#0057ae;'>const</span> ParamTuple&amp; params, <span style='color:#0057ae;'>const</span> ValueTuple&amp; args) {
     TRACE_FUNCTION(<span style='color:#bf0303;'>&quot;Node.getKey&quot;</span>)
     ReturnTuple returns(<span style='color:#b08000;'>1</span>);
-    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 243, column 15)&quot;</span>)
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 243, column 15)&quot;</span>)
     <b>return</b> ReturnTuple(Var_key);
     <b>return</b> returns;
   }
   ReturnTuple Call_getLower(<span style='color:#0057ae;'>const</span> S&lt;TypeValue&gt;&amp; Var_self, <span style='color:#0057ae;'>const</span> ParamTuple&amp; params, <span style='color:#0057ae;'>const</span> ValueTuple&amp; args) {
     TRACE_FUNCTION(<span style='color:#bf0303;'>&quot;Node.getLower&quot;</span>)
     ReturnTuple returns(<span style='color:#b08000;'>1</span>);
-    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 252, column 17)&quot;</span>)
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 252, column 17)&quot;</span>)
     <b>return</b> ReturnTuple(Var_lower);
     <b>return</b> returns;
   }
   ReturnTuple Call_getValue(<span style='color:#0057ae;'>const</span> S&lt;TypeValue&gt;&amp; Var_self, <span style='color:#0057ae;'>const</span> ParamTuple&amp; params, <span style='color:#0057ae;'>const</span> ValueTuple&amp; args) {
     TRACE_FUNCTION(<span style='color:#bf0303;'>&quot;Node.getValue&quot;</span>)
     ReturnTuple returns(<span style='color:#b08000;'>1</span>);
-    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 246, column 17)&quot;</span>)
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 246, column 17)&quot;</span>)
     <b>return</b> ReturnTuple(Var_value);
     <b>return</b> returns;
   }
@@ -510,7 +510,7 @@ Type_Node&amp; CreateType(Params&lt;<span style='color:#b08000;'>2</span>&gt;::T
     TRACE_FUNCTION(<span style='color:#bf0303;'>&quot;Node.setHigher&quot;</span>)
     ReturnTuple returns(<span style='color:#b08000;'>0</span>);
     <span style='color:#0057ae;'>const</span> S&lt;TypeValue&gt;&amp; Var_h = (args.At(<span style='color:#b08000;'>0</span>));
-    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 261, column 19)&quot;</span>)
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 261, column 19)&quot;</span>)
     Var_higher = (Var_h);
     <b>return</b> returns;
   }
@@ -518,7 +518,7 @@ Type_Node&amp; CreateType(Params&lt;<span style='color:#b08000;'>2</span>&gt;::T
     TRACE_FUNCTION(<span style='color:#bf0303;'>&quot;Node.setLower&quot;</span>)
     ReturnTuple returns(<span style='color:#b08000;'>0</span>);
     <span style='color:#0057ae;'>const</span> S&lt;TypeValue&gt;&amp; Var_l = (args.At(<span style='color:#b08000;'>0</span>));
-    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 255, column 18)&quot;</span>)
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 255, column 18)&quot;</span>)
     Var_lower = (Var_l);
     <b>return</b> returns;
   }
@@ -526,7 +526,7 @@ Type_Node&amp; CreateType(Params&lt;<span style='color:#b08000;'>2</span>&gt;::T
     TRACE_FUNCTION(<span style='color:#bf0303;'>&quot;Node.setValue&quot;</span>)
     ReturnTuple returns(<span style='color:#b08000;'>0</span>);
     <span style='color:#0057ae;'>const</span> S&lt;TypeValue&gt;&amp; Var_v = (args.At(<span style='color:#b08000;'>0</span>));
-    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 249, column 18)&quot;</span>)
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 249, column 18)&quot;</span>)
     Var_value = (Var_v);
     <b>return</b> returns;
   }
@@ -535,25 +535,25 @@ Type_Node&amp; CreateType(Params&lt;<span style='color:#b08000;'>2</span>&gt;::T
     ReturnTuple returns(<span style='color:#b08000;'>0</span>);
     {
     PrimInt Var_l;
-    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 102, column 7)&quot;</span>)
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 102, column 7)&quot;</span>)
     Var_l = (PrimInt(<span style='color:#b08000;'>0</span>));
     PrimInt Var_h;
-    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 103, column 7)&quot;</span>)
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 103, column 7)&quot;</span>)
     Var_h = (PrimInt(<span style='color:#b08000;'>0</span>));
-    <b>if</b> (PRED_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 104, column 7)&quot;</span>)(TypeValue::Present((Var_lower)))) {
-    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 105, column 9)&quot;</span>)
+    <b>if</b> (PRED_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 104, column 7)&quot;</span>)(TypeValue::Present((Var_lower)))) {
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 105, column 9)&quot;</span>)
     Var_l = (TypeValue::Call((TypeValue::Require((Var_lower))), Function_Node_getHeight, ParamTuple(), ArgTuple())).Only()-&gt;AsInt();
     }
-    <b>if</b> (PRED_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 107, column 7)&quot;</span>)(TypeValue::Present((Var_higher)))) {
-    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 108, column 9)&quot;</span>)
+    <b>if</b> (PRED_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 107, column 7)&quot;</span>)(TypeValue::Present((Var_higher)))) {
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 108, column 9)&quot;</span>)
     Var_h = (TypeValue::Call((TypeValue::Require((Var_higher))), Function_Node_getHeight, ParamTuple(), ArgTuple())).Only()-&gt;AsInt();
     }
-    <b>if</b> (PRED_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 110, column 10)&quot;</span>)((Var_l)&gt;(Var_h))) {
-    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 111, column 7)&quot;</span>)
+    <b>if</b> (PRED_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 110, column 10)&quot;</span>)((Var_l)&gt;(Var_h))) {
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 111, column 7)&quot;</span>)
     Var_height = ((Var_l)+(PrimInt(<span style='color:#b08000;'>1</span>)));
     }
     <b>else</b> {
-    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 113, column 7)&quot;</span>)
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 113, column 7)&quot;</span>)
     Var_height = ((Var_h)+(PrimInt(<span style='color:#b08000;'>1</span>)));
     }
     }

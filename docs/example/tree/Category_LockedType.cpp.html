@@ -50,7 +50,7 @@ S&lt;TypeValue&gt; CreateValue(Type_LockedType&amp; parent, <span style='color:#
     TypeInstance&amp; Param_x = *params.At(<span style='color:#b08000;'>0</span>);
     <span style='color:#0057ae;'>const</span> S&lt;TypeValue&gt;&amp; Var_k = (args.At(<span style='color:#b08000;'>0</span>));
     <span style='color:#0057ae;'>const</span> S&lt;TypeValue&gt;&amp; Var_v = (args.At(<span style='color:#b08000;'>1</span>));
-    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/type-tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 75, column 5)&quot;</span>)
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/type-tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 75, column 5)&quot;</span>)
     <b>return</b> ReturnTuple(CreateValue(CreateType(T_get(&amp;Param_x)), ParamTuple(), ArgTuple((Var_k), (Var_v))));
     <b>return</b> returns;
   }
@@ -119,12 +119,12 @@ Type_LockedType&amp; CreateType(Params&lt;<span style='color:#b08000;'>1</span>&
     ReturnTuple returns(<span style='color:#b08000;'>1</span>);
     TypeInstance&amp; Param_y = *params.At(<span style='color:#b08000;'>0</span>);
     <span style='color:#0057ae;'>const</span> S&lt;TypeValue&gt;&amp; Var_k = (args.At(<span style='color:#b08000;'>0</span>));
-    <b>if</b> (PRED_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/type-tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 79, column 5)&quot;</span>)(GetType_TypeKey(T_get(&amp;GetMerged_Any())).Call(Function_Equals_equals, ParamTuple(), ArgTuple((Var_key), (Var_k)))).Only()-&gt;AsBool()) {
-    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/type-tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 88, column 7)&quot;</span>)
+    <b>if</b> (PRED_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/type-tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 79, column 5)&quot;</span>)(GetType_TypeKey(T_get(&amp;GetMerged_Any())).Call(Function_Equals_equals, ParamTuple(), ArgTuple((Var_key), (Var_k)))).Only()-&gt;AsBool()) {
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/type-tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 88, column 7)&quot;</span>)
     <b>return</b> ReturnTuple(TypeInstance::Reduce(parent.Param_x, Param_y, (Var_value)));
     }
     <b>else</b> {
-    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/type-tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 90, column 7)&quot;</span>)
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/type-tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 90, column 7)&quot;</span>)
     <b>return</b> ReturnTuple(Var_empty);
     }
     <b>return</b> returns;

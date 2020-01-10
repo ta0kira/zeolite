@@ -1404,6 +1404,6 @@ if you are interested in helping with development.
 
 [clang]: https://clang.llvm.org/cxx_status.html
 [cov-con]: https://en.wikipedia.org/wiki/Covariance_and_contravariance_%28computer_science%29
-[example]: https://github.com/ta0kira/zeolite/tree/master/example
+[example]: https://github.com/ta0kira/zeolite/tree/master/example/tree
 [ghc]: https://www.haskell.org/ghc/
 [git]: https://git-scm.com/

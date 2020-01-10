@@ -99,7 +99,7 @@ Category_Tree&amp; CreateCategory() {
   ReturnTuple Call_new(<span style='color:#0057ae;'>const</span> ParamTuple&amp; params, <span style='color:#0057ae;'>const</span> ValueTuple&amp; args) {
     TRACE_FUNCTION(<span style='color:#bf0303;'>&quot;Tree.new&quot;</span>)
     ReturnTuple returns(<span style='color:#b08000;'>1</span>);
-    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 5, column 5)&quot;</span>)
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 5, column 5)&quot;</span>)
     <b>return</b> ReturnTuple(CreateValue(*<b>this</b>, ParamTuple(), ArgTuple(Var_empty)));
     <b>return</b> returns;
   }
@@ -150,7 +150,7 @@ Type_Tree&amp; CreateType(Params&lt;<span style='color:#b08000;'>2</span>&gt;::T
     TRACE_FUNCTION(<span style='color:#bf0303;'>&quot;Tree.get&quot;</span>)
     ReturnTuple returns(<span style='color:#b08000;'>1</span>);
     <span style='color:#0057ae;'>const</span> S&lt;TypeValue&gt;&amp; Var_k = (args.At(<span style='color:#b08000;'>0</span>));
-    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 19, column 5)&quot;</span>)
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 19, column 5)&quot;</span>)
     <b>return</b> (GetType_Node(T_get(&amp;parent.Param_k,&amp;parent.Param_v)).Call(Function_Node_find, ParamTuple(), ArgTuple((Var_root), (Var_k))));
     <b>return</b> returns;
   }
@@ -158,9 +158,9 @@ Type_Tree&amp; CreateType(Params&lt;<span style='color:#b08000;'>2</span>&gt;::T
     TRACE_FUNCTION(<span style='color:#bf0303;'>&quot;Tree.remove&quot;</span>)
     ReturnTuple returns(<span style='color:#b08000;'>1</span>);
     <span style='color:#0057ae;'>const</span> S&lt;TypeValue&gt;&amp; Var_k = (args.At(<span style='color:#b08000;'>0</span>));
-    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 14, column 5)&quot;</span>)
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 14, column 5)&quot;</span>)
     Var_root = (GetType_Node(T_get(&amp;parent.Param_k,&amp;parent.Param_v)).Call(Function_Node_delete, ParamTuple(), ArgTuple((Var_root), (Var_k)))).Only();
-    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 15, column 5)&quot;</span>)
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 15, column 5)&quot;</span>)
     <b>return</b> ReturnTuple(Var_self);
     <b>return</b> returns;
   }
@@ -169,9 +169,9 @@ Type_Tree&amp; CreateType(Params&lt;<span style='color:#b08000;'>2</span>&gt;::T
     ReturnTuple returns(<span style='color:#b08000;'>1</span>);
     <span style='color:#0057ae;'>const</span> S&lt;TypeValue&gt;&amp; Var_k = (args.At(<span style='color:#b08000;'>0</span>));
     <span style='color:#0057ae;'>const</span> S&lt;TypeValue&gt;&amp; Var_v = (args.At(<span style='color:#b08000;'>1</span>));
-    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 9, column 5)&quot;</span>)
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 9, column 5)&quot;</span>)
     Var_root = (GetType_Node(T_get(&amp;parent.Param_k,&amp;parent.Param_v)).Call(Function_Node_insert, ParamTuple(), ArgTuple((Var_root), (Var_k), (Var_v)))).Only();
-    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 10, column 5)&quot;</span>)
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 10, column 5)&quot;</span>)
     <b>return</b> ReturnTuple(Var_self);
     <b>return</b> returns;
   }

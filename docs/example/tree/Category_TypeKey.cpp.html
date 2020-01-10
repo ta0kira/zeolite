@@ -29,7 +29,7 @@ S&lt;TypeValue&gt; CreateValue(Type_TypeKey&amp; parent, <span style='color:#005
     CycleCheck&lt;Category_TypeKey&gt;::Check();
     CycleCheck&lt;Category_TypeKey&gt; marker(*<b>this</b>);
     TRACE_FUNCTION(<span style='color:#bf0303;'>&quot;TypeKey (init @category)&quot;</span>)
-    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/type-tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 36, column 3)&quot;</span>)
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/type-tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 36, column 3)&quot;</span>)
     Var_counter = (PrimInt(<span style='color:#b08000;'>0</span>));
   }
   ReturnTuple Dispatch(<span style='color:#0057ae;'>const</span> DFunction&lt;SymbolScope::CATEGORY&gt;&amp; label, <span style='color:#0057ae;'>const</span> ParamTuple&amp; params, <span style='color:#0057ae;'>const</span> ValueTuple&amp; args) <b>final</b> {
@@ -106,7 +106,7 @@ Category_TypeKey&amp; CreateCategory() {
     ReturnTuple returns(<span style='color:#b08000;'>1</span>);
     <span style='color:#0057ae;'>const</span> S&lt;TypeValue&gt;&amp; Var_l = (args.At(<span style='color:#b08000;'>0</span>));
     <span style='color:#0057ae;'>const</span> S&lt;TypeValue&gt;&amp; Var_r = (args.At(<span style='color:#b08000;'>1</span>));
-    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/type-tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 48, column 5)&quot;</span>)
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/type-tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 48, column 5)&quot;</span>)
     <b>return</b> ReturnTuple(Box_Bool((TypeValue::Call((Var_l), Function_TypeKey_get, ParamTuple(), ArgTuple())).Only()-&gt;AsInt()==(TypeValue::Call((Var_r), Function_TypeKey_get, ParamTuple(), ArgTuple())).Only()-&gt;AsInt()));
     <b>return</b> returns;
   }
@@ -115,14 +115,14 @@ Category_TypeKey&amp; CreateCategory() {
     ReturnTuple returns(<span style='color:#b08000;'>1</span>);
     <span style='color:#0057ae;'>const</span> S&lt;TypeValue&gt;&amp; Var_l = (args.At(<span style='color:#b08000;'>0</span>));
     <span style='color:#0057ae;'>const</span> S&lt;TypeValue&gt;&amp; Var_r = (args.At(<span style='color:#b08000;'>1</span>));
-    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/type-tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 44, column 5)&quot;</span>)
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/type-tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 44, column 5)&quot;</span>)
     <b>return</b> ReturnTuple(Box_Bool((TypeValue::Call((Var_l), Function_TypeKey_get, ParamTuple(), ArgTuple())).Only()-&gt;AsInt()&lt;(TypeValue::Call((Var_r), Function_TypeKey_get, ParamTuple(), ArgTuple())).Only()-&gt;AsInt()));
     <b>return</b> returns;
   }
   ReturnTuple Call_new(<span style='color:#0057ae;'>const</span> ParamTuple&amp; params, <span style='color:#0057ae;'>const</span> ValueTuple&amp; args) {
     TRACE_FUNCTION(<span style='color:#bf0303;'>&quot;TypeKey.new&quot;</span>)
     ReturnTuple returns(<span style='color:#b08000;'>1</span>);
-    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/type-tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 40, column 5)&quot;</span>)
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/type-tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 40, column 5)&quot;</span>)
     <b>return</b> ReturnTuple(CreateValue(*<b>this</b>, ParamTuple(), ArgTuple(Box_Int((parent.Var_counter = ((parent.Var_counter)+(PrimInt(<span style='color:#b08000;'>1</span>))))))));
     <b>return</b> returns;
   }
@@ -152,7 +152,7 @@ Type_TypeKey&amp; CreateType(Params&lt;<span style='color:#b08000;'>1</span>&gt;
   ReturnTuple Call_get(<span style='color:#0057ae;'>const</span> S&lt;TypeValue&gt;&amp; Var_self, <span style='color:#0057ae;'>const</span> ParamTuple&amp; params, <span style='color:#0057ae;'>const</span> ValueTuple&amp; args) {
     TRACE_FUNCTION(<span style='color:#bf0303;'>&quot;TypeKey.get&quot;</span>)
     ReturnTuple returns(<span style='color:#b08000;'>1</span>);
-    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/type-tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 53, column 5)&quot;</span>)
+    SET_CONTEXT_POINT(<span style='color:#bf0303;'>&quot;</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'>example/tree/type-tree.0rx</span><span style='color:#3daee9;'>\&quot;</span><span style='color:#bf0303;'> (line 53, column 5)&quot;</span>)
     <b>return</b> ReturnTuple(Box_Int(Var_index));
     <b>return</b> returns;
   }
