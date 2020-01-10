@@ -235,6 +235,14 @@ define Test {
 }
 END
 
+expect_error 'missing member scope' 'scope' 'line 2' <<END
+define Test {
+  Bool value <- false
+
+  run () {}
+}
+END
+
 expect_runs '@category member from @type' <<END
 define Test {
   @category Bool value <- true

@@ -91,7 +91,7 @@ parseMemberProcedureFunction n = parsed >>= return . foldr merge empty where
   empty = ([],[],[])
   merge (ms1,ps1,fs1) (ms2,ps2,fs2) = (ms1++ms2,ps1++ps2,fs1++fs2)
   parsed = sepBy anyType optionalSpace
-  anyType = labeled "" $ singleMember <|> singleProcedure <|> singleFunction
+  anyType = labeled "" $ catchUnscopedType <|> singleMember <|> singleProcedure <|> singleFunction
   singleMember = labeled "member" $ do
     m <- sourceParser
     return ([m],[],[])
@@ -105,3 +105,6 @@ parseMemberProcedureFunction n = parsed >>= return . foldr merge empty where
       fail $ "expecting definition of function " ++ show (sfName f) ++
              " but got definition of " ++ show (epName p)
     return ([],[p],[f])
+  catchUnscopedType = do
+    t <- try sourceParser :: Parser ValueType
+    fail $ "members must have an explicit @value or @category scope"
