@@ -1,0 +1,19 @@
+@value interface Type1 {
+  get () -> (Type1)
+}
+
+@value interface Type2 {
+  refines Type1
+}
+
+@value interface Test1 {
+  refines Type2
+
+  get () -> (Test1)
+}
+
+concrete Test2 {
+  refines Type2
+
+  @value get () -> (Test2)
+}

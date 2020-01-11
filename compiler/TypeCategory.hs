@@ -553,6 +553,9 @@ flattenAllConnections tm0 ts = do
     preMergeSingle tm t@(ValueInterface c n ps rs vs fs) = do
       rs' <- fmap concat $ collectAllOrErrorM $ map (getRefines tm) rs
       return $ ValueInterface c n ps rs' vs fs
+    preMergeSingle tm t@(ValueConcrete c n ps rs ds vs fs) = do
+      rs' <- fmap concat $ collectAllOrErrorM $ map (getRefines tm) rs
+      return $ ValueConcrete c n ps rs' ds vs fs
     preMergeSingle _ t = return t
     update r t u = do
       (ts,tm) <- u

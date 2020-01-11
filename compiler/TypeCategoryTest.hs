@@ -761,6 +761,12 @@ tests = [
         ts <- topoSortCategories defaultCategories ts
         flattenAllConnections defaultCategories ts
         return ()),
+    checkOperationSuccess
+      "testfiles/merge_with_refine.0rx"
+      (\ts -> do
+        ts <- topoSortCategories defaultCategories ts
+        flattenAllConnections defaultCategories ts
+        return ()),
     checkOperationFail
       "testfiles/failed_merge.0rx"
       (\ts -> do
