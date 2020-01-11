@@ -56,10 +56,14 @@ concrete RepeatMatcher<#c> {
 }
 
 concrete SequenceMatcher<#c> {
+  refines Matcher<#c>
   refines BranchingMatcher<#c>
 
   @type create (optional ReadSequence<Matcher<#c>>) -> (SequenceMatcher<#c>)
   @value copyWithReset () -> (SequenceMatcher<#c>)
+  @value matchesEmpty () -> (Bool)
+  @value tryNextMatch (#c) -> (MatchState)
+  @value getBranch () -> (optional SequenceMatcher<#c>)
 }
 
 @value interface ReadSequence<|#c> {

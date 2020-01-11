@@ -15,6 +15,7 @@ define RegexTest {
     ~ testSequenceMatcherMatch()
     ~ testSequenceMatcherNonMatch()
     ~ testSequenceMatcherBranch()
+    ~ testSequenceMatcherNestedBranch()
     ~ testSequenceMatcherSkipFailedEmpty()
     ~ testSequenceMatcherEndBranch()
   }
@@ -314,6 +315,70 @@ define RegexTest {
     BranchingMatcher<Char> matcher <-
         SequenceMatcher<Char>$create(
             LinkedNode<Matcher<Char>>$create(RepeatMatcher<Char>$createRange(1,2,MatchSingle<Char>$create('a')),
+                LinkedNode<Matcher<Char>>$create(MatchSingle<Char>$create('b'),empty)))
+
+    MatchState state <- MatchState$matchFail()
+
+    // First character.
+    state <- matcher.tryNextMatch('a')
+    if (!MatchState$equals(state,MatchState$matchContinue())) {
+      ~ fail(state)
+    }
+    // The RepeatMatcher should branch.
+    if (!present(matcher.getBranch())) {
+      ~ fail("branch missing")
+    }
+    if (matcher.matchesEmpty()) {
+      ~ fail("matches empty")
+    }
+
+    BranchingMatcher<Char> branch <- require(matcher.getBranch())
+
+    // Second character.
+    state <- matcher.tryNextMatch('a')
+    if (!MatchState$equals(state,MatchState$matchContinue())) {
+      ~ fail(state)
+    }
+    if (present(matcher.getBranch())) {
+      ~ fail("branch present")
+    }
+    if (matcher.matchesEmpty()) {
+      ~ fail("matches empty")
+    }
+
+    // Third character.
+    state <- matcher.tryNextMatch('b')
+    if (!MatchState$equals(state,MatchState$matchComplete())) {
+      ~ fail(state)
+    }
+    if (present(matcher.getBranch())) {
+      ~ fail("branch present")
+    }
+    if (!matcher.matchesEmpty()) {
+      ~ fail("doesn't match empty")
+    }
+
+    // Second character in branch.
+    state <- branch.tryNextMatch('b')
+    if (!MatchState$equals(state,MatchState$matchComplete())) {
+      ~ fail(state)
+    }
+    if (present(branch.getBranch())) {
+      ~ fail("branch present")
+    }
+    if (!branch.matchesEmpty()) {
+      ~ fail("doesn't match empty")
+    }
+  }
+
+  @type testSequenceMatcherNestedBranch () -> ()
+  testSequenceMatcherNestedBranch () {
+    Matcher<Char> matcher0 <-
+        SequenceMatcher<Char>$create(
+            LinkedNode<Matcher<Char>>$create(RepeatMatcher<Char>$createRange(1,2,MatchSingle<Char>$create('a')),empty))
+    BranchingMatcher<Char> matcher <-
+        SequenceMatcher<Char>$create(
+            LinkedNode<Matcher<Char>>$create(matcher0,
                 LinkedNode<Matcher<Char>>$create(MatchSingle<Char>$create('b'),empty)))
 
     MatchState state <- MatchState$matchFail()
