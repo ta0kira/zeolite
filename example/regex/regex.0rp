@@ -11,8 +11,14 @@ concrete MatchState {
 @value interface Matcher<#c|> {
   copyWithReset () -> (Matcher<#c>)
   matchesEmpty () -> (Bool)
-  // NOTE: A state of matchFail() should persist to subsequent calls.
   tryNextMatch (#c) -> (MatchState)
+}
+
+@value interface BranchingMatcher<#c|> {
+  copyWithReset () -> (BranchingMatcher<#c>)
+  matchesEmpty () -> (Bool)
+  tryNextMatch (#c) -> (MatchState)
+  getBranch () -> (optional BranchingMatcher<#c>)
 }
 
 concrete MatchSingle<#c> {
@@ -47,13 +53,6 @@ concrete RepeatMatcher<#c> {
   @type createOnePlus (Matcher<#c>) -> (RepeatMatcher<#c>)
   @type createRange (Int,Int,Matcher<#c>) -> (RepeatMatcher<#c>)
   @value copyWithReset () -> (RepeatMatcher<#c>)
-}
-
-@value interface BranchingMatcher<#c|> {
-  refines Matcher<#c>
-
-  copyWithReset () -> (BranchingMatcher<#c>)
-  getBranch () -> (optional BranchingMatcher<#c>)
 }
 
 concrete SequenceMatcher<#c> {
