@@ -4,6 +4,7 @@ define MatchState {
   @category MatchState matchFailVal     <- MatchState{ 0, "matchFail" }
   @category MatchState matchContinueVal <- MatchState{ 1, "matchContinue" }
   @category MatchState matchCompleteVal <- MatchState{ 2, "matchComplete" }
+  @category MatchState matchBranchVal   <- MatchState{ 3, "matchBranch" }
 
   formatted () {
     return "MatchState$" + name + "()"
@@ -11,10 +12,6 @@ define MatchState {
 
   equals (x,y) {
     return x.getEnum() == y.getEnum()
-  }
-
-  lessThan (x,y) {
-    return x.getEnum() < y.getEnum()
   }
 
   matchFail () {
@@ -27,6 +24,10 @@ define MatchState {
 
   matchComplete () {
     return matchCompleteVal
+  }
+
+  matchBranch () {
+    return matchBranchVal
   }
 
   @value getEnum () -> (Int)
@@ -51,9 +52,8 @@ define MatchSingle {
     return false
   }
 
-  tryNextMatch (data) (state2,branches) {
+  tryNextMatch (data) (state2) {
     state2 <- MatchState$matchFail()
-    branches <- empty
     if (MatchState$equals(state,MatchState$matchContinue())) {
       if (#c$equals(data,match)) {
         state2 <- MatchState$matchComplete()
@@ -80,9 +80,8 @@ define MatchRange {
     return false
   }
 
-  tryNextMatch (data) (state2,branches) {
+  tryNextMatch (data) (state2) {
     state2 <- MatchState$matchFail()
-    branches <- empty
     if (MatchState$equals(state,MatchState$matchContinue())) {
       if (!#c$lessThan(data,matchMin) && !#c$lessThan(matchMax,data)) {
         state2 <- MatchState$matchComplete()
@@ -107,9 +106,8 @@ define MatchAny {
     return false
   }
 
-  tryNextMatch (_) (state2,branches) {
+  tryNextMatch (_) (state2) {
     state2 <- MatchState$matchFail()
-    branches <- empty
     if (MatchState$equals(state,MatchState$matchContinue())) {
       state2 <- MatchState$matchComplete()
     }
@@ -144,19 +142,21 @@ define RepeatMatcher {
     return reachedMin()
   }
 
-  tryNextMatch (data) (state,branches) {
+  tryNextMatch (data) (state) {
     if (atMax() || failed) {
-      return { MatchState$matchFail(), empty }
+      return MatchState$matchFail()
     }
-    { state, branches } <- matcher.tryNextMatch(data)
-    if (MatchState$equals(state,MatchState$matchComplete())) {
+    state <- matcher.tryNextMatch(data)
+    // matchContinue() is passed on.
+    if (MatchState$equals(state,MatchState$matchComplete()) ||
+        MatchState$equals(state,MatchState$matchBranch())) {
       ~ incrementMatch()
       ~ startRepeat()
       if (reachedMin()) {
-        state <- MatchState$matchComplete()
         if (!atMax()) {
-          // Add a new branch to continue optional matching.
-          branches <- LinkedNode<Matcher<#c>>$create(self,branches)
+          state <- MatchState$matchBranch()
+        } else {
+          state <- MatchState$matchComplete()
         }
       } else {
         state <- MatchState$matchContinue()
@@ -188,13 +188,18 @@ define RepeatMatcher {
 }
 
 define SequenceMatcher {
-  @value LinkedNode<Matcher<#c>> head
-  @value LinkedNode<Matcher<#c>> tail
+  @value optional ReadSequence<Matcher<#c>> matchers
   @value optional ReadSequence<Matcher<#c>> current
+  @value optional SequenceMatcher<#c> branch
+  @value Bool failed
 
-  create (matcher) {
-    LinkedNode<Matcher<#c>> node <- LinkedNode<Matcher<#c>>$create(matcher,empty)
-    return SequenceMatcher<#c>{ node, node, node }
+  create (matchers) {
+    return SequenceMatcher<#c>{ matchers, matchers, empty, false }
+  }
+
+  copyWithReset () {
+    optional ReadSequence<Matcher<#c>> matchers2 <- copySequence(matchers)
+    return SequenceMatcher<#c>{ matchers2, matchers2, empty, false }
   }
 
   matchesEmpty () {
@@ -210,109 +215,81 @@ define SequenceMatcher {
     return true
   }
 
-  copyWithReset () {
-    { optional LinkedNode<Matcher<#c>> head2,
-      optional LinkedNode<Matcher<#c>> tail2 } <- copySequence(head)
-    return SequenceMatcher<#c>{ require(head2), require(tail2), head2 }
-  }
-
-  appendMatcher (matcher) {
-    LinkedNode<Matcher<#c>> node <- LinkedNode<Matcher<#c>>$create(matcher,empty)
-    if (!present(head)) {
-      head <- node
-      tail <- node
-      current <- node
-    } else {
-      ~ tail.setNext(node)
-      tail <- node
+  tryNextMatch (data) (state) {
+    if (!present(current) || failed) {
+      failed <- true
+      return MatchState$matchFail()
     }
-    return self
-  }
-
-  tryNextMatch (data) (state,branches) {
-    if (!present(current)) {
-      return { MatchState$matchFail(), empty }
-    }
-    { state, branches } <- require(current).value().tryNextMatch(data)
-    if (MatchState$equals(state,MatchState$matchComplete())) {
-      current <- require(current).next()
-      branches <- extendBranches(branches)
-      if (!matchesEmpty()) {
-        state <- MatchState$matchContinue()
-      } elif (present(current)) {
-        // Add a new branch to continue optional matching.
-        branches <- LinkedNode<Matcher<#c>>$create(self,branches)
-      }
-    } else {
-      branches <- empty
-    }
-  }
-
-  @value extendBranches (optional ReadSequence<Matcher<#c>>) -> (optional ReadSequence<Matcher<#c>>)
-  extendBranches (branches) (head2) {
-    if (!present(current)) {
-      return branches
-    }
-    head2 <- empty
-    scoped {
-      optional LinkedNode<Matcher<#c>> tail2 <- empty
-      optional ReadSequence<Matcher<#c>> current2 <- branches
-    } in while (present(current2)) {
-      SequenceMatcher<#c> extended <- extendSingleBranch(require(current2).value())
-      LinkedNode<Matcher<#c>> node <- LinkedNode<Matcher<#c>>$create(extended,empty)
-      if (!present(head2)) {
-        head2 <- node
-        tail2 <- node
-      } else {
-        ~ require(tail2).setNext(node)
-        tail2 <- node
+    branch <- empty
+    state <- MatchState$matchFail()
+    while (!atEnd()) {
+      // Skip over any matcher that fails but could have matched empty.
+      Bool emptyAllowed <- require(current).value().matchesEmpty()
+      state <- require(current).value().tryNextMatch(data)
+      if (!MatchState$equals(state,MatchState$matchFail()) || !emptyAllowed) {
+        break
       }
     } update {
-      current2 <- require(current2).next()
+      ~ startNext()
+    }
+    // matchContinue() is passed on.
+    if (MatchState$equals(state,MatchState$matchBranch())) {
+      optional ReadSequence<Matcher<#c>> matchers2 <- copySequence(require(current).next())
+      if (present(matchers2)) {
+        branch <- SequenceMatcher<#c>{ matchers2, matchers2, empty, false }
+        state <- MatchState$matchContinue()
+      } else {
+        state <- MatchState$matchBranch()
+      }
+    } elif (MatchState$equals(state,MatchState$matchComplete())) {
+      ~ startNext()
+      if (atEnd()) {
+        state <- MatchState$matchComplete()
+      } else {
+        state <- MatchState$matchContinue()
+      }
+    } elif (MatchState$equals(state,MatchState$matchFail())) {
+      failed <- true
     }
   }
 
-  @value extendSingleBranch (Matcher<#c>) -> (SequenceMatcher<#c>)
-  extendSingleBranch (branch) {
-    { optional LinkedNode<Matcher<#c>> head2,
-      optional LinkedNode<Matcher<#c>> tail2 } <- copySequence(current)
-    // NOTE: Don't copyWithReset() branch!
-    head2 <- LinkedNode<Matcher<#c>>$create(branch,head2)
-    if (!present(tail2)) {
-      tail2 <- head2
-    }
-    return SequenceMatcher<#c>{ require(head2), require(tail2), head2 }
+  getBranch () {
+    return branch
   }
 
   @type copySequence
-  (optional ReadSequence<Matcher<#c>>) ->
-  (optional LinkedNode<Matcher<#c>>,optional LinkedNode<Matcher<#c>>)
-  copySequence (head) (head2,tail2) {
+  (optional ReadSequence<Matcher<#c>>) -> (optional LinkedNode<Matcher<#c>>)
+  copySequence (head) (head2) {
     head2 <- empty
-    tail2 <- empty
     scoped {
+      optional LinkedNode<Matcher<#c>> tail <- empty
       optional ReadSequence<Matcher<#c>> current <- head
     } in while (present(current)) {
       LinkedNode<Matcher<#c>> node <-
           LinkedNode<Matcher<#c>>$create(require(current).value().copyWithReset(),empty)
       if (!present(head2)) {
         head2 <- node
-        tail2 <- node
+        tail <- node
       } else {
-        ~ require(tail2).setNext(node)
-        tail2 <- node
+        ~ require(tail).setNext(node)
+        tail <- node
       }
     } update {
       current <- require(current).next()
     }
   }
-}
 
-concrete LinkedNode<#x> {
-  refines ReadSequence<#x>
+  @value startNext () -> ()
+  startNext () {
+    if (present(current)) {
+      current <- require(current).next()
+    }
+  }
 
-  @type create (#x,optional ReadSequence<#x>) -> (LinkedNode<#x>)
-  @value setNext(optional ReadSequence<#x>) -> ()
+  @value atEnd () -> (Bool)
+  atEnd () {
+    return !present(current)
+  }
 }
 
 define LinkedNode {

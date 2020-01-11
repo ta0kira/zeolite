@@ -1,26 +1,18 @@
 concrete MatchState {
   refines Formatted
   defines Equals<MatchState>
-  defines LessThan<MatchState>
-
-  // Ordered from lowest to highest.
 
   @type matchFail     () -> (MatchState) // Matching has failed.
   @type matchContinue () -> (MatchState) // Matching must continue.
   @type matchComplete () -> (MatchState) // End of the pattern.
+  @type matchBranch   () -> (MatchState) // Optional end of the pattern.
 }
 
 @value interface Matcher<#c|> {
   copyWithReset () -> (Matcher<#c>)
   matchesEmpty () -> (Bool)
-  // NOTE: Only return a branch if the state is matchComplete().
-  tryNextMatch (#c) -> (MatchState /*state*/,
-                        optional ReadSequence<Matcher<#c>> /*branches*/)
-}
-
-@value interface ReadSequence<|#c> {
-  value () -> (#c)
-  next () -> (optional ReadSequence<#c>)
+  // NOTE: A state of matchFail() should persist to subsequent calls.
+  tryNextMatch (#c) -> (MatchState)
 }
 
 concrete MatchSingle<#c> {
@@ -57,10 +49,28 @@ concrete RepeatMatcher<#c> {
   @value copyWithReset () -> (RepeatMatcher<#c>)
 }
 
-concrete SequenceMatcher<#c> {
+@value interface ReadSequence<|#c> {
+  value () -> (#c)
+  next () -> (optional ReadSequence<#c>)
+}
+
+@value interface BranchingMatcher<#c|> {
   refines Matcher<#c>
 
-  @type create (Matcher<#c>) -> (SequenceMatcher<#c>)
+  copyWithReset () -> (BranchingMatcher<#c>)
+  getBranch () -> (optional BranchingMatcher<#c>)
+}
+
+concrete SequenceMatcher<#c> {
+  refines BranchingMatcher<#c>
+
+  @type create (optional ReadSequence<Matcher<#c>>) -> (SequenceMatcher<#c>)
   @value copyWithReset () -> (SequenceMatcher<#c>)
-  @value appendMatcher (Matcher<#c>) -> (SequenceMatcher<#c>)
+}
+
+concrete LinkedNode<#x> {
+  refines ReadSequence<#x>
+
+  @type create (#x,optional ReadSequence<#x>) -> (LinkedNode<#x>)
+  @value setNext(optional ReadSequence<#x>) -> ()
 }
