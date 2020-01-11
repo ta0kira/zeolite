@@ -61,15 +61,19 @@ main = do
     xs' <- fmap concat $ collectAllOrErrorM $  map (processInternal tm0') xs
     return $ ps' ++ xs'
   hPutStr stderr $ format results
-  writeResults results
   exit results
   where
     setPrefix "" f = f
     setPrefix p f@('/':_) = f
     setPrefix p f = p ++ "/" ++ f
-    exit c = if isCompileError c
-                then exitFailure
-                else exitSuccess
+    exit results = if isCompileError results
+                      then do
+                        hPutStrLn stderr $ "Zeolite compilation failed."
+                        exitFailure
+                      else do
+                        writeResults results
+                        hPutStrLn stderr $ "Zeolite compilation succeeded."
+                        exitSuccess
     processExisting :: (CategoryMap SourcePos) -> [(String,String)] ->
                        CompileInfo (CategoryMap SourcePos)
     processExisting bs cs = do
