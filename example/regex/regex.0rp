@@ -7,69 +7,60 @@ concrete MatchState {
 
   @type matchFail     () -> (MatchState) // Matching has failed.
   @type matchContinue () -> (MatchState) // Matching must continue.
-  @type matchEnd      () -> (MatchState) // End of the match but not the data.
-  @type matchComplete () -> (MatchState) // End of the pattern and the data.
+  @type matchComplete () -> (MatchState) // End of the pattern.
 }
 
-@value interface Matcher<#x> {
-  copyWithReset () -> (Matcher<#x>)
-  tryNextMatch (#x) -> (MatchState,#x,optional LinkedNode<Matcher<#x>>)
+@value interface Matcher<#c|> {
+  copyWithReset () -> (Matcher<#c>)
+  matchesEmpty () -> (Bool)
+  // NOTE: Only return a branch if the state is matchComplete().
+  tryNextMatch (#c) -> (MatchState /*state*/,
+                        optional ReadSequence<Matcher<#c>> /*branches*/)
 }
 
-concrete MatchSingleChar<#c> {
+@value interface ReadSequence<|#c> {
+  value () -> (#c)
+  next () -> (optional ReadSequence<#c>)
+}
+
+concrete MatchSingle<#c> {
   #c defines Equals<#c>
 
-  refines Matcher<ReadIterator<#c>>
+  refines Matcher<#c>
 
-  @type create (#c) -> (MatchSingleChar<#c>)
-  @value copyWithReset () -> (MatchSingleChar<#c>)
+  @type create (#c) -> (MatchSingle<#c>)
+  @value copyWithReset () -> (MatchSingle<#c>)
 }
 
-concrete MatchCharRange<#c> {
+concrete MatchRange<#c> {
   #c defines LessThan<#c>
 
-  refines Matcher<ReadIterator<#c>>
+  refines Matcher<#c>
 
-  @type create (#c,#c) -> (MatchCharRange<#c>)
-  @value copyWithReset () -> (MatchCharRange<#c>)
+  @type create (#c,#c) -> (MatchRange<#c>)
+  @value copyWithReset () -> (MatchRange<#c>)
 }
 
-concrete MatchAnyChar<#c> {
-  refines Matcher<ReadIterator<#c>>
+concrete MatchAny<#c|> {
+  refines Matcher<#c>
 
-  @type create () -> (MatchAnyChar<#c>)
-  @value copyWithReset () -> (MatchAnyChar<#c>)
+  @type create () -> (MatchAny<#c>)
+  @value copyWithReset () -> (MatchAny<#c>)
 }
 
-concrete RepeatMatcher<#x> {
-  refines Matcher<#x>
+concrete RepeatMatcher<#c> {
+  refines Matcher<#c>
 
-  @type createZeroPlus (Matcher<#x>) -> (Matcher<#x>)
-  @type createOnePlus (Matcher<#x>) -> (Matcher<#x>)
-  @type createRange (Int,Int,Matcher<#x>) -> (Matcher<#x>)
-  @value copyWithReset () -> (RepeatMatcher<#x>)
+  @type createZeroPlus (Matcher<#c>) -> (RepeatMatcher<#c>)
+  @type createOnePlus (Matcher<#c>) -> (RepeatMatcher<#c>)
+  @type createRange (Int,Int,Matcher<#c>) -> (RepeatMatcher<#c>)
+  @value copyWithReset () -> (RepeatMatcher<#c>)
 }
 
-concrete SequenceMatcher<#x> {
-  refines Matcher<#x>
+concrete SequenceMatcher<#c> {
+  refines Matcher<#c>
 
-  @type create (Matcher<#x>) -> (SequenceMatcher<#x>)
-  @value copyWithReset () -> (SequenceMatcher<#x>)
-  @value appendMatcher (Matcher<#x>) -> (SequenceMatcher<#x>)
-}
-
-concrete AlternativeMatcher<#x> {
-  refines Matcher<#x>
-
-  @type create (Matcher<#x>) -> (AlternativeMatcher<#x>)
-  @value copyWithReset () -> (AlternativeMatcher<#x>)
-  @value addAlternative (Matcher<#x>) -> (AlternativeMatcher<#x>)
-}
-
-concrete LinkedNode<#x> {
-  @type create (#x,optional LinkedNode<#x>) -> (LinkedNode<#x>)
-  @type appendTail (optional LinkedNode<#x>,optional LinkedNode<#x>) -> (optional LinkedNode<#x>)
-  @value value () -> (#x)
-  @value next () -> (optional LinkedNode<#x>)
-  @value setNext(optional LinkedNode<#x>) -> ()
+  @type create (Matcher<#c>) -> (SequenceMatcher<#c>)
+  @value copyWithReset () -> (SequenceMatcher<#c>)
+  @value appendMatcher (Matcher<#c>) -> (SequenceMatcher<#c>)
 }
