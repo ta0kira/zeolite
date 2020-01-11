@@ -49,11 +49,6 @@ concrete RepeatMatcher<#c> {
   @value copyWithReset () -> (RepeatMatcher<#c>)
 }
 
-@value interface ReadSequence<|#c> {
-  value () -> (#c)
-  next () -> (optional ReadSequence<#c>)
-}
-
 @value interface BranchingMatcher<#c|> {
   refines Matcher<#c>
 
@@ -68,9 +63,13 @@ concrete SequenceMatcher<#c> {
   @value copyWithReset () -> (SequenceMatcher<#c>)
 }
 
+@value interface ReadSequence<|#c> {
+  value () -> (#c)
+  next () -> (optional ReadSequence<#c>)
+}
+
 concrete LinkedNode<#x> {
   refines ReadSequence<#x>
 
-  @type create (#x,optional ReadSequence<#x>) -> (LinkedNode<#x>)
-  @value setNext(optional ReadSequence<#x>) -> ()
+  @type create (#x,optional ReadSequence<#x>) -> (ReadSequence<#x>)
 }

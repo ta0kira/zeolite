@@ -258,24 +258,13 @@ define SequenceMatcher {
   }
 
   @type copySequence
-  (optional ReadSequence<Matcher<#c>>) -> (optional LinkedNode<Matcher<#c>>)
-  copySequence (head) (head2) {
-    head2 <- empty
-    scoped {
-      optional LinkedNode<Matcher<#c>> tail <- empty
-      optional ReadSequence<Matcher<#c>> current <- head
-    } in while (present(current)) {
-      LinkedNode<Matcher<#c>> node <-
-          LinkedNode<Matcher<#c>>$create(require(current).value().copyWithReset(),empty)
-      if (!present(head2)) {
-        head2 <- node
-        tail <- node
-      } else {
-        ~ require(tail).setNext(node)
-        tail <- node
-      }
-    } update {
-      current <- require(current).next()
+  (optional ReadSequence<Matcher<#c>>) -> (optional ReadSequence<Matcher<#c>>)
+  copySequence (head) {
+    if (!present(head)) {
+      return empty
+    } else {
+      return LinkedNode<Matcher<#c>>$create(require(head).value().copyWithReset(),
+                                            copySequence(require(head).next()))
     }
   }
 
@@ -306,9 +295,5 @@ define LinkedNode {
 
   next () {
     return parent
-  }
-
-  setNext (parent2) {
-    parent <- parent2
   }
 }
