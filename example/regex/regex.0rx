@@ -14,6 +14,10 @@ define MatchState {
     return x.getEnum() == y.getEnum()
   }
 
+  lessThan (x,y) {
+    return x.getEnum() < y.getEnum()
+  }
+
   matchFail () {
     return matchFailVal
   }
@@ -216,11 +220,11 @@ define SequenceMatcher {
   }
 
   tryNextMatch (data) (state) {
+    branch <- empty
     if (!present(current) || failed) {
       failed <- true
       return MatchState$matchFail()
     }
-    branch <- empty
     state <- MatchState$matchFail()
     while (!atEnd()) {
       // Skip over any matcher that fails but could have matched empty.
@@ -278,6 +282,59 @@ define SequenceMatcher {
   @value atEnd () -> (Bool)
   atEnd () {
     return !present(current)
+  }
+}
+
+define BranchMatcher {
+  @value BranchingMatcher<#c> matcher
+  @value optional ReadSequence<BranchingMatcher<#c>> branches
+
+  create (matcher) {
+    ReadSequence<BranchingMatcher<#c>> branch <-
+        LinkedNode<BranchingMatcher<#c>>$create(matcher,empty)
+    return BranchMatcher<#c>{ matcher, branch }
+  }
+
+  copyWithReset () {
+    return create(matcher.copyWithReset())
+  }
+
+  matchesEmpty () {
+    scoped {
+      optional ReadSequence<BranchingMatcher<#c>> current <- branches
+    } in while (present(current)) {
+      if (require(current).value().matchesEmpty()) {
+        return true
+      }
+    } update {
+      current <- require(current).next()
+    }
+    return false
+  }
+
+  tryNextMatch (data) (state) {
+    state <- MatchState$matchFail()
+    optional ReadSequence<BranchingMatcher<#c>> branches2 <- empty
+    while (present(branches)) {
+      BranchingMatcher<#c> branch <- require(branches).value()
+      MatchState state2 <- branch.tryNextMatch(data)
+      if (MatchState$equals(state2,MatchState$matchFail())) {
+        continue
+      }
+      if (!MatchState$equals(state2,MatchState$matchFail())) {
+        branches2 <- LinkedNode<BranchingMatcher<#c>>$create(branch,branches2)
+      }
+      optional BranchingMatcher<#c> branch2 <- branch.getBranch()
+      if (present(branch2)) {
+        branches2 <- LinkedNode<BranchingMatcher<#c>>$create(require(branch2),branches2)
+      }
+      if (MatchState$lessThan(state,state2)) {
+        state <- state2
+      }
+    } update {
+      branches <- require(branches).next()
+    }
+    branches <- branches2
   }
 }
 

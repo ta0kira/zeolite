@@ -18,6 +18,9 @@ define RegexTest {
     ~ testSequenceMatcherNestedBranch()
     ~ testSequenceMatcherSkipFailedEmpty()
     ~ testSequenceMatcherEndBranch()
+
+    ~ testBranchMatcherMatch()
+    ~ testBranchMatcherNonMatch()
   }
 
   @type testMatchSingleMatch () -> ()
@@ -226,7 +229,7 @@ define RegexTest {
 
   @type testSequenceMatcherMatch () -> ()
   testSequenceMatcherMatch () {
-    BranchingMatcher<Char> matcher <-
+    SequenceMatcher<Char> matcher <-
         SequenceMatcher<Char>$create(
             LinkedNode<Matcher<Char>>$create(MatchRange<Char>$create('w','y'),
                 LinkedNode<Matcher<Char>>$create(MatchSingle<Char>$create('a'),empty)))
@@ -275,7 +278,7 @@ define RegexTest {
 
   @type testSequenceMatcherNonMatch () -> ()
   testSequenceMatcherNonMatch () {
-    BranchingMatcher<Char> matcher <-
+    SequenceMatcher<Char> matcher <-
         SequenceMatcher<Char>$create(
             LinkedNode<Matcher<Char>>$create(MatchSingle<Char>$create('a'),
                 LinkedNode<Matcher<Char>>$create(MatchSingle<Char>$create('b'),empty)))
@@ -312,7 +315,7 @@ define RegexTest {
 
   @type testSequenceMatcherBranch () -> ()
   testSequenceMatcherBranch () {
-    BranchingMatcher<Char> matcher <-
+    SequenceMatcher<Char> matcher <-
         SequenceMatcher<Char>$create(
             LinkedNode<Matcher<Char>>$create(RepeatMatcher<Char>$createRange(1,2,MatchSingle<Char>$create('a')),
                 LinkedNode<Matcher<Char>>$create(MatchSingle<Char>$create('b'),empty)))
@@ -332,7 +335,7 @@ define RegexTest {
       ~ fail("matches empty")
     }
 
-    BranchingMatcher<Char> branch <- require(matcher.getBranch())
+    SequenceMatcher<Char> branch <- require(matcher.getBranch())
 
     // Second character.
     state <- matcher.tryNextMatch('a')
@@ -376,7 +379,7 @@ define RegexTest {
     Matcher<Char> matcher0 <-
         SequenceMatcher<Char>$create(
             LinkedNode<Matcher<Char>>$create(RepeatMatcher<Char>$createRange(1,2,MatchSingle<Char>$create('a')),empty))
-    BranchingMatcher<Char> matcher <-
+    SequenceMatcher<Char> matcher <-
         SequenceMatcher<Char>$create(
             LinkedNode<Matcher<Char>>$create(matcher0,
                 LinkedNode<Matcher<Char>>$create(MatchSingle<Char>$create('b'),empty)))
@@ -396,7 +399,7 @@ define RegexTest {
       ~ fail("matches empty")
     }
 
-    BranchingMatcher<Char> branch <- require(matcher.getBranch())
+    SequenceMatcher<Char> branch <- require(matcher.getBranch())
 
     // Second character.
     state <- matcher.tryNextMatch('a')
@@ -437,7 +440,7 @@ define RegexTest {
 
   @type testSequenceMatcherSkipFailedEmpty () -> ()
   testSequenceMatcherSkipFailedEmpty () {
-    BranchingMatcher<Char> matcher <-
+    SequenceMatcher<Char> matcher <-
         SequenceMatcher<Char>$create(
             LinkedNode<Matcher<Char>>$create(RepeatMatcher<Char>$createZeroPlus(MatchSingle<Char>$create('a')),
                 LinkedNode<Matcher<Char>>$create(MatchSingle<Char>$create('b'),empty)))
@@ -459,7 +462,7 @@ define RegexTest {
 
   @type testSequenceMatcherEndBranch () -> ()
   testSequenceMatcherEndBranch () {
-    BranchingMatcher<Char> matcher <-
+    SequenceMatcher<Char> matcher <-
         SequenceMatcher<Char>$create(
             LinkedNode<Matcher<Char>>$create(MatchSingle<Char>$create('a'),
                 LinkedNode<Matcher<Char>>$create(
@@ -489,6 +492,91 @@ define RegexTest {
     }
     if (!matcher.matchesEmpty()) {
       ~ fail("doesn't match empty")
+    }
+  }
+
+  @type testBranchMatcherMatch () -> ()
+  testBranchMatcherMatch () {
+    BranchMatcher<Char> matcher <-
+        BranchMatcher<Char>$create(
+            SequenceMatcher<Char>$create(
+                LinkedNode<Matcher<Char>>$create(RepeatMatcher<Char>$createZeroPlus(MatchSingle<Char>$create('a')),
+                    LinkedNode<Matcher<Char>>$create(MatchSingle<Char>$create('b'),empty))))
+
+    MatchState state <- MatchState$matchFail()
+
+    // First character.
+    state <- matcher.tryNextMatch('a')
+    if (!MatchState$equals(state,MatchState$matchContinue())) {
+      ~ fail(state)
+    }
+    if (matcher.matchesEmpty()) {
+      ~ fail("matches empty")
+    }
+
+    // Second character.
+    state <- matcher.tryNextMatch('a')
+    if (!MatchState$equals(state,MatchState$matchContinue())) {
+      ~ fail(state)
+    }
+    if (matcher.matchesEmpty()) {
+      ~ fail("matches empty")
+    }
+
+    // Third character.
+    state <- matcher.tryNextMatch('b')
+    if (!MatchState$equals(state,MatchState$matchComplete())) {
+      ~ fail(state)
+    }
+    if (!matcher.matchesEmpty()) {
+      ~ fail("doesn't match empty")
+    }
+
+    // Reset to reuse the matcher.
+    matcher <- matcher.copyWithReset()
+
+    // Fourth character.
+    state <- matcher.tryNextMatch('b')
+    if (!MatchState$equals(state,MatchState$matchComplete())) {
+      ~ fail(state)
+    }
+    if (!matcher.matchesEmpty()) {
+      ~ fail("doesn't match empty")
+    }
+  }
+
+  @type testBranchMatcherNonMatch () -> ()
+  testBranchMatcherNonMatch () {
+    BranchMatcher<Char> matcher <-
+        BranchMatcher<Char>$create(
+            SequenceMatcher<Char>$create(
+                LinkedNode<Matcher<Char>>$create(RepeatMatcher<Char>$createZeroPlus(MatchSingle<Char>$create('a')),
+                    LinkedNode<Matcher<Char>>$create(MatchSingle<Char>$create('b'),empty))))
+
+    MatchState state <- MatchState$matchFail()
+
+    // First character.
+    state <- matcher.tryNextMatch('a')
+    if (!MatchState$equals(state,MatchState$matchContinue())) {
+      ~ fail(state)
+    }
+    if (matcher.matchesEmpty()) {
+      ~ fail("matches empty")
+    }
+
+    // Second character.
+    state <- matcher.tryNextMatch('c')
+    if (!MatchState$equals(state,MatchState$matchFail())) {
+      ~ fail(state)
+    }
+    if (matcher.matchesEmpty()) {
+      ~ fail("matches empty")
+    }
+
+    // Should keep failing to match.
+    state <- matcher.tryNextMatch('b')
+    if (!MatchState$equals(state,MatchState$matchFail())) {
+      ~ fail(state)
     }
   }
 }

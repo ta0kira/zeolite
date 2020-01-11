@@ -1,6 +1,7 @@
 concrete MatchState {
   refines Formatted
   defines Equals<MatchState>
+  defines LessThan<MatchState>
 
   @type matchFail     () -> (MatchState) // Matching has failed.
   @type matchContinue () -> (MatchState) // Matching must continue.
@@ -64,6 +65,13 @@ concrete SequenceMatcher<#c> {
   @value matchesEmpty () -> (Bool)
   @value tryNextMatch (#c) -> (MatchState)
   @value getBranch () -> (optional SequenceMatcher<#c>)
+}
+
+concrete BranchMatcher<#c> {
+  refines Matcher<#c>
+
+  @type create (BranchingMatcher<#c>) -> (BranchMatcher<#c>)
+  @value copyWithReset () -> (BranchMatcher<#c>)
 }
 
 @value interface ReadSequence<|#c> {
