@@ -436,7 +436,7 @@ compileExpression = compile where
                                             " [" ++ formatFullContext c ++ "]"
       doNot t e = do
         when (t /= boolRequiredValue) $
-          lift $ compileError $ "Operator ! requires a Bool value " ++
+          lift $ compileError $ "Cannot use " ++ show t ++ " with unary ! operator" ++
                                 " [" ++ formatFullContext c ++ "]"
         return $ (ParamSet [boolRequiredValue],UnboxedPrimitive PrimBool $ "!" ++ useAsUnboxed PrimBool e)
       doNeg t e
@@ -444,7 +444,7 @@ compileExpression = compile where
                                             UnboxedPrimitive PrimInt $ "-" ++ useAsUnboxed PrimInt e)
         | t == floatRequiredValue = return $ (ParamSet [floatRequiredValue],
                                              UnboxedPrimitive PrimFloat $ "-" ++ useAsUnboxed PrimFloat e)
-        | otherwise = lift $ compileError $ "Operator - requires an Int or Float value " ++
+        | otherwise = lift $ compileError $ "Cannot use " ++ show t ++ " with unary - operator" ++
                                             " [" ++ formatFullContext c ++ "]"
   compile (InitializeValue c t ps es) = do
     es' <- sequence $ map compileExpression $ psParams es
