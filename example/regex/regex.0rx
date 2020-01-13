@@ -172,6 +172,43 @@ define MatchAnyMatcher {
   }
 }
 
+define MatchEmpty {
+  create () {
+    return MatchEmpty<#c>{ }
+  }
+
+  matchesEmpty () {
+    return true
+  }
+
+  newMatcher () {
+    return MatchEmptyMatcher<#c>$create()
+  }
+}
+
+concrete MatchEmptyMatcher<#c> {
+  refines Matcher<#c>
+
+  @type create () -> (MatchEmptyMatcher<#c>)
+}
+
+define MatchEmptyMatcher {
+  @value Bool failed
+
+  create () {
+    return MatchEmptyMatcher<#c>{ false }
+  }
+
+  matchSatisfied () {
+    return !failed
+  }
+
+  tryNextMatch (data) {
+    failed <- true
+    return MatchState$matchFail()
+  }
+}
+
 define MatchRepeat {
   @value MatcherTemplate<#c> template
   @value Int minCount
@@ -265,6 +302,84 @@ define MatchRepeatMatcher {
   }
 }
 
+define MatchChoices {
+  @value optional ReadSequence<MatcherTemplate<#c>> choices
+
+  create (choices) {
+    return MatchChoices<#c>{ choices }
+  }
+
+  matchesEmpty () {
+    scoped {
+      optional ReadSequence<MatcherTemplate<#c>> current <- choices
+    } in while (present(current)) {
+      if (require(current).value().matchesEmpty()) {
+        return true
+      }
+    } update {
+      current <- require(current).next()
+    }
+    return false
+  }
+
+  newMatcher () {
+    return MatchChoicesMatcher<#c>$create(recursiveNewMatcher(choices))
+  }
+
+  @type recursiveNewMatcher (optional ReadSequence<MatcherTemplate<#c>>) ->
+                            (optional ReadSequence<Matcher<#c>>)
+  recursiveNewMatcher (choices) {
+    if (!present(choices)) {
+      return empty
+    }
+    return LinkedNode<Matcher<#c>>$create(require(choices).value().newMatcher(),
+                                          recursiveNewMatcher(require(choices).next()))
+  }
+}
+
+concrete MatchChoicesMatcher<#c> {
+  refines Matcher<#c>
+
+  @type create (optional ReadSequence<Matcher<#c>>) -> (MatchChoicesMatcher<#c>)
+}
+
+define MatchChoicesMatcher {
+  @value optional ReadSequence<Matcher<#c>> choices
+
+  create (choices) {
+    return MatchChoicesMatcher<#c>{ choices }
+  }
+
+  matchSatisfied () {
+    scoped {
+      optional ReadSequence<Matcher<#c>> current <- choices
+    } in while (present(current)) {
+      if (require(current).value().matchSatisfied()) {
+        return true
+      }
+    } update {
+      current <- require(current).next()
+    }
+    return false
+  }
+
+  tryNextMatch (data) (state) {
+    state <- MatchState$matchFail()
+    scoped {
+      optional ReadSequence<Matcher<#c>> current <- choices
+    } in while (present(current)) {
+      // NOTE: Failing matchers are left in for simplicity, under the assumption
+      // that they will keep failing.
+      MatchState state2 <- require(current).value().tryNextMatch(data)
+      if (MatchState$lessThan(state,state2)) {
+        state <- state2
+      }
+    } update {
+      current <- require(current).next()
+    }
+  }
+}
+
 define MatchBranches {
   @value MatchBrancherTemplate<#c> template
 
@@ -316,9 +431,8 @@ define MatchBranchesMatcher {
     complete <- MatchState$equals(state,MatchState$matchComplete())
   }
 
-  @type recursiveMatch
-  (#c,optional ReadSequence<MatchBrancher<#c>>) ->
-  (MatchState,optional ReadSequence<MatchBrancher<#c>>)
+  @type recursiveMatch (#c,optional ReadSequence<MatchBrancher<#c>>) ->
+                       (MatchState,optional ReadSequence<MatchBrancher<#c>>)
   recursiveMatch (data,branches) (state,branches2) {
     state <- MatchState$matchFail()
     branches2 <- empty
@@ -330,24 +444,10 @@ define MatchBranchesMatcher {
       { MatchState state2, optional ReadSequence<MatchBrancher<#c>> branches3 } <-
           require(branches).value().tryBranches(data)
     } in if (present(branches3)) {
-      branches2 <- concatBranches(branches3,branches2)
+      branches2 <- LinkedNode<MatchBrancher<#c>>$concatSequences(branches3,branches2)
       state <- MatchState$matchContinue()
     } elif (MatchState$lessThan(state,state2)) {
       state <- state2
-    }
-  }
-
-  @type concatBranches
-  (optional ReadSequence<MatchBrancher<#c>>,optional ReadSequence<MatchBrancher<#c>>) ->
-  (optional ReadSequence<MatchBrancher<#c>>)
-  concatBranches (head1,head2) {
-    if (!present(head2)) {
-      return head1
-    } elif (present(head1)) {
-      return LinkedNode<MatchBrancher<#c>>$create(
-          require(head1).value(),concatBranches(require(head1).next(),head2))
-    } else {
-      return head2
     }
   }
 }
@@ -420,9 +520,8 @@ define BranchSequenceMatcher {
     return recursiveBranch(data,continued,sequence)
   }
 
-  @type recursiveBranch
-  (#c,optional Matcher<#c>,optional ReadSequence<MatcherTemplate<#c>>) ->
-  (MatchState,optional ReadSequence<BranchSequenceMatcher<#c>>)
+  @type recursiveBranch (#c,optional Matcher<#c>,optional ReadSequence<MatcherTemplate<#c>>) ->
+                        (MatchState,optional ReadSequence<BranchSequenceMatcher<#c>>)
   recursiveBranch (data,continued,sequence) (state,branch) {
     state <- MatchState$matchFail()
     branch <- empty
@@ -461,11 +560,22 @@ define BranchSequenceMatcher {
 }
 
 define LinkedNode {
-  @value optional ReadSequence<#x> parent
+  @value optional ReadSequence<#x> nextNode
   @value #x data
 
-  create (data,parent) {
-    return LinkedNode<#x>{ parent, data }
+  create (data,nextNode) {
+    return LinkedNode<#x>{ nextNode, data }
+  }
+
+  concatSequences (head1,head2) {
+    if (!present(head2)) {
+      return head1
+    } elif (present(head1)) {
+      return LinkedNode<#x>$create(require(head1).value(),
+                                   concatSequences(require(head1).next(),head2))
+    } else {
+      return head2
+    }
   }
 
   value () {
@@ -473,6 +583,6 @@ define LinkedNode {
   }
 
   next () {
-    return parent
+    return nextNode
   }
 }

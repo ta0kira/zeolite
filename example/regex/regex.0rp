@@ -72,12 +72,24 @@ concrete MatchAny<#c|> {
   @type create () -> (MatchAny<#c>)
 }
 
+concrete MatchEmpty<#c|> {
+  refines MatcherTemplate<#c>
+
+  @type create () -> (MatchEmpty<#c>)
+}
+
 concrete MatchRepeat<#c> {
   refines MatcherTemplate<#c>
 
   @type createZeroPlus (MatcherTemplate<#c>) -> (MatchRepeat<#c>)
   @type createOnePlus (MatcherTemplate<#c>) -> (MatchRepeat<#c>)
   @type createRange (Int,Int,MatcherTemplate<#c>) -> (MatchRepeat<#c>)
+}
+
+concrete MatchChoices<#c> {
+  refines MatcherTemplate<#c>
+
+  @type create (optional ReadSequence<MatcherTemplate<#c>>) -> (MatchChoices<#c>)
 }
 
 concrete MatchBranches<#c> {
@@ -101,4 +113,6 @@ concrete LinkedNode<#x> {
   refines ReadSequence<#x>
 
   @type create (#x,optional ReadSequence<#x>) -> (ReadSequence<#x>)
+  @type concatSequences (optional ReadSequence<#x>,optional ReadSequence<#x>) ->
+                        (optional ReadSequence<#x>)
 }
