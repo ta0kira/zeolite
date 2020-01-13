@@ -3,75 +3,93 @@ concrete MatchState {
   defines Equals<MatchState>
   defines LessThan<MatchState>
 
+  // Ordered from low to high.
+
   @type matchFail     () -> (MatchState) // Matching has failed.
-  @type matchContinue () -> (MatchState) // Matching must continue.
   @type matchComplete () -> (MatchState) // End of the pattern.
-  @type matchBranch   () -> (MatchState) // Optional end of the pattern.
+  @type matchContinue () -> (MatchState) // Matching must continue.
 }
 
 @value interface Matcher<#c|> {
-  copyWithReset () -> (Matcher<#c>)
-  matchesEmpty () -> (Bool)
+  // Returns true if the pattern is complete without additional data.
+  matchSatisfied () -> (Bool)
+
+  // This can be called as long as it returns matchContinue(). The matcher does
+  // not branch; each call updates it with the next data point in the input.
+  //
+  // Returns:
+  // - matchFail(): The pattern cannot be completed.
+  // - matchContinue(): Matching can continue; check matchSatisfied() to see if
+  //                    more data is required to complete the pattern.
+  // - matchComplete(): The pattern has been completed and cannot match any
+  //                    additional data.
   tryNextMatch (#c) -> (MatchState)
 }
 
-@value interface BranchingMatcher<#c|> {
-  copyWithReset () -> (BranchingMatcher<#c>)
+@value interface MatcherTemplate<#c|> {
+  // Returns true if the pattern can match an empty sequence.
   matchesEmpty () -> (Bool)
-  tryNextMatch (#c) -> (MatchState)
-  getBranch () -> (optional BranchingMatcher<#c>)
+  newMatcher () -> (Matcher<#c>)
+}
+
+@value interface MatchBrancher<#c|> {
+  // Returns true if the pattern is complete without additional data.
+  matchSatisfied () -> (Bool)
+
+  // NOTE: Calling this invalidates the MatchBrancher; do not call it again.
+  // Returns:
+  // - state: The highest state of the branches checked.
+  // - branches: All branches with a status of matchContinue().
+  tryBranches (#c) -> (MatchState /*state*/,
+                       optional ReadSequence<MatchBrancher<#c>> /*branches*/)
+}
+
+@value interface MatchBrancherTemplate<#c|> {
+  // Returns true if the pattern can match an empty sequence.
+  matchesEmpty () -> (Bool)
+  newBrancher () -> (MatchBrancher<#c>)
 }
 
 concrete MatchSingle<#c> {
   #c defines Equals<#c>
 
-  refines Matcher<#c>
+  refines MatcherTemplate<#c>
 
   @type create (#c) -> (MatchSingle<#c>)
-  @value copyWithReset () -> (MatchSingle<#c>)
 }
 
 concrete MatchRange<#c> {
   #c defines LessThan<#c>
 
-  refines Matcher<#c>
+  refines MatcherTemplate<#c>
 
   @type create (#c,#c) -> (MatchRange<#c>)
-  @value copyWithReset () -> (MatchRange<#c>)
 }
 
 concrete MatchAny<#c|> {
-  refines Matcher<#c>
+  refines MatcherTemplate<#c>
 
   @type create () -> (MatchAny<#c>)
-  @value copyWithReset () -> (MatchAny<#c>)
 }
 
-concrete RepeatMatcher<#c> {
-  refines Matcher<#c>
+concrete MatchRepeat<#c> {
+  refines MatcherTemplate<#c>
 
-  @type createZeroPlus (Matcher<#c>) -> (RepeatMatcher<#c>)
-  @type createOnePlus (Matcher<#c>) -> (RepeatMatcher<#c>)
-  @type createRange (Int,Int,Matcher<#c>) -> (RepeatMatcher<#c>)
-  @value copyWithReset () -> (RepeatMatcher<#c>)
+  @type createZeroPlus (MatcherTemplate<#c>) -> (MatchRepeat<#c>)
+  @type createOnePlus (MatcherTemplate<#c>) -> (MatchRepeat<#c>)
+  @type createRange (Int,Int,MatcherTemplate<#c>) -> (MatchRepeat<#c>)
 }
 
-concrete SequenceMatcher<#c> {
-  refines Matcher<#c>
-  refines BranchingMatcher<#c>
+concrete MatchBranches<#c> {
+  refines MatcherTemplate<#c>
 
-  @type create (optional ReadSequence<Matcher<#c>>) -> (SequenceMatcher<#c>)
-  @value copyWithReset () -> (SequenceMatcher<#c>)
-  @value matchesEmpty () -> (Bool)
-  @value tryNextMatch (#c) -> (MatchState)
-  @value getBranch () -> (optional SequenceMatcher<#c>)
+  @type create (MatchBrancherTemplate<#c>) -> (MatcherTemplate<#c>)
 }
 
-concrete BranchMatcher<#c> {
-  refines Matcher<#c>
+concrete BranchSequence<#c> {
+  refines MatchBrancherTemplate<#c>
 
-  @type create (BranchingMatcher<#c>) -> (BranchMatcher<#c>)
-  @value copyWithReset () -> (BranchMatcher<#c>)
+  @type create (optional ReadSequence<MatcherTemplate<#c>>) -> (BranchSequence<#c>)
 }
 
 @value interface ReadSequence<|#c> {

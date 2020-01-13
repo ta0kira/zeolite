@@ -2,9 +2,8 @@ define MatchState {
   @value Int enum
   @value String name
   @category MatchState matchFailVal     <- MatchState{ 0, "matchFail" }
-  @category MatchState matchContinueVal <- MatchState{ 1, "matchContinue" }
-  @category MatchState matchCompleteVal <- MatchState{ 2, "matchComplete" }
-  @category MatchState matchBranchVal   <- MatchState{ 3, "matchBranch" }
+  @category MatchState matchCompleteVal <- MatchState{ 1, "matchComplete" }
+  @category MatchState matchContinueVal <- MatchState{ 2, "matchContinue" }
 
   formatted () {
     return "MatchState$" + name + "()"
@@ -22,16 +21,12 @@ define MatchState {
     return matchFailVal
   }
 
-  matchContinue () {
-    return matchContinueVal
-  }
-
   matchComplete () {
     return matchCompleteVal
   }
 
-  matchBranch () {
-    return matchBranchVal
+  matchContinue () {
+    return matchContinueVal
   }
 
   @value getEnum () -> (Int)
@@ -42,131 +37,215 @@ define MatchState {
 
 define MatchSingle {
   @value #c match
-  @value MatchState state
 
   create (match) {
-    return MatchSingle<#c>{ match, MatchState$matchContinue() }
-  }
-
-  copyWithReset () {
-    return MatchSingle<#c>{ match, MatchState$matchContinue() }
+    return MatchSingle<#c>{ match }
   }
 
   matchesEmpty () {
     return false
   }
 
-  tryNextMatch (data) (state2) {
-    state2 <- MatchState$matchFail()
-    if (MatchState$equals(state,MatchState$matchContinue())) {
-      if (#c$equals(data,match)) {
-        state2 <- MatchState$matchComplete()
-      }
+  newMatcher () {
+    return MatchSingleMatcher<#c>$create(match)
+  }
+}
+
+concrete MatchSingleMatcher<#c> {
+  #c defines Equals<#c>
+
+  refines Matcher<#c>
+
+  @type create (#c) -> (MatchSingleMatcher<#c>)
+}
+
+define MatchSingleMatcher {
+  @value #c match
+  @value MatchState state
+
+  create (match) {
+    return MatchSingleMatcher<#c>{ match, MatchState$matchContinue() }
+  }
+
+  matchSatisfied () {
+    return MatchState$equals(state,MatchState$matchComplete())
+  }
+
+  tryNextMatch (data) {
+    if (!MatchState$equals(state,MatchState$matchContinue())) {
+      return (state <- MatchState$matchFail())
     }
-    state <- state2
+    if (#c$equals(data,match)) {
+      return (state <- MatchState$matchComplete())
+    } else {
+      return (state <- MatchState$matchFail())
+    }
   }
 }
 
 define MatchRange {
-  @value #c matchMin
-  @value #c matchMax
-  @value MatchState state
+  @value #c minMatch
+  @value #c maxMatch
 
-  create (matchMin,matchMax) {
-    return MatchRange<#c>{ matchMin, matchMax, MatchState$matchContinue() }
-  }
-
-  copyWithReset () {
-    return MatchRange<#c>{ matchMin, matchMax, MatchState$matchContinue() }
+  create (minMatch,maxMatch) {
+    return MatchRange<#c>{ minMatch, maxMatch }
   }
 
   matchesEmpty () {
     return false
   }
 
-  tryNextMatch (data) (state2) {
-    state2 <- MatchState$matchFail()
-    if (MatchState$equals(state,MatchState$matchContinue())) {
-      if (!#c$lessThan(data,matchMin) && !#c$lessThan(matchMax,data)) {
-        state2 <- MatchState$matchComplete()
-      }
+  newMatcher () {
+    return MatchRangeMatcher<#c>$create(minMatch,maxMatch)
+  }
+}
+
+concrete MatchRangeMatcher<#c> {
+  #c defines LessThan<#c>
+
+  refines Matcher<#c>
+
+  @type create (#c,#c) -> (MatchRangeMatcher<#c>)
+}
+
+define MatchRangeMatcher {
+  @value #c minMatch
+  @value #c maxMatch
+  @value MatchState state
+
+  create (minMatch,maxMatch) {
+    return MatchRangeMatcher<#c>{ minMatch, maxMatch, MatchState$matchContinue() }
+  }
+
+  matchSatisfied () {
+    return MatchState$equals(state,MatchState$matchComplete())
+  }
+
+  tryNextMatch (data) {
+    if (!MatchState$equals(state,MatchState$matchContinue())) {
+      return (state <- MatchState$matchFail())
     }
-    state <- state2
+    if (!#c$lessThan(data,minMatch) && !#c$lessThan(maxMatch,data)) {
+      return (state <- MatchState$matchComplete())
+    } else {
+      return (state <- MatchState$matchFail())
+    }
   }
 }
 
 define MatchAny {
-  @value MatchState state
-
   create () {
-    return MatchAny<#c>{ MatchState$matchContinue() }
-  }
-
-  copyWithReset () {
-    return MatchAny<#c>{ MatchState$matchContinue() }
+    return MatchAny<#c>{ }
   }
 
   matchesEmpty () {
     return false
   }
 
-  tryNextMatch (_) (state2) {
-    state2 <- MatchState$matchFail()
-    if (MatchState$equals(state,MatchState$matchContinue())) {
-      state2 <- MatchState$matchComplete()
-    }
-    state <- state2
+  newMatcher () {
+    return MatchAnyMatcher<#c>$create()
   }
 }
 
-define RepeatMatcher {
-  @value Matcher<#c> matcher
-  @value Int min
-  @value Int max // 0 means unlimited.
-  @value Int repetitionCount
-  @value Bool failed
+concrete MatchAnyMatcher<#c> {
+  refines Matcher<#c>
 
-  createZeroPlus (matcher) {
-    return createRange(0,0,matcher)
+  @type create () -> (MatchAnyMatcher<#c>)
+}
+
+define MatchAnyMatcher {
+  @value MatchState state
+
+  create () {
+    return MatchAnyMatcher<#c>{ MatchState$matchContinue() }
   }
 
-  createOnePlus (matcher) {
-    return createRange(1,0,matcher)
+  matchSatisfied () {
+    return MatchState$equals(state,MatchState$matchComplete())
   }
 
-  createRange (min,max,matcher) {
-    return RepeatMatcher<#c>{ matcher, min, max, 0, false }
+  tryNextMatch (data) {
+    if (!MatchState$equals(state,MatchState$matchContinue())) {
+      return (state <- MatchState$matchFail())
+    }
+    return (state <- MatchState$matchComplete())
+  }
+}
+
+define MatchRepeat {
+  @value MatcherTemplate<#c> template
+  @value Int minCount
+  @value Int maxCount
+
+  createZeroPlus (template) {
+    return createRange(0,0,template)
   }
 
-  copyWithReset () {
-    return RepeatMatcher<#c>{ matcher.copyWithReset(), min, max, 0, false }
+  createOnePlus (template) {
+    return createRange(1,0,template)
+  }
+
+  createRange (minCount,maxCount,template) {
+    return MatchRepeat<#c>{ template, minCount, maxCount }
   }
 
   matchesEmpty () {
-    return reachedMin()
+    return minCount <= 0 || template.matchesEmpty()
+  }
+
+  newMatcher () {
+    return MatchRepeatMatcher<#c>$create(minCount,maxCount,template)
+  }
+}
+
+concrete MatchRepeatMatcher<#c> {
+  refines Matcher<#c>
+
+  @type create (Int,Int,MatcherTemplate<#c>) -> (MatchRepeatMatcher<#c>)
+}
+
+define MatchRepeatMatcher {
+  @value MatcherTemplate<#c> template
+  @value Matcher<#c> matcher
+  @value Int minCount
+  @value Int maxCount // 0 means unlimited.
+  @value Int repetitionCount
+  @value MatchState lastState
+
+  create (minCount,maxCount,template) {
+    return MatchRepeatMatcher<#c>{ template, template.newMatcher(), minCount,
+                                   maxCount, 0, MatchState$matchComplete() }
+  }
+
+  matchSatisfied () {
+    if (MatchState$equals(lastState,MatchState$matchFail())) {
+      return false
+    }
+    if (MatchState$equals(lastState,MatchState$matchContinue()) &&
+        repetitionCount+1 >= minCount && matcher.matchSatisfied()) {
+      // The rest of the current repetition can be ignored.
+      return true
+    }
+    if (MatchState$equals(lastState,MatchState$matchComplete()) &&
+        repetitionCount >= minCount) {
+      return true
+    }
+    return false
   }
 
   tryNextMatch (data) (state) {
-    if (atMax() || failed) {
+    if (atMax() || (MatchState$equals(lastState,MatchState$matchFail()))) {
       return MatchState$matchFail()
     }
-    state <- matcher.tryNextMatch(data)
-    // matchContinue() is passed on.
-    if (MatchState$equals(state,MatchState$matchComplete()) ||
-        MatchState$equals(state,MatchState$matchBranch())) {
+    state <- (lastState <- matcher.tryNextMatch(data))
+    if (MatchState$equals(state,MatchState$matchComplete())) {
       ~ incrementMatch()
       ~ startRepeat()
-      if (reachedMin()) {
-        if (!atMax()) {
-          state <- MatchState$matchBranch()
-        } else {
-          state <- MatchState$matchComplete()
-        }
+      if (atMax()) {
+        state <- MatchState$matchComplete()
       } else {
         state <- MatchState$matchContinue()
       }
-    } elif (MatchState$equals(state,MatchState$matchFail())) {
-      failed <- true
     }
   }
 
@@ -177,133 +256,53 @@ define RepeatMatcher {
 
   @value atMax () -> (Bool)
   atMax () {
-    return max > 0 && repetitionCount >= max
-  }
-
-  @value reachedMin () -> (Bool)
-  reachedMin () {
-    return repetitionCount >= min
+    return maxCount > 0 && repetitionCount >= maxCount
   }
 
   @value startRepeat () -> ()
   startRepeat () {
-    matcher <- matcher.copyWithReset()
+    matcher <- template.newMatcher()
   }
 }
 
-define SequenceMatcher {
-  @value optional ReadSequence<Matcher<#c>> matchers
-  @value optional ReadSequence<Matcher<#c>> current
-  @value optional SequenceMatcher<#c> branch
-  @value Bool failed
+define MatchBranches {
+  @value MatchBrancherTemplate<#c> template
 
-  create (matchers) {
-    return SequenceMatcher<#c>{ matchers, matchers, empty, false }
-  }
-
-  copyWithReset () {
-    optional ReadSequence<Matcher<#c>> matchers2 <- copySequence(matchers)
-    return SequenceMatcher<#c>{ matchers2, matchers2, empty, false }
+  create (template) {
+    return MatchBranches<#c>{ template }
   }
 
   matchesEmpty () {
-    scoped {
-      optional ReadSequence<Matcher<#c>> current2 <- current
-    } in while (present(current2)) {
-      if (!require(current2).value().matchesEmpty()) {
-        return false
-      }
-    } update {
-      current2 <- require(current2).next()
-    }
-    return true
+    return template.matchesEmpty()
   }
 
-  tryNextMatch (data) (state) {
-    branch <- empty
-    if (!present(current) || failed) {
-      failed <- true
-      return MatchState$matchFail()
-    }
-    state <- MatchState$matchFail()
-    while (!atEnd()) {
-      // Skip over any matcher that fails but could have matched empty.
-      Bool emptyAllowed <- require(current).value().matchesEmpty()
-      state <- require(current).value().tryNextMatch(data)
-      if (!MatchState$equals(state,MatchState$matchFail()) || !emptyAllowed) {
-        break
-      }
-    } update {
-      ~ startNext()
-    }
-    // matchContinue() is passed on.
-    if (MatchState$equals(state,MatchState$matchBranch())) {
-      optional ReadSequence<Matcher<#c>> matchers2 <- copySequence(require(current).next())
-      if (present(matchers2)) {
-        branch <- SequenceMatcher<#c>{ matchers2, matchers2, empty, false }
-        state <- MatchState$matchContinue()
-      } else {
-        state <- MatchState$matchBranch()
-      }
-    } elif (MatchState$equals(state,MatchState$matchComplete())) {
-      ~ startNext()
-      if (atEnd()) {
-        state <- MatchState$matchComplete()
-      } else {
-        state <- MatchState$matchContinue()
-      }
-    } elif (MatchState$equals(state,MatchState$matchFail())) {
-      failed <- true
-    }
-  }
-
-  getBranch () {
-    return branch
-  }
-
-  @type copySequence
-  (optional ReadSequence<Matcher<#c>>) -> (optional ReadSequence<Matcher<#c>>)
-  copySequence (head) {
-    if (!present(head)) {
-      return empty
-    } else {
-      return LinkedNode<Matcher<#c>>$create(require(head).value().copyWithReset(),
-                                            copySequence(require(head).next()))
-    }
-  }
-
-  @value startNext () -> ()
-  startNext () {
-    if (present(current)) {
-      current <- require(current).next()
-    }
-  }
-
-  @value atEnd () -> (Bool)
-  atEnd () {
-    return !present(current)
+  newMatcher () {
+    return MatchBranchesMatcher<#c>$create(template.newBrancher())
   }
 }
 
-define BranchMatcher {
-  @value BranchingMatcher<#c> matcher
-  @value optional ReadSequence<BranchingMatcher<#c>> branches
+concrete MatchBranchesMatcher<#c> {
+  refines Matcher<#c>
 
-  create (matcher) {
-    ReadSequence<BranchingMatcher<#c>> branch <-
-        LinkedNode<BranchingMatcher<#c>>$create(matcher,empty)
-    return BranchMatcher<#c>{ matcher, branch }
+  @type create (MatchBrancher<#c>) -> (MatchBranchesMatcher<#c>)
+}
+
+define MatchBranchesMatcher {
+  @value optional ReadSequence<MatchBrancher<#c>> branches
+  @value Bool complete
+
+  create (brancher) {
+    return MatchBranchesMatcher<#c>{ LinkedNode<MatchBrancher<#c>>$create(brancher,empty), false }
   }
 
-  copyWithReset () {
-    return create(matcher.copyWithReset())
-  }
-
-  matchesEmpty () {
+  matchSatisfied () {
+    if (complete) {
+      return true
+    }
     scoped {
-      optional ReadSequence<BranchingMatcher<#c>> current <- branches
+      optional ReadSequence<MatchBrancher<#c>> current <- branches
     } in while (present(current)) {
-      if (require(current).value().matchesEmpty()) {
+      if (require(current).value().matchSatisfied()) {
         return true
       }
     } update {
@@ -314,27 +313,126 @@ define BranchMatcher {
 
   tryNextMatch (data) (state) {
     state <- MatchState$matchFail()
-    optional ReadSequence<BranchingMatcher<#c>> branches2 <- empty
-    while (present(branches)) {
-      BranchingMatcher<#c> branch <- require(branches).value()
-      MatchState state2 <- branch.tryNextMatch(data)
-      if (MatchState$equals(state2,MatchState$matchFail())) {
-        continue
-      }
-      if (!MatchState$equals(state2,MatchState$matchFail())) {
-        branches2 <- LinkedNode<BranchingMatcher<#c>>$create(branch,branches2)
-      }
-      optional BranchingMatcher<#c> branch2 <- branch.getBranch()
-      if (present(branch2)) {
-        branches2 <- LinkedNode<BranchingMatcher<#c>>$create(require(branch2),branches2)
-      }
+    scoped {
+      optional ReadSequence<MatchBrancher<#c>> current <- branches
+      branches <- empty
+    } in while (present(current)) {
+      { MatchState state2, optional ReadSequence<MatchBrancher<#c>> branches2 } <-
+          require(current).value().tryBranches(data)
       if (MatchState$lessThan(state,state2)) {
         state <- state2
       }
+      scoped {
+        optional ReadSequence<MatchBrancher<#c>> current2 <- branches2
+      } in while (present(current2)) {
+        branches <- LinkedNode<MatchBrancher<#c>>$create(require(current2).value(),branches)
+      } update {
+        current2 <- require(current2).next()
+      }
     } update {
-      branches <- require(branches).next()
+      current <- require(current).next()
     }
-    branches <- branches2
+    complete <- MatchState$equals(state,MatchState$matchComplete())
+  }
+}
+
+define BranchSequence {
+  @value optional ReadSequence<MatcherTemplate<#c>> sequence
+
+  create (sequence) {
+    return BranchSequence<#c>{ sequence }
+  }
+
+  matchesEmpty () {
+    scoped {
+      optional ReadSequence<MatcherTemplate<#c>> current <- sequence
+    } in while (present(current)) {
+      if (!require(current).value().matchesEmpty()) {
+        return false
+      }
+    } update {
+      current <- require(current).next()
+    }
+    return true
+  }
+
+  newBrancher () {
+    return BranchSequenceMatcher<#c>$create(sequence)
+  }
+}
+
+concrete BranchSequenceMatcher<#c> {
+  refines MatchBrancher<#c>
+
+  @type create (optional ReadSequence<MatcherTemplate<#c>>) -> (BranchSequenceMatcher<#c>)
+  @value tryBranches (#c) -> (MatchState,optional ReadSequence<BranchSequenceMatcher<#c>>)
+}
+
+define BranchSequenceMatcher {
+  @value optional Matcher<#c> continued
+  @value optional ReadSequence<MatcherTemplate<#c>> sequence
+  @value Bool consumed
+
+  create (sequence) {
+    return BranchSequenceMatcher<#c>{ empty, sequence, false }
+  }
+
+  matchSatisfied () {
+    if (consumed) {
+      return false
+    }
+    if (present(continued) && !require(continued).matchSatisfied()) {
+      return false
+    }
+    scoped {
+      optional ReadSequence<MatcherTemplate<#c>> current <- sequence
+    } in while (present(current)) {
+      if (!require(current).value().matchesEmpty()) {
+        return false
+      }
+    } update {
+      current <- require(current).next()
+    }
+    return true
+  }
+
+  tryBranches (data) (state,branches) {
+    branches <- empty
+    state <- MatchState$matchFail()
+    if (consumed) {
+      return _
+    }
+    while (present(continued) || present(sequence)) {
+      if (!present(continued)) {
+        continued <- require(sequence).value().newMatcher()
+        sequence <- require(sequence).next()
+      }
+      Bool complete <- require(continued).matchSatisfied()
+      MatchState state2 <- require(continued).tryNextMatch(data)
+      if (MatchState$equals(state2,MatchState$matchComplete())) {
+        if (present(sequence)) {
+          // Add a branch to continue this sequence.
+          branches <- LinkedNode<BranchSequenceMatcher<#c>>$create(
+              BranchSequenceMatcher<#c>{ empty, sequence, false },branches)
+          state2 <- MatchState$matchContinue()
+        }
+      } elif (MatchState$equals(state2,MatchState$matchContinue())) {
+        // Add a branch to continue this sequence.
+        branches <- LinkedNode<BranchSequenceMatcher<#c>>$create(
+            BranchSequenceMatcher<#c>{ continued, sequence, false },branches)
+      }
+      if (MatchState$lessThan(state,state2)) {
+        // NOTE: state2 might be updated above!
+        state <- state2
+      }
+      if (!complete) {
+        // The matcher can't be skipped => no more branching is possible.
+        break
+      }
+    } update {
+      continued <- empty
+    }
+    consumed <- true
   }
 }
 

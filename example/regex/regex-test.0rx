@@ -8,28 +8,40 @@ define RegexTest {
 
     ~ testMatchAnyMatch()
 
-    ~ testRepeatMatcherMatch()
-    ~ testRepeatMatcherNested()
-    ~ testRepeatMatcherNonMatch()
+    ~ testMatchRepeatMatch()
+    ~ testMatchRepeatNested()
+    ~ testMatchRepeatNonMatch()
 
-    ~ testSequenceMatcherMatch()
-    ~ testSequenceMatcherNonMatch()
-    ~ testSequenceMatcherBranch()
-    ~ testSequenceMatcherNestedBranch()
-    ~ testSequenceMatcherSkipFailedEmpty()
-    ~ testSequenceMatcherEndBranch()
+    ~ testBranchSequenceMatch()
+    ~ testBranchSequenceNonMatch()
+    ~ testBranchSequenceSkipEmptyFailed()
+    ~ testBranchSequenceFailNonEmptyFailed()
+    ~ testBranchSequenceBranchMultiMatch()
 
-    ~ testBranchMatcherMatch()
-    ~ testBranchMatcherNonMatch()
+    ~ testMatchBranchesMatch()
+    ~ testMatchBranchesNonMatch()
+    ~ testMatchBranchesBranchedMatch()
   }
 
   @type testMatchSingleMatch () -> ()
   testMatchSingleMatch () {
-    Matcher<Char> matcher <- MatchSingle<Char>$create('x')
+    // Pattern: "x"
+    MatcherTemplate<Char> template <- MatchSingle<Char>$create('x')
+    Matcher<Char> matcher <- template.newMatcher()
+
+    if (template.matchesEmpty()) {
+      ~ fail("matches empty")
+    }
+    if (matcher.matchSatisfied()) {
+      ~ fail("match satisfied")
+    }
 
     MatchState state <- matcher.tryNextMatch('x')
     if (!MatchState$equals(state,MatchState$matchComplete())) {
       ~ fail(state)
+    }
+    if (!matcher.matchSatisfied()) {
+      ~ fail("match not satisfied")
     }
 
     // Should only match once.
@@ -37,9 +49,12 @@ define RegexTest {
     if (!MatchState$equals(state,MatchState$matchFail())) {
       ~ fail(state)
     }
+    if (matcher.matchSatisfied()) {
+      ~ fail("match satisfied")
+    }
 
     // Should match again after reset.
-    matcher <- matcher.copyWithReset()
+    matcher <- template.newMatcher()
     state <- matcher.tryNextMatch('x')
     if (!MatchState$equals(state,MatchState$matchComplete())) {
       ~ fail(state)
@@ -48,7 +63,9 @@ define RegexTest {
 
   @type testMatchSingleNonMatch () -> ()
   testMatchSingleNonMatch () {
-    Matcher<Char> matcher <- MatchSingle<Char>$create('x')
+    // Pattern: "x"
+    MatcherTemplate<Char> template <- MatchSingle<Char>$create('x')
+    Matcher<Char> matcher <- template.newMatcher()
 
     MatchState state <- matcher.tryNextMatch('y')
     if (!MatchState$equals(state,MatchState$matchFail())) {
@@ -64,11 +81,23 @@ define RegexTest {
 
   @type testMatchRangeMatch () -> ()
   testMatchRangeMatch () {
-    Matcher<Char> matcher <- MatchRange<Char>$create('w','y')
+    // Pattern: "[w-y]"
+    MatcherTemplate<Char> template <- MatchRange<Char>$create('w','y')
+    Matcher<Char> matcher <- template.newMatcher()
+
+    if (template.matchesEmpty()) {
+      ~ fail("matches empty")
+    }
+    if (matcher.matchSatisfied()) {
+      ~ fail("match satisfied")
+    }
 
     MatchState state <- matcher.tryNextMatch('x')
     if (!MatchState$equals(state,MatchState$matchComplete())) {
       ~ fail(state)
+    }
+    if (!matcher.matchSatisfied()) {
+      ~ fail("match not satisfied")
     }
 
     // Should only match once.
@@ -76,9 +105,12 @@ define RegexTest {
     if (!MatchState$equals(state,MatchState$matchFail())) {
       ~ fail(state)
     }
+    if (matcher.matchSatisfied()) {
+      ~ fail("match satisfied")
+    }
 
     // Should match again after reset.
-    matcher <- matcher.copyWithReset()
+    matcher <- template.newMatcher()
     state <- matcher.tryNextMatch('x')
     if (!MatchState$equals(state,MatchState$matchComplete())) {
       ~ fail(state)
@@ -87,7 +119,9 @@ define RegexTest {
 
   @type testMatchRangeNonMatch () -> ()
   testMatchRangeNonMatch () {
-    Matcher<Char> matcher <- MatchRange<Char>$create('w','y')
+    // Pattern: "[w-y]"
+    MatcherTemplate<Char> template <- MatchRange<Char>$create('w','y')
+    Matcher<Char> matcher <- template.newMatcher()
 
     MatchState state <- matcher.tryNextMatch('a')
     if (!MatchState$equals(state,MatchState$matchFail())) {
@@ -103,11 +137,23 @@ define RegexTest {
 
   @type testMatchAnyMatch () -> ()
   testMatchAnyMatch () {
-    Matcher<Char> matcher <- MatchAny<Char>$create()
+    // Pattern: "."
+    MatcherTemplate<Char> template <- MatchAny<Char>$create()
+    Matcher<Char> matcher <- template.newMatcher()
+
+    if (template.matchesEmpty()) {
+      ~ fail("matches empty")
+    }
+    if (matcher.matchSatisfied()) {
+      ~ fail("match satisfied")
+    }
 
     MatchState state <- matcher.tryNextMatch('x')
     if (!MatchState$equals(state,MatchState$matchComplete())) {
       ~ fail(state)
+    }
+    if (!matcher.matchSatisfied()) {
+      ~ fail("match not satisfied")
     }
 
     // Should only match once.
@@ -115,19 +161,31 @@ define RegexTest {
     if (!MatchState$equals(state,MatchState$matchFail())) {
       ~ fail(state)
     }
+    if (matcher.matchSatisfied()) {
+      ~ fail("match satisfied")
+    }
 
     // Should match again after reset.
-    matcher <- matcher.copyWithReset()
+    matcher <- template.newMatcher()
     state <- matcher.tryNextMatch('x')
     if (!MatchState$equals(state,MatchState$matchComplete())) {
       ~ fail(state)
     }
   }
 
-  @type testRepeatMatcherMatch () -> ()
-  testRepeatMatcherMatch () {
-    Matcher<Char> matcher <-
-        RepeatMatcher<Char>$createRange(2,3,MatchRange<Char>$create('w','y'))
+  @type testMatchRepeatMatch () -> ()
+  testMatchRepeatMatch () {
+    // Pattern: "[w-y]{2,3}"
+    MatcherTemplate<Char> template <-
+        MatchRepeat<Char>$createRange(2,3,MatchRange<Char>$create('w','y'))
+    Matcher<Char> matcher <- template.newMatcher()
+
+    if (template.matchesEmpty()) {
+      ~ fail("matches empty")
+    }
+    if (matcher.matchSatisfied()) {
+      ~ fail("match satisfied")
+    }
 
     MatchState state <- MatchState$matchFail()
 
@@ -136,17 +194,17 @@ define RegexTest {
     if (!MatchState$equals(state,MatchState$matchContinue())) {
       ~ fail(state)
     }
-    if (matcher.matchesEmpty()) {
-      ~ fail("matches empty")
+    if (matcher.matchSatisfied()) {
+      ~ fail("match satisfied")
     }
 
     // Second character.
     state <- matcher.tryNextMatch('y')
-    if (!MatchState$equals(state,MatchState$matchBranch())) {
+    if (!MatchState$equals(state,MatchState$matchContinue())) {
       ~ fail(state)
     }
-    if (!matcher.matchesEmpty()) {
-      ~ fail("doesn't match empty")
+    if (!matcher.matchSatisfied()) {
+      ~ fail("match not satisfied")
     }
 
     // Third character.
@@ -155,56 +213,51 @@ define RegexTest {
       ~ fail(state)
     }
 
+    // Fourth character.
+    state <- matcher.tryNextMatch('x')
+    if (!MatchState$equals(state,MatchState$matchFail())) {
+      ~ fail(state)
+    }
+    if (!matcher.matchSatisfied()) {
+      ~ fail("match not satisfied")
+    }
+
     // Reset to reuse the matcher.
-    matcher <- matcher.copyWithReset()
+    matcher <- template.newMatcher()
 
     // Fourth character.
     state <- matcher.tryNextMatch('w')
     if (!MatchState$equals(state,MatchState$matchContinue())) {
       ~ fail(state)
     }
-    if (matcher.matchesEmpty()) {
-      ~ fail("matches empty")
+    if (matcher.matchSatisfied()) {
+      ~ fail("match satisfied")
     }
 
     // Fifth character.
     state <- matcher.tryNextMatch('w')
-    if (!MatchState$equals(state,MatchState$matchBranch())) {
+    if (!MatchState$equals(state,MatchState$matchContinue())) {
       ~ fail(state)
+    }
+    if (!matcher.matchSatisfied()) {
+      ~ fail("match not satisfied")
     }
   }
 
-  @type testRepeatMatcherNested () -> ()
-  testRepeatMatcherNested () {
-    Matcher<Char> matcher <-
-        RepeatMatcher<Char>$createZeroPlus(
-            RepeatMatcher<Char>$createZeroPlus(MatchSingle<Char>$create('x')))
+  @type testMatchRepeatNested () -> ()
+  testMatchRepeatNested () {
+    // Pattern: "(x*)*"
+    MatcherTemplate<Char> template <-
+        MatchRepeat<Char>$createZeroPlus(
+            MatchRepeat<Char>$createZeroPlus(MatchSingle<Char>$create('x')))
+    Matcher<Char> matcher <- template.newMatcher()
 
-    MatchState state <- MatchState$matchFail()
-
-    // First character.
-    state <- matcher.tryNextMatch('x')
-    if (!MatchState$equals(state,MatchState$matchBranch())) {
-      ~ fail(state)
+    if (!template.matchesEmpty()) {
+      ~ fail("doesn't match empty")
     }
-
-    // Second character.
-    state <- matcher.tryNextMatch('x')
-    if (!MatchState$equals(state,MatchState$matchBranch())) {
-      ~ fail(state)
+    if (!matcher.matchSatisfied()) {
+      ~ fail("match not satisfied")
     }
-
-    // Third character.
-    state <- matcher.tryNextMatch('x')
-    if (!MatchState$equals(state,MatchState$matchBranch())) {
-      ~ fail(state)
-    }
-  }
-
-  @type testRepeatMatcherNonMatch () -> ()
-  testRepeatMatcherNonMatch () {
-    Matcher<Char> matcher <-
-        RepeatMatcher<Char>$createRange(2,3,MatchRange<Char>$create('w','y'))
 
     MatchState state <- MatchState$matchFail()
 
@@ -212,6 +265,46 @@ define RegexTest {
     state <- matcher.tryNextMatch('x')
     if (!MatchState$equals(state,MatchState$matchContinue())) {
       ~ fail(state)
+    }
+    if (!matcher.matchSatisfied()) {
+      ~ fail("match not satisfied")
+    }
+
+    // Second character.
+    state <- matcher.tryNextMatch('x')
+    if (!MatchState$equals(state,MatchState$matchContinue())) {
+      ~ fail(state)
+    }
+    if (!matcher.matchSatisfied()) {
+      ~ fail("match not satisfied")
+    }
+
+    // Third character.
+    state <- matcher.tryNextMatch('x')
+    if (!MatchState$equals(state,MatchState$matchContinue())) {
+      ~ fail(state)
+    }
+    if (!matcher.matchSatisfied()) {
+      ~ fail("match not satisfied")
+    }
+  }
+
+  @type testMatchRepeatNonMatch () -> ()
+  testMatchRepeatNonMatch () {
+    // Pattern: "[w-y]{2,3}"
+    MatcherTemplate<Char> template <-
+        MatchRepeat<Char>$createRange(2,3,MatchRange<Char>$create('w','y'))
+    Matcher<Char> matcher <- template.newMatcher()
+
+    MatchState state <- MatchState$matchFail()
+
+    // First character.
+    state <- matcher.tryNextMatch('x')
+    if (!MatchState$equals(state,MatchState$matchContinue())) {
+      ~ fail(state)
+    }
+    if (matcher.matchSatisfied()) {
+      ~ fail("match satisfied")
     }
 
     // Second character.
@@ -219,6 +312,9 @@ define RegexTest {
     if (!MatchState$equals(state,MatchState$matchFail())) {
       ~ fail(state)
     }
+    if (matcher.matchSatisfied()) {
+      ~ fail("match satisfied")
+    }
 
     // Should keep failing to match.
     state <- matcher.tryNextMatch('x')
@@ -227,12 +323,229 @@ define RegexTest {
     }
   }
 
-  @type testSequenceMatcherMatch () -> ()
-  testSequenceMatcherMatch () {
-    SequenceMatcher<Char> matcher <-
-        SequenceMatcher<Char>$create(
-            LinkedNode<Matcher<Char>>$create(MatchRange<Char>$create('w','y'),
-                LinkedNode<Matcher<Char>>$create(MatchSingle<Char>$create('a'),empty)))
+  @type testBranchSequenceMatch () -> ()
+  testBranchSequenceMatch () {
+    // Pattern: "[w-y]a"
+    MatchBrancherTemplate<Char> template <-
+        BranchSequence<Char>$create(
+            LinkedNode<MatcherTemplate<Char>>$create(MatchRange<Char>$create('w','y'),
+                LinkedNode<MatcherTemplate<Char>>$create(MatchSingle<Char>$create('a'),empty)))
+    MatchBrancher<Char> brancher <- template.newBrancher()
+
+    if (template.matchesEmpty()) {
+      ~ fail("matches empty")
+    }
+    if (brancher.matchSatisfied()) {
+      ~ fail("matches empty")
+    }
+
+    MatchState state <- MatchState$matchFail()
+    optional ReadSequence<MatchBrancher<Char>> branches <- empty
+
+    // First character.
+    { state, branches } <- brancher.tryBranches('x')
+    if (!MatchState$equals(state,MatchState$matchContinue())) {
+      ~ fail(state)
+    }
+    if (!present(branches)) {
+      ~ fail("branch missing")
+    }
+
+    brancher <- require(branches).value()
+    branches <- require(branches).next()
+    if (present(branches)) {
+      ~ fail("branch present")
+    }
+
+    // Second character.
+    { state, branches } <- brancher.tryBranches('a')
+    if (!MatchState$equals(state,MatchState$matchComplete())) {
+      ~ fail(state)
+    }
+    if (present(branches)) {
+      ~ fail("branch present")
+    }
+
+    // Reset to reuse the brancher.
+    brancher <- template.newBrancher()
+
+    // Third character.
+    { state, branches } <- brancher.tryBranches('y')
+    if (!MatchState$equals(state,MatchState$matchContinue())) {
+      ~ fail(state)
+    }
+    if (!present(branches)) {
+      ~ fail("branch missing")
+    }
+  }
+
+  @type testBranchSequenceNonMatch () -> ()
+  testBranchSequenceNonMatch () {
+    // Pattern: "[w-y]a"
+    MatchBrancherTemplate<Char> template <-
+        BranchSequence<Char>$create(
+            LinkedNode<MatcherTemplate<Char>>$create(MatchRange<Char>$create('w','y'),
+                LinkedNode<MatcherTemplate<Char>>$create(MatchSingle<Char>$create('a'),empty)))
+    MatchBrancher<Char> brancher <- template.newBrancher()
+
+    MatchState state <- MatchState$matchFail()
+    optional ReadSequence<MatchBrancher<Char>> branches <- empty
+
+    // First character.
+    { state, branches } <- brancher.tryBranches('q')
+    if (!MatchState$equals(state,MatchState$matchFail())) {
+      ~ fail(state)
+    }
+    if (present(branches)) {
+      ~ fail("branch present")
+    }
+
+    // Should keep failing to match.
+    { state, branches } <- brancher.tryBranches('x')
+    if (!MatchState$equals(state,MatchState$matchFail())) {
+      ~ fail(state)
+    }
+  }
+
+  @type testBranchSequenceSkipEmptyFailed () -> ()
+  testBranchSequenceSkipEmptyFailed () {
+    // Pattern: "a*b"
+    MatchBrancherTemplate<Char> template <-
+        BranchSequence<Char>$create(
+            LinkedNode<MatcherTemplate<Char>>$create(
+                MatchRepeat<Char>$createZeroPlus(MatchSingle<Char>$create('a')),
+                LinkedNode<MatcherTemplate<Char>>$create(
+                    MatchSingle<Char>$create('b'),empty)))
+    MatchBrancher<Char> brancher <- template.newBrancher()
+
+    if (template.matchesEmpty()) {
+      ~ fail("matches empty")
+    }
+    if (brancher.matchSatisfied()) {
+      ~ fail("matches empty")
+    }
+
+    MatchState state <- MatchState$matchFail()
+    optional ReadSequence<MatchBrancher<Char>> branches <- empty
+
+    // First character.
+    { state, branches } <- brancher.tryBranches('b')
+    if (!MatchState$equals(state,MatchState$matchComplete())) {
+      ~ fail(state)
+    }
+    if (present(branches)) {
+      ~ fail("branch present")
+    }
+  }
+
+  @type testBranchSequenceFailNonEmptyFailed () -> ()
+  testBranchSequenceFailNonEmptyFailed () {
+    // Pattern: "a+b"
+    MatchBrancherTemplate<Char> template <-
+        BranchSequence<Char>$create(
+            LinkedNode<MatcherTemplate<Char>>$create(
+                MatchRepeat<Char>$createOnePlus(MatchSingle<Char>$create('a')),
+                LinkedNode<MatcherTemplate<Char>>$create(
+                    MatchSingle<Char>$create('b'),empty)))
+    MatchBrancher<Char> brancher <- template.newBrancher()
+
+    if (template.matchesEmpty()) {
+      ~ fail("matches empty")
+    }
+    if (brancher.matchSatisfied()) {
+      ~ fail("matches empty")
+    }
+
+    MatchState state <- MatchState$matchFail()
+    optional ReadSequence<MatchBrancher<Char>> branches <- empty
+
+    // First character.
+    { state, branches } <- brancher.tryBranches('b')
+    if (!MatchState$equals(state,MatchState$matchFail())) {
+      ~ fail(state)
+    }
+    if (present(branches)) {
+      ~ fail("branch present")
+    }
+  }
+
+  @type testBranchSequenceBranchMultiMatch () -> ()
+  testBranchSequenceBranchMultiMatch () {
+    // Pattern: "a*a{0,2}"
+    MatchBrancherTemplate<Char> template <-
+        BranchSequence<Char>$create(
+            LinkedNode<MatcherTemplate<Char>>$create(
+                MatchRepeat<Char>$createZeroPlus(MatchSingle<Char>$create('a')),
+                LinkedNode<MatcherTemplate<Char>>$create(
+                    MatchRepeat<Char>$createRange(0,2,MatchSingle<Char>$create('a')),empty)))
+    MatchBrancher<Char> brancher <- template.newBrancher()
+
+    if (!template.matchesEmpty()) {
+      ~ fail("doesn't match empty")
+    }
+    if (!brancher.matchSatisfied()) {
+      ~ fail("doesn't match empty")
+    }
+
+    MatchState state <- MatchState$matchFail()
+    optional ReadSequence<MatchBrancher<Char>> branches <- empty
+
+    // First character.
+    { state, branches } <- brancher.tryBranches('a')
+    if (!MatchState$equals(state,MatchState$matchContinue())) {
+      ~ fail(state)
+    }
+    if (!present(branches)) {
+      ~ fail("branch missing")
+    }
+
+    brancher <- require(branches).value()
+    branches <- require(branches).next()
+    if (!present(branches)) {
+      ~ fail("branch missing")
+    }
+
+    // TODO: This assumes that the branches are ordered from shortest to longest
+    // remaining sequence.
+
+    // Second character, branch 1.
+    { state, _ } <- brancher.tryBranches('a')
+    if (!MatchState$equals(state,MatchState$matchComplete())) {
+      ~ fail(state)
+    }
+
+    brancher <- require(branches).value()
+    branches <- require(branches).next()
+    if (present(branches)) {
+      ~ fail("branch present")
+    }
+
+    // Second character, branch 2.
+    { state, branches } <- brancher.tryBranches('a')
+    if (!MatchState$equals(state,MatchState$matchContinue())) {
+      ~ fail(state)
+    }
+    if (!present(branches)) {
+      ~ fail("branch missing")
+    }
+  }
+
+  @type testMatchBranchesMatch () -> ()
+  testMatchBranchesMatch () {
+    // Pattern: "[w-y]a"
+    MatcherTemplate<Char> template <-
+        MatchBranches<Char>$create(
+            BranchSequence<Char>$create(
+                LinkedNode<MatcherTemplate<Char>>$create(MatchRange<Char>$create('w','y'),
+                    LinkedNode<MatcherTemplate<Char>>$create(MatchSingle<Char>$create('a'),empty))))
+    Matcher<Char> matcher <- template.newMatcher()
+
+    if (template.matchesEmpty()) {
+      ~ fail("matches empty")
+    }
+    if (matcher.matchSatisfied()) {
+      ~ fail("match satisfied")
+    }
 
     MatchState state <- MatchState$matchFail()
 
@@ -241,11 +554,8 @@ define RegexTest {
     if (!MatchState$equals(state,MatchState$matchContinue())) {
       ~ fail(state)
     }
-    if (present(matcher.getBranch())) {
-      ~ fail("branch present")
-    }
-    if (matcher.matchesEmpty()) {
-      ~ fail("matches empty")
+    if (matcher.matchSatisfied()) {
+      ~ fail("match satisfied")
     }
 
     // Second character.
@@ -253,72 +563,86 @@ define RegexTest {
     if (!MatchState$equals(state,MatchState$matchComplete())) {
       ~ fail(state)
     }
-    if (present(matcher.getBranch())) {
-      ~ fail("branch present")
-    }
-    if (!matcher.matchesEmpty()) {
-      ~ fail("doesn't match empty")
+    if (!matcher.matchSatisfied()) {
+      ~ fail("match not satisfied")
     }
 
     // Reset to reuse the matcher.
-    matcher <- matcher.copyWithReset()
+    matcher <- template.newMatcher()
 
     // Third character.
     state <- matcher.tryNextMatch('y')
     if (!MatchState$equals(state,MatchState$matchContinue())) {
       ~ fail(state)
     }
-
-    // Fourth character.
-    state <- matcher.tryNextMatch('a')
-    if (!MatchState$equals(state,MatchState$matchComplete())) {
-      ~ fail(state)
-    }
   }
 
-  @type testSequenceMatcherNonMatch () -> ()
-  testSequenceMatcherNonMatch () {
-    SequenceMatcher<Char> matcher <-
-        SequenceMatcher<Char>$create(
-            LinkedNode<Matcher<Char>>$create(MatchSingle<Char>$create('a'),
-                LinkedNode<Matcher<Char>>$create(MatchSingle<Char>$create('b'),empty)))
+  @type testMatchBranchesNonMatch () -> ()
+  testMatchBranchesNonMatch () {
+    // Pattern: "[w-y]a"
+    MatcherTemplate<Char> template <-
+        MatchBranches<Char>$create(
+            BranchSequence<Char>$create(
+                LinkedNode<MatcherTemplate<Char>>$create(MatchRange<Char>$create('w','y'),
+                    LinkedNode<MatcherTemplate<Char>>$create(MatchSingle<Char>$create('a'),empty))))
+    Matcher<Char> matcher <- template.newMatcher()
+
+    if (template.matchesEmpty()) {
+      ~ fail("matches empty")
+    }
+    if (matcher.matchSatisfied()) {
+      ~ fail("match satisfied")
+    }
 
     MatchState state <- MatchState$matchFail()
 
     // First character.
-    state <- matcher.tryNextMatch('a')
+    state <- matcher.tryNextMatch('x')
     if (!MatchState$equals(state,MatchState$matchContinue())) {
       ~ fail(state)
     }
-    if (matcher.matchesEmpty()) {
-      ~ fail("matches empty")
+    if (matcher.matchSatisfied()) {
+      ~ fail("match satisfied")
     }
 
     // Second character.
-    state <- matcher.tryNextMatch('a')
+    state <- matcher.tryNextMatch('q')
     if (!MatchState$equals(state,MatchState$matchFail())) {
       ~ fail(state)
     }
-    if (present(matcher.getBranch())) {
-      ~ fail("branch present")
-    }
-    if (matcher.matchesEmpty()) {
-      ~ fail("matches empty")
+    if (matcher.matchSatisfied()) {
+      ~ fail("match satisfied")
     }
 
     // Should keep failing to match.
-    state <- matcher.tryNextMatch('b')
+    state <- matcher.tryNextMatch('y')
     if (!MatchState$equals(state,MatchState$matchFail())) {
       ~ fail(state)
     }
   }
 
-  @type testSequenceMatcherBranch () -> ()
-  testSequenceMatcherBranch () {
-    SequenceMatcher<Char> matcher <-
-        SequenceMatcher<Char>$create(
-            LinkedNode<Matcher<Char>>$create(RepeatMatcher<Char>$createRange(1,2,MatchSingle<Char>$create('a')),
-                LinkedNode<Matcher<Char>>$create(MatchSingle<Char>$create('b'),empty)))
+  @type testMatchBranchesBranchedMatch () -> ()
+  testMatchBranchesBranchedMatch () {
+    // Pattern: "ab"
+    MatcherTemplate<Char> templateAB <-
+        MatchBranches<Char>$create(
+            BranchSequence<Char>$create(
+                LinkedNode<MatcherTemplate<Char>>$create(MatchSingle<Char>$create('a'),
+                    LinkedNode<MatcherTemplate<Char>>$create(MatchSingle<Char>$create('b'),empty))))
+    // Pattern: "ac"
+    MatcherTemplate<Char> templateAC <-
+        MatchBranches<Char>$create(
+            BranchSequence<Char>$create(
+                LinkedNode<MatcherTemplate<Char>>$create(MatchSingle<Char>$create('a'),
+                    LinkedNode<MatcherTemplate<Char>>$create(MatchSingle<Char>$create('c'),empty))))
+    // Pattern: "(ab)*ac"
+    MatcherTemplate<Char> template <-
+        MatchBranches<Char>$create(
+            BranchSequence<Char>$create(
+                LinkedNode<MatcherTemplate<Char>>$create(
+                    MatchRepeat<Char>$createZeroPlus(templateAB),
+                    LinkedNode<MatcherTemplate<Char>>$create(templateAC,empty))))
+    Matcher<Char> matcher <- template.newMatcher()
 
     MatchState state <- MatchState$matchFail()
 
@@ -327,256 +651,38 @@ define RegexTest {
     if (!MatchState$equals(state,MatchState$matchContinue())) {
       ~ fail(state)
     }
-    // The RepeatMatcher should branch.
-    if (!present(matcher.getBranch())) {
-      ~ fail("branch missing")
-    }
-    if (matcher.matchesEmpty()) {
-      ~ fail("matches empty")
-    }
-
-    SequenceMatcher<Char> branch <- require(matcher.getBranch())
-
-    // Second character.
-    state <- matcher.tryNextMatch('a')
-    if (!MatchState$equals(state,MatchState$matchContinue())) {
-      ~ fail(state)
-    }
-    if (present(matcher.getBranch())) {
-      ~ fail("branch present")
-    }
-    if (matcher.matchesEmpty()) {
-      ~ fail("matches empty")
-    }
-
-    // Third character.
-    state <- matcher.tryNextMatch('b')
-    if (!MatchState$equals(state,MatchState$matchComplete())) {
-      ~ fail(state)
-    }
-    if (present(matcher.getBranch())) {
-      ~ fail("branch present")
-    }
-    if (!matcher.matchesEmpty()) {
-      ~ fail("doesn't match empty")
-    }
-
-    // Second character in branch.
-    state <- branch.tryNextMatch('b')
-    if (!MatchState$equals(state,MatchState$matchComplete())) {
-      ~ fail(state)
-    }
-    if (present(branch.getBranch())) {
-      ~ fail("branch present")
-    }
-    if (!branch.matchesEmpty()) {
-      ~ fail("doesn't match empty")
-    }
-  }
-
-  @type testSequenceMatcherNestedBranch () -> ()
-  testSequenceMatcherNestedBranch () {
-    Matcher<Char> matcher0 <-
-        SequenceMatcher<Char>$create(
-            LinkedNode<Matcher<Char>>$create(RepeatMatcher<Char>$createRange(1,2,MatchSingle<Char>$create('a')),empty))
-    SequenceMatcher<Char> matcher <-
-        SequenceMatcher<Char>$create(
-            LinkedNode<Matcher<Char>>$create(matcher0,
-                LinkedNode<Matcher<Char>>$create(MatchSingle<Char>$create('b'),empty)))
-
-    MatchState state <- MatchState$matchFail()
-
-    // First character.
-    state <- matcher.tryNextMatch('a')
-    if (!MatchState$equals(state,MatchState$matchContinue())) {
-      ~ fail(state)
-    }
-    // The RepeatMatcher should branch.
-    if (!present(matcher.getBranch())) {
-      ~ fail("branch missing")
-    }
-    if (matcher.matchesEmpty()) {
-      ~ fail("matches empty")
-    }
-
-    SequenceMatcher<Char> branch <- require(matcher.getBranch())
-
-    // Second character.
-    state <- matcher.tryNextMatch('a')
-    if (!MatchState$equals(state,MatchState$matchContinue())) {
-      ~ fail(state)
-    }
-    if (present(matcher.getBranch())) {
-      ~ fail("branch present")
-    }
-    if (matcher.matchesEmpty()) {
-      ~ fail("matches empty")
-    }
-
-    // Third character.
-    state <- matcher.tryNextMatch('b')
-    if (!MatchState$equals(state,MatchState$matchComplete())) {
-      ~ fail(state)
-    }
-    if (present(matcher.getBranch())) {
-      ~ fail("branch present")
-    }
-    if (!matcher.matchesEmpty()) {
-      ~ fail("doesn't match empty")
-    }
-
-    // Second character in branch.
-    state <- branch.tryNextMatch('b')
-    if (!MatchState$equals(state,MatchState$matchComplete())) {
-      ~ fail(state)
-    }
-    if (present(branch.getBranch())) {
-      ~ fail("branch present")
-    }
-    if (!branch.matchesEmpty()) {
-      ~ fail("doesn't match empty")
-    }
-  }
-
-  @type testSequenceMatcherSkipFailedEmpty () -> ()
-  testSequenceMatcherSkipFailedEmpty () {
-    SequenceMatcher<Char> matcher <-
-        SequenceMatcher<Char>$create(
-            LinkedNode<Matcher<Char>>$create(RepeatMatcher<Char>$createZeroPlus(MatchSingle<Char>$create('a')),
-                LinkedNode<Matcher<Char>>$create(MatchSingle<Char>$create('b'),empty)))
-
-    MatchState state <- MatchState$matchFail()
-
-    // First character skips over 'a*'.
-    state <- matcher.tryNextMatch('b')
-    if (!MatchState$equals(state,MatchState$matchComplete())) {
-      ~ fail(state)
-    }
-    if (present(matcher.getBranch())) {
-      ~ fail("branch present")
-    }
-    if (!matcher.matchesEmpty()) {
-      ~ fail("doesn't match empty")
-    }
-  }
-
-  @type testSequenceMatcherEndBranch () -> ()
-  testSequenceMatcherEndBranch () {
-    SequenceMatcher<Char> matcher <-
-        SequenceMatcher<Char>$create(
-            LinkedNode<Matcher<Char>>$create(MatchSingle<Char>$create('a'),
-                LinkedNode<Matcher<Char>>$create(
-                    RepeatMatcher<Char>$createOnePlus(MatchSingle<Char>$create('b')),empty)))
-
-    MatchState state <- MatchState$matchFail()
-
-    // First character.
-    state <- matcher.tryNextMatch('a')
-    if (!MatchState$equals(state,MatchState$matchContinue())) {
-      ~ fail(state)
-    }
-    if (present(matcher.getBranch())) {
-      ~ fail("branch present")
-    }
-    if (matcher.matchesEmpty()) {
-      ~ fail("matches empty")
-    }
-
-    // Second character.
-    state <- matcher.tryNextMatch('b')
-    if (!MatchState$equals(state,MatchState$matchBranch())) {
-      ~ fail(state)
-    }
-    if (present(matcher.getBranch())) {
-      ~ fail("branch present")
-    }
-    if (!matcher.matchesEmpty()) {
-      ~ fail("doesn't match empty")
-    }
-  }
-
-  @type testBranchMatcherMatch () -> ()
-  testBranchMatcherMatch () {
-    BranchMatcher<Char> matcher <-
-        BranchMatcher<Char>$create(
-            SequenceMatcher<Char>$create(
-                LinkedNode<Matcher<Char>>$create(RepeatMatcher<Char>$createZeroPlus(MatchSingle<Char>$create('a')),
-                    LinkedNode<Matcher<Char>>$create(MatchSingle<Char>$create('b'),empty))))
-
-    MatchState state <- MatchState$matchFail()
-
-    // First character.
-    state <- matcher.tryNextMatch('a')
-    if (!MatchState$equals(state,MatchState$matchContinue())) {
-      ~ fail(state)
-    }
-    if (matcher.matchesEmpty()) {
-      ~ fail("matches empty")
-    }
-
-    // Second character.
-    state <- matcher.tryNextMatch('a')
-    if (!MatchState$equals(state,MatchState$matchContinue())) {
-      ~ fail(state)
-    }
-    if (matcher.matchesEmpty()) {
-      ~ fail("matches empty")
-    }
-
-    // Third character.
-    state <- matcher.tryNextMatch('b')
-    if (!MatchState$equals(state,MatchState$matchComplete())) {
-      ~ fail(state)
-    }
-    if (!matcher.matchesEmpty()) {
-      ~ fail("doesn't match empty")
-    }
-
-    // Reset to reuse the matcher.
-    matcher <- matcher.copyWithReset()
-
-    // Fourth character.
-    state <- matcher.tryNextMatch('b')
-    if (!MatchState$equals(state,MatchState$matchComplete())) {
-      ~ fail(state)
-    }
-    if (!matcher.matchesEmpty()) {
-      ~ fail("doesn't match empty")
-    }
-  }
-
-  @type testBranchMatcherNonMatch () -> ()
-  testBranchMatcherNonMatch () {
-    BranchMatcher<Char> matcher <-
-        BranchMatcher<Char>$create(
-            SequenceMatcher<Char>$create(
-                LinkedNode<Matcher<Char>>$create(RepeatMatcher<Char>$createZeroPlus(MatchSingle<Char>$create('a')),
-                    LinkedNode<Matcher<Char>>$create(MatchSingle<Char>$create('b'),empty))))
-
-    MatchState state <- MatchState$matchFail()
-
-    // First character.
-    state <- matcher.tryNextMatch('a')
-    if (!MatchState$equals(state,MatchState$matchContinue())) {
-      ~ fail(state)
-    }
-    if (matcher.matchesEmpty()) {
-      ~ fail("matches empty")
+    if (matcher.matchSatisfied()) {
+      ~ fail("match satisfied")
     }
 
     // Second character.
     state <- matcher.tryNextMatch('c')
-    if (!MatchState$equals(state,MatchState$matchFail())) {
+    if (!MatchState$equals(state,MatchState$matchComplete())) {
       ~ fail(state)
     }
-    if (matcher.matchesEmpty()) {
-      ~ fail("matches empty")
+    if (!matcher.matchSatisfied()) {
+      ~ fail("match not satisfied")
     }
 
-    // Should keep failing to match.
-    state <- matcher.tryNextMatch('b')
-    if (!MatchState$equals(state,MatchState$matchFail())) {
+    // Reset to reuse the matcher.
+    matcher <- template.newMatcher()
+
+    // First character.
+    state <- matcher.tryNextMatch('a')
+    if (!MatchState$equals(state,MatchState$matchContinue())) {
       ~ fail(state)
+    }
+    if (matcher.matchSatisfied()) {
+      ~ fail("match satisfied")
+    }
+
+    // Second character.
+    state <- matcher.tryNextMatch('b')
+    if (!MatchState$equals(state,MatchState$matchContinue())) {
+      ~ fail(state)
+    }
+    if (matcher.matchSatisfied()) {
+      ~ fail("match satisfied")
     }
   }
 }
