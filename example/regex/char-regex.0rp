@@ -1,0 +1,3 @@
+concrete CharRegex {
+  @type parse (String) -> (optional MatcherTemplate<Char>)
+}

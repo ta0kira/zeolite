@@ -1,0 +1,137 @@
+define CharRegex {
+  parse (pattern) (matcher) {
+    ReadIterator<Char> p <- ReadIterator$$fromReadPosition<Char>(pattern)
+    // TODO: Needs error handling.
+    { _, matcher } <- parseExpression(p)
+  }
+
+  @type parseSequence (ReadIterator<Char>) ->
+                      (ReadIterator<Char>,optional ReadSequence<MatcherTemplate<Char>>)
+  parseSequence (p) {
+    if (p.pastForwardEnd()) {
+      return { p, empty }
+    }
+    { ReadIterator<Char> p2, optional MatcherTemplate<Char> matcher } <- parseNonSequence(p)
+    if (!p2.pastForwardEnd() && (p2.readCurrent() == '|' || p2.readCurrent() == ')')) {
+      // Requires choice matching or the end of a subexpression.
+      if (present(matcher)) {
+        return { p2, LinkedNode<MatcherTemplate<Char>>$create(require(matcher),empty) }
+      } else {
+        // TODO: Disregards errors from parseNonSequence.
+        return { p2, LinkedNode<MatcherTemplate<Char>>$create(MatchEmpty<Char>$create(),empty) }
+      }
+    } if (!present(matcher)) {
+      return { p2, empty }
+    } else {
+      { p2, optional ReadSequence<MatcherTemplate<Char>> sequence } <- parseSequence(p2)
+      return { p2, LinkedNode<MatcherTemplate<Char>>$create(require(matcher),sequence) }
+    }
+  }
+
+  @type parseNonSequence (ReadIterator<Char>) ->
+                         (ReadIterator<Char>,optional MatcherTemplate<Char>)
+  parseNonSequence (p) (p2,matcher) {
+    p2 <- p
+    matcher <- empty
+    while (!p2.pastForwardEnd()) {
+    Char c <- p2.readCurrent()
+      if (c == '|' || c == ')') {
+        // Requires choice matching or the end of a subexpression.
+        return _
+      } elif (c == '*') {
+        // TODO: Needs error handling.
+        return { p2.forward(), MatchRepeat<Char>$createZeroPlus(require(matcher)) }
+      } elif (c == '+') {
+        // TODO: Needs error handling.
+        return { p2.forward(), MatchRepeat<Char>$createOnePlus(require(matcher)) }
+      } elif (present(matcher)) {
+        return _
+      } elif (c == '[') {
+        { p2, matcher } <- parseCharChoices(p2.forward())
+        if (p2.pastForwardEnd() || p2.readCurrent() != ']') {
+          // TODO: Needs error handling.
+          return { p2, empty }
+        }
+        p2 <- p2.forward()
+      } elif (c == '(') {
+        { p2, matcher } <- parseExpression(p2.forward())
+        if (p2.pastForwardEnd() || p2.readCurrent() != ')') {
+          // TODO: Needs error handling.
+          return { p2, empty }
+        }
+        p2 <- p2.forward()
+      } else {
+        { p2, matcher } <- parseSingleChar(p2)
+      }
+    }
+  }
+
+  @type parseExpression (ReadIterator<Char>) ->
+                        (ReadIterator<Char>,optional MatcherTemplate<Char>)
+  parseExpression (p) (p2,matcher) {
+    optional ReadSequence<MatcherTemplate<Char>> choices <- empty
+    p2 <- p
+    while (!p2.pastForwardEnd()) {
+      { p2, optional ReadSequence<MatcherTemplate<Char>> sequence } <- parseSequence(p)
+      if (!present(sequence)) {
+        break
+      }
+      choices <- LinkedNode<MatcherTemplate<Char>>$create(
+          MatchBranches<Char>$create(BranchSequence<Char>$create(sequence)),choices)
+      if (p2.pastForwardEnd() || p2.readCurrent() != '|') {
+        break
+      }
+    }
+    matcher <- MatchChoices<Char>$create(choices)
+  }
+
+  @type parseSingleChar (ReadIterator<Char>) ->
+                        (ReadIterator<Char>,optional MatcherTemplate<Char>)
+  parseSingleChar (p) (p2,matcher) {
+    // TODO: Needs error handling.
+    Char c <- p.readCurrent()
+    p2 <- p.forward()
+    if (c == '\\') {
+      matcher <- MatchSingle<Char>$create(p2.readCurrent())
+      p2 <- p.forward()
+    } elif (c == '.') {
+      matcher <- MatchAny<Char>$create()
+    } else {
+      matcher <- MatchSingle<Char>$create(c)
+    }
+  }
+
+  @type parseCharChoices (ReadIterator<Char>) ->
+                         (ReadIterator<Char>,optional MatcherTemplate<Char>)
+  parseCharChoices (p) (p2,matcher) {
+    p2 <- p
+    matcher <- empty
+    optional Char previous <- empty
+    Bool doRange <- false
+    optional ReadSequence<MatcherTemplate<Char>> choices <- empty
+    while (!p2.pastForwardEnd()) {
+      Char c <- p2.readCurrent()
+      if (c == '\\') {
+        p2 <- p2.forward()
+        c <- p2.readCurrent()
+      }
+      if (c == ']') {
+        break
+      } elif (c == '-' && present(previous) && !doRange) {
+        doRange <- true
+      } elif (doRange) {
+        choices <- LinkedNode<MatcherTemplate<Char>>$create(MatchRange<Char>$create(require(previous),c),choices)
+        previous <- empty
+        doRange <- false
+      } elif (present(previous)) {
+        choices <- LinkedNode<MatcherTemplate<Char>>$create(MatchSingle<Char>$create(require(previous)),choices)
+        previous <- c
+      }
+    } update {
+      p2 <- p2.forward()
+    }
+    if (present(previous)) {
+      choices <- LinkedNode<MatcherTemplate<Char>>$create(MatchSingle<Char>$create(require(previous)),choices)
+    }
+  }
+}
