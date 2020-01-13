@@ -67,6 +67,7 @@ compile() {
     set -e
     cd "$temp" || exit 1
     command0=("$compiler" "$root" "$here" "${standard_tm[@]}" -- "${files[@]}")
+    echo "Compiling Zeolite sources..." 1>&2
     echo "${command0[@]}" >> "$temp/$errors"
     "${command0[@]}" |& tee -a "$temp/$errors"
     if [[ "${PIPESTATUS[0]}" != 0 ]]; then
@@ -86,6 +87,7 @@ compile() {
       -I"$temp"
       "${extra_src[@]}"
       "$temp"/*cpp)
+    echo "Compiling C++ output..." 1>&2
     echo "${command1[@]}" >> "$temp/$errors"
     "${command1[@]}" |& tee -a "$temp/$errors"
     if [[ "${PIPESTATUS[0]}" != 0 ]]; then
