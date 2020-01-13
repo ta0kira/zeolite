@@ -682,4 +682,40 @@ define RegexTest {
       ~ fail("match satisfied")
     }
   }
+
+  @type testMatchBranchesPartialRepeat () -> ()
+  testMatchBranchesPartialRepeat () {
+    // Pattern: "(ab)*"
+    MatcherTemplate<Char> template <-
+        MatchRepeat<Char>$createZeroPlus(
+            MatchBranches<Char>$create(
+                BranchSequence<Char>$create(
+                    LinkedNode<MatcherTemplate<Char>>$create(MatchSingle<Char>$create('a'),
+                        LinkedNode<MatcherTemplate<Char>>$create(MatchSingle<Char>$create('b'),empty)))))
+    Matcher<Char> matcher <- template.newMatcher()
+
+    MatchState state <- MatchState$matchFail()
+
+    if (!matcher.matchSatisfied()) {
+      ~ fail("match not satisfied")
+    }
+
+    // First character.
+    state <- matcher.tryNextMatch('a')
+    if (!MatchState$equals(state,MatchState$matchContinue())) {
+      ~ fail(state)
+    }
+    if (matcher.matchSatisfied()) {
+      ~ fail("match satisfied")
+    }
+
+    // Second character.
+    state <- matcher.tryNextMatch('b')
+    if (!MatchState$equals(state,MatchState$matchContinue())) {
+      ~ fail(state)
+    }
+    if (!matcher.matchSatisfied()) {
+      ~ fail("match not satisfied")
+    }
+  }
 }
