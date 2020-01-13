@@ -245,7 +245,7 @@
   }
 
   tryNextMatch (data) (state) {
-    <b>if</b> (atMax() || (<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals(lastState,<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchFail()))) {
+    <b>if</b> (atMax() || <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals(lastState,<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchFail())) {
       <b>return</b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchFail()
     }
     state <b><span style='color:#006e28;'>&lt;-</span></b> (lastState <b><span style='color:#006e28;'>&lt;-</span></b> matcher.tryNextMatch(data))
@@ -458,13 +458,13 @@
     }
     <b>if</b> (<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals(state2,<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchComplete())) {
       <b>if</b> (<b>present</b>(sequence2)) {
-        <span style='color:#898887;'>// Add a branch to continue this sequence2.</span>
+        <span style='color:#898887;'>// Add a branch to continue this sequence.</span>
         branch <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#0057ae;'>LinkedNode</span><span style='color:#c02040;'>&lt;</span><span style='color:#0057ae;'>BranchSequenceMatcher</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;&gt;</span><span style='color:#644a9b;'>$</span>create(
             <span style='color:#0057ae;'>BranchSequenceMatcher</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;</span>{ <b>empty</b>, sequence2, <b>false</b> },branch)
         state <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchContinue()
       }
     } <b>elif</b> (<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals(state,<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchContinue())) {
-        <span style='color:#898887;'>// Add a branch to continue this sequence2.</span>
+        <span style='color:#898887;'>// Add a branch to continue this sequence.</span>
         branch <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#0057ae;'>LinkedNode</span><span style='color:#c02040;'>&lt;</span><span style='color:#0057ae;'>BranchSequenceMatcher</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;&gt;</span><span style='color:#644a9b;'>$</span>create(
             <span style='color:#0057ae;'>BranchSequenceMatcher</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;</span>{ continued2, sequence2, <b>false</b> },branch)
     }

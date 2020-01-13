@@ -234,7 +234,7 @@ define MatchRepeatMatcher {
   }
 
   tryNextMatch (data) (state) {
-    if (atMax() || (MatchState$equals(lastState,MatchState$matchFail()))) {
+    if (atMax() || MatchState$equals(lastState,MatchState$matchFail())) {
       return MatchState$matchFail()
     }
     state <- (lastState <- matcher.tryNextMatch(data))
@@ -447,13 +447,13 @@ define BranchSequenceMatcher {
     }
     if (MatchState$equals(state2,MatchState$matchComplete())) {
       if (present(sequence2)) {
-        // Add a branch to continue this sequence2.
+        // Add a branch to continue this sequence.
         branch <- LinkedNode<BranchSequenceMatcher<#c>>$create(
             BranchSequenceMatcher<#c>{ empty, sequence2, false },branch)
         state <- MatchState$matchContinue()
       }
     } elif (MatchState$equals(state,MatchState$matchContinue())) {
-        // Add a branch to continue this sequence2.
+        // Add a branch to continue this sequence.
         branch <- LinkedNode<BranchSequenceMatcher<#c>>$create(
             BranchSequenceMatcher<#c>{ continued2, sequence2, false },branch)
     }
