@@ -1,0 +1,492 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="Generator" content="Kate, the KDE Advanced Text Editor" />
+<title>regex.0rx</title>
+</head>
+<!-- Highlighting: "Zeolite" -->
+<body>
+<pre style='color:#1f1c1b;background-color:#ffffff;'>
+<b>define</b> <b><span style='color:#0057ae;'>MatchState</span></b> {
+  <span style='color:#644a9b;'>@value</span> <i><span style='color:#0057ae;'>Int</span></i> enum
+  <span style='color:#644a9b;'>@value</span> <i><span style='color:#0057ae;'>String</span></i> name
+  <span style='color:#644a9b;'>@category</span> <span style='color:#0057ae;'>MatchState</span> matchFailVal     <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#0057ae;'>MatchState</span>{ <span style='color:#b08000;'>0</span>, <span style='color:#bf0303;'>&quot;matchFail&quot;</span> }
+  <span style='color:#644a9b;'>@category</span> <span style='color:#0057ae;'>MatchState</span> matchCompleteVal <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#0057ae;'>MatchState</span>{ <span style='color:#b08000;'>1</span>, <span style='color:#bf0303;'>&quot;matchComplete&quot;</span> }
+  <span style='color:#644a9b;'>@category</span> <span style='color:#0057ae;'>MatchState</span> matchContinueVal <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#0057ae;'>MatchState</span>{ <span style='color:#b08000;'>2</span>, <span style='color:#bf0303;'>&quot;matchContinue&quot;</span> }
+
+  formatted () {
+    <b>return</b> <span style='color:#bf0303;'>&quot;MatchState$&quot;</span> + name + <span style='color:#bf0303;'>&quot;()&quot;</span>
+  }
+
+  equals (x,y) {
+    <b>return</b> x.getEnum() == y.getEnum()
+  }
+
+  lessThan (x,y) {
+    <b>return</b> x.getEnum() &lt; y.getEnum()
+  }
+
+  matchFail () {
+    <b>return</b> matchFailVal
+  }
+
+  matchComplete () {
+    <b>return</b> matchCompleteVal
+  }
+
+  matchContinue () {
+    <b>return</b> matchContinueVal
+  }
+
+  <span style='color:#644a9b;'>@value</span> getEnum () <b><span style='color:#006e28;'>-&gt;</span></b> (<i><span style='color:#0057ae;'>Int</span></i>)
+  getEnum () {
+    <b>return</b> enum
+  }
+}
+
+<b>define</b> <b><span style='color:#0057ae;'>MatchSingle</span></b> {
+  <span style='color:#644a9b;'>@value</span> <i><span style='color:#0057ae;'>#c</span></i> match
+
+  create (match) {
+    <b>return</b> <span style='color:#0057ae;'>MatchSingle</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;</span>{ match }
+  }
+
+  matchesEmpty () {
+    <b>return</b> <b>false</b>
+  }
+
+  newMatcher () {
+    <b>return</b> <span style='color:#0057ae;'>MatchSingleMatcher</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>$</span>create(match)
+  }
+}
+
+<b>concrete</b> <b><span style='color:#0057ae;'>MatchSingleMatcher</span></b><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;</span> {
+  <i><span style='color:#0057ae;'>#c</span></i> <b>defines</b> <i><span style='color:#0057ae;'>Equals</span></i><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;</span>
+
+  <b>refines</b> <span style='color:#0057ae;'>Matcher</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;</span>
+
+  <span style='color:#644a9b;'>@type</span> create (<i><span style='color:#0057ae;'>#c</span></i>) <b><span style='color:#006e28;'>-&gt;</span></b> (<span style='color:#0057ae;'>MatchSingleMatcher</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;</span>)
+}
+
+<b>define</b> <b><span style='color:#0057ae;'>MatchSingleMatcher</span></b> {
+  <span style='color:#644a9b;'>@value</span> <i><span style='color:#0057ae;'>#c</span></i> match
+  <span style='color:#644a9b;'>@value</span> <span style='color:#0057ae;'>MatchState</span> state
+
+  create (match) {
+    <b>return</b> <span style='color:#0057ae;'>MatchSingleMatcher</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;</span>{ match, <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchContinue() }
+  }
+
+  matchSatisfied () {
+    <b>return</b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals(state,<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchComplete())
+  }
+
+  tryNextMatch (data) {
+    <b>if</b> (!<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals(state,<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchContinue())) {
+      <b>return</b> (state <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchFail())
+    }
+    <b>if</b> (<i><span style='color:#0057ae;'>#c</span></i><span style='color:#644a9b;'>$</span>equals(data,match)) {
+      <b>return</b> (state <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchComplete())
+    } <b>else</b> {
+      <b>return</b> (state <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchFail())
+    }
+  }
+}
+
+<b>define</b> <b><span style='color:#0057ae;'>MatchRange</span></b> {
+  <span style='color:#644a9b;'>@value</span> <i><span style='color:#0057ae;'>#c</span></i> minMatch
+  <span style='color:#644a9b;'>@value</span> <i><span style='color:#0057ae;'>#c</span></i> maxMatch
+
+  create (minMatch,maxMatch) {
+    <b>return</b> <span style='color:#0057ae;'>MatchRange</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;</span>{ minMatch, maxMatch }
+  }
+
+  matchesEmpty () {
+    <b>return</b> <b>false</b>
+  }
+
+  newMatcher () {
+    <b>return</b> <span style='color:#0057ae;'>MatchRangeMatcher</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>$</span>create(minMatch,maxMatch)
+  }
+}
+
+<b>concrete</b> <b><span style='color:#0057ae;'>MatchRangeMatcher</span></b><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;</span> {
+  <i><span style='color:#0057ae;'>#c</span></i> <b>defines</b> <i><span style='color:#0057ae;'>LessThan</span></i><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;</span>
+
+  <b>refines</b> <span style='color:#0057ae;'>Matcher</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;</span>
+
+  <span style='color:#644a9b;'>@type</span> create (<i><span style='color:#0057ae;'>#c</span></i>,<i><span style='color:#0057ae;'>#c</span></i>) <b><span style='color:#006e28;'>-&gt;</span></b> (<span style='color:#0057ae;'>MatchRangeMatcher</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;</span>)
+}
+
+<b>define</b> <b><span style='color:#0057ae;'>MatchRangeMatcher</span></b> {
+  <span style='color:#644a9b;'>@value</span> <i><span style='color:#0057ae;'>#c</span></i> minMatch
+  <span style='color:#644a9b;'>@value</span> <i><span style='color:#0057ae;'>#c</span></i> maxMatch
+  <span style='color:#644a9b;'>@value</span> <span style='color:#0057ae;'>MatchState</span> state
+
+  create (minMatch,maxMatch) {
+    <b>return</b> <span style='color:#0057ae;'>MatchRangeMatcher</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;</span>{ minMatch, maxMatch, <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchContinue() }
+  }
+
+  matchSatisfied () {
+    <b>return</b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals(state,<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchComplete())
+  }
+
+  tryNextMatch (data) {
+    <b>if</b> (!<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals(state,<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchContinue())) {
+      <b>return</b> (state <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchFail())
+    }
+    <b>if</b> (!<i><span style='color:#0057ae;'>#c</span></i><span style='color:#644a9b;'>$</span>lessThan(data,minMatch) &amp;&amp; !<i><span style='color:#0057ae;'>#c</span></i><span style='color:#644a9b;'>$</span>lessThan(maxMatch,data)) {
+      <b>return</b> (state <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchComplete())
+    } <b>else</b> {
+      <b>return</b> (state <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchFail())
+    }
+  }
+}
+
+<b>define</b> <b><span style='color:#0057ae;'>MatchAny</span></b> {
+  create () {
+    <b>return</b> <span style='color:#0057ae;'>MatchAny</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;</span>{ }
+  }
+
+  matchesEmpty () {
+    <b>return</b> <b>false</b>
+  }
+
+  newMatcher () {
+    <b>return</b> <span style='color:#0057ae;'>MatchAnyMatcher</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>$</span>create()
+  }
+}
+
+<b>concrete</b> <b><span style='color:#0057ae;'>MatchAnyMatcher</span></b><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;</span> {
+  <b>refines</b> <span style='color:#0057ae;'>Matcher</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;</span>
+
+  <span style='color:#644a9b;'>@type</span> create () <b><span style='color:#006e28;'>-&gt;</span></b> (<span style='color:#0057ae;'>MatchAnyMatcher</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;</span>)
+}
+
+<b>define</b> <b><span style='color:#0057ae;'>MatchAnyMatcher</span></b> {
+  <span style='color:#644a9b;'>@value</span> <span style='color:#0057ae;'>MatchState</span> state
+
+  create () {
+    <b>return</b> <span style='color:#0057ae;'>MatchAnyMatcher</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;</span>{ <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchContinue() }
+  }
+
+  matchSatisfied () {
+    <b>return</b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals(state,<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchComplete())
+  }
+
+  tryNextMatch (data) {
+    <b>if</b> (!<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals(state,<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchContinue())) {
+      <b>return</b> (state <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchFail())
+    }
+    <b>return</b> (state <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchComplete())
+  }
+}
+
+<b>define</b> <b><span style='color:#0057ae;'>MatchRepeat</span></b> {
+  <span style='color:#644a9b;'>@value</span> <span style='color:#0057ae;'>MatcherTemplate</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;</span> template
+  <span style='color:#644a9b;'>@value</span> <i><span style='color:#0057ae;'>Int</span></i> minCount
+  <span style='color:#644a9b;'>@value</span> <i><span style='color:#0057ae;'>Int</span></i> maxCount
+
+  createZeroPlus (template) {
+    <b>return</b> createRange(<span style='color:#b08000;'>0</span>,<span style='color:#b08000;'>0</span>,template)
+  }
+
+  createOnePlus (template) {
+    <b>return</b> createRange(<span style='color:#b08000;'>1</span>,<span style='color:#b08000;'>0</span>,template)
+  }
+
+  createRange (minCount,maxCount,template) {
+    <b>return</b> <span style='color:#0057ae;'>MatchRepeat</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;</span>{ template, minCount, maxCount }
+  }
+
+  matchesEmpty () {
+    <b>return</b> minCount &lt;= <span style='color:#b08000;'>0</span> || template.matchesEmpty()
+  }
+
+  newMatcher () {
+    <b>return</b> <span style='color:#0057ae;'>MatchRepeatMatcher</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>$</span>create(minCount,maxCount,template)
+  }
+}
+
+<b>concrete</b> <b><span style='color:#0057ae;'>MatchRepeatMatcher</span></b><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;</span> {
+  <b>refines</b> <span style='color:#0057ae;'>Matcher</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;</span>
+
+  <span style='color:#644a9b;'>@type</span> create (<i><span style='color:#0057ae;'>Int</span></i>,<i><span style='color:#0057ae;'>Int</span></i>,<span style='color:#0057ae;'>MatcherTemplate</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;</span>) <b><span style='color:#006e28;'>-&gt;</span></b> (<span style='color:#0057ae;'>MatchRepeatMatcher</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;</span>)
+}
+
+<b>define</b> <b><span style='color:#0057ae;'>MatchRepeatMatcher</span></b> {
+  <span style='color:#644a9b;'>@value</span> <span style='color:#0057ae;'>MatcherTemplate</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;</span> template
+  <span style='color:#644a9b;'>@value</span> <span style='color:#0057ae;'>Matcher</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;</span> matcher
+  <span style='color:#644a9b;'>@value</span> <i><span style='color:#0057ae;'>Int</span></i> minCount
+  <span style='color:#644a9b;'>@value</span> <i><span style='color:#0057ae;'>Int</span></i> maxCount <span style='color:#898887;'>// 0 means unlimited.</span>
+  <span style='color:#644a9b;'>@value</span> <i><span style='color:#0057ae;'>Int</span></i> repetitionCount
+  <span style='color:#644a9b;'>@value</span> <span style='color:#0057ae;'>MatchState</span> lastState
+
+  create (minCount,maxCount,template) {
+    <b>return</b> <span style='color:#0057ae;'>MatchRepeatMatcher</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;</span>{ template, template.newMatcher(), minCount,
+                                   maxCount, <span style='color:#b08000;'>0</span>, <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchComplete() }
+  }
+
+  matchSatisfied () {
+    <b>if</b> (<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals(lastState,<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchFail())) {
+      <b>return</b> <b>false</b>
+    }
+    <b>if</b> (<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals(lastState,<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchContinue()) &amp;&amp;
+        repetitionCount+<span style='color:#b08000;'>1</span> &gt;= minCount &amp;&amp; matcher.matchSatisfied()) {
+      <span style='color:#898887;'>// The rest of the current repetition can be ignored.</span>
+      <b>return</b> <b>true</b>
+    }
+    <b>if</b> (<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals(lastState,<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchComplete()) &amp;&amp;
+        repetitionCount &gt;= minCount) {
+      <b>return</b> <b>true</b>
+    }
+    <b>return</b> <b>false</b>
+  }
+
+  tryNextMatch (data) (state) {
+    <b>if</b> (atMax() || (<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals(lastState,<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchFail()))) {
+      <b>return</b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchFail()
+    }
+    state <b><span style='color:#006e28;'>&lt;-</span></b> (lastState <b><span style='color:#006e28;'>&lt;-</span></b> matcher.tryNextMatch(data))
+    <b>if</b> (<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals(state,<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchComplete())) {
+      <span style='color:#006e28;'>~</span> incrementMatch()
+      <span style='color:#006e28;'>~</span> startRepeat()
+      <b>if</b> (atMax()) {
+        state <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchComplete()
+      } <b>else</b> {
+        state <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchContinue()
+      }
+    }
+  }
+
+  <span style='color:#644a9b;'>@value</span> incrementMatch () <b><span style='color:#006e28;'>-&gt;</span></b> ()
+  incrementMatch () {
+    repetitionCount <b><span style='color:#006e28;'>&lt;-</span></b> repetitionCount+<span style='color:#b08000;'>1</span>
+  }
+
+  <span style='color:#644a9b;'>@value</span> atMax () <b><span style='color:#006e28;'>-&gt;</span></b> (<i><span style='color:#0057ae;'>Bool</span></i>)
+  atMax () {
+    <b>return</b> maxCount &gt; <span style='color:#b08000;'>0</span> &amp;&amp; repetitionCount &gt;= maxCount
+  }
+
+  <span style='color:#644a9b;'>@value</span> startRepeat () <b><span style='color:#006e28;'>-&gt;</span></b> ()
+  startRepeat () {
+    matcher <b><span style='color:#006e28;'>&lt;-</span></b> template.newMatcher()
+  }
+}
+
+<b>define</b> <b><span style='color:#0057ae;'>MatchBranches</span></b> {
+  <span style='color:#644a9b;'>@value</span> <span style='color:#0057ae;'>MatchBrancherTemplate</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;</span> template
+
+  create (template) {
+    <b>return</b> <span style='color:#0057ae;'>MatchBranches</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;</span>{ template }
+  }
+
+  matchesEmpty () {
+    <b>return</b> template.matchesEmpty()
+  }
+
+  newMatcher () {
+    <b>return</b> <span style='color:#0057ae;'>MatchBranchesMatcher</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>$</span>create(template.newBrancher())
+  }
+}
+
+<b>concrete</b> <b><span style='color:#0057ae;'>MatchBranchesMatcher</span></b><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;</span> {
+  <b>refines</b> <span style='color:#0057ae;'>Matcher</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;</span>
+
+  <span style='color:#644a9b;'>@type</span> create (<span style='color:#0057ae;'>MatchBrancher</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;</span>) <b><span style='color:#006e28;'>-&gt;</span></b> (<span style='color:#0057ae;'>MatchBranchesMatcher</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;</span>)
+}
+
+<b>define</b> <b><span style='color:#0057ae;'>MatchBranchesMatcher</span></b> {
+  <span style='color:#644a9b;'>@value</span> <b>optional</b> <span style='color:#0057ae;'>ReadSequence</span><span style='color:#c02040;'>&lt;</span><span style='color:#0057ae;'>MatchBrancher</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;&gt;</span> branches
+  <span style='color:#644a9b;'>@value</span> <i><span style='color:#0057ae;'>Bool</span></i> complete
+
+  create (brancher) {
+    <b>return</b> <span style='color:#0057ae;'>MatchBranchesMatcher</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;</span>{ <span style='color:#0057ae;'>LinkedNode</span><span style='color:#c02040;'>&lt;</span><span style='color:#0057ae;'>MatchBrancher</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;&gt;</span><span style='color:#644a9b;'>$</span>create(brancher,<b>empty</b>), <b>false</b> }
+  }
+
+  matchSatisfied () {
+    <b>if</b> (complete) {
+      <b>return</b> <b>true</b>
+    }
+    <b>scoped</b> {
+      <b>optional</b> <span style='color:#0057ae;'>ReadSequence</span><span style='color:#c02040;'>&lt;</span><span style='color:#0057ae;'>MatchBrancher</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;&gt;</span> current <b><span style='color:#006e28;'>&lt;-</span></b> branches
+    } <b>in</b> <b>while</b> (<b>present</b>(current)) {
+      <b>if</b> (<b>require</b>(current).value().matchSatisfied()) {
+        <b>return</b> <b>true</b>
+      }
+    } <b>update</b> {
+      current <b><span style='color:#006e28;'>&lt;-</span></b> <b>require</b>(current).next()
+    }
+    <b>return</b> <b>false</b>
+  }
+
+  tryNextMatch (data) (state) {
+    { state, branches } <b><span style='color:#006e28;'>&lt;-</span></b> recursiveMatch(data,branches)
+    complete <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals(state,<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchComplete())
+  }
+
+  <span style='color:#644a9b;'>@type</span> recursiveMatch
+  (<i><span style='color:#0057ae;'>#c</span></i>,<b>optional</b> <span style='color:#0057ae;'>ReadSequence</span><span style='color:#c02040;'>&lt;</span><span style='color:#0057ae;'>MatchBrancher</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;&gt;</span>) <b><span style='color:#006e28;'>-&gt;</span></b>
+  (<span style='color:#0057ae;'>MatchState</span>,<b>optional</b> <span style='color:#0057ae;'>ReadSequence</span><span style='color:#c02040;'>&lt;</span><span style='color:#0057ae;'>MatchBrancher</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;&gt;</span>)
+  recursiveMatch (data,branches) (state,branches2) {
+    state <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchFail()
+    branches2 <b><span style='color:#006e28;'>&lt;-</span></b> <b>empty</b>
+    <b>if</b> (!<b>present</b>(branches)) {
+      <b>return</b> <b>_</b>
+    }
+    { state, branches2 } <b><span style='color:#006e28;'>&lt;-</span></b> recursiveMatch(data,<b>require</b>(branches).next())
+    <b>scoped</b> {
+      { <span style='color:#0057ae;'>MatchState</span> state2, <b>optional</b> <span style='color:#0057ae;'>ReadSequence</span><span style='color:#c02040;'>&lt;</span><span style='color:#0057ae;'>MatchBrancher</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;&gt;</span> branches3 } <b><span style='color:#006e28;'>&lt;-</span></b>
+          <b>require</b>(branches).value().tryBranches(data)
+    } <b>in</b> <b>if</b> (<b>present</b>(branches3)) {
+      branches2 <b><span style='color:#006e28;'>&lt;-</span></b> concatBranches(branches3,branches2)
+      state <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchContinue()
+    } <b>elif</b> (<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>lessThan(state,state2)) {
+      state <b><span style='color:#006e28;'>&lt;-</span></b> state2
+    }
+  }
+
+  <span style='color:#644a9b;'>@type</span> concatBranches
+  (<b>optional</b> <span style='color:#0057ae;'>ReadSequence</span><span style='color:#c02040;'>&lt;</span><span style='color:#0057ae;'>MatchBrancher</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;&gt;</span>,<b>optional</b> <span style='color:#0057ae;'>ReadSequence</span><span style='color:#c02040;'>&lt;</span><span style='color:#0057ae;'>MatchBrancher</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;&gt;</span>) <b><span style='color:#006e28;'>-&gt;</span></b>
+  (<b>optional</b> <span style='color:#0057ae;'>ReadSequence</span><span style='color:#c02040;'>&lt;</span><span style='color:#0057ae;'>MatchBrancher</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;&gt;</span>)
+  concatBranches (head1,head2) {
+    <b>if</b> (!<b>present</b>(head2)) {
+      <b>return</b> head1
+    } <b>elif</b> (<b>present</b>(head1)) {
+      <b>return</b> <span style='color:#0057ae;'>LinkedNode</span><span style='color:#c02040;'>&lt;</span><span style='color:#0057ae;'>MatchBrancher</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;&gt;</span><span style='color:#644a9b;'>$</span>create(
+          <b>require</b>(head1).value(),concatBranches(<b>require</b>(head1).next(),head2))
+    } <b>else</b> {
+      <b>return</b> head2
+    }
+  }
+}
+
+<b>define</b> <b><span style='color:#0057ae;'>BranchSequence</span></b> {
+  <span style='color:#644a9b;'>@value</span> <b>optional</b> <span style='color:#0057ae;'>ReadSequence</span><span style='color:#c02040;'>&lt;</span><span style='color:#0057ae;'>MatcherTemplate</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;&gt;</span> sequence
+
+  create (sequence) {
+    <b>return</b> <span style='color:#0057ae;'>BranchSequence</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;</span>{ sequence }
+  }
+
+  matchesEmpty () {
+    <b>scoped</b> {
+      <b>optional</b> <span style='color:#0057ae;'>ReadSequence</span><span style='color:#c02040;'>&lt;</span><span style='color:#0057ae;'>MatcherTemplate</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;&gt;</span> current <b><span style='color:#006e28;'>&lt;-</span></b> sequence
+    } <b>in</b> <b>while</b> (<b>present</b>(current)) {
+      <b>if</b> (!<b>require</b>(current).value().matchesEmpty()) {
+        <b>return</b> <b>false</b>
+      }
+    } <b>update</b> {
+      current <b><span style='color:#006e28;'>&lt;-</span></b> <b>require</b>(current).next()
+    }
+    <b>return</b> <b>true</b>
+  }
+
+  newBrancher () {
+    <b>return</b> <span style='color:#0057ae;'>BranchSequenceMatcher</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>$</span>create(sequence)
+  }
+}
+
+<b>concrete</b> <b><span style='color:#0057ae;'>BranchSequenceMatcher</span></b><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;</span> {
+  <b>refines</b> <span style='color:#0057ae;'>MatchBrancher</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;</span>
+
+  <span style='color:#644a9b;'>@type</span> create (<b>optional</b> <span style='color:#0057ae;'>ReadSequence</span><span style='color:#c02040;'>&lt;</span><span style='color:#0057ae;'>MatcherTemplate</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;&gt;</span>) <b><span style='color:#006e28;'>-&gt;</span></b> (<span style='color:#0057ae;'>BranchSequenceMatcher</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;</span>)
+  <span style='color:#644a9b;'>@value</span> tryBranches (<i><span style='color:#0057ae;'>#c</span></i>) <b><span style='color:#006e28;'>-&gt;</span></b> (<span style='color:#0057ae;'>MatchState</span>,<b>optional</b> <span style='color:#0057ae;'>ReadSequence</span><span style='color:#c02040;'>&lt;</span><span style='color:#0057ae;'>BranchSequenceMatcher</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;&gt;</span>)
+}
+
+<b>define</b> <b><span style='color:#0057ae;'>BranchSequenceMatcher</span></b> {
+  <span style='color:#644a9b;'>@value</span> <b>optional</b> <span style='color:#0057ae;'>Matcher</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;</span> continued
+  <span style='color:#644a9b;'>@value</span> <b>optional</b> <span style='color:#0057ae;'>ReadSequence</span><span style='color:#c02040;'>&lt;</span><span style='color:#0057ae;'>MatcherTemplate</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;&gt;</span> sequence
+  <span style='color:#644a9b;'>@value</span> <i><span style='color:#0057ae;'>Bool</span></i> consumed
+
+  create (sequence) {
+    <b>return</b> <span style='color:#0057ae;'>BranchSequenceMatcher</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;</span>{ <b>empty</b>, sequence, <b>false</b> }
+  }
+
+  matchSatisfied () {
+    <b>if</b> (consumed) {
+      <b>return</b> <b>false</b>
+    }
+    <b>if</b> (<b>present</b>(continued) &amp;&amp; !<b>require</b>(continued).matchSatisfied()) {
+      <b>return</b> <b>false</b>
+    }
+    <b>scoped</b> {
+      <b>optional</b> <span style='color:#0057ae;'>ReadSequence</span><span style='color:#c02040;'>&lt;</span><span style='color:#0057ae;'>MatcherTemplate</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;&gt;</span> current <b><span style='color:#006e28;'>&lt;-</span></b> sequence
+    } <b>in</b> <b>while</b> (<b>present</b>(current)) {
+      <b>if</b> (!<b>require</b>(current).value().matchesEmpty()) {
+        <b>return</b> <b>false</b>
+      }
+    } <b>update</b> {
+      current <b><span style='color:#006e28;'>&lt;-</span></b> <b>require</b>(current).next()
+    }
+    <b>return</b> <b>true</b>
+  }
+
+  tryBranches (data) {
+    <b>if</b> (consumed) {
+      <b>return</b> { <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchFail(), <b>empty</b> }
+    }
+    consumed <b><span style='color:#006e28;'>&lt;-</span></b> <b>true</b>
+    <b>return</b> recursiveBranch(data,continued,sequence)
+  }
+
+  <span style='color:#644a9b;'>@type</span> recursiveBranch
+  (<i><span style='color:#0057ae;'>#c</span></i>,<b>optional</b> <span style='color:#0057ae;'>Matcher</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;</span>,<b>optional</b> <span style='color:#0057ae;'>ReadSequence</span><span style='color:#c02040;'>&lt;</span><span style='color:#0057ae;'>MatcherTemplate</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;&gt;</span>) <b><span style='color:#006e28;'>-&gt;</span></b>
+  (<span style='color:#0057ae;'>MatchState</span>,<b>optional</b> <span style='color:#0057ae;'>ReadSequence</span><span style='color:#c02040;'>&lt;</span><span style='color:#0057ae;'>BranchSequenceMatcher</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;&gt;</span>)
+  recursiveBranch (data,continued,sequence) (state,branch) {
+    state <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchFail()
+    branch <b><span style='color:#006e28;'>&lt;-</span></b> <b>empty</b>
+    <b>if</b> (!<b>present</b>(continued) &amp;&amp; !<b>present</b>(sequence)) {
+      <b>return</b> <b>_</b>
+    }
+    <b>optional</b> <span style='color:#0057ae;'>Matcher</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;</span> continued2 <b><span style='color:#006e28;'>&lt;-</span></b> continued
+    <b>optional</b> <span style='color:#0057ae;'>ReadSequence</span><span style='color:#c02040;'>&lt;</span><span style='color:#0057ae;'>MatcherTemplate</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;&gt;</span> sequence2 <b><span style='color:#006e28;'>&lt;-</span></b> sequence
+    <b>if</b> (!<b>present</b>(continued2)) {
+      continued2 <b><span style='color:#006e28;'>&lt;-</span></b> <b>require</b>(sequence2).value().newMatcher()
+      sequence2 <b><span style='color:#006e28;'>&lt;-</span></b> <b>require</b>(sequence2).next()
+    }
+    <b>if</b> (<b>require</b>(continued2).matchSatisfied()) {
+      { <span style='color:#0057ae;'>MatchState</span> state2, branch } <b><span style='color:#006e28;'>&lt;-</span></b> recursiveBranch(data,<b>empty</b>,sequence2)
+      <b>if</b> (<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>lessThan(state,state2)) {
+        state <b><span style='color:#006e28;'>&lt;-</span></b> state2
+      }
+    }
+    <span style='color:#0057ae;'>MatchState</span> state2 <b><span style='color:#006e28;'>&lt;-</span></b> <b>require</b>(continued2).tryNextMatch(data)
+    <b>if</b> (<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>lessThan(state,state2)) {
+      state <b><span style='color:#006e28;'>&lt;-</span></b> state2
+    }
+    <b>if</b> (<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals(state2,<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchComplete())) {
+      <b>if</b> (<b>present</b>(sequence2)) {
+        <span style='color:#898887;'>// Add a branch to continue this sequence2.</span>
+        branch <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#0057ae;'>LinkedNode</span><span style='color:#c02040;'>&lt;</span><span style='color:#0057ae;'>BranchSequenceMatcher</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;&gt;</span><span style='color:#644a9b;'>$</span>create(
+            <span style='color:#0057ae;'>BranchSequenceMatcher</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;</span>{ <b>empty</b>, sequence2, <b>false</b> },branch)
+        state <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchContinue()
+      }
+    } <b>elif</b> (<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals(state,<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchContinue())) {
+        <span style='color:#898887;'>// Add a branch to continue this sequence2.</span>
+        branch <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#0057ae;'>LinkedNode</span><span style='color:#c02040;'>&lt;</span><span style='color:#0057ae;'>BranchSequenceMatcher</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;&gt;</span><span style='color:#644a9b;'>$</span>create(
+            <span style='color:#0057ae;'>BranchSequenceMatcher</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;</span>{ continued2, sequence2, <b>false</b> },branch)
+    }
+  }
+}
+
+<b>define</b> <b><span style='color:#0057ae;'>LinkedNode</span></b> {
+  <span style='color:#644a9b;'>@value</span> <b>optional</b> <span style='color:#0057ae;'>ReadSequence</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span> parent
+  <span style='color:#644a9b;'>@value</span> <i><span style='color:#0057ae;'>#x</span></i> data
+
+  create (data,parent) {
+    <b>return</b> <span style='color:#0057ae;'>LinkedNode</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>{ parent, data }
+  }
+
+  value () {
+    <b>return</b> data
+  }
+
+  next () {
+    <b>return</b> parent
+  }
+}
+</pre>
+</body>
+</html>

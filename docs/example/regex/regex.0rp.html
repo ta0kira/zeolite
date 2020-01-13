@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="Generator" content="Kate, the KDE Advanced Text Editor" />
+<title>regex.0rp</title>
+</head>
+<!-- Highlighting: "Zeolite" -->
+<body>
+<pre style='color:#1f1c1b;background-color:#ffffff;'>
+<b>concrete</b> <b><span style='color:#0057ae;'>MatchState</span></b> {
+  <b>refines</b> <i><span style='color:#0057ae;'>Formatted</span></i>
+  <b>defines</b> <i><span style='color:#0057ae;'>Equals</span></i><span style='color:#c02040;'>&lt;</span><span style='color:#0057ae;'>MatchState</span><span style='color:#c02040;'>&gt;</span>
+  <b>defines</b> <i><span style='color:#0057ae;'>LessThan</span></i><span style='color:#c02040;'>&lt;</span><span style='color:#0057ae;'>MatchState</span><span style='color:#c02040;'>&gt;</span>
+
+  <span style='color:#898887;'>// Ordered from low to high.</span>
+
+  <span style='color:#644a9b;'>@type</span> matchFail     () <b><span style='color:#006e28;'>-&gt;</span></b> (<span style='color:#0057ae;'>MatchState</span>) <span style='color:#898887;'>// Matching has failed.</span>
+  <span style='color:#644a9b;'>@type</span> matchComplete () <b><span style='color:#006e28;'>-&gt;</span></b> (<span style='color:#0057ae;'>MatchState</span>) <span style='color:#898887;'>// End of the pattern.</span>
+  <span style='color:#644a9b;'>@type</span> matchContinue () <b><span style='color:#006e28;'>-&gt;</span></b> (<span style='color:#0057ae;'>MatchState</span>) <span style='color:#898887;'>// Matching must continue.</span>
+}
+
+<span style='color:#644a9b;'>@value</span> <b>interface</b> <b><span style='color:#0057ae;'>Matcher</span></b><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c04040;'>|</span><span style='color:#c02040;'>&gt;</span> {
+  <span style='color:#898887;'>// Returns true if the pattern is complete without additional data.</span>
+  matchSatisfied () <b><span style='color:#006e28;'>-&gt;</span></b> (<i><span style='color:#0057ae;'>Bool</span></i>)
+
+  <span style='color:#898887;'>// This can be called as long as it returns matchContinue(). The matcher does</span>
+  <span style='color:#898887;'>// not branch; each call updates it with the next data point in the input.</span>
+  <span style='color:#898887;'>//</span>
+  <span style='color:#898887;'>// Returns:</span>
+  <span style='color:#898887;'>// - matchFail(): The pattern cannot be completed.</span>
+  <span style='color:#898887;'>// - matchContinue(): Matching can continue; check matchSatisfied() to see if</span>
+  <span style='color:#898887;'>//                    more data is required to complete the pattern.</span>
+  <span style='color:#898887;'>// - matchComplete(): The pattern has been completed and cannot match any</span>
+  <span style='color:#898887;'>//                    additional data.</span>
+  tryNextMatch (<i><span style='color:#0057ae;'>#c</span></i>) <b><span style='color:#006e28;'>-&gt;</span></b> (<span style='color:#0057ae;'>MatchState</span>)
+}
+
+<span style='color:#644a9b;'>@value</span> <b>interface</b> <b><span style='color:#0057ae;'>MatcherTemplate</span></b><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c04040;'>|</span><span style='color:#c02040;'>&gt;</span> {
+  <span style='color:#898887;'>// Returns true if the pattern can match an empty sequence.</span>
+  matchesEmpty () <b><span style='color:#006e28;'>-&gt;</span></b> (<i><span style='color:#0057ae;'>Bool</span></i>)
+  newMatcher () <b><span style='color:#006e28;'>-&gt;</span></b> (<span style='color:#0057ae;'>Matcher</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;</span>)
+}
+
+<span style='color:#644a9b;'>@value</span> <b>interface</b> <b><span style='color:#0057ae;'>MatchBrancher</span></b><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c04040;'>|</span><span style='color:#c02040;'>&gt;</span> {
+  <span style='color:#898887;'>// Returns true if the pattern is complete without additional data.</span>
+  matchSatisfied () <b><span style='color:#006e28;'>-&gt;</span></b> (<i><span style='color:#0057ae;'>Bool</span></i>)
+
+  <span style='color:#898887;'>// NOTE: Calling this invalidates the MatchBrancher; do not call it again.</span>
+  <span style='color:#898887;'>// Returns:</span>
+  <span style='color:#898887;'>// - state: The highest state of the branches checked.</span>
+  <span style='color:#898887;'>// - branches: All branches with a status of matchContinue().</span>
+  tryBranches (<i><span style='color:#0057ae;'>#c</span></i>) <b><span style='color:#006e28;'>-&gt;</span></b> (<span style='color:#0057ae;'>MatchState</span> <span style='color:#898887;'>/*</span><span style='color:#898887;'>state</span><span style='color:#898887;'>*/</span>,
+                       <b>optional</b> <span style='color:#0057ae;'>ReadSequence</span><span style='color:#c02040;'>&lt;</span><span style='color:#0057ae;'>MatchBrancher</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;&gt;</span> <span style='color:#898887;'>/*</span><span style='color:#898887;'>branches</span><span style='color:#898887;'>*/</span>)
+}
+
+<span style='color:#644a9b;'>@value</span> <b>interface</b> <b><span style='color:#0057ae;'>MatchBrancherTemplate</span></b><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c04040;'>|</span><span style='color:#c02040;'>&gt;</span> {
+  <span style='color:#898887;'>// Returns true if the pattern can match an empty sequence.</span>
+  matchesEmpty () <b><span style='color:#006e28;'>-&gt;</span></b> (<i><span style='color:#0057ae;'>Bool</span></i>)
+  newBrancher () <b><span style='color:#006e28;'>-&gt;</span></b> (<span style='color:#0057ae;'>MatchBrancher</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;</span>)
+}
+
+<b>concrete</b> <b><span style='color:#0057ae;'>MatchSingle</span></b><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;</span> {
+  <i><span style='color:#0057ae;'>#c</span></i> <b>defines</b> <i><span style='color:#0057ae;'>Equals</span></i><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;</span>
+
+  <b>refines</b> <span style='color:#0057ae;'>MatcherTemplate</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;</span>
+
+  <span style='color:#644a9b;'>@type</span> create (<i><span style='color:#0057ae;'>#c</span></i>) <b><span style='color:#006e28;'>-&gt;</span></b> (<span style='color:#0057ae;'>MatchSingle</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;</span>)
+}
+
+<b>concrete</b> <b><span style='color:#0057ae;'>MatchRange</span></b><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;</span> {
+  <i><span style='color:#0057ae;'>#c</span></i> <b>defines</b> <i><span style='color:#0057ae;'>LessThan</span></i><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;</span>
+
+  <b>refines</b> <span style='color:#0057ae;'>MatcherTemplate</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;</span>
+
+  <span style='color:#644a9b;'>@type</span> create (<i><span style='color:#0057ae;'>#c</span></i>,<i><span style='color:#0057ae;'>#c</span></i>) <b><span style='color:#006e28;'>-&gt;</span></b> (<span style='color:#0057ae;'>MatchRange</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;</span>)
+}
+
+<b>concrete</b> <b><span style='color:#0057ae;'>MatchAny</span></b><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c04040;'>|</span><span style='color:#c02040;'>&gt;</span> {
+  <b>refines</b> <span style='color:#0057ae;'>MatcherTemplate</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;</span>
+
+  <span style='color:#644a9b;'>@type</span> create () <b><span style='color:#006e28;'>-&gt;</span></b> (<span style='color:#0057ae;'>MatchAny</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;</span>)
+}
+
+<b>concrete</b> <b><span style='color:#0057ae;'>MatchRepeat</span></b><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;</span> {
+  <b>refines</b> <span style='color:#0057ae;'>MatcherTemplate</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;</span>
+
+  <span style='color:#644a9b;'>@type</span> createZeroPlus (<span style='color:#0057ae;'>MatcherTemplate</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;</span>) <b><span style='color:#006e28;'>-&gt;</span></b> (<span style='color:#0057ae;'>MatchRepeat</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;</span>)
+  <span style='color:#644a9b;'>@type</span> createOnePlus (<span style='color:#0057ae;'>MatcherTemplate</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;</span>) <b><span style='color:#006e28;'>-&gt;</span></b> (<span style='color:#0057ae;'>MatchRepeat</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;</span>)
+  <span style='color:#644a9b;'>@type</span> createRange (<i><span style='color:#0057ae;'>Int</span></i>,<i><span style='color:#0057ae;'>Int</span></i>,<span style='color:#0057ae;'>MatcherTemplate</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;</span>) <b><span style='color:#006e28;'>-&gt;</span></b> (<span style='color:#0057ae;'>MatchRepeat</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;</span>)
+}
+
+<b>concrete</b> <b><span style='color:#0057ae;'>MatchBranches</span></b><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;</span> {
+  <b>refines</b> <span style='color:#0057ae;'>MatcherTemplate</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;</span>
+
+  <span style='color:#644a9b;'>@type</span> create (<span style='color:#0057ae;'>MatchBrancherTemplate</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;</span>) <b><span style='color:#006e28;'>-&gt;</span></b> (<span style='color:#0057ae;'>MatcherTemplate</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;</span>)
+}
+
+<b>concrete</b> <b><span style='color:#0057ae;'>BranchSequence</span></b><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;</span> {
+  <b>refines</b> <span style='color:#0057ae;'>MatchBrancherTemplate</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;</span>
+
+  <span style='color:#644a9b;'>@type</span> create (<b>optional</b> <span style='color:#0057ae;'>ReadSequence</span><span style='color:#c02040;'>&lt;</span><span style='color:#0057ae;'>MatcherTemplate</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;&gt;</span>) <b><span style='color:#006e28;'>-&gt;</span></b> (<span style='color:#0057ae;'>BranchSequence</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;</span>)
+}
+
+<span style='color:#644a9b;'>@value</span> <b>interface</b> <b><span style='color:#0057ae;'>ReadSequence</span></b><span style='color:#c02040;'>&lt;</span><span style='color:#c04040;'>|</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;</span> {
+  value () <b><span style='color:#006e28;'>-&gt;</span></b> (<i><span style='color:#0057ae;'>#c</span></i>)
+  next () <b><span style='color:#006e28;'>-&gt;</span></b> (<b>optional</b> <span style='color:#0057ae;'>ReadSequence</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;</span>)
+}
+
+<b>concrete</b> <b><span style='color:#0057ae;'>LinkedNode</span></b><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span> {
+  <b>refines</b> <span style='color:#0057ae;'>ReadSequence</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>
+
+  <span style='color:#644a9b;'>@type</span> create (<i><span style='color:#0057ae;'>#x</span></i>,<b>optional</b> <span style='color:#0057ae;'>ReadSequence</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>) <b><span style='color:#006e28;'>-&gt;</span></b> (<span style='color:#0057ae;'>ReadSequence</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>)
+}
+</pre>
+</body>
+</html>
