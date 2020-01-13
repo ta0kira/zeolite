@@ -505,12 +505,12 @@ define RegexTest {
       ~ fail("branch missing")
     }
 
-    // TODO: This assumes that the branches are ordered from shortest to longest
+    // TODO: This assumes that the branches are ordered from longest to shortest
     // remaining sequence.
 
     // Second character, branch 1.
     { state, _ } <- brancher.tryBranches('a')
-    if (!MatchState$equals(state,MatchState$matchComplete())) {
+    if (!MatchState$equals(state,MatchState$matchContinue())) {
       ~ fail(state)
     }
 
@@ -521,12 +521,9 @@ define RegexTest {
     }
 
     // Second character, branch 2.
-    { state, branches } <- brancher.tryBranches('a')
-    if (!MatchState$equals(state,MatchState$matchContinue())) {
+    { state, _ } <- brancher.tryBranches('a')
+    if (!MatchState$equals(state,MatchState$matchComplete())) {
       ~ fail(state)
-    }
-    if (!present(branches)) {
-      ~ fail("branch missing")
     }
   }
 

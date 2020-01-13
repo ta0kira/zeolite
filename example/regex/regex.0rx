@@ -312,27 +312,43 @@ define MatchBranchesMatcher {
   }
 
   tryNextMatch (data) (state) {
-    state <- MatchState$matchFail()
-    scoped {
-      optional ReadSequence<MatchBrancher<#c>> current <- branches
-      branches <- empty
-    } in while (present(current)) {
-      { MatchState state2, optional ReadSequence<MatchBrancher<#c>> branches2 } <-
-          require(current).value().tryBranches(data)
-      if (MatchState$lessThan(state,state2)) {
-        state <- state2
-      }
-      scoped {
-        optional ReadSequence<MatchBrancher<#c>> current2 <- branches2
-      } in while (present(current2)) {
-        branches <- LinkedNode<MatchBrancher<#c>>$create(require(current2).value(),branches)
-      } update {
-        current2 <- require(current2).next()
-      }
-    } update {
-      current <- require(current).next()
-    }
+    { state, branches } <- recursiveMatch(data,branches)
     complete <- MatchState$equals(state,MatchState$matchComplete())
+  }
+
+  @type recursiveMatch
+  (#c,optional ReadSequence<MatchBrancher<#c>>) ->
+  (MatchState,optional ReadSequence<MatchBrancher<#c>>)
+  recursiveMatch (data,branches) (state,branches2) {
+    state <- MatchState$matchFail()
+    branches2 <- empty
+    if (!present(branches)) {
+      return _
+    }
+    { state, branches2 } <- recursiveMatch(data,require(branches).next())
+    scoped {
+      { MatchState state2, optional ReadSequence<MatchBrancher<#c>> branches3 } <-
+          require(branches).value().tryBranches(data)
+    } in if (present(branches3)) {
+      branches2 <- concatBranches(branches3,branches2)
+      state <- MatchState$matchContinue()
+    } elif (MatchState$lessThan(state,state2)) {
+      state <- state2
+    }
+  }
+
+  @type concatBranches
+  (optional ReadSequence<MatchBrancher<#c>>,optional ReadSequence<MatchBrancher<#c>>) ->
+  (optional ReadSequence<MatchBrancher<#c>>)
+  concatBranches (head1,head2) {
+    if (!present(head2)) {
+      return head1
+    } elif (present(head1)) {
+      return LinkedNode<MatchBrancher<#c>>$create(
+          require(head1).value(),concatBranches(require(head1).next(),head2))
+    } else {
+      return head2
+    }
   }
 }
 
@@ -396,43 +412,51 @@ define BranchSequenceMatcher {
     return true
   }
 
-  tryBranches (data) (state,branches) {
-    branches <- empty
-    state <- MatchState$matchFail()
+  tryBranches (data) {
     if (consumed) {
-      return _
-    }
-    while (present(continued) || present(sequence)) {
-      if (!present(continued)) {
-        continued <- require(sequence).value().newMatcher()
-        sequence <- require(sequence).next()
-      }
-      Bool complete <- require(continued).matchSatisfied()
-      MatchState state2 <- require(continued).tryNextMatch(data)
-      if (MatchState$equals(state2,MatchState$matchComplete())) {
-        if (present(sequence)) {
-          // Add a branch to continue this sequence.
-          branches <- LinkedNode<BranchSequenceMatcher<#c>>$create(
-              BranchSequenceMatcher<#c>{ empty, sequence, false },branches)
-          state2 <- MatchState$matchContinue()
-        }
-      } elif (MatchState$equals(state2,MatchState$matchContinue())) {
-        // Add a branch to continue this sequence.
-        branches <- LinkedNode<BranchSequenceMatcher<#c>>$create(
-            BranchSequenceMatcher<#c>{ continued, sequence, false },branches)
-      }
-      if (MatchState$lessThan(state,state2)) {
-        // NOTE: state2 might be updated above!
-        state <- state2
-      }
-      if (!complete) {
-        // The matcher can't be skipped => no more branching is possible.
-        break
-      }
-    } update {
-      continued <- empty
+      return { MatchState$matchFail(), empty }
     }
     consumed <- true
+    return recursiveBranch(data,continued,sequence)
+  }
+
+  @type recursiveBranch
+  (#c,optional Matcher<#c>,optional ReadSequence<MatcherTemplate<#c>>) ->
+  (MatchState,optional ReadSequence<BranchSequenceMatcher<#c>>)
+  recursiveBranch (data,continued,sequence) (state,branch) {
+    state <- MatchState$matchFail()
+    branch <- empty
+    if (!present(continued) && !present(sequence)) {
+      return _
+    }
+    optional Matcher<#c> continued2 <- continued
+    optional ReadSequence<MatcherTemplate<#c>> sequence2 <- sequence
+    if (!present(continued2)) {
+      continued2 <- require(sequence2).value().newMatcher()
+      sequence2 <- require(sequence2).next()
+    }
+    if (require(continued2).matchSatisfied()) {
+      { MatchState state2, branch } <- recursiveBranch(data,empty,sequence2)
+      if (MatchState$lessThan(state,state2)) {
+        state <- state2
+      }
+    }
+    MatchState state2 <- require(continued2).tryNextMatch(data)
+    if (MatchState$lessThan(state,state2)) {
+      state <- state2
+    }
+    if (MatchState$equals(state2,MatchState$matchComplete())) {
+      if (present(sequence2)) {
+        // Add a branch to continue this sequence2.
+        branch <- LinkedNode<BranchSequenceMatcher<#c>>$create(
+            BranchSequenceMatcher<#c>{ empty, sequence2, false },branch)
+        state <- MatchState$matchContinue()
+      }
+    } elif (MatchState$equals(state,MatchState$matchContinue())) {
+        // Add a branch to continue this sequence2.
+        branch <- LinkedNode<BranchSequenceMatcher<#c>>$create(
+            BranchSequenceMatcher<#c>{ continued2, sequence2, false },branch)
+    }
   }
 }
 
