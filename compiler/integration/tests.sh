@@ -285,6 +285,84 @@ define Test {
 }
 END
 
+expect_runs '@category member is lazy' <<END
+concrete Util {
+  @type doNotUse () -> (Bool)
+}
+
+define Util {
+  doNotUse () {
+    fail("do not use")
+  }
+}
+
+define Test {
+  @category Bool value <- Util\$doNotUse()
+
+  run () {}
+}
+END
+
+expect_crashes '@category member init when read' 'do not use' 'line 15' <<END
+concrete Util {
+  @type doNotUse () -> (Bool)
+}
+
+define Util {
+  doNotUse () {
+    fail("do not use")
+  }
+}
+
+define Test {
+  @category Bool value <- Util\$doNotUse()
+
+  run () {
+    Bool value2 <- value
+  }
+}
+END
+
+expect_crashes '@category member init when assigned' 'do not use' 'line 15' <<END
+concrete Util {
+  @type doNotUse () -> (Bool)
+}
+
+define Util {
+  doNotUse () {
+    fail("do not use")
+  }
+}
+
+define Test {
+  @category Bool value <- Util\$doNotUse()
+
+  run () {
+    value <- false
+  }
+}
+END
+
+expect_crashes '@category member init when ignored' 'do not use' 'line 15' <<END
+concrete Util {
+  @type doNotUse () -> (Bool)
+}
+
+define Util {
+  doNotUse () {
+    fail("do not use")
+  }
+}
+
+define Test {
+  @category Bool value <- Util\$doNotUse()
+
+  run () {
+    ~ value
+  }
+}
+END
+
 expect_runs '@category member inline assignment' <<END
 define Test {
   @category Bool value <- true
