@@ -506,6 +506,33 @@ define Test {
 }
 END
 
+expect_error 'unhandled value return' 'return' 'line 4' <<END
+define Test {
+  run () {
+    // Does't exist, but the error should happen in parsing.
+    x.call()
+  }
+}
+END
+
+expect_error 'unhandled type return' 'return' 'line 4' <<END
+define Test {
+  run () {
+    // Does't exist, but the error should happen in parsing.
+    X\$call()
+  }
+}
+END
+
+expect_error 'unhandled category return' 'return' 'line 4' <<END
+define Test {
+  run () {
+    // Does't exist, but the error should happen in parsing.
+    X\$\$call()
+  }
+}
+END
+
 expect_error 'missing assign' 'value' 'line 5' <<END
 @value interface Value {}
 

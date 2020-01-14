@@ -93,12 +93,12 @@ class ParseFromSource a where
 
 labeled = flip label
 
-statementStart    = sepAfter (string "~")
-statementEnd      = sepAfter (string "")
-valueSymbolGet    = sepAfter (string ".")
-categorySymbolGet = sepAfter (string "$$")
+statementStart    = sepAfter (string "~" >> return ())
+statementEnd      = sepAfter (string "" >> return ())
+valueSymbolGet    = sepAfter (string "." >> return ())
+categorySymbolGet = sepAfter (string "$$" >> return ())
 typeSymbolGet     = sepAfter (string "$" >> notFollowedBy (string "$"))
-initSeparator     = sepAfter (string ":")
+initSeparator     = sepAfter (string ":" >> return ())
 assignOperator    = operator "<-"
 
 -- TODO: Maybe this should not use strings.

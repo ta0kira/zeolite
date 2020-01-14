@@ -99,12 +99,12 @@ instance ParseFromSource (Procedure SourcePos) where
     return $ Procedure [c] rs
 
 instance ParseFromSource (Statement SourcePos) where
-  sourceParser = parseIgnore <|>
-                 parseReturn <|>
+  sourceParser = parseReturn <|>
                  parseBreak <|>
                  parseContinue <|>
                  parseVoid <|>
-                 parseAssign where
+                 parseAssign <|>
+                 parseIgnore where
     parseAssign = labeled "statement" $ do
       c <- getPosition
       as <- multiDest <|> try singleDest
@@ -164,12 +164,17 @@ instance ParseFromSource (Assignable SourcePos) where
   sourceParser = existing <|> create where
     create = labeled "variable creation" $ do
       t <- sourceParser
+      strayFuncCall <|> return ()
       c <- getPosition
       n <- sourceParser
       return $ CreateVariable [c] t n
     existing = labeled "variable name" $ do
       n <- sourceParser
+      strayFuncCall <|> return ()
       return $ ExistingVariable n
+    strayFuncCall = do
+      valueSymbolGet <|> try typeSymbolGet <|> categorySymbolGet
+      fail "function returns must be explicitly handled"
 
 instance ParseFromSource (VoidExpression SourcePos) where
   sourceParser = conditional <|> loop <|> scoped where
