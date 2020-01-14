@@ -438,28 +438,21 @@
   }
 
   tryNextMatch (data) (state) {
-    { state, branches } <b><span style='color:#006e28;'>&lt;-</span></b> recursiveMatch(data,branches)
-    complete <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals(state,<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchComplete())
-  }
-
-  <span style='color:#644a9b;'>@type</span> recursiveMatch (<i><span style='color:#0057ae;'>#c</span></i>,<b>optional</b> <span style='color:#0057ae;'>ReadSequence</span><span style='color:#c02040;'>&lt;</span><span style='color:#0057ae;'>MatchBrancher</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;&gt;</span>) <b><span style='color:#006e28;'>-&gt;</span></b>
-                       (<span style='color:#0057ae;'>MatchState</span>,<b>optional</b> <span style='color:#0057ae;'>ReadSequence</span><span style='color:#c02040;'>&lt;</span><span style='color:#0057ae;'>MatchBrancher</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;&gt;</span>)
-  recursiveMatch (data,branches) (state,branches2) {
     state <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchFail()
-    branches2 <b><span style='color:#006e28;'>&lt;-</span></b> <b>empty</b>
-    <b>if</b> (!<b>present</b>(branches)) {
-      <b>return</b> <b>_</b>
-    }
-    { state, branches2 } <b><span style='color:#006e28;'>&lt;-</span></b> recursiveMatch(data,<b>require</b>(branches).next())
+    <b>optional</b> <span style='color:#0057ae;'>ReadSequence</span><span style='color:#c02040;'>&lt;</span><span style='color:#0057ae;'>MatchBrancher</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;&gt;</span> current <b><span style='color:#006e28;'>&lt;-</span></b> branches
+    branches <b><span style='color:#006e28;'>&lt;-</span></b> <b>empty</b>
     <b>scoped</b> {
-      { <span style='color:#0057ae;'>MatchState</span> state2, <b>optional</b> <span style='color:#0057ae;'>ReadSequence</span><span style='color:#c02040;'>&lt;</span><span style='color:#0057ae;'>MatchBrancher</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;&gt;</span> branches3 } <b><span style='color:#006e28;'>&lt;-</span></b>
-          <b>require</b>(branches).value().tryBranches(data)
-    } <b>in</b> <b>if</b> (<b>present</b>(branches3)) {
-      branches2 <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#0057ae;'>LinkedNode</span><span style='color:#c02040;'>&lt;</span><span style='color:#0057ae;'>MatchBrancher</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;&gt;</span><span style='color:#644a9b;'>$</span>concatSequences(branches3,branches2)
-      state <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchContinue()
-    } <b>elif</b> (<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>lessThan(state,state2)) {
-      state <b><span style='color:#006e28;'>&lt;-</span></b> state2
+    } <b>in</b> <b>while</b>(<b>present</b>(current)) {
+      { <span style='color:#0057ae;'>MatchState</span> state2, <b>optional</b> <span style='color:#0057ae;'>ReadSequence</span><span style='color:#c02040;'>&lt;</span><span style='color:#0057ae;'>MatchBrancher</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;&gt;</span> branches2 } <b><span style='color:#006e28;'>&lt;-</span></b>
+          <b>require</b>(current).value().tryBranches(data)
+      <b>if</b> (<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>lessThan(state,state2)) {
+        state <b><span style='color:#006e28;'>&lt;-</span></b> state2
+      }
+      branches <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#0057ae;'>LinkedNode</span><span style='color:#c02040;'>&lt;</span><span style='color:#0057ae;'>MatchBrancher</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;&gt;</span><span style='color:#644a9b;'>$</span>concatSequences(branches2,branches)
+    } <b>update</b> {
+      current <b><span style='color:#006e28;'>&lt;-</span></b> <b>require</b>(current).next()
     }
+    complete <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals(state,<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchComplete())
   }
 }
 

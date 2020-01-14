@@ -47,6 +47,23 @@
     <span style='color:#006e28;'>~</span> testMatch(<span style='color:#bf0303;'>&quot;[a-z?]&quot;</span>,<span style='color:#bf0303;'>&quot;?&quot;</span>,<b>true</b>)
     <span style='color:#006e28;'>~</span> testMatch(<span style='color:#bf0303;'>&quot;[a-z?]*&quot;</span>,<span style='color:#bf0303;'>&quot;abcde?&quot;</span>,<b>true</b>)
     <span style='color:#006e28;'>~</span> testMatch(<span style='color:#bf0303;'>&quot;[a-z?]*&quot;</span>,<span style='color:#bf0303;'>&quot;ab-cde&quot;</span>,<b>false</b>)
+
+    <span style='color:#898887;'>// A few malicious regexes from https://en.wikipedia.org/wiki/ReDoS.</span>
+    <span style='color:#006e28;'>~</span> testMatch(<span style='color:#bf0303;'>&quot;(a+)+&quot;</span>,<span style='color:#bf0303;'>&quot;aaaaaaaaaaaaaaaaaaaaaaaa!&quot;</span>,<b>false</b>)
+    <span style='color:#006e28;'>~</span> testMatch(<span style='color:#bf0303;'>&quot;([a-zA-Z]+)*&quot;</span>,<span style='color:#bf0303;'>&quot;aaaaaaaaaaaaaaaaaaaaaaaa!&quot;</span>,<b>false</b>)
+    <span style='color:#006e28;'>~</span> testMatch(<span style='color:#bf0303;'>&quot;(a|aa)+&quot;</span>,<span style='color:#bf0303;'>&quot;aaaaaaaaaaaaaaaaaaaaaaaa!&quot;</span>,<b>false</b>)
+    <span style='color:#006e28;'>~</span> testMatch(<span style='color:#bf0303;'>&quot;(.*a){30}&quot;</span>,<span style='color:#bf0303;'>&quot;aaaaaaaaaaaaaaaaaaaaaaaa!&quot;</span>,<b>false</b>)
+
+    <span style='color:#898887;'>// This causes a ton of branching, but it actually finishes. For m groups</span>
+    <span style='color:#898887;'>// like &quot;[ab]*&quot; and n input characters, the branching requirement in this</span>
+    <span style='color:#898887;'>// implementation is O(n^m), so appending even one group takes much longer.</span>
+    <span style='color:#006e28;'>~</span> testMatch(<span style='color:#bf0303;'>&quot;[ab]*[ac]*[ad]*[ae]*[af]*&quot;</span>,
+                <span style='color:#bf0303;'>&quot;aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaad&quot;</span>,<b>true</b>)
+
+    <span style='color:#898887;'>// Branching is local to repetitions within a single sequence of patterns;</span>
+    <span style='color:#898887;'>// therefore, the pattern below isn't actually problematic.</span>
+    <span style='color:#006e28;'>~</span> testMatch(<span style='color:#bf0303;'>&quot;([ab]*|[ac]*|[ad]*|[ae]*|[af]*)*&quot;</span>,
+                <span style='color:#bf0303;'>&quot;aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaad&quot;</span>,<b>true</b>)
   }
 
   <span style='color:#644a9b;'>@type</span> testMatch (<i><span style='color:#0057ae;'>String</span></i>,<i><span style='color:#0057ae;'>String</span></i>,<i><span style='color:#0057ae;'>Bool</span></i>) <b><span style='color:#006e28;'>-&gt;</span></b> ()

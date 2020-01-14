@@ -36,6 +36,23 @@ define RegexDemo {
     ~ testMatch("[a-z?]","?",true)
     ~ testMatch("[a-z?]*","abcde?",true)
     ~ testMatch("[a-z?]*","ab-cde",false)
+
+    // A few malicious regexes from https://en.wikipedia.org/wiki/ReDoS.
+    ~ testMatch("(a+)+","aaaaaaaaaaaaaaaaaaaaaaaa!",false)
+    ~ testMatch("([a-zA-Z]+)*","aaaaaaaaaaaaaaaaaaaaaaaa!",false)
+    ~ testMatch("(a|aa)+","aaaaaaaaaaaaaaaaaaaaaaaa!",false)
+    ~ testMatch("(.*a){30}","aaaaaaaaaaaaaaaaaaaaaaaa!",false)
+
+    // This causes a ton of branching, but it actually finishes. For m groups
+    // like "[ab]*" and n input characters, the branching requirement in this
+    // implementation is O(n^m), so appending even one group takes much longer.
+    ~ testMatch("[ab]*[ac]*[ad]*[ae]*[af]*",
+                "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaad",true)
+
+    // Branching is local to repetitions within a single sequence of patterns;
+    // therefore, the pattern below isn't actually problematic.
+    ~ testMatch("([ab]*|[ac]*|[ad]*|[ae]*|[af]*)*",
+                "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaad",true)
   }
 
   @type testMatch (String,String,Bool) -> ()

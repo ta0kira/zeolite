@@ -3,8 +3,6 @@
 *Also see
 [a highlighted version of the example code](https://ta0kira.github.io/zeolite/example/regex/index.html).*
 
-**This example is currently incomplete.**
-
 To run the example:
 
 ```shell
