@@ -129,6 +129,9 @@ tests = [
     checkShortParseFail "~ (T x <- var).func()",
     checkShortParseSuccess "~ call(((var.func())).T$call())",
     checkShortParseSuccess "if (((var.func()).T$call())) { }",
+    checkShortParseSuccess "fail(\"reason\")",
+    checkShortParseFail "~ fail(\"reason\")",
+    checkShortParseSuccess "failed <- 10",
 
     checkShortParseSuccess "~var.T<#x>$func().func2().func3()",
     checkShortParseSuccess "~T<#x>{val,var.T<#x>$func()}",

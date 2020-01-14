@@ -221,6 +221,18 @@ compileStatement (LoopContinue c) = do
          lift $ compileError $ "Using next outside of while is no allowed [" ++ formatFullContext c ++ "]"
        _ -> return ()
   csWrite $ ["{"] ++ lsUpdate loop ++ ["}","continue;"]
+compileStatement (FailCall c e) = do
+  e' <- compileExpression e
+  when (length (psParams $ fst e') /= 1) $
+    lift $ compileError $ "Expected single return in argument [" ++ formatFullContext c ++ "]"
+  let (ParamSet [t0],e) = e'
+  r <- csResolver
+  fa <- csAllFilters
+  lift $ (checkValueTypeMatch r fa t0 formattedRequiredValue) `reviseError`
+    ("In fail call at " ++ formatFullContext c)
+  csSetNoReturn
+  csWrite [setTraceContext c]
+  csWrite ["BuiltinFail(" ++ useAsUnwrapped e ++ ");"]
 compileStatement (IgnoreValues c e) = do
   (_,e') <- compileExpression e
   csWrite [setTraceContext c]
@@ -670,22 +682,6 @@ compileExpressionStart (BuiltinCall c f@(FunctionCall _ BuiltinTypename ps es)) 
   csRequiresTypes $ Set.unions $ map categoriesFromTypes $ psParams ps
   return $ (ParamSet [formattedRequiredValue],
             valueAsWrapped $ UnboxedPrimitive PrimString $ typeBase ++ "::TypeName(" ++ t ++ ")")
-compileExpressionStart (BuiltinCall c f@(FunctionCall _ BuiltinFail ps es)) = do
-  when (length (psParams ps) /= 0) $
-    lift $ compileError $ "Expected 0 type parameters [" ++ formatFullContext c ++ "]"
-  when (length (psParams es) /= 1) $
-    lift $ compileError $ "Expected 1 argument [" ++ formatFullContext c ++ "]"
-  es' <- sequence $ map compileExpression $ psParams es
-  when (length (psParams $ fst $ head es') /= 1) $
-    lift $ compileError $ "Expected single return in argument [" ++ formatFullContext c ++ "]"
-  let (ParamSet [t0],e) = head es'
-  r <- csResolver
-  fa <- csAllFilters
-  lift $ (checkValueTypeMatch r fa t0 formattedRequiredValue) `reviseError`
-    ("In fail call at " ++ formatFullContext c)
-  csSetNoReturn
-  return $ (ParamSet [],
-            OpaqueMulti $ "BuiltinFail(" ++ useAsUnwrapped e ++ ")")
 compileExpressionStart (ParensExpression c e) = compileExpression e
 compileExpressionStart (InlineAssignment c n e) = do
   (VariableValue c2 s t0 w) <- csGetVariable c n

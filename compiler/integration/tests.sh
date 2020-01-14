@@ -187,7 +187,7 @@ expect_crashes 'fail builtin' 'Failed' 'line 4' <<END
 define Test {
   @category failedReturn () -> (Int)
   failedReturn () {
-    ~ fail("Failed")
+    fail("Failed")
   }
 
   run () {
@@ -209,7 +209,7 @@ define Value {
 
 define Test {
   run () {
-    ~ fail(Value\$create())
+    fail(Value\$create())
   }
 }
 END
@@ -378,7 +378,7 @@ define Test {
 
   run () {
     if (singleton.get() != 3) {
-      ~fail(singleton.get())
+      fail(singleton.get())
     }
   }
 }
@@ -406,7 +406,7 @@ define Test {
   run () {
     Value<Int> value <- Value<Int>\$create(1)
     if (value.get() != 1) {
-      ~ fail("Failed")
+      fail("Failed")
     }
   }
 }
@@ -434,7 +434,7 @@ define Test {
   run () {
     Value<Int> value <- Value<String>\$create<Int>(1)
     if (value.get() != 1) {
-      ~ fail("Failed")
+      fail("Failed")
     }
   }
 }
@@ -467,7 +467,7 @@ define Test {
   run () {
     Value<Int> value <- Value<Int>\$create(2).create2(1)
     if (value.get() != 1) {
-      ~ fail("Failed")
+      fail("Failed")
     }
   }
 }
@@ -500,7 +500,7 @@ define Test {
   run () {
     Value<Int> value <- Value<String>\$create("x").create2<Int>(1)
     if (value.get() != 1) {
-      ~ fail("Failed")
+      fail("Failed")
     }
   }
 }
@@ -610,7 +610,7 @@ define Test {
   run () {
     Int value <- process()
     if (value != 2) {
-      ~ fail("Failed")
+      fail("Failed")
     }
   }
 }
@@ -627,9 +627,9 @@ define Test {
     scoped {
       { Int x, Int y } <- get()
     } in if (x != 1) {
-      ~ fail("Failed")
+      fail("Failed")
     } elif (y != 2) {
-      ~ fail("Failed")
+      fail("Failed")
     }
   }
 }
@@ -659,9 +659,9 @@ define Test {
     scoped {
       { _, Int x, Int y } <- get()
     } in if (x != 1) {
-      ~ fail("Failed")
+      fail("Failed")
     } elif (y != 2) {
-      ~ fail("Failed")
+      fail("Failed")
     }
   }
 }
@@ -680,9 +680,9 @@ define Test {
     scoped {
       { Int x, Int y } <- get()
     } in if (x != 1) {
-      ~ fail("Failed")
+      fail("Failed")
     } elif (y != 2) {
-      ~ fail("Failed")
+      fail("Failed")
     }
   }
 }
@@ -726,9 +726,9 @@ define Test {
     scoped {
       { Int x, Int y } <- get()
     } in if (x != 3) {
-      ~ fail("Failed")
+      fail("Failed")
     } elif (y != 4) {
-      ~ fail("Failed")
+      fail("Failed")
     }
   }
 }
@@ -745,9 +745,9 @@ define Test {
     scoped {
       { Int x, Int y } <- get()
     } in if (x != 1) {
-      ~ fail("Failed")
+      fail("Failed")
     } elif (y != 2) {
-      ~ fail("Failed")
+      fail("Failed")
     }
   }
 }
@@ -769,9 +769,9 @@ define Test {
     scoped {
       { Int x, Int y } <- get()
     } in if (x != 3) {
-      ~ fail("Failed")
+      fail("Failed")
     } elif (y != 4) {
-      ~ fail("Failed")
+      fail("Failed")
     }
   }
 }
@@ -1001,10 +1001,10 @@ define Test {
     } in while (i < limit) {
       output <- i
       break
-      ~ fail("Failed")
+      fail("Failed")
     }
     if (output != 0) {
-      ~ fail("Failed")
+      fail("Failed")
     }
   }
 }
@@ -1023,7 +1023,7 @@ define Test {
       i <- i+1
     }
     if (output != 4) {
-      ~ fail("Failed")
+      fail("Failed")
     }
   }
 }
@@ -1037,12 +1037,12 @@ define Test {
     } update {
       if (output > 5) {
         break
-        ~ fail("Failed")
+        fail("Failed")
       }
       output <- output+1
     }
     if (output != 6) {
-      ~ fail("Failed")
+      fail("Failed")
     }
   }
 }
@@ -1057,7 +1057,7 @@ define Test {
     } update {
       if (output > 5) {
         return output
-        ~ fail("Failed")
+        fail("Failed")
       }
     }
     return -1
@@ -1065,7 +1065,7 @@ define Test {
 
   run () {
     if (test() != 6) {
-      ~ fail("Failed")
+      fail("Failed")
     }
   }
 }
@@ -1081,12 +1081,12 @@ define Test {
       } else {
         continue
       }
-      ~ fail("Failed")
+      fail("Failed")
     } update {
       i <- i+1
     }
     if (i != 6) {
-      ~ fail("Failed")
+      fail("Failed")
     }
   }
 }
@@ -1129,7 +1129,7 @@ define Test {
       i <- i+1
     }
     if (output != 4) {
-      ~ fail("Failed")
+      fail("Failed")
     }
   }
 }
@@ -1145,12 +1145,12 @@ define Test {
     } in while (i < limit) {
       output <- i
       continue
-      ~ fail("Failed")
+      fail("Failed")
     } update {
       i <- i+1
     }
     if (output != 4) {
-      ~ fail("Failed")
+      fail("Failed")
     }
   }
 }
@@ -1167,10 +1167,10 @@ define Test {
       output <- i
       i <- i+1
       continue
-      ~ fail("Failed")
+      fail("Failed")
     }
     if (output != 4) {
-      ~ fail("Failed")
+      fail("Failed")
     }
   }
 }
@@ -1289,7 +1289,7 @@ define Test {
     scoped {
       optional Test self3 <- strong(self2)
     } in if (present(self3)) {
-      ~ fail("Failed")
+      fail("Failed")
     }
   }
 
@@ -1312,7 +1312,7 @@ define Test {
   check () {
     weak Test value <- create()
     if (present(strong(value))) { // value should be nullptr here
-      ~ fail("Failed")
+      fail("Failed")
     }
   }
 
@@ -1367,7 +1367,7 @@ define Test {
     // value1 ensures value2 is present.
     { Value value1, weak Value value2 } <- get()
     if (!present(strong(value2))) {
-      ~ fail("Failed")
+      fail("Failed")
     }
   }
 }
@@ -1389,7 +1389,7 @@ define Test {
     Value value1 <- Value\$create()
     weak Value value2 <- empty
     if (!present(strong((value2 <- value1)))) {
-      ~ fail("Failed")
+      fail("Failed")
     }
   }
 }
@@ -1399,7 +1399,7 @@ expect_runs 'not true' <<END
 define Test {
   run () {
     if (!true) {
-      ~ fail("Failed")
+      fail("Failed")
     }
   }
 }
@@ -1415,7 +1415,7 @@ define Test {
   run () {
     Test value <- create()
     if (!present(value)) {
-      ~ fail("Failed")
+      fail("Failed")
     }
   }
 }
@@ -1585,10 +1585,10 @@ define Test {
   @type call (Int,Int) -> ()
   call (x,y) {
     if (x != 1) {
-      ~ fail("Failed")
+      fail("Failed")
     }
     if (y != 2) {
-      ~ fail("Failed")
+      fail("Failed")
     }
   }
 
@@ -2260,7 +2260,7 @@ define Test {
     scoped {
       optional Value value2 <- reduce<Value,Value>(value)
     } in if (!present(value2)) {
-      ~ fail("Failed")
+      fail("Failed")
     }
   }
 }
@@ -2283,7 +2283,7 @@ define Test {
     scoped {
       optional Test value2 <- reduce<Value,Test>(value)
     } in if (present(value2)) {
-      ~ fail("Failed")
+      fail("Failed")
     }
   }
 }
@@ -2357,7 +2357,7 @@ define Test {
     scoped {
       optional Value<Type1> value2 <- value.attempt<Type1>()
     } in if (!present(value2)) {
-      ~ fail("Failed")
+      fail("Failed")
     }
   }
 }
@@ -2393,7 +2393,7 @@ define Test {
     scoped {
       optional Value<Type2> value2 <- value.attempt<Type2>()
     } in if (present(value2)) {
-      ~ fail("Failed")
+      fail("Failed")
     }
   }
 }
@@ -2429,7 +2429,7 @@ define Test {
     scoped {
       optional Value<Value<Type1>> value2 <- value.attempt<Value<Type1>>()
     } in if (!present(value2)) {
-      ~ fail("Failed")
+      fail("Failed")
     }
   }
 }
@@ -2465,7 +2465,7 @@ define Test {
     scoped {
       optional Value<Value<Type2>> value2 <- value.attempt<Value<Type2>>()
     } in if (present(value2)) {
-      ~ fail("Failed")
+      fail("Failed")
     }
   }
 }
@@ -2496,7 +2496,7 @@ define Test {
     scoped {
       optional Base value2 <- reduce<[Value1|Value2],Base>(value)
     } in if (!present(value2)) {
-      ~ fail("Failed")
+      fail("Failed")
     }
   }
 }
@@ -2527,7 +2527,7 @@ define Test {
     scoped {
       optional Value2 value2 <- reduce<[Value1|Value2],Value2>(value)
     } in if (present(value2)) {
-      ~ fail("Failed")
+      fail("Failed")
     }
   }
 }
@@ -2557,7 +2557,7 @@ define Test {
     scoped {
       optional [Base1&Base2] value2 <- reduce<Value,[Base1&Base2]>(value)
     } in if (!present(value2)) {
-      ~ fail("Failed")
+      fail("Failed")
     }
   }
 }
@@ -2586,7 +2586,7 @@ define Test {
     scoped {
       optional [Base1&Base2] value2 <- reduce<Value,[Base1&Base2]>(value)
     } in if (present(value2)) {
-      ~ fail("Failed")
+      fail("Failed")
     }
   }
 }
@@ -2621,7 +2621,7 @@ define Test {
     scoped {
       optional [Base1&Base2] value2 <- reduce<[Value1|Value2],[Base1&Base2]>(value)
     } in if (!present(value2)) {
-      ~ fail("Failed")
+      fail("Failed")
     }
   }
 }
@@ -2655,7 +2655,7 @@ define Test {
     scoped {
       optional [Base1&Base2] value2 <- reduce<[Value1|Value2],[Base1&Base2]>(value)
     } in if (present(value2)) {
-      ~ fail("Failed")
+      fail("Failed")
     }
   }
 }
@@ -2691,7 +2691,7 @@ define Test {
     scoped {
       optional [Base1|Base2] value2 <- reduce<[Value1&Value2],[Base1|Base2]>(value)
     } in if (!present(value2)) {
-      ~ fail("Failed")
+      fail("Failed")
     }
   }
 }
@@ -2725,7 +2725,7 @@ define Test {
     scoped {
       optional [Base1|Base2] value2 <- reduce<[Value1&Value2],[Base1|Base2]>(value)
     } in if (present(value2)) {
-      ~ fail("Failed")
+      fail("Failed")
     }
   }
 }
@@ -2748,7 +2748,7 @@ define Test {
     scoped {
       optional Value<any> value2 <- reduce<Value<Test>,Value<any>>(value)
     } in if (!present(value2)) {
-      ~ fail("Failed")
+      fail("Failed")
     }
   }
 }
@@ -2771,7 +2771,7 @@ define Test {
     scoped {
       optional Value<all> value2 <- reduce<Value<Test>,Value<all>>(value)
     } in if (!present(value2)) {
-      ~ fail("Failed")
+      fail("Failed")
     }
   }
 }
@@ -2794,7 +2794,7 @@ define Test {
     scoped {
       optional Value<any> value2 <- reduce<Value<Test>,Value<any>>(value)
     } in if (present(value2)) {
-      ~ fail("Failed")
+      fail("Failed")
     }
   }
 }
@@ -2817,7 +2817,7 @@ define Test {
     scoped {
       optional Value<Test> value2 <- reduce<Value<all>,Value<Test>>(value)
     } in if (!present(value2)) {
-      ~ fail("Failed")
+      fail("Failed")
     }
   }
 }
@@ -2840,7 +2840,7 @@ define Test {
     scoped {
       optional Value<Test> value2 <- reduce<Value<any>,Value<Test>>(value)
     } in if (!present(value2)) {
-      ~ fail("Failed")
+      fail("Failed")
     }
   }
 }
@@ -2863,7 +2863,7 @@ define Test {
     scoped {
       optional Value<Test> value2 <- reduce<Value<all>,Value<Test>>(value)
     } in if (present(value2)) {
-      ~ fail("Failed")
+      fail("Failed")
     }
   }
 }
@@ -2873,7 +2873,7 @@ expect_runs 'reduce Bool to Bool' <<END
 define Test {
   run () {
     if (!present(reduce<Bool,Bool>(true))) {
-      ~ fail("Failed")
+      fail("Failed")
     }
   }
 }
@@ -2883,7 +2883,7 @@ expect_runs 'reduce Bool to Formatted' <<END
 define Test {
   run () {
     if (!present(reduce<Bool,Formatted>(true))) {
-      ~ fail("Failed")
+      fail("Failed")
     }
   }
 }
@@ -2893,7 +2893,7 @@ expect_runs 'reduce Int to Int' <<END
 define Test {
   run () {
     if (!present(reduce<Int,Int>(1))) {
-      ~ fail("Failed")
+      fail("Failed")
     }
   }
 }
@@ -2903,7 +2903,7 @@ expect_runs 'reduce Int to Formatted' <<END
 define Test {
   run () {
     if (!present(reduce<Int,Formatted>(1))) {
-      ~ fail("Failed")
+      fail("Failed")
     }
   }
 }
@@ -2913,7 +2913,7 @@ expect_runs 'reduce String to String' <<END
 define Test {
   run () {
     if (!present(reduce<String,String>("x"))) {
-      ~ fail("Failed")
+      fail("Failed")
     }
   }
 }
@@ -2923,7 +2923,7 @@ expect_runs 'reduce String to Formatted' <<END
 define Test {
   run () {
     if (!present(reduce<String,Formatted>("x"))) {
-      ~ fail("Failed")
+      fail("Failed")
     }
   }
 }
@@ -2933,7 +2933,7 @@ expect_runs 'reduce Float to Float' <<END
 define Test {
   run () {
     if (!present(reduce<Float,Float>(1.1))) {
-      ~ fail("Failed")
+      fail("Failed")
     }
   }
 }
@@ -2943,7 +2943,7 @@ expect_runs 'reduce Float to Formatted' <<END
 define Test {
   run () {
     if (!present(reduce<Float,Formatted>(1.1))) {
-      ~ fail("Failed")
+      fail("Failed")
     }
   }
 }
@@ -2953,7 +2953,7 @@ expect_runs 'reduce ReadPosition success' <<END
 define Test {
   run () {
     if (!present(reduce<ReadPosition<Char>,ReadPosition<Formatted>>("x"))) {
-      ~ fail("Failed")
+      fail("Failed")
     }
   }
 }
@@ -2963,7 +2963,7 @@ expect_runs 'reduce ReadPosition fail' <<END
 define Test {
   run () {
     if (present(reduce<ReadPosition<Formatted>,ReadPosition<Char>>("x"))) {
-      ~ fail("Failed")
+      fail("Failed")
     }
   }
 }
@@ -2991,7 +2991,7 @@ define Test {
   run () {
     Value value <- Value\$create<Formatted>()
     if (!value.check<String>("")) {
-      ~ fail("Failed")
+      fail("Failed")
     }
   }
 }
@@ -3019,7 +3019,7 @@ define Test {
   run () {
     Value value <- Value\$create<Formatted>()
     if (value.check<Value>(value)) {
-      ~ fail("Failed")
+      fail("Failed")
     }
   }
 }
@@ -3031,7 +3031,7 @@ define Test {
     scoped {
       Int x <- 0x10 + 1 * 2 - 8 / 2 - 3 % 2
     } in if (x != 13) {
-      ~ fail("Failed")
+      fail("Failed")
     }
   }
 }
@@ -3059,7 +3059,7 @@ define Test {
     scoped {
       String x <- "x" + "y" + "z"
     } in if (x != "xyz") {
-      ~ fail("Failed")
+      fail("Failed")
     }
   }
 }
@@ -3071,7 +3071,7 @@ define Test {
     scoped {
       Float x <- 16.0 + 1.0 * 2.0 - 8.0 / 2.0 - 3.0 / 3.0
     } in if (x != 13.0) {
-      ~ fail("Failed")
+      fail("Failed")
     }
   }
 }
@@ -3080,9 +3080,9 @@ END
 expect_runs 'bool comparison' <<END
 define Test {
   run () {
-    if (!(true  == true))  { ~ fail("Failed") }
-    if (!(false == false)) { ~ fail("Failed") }
-    if (!(false != true))  { ~ fail("Failed") }
+    if (!(true  == true))  { fail("Failed") }
+    if (!(false == false)) { fail("Failed") }
+    if (!(false != true))  { fail("Failed") }
   }
 }
 END
@@ -3090,12 +3090,12 @@ END
 expect_runs 'int comparison' <<END
 define Test {
   run () {
-    if (!(1 <  2)) { ~ fail("Failed") }
-    if (!(1 <= 2)) { ~ fail("Failed") }
-    if (!(1 == 1)) { ~ fail("Failed") }
-    if (!(1 != 2)) { ~ fail("Failed") }
-    if (!(2 >  1)) { ~ fail("Failed") }
-    if (!(2 >= 1)) { ~ fail("Failed") }
+    if (!(1 <  2)) { fail("Failed") }
+    if (!(1 <= 2)) { fail("Failed") }
+    if (!(1 == 1)) { fail("Failed") }
+    if (!(1 != 2)) { fail("Failed") }
+    if (!(2 >  1)) { fail("Failed") }
+    if (!(2 >= 1)) { fail("Failed") }
   }
 }
 END
@@ -3103,12 +3103,12 @@ END
 expect_runs 'float comparison' <<END
 define Test {
   run () {
-    if (!(1.0 <  2.0)) { ~ fail("Failed") }
-    if (!(1.0 <= 2.0)) { ~ fail("Failed") }
-    if (!(1.0 == 1.0)) { ~ fail("Failed") }
-    if (!(1.0 != 2.0)) { ~ fail("Failed") }
-    if (!(2.0 >  1.0)) { ~ fail("Failed") }
-    if (!(2.0 >= 1.0)) { ~ fail("Failed") }
+    if (!(1.0 <  2.0)) { fail("Failed") }
+    if (!(1.0 <= 2.0)) { fail("Failed") }
+    if (!(1.0 == 1.0)) { fail("Failed") }
+    if (!(1.0 != 2.0)) { fail("Failed") }
+    if (!(2.0 >  1.0)) { fail("Failed") }
+    if (!(2.0 >= 1.0)) { fail("Failed") }
   }
 }
 END
@@ -3116,12 +3116,12 @@ END
 expect_runs 'string comparison' <<END
 define Test {
   run () {
-    if (!("x" <  "y")) { ~ fail("Failed") }
-    if (!("x" <= "y")) { ~ fail("Failed") }
-    if (!("x" == "x")) { ~ fail("Failed") }
-    if (!("x" != "y")) { ~ fail("Failed") }
-    if (!("y" >  "x")) { ~ fail("Failed") }
-    if (!("y" >= "x")) { ~ fail("Failed") }
+    if (!("x" <  "y")) { fail("Failed") }
+    if (!("x" <= "y")) { fail("Failed") }
+    if (!("x" == "x")) { fail("Failed") }
+    if (!("x" != "y")) { fail("Failed") }
+    if (!("y" >  "x")) { fail("Failed") }
+    if (!("y" >= "x")) { fail("Failed") }
   }
 }
 END
@@ -3129,12 +3129,12 @@ END
 expect_runs 'char comparison' <<END
 define Test {
   run () {
-    if (!('x' <  'y')) { ~ fail("Failed") }
-    if (!('x' <= 'y')) { ~ fail("Failed") }
-    if (!('x' == 'x')) { ~ fail("Failed") }
-    if (!('x' != 'y')) { ~ fail("Failed") }
-    if (!('y' >  'x')) { ~ fail("Failed") }
-    if (!('y' >= 'x')) { ~ fail("Failed") }
+    if (!('x' <  'y')) { fail("Failed") }
+    if (!('x' <= 'y')) { fail("Failed") }
+    if (!('x' == 'x')) { fail("Failed") }
+    if (!('x' != 'y')) { fail("Failed") }
+    if (!('y' >  'x')) { fail("Failed") }
+    if (!('y' >= 'x')) { fail("Failed") }
   }
 }
 END
@@ -3145,7 +3145,7 @@ define Test {
     scoped {
       Bool x <- false && false || true
     } in if (!x) {
-      ~ fail("Failed")
+      fail("Failed")
     }
   }
 }
@@ -3171,7 +3171,7 @@ expect_runs 'string plus with comparison' <<END
 define Test {
   run () {
     if (!("x" + "w" < "x" + "y")) {
-      ~ fail("Failed")
+      fail("Failed")
     }
   }
 }
@@ -3181,7 +3181,7 @@ expect_runs 'char minus with comparison' <<END
 define Test {
   run () {
     if (!('d' - 'a' == 3)) {
-      ~ fail("Failed")
+      fail("Failed")
     }
   }
 }
@@ -3191,7 +3191,7 @@ expect_runs 'int arithmetic with comparison' <<END
 define Test {
   run () {
     if (!(2 + 1 < 2 + 3)) {
-      ~ fail("Failed")
+      fail("Failed")
     }
   }
 }
@@ -3201,7 +3201,7 @@ expect_runs 'float arithmetic with comparison' <<END
 define Test {
   run () {
     if (!(2.0 + 1.0 < 2.0 + 3.0)) {
-      ~ fail("Failed")
+      fail("Failed")
     }
   }
 }
@@ -3221,7 +3221,7 @@ define Test {
     scoped {
       Bool x <- 1 + 2 < 4 && 3 >= 1 * 2 + 1
     } in if (!x) {
-      ~ fail("Failed")
+      fail("Failed")
     }
   }
 }
@@ -3231,7 +3231,7 @@ expect_runs 'string LessThan' <<END
 define Test {
   run () {
     if (!String\$lessThan("x","y")) {
-      ~ fail("Failed")
+      fail("Failed")
     }
   }
 }
@@ -3241,7 +3241,7 @@ expect_runs 'bool Equals' <<END
 define Test {
   run () {
     if (!Bool\$equals(true,true)) {
-      ~ fail("Failed")
+      fail("Failed")
     }
   }
 }
@@ -3251,7 +3251,7 @@ expect_runs 'string Equals' <<END
 define Test {
   run () {
     if (!String\$equals("x","x")) {
-      ~ fail("Failed")
+      fail("Failed")
     }
   }
 }
@@ -3261,7 +3261,7 @@ expect_runs 'char LessThan' <<END
 define Test {
   run () {
     if (!Char\$lessThan('x','y')) {
-      ~ fail("Failed")
+      fail("Failed")
     }
   }
 }
@@ -3271,7 +3271,7 @@ expect_runs 'char Equals' <<END
 define Test {
   run () {
     if (!Char\$equals('x','x')) {
-      ~ fail("Failed")
+      fail("Failed")
     }
   }
 }
@@ -3281,7 +3281,7 @@ expect_runs 'int LessThan' <<END
 define Test {
   run () {
     if (!Int\$lessThan(1,2)) {
-      ~ fail("Failed")
+      fail("Failed")
     }
   }
 }
@@ -3291,7 +3291,7 @@ expect_runs 'int Equals' <<END
 define Test {
   run () {
     if (!Int\$equals(1,1)) {
-      ~ fail("Failed")
+      fail("Failed")
     }
   }
 }
@@ -3301,7 +3301,7 @@ expect_runs 'float LessThan' <<END
 define Test {
   run () {
     if (!Float\$lessThan(1.0,2.0)) {
-      ~ fail("Failed")
+      fail("Failed")
     }
   }
 }
@@ -3311,7 +3311,7 @@ expect_runs 'float Equals' <<END
 define Test {
   run () {
     if (!Float\$equals(1.0,1.0)) {
-      ~ fail("Failed")
+      fail("Failed")
     }
   }
 }
@@ -3324,7 +3324,7 @@ define Test {
     // Shared because true and false are boxed constants.
     weak Bool value2 <- value1
     if (!present(strong(value2))) {
-      ~ fail("Failed")
+      fail("Failed")
     }
   }
 }
@@ -3336,7 +3336,7 @@ define Test {
     String value1 <- "x"
     weak String value2 <- value1
     if (!present(strong(value2))) {
-      ~ fail("Failed")
+      fail("Failed")
     }
   }
 }
@@ -3348,7 +3348,7 @@ define Test {
     Char value1 <- 'x'
     weak Char value2 <- value1
     if (present(strong(value2))) {
-      ~ fail("Failed")
+      fail("Failed")
     }
   }
 }
@@ -3360,7 +3360,7 @@ define Test {
     Int value1 <- 1
     weak Int value2 <- value1
     if (present(strong(value2))) {
-      ~ fail("Failed")
+      fail("Failed")
     }
   }
 }
@@ -3372,7 +3372,7 @@ define Test {
     Float value1 <- 1.1
     weak Float value2 <- value1
     if (present(strong(value2))) {
-      ~ fail("Failed")
+      fail("Failed")
     }
   }
 }
@@ -3488,11 +3488,11 @@ define Test {
     String s <- "abcde"
     Char c <- s.readPosition(3)
     if (c != 'd') {
-      ~ fail(c)
+      fail(c)
     }
     Int size <- s.readSize()
     if (size != 5) {
-      ~ fail(size)
+      fail(size)
     }
   }
 }
@@ -3519,7 +3519,7 @@ define Test {
   run () {
     String s <- ("x").formatted()
     if (s != "x") {
-      ~ fail(s)
+      fail(s)
     }
   }
 }
@@ -3530,7 +3530,7 @@ define Test {
   run () {
     String s <- ('x').formatted()
     if (s != "x") {
-      ~ fail(s)
+      fail(s)
     }
   }
 }
@@ -3541,7 +3541,7 @@ define Test {
   run () {
     String s <- ('\170').formatted()
     if (s != "x") {
-      ~ fail(s)
+      fail(s)
     }
   }
 }
@@ -3552,7 +3552,7 @@ define Test {
   run () {
     String s <- ('\x78').formatted()
     if (s != "x") {
-      ~ fail(s)
+      fail(s)
     }
   }
 }
@@ -3563,7 +3563,7 @@ define Test {
   run () {
     String s <- (1).formatted()
     if (s != "1") {
-      ~ fail(s)
+      fail(s)
     }
   }
 }
@@ -3574,7 +3574,7 @@ define Test {
   run () {
     String s <- (0x0010).formatted()
     if (s != "16") {
-      ~ fail(s)
+      fail(s)
     }
   }
 }
@@ -3585,7 +3585,7 @@ define Test {
   run () {
     String s <- (1.1).formatted()
     if (s != "1.1") { // precision might vary
-      ~ fail(s)
+      fail(s)
     }
   }
 }
@@ -3596,7 +3596,7 @@ define Test {
   run () {
     String s <- (false).formatted()
     if (s != "false") {
-      ~ fail(s)
+      fail(s)
     }
   }
 }
@@ -3607,7 +3607,7 @@ define Test {
   run () {
     Formatted name <- typename<String>()
     if (name.formatted() != "String") {
-      ~ fail(name)
+      fail(name)
     }
   }
 }
@@ -3618,7 +3618,7 @@ define Test {
   run () {
     Formatted name <- typename<Int>()
     if (name.formatted() != "Int") {
-      ~ fail(name)
+      fail(name)
     }
   }
 }
@@ -3629,7 +3629,7 @@ define Test {
   run () {
     Formatted name <- typename<Float>()
     if (name.formatted() != "Float") {
-      ~ fail(name)
+      fail(name)
     }
   }
 }
@@ -3640,7 +3640,7 @@ define Test {
   run () {
     Formatted name <- typename<Bool>()
     if (name.formatted() != "Bool") {
-      ~ fail(name)
+      fail(name)
     }
   }
 }
@@ -3651,7 +3651,7 @@ define Test {
   run () {
     Formatted name <- typename<Formatted>()
     if (name.formatted() != "Formatted") {
-      ~ fail(name)
+      fail(name)
     }
   }
 }
@@ -3662,7 +3662,7 @@ define Test {
   run () {
     Formatted name <- typename<LessThan<Int>>()
     if (name.formatted() != "LessThan<Int>") {
-      ~ fail(name)
+      fail(name)
     }
   }
 }
@@ -3673,7 +3673,7 @@ define Test {
   run () {
     Formatted name <- typename<Equals<Int>>()
     if (name.formatted() != "Equals<Int>") {
-      ~ fail(name)
+      fail(name)
     }
   }
 }
@@ -3684,7 +3684,7 @@ define Test {
   run () {
     Formatted name <- typename<any>()
     if (name.formatted() != "any") {
-      ~ fail(name)
+      fail(name)
     }
   }
 }
@@ -3695,7 +3695,7 @@ define Test {
   run () {
     Formatted name <- typename<all>()
     if (name.formatted() != "all") {
-      ~ fail(name)
+      fail(name)
     }
   }
 }
@@ -3706,7 +3706,7 @@ define Test {
   run () {
     Formatted name <- typename<[String&Int]>()
     if (name.formatted() != "[String&Int]") {
-      ~ fail(name)
+      fail(name)
     }
   }
 }
@@ -3717,7 +3717,7 @@ define Test {
   run () {
     Formatted name <- typename<[String|Int]>()
     if (name.formatted() != "[String|Int]") {
-      ~ fail(name)
+      fail(name)
     }
   }
 }
@@ -3735,7 +3735,7 @@ define Test {
   run () {
     Formatted name <- getTypename<String,LessThan<Int>>()
     if (name.formatted() != "Type<String,LessThan<Int>>") {
-      ~ fail(name)
+      fail(name)
     }
   }
 }
@@ -3750,14 +3750,14 @@ define Test {
       ReadIterator<Char> iter <- ReadIterator\$\$fromReadPosition<Char>(s)
     } in while (!iter.pastForwardEnd()) {
       if (iter.readCurrent() != s.readPosition(count)) {
-        ~ fail(iter.readCurrent())
+        fail(iter.readCurrent())
       }
     } update {
       count <- count+1
       iter <- iter.forward()
     }
     if (count != s.readSize()) {
-     ~ fail(count)
+     fail(count)
     }
   }
 }
@@ -3772,14 +3772,14 @@ define Test {
       ReadIterator<Char> iter <- ReadIterator\$\$fromReadPositionAt<Char>(s,count)
     } in while (!iter.pastReverseEnd()) {
       if (iter.readCurrent() != s.readPosition(count)) {
-        ~ fail(iter.readCurrent())
+        fail(iter.readCurrent())
       }
     } update {
       count <- count-1
       iter <- iter.reverse()
     }
     if (count != -1) {
-     ~ fail(count)
+     fail(count)
     }
   }
 }

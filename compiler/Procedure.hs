@@ -138,6 +138,7 @@ data Statement c =
   ExplicitReturn [c] (ParamSet (Expression c)) |
   LoopBreak [c] |
   LoopContinue [c] |
+  FailCall [c] (Expression c) |
   IgnoreValues [c] (Expression c) |
   Assignment [c] (ParamSet (Assignable c)) (Expression c) |
   NoValueExpression (VoidExpression c)

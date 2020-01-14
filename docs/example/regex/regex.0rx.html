@@ -146,7 +146,7 @@
 
 <b>define</b> <b><span style='color:#0057ae;'>MatchAny</span></b> {
   create () {
-    <b>return</b> <span style='color:#0057ae;'>MatchAny</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;</span>{ }
+    <b>return</b> <span style='color:#0057ae;'>MatchAny</span>{ }
   }
 
   matchesEmpty () {
@@ -154,21 +154,21 @@
   }
 
   newMatcher () {
-    <b>return</b> <span style='color:#0057ae;'>MatchAnyMatcher</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>$</span>create()
+    <b>return</b> <span style='color:#0057ae;'>MatchAnyMatcher</span><span style='color:#644a9b;'>$</span>create()
   }
 }
 
-<b>concrete</b> <b><span style='color:#0057ae;'>MatchAnyMatcher</span></b><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;</span> {
-  <b>refines</b> <span style='color:#0057ae;'>Matcher</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;</span>
+<b>concrete</b> <b><span style='color:#0057ae;'>MatchAnyMatcher</span></b> {
+  <b>refines</b> <span style='color:#0057ae;'>Matcher</span><span style='color:#c02040;'>&lt;</span><b>any</b><span style='color:#c02040;'>&gt;</span>
 
-  <span style='color:#644a9b;'>@type</span> create () <b><span style='color:#006e28;'>-&gt;</span></b> (<span style='color:#0057ae;'>MatchAnyMatcher</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;</span>)
+  <span style='color:#644a9b;'>@type</span> create () <b><span style='color:#006e28;'>-&gt;</span></b> (<span style='color:#0057ae;'>MatchAnyMatcher</span>)
 }
 
 <b>define</b> <b><span style='color:#0057ae;'>MatchAnyMatcher</span></b> {
   <span style='color:#644a9b;'>@value</span> <span style='color:#0057ae;'>MatchState</span> state
 
   create () {
-    <b>return</b> <span style='color:#0057ae;'>MatchAnyMatcher</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;</span>{ <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchContinue() }
+    <b>return</b> <span style='color:#0057ae;'>MatchAnyMatcher</span>{ <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchContinue() }
   }
 
   matchSatisfied () {
@@ -185,7 +185,7 @@
 
 <b>define</b> <b><span style='color:#0057ae;'>MatchEmpty</span></b> {
   create () {
-    <b>return</b> <span style='color:#0057ae;'>MatchEmpty</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;</span>{ }
+    <b>return</b> <span style='color:#0057ae;'>MatchEmpty</span>{ }
   }
 
   matchesEmpty () {
@@ -193,21 +193,21 @@
   }
 
   newMatcher () {
-    <b>return</b> <span style='color:#0057ae;'>MatchEmptyMatcher</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>$</span>create()
+    <b>return</b> <span style='color:#0057ae;'>MatchEmptyMatcher</span><span style='color:#644a9b;'>$</span>create()
   }
 }
 
-<b>concrete</b> <b><span style='color:#0057ae;'>MatchEmptyMatcher</span></b><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;</span> {
-  <b>refines</b> <span style='color:#0057ae;'>Matcher</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;</span>
+<b>concrete</b> <b><span style='color:#0057ae;'>MatchEmptyMatcher</span></b> {
+  <b>refines</b> <span style='color:#0057ae;'>Matcher</span><span style='color:#c02040;'>&lt;</span><b>any</b><span style='color:#c02040;'>&gt;</span>
 
-  <span style='color:#644a9b;'>@type</span> create () <b><span style='color:#006e28;'>-&gt;</span></b> (<span style='color:#0057ae;'>MatchEmptyMatcher</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;</span>)
+  <span style='color:#644a9b;'>@type</span> create () <b><span style='color:#006e28;'>-&gt;</span></b> (<span style='color:#0057ae;'>MatchEmptyMatcher</span>)
 }
 
 <b>define</b> <b><span style='color:#0057ae;'>MatchEmptyMatcher</span></b> {
   <span style='color:#644a9b;'>@value</span> <i><span style='color:#0057ae;'>Bool</span></i> failed
 
   create () {
-    <b>return</b> <span style='color:#0057ae;'>MatchEmptyMatcher</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;</span>{ <b>false</b> }
+    <b>return</b> <span style='color:#0057ae;'>MatchEmptyMatcher</span>{ <b>false</b> }
   }
 
   matchSatisfied () {

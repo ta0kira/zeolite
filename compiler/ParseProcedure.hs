@@ -102,6 +102,7 @@ instance ParseFromSource (Statement SourcePos) where
   sourceParser = parseReturn <|>
                  parseBreak <|>
                  parseContinue <|>
+                 parseFailCall <|>
                  parseVoid <|>
                  parseAssign <|>
                  parseIgnore where
@@ -119,6 +120,11 @@ instance ParseFromSource (Statement SourcePos) where
       c <- getPosition
       try kwContinue
       return $ LoopContinue [c]
+    parseFailCall = do
+      c <- getPosition
+      try kwFail
+      e <- between (sepAfter $ string "(") (sepAfter $ string ")") sourceParser
+      return $ FailCall [c] e
     multiDest = do
       as <- between (sepAfter $ string "{")
                     (sepAfter $ string "}")
@@ -299,8 +305,7 @@ builtinFunction = foldr (<|>) (fail "empty") $ map try [
     kwReduce >> return BuiltinReduce,
     kwRequire >> return BuiltinRequire,
     kwStrong >> return BuiltinStrong,
-    kwTypename >> return BuiltinTypename,
-    kwFail >> return BuiltinFail
+    kwTypename >> return BuiltinTypename
   ]
 
 instance ParseFromSource (ExpressionStart SourcePos) where

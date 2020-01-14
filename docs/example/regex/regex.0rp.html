@@ -77,16 +77,16 @@
   <span style='color:#644a9b;'>@type</span> create (<i><span style='color:#0057ae;'>#c</span></i>,<i><span style='color:#0057ae;'>#c</span></i>) <b><span style='color:#006e28;'>-&gt;</span></b> (<span style='color:#0057ae;'>MatchRange</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;</span>)
 }
 
-<b>concrete</b> <b><span style='color:#0057ae;'>MatchAny</span></b><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c04040;'>|</span><span style='color:#c02040;'>&gt;</span> {
-  <b>refines</b> <span style='color:#0057ae;'>MatcherTemplate</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;</span>
+<b>concrete</b> <b><span style='color:#0057ae;'>MatchAny</span></b> {
+  <b>refines</b> <span style='color:#0057ae;'>MatcherTemplate</span><span style='color:#c02040;'>&lt;</span><b>any</b><span style='color:#c02040;'>&gt;</span>
 
-  <span style='color:#644a9b;'>@type</span> create () <b><span style='color:#006e28;'>-&gt;</span></b> (<span style='color:#0057ae;'>MatchAny</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;</span>)
+  <span style='color:#644a9b;'>@type</span> create () <b><span style='color:#006e28;'>-&gt;</span></b> (<span style='color:#0057ae;'>MatchAny</span>)
 }
 
-<b>concrete</b> <b><span style='color:#0057ae;'>MatchEmpty</span></b><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c04040;'>|</span><span style='color:#c02040;'>&gt;</span> {
-  <b>refines</b> <span style='color:#0057ae;'>MatcherTemplate</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;</span>
+<b>concrete</b> <b><span style='color:#0057ae;'>MatchEmpty</span></b> {
+  <b>refines</b> <span style='color:#0057ae;'>MatcherTemplate</span><span style='color:#c02040;'>&lt;</span><b>any</b><span style='color:#c02040;'>&gt;</span>
 
-  <span style='color:#644a9b;'>@type</span> create () <b><span style='color:#006e28;'>-&gt;</span></b> (<span style='color:#0057ae;'>MatchEmpty</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;</span>)
+  <span style='color:#644a9b;'>@type</span> create () <b><span style='color:#006e28;'>-&gt;</span></b> (<span style='color:#0057ae;'>MatchEmpty</span>)
 }
 
 <b>concrete</b> <b><span style='color:#0057ae;'>MatchRepeat</span></b><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;</span> {
