@@ -44,6 +44,13 @@ define CharRegex {
       } elif (c == '+') {
         // TODO: Needs error handling.
         return { p2.forward(), MatchRepeat<Char>$createOnePlus(require(matcher)) }
+      } elif (c == '{') {
+        { p2, Int min, Int max } <- parseRange(p2.forward())
+        if (p2.pastForwardEnd() || p2.readCurrent() != '}') {
+          // TODO: Needs error handling.
+          return { p2, empty }
+        }
+        return { p2.forward(), MatchRepeat<Char>$createRange(min,max,require(matcher)) }
       } elif (present(matcher)) {
         return _
       } elif (c == '[') {
@@ -63,6 +70,32 @@ define CharRegex {
       } else {
         { p2, matcher } <- parseSingleChar(p2)
       }
+    }
+  }
+
+  @type parseRange (ReadIterator<Char>) -> (ReadIterator<Char>,Int,Int)
+  parseRange (p) (p2,min,max) {
+    max <- 0
+    { p2, min } <- parseCount(p)
+    if (p2.pastForwardEnd() || p2.readCurrent() != ',') {
+      return _
+    }
+    p2 <- p2.forward()
+    { p2, max } <- parseCount(p2)
+  }
+
+  @type parseCount (ReadIterator<Char>) -> (ReadIterator<Char>,Int)
+  parseCount (p) (p2,count) {
+    // TODO: Needs error handling.
+    count <- 0
+    p2 <- p
+    while (!p2.pastForwardEnd()) {
+      Char c <- p2.readCurrent()
+      if (c >= '0' && c <= '9') {
+        count <- 10*count + (c - '0')
+      }
+    } update {
+      p2 <- p2.forward()
     }
   }
 
