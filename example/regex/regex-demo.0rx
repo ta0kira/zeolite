@@ -24,6 +24,18 @@ define RegexDemo {
     ~ testMatch("(ab)*|ac","ac",true)
     ~ testMatch("(ab)*|ac","acac",false)
     ~ testMatch("(ab)*|ac","abac",false)
+    ~ testMatch("a{2}","a",false)
+    ~ testMatch("a{2}","aa",true)
+    ~ testMatch("a{2}","aaa",false)
+    ~ testMatch("a{2,3}","a",false)
+    ~ testMatch("a{2,3}","aa",true)
+    ~ testMatch("a{2,3}","aaa",true)
+    ~ testMatch("a{2,3}","aaaa",false)
+    ~ testMatch("[a-z?]","q",true)
+    ~ testMatch("[a-z?]","-",false)
+    ~ testMatch("[a-z?]","?",true)
+    ~ testMatch("[a-z?]*","abcde?",true)
+    ~ testMatch("[a-z?]*","ab-cde",false)
   }
 
   @type testMatch (String,String,Bool) -> ()

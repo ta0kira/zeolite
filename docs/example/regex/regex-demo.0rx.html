@@ -18,7 +18,9 @@
     <span style='color:#006e28;'>~</span> <span style='color:#0057ae;'>RegexTest</span><span style='color:#644a9b;'>$</span>runTests()
 
     <span style='color:#006e28;'>~</span> testMatch(<span style='color:#bf0303;'>&quot;&quot;</span>,<span style='color:#bf0303;'>&quot;&quot;</span>,<b>true</b>)
+    <span style='color:#006e28;'>~</span> testMatch(<span style='color:#bf0303;'>&quot;&quot;</span>,<span style='color:#bf0303;'>&quot;a&quot;</span>,<b>false</b>)
     <span style='color:#006e28;'>~</span> testMatch(<span style='color:#bf0303;'>&quot;.&quot;</span>,<span style='color:#bf0303;'>&quot;a&quot;</span>,<b>true</b>)
+    <span style='color:#006e28;'>~</span> testMatch(<span style='color:#bf0303;'>&quot;.&quot;</span>,<span style='color:#bf0303;'>&quot;aa&quot;</span>,<b>false</b>)
     <span style='color:#006e28;'>~</span> testMatch(<span style='color:#bf0303;'>&quot;a&quot;</span>,<span style='color:#bf0303;'>&quot;.&quot;</span>,<b>false</b>)
     <span style='color:#006e28;'>~</span> testMatch(<span style='color:#bf0303;'>&quot;.+&quot;</span>,<span style='color:#bf0303;'>&quot;&quot;</span>,<b>false</b>)
     <span style='color:#006e28;'>~</span> testMatch(<span style='color:#bf0303;'>&quot;.+&quot;</span>,<span style='color:#bf0303;'>&quot;ab&quot;</span>,<b>true</b>)
@@ -33,6 +35,18 @@
     <span style='color:#006e28;'>~</span> testMatch(<span style='color:#bf0303;'>&quot;(ab)*|ac&quot;</span>,<span style='color:#bf0303;'>&quot;ac&quot;</span>,<b>true</b>)
     <span style='color:#006e28;'>~</span> testMatch(<span style='color:#bf0303;'>&quot;(ab)*|ac&quot;</span>,<span style='color:#bf0303;'>&quot;acac&quot;</span>,<b>false</b>)
     <span style='color:#006e28;'>~</span> testMatch(<span style='color:#bf0303;'>&quot;(ab)*|ac&quot;</span>,<span style='color:#bf0303;'>&quot;abac&quot;</span>,<b>false</b>)
+    <span style='color:#006e28;'>~</span> testMatch(<span style='color:#bf0303;'>&quot;a{2}&quot;</span>,<span style='color:#bf0303;'>&quot;a&quot;</span>,<b>false</b>)
+    <span style='color:#006e28;'>~</span> testMatch(<span style='color:#bf0303;'>&quot;a{2}&quot;</span>,<span style='color:#bf0303;'>&quot;aa&quot;</span>,<b>true</b>)
+    <span style='color:#006e28;'>~</span> testMatch(<span style='color:#bf0303;'>&quot;a{2}&quot;</span>,<span style='color:#bf0303;'>&quot;aaa&quot;</span>,<b>false</b>)
+    <span style='color:#006e28;'>~</span> testMatch(<span style='color:#bf0303;'>&quot;a{2,3}&quot;</span>,<span style='color:#bf0303;'>&quot;a&quot;</span>,<b>false</b>)
+    <span style='color:#006e28;'>~</span> testMatch(<span style='color:#bf0303;'>&quot;a{2,3}&quot;</span>,<span style='color:#bf0303;'>&quot;aa&quot;</span>,<b>true</b>)
+    <span style='color:#006e28;'>~</span> testMatch(<span style='color:#bf0303;'>&quot;a{2,3}&quot;</span>,<span style='color:#bf0303;'>&quot;aaa&quot;</span>,<b>true</b>)
+    <span style='color:#006e28;'>~</span> testMatch(<span style='color:#bf0303;'>&quot;a{2,3}&quot;</span>,<span style='color:#bf0303;'>&quot;aaaa&quot;</span>,<b>false</b>)
+    <span style='color:#006e28;'>~</span> testMatch(<span style='color:#bf0303;'>&quot;[a-z?]&quot;</span>,<span style='color:#bf0303;'>&quot;q&quot;</span>,<b>true</b>)
+    <span style='color:#006e28;'>~</span> testMatch(<span style='color:#bf0303;'>&quot;[a-z?]&quot;</span>,<span style='color:#bf0303;'>&quot;-&quot;</span>,<b>false</b>)
+    <span style='color:#006e28;'>~</span> testMatch(<span style='color:#bf0303;'>&quot;[a-z?]&quot;</span>,<span style='color:#bf0303;'>&quot;?&quot;</span>,<b>true</b>)
+    <span style='color:#006e28;'>~</span> testMatch(<span style='color:#bf0303;'>&quot;[a-z?]*&quot;</span>,<span style='color:#bf0303;'>&quot;abcde?&quot;</span>,<b>true</b>)
+    <span style='color:#006e28;'>~</span> testMatch(<span style='color:#bf0303;'>&quot;[a-z?]*&quot;</span>,<span style='color:#bf0303;'>&quot;ab-cde&quot;</span>,<b>false</b>)
   }
 
   <span style='color:#644a9b;'>@type</span> testMatch (<i><span style='color:#0057ae;'>String</span></i>,<i><span style='color:#0057ae;'>String</span></i>,<i><span style='color:#0057ae;'>Bool</span></i>) <b><span style='color:#006e28;'>-&gt;</span></b> ()
