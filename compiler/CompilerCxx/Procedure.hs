@@ -224,7 +224,7 @@ compileStatement (LoopContinue c) = do
 compileStatement (IgnoreValues c e) = do
   (_,e') <- compileExpression e
   csWrite [setTraceContext c]
-  csWrite [useAsWhatever e' ++ ";"]
+  csWrite ["(void) (" ++ useAsWhatever e' ++ ");"]
 compileStatement (Assignment c as e) = do
   (ts,e') <- compileExpression e
   r <- csResolver
