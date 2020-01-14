@@ -291,9 +291,9 @@
 
   <span style='color:#644a9b;'>@type</span> testMatchRepeatNested () <b><span style='color:#006e28;'>-&gt;</span></b> ()
   testMatchRepeatNested () {
-    <span style='color:#898887;'>// Pattern: &quot;(x*)*&quot;</span>
+    <span style='color:#898887;'>// Pattern: &quot;(x*){2,}&quot;</span>
     <span style='color:#0057ae;'>MatcherTemplate</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;</span> template <b><span style='color:#006e28;'>&lt;-</span></b>
-        <span style='color:#0057ae;'>MatchRepeat</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>$</span>createZeroPlus(
+        <span style='color:#0057ae;'>MatchRepeat</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>$</span>createRange(<span style='color:#b08000;'>2</span>,<span style='color:#b08000;'>0</span>,
             <span style='color:#0057ae;'>MatchRepeat</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>$</span>createZeroPlus(<span style='color:#0057ae;'>MatchSingle</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>$</span>create(<span style='color:#924c9d;'>'x'</span>)))
     <span style='color:#0057ae;'>Matcher</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;</span> matcher <b><span style='color:#006e28;'>&lt;-</span></b> template.newMatcher()
 

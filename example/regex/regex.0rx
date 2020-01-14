@@ -259,12 +259,13 @@ define MatchRepeatMatcher {
       return false
     }
     if (MatchState$equals(lastState,MatchState$matchContinue()) &&
-        repetitionCount+1 >= minCount && matcher.matchSatisfied()) {
+        (repetitionCount+1 >= minCount || template.matchesEmpty()) &&
+        matcher.matchSatisfied()) {
       // The rest of the current repetition can be ignored.
       return true
     }
     if (MatchState$equals(lastState,MatchState$matchComplete()) &&
-        repetitionCount >= minCount) {
+        (repetitionCount >= minCount || template.matchesEmpty())) {
       return true
     }
     return false

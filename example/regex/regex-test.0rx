@@ -280,9 +280,9 @@ define RegexTest {
 
   @type testMatchRepeatNested () -> ()
   testMatchRepeatNested () {
-    // Pattern: "(x*)*"
+    // Pattern: "(x*){2,}"
     MatcherTemplate<Char> template <-
-        MatchRepeat<Char>$createZeroPlus(
+        MatchRepeat<Char>$createRange(2,0,
             MatchRepeat<Char>$createZeroPlus(MatchSingle<Char>$create('x')))
     Matcher<Char> matcher <- template.newMatcher()
 

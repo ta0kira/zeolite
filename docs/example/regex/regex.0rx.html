@@ -270,12 +270,13 @@
       <b>return</b> <b>false</b>
     }
     <b>if</b> (<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals(lastState,<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchContinue()) &amp;&amp;
-        repetitionCount+<span style='color:#b08000;'>1</span> &gt;= minCount &amp;&amp; matcher.matchSatisfied()) {
+        (repetitionCount+<span style='color:#b08000;'>1</span> &gt;= minCount || template.matchesEmpty()) &amp;&amp;
+        matcher.matchSatisfied()) {
       <span style='color:#898887;'>// The rest of the current repetition can be ignored.</span>
       <b>return</b> <b>true</b>
     }
     <b>if</b> (<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals(lastState,<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchComplete()) &amp;&amp;
-        repetitionCount &gt;= minCount) {
+        (repetitionCount &gt;= minCount || template.matchesEmpty())) {
       <b>return</b> <b>true</b>
     }
     <b>return</b> <b>false</b>
