@@ -75,6 +75,8 @@ class CompileError a where
   isCompileError :: a -> Bool
   reviseError :: a -> String -> a
   reviseError e _ = e
+  compileWarning :: a -> String -> a
+  compileWarning w _ = w
 
 class CompileErrorM m where
   compileErrorM :: String -> m a
@@ -83,6 +85,8 @@ class CompileErrorM m where
   collectOneOrErrorM :: Foldable f => f (m a) -> m a
   reviseErrorM :: m a -> String -> m a
   reviseErrorM e _ = e
+  compileWarningM :: m a -> String -> m a
+  compileWarningM w _ = w
 
 instance CompileErrorM m => CompileError (m a) where
   compileError = compileErrorM

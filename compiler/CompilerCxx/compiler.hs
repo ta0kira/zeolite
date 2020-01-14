@@ -97,9 +97,13 @@ main = do
       let interfaces = filter (not . isValueConcrete) cs
       cxx2 <- collectAllOrErrorM $ map compileInterfaceDefinition interfaces
       return $ hxx ++ cxx ++ cxx2
-    format c
-      | isCompileError c = show $ getCompileError c
-      | otherwise = ""
+    format c = showWarnings ++ showErrors where
+        showWarnings
+          | null $ getCompileWarnings c = ""
+          | otherwise = "Compiler warnings:\n" ++ (intercalate "\n" $ getCompileWarnings c)
+        showErrors
+          | isCompileError c = "Compiler errors:\n" ++ (show $ getCompileError c)
+          | otherwise = ""
     writeResults c
       | isCompileError c = return ()
       | otherwise = mapM_ (\(CxxOutput f os) -> writeSingleFile f $ concat $ map (++ "\n") os) $ getCompileSuccess c
