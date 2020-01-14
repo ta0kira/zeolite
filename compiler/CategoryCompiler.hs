@@ -70,7 +70,8 @@ data ReturnValidation c =
     vnTypes :: ParamSet (PassedValue c),
     vnReturns :: Map.Map VariableName (PassedValue c)
   } |
-  NoValidation
+  NoValidation |
+  UnreachableReturn
 
 instance (Show c, MergeableM m, CompileErrorM m, Monad m) =>
   CompilerContext c m [String] (ProcedureContext c) where
@@ -325,7 +326,7 @@ instance (Show c, MergeableM m, CompileErrorM m, Monad m) =>
       pcParamScopes = pcParamScopes ctx,
       pcFunctions = pcFunctions ctx,
       pcVariables = pcVariables ctx,
-      pcReturns = foldr update NoValidation (map pcReturns cs),
+      pcReturns = foldr update UnreachableReturn (map pcReturns cs),
       pcPrimNamed = pcPrimNamed ctx,
       pcRequiredTypes = pcRequiredTypes ctx,
       pcOutput = pcOutput ctx,
@@ -336,7 +337,10 @@ instance (Show c, MergeableM m, CompileErrorM m, Monad m) =>
       update r@(ValidatePositions _) _ = r
       update NoValidation r = r
       update r NoValidation = r
+      update UnreachableReturn r = r
+      update r UnreachableReturn = r
       update (ValidateNames ts ra1) (ValidateNames _ ra2) = ValidateNames ts $ Map.union ra1 ra2
+      update _ _ = UnreachableReturn
   ccRegisterReturn ctx c vs = do
     check (pcReturns ctx)
     return $ ProcedureContext {
@@ -352,7 +356,7 @@ instance (Show c, MergeableM m, CompileErrorM m, Monad m) =>
         pcParamScopes = pcParamScopes ctx,
         pcFunctions = pcFunctions ctx,
         pcVariables = pcVariables ctx,
-        pcReturns = NoValidation,
+        pcReturns = UnreachableReturn,
         pcPrimNamed = pcPrimNamed ctx,
         pcRequiredTypes = pcRequiredTypes ctx,
         pcOutput = pcOutput ctx,
@@ -381,6 +385,9 @@ instance (Show c, MergeableM m, CompileErrorM m, Monad m) =>
                                                formatFullContext c
       check _ = return ()
   ccPrimNamedReturns = return . pcPrimNamed
+  ccIsUnreachable ctx = return $ match (pcReturns ctx) where
+    match UnreachableReturn = True
+    match _                 = False
   ccSetNoReturn ctx =
     return $ ProcedureContext {
         pcScope = pcScope ctx,
@@ -395,7 +402,7 @@ instance (Show c, MergeableM m, CompileErrorM m, Monad m) =>
         pcParamScopes = pcParamScopes ctx,
         pcFunctions = pcFunctions ctx,
         pcVariables = pcVariables ctx,
-        pcReturns = NoValidation,
+        pcReturns = UnreachableReturn,
         pcPrimNamed = pcPrimNamed ctx,
         pcRequiredTypes = pcRequiredTypes ctx,
         pcOutput = pcOutput ctx,

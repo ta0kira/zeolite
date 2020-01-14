@@ -196,6 +196,46 @@ define Test {
 }
 END
 
+expect_runs 'warning statement after fail' 'line 5' <<END
+define Test {
+  @category failedReturn () -> (Int)
+  failedReturn () {
+    fail("Failed")
+    return 1
+  }
+
+  run () {}
+}
+END
+
+expect_runs 'warning statement after return' 'line 5' <<END
+define Test {
+  @category failedReturn () -> (Int)
+  failedReturn () {
+    return 0
+    return 1
+  }
+
+  run () {}
+}
+END
+
+expect_runs 'warning statement after conditional return' 'line 9' <<END
+define Test {
+  @category failedReturn () -> (Int)
+  failedReturn () {
+    if (true) {
+      return 1
+    } else {
+      return 2
+    }
+    return 3
+  }
+
+  run () {}
+}
+END
+
 expect_error 'wrong type for fail' 'fail' 'Formatted' 'line 13' <<END
 concrete Value {
   @type create () -> (Value)

@@ -64,6 +64,7 @@ getCompileSuccess = csData
 getCompileWarnings (CompileFail w _)    = w
 getCompileWarnings (CompileSuccess w _) = w
 
+
 instance Functor CompileInfo where
   fmap f (CompileFail w e)    = (CompileFail w e) -- Not the same a.
   fmap f (CompileSuccess w d) = CompileSuccess w (f d)
@@ -86,26 +87,25 @@ instance CompileErrorM CompileInfo where
   compileErrorM = CompileFail [] . flip CompileMessage []
   isCompileErrorM = isCompileError
   collectAllOrErrorM = result . splitErrorsAndData where
-    result ([],xs) = return xs
-    result (es,_) = CompileFail [] $ CompileMessage "" es
+    result ([],xs,ws) = CompileSuccess ws xs
+    result (es,_,ws) = CompileFail ws $ CompileMessage "" es
   collectOneOrErrorM = result . splitErrorsAndData where
-    result (_,x:_) = return x
-    result ([],_)  = compileErrorM "No choices found"
-    result (es,_)  = CompileFail [] $ CompileMessage "" es
+    result (_,x:_,ws) = CompileSuccess ws x
+    result ([],_,ws)  = CompileFail ws $ CompileMessage "No choices found" []
+    result (es,_,ws)  = CompileFail ws $ CompileMessage "" es
   reviseErrorM x@(CompileSuccess _ _) _ = x
   reviseErrorM x@(CompileFail w (CompileMessage [] ms)) s = CompileFail w $ CompileMessage s ms
   reviseErrorM x@(CompileFail w e) s = CompileFail w $ CompileMessage s [e]
-  compileWarningM (CompileSuccess w d) w2 = CompileSuccess (w ++ [w2]) d
-  compileWarningM (CompileFail w e)    w2 = CompileFail (w ++ [w2]) e
+  compileWarningM w = CompileSuccess [w] ()
 
 instance MergeableM CompileInfo where
   mergeAnyM = result . splitErrorsAndData where
-    result (_,xs@(x:_)) = return $ mergeAny xs
-    result ([],_)       = compileErrorM "No choices found"
-    result (es,_)       = CompileFail [] $ CompileMessage "" es
+    result (_,xs@(x:_),ws) = CompileSuccess ws $ mergeAny xs
+    result ([],_,ws)       = CompileFail ws $ CompileMessage "No choices found" []
+    result (es,_,ws)       = CompileFail ws $ CompileMessage "" es
   mergeAllM = result . splitErrorsAndData where
-    result ([],xs) = return $ mergeAll xs
-    result (es,_)  = CompileFail [] $ CompileMessage "" es
+    result ([],xs,ws) = CompileSuccess ws $ mergeAll xs
+    result (es,_,ws)  = CompileFail ws $ CompileMessage "" es
   (CompileSuccess w1 x) `mergeNestedM` (CompileSuccess w2 y) = CompileSuccess (w1 ++ w2) $ x `mergeNested` y
   (CompileFail w1 e)    `mergeNestedM` (CompileSuccess w2 _) = CompileFail (w1 ++ w2) e
   (CompileSuccess w1 _) `mergeNestedM` (CompileFail w2 e)    = CompileFail (w1 ++ w2) e
@@ -118,7 +118,7 @@ nestMessages (CompileMessage [] ms1) (CompileMessage m2 ms2) =
 nestMessages (CompileMessage m1 ms1) ma@(CompileMessage _ _) =
   CompileMessage m1 (ms1 ++ [ma])
 
-splitErrorsAndData :: Foldable f => f (CompileInfo a) -> ([CompileMessage],[a])
-splitErrorsAndData = foldr partition ([],[]) where
-  partition (CompileFail _ e)    (es,ds) = (e:es,ds)
-  partition (CompileSuccess _ d) (es,ds) = (es,d:ds)
+splitErrorsAndData :: Foldable f => f (CompileInfo a) -> ([CompileMessage],[a],[String])
+splitErrorsAndData = foldr partition ([],[],[]) where
+  partition (CompileFail w e)    (es,ds,ws) = (e:es,ds,w++ws)
+  partition (CompileSuccess w d) (es,ds,ws) = (es,d:ds,w++ws)

@@ -163,8 +163,9 @@ instance ParseFromSource (Statement SourcePos) where
       statementEnd
       return $ EmptyReturn [c]
     parseVoid = do
+      c <- getPosition
       e <- sourceParser
-      return $ NoValueExpression e
+      return $ NoValueExpression [c] e
 
 instance ParseFromSource (Assignable SourcePos) where
   sourceParser = existing <|> create where

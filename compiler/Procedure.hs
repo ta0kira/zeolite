@@ -38,6 +38,7 @@ module Procedure (
   VoidExpression(..),
   WhileLoop(..),
   getExpressionContext,
+  getStatementContext,
   isDiscardedInput,
   isUnnamedReturns,
 ) where
@@ -141,8 +142,18 @@ data Statement c =
   FailCall [c] (Expression c) |
   IgnoreValues [c] (Expression c) |
   Assignment [c] (ParamSet (Assignable c)) (Expression c) |
-  NoValueExpression (VoidExpression c)
+  NoValueExpression [c] (VoidExpression c)
   deriving (Show)
+
+getStatementContext :: Statement c -> [c]
+getStatementContext (EmptyReturn c)         = c
+getStatementContext (ExplicitReturn c _)    = c
+getStatementContext (LoopBreak c)           = c
+getStatementContext (LoopContinue c)        = c
+getStatementContext (FailCall c _)          = c
+getStatementContext (IgnoreValues c _)      = c
+getStatementContext (Assignment c _ _)      = c
+getStatementContext (NoValueExpression c _) = c
 
 data Assignable c =
   CreateVariable [c] ValueType VariableName |

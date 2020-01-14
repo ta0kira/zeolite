@@ -173,8 +173,14 @@ compileProcedure :: (Show c, Monad m, CompileErrorM m, MergeableM m,
                      CompilerContext c m [String] a) =>
   a -> Procedure c -> CompilerState a m a
 compileProcedure ctx (Procedure c ss) = do
-  ctx' <- lift $ execStateT (sequence $ map compileStatement ss) ctx
-  return ctx'
+  ctx' <- lift $ execStateT (sequence $ map (\s -> warnUnreachable s >> compileStatement s) ss) ctx
+  return ctx' where
+    warnUnreachable s = do
+      unreachable <- csIsUnreachable
+      lift $ when unreachable $
+                  compileWarningM $ "Statement at " ++
+                                    formatFullContext (getStatementContext s) ++
+                                    " is unreachable"
 
 compileStatement :: (Show c, Monad m, CompileErrorM m, MergeableM m,
                      CompilerContext c m [String] a) =>
@@ -289,7 +295,7 @@ compileStatement (Assignment c as e) = do
       csWrite [scoped ++ variableName n ++ " = " ++
                writeStoredVariable t (UnwrappedSingle $ "r.At(" ++ show i ++ ")") ++ ";"]
     assignMulti _ = return ()
-compileStatement (NoValueExpression v) = compileVoidExpression v
+compileStatement (NoValueExpression _ v) = compileVoidExpression v
 
 compileLazyInit :: (Show c, Monad m, CompileErrorM m, MergeableM m,
                    CompilerContext c m [String] a) =>
@@ -401,8 +407,8 @@ compileScopedBlock s = do
       csAddVariable c n (VariableValue c LocalScope t True)
     -- Merge chained scoped sections into a single section.
     rewriteScoped w@(ScopedBlock c (Procedure c2 ss1)
-                                 (NoValueExpression (WithScope
-                                 (ScopedBlock _ (Procedure _ ss2) s)))) =
+                                 (NoValueExpression _ (WithScope
+                                  (ScopedBlock _ (Procedure _ ss2) s)))) =
       rewriteScoped $ ScopedBlock c (Procedure c2 $ ss1 ++ ss2) s
     -- Gather to-be-created variables.
     rewriteScoped (ScopedBlock c p (Assignment c2 vs e)) =

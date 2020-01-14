@@ -100,7 +100,7 @@ main = do
     format c = showWarnings ++ showErrors where
         showWarnings
           | null $ getCompileWarnings c = ""
-          | otherwise = "Compiler warnings:\n" ++ (intercalate "\n" $ getCompileWarnings c)
+          | otherwise = "Compiler warnings:\n" ++ (intercalate "\n" $ getCompileWarnings c) ++ "\n"
         showErrors
           | isCompileError c = "Compiler errors:\n" ++ (show $ getCompileError c)
           | otherwise = ""
