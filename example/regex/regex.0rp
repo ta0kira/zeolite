@@ -66,16 +66,16 @@ concrete MatchRange<#c> {
   @type create (#c,#c) -> (MatchRange<#c>)
 }
 
-concrete MatchAny<#c|> {
-  refines MatcherTemplate<#c>
+concrete MatchAny {
+  refines MatcherTemplate<any>
 
-  @type create () -> (MatchAny<#c>)
+  @type create () -> (MatchAny)
 }
 
-concrete MatchEmpty<#c|> {
-  refines MatcherTemplate<#c>
+concrete MatchEmpty {
+  refines MatcherTemplate<any>
 
-  @type create () -> (MatchEmpty<#c>)
+  @type create () -> (MatchEmpty)
 }
 
 concrete MatchRepeat<#c> {

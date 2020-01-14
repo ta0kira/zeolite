@@ -135,7 +135,7 @@ define MatchRangeMatcher {
 
 define MatchAny {
   create () {
-    return MatchAny<#c>{ }
+    return MatchAny{ }
   }
 
   matchesEmpty () {
@@ -143,21 +143,21 @@ define MatchAny {
   }
 
   newMatcher () {
-    return MatchAnyMatcher<#c>$create()
+    return MatchAnyMatcher$create()
   }
 }
 
-concrete MatchAnyMatcher<#c> {
-  refines Matcher<#c>
+concrete MatchAnyMatcher {
+  refines Matcher<any>
 
-  @type create () -> (MatchAnyMatcher<#c>)
+  @type create () -> (MatchAnyMatcher)
 }
 
 define MatchAnyMatcher {
   @value MatchState state
 
   create () {
-    return MatchAnyMatcher<#c>{ MatchState$matchContinue() }
+    return MatchAnyMatcher{ MatchState$matchContinue() }
   }
 
   matchSatisfied () {
@@ -174,7 +174,7 @@ define MatchAnyMatcher {
 
 define MatchEmpty {
   create () {
-    return MatchEmpty<#c>{ }
+    return MatchEmpty{ }
   }
 
   matchesEmpty () {
@@ -182,21 +182,21 @@ define MatchEmpty {
   }
 
   newMatcher () {
-    return MatchEmptyMatcher<#c>$create()
+    return MatchEmptyMatcher$create()
   }
 }
 
-concrete MatchEmptyMatcher<#c> {
-  refines Matcher<#c>
+concrete MatchEmptyMatcher {
+  refines Matcher<any>
 
-  @type create () -> (MatchEmptyMatcher<#c>)
+  @type create () -> (MatchEmptyMatcher)
 }
 
 define MatchEmptyMatcher {
   @value Bool failed
 
   create () {
-    return MatchEmptyMatcher<#c>{ false }
+    return MatchEmptyMatcher{ false }
   }
 
   matchSatisfied () {

@@ -18,7 +18,7 @@ define CharRegex {
         return { p2, LinkedNode<MatcherTemplate<Char>>$create(require(matcher),empty) }
       } else {
         // TODO: Disregards errors from parseNonSequence.
-        return { p2, LinkedNode<MatcherTemplate<Char>>$create(MatchEmpty<Char>$create(),empty) }
+        return { p2, LinkedNode<MatcherTemplate<Char>>$create(MatchEmpty$create(),empty) }
       }
     } if (!present(matcher)) {
       return { p2, empty }
@@ -72,7 +72,7 @@ define CharRegex {
     optional ReadSequence<MatcherTemplate<Char>> choices <- empty
     p2 <- p
     while (!p2.pastForwardEnd()) {
-      { p2, optional ReadSequence<MatcherTemplate<Char>> sequence } <- parseSequence(p)
+      { p2, optional ReadSequence<MatcherTemplate<Char>> sequence } <- parseSequence(p2)
       if (!present(sequence)) {
         break
       }
@@ -81,6 +81,7 @@ define CharRegex {
       if (p2.pastForwardEnd() || p2.readCurrent() != '|') {
         break
       }
+      p2 <- p2.forward()
     }
     matcher <- MatchChoices<Char>$create(choices)
   }
@@ -95,7 +96,7 @@ define CharRegex {
       matcher <- MatchSingle<Char>$create(p2.readCurrent())
       p2 <- p.forward()
     } elif (c == '.') {
-      matcher <- MatchAny<Char>$create()
+      matcher <- MatchAny$create()
     } else {
       matcher <- MatchSingle<Char>$create(c)
     }

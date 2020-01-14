@@ -144,7 +144,7 @@ define RegexTest {
   @type testMatchAny () -> ()
   testMatchAny () {
     // Pattern: "."
-    MatcherTemplate<Char> template <- MatchAny<Char>$create()
+    MatcherTemplate<Char> template <- MatchAny$create()
     Matcher<Char> matcher <- template.newMatcher()
 
     if (template.matchesEmpty()) {
@@ -182,7 +182,7 @@ define RegexTest {
   @type testMatchEmpty () -> ()
   testMatchEmpty () {
     // Pattern: ""
-    MatcherTemplate<Char> template <- MatchEmpty<Char>$create()
+    MatcherTemplate<Char> template <- MatchEmpty$create()
     Matcher<Char> matcher <- template.newMatcher()
 
     if (!template.matchesEmpty()) {
@@ -445,7 +445,7 @@ define RegexTest {
                 LinkedNode<MatcherTemplate<Char>>$create(
                     MatchRepeat<Char>$createRange(2,2,MatchSingle<Char>$create('a')),
                     LinkedNode<MatcherTemplate<Char>>$create(
-                        MatchEmpty<Char>$create(),empty))))
+                        MatchEmpty$create(),empty))))
     Matcher<Char> matcher <- template.newMatcher()
 
     if (!template.matchesEmpty()) {
