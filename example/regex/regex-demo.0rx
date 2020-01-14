@@ -5,5 +5,42 @@ concrete RegexDemo {
 define RegexDemo {
   run () {
     ~ RegexTest$runTests()
+
+    ~ testMatch("","",true)
+    ~ testMatch("","a",false)
+    ~ testMatch(".","a",true)
+    ~ testMatch(".","aa",false)
+    ~ testMatch("a",".",false)
+    ~ testMatch(".+","",false)
+    ~ testMatch(".+","ab",true)
+    ~ testMatch("(ab)*","",true)
+    ~ testMatch("(ab)*","abab",true)
+    ~ testMatch("(ab)*","a",false)
+    ~ testMatch("(ab)*ac","abac",true)
+    ~ testMatch("(ab)*ac","ac",true)
+    ~ testMatch("(ab)*ac","aca",false)
+    ~ testMatch("(ab)*ac","acab",false)
+    ~ testMatch("(ab)*|ac","abab",true)
+    ~ testMatch("(ab)*|ac","ac",true)
+    ~ testMatch("(ab)*|ac","acac",false)
+    ~ testMatch("(ab)*|ac","abac",false)
+  }
+
+  @type testMatch (String,String,Bool) -> ()
+  testMatch (pattern,data,expected) {
+    MatcherTemplate<Char> template <- require(CharRegex$parse(pattern))
+    LazyStream<Formatted> summary <-
+        LazyStream<Formatted>$new()
+            .append("regex: \"")
+            .append(pattern)
+            .append("\" data: \"")
+            .append(data)
+            .append("\" -> ")
+            .append(expected)
+    if (CharRegex$match(template,data) == expected) {
+      ~ summary.append("\n").writeTo(SimpleOutput$stderr())
+    } else {
+      ~ summary.writeTo(SimpleOutput$error())
+    }
   }
 }

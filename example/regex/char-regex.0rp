@@ -1,3 +1,4 @@
 concrete CharRegex {
   @type parse (String) -> (optional MatcherTemplate<Char>)
+  @type match (MatcherTemplate<Char>,String) -> (Bool)
 }

@@ -5,6 +5,22 @@ define CharRegex {
     { _, matcher } <- parseExpression(p)
   }
 
+  match (template,data) {
+    ReadIterator<Char> p <- ReadIterator$$fromReadPosition<Char>(data)
+    Matcher<Char> matcher <- template.newMatcher()
+    while (!p.pastForwardEnd()) {
+      MatchState state <- matcher.tryNextMatch(p.readCurrent())
+      if (MatchState$equals(state,MatchState$matchFail())) {
+        break
+      }
+      p <- p.forward()
+      if (MatchState$equals(state,MatchState$matchComplete())) {
+        break
+      }
+    }
+    return p.pastForwardEnd() && matcher.matchSatisfied()
+  }
+
   @type parseSequence (ReadIterator<Char>) ->
                       (ReadIterator<Char>,optional ReadSequence<MatcherTemplate<Char>>)
   parseSequence (p) {
@@ -116,7 +132,11 @@ define CharRegex {
       }
       p2 <- p2.forward()
     }
-    matcher <- MatchChoices<Char>$create(choices)
+    if (!present(choices)) {
+      matcher <- MatchEmpty$create()
+    } else {
+      matcher <- MatchChoices<Char>$create(choices)
+    }
   }
 
   @type parseSingleChar (ReadIterator<Char>) ->

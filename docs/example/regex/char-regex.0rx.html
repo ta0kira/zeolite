@@ -16,6 +16,22 @@
     { <b>_</b>, matcher } <b><span style='color:#006e28;'>&lt;-</span></b> parseExpression(p)
   }
 
+  match (template,data) {
+    <span style='color:#0057ae;'>ReadIterator</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;</span> p <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#0057ae;'>ReadIterator</span><span style='color:#644a9b;'>$$</span>fromReadPosition&lt;<i><span style='color:#0057ae;'>Char</span></i>&gt;(data)
+    <span style='color:#0057ae;'>Matcher</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;</span> matcher <b><span style='color:#006e28;'>&lt;-</span></b> template.newMatcher()
+    <b>while</b> (!p.pastForwardEnd()) {
+      <span style='color:#0057ae;'>MatchState</span> state <b><span style='color:#006e28;'>&lt;-</span></b> matcher.tryNextMatch(p.readCurrent())
+      <b>if</b> (<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals(state,<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchFail())) {
+        <b>break</b>
+      }
+      p <b><span style='color:#006e28;'>&lt;-</span></b> p.forward()
+      <b>if</b> (<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals(state,<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchComplete())) {
+        <b>break</b>
+      }
+    }
+    <b>return</b> p.pastForwardEnd() &amp;&amp; matcher.matchSatisfied()
+  }
+
   <span style='color:#644a9b;'>@type</span> parseSequence (<span style='color:#0057ae;'>ReadIterator</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;</span>) <b><span style='color:#006e28;'>-&gt;</span></b>
                       (<span style='color:#0057ae;'>ReadIterator</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;</span>,<b>optional</b> <span style='color:#0057ae;'>ReadSequence</span><span style='color:#c02040;'>&lt;</span><span style='color:#0057ae;'>MatcherTemplate</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;&gt;</span>)
   parseSequence (p) {
@@ -127,7 +143,11 @@
       }
       p2 <b><span style='color:#006e28;'>&lt;-</span></b> p2.forward()
     }
-    matcher <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#0057ae;'>MatchChoices</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>$</span>create(choices)
+    <b>if</b> (!<b>present</b>(choices)) {
+      matcher <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#0057ae;'>MatchEmpty</span><span style='color:#644a9b;'>$</span>create()
+    } <b>else</b> {
+      matcher <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#0057ae;'>MatchChoices</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>$</span>create(choices)
+    }
   }
 
   <span style='color:#644a9b;'>@type</span> parseSingleChar (<span style='color:#0057ae;'>ReadIterator</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;</span>) <b><span style='color:#006e28;'>-&gt;</span></b>
