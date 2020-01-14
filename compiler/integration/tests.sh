@@ -285,6 +285,23 @@ define Test {
 }
 END
 
+expect_runs '@category member inline assignment' <<END
+define Test {
+  @category Bool value <- true
+
+  @type call () -> (Bool)
+  call () {
+    return (value <- false)
+  }
+
+  run () {
+    if (call() || value) {
+      fail("Failed")
+    }
+  }
+}
+END
+
 expect_crashes '@category init cycle' 'Value1|Value2' 'line 13|line 21' <<END
 concrete Value1 {
   @type get () -> (Bool)

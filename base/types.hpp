@@ -85,9 +85,10 @@ class LazyInit {
     return value_;
   }
 
-  const T& operator = (const T& value) {
+  LazyInit& operator = (const T& value) {
     InitValue();
-    return (value_ = value);
+    value_ = value;
+    return *this;
   }
 
  private:
