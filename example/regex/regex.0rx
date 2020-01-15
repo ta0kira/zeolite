@@ -275,7 +275,16 @@ define MatchRepeatMatcher {
     if (atMax() || MatchState$equals(lastState,MatchState$matchFail())) {
       return MatchState$matchFail()
     }
-    state <- (lastState <- matcher.tryNextMatch(data))
+    Bool canSkip <- matcher.matchSatisfied()
+    state <- matcher.tryNextMatch(data)
+    if (MatchState$equals(state,MatchState$matchFail()) &&
+        MatchState$equals(lastState,MatchState$matchContinue()) && canSkip) {
+      // Handle the case where an optional end to the pattern can be skipped.
+      ~ incrementMatch()
+      ~ startRepeat()
+      state <- matcher.tryNextMatch(data)
+    }
+    lastState <- state
     if (MatchState$equals(state,MatchState$matchComplete())) {
       ~ incrementMatch()
       ~ startRepeat()

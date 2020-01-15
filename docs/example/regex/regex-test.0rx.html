@@ -24,6 +24,7 @@
     <span style='color:#006e28;'>~</span> testMatchRepeatMatch()
     <span style='color:#006e28;'>~</span> testMatchRepeatNested()
     <span style='color:#006e28;'>~</span> testMatchRepeatNonMatch()
+    <span style='color:#006e28;'>~</span> testMatchRepeatOptionalSuffix()
 
     <span style='color:#006e28;'>~</span> testMatchChoicesMatch()
     <span style='color:#006e28;'>~</span> testMatchChoicesNonMatch()
@@ -365,6 +366,52 @@
     state <b><span style='color:#006e28;'>&lt;-</span></b> matcher.tryNextMatch(<span style='color:#924c9d;'>'x'</span>)
     <b>if</b> (!<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals(state,<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchFail())) {
       <b>fail</b>(state)
+    }
+  }
+
+  <span style='color:#644a9b;'>@type</span> testMatchRepeatOptionalSuffix () <b><span style='color:#006e28;'>-&gt;</span></b> ()
+  testMatchRepeatOptionalSuffix () {
+    <span style='color:#898887;'>// Pattern: &quot;(ab*)*&quot;</span>
+    <span style='color:#0057ae;'>MatcherTemplate</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;</span> template <b><span style='color:#006e28;'>&lt;-</span></b>
+        <span style='color:#0057ae;'>MatchRepeat</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>$</span>createZeroPlus(
+            <span style='color:#0057ae;'>MatchBranches</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>$</span>create(
+                <span style='color:#0057ae;'>BranchSequence</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>$</span>create(
+                    <span style='color:#0057ae;'>LinkedNode</span><span style='color:#c02040;'>&lt;</span><span style='color:#0057ae;'>MatcherTemplate</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;&gt;</span><span style='color:#644a9b;'>$</span>create(<span style='color:#0057ae;'>MatchSingle</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>$</span>create(<span style='color:#924c9d;'>'a'</span>),
+                        <span style='color:#0057ae;'>LinkedNode</span><span style='color:#c02040;'>&lt;</span><span style='color:#0057ae;'>MatcherTemplate</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;&gt;</span><span style='color:#644a9b;'>$</span>create(
+                            <span style='color:#0057ae;'>MatchRepeat</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>$</span>createZeroPlus(<span style='color:#0057ae;'>MatchSingle</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>$</span>create(<span style='color:#924c9d;'>'b'</span>)),<b>empty</b>)))))
+    <span style='color:#0057ae;'>Matcher</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;</span> matcher <b><span style='color:#006e28;'>&lt;-</span></b> template.newMatcher()
+
+    <b>if</b> (!matcher.matchSatisfied()) {
+      <b>fail</b>(<span style='color:#bf0303;'>&quot;match not satisfied&quot;</span>)
+    }
+
+    <span style='color:#0057ae;'>MatchState</span> state <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchFail()
+
+    <span style='color:#898887;'>// First character.</span>
+    state <b><span style='color:#006e28;'>&lt;-</span></b> matcher.tryNextMatch(<span style='color:#924c9d;'>'a'</span>)
+    <b>if</b> (!<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals(state,<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchContinue())) {
+      <b>fail</b>(state)
+    }
+    <b>if</b> (!matcher.matchSatisfied()) {
+      <b>fail</b>(<span style='color:#bf0303;'>&quot;match not satisfied&quot;</span>)
+    }
+
+    <span style='color:#898887;'>// Second character.</span>
+    state <b><span style='color:#006e28;'>&lt;-</span></b> matcher.tryNextMatch(<span style='color:#924c9d;'>'b'</span>)
+    <b>if</b> (!<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals(state,<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchContinue())) {
+      <b>fail</b>(state)
+    }
+    <b>if</b> (!matcher.matchSatisfied()) {
+      <b>fail</b>(<span style='color:#bf0303;'>&quot;match not satisfied&quot;</span>)
+    }
+
+    <span style='color:#898887;'>// Third character.</span>
+    state <b><span style='color:#006e28;'>&lt;-</span></b> matcher.tryNextMatch(<span style='color:#924c9d;'>'a'</span>)
+    <b>if</b> (!<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals(state,<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchContinue())) {
+      <b>fail</b>(state)
+    }
+    <b>if</b> (!matcher.matchSatisfied()) {
+      <b>fail</b>(<span style='color:#bf0303;'>&quot;match not satisfied&quot;</span>)
     }
   }
 

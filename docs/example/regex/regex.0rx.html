@@ -286,7 +286,16 @@
     <b>if</b> (atMax() || <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals(lastState,<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchFail())) {
       <b>return</b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchFail()
     }
-    state <b><span style='color:#006e28;'>&lt;-</span></b> (lastState <b><span style='color:#006e28;'>&lt;-</span></b> matcher.tryNextMatch(data))
+    <i><span style='color:#0057ae;'>Bool</span></i> canSkip <b><span style='color:#006e28;'>&lt;-</span></b> matcher.matchSatisfied()
+    state <b><span style='color:#006e28;'>&lt;-</span></b> matcher.tryNextMatch(data)
+    <b>if</b> (<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals(state,<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchFail()) &amp;&amp;
+        <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals(lastState,<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchContinue()) &amp;&amp; canSkip) {
+      <span style='color:#898887;'>// Handle the case where an optional end to the pattern can be skipped.</span>
+      <span style='color:#006e28;'>~</span> incrementMatch()
+      <span style='color:#006e28;'>~</span> startRepeat()
+      state <b><span style='color:#006e28;'>&lt;-</span></b> matcher.tryNextMatch(data)
+    }
+    lastState <b><span style='color:#006e28;'>&lt;-</span></b> state
     <b>if</b> (<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals(state,<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchComplete())) {
       <span style='color:#006e28;'>~</span> incrementMatch()
       <span style='color:#006e28;'>~</span> startRepeat()

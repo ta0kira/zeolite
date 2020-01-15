@@ -13,6 +13,7 @@ define RegexTest {
     ~ testMatchRepeatMatch()
     ~ testMatchRepeatNested()
     ~ testMatchRepeatNonMatch()
+    ~ testMatchRepeatOptionalSuffix()
 
     ~ testMatchChoicesMatch()
     ~ testMatchChoicesNonMatch()
@@ -354,6 +355,52 @@ define RegexTest {
     state <- matcher.tryNextMatch('x')
     if (!MatchState$equals(state,MatchState$matchFail())) {
       fail(state)
+    }
+  }
+
+  @type testMatchRepeatOptionalSuffix () -> ()
+  testMatchRepeatOptionalSuffix () {
+    // Pattern: "(ab*)*"
+    MatcherTemplate<Char> template <-
+        MatchRepeat<Char>$createZeroPlus(
+            MatchBranches<Char>$create(
+                BranchSequence<Char>$create(
+                    LinkedNode<MatcherTemplate<Char>>$create(MatchSingle<Char>$create('a'),
+                        LinkedNode<MatcherTemplate<Char>>$create(
+                            MatchRepeat<Char>$createZeroPlus(MatchSingle<Char>$create('b')),empty)))))
+    Matcher<Char> matcher <- template.newMatcher()
+
+    if (!matcher.matchSatisfied()) {
+      fail("match not satisfied")
+    }
+
+    MatchState state <- MatchState$matchFail()
+
+    // First character.
+    state <- matcher.tryNextMatch('a')
+    if (!MatchState$equals(state,MatchState$matchContinue())) {
+      fail(state)
+    }
+    if (!matcher.matchSatisfied()) {
+      fail("match not satisfied")
+    }
+
+    // Second character.
+    state <- matcher.tryNextMatch('b')
+    if (!MatchState$equals(state,MatchState$matchContinue())) {
+      fail(state)
+    }
+    if (!matcher.matchSatisfied()) {
+      fail("match not satisfied")
+    }
+
+    // Third character.
+    state <- matcher.tryNextMatch('a')
+    if (!MatchState$equals(state,MatchState$matchContinue())) {
+      fail(state)
+    }
+    if (!matcher.matchSatisfied()) {
+      fail("match not satisfied")
     }
   }
 
