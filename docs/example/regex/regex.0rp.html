@@ -47,7 +47,8 @@
   <span style='color:#898887;'>// Returns true if the pattern is complete without additional data.</span>
   matchSatisfied () <b><span style='color:#006e28;'>-&gt;</span></b> (<i><span style='color:#0057ae;'>Bool</span></i>)
 
-  <span style='color:#898887;'>// NOTE: Calling this invalidates the MatchBrancher; do not call it again.</span>
+  <span style='color:#898887;'>// NOTE: Calling this invalidates the MatchBrancher. Subsequent calls should</span>
+  <span style='color:#898887;'>// be done against the returned branches.</span>
   <span style='color:#898887;'>// Returns:</span>
   <span style='color:#898887;'>// - state: The highest state of the branches checked.</span>
   <span style='color:#898887;'>// - branches: All branches with a status of matchContinue().</span>
@@ -107,6 +108,14 @@
   <b>refines</b> <span style='color:#0057ae;'>MatcherTemplate</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;</span>
 
   <span style='color:#644a9b;'>@type</span> create (<span style='color:#0057ae;'>MatchBrancherTemplate</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;</span>) <b><span style='color:#006e28;'>-&gt;</span></b> (<span style='color:#0057ae;'>MatcherTemplate</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;</span>)
+}
+
+<b>concrete</b> <b><span style='color:#0057ae;'>BranchRepeat</span></b><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;</span> {
+  <b>refines</b> <span style='color:#0057ae;'>MatchBrancherTemplate</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;</span>
+
+  <span style='color:#644a9b;'>@type</span> createZeroPlus (<span style='color:#0057ae;'>MatcherTemplate</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;</span>) <b><span style='color:#006e28;'>-&gt;</span></b> (<span style='color:#0057ae;'>BranchRepeat</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;</span>)
+  <span style='color:#644a9b;'>@type</span> createOnePlus (<span style='color:#0057ae;'>MatcherTemplate</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;</span>) <b><span style='color:#006e28;'>-&gt;</span></b> (<span style='color:#0057ae;'>BranchRepeat</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;</span>)
+  <span style='color:#644a9b;'>@type</span> createRange (<i><span style='color:#0057ae;'>Int</span></i>,<i><span style='color:#0057ae;'>Int</span></i>,<span style='color:#0057ae;'>MatcherTemplate</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;</span>) <b><span style='color:#006e28;'>-&gt;</span></b> (<span style='color:#0057ae;'>BranchRepeat</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;</span>)
 }
 
 <b>concrete</b> <b><span style='color:#0057ae;'>BranchSequence</span></b><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;</span> {

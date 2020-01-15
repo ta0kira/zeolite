@@ -19,6 +19,10 @@ define RegexTest {
     ~ testMatchChoicesNonMatch()
     ~ testMatchChoicesEmptyChoice()
 
+    ~ testBranchRepeatMatch()
+    ~ testBranchRepeatNested()
+    ~ testBranchRepeatNonMatch()
+
     ~ testBranchSequenceMatch()
     ~ testBranchSequenceNonMatch()
     ~ testBranchSequenceSkipEmptyFailed()
@@ -28,6 +32,10 @@ define RegexTest {
     ~ testMatchBranchesMatch()
     ~ testMatchBranchesNonMatch()
     ~ testMatchBranchesBranchedMatch()
+
+    ~ LazyStream<Formatted>$new()
+        .append("Tests passed.\n")
+        .writeTo(SimpleOutput$stderr())
   }
 
   @type testMatchSingleMatch () -> ()
@@ -411,7 +419,8 @@ define RegexTest {
         MatchChoices<Char>$create(
             LinkedNode<MatcherTemplate<Char>>$create(MatchRange<Char>$create('w','y'),
                 LinkedNode<MatcherTemplate<Char>>$create(
-                    MatchRepeat<Char>$createZeroPlus(MatchSingle<Char>$create('a')),empty)))
+                    MatchBranches<Char>$create(
+                        BranchRepeat<Char>$createZeroPlus(MatchSingle<Char>$create('a'))),empty)))
     Matcher<Char> matcher <- template.newMatcher()
 
     MatchState state <- MatchState$matchFail()
@@ -458,7 +467,8 @@ define RegexTest {
         MatchChoices<Char>$create(
             LinkedNode<MatcherTemplate<Char>>$create(MatchRange<Char>$create('w','y'),
                 LinkedNode<MatcherTemplate<Char>>$create(
-                    MatchRepeat<Char>$createZeroPlus(MatchSingle<Char>$create('a')),empty)))
+                    MatchBranches<Char>$create(
+                        BranchRepeat<Char>$createZeroPlus(MatchSingle<Char>$create('a'))),empty)))
     Matcher<Char> matcher <- template.newMatcher()
 
     if (!template.matchesEmpty()) {
@@ -490,7 +500,8 @@ define RegexTest {
         MatchChoices<Char>$create(
             LinkedNode<MatcherTemplate<Char>>$create(MatchRange<Char>$create('w','y'),
                 LinkedNode<MatcherTemplate<Char>>$create(
-                    MatchRepeat<Char>$createRange(2,2,MatchSingle<Char>$create('a')),
+                    MatchBranches<Char>$create(
+                        BranchRepeat<Char>$createRange(2,2,MatchSingle<Char>$create('a'))),
                     LinkedNode<MatcherTemplate<Char>>$create(
                         MatchEmpty$create(),empty))))
     Matcher<Char> matcher <- template.newMatcher()
@@ -511,6 +522,198 @@ define RegexTest {
     }
     if (matcher.matchSatisfied()) {
       fail("match satisfied")
+    }
+  }
+
+  @type testBranchRepeatMatch () -> ()
+  testBranchRepeatMatch () {
+    // Pattern: "[w-y]{2,3}"
+    MatchBrancherTemplate<Char> template <-
+        BranchRepeat<Char>$createRange(2,3,MatchRange<Char>$create('w','y'))
+    MatchBrancher<Char> brancher <- template.newBrancher()
+
+    if (template.matchesEmpty()) {
+      fail("matches empty")
+    }
+    if (brancher.matchSatisfied()) {
+      fail("match satisfied")
+    }
+
+    MatchState state <- MatchState$matchFail()
+    optional ReadSequence<MatchBrancher<Char>> branches <- empty
+
+    // First character.
+    { state, branches } <- brancher.tryBranches('x')
+    if (!MatchState$equals(state,MatchState$matchContinue())) {
+      fail(state)
+    }
+    if (!present(branches)) {
+      fail("branch missing")
+    }
+
+    brancher <- require(branches).value()
+    if (brancher.matchSatisfied()) {
+      fail("match satisfied")
+    }
+    branches <- require(branches).next()
+    if (present(branches)) {
+      fail("branch present")
+    }
+
+    // Second character.
+    { state, branches } <- brancher.tryBranches('y')
+    if (!MatchState$equals(state,MatchState$matchContinue())) {
+      fail(state)
+    }
+    if (!present(branches)) {
+      fail("branch missing")
+    }
+    if (!brancher.matchSatisfied()) {
+      fail("match not satisfied")
+    }
+
+    brancher <- require(branches).value()
+    branches <- require(branches).next()
+    if (present(branches)) {
+      fail("branch present")
+    }
+
+    // Third character.
+    { state, branches } <- brancher.tryBranches('x')
+    if (!MatchState$equals(state,MatchState$matchComplete())) {
+      fail(state)
+    }
+    if (present(branches)) {
+      fail("branch present")
+    }
+
+    // Reset to reuse the brancher.
+    brancher <- template.newBrancher()
+
+    // Fourth character.
+    { state, branches } <- brancher.tryBranches('w')
+    if (!MatchState$equals(state,MatchState$matchContinue())) {
+      fail(state)
+    }
+    if (!present(branches)) {
+      fail("branch missing")
+    }
+  }
+
+  @type testBranchRepeatNested () -> ()
+  testBranchRepeatNested () {
+    // Pattern: "(x*){2,}"
+    MatchBrancherTemplate<Char> template <-
+        BranchRepeat<Char>$createRange(2,0,
+            MatchBranches<Char>$create(
+                BranchRepeat<Char>$createZeroPlus(MatchSingle<Char>$create('x'))))
+    MatchBrancher<Char> brancher <- template.newBrancher()
+
+    if (!template.matchesEmpty()) {
+      fail("doesn't match empty")
+    }
+    if (!brancher.matchSatisfied()) {
+      fail("match not satisfied")
+    }
+
+    MatchState state <- MatchState$matchFail()
+    optional ReadSequence<MatchBrancher<Char>> branches <- empty
+
+    // First character.
+    { state, branches } <- brancher.tryBranches('x')
+    if (!MatchState$equals(state,MatchState$matchContinue())) {
+      fail(state)
+    }
+    if (!present(branches)) {
+      fail("branch missing")
+    }
+
+    brancher <- require(branches).value()
+    if (!brancher.matchSatisfied()) {
+      fail("match not satisfied")
+    }
+    branches <- require(branches).next()
+    if (present(branches)) {
+      fail("branch present")
+    }
+
+    // Second character.
+    { state, branches } <- brancher.tryBranches('x')
+    if (!MatchState$equals(state,MatchState$matchContinue())) {
+      fail(state)
+    }
+    if (!present(branches)) {
+      fail("branch missing")
+    }
+
+    brancher <- require(branches).value()
+    if (!brancher.matchSatisfied()) {
+      fail("match not satisfied")
+    }
+    // Expect one additional branch to continue "xx*".
+    branches <- require(branches).next()
+    if (!present(branches)) {
+      fail("branch missing")
+    }
+
+    // Third character, branch 1.
+    { state, _ } <- brancher.tryBranches('x')
+    if (!MatchState$equals(state,MatchState$matchContinue())) {
+      fail(state)
+    }
+
+    brancher <- require(branches).value()
+    if (!brancher.matchSatisfied()) {
+      fail("match not satisfied")
+    }
+    // No more branches expected.
+    branches <- require(branches).next()
+    if (present(branches)) {
+      fail("branch present")
+    }
+
+    // Third character, branch 2.
+    { state, _ } <- brancher.tryBranches('x')
+    if (!MatchState$equals(state,MatchState$matchContinue())) {
+      fail(state)
+    }
+  }
+
+  @type testBranchRepeatNonMatch () -> ()
+  testBranchRepeatNonMatch () {
+    // Pattern: "[w-y]{2,3}"
+    MatchBrancherTemplate<Char> template <-
+        BranchRepeat<Char>$createRange(2,3,MatchRange<Char>$create('w','y'))
+    MatchBrancher<Char> brancher <- template.newBrancher()
+
+    MatchState state <- MatchState$matchFail()
+    optional ReadSequence<MatchBrancher<Char>> branches <- empty
+
+    // First character.
+    { state, branches } <- brancher.tryBranches('x')
+    if (!MatchState$equals(state,MatchState$matchContinue())) {
+      fail(state)
+    }
+    if (!present(branches)) {
+      fail("branch missing")
+    }
+
+    brancher <- require(branches).value()
+    if (brancher.matchSatisfied()) {
+      fail("match satisfied")
+    }
+    branches <- require(branches).next()
+    if (present(branches)) {
+      fail("branch present")
+    }
+
+    // Second character.
+    { state, branches } <- brancher.tryBranches('q')
+    if (!MatchState$equals(state,MatchState$matchFail())) {
+      fail(state)
+    }
+    if (present(branches)) {
+      fail("branch present")
     }
   }
 
@@ -553,8 +756,17 @@ define RegexTest {
     if (!MatchState$equals(state,MatchState$matchComplete())) {
       fail(state)
     }
-    if (present(branches)) {
-      fail("branch present")
+    if (!present(branches)) {
+      fail("branch missing")
+    }
+
+    // The final branch should just be a record of completeness.
+    if (!require(branches).value().matchSatisfied()) {
+      fail("match not satisfied")
+    }
+    { state, branches } <- require(branches).value().tryBranches('a')
+    if (!MatchState$equals(state,MatchState$matchFail())) {
+      fail(state)
     }
 
     // Reset to reuse the brancher.
@@ -604,7 +816,8 @@ define RegexTest {
     MatchBrancherTemplate<Char> template <-
         BranchSequence<Char>$create(
             LinkedNode<MatcherTemplate<Char>>$create(
-                MatchRepeat<Char>$createZeroPlus(MatchSingle<Char>$create('a')),
+                MatchBranches<Char>$create(
+                    BranchRepeat<Char>$createZeroPlus(MatchSingle<Char>$create('a'))),
                 LinkedNode<MatcherTemplate<Char>>$create(
                     MatchSingle<Char>$create('b'),empty)))
     MatchBrancher<Char> brancher <- template.newBrancher()
@@ -624,8 +837,8 @@ define RegexTest {
     if (!MatchState$equals(state,MatchState$matchComplete())) {
       fail(state)
     }
-    if (present(branches)) {
-      fail("branch present")
+    if (!present(branches)) {
+      fail("branch missing")
     }
   }
 
@@ -635,7 +848,8 @@ define RegexTest {
     MatchBrancherTemplate<Char> template <-
         BranchSequence<Char>$create(
             LinkedNode<MatcherTemplate<Char>>$create(
-                MatchRepeat<Char>$createOnePlus(MatchSingle<Char>$create('a')),
+                MatchBranches<Char>$create(
+                    BranchRepeat<Char>$createOnePlus(MatchSingle<Char>$create('a'))),
                 LinkedNode<MatcherTemplate<Char>>$create(
                     MatchSingle<Char>$create('b'),empty)))
     MatchBrancher<Char> brancher <- template.newBrancher()
@@ -666,9 +880,11 @@ define RegexTest {
     MatchBrancherTemplate<Char> template <-
         BranchSequence<Char>$create(
             LinkedNode<MatcherTemplate<Char>>$create(
-                MatchRepeat<Char>$createZeroPlus(MatchSingle<Char>$create('a')),
+                MatchBranches<Char>$create(
+                    BranchRepeat<Char>$createZeroPlus(MatchSingle<Char>$create('a'))),
                 LinkedNode<MatcherTemplate<Char>>$create(
-                    MatchRepeat<Char>$createRange(0,2,MatchSingle<Char>$create('a')),empty)))
+                    MatchBranches<Char>$create(
+                        BranchRepeat<Char>$createRange(0,2,MatchSingle<Char>$create('a'))),empty)))
     MatchBrancher<Char> brancher <- template.newBrancher()
 
     if (!template.matchesEmpty()) {
@@ -828,7 +1044,8 @@ define RegexTest {
         MatchBranches<Char>$create(
             BranchSequence<Char>$create(
                 LinkedNode<MatcherTemplate<Char>>$create(
-                    MatchRepeat<Char>$createZeroPlus(templateAB),
+                    MatchBranches<Char>$create(
+                        BranchRepeat<Char>$createZeroPlus(templateAB)),
                     LinkedNode<MatcherTemplate<Char>>$create(templateAC,empty))))
     Matcher<Char> matcher <- template.newMatcher()
 
@@ -878,11 +1095,12 @@ define RegexTest {
   testMatchBranchesPartialRepeat () {
     // Pattern: "(ab)*"
     MatcherTemplate<Char> template <-
-        MatchRepeat<Char>$createZeroPlus(
-            MatchBranches<Char>$create(
-                BranchSequence<Char>$create(
-                    LinkedNode<MatcherTemplate<Char>>$create(MatchSingle<Char>$create('a'),
-                        LinkedNode<MatcherTemplate<Char>>$create(MatchSingle<Char>$create('b'),empty)))))
+        MatchBranches<Char>$create(
+            BranchRepeat<Char>$createZeroPlus(
+                MatchBranches<Char>$create(
+                    BranchSequence<Char>$create(
+                        LinkedNode<MatcherTemplate<Char>>$create(MatchSingle<Char>$create('a'),
+                            LinkedNode<MatcherTemplate<Char>>$create(MatchSingle<Char>$create('b'),empty))))))
     Matcher<Char> matcher <- template.newMatcher()
 
     if (!matcher.matchSatisfied()) {

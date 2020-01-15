@@ -56,17 +56,20 @@ define CharRegex {
         return _
       } elif (c == '*') {
         // TODO: Needs error handling.
-        return { p2.forward(), MatchRepeat<Char>$createZeroPlus(require(matcher)) }
+        return { p2.forward(),
+                 MatchBranches<Char>$create(BranchRepeat<Char>$createZeroPlus(require(matcher))) }
       } elif (c == '+') {
         // TODO: Needs error handling.
-        return { p2.forward(), MatchRepeat<Char>$createOnePlus(require(matcher)) }
+        return { p2.forward(),
+                 MatchBranches<Char>$create(BranchRepeat<Char>$createOnePlus(require(matcher))) }
       } elif (c == '{') {
         { p2, Int min, Int max } <- parseRange(p2.forward())
         if (p2.pastForwardEnd() || p2.readCurrent() != '}') {
           // TODO: Needs error handling.
           fail("missing }")
         }
-        return { p2.forward(), MatchRepeat<Char>$createRange(min,max,require(matcher)) }
+        return { p2.forward(),
+                 MatchBranches<Char>$create(BranchRepeat<Char>$createRange(min,max,require(matcher))) }
       } elif (present(matcher)) {
         return _
       } elif (c == '[') {

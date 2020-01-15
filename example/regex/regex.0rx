@@ -440,10 +440,14 @@ define MatchBranchesMatcher {
     state <- MatchState$matchFail()
     optional ReadSequence<MatchBrancher<#c>> current <- branches
     branches <- empty
+    complete <- false
     scoped {
     } in while(present(current)) {
       { MatchState state2, optional ReadSequence<MatchBrancher<#c>> branches2 } <-
           require(current).value().tryBranches(data)
+      if (MatchState$equals(state2,MatchState$matchComplete())) {
+        complete <- true
+      }
       if (MatchState$lessThan(state,state2)) {
         state <- state2
       }
@@ -451,7 +455,105 @@ define MatchBranchesMatcher {
     } update {
       current <- require(current).next()
     }
-    complete <- MatchState$equals(state,MatchState$matchComplete())
+  }
+}
+
+concrete BranchRepeatMatcher<#c> {
+  refines MatchBrancher<#c>
+
+  @type create (Int,Int,MatcherTemplate<#c>) -> (BranchRepeatMatcher<#c>)
+  @value tryBranches (#c) -> (MatchState,optional ReadSequence<BranchRepeatMatcher<#c>>)
+}
+
+define BranchRepeatMatcher {
+  @value MatcherTemplate<#c> template
+  @value Matcher<#c> matcher
+  @value Int minCount
+  @value Int maxCount // 0 means unlimited.
+  @value Int repetitionCount
+  @value MatchState lastState
+
+  create (minCount,maxCount,template) {
+    return BranchRepeatMatcher<#c>{ template, template.newMatcher(), minCount,
+                                    maxCount, 0, MatchState$matchComplete() }
+  }
+
+  matchSatisfied () {
+    if (MatchState$equals(lastState,MatchState$matchFail())) {
+      return false
+    }
+    if (MatchState$equals(lastState,MatchState$matchContinue()) &&
+        (repetitionCount+1 >= minCount || template.matchesEmpty()) &&
+        matcher.matchSatisfied()) {
+      // The rest of the current repetition can be ignored.
+      return true
+    }
+    if (MatchState$equals(lastState,MatchState$matchComplete()) &&
+        (repetitionCount >= minCount || template.matchesEmpty())) {
+      return true
+    }
+    return false
+  }
+
+  tryBranches (data) (state,branch) {
+    state <- MatchState$matchFail()
+    branch <- empty
+    if (atMax() || MatchState$equals(lastState,MatchState$matchFail())) {
+      return _
+    }
+    if (MatchState$equals(lastState,MatchState$matchContinue())) {
+      // Handle a possible single branch.
+      Bool canSkip <- matcher.matchSatisfied()
+      state <- matcher.tryNextMatch(data)
+      if (canSkip) {
+        if (MatchState$equals(state,MatchState$matchContinue())) {
+          // Add a branch for the optional suffix.
+          branch <- LinkedNode<BranchRepeatMatcher<#c>>$create(
+              BranchRepeatMatcher<#c>{ template, matcher, minCount,
+                                       maxCount, repetitionCount,
+                                       MatchState$matchContinue() },empty)
+        }
+        // Continue, skipping over the optional suffix.
+        ~ incrementMatch()
+        ~ startRepeat()
+        if (atMax()) {
+          // Skipping the branch puts us at the max.
+          return _
+        }
+        state <- matcher.tryNextMatch(data)
+      }
+    } else {
+      // Branching is not possible.
+      state <- matcher.tryNextMatch(data)
+    }
+    lastState <- state
+    if (MatchState$equals(state,MatchState$matchComplete())) {
+      ~ incrementMatch()
+      ~ startRepeat()
+      if (!atMax()) {
+        branch <- LinkedNode<BranchRepeatMatcher<#c>>$create(self,branch)
+      }
+    } elif (MatchState$equals(state,MatchState$matchContinue())) {
+      branch <- LinkedNode<BranchRepeatMatcher<#c>>$create(self,branch)
+    }
+    if (present(branch)) {
+      state <- MatchState$matchContinue()
+    }
+  }
+
+  @value incrementMatch () -> ()
+  incrementMatch () {
+    repetitionCount <- repetitionCount+1
+  }
+
+  @value atMax () -> (Bool)
+  atMax () {
+    return maxCount > 0 && repetitionCount >= maxCount
+  }
+
+  @value startRepeat () -> ()
+  startRepeat () {
+    matcher <- template.newMatcher()
   }
 }
 
@@ -553,12 +655,43 @@ define BranchSequenceMatcher {
         branch <- LinkedNode<BranchSequenceMatcher<#c>>$create(
             BranchSequenceMatcher<#c>{ empty, sequence2, false },branch)
         state <- MatchState$matchContinue()
+      } else {
+        // Add a branch to serve as a record of completeness. It will fail to
+        // match anything, but matchSatisfied() will return true.
+        branch <- LinkedNode<BranchSequenceMatcher<#c>>$create(
+            BranchSequenceMatcher<#c>{ empty, empty, false },branch)
       }
     } elif (MatchState$equals(state,MatchState$matchContinue())) {
         // Add a branch to continue this sequence.
         branch <- LinkedNode<BranchSequenceMatcher<#c>>$create(
             BranchSequenceMatcher<#c>{ continued2, sequence2, false },branch)
     }
+  }
+}
+
+define BranchRepeat {
+  @value MatcherTemplate<#c> template
+  @value Int minCount
+  @value Int maxCount
+
+  createZeroPlus (template) {
+    return createRange(0,0,template)
+  }
+
+  createOnePlus (template) {
+    return createRange(1,0,template)
+  }
+
+  createRange (minCount,maxCount,template) {
+    return BranchRepeat<#c>{ template, minCount, maxCount }
+  }
+
+  matchesEmpty () {
+    return minCount <= 0 || template.matchesEmpty()
+  }
+
+  newBrancher () {
+    return BranchRepeatMatcher<#c>$create(minCount,maxCount,template)
   }
 }
 

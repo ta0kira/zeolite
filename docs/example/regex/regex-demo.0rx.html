@@ -23,7 +23,10 @@
     <span style='color:#006e28;'>~</span> testMatch(<span style='color:#bf0303;'>&quot;.&quot;</span>,<span style='color:#bf0303;'>&quot;aa&quot;</span>,<b>false</b>)
     <span style='color:#006e28;'>~</span> testMatch(<span style='color:#bf0303;'>&quot;a&quot;</span>,<span style='color:#bf0303;'>&quot;.&quot;</span>,<b>false</b>)
     <span style='color:#006e28;'>~</span> testMatch(<span style='color:#bf0303;'>&quot;.+&quot;</span>,<span style='color:#bf0303;'>&quot;&quot;</span>,<b>false</b>)
+    <span style='color:#006e28;'>~</span> testMatch(<span style='color:#bf0303;'>&quot;.+&quot;</span>,<span style='color:#bf0303;'>&quot;a&quot;</span>,<b>true</b>)
     <span style='color:#006e28;'>~</span> testMatch(<span style='color:#bf0303;'>&quot;.+&quot;</span>,<span style='color:#bf0303;'>&quot;ab&quot;</span>,<b>true</b>)
+    <span style='color:#006e28;'>~</span> testMatch(<span style='color:#bf0303;'>&quot;.*.&quot;</span>,<span style='color:#bf0303;'>&quot;a&quot;</span>,<b>true</b>)
+    <span style='color:#006e28;'>~</span> testMatch(<span style='color:#bf0303;'>&quot;.*.&quot;</span>,<span style='color:#bf0303;'>&quot;ab&quot;</span>,<b>true</b>)
     <span style='color:#006e28;'>~</span> testMatch(<span style='color:#bf0303;'>&quot;(ab)*&quot;</span>,<span style='color:#bf0303;'>&quot;&quot;</span>,<b>true</b>)
     <span style='color:#006e28;'>~</span> testMatch(<span style='color:#bf0303;'>&quot;(ab)*&quot;</span>,<span style='color:#bf0303;'>&quot;abab&quot;</span>,<b>true</b>)
     <span style='color:#006e28;'>~</span> testMatch(<span style='color:#bf0303;'>&quot;(ab)*&quot;</span>,<span style='color:#bf0303;'>&quot;a&quot;</span>,<b>false</b>)
@@ -42,6 +45,10 @@
     <span style='color:#006e28;'>~</span> testMatch(<span style='color:#bf0303;'>&quot;a{2,3}&quot;</span>,<span style='color:#bf0303;'>&quot;aa&quot;</span>,<b>true</b>)
     <span style='color:#006e28;'>~</span> testMatch(<span style='color:#bf0303;'>&quot;a{2,3}&quot;</span>,<span style='color:#bf0303;'>&quot;aaa&quot;</span>,<b>true</b>)
     <span style='color:#006e28;'>~</span> testMatch(<span style='color:#bf0303;'>&quot;a{2,3}&quot;</span>,<span style='color:#bf0303;'>&quot;aaaa&quot;</span>,<b>false</b>)
+    <span style='color:#006e28;'>~</span> testMatch(<span style='color:#bf0303;'>&quot;(a+){4}&quot;</span>,<span style='color:#bf0303;'>&quot;aaa&quot;</span>,<b>false</b>)
+    <span style='color:#006e28;'>~</span> testMatch(<span style='color:#bf0303;'>&quot;(a+){4}&quot;</span>,<span style='color:#bf0303;'>&quot;aaaa&quot;</span>,<b>true</b>)
+    <span style='color:#006e28;'>~</span> testMatch(<span style='color:#bf0303;'>&quot;(a+){4}&quot;</span>,<span style='color:#bf0303;'>&quot;aaaaa&quot;</span>,<b>true</b>)
+    <span style='color:#006e28;'>~</span> testMatch(<span style='color:#bf0303;'>&quot;(a+){4}&quot;</span>,<span style='color:#bf0303;'>&quot;aaaaaa&quot;</span>,<b>true</b>)
     <span style='color:#006e28;'>~</span> testMatch(<span style='color:#bf0303;'>&quot;[a-z?]&quot;</span>,<span style='color:#bf0303;'>&quot;q&quot;</span>,<b>true</b>)
     <span style='color:#006e28;'>~</span> testMatch(<span style='color:#bf0303;'>&quot;[a-z?]&quot;</span>,<span style='color:#bf0303;'>&quot;-&quot;</span>,<b>false</b>)
     <span style='color:#006e28;'>~</span> testMatch(<span style='color:#bf0303;'>&quot;[a-z?]&quot;</span>,<span style='color:#bf0303;'>&quot;?&quot;</span>,<b>true</b>)
@@ -49,38 +56,50 @@
     <span style='color:#006e28;'>~</span> testMatch(<span style='color:#bf0303;'>&quot;[a-z?]*&quot;</span>,<span style='color:#bf0303;'>&quot;ab-cde&quot;</span>,<b>false</b>)
 
     <span style='color:#898887;'>// A few malicious regexes from https://en.wikipedia.org/wiki/ReDoS.</span>
-    <span style='color:#006e28;'>~</span> testMatch(<span style='color:#bf0303;'>&quot;(a+)+&quot;</span>,<span style='color:#bf0303;'>&quot;aaaaaaaaaaaaaaaaaaaaaaaa!&quot;</span>,<b>false</b>)
-    <span style='color:#006e28;'>~</span> testMatch(<span style='color:#bf0303;'>&quot;([a-zA-Z]+)*&quot;</span>,<span style='color:#bf0303;'>&quot;aaaaaaaaaaaaaaaaaaaaaaaa!&quot;</span>,<b>false</b>)
+    <span style='color:#898887;'>//</span>
+    <span style='color:#898887;'>// The first three below don't finish, due to repeat branching. The</span>
+    <span style='color:#898887;'>// branching of &quot;a+&quot; is O(sqrt(2)^n) and &quot;(a+)+&quot; is therefore O(2^n).</span>
+    <span style='color:#898887;'>//</span>
+    <span style='color:#898887;'>// The first two could still be matched using non-branching repeats, since</span>
+    <span style='color:#898887;'>// there is a complete overlap between the tail of one repeat and the next</span>
+    <span style='color:#898887;'>// repeat, and repeats past 1 don't matter. The third could also be if the</span>
+    <span style='color:#898887;'>// first 30 were expanded at the beginning.</span>
+    <span style='color:#898887;'>//</span>
+    <span style='color:#898887;'>// Overall, the safer solution would be to avoid repeat branching, and have</span>
+    <span style='color:#898887;'>// a disclaimer about matching accuracy with repeated unbounded patterns</span>
+    <span style='color:#898887;'>// that overlap themselves.</span>
+
+    <span style='color:#898887;'>// ~ testMatch(&quot;(a+)+&quot;,&quot;aaaaaaaaaaaaaaaaaaaaaaaa!&quot;,false)</span>
+    <span style='color:#898887;'>// ~ testMatch(&quot;(a+)+&quot;,&quot;aaaaaaaaaaaaaaaaaaaaaaaa!&quot;,false)</span>
+    <span style='color:#898887;'>// ~ testMatch(&quot;([a-zA-Z]+)*&quot;,&quot;aaaaaaaaaaaaaaaaaaaaaaaa!&quot;,false)</span>
+    <span style='color:#898887;'>// ~ testMatch(&quot;(.*a){30}&quot;,&quot;aaaaaaaaaaaaaaaaaaaaaaaa!&quot;,false)</span>
     <span style='color:#006e28;'>~</span> testMatch(<span style='color:#bf0303;'>&quot;(a|aa)+&quot;</span>,<span style='color:#bf0303;'>&quot;aaaaaaaaaaaaaaaaaaaaaaaa!&quot;</span>,<b>false</b>)
-    <span style='color:#006e28;'>~</span> testMatch(<span style='color:#bf0303;'>&quot;(.*a){30}&quot;</span>,<span style='color:#bf0303;'>&quot;aaaaaaaaaaaaaaaaaaaaaaaa!&quot;</span>,<b>false</b>)
 
-    <span style='color:#898887;'>// This causes a ton of branching, but it actually finishes. For m groups</span>
-    <span style='color:#898887;'>// like &quot;[ab]*&quot; and n input characters, the branching requirement in this</span>
-    <span style='color:#898887;'>// implementation is O(n^m), so appending even one group takes much longer.</span>
+    <span style='color:#898887;'>// This causes a ton of branching, but it actually finishes. Given m</span>
+    <span style='color:#898887;'>// unbounded groups in a sequence, the branching is O(n^m). Since n^m</span>
+    <span style='color:#898887;'>// increases rapidly with n, most sequence branches at any given time will</span>
+    <span style='color:#898887;'>// not contain repeat branches within them. The exception is that each of</span>
+    <span style='color:#898887;'>// the m groups will be in separate sequence branches from the beginning,</span>
+    <span style='color:#898887;'>// *adding* O(sqrt(2)^n) branches. This means the overall complexity is</span>
+    <span style='color:#898887;'>// O(n^m)+O(sqrt(2)^n): O(n^m) for smaller n, O(sqrt(2)^n) for larger n.</span>
     <span style='color:#006e28;'>~</span> testMatch(<span style='color:#bf0303;'>&quot;[ab]*[ac]*[ad]*[ae]*[af]*&quot;</span>,
-                <span style='color:#bf0303;'>&quot;aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaad&quot;</span>,<b>true</b>)
-
-    <span style='color:#898887;'>// Branching is local to repetitions within a single sequence of patterns;</span>
-    <span style='color:#898887;'>// therefore, the pattern below isn't actually problematic.</span>
-    <span style='color:#006e28;'>~</span> testMatch(<span style='color:#bf0303;'>&quot;([ab]*|[ac]*|[ad]*|[ae]*|[af]*)*&quot;</span>,
                 <span style='color:#bf0303;'>&quot;aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaad&quot;</span>,<b>true</b>)
   }
 
   <span style='color:#644a9b;'>@type</span> testMatch (<i><span style='color:#0057ae;'>String</span></i>,<i><span style='color:#0057ae;'>String</span></i>,<i><span style='color:#0057ae;'>Bool</span></i>) <b><span style='color:#006e28;'>-&gt;</span></b> ()
   testMatch (pattern,data,expected) {
     <span style='color:#0057ae;'>MatcherTemplate</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;</span> template <b><span style='color:#006e28;'>&lt;-</span></b> <b>require</b>(<span style='color:#0057ae;'>CharRegex</span><span style='color:#644a9b;'>$</span>parse(pattern))
-    <span style='color:#0057ae;'>LazyStream</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Formatted</span></i><span style='color:#c02040;'>&gt;</span> summary <b><span style='color:#006e28;'>&lt;-</span></b>
-        <span style='color:#0057ae;'>LazyStream</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Formatted</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>$</span>new()
-            .append(<span style='color:#bf0303;'>&quot;regex: </span><span style='color:#924c9d;'>\&quot;</span><span style='color:#bf0303;'>&quot;</span>)
-            .append(pattern)
-            .append(<span style='color:#bf0303;'>&quot;</span><span style='color:#924c9d;'>\&quot;</span><span style='color:#bf0303;'> data: </span><span style='color:#924c9d;'>\&quot;</span><span style='color:#bf0303;'>&quot;</span>)
-            .append(data)
-            .append(<span style='color:#bf0303;'>&quot;</span><span style='color:#924c9d;'>\&quot;</span><span style='color:#bf0303;'> -&gt; &quot;</span>)
-            .append(expected)
-    <b>if</b> (<span style='color:#0057ae;'>CharRegex</span><span style='color:#644a9b;'>$</span>match(template,data) == expected) {
-      <span style='color:#006e28;'>~</span> summary.append(<span style='color:#bf0303;'>&quot;</span><span style='color:#924c9d;'>\n</span><span style='color:#bf0303;'>&quot;</span>).writeTo(<span style='color:#0057ae;'>SimpleOutput</span><span style='color:#644a9b;'>$</span>stderr())
-    } <b>else</b> {
-      <span style='color:#006e28;'>~</span> summary.writeTo(<span style='color:#0057ae;'>SimpleOutput</span><span style='color:#644a9b;'>$</span>error())
+    <span style='color:#006e28;'>~</span> <span style='color:#0057ae;'>LazyStream</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Formatted</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>$</span>new()
+        .append(<span style='color:#bf0303;'>&quot;Trying: regex=</span><span style='color:#924c9d;'>\&quot;</span><span style='color:#bf0303;'>&quot;</span>)
+        .append(pattern)
+        .append(<span style='color:#bf0303;'>&quot;</span><span style='color:#924c9d;'>\&quot;</span><span style='color:#bf0303;'> data=</span><span style='color:#924c9d;'>\&quot;</span><span style='color:#bf0303;'>&quot;</span>)
+        .append(data)
+        .append(<span style='color:#bf0303;'>&quot;</span><span style='color:#924c9d;'>\&quot;</span><span style='color:#bf0303;'> -&gt; &quot;</span>)
+        .append(expected)
+        .append(<span style='color:#bf0303;'>&quot;...</span><span style='color:#924c9d;'>\n</span><span style='color:#bf0303;'>&quot;</span>)
+        .writeTo(<span style='color:#0057ae;'>SimpleOutput</span><span style='color:#644a9b;'>$</span>stderr())
+    <b>if</b> (<span style='color:#0057ae;'>CharRegex</span><span style='color:#644a9b;'>$</span>match(template,data) != expected) {
+      <b>fail</b>(<span style='color:#bf0303;'>&quot;Incorrect match result!&quot;</span>)
     }
   }
 }

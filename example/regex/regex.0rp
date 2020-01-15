@@ -36,7 +36,8 @@ concrete MatchState {
   // Returns true if the pattern is complete without additional data.
   matchSatisfied () -> (Bool)
 
-  // NOTE: Calling this invalidates the MatchBrancher; do not call it again.
+  // NOTE: Calling this invalidates the MatchBrancher. Subsequent calls should
+  // be done against the returned branches.
   // Returns:
   // - state: The highest state of the branches checked.
   // - branches: All branches with a status of matchContinue().
@@ -96,6 +97,14 @@ concrete MatchBranches<#c> {
   refines MatcherTemplate<#c>
 
   @type create (MatchBrancherTemplate<#c>) -> (MatcherTemplate<#c>)
+}
+
+concrete BranchRepeat<#c> {
+  refines MatchBrancherTemplate<#c>
+
+  @type createZeroPlus (MatcherTemplate<#c>) -> (BranchRepeat<#c>)
+  @type createOnePlus (MatcherTemplate<#c>) -> (BranchRepeat<#c>)
+  @type createRange (Int,Int,MatcherTemplate<#c>) -> (BranchRepeat<#c>)
 }
 
 concrete BranchSequence<#c> {

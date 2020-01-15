@@ -67,17 +67,20 @@
         <b>return</b> <b>_</b>
       } <b>elif</b> (c == <span style='color:#924c9d;'>'*'</span>) {
         <span style='color:#898887;'>// TODO: Needs error handling.</span>
-        <b>return</b> { p2.forward(), <span style='color:#0057ae;'>MatchRepeat</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>$</span>createZeroPlus(<b>require</b>(matcher)) }
+        <b>return</b> { p2.forward(),
+                 <span style='color:#0057ae;'>MatchBranches</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>$</span>create(<span style='color:#0057ae;'>BranchRepeat</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>$</span>createZeroPlus(<b>require</b>(matcher))) }
       } <b>elif</b> (c == <span style='color:#924c9d;'>'+'</span>) {
         <span style='color:#898887;'>// TODO: Needs error handling.</span>
-        <b>return</b> { p2.forward(), <span style='color:#0057ae;'>MatchRepeat</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>$</span>createOnePlus(<b>require</b>(matcher)) }
+        <b>return</b> { p2.forward(),
+                 <span style='color:#0057ae;'>MatchBranches</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>$</span>create(<span style='color:#0057ae;'>BranchRepeat</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>$</span>createOnePlus(<b>require</b>(matcher))) }
       } <b>elif</b> (c == <span style='color:#924c9d;'>'{'</span>) {
         { p2, <i><span style='color:#0057ae;'>Int</span></i> min, <i><span style='color:#0057ae;'>Int</span></i> max } <b><span style='color:#006e28;'>&lt;-</span></b> parseRange(p2.forward())
         <b>if</b> (p2.pastForwardEnd() || p2.readCurrent() != <span style='color:#924c9d;'>'}'</span>) {
           <span style='color:#898887;'>// TODO: Needs error handling.</span>
           <b>fail</b>(<span style='color:#bf0303;'>&quot;missing }&quot;</span>)
         }
-        <b>return</b> { p2.forward(), <span style='color:#0057ae;'>MatchRepeat</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>$</span>createRange(min,max,<b>require</b>(matcher)) }
+        <b>return</b> { p2.forward(),
+                 <span style='color:#0057ae;'>MatchBranches</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>$</span>create(<span style='color:#0057ae;'>BranchRepeat</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>$</span>createRange(min,max,<b>require</b>(matcher))) }
       } <b>elif</b> (<b>present</b>(matcher)) {
         <b>return</b> <b>_</b>
       } <b>elif</b> (c == <span style='color:#924c9d;'>'['</span>) {
