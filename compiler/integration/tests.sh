@@ -29,7 +29,7 @@ compiler_hs="$root/compiler/CompilerCxx/compiler.hs"
 compiler="$PWD/compiler"
 
 [[ "${COMPILER_CXX-}" ]] || COMPILER_CXX=clang++
-[[ "${COMPILE_CXX-}" ]] || COMPILE_CXX=("$COMPILER_CXX" -O0 -g -std=c++11 -o)
+[[ "${COMPILE_CXX-}" ]] || COMPILE_CXX=("$COMPILER_CXX" -O0 -g -std=c++11)
 
 standard_src=('standard.0rp' 'standard.0rx')
 
@@ -38,9 +38,27 @@ ghc -i"$root/compiler" "$compiler_hs" -o "$compiler"
 
 standard_tm=($root/standard/*.0rp)
 standard_inc=($root/standard)
-standard_cpp=($root/standard/*.cpp)
-
+cache_obj=$PWD/.cache
 command0=("$compiler" "$root" "" "${standard_tm[@]}" -- /dev/stdin)
+
+compile_src() {
+  [[ -d "$cache_obj" ]] || mkdir "$cache_obj"
+  (
+    cd "$cache_obj"
+    local command=(
+    "${COMPILE_CXX[@]}" -c
+    -I"$root/capture-thread/include"
+    -I"$root/base"
+    -I"$standard_inc"
+    "$@")
+    echo "${command[@]}" 1>&2
+    "${command[@]}"
+  )
+}
+
+compile_src "$root/base"/*.cpp
+compile_src "$root/standard"/*.cpp
+compile_src "$root/capture-thread/src"/*.cc
 
 test_base="
 concrete Test {
@@ -60,14 +78,12 @@ compile() {
     { "${command0[@]}" |& tee -a "$temp/$errors"; } < <(echo "$code$test_base")
     [[ "${PIPESTATUS[0]}" = 0 ]] || return 1
     command1=(
-      "${COMPILE_CXX[@]}" "$temp/compiled"
+      "${COMPILE_CXX[@]}" -o "$temp/compiled"
       -I"$root/capture-thread/include"
       -I"$root/base"
       -I"$temp"
       -I"$standard_inc"
-      "$root/capture-thread/src"/*.cc
-      "$root/base"/*cpp
-      "${standard_cpp[@]}"
+      "$cache_obj"/*.o
       "$temp"/*cpp
       "$main")
     echo "${command1[@]}" >> "$temp/$errors"
