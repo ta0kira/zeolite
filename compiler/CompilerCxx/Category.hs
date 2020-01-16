@@ -1,5 +1,5 @@
 {- -----------------------------------------------------------------------------
-Copyright 2019 Kevin P. Barry
+Copyright 2019-2020 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -60,7 +60,7 @@ compileCategoryDeclaration _ t =
     guardName = "HEADER_" ++ show name
     content = baseHeaderIncludes ++ collection ++ labels ++ getCategory ++ getType
     labels = map label $ filter ((== name) . sfType) $ getCategoryFunctions t
-    label f = "extern const " ++ functionLabelType f ++ "& " ++ functionName f ++ ";"
+    label f = "extern " ++ functionLabelType f ++ " " ++ functionName f ++ ";"
     collection
       | isValueConcrete t = []
       | otherwise         = ["extern const void* const " ++ collectionName name ++ ";"]
@@ -231,14 +231,14 @@ compileConcreteDefinition ta dd@(DefinedCategory c n pi fi ms ps fs) = do
     categoryDispatch fs =
       return $ onlyCodes $ [
           "ReturnTuple Dispatch(" ++
-          "const DFunction<SymbolScope::CATEGORY>& label, " ++
+          "const CategoryFunction& label, " ++
           "const ParamTuple& params, " ++
           "const ValueTuple& args) final {"
         ] ++ createFunctionDispatch n CategoryScope fs ++ ["}"]
     typeDispatch fs =
       return $ onlyCodes $ [
           "ReturnTuple Dispatch(" ++
-          "const DFunction<SymbolScope::TYPE>& label, " ++
+          "const TypeFunction& label, " ++
           "const ParamTuple& params, " ++
           "const ValueTuple& args) final {"
         ] ++ createFunctionDispatch n TypeScope fs ++ ["}"]
@@ -246,7 +246,7 @@ compileConcreteDefinition ta dd@(DefinedCategory c n pi fi ms ps fs) = do
       return $ onlyCodes $ [
           "ReturnTuple Dispatch(" ++
           "const S<TypeValue>& self, " ++
-          "const DFunction<SymbolScope::VALUE>& label, " ++
+          "const ValueFunction& label, " ++
           "const ParamTuple& params," ++
           "const ValueTuple& args) final {"
         ] ++ createFunctionDispatch n ValueScope fs ++ ["}"]
@@ -320,10 +320,8 @@ commonDefineAll t top bottom ce te fe = do
     getType = defineGetType t
 
 createLabelForFunction :: Int -> ScopedFunction c -> String
-createLabelForFunction i f = "const " ++ functionLabelType f ++ "& " ++ functionName f ++
-                              " = *new " ++ functionLabelType f ++ "(\"" ++
-                              show (sfType f) ++ "\", \"" ++ show (sfName f) ++ "\", " ++
-                              collectionName (sfType f) ++ ", " ++ show i ++ ");"
+createLabelForFunction i f = functionLabelType f ++ " " ++ functionName f ++
+                              " = " ++ newFunctionLabel i f ++ ";"
 
 createFunctionDispatch :: CategoryName -> SymbolScope -> [ScopedFunction c] -> [String]
 createFunctionDispatch n s fs = [typedef] ++ concat (map table $ byCategory) ++
@@ -348,11 +346,11 @@ createFunctionDispatch n s fs = [typedef] ++ concat (map table $ byCategory) ++
     map (\f -> "    &" ++ name f ++ ",") (Set.toList $ Set.fromList $ map sfName fs) ++
     ["  };"]
   dispatch (n2,fs) = [
-      "  if (label.Collection() == " ++ collectionName n2 ++ ") {",
-      "    if (label.Num() < 0 || label.Num() >= " ++ show (length fs) ++ ") {",
-      "      FAIL() << \"Bad function call \" << label.FunctionName();",
+      "  if (label.collection == " ++ collectionName n2 ++ ") {",
+      "    if (label.function_num < 0 || label.function_num >= " ++ show (length fs) ++ ") {",
+      "      FAIL() << \"Bad function call \" << label;",
       "    }",
-      "    return (this->*" ++ tableName n2 ++ "[label.Num()])(" ++ args ++ ");",
+      "    return (this->*" ++ tableName n2 ++ "[label.function_num])(" ++ args ++ ");",
       "  }"
     ]
   args

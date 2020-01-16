@@ -27,6 +27,7 @@ module CompilerCxx.Code (
   functionLabelType,
   indentCompiled,
   isPrimType,
+  newFunctionLabel,
   onlyCode,
   onlyCodes,
   paramType,
@@ -48,6 +49,7 @@ module CompilerCxx.Code (
   writeStoredVariable,
 ) where
 
+import Data.List (intercalate)
 import qualified Data.Set as Set
 
 import Builtin
@@ -56,6 +58,7 @@ import DefinedCategory
 import TypeCategory
 import TypeInstance
 import TypesBase
+import CompilerCxx.Naming
 
 
 emptyCode :: CompiledData [String]
@@ -251,15 +254,33 @@ writeStoredVariable t e
   | otherwise                = useAsUnwrapped e
 
 functionLabelType :: ScopedFunction c -> String
-functionLabelType f =
-  "Function<" ++ scope ++ "," ++ show pn ++ "," ++ show an ++ "," ++ show rn ++ ">" where
-    pn = length $ psParams $ sfParams f
-    an = length $ psParams $ sfArgs f
-    rn = length $ psParams $ sfReturns f
-    scope
-      | sfScope f == CategoryScope = "SymbolScope::CATEGORY"
-      | sfScope f == TypeScope     = "SymbolScope::TYPE"
-      | sfScope f == ValueScope    = "SymbolScope::VALUE"
+functionLabelType = getType . sfScope where
+  getType CategoryScope = "const CategoryFunction&"
+  getType TypeScope     = "const TypeFunction&"
+  getType ValueScope    = "const ValueFunction&"
+
+newFunctionLabel :: Int -> ScopedFunction c -> String
+newFunctionLabel i f = "(*new " ++ (getType $ sfScope f) ++ "{ " ++ intercalate ", " args ++ " })" where
+  args = [
+      paramCount,
+      argCount,
+      returnCount,
+      category,
+      function,
+      collection,
+      functionNum
+    ]
+  paramCount  = show $ length $ psParams $ sfParams f
+  argCount    = show $ length $ psParams $ sfArgs f
+  returnCount = show $ length $ psParams $ sfReturns f
+  category    = show $ show $ sfType f
+  function    = show $ show $ sfName f
+  collection  = collectionName $ sfType f
+  functionNum = show i
+  getType CategoryScope = "CategoryFunction"
+  getType TypeScope     = "TypeFunction"
+  getType ValueScope    = "ValueFunction"
+
 
 categoryBase :: String
 categoryBase = "TypeCategory"

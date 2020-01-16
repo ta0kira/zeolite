@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-Copyright 2019 Kevin P. Barry
+Copyright 2019-2020 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -19,54 +19,49 @@ limitations under the License.
 #ifndef FUNCTION_HPP_
 #define FUNCTION_HPP_
 
-#include "types.hpp"
-
-#include <sstream>
+#include <ostream>
 
 
-template<SymbolScope S> class DFunction {
- public:
-  inline DFunction(std::string category, std::string function, const void* collection, int n) :
-      category_(category), function_(function), collection_(collection), n_(n) {}
-
-  inline int Num() const { return n_; }
-  inline const void* Collection() const { return collection_; }
-  virtual int ParamCount() const = 0;
-  virtual int ArgCount() const = 0;
-  virtual int ReturnCount() const = 0;
-
-  std::string FunctionName() const;
-
- private:
-  ALWAYS_PERMANENT(DFunction)
-  const void* const collection_;
-  const int n_;
-  const std::string category_;
-  const std::string function_;
+struct CategoryFunction {
+  const int param_count;
+  const int arg_count;
+  const int return_count;
+  const char* const category;
+  const char* const function;
+  const void* const collection;
+  const int function_num;
 };
 
-
-template<SymbolScope S, int P, int A, int R> class Function : public DFunction<S> {
- public:
-  int ParamCount() const final { return P; }
-  int ArgCount() const final { return A; }
-  int ReturnCount() const final { return R; }
-  using DFunction<S>::DFunction;
+struct TypeFunction {
+  const int param_count;
+  const int arg_count;
+  const int return_count;
+  const char* const category;
+  const char* const function;
+  const void* const collection;
+  const int function_num;
 };
 
-template<SymbolScope S>
-std::string DFunction<S>::FunctionName() const {
-  std::ostringstream output;
-  switch (S) {
-    case SymbolScope::CATEGORY:
-      output << category_ << "$$" << function_;
-      break;
-    case SymbolScope::TYPE:
-    case SymbolScope::VALUE:
-      output << category_ << "$" << function_;
-      break;
-  }
-  return output.str();
+struct ValueFunction {
+  const int param_count;
+  const int arg_count;
+  const int return_count;
+  const char* const category;
+  const char* const function;
+  const void* const collection;
+  const int function_num;
+};
+
+inline std::ostream& operator << (std::ostream& output, const CategoryFunction& func) {
+  return output << func.category << "." << func.function;
+}
+
+inline std::ostream& operator << (std::ostream& output, const TypeFunction& func) {
+  return output << func.category << "." << func.function;
+}
+
+inline std::ostream& operator << (std::ostream& output, const ValueFunction& func) {
+  return output << func.category << "." << func.function;
 }
 
 #endif  // FUNCTION_HPP_

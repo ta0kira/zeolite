@@ -25,17 +25,17 @@ limitations under the License.
 void BuiltinFail(const S<TypeValue>& formatted) __attribute__ ((noreturn));
 
 extern const void* const Functions_LessThan;
-extern const Function<SymbolScope::TYPE,0,2,1>& Function_LessThan_lessThan;
+extern const TypeFunction& Function_LessThan_lessThan;
 
 extern const void* const Functions_Equals;
-extern const Function<SymbolScope::TYPE,0,2,1>& Function_Equals_equals;
+extern const TypeFunction& Function_Equals_equals;
 
 extern const void* const Functions_Formatted;
-extern const Function<SymbolScope::VALUE,0,0,1>& Function_Formatted_formatted;
+extern const ValueFunction& Function_Formatted_formatted;
 
 extern const void* const Functions_ReadPosition;
-extern const Function<SymbolScope::VALUE,0,1,1>& Function_ReadPosition_readPosition;
-extern const Function<SymbolScope::VALUE,0,0,1>& Function_ReadPosition_readSize;
+extern const ValueFunction& Function_ReadPosition_readPosition;
+extern const ValueFunction& Function_ReadPosition_readSize;
 
 TypeInstance& Merge_Intersect(L<TypeInstance*> params);
 TypeInstance& Merge_Union(L<TypeInstance*> params);

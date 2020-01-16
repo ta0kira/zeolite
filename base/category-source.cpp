@@ -22,22 +22,22 @@ limitations under the License.
 #include "builtin.hpp"
 
 
-ReturnTuple TypeCategory::Dispatch(const DFunction<SymbolScope::CATEGORY>& label,
+ReturnTuple TypeCategory::Dispatch(const CategoryFunction& label,
                                    const ParamTuple& params, const ValueTuple& args) {
-  FAIL() << CategoryName() << " does not implement " << label.FunctionName();
+  FAIL() << CategoryName() << " does not implement " << label;
   __builtin_unreachable();
 }
 
-ReturnTuple TypeInstance::Dispatch(const DFunction<SymbolScope::TYPE>& label,
+ReturnTuple TypeInstance::Dispatch(const TypeFunction& label,
                                    const ParamTuple& params, const ValueTuple& args) {
-  FAIL() << CategoryName() << " does not implement " << label.FunctionName();
+  FAIL() << CategoryName() << " does not implement " << label;
   __builtin_unreachable();
 }
 
 ReturnTuple TypeValue::Dispatch(const S<TypeValue>& self,
-                                const DFunction<SymbolScope::VALUE>& label,
+                                const ValueFunction& label,
                                 const ParamTuple& params, const ValueTuple& args) {
-  FAIL() << CategoryName() << " does not implement " << label.FunctionName();
+  FAIL() << CategoryName() << " does not implement " << label;
   __builtin_unreachable();
 }
 

@@ -31,7 +31,7 @@ limitations under the License.
 
 class TypeCategory {
  public:
-  inline ReturnTuple Call(const DFunction<SymbolScope::CATEGORY>& label,
+  inline ReturnTuple Call(const CategoryFunction& label,
                           const ParamTuple& params, const ValueTuple& args) {
     return Dispatch(label, params, args);
   }
@@ -44,13 +44,13 @@ class TypeCategory {
  protected:
   TypeCategory() = default;
 
-  virtual ReturnTuple Dispatch(const DFunction<SymbolScope::CATEGORY>& label,
+  virtual ReturnTuple Dispatch(const CategoryFunction& label,
                                const ParamTuple& params, const ValueTuple& args);
 };
 
 class TypeInstance {
  public:
-  inline ReturnTuple Call(const DFunction<SymbolScope::TYPE>& label,
+  inline ReturnTuple Call(const TypeFunction& label,
                           ParamTuple params, const ValueTuple& args) {
     return Dispatch(label, params, args);
   }
@@ -80,7 +80,7 @@ class TypeInstance {
  protected:
   TypeInstance() = default;
 
-  virtual ReturnTuple Dispatch(const DFunction<SymbolScope::TYPE>& label,
+  virtual ReturnTuple Dispatch(const TypeFunction& label,
                                const ParamTuple& params, const ValueTuple& args);
 
   virtual bool CanConvertFrom(const TypeInstance& from) const
@@ -125,7 +125,7 @@ class TypeInstance {
 class TypeValue {
  public:
   inline static ReturnTuple Call(const S<TypeValue>& target,
-                                 const DFunction<SymbolScope::VALUE>& label,
+                                 const ValueFunction& label,
                                  const ParamTuple& params, const ValueTuple& args) {
     if (target == nullptr) {
       FAIL() << "Function called on null value";
@@ -154,7 +154,7 @@ class TypeValue {
   virtual bool Present() const;
 
   virtual ReturnTuple Dispatch(const S<TypeValue>& self,
-                               const DFunction<SymbolScope::VALUE>& label,
+                               const ValueFunction& label,
                                const ParamTuple& params, const ValueTuple& args);
 };
 

@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-Copyright 2019 Kevin P. Barry
+Copyright 2019-2020 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -27,6 +27,8 @@ limitations under the License.
 class TypeCategory;
 class TypeInstance;
 class TypeValue;
-template<SymbolScope S, int P, int A, int R> class Function;
+class CategoryFunction;
+class TypeFunction;
+class ValueFunction;
 
 #endif  // CATEGORY_HEADER_HPP_

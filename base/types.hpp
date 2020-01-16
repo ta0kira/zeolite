@@ -38,12 +38,6 @@ using PrimString = std::string;
 using PrimChar = char;
 using PrimFloat = double;
 
-enum class SymbolScope {
-  CATEGORY,
-  TYPE,
-  VALUE,
-};
-
 template<class T>
 using R = std::unique_ptr<T>;
 

@@ -24,9 +24,9 @@
 <span style='color:#0057ae;'>const</span> <span style='color:#0057ae;'>int</span> collection = <span style='color:#b08000;'>0</span>;
 }
 <span style='color:#0057ae;'>const</span> <span style='color:#0057ae;'>void</span>* <span style='color:#0057ae;'>const</span> Functions_TreeDemo = &amp;collection;
-<span style='color:#0057ae;'>const</span> Function&lt;SymbolScope::CATEGORY,<span style='color:#b08000;'>1</span>,<span style='color:#b08000;'>2</span>,<span style='color:#b08000;'>0</span>&gt;&amp; Function_TreeDemo_check = *<b>new</b> Function&lt;SymbolScope::CATEGORY,<span style='color:#b08000;'>1</span>,<span style='color:#b08000;'>2</span>,<span style='color:#b08000;'>0</span>&gt;(<span style='color:#bf0303;'>&quot;TreeDemo&quot;</span>, <span style='color:#bf0303;'>&quot;check&quot;</span>, Functions_TreeDemo, <span style='color:#b08000;'>0</span>);
-<span style='color:#0057ae;'>const</span> Function&lt;SymbolScope::CATEGORY,<span style='color:#b08000;'>0</span>,<span style='color:#b08000;'>0</span>,<span style='color:#b08000;'>0</span>&gt;&amp; Function_TreeDemo_demoTypeTree = *<b>new</b> Function&lt;SymbolScope::CATEGORY,<span style='color:#b08000;'>0</span>,<span style='color:#b08000;'>0</span>,<span style='color:#b08000;'>0</span>&gt;(<span style='color:#bf0303;'>&quot;TreeDemo&quot;</span>, <span style='color:#bf0303;'>&quot;demoTypeTree&quot;</span>, Functions_TreeDemo, <span style='color:#b08000;'>1</span>);
-<span style='color:#0057ae;'>const</span> Function&lt;SymbolScope::CATEGORY,<span style='color:#b08000;'>0</span>,<span style='color:#b08000;'>0</span>,<span style='color:#b08000;'>0</span>&gt;&amp; Function_TreeDemo_testTree = *<b>new</b> Function&lt;SymbolScope::CATEGORY,<span style='color:#b08000;'>0</span>,<span style='color:#b08000;'>0</span>,<span style='color:#b08000;'>0</span>&gt;(<span style='color:#bf0303;'>&quot;TreeDemo&quot;</span>, <span style='color:#bf0303;'>&quot;testTree&quot;</span>, Functions_TreeDemo, <span style='color:#b08000;'>2</span>);
+<span style='color:#0057ae;'>const</span> CategoryFunction&amp; Function_TreeDemo_check = (*<b>new</b> CategoryFunction{ <span style='color:#b08000;'>1</span>, <span style='color:#b08000;'>2</span>, <span style='color:#b08000;'>0</span>, <span style='color:#bf0303;'>&quot;TreeDemo&quot;</span>, <span style='color:#bf0303;'>&quot;check&quot;</span>, Functions_TreeDemo, <span style='color:#b08000;'>0</span> });
+<span style='color:#0057ae;'>const</span> CategoryFunction&amp; Function_TreeDemo_demoTypeTree = (*<b>new</b> CategoryFunction{ <span style='color:#b08000;'>0</span>, <span style='color:#b08000;'>0</span>, <span style='color:#b08000;'>0</span>, <span style='color:#bf0303;'>&quot;TreeDemo&quot;</span>, <span style='color:#bf0303;'>&quot;demoTypeTree&quot;</span>, Functions_TreeDemo, <span style='color:#b08000;'>1</span> });
+<span style='color:#0057ae;'>const</span> CategoryFunction&amp; Function_TreeDemo_testTree = (*<b>new</b> CategoryFunction{ <span style='color:#b08000;'>0</span>, <span style='color:#b08000;'>0</span>, <span style='color:#b08000;'>0</span>, <span style='color:#bf0303;'>&quot;TreeDemo&quot;</span>, <span style='color:#bf0303;'>&quot;testTree&quot;</span>, Functions_TreeDemo, <span style='color:#b08000;'>2</span> });
 <b>namespace</b> {
 <b>class</b> Category_TreeDemo;
 <b>class</b> Type_TreeDemo;
@@ -40,18 +40,18 @@ S&lt;TypeValue&gt; CreateValue(Type_TreeDemo&amp; parent, <span style='color:#00
     CycleCheck&lt;Category_TreeDemo&gt; marker(*<b>this</b>);
     TRACE_FUNCTION(<span style='color:#bf0303;'>&quot;TreeDemo (init @category)&quot;</span>)
   }
-  ReturnTuple Dispatch(<span style='color:#0057ae;'>const</span> DFunction&lt;SymbolScope::CATEGORY&gt;&amp; label, <span style='color:#0057ae;'>const</span> ParamTuple&amp; params, <span style='color:#0057ae;'>const</span> ValueTuple&amp; args) <b>final</b> {
+  ReturnTuple Dispatch(<span style='color:#0057ae;'>const</span> CategoryFunction&amp; label, <span style='color:#0057ae;'>const</span> ParamTuple&amp; params, <span style='color:#0057ae;'>const</span> ValueTuple&amp; args) <b>final</b> {
     <b>using</b> CallType = ReturnTuple(Category_TreeDemo::*)(<span style='color:#0057ae;'>const</span> ParamTuple&amp;, <span style='color:#0057ae;'>const</span> ValueTuple&amp;);
     <span style='color:#0057ae;'>static</span> <span style='color:#0057ae;'>const</span> CallType Table_TreeDemo[] = {
       &amp;Category_TreeDemo::Call_check,
       &amp;Category_TreeDemo::Call_demoTypeTree,
       &amp;Category_TreeDemo::Call_testTree,
     };
-    <b>if</b> (label.Collection() == Functions_TreeDemo) {
-      <b>if</b> (label.Num() &lt; <span style='color:#b08000;'>0</span> || label.Num() &gt;= <span style='color:#b08000;'>3</span>) {
-        FAIL() &lt;&lt; <span style='color:#bf0303;'>&quot;Bad function call &quot;</span> &lt;&lt; label.FunctionName();
+    <b>if</b> (label.collection == Functions_TreeDemo) {
+      <b>if</b> (label.function_num &lt; <span style='color:#b08000;'>0</span> || label.function_num &gt;= <span style='color:#b08000;'>3</span>) {
+        FAIL() &lt;&lt; <span style='color:#bf0303;'>&quot;Bad function call &quot;</span> &lt;&lt; label;
       }
-      <b>return</b> (<b>this</b>-&gt;*Table_TreeDemo[label.Num()])(params, args);
+      <b>return</b> (<b>this</b>-&gt;*Table_TreeDemo[label.function_num])(params, args);
     }
     <b>return</b> TypeCategory::Dispatch(label, params, args);
   }
@@ -203,16 +203,16 @@ Category_TreeDemo&amp; CreateCategory() {
     CycleCheck&lt;Type_TreeDemo&gt; marker(*<b>this</b>);
     TRACE_FUNCTION(<span style='color:#bf0303;'>&quot;TreeDemo (init @type)&quot;</span>)
   }
-  ReturnTuple Dispatch(<span style='color:#0057ae;'>const</span> DFunction&lt;SymbolScope::TYPE&gt;&amp; label, <span style='color:#0057ae;'>const</span> ParamTuple&amp; params, <span style='color:#0057ae;'>const</span> ValueTuple&amp; args) <b>final</b> {
+  ReturnTuple Dispatch(<span style='color:#0057ae;'>const</span> TypeFunction&amp; label, <span style='color:#0057ae;'>const</span> ParamTuple&amp; params, <span style='color:#0057ae;'>const</span> ValueTuple&amp; args) <b>final</b> {
     <b>using</b> CallType = ReturnTuple(Type_TreeDemo::*)(<span style='color:#0057ae;'>const</span> ParamTuple&amp;, <span style='color:#0057ae;'>const</span> ValueTuple&amp;);
     <span style='color:#0057ae;'>static</span> <span style='color:#0057ae;'>const</span> CallType Table_Runner[] = {
       &amp;Type_TreeDemo::Call_run,
     };
-    <b>if</b> (label.Collection() == Functions_Runner) {
-      <b>if</b> (label.Num() &lt; <span style='color:#b08000;'>0</span> || label.Num() &gt;= <span style='color:#b08000;'>1</span>) {
-        FAIL() &lt;&lt; <span style='color:#bf0303;'>&quot;Bad function call &quot;</span> &lt;&lt; label.FunctionName();
+    <b>if</b> (label.collection == Functions_Runner) {
+      <b>if</b> (label.function_num &lt; <span style='color:#b08000;'>0</span> || label.function_num &gt;= <span style='color:#b08000;'>1</span>) {
+        FAIL() &lt;&lt; <span style='color:#bf0303;'>&quot;Bad function call &quot;</span> &lt;&lt; label;
       }
-      <b>return</b> (<b>this</b>-&gt;*Table_Runner[label.Num()])(params, args);
+      <b>return</b> (<b>this</b>-&gt;*Table_Runner[label.function_num])(params, args);
     }
     <b>return</b> TypeInstance::Dispatch(label, params, args);
   }
@@ -234,7 +234,7 @@ Type_TreeDemo&amp; CreateType(Params&lt;<span style='color:#b08000;'>0</span>&gt
 }
 <b>struct</b> Value_TreeDemo : <b>public</b> TypeValue {
   Value_TreeDemo(Type_TreeDemo&amp; p, <span style='color:#0057ae;'>const</span> ParamTuple&amp; params, <span style='color:#0057ae;'>const</span> ValueTuple&amp; args) : parent(p) {}
-  ReturnTuple Dispatch(<span style='color:#0057ae;'>const</span> S&lt;TypeValue&gt;&amp; self, <span style='color:#0057ae;'>const</span> DFunction&lt;SymbolScope::VALUE&gt;&amp; label, <span style='color:#0057ae;'>const</span> ParamTuple&amp; params,<span style='color:#0057ae;'>const</span> ValueTuple&amp; args) <b>final</b> {
+  ReturnTuple Dispatch(<span style='color:#0057ae;'>const</span> S&lt;TypeValue&gt;&amp; self, <span style='color:#0057ae;'>const</span> ValueFunction&amp; label, <span style='color:#0057ae;'>const</span> ParamTuple&amp; params,<span style='color:#0057ae;'>const</span> ValueTuple&amp; args) <b>final</b> {
     <b>using</b> CallType = ReturnTuple(Value_TreeDemo::*)(<span style='color:#0057ae;'>const</span> S&lt;TypeValue&gt;&amp;, <span style='color:#0057ae;'>const</span> ParamTuple&amp;, <span style='color:#0057ae;'>const</span> ValueTuple&amp;);
     <b>return</b> TypeValue::Dispatch(self, label, params, args);
   }

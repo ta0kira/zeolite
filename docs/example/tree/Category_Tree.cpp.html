@@ -18,9 +18,9 @@
 <span style='color:#0057ae;'>const</span> <span style='color:#0057ae;'>int</span> collection = <span style='color:#b08000;'>0</span>;
 }
 <span style='color:#0057ae;'>const</span> <span style='color:#0057ae;'>void</span>* <span style='color:#0057ae;'>const</span> Functions_Tree = &amp;collection;
-<span style='color:#0057ae;'>const</span> Function&lt;SymbolScope::TYPE,<span style='color:#b08000;'>0</span>,<span style='color:#b08000;'>0</span>,<span style='color:#b08000;'>1</span>&gt;&amp; Function_Tree_new = *<b>new</b> Function&lt;SymbolScope::TYPE,<span style='color:#b08000;'>0</span>,<span style='color:#b08000;'>0</span>,<span style='color:#b08000;'>1</span>&gt;(<span style='color:#bf0303;'>&quot;Tree&quot;</span>, <span style='color:#bf0303;'>&quot;new&quot;</span>, Functions_Tree, <span style='color:#b08000;'>0</span>);
-<span style='color:#0057ae;'>const</span> Function&lt;SymbolScope::VALUE,<span style='color:#b08000;'>0</span>,<span style='color:#b08000;'>1</span>,<span style='color:#b08000;'>1</span>&gt;&amp; Function_Tree_remove = *<b>new</b> Function&lt;SymbolScope::VALUE,<span style='color:#b08000;'>0</span>,<span style='color:#b08000;'>1</span>,<span style='color:#b08000;'>1</span>&gt;(<span style='color:#bf0303;'>&quot;Tree&quot;</span>, <span style='color:#bf0303;'>&quot;remove&quot;</span>, Functions_Tree, <span style='color:#b08000;'>0</span>);
-<span style='color:#0057ae;'>const</span> Function&lt;SymbolScope::VALUE,<span style='color:#b08000;'>0</span>,<span style='color:#b08000;'>2</span>,<span style='color:#b08000;'>1</span>&gt;&amp; Function_Tree_set = *<b>new</b> Function&lt;SymbolScope::VALUE,<span style='color:#b08000;'>0</span>,<span style='color:#b08000;'>2</span>,<span style='color:#b08000;'>1</span>&gt;(<span style='color:#bf0303;'>&quot;Tree&quot;</span>, <span style='color:#bf0303;'>&quot;set&quot;</span>, Functions_Tree, <span style='color:#b08000;'>1</span>);
+<span style='color:#0057ae;'>const</span> TypeFunction&amp; Function_Tree_new = (*<b>new</b> TypeFunction{ <span style='color:#b08000;'>0</span>, <span style='color:#b08000;'>0</span>, <span style='color:#b08000;'>1</span>, <span style='color:#bf0303;'>&quot;Tree&quot;</span>, <span style='color:#bf0303;'>&quot;new&quot;</span>, Functions_Tree, <span style='color:#b08000;'>0</span> });
+<span style='color:#0057ae;'>const</span> ValueFunction&amp; Function_Tree_remove = (*<b>new</b> ValueFunction{ <span style='color:#b08000;'>0</span>, <span style='color:#b08000;'>1</span>, <span style='color:#b08000;'>1</span>, <span style='color:#bf0303;'>&quot;Tree&quot;</span>, <span style='color:#bf0303;'>&quot;remove&quot;</span>, Functions_Tree, <span style='color:#b08000;'>0</span> });
+<span style='color:#0057ae;'>const</span> ValueFunction&amp; Function_Tree_set = (*<b>new</b> ValueFunction{ <span style='color:#b08000;'>0</span>, <span style='color:#b08000;'>2</span>, <span style='color:#b08000;'>1</span>, <span style='color:#bf0303;'>&quot;Tree&quot;</span>, <span style='color:#bf0303;'>&quot;set&quot;</span>, Functions_Tree, <span style='color:#b08000;'>1</span> });
 <b>namespace</b> {
 <b>class</b> Category_Tree;
 <b>class</b> Type_Tree;
@@ -34,7 +34,7 @@ S&lt;TypeValue&gt; CreateValue(Type_Tree&amp; parent, <span style='color:#0057ae
     CycleCheck&lt;Category_Tree&gt; marker(*<b>this</b>);
     TRACE_FUNCTION(<span style='color:#bf0303;'>&quot;Tree (init @category)&quot;</span>)
   }
-  ReturnTuple Dispatch(<span style='color:#0057ae;'>const</span> DFunction&lt;SymbolScope::CATEGORY&gt;&amp; label, <span style='color:#0057ae;'>const</span> ParamTuple&amp; params, <span style='color:#0057ae;'>const</span> ValueTuple&amp; args) <b>final</b> {
+  ReturnTuple Dispatch(<span style='color:#0057ae;'>const</span> CategoryFunction&amp; label, <span style='color:#0057ae;'>const</span> ParamTuple&amp; params, <span style='color:#0057ae;'>const</span> ValueTuple&amp; args) <b>final</b> {
     <b>using</b> CallType = ReturnTuple(Category_Tree::*)(<span style='color:#0057ae;'>const</span> ParamTuple&amp;, <span style='color:#0057ae;'>const</span> ValueTuple&amp;);
     <b>return</b> TypeCategory::Dispatch(label, params, args);
   }
@@ -83,16 +83,16 @@ Category_Tree&amp; CreateCategory() {
     CycleCheck&lt;Type_Tree&gt; marker(*<b>this</b>);
     TRACE_FUNCTION(<span style='color:#bf0303;'>&quot;Tree (init @type)&quot;</span>)
   }
-  ReturnTuple Dispatch(<span style='color:#0057ae;'>const</span> DFunction&lt;SymbolScope::TYPE&gt;&amp; label, <span style='color:#0057ae;'>const</span> ParamTuple&amp; params, <span style='color:#0057ae;'>const</span> ValueTuple&amp; args) <b>final</b> {
+  ReturnTuple Dispatch(<span style='color:#0057ae;'>const</span> TypeFunction&amp; label, <span style='color:#0057ae;'>const</span> ParamTuple&amp; params, <span style='color:#0057ae;'>const</span> ValueTuple&amp; args) <b>final</b> {
     <b>using</b> CallType = ReturnTuple(Type_Tree::*)(<span style='color:#0057ae;'>const</span> ParamTuple&amp;, <span style='color:#0057ae;'>const</span> ValueTuple&amp;);
     <span style='color:#0057ae;'>static</span> <span style='color:#0057ae;'>const</span> CallType Table_Tree[] = {
       &amp;Type_Tree::Call_new,
     };
-    <b>if</b> (label.Collection() == Functions_Tree) {
-      <b>if</b> (label.Num() &lt; <span style='color:#b08000;'>0</span> || label.Num() &gt;= <span style='color:#b08000;'>1</span>) {
-        FAIL() &lt;&lt; <span style='color:#bf0303;'>&quot;Bad function call &quot;</span> &lt;&lt; label.FunctionName();
+    <b>if</b> (label.collection == Functions_Tree) {
+      <b>if</b> (label.function_num &lt; <span style='color:#b08000;'>0</span> || label.function_num &gt;= <span style='color:#b08000;'>1</span>) {
+        FAIL() &lt;&lt; <span style='color:#bf0303;'>&quot;Bad function call &quot;</span> &lt;&lt; label;
       }
-      <b>return</b> (<b>this</b>-&gt;*Table_Tree[label.Num()])(params, args);
+      <b>return</b> (<b>this</b>-&gt;*Table_Tree[label.function_num])(params, args);
     }
     <b>return</b> TypeInstance::Dispatch(label, params, args);
   }
@@ -112,7 +112,7 @@ Type_Tree&amp; CreateType(Params&lt;<span style='color:#b08000;'>2</span>&gt;::T
 }
 <b>struct</b> Value_Tree : <b>public</b> TypeValue {
   Value_Tree(Type_Tree&amp; p, <span style='color:#0057ae;'>const</span> ParamTuple&amp; params, <span style='color:#0057ae;'>const</span> ValueTuple&amp; args) : parent(p), Var_root((args.At(<span style='color:#b08000;'>0</span>))) {}
-  ReturnTuple Dispatch(<span style='color:#0057ae;'>const</span> S&lt;TypeValue&gt;&amp; self, <span style='color:#0057ae;'>const</span> DFunction&lt;SymbolScope::VALUE&gt;&amp; label, <span style='color:#0057ae;'>const</span> ParamTuple&amp; params,<span style='color:#0057ae;'>const</span> ValueTuple&amp; args) <b>final</b> {
+  ReturnTuple Dispatch(<span style='color:#0057ae;'>const</span> S&lt;TypeValue&gt;&amp; self, <span style='color:#0057ae;'>const</span> ValueFunction&amp; label, <span style='color:#0057ae;'>const</span> ParamTuple&amp; params,<span style='color:#0057ae;'>const</span> ValueTuple&amp; args) <b>final</b> {
     <b>using</b> CallType = ReturnTuple(Value_Tree::*)(<span style='color:#0057ae;'>const</span> S&lt;TypeValue&gt;&amp;, <span style='color:#0057ae;'>const</span> ParamTuple&amp;, <span style='color:#0057ae;'>const</span> ValueTuple&amp;);
     <span style='color:#0057ae;'>static</span> <span style='color:#0057ae;'>const</span> CallType Table_KVReader[] = {
       &amp;Value_Tree::Call_get,
@@ -125,23 +125,23 @@ Type_Tree&amp; CreateType(Params&lt;<span style='color:#b08000;'>2</span>&gt;::T
       &amp;Value_Tree::Call_remove,
       &amp;Value_Tree::Call_set,
     };
-    <b>if</b> (label.Collection() == Functions_KVReader) {
-      <b>if</b> (label.Num() &lt; <span style='color:#b08000;'>0</span> || label.Num() &gt;= <span style='color:#b08000;'>1</span>) {
-        FAIL() &lt;&lt; <span style='color:#bf0303;'>&quot;Bad function call &quot;</span> &lt;&lt; label.FunctionName();
+    <b>if</b> (label.collection == Functions_KVReader) {
+      <b>if</b> (label.function_num &lt; <span style='color:#b08000;'>0</span> || label.function_num &gt;= <span style='color:#b08000;'>1</span>) {
+        FAIL() &lt;&lt; <span style='color:#bf0303;'>&quot;Bad function call &quot;</span> &lt;&lt; label;
       }
-      <b>return</b> (<b>this</b>-&gt;*Table_KVReader[label.Num()])(self, params, args);
+      <b>return</b> (<b>this</b>-&gt;*Table_KVReader[label.function_num])(self, params, args);
     }
-    <b>if</b> (label.Collection() == Functions_KVWriter) {
-      <b>if</b> (label.Num() &lt; <span style='color:#b08000;'>0</span> || label.Num() &gt;= <span style='color:#b08000;'>2</span>) {
-        FAIL() &lt;&lt; <span style='color:#bf0303;'>&quot;Bad function call &quot;</span> &lt;&lt; label.FunctionName();
+    <b>if</b> (label.collection == Functions_KVWriter) {
+      <b>if</b> (label.function_num &lt; <span style='color:#b08000;'>0</span> || label.function_num &gt;= <span style='color:#b08000;'>2</span>) {
+        FAIL() &lt;&lt; <span style='color:#bf0303;'>&quot;Bad function call &quot;</span> &lt;&lt; label;
       }
-      <b>return</b> (<b>this</b>-&gt;*Table_KVWriter[label.Num()])(self, params, args);
+      <b>return</b> (<b>this</b>-&gt;*Table_KVWriter[label.function_num])(self, params, args);
     }
-    <b>if</b> (label.Collection() == Functions_Tree) {
-      <b>if</b> (label.Num() &lt; <span style='color:#b08000;'>0</span> || label.Num() &gt;= <span style='color:#b08000;'>2</span>) {
-        FAIL() &lt;&lt; <span style='color:#bf0303;'>&quot;Bad function call &quot;</span> &lt;&lt; label.FunctionName();
+    <b>if</b> (label.collection == Functions_Tree) {
+      <b>if</b> (label.function_num &lt; <span style='color:#b08000;'>0</span> || label.function_num &gt;= <span style='color:#b08000;'>2</span>) {
+        FAIL() &lt;&lt; <span style='color:#bf0303;'>&quot;Bad function call &quot;</span> &lt;&lt; label;
       }
-      <b>return</b> (<b>this</b>-&gt;*Table_Tree[label.Num()])(self, params, args);
+      <b>return</b> (<b>this</b>-&gt;*Table_Tree[label.function_num])(self, params, args);
     }
     <b>return</b> TypeValue::Dispatch(self, label, params, args);
   }

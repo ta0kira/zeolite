@@ -15,8 +15,8 @@
 <span style='color:#0057ae;'>const</span> <span style='color:#0057ae;'>int</span> collection = <span style='color:#b08000;'>0</span>;
 }
 <span style='color:#0057ae;'>const</span> <span style='color:#0057ae;'>void</span>* <span style='color:#0057ae;'>const</span> Functions_TypeKey = &amp;collection;
-<span style='color:#0057ae;'>const</span> Function&lt;SymbolScope::TYPE,<span style='color:#b08000;'>0</span>,<span style='color:#b08000;'>0</span>,<span style='color:#b08000;'>1</span>&gt;&amp; Function_TypeKey_new = *<b>new</b> Function&lt;SymbolScope::TYPE,<span style='color:#b08000;'>0</span>,<span style='color:#b08000;'>0</span>,<span style='color:#b08000;'>1</span>&gt;(<span style='color:#bf0303;'>&quot;TypeKey&quot;</span>, <span style='color:#bf0303;'>&quot;new&quot;</span>, Functions_TypeKey, <span style='color:#b08000;'>0</span>);
-<span style='color:#0057ae;'>const</span> Function&lt;SymbolScope::VALUE,<span style='color:#b08000;'>0</span>,<span style='color:#b08000;'>0</span>,<span style='color:#b08000;'>1</span>&gt;&amp; Function_TypeKey_get = *<b>new</b> Function&lt;SymbolScope::VALUE,<span style='color:#b08000;'>0</span>,<span style='color:#b08000;'>0</span>,<span style='color:#b08000;'>1</span>&gt;(<span style='color:#bf0303;'>&quot;TypeKey&quot;</span>, <span style='color:#bf0303;'>&quot;get&quot;</span>, Functions_TypeKey, <span style='color:#b08000;'>0</span>);
+<span style='color:#0057ae;'>const</span> TypeFunction&amp; Function_TypeKey_new = (*<b>new</b> TypeFunction{ <span style='color:#b08000;'>0</span>, <span style='color:#b08000;'>0</span>, <span style='color:#b08000;'>1</span>, <span style='color:#bf0303;'>&quot;TypeKey&quot;</span>, <span style='color:#bf0303;'>&quot;new&quot;</span>, Functions_TypeKey, <span style='color:#b08000;'>0</span> });
+<span style='color:#0057ae;'>const</span> ValueFunction&amp; Function_TypeKey_get = (*<b>new</b> ValueFunction{ <span style='color:#b08000;'>0</span>, <span style='color:#b08000;'>0</span>, <span style='color:#b08000;'>1</span>, <span style='color:#bf0303;'>&quot;TypeKey&quot;</span>, <span style='color:#bf0303;'>&quot;get&quot;</span>, Functions_TypeKey, <span style='color:#b08000;'>0</span> });
 <b>namespace</b> {
 <b>class</b> Category_TypeKey;
 <b>class</b> Type_TypeKey;
@@ -30,7 +30,7 @@ S&lt;TypeValue&gt; CreateValue(Type_TypeKey&amp; parent, <span style='color:#005
     CycleCheck&lt;Category_TypeKey&gt; marker(*<b>this</b>);
     TRACE_FUNCTION(<span style='color:#bf0303;'>&quot;TypeKey (init @category)&quot;</span>)
   }
-  ReturnTuple Dispatch(<span style='color:#0057ae;'>const</span> DFunction&lt;SymbolScope::CATEGORY&gt;&amp; label, <span style='color:#0057ae;'>const</span> ParamTuple&amp; params, <span style='color:#0057ae;'>const</span> ValueTuple&amp; args) <b>final</b> {
+  ReturnTuple Dispatch(<span style='color:#0057ae;'>const</span> CategoryFunction&amp; label, <span style='color:#0057ae;'>const</span> ParamTuple&amp; params, <span style='color:#0057ae;'>const</span> ValueTuple&amp; args) <b>final</b> {
     <b>using</b> CallType = ReturnTuple(Category_TypeKey::*)(<span style='color:#0057ae;'>const</span> ParamTuple&amp;, <span style='color:#0057ae;'>const</span> ValueTuple&amp;);
     <b>return</b> TypeCategory::Dispatch(label, params, args);
   }
@@ -68,7 +68,7 @@ Category_TypeKey&amp; CreateCategory() {
     CycleCheck&lt;Type_TypeKey&gt; marker(*<b>this</b>);
     TRACE_FUNCTION(<span style='color:#bf0303;'>&quot;TypeKey (init @type)&quot;</span>)
   }
-  ReturnTuple Dispatch(<span style='color:#0057ae;'>const</span> DFunction&lt;SymbolScope::TYPE&gt;&amp; label, <span style='color:#0057ae;'>const</span> ParamTuple&amp; params, <span style='color:#0057ae;'>const</span> ValueTuple&amp; args) <b>final</b> {
+  ReturnTuple Dispatch(<span style='color:#0057ae;'>const</span> TypeFunction&amp; label, <span style='color:#0057ae;'>const</span> ParamTuple&amp; params, <span style='color:#0057ae;'>const</span> ValueTuple&amp; args) <b>final</b> {
     <b>using</b> CallType = ReturnTuple(Type_TypeKey::*)(<span style='color:#0057ae;'>const</span> ParamTuple&amp;, <span style='color:#0057ae;'>const</span> ValueTuple&amp;);
     <span style='color:#0057ae;'>static</span> <span style='color:#0057ae;'>const</span> CallType Table_Equals[] = {
       &amp;Type_TypeKey::Call_equals,
@@ -79,23 +79,23 @@ Category_TypeKey&amp; CreateCategory() {
     <span style='color:#0057ae;'>static</span> <span style='color:#0057ae;'>const</span> CallType Table_TypeKey[] = {
       &amp;Type_TypeKey::Call_new,
     };
-    <b>if</b> (label.Collection() == Functions_Equals) {
-      <b>if</b> (label.Num() &lt; <span style='color:#b08000;'>0</span> || label.Num() &gt;= <span style='color:#b08000;'>1</span>) {
-        FAIL() &lt;&lt; <span style='color:#bf0303;'>&quot;Bad function call &quot;</span> &lt;&lt; label.FunctionName();
+    <b>if</b> (label.collection == Functions_Equals) {
+      <b>if</b> (label.function_num &lt; <span style='color:#b08000;'>0</span> || label.function_num &gt;= <span style='color:#b08000;'>1</span>) {
+        FAIL() &lt;&lt; <span style='color:#bf0303;'>&quot;Bad function call &quot;</span> &lt;&lt; label;
       }
-      <b>return</b> (<b>this</b>-&gt;*Table_Equals[label.Num()])(params, args);
+      <b>return</b> (<b>this</b>-&gt;*Table_Equals[label.function_num])(params, args);
     }
-    <b>if</b> (label.Collection() == Functions_LessThan) {
-      <b>if</b> (label.Num() &lt; <span style='color:#b08000;'>0</span> || label.Num() &gt;= <span style='color:#b08000;'>1</span>) {
-        FAIL() &lt;&lt; <span style='color:#bf0303;'>&quot;Bad function call &quot;</span> &lt;&lt; label.FunctionName();
+    <b>if</b> (label.collection == Functions_LessThan) {
+      <b>if</b> (label.function_num &lt; <span style='color:#b08000;'>0</span> || label.function_num &gt;= <span style='color:#b08000;'>1</span>) {
+        FAIL() &lt;&lt; <span style='color:#bf0303;'>&quot;Bad function call &quot;</span> &lt;&lt; label;
       }
-      <b>return</b> (<b>this</b>-&gt;*Table_LessThan[label.Num()])(params, args);
+      <b>return</b> (<b>this</b>-&gt;*Table_LessThan[label.function_num])(params, args);
     }
-    <b>if</b> (label.Collection() == Functions_TypeKey) {
-      <b>if</b> (label.Num() &lt; <span style='color:#b08000;'>0</span> || label.Num() &gt;= <span style='color:#b08000;'>1</span>) {
-        FAIL() &lt;&lt; <span style='color:#bf0303;'>&quot;Bad function call &quot;</span> &lt;&lt; label.FunctionName();
+    <b>if</b> (label.collection == Functions_TypeKey) {
+      <b>if</b> (label.function_num &lt; <span style='color:#b08000;'>0</span> || label.function_num &gt;= <span style='color:#b08000;'>1</span>) {
+        FAIL() &lt;&lt; <span style='color:#bf0303;'>&quot;Bad function call &quot;</span> &lt;&lt; label;
       }
-      <b>return</b> (<b>this</b>-&gt;*Table_TypeKey[label.Num()])(params, args);
+      <b>return</b> (<b>this</b>-&gt;*Table_TypeKey[label.function_num])(params, args);
     }
     <b>return</b> TypeInstance::Dispatch(label, params, args);
   }
@@ -133,16 +133,16 @@ Type_TypeKey&amp; CreateType(Params&lt;<span style='color:#b08000;'>1</span>&gt;
 }
 <b>struct</b> Value_TypeKey : <b>public</b> TypeValue {
   Value_TypeKey(Type_TypeKey&amp; p, <span style='color:#0057ae;'>const</span> ParamTuple&amp; params, <span style='color:#0057ae;'>const</span> ValueTuple&amp; args) : parent(p), Var_index((args.At(<span style='color:#b08000;'>0</span>))-&gt;AsInt()) {}
-  ReturnTuple Dispatch(<span style='color:#0057ae;'>const</span> S&lt;TypeValue&gt;&amp; self, <span style='color:#0057ae;'>const</span> DFunction&lt;SymbolScope::VALUE&gt;&amp; label, <span style='color:#0057ae;'>const</span> ParamTuple&amp; params,<span style='color:#0057ae;'>const</span> ValueTuple&amp; args) <b>final</b> {
+  ReturnTuple Dispatch(<span style='color:#0057ae;'>const</span> S&lt;TypeValue&gt;&amp; self, <span style='color:#0057ae;'>const</span> ValueFunction&amp; label, <span style='color:#0057ae;'>const</span> ParamTuple&amp; params,<span style='color:#0057ae;'>const</span> ValueTuple&amp; args) <b>final</b> {
     <b>using</b> CallType = ReturnTuple(Value_TypeKey::*)(<span style='color:#0057ae;'>const</span> S&lt;TypeValue&gt;&amp;, <span style='color:#0057ae;'>const</span> ParamTuple&amp;, <span style='color:#0057ae;'>const</span> ValueTuple&amp;);
     <span style='color:#0057ae;'>static</span> <span style='color:#0057ae;'>const</span> CallType Table_TypeKey[] = {
       &amp;Value_TypeKey::Call_get,
     };
-    <b>if</b> (label.Collection() == Functions_TypeKey) {
-      <b>if</b> (label.Num() &lt; <span style='color:#b08000;'>0</span> || label.Num() &gt;= <span style='color:#b08000;'>1</span>) {
-        FAIL() &lt;&lt; <span style='color:#bf0303;'>&quot;Bad function call &quot;</span> &lt;&lt; label.FunctionName();
+    <b>if</b> (label.collection == Functions_TypeKey) {
+      <b>if</b> (label.function_num &lt; <span style='color:#b08000;'>0</span> || label.function_num &gt;= <span style='color:#b08000;'>1</span>) {
+        FAIL() &lt;&lt; <span style='color:#bf0303;'>&quot;Bad function call &quot;</span> &lt;&lt; label;
       }
-      <b>return</b> (<b>this</b>-&gt;*Table_TypeKey[label.Num()])(self, params, args);
+      <b>return</b> (<b>this</b>-&gt;*Table_TypeKey[label.function_num])(self, params, args);
     }
     <b>return</b> TypeValue::Dispatch(self, label, params, args);
   }

@@ -30,12 +30,12 @@ limitations under the License.
 const int Collection_SimpleOutput = 0;
 const void* const Functions_SimpleOutput = &Collection_SimpleOutput;
 
-const Function<SymbolScope::TYPE,0,0,1>& Function_SimpleOutput_stdout =
-  *new Function<SymbolScope::TYPE,0,0,1>("SimpleOutput", "stdout", Functions_SimpleOutput, 0);
-const Function<SymbolScope::TYPE,0,0,1>& Function_SimpleOutput_stderr =
-  *new Function<SymbolScope::TYPE,0,0,1>("SimpleOutput", "stderr", Functions_SimpleOutput, 1);
-const Function<SymbolScope::TYPE,0,0,1>& Function_SimpleOutput_error =
-  *new Function<SymbolScope::TYPE,0,0,1>("SimpleOutput", "error", Functions_SimpleOutput, 2);
+const TypeFunction& Function_SimpleOutput_stdout =
+  *new TypeFunction{ 0, 0, 1, "SimpleOutput", "stdout", Functions_SimpleOutput, 0 };
+const TypeFunction& Function_SimpleOutput_stderr =
+  *new TypeFunction{ 0, 0, 1, "SimpleOutput", "stderr", Functions_SimpleOutput, 1 };
+const TypeFunction& Function_SimpleOutput_error =
+  *new TypeFunction{ 0, 0, 1, "SimpleOutput", "error", Functions_SimpleOutput, 2 };
 
 namespace {
 
@@ -51,12 +51,12 @@ struct Type_SimpleOutput : public TypeInstance {
   std::string CategoryName() const final { return "SimpleOutput"; }
   void BuildTypeName(std::ostream& output) const final { output << CategoryName(); }
 
-  ReturnTuple Dispatch(const DFunction<SymbolScope::TYPE>& label,
+  ReturnTuple Dispatch(const TypeFunction& label,
                        const ParamTuple& params, const ValueTuple& args) final {
-    if (args.Size() != label.ArgCount()) {
+    if (args.Size() != label.arg_count) {
       FAIL() << "Wrong number of args";
     }
-    if (params.Size() != label.ParamCount()){
+    if (params.Size() != label.param_count){
       FAIL() << "Wrong number of params";
     }
     if (&label == &Function_SimpleOutput_stdout) {
@@ -79,12 +79,12 @@ class Value_SimpleOutput : public TypeValue {
   std::string CategoryName() const final { return "SimpleOutput"; }
 
   ReturnTuple Dispatch(const S<TypeValue>& self,
-                       const DFunction<SymbolScope::VALUE>& label,
+                       const ValueFunction& label,
                        const ParamTuple& params, const ValueTuple& args) final {
-    if (args.Size() != label.ArgCount()) {
+    if (args.Size() != label.arg_count) {
       FAIL() << "Wrong number of args";
     }
-    if (params.Size() != label.ParamCount()){
+    if (params.Size() != label.param_count){
       FAIL() << "Wrong number of params";
     }
     if (&label == &Function_Writer_write) {
@@ -108,12 +108,12 @@ class Value_SimpleError : public TypeValue {
   std::string CategoryName() const final { return "SimpleError"; }
 
   ReturnTuple Dispatch(const S<TypeValue>& self,
-                       const DFunction<SymbolScope::VALUE>& label,
+                       const ValueFunction& label,
                        const ParamTuple& params, const ValueTuple& args) final {
-    if (args.Size() != label.ArgCount()) {
+    if (args.Size() != label.arg_count) {
       FAIL() << "Wrong number of args";
     }
-    if (params.Size() != label.ParamCount()){
+    if (params.Size() != label.param_count){
       FAIL() << "Wrong number of params";
     }
     if (&label == &Function_Writer_write) {

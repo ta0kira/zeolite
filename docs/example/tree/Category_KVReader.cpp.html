@@ -15,7 +15,7 @@
 <span style='color:#0057ae;'>const</span> <span style='color:#0057ae;'>int</span> collection = <span style='color:#b08000;'>0</span>;
 }
 <span style='color:#0057ae;'>const</span> <span style='color:#0057ae;'>void</span>* <span style='color:#0057ae;'>const</span> Functions_KVReader = &amp;collection;
-<span style='color:#0057ae;'>const</span> Function&lt;SymbolScope::VALUE,<span style='color:#b08000;'>0</span>,<span style='color:#b08000;'>1</span>,<span style='color:#b08000;'>1</span>&gt;&amp; Function_KVReader_get = *<b>new</b> Function&lt;SymbolScope::VALUE,<span style='color:#b08000;'>0</span>,<span style='color:#b08000;'>1</span>,<span style='color:#b08000;'>1</span>&gt;(<span style='color:#bf0303;'>&quot;KVReader&quot;</span>, <span style='color:#bf0303;'>&quot;get&quot;</span>, Functions_KVReader, <span style='color:#b08000;'>0</span>);
+<span style='color:#0057ae;'>const</span> ValueFunction&amp; Function_KVReader_get = (*<b>new</b> ValueFunction{ <span style='color:#b08000;'>0</span>, <span style='color:#b08000;'>1</span>, <span style='color:#b08000;'>1</span>, <span style='color:#bf0303;'>&quot;KVReader&quot;</span>, <span style='color:#bf0303;'>&quot;get&quot;</span>, Functions_KVReader, <span style='color:#b08000;'>0</span> });
 <b>namespace</b> {
 <b>class</b> Category_KVReader;
 <b>class</b> Type_KVReader;
