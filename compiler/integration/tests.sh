@@ -116,6 +116,7 @@ END
 }
 
 SKIP_TESTS=${SKIP_TESTS-0}
+START_WITH=${1-}
 
 start_skipping() {
   SKIP_TESTS=1
@@ -125,11 +126,24 @@ stop_skipping() {
   SKIP_TESTS=0
 }
 
+should_skip() {
+  local name=${1-}
+  if [[ "$START_WITH" ]]; then
+    if echo "$name" | egrep -q "$START_WITH"; then
+      START_WITH=
+      stop_skipping
+    else
+      start_skipping
+    fi
+  fi
+  (($SKIP_TESTS))
+}
+
 expect_error() {
   ((count++)) || true
   local name=$1
   shift
-  if ((SKIP_TESTS)); then
+  if should_skip "$name"; then
     echo "Test \"$name\" ($count) skipped without compiling or executing" 1>&2
     return
   fi
@@ -158,7 +172,7 @@ expect_runs() {
   ((count++)) || true
   local name=$1
   shift
-  if ((SKIP_TESTS)); then
+  if should_skip "$name"; then
     echo "Test \"$name\" ($count) skipped without compiling or executing" 1>&2
     return
   fi
@@ -189,7 +203,7 @@ expect_crashes() {
   ((count++)) || true
   local name=$1
   shift
-  if ((SKIP_TESTS)); then
+  if should_skip "$name"; then
     echo "Test \"$name\" ($count) skipped without compiling or executing" 1>&2
     return
   fi

@@ -130,7 +130,7 @@ instance Show c => Show (AnyCategory c) where
       "\n}\n"
     namespace ns
       | null ns = ""
-      | otherwise = "/*" ++ ns ++ "*/ "
+      | otherwise = " /*" ++ ns ++ "*/"
     formatContext cs = "/*" ++ formatFullContext cs ++ "*/"
     formatParams ps = let (con,inv,cov) = (foldr partitionParam ([],[],[]) ps) in
       "<" ++ intercalate "," con ++ "|" ++
