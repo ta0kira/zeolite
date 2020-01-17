@@ -74,11 +74,12 @@ compile() {
   local temp=$1
   local code=$(cat)
   local main="$temp/main.cpp"
+  local full_names="$temp/names.txt"
   (
     set -e
     cd "$temp" || exit 1
     echo "${command0[@]}" >> "$temp/$errors"
-    local full_names=$({ "${command0[@]}" |& tee -a "$temp/$errors"; } < <(echo "$code$test_base"))
+    "${command0[@]}" < <(echo "$code$test_base") 2> >(tee -a "$temp/$errors" 1>&2) > "$full_names"
     create_main "$main" "$full_names"
     [[ "${PIPESTATUS[0]}" = 0 ]] || return 1
     command1=(
@@ -98,8 +99,7 @@ compile() {
 create_main() {
   local main=$1
   local full_names=$2
-  local getter=$(echo "$full_names" |
-                 egrep "(^|::)$main_category$" |
+  local getter=$(egrep "(^|::)$main_category$" "$full_names" |
                  sed -r 's/^(|[^:]+::)([^:]+)/\1GetType_\2/')
   cat > "$main" <<END
 #include "category-source.hpp"

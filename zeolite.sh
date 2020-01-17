@@ -64,23 +64,19 @@ compile() {
   shift 3
   local files=("$@")
   local main="$temp/main.cpp"
+  local full_names="$temp/names.txt"
   (
     set -e
     cd "$temp" || exit 1
     command0=("$compiler" "$root" "$here" "${standard_tm[@]}" -- "${files[@]}")
     echo "Compiling Zeolite sources..." 1>&2
     echo "${command0[@]}" >> "$temp/$errors"
-    local full_names=$("${command0[@]}" |& tee -a "$temp/$errors")
-    if [[ "${PIPESTATUS[0]}" != 0 ]]; then
+    if ! "${command0[@]}" 2> >(tee -a "$temp/$errors" 1>&2) > "$full_names"; then
       echo "$0: Failed to compile Zeolite sources. See $temp for more details." 1>&2
       general_help
       return 1
     fi
     create_main "$main" "$main_category" "$full_names"
-    if [ ! -r "$temp/Category_$main_category.hpp" ]; then
-      echo "$0: $main_category has not been defined." 1>&2
-      return 1
-    fi
     command1=(
       "${COMPILE_CXX[@]}" -o "$binary_name"
       -I"$root/capture-thread/include"
@@ -104,19 +100,20 @@ create_main() {
   local main=$1
   local main_category=$2
   local full_names=$3
-  local match_count=$(echo "$full_names" | egrep -c "(^|::)$main_category$")
+  local match_count=$(egrep -c "(^|::)$main_category$" "$full_names")
   if [[ "$match_count" -eq 0 ]]; then
     echo "$0: Invalid main category name '$main_category'" 1>&2
+    echo "$0: Failed to compile C++ output. See $temp for more details." 1>&2
     general_help
     exit 1
   fi
   if [[ "$match_count" -gt 1 ]]; then
     echo "$0: Ambiguous main category name '$main_category'" 1>&2
+    echo "$0: Failed to compile C++ output. See $temp for more details." 1>&2
     general_help
     exit 1
   fi
-  local getter=$(echo "$full_names" |
-                 egrep "(^|::)$main_category$" |
+  local getter=$(egrep "(^|::)$main_category$" "$full_names" |
                  sed -r 's/^(|[^:]+::)([^:]+)/\1GetType_\2/')
   cat > "$main" <<END
 #include "category-source.hpp"
