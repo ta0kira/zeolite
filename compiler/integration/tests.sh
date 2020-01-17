@@ -24,7 +24,7 @@ cd "$(dirname "$0")"
 
 root=$PWD/../..
 errors='errors.txt'
-compiler_hs="$root/compiler/CompilerCxx/compiler.hs"
+compiler_hs="$root/compiler/Cli/compiler.hs"
 compiler="$PWD/compiler"
 main_category='Test'
 
@@ -34,12 +34,11 @@ main_category='Test'
 standard_src=('standard.0rp' 'standard.0rx')
 
 ghc -i"$root/compiler" "$compiler_hs" -o "$compiler"
-(cd "$root/standard" && "$compiler" "$root" "" "${standard_src[@]}" > /dev/null)
+(cd "$root/standard" && "$compiler" -c "${standard_src[@]}")
 
-standard_tm=($root/standard/*.0rp)
+standard_tm=(-i "$root/standard/standard.0rp")
 standard_inc=($root/standard)
 cache_obj=$PWD/.cache
-command0=("$compiler" "$root" "" "${standard_tm[@]}" -- /dev/stdin)
 
 compile_src() {
   [[ -d "$cache_obj" ]] || mkdir "$cache_obj"
@@ -72,18 +71,23 @@ count=0
 
 compile() {
   local temp=$1
-  local code=$(cat)
   local main="$temp/main.cpp"
-  local full_names="$temp/names.txt"
+  local compiled_name="$temp/compiled"
+  local test_src="$temp/test.0rx"
   (
     set -e
     cd "$temp" || exit 1
+    { cat; echo "$test_base"; } > "$test_src"
+    local command0=(
+      "$compiler"
+      -m "Test" "$compiled_name"
+      "${standard_tm[@]}"
+      "$test_src")
     echo "${command0[@]}" >> "$temp/$errors"
-    "${command0[@]}" < <(echo "$code$test_base") 2> >(tee -a "$temp/$errors" 1>&2) > "$full_names"
-    create_main "$main" "$full_names"
+    "${command0[@]}" 2> >(tee -a "$temp/$errors" 1>&2)
     [[ "${PIPESTATUS[0]}" = 0 ]] || return 1
     command1=(
-      "${COMPILE_CXX[@]}" -o "$temp/compiled"
+      "${COMPILE_CXX[@]}" -o "$compiled_name"
       -I"$root/capture-thread/include"
       -I"$root/base"
       -I"$temp"
@@ -149,16 +153,10 @@ expect_error() {
   fi
   local patterns=("$@")
   local temp=$(mktemp -d)
-  local code=$(cat)
-  (
-    set -e
-    cd "$temp" || exit 1
-    echo "${command0[@]}" >> "$temp/$errors"
-    if "${command0[@]}" &>> "$temp/$errors" < <(echo "$code$test_base"); then
-      echo "Test \"$name\" ($count): Expected compile error; see output in $temp" 1>&2
-      return 1
-    fi
-  )
+  if compile "$temp"; then
+    echo "Test \"$name\" ($count): Expected compile error; see output in $temp" 1>&2
+    return 1
+  fi
   [[ -z "${patterns-}" ]] || for p in "${patterns[@]}"; do
     if ! egrep -q -- "$p" "$temp/$errors"; then
       echo "Test \"$name\" ($count): Expected pattern '$p' in error; see output in $temp" 1>&2

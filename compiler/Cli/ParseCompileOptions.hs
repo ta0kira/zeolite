@@ -37,6 +37,7 @@ optionHelpText = [
     "-m [category] [binary]: Compile the concrete category into a binary file.",
     "-c: Only compile the individual files. (default)",
     "-i: Include a single .0rp file without compiling it.",
+    "-p: Set a path prefix for finding the specified source files.",
     "[filenames...]: Compile the categories from the source files."
   ]
 
@@ -48,46 +49,54 @@ parseCompileOptions = parseAll emptyCompileOptions . zip [1..] where
     parseAll co' os'
   argError n o m = compileError $ "Argument " ++ show n ++ " (\"" ++ o ++ "\"): " ++ m
   checkFilename n f o
-    | f =~ "^(/[^/]+|[^-/]+)(/[^/]+)*$" = return ()
-    | null o    = argError n f "Invalid filename."
-    | otherwise = argError n f $ "Invalid filename for " ++ o ++ "."
+    | f =~ "^(/[^/]+|[^-/][^/]*)(/[^/]+)*$" = return ()
+    | null o    = argError n f "Invalid file path."
+    | otherwise = argError n f $ "Invalid file path for " ++ o ++ "."
   checkCategoryName n c o
     | c =~ "^[A-Z][A-Za-z0-9]+$" = return ()
     | null o    = argError n c "Invalid category name."
     | otherwise = argError n c $ "Invalid category name for " ++ o ++ "."
 
-  parseSingle (CompileOptions _ is cs ds m) ((n,"-h"):os) =
-    return (os,CompileOptions HelpNeeded is cs ds m)
+  parseSingle (CompileOptions _ is cs ds p m) ((n,"-h"):os) =
+    return (os,CompileOptions HelpNeeded is cs ds p m)
 
-  parseSingle (CompileOptions h is cs ds m) ((n,"-c"):os)
+  parseSingle (CompileOptions h is cs ds p m) ((n,"-c"):os)
     | m /= CompileUnspecified = argError n "-c" "Compiler mode already set."
-    | otherwise = return (os,CompileOptions (maybeDisableHelp h) is cs ds CompileIncremental)
+    | otherwise = return (os,CompileOptions (maybeDisableHelp h) is cs ds p CompileIncremental)
 
-  parseSingle (CompileOptions h is cs ds m) ((n,"-m"):os)
+  parseSingle (CompileOptions h is cs ds p m) ((n,"-m"):os)
     | m /= CompileUnspecified = argError n "-m" "Compiler mode already set."
     | otherwise = update os where
       update ((n1,c):(n2,f):os) =  do
         checkCategoryName n1 c "-m"
         checkFilename     n2 f "-m"
-        return (os,CompileOptions (maybeDisableHelp h) is cs ds (CompileBinary c f))
+        return (os,CompileOptions (maybeDisableHelp h) is cs ds p (CompileBinary c f))
       update _ = argError n "-m" "Requires a category name and an output filename."
 
-  parseSingle (CompileOptions h is cs ds m) ((n,"-i"):os) = update os where
+  parseSingle (CompileOptions h is cs ds p m) ((n,"-i"):os) = update os where
     update ((n,f):os)
       | isSuffixOf ".0rp" f = do
         checkFilename n f "-i"
-        return (os,CompileOptions (maybeDisableHelp h) (is ++ [f]) cs ds m)
+        return (os,CompileOptions (maybeDisableHelp h) (is ++ [f]) cs ds p m)
       | isSuffixOf ".0rx" f = argError n f "Cannot include .0rx source files."
       | otherwise = argError n f "Unknown source file type."
     update _ = argError n "-i" "Requires a source filename."
 
+  parseSingle (CompileOptions h is cs ds p m) ((n,"-p"):os)
+    | not $ null p = argError n "-p" "Path prefix already set."
+    | otherwise = update os where
+      update ((n,p):os) = do
+        checkFilename n p "-p"
+        return (os,CompileOptions (maybeDisableHelp h) is cs ds p m)
+      update _ = argError n "-p" "Requires a path prefix."
+
   parseSingle _ ((n,o@('-':_)):os) = argError n o "Unknown option."
 
-  parseSingle (CompileOptions h is cs ds m) ((n,f):os)
+  parseSingle (CompileOptions h is cs ds p m) ((n,f):os)
     | isSuffixOf ".0rp" f = do
       checkFilename n f ""
-      return (os,CompileOptions (maybeDisableHelp h) is (cs ++ [f]) ds m)
+      return (os,CompileOptions (maybeDisableHelp h) is (cs ++ [f]) ds p m)
     | isSuffixOf ".0rx" f = do
       checkFilename n f ""
-      return (os,CompileOptions (maybeDisableHelp h) is cs (ds ++ [f]) m)
+      return (os,CompileOptions (maybeDisableHelp h) is cs (ds ++ [f]) p m)
     | otherwise = argError n f "Unknown source file type."

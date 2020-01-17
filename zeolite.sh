@@ -25,13 +25,13 @@ cd "$(dirname "$0")"
 
 root=$PWD
 errors='errors.txt'
-compiler="$root/compiler/CompilerCxx/compiler"
+compiler="$root/compiler/Cli/compiler"
 
 [[ "${COMPILER_CXX-}" ]] || COMPILER_CXX=clang++
 [[ "${COMPILE_CXX-}" ]] || COMPILE_CXX=("$COMPILER_CXX" -O2 -std=c++11)
 
 standard_src=('standard.0rp' 'standard.0rx')
-standard_tm=("$root/standard/standard.0rp")
+standard_tm=(-i "$root/standard/standard.0rp")
 extra_src=(
   "$root/base/builtin.cpp"
   "$root/base/category-source.cpp"
@@ -50,7 +50,7 @@ extra_src=(
 
 init() {
   ghc -i"$root/compiler" "$compiler.hs"
-  (cd "$root/standard" && "$compiler" "$root" "" "${standard_src[@]}" > /dev/null)
+  (cd "$root/standard" && "$compiler" -c "${standard_src[@]}")
 }
 
 general_help() {
@@ -64,19 +64,22 @@ compile() {
   shift 3
   local files=("$@")
   local main="$temp/main.cpp"
-  local full_names="$temp/names.txt"
   (
     set -e
     cd "$temp" || exit 1
-    command0=("$compiler" "$root" "$here" "${standard_tm[@]}" -- "${files[@]}")
+    command0=(
+      "$compiler"
+      -p "$here"
+      -m "$main_category" "$binary_name"
+      "${standard_tm[@]}"
+      "${files[@]}")
     echo "Compiling Zeolite sources..." 1>&2
     echo "${command0[@]}" >> "$temp/$errors"
-    if ! "${command0[@]}" 2> >(tee -a "$temp/$errors" 1>&2) > "$full_names"; then
+    if ! "${command0[@]}" 2> >(tee -a "$temp/$errors" 1>&2); then
       echo "$0: Failed to compile Zeolite sources. See $temp for more details." 1>&2
       general_help
       return 1
     fi
-    create_main "$main" "$main_category" "$full_names"
     command1=(
       "${COMPILE_CXX[@]}" -o "$binary_name"
       -I"$root/capture-thread/include"

@@ -23,6 +23,7 @@ module Cli.CompileOptions (
   CompileMode(..),
   HelpMode(..),
   emptyCompileOptions,
+  isCompileBinary,
   maybeDisableHelp,
 ) where
 
@@ -33,6 +34,7 @@ data CompileOptions =
     coInclude :: [String],
     coCompileDeclare :: [String],
     coCompileDefine :: [String],
+    coSourcePrefix :: String,
     coMode :: CompileMode
   } deriving (Show)
 
@@ -43,6 +45,7 @@ emptyCompileOptions =
     coInclude = [],
     coCompileDeclare = [],
     coCompileDefine = [],
+    coSourcePrefix = "",
     coMode = CompileUnspecified
   }
 
@@ -54,6 +57,9 @@ data CompileMode =
     cbFile :: String
   } | CompileIncremental | CompileUnspecified
   deriving (Eq,Show)
+
+isCompileBinary (CompileBinary _ _) = True
+isCompileBinary _                   = False
 
 maybeDisableHelp HelpUnspecified = HelpNotNeeded
 maybeDisableHelp h               = h

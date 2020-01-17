@@ -32,8 +32,10 @@ module CompilerCxx.Naming (
   headerFilename,
   initializerName,
   intersectGetter,
+  mainFilename,
   paramName,
   privateNamepace,
+  qualifiedTypeGetter,
   sourceFilename,
   tableName,
   typeCreator,
@@ -60,6 +62,9 @@ headerFilename n = "Category_" ++ show n ++ ".hpp"
 
 sourceFilename :: CategoryName -> String
 sourceFilename n = "Category_" ++ show n ++ ".cpp"
+
+mainFilename :: String
+mainFilename = "main.cpp"
 
 baseHeaderIncludes :: [String]
 baseHeaderIncludes = ["#include \"category-header.hpp\""]
@@ -126,3 +131,8 @@ valueCreator = "CreateValue"
 
 privateNamepace :: Hashable a => a -> String
 privateNamepace = ("private_" ++) . flip showHex "" . abs . hash
+
+qualifiedTypeGetter :: AnyCategory c -> String
+qualifiedTypeGetter t
+  | null $ getCategoryNamespace t = typeGetter $ getCategoryName t
+  | otherwise = getCategoryNamespace t ++ "::" ++ (typeGetter $ getCategoryName t)
