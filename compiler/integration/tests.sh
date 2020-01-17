@@ -24,9 +24,9 @@ cd "$(dirname "$0")"
 
 root=$PWD/../..
 errors='errors.txt'
-main="$PWD/main.cpp"
 compiler_hs="$root/compiler/CompilerCxx/compiler.hs"
 compiler="$PWD/compiler"
+main_category='Test'
 
 [[ "${COMPILER_CXX-}" ]] || COMPILER_CXX=clang++
 [[ "${COMPILE_CXX-}" ]] || COMPILE_CXX=("$COMPILER_CXX" -O0 -g -std=c++11)
@@ -34,7 +34,7 @@ compiler="$PWD/compiler"
 standard_src=('standard.0rp' 'standard.0rx')
 
 ghc -i"$root/compiler" "$compiler_hs" -o "$compiler"
-(cd "$root/standard" && "$compiler" "$root" "" "${standard_src[@]}")
+(cd "$root/standard" && "$compiler" "$root" "" "${standard_src[@]}" > /dev/null)
 
 standard_tm=($root/standard/*.0rp)
 standard_inc=($root/standard)
@@ -68,14 +68,18 @@ concrete Test {
 
 count=0
 
+# TODO: Merge compiler chaining logic with zeolite.sh.
+
 compile() {
   local temp=$1
   local code=$(cat)
+  local main="$temp/main.cpp"
   (
     set -e
     cd "$temp" || exit 1
     echo "${command0[@]}" >> "$temp/$errors"
-    { "${command0[@]}" |& tee -a "$temp/$errors"; } < <(echo "$code$test_base")
+    local full_names=$({ "${command0[@]}" |& tee -a "$temp/$errors"; } < <(echo "$code$test_base"))
+    create_main "$main" "$full_names"
     [[ "${PIPESTATUS[0]}" = 0 ]] || return 1
     command1=(
       "${COMPILE_CXX[@]}" -o "$temp/compiled"
@@ -84,12 +88,31 @@ compile() {
       -I"$temp"
       -I"$standard_inc"
       "$cache_obj"/*.o
-      "$temp"/*cpp
-      "$main")
+      "$temp"/*cpp)
     echo "${command1[@]}" >> "$temp/$errors"
     "${command1[@]}" |& tee -a "$temp/$errors"
     [[ "${PIPESTATUS[0]}" = 0 ]] || return 1
   )
+}
+
+create_main() {
+  local main=$1
+  local full_names=$2
+  local getter=$(echo "$full_names" |
+                 egrep "(^|::)$main_category$" |
+                 sed -r 's/^(|[^:]+::)([^:]+)/\1GetType_\2/')
+  cat > "$main" <<END
+#include "category-source.hpp"
+
+#include "Category_Runner.hpp"
+#include "Category_$main_category.hpp"
+
+int main() {
+  SetSignalHandler();
+  TRACE_FUNCTION("main")
+  $getter(T_get()).Call(Function_Runner_run, ParamTuple(), ArgTuple());
+}
+END
 }
 
 SKIP_TESTS=${SKIP_TESTS-0}

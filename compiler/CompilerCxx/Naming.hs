@@ -33,6 +33,7 @@ module CompilerCxx.Naming (
   initializerName,
   intersectGetter,
   paramName,
+  privateNamepace,
   sourceFilename,
   tableName,
   typeCreator,
@@ -43,6 +44,9 @@ module CompilerCxx.Naming (
   valueName,
   variableName,
 ) where
+
+import Data.Hashable (Hashable,hash)
+import Numeric (showHex)
 
 import Function
 import Procedure
@@ -119,3 +123,6 @@ typeCreator = "CreateType"
 
 valueCreator :: String
 valueCreator = "CreateValue"
+
+privateNamepace :: Hashable a => a -> String
+privateNamepace = ("private_" ++) . flip showHex "" . abs . hash

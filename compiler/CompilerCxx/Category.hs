@@ -27,7 +27,7 @@ module CompilerCxx.Category (
 ) where
 
 import Control.Monad (when)
-import Data.List (intercalate,sortOn)
+import Data.List (intercalate,nub,sortOn)
 import qualified Data.Map as Map
 import qualified Data.Set as Set
 
@@ -48,17 +48,27 @@ import CompilerCxx.Procedure
 data CxxOutput =
   CxxOutput {
     coFilename :: String,
+    coNames :: [String],
     coOutput :: [String]
   }
 
 compileCategoryDeclaration :: Monad m => CategoryMap c -> AnyCategory c -> m CxxOutput
 compileCategoryDeclaration _ t =
-  return $ CxxOutput (headerFilename name) $ guardTop ++ content ++ guardBottom where
+  return $ CxxOutput (headerFilename name) [fullName] (cdOutput file) where
+    file = mergeAll $ [
+        onlyCodes guardTop,
+        onlyCodes baseHeaderIncludes,
+        addNamespace t content,
+        onlyCodes guardBottom
+      ]
+    content = onlyCodes $ collection ++ labels ++ getCategory ++ getType
+    fullName
+      | null $ getCategoryNamespace t = show name
+      | otherwise = getCategoryNamespace t ++ "::" ++ show name
     name = getCategoryName t
     guardTop = ["#ifndef " ++ guardName,"#define " ++ guardName]
     guardBottom = ["#endif"]
     guardName = "HEADER_" ++ show name
-    content = baseHeaderIncludes ++ collection ++ labels ++ getCategory ++ getType
     labels = map label $ filter ((== name) . sfType) $ getCategoryFunctions t
     label f = "extern " ++ functionLabelType f ++ " " ++ functionName f ++ ";"
     collection
@@ -77,7 +87,7 @@ compileInterfaceDefinition t = do
   bottom <- return emptyCode
   ce <- return emptyCode
   te <- typeConstructor
-  commonDefineAll t emptyCode emptyCode emptyCode te []
+  commonDefineAll t [] emptyCode emptyCode emptyCode te []
   where
     typeConstructor = do
       let ps = map vpParam $ getCategoryParams t
@@ -90,8 +100,8 @@ compileInterfaceDefinition t = do
       return $ onlyCode $ typeName (getCategoryName t) ++ "(" ++ allArgs ++ ") : " ++ allInit ++ " {}"
 
 compileConcreteDefinition :: (Show c, Monad m, CompileErrorM m, MergeableM m) =>
-  CategoryMap c -> DefinedCategory c -> m CxxOutput
-compileConcreteDefinition ta dd@(DefinedCategory c n pi fi ms ps fs) = do
+  CategoryMap c -> [String] -> DefinedCategory c -> m CxxOutput
+compileConcreteDefinition ta ns dd@(DefinedCategory c n pi fi ms ps fs) = do
   -- TODO: Move most of this logic to DefinedCategory.
   (_,t) <- getConcreteCategory ta (c,n)
   let params = ParamSet $ getCategoryParams t
@@ -157,7 +167,7 @@ compileConcreteDefinition ta dd@(DefinedCategory c n pi fi ms ps fs) = do
       mergeAllM $ map (compileExecutableProcedure ta n params params2 vm filters filters2 fa tv) tp,
       mergeAllM $ map (createMember r allFilters) tm
     ]
-  commonDefineAll t top bottom ce te fe
+  commonDefineAll t ns top bottom ce te fe
   where
     disallowTypeMembers :: (Show c, Monad m, CompileErrorM m, MergeableM m) =>
       [DefinedMember c] -> m ()
@@ -271,21 +281,26 @@ compileConcreteDefinition ta dd@(DefinedCategory c n pi fi ms ps fs) = do
                                       formatFullContext (vpContext p)
 
 commonDefineAll :: (MergeableM m, Monad m) =>
-  AnyCategory c -> CompiledData [String] -> CompiledData [String] ->
-  CompiledData [String] -> CompiledData [String] -> [ScopedFunction c] -> m CxxOutput
-commonDefineAll t top bottom ce te fe = do
+  AnyCategory c -> [String] -> CompiledData [String] -> CompiledData [String] ->
+  CompiledData [String] -> CompiledData [String] ->
+  [ScopedFunction c] -> m CxxOutput
+commonDefineAll t ns top bottom ce te fe = do
   let filename = sourceFilename name
   (CompiledData req out) <- mergeAllM $ [
       return $ CompiledData (Set.fromList [name]) [],
-      createCollection,
-      createAllLabels
+      return $ addNamespace t $ mergeAll [createCollection,createAllLabels],
+      return namespaces
     ] ++ conditionalContent
   let inherited = Set.fromList $ (map (tiName . vrType) $ getCategoryRefines t) ++
                                  (map (diName . vdType) $ getCategoryDefines t)
   let includes = map (\i -> "#include \"" ++ headerFilename i ++ "\"") $
                    filter (not . isBuiltinCategory) $ Set.toList $ Set.union req inherited
-  return $ CxxOutput filename (baseSourceIncludes ++ includes ++ out)
+  return $ CxxOutput filename [] (baseSourceIncludes ++ includes ++ out)
   where
+    using = nub $ filter (not . null) $ (getCategoryNamespace t):ns
+    namespaces =
+      mergeAll $ map (\n -> onlyCodes ["namespace " ++ n ++ " {}",
+                                       "using namespace " ++ n ++ ";"]) $ using
     conditionalContent
       | isInstanceInterface t = []
       | otherwise = [
@@ -299,25 +314,33 @@ commonDefineAll t top bottom ce te fe = do
         defineInternalType name paramCount,
         return bottom,
         return $ onlyCode $ "}",
-        return $ onlyCodes getCategory,
-        return $ onlyCodes getType
+        return $ addNamespace t $ onlyCodes $ getCategory ++ getType
       ]
     declareTypes =
       return $ onlyCodes $ map (\f -> "class " ++ f name ++ ";") [categoryName,typeName]
     paramCount = length $ getCategoryParams t
     name = getCategoryName t
-    createCollection = return $ onlyCodes [
+    createCollection = onlyCodes [
         "namespace {",
         "const int collection = 0;",
         "}",
         "const void* const " ++ collectionName name ++ " = &collection;"
       ]
     (fc,ft,fv) = partitionByScope sfScope $ getCategoryFunctions t ++ fe
-    createAllLabels = return $ onlyCodes $ concat $ map createLabels [fc,ft,fv]
+    createAllLabels = onlyCodes $ concat $ map createLabels [fc,ft,fv]
     createLabels = map (uncurry createLabelForFunction) . zip [0..] . sortOn sfName . filter ((== name) . sfType)
     getInternal = defineInternalCategory t
     getCategory = defineGetCatetory t
     getType = defineGetType t
+
+addNamespace :: AnyCategory c -> CompiledData [String] -> CompiledData [String]
+addNamespace t cs
+  | null $ getCategoryNamespace t = cs
+  | otherwise = mergeAll [
+      onlyCode $ "namespace " ++ getCategoryNamespace t ++ " {",
+      cs,
+      onlyCode $ "}  // namespace " ++ getCategoryNamespace t
+    ]
 
 createLabelForFunction :: Int -> ScopedFunction c -> String
 createLabelForFunction i f = functionLabelType f ++ " " ++ functionName f ++

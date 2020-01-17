@@ -12,12 +12,16 @@
 <span style='color:#006e28;'>#include </span><span style='color:#ff5500;'>&quot;category-source.hpp&quot;</span>
 <span style='color:#006e28;'>#include </span><span style='color:#ff5500;'>&quot;Category_LockedType.hpp&quot;</span>
 <span style='color:#006e28;'>#include </span><span style='color:#ff5500;'>&quot;Category_TypeKey.hpp&quot;</span>
+<b>namespace</b> private_2be2559f0c1bfc80 {
 <b>namespace</b> {
 <span style='color:#0057ae;'>const</span> <span style='color:#0057ae;'>int</span> collection = <span style='color:#b08000;'>0</span>;
 }
 <span style='color:#0057ae;'>const</span> <span style='color:#0057ae;'>void</span>* <span style='color:#0057ae;'>const</span> Functions_LockedType = &amp;collection;
 <span style='color:#0057ae;'>const</span> CategoryFunction&amp; Function_LockedType_create = (*<b>new</b> CategoryFunction{ <span style='color:#b08000;'>1</span>, <span style='color:#b08000;'>2</span>, <span style='color:#b08000;'>1</span>, <span style='color:#bf0303;'>&quot;LockedType&quot;</span>, <span style='color:#bf0303;'>&quot;create&quot;</span>, Functions_LockedType, <span style='color:#b08000;'>0</span> });
 <span style='color:#0057ae;'>const</span> ValueFunction&amp; Function_LockedType_check = (*<b>new</b> ValueFunction{ <span style='color:#b08000;'>1</span>, <span style='color:#b08000;'>1</span>, <span style='color:#b08000;'>1</span>, <span style='color:#bf0303;'>&quot;LockedType&quot;</span>, <span style='color:#bf0303;'>&quot;check&quot;</span>, Functions_LockedType, <span style='color:#b08000;'>0</span> });
+}  <span style='color:#898887;'>// namespace private_2be2559f0c1bfc80</span>
+<b>namespace</b> private_2be2559f0c1bfc80 {}
+<b>using</b> <b>namespace</b> private_2be2559f0c1bfc80;
 <b>namespace</b> {
 <b>class</b> Category_LockedType;
 <b>class</b> Type_LockedType;
@@ -137,12 +141,14 @@ S&lt;TypeValue&gt; CreateValue(Type_LockedType&amp; parent, <span style='color:#
   <b>return</b> S_get(<b>new</b> Value_LockedType(parent, params, args));
 }
 }
+<b>namespace</b> private_2be2559f0c1bfc80 {
 TypeCategory&amp; GetCategory_LockedType() {
   <b>return</b> CreateCategory();
 }
 TypeInstance&amp; GetType_LockedType(Params&lt;<span style='color:#b08000;'>1</span>&gt;::Type params) {
   <b>return</b> CreateType(params);
 }
+}  <span style='color:#898887;'>// namespace private_2be2559f0c1bfc80</span>
 </pre>
 </body>
 </html>

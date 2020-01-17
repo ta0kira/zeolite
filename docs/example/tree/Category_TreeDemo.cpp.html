@@ -20,6 +20,7 @@
 <span style='color:#006e28;'>#include </span><span style='color:#ff5500;'>&quot;Category_TypeKey.hpp&quot;</span>
 <span style='color:#006e28;'>#include </span><span style='color:#ff5500;'>&quot;Category_TypeTree.hpp&quot;</span>
 <span style='color:#006e28;'>#include </span><span style='color:#ff5500;'>&quot;Category_Value.hpp&quot;</span>
+<b>namespace</b> private_4893fd304b281fa6 {
 <b>namespace</b> {
 <span style='color:#0057ae;'>const</span> <span style='color:#0057ae;'>int</span> collection = <span style='color:#b08000;'>0</span>;
 }
@@ -27,6 +28,9 @@
 <span style='color:#0057ae;'>const</span> CategoryFunction&amp; Function_TreeDemo_check = (*<b>new</b> CategoryFunction{ <span style='color:#b08000;'>1</span>, <span style='color:#b08000;'>2</span>, <span style='color:#b08000;'>0</span>, <span style='color:#bf0303;'>&quot;TreeDemo&quot;</span>, <span style='color:#bf0303;'>&quot;check&quot;</span>, Functions_TreeDemo, <span style='color:#b08000;'>0</span> });
 <span style='color:#0057ae;'>const</span> CategoryFunction&amp; Function_TreeDemo_demoTypeTree = (*<b>new</b> CategoryFunction{ <span style='color:#b08000;'>0</span>, <span style='color:#b08000;'>0</span>, <span style='color:#b08000;'>0</span>, <span style='color:#bf0303;'>&quot;TreeDemo&quot;</span>, <span style='color:#bf0303;'>&quot;demoTypeTree&quot;</span>, Functions_TreeDemo, <span style='color:#b08000;'>1</span> });
 <span style='color:#0057ae;'>const</span> CategoryFunction&amp; Function_TreeDemo_testTree = (*<b>new</b> CategoryFunction{ <span style='color:#b08000;'>0</span>, <span style='color:#b08000;'>0</span>, <span style='color:#b08000;'>0</span>, <span style='color:#bf0303;'>&quot;TreeDemo&quot;</span>, <span style='color:#bf0303;'>&quot;testTree&quot;</span>, Functions_TreeDemo, <span style='color:#b08000;'>2</span> });
+}  <span style='color:#898887;'>// namespace private_4893fd304b281fa6</span>
+<b>namespace</b> private_4893fd304b281fa6 {}
+<b>using</b> <b>namespace</b> private_4893fd304b281fa6;
 <b>namespace</b> {
 <b>class</b> Category_TreeDemo;
 <b>class</b> Type_TreeDemo;
@@ -245,12 +249,14 @@ S&lt;TypeValue&gt; CreateValue(Type_TreeDemo&amp; parent, <span style='color:#00
   <b>return</b> S_get(<b>new</b> Value_TreeDemo(parent, params, args));
 }
 }
+<b>namespace</b> private_4893fd304b281fa6 {
 TypeCategory&amp; GetCategory_TreeDemo() {
   <b>return</b> CreateCategory();
 }
 TypeInstance&amp; GetType_TreeDemo(Params&lt;<span style='color:#b08000;'>0</span>&gt;::Type params) {
   <b>return</b> CreateType(params);
 }
+}  <span style='color:#898887;'>// namespace private_4893fd304b281fa6</span>
 </pre>
 </body>
 </html>

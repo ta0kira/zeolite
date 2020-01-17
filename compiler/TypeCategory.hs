@@ -43,6 +43,7 @@ module TypeCategory (
   getCategoryFilters,
   getCategoryFunctions,
   getCategoryName,
+  getCategoryNamespace,
   getCategoryParams,
   getCategoryRefines,
   getConcreteCategory,
@@ -55,6 +56,7 @@ module TypeCategory (
   isValueConcrete,
   isValueInterface,
   parsedToFunctionType,
+  setCategoryNamespace,
   topoSortCategories,
   uncheckedSubFunction,
   validateCategoryFunction,
@@ -74,6 +76,7 @@ import TypesBase
 data AnyCategory c =
   ValueInterface {
     viContext :: [c],
+    viNamespace :: String,
     viName :: CategoryName,
     viParams :: [ValueParam c],
     viRefines :: [ValueRefine c],
@@ -82,6 +85,7 @@ data AnyCategory c =
   } |
   InstanceInterface {
     iiContext :: [c],
+    iiNamespace :: String,
     iiName :: CategoryName,
     iiParams :: [ValueParam c],
     iiParamFilter :: [ParamFilter c],
@@ -89,6 +93,7 @@ data AnyCategory c =
   } |
   ValueConcrete {
     vcContext :: [c],
+    vcNamespace :: String,
     vcName :: CategoryName,
     vcParams :: [ValueParam c],
     vcRefines :: [ValueRefine c],
@@ -102,27 +107,30 @@ formatFullContext cs = intercalate " -> " (map show cs)
 
 instance Show c => Show (AnyCategory c) where
   show = format where
-    format (ValueInterface cs n ps rs vs fs) =
-      "@value interface " ++ show n ++ formatParams ps ++ " { " ++ formatContext cs ++ "\n" ++
+    format (ValueInterface cs ns n ps rs vs fs) =
+      "@value interface " ++ show n ++ formatParams ps ++ namespace ns ++ " { " ++ formatContext cs ++ "\n" ++
       (intercalate "\n\n" $
          map (\r -> "  " ++ formatRefine r) rs ++
          map (\v -> "  " ++ formatValue v) vs ++
          map (\f -> formatInterfaceFunc f) fs) ++
       "\n}\n"
-    format (InstanceInterface cs n ps vs fs) =
-      "@type interface " ++ show n ++ formatParams ps ++ " { " ++ formatContext cs ++
+    format (InstanceInterface cs ns n ps vs fs) =
+      "@type interface " ++ show n ++ formatParams ps ++ namespace ns ++ " { " ++ formatContext cs ++
       (intercalate "\n\n" $
          map (\v -> "  " ++ formatValue v) vs ++
          map (\f -> formatInterfaceFunc f) fs) ++
       "\n}\n"
-    format (ValueConcrete cs n ps rs ds vs fs) =
-      "concrete " ++ show n ++ formatParams ps ++ " { " ++ formatContext cs ++ "\n" ++
+    format (ValueConcrete cs ns n ps rs ds vs fs) =
+      "concrete " ++ show n ++ formatParams ps ++ namespace ns ++ " { " ++ formatContext cs ++ "\n" ++
       (intercalate "\n\n" $
          map (\r -> "  " ++ formatRefine r) rs ++
          map (\d -> "  " ++ formatDefine d) ds ++
          map (\v -> "  " ++ formatValue v) vs ++
          map (\f -> formatInterfaceFunc f) fs) ++
       "\n}\n"
+    namespace ns
+      | null ns = ""
+      | otherwise = "/*" ++ ns ++ "*/ "
     formatContext cs = "/*" ++ formatFullContext cs ++ "*/"
     formatParams ps = let (con,inv,cov) = (foldr partitionParam ([],[],[]) ps) in
       "<" ++ intercalate "," con ++ "|" ++
@@ -148,50 +156,60 @@ showScope ValueScope    = "@value"
 showScope LocalScope    = "@local"
 
 getCategoryName :: AnyCategory c -> CategoryName
-getCategoryName (ValueInterface _ n _ _ _ _) = n
-getCategoryName (InstanceInterface _ n _ _ _) = n
-getCategoryName (ValueConcrete _ n _ _ _ _ _) = n
+getCategoryName (ValueInterface _ _ n _ _ _ _)  = n
+getCategoryName (InstanceInterface _ _ n _ _ _) = n
+getCategoryName (ValueConcrete _ _ n _ _ _ _ _) = n
 
 getCategoryContext :: AnyCategory c -> [c]
-getCategoryContext (ValueInterface c _ _ _ _ _) = c
-getCategoryContext (InstanceInterface c _ _ _ _) = c
-getCategoryContext (ValueConcrete c _ _ _ _ _ _) = c
+getCategoryContext (ValueInterface c _ _ _ _ _ _)  = c
+getCategoryContext (InstanceInterface c _ _ _ _ _) = c
+getCategoryContext (ValueConcrete c _ _ _ _ _ _ _) = c
+
+getCategoryNamespace :: AnyCategory c -> String
+getCategoryNamespace (ValueInterface _ ns _ _ _ _ _)  = ns
+getCategoryNamespace (InstanceInterface _ ns _ _ _ _) = ns
+getCategoryNamespace (ValueConcrete _ ns _ _ _ _ _ _) = ns
+
+setCategoryNamespace :: String -> AnyCategory c -> AnyCategory c
+setCategoryNamespace ns (ValueInterface c _ n ps rs vs fs)   = (ValueInterface c ns n ps rs vs fs)
+setCategoryNamespace ns (InstanceInterface c _ n ps vs fs)   = (InstanceInterface c ns n ps vs fs)
+setCategoryNamespace ns (ValueConcrete c _ n ps rs ds vs fs) = (ValueConcrete c ns n ps rs ds vs fs)
 
 getCategoryParams :: AnyCategory c -> [ValueParam c]
-getCategoryParams (ValueInterface _ _ ps _ _ _) = ps
-getCategoryParams (InstanceInterface _ _ ps _ _) = ps
-getCategoryParams (ValueConcrete _ _ ps _ _ _ _) = ps
+getCategoryParams (ValueInterface _ _ _ ps _ _ _)  = ps
+getCategoryParams (InstanceInterface _ _ _ ps _ _) = ps
+getCategoryParams (ValueConcrete _ _ _ ps _ _ _ _) = ps
 
 getCategoryRefines :: AnyCategory c -> [ValueRefine c]
-getCategoryRefines (ValueInterface _ _ _ rs _ _) = rs
-getCategoryRefines (InstanceInterface _ _ _ _ _) = []
-getCategoryRefines (ValueConcrete _ _ _ rs _ _ _) = rs
+getCategoryRefines (ValueInterface _ _ _ _ rs _ _)  = rs
+getCategoryRefines (InstanceInterface _ _ _ _ _ _)  = []
+getCategoryRefines (ValueConcrete _ _ _ _ rs _ _ _) = rs
 
 getCategoryDefines :: AnyCategory c -> [ValueDefine c]
-getCategoryDefines (ValueInterface _ _ _ _ _ _) = []
-getCategoryDefines (InstanceInterface _ _ _ _ _) = []
-getCategoryDefines (ValueConcrete _ _ _ _ ds _ _) = ds
+getCategoryDefines (ValueInterface _ _ _ _ _ _ _)  = []
+getCategoryDefines (InstanceInterface _ _ _ _ _ _)  = []
+getCategoryDefines (ValueConcrete _ _ _ _ _ ds _ _) = ds
 
 getCategoryFilters :: AnyCategory c -> [ParamFilter c]
-getCategoryFilters (ValueInterface _ _ _ _ vs _) = vs
-getCategoryFilters (InstanceInterface _ _ _ vs _) = vs
-getCategoryFilters (ValueConcrete _ _ _ _ _ vs _) = vs
+getCategoryFilters (ValueInterface _ _ _ _ _ vs _)  = vs
+getCategoryFilters (InstanceInterface _ _ _ _ vs _) = vs
+getCategoryFilters (ValueConcrete _ _ _ _ _ _ vs _) = vs
 
 getCategoryFunctions :: AnyCategory c -> [ScopedFunction c]
-getCategoryFunctions (ValueInterface _ _ _ _ _ fs) = fs
-getCategoryFunctions (InstanceInterface _ _ _ _ fs) = fs
-getCategoryFunctions (ValueConcrete _ _ _ _ _ _ fs) = fs
+getCategoryFunctions (ValueInterface _ _ _ _ _ _ fs)  = fs
+getCategoryFunctions (InstanceInterface _ _ _ _ _ fs) = fs
+getCategoryFunctions (ValueConcrete _ _ _ _ _ _ _ fs) = fs
 
 isValueInterface :: AnyCategory c -> Bool
-isValueInterface (ValueInterface _ _ _ _ _ _) = True
+isValueInterface (ValueInterface _ _ _ _ _ _ _) = True
 isValueInterface _ = False
 
 isInstanceInterface :: AnyCategory c -> Bool
-isInstanceInterface (InstanceInterface _ _ _ _ _) = True
+isInstanceInterface (InstanceInterface _ _ _ _ _ _) = True
 isInstanceInterface _ = False
 
 isValueConcrete :: AnyCategory c -> Bool
-isValueConcrete (ValueConcrete _ _ _ _ _ _ _) = True
+isValueConcrete (ValueConcrete _ _ _ _ _ _ _ _) = True
 isValueConcrete _ = False
 
 data ValueRefine c =
@@ -320,12 +338,12 @@ checkConnectedTypes tm0 ts = do
   tm <- declareAllTypes tm0 ts
   mergeAllM (map (checkSingle tm) ts)
   where
-    checkSingle tm (ValueInterface c n _ rs _ _) = do
+    checkSingle tm (ValueInterface c _ n _ rs _ _) = do
       let ts = map (\r -> (vrContext r,tiName $ vrType r)) rs
       is <- collectAllOrErrorM $ map (getCategory tm) ts
       mergeAllM (map (valueRefinesInstanceError c n) is)
       mergeAllM (map (valueRefinesConcreteError c n) is)
-    checkSingle tm (ValueConcrete c n _ rs ds _ _) = do
+    checkSingle tm (ValueConcrete c _ n _ rs ds _ _) = do
       let ts1 = map (\r -> (vrContext r,tiName $ vrType r)) rs
       let ts2 = map (\d -> (vdContext d,diName $ vdType d)) ds
       is1 <- collectAllOrErrorM $ map (getCategory tm) ts1
@@ -378,12 +396,12 @@ checkConnectionCycles :: (Show c, MergeableM m, CompileErrorM m, Monad m) =>
   CategoryMap c -> [AnyCategory c] -> m ()
 checkConnectionCycles tm0 ts = mergeAllM (map (checker []) ts) where
   tm = Map.union tm0 $ Map.fromList $ zip (map getCategoryName ts) ts
-  checker us (ValueInterface c n _ rs _ _) = do
+  checker us (ValueInterface c _ n _ rs _ _) = do
     failIfCycle n c us
     let ts = map (\r -> (vrContext r,tiName $ vrType r)) rs
     is <- collectAllOrErrorM $ map (getValueCategory tm) ts
     mergeAllM (map (checker (us ++ [n]) . snd) is)
-  checker us (ValueConcrete c n _ rs _ _ _) = do
+  checker us (ValueConcrete c _ n _ rs _ _ _) = do
     failIfCycle n c us
     let ts = map (\r -> (vrContext r,tiName $ vrType r)) rs
     is <- collectAllOrErrorM $ map (getValueCategory tm) ts
@@ -402,18 +420,18 @@ checkParamVariances tm0 ts = do
   let r = categoriesToTypeResolver tm
   mergeAllM (map (checkCategory r) ts)
   where
-    checkCategory r (ValueInterface c n ps rs fa _) = do
+    checkCategory r (ValueInterface c _ n ps rs fa _) = do
       noDuplicates c n ps
       let vm = Map.fromList $ map (\p -> (vpParam p,vpVariance p)) ps
       mergeAllM (map (checkRefine r vm) rs)
       mergeAllM $ map (checkFilterVariance r vm) fa
-    checkCategory r (ValueConcrete c n ps rs ds fa _) = do
+    checkCategory r (ValueConcrete c _ n ps rs ds fa _) = do
       noDuplicates c n ps
       let vm = Map.fromList $ map (\p -> (vpParam p,vpVariance p)) ps
       mergeAllM (map (checkRefine r vm) rs)
       mergeAllM (map (checkDefine r vm) ds)
       mergeAllM $ map (checkFilterVariance r vm) fa
-    checkCategory r (InstanceInterface c n ps fa _) = do
+    checkCategory r (InstanceInterface c _ n ps fa _) = do
       noDuplicates c n ps
       let vm = Map.fromList $ map (\p -> (vpParam p,vpVariance p)) ps
       mergeAllM $ map (checkFilterVariance r vm) fa
@@ -550,12 +568,12 @@ flattenAllConnections tm0 ts = do
       tm <- u
       t' <- preMergeSingle tm t
       return $ Map.insert (getCategoryName t') t' tm
-    preMergeSingle tm t@(ValueInterface c n ps rs vs fs) = do
+    preMergeSingle tm t@(ValueInterface c ns n ps rs vs fs) = do
       rs' <- fmap concat $ collectAllOrErrorM $ map (getRefines tm) rs
-      return $ ValueInterface c n ps rs' vs fs
-    preMergeSingle tm t@(ValueConcrete c n ps rs ds vs fs) = do
+      return $ ValueInterface c ns n ps rs' vs fs
+    preMergeSingle tm t@(ValueConcrete c ns n ps rs ds vs fs) = do
       rs' <- fmap concat $ collectAllOrErrorM $ map (getRefines tm) rs
-      return $ ValueConcrete c n ps rs' ds vs fs
+      return $ ValueConcrete c ns n ps rs' ds vs fs
     preMergeSingle _ t = return t
     update r t u = do
       (ts,tm) <- u
@@ -563,7 +581,7 @@ flattenAllConnections tm0 ts = do
               ("In category " ++ show (getCategoryName t) ++ " [" ++
                formatFullContext (getCategoryContext t) ++ "]")
       return (ts ++ [t'],Map.insert (getCategoryName t') t' tm)
-    updateSingle r tm t@(ValueInterface c n ps rs vs fs) = do
+    updateSingle r tm t@(ValueInterface c ns n ps rs vs fs) = do
       noDuplicateRefines c n rs
       let fm = getCategoryFilterMap t
       rs' <- fmap concat $ collectAllOrErrorM $ map (getRefines tm) rs
@@ -572,9 +590,9 @@ flattenAllConnections tm0 ts = do
       checkMerged r fm rs rs''
       -- Only merge from direct parents.
       fs' <- mergeFuncs r tm fm rs [] fs
-      return $ ValueInterface c n ps rs'' vs fs'
+      return $ ValueInterface c ns n ps rs'' vs fs'
     -- TODO: Remove duplication below and/or have separate tests.
-    updateSingle r tm t@(ValueConcrete c n ps rs ds vs fs) = do
+    updateSingle r tm t@(ValueConcrete c ns n ps rs ds vs fs) = do
       noDuplicateRefines c n rs
       noDuplicateDefines c n ds
       let fm = getCategoryFilterMap t
@@ -584,7 +602,7 @@ flattenAllConnections tm0 ts = do
       checkMerged r fm rs rs''
       -- Only merge from direct parents.
       fs' <- mergeFuncs r tm fm rs ds fs
-      return $ ValueConcrete c n ps rs'' ds vs fs'
+      return $ ValueConcrete c ns n ps rs'' ds vs fs'
     updateSingle _ _ t = return t
     noDuplicateRefines c n rs = do
       let names = map (\r -> (tiName $ vrType r,r)) rs

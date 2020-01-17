@@ -50,7 +50,7 @@ extra_src=(
 
 init() {
   ghc -i"$root/compiler" "$compiler.hs"
-  (cd "$root/standard" && "$compiler" "$root" "" "${standard_src[@]}")
+  (cd "$root/standard" && "$compiler" "$root" "" "${standard_src[@]}" > /dev/null)
 }
 
 general_help() {
@@ -63,18 +63,20 @@ compile() {
   local main_category=$3
   shift 3
   local files=("$@")
+  local main="$temp/main.cpp"
   (
     set -e
     cd "$temp" || exit 1
     command0=("$compiler" "$root" "$here" "${standard_tm[@]}" -- "${files[@]}")
     echo "Compiling Zeolite sources..." 1>&2
     echo "${command0[@]}" >> "$temp/$errors"
-    "${command0[@]}" |& tee -a "$temp/$errors"
+    local full_names=$("${command0[@]}" |& tee -a "$temp/$errors")
     if [[ "${PIPESTATUS[0]}" != 0 ]]; then
       echo "$0: Failed to compile Zeolite sources. See $temp for more details." 1>&2
       general_help
       return 1
     fi
+    create_main "$main" "$main_category" "$full_names"
     if [ ! -r "$temp/Category_$main_category.hpp" ]; then
       echo "$0: $main_category has not been defined." 1>&2
       return 1
@@ -101,6 +103,21 @@ compile() {
 create_main() {
   local main=$1
   local main_category=$2
+  local full_names=$3
+  local match_count=$(echo "$full_names" | egrep -c "(^|::)$main_category$")
+  if [[ "$match_count" -eq 0 ]]; then
+    echo "$0: Invalid main category name '$main_category'" 1>&2
+    general_help
+    exit 1
+  fi
+  if [[ "$match_count" -gt 1 ]]; then
+    echo "$0: Ambiguous main category name '$main_category'" 1>&2
+    general_help
+    exit 1
+  fi
+  local getter=$(echo "$full_names" |
+                 egrep "(^|::)$main_category$" |
+                 sed -r 's/^(|[^:]+::)([^:]+)/\1GetType_\2/')
   cat > "$main" <<END
 #include "category-source.hpp"
 
@@ -110,7 +127,7 @@ create_main() {
 int main() {
   SetSignalHandler();
   TRACE_FUNCTION("main")
-  GetType_$main_category(T_get()).Call(Function_Runner_run, ParamTuple(), ArgTuple());
+  $getter(T_get()).Call(Function_Runner_run, ParamTuple(), ArgTuple());
 }
 END
 }
@@ -132,10 +149,8 @@ run() {
 
   local all_files=("$@")
   local temp=$(mktemp -d)
-  local main="$temp/main.cpp"
 
   init
-  create_main "$main" "$main_category"
   compile "$temp" "$here/$main_category" "$main_category" "${all_files[@]}"
   echo "Created binary $main_category." 1>&2
   echo "Also check out intermediate output in $temp." 1>&2

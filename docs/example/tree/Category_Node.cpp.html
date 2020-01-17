@@ -11,6 +11,7 @@
 <pre style='color:#1f1c1b;background-color:#ffffff;'>
 <span style='color:#006e28;'>#include </span><span style='color:#ff5500;'>&quot;category-source.hpp&quot;</span>
 <span style='color:#006e28;'>#include </span><span style='color:#ff5500;'>&quot;Category_Node.hpp&quot;</span>
+<b>namespace</b> private_5f5acf7c225fe54d {
 <b>namespace</b> {
 <span style='color:#0057ae;'>const</span> <span style='color:#0057ae;'>int</span> collection = <span style='color:#b08000;'>0</span>;
 }
@@ -35,6 +36,9 @@
 <span style='color:#0057ae;'>const</span> ValueFunction&amp; Function_Node_setLower = (*<b>new</b> ValueFunction{ <span style='color:#b08000;'>0</span>, <span style='color:#b08000;'>1</span>, <span style='color:#b08000;'>0</span>, <span style='color:#bf0303;'>&quot;Node&quot;</span>, <span style='color:#bf0303;'>&quot;setLower&quot;</span>, Functions_Node, <span style='color:#b08000;'>7</span> });
 <span style='color:#0057ae;'>const</span> ValueFunction&amp; Function_Node_setValue = (*<b>new</b> ValueFunction{ <span style='color:#b08000;'>0</span>, <span style='color:#b08000;'>1</span>, <span style='color:#b08000;'>0</span>, <span style='color:#bf0303;'>&quot;Node&quot;</span>, <span style='color:#bf0303;'>&quot;setValue&quot;</span>, Functions_Node, <span style='color:#b08000;'>8</span> });
 <span style='color:#0057ae;'>const</span> ValueFunction&amp; Function_Node_updateHeight = (*<b>new</b> ValueFunction{ <span style='color:#b08000;'>0</span>, <span style='color:#b08000;'>0</span>, <span style='color:#b08000;'>0</span>, <span style='color:#bf0303;'>&quot;Node&quot;</span>, <span style='color:#bf0303;'>&quot;updateHeight&quot;</span>, Functions_Node, <span style='color:#b08000;'>9</span> });
+}  <span style='color:#898887;'>// namespace private_5f5acf7c225fe54d</span>
+<b>namespace</b> private_5f5acf7c225fe54d {}
+<b>using</b> <b>namespace</b> private_5f5acf7c225fe54d;
 <b>namespace</b> {
 <b>class</b> Category_Node;
 <b>class</b> Type_Node;
@@ -570,12 +574,14 @@ S&lt;TypeValue&gt; CreateValue(Type_Node&amp; parent, <span style='color:#0057ae
   <b>return</b> S_get(<b>new</b> Value_Node(parent, params, args));
 }
 }
+<b>namespace</b> private_5f5acf7c225fe54d {
 TypeCategory&amp; GetCategory_Node() {
   <b>return</b> CreateCategory();
 }
 TypeInstance&amp; GetType_Node(Params&lt;<span style='color:#b08000;'>2</span>&gt;::Type params) {
   <b>return</b> CreateType(params);
 }
+}  <span style='color:#898887;'>// namespace private_5f5acf7c225fe54d</span>
 </pre>
 </body>
 </html>

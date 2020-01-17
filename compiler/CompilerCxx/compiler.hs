@@ -35,6 +35,7 @@ import ParseDefinition
 import ParserBase
 import TypesBase
 import CompilerCxx.Category
+import CompilerCxx.Naming
 
 
 -- $ compiler [root prefix] [path prefix] [abs. existing sources] -- [rel. new sources]
@@ -90,11 +91,13 @@ main = do
       return (tm,hxx ++ cxx)
     processInternal :: CategoryMap SourcePos -> (String,String) -> CompileInfo [CxxOutput]
     processInternal tm0 c = do
+      let namespace = privateNamepace c
       (cs,ds) <- parseInternal c
-      tm <- includeNewTypes tm0 cs
-      hxx <- collectAllOrErrorM $ map (compileCategoryDeclaration tm) cs
-      cxx <- collectAllOrErrorM $ map (compileConcreteDefinition  tm) ds
-      let interfaces = filter (not . isValueConcrete) cs
+      let cs' = map (setCategoryNamespace namespace) cs
+      tm <- includeNewTypes tm0 cs'
+      hxx <- collectAllOrErrorM $ map (compileCategoryDeclaration tm) cs'
+      cxx <- collectAllOrErrorM $ map (compileConcreteDefinition tm [namespace]) ds
+      let interfaces = filter (not . isValueConcrete) cs'
       cxx2 <- collectAllOrErrorM $ map compileInterfaceDefinition interfaces
       return $ hxx ++ cxx ++ cxx2
     format c = showWarnings ++ showErrors where
@@ -106,7 +109,10 @@ main = do
           | otherwise = ""
     writeResults c
       | isCompileError c = return ()
-      | otherwise = mapM_ (\(CxxOutput f os) -> writeSingleFile f $ concat $ map (++ "\n") os) $ getCompileSuccess c
+      | otherwise = mapM_ writeCategory $ getCompileSuccess c
+    writeCategory (CxxOutput f n os) = do
+      writeSingleFile f $ concat $ map (++ "\n") os
+      mapM_ (hPutStrLn stdout) n
     writeSingleFile f c = do
       hPutStrLn stderr $ "Writing file " ++ f
       writeFile f c
