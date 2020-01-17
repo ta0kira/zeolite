@@ -20,9 +20,7 @@ limitations under the License.
 
 module Builtin (
   boolRequiredValue,
-  builtinBasename,
   builtinCategories,
-  builtinFilename,
   charRequiredValue,
   defaultCategories,
   emptyValue,
@@ -42,19 +40,16 @@ import TypeInstance
 import TypesBase
 
 
-builtinBasename = "builtin.0rp"
-builtinFilename = "compiler/" ++ builtinBasename
-
 defaultCategories :: CategoryMap c
 defaultCategories = Map.empty
 
-builtinCategories :: (MergeableM m, CompileErrorM m, Monad m) =>
-  String -> String -> m (CategoryMap SourcePos)
-builtinCategories f s = unwrap parsed >>= mapNames where
-  parsed = parse (between optionalSpace endOfDoc (sepBy sourceParser optionalSpace)) f s
+builtinCategories :: (MergeableM m, CompileErrorM m, Monad m) => m (CategoryMap SourcePos)
+builtinCategories = unwrap parsed >>= mapNames where
+  parsed = parse (between optionalSpace endOfDoc (sepBy sourceParser optionalSpace)) sourceName builtinSource
   unwrap (Left e)  = compileError (show e)
   unwrap (Right t) = return t
   mapNames = includeNewTypes Map.empty
+  sourceName = "(builtin)"
 
 boolRequiredValue :: ValueType
 boolRequiredValue = requiredSingleton BuiltinBool
@@ -70,3 +65,57 @@ formattedRequiredValue :: ValueType
 formattedRequiredValue = requiredSingleton BuiltinFormatted
 emptyValue :: ValueType
 emptyValue = ValueType OptionalValue $ TypeMerge MergeUnion []
+
+builtinSource :: String
+builtinSource = concat $ map (++ "\n") [
+    "concrete Bool {",
+    "  refines Formatted",
+    "",
+    "  defines Equals<Bool>",
+    "}",
+    "",
+    "concrete Int {",
+    "  refines Formatted",
+    "",
+    "  defines Equals<Int>",
+    "  defines LessThan<Int>",
+    "}",
+    "",
+    "concrete Char {",
+    "  refines Formatted",
+    "",
+    "  defines Equals<Char>",
+    "  defines LessThan<Char>",
+    "}",
+    "",
+    "concrete Float {",
+    "  refines Formatted",
+    "",
+    "  defines Equals<Float>",
+    "  defines LessThan<Float>",
+    "}",
+    "",
+    "concrete String {",
+    "  refines Formatted",
+    "  refines ReadPosition<Char>",
+    "",
+    "  defines Equals<String>",
+    "  defines LessThan<String>",
+    "}",
+    "",
+    "@type interface LessThan<#x|> {",
+    "  lessThan (#x,#x) -> (Bool)",
+    "}",
+    "",
+    "@type interface Equals<#x|> {",
+    "  equals (#x,#x) -> (Bool)",
+    "}",
+    "",
+    "@value interface Formatted {",
+    "  formatted () -> (String)",
+    "}",
+    "",
+    "@value interface ReadPosition<|#x> {",
+    "  readPosition (Int) -> (#x)",
+    "  readSize () -> (Int)",
+    "}"]

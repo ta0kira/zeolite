@@ -58,15 +58,11 @@ showHelp = do
 runCompiler :: CompileOptions -> IO ()
 runCompiler co@(CompileOptions h is cs ds p m) = do
   when (h /= HelpNotNeeded) (showHelp >> exitFailure)
-  rootPrefix <- guessRootPrefix
-  builtinContents <- readFile (rootPrefix </> builtinFilename)
   is' <- zipWithContents is
   cs' <- zipWithContents cs
   ds' <- zipWithContents ds
-  let fs = compileAll builtinContents is' cs' ds'
+  let fs = compileAll is' cs' ds'
   writeOutput fs where
-    -- TODO: Clean up root-prefix inference.
-    guessRootPrefix = getExecutablePath >>= return . (</> "../..") . takeDirectory
     zipWithContents fs = fmap (zip fs) $ sequence $ map (readFile . (p </>)) fs
     writeOutput fs
       | isCompileError fs = do
@@ -87,8 +83,8 @@ runCompiler co@(CompileOptions h is cs ds p m) = do
     writeSingleFile f c = do
       hPutStrLn stderr $ "Writing file " ++ f
       writeFile f c
-    compileAll bs is cs ds = do
-      tm0 <- builtinCategories builtinBasename bs
+    compileAll is cs ds = do
+      tm0 <- builtinCategories
       tm1 <- addIncludes tm0 is
       (tm2,cf) <- compilePublic tm1 cs
       ds' <- collectAllOrErrorM $ map (compileInternal tm2) ds
