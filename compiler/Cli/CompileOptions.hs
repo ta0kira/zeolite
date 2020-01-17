@@ -31,9 +31,9 @@ module Cli.CompileOptions (
 data CompileOptions =
   CompileOptions {
     coHelp :: HelpMode,
-    coInclude :: [String],
-    coCompileDeclare :: [String],
-    coCompileDefine :: [String],
+    coIncludes :: [String],
+    coSources :: [String],
+    coExtraFiles :: [String],
     coSourcePrefix :: String,
     coMode :: CompileMode
   } deriving (Show)
@@ -42,9 +42,9 @@ emptyCompileOptions :: CompileOptions
 emptyCompileOptions =
   CompileOptions {
     coHelp = HelpUnspecified,
-    coInclude = [],
-    coCompileDeclare = [],
-    coCompileDefine = [],
+    coIncludes = [],
+    coSources = [],
+    coExtraFiles = [],
     coSourcePrefix = "",
     coMode = CompileUnspecified
   }

@@ -48,12 +48,13 @@ import CompilerCxx.Procedure
 data CxxOutput =
   CxxOutput {
     coFilename :: String,
+    coNamespace :: String,
     coOutput :: [String]
   }
 
 compileCategoryDeclaration :: Monad m => CategoryMap c -> AnyCategory c -> m CxxOutput
 compileCategoryDeclaration _ t =
-  return $ CxxOutput (headerFilename name) (cdOutput file) where
+  return $ CxxOutput (headerFilename name) (getCategoryNamespace t) (cdOutput file) where
     file = mergeAll $ [
         onlyCodes guardTop,
         onlyCodes baseHeaderIncludes,
@@ -291,7 +292,7 @@ commonDefineAll t ns top bottom ce te fe = do
                                  (map (diName . vdType) $ getCategoryDefines t)
   let includes = map (\i -> "#include \"" ++ headerFilename i ++ "\"") $
                    filter (not . isBuiltinCategory) $ Set.toList $ Set.union req inherited
-  return $ CxxOutput filename (baseSourceIncludes ++ includes ++ out)
+  return $ CxxOutput filename (getCategoryNamespace t) (baseSourceIncludes ++ includes ++ out)
   where
     using = nub $ filter (not . null) $ (getCategoryNamespace t):ns
     namespaces =

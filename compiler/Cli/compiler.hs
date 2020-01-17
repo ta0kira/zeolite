@@ -17,10 +17,11 @@ limitations under the License.
 -- Author: Kevin P. Barry [ta0kira@gmail.com]
 
 import Control.Monad (when)
+import Data.List (isSuffixOf,nub)
 import System.Environment
 import System.Exit
-import System.IO
 import System.FilePath
+import System.IO
 import qualified Data.Map as Map
 
 import Builtin
@@ -32,6 +33,7 @@ import TypeInstance
 import Cli.CompileOptions
 import Cli.ParseCompileOptions -- Not safe, due to Text.Regex.TDFA.
 import CompilerCxx.Category
+import Cli.CompileMetadata
 import CompilerCxx.Naming
 
 
@@ -56,50 +58,62 @@ showHelp = do
   mapM_ (hPutStrLn stderr . ("  " ++)) optionHelpText
 
 runCompiler :: CompileOptions -> IO ()
-runCompiler co@(CompileOptions h is cs ds p m) = do
+runCompiler co@(CompileOptions h is ds es p m) = do
   when (h /= HelpNotNeeded) (showHelp >> exitFailure)
+  is <- getSourceFilesForDeps is
   is' <- zipWithContents is
-  cs' <- zipWithContents cs
-  ds' <- zipWithContents ds
-  let fs = compileAll is' cs' ds'
-  writeOutput fs where
+  ms <- fmap concat $ sequence $ map (processPath is') ds
+  writeMain m ms
+  hPutStrLn stderr $ "Zeolite compilation succeeded."
+  exitSuccess where
+    processPath is d = do
+      (ps,xs) <- findSourceFiles p d
+      ps' <- zipWithContents ps
+      xs' <- zipWithContents xs
+      let fs = compileAll is ps' xs'
+      writeOutput d (map takeFileName ps) (map takeFileName xs) fs
     zipWithContents fs = fmap (zip fs) $ sequence $ map (readFile . (p </>)) fs
-    writeOutput fs
+    writeOutput d ps xs fs
       | isCompileError fs = do
-        formatWarnings fs
-        hPutStr stderr $ "Compiler errors:\n" ++ (show $ getCompileError fs)
-        hPutStrLn stderr $ "Zeolite compilation failed."
-        exitFailure
+          formatWarnings fs
+          hPutStr stderr $ "Compiler errors:\n" ++ (show $ getCompileError fs)
+          hPutStrLn stderr $ "Zeolite compilation failed."
+          exitFailure
       | otherwise = do
-        formatWarnings fs
-        mapM_ writeOutputFile $ getCompileSuccess fs
-        hPutStrLn stderr $ "Zeolite compilation succeeded."
-        exitSuccess
+          formatWarnings fs
+          let (pc,mf,fs') = getCompileSuccess fs
+          os <- fmap concat $ sequence $ map (writeOutputFile d) fs'
+          let (hxx,cxx,os') = sortCompiledFiles $ map (\f -> coNamespace f </> coFilename f) fs' ++ os ++ es
+          let ss = nub $ filter (not . null) $ map coNamespace fs'
+          writeMetadata (p </> d) $ CompileMetadata "" is (map show pc) "" ss ps xs hxx cxx os'
+          return mf
     formatWarnings c
       | null $ getCompileWarnings c = return ()
       | otherwise = hPutStr stderr $ "Compiler warnings:\n" ++ (concat $ map (++ "\n") (getCompileWarnings c))
-    writeOutputFile (CxxOutput f os) = do
-      writeSingleFile f $ concat $ map (++ "\n") os
-    writeSingleFile f c = do
+    writeOutputFile d (CxxOutput f ns os) = do
       hPutStrLn stderr $ "Writing file " ++ f
-      writeFile f c
+      writeCachedFile (p </> d) ns f $ concat $ map (++ "\n") os
+      if isSuffixOf ".cpp" f
+         then return [ns </> (dropExtension f ++ ".o")] -- TODO: Actually compile the source.
+         else return []
     compileAll is cs ds = do
       tm0 <- builtinCategories
       tm1 <- addIncludes tm0 is
-      (tm2,cf) <- compilePublic tm1 cs
+      (pc,tm2,cf) <- compilePublic tm1 cs
       ds' <- collectAllOrErrorM $ map (compileInternal tm2) ds
-      (mf,df) <- mergeInternal m ds'
-      return $ mf ++ cf ++ df
+      let (mf,df) = mergeInternal ds'
+      return $ (pc,mf,cf ++ df)
     addIncludes tm fs = do
       cs <- fmap concat $ collectAllOrErrorM $ map parsePublicSource fs
       includeNewTypes tm cs
     compilePublic tm fs = do
       cs <- fmap concat $ collectAllOrErrorM $ map parsePublicSource fs
+      let pc = map getCategoryName cs
       tm' <- includeNewTypes tm cs
       hxx <- collectAllOrErrorM $ map (compileCategoryDeclaration tm') cs
       let interfaces = filter (not . isValueConcrete) cs
       cxx <- collectAllOrErrorM $ map compileInterfaceDefinition interfaces
-      return (tm',hxx ++ cxx)
+      return (pc,tm',hxx ++ cxx)
     compileInternal tm d = do
       let namespace = privateNamepace d
       (cs,ds) <- parseInternalSource d
@@ -111,18 +125,24 @@ runCompiler co@(CompileOptions h is cs ds p m) = do
       ms <- maybeCreateMain tm' m
       cxx2 <- collectAllOrErrorM $ map compileInterfaceDefinition interfaces
       return $ (ms,hxx ++ cxx ++ cxx2)
-    mergeInternal (CompileBinary n _) ds = do
-      let matches = length (concat $ map fst ds)
-      when (matches > 1)  $ compileError $ "Multiple matches for main category " ++ n ++ "."
-      when (matches == 0) $ compileError $ "Main category " ++ n ++ " not found."
-      return ([head $ concat $ map fst ds],concat $ map snd ds)
-    mergeInternal _ ds = return ([],concat $ map snd ds)
+    mergeInternal ds = (concat $ map fst ds,concat $ map snd ds)
+    writeMain (CompileBinary n _) ms
+      | length ms > 1 = do
+        hPutStr stderr $ "Multiple matches for main category " ++ n ++ "."
+        exitFailure
+      | length ms == 0 = do
+        hPutStr stderr $ "Main category " ++ n ++ " not found."
+        exitFailure
+      | otherwise = do
+          let (CxxOutput f _ os) = head ms
+          writeFile f $ concat $ map (++ "\n") os
+    writeMain _ _ = return ()
     maybeCreateMain tm (CompileBinary n _) = do
       case (CategoryName n) `Map.lookup` tm of
         Nothing -> return []
         Just t -> do
           contents <- createMain t
-          return [CxxOutput mainFilename contents]
+          return [CxxOutput mainFilename "" contents]
     maybeCreateMain _ _ = return []
 
 createMain :: (CompileErrorM m, Monad m) => AnyCategory c -> m [String]
