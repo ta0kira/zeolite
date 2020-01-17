@@ -227,7 +227,7 @@ box on other operating systems at the moment.
    ```shell
    sudo apt-get install cabal-install
    cabal update
-   cabal install mtl parsec
+   cabal install mtl parsec regex-tdfa
    ```
 5. If you want to use a different C++ compiler (such as `g++`), you can override
    the default in `~/.zeoliterc`:
