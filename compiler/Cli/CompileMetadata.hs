@@ -39,7 +39,6 @@ data CompileMetadata =
     cmPath :: String,
     cmDepPaths :: [String],
     cmCategories :: [String],
-    cmNamespace :: String,
     cmSubdirs :: [String],
     cmPublicFiles :: [String],
     cmPrivateFiles :: [String],
@@ -54,7 +53,6 @@ emptyCompileMetadata =
     cmPath = "",
     cmDepPaths = [],
     cmCategories = [],
-    cmNamespace = "",
     cmSubdirs = [],
     cmPublicFiles = [],
     cmPrivateFiles = [],
@@ -91,12 +89,14 @@ findSourceFiles p0 p = do
   let xs = filter (isSuffixOf ".0rx") ds
   return (ps,xs)
 
-getSourceFilesForDeps :: [String] -> IO [String]
-getSourceFilesForDeps = fmap concat . sequence . map loadSingle where
+getSourceFilesForDeps :: [String] -> IO ([String],[String])
+getSourceFilesForDeps = fmap merge . sequence . map loadSingle where
   loadSingle p = do
     -- TODO: This needs error handling.
     m <- loadMetadata p
-    return $ map (p </>) $ cmPublicFiles m
+    let p' = cmPath m
+    return (p',map (p' </>) $ cmPublicFiles m)
+  merge fs = (map fst fs,concat $ map snd fs)
 
 sortCompiledFiles :: [String] -> ([String],[String],[String])
 sortCompiledFiles = foldl split ([],[],[]) where

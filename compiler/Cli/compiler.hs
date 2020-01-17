@@ -17,7 +17,8 @@ limitations under the License.
 -- Author: Kevin P. Barry [ta0kira@gmail.com]
 
 import Control.Monad (when)
-import Data.List (isSuffixOf,nub)
+import Data.List (isSuffixOf,nub,sort)
+import System.Directory
 import System.Environment
 import System.Exit
 import System.FilePath
@@ -60,20 +61,20 @@ showHelp = do
 runCompiler :: CompileOptions -> IO ()
 runCompiler co@(CompileOptions h is ds es p m) = do
   when (h /= HelpNotNeeded) (showHelp >> exitFailure)
-  is <- getSourceFilesForDeps is
+  (as,is) <- getSourceFilesForDeps is
   is' <- zipWithContents is
-  ms <- fmap concat $ sequence $ map (processPath is') ds
+  ms <- fmap concat $ sequence $ map (processPath as is') ds
   writeMain m ms
   hPutStrLn stderr $ "Zeolite compilation succeeded."
   exitSuccess where
-    processPath is d = do
+    processPath as is d = do
       (ps,xs) <- findSourceFiles p d
       ps' <- zipWithContents ps
       xs' <- zipWithContents xs
       let fs = compileAll is ps' xs'
-      writeOutput d (map takeFileName ps) (map takeFileName xs) fs
+      writeOutput d as (map takeFileName ps) (map takeFileName xs) fs
     zipWithContents fs = fmap (zip fs) $ sequence $ map (readFile . (p </>)) fs
-    writeOutput d ps xs fs
+    writeOutput d as ps xs fs
       | isCompileError fs = do
           formatWarnings fs
           hPutStr stderr $ "Compiler errors:\n" ++ (show $ getCompileError fs)
@@ -85,8 +86,22 @@ runCompiler co@(CompileOptions h is ds es p m) = do
           os <- fmap concat $ sequence $ map (writeOutputFile d) fs'
           let (hxx,cxx,os') = sortCompiledFiles $ map (\f -> coNamespace f </> coFilename f) fs' ++ os ++ es
           let ss = nub $ filter (not . null) $ map coNamespace fs'
-          writeMetadata (p </> d) $ CompileMetadata "" is (map show pc) "" ss ps xs hxx cxx os'
+          path <- getPath d
+          writeMetadata (p </> d) $ CompileMetadata {
+              cmPath = path,
+              cmDepPaths = sort as,
+              cmCategories = sort $ map show pc,
+              cmSubdirs = sort ss,
+              cmPublicFiles = sort ps,
+              cmPrivateFiles = sort xs,
+              cmHxxFiles = sort hxx,
+              cmCxxFiles = sort cxx,
+              cmObjectFiles = sort os'
+            }
           return mf
+    getPath d = do
+      pwd <- getCurrentDirectory
+      return $ normalise $ pwd </> p </> d
     formatWarnings c
       | null $ getCompileWarnings c = return ()
       | otherwise = hPutStr stderr $ "Compiler warnings:\n" ++ (concat $ map (++ "\n") (getCompileWarnings c))
