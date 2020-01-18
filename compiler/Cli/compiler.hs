@@ -60,6 +60,7 @@ showHelp :: IO ()
 showHelp = do
   hPutStrLn stderr "Zeolite CLI Help:"
   mapM_ (hPutStrLn stderr . ("  " ++)) optionHelpText
+  hPutStrLn stderr "Also see https://ta0kira.github.io/zeolite for more documentation."
 
 runCompiler :: CompileOptions -> IO ()
 runCompiler co@(CompileOptions h is ds es ep p m) = do
