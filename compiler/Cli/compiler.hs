@@ -197,23 +197,6 @@ runCompiler co@(CompileOptions h is ds es ep p m) = do
       case (CategoryName n) `Map.lookup` tm of
         Nothing -> return []
         Just t -> do
-          contents <- createMain t
+          contents <- createMainFile t
           return [CxxOutput mainFilename "" contents]
     maybeCreateMain _ _ = return []
-
-createMain :: (CompileErrorM m, Monad m) => AnyCategory c -> m [String]
-createMain t
-  -- TODO: Don't hard code as much here.
-  | isValueConcrete t = return [
-      "#include \"category-source.hpp\"",
-      "",
-      "#include \"Category_Runner.hpp\"",
-      "#include \"Category_" ++ show (getCategoryName t) ++ ".hpp\"",
-      "",
-      "int main() {",
-      "  SetSignalHandler();",
-      "  TRACE_FUNCTION(\"main\")",
-      "  " ++ qualifiedTypeGetter t ++ "(T_get()).Call(Function_Runner_run, ParamTuple(), ArgTuple());",
-      "}"
-    ]
-  | otherwise = compileError $ "Main category " ++ show (getCategoryName t) ++ " is not concrete."

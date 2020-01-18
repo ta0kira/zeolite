@@ -21,6 +21,7 @@ limitations under the License.
 
 module CompilerCxx.Category (
   CxxOutput(..),
+  createMainFile,
   compileCategoryDeclaration,
   compileConcreteDefinition,
   compileInterfaceDefinition,
@@ -598,3 +599,20 @@ builtinVariables :: TypeInstance -> Map.Map VariableName (VariableValue c)
 builtinVariables t = Map.fromList [
     (VariableName "self",VariableValue [] ValueScope (ValueType RequiredValue $ SingleType $ JustTypeInstance t) False)
   ]
+
+createMainFile :: (CompileErrorM m, Monad m) => AnyCategory c -> m [String]
+createMainFile t
+  -- TODO: Don't hard code as much here.
+  | isValueConcrete t = return [
+      "#include \"category-source.hpp\"",
+      "",
+      "#include \"Category_Runner.hpp\"",
+      "#include \"Category_" ++ show (getCategoryName t) ++ ".hpp\"",
+      "",
+      "int main() {",
+      "  SetSignalHandler();",
+      "  TRACE_FUNCTION(\"main\")",
+      "  " ++ qualifiedTypeGetter t ++ "(T_get()).Call(Function_Runner_run, ParamTuple(), ArgTuple());",
+      "}"
+    ]
+  | otherwise = compileError $ "Main category " ++ show (getCategoryName t) ++ " is not concrete."
