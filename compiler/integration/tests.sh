@@ -24,40 +24,17 @@ cd "$(dirname "$0")"
 
 root=$PWD/../..
 errors='errors.txt'
-compiler_hs="$root/compiler/Cli/compiler.hs"
-compiler="$PWD/compiler"
-main_category='Test'
+compiler="$root/zeolite"
 
-[[ "${COMPILER_CXX-}" ]] || COMPILER_CXX=clang++
-[[ "${COMPILE_CXX-}" ]] || COMPILE_CXX=("$COMPILER_CXX" -O0 -g -std=c++11)
+default_color='\033[;37m'
+skip_color='\033[01;33m'
+pass_color='\033[01;32m'
+fail_color='\033[01;31m'
 
-standard_src=('standard.0rp' 'standard.0rx')
+echo -en "$default_color"
 
-ghc -i"$root/compiler" "$compiler_hs" -o "$compiler"
-(cd "$root/standard" && "$compiler" -c "${standard_src[@]}")
-
-standard_tm=(-i "$root/standard/standard.0rp")
-standard_inc=($root/standard)
-cache_obj=$PWD/.cache
-
-compile_src() {
-  [[ -d "$cache_obj" ]] || mkdir "$cache_obj"
-  (
-    cd "$cache_obj"
-    local command=(
-    "${COMPILE_CXX[@]}" -c
-    -I"$root/capture-thread/include"
-    -I"$root/base"
-    -I"$standard_inc"
-    "$@")
-    echo "${command[@]}" 1>&2
-    "${command[@]}"
-  )
-}
-
-compile_src "$root/base"/*.cpp
-compile_src "$root/standard"/*.cpp
-compile_src "$root/capture-thread/src"/*.cc
+# Rerun setup, in case the compiler code changed.
+"$root/setup.sh"
 
 test_base="
 concrete Test {
@@ -65,59 +42,25 @@ concrete Test {
 }
 "
 
-count=0
-
-# TODO: Merge compiler chaining logic with zeolite.sh.
-
 compile() {
   local temp=$1
-  local main="$temp/main.cpp"
-  local compiled_name="$temp/compiled"
   local test_src="$temp/test.0rx"
   (
     set -e
     cd "$temp" || exit 1
     { cat; echo "$test_base"; } > "$test_src"
-    local command0=(
+    local command=(
       "$compiler"
-      -m "Test" "$compiled_name"
-      "${standard_tm[@]}"
-      "$test_src")
-    echo "${command0[@]}" >> "$temp/$errors"
-    "${command0[@]}" 2> >(tee -a "$temp/$errors" 1>&2)
-    [[ "${PIPESTATUS[0]}" = 0 ]] || return 1
-    command1=(
-      "${COMPILE_CXX[@]}" -o "$compiled_name"
-      -I"$root/capture-thread/include"
-      -I"$root/base"
-      -I"$temp"
-      -I"$standard_inc"
-      "$cache_obj"/*.o
-      "$temp"/*cpp)
-    echo "${command1[@]}" >> "$temp/$errors"
-    "${command1[@]}" |& tee -a "$temp/$errors"
+      -i "$root/util"
+      -m "Test" "$temp/compiled"
+      "$temp")
+    echo "${command[@]}" >> "$temp/$errors"
+    "${command[@]}" 2> >(tee -a "$temp/$errors" 1>&2)
     [[ "${PIPESTATUS[0]}" = 0 ]] || return 1
   )
 }
 
-create_main() {
-  local main=$1
-  local full_names=$2
-  local getter=$(egrep "(^|::)$main_category$" "$full_names" |
-                 sed -r 's/^(|[^:]+::)([^:]+)/\1GetType_\2/')
-  cat > "$main" <<END
-#include "category-source.hpp"
-
-#include "Category_Runner.hpp"
-#include "Category_$main_category.hpp"
-
-int main() {
-  SetSignalHandler();
-  TRACE_FUNCTION("main")
-  $getter(T_get()).Call(Function_Runner_run, ParamTuple(), ArgTuple());
-}
-END
-}
+count=0
 
 SKIP_TESTS=${SKIP_TESTS-0}
 START_WITH=${1-}
@@ -128,6 +71,18 @@ start_skipping() {
 
 stop_skipping() {
   SKIP_TESTS=0
+}
+
+message_skip() {
+  echo -e "$skip_color$*$default_color" 1>&2
+}
+
+message_pass() {
+  echo -e "$pass_color$*$default_color" 1>&2
+}
+
+message_fail() {
+  echo -e "$fail_color$*$default_color" 1>&2
 }
 
 should_skip() {
@@ -148,22 +103,22 @@ expect_error() {
   local name=$1
   shift
   if should_skip "$name"; then
-    echo "Test \"$name\" ($count) skipped without compiling or executing" 1>&2
+    message_skip "Test \"$name\" ($count) skipped without compiling or executing"
     return
   fi
   local patterns=("$@")
   local temp=$(mktemp -d)
   if compile "$temp"; then
-    echo "Test \"$name\" ($count): Expected compile error; see output in $temp" 1>&2
+    message_fail "Test \"$name\" ($count): Expected compile error; see output in $temp"
     return 1
   fi
   [[ -z "${patterns-}" ]] || for p in "${patterns[@]}"; do
     if ! egrep -q -- "$p" "$temp/$errors"; then
-      echo "Test \"$name\" ($count): Expected pattern '$p' in error; see output in $temp" 1>&2
+      message_fail "Test \"$name\" ($count): Expected pattern '$p' in error; see output in $temp"
       return 1
     fi
   done
-  echo "Test \"$name\" ($count) passed (see output in $temp)" 1>&2
+  message_pass "Test \"$name\" ($count) passed (see output in $temp)"
 }
 
 expect_runs() {
@@ -171,30 +126,30 @@ expect_runs() {
   local name=$1
   shift
   if should_skip "$name"; then
-    echo "Test \"$name\" ($count) skipped without compiling or executing" 1>&2
+    message_skip "Test \"$name\" ($count) skipped without compiling or executing" 1>&2
     return
   fi
   local patterns=("$@")
   local temp=$(mktemp -d)
   if ! compile "$temp"; then
-    echo "Test \"$name\" ($count): Expected compilation; see output in $temp" 1>&2
+    message_fail "Test \"$name\" ($count): Expected compilation; see output in $temp"
     return 1
   fi
   (
     cd "$temp" # Makes sure core dump is in the right place.
     ulimit -Sc unlimited 2> /dev/null || true
     if ! "$temp/compiled" &>> "$temp/$errors"; then
-      echo "Test \"$name\" ($count): Expected execution; see output in $temp" 1>&2
+      message_fail "Test \"$name\" ($count): Expected execution; see output in $temp"
       return 1
     fi
   )
   [[ -z "${patterns-}" ]] || for p in "${patterns[@]}"; do
     if ! egrep -q -- "$p" "$temp/$errors"; then
-      echo "Test \"$name\" ($count): Expected pattern '$p' in output; see output in $temp" 1>&2
+      message_fail "Test \"$name\" ($count): Expected pattern '$p' in output; see output in $temp"
       return 1
     fi
   done
-  echo "Test \"$name\" ($count) passed (see output in $temp)" 1>&2
+  message_pass "Test \"$name\" ($count) passed (see output in $temp)"
 }
 
 expect_crashes() {
@@ -202,30 +157,30 @@ expect_crashes() {
   local name=$1
   shift
   if should_skip "$name"; then
-    echo "Test \"$name\" ($count) skipped without compiling or executing" 1>&2
+    message_skip "Test \"$name\" ($count) skipped without compiling or executing"
     return
   fi
   local patterns=("$@")
   local temp=$(mktemp -d)
   if ! compile "$temp"; then
-    echo "Test \"$name\" ($count): Expected compilation; see output in $temp" 1>&2
+    message_fail "Test \"$name\" ($count): Expected compilation; see output in $temp"
     return 1
   fi
   (
     cd "$temp" # Makes sure core dump is in the right place.
     ulimit -Sc unlimited 2> /dev/null || true
     if "$temp/compiled" &>> "$temp/$errors"; then
-      echo "Test \"$name\" ($count): Expected crash; see output in $temp" 1>&2
+      message_fail "Test \"$name\" ($count): Expected crash; see output in $temp"
       return 1
     fi
   )
   [[ -z "${patterns-}" ]] || for p in "${patterns[@]}"; do
     if ! egrep -q -- "$p" "$temp/$errors"; then
-      echo "Test \"$name\" ($count): Expected pattern '$p' in error; see output in $temp" 1>&2
+      message_fail "Test \"$name\" ($count): Expected pattern '$p' in error; see output in $temp"
       return 1
     fi
   done
-  echo "Test \"$name\" ($count) passed (see output in $temp)" 1>&2
+  message_pass "Test \"$name\" ($count) passed (see output in $temp)"
 }
 
 expect_runs 'do nothing' <<END

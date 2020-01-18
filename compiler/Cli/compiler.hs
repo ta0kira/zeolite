@@ -53,7 +53,7 @@ main = do
       | otherwise = runCompiler $ getCompileSuccess co
     validate co@(CompileOptions h is ds es ep p m)
       | h /= HelpNotNeeded = return co
-      | null ds   = compileError "Please specify at least one input file."
+      | null ds   = compileError "Please specify at least one input path."
       | otherwise = return co
 
 showHelp :: IO ()
@@ -66,21 +66,25 @@ runCompiler co@(CompileOptions h is ds es ep p m) = do
   when (h /= HelpNotNeeded) (showHelp >> exitFailure)
   (as,is) <- getSourceFilesForDeps is >>= return . first nub >>= return . second nub
   basePath <- getBasePath
-  paths <- getIncludePathsForDeps (basePath:as) >>= return . nub
   is' <- zipWithContents is
-  ms <- fmap concat $ sequence $ map (processPath (paths ++ ep) as is') ds
+  ms <- fmap concat $ sequence $ map (processPath basePath as is') ds
   -- TODO: Stop spamming paths just to find deps for main.cpp.
   writeMain ([basePath] ++ ds ++ as) m ms
   hPutStrLn stderr $ "Zeolite compilation succeeded."
   exitSuccess where
+    ep' = map (getCachedPath p "") ep
     getBasePath = getExecutablePath >>= return . takeDirectory
-    processPath paths as is d = do
+    processPath bp as is d = do
       eraseMetadata d -- Avoids invalid metadata.
       (ps,xs) <- findSourceFiles p d
+      -- Lazy dependency loading, in case we aren't compiling anything.
+      paths <- if null ps && null xs
+                  then return []
+                  else getIncludePathsForDeps (bp:as) >>= return . nub
       ps' <- zipWithContents ps
       xs' <- zipWithContents xs
       let fs = compileAll is ps' xs'
-      writeOutput paths d as (map takeFileName ps) (map takeFileName xs) fs
+      writeOutput (paths ++ ep') d as (map takeFileName ps) (map takeFileName xs) fs
     zipWithContents fs = fmap (zip fs) $ sequence $ map (readFile . (p </>)) fs
     writeOutput paths d as ps xs fs
       | isCompileError fs = do

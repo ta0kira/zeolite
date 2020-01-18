@@ -34,7 +34,7 @@ build_compiler() {
 init_base() {
   local command=(
     "$compiler_bin"
-    -c .
+    -c "$PWD"
     -e ../base
     -e ../capture-thread/include
     -e ../base/builtin.cpp
@@ -58,6 +58,7 @@ init_base() {
 init_util() {
   local command=(
     "$compiler_bin"
+    -p "$PWD"
     -c util
     -e ../Category_SimpleOutput.cpp)
   echo "${command[@]}" 1>&2
