@@ -95,11 +95,16 @@ loadMetadata p = do
     check [(cm,"")] = return cm
     check [(cm,"\n")] = return cm
     check _ = do
-      hPutStrLn stderr $ "Could not parse metadata from \"" ++ p ++ "\". Please recompile."
+      hPutStrLn stderr $ "Could not parse metadata from \"" ++ p ++ "\"; please recompile."
       exitFailure
 
 writeMetadata :: String -> CompileMetadata -> IO ()
-writeMetadata p m = writeCachedFile p "" metadataFilename (show m ++ "\n")
+writeMetadata p m = do
+  writeCachedFile p "" metadataFilename (show m ++ "\n")
+  fresh <- checkModuleFreshness p m
+  when (not fresh) $ do
+    hPutStrLn stderr $ "Error writing metadata for \"" ++ p ++ "\"."
+    exitFailure
 
 eraseMetadata :: String -> IO ()
 eraseMetadata p = do
@@ -156,7 +161,9 @@ loadRecursiveDeps ps = fmap snd $ run (Set.empty,[]) ps where
        else do
          hPutStrLn stderr $ "Loading metadata for dependency \"" ++ p' ++ "\"."
          m <- loadMetadata p'
-         checkModuleFreshness p' m
+         fresh <- checkModuleFreshness p' m
+         when (not fresh) $
+           hPutStrLn stderr $ "Module \"" ++ p' ++ "\" is out of date and should be recompiled."
          run (p' `Set.insert` pa,xs ++ [m]) (ps ++ cmDepPaths m)
   run xa _ = return xa
 
@@ -191,7 +198,6 @@ checkModuleFreshness p (CompileMetadata p2 is _ _ ps xs hxx cxx os) = do
   c2 <- sequence $ map (check time . (p2 </>)) $ ps ++ xs
   c2 <- sequence $ map (check time . getCachedPath p2 "") $ hxx ++ cxx ++ os
   let fresh = not $ any id $ c1 ++ c2
-  when (not fresh) $ hPutStrLn stderr $ "Module \"" ++ p2 ++ "\" should be recompiled."
   return fresh where
     check time f = do
       time2 <- getModificationTime f
