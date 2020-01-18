@@ -17,7 +17,7 @@ collaborative development, and with various systems of code-quality enforcement.
 It's the [any%](https://en.wiktionary.org/wiki/any%25) of programming.
 
 <pre style='color:#1f1c1b;background-color:#ffffff;'>
-<span style='color:#898887;'>// hello-world.0rx</span>
+<span style='color:#898887;'>// helloworld/hello-world.0rx</span>
 
 <b>concrete</b> <b><span style='color:#0057ae;'>HelloWorld</span></b> {
   <b>defines</b> <span style='color:#0057ae;'>Runner</span>
@@ -31,7 +31,7 @@ It's the [any%](https://en.wiktionary.org/wiki/any%25) of programming.
 
 ```shell
 # Compile.
-./zeolite -i util -m HelloWorld ./HelloWorld .
+./zeolite -i util -m HelloWorld helloworld/HelloWorld helloworld
 
 # Execute.
 ./HelloWorld
@@ -266,13 +266,20 @@ you need to split it up, you must also use `.0rp` for sharing type declarations.
 
 ### Compiling Programs
 
-The Zeolite compiler is currently extremely simple. It takes the name of a main
-category and a list of source files, and creates a binary with the same name as
-the main category. The main category *must* define `Runner` and implement the
-`@type run () -> ()` function.
+To create a program, `define Runner` in a `concrete` category and implement the
+`@type run () -> ()` function with the main routine.
+
+The `zeolite` compiler operates on *source paths* rather than on *source files*.
+All of the source files (i.e., `.0rp` and `.0rx`) at the top level of the path
+are included in the module.
+
+To compile the module into a binary, call `zeolite` with the `-m` option,
+passing the name of the `Runner` and the output binary name. Additional
+dependencies can be included using `-i`. You can call `./zeolite -h` for the
+most-current options.
 
 <pre style='color:#1f1c1b;background-color:#ffffff;'>
-<span style='color:#898887;'>// your-source.0rx</span>
+<span style='color:#898887;'>// yourprojectdir/your-source.0rx</span>
 
 <b>concrete</b> <b><span style='color:#0057ae;'>YourCategory</span></b> {
   <b>defines</b> <span style='color:#0057ae;'>Runner</span>
@@ -284,14 +291,11 @@ the main category. The main category *must* define `Runner` and implement the
 
 ```shell
 # Compile.
-./zeolite -i util -m YourCategory ./YourCategory .
+./zeolite -i util -m YourCategory yourprojectdir/YourCategory yourprojectdir
 
 # Execute.
 ./YourCategory
 ```
-
-The calling convention recently changed, and still needs better documentation.
-You can call `./zeolite -h` for a help summary.
 
 `zeolite` was written for Linux systems that have the [`clang++`][clang] C++
 compiler and the [`ghc`][ghc] Haskell compiler. The C++ compiler can be changed
