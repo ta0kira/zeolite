@@ -36,7 +36,7 @@ optionHelpText = [
     "zeolite [options...] -m [category] -o [binary] [paths...]",
     "zeolite [options...] -c [paths...]",
     "",
-    "-m [category]: Compile a specific Runner category into a binary file.",
+    "-m [category]: Compile a specific category into a binary file.",
     "-o [binary]: The name of the binary file to create with -m.",
     "-c: Only compile the individual files. (default)",
     "-i: A single source path to include as a dependency.",

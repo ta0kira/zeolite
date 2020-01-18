@@ -627,9 +627,9 @@ createMainFile t f
         getRunFunc = check $ filter ((== name) . sfName) $ filter ((== TypeScope) . sfScope) $ getCategoryFunctions t
         check [f]
           | not $ null $ psParams $ sfArgs f =
-            compileError $ "Main function " ++ show f ++ " must have 0 arguments."
+            compileError $ "Main function \"" ++ show (sfName f) ++ "\" requires arguments but none are allowed."
           | not $ null $ psParams $ sfParams f =
-            compileError $ "Main function " ++ show f ++ " must have 0 parameters."
+            compileError $ "Main function \"" ++ show (sfName f) ++ "\" requires parameters but none are allowed."
           | otherwise = return f
         check _ = compileError $ "Main category " ++ show (getCategoryName t) ++
                                  " does not have a @type function \"" ++ show name ++ "\"."
