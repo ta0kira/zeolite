@@ -100,10 +100,12 @@ loadMetadata p = do
 
 writeMetadata :: String -> CompileMetadata -> IO ()
 writeMetadata p m = do
-  writeCachedFile p "" metadataFilename (show m ++ "\n")
-  fresh <- checkModuleFreshness p m
+  p' <- canonicalizePath p
+  hPutStrLn stderr $ "Writing metadata for \"" ++ p' ++ "\"."
+  writeCachedFile p' "" metadataFilename (show m ++ "\n")
+  fresh <- checkModuleFreshness p' m
   when (not fresh) $ do
-    hPutStrLn stderr $ "Error writing metadata for \"" ++ p ++ "\"."
+    hPutStrLn stderr $ "Error writing metadata for \"" ++ p' ++ "\"."
     exitFailure
 
 eraseMetadata :: String -> IO ()
@@ -153,18 +155,17 @@ getObjectFilesForDeps = concat . map extract where
   extract m = map ((cmPath m </> cachedDataPath) </>) $ cmObjectFiles m
 
 loadRecursiveDeps :: [String] -> IO [CompileMetadata]
-loadRecursiveDeps ps = fmap snd $ run (Set.empty,[]) ps where
-  run xa@(pa,xs) (p:ps) = do
-    p' <- canonicalizePath p
-    if p' `Set.member` pa
-       then run xa ps
-       else do
-         hPutStrLn stderr $ "Loading metadata for dependency \"" ++ p' ++ "\"."
-         m <- loadMetadata p'
-         fresh <- checkModuleFreshness p' m
-         when (not fresh) $
-           hPutStrLn stderr $ "Module \"" ++ p' ++ "\" is out of date and should be recompiled."
-         run (p' `Set.insert` pa,xs ++ [m]) (ps ++ cmDepPaths m)
+loadRecursiveDeps ps = fmap snd $ fixedPaths >>= run (Set.empty,[]) where
+  fixedPaths = sequence $ map canonicalizePath ps
+  run xa@(pa,xs) (p:ps)
+    | p `Set.member` pa = run xa ps
+    | otherwise = do
+        hPutStrLn stderr $ "Loading metadata for dependency \"" ++ p ++ "\"."
+        m <- loadMetadata p
+        fresh <- checkModuleFreshness p m
+        when (not fresh) $
+          hPutStrLn stderr $ "Module \"" ++ p ++ "\" is out of date and should be recompiled."
+        run (p `Set.insert` pa,xs ++ [m]) (ps ++ cmDepPaths m)
   run xa _ = return xa
 
 fixPath :: String -> String
