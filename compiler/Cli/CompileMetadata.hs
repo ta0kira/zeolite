@@ -19,6 +19,7 @@ limitations under the License.
 module Cli.CompileMetadata (
   CompileMetadata(..),
   allowedExtraTypes,
+  checkModuleFreshness,
   eraseMetadata,
   findSourceFiles,
   fixPath,
@@ -183,3 +184,17 @@ sortCompiledFiles = foldl split ([],[],[]) where
     | isSuffixOf ".a"   f = (hxx,cxx,os++[f])
     | isSuffixOf ".o"   f = (hxx,cxx,os++[f])
     | otherwise = fs
+
+checkModuleFreshness :: String -> IO Bool
+checkModuleFreshness p = do
+  (CompileMetadata p' is _ _ ps xs hxx cxx os) <- loadMetadata p
+  time <- getModificationTime $ getCachedPath p "" metadataFilename
+  c1 <- sequence $ map (\p2 -> check time $ getCachedPath p2 "" metadataFilename) is
+  c2 <- sequence $ map (check time . (p' </>)) $ ps ++ xs
+  c2 <- sequence $ map (check time . getCachedPath p' "") $ hxx ++ cxx ++ os
+  let fresh = not $ any id $ c1 ++ c2
+  when (not fresh) $ hPutStrLn stderr $ "Path \"" ++ p ++ "\" should be recompiled."
+  return fresh where
+    check time f = do
+      time2 <- getModificationTime f
+      return (time2 > time)

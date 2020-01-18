@@ -68,6 +68,7 @@ showHelp = do
 runCompiler :: CompileOptions -> IO ()
 runCompiler co@(CompileOptions h is ds es ep p m o) = do
   when (h /= HelpNotNeeded) (showHelp >> exitFailure)
+  sequence $ map checkModuleFreshness is
   (as,is) <- getSourceFilesForDeps is >>= return . first fixPaths >>= return . second fixPaths
   basePath <- getBasePath
   is' <- zipWithContents is
