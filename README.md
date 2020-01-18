@@ -1,12 +1,12 @@
 # Zeolite Programming Language
 
-Zeolite is a statically-typed, general-purpose programming language. It focuses
-on data objects and their uses, while attempting to avoid some pitfalls of
-object-oriented programming and type parameterization.
+Zeolite is a statically-typed, general-purpose programming language. The type
+system revolves around defining objects and their usage patterns.
 
 Zeolite prioritizes making code written with it simple to understand for readers
-who didn't write the original code. This is done by disallowing certain idioms
-that tend to lead to code decay over time.
+who didn't write the original code. This is done by limiting flexibility in
+some places and increasing it in others. In particular, emphasis is places on
+the user's experience when troubleshooting code that is *incorrect*.
 
 The design of the type system and the language itself is influenced by positive
 and negative experiences with Java, C++, Haskell, Python, and Go, with
@@ -31,7 +31,7 @@ It's the [any%](https://en.wiktionary.org/wiki/any%25) of programming.
 
 ```shell
 # Compile.
-./zeolite -i util -m HelloWorld helloworld/HelloWorld helloworld
+./zeolite -i util -m HelloWorld helloworld
 
 # Execute.
 ./HelloWorld
@@ -53,26 +53,20 @@ minimal.
 
 ## Motivation
 
-The basic units of a Zeolite program are
-[**categories**](https://en.wikipedia.org/wiki/Category_%28mathematics%29) of
-types, each having a fixed number of **type parameters**.
+The type system used by Zeolite is based on
+[**category theory**](https://en.wikipedia.org/wiki/Category_%28mathematics%29).
+This is essentially a mathematical formalism that allows us to prove that
+particular type conversions and function calls are safe. Overall, this knowledge
+is not needed in order to use the language.
 
-For example:
-
-<pre style='color:#1f1c1b;background-color:#ffffff;'>
-<b>concrete</b> <b><span style='color:#0057ae;'>Type</span></b><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span> {
-  <span style='color:#898887;'>// ...</span>
-}</pre>
-
-The category `Type` has a single type parameter `#x`. Passing a type to `Type`
-gives you a **type instance**, e.g., `Type<Value>`. Here `Type` can be thought
-of as a function that turns one type (`Value`) into another type
-(`Type<Value>`), where `#x` is the name of the type argument.
+Everything in Zeolite starts with **parameterized types** called **type
+cateories**, which are similar to classes in generics Java and templates in C++.
+The primary design objective of the type system is to impose the least amount of
+effort on the users of types and callers of functions. This is done by allowing
+implicit type conversions in situations where languages like Java and C++ would
+not.
 
 ### Parameter Variance - Java
-
-This is all somewhat standard until you consider how two type-instances of
-`Type` relate to each other.
 
 Take the following Java code as an example:
 
@@ -90,26 +84,26 @@ it has `X` as a super-class.
 Although this is a powerful feature (vs. C++ templates), it is still suboptimal:
 
 - In `addItems`, the use of `super` means that all *read* functionality in the
-  `List` is useless.
+  `List` is unusable.
 - In `readItems`, the use of `extends` means that all *write* functionality in
-  the `List` is useless.
-- Each user of `List` determines how the type parameter is going to be used,
-  rather than `List` specifying how it should be used.
+  the `List` is unusable.
 
-The theme here is that the Java `List` focuses on appearing as a container of
-objects, and each user chooses a way to make use of that container.
+The issue in both cases is that the caller must pass an object that implements
+functionality that is *provably unused* by the method.
 
 ### Parameter Variance - Zeolite
 
-Zeolite takes a different approach by forcing the type category to declare how
-each type parameter can vary.
+Zeolite has a similar approach to that of C# when it comes to handling parameter
+variance: It allows the author of the type to assign a fixed **variance rule**
+to each parameter, and then automatically handles conversions between
+substitutions that have compatible parameters.
 
 <pre style='color:#1f1c1b;background-color:#ffffff;'>
-<span style='color:#644a9b;'>@value</span> <b>interface</b> <b><span style='color:#0057ae;'>Writer</span></b><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c04040;'>|</span><span style='color:#c02040;'>&gt;</span> {
+<span style='color:#644a9b;'>@value</span> <b>interface</b> <b><span style='color:#0057ae;'>Writer</span></b><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c04040;'>|</span><span style='color:#c02040;'>&gt;</span> {  <span style='color:#898887;'>// &lt;- &lt;#x|&gt; means param #x is contravariant</span>
   append (<i><span style='color:#0057ae;'>#x</span></i>) <b><span style='color:#006e28;'>-&gt;</span></b> ()
 }
 
-<span style='color:#644a9b;'>@value</span> <b>interface</b> <b><span style='color:#0057ae;'>Reader</span></b><span style='color:#c02040;'>&lt;</span><span style='color:#c04040;'>|</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span> {
+<span style='color:#644a9b;'>@value</span> <b>interface</b> <b><span style='color:#0057ae;'>Reader</span></b><span style='color:#c02040;'>&lt;</span><span style='color:#c04040;'>|</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span> {  <span style='color:#898887;'>// &lt;- &lt;|#x&gt; means param #x is covariant</span>
   iterator () <b><span style='color:#006e28;'>-&gt;</span></b> (<b>optional</b> <span style='color:#0057ae;'>Iterator</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>)
 }
 
@@ -123,13 +117,10 @@ each type parameter can vary.
   next () <b><span style='color:#006e28;'>-&gt;</span></b> (<b>optional</b> <span style='color:#0057ae;'>Iterator</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>)
 }</pre>
 
-In this example, the `|` to the *right* of `#x` in `Writer` means that any
-`Writer` can be used as a `Writer` of a *more specific* type of object. This is
-like `super` in the Java example, but it's permanent for all users.
-
-Similarly, the `|` to the *left* of `#x` in `Reader` means that any `Reader` can
-be used as a `Reader` of any *more general* type of object. This is similar to
-`extends` in the Java example, but it's permanent for all users.
+`Writer` has a **contravariant** parameter `#x`, which means that any `Writer`
+can be used as a `Writer` of a *more specific* type of object. Similarly,
+`Reader` has a **covariant** parameter `#x`, which means that any `Reader` can
+be used as a `Reader` of a *more general* type of object.
 
 The Zeolite equivalent to the Java example is then:
 
@@ -170,41 +161,39 @@ parameter filters.)
 
 ## Language Overview
 
-Despite the complex motivation behind Zeolite, programs written with it can be
-simple and readable.
+The central goal of the langauge design is to limit the possible interpretations
+of a given piece of code, *and* limit the possible interpretations of
+compile-time errors.
 
-This is partly due to limitations on how types can be defined and used. The
-theme of these limitations (listed below) is that the program must focus on how
-types and values *can be used*, rather than on *the data they represent*.
-
-The following list can be thought of as *things that are missing* when comparing
-to other languages, which is a good thing, once you get used to it.
-
-- Each type category is either **concrete** or an **interface**. Concrete
-  categories *cannot* be further extended, and interfaces *cannot* define
-  procedural code. This means that the inheritance graph of types primarily
-  consists of interfaces, with all procedural code living at the very bottom.
-- All data members have *internal* visibility. This is more restrictive than
-  `private` visibility in Java and C++ in that objects *cannot* directly access
-  the data members of other objects of the same type.
-- Function overloading (i.e., multiple functions with the same name) is not
-  allowed; a category can only have one function with a given name. (*But*
-  compatible functions with the same name from multiple parents can be merged.)
-- Values cannot be missing (like `null` in Java) unless a specific qualifier is
-  used for the variable, argument, or return.
+- All procedural code exists at the very bottom of the inheritance graph, in
+  **concrete types**. These *cannot* be further refined, but they can implement
+  any number of **value interfaces** and **type interfaces** to express *usage
+  patterns*.
+- Data members in concrete types have *internal* visibility, meaning that they
+  are not accessible even by other members of the same type. Incidentally, this
+  means that there are no publicly-visible data members *anywhere*.
+- Multiple functions with the same name in the same type (i.e., "overloading")
+  are *not allowed*. This is primarily to limit the amount of type inference
+  done by the compiler, thereby making it simpler for the user to reason about.
 - There are no constructors and there is no default initialization; values can
-  only be created using factory functions or literals.
+  only be created using factory functions or literals. This encourages more
+  focus on "what it *does*" rather than "what it *is*".
+- Variables can only be missing (similar to `null` in Java) if a special storage
+  type is used.
 
-Zeolite also has a limited meta-type system that operates on types themselves:
+Zeolite also *increases* flexbility in some ways:
 
-- A special type of interface called a **type interface** can be used for
-  requiring type-level functions. This allows procedures to call functions on
-  type parameters themselves.
+- **Type interfaces** can be used for requiring type-level functions. This
+  allows procedures to call functions on type parameters themselves. This
+  would be like Java allowing abstract `static` methods.
 - Constraints on type parameters can be used when declaring categories or
   functions, to ensure that the parameter can be used in a certain manner. This
   is similar to how Java allows syntax like `<X extends Parent>`, but it is done
   out of line so that constraints can contain more complex relationships between
   parameters.
+- The types used in inherited functions can be overridden using compatible
+  types. Additionally, multiple inherited functions with the same name can be
+  **merged** into a single function if they have compatible types.
 
 ## Getting Started
 
@@ -233,21 +222,24 @@ box on other operating systems at the moment.
    ```shell
    ./setup.sh
    ```
-   This will create the compiler binary `./zeolite`.
+   This will create the compiler binary `./zeolite`. If you modify the compiler
+   code or move the source directory, you will need to rerun `setup.sh`.
+
+`zeolite` was written for Linux systems that have the [`clang++`][clang] C++
+compiler and the [`ghc`][ghc] Haskell compiler. More flexibility will probably
+be added in the future.
 
 If you feel like running the unit and integration tests, you can run the
-commands below. (This isn't required, but it might be useful if you modify the
-compiler.)
+commands below. This isn't required, but it might be useful if you modify the
+compiler.
 
 ```shell
 # Unit Tests.
 ( cd compiler && ghc all-tests.hs && ./all-tests )
 
-# Integration Tests. (SLOW)
+# Integration Tests.
 compiler/integration/tests.sh
 ```
-
-The following sections explain the basics of source files and compilation.
 
 ### Source Files
 
@@ -267,16 +259,9 @@ you need to split it up, you must also use `.0rp` for sharing type declarations.
 ### Compiling Programs
 
 To create a program, `define Runner` in a `concrete` category and implement the
-`@type run () -> ()` function with the main routine.
-
-The `zeolite` compiler operates on *source paths* rather than on *source files*.
-All of the source files (i.e., `.0rp` and `.0rx`) at the top level of the path
-are included in the module.
-
-To compile the module into a binary, call `zeolite` with the `-m` option,
-passing the name of the `Runner` and the output binary name. Additional
-dependencies can be included using `-i`. You can call `./zeolite -h` for the
-most-current options.
+`@type run () -> ()` function. (The function signature means that it takes
+nothing and returns nothing, and it is called on a *type* rather than a
+*value*.)
 
 <pre style='color:#1f1c1b;background-color:#ffffff;'>
 <span style='color:#898887;'>// yourprojectdir/your-source.0rx</span>
@@ -291,15 +276,22 @@ most-current options.
 
 ```shell
 # Compile.
-./zeolite -i util -m YourCategory yourprojectdir/YourCategory yourprojectdir
+./zeolite -i util -m YourCategory yourprojectdir
 
 # Execute.
 ./YourCategory
 ```
 
-`zeolite` was written for Linux systems that have the [`clang++`][clang] C++
-compiler and the [`ghc`][ghc] Haskell compiler. The C++ compiler can be changed
-in the script, but the Haskell code might not work without [`ghc`][ghc].
+The `zeolite` compiler operates on *source paths* rather than on *source files*.
+Unlike C++, you cannot specify individual source files to compile; all of the
+source files (i.e., `.0rp` and `.0rx`) at the top level of the path are
+included. This allows `zeolite` to more easily manage dependencies between
+source files during compilation.
+
+To compile the module into a binary, call `zeolite` with the `-m` option,
+passing the name of the `Runner`. The default binary name is the same as that of
+the runner, placed in the current directory. Additional dependencies can be
+included using `-i`. You can call `./zeolite -h` for the most-current options.
 
 ## Basic Ideas
 

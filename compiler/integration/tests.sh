@@ -52,7 +52,8 @@ compile() {
     local command=(
       "$compiler"
       -i "$root/util"
-      -m "Test" "$temp/compiled"
+      -m "Test"
+      -o "$temp/compiled"
       "$temp")
     echo "${command[@]}" >> "$temp/$errors"
     "${command[@]}" 2> >(tee -a "$temp/$errors" 1>&2)

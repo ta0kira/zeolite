@@ -51,9 +51,12 @@ main = do
           hPutStrLn stderr "Use the -h option to show help."
           exitFailure
       | otherwise = runCompiler $ getCompileSuccess co
-    validate co@(CompileOptions h is ds es ep p m)
+    validate co@(CompileOptions h is ds es ep p m o)
       | h /= HelpNotNeeded = return co
-      | null ds   = compileError "Please specify at least one input path."
+      | (not $ null o) && (not $ isCompileBinary m) =
+        compileError "Output filename (-o) is not allowed with multiple output files."
+      | null ds =
+        compileError "Please specify at least one input path."
       | otherwise = return co
 
 showHelp :: IO ()
@@ -63,7 +66,7 @@ showHelp = do
   hPutStrLn stderr "Also see https://ta0kira.github.io/zeolite for more documentation."
 
 runCompiler :: CompileOptions -> IO ()
-runCompiler co@(CompileOptions h is ds es ep p m) = do
+runCompiler co@(CompileOptions h is ds es ep p m o) = do
   when (h /= HelpNotNeeded) (showHelp >> exitFailure)
   (as,is) <- getSourceFilesForDeps is >>= return . first fixPaths >>= return . second fixPaths
   basePath <- getBasePath
@@ -175,7 +178,7 @@ runCompiler co@(CompileOptions h is ds es ep p m) = do
       cxx2 <- collectAllOrErrorM $ map compileInterfaceDefinition interfaces
       return $ (ms,hxx ++ cxx ++ cxx2)
     mergeInternal ds = (concat $ map fst ds,concat $ map snd ds)
-    writeMain paths (CompileBinary n f0) ms
+    writeMain paths (CompileBinary n) ms
       | length ms > 1 = do
         hPutStr stderr $ "Multiple matches for main category " ++ n ++ "."
         exitFailure
@@ -183,18 +186,19 @@ runCompiler co@(CompileOptions h is ds es ep p m) = do
         hPutStr stderr $ "Main category " ++ n ++ " not found."
         exitFailure
       | otherwise = do
+          let f0 = if null o then n else o
           let (CxxOutput _ _ os) = head ms
           -- TODO: Create a helper or a constant or something.
-          (f1,h) <- mkstemps "/tmp/zmain_" ".cpp"
+          (f,h) <- mkstemps "/tmp/zmain_" ".cpp"
           hPutStr h $ concat $ map (++ "\n") os
           hClose h
           paths' <- getIncludePathsForDeps paths >>= return . fixPaths
           os     <- getObjectFilesForDeps  paths >>= return . fixPaths
-          let command = CompileToBinary (f1:os) f0 paths'
+          let command = CompileToBinary (f:os) f0 paths'
           runCxxCommand command
-          removeFile f1
+          removeFile f
     writeMain _ _ _ = return ()
-    maybeCreateMain tm (CompileBinary n _) = do
+    maybeCreateMain tm (CompileBinary n) = do
       case (CategoryName n) `Map.lookup` tm of
         Nothing -> return []
         Just t -> do

@@ -7,7 +7,7 @@ To run the example:
 
 ```shell
 # Compile the example.
-../../zeolite -i ../../util -m RegexDemo ./RegexDemo .
+../../zeolite -i ../../util -m RegexDemo .
 
 # Execute the compiled binary.
 ./RegexDemo

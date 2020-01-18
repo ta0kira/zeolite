@@ -36,7 +36,8 @@ data CompileOptions =
     coExtraFiles :: [String],
     coExtraPaths :: [String],
     coSourcePrefix :: String,
-    coMode :: CompileMode
+    coMode :: CompileMode,
+    coOutputName :: String
   } deriving (Show)
 
 emptyCompileOptions :: CompileOptions
@@ -48,20 +49,20 @@ emptyCompileOptions =
     coExtraFiles = [],
     coExtraPaths = [],
     coSourcePrefix = "",
-    coMode = CompileUnspecified
+    coMode = CompileUnspecified,
+    coOutputName = ""
   }
 
 data HelpMode = HelpNeeded | HelpNotNeeded | HelpUnspecified deriving (Eq,Show)
 
 data CompileMode =
   CompileBinary {
-    cbCategory :: String,
-    cbFile :: String
+    cbCategory :: String
   } | CompileIncremental | CompileUnspecified
   deriving (Eq,Show)
 
-isCompileBinary (CompileBinary _ _) = True
-isCompileBinary _                   = False
+isCompileBinary (CompileBinary _) = True
+isCompileBinary _                 = False
 
 maybeDisableHelp HelpUnspecified = HelpNotNeeded
 maybeDisableHelp h               = h
