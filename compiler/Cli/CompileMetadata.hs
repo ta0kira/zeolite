@@ -19,7 +19,8 @@ limitations under the License.
 module Cli.CompileMetadata (
   CompileMetadata(..),
   allowedExtraTypes,
-  eraseMetadata,
+  createCachePath,
+  eraseCachedData,
   findSourceFiles,
   fixPath,
   getCachedPath,
@@ -108,15 +109,21 @@ writeMetadata p m = do
     hPutStrLn stderr $ "Error writing metadata for \"" ++ p' ++ "\"."
     exitFailure
 
-eraseMetadata :: String -> IO ()
-eraseMetadata p = do
-  let f = p </> cachedDataPath </> metadataFilename
-  exists <- doesPathExist f
-  when exists $ removeFile f
+eraseCachedData :: String -> IO ()
+eraseCachedData p = do
+  let f = p </> cachedDataPath
+  exists <- doesDirectoryExist f
+  when exists $ removeDirectoryRecursive f
+
+createCachePath :: String -> IO ()
+createCachePath p = do
+  let f = p </> cachedDataPath
+  exists <- doesDirectoryExist f
+  when (not exists) $ createDirectoryIfMissing False f
 
 writeCachedFile :: String -> String -> String -> String -> IO ()
 writeCachedFile p ns f c = do
-  createDirectoryIfMissing False $ p </> cachedDataPath
+  createCachePath p
   createDirectoryIfMissing False $ p </> cachedDataPath </> ns
   writeFile (getCachedPath p ns f) c
 

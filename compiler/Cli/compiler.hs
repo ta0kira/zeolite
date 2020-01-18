@@ -83,7 +83,7 @@ runCompiler co@(CompileOptions h is ds es ep p m o) = do
     fixPaths = nub . map fixPath
     getBasePath = getExecutablePath >>= return . takeDirectory
     processPath bp deps as is d = do
-      eraseMetadata d -- Avoids invalid metadata.
+      eraseCachedData (p </> d)
       (ps,xs) <- findSourceFiles p d
       -- Lazy dependency loading, in case we aren't compiling anything.
       paths <- if null ps && null xs
@@ -141,6 +141,7 @@ runCompiler co@(CompileOptions h is ds es ep p m o) = do
            let p0 = getCachedPath (p </> d) "" ""
            let p1 = getCachedPath (p </> d) ns ""
            let o = takeFileName $ dropExtension f ++ ".o"
+           createCachePath (p </> d)
            let command = CompileToObject f' (getCachedPath (p </> d) ns o) (p0:p1:paths)
            runCxxCommand command
            return [ns </> o]
@@ -150,6 +151,7 @@ runCompiler co@(CompileOptions h is ds es ep p m o) = do
           let f' = getCachedPath (p </> d) "" f
           let p0 = getCachedPath (p </> d) "" ""
           let o = takeFileName $ dropExtension f ++ ".o"
+          createCachePath (p </> d)
           let command = CompileToObject f' (getCachedPath (p </> d) "" o) (p0:paths)
           runCxxCommand command
           return [o]
