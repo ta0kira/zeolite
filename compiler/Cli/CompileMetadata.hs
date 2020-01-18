@@ -19,7 +19,6 @@ limitations under the License.
 module Cli.CompileMetadata (
   CompileMetadata(..),
   allowedExtraTypes,
-  checkModuleFreshness,
   eraseMetadata,
   findSourceFiles,
   fixPath,
@@ -27,6 +26,7 @@ module Cli.CompileMetadata (
   getIncludePathsForDeps,
   getObjectFilesForDeps,
   getSourceFilesForDeps,
+  loadRecursiveDeps,
   loadMetadata,
   sortCompiledFiles,
   writeCachedFile,
@@ -40,6 +40,7 @@ import System.Environment
 import System.Exit (exitFailure)
 import System.FilePath
 import System.IO
+import qualified Data.Set as Set
 
 
 data CompileMetadata =
@@ -86,7 +87,7 @@ loadMetadata p = do
     exitFailure
   filePresent <- doesFileExist f
   when (not filePresent) $ do
-    hPutStrLn stderr $ "Path \"" ++ p ++ "\" has not been compiled yet."
+    hPutStrLn stderr $ "Module \"" ++ p ++ "\" has not been compiled yet."
     exitFailure
   c <- readFile f
   check $ (reads c :: [(CompileMetadata,String)]) where
@@ -130,36 +131,30 @@ findSourceFiles p0 p = do
   let xs = filter (isSuffixOf ".0rx") ds
   return (ps,xs)
 
-getSourceFilesForDeps :: [String] -> IO ([String],[String])
-getSourceFilesForDeps = fmap merge . sequence . map loadSingle where
-  loadSingle p = do
-    m <- loadMetadata p
-    let p' = cmPath m
-    let direct = ([p'],map (p' </>) $ cmPublicFiles m)
-    -- TODO: This will cause issues if there is a dependency cycle!
-    indirect <- getSourceFilesForDeps $ cmDepPaths m
-    return (fst direct ++ fst indirect,snd direct ++ snd indirect)
-  merge fs = (concat $ map fst fs,concat $ map snd fs)
+getSourceFilesForDeps :: [CompileMetadata] -> ([String],[String])
+getSourceFilesForDeps = foldl extract ([],[]) where
+  extract fs m = (fst fs ++ [cmPath m],snd fs ++ map (cmPath m </>) (cmPublicFiles m))
 
-getIncludePathsForDeps :: [String] -> IO [String]
-getIncludePathsForDeps = fmap concat . sequence . map loadSingle where
-  loadSingle p = do
-    m <- loadMetadata p
-    let p' = cmPath m
-    let direct = (p' </> cachedDataPath):(map ((p' </> cachedDataPath) </>) $ cmSubdirs m)
-    -- TODO: This will cause issues if there is a dependency cycle!
-    indirect <- getIncludePathsForDeps $ cmDepPaths m
-    return $ direct ++ indirect
+getIncludePathsForDeps :: [CompileMetadata] -> [String]
+getIncludePathsForDeps = concat . map extract where
+  extract m = (cmPath m </> cachedDataPath):(map ((cmPath m </> cachedDataPath) </>) $ cmSubdirs m)
 
-getObjectFilesForDeps :: [String] -> IO [String]
-getObjectFilesForDeps = fmap concat . sequence . map loadSingle where
-  loadSingle p = do
-    m <- loadMetadata p
-    let p' = cmPath m
-    let direct = map ((p' </> cachedDataPath) </>) $ cmObjectFiles m
-    -- TODO: This will cause issues if there is a dependency cycle!
-    indirect <- getObjectFilesForDeps $ cmDepPaths m
-    return $ direct ++ indirect
+getObjectFilesForDeps :: [CompileMetadata] -> [String]
+getObjectFilesForDeps = concat . map extract where
+  extract m = map ((cmPath m </> cachedDataPath) </>) $ cmObjectFiles m
+
+loadRecursiveDeps :: [String] -> IO [CompileMetadata]
+loadRecursiveDeps ps = fmap snd $ run (Set.empty,[]) ps where
+  run xa@(pa,xs) (p:ps) = do
+    p' <- canonicalizePath p
+    if p' `Set.member` pa
+       then run xa ps
+       else do
+         hPutStrLn stderr $ "Loading metadata for dependency \"" ++ p' ++ "\"."
+         m <- loadMetadata p'
+         checkModuleFreshness p' m
+         run (p' `Set.insert` pa,xs ++ [m]) (ps ++ cmDepPaths m)
+  run xa _ = return xa
 
 fixPath :: String -> String
 fixPath = foldl (</>) "" . process [] . map dropSlash . splitPath where
@@ -185,15 +180,14 @@ sortCompiledFiles = foldl split ([],[],[]) where
     | isSuffixOf ".o"   f = (hxx,cxx,os++[f])
     | otherwise = fs
 
-checkModuleFreshness :: String -> IO Bool
-checkModuleFreshness p = do
-  (CompileMetadata p' is _ _ ps xs hxx cxx os) <- loadMetadata p
+checkModuleFreshness :: String -> CompileMetadata -> IO Bool
+checkModuleFreshness p (CompileMetadata p2 is _ _ ps xs hxx cxx os) = do
   time <- getModificationTime $ getCachedPath p "" metadataFilename
   c1 <- sequence $ map (\p2 -> check time $ getCachedPath p2 "" metadataFilename) is
-  c2 <- sequence $ map (check time . (p' </>)) $ ps ++ xs
-  c2 <- sequence $ map (check time . getCachedPath p' "") $ hxx ++ cxx ++ os
+  c2 <- sequence $ map (check time . (p2 </>)) $ ps ++ xs
+  c2 <- sequence $ map (check time . getCachedPath p2 "") $ hxx ++ cxx ++ os
   let fresh = not $ any id $ c1 ++ c2
-  when (not fresh) $ hPutStrLn stderr $ "Path \"" ++ p ++ "\" should be recompiled."
+  when (not fresh) $ hPutStrLn stderr $ "Module \"" ++ p2 ++ "\" should be recompiled."
   return fresh where
     check time f = do
       time2 <- getModificationTime f

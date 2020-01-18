@@ -68,25 +68,29 @@ showHelp = do
 runCompiler :: CompileOptions -> IO ()
 runCompiler co@(CompileOptions h is ds es ep p m o) = do
   when (h /= HelpNotNeeded) (showHelp >> exitFailure)
-  sequence $ map checkModuleFreshness is
-  (as,is) <- getSourceFilesForDeps is >>= return . first fixPaths >>= return . second fixPaths
+  deps <- loadRecursiveDeps is
+  let (as,is) = first fixPaths $ second fixPaths $ getSourceFilesForDeps deps
   basePath <- getBasePath
   is' <- zipWithContents is
-  ms <- fmap concat $ sequence $ map (processPath basePath as is') ds
+  ma <- sequence $ map (processPath basePath deps as is') ds
+  let ms = concat $ map snd ma
+  let deps2 = map fst ma
   -- TODO: Stop spamming paths just to find deps for main.cpp.
-  writeMain ([basePath] ++ ds ++ as) m ms
+  writeMain basePath (deps ++ deps2) m ms
   hPutStrLn stderr $ "Zeolite compilation succeeded."
   exitSuccess where
     ep' = fixPaths $ map (getCachedPath p "") ep
     fixPaths = nub . map fixPath
     getBasePath = getExecutablePath >>= return . takeDirectory
-    processPath bp as is d = do
+    processPath bp deps as is d = do
       eraseMetadata d -- Avoids invalid metadata.
       (ps,xs) <- findSourceFiles p d
       -- Lazy dependency loading, in case we aren't compiling anything.
       paths <- if null ps && null xs
-                  then return []
-                  else getIncludePathsForDeps (bp:as)
+                  then return $ getIncludePathsForDeps deps
+                  else do
+                    bpDeps <- loadRecursiveDeps [bp]
+                    return $ getIncludePathsForDeps (bpDeps ++ deps)
       ps' <- zipWithContents ps
       xs' <- zipWithContents xs
       let fs = compileAll is ps' xs'
@@ -109,7 +113,7 @@ runCompiler co@(CompileOptions h is ds es ep p m o) = do
           os2 <- fmap concat $ sequence $ map (compileExtraFile paths' d) es
           let (hxx,cxx,os') = sortCompiledFiles $ map (\f -> coNamespace f </> coFilename f) fs' ++ (os1 ++ os2) ++ es
           path <- getPath d
-          writeMetadata (p </> d) $ CompileMetadata {
+          let m = CompileMetadata {
               cmPath = fixPath path,
               cmDepPaths = sort as,
               cmCategories = sort $ map show pc,
@@ -120,7 +124,8 @@ runCompiler co@(CompileOptions h is ds es ep p m o) = do
               cmCxxFiles = sort cxx,
               cmObjectFiles = sort os'
             }
-          return mf
+          writeMetadata (p </> d) m
+          return (m,mf)
     getPath d = do
       pwd <- getCurrentDirectory
       return $ fixPath $ pwd </> p </> d
@@ -179,7 +184,7 @@ runCompiler co@(CompileOptions h is ds es ep p m o) = do
       cxx2 <- collectAllOrErrorM $ map compileInterfaceDefinition interfaces
       return $ (ms,hxx ++ cxx ++ cxx2)
     mergeInternal ds = (concat $ map fst ds,concat $ map snd ds)
-    writeMain paths (CompileBinary n _) ms
+    writeMain bp deps (CompileBinary n _) ms
       | length ms > 1 = do
         hPutStr stderr $ "Multiple matches for main category " ++ n ++ "."
         exitFailure
@@ -193,12 +198,13 @@ runCompiler co@(CompileOptions h is ds es ep p m o) = do
           (o',h) <- mkstemps "/tmp/zmain_" ".cpp"
           hPutStr h $ concat $ map (++ "\n") os
           hClose h
-          paths' <- getIncludePathsForDeps paths >>= return . fixPaths
-          os     <- getObjectFilesForDeps  paths >>= return . fixPaths
-          let command = CompileToBinary (o':os) f0 paths'
+          baseDeps <- loadRecursiveDeps [bp]
+          let paths = fixPaths $ getIncludePathsForDeps (baseDeps ++ deps)
+          let os    = fixPaths $ getObjectFilesForDeps  (baseDeps ++ deps)
+          let command = CompileToBinary (o':os) f0 paths
           runCxxCommand command
           removeFile o'
-    writeMain _ _ _ = return ()
+    writeMain _ _ _ _ = return ()
     maybeCreateMain tm (CompileBinary n f) = do
       case (CategoryName n) `Map.lookup` tm of
         Nothing -> return []
