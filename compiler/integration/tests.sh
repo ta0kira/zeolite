@@ -27,14 +27,33 @@ errors='errors.txt'
 compiler="$root/zeolite"
 
 default_color='\033[;37m'
+info_color='\033[01;37m'
 skip_color='\033[01;33m'
 pass_color='\033[01;32m'
 fail_color='\033[01;31m'
 
+message_info() {
+  echo -e "$info_color$*$default_color" 1>&2
+}
+
+message_skip() {
+  echo -e "$skip_color$*$default_color" 1>&2
+}
+
+message_pass() {
+  echo -e "$pass_color$*$default_color" 1>&2
+}
+
+message_fail() {
+  echo -e "$fail_color$*$default_color" 1>&2
+}
+
 echo -en "$default_color"
 
 # Rerun setup, in case the compiler code changed.
+message_info "Running compiler setup"
 "$root/setup.sh"
+message_info "Setup complete"
 
 test_base="
 concrete Test {
@@ -72,18 +91,6 @@ start_skipping() {
 
 stop_skipping() {
   SKIP_TESTS=0
-}
-
-message_skip() {
-  echo -e "$skip_color$*$default_color" 1>&2
-}
-
-message_pass() {
-  echo -e "$pass_color$*$default_color" 1>&2
-}
-
-message_fail() {
-  echo -e "$fail_color$*$default_color" 1>&2
 }
 
 should_skip() {
@@ -3910,4 +3917,4 @@ define Test {
 }
 END
 
-echo "All $count tests passed" 1>&2
+message_info "All $count tests passed"
