@@ -16,7 +16,6 @@ limitations under the License.
 
 -- Author: Kevin P. Barry [ta0kira@gmail.com]
 
-import Control.Arrow (first,second)
 import Control.Monad (when)
 import Data.List (isSuffixOf,nub,sort)
 import System.Directory
@@ -69,10 +68,11 @@ runCompiler :: CompileOptions -> IO ()
 runCompiler co@(CompileOptions h is ds es ep p m o) = do
   when (h /= HelpNotNeeded) (showHelp >> exitFailure)
   deps <- loadRecursiveDeps is
-  let (as,is) = first fixPaths $ second fixPaths $ getSourceFilesForDeps deps
+  let ss = fixPaths $ getSourceFilesForDeps deps
+  let as = fixPaths $ getRealPathsForDeps deps
   basePath <- getBasePath
-  is' <- zipWithContents is
-  ma <- sequence $ map (processPath basePath deps as is') ds
+  ss' <- zipWithContents ss
+  ma <- sequence $ map (processPath basePath deps as ss') ds
   let ms = concat $ map snd ma
   let deps2 = map fst ma
   -- TODO: Stop spamming paths just to find deps for main.cpp.
@@ -82,7 +82,7 @@ runCompiler co@(CompileOptions h is ds es ep p m o) = do
     ep' = fixPaths $ map (getCachedPath p "") ep
     fixPaths = nub . map fixPath
     getBasePath = getExecutablePath >>= return . takeDirectory
-    processPath bp deps as is d = do
+    processPath bp deps as ss d = do
       eraseCachedData (p </> d)
       (ps,xs) <- findSourceFiles p d
       -- Lazy dependency loading, in case we aren't compiling anything.
@@ -93,7 +93,7 @@ runCompiler co@(CompileOptions h is ds es ep p m o) = do
                     return $ getIncludePathsForDeps (bpDeps ++ deps)
       ps' <- zipWithContents ps
       xs' <- zipWithContents xs
-      let fs = compileAll is ps' xs'
+      let fs = compileAll ss ps' xs'
       writeOutput (fixPaths $ paths ++ ep') d as (map takeFileName ps) (map takeFileName xs) fs
     zipWithContents fs = fmap (zip $ map fixPath fs) $ sequence $ map (readFile . (p </>)) fs
     writeOutput paths d as ps xs fs

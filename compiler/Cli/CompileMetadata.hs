@@ -27,6 +27,7 @@ module Cli.CompileMetadata (
   getCacheRelativePath,
   getIncludePathsForDeps,
   getObjectFilesForDeps,
+  getRealPathsForDeps,
   getSourceFilesForDeps,
   loadRecursiveDeps,
   loadMetadata,
@@ -149,9 +150,12 @@ findSourceFiles p0 p = do
   let xs = filter (isSuffixOf ".0rx") ds
   return (ps,xs)
 
-getSourceFilesForDeps :: [CompileMetadata] -> ([String],[String])
-getSourceFilesForDeps = foldl extract ([],[]) where
-  extract fs m = (fst fs ++ [cmPath m],snd fs ++ map (cmPath m </>) (cmPublicFiles m))
+getRealPathsForDeps :: [CompileMetadata] -> [String]
+getRealPathsForDeps = map cmPath
+
+getSourceFilesForDeps :: [CompileMetadata] -> [String]
+getSourceFilesForDeps = concat . map extract where
+  extract m = map (cmPath m </>) (cmPublicFiles m)
 
 getIncludePathsForDeps :: [CompileMetadata] -> [String]
 getIncludePathsForDeps = concat . map extract where
