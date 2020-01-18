@@ -1,5 +1,5 @@
 concrete RegexDemo {
-  defines Runner
+  @type run () -> ()
 }
 
 define RegexDemo {

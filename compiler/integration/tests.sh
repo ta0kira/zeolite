@@ -57,7 +57,7 @@ message_info "Setup complete"
 
 test_base="
 concrete Test {
-  defines Runner
+  @type run () -> ()
 }
 "
 

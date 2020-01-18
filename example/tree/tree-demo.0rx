@@ -1,5 +1,5 @@
 concrete TreeDemo {
-  defines Runner
+  @type run () -> ()
 }
 
 define TreeDemo {

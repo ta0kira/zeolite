@@ -46,6 +46,9 @@ optionHelpText = [
     ""
   ]
 
+defaultMainFunc :: String
+defaultMainFunc = "run"
+
 parseCompileOptions :: (CompileErrorM m, Monad m) => [String] -> m CompileOptions
 parseCompileOptions = parseAll emptyCompileOptions . zip [1..] where
   parseAll co [] = return co
@@ -61,6 +64,10 @@ parseCompileOptions = parseAll emptyCompileOptions . zip [1..] where
     | c =~ "^[A-Z][A-Za-z0-9]+$" = return ()
     | null o    = argError n c "Invalid category name."
     | otherwise = argError n c $ "Invalid category name for " ++ o ++ "."
+  checkFunctionName n d o
+    | d =~ "^[a-z][A-Za-z0-9]+$" = return ()
+    | null d    = argError n d "Invalid function name."
+    | otherwise = argError n d $ "Invalid function name for " ++ o ++ "."
 
   parseSingle (CompileOptions _ is ds es ep p m o) ((n,"-h"):os) =
     return (os,CompileOptions HelpNeeded is ds es ep p m o)
@@ -73,8 +80,12 @@ parseCompileOptions = parseAll emptyCompileOptions . zip [1..] where
     | m /= CompileUnspecified = argError n "-m" "Compiler mode already set."
     | otherwise = update os where
       update ((n,c):os) =  do
-        checkCategoryName n c "-m"
-        return (os,CompileOptions (maybeDisableHelp h) is ds es ep p (CompileBinary c) o)
+        let (t,f) = check $ break (== '.') c
+        checkCategoryName n t "-m"
+        checkFunctionName n f "-m"
+        return (os,CompileOptions (maybeDisableHelp h) is ds es ep p (CompileBinary t f) o) where
+          check (t,"")    = (t,defaultMainFunc)
+          check (t,'.':f) = (t,f)
       update _ = argError n "-m" "Requires a category name."
 
   parseSingle (CompileOptions h is ds es ep p m o) ((n,"-o"):os)

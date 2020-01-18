@@ -178,7 +178,7 @@ runCompiler co@(CompileOptions h is ds es ep p m o) = do
       cxx2 <- collectAllOrErrorM $ map compileInterfaceDefinition interfaces
       return $ (ms,hxx ++ cxx ++ cxx2)
     mergeInternal ds = (concat $ map fst ds,concat $ map snd ds)
-    writeMain paths (CompileBinary n) ms
+    writeMain paths (CompileBinary n _) ms
       | length ms > 1 = do
         hPutStr stderr $ "Multiple matches for main category " ++ n ++ "."
         exitFailure
@@ -189,19 +189,19 @@ runCompiler co@(CompileOptions h is ds es ep p m o) = do
           let f0 = if null o then n else o
           let (CxxOutput _ _ os) = head ms
           -- TODO: Create a helper or a constant or something.
-          (f,h) <- mkstemps "/tmp/zmain_" ".cpp"
+          (o',h) <- mkstemps "/tmp/zmain_" ".cpp"
           hPutStr h $ concat $ map (++ "\n") os
           hClose h
           paths' <- getIncludePathsForDeps paths >>= return . fixPaths
           os     <- getObjectFilesForDeps  paths >>= return . fixPaths
-          let command = CompileToBinary (f:os) f0 paths'
+          let command = CompileToBinary (o':os) f0 paths'
           runCxxCommand command
-          removeFile f
+          removeFile o'
     writeMain _ _ _ = return ()
-    maybeCreateMain tm (CompileBinary n) = do
+    maybeCreateMain tm (CompileBinary n f) = do
       case (CategoryName n) `Map.lookup` tm of
         Nothing -> return []
         Just t -> do
-          contents <- createMainFile t
+          contents <- createMainFile t f
           return [CxxOutput mainFilename "" contents]
     maybeCreateMain _ _ = return []

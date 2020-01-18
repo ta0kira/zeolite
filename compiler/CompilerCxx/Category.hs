@@ -600,22 +600,33 @@ builtinVariables t = Map.fromList [
     (VariableName "self",VariableValue [] ValueScope (ValueType RequiredValue $ SingleType $ JustTypeInstance t) False)
   ]
 
-mainRunner = DefinesInstance (CategoryName "Runner") (ParamSet [])
-mainFunc = "run"
-
-createMainFile :: (CompileErrorM m, Monad m) => AnyCategory c -> m [String]
-createMainFile t
+createMainFile :: (Show c, CompileErrorM m, Monad m) =>
+  AnyCategory c -> String -> m [String]
+createMainFile t f
   | not $ isValueConcrete t =
     compileError $ "Main category " ++ show (getCategoryName t) ++ " is not concrete."
-  | null $ filter ((==) mainRunner . vdType) $ getCategoryDefines t =
-    -- TODO: Actually compile the function call with type checking.
-    compileError $ "Main category " ++ show (getCategoryName t) ++ " does not define " ++ show mainRunner ++ "."
-  | otherwise = return $ baseSourceIncludes ++ [
-      "#include \"" ++ headerFilename (diName mainRunner) ++ "\"",
-      "#include \"" ++ headerFilename (getCategoryName t) ++ "\"",
-      "int main() {",
-      "  SetSignalHandler();",
-      "  TRACE_FUNCTION(\"main\")",
-      "  " ++ qualifiedTypeGetter t ++ "(T_get()).Call(Function_" ++ show mainRunner ++ "_" ++ mainFunc ++ ", ParamTuple(), ArgTuple());",
-      "}"
-    ]
+  | otherwise = do
+      func <- getRunFunc
+      return $ baseSourceIncludes ++ [
+          "#include \"" ++ headerFilename (sfType func) ++ "\"",
+          "#include \"" ++ headerFilename (getCategoryName t) ++ "\""
+        ] ++ namespace ++ [
+          "int main() {",
+          "  SetSignalHandler();",
+          "  TRACE_FUNCTION(\"main\")",
+          "  (void) " ++ qualifiedTypeGetter t ++ "(T_get()).Call(" ++ functionName func ++ ", ParamTuple(), ArgTuple());",
+          "}"
+        ] where
+        name = FunctionName f
+        namespace
+          | null $ getCategoryNamespace t = []
+          | otherwise = ["using namespace " ++ getCategoryNamespace t ++ ";"]
+        getRunFunc = check $ filter ((== name) . sfName) $ filter ((== TypeScope) . sfScope) $ getCategoryFunctions t
+        check [f]
+          | not $ null $ psParams $ sfArgs f =
+            compileError $ "Main function " ++ show f ++ " must have 0 arguments."
+          | not $ null $ psParams $ sfParams f =
+            compileError $ "Main function " ++ show f ++ " must have 0 parameters."
+          | otherwise = return f
+        check _ = compileError $ "Main category " ++ show (getCategoryName t) ++
+                                 " does not have a @type function \"" ++ show name ++ "\"."

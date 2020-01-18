@@ -60,7 +60,3 @@ concrete SimpleOutput {
   @type stderr () -> (BufferedWriter<Formatted>)
   @type error () -> (BufferedWriter<Formatted>)
 }
-
-@type interface Runner {
-  run () -> ()
-}

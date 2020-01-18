@@ -57,12 +57,13 @@ data HelpMode = HelpNeeded | HelpNotNeeded | HelpUnspecified deriving (Eq,Show)
 
 data CompileMode =
   CompileBinary {
-    cbCategory :: String
+    cbCategory :: String,
+    cbFunction :: String
   } | CompileIncremental | CompileUnspecified
   deriving (Eq,Show)
 
-isCompileBinary (CompileBinary _) = True
-isCompileBinary _                 = False
+isCompileBinary (CompileBinary _ _) = True
+isCompileBinary _                   = False
 
 maybeDisableHelp HelpUnspecified = HelpNotNeeded
 maybeDisableHelp h               = h

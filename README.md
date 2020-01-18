@@ -20,7 +20,7 @@ It's the [any%](https://en.wiktionary.org/wiki/any%25) of programming.
 <span style='color:#898887;'>// helloworld/hello-world.0rx</span>
 
 <b>concrete</b> <b><span style='color:#0057ae;'>HelloWorld</span></b> {
-  <b>defines</b> <span style='color:#0057ae;'>Runner</span>
+  <span style='color:#644a9b;'>@type</span> run () <b><span style='color:#006e28;'>-&gt;</span></b> ()
 }
 
 <b>define</b> <b><span style='color:#0057ae;'>HelloWorld</span></b> {
@@ -258,7 +258,7 @@ you need to split it up, you must also use `.0rp` for sharing type declarations.
 
 ### Compiling Programs
 
-To create a program, `define Runner` in a `concrete` category and implement the
+To create a program, define a `concrete` category and implement the
 `@type run () -> ()` function. (The function signature means that it takes
 nothing and returns nothing, and it is called on a *type* rather than a
 *value*.)
@@ -267,7 +267,7 @@ nothing and returns nothing, and it is called on a *type* rather than a
 <span style='color:#898887;'>// yourprojectdir/your-source.0rx</span>
 
 <b>concrete</b> <b><span style='color:#0057ae;'>YourCategory</span></b> {
-  <b>defines</b> <span style='color:#0057ae;'>Runner</span>
+  <span style='color:#644a9b;'>@type</span> run () <b><span style='color:#006e28;'>-&gt;</span></b> ()
 }
 
 <b>define</b> <b><span style='color:#0057ae;'>YourCategory</span></b> {
@@ -289,9 +289,10 @@ included. This allows `zeolite` to more easily manage dependencies between
 source files during compilation.
 
 To compile the module into a binary, call `zeolite` with the `-m` option,
-passing the name of the `Runner`. The default binary name is the same as that of
-the runner, placed in the current directory. Additional dependencies can be
-included using `-i`. You can call `./zeolite -h` for the most-current options.
+passing the name of the main category. The default binary name is the same as
+that of the category, placed in the current directory. Additional dependencies
+can be included using `-i`. You can call `./zeolite -h` for the most-current
+options.
 
 ## Basic Ideas
 
