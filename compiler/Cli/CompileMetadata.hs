@@ -36,6 +36,7 @@ import Control.Monad (when)
 import Data.List (isSuffixOf)
 import System.Directory
 import System.Environment
+import System.Exit (exitFailure)
 import System.FilePath
 import System.IO
 
@@ -73,10 +74,26 @@ allowedExtraTypes = [".hpp",".cpp",".h",".cc",".a",".o"]
 
 loadMetadata :: String -> IO CompileMetadata
 loadMetadata p = do
-  -- TODO: This needs error handling.
   let f = p </> cachedDataPath </> metadataFilename
+  isFile <- doesFileExist p
+  when isFile $ do
+    hPutStrLn stderr $ "Path \"" ++ p ++ "\" is not a directory."
+    exitFailure
+  isDir <- doesDirectoryExist p
+  when (not isDir) $ do
+    hPutStrLn stderr $ "Path \"" ++ p ++ "\" does not exist."
+    exitFailure
+  filePresent <- doesFileExist f
+  when (not filePresent) $ do
+    hPutStrLn stderr $ "Path \"" ++ p ++ "\" has not been compiled yet."
+    exitFailure
   c <- readFile f
-  return $ read c
+  check $ (reads c :: [(CompileMetadata,String)]) where
+    check [(cm,"")] = return cm
+    check [(cm,"\n")] = return cm
+    check _ = do
+      hPutStrLn stderr $ "Could not parse metadata from \"" ++ p ++ "\". Please recompile."
+      exitFailure
 
 writeMetadata :: String -> CompileMetadata -> IO ()
 writeMetadata p m = writeCachedFile p "" metadataFilename (show m ++ "\n")
@@ -98,8 +115,16 @@ getCachedPath p ns f = fixPath $ p </> cachedDataPath </> ns </> f
 
 findSourceFiles :: String -> String -> IO ([String],[String])
 findSourceFiles p0 p = do
-  -- TODO: This needs error handling.
-  ds <- getDirectoryContents (p0 </> p) >>= return . map (p </>)
+  let absolute = p0 </> p
+  isFile <- doesFileExist absolute
+  when isFile $ do
+    hPutStrLn stderr $ "Path \"" ++ absolute ++ "\" is not a directory."
+    exitFailure
+  isDir <- doesDirectoryExist absolute
+  when (not isDir) $ do
+    hPutStrLn stderr $ "Path \"" ++ absolute ++ "\" does not exist."
+    exitFailure
+  ds <- getDirectoryContents absolute >>= return . map (p </>)
   let ps = filter (isSuffixOf ".0rp") ds
   let xs = filter (isSuffixOf ".0rx") ds
   return (ps,xs)
@@ -107,7 +132,6 @@ findSourceFiles p0 p = do
 getSourceFilesForDeps :: [String] -> IO ([String],[String])
 getSourceFilesForDeps = fmap merge . sequence . map loadSingle where
   loadSingle p = do
-    -- TODO: This needs error handling.
     m <- loadMetadata p
     let p' = cmPath m
     let direct = ([p'],map (p' </>) $ cmPublicFiles m)
@@ -119,7 +143,6 @@ getSourceFilesForDeps = fmap merge . sequence . map loadSingle where
 getIncludePathsForDeps :: [String] -> IO [String]
 getIncludePathsForDeps = fmap concat . sequence . map loadSingle where
   loadSingle p = do
-    -- TODO: This needs error handling.
     m <- loadMetadata p
     let p' = cmPath m
     let direct = (p' </> cachedDataPath):(map ((p' </> cachedDataPath) </>) $ cmSubdirs m)
@@ -130,7 +153,6 @@ getIncludePathsForDeps = fmap concat . sequence . map loadSingle where
 getObjectFilesForDeps :: [String] -> IO [String]
 getObjectFilesForDeps = fmap concat . sequence . map loadSingle where
   loadSingle p = do
-    -- TODO: This needs error handling.
     m <- loadMetadata p
     let p' = cmPath m
     let direct = map ((p' </> cachedDataPath) </>) $ cmObjectFiles m
