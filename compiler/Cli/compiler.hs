@@ -16,12 +16,14 @@ limitations under the License.
 
 -- Author: Kevin P. Barry [ta0kira@gmail.com]
 
+import Control.Arrow (first,second)
 import Control.Monad (when)
 import Data.List (isSuffixOf,nub,sort)
 import System.Directory
 import System.Environment
 import System.Exit
 import System.FilePath
+import System.Posix.Temp (mkstemps)
 import System.IO
 import qualified Data.Map as Map
 
@@ -31,11 +33,12 @@ import SourceFile
 import TypesBase
 import TypeCategory
 import TypeInstance
-import Cli.CompileOptions
-import Cli.ParseCompileOptions -- Not safe, due to Text.Regex.TDFA.
 import CompilerCxx.Category
-import Cli.CompileMetadata
 import CompilerCxx.Naming
+import Cli.CompileMetadata
+import Cli.CompileOptions
+import Cli.CxxCommand
+import Cli.ParseCompileOptions -- Not safe, due to Text.Regex.TDFA.
 
 
 main = do
@@ -48,10 +51,10 @@ main = do
           hPutStrLn stderr "Use the -h option to show help."
           exitFailure
       | otherwise = runCompiler $ getCompileSuccess co
-    validate co@(CompileOptions h is cs ds p m)
+    validate co@(CompileOptions h is ds es ep p m)
       | h /= HelpNotNeeded = return co
-      | null cs && null ds = compileError "Please specify at least one input file."
-      | otherwise          = return co
+      | null ds   = compileError "Please specify at least one input file."
+      | otherwise = return co
 
 showHelp :: IO ()
 showHelp = do
@@ -59,22 +62,27 @@ showHelp = do
   mapM_ (hPutStrLn stderr . ("  " ++)) optionHelpText
 
 runCompiler :: CompileOptions -> IO ()
-runCompiler co@(CompileOptions h is ds es p m) = do
+runCompiler co@(CompileOptions h is ds es ep p m) = do
   when (h /= HelpNotNeeded) (showHelp >> exitFailure)
-  (as,is) <- getSourceFilesForDeps is
+  (as,is) <- getSourceFilesForDeps is >>= return . first nub >>= return . second nub
+  basePath <- getBasePath
+  paths <- getIncludePathsForDeps (basePath:as) >>= return . nub
   is' <- zipWithContents is
-  ms <- fmap concat $ sequence $ map (processPath as is') ds
-  writeMain m ms
+  ms <- fmap concat $ sequence $ map (processPath (paths ++ ep) as is') ds
+  -- TODO: Stop spamming paths just to find deps for main.cpp.
+  writeMain ([basePath] ++ ds ++ as) m ms
   hPutStrLn stderr $ "Zeolite compilation succeeded."
   exitSuccess where
-    processPath as is d = do
+    getBasePath = getExecutablePath >>= return . takeDirectory
+    processPath paths as is d = do
+      eraseMetadata d -- Avoids invalid metadata.
       (ps,xs) <- findSourceFiles p d
       ps' <- zipWithContents ps
       xs' <- zipWithContents xs
       let fs = compileAll is ps' xs'
-      writeOutput d as (map takeFileName ps) (map takeFileName xs) fs
+      writeOutput paths d as (map takeFileName ps) (map takeFileName xs) fs
     zipWithContents fs = fmap (zip fs) $ sequence $ map (readFile . (p </>)) fs
-    writeOutput d as ps xs fs
+    writeOutput paths d as ps xs fs
       | isCompileError fs = do
           formatWarnings fs
           hPutStr stderr $ "Compiler errors:\n" ++ (show $ getCompileError fs)
@@ -83,16 +91,19 @@ runCompiler co@(CompileOptions h is ds es p m) = do
       | otherwise = do
           formatWarnings fs
           let (pc,mf,fs') = getCompileSuccess fs
-          os1 <- fmap concat $ sequence $ map (writeOutputFile d) fs'
-          os2 <- fmap concat $ sequence $ map (compileExtraFile d) es
-          let (hxx,cxx,os') = sortCompiledFiles $ map (\f -> coNamespace f </> coFilename f) fs' ++ (os1 ++ os2) ++ es
           let ss = nub $ filter (not . null) $ map coNamespace fs'
+          let paths' = paths ++ map (\ns -> getCachedPath (p </> d) ns "") ss
+          let hxx   = filter (isSuffixOf ".hpp" . coFilename)       fs'
+          let other = filter (not . isSuffixOf ".hpp" . coFilename) fs'
+          os1 <- fmap concat $ sequence $ map (writeOutputFile paths' d) $ hxx ++ other
+          os2 <- fmap concat $ sequence $ map (compileExtraFile paths' d) es
+          let (hxx,cxx,os') = sortCompiledFiles $ map (\f -> coNamespace f </> coFilename f) fs' ++ (os1 ++ os2) ++ es
           path <- getPath d
           writeMetadata (p </> d) $ CompileMetadata {
               cmPath = path,
               cmDepPaths = sort as,
               cmCategories = sort $ map show pc,
-              cmSubdirs = sort ss,
+              cmSubdirs = sort $ ss ++ ep,
               cmPublicFiles = sort ps,
               cmPrivateFiles = sort xs,
               cmHxxFiles = sort hxx,
@@ -106,15 +117,27 @@ runCompiler co@(CompileOptions h is ds es p m) = do
     formatWarnings c
       | null $ getCompileWarnings c = return ()
       | otherwise = hPutStr stderr $ "Compiler warnings:\n" ++ (concat $ map (++ "\n") (getCompileWarnings c))
-    writeOutputFile d (CxxOutput f ns os) = do
+    writeOutputFile paths d (CxxOutput f ns os) = do
       hPutStrLn stderr $ "Writing file " ++ f
       writeCachedFile (p </> d) ns f $ concat $ map (++ "\n") os
       if isSuffixOf ".cpp" f || isSuffixOf ".cc" f
-         then return [ns </> (dropExtension f ++ ".o")] -- TODO: Actually compile the source.
+         then do
+           let f' = getCachedPath (p </> d) ns f
+           let p0 = getCachedPath (p </> d) "" ""
+           let p1 = getCachedPath (p </> d) ns ""
+           let o = takeFileName $ dropExtension f ++ ".o"
+           let command = CompileToObject f' (getCachedPath (p </> d) ns o) (p0:p1:paths)
+           runCxxCommand command
+           return [ns </> o]
          else return []
-    compileExtraFile d f
-      | isSuffixOf ".cpp" f || isSuffixOf ".cc" f =
-        return [(dropExtension $ takeFileName f) ++ ".o"] -- TODO: Actually compile the source.
+    compileExtraFile paths d f
+      | isSuffixOf ".cpp" f || isSuffixOf ".cc" f = do
+          let f' = getCachedPath (p </> d) "" f
+          let p0 = getCachedPath (p </> d) "" ""
+          let o = takeFileName $ dropExtension f ++ ".o"
+          let command = CompileToObject f' (getCachedPath (p </> d) "" o) (p0:paths)
+          runCxxCommand command
+          return [o]
       | otherwise = return []
     compileAll is cs ds = do
       tm0 <- builtinCategories
@@ -146,7 +169,7 @@ runCompiler co@(CompileOptions h is ds es p m) = do
       cxx2 <- collectAllOrErrorM $ map compileInterfaceDefinition interfaces
       return $ (ms,hxx ++ cxx ++ cxx2)
     mergeInternal ds = (concat $ map fst ds,concat $ map snd ds)
-    writeMain (CompileBinary n _) ms
+    writeMain paths (CompileBinary n f0) ms
       | length ms > 1 = do
         hPutStr stderr $ "Multiple matches for main category " ++ n ++ "."
         exitFailure
@@ -154,9 +177,17 @@ runCompiler co@(CompileOptions h is ds es p m) = do
         hPutStr stderr $ "Main category " ++ n ++ " not found."
         exitFailure
       | otherwise = do
-          let (CxxOutput f _ os) = head ms
-          writeFile f $ concat $ map (++ "\n") os
-    writeMain _ _ = return ()
+          let (CxxOutput _ _ os) = head ms
+          -- TODO: Create a helper or a constant or something.
+          (f1,h) <- mkstemps "/tmp/main" ".cpp"
+          hPutStr h $ concat $ map (++ "\n") os
+          hClose h
+          paths' <- getIncludePathsForDeps paths >>= return . nub
+          os     <- getObjectFilesForDeps  paths >>= return . nub
+          let command = CompileToBinary (f1:os) f0 paths'
+          runCxxCommand command
+          removeFile f1
+    writeMain _ _ _ = return ()
     maybeCreateMain tm (CompileBinary n _) = do
       case (CategoryName n) `Map.lookup` tm of
         Nothing -> return []

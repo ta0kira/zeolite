@@ -19,7 +19,11 @@ limitations under the License.
 module Cli.CompileMetadata (
   CompileMetadata(..),
   allowedExtraTypes,
+  eraseMetadata,
   findSourceFiles,
+  getCachedPath,
+  getIncludePathsForDeps,
+  getObjectFilesForDeps,
   getSourceFilesForDeps,
   loadMetadata,
   sortCompiledFiles,
@@ -27,6 +31,7 @@ module Cli.CompileMetadata (
   writeMetadata,
 ) where
 
+import Control.Monad (when)
 import Data.List (isSuffixOf)
 import System.Directory
 import System.Environment
@@ -75,11 +80,20 @@ loadMetadata p = do
 writeMetadata :: String -> CompileMetadata -> IO ()
 writeMetadata p m = writeCachedFile p "" metadataFilename (show m ++ "\n")
 
+eraseMetadata :: String -> IO ()
+eraseMetadata p = do
+  let f = p </> cachedDataPath </> metadataFilename
+  exists <- doesPathExist f
+  when exists $ removeFile f
+
 writeCachedFile :: String -> String -> String -> String -> IO ()
 writeCachedFile p ns f c = do
   createDirectoryIfMissing False $ p </> cachedDataPath
   createDirectoryIfMissing False $ p </> cachedDataPath </> ns
   writeFile (p </> cachedDataPath </> ns </> f) c
+
+getCachedPath :: String -> String -> String -> String
+getCachedPath p ns f = p </> cachedDataPath </> ns </> f
 
 findSourceFiles :: String -> String -> IO ([String],[String])
 findSourceFiles p0 p = do
@@ -95,8 +109,33 @@ getSourceFilesForDeps = fmap merge . sequence . map loadSingle where
     -- TODO: This needs error handling.
     m <- loadMetadata p
     let p' = cmPath m
-    return (p',map (p' </>) $ cmPublicFiles m)
-  merge fs = (map fst fs,concat $ map snd fs)
+    let direct = ([p'],map (p' </>) $ cmPublicFiles m)
+    -- TODO: This will cause issues if there is a dependency cycle!
+    indirect <- getSourceFilesForDeps $ cmDepPaths m
+    return (fst direct ++ fst indirect,snd direct ++ snd indirect)
+  merge fs = (concat $ map fst fs,concat $ map snd fs)
+
+getIncludePathsForDeps :: [String] -> IO [String]
+getIncludePathsForDeps = fmap concat . sequence . map loadSingle where
+  loadSingle p = do
+    -- TODO: This needs error handling.
+    m <- loadMetadata p
+    let p' = cmPath m
+    let direct = (p' </> cachedDataPath):(map ((p' </> cachedDataPath) </>) $ cmSubdirs m)
+    -- TODO: This will cause issues if there is a dependency cycle!
+    indirect <- getIncludePathsForDeps $ cmDepPaths m
+    return $ direct ++ indirect
+
+getObjectFilesForDeps :: [String] -> IO [String]
+getObjectFilesForDeps = fmap concat . sequence . map loadSingle where
+  loadSingle p = do
+    -- TODO: This needs error handling.
+    m <- loadMetadata p
+    let p' = cmPath m
+    let direct = map ((p' </> cachedDataPath) </>) $ cmObjectFiles m
+    -- TODO: This will cause issues if there is a dependency cycle!
+    indirect <- getObjectFilesForDeps $ cmDepPaths m
+    return $ direct ++ indirect
 
 sortCompiledFiles :: [String] -> ([String],[String],[String])
 sortCompiledFiles = foldl split ([],[],[]) where

@@ -34,6 +34,7 @@ data CompileOptions =
     coIncludes :: [String],
     coSources :: [String],
     coExtraFiles :: [String],
+    coExtraPaths :: [String],
     coSourcePrefix :: String,
     coMode :: CompileMode
   } deriving (Show)
@@ -45,6 +46,7 @@ emptyCompileOptions =
     coIncludes = [],
     coSources = [],
     coExtraFiles = [],
+    coExtraPaths = [],
     coSourcePrefix = "",
     coMode = CompileUnspecified
   }

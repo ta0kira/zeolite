@@ -31,7 +31,7 @@ It's the [any%](https://en.wiktionary.org/wiki/any%25) of programming.
 
 ```shell
 # Compile.
-./zeolite.sh HelloWorld hello-world.0rx
+./zeolite -i util -m HelloWorld ./HelloWorld $PWD
 
 # Execute.
 ./HelloWorld
@@ -229,11 +229,11 @@ box on other operating systems at the moment.
    cabal update
    cabal install mtl parsec regex-tdfa
    ```
-5. If you want to use a different C++ compiler (such as `g++`), you can override
-   the default in `~/.zeoliterc`:
+5. Run the compiler setup:
    ```shell
-   echo 'COMPILER_CXX=g++' >> ~/.zeoliterc
+   ./setup.sh
    ```
+   This will create the compiler binary `./zeolite`.
 
 If you feel like running the unit and integration tests, you can run the
 commands below. (This isn't required, but it might be useful if you modify the
@@ -284,23 +284,18 @@ the main category. The main category *must* define `Runner` and implement the
 
 ```shell
 # Compile.
-./zeolite.sh YourCategory your-source.0rx
+./zeolite -i util -m YourCategory ./YourCategory $PWD
 
 # Execute.
 ./YourCategory
 ```
 
-Zeolite will allow incremental compilation and linking at some point in the
-future, but it currently compiles and links the entire binary in one shot.
+The calling convention recently changed, and still needs better documentation.
+You can call `./zeolite -h` for a help summary.
 
-`zeolite.sh` was written for Linux systems that have the [`clang++`][clang] C++
+`zeolite` was written for Linux systems that have the [`clang++`][clang] C++
 compiler and the [`ghc`][ghc] Haskell compiler. The C++ compiler can be changed
 in the script, but the Haskell code might not work without [`ghc`][ghc].
-
-For other operating systems, `zeolite.sh` will likely need some tweaking, or
-complete replacement. The Zeolite compiler `compiler/CompilerCxx/compiler` can
-be called directly to create C++ source files, which can then be compiled into a
-binary with most C++ compilers.
 
 ## Basic Ideas
 
