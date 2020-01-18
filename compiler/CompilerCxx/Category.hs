@@ -65,8 +65,11 @@ compileCategoryDeclaration _ t =
     content = onlyCodes $ collection ++ labels ++ getCategory ++ getType
     name = getCategoryName t
     guardTop = ["#ifndef " ++ guardName,"#define " ++ guardName]
-    guardBottom = ["#endif"]
-    guardName = "HEADER_" ++ show name
+    guardBottom = ["#endif  // " ++ guardName]
+    guardName = "HEADER_" ++ guardNamespace ++ show name
+    guardNamespace
+      | null $ getCategoryNamespace t = ""
+      | otherwise = getCategoryNamespace t ++ "_"
     labels = map label $ filter ((== name) . sfType) $ getCategoryFunctions t
     label f = "extern " ++ functionLabelType f ++ " " ++ functionName f ++ ";"
     collection
