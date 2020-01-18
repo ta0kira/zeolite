@@ -7,7 +7,7 @@ To run the example:
 
 ```shell
 # Compile the example.
-../../zeolite -i ../../util -m TreeDemo ./TreeDemo $PWD
+../../zeolite -i ../../util -m TreeDemo ./TreeDemo .
 
 # Execute the compiled binary.
 ./TreeDemo

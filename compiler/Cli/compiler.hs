@@ -64,7 +64,7 @@ showHelp = do
 runCompiler :: CompileOptions -> IO ()
 runCompiler co@(CompileOptions h is ds es ep p m) = do
   when (h /= HelpNotNeeded) (showHelp >> exitFailure)
-  (as,is) <- getSourceFilesForDeps is >>= return . first nub >>= return . second nub
+  (as,is) <- getSourceFilesForDeps is >>= return . first fixPaths >>= return . second fixPaths
   basePath <- getBasePath
   is' <- zipWithContents is
   ms <- fmap concat $ sequence $ map (processPath basePath as is') ds
@@ -72,7 +72,8 @@ runCompiler co@(CompileOptions h is ds es ep p m) = do
   writeMain ([basePath] ++ ds ++ as) m ms
   hPutStrLn stderr $ "Zeolite compilation succeeded."
   exitSuccess where
-    ep' = map (getCachedPath p "") ep
+    ep' = fixPaths $ map (getCachedPath p "") ep
+    fixPaths = nub . map fixPath
     getBasePath = getExecutablePath >>= return . takeDirectory
     processPath bp as is d = do
       eraseMetadata d -- Avoids invalid metadata.
@@ -80,12 +81,12 @@ runCompiler co@(CompileOptions h is ds es ep p m) = do
       -- Lazy dependency loading, in case we aren't compiling anything.
       paths <- if null ps && null xs
                   then return []
-                  else getIncludePathsForDeps (bp:as) >>= return . nub
+                  else getIncludePathsForDeps (bp:as)
       ps' <- zipWithContents ps
       xs' <- zipWithContents xs
       let fs = compileAll is ps' xs'
-      writeOutput (paths ++ ep') d as (map takeFileName ps) (map takeFileName xs) fs
-    zipWithContents fs = fmap (zip fs) $ sequence $ map (readFile . (p </>)) fs
+      writeOutput (fixPaths $ paths ++ ep') d as (map takeFileName ps) (map takeFileName xs) fs
+    zipWithContents fs = fmap (zip $ map fixPath fs) $ sequence $ map (readFile . (p </>)) fs
     writeOutput paths d as ps xs fs
       | isCompileError fs = do
           formatWarnings fs
@@ -104,7 +105,7 @@ runCompiler co@(CompileOptions h is ds es ep p m) = do
           let (hxx,cxx,os') = sortCompiledFiles $ map (\f -> coNamespace f </> coFilename f) fs' ++ (os1 ++ os2) ++ es
           path <- getPath d
           writeMetadata (p </> d) $ CompileMetadata {
-              cmPath = path,
+              cmPath = fixPath path,
               cmDepPaths = sort as,
               cmCategories = sort $ map show pc,
               cmSubdirs = sort $ ss ++ ep,
@@ -117,7 +118,7 @@ runCompiler co@(CompileOptions h is ds es ep p m) = do
           return mf
     getPath d = do
       pwd <- getCurrentDirectory
-      return $ normalise $ pwd </> p </> d
+      return $ fixPath $ pwd </> p </> d
     formatWarnings c
       | null $ getCompileWarnings c = return ()
       | otherwise = hPutStr stderr $ "Compiler warnings:\n" ++ (concat $ map (++ "\n") (getCompileWarnings c))
@@ -183,11 +184,11 @@ runCompiler co@(CompileOptions h is ds es ep p m) = do
       | otherwise = do
           let (CxxOutput _ _ os) = head ms
           -- TODO: Create a helper or a constant or something.
-          (f1,h) <- mkstemps "/tmp/main" ".cpp"
+          (f1,h) <- mkstemps "/tmp/zmain_" ".cpp"
           hPutStr h $ concat $ map (++ "\n") os
           hClose h
-          paths' <- getIncludePathsForDeps paths >>= return . nub
-          os     <- getObjectFilesForDeps  paths >>= return . nub
+          paths' <- getIncludePathsForDeps paths >>= return . fixPaths
+          os     <- getObjectFilesForDeps  paths >>= return . fixPaths
           let command = CompileToBinary (f1:os) f0 paths'
           runCxxCommand command
           removeFile f1

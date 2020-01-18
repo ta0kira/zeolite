@@ -31,7 +31,7 @@ It's the [any%](https://en.wiktionary.org/wiki/any%25) of programming.
 
 ```shell
 # Compile.
-./zeolite -i util -m HelloWorld ./HelloWorld $PWD
+./zeolite -i util -m HelloWorld ./HelloWorld .
 
 # Execute.
 ./HelloWorld
@@ -284,7 +284,7 @@ the main category. The main category *must* define `Runner` and implement the
 
 ```shell
 # Compile.
-./zeolite -i util -m YourCategory ./YourCategory $PWD
+./zeolite -i util -m YourCategory ./YourCategory .
 
 # Execute.
 ./YourCategory

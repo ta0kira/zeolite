@@ -21,6 +21,7 @@ module Cli.CompileMetadata (
   allowedExtraTypes,
   eraseMetadata,
   findSourceFiles,
+  fixPath,
   getCachedPath,
   getIncludePathsForDeps,
   getObjectFilesForDeps,
@@ -90,10 +91,10 @@ writeCachedFile :: String -> String -> String -> String -> IO ()
 writeCachedFile p ns f c = do
   createDirectoryIfMissing False $ p </> cachedDataPath
   createDirectoryIfMissing False $ p </> cachedDataPath </> ns
-  writeFile (p </> cachedDataPath </> ns </> f) c
+  writeFile (getCachedPath p ns f) c
 
 getCachedPath :: String -> String -> String -> String
-getCachedPath p ns f = p </> cachedDataPath </> ns </> f
+getCachedPath p ns f = fixPath $ p </> cachedDataPath </> ns </> f
 
 findSourceFiles :: String -> String -> IO ([String],[String])
 findSourceFiles p0 p = do
@@ -136,6 +137,19 @@ getObjectFilesForDeps = fmap concat . sequence . map loadSingle where
     -- TODO: This will cause issues if there is a dependency cycle!
     indirect <- getObjectFilesForDeps $ cmDepPaths m
     return $ direct ++ indirect
+
+fixPath :: String -> String
+fixPath = foldl (</>) "" . process [] . map dropSlash . splitPath where
+  dropSlash "/" = "/"
+  dropSlash d
+    | isSuffixOf "/" d = reverse $ tail $ reverse d
+    | otherwise        = d
+  process rs        (".":ds)  = process rs ds
+  process ("..":rs) ("..":ds) = process ("..":"..":rs) ds
+  process ("/":[])  ("..":ds) = process ("/":[]) ds
+  process (_:rs)    ("..":ds) = process rs ds
+  process rs        (d:ds)    = process (d:rs) ds
+  process rs        _         = reverse rs
 
 sortCompiledFiles :: [String] -> ([String],[String],[String])
 sortCompiledFiles = foldl split ([],[],[]) where
