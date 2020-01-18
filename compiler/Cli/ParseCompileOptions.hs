@@ -26,7 +26,7 @@ import System.FilePath (takeExtension)
 import Text.Regex.TDFA -- Not safe!
 
 import TypesBase
-import Cli.CompileMetadata (allowedExtraTypes)
+import Cli.CompileMetadata (allowedExtraTypes,getCacheRelativePath)
 import Cli.CompileOptions
 
 
@@ -109,10 +109,10 @@ parseCompileOptions = parseAll emptyCompileOptions . zip [1..] where
     update ((n,f):os)
       | any id $ map (flip isSuffixOf f) allowedExtraTypes = do
           checkPathName n f "-e"
-          return (os,CompileOptions (maybeDisableHelp h) is ds (es ++ [f]) ep p m o)
+          return (os,CompileOptions (maybeDisableHelp h) is ds (es ++ [getCacheRelativePath f]) ep p m o)
       | takeExtension f == "" = do
           checkPathName n f "-e"
-          return (os,CompileOptions (maybeDisableHelp h) is ds es (ep ++ [f]) p m o)
+          return (os,CompileOptions (maybeDisableHelp h) is ds es (ep ++ [getCacheRelativePath f]) p m o)
       | otherwise = argError n "-e" $ "Only " ++ intercalate ", " allowedExtraTypes ++
                                       " and directory sources are allowed."
     update _ = argError n "-e" "Requires a source filename."

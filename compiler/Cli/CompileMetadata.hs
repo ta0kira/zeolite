@@ -23,6 +23,7 @@ module Cli.CompileMetadata (
   findSourceFiles,
   fixPath,
   getCachedPath,
+  getCacheRelativePath,
   getIncludePathsForDeps,
   getObjectFilesForDeps,
   getSourceFilesForDeps,
@@ -114,6 +115,9 @@ writeCachedFile p ns f c = do
 
 getCachedPath :: String -> String -> String -> String
 getCachedPath p ns f = fixPath $ p </> cachedDataPath </> ns </> f
+
+getCacheRelativePath :: String -> String
+getCacheRelativePath f = ".." </> f
 
 findSourceFiles :: String -> String -> IO ([String],[String])
 findSourceFiles p0 p = do

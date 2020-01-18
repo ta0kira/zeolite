@@ -36,22 +36,22 @@ init_base() {
     "$compiler_bin"
     -p "$root"
     -c .
-    -e ../base
-    -e ../capture-thread/include
-    -e ../base/builtin.cpp
-    -e ../base/builtin.hpp
-    -e ../base/category-header.hpp
-    -e ../base/category-source.cpp
-    -e ../base/category-source.hpp
-    -e ../base/cycle-check.hpp
-    -e ../base/function.hpp
-    -e ../base/logging.cpp
-    -e ../base/logging.hpp
-    -e ../base/types.cpp
-    -e ../base/types.hpp
-    -e ../capture-thread/include/thread-capture.h
-    -e ../capture-thread/include/thread-crosser.h
-    -e ../capture-thread/src/thread-crosser.cc)
+    -e base
+    -e capture-thread/include
+    -e base/builtin.cpp
+    -e base/builtin.hpp
+    -e base/category-header.hpp
+    -e base/category-source.cpp
+    -e base/category-source.hpp
+    -e base/cycle-check.hpp
+    -e base/function.hpp
+    -e base/logging.cpp
+    -e base/logging.hpp
+    -e base/types.cpp
+    -e base/types.hpp
+    -e capture-thread/include/thread-capture.h
+    -e capture-thread/include/thread-crosser.h
+    -e capture-thread/src/thread-crosser.cc)
   echo "${command[@]}" 1>&2
   "${command[@]}"
 }
@@ -61,7 +61,7 @@ init_util() {
     "$compiler_bin"
     -p "$root"
     -c util
-    -e ../Category_SimpleOutput.cpp)
+    -e Category_SimpleOutput.cpp)
   echo "${command[@]}" 1>&2
   "${command[@]}"
 }
