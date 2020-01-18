@@ -600,19 +600,22 @@ builtinVariables t = Map.fromList [
     (VariableName "self",VariableValue [] ValueScope (ValueType RequiredValue $ SingleType $ JustTypeInstance t) False)
   ]
 
+mainRunner = DefinesInstance (CategoryName "Runner") (ParamSet [])
+mainFunc = "run"
+
 createMainFile :: (CompileErrorM m, Monad m) => AnyCategory c -> m [String]
 createMainFile t
-  -- TODO: Don't hard code as much here.
-  | isValueConcrete t = return [
-      "#include \"category-source.hpp\"",
-      "",
-      "#include \"Category_Runner.hpp\"",
-      "#include \"Category_" ++ show (getCategoryName t) ++ ".hpp\"",
-      "",
+  | not $ isValueConcrete t =
+    compileError $ "Main category " ++ show (getCategoryName t) ++ " is not concrete."
+  | null $ filter ((==) mainRunner . vdType) $ getCategoryDefines t =
+    -- TODO: Actually compile the function call with type checking.
+    compileError $ "Main category " ++ show (getCategoryName t) ++ " does not define " ++ show mainRunner ++ "."
+  | otherwise = return $ baseSourceIncludes ++ [
+      "#include \"" ++ headerFilename (diName mainRunner) ++ "\"",
+      "#include \"" ++ headerFilename (getCategoryName t) ++ "\"",
       "int main() {",
       "  SetSignalHandler();",
       "  TRACE_FUNCTION(\"main\")",
-      "  " ++ qualifiedTypeGetter t ++ "(T_get()).Call(Function_Runner_run, ParamTuple(), ArgTuple());",
+      "  " ++ qualifiedTypeGetter t ++ "(T_get()).Call(Function_" ++ show mainRunner ++ "_" ++ mainFunc ++ ", ParamTuple(), ArgTuple());",
       "}"
     ]
-  | otherwise = compileError $ "Main category " ++ show (getCategoryName t) ++ " is not concrete."
