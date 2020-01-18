@@ -69,7 +69,7 @@ emptyCompileMetadata =
 
 cachedDataPath = ".zeolite-cache"
 metadataFilename = "metadata.txt"
-allowedExtraTypes = [".hpp",".cpp",".h",".cc",".o"]
+allowedExtraTypes = [".hpp",".cpp",".h",".cc",".a",".o"]
 
 loadMetadata :: String -> IO CompileMetadata
 loadMetadata p = do
@@ -158,5 +158,6 @@ sortCompiledFiles = foldl split ([],[],[]) where
     | isSuffixOf ".h"   f = (hxx++[f],cxx,os)
     | isSuffixOf ".cpp" f = (hxx,cxx++[f],os)
     | isSuffixOf ".cc"  f = (hxx,cxx++[f],os)
+    | isSuffixOf ".a"   f = (hxx,cxx,os++[f])
     | isSuffixOf ".o"   f = (hxx,cxx,os++[f])
     | otherwise = fs

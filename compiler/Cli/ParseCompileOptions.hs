@@ -41,7 +41,8 @@ optionHelpText = [
     "-i: A single source path to include as a dependency.",
     "-e: Include an extra source file during compilation.",
     "-p: Set a path prefix for finding the specified source files.",
-    "[paths...]: Paths containing .0rp and .0rx source files to compile."
+    "[paths...]: Paths containing .0rp and .0rx source files to compile.",
+    ""
   ]
 
 parseCompileOptions :: (CompileErrorM m, Monad m) => [String] -> m CompileOptions
