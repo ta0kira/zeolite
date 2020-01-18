@@ -9,11 +9,11 @@
 <!-- Highlighting: "Zeolite" -->
 <body>
 <pre style='color:#1f1c1b;background-color:#ffffff;'>
-<b>concrete</b> <b><span style='color:#0057ae;'>Demo</span></b> {
-  <b>defines</b> <span style='color:#0057ae;'>Runner</span>
+<b>concrete</b> <b><span style='color:#0057ae;'>TreeDemo</span></b> {
+  <span style='color:#644a9b;'>@type</span> run () <b><span style='color:#006e28;'>-&gt;</span></b> ()
 }
 
-<b>define</b> <b><span style='color:#0057ae;'>Demo</span></b> {
+<b>define</b> <b><span style='color:#0057ae;'>TreeDemo</span></b> {
   run () {
     <span style='color:#006e28;'>~</span> testTree()
     <span style='color:#006e28;'>~</span> demoTypeTree()
@@ -95,8 +95,7 @@
             .append(new)
             .append(<span style='color:#bf0303;'>&quot; but should have been &quot;</span>)
             .append(i)
-            .append(<span style='color:#bf0303;'>&quot;</span><span style='color:#924c9d;'>\n</span><span style='color:#bf0303;'>&quot;</span>)
-            .writeTo(<span style='color:#0057ae;'>SimpleOutput</span><span style='color:#644a9b;'>$</span>fail())
+            .writeTo(<span style='color:#0057ae;'>SimpleOutput</span><span style='color:#644a9b;'>$</span>error())
       } <b>elif</b> (<b>require</b>(value) != i) {
         <span style='color:#006e28;'>~</span> <span style='color:#0057ae;'>LazyStream</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Formatted</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>$</span>new()
             .append(<span style='color:#bf0303;'>&quot;Element &quot;</span>)
@@ -105,8 +104,7 @@
             .append(i)
             .append(<span style='color:#bf0303;'>&quot; but was &quot;</span>)
             .append(<b>require</b>(value))
-            .append(<span style='color:#bf0303;'>&quot;</span><span style='color:#924c9d;'>\n</span><span style='color:#bf0303;'>&quot;</span>)
-            .writeTo(<span style='color:#0057ae;'>SimpleOutput</span><span style='color:#644a9b;'>$</span>fail())
+            .writeTo(<span style='color:#0057ae;'>SimpleOutput</span><span style='color:#644a9b;'>$</span>error())
       } <b>else</b> {
         <span style='color:#006e28;'>~</span> <span style='color:#0057ae;'>LazyStream</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Formatted</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>$</span>new()
             .append(<span style='color:#bf0303;'>&quot;Element &quot;</span>)
