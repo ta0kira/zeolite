@@ -83,8 +83,9 @@ runCompiler co@(CompileOptions h is ds es p m) = do
       | otherwise = do
           formatWarnings fs
           let (pc,mf,fs') = getCompileSuccess fs
-          os <- fmap concat $ sequence $ map (writeOutputFile d) fs'
-          let (hxx,cxx,os') = sortCompiledFiles $ map (\f -> coNamespace f </> coFilename f) fs' ++ os ++ es
+          os1 <- fmap concat $ sequence $ map (writeOutputFile d) fs'
+          os2 <- fmap concat $ sequence $ map (compileExtraFile d) es
+          let (hxx,cxx,os') = sortCompiledFiles $ map (\f -> coNamespace f </> coFilename f) fs' ++ (os1 ++ os2) ++ es
           let ss = nub $ filter (not . null) $ map coNamespace fs'
           path <- getPath d
           writeMetadata (p </> d) $ CompileMetadata {
@@ -108,9 +109,13 @@ runCompiler co@(CompileOptions h is ds es p m) = do
     writeOutputFile d (CxxOutput f ns os) = do
       hPutStrLn stderr $ "Writing file " ++ f
       writeCachedFile (p </> d) ns f $ concat $ map (++ "\n") os
-      if isSuffixOf ".cpp" f
+      if isSuffixOf ".cpp" f || isSuffixOf ".cc" f
          then return [ns </> (dropExtension f ++ ".o")] -- TODO: Actually compile the source.
          else return []
+    compileExtraFile d f
+      | isSuffixOf ".cpp" f || isSuffixOf ".cc" f =
+        return [(dropExtension $ takeFileName f) ++ ".o"] -- TODO: Actually compile the source.
+      | otherwise = return []
     compileAll is cs ds = do
       tm0 <- builtinCategories
       tm1 <- addIncludes tm0 is
