@@ -61,16 +61,3 @@ concrete Test {
 define Test {
   execute () { }
 }
-
-
-testcase "do nothing" {
-  success Test$run()
-}
-
-define Test {
-  run () {}
-}
-
-concrete Test {
-  @type run () -> ()
-}
