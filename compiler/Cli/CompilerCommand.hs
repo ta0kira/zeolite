@@ -18,9 +18,12 @@ limitations under the License.
 
 {-# LANGUAGE Safe #-}
 
-module Cli.CxxCommand (
+module Cli.CompilerCommand (
   CxxCommand(..),
+  TestCommand(..),
+  TestCommandResult(..),
   runCxxCommand,
+  runTestCommand,
 ) where
 
 import Data.List (intercalate)
@@ -43,9 +46,23 @@ data CxxCommand =
   }
   deriving (Show)
 
+data TestCommand =
+  TestCommand {
+    tcBinary :: String
+  }
+  deriving (Show)
+
+data TestCommandResult =
+  TestCommandResult {
+    tcrSuccess :: Bool,
+    tcrOutput :: [String]
+  }
+  deriving (Show)
+
 cxxCompiler = "clang++"
 cxxBaseOptions = ["-O2", "-std=c++11"]
 
+runCxxCommand :: CxxCommand -> IO ()
 runCxxCommand (CompileToObject s o ps) =
   executeProcess cxxCompiler $ cxxBaseOptions ++ otherOptions ++ ["-c", s, "-o", o] where
     otherOptions = map ("-I" ++) $ map normalise ps
@@ -53,12 +70,20 @@ runCxxCommand (CompileToBinary ss o ps) =
   executeProcess cxxCompiler $ cxxBaseOptions ++ otherOptions ++ ss ++ ["-o", o] where
     otherOptions = map ("-I" ++) $ map normalise ps
 
+runTestCommand :: TestCommand -> IO TestCommandResult
+runTestCommand (TestCommand b) = do
+  pid <- forkProcess $ executeFile b True [] Nothing
+  status <- getProcessStatus True True pid
+  let success = case status of
+                     Just (Exited ExitSuccess) -> True
+                     _ -> False
+  return $ TestCommandResult success []
+
+executeProcess :: String -> [String] -> IO ()
 executeProcess c os = do
   hPutStrLn stderr $ "Executing: " ++ intercalate " " (c:os)
-  pid <- forkProcess run
+  pid <- forkProcess $ executeFile c True os Nothing
   status <- getProcessStatus True True pid
   case status of
        Just (Exited ExitSuccess) -> return ()
        _ -> exitFailure
-  where
-    run = executeFile c True os Nothing

@@ -36,7 +36,7 @@ import CompilerCxx.Category
 import CompilerCxx.Naming
 import Cli.CompileMetadata
 import Cli.CompileOptions
-import Cli.CxxCommand
+import Cli.CompilerCommand
 import Cli.TestRunner
 import Cli.ParseCompileOptions -- Not safe, due to Text.Regex.TDFA.
 

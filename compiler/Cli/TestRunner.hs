@@ -36,7 +36,7 @@ import TypeCategory
 import TypesBase
 import CompilerCxx.Category
 import CompilerCxx.Naming
-import Cli.CxxCommand
+import Cli.CompilerCommand
 
 
 runSingleTest :: [String] -> [String] -> CategoryMap SourcePos ->
@@ -59,30 +59,29 @@ runSingleTest paths os tm (f,s) = do
       if not $ isCompileError result
          then return $ compileError "Expected compiler errors"
          else return $ do
-           let warnings = concat $ map (++ "\n") $ getCompileWarnings result
+           let warnings = getCompileWarnings result
            let errors = show $ getCompileError result
-           checkRequired rs $ warnings ++ errors
-           checkExcluded es $ warnings ++ errors
+           checkRequired rs $ warnings ++ lines errors
+           checkExcluded es $ warnings ++ lines errors
 
-    run n (ExpectRuntimeError _ e rs es) cs ds = do
+    run n (ExpectRuntimeError   _ e rs es) cs ds = execute False n e rs es cs ds
+    run n (ExpectRuntimeSuccess _ e rs es) cs ds = execute True  n e rs es cs ds
+
+    execute s n e rs es cs ds = do
       let result = compileAll (Just e) cs ds :: CompileInfo ([String],[CxxOutput])
       if isCompileError result
          then return $ compileError "Expected compiler success"
          else do
-           let warnings = concat $ map (++ "\n") $ getCompileWarnings result
+           let warnings = getCompileWarnings result
            let (main,fs) = getCompileSuccess result
            binaryName <- createBinary main fs
-           return $ return () -- TODO: Execute the binary and check the patterns.
-
-    run n (ExpectRuntimeSuccess _ e rs es) cs ds = do
-      let result = compileAll (Just e) cs ds :: CompileInfo ([String],[CxxOutput])
-      if isCompileError result
-         then return $ compileError "Expected compiler success"
-         else do
-           let warnings = concat $ map (++ "\n") $ getCompileWarnings result
-           let (main,fs) = getCompileSuccess result
-           binaryName <- createBinary main fs
-           return $ return () -- TODO: Execute the binary and check the patterns.
+           (TestCommandResult s' ms) <- runTestCommand (TestCommand binaryName)
+           case (s,s') of
+                (True,False) -> return $ compileError "Expected runtime execution"
+                (False,True) -> return $ compileError "Expected runtime failure"
+                _ -> return $ do
+                  checkRequired rs $ warnings ++ ms
+                  checkExcluded es $ warnings ++ ms
 
     compileAll e cs ds = do
       let namespace = privateNamepace s
@@ -94,8 +93,8 @@ runSingleTest paths os tm (f,s) = do
                    Just e -> createTestFile tm' e namespace
                    Nothing -> return []
       return (main,hxx ++ cxx)
-    checkRequired rs ms = mergeAllM $ map (checkForRegex True  $ lines ms) rs
-    checkExcluded es ms = mergeAllM $ map (checkForRegex False $ lines ms) es
+    checkRequired rs ms = mergeAllM $ map (checkForRegex True  ms) rs
+    checkExcluded es ms = mergeAllM $ map (checkForRegex False ms) es
     checkForRegex :: Bool -> [String] -> String -> CompileInfo ()
     checkForRegex expected ms r = do
       let found = any id $ map (=~ r) ms
