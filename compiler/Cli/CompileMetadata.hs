@@ -54,24 +54,12 @@ data CompileMetadata =
     cmSubdirs :: [String],
     cmPublicFiles :: [String],
     cmPrivateFiles :: [String],
+    cmTestFiles :: [String],
     cmHxxFiles :: [String],
     cmCxxFiles :: [String],
     cmObjectFiles :: [String]
   }
   deriving (Show,Read)
-
-emptyCompileMetadata =
-  CompileMetadata {
-    cmPath = "",
-    cmDepPaths = [],
-    cmCategories = [],
-    cmSubdirs = [],
-    cmPublicFiles = [],
-    cmPrivateFiles = [],
-    cmHxxFiles = [],
-    cmCxxFiles = [],
-    cmObjectFiles = []
-  }
 
 cachedDataPath = ".zeolite-cache"
 metadataFilename = "metadata.txt"
@@ -134,7 +122,7 @@ getCachedPath p ns f = fixPath $ p </> cachedDataPath </> ns </> f
 getCacheRelativePath :: String -> String
 getCacheRelativePath f = ".." </> f
 
-findSourceFiles :: String -> String -> IO ([String],[String])
+findSourceFiles :: String -> String -> IO ([String],[String],[String])
 findSourceFiles p0 p = do
   let absolute = p0 </> p
   isFile <- doesFileExist absolute
@@ -148,7 +136,8 @@ findSourceFiles p0 p = do
   ds <- getDirectoryContents absolute >>= return . map (p </>)
   let ps = filter (isSuffixOf ".0rp") ds
   let xs = filter (isSuffixOf ".0rx") ds
-  return (ps,xs)
+  let ts = filter (isSuffixOf ".0rt") ds
+  return (ps,xs,ts)
 
 getRealPathsForDeps :: [CompileMetadata] -> [String]
 getRealPathsForDeps = map cmPath
@@ -204,13 +193,18 @@ sortCompiledFiles = foldl split ([],[],[]) where
     | otherwise = fs
 
 checkModuleFreshness :: String -> CompileMetadata -> IO Bool
-checkModuleFreshness p (CompileMetadata p2 is _ _ ps xs hxx cxx os) = do
+checkModuleFreshness p (CompileMetadata p2 is _ _ ps xs ts hxx cxx os) = do
   time <- getModificationTime $ getCachedPath p "" metadataFilename
-  c1 <- sequence $ map (\p2 -> check time $ getCachedPath p2 "" metadataFilename) is
-  c2 <- sequence $ map (check time . (p2 </>)) $ ps ++ xs
-  c2 <- sequence $ map (check time . getCachedPath p2 "") $ hxx ++ cxx ++ os
-  let fresh = not $ any id $ c1 ++ c2
+  (ps2,xs2,ts2) <- findSourceFiles p ""
+  let e1 = checkMissing ps ps2
+  let e2 = checkMissing xs xs2
+  let e3 = checkMissing ts ts2
+  f1 <- sequence $ map (\p2 -> check time $ getCachedPath p2 "" metadataFilename) is
+  f2 <- sequence $ map (check time . (p2 </>)) $ ps ++ xs
+  f3 <- sequence $ map (check time . getCachedPath p2 "") $ hxx ++ cxx ++ os
+  let fresh = not $ any id $ [e1,e2,e3] ++ f1 ++ f2 ++ f3
   return fresh where
     check time f = do
       time2 <- getModificationTime f
       return (time2 > time)
+    checkMissing s0 s1 = not $ null $ (Set.fromList s1) `Set.difference` (Set.fromList s0)

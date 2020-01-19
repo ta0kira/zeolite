@@ -100,6 +100,7 @@ parseCompileOptions = parseAll emptyCompileOptions . zip [1..] where
     update ((n,f):os)
       | isSuffixOf ".0rp" f = argError n f "Cannot directly include .0rp source files."
       | isSuffixOf ".0rx" f = argError n f "Cannot directly include .0rx source files."
+      | isSuffixOf ".0rt" f = argError n f "Cannot directly include .0rt test files."
       | otherwise = do
           checkPathName n f "-i"
           return (os,CompileOptions (maybeDisableHelp h) (is ++ [f]) ds es ep p m o)
@@ -130,6 +131,7 @@ parseCompileOptions = parseAll emptyCompileOptions . zip [1..] where
   parseSingle (CompileOptions h is ds es ep p m o) ((n,f):os)
       | isSuffixOf ".0rp" f = argError n f "Cannot directly include .0rp source files."
       | isSuffixOf ".0rx" f = argError n f "Cannot directly include .0rx source files."
+      | isSuffixOf ".0rt" f = argError n f "Cannot directly include .0rt test files."
       | otherwise = do
         checkPathName n f ""
         return (os,CompileOptions (maybeDisableHelp h) is (ds ++ [f]) es ep p m o)

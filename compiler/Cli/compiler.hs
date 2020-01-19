@@ -86,7 +86,7 @@ runCompiler co@(CompileOptions h is ds es ep p m o) = do
     getBasePath = getExecutablePath >>= return . takeDirectory
     processPath bp deps as ss d = do
       eraseCachedData (p </> d)
-      (ps,xs) <- findSourceFiles p d
+      (ps,xs,ts) <- findSourceFiles p d
       -- Lazy dependency loading, in case we aren't compiling anything.
       paths <- if null ps && null xs
                   then return $ getIncludePathsForDeps deps
@@ -96,9 +96,12 @@ runCompiler co@(CompileOptions h is ds es ep p m o) = do
       ps' <- zipWithContents ps
       xs' <- zipWithContents xs
       let fs = compileAll ss ps' xs'
-      writeOutput (fixPaths $ paths ++ ep') d as (map takeFileName ps) (map takeFileName xs) fs
+      writeOutput (fixPaths $ paths ++ ep') d as
+                  (map takeFileName ps)
+                  (map takeFileName xs)
+                  (map takeFileName ts) fs
     zipWithContents fs = fmap (zip $ map fixPath fs) $ sequence $ map (readFile . (p </>)) fs
-    writeOutput paths d as ps xs fs
+    writeOutput paths d as ps xs ts fs
       | isCompileError fs = do
           formatWarnings fs
           hPutStr stderr $ "Compiler errors:\n" ++ (show $ getCompileError fs)
@@ -122,6 +125,7 @@ runCompiler co@(CompileOptions h is ds es ep p m o) = do
               cmSubdirs = sort $ ss ++ ep,
               cmPublicFiles = sort ps,
               cmPrivateFiles = sort xs,
+              cmTestFiles = sort ts,
               cmHxxFiles = sort hxx,
               cmCxxFiles = sort cxx,
               cmObjectFiles = sort os'
