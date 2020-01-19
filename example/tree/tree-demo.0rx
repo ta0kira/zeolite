@@ -4,12 +4,6 @@ concrete TreeDemo {
 
 define TreeDemo {
   run () {
-    ~ testTree()
-    ~ demoTypeTree()
-  }
-
-  @category demoTypeTree () -> ()
-  demoTypeTree () {
     TypeTree tree <- TypeTree$new()
 
     TypeKey<Int>    keyInt    <- TypeKey<Int>$new()
@@ -45,67 +39,6 @@ define TreeDemo {
           .append(typename<TypeKey<#x>>())
           .append(" Not Found\n")
           .writeTo(SimpleOutput$stderr())
-    }
-  }
-
-  @category testTree () -> ()
-  testTree () {
-    // Just select the required usage patterns with an intersection.
-    [KVWriter<Int,Int>&KVReader<Int,Int>] tree <- Tree<Int,Int>$new()
-    Int count <- 30
-
-    // Insert values.
-    scoped {
-      Int i <- 0
-    } in while (i < count) {
-      Int new <- ((i + 13) * 3547) % count
-      ~ LazyStream<Formatted>$new()
-          .append("Inserting ")
-          .append(i)
-          .append(" at ")
-          .append(new)
-          .append("\n")
-          .writeTo(SimpleOutput$stderr())
-      ~ tree.set(new,i)
-    } update {
-      i <- i+1
-    }
-
-    // Verify and remove values.
-    scoped {
-      Int i <- 0
-    } in while (i < count) {
-      Int new <- ((i + 13) * 3547) % count
-      scoped {
-        optional Int value <- tree.get(new)
-      } in if (!present(value)) {
-        ~ LazyStream<Formatted>$new()
-            .append("Not found ")
-            .append(new)
-            .append(" but should have been ")
-            .append(i)
-            .writeTo(SimpleOutput$error())
-      } elif (require(value) != i) {
-        ~ LazyStream<Formatted>$new()
-            .append("Element ")
-            .append(new)
-            .append(" should have been ")
-            .append(i)
-            .append(" but was ")
-            .append(require(value))
-            .writeTo(SimpleOutput$error())
-      } else {
-        ~ LazyStream<Formatted>$new()
-            .append("Element ")
-            .append(new)
-            .append(" is ")
-            .append(i)
-            .append("\n")
-            .writeTo(SimpleOutput$stderr())
-      }
-      ~ tree.remove(new)
-    } update {
-      i <- i+1
     }
   }
 }

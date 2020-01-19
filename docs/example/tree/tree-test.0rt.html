@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="Generator" content="Kate, the KDE Advanced Text Editor" />
+<title>tree-test.0rt</title>
+</head>
+<!-- Highlighting: "Zeolite" -->
+<body>
+<pre style='color:#1f1c1b;background-color:#ffffff;'>
+<b>testcase</b> <span style='color:#bf0303;'>&quot;integration test&quot;</span> {
+  <span style='color:#04e040;'>success</span> <span style='color:#0057ae;'>Test</span><span style='color:#644a9b;'>$</span>execute()
+}
+
+<b>concrete</b> <b><span style='color:#0057ae;'>Test</span></b> {
+  <span style='color:#644a9b;'>@type</span> execute () -&gt; ()
+}
+
+<b>define</b> <b><span style='color:#0057ae;'>Test</span></b> {
+  execute () {
+    <span style='color:#898887;'>// Just select the required usage patterns with an intersection.</span>
+    <b><span style='color:#006e28;'>[</span></b><span style='color:#0057ae;'>KVWriter</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Int</span></i>,<i><span style='color:#0057ae;'>Int</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#006e28;'>&amp;</span><span style='color:#0057ae;'>KVReader</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Int</span></i>,<i><span style='color:#0057ae;'>Int</span></i><span style='color:#c02040;'>&gt;</span><b><span style='color:#006e28;'>]</span></b> tree &lt;- <span style='color:#0057ae;'>Tree</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Int</span></i>,<i><span style='color:#0057ae;'>Int</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>$</span>new()
+    <i><span style='color:#0057ae;'>Int</span></i> count &lt;- <span style='color:#b08000;'>30</span>
+
+    <span style='color:#898887;'>// Insert values.</span>
+    <b>scoped</b> {
+      <i><span style='color:#0057ae;'>Int</span></i> i &lt;- <span style='color:#b08000;'>0</span>
+    } <b>in</b> <b>while</b> (i &lt; count) {
+      <i><span style='color:#0057ae;'>Int</span></i> new &lt;- ((i + <span style='color:#b08000;'>13</span>) * <span style='color:#b08000;'>3547</span>) % count
+      <span style='color:#006e28;'>~</span> tree.set(new,i)
+    } <b>update</b> {
+      i &lt;- i+<span style='color:#b08000;'>1</span>
+    }
+
+    <span style='color:#898887;'>// Verify and remove values.</span>
+    <b>scoped</b> {
+      <i><span style='color:#0057ae;'>Int</span></i> i &lt;- <span style='color:#b08000;'>0</span>
+    } <b>in</b> <b>while</b> (i &lt; count) {
+      <i><span style='color:#0057ae;'>Int</span></i> new &lt;- ((i + <span style='color:#b08000;'>13</span>) * <span style='color:#b08000;'>3547</span>) % count
+      <b>scoped</b> {
+        <b>optional</b> <i><span style='color:#0057ae;'>Int</span></i> value &lt;- tree.get(new)
+      } <b>in</b> <b>if</b> (!<b>present</b>(value)) {
+        <span style='color:#006e28;'>~</span> <span style='color:#0057ae;'>LazyStream</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Formatted</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>$</span>new()
+            .append(<span style='color:#bf0303;'>&quot;Not found &quot;</span>)
+            .append(new)
+            .append(<span style='color:#bf0303;'>&quot; but should have been &quot;</span>)
+            .append(i)
+            .writeTo(<span style='color:#0057ae;'>SimpleOutput</span><span style='color:#644a9b;'>$</span>error())
+      } <b>elif</b> (<b>require</b>(value) != i) {
+        <span style='color:#006e28;'>~</span> <span style='color:#0057ae;'>LazyStream</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Formatted</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>$</span>new()
+            .append(<span style='color:#bf0303;'>&quot;Element &quot;</span>)
+            .append(new)
+            .append(<span style='color:#bf0303;'>&quot; should have been &quot;</span>)
+            .append(i)
+            .append(<span style='color:#bf0303;'>&quot; but was &quot;</span>)
+            .append(<b>require</b>(value))
+            .writeTo(<span style='color:#0057ae;'>SimpleOutput</span><span style='color:#644a9b;'>$</span>error())
+      }
+      <span style='color:#006e28;'>~</span> tree.remove(new)
+    } <b>update</b> {
+      i &lt;- i+<span style='color:#b08000;'>1</span>
+    }
+  }
+}
+</pre>
+</body>
+</html>

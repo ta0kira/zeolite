@@ -9,6 +9,9 @@ To run the example:
 # Compile the example.
 ../../zeolite -i ../../util -m TreeDemo .
 
+# Run the unit tests.
+../../zeolite -t .
+
 # Execute the compiled binary.
 ./TreeDemo
 ```
