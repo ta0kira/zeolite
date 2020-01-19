@@ -28,8 +28,7 @@ import Text.Parsec
 import Builtin
 import CompileInfo
 import IntegrationTest
-import ParseIntegrationTest
-import ParserBase
+import SourceFile
 import TypeCategory
 import TypesBase
 import CompilerCxx.Category
@@ -39,21 +38,17 @@ import Cli.CxxCommand
 
 runSingleTest :: [String] -> CategoryMap SourcePos -> (String,String) -> IO (CompileInfo ())
 runSingleTest paths tm (f,s) = do
-  hPutStrLn stderr $ "Executing test " ++ f
-  fmap (flip reviseError $ "In test " ++ f) $ checkAndRun test where
-    test = unwrap parsed :: CompileInfo (IntegrationTest SourcePos)
-    parsed = parse (between optionalSpace endOfDoc sourceParser) f s
-    unwrap (Left e)  = compileError (show e)
-    unwrap (Right t) = return t
-    checkAndRun t
-      | isCompileError t = return (t >> return ())
-      | otherwise = addMessage $ run name
-                                     (ithResult $ itHeader t')
-                                     (itCategory t')
-                                     (itDefinition t') where
-        t' = getCompileSuccess t
-        name = ithTestName $ itHeader t'
-        addMessage = fmap (flip reviseError ("In \"" ++ name ++ "\""))
+  hPutStrLn stderr $ "Executing tests from " ++ f
+  fmap (flip reviseError $ "In test file " ++ f) $ checkAndRun (parseTestSource (f,s)) where
+    checkAndRun ts
+      | isCompileError ts = return (ts >> return ())
+      | otherwise = fmap mergeAllM $ sequence $ map runSingle $ getCompileSuccess ts
+    runSingle t = do
+      let name = ithTestName $ itHeader t
+      let context = "[" ++ formatFullContext (ithContext $ itHeader t) ++ "]"
+      hPutStrLn stderr $ "Executing test \"" ++ name ++ "\""
+      fmap (flip reviseError ("In test \"" ++ name ++ "\" " ++ context)) $
+        run name (ithResult $ itHeader t) (itCategory t) (itDefinition t)
 
     run n (ExpectCompileError _ rs es) cs ds = do
       let result = compileAll cs ds :: CompileInfo [CxxOutput]

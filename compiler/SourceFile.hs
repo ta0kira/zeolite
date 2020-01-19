@@ -21,16 +21,19 @@ limitations under the License.
 module SourceFile (
   parseInternalSource,
   parsePublicSource,
+  parseTestSource,
 ) where
 
 import Text.Parsec
 import Text.Parsec.String
 
 import DefinedCategory
-import TypeCategory
+import IntegrationTest
 import ParseCategory
 import ParseDefinition
+import ParseIntegrationTest
 import ParserBase
+import TypeCategory
 import TypesBase
 
 
@@ -44,6 +47,13 @@ parseInternalSource (f,s) = unwrap parsed where
 parsePublicSource :: (CompileErrorM m, Monad m) =>
   (String,String) -> m [AnyCategory SourcePos]
 parsePublicSource (f,s) = unwrap parsed where
+  parsed = parse (between optionalSpace endOfDoc (sepBy sourceParser optionalSpace)) f s
+  unwrap (Left e)  = compileError (show e)
+  unwrap (Right t) = return t
+
+parseTestSource :: (CompileErrorM m, Monad m) =>
+  (String,String) -> m [IntegrationTest SourcePos]
+parseTestSource (f,s) = unwrap parsed where
   parsed = parse (between optionalSpace endOfDoc (sepBy sourceParser optionalSpace)) f s
   unwrap (Left e)  = compileError (show e)
   unwrap (Right t) = return t
