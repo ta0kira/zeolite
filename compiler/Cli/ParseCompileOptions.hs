@@ -33,16 +33,18 @@ import Cli.CompileOptions
 optionHelpText :: [String]
 optionHelpText = [
     "",
-    "zeolite [options...] -m [category] -o [binary] [paths...]",
+    "zeolite [options...] -m [category] -o [binary] [path]",
     "zeolite [options...] -c [paths...]",
+    "zeolite [options...] -t [paths...]",
     "",
+    "-c: Only compile the individual files. (default)",
+    "-e: Include an extra source file during compilation.",
+    "-i: A single source path to include as a dependency.",
     "-m [category]: Compile a specific category into a binary file.",
     "-o [binary]: The name of the binary file to create with -m.",
-    "-c: Only compile the individual files. (default)",
-    "-i: A single source path to include as a dependency.",
-    "-e: Include an extra source file during compilation.",
     "-p: Set a path prefix for finding the specified source files.",
-    "[paths...]: Paths containing .0rp and .0rx source files to compile.",
+    "-t: Only execute tests, without other compilation.",
+    "[path(s...)]: Path(s) containing .0rp and .0rx source files to compile.",
     ""
   ]
 
@@ -75,6 +77,10 @@ parseCompileOptions = parseAll emptyCompileOptions . zip [1..] where
   parseSingle (CompileOptions h is ds es ep p m o) ((n,"-c"):os)
     | m /= CompileUnspecified = argError n "-c" "Compiler mode already set."
     | otherwise = return (os,CompileOptions (maybeDisableHelp h) is ds es ep p CompileIncremental o)
+
+  parseSingle (CompileOptions h is ds es ep p m o) ((n,"-t"):os)
+    | m /= CompileUnspecified = argError n "-t" "Compiler mode already set."
+    | otherwise = return (os,CompileOptions (maybeDisableHelp h) is ds es ep p ExecuteTests o)
 
   parseSingle (CompileOptions h is ds es ep p m o) ((n,"-m"):os)
     | m /= CompileUnspecified = argError n "-m" "Compiler mode already set."

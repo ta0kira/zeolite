@@ -25,6 +25,7 @@ module Cli.CompileOptions (
   emptyCompileOptions,
   isCompileBinary,
   isCompileIncremental,
+  isExecuteTests,
   maybeDisableHelp,
 ) where
 
@@ -60,7 +61,7 @@ data CompileMode =
   CompileBinary {
     cbCategory :: String,
     cbFunction :: String
-  } | CompileIncremental | CompileUnspecified
+  } | CompileIncremental | ExecuteTests | CompileUnspecified
   deriving (Eq,Show)
 
 isCompileBinary (CompileBinary _ _) = True
@@ -68,6 +69,9 @@ isCompileBinary _                   = False
 
 isCompileIncremental CompileIncremental = True
 isCompileIncremental _                  = False
+
+isExecuteTests ExecuteTests = True
+isExecuteTests _            = False
 
 maybeDisableHelp HelpUnspecified = HelpNotNeeded
 maybeDisableHelp h               = h

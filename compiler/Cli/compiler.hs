@@ -24,6 +24,7 @@ import System.Exit
 import System.FilePath
 import System.Posix.Temp (mkstemps)
 import System.IO
+import Text.Parsec (SourcePos)
 import qualified Data.Map as Map
 
 import Builtin
@@ -54,6 +55,12 @@ main = do
       | h /= HelpNotNeeded = return co
       | (not $ null o) && (isCompileIncremental m) =
         compileError "Output filename (-o) is not allowed in compile-only mode (-c)."
+      | (not $ null o) && (isExecuteTests m) =
+        compileError "Output filename (-o) is not allowed in test mode (-t)."
+      | (not $ null is) && (isExecuteTests m) =
+        compileError "Include paths (-i) are not allowed in test mode (-t)."
+          | (not $ null $ es ++ ep) && (isExecuteTests m) =
+        compileError "Extra files (-e) are not allowed in test mode (-t)."
       | null ds =
         compileError "Please specify at least one input path."
       | (length ds /= 1) && (isCompileBinary m) =
@@ -67,13 +74,43 @@ showHelp = do
   hPutStrLn stderr "Also see https://ta0kira.github.io/zeolite for more documentation."
 
 runCompiler :: CompileOptions -> IO ()
+runCompiler co@(CompileOptions _ _ ds _ _ p ExecuteTests _) = do
+  results <- sequence $ map runTests ds
+  processResults $ mergeAllM results where
+    runTests :: String -> IO (CompileInfo ())
+    runTests d = do
+      m <- loadMetadata (p </> d)
+      basePath <- getBasePath
+      deps <- loadRecursiveDeps [basePath,p </> d]
+      let paths = getIncludePathsForDeps deps
+      let ss = fixPaths $ getSourceFilesForDeps deps
+      ss' <- zipWithContents p ss
+      ts' <- zipWithContents p (map (d </>) $ cmTestFiles m)
+      tm <- return $ do
+        tm0 <- builtinCategories
+        cs <- fmap concat $ collectAllOrErrorM $ map parsePublicSource ss'
+        includeNewTypes tm0 cs
+      if isCompileError tm
+         then return (tm >> return ())
+         else fmap mergeAllM $ sequence $ map (runSingleTest paths (getCompileSuccess tm)) ts'
+    runSingleTest :: [String] -> CategoryMap SourcePos -> (String,String) -> IO (CompileInfo ())
+    runSingleTest paths tm (f,c) = do
+      hPutStrLn stderr $ "Faking test for " ++ show (f,c)
+      return $ return ()
+    processResults rs
+      | isCompileError rs = do
+          hPutStr stderr $ "Test errors:\n" ++ (show $ getCompileError rs)
+          hPutStrLn stderr $ "Zeolite tests failed."
+          exitFailure
+      | otherwise = do
+          hPutStrLn stderr $ "Zeolite tests passed."
 runCompiler co@(CompileOptions h is ds es ep p m o) = do
   when (h /= HelpNotNeeded) (showHelp >> exitFailure)
   deps <- loadRecursiveDeps is
   let ss = fixPaths $ getSourceFilesForDeps deps
   let as = fixPaths $ getRealPathsForDeps deps
   basePath <- getBasePath
-  ss' <- zipWithContents ss
+  ss' <- zipWithContents p ss
   ma <- sequence $ map (processPath basePath deps as ss') ds
   let ms = concat $ map snd ma
   let deps2 = map fst ma
@@ -82,8 +119,6 @@ runCompiler co@(CompileOptions h is ds es ep p m o) = do
   hPutStrLn stderr $ "Zeolite compilation succeeded."
   exitSuccess where
     ep' = fixPaths $ map (getCachedPath p "") ep
-    fixPaths = nub . map fixPath
-    getBasePath = getExecutablePath >>= return . takeDirectory
     processPath bp deps as ss d = do
       eraseCachedData (p </> d)
       (ps,xs,ts) <- findSourceFiles p d
@@ -93,14 +128,13 @@ runCompiler co@(CompileOptions h is ds es ep p m o) = do
                   else do
                     bpDeps <- loadRecursiveDeps [bp]
                     return $ getIncludePathsForDeps (bpDeps ++ deps)
-      ps' <- zipWithContents ps
-      xs' <- zipWithContents xs
+      ps' <- zipWithContents p ps
+      xs' <- zipWithContents p xs
       let fs = compileAll ss ps' xs'
       writeOutput (fixPaths $ paths ++ ep') d as
                   (map takeFileName ps)
                   (map takeFileName xs)
                   (map takeFileName ts) fs
-    zipWithContents fs = fmap (zip $ map fixPath fs) $ sequence $ map (readFile . (p </>)) fs
     writeOutput paths d as ps xs ts fs
       | isCompileError fs = do
           formatWarnings fs
@@ -220,3 +254,12 @@ runCompiler co@(CompileOptions h is ds es ep p m o) = do
           contents <- createMainFile tm t f
           return [CxxOutput mainFilename "" contents]
     maybeCreateMain _ _ = return []
+
+fixPaths :: [String] -> [String]
+fixPaths = nub . map fixPath
+
+getBasePath :: IO String
+getBasePath = getExecutablePath >>= return . takeDirectory
+
+zipWithContents :: String -> [String] -> IO [(String,String)]
+zipWithContents p fs = fmap (zip $ map fixPath fs) $ sequence $ map (readFile . (p </>)) fs
