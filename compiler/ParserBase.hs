@@ -58,7 +58,7 @@ module ParserBase (
   kwSelf,
   kwScoped,
   kwStrong,
-  kwTest,
+  kwTestcase,
   kwTrue,
   kwType,
   kwTypename,
@@ -160,7 +160,7 @@ kwReturn = keyword "return"
 kwSelf = keyword "self"
 kwScoped = keyword "scoped"
 kwStrong = keyword "strong"
-kwTest = keyword "test"
+kwTestcase = keyword "testcase"
 kwTrue = keyword "true"
 kwType = keyword "@type"
 kwTypename = keyword "typename"
@@ -202,7 +202,7 @@ isKeyword = foldr (<|>) nullParse $ map try [
     kwSelf,
     kwScoped,
     kwStrong,
-    kwTest,
+    kwTestcase,
     kwTrue,
     kwType,
     kwTypename,

@@ -33,9 +33,9 @@ import ParserBase
 
 
 instance ParseFromSource (IntegrationTestHeader SourcePos) where
-  sourceParser = labeled "integration test header" $ do
+  sourceParser = labeled "testcase" $ do
     c <- getPosition
-    sepAfter kwTest
+    sepAfter kwTestcase
     string "\""
     name <- fmap concat $ manyTill stringChar (string "\"")
     optionalSpace

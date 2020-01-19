@@ -1,4 +1,4 @@
-test "basic success test" {
+testcase "basic success test" {
   success
   Test$execute()
   require "pattern in output 1"

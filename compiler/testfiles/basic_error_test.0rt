@@ -1,4 +1,4 @@
-test "basic error test" {
+testcase "basic error test" {
   error
   require "pattern in output 1"
   exclude "pattern not in output 1"

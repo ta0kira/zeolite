@@ -1,4 +1,4 @@
-test "basic crash test" {
+testcase "basic crash test" {
   crash
   Test$execute()
   require "pattern in output 1"

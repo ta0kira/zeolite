@@ -10,7 +10,7 @@
     kateversion="2.4"
     indenter="cstyle"
     style="Zeolite"
-    extensions="*.0rp;*.0rx"
+    extensions="*.0rp;*.0rx;*.0rt"
     author="Kevin P. Barry (ta0kira@gmail.com)"
     priority="0"
   >
@@ -38,6 +38,7 @@
       <item> self </item>
       <item> scoped </item>
       <item> strong </item>
+      <item> testcase </item>
       <item> true </item>
       <item> typename </item>
       <item> update </item>

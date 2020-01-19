@@ -24,7 +24,6 @@ import System.Exit
 import System.FilePath
 import System.Posix.Temp (mkstemps)
 import System.IO
-import Text.Parsec (SourcePos)
 import qualified Data.Map as Map
 
 import Builtin
@@ -38,6 +37,7 @@ import CompilerCxx.Naming
 import Cli.CompileMetadata
 import Cli.CompileOptions
 import Cli.CxxCommand
+import Cli.TestRunner
 import Cli.ParseCompileOptions -- Not safe, due to Text.Regex.TDFA.
 
 
@@ -93,10 +93,6 @@ runCompiler co@(CompileOptions _ _ ds _ _ p ExecuteTests _) = do
       if isCompileError tm
          then return (tm >> return ())
          else fmap mergeAllM $ sequence $ map (runSingleTest paths (getCompileSuccess tm)) ts'
-    runSingleTest :: [String] -> CategoryMap SourcePos -> (String,String) -> IO (CompileInfo ())
-    runSingleTest paths tm (f,c) = do
-      hPutStrLn stderr $ "Faking test for " ++ show (f,c)
-      return $ return ()
     processResults rs
       | isCompileError rs = do
           hPutStr stderr $ "Test errors:\n" ++ (show $ getCompileError rs)
