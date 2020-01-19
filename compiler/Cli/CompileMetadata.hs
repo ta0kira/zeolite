@@ -16,6 +16,8 @@ limitations under the License.
 
 -- Author: Kevin P. Barry [ta0kira@gmail.com]
 
+{-# LANGUAGE Safe #-}
+
 module Cli.CompileMetadata (
   CompileMetadata(..),
   allowedExtraTypes,

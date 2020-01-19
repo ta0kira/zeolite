@@ -1,5 +1,5 @@
 {- -----------------------------------------------------------------------------
-Copyright 2019 Kevin P. Barry
+Copyright 2019-2020 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -21,8 +21,13 @@ limitations under the License.
 module TestBase (
   checkDefinesFail,
   checkDefinesSuccess,
+  checkEquals,
   checkTypeFail,
   checkTypeSuccess,
+  containsAtLeast,
+  containsAtMost,
+  containsExactly,
+  containsNoDuplicates,
   forceParse,
   parseFilterMap,
   parseTheTest,
@@ -37,6 +42,7 @@ import Data.List
 import System.IO
 import Text.Parsec
 import qualified Data.Map as Map
+import qualified Data.Set as Set
 
 import CompileInfo
 import TypeInstance
@@ -62,7 +68,7 @@ forceParse :: ParseFromSource a => String -> a
 forceParse s = force $ parse sourceParser "(string)" s where
   force (Right x) = x
 
-readSingle :: (CompileErrorM m, Monad m) =>
+readSingle :: (Monad m, CompileErrorM m) =>
   ParseFromSource a => String -> String -> m a
 readSingle f s =
   unwrap $ parse (between optionalSpace endOfDoc sourceParser) f s
@@ -70,7 +76,7 @@ readSingle f s =
     unwrap (Left e)  = compileError (show e)
     unwrap (Right t) = return t
 
-readMulti :: (CompileErrorM m, Monad m) =>
+readMulti :: (Monad m, CompileErrorM m) =>
   ParseFromSource a => String -> String -> m [a]
 readMulti f s =
   unwrap $ parse (between optionalSpace endOfDoc (sepBy sourceParser optionalSpace)) f s
@@ -78,7 +84,7 @@ readMulti f s =
     unwrap (Left e)  = compileError (show e)
     unwrap (Right t) = return t
 
-parseFilterMap :: (CompileErrorM m, Monad m) =>
+parseFilterMap :: (Monad m, CompileErrorM m) =>
   [(String,[String])] -> m ParamFilters
 parseFilterMap pa = do
   pa2 <- collectAllOrErrorM $ map parseFilters pa
@@ -88,7 +94,7 @@ parseFilterMap pa = do
       fs2 <- collectAllOrErrorM $ map (readSingle "(string)") fs
       return (ParamName n,fs2)
 
-parseTheTest :: (ParseFromSource a, CompileErrorM m, Monad m) =>
+parseTheTest :: (ParseFromSource a, Monad m, CompileErrorM m) =>
   [(String,[String])] -> [String] -> m ([a],ParamFilters)
 parseTheTest pa xs = do
   ts <- collectAllOrErrorM $ map (readSingle "(string)") xs
@@ -138,3 +144,47 @@ checkDefinesFail r pa x = do
     check c
       | isCompileError c = return ()
       | otherwise = compileError $ prefix ++ ": Expected failure\n"
+
+containsExactly :: (Ord a, Show a, Monad m, MergeableM m, CompileErrorM m) =>
+  [a] -> [a] -> m ()
+containsExactly actual expected = do
+  containsNoDuplicates actual
+  containsAtLeast actual expected
+  containsAtMost actual expected
+
+containsNoDuplicates :: (Ord a, Show a, Monad m, MergeableM m, CompileErrorM m) =>
+  [a] -> m ()
+containsNoDuplicates expected =
+  (mergeAllM $ map checkSingle $ group $ sort expected) `reviseError` (show expected)
+  where
+    checkSingle xa@(x:_:_) =
+      compileError $ "Item " ++ show x ++ " occurs " ++ show (length xa) ++ " times"
+    checkSingle _ = return ()
+
+containsAtLeast :: (Ord a, Show a, Monad m, MergeableM m, CompileErrorM m) =>
+  [a] -> [a] -> m ()
+containsAtLeast actual expected =
+  (mergeAllM $ map (checkInActual $ Set.fromList actual) expected) `reviseError`
+        (show actual ++ " (actual) vs. " ++ show expected ++ " (expected)")
+  where
+    checkInActual va v =
+      if v `Set.member` va
+         then return ()
+         else compileError $ "Item " ++ show v ++ " was expected but not present"
+
+containsAtMost :: (Ord a, Show a, Monad m, MergeableM m, CompileErrorM m) =>
+  [a] -> [a] -> m ()
+containsAtMost actual expected =
+  (mergeAllM $ map (checkInExpected $ Set.fromList expected) actual) `reviseError`
+        (show actual ++ " (actual) vs. " ++ show expected ++ " (expected)")
+  where
+    checkInExpected va v =
+      if v `Set.member` va
+         then return ()
+         else compileError $ "Item " ++ show v ++ " is unexpected"
+
+checkEquals :: (Eq a, Show a, Monad m, MergeableM m, CompileErrorM m) =>
+  a -> a -> m ()
+checkEquals actual expected
+  | actual == expected = return ()
+  | otherwise = compileError $ "Expected " ++ show expected ++ " but got " ++ show actual

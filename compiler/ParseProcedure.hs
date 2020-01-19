@@ -384,9 +384,9 @@ instance ParseFromSource (ValueLiteral SourcePos) where
     stringLiteral = do
       c <- getPosition
       string "\""
-      ss <- manyTill stringChar (string "\"")
+      ss <- fmap concat $ manyTill stringChar (string "\"")
       optionalSpace
-      return $ StringLiteral [c] $ concat ss
+      return $ StringLiteral [c] ss
     charLiteral = do
       c <- getPosition
       string "'"
@@ -410,12 +410,6 @@ instance ParseFromSource (ValueLiteral SourcePos) where
           h1 <- hexDigit
           h2 <- hexDigit
           return ['x',h1,h2]
-    stringChar = escaped <|> notEscaped where
-      escaped = do
-        char '\\'
-        v <- anyChar
-        return ['\\',v]
-      notEscaped = fmap (:[]) $ noneOf "\""
     hexLiteral = do
       c <- getPosition
       try (char '0' >> (char 'x' <|> char 'X'))

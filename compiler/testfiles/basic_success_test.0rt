@@ -1,0 +1,16 @@
+test "basic success test" {
+  success
+  Test$execute()
+  require "pattern in output 1"
+  exclude "pattern not in output 1"
+  require "pattern in output 2"
+  exclude "pattern not in output 2"
+}
+
+concrete Test {
+  @type execute () -> ()
+}
+
+define Test {
+  execute () { }
+}

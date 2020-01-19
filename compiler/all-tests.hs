@@ -1,5 +1,5 @@
 {- -----------------------------------------------------------------------------
-Copyright 2019 Kevin P. Barry
+Copyright 2019-2020 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -25,12 +25,14 @@ import qualified DefinitionTest as DefinitionTest
 import qualified TypeInstanceTest as TypeInstanceTest
 import qualified TypeCategoryTest as TypeCategoryTest
 import qualified ProcedureTest as ProcedureTest
+import qualified IntegrationTestTest as IntegrationTestTest
 
 main = runAllTests $ concat [
-    labelWith "DefinitionTest" DefinitionTest.tests,
-    labelWith "TypeInstanceTest" TypeInstanceTest.tests,
-    labelWith "TypeCategoryTest" TypeCategoryTest.tests,
-    labelWith "ProcedureTest"    ProcedureTest.tests
+    labelWith "DefinitionTest"      DefinitionTest.tests,
+    labelWith "TypeInstanceTest"    TypeInstanceTest.tests,
+    labelWith "TypeCategoryTest"    TypeCategoryTest.tests,
+    labelWith "ProcedureTest"       ProcedureTest.tests,
+    labelWith "IntegrationTestTest" IntegrationTestTest.tests
   ]
 
 labelWith s ts = map (\(n,t) -> fmap (`reviseError` ("In " ++ s ++ " (#" ++ show n ++ "):")) t) (zip [1..] ts)

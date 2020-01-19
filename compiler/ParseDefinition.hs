@@ -1,5 +1,5 @@
 {- -----------------------------------------------------------------------------
-Copyright 2019 Kevin P. Barry
+Copyright 2019-2020 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ limitations under the License.
 {-# LANGUAGE Safe #-}
 
 module ParseDefinition (
+  parseAnySource,
 ) where
 
 import Control.Monad (when)
@@ -108,3 +109,16 @@ parseMemberProcedureFunction n = parsed >>= return . foldr merge empty where
   catchUnscopedType = do
     t <- try sourceParser :: Parser ValueType
     fail $ "members must have an explicit @value or @category scope"
+
+parseAnySource :: Parser ([AnyCategory SourcePos],[DefinedCategory SourcePos])
+parseAnySource = parsed >>= return . foldr merge empty where
+  empty = ([],[])
+  merge (cs1,ds1) (cs2,ds2) = (cs1++cs2,ds1++ds2)
+  parsed = sepBy anyType optionalSpace
+  anyType = singleCategory <|> singleDefine
+  singleCategory = do
+    c <- sourceParser
+    return ([c],[])
+  singleDefine = do
+    d <- sourceParser
+    return ([],[d])

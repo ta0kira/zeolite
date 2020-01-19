@@ -876,37 +876,6 @@ scrapeAllDefines = map (show *** show) . concat . map scrapeSingle where
   scrapeSingle (ValueConcrete _ _ n _ _ ds _ _) = map ((,) n . vdType) ds
   scrapeSingle _ = []
 
-
-containsExactly actual expected = do
-  containsNoDuplicates actual
-  containsAtLeast actual expected
-  containsAtMost actual expected
-
-containsNoDuplicates expected =
-  (mergeAllM $ map checkSingle $ group $ sort expected) `reviseError` (show expected)
-  where
-    checkSingle xa@(x:_:_) =
-      compileError $ "Item " ++ show x ++ " occurs " ++ show (length xa) ++ " times"
-    checkSingle _ = return ()
-
-containsAtLeast actual expected =
-  (mergeAllM $ map (checkInActual $ Set.fromList actual) expected) `reviseError`
-        (show actual ++ " (actual) vs. " ++ show expected ++ " (expected)")
-  where
-    checkInActual va v =
-      if v `Set.member` va
-         then return ()
-         else compileError $ "Item " ++ show v ++ " was expected but not present"
-
-containsAtMost actual expected =
-  (mergeAllM $ map (checkInExpected $ Set.fromList expected) actual) `reviseError`
-        (show actual ++ " (actual) vs. " ++ show expected ++ " (expected)")
-  where
-    checkInExpected va v =
-      if v `Set.member` va
-         then return ()
-         else compileError $ "Item " ++ show v ++ " is unexpected"
-
 checkPaired :: (Show a, CompileErrorM m, MergeableM m, Monad m) =>
   (a -> a -> m ()) -> [a] -> [a] -> m ()
 checkPaired f actual expected

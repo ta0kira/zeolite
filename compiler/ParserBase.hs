@@ -58,6 +58,7 @@ module ParserBase (
   kwSelf,
   kwScoped,
   kwStrong,
+  kwTest,
   kwTrue,
   kwType,
   kwTypename,
@@ -75,6 +76,7 @@ module ParserBase (
   requiredSpace,
   sepAfter,
   sepAfter1,
+  stringChar,
   statementEnd,
   statementStart,
   typeSymbolGet,
@@ -158,6 +160,7 @@ kwReturn = keyword "return"
 kwSelf = keyword "self"
 kwScoped = keyword "scoped"
 kwStrong = keyword "strong"
+kwTest = keyword "test"
 kwTrue = keyword "true"
 kwType = keyword "@type"
 kwTypename = keyword "typename"
@@ -199,6 +202,7 @@ isKeyword = foldr (<|>) nullParse $ map try [
     kwSelf,
     kwScoped,
     kwStrong,
+    kwTest,
     kwTrue,
     kwType,
     kwTypename,
@@ -256,3 +260,11 @@ operator o = labeled o $ do
   notFollowedBy operatorSymbol
   optionalSpace
   return o
+
+stringChar :: Parser String
+stringChar = escaped <|> notEscaped where
+  escaped = do
+    char '\\'
+    v <- anyChar
+    return ['\\',v]
+  notEscaped = fmap (:[]) $ noneOf "\""
