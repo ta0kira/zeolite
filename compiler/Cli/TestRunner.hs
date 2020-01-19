@@ -21,7 +21,7 @@ module Cli.TestRunner (
 ) where
 
 import Control.Monad (when)
-import Data.List (isSuffixOf)
+import Data.List (isSuffixOf,nub)
 import System.IO
 import System.Posix.Temp (mkdtemp,mkstemps)
 import System.FilePath
@@ -36,13 +36,14 @@ import TypeCategory
 import TypesBase
 import CompilerCxx.Category
 import CompilerCxx.Naming
+import Cli.CompileMetadata
 import Cli.CompilerCommand
 
 
 runSingleTest :: [String] -> [String] -> CategoryMap SourcePos ->
                  (String,String) -> IO (CompileInfo ())
 runSingleTest paths os tm (f,s) = do
-  hPutStrLn stderr $ "Executing tests from " ++ f
+  hPutStrLn stderr $ "\nExecuting tests from " ++ f
   fmap (flip reviseError $ "In test file " ++ f) $ checkAndRun (parseTestSource (f,s)) where
     checkAndRun ts
       | isCompileError ts = return (ts >> return ())
@@ -50,12 +51,12 @@ runSingleTest paths os tm (f,s) = do
     runSingle t = do
       let name = ithTestName $ itHeader t
       let context = "[" ++ formatFullContext (ithContext $ itHeader t) ++ "]"
-      hPutStrLn stderr $ "Executing test \"" ++ name ++ "\""
+      hPutStrLn stderr $ "\n*** Executing test \"" ++ name ++ "\" ***"
       outcome <- fmap (flip reviseError ("In test \"" ++ name ++ "\" " ++ context)) $
                    run name (ithResult $ itHeader t) (itCategory t) (itDefinition t)
       if isCompileError outcome
-         then hPutStrLn stderr $ "Test \"" ++ name ++ "\" failed"
-         else hPutStrLn stderr $ "Test \"" ++ name ++ "\" passed"
+         then hPutStrLn stderr $ "*** Test \"" ++ name ++ "\" failed ***"
+         else hPutStrLn stderr $ "*** Test \"" ++ name ++ "\" passed ***"
       return outcome
 
     run n (ExpectCompileError _ rs es) cs ds = do
@@ -117,7 +118,8 @@ runSingleTest paths os tm (f,s) = do
       let binary = dir </> "testcase"
       hPutStr h $ concat $ map (++ "\n") main
       hClose h
-      let command = CompileToBinary ([o'] ++ sources ++ os) binary (dir:paths)
+      let paths' = nub $ map fixPath (dir:paths)
+      let command = CompileToBinary ([o'] ++ sources ++ os) binary paths'
       runCxxCommand command
       return binary
     writeSingleFile d (CxxOutput f _ os) = do

@@ -529,7 +529,10 @@ struct Category_ReadPosition : public TypeCategory {
 struct Type_ReadPosition : public TypeInstance {
   Type_ReadPosition(Params<1>::Type params) : Param_x(*std::get<0>(params)) {}
   std::string CategoryName() const final { return "ReadPosition"; }
-  void BuildTypeName(std::ostream& output) const final { output << CategoryName(); }
+
+  void BuildTypeName(std::ostream& output) const final {
+    TypeInstance::TypeNameFrom(output, GetCategory_ReadPosition(), Param_x);
+  }
 
   bool TypeArgsForParent(
     const TypeCategory& category, std::vector<const TypeInstance*>& args) const final {

@@ -96,11 +96,11 @@ runCompiler co@(CompileOptions _ _ ds _ _ p ExecuteTests _) = do
          else fmap mergeAllM $ sequence $ map (runSingleTest paths os (getCompileSuccess tm)) ts'
     processResults rs
       | isCompileError rs = do
-          hPutStr stderr $ "Test errors:\n" ++ (show $ getCompileError rs)
-          hPutStrLn stderr $ "Zeolite tests failed."
+          hPutStr stderr $ "\nTest errors:\n" ++ (show $ getCompileError rs)
+          hPutStrLn stderr $ "\nZeolite tests failed."
           exitFailure
       | otherwise = do
-          hPutStrLn stderr $ "Zeolite tests passed."
+          hPutStrLn stderr $ "\nZeolite tests passed."
 runCompiler co@(CompileOptions h is ds es ep p m o) = do
   when (h /= HelpNotNeeded) (showHelp >> exitFailure)
   deps <- loadRecursiveDeps is
