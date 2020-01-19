@@ -24,6 +24,7 @@ module Cli.CompileOptions (
   HelpMode(..),
   emptyCompileOptions,
   isCompileBinary,
+  isCompileIncremental,
   maybeDisableHelp,
 ) where
 
@@ -64,6 +65,9 @@ data CompileMode =
 
 isCompileBinary (CompileBinary _ _) = True
 isCompileBinary _                   = False
+
+isCompileIncremental CompileIncremental = True
+isCompileIncremental _                  = False
 
 maybeDisableHelp HelpUnspecified = HelpNotNeeded
 maybeDisableHelp h               = h

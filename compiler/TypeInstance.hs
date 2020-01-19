@@ -106,7 +106,8 @@ data CategoryName =
   BuiltinLessThan |
   BuiltinEquals |
   BuiltinFormatted |
-  BuiltinReadPosition
+  BuiltinReadPosition |
+  CategoryNone
 
 instance Show CategoryName where
   show (CategoryName n)    = n
@@ -119,6 +120,7 @@ instance Show CategoryName where
   show BuiltinEquals       = "Equals"
   show BuiltinFormatted    = "Formatted"
   show BuiltinReadPosition = "ReadPosition"
+  show CategoryNone        = "(none)"
 
 instance Eq CategoryName where
   c1 == c2 = show c1 == show c2

@@ -603,33 +603,21 @@ builtinVariables t = Map.fromList [
     (VariableName "self",VariableValue [] ValueScope (ValueType RequiredValue $ SingleType $ JustTypeInstance t) False)
   ]
 
-createMainFile :: (Show c, CompileErrorM m, Monad m) =>
-  AnyCategory c -> String -> m [String]
-createMainFile t f
-  | not $ isValueConcrete t =
-    compileError $ "Main category " ++ show (getCategoryName t) ++ " is not concrete."
-  | otherwise = do
-      func <- getRunFunc
-      return $ baseSourceIncludes ++ [
-          "#include \"" ++ headerFilename (sfType func) ++ "\"",
-          "#include \"" ++ headerFilename (getCategoryName t) ++ "\""
-        ] ++ namespace ++ [
-          "int main() {",
-          "  SetSignalHandler();",
-          "  TRACE_FUNCTION(\"main\")",
-          "  (void) " ++ qualifiedTypeGetter t ++ "(T_get()).Call(" ++ functionName func ++ ", ParamTuple(), ArgTuple());",
-          "}"
-        ] where
-        name = FunctionName f
-        namespace
-          | null $ getCategoryNamespace t = []
-          | otherwise = ["using namespace " ++ getCategoryNamespace t ++ ";"]
-        getRunFunc = check $ filter ((== name) . sfName) $ filter ((== TypeScope) . sfScope) $ getCategoryFunctions t
-        check [f]
-          | not $ null $ psParams $ sfArgs f =
-            compileError $ "Main function \"" ++ show (sfName f) ++ "\" requires arguments but none are allowed."
-          | not $ null $ psParams $ sfParams f =
-            compileError $ "Main function \"" ++ show (sfName f) ++ "\" requires parameters but none are allowed."
-          | otherwise = return f
-        check _ = compileError $ "Main category " ++ show (getCategoryName t) ++
-                                 " does not have a @type function \"" ++ show name ++ "\"."
+createMainFile :: (Show c, Monad m, CompileErrorM m, MergeableM m) =>
+  CategoryMap c -> AnyCategory c -> String -> m [String]
+createMainFile tm t f = flip reviseError ("In the creation of the main binary procedure") $ do
+  (CompiledData req out) <- fmap indentCompiled (compileMainProcedure tm (expr t))
+  return $ baseSourceIncludes ++ depIncludes req ++ namespace t ++ [
+      "int main() {",
+      "  SetSignalHandler();",
+      "  TRACE_FUNCTION(\"main\")"
+    ] ++ out ++ ["}"] where
+    funcName = FunctionName f
+    funcCall = FunctionCall [] funcName (ParamSet []) (ParamSet [])
+    mainType t = JustTypeInstance $ TypeInstance (getCategoryName t) (ParamSet [])
+    expr t = Expression [] (TypeCall [] (mainType t) funcCall) []
+    depIncludes req = map (\i -> "#include \"" ++ headerFilename i ++ "\"") $
+                        filter (not . isBuiltinCategory) $ Set.toList req
+    namespace t
+      | null $ getCategoryNamespace t = []
+      | otherwise = ["using namespace " ++ getCategoryNamespace t ++ ";"]

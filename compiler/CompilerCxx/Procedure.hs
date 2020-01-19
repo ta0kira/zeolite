@@ -24,6 +24,7 @@ limitations under the License.
 module CompilerCxx.Procedure (
   categoriesFromTypes,
   compileExecutableProcedure,
+  compileMainProcedure,
   compileExpression,
   compileLazyInit,
   compileStatement,
@@ -750,6 +751,35 @@ compileFunctionCall e f (FunctionCall c _ ps es) = do
       compileError $ "Return position " ++ show i ++ " has " ++ show (length ts) ++ " values but should have 1"
     checkArg r fa t0 (i,t1) = do
       checkValueTypeMatch r fa t1 t0 `reviseError` ("In argument " ++ show i)
+
+compileMainProcedure :: (Show c, Monad m, CompileErrorM m, MergeableM m) =>
+  CategoryMap c -> Expression c -> m (CompiledData [String])
+compileMainProcedure tm e = do
+  let ctx = ProcedureContext {
+      pcScope = LocalScope,
+      pcType = CategoryNone,
+      pcExtParams = ParamSet [],
+      pcIntParams = ParamSet [],
+      pcMembers = [],
+      pcCategories = tm,
+      pcAllFilters = Map.empty,
+      pcExtFilters = [],
+      pcIntFilters = [],
+      pcParamScopes = Map.empty,
+      pcFunctions = Map.empty,
+      pcVariables = Map.empty,
+      pcReturns = ValidatePositions (ParamSet []),
+      pcPrimNamed = [],
+      pcRequiredTypes = Set.empty,
+      pcOutput = [],
+      pcDisallowInit = False,
+      pcLoopSetup = NotInLoop
+    }
+  runDataCompiler compiler ctx where
+    procedure = Procedure [] [IgnoreValues [] e]
+    compiler = do
+      ctx0 <- getCleanContext
+      compileProcedure ctx0 procedure >>= put
 
 autoScope :: (Monad m, CompilerContext c m s a) =>
   SymbolScope -> CompilerState a m String

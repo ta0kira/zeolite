@@ -52,10 +52,12 @@ main = do
       | otherwise = runCompiler $ getCompileSuccess co
     validate co@(CompileOptions h is ds es ep p m o)
       | h /= HelpNotNeeded = return co
-      | (not $ null o) && (not $ isCompileBinary m) =
-        compileError "Output filename (-o) is not allowed with multiple output files."
+      | (not $ null o) && (isCompileIncremental m) =
+        compileError "Output filename (-o) is not allowed in compile-only mode (-c)."
       | null ds =
         compileError "Please specify at least one input path."
+      | (length ds /= 1) && (isCompileBinary m) =
+        compileError "Specify exactly one input path for binary mode (-m)."
       | otherwise = return co
 
 showHelp :: IO ()
@@ -188,10 +190,10 @@ runCompiler co@(CompileOptions h is ds es ep p m o) = do
     mergeInternal ds = (concat $ map fst ds,concat $ map snd ds)
     writeMain bp deps (CompileBinary n _) ms
       | length ms > 1 = do
-        hPutStr stderr $ "Multiple matches for main category " ++ n ++ "."
+        hPutStrLn stderr $ "Multiple matches for main category " ++ n ++ "."
         exitFailure
       | length ms == 0 = do
-        hPutStr stderr $ "Main category " ++ n ++ " not found."
+        hPutStrLn stderr $ "Main category " ++ n ++ " not found."
         exitFailure
       | otherwise = do
           let f0 = if null o then n else o
@@ -211,6 +213,6 @@ runCompiler co@(CompileOptions h is ds es ep p m o) = do
       case (CategoryName n) `Map.lookup` tm of
         Nothing -> return []
         Just t -> do
-          contents <- createMainFile t f
+          contents <- createMainFile tm t f
           return [CxxOutput mainFilename "" contents]
     maybeCreateMain _ _ = return []
