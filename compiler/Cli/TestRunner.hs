@@ -65,6 +65,7 @@ runSingleTest paths os tm (f,s) = do
          else return $ do
            let warnings = getCompileWarnings result
            let errors = show $ getCompileError result
+           -- TODO: Find a way to return the output if one of the below fails.
            checkRequired rs $ warnings ++ lines errors
            checkExcluded es $ warnings ++ lines errors
 
@@ -81,9 +82,10 @@ runSingleTest paths os tm (f,s) = do
            binaryName <- createBinary main fs
            (TestCommandResult s' ms1 ms2) <- runTestCommand (TestCommand binaryName)
            case (s,s') of
-                (True,False) -> return $ compileError "Expected runtime execution"
+                (True,False) -> return $ mergeAllM $ map compileError $ warnings ++ ms1 ++ ms2
                 (False,True) -> return $ compileError "Expected runtime failure"
                 _ -> return $ do
+                  -- TODO: Find a way to return the output if one of the below fails.
                   checkRequired rs $ warnings ++ ms1 ++ ms2
                   checkExcluded es $ warnings ++ ms1 ++ ms2
 
