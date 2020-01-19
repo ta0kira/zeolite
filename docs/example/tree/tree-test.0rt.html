@@ -9,9 +9,19 @@
 <!-- Highlighting: "Zeolite" -->
 <body>
 <pre style='color:#1f1c1b;background-color:#ffffff;'>
+<span style='color:#898887;'>// Each testcase is essentially followed by its own private .0rx that is</span>
+<span style='color:#898887;'>// separate from all other testcases. In this case, the testcase expects that</span>
+<span style='color:#898887;'>// the source will compile and Test$execute() will succeed, but testcases can</span>
+<span style='color:#898887;'>// also expect a compiler error (&quot;error&quot;) or a runtime crash (&quot;crash&quot;). Note</span>
+<span style='color:#898887;'>// that you *cannot* expect parse-time errors.</span>
+
 <b>testcase</b> <span style='color:#bf0303;'>&quot;integration test&quot;</span> {
   <span style='color:#04e040;'>success</span> <span style='color:#0057ae;'>Test</span><span style='color:#644a9b;'>$</span>execute()
 }
+
+<span style='color:#898887;'>// Everything past the testcase (up until the next testcase, if there is one) is</span>
+<span style='color:#898887;'>// treated as a self-contained .0rx. This is compiled into a binary that calls</span>
+<span style='color:#898887;'>// the expression that follows &quot;success&quot; above.</span>
 
 <b>concrete</b> <b><span style='color:#0057ae;'>Test</span></b> {
   <span style='color:#644a9b;'>@type</span> execute () -&gt; ()

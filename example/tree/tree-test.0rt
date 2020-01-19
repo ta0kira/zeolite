@@ -1,6 +1,16 @@
+// Each testcase is essentially followed by its own private .0rx that is
+// separate from all other testcases. In this case, the testcase expects that
+// the source will compile and Test$execute() will succeed, but testcases can
+// also expect a compiler error ("error") or a runtime crash ("crash"). Note
+// that you *cannot* expect parse-time errors.
+
 testcase "integration test" {
   success Test$execute()
 }
+
+// Everything past the testcase (up until the next testcase, if there is one) is
+// treated as a self-contained .0rx. This is compiled into a binary that calls
+// the expression that follows "success" above.
 
 concrete Test {
   @type execute () -> ()

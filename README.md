@@ -244,7 +244,7 @@ compiler.
 
 ### Source Files
 
-There are two distinct types of source file used by the Zeolite compiler:
+There are three distinct types of source file used by the Zeolite compiler:
 
 1. `.0rx`: Implementation files that can contain category declarations, i.e.,
    `concrete`, `@value interface`, `@type interface`, and category definitions,
@@ -253,6 +253,10 @@ There are two distinct types of source file used by the Zeolite compiler:
 2. `.0rp`: Declaration files that can only contain category declarations; they
    *cannot* contain `define`. Everything in declaration files is visible to
    other source files.
+2. `.0rt`: Test files that specify test cases. Unlike most other languages,
+   the test is run directly by the compiler, which allows test cases that
+   *expect* compile-time errors or crashes. (See [the base tests][tests] as an
+   example.)
 
 If you want to have an entire program in a single source file, use `.0rx`. If
 you need to split it up, you must also use `.0rp` for sharing type declarations.
@@ -1400,3 +1404,4 @@ if you are interested in helping with development.
 [example]: https://github.com/ta0kira/zeolite/tree/master/example/tree
 [ghc]: https://www.haskell.org/ghc/
 [git]: https://git-scm.com/
+[tests]: https://github.com/ta0kira/zeolite/tree/master/tests
