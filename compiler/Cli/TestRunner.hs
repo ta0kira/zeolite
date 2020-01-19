@@ -38,55 +38,59 @@ import Cli.CxxCommand
 
 
 runSingleTest :: [String] -> CategoryMap SourcePos -> (String,String) -> IO (CompileInfo ())
-runSingleTest paths tm (f,s) = fmap (flip reviseError $ "In test " ++ f) $ checkAndRun test where
-  test = unwrap parsed :: CompileInfo (IntegrationTest SourcePos)
-  parsed = parse (between optionalSpace endOfDoc sourceParser) f s
-  unwrap (Left e)  = compileError (show e)
-  unwrap (Right t) = return t
-  checkAndRun t
-    | isCompileError t = return (t >> return ())
-    | otherwise = run (ithTestName $ itHeader t')
-                      (ithResult $ itHeader t')
-                      (itCategory t')
-                      (itDefinition t') where
-      t' = getCompileSuccess t
+runSingleTest paths tm (f,s) = do
+  hPutStrLn stderr $ "Executing test " ++ f
+  fmap (flip reviseError $ "In test " ++ f) $ checkAndRun test where
+    test = unwrap parsed :: CompileInfo (IntegrationTest SourcePos)
+    parsed = parse (between optionalSpace endOfDoc sourceParser) f s
+    unwrap (Left e)  = compileError (show e)
+    unwrap (Right t) = return t
+    checkAndRun t
+      | isCompileError t = return (t >> return ())
+      | otherwise = addMessage $ run name
+                                     (ithResult $ itHeader t')
+                                     (itCategory t')
+                                     (itDefinition t') where
+        t' = getCompileSuccess t
+        name = ithTestName $ itHeader t'
+        addMessage = fmap (flip reviseError ("In \"" ++ name ++ "\""))
 
-  run n (ExpectCompileError _ rs es) cs ds = do
-    let result = compileAll cs ds :: CompileInfo [CxxOutput]
-    if not $ isCompileError result
-       then return $ compileError "Expected compiler errors"
-       else return $ do
-         let warnings = concat $ map (++ "\n") $ getCompileWarnings result
-         let errors = show $ getCompileError result
-         checkRequired rs $ warnings ++ errors
-         checkExcluded es $ warnings ++ errors
+    run n (ExpectCompileError _ rs es) cs ds = do
+      let result = compileAll cs ds :: CompileInfo [CxxOutput]
+      if not $ isCompileError result
+         then return $ compileError "Expected compiler errors"
+         else return $ do
+           let warnings = concat $ map (++ "\n") $ getCompileWarnings result
+           let errors = show $ getCompileError result
+           checkRequired rs $ warnings ++ errors
+           checkExcluded es $ warnings ++ errors
 
-  run n (ExpectRuntimeError _ e rs es) cs ds = do
-    let result = compileAll cs ds :: CompileInfo [CxxOutput]
-    if isCompileError result
-       then return $ compileError "Expected compiler success"
-       else do
-         let warnings = concat $ map (++ "\n") $ getCompileWarnings result
-         binaryName <- createBinary e (getCompileSuccess result)
-         return $ return () -- TODO: Execute the binary and check the patterns.
+    run n (ExpectRuntimeError _ e rs es) cs ds = do
+      let result = compileAll cs ds :: CompileInfo [CxxOutput]
+      if isCompileError result
+         then return $ compileError "Expected compiler success"
+         else do
+           let warnings = concat $ map (++ "\n") $ getCompileWarnings result
+           binaryName <- createBinary e (getCompileSuccess result)
+           return $ return () -- TODO: Execute the binary and check the patterns.
 
-  run n (ExpectRuntimeSuccess _ e rs es) cs ds = do
-    let result = compileAll cs ds :: CompileInfo [CxxOutput]
-    if isCompileError result
-       then return $ compileError "Expected compiler success"
-       else do
-         let warnings = concat $ map (++ "\n") $ getCompileWarnings result
-         binaryName <- createBinary e (getCompileSuccess result)
-         return $ return () -- TODO: Execute the binary and check the patterns.
+    run n (ExpectRuntimeSuccess _ e rs es) cs ds = do
+      let result = compileAll cs ds :: CompileInfo [CxxOutput]
+      if isCompileError result
+         then return $ compileError "Expected compiler success"
+         else do
+           let warnings = concat $ map (++ "\n") $ getCompileWarnings result
+           binaryName <- createBinary e (getCompileSuccess result)
+           return $ return () -- TODO: Execute the binary and check the patterns.
 
-  compileAll cs ds = do
-    let namespace = privateNamepace s
-    let cs' = map (setCategoryNamespace namespace) cs
-    tm' <- includeNewTypes tm cs'
-    hxx <- collectAllOrErrorM $ map (compileCategoryDeclaration tm') cs'
-    cxx <- collectAllOrErrorM $ map (compileConcreteDefinition tm' [namespace]) ds
-    return $ hxx ++ cxx
-  checkRequired rs m = return () -- TODO: Check patterns.
-  checkExcluded es m = return () -- TODO: Check patterns.
-  createBinary e fs = do
-    return "" -- TODO: Write the files and compile the binary.
+    compileAll cs ds = do
+      let namespace = privateNamepace s
+      let cs' = map (setCategoryNamespace namespace) cs
+      tm' <- includeNewTypes tm cs'
+      hxx <- collectAllOrErrorM $ map (compileCategoryDeclaration tm') cs'
+      cxx <- collectAllOrErrorM $ map (compileConcreteDefinition tm' [namespace]) ds
+      return $ hxx ++ cxx
+    checkRequired rs m = return () -- TODO: Check patterns.
+    checkExcluded es m = return () -- TODO: Check patterns.
+    createBinary e fs = do
+      return "" -- TODO: Write the files and compile the binary.

@@ -38,7 +38,6 @@
       <item> self </item>
       <item> scoped </item>
       <item> strong </item>
-      <item> testcase </item>
       <item> true </item>
       <item> typename </item>
       <item> update </item>
@@ -52,6 +51,10 @@
 
     <list name="typeDefine">
       <item> define </item>
+    </list>
+
+    <list name="testHeader">
+      <item> testcase </item>
     </list>
 
     <list name="internalTypes">
@@ -94,27 +97,13 @@
         <keyword attribute="Keyword" context="#stay" String="keywords" />
         <keyword attribute="Scope Qualifier" context="#stay" String="scope" />
         <keyword attribute="Storage Qualifier" context="#stay" String="storage" />
+        <keyword attribute="Keyword" context="Test Header" String="testHeader" />
         <keyword attribute="Keyword" context="Declare Type" String="typeDeclare" />
         <keyword attribute="Keyword" context="Define Type" String="typeDefine" />
-        <RegExpr attribute="Number" context="#stay" String="0[xX][0-9a-fA-F]+" />
-        <RegExpr attribute="Number" context="#stay" String="[0-9]+(\.[0-9]+)" />
-        <Int attribute="Number" context="#stay" />
-        <DetectChar attribute="String" context="String" char="&quot;" />
-        <DetectChar attribute="Char" context="Char" char="'" />
+        <IncludeRules context="Any Expression" />
         <Detect2Chars attribute="Assign" context="#stay" char="&lt;" char1="-" />
         <Detect2Chars attribute="Assign" context="#stay" char="-" char1="&gt;" />
         <DetectChar attribute="Voided" context="#stay" char="~" />
-        <Detect2Chars attribute="Caller" context="#stay" char="$" char1="$" />
-        <Detect2Chars attribute="Operator" context="#stay" char="|" char1="|" />
-        <Detect2Chars attribute="Operator" context="#stay" char="&amp;" char1="&amp;" />
-        <Detect2Chars attribute="Operator" context="#stay" char="=" char1="=" />
-        <Detect2Chars attribute="Operator" context="#stay" char="!" char1="=" />
-        <Detect2Chars attribute="Operator" context="#stay" char="&lt;" char1="=" />
-        <Detect2Chars attribute="Operator" context="#stay" char="&gt;" char1="=" />
-        <AnyChar attribute="Operator" context="#stay" String="&lt;&gt;+-*%/" />
-        <DetectChar attribute="Caller" context="#stay" char="$" />
-        <IncludeRules context="Any Type" />
-        <AnyChar attribute="Error" context="#stay" String="]|&amp;" />
       </context>
 
       <context name="Declare Type" attribute="Normal Text" lineEndContext="#stay" >
@@ -133,6 +122,43 @@
         <IncludeRules context="Any Comment" />
         <AnyChar attribute="Error" context="#stay" String="#$}.*@!=%+-/\&lt;&gt;()[]" />
         <RegExpr attribute="Error" context="#stay" String="[a-z0-9][a-zA-Z0-9]*\b" />
+      </context>
+
+      <context name="Test Header" attribute="Normal Text" lineEndContext="#stay" >
+        <DetectSpaces />
+        <DetectChar context="#pop" char="}" lookAhead="true" />
+        <Detect2Chars attribute="Error" context="#stay" char="&lt;" char1="-" />
+        <Detect2Chars attribute="Error" context="#stay" char="-" char1="&gt;" />
+        <WordDetect attribute="Error" context="#stay" String="optional" />
+        <WordDetect attribute="Error" context="#stay" String="weak" />
+        <WordDetect attribute="Test Keyword" context="#stay" String="error" />
+        <WordDetect attribute="Test Keyword" context="#stay" String="error" />
+        <WordDetect attribute="Test Keyword" context="#stay" String="crash" />
+        <WordDetect attribute="Test Keyword" context="#stay" String="success" />
+        <WordDetect attribute="Test Keyword" context="#stay" String="require" />
+        <WordDetect attribute="Test Keyword" context="#stay" String="exclude" />
+        <IncludeRules context="Any Expression" />
+        <keyword attribute="Error" context="#stay" String="keywords" />
+      </context>
+
+      <context name="Any Expression" attribute="Normal Text" lineEndContext="#stay" >
+        <IncludeRules context="Any Comment" />
+        <RegExpr attribute="Number" context="#stay" String="0[xX][0-9a-fA-F]+" />
+        <RegExpr attribute="Number" context="#stay" String="[0-9]+(\.[0-9]+)" />
+        <Int attribute="Number" context="#stay" />
+        <DetectChar attribute="String" context="String" char="&quot;" />
+        <DetectChar attribute="Char" context="Char" char="'" />
+        <Detect2Chars attribute="Caller" context="#stay" char="$" char1="$" />
+        <Detect2Chars attribute="Operator" context="#stay" char="|" char1="|" />
+        <Detect2Chars attribute="Operator" context="#stay" char="&amp;" char1="&amp;" />
+        <Detect2Chars attribute="Operator" context="#stay" char="=" char1="=" />
+        <Detect2Chars attribute="Operator" context="#stay" char="!" char1="=" />
+        <Detect2Chars attribute="Operator" context="#stay" char="&lt;" char1="=" />
+        <Detect2Chars attribute="Operator" context="#stay" char="&gt;" char1="=" />
+        <AnyChar attribute="Operator" context="#stay" String="&lt;&gt;+-*%/" />
+        <DetectChar attribute="Caller" context="#stay" char="$" />
+        <IncludeRules context="Any Type" />
+        <AnyChar attribute="Error" context="#stay" String="]|&amp;" />
       </context>
 
       <context name="Any Type" attribute="Normal Text" lineEndContext="#stay" >
@@ -253,6 +279,7 @@
       <itemData name="Char" defStyleNum="dsChar" spellChecking="true" />
       <itemData name="Escaped Char" defStyleNum="dsChar" spellChecking="false" />
       <itemData name="Assign" defStyleNum="dsOthers" bold="true" spellChecking="false" />
+      <itemData name="Test Keyword" defStyleNum="dsOperator" bold="false" color="#04e040" selColor="#04e040" spellChecking="false" />
       <itemData name="Params Brace" defStyleNum="dsOperator" bold="false" color="#c02040" selColor="#c02040" spellChecking="false" />
       <itemData name="Merge Brace" defStyleNum="dsOthers" bold="true" />
       <itemData name="Type Delim" defStyleNum="dsOperator" bold="false" color="#c04040" selColor="#c04040" spellChecking="false" />

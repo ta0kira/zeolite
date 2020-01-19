@@ -1,0 +1,15 @@
+testcase "basic crash test" {
+  crash Test$execute()
+  require "failure message"
+  require "line 13"
+}
+
+concrete Test {
+  @type execute () -> ()
+}
+
+define Test {
+  execute () {
+    fail("failure message")
+  }
+}
