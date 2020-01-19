@@ -4,8 +4,6 @@ concrete RegexDemo {
 
 define RegexDemo {
   run () {
-    ~ RegexTest$runTests()
-
     ~ testMatch("","",true)
     ~ testMatch("","a",false)
     ~ testMatch(".","a",true)

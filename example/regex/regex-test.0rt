@@ -1,45 +1,13 @@
-define RegexTest {
-  runTests () {
-    ~ testMatchSingleMatch()
-    ~ testMatchSingleNonMatch()
+testcase "MatchSingle match" {
+  success Test$execute()
+}
 
-    ~ testMatchRangeMatch()
-    ~ testMatchRangeNonMatch()
+concrete Test {
+  @type execute () -> ()
+}
 
-    ~ testMatchAny()
-
-    ~ testMatchEmpty()
-
-    ~ testMatchRepeatMatch()
-    ~ testMatchRepeatNested()
-    ~ testMatchRepeatNonMatch()
-    ~ testMatchRepeatOptionalSuffix()
-
-    ~ testMatchChoicesMatch()
-    ~ testMatchChoicesNonMatch()
-    ~ testMatchChoicesEmptyChoice()
-
-    ~ testBranchRepeatMatch()
-    ~ testBranchRepeatNested()
-    ~ testBranchRepeatNonMatch()
-
-    ~ testBranchSequenceMatch()
-    ~ testBranchSequenceNonMatch()
-    ~ testBranchSequenceSkipEmptyFailed()
-    ~ testBranchSequenceFailNonEmptyFailed()
-    ~ testBranchSequenceBranchMultiMatch()
-
-    ~ testMatchBranchesMatch()
-    ~ testMatchBranchesNonMatch()
-    ~ testMatchBranchesBranchedMatch()
-
-    ~ LazyStream<Formatted>$new()
-        .append("Tests passed.\n")
-        .writeTo(SimpleOutput$stderr())
-  }
-
-  @type testMatchSingleMatch () -> ()
-  testMatchSingleMatch () {
+define Test {
+  execute () {
     // Pattern: "x"
     MatcherTemplate<Char> template <- MatchSingle<Char>$create('x')
     Matcher<Char> matcher <- template.newMatcher()
@@ -75,9 +43,19 @@ define RegexTest {
       fail(state)
     }
   }
+}
 
-  @type testMatchSingleNonMatch () -> ()
-  testMatchSingleNonMatch () {
+
+testcase "MatchSingle non-match" {
+  success Test$execute()
+}
+
+concrete Test {
+  @type execute () -> ()
+}
+
+define Test {
+  execute () {
     // Pattern: "x"
     MatcherTemplate<Char> template <- MatchSingle<Char>$create('x')
     Matcher<Char> matcher <- template.newMatcher()
@@ -93,9 +71,19 @@ define RegexTest {
       fail(state)
     }
   }
+}
 
-  @type testMatchRangeMatch () -> ()
-  testMatchRangeMatch () {
+
+testcase "MatchRange match" {
+  success Test$execute()
+}
+
+concrete Test {
+  @type execute () -> ()
+}
+
+define Test {
+  execute () {
     // Pattern: "[w-y]"
     MatcherTemplate<Char> template <- MatchRange<Char>$create('w','y')
     Matcher<Char> matcher <- template.newMatcher()
@@ -131,9 +119,19 @@ define RegexTest {
       fail(state)
     }
   }
+}
 
-  @type testMatchRangeNonMatch () -> ()
-  testMatchRangeNonMatch () {
+
+testcase "MatchRange non-match" {
+  success Test$execute()
+}
+
+concrete Test {
+  @type execute () -> ()
+}
+
+define Test {
+  execute () {
     // Pattern: "[w-y]"
     MatcherTemplate<Char> template <- MatchRange<Char>$create('w','y')
     Matcher<Char> matcher <- template.newMatcher()
@@ -149,9 +147,19 @@ define RegexTest {
       fail(state)
     }
   }
+}
 
-  @type testMatchAny () -> ()
-  testMatchAny () {
+
+testcase "MatchAny" {
+  success Test$execute()
+}
+
+concrete Test {
+  @type execute () -> ()
+}
+
+define Test {
+  execute () {
     // Pattern: "."
     MatcherTemplate<Char> template <- MatchAny$create()
     Matcher<Char> matcher <- template.newMatcher()
@@ -187,9 +195,19 @@ define RegexTest {
       fail(state)
     }
   }
+}
 
-  @type testMatchEmpty () -> ()
-  testMatchEmpty () {
+
+testcase "MatchEmpty" {
+  success Test$execute()
+}
+
+concrete Test {
+  @type execute () -> ()
+}
+
+define Test {
+  execute () {
     // Pattern: ""
     MatcherTemplate<Char> template <- MatchEmpty$create()
     Matcher<Char> matcher <- template.newMatcher()
@@ -215,9 +233,19 @@ define RegexTest {
       fail("match not satisfied")
     }
   }
+}
 
-  @type testMatchRepeatMatch () -> ()
-  testMatchRepeatMatch () {
+
+testcase "MatchRepeat match" {
+  success Test$execute()
+}
+
+concrete Test {
+  @type execute () -> ()
+}
+
+define Test {
+  execute () {
     // Pattern: "[w-y]{2,3}"
     MatcherTemplate<Char> template <-
         MatchRepeat<Char>$createRange(2,3,MatchRange<Char>$create('w','y'))
@@ -286,9 +314,19 @@ define RegexTest {
       fail("match not satisfied")
     }
   }
+}
 
-  @type testMatchRepeatNested () -> ()
-  testMatchRepeatNested () {
+
+testcase "MatchRepeat nested" {
+  success Test$execute()
+}
+
+concrete Test {
+  @type execute () -> ()
+}
+
+define Test {
+  execute () {
     // Pattern: "(x*){2,}"
     MatcherTemplate<Char> template <-
         MatchRepeat<Char>$createRange(2,0,
@@ -331,9 +369,19 @@ define RegexTest {
       fail("match not satisfied")
     }
   }
+}
 
-  @type testMatchRepeatNonMatch () -> ()
-  testMatchRepeatNonMatch () {
+
+testcase "MatchRepeat non-match" {
+  success Test$execute()
+}
+
+concrete Test {
+  @type execute () -> ()
+}
+
+define Test {
+  execute () {
     // Pattern: "[w-y]{2,3}"
     MatcherTemplate<Char> template <-
         MatchRepeat<Char>$createRange(2,3,MatchRange<Char>$create('w','y'))
@@ -365,9 +413,19 @@ define RegexTest {
       fail(state)
     }
   }
+}
 
-  @type testMatchRepeatOptionalSuffix () -> ()
-  testMatchRepeatOptionalSuffix () {
+
+testcase "MatchRepeat optional suffix" {
+  success Test$execute()
+}
+
+concrete Test {
+  @type execute () -> ()
+}
+
+define Test {
+  execute () {
     // Pattern: "(ab*)*"
     MatcherTemplate<Char> template <-
         MatchRepeat<Char>$createZeroPlus(
@@ -411,9 +469,19 @@ define RegexTest {
       fail("match not satisfied")
     }
   }
+}
 
-  @type testMatchChoicesMatch () -> ()
-  testMatchChoicesMatch () {
+
+testcase "MatchChoices match" {
+  success Test$execute()
+}
+
+concrete Test {
+  @type execute () -> ()
+}
+
+define Test {
+  execute () {
     // Pattern: "[w-y]|a*"
     MatcherTemplate<Char> template <-
         MatchChoices<Char>$create(
@@ -459,9 +527,19 @@ define RegexTest {
       fail(state)
     }
   }
+}
 
-  @type testMatchChoicesNonMatch () -> ()
-  testMatchChoicesNonMatch () {
+
+testcase "MatchChoices non-match" {
+  success Test$execute()
+}
+
+concrete Test {
+  @type execute () -> ()
+}
+
+define Test {
+  execute () {
     // Pattern: "[w-y]|a*"
     MatcherTemplate<Char> template <-
         MatchChoices<Char>$create(
@@ -492,9 +570,19 @@ define RegexTest {
       fail(state)
     }
   }
+}
 
-  @type testMatchChoicesEmptyChoice () -> ()
-  testMatchChoicesEmptyChoice () {
+
+testcase "MatchChoices empty choice" {
+  success Test$execute()
+}
+
+concrete Test {
+  @type execute () -> ()
+}
+
+define Test {
+  execute () {
     // Pattern: "[w-y]|a{2,2}|"
     MatcherTemplate<Char> template <-
         MatchChoices<Char>$create(
@@ -524,9 +612,19 @@ define RegexTest {
       fail("match satisfied")
     }
   }
+}
 
-  @type testBranchRepeatMatch () -> ()
-  testBranchRepeatMatch () {
+
+testcase "BranchRepeat match" {
+  success Test$execute()
+}
+
+concrete Test {
+  @type execute () -> ()
+}
+
+define Test {
+  execute () {
     // Pattern: "[w-y]{2,3}"
     MatchBrancherTemplate<Char> template <-
         BranchRepeat<Char>$createRange(2,3,MatchRange<Char>$create('w','y'))
@@ -599,9 +697,19 @@ define RegexTest {
       fail("branch missing")
     }
   }
+}
 
-  @type testBranchRepeatNested () -> ()
-  testBranchRepeatNested () {
+
+testcase "BranchRepeat nested" {
+  success Test$execute()
+}
+
+concrete Test {
+  @type execute () -> ()
+}
+
+define Test {
+  execute () {
     // Pattern: "(x*){2,}"
     MatchBrancherTemplate<Char> template <-
         BranchRepeat<Char>$createRange(2,0,
@@ -678,9 +786,19 @@ define RegexTest {
       fail(state)
     }
   }
+}
 
-  @type testBranchRepeatNonMatch () -> ()
-  testBranchRepeatNonMatch () {
+
+testcase "BranchRepeat non-match" {
+  success Test$execute()
+}
+
+concrete Test {
+  @type execute () -> ()
+}
+
+define Test {
+  execute () {
     // Pattern: "[w-y]{2,3}"
     MatchBrancherTemplate<Char> template <-
         BranchRepeat<Char>$createRange(2,3,MatchRange<Char>$create('w','y'))
@@ -716,9 +834,19 @@ define RegexTest {
       fail("branch present")
     }
   }
+}
 
-  @type testBranchSequenceMatch () -> ()
-  testBranchSequenceMatch () {
+
+testcase "BranchSequence match" {
+  success Test$execute()
+}
+
+concrete Test {
+  @type execute () -> ()
+}
+
+define Test {
+  execute () {
     // Pattern: "[w-y]a"
     MatchBrancherTemplate<Char> template <-
         BranchSequence<Char>$create(
@@ -781,9 +909,19 @@ define RegexTest {
       fail("branch missing")
     }
   }
+}
 
-  @type testBranchSequenceNonMatch () -> ()
-  testBranchSequenceNonMatch () {
+
+testcase "BranchSequence non-match" {
+  success Test$execute()
+}
+
+concrete Test {
+  @type execute () -> ()
+}
+
+define Test {
+  execute () {
     // Pattern: "[w-y]a"
     MatchBrancherTemplate<Char> template <-
         BranchSequence<Char>$create(
@@ -809,9 +947,19 @@ define RegexTest {
       fail(state)
     }
   }
+}
 
-  @type testBranchSequenceSkipEmptyFailed () -> ()
-  testBranchSequenceSkipEmptyFailed () {
+
+testcase "BranchSequence skip empty failed" {
+  success Test$execute()
+}
+
+concrete Test {
+  @type execute () -> ()
+}
+
+define Test {
+  execute () {
     // Pattern: "a*b"
     MatchBrancherTemplate<Char> template <-
         BranchSequence<Char>$create(
@@ -841,9 +989,19 @@ define RegexTest {
       fail("branch missing")
     }
   }
+}
 
-  @type testBranchSequenceFailNonEmptyFailed () -> ()
-  testBranchSequenceFailNonEmptyFailed () {
+
+testcase "BranchSequence fail non-empty field" {
+  success Test$execute()
+}
+
+concrete Test {
+  @type execute () -> ()
+}
+
+define Test {
+  execute () {
     // Pattern: "a+b"
     MatchBrancherTemplate<Char> template <-
         BranchSequence<Char>$create(
@@ -873,9 +1031,19 @@ define RegexTest {
       fail("branch present")
     }
   }
+}
 
-  @type testBranchSequenceBranchMultiMatch () -> ()
-  testBranchSequenceBranchMultiMatch () {
+
+testcase "BranchSequence branch sequence multi-match" {
+  success Test$execute()
+}
+
+concrete Test {
+  @type execute () -> ()
+}
+
+define Test {
+  execute () {
     // Pattern: "a*a{0,2}"
     MatchBrancherTemplate<Char> template <-
         BranchSequence<Char>$create(
@@ -933,9 +1101,19 @@ define RegexTest {
       fail(state)
     }
   }
+}
 
-  @type testMatchBranchesMatch () -> ()
-  testMatchBranchesMatch () {
+
+testcase "MatchBranches match" {
+  success Test$execute()
+}
+
+concrete Test {
+  @type execute () -> ()
+}
+
+define Test {
+  execute () {
     // Pattern: "[w-y]a"
     MatcherTemplate<Char> template <-
         MatchBranches<Char>$create(
@@ -980,9 +1158,19 @@ define RegexTest {
       fail(state)
     }
   }
+}
 
-  @type testMatchBranchesNonMatch () -> ()
-  testMatchBranchesNonMatch () {
+
+testcase "MatchBranches non-match" {
+  success Test$execute()
+}
+
+concrete Test {
+  @type execute () -> ()
+}
+
+define Test {
+  execute () {
     // Pattern: "[w-y]a"
     MatcherTemplate<Char> template <-
         MatchBranches<Char>$create(
@@ -1024,9 +1212,19 @@ define RegexTest {
       fail(state)
     }
   }
+}
 
-  @type testMatchBranchesBranchedMatch () -> ()
-  testMatchBranchesBranchedMatch () {
+
+testcase "MatchBranches branched match" {
+  success Test$execute()
+}
+
+concrete Test {
+  @type execute () -> ()
+}
+
+define Test {
+  execute () {
     // Pattern: "ab"
     MatcherTemplate<Char> templateAB <-
         MatchBranches<Char>$create(
@@ -1090,9 +1288,19 @@ define RegexTest {
       fail("match satisfied")
     }
   }
+}
 
-  @type testMatchBranchesPartialRepeat () -> ()
-  testMatchBranchesPartialRepeat () {
+
+testcase "MatchBranches partial repeat" {
+  success Test$execute()
+}
+
+concrete Test {
+  @type execute () -> ()
+}
+
+define Test {
+  execute () {
     // Pattern: "(ab)*"
     MatcherTemplate<Char> template <-
         MatchBranches<Char>$create(
