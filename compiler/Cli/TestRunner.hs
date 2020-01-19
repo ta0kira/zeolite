@@ -75,13 +75,13 @@ runSingleTest paths os tm (f,s) = do
            let warnings = getCompileWarnings result
            let (main,fs) = getCompileSuccess result
            binaryName <- createBinary main fs
-           (TestCommandResult s' ms) <- runTestCommand (TestCommand binaryName)
+           (TestCommandResult s' ms1 ms2) <- runTestCommand (TestCommand binaryName)
            case (s,s') of
                 (True,False) -> return $ compileError "Expected runtime execution"
                 (False,True) -> return $ compileError "Expected runtime failure"
                 _ -> return $ do
-                  checkRequired rs $ warnings ++ ms
-                  checkExcluded es $ warnings ++ ms
+                  checkRequired rs $ warnings ++ ms1 ++ ms2
+                  checkExcluded es $ warnings ++ ms1 ++ ms2
 
     compileAll e cs ds = do
       let namespace = privateNamepace s

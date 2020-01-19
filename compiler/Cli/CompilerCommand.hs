@@ -26,11 +26,14 @@ module Cli.CompilerCommand (
   runTestCommand,
 ) where
 
+import GHC.IO.Handle
 import Data.List (intercalate)
+import System.Directory
 import System.Exit
 import System.FilePath
 import System.IO
 import System.Posix.Process (ProcessStatus(..),executeFile,forkProcess,getProcessStatus)
+import System.Posix.Temp (mkstemps)
 
 
 data CxxCommand =
@@ -55,7 +58,8 @@ data TestCommand =
 data TestCommandResult =
   TestCommandResult {
     tcrSuccess :: Bool,
-    tcrOutput :: [String]
+    tcrOutput :: [String],
+    tcrError :: [String]
   }
   deriving (Show)
 
@@ -72,12 +76,24 @@ runCxxCommand (CompileToBinary ss o ps) =
 
 runTestCommand :: TestCommand -> IO TestCommandResult
 runTestCommand (TestCommand b) = do
-  pid <- forkProcess $ executeFile b True [] Nothing
+  (outF,outH) <- mkstemps "/tmp/ztest_" ".txt"
+  (errF,errH) <- mkstemps "/tmp/ztest_" ".txt"
+  pid <- forkProcess (execWithCapture outH errH)
+  hClose outH
+  hClose errH
   status <- getProcessStatus True True pid
+  out <- readFile outF
+  err <- readFile errF
+  removeFile outF
+  removeFile errF
   let success = case status of
                      Just (Exited ExitSuccess) -> True
                      _ -> False
-  return $ TestCommandResult success []
+  return $ TestCommandResult success (lines out) (lines err) where
+    execWithCapture h1 h2 = do
+      hDuplicateTo h1 stdout
+      hDuplicateTo h2 stderr
+      executeFile b True [] Nothing
 
 executeProcess :: String -> [String] -> IO ()
 executeProcess c os = do
