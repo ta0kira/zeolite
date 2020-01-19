@@ -16,14 +16,14 @@ limitations under the License.
 
 -- Author: Kevin P. Barry [ta0kira@gmail.com]
 
-{-# LANGUAGE Safe #-}
-
 module Cli.TestRunner (
   runSingleTest,
 ) where
 
+import Control.Monad (when)
 import System.IO
 import Text.Parsec
+import Text.Regex.TDFA -- Not safe!
 
 import Builtin
 import CompileInfo
@@ -85,7 +85,12 @@ runSingleTest paths tm (f,s) = do
       hxx <- collectAllOrErrorM $ map (compileCategoryDeclaration tm') cs'
       cxx <- collectAllOrErrorM $ map (compileConcreteDefinition tm' [namespace]) ds
       return $ hxx ++ cxx
-    checkRequired rs m = return () -- TODO: Check patterns.
-    checkExcluded es m = return () -- TODO: Check patterns.
+    checkRequired rs ms = mergeAllM $ map (checkForRegex True  $ lines ms) rs
+    checkExcluded es ms = mergeAllM $ map (checkForRegex False $ lines ms) es
+    checkForRegex :: Bool -> [String] -> String -> CompileInfo ()
+    checkForRegex expected ms r = do
+      let found = any id $ map (=~ r) ms
+      when (found && not expected) $ compileError $ "Pattern \"" ++ r ++ "\" present in output"
+      when (not found && expected) $ compileError $ "Pattern \"" ++ r ++ "\" missing from output"
     createBinary e fs = do
       return "" -- TODO: Write the files and compile the binary.
