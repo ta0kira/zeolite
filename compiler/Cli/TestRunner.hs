@@ -51,8 +51,12 @@ runSingleTest paths os tm (f,s) = do
       let name = ithTestName $ itHeader t
       let context = "[" ++ formatFullContext (ithContext $ itHeader t) ++ "]"
       hPutStrLn stderr $ "Executing test \"" ++ name ++ "\""
-      fmap (flip reviseError ("In test \"" ++ name ++ "\" " ++ context)) $
-        run name (ithResult $ itHeader t) (itCategory t) (itDefinition t)
+      outcome <- fmap (flip reviseError ("In test \"" ++ name ++ "\" " ++ context)) $
+                   run name (ithResult $ itHeader t) (itCategory t) (itDefinition t)
+      if isCompileError outcome
+         then hPutStrLn stderr $ "Test \"" ++ name ++ "\" failed"
+         else hPutStrLn stderr $ "Test \"" ++ name ++ "\" passed"
+      return outcome
 
     run n (ExpectCompileError _ rs es) cs ds = do
       let result = compileAll Nothing cs ds :: CompileInfo ([String],[CxxOutput])
@@ -83,16 +87,19 @@ runSingleTest paths os tm (f,s) = do
                   checkRequired rs $ warnings ++ ms1 ++ ms2
                   checkExcluded es $ warnings ++ ms1 ++ ms2
 
+    -- TODO: Combine this with the logic in runCompiler.
     compileAll e cs ds = do
       let namespace = privateNamepace s
       let cs' = map (setCategoryNamespace namespace) cs
       tm' <- includeNewTypes tm cs'
       hxx <- collectAllOrErrorM $ map (compileCategoryDeclaration tm') cs'
       cxx <- collectAllOrErrorM $ map (compileConcreteDefinition tm' [namespace]) ds
+      let interfaces = filter (not . isValueConcrete) cs'
+      cxx2 <- collectAllOrErrorM $ map compileInterfaceDefinition interfaces
       main <- case e of
                    Just e -> createTestFile tm' e namespace
                    Nothing -> return []
-      return (main,hxx ++ cxx)
+      return (main,hxx ++ cxx ++ cxx2)
     checkRequired rs ms = mergeAllM $ map (checkForRegex True  ms) rs
     checkExcluded es ms = mergeAllM $ map (checkForRegex False ms) es
     checkForRegex :: Bool -> [String] -> String -> CompileInfo ()

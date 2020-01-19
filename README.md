@@ -238,7 +238,8 @@ compiler.
 ( cd compiler && ghc all-tests.hs && ./all-tests )
 
 # Integration Tests.
-compiler/integration/tests.sh
+./zeolite -i util -c tests
+./zeolite -t tests
 ```
 
 ### Source Files

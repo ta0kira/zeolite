@@ -86,6 +86,7 @@ runTestCommand (TestCommand b) = do
   err <- readFile errF
   removeFile outF
   removeFile errF
+  hPutStr stderr err -- Pass along the captured stderr.
   let success = case status of
                      Just (Exited ExitSuccess) -> True
                      _ -> False
