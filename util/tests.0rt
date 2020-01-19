@@ -16,19 +16,14 @@ limitations under the License.
 
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
-testcase "fail builtin" {
+testcase "fail writer" {
   crash Test$run()
   require "Failed"
 }
 
 define Test {
-  @category failedReturn () -> (Int)
-  failedReturn () {
-    fail("Failed")
-  }
-
   run () {
-    Int value <- failedReturn()
+    ~ LazyStream<Formatted>$new().append("Failed").writeTo(SimpleOutput$error())
   }
 }
 
@@ -37,26 +32,27 @@ concrete Test {
 }
 
 
-
-testcase "wrong type for fail" {
-  error
-  require "fail"
-  require "Formatted"
-}
-
-concrete Value {
-  @type create () -> (Value)
-}
-
-define Value {
-  create () {
-    return Value{}
-  }
+testcase "iterate String forward" {
+  success Test$run()
 }
 
 define Test {
   run () {
-    fail(Value$create())
+    String s <- "abcde"
+    Int count <- 0
+    scoped {
+      ReadIterator<Char> iter <- ReadIterator$$fromReadPosition<Char>(s)
+    } in while (!iter.pastForwardEnd()) {
+      if (iter.readCurrent() != s.readPosition(count)) {
+        fail(iter.readCurrent())
+      }
+    } update {
+      count <- count+1
+      iter <- iter.forward()
+    }
+    if (count != s.readSize()) {
+     fail(count)
+    }
   }
 }
 
@@ -65,14 +61,27 @@ concrete Test {
 }
 
 
-testcase "require empty" {
-  crash Test$run()
-  require "require.+empty"
+testcase "iterate String reverse" {
+  success Test$run()
 }
 
 define Test {
   run () {
-    ~ require(empty)
+    String s <- "abcde"
+    Int count <- s.readSize()-1
+    scoped {
+      ReadIterator<Char> iter <- ReadIterator$$fromReadPositionAt<Char>(s,count)
+    } in while (!iter.pastReverseEnd()) {
+      if (iter.readCurrent() != s.readPosition(count)) {
+        fail(iter.readCurrent())
+      }
+    } update {
+      count <- count-1
+      iter <- iter.reverse()
+    }
+    if (count != -1) {
+     fail(count)
+    }
   }
 }
 
