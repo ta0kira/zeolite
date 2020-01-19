@@ -102,7 +102,7 @@ std::list<std::string> TraceContext::GetTrace() {
 
 void SourceContext::AppendTrace(std::list<std::string>& trace) const {
   std::ostringstream output;
-  if (at_ == nullptr) {
+  if (at_ == nullptr || at_[0] == 0x00) {
     output << "From " << name_;
   } else {
     output << "From " << name_ << " at " << at_;
