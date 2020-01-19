@@ -84,6 +84,7 @@ runCompiler co@(CompileOptions _ _ ds _ _ p ExecuteTests _) = do
       deps <- loadRecursiveDeps [basePath,p </> d]
       let paths = getIncludePathsForDeps deps
       let ss = fixPaths $ getSourceFilesForDeps deps
+      let os = fixPaths $ getObjectFilesForDeps deps
       ss' <- zipWithContents p ss
       ts' <- zipWithContents p (map (d </>) $ cmTestFiles m)
       tm <- return $ do
@@ -92,7 +93,7 @@ runCompiler co@(CompileOptions _ _ ds _ _ p ExecuteTests _) = do
         includeNewTypes tm0 cs
       if isCompileError tm
          then return (tm >> return ())
-         else fmap mergeAllM $ sequence $ map (runSingleTest paths (getCompileSuccess tm)) ts'
+         else fmap mergeAllM $ sequence $ map (runSingleTest paths os (getCompileSuccess tm)) ts'
     processResults rs
       | isCompileError rs = do
           hPutStr stderr $ "Test errors:\n" ++ (show $ getCompileError rs)

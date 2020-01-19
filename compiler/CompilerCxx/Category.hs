@@ -22,6 +22,7 @@ limitations under the License.
 module CompilerCxx.Category (
   CxxOutput(..),
   createMainFile,
+  createTestFile,
   compileCategoryDeclaration,
   compileConcreteDefinition,
   compileInterfaceDefinition,
@@ -621,3 +622,18 @@ createMainFile tm t f = flip reviseError ("In the creation of the main binary pr
     namespace t
       | null $ getCategoryNamespace t = []
       | otherwise = ["using namespace " ++ getCategoryNamespace t ++ ";"]
+
+createTestFile :: (Show c, Monad m, CompileErrorM m, MergeableM m) =>
+  CategoryMap c -> Expression c -> String -> m [String]
+createTestFile tm e ns = flip reviseError ("In the creation of the test binary procedure") $ do
+  (CompiledData req out) <- fmap indentCompiled (compileMainProcedure tm e)
+  return $ baseSourceIncludes ++ depIncludes req ++ namespace ++ [
+      "int main() {",
+      "  SetSignalHandler();",
+      "  TRACE_FUNCTION(\"main\")"
+    ] ++ out ++ ["}"] where
+    depIncludes req = map (\i -> "#include \"" ++ headerFilename i ++ "\"") $
+                        filter (not . isBuiltinCategory) $ Set.toList req
+    namespace
+      | null ns = []
+      | otherwise = ["using namespace " ++ ns ++ ";"]
