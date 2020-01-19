@@ -1,0 +1,711 @@
+/* -----------------------------------------------------------------------------
+Copyright 2020 Kevin P. Barry
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+----------------------------------------------------------------------------- */
+
+// Author: Kevin P. Barry [ta0kira@gmail.com]
+
+testcase "not true" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+    if (!true) {
+      fail("Failed")
+    }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "reduce Bool to Bool" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+    if (!present(reduce<Bool,Bool>(true))) {
+      fail("Failed")
+    }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "reduce Bool to Formatted" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+    if (!present(reduce<Bool,Formatted>(true))) {
+      fail("Failed")
+    }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "reduce Int to Int" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+    if (!present(reduce<Int,Int>(1))) {
+      fail("Failed")
+    }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "reduce Int to Formatted" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+    if (!present(reduce<Int,Formatted>(1))) {
+      fail("Failed")
+    }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "reduce String to String" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+    if (!present(reduce<String,String>("x"))) {
+      fail("Failed")
+    }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "reduce String to Formatted" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+    if (!present(reduce<String,Formatted>("x"))) {
+      fail("Failed")
+    }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "reduce Float to Float" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+    if (!present(reduce<Float,Float>(1.1))) {
+      fail("Failed")
+    }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "reduce Float to Formatted" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+    if (!present(reduce<Float,Formatted>(1.1))) {
+      fail("Failed")
+    }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "reduce ReadPosition success" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+    if (!present(reduce<ReadPosition<Char>,ReadPosition<Formatted>>("x"))) {
+      fail("Failed")
+    }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "reduce ReadPosition fail" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+    if (present(reduce<ReadPosition<Formatted>,ReadPosition<Char>>("x"))) {
+      fail("Failed")
+    }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "String LessThan" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+    if (!String$lessThan("x","y")) {
+      fail("Failed")
+    }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "Bool Equals" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+    if (!Bool$equals(true,true)) {
+      fail("Failed")
+    }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "String Equals" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+    if (!String$equals("x","x")) {
+      fail("Failed")
+    }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "Char LessThan" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+    if (!Char$lessThan('x','y')) {
+      fail("Failed")
+    }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "Char Equals" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+    if (!Char$equals('x','x')) {
+      fail("Failed")
+    }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "Int LessThan" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+    if (!Int$lessThan(1,2)) {
+      fail("Failed")
+    }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "Int Equals" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+    if (!Int$equals(1,1)) {
+      fail("Failed")
+    }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "Float LessThan" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+    if (!Float$lessThan(1.0,2.0)) {
+      fail("Failed")
+    }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "Float Equals" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+    if (!Float$equals(1.0,1.0)) {
+      fail("Failed")
+    }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "Bool is shared" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+    Bool value1 <- true
+    // Shared because true and false are boxed constants.
+    weak Bool value2 <- value1
+    if (!present(strong(value2))) {
+      fail("Failed")
+    }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "String is shared" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+    String value1 <- "x"
+    weak String value2 <- value1
+    if (!present(strong(value2))) {
+      fail("Failed")
+    }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "Char is not shared" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+    Char value1 <- 'x'
+    weak Char value2 <- value1
+    if (present(strong(value2))) {
+      fail("Failed")
+    }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "Int is not shared" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+    Int value1 <- 1
+    weak Int value2 <- value1
+    if (present(strong(value2))) {
+      fail("Failed")
+    }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "Float is not shared" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+    Float value1 <- 1.1
+    weak Float value2 <- value1
+    if (present(strong(value2))) {
+      fail("Failed")
+    }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "String Formatted" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+    String s <- ("x").formatted()
+    if (s != "x") {
+      fail(s)
+    }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "Char Formatted" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+    String s <- ('x').formatted()
+    if (s != "x") {
+      fail(s)
+    }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "Char octal Formatted" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+    String s <- ('\170').formatted()
+    if (s != "x") {
+      fail(s)
+    }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "Char hex Formatted" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+    String s <- ('\x78').formatted()
+    if (s != "x") {
+      fail(s)
+    }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "Int Formatted" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+    String s <- (1).formatted()
+    if (s != "1") {
+      fail(s)
+    }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "Int hex Formatted" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+    String s <- (0x0010).formatted()
+    if (s != "16") {
+      fail(s)
+    }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "Float Formatted" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+    String s <- (1.1).formatted()
+    if (s != "1.1") {  // precision might vary
+      fail(s)
+    }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "Bool Formatted" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+    String s <- (false).formatted()
+    if (s != "false") {
+      fail(s)
+    }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "String access" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+    String s <- "abcde"
+    Char c <- s.readPosition(3)
+    if (c != 'd') {
+      fail(c)
+    }
+    Int size <- s.readSize()
+    if (size != 5) {
+      fail(size)
+    }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "String access negative" {
+  crash Test$run()
+  require "-10"
+  require "bounds"
+}
+
+define Test {
+  run () {
+    ~ ("abc").readPosition(-10)
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "String access past end" {
+  crash Test$run()
+  require "100"
+  require "bounds"
+}
+
+define Test {
+  run () {
+    ~ ("abc").readPosition(100)
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "iterate String forward" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+    String s <- "abcde"
+    Int count <- 0
+    scoped {
+      ReadIterator<Char> iter <- ReadIterator$$fromReadPosition<Char>(s)
+    } in while (!iter.pastForwardEnd()) {
+      if (iter.readCurrent() != s.readPosition(count)) {
+        fail(iter.readCurrent())
+      }
+    } update {
+      count <- count+1
+      iter <- iter.forward()
+    }
+    if (count != s.readSize()) {
+     fail(count)
+    }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "iterate String reverse" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+    String s <- "abcde"
+    Int count <- s.readSize()-1
+    scoped {
+      ReadIterator<Char> iter <- ReadIterator$$fromReadPositionAt<Char>(s,count)
+    } in while (!iter.pastReverseEnd()) {
+      if (iter.readCurrent() != s.readPosition(count)) {
+        fail(iter.readCurrent())
+      }
+    } update {
+      count <- count-1
+      iter <- iter.reverse()
+    }
+    if (count != -1) {
+     fail(count)
+    }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}

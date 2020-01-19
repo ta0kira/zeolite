@@ -1,0 +1,351 @@
+/* -----------------------------------------------------------------------------
+Copyright 2020 Kevin P. Barry
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+----------------------------------------------------------------------------- */
+
+// Author: Kevin P. Barry [ta0kira@gmail.com]
+
+testcase "assign if/elif/else" {
+  success Test$run()
+}
+
+@value interface Value {}
+
+define Test {
+  @value process () -> (optional Value)
+  process () (value) {
+    if (false) {
+      value <- empty
+    } elif (false) {
+      value <- empty
+    } else {
+      value <- empty
+    }
+  }
+
+  run () {}
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "return if/elif/else" {
+  success Test$run()
+}
+
+@value interface Value {}
+
+define Test {
+  @value process () -> (optional Value)
+  process () {
+    if (false) {
+      return empty
+    } elif (false) {
+      return empty
+    } else {
+      return empty
+    }
+  }
+
+  run () {}
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "assign if/elif condition" {
+  error
+  require "value"
+}
+
+@value interface Value {}
+
+define Test {
+  @value process () -> (optional Value)
+  process () (value) {
+    if (present((value <- empty))) {
+    } elif (present((value <- empty))) {
+    } else {
+      value <- empty
+    }
+  }
+
+  run () {}
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "missing in if" {
+  error
+  require "value"
+}
+
+@value interface Value {}
+
+define Test {
+  @value process () -> (optional Value)
+  process () (value) {
+    if (false) {
+    } elif (false) {
+      value <- empty
+    } else {
+      value <- empty
+    }
+  }
+
+  run () {}
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "missing in elif" {
+  error
+  require "value"
+}
+
+@value interface Value {}
+
+define Test {
+  @value process () -> (optional Value)
+  process () (value) {
+    if (false) {
+      value <- empty
+    } elif (false) {
+    } else {
+      value <- empty
+    }
+  }
+
+  run () {}
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "missing in else" {
+  error
+  require "value"
+}
+
+@value interface Value {}
+
+define Test {
+  @value process () -> (optional Value)
+  process () (value) {
+    if (false) {
+      value <- empty
+    } elif (false) {
+      value <- empty
+    } else {
+    }
+  }
+
+  run () {}
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "missing in implicit else" {
+  error
+  require "value"
+}
+
+@value interface Value {}
+
+define Test {
+  @value process () -> (optional Value)
+  process () (value) {
+    if (false) {
+      value <- empty
+    } elif (false) {
+      value <- empty
+    }
+  }
+
+  run () {}
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "crash in if" {
+  crash Test$run()
+  require "empty"
+}
+
+define Test {
+  run () {
+    optional Bool test <- empty
+    if (require(test)) {
+      // empty
+    }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "crash in elif" {
+  crash Test$run()
+  require "empty"
+}
+
+define Test {
+  run () {
+    optional Bool test <- empty
+    if (false) {
+    } elif (require(test)) {
+      // empty
+    }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "multi assign if/elif/else" {
+  success Test$run()
+}
+
+@value interface Value {}
+
+define Test {
+  @value process () -> (optional Value,optional Value)
+  process () (value1,value2) {
+    if (false) {
+      value1 <- empty
+      value2 <- empty
+    } elif (false) {
+      value1 <- empty
+      value2 <- empty
+    } else {
+      value1 <- empty
+      value2 <- empty
+    }
+  }
+
+  run () {}
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "multi missing in if" {
+  error
+  require "value2"
+}
+
+@value interface Value {}
+
+define Test {
+  @value process () -> (optional Value,optional Value)
+  process () (value1,value2) {
+    if (false) {
+      value1 <- empty
+    } elif (false) {
+      value1 <- empty
+      value2 <- empty
+    } else {
+      value1 <- empty
+      value2 <- empty
+    }
+  }
+
+  run () {}
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "multi missing in elif" {
+  error
+  require "value2"
+}
+
+@value interface Value {}
+
+define Test {
+  @value process () -> (optional Value,optional Value)
+  process () (value1,value2) {
+    if (false) {
+      value1 <- empty
+      value2 <- empty
+    } elif (false) {
+      value1 <- empty
+    } else {
+      value1 <- empty
+      value2 <- empty
+    }
+  }
+
+  run () {}
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "multi missing in else" {
+  error
+  require "value2"
+}
+
+@value interface Value {}
+
+define Test {
+  @value process () -> (optional Value,optional Value)
+  process () (value1,value2) {
+    if (false) {
+      value1 <- empty
+      value2 <- empty
+    } elif (false) {
+      value1 <- empty
+      value2 <- empty
+    } else {
+      value1 <- empty
+    }
+  }
+
+  run () {}
+}
+
+concrete Test {
+  @type run () -> ()
+}

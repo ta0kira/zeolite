@@ -1,0 +1,474 @@
+/* -----------------------------------------------------------------------------
+Copyright 2020 Kevin P. Barry
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+----------------------------------------------------------------------------- */
+
+// Author: Kevin P. Barry [ta0kira@gmail.com]
+
+testcase "internal param not visible from @type" {
+  error
+  require "#x"
+}
+
+concrete Value {}
+
+define Value {
+  types<#x> {}
+
+  @type something () -> ()
+  something () {
+    optional #x val <- empty
+  }
+}
+
+define Test {
+  run () {}
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "internal filter not applied in @type" {
+  success Test$run()
+}
+
+concrete Value {
+  @type something<#x> () -> ()
+}
+
+define Value {
+  types<#x> {
+    #x defines LessThan<#x>
+  }
+
+  something () {}
+}
+
+define Test {
+  run () {
+    ~ Value$something<Bool>()
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "internal filter not applied in @category" {
+  success Test$run()
+}
+
+concrete Value {
+  @category something<#x> () -> ()
+}
+
+define Value {
+  types<#x> {
+    #x defines LessThan<#x>
+  }
+
+  something () {}
+}
+
+define Test {
+  run () {
+    ~ Value$$something<Bool>()
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "internal params" {
+  success Test$run()
+}
+
+concrete Value {
+  @type create<#x,#y>
+  () -> (Value)
+}
+
+define Value {
+  types<#x,#y> {}
+
+  create () {
+    return Value{ types<#x,#y> }
+  }
+}
+
+@value interface Type1 {}
+@value interface Type2 {}
+
+define Test {
+  run () {
+    ~ Value$create<Type1,Type2>()
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "internal params with filters" {
+  success Test$run()
+}
+
+@value interface Get<|#x> {
+  get () -> (#x)
+}
+
+@value interface Set<#x|> {
+  set (#x) -> ()
+}
+
+concrete Value {
+  @type create<#x,#y>
+    #x requires Get<#x>
+    #y allows Set<#y>
+  () -> (Value)
+}
+
+define Value {
+  types<#x,#y> {
+    #x requires Get<#x>
+    #y allows Set<#y>
+  }
+
+  create () {
+    return Value{ types<#x,#y> }
+  }
+}
+
+define Test {
+  run () {}
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "internal params missing filters" {
+  error
+  require "Get|Set"
+}
+
+@value interface Get<|#x> {
+  get () -> (#x)
+}
+
+@value interface Set<#x|> {
+  set (#x) -> ()
+}
+
+concrete Value {
+  @category create<#x,#y>
+  () -> (Value)
+}
+
+define Value {
+  types<#x,#y> {
+    #x requires Get<#x>
+    #y allows Set<#y>
+  }
+
+  create () {
+    return Value{ types<#x,#y> }
+  }
+}
+
+define Test {
+  run () {}
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "internal params with values" {
+  success Test$run()
+}
+
+concrete Value {
+  @category create<#x,#y>
+  () -> (Value)
+}
+
+define Value {
+  types<#x,#y> {}
+
+  @value Bool value
+
+  create () {
+    return Value{ types<#x,#y>, false }
+  }
+}
+
+define Test {
+  run () {}
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "value depends on internal param" {
+  success Test$run()
+}
+
+concrete Type<#y> {
+  @type create () -> (Type<#y>)
+}
+
+define Type {
+  create () {
+    return Type<#y>{}
+  }
+}
+
+concrete Value {
+  @type create<#x>
+  (Type<#x>) -> (Value)
+}
+
+define Value {
+  types<#z> {}
+
+  @value Type<#z> value
+
+  create (value) {
+    return Value{ types<#x>, value }
+  }
+}
+
+define Test {
+  run () {
+    ~ Value$create<Bool>(Type<Bool>$create())
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "value mismatch with internal param" {
+  error
+  require "call"
+  require "Bool"
+  require "String"
+}
+
+concrete Type<#y> {
+  @type create () -> (Type<#y>)
+}
+
+define Type {
+  create () {
+    return Type<#y>{}
+  }
+}
+
+concrete Value {
+  @type create<#x>
+  (Type<#x>) -> (Value)
+}
+
+define Value {
+  types<#z> {}
+
+  @value Type<#z> value
+
+  create (value) {
+    return Value{ types<#x>, value }
+  }
+}
+
+define Test {
+  run () {
+    ~ Value$create<String>(Type<Bool>$create())
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "internal param clash with external" {
+  error
+  require "#x"
+}
+
+concrete Value<#x> {}
+
+define Value {
+  types<#x> {}
+}
+
+define Test {
+  run () {}
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "internal param clash with function" {
+  error
+  require "#x"
+}
+
+concrete Value {
+  @value check<#x> () -> ()
+}
+
+define Value {
+  types<#x> {}
+}
+
+define Test {
+  run () {}
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "internal param clash with internal function" {
+  error
+  require "#x"
+}
+
+concrete Value {}
+
+define Value {
+  types<#x> {}
+
+  @value check<#x> () -> ()
+  check () {}
+}
+
+define Test {
+  run () {}
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "internal param no clash with category" {
+  success Test$run()
+}
+
+concrete Value {
+  @category create<#x> () -> (Value)
+}
+
+define Value {
+  types<#x> {}
+
+  create () {
+    return Value { types<#x> }
+  }
+}
+
+define Test {
+  run () {}
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "reduce internal param success" {
+  success Test$run()
+}
+
+concrete Value {
+  @type create<#x> () -> (Value)
+  @value check<#y> (#y) -> (Bool)
+}
+
+define Value {
+  types<#x> {}
+
+  create () {
+    return Value { types<#x> }
+  }
+
+  check (y) {
+    return present(reduce<#y,#x>(y))
+  }
+}
+
+define Test {
+  run () {
+    Value value <- Value$create<Formatted>()
+    if (!value.check<String>("")) {
+      fail("Failed")
+    }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "reduce internal param fail" {
+  success Test$run()
+}
+
+concrete Value {
+  @type create<#x> () -> (Value)
+  @value check<#y> (#y) -> (Bool)
+}
+
+define Value {
+  types<#x> {}
+
+  create () {
+    return Value { types<#x> }
+  }
+
+  check (y) {
+    return present(reduce<#y,#x>(y))
+  }
+}
+
+define Test {
+  run () {
+    Value value <- Value$create<Formatted>()
+    if (value.check<Value>(value)) {
+      fail("Failed")
+    }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}

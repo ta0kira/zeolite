@@ -1,0 +1,303 @@
+/* -----------------------------------------------------------------------------
+Copyright 2020 Kevin P. Barry
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+----------------------------------------------------------------------------- */
+
+// Author: Kevin P. Barry [ta0kira@gmail.com]
+
+testcase "@type member not allowed" {
+  error
+  require "not allowed"
+}
+
+define Test {
+  @type Bool value <- false
+
+  run () {}
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "@category member from @type" {
+  success Test$run()
+}
+
+define Test {
+  @category Bool value <- true
+
+  @type call () -> ()
+  call () {
+    ~ value
+  }
+
+  run () {}
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "@category member from @value" {
+  success Test$run()
+}
+
+define Test {
+  @category Bool value <- true
+
+  @value call () -> ()
+  call () {
+    ~ value
+  }
+
+  run () {}
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "@category to @category" {
+  error
+  require "get"
+}
+
+define Test {
+  @category Bool value <- get()
+
+  @category get () -> (Bool)
+  get () {
+    return true
+  }
+
+  run () {}
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "@category member is lazy" {
+  success Test$run()
+}
+
+concrete Util {
+  @type doNotUse () -> (Bool)
+}
+
+define Util {
+  doNotUse () {
+    fail("do not use")
+  }
+}
+
+define Test {
+  @category Bool value <- Util$doNotUse()
+
+  run () {}
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "@category member init when read" {
+  crash Test$run()
+  require "do not use"
+}
+
+concrete Util {
+  @type doNotUse () -> (Bool)
+}
+
+define Util {
+  doNotUse () {
+    fail("do not use")
+  }
+}
+
+define Test {
+  @category Bool value <- Util$doNotUse()
+
+  run () {
+    Bool value2 <- value
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "@category member init when assigned" {
+  crash Test$run()
+  require "do not use"
+}
+
+concrete Util {
+  @type doNotUse () -> (Bool)
+}
+
+define Util {
+  doNotUse () {
+    fail("do not use")
+  }
+}
+
+define Test {
+  @category Bool value <- Util$doNotUse()
+
+  run () {
+    value <- false
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "@category member init when ignored" {
+  crash Test$run()
+  require "do not use"
+}
+
+concrete Util {
+  @type doNotUse () -> (Bool)
+}
+
+define Util {
+  doNotUse () {
+    fail("do not use")
+  }
+}
+
+define Test {
+  @category Bool value <- Util$doNotUse()
+
+  run () {
+    ~ value
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "@category member inline assignment" {
+  success Test$run()
+}
+
+define Test {
+  @category Bool value <- true
+
+  @type call () -> (Bool)
+  call () {
+    return (value <- false)
+  }
+
+  run () {
+    if (call() || value) {
+      fail("Failed")
+    }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "@category init cycle" {
+  crash Test$run()
+  require "Value1|Value2"
+}
+
+concrete Value1 {
+  @type get () -> (Bool)
+}
+
+concrete Value2 {
+  @type get () -> (Bool)
+}
+
+define Value1 {
+  @category Bool value <- Value2$get()
+
+  get () {
+    return value
+  }
+}
+
+define Value2 {
+  @category Bool value <- Value1$get()
+
+  get () {
+    return value
+  }
+}
+
+define Test {
+  run () {
+    ~ Value1$get()
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "self in @category init" {
+  error
+  require "self"
+}
+
+define Test {
+  @category Test value <- self
+
+  run () {}
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "cycle in @category init" {
+  error
+  require "disallowed"
+}
+
+define Test {
+  @category Bool value <- get()
+
+  @category get () -> (Bool)
+  get () {
+    return value
+  }
+
+  run () {}
+}
+
+concrete Test {
+  @type run () -> ()
+}

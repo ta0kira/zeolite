@@ -1,0 +1,450 @@
+/* -----------------------------------------------------------------------------
+Copyright 2020 Kevin P. Barry
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+----------------------------------------------------------------------------- */
+
+// Author: Kevin P. Barry [ta0kira@gmail.com]
+
+testcase "converted call" {
+  success Test$run()
+}
+
+@value interface Base {
+  call () -> ()
+}
+
+concrete Value {
+  refines Base
+
+  @type create () -> (Value)
+}
+
+define Value {
+  call () {}
+
+  create () {
+    return Value{}
+  }
+}
+
+define Test {
+  run () {
+    Value value <- Value$create()
+    ~ value.Base$call()
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "converted call bad type" {
+  error
+  require "Base"
+}
+
+@value interface Base {
+  call () -> ()
+}
+
+concrete Value {
+  @value call () -> ()
+  @type create () -> (Value)
+}
+
+define Value {
+  call () {}
+
+  create () {
+    return Value{}
+  }
+}
+
+define Test {
+  run () {
+    Value value <- Value$create()
+    ~ value.Base$call()
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "call from union" {
+  error
+  require "\[Base\|Value\]"
+}
+
+@value interface Base {
+  call () -> ()
+}
+
+concrete Value {
+  refines Base
+
+  @type create () -> (Value)
+}
+
+define Value {
+  call () {}
+
+  create () {
+    return Value{}
+  }
+}
+
+define Test {
+  run () {
+    [Base|Value] value <- Value$create()
+    ~ value.call()
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "call from union with conversion" {
+  success Test$run()
+}
+
+@value interface Base {
+  call () -> ()
+}
+
+concrete Value {
+  refines Base
+
+  @type create () -> (Value)
+}
+
+define Value {
+  call () {}
+
+  create () {
+    return Value{}
+  }
+}
+
+define Test {
+  run () {
+    [Base|Value] value <- Value$create()
+    ~ value.Base$call()
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "call from intersect" {
+  success Test$run()
+}
+
+@value interface Base1 {
+  call () -> ()
+}
+
+@value interface Base2 {}
+
+concrete Value {
+  refines Base1
+  refines Base2
+
+  @type create () -> (Value)
+}
+
+define Value {
+  call () {}
+
+  create () {
+    return Value{}
+  }
+}
+
+define Test {
+  run () {
+    [Base1&Base2] value <- Value$create()
+    ~ value.call()
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "call from intersect with conversion" {
+  success Test$run()
+}
+
+@value interface Base1 {
+  call () -> ()
+}
+
+@value interface Base2 {}
+
+concrete Value {
+  refines Base1
+  refines Base2
+
+  @type create () -> (Value)
+}
+
+define Value {
+  call () {}
+
+  create () {
+    return Value{}
+  }
+}
+
+define Test {
+  run () {
+    [Base1&Base2] value <- Value$create()
+    ~ value.Base1$call()
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "call from intersect with conversion" {
+  success Test$run()
+}
+
+@value interface Base1 {
+  call () -> ()
+}
+
+@value interface Base2 {}
+
+concrete Value {
+  refines Base1
+  refines Base2
+
+  @type create () -> (Value)
+}
+
+define Value {
+  call () {}
+
+  create () {
+    return Value{}
+  }
+}
+
+define Test {
+  run () {
+    [Base1&Base2] value <- Value$create()
+    ~ value.Base1$call()
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "call from param type" {
+  success Test$run()
+}
+
+@type interface Base {
+  call () -> ()
+}
+
+concrete Value {
+  defines Base
+}
+
+define Value {
+  call () {}
+}
+
+define Test {
+  @type check<#x>
+    #x defines Base
+  () -> ()
+  check () {
+    ~ #x$call()
+  }
+
+  run () {
+    ~ check<Value>()
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "call from bad param type" {
+  error
+  require "call.+param #x"
+}
+
+@type interface Base {
+  call () -> ()
+}
+
+define Test {
+  @type check<#x>
+  () -> ()
+  check () {
+    ~ #x$call()
+  }
+
+  run () {}
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "call from param value" {
+  success Test$run()
+}
+
+@value interface Base {
+  call () -> ()
+}
+
+concrete Value {
+  refines Base
+
+  @type create () -> (Value)
+}
+
+define Value {
+  call () {}
+
+  create () {
+    return Value{}
+  }
+}
+
+define Test {
+  @type check<#x>
+    #x requires Base
+  (#x) -> ()
+  check (value) {
+    ~ value.call()
+  }
+
+  run () {
+    Value value <- Value$create()
+    ~ check<Value>(value)
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "call from bad param value" {
+  error
+  require "call.+param #x"
+}
+
+@value interface Base {
+  call () -> ()
+}
+
+define Test {
+  @type check<#x>
+  (#x) -> ()
+  check (value) {
+    ~ value.call()
+  }
+
+  run () {}
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "convert arg" {
+  success Test$run()
+}
+
+@value interface Base {
+  call () -> ()
+}
+
+concrete Value {
+  refines Base
+
+  @type create () -> (Value)
+}
+
+define Value {
+  call () {}
+
+  create () {
+    return Value{}
+  }
+}
+
+define Test {
+  @type convert (Value) -> (Base)
+  convert (value) {
+    return value
+  }
+
+  run () {
+   ~ convert(Value$create()).call()
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "bad convert arg" {
+  error
+  require "does not refine Value"
+}
+
+@value interface Base {}
+
+concrete Value {}
+
+define Value {}
+
+define Test {
+  @type convert (Base) -> (Value)
+  convert (value) {
+    return value
+  }
+
+  run () {}
+}
+
+concrete Test {
+  @type run () -> ()
+}

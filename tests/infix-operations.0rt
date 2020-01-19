@@ -1,0 +1,356 @@
+/* -----------------------------------------------------------------------------
+Copyright 2020 Kevin P. Barry
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+----------------------------------------------------------------------------- */
+
+// Author: Kevin P. Barry [ta0kira@gmail.com]
+
+testcase "Int arithmetic with precedence" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+    scoped {
+      Int x <- 0x10 + 1 * 2 - 8 / 2 - 3 % 2
+    } in if (x != 13) {
+      fail("Failed")
+    }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "Int + Bool" {
+  error
+  require "Int.+Bool"
+}
+
+define Test {
+  run () {
+    ~ 0x10 + false
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "Int + String" {
+  error
+  require "Int.+String"
+}
+
+define Test {
+  run () {
+    ~ 0x10 + ""
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "String arithmetic" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+    scoped {
+      String x <- "x" + "y" + "z"
+    } in if (x != "xyz") {
+      fail("Failed")
+    }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "Float arithmetic with precedence" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+    scoped {
+      Float x <- 16.0 + 1.0 * 2.0 - 8.0 / 2.0 - 3.0 / 3.0
+    } in if (x != 13.0) {
+      fail("Failed")
+    }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "Bool comparison" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+    if (!(true  == true))  { fail("Failed") }
+    if (!(false == false)) { fail("Failed") }
+    if (!(false != true))  { fail("Failed") }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "Int comparison" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+    if (!(1 <  2)) { fail("Failed") }
+    if (!(1 <= 2)) { fail("Failed") }
+    if (!(1 == 1)) { fail("Failed") }
+    if (!(1 != 2)) { fail("Failed") }
+    if (!(2 >  1)) { fail("Failed") }
+    if (!(2 >= 1)) { fail("Failed") }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "Float comparison" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+    if (!(1.0 <  2.0)) { fail("Failed") }
+    if (!(1.0 <= 2.0)) { fail("Failed") }
+    if (!(1.0 == 1.0)) { fail("Failed") }
+    if (!(1.0 != 2.0)) { fail("Failed") }
+    if (!(2.0 >  1.0)) { fail("Failed") }
+    if (!(2.0 >= 1.0)) { fail("Failed") }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "String comparison" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+    if (!("x" <  "y")) { fail("Failed") }
+    if (!("x" <= "y")) { fail("Failed") }
+    if (!("x" == "x")) { fail("Failed") }
+    if (!("x" != "y")) { fail("Failed") }
+    if (!("y" >  "x")) { fail("Failed") }
+    if (!("y" >= "x")) { fail("Failed") }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "Char comparison" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+    if (!('x' <  'y')) { fail("Failed") }
+    if (!('x' <= 'y')) { fail("Failed") }
+    if (!('x' == 'x')) { fail("Failed") }
+    if (!('x' != 'y')) { fail("Failed") }
+    if (!('y' >  'x')) { fail("Failed") }
+    if (!('y' >= 'x')) { fail("Failed") }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "Bool logic with precedence" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+    scoped {
+      Bool x <- false && false || true
+    } in if (!x) {
+      fail("Failed")
+    }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "minus String" {
+  error
+  require "String.+String"
+}
+
+define Test {
+  run () {
+    ~ "x" - "x"
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "arithmetic Bool" {
+  error
+  require "Bool.+Bool"
+}
+
+define Test {
+  run () {
+    ~ true - false
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "String plus with comparison" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+    if (!("x" + "w" < "x" + "y")) {
+      fail("Failed")
+    }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "Char minus with comparison" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+    if (!('d' - 'a' == 3)) {
+      fail("Failed")
+    }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "Int arithmetic with comparison" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+    if (!(2 + 1 < 2 + 3)) {
+      fail("Failed")
+    }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "Float arithmetic with comparison" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+    if (!(2.0 + 1.0 < 2.0 + 3.0)) {
+      fail("Failed")
+    }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "Bool comparison" {
+  error
+  require "Bool.+Int"
+}
+
+define Test {
+  run () {
+    ~ 1 < 2 < 3
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "arithmetic, comparison, logic" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+    scoped {
+      Bool x <- 1 + 2 < 4 && 3 >= 1 * 2 + 1
+    } in if (!x) {
+      fail("Failed")
+    }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}

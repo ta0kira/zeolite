@@ -1,0 +1,268 @@
+/* -----------------------------------------------------------------------------
+Copyright 2020 Kevin P. Barry
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+----------------------------------------------------------------------------- */
+
+// Author: Kevin P. Barry [ta0kira@gmail.com]
+
+testcase "optional persists" {
+  success Test$run()
+}
+
+define Test {
+  @value optional Test self2
+
+  @type create () -> (Test)
+  create () {
+    return Test{ empty }
+  }
+
+  @value set () -> ()
+  set () {
+    scoped {
+      Test value <- create()
+    } in self2 <- value
+  }
+
+  @value check () -> ()
+  check () {
+    ~ require(self2)
+  }
+
+  run () {
+    Test value <- create()
+    ~ value.set()
+    ~ value.check()
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "weak is weak" {
+  success Test$run()
+}
+
+define Test {
+  @value weak Test self2
+
+  @type create () -> (Test)
+  create () {
+    return Test{ empty }
+  }
+
+  @value set () -> ()
+  set () {
+    scoped {
+      Test value <- create()
+    } in self2 <- value
+  }
+
+  @value check () -> ()
+  check () {
+    scoped {
+      optional Test self3 <- strong(self2)
+    } in if (present(self3)) {
+      fail("Failed")
+    }
+  }
+
+  run () {
+    Test value <- create()
+    ~ value.set()
+    ~ value.check()
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "present weak" {
+  success Test$run()
+}
+
+define Test {
+  @type create () -> (Test)
+  create () {
+    return Test{}
+  }
+
+  @value check () -> ()
+  check () {
+    weak Test value <- create()
+    if (present(strong(value))) {  // value should be nullptr here
+      fail("Failed")
+    }
+  }
+
+  run () {
+    Test value <- create()
+    ~ value.check()
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "weak variable to weak variable" {
+  success Test$run()
+}
+
+define Test {
+  @category weak Test one <- empty
+
+  run () {
+    weak Test two <- one
+    one <- two
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "optional variable to weak variable" {
+  success Test$run()
+}
+
+define Test {
+  @category optional Test one <- empty
+
+  run () {
+    weak Test two <- one
+    two <- one
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "weak in multi assign" {
+  success Test$run()
+}
+
+concrete Value {
+  @type create () -> (Value)
+}
+
+define Value {
+  create () {
+    return Value{}
+  }
+}
+
+define Test {
+  @type get () -> (Value,Value)
+  get () {
+    Value value <- Value$create()
+    return { value, value }
+  }
+
+  run () {
+    // value1 ensures value2 is present.
+    { Value value1, weak Value value2 } <- get()
+    if (!present(strong(value2))) {
+      fail("Failed")
+    }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "weak in inline assign" {
+  success Test$run()
+}
+
+concrete Value {
+  @type create () -> (Value)
+}
+
+define Value {
+  create () {
+    return Value{}
+  }
+}
+
+define Test {
+  run () {
+    Value value1 <- Value$create()
+    weak Value value2 <- empty
+    if (!present(strong((value2 <- value1)))) {
+      fail("Failed")
+    }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "present required" {
+  success Test$run()
+}
+
+define Test {
+  @type create () -> (Test)
+  create () {
+    return Test{}
+  }
+
+  run () {
+    Test value <- create()
+    if (!present(value)) {
+      fail("Failed")
+    }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "require required" {
+  success Test$run()
+}
+
+define Test {
+  @type create () -> (Test)
+  create () {
+    return Test{}
+  }
+
+  @value call () -> ()
+  call () {}
+
+  run () {
+    Test value <- create()
+    ~ require(value).call()
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}

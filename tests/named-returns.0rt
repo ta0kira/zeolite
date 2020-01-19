@@ -1,0 +1,244 @@
+/* -----------------------------------------------------------------------------
+Copyright 2020 Kevin P. Barry
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+----------------------------------------------------------------------------- */
+
+// Author: Kevin P. Barry [ta0kira@gmail.com]
+
+testcase "missing assign" {
+  error
+  require "value"
+}
+
+@value interface Value {}
+
+define Test {
+  @value process () -> (Value)
+  process () (value) {}
+
+  run () {}
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "assign before logical" {
+  success Test$run()
+}
+
+define Test {
+  @value process () -> (Bool)
+  process () (value) {
+    ~ (value <- true) || false
+  }
+
+  run () {}
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "assign after logical" {
+  error
+  require "value"
+}
+
+define Test {
+  @value process () -> (Bool)
+  process () (value) {
+    ~ false || (value <- true)
+  }
+
+  run () {}
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "assign before arithmetic" {
+  success Test$run()
+}
+
+define Test {
+  @value process () -> (Int)
+  process () (value) {
+    ~ (value <- 1) + 2
+  }
+
+  run () {}
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "assign after arithmetic" {
+  success Test$run()
+}
+
+define Test {
+  @value process () -> (Int)
+  process () (value) {
+    ~ 2 + (value <- 1)
+  }
+
+  run () {}
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "return used before assigned" {
+  error
+  require "value.+initialized"
+}
+
+define Test {
+  @category process () -> (Int)
+  process () (value) {
+    value <- value+1
+  }
+
+  run () {}
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "return used after assigned" {
+  success Test$run()
+}
+
+define Test {
+  @category process () -> (Int)
+  process () (value) {
+    value <- 1
+    value <- value+1
+  }
+
+  run () {
+    Int value <- process()
+    if (value != 2) {
+      fail("Failed")
+    }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "returns in correct order" {
+  success Test$run()
+}
+
+define Test {
+  @type get () -> (Int,Int)
+  get () {
+    return { 1, 2 }
+  }
+
+  run () {
+    scoped {
+      { Int x, Int y } <- get()
+    } in if (x != 1) {
+      fail("Failed")
+    } elif (y != 2) {
+      fail("Failed")
+    }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "assigns in correct order" {
+  success Test$run()
+}
+
+concrete Value {
+  @type create () -> (Value)
+}
+
+define Value {
+  create () {
+    return Value{}
+  }
+}
+
+define Test {
+  @type get () -> (Value,Int,Int)
+  get () (v,x,y) {
+    // This makes sure that x and y (primitive) are offset.
+    v <- Value$create()
+    x <- 1
+    y <- 2
+  }
+
+  run () {
+    scoped {
+      { _, Int x, Int y } <- get()
+    } in if (x != 1) {
+      fail("Failed")
+    } elif (y != 2) {
+      fail("Failed")
+    }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "assigns in correct order with explicit return" {
+  success Test$run()
+}
+
+define Test {
+  @type get () -> (Int,Int)
+  get () (x,y) {
+    x <- 1
+    y <- 2
+    return _
+  }
+
+  run () {
+    scoped {
+      { Int x, Int y } <- get()
+    } in if (x != 1) {
+      fail("Failed")
+    } elif (y != 2) {
+      fail("Failed")
+    }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}

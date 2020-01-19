@@ -1,0 +1,368 @@
+/* -----------------------------------------------------------------------------
+Copyright 2020 Kevin P. Barry
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+----------------------------------------------------------------------------- */
+
+// Author: Kevin P. Barry [ta0kira@gmail.com]
+
+testcase "assign while" {
+  error
+  require "value"
+}
+
+@value interface Value {}
+
+define Test {
+  @value process () -> (optional Value)
+  process () (value) {
+    while (false) {
+      value <- empty
+    }
+  }
+
+  run () {}
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "assign while condition" {
+  error
+  require "value"
+}
+
+@value interface Value {}
+
+define Test {
+  @value process () -> (optional Value)
+  process () (value) {
+    while (present((value <- empty))) {}
+  }
+
+  run () {}
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+testcase "return while" {
+  error
+  require "Value"
+}
+
+@value interface Value {}
+
+define Test {
+  @value process () -> (optional Value)
+  process () {
+    while (false) {
+      return empty
+    }
+  }
+
+  run () {}
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "break outside of while" {
+  error
+  require "while"
+}
+
+define Test {
+  run () {
+    break
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "continue outside of while" {
+  error
+  require "while"
+}
+
+define Test {
+  run () {
+    continue
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "while with break" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+    Int output <- -1
+    scoped {
+      Int i <- 0
+      Int limit <- 5
+    } in while (i < limit) {
+      output <- i
+      break
+      fail("Failed")
+    }
+    if (output != 0) {
+      fail("Failed")
+    }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "while with update" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+    Int output <- -1
+    scoped {
+      Int i <- 0
+      Int limit <- 5
+    } in while (i < limit) {
+      output <- i
+    } update {
+      i <- i+1
+    }
+    if (output != 4) {
+      fail("Failed")
+    }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "break in update" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+    Int output <- 0
+    while (true) {
+    } update {
+      if (output > 5) {
+        break
+        fail("Failed")
+      }
+      output <- output+1
+    }
+    if (output != 6) {
+      fail("Failed")
+    }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "return in update" {
+  success Test$run()
+}
+
+define Test {
+  @type test () -> (Int)
+  test () {
+    Int output <- 0
+    while ((output <- output+1) > 0) {
+    } update {
+      if (output > 5) {
+        return output
+        fail("Failed")
+      }
+    }
+    return -1
+  }
+
+  run () {
+    if (test() != 6) {
+      fail("Failed")
+    }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "break and continue in if/else" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+    Int i <- 0
+    while (true) {
+      if (i > 5) {
+        break
+      } else {
+        continue
+      }
+      fail("Failed")
+    } update {
+      i <- i+1
+    }
+    if (i != 6) {
+      fail("Failed")
+    }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "update clashes with while" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+    while (false) {
+      Int x <- 2
+    } update {
+      Int x <- 1
+    }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "while without update" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+    Int output <- -1
+    scoped {
+      Int i <- 0
+      Int limit <- 5
+    } in while (i < limit) {
+      output <- i
+      i <- i+1
+    }
+    if (output != 4) {
+      fail("Failed")
+    }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "while with continue and update" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+    Int output <- -1
+    scoped {
+      Int i <- 0
+      Int limit <- 5
+    } in while (i < limit) {
+      output <- i
+      continue
+      fail("Failed")
+    } update {
+      i <- i+1
+    }
+    if (output != 4) {
+      fail("Failed")
+    }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "while with continue and without update" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+    Int output <- -1
+    scoped {
+      Int i <- 0
+      Int limit <- 5
+    } in while (i < limit) {
+      output <- i
+      i <- i+1
+      continue
+      fail("Failed")
+    }
+    if (output != 4) {
+      fail("Failed")
+    }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "crash in while" {
+  crash Test$run()
+  require "empty"
+}
+
+define Test {
+  run () {
+    optional Bool test <- empty
+    while (require(test)) {
+      // empty
+    }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}

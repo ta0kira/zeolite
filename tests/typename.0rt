@@ -1,0 +1,275 @@
+/* -----------------------------------------------------------------------------
+Copyright 2020 Kevin P. Barry
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+----------------------------------------------------------------------------- */
+
+// Author: Kevin P. Barry [ta0kira@gmail.com]
+
+testcase "String typename" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+    Formatted name <- typename<String>()
+    if (name.formatted() != "String") {
+      fail(name)
+    }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "Int typename" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+    Formatted name <- typename<Int>()
+    if (name.formatted() != "Int") {
+      fail(name)
+    }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "Char typename" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+    Formatted name <- typename<Char>()
+    if (name.formatted() != "Char") {
+      fail(name)
+    }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "Float typename" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+    Formatted name <- typename<Float>()
+    if (name.formatted() != "Float") {
+      fail(name)
+    }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "Bool typename" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+    Formatted name <- typename<Bool>()
+    if (name.formatted() != "Bool") {
+      fail(name)
+    }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "Formatted typename" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+    Formatted name <- typename<Formatted>()
+    if (name.formatted() != "Formatted") {
+      fail(name)
+    }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "LessThan typename" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+    Formatted name <- typename<LessThan<Int>>()
+    if (name.formatted() != "LessThan<Int>") {
+      fail(name)
+    }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "Equals typename" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+    Formatted name <- typename<Equals<Int>>()
+    if (name.formatted() != "Equals<Int>") {
+      fail(name)
+    }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "ReadPosition typename" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+    Formatted name <- typename<ReadPosition<Char>>()
+    if (name.formatted() != "ReadPosition<Char>") {
+      fail(name)
+    }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "any typename" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+    Formatted name <- typename<any>()
+    if (name.formatted() != "any") {
+      fail(name)
+    }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "all typename" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+    Formatted name <- typename<all>()
+    if (name.formatted() != "all") {
+      fail(name)
+    }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "intersect typename" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+    Formatted name <- typename<[String&Int]>()
+    if (name.formatted() != "[String&Int]") {
+      fail(name)
+    }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "union typename" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+    Formatted name <- typename<[String|Int]>()
+    if (name.formatted() != "[String|Int]") {
+      fail(name)
+    }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "param typename" {
+  success Test$run()
+}
+
+@value interface Type<#x,#y> {}
+
+define Test {
+  @category getTypename<#x,#y> () -> (Formatted)
+  getTypename () {
+    return typename<Type<#x,#y>>()
+  }
+
+  run () {
+    Formatted name <- getTypename<String,LessThan<Int>>()
+    if (name.formatted() != "Type<String,LessThan<Int>>") {
+      fail(name)
+    }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}

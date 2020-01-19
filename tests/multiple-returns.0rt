@@ -1,0 +1,121 @@
+/* -----------------------------------------------------------------------------
+Copyright 2020 Kevin P. Barry
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+----------------------------------------------------------------------------- */
+
+// Author: Kevin P. Barry [ta0kira@gmail.com]
+
+testcase "multi return to call" {
+  error
+  require "call.+\{Value,Value\}"
+}
+
+@value interface Value {
+  get () -> (Value,Value)
+  call () -> ()
+}
+
+define Test {
+  @value process (Value) -> ()
+  process (value) {
+    ~ value.get().call()
+  }
+
+  run () {}
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "zero return to call" {
+  error
+  require "call.+\{\}"
+}
+
+@value interface Value {
+  get () -> ()
+  call () -> ()
+}
+
+define Test {
+  @value process (Value) -> ()
+  process (value) {
+    ~ value.get().call()
+  }
+
+  run () {}
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "multi return assign" {
+  success Test$run()
+}
+
+define Test {
+  @type create () -> (Test)
+  create () {
+    return Test{}
+  }
+
+  @value double () -> (Test,Test)
+  double () {
+    return { self, self }
+  }
+
+  run () {
+    Test value <- create()
+    { _, Test value2 } <- value.double()
+    { value, _ } <- value2.double()
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "multi return as args" {
+  success Test$run()
+}
+
+define Test {
+  @type get () -> (Int,Int)
+  get () {
+    return { 1, 2 }
+  }
+
+  @type call (Int,Int) -> ()
+  call (x,y) {
+    if (x != 1) {
+      fail("Failed")
+    }
+    if (y != 2) {
+      fail("Failed")
+    }
+  }
+
+  run () {
+    ~ call(get())
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}

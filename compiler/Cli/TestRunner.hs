@@ -61,7 +61,7 @@ runSingleTest paths os tm (f,s) = do
     run n (ExpectCompileError _ rs es) cs ds = do
       let result = compileAll Nothing cs ds :: CompileInfo ([String],[CxxOutput])
       if not $ isCompileError result
-         then return $ compileError "Expected compiler errors"
+         then return $ compileError "Expected compiler error"
          else return $ do
            let warnings = getCompileWarnings result
            let errors = show $ getCompileError result
@@ -74,7 +74,7 @@ runSingleTest paths os tm (f,s) = do
     execute s n e rs es cs ds = do
       let result = compileAll (Just e) cs ds :: CompileInfo ([String],[CxxOutput])
       if isCompileError result
-         then return $ compileError "Expected compiler success"
+         then return $ result >> return ()
          else do
            let warnings = getCompileWarnings result
            let (main,fs) = getCompileSuccess result
