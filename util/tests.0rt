@@ -16,7 +16,41 @@ limitations under the License.
 
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
-testcase "fail writer" {
+testcase "stdout writer" {
+  success Test$run()
+  // TODO: This doesn't differentiate between stdout and stderr.
+  require "output"
+}
+
+define Test {
+  run () {
+    ~ LazyStream<Formatted>$new().append("output").writeTo(SimpleOutput$stdout())
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "stderr writer" {
+  success Test$run()
+  // TODO: This doesn't differentiate between stdout and stderr.
+  require "output"
+}
+
+define Test {
+  run () {
+    ~ LazyStream<Formatted>$new().append("output").writeTo(SimpleOutput$stderr())
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "error writer" {
   crash Test$run()
   require "Failed"
 }
