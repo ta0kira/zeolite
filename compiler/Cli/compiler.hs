@@ -154,6 +154,7 @@ runCompiler co@(CompileOptions h is ds es ep p m o) = do
           let rm = RecompileMetadata {
             rmRoot = absolute,
             rmPath = d,
+            rmDepPaths = sort as,
             rmExtraFiles = sort es,
             rmExtraPaths = sort ep,
             rmMode = m,

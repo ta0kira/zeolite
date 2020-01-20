@@ -71,16 +71,52 @@ data RecompileMetadata =
   RecompileMetadata {
     rmRoot :: String,
     rmPath :: String,
+    rmDepPaths :: [String],
     rmExtraFiles :: [String],
     rmExtraPaths :: [String],
     rmMode :: CompileMode,
     rmOutputName :: String
-  }
+  } | NotCompiled
   deriving (Show,Read)
 
 cachedDataPath = ".zeolite-cache"
 metadataFilename = "metadata.txt"
 allowedExtraTypes = [".hpp",".cpp",".h",".cc",".a",".o"]
+
+isNotCompiled NotCompiled = True
+isNotCompiled _           = False
+
+resetMetadata :: CompileMetadata -> CompileMetadata
+resetMetadata (CompileMetadata p rm _ _ _ _ _ _ _ _ _) =
+  CompileMetadata {
+    cmPath = p,
+    cmRecompile = rm,
+    cmDepPaths = [],
+    cmCategories = [],
+    cmSubdirs = [],
+    cmPublicFiles = [],
+    cmPrivateFiles = [],
+    cmTestFiles = [],
+    cmHxxFiles = [],
+    cmCxxFiles = [],
+    cmObjectFiles = []
+  }
+
+emptyMetadata :: String -> CompileMetadata
+emptyMetadata p =
+  CompileMetadata {
+    cmPath = p,
+    cmRecompile = NotCompiled,
+    cmDepPaths = [],
+    cmCategories = [],
+    cmSubdirs = [],
+    cmPublicFiles = [],
+    cmPrivateFiles = [],
+    cmTestFiles = [],
+    cmHxxFiles = [],
+    cmCxxFiles = [],
+    cmObjectFiles = []
+  }
 
 loadMetadata :: String -> IO CompileMetadata
 loadMetadata p = do
@@ -98,12 +134,34 @@ loadMetadata p = do
     hPutStrLn stderr $ "Module \"" ++ p ++ "\" has not been compiled yet."
     exitFailure
   c <- readFile f
-  check $ (reads c :: [(CompileMetadata,String)]) where
+  m <- check $ (reads c :: [(CompileMetadata,String)])
+  when (isNotCompiled $ cmRecompile m) $ do
+    hPutStrLn stderr $ "Module \"" ++ p ++ "\" has not been compiled yet."
+    exitFailure
+  return m where
     check [(cm,"")] = return cm
     check [(cm,"\n")] = return cm
     check _ = do
       hPutStrLn stderr $ "Could not parse metadata from \"" ++ p ++ "\"; please recompile."
       exitFailure
+
+tryLoadMetadata :: String -> IO CompileMetadata
+tryLoadMetadata p = do
+  let f = p </> cachedDataPath </> metadataFilename
+  def <- canonicalizePath p >>= return . emptyMetadata
+  isDir <- doesDirectoryExist p
+  if not isDir
+     then return def
+     else do
+       filePresent <- doesFileExist f
+       if not filePresent
+          then return def
+          else do
+            c <- readFile f
+            check def $ (reads c :: [(CompileMetadata,String)]) where
+              check _ [(cm,"")]   = return cm
+              check _ [(cm,"\n")] = return cm
+              check d _           = return d
 
 writeMetadata :: String -> CompileMetadata -> IO ()
 writeMetadata p m = do
@@ -117,9 +175,14 @@ writeMetadata p m = do
 
 eraseCachedData :: String -> IO ()
 eraseCachedData p = do
-  let f = p </> cachedDataPath
-  exists <- doesDirectoryExist f
-  when exists $ removeDirectoryRecursive f
+  let d  = p </> cachedDataPath
+  let md = getCachedPath p "" metadataFilename
+  dirExists <- doesDirectoryExist d
+  fileExists <- doesFileExist md
+  -- Preserve the recompilation parts, in case there is an error later on.
+  m <- tryLoadMetadata p
+  when dirExists $ removeDirectoryRecursive d
+  writeCachedFile p "" metadataFilename (show m ++ "\n")
 
 createCachePath :: String -> IO ()
 createCachePath p = do
