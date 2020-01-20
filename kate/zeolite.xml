@@ -97,7 +97,7 @@
         <keyword attribute="Keyword" context="#stay" String="keywords" />
         <keyword attribute="Scope Qualifier" context="#stay" String="scope" />
         <keyword attribute="Storage Qualifier" context="#stay" String="storage" />
-        <keyword attribute="Keyword" context="Test Header" String="testHeader" />
+        <keyword attribute="Keyword" context="Test Name" String="testHeader" />
         <keyword attribute="Keyword" context="Declare Type" String="typeDeclare" />
         <keyword attribute="Keyword" context="Define Type" String="typeDefine" />
         <IncludeRules context="Any Expression" />
@@ -124,6 +124,15 @@
         <RegExpr attribute="Error" context="#stay" String="[a-z0-9][a-zA-Z0-9]*\b" />
       </context>
 
+      <context name="Test Name" attribute="Normal Text" lineEndContext="#stay" >
+        <DetectSpaces />
+        <DetectChar context="Test Header" char="{" />
+        <DetectChar context="#pop" char="}" lookAhead="true" />
+        <IncludeRules context="Any Comment" />
+        <DetectChar attribute="String" context="String" char="&quot;" />
+        <RegExpr attribute="Error" context="#stay" String="[^ \n\t\r]" />
+      </context>
+
       <context name="Test Header" attribute="Normal Text" lineEndContext="#stay" >
         <DetectSpaces />
         <DetectChar context="#pop" char="}" lookAhead="true" />
@@ -131,6 +140,7 @@
         <Detect2Chars attribute="Error" context="#stay" char="-" char1="&gt;" />
         <WordDetect attribute="Error" context="#stay" String="optional" />
         <WordDetect attribute="Error" context="#stay" String="weak" />
+        <WordDetect attribute="Error" context="#stay" String="testcase" />
         <WordDetect attribute="Test Keyword" context="#stay" String="error" />
         <WordDetect attribute="Test Keyword" context="#stay" String="error" />
         <WordDetect attribute="Test Keyword" context="#stay" String="crash" />
