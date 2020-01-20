@@ -148,9 +148,20 @@ runCompiler co@(CompileOptions h is ds es ep p m o) = do
           os1 <- fmap concat $ sequence $ map (writeOutputFile paths' d) $ hxx ++ other
           os2 <- fmap concat $ sequence $ map (compileExtraFile paths' d) es
           let (hxx,cxx,os') = sortCompiledFiles $ map (\f -> coNamespace f </> coFilename f) fs' ++ (os1 ++ os2) ++ es
-          path <- getPath d
-          let m = CompileMetadata {
-              cmPath = fixPath path,
+          path <- canonicalizePath $ p </> d
+          absolute <- canonicalizePath p
+          output <- getBinaryName m
+          let rm = RecompileMetadata {
+            rmRoot = absolute,
+            rmPath = d,
+            rmExtraFiles = sort es,
+            rmExtraPaths = sort ep,
+            rmMode = m,
+            rmOutputName = output
+          }
+          let cm = CompileMetadata {
+              cmPath = path,
+              cmRecompile = rm,
               cmDepPaths = sort as,
               cmCategories = sort $ map show pc,
               cmSubdirs = sort $ ss ++ ep,
@@ -161,11 +172,8 @@ runCompiler co@(CompileOptions h is ds es ep p m o) = do
               cmCxxFiles = sort cxx,
               cmObjectFiles = sort os'
             }
-          writeMetadata (p </> d) m
-          return (m,mf)
-    getPath d = do
-      pwd <- getCurrentDirectory
-      return $ fixPath $ pwd </> p </> d
+          writeMetadata (p </> d) cm
+          return (cm,mf)
     formatWarnings c
       | null $ getCompileWarnings c = return ()
       | otherwise = hPutStr stderr $ "Compiler warnings:\n" ++ (concat $ map (++ "\n") (getCompileWarnings c))
@@ -223,7 +231,9 @@ runCompiler co@(CompileOptions h is ds es ep p m o) = do
       cxx2 <- collectAllOrErrorM $ map compileInterfaceDefinition interfaces
       return $ (ms,hxx ++ cxx ++ cxx2)
     mergeInternal ds = (concat $ map fst ds,concat $ map snd ds)
-    writeMain bp deps (CompileBinary n _) ms
+    getBinaryName (CompileBinary n _) = canonicalizePath $ if null o then n else o
+    getBinaryName _                   = return ""
+    writeMain bp deps ma@(CompileBinary n _) ms
       | length ms > 1 = do
         hPutStrLn stderr $ "Multiple matches for main category " ++ n ++ "."
         exitFailure
@@ -231,6 +241,7 @@ runCompiler co@(CompileOptions h is ds es ep p m o) = do
         hPutStrLn stderr $ "Main category " ++ n ++ " not found."
         exitFailure
       | otherwise = do
+          f0 <- getBinaryName ma
           let f0 = if null o then n else o
           let (CxxOutput _ _ c) = head ms
           -- TODO: Create a helper or a constant or something.
@@ -241,6 +252,7 @@ runCompiler co@(CompileOptions h is ds es ep p m o) = do
           let paths = fixPaths $ getIncludePathsForDeps (baseDeps ++ deps)
           let os    = fixPaths $ getObjectFilesForDeps  (baseDeps ++ deps)
           let command = CompileToBinary (o':os) f0 paths
+          hPutStrLn stderr $ "Creating binary " ++ f0
           runCxxCommand command
           removeFile o'
     writeMain _ _ _ _ = return ()

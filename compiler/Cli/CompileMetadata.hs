@@ -20,6 +20,7 @@ limitations under the License.
 
 module Cli.CompileMetadata (
   CompileMetadata(..),
+  RecompileMetadata(..),
   allowedExtraTypes,
   createCachePath,
   eraseCachedData,
@@ -47,10 +48,13 @@ import System.FilePath
 import System.IO
 import qualified Data.Set as Set
 
+import Cli.CompileOptions (CompileMode)
+
 
 data CompileMetadata =
   CompileMetadata {
     cmPath :: String,
+    cmRecompile :: RecompileMetadata,
     cmDepPaths :: [String],
     cmCategories :: [String],
     cmSubdirs :: [String],
@@ -60,6 +64,17 @@ data CompileMetadata =
     cmHxxFiles :: [String],
     cmCxxFiles :: [String],
     cmObjectFiles :: [String]
+  }
+  deriving (Show,Read)
+
+data RecompileMetadata =
+  RecompileMetadata {
+    rmRoot :: String,
+    rmPath :: String,
+    rmExtraFiles :: [String],
+    rmExtraPaths :: [String],
+    rmMode :: CompileMode,
+    rmOutputName :: String
   }
   deriving (Show,Read)
 
@@ -195,7 +210,7 @@ sortCompiledFiles = foldl split ([],[],[]) where
     | otherwise = fs
 
 checkModuleFreshness :: String -> CompileMetadata -> IO Bool
-checkModuleFreshness p (CompileMetadata p2 is _ _ ps xs ts hxx cxx os) = do
+checkModuleFreshness p (CompileMetadata p2 _ is _ _ ps xs ts hxx cxx os) = do
   time <- getModificationTime $ getCachedPath p "" metadataFilename
   (ps2,xs2,ts2) <- findSourceFiles p ""
   let e1 = checkMissing ps ps2

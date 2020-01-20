@@ -62,7 +62,7 @@ data CompileMode =
     cbCategory :: String,
     cbFunction :: String
   } | CompileIncremental | ExecuteTests | CompileUnspecified
-  deriving (Eq,Show)
+  deriving (Eq,Read,Show)
 
 isCompileBinary (CompileBinary _ _) = True
 isCompileBinary _                   = False
