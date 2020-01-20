@@ -630,7 +630,7 @@ createTestFile tm e ns = flip reviseError ("In the creation of the test binary p
   return $ baseSourceIncludes ++ depIncludes req ++ namespace ++ [
       "int main() {",
       "  SetSignalHandler();",
-      "  TRACE_FUNCTION(\"main\")"
+      "  TRACE_FUNCTION(\"test\")"
     ] ++ out ++ ["}"] where
     depIncludes req = map (\i -> "#include \"" ++ headerFilename i ++ "\"") $
                         filter (not . isBuiltinCategory) $ Set.toList req
