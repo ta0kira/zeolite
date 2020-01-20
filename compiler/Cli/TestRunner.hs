@@ -22,8 +22,9 @@ module Cli.TestRunner (
 
 import Control.Monad (when)
 import Data.List (isSuffixOf,nub)
+import System.Directory (setCurrentDirectory)
 import System.IO
-import System.Posix.Temp (mkdtemp,mkstemps)
+import System.Posix.Temp (mkdtemp)
 import System.FilePath
 import Text.Parsec
 import Text.Regex.TDFA -- Not safe!
@@ -81,7 +82,8 @@ runSingleTest paths os tm (f,s) = do
            let warnings = getCompileWarnings result
            let (main,fs) = getCompileSuccess result
            binaryName <- createBinary main fs
-           (TestCommandResult s' ms1 ms2) <- runTestCommand (TestCommand binaryName)
+           let command = TestCommand binaryName (takeDirectory binaryName)
+           (TestCommandResult s' ms1 ms2) <- runTestCommand command
            case (s,s') of
                 (True,False) -> return $ mergeAllM $ map compileError $ warnings ++ ms1 ++ ms2
                 (False,True) -> return $ compileError "Expected runtime failure"
@@ -110,20 +112,19 @@ runSingleTest paths os tm (f,s) = do
       let found = any id $ map (=~ r) ms
       when (found && not expected) $ compileError $ "Pattern \"" ++ r ++ "\" present in output"
       when (not found && expected) $ compileError $ "Pattern \"" ++ r ++ "\" missing from output"
-    createBinary main fs = do
+    createBinary c fs = do
       dir <- mkdtemp "/tmp/ztest_"
       hPutStrLn stderr $ "Writing temporary files to " ++ dir
       sources <- fmap concat $ sequence $ map (writeSingleFile dir) fs
-      (o',h) <- mkstemps (dir </> "zmain_") ".cpp"
+      let main   = dir </> "testcase.cpp"
       let binary = dir </> "testcase"
-      hPutStr h $ concat $ map (++ "\n") main
-      hClose h
+      writeFile main $ concat $ map (++ "\n") c
       let paths' = nub $ map fixPath (dir:paths)
-      let command = CompileToBinary ([o'] ++ sources ++ os) binary paths'
+      let command = CompileToBinary ([main] ++ sources ++ os) binary paths'
       runCxxCommand command
       return binary
-    writeSingleFile d (CxxOutput f _ os) = do
-      writeFile (d </> f) $ concat $ map (++ "\n") os
+    writeSingleFile d (CxxOutput f _ c) = do
+      writeFile (d </> f) $ concat $ map (++ "\n") c
       if isSuffixOf ".cpp" f
          then return [d </> f]
          else return []

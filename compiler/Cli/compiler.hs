@@ -169,9 +169,9 @@ runCompiler co@(CompileOptions h is ds es ep p m o) = do
     formatWarnings c
       | null $ getCompileWarnings c = return ()
       | otherwise = hPutStr stderr $ "Compiler warnings:\n" ++ (concat $ map (++ "\n") (getCompileWarnings c))
-    writeOutputFile paths d (CxxOutput f ns os) = do
+    writeOutputFile paths d (CxxOutput f ns c) = do
       hPutStrLn stderr $ "Writing file " ++ f
-      writeCachedFile (p </> d) ns f $ concat $ map (++ "\n") os
+      writeCachedFile (p </> d) ns f $ concat $ map (++ "\n") c
       if isSuffixOf ".cpp" f || isSuffixOf ".cc" f
          then do
            let f' = getCachedPath (p </> d) ns f
@@ -232,10 +232,10 @@ runCompiler co@(CompileOptions h is ds es ep p m o) = do
         exitFailure
       | otherwise = do
           let f0 = if null o then n else o
-          let (CxxOutput _ _ os) = head ms
+          let (CxxOutput _ _ c) = head ms
           -- TODO: Create a helper or a constant or something.
           (o',h) <- mkstemps "/tmp/zmain_" ".cpp"
-          hPutStr h $ concat $ map (++ "\n") os
+          hPutStr h $ concat $ map (++ "\n") c
           hClose h
           baseDeps <- loadRecursiveDeps [bp]
           let paths = fixPaths $ getIncludePathsForDeps (baseDeps ++ deps)

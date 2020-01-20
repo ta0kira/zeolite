@@ -26,6 +26,7 @@ module Cli.CompilerCommand (
   runTestCommand,
 ) where
 
+import Control.Monad (when)
 import GHC.IO.Handle
 import Data.List (intercalate)
 import System.Directory
@@ -51,7 +52,8 @@ data CxxCommand =
 
 data TestCommand =
   TestCommand {
-    tcBinary :: String
+    tcBinary :: String,
+    tcPath :: String
   }
   deriving (Show)
 
@@ -75,7 +77,7 @@ runCxxCommand (CompileToBinary ss o ps) =
     otherOptions = map ("-I" ++) $ map normalise ps
 
 runTestCommand :: TestCommand -> IO TestCommandResult
-runTestCommand (TestCommand b) = do
+runTestCommand (TestCommand b p) = do
   (outF,outH) <- mkstemps "/tmp/ztest_" ".txt"
   (errF,errH) <- mkstemps "/tmp/ztest_" ".txt"
   pid <- forkProcess (execWithCapture outH errH)
@@ -91,6 +93,7 @@ runTestCommand (TestCommand b) = do
                      _ -> False
   return $ TestCommandResult success (lines out) (lines err) where
     execWithCapture h1 h2 = do
+      when (not $ null p) $ setCurrentDirectory p
       hDuplicateTo h1 stdout
       hDuplicateTo h2 stderr
       executeFile b True [] Nothing
