@@ -89,14 +89,15 @@ showHelp = do
   hPutStrLn stderr "Also see https://ta0kira.github.io/zeolite for more documentation."
 
 runCompiler :: CompileOptions -> IO ()
-runCompiler co@(CompileOptions _ _ ds _ _ p ExecuteTests _ _) = do
+runCompiler co@(CompileOptions _ _ ds _ _ p ExecuteTests _ f) = do
   results <- sequence $ map runTests ds
   processResults $ mergeAllM results where
     runTests :: String -> IO (CompileInfo ())
     runTests d = do
       m <- loadMetadata (p </> d)
       basePath <- getBasePath
-      deps <- loadRecursiveDeps [basePath,p </> d]
+      (fr,deps) <- loadRecursiveDeps [basePath,p </> d]
+      checkAllowedStale fr f
       let paths = getIncludePathsForDeps deps
       let ss = fixPaths $ getSourceFilesForDeps deps
       let os = fixPaths $ getObjectFilesForDeps deps
@@ -116,7 +117,7 @@ runCompiler co@(CompileOptions _ _ ds _ _ p ExecuteTests _ _) = do
           exitFailure
       | otherwise = do
           hPutStrLn stderr $ "\nZeolite tests passed."
-runCompiler co@(CompileOptions h _ ds _ _ _ CompileRecompile _ _) = do
+runCompiler co@(CompileOptions h _ ds _ _ _ CompileRecompile _ f) = do
   fmap mergeAll $ sequence $ map recompileSingle ds where
     recompileSingle d = do
       cm <- loadMetadata d
@@ -139,11 +140,12 @@ runCompiler co@(CompileOptions h _ ds _ _ _ CompileRecompile _ _) = do
                coSourcePrefix = p,
                coMode = m,
                coOutputName = o,
-               coForce = True
+               coForce = max AllowRecompile f
              }
            runCompiler recompile
 runCompiler co@(CompileOptions h is ds es ep p m o f) = do
-  deps <- loadRecursiveDeps is
+  (fr,deps) <- loadRecursiveDeps is
+  checkAllowedStale fr f
   let ss = fixPaths $ getSourceFilesForDeps deps
   let as = fixPaths $ getRealPathsForDeps deps
   basePath <- getBasePath
@@ -157,7 +159,7 @@ runCompiler co@(CompileOptions h is ds es ep p m o f) = do
     ep' = fixPaths $ map (getCachedPath p "") ep
     processPath bp deps as ss d = do
       isCompiled <- isPathCompiled d
-      when (isCompiled && not f) $ do
+      when (isCompiled && f == DoNotForce) $ do
         hPutStrLn stderr $ "Please recompile path " ++ d ++
                            " with -r or use -f to force overwriting options."
         exitFailure
@@ -167,7 +169,8 @@ runCompiler co@(CompileOptions h is ds es ep p m o f) = do
       paths <- if null ps && null xs
                   then return $ getIncludePathsForDeps deps
                   else do
-                    bpDeps <- loadRecursiveDeps [bp]
+                    (fr,bpDeps) <- loadRecursiveDeps [bp]
+                    checkAllowedStale fr f
                     return $ getIncludePathsForDeps (bpDeps ++ deps)
       ps' <- zipWithContents p ps
       xs' <- zipWithContents p xs
@@ -293,7 +296,7 @@ runCompiler co@(CompileOptions h is ds es ep p m o f) = do
           (o',h) <- mkstemps "/tmp/zmain_" ".cpp"
           hPutStr h $ concat $ map (++ "\n") c
           hClose h
-          baseDeps <- loadRecursiveDeps [bp]
+          (_,baseDeps) <- loadRecursiveDeps [bp]
           let paths = fixPaths $ getIncludePathsForDeps (baseDeps ++ deps)
           let os    = fixPaths $ getObjectFilesForDeps  (baseDeps ++ deps)
           let command = CompileToBinary (o':os) f0 paths
@@ -308,6 +311,13 @@ runCompiler co@(CompileOptions h is ds es ep p m o f) = do
           contents <- createMainFile tm t f
           return [CxxOutput mainFilename "" contents]
     maybeCreateMain _ _ = return []
+
+checkAllowedStale :: Bool -> ForceMode -> IO ()
+checkAllowedStale fr f = do
+  when (not fr && f < ForceAll) $ do
+    hPutStrLn stderr $ "Some dependencies are out of date. " ++
+                       "Recompile them or use -f to force."
+    exitFailure
 
 fixPaths :: [String] -> [String]
 fixPaths = nub . map fixPath

@@ -242,10 +242,10 @@ getObjectFilesForDeps :: [CompileMetadata] -> [String]
 getObjectFilesForDeps = concat . map extract where
   extract m = map ((cmPath m </> cachedDataPath) </>) $ cmObjectFiles m
 
-loadRecursiveDeps :: [String] -> IO [CompileMetadata]
-loadRecursiveDeps ps = fmap snd $ fixedPaths >>= run (Set.empty,[]) where
+loadRecursiveDeps :: [String] -> IO (Bool,[CompileMetadata])
+loadRecursiveDeps ps = fmap snd $ fixedPaths >>= run (Set.empty,(True,[])) where
   fixedPaths = sequence $ map canonicalizePath ps
-  run xa@(pa,xs) (p:ps)
+  run xa@(pa,(fr,xs)) (p:ps)
     | p `Set.member` pa = run xa ps
     | otherwise = do
         hPutStrLn stderr $ "Loading metadata for dependency \"" ++ p ++ "\"."
@@ -253,7 +253,7 @@ loadRecursiveDeps ps = fmap snd $ fixedPaths >>= run (Set.empty,[]) where
         fresh <- checkModuleFreshness p m
         when (not fresh) $
           hPutStrLn stderr $ "Module \"" ++ p ++ "\" is out of date and should be recompiled."
-        run (p `Set.insert` pa,xs ++ [m]) (ps ++ cmDepPaths m)
+        run (p `Set.insert` pa,(fresh && fr,xs ++ [m])) (ps ++ cmDepPaths m)
   run xa _ = return xa
 
 fixPath :: String -> String

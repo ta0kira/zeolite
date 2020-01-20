@@ -82,7 +82,7 @@ parseCompileOptions = parseAll emptyCompileOptions . zip [1..] where
     return (os,CompileOptions HelpNeeded is ds es ep p m o f)
 
   parseSingle (CompileOptions h is ds es ep p m o _) ((n,"-f"):os) =
-    return (os,CompileOptions (maybeDisableHelp h) is ds es ep p m o True)
+    return (os,CompileOptions (maybeDisableHelp h) is ds es ep p m o ForceAll)
 
   parseSingle (CompileOptions h is ds es ep p m o f) ((n,"-c"):os)
     | m /= CompileUnspecified = argError n "-c" "Compiler mode already set."

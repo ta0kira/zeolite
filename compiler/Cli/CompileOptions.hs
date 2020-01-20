@@ -21,6 +21,7 @@ limitations under the License.
 module Cli.CompileOptions (
   CompileOptions(..),
   CompileMode(..),
+  ForceMode(..),
   HelpMode(..),
   emptyCompileOptions,
   isCompileBinary,
@@ -41,7 +42,7 @@ data CompileOptions =
     coSourcePrefix :: String,
     coMode :: CompileMode,
     coOutputName :: String,
-    coForce :: Bool
+    coForce :: ForceMode
   } deriving (Show)
 
 emptyCompileOptions :: CompileOptions
@@ -55,10 +56,12 @@ emptyCompileOptions =
     coSourcePrefix = "",
     coMode = CompileUnspecified,
     coOutputName = "",
-    coForce = False
+    coForce = DoNotForce
   }
 
 data HelpMode = HelpNeeded | HelpNotNeeded | HelpUnspecified deriving (Eq,Show)
+
+data ForceMode = DoNotForce | AllowRecompile | ForceAll deriving (Eq,Ord,Show)
 
 data CompileMode =
   CompileBinary {
