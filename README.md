@@ -238,7 +238,7 @@ compiler.
 ( cd compiler && ghc all-tests.hs && ./all-tests )
 
 # Integration Tests.
-./zeolite -c tests       # compile the test module
+./zeolite -f -c tests    # force-compile the test module
 ./zeolite -t tests util  # execute the tests
 ```
 

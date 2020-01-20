@@ -35,7 +35,7 @@ init_base() {
   local command=(
     "$compiler_bin"
     -p "$root"
-    -c .
+    -f -c .
     -e base
     -e capture-thread/include
     -e base/builtin.cpp
@@ -60,7 +60,7 @@ init_util() {
   local command=(
     "$compiler_bin"
     -p "$root"
-    -c util
+    -f -c util
     -e Category_SimpleOutput.cpp)
   echo "${command[@]}" 1>&2
   "${command[@]}"

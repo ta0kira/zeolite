@@ -32,6 +32,8 @@ module Cli.CompileMetadata (
   getObjectFilesForDeps,
   getRealPathsForDeps,
   getSourceFilesForDeps,
+  isNotCompiled,
+  isPathCompiled,
   loadRecursiveDeps,
   loadMetadata,
   sortCompiledFiles,
@@ -83,6 +85,7 @@ cachedDataPath = ".zeolite-cache"
 metadataFilename = "metadata.txt"
 allowedExtraTypes = [".hpp",".cpp",".h",".cc",".a",".o"]
 
+isNotCompiled :: RecompileMetadata -> Bool
 isNotCompiled NotCompiled = True
 isNotCompiled _           = False
 
@@ -162,6 +165,11 @@ tryLoadMetadata p = do
               check _ [(cm,"")]   = return cm
               check _ [(cm,"\n")] = return cm
               check d _           = return d
+
+isPathCompiled :: String -> IO Bool
+isPathCompiled p = do
+  m <- tryLoadMetadata p
+  return $ not $ isNotCompiled $ cmRecompile m
 
 writeMetadata :: String -> CompileMetadata -> IO ()
 writeMetadata p m = do

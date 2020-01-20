@@ -50,17 +50,32 @@ main = do
           hPutStr stderr $ show $ getCompileError co
           hPutStrLn stderr "Use the -h option to show help."
           exitFailure
-      | otherwise = runCompiler $ getCompileSuccess co
-    validate co@(CompileOptions h is ds es ep p m o)
+      | otherwise = do
+        let co' = getCompileSuccess co
+        when (HelpNotNeeded /= (coHelp co')) $ showHelp >> exitFailure
+        runCompiler co'
+    validate co@(CompileOptions h is ds es ep p m o _)
       | h /= HelpNotNeeded = return co
+
       | (not $ null o) && (isCompileIncremental m) =
         compileError "Output filename (-o) is not allowed in compile-only mode (-c)."
+
       | (not $ null o) && (isExecuteTests m) =
         compileError "Output filename (-o) is not allowed in test mode (-t)."
       | (not $ null is) && (isExecuteTests m) =
         compileError "Include paths (-i) are not allowed in test mode (-t)."
           | (not $ null $ es ++ ep) && (isExecuteTests m) =
         compileError "Extra files (-e) are not allowed in test mode (-t)."
+
+      | (not $ null p) && (isCompileRecompile m) =
+        compileError "Path prefix (-p) is not allowed in recompile mode (-r)."
+      | (not $ null o) && (isCompileRecompile m) =
+        compileError "Output filename (-o) is not allowed in recompile mode (-r)."
+      | (not $ null is) && (isCompileRecompile m) =
+        compileError "Include paths (-i) are not allowed in recompile mode (-r)."
+          | (not $ null $ es ++ ep) && (isCompileRecompile m) =
+        compileError "Extra files (-e) are not allowed in recompile mode (-r)."
+
       | null ds =
         compileError "Please specify at least one input path."
       | (length ds /= 1) && (isCompileBinary m) =
@@ -74,7 +89,7 @@ showHelp = do
   hPutStrLn stderr "Also see https://ta0kira.github.io/zeolite for more documentation."
 
 runCompiler :: CompileOptions -> IO ()
-runCompiler co@(CompileOptions _ _ ds _ _ p ExecuteTests _) = do
+runCompiler co@(CompileOptions _ _ ds _ _ p ExecuteTests _ _) = do
   results <- sequence $ map runTests ds
   processResults $ mergeAllM results where
     runTests :: String -> IO (CompileInfo ())
@@ -101,8 +116,33 @@ runCompiler co@(CompileOptions _ _ ds _ _ p ExecuteTests _) = do
           exitFailure
       | otherwise = do
           hPutStrLn stderr $ "\nZeolite tests passed."
-runCompiler co@(CompileOptions h is ds es ep p m o) = do
-  when (h /= HelpNotNeeded) (showHelp >> exitFailure)
+runCompiler co@(CompileOptions h _ ds _ _ _ CompileRecompile _ _) = do
+  fmap mergeAll $ sequence $ map recompileSingle ds where
+    recompileSingle d = do
+      cm <- loadMetadata d
+      if isNotCompiled (cmRecompile cm)
+         then do
+           hPutStrLn stderr $ "Path " ++ d ++ " has not been compiled yet."
+           exitFailure
+         else do
+           let (RecompileMetadata p d is es ep m o) = cmRecompile cm
+           when (isCompileRecompile m || isExecuteTests m) $ do
+             -- This should only happen if the metadata is hand-edited.
+             hPutStrLn stderr $ "Path " ++ d ++ " has not been compiled yet."
+             exitFailure
+           let recompile = CompileOptions {
+               coHelp = h,
+               coIncludes = is,
+               coSources = [d],
+               coExtraFiles = es,
+               coExtraPaths = ep,
+               coSourcePrefix = p,
+               coMode = m,
+               coOutputName = o,
+               coForce = True
+             }
+           runCompiler recompile
+runCompiler co@(CompileOptions h is ds es ep p m o f) = do
   deps <- loadRecursiveDeps is
   let ss = fixPaths $ getSourceFilesForDeps deps
   let as = fixPaths $ getRealPathsForDeps deps
@@ -113,10 +153,14 @@ runCompiler co@(CompileOptions h is ds es ep p m o) = do
   let deps2 = map fst ma
   -- TODO: Stop spamming paths just to find deps for main.cpp.
   writeMain basePath (deps ++ deps2) m ms
-  hPutStrLn stderr $ "Zeolite compilation succeeded."
-  exitSuccess where
+  hPutStrLn stderr $ "Zeolite compilation succeeded." where
     ep' = fixPaths $ map (getCachedPath p "") ep
     processPath bp deps as ss d = do
+      isCompiled <- isPathCompiled d
+      when (isCompiled && not f) $ do
+        hPutStrLn stderr $ "Please recompile path " ++ d ++
+                           " with -r or use -f to force overwriting options."
+        exitFailure
       eraseCachedData (p </> d)
       (ps,xs,ts) <- findSourceFiles p d
       -- Lazy dependency loading, in case we aren't compiling anything.

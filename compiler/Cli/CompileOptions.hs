@@ -25,6 +25,7 @@ module Cli.CompileOptions (
   emptyCompileOptions,
   isCompileBinary,
   isCompileIncremental,
+  isCompileRecompile,
   isExecuteTests,
   maybeDisableHelp,
 ) where
@@ -39,7 +40,8 @@ data CompileOptions =
     coExtraPaths :: [String],
     coSourcePrefix :: String,
     coMode :: CompileMode,
-    coOutputName :: String
+    coOutputName :: String,
+    coForce :: Bool
   } deriving (Show)
 
 emptyCompileOptions :: CompileOptions
@@ -52,7 +54,8 @@ emptyCompileOptions =
     coExtraPaths = [],
     coSourcePrefix = "",
     coMode = CompileUnspecified,
-    coOutputName = ""
+    coOutputName = "",
+    coForce = False
   }
 
 data HelpMode = HelpNeeded | HelpNotNeeded | HelpUnspecified deriving (Eq,Show)
@@ -61,7 +64,7 @@ data CompileMode =
   CompileBinary {
     cbCategory :: String,
     cbFunction :: String
-  } | CompileIncremental | ExecuteTests | CompileUnspecified
+  } | CompileIncremental | CompileRecompile | ExecuteTests | CompileUnspecified
   deriving (Eq,Read,Show)
 
 isCompileBinary (CompileBinary _ _) = True
@@ -69,6 +72,9 @@ isCompileBinary _                   = False
 
 isCompileIncremental CompileIncremental = True
 isCompileIncremental _                  = False
+
+isCompileRecompile CompileRecompile = True
+isCompileRecompile _                = False
 
 isExecuteTests ExecuteTests = True
 isExecuteTests _            = False
