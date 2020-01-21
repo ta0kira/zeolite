@@ -91,16 +91,20 @@ showHelp = do
 
 runCompiler :: CompileOptions -> IO ()
 runCompiler co@(CompileOptions _ _ ds _ _ p (ExecuteTests tp) _ f) = do
-  results <- sequence $ map runTests ds
+  ds' <- sequence $ map preloadModule ds
+  results <- sequence $ map runTests ds'
   processResults $ mergeAllM results where
-    allowTests = Set.fromList tp
-    isTestAllowed t = if null allowTests then True else t `Set.member` allowTests
-    runTests :: String -> IO (CompileInfo ())
-    runTests d = do
+    preloadModule d = do
+      -- TODO: This can probably cache dependencies that need to be reused.
       m <- loadMetadata (p </> d)
       basePath <- getBasePath
       (fr,deps) <- loadRecursiveDeps [basePath,p </> d]
       checkAllowedStale fr f
+      return (d,m,deps)
+    allowTests = Set.fromList tp
+    isTestAllowed t = if null allowTests then True else t `Set.member` allowTests
+    runTests :: (String,CompileMetadata,[CompileMetadata]) -> IO (CompileInfo ())
+    runTests (d,m,deps) = do
       let paths = getIncludePathsForDeps deps
       let ss = fixPaths $ getSourceFilesForDeps deps
       let os = fixPaths $ getObjectFilesForDeps deps
