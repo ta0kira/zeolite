@@ -67,7 +67,11 @@ data CompileMode =
   CompileBinary {
     cbCategory :: String,
     cbFunction :: String
-  } | CompileIncremental | CompileRecompile | ExecuteTests | CompileUnspecified
+  } |
+  ExecuteTests {
+    etInclude :: [String]
+  } |
+  CompileIncremental | CompileRecompile | CompileUnspecified
   deriving (Eq,Read,Show)
 
 isCompileBinary (CompileBinary _ _) = True
@@ -79,8 +83,8 @@ isCompileIncremental _                  = False
 isCompileRecompile CompileRecompile = True
 isCompileRecompile _                = False
 
-isExecuteTests ExecuteTests = True
-isExecuteTests _            = False
+isExecuteTests (ExecuteTests _) = True
+isExecuteTests _                = False
 
 maybeDisableHelp HelpUnspecified = HelpNotNeeded
 maybeDisableHelp h               = h

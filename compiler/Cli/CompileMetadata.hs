@@ -78,7 +78,8 @@ data RecompileMetadata =
     rmExtraPaths :: [String],
     rmMode :: CompileMode,
     rmOutputName :: String
-  } | NotCompiled
+  } |
+  NotCompiled
   deriving (Show,Read)
 
 cachedDataPath = ".zeolite-cache"

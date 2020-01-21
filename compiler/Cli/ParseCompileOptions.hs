@@ -21,6 +21,7 @@ module Cli.ParseCompileOptions (
   optionHelpText,
 ) where
 
+import Control.Monad (when)
 import Data.List (intercalate,isSuffixOf)
 import System.FilePath (takeExtension)
 import Text.Regex.TDFA -- Not safe!
@@ -96,7 +97,7 @@ parseCompileOptions = parseAll emptyCompileOptions . zip [1..] where
 
   parseSingle (CompileOptions h is ds es ep p m o f) ((n,"-t"):os)
     | m /= CompileUnspecified = argError n "-t" "Compiler mode already set."
-    | otherwise = return (os,CompileOptions (maybeDisableHelp h) is ds es ep p ExecuteTests o f)
+    | otherwise = return (os,CompileOptions (maybeDisableHelp h) is ds es ep p (ExecuteTests []) o f)
 
   parseSingle (CompileOptions h is ds es ep p m o f) ((n,"-m"):os)
     | m /= CompileUnspecified = argError n "-m" "Compiler mode already set."
@@ -153,7 +154,12 @@ parseCompileOptions = parseAll emptyCompileOptions . zip [1..] where
   parseSingle (CompileOptions h is ds es ep p m o f) ((n,d):os)
       | isSuffixOf ".0rp" d = argError n d "Cannot directly include .0rp source files."
       | isSuffixOf ".0rx" d = argError n d "Cannot directly include .0rx source files."
-      | isSuffixOf ".0rt" d = argError n d "Cannot directly include .0rt test files."
+      | isSuffixOf ".0rt" d = do
+        when (not $ isExecuteTests m) $
+          argError n d "Test mode (-t) must be enabled before listing any .0rt test files."
+        checkPathName n d ""
+        let (ExecuteTests tp) = m
+        return (os,CompileOptions (maybeDisableHelp h) is ds es ep p (ExecuteTests $ tp ++ [d]) o f)
       | otherwise = do
         checkPathName n d ""
         return (os,CompileOptions (maybeDisableHelp h) is (ds ++ [d]) es ep p m o f)

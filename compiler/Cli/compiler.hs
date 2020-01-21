@@ -25,6 +25,7 @@ import System.FilePath
 import System.Posix.Temp (mkstemps)
 import System.IO
 import qualified Data.Map as Map
+import qualified Data.Set as Set
 
 import Builtin
 import CompileInfo
@@ -89,9 +90,11 @@ showHelp = do
   hPutStrLn stderr "Also see https://ta0kira.github.io/zeolite for more documentation."
 
 runCompiler :: CompileOptions -> IO ()
-runCompiler co@(CompileOptions _ _ ds _ _ p ExecuteTests _ f) = do
+runCompiler co@(CompileOptions _ _ ds _ _ p (ExecuteTests tp) _ f) = do
   results <- sequence $ map runTests ds
   processResults $ mergeAllM results where
+    allowTests = Set.fromList tp
+    isTestAllowed t = if null allowTests then True else t `Set.member` allowTests
     runTests :: String -> IO (CompileInfo ())
     runTests d = do
       m <- loadMetadata (p </> d)
@@ -102,7 +105,7 @@ runCompiler co@(CompileOptions _ _ ds _ _ p ExecuteTests _ f) = do
       let ss = fixPaths $ getSourceFilesForDeps deps
       let os = fixPaths $ getObjectFilesForDeps deps
       ss' <- zipWithContents p ss
-      ts' <- zipWithContents p (map (d </>) $ cmTestFiles m)
+      ts' <- zipWithContents p (map (d </>) $ filter isTestAllowed $ cmTestFiles m)
       tm <- return $ do
         tm0 <- builtinCategories
         cs <- fmap concat $ collectAllOrErrorM $ map parsePublicSource ss'
