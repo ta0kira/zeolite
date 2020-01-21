@@ -128,7 +128,7 @@ runSingleTest paths os tm (f,s) = do
       checkForRegex expected out r "test stdout"
     checkForRegex :: Bool -> [String] -> String -> String -> CompileInfo ()
     checkForRegex expected ms r n = do
-      let found = any id $ map (=~ r) ms
+      let found = any (=~ r) ms
       when (found && not expected) $ compileError $ "Pattern \"" ++ r ++ "\" present in " ++ n
       when (not found && expected) $ compileError $ "Pattern \"" ++ r ++ "\" missing from " ++ n
     createBinary c fs = do

@@ -131,7 +131,7 @@ parseCompileOptions = parseAll emptyCompileOptions . zip [1..] where
 
   parseSingle (CompileOptions h is ds es ep p m o f) ((n,"-e"):os) = update os where
     update ((n,e):os)
-      | any id $ map (flip isSuffixOf e) allowedExtraTypes = do
+      | any (flip isSuffixOf e) allowedExtraTypes = do
           checkPathName n e "-e"
           return (os,CompileOptions (maybeDisableHelp h) is ds (es ++ [getCacheRelativePath e]) ep p m o f)
       | takeExtension e == "" = do
