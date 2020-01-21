@@ -43,8 +43,14 @@ tests = [
         let h = itHeader t
         when (not $ isExpectCompileError $ ithResult h) $ compileError "Expected ExpectCompileError"
         checkEquals (ithTestName h) "basic error test"
-        containsExactly (getRequirePattern $ ithResult h) ["pattern in output 1","pattern in output 2"]
-        containsExactly (getExcludePattern $ ithResult h) ["pattern not in output 1","pattern not in output 2"]
+        containsExactly (getRequirePattern $ ithResult h) [
+            OutputPattern OutputCompiler "pattern in output 1",
+            OutputPattern OutputAny      "pattern in output 2"
+          ]
+        containsExactly (getExcludePattern $ ithResult h) [
+            OutputPattern OutputStderr "pattern not in output 1",
+            OutputPattern OutputStdout "pattern not in output 2"
+          ]
         containsExactly (extractCategoryNames t) ["Test"]
         containsExactly (extractDefinitionNames t) ["Test"]
         ),
@@ -62,8 +68,14 @@ tests = [
                              (FunctionCall _ (FunctionName "execute") (ParamSet []) (ParamSet []))) []) -> True
                          _ -> False
         when (not match) $ compileError "Expected test expression \"Test$execute()\""
-        containsExactly (getRequirePattern $ ithResult h) ["pattern in output 1","pattern in output 2"]
-        containsExactly (getExcludePattern $ ithResult h) ["pattern not in output 1","pattern not in output 2"]
+        containsExactly (getRequirePattern $ ithResult h) [
+            OutputPattern OutputAny "pattern in output 1",
+            OutputPattern OutputAny "pattern in output 2"
+          ]
+        containsExactly (getExcludePattern $ ithResult h) [
+            OutputPattern OutputAny "pattern not in output 1",
+            OutputPattern OutputAny "pattern not in output 2"
+          ]
         containsExactly (extractCategoryNames t) ["Test"]
         containsExactly (extractDefinitionNames t) ["Test"]
         ),
@@ -81,8 +93,14 @@ tests = [
                              (FunctionCall _ (FunctionName "execute") (ParamSet []) (ParamSet []))) []) -> True
                          _ -> False
         when (not match) $ compileError "Expected test expression \"Test$execute()\""
-        containsExactly (getRequirePattern $ ithResult h) ["pattern in output 1","pattern in output 2"]
-        containsExactly (getExcludePattern $ ithResult h) ["pattern not in output 1","pattern not in output 2"]
+        containsExactly (getRequirePattern $ ithResult h) [
+            OutputPattern OutputAny "pattern in output 1",
+            OutputPattern OutputAny "pattern in output 2"
+          ]
+        containsExactly (getExcludePattern $ ithResult h) [
+            OutputPattern OutputAny "pattern not in output 1",
+            OutputPattern OutputAny "pattern not in output 2"
+          ]
         containsExactly (extractCategoryNames t) ["Test"]
         containsExactly (extractDefinitionNames t) ["Test"]
         )

@@ -45,7 +45,7 @@ runSingleTest :: [String] -> [String] -> CategoryMap SourcePos ->
                  (String,String) -> IO (CompileInfo ())
 runSingleTest paths os tm (f,s) = do
   hPutStrLn stderr $ "\nExecuting tests from " ++ f
-  fmap (flip reviseError $ "In test file " ++ f) $ checkAndRun (parseTestSource (f,s)) where
+  fmap (flip reviseError $ "\nIn test file " ++ f) $ checkAndRun (parseTestSource (f,s)) where
     checkAndRun ts
       | isCompileError ts = return (ts >> return ())
       | otherwise = fmap mergeAllM $ sequence $ map runSingle $ getCompileSuccess ts
@@ -53,7 +53,7 @@ runSingleTest paths os tm (f,s) = do
       let name = ithTestName $ itHeader t
       let context = "[" ++ formatFullContext (ithContext $ itHeader t) ++ "]"
       hPutStrLn stderr $ "\n*** Executing test \"" ++ name ++ "\" ***"
-      outcome <- fmap (flip reviseError ("In test \"" ++ name ++ "\" " ++ context)) $
+      outcome <- fmap (flip reviseError ("\nIn test \"" ++ name ++ "\" " ++ context)) $
                    run name (ithResult $ itHeader t) (itCategory t) (itDefinition t)
       if isCompileError outcome
          then hPutStrLn stderr $ "*** Test \"" ++ name ++ "\" failed ***"
@@ -67,18 +67,25 @@ runSingleTest paths os tm (f,s) = do
          else return $ do
            let warnings = getCompileWarnings result
            let errors = show $ getCompileError result
-           checkContent rs es (warnings ++ lines errors)
+           checkContent rs es (warnings ++ lines errors) [] []
 
     run n (ExpectRuntimeError   _ e rs es) cs ds = execute False n e rs es cs ds
     run n (ExpectRuntimeSuccess _ e rs es) cs ds = execute True  n e rs es cs ds
 
-    checkContent rs es content = do
-      let cr = checkRequired rs content
-      let ce = checkExcluded es content
-      let contentError = (mergeAllM $ map compileError content) `reviseError`
-                           "Output from test run:"
+    checkContent rs es comp err out = do
+      let cr = checkRequired rs comp err out
+      let ce = checkExcluded es comp err out
+      let compError = if null comp
+                         then return ()
+                         else (mergeAllM $ map compileError comp) `reviseError` "\nOutput from compiler:"
+      let errError = if null err
+                        then return ()
+                        else (mergeAllM $ map compileError err) `reviseError` "\nOutput to stderr from test:"
+      let outError = if null out
+                        then return ()
+                        else (mergeAllM $ map compileError out) `reviseError` "\nOutput to stdout from test:"
       if isCompileError cr || isCompileError ce
-         then mergeAllM [cr,ce,contentError]
+         then mergeAllM [cr,ce,compError,errError,outError]
          else mergeAllM [cr,ce]
 
     execute s n e rs es cs ds = do
@@ -90,11 +97,11 @@ runSingleTest paths os tm (f,s) = do
            let (main,fs) = getCompileSuccess result
            binaryName <- createBinary main fs
            let command = TestCommand binaryName (takeDirectory binaryName)
-           (TestCommandResult s' ms1 ms2) <- runTestCommand command
+           (TestCommandResult s' out err) <- runTestCommand command
            case (s,s') of
-                (True,False) -> return $ mergeAllM $ map compileError $ warnings ++ ms1 ++ ms2
+                (True,False) -> return $ mergeAllM $ map compileError $ warnings ++ err ++ out
                 (False,True) -> return $ compileError "Expected runtime failure"
-                _ -> return $ checkContent rs es (warnings ++ ms1 ++ ms2)
+                _ -> return $ checkContent rs es warnings err out
 
     -- TODO: Combine this with the logic in runCompiler.
     compileAll e cs ds = do
@@ -109,13 +116,21 @@ runSingleTest paths os tm (f,s) = do
                    Just e -> createTestFile tm' e namespace
                    Nothing -> return []
       return (main,hxx ++ cxx ++ cxx2)
-    checkRequired rs ms = mergeAllM $ map (checkForRegex True  ms) rs
-    checkExcluded es ms = mergeAllM $ map (checkForRegex False ms) es
-    checkForRegex :: Bool -> [String] -> String -> CompileInfo ()
-    checkForRegex expected ms r = do
+    checkRequired rs comp err out = mergeAllM $ map (checkSubsetForRegex True  comp err out) rs
+    checkExcluded es comp err out = mergeAllM $ map (checkSubsetForRegex False comp err out) es
+    checkSubsetForRegex expected comp err out (OutputPattern OutputAny r) =
+      checkForRegex expected (comp ++ err ++ out) r "compiler output or test output"
+    checkSubsetForRegex expected comp _ _ (OutputPattern OutputCompiler r) =
+      checkForRegex expected comp r "compiler output"
+    checkSubsetForRegex expected _ err _ (OutputPattern OutputStderr r) =
+      checkForRegex expected err r "test stderr"
+    checkSubsetForRegex expected _ _ out (OutputPattern OutputStdout r) =
+      checkForRegex expected out r "test stdout"
+    checkForRegex :: Bool -> [String] -> String -> String -> CompileInfo ()
+    checkForRegex expected ms r n = do
       let found = any id $ map (=~ r) ms
-      when (found && not expected) $ compileError $ "Pattern \"" ++ r ++ "\" present in output"
-      when (not found && expected) $ compileError $ "Pattern \"" ++ r ++ "\" missing from output"
+      when (found && not expected) $ compileError $ "Pattern \"" ++ r ++ "\" present in " ++ n
+      when (not found && expected) $ compileError $ "Pattern \"" ++ r ++ "\" missing from " ++ n
     createBinary c fs = do
       dir <- mkdtemp "/tmp/ztest_"
       hPutStrLn stderr $ "Writing temporary files to " ++ dir

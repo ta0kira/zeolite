@@ -67,16 +67,27 @@ instance ParseFromSource (IntegrationTestHeader SourcePos) where
         anyType = require <|> exclude where
           require = do
             sepAfter (keyword "require")
+            s <- outputScope
             string "\""
             r <- fmap concat $ manyTill stringChar (string "\"")
             optionalSpace
-            return ([r],[])
+            return ([OutputPattern s r],[])
           exclude = do
             sepAfter (keyword "exclude")
+            s <- outputScope
             string "\""
             e <- fmap concat $ manyTill stringChar (string "\"")
             optionalSpace
-            return ([],[e])
+            return ([],[OutputPattern s e])
+      outputScope = try anyScope <|>
+                    try compilerScope <|>
+                    try stderrScope <|>
+                    try stdoutScope <|>
+                    return OutputAny
+      anyScope      = sepAfter (keyword "any")      >> return OutputAny
+      compilerScope = sepAfter (keyword "compiler") >> return OutputCompiler
+      stderrScope   = sepAfter (keyword "stderr")   >> return OutputStderr
+      stdoutScope   = sepAfter (keyword "stdout")   >> return OutputStdout
 
 instance ParseFromSource (IntegrationTest SourcePos) where
   sourceParser = labeled "integration test" $ do

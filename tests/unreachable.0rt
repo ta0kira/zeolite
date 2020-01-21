@@ -18,7 +18,7 @@ limitations under the License.
 
 testcase "warning statement after fail" {
   success Test$run()
-  require "unreachable"
+  require compiler "unreachable"
 }
 
 define Test {
@@ -37,7 +37,7 @@ concrete Test {
 
 testcase "warning statement after return" {
   success Test$run()
-  require "unreachable"
+  require compiler "unreachable"
 }
 
 define Test {
@@ -56,7 +56,7 @@ concrete Test {
 
 testcase "warning statement after conditional return" {
   success Test$run()
-  require "unreachable"
+  require compiler "unreachable"
 }
 
 define Test {
@@ -79,7 +79,7 @@ concrete Test {
 
 testcase "warning statement after scoped return" {
   success Test$run()
-  require "unreachable"
+  require compiler "unreachable"
 }
 
 define Test {
@@ -99,7 +99,7 @@ concrete Test {
 
 testcase "warning statement after cleanup return" {
   success Test$run()
-  require "unreachable"
+  require compiler "unreachable"
 }
 
 define Test {
@@ -121,7 +121,7 @@ concrete Test {
 
 testcase "warning statement in cleanup after scoped return" {
   success Test$run()
-  require "unreachable"
+  require compiler "unreachable"
 }
 
 define Test {

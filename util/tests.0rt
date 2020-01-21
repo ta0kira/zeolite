@@ -18,13 +18,13 @@ limitations under the License.
 
 testcase "stdout writer" {
   success Test$run()
-  // TODO: This doesn't differentiate between stdout and stderr.
-  require "output"
+  require stdout "message"
+  exclude stderr "message"
 }
 
 define Test {
   run () {
-    ~ LazyStream<Formatted>$new().append("output").writeTo(SimpleOutput$stdout())
+    ~ LazyStream<Formatted>$new().append("message").writeTo(SimpleOutput$stdout())
   }
 }
 
@@ -35,13 +35,13 @@ concrete Test {
 
 testcase "stderr writer" {
   success Test$run()
-  // TODO: This doesn't differentiate between stdout and stderr.
-  require "output"
+  require stderr "message"
+  exclude stdout "message"
 }
 
 define Test {
   run () {
-    ~ LazyStream<Formatted>$new().append("output").writeTo(SimpleOutput$stderr())
+    ~ LazyStream<Formatted>$new().append("message").writeTo(SimpleOutput$stderr())
   }
 }
 
@@ -52,12 +52,12 @@ concrete Test {
 
 testcase "error writer" {
   crash Test$run()
-  require "Failed"
+  require "message"
 }
 
 define Test {
   run () {
-    ~ LazyStream<Formatted>$new().append("Failed").writeTo(SimpleOutput$error())
+    ~ LazyStream<Formatted>$new().append("message").writeTo(SimpleOutput$error())
   }
 }
 

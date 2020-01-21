@@ -143,13 +143,23 @@
         <WordDetect attribute="Error" context="#stay" String="weak" />
         <WordDetect attribute="Error" context="#stay" String="testcase" />
         <WordDetect attribute="Test Keyword" context="#stay" String="error" />
-        <WordDetect attribute="Test Keyword" context="#stay" String="error" />
         <WordDetect attribute="Test Keyword" context="#stay" String="crash" />
         <WordDetect attribute="Test Keyword" context="#stay" String="success" />
-        <WordDetect attribute="Test Keyword" context="#stay" String="require" />
-        <WordDetect attribute="Test Keyword" context="#stay" String="exclude" />
+        <WordDetect attribute="Test Keyword" context="Test Output" String="require" />
+        <WordDetect attribute="Test Keyword" context="Test Output" String="exclude" />
         <IncludeRules context="Any Expression" />
         <keyword attribute="Error" context="#stay" String="keywords" />
+      </context>
+
+      <context name="Test Output" attribute="Normal Text" lineEndContext="#stay" >
+        <DetectSpaces />
+        <IncludeRules context="Any Comment" />
+        <WordDetect attribute="Test Keyword" context="#stay" String="any" />
+        <WordDetect attribute="Test Keyword" context="#stay" String="compiler" />
+        <WordDetect attribute="Test Keyword" context="#stay" String="stderr" />
+        <WordDetect attribute="Test Keyword" context="#stay" String="stdout" />
+        <RegExpr context="#pop" String="&quot;" lookAhead="true" />
+        <RegExpr attribute="Error" context="#stay" String="[^ \n\t\r]" />
       </context>
 
       <context name="Any Expression" attribute="Normal Text" lineEndContext="#stay" >
