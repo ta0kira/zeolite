@@ -177,7 +177,7 @@ data WhileLoop c =
   deriving (Show)
 
 data ScopedBlock c =
-  ScopedBlock [c] (Procedure c) (Statement c)
+  ScopedBlock [c] (Procedure c) (Maybe (Procedure c)) (Statement c)
   deriving (Show)
 
 data Expression c =

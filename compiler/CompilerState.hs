@@ -22,6 +22,7 @@ limitations under the License.
 {-# LANGUAGE ScopedTypeVariables #-}
 
 module CompilerState (
+  CleanupSetup(..),
   CompilerContext(..),
   CompiledData(..),
   CompilerState(..),
@@ -36,6 +37,7 @@ module CompilerState (
   csClearOutput,
   csCurrentScope,
   csGetCategoryFunction,
+  csGetCleanup,
   csGetLoop,
   csGetOutput,
   csGetParamScope,
@@ -44,6 +46,7 @@ module CompilerState (
   csInheritReturns,
   csIsUnreachable,
   csPrimNamedReturns,
+  csPushCleanup,
   csRegisterReturn,
   csRequiresTypes,
   csResolver,
@@ -97,6 +100,8 @@ class Monad m => CompilerContext c m s a | a -> c s where
   ccSetNoReturn :: a -> m a
   ccStartLoop :: a -> LoopSetup s -> m a
   ccGetLoop :: a -> m (LoopSetup s)
+  ccPushCleanup :: a -> CleanupSetup a s -> m a
+  ccGetCleanup :: a -> m (CleanupSetup a s)
 
 type ExpressionType = ParamSet ValueType
 
@@ -121,6 +126,12 @@ data LoopSetup s =
     lsUpdate :: s
   } |
   NotInLoop
+
+data CleanupSetup a s =
+  CleanupSetup {
+    csReturnContext :: [a],
+    csCleanup :: s
+  }
 
 instance Show c => Show (VariableValue c) where
   show (VariableValue c _ t _) = show t ++ " [" ++ formatFullContext c ++ "]"
@@ -218,6 +229,14 @@ csStartLoop l = fmap (\x -> ccStartLoop x l) get >>= lift >>= put
 csGetLoop :: (Monad m, CompilerContext c m s a) =>
   CompilerState a m (LoopSetup s)
 csGetLoop = fmap ccGetLoop get >>= lift
+
+csPushCleanup :: (Monad m, CompilerContext c m s a) =>
+  CleanupSetup a s -> CompilerState a m ()
+csPushCleanup l = fmap (\x -> ccPushCleanup x l) get >>= lift >>= put
+
+csGetCleanup :: (Monad m, CompilerContext c m s a) =>
+  CompilerState a m (CleanupSetup a s)
+csGetCleanup = fmap ccGetCleanup get >>= lift
 
 data CompiledData s =
   CompiledData {

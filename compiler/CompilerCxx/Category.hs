@@ -591,12 +591,13 @@ getContextForInit tm t d s = do
       pcParamScopes = sa,
       pcFunctions = fa,
       pcVariables = Map.union builtin members,
-      pcReturns = NoValidation,
+      pcReturns = UnreachableCode,
       pcPrimNamed = [],
       pcRequiredTypes = Set.empty,
       pcOutput = [],
       pcDisallowInit = True,
-      pcLoopSetup = NotInLoop
+      pcLoopSetup = NotInLoop,
+      pcCleanupSetup = CleanupSetup [] []
     }
 
 builtinVariables :: TypeInstance -> Map.Map VariableName (VariableValue c)

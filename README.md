@@ -691,6 +691,20 @@ and `while`.
   i <b><span style='color:#006e28;'>&lt;-</span></b> i+<span style='color:#b08000;'>1</span>
 }</pre>
 
+You can also specify a `cleanup` procedure that gets executed when the scope
+ends. Cleanup happens even if there is an early `return`.
+
+<pre style='color:#1f1c1b;background-color:#ffffff;'>
+<b>scoped</b> {
+  <span style='color:#898887;'>// a made-up data source</span>
+  <span style='color:#0057ae;'>Input</span> data &lt;- <span style='color:#0057ae;'>Input</span><span style='color:#644a9b;'>$</span>open(<span style='color:#bf0303;'>&quot;foo&quot;</span>)
+} <b>cleanup</b> {
+  <span style='color:#898887;'>// freeing up resources</span>
+  <span style='color:#006e28;'>~</span> data.close()
+} <b>in</b> <b>while</b> (!data.atEnd()) {
+  <span style='color:#898887;'>// something with data</span>
+}</pre>
+
 ### Optional and Weak Values
 
 In Java, all (boxed) values can be `null`. In C++, all pointers can be

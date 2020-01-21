@@ -86,8 +86,6 @@ runTestCommand (TestCommand b p) = do
   status <- getProcessStatus True True pid
   out <- readFile outF
   err <- readFile errF
-  removeFile outF
-  removeFile errF
   let success = case status of
                      Just (Exited ExitSuccess) -> True
                      _ -> False

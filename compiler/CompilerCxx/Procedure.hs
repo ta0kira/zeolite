@@ -30,6 +30,7 @@ module CompilerCxx.Procedure (
   compileStatement,
 ) where
 
+import Control.Applicative ((<|>))
 import Control.Monad (when)
 import Control.Monad.Trans.State (execStateT,get,put,runStateT)
 import Control.Monad.Trans (lift)
@@ -103,7 +104,8 @@ compileExecutableProcedure tm t ps pi ms pa fi fa va
       pcRequiredTypes = Set.empty,
       pcOutput = [],
       pcDisallowInit = False,
-      pcLoopSetup = NotInLoop
+      pcLoopSetup = NotInLoop,
+      pcCleanupSetup = CleanupSetup [] []
     }
   output <- runDataCompiler compileWithReturn ctx
   return $ wrapProcedure output
@@ -187,9 +189,11 @@ compileStatement :: (Show c, Monad m, CompileErrorM m, MergeableM m,
                      CompilerContext c m [String] a) =>
   Statement c -> CompilerState a m ()
 compileStatement (EmptyReturn c) = do
+  doReturnCleanup
   csRegisterReturn c (ParamSet [])
   doNamedReturn
 compileStatement (ExplicitReturn c es) = do
+  doReturnCleanup
   es' <- sequence $ map compileExpression $ psParams es
   getReturn $ zip (map getExpressionContext $ psParams es) es'
   where
@@ -225,7 +229,7 @@ compileStatement (LoopContinue c) = do
   loop <- csGetLoop
   case loop of
        NotInLoop ->
-         lift $ compileError $ "Using next outside of while is no allowed [" ++ formatFullContext c ++ "]"
+         lift $ compileError $ "Using continue outside of while is no allowed [" ++ formatFullContext c ++ "]"
        _ -> return ()
   csWrite $ ["{"] ++ lsUpdate loop ++ ["}","continue;"]
 compileStatement (FailCall c e) = do
@@ -380,24 +384,38 @@ compileScopedBlock :: (Show c, Monad m, CompileErrorM m, MergeableM m,
                        CompilerContext c m [String] a) =>
   ScopedBlock c -> CompilerState a m ()
 compileScopedBlock s = do
-  let (vs,p,st) = rewriteScoped s
+  let (vs,p,cl,st) = rewriteScoped s
   -- Capture context so we can discard scoped variable names.
   ctx0 <- getCleanContext
   r <- csResolver
   fa <- csAllFilters
+  let cc = case cl of
+                Just (Procedure _ ss2) -> ss2
+                _ -> []
   sequence $ map (createVariable r fa) vs
-  ctx <- compileProcedure ctx0 p
-  -- This needs to come at the end so that statements in the scoped block cannot
-  -- refer variables created in the final statement. Both of the following need
-  -- to compile in the same context as p.
-  ctx' <- lift $ execStateT (sequence $ map showVariable vs) ctx
-  ctx'' <- compileProcedure ctx' (Procedure [] [st])
+  ctxP <- compileProcedure ctx0 p
+  (ctxP',cl',ctxCl) <-
+    case cl of
+         Just p2 -> do
+           ctx0' <- lift $ ccClearOutput ctxP
+           ctxCl <- compileProcedure ctx0' p2
+           p2' <- lift $ ccGetOutput ctxCl
+           ctxP' <- lift $ ccPushCleanup ctxP (CleanupSetup [ctxCl] p2')
+           return (ctxP',p2',ctxCl)
+         Nothing -> return (ctxP,[],ctxP)
+  -- Make variables to be created visible *after* p has been compiled so that p
+  -- can't refer to them.
+  ctxP'' <- lift $ execStateT (sequence $ map showVariable vs) ctxP'
+  ctxS <- compileProcedure ctxP'' (Procedure [] [st])
   csWrite ["{"]
-  (lift $ ccGetOutput ctx'') >>= csWrite
+  (lift $ ccGetOutput ctxS) >>= csWrite
+  csWrite cl'
   csWrite ["}"]
   sequence $ map showVariable vs
-  (lift $ ccGetRequired ctx'') >>= csRequiresTypes
-  csInheritReturns [ctx'']
+  (lift $ ccGetRequired ctxS) >>= csRequiresTypes
+  (lift $ ccGetRequired ctxCl) >>= csRequiresTypes
+  csInheritReturns [ctxS]
+  csInheritReturns [ctxCl]
   where
     createVariable r fa (c,t,n) = do
       lift $ validateGeneralInstance r fa (vtType t) `reviseError`
@@ -406,20 +424,26 @@ compileScopedBlock s = do
     showVariable (c,t,n) = do
       -- TODO: Call csRequiresTypes for t. (Maybe needs a helper function.)
       csAddVariable c n (VariableValue c LocalScope t True)
+    -- Don't merge if the second scope has cleanup, so that the latter can't
+    -- refer to variables defined in the first scope.
+    rewriteScoped (ScopedBlock c p cl@(Just _)
+                               s@(NoValueExpression _ (WithScope
+                                  (ScopedBlock _ _ (Just _) _)))) =
+      ([],p,cl,s)
     -- Merge chained scoped sections into a single section.
-    rewriteScoped w@(ScopedBlock c (Procedure c2 ss1)
-                                 (NoValueExpression _ (WithScope
-                                  (ScopedBlock _ (Procedure _ ss2) s)))) =
-      rewriteScoped $ ScopedBlock c (Procedure c2 $ ss1 ++ ss2) s
+    rewriteScoped (ScopedBlock c (Procedure c2 ss1) cl1
+                               (NoValueExpression _ (WithScope
+                                (ScopedBlock _ (Procedure _ ss2) cl2 s)))) =
+      rewriteScoped $ ScopedBlock c (Procedure c2 $ ss1 ++ ss2) (cl1 <|> cl2) s
     -- Gather to-be-created variables.
-    rewriteScoped (ScopedBlock c p (Assignment c2 vs e)) =
-      (created,p,Assignment c2 (ParamSet existing) e) where
+    rewriteScoped (ScopedBlock _ p cl (Assignment c2 vs e)) =
+      (created,p,cl,Assignment c2 (ParamSet existing) e) where
         (created,existing) = foldr update ([],[]) (psParams vs)
         update (CreateVariable c t n) (cs,es) = ((c,t,n):cs,(ExistingVariable $ InputValue c n):es)
         update e (cs,es) = (cs,e:es)
     -- Merge the statement into the scoped block.
-    rewriteScoped (ScopedBlock c p s) =
-      ([],p,s)
+    rewriteScoped (ScopedBlock _ p cl s) =
+      ([],p,cl,s)
 
 compileExpression :: (Show c, Monad m, CompileErrorM m, MergeableM m,
                       CompilerContext c m [String] a) =>
@@ -773,7 +797,8 @@ compileMainProcedure tm e = do
       pcRequiredTypes = Set.empty,
       pcOutput = [],
       pcDisallowInit = False,
-      pcLoopSetup = NotInLoop
+      pcLoopSetup = NotInLoop,
+      pcCleanupSetup = CleanupSetup [] []
     }
   runDataCompiler compiler ctx where
     procedure = Procedure [] [IgnoreValues [] e]
@@ -842,3 +867,12 @@ doNamedReturn = do
   where
     assign (ReturnVariable i n t) =
       "returns.At(" ++ show i ++ ") = " ++ useAsUnwrapped (readStoredVariable False t $ variableName n) ++ ";"
+
+doReturnCleanup :: (Monad m, CompilerContext c m [String] a) => CompilerState a m ()
+doReturnCleanup = do
+  (CleanupSetup cs ss) <- csGetCleanup
+  if null ss
+     then return ()
+     else do
+       sequence $ map (csInheritReturns . (:[])) cs
+       csWrite $ ["{"] ++ ss ++ ["}"]

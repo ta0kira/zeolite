@@ -121,3 +121,339 @@ define Test {
 concrete Test {
   @type run () -> ()
 }
+
+
+testcase "simple cleanup" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+    Int value <- 0
+    scoped {
+      value <- 1
+    } cleanup {
+      value <- 2
+    } in value <- 3
+    if (value != 2) {
+      fail(value)
+    }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "name clash in cleanup" {
+  error
+  require "value.+already defined"
+}
+
+define Test {
+  run () {
+    scoped {
+      Int value <- 1
+    } cleanup {
+      Int value <- 2
+    } in ~ empty
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "cleanup before return" {
+  success Test$run()
+}
+
+define Test {
+  @type get () -> (Int)
+  get () {
+    Int value <- 0
+    scoped {
+      value <- 1
+    } cleanup {
+      value <- 2
+    } in return value
+  }
+
+  run () {
+    Int value <- get()
+    if (value != 2) {
+      fail(value)
+    }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "cleanup initializes return" {
+  success Test$run()
+}
+
+define Test {
+  @type get () -> (Int)
+  get () (value) {
+    scoped {
+    } cleanup {
+      value <- 1
+    } in return _
+  }
+
+  run () {
+    ~ get()
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "cannot refer to cleanup variables" {
+  error
+  require "value.+not defined"
+}
+
+define Test {
+  @type get () -> (Int)
+  get () (value) {
+    scoped {
+    } cleanup {
+      Int value2 <- 1
+    } in return value2
+  }
+
+  run () {
+    ~ get()
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "cleanup skipped in scoped return" {
+  success Test$run()
+}
+
+define Test {
+  @type get () -> (Int)
+  get () {
+    Int value <- 0
+    scoped {
+      value <- 1
+      return value
+    } cleanup {
+      value <- 2
+    } in return 3
+  }
+
+  run () {
+    Int value <- get()
+    if (value != 1) {
+      fail(value)
+    }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "no infinite loop in cleanup return" {
+  success Test$run()
+}
+
+define Test {
+  @type get () -> (Int)
+  get () {
+    Int value <- 0
+    scoped {
+      value <- 1
+    } cleanup {
+      value <- 2
+      return value
+    } in return 3
+  }
+
+  run () {
+    Int value <- get()
+    if (value != 2) {
+      fail(value)
+    }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "multiple cleanup" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+    Int value1 <- 0
+    Int value2 <- 0
+    Int value3 <- 0
+    scoped {
+    } cleanup {
+      value1 <- 1
+      value2 <- 1
+    } in scoped {
+    } cleanup {
+      value2 <- 2
+      value3 <- 2
+    } in ~ empty
+    if (value1 != 1) {
+      fail(value1)
+    }
+    if (value2 != 1) {
+      fail(value2)
+    }
+    if (value3 != 2) {
+      fail(value3)
+    }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "multiple cleanup with return" {
+  success Test$run()
+}
+
+define Test {
+  @type get () -> (Int,Int,Int)
+  get () (value1,value2,value3) {
+    value1 <- 0
+    value2 <- 0
+    value3 <- 0
+    scoped {
+    } cleanup {
+      value1 <- 1
+      value2 <- 1
+    } in scoped {
+    } cleanup {
+      value2 <- 2
+      value3 <- 2
+    } in return _
+  }
+
+  run () {
+    { Int value1, Int value2, Int value3 } <- get()
+    if (value1 != 1) {
+      fail(value1)
+    }
+    if (value2 != 1) {
+      fail(value2)
+    }
+    if (value3 != 2) {
+      fail(value3)
+    }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "cleanup cannot refer to later variables" {
+  error
+  require "value.+not defined"
+}
+
+define Test {
+  run () {
+    scoped {
+    } cleanup {
+      value <- 1
+    } in Int value <- 2
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "cleanup not merged" {
+  error
+  require "value.+not defined"
+}
+
+define Test {
+  run () {
+    scoped {
+    } cleanup {
+      Int value <- 0
+    } in scoped {
+    } cleanup {
+      value <- 1
+    } in ~ empty
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "cleanup skipped for fail" {
+  crash Test$run()
+  require "scoped"
+}
+
+define Test {
+  run () {
+    scoped {
+      String message <- "scoped"
+    } cleanup {
+      message <- "cleanup"
+    } in fail(message)
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "cleanup not applied to returns outside of scope" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+    Int value <- 0
+    scoped {
+    } cleanup {
+      if (value != 0) {
+        fail(value)
+      }
+    } in ~ empty
+
+    value <- 1
+    return _
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}

@@ -70,7 +70,7 @@ concrete Test {
 
 testcase "assign if/elif condition" {
   error
-  require "value"
+  require "value.+before return"
 }
 
 @value interface Value {}
@@ -93,9 +93,35 @@ concrete Test {
 }
 
 
+testcase "different in if and else" {
+  error
+  require "value1.+before return"
+  require "value2.+before return"
+}
+
+@value interface Value {}
+
+define Test {
+  @value process () -> (optional Value,optional Value)
+  process () (value1,value2) {
+    if (false) {
+      value1 <- empty
+    } else {
+      value2 <- empty
+    }
+  }
+
+  run () {}
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
 testcase "missing in if" {
   error
-  require "value"
+  require "value.+before return"
 }
 
 @value interface Value {}
@@ -121,7 +147,7 @@ concrete Test {
 
 testcase "missing in elif" {
   error
-  require "value"
+  require "value.+before return"
 }
 
 @value interface Value {}
@@ -147,7 +173,7 @@ concrete Test {
 
 testcase "missing in else" {
   error
-  require "value"
+  require "value.+before return"
 }
 
 @value interface Value {}
@@ -173,7 +199,7 @@ concrete Test {
 
 testcase "missing in implicit else" {
   error
-  require "value"
+  require "value.+before return"
 }
 
 @value interface Value {}
@@ -344,6 +370,37 @@ define Test {
   }
 
   run () {}
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "cleanup before return in if" {
+  success Test$run()
+}
+
+define Test {
+  @type get () -> (Int)
+  get () {
+    Int value <- 0
+    scoped {
+      value <- 1
+    } cleanup {
+      value <- 2
+    } in if (true) {
+      return value
+    }
+    return 3
+  }
+
+  run () {
+    Int value <- get()
+    if (value != 2) {
+      fail(value)
+    }
+  }
 }
 
 concrete Test {

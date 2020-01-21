@@ -75,3 +75,67 @@ define Test {
 concrete Test {
   @type run () -> ()
 }
+
+
+testcase "warning statement after scoped return" {
+  success Test$run()
+  require "unreachable"
+}
+
+define Test {
+  @category failedReturn () -> (Int)
+  failedReturn () {
+    scoped {
+      return 1
+    } in return 2
+  }
+  run () {}
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "warning statement after cleanup return" {
+  success Test$run()
+  require "unreachable"
+}
+
+define Test {
+  @category failedReturn () -> (Int)
+  failedReturn () {
+    scoped {
+    } cleanup {
+      return 1
+    } in ~ empty
+    return 2
+  }
+  run () {}
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "warning statement in cleanup after scoped return" {
+  success Test$run()
+  require "unreachable"
+}
+
+define Test {
+  @category failedReturn () -> (Int)
+  failedReturn () {
+    scoped {
+      return 1
+    } cleanup {
+      return 2
+    } in ~ empty
+  }
+  run () {}
+}
+
+concrete Test {
+  @type run () -> ()
+}

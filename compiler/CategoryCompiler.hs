@@ -59,7 +59,8 @@ data ProcedureContext c =
     pcRequiredTypes :: Set.Set CategoryName,
     pcOutput :: [String],
     pcDisallowInit :: Bool,
-    pcLoopSetup :: LoopSetup [String]
+    pcLoopSetup :: LoopSetup [String],
+    pcCleanupSetup :: CleanupSetup (ProcedureContext c) [String]
   }
 
 data ReturnValidation c =
@@ -68,10 +69,9 @@ data ReturnValidation c =
   } |
   ValidateNames {
     vnTypes :: ParamSet (PassedValue c),
-    vnReturns :: Map.Map VariableName (PassedValue c)
+    vnRemaining :: Map.Map VariableName (PassedValue c)
   } |
-  NoValidation |
-  UnreachableReturn
+  UnreachableCode
 
 instance (Show c, MergeableM m, CompileErrorM m, Monad m) =>
   CompilerContext c m [String] (ProcedureContext c) where
@@ -103,7 +103,8 @@ instance (Show c, MergeableM m, CompileErrorM m, Monad m) =>
       pcRequiredTypes = Set.union (pcRequiredTypes ctx) ts,
       pcOutput = pcOutput ctx,
       pcDisallowInit = pcDisallowInit ctx,
-      pcLoopSetup = pcLoopSetup ctx
+      pcLoopSetup = pcLoopSetup ctx,
+      pcCleanupSetup = pcCleanupSetup ctx
     }
   ccGetRequired = return . pcRequiredTypes
   ccGetCategoryFunction ctx c Nothing n = ccGetCategoryFunction ctx c (Just $ pcType ctx) n
@@ -242,7 +243,8 @@ instance (Show c, MergeableM m, CompileErrorM m, Monad m) =>
         pcRequiredTypes = pcRequiredTypes ctx,
         pcOutput = pcOutput ctx,
         pcDisallowInit = pcDisallowInit ctx,
-        pcLoopSetup = pcLoopSetup ctx
+        pcLoopSetup = pcLoopSetup ctx,
+        pcCleanupSetup = pcCleanupSetup ctx
       }
   ccCheckVariableInit ctx c n =
     case pcReturns ctx of
@@ -268,7 +270,8 @@ instance (Show c, MergeableM m, CompileErrorM m, Monad m) =>
       pcRequiredTypes = pcRequiredTypes ctx,
       pcOutput = pcOutput ctx ++ ss,
       pcDisallowInit = pcDisallowInit ctx,
-      pcLoopSetup = pcLoopSetup ctx
+      pcLoopSetup = pcLoopSetup ctx,
+      pcCleanupSetup = pcCleanupSetup ctx
     }
   ccGetOutput = return . pcOutput
   ccClearOutput ctx = return $ ProcedureContext {
@@ -289,7 +292,8 @@ instance (Show c, MergeableM m, CompileErrorM m, Monad m) =>
         pcRequiredTypes = pcRequiredTypes ctx,
         pcOutput = [],
         pcDisallowInit = pcDisallowInit ctx,
-        pcLoopSetup = pcLoopSetup ctx
+        pcLoopSetup = pcLoopSetup ctx,
+        pcCleanupSetup = pcCleanupSetup ctx
       }
   ccUpdateAssigned ctx n = update (pcReturns ctx) where
     update (ValidateNames ts ra) = return $ ProcedureContext {
@@ -310,7 +314,8 @@ instance (Show c, MergeableM m, CompileErrorM m, Monad m) =>
         pcRequiredTypes = pcRequiredTypes ctx,
         pcOutput = pcOutput ctx,
         pcDisallowInit = pcDisallowInit ctx,
-        pcLoopSetup = pcLoopSetup ctx
+        pcLoopSetup = pcLoopSetup ctx,
+        pcCleanupSetup = pcCleanupSetup ctx
       }
     update _ = return ctx
   ccInheritReturns ctx cs = return $ ProcedureContext {
@@ -326,21 +331,25 @@ instance (Show c, MergeableM m, CompileErrorM m, Monad m) =>
       pcParamScopes = pcParamScopes ctx,
       pcFunctions = pcFunctions ctx,
       pcVariables = pcVariables ctx,
-      pcReturns = foldr update UnreachableReturn (map pcReturns cs),
+      pcReturns = combineSeries (pcReturns ctx) inherited,
       pcPrimNamed = pcPrimNamed ctx,
       pcRequiredTypes = pcRequiredTypes ctx,
       pcOutput = pcOutput ctx,
       pcDisallowInit = pcDisallowInit ctx,
-      pcLoopSetup = pcLoopSetup ctx
+      pcLoopSetup = pcLoopSetup ctx,
+      pcCleanupSetup = pcCleanupSetup ctx
     }
     where
-      update r@(ValidatePositions _) _ = r
-      update NoValidation r = r
-      update r NoValidation = r
-      update UnreachableReturn r = r
-      update r UnreachableReturn = r
-      update (ValidateNames ts ra1) (ValidateNames _ ra2) = ValidateNames ts $ Map.union ra1 ra2
-      update _ _ = UnreachableReturn
+      inherited = foldr combineParallel UnreachableCode (map pcReturns cs)
+      combineSeries _ UnreachableCode = UnreachableCode
+      combineSeries UnreachableCode _ = UnreachableCode
+      combineSeries r@(ValidatePositions _) _ = r
+      combineSeries _ r@(ValidatePositions _) = r
+      combineSeries (ValidateNames ts ra1) (ValidateNames _ ra2) = ValidateNames ts $ Map.intersection ra1 ra2
+      combineParallel UnreachableCode r = r
+      combineParallel r UnreachableCode = r
+      combineParallel (ValidateNames ts ra1) (ValidateNames _ ra2) = ValidateNames ts $ Map.union ra1 ra2
+      combineParallel r@(ValidatePositions _) _ = r
   ccRegisterReturn ctx c vs = do
     check (pcReturns ctx)
     return $ ProcedureContext {
@@ -356,12 +365,13 @@ instance (Show c, MergeableM m, CompileErrorM m, Monad m) =>
         pcParamScopes = pcParamScopes ctx,
         pcFunctions = pcFunctions ctx,
         pcVariables = pcVariables ctx,
-        pcReturns = UnreachableReturn,
+        pcReturns = UnreachableCode,
         pcPrimNamed = pcPrimNamed ctx,
         pcRequiredTypes = pcRequiredTypes ctx,
         pcOutput = pcOutput ctx,
         pcDisallowInit = pcDisallowInit ctx,
-        pcLoopSetup = pcLoopSetup ctx
+        pcLoopSetup = pcLoopSetup ctx,
+        pcCleanupSetup = pcCleanupSetup ctx
       }
     where
       check (ValidatePositions rs) = do
@@ -386,7 +396,7 @@ instance (Show c, MergeableM m, CompileErrorM m, Monad m) =>
       check _ = return ()
   ccPrimNamedReturns = return . pcPrimNamed
   ccIsUnreachable ctx = return $ match (pcReturns ctx) where
-    match UnreachableReturn = True
+    match UnreachableCode = True
     match _                 = False
   ccSetNoReturn ctx =
     return $ ProcedureContext {
@@ -402,12 +412,13 @@ instance (Show c, MergeableM m, CompileErrorM m, Monad m) =>
         pcParamScopes = pcParamScopes ctx,
         pcFunctions = pcFunctions ctx,
         pcVariables = pcVariables ctx,
-        pcReturns = UnreachableReturn,
+        pcReturns = UnreachableCode,
         pcPrimNamed = pcPrimNamed ctx,
         pcRequiredTypes = pcRequiredTypes ctx,
         pcOutput = pcOutput ctx,
         pcDisallowInit = pcDisallowInit ctx,
-        pcLoopSetup = pcLoopSetup ctx
+        pcLoopSetup = pcLoopSetup ctx,
+        pcCleanupSetup = pcCleanupSetup ctx
       }
   ccStartLoop ctx l =
     return $ ProcedureContext {
@@ -428,9 +439,34 @@ instance (Show c, MergeableM m, CompileErrorM m, Monad m) =>
         pcRequiredTypes = pcRequiredTypes ctx,
         pcOutput = pcOutput ctx,
         pcDisallowInit = pcDisallowInit ctx,
-        pcLoopSetup = l
+        pcLoopSetup = l,
+        pcCleanupSetup = pcCleanupSetup ctx
       }
   ccGetLoop = return . pcLoopSetup
+  ccPushCleanup ctx (CleanupSetup cs ss) =
+    return $ ProcedureContext {
+        pcScope = pcScope ctx,
+        pcType = pcType ctx,
+        pcExtParams = pcExtParams ctx,
+        pcIntParams = pcIntParams ctx,
+        pcMembers = pcMembers ctx,
+        pcCategories = pcCategories ctx,
+        pcAllFilters = pcAllFilters ctx,
+        pcExtFilters = pcExtFilters ctx,
+        pcIntFilters = pcIntFilters ctx,
+        pcParamScopes = pcParamScopes ctx,
+        pcFunctions = pcFunctions ctx,
+        pcVariables = pcVariables ctx,
+        pcReturns = pcReturns ctx,
+        pcPrimNamed = pcPrimNamed ctx,
+        pcRequiredTypes = pcRequiredTypes ctx,
+        pcOutput = pcOutput ctx,
+        pcDisallowInit = pcDisallowInit ctx,
+        pcLoopSetup = pcLoopSetup ctx,
+        pcCleanupSetup = CleanupSetup (cs ++ (csReturnContext $ pcCleanupSetup ctx))
+                                      (ss ++ (csCleanup $ pcCleanupSetup ctx))
+      }
+  ccGetCleanup = return . pcCleanupSetup
 
 updateReturnVariables :: (Show c, Monad m, CompileErrorM m, MergeableM m) =>
   (Map.Map VariableName (VariableValue c)) ->

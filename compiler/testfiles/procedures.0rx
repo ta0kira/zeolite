@@ -25,6 +25,8 @@ testFunction1 (a,b,c) (d,e,f) {
 
   scoped {
     // ...
+  } cleanup {
+    x <- y
   } in ~ x.process()
 
   ~ z.call().call()
@@ -37,6 +39,8 @@ testFunction1 (a,b,c) (d,e,f) {
   while (true) {
     ~ failure.to().execute()
     return x
+  } update {
+    x <- y
   }
 }
 

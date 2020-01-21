@@ -35,6 +35,7 @@ module ParserBase (
   kwAny,
   kwBreak,
   kwCategory,
+  kwCleanup,
   kwConcrete,
   kwContinue,
   kwDefine,
@@ -137,6 +138,7 @@ kwAllows = keyword "allows"
 kwAny = keyword "any"
 kwBreak = keyword "break"
 kwCategory = keyword "@category"
+kwCleanup = keyword "cleanup"
 kwConcrete = keyword "concrete"
 kwContinue = keyword "continue"
 kwDefine = keyword "define"
@@ -179,6 +181,7 @@ isKeyword = foldr (<|>) nullParse $ map try [
     kwAny,
     kwBreak,
     kwCategory,
+    kwCleanup,
     kwConcrete,
     kwContinue,
     kwDefine,

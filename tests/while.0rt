@@ -18,7 +18,7 @@ limitations under the License.
 
 testcase "assign while" {
   error
-  require "value"
+  require "value.+before return"
 }
 
 @value interface Value {}
@@ -41,7 +41,7 @@ concrete Test {
 
 testcase "assign while condition" {
   error
-  require "value"
+  require "value.+before return"
 }
 
 @value interface Value {}
@@ -61,7 +61,7 @@ concrete Test {
 
 testcase "return while" {
   error
-  require "Value"
+  require "return"
 }
 
 @value interface Value {}
@@ -85,6 +85,7 @@ concrete Test {
 testcase "break outside of while" {
   error
   require "while"
+  require "break"
 }
 
 define Test {
@@ -101,6 +102,7 @@ concrete Test {
 testcase "continue outside of while" {
   error
   require "while"
+  require "continue"
 }
 
 define Test {
@@ -359,6 +361,63 @@ define Test {
     optional Bool test <- empty
     while (require(test)) {
       // empty
+    }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "cleanup after break" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+    Int value <- 0
+    scoped {
+      value <- 1
+    } cleanup {
+      value <- 2
+    } in while (true) {
+      value <- 3
+      break
+    }
+    if (value != 2) {
+      fail(value)
+    }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "cleanup before return in while" {
+  success Test$run()
+}
+
+define Test {
+  @type get () -> (Int)
+  get () {
+    Int value <- 0
+    scoped {
+      value <- 1
+    } cleanup {
+      value <- 2
+    } in while (true) {
+      return value
+    }
+    return 3
+  }
+
+  run () {
+    Int value <- get()
+    if (value != 2) {
+      fail(value)
     }
   }
 }
