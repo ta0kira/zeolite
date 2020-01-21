@@ -127,7 +127,7 @@ instance (Show c, MergeableM m, CompileErrorM m, Monad m) =>
       return f
     checkFunction _ =
       compileError $ "Category " ++ show t ++
-                     " does not have a function named " ++ show n ++ " [" ++
+                     " does not have a category function named " ++ show n ++ " [" ++
                      formatFullContext c ++ "]"
   ccGetTypeFunction ctx c t n = getFunction t where
     getFunction (Just t@(TypeMerge MergeUnion _)) =
@@ -177,7 +177,7 @@ instance (Show c, MergeableM m, CompileErrorM m, Monad m) =>
       uncheckedSubFunction assigned f
     checkFunction t2 _ _ _ =
       compileError $ "Category " ++ show t2 ++
-                     " does not have a function named " ++ show n ++ " [" ++
+                     " does not have a type or value function named " ++ show n ++ " [" ++
                      formatFullContext c ++ "]"
   ccCheckValueInit ctx c (TypeInstance t as) ts ps
     | t /= pcType ctx =

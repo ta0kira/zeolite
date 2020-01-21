@@ -18,8 +18,8 @@ limitations under the License.
 
 testcase "basic error test" {
   error
-  require compiler "undefined"
-  require compiler "line 33"
+  require compiler "category.+undefined"
+  require compiler "type.+undefined"
   exclude stderr "."
   exclude stdout "."
 }
@@ -38,7 +38,7 @@ define Test {
 testcase "basic crash test" {
   crash Test$execute()
   require stderr "failure message"
-  require stderr "line 50"
+  exclude stdout "failure message"
 }
 
 concrete Test {
