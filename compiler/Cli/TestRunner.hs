@@ -67,12 +67,19 @@ runSingleTest paths os tm (f,s) = do
          else return $ do
            let warnings = getCompileWarnings result
            let errors = show $ getCompileError result
-           -- TODO: Find a way to return the output if one of the below fails.
-           checkRequired rs $ warnings ++ lines errors
-           checkExcluded es $ warnings ++ lines errors
+           checkContent rs es (warnings ++ lines errors)
 
     run n (ExpectRuntimeError   _ e rs es) cs ds = execute False n e rs es cs ds
     run n (ExpectRuntimeSuccess _ e rs es) cs ds = execute True  n e rs es cs ds
+
+    checkContent rs es content = do
+      let cr = checkRequired rs content
+      let ce = checkExcluded es content
+      let contentError = (mergeAllM $ map compileError content) `reviseError`
+                           "Output from test run:"
+      if isCompileError cr || isCompileError ce
+         then mergeAllM [cr,ce,contentError]
+         else mergeAllM [cr,ce]
 
     execute s n e rs es cs ds = do
       let result = compileAll (Just e) cs ds :: CompileInfo ([String],[CxxOutput])
@@ -87,10 +94,7 @@ runSingleTest paths os tm (f,s) = do
            case (s,s') of
                 (True,False) -> return $ mergeAllM $ map compileError $ warnings ++ ms1 ++ ms2
                 (False,True) -> return $ compileError "Expected runtime failure"
-                _ -> return $ do
-                  -- TODO: Find a way to return the output if one of the below fails.
-                  checkRequired rs $ warnings ++ ms1 ++ ms2
-                  checkExcluded es $ warnings ++ ms1 ++ ms2
+                _ -> return $ checkContent rs es (warnings ++ ms1 ++ ms2)
 
     -- TODO: Combine this with the logic in runCompiler.
     compileAll e cs ds = do
