@@ -97,7 +97,7 @@
         <keyword attribute="Keyword" context="#stay" String="keywords" />
         <keyword attribute="Scope Qualifier" context="#stay" String="scope" />
         <keyword attribute="Storage Qualifier" context="#stay" String="storage" />
-        <keyword attribute="Keyword" context="Test Name" String="testHeader" />
+        <keyword attribute="Testcase Keyword" context="Test Name" String="testHeader" />
         <keyword attribute="Keyword" context="Declare Type" String="typeDeclare" />
         <keyword attribute="Keyword" context="Define Type" String="typeDefine" />
         <IncludeRules context="Any Expression" />
@@ -289,6 +289,7 @@
       <itemData name="Char" defStyleNum="dsChar" spellChecking="true" />
       <itemData name="Escaped Char" defStyleNum="dsChar" spellChecking="false" />
       <itemData name="Assign" defStyleNum="dsOthers" bold="true" spellChecking="false" />
+      <itemData name="Testcase Keyword" defStyleNum="dsAlert" spellChecking="false" />
       <itemData name="Test Keyword" defStyleNum="dsOperator" bold="false" color="#04e040" selColor="#04e040" spellChecking="false" />
       <itemData name="Params Brace" defStyleNum="dsOperator" bold="false" color="#c02040" selColor="#c02040" spellChecking="false" />
       <itemData name="Merge Brace" defStyleNum="dsOthers" bold="true" />
