@@ -24,6 +24,7 @@ cd "$(dirname "$0")"
 root=$PWD
 compiler_hs="$root/compiler/Cli/compiler"
 compiler_bin="$root/zeolite"
+modules=("$root" "$root/util" "$root/tests")
 
 build_compiler() {
   local command=(ghc -i"$root/compiler" "$compiler_hs" -o "$compiler_bin")
@@ -31,22 +32,15 @@ build_compiler() {
   "${command[@]}"
 }
 
-init_base() {
-  local command=("$compiler_bin" -r "$root")
-  echo "${command[@]}" 1>&2
-  "${command[@]}"
-}
-
-init_util() {
-  local command=("$compiler_bin" -r "$root/util")
+init_modules() {
+  local command=("$compiler_bin" -r "${modules[@]}")
   echo "${command[@]}" 1>&2
   "${command[@]}"
 }
 
 run() {
   build_compiler
-  init_base
-  init_util
+  init_modules
 }
 
 run "$@"
