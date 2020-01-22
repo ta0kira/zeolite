@@ -34,6 +34,7 @@ import CompileInfo
 import IntegrationTest
 import SourceFile
 import TypeCategory
+import TypeInstance
 import TypesBase
 import CompilerCxx.Category
 import CompilerCxx.Naming
@@ -41,7 +42,7 @@ import Cli.CompileMetadata
 import Cli.CompilerCommand
 
 
-runSingleTest :: [String] -> [String] -> CategoryMap SourcePos ->
+runSingleTest :: [String] -> [ObjectFile] -> CategoryMap SourcePos ->
                  (String,String) -> IO (CompileInfo ())
 runSingleTest paths os tm (f,s) = do
   hPutStrLn stderr $ "\nExecuting tests from " ++ f
@@ -61,7 +62,7 @@ runSingleTest paths os tm (f,s) = do
       return outcome
 
     run n (ExpectCompileError _ rs es) cs ds = do
-      let result = compileAll Nothing cs ds :: CompileInfo ([String],[CxxOutput])
+      let result = compileAll Nothing cs ds :: CompileInfo ([CategoryName],[String],String,[CxxOutput])
       if not $ isCompileError result
          then return $ compileError "Expected compiler error"
          else return $ do
@@ -89,13 +90,13 @@ runSingleTest paths os tm (f,s) = do
          else mergeAllM [cr,ce]
 
     execute s n e rs es cs ds = do
-      let result = compileAll (Just e) cs ds :: CompileInfo ([String],[CxxOutput])
+      let result = compileAll (Just e) cs ds :: CompileInfo ([CategoryName],[String],String,[CxxOutput])
       if isCompileError result
          then return $ result >> return ()
          else do
            let warnings = getCompileWarnings result
-           let (main,fs) = getCompileSuccess result
-           binaryName <- createBinary main fs
+           let (req,main,ns,fs) = getCompileSuccess result
+           binaryName <- createBinary main req ns fs
            let command = TestCommand binaryName (takeDirectory binaryName)
            (TestCommandResult s' out err) <- runTestCommand command
            case (s,s') of
@@ -112,10 +113,10 @@ runSingleTest paths os tm (f,s) = do
       cxx <- collectAllOrErrorM $ map (compileConcreteDefinition tm' [namespace]) ds
       let interfaces = filter (not . isValueConcrete) cs'
       cxx2 <- collectAllOrErrorM $ map compileInterfaceDefinition interfaces
-      main <- case e of
-                   Just e -> createTestFile tm' e namespace
-                   Nothing -> return []
-      return (main,hxx ++ cxx ++ cxx2)
+      (req,main) <- case e of
+                         Just e -> createTestFile tm' e namespace
+                         Nothing -> return ([],[])
+      return (req,main,namespace,hxx ++ cxx ++ cxx2)
     checkRequired rs comp err out = mergeAllM $ map (checkSubsetForRegex True  comp err out) rs
     checkExcluded es comp err out = mergeAllM $ map (checkSubsetForRegex False comp err out) es
     checkSubsetForRegex expected comp err out (OutputPattern OutputAny r) =
@@ -131,7 +132,7 @@ runSingleTest paths os tm (f,s) = do
       let found = any (=~ r) ms
       when (found && not expected) $ compileError $ "Pattern \"" ++ r ++ "\" present in " ++ n
       when (not found && expected) $ compileError $ "Pattern \"" ++ r ++ "\" missing from " ++ n
-    createBinary c fs = do
+    createBinary c req ns fs = do
       dir <- mkdtemp "/tmp/ztest_"
       hPutStrLn stderr $ "Writing temporary files to " ++ dir
       sources <- fmap concat $ sequence $ map (writeSingleFile dir) fs
@@ -139,11 +140,13 @@ runSingleTest paths os tm (f,s) = do
       let binary = dir </> "testcase"
       writeFile main $ concat $ map (++ "\n") c
       let paths' = nub $ map fixPath (dir:paths)
-      let command = CompileToBinary ([main] ++ sources ++ os) binary paths'
+      let ofr = getObjectFileResolver os
+      let os' = ofr "" ns req
+      let command = CompileToBinary ([main] ++ sources ++ os') binary paths'
       runCxxCommand command
       return binary
-    writeSingleFile d (CxxOutput f _ c) = do
-      writeFile (d </> f) $ concat $ map (++ "\n") c
+    writeSingleFile d (CxxOutput _ f _ _ _ content) = do
+      writeFile (d </> f) $ concat $ map (++ "\n") content
       if isSuffixOf ".cpp" f
          then return [d </> f]
          else return []

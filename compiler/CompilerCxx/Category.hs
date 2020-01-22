@@ -49,14 +49,22 @@ import CompilerCxx.Procedure
 
 data CxxOutput =
   CxxOutput {
+    coCategory :: Maybe CategoryName,
     coFilename :: String,
     coNamespace :: String,
+    coUsesNamespace :: String,
+    coUsesCategory :: [CategoryName],
     coOutput :: [String]
   }
 
 compileCategoryDeclaration :: Monad m => CategoryMap c -> AnyCategory c -> m CxxOutput
 compileCategoryDeclaration _ t =
-  return $ CxxOutput (headerFilename name) (getCategoryNamespace t) (cdOutput file) where
+  return $ CxxOutput (Just $ getCategoryName t)
+                     (headerFilename name)
+                     (getCategoryNamespace t)
+                     ""
+                     (Set.toList $ cdRequired file)
+                     (cdOutput file) where
     file = mergeAll $ [
         onlyCodes guardTop,
         onlyCodes baseHeaderIncludes,
@@ -297,7 +305,12 @@ commonDefineAll t ns top bottom ce te fe = do
                                  (map (diName . vdType) $ getCategoryDefines t)
   let includes = map (\i -> "#include \"" ++ headerFilename i ++ "\"") $
                    filter (not . isBuiltinCategory) $ Set.toList $ Set.union req inherited
-  return $ CxxOutput filename (getCategoryNamespace t) (baseSourceIncludes ++ includes ++ out)
+  return $ CxxOutput (Just $ getCategoryName t)
+                     filename
+                     (getCategoryNamespace t)
+                     (if null ns then "" else head ns)
+                     (Set.toList req)
+                     (baseSourceIncludes ++ includes ++ out)
   where
     using = nub $ filter (not . null) $ (getCategoryNamespace t):ns
     namespaces =
@@ -606,14 +619,15 @@ builtinVariables t = Map.fromList [
   ]
 
 createMainFile :: (Show c, Monad m, CompileErrorM m, MergeableM m) =>
-  CategoryMap c -> AnyCategory c -> String -> m [String]
+  CategoryMap c -> AnyCategory c -> String -> m ([CategoryName],String,[String])
 createMainFile tm t f = flip reviseError ("In the creation of the main binary procedure") $ do
   (CompiledData req out) <- fmap indentCompiled (compileMainProcedure tm (expr t))
-  return $ baseSourceIncludes ++ depIncludes req ++ namespace t ++ [
+  file <- return $ baseSourceIncludes ++ depIncludes req ++ namespace t ++ [
       "int main() {",
       "  SetSignalHandler();",
       "  TRACE_FUNCTION(\"main\")"
-    ] ++ out ++ ["}"] where
+    ] ++ out ++ ["}"]
+  return (Set.toList req,getCategoryNamespace t,file) where
     funcName = FunctionName f
     funcCall = FunctionCall [] funcName (ParamSet []) (ParamSet [])
     mainType t = JustTypeInstance $ TypeInstance (getCategoryName t) (ParamSet [])
@@ -625,14 +639,15 @@ createMainFile tm t f = flip reviseError ("In the creation of the main binary pr
       | otherwise = ["using namespace " ++ getCategoryNamespace t ++ ";"]
 
 createTestFile :: (Show c, Monad m, CompileErrorM m, MergeableM m) =>
-  CategoryMap c -> Expression c -> String -> m [String]
+  CategoryMap c -> Expression c -> String -> m ([CategoryName],[String])
 createTestFile tm e ns = flip reviseError ("In the creation of the test binary procedure") $ do
   (CompiledData req out) <- fmap indentCompiled (compileMainProcedure tm e)
-  return $ baseSourceIncludes ++ depIncludes req ++ namespace ++ [
+  file <- return $ baseSourceIncludes ++ depIncludes req ++ namespace ++ [
       "int main() {",
       "  SetSignalHandler();",
       "  TRACE_FUNCTION(\"test\")"
-    ] ++ out ++ ["}"] where
+    ] ++ out ++ ["}"]
+  return (Set.toList req,file) where
     depIncludes req = map (\i -> "#include \"" ++ headerFilename i ++ "\"") $
                         filter (not . isBuiltinCategory) $ Set.toList req
     namespace

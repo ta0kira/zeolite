@@ -20,6 +20,7 @@ limitations under the License.
 
 module Cli.CompileMetadata (
   CompileMetadata(..),
+  ObjectFile(..),
   RecompileMetadata(..),
   allowedExtraTypes,
   createCachePath,
@@ -30,6 +31,7 @@ module Cli.CompileMetadata (
   getCacheRelativePath,
   getIncludePathsForDeps,
   getObjectFilesForDeps,
+  getObjectFileResolver,
   getRealPathsForDeps,
   getSourceFilesForDeps,
   isNotConfigured,
@@ -44,7 +46,7 @@ module Cli.CompileMetadata (
 ) where
 
 import Control.Monad (when)
-import Data.List (isSuffixOf)
+import Data.List (nub,isSuffixOf)
 import Data.Maybe (isJust)
 import System.Directory
 import System.Environment
@@ -53,6 +55,7 @@ import System.FilePath
 import System.IO
 import qualified Data.Set as Set
 
+import TypeInstance
 import Cli.CompileOptions (CompileMode)
 
 
@@ -67,9 +70,33 @@ data CompileMetadata =
     cmTestFiles :: [String],
     cmHxxFiles :: [String],
     cmCxxFiles :: [String],
-    cmObjectFiles :: [String]
+    cmObjectFiles :: [ObjectFile]
   }
   deriving (Show,Read)
+
+data ObjectFile =
+  CategoryObjectFile {
+    cofCategory :: String,
+    cofNamespace :: String,
+    cofUsesNamespace :: String,
+    cofRequires :: [String],
+    cofFile :: String
+  } |
+  OtherObjectFile {
+    oofUsesNamespace :: String,
+    oofFile :: String
+  }
+  deriving (Show,Read)
+
+getObjectFile :: ObjectFile -> String
+getObjectFile (CategoryObjectFile _ _ _ _ f) = f
+getObjectFile (OtherObjectFile _ f)          = f
+
+useObjectPath :: String -> ObjectFile -> ObjectFile
+useObjectPath p (CategoryObjectFile c ns ns2 req f) =
+  CategoryObjectFile c ns ns2 req (fixPath $ p </> f)
+useObjectPath p (OtherObjectFile ns2 f) =
+  OtherObjectFile ns2 (fixPath $ p </> f)
 
 data RecompileMetadata =
   RecompileMetadata {
@@ -207,9 +234,13 @@ getIncludePathsForDeps :: [CompileMetadata] -> [String]
 getIncludePathsForDeps = concat . map extract where
   extract m = (cmPath m </> cachedDataPath):(map ((cmPath m </> cachedDataPath) </>) $ cmSubdirs m)
 
-getObjectFilesForDeps :: [CompileMetadata] -> [String]
+getObjectFilesForDeps :: [CompileMetadata] -> [ObjectFile]
 getObjectFilesForDeps = concat . map extract where
-  extract m = map ((cmPath m </> cachedDataPath) </>) $ cmObjectFiles m
+  extract m = map (useObjectPath $ cmPath m </> cachedDataPath) $ cmObjectFiles m
+
+-- TODO: Implement this as a graph traversal.
+getObjectFileResolver :: [ObjectFile] -> String -> String -> [CategoryName] -> [String]
+getObjectFileResolver os ns ns2 req = nub $ map getObjectFile os
 
 loadRecursiveDeps :: [String] -> IO (Bool,[CompileMetadata])
 loadRecursiveDeps ps = fmap snd $ fixedPaths >>= run (Set.empty,(True,[])) where
@@ -250,7 +281,7 @@ sortCompiledFiles = foldl split ([],[],[]) where
     | otherwise = fs
 
 checkModuleFreshness :: String -> CompileMetadata -> IO Bool
-checkModuleFreshness p (CompileMetadata p2 is _ _ ps xs ts hxx cxx os) = do
+checkModuleFreshness p (CompileMetadata p2 is _ _ ps xs ts hxx cxx _) = do
   time <- getModificationTime $ getCachedPath p "" metadataFilename
   (ps2,xs2,ts2) <- findSourceFiles p ""
   let e1 = checkMissing ps ps2
@@ -258,7 +289,7 @@ checkModuleFreshness p (CompileMetadata p2 is _ _ ps xs ts hxx cxx os) = do
   let e3 = checkMissing ts ts2
   f1 <- sequence $ map (\p2 -> check time $ getCachedPath p2 "" metadataFilename) is
   f2 <- sequence $ map (check time . (p2 </>)) $ ps ++ xs
-  f3 <- sequence $ map (check time . getCachedPath p2 "") $ hxx ++ cxx ++ os
+  f3 <- sequence $ map (check time . getCachedPath p2 "") $ hxx ++ cxx
   let fresh = not $ any id $ [e1,e2,e3] ++ f1 ++ f2 ++ f3
   return fresh where
     check time f = do

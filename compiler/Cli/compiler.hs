@@ -107,7 +107,7 @@ runCompiler co@(CompileOptions _ _ ds _ _ p (ExecuteTests tp) _ f) = do
     runTests (d,m,deps) = do
       let paths = getIncludePathsForDeps deps
       let ss = fixPaths $ getSourceFilesForDeps deps
-      let os = fixPaths $ getObjectFilesForDeps deps
+      let os = getObjectFilesForDeps deps
       ss' <- zipWithContents p ss
       ts' <- zipWithContents p (map (d </>) $ filter isTestAllowed $ cmTestFiles m)
       tm <- return $ do
@@ -214,7 +214,7 @@ runCompiler co@(CompileOptions h is ds es ep p m o f) = do
           let other = filter (not . isSuffixOf ".hpp" . coFilename) fs'
           os1 <- fmap concat $ sequence $ map (writeOutputFile paths' d) $ hxx ++ other
           os2 <- fmap concat $ sequence $ map (compileExtraFile paths' d) es
-          let (hxx,cxx,os') = sortCompiledFiles $ map (\f -> coNamespace f </> coFilename f) fs' ++ (os1 ++ os2) ++ es
+          let (hxx,cxx,os') = sortCompiledFiles $ map (\f -> coNamespace f </> coFilename f) fs' ++ os2 ++ es
           path <- canonicalizePath $ p </> d
           let cm = CompileMetadata {
               cmPath = path,
@@ -226,16 +226,16 @@ runCompiler co@(CompileOptions h is ds es ep p m o f) = do
               cmTestFiles = sort ts,
               cmHxxFiles = sort hxx,
               cmCxxFiles = sort cxx,
-              cmObjectFiles = sort os'
+              cmObjectFiles = os1 ++ map (OtherObjectFile "") os'
             }
           writeMetadata (p </> d) cm
           return (cm,mf)
     formatWarnings c
       | null $ getCompileWarnings c = return ()
       | otherwise = hPutStr stderr $ "Compiler warnings:\n" ++ (concat $ map (++ "\n") (getCompileWarnings c))
-    writeOutputFile paths d (CxxOutput f ns c) = do
+    writeOutputFile paths d (CxxOutput c f ns ns2 req content) = do
       hPutStrLn stderr $ "Writing file " ++ f
-      writeCachedFile (p </> d) ns f $ concat $ map (++ "\n") c
+      writeCachedFile (p </> d) ns f $ concat $ map (++ "\n") content
       if isSuffixOf ".cpp" f || isSuffixOf ".cc" f
          then do
            let f' = getCachedPath (p </> d) ns f
@@ -245,7 +245,9 @@ runCompiler co@(CompileOptions h is ds es ep p m o f) = do
            createCachePath (p </> d)
            let command = CompileToObject f' (getCachedPath (p </> d) ns o) (p0:p1:paths)
            runCxxCommand command
-           return [ns </> o]
+           case c of
+                Just c' -> return [CategoryObjectFile (show c') ns ns2 (map show req) (ns </> o)]
+                Nothing -> return [OtherObjectFile ns2 (ns </> o)]
          else return []
     compileExtraFile paths d f
       | isSuffixOf ".cpp" f || isSuffixOf ".cc" f = do
@@ -299,15 +301,17 @@ runCompiler co@(CompileOptions h is ds es ep p m o f) = do
       | otherwise = do
           f0 <- getBinaryName ma
           let f0 = if null o then n else o
-          let (CxxOutput _ _ c) = head ms
+          let (CxxOutput _ _ ns ns2 req content) = head ms
           -- TODO: Create a helper or a constant or something.
           (o',h) <- mkstemps "/tmp/zmain_" ".cpp"
-          hPutStr h $ concat $ map (++ "\n") c
+          hPutStr h $ concat $ map (++ "\n") content
           hClose h
           (_,baseDeps) <- loadRecursiveDeps [bp]
           let paths = fixPaths $ getIncludePathsForDeps (baseDeps ++ deps)
-          let os    = fixPaths $ getObjectFilesForDeps  (baseDeps ++ deps)
-          let command = CompileToBinary (o':os) f0 paths
+          let os    = getObjectFilesForDeps  (baseDeps ++ deps)
+          let ofr = getObjectFileResolver os
+          let os' = ofr ns ns2 req
+          let command = CompileToBinary (o':os') f0 paths
           hPutStrLn stderr $ "Creating binary " ++ f0
           runCxxCommand command
           removeFile o'
@@ -316,8 +320,8 @@ runCompiler co@(CompileOptions h is ds es ep p m o f) = do
       case (CategoryName n) `Map.lookup` tm of
         Nothing -> return []
         Just t -> do
-          contents <- createMainFile tm t f
-          return [CxxOutput mainFilename "" contents]
+          (req,ns,main) <- createMainFile tm t f
+          return [CxxOutput Nothing mainFilename "" ns req main]
     maybeCreateMain _ _ = return []
 
 checkAllowedStale :: Bool -> ForceMode -> IO ()
