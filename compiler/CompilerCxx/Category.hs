@@ -636,7 +636,10 @@ createMainFile tm t f = flip reviseError ("In the creation of the main binary pr
                         filter (not . isBuiltinCategory) $ Set.toList req
     namespace t
       | null $ getCategoryNamespace t = []
-      | otherwise = ["using namespace " ++ getCategoryNamespace t ++ ";"]
+      | otherwise = [
+          "namespace " ++ getCategoryNamespace t ++ "{}",
+          "using namespace " ++ getCategoryNamespace t ++ ";"
+        ]
 
 createTestFile :: (Show c, Monad m, CompileErrorM m, MergeableM m) =>
   CategoryMap c -> Expression c -> String -> m ([CategoryName],[String])
@@ -652,4 +655,7 @@ createTestFile tm e ns = flip reviseError ("In the creation of the test binary p
                         filter (not . isBuiltinCategory) $ Set.toList req
     namespace
       | null ns = []
-      | otherwise = ["using namespace " ++ ns ++ ";"]
+      | otherwise = [
+          "namespace " ++ ns ++ "{}",
+          "using namespace " ++ ns ++ ";"
+        ]

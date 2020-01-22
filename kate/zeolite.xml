@@ -147,6 +147,7 @@
         <WordDetect attribute="Test Keyword" context="#stay" String="success" />
         <WordDetect attribute="Test Keyword" context="Test Output" String="require" />
         <WordDetect attribute="Test Keyword" context="Test Output" String="exclude" />
+        <WordDetect attribute="Keyword" context="#stay" String="empty" />
         <IncludeRules context="Any Expression" />
         <keyword attribute="Error" context="#stay" String="keywords" />
       </context>

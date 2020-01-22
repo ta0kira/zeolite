@@ -63,3 +63,8 @@ concrete Test {
 define Test {
   execute () { }
 }
+
+
+testcase "minimal linking works properly" {
+  success empty
+}
