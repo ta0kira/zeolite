@@ -32,17 +32,20 @@ module Cli.CompileMetadata (
   getObjectFilesForDeps,
   getRealPathsForDeps,
   getSourceFilesForDeps,
-  isNotCompiled,
-  isPathCompiled,
+  isNotConfigured,
+  isPathConfigured,
   loadRecursiveDeps,
   loadMetadata,
   sortCompiledFiles,
+  tryLoadRecompile,
   writeCachedFile,
   writeMetadata,
+  writeRecompile,
 ) where
 
 import Control.Monad (when)
 import Data.List (isSuffixOf)
+import Data.Maybe (isJust)
 import System.Directory
 import System.Environment
 import System.Exit (exitFailure)
@@ -56,7 +59,6 @@ import Cli.CompileOptions (CompileMode)
 data CompileMetadata =
   CompileMetadata {
     cmPath :: String,
-    cmRecompile :: RecompileMetadata,
     cmDepPaths :: [String],
     cmCategories :: [String],
     cmSubdirs :: [String],
@@ -79,48 +81,17 @@ data RecompileMetadata =
     rmMode :: CompileMode,
     rmOutputName :: String
   } |
-  NotCompiled
+  NotConfigured
   deriving (Show,Read)
 
 cachedDataPath = ".zeolite-cache"
+recompileFilename = ".zeolite-module"
 metadataFilename = "metadata.txt"
 allowedExtraTypes = [".hpp",".cpp",".h",".cc",".a",".o"]
 
-isNotCompiled :: RecompileMetadata -> Bool
-isNotCompiled NotCompiled = True
-isNotCompiled _           = False
-
-resetMetadata :: CompileMetadata -> CompileMetadata
-resetMetadata (CompileMetadata p rm _ _ _ _ _ _ _ _ _) =
-  CompileMetadata {
-    cmPath = p,
-    cmRecompile = rm,
-    cmDepPaths = [],
-    cmCategories = [],
-    cmSubdirs = [],
-    cmPublicFiles = [],
-    cmPrivateFiles = [],
-    cmTestFiles = [],
-    cmHxxFiles = [],
-    cmCxxFiles = [],
-    cmObjectFiles = []
-  }
-
-emptyMetadata :: String -> CompileMetadata
-emptyMetadata p =
-  CompileMetadata {
-    cmPath = p,
-    cmRecompile = NotCompiled,
-    cmDepPaths = [],
-    cmCategories = [],
-    cmSubdirs = [],
-    cmPublicFiles = [],
-    cmPrivateFiles = [],
-    cmTestFiles = [],
-    cmHxxFiles = [],
-    cmCxxFiles = [],
-    cmObjectFiles = []
-  }
+isNotConfigured :: RecompileMetadata -> Bool
+isNotConfigured NotConfigured = True
+isNotConfigured _             = False
 
 loadMetadata :: String -> IO CompileMetadata
 loadMetadata p = do
@@ -139,9 +110,6 @@ loadMetadata p = do
     exitFailure
   c <- readFile f
   m <- check $ (reads c :: [(CompileMetadata,String)])
-  when (isNotCompiled $ cmRecompile m) $ do
-    hPutStrLn stderr $ "Module \"" ++ p ++ "\" has not been compiled yet."
-    exitFailure
   return m where
     check [(cm,"")] = return cm
     check [(cm,"\n")] = return cm
@@ -149,28 +117,27 @@ loadMetadata p = do
       hPutStrLn stderr $ "Could not parse metadata from \"" ++ p ++ "\"; please recompile."
       exitFailure
 
-tryLoadMetadata :: String -> IO CompileMetadata
-tryLoadMetadata p = do
-  let f = p </> cachedDataPath </> metadataFilename
-  def <- canonicalizePath p >>= return . emptyMetadata
+tryLoadRecompile :: String -> IO RecompileMetadata
+tryLoadRecompile p = do
+  let f = p </> recompileFilename
   isDir <- doesDirectoryExist p
   if not isDir
-     then return def
+     then return NotConfigured
      else do
        filePresent <- doesFileExist f
        if not filePresent
-          then return def
+          then return NotConfigured
           else do
             c <- readFile f
-            check def $ (reads c :: [(CompileMetadata,String)]) where
-              check _ [(cm,"")]   = return cm
-              check _ [(cm,"\n")] = return cm
-              check d _           = return d
+            check (reads c :: [(RecompileMetadata,String)]) where
+              check [(cm,"")]   = return cm
+              check [(cm,"\n")] = return cm
+              check _           = return NotConfigured
 
-isPathCompiled :: String -> IO Bool
-isPathCompiled p = do
-  m <- tryLoadMetadata p
-  return $ not $ isNotCompiled $ cmRecompile m
+isPathConfigured :: String -> IO Bool
+isPathConfigured p = do
+  m <- tryLoadRecompile p
+  return $ not $ isNotConfigured m
 
 writeMetadata :: String -> CompileMetadata -> IO ()
 writeMetadata p m = do
@@ -182,16 +149,17 @@ writeMetadata p m = do
     hPutStrLn stderr $ "Error writing metadata for \"" ++ p' ++ "\"."
     exitFailure
 
+writeRecompile :: String -> RecompileMetadata -> IO ()
+writeRecompile p m = do
+  p' <- canonicalizePath p
+  hPutStrLn stderr $ "Updating config for \"" ++ p' ++ "\"."
+  writeFile (p </> recompileFilename) (show m ++ "\n")
+
 eraseCachedData :: String -> IO ()
 eraseCachedData p = do
   let d  = p </> cachedDataPath
-  let md = getCachedPath p "" metadataFilename
   dirExists <- doesDirectoryExist d
-  fileExists <- doesFileExist md
-  -- Preserve the recompilation parts, in case there is an error later on.
-  m <- tryLoadMetadata p
   when dirExists $ removeDirectoryRecursive d
-  writeCachedFile p "" metadataFilename (show m ++ "\n")
 
 createCachePath :: String -> IO ()
 createCachePath p = do
@@ -282,7 +250,7 @@ sortCompiledFiles = foldl split ([],[],[]) where
     | otherwise = fs
 
 checkModuleFreshness :: String -> CompileMetadata -> IO Bool
-checkModuleFreshness p (CompileMetadata p2 _ is _ _ ps xs ts hxx cxx os) = do
+checkModuleFreshness p (CompileMetadata p2 is _ _ ps xs ts hxx cxx os) = do
   time <- getModificationTime $ getCachedPath p "" metadataFilename
   (ps2,xs2,ts2) <- findSourceFiles p ""
   let e1 = checkMissing ps ps2

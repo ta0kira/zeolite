@@ -126,25 +126,25 @@ runCompiler co@(CompileOptions _ _ ds _ _ p (ExecuteTests tp) _ f) = do
           hPutStrLn stderr $ "\nZeolite tests passed."
 runCompiler co@(CompileOptions h _ ds _ _ _ CompileRecompile _ f) = do
   fmap mergeAll $ sequence $ map recompileSingle ds where
-    recompileSingle d = do
-      cm <- loadMetadata d
-      if isNotCompiled (cmRecompile cm)
+    recompileSingle d0 = do
+      rm <- tryLoadRecompile d0
+      if isNotConfigured rm
          then do
-           hPutStrLn stderr $ "Path " ++ d ++ " has not been compiled yet."
+           hPutStrLn stderr $ "Path " ++ d0 ++ " has not been configured or compiled yet."
            exitFailure
          else do
-           let (RecompileMetadata p d is es ep m o) = cmRecompile cm
-           when (isCompileRecompile m || isExecuteTests m) $ do
-             -- This should only happen if the metadata is hand-edited.
-             hPutStrLn stderr $ "Path " ++ d ++ " has not been compiled yet."
-             exitFailure
+           let (RecompileMetadata p d is es ep m o) = rm
+           -- In case the module is manually configured with a p such as "..",
+           -- since the absolute path might not be known ahead of time.
+           absolute <- canonicalizePath d0
+           let fixed = fixPath (absolute </> p)
            let recompile = CompileOptions {
                coHelp = h,
                coIncludes = is,
                coSources = [d],
                coExtraFiles = es,
                coExtraPaths = ep,
-               coSourcePrefix = p,
+               coSourcePrefix = fixed,
                coMode = m,
                coOutputName = o,
                coForce = max AllowRecompile f
@@ -165,12 +165,25 @@ runCompiler co@(CompileOptions h is ds es ep p m o f) = do
   hPutStrLn stderr $ "Zeolite compilation succeeded." where
     ep' = fixPaths $ map (getCachedPath p "") ep
     processPath bp deps as ss d = do
-      isCompiled <- isPathCompiled d
-      when (isCompiled && f == DoNotForce) $ do
-        hPutStrLn stderr $ "Please recompile path " ++ d ++
-                           " with -r or use -f to force overwriting options."
+      isConfigured <- isPathConfigured d
+      when (isConfigured && f == DoNotForce) $ do
+        hPutStrLn stderr $ "Module " ++ d ++ " has already been configured. " ++
+                           "Recompile with -r or use -f to overwrite the config."
         exitFailure
       eraseCachedData (p </> d)
+      absolute <- canonicalizePath p
+      let rm = RecompileMetadata {
+        rmRoot = absolute,
+        rmPath = d,
+        rmDepPaths = sort as,
+        rmExtraFiles = sort es,
+        rmExtraPaths = sort ep,
+        rmMode = m,
+        rmOutputName = o
+      }
+      -- TODO: -f might be used with -r if there are stale dependencies, which
+      -- will inadvertently overwrite the config here.
+      when (f /= AllowRecompile) $ writeRecompile (p </> d) rm
       (ps,xs,ts) <- findSourceFiles p d
       -- Lazy dependency loading, in case we aren't compiling anything.
       paths <- if null ps && null xs
@@ -203,20 +216,8 @@ runCompiler co@(CompileOptions h is ds es ep p m o f) = do
           os2 <- fmap concat $ sequence $ map (compileExtraFile paths' d) es
           let (hxx,cxx,os') = sortCompiledFiles $ map (\f -> coNamespace f </> coFilename f) fs' ++ (os1 ++ os2) ++ es
           path <- canonicalizePath $ p </> d
-          absolute <- canonicalizePath p
-          output <- getBinaryName m
-          let rm = RecompileMetadata {
-            rmRoot = absolute,
-            rmPath = d,
-            rmDepPaths = sort as,
-            rmExtraFiles = sort es,
-            rmExtraPaths = sort ep,
-            rmMode = m,
-            rmOutputName = output
-          }
           let cm = CompileMetadata {
               cmPath = path,
-              cmRecompile = rm,
               cmDepPaths = sort as,
               cmCategories = sort $ map show pc,
               cmSubdirs = sort $ ss ++ ep,

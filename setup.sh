@@ -32,36 +32,13 @@ build_compiler() {
 }
 
 init_base() {
-  local command=(
-    "$compiler_bin"
-    -p "$root"
-    -f -c .
-    -e base
-    -e capture-thread/include
-    -e base/builtin.cpp
-    -e base/builtin.hpp
-    -e base/category-header.hpp
-    -e base/category-source.cpp
-    -e base/category-source.hpp
-    -e base/cycle-check.hpp
-    -e base/function.hpp
-    -e base/logging.cpp
-    -e base/logging.hpp
-    -e base/types.cpp
-    -e base/types.hpp
-    -e capture-thread/include/thread-capture.h
-    -e capture-thread/include/thread-crosser.h
-    -e capture-thread/src/thread-crosser.cc)
+  local command=("$compiler_bin" -r "$root")
   echo "${command[@]}" 1>&2
   "${command[@]}"
 }
 
 init_util() {
-  local command=(
-    "$compiler_bin"
-    -p "$root"
-    -f -c util
-    -e Category_SimpleOutput.cpp)
+  local command=("$compiler_bin" -r "$root/util")
   echo "${command[@]}" 1>&2
   "${command[@]}"
 }
