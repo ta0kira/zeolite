@@ -63,7 +63,7 @@ compileCategoryDeclaration _ t =
                      (headerFilename name)
                      (getCategoryNamespace t)
                      ""
-                     (Set.toList $ cdRequired file)
+                     (filter (not . isBuiltinCategory) $ Set.toList $ cdRequired file)
                      (cdOutput file) where
     file = mergeAll $ [
         onlyCodes guardTop,
@@ -309,7 +309,7 @@ commonDefineAll t ns top bottom ce te fe = do
                      filename
                      (getCategoryNamespace t)
                      (if null ns then "" else head ns)
-                     (Set.toList req)
+                     (filter (not . isBuiltinCategory) $ Set.toList req)
                      (baseSourceIncludes ++ includes ++ out)
   where
     using = nub $ filter (not . null) $ (getCategoryNamespace t):ns
@@ -619,7 +619,7 @@ builtinVariables t = Map.fromList [
   ]
 
 createMainFile :: (Show c, Monad m, CompileErrorM m, MergeableM m) =>
-  CategoryMap c -> AnyCategory c -> String -> m ([CategoryName],String,[String])
+  CategoryMap c -> AnyCategory c -> String -> m (String,[String])
 createMainFile tm t f = flip reviseError ("In the creation of the main binary procedure") $ do
   (CompiledData req out) <- fmap indentCompiled (compileMainProcedure tm (expr t))
   file <- return $ baseSourceIncludes ++ depIncludes req ++ namespace t ++ [
@@ -627,7 +627,7 @@ createMainFile tm t f = flip reviseError ("In the creation of the main binary pr
       "  SetSignalHandler();",
       "  TRACE_FUNCTION(\"main\")"
     ] ++ out ++ ["}"]
-  return (Set.toList req,getCategoryNamespace t,file) where
+  return (getCategoryNamespace t,file) where
     funcName = FunctionName f
     funcCall = FunctionCall [] funcName (ParamSet []) (ParamSet [])
     mainType t = JustTypeInstance $ TypeInstance (getCategoryName t) (ParamSet [])
@@ -647,7 +647,7 @@ createTestFile tm e ns = flip reviseError ("In the creation of the test binary p
       "  SetSignalHandler();",
       "  TRACE_FUNCTION(\"test\")"
     ] ++ out ++ ["}"]
-  return (Set.toList req,file) where
+  return (filter (not . isBuiltinCategory) $ Set.toList req,file) where
     depIncludes req = map (\i -> "#include \"" ++ headerFilename i ++ "\"") $
                         filter (not . isBuiltinCategory) $ Set.toList req
     namespace

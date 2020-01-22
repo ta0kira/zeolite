@@ -140,13 +140,15 @@ runSingleTest paths os tm (f,s) = do
       let binary = dir </> "testcase"
       writeFile main $ concat $ map (++ "\n") c
       let paths' = nub $ map fixPath (dir:paths)
-      let ofr = getObjectFileResolver os
-      let os' = ofr "" ns req
-      let command = CompileToBinary ([main] ++ sources ++ os') binary paths'
+      let ofr = getObjectFileResolver (os ++ sources)
+      os' <- ofr ns req
+      let command = CompileToBinary main os' binary paths'
       runCxxCommand command
       return binary
-    writeSingleFile d (CxxOutput _ f _ _ _ content) = do
+    writeSingleFile d (CxxOutput c f ns ns2 req content) = do
       writeFile (d </> f) $ concat $ map (++ "\n") content
       if isSuffixOf ".cpp" f
-         then return [d </> f]
+         then case c of
+                   Just c' -> return [CategoryObjectFile (show c') ns ns2 (map show req) [d </> f]]
+                   Nothing -> return [OtherObjectFile (d </> f)]
          else return []

@@ -226,7 +226,7 @@ runCompiler co@(CompileOptions h is ds es ep p m o f) = do
               cmTestFiles = sort ts,
               cmHxxFiles = sort hxx,
               cmCxxFiles = sort cxx,
-              cmObjectFiles = os1 ++ map (OtherObjectFile "") os'
+              cmObjectFiles = os1 ++ map OtherObjectFile os'
             }
           writeMetadata (p </> d) cm
           return (cm,mf)
@@ -241,22 +241,24 @@ runCompiler co@(CompileOptions h is ds es ep p m o f) = do
            let f' = getCachedPath (p </> d) ns f
            let p0 = getCachedPath (p </> d) "" ""
            let p1 = getCachedPath (p </> d) ns ""
-           let o = takeFileName $ dropExtension f ++ ".o"
            createCachePath (p </> d)
-           let command = CompileToObject f' (getCachedPath (p </> d) ns o) (p0:p1:paths)
-           runCxxCommand command
+           let command = CompileToObject f' (getCachedPath (p </> d) ns "") (p0:p1:paths) False
+           o <- runCxxCommand command
            case c of
-                Just c' -> return [CategoryObjectFile (show c') ns ns2 (map show req) (ns </> o)]
-                Nothing -> return [OtherObjectFile ns2 (ns </> o)]
-         else return []
+                Just c' -> return [CategoryObjectFile (show c') ns ns2 (map show req) [o]]
+                Nothing -> return [OtherObjectFile o]
+         else case c of
+                   -- This accounts for dependencies of categories that are
+                   -- implemented in C++ by hand but also have an .0rp.
+                   Just c' -> return [CategoryObjectFile (show c') ns ns2 (map show req) []]
+                   Nothing -> return []
     compileExtraFile paths d f
       | isSuffixOf ".cpp" f || isSuffixOf ".cc" f = do
           let f' = getCachedPath (p </> d) "" f
           let p0 = getCachedPath (p </> d) "" ""
-          let o = takeFileName $ dropExtension f ++ ".o"
           createCachePath (p </> d)
-          let command = CompileToObject f' (getCachedPath (p </> d) "" o) (p0:paths)
-          runCxxCommand command
+          let command = CompileToObject f' (getCachedPath (p </> d) "" "") (p0:paths) True
+          o <- runCxxCommand command
           return [o]
       | otherwise = return []
     compileAll is cs ds = do
@@ -301,17 +303,17 @@ runCompiler co@(CompileOptions h is ds es ep p m o f) = do
       | otherwise = do
           f0 <- getBinaryName ma
           let f0 = if null o then n else o
-          let (CxxOutput _ _ ns ns2 req content) = head ms
+          let (CxxOutput _ _ _ ns2 req content) = head ms
           -- TODO: Create a helper or a constant or something.
           (o',h) <- mkstemps "/tmp/zmain_" ".cpp"
           hPutStr h $ concat $ map (++ "\n") content
           hClose h
           (_,baseDeps) <- loadRecursiveDeps [bp]
           let paths = fixPaths $ getIncludePathsForDeps (baseDeps ++ deps)
-          let os    = getObjectFilesForDeps  (baseDeps ++ deps)
+          let os    = getObjectFilesForDeps (baseDeps ++ deps)
           let ofr = getObjectFileResolver os
-          let os' = ofr ns ns2 req
-          let command = CompileToBinary (o':os') f0 paths
+          os' <- ofr ns2 req
+          let command = CompileToBinary o' os' f0 paths
           hPutStrLn stderr $ "Creating binary " ++ f0
           runCxxCommand command
           removeFile o'
@@ -320,8 +322,8 @@ runCompiler co@(CompileOptions h is ds es ep p m o f) = do
       case (CategoryName n) `Map.lookup` tm of
         Nothing -> return []
         Just t -> do
-          (req,ns,main) <- createMainFile tm t f
-          return [CxxOutput Nothing mainFilename "" ns req main]
+          (ns,main) <- createMainFile tm t f
+          return [CxxOutput Nothing mainFilename "" ns [getCategoryName t] main]
     maybeCreateMain _ _ = return []
 
 checkAllowedStale :: Bool -> ForceMode -> IO ()

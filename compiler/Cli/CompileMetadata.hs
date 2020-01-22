@@ -45,6 +45,7 @@ module Cli.CompileMetadata (
   writeRecompile,
 ) where
 
+import Control.Applicative ((<|>))
 import Control.Monad (when)
 import Data.List (nub,isSuffixOf)
 import Data.Maybe (isJust)
@@ -53,6 +54,7 @@ import System.Environment
 import System.Exit (exitFailure)
 import System.FilePath
 import System.IO
+import qualified Data.Map as Map
 import qualified Data.Set as Set
 
 import TypeInstance
@@ -80,23 +82,29 @@ data ObjectFile =
     cofNamespace :: String,
     cofUsesNamespace :: String,
     cofRequires :: [String],
-    cofFile :: String
+    cofFiles :: [String]
   } |
   OtherObjectFile {
-    oofUsesNamespace :: String,
     oofFile :: String
   }
   deriving (Show,Read)
 
-getObjectFile :: ObjectFile -> String
-getObjectFile (CategoryObjectFile _ _ _ _ f) = f
-getObjectFile (OtherObjectFile _ f)          = f
+mergeObjectFiles :: ObjectFile -> ObjectFile -> ObjectFile
+mergeObjectFiles (CategoryObjectFile c ns1 ns1' req1 os1)
+                 (CategoryObjectFile _ ns2 ns2' req2 os2) =
+                   (CategoryObjectFile c ns3 ns23 req3 os3) where
+  ns3
+    | null ns1 = ns2
+    | otherwise = ns1
+  ns23
+    | null ns1' = ns2'
+    | otherwise = ns1'
+  req3 = req1 ++ req2
+  os3 = os1 ++ os2
 
-useObjectPath :: String -> ObjectFile -> ObjectFile
-useObjectPath p (CategoryObjectFile c ns ns2 req f) =
-  CategoryObjectFile c ns ns2 req (fixPath $ p </> f)
-useObjectPath p (OtherObjectFile ns2 f) =
-  OtherObjectFile ns2 (fixPath $ p </> f)
+isCategoryObjectFile :: ObjectFile -> Bool
+isCategoryObjectFile (CategoryObjectFile _ _ _ _ _) = True
+isCategoryObjectFile (OtherObjectFile _)            = False
 
 data RecompileMetadata =
   RecompileMetadata {
@@ -235,26 +243,21 @@ getIncludePathsForDeps = concat . map extract where
   extract m = (cmPath m </> cachedDataPath):(map ((cmPath m </> cachedDataPath) </>) $ cmSubdirs m)
 
 getObjectFilesForDeps :: [CompileMetadata] -> [ObjectFile]
-getObjectFilesForDeps = concat . map extract where
-  extract m = map (useObjectPath $ cmPath m </> cachedDataPath) $ cmObjectFiles m
-
--- TODO: Implement this as a graph traversal.
-getObjectFileResolver :: [ObjectFile] -> String -> String -> [CategoryName] -> [String]
-getObjectFileResolver os ns ns2 req = nub $ map getObjectFile os
+getObjectFilesForDeps = concat . map cmObjectFiles
 
 loadRecursiveDeps :: [String] -> IO (Bool,[CompileMetadata])
-loadRecursiveDeps ps = fmap snd $ fixedPaths >>= run (Set.empty,(True,[])) where
+loadRecursiveDeps ps = fmap snd $ fixedPaths >>= collect (Set.empty,(True,[])) where
   fixedPaths = sequence $ map canonicalizePath ps
-  run xa@(pa,(fr,xs)) (p:ps)
-    | p `Set.member` pa = run xa ps
+  collect xa@(pa,(fr,xs)) (p:ps)
+    | p `Set.member` pa = collect xa ps
     | otherwise = do
         hPutStrLn stderr $ "Loading metadata for dependency \"" ++ p ++ "\"."
         m <- loadMetadata p
         fresh <- checkModuleFreshness p m
         when (not fresh) $
           hPutStrLn stderr $ "Module \"" ++ p ++ "\" is out of date and should be recompiled."
-        run (p `Set.insert` pa,(fresh && fr,xs ++ [m])) (ps ++ cmDepPaths m)
-  run xa _ = return xa
+        collect (p `Set.insert` pa,(fresh && fr,xs ++ [m])) (ps ++ cmDepPaths m)
+  collect xa _ = return xa
 
 fixPath :: String -> String
 fixPath = foldl (</>) "" . process [] . map dropSlash . splitPath where
@@ -296,3 +299,31 @@ checkModuleFreshness p (CompileMetadata p2 is _ _ ps xs ts hxx cxx _) = do
       time2 <- getModificationTime f
       return (time2 > time)
     checkMissing s0 s1 = not $ null $ (Set.fromList s1) `Set.difference` (Set.fromList s0)
+
+getObjectFileResolver :: [ObjectFile] -> String -> [CategoryName] -> IO [String]
+getObjectFileResolver os ns0 req =  fmap (cleanup . snd) $ collect (Set.empty,alwaysUse) withNamespace where
+  cleanup = reverse . nub . reverse
+  alwaysUse = map oofFile $ filter (not . isCategoryObjectFile) os
+  withNamespace = zip (repeat ns0) $ map show req
+  conditionalUse = filter isCategoryObjectFile os
+  byNsAndCat = Map.map (Map.fromListWith mergeObjectFiles) $ Map.fromListWith (++) $
+                 map (\o -> (cofNamespace o,[(cofCategory o,o)])) conditionalUse
+  collect xa@(ra,xs) ((ns,r):rs)
+    | isBuiltinCategory (CategoryName r) = collect xa rs
+    | (ns,r) `Set.member` ra = collect xa rs
+    | ("",r) `Set.member` ra = collect xa rs
+    | otherwise = do
+        case maybeResolved of
+             Just resolved -> do
+               let ys = cofFiles resolved
+               let rs2 = zip (repeat $ cofUsesNamespace resolved) $ cofRequires resolved
+               collect ((ns,r) `Set.insert` ra,ys ++ xs) (rs ++ rs2)
+            -- Assume that alwaysUse has this taken care of. If nothing else,
+            -- the C++ compiler will complain if something is missing.
+             _ -> collect ((ns,r) `Set.insert` ra,xs) rs
+        where
+          maybeResolved
+            | null ns   = check Nothing                      ("" `Map.lookup` byNsAndCat)
+            | otherwise = check (ns `Map.lookup` byNsAndCat) ("" `Map.lookup` byNsAndCat)
+          check cs1 cs2 = (cs1 >>= (r `Map.lookup`)) <|> (cs2 >>= (r `Map.lookup`))
+  collect xa _ = return xa

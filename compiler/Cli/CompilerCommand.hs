@@ -28,7 +28,7 @@ module Cli.CompilerCommand (
 
 import Control.Monad (when)
 import GHC.IO.Handle
-import Data.List (intercalate)
+import Data.List (intercalate,isSuffixOf)
 import System.Directory
 import System.Exit
 import System.FilePath
@@ -40,10 +40,12 @@ import System.Posix.Temp (mkstemps)
 data CxxCommand =
   CompileToObject {
     ctoSource :: String,
-    ctoOutput :: String,
-    ctoPaths :: [String]
+    ctoPath :: String,
+    ctoPaths :: [String],
+    ctoExtra :: Bool
   } |
   CompileToBinary {
+    ctbMain :: String,
     ctbSources :: [String],
     ctbOutput :: String,
     ctoPaths :: [String]
@@ -66,14 +68,27 @@ data TestCommandResult =
   deriving (Show)
 
 cxxCompiler = "clang++"
+arArchiver = "ar"
 cxxBaseOptions = ["-O2", "-std=c++11"]
 
-runCxxCommand :: CxxCommand -> IO ()
-runCxxCommand (CompileToObject s o ps) =
-  executeProcess cxxCompiler $ cxxBaseOptions ++ otherOptions ++ ["-c", s, "-o", o] where
+runCxxCommand :: CxxCommand -> IO String
+runCxxCommand (CompileToObject s p ps e) = do
+  objName <- canonicalizePath $ p </> (takeFileName $ dropExtension s ++ ".o")
+  executeProcess cxxCompiler $ cxxBaseOptions ++ otherOptions ++ ["-c", s, "-o", objName]
+  if e
+     then do
+       -- Extra files are put into .a since they will be unconditionally
+       -- included. This prevents unwanted symbol dependencies.
+       arName  <- canonicalizePath $ p </> (takeFileName $ dropExtension s ++ ".a")
+       executeProcess arArchiver ["-q",arName,objName]
+       return arName
+     else return objName where
     otherOptions = map ("-I" ++) $ map normalise ps
-runCxxCommand (CompileToBinary ss o ps) =
-  executeProcess cxxCompiler $ cxxBaseOptions ++ otherOptions ++ ss ++ ["-o", o] where
+runCxxCommand (CompileToBinary m ss o ps) = do
+  let arFiles    = filter (isSuffixOf ".a")       ss
+  let otherFiles = filter (not . isSuffixOf ".a") ss
+  executeProcess cxxCompiler $ cxxBaseOptions ++ otherOptions ++ m:otherFiles ++ arFiles ++ ["-o", o]
+  return o where
     otherOptions = map ("-I" ++) $ map normalise ps
 
 runTestCommand :: TestCommand -> IO TestCommandResult
