@@ -64,7 +64,8 @@ import Cli.CompileOptions (CompileMode)
 data CompileMetadata =
   CompileMetadata {
     cmPath :: String,
-    cmDepPaths :: [String],
+    cmPublicDeps :: [String],
+    cmPrivateDeps :: [String],
     cmCategories :: [String],
     cmSubdirs :: [String],
     cmPublicFiles :: [String],
@@ -110,7 +111,8 @@ data RecompileMetadata =
   RecompileMetadata {
     rmRoot :: String,
     rmPath :: String,
-    rmDepPaths :: [String],
+    rmPublicDeps :: [String],
+    rmPrivateDeps :: [String],
     rmExtraFiles :: [String],
     rmExtraPaths :: [String],
     rmMode :: CompileMode,
@@ -256,7 +258,7 @@ loadRecursiveDeps ps = fmap snd $ fixedPaths >>= collect (Set.empty,(True,[])) w
         fresh <- checkModuleFreshness p m
         when (not fresh) $
           hPutStrLn stderr $ "Module \"" ++ p ++ "\" is out of date and should be recompiled."
-        collect (p `Set.insert` pa,(fresh && fr,xs ++ [m])) (ps ++ cmDepPaths m)
+        collect (p `Set.insert` pa,(fresh && fr,xs ++ [m])) (ps ++ cmPublicDeps m)
   collect xa _ = return xa
 
 fixPath :: String -> String
@@ -284,13 +286,13 @@ sortCompiledFiles = foldl split ([],[],[]) where
     | otherwise = fs
 
 checkModuleFreshness :: String -> CompileMetadata -> IO Bool
-checkModuleFreshness p (CompileMetadata p2 is _ _ ps xs ts hxx cxx _) = do
+checkModuleFreshness p (CompileMetadata p2 is is2 _ _ ps xs ts hxx cxx _) = do
   time <- getModificationTime $ getCachedPath p "" metadataFilename
   (ps2,xs2,ts2) <- findSourceFiles p ""
   let e1 = checkMissing ps ps2
   let e2 = checkMissing xs xs2
   let e3 = checkMissing ts ts2
-  f1 <- sequence $ map (\p2 -> check time $ getCachedPath p2 "" metadataFilename) is
+  f1 <- sequence $ map (\p2 -> check time $ getCachedPath p2 "" metadataFilename) $ is ++ is2
   f2 <- sequence $ map (check time . (p2 </>)) $ ps ++ xs
   f3 <- sequence $ map (check time . getCachedPath p2 "") $ hxx ++ cxx
   let fresh = not $ any id $ [e1,e2,e3] ++ f1 ++ f2 ++ f3

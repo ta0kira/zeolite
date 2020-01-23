@@ -35,7 +35,8 @@ module Cli.CompileOptions (
 data CompileOptions =
   CompileOptions {
     coHelp :: HelpMode,
-    coIncludes :: [String],
+    coPublicDeps :: [String],
+    coPrivateDeps :: [String],
     coSources :: [String],
     coExtraFiles :: [String],
     coExtraPaths :: [String],
@@ -49,7 +50,8 @@ emptyCompileOptions :: CompileOptions
 emptyCompileOptions =
   CompileOptions {
     coHelp = HelpUnspecified,
-    coIncludes = [],
+    coPublicDeps = [],
+    coPrivateDeps = [],
     coSources = [],
     coExtraFiles = [],
     coExtraPaths = [],

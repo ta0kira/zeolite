@@ -55,7 +55,7 @@ main = do
         let co' = getCompileSuccess co
         when (HelpNotNeeded /= (coHelp co')) $ showHelp >> exitFailure
         runCompiler co'
-    validate co@(CompileOptions h is ds es ep p m o _)
+    validate co@(CompileOptions h is is2 ds es ep p m o _)
       | h /= HelpNotNeeded = return co
 
       | (not $ null o) && (isCompileIncremental m) =
@@ -63,8 +63,8 @@ main = do
 
       | (not $ null o) && (isExecuteTests m) =
         compileError "Output filename (-o) is not allowed in test mode (-t)."
-      | (not $ null is) && (isExecuteTests m) =
-        compileError "Include paths (-i) are not allowed in test mode (-t)."
+      | (not $ null $ is ++ is2) && (isExecuteTests m) =
+        compileError "Include paths (-i/-I) are not allowed in test mode (-t)."
           | (not $ null $ es ++ ep) && (isExecuteTests m) =
         compileError "Extra files (-e) are not allowed in test mode (-t)."
 
@@ -72,8 +72,8 @@ main = do
         compileError "Path prefix (-p) is not allowed in recompile mode (-r)."
       | (not $ null o) && (isCompileRecompile m) =
         compileError "Output filename (-o) is not allowed in recompile mode (-r)."
-      | (not $ null is) && (isCompileRecompile m) =
-        compileError "Include paths (-i) are not allowed in recompile mode (-r)."
+      | (not $ null $ is ++ is2) && (isCompileRecompile m) =
+        compileError "Include paths (-i/-I) are not allowed in recompile mode (-r)."
           | (not $ null $ es ++ ep) && (isCompileRecompile m) =
         compileError "Extra files (-e) are not allowed in recompile mode (-r)."
 
@@ -90,7 +90,7 @@ showHelp = do
   hPutStrLn stderr "Also see https://ta0kira.github.io/zeolite for more documentation."
 
 runCompiler :: CompileOptions -> IO ()
-runCompiler co@(CompileOptions _ _ ds _ _ p (ExecuteTests tp) _ f) = do
+runCompiler co@(CompileOptions _ _ _ ds _ _ p (ExecuteTests tp) _ f) = do
   ds' <- sequence $ map preloadModule ds
   results <- sequence $ map runTests ds'
   processResults $ mergeAllM results where
@@ -124,7 +124,7 @@ runCompiler co@(CompileOptions _ _ ds _ _ p (ExecuteTests tp) _ f) = do
           exitFailure
       | otherwise = do
           hPutStrLn stderr $ "\nZeolite tests passed."
-runCompiler co@(CompileOptions h _ ds _ _ _ CompileRecompile _ f) = do
+runCompiler co@(CompileOptions h _ _ ds _ _ _ CompileRecompile _ f) = do
   fmap mergeAll $ sequence $ map recompileSingle ds where
     recompileSingle d0 = do
       rm <- tryLoadRecompile d0
@@ -133,14 +133,15 @@ runCompiler co@(CompileOptions h _ ds _ _ _ CompileRecompile _ f) = do
            hPutStrLn stderr $ "Path " ++ d0 ++ " has not been configured or compiled yet."
            exitFailure
          else do
-           let (RecompileMetadata p d is es ep m o) = rm
+           let (RecompileMetadata p d is is2 es ep m o) = rm
            -- In case the module is manually configured with a p such as "..",
            -- since the absolute path might not be known ahead of time.
            absolute <- canonicalizePath d0
            let fixed = fixPath (absolute </> p)
            let recompile = CompileOptions {
                coHelp = h,
-               coIncludes = is,
+               coPublicDeps = is,
+               coPrivateDeps = is2,
                coSources = [d],
                coExtraFiles = es,
                coExtraPaths = ep,
@@ -150,21 +151,22 @@ runCompiler co@(CompileOptions h _ ds _ _ _ CompileRecompile _ f) = do
                coForce = max AllowRecompile f
              }
            runCompiler recompile
-runCompiler co@(CompileOptions h is ds es ep p m o f) = do
-  (fr,deps) <- loadRecursiveDeps is
+runCompiler co@(CompileOptions h is is2 ds es ep p m o f) = do
+  (fr,deps) <- loadRecursiveDeps (is ++ is2)
   checkAllowedStale fr f
   let ss = fixPaths $ getSourceFilesForDeps deps
-  let as = fixPaths $ getRealPathsForDeps deps
+  as  <- fmap fixPaths $ sequence $ map canonicalizePath is
+  as2 <- fmap fixPaths $ sequence $ map canonicalizePath is2
   basePath <- getBasePath
   ss' <- zipWithContents p ss
-  ma <- sequence $ map (processPath basePath deps as ss') ds
+  ma <- sequence $ map (processPath basePath deps as as2 ss') ds
   let ms = concat $ map snd ma
   let deps2 = map fst ma
   -- TODO: Stop spamming paths just to find deps for main.cpp.
   writeMain basePath (deps ++ deps2) m ms
   hPutStrLn stderr $ "Zeolite compilation succeeded." where
     ep' = fixPaths $ map (getCachedPath p "") ep
-    processPath bp deps as ss d = do
+    processPath bp deps as as2 ss d = do
       isConfigured <- isPathConfigured d
       when (isConfigured && f == DoNotForce) $ do
         hPutStrLn stderr $ "Module " ++ d ++ " has already been configured. " ++
@@ -175,7 +177,8 @@ runCompiler co@(CompileOptions h is ds es ep p m o f) = do
       let rm = RecompileMetadata {
         rmRoot = absolute,
         rmPath = d,
-        rmDepPaths = sort as,
+        rmPublicDeps = as,
+        rmPrivateDeps = as2,
         rmExtraFiles = sort es,
         rmExtraPaths = sort ep,
         rmMode = m,
@@ -195,11 +198,11 @@ runCompiler co@(CompileOptions h is ds es ep p m o f) = do
       ps' <- zipWithContents p ps
       xs' <- zipWithContents p xs
       let fs = compileAll ss ps' xs'
-      writeOutput (fixPaths $ paths ++ ep') d as
+      writeOutput (fixPaths $ paths ++ ep') d as as2
                   (map takeFileName ps)
                   (map takeFileName xs)
                   (map takeFileName ts) fs
-    writeOutput paths d as ps xs ts fs
+    writeOutput paths d as as2 ps xs ts fs
       | isCompileError fs = do
           formatWarnings fs
           hPutStr stderr $ "Compiler errors:\n" ++ (show $ getCompileError fs)
@@ -218,7 +221,8 @@ runCompiler co@(CompileOptions h is ds es ep p m o f) = do
           path <- canonicalizePath $ p </> d
           let cm = CompileMetadata {
               cmPath = path,
-              cmDepPaths = sort as,
+              cmPublicDeps = as,
+              cmPrivateDeps = as2,
               cmCategories = sort $ map show pc,
               cmSubdirs = sort $ ss ++ ep,
               cmPublicFiles = sort ps,
