@@ -1,0 +1,9 @@
+define Internal {
+  create () {
+    return Internal{ }
+  }
+
+  get () {
+    return 1
+  }
+}

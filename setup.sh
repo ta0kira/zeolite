@@ -29,6 +29,8 @@ modules=(
   "$root/util"
   "$root/tests/visibility/internal"
   "$root/tests/visibility"
+  "$root/tests/visibility2/internal"
+  "$root/tests/visibility2"
   "$root/tests"
 )
 

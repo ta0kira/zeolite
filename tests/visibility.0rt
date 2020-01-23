@@ -20,7 +20,9 @@ testcase "public types in private deps stay hidden" {
   success Test$run()
 }
 
-// Also defined differently in visibility/internal/internal.0rp.
+// Internal is defined in visibility/internal and visibility2/internal. The
+// three definitions should not interfere with each other, despite two of them
+// being public.
 concrete Internal {
   @type create () -> (Internal)
   @value get () -> (String)

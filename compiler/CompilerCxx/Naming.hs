@@ -35,6 +35,7 @@ module CompilerCxx.Naming (
   mainFilename,
   paramName,
   privateNamepace,
+  publicNamepace,
   qualifiedTypeGetter,
   sourceFilename,
   tableName,
@@ -131,6 +132,9 @@ valueCreator = "CreateValue"
 
 privateNamepace :: Hashable a => a -> String
 privateNamepace = ("private_" ++) . flip showHex "" . abs . hash
+
+publicNamepace :: Hashable a => a -> String
+publicNamepace = ("public_" ++) . flip showHex "" . abs . hash
 
 qualifiedTypeGetter :: AnyCategory c -> String
 qualifiedTypeGetter t

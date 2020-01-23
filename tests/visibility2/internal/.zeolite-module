@@ -1,0 +1,1 @@
+RecompileMetadata {rmRoot = "../..", rmPath = "visibility2/internal", rmPublicDeps = [], rmPrivateDeps = [], rmExtraFiles = [], rmExtraPaths = [], rmMode = CompileIncremental, rmOutputName = ""}

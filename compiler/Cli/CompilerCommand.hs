@@ -41,6 +41,7 @@ data CxxCommand =
   CompileToObject {
     ctoSource :: String,
     ctoPath :: String,
+    ctoNamespace :: String,
     ctoPaths :: [String],
     ctoExtra :: Bool
   } |
@@ -69,10 +70,11 @@ data TestCommandResult =
 
 cxxCompiler = "clang++"
 arArchiver = "ar"
+namespaceMacro = "ZEOLITE_PUBLIC_NAMESPACE"
 cxxBaseOptions = ["-O2", "-std=c++11"]
 
 runCxxCommand :: CxxCommand -> IO String
-runCxxCommand (CompileToObject s p ps e) = do
+runCxxCommand (CompileToObject s p ns ps e) = do
   objName <- canonicalizePath $ p </> (takeFileName $ dropExtension s ++ ".o")
   executeProcess cxxCompiler $ cxxBaseOptions ++ otherOptions ++ ["-c", s, "-o", objName]
   if e
@@ -83,7 +85,10 @@ runCxxCommand (CompileToObject s p ps e) = do
        executeProcess arArchiver ["-q",arName,objName]
        return arName
      else return objName where
-    otherOptions = map ("-I" ++) $ map normalise ps
+    otherOptions = map (("-I" ++) . normalise) ps ++ nsFlag
+    nsFlag
+      | null ns = []
+      | otherwise = ["-D" ++ namespaceMacro ++ "=" ++ ns]
 runCxxCommand (CompileToBinary m ss o ps) = do
   let arFiles    = filter (isSuffixOf ".a")       ss
   let otherFiles = filter (not . isSuffixOf ".a") ss

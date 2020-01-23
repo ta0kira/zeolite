@@ -52,7 +52,7 @@ data CxxOutput =
     coCategory :: Maybe CategoryName,
     coFilename :: String,
     coNamespace :: String,
-    coUsesNamespace :: String,
+    coUsesNamespace :: [String],
     coUsesCategory :: [CategoryName],
     coOutput :: [String]
   }
@@ -62,7 +62,7 @@ compileCategoryDeclaration _ t =
   return $ CxxOutput (Just $ getCategoryName t)
                      (headerFilename name)
                      (getCategoryNamespace t)
-                     ""
+                     ns
                      (filter (not . isBuiltinCategory) $ Set.toList $ cdRequired file)
                      (cdOutput file) where
     file = mergeAll $ [
@@ -71,6 +71,7 @@ compileCategoryDeclaration _ t =
         addNamespace t content,
         onlyCodes guardBottom
       ]
+    ns = nub $ filter (not . null) [getCategoryNamespace t]
     content = onlyCodes $ collection ++ labels ++ getCategory ++ getType
     name = getCategoryName t
     guardTop = ["#ifndef " ++ guardName,"#define " ++ guardName]
@@ -308,14 +309,14 @@ commonDefineAll t ns top bottom ce te fe = do
   return $ CxxOutput (Just $ getCategoryName t)
                      filename
                      (getCategoryNamespace t)
-                     (if null ns then "" else head ns)
+                     ns'
                      (filter (not . isBuiltinCategory) $ Set.toList req)
                      (baseSourceIncludes ++ includes ++ out)
   where
-    using = nub $ filter (not . null) $ (getCategoryNamespace t):ns
+    ns' = nub $ filter (not . null) $ (getCategoryNamespace t):ns
     namespaces =
       mergeAll $ map (\n -> onlyCodes ["namespace " ++ n ++ " {}",
-                                       "using namespace " ++ n ++ ";"]) $ using
+                                       "using namespace " ++ n ++ ";"]) ns'
     conditionalContent
       | isInstanceInterface t = []
       | otherwise = [

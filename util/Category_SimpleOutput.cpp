@@ -28,6 +28,11 @@ limitations under the License.
 #include "Category_BufferedWriter.hpp"
 
 const int Collection_SimpleOutput = 0;
+
+#ifdef ZEOLITE_PUBLIC_NAMESPACE
+namespace ZEOLITE_PUBLIC_NAMESPACE {
+#endif  // ZEOLITE_PUBLIC_NAMESPACE
+
 const void* const Functions_SimpleOutput = &Collection_SimpleOutput;
 
 const TypeFunction& Function_SimpleOutput_stdout =
@@ -149,3 +154,7 @@ TypeInstance& GetType_SimpleOutput(Params<0>::Type) {
   static auto& instance = *new Type_SimpleOutput();
   return instance;
 }
+
+#ifdef ZEOLITE_PUBLIC_NAMESPACE
+}  // namespace ZEOLITE_PUBLIC_NAMESPACE
+#endif  // ZEOLITE_PUBLIC_NAMESPACE

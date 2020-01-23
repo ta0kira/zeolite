@@ -201,12 +201,14 @@ runCompiler co@(CompileOptions h is is2 ds es ep p m o f) = do
       let paths = getIncludePathsForDeps deps2
       ps' <- zipWithContents p ps
       xs' <- zipWithContents p xs
-      let fs = compileAll ss ps' xs'
-      writeOutput (fixPaths $ paths ++ ep') deps2 d as as2
+      ns0 <- canonicalizePath (p </> d) >>= return . publicNamepace
+      let ns2 = getNamespacesForDeps deps
+      let fs = compileAll ns0 ns2 ss ps' xs'
+      writeOutput (fixPaths $ paths ++ ep') ns0 deps2 d as as2
                   (map takeFileName ps)
                   (map takeFileName xs)
                   (map takeFileName ts) fs
-    writeOutput paths deps d as as2 ps xs ts fs
+    writeOutput paths ns0 deps d as as2 ps xs ts fs
       | isCompileError fs = do
           formatWarnings fs
           hPutStr stderr $ "Compiler errors:\n" ++ (show $ getCompileError fs)
@@ -215,17 +217,18 @@ runCompiler co@(CompileOptions h is is2 ds es ep p m o f) = do
       | otherwise = do
           formatWarnings fs
           let (pc,mf,fs') = getCompileSuccess fs
-          let ss = nub $ filter (not . null) $ map coNamespace fs'
+          let ss = nub $ filter (not . null) $ [ns0] ++ map coNamespace fs'
           let paths' = paths ++ map (\ns -> getCachedPath (p </> d) ns "") ss
           let hxx   = filter (isSuffixOf ".hpp" . coFilename)       fs'
           let other = filter (not . isSuffixOf ".hpp" . coFilename) fs'
-          os1 <- sequence $ map (writeOutputFile paths' d) $ hxx ++ other
-          os2 <- fmap concat $ sequence $ map (compileExtraFile paths' d) es
+          os1 <- sequence $ map (writeOutputFile ns0 paths' d) $ hxx ++ other
+          os2 <- fmap concat $ sequence $ map (compileExtraFile ns0 paths' d) es
           let (hxx,cxx,os') = sortCompiledFiles $ map (\f -> coNamespace f </> coFilename f) fs' ++ es
           path <- canonicalizePath $ p </> d
           let os1' = resolveObjectDeps path os1 deps
           let cm = CompileMetadata {
               cmPath = path,
+              cmNamespace = ns0,
               cmPublicDeps = as,
               cmPrivateDeps = as2,
               cmCategories = sort $ map show pc,
@@ -242,7 +245,7 @@ runCompiler co@(CompileOptions h is is2 ds es ep p m o f) = do
     formatWarnings c
       | null $ getCompileWarnings c = return ()
       | otherwise = hPutStr stderr $ "Compiler warnings:\n" ++ (concat $ map (++ "\n") (getCompileWarnings c))
-    writeOutputFile paths d ca@(CxxOutput c f ns ns2 req content) = do
+    writeOutputFile ns0 paths d ca@(CxxOutput c f ns ns2 req content) = do
       hPutStrLn stderr $ "Writing file " ++ f
       writeCachedFile (p </> d) ns f $ concat $ map (++ "\n") content
       if isSuffixOf ".cpp" f || isSuffixOf ".cc" f
@@ -251,44 +254,46 @@ runCompiler co@(CompileOptions h is is2 ds es ep p m o f) = do
            let p0 = getCachedPath (p </> d) "" ""
            let p1 = getCachedPath (p </> d) ns ""
            createCachePath (p </> d)
-           let command = CompileToObject f' (getCachedPath (p </> d) ns "") (p0:p1:paths) False
+           let ns' = if null ns then ns0 else ns
+           let command = CompileToObject f' (getCachedPath (p </> d) ns' "") "" (p0:p1:paths) False
            o <- runCxxCommand command
            return $ ([o],ca)
          else return ([],ca)
-    compileExtraFile paths d f
+    compileExtraFile ns0 paths d f
       | isSuffixOf ".cpp" f || isSuffixOf ".cc" f = do
           let f' = getCachedPath (p </> d) "" f
           let p0 = getCachedPath (p </> d) "" ""
           createCachePath (p </> d)
-          let command = CompileToObject f' (getCachedPath (p </> d) "" "") (p0:paths) True
+          let command = CompileToObject f' (getCachedPath (p </> d) "" "") ns0 (p0:paths) True
           o <- runCxxCommand command
           return [OtherObjectFile o]
       | otherwise = return []
-    compileAll is cs ds = do
+    compileAll ns0 ns2 is cs ds = do
       tm0 <- builtinCategories
       tm1 <- addIncludes tm0 is
-      (pc,tm2,cf) <- compilePublic tm1 cs
-      ds' <- collectAllOrErrorM $ map (compileInternal tm2) ds
+      (pc,tm2,cf) <- compilePublic ns0 tm1 cs
+      ds' <- collectAllOrErrorM $ map (compileInternal ns0 ns2 tm2) ds
       let (mf,df) = mergeInternal ds'
       return $ (pc,mf,cf ++ df)
     addIncludes tm fs = do
       cs <- fmap concat $ collectAllOrErrorM $ map parsePublicSource fs
       includeNewTypes tm cs
-    compilePublic tm fs = do
+    compilePublic ns0 tm fs = do
       cs <- fmap concat $ collectAllOrErrorM $ map parsePublicSource fs
-      let pc = map getCategoryName cs
-      tm' <- includeNewTypes tm cs
-      hxx <- collectAllOrErrorM $ map (compileCategoryDeclaration tm') cs
-      let interfaces = filter (not . isValueConcrete) cs
-      cxx <- collectAllOrErrorM $ map compileInterfaceDefinition interfaces
-      return (pc,tm',hxx ++ cxx)
-    compileInternal tm d = do
-      let namespace = privateNamepace d
-      (cs,ds) <- parseInternalSource d
-      let cs' = map (setCategoryNamespace namespace) cs
+      let cs' = map (setCategoryNamespace ns0) cs
+      let pc = map getCategoryName cs'
       tm' <- includeNewTypes tm cs'
       hxx <- collectAllOrErrorM $ map (compileCategoryDeclaration tm') cs'
-      cxx <- collectAllOrErrorM $ map (compileConcreteDefinition tm' [namespace]) ds
+      let interfaces = filter (not . isValueConcrete) cs'
+      cxx <- collectAllOrErrorM $ map compileInterfaceDefinition interfaces
+      return (pc,tm',hxx ++ cxx)
+    compileInternal ns0 ns2 tm d = do
+      let ns1 = privateNamepace d
+      (cs,ds) <- parseInternalSource d
+      let cs' = map (setCategoryNamespace ns1) cs
+      tm' <- includeNewTypes tm cs'
+      hxx <- collectAllOrErrorM $ map (compileCategoryDeclaration tm') cs'
+      cxx <- collectAllOrErrorM $ map (compileConcreteDefinition tm' (ns0:ns1:ns2)) ds
       let interfaces = filter (not . isValueConcrete) cs'
       ms <- maybeCreateMain tm' m
       cxx2 <- collectAllOrErrorM $ map compileInterfaceDefinition interfaces
@@ -328,7 +333,7 @@ runCompiler co@(CompileOptions h is is2 ds es ep p m o f) = do
         Nothing -> return []
         Just t -> do
           (ns,main) <- createMainFile tm t f
-          return [CxxOutput Nothing mainFilename "" ns [getCategoryName t] main]
+          return [CxxOutput Nothing mainFilename "" [ns] [getCategoryName t] main]
     maybeCreateMain _ _ = return []
 
 checkAllowedStale :: Bool -> ForceMode -> IO ()

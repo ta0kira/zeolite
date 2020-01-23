@@ -31,6 +31,7 @@ module Cli.CompileMetadata (
   getCachedPath,
   getCacheRelativePath,
   getIncludePathsForDeps,
+  getNamespacesForDeps,
   getObjectFilesForDeps,
   getObjectFileResolver,
   getRealPathsForDeps,
@@ -70,6 +71,7 @@ import CompilerCxx.Category (CxxOutput(..))
 data CompileMetadata =
   CompileMetadata {
     cmPath :: String,
+    cmNamespace :: String,
     cmPublicDeps :: [String],
     cmPrivateDeps :: [String],
     cmCategories :: [String],
@@ -240,6 +242,9 @@ getSourceFilesForDeps :: [CompileMetadata] -> [String]
 getSourceFilesForDeps = concat . map extract where
   extract m = map (cmPath m </>) (cmPublicFiles m)
 
+getNamespacesForDeps :: [CompileMetadata] -> [String]
+getNamespacesForDeps = filter (not . null) . map cmNamespace
+
 getIncludePathsForDeps :: [CompileMetadata] -> [String]
 getIncludePathsForDeps = concat . map extract where
   extract m = (cmPath m </> cachedDataPath):(map ((cmPath m </> cachedDataPath) </>) $ cmSubdirs m)
@@ -301,7 +306,7 @@ sortCompiledFiles = foldl split ([],[],[]) where
     | otherwise = fs
 
 checkModuleFreshness :: String -> CompileMetadata -> IO Bool
-checkModuleFreshness p (CompileMetadata p2 is is2 _ _ ps xs ts hxx cxx _) = do
+checkModuleFreshness p (CompileMetadata p2 _ is is2 _ _ ps xs ts hxx cxx _) = do
   time <- getModificationTime $ getCachedPath p "" metadataFilename
   (ps2,xs2,ts2) <- findSourceFiles p ""
   let e1 = checkMissing ps ps2
@@ -322,7 +327,7 @@ checkModuleFreshness p (CompileMetadata p2 is is2 _ _ ps xs ts hxx cxx _) = do
            return (time2 > time)
     checkMissing s0 s1 = not $ null $ (Set.fromList s1) `Set.difference` (Set.fromList s0)
 
-getObjectFileResolver :: [ObjectFile] -> String -> [CategoryName] -> [String]
+getObjectFileResolver :: [ObjectFile] -> [String] -> [CategoryName] -> [String]
 getObjectFileResolver os ns ds = resolved ++ nonCategories where
   categories    = filter isCategoryObjectFile os
   nonCategories = map oofFile $ filter (not . isCategoryObjectFile) os
@@ -332,11 +337,10 @@ getObjectFileResolver os ns ds = resolved ++ nonCategories where
   keyBySpec o = (cofCategory o,o)
   directDeps = concat $ map (resolveDep . show) ds
   directResolved = map cofCategory directDeps
-  resolveDep d = unwrap $ ((d,ns) `Map.lookup` categoryMap >>= return . (:[])) <|>
-                          ((d,"") `Map.lookup` categoryMap >>= return . (:[])) <|>
-                          Just []
-  unwrap (Just xs) = xs
-  unwrap _         = []
+  resolveDep d = unwrap $ foldl (<|>) Nothing allChecks <|> Just [] where
+    allChecks = map (\n -> (d,n) `Map.lookup` categoryMap >>= return . (:[])) (ns ++ [""])
+    unwrap (Just xs) = xs
+    unwrap _         = []
   resolved = reverse $ nub $ reverse $ collectAll Set.empty directResolved
   collectAll ca = concat . map (collect ca)
   -- NOTE: Object files are collected with deps following things that depend on
@@ -363,8 +367,7 @@ resolveObjectDeps p os deps = resolvedCategories ++ nonCategories where
   resolveCategory (fs,ca@(CxxOutput _ _ _ ns2 ds _)) =
     (cxxToId ca,CategoryObjectFile (cxxToId ca) rs fs) where
       rs = concat $ map (resolveDep ns2 . show) ds
-  resolveDep ns d = unwrap $ ((d,ns) `Map.lookup` categoryMap >>= return . (:[])) <|>
-                             ((d,"") `Map.lookup` categoryMap >>= return . (:[])) <|>
-                             Just []
-  unwrap (Just xs) = xs
-  unwrap _         = []
+  resolveDep ns d = unwrap $ foldl (<|>) Nothing allChecks <|> Just [] where
+    allChecks = map (\n -> (d,n) `Map.lookup` categoryMap >>= return . (:[])) (ns ++ [""])
+    unwrap (Just xs) = xs
+    unwrap _         = []

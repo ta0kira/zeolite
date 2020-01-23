@@ -1,0 +1,5 @@
+define Getter2 {
+  getValue () {
+    return Internal$create().get()
+  }
+}

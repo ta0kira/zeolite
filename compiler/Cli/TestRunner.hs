@@ -96,7 +96,7 @@ runSingleTest paths deps os tm (f,s) = do
          else do
            let warnings = getCompileWarnings result
            let (req,main,ns,fs) = getCompileSuccess result
-           binaryName <- createBinary main req ns fs
+           binaryName <- createBinary main req [ns] fs
            let command = TestCommand binaryName (takeDirectory binaryName)
            (TestCommandResult s' out err) <- runTestCommand command
            case (s,s') of
@@ -106,17 +106,18 @@ runSingleTest paths deps os tm (f,s) = do
 
     -- TODO: Combine this with the logic in runCompiler.
     compileAll e cs ds = do
-      let namespace = privateNamepace s
-      let cs' = map (setCategoryNamespace namespace) cs
+      let ns0 = map cmNamespace deps
+      let ns1 = privateNamepace s
+      let cs' = map (setCategoryNamespace ns1) cs
       tm' <- includeNewTypes tm cs'
       hxx <- collectAllOrErrorM $ map (compileCategoryDeclaration tm') cs'
-      cxx <- collectAllOrErrorM $ map (compileConcreteDefinition tm' [namespace]) ds
+      cxx <- collectAllOrErrorM $ map (compileConcreteDefinition tm' (ns1:ns0)) ds
       let interfaces = filter (not . isValueConcrete) cs'
       cxx2 <- collectAllOrErrorM $ map compileInterfaceDefinition interfaces
       (req,main) <- case e of
-                         Just e -> createTestFile tm' e namespace
+                         Just e -> createTestFile tm' e ns1
                          Nothing -> return ([],[])
-      return (req,main,namespace,hxx ++ cxx ++ cxx2)
+      return (req,main,ns1,hxx ++ cxx ++ cxx2)
     checkRequired rs comp err out = mergeAllM $ map (checkSubsetForRegex True  comp err out) rs
     checkExcluded es comp err out = mergeAllM $ map (checkSubsetForRegex False comp err out) es
     checkSubsetForRegex expected comp err out (OutputPattern OutputAny r) =
