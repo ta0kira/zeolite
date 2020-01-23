@@ -142,7 +142,7 @@ runCompiler co@(CompileOptions h _ _ ds _ _ _ CompileRecompile _ f) = do
           hPutStrLn stderr $ "Path " ++ d0 ++ " has not been configured or compiled yet."
           exitFailure
         maybeCompile (Just rm') upToDate
-          | upToDate && f < ForceAll = hPutStrLn stderr $ "Path " ++ d0 ++ " is up to date."
+          | f < ForceAll && upToDate = hPutStrLn stderr $ "Path " ++ d0 ++ " is up to date."
           | otherwise = do
               let (RecompileMetadata p d is is2 es ep m o) = rm'
               -- In case the module is manually configured with a p such as "..",

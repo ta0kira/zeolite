@@ -177,8 +177,10 @@ isPathUpToDate :: String -> IO Bool
 isPathUpToDate p = do
   m <- tryLoadMetadata p
   case m of
-       Just m' -> checkModuleFreshness p m'
        Nothing -> return False
+       Just m'-> do
+         (fr,_) <- loadDepsCommon True (\m -> cmPublicDeps m ++ cmPrivateDeps m) [p]
+         return fr
 
 isPathConfigured :: String -> IO Bool
 isPathConfigured p = tryLoadRecompile p >>= return . isJust
@@ -254,11 +256,11 @@ getObjectFilesForDeps :: [CompileMetadata] -> [ObjectFile]
 getObjectFilesForDeps = concat . map cmObjectFiles
 
 loadPublicDeps :: [String] -> IO (Bool,[CompileMetadata])
-loadPublicDeps = loadDepsCommon cmPublicDeps
+loadPublicDeps = loadDepsCommon False cmPublicDeps
 
 loadPrivateDeps :: [CompileMetadata] -> IO (Bool,[CompileMetadata])
 loadPrivateDeps ms = do
-  (fr,new) <- loadDepsCommon (\m -> cmPublicDeps m ++ cmPrivateDeps m) toFind
+  (fr,new) <- loadDepsCommon False (\m -> cmPublicDeps m ++ cmPrivateDeps m) toFind
   return (fr,ms ++ existing ++ new) where
     paths = concat $ map (\m -> cmPublicDeps m ++ cmPrivateDeps m) ms
     (existing,toFind) = foldl splitByExisting ([],[]) $ nub paths
@@ -268,16 +270,16 @@ loadPrivateDeps ms = do
           Just m  -> (es ++ [m],fs)
           Nothing -> (es,fs ++ [p])
 
-loadDepsCommon :: (CompileMetadata -> [String]) -> [String] -> IO (Bool,[CompileMetadata])
-loadDepsCommon f ps = fmap snd $ fixedPaths >>= collect (Set.empty,(True,[])) where
+loadDepsCommon :: Bool -> (CompileMetadata -> [String]) -> [String] -> IO (Bool,[CompileMetadata])
+loadDepsCommon s f ps = fmap snd $ fixedPaths >>= collect (Set.empty,(True,[])) where
   fixedPaths = sequence $ map canonicalizePath ps
   collect xa@(pa,(fr,xs)) (p:ps)
     | p `Set.member` pa = collect xa ps
     | otherwise = do
-        hPutStrLn stderr $ "Loading metadata for dependency \"" ++ p ++ "\"."
+        when (not s) $ hPutStrLn stderr $ "Loading metadata for dependency \"" ++ p ++ "\"."
         m <- loadMetadata p
         fresh <- checkModuleFreshness p m
-        when (not fresh) $
+        when (not s && not fresh) $
           hPutStrLn stderr $ "Module \"" ++ p ++ "\" is out of date and should be recompiled."
         collect (p `Set.insert` pa,(fresh && fr,xs ++ [m])) (ps ++ f m)
   collect xa _ = return xa
