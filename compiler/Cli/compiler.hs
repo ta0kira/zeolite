@@ -132,29 +132,32 @@ runCompiler co@(CompileOptions h _ _ ds _ _ _ CompileRecompile _ f) = do
   fmap mergeAll $ sequence $ map recompileSingle ds where
     recompileSingle d0 = do
       rm <- tryLoadRecompile d0
-      if isNotConfigured rm
-         then do
-           hPutStrLn stderr $ "Path " ++ d0 ++ " has not been configured or compiled yet."
-           exitFailure
-         else do
-           let (RecompileMetadata p d is is2 es ep m o) = rm
-           -- In case the module is manually configured with a p such as "..",
-           -- since the absolute path might not be known ahead of time.
-           absolute <- canonicalizePath d0
-           let fixed = fixPath (absolute </> p)
-           let recompile = CompileOptions {
-               coHelp = h,
-               coPublicDeps = map ((fixed </> d) </>) is,
-               coPrivateDeps = map ((fixed </> d) </>) is2,
-               coSources = [d],
-               coExtraFiles = es,
-               coExtraPaths = ep,
-               coSourcePrefix = fixed,
-               coMode = m,
-               coOutputName = o,
-               coForce = max AllowRecompile f
-             }
-           runCompiler recompile
+      upToDate <- isPathUpToDate d0
+      maybeCompile rm upToDate where
+        maybeCompile Nothing _ = do
+          hPutStrLn stderr $ "Path " ++ d0 ++ " has not been configured or compiled yet."
+          exitFailure
+        maybeCompile (Just rm') upToDate
+          | upToDate && f < ForceAll = hPutStrLn stderr $ "Path " ++ d0 ++ " is up to date."
+          | otherwise = do
+              let (RecompileMetadata p d is is2 es ep m o) = rm'
+              -- In case the module is manually configured with a p such as "..",
+              -- since the absolute path might not be known ahead of time.
+              absolute <- canonicalizePath d0
+              let fixed = fixPath (absolute </> p)
+              let recompile = CompileOptions {
+                  coHelp = h,
+                  coPublicDeps = map ((fixed </> d) </>) is,
+                  coPrivateDeps = map ((fixed </> d) </>) is2,
+                  coSources = [d],
+                  coExtraFiles = es,
+                  coExtraPaths = ep,
+                  coSourcePrefix = fixed,
+                  coMode = m,
+                  coOutputName = o,
+                  coForce = if f == ForceAll then ForceRecompile else AllowRecompile
+                }
+              runCompiler recompile
 runCompiler co@(CompileOptions h is is2 ds es ep p m o f) = do
   (fr,deps) <- loadPublicDeps (is ++ is2)
   checkAllowedStale fr f
@@ -186,9 +189,7 @@ runCompiler co@(CompileOptions h is is2 ds es ep p m o f) = do
         rmMode = m,
         rmOutputName = o
       }
-      -- TODO: -f might be used with -r if there are stale dependencies, which
-      -- will inadvertently overwrite the config here.
-      when (f /= AllowRecompile) $ writeRecompile (p </> d) rm
+      when (f == DoNotForce && f == ForceAll) $ writeRecompile (p </> d) rm
       (ps,xs,ts) <- findSourceFiles p d
       -- Lazy dependency loading, in case we aren't compiling anything.
       deps2 <- if null ps && null xs
@@ -338,7 +339,7 @@ runCompiler co@(CompileOptions h is is2 ds es ep p m o f) = do
 
 checkAllowedStale :: Bool -> ForceMode -> IO ()
 checkAllowedStale fr f = do
-  when (not fr && f < ForceAll) $ do
+  when (not fr && f < ForceRecompile) $ do
     hPutStrLn stderr $ "Some dependencies are out of date. " ++
                        "Recompile them or use -f to force."
     exitFailure

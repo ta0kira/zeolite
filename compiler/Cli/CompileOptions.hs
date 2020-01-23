@@ -63,7 +63,7 @@ emptyCompileOptions =
 
 data HelpMode = HelpNeeded | HelpNotNeeded | HelpUnspecified deriving (Eq,Show)
 
-data ForceMode = DoNotForce | AllowRecompile | ForceAll deriving (Eq,Ord,Show)
+data ForceMode = DoNotForce | AllowRecompile | ForceRecompile | ForceAll deriving (Eq,Ord,Show)
 
 data CompileMode =
   CompileBinary {

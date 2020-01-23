@@ -37,8 +37,8 @@ module Cli.CompileMetadata (
   getRealPathsForDeps,
   getSourceFilesForDeps,
   isCategoryObjectFile,
-  isNotConfigured,
   isPathConfigured,
+  isPathUpToDate,
   loadPrivateDeps,
   loadPublicDeps,
   loadMetadata,
@@ -123,18 +123,13 @@ data RecompileMetadata =
     rmExtraPaths :: [String],
     rmMode :: CompileMode,
     rmOutputName :: String
-  } |
-  NotConfigured
+  }
   deriving (Show,Read)
 
 cachedDataPath = ".zeolite-cache"
 recompileFilename = ".zeolite-module"
 metadataFilename = "metadata.txt"
 allowedExtraTypes = [".hpp",".cpp",".h",".cc",".a",".o"]
-
-isNotConfigured :: RecompileMetadata -> Bool
-isNotConfigured NotConfigured = True
-isNotConfigured _             = False
 
 loadMetadata :: String -> IO CompileMetadata
 loadMetadata p = do
@@ -160,27 +155,33 @@ loadMetadata p = do
       hPutStrLn stderr $ "Could not parse metadata from \"" ++ p ++ "\"; please recompile."
       exitFailure
 
-tryLoadRecompile :: String -> IO RecompileMetadata
-tryLoadRecompile p = do
-  let f = p </> recompileFilename
-  isDir <- doesDirectoryExist p
-  if not isDir
-     then return NotConfigured
-     else do
-       filePresent <- doesFileExist f
-       if not filePresent
-          then return NotConfigured
-          else do
-            c <- readFile f
-            check (reads c :: [(RecompileMetadata,String)]) where
-              check [(cm,"")]   = return cm
-              check [(cm,"\n")] = return cm
-              check _           = return NotConfigured
+tryLoadMetadata :: String -> IO (Maybe CompileMetadata)
+tryLoadMetadata p = tryLoadData $ (p </> cachedDataPath </> metadataFilename)
+
+tryLoadRecompile :: String -> IO (Maybe RecompileMetadata)
+tryLoadRecompile p = tryLoadData $ (p </> recompileFilename)
+
+tryLoadData :: Read a => String -> IO (Maybe a)
+tryLoadData f = do
+  filePresent <- doesFileExist f
+  if not filePresent
+    then return Nothing
+    else do
+      c <- readFile f
+      check (reads c) where
+        check [(cm,"")]   = return (Just cm)
+        check [(cm,"\n")] = return (Just cm)
+        check _           = return Nothing
+
+isPathUpToDate :: String -> IO Bool
+isPathUpToDate p = do
+  m <- tryLoadMetadata p
+  case m of
+       Just m' -> checkModuleFreshness p m'
+       Nothing -> return False
 
 isPathConfigured :: String -> IO Bool
-isPathConfigured p = do
-  m <- tryLoadRecompile p
-  return $ not $ isNotConfigured m
+isPathConfigured p = tryLoadRecompile p >>= return . isJust
 
 writeMetadata :: String -> CompileMetadata -> IO ()
 writeMetadata p m = do

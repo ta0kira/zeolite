@@ -41,7 +41,7 @@ build_compiler() {
 }
 
 init_modules() {
-  local command=("$compiler_bin" -r "${modules[@]}")
+  local command=("$compiler_bin" -f -r "${modules[@]}")
   echo "${command[@]}" 1>&2
   "${command[@]}"
 }
