@@ -20,6 +20,7 @@ module Cli.TestRunner (
   runSingleTest,
 ) where
 
+import Control.Arrow (second)
 import Control.Monad (when)
 import Data.List (isSuffixOf,nub)
 import System.Directory (setCurrentDirectory)
@@ -43,13 +44,19 @@ import Cli.CompilerCommand
 
 
 runSingleTest :: [String] -> [CompileMetadata] -> [ObjectFile] ->
-                 CategoryMap SourcePos -> (String,String) -> IO (CompileInfo ())
+                 CategoryMap SourcePos -> (String,String) ->
+                 IO ((Int,Int),CompileInfo ())
 runSingleTest paths deps os tm (f,s) = do
   hPutStrLn stderr $ "\nExecuting tests from " ++ f
-  fmap (flip reviseError $ "\nIn test file " ++ f) $ checkAndRun (parseTestSource (f,s)) where
+  allResults <- checkAndRun (parseTestSource (f,s))
+  return $ second (flip reviseError $ "\nIn test file " ++ f) allResults where
     checkAndRun ts
-      | isCompileError ts = return (ts >> return ())
-      | otherwise = fmap mergeAllM $ sequence $ map runSingle $ getCompileSuccess ts
+      | isCompileError ts = return ((0,0),ts >> return ())
+      | otherwise = do
+        allResults <- sequence $ map runSingle $ getCompileSuccess ts
+        let passed = length $ filter (not . isCompileError) allResults
+        let failed = length $ filter isCompileError allResults
+        return ((passed,failed),mergeAllM allResults)
     runSingle t = do
       let name = ithTestName $ itHeader t
       let context = "[" ++ formatFullContext (ithContext $ itHeader t) ++ "]"

@@ -94,8 +94,10 @@ showHelp = do
 runCompiler :: CompileOptions -> IO ()
 runCompiler co@(CompileOptions _ _ _ ds _ _ p (ExecuteTests tp) _ f) = do
   ds' <- sequence $ map preloadModule ds
-  results <- sequence $ map runTests ds'
-  processResults $ mergeAllM results where
+  allResults <- fmap concat $ sequence $ map runTests ds'
+  let passed = sum $ map (fst . fst) allResults
+  let failed = sum $ map (snd . fst) allResults
+  processResults passed failed (mergeAllM $ map snd allResults) where
     preloadModule d = do
       m <- loadMetadata (p </> d)
       base <- getBasePath
@@ -107,7 +109,7 @@ runCompiler co@(CompileOptions _ _ _ ds _ _ p (ExecuteTests tp) _ f) = do
     allowTests = Set.fromList tp
     isTestAllowed t = if null allowTests then True else t `Set.member` allowTests
     runTests :: (String,CompileMetadata,[CompileMetadata],[CompileMetadata]) ->
-                IO (CompileInfo ())
+                IO [((Int,Int),CompileInfo ())]
     runTests (d,m,deps1,deps2) = do
       let paths = getIncludePathsForDeps deps1
       let ss = fixPaths $ getSourceFilesForDeps deps1
@@ -119,15 +121,17 @@ runCompiler co@(CompileOptions _ _ _ ds _ _ p (ExecuteTests tp) _ f) = do
         cs <- fmap concat $ collectAllOrErrorM $ map parsePublicSource ss'
         includeNewTypes tm0 cs
       if isCompileError tm
-         then return (tm >> return ())
-         else fmap mergeAllM $ sequence $ map (runSingleTest paths deps1 os (getCompileSuccess tm)) ts'
-    processResults rs
+         then return [((0,0),tm >> return ())]
+         else sequence $ map (runSingleTest paths deps1 os (getCompileSuccess tm)) ts'
+    processResults passed failed rs
       | isCompileError rs = do
           hPutStr stderr $ "\nTest errors:\n" ++ (show $ getCompileError rs)
-          hPutStrLn stderr $ "\nZeolite tests failed."
+          hPutStrLn stderr $ "\nPassed: " ++ show passed ++ " tests, Failed: " ++ show failed ++ " tests"
+          hPutStrLn stderr $ "Zeolite tests failed."
           exitFailure
       | otherwise = do
-          hPutStrLn stderr $ "\nZeolite tests passed."
+          hPutStrLn stderr $ "\nPassed: " ++ show passed ++ " tests, Failed: " ++ show failed ++ " tests"
+          hPutStrLn stderr $ "Zeolite tests passed."
 runCompiler co@(CompileOptions h _ _ ds _ _ _ CompileRecompile _ f) = do
   fmap mergeAll $ sequence $ map recompileSingle ds where
     recompileSingle d0 = do
