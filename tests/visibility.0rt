@@ -48,6 +48,10 @@ define Test {
     if (value2 != 1) {
       fail(value2)
     }
+    Int value3 <- Getter2$getValue()
+    if (value3 != 2) {
+      fail(value3)
+    }
   }
 }
 
