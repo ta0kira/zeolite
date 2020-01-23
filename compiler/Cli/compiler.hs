@@ -16,8 +16,10 @@ limitations under the License.
 
 -- Author: Kevin P. Barry [ta0kira@gmail.com]
 
+import Control.Applicative ((<|>))
 import Control.Monad (when)
 import Data.List (isSuffixOf,nub,sort)
+import Data.Maybe (isJust)
 import System.Directory
 import System.Environment
 import System.Exit
@@ -95,19 +97,21 @@ runCompiler co@(CompileOptions _ _ _ ds _ _ p (ExecuteTests tp) _ f) = do
   results <- sequence $ map runTests ds'
   processResults $ mergeAllM results where
     preloadModule d = do
-      -- TODO: This can probably cache dependencies that need to be reused.
       m <- loadMetadata (p </> d)
-      basePath <- getBasePath
-      (fr,deps) <- loadRecursiveDeps [basePath,p </> d]
-      checkAllowedStale fr f
-      return (d,m,deps)
+      base <- getBasePath
+      (fr1,deps1) <- loadPublicDeps [base,p </> d]
+      checkAllowedStale fr1 f
+      (fr2,deps2) <- loadPrivateDeps deps1
+      checkAllowedStale fr2 f
+      return (d,m,deps1,deps2)
     allowTests = Set.fromList tp
     isTestAllowed t = if null allowTests then True else t `Set.member` allowTests
-    runTests :: (String,CompileMetadata,[CompileMetadata]) -> IO (CompileInfo ())
-    runTests (d,m,deps) = do
-      let paths = getIncludePathsForDeps deps
-      let ss = fixPaths $ getSourceFilesForDeps deps
-      let os = getObjectFilesForDeps deps
+    runTests :: (String,CompileMetadata,[CompileMetadata],[CompileMetadata]) ->
+                IO (CompileInfo ())
+    runTests (d,m,deps1,deps2) = do
+      let paths = getIncludePathsForDeps deps1
+      let ss = fixPaths $ getSourceFilesForDeps deps1
+      let os = getObjectFilesForDeps deps2
       ss' <- zipWithContents p ss
       ts' <- zipWithContents p (map (d </>) $ filter isTestAllowed $ cmTestFiles m)
       tm <- return $ do
@@ -116,7 +120,7 @@ runCompiler co@(CompileOptions _ _ _ ds _ _ p (ExecuteTests tp) _ f) = do
         includeNewTypes tm0 cs
       if isCompileError tm
          then return (tm >> return ())
-         else fmap mergeAllM $ sequence $ map (runSingleTest paths os (getCompileSuccess tm)) ts'
+         else fmap mergeAllM $ sequence $ map (runSingleTest paths deps1 os (getCompileSuccess tm)) ts'
     processResults rs
       | isCompileError rs = do
           hPutStr stderr $ "\nTest errors:\n" ++ (show $ getCompileError rs)
@@ -140,8 +144,8 @@ runCompiler co@(CompileOptions h _ _ ds _ _ _ CompileRecompile _ f) = do
            let fixed = fixPath (absolute </> p)
            let recompile = CompileOptions {
                coHelp = h,
-               coPublicDeps = is,
-               coPrivateDeps = is2,
+               coPublicDeps = map ((fixed </> d) </>) is,
+               coPrivateDeps = map ((fixed </> d) </>) is2,
                coSources = [d],
                coExtraFiles = es,
                coExtraPaths = ep,
@@ -152,21 +156,19 @@ runCompiler co@(CompileOptions h _ _ ds _ _ _ CompileRecompile _ f) = do
              }
            runCompiler recompile
 runCompiler co@(CompileOptions h is is2 ds es ep p m o f) = do
-  (fr,deps) <- loadRecursiveDeps (is ++ is2)
+  (fr,deps) <- loadPublicDeps (is ++ is2)
   checkAllowedStale fr f
   let ss = fixPaths $ getSourceFilesForDeps deps
   as  <- fmap fixPaths $ sequence $ map canonicalizePath is
   as2 <- fmap fixPaths $ sequence $ map canonicalizePath is2
-  basePath <- getBasePath
   ss' <- zipWithContents p ss
-  ma <- sequence $ map (processPath basePath deps as as2 ss') ds
+  ma <- sequence $ map (processPath deps as as2 ss') ds
   let ms = concat $ map snd ma
   let deps2 = map fst ma
-  -- TODO: Stop spamming paths just to find deps for main.cpp.
-  writeMain basePath (deps ++ deps2) m ms
+  createBinary (deps ++ deps2) m ms
   hPutStrLn stderr $ "Zeolite compilation succeeded." where
     ep' = fixPaths $ map (getCachedPath p "") ep
-    processPath bp deps as as2 ss d = do
+    processPath deps as as2 ss d = do
       isConfigured <- isPathConfigured d
       when (isConfigured && f == DoNotForce) $ do
         hPutStrLn stderr $ "Module " ++ d ++ " has already been configured. " ++
@@ -189,20 +191,22 @@ runCompiler co@(CompileOptions h is is2 ds es ep p m o f) = do
       when (f /= AllowRecompile) $ writeRecompile (p </> d) rm
       (ps,xs,ts) <- findSourceFiles p d
       -- Lazy dependency loading, in case we aren't compiling anything.
-      paths <- if null ps && null xs
-                  then return $ getIncludePathsForDeps deps
+      deps2 <- if null ps && null xs
+                  then return deps
                   else do
-                    (fr,bpDeps) <- loadRecursiveDeps [bp]
+                    base <- getBasePath
+                    (fr,bpDeps) <- loadPublicDeps [base]
                     checkAllowedStale fr f
-                    return $ getIncludePathsForDeps (bpDeps ++ deps)
+                    return $ bpDeps ++ deps
+      let paths = getIncludePathsForDeps deps2
       ps' <- zipWithContents p ps
       xs' <- zipWithContents p xs
       let fs = compileAll ss ps' xs'
-      writeOutput (fixPaths $ paths ++ ep') d as as2
+      writeOutput (fixPaths $ paths ++ ep') deps2 d as as2
                   (map takeFileName ps)
                   (map takeFileName xs)
                   (map takeFileName ts) fs
-    writeOutput paths d as as2 ps xs ts fs
+    writeOutput paths deps d as as2 ps xs ts fs
       | isCompileError fs = do
           formatWarnings fs
           hPutStr stderr $ "Compiler errors:\n" ++ (show $ getCompileError fs)
@@ -215,10 +219,11 @@ runCompiler co@(CompileOptions h is is2 ds es ep p m o f) = do
           let paths' = paths ++ map (\ns -> getCachedPath (p </> d) ns "") ss
           let hxx   = filter (isSuffixOf ".hpp" . coFilename)       fs'
           let other = filter (not . isSuffixOf ".hpp" . coFilename) fs'
-          os1 <- fmap concat $ sequence $ map (writeOutputFile paths' d) $ hxx ++ other
+          os1 <- sequence $ map (writeOutputFile paths' d) $ hxx ++ other
           os2 <- fmap concat $ sequence $ map (compileExtraFile paths' d) es
-          let (hxx,cxx,os') = sortCompiledFiles $ map (\f -> coNamespace f </> coFilename f) fs' ++ os2 ++ es
+          let (hxx,cxx,os') = sortCompiledFiles $ map (\f -> coNamespace f </> coFilename f) fs' ++ es
           path <- canonicalizePath $ p </> d
+          let os1' = resolveObjectDeps path os1 deps
           let cm = CompileMetadata {
               cmPath = path,
               cmPublicDeps = as,
@@ -230,14 +235,14 @@ runCompiler co@(CompileOptions h is is2 ds es ep p m o f) = do
               cmTestFiles = sort ts,
               cmHxxFiles = sort hxx,
               cmCxxFiles = sort cxx,
-              cmObjectFiles = os1 ++ map OtherObjectFile os'
+              cmObjectFiles = os1' ++ os2 ++ map OtherObjectFile os'
             }
           writeMetadata (p </> d) cm
           return (cm,mf)
     formatWarnings c
       | null $ getCompileWarnings c = return ()
       | otherwise = hPutStr stderr $ "Compiler warnings:\n" ++ (concat $ map (++ "\n") (getCompileWarnings c))
-    writeOutputFile paths d (CxxOutput c f ns ns2 req content) = do
+    writeOutputFile paths d ca@(CxxOutput c f ns ns2 req content) = do
       hPutStrLn stderr $ "Writing file " ++ f
       writeCachedFile (p </> d) ns f $ concat $ map (++ "\n") content
       if isSuffixOf ".cpp" f || isSuffixOf ".cc" f
@@ -248,14 +253,8 @@ runCompiler co@(CompileOptions h is is2 ds es ep p m o f) = do
            createCachePath (p </> d)
            let command = CompileToObject f' (getCachedPath (p </> d) ns "") (p0:p1:paths) False
            o <- runCxxCommand command
-           case c of
-                Just c' -> return [CategoryObjectFile (show c') ns ns2 (map show req) [o]]
-                Nothing -> return [OtherObjectFile o]
-         else case c of
-                   -- This accounts for dependencies of categories that are
-                   -- implemented in C++ by hand but also have an .0rp.
-                   Just c' -> return [CategoryObjectFile (show c') ns ns2 (map show req) []]
-                   Nothing -> return []
+           return $ ([o],ca)
+         else return ([],ca)
     compileExtraFile paths d f
       | isSuffixOf ".cpp" f || isSuffixOf ".cc" f = do
           let f' = getCachedPath (p </> d) "" f
@@ -263,7 +262,7 @@ runCompiler co@(CompileOptions h is is2 ds es ep p m o f) = do
           createCachePath (p </> d)
           let command = CompileToObject f' (getCachedPath (p </> d) "" "") (p0:paths) True
           o <- runCxxCommand command
-          return [o]
+          return [OtherObjectFile o]
       | otherwise = return []
     compileAll is cs ds = do
       tm0 <- builtinCategories
@@ -297,7 +296,7 @@ runCompiler co@(CompileOptions h is is2 ds es ep p m o f) = do
     mergeInternal ds = (concat $ map fst ds,concat $ map snd ds)
     getBinaryName (CompileBinary n _) = canonicalizePath $ if null o then n else o
     getBinaryName _                   = return ""
-    writeMain bp deps ma@(CompileBinary n _) ms
+    createBinary deps ma@(CompileBinary n _) ms
       | length ms > 1 = do
         hPutStrLn stderr $ "Multiple matches for main category " ++ n ++ "."
         exitFailure
@@ -312,16 +311,18 @@ runCompiler co@(CompileOptions h is is2 ds es ep p m o f) = do
           (o',h) <- mkstemps "/tmp/zmain_" ".cpp"
           hPutStr h $ concat $ map (++ "\n") content
           hClose h
-          (_,baseDeps) <- loadRecursiveDeps [bp]
-          let paths = fixPaths $ getIncludePathsForDeps (baseDeps ++ deps)
-          let os    = getObjectFilesForDeps (baseDeps ++ deps)
+          base <- getBasePath
+          (_,bpDeps) <- loadPublicDeps [base]
+          (_,deps2) <- loadPrivateDeps (bpDeps ++ deps)
+          let paths = fixPaths $ getIncludePathsForDeps deps2
+          let os    = getObjectFilesForDeps deps2
           let ofr = getObjectFileResolver os
-          os' <- ofr ns2 req
+          let os' = ofr ns2 req
           let command = CompileToBinary o' os' f0 paths
           hPutStrLn stderr $ "Creating binary " ++ f0
           runCxxCommand command
           removeFile o'
-    writeMain _ _ _ _ = return ()
+    createBinary _ _ _ = return ()
     maybeCreateMain tm (CompileBinary n f) = do
       case (CategoryName n) `Map.lookup` tm of
         Nothing -> return []

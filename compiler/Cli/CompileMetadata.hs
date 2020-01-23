@@ -19,6 +19,7 @@ limitations under the License.
 {-# LANGUAGE Safe #-}
 
 module Cli.CompileMetadata (
+  CategoryIdentifier(..),
   CompileMetadata(..),
   ObjectFile(..),
   RecompileMetadata(..),
@@ -34,10 +35,14 @@ module Cli.CompileMetadata (
   getObjectFileResolver,
   getRealPathsForDeps,
   getSourceFilesForDeps,
+  isCategoryObjectFile,
   isNotConfigured,
   isPathConfigured,
-  loadRecursiveDeps,
+  loadPrivateDeps,
+  loadPublicDeps,
   loadMetadata,
+  mergeObjectFiles,
+  resolveObjectDeps,
   sortCompiledFiles,
   tryLoadRecompile,
   writeCachedFile,
@@ -59,6 +64,7 @@ import qualified Data.Set as Set
 
 import TypeInstance
 import Cli.CompileOptions (CompileMode)
+import CompilerCxx.Category (CxxOutput(..))
 
 
 data CompileMetadata =
@@ -79,10 +85,8 @@ data CompileMetadata =
 
 data ObjectFile =
   CategoryObjectFile {
-    cofCategory :: String,
-    cofNamespace :: String,
-    cofUsesNamespace :: String,
-    cofRequires :: [String],
+    cofCategory :: CategoryIdentifier,
+    cofRequires :: [CategoryIdentifier],
     cofFiles :: [String]
   } |
   OtherObjectFile {
@@ -90,22 +94,22 @@ data ObjectFile =
   }
   deriving (Show,Read)
 
+data CategoryIdentifier =
+  CategoryIdentifier {
+    ciPath :: String,
+    ciCategory :: String,
+    ciNamespace :: String
+  }
+  deriving (Eq,Ord,Show,Read)
+
 mergeObjectFiles :: ObjectFile -> ObjectFile -> ObjectFile
-mergeObjectFiles (CategoryObjectFile c ns1 ns1' req1 os1)
-                 (CategoryObjectFile _ ns2 ns2' req2 os2) =
-                   (CategoryObjectFile c ns3 ns23 req3 os3) where
-  ns3
-    | null ns1 = ns2
-    | otherwise = ns1
-  ns23
-    | null ns1' = ns2'
-    | otherwise = ns1'
-  req3 = req1 ++ req2
-  os3 = os1 ++ os2
+mergeObjectFiles (CategoryObjectFile c rs1 fs1) (CategoryObjectFile _ rs2 fs2) =
+  CategoryObjectFile c (rs1 ++ rs2) (fs1 ++ fs2)
+mergeObjectFiles o _ = o
 
 isCategoryObjectFile :: ObjectFile -> Bool
-isCategoryObjectFile (CategoryObjectFile _ _ _ _ _) = True
-isCategoryObjectFile (OtherObjectFile _)            = False
+isCategoryObjectFile (CategoryObjectFile _ _ _) = True
+isCategoryObjectFile (OtherObjectFile _)        = False
 
 data RecompileMetadata =
   RecompileMetadata {
@@ -181,10 +185,6 @@ writeMetadata p m = do
   p' <- canonicalizePath p
   hPutStrLn stderr $ "Writing metadata for \"" ++ p' ++ "\"."
   writeCachedFile p' "" metadataFilename (show m ++ "\n")
-  fresh <- checkModuleFreshness p' m
-  when (not fresh) $ do
-    hPutStrLn stderr $ "Error writing metadata for \"" ++ p' ++ "\"."
-    exitFailure
 
 writeRecompile :: String -> RecompileMetadata -> IO ()
 writeRecompile p m = do
@@ -247,8 +247,23 @@ getIncludePathsForDeps = concat . map extract where
 getObjectFilesForDeps :: [CompileMetadata] -> [ObjectFile]
 getObjectFilesForDeps = concat . map cmObjectFiles
 
-loadRecursiveDeps :: [String] -> IO (Bool,[CompileMetadata])
-loadRecursiveDeps ps = fmap snd $ fixedPaths >>= collect (Set.empty,(True,[])) where
+loadPublicDeps :: [String] -> IO (Bool,[CompileMetadata])
+loadPublicDeps = loadDepsCommon cmPublicDeps
+
+loadPrivateDeps :: [CompileMetadata] -> IO (Bool,[CompileMetadata])
+loadPrivateDeps ms = do
+  (fr,new) <- loadDepsCommon (\m -> cmPublicDeps m ++ cmPrivateDeps m) toFind
+  return (fr,ms ++ existing ++ new) where
+    paths = concat $ map (\m -> cmPublicDeps m ++ cmPrivateDeps m) ms
+    (existing,toFind) = foldl splitByExisting ([],[]) $ nub paths
+    byPath = Map.fromList $ map (\m -> (cmPath m,m)) ms
+    splitByExisting (es,fs) p =
+      case p `Map.lookup` byPath of
+          Just m  -> (es ++ [m],fs)
+          Nothing -> (es,fs ++ [p])
+
+loadDepsCommon :: (CompileMetadata -> [String]) -> [String] -> IO (Bool,[CompileMetadata])
+loadDepsCommon f ps = fmap snd $ fixedPaths >>= collect (Set.empty,(True,[])) where
   fixedPaths = sequence $ map canonicalizePath ps
   collect xa@(pa,(fr,xs)) (p:ps)
     | p `Set.member` pa = collect xa ps
@@ -258,7 +273,7 @@ loadRecursiveDeps ps = fmap snd $ fixedPaths >>= collect (Set.empty,(True,[])) w
         fresh <- checkModuleFreshness p m
         when (not fresh) $
           hPutStrLn stderr $ "Module \"" ++ p ++ "\" is out of date and should be recompiled."
-        collect (p `Set.insert` pa,(fresh && fr,xs ++ [m])) (ps ++ cmPublicDeps m)
+        collect (p `Set.insert` pa,(fresh && fr,xs ++ [m])) (ps ++ f m)
   collect xa _ = return xa
 
 fixPath :: String -> String
@@ -292,40 +307,64 @@ checkModuleFreshness p (CompileMetadata p2 is is2 _ _ ps xs ts hxx cxx _) = do
   let e1 = checkMissing ps ps2
   let e2 = checkMissing xs xs2
   let e3 = checkMissing ts ts2
+  rm <- check time (p </> recompileFilename)
   f1 <- sequence $ map (\p2 -> check time $ getCachedPath p2 "" metadataFilename) $ is ++ is2
   f2 <- sequence $ map (check time . (p2 </>)) $ ps ++ xs
   f3 <- sequence $ map (check time . getCachedPath p2 "") $ hxx ++ cxx
-  let fresh = not $ any id $ [e1,e2,e3] ++ f1 ++ f2 ++ f3
+  let fresh = not $ any id $ [rm,e1,e2,e3] ++ f1 ++ f2 ++ f3
   return fresh where
     check time f = do
-      time2 <- getModificationTime f
-      return (time2 > time)
+      exists <- doesPathExist f
+      if not exists
+         then return True
+         else do
+           time2 <- getModificationTime f
+           return (time2 > time)
     checkMissing s0 s1 = not $ null $ (Set.fromList s1) `Set.difference` (Set.fromList s0)
 
-getObjectFileResolver :: [ObjectFile] -> String -> [CategoryName] -> IO [String]
-getObjectFileResolver os ns0 req =  fmap (cleanup . snd) $ collect (Set.empty,alwaysUse) withNamespace where
-  cleanup = reverse . nub . reverse
-  alwaysUse = map oofFile $ filter (not . isCategoryObjectFile) os
-  withNamespace = zip (repeat ns0) $ map show req
-  conditionalUse = filter isCategoryObjectFile os
-  byNsAndCat = Map.map (Map.fromListWith mergeObjectFiles) $ Map.fromListWith (++) $
-                 map (\o -> (cofNamespace o,[(cofCategory o,o)])) conditionalUse
-  collect xa@(ra,xs) ((ns,r):rs)
-    | isBuiltinCategory (CategoryName r) = collect xa rs
-    | (ns,r) `Set.member` ra = collect xa rs
-    | ("",r) `Set.member` ra = collect xa rs
-    | otherwise = do
-        case maybeResolved of
-             Just resolved -> do
-               let ys = cofFiles resolved
-               let rs2 = zip (repeat $ cofUsesNamespace resolved) $ cofRequires resolved
-               collect ((ns,r) `Set.insert` ra,ys ++ xs) (rs ++ rs2)
-            -- Assume that alwaysUse has this taken care of. If nothing else,
-            -- the C++ compiler will complain if something is missing.
-             _ -> collect ((ns,r) `Set.insert` ra,xs) rs
-        where
-          maybeResolved
-            | null ns   = check Nothing                      ("" `Map.lookup` byNsAndCat)
-            | otherwise = check (ns `Map.lookup` byNsAndCat) ("" `Map.lookup` byNsAndCat)
-          check cs1 cs2 = (cs1 >>= (r `Map.lookup`)) <|> (cs2 >>= (r `Map.lookup`))
-  collect xa _ = return xa
+getObjectFileResolver :: [ObjectFile] -> String -> [CategoryName] -> [String]
+getObjectFileResolver os ns ds = resolved ++ nonCategories where
+  categories    = filter isCategoryObjectFile os
+  nonCategories = map oofFile $ filter (not . isCategoryObjectFile) os
+  categoryMap = Map.fromList $ map keyByCategory categories
+  keyByCategory o = ((ciCategory $ cofCategory o,ciNamespace $ cofCategory o),o)
+  objectMap = Map.fromList $ map keyBySpec categories
+  keyBySpec o = (cofCategory o,o)
+  directDeps = concat $ map (resolveDep . show) ds
+  directResolved = map cofCategory directDeps
+  resolveDep d = unwrap $ ((d,ns) `Map.lookup` categoryMap >>= return . (:[])) <|>
+                          ((d,"") `Map.lookup` categoryMap >>= return . (:[])) <|>
+                          Just []
+  unwrap (Just xs) = xs
+  unwrap _         = []
+  resolved = reverse $ nub $ reverse $ collectAll Set.empty directResolved
+  collectAll ca = concat . map (collect ca)
+  -- NOTE: Object files are collected with deps following things that depend on
+  -- them, without skipping over deps that have already been seen. This is so
+  -- that a dep strictly follows everything that depends on it. This is
+  -- is necessary when linking .a files.
+  collect ca c
+    | c `Set.member` ca = []
+    | otherwise =
+      case c `Map.lookup` objectMap of
+           Just (CategoryObjectFile _ ds fs) -> fs ++ collectAll (c `Set.insert` ca) ds
+           Nothing -> []
+
+resolveObjectDeps :: String -> [([String],CxxOutput)] -> [CompileMetadata] -> [ObjectFile]
+resolveObjectDeps p os deps = resolvedCategories ++ nonCategories where
+  categories = filter (isJust . coCategory . snd) os
+  nonCategories = map OtherObjectFile $ concat $ map fst $ filter (not . isJust . coCategory . snd) os
+  resolvedCategories = Map.elems $ Map.fromListWith mergeObjectFiles $ map resolveCategory categories
+  categoryMap = Map.fromList $ directCategories ++ depCategories
+  directCategories = map (keyByCategory . cxxToId) $ map snd categories
+  depCategories = map (keyByCategory . cofCategory) $ filter isCategoryObjectFile $ concat $ map cmObjectFiles deps
+  keyByCategory c = ((ciCategory c,ciNamespace c),c)
+  cxxToId (CxxOutput (Just c) _ ns _ _ _) = CategoryIdentifier p (show c) ns
+  resolveCategory (fs,ca@(CxxOutput _ _ _ ns2 ds _)) =
+    (cxxToId ca,CategoryObjectFile (cxxToId ca) rs fs) where
+      rs = concat $ map (resolveDep ns2 . show) ds
+  resolveDep ns d = unwrap $ ((d,ns) `Map.lookup` categoryMap >>= return . (:[])) <|>
+                             ((d,"") `Map.lookup` categoryMap >>= return . (:[])) <|>
+                             Just []
+  unwrap (Just xs) = xs
+  unwrap _         = []

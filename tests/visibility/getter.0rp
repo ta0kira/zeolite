@@ -1,0 +1,3 @@
+concrete Getter {
+  @type getValue () -> (Int)
+}

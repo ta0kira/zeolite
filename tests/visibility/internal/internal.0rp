@@ -1,0 +1,4 @@
+concrete Internal {
+  @type create () -> (Internal)
+  @value get () -> (Int)
+}

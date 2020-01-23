@@ -42,9 +42,9 @@ import Cli.CompileMetadata
 import Cli.CompilerCommand
 
 
-runSingleTest :: [String] -> [ObjectFile] -> CategoryMap SourcePos ->
-                 (String,String) -> IO (CompileInfo ())
-runSingleTest paths os tm (f,s) = do
+runSingleTest :: [String] -> [CompileMetadata] -> [ObjectFile] ->
+                 CategoryMap SourcePos -> (String,String) -> IO (CompileInfo ())
+runSingleTest paths deps os tm (f,s) = do
   hPutStrLn stderr $ "\nExecuting tests from " ++ f
   fmap (flip reviseError $ "\nIn test file " ++ f) $ checkAndRun (parseTestSource (f,s)) where
     checkAndRun ts
@@ -135,20 +135,19 @@ runSingleTest paths os tm (f,s) = do
     createBinary c req ns fs = do
       dir <- mkdtemp "/tmp/ztest_"
       hPutStrLn stderr $ "Writing temporary files to " ++ dir
-      sources <- fmap concat $ sequence $ map (writeSingleFile dir) fs
+      sources <- sequence $ map (writeSingleFile dir) fs
+      let sources' = resolveObjectDeps dir sources deps
       let main   = dir </> "testcase.cpp"
       let binary = dir </> "testcase"
       writeFile main $ concat $ map (++ "\n") c
       let paths' = nub $ map fixPath (dir:paths)
-      let ofr = getObjectFileResolver (os ++ sources)
-      os' <- ofr ns req
+      let ofr = getObjectFileResolver (sources' ++ os)
+      let os' = ofr ns req
       let command = CompileToBinary main os' binary paths'
       runCxxCommand command
       return binary
-    writeSingleFile d (CxxOutput c f ns ns2 req content) = do
+    writeSingleFile d ca@(CxxOutput c f ns ns2 req content) = do
       writeFile (d </> f) $ concat $ map (++ "\n") content
       if isSuffixOf ".cpp" f
-         then case c of
-                   Just c' -> return [CategoryObjectFile (show c') ns ns2 (map show req) [d </> f]]
-                   Nothing -> return [OtherObjectFile (d </> f)]
-         else return []
+         then return ([d </> f],ca)
+         else return ([],ca)

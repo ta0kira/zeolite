@@ -24,10 +24,16 @@ cd "$(dirname "$0")"
 root=$PWD
 compiler_hs="$root/compiler/Cli/compiler"
 compiler_bin="$root/zeolite"
-modules=("$root" "$root/util" "$root/tests")
+modules=(
+  "$root"
+  "$root/util"
+  "$root/tests/visibility/internal"
+  "$root/tests/visibility"
+  "$root/tests"
+)
 
 build_compiler() {
-  local command=(ghc -i"$root/compiler" "$compiler_hs" -o "$compiler_bin")
+  local command=(ghc -O5 -i"$root/compiler" "$compiler_hs" -o "$compiler_bin")
   echo "${command[@]}" 1>&2
   "${command[@]}"
 }
