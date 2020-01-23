@@ -51,7 +51,9 @@ runSingleTest paths deps os tm (f,s) = do
   allResults <- checkAndRun (parseTestSource (f,s))
   return $ second (flip reviseError $ "\nIn test file " ++ f) allResults where
     checkAndRun ts
-      | isCompileError ts = return ((0,0),ts >> return ())
+      | isCompileError ts = do
+        hPutStrLn stderr $ "Failed to parse tests in " ++ f
+        return ((0,0),ts >> return ())
       | otherwise = do
         allResults <- sequence $ map runSingle $ getCompileSuccess ts
         let passed = length $ filter (not . isCompileError) allResults

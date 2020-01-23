@@ -126,11 +126,11 @@ runCompiler co@(CompileOptions _ _ _ ds _ _ p (ExecuteTests tp) _ f) = do
     processResults passed failed rs
       | isCompileError rs = do
           hPutStr stderr $ "\nTest errors:\n" ++ (show $ getCompileError rs)
-          hPutStrLn stderr $ "\nPassed: " ++ show passed ++ " tests, Failed: " ++ show failed ++ " tests"
+          hPutStrLn stderr $ "\nPassed: " ++ show passed ++ " test(s), Failed: " ++ show failed ++ " test(s)"
           hPutStrLn stderr $ "Zeolite tests failed."
           exitFailure
       | otherwise = do
-          hPutStrLn stderr $ "\nPassed: " ++ show passed ++ " tests, Failed: " ++ show failed ++ " tests"
+          hPutStrLn stderr $ "\nPassed: " ++ show passed ++ " test(s), Failed: " ++ show failed ++ " test(s)"
           hPutStrLn stderr $ "Zeolite tests passed."
 runCompiler co@(CompileOptions h _ _ ds _ _ _ CompileRecompile _ f) = do
   fmap mergeAll $ sequence $ map recompileSingle ds where
