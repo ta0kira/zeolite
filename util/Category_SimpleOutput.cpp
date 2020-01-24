@@ -27,13 +27,15 @@ limitations under the License.
 #include "Category_Writer.hpp"
 #include "Category_BufferedWriter.hpp"
 
-const int Collection_SimpleOutput = 0;
-
 #ifdef ZEOLITE_PUBLIC_NAMESPACE
 namespace ZEOLITE_PUBLIC_NAMESPACE {
 #endif  // ZEOLITE_PUBLIC_NAMESPACE
 
-const void* const Functions_SimpleOutput = &Collection_SimpleOutput;
+namespace {
+const int collection = 0;
+}
+
+const void* const Functions_SimpleOutput = &collection;
 
 const TypeFunction& Function_SimpleOutput_stdout =
   *new TypeFunction{ 0, 0, 1, "SimpleOutput", "stdout", Functions_SimpleOutput, 0 };
