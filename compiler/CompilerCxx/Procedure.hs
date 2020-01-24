@@ -189,27 +189,27 @@ compileStatement :: (Show c, Monad m, CompileErrorM m, MergeableM m,
                      CompilerContext c m [String] a) =>
   Statement c -> CompilerState a m ()
 compileStatement (EmptyReturn c) = do
-  doReturnCleanup
   csRegisterReturn c (ParamSet [])
   doNamedReturn
+compileStatement (ExplicitReturn c (ParamSet [])) = compileStatement (EmptyReturn c)
 compileStatement (ExplicitReturn c es) = do
-  doReturnCleanup
   es' <- sequence $ map compileExpression $ psParams es
   getReturn $ zip (map getExpressionContext $ psParams es) es'
   where
-    -- Empty return statement.
-    getReturn [] = doNamedReturn
     -- Single expression, but possibly multi-return.
     getReturn [(_,(ParamSet ts,e))] = do
       csRegisterReturn c (ParamSet ts)
       csWrite [setTraceContext c]
-      csWrite ["return " ++ useAsReturns e ++ ";"]
+      csWrite ["returns = " ++ useAsReturns e ++ ";"]
+      doReturnCleanup
+      csWrite ["return returns;"]
     -- Multi-expression => must all be singles.
     getReturn rs = do
       lift $ mergeAllM (map checkArity $ zip [1..] $ map (fst . snd) rs) `reviseError`
         ("In return at " ++ formatFullContext c)
       csRegisterReturn c $ ParamSet $ map (head . psParams . fst . snd) rs
       csWrite $ concat $ map bindReturn $ zip [0..] rs
+      doReturnCleanup
       csWrite ["return returns;"]
     checkArity (_,ParamSet [_]) = return ()
     checkArity (i,ParamSet ts)  =
@@ -400,8 +400,11 @@ compileScopedBlock s = do
            ctx0' <- lift $ ccClearOutput ctxP
            ctxCl <- compileProcedure ctx0' p2
            p2' <- lift $ ccGetOutput ctxCl
-           ctxP' <- lift $ ccPushCleanup ctxP (CleanupSetup [ctxCl] p2')
-           return (ctxP',p2',ctxCl)
+           -- TODO: It might be helpful to add a new trace-context line for this
+           -- so that the line that triggered the cleanup is still in the trace.
+           let p2'' = ["{"] ++ p2' ++ ["}"]
+           ctxP' <- lift $ ccPushCleanup ctxP (CleanupSetup [ctxCl] p2'')
+           return (ctxP',p2'',ctxCl)
          Nothing -> return (ctxP,[],ctxP)
   -- Make variables to be created visible *after* p has been compiled so that p
   -- can't refer to them.
@@ -412,7 +415,7 @@ compileScopedBlock s = do
   csWrite cl'
   csWrite ["}"]
   sequence $ map showVariable vs
-  (lift $ ccGetRequired ctxS) >>= csRequiresTypes
+  (lift $ ccGetRequired ctxS)  >>= csRequiresTypes
   (lift $ ccGetRequired ctxCl) >>= csRequiresTypes
   csInheritReturns [ctxS]
   csInheritReturns [ctxCl]
@@ -863,6 +866,7 @@ doNamedReturn :: (Monad m, CompilerContext c m [String] a) => CompilerState a m 
 doNamedReturn = do
   vars <- csPrimNamedReturns
   sequence $ map (csWrite . (:[]) . assign) vars
+  doReturnCleanup
   csWrite ["return returns;"]
   where
     assign (ReturnVariable i n t) =
@@ -875,4 +879,4 @@ doReturnCleanup = do
      then return ()
      else do
        sequence $ map (csInheritReturns . (:[])) cs
-       csWrite $ ["{"] ++ ss ++ ["}"]
+       csWrite ss

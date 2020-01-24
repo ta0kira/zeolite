@@ -400,24 +400,46 @@ testcase "cleanup before return in while" {
   success Test$run()
 }
 
-define Test {
-  @type get () -> (Int)
-  get () {
-    Int value <- 0
+concrete Value {
+  @type create () -> (Value)
+  @value call () -> (Int)
+  @value get () -> (Int)
+}
+
+define Value {
+  @value Int value
+
+  create () {
+    return Value{ 0 }
+  }
+
+  call () {
+    value <- 1
     scoped {
-      value <- 1
-    } cleanup {
       value <- 2
+    } cleanup {
+      value <- 3
     } in while (true) {
       return value
     }
-    return 3
+    return 4
   }
 
+  get () {
+    return value
+  }
+}
+
+define Test {
   run () {
-    Int value <- get()
-    if (value != 2) {
-      fail(value)
+    Value value <- Value$create()
+    Int value1 <- value.call()
+    if (value1 != 2) {
+      fail(value1)
+    }
+    Int value2 <- value.get()
+    if (value2 != 3) {
+      fail(value2)
     }
   }
 }

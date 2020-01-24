@@ -170,21 +170,43 @@ testcase "cleanup before return" {
   success Test$run()
 }
 
-define Test {
-  @type get () -> (Int)
-  get () {
-    Int value <- 0
+concrete Value {
+  @type create () -> (Value)
+  @value call () -> (Int)
+  @value get () -> (Int)
+}
+
+define Value {
+  @value Int value
+
+  create () {
+    return Value{ 0 }
+  }
+
+  call () {
+    value <- 1
     scoped {
-      value <- 1
-    } cleanup {
       value <- 2
+    } cleanup {
+      value <- 3
     } in return value
   }
 
+  get () {
+    return value
+  }
+}
+
+define Test {
   run () {
-    Int value <- get()
-    if (value != 2) {
-      fail(value)
+    Value value <- Value$create()
+    Int value1 <- value.call()
+    if (value1 != 2) {
+      fail(value1)
+    }
+    Int value2 <- value.get()
+    if (value2 != 3) {
+      fail(value2)
     }
   }
 }
@@ -194,8 +216,9 @@ concrete Test {
 }
 
 
-testcase "cleanup initializes return" {
-  success Test$run()
+testcase "cleanup does not initialize return" {
+  error
+  require "value.+before return"
 }
 
 define Test {
@@ -338,32 +361,62 @@ testcase "multiple cleanup with return" {
   success Test$run()
 }
 
-define Test {
-  @type get () -> (Int,Int,Int)
-  get () (value1,value2,value3) {
-    value1 <- 0
-    value2 <- 0
-    value3 <- 0
-    scoped {
-    } cleanup {
-      value1 <- 1
-      value2 <- 1
-    } in scoped {
-    } cleanup {
-      value2 <- 2
-      value3 <- 2
-    } in return _
+concrete Value {
+  @type create () -> (Value)
+  @value call () -> (Int,Int,Int)
+  @value get () -> (Int,Int,Int)
+}
+
+define Value {
+  @value Int value1
+  @value Int value2
+  @value Int value3
+
+  create () {
+    return Value{ 0, 0, 0 }
   }
 
+  call () {
+    value1 <- 1
+    value2 <- 1
+    value3 <- 1
+    scoped {
+    } cleanup {
+      value1 <- 2
+      value2 <- 2
+    } in scoped {
+    } cleanup {
+      value2 <- 3
+      value3 <- 3
+    } in return { value1, value2, value3 }
+  }
+
+  get () {
+    return { value1, value2, value3 }
+  }
+}
+
+define Test {
   run () {
-    { Int value1, Int value2, Int value3 } <- get()
+    Value value <- Value$create()
+    { Int value1, Int value2, Int value3 } <- value.call()
     if (value1 != 1) {
       fail(value1)
     }
     if (value2 != 1) {
       fail(value2)
     }
-    if (value3 != 2) {
+    if (value3 != 1) {
+      fail(value3)
+    }
+    { value1, value2, value3 } <- value.get()
+    if (value1 != 2) {
+      fail(value1)
+    }
+    if (value2 != 2) {
+      fail(value2)
+    }
+    if (value3 != 3) {
       fail(value3)
     }
   }
@@ -407,6 +460,27 @@ define Test {
     } cleanup {
       value <- 1
     } in ~ empty
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "no name clash in nested scope with return" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+    scoped {
+    } cleanup {
+      Int value <- 0
+    } in scoped {
+    } cleanup {
+      Int value <- 1
+    } in return _
   }
 }
 
