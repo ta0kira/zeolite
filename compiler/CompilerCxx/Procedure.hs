@@ -137,7 +137,7 @@ compileExecutableProcedure tm t ps pi ms pa fi fa va
       | otherwise =
         returnType ++ " " ++ name ++ "(const ParamTuple& params, const ValueTuple& args) {"
     returnType = "ReturnTuple"
-    setProcedureTrace = "TRACE_FUNCTION(\"" ++ show t ++ "." ++ show n ++ "\")"
+    setProcedureTrace = startFunctionTracing $ show t ++ "." ++ show n
     defineReturns = [returnType ++ " returns(" ++ show (length $ psParams rs1) ++ ");"]
     nameParams = flip map (zip [0..] $ psParams ps1) $
       (\(i,p) -> paramType ++ " " ++ paramName (vpParam p) ++ " = *params.At(" ++ show i ++ ");")
@@ -190,6 +190,7 @@ compileStatement :: (Show c, Monad m, CompileErrorM m, MergeableM m,
   Statement c -> CompilerState a m ()
 compileStatement (EmptyReturn c) = do
   csRegisterReturn c Nothing
+  csWrite [setTraceContext c]
   doNamedReturn
 compileStatement (ExplicitReturn c es) = do
   es' <- sequence $ map compileExpression $ psParams es
@@ -401,7 +402,7 @@ compileScopedBlock s = do
            p2' <- lift $ ccGetOutput ctxCl
            -- TODO: It might be helpful to add a new trace-context line for this
            -- so that the line that triggered the cleanup is still in the trace.
-           let p2'' = ["{"] ++ p2' ++ ["}"]
+           let p2'' = ["{",startCleanupTracing] ++ p2' ++ ["}"]
            ctxP' <- lift $ ccPushCleanup ctxP (CleanupSetup [ctxCl] p2'')
            return (ctxP',p2'',ctxCl)
          Nothing -> return (ctxP,[],ctxP)

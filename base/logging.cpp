@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-Copyright 2019 Kevin P. Barry
+Copyright 2019-2020 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -100,6 +100,10 @@ std::list<std::string> TraceContext::GetTrace() {
 }
 
 
+void SourceContext::SetLocal(const char* at) {
+  at_ = at;
+}
+
 void SourceContext::AppendTrace(std::list<std::string>& trace) const {
   std::ostringstream output;
   if (at_ == nullptr || at_[0] == 0x00) {
@@ -111,5 +115,24 @@ void SourceContext::AppendTrace(std::list<std::string>& trace) const {
 }
 
 const TraceContext* SourceContext::GetNext() const {
+  return cross_and_capture_to_.Previous();
+}
+
+
+void CleanupContext::SetLocal(const char* at) {
+  at_ = at;
+}
+
+void CleanupContext::AppendTrace(std::list<std::string>& trace) const {
+  std::ostringstream output;
+  if (at_ == nullptr || at_[0] == 0x00) {
+    output << "In cleanup block";
+  } else {
+    output << "In cleanup block at " << at_;
+  }
+  trace.push_back(output.str());
+}
+
+const TraceContext* CleanupContext::GetNext() const {
   return cross_and_capture_to_.Previous();
 }

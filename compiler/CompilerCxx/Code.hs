@@ -34,6 +34,8 @@ module CompilerCxx.Code (
   predTraceContext,
   readStoredVariable,
   setTraceContext,
+  startCleanupTracing,
+  startFunctionTracing,
   typeBase,
   useAsArgs,
   useAsReturns,
@@ -75,6 +77,12 @@ indentCompiled (CompiledData r o) = CompiledData r $ map ("  " ++) o
 
 clearCompiled :: CompiledData [String] -> CompiledData [String]
 clearCompiled (CompiledData r _) = CompiledData r []
+
+startFunctionTracing :: String -> String
+startFunctionTracing f = "TRACE_FUNCTION(" ++ show f ++ ")"
+
+startCleanupTracing :: String
+startCleanupTracing = "TRACE_CLEANUP"
 
 setTraceContext :: Show c => [c] -> String
 setTraceContext c = "SET_CONTEXT_POINT(" ++ show (formatFullContext c) ++ ")"

@@ -578,3 +578,25 @@ define Test {
 concrete Test {
   @type run () -> ()
 }
+
+
+testcase "separate trace context for cleanup" {
+  crash Test$run()
+  require "Failed"
+  require "cleanup block"
+  require "Test\.run"
+  exclude "Failed.+Test\.run"
+  exclude "Test\.run.+Failed"
+}
+
+define Test {
+  run () {
+    cleanup {
+      fail("Failed")
+    } in return _
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}

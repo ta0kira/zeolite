@@ -204,7 +204,7 @@ compileConcreteDefinition ta ns dd@(DefinedCategory c n pi fi ms ps fs) = do
       mergeAllM [
           return $ onlyCode $ categoryName n ++ "()" ++ initColon ++ initMembersStr ++ " {",
           return $ indentCompiled $ onlyCodes $ getCycleCheck (categoryName n),
-          return $ indentCompiled $ onlyCode $ "TRACE_FUNCTION(\"" ++ show n ++ " (init @category)\")",
+          return $ indentCompiled $ onlyCode $ startFunctionTracing $ show n ++ " (init @category)",
           return $ onlyCode "}",
           return $ clearCompiled initMembers -- Inherit required types.
         ]
@@ -221,7 +221,7 @@ compileConcreteDefinition ta ns dd@(DefinedCategory c n pi fi ms ps fs) = do
       mergeAllM [
           return $ onlyCode $ typeName n ++ "(" ++ allArgs ++ ") : " ++ allInit ++ " {",
           return $ indentCompiled $ onlyCodes $ getCycleCheck (typeName n),
-          return $ indentCompiled $ onlyCode $ "TRACE_FUNCTION(\"" ++ show n ++ " (init @type)\")",
+          return $ indentCompiled $ onlyCode $ startFunctionTracing $ show n ++ " (init @type)",
           return $ indentCompiled $ initMembers,
           return $ onlyCode "}"
         ]
@@ -626,7 +626,7 @@ createMainFile tm t f = flip reviseError ("In the creation of the main binary pr
   file <- return $ baseSourceIncludes ++ depIncludes req ++ namespace t ++ [
       "int main() {",
       "  SetSignalHandler();",
-      "  TRACE_FUNCTION(\"main\")"
+      "  " ++ startFunctionTracing "main"
     ] ++ out ++ ["}"]
   return (getCategoryNamespace t,file) where
     funcName = FunctionName f
@@ -649,7 +649,7 @@ createTestFile tm e ns = flip reviseError ("In the creation of the test binary p
   file <- return $ baseSourceIncludes ++ depIncludes req ++ namespace ++ [
       "int main() {",
       "  SetSignalHandler();",
-      "  TRACE_FUNCTION(\"test\")"
+      "  " ++ startFunctionTracing "test"
     ] ++ out ++ ["}"]
   return (filter (not . isBuiltinCategory) $ Set.toList req,file) where
     depIncludes req = map (\i -> "#include \"" ++ headerFilename i ++ "\"") $

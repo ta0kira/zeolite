@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-Copyright 2019 Kevin P. Barry
+Copyright 2019-2020 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -63,15 +63,20 @@ class LogThenCrash {
   #define TRACE_FUNCTION(name) \
     SourceContext source_context(name);
 
+  #define TRACE_CLEANUP \
+    CleanupContext cleanup_context;
+
   #define SET_CONTEXT_POINT(point) \
-    source_context.SetLocal(point);
+    TraceContext::SetContext(point);
 
   #define PRED_CONTEXT_POINT(point) \
-    source_context.SetLocal(point),
+    TraceContext::SetContext(point),
 
 #else
 
   #define TRACE_FUNCTION(name)
+
+  #define TRACE_CLEANUP
 
   #define SET_CONTEXT_POINT(point)
 
@@ -83,10 +88,20 @@ class TraceContext : public capture_thread::ThreadCapture<TraceContext> {
  public:
   static std::list<std::string> GetTrace();
 
+  template<int S>
+  static inline void SetContext(const char(&at)[S]) {
+    if (GetCurrent()) {
+      GetCurrent()->SetLocal(at);
+    }
+  }
+
  protected:
+  virtual ~TraceContext() = default;
+
+ private:
+  virtual void SetLocal(const char*) = 0;
   virtual void AppendTrace(std::list<std::string>& trace) const = 0;
   virtual const TraceContext* GetNext() const = 0;
-  virtual ~TraceContext() = default;
 };
 
 class SourceContext : public TraceContext {
@@ -95,17 +110,27 @@ class SourceContext : public TraceContext {
   inline SourceContext(const char(&name)[S])
     : at_(nullptr), name_(name), cross_and_capture_to_(this) {}
 
-  template<int S>
-  inline void SetLocal(const char(&at)[S]) {
-    at_ = at;
-  }
-
  private:
+  void SetLocal(const char*) final;
   void AppendTrace(std::list<std::string>& trace) const final;
   const TraceContext* GetNext() const final;
 
   const char* at_;
   const char* const name_;
+  const AutoThreadCrosser cross_and_capture_to_;
+};
+
+class CleanupContext : public TraceContext {
+ public:
+  inline CleanupContext()
+    : at_(nullptr), cross_and_capture_to_(this) {}
+
+ private:
+  void SetLocal(const char*) final;
+  void AppendTrace(std::list<std::string>& trace) const final;
+  const TraceContext* GetNext() const final;
+
+  const char* at_;
   const AutoThreadCrosser cross_and_capture_to_;
 };
 
