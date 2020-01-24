@@ -18,7 +18,7 @@ limitations under the License.
 
 import Control.Applicative ((<|>))
 import Control.Monad (when)
-import Data.List (isSuffixOf,nub,sort)
+import Data.List (intercalate,isSuffixOf,nub,sort)
 import Data.Maybe (isJust)
 import System.Directory
 import System.Environment
@@ -94,6 +94,13 @@ showHelp = do
 runCompiler :: CompileOptions -> IO ()
 runCompiler co@(CompileOptions _ _ _ ds _ _ p (ExecuteTests tp) _ f) = do
   ds' <- sequence $ map preloadModule ds
+  let possibleTests = Set.fromList $ concat $ map getTestsFromPreload ds'
+  case Set.toList $ allowTests `Set.difference` possibleTests of
+       [] -> return ()
+       ts -> do
+         hPutStr stderr $ "Some test files do not occur in the selected modules: " ++
+                          intercalate ", " (map show ts) ++ "\n"
+         exitFailure
   allResults <- fmap concat $ sequence $ map runTests ds'
   let passed = sum $ map (fst . fst) allResults
   let failed = sum $ map (snd . fst) allResults
@@ -106,6 +113,7 @@ runCompiler co@(CompileOptions _ _ _ ds _ _ p (ExecuteTests tp) _ f) = do
       (fr2,deps2) <- loadPrivateDeps deps1
       checkAllowedStale fr2 f
       return (d,m,deps1,deps2)
+    getTestsFromPreload (_,m,_,_) = cmTestFiles m
     allowTests = Set.fromList tp
     isTestAllowed t = if null allowTests then True else t `Set.member` allowTests
     runTests :: (String,CompileMetadata,[CompileMetadata],[CompileMetadata]) ->
