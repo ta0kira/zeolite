@@ -113,7 +113,7 @@ compileExecutableProcedure tm t ps pi ms pa fi fa va
     compileWithReturn = do
       ctx0 <- getCleanContext
       compileProcedure ctx0 p >>= put
-      csRegisterReturn c (ParamSet []) `reviseErrorStateT`
+      csRegisterReturn c Nothing `reviseErrorStateT`
         ("In implicit return from " ++ show n ++ " [" ++ formatFullContext c ++ "]")
       doNamedReturn
     pairOutput (PassedValue c1 t) (OutputValue c2 n) = return $ (n,PassedValue (c2++c1) t)
@@ -189,16 +189,15 @@ compileStatement :: (Show c, Monad m, CompileErrorM m, MergeableM m,
                      CompilerContext c m [String] a) =>
   Statement c -> CompilerState a m ()
 compileStatement (EmptyReturn c) = do
-  csRegisterReturn c (ParamSet [])
+  csRegisterReturn c Nothing
   doNamedReturn
-compileStatement (ExplicitReturn c (ParamSet [])) = compileStatement (EmptyReturn c)
 compileStatement (ExplicitReturn c es) = do
   es' <- sequence $ map compileExpression $ psParams es
   getReturn $ zip (map getExpressionContext $ psParams es) es'
   where
     -- Single expression, but possibly multi-return.
     getReturn [(_,(ParamSet ts,e))] = do
-      csRegisterReturn c (ParamSet ts)
+      csRegisterReturn c $ Just (ParamSet ts)
       csWrite [setTraceContext c]
       csWrite ["returns = " ++ useAsReturns e ++ ";"]
       doReturnCleanup
@@ -207,7 +206,7 @@ compileStatement (ExplicitReturn c es) = do
     getReturn rs = do
       lift $ mergeAllM (map checkArity $ zip [1..] $ map (fst . snd) rs) `reviseError`
         ("In return at " ++ formatFullContext c)
-      csRegisterReturn c $ ParamSet $ map (head . psParams . fst . snd) rs
+      csRegisterReturn c $ Just $ ParamSet $ map (head . psParams . fst . snd) rs
       csWrite $ concat $ map bindReturn $ zip [0..] rs
       doReturnCleanup
       csWrite ["return returns;"]

@@ -375,7 +375,10 @@ instance (Show c, MergeableM m, CompileErrorM m, Monad m) =>
       }
     where
       check (ValidatePositions rs) = do
-        processParamPairs checkReturnType rs (ParamSet $ zip [1..] $ psParams vs) `reviseError`
+        let vs' = case vs of
+                       Nothing -> ParamSet []
+                       Just vs -> vs
+        processParamPairs checkReturnType rs (ParamSet $ zip [1..] $ psParams vs') `reviseError`
           ("In procedure return at " ++ formatFullContext c)
         return ()
         where
@@ -385,14 +388,13 @@ instance (Show c, MergeableM m, CompileErrorM m, Monad m) =>
             checkValueTypeMatch r pa t t0 `reviseError`
               ("Cannot convert " ++ show t ++ " to " ++ show ta0 ++ " in return " ++
                show n ++ " at " ++ formatFullContext c)
-      check (ValidateNames ts ra)
-        | not $ null $ psParams vs = check (ValidatePositions ts)
-        | otherwise =
-          mergeAllM $ map alwaysError $ Map.toList ra
-          where
-            alwaysError (n,t) = compileError $ "Named return " ++ show n ++ " (" ++ show t ++
-                                               ") might not have been set before return at " ++
-                                               formatFullContext c
+      check (ValidateNames ts ra) =
+        case vs of
+             Just vs -> check (ValidatePositions ts)
+             Nothing -> mergeAllM $ map alwaysError $ Map.toList ra where
+               alwaysError (n,t) = compileError $ "Named return " ++ show n ++ " (" ++ show t ++
+                                                  ") might not have been set before return at " ++
+                                                  formatFullContext c
       check _ = return ()
   ccPrimNamedReturns = return . pcPrimNamed
   ccIsUnreachable ctx = return $ match (pcReturns ctx) where

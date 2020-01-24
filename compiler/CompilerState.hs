@@ -85,7 +85,7 @@ class Monad m => CompilerContext c m s a | a -> c s where
   ccGetRequired :: a -> m (Set.Set CategoryName)
   ccGetCategoryFunction :: a -> [c] -> Maybe CategoryName -> FunctionName -> m (ScopedFunction c)
   ccGetTypeFunction :: a -> [c] -> Maybe GeneralInstance -> FunctionName -> m (ScopedFunction c)
-  ccCheckValueInit :: a -> [c] -> TypeInstance -> ParamSet ValueType -> ParamSet GeneralInstance -> m ()
+  ccCheckValueInit :: a -> [c] -> TypeInstance -> ExpressionType -> ParamSet GeneralInstance -> m ()
   ccGetVariable :: a -> [c] -> VariableName -> m (VariableValue c)
   ccAddVariable :: a -> [c] -> VariableName -> VariableValue c -> m a
   ccCheckVariableInit :: a -> [c] -> VariableName -> m ()
@@ -94,7 +94,7 @@ class Monad m => CompilerContext c m s a | a -> c s where
   ccClearOutput :: a -> m a
   ccUpdateAssigned :: a -> VariableName -> m a
   ccInheritReturns :: a -> [a] -> m a
-  ccRegisterReturn :: a -> [c] -> ExpressionType -> m a
+  ccRegisterReturn :: a -> [c] -> Maybe ExpressionType -> m a
   ccPrimNamedReturns :: a -> m [ReturnVariable]
   ccIsUnreachable :: a -> m Bool
   ccSetNoReturn :: a -> m a
@@ -175,7 +175,7 @@ csGetTypeFunction :: (Monad m, CompilerContext c m s a) =>
 csGetTypeFunction c t n = fmap (\x -> ccGetTypeFunction x c t n) get >>= lift
 
 csCheckValueInit :: (Monad m, CompilerContext c m s a) =>
-  [c] -> TypeInstance -> ParamSet ValueType -> ParamSet GeneralInstance -> CompilerState a m ()
+  [c] -> TypeInstance -> ExpressionType -> ParamSet GeneralInstance -> CompilerState a m ()
 csCheckValueInit c t as ps = fmap (\x -> ccCheckValueInit x c t as ps) get >>= lift
 
 csGetVariable :: (Monad m, CompilerContext c m s a) =>
@@ -208,7 +208,7 @@ csInheritReturns :: (Monad m, CompilerContext c m s a) =>
 csInheritReturns xs = fmap (\x -> ccInheritReturns x xs) get >>= lift >>= put
 
 csRegisterReturn :: (Monad m, CompilerContext c m s a) =>
-  [c] -> ParamSet ValueType -> CompilerState a m ()
+  [c] -> Maybe ExpressionType -> CompilerState a m ()
 csRegisterReturn c rs = fmap (\x -> ccRegisterReturn x c rs) get >>= lift >>= put
 
 csPrimNamedReturns :: (Monad m, CompilerContext c m s a) =>
