@@ -656,7 +656,7 @@ case of `while`, and can become ugly very quickly if additional flexibility is
 required. The same functionality can be achieved with `update` and `scoped`
 statements, discussed in the next section.
 
-### Scoped Statements
+### Scoped and Cleanup Statements
 
 Temporary variables are often only needed for a single statement (or control
 block) and can then be discarded. Rather than leaving them lying around, you can
@@ -691,7 +691,7 @@ and `while`.
 }</pre>
 
 You can also specify a `cleanup` procedure that gets executed when the scope
-ends. Cleanup happens even if there is an early `return`.
+ends.
 
 <pre style='color:#1f1c1b;background-color:#ffffff;'>
 <b>scoped</b> {
@@ -702,6 +702,21 @@ ends. Cleanup happens even if there is an early `return`.
   <span style='color:#006e28;'>~</span> data.close()
 } <b>in</b> <b>while</b> (!data.atEnd()) {
   <span style='color:#898887;'>// something with data</span>
+}</pre>
+
+Cleanup happens even if there is an early `return`. When used with `return`,
+the `cleanup` will be executed *after* the expressions in the `return` are
+evaluated and *before* the return is executed. For example, in `return a+b`,
+`cleanup` happens after `a+b` and before `return`.
+
+`cleanup` can also be used without `scoped`, e.g., for something like a
+post-increment operation.
+
+<pre style='color:#1f1c1b;background-color:#ffffff;'>
+postIncrement () {
+  <b>cleanup</b> {
+    value &lt;- value+<span style='color:#b08000;'>1</span>
+  } <b>in</b> <b>return</b> value
 }</pre>
 
 ### Optional and Weak Values

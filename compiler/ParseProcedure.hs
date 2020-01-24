@@ -228,18 +228,24 @@ instance ParseFromSource (WhileLoop SourcePos) where
         between (sepAfter $ string "{") (sepAfter $ string "}") sourceParser
 
 instance ParseFromSource (ScopedBlock SourcePos) where
-  sourceParser = labeled "scoped" $ do
-    c <- getPosition
-    try kwScoped
-    p <- between (sepAfter $ string "{") (sepAfter $ string "}") sourceParser
-    cl <- fmap Just parseCleanup <|> return Nothing
-    kwIn
-    s <- sourceParser
-    return $ ScopedBlock [c] p cl s
-    where
-      parseCleanup = do
-        try kwCleanup
-        between (sepAfter $ string "{") (sepAfter $ string "}") sourceParser
+  sourceParser = scoped <|> justCleanup where
+    scoped = labeled "scoped" $ do
+      c <- getPosition
+      try kwScoped
+      p <- between (sepAfter $ string "{") (sepAfter $ string "}") sourceParser
+      cl <- fmap Just parseCleanup <|> return Nothing
+      kwIn
+      s <- sourceParser
+      return $ ScopedBlock [c] p cl s
+    justCleanup = do
+      c <- getPosition
+      cl <- parseCleanup
+      kwIn
+      s <- sourceParser
+      return $ ScopedBlock [c] (Procedure [] []) (Just cl) s
+    parseCleanup = do
+      try kwCleanup
+      between (sepAfter $ string "{") (sepAfter $ string "}") sourceParser
 
 instance ParseFromSource (Expression SourcePos) where
   sourceParser = do
