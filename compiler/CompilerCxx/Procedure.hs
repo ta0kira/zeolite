@@ -34,6 +34,7 @@ import Control.Applicative ((<|>))
 import Control.Monad (when)
 import Control.Monad.Trans.State (execStateT,get,put,runStateT)
 import Control.Monad.Trans (lift)
+import Data.Char
 import Data.List (intercalate)
 import qualified Data.Map as Map
 import qualified Data.Set as Set
@@ -448,14 +449,25 @@ compileScopedBlock s = do
     rewriteScoped (ScopedBlock _ p cl s) =
       ([],p,cl,s)
 
+escapeChar :: Char -> String
+escapeChar c = ['\\','x',asHex c1,asHex c2] where
+  c1 = (ord c) `div` 16
+  c2 = (ord c) `mod` 16
+  asHex n
+    | n < 10    = chr $ n + (ord '0')
+    | otherwise = chr $ n + (ord 'A') - 10
+
+escapeChars :: String -> String
+escapeChars = concat . map escapeChar
+
 compileExpression :: (Show c, Monad m, CompileErrorM m, MergeableM m,
                       CompilerContext c m [String] a) =>
   Expression c -> CompilerState a m (ExpressionType,ExprValue)
 compileExpression = compile where
   compile (Literal (StringLiteral c l)) = do
-    return (ParamSet [stringRequiredValue],UnboxedPrimitive PrimString $ "PrimString(\"" ++ l ++ "\")")
+    return (ParamSet [stringRequiredValue],UnboxedPrimitive PrimString $ "PrimString(\"" ++ escapeChars l ++ "\")")
   compile (Literal (CharLiteral c l)) = do
-    return (ParamSet [charRequiredValue],UnboxedPrimitive PrimChar $ "PrimChar('" ++ l ++ "')")
+    return (ParamSet [charRequiredValue],UnboxedPrimitive PrimChar $ "PrimChar('" ++ escapeChars l ++ "')")
   compile (Literal (IntegerLiteral c l)) = do
     -- TODO: Check bounds.
     return (ParamSet [intRequiredValue],UnboxedPrimitive PrimInt $ "PrimInt(" ++ l ++ ")")

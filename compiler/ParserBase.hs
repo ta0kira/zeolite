@@ -86,6 +86,7 @@ module ParserBase (
   valueSymbolGet,
 ) where
 
+import Data.Char
 import Text.Parsec
 import Text.Parsec.String
 import qualified Data.Set as Set
@@ -267,10 +268,38 @@ operator o = labeled o $ do
 
 stringChar :: Parser String
 stringChar = escaped <|> notEscaped where
-  escaped = do
+  escaped = labeled "escaped char sequence" $ do
     char '\\'
-    v <- anyChar
-    return ['\\',v]
+    octChar <|> otherEscape where
+      otherEscape = do
+        v <- anyChar
+        case v of
+            '\'' -> return "'"
+            '"' -> return "\""
+            '?' -> return "?"
+            '\\' -> return "\\"
+            'a' -> return [chr 7]
+            'b' -> return [chr 8]
+            'f' -> return [chr 12]
+            'n' -> return [chr 10]
+            'r' -> return [chr 13]
+            't' -> return [chr 9]
+            'v' -> return [chr 11]
+            'x' -> hexChar
+            _ -> fail (show v)
+      octChar = labeled "3 octal chars" $ do
+        o1 <- octDigit >>= digitVal
+        o2 <- octDigit >>= digitVal
+        o3 <- octDigit >>= digitVal
+        return [chr $ 8*8*o1 + 8*o2 + o3]
+      hexChar = labeled "2 hex chars" $ do
+        h1 <- hexDigit >>= digitVal
+        h2 <- hexDigit >>= digitVal
+        return [chr $ 16*h1 + h2]
+      digitVal c
+        | c >= '0' && c <= '9' = return $ ord(c) - ord('0')
+        | c >= 'A' && c <= 'F' = return $ 10 + ord(c) - ord('A')
+        | c >= 'a' && c <= 'f' = return $ 10 + ord(c) - ord('a')
   notEscaped = fmap (:[]) $ noneOf "\""
 
 regexChar :: Parser String

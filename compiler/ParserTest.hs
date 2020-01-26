@@ -32,11 +32,25 @@ import TypesBase
 
 tests :: [IO (CompileInfo ())]
 tests = [
-    checkParsesAs stringChar "\\\\" "\\\\",
-    checkParsesAs stringChar "\\n" "\\n",
+    checkParsesAs stringChar "\\'" "'",
+    checkParsesAs stringChar "\\\"" "\"",
+    checkParsesAs stringChar "\\?" "?",
+    checkParsesAs stringChar "\\\\" "\\",
+    checkParsesAs stringChar "\\a" "\a",
+    checkParsesAs stringChar "\\b" "\b",
+    checkParsesAs stringChar "\\f" "\f",
+    checkParsesAs stringChar "\\n" "\n",
+    checkParsesAs stringChar "\\r" "\r",
+    checkParsesAs stringChar "\\t" "\t",
+    checkParsesAs stringChar "\\v" "\v",
     checkParsesAs stringChar "\n" "\n",
-    checkParsesAs stringChar "\\\"" "\\\"",
+    checkParsesAs stringChar "\\x0A" "\n",
+    checkParsesAs stringChar "\\012" "\n",
+    checkParsesAs stringChar "\\\"" "\"",
     checkParseFail stringChar "\"",
+    checkParseFail stringChar "\\q",
+    checkParseFail stringChar "\\00",
+    checkParseFail stringChar "\\x0",
 
     checkParsesAs regexChar "\\\\" "\\\\",
     checkParsesAs regexChar "\\n" "\\n",
@@ -50,7 +64,7 @@ checkParsesAs p s m = return $ do
   check parsed
   e <- parsed
   when (e /= m) $
-    compileError $ "'" ++ s ++ "' does not parse as '" ++ m ++ "':\n" ++ show e
+    compileError $ show s ++ " does not parse as " ++ show m ++ ":\n" ++ show e
   where
     check c
       | isCompileError c = compileError $ "Parse '" ++ s ++ "':\n" ++ show (getCompileError c)

@@ -401,26 +401,10 @@ instance ParseFromSource (ValueLiteral SourcePos) where
     charLiteral = do
       c <- getPosition
       string "'"
-      ch <- escapedChar <|> singleChar
+      ch <- stringChar
       string "'"
       optionalSpace
       return $ CharLiteral [c] ch
-      where
-        singleChar = try anyChar >>= return . (:[])
-        escapedChar = do
-          char '\\'
-          cs <- octChar <|> hexChar <|> singleChar
-          return ('\\':cs)
-        octChar = do
-          o1 <- octDigit
-          o2 <- octDigit
-          o3 <- octDigit
-          return [o1,o2,o3]
-        hexChar = do
-          char 'x' <|> char 'X'
-          h1 <- hexDigit
-          h2 <- hexDigit
-          return ['x',h1,h2]
     hexLiteral = do
       c <- getPosition
       try (char '0' >> (char 'x' <|> char 'X'))
