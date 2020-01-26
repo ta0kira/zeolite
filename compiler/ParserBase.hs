@@ -74,6 +74,7 @@ module ParserBase (
   notAllowed,
   nullParse,
   optionalSpace,
+  regexChar,
   requiredSpace,
   sepAfter,
   sepAfter1,
@@ -270,4 +271,14 @@ stringChar = escaped <|> notEscaped where
     char '\\'
     v <- anyChar
     return ['\\',v]
+  notEscaped = fmap (:[]) $ noneOf "\""
+
+regexChar :: Parser String
+regexChar = escaped <|> notEscaped where
+  escaped = do
+    char '\\'
+    v <- anyChar
+    case v of
+         '"' -> return "\""
+         _ -> return ['\\',v]
   notEscaped = fmap (:[]) $ noneOf "\""

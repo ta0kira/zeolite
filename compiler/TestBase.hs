@@ -31,8 +31,9 @@ module TestBase (
   forceParse,
   parseFilterMap,
   parseTheTest,
-  readSingle,
   readMulti,
+  readSingle,
+  readSingleWith,
   runAllTests,
   showParams,
 ) where
@@ -41,6 +42,7 @@ import Data.Either
 import Data.List
 import System.IO
 import Text.Parsec
+import Text.Parsec.String
 import qualified Data.Map as Map
 import qualified Data.Set as Set
 
@@ -68,10 +70,12 @@ forceParse :: ParseFromSource a => String -> a
 forceParse s = force $ parse sourceParser "(string)" s where
   force (Right x) = x
 
-readSingle :: (Monad m, CompileErrorM m) =>
-  ParseFromSource a => String -> String -> m a
-readSingle f s =
-  unwrap $ parse (between optionalSpace endOfDoc sourceParser) f s
+readSingle :: (ParseFromSource a, Monad m, CompileErrorM m) => String -> String -> m a
+readSingle = readSingleWith (optionalSpace >> sourceParser)
+
+readSingleWith :: (Monad m, CompileErrorM m) => Parser a -> String -> String -> m a
+readSingleWith p f s =
+  unwrap $ parse (between nullParse endOfDoc p) f s
   where
     unwrap (Left e)  = compileError (show e)
     unwrap (Right t) = return t

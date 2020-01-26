@@ -24,12 +24,14 @@ import TypesBase
 import qualified DefinitionTest as DefinitionTest
 import qualified TypeInstanceTest as TypeInstanceTest
 import qualified TypeCategoryTest as TypeCategoryTest
+import qualified ParserTest as ParserTest
 import qualified ProcedureTest as ProcedureTest
 import qualified IntegrationTestTest as IntegrationTestTest
 
 main = runAllTests $ concat [
     labelWith "DefinitionTest"      DefinitionTest.tests,
     labelWith "TypeInstanceTest"    TypeInstanceTest.tests,
+    labelWith "ParserTest"          ParserTest.tests,
     labelWith "TypeCategoryTest"    TypeCategoryTest.tests,
     labelWith "ProcedureTest"       ProcedureTest.tests,
     labelWith "IntegrationTestTest" IntegrationTestTest.tests

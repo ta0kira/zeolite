@@ -69,14 +69,14 @@ instance ParseFromSource (IntegrationTestHeader SourcePos) where
             sepAfter (keyword "require")
             s <- outputScope
             string "\""
-            r <- fmap concat $ manyTill stringChar (string "\"")
+            r <- fmap concat $ manyTill regexChar (string "\"")
             optionalSpace
             return ([OutputPattern s r],[])
           exclude = do
             sepAfter (keyword "exclude")
             s <- outputScope
             string "\""
-            e <- fmap concat $ manyTill stringChar (string "\"")
+            e <- fmap concat $ manyTill regexChar (string "\"")
             optionalSpace
             return ([],[OutputPattern s e])
       outputScope = try anyScope <|>
