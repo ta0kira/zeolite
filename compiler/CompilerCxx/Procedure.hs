@@ -531,6 +531,14 @@ compileExpression = compile where
       checkArity (_,ParamSet [_]) = return ()
       checkArity (i,ParamSet ts)  =
         compileError $ "Initializer position " ++ show i ++ " has " ++ show (length ts) ++ " values but should have 1"
+  compile (InfixExpression c e1 (FunctionOperator _ (FunctionSpec _ (CategoryFunction c2 cn) fn ps)) e2) =
+    compile (Expression c (CategoryCall c2 cn (FunctionCall c fn ps (ParamSet [e1,e2]))) [])
+  compile (InfixExpression c e1 (FunctionOperator _ (FunctionSpec _ (TypeFunction c2 tn) fn ps)) e2) =
+    compile (Expression c (TypeCall c2 tn (FunctionCall c fn ps (ParamSet [e1,e2]))) [])
+  compile (InfixExpression c e1 (FunctionOperator _ (FunctionSpec _ (ValueFunction c2 e0) fn ps)) e2) =
+    compile (Expression c (ParensExpression c2 e0) [ValueCall c (FunctionCall c fn ps (ParamSet [e1,e2]))])
+  compile (InfixExpression c e1 (FunctionOperator _ (FunctionSpec c2 UnqualifiedFunction fn ps)) e2) =
+    compile (Expression c (UnqualifiedCall c2 (FunctionCall c fn ps (ParamSet [e1,e2]))) [])
   compile (InfixExpression c e1 (NamedOperator o) e2) = do
     e1' <- compileExpression e1
     e2' <- if o `Set.member` logical

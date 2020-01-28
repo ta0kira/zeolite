@@ -209,7 +209,7 @@ testcase "String LessThan" {
 
 define Test {
   run () {
-    if (!String$lessThan("x","y")) {
+    if (!("x" `String$lessThan` "y")) {
       fail("Failed")
     }
   }
@@ -226,7 +226,7 @@ testcase "Bool Equals" {
 
 define Test {
   run () {
-    if (!Bool$equals(true,true)) {
+    if (!(true `Bool$equals` true)) {
       fail("Failed")
     }
   }
@@ -243,7 +243,7 @@ testcase "String Equals" {
 
 define Test {
   run () {
-    if (!String$equals("x","x")) {
+    if (!("x" `String$equals` "x")) {
       fail("Failed")
     }
   }
@@ -260,7 +260,7 @@ testcase "Char LessThan" {
 
 define Test {
   run () {
-    if (!Char$lessThan('x','y')) {
+    if (!('x' `Char$lessThan` 'y')) {
       fail("Failed")
     }
   }
@@ -277,7 +277,7 @@ testcase "Char Equals" {
 
 define Test {
   run () {
-    if (!Char$equals('x','x')) {
+    if (!('x' `Char$equals` 'x')) {
       fail("Failed")
     }
   }
@@ -294,7 +294,7 @@ testcase "Int LessThan" {
 
 define Test {
   run () {
-    if (!Int$lessThan(1,2)) {
+    if (!(1 `Int$lessThan` 2)) {
       fail("Failed")
     }
   }
@@ -311,7 +311,7 @@ testcase "Int Equals" {
 
 define Test {
   run () {
-    if (!Int$equals(1,1)) {
+    if (!(1 `Int$equals` 1)) {
       fail("Failed")
     }
   }
@@ -328,7 +328,7 @@ testcase "Float LessThan" {
 
 define Test {
   run () {
-    if (!Float$lessThan(1.0,2.0)) {
+    if (!(1.0 `Float$lessThan` 2.0)) {
       fail("Failed")
     }
   }
@@ -345,7 +345,7 @@ testcase "Float Equals" {
 
 define Test {
   run () {
-    if (!Float$equals(1.0,1.0)) {
+    if (!(1.0 `Float$equals` 1.0)) {
       fail("Failed")
     }
   }

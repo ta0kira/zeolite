@@ -20,7 +20,7 @@ define Test {
     }
 
     MatchState state <- matcher.tryNextMatch('x')
-    if (!MatchState$equals(state,MatchState$matchComplete())) {
+    if (!(state `MatchState$equals` MatchState$matchComplete())) {
       fail(state)
     }
     if (!matcher.matchSatisfied()) {
@@ -29,7 +29,7 @@ define Test {
 
     // Should only match once.
     state <- matcher.tryNextMatch('x')
-    if (!MatchState$equals(state,MatchState$matchFail())) {
+    if (!(state `MatchState$equals` MatchState$matchFail())) {
       fail(state)
     }
     if (matcher.matchSatisfied()) {
@@ -39,7 +39,7 @@ define Test {
     // Should match again after reset.
     matcher <- template.newMatcher()
     state <- matcher.tryNextMatch('x')
-    if (!MatchState$equals(state,MatchState$matchComplete())) {
+    if (!(state `MatchState$equals` MatchState$matchComplete())) {
       fail(state)
     }
   }
@@ -61,13 +61,13 @@ define Test {
     Matcher<Char> matcher <- template.newMatcher()
 
     MatchState state <- matcher.tryNextMatch('y')
-    if (!MatchState$equals(state,MatchState$matchFail())) {
+    if (!(state `MatchState$equals` MatchState$matchFail())) {
       fail(state)
     }
 
     // Should keep failing to match.
     state <- matcher.tryNextMatch('x')
-    if (!MatchState$equals(state,MatchState$matchFail())) {
+    if (!(state `MatchState$equals` MatchState$matchFail())) {
       fail(state)
     }
   }
@@ -96,7 +96,7 @@ define Test {
     }
 
     MatchState state <- matcher.tryNextMatch('x')
-    if (!MatchState$equals(state,MatchState$matchComplete())) {
+    if (!(state `MatchState$equals` MatchState$matchComplete())) {
       fail(state)
     }
     if (!matcher.matchSatisfied()) {
@@ -105,7 +105,7 @@ define Test {
 
     // Should only match once.
     state <- matcher.tryNextMatch('x')
-    if (!MatchState$equals(state,MatchState$matchFail())) {
+    if (!(state `MatchState$equals` MatchState$matchFail())) {
       fail(state)
     }
     if (matcher.matchSatisfied()) {
@@ -115,7 +115,7 @@ define Test {
     // Should match again after reset.
     matcher <- template.newMatcher()
     state <- matcher.tryNextMatch('x')
-    if (!MatchState$equals(state,MatchState$matchComplete())) {
+    if (!(state `MatchState$equals` MatchState$matchComplete())) {
       fail(state)
     }
   }
@@ -137,13 +137,13 @@ define Test {
     Matcher<Char> matcher <- template.newMatcher()
 
     MatchState state <- matcher.tryNextMatch('a')
-    if (!MatchState$equals(state,MatchState$matchFail())) {
+    if (!(state `MatchState$equals` MatchState$matchFail())) {
       fail(state)
     }
 
     // Should keep failing to match.
     state <- matcher.tryNextMatch('x')
-    if (!MatchState$equals(state,MatchState$matchFail())) {
+    if (!(state `MatchState$equals` MatchState$matchFail())) {
       fail(state)
     }
   }
@@ -172,7 +172,7 @@ define Test {
     }
 
     MatchState state <- matcher.tryNextMatch('x')
-    if (!MatchState$equals(state,MatchState$matchComplete())) {
+    if (!(state `MatchState$equals` MatchState$matchComplete())) {
       fail(state)
     }
     if (!matcher.matchSatisfied()) {
@@ -181,7 +181,7 @@ define Test {
 
     // Should only match once.
     state <- matcher.tryNextMatch('x')
-    if (!MatchState$equals(state,MatchState$matchFail())) {
+    if (!(state `MatchState$equals` MatchState$matchFail())) {
       fail(state)
     }
     if (matcher.matchSatisfied()) {
@@ -191,7 +191,7 @@ define Test {
     // Should match again after reset.
     matcher <- template.newMatcher()
     state <- matcher.tryNextMatch('x')
-    if (!MatchState$equals(state,MatchState$matchComplete())) {
+    if (!(state `MatchState$equals` MatchState$matchComplete())) {
       fail(state)
     }
   }
@@ -220,7 +220,7 @@ define Test {
     }
 
     MatchState state <- matcher.tryNextMatch('x')
-    if (!MatchState$equals(state,MatchState$matchFail())) {
+    if (!(state `MatchState$equals` MatchState$matchFail())) {
       fail(state)
     }
     if (matcher.matchSatisfied()) {
@@ -262,7 +262,7 @@ define Test {
 
     // First character.
     state <- matcher.tryNextMatch('x')
-    if (!MatchState$equals(state,MatchState$matchContinue())) {
+    if (!(state `MatchState$equals` MatchState$matchContinue())) {
       fail(state)
     }
     if (matcher.matchSatisfied()) {
@@ -271,7 +271,7 @@ define Test {
 
     // Second character.
     state <- matcher.tryNextMatch('y')
-    if (!MatchState$equals(state,MatchState$matchContinue())) {
+    if (!(state `MatchState$equals` MatchState$matchContinue())) {
       fail(state)
     }
     if (!matcher.matchSatisfied()) {
@@ -280,13 +280,13 @@ define Test {
 
     // Third character.
     state <- matcher.tryNextMatch('x')
-    if (!MatchState$equals(state,MatchState$matchComplete())) {
+    if (!(state `MatchState$equals` MatchState$matchComplete())) {
       fail(state)
     }
 
     // Fourth character.
     state <- matcher.tryNextMatch('x')
-    if (!MatchState$equals(state,MatchState$matchFail())) {
+    if (!(state `MatchState$equals` MatchState$matchFail())) {
       fail(state)
     }
     if (!matcher.matchSatisfied()) {
@@ -298,7 +298,7 @@ define Test {
 
     // Fourth character.
     state <- matcher.tryNextMatch('w')
-    if (!MatchState$equals(state,MatchState$matchContinue())) {
+    if (!(state `MatchState$equals` MatchState$matchContinue())) {
       fail(state)
     }
     if (matcher.matchSatisfied()) {
@@ -307,7 +307,7 @@ define Test {
 
     // Fifth character.
     state <- matcher.tryNextMatch('w')
-    if (!MatchState$equals(state,MatchState$matchContinue())) {
+    if (!(state `MatchState$equals` MatchState$matchContinue())) {
       fail(state)
     }
     if (!matcher.matchSatisfied()) {
@@ -344,7 +344,7 @@ define Test {
 
     // First character.
     state <- matcher.tryNextMatch('x')
-    if (!MatchState$equals(state,MatchState$matchContinue())) {
+    if (!(state `MatchState$equals` MatchState$matchContinue())) {
       fail(state)
     }
     if (!matcher.matchSatisfied()) {
@@ -353,7 +353,7 @@ define Test {
 
     // Second character.
     state <- matcher.tryNextMatch('x')
-    if (!MatchState$equals(state,MatchState$matchContinue())) {
+    if (!(state `MatchState$equals` MatchState$matchContinue())) {
       fail(state)
     }
     if (!matcher.matchSatisfied()) {
@@ -362,7 +362,7 @@ define Test {
 
     // Third character.
     state <- matcher.tryNextMatch('x')
-    if (!MatchState$equals(state,MatchState$matchContinue())) {
+    if (!(state `MatchState$equals` MatchState$matchContinue())) {
       fail(state)
     }
     if (!matcher.matchSatisfied()) {
@@ -391,7 +391,7 @@ define Test {
 
     // First character.
     state <- matcher.tryNextMatch('x')
-    if (!MatchState$equals(state,MatchState$matchContinue())) {
+    if (!(state `MatchState$equals` MatchState$matchContinue())) {
       fail(state)
     }
     if (matcher.matchSatisfied()) {
@@ -400,7 +400,7 @@ define Test {
 
     // Second character.
     state <- matcher.tryNextMatch('q')
-    if (!MatchState$equals(state,MatchState$matchFail())) {
+    if (!(state `MatchState$equals` MatchState$matchFail())) {
       fail(state)
     }
     if (matcher.matchSatisfied()) {
@@ -409,7 +409,7 @@ define Test {
 
     // Should keep failing to match.
     state <- matcher.tryNextMatch('x')
-    if (!MatchState$equals(state,MatchState$matchFail())) {
+    if (!(state `MatchState$equals` MatchState$matchFail())) {
       fail(state)
     }
   }
@@ -444,7 +444,7 @@ define Test {
 
     // First character.
     state <- matcher.tryNextMatch('a')
-    if (!MatchState$equals(state,MatchState$matchContinue())) {
+    if (!(state `MatchState$equals` MatchState$matchContinue())) {
       fail(state)
     }
     if (!matcher.matchSatisfied()) {
@@ -453,7 +453,7 @@ define Test {
 
     // Second character.
     state <- matcher.tryNextMatch('b')
-    if (!MatchState$equals(state,MatchState$matchContinue())) {
+    if (!(state `MatchState$equals` MatchState$matchContinue())) {
       fail(state)
     }
     if (!matcher.matchSatisfied()) {
@@ -462,7 +462,7 @@ define Test {
 
     // Third character.
     state <- matcher.tryNextMatch('a')
-    if (!MatchState$equals(state,MatchState$matchContinue())) {
+    if (!(state `MatchState$equals` MatchState$matchContinue())) {
       fail(state)
     }
     if (!matcher.matchSatisfied()) {
@@ -502,19 +502,19 @@ define Test {
 
     // First character.
     state <- matcher.tryNextMatch('a')
-    if (!MatchState$equals(state,MatchState$matchContinue())) {
+    if (!(state `MatchState$equals` MatchState$matchContinue())) {
       fail(state)
     }
 
     // Second character.
     state <- matcher.tryNextMatch('a')
-    if (!MatchState$equals(state,MatchState$matchContinue())) {
+    if (!(state `MatchState$equals` MatchState$matchContinue())) {
       fail(state)
     }
 
     // Third character.
     state <- matcher.tryNextMatch('x')
-    if (!MatchState$equals(state,MatchState$matchFail())) {
+    if (!(state `MatchState$equals` MatchState$matchFail())) {
       fail(state)
     }
 
@@ -523,7 +523,7 @@ define Test {
 
     // First character.
     state <- matcher.tryNextMatch('x')
-    if (!MatchState$equals(state,MatchState$matchComplete())) {
+    if (!(state `MatchState$equals` MatchState$matchComplete())) {
       fail(state)
     }
   }
@@ -560,13 +560,13 @@ define Test {
 
     // First character.
     state <- matcher.tryNextMatch('a')
-    if (!MatchState$equals(state,MatchState$matchContinue())) {
+    if (!(state `MatchState$equals` MatchState$matchContinue())) {
       fail(state)
     }
 
     // Should keep failing to match.
     state <- matcher.tryNextMatch('x')
-    if (!MatchState$equals(state,MatchState$matchFail())) {
+    if (!(state `MatchState$equals` MatchState$matchFail())) {
       fail(state)
     }
   }
@@ -605,7 +605,7 @@ define Test {
 
     // First character.
     state <- matcher.tryNextMatch('a')
-    if (!MatchState$equals(state,MatchState$matchContinue())) {
+    if (!(state `MatchState$equals` MatchState$matchContinue())) {
       fail(state)
     }
     if (matcher.matchSatisfied()) {
@@ -642,7 +642,7 @@ define Test {
 
     // First character.
     { state, branches } <- brancher.tryBranches('x')
-    if (!MatchState$equals(state,MatchState$matchContinue())) {
+    if (!(state `MatchState$equals` MatchState$matchContinue())) {
       fail(state)
     }
     if (!present(branches)) {
@@ -660,7 +660,7 @@ define Test {
 
     // Second character.
     { state, branches } <- brancher.tryBranches('y')
-    if (!MatchState$equals(state,MatchState$matchContinue())) {
+    if (!(state `MatchState$equals` MatchState$matchContinue())) {
       fail(state)
     }
     if (!present(branches)) {
@@ -678,7 +678,7 @@ define Test {
 
     // Third character.
     { state, branches } <- brancher.tryBranches('x')
-    if (!MatchState$equals(state,MatchState$matchComplete())) {
+    if (!(state `MatchState$equals` MatchState$matchComplete())) {
       fail(state)
     }
     if (present(branches)) {
@@ -690,7 +690,7 @@ define Test {
 
     // Fourth character.
     { state, branches } <- brancher.tryBranches('w')
-    if (!MatchState$equals(state,MatchState$matchContinue())) {
+    if (!(state `MatchState$equals` MatchState$matchContinue())) {
       fail(state)
     }
     if (!present(branches)) {
@@ -729,7 +729,7 @@ define Test {
 
     // First character.
     { state, branches } <- brancher.tryBranches('x')
-    if (!MatchState$equals(state,MatchState$matchContinue())) {
+    if (!(state `MatchState$equals` MatchState$matchContinue())) {
       fail(state)
     }
     if (!present(branches)) {
@@ -747,7 +747,7 @@ define Test {
 
     // Second character.
     { state, branches } <- brancher.tryBranches('x')
-    if (!MatchState$equals(state,MatchState$matchContinue())) {
+    if (!(state `MatchState$equals` MatchState$matchContinue())) {
       fail(state)
     }
     if (!present(branches)) {
@@ -766,7 +766,7 @@ define Test {
 
     // Third character, branch 1.
     { state, _ } <- brancher.tryBranches('x')
-    if (!MatchState$equals(state,MatchState$matchContinue())) {
+    if (!(state `MatchState$equals` MatchState$matchContinue())) {
       fail(state)
     }
 
@@ -782,7 +782,7 @@ define Test {
 
     // Third character, branch 2.
     { state, _ } <- brancher.tryBranches('x')
-    if (!MatchState$equals(state,MatchState$matchContinue())) {
+    if (!(state `MatchState$equals` MatchState$matchContinue())) {
       fail(state)
     }
   }
@@ -809,7 +809,7 @@ define Test {
 
     // First character.
     { state, branches } <- brancher.tryBranches('x')
-    if (!MatchState$equals(state,MatchState$matchContinue())) {
+    if (!(state `MatchState$equals` MatchState$matchContinue())) {
       fail(state)
     }
     if (!present(branches)) {
@@ -827,7 +827,7 @@ define Test {
 
     // Second character.
     { state, branches } <- brancher.tryBranches('q')
-    if (!MatchState$equals(state,MatchState$matchFail())) {
+    if (!(state `MatchState$equals` MatchState$matchFail())) {
       fail(state)
     }
     if (present(branches)) {
@@ -866,7 +866,7 @@ define Test {
 
     // First character.
     { state, branches } <- brancher.tryBranches('x')
-    if (!MatchState$equals(state,MatchState$matchContinue())) {
+    if (!(state `MatchState$equals` MatchState$matchContinue())) {
       fail(state)
     }
     if (!present(branches)) {
@@ -881,7 +881,7 @@ define Test {
 
     // Second character.
     { state, branches } <- brancher.tryBranches('a')
-    if (!MatchState$equals(state,MatchState$matchComplete())) {
+    if (!(state `MatchState$equals` MatchState$matchComplete())) {
       fail(state)
     }
     if (!present(branches)) {
@@ -893,7 +893,7 @@ define Test {
       fail("match not satisfied")
     }
     { state, branches } <- require(branches).value().tryBranches('a')
-    if (!MatchState$equals(state,MatchState$matchFail())) {
+    if (!(state `MatchState$equals` MatchState$matchFail())) {
       fail(state)
     }
 
@@ -902,7 +902,7 @@ define Test {
 
     // Third character.
     { state, branches } <- brancher.tryBranches('y')
-    if (!MatchState$equals(state,MatchState$matchContinue())) {
+    if (!(state `MatchState$equals` MatchState$matchContinue())) {
       fail(state)
     }
     if (!present(branches)) {
@@ -934,7 +934,7 @@ define Test {
 
     // First character.
     { state, branches } <- brancher.tryBranches('q')
-    if (!MatchState$equals(state,MatchState$matchFail())) {
+    if (!(state `MatchState$equals` MatchState$matchFail())) {
       fail(state)
     }
     if (present(branches)) {
@@ -943,7 +943,7 @@ define Test {
 
     // Should keep failing to match.
     { state, branches } <- brancher.tryBranches('x')
-    if (!MatchState$equals(state,MatchState$matchFail())) {
+    if (!(state `MatchState$equals` MatchState$matchFail())) {
       fail(state)
     }
   }
@@ -982,7 +982,7 @@ define Test {
 
     // First character.
     { state, branches } <- brancher.tryBranches('b')
-    if (!MatchState$equals(state,MatchState$matchComplete())) {
+    if (!(state `MatchState$equals` MatchState$matchComplete())) {
       fail(state)
     }
     if (!present(branches)) {
@@ -1024,7 +1024,7 @@ define Test {
 
     // First character.
     { state, branches } <- brancher.tryBranches('b')
-    if (!MatchState$equals(state,MatchState$matchFail())) {
+    if (!(state `MatchState$equals` MatchState$matchFail())) {
       fail(state)
     }
     if (present(branches)) {
@@ -1067,7 +1067,7 @@ define Test {
 
     // First character.
     { state, branches } <- brancher.tryBranches('a')
-    if (!MatchState$equals(state,MatchState$matchContinue())) {
+    if (!(state `MatchState$equals` MatchState$matchContinue())) {
       fail(state)
     }
     if (!present(branches)) {
@@ -1085,7 +1085,7 @@ define Test {
 
     // Second character, branch 1.
     { state, _ } <- brancher.tryBranches('a')
-    if (!MatchState$equals(state,MatchState$matchContinue())) {
+    if (!(state `MatchState$equals` MatchState$matchContinue())) {
       fail(state)
     }
 
@@ -1097,7 +1097,7 @@ define Test {
 
     // Second character, branch 2.
     { state, _ } <- brancher.tryBranches('a')
-    if (!MatchState$equals(state,MatchState$matchComplete())) {
+    if (!(state `MatchState$equals` MatchState$matchComplete())) {
       fail(state)
     }
   }
@@ -1133,7 +1133,7 @@ define Test {
 
     // First character.
     state <- matcher.tryNextMatch('x')
-    if (!MatchState$equals(state,MatchState$matchContinue())) {
+    if (!(state `MatchState$equals` MatchState$matchContinue())) {
       fail(state)
     }
     if (matcher.matchSatisfied()) {
@@ -1142,7 +1142,7 @@ define Test {
 
     // Second character.
     state <- matcher.tryNextMatch('a')
-    if (!MatchState$equals(state,MatchState$matchComplete())) {
+    if (!(state `MatchState$equals` MatchState$matchComplete())) {
       fail(state)
     }
     if (!matcher.matchSatisfied()) {
@@ -1154,7 +1154,7 @@ define Test {
 
     // Third character.
     state <- matcher.tryNextMatch('y')
-    if (!MatchState$equals(state,MatchState$matchContinue())) {
+    if (!(state `MatchState$equals` MatchState$matchContinue())) {
       fail(state)
     }
   }
@@ -1190,7 +1190,7 @@ define Test {
 
     // First character.
     state <- matcher.tryNextMatch('x')
-    if (!MatchState$equals(state,MatchState$matchContinue())) {
+    if (!(state `MatchState$equals` MatchState$matchContinue())) {
       fail(state)
     }
     if (matcher.matchSatisfied()) {
@@ -1199,7 +1199,7 @@ define Test {
 
     // Second character.
     state <- matcher.tryNextMatch('q')
-    if (!MatchState$equals(state,MatchState$matchFail())) {
+    if (!(state `MatchState$equals` MatchState$matchFail())) {
       fail(state)
     }
     if (matcher.matchSatisfied()) {
@@ -1208,7 +1208,7 @@ define Test {
 
     // Should keep failing to match.
     state <- matcher.tryNextMatch('y')
-    if (!MatchState$equals(state,MatchState$matchFail())) {
+    if (!(state `MatchState$equals` MatchState$matchFail())) {
       fail(state)
     }
   }
@@ -1251,7 +1251,7 @@ define Test {
 
     // First character.
     state <- matcher.tryNextMatch('a')
-    if (!MatchState$equals(state,MatchState$matchContinue())) {
+    if (!(state `MatchState$equals` MatchState$matchContinue())) {
       fail(state)
     }
     if (matcher.matchSatisfied()) {
@@ -1260,7 +1260,7 @@ define Test {
 
     // Second character.
     state <- matcher.tryNextMatch('c')
-    if (!MatchState$equals(state,MatchState$matchComplete())) {
+    if (!(state `MatchState$equals` MatchState$matchComplete())) {
       fail(state)
     }
     if (!matcher.matchSatisfied()) {
@@ -1272,7 +1272,7 @@ define Test {
 
     // First character.
     state <- matcher.tryNextMatch('a')
-    if (!MatchState$equals(state,MatchState$matchContinue())) {
+    if (!(state `MatchState$equals` MatchState$matchContinue())) {
       fail(state)
     }
     if (matcher.matchSatisfied()) {
@@ -1281,7 +1281,7 @@ define Test {
 
     // Second character.
     state <- matcher.tryNextMatch('b')
-    if (!MatchState$equals(state,MatchState$matchContinue())) {
+    if (!(state `MatchState$equals` MatchState$matchContinue())) {
       fail(state)
     }
     if (matcher.matchSatisfied()) {
@@ -1319,7 +1319,7 @@ define Test {
 
     // First character.
     state <- matcher.tryNextMatch('a')
-    if (!MatchState$equals(state,MatchState$matchContinue())) {
+    if (!(state `MatchState$equals` MatchState$matchContinue())) {
       fail(state)
     }
     if (matcher.matchSatisfied()) {
@@ -1328,7 +1328,7 @@ define Test {
 
     // Second character.
     state <- matcher.tryNextMatch('b')
-    if (!MatchState$equals(state,MatchState$matchContinue())) {
+    if (!(state `MatchState$equals` MatchState$matchContinue())) {
       fail(state)
     }
     if (!matcher.matchSatisfied()) {

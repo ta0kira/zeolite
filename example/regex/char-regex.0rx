@@ -10,11 +10,11 @@ define CharRegex {
     Matcher<Char> matcher <- template.newMatcher()
     while (!p.pastForwardEnd()) {
       MatchState state <- matcher.tryNextMatch(p.readCurrent())
-      if (MatchState$equals(state,MatchState$matchFail())) {
+      if (state `MatchState$equals` MatchState$matchFail()) {
         break
       }
       p <- p.forward()
-      if (MatchState$equals(state,MatchState$matchComplete())) {
+      if (state `MatchState$equals` MatchState$matchComplete()) {
         break
       }
     }

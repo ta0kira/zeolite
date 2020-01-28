@@ -31,7 +31,7 @@
     }
 
     <span style='color:#0057ae;'>MatchState</span> state &lt;- matcher.tryNextMatch(<span style='color:#924c9d;'>'x'</span>)
-    <b>if</b> (!<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals(state,<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchComplete())) {
+    <b>if</b> (!(state <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals<b><span style='color:#c02040;'>`</span></b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchComplete())) {
       <b>fail</b>(state)
     }
     <b>if</b> (!matcher.matchSatisfied()) {
@@ -40,7 +40,7 @@
 
     <span style='color:#898887;'>// Should only match once.</span>
     state &lt;- matcher.tryNextMatch(<span style='color:#924c9d;'>'x'</span>)
-    <b>if</b> (!<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals(state,<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchFail())) {
+    <b>if</b> (!(state <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals<b><span style='color:#c02040;'>`</span></b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchFail())) {
       <b>fail</b>(state)
     }
     <b>if</b> (matcher.matchSatisfied()) {
@@ -50,7 +50,7 @@
     <span style='color:#898887;'>// Should match again after reset.</span>
     matcher &lt;- template.newMatcher()
     state &lt;- matcher.tryNextMatch(<span style='color:#924c9d;'>'x'</span>)
-    <b>if</b> (!<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals(state,<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchComplete())) {
+    <b>if</b> (!(state <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals<b><span style='color:#c02040;'>`</span></b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchComplete())) {
       <b>fail</b>(state)
     }
   }
@@ -72,13 +72,13 @@
     <span style='color:#0057ae;'>Matcher</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;</span> matcher &lt;- template.newMatcher()
 
     <span style='color:#0057ae;'>MatchState</span> state &lt;- matcher.tryNextMatch(<span style='color:#924c9d;'>'y'</span>)
-    <b>if</b> (!<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals(state,<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchFail())) {
+    <b>if</b> (!(state <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals<b><span style='color:#c02040;'>`</span></b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchFail())) {
       <b>fail</b>(state)
     }
 
     <span style='color:#898887;'>// Should keep failing to match.</span>
     state &lt;- matcher.tryNextMatch(<span style='color:#924c9d;'>'x'</span>)
-    <b>if</b> (!<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals(state,<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchFail())) {
+    <b>if</b> (!(state <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals<b><span style='color:#c02040;'>`</span></b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchFail())) {
       <b>fail</b>(state)
     }
   }
@@ -107,7 +107,7 @@
     }
 
     <span style='color:#0057ae;'>MatchState</span> state &lt;- matcher.tryNextMatch(<span style='color:#924c9d;'>'x'</span>)
-    <b>if</b> (!<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals(state,<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchComplete())) {
+    <b>if</b> (!(state <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals<b><span style='color:#c02040;'>`</span></b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchComplete())) {
       <b>fail</b>(state)
     }
     <b>if</b> (!matcher.matchSatisfied()) {
@@ -116,7 +116,7 @@
 
     <span style='color:#898887;'>// Should only match once.</span>
     state &lt;- matcher.tryNextMatch(<span style='color:#924c9d;'>'x'</span>)
-    <b>if</b> (!<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals(state,<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchFail())) {
+    <b>if</b> (!(state <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals<b><span style='color:#c02040;'>`</span></b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchFail())) {
       <b>fail</b>(state)
     }
     <b>if</b> (matcher.matchSatisfied()) {
@@ -126,7 +126,7 @@
     <span style='color:#898887;'>// Should match again after reset.</span>
     matcher &lt;- template.newMatcher()
     state &lt;- matcher.tryNextMatch(<span style='color:#924c9d;'>'x'</span>)
-    <b>if</b> (!<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals(state,<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchComplete())) {
+    <b>if</b> (!(state <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals<b><span style='color:#c02040;'>`</span></b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchComplete())) {
       <b>fail</b>(state)
     }
   }
@@ -148,13 +148,13 @@
     <span style='color:#0057ae;'>Matcher</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;</span> matcher &lt;- template.newMatcher()
 
     <span style='color:#0057ae;'>MatchState</span> state &lt;- matcher.tryNextMatch(<span style='color:#924c9d;'>'a'</span>)
-    <b>if</b> (!<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals(state,<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchFail())) {
+    <b>if</b> (!(state <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals<b><span style='color:#c02040;'>`</span></b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchFail())) {
       <b>fail</b>(state)
     }
 
     <span style='color:#898887;'>// Should keep failing to match.</span>
     state &lt;- matcher.tryNextMatch(<span style='color:#924c9d;'>'x'</span>)
-    <b>if</b> (!<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals(state,<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchFail())) {
+    <b>if</b> (!(state <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals<b><span style='color:#c02040;'>`</span></b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchFail())) {
       <b>fail</b>(state)
     }
   }
@@ -183,7 +183,7 @@
     }
 
     <span style='color:#0057ae;'>MatchState</span> state &lt;- matcher.tryNextMatch(<span style='color:#924c9d;'>'x'</span>)
-    <b>if</b> (!<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals(state,<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchComplete())) {
+    <b>if</b> (!(state <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals<b><span style='color:#c02040;'>`</span></b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchComplete())) {
       <b>fail</b>(state)
     }
     <b>if</b> (!matcher.matchSatisfied()) {
@@ -192,7 +192,7 @@
 
     <span style='color:#898887;'>// Should only match once.</span>
     state &lt;- matcher.tryNextMatch(<span style='color:#924c9d;'>'x'</span>)
-    <b>if</b> (!<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals(state,<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchFail())) {
+    <b>if</b> (!(state <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals<b><span style='color:#c02040;'>`</span></b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchFail())) {
       <b>fail</b>(state)
     }
     <b>if</b> (matcher.matchSatisfied()) {
@@ -202,7 +202,7 @@
     <span style='color:#898887;'>// Should match again after reset.</span>
     matcher &lt;- template.newMatcher()
     state &lt;- matcher.tryNextMatch(<span style='color:#924c9d;'>'x'</span>)
-    <b>if</b> (!<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals(state,<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchComplete())) {
+    <b>if</b> (!(state <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals<b><span style='color:#c02040;'>`</span></b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchComplete())) {
       <b>fail</b>(state)
     }
   }
@@ -231,7 +231,7 @@
     }
 
     <span style='color:#0057ae;'>MatchState</span> state &lt;- matcher.tryNextMatch(<span style='color:#924c9d;'>'x'</span>)
-    <b>if</b> (!<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals(state,<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchFail())) {
+    <b>if</b> (!(state <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals<b><span style='color:#c02040;'>`</span></b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchFail())) {
       <b>fail</b>(state)
     }
     <b>if</b> (matcher.matchSatisfied()) {
@@ -273,7 +273,7 @@
 
     <span style='color:#898887;'>// First character.</span>
     state &lt;- matcher.tryNextMatch(<span style='color:#924c9d;'>'x'</span>)
-    <b>if</b> (!<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals(state,<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchContinue())) {
+    <b>if</b> (!(state <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals<b><span style='color:#c02040;'>`</span></b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchContinue())) {
       <b>fail</b>(state)
     }
     <b>if</b> (matcher.matchSatisfied()) {
@@ -282,7 +282,7 @@
 
     <span style='color:#898887;'>// Second character.</span>
     state &lt;- matcher.tryNextMatch(<span style='color:#924c9d;'>'y'</span>)
-    <b>if</b> (!<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals(state,<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchContinue())) {
+    <b>if</b> (!(state <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals<b><span style='color:#c02040;'>`</span></b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchContinue())) {
       <b>fail</b>(state)
     }
     <b>if</b> (!matcher.matchSatisfied()) {
@@ -291,13 +291,13 @@
 
     <span style='color:#898887;'>// Third character.</span>
     state &lt;- matcher.tryNextMatch(<span style='color:#924c9d;'>'x'</span>)
-    <b>if</b> (!<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals(state,<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchComplete())) {
+    <b>if</b> (!(state <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals<b><span style='color:#c02040;'>`</span></b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchComplete())) {
       <b>fail</b>(state)
     }
 
     <span style='color:#898887;'>// Fourth character.</span>
     state &lt;- matcher.tryNextMatch(<span style='color:#924c9d;'>'x'</span>)
-    <b>if</b> (!<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals(state,<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchFail())) {
+    <b>if</b> (!(state <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals<b><span style='color:#c02040;'>`</span></b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchFail())) {
       <b>fail</b>(state)
     }
     <b>if</b> (!matcher.matchSatisfied()) {
@@ -309,7 +309,7 @@
 
     <span style='color:#898887;'>// Fourth character.</span>
     state &lt;- matcher.tryNextMatch(<span style='color:#924c9d;'>'w'</span>)
-    <b>if</b> (!<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals(state,<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchContinue())) {
+    <b>if</b> (!(state <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals<b><span style='color:#c02040;'>`</span></b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchContinue())) {
       <b>fail</b>(state)
     }
     <b>if</b> (matcher.matchSatisfied()) {
@@ -318,7 +318,7 @@
 
     <span style='color:#898887;'>// Fifth character.</span>
     state &lt;- matcher.tryNextMatch(<span style='color:#924c9d;'>'w'</span>)
-    <b>if</b> (!<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals(state,<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchContinue())) {
+    <b>if</b> (!(state <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals<b><span style='color:#c02040;'>`</span></b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchContinue())) {
       <b>fail</b>(state)
     }
     <b>if</b> (!matcher.matchSatisfied()) {
@@ -355,7 +355,7 @@
 
     <span style='color:#898887;'>// First character.</span>
     state &lt;- matcher.tryNextMatch(<span style='color:#924c9d;'>'x'</span>)
-    <b>if</b> (!<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals(state,<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchContinue())) {
+    <b>if</b> (!(state <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals<b><span style='color:#c02040;'>`</span></b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchContinue())) {
       <b>fail</b>(state)
     }
     <b>if</b> (!matcher.matchSatisfied()) {
@@ -364,7 +364,7 @@
 
     <span style='color:#898887;'>// Second character.</span>
     state &lt;- matcher.tryNextMatch(<span style='color:#924c9d;'>'x'</span>)
-    <b>if</b> (!<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals(state,<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchContinue())) {
+    <b>if</b> (!(state <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals<b><span style='color:#c02040;'>`</span></b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchContinue())) {
       <b>fail</b>(state)
     }
     <b>if</b> (!matcher.matchSatisfied()) {
@@ -373,7 +373,7 @@
 
     <span style='color:#898887;'>// Third character.</span>
     state &lt;- matcher.tryNextMatch(<span style='color:#924c9d;'>'x'</span>)
-    <b>if</b> (!<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals(state,<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchContinue())) {
+    <b>if</b> (!(state <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals<b><span style='color:#c02040;'>`</span></b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchContinue())) {
       <b>fail</b>(state)
     }
     <b>if</b> (!matcher.matchSatisfied()) {
@@ -402,7 +402,7 @@
 
     <span style='color:#898887;'>// First character.</span>
     state &lt;- matcher.tryNextMatch(<span style='color:#924c9d;'>'x'</span>)
-    <b>if</b> (!<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals(state,<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchContinue())) {
+    <b>if</b> (!(state <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals<b><span style='color:#c02040;'>`</span></b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchContinue())) {
       <b>fail</b>(state)
     }
     <b>if</b> (matcher.matchSatisfied()) {
@@ -411,7 +411,7 @@
 
     <span style='color:#898887;'>// Second character.</span>
     state &lt;- matcher.tryNextMatch(<span style='color:#924c9d;'>'q'</span>)
-    <b>if</b> (!<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals(state,<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchFail())) {
+    <b>if</b> (!(state <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals<b><span style='color:#c02040;'>`</span></b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchFail())) {
       <b>fail</b>(state)
     }
     <b>if</b> (matcher.matchSatisfied()) {
@@ -420,7 +420,7 @@
 
     <span style='color:#898887;'>// Should keep failing to match.</span>
     state &lt;- matcher.tryNextMatch(<span style='color:#924c9d;'>'x'</span>)
-    <b>if</b> (!<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals(state,<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchFail())) {
+    <b>if</b> (!(state <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals<b><span style='color:#c02040;'>`</span></b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchFail())) {
       <b>fail</b>(state)
     }
   }
@@ -455,7 +455,7 @@
 
     <span style='color:#898887;'>// First character.</span>
     state &lt;- matcher.tryNextMatch(<span style='color:#924c9d;'>'a'</span>)
-    <b>if</b> (!<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals(state,<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchContinue())) {
+    <b>if</b> (!(state <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals<b><span style='color:#c02040;'>`</span></b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchContinue())) {
       <b>fail</b>(state)
     }
     <b>if</b> (!matcher.matchSatisfied()) {
@@ -464,7 +464,7 @@
 
     <span style='color:#898887;'>// Second character.</span>
     state &lt;- matcher.tryNextMatch(<span style='color:#924c9d;'>'b'</span>)
-    <b>if</b> (!<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals(state,<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchContinue())) {
+    <b>if</b> (!(state <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals<b><span style='color:#c02040;'>`</span></b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchContinue())) {
       <b>fail</b>(state)
     }
     <b>if</b> (!matcher.matchSatisfied()) {
@@ -473,7 +473,7 @@
 
     <span style='color:#898887;'>// Third character.</span>
     state &lt;- matcher.tryNextMatch(<span style='color:#924c9d;'>'a'</span>)
-    <b>if</b> (!<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals(state,<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchContinue())) {
+    <b>if</b> (!(state <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals<b><span style='color:#c02040;'>`</span></b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchContinue())) {
       <b>fail</b>(state)
     }
     <b>if</b> (!matcher.matchSatisfied()) {
@@ -513,19 +513,19 @@
 
     <span style='color:#898887;'>// First character.</span>
     state &lt;- matcher.tryNextMatch(<span style='color:#924c9d;'>'a'</span>)
-    <b>if</b> (!<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals(state,<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchContinue())) {
+    <b>if</b> (!(state <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals<b><span style='color:#c02040;'>`</span></b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchContinue())) {
       <b>fail</b>(state)
     }
 
     <span style='color:#898887;'>// Second character.</span>
     state &lt;- matcher.tryNextMatch(<span style='color:#924c9d;'>'a'</span>)
-    <b>if</b> (!<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals(state,<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchContinue())) {
+    <b>if</b> (!(state <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals<b><span style='color:#c02040;'>`</span></b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchContinue())) {
       <b>fail</b>(state)
     }
 
     <span style='color:#898887;'>// Third character.</span>
     state &lt;- matcher.tryNextMatch(<span style='color:#924c9d;'>'x'</span>)
-    <b>if</b> (!<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals(state,<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchFail())) {
+    <b>if</b> (!(state <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals<b><span style='color:#c02040;'>`</span></b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchFail())) {
       <b>fail</b>(state)
     }
 
@@ -534,7 +534,7 @@
 
     <span style='color:#898887;'>// First character.</span>
     state &lt;- matcher.tryNextMatch(<span style='color:#924c9d;'>'x'</span>)
-    <b>if</b> (!<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals(state,<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchComplete())) {
+    <b>if</b> (!(state <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals<b><span style='color:#c02040;'>`</span></b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchComplete())) {
       <b>fail</b>(state)
     }
   }
@@ -571,13 +571,13 @@
 
     <span style='color:#898887;'>// First character.</span>
     state &lt;- matcher.tryNextMatch(<span style='color:#924c9d;'>'a'</span>)
-    <b>if</b> (!<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals(state,<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchContinue())) {
+    <b>if</b> (!(state <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals<b><span style='color:#c02040;'>`</span></b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchContinue())) {
       <b>fail</b>(state)
     }
 
     <span style='color:#898887;'>// Should keep failing to match.</span>
     state &lt;- matcher.tryNextMatch(<span style='color:#924c9d;'>'x'</span>)
-    <b>if</b> (!<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals(state,<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchFail())) {
+    <b>if</b> (!(state <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals<b><span style='color:#c02040;'>`</span></b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchFail())) {
       <b>fail</b>(state)
     }
   }
@@ -616,7 +616,7 @@
 
     <span style='color:#898887;'>// First character.</span>
     state &lt;- matcher.tryNextMatch(<span style='color:#924c9d;'>'a'</span>)
-    <b>if</b> (!<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals(state,<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchContinue())) {
+    <b>if</b> (!(state <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals<b><span style='color:#c02040;'>`</span></b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchContinue())) {
       <b>fail</b>(state)
     }
     <b>if</b> (matcher.matchSatisfied()) {
@@ -653,7 +653,7 @@
 
     <span style='color:#898887;'>// First character.</span>
     { state, branches } &lt;- brancher.tryBranches(<span style='color:#924c9d;'>'x'</span>)
-    <b>if</b> (!<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals(state,<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchContinue())) {
+    <b>if</b> (!(state <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals<b><span style='color:#c02040;'>`</span></b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchContinue())) {
       <b>fail</b>(state)
     }
     <b>if</b> (!<b>present</b>(branches)) {
@@ -671,7 +671,7 @@
 
     <span style='color:#898887;'>// Second character.</span>
     { state, branches } &lt;- brancher.tryBranches(<span style='color:#924c9d;'>'y'</span>)
-    <b>if</b> (!<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals(state,<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchContinue())) {
+    <b>if</b> (!(state <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals<b><span style='color:#c02040;'>`</span></b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchContinue())) {
       <b>fail</b>(state)
     }
     <b>if</b> (!<b>present</b>(branches)) {
@@ -689,7 +689,7 @@
 
     <span style='color:#898887;'>// Third character.</span>
     { state, branches } &lt;- brancher.tryBranches(<span style='color:#924c9d;'>'x'</span>)
-    <b>if</b> (!<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals(state,<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchComplete())) {
+    <b>if</b> (!(state <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals<b><span style='color:#c02040;'>`</span></b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchComplete())) {
       <b>fail</b>(state)
     }
     <b>if</b> (<b>present</b>(branches)) {
@@ -701,7 +701,7 @@
 
     <span style='color:#898887;'>// Fourth character.</span>
     { state, branches } &lt;- brancher.tryBranches(<span style='color:#924c9d;'>'w'</span>)
-    <b>if</b> (!<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals(state,<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchContinue())) {
+    <b>if</b> (!(state <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals<b><span style='color:#c02040;'>`</span></b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchContinue())) {
       <b>fail</b>(state)
     }
     <b>if</b> (!<b>present</b>(branches)) {
@@ -740,7 +740,7 @@
 
     <span style='color:#898887;'>// First character.</span>
     { state, branches } &lt;- brancher.tryBranches(<span style='color:#924c9d;'>'x'</span>)
-    <b>if</b> (!<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals(state,<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchContinue())) {
+    <b>if</b> (!(state <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals<b><span style='color:#c02040;'>`</span></b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchContinue())) {
       <b>fail</b>(state)
     }
     <b>if</b> (!<b>present</b>(branches)) {
@@ -758,7 +758,7 @@
 
     <span style='color:#898887;'>// Second character.</span>
     { state, branches } &lt;- brancher.tryBranches(<span style='color:#924c9d;'>'x'</span>)
-    <b>if</b> (!<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals(state,<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchContinue())) {
+    <b>if</b> (!(state <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals<b><span style='color:#c02040;'>`</span></b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchContinue())) {
       <b>fail</b>(state)
     }
     <b>if</b> (!<b>present</b>(branches)) {
@@ -777,7 +777,7 @@
 
     <span style='color:#898887;'>// Third character, branch 1.</span>
     { state, <b>_</b> } &lt;- brancher.tryBranches(<span style='color:#924c9d;'>'x'</span>)
-    <b>if</b> (!<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals(state,<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchContinue())) {
+    <b>if</b> (!(state <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals<b><span style='color:#c02040;'>`</span></b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchContinue())) {
       <b>fail</b>(state)
     }
 
@@ -793,7 +793,7 @@
 
     <span style='color:#898887;'>// Third character, branch 2.</span>
     { state, <b>_</b> } &lt;- brancher.tryBranches(<span style='color:#924c9d;'>'x'</span>)
-    <b>if</b> (!<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals(state,<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchContinue())) {
+    <b>if</b> (!(state <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals<b><span style='color:#c02040;'>`</span></b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchContinue())) {
       <b>fail</b>(state)
     }
   }
@@ -820,7 +820,7 @@
 
     <span style='color:#898887;'>// First character.</span>
     { state, branches } &lt;- brancher.tryBranches(<span style='color:#924c9d;'>'x'</span>)
-    <b>if</b> (!<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals(state,<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchContinue())) {
+    <b>if</b> (!(state <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals<b><span style='color:#c02040;'>`</span></b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchContinue())) {
       <b>fail</b>(state)
     }
     <b>if</b> (!<b>present</b>(branches)) {
@@ -838,7 +838,7 @@
 
     <span style='color:#898887;'>// Second character.</span>
     { state, branches } &lt;- brancher.tryBranches(<span style='color:#924c9d;'>'q'</span>)
-    <b>if</b> (!<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals(state,<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchFail())) {
+    <b>if</b> (!(state <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals<b><span style='color:#c02040;'>`</span></b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchFail())) {
       <b>fail</b>(state)
     }
     <b>if</b> (<b>present</b>(branches)) {
@@ -877,7 +877,7 @@
 
     <span style='color:#898887;'>// First character.</span>
     { state, branches } &lt;- brancher.tryBranches(<span style='color:#924c9d;'>'x'</span>)
-    <b>if</b> (!<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals(state,<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchContinue())) {
+    <b>if</b> (!(state <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals<b><span style='color:#c02040;'>`</span></b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchContinue())) {
       <b>fail</b>(state)
     }
     <b>if</b> (!<b>present</b>(branches)) {
@@ -892,7 +892,7 @@
 
     <span style='color:#898887;'>// Second character.</span>
     { state, branches } &lt;- brancher.tryBranches(<span style='color:#924c9d;'>'a'</span>)
-    <b>if</b> (!<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals(state,<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchComplete())) {
+    <b>if</b> (!(state <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals<b><span style='color:#c02040;'>`</span></b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchComplete())) {
       <b>fail</b>(state)
     }
     <b>if</b> (!<b>present</b>(branches)) {
@@ -904,7 +904,7 @@
       <b>fail</b>(<span style='color:#bf0303;'>&quot;match not satisfied&quot;</span>)
     }
     { state, branches } &lt;- <b>require</b>(branches).value().tryBranches(<span style='color:#924c9d;'>'a'</span>)
-    <b>if</b> (!<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals(state,<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchFail())) {
+    <b>if</b> (!(state <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals<b><span style='color:#c02040;'>`</span></b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchFail())) {
       <b>fail</b>(state)
     }
 
@@ -913,7 +913,7 @@
 
     <span style='color:#898887;'>// Third character.</span>
     { state, branches } &lt;- brancher.tryBranches(<span style='color:#924c9d;'>'y'</span>)
-    <b>if</b> (!<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals(state,<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchContinue())) {
+    <b>if</b> (!(state <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals<b><span style='color:#c02040;'>`</span></b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchContinue())) {
       <b>fail</b>(state)
     }
     <b>if</b> (!<b>present</b>(branches)) {
@@ -945,7 +945,7 @@
 
     <span style='color:#898887;'>// First character.</span>
     { state, branches } &lt;- brancher.tryBranches(<span style='color:#924c9d;'>'q'</span>)
-    <b>if</b> (!<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals(state,<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchFail())) {
+    <b>if</b> (!(state <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals<b><span style='color:#c02040;'>`</span></b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchFail())) {
       <b>fail</b>(state)
     }
     <b>if</b> (<b>present</b>(branches)) {
@@ -954,7 +954,7 @@
 
     <span style='color:#898887;'>// Should keep failing to match.</span>
     { state, branches } &lt;- brancher.tryBranches(<span style='color:#924c9d;'>'x'</span>)
-    <b>if</b> (!<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals(state,<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchFail())) {
+    <b>if</b> (!(state <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals<b><span style='color:#c02040;'>`</span></b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchFail())) {
       <b>fail</b>(state)
     }
   }
@@ -993,7 +993,7 @@
 
     <span style='color:#898887;'>// First character.</span>
     { state, branches } &lt;- brancher.tryBranches(<span style='color:#924c9d;'>'b'</span>)
-    <b>if</b> (!<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals(state,<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchComplete())) {
+    <b>if</b> (!(state <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals<b><span style='color:#c02040;'>`</span></b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchComplete())) {
       <b>fail</b>(state)
     }
     <b>if</b> (!<b>present</b>(branches)) {
@@ -1035,7 +1035,7 @@
 
     <span style='color:#898887;'>// First character.</span>
     { state, branches } &lt;- brancher.tryBranches(<span style='color:#924c9d;'>'b'</span>)
-    <b>if</b> (!<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals(state,<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchFail())) {
+    <b>if</b> (!(state <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals<b><span style='color:#c02040;'>`</span></b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchFail())) {
       <b>fail</b>(state)
     }
     <b>if</b> (<b>present</b>(branches)) {
@@ -1078,7 +1078,7 @@
 
     <span style='color:#898887;'>// First character.</span>
     { state, branches } &lt;- brancher.tryBranches(<span style='color:#924c9d;'>'a'</span>)
-    <b>if</b> (!<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals(state,<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchContinue())) {
+    <b>if</b> (!(state <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals<b><span style='color:#c02040;'>`</span></b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchContinue())) {
       <b>fail</b>(state)
     }
     <b>if</b> (!<b>present</b>(branches)) {
@@ -1096,7 +1096,7 @@
 
     <span style='color:#898887;'>// Second character, branch 1.</span>
     { state, <b>_</b> } &lt;- brancher.tryBranches(<span style='color:#924c9d;'>'a'</span>)
-    <b>if</b> (!<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals(state,<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchContinue())) {
+    <b>if</b> (!(state <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals<b><span style='color:#c02040;'>`</span></b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchContinue())) {
       <b>fail</b>(state)
     }
 
@@ -1108,7 +1108,7 @@
 
     <span style='color:#898887;'>// Second character, branch 2.</span>
     { state, <b>_</b> } &lt;- brancher.tryBranches(<span style='color:#924c9d;'>'a'</span>)
-    <b>if</b> (!<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals(state,<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchComplete())) {
+    <b>if</b> (!(state <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals<b><span style='color:#c02040;'>`</span></b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchComplete())) {
       <b>fail</b>(state)
     }
   }
@@ -1144,7 +1144,7 @@
 
     <span style='color:#898887;'>// First character.</span>
     state &lt;- matcher.tryNextMatch(<span style='color:#924c9d;'>'x'</span>)
-    <b>if</b> (!<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals(state,<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchContinue())) {
+    <b>if</b> (!(state <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals<b><span style='color:#c02040;'>`</span></b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchContinue())) {
       <b>fail</b>(state)
     }
     <b>if</b> (matcher.matchSatisfied()) {
@@ -1153,7 +1153,7 @@
 
     <span style='color:#898887;'>// Second character.</span>
     state &lt;- matcher.tryNextMatch(<span style='color:#924c9d;'>'a'</span>)
-    <b>if</b> (!<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals(state,<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchComplete())) {
+    <b>if</b> (!(state <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals<b><span style='color:#c02040;'>`</span></b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchComplete())) {
       <b>fail</b>(state)
     }
     <b>if</b> (!matcher.matchSatisfied()) {
@@ -1165,7 +1165,7 @@
 
     <span style='color:#898887;'>// Third character.</span>
     state &lt;- matcher.tryNextMatch(<span style='color:#924c9d;'>'y'</span>)
-    <b>if</b> (!<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals(state,<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchContinue())) {
+    <b>if</b> (!(state <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals<b><span style='color:#c02040;'>`</span></b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchContinue())) {
       <b>fail</b>(state)
     }
   }
@@ -1201,7 +1201,7 @@
 
     <span style='color:#898887;'>// First character.</span>
     state &lt;- matcher.tryNextMatch(<span style='color:#924c9d;'>'x'</span>)
-    <b>if</b> (!<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals(state,<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchContinue())) {
+    <b>if</b> (!(state <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals<b><span style='color:#c02040;'>`</span></b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchContinue())) {
       <b>fail</b>(state)
     }
     <b>if</b> (matcher.matchSatisfied()) {
@@ -1210,7 +1210,7 @@
 
     <span style='color:#898887;'>// Second character.</span>
     state &lt;- matcher.tryNextMatch(<span style='color:#924c9d;'>'q'</span>)
-    <b>if</b> (!<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals(state,<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchFail())) {
+    <b>if</b> (!(state <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals<b><span style='color:#c02040;'>`</span></b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchFail())) {
       <b>fail</b>(state)
     }
     <b>if</b> (matcher.matchSatisfied()) {
@@ -1219,7 +1219,7 @@
 
     <span style='color:#898887;'>// Should keep failing to match.</span>
     state &lt;- matcher.tryNextMatch(<span style='color:#924c9d;'>'y'</span>)
-    <b>if</b> (!<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals(state,<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchFail())) {
+    <b>if</b> (!(state <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals<b><span style='color:#c02040;'>`</span></b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchFail())) {
       <b>fail</b>(state)
     }
   }
@@ -1262,7 +1262,7 @@
 
     <span style='color:#898887;'>// First character.</span>
     state &lt;- matcher.tryNextMatch(<span style='color:#924c9d;'>'a'</span>)
-    <b>if</b> (!<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals(state,<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchContinue())) {
+    <b>if</b> (!(state <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals<b><span style='color:#c02040;'>`</span></b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchContinue())) {
       <b>fail</b>(state)
     }
     <b>if</b> (matcher.matchSatisfied()) {
@@ -1271,7 +1271,7 @@
 
     <span style='color:#898887;'>// Second character.</span>
     state &lt;- matcher.tryNextMatch(<span style='color:#924c9d;'>'c'</span>)
-    <b>if</b> (!<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals(state,<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchComplete())) {
+    <b>if</b> (!(state <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals<b><span style='color:#c02040;'>`</span></b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchComplete())) {
       <b>fail</b>(state)
     }
     <b>if</b> (!matcher.matchSatisfied()) {
@@ -1283,7 +1283,7 @@
 
     <span style='color:#898887;'>// First character.</span>
     state &lt;- matcher.tryNextMatch(<span style='color:#924c9d;'>'a'</span>)
-    <b>if</b> (!<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals(state,<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchContinue())) {
+    <b>if</b> (!(state <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals<b><span style='color:#c02040;'>`</span></b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchContinue())) {
       <b>fail</b>(state)
     }
     <b>if</b> (matcher.matchSatisfied()) {
@@ -1292,7 +1292,7 @@
 
     <span style='color:#898887;'>// Second character.</span>
     state &lt;- matcher.tryNextMatch(<span style='color:#924c9d;'>'b'</span>)
-    <b>if</b> (!<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals(state,<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchContinue())) {
+    <b>if</b> (!(state <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals<b><span style='color:#c02040;'>`</span></b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchContinue())) {
       <b>fail</b>(state)
     }
     <b>if</b> (matcher.matchSatisfied()) {
@@ -1330,7 +1330,7 @@
 
     <span style='color:#898887;'>// First character.</span>
     state &lt;- matcher.tryNextMatch(<span style='color:#924c9d;'>'a'</span>)
-    <b>if</b> (!<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals(state,<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchContinue())) {
+    <b>if</b> (!(state <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals<b><span style='color:#c02040;'>`</span></b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchContinue())) {
       <b>fail</b>(state)
     }
     <b>if</b> (matcher.matchSatisfied()) {
@@ -1339,7 +1339,7 @@
 
     <span style='color:#898887;'>// Second character.</span>
     state &lt;- matcher.tryNextMatch(<span style='color:#924c9d;'>'b'</span>)
-    <b>if</b> (!<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals(state,<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchContinue())) {
+    <b>if</b> (!(state <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals<b><span style='color:#c02040;'>`</span></b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchContinue())) {
       <b>fail</b>(state)
     }
     <b>if</b> (!matcher.matchSatisfied()) {

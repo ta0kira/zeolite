@@ -11,34 +11,34 @@
 <pre style='color:#1f1c1b;background-color:#ffffff;'>
 <b>define</b> <b><span style='color:#0057ae;'>CharRegex</span></b> {
   parse (pattern) (matcher) {
-    <span style='color:#0057ae;'>ReadIterator</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;</span> p <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#0057ae;'>ReadIterator</span><span style='color:#644a9b;'>$$</span>fromReadPosition&lt;<i><span style='color:#0057ae;'>Char</span></i>&gt;(pattern)
+    <span style='color:#0057ae;'>ReadIterator</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;</span> p &lt;- <span style='color:#0057ae;'>ReadIterator</span><span style='color:#644a9b;'>$$</span>fromReadPosition&lt;<i><span style='color:#0057ae;'>Char</span></i>&gt;(pattern)
     <span style='color:#898887;'>// TODO: Needs error handling.</span>
-    { <b>_</b>, matcher } <b><span style='color:#006e28;'>&lt;-</span></b> parseExpression(p)
+    { <b>_</b>, matcher } &lt;- parseExpression(p)
   }
 
   match (template,data) {
-    <span style='color:#0057ae;'>ReadIterator</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;</span> p <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#0057ae;'>ReadIterator</span><span style='color:#644a9b;'>$$</span>fromReadPosition&lt;<i><span style='color:#0057ae;'>Char</span></i>&gt;(data)
-    <span style='color:#0057ae;'>Matcher</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;</span> matcher <b><span style='color:#006e28;'>&lt;-</span></b> template.newMatcher()
+    <span style='color:#0057ae;'>ReadIterator</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;</span> p &lt;- <span style='color:#0057ae;'>ReadIterator</span><span style='color:#644a9b;'>$$</span>fromReadPosition&lt;<i><span style='color:#0057ae;'>Char</span></i>&gt;(data)
+    <span style='color:#0057ae;'>Matcher</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;</span> matcher &lt;- template.newMatcher()
     <b>while</b> (!p.pastForwardEnd()) {
-      <span style='color:#0057ae;'>MatchState</span> state <b><span style='color:#006e28;'>&lt;-</span></b> matcher.tryNextMatch(p.readCurrent())
-      <b>if</b> (<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals(state,<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchFail())) {
+      <span style='color:#0057ae;'>MatchState</span> state &lt;- matcher.tryNextMatch(p.readCurrent())
+      <b>if</b> (state <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals<b><span style='color:#c02040;'>`</span></b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchFail()) {
         <b>break</b>
       }
-      p <b><span style='color:#006e28;'>&lt;-</span></b> p.forward()
-      <b>if</b> (<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals(state,<span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchComplete())) {
+      p &lt;- p.forward()
+      <b>if</b> (state <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals<b><span style='color:#c02040;'>`</span></b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchComplete()) {
         <b>break</b>
       }
     }
     <b>return</b> p.pastForwardEnd() &amp;&amp; matcher.matchSatisfied()
   }
 
-  <span style='color:#644a9b;'>@type</span> parseSequence (<span style='color:#0057ae;'>ReadIterator</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;</span>) <b><span style='color:#006e28;'>-&gt;</span></b>
+  <span style='color:#644a9b;'>@type</span> parseSequence (<span style='color:#0057ae;'>ReadIterator</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;</span>) -&gt;
                       (<span style='color:#0057ae;'>ReadIterator</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;</span>,<b>optional</b> <span style='color:#0057ae;'>ReadSequence</span><span style='color:#c02040;'>&lt;</span><span style='color:#0057ae;'>MatcherTemplate</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;&gt;</span>)
   parseSequence (p) {
     <b>if</b> (p.pastForwardEnd()) {
       <b>return</b> { p, <b>empty</b> }
     }
-    { <span style='color:#0057ae;'>ReadIterator</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;</span> p2, <b>optional</b> <span style='color:#0057ae;'>MatcherTemplate</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;</span> matcher } <b><span style='color:#006e28;'>&lt;-</span></b> parseNonSequence(p)
+    { <span style='color:#0057ae;'>ReadIterator</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;</span> p2, <b>optional</b> <span style='color:#0057ae;'>MatcherTemplate</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;</span> matcher } &lt;- parseNonSequence(p)
     <b>if</b> (!p2.pastForwardEnd() &amp;&amp; (p2.readCurrent() == <span style='color:#924c9d;'>'|'</span> || p2.readCurrent() == <span style='color:#924c9d;'>')'</span>)) {
       <span style='color:#898887;'>// Requires choice matching or the end of a subexpression.</span>
       <b>if</b> (<b>present</b>(matcher)) {
@@ -50,18 +50,18 @@
     } <b>if</b> (!<b>present</b>(matcher)) {
       <b>return</b> { p2, <b>empty</b> }
     } <b>else</b> {
-      { p2, <b>optional</b> <span style='color:#0057ae;'>ReadSequence</span><span style='color:#c02040;'>&lt;</span><span style='color:#0057ae;'>MatcherTemplate</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;&gt;</span> sequence } <b><span style='color:#006e28;'>&lt;-</span></b> parseSequence(p2)
+      { p2, <b>optional</b> <span style='color:#0057ae;'>ReadSequence</span><span style='color:#c02040;'>&lt;</span><span style='color:#0057ae;'>MatcherTemplate</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;&gt;</span> sequence } &lt;- parseSequence(p2)
       <b>return</b> { p2, <span style='color:#0057ae;'>LinkedNode</span><span style='color:#c02040;'>&lt;</span><span style='color:#0057ae;'>MatcherTemplate</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;&gt;</span><span style='color:#644a9b;'>$</span>create(<b>require</b>(matcher),sequence) }
     }
   }
 
-  <span style='color:#644a9b;'>@type</span> parseNonSequence (<span style='color:#0057ae;'>ReadIterator</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;</span>) <b><span style='color:#006e28;'>-&gt;</span></b>
+  <span style='color:#644a9b;'>@type</span> parseNonSequence (<span style='color:#0057ae;'>ReadIterator</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;</span>) -&gt;
                          (<span style='color:#0057ae;'>ReadIterator</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;</span>,<b>optional</b> <span style='color:#0057ae;'>MatcherTemplate</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;</span>)
   parseNonSequence (p) (p2,matcher) {
-    p2 <b><span style='color:#006e28;'>&lt;-</span></b> p
-    matcher <b><span style='color:#006e28;'>&lt;-</span></b> <b>empty</b>
+    p2 &lt;- p
+    matcher &lt;- <b>empty</b>
     <b>while</b> (!p2.pastForwardEnd()) {
-      <i><span style='color:#0057ae;'>Char</span></i> c <b><span style='color:#006e28;'>&lt;-</span></b> p2.readCurrent()
+      <i><span style='color:#0057ae;'>Char</span></i> c &lt;- p2.readCurrent()
       <b>if</b> (c == <span style='color:#924c9d;'>'|'</span> || c == <span style='color:#924c9d;'>')'</span>) {
         <span style='color:#898887;'>// Requires choice matching or the end of a subexpression.</span>
         <b>return</b> <b>_</b>
@@ -74,7 +74,7 @@
         <b>return</b> { p2.forward(),
                  <span style='color:#0057ae;'>MatchBranches</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>$</span>create(<span style='color:#0057ae;'>BranchRepeat</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>$</span>createOnePlus(<b>require</b>(matcher))) }
       } <b>elif</b> (c == <span style='color:#924c9d;'>'{'</span>) {
-        { p2, <i><span style='color:#0057ae;'>Int</span></i> min, <i><span style='color:#0057ae;'>Int</span></i> max } <b><span style='color:#006e28;'>&lt;-</span></b> parseRange(p2.forward())
+        { p2, <i><span style='color:#0057ae;'>Int</span></i> min, <i><span style='color:#0057ae;'>Int</span></i> max } &lt;- parseRange(p2.forward())
         <b>if</b> (p2.pastForwardEnd() || p2.readCurrent() != <span style='color:#924c9d;'>'}'</span>) {
           <span style='color:#898887;'>// TODO: Needs error handling.</span>
           <b>fail</b>(<span style='color:#bf0303;'>&quot;missing }&quot;</span>)
@@ -84,128 +84,128 @@
       } <b>elif</b> (<b>present</b>(matcher)) {
         <b>return</b> <b>_</b>
       } <b>elif</b> (c == <span style='color:#924c9d;'>'['</span>) {
-        { p2, matcher } <b><span style='color:#006e28;'>&lt;-</span></b> parseCharChoices(p2.forward())
+        { p2, matcher } &lt;- parseCharChoices(p2.forward())
         <b>if</b> (p2.pastForwardEnd() || p2.readCurrent() != <span style='color:#924c9d;'>']'</span>) {
           <span style='color:#898887;'>// TODO: Needs error handling.</span>
           <b>fail</b>(<span style='color:#bf0303;'>&quot;missing ]&quot;</span>)
         }
-        p2 <b><span style='color:#006e28;'>&lt;-</span></b> p2.forward()
+        p2 &lt;- p2.forward()
       } <b>elif</b> (c == <span style='color:#924c9d;'>'('</span>) {
-        { p2, matcher } <b><span style='color:#006e28;'>&lt;-</span></b> parseExpression(p2.forward())
+        { p2, matcher } &lt;- parseExpression(p2.forward())
         <b>if</b> (p2.pastForwardEnd() || p2.readCurrent() != <span style='color:#924c9d;'>')'</span>) {
           <span style='color:#898887;'>// TODO: Needs error handling.</span>
           <b>fail</b>(<span style='color:#bf0303;'>&quot;missing )&quot;</span>)
         }
-        p2 <b><span style='color:#006e28;'>&lt;-</span></b> p2.forward()
+        p2 &lt;- p2.forward()
       } <b>else</b> {
-        { p2, matcher } <b><span style='color:#006e28;'>&lt;-</span></b> parseSingleChar(p2)
+        { p2, matcher } &lt;- parseSingleChar(p2)
       }
     }
   }
 
-  <span style='color:#644a9b;'>@type</span> parseRange (<span style='color:#0057ae;'>ReadIterator</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;</span>) <b><span style='color:#006e28;'>-&gt;</span></b> (<span style='color:#0057ae;'>ReadIterator</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;</span>,<i><span style='color:#0057ae;'>Int</span></i>,<i><span style='color:#0057ae;'>Int</span></i>)
+  <span style='color:#644a9b;'>@type</span> parseRange (<span style='color:#0057ae;'>ReadIterator</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;</span>) -&gt; (<span style='color:#0057ae;'>ReadIterator</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;</span>,<i><span style='color:#0057ae;'>Int</span></i>,<i><span style='color:#0057ae;'>Int</span></i>)
   parseRange (p) (p2,min,max) {
-    max <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#b08000;'>0</span>
-    { p2, min } <b><span style='color:#006e28;'>&lt;-</span></b> parseCount(p)
+    max &lt;- <span style='color:#b08000;'>0</span>
+    { p2, min } &lt;- parseCount(p)
     <b>if</b> (p2.pastForwardEnd() || p2.readCurrent() != <span style='color:#924c9d;'>','</span>) {
-      max <b><span style='color:#006e28;'>&lt;-</span></b> min
+      max &lt;- min
     } <b>else</b> {
-      { p2, max } <b><span style='color:#006e28;'>&lt;-</span></b> parseCount(p2.forward())
+      { p2, max } &lt;- parseCount(p2.forward())
     }
   }
 
-  <span style='color:#644a9b;'>@type</span> parseCount (<span style='color:#0057ae;'>ReadIterator</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;</span>) <b><span style='color:#006e28;'>-&gt;</span></b> (<span style='color:#0057ae;'>ReadIterator</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;</span>,<i><span style='color:#0057ae;'>Int</span></i>)
+  <span style='color:#644a9b;'>@type</span> parseCount (<span style='color:#0057ae;'>ReadIterator</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;</span>) -&gt; (<span style='color:#0057ae;'>ReadIterator</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;</span>,<i><span style='color:#0057ae;'>Int</span></i>)
   parseCount (p) (p2,count) {
     <span style='color:#898887;'>// TODO: Needs error handling.</span>
-    count <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#b08000;'>0</span>
-    p2 <b><span style='color:#006e28;'>&lt;-</span></b> p
+    count &lt;- <span style='color:#b08000;'>0</span>
+    p2 &lt;- p
     <b>while</b> (!p2.pastForwardEnd()) {
-      <i><span style='color:#0057ae;'>Char</span></i> c <b><span style='color:#006e28;'>&lt;-</span></b> p2.readCurrent()
+      <i><span style='color:#0057ae;'>Char</span></i> c &lt;- p2.readCurrent()
       <b>if</b> (c &gt;= <span style='color:#924c9d;'>'0'</span> &amp;&amp; c &lt;= <span style='color:#924c9d;'>'9'</span>) {
-        count <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#b08000;'>10</span>*count + (c - <span style='color:#924c9d;'>'0'</span>)
+        count &lt;- <span style='color:#b08000;'>10</span>*count + (c - <span style='color:#924c9d;'>'0'</span>)
       } <b>else</b> {
         <b>break</b>
       }
     } <b>update</b> {
-      p2 <b><span style='color:#006e28;'>&lt;-</span></b> p2.forward()
+      p2 &lt;- p2.forward()
     }
   }
 
-  <span style='color:#644a9b;'>@type</span> parseExpression (<span style='color:#0057ae;'>ReadIterator</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;</span>) <b><span style='color:#006e28;'>-&gt;</span></b>
+  <span style='color:#644a9b;'>@type</span> parseExpression (<span style='color:#0057ae;'>ReadIterator</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;</span>) -&gt;
                         (<span style='color:#0057ae;'>ReadIterator</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;</span>,<b>optional</b> <span style='color:#0057ae;'>MatcherTemplate</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;</span>)
   parseExpression (p) (p2,matcher) {
-    <b>optional</b> <span style='color:#0057ae;'>ReadSequence</span><span style='color:#c02040;'>&lt;</span><span style='color:#0057ae;'>MatcherTemplate</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;&gt;</span> choices <b><span style='color:#006e28;'>&lt;-</span></b> <b>empty</b>
-    p2 <b><span style='color:#006e28;'>&lt;-</span></b> p
+    <b>optional</b> <span style='color:#0057ae;'>ReadSequence</span><span style='color:#c02040;'>&lt;</span><span style='color:#0057ae;'>MatcherTemplate</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;&gt;</span> choices &lt;- <b>empty</b>
+    p2 &lt;- p
     <b>while</b> (!p2.pastForwardEnd()) {
-      { p2, <b>optional</b> <span style='color:#0057ae;'>ReadSequence</span><span style='color:#c02040;'>&lt;</span><span style='color:#0057ae;'>MatcherTemplate</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;&gt;</span> sequence } <b><span style='color:#006e28;'>&lt;-</span></b> parseSequence(p2)
+      { p2, <b>optional</b> <span style='color:#0057ae;'>ReadSequence</span><span style='color:#c02040;'>&lt;</span><span style='color:#0057ae;'>MatcherTemplate</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;&gt;</span> sequence } &lt;- parseSequence(p2)
       <b>if</b> (!<b>present</b>(sequence)) {
         <b>break</b>
       }
-      choices <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#0057ae;'>LinkedNode</span><span style='color:#c02040;'>&lt;</span><span style='color:#0057ae;'>MatcherTemplate</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;&gt;</span><span style='color:#644a9b;'>$</span>create(
+      choices &lt;- <span style='color:#0057ae;'>LinkedNode</span><span style='color:#c02040;'>&lt;</span><span style='color:#0057ae;'>MatcherTemplate</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;&gt;</span><span style='color:#644a9b;'>$</span>create(
           <span style='color:#0057ae;'>MatchBranches</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>$</span>create(<span style='color:#0057ae;'>BranchSequence</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>$</span>create(sequence)),choices)
       <b>if</b> (p2.pastForwardEnd() || p2.readCurrent() != <span style='color:#924c9d;'>'|'</span>) {
         <b>break</b>
       }
-      p2 <b><span style='color:#006e28;'>&lt;-</span></b> p2.forward()
+      p2 &lt;- p2.forward()
     }
     <b>if</b> (!<b>present</b>(choices)) {
-      matcher <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#0057ae;'>MatchEmpty</span><span style='color:#644a9b;'>$</span>create()
+      matcher &lt;- <span style='color:#0057ae;'>MatchEmpty</span><span style='color:#644a9b;'>$</span>create()
     } <b>else</b> {
-      matcher <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#0057ae;'>MatchChoices</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>$</span>create(choices)
+      matcher &lt;- <span style='color:#0057ae;'>MatchChoices</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>$</span>create(choices)
     }
   }
 
-  <span style='color:#644a9b;'>@type</span> parseSingleChar (<span style='color:#0057ae;'>ReadIterator</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;</span>) <b><span style='color:#006e28;'>-&gt;</span></b>
+  <span style='color:#644a9b;'>@type</span> parseSingleChar (<span style='color:#0057ae;'>ReadIterator</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;</span>) -&gt;
                         (<span style='color:#0057ae;'>ReadIterator</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;</span>,<b>optional</b> <span style='color:#0057ae;'>MatcherTemplate</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;</span>)
   parseSingleChar (p) (p2,matcher) {
     <span style='color:#898887;'>// TODO: Needs error handling.</span>
-    <i><span style='color:#0057ae;'>Char</span></i> c <b><span style='color:#006e28;'>&lt;-</span></b> p.readCurrent()
-    p2 <b><span style='color:#006e28;'>&lt;-</span></b> p.forward()
+    <i><span style='color:#0057ae;'>Char</span></i> c &lt;- p.readCurrent()
+    p2 &lt;- p.forward()
     <b>if</b> (c == <span style='color:#924c9d;'>'\\'</span>) {
-      matcher <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#0057ae;'>MatchSingle</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>$</span>create(p2.readCurrent())
-      p2 <b><span style='color:#006e28;'>&lt;-</span></b> p.forward()
+      matcher &lt;- <span style='color:#0057ae;'>MatchSingle</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>$</span>create(p2.readCurrent())
+      p2 &lt;- p.forward()
     } <b>elif</b> (c == <span style='color:#924c9d;'>'.'</span>) {
-      matcher <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#0057ae;'>MatchAny</span><span style='color:#644a9b;'>$</span>create()
+      matcher &lt;- <span style='color:#0057ae;'>MatchAny</span><span style='color:#644a9b;'>$</span>create()
     } <b>else</b> {
-      matcher <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#0057ae;'>MatchSingle</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>$</span>create(c)
+      matcher &lt;- <span style='color:#0057ae;'>MatchSingle</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>$</span>create(c)
     }
   }
 
-  <span style='color:#644a9b;'>@type</span> parseCharChoices (<span style='color:#0057ae;'>ReadIterator</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;</span>) <b><span style='color:#006e28;'>-&gt;</span></b>
+  <span style='color:#644a9b;'>@type</span> parseCharChoices (<span style='color:#0057ae;'>ReadIterator</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;</span>) -&gt;
                          (<span style='color:#0057ae;'>ReadIterator</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;</span>,<b>optional</b> <span style='color:#0057ae;'>MatcherTemplate</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;</span>)
   parseCharChoices (p) (p2,matcher) {
-    p2 <b><span style='color:#006e28;'>&lt;-</span></b> p
-    matcher <b><span style='color:#006e28;'>&lt;-</span></b> <b>empty</b>
-    <b>optional</b> <i><span style='color:#0057ae;'>Char</span></i> previous <b><span style='color:#006e28;'>&lt;-</span></b> <b>empty</b>
-    <i><span style='color:#0057ae;'>Bool</span></i> doRange <b><span style='color:#006e28;'>&lt;-</span></b> <b>false</b>
-    <b>optional</b> <span style='color:#0057ae;'>ReadSequence</span><span style='color:#c02040;'>&lt;</span><span style='color:#0057ae;'>MatcherTemplate</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;&gt;</span> choices <b><span style='color:#006e28;'>&lt;-</span></b> <b>empty</b>
+    p2 &lt;- p
+    matcher &lt;- <b>empty</b>
+    <b>optional</b> <i><span style='color:#0057ae;'>Char</span></i> previous &lt;- <b>empty</b>
+    <i><span style='color:#0057ae;'>Bool</span></i> doRange &lt;- <b>false</b>
+    <b>optional</b> <span style='color:#0057ae;'>ReadSequence</span><span style='color:#c02040;'>&lt;</span><span style='color:#0057ae;'>MatcherTemplate</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;&gt;</span> choices &lt;- <b>empty</b>
     <b>while</b> (!p2.pastForwardEnd()) {
-      <i><span style='color:#0057ae;'>Char</span></i> c <b><span style='color:#006e28;'>&lt;-</span></b> p2.readCurrent()
+      <i><span style='color:#0057ae;'>Char</span></i> c &lt;- p2.readCurrent()
       <b>if</b> (c == <span style='color:#924c9d;'>'\\'</span>) {
-        p2 <b><span style='color:#006e28;'>&lt;-</span></b> p2.forward()
-        c <b><span style='color:#006e28;'>&lt;-</span></b> p2.readCurrent()
+        p2 &lt;- p2.forward()
+        c &lt;- p2.readCurrent()
       }
       <b>if</b> (c == <span style='color:#924c9d;'>']'</span>) {
         <b>break</b>
       } <b>elif</b> (c == <span style='color:#924c9d;'>'-'</span> &amp;&amp; <b>present</b>(previous) &amp;&amp; !doRange) {
-        doRange <b><span style='color:#006e28;'>&lt;-</span></b> <b>true</b>
+        doRange &lt;- <b>true</b>
       } <b>elif</b> (doRange) {
-        choices <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#0057ae;'>LinkedNode</span><span style='color:#c02040;'>&lt;</span><span style='color:#0057ae;'>MatcherTemplate</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;&gt;</span><span style='color:#644a9b;'>$</span>create(<span style='color:#0057ae;'>MatchRange</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>$</span>create(<b>require</b>(previous),c),choices)
-        previous <b><span style='color:#006e28;'>&lt;-</span></b> <b>empty</b>
-        doRange <b><span style='color:#006e28;'>&lt;-</span></b> <b>false</b>
+        choices &lt;- <span style='color:#0057ae;'>LinkedNode</span><span style='color:#c02040;'>&lt;</span><span style='color:#0057ae;'>MatcherTemplate</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;&gt;</span><span style='color:#644a9b;'>$</span>create(<span style='color:#0057ae;'>MatchRange</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>$</span>create(<b>require</b>(previous),c),choices)
+        previous &lt;- <b>empty</b>
+        doRange &lt;- <b>false</b>
       } <b>elif</b> (<b>present</b>(previous)) {
-        choices <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#0057ae;'>LinkedNode</span><span style='color:#c02040;'>&lt;</span><span style='color:#0057ae;'>MatcherTemplate</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;&gt;</span><span style='color:#644a9b;'>$</span>create(<span style='color:#0057ae;'>MatchSingle</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>$</span>create(<b>require</b>(previous)),choices)
-        previous <b><span style='color:#006e28;'>&lt;-</span></b> c
+        choices &lt;- <span style='color:#0057ae;'>LinkedNode</span><span style='color:#c02040;'>&lt;</span><span style='color:#0057ae;'>MatcherTemplate</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;&gt;</span><span style='color:#644a9b;'>$</span>create(<span style='color:#0057ae;'>MatchSingle</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>$</span>create(<b>require</b>(previous)),choices)
+        previous &lt;- c
       } <b>else</b> {
-        previous <b><span style='color:#006e28;'>&lt;-</span></b> c
+        previous &lt;- c
       }
     } <b>update</b> {
-      p2 <b><span style='color:#006e28;'>&lt;-</span></b> p2.forward()
+      p2 &lt;- p2.forward()
     }
     <b>if</b> (<b>present</b>(previous)) {
-      choices <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#0057ae;'>LinkedNode</span><span style='color:#c02040;'>&lt;</span><span style='color:#0057ae;'>MatcherTemplate</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;&gt;</span><span style='color:#644a9b;'>$</span>create(<span style='color:#0057ae;'>MatchSingle</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>$</span>create(<b>require</b>(previous)),choices)
+      choices &lt;- <span style='color:#0057ae;'>LinkedNode</span><span style='color:#c02040;'>&lt;</span><span style='color:#0057ae;'>MatcherTemplate</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;&gt;</span><span style='color:#644a9b;'>$</span>create(<span style='color:#0057ae;'>MatchSingle</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>$</span>create(<b>require</b>(previous)),choices)
     }
-    matcher <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#0057ae;'>MatchChoices</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>$</span>create(choices)
+    matcher &lt;- <span style='color:#0057ae;'>MatchChoices</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>$</span>create(choices)
   }
 }
 </pre>

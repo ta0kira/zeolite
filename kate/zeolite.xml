@@ -168,6 +168,7 @@
         <RegExpr attribute="Number" context="#stay" String="0[xX][0-9a-fA-F]+" />
         <RegExpr attribute="Number" context="#stay" String="[0-9]+(\.[0-9]+)" />
         <Int attribute="Number" context="#stay" />
+        <DetectChar attribute="Infix Func" context="#stay" char="`" />
         <DetectChar attribute="String" context="String" char="&quot;" />
         <DetectChar attribute="Char" context="Char" char="'" />
         <Detect2Chars attribute="Caller" context="#stay" char="$" char1="$" />
@@ -304,6 +305,7 @@
       <itemData name="Testcase Keyword" defStyleNum="dsAlert" spellChecking="false" />
       <itemData name="Test Keyword" defStyleNum="dsOperator" bold="false" color="#04e040" selColor="#04e040" spellChecking="false" />
       <itemData name="Params Brace" defStyleNum="dsOperator" bold="false" color="#c02040" selColor="#c02040" spellChecking="false" />
+      <itemData name="Infix Func" defStyleNum="dsOperator" bold="true" color="#c02040" selColor="#c02040" spellChecking="false" />
       <itemData name="Merge Brace" defStyleNum="dsOthers" bold="true" />
       <itemData name="Type Delim" defStyleNum="dsOperator" bold="false" color="#c04040" selColor="#c04040" spellChecking="false" />
       <itemData name="Merge Delim" defStyleNum="dsOthers" spellChecking="false" />

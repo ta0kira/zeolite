@@ -261,15 +261,14 @@ infixOperator = op >>= return . NamedOperator where
     ]
 
 infixBefore :: Operator c -> Operator c -> Bool
-infixBefore (NamedOperator o1) (NamedOperator o2) = (infixOrder o1) <= (infixOrder o2) where
-  infixOrder o
+infixBefore o1 o2 = (infixOrder o1) <= (infixOrder o2) where
+  infixOrder (NamedOperator o)
     -- TODO: Don't hard-code this.
     | o `Set.member` Set.fromList ["*","/","%"] = 1
     | o `Set.member` Set.fromList ["+","-"] = 2
-    | o `Set.member` Set.fromList ["==","!=","<","<=",">",">="] = 3
-    | o `Set.member` Set.fromList ["&&","||"] = 4
-infixBefore (NamedOperator _) _ = True
-infixBefore _                 _ = False
+    | o `Set.member` Set.fromList ["==","!=","<","<=",">",">="] = 4
+    | o `Set.member` Set.fromList ["&&","||"] = 5
+  infixOrder _ = 3
 
 functionOperator :: Parser (Operator SourcePos)
 functionOperator = do
@@ -332,7 +331,8 @@ instance ParseFromSource (Expression SourcePos) where
         return $ InitializeValue [c] t (ParamSet []) (ParamSet as)
 
 instance ParseFromSource (FunctionQualifier SourcePos) where
-  sourceParser = try categoryFunc <|> typeFunc <|> valueFunc where
+  -- TODO: This is probably better done iteratively.
+  sourceParser = try valueFunc <|> try categoryFunc <|> try typeFunc where
     categoryFunc = do
       c <- getPosition
       q <- sourceParser

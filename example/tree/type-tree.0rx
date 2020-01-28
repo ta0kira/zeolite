@@ -76,7 +76,7 @@ define LockedType {
   }
 
   check (k) {
-    if (TypeKey<any>$equals(key,k)) {
+    if (key `TypeKey<any>$equals` k) {
       // reduce is a builtin that returns value (as optional #y) iff #x -> #y.
       // The runtime type of value does not matter here; it just needs to be of
       // type optional #x at compile time.

@@ -1,0 +1,164 @@
+/* -----------------------------------------------------------------------------
+Copyright 2020 Kevin P. Barry
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+----------------------------------------------------------------------------- */
+
+// Author: Kevin P. Barry [ta0kira@gmail.com]
+
+testcase "category infix" {
+  success Test$run()
+}
+
+define Test {
+  @category add (Int,Int) -> (Int)
+  add (x,y) {
+    return x + y
+  }
+
+  run () {
+    Int value <- 1 `Test$$add` 2
+    if (value != 3) {
+      fail(value)
+    }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "type infix" {
+  success Test$run()
+}
+
+define Test {
+  @type add (Int,Int) -> (Int)
+  add (x,y) {
+    return x + y
+  }
+
+  run () {
+    Int value <- 1 `Test$add` 2
+    if (value != 3) {
+      fail(value)
+    }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "value infix" {
+  success Test$run()
+}
+
+concrete Arithmetic {
+  @type create () -> (Arithmetic)
+  @value add (Int,Int) -> (Int)
+}
+
+define Arithmetic {
+  create () {
+    return Arithmetic{ }
+  }
+
+  add (x,y) {
+    return x + y
+  }
+}
+
+define Test {
+  run () {
+    Int value <- 1 `Arithmetic$create().add` 2
+    if (value != 3) {
+      fail(value)
+    }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "unqualified infix" {
+  success Test$run()
+}
+
+define Test {
+  @type add (Int,Int) -> (Int)
+  add (x,y) {
+    return x + y
+  }
+
+  run () {
+    Int value <- 1 `add` 2
+    if (value != 3) {
+      fail(value)
+    }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "infix function comes after arithmetic" {
+  success Test$run()
+}
+
+define Test {
+  @category add (Int,Int) -> (Int)
+  add (x,y) {
+    return x + y
+  }
+
+  run () {
+    Int value <- 1 `add` 2 * 3
+    if (value != 7) {
+      fail(value)
+    }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "infix function comes before comparison" {
+  success Test$run()
+}
+
+define Test {
+  @category add (Int,Int) -> (Int)
+  add (x,y) {
+    return x + y
+  }
+
+  run () {
+    Bool value <- 1 `add` 2 < 4
+    if (value != true) {
+      fail(value)
+    }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}

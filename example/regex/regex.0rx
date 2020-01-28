@@ -68,14 +68,14 @@ define MatchSingleMatcher {
   }
 
   matchSatisfied () {
-    return MatchState$equals(state,MatchState$matchComplete())
+    return state `MatchState$equals` MatchState$matchComplete()
   }
 
   tryNextMatch (data) {
-    if (!MatchState$equals(state,MatchState$matchContinue())) {
+    if (!(state `MatchState$equals` MatchState$matchContinue())) {
       return (state <- MatchState$matchFail())
     }
-    if (#c$equals(data,match)) {
+    if (data `#c$equals` match) {
       return (state <- MatchState$matchComplete())
     } else {
       return (state <- MatchState$matchFail())
@@ -118,14 +118,14 @@ define MatchRangeMatcher {
   }
 
   matchSatisfied () {
-    return MatchState$equals(state,MatchState$matchComplete())
+    return state `MatchState$equals` MatchState$matchComplete()
   }
 
   tryNextMatch (data) {
-    if (!MatchState$equals(state,MatchState$matchContinue())) {
+    if (!(state `MatchState$equals` MatchState$matchContinue())) {
       return (state <- MatchState$matchFail())
     }
-    if (!#c$lessThan(data,minMatch) && !#c$lessThan(maxMatch,data)) {
+    if (!(data `#c$lessThan` minMatch) && !(maxMatch `#c$lessThan` data)) {
       return (state <- MatchState$matchComplete())
     } else {
       return (state <- MatchState$matchFail())
@@ -161,11 +161,11 @@ define MatchAnyMatcher {
   }
 
   matchSatisfied () {
-    return MatchState$equals(state,MatchState$matchComplete())
+    return state `MatchState$equals` MatchState$matchComplete()
   }
 
   tryNextMatch (data) {
-    if (!MatchState$equals(state,MatchState$matchContinue())) {
+    if (!(state `MatchState$equals` MatchState$matchContinue())) {
       return (state <- MatchState$matchFail())
     }
     return (state <- MatchState$matchComplete())
@@ -255,16 +255,16 @@ define MatchRepeatMatcher {
   }
 
   matchSatisfied () {
-    if (MatchState$equals(lastState,MatchState$matchFail())) {
+    if (lastState `MatchState$equals` MatchState$matchFail()) {
       return false
     }
-    if (MatchState$equals(lastState,MatchState$matchContinue()) &&
+    if (lastState `MatchState$equals` MatchState$matchContinue() &&
         (repetitionCount+1 >= minCount || template.matchesEmpty()) &&
         matcher.matchSatisfied()) {
       // The rest of the current repetition can be ignored.
       return true
     }
-    if (MatchState$equals(lastState,MatchState$matchComplete()) &&
+    if (lastState `MatchState$equals` MatchState$matchComplete() &&
         (repetitionCount >= minCount || template.matchesEmpty())) {
       return true
     }
@@ -272,20 +272,20 @@ define MatchRepeatMatcher {
   }
 
   tryNextMatch (data) (state) {
-    if (atMax() || MatchState$equals(lastState,MatchState$matchFail())) {
+    if (atMax() || lastState `MatchState$equals` MatchState$matchFail()) {
       return MatchState$matchFail()
     }
     Bool canSkip <- matcher.matchSatisfied()
     state <- matcher.tryNextMatch(data)
-    if (MatchState$equals(state,MatchState$matchFail()) &&
-        MatchState$equals(lastState,MatchState$matchContinue()) && canSkip) {
+    if (state `MatchState$equals` MatchState$matchFail() &&
+        lastState `MatchState$equals` MatchState$matchContinue() && canSkip) {
       // Handle the case where an optional end to the pattern can be skipped.
       ~ incrementMatch()
       ~ startRepeat()
       state <- matcher.tryNextMatch(data)
     }
     lastState <- state
-    if (MatchState$equals(state,MatchState$matchComplete())) {
+    if (state `MatchState$equals` MatchState$matchComplete()) {
       ~ incrementMatch()
       ~ startRepeat()
       if (atMax()) {
@@ -381,7 +381,7 @@ define MatchChoicesMatcher {
       // NOTE: Failing matchers are left in for simplicity, under the assumption
       // that they will keep failing.
       MatchState state2 <- require(current).value().tryNextMatch(data)
-      if (MatchState$lessThan(state,state2)) {
+      if (state `MatchState$lessThan` state2) {
         state <- state2
       }
     } update {
@@ -445,10 +445,10 @@ define MatchBranchesMatcher {
     } in while(present(current)) {
       { MatchState state2, optional ReadSequence<MatchBrancher<#c>> branches2 } <-
           require(current).value().tryBranches(data)
-      if (MatchState$equals(state2,MatchState$matchComplete())) {
+      if (state2 `MatchState$equals` MatchState$matchComplete()) {
         complete <- true
       }
-      if (MatchState$lessThan(state,state2)) {
+      if (state `MatchState$lessThan` state2) {
         state <- state2
       }
       branches <- LinkedNode<MatchBrancher<#c>>$concatSequences(branches2,branches)
@@ -479,16 +479,16 @@ define BranchRepeatMatcher {
   }
 
   matchSatisfied () {
-    if (MatchState$equals(lastState,MatchState$matchFail())) {
+    if (lastState `MatchState$equals` MatchState$matchFail()) {
       return false
     }
-    if (MatchState$equals(lastState,MatchState$matchContinue()) &&
+    if (lastState `MatchState$equals` MatchState$matchContinue() &&
         (repetitionCount+1 >= minCount || template.matchesEmpty()) &&
         matcher.matchSatisfied()) {
       // The rest of the current repetition can be ignored.
       return true
     }
-    if (MatchState$equals(lastState,MatchState$matchComplete()) &&
+    if (lastState `MatchState$equals` MatchState$matchComplete() &&
         (repetitionCount >= minCount || template.matchesEmpty())) {
       return true
     }
@@ -498,15 +498,15 @@ define BranchRepeatMatcher {
   tryBranches (data) (state,branch) {
     state <- MatchState$matchFail()
     branch <- empty
-    if (atMax() || MatchState$equals(lastState,MatchState$matchFail())) {
+    if (atMax() || lastState `MatchState$equals` MatchState$matchFail()) {
       return _
     }
-    if (MatchState$equals(lastState,MatchState$matchContinue())) {
+    if (lastState `MatchState$equals` MatchState$matchContinue()) {
       // Handle a possible single branch.
       Bool canSkip <- matcher.matchSatisfied()
       state <- matcher.tryNextMatch(data)
       if (canSkip) {
-        if (MatchState$equals(state,MatchState$matchContinue())) {
+        if (state `MatchState$equals` MatchState$matchContinue()) {
           // Add a branch for the optional suffix.
           branch <- LinkedNode<BranchRepeatMatcher<#c>>$create(
               BranchRepeatMatcher<#c>{ template, matcher, minCount,
@@ -527,13 +527,13 @@ define BranchRepeatMatcher {
       state <- matcher.tryNextMatch(data)
     }
     lastState <- state
-    if (MatchState$equals(state,MatchState$matchComplete())) {
+    if (state `MatchState$equals` MatchState$matchComplete()) {
       ~ incrementMatch()
       ~ startRepeat()
       if (!atMax()) {
         branch <- LinkedNode<BranchRepeatMatcher<#c>>$create(self,branch)
       }
-    } elif (MatchState$equals(state,MatchState$matchContinue())) {
+    } elif (state `MatchState$equals` MatchState$matchContinue()) {
       branch <- LinkedNode<BranchRepeatMatcher<#c>>$create(self,branch)
     }
     if (present(branch)) {
@@ -641,15 +641,15 @@ define BranchSequenceMatcher {
     }
     if (require(continued2).matchSatisfied()) {
       { MatchState state2, branch } <- recursiveBranch(data,empty,sequence2)
-      if (MatchState$lessThan(state,state2)) {
+      if (state `MatchState$lessThan` state2) {
         state <- state2
       }
     }
     MatchState state2 <- require(continued2).tryNextMatch(data)
-    if (MatchState$lessThan(state,state2)) {
+    if (state `MatchState$lessThan` state2) {
       state <- state2
     }
-    if (MatchState$equals(state2,MatchState$matchComplete())) {
+    if (state2 `MatchState$equals` MatchState$matchComplete()) {
       if (present(sequence2)) {
         // Add a branch to continue this sequence.
         branch <- LinkedNode<BranchSequenceMatcher<#c>>$create(
@@ -661,7 +661,7 @@ define BranchSequenceMatcher {
         branch <- LinkedNode<BranchSequenceMatcher<#c>>$create(
             BranchSequenceMatcher<#c>{ empty, empty, false },branch)
       }
-    } elif (MatchState$equals(state,MatchState$matchContinue())) {
+    } elif (state `MatchState$equals` MatchState$matchContinue()) {
         // Add a branch to continue this sequence.
         branch <- LinkedNode<BranchSequenceMatcher<#c>>$create(
             BranchSequenceMatcher<#c>{ continued2, sequence2, false },branch)
