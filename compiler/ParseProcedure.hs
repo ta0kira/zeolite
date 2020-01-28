@@ -25,6 +25,7 @@ module ParseProcedure (
 
 import Text.Parsec
 import Text.Parsec.String
+import qualified Data.Set as Set
 
 import ParseCategory
 import ParseInstance
@@ -247,6 +248,29 @@ instance ParseFromSource (ScopedBlock SourcePos) where
       try kwCleanup
       between (sepAfter $ string "{") (sepAfter $ string "}") sourceParser
 
+unaryOperator :: Parser (Operator c)
+unaryOperator = op >>= return . NamedOperator where
+  op = labeled "unary operator" $ foldr (<|>) (fail "empty") $ map (try . operator) [
+      "!", "-"
+    ]
+
+infixOperator :: Parser (Operator c)
+infixOperator = op >>= return . NamedOperator where
+  op = labeled "binary operator" $ foldr (<|>) (fail "empty") $ map (try . operator) [
+      "+","-","*","/","%","==","!=","<","<=",">",">=","&&","||"
+    ]
+
+infixBefore :: Operator c -> Operator c -> Bool
+infixBefore (NamedOperator o1) (NamedOperator o2) = (infixOrder o1) <= (infixOrder o2) where
+  infixOrder o
+    -- TODO: Don't hard-code this.
+    | o `Set.member` Set.fromList ["*","/","%"] = 1
+    | o `Set.member` Set.fromList ["+","-"] = 2
+    | o `Set.member` Set.fromList ["==","!=","<","<=",">",">="] = 3
+    | o `Set.member` Set.fromList ["&&","||"] = 4
+infixBefore (NamedOperator _) _ = True
+infixBefore _                 _ = False
+
 instance ParseFromSource (Expression SourcePos) where
   sourceParser = do
     e <- notInfix
@@ -255,7 +279,7 @@ instance ParseFromSource (Expression SourcePos) where
       notInfix = literal <|> unary <|> expression <|> initalize
       asInfix es os = do
         c <- getPosition
-        o <- binaryOperator
+        o <- infixOperator
         e2 <- notInfix
         let es' = es ++ [e2]
         let os' = os ++ [([c],o)]

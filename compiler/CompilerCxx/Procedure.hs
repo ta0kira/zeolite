@@ -482,7 +482,7 @@ compileExpression = compile where
     return (ParamSet [emptyValue],UnwrappedSingle "Var_empty")
   compile (Expression c s os) = do
     foldl transform (compileExpressionStart s) os
-  compile (UnaryExpression c o e) = do
+  compile (UnaryExpression c (NamedOperator o) e) = do
     (ParamSet ts,e') <- compileExpression e
     t' <- requireSingle c ts
     doUnary t' e'
@@ -531,7 +531,7 @@ compileExpression = compile where
       checkArity (_,ParamSet [_]) = return ()
       checkArity (i,ParamSet ts)  =
         compileError $ "Initializer position " ++ show i ++ " has " ++ show (length ts) ++ " values but should have 1"
-  compile (InfixExpression c e1 o e2) = do
+  compile (InfixExpression c e1 (NamedOperator o) e2) = do
     e1' <- compileExpression e1
     e2' <- if o `Set.member` logical
               then isolateExpression e2 -- Ignore named-return assignments.

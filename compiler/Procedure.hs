@@ -25,8 +25,11 @@ module Procedure (
   Expression(..),
   ExpressionStart(..),
   FunctionCall(..),
+  FunctionQualifier(..),
+  FunctionSpec(..),
   IfElifElse(..),
   InputValue(..),
+  Operator(..),
   OutputValue(..),
   Procedure(..),
   ReturnValues(..),
@@ -183,9 +186,25 @@ data ScopedBlock c =
 data Expression c =
   Expression [c] (ExpressionStart c) [ValueOperation c] |
   Literal (ValueLiteral c) |
-  UnaryExpression [c] String (Expression c) |
-  InfixExpression [c] (Expression c) String (Expression c) |
+  UnaryExpression [c] (Operator c) (Expression c) |
+  InfixExpression [c] (Expression c) (Operator c) (Expression c) |
   InitializeValue [c] TypeInstance (ParamSet GeneralInstance) (ParamSet (Expression c))
+  deriving (Show)
+
+data FunctionQualifier c =
+  CategoryFunction [c] CategoryName |
+  TypeFunction [c] TypeInstanceOrParam |
+  ValueFunction [c] (Expression c) |
+  UnqualifiedFunction
+  deriving (Show)
+
+data FunctionSpec c =
+  FunctionSpec [c] (FunctionQualifier c) FunctionName (ParamSet GeneralInstance)
+  deriving (Show)
+
+data Operator c =
+  NamedOperator String |
+  FunctionOperator [c] (FunctionSpec c)
   deriving (Show)
 
 getExpressionContext :: Expression c -> [c]
@@ -209,7 +228,6 @@ data ExpressionStart c =
   InlineAssignment [c] VariableName (Expression c)
   deriving (Show)
 
--- TODO: Add character, binary, octal.
 data ValueLiteral c =
   StringLiteral [c] String |
   CharLiteral [c] String |

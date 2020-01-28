@@ -23,11 +23,9 @@ module ParserBase (
   anyComment,
   assignOperator,
   blockComment,
-  binaryOperator,
   builtinValues,
   categorySymbolGet,
   endOfDoc,
-  infixBefore,
   initSeparator,
   keyword,
   kwAll,
@@ -73,6 +71,7 @@ module ParserBase (
   noKeywords,
   notAllowed,
   nullParse,
+  operator,
   optionalSpace,
   regexChar,
   requiredSpace,
@@ -82,7 +81,6 @@ module ParserBase (
   statementEnd,
   statementStart,
   typeSymbolGet,
-  unaryOperator,
   valueSymbolGet,
 ) where
 
@@ -111,29 +109,6 @@ builtinValues :: Parser String
 builtinValues = foldr (<|>) (fail "empty") $ map try [
     kwSelf >> return "self"
   ]
-
--- TODO: Maybe this should not use strings.
-unaryOperator :: Parser String
-unaryOperator =
-  labeled "unary operator" $ foldr (<|>) (fail "empty") $ map (try . operator) [
-      "!", "-"
-    ]
-
--- TODO: Maybe this should not use strings.
-binaryOperator :: Parser String
-binaryOperator =
-  labeled "binary operator" $ foldr (<|>) (fail "empty") $ map (try . operator) [
-      "+","-","*","/","%","==","!=","<","<=",">",">=","&&","||"
-    ]
-
-infixBefore :: String -> String -> Bool
-infixBefore o1 o2 = (infixOrder o1) <= (infixOrder o2) where
-  infixOrder o
-    -- TODO: Don't hard-code this.
-    | o `Set.member` Set.fromList ["*","/","%"] = 1
-    | o `Set.member` Set.fromList ["+","-"] = 2
-    | o `Set.member` Set.fromList ["==","!=","<","<=",">",">="] = 3
-    | o `Set.member` Set.fromList ["&&","||"] = 4
 
 kwAll = keyword "all"
 kwAllows = keyword "allows"

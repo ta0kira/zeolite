@@ -205,16 +205,16 @@ tests = [
                                 (InfixExpression _
                                   (InfixExpression _
                                     (InfixExpression _
-                                      (Literal (IntegerLiteral _ "1")) "+"
-                                      (Literal (IntegerLiteral _ "2"))) "<"
-                                    (Literal (IntegerLiteral _ "4"))) "&&"
+                                      (Literal (IntegerLiteral _ "1")) (NamedOperator "+")
+                                      (Literal (IntegerLiteral _ "2"))) (NamedOperator "<")
+                                    (Literal (IntegerLiteral _ "4"))) (NamedOperator "&&")
                                   (InfixExpression _
-                                    (Literal (IntegerLiteral _ "3")) ">="
+                                    (Literal (IntegerLiteral _ "3")) (NamedOperator ">=")
                                     (InfixExpression _
                                       (InfixExpression _
-                                        (Literal (IntegerLiteral _ "1")) "*"
-                                        (Literal (IntegerLiteral _ "2"))) "+"
-                                      (Literal (IntegerLiteral _ "1"))))) "||"
+                                        (Literal (IntegerLiteral _ "1")) (NamedOperator "*")
+                                        (Literal (IntegerLiteral _ "2"))) (NamedOperator "+")
+                                      (Literal (IntegerLiteral _ "1"))))) (NamedOperator "||")
                                 (Literal (BoolLiteral _ True))) -> True
                               _ -> False),
 
@@ -224,11 +224,11 @@ tests = [
                   (\e -> case e of
                               (InfixExpression _
                                 (InfixExpression _
-                                  (UnaryExpression _ "!"
-                                    (Expression _ (NamedVariable (OutputValue _ (VariableName "x"))) [])) "*"
-                                  (UnaryExpression _ "!"
-                                    (Expression _ (NamedVariable (OutputValue _ (VariableName "y"))) []))) "+"
-                                (UnaryExpression _ "!"
+                                  (UnaryExpression _ (NamedOperator "!")
+                                    (Expression _ (NamedVariable (OutputValue _ (VariableName "x"))) [])) (NamedOperator "*")
+                                  (UnaryExpression _ (NamedOperator "!")
+                                    (Expression _ (NamedVariable (OutputValue _ (VariableName "y"))) []))) (NamedOperator "+")
+                                (UnaryExpression _ (NamedOperator "!")
                                   (Expression _ (NamedVariable (OutputValue _ (VariableName "z"))) []))) -> True
                               _ -> False)
   ]
