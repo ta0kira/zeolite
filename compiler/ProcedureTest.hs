@@ -28,6 +28,8 @@ import CompileInfo
 import ParseProcedure
 import Procedure
 import TestBase
+import TypeCategory
+import TypeInstance
 import TypesBase
 
 
@@ -230,6 +232,49 @@ tests = [
                                     (Expression _ (NamedVariable (OutputValue _ (VariableName "y"))) []))) (NamedOperator "+")
                                 (UnaryExpression _ (NamedOperator "!")
                                   (Expression _ (NamedVariable (OutputValue _ (VariableName "z"))) []))) -> True
+                              _ -> False),
+
+    checkParsesAs "1 `Int$lessThan` 2"
+                  (\e -> case e of
+                              (InfixExpression _
+                                (Literal (IntegerLiteral _ "1"))
+                                (FunctionOperator _ (
+                                  FunctionSpec _
+                                    (TypeFunction _ (JustTypeInstance (TypeInstance BuiltinInt (ParamSet []))))
+                                    (FunctionName "lessThan") (ParamSet [])))
+                                (Literal (IntegerLiteral _ "2"))) -> True
+                              _ -> False),
+
+    checkParsesAs "1 `Something$$foo` 2"
+                  (\e -> case e of
+                              (InfixExpression _
+                                (Literal (IntegerLiteral _ "1"))
+                                (FunctionOperator _
+                                  (FunctionSpec _
+                                    (CategoryFunction _ (CategoryName "Something"))
+                                    (FunctionName "foo") (ParamSet [])))
+                                (Literal (IntegerLiteral _ "2"))) -> True
+                              _ -> False),
+
+    checkParsesAs "1 `something.foo` 2"
+                  (\e -> case e of
+                              (InfixExpression _
+                                (Literal (IntegerLiteral _ "1"))
+                                (FunctionOperator _
+                                  (FunctionSpec _
+                                    (ValueFunction _
+                                      (Expression _ (NamedVariable (OutputValue _ (VariableName "something"))) []))
+                                    (FunctionName "foo") (ParamSet [])))
+                                (Literal (IntegerLiteral _ "2"))) -> True
+                              _ -> False),
+
+    checkParsesAs "1 `foo` 2"
+                  (\e -> case e of
+                              (InfixExpression _
+                                (Literal (IntegerLiteral _ "1"))
+                                (FunctionOperator _
+                                  (FunctionSpec _ UnqualifiedFunction (FunctionName "foo") (ParamSet [])))
+                                (Literal (IntegerLiteral _ "2"))) -> True
                               _ -> False)
   ]
 

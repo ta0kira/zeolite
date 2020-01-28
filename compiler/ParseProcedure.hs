@@ -271,6 +271,14 @@ infixBefore (NamedOperator o1) (NamedOperator o2) = (infixOrder o1) <= (infixOrd
 infixBefore (NamedOperator _) _ = True
 infixBefore _                 _ = False
 
+functionOperator :: Parser (Operator SourcePos)
+functionOperator = do
+  c <- getPosition
+  infixFuncStart
+  q <- sourceParser
+  infixFuncEnd
+  return $ FunctionOperator [c] q
+
 instance ParseFromSource (Expression SourcePos) where
   sourceParser = do
     e <- notInfix
@@ -279,7 +287,7 @@ instance ParseFromSource (Expression SourcePos) where
       notInfix = literal <|> unary <|> expression <|> initalize
       asInfix es os = do
         c <- getPosition
-        o <- infixOperator
+        o <- infixOperator <|> functionOperator
         e2 <- notInfix
         let es' = es ++ [e2]
         let os' = os ++ [([c],o)]
@@ -322,6 +330,42 @@ instance ParseFromSource (Expression SourcePos) where
         as <- sepBy sourceParser (sepAfter $ string ",")
         sepAfter (string "}")
         return $ InitializeValue [c] t (ParamSet []) (ParamSet as)
+
+instance ParseFromSource (FunctionQualifier SourcePos) where
+  sourceParser = try categoryFunc <|> typeFunc <|> valueFunc where
+    categoryFunc = do
+      c <- getPosition
+      q <- sourceParser
+      categorySymbolGet
+      return $ CategoryFunction [c] q
+    typeFunc = do
+      c <- getPosition
+      q <- sourceParser
+      typeSymbolGet
+      return $ TypeFunction [c] q
+    valueFunc = do
+      c <- getPosition
+      q <- sourceParser
+      valueSymbolGet
+      return $ ValueFunction [c] q
+
+instance ParseFromSource (FunctionSpec SourcePos) where
+  sourceParser = try qualified <|> unqualified where
+    qualified = do
+      c <- getPosition
+      q <- sourceParser
+      n <- sourceParser
+      ps <- try $ between (sepAfter $ string "<")
+                          (sepAfter $ string ">")
+                          (sepBy sourceParser (sepAfter $ string ",")) <|> return []
+      return $ FunctionSpec [c] q n (ParamSet ps)
+    unqualified = do
+      c <- getPosition
+      n <- sourceParser
+      ps <- try $ between (sepAfter $ string "<")
+                          (sepAfter $ string ">")
+                          (sepBy sourceParser (sepAfter $ string ",")) <|> return []
+      return $ FunctionSpec [c] UnqualifiedFunction n (ParamSet ps)
 
 parseFunctionCall :: SourcePos -> FunctionName -> Parser (FunctionCall SourcePos)
 parseFunctionCall c n = do

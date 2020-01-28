@@ -26,7 +26,8 @@ module ParserBase (
   builtinValues,
   categorySymbolGet,
   endOfDoc,
-  initSeparator,
+  infixFuncEnd,
+  infixFuncStart,
   keyword,
   kwAll,
   kwAllows,
@@ -101,8 +102,9 @@ statementEnd      = sepAfter (string "" >> return ())
 valueSymbolGet    = sepAfter (string "." >> return ())
 categorySymbolGet = sepAfter (string "$$" >> return ())
 typeSymbolGet     = sepAfter (string "$" >> notFollowedBy (string "$"))
-initSeparator     = sepAfter (string ":" >> return ())
 assignOperator    = operator "<-"
+infixFuncStart    = sepAfter (string "`" >> return ())
+infixFuncEnd      = sepAfter (string "`" >> return ())
 
 -- TODO: Maybe this should not use strings.
 builtinValues :: Parser String

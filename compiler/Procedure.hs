@@ -194,6 +194,7 @@ data Expression c =
 data FunctionQualifier c =
   CategoryFunction [c] CategoryName |
   TypeFunction [c] TypeInstanceOrParam |
+  -- TODO: Does this need to allow conversion calls?
   ValueFunction [c] (Expression c) |
   UnqualifiedFunction
   deriving (Show)
