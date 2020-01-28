@@ -207,16 +207,16 @@ tests = [
                                 (InfixExpression _
                                   (InfixExpression _
                                     (InfixExpression _
-                                      (Literal (IntegerLiteral _ "1")) (NamedOperator "+")
-                                      (Literal (IntegerLiteral _ "2"))) (NamedOperator "<")
-                                    (Literal (IntegerLiteral _ "4"))) (NamedOperator "&&")
+                                      (Literal (IntegerLiteral _ 1)) (NamedOperator "+")
+                                      (Literal (IntegerLiteral _ 2))) (NamedOperator "<")
+                                    (Literal (IntegerLiteral _ 4))) (NamedOperator "&&")
                                   (InfixExpression _
-                                    (Literal (IntegerLiteral _ "3")) (NamedOperator ">=")
+                                    (Literal (IntegerLiteral _ 3)) (NamedOperator ">=")
                                     (InfixExpression _
                                       (InfixExpression _
-                                        (Literal (IntegerLiteral _ "1")) (NamedOperator "*")
-                                        (Literal (IntegerLiteral _ "2"))) (NamedOperator "+")
-                                      (Literal (IntegerLiteral _ "1"))))) (NamedOperator "||")
+                                        (Literal (IntegerLiteral _ 1)) (NamedOperator "*")
+                                        (Literal (IntegerLiteral _ 2))) (NamedOperator "+")
+                                      (Literal (IntegerLiteral _ 1))))) (NamedOperator "||")
                                 (Literal (BoolLiteral _ True))) -> True
                               _ -> False),
 
@@ -237,45 +237,73 @@ tests = [
     checkParsesAs "1 `Int$lessThan` 2"
                   (\e -> case e of
                               (InfixExpression _
-                                (Literal (IntegerLiteral _ "1"))
+                                (Literal (IntegerLiteral _ 1))
                                 (FunctionOperator _ (
                                   FunctionSpec _
                                     (TypeFunction _ (JustTypeInstance (TypeInstance BuiltinInt (ParamSet []))))
                                     (FunctionName "lessThan") (ParamSet [])))
-                                (Literal (IntegerLiteral _ "2"))) -> True
+                                (Literal (IntegerLiteral _ 2))) -> True
                               _ -> False),
 
     checkParsesAs "1 `Something$$foo` 2"
                   (\e -> case e of
                               (InfixExpression _
-                                (Literal (IntegerLiteral _ "1"))
+                                (Literal (IntegerLiteral _ 1))
                                 (FunctionOperator _
                                   (FunctionSpec _
                                     (CategoryFunction _ (CategoryName "Something"))
                                     (FunctionName "foo") (ParamSet [])))
-                                (Literal (IntegerLiteral _ "2"))) -> True
+                                (Literal (IntegerLiteral _ 2))) -> True
                               _ -> False),
 
     checkParsesAs "1 `something.foo` 2"
                   (\e -> case e of
                               (InfixExpression _
-                                (Literal (IntegerLiteral _ "1"))
+                                (Literal (IntegerLiteral _ 1))
                                 (FunctionOperator _
                                   (FunctionSpec _
                                     (ValueFunction _
                                       (Expression _ (NamedVariable (OutputValue _ (VariableName "something"))) []))
                                     (FunctionName "foo") (ParamSet [])))
-                                (Literal (IntegerLiteral _ "2"))) -> True
+                                (Literal (IntegerLiteral _ 2))) -> True
                               _ -> False),
 
     checkParsesAs "1 `foo` 2"
                   (\e -> case e of
                               (InfixExpression _
-                                (Literal (IntegerLiteral _ "1"))
+                                (Literal (IntegerLiteral _ 1))
                                 (FunctionOperator _
                                   (FunctionSpec _ UnqualifiedFunction (FunctionName "foo") (ParamSet [])))
-                                (Literal (IntegerLiteral _ "2"))) -> True
-                              _ -> False)
+                                (Literal (IntegerLiteral _ 2))) -> True
+                              _ -> False),
+
+    checkParsesAs "0o10" (\e -> case e of
+                                    (Literal (IntegerLiteral _ 8)) -> True
+                                    _ -> False),
+
+    checkParsesAs "0x10" (\e -> case e of
+                                     (Literal (IntegerLiteral _ 16)) -> True
+                                     _ -> False),
+
+    checkParsesAs "0b10" (\e -> case e of
+                                     (Literal (IntegerLiteral _ 2)) -> True
+                                     _ -> False),
+
+    checkParsesAs "10" (\e -> case e of
+                                   (Literal (IntegerLiteral _ 10)) -> True
+                                   _ -> False),
+
+    checkParsesAs "1.2345" (\e -> case e of
+                                       (Literal (DecimalLiteral _ 12345 (-4))) -> True
+                                       _ -> False),
+
+    checkParsesAs "1.2345E+4" (\e -> case e of
+                                          (Literal (DecimalLiteral _ 12345 0)) -> True
+                                          _ -> False),
+
+    checkParsesAs "1.2345E-4" (\e -> case e of
+                                          (Literal (DecimalLiteral _ 12345 (-8))) -> True
+                                          _ -> False)
   ]
 
 checkParseSuccess f = do

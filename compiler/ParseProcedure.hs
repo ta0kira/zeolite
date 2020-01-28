@@ -457,7 +457,9 @@ instance ParseFromSource (ValueLiteral SourcePos) where
                  stringLiteral <|>
                  charLiteral <|>
                  hexLiteral <|>
-                 numberLiteral <|>
+                 binLiteral <|>
+                 octLiteral <|>
+                 decLiteral <|>
                  boolLiteral <|>
                  emptyLiteral where
     stringLiteral = do
@@ -473,24 +475,42 @@ instance ParseFromSource (ValueLiteral SourcePos) where
       string "'"
       optionalSpace
       return $ CharLiteral [c] ch
+    binLiteral = do
+      c <- getPosition
+      try (char '0' >> (char 'b' <|> char 'B'))
+      d <- parseBin
+      optionalSpace
+      return $ IntegerLiteral [c] d
+    octLiteral = do
+      c <- getPosition
+      try (char '0' >> (char 'o' <|> char 'O'))
+      d <- parseOct
+      optionalSpace
+      return $ IntegerLiteral [c] d
+    decLiteral = do
+      c <- getPosition
+      d <- parseDec
+      decimal c d <|> integer c d
     hexLiteral = do
       c <- getPosition
       try (char '0' >> (char 'x' <|> char 'X'))
-      ds <- many1 hexDigit
+      d <- parseHex
       optionalSpace
-      return $ IntegerLiteral [c] $ "0x" ++ ds
-    numberLiteral = do
-      c <- getPosition
-      ds <- many1 digit
-      decimal c ds <|> integer c ds
-    decimal c ds = do
+      return $ IntegerLiteral [c] d
+    decimal c d = do
       try (char '.')
-      ds2 <- many1 digit
+      (n,d2) <- parseSubOne
+      e <- decExponent <|> return 0
       optionalSpace
-      return $ DecimalLiteral [c] ds ds2
-    integer c ds = do
+      return $ DecimalLiteral [c] (d*10^n + d2) (e - n)
+    decExponent = do
+      string "e" <|> string "E"
+      s <- (string "+" >> return 1) <|> (string "-" >> return (-1)) <|> return 1
+      e <- parseDec
+      return (s*e)
+    integer c d = do
       optionalSpace
-      return $ IntegerLiteral [c] ds
+      return $ IntegerLiteral [c] d
     boolLiteral = do
       c <- getPosition
       b <- try $ (kwTrue >> return True) <|> (kwFalse >> return False)

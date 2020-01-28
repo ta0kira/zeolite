@@ -19,6 +19,7 @@ limitations under the License.
 #ifndef TYPES_HPP_
 #define TYPES_HPP_
 
+#include <cstdint>
 #include <functional>
 #include <memory>
 #include <tuple>
@@ -33,7 +34,7 @@ limitations under the License.
   type& operator =(const type&) = delete; \
   type& operator =(type&&) = delete;
 
-using PrimInt = long;
+using PrimInt = std::int64_t;
 using PrimString = std::string;
 using PrimChar = char;
 using PrimFloat = double;

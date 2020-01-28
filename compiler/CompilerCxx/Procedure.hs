@@ -469,11 +469,14 @@ compileExpression = compile where
   compile (Literal (CharLiteral c l)) = do
     return (ParamSet [charRequiredValue],UnboxedPrimitive PrimChar $ "PrimChar('" ++ escapeChars l ++ "')")
   compile (Literal (IntegerLiteral c l)) = do
+    when (l > 2^63 - 1) $ lift $ compileError $
+      "Literal " ++ show l ++ " [" ++ formatFullContext c ++ "] is greater than the max value for 64-bit signed"
+    when ((-l) > 2^63 - 2) $ lift $ compileError $
+      "Literal " ++ show l ++ " [" ++ formatFullContext c ++ "] is less than the min value for 64-bit signed"
+    return (ParamSet [intRequiredValue],UnboxedPrimitive PrimInt $ "PrimInt(" ++ show l ++ ")")
+  compile (Literal (DecimalLiteral c l e)) = do
     -- TODO: Check bounds.
-    return (ParamSet [intRequiredValue],UnboxedPrimitive PrimInt $ "PrimInt(" ++ l ++ ")")
-  compile (Literal (DecimalLiteral c l1 l2)) = do
-    -- TODO: Check bounds.
-    return (ParamSet [floatRequiredValue],UnboxedPrimitive PrimFloat $ "PrimFloat(" ++ l1 ++ "." ++ l2 ++ ")")
+    return (ParamSet [floatRequiredValue],UnboxedPrimitive PrimFloat $ "PrimFloat(" ++ show l ++ "E" ++ show e ++ ")")
   compile (Literal (BoolLiteral c True)) = do
     return (ParamSet [boolRequiredValue],UnboxedPrimitive PrimBool "true")
   compile (Literal (BoolLiteral c False)) = do
@@ -482,6 +485,10 @@ compileExpression = compile where
     return (ParamSet [emptyValue],UnwrappedSingle "Var_empty")
   compile (Expression c s os) = do
     foldl transform (compileExpressionStart s) os
+  compile (UnaryExpression c (NamedOperator "-") (Literal (IntegerLiteral _ l))) =
+    compile (Literal (IntegerLiteral c (-l)))
+  compile (UnaryExpression c (NamedOperator "-") (Literal (DecimalLiteral _ l e))) =
+    compile (Literal (DecimalLiteral c (-l) e))
   compile (UnaryExpression c (NamedOperator o) e) = do
     (ParamSet ts,e') <- compileExpression e
     t' <- requireSingle c ts

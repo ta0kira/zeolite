@@ -232,8 +232,8 @@ data ExpressionStart c =
 data ValueLiteral c =
   StringLiteral [c] String |
   CharLiteral [c] String |
-  IntegerLiteral [c] String |
-  DecimalLiteral [c] String String |
+  IntegerLiteral [c] Integer |
+  DecimalLiteral [c] Integer Integer |
   BoolLiteral [c] Bool |
   EmptyLiteral [c]
   deriving (Show)

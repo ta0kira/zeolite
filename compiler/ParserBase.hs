@@ -74,6 +74,11 @@ module ParserBase (
   nullParse,
   operator,
   optionalSpace,
+  parseBin,
+  parseDec,
+  parseHex,
+  parseOct,
+  parseSubOne,
   regexChar,
   requiredSpace,
   sepAfter,
@@ -265,19 +270,41 @@ stringChar = escaped <|> notEscaped where
             'x' -> hexChar
             _ -> fail (show v)
       octChar = labeled "3 octal chars" $ do
-        o1 <- octDigit >>= digitVal
-        o2 <- octDigit >>= digitVal
-        o3 <- octDigit >>= digitVal
+        o1 <- octDigit >>= return . digitVal
+        o2 <- octDigit >>= return . digitVal
+        o3 <- octDigit >>= return . digitVal
         return [chr $ 8*8*o1 + 8*o2 + o3]
       hexChar = labeled "2 hex chars" $ do
-        h1 <- hexDigit >>= digitVal
-        h2 <- hexDigit >>= digitVal
+        h1 <- hexDigit >>= return . digitVal
+        h2 <- hexDigit >>= return . digitVal
         return [chr $ 16*h1 + h2]
-      digitVal c
-        | c >= '0' && c <= '9' = return $ ord(c) - ord('0')
-        | c >= 'A' && c <= 'F' = return $ 10 + ord(c) - ord('A')
-        | c >= 'a' && c <= 'f' = return $ 10 + ord(c) - ord('a')
   notEscaped = fmap (:[]) $ noneOf "\""
+
+digitVal :: Char -> Int
+digitVal c
+  | c >= '0' && c <= '9' = ord(c) - ord('0')
+  | c >= 'A' && c <= 'F' = 10 + ord(c) - ord('A')
+  | c >= 'a' && c <= 'f' = 10 + ord(c) - ord('a')
+
+parseDec :: Parser Integer
+parseDec = fmap snd $ parseIntCommon 10 digit
+
+parseHex :: Parser Integer
+parseHex = fmap snd $ parseIntCommon 16 hexDigit
+
+parseOct :: Parser Integer
+parseOct = fmap snd $ parseIntCommon 8 octDigit
+
+parseBin :: Parser Integer
+parseBin = fmap snd $ parseIntCommon 2 (oneOf "01")
+
+parseSubOne :: Parser (Integer,Integer)
+parseSubOne = parseIntCommon 10 digit
+
+parseIntCommon :: Integer -> Parser Char -> Parser (Integer,Integer)
+parseIntCommon b p = do
+  ds <- many1 p
+  return $ foldl (\(n,x) y -> (n+1,b*x + (fromIntegral $ digitVal y :: Integer))) (0,0) ds
 
 regexChar :: Parser String
 regexChar = escaped <|> notEscaped where

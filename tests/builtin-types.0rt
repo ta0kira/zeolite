@@ -651,3 +651,73 @@ define Test {
 concrete Test {
   @type run () -> ()
 }
+
+
+testcase "Int max is accurate" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+    Int x <- 9223372036854775807 - 1
+    if (x != 9223372036854775806) {
+      fail(x)
+    }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "Int min is accurate" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+    Int x <- -9223372036854775806 + 1
+    if (x != -9223372036854775805) {
+      fail(x)
+    }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "Int literal too large" {
+  error
+  require "9223372036854775808"
+  require "max"
+}
+
+define Test {
+  run () {
+    ~ 9223372036854775808
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "Int literal too small" {
+  error
+  require "-9223372036854775807"
+  require "min"
+}
+
+define Test {
+  run () {
+    ~ -9223372036854775807
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
