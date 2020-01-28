@@ -498,7 +498,7 @@ instance ParseFromSource (ValueLiteral SourcePos) where
       optionalSpace
       return $ IntegerLiteral [c] d
     decimal c d = do
-      try (char '.')
+      char '.'
       (n,d2) <- parseSubOne
       e <- decExponent <|> return 0
       optionalSpace

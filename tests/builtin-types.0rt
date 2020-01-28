@@ -721,3 +721,29 @@ define Test {
 concrete Test {
   @type run () -> ()
 }
+
+
+testcase "Float exponent does not cross whitespace" {
+  success Test$run()
+}
+
+concrete E10 {
+  @type create () -> (E10)
+}
+
+define E10 {
+  create () {
+    return E10{ }
+  }
+}
+
+define Test {
+  run () {
+    Float x <- 1.2345
+    E10 y <- E10$create()
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
