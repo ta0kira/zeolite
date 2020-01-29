@@ -39,6 +39,11 @@ using PrimString = std::string;
 using PrimChar = char;
 using PrimFloat = double;
 
+template<int S>
+inline PrimString PrimString_FromLiteral(const char(&literal)[S]) {
+  return PrimString(literal, literal + (S - 1));
+}
+
 template<class T>
 using R = std::unique_ptr<T>;
 

@@ -747,3 +747,23 @@ define Test {
 concrete Test {
   @type run () -> ()
 }
+
+
+testcase "String allows null" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+    if ("abc\x00def" == "abc") {
+      fail("Failed")
+    }
+    if (("abc\x00def").readPosition(4) != 'd') {
+      fail("Failed")
+    }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}

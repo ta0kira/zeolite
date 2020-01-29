@@ -465,7 +465,7 @@ compileExpression :: (Show c, Monad m, CompileErrorM m, MergeableM m,
   Expression c -> CompilerState a m (ExpressionType,ExprValue)
 compileExpression = compile where
   compile (Literal (StringLiteral c l)) = do
-    return (ParamSet [stringRequiredValue],UnboxedPrimitive PrimString $ "PrimString(\"" ++ escapeChars l ++ "\")")
+    return (ParamSet [stringRequiredValue],UnboxedPrimitive PrimString $ "PrimString_FromLiteral(\"" ++ escapeChars l ++ "\")")
   compile (Literal (CharLiteral c l)) = do
     return (ParamSet [charRequiredValue],UnboxedPrimitive PrimChar $ "PrimChar('" ++ escapeChars l ++ "')")
   compile (Literal (IntegerLiteral c l)) = do
