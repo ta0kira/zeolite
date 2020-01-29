@@ -23,7 +23,7 @@ testcase "Int arithmetic with precedence" {
 define Test {
   run () {
     scoped {
-      Int x <- 0x10 + 1 * 2 - 8 / 2 - 3 % 2
+      Int x <- \x10 + 1 * 2 - 8 / 2 - 3 % 2
     } in if (x != 13) {
       fail(x)
     }
@@ -61,7 +61,7 @@ testcase "Int + Bool" {
 
 define Test {
   run () {
-    ~ 0x10 + false
+    ~ \x10 + false
   }
 }
 
@@ -77,7 +77,7 @@ testcase "Int + String" {
 
 define Test {
   run () {
-    ~ 0x10 + ""
+    ~ \x10 + ""
   }
 }
 

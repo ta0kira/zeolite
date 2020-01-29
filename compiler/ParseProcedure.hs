@@ -456,10 +456,8 @@ instance ParseFromSource (ValueLiteral SourcePos) where
   sourceParser = labeled "literal" $
                  stringLiteral <|>
                  charLiteral <|>
-                 hexLiteral <|>
-                 binLiteral <|>
-                 octLiteral <|>
-                 decLiteral <|>
+                 escapedInteger <|>
+                 integerOrDecimal <|>
                  boolLiteral <|>
                  emptyLiteral where
     stringLiteral = do
@@ -475,28 +473,25 @@ instance ParseFromSource (ValueLiteral SourcePos) where
       string "'"
       optionalSpace
       return $ CharLiteral [c] ch
-    binLiteral = do
+    escapedInteger = do
       c <- getPosition
-      try (char '0' >> (char 'b' <|> char 'B'))
-      d <- parseBin
+      escapeStart
+      b <- oneOf "bBoOdDxX"
+      d <- case b of
+               'b' -> parseBin
+               'B' -> parseBin
+               'o' -> parseOct
+               'O' -> parseOct
+               'd' -> parseDec
+               'D' -> parseDec
+               'x' -> parseHex
+               'X' -> parseHex
       optionalSpace
       return $ IntegerLiteral [c] d
-    octLiteral = do
-      c <- getPosition
-      try (char '0' >> (char 'o' <|> char 'O'))
-      d <- parseOct
-      optionalSpace
-      return $ IntegerLiteral [c] d
-    decLiteral = do
+    integerOrDecimal = do
       c <- getPosition
       d <- parseDec
       decimal c d <|> integer c d
-    hexLiteral = do
-      c <- getPosition
-      try (char '0' >> (char 'x' <|> char 'X'))
-      d <- parseHex
-      optionalSpace
-      return $ IntegerLiteral [c] d
     decimal c d = do
       char '.'
       (n,d2) <- parseSubOne

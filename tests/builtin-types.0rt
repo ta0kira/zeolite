@@ -548,7 +548,7 @@ testcase "Int hex Formatted" {
 
 define Test {
   run () {
-    String s <- (0x0010).formatted()
+    String s <- (\x0010).formatted()
     if (s != "16") {
       fail(s)
     }

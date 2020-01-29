@@ -165,11 +165,12 @@
 
       <context name="Any Expression" attribute="Normal Text" lineEndContext="#stay" >
         <IncludeRules context="Any Comment" />
-        <RegExpr attribute="Number" context="#stay" String="(-|)0[xX][0-9a-fA-F]+" />
-        <RegExpr attribute="Number" context="#stay" String="(-|)0[oO][0-7]+" />
-        <RegExpr attribute="Number" context="#stay" String="(-|)0[bB][01]+" />
+        <RegExpr attribute="Number" context="#stay" String="(-|)\\[xX][0-9a-fA-F]+" />
+        <RegExpr attribute="Number" context="#stay" String="(-|)\\[dD][0-9]+" />
+        <RegExpr attribute="Number" context="#stay" String="(-|)\\[oO][0-7]+" />
+        <RegExpr attribute="Number" context="#stay" String="(-|)\\[bB][01]+" />
         <RegExpr attribute="Number" context="#stay" String="(-|)[0-9]+\.[0-9]*([eE](\+|-|)[0-9]+|)" />
-        <RegExpr attribute="Number" context="#stay" String="(-|)[0-9]+" />
+        <RegExpr attribute="Number" context="#stay" String="\b(-|)[0-9]+" />
         <DetectChar attribute="Infix Func" context="#stay" char="`" />
         <DetectChar attribute="String" context="String" char="&quot;" />
         <DetectChar attribute="Char" context="Char" char="'" />

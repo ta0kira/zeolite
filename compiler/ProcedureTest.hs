@@ -181,10 +181,10 @@ tests = [
     checkShortParseSuccess "x <- 12.3 / 12.3",
     checkShortParseFail "x <- 12.3.",
     checkShortParseSuccess "x <- 12.3 + -456.7",
-    checkShortParseSuccess "x <- 0x123aBc + 0x123aBc",
-    checkShortParseFail "x <- 0x123aQc",
-    checkShortParseFail "x <- 0x",
-    checkShortParseFail "x <- 0x1.2",
+    checkShortParseSuccess "x <- \\x123aBc + \\x123aBc",
+    checkShortParseFail "x <- \\x123aQc",
+    checkShortParseFail "x <- \\x",
+    checkShortParseFail "x <- \\x1.2",
     checkShortParseSuccess "x <- \" return \\\"\\\" \" + \"1fds\"",
     checkShortParseFail "x <- \"fsdfd",
     checkShortParseFail "x <- \"\"fsdfd",
@@ -277,17 +277,37 @@ tests = [
                                 (Literal (IntegerLiteral _ 2))) -> True
                               _ -> False),
 
-    checkParsesAs "0o10" (\e -> case e of
-                                    (Literal (IntegerLiteral _ 8)) -> True
-                                    _ -> False),
+    checkParsesAs "\\b10" (\e -> case e of
+                                      (Literal (IntegerLiteral _ 2)) -> True
+                                      _ -> False),
 
-    checkParsesAs "0x10" (\e -> case e of
-                                     (Literal (IntegerLiteral _ 16)) -> True
-                                     _ -> False),
+    checkParsesAs "\\B10" (\e -> case e of
+                                      (Literal (IntegerLiteral _ 2)) -> True
+                                      _ -> False),
 
-    checkParsesAs "0b10" (\e -> case e of
-                                     (Literal (IntegerLiteral _ 2)) -> True
-                                     _ -> False),
+    checkParsesAs "\\o10" (\e -> case e of
+                                      (Literal (IntegerLiteral _ 8)) -> True
+                                      _ -> False),
+
+    checkParsesAs "\\O10" (\e -> case e of
+                                      (Literal (IntegerLiteral _ 8)) -> True
+                                      _ -> False),
+
+    checkParsesAs "\\d10" (\e -> case e of
+                                      (Literal (IntegerLiteral _ 10)) -> True
+                                      _ -> False),
+
+    checkParsesAs "\\D10" (\e -> case e of
+                                      (Literal (IntegerLiteral _ 10)) -> True
+                                      _ -> False),
+
+    checkParsesAs "\\x10" (\e -> case e of
+                                      (Literal (IntegerLiteral _ 16)) -> True
+                                      _ -> False),
+
+    checkParsesAs "\\X10" (\e -> case e of
+                                      (Literal (IntegerLiteral _ 16)) -> True
+                                      _ -> False),
 
     checkParsesAs "10" (\e -> case e of
                                    (Literal (IntegerLiteral _ 10)) -> True

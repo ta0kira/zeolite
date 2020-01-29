@@ -26,6 +26,7 @@ module ParserBase (
   builtinValues,
   categorySymbolGet,
   endOfDoc,
+  escapeStart,
   infixFuncEnd,
   infixFuncStart,
   keyword,
@@ -102,6 +103,7 @@ class ParseFromSource a where
 
 labeled = flip label
 
+escapeStart       = sepAfter (string "\\" >> return ())
 statementStart    = sepAfter (string "~" >> return ())
 statementEnd      = sepAfter (string "" >> return ())
 valueSymbolGet    = sepAfter (string "." >> return ())
