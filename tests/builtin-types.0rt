@@ -689,6 +689,23 @@ concrete Test {
 }
 
 
+testcase "Int unsigned works properly" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+    if (\xffffffffffffffff != -1) {
+      fail("Failed")
+    }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
 testcase "Int literal too large" {
   error
   require "9223372036854775808"
@@ -698,6 +715,23 @@ testcase "Int literal too large" {
 define Test {
   run () {
     ~ 9223372036854775808
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "Int unsigned literal too large" {
+  error
+  require "18446744073709551616"
+  require "max"
+}
+
+define Test {
+  run () {
+    ~ \x10000000000000000
   }
 }
 

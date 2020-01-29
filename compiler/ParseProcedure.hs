@@ -487,7 +487,7 @@ instance ParseFromSource (ValueLiteral SourcePos) where
                'x' -> parseHex
                'X' -> parseHex
       optionalSpace
-      return $ IntegerLiteral [c] d
+      return $ IntegerLiteral [c] True d
     integerOrDecimal = do
       c <- getPosition
       d <- parseDec
@@ -505,7 +505,7 @@ instance ParseFromSource (ValueLiteral SourcePos) where
       return (s*e)
     integer c d = do
       optionalSpace
-      return $ IntegerLiteral [c] d
+      return $ IntegerLiteral [c] False d
     boolLiteral = do
       c <- getPosition
       b <- try $ (kwTrue >> return True) <|> (kwFalse >> return False)

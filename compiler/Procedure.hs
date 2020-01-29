@@ -232,7 +232,7 @@ data ExpressionStart c =
 data ValueLiteral c =
   StringLiteral [c] String |
   CharLiteral [c] String |
-  IntegerLiteral [c] Integer |
+  IntegerLiteral [c] Bool Integer |
   DecimalLiteral [c] Integer Integer |
   BoolLiteral [c] Bool |
   EmptyLiteral [c]
@@ -241,7 +241,7 @@ data ValueLiteral c =
 getValueLiteralContext :: ValueLiteral c -> [c]
 getValueLiteralContext (StringLiteral c _)    = c
 getValueLiteralContext (CharLiteral c _)      = c
-getValueLiteralContext (IntegerLiteral c _)   = c
+getValueLiteralContext (IntegerLiteral c _ _) = c
 getValueLiteralContext (DecimalLiteral c _ _) = c
 getValueLiteralContext (BoolLiteral c _)      = c
 getValueLiteralContext (EmptyLiteral c)       = c

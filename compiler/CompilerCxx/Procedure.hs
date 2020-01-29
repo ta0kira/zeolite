@@ -468,7 +468,12 @@ compileExpression = compile where
     return (ParamSet [stringRequiredValue],UnboxedPrimitive PrimString $ "PrimString_FromLiteral(\"" ++ escapeChars l ++ "\")")
   compile (Literal (CharLiteral c l)) = do
     return (ParamSet [charRequiredValue],UnboxedPrimitive PrimChar $ "PrimChar('" ++ escapeChars l ++ "')")
-  compile (Literal (IntegerLiteral c l)) = do
+  compile (Literal (IntegerLiteral c True l)) = do
+    when (l > 2^64 - 1) $ lift $ compileError $
+      "Literal " ++ show l ++ " [" ++ formatFullContext c ++ "] is greater than the max value for 64-bit unsigned"
+    let l' = if l > 2^63 - 1 then l - 2^64 else l
+    return (ParamSet [intRequiredValue],UnboxedPrimitive PrimInt $ "PrimInt(" ++ show l' ++ ")")
+  compile (Literal (IntegerLiteral c False l)) = do
     when (l > 2^63 - 1) $ lift $ compileError $
       "Literal " ++ show l ++ " [" ++ formatFullContext c ++ "] is greater than the max value for 64-bit signed"
     when ((-l) > 2^63 - 2) $ lift $ compileError $
@@ -485,8 +490,8 @@ compileExpression = compile where
     return (ParamSet [emptyValue],UnwrappedSingle "Var_empty")
   compile (Expression c s os) = do
     foldl transform (compileExpressionStart s) os
-  compile (UnaryExpression c (NamedOperator "-") (Literal (IntegerLiteral _ l))) =
-    compile (Literal (IntegerLiteral c (-l)))
+  compile (UnaryExpression c (NamedOperator "-") (Literal (IntegerLiteral _ _ l))) =
+    compile (Literal (IntegerLiteral c False (-l)))
   compile (UnaryExpression c (NamedOperator "-") (Literal (DecimalLiteral _ l e))) =
     compile (Literal (DecimalLiteral c (-l) e))
   compile (UnaryExpression c (NamedOperator o) e) = do
