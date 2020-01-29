@@ -268,6 +268,19 @@ tests = [
                                 (Literal (IntegerLiteral _ 2))) -> True
                               _ -> False),
 
+    checkParsesAs "1 `require(x).foo` 2"
+                  (\e -> case e of
+                              InfixExpression _
+                                (Literal (IntegerLiteral _ 1))
+                                  (FunctionOperator _
+                                    (FunctionSpec _
+                                      (ValueFunction _
+                                        (Expression _ (BuiltinCall _ (FunctionCall _ BuiltinRequire (ParamSet [])
+                                          (ParamSet [Expression _ (NamedVariable (OutputValue _ (VariableName "x"))) []]))) []))
+                                        (FunctionName "foo") (ParamSet [])))
+                                (Literal (IntegerLiteral _ 2)) -> True
+                              _ -> False),
+
     checkParsesAs "1 `foo` 2"
                   (\e -> case e of
                               (InfixExpression _
