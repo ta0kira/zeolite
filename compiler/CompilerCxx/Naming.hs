@@ -34,8 +34,8 @@ module CompilerCxx.Naming (
   intersectGetter,
   mainFilename,
   paramName,
-  privateNamepace,
-  publicNamepace,
+  privateNamespace,
+  publicNamespace,
   qualifiedTypeGetter,
   sourceFilename,
   tableName,
@@ -130,11 +130,11 @@ typeCreator = "CreateType"
 valueCreator :: String
 valueCreator = "CreateValue"
 
-privateNamepace :: Hashable a => a -> String
-privateNamepace = ("private_" ++) . flip showHex "" . abs . hash
+privateNamespace :: Hashable a => a -> String
+privateNamespace = ("private_" ++) . flip showHex "" . abs . hash
 
-publicNamepace :: Hashable a => a -> String
-publicNamepace = ("public_" ++) . flip showHex "" . abs . hash
+publicNamespace :: Hashable a => a -> String
+publicNamespace = ("public_" ++) . flip showHex "" . abs . hash
 
 qualifiedTypeGetter :: AnyCategory c -> String
 qualifiedTypeGetter t

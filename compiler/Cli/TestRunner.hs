@@ -116,7 +116,7 @@ runSingleTest paths deps os tm (f,s) = do
     -- TODO: Combine this with the logic in runCompiler.
     compileAll e cs ds = do
       let ns0 = map cmNamespace deps
-      let ns1 = privateNamepace s
+      let ns1 = privateNamespace s
       let cs' = map (setCategoryNamespace ns1) cs
       tm' <- includeNewTypes tm cs'
       hxx <- collectAllOrErrorM $ map (compileCategoryDeclaration tm') cs'

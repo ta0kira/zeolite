@@ -214,7 +214,7 @@ runCompiler co@(CompileOptions h is is2 ds es ep p m o f) = do
       let paths = getIncludePathsForDeps deps2
       ps' <- zipWithContents p ps
       xs' <- zipWithContents p xs
-      ns0 <- canonicalizePath (p </> d) >>= return . publicNamepace
+      ns0 <- canonicalizePath (p </> d) >>= return . publicNamespace
       let ns2 = getNamespacesForDeps deps
       let fs = compileAll ns0 ns2 ss ps' xs'
       writeOutput (fixPaths $ paths ++ ep') ns0 deps2 d as as2
@@ -301,7 +301,7 @@ runCompiler co@(CompileOptions h is is2 ds es ep p m o f) = do
       cxx <- collectAllOrErrorM $ map compileInterfaceDefinition interfaces
       return (pc,tm',hxx ++ cxx)
     compileInternal ns0 ns2 tm d = do
-      let ns1 = privateNamepace d
+      let ns1 = privateNamespace (p </> fst d)
       (cs,ds) <- parseInternalSource d
       let cs' = map (setCategoryNamespace ns1) cs
       tm' <- includeNewTypes tm cs'
