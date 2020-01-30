@@ -490,6 +490,14 @@ compileExpression = compile where
     return (ParamSet [emptyValue],UnwrappedSingle "Var_empty")
   compile (Expression c s os) = do
     foldl transform (compileExpressionStart s) os
+  compile (UnaryExpression c (FunctionOperator _ (FunctionSpec _ (CategoryFunction c2 cn) fn ps)) e) =
+    compile (Expression c (CategoryCall c2 cn (FunctionCall c fn ps (ParamSet [e]))) [])
+  compile (UnaryExpression c (FunctionOperator _ (FunctionSpec _ (TypeFunction c2 tn) fn ps)) e) =
+    compile (Expression c (TypeCall c2 tn (FunctionCall c fn ps (ParamSet [e]))) [])
+  compile (UnaryExpression c (FunctionOperator _ (FunctionSpec _ (ValueFunction c2 e0) fn ps)) e) =
+    compile (Expression c (ParensExpression c2 e0) [ValueCall c (FunctionCall c fn ps (ParamSet [e]))])
+  compile (UnaryExpression c (FunctionOperator _ (FunctionSpec c2 UnqualifiedFunction fn ps)) e) =
+    compile (Expression c (UnqualifiedCall c2 (FunctionCall c fn ps (ParamSet [e]))) [])
   compile (UnaryExpression c (NamedOperator "-") (Literal (IntegerLiteral _ _ l))) =
     compile (Literal (IntegerLiteral c False (-l)))
   compile (UnaryExpression c (NamedOperator "-") (Literal (DecimalLiteral _ l e))) =

@@ -304,7 +304,7 @@ instance ParseFromSource (Expression SourcePos) where
         return $ Literal l
       unary = do
         c <- getPosition
-        o <- unaryOperator
+        o <- unaryOperator <|> functionOperator
         e <- notInfix
         return $ UnaryExpression [c] o e
       expression = labeled "expression" $ do

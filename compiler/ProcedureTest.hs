@@ -290,6 +290,57 @@ tests = [
                                 (Literal (IntegerLiteral _ False 2))) -> True
                               _ -> False),
 
+    checkParsesAs "`Bits$not` 2"
+                  (\e -> case e of
+                              (UnaryExpression _
+                                (FunctionOperator _ (
+                                  FunctionSpec _
+                                    (TypeFunction _ (JustTypeInstance (TypeInstance (CategoryName "Bits") (ParamSet []))))
+                                    (FunctionName "not") (ParamSet [])))
+                                (Literal (IntegerLiteral _ False 2))) -> True
+                              _ -> False),
+
+    checkParsesAs "`Bits$$not` 2"
+                  (\e -> case e of
+                              (UnaryExpression _
+                                (FunctionOperator _
+                                  (FunctionSpec _
+                                    (CategoryFunction _ (CategoryName "Bits"))
+                                    (FunctionName "not") (ParamSet [])))
+                                (Literal (IntegerLiteral _ False 2))) -> True
+                              _ -> False),
+
+    checkParsesAs "`bits.not` 2"
+                  (\e -> case e of
+                              (UnaryExpression _
+                                (FunctionOperator _
+                                  (FunctionSpec _
+                                    (ValueFunction _
+                                      (Expression _ (NamedVariable (OutputValue _ (VariableName "bits"))) []))
+                                    (FunctionName "not") (ParamSet [])))
+                                (Literal (IntegerLiteral _ False 2))) -> True
+                              _ -> False),
+
+    checkParsesAs "`require(x).not` 2"
+                  (\e -> case e of
+                              UnaryExpression _
+                                  (FunctionOperator _
+                                    (FunctionSpec _
+                                      (ValueFunction _
+                                        (Expression _ (BuiltinCall _ (FunctionCall _ BuiltinRequire (ParamSet [])
+                                          (ParamSet [Expression _ (NamedVariable (OutputValue _ (VariableName "x"))) []]))) []))
+                                        (FunctionName "not") (ParamSet [])))
+                                (Literal (IntegerLiteral _ False 2)) -> True
+                              _ -> False),
+
+    checkParsesAs "`not` 2"
+                  (\e -> case e of
+                              (UnaryExpression _
+                                (FunctionOperator _
+                                  (FunctionSpec _ UnqualifiedFunction (FunctionName "not") (ParamSet [])))
+                                (Literal (IntegerLiteral _ False 2))) -> True
+                              _ -> False),
+
     checkParsesAs "\\b10" (\e -> case e of
                                       (Literal (IntegerLiteral _ True 2)) -> True
                                       _ -> False),
