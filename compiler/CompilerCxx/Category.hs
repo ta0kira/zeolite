@@ -619,22 +619,27 @@ builtinVariables t = Map.fromList [
     (VariableName "self",VariableValue [] ValueScope (ValueType RequiredValue $ SingleType $ JustTypeInstance t) False)
   ]
 
+createMainCommon :: String -> [String] -> CompiledData [String] -> [String]
+createMainCommon n ns (CompiledData req out) =
+  baseSourceIncludes ++ mainSourceIncludes ++ depIncludes req ++ ns ++ [
+      "int main(int argc, const char** argv) {",
+      "  SetSignalHandler();",
+      "  ProgramArgv program_argv(argc, argv);",
+      "  " ++ startFunctionTracing n
+    ] ++ out ++ ["}"] where
+      depIncludes req = map (\i -> "#include \"" ++ headerFilename i ++ "\"") $
+                          filter (not . isBuiltinCategory) $ Set.toList req
+
 createMainFile :: (Show c, Monad m, CompileErrorM m, MergeableM m) =>
   CategoryMap c -> AnyCategory c -> String -> m (String,[String])
 createMainFile tm t f = flip reviseError ("In the creation of the main binary procedure") $ do
-  (CompiledData req out) <- fmap indentCompiled (compileMainProcedure tm (expr t))
-  file <- return $ baseSourceIncludes ++ depIncludes req ++ namespace t ++ [
-      "int main() {",
-      "  SetSignalHandler();",
-      "  " ++ startFunctionTracing "main"
-    ] ++ out ++ ["}"]
+  ca <- fmap indentCompiled (compileMainProcedure tm (expr t))
+  let file = createMainCommon "main" (namespace t) ca
   return (getCategoryNamespace t,file) where
     funcName = FunctionName f
     funcCall = FunctionCall [] funcName (ParamSet []) (ParamSet [])
     mainType t = JustTypeInstance $ TypeInstance (getCategoryName t) (ParamSet [])
     expr t = Expression [] (TypeCall [] (mainType t) funcCall) []
-    depIncludes req = map (\i -> "#include \"" ++ headerFilename i ++ "\"") $
-                        filter (not . isBuiltinCategory) $ Set.toList req
     namespace t
       | null $ getCategoryNamespace t = []
       | otherwise = [
@@ -645,15 +650,9 @@ createMainFile tm t f = flip reviseError ("In the creation of the main binary pr
 createTestFile :: (Show c, Monad m, CompileErrorM m, MergeableM m) =>
   CategoryMap c -> Expression c -> String -> m ([CategoryName],[String])
 createTestFile tm e ns = flip reviseError ("In the creation of the test binary procedure") $ do
-  (CompiledData req out) <- fmap indentCompiled (compileMainProcedure tm e)
-  file <- return $ baseSourceIncludes ++ depIncludes req ++ namespace ++ [
-      "int main() {",
-      "  SetSignalHandler();",
-      "  " ++ startFunctionTracing "test"
-    ] ++ out ++ ["}"]
+  ca@(CompiledData req _) <- fmap indentCompiled (compileMainProcedure tm e)
+  let file = createMainCommon "main" namespace ca
   return (filter (not . isBuiltinCategory) $ Set.toList req,file) where
-    depIncludes req = map (\i -> "#include \"" ++ headerFilename i ++ "\"") $
-                        filter (not . isBuiltinCategory) $ Set.toList req
     namespace
       | null ns = []
       | otherwise = [

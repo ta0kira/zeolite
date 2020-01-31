@@ -16,56 +16,37 @@ limitations under the License.
 
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
-testcase "basic error test" {
-  error
-  require compiler "category.+undefined"
-  require compiler "type.+undefined"
-  exclude stderr "."
-  exclude stdout "."
-}
+#ifndef ARGV_HPP_
+#define ARGV_HPP_
 
-concrete Test {
-  @type execute () -> ()
-}
+#include <string>
+#include <vector>
 
-define Test {
-  execute () {
-    ~ undefined()
-  }
-}
+#include "thread-capture.h"
 
 
-testcase "basic crash test" {
-  crash Test$execute()
-  require stderr "/testcase:"
-  require stderr "failure message"
-  exclude stdout "failure message"
-}
+class Argv : public capture_thread::ThreadCapture<Argv> {
+ public:
+  static int ArgCount();
+  static const std::string& GetArgAt(int pos);
 
-concrete Test {
-  @type execute () -> ()
-}
+ protected:
+  virtual ~Argv() = default;
 
-define Test {
-  execute () {
-    fail("failure message")
-  }
-}
+ private:
+  virtual const std::vector<std::string>& GetArgs() const = 0;
+};
 
+class ProgramArgv : public Argv {
+ public:
+  inline ProgramArgv(int argc, const char** argv)
+    : argv_(argv, argv + argc), capture_to_(this) {}
 
-testcase "basic success test" {
-  success Test$execute()
-}
+ private:
+  const std::vector<std::string>& GetArgs() const final;
 
-concrete Test {
-  @type execute () -> ()
-}
+  const std::vector<std::string> argv_;
+  const ScopedCapture capture_to_;
+};
 
-define Test {
-  execute () { }
-}
-
-
-testcase "minimal linking works properly" {
-  success empty
-}
+#endif  // ARGV_HPP_

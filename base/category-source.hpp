@@ -26,6 +26,7 @@ limitations under the License.
 #include "types.hpp"
 #include "function.hpp"
 #include "builtin.hpp"
+#include "argv.hpp"
 #include "cycle-check.hpp"
 
 

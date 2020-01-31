@@ -33,6 +33,7 @@ module CompilerCxx.Naming (
   initializerName,
   intersectGetter,
   mainFilename,
+  mainSourceIncludes,
   paramName,
   privateNamespace,
   publicNamespace,
@@ -72,6 +73,9 @@ baseHeaderIncludes = ["#include \"category-header.hpp\""]
 
 baseSourceIncludes :: [String]
 baseSourceIncludes = ["#include \"category-source.hpp\""]
+
+mainSourceIncludes :: [String]
+mainSourceIncludes = ["#include \"argv.hpp\""]
 
 paramName :: ParamName -> String
 paramName p = "Param_" ++ tail (pnName p) -- Remove leading '#'.

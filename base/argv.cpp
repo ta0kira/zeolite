@@ -16,56 +16,27 @@ limitations under the License.
 
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
-testcase "basic error test" {
-  error
-  require compiler "category.+undefined"
-  require compiler "type.+undefined"
-  exclude stderr "."
-  exclude stdout "."
-}
+#include "argv.hpp"
+#include "logging.hpp"
 
-concrete Test {
-  @type execute () -> ()
-}
 
-define Test {
-  execute () {
-    ~ undefined()
+int Argv::ArgCount() {
+  if (GetCurrent()) {
+    return GetCurrent()->GetArgs().size();
+  } else {
+    return 0;
   }
 }
 
-
-testcase "basic crash test" {
-  crash Test$execute()
-  require stderr "/testcase:"
-  require stderr "failure message"
-  exclude stdout "failure message"
-}
-
-concrete Test {
-  @type execute () -> ()
-}
-
-define Test {
-  execute () {
-    fail("failure message")
+const std::string& Argv::GetArgAt(int pos) {
+  if (pos < 0 || pos >= ArgCount()) {
+    FAIL() << "Argv index " << pos << " is out of bounds";
+    __builtin_unreachable();
+  } else {
+    return GetCurrent()->GetArgs()[pos];
   }
 }
 
-
-testcase "basic success test" {
-  success Test$execute()
-}
-
-concrete Test {
-  @type execute () -> ()
-}
-
-define Test {
-  execute () { }
-}
-
-
-testcase "minimal linking works properly" {
-  success empty
+const std::vector<std::string>& ProgramArgv::GetArgs() const {
+  return argv_;
 }

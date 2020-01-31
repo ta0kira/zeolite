@@ -22,6 +22,8 @@ limitations under the License.
 #include <csignal>
 #include <iostream>
 
+#include "argv.hpp"
+
 
 LogThenCrash::LogThenCrash(bool fail, const std::string& condition)
     : fail_(fail), signal_(SIGABRT), condition_(condition) {}
@@ -32,6 +34,9 @@ LogThenCrash::LogThenCrash(bool fail, int signal)
 LogThenCrash::~LogThenCrash() {
   if (fail_) {
     std::signal(signal_, SIG_DFL);
+    if (Argv::ArgCount() > 0) {
+      std::cerr << Argv::GetArgAt(0) << ": ";
+    }
     std::cerr << "Failed condition";
     if (!condition_.empty()) {
       std::cerr << " '" << condition_ << "'";
