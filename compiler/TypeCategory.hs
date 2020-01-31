@@ -22,6 +22,7 @@ module TypeCategory (
   AnyCategory(..),
   CategoryMap(..),
   FunctionName(..),
+  Namespace(..),
   ParamFilter(..),
   PassedValue(..),
   ScopedFunction(..),
@@ -53,6 +54,9 @@ module TypeCategory (
   getValueCategory,
   includeNewTypes,
   isInstanceInterface,
+  isDynamicNamespace,
+  isNoNamespace,
+  isStaticNamespace,
   isValueConcrete,
   isValueInterface,
   parsedToFunctionType,
@@ -76,7 +80,7 @@ import TypesBase
 data AnyCategory c =
   ValueInterface {
     viContext :: [c],
-    viNamespace :: String,
+    viNamespace :: Namespace,
     viName :: CategoryName,
     viParams :: [ValueParam c],
     viRefines :: [ValueRefine c],
@@ -85,7 +89,7 @@ data AnyCategory c =
   } |
   InstanceInterface {
     iiContext :: [c],
-    iiNamespace :: String,
+    iiNamespace :: Namespace,
     iiName :: CategoryName,
     iiParams :: [ValueParam c],
     iiParamFilter :: [ParamFilter c],
@@ -93,7 +97,7 @@ data AnyCategory c =
   } |
   ValueConcrete {
     vcContext :: [c],
-    vcNamespace :: String,
+    vcNamespace :: Namespace,
     vcName :: CategoryName,
     vcParams :: [ValueParam c],
     vcRefines :: [ValueRefine c],
@@ -129,8 +133,8 @@ instance Show c => Show (AnyCategory c) where
          map (\f -> formatInterfaceFunc f) fs) ++
       "\n}\n"
     namespace ns
-      | null ns = ""
-      | otherwise = " /*" ++ ns ++ "*/"
+      | isStaticNamespace ns = " /*" ++ show ns ++ "*/"
+      | otherwise = ""
     formatContext cs = "/*" ++ formatFullContext cs ++ "*/"
     formatParams ps = let (con,inv,cov) = (foldr partitionParam ([],[],[]) ps) in
       "<" ++ intercalate "," con ++ "|" ++
@@ -165,12 +169,12 @@ getCategoryContext (ValueInterface c _ _ _ _ _ _)  = c
 getCategoryContext (InstanceInterface c _ _ _ _ _) = c
 getCategoryContext (ValueConcrete c _ _ _ _ _ _ _) = c
 
-getCategoryNamespace :: AnyCategory c -> String
+getCategoryNamespace :: AnyCategory c -> Namespace
 getCategoryNamespace (ValueInterface _ ns _ _ _ _ _)  = ns
 getCategoryNamespace (InstanceInterface _ ns _ _ _ _) = ns
 getCategoryNamespace (ValueConcrete _ ns _ _ _ _ _ _) = ns
 
-setCategoryNamespace :: String -> AnyCategory c -> AnyCategory c
+setCategoryNamespace :: Namespace -> AnyCategory c -> AnyCategory c
 setCategoryNamespace ns (ValueInterface c _ n ps rs vs fs)   = (ValueInterface c ns n ps rs vs fs)
 setCategoryNamespace ns (InstanceInterface c _ n ps vs fs)   = (InstanceInterface c ns n ps vs fs)
 setCategoryNamespace ns (ValueConcrete c _ n ps rs ds vs fs) = (ValueConcrete c ns n ps rs ds vs fs)
@@ -211,6 +215,27 @@ isInstanceInterface _ = False
 isValueConcrete :: AnyCategory c -> Bool
 isValueConcrete (ValueConcrete _ _ _ _ _ _ _ _) = True
 isValueConcrete _ = False
+
+data Namespace =
+  StaticNamespace {
+    snName :: String
+  } |
+  NoNamespace |
+  DynamicNamespace
+  deriving (Eq,Ord)
+
+instance Show Namespace where
+  show (StaticNamespace n) = n
+  show _                   = ""
+
+isStaticNamespace (StaticNamespace _) = True
+isStaticNamespace _                   = False
+
+isNoNamespace NoNamespace = True
+isNoNamespace _           = False
+
+isDynamicNamespace DynamicNamespace = True
+isDynamicNamespace _                = False
 
 data ValueRefine c =
   ValueRefine {

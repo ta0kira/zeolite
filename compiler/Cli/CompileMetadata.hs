@@ -71,7 +71,7 @@ import CompilerCxx.Category (CxxOutput(..))
 data CompileMetadata =
   CompileMetadata {
     cmPath :: String,
-    cmNamespace :: String,
+    cmNamespace :: String, -- TODO: Use Namespace here?
     cmPublicDeps :: [String],
     cmPrivateDeps :: [String],
     cmCategories :: [String],

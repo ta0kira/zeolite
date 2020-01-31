@@ -48,7 +48,7 @@ instance ParseFromSource (AnyCategory SourcePos) where
       (rs,vs) <- parseRefinesFilters
       fs <- flip sepBy optionalSpace $ parseScopedFunction (return ValueScope) (return n)
       close
-      return $ ValueInterface [c] "" n ps rs vs fs
+      return $ ValueInterface [c] NoNamespace n ps rs vs fs
     parseInstance = labeled "type interface" $ do
       c <- getPosition
       try $ kwType >> kwInterface
@@ -58,7 +58,7 @@ instance ParseFromSource (AnyCategory SourcePos) where
       vs <- parseFilters
       fs <- flip sepBy optionalSpace $ parseScopedFunction (return TypeScope) (return n)
       close
-      return $ InstanceInterface [c] "" n ps vs fs
+      return $ InstanceInterface [c] NoNamespace n ps vs fs
     parseConcrete = labeled "concrete type" $ do
       c <- getPosition
       try kwConcrete
@@ -68,7 +68,7 @@ instance ParseFromSource (AnyCategory SourcePos) where
       (rs,ds,vs) <- parseRefinesDefinesFilters
       fs <- flip sepBy optionalSpace $ parseScopedFunction parseScope (return n)
       close
-      return $ ValueConcrete [c] "" n ps rs ds vs fs
+      return $ ValueConcrete [c] NoNamespace n ps rs ds vs fs
 
 parseCategoryParams :: Parser [ValueParam SourcePos]
 parseCategoryParams = do

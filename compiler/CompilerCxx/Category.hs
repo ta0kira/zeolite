@@ -25,6 +25,7 @@ module CompilerCxx.Category (
   createTestFile,
   compileCategoryDeclaration,
   compileConcreteDefinition,
+  compileConcreteTemplate,
   compileInterfaceDefinition,
 ) where
 
@@ -51,8 +52,8 @@ data CxxOutput =
   CxxOutput {
     coCategory :: Maybe CategoryName,
     coFilename :: String,
-    coNamespace :: String,
-    coUsesNamespace :: [String],
+    coNamespace :: String,       -- TODO: Use Namespace here?
+    coUsesNamespace :: [String], -- TODO: Use Namespace here?
     coUsesCategory :: [CategoryName],
     coOutput :: [String]
   }
@@ -61,7 +62,7 @@ compileCategoryDeclaration :: Monad m => CategoryMap c -> AnyCategory c -> m Cxx
 compileCategoryDeclaration _ t =
   return $ CxxOutput (Just $ getCategoryName t)
                      (headerFilename name)
-                     (getCategoryNamespace t)
+                     (show $ getCategoryNamespace t)
                      ns
                      (filter (not . isBuiltinCategory) $ Set.toList $ cdRequired file)
                      (cdOutput file) where
@@ -71,15 +72,15 @@ compileCategoryDeclaration _ t =
         addNamespace t content,
         onlyCodes guardBottom
       ]
-    ns = nub $ filter (not . null) [getCategoryNamespace t]
+    ns = nub $ map show $ filter isStaticNamespace [getCategoryNamespace t]
     content = onlyCodes $ collection ++ labels ++ getCategory ++ getType
     name = getCategoryName t
     guardTop = ["#ifndef " ++ guardName,"#define " ++ guardName]
     guardBottom = ["#endif  // " ++ guardName]
     guardName = "HEADER_" ++ guardNamespace ++ show name
     guardNamespace
-      | null $ getCategoryNamespace t = ""
-      | otherwise = getCategoryNamespace t ++ "_"
+      | isStaticNamespace $ getCategoryNamespace t = show (getCategoryNamespace t) ++ "_"
+      | otherwise = ""
     labels = map label $ filter ((== name) . sfType) $ getCategoryFunctions t
     label f = "extern " ++ functionLabelType f ++ " " ++ functionName f ++ ";"
     collection
@@ -110,8 +111,33 @@ compileInterfaceDefinition t = do
       let allInit = intercalate ", " $ initParent:initPassed
       return $ onlyCode $ typeName (getCategoryName t) ++ "(" ++ allArgs ++ ") : " ++ allInit ++ " {}"
 
+compileConcreteTemplate :: (Show c, Monad m, CompileErrorM m, MergeableM m) =>
+  CategoryMap c -> CategoryName -> m CxxOutput
+compileConcreteTemplate ta n = do
+  (_,t) <- getConcreteCategory ta ([],n)
+  compileConcreteDefinition ta [] (defined t) `reviseError` ("In generated template for " ++ show n) where
+    defined t = DefinedCategory {
+        dcContext = [],
+        dcName = getCategoryName t,
+        dcParams = [],
+        dcParamFilter = [],
+        dcMembers = [],
+        dcProcedures = map defaultFail (getCategoryFunctions t),
+        dcFunctions = []
+      }
+    defaultFail f = ExecutableProcedure {
+        epContext = [],
+        epEnd = [],
+        epName = sfName f,
+        epArgs = ArgValues [] $ ParamSet $ map createArg [1..(length $ psParams $ sfArgs f)],
+        epReturns = UnnamedReturns [],
+        epProcedure = failProcedure
+      }
+    createArg = InputValue [] . VariableName . ("arg" ++) . show
+    failProcedure = Procedure [] [FailCall [] (Literal (StringLiteral [] "function not implemented"))]
+
 compileConcreteDefinition :: (Show c, Monad m, CompileErrorM m, MergeableM m) =>
-  CategoryMap c -> [String] -> DefinedCategory c -> m CxxOutput
+  CategoryMap c -> [Namespace] -> DefinedCategory c -> m CxxOutput
 compileConcreteDefinition ta ns dd@(DefinedCategory c n pi fi ms ps fs) = do
   -- TODO: Move most of this logic to DefinedCategory.
   (_,t) <- getConcreteCategory ta (c,n)
@@ -292,7 +318,7 @@ compileConcreteDefinition ta ns dd@(DefinedCategory c n pi fi ms ps fs) = do
                                       formatFullContext (vpContext p)
 
 commonDefineAll :: (MergeableM m, Monad m) =>
-  AnyCategory c -> [String] -> CompiledData [String] -> CompiledData [String] ->
+  AnyCategory c -> [Namespace] -> CompiledData [String] -> CompiledData [String] ->
   CompiledData [String] -> CompiledData [String] ->
   [ScopedFunction c] -> m CxxOutput
 commonDefineAll t ns top bottom ce te fe = do
@@ -308,12 +334,16 @@ commonDefineAll t ns top bottom ce te fe = do
                    filter (not . isBuiltinCategory) $ Set.toList $ Set.union req inherited
   return $ CxxOutput (Just $ getCategoryName t)
                      filename
-                     (getCategoryNamespace t)
+                     (show $ getCategoryNamespace t)
                      ns'
                      (filter (not . isBuiltinCategory) $ Set.toList req)
                      (baseSourceIncludes ++ includes ++ out)
   where
-    ns' = nub $ filter (not . null) $ (getCategoryNamespace t):ns
+    ns' = nub $ concat $ map maybeShow $ (getCategoryNamespace t):ns
+    maybeShow ns
+      | isStaticNamespace ns  = [show ns]
+      | isDynamicNamespace ns = [dynamicNamespaceName]
+      | otherwise = []
     namespaces =
       mergeAll $ map (\n -> onlyCodes ["namespace " ++ n ++ " {}",
                                        "using namespace " ++ n ++ ";"]) ns'
@@ -351,12 +381,21 @@ commonDefineAll t ns top bottom ce te fe = do
 
 addNamespace :: AnyCategory c -> CompiledData [String] -> CompiledData [String]
 addNamespace t cs
-  | null $ getCategoryNamespace t = cs
-  | otherwise = mergeAll [
-      onlyCode $ "namespace " ++ getCategoryNamespace t ++ " {",
+  | isStaticNamespace $ getCategoryNamespace t = mergeAll [
+      onlyCode $ "namespace " ++ show (getCategoryNamespace t) ++ " {",
       cs,
-      onlyCode $ "}  // namespace " ++ getCategoryNamespace t
+      onlyCode $ "}  // namespace " ++ show (getCategoryNamespace t)
     ]
+  | isDynamicNamespace $ getCategoryNamespace t = mergeAll [
+      onlyCode $ "#ifdef " ++ dynamicNamespaceName,
+      onlyCode $ "namespace " ++ dynamicNamespaceName ++ " {",
+      onlyCode $ "#endif  // " ++ dynamicNamespaceName,
+      cs,
+      onlyCode $ "#ifdef " ++ dynamicNamespaceName,
+      onlyCode $ "}  // namespace " ++ dynamicNamespaceName,
+      onlyCode $ "#endif  // " ++ dynamicNamespaceName
+    ]
+  | otherwise = cs
 
 createLabelForFunction :: Int -> ScopedFunction c -> String
 createLabelForFunction i f = functionLabelType f ++ " " ++ functionName f ++
@@ -635,27 +674,27 @@ createMainFile :: (Show c, Monad m, CompileErrorM m, MergeableM m) =>
 createMainFile tm t f = flip reviseError ("In the creation of the main binary procedure") $ do
   ca <- fmap indentCompiled (compileMainProcedure tm (expr t))
   let file = createMainCommon "main" (namespace t) ca
-  return (getCategoryNamespace t,file) where
+  return (show $ getCategoryNamespace t,file) where
     funcName = FunctionName f
     funcCall = FunctionCall [] funcName (ParamSet []) (ParamSet [])
     mainType t = JustTypeInstance $ TypeInstance (getCategoryName t) (ParamSet [])
     expr t = Expression [] (TypeCall [] (mainType t) funcCall) []
     namespace t
-      | null $ getCategoryNamespace t = []
-      | otherwise = [
-          "namespace " ++ getCategoryNamespace t ++ "{}",
-          "using namespace " ++ getCategoryNamespace t ++ ";"
+      | isStaticNamespace $ getCategoryNamespace t = [
+          "namespace " ++ show (getCategoryNamespace t) ++ "{}",
+          "using namespace " ++ show (getCategoryNamespace t) ++ ";"
         ]
+      | otherwise = []
 
 createTestFile :: (Show c, Monad m, CompileErrorM m, MergeableM m) =>
-  CategoryMap c -> Expression c -> String -> m ([CategoryName],[String])
+  CategoryMap c -> Expression c -> Namespace -> m ([CategoryName],[String])
 createTestFile tm e ns = flip reviseError ("In the creation of the test binary procedure") $ do
   ca@(CompiledData req _) <- fmap indentCompiled (compileMainProcedure tm e)
   let file = createMainCommon "main" namespace ca
   return (filter (not . isBuiltinCategory) $ Set.toList req,file) where
     namespace
-      | null ns = []
-      | otherwise = [
-          "namespace " ++ ns ++ "{}",
-          "using namespace " ++ ns ++ ";"
+      | isStaticNamespace ns = [
+          "namespace " ++ show ns ++ "{}",
+          "using namespace " ++ show ns ++ ";"
         ]
+      | otherwise = []

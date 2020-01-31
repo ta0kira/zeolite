@@ -38,12 +38,14 @@ optionHelpText = [
     "zeolite [options...] -c [paths...]",
     "zeolite [options...] -r [paths...]",
     "zeolite [options...] -t [paths...]",
+    "zeolite [options...] --templates [paths...]",
     "",
     "Modes:",
     "  -c: Only compile the individual files. (default)",
     "  -m [category(.function)]: Create a binary that executes the function.",
     "  -r: Recompile using the previous compilation options.",
     "  -t: Only execute tests, without other compilation.",
+    "  --templates: Only create C++ templates for undefined categories in .0rp sources.",
     "",
     "Options:",
     "  -e [path|file]: Include an extra source file or path during compilation.",
@@ -99,6 +101,10 @@ parseCompileOptions = parseAll emptyCompileOptions . zip [1..] where
   parseSingle (CompileOptions h is is2 ds es ep p m o f) ((n,"-t"):os)
     | m /= CompileUnspecified = argError n "-t" "Compiler mode already set."
     | otherwise = return (os,CompileOptions (maybeDisableHelp h) is is2 ds es ep p (ExecuteTests []) o f)
+
+  parseSingle (CompileOptions h is is2 ds es ep p m o f) ((n,"--templates"):os)
+    | m /= CompileUnspecified = argError n "-t" "Compiler mode already set."
+    | otherwise = return (os,CompileOptions (maybeDisableHelp h) is is2 ds es ep p CreateTemplates o f)
 
   parseSingle (CompileOptions h is is2 ds es ep p m o f) ((n,"-m"):os)
     | m /= CompileUnspecified = argError n "-m" "Compiler mode already set."

@@ -71,7 +71,7 @@ runSingleTest paths deps os tm (f,s) = do
       return outcome
 
     run n (ExpectCompileError _ rs es) cs ds = do
-      let result = compileAll Nothing cs ds :: CompileInfo ([CategoryName],[String],String,[CxxOutput])
+      let result = compileAll Nothing cs ds :: CompileInfo ([CategoryName],[String],Namespace,[CxxOutput])
       if not $ isCompileError result
          then return $ compileError "Expected compiler error"
          else return $ do
@@ -99,13 +99,13 @@ runSingleTest paths deps os tm (f,s) = do
          else mergeAllM [cr,ce]
 
     execute s n e rs es cs ds = do
-      let result = compileAll (Just e) cs ds :: CompileInfo ([CategoryName],[String],String,[CxxOutput])
+      let result = compileAll (Just e) cs ds :: CompileInfo ([CategoryName],[String],Namespace,[CxxOutput])
       if isCompileError result
          then return $ result >> return ()
          else do
            let warnings = getCompileWarnings result
            let (req,main,ns,fs) = getCompileSuccess result
-           binaryName <- createBinary main req [ns] fs
+           binaryName <- createBinary main req [show ns] fs
            let command = TestCommand binaryName (takeDirectory binaryName)
            (TestCommandResult s' out err) <- runTestCommand command
            case (s,s') of
@@ -115,8 +115,8 @@ runSingleTest paths deps os tm (f,s) = do
 
     -- TODO: Combine this with the logic in runCompiler.
     compileAll e cs ds = do
-      let ns0 = map cmNamespace deps
-      let ns1 = privateNamespace s
+      let ns0 = map (StaticNamespace . cmNamespace) deps
+      let ns1 = StaticNamespace $ privateNamespace s
       let cs' = map (setCategoryNamespace ns1) cs
       tm' <- includeNewTypes tm cs'
       hxx <- collectAllOrErrorM $ map (compileCategoryDeclaration tm') cs'

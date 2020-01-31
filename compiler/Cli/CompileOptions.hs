@@ -27,6 +27,7 @@ module Cli.CompileOptions (
   isCompileBinary,
   isCompileIncremental,
   isCompileRecompile,
+  isCreateTemplates,
   isExecuteTests,
   maybeDisableHelp,
 ) where
@@ -73,7 +74,10 @@ data CompileMode =
   ExecuteTests {
     etInclude :: [String]
   } |
-  CompileIncremental | CompileRecompile | CompileUnspecified
+  CompileIncremental |
+  CompileRecompile |
+  CreateTemplates |
+  CompileUnspecified
   deriving (Eq,Read,Show)
 
 isCompileBinary (CompileBinary _ _) = True
@@ -87,6 +91,9 @@ isCompileRecompile _                = False
 
 isExecuteTests (ExecuteTests _) = True
 isExecuteTests _                = False
+
+isCreateTemplates CreateTemplates = True
+isCreateTemplates _               = False
 
 maybeDisableHelp HelpUnspecified = HelpNotNeeded
 maybeDisableHelp h               = h

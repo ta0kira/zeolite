@@ -28,6 +28,7 @@ module CompilerCxx.Naming (
   categoryGetter,
   categoryName,
   collectionName,
+  dynamicNamespaceName,
   functionName,
   headerFilename,
   initializerName,
@@ -142,5 +143,9 @@ publicNamespace = ("public_" ++) . flip showHex "" . abs . hash
 
 qualifiedTypeGetter :: AnyCategory c -> String
 qualifiedTypeGetter t
-  | null $ getCategoryNamespace t = typeGetter $ getCategoryName t
-  | otherwise = getCategoryNamespace t ++ "::" ++ (typeGetter $ getCategoryName t)
+  | isStaticNamespace $ getCategoryNamespace t =
+    show (getCategoryNamespace t) ++ "::" ++ (typeGetter $ getCategoryName t)
+  | otherwise = typeGetter $ getCategoryName t
+
+dynamicNamespaceName :: String
+dynamicNamespaceName = "ZEOLITE_PUBLIC_NAMESPACE"

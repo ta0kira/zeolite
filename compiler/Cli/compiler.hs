@@ -31,6 +31,7 @@ import qualified Data.Set as Set
 
 import Builtin
 import CompileInfo
+import DefinedCategory
 import SourceFile
 import TypesBase
 import TypeCategory
@@ -69,6 +70,11 @@ main = do
         compileError "Include paths (-i/-I) are not allowed in test mode (-t)."
           | (not $ null $ es ++ ep) && (isExecuteTests m) =
         compileError "Extra files (-e) are not allowed in test mode (-t)."
+
+      | (not $ null o) && (isCreateTemplates m) =
+        compileError "Output filename (-o) is not allowed in template mode (--templates)."
+          | (not $ null $ es ++ ep) && (isCreateTemplates m) =
+        compileError "Extra files (-e) are not allowed in template mode (--templates)."
 
       | (not $ null p) && (isCompileRecompile m) =
         compileError "Path prefix (-p) is not allowed in recompile mode (-r)."
@@ -177,10 +183,13 @@ runCompiler co@(CompileOptions h is is2 ds es ep p m o f) = do
   as  <- fmap fixPaths $ sequence $ map canonicalizePath is
   as2 <- fmap fixPaths $ sequence $ map canonicalizePath is2
   ss' <- zipWithContents p ss
-  ma <- sequence $ map (processPath deps as as2 ss') ds
-  let ms = concat $ map snd ma
-  let deps2 = map fst ma
-  createBinary (deps ++ deps2) m ms
+  if isCreateTemplates m
+      then sequence_ $ map (processTemplates ss') ds
+      else do
+        ma <- sequence $ map (processPath deps as as2 ss') ds
+        let ms = concat $ map snd ma
+        let deps2 = map fst ma
+        createBinary (deps ++ deps2) m ms
   hPutStrLn stderr $ "Zeolite compilation succeeded." where
     ep' = fixPaths $ map (getCachedPath p "") ep
     processPath deps as as2 ss d = do
@@ -214,8 +223,8 @@ runCompiler co@(CompileOptions h is is2 ds es ep p m o f) = do
       let paths = getIncludePathsForDeps deps2
       ps' <- zipWithContents p ps
       xs' <- zipWithContents p xs
-      ns0 <- canonicalizePath (p </> d) >>= return . publicNamespace
-      let ns2 = getNamespacesForDeps deps
+      ns0 <- canonicalizePath (p </> d) >>= return . StaticNamespace . publicNamespace
+      let ns2 = map StaticNamespace $ filter (not . null) $ getNamespacesForDeps deps
       let fs = compileAll ns0 ns2 ss ps' xs'
       writeOutput (fixPaths $ paths ++ ep') ns0 deps2 d as as2
                   (map takeFileName ps)
@@ -230,18 +239,18 @@ runCompiler co@(CompileOptions h is is2 ds es ep p m o f) = do
       | otherwise = do
           formatWarnings fs
           let (pc,mf,fs') = getCompileSuccess fs
-          let ss = nub $ filter (not . null) $ [ns0] ++ map coNamespace fs'
+          let ss = nub $ filter (not . null) $ [show ns0] ++ map coNamespace fs'
           let paths' = paths ++ map (\ns -> getCachedPath (p </> d) ns "") ss
           let hxx   = filter (isSuffixOf ".hpp" . coFilename)       fs'
           let other = filter (not . isSuffixOf ".hpp" . coFilename) fs'
-          os1 <- sequence $ map (writeOutputFile ns0 paths' d) $ hxx ++ other
-          os2 <- fmap concat $ sequence $ map (compileExtraFile ns0 paths' d) es
+          os1 <- sequence $ map (writeOutputFile (show ns0) paths' d) $ hxx ++ other
+          os2 <- fmap concat $ sequence $ map (compileExtraFile (show ns0) paths' d) es
           let (hxx,cxx,os') = sortCompiledFiles $ map (\f -> coNamespace f </> coFilename f) fs' ++ es
           path <- canonicalizePath $ p </> d
           let os1' = resolveObjectDeps path os1 deps
           let cm = CompileMetadata {
               cmPath = path,
-              cmNamespace = ns0,
+              cmNamespace = show ns0,
               cmPublicDeps = as,
               cmPrivateDeps = as2,
               cmCategories = sort $ map show pc,
@@ -253,7 +262,7 @@ runCompiler co@(CompileOptions h is is2 ds es ep p m o f) = do
               cmCxxFiles = sort cxx,
               cmObjectFiles = os1' ++ os2 ++ map OtherObjectFile os'
             }
-          writeMetadata (p </> d) cm
+          when (not $ isCreateTemplates m) $ writeMetadata (p </> d) cm
           return (cm,mf)
     formatWarnings c
       | null $ getCompileWarnings c = return ()
@@ -267,7 +276,7 @@ runCompiler co@(CompileOptions h is is2 ds es ep p m o f) = do
            let p0 = getCachedPath (p </> d) "" ""
            let p1 = getCachedPath (p </> d) ns ""
            createCachePath (p </> d)
-           let ns' = if null ns then ns0 else ns
+           let ns' = if null ns then show ns0 else ns
            let command = CompileToObject f' (getCachedPath (p </> d) ns' "") "" (p0:p1:paths) False
            o <- runCxxCommand command
            return $ ([o],ca)
@@ -281,6 +290,37 @@ runCompiler co@(CompileOptions h is is2 ds es ep p m o f) = do
           o <- runCxxCommand command
           return [OtherObjectFile o]
       | otherwise = return []
+    processTemplates ss d = do
+      (ps,xs,_) <- findSourceFiles p d
+      ps' <- zipWithContents p ps
+      xs' <- zipWithContents p xs
+      let ts = createTemplates ss ps' xs' :: CompileInfo [CxxOutput]
+      if isCompileError ts
+         then do
+           formatWarnings ts
+           hPutStr stderr $ "Compiler errors:\n" ++ (show $ getCompileError ts)
+           hPutStrLn stderr $ "Zeolite compilation failed."
+           exitFailure
+         else do
+           formatWarnings ts
+           sequence $ map (writeTemplate d) $ getCompileSuccess ts
+    createTemplates is cs ds = do
+      tm0 <- builtinCategories
+      tm1 <- addIncludes tm0 is
+      cs' <- fmap concat $ collectAllOrErrorM $ map parsePublicSource cs
+      let cs'' = map (setCategoryNamespace DynamicNamespace) cs'
+      tm2 <- includeNewTypes tm1 cs''
+      da <- collectAllOrErrorM $ map parseInternalSource ds
+      let ds' = concat $ map snd da
+      let cs2 = concat $ map fst da
+      tm3 <- includeNewTypes tm2 cs2
+      let ca = Set.fromList $ map getCategoryName $ filter isValueConcrete cs'
+      let ca' = foldr Set.delete ca $ map dcName ds'
+      collectAllOrErrorM $ map (compileConcreteTemplate tm3) $ Set.toList ca'
+    writeTemplate d (CxxOutput _ f _ _ _ content) = do
+      hPutStrLn stderr $ "Writing file " ++ f
+      let f' = p </> d </> f
+      writeFile f' $ concat $ map (++ "\n") content
     compileAll ns0 ns2 is cs ds = do
       tm0 <- builtinCategories
       tm1 <- addIncludes tm0 is
@@ -301,7 +341,7 @@ runCompiler co@(CompileOptions h is is2 ds es ep p m o f) = do
       cxx <- collectAllOrErrorM $ map compileInterfaceDefinition interfaces
       return (pc,tm',hxx ++ cxx)
     compileInternal ns0 ns2 tm d = do
-      let ns1 = privateNamespace (p </> fst d)
+      let ns1 = StaticNamespace $ privateNamespace (p </> fst d)
       (cs,ds) <- parseInternalSource d
       let cs' = map (setCategoryNamespace ns1) cs
       tm' <- includeNewTypes tm cs'
