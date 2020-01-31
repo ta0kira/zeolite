@@ -152,7 +152,7 @@ class ReturnTuple : public ValueTuple {
   ReturnTuple& operator =(ReturnTuple&&) = default;
 
   template<class...Ts>
-  ReturnTuple(Ts... returns) : returns_{std::move(returns)...} {}
+  explicit ReturnTuple(Ts... returns) : returns_{std::move(returns)...} {}
 
   int Size() const final;
   S<TypeValue>& At(int pos);
@@ -169,7 +169,7 @@ class ReturnTuple : public ValueTuple {
 class ArgTuple : public ValueTuple {
  public:
   template<class...Ts>
-  ArgTuple(const Ts&... args) : args_{&args...} {}
+  explicit ArgTuple(const Ts&... args) : args_{&args...} {}
 
   int Size() const final;
   const S<TypeValue>& At(int pos) const final;
@@ -187,7 +187,7 @@ class ParamTuple {
   ParamTuple(ParamTuple&& other) : params_(std::move(other.params_)) {}
 
   template<class...Ts>
-  ParamTuple(Ts*... args) : params_{args...} {}
+  explicit ParamTuple(Ts*... args) : params_{args...} {}
 
   int Size() const;
   TypeInstance* At(int pos) const;

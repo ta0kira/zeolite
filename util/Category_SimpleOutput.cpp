@@ -27,6 +27,7 @@ limitations under the License.
 #include "Category_Writer.hpp"
 #include "Category_BufferedWriter.hpp"
 
+
 #ifdef ZEOLITE_PUBLIC_NAMESPACE
 namespace ZEOLITE_PUBLIC_NAMESPACE {
 #endif  // ZEOLITE_PUBLIC_NAMESPACE

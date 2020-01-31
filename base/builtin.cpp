@@ -252,10 +252,10 @@ class Value_String : public TypeValue {
       if (position < 0 || position >= value_.size()) {
         FAIL() << "Position " << position << " is out of bounds";
       }
-      return Box_Char(value_[position]);
+      return ReturnTuple(Box_Char(value_[position]));
     }
     if (&label == &Function_ReadPosition_readSize) {
-      return Box_Int(value_.size());
+      return ReturnTuple(Box_Int(value_.size()));
     }
     return TypeValue::Dispatch(self, label, params, args);
   }

@@ -60,3 +60,9 @@ concrete SimpleOutput {
   @type stderr () -> (BufferedWriter<Formatted>)
   @type error () -> (BufferedWriter<Formatted>)
 }
+
+concrete Argv {
+  refines ReadPosition<String>
+
+  @type global () -> (ReadPosition<String>)
+}

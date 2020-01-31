@@ -122,3 +122,27 @@ define Test {
 concrete Test {
   @type run () -> ()
 }
+
+
+testcase "Argv is set and available" {
+  success Test$run()
+  require stdout "/testcase$"
+}
+
+define Test {
+  run () {
+    Int count <- Argv$global().readSize()
+    if (count != 1) {
+      fail(count)
+    }
+    String name <- Argv$global().readPosition(0)
+    ~ LazyStream<Formatted>$new()
+        .append(name)
+        .append("\n")
+        .writeTo(SimpleOutput$stdout())
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
