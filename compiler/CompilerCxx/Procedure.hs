@@ -453,9 +453,9 @@ compileExpression :: (Show c, Monad m, CompileErrorM m, MergeableM m,
   Expression c -> CompilerState a m (ExpressionType,ExprValue)
 compileExpression = compile where
   compile (Literal (StringLiteral c l)) = do
-    return (ParamSet [stringRequiredValue],UnboxedPrimitive PrimString $ "PrimString_FromLiteral(\"" ++ escapeChars l ++ "\")")
+    return (ParamSet [stringRequiredValue],UnboxedPrimitive PrimString $ "PrimString_FromLiteral(" ++ escapeChars l ++ ")")
   compile (Literal (CharLiteral c l)) = do
-    return (ParamSet [charRequiredValue],UnboxedPrimitive PrimChar $ "PrimChar('" ++ escapeChars l ++ "')")
+    return (ParamSet [charRequiredValue],UnboxedPrimitive PrimChar $ "PrimChar('" ++ escapeChar l ++ "')")
   compile (Literal (IntegerLiteral c True l)) = do
     when (l > 2^64 - 1) $ lift $ compileError $
       "Literal " ++ show l ++ " [" ++ formatFullContext c ++ "] is greater than the max value for 64-bit unsigned"

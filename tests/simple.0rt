@@ -38,8 +38,8 @@ define Test {
 testcase "basic crash test" {
   crash Test$execute()
   require stderr "/testcase:"
-  require stderr "failure message!"
-  exclude stdout "failure message!"
+  require stderr "failure message!!!"
+  exclude stdout "failure message!!!"
 }
 
 concrete Test {
@@ -48,7 +48,9 @@ concrete Test {
 
 define Test {
   execute () {
-    fail("failure message!")
+    // NOTE: "!!!" is important here because it also tests mixing of escaped and
+    // unescaped characters when handling string literals.
+    fail("failure message!!!")
   }
 }
 

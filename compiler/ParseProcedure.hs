@@ -463,7 +463,7 @@ instance ParseFromSource (ValueLiteral SourcePos) where
     stringLiteral = do
       c <- getPosition
       string "\""
-      ss <- fmap concat $ manyTill stringChar (string "\"")
+      ss <- manyTill stringChar (string "\"")
       optionalSpace
       return $ StringLiteral [c] ss
     charLiteral = do

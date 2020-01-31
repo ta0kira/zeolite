@@ -250,7 +250,7 @@ operator o = labeled o $ do
   optionalSpace
   return o
 
-stringChar :: Parser String
+stringChar :: Parser Char
 stringChar = escaped <|> notEscaped where
   escaped = labeled "escaped char sequence" $ do
     char '\\'
@@ -258,29 +258,29 @@ stringChar = escaped <|> notEscaped where
       otherEscape = do
         v <- anyChar
         case v of
-            '\'' -> return "'"
-            '"' -> return "\""
-            '?' -> return "?"
-            '\\' -> return "\\"
-            'a' -> return [chr 7]
-            'b' -> return [chr 8]
-            'f' -> return [chr 12]
-            'n' -> return [chr 10]
-            'r' -> return [chr 13]
-            't' -> return [chr 9]
-            'v' -> return [chr 11]
+            '\'' -> return '\''
+            '"' -> return '"'
+            '?' -> return '?'
+            '\\' -> return '\\'
+            'a' -> return $ chr 7
+            'b' -> return $ chr 8
+            'f' -> return $ chr 12
+            'n' -> return $ chr 10
+            'r' -> return $ chr 13
+            't' -> return $ chr 9
+            'v' -> return $ chr 11
             'x' -> hexChar
             _ -> fail (show v)
       octChar = labeled "3 octal chars" $ do
         o1 <- octDigit >>= return . digitVal
         o2 <- octDigit >>= return . digitVal
         o3 <- octDigit >>= return . digitVal
-        return [chr $ 8*8*o1 + 8*o2 + o3]
+        return $ chr $ 8*8*o1 + 8*o2 + o3
       hexChar = labeled "2 hex chars" $ do
         h1 <- hexDigit >>= return . digitVal
         h2 <- hexDigit >>= return . digitVal
-        return [chr $ 16*h1 + h2]
-  notEscaped = fmap (:[]) $ noneOf "\""
+        return $ chr $ 16*h1 + h2
+  notEscaped = noneOf "\""
 
 digitVal :: Char -> Int
 digitVal c

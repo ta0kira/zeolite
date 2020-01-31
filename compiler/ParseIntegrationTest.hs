@@ -37,7 +37,7 @@ instance ParseFromSource (IntegrationTestHeader SourcePos) where
     c <- getPosition
     sepAfter kwTestcase
     string "\""
-    name <- fmap concat $ manyTill stringChar (string "\"")
+    name <- manyTill stringChar (string "\"")
     optionalSpace
     sepAfter $ string "{"
     result <- resultError <|> resultCrash <|> resultSuccess

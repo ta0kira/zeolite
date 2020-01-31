@@ -96,28 +96,28 @@ tests = [
     checkOperationSuccess
       "testfiles/concrete_refines_value.0rx"
       (checkConnectedTypes $ Map.fromList [
-          (CategoryName "Parent2",InstanceInterface [] "" (CategoryName "Parent2") [] [] [])
+          (CategoryName "Parent2",InstanceInterface [] NoNamespace (CategoryName "Parent2") [] [] [])
         ]),
     checkOperationFail
       "testfiles/concrete_refines_value.0rx"
       (checkConnectedTypes $ Map.fromList [
-          (CategoryName "Parent",InstanceInterface [] "" (CategoryName "Parent") [] [] [])
+          (CategoryName "Parent",InstanceInterface [] NoNamespace (CategoryName "Parent") [] [] [])
         ]),
 
     checkOperationSuccess
       "testfiles/partial.0rx"
       (checkConnectedTypes $ Map.fromList [
-          (CategoryName "Parent",ValueInterface [] "" (CategoryName "Parent") [] [] [] [])
+          (CategoryName "Parent",ValueInterface [] NoNamespace (CategoryName "Parent") [] [] [] [])
         ]),
     checkOperationFail
       "testfiles/partial.0rx"
       (checkConnectedTypes $ Map.fromList [
-          (CategoryName "Parent",InstanceInterface [] "" (CategoryName "Parent") [] [] [])
+          (CategoryName "Parent",InstanceInterface [] NoNamespace (CategoryName "Parent") [] [] [])
         ]),
     checkOperationFail
       "testfiles/partial.0rx"
       (checkConnectedTypes $ Map.fromList [
-          (CategoryName "Parent",ValueConcrete [] [] (CategoryName "Parent") [] [] [] [] [])
+          (CategoryName "Parent",ValueConcrete [] NoNamespace (CategoryName "Parent") [] [] [] [] [])
         ]),
 
     checkOperationSuccess "testfiles/value_refines_value.0rx" (checkConnectionCycles Map.empty),
@@ -163,7 +163,7 @@ tests = [
       "testfiles/flatten.0rx"
       (\ts -> do
         existing  <- return $ Map.fromList [
-            (CategoryName "Parent2",InstanceInterface [] "" (CategoryName "Parent2") [] [] [])
+            (CategoryName "Parent2",InstanceInterface [] NoNamespace (CategoryName "Parent2") [] [] [])
           ]
         ts <- topoSortCategories existing ts
         flattenAllConnections existing ts),
@@ -171,7 +171,7 @@ tests = [
       "testfiles/flatten.0rx"
       (\ts -> do
         existing  <- return $ Map.fromList [
-            (CategoryName "Parent",InstanceInterface [] "" (CategoryName "Parent") [] [] [])
+            (CategoryName "Parent",InstanceInterface [] NoNamespace (CategoryName "Parent") [] [] [])
           ]
         topoSortCategories existing ts),
 
@@ -180,13 +180,13 @@ tests = [
       (\ts -> do
         existing  <- return $ Map.fromList [
             (CategoryName "Parent",
-            ValueInterface [] "" (CategoryName "Parent") []
+            ValueInterface [] NoNamespace (CategoryName "Parent") []
                            [ValueRefine [] $ TypeInstance (CategoryName "Object1") (ParamSet []),
                            ValueRefine [] $ TypeInstance (CategoryName "Object2") (ParamSet [])] [] []),
             -- NOTE: Object1 deliberately excluded here so that we catch
             -- unnecessary recursion in existing categories.
             (CategoryName "Object2",
-            ValueInterface [] "" (CategoryName "Object2") [] [] [] [])
+            ValueInterface [] NoNamespace (CategoryName "Object2") [] [] [] [])
           ]
         ts <- topoSortCategories existing ts
         ts <- flattenAllConnections existing ts
@@ -212,19 +212,19 @@ tests = [
     checkOperationSuccess
       "testfiles/concrete_refines_value.0rx"
       (checkParamVariances $ Map.fromList [
-          (CategoryName "Parent2",InstanceInterface [] "" (CategoryName "Parent2") [] [] [])
+          (CategoryName "Parent2",InstanceInterface [] NoNamespace (CategoryName "Parent2") [] [] [])
         ]),
     checkOperationFail
       "testfiles/concrete_refines_value.0rx"
       (checkParamVariances $ Map.fromList [
-          (CategoryName "Parent",InstanceInterface [] "" (CategoryName "Parent") [] [] [])
+          (CategoryName "Parent",InstanceInterface [] NoNamespace (CategoryName "Parent") [] [] [])
         ]),
 
     checkOperationSuccess
       "testfiles/partial_params.0rx"
       (checkParamVariances $ Map.fromList [
           (CategoryName "Parent",
-           ValueInterface [] "" (CategoryName "Parent")
+           ValueInterface [] NoNamespace (CategoryName "Parent")
                           [ValueParam [] (ParamName "#w") Contravariant,
                            ValueParam [] (ParamName "#z") Covariant] [] [] [])
       ]),
@@ -232,7 +232,7 @@ tests = [
       "testfiles/partial_params.0rx"
       (checkParamVariances $ Map.fromList [
           (CategoryName "Parent",
-           ValueInterface [] "" (CategoryName "Parent")
+           ValueInterface [] NoNamespace (CategoryName "Parent")
                           [ValueParam [] (ParamName "#w") Invariant,
                            ValueParam [] (ParamName "#z") Covariant] [] [] [])
       ]),
@@ -240,7 +240,7 @@ tests = [
       "testfiles/partial_params.0rx"
       (checkParamVariances $ Map.fromList [
           (CategoryName "Parent",
-           ValueInterface [] "" (CategoryName "Parent")
+           ValueInterface [] NoNamespace (CategoryName "Parent")
                           [ValueParam [] (ParamName "#w") Contravariant,
                            ValueParam [] (ParamName "#z") Invariant] [] [] [])
       ]),
@@ -645,7 +645,7 @@ tests = [
       "testfiles/flatten.0rx"
       (\ts -> do
         let tm0 = Map.fromList [
-                    (CategoryName "Parent2",InstanceInterface [] "" (CategoryName "Parent2") [] [] [])
+                    (CategoryName "Parent2",InstanceInterface [] NoNamespace (CategoryName "Parent2") [] [] [])
                   ]
         tm <- includeNewTypes tm0 ts
         rs <- getRefines tm "Child"

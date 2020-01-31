@@ -232,7 +232,7 @@ data ExpressionStart c =
 
 data ValueLiteral c =
   StringLiteral [c] String |
-  CharLiteral [c] String |
+  CharLiteral [c] Char |
   IntegerLiteral [c] Bool Integer |
   DecimalLiteral [c] Integer Integer |
   BoolLiteral [c] Bool |

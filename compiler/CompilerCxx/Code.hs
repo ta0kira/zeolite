@@ -90,12 +90,12 @@ startCleanupTracing = "TRACE_CLEANUP"
 setTraceContext :: Show c => [c] -> [String]
 setTraceContext c
   | null c = []
-  | otherwise = ["SET_CONTEXT_POINT(\"" ++ escapeChars (formatFullContext c) ++ "\")"]
+  | otherwise = ["SET_CONTEXT_POINT(" ++ escapeChars (formatFullContext c) ++ ")"]
 
 predTraceContext :: Show c => [c] -> String
 predTraceContext c
   | null c = ""
-  | otherwise = "PRED_CONTEXT_POINT(\"" ++ escapeChars (formatFullContext c) ++ "\")"
+  | otherwise = "PRED_CONTEXT_POINT(" ++ escapeChars (formatFullContext c) ++ ")"
 
 data PrimitiveType =
   PrimBool |
@@ -314,6 +314,7 @@ unescapedChars = Set.fromList $ ['a'..'z'] ++ ['A'..'Z'] ++ ['0'..'9'] ++ [' ','
 
 escapeChar :: Char -> String
 escapeChar c
+  | c `Set.member` unescapedChars = [c]
   | otherwise = ['\\','x',asHex c1,asHex c2] where
     c1 = (ord c) `div` 16
     c2 = (ord c) `mod` 16
@@ -322,4 +323,17 @@ escapeChar c
       | otherwise = chr $ n + (ord 'A') - 10
 
 escapeChars :: String -> String
-escapeChars = concat . map escapeChar
+escapeChars cs
+  | null cs = "\"\""
+  | otherwise = escapeAll False "" cs where
+    -- Creates alternating substrings of (un)escaped characters.
+    escapeAll False ss (c:cs)
+      | c `Set.member` unescapedChars = escapeAll False (ss ++ [c]) cs
+      | otherwise = maybeQuote ss ++ escapeAll True "" (c:cs)
+    escapeAll True ss (c:cs)
+      | c `Set.member` unescapedChars = maybeQuote ss ++ escapeAll False "" (c:cs)
+      | otherwise = escapeAll True (ss ++ escapeChar c) cs
+    escapeAll _ ss "" = maybeQuote ss
+    maybeQuote ss
+      | null ss = ""
+      | otherwise = "\"" ++ ss ++ "\""
