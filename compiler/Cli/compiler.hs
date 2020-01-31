@@ -317,10 +317,14 @@ runCompiler co@(CompileOptions h is is2 ds es ep p m o f) = do
       let ca = Set.fromList $ map getCategoryName $ filter isValueConcrete cs'
       let ca' = foldr Set.delete ca $ map dcName ds'
       collectAllOrErrorM $ map (compileConcreteTemplate tm3) $ Set.toList ca'
-    writeTemplate d (CxxOutput _ f _ _ _ content) = do
-      hPutStrLn stderr $ "Writing file " ++ f
-      let f' = p </> d </> f
-      writeFile f' $ concat $ map (++ "\n") content
+    writeTemplate d (CxxOutput _ n _ _ _ content) = do
+      let n' = p </> d </> n
+      exists <- doesPathExist n'
+      if exists && f /= ForceAll
+         then hPutStrLn stderr $ "Skipping existing file " ++ n
+         else do
+           hPutStrLn stderr $ "Writing file " ++ n
+           writeFile n' $ concat $ map (++ "\n") content
     compileAll ns0 ns2 is cs ds = do
       tm0 <- builtinCategories
       tm1 <- addIncludes tm0 is
