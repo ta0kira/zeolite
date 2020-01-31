@@ -34,7 +34,6 @@ import Control.Applicative ((<|>))
 import Control.Monad (when)
 import Control.Monad.Trans.State (execStateT,get,put,runStateT)
 import Control.Monad.Trans (lift)
-import Data.Char
 import Data.List (intercalate)
 import qualified Data.Map as Map
 import qualified Data.Set as Set
@@ -448,17 +447,6 @@ compileScopedBlock s = do
     -- Merge the statement into the scoped block.
     rewriteScoped (ScopedBlock _ p cl s) =
       ([],p,cl,s)
-
-escapeChar :: Char -> String
-escapeChar c = ['\\','x',asHex c1,asHex c2] where
-  c1 = (ord c) `div` 16
-  c2 = (ord c) `mod` 16
-  asHex n
-    | n < 10    = chr $ n + (ord '0')
-    | otherwise = chr $ n + (ord 'A') - 10
-
-escapeChars :: String -> String
-escapeChars = concat . map escapeChar
 
 compileExpression :: (Show c, Monad m, CompileErrorM m, MergeableM m,
                       CompilerContext c m [String] a) =>

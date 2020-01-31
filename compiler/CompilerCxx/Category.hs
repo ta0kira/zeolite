@@ -323,10 +323,9 @@ commonDefineAll :: (MergeableM m, Monad m) =>
   [ScopedFunction c] -> m CxxOutput
 commonDefineAll t ns top bottom ce te fe = do
   let filename = sourceFilename name
-  (CompiledData req out) <- mergeAllM $ [
+  (CompiledData req out) <- fmap (addNamespace t) $ mergeAllM $ [
       return $ CompiledData (Set.fromList [name]) [],
-      return $ addNamespace t $ mergeAll [createCollection,createAllLabels],
-      return namespaces
+      return $ mergeAll [createCollection,createAllLabels]
     ] ++ conditionalContent
   let inherited = Set.fromList $ (map (tiName . vrType) $ getCategoryRefines t) ++
                                  (map (diName . vdType) $ getCategoryDefines t)
@@ -337,20 +336,16 @@ commonDefineAll t ns top bottom ce te fe = do
                      (show $ getCategoryNamespace t)
                      ns'
                      (filter (not . isBuiltinCategory) $ Set.toList req)
-                     (baseSourceIncludes ++ includes ++ out)
+                     (baseSourceIncludes ++ includes ++ nsDeclare ++ out)
   where
-    ns' = nub $ concat $ map maybeShow $ (getCategoryNamespace t):ns
-    maybeShow ns
-      | isStaticNamespace ns  = [show ns]
-      | isDynamicNamespace ns = [dynamicNamespaceName]
-      | otherwise = []
-    namespaces =
-      mergeAll $ map (\n -> onlyCodes ["namespace " ++ n ++ " {}",
-                                       "using namespace " ++ n ++ ";"]) ns'
+    ns' = nub $ map show $ filter isStaticNamespace $ (getCategoryNamespace t):ns
+    nsDeclare = map (\n -> "namespace " ++ n ++ " {}") ns'
+    nsUsing = map (\n -> "using namespace " ++ n ++ ";") ns'
     conditionalContent
       | isInstanceInterface t = []
       | otherwise = [
         return $ onlyCode $ "namespace {",
+        return $ onlyCodes nsUsing,
         declareTypes,
         declareInternalType name paramCount,
         return top,
@@ -360,7 +355,7 @@ commonDefineAll t ns top bottom ce te fe = do
         defineInternalType name paramCount,
         return bottom,
         return $ onlyCode $ "}",
-        return $ addNamespace t $ onlyCodes $ getCategory ++ getType
+        return $ onlyCodes $ getCategory ++ getType
       ]
     declareTypes =
       return $ onlyCodes $ map (\f -> "class " ++ f name ++ ";") [categoryName,typeName]

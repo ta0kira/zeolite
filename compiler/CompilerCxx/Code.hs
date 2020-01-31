@@ -24,6 +24,8 @@ module CompilerCxx.Code (
   categoryBase,
   clearCompiled,
   emptyCode,
+  escapeChar,
+  escapeChars,
   functionLabelType,
   indentCompiled,
   isPrimType,
@@ -51,6 +53,7 @@ module CompilerCxx.Code (
   writeStoredVariable,
 ) where
 
+import Data.Char
 import Data.List (intercalate)
 import qualified Data.Set as Set
 
@@ -85,10 +88,10 @@ startCleanupTracing :: String
 startCleanupTracing = "TRACE_CLEANUP"
 
 setTraceContext :: Show c => [c] -> String
-setTraceContext c = "SET_CONTEXT_POINT(" ++ show (formatFullContext c) ++ ")"
+setTraceContext c = "SET_CONTEXT_POINT(\"" ++ escapeChars (formatFullContext c) ++ "\")"
 
 predTraceContext :: Show c => [c] -> String
-predTraceContext c = "PRED_CONTEXT_POINT(" ++ show (formatFullContext c) ++ ")"
+predTraceContext c = "PRED_CONTEXT_POINT(\"" ++ escapeChars (formatFullContext c) ++ "\")"
 
 data PrimitiveType =
   PrimBool |
@@ -301,3 +304,19 @@ valueBase = "TypeValue"
 
 paramType :: String
 paramType = typeBase ++ "&"
+
+unescapedChars :: Set.Set Char
+unescapedChars = Set.fromList $ ['a'..'z'] ++ ['A'..'Z'] ++ ['0'..'9'] ++ [' ','.']
+
+escapeChar :: Char -> String
+escapeChar c
+  | c `Set.member` unescapedChars = [c]
+  | otherwise = ['\\','x','0','0',asHex c1,asHex c2] where
+    c1 = (ord c) `div` 16
+    c2 = (ord c) `mod` 16
+    asHex n
+      | n < 10    = chr $ n + (ord '0')
+      | otherwise = chr $ n + (ord 'A') - 10
+
+escapeChars :: String -> String
+escapeChars = concat . map escapeChar
