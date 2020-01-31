@@ -166,7 +166,8 @@ data Assignable c =
 data VoidExpression c =
   Conditional (IfElifElse c) |
   Loop (WhileLoop c) |
-  WithScope (ScopedBlock c)
+  WithScope (ScopedBlock c) |
+  LineComment String
   deriving (Show)
 
 data IfElifElse c =

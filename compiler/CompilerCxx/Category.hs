@@ -131,10 +131,14 @@ compileConcreteTemplate ta n = do
         epName = sfName f,
         epArgs = ArgValues [] $ ParamSet $ map createArg [1..(length $ psParams $ sfArgs f)],
         epReturns = UnnamedReturns [],
-        epProcedure = failProcedure
+        epProcedure = failProcedure f
       }
     createArg = InputValue [] . VariableName . ("arg" ++) . show
-    failProcedure = Procedure [] [FailCall [] (Literal (StringLiteral [] "function not implemented"))]
+    failProcedure f = Procedure [] [
+        NoValueExpression [] $ LineComment $ "// TODO: Implement " ++ funcName f ++ ".",
+        FailCall [] (Literal (StringLiteral [] $ funcName f ++ " is not implemented"))
+      ]
+    funcName f = show (sfType f) ++ "." ++ show (sfName f)
 
 compileConcreteDefinition :: (Show c, Monad m, CompileErrorM m, MergeableM m) =>
   CategoryMap c -> [Namespace] -> DefinedCategory c -> m CxxOutput

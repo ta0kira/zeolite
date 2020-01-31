@@ -190,7 +190,7 @@ compileStatement :: (Show c, Monad m, CompileErrorM m, MergeableM m,
   Statement c -> CompilerState a m ()
 compileStatement (EmptyReturn c) = do
   csRegisterReturn c Nothing
-  csWrite [setTraceContext c]
+  csWrite $ setTraceContext c
   doNamedReturn
 compileStatement (ExplicitReturn c es) = do
   es' <- sequence $ map compileExpression $ psParams es
@@ -199,7 +199,7 @@ compileStatement (ExplicitReturn c es) = do
     -- Single expression, but possibly multi-return.
     getReturn [(_,(ParamSet ts,e))] = do
       csRegisterReturn c $ Just (ParamSet ts)
-      csWrite [setTraceContext c]
+      csWrite $ setTraceContext c
       csWrite ["returns = " ++ useAsReturns e ++ ";"]
       doReturnCleanup
       csWrite ["return returns;"]
@@ -214,8 +214,7 @@ compileStatement (ExplicitReturn c es) = do
     checkArity (_,ParamSet [_]) = return ()
     checkArity (i,ParamSet ts)  =
       compileError $ "Return position " ++ show i ++ " has " ++ show (length ts) ++ " values but should have 1"
-    bindReturn (i,(c0,(_,e))) = [
-        setTraceContext c0,
+    bindReturn (i,(c0,(_,e))) = setTraceContext c0 ++ [
         "returns.At(" ++ show i ++ ") = " ++ useAsUnwrapped e ++ ";"
       ]
 compileStatement (LoopBreak c) = do
@@ -242,11 +241,11 @@ compileStatement (FailCall c e) = do
   lift $ (checkValueTypeMatch r fa t0 formattedRequiredValue) `reviseError`
     ("In fail call at " ++ formatFullContext c)
   csSetNoReturn
-  csWrite [setTraceContext c]
+  csWrite $ setTraceContext c
   csWrite ["BuiltinFail(" ++ useAsUnwrapped e ++ ");"]
 compileStatement (IgnoreValues c e) = do
   (_,e') <- compileExpression e
-  csWrite [setTraceContext c]
+  csWrite $ setTraceContext c
   csWrite ["(void) (" ++ useAsWhatever e' ++ ");"]
 compileStatement (Assignment c as e) = do
   (ts,e') <- compileExpression e
@@ -254,7 +253,7 @@ compileStatement (Assignment c as e) = do
   fa <- csAllFilters
   processParamPairsT (createVariable r fa) as ts `reviseErrorStateT`
     ("In assignment at " ++ formatFullContext c)
-  csWrite [setTraceContext c]
+  csWrite $ setTraceContext c
   variableTypes <- sequence $ map (uncurry getVariableType) $ zip (psParams as) (psParams ts)
   assignAll (zip3 [0..] variableTypes (psParams as)) e'
   where
@@ -323,6 +322,7 @@ compileVoidExpression :: (Show c, Monad m, CompileErrorM m, MergeableM m,
 compileVoidExpression (Conditional ie) = compileIfElifElse ie
 compileVoidExpression (Loop l) = compileWhileLoop l
 compileVoidExpression (WithScope s) = compileScopedBlock s
+compileVoidExpression (LineComment s) = csWrite $ map ("// " ++) $ lines s
 
 compileIfElifElse :: (Show c, Monad m, CompileErrorM m, MergeableM m,
                       CompilerContext c m [String] a) =>

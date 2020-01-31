@@ -87,11 +87,15 @@ startFunctionTracing f = "TRACE_FUNCTION(" ++ show f ++ ")"
 startCleanupTracing :: String
 startCleanupTracing = "TRACE_CLEANUP"
 
-setTraceContext :: Show c => [c] -> String
-setTraceContext c = "SET_CONTEXT_POINT(\"" ++ escapeChars (formatFullContext c) ++ "\")"
+setTraceContext :: Show c => [c] -> [String]
+setTraceContext c
+  | null c = []
+  | otherwise = ["SET_CONTEXT_POINT(\"" ++ escapeChars (formatFullContext c) ++ "\")"]
 
 predTraceContext :: Show c => [c] -> String
-predTraceContext c = "PRED_CONTEXT_POINT(\"" ++ escapeChars (formatFullContext c) ++ "\")"
+predTraceContext c
+  | null c = ""
+  | otherwise = "PRED_CONTEXT_POINT(\"" ++ escapeChars (formatFullContext c) ++ "\")"
 
 data PrimitiveType =
   PrimBool |
