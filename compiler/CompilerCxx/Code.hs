@@ -314,8 +314,7 @@ unescapedChars = Set.fromList $ ['a'..'z'] ++ ['A'..'Z'] ++ ['0'..'9'] ++ [' ','
 
 escapeChar :: Char -> String
 escapeChar c
-  | c `Set.member` unescapedChars = [c]
-  | otherwise = ['\\','x','0','0',asHex c1,asHex c2] where
+  | otherwise = ['\\','x',asHex c1,asHex c2] where
     c1 = (ord c) `div` 16
     c2 = (ord c) `mod` 16
     asHex n
