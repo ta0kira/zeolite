@@ -53,7 +53,7 @@ runSingleTest paths deps os tm (f,s) = do
     checkAndRun ts
       | isCompileError ts = do
         hPutStrLn stderr $ "Failed to parse tests in " ++ f
-        return ((0,0),ts >> return ())
+        return ((0,1),ts >> return ())
       | otherwise = do
         allResults <- sequence $ map runSingle $ getCompileSuccess ts
         let passed = length $ filter (not . isCompileError) allResults
