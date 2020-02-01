@@ -16,14 +16,8 @@ limitations under the License.
 
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
-// Hand-written implementation of Argv.
-
-#include "Category_Argv.hpp"
-
-#include <iostream>
-#include <sstream>
-
 #include "category-source.hpp"
+#include "Category_Argv.hpp"
 
 
 #ifdef ZEOLITE_PUBLIC_NAMESPACE
@@ -31,78 +25,132 @@ namespace ZEOLITE_PUBLIC_NAMESPACE {
 #endif  // ZEOLITE_PUBLIC_NAMESPACE
 
 namespace {
-const int collection = 0;
-}
-
-const void* const Functions_Argv = &collection;
-
-const TypeFunction& Function_Argv_global =
-  *new TypeFunction{ 0, 0, 1, "Argv", "global", Functions_Argv, 0 };
-
-namespace {
 
 extern const S<TypeValue>& Var_global;
 
+const int collection = 0;
+}  // namespace
+
+const void* const Functions_Argv = &collection;
+const TypeFunction& Function_Argv_global = (*new TypeFunction{ 0, 0, 1, "Argv", "global", Functions_Argv, 0 });
+
+namespace {
+class Category_Argv;
+class Type_Argv;
+Type_Argv& CreateType(Params<0>::Type params);
+class Value_Argv;
+S<TypeValue> CreateValue(Type_Argv& parent, const ParamTuple& params, const ValueTuple& args);
 struct Category_Argv : public TypeCategory {
   std::string CategoryName() const final { return "Argv"; }
+  Category_Argv() {
+    CycleCheck<Category_Argv>::Check();
+    CycleCheck<Category_Argv> marker(*this);
+    TRACE_FUNCTION("Argv (init @category)")
+  }
+  ReturnTuple Dispatch(const CategoryFunction& label, const ParamTuple& params, const ValueTuple& args) final {
+    using CallType = ReturnTuple(Category_Argv::*)(const ParamTuple&, const ValueTuple&);
+    return TypeCategory::Dispatch(label, params, args);
+  }
 };
-
+Category_Argv& CreateCategory() {
+  static auto& category = *new Category_Argv();
+  return category;
+}
 struct Type_Argv : public TypeInstance {
-  std::string CategoryName() const final { return "Argv"; }
-  void BuildTypeName(std::ostream& output) const final { output << CategoryName(); }
-
-  ReturnTuple Dispatch(const TypeFunction& label,
-                       const ParamTuple& params, const ValueTuple& args) final {
-    if (args.Size() != label.arg_count) {
-      FAIL() << "Wrong number of args";
+  std::string CategoryName() const final { return parent.CategoryName(); }
+  void BuildTypeName(std::ostream& output) const final {
+    return TypeInstance::TypeNameFrom(output, parent);
+  }
+  Category_Argv& parent;
+  bool CanConvertFrom(const TypeInstance& from) const final {
+    std::vector<const TypeInstance*> args;
+    if (!from.TypeArgsForParent(parent, args)) return false;
+    if(args.size() != 0) {
+      FAIL() << "Wrong number of args (" << args.size() << ")  for " << CategoryName();
     }
-    if (params.Size() != label.param_count){
-      FAIL() << "Wrong number of params";
+    return true;
+  }
+  bool TypeArgsForParent(const TypeCategory& category, std::vector<const TypeInstance*>& args) const final {
+    if (&category == &GetCategory_Argv()) {
+      args = std::vector<const TypeInstance*>{};
+      return true;
     }
-    if (&label == &Function_Argv_global) {
-      return ReturnTuple(Var_global);
+    if (&category == &GetCategory_ReadPosition()) {
+      args = std::vector<const TypeInstance*>{&GetType_String(T_get())};
+      return true;
+    }
+    return false;
+  }
+  Type_Argv(Category_Argv& p, Params<0>::Type params) : parent(p) {
+    CycleCheck<Type_Argv>::Check();
+    CycleCheck<Type_Argv> marker(*this);
+    TRACE_FUNCTION("Argv (init @type)")
+  }
+  ReturnTuple Dispatch(const TypeFunction& label, const ParamTuple& params, const ValueTuple& args) final {
+    using CallType = ReturnTuple(Type_Argv::*)(const ParamTuple&, const ValueTuple&);
+    static const CallType Table_Argv[] = {
+      &Type_Argv::Call_global,
+    };
+    if (label.collection == Functions_Argv) {
+      if (label.function_num < 0 || label.function_num >= 1) {
+        FAIL() << "Bad function call " << label;
+      }
+      return (this->*Table_Argv[label.function_num])(params, args);
     }
     return TypeInstance::Dispatch(label, params, args);
   }
+  ReturnTuple Call_global(const ParamTuple& params, const ValueTuple& args) {
+    TRACE_FUNCTION("Argv.global")
+    return ReturnTuple(Var_global);
+  }
 };
-
-class Value_Argv : public TypeValue {
- public:
-  std::string CategoryName() const final { return "Argv"; }
-
-  ReturnTuple Dispatch(const S<TypeValue>& self,
-                       const ValueFunction& label,
-                       const ParamTuple& params, const ValueTuple& args) final {
-    if (args.Size() != label.arg_count) {
-      FAIL() << "Wrong number of args";
-    }
-    if (params.Size() != label.param_count){
-      FAIL() << "Wrong number of params";
-    }
-    if (&label == &Function_ReadPosition_readPosition) {
-      TRACE_FUNCTION("Argv.readPosition")
-      return ReturnTuple(Box_String(Argv::GetArgAt(args.At(0)->AsInt())));
-    }
-    if (&label == &Function_ReadPosition_readSize) {
-      TRACE_FUNCTION("Argv.readSize")
-      return ReturnTuple(Box_Int(Argv::ArgCount()));
+Type_Argv& CreateType(Params<0>::Type params) {
+  static auto& cache = *new InstanceMap<0,Type_Argv>();
+  auto& cached = cache[params];
+  if (!cached) { cached = R_get(new Type_Argv(CreateCategory(), params)); }
+  return *cached;
+}
+struct Value_Argv : public TypeValue {
+  Value_Argv(Type_Argv& p, const ParamTuple& params, const ValueTuple& args) : parent(p) {}
+  ReturnTuple Dispatch(const S<TypeValue>& self, const ValueFunction& label, const ParamTuple& params,const ValueTuple& args) final {
+    using CallType = ReturnTuple(Value_Argv::*)(const S<TypeValue>&, const ParamTuple&, const ValueTuple&);
+    static const CallType Table_ReadPosition[] = {
+      &Value_Argv::Call_readPosition,
+      &Value_Argv::Call_readSize,
+    };
+    if (label.collection == Functions_ReadPosition) {
+      if (label.function_num < 0 || label.function_num >= 2) {
+        FAIL() << "Bad function call " << label;
+      }
+      return (this->*Table_ReadPosition[label.function_num])(self, params, args);
     }
     return TypeValue::Dispatch(self, label, params, args);
   }
+  std::string CategoryName() const final { return parent.CategoryName(); }
+  ReturnTuple Call_readPosition(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) {
+    TRACE_FUNCTION("Argv.readPosition")
+    const PrimInt Var_arg1 = (args.At(0))->AsInt();
+    return ReturnTuple(Box_String(Argv::GetArgAt(Var_arg1)));
+  }
+  ReturnTuple Call_readSize(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) {
+    TRACE_FUNCTION("Argv.readSize")
+    return ReturnTuple(Box_Int(Argv::ArgCount()));
+  }
+  Type_Argv& parent;
 };
+S<TypeValue> CreateValue(Type_Argv& parent, const ParamTuple& params, const ValueTuple& args) {
+  return S_get(new Value_Argv(parent, params, args));
+}
 
-const S<TypeValue>& Var_global = *new S<TypeValue>(new Value_Argv);
+const S<TypeValue>& Var_global = *new S<TypeValue>(CreateValue(CreateType(Params<0>::Type()), ParamTuple(), ArgTuple()));
 
 }  // namespace
 
 TypeCategory& GetCategory_Argv() {
-  static auto& category = *new Category_Argv();
-  return category;
+  return CreateCategory();
 }
-
-TypeInstance& GetType_Argv(Params<0>::Type) {
-  static auto& instance = *new Type_Argv();
-  return instance;
+TypeInstance& GetType_Argv(Params<0>::Type params) {
+  return CreateType(params);
 }
 
 #ifdef ZEOLITE_PUBLIC_NAMESPACE

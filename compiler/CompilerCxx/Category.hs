@@ -358,7 +358,7 @@ commonDefineAll t ns top bottom ce te fe = do
         commonDefineType t te,
         defineInternalType name paramCount,
         return bottom,
-        return $ onlyCode $ "}",
+        return $ onlyCode $ "}  // namespace",
         return $ onlyCodes $ getCategory ++ getType
       ]
     declareTypes =
@@ -368,7 +368,7 @@ commonDefineAll t ns top bottom ce te fe = do
     createCollection = onlyCodes [
         "namespace {",
         "const int collection = 0;",
-        "}",
+        "}  // namespace",
         "const void* const " ++ collectionName name ++ " = &collection;"
       ]
     (fc,ft,fv) = partitionByScope sfScope $ getCategoryFunctions t ++ fe
