@@ -124,7 +124,7 @@ runSingleTest paths deps os tm (f,s) = do
       let interfaces = filter (not . isValueConcrete) cs'
       cxx2 <- collectAllOrErrorM $ map compileInterfaceDefinition interfaces
       (req,main) <- case e of
-                         Just e -> createTestFile tm' e ns1
+                         Just e -> createTestFile tm' e
                          Nothing -> return ([],[])
       return (req,main,ns1,hxx ++ cxx ++ cxx2)
     checkRequired rs comp err out = mergeAllM $ map (checkSubsetForRegex True  comp err out) rs
@@ -156,7 +156,7 @@ runSingleTest paths deps os tm (f,s) = do
       let command = CompileToBinary main os' binary paths'
       runCxxCommand command
       return binary
-    writeSingleFile d ca@(CxxOutput c f ns ns2 req content) = do
+    writeSingleFile d ca@(CxxOutput _ f _ _ _ content) = do
       writeFile (d </> f) $ concat $ map (++ "\n") content
       if isSuffixOf ".cpp" f
          then return ([d </> f],ca)

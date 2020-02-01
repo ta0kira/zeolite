@@ -340,16 +340,13 @@ commonDefineAll t ns top bottom ce te fe = do
                      (show $ getCategoryNamespace t)
                      ns'
                      (filter (not . isBuiltinCategory) $ Set.toList req)
-                     (baseSourceIncludes ++ includes ++ nsDeclare ++ out)
+                     (baseSourceIncludes ++ includes ++ out)
   where
     ns' = nub $ map show $ filter isStaticNamespace $ (getCategoryNamespace t):ns
-    nsDeclare = map (\n -> "namespace " ++ n ++ " {}") ns'
-    nsUsing = map (\n -> "using namespace " ++ n ++ ";") ns'
     conditionalContent
       | isInstanceInterface t = []
       | otherwise = [
         return $ onlyCode $ "namespace {",
-        return $ onlyCodes nsUsing,
         declareTypes,
         declareInternalType name paramCount,
         return top,
@@ -383,7 +380,8 @@ addNamespace t cs
   | isStaticNamespace $ getCategoryNamespace t = mergeAll [
       onlyCode $ "namespace " ++ show (getCategoryNamespace t) ++ " {",
       cs,
-      onlyCode $ "}  // namespace " ++ show (getCategoryNamespace t)
+      onlyCode $ "}  // namespace " ++ show (getCategoryNamespace t),
+      onlyCode $ "using namespace " ++ show (getCategoryNamespace t) ++ ";"
     ]
   | isDynamicNamespace $ getCategoryNamespace t = mergeAll [
       onlyCode $ "#ifdef " ++ dynamicNamespaceName,
@@ -392,6 +390,7 @@ addNamespace t cs
       cs,
       onlyCode $ "#ifdef " ++ dynamicNamespaceName,
       onlyCode $ "}  // namespace " ++ dynamicNamespaceName,
+      onlyCode $ "using namespace " ++ dynamicNamespaceName ++ ";",
       onlyCode $ "#endif  // " ++ dynamicNamespaceName
     ]
   | otherwise = cs
@@ -657,9 +656,9 @@ builtinVariables t = Map.fromList [
     (VariableName "self",VariableValue [] ValueScope (ValueType RequiredValue $ SingleType $ JustTypeInstance t) False)
   ]
 
-createMainCommon :: String -> [String] -> CompiledData [String] -> [String]
-createMainCommon n ns (CompiledData req out) =
-  baseSourceIncludes ++ mainSourceIncludes ++ depIncludes req ++ ns ++ [
+createMainCommon :: String -> CompiledData [String] -> [String]
+createMainCommon n (CompiledData req out) =
+  baseSourceIncludes ++ mainSourceIncludes ++ depIncludes req ++ [
       "int main(int argc, const char** argv) {",
       "  SetSignalHandler();",
       "  ProgramArgv program_argv(argc, argv);",
@@ -672,28 +671,16 @@ createMainFile :: (Show c, Monad m, CompileErrorM m, MergeableM m) =>
   CategoryMap c -> AnyCategory c -> String -> m (String,[String])
 createMainFile tm t f = flip reviseError ("In the creation of the main binary procedure") $ do
   ca <- fmap indentCompiled (compileMainProcedure tm (expr t))
-  let file = createMainCommon "main" (namespace t) ca
+  let file = createMainCommon "main" ca
   return (show $ getCategoryNamespace t,file) where
     funcName = FunctionName f
     funcCall = FunctionCall [] funcName (ParamSet []) (ParamSet [])
     mainType t = JustTypeInstance $ TypeInstance (getCategoryName t) (ParamSet [])
     expr t = Expression [] (TypeCall [] (mainType t) funcCall) []
-    namespace t
-      | isStaticNamespace $ getCategoryNamespace t = [
-          "namespace " ++ show (getCategoryNamespace t) ++ "{}",
-          "using namespace " ++ show (getCategoryNamespace t) ++ ";"
-        ]
-      | otherwise = []
 
 createTestFile :: (Show c, Monad m, CompileErrorM m, MergeableM m) =>
-  CategoryMap c -> Expression c -> Namespace -> m ([CategoryName],[String])
-createTestFile tm e ns = flip reviseError ("In the creation of the test binary procedure") $ do
+  CategoryMap c -> Expression c -> m ([CategoryName],[String])
+createTestFile tm e = flip reviseError ("In the creation of the test binary procedure") $ do
   ca@(CompiledData req _) <- fmap indentCompiled (compileMainProcedure tm e)
-  let file = createMainCommon "main" namespace ca
-  return (filter (not . isBuiltinCategory) $ Set.toList req,file) where
-    namespace
-      | isStaticNamespace ns = [
-          "namespace " ++ show ns ++ "{}",
-          "using namespace " ++ show ns ++ ";"
-        ]
-      | otherwise = []
+  let file = createMainCommon "main" ca
+  return (filter (not . isBuiltinCategory) $ Set.toList req,file)
