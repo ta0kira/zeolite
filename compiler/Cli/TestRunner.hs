@@ -105,7 +105,7 @@ runSingleTest paths deps os tm (f,s) = do
          else do
            let warnings = getCompileWarnings result
            let (req,main,ns,fs) = getCompileSuccess result
-           binaryName <- createBinary main req [show ns] fs
+           binaryName <- createBinary main req [ns] fs
            let command = TestCommand binaryName (takeDirectory binaryName)
            (TestCommandResult s' out err) <- runTestCommand command
            case (s,s') of

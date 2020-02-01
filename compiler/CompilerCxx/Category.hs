@@ -52,8 +52,8 @@ data CxxOutput =
   CxxOutput {
     coCategory :: Maybe CategoryName,
     coFilename :: String,
-    coNamespace :: String,       -- TODO: Use Namespace here?
-    coUsesNamespace :: [String], -- TODO: Use Namespace here?
+    coNamespace :: Namespace,
+    coUsesNamespace :: [Namespace],
     coUsesCategory :: [CategoryName],
     coOutput :: [String]
   }
@@ -62,8 +62,8 @@ compileCategoryDeclaration :: Monad m => CategoryMap c -> AnyCategory c -> m Cxx
 compileCategoryDeclaration _ t =
   return $ CxxOutput (Just $ getCategoryName t)
                      (headerFilename name)
-                     (show $ getCategoryNamespace t)
-                     ns
+                     (getCategoryNamespace t)
+                     [getCategoryNamespace t]
                      (filter (not . isBuiltinCategory) $ Set.toList $ cdRequired file)
                      (cdOutput file) where
     file = mergeAll $ [
@@ -72,7 +72,6 @@ compileCategoryDeclaration _ t =
         addNamespace t content,
         onlyCodes guardBottom
       ]
-    ns = nub $ map show $ filter isStaticNamespace [getCategoryNamespace t]
     content = onlyCodes $ collection ++ labels ++ getCategory ++ getType
     name = getCategoryName t
     guardTop = ["#ifndef " ++ guardName,"#define " ++ guardName]
@@ -337,12 +336,11 @@ commonDefineAll t ns top bottom ce te fe = do
                    filter (not . isBuiltinCategory) $ Set.toList $ Set.union req inherited
   return $ CxxOutput (Just $ getCategoryName t)
                      filename
-                     (show $ getCategoryNamespace t)
-                     ns'
+                     (getCategoryNamespace t)
+                     ((getCategoryNamespace t):ns)
                      (filter (not . isBuiltinCategory) $ Set.toList req)
                      (baseSourceIncludes ++ includes ++ out)
   where
-    ns' = nub $ map show $ filter isStaticNamespace $ (getCategoryNamespace t):ns
     conditionalContent
       | isInstanceInterface t = []
       | otherwise = [
@@ -668,11 +666,11 @@ createMainCommon n (CompiledData req out) =
                           filter (not . isBuiltinCategory) $ Set.toList req
 
 createMainFile :: (Show c, Monad m, CompileErrorM m, MergeableM m) =>
-  CategoryMap c -> AnyCategory c -> String -> m (String,[String])
+  CategoryMap c -> AnyCategory c -> String -> m (Namespace,[String])
 createMainFile tm t f = flip reviseError ("In the creation of the main binary procedure") $ do
   ca <- fmap indentCompiled (compileMainProcedure tm (expr t))
   let file = createMainCommon "main" ca
-  return (show $ getCategoryNamespace t,file) where
+  return (getCategoryNamespace t,file) where
     funcName = FunctionName f
     funcCall = FunctionCall [] funcName (ParamSet []) (ParamSet [])
     mainType t = JustTypeInstance $ TypeInstance (getCategoryName t) (ParamSet [])

@@ -63,6 +63,7 @@ import System.IO
 import qualified Data.Map as Map
 import qualified Data.Set as Set
 
+import TypeCategory
 import TypeInstance
 import Cli.CompileOptions (CompileMode)
 import CompilerCxx.Category (CxxOutput(..))
@@ -330,7 +331,7 @@ checkModuleFreshness p (CompileMetadata p2 _ is is2 _ _ ps xs ts hxx cxx _) = do
            return (time2 > time)
     checkMissing s0 s1 = not $ null $ (Set.fromList s1) `Set.difference` (Set.fromList s0)
 
-getObjectFileResolver :: [ObjectFile] -> [String] -> [CategoryName] -> [String]
+getObjectFileResolver :: [ObjectFile] -> [Namespace] -> [CategoryName] -> [String]
 getObjectFileResolver os ns ds = resolved ++ nonCategories where
   categories    = filter isCategoryObjectFile os
   nonCategories = map oofFile $ filter (not . isCategoryObjectFile) os
@@ -341,7 +342,7 @@ getObjectFileResolver os ns ds = resolved ++ nonCategories where
   directDeps = concat $ map (resolveDep . show) ds
   directResolved = map cofCategory directDeps
   resolveDep d = unwrap $ foldl (<|>) Nothing allChecks <|> Just [] where
-    allChecks = map (\n -> (d,n) `Map.lookup` categoryMap >>= return . (:[])) (ns ++ [""])
+    allChecks = map (\n -> (d,n) `Map.lookup` categoryMap >>= return . (:[])) (map show ns ++ [""])
     unwrap (Just xs) = xs
     unwrap _         = []
   resolved = reverse $ nub $ reverse $ collectAll Set.empty directResolved
@@ -366,10 +367,10 @@ resolveObjectDeps p os deps = resolvedCategories ++ nonCategories where
   directCategories = map (keyByCategory . cxxToId) $ map snd categories
   depCategories = map (keyByCategory . cofCategory) $ filter isCategoryObjectFile $ concat $ map cmObjectFiles deps
   keyByCategory c = ((ciCategory c,ciNamespace c),c)
-  cxxToId (CxxOutput (Just c) _ ns _ _ _) = CategoryIdentifier p (show c) ns
+  cxxToId (CxxOutput (Just c) _ ns _ _ _) = CategoryIdentifier p (show c) (show ns)
   resolveCategory (fs,ca@(CxxOutput _ _ _ ns2 ds _)) =
     (cxxToId ca,CategoryObjectFile (cxxToId ca) rs fs) where
-      rs = concat $ map (resolveDep ns2 . show) ds
+      rs = concat $ map (resolveDep (map show ns2) . show) ds
   resolveDep ns d = unwrap $ foldl (<|>) Nothing allChecks <|> Just [] where
     allChecks = map (\n -> (d,n) `Map.lookup` categoryMap >>= return . (:[])) (ns ++ [""])
     unwrap (Just xs) = xs

@@ -239,13 +239,13 @@ runCompiler co@(CompileOptions h is is2 ds es ep p m o f) = do
       | otherwise = do
           formatWarnings fs
           let (pc,mf,fs') = getCompileSuccess fs
-          let ss = nub $ filter (not . null) $ [show ns0] ++ map coNamespace fs'
+          let ss = nub $ filter (not . null) $ map show $ [ns0] ++ map coNamespace fs'
           let paths' = paths ++ map (\ns -> getCachedPath (p </> d) ns "") ss
           let hxx   = filter (isSuffixOf ".hpp" . coFilename)       fs'
           let other = filter (not . isSuffixOf ".hpp" . coFilename) fs'
           os1 <- sequence $ map (writeOutputFile (show ns0) paths' d) $ hxx ++ other
           os2 <- fmap concat $ sequence $ map (compileExtraFile (show ns0) paths' d) es
-          let (hxx,cxx,os') = sortCompiledFiles $ map (\f -> coNamespace f </> coFilename f) fs' ++ es
+          let (hxx,cxx,os') = sortCompiledFiles $ map (\f -> show (coNamespace f) </> coFilename f) fs' ++ es
           path <- canonicalizePath $ p </> d
           let os1' = resolveObjectDeps path os1 deps
           let cm = CompileMetadata {
@@ -269,14 +269,14 @@ runCompiler co@(CompileOptions h is is2 ds es ep p m o f) = do
       | otherwise = hPutStr stderr $ "Compiler warnings:\n" ++ (concat $ map (++ "\n") (getCompileWarnings c))
     writeOutputFile ns0 paths d ca@(CxxOutput c f ns ns2 req content) = do
       hPutStrLn stderr $ "Writing file " ++ f
-      writeCachedFile (p </> d) ns f $ concat $ map (++ "\n") content
+      writeCachedFile (p </> d) (show ns) f $ concat $ map (++ "\n") content
       if isSuffixOf ".cpp" f || isSuffixOf ".cc" f
          then do
-           let f' = getCachedPath (p </> d) ns f
+           let f' = getCachedPath (p </> d) (show ns) f
            let p0 = getCachedPath (p </> d) "" ""
-           let p1 = getCachedPath (p </> d) ns ""
+           let p1 = getCachedPath (p </> d) (show ns) ""
            createCachePath (p </> d)
-           let ns' = if null ns then show ns0 else ns
+           let ns' = if isStaticNamespace ns then show ns else show ns0
            let command = CompileToObject f' (getCachedPath (p </> d) ns' "") "" (p0:p1:paths) False
            o <- runCxxCommand command
            return $ ([o],ca)
@@ -390,7 +390,7 @@ runCompiler co@(CompileOptions h is is2 ds es ep p m o f) = do
         Nothing -> return []
         Just t -> do
           (ns,main) <- createMainFile tm t f
-          return [CxxOutput Nothing mainFilename "" [ns] [getCategoryName t] main]
+          return [CxxOutput Nothing mainFilename NoNamespace [ns] [getCategoryName t] main]
     maybeCreateMain _ _ = return []
 
 checkAllowedStale :: Bool -> ForceMode -> IO ()
