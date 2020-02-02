@@ -148,4 +148,4 @@ qualifiedTypeGetter t
   | otherwise = typeGetter $ getCategoryName t
 
 dynamicNamespaceName :: String
-dynamicNamespaceName = "ZEOLITE_PUBLIC_NAMESPACE"
+dynamicNamespaceName = "ZEOLITE_DYNAMIC_NAMESPACE"

@@ -20,9 +20,9 @@ limitations under the License.
 #include "Category_Argv.hpp"
 
 
-#ifdef ZEOLITE_PUBLIC_NAMESPACE
-namespace ZEOLITE_PUBLIC_NAMESPACE {
-#endif  // ZEOLITE_PUBLIC_NAMESPACE
+#ifdef ZEOLITE_DYNAMIC_NAMESPACE
+namespace ZEOLITE_DYNAMIC_NAMESPACE {
+#endif  // ZEOLITE_DYNAMIC_NAMESPACE
 
 namespace {
 
@@ -153,6 +153,6 @@ TypeInstance& GetType_Argv(Params<0>::Type params) {
   return CreateType(params);
 }
 
-#ifdef ZEOLITE_PUBLIC_NAMESPACE
-}  // namespace ZEOLITE_PUBLIC_NAMESPACE
-#endif  // ZEOLITE_PUBLIC_NAMESPACE
+#ifdef ZEOLITE_DYNAMIC_NAMESPACE
+}  // namespace ZEOLITE_DYNAMIC_NAMESPACE
+#endif  // ZEOLITE_DYNAMIC_NAMESPACE

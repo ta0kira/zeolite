@@ -36,6 +36,8 @@ import System.IO
 import System.Posix.Process (ProcessStatus(..),executeFile,forkProcess,getProcessStatus)
 import System.Posix.Temp (mkstemps)
 
+import CompilerCxx.Naming (dynamicNamespaceName)
+
 
 data CxxCommand =
   CompileToObject {
@@ -70,7 +72,6 @@ data TestCommandResult =
 
 cxxCompiler = "clang++"
 arArchiver = "ar"
-namespaceMacro = "ZEOLITE_PUBLIC_NAMESPACE"
 cxxBaseOptions = ["-O2", "-std=c++11"]
 
 runCxxCommand :: CxxCommand -> IO String
@@ -88,7 +89,7 @@ runCxxCommand (CompileToObject s p ns ps e) = do
     otherOptions = map (("-I" ++) . normalise) ps ++ nsFlag
     nsFlag
       | null ns = []
-      | otherwise = ["-D" ++ namespaceMacro ++ "=" ++ ns]
+      | otherwise = ["-D" ++ dynamicNamespaceName ++ "=" ++ ns]
 runCxxCommand (CompileToBinary m ss o ps) = do
   let arFiles    = filter (isSuffixOf ".a")       ss
   let otherFiles = filter (not . isSuffixOf ".a") ss
