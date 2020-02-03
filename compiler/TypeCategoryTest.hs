@@ -610,13 +610,13 @@ tests = [
         ts <- topoSortCategories defaultCategories ts
         flattenAllConnections defaultCategories ts
         return ()),
-    checkOperationFail
+    checkOperationSuccess
       "testfiles/duplicate_refine.0rx"
       (\ts -> do
         ts <- topoSortCategories defaultCategories ts
         flattenAllConnections defaultCategories ts
         return ()),
-    checkOperationFail
+    checkOperationSuccess
       "testfiles/duplicate_define.0rx"
       (\ts -> do
         ts <- topoSortCategories defaultCategories ts

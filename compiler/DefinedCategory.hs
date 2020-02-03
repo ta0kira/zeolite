@@ -156,12 +156,23 @@ mapMembers ms = foldr update (return Map.empty) ms where
                                      formatFullContext (vvContext m0) ++ "]"
     return $ Map.insert (dmName m) (VariableValue (dmContext m) (dmScope m) (dmType m) True) ma'
 
+-- TODO: Most of this duplicates parts of flattenAllConnections.
 mergeInternalInheritance :: (Show c, Monad m, CompileErrorM m, MergeableM m) =>
-  [AnyCategory c] -> [DefinedCategory c] -> m [AnyCategory c]
-mergeInternalInheritance cs ds = collectAllOrErrorM $ map merge cs where
-  dm = Map.fromList $ map (\d -> (dcName d,d)) ds
-  merge ca@(ValueConcrete c ns n ps rs ds vs fs) = do
-    case n `Map.lookup` dm of
-         Nothing -> return ca
-         Just d -> return $ ValueConcrete c ns n ps (rs ++ dcRefines d) (ds ++ dcDefines d) vs fs
-  merge c = return c
+  CategoryMap c -> DefinedCategory c -> m (CategoryMap c)
+mergeInternalInheritance tm d = do
+  let rs2 = dcRefines d
+  let ds2 = dcDefines d
+  (_,t@(ValueConcrete c ns n ps rs ds vs fs)) <- getConcreteCategory tm ([],dcName d)
+  let c2 = ValueConcrete c ns n ps (rs++rs2) (ds++ds2) vs fs
+  let tm' = Map.insert (dcName d) c2 tm
+  let r = categoriesToTypeResolver tm'
+  let fm = getCategoryFilterMap t
+  rs' <- mergeRefines r fm (rs++rs2)
+  noDuplicateRefines [] n rs'
+  ds' <- mergeDefines r fm (ds++ds2)
+  noDuplicateDefines [] n ds'
+  fs' <- mergeFunctions r tm' fm rs' ds' fs
+  let c2' = ValueConcrete c ns n ps rs' ds' vs fs'
+  let tm0 = (dcName d) `Map.delete` tm
+  checkCategoryInstances tm0 [c2']
+  return $ Map.insert (dcName d) c2' tm

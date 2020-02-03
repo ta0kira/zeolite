@@ -94,8 +94,11 @@ compileCategoryModule (CategoryModule tm ns cs xa) = do
       hxx <- collectAllOrErrorM $ map (compileCategoryDeclaration tm') cs2
       let interfaces = filter (not . isValueConcrete) cs2
       cxx1 <- collectAllOrErrorM $ map compileInterfaceDefinition interfaces
-      cxx2 <- collectAllOrErrorM $ map (compileConcreteDefinition tm' (ns1:ns)) ds
+      cxx2 <- collectAllOrErrorM $ map (compileDefinition tm' (ns1:ns)) ds
       return $ hxx ++ cxx1 ++ cxx2
+    compileDefinition tm ns d = do
+      tm' <- mergeInternalInheritance tm d
+      compileConcreteDefinition tm' ns d
 
 compileModuleMain :: (Show c, Monad m, CompileErrorM m, MergeableM m) =>
   CategoryModule c -> CategoryName -> FunctionName -> m CxxOutput

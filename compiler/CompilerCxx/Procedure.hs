@@ -653,6 +653,9 @@ compileExpressionStart (CategoryCall c t f@(FunctionCall _ n _ _)) = do
   t' <- expandCategory t
   compileFunctionCall (Just t') f' f
 compileExpressionStart (TypeCall c t f@(FunctionCall _ n _ _)) = do
+  r <- csResolver
+  fa <- csAllFilters
+  lift $ validateGeneralInstance r fa (SingleType t)
   f' <- csGetTypeFunction c (Just $ SingleType t) n
   when (sfScope f' /= TypeScope) $ lift $ compileError $ "Function " ++ show n ++
                                           " cannot be used as a type function [" ++

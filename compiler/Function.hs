@@ -1,5 +1,5 @@
 {- -----------------------------------------------------------------------------
-Copyright 2019 Kevin P. Barry
+Copyright 2019-2020 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -94,6 +94,7 @@ assignFunctionParams :: (MergeableM m, CompileErrorM m, Monad m) =>
   TypeResolver m -> ParamFilters -> ParamSet GeneralInstance ->
   FunctionType -> m FunctionType
 assignFunctionParams r fm ts ff@(FunctionType as rs ps fa) = do
+  mergeAllM $ map (validateGeneralInstance r fm) $ psParams ts
   assigned <- fmap Map.fromList $ processParamPairs alwaysPairParams ps ts
   let allAssigned = Map.union assigned (Map.fromList $ map (\n -> (n,SingleType $ JustParamName n)) $ Map.keys fm)
   fa' <- fmap ParamSet $ collectAllOrErrorM $ map (assignFilters allAssigned) (psParams fa)

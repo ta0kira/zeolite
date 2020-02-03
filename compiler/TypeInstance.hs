@@ -35,6 +35,7 @@ module TypeInstance (
   TypeInstanceOrParam(..),
   TypeResolver(..),
   ValueType(..),
+  checkDefinesMatch,
   checkGeneralMatch,
   checkValueTypeMatch,
   uncheckedSubFilter,
@@ -436,18 +437,21 @@ validateAssignment r f t fs = mergeAllM (map (checkFilter t) fs) where
       (mergeAllM $ map (compileError . show) ts)
   checkDefinesFilter f2@(DefinesInstance n2 _) (JustTypeInstance t1) = do
     ps1' <- trDefines r t1 n2 `reviseError` (show (tiName t1) ++ " does not define " ++ show n2)
-    checkDefines f2 (DefinesInstance n2 ps1')
+    checkDefinesMatch r f f2 (DefinesInstance n2 ps1')
   checkDefinesFilter f2 (JustParamName n1) = do
       fs1 <- fmap (map dfType . filter isDefinesFilter) $ f `filterLookup` n1
-      mergeAnyM (map (checkDefines f2) fs1) `reviseError`
+      mergeAnyM (map (checkDefinesMatch r f f2) fs1) `reviseError`
         ("No filters imply " ++ show n1 ++ " defines " ++ show f2)
-  checkDefines f2@(DefinesInstance n2 ps2) f1@(DefinesInstance n1 ps1)
-    | n1 == n2 = do
-      paired <- processParamPairs alwaysPairParams ps1 ps2
-      variance <- trVariance r n2
-      processParamPairs (\v2 (p1,p2) -> checkGeneralMatch r f v2 p1 p2) variance (ParamSet paired)
-      mergeDefaultM
-    | otherwise = compileError $ "Constraint " ++ show f1 ++ " does not imply " ++ show f2
+
+checkDefinesMatch :: (MergeableM m, CompileErrorM m, Monad m) =>
+  TypeResolver m -> ParamFilters -> DefinesInstance -> DefinesInstance -> m ()
+checkDefinesMatch r f f2@(DefinesInstance n2 ps2) f1@(DefinesInstance n1 ps1)
+  | n1 == n2 = do
+    paired <- processParamPairs alwaysPairParams ps1 ps2
+    variance <- trVariance r n2
+    processParamPairs (\v2 (p1,p2) -> checkGeneralMatch r f v2 p1 p2) variance (ParamSet paired)
+    mergeDefaultM
+  | otherwise = compileError $ "Constraint " ++ show f1 ++ " does not imply " ++ show f2
 
 validateInstanceVariance :: (MergeableM m, CompileErrorM m, Monad m) =>
   TypeResolver m -> ParamVariances -> Variance -> GeneralInstance -> m ()
