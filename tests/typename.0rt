@@ -218,6 +218,8 @@ testcase "param typename" {
   success Test$run()
 }
 
+@value interface Value<#x> {}
+
 @value interface Type<#x,#y> {}
 
 define Test {
@@ -227,8 +229,8 @@ define Test {
   }
 
   run () {
-    Formatted name <- getTypename<String,LessThan<Int>>()
-    if (name.formatted() != "Type<String,LessThan<Int>>") {
+    Formatted name <- getTypename<String,Value<Int>>()
+    if (name.formatted() != "Type<String,Value<Int>>") {
       fail(name)
     }
   }
