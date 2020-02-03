@@ -119,6 +119,8 @@ compileConcreteTemplate ta n = do
         dcContext = [],
         dcName = getCategoryName t,
         dcParams = [],
+        dcRefines = [],
+        dcDefines = [],
         dcParamFilter = [],
         dcMembers = [],
         dcProcedures = map defaultFail (getCategoryFunctions t),
@@ -141,7 +143,7 @@ compileConcreteTemplate ta n = do
 
 compileConcreteDefinition :: (Show c, Monad m, CompileErrorM m, MergeableM m) =>
   CategoryMap c -> [Namespace] -> DefinedCategory c -> m CxxOutput
-compileConcreteDefinition ta ns dd@(DefinedCategory c n pi fi ms ps fs) = do
+compileConcreteDefinition ta ns dd@(DefinedCategory c n pi _ _ fi ms ps fs) = do
   -- TODO: Move most of this logic to DefinedCategory.
   (_,t) <- getConcreteCategory ta (c,n)
   let params = ParamSet $ getCategoryParams t

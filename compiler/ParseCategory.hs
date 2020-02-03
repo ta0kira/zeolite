@@ -23,6 +23,9 @@ module ParseCategory (
   parseFilters,
   parseScope,
   parseScopedFunction,
+  singleDefine,
+  singleFilter,
+  singleRefine,
 ) where
 
 import Text.Parsec
@@ -110,63 +113,45 @@ parseCategoryParams = do
       return (c,n)
     apply v (c,n) = ValueParam [c] n v
 
+singleRefine :: Parser (ValueRefine SourcePos)
+singleRefine = do
+  c <- getPosition
+  try kwRefines
+  t <- sourceParser
+  return $ ValueRefine [c] t
+
+singleDefine :: Parser (ValueDefine SourcePos)
+singleDefine = do
+  c <- getPosition
+  try kwDefines
+  t <- sourceParser
+  return $ ValueDefine [c] t
+
+singleFilter :: Parser (ParamFilter SourcePos)
+singleFilter = try $ do
+  c <- getPosition
+  n <- sourceParser
+  f <- sourceParser
+  return $ ParamFilter [c] n f
+
 parseCategoryRefines :: Parser [ValueRefine SourcePos]
-parseCategoryRefines = sepAfter $ sepBy singleRefine optionalSpace where
-  singleRefine = do
-    c <- getPosition
-    try kwRefines
-    t <- sourceParser
-    return $ ValueRefine [c] t
+parseCategoryRefines = sepAfter $ sepBy singleRefine optionalSpace
 
 parseFilters :: Parser [ParamFilter SourcePos]
-parseFilters = sepBy singleFilter optionalSpace where
-  singleFilter = labeled "param filter" $ try $ do
-    c <- getPosition
-    n <- sourceParser
-    f <- sourceParser
-    return $ ParamFilter [c] n f
+parseFilters = sepBy singleFilter optionalSpace
 
 parseRefinesFilters :: Parser ([ValueRefine SourcePos],[ParamFilter SourcePos])
-parseRefinesFilters = parsed >>= return . foldr merge empty where
-  empty = ([],[])
-  merge (rs1,vs1) (rs2,vs2) = (rs1++rs2,vs1++vs2)
+parseRefinesFilters = parsed >>= return . merge2 where
   parsed = sepBy anyType optionalSpace
-  anyType = labeled "refine or param filter" $ singleRefine <|> singleFilter
-  singleRefine = do
-    c <- getPosition
-    try kwRefines
-    t <- sourceParser
-    return ([ValueRefine [c] t],[])
-  singleFilter = try $ do
-    c <- getPosition
-    n <- sourceParser
-    f <- sourceParser
-    return ([],[ParamFilter [c] n f])
+  anyType = labeled "refine or param filter" $ put12 singleRefine <|> put22 singleFilter
 
 parseRefinesDefinesFilters :: Parser ([ValueRefine SourcePos],
                                       [ValueDefine SourcePos],
                                       [ParamFilter SourcePos])
-parseRefinesDefinesFilters = parsed >>= return . foldr merge empty where
-  empty = ([],[],[])
-  merge (rs1,ds1,vs1) (rs2,ds2,vs2) = (rs1++rs2,ds1++ds2,vs1++vs2)
+parseRefinesDefinesFilters = parsed >>= return . merge3 where
   parsed = sepBy anyType optionalSpace
   anyType =
-    labeled "refine or define or param filter" $ singleRefine <|> singleDefine <|> singleFilter
-  singleRefine = do
-    c <- getPosition
-    try kwRefines
-    t <- sourceParser
-    return ([ValueRefine [c] t],[],[])
-  singleDefine = do
-    c <- getPosition
-    try kwDefines
-    t <- sourceParser
-    return ([],[ValueDefine [c] t],[])
-  singleFilter = try $ do
-    c <- getPosition
-    n <- sourceParser
-    f <- sourceParser
-    return ([],[],[ParamFilter [c] n f])
+    labeled "refine or define or param filter" $ put13 singleRefine <|> put23 singleDefine <|> put33 singleFilter
 
 instance ParseFromSource FunctionName where
   sourceParser = labeled "function name" $ do

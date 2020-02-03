@@ -1,0 +1,4 @@
+define Type {
+  refines Formatted
+  defines LessThan<Type>
+}

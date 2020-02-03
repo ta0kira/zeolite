@@ -44,11 +44,14 @@ instance ParseFromSource (DefinedCategory SourcePos) where
     kwDefine
     n <- sourceParser
     sepAfter (string "{")
+    (ds,rs) <- parseRefinesDefines
     (pi,fi) <- parseInternalParams <|> return ([],[])
     (ms,ps,fs) <- parseMemberProcedureFunction n
     sepAfter (string "}")
-    return $ DefinedCategory [c] n pi fi ms ps fs
+    return $ DefinedCategory [c] n pi ds rs fi ms ps fs
     where
+      parseRefinesDefines = fmap merge2 $ sepBy refineOrDefine optionalSpace
+      refineOrDefine = labeled "refine or define" $ put12 singleRefine <|> put22 singleDefine
       parseInternalParams = labeled "internal params" $ do
         try kwTypes
         pi <- between (sepAfter $ string "<")
