@@ -84,10 +84,11 @@ compileCategoryModule (CategoryModule tm ns cs xa) = do
   hxx <- collectAllOrErrorM $ map (compileCategoryDeclaration tm') cs
   let interfaces = filter (not . isValueConcrete) cs
   cxx <- collectAllOrErrorM $ map compileInterfaceDefinition interfaces
-  xx <- fmap concat $ collectAllOrErrorM $ map compileInternal xa
+  xa <- collectAllOrErrorM $ map compileInternal xa
+  let xx = concat $ map snd xa
+  let dm = Map.fromListWith (++) $ map (\d -> (dcName d,[d])) $ concat $ map fst xa
+  checkDuplicates dm (map getCategoryName cs)
   return $ hxx ++ cxx ++ xx where
-    -- TODO: There should be an error if multiple .0rx files define the same
-    -- concrete category from a .0rp.
     compileInternal (PrivateSource ns1 cs2 ds) = do
       let cs' = cs++cs2
       tm' <- includeNewTypes tm cs'
@@ -95,10 +96,18 @@ compileCategoryModule (CategoryModule tm ns cs xa) = do
       let interfaces = filter (not . isValueConcrete) cs2
       cxx1 <- collectAllOrErrorM $ map compileInterfaceDefinition interfaces
       cxx2 <- collectAllOrErrorM $ map (compileDefinition tm' (ns1:ns)) ds
-      return $ hxx ++ cxx1 ++ cxx2
+      return (ds,hxx ++ cxx1 ++ cxx2)
     compileDefinition tm ns d = do
       tm' <- mergeInternalInheritance tm d
       compileConcreteDefinition tm' ns d
+    checkDuplicates dm = mergeAllM . map (check dm)
+    check dm n =
+      case n `Map.lookup` dm of
+           Nothing -> return ()
+           Just [_] -> return ()
+           Just ds ->
+             flip reviseError ("Public category " ++ show n ++ " is defined " ++ show (length ds) ++ " times") $
+               mergeAllM $ map (\d -> compileError $ "Defined at " ++ formatFullContext (dcContext d)) ds
 
 compileModuleMain :: (Show c, Monad m, CompileErrorM m, MergeableM m) =>
   CategoryModule c -> CategoryName -> FunctionName -> m CxxOutput
