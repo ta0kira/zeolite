@@ -108,10 +108,10 @@ pairProceduresToFunctions fa ps = do
       case epName p `Map.lookup` pa' of
            Nothing -> return ()
            -- TODO: The error might show things in the wrong order.
-           (Just p0) -> compileError $ "Procedure " ++ show (epName p) ++ " [" ++
-                                       formatFullContext (epContext p) ++
-                                       "] is already defined [" ++
-                                       formatFullContext (epContext p0) ++ "]"
+           (Just p0) -> compileError $ "Procedure " ++ show (epName p) ++
+                                       formatFullContextBrace (epContext p) ++
+                                       " is already defined" ++
+                                       formatFullContextBrace (epContext p0)
       return $ Map.insert (epName p) p pa'
     updatePairs fa pa n ps = do
       ps' <- ps
@@ -119,26 +119,26 @@ pairProceduresToFunctions fa ps = do
       return (p:ps')
     getPair (Just f) Nothing =
       compileError $ "Function " ++ show (sfName f) ++
-                     " [" ++ formatFullContext (sfContext f) ++
-                     "] has no procedure definition"
+                     formatFullContextBrace (sfContext f) ++
+                     " has no procedure definition"
     getPair Nothing (Just p) =
       compileError $ "Procedure " ++ show (epName p) ++
-                     " [" ++ formatFullContext (epContext p) ++
-                     "] does not correspond to a function"
+                     formatFullContextBrace (epContext p) ++
+                     " does not correspond to a function"
     getPair (Just f) (Just p) = do
       processParamPairs alwaysPairParams (sfArgs f) (avNames $ epArgs p) `reviseError`
-        ("Procedure for " ++ show (sfName f) ++ " [" ++
-         formatFullContext (avContext $ epArgs p) ++
-         "] has the wrong number of arguments [" ++
-         formatFullContext (sfContext f) ++ "]")
+        ("Procedure for " ++ show (sfName f) ++
+         formatFullContextBrace (avContext $ epArgs p) ++
+         " has the wrong number of arguments" ++
+         formatFullContextBrace (sfContext f))
       if isUnnamedReturns (epReturns p)
          then return ()
          else do
            processParamPairs alwaysPairParams (sfReturns f) (nrNames $ epReturns p) `reviseError`
-             ("Procedure for " ++ show (sfName f) ++ " [" ++
-              formatFullContext (nrContext $ epReturns p) ++
-              "] has the wrong number of returns [" ++
-              formatFullContext (sfContext f) ++ "]")
+             ("Procedure for " ++ show (sfName f) ++
+              formatFullContextBrace (nrContext $ epReturns p) ++
+              " has the wrong number of returns" ++
+              formatFullContextBrace (sfContext f))
            return ()
       return (f,p)
 
@@ -150,10 +150,10 @@ mapMembers ms = foldr update (return Map.empty) ms where
     case dmName m `Map.lookup` ma' of
          Nothing ->  return ()
          -- TODO: The error might show things in the wrong order.
-         (Just m0) -> compileError $ "Member " ++ show (dmName m) ++ " [" ++
-                                     formatFullContext (dmContext m) ++
-                                     "] is already defined [" ++
-                                     formatFullContext (vvContext m0) ++ "]"
+         (Just m0) -> compileError $ "Member " ++ show (dmName m) ++
+                                     formatFullContextBrace (dmContext m) ++
+                                     " is already defined" ++
+                                     formatFullContextBrace (vvContext m0)
     return $ Map.insert (dmName m) (VariableValue (dmContext m) (dmScope m) (dmType m) True) ma'
 
 -- TODO: Most of this duplicates parts of flattenAllConnections.

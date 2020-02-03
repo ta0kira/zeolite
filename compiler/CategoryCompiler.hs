@@ -121,18 +121,18 @@ instance (Show c, MergeableM m, CompileErrorM m, Monad m) =>
     checkFunction (Just f) = do
       when (pcDisallowInit ctx && t == pcType ctx && pcScope ctx == CategoryScope) $
         compileError $ "Function " ++ show n ++
-                       " disallowed during initialization [" ++ formatFullContext c ++ "]"
+                       " disallowed during initialization" ++ formatFullContextBrace c
       when (sfScope f /= CategoryScope) $
         compileError $ "Function " ++ show n ++ " in " ++ show t ++ " cannot be used as a category function"
       return f
     checkFunction _ =
       compileError $ "Category " ++ show t ++
-                     " does not have a category function named " ++ show n ++ " [" ++
-                     formatFullContext c ++ "]"
+                     " does not have a category function named " ++ show n ++
+                     formatFullContextBrace c
   ccGetTypeFunction ctx c t n = getFunction t where
     getFunction (Just t@(TypeMerge MergeUnion _)) =
       compileError $ "Use explicit type conversion to call " ++ show n ++ " for union type " ++
-                     show t ++ " [" ++ formatFullContext c ++ "]"
+                     show t ++ formatFullContextBrace c
     getFunction (Just t@(TypeMerge MergeIntersect ts)) =
       collectOneOrErrorM $ map getFunction $ map Just ts
     getFunction (Just (SingleType (JustParamName p))) = do
@@ -144,7 +144,7 @@ instance (Show c, MergeableM m, CompileErrorM m, Monad m) =>
       let ds = map dfType $ filter isDefinesFilter  fs
       collectOneOrErrorM $
         [compileError $ "Function " ++ show n ++ " not available for param " ++ show p ++
-         " [" ++ formatFullContext c ++ "]"] ++
+         formatFullContextBrace c] ++
         (map getFunction $ map (Just . SingleType) ts) ++ (map checkDefine ds)
     getFunction (Just (SingleType (JustTypeInstance t)))
       -- Same category as the procedure itself.
@@ -167,22 +167,22 @@ instance (Show c, MergeableM m, CompileErrorM m, Monad m) =>
     checkFunction t2 ps1 ps2 (Just f) = do
       when (pcDisallowInit ctx && t2 == pcType ctx) $
         compileError $ "Function " ++ show n ++
-                       " disallowed during initialization [" ++ formatFullContext c ++ "]"
+                       " disallowed during initialization" ++ formatFullContextBrace c
       when (sfScope f == CategoryScope) $
         compileError $ "Function " ++ show n ++ " in " ++ show t2 ++
-                       " is a category function [" ++ formatFullContext c ++ "]"
+                       " is a category function" ++ formatFullContextBrace c
       paired <- processParamPairs alwaysPairParams ps1 ps2 `reviseError`
         ("In external function call at " ++ formatFullContext c)
       let assigned = Map.fromList paired
       uncheckedSubFunction assigned f
     checkFunction t2 _ _ _ =
       compileError $ "Category " ++ show t2 ++
-                     " does not have a type or value function named " ++ show n ++ " [" ++
-                     formatFullContext c ++ "]"
+                     " does not have a type or value function named " ++ show n ++
+                     formatFullContextBrace c
   ccCheckValueInit ctx c (TypeInstance t as) ts ps
     | t /= pcType ctx =
       compileError $ "Category " ++ show (pcType ctx) ++ " cannot initialize values from " ++
-                     show t ++ " [" ++ formatFullContext c ++ "]"
+                     show t ++ formatFullContextBrace c
     | otherwise = flip reviseError ("In initialization at " ++ formatFullContext c) $ do
       let t' = TypeInstance (pcType ctx) as
       r <- ccResolver ctx
@@ -210,21 +210,21 @@ instance (Show c, MergeableM m, CompileErrorM m, Monad m) =>
           collectAllOrErrorM $ map (uncheckedSubFilter $ getValueForParam fm) fs
         checkInit r fa (MemberValue c n t0) (i,t1) = do
           checkValueTypeMatch r fa t1 t0 `reviseError`
-            ("In initializer " ++ show i ++ " for " ++ show n ++ " [" ++ formatFullContext c ++ "]")
+            ("In initializer " ++ show i ++ " for " ++ show n ++ formatFullContextBrace c)
         subSingle pa (DefinedMember c _ t n _) = do
           t' <- uncheckedSubValueType (getValueForParam pa) t
           return $ MemberValue c n t'
   ccGetVariable ctx c n =
     case n `Map.lookup` pcVariables ctx of
           (Just v) -> return v
-          _ -> compileError $ "Variable " ++ show n ++ " is not defined [" ++
-                              formatFullContext c ++ "]"
+          _ -> compileError $ "Variable " ++ show n ++ " is not defined" ++
+                              formatFullContextBrace c
   ccAddVariable ctx c n t = do
     case n `Map.lookup` pcVariables ctx of
           Nothing -> return ()
-          (Just v) -> compileError $ "Variable " ++ show n ++ " [" ++
-                                    formatFullContext c ++
-                                    "] is already defined: " ++ show v
+          (Just v) -> compileError $ "Variable " ++ show n ++
+                                    formatFullContextBrace c ++
+                                    " is already defined: " ++ show v
     return $ ProcedureContext {
         pcScope = pcScope ctx,
         pcType = pcType ctx,
@@ -249,7 +249,7 @@ instance (Show c, MergeableM m, CompileErrorM m, Monad m) =>
   ccCheckVariableInit ctx c n =
     case pcReturns ctx of
          ValidateNames _ na -> when (n `Map.member` na) $
-           compileError $ "Named return " ++ show n ++ " might not be initialized [" ++ formatFullContext c ++ "]"
+           compileError $ "Named return " ++ show n ++ " might not be initialized" ++ formatFullContextBrace c
          _ -> return ()
   ccWrite ctx ss = return $
     ProcedureContext {
@@ -485,9 +485,9 @@ updateReturnVariables ma rs1 rs2 = updated where
           case ovName r `Map.lookup` va' of
                Nothing -> return $ Map.insert (ovName r) (VariableValue c LocalScope t True) va'
                (Just v) -> compileError $ "Variable " ++ show (ovName r) ++
-                                          " [" ++ formatFullContext (ovContext r) ++
-                                          "] is already defined [" ++
-                                          formatFullContext (vvContext v) ++ "]"
+                                          formatFullContextBrace (ovContext r) ++
+                                          " is already defined" ++
+                                          formatFullContextBrace (vvContext v)
 
 updateArgVariables :: (Show c, Monad m, CompileErrorM m, MergeableM m) =>
   (Map.Map VariableName (VariableValue c)) ->
@@ -502,6 +502,6 @@ updateArgVariables ma as1 as2 = do
       case ivName a `Map.lookup` va' of
             Nothing -> return $ Map.insert (ivName a) (VariableValue c LocalScope t False) va'
             (Just v) -> compileError $ "Variable " ++ show (ivName a) ++
-                                       " [" ++ formatFullContext (ivContext a) ++
-                                       "] is already defined [" ++
-                                       formatFullContext (vvContext v) ++ "]"
+                                       formatFullContextBrace (ivContext a) ++
+                                       " is already defined" ++
+                                       formatFullContextBrace (vvContext v)

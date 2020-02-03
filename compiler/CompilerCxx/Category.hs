@@ -106,9 +106,9 @@ compileCategoryModule (CategoryModule tm ns cs xa) = do
            Nothing -> return ()
            Just [_] -> return ()
            Just ds ->
-             flip reviseError ("Public category " ++ show (getCategoryName t) ++ " [" ++
-                               formatFullContext (getCategoryContext t) ++
-                               "] is defined " ++ show (length ds) ++ " times") $
+             flip reviseError ("Public category " ++ show (getCategoryName t) ++
+                               formatFullContextBrace (getCategoryContext t) ++
+                               " is defined " ++ show (length ds) ++ " times") $
                mergeAllM $ map (\d -> compileError $ "Defined at " ++ formatFullContext (dcContext d)) ds
 
 compileModuleMain :: (Show c, Monad m, CompileErrorM m, MergeableM m) =>
@@ -288,8 +288,8 @@ compileConcreteDefinition ta ns dd@(DefinedCategory c n pi _ _ fi ms ps fs) = do
     disallowTypeMembers tm =
       mergeAllM $ flip map tm
         (\m -> compileError $ "Member " ++ show (dmName m) ++
-                              " is not allowed to be @type-scoped [" ++
-                              formatFullContext (dmContext m) ++ "]")
+                              " is not allowed to be @type-scoped" ++
+                              formatFullContextBrace (dmContext m))
     createParams = mergeAllM $ map createParam pi
     createParam p = return $ onlyCode $ paramType ++ " " ++ paramName (vpParam p) ++ ";"
     builtins t s0 = Map.filter ((<= s0) . vvScope) $ builtinVariables t
@@ -382,7 +382,7 @@ compileConcreteDefinition ta ns dd@(DefinedCategory c n pi _ _ fi ms ps fs) = do
       mergeAllM $ map (checkFilter r fa') fi
     checkFilter r fa (ParamFilter c n f) =
       validateTypeFilter r fa f `reviseError`
-        (show n ++ " " ++ show f ++ " [" ++ formatFullContext c ++ "]")
+        (show n ++ " " ++ show f ++ formatFullContextBrace c)
     checkFunction pm f =
       when (sfScope f == ValueScope) $
         mergeAllM $ map (checkParam pm) $ psParams $ sfParams f
@@ -390,8 +390,8 @@ compileConcreteDefinition ta ns dd@(DefinedCategory c n pi _ _ fi ms ps fs) = do
       case vpParam p `Map.lookup` pm of
            Nothing -> return ()
            (Just c) -> compileError $ "Internal param " ++ show (vpParam p) ++
-                                      " [" ++ formatFullContext c ++
-                                      "] is already defined at " ++
+                                      formatFullContextBrace c ++
+                                      " is already defined at " ++
                                       formatFullContext (vpContext p)
 
 commonDefineAll :: (MergeableM m, Monad m) =>

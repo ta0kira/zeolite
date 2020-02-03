@@ -37,6 +37,7 @@ module TypeCategory (
   declareAllTypes, -- TODO: Remove?
   flattenAllConnections,
   formatFullContext,
+  formatFullContextBrace,
   getCategory,
   getCategoryContext,
   getCategoryDefines,
@@ -113,6 +114,10 @@ data AnyCategory c =
 
 formatFullContext :: Show a => [a] -> String
 formatFullContext cs = intercalate " -> " (map show cs)
+
+formatFullContextBrace :: Show a => [a] -> String
+formatFullContextBrace [] = ""
+formatFullContextBrace cs = " [" ++ intercalate " -> " (map show cs) ++ "]"
 
 instance Show c => Show (AnyCategory c) where
   show = format where
@@ -249,7 +254,7 @@ data ValueRefine c =
   }
 
 instance Show c => Show (ValueRefine c) where
-  show (ValueRefine c t) = show t ++ " [" ++ formatFullContext c ++ "]"
+  show (ValueRefine c t) = show t ++ formatFullContextBrace c
 
 data ValueDefine c =
   ValueDefine {
@@ -258,7 +263,7 @@ data ValueDefine c =
   }
 
 instance Show c => Show (ValueDefine c) where
-  show (ValueDefine c t) = show t ++ " [" ++ formatFullContext c ++ "]"
+  show (ValueDefine c t) = show t ++ formatFullContextBrace c
 
 data ValueParam c =
   ValueParam {
@@ -268,7 +273,7 @@ data ValueParam c =
   }
 
 instance Show c => Show (ValueParam c) where
-  show (ValueParam c t v) = show t ++ " (" ++ show v ++ ") [" ++ formatFullContext c ++ "]"
+  show (ValueParam c t v) = show t ++ " (" ++ show v ++ ")" ++ formatFullContextBrace c
 
 data ParamFilter c =
   ParamFilter {
@@ -278,7 +283,7 @@ data ParamFilter c =
   }
 
 instance Show c => Show (ParamFilter c) where
-  show (ParamFilter c n f) = show n ++ " " ++ show f ++ " [" ++ formatFullContext c ++ "]"
+  show (ParamFilter c n f) = show n ++ " " ++ show f ++ formatFullContextBrace c
 
 
 type CategoryMap c = Map.Map CategoryName (AnyCategory c)
@@ -292,7 +297,7 @@ getCategory tm (c,n) =
   where
     context
       | null c = ""
-      | otherwise = " [" ++ formatFullContext c ++ "]"
+      | otherwise = formatFullContextBrace c
 
 getValueCategory :: (Show c, CompileErrorM m, Monad m) =>
   CategoryMap c -> ([c],CategoryName) -> m ([c],AnyCategory c)
@@ -301,8 +306,8 @@ getValueCategory tm (c,n) = do
   if isValueInterface t || isValueConcrete t
      then return (c2,t)
      else compileError $ "Category " ++ show n ++
-                         " cannot be used as a value [" ++
-                         formatFullContext c ++ "]"
+                         " cannot be used as a value" ++
+                         formatFullContextBrace c
 
 getInstanceCategory :: (Show c, CompileErrorM m, Monad m) =>
   CategoryMap c -> ([c],CategoryName) -> m ([c],AnyCategory c)
@@ -311,8 +316,8 @@ getInstanceCategory tm (c,n) = do
   if isInstanceInterface t
      then return (c2,t)
      else compileError $ "Category " ++ show n ++
-                         " cannot be used as a type interface [" ++
-                         formatFullContext c ++ "]"
+                         " cannot be used as a type interface" ++
+                         formatFullContextBrace c
 
 getConcreteCategory :: (Show c, CompileErrorM m, Monad m) =>
   CategoryMap c -> ([c],CategoryName) -> m ([c],AnyCategory c)
@@ -321,8 +326,8 @@ getConcreteCategory tm (c,n) = do
   if isValueConcrete t
      then return (c2,t)
      else compileError $ "Category " ++ show n ++
-                         " cannot be used as concrete [" ++
-                         formatFullContext c ++ "]"
+                         " cannot be used as concrete" ++
+                         formatFullContextBrace c
 
 includeNewTypes :: (Show c, MergeableM m, CompileErrorM m, Monad m) =>
   CategoryMap c -> [AnyCategory c] -> m (CategoryMap c)
@@ -341,13 +346,13 @@ declareAllTypes tm0 = foldr (\t tm -> tm >>= update t) (return tm0) where
   update t tm =
     case getCategoryName t `Map.lookup` tm of
         (Just t2) -> compileError $ "Type " ++ show (getCategoryName t) ++
-                                    " [" ++ formatFullContext (getCategoryContext t) ++
-                                    "] has already been declared [" ++
-                                    showExisting t2 ++ "]"
+                                    formatFullContextBrace (getCategoryContext t) ++
+                                    " has already been declared" ++
+                                    showExisting t2
         _ -> return $ Map.insert (getCategoryName t) t tm
   showExisting t
-    | isBuiltinCategory (getCategoryName t) = "builtin type"
-    | otherwise = formatFullContext (getCategoryContext t)
+    | isBuiltinCategory (getCategoryName t) = " [builtin type]"
+    | otherwise = formatFullContextBrace (getCategoryContext t)
 
 getFilterMap :: [ValueParam c] -> [ParamFilter c] -> ParamFilters
 getFilterMap ps fs = getFilters $ zip (Set.toList pa) (repeat []) where
@@ -385,41 +390,41 @@ checkConnectedTypes tm0 ts = do
     checkSingle _ _ = return ()
     valueRefinesInstanceError c n (c2,t)
       | isInstanceInterface t =
-        compileError $ "Value interface " ++ show n ++ " [" ++ formatFullContext c ++ "]" ++
+        compileError $ "Value interface " ++ show n ++ formatFullContextBrace c ++
                       " cannot refine type interface " ++
-                      show (iiName t) ++ " [" ++ formatFullContext c2 ++ "]"
+                      show (iiName t) ++ formatFullContextBrace c2
       | otherwise = return ()
     valueRefinesConcreteError c n (c2,t)
       | isValueConcrete t =
-        compileError $ "Value interface " ++ show n ++ " [" ++ formatFullContext c ++ "]" ++
+        compileError $ "Value interface " ++ show n ++ formatFullContextBrace c ++
                       " cannot refine concrete type " ++
-                      show (getCategoryName t) ++ " [" ++ formatFullContext c2 ++ "]"
+                      show (getCategoryName t) ++ formatFullContextBrace c2
       | otherwise = return ()
     concreteRefinesInstanceError c n (c2,t)
       | isInstanceInterface t =
-        compileError $ "Concrete type " ++ show n ++ " [" ++ formatFullContext c ++ "]" ++
+        compileError $ "Concrete type " ++ show n ++ formatFullContextBrace c ++
                       " cannot refine instance interface " ++
-                      show (getCategoryName t) ++ " [" ++ formatFullContext c2 ++ "]" ++
+                      show (getCategoryName t) ++ formatFullContextBrace c2 ++
                       " => use defines instead"
       | otherwise = return ()
     concreteDefinesValueError c n (c2,t)
       | isValueInterface t =
-        compileError $ "Concrete type " ++ show n ++ " [" ++ formatFullContext c ++ "]" ++
+        compileError $ "Concrete type " ++ show n ++ formatFullContextBrace c ++
                       " cannot define value interface " ++
-                      show (getCategoryName t) ++ " [" ++ formatFullContext c2 ++ "]" ++
+                      show (getCategoryName t) ++ formatFullContextBrace c2 ++
                       " => use refines instead"
       | otherwise = return ()
     concreteRefinesConcreteError c n (c2,t)
       | isValueConcrete t =
-        compileError $ "Concrete type " ++ show n ++ " [" ++ formatFullContext c ++ "]" ++
+        compileError $ "Concrete type " ++ show n ++ formatFullContextBrace c ++
                       " cannot refine concrete type " ++
-                      show (getCategoryName t) ++ " [" ++ formatFullContext c2 ++ "]"
+                      show (getCategoryName t) ++ formatFullContextBrace c2
       | otherwise = return ()
     concreteDefinesConcreteError c n (c2,t)
       | isValueConcrete t =
-        compileError $ "Concrete type " ++ show n ++ " [" ++ formatFullContext c ++ "]" ++
+        compileError $ "Concrete type " ++ show n ++ formatFullContextBrace c ++
                       " cannot define concrete type " ++
-                      show (getCategoryName t) ++ " [" ++ formatFullContext c2 ++ "]"
+                      show (getCategoryName t) ++ formatFullContextBrace c2
       | otherwise = return ()
 
 checkConnectionCycles :: (Show c, MergeableM m, CompileErrorM m, Monad m) =>
@@ -439,8 +444,8 @@ checkConnectionCycles tm0 ts = mergeAllM (map (checker []) ts) where
   checker _ _ = return ()
   failIfCycle n c us =
     when (n `Set.member` (Set.fromList us)) $
-      compileError $ "Category " ++ show n ++ " [" ++
-                     formatFullContext c ++ "] refers back to itself: " ++
+      compileError $ "Category " ++ show n ++ formatFullContextBrace c ++
+                     " refers back to itself: " ++
                      intercalate " -> " (map show (us ++ [n]))
 
 checkParamVariances :: (Show c, MergeableM m, CompileErrorM m, Monad m) =>
@@ -468,16 +473,16 @@ checkParamVariances tm0 ts = do
     noDuplicates c n ps = mergeAllM (map checkCount $ group $ sort $ map vpParam ps) where
       checkCount xa@(x:_:_) =
         compileError $ "Param " ++ show x ++ " occurs " ++ show (length xa) ++
-                      " times in " ++ show n ++ " [" ++ formatFullContext c ++ "]"
+                      " times in " ++ show n ++ formatFullContextBrace c
       checkCount _ = return ()
     checkRefine r vm (ValueRefine c t) =
       validateInstanceVariance r vm Covariant (SingleType $ JustTypeInstance t) `reviseError`
-        (show t ++ " [" ++ formatFullContext c ++ "]")
+        (show t ++ formatFullContextBrace c)
     checkDefine r vm (ValueDefine c t) =
       validateDefinesVariance r vm Covariant t `reviseError`
-        (show t ++ " [" ++ formatFullContext c ++ "]")
+        (show t ++ formatFullContextBrace c)
     checkFilterVariance r vs (ParamFilter c n f@(TypeFilter FilterRequires t)) =
-      flip reviseError ("In filter " ++ show n ++ " " ++ show f ++ " [" ++ formatFullContext c ++ "]") $ do
+      flip reviseError ("In filter " ++ show n ++ " " ++ show f ++ formatFullContextBrace c) $ do
         case n `Map.lookup` vs of
              Just Contravariant -> compileError $ "Contravariant param " ++ show n ++
                                                   " cannot have a requires filter"
@@ -485,7 +490,7 @@ checkParamVariances tm0 ts = do
              _ -> return ()
         validateInstanceVariance r vs Contravariant (SingleType t)
     checkFilterVariance r vs (ParamFilter c n f@(TypeFilter FilterAllows t)) =
-      flip reviseError ("In filter " ++ show n ++ " " ++ show f ++ " [" ++ formatFullContext c ++ "]") $ do
+      flip reviseError ("In filter " ++ show n ++ " " ++ show f ++ formatFullContextBrace c) $ do
         case n `Map.lookup` vs of
              Just Covariant -> compileError $ "Covariant param " ++ show n ++
                                               " cannot have an allows filter"
@@ -493,7 +498,7 @@ checkParamVariances tm0 ts = do
              _ -> return ()
         validateInstanceVariance r vs Covariant (SingleType t)
     checkFilterVariance r vs (ParamFilter c n f@(DefinesFilter t)) =
-      flip reviseError ("In filter " ++ show n ++ " " ++ show f ++ " [" ++ formatFullContext c ++ "]") $ do
+      flip reviseError ("In filter " ++ show n ++ " " ++ show f ++ formatFullContextBrace c) $ do
         case n `Map.lookup` vs of
              Just Contravariant -> compileError $ "Contravariant param " ++ show n ++
                                                   " cannot have a defines filter"
@@ -519,16 +524,16 @@ checkCategoryInstances tm0 ts = do
       mergeAllM $ map (validateCategoryFunction r t) (getCategoryFunctions t)
     checkFilterParam pa (ParamFilter c n _) =
       when (not $ n `Set.member` pa) $
-        compileError $ "Param " ++ show n ++ " [" ++ formatFullContext c ++ "] does not exist"
+        compileError $ "Param " ++ show n ++ formatFullContextBrace c ++ " does not exist"
     checkRefine r fm (ValueRefine c t) =
       validateTypeInstance r fm t `reviseError`
-        (show t ++ " [" ++ formatFullContext c ++ "]")
+        (show t ++ formatFullContextBrace c)
     checkDefine r fm (ValueDefine c t) =
       validateDefinesInstance r fm t `reviseError`
-        (show t ++ " [" ++ formatFullContext c ++ "]")
+        (show t ++ formatFullContextBrace c)
     checkFilter r fm (ParamFilter c n f) =
       validateTypeFilter r fm f `reviseError`
-        (show n ++ " " ++ show f ++ " [" ++ formatFullContext c ++ "]")
+        (show n ++ " " ++ show f ++ formatFullContextBrace c)
 
 validateCategoryFunction :: (Show c, MergeableM m, CompileErrorM m, Monad m) =>
   TypeResolver m -> AnyCategory c -> ScopedFunction c -> m ()
@@ -612,7 +617,7 @@ noDuplicates c n ns =
                                sortBy (\x y -> fst x `compare` fst y) ns where
     checkCount xa@(x:_:_) =
       compileError $ "Category " ++ show (fst x) ++ " occurs " ++ show (length xa) ++
-                      " times in " ++ show n ++ " [" ++ formatFullContext c ++ "] :\n---\n" ++
+                      " times in " ++ show n ++ formatFullContextBrace c ++ " :\n---\n" ++
                       intercalate "\n---\n" (map (show . snd) xa)
     checkCount _ = return ()
 
@@ -639,8 +644,8 @@ flattenAllConnections tm0 ts = do
     update r t u = do
       (ts,tm) <- u
       t' <- updateSingle r tm t `reviseError`
-              ("In category " ++ show (getCategoryName t) ++ " [" ++
-               formatFullContext (getCategoryContext t) ++ "]")
+              ("In category " ++ show (getCategoryName t) ++
+               formatFullContextBrace (getCategoryContext t))
       return (ts ++ [t'],Map.insert (getCategoryName t') t' tm)
     updateSingle r tm t@(ValueInterface c ns n ps rs vs fs) = do
       let fm = getCategoryFilterMap t
@@ -870,7 +875,7 @@ data PassedValue c =
   }
 
 instance Show c => Show (PassedValue c) where
-  show (PassedValue c t) = show t ++ " [" ++ formatFullContext c ++ "]"
+  show (PassedValue c t) = show t ++ formatFullContextBrace c
 
 parsedToFunctionType :: (Show c, MergeableM m, CompileErrorM m, Monad m) =>
   ScopedFunction c -> m FunctionType
@@ -888,7 +893,7 @@ parsedToFunctionType (ScopedFunction c n t _ as rs ps fa _) = do
       when (not $ (pfParam f) `Set.member` pa) $
       compileError $ "Filtered param " ++ show (pfParam f) ++
                      " is not defined for function " ++ show n ++
-                     " [" ++ formatFullContext c ++ "]"
+                     formatFullContextBrace c
     getFilters fm n =
       case n `Map.lookup` fm of
            (Just fs) -> fs

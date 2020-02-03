@@ -61,9 +61,9 @@ runSingleTest paths deps os tm (f,s) = do
         return ((passed,failed),mergeAllM allResults)
     runSingle t = do
       let name = ithTestName $ itHeader t
-      let context = "[" ++ formatFullContext (ithContext $ itHeader t) ++ "]"
+      let context = formatFullContextBrace (ithContext $ itHeader t)
       hPutStrLn stderr $ "\n*** Executing test \"" ++ name ++ "\" ***"
-      outcome <- fmap (flip reviseError ("\nIn test \"" ++ name ++ "\" " ++ context)) $
+      outcome <- fmap (flip reviseError ("\nIn test \"" ++ name ++ "\"" ++ context)) $
                    run name (ithResult $ itHeader t) (itCategory t) (itDefinition t)
       if isCompileError outcome
          then hPutStrLn stderr $ "*** Test \"" ++ name ++ "\" failed ***"
