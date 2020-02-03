@@ -113,20 +113,27 @@ runSingleTest paths deps os tm (f,s) = do
                 (False,True) -> return $ compileError "Expected runtime failure"
                 _ -> return $ checkContent rs es warnings err out
 
-    -- TODO: Combine this with the logic in runCompiler.
     compileAll e cs ds = do
       let ns0 = map (StaticNamespace . cmNamespace) deps
       let ns1 = StaticNamespace $ privateNamespace s
       let cs' = map (setCategoryNamespace ns1) cs
+      let cm = CategoryModule {
+          cnBase = tm,
+          cnNamespaces = ns0,
+          cnPublic = [],
+          cnPrivate = [PrivateSource {
+              psNamespace = ns1,
+              psCategory = cs',
+              psDefine = ds
+            }]
+        }
+      xx <- compileCategoryModule cm
       tm' <- includeNewTypes tm cs'
-      hxx <- collectAllOrErrorM $ map (compileCategoryDeclaration tm') cs'
-      cxx <- collectAllOrErrorM $ map (compileConcreteDefinition tm' (ns1:ns0)) ds
-      let interfaces = filter (not . isValueConcrete) cs'
-      cxx2 <- collectAllOrErrorM $ map compileInterfaceDefinition interfaces
       (req,main) <- case e of
                          Just e -> createTestFile tm' e
                          Nothing -> return ([],[])
-      return (req,main,ns1,hxx ++ cxx ++ cxx2)
+      return (req,main,ns1,xx)
+
     checkRequired rs comp err out = mergeAllM $ map (checkSubsetForRegex True  comp err out) rs
     checkExcluded es comp err out = mergeAllM $ map (checkSubsetForRegex False comp err out) es
     checkSubsetForRegex expected comp err out (OutputPattern OutputAny r) =

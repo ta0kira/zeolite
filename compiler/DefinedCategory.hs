@@ -24,6 +24,7 @@ module DefinedCategory (
   VariableValue(..),
   isInitialized,
   mapMembers,
+  mergeInternalInheritance,
   pairProceduresToFunctions,
   setInternalFunctions,
 ) where
@@ -154,3 +155,13 @@ mapMembers ms = foldr update (return Map.empty) ms where
                                      "] is already defined [" ++
                                      formatFullContext (vvContext m0) ++ "]"
     return $ Map.insert (dmName m) (VariableValue (dmContext m) (dmScope m) (dmType m) True) ma'
+
+mergeInternalInheritance :: (Show c, Monad m, CompileErrorM m, MergeableM m) =>
+  [AnyCategory c] -> [DefinedCategory c] -> m [AnyCategory c]
+mergeInternalInheritance cs ds = collectAllOrErrorM $ map merge cs where
+  dm = Map.fromList $ map (\d -> (dcName d,d)) ds
+  merge ca@(ValueConcrete c ns n ps rs ds vs fs) = do
+    case n `Map.lookup` dm of
+         Nothing -> return ca
+         Just d -> return $ ValueConcrete c ns n ps (rs ++ dcRefines d) (ds ++ dcDefines d) vs fs
+  merge c = return c

@@ -1,6 +1,8 @@
 @value interface Value0 {}
 
-@value interface Value1 {}
+@value interface Value1 {
+  refines Value0
+}
 
 @value interface Value2<|#x> {}
 

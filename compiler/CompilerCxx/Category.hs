@@ -20,13 +20,17 @@ limitations under the License.
 {-# LANGUAGE Safe #-}
 
 module CompilerCxx.Category (
+  CategoryModule(..),
   CxxOutput(..),
+  PrivateSource(..),
   createMainFile,
   createTestFile,
   compileCategoryDeclaration,
+  compileCategoryModule,
   compileConcreteDefinition,
   compileConcreteTemplate,
   compileInterfaceDefinition,
+  compileModuleMain,
 ) where
 
 import Control.Monad (when)
@@ -57,6 +61,60 @@ data CxxOutput =
     coUsesCategory :: [CategoryName],
     coOutput :: [String]
   }
+
+data CategoryModule c =
+  CategoryModule {
+    cnBase :: CategoryMap c,
+    cnNamespaces :: [Namespace],
+    cnPublic :: [AnyCategory c],
+    cnPrivate :: [PrivateSource c]
+  }
+
+data PrivateSource c =
+  PrivateSource {
+    psNamespace :: Namespace,
+    psCategory :: [AnyCategory c],
+    psDefine :: [DefinedCategory c]
+  }
+
+compileCategoryModule :: (Show c, Monad m, CompileErrorM m, MergeableM m) =>
+  CategoryModule c -> m [CxxOutput]
+compileCategoryModule (CategoryModule tm ns cs xa) = do
+  tm' <- includeNewTypes tm cs
+  hxx <- collectAllOrErrorM $ map (compileCategoryDeclaration tm') cs
+  let interfaces = filter (not . isValueConcrete) cs
+  cxx <- collectAllOrErrorM $ map compileInterfaceDefinition interfaces
+  xx <- fmap concat $ collectAllOrErrorM $ map compileInternal xa
+  return $ hxx ++ cxx ++ xx where
+    -- TODO: There should be an error if multiple .0rx files define the same
+    -- concrete category from a .0rp.
+    compileInternal (PrivateSource ns1 cs2 ds) = do
+      let cs' = cs++cs2
+      tm' <- includeNewTypes tm cs'
+      hxx <- collectAllOrErrorM $ map (compileCategoryDeclaration tm') cs2
+      let interfaces = filter (not . isValueConcrete) cs2
+      cxx1 <- collectAllOrErrorM $ map compileInterfaceDefinition interfaces
+      cxx2 <- collectAllOrErrorM $ map (compileConcreteDefinition tm' (ns1:ns)) ds
+      return $ hxx ++ cxx1 ++ cxx2
+
+compileModuleMain :: (Show c, Monad m, CompileErrorM m, MergeableM m) =>
+  CategoryModule c -> CategoryName -> FunctionName -> m CxxOutput
+compileModuleMain (CategoryModule tm ns cs xa) n f = do
+  tm' <- includeNewTypes tm cs
+  xx <- fmap concat $ collectAllOrErrorM $ filter (not . isCompileError) $ map maybeCompileMain xa
+  reconcile xx where
+    maybeCompileMain (PrivateSource _ cs2 ds) = do
+      let cs' = cs++cs2
+      tm' <- includeNewTypes tm cs'
+      let dm = Set.fromList $ map dcName ds
+      if n `Set.member` dm
+         then do
+           (ns,main) <- createMainFile tm' n f
+           return [CxxOutput Nothing mainFilename NoNamespace [ns] [n] main]
+         else return []
+    reconcile [x] = return x
+    reconcile []  = compileErrorM $ "No matches for main category " ++ show n
+    reconcile _   = compileErrorM $ "Multiple matches for main category " ++ show n
 
 compileCategoryDeclaration :: Monad m => CategoryMap c -> AnyCategory c -> m CxxOutput
 compileCategoryDeclaration _ t =
@@ -668,15 +726,15 @@ createMainCommon n (CompiledData req out) =
                           filter (not . isBuiltinCategory) $ Set.toList req
 
 createMainFile :: (Show c, Monad m, CompileErrorM m, MergeableM m) =>
-  CategoryMap c -> AnyCategory c -> String -> m (Namespace,[String])
-createMainFile tm t f = flip reviseError ("In the creation of the main binary procedure") $ do
-  ca <- fmap indentCompiled (compileMainProcedure tm (expr t))
+  CategoryMap c -> CategoryName -> FunctionName -> m (Namespace,[String])
+createMainFile tm n f = flip reviseError ("In the creation of the main binary procedure") $ do
+  ca <- fmap indentCompiled (compileMainProcedure tm expr)
   let file = createMainCommon "main" ca
+  (_,t) <- getConcreteCategory tm ([],n)
   return (getCategoryNamespace t,file) where
-    funcName = FunctionName f
-    funcCall = FunctionCall [] funcName (ParamSet []) (ParamSet [])
-    mainType t = JustTypeInstance $ TypeInstance (getCategoryName t) (ParamSet [])
-    expr t = Expression [] (TypeCall [] (mainType t) funcCall) []
+    funcCall = FunctionCall [] f (ParamSet []) (ParamSet [])
+    mainType = JustTypeInstance $ TypeInstance n (ParamSet [])
+    expr = Expression [] (TypeCall [] mainType funcCall) []
 
 createTestFile :: (Show c, Monad m, CompileErrorM m, MergeableM m) =>
   CategoryMap c -> Expression c -> m ([CategoryName],[String])

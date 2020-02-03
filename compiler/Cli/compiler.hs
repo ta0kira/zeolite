@@ -328,33 +328,27 @@ runCompiler co@(CompileOptions h is is2 ds es ep p m o f) = do
     compileAll ns0 ns2 is cs ds = do
       tm0 <- builtinCategories
       tm1 <- addIncludes tm0 is
-      (pc,tm2,cf) <- compilePublic ns0 tm1 cs
-      ds' <- collectAllOrErrorM $ map (compileInternal ns0 ns2 tm2) ds
-      let (mf,df) = mergeInternal ds'
-      return $ (pc,mf,cf ++ df)
-    addIncludes tm fs = do
-      cs <- fmap concat $ collectAllOrErrorM $ map parsePublicSource fs
-      includeNewTypes tm cs
-    compilePublic ns0 tm fs = do
-      cs <- fmap concat $ collectAllOrErrorM $ map parsePublicSource fs
-      let cs' = map (setCategoryNamespace ns0) cs
-      let pc = map getCategoryName cs'
-      tm' <- includeNewTypes tm cs'
-      hxx <- collectAllOrErrorM $ map (compileCategoryDeclaration tm') cs'
-      let interfaces = filter (not . isValueConcrete) cs'
-      cxx <- collectAllOrErrorM $ map compileInterfaceDefinition interfaces
-      return (pc,tm',hxx ++ cxx)
-    compileInternal ns0 ns2 tm d = do
+      cs' <- fmap concat $ collectAllOrErrorM $ map parsePublicSource cs
+      let cs'' = map (setCategoryNamespace ns0) cs'
+      xa <- collectAllOrErrorM $ map parsePrivate ds
+      let cm = CategoryModule {
+          cnBase = tm1,
+          cnNamespaces = ns0:ns2,
+          cnPublic = cs'',
+          cnPrivate = xa
+        }
+      xx <- compileCategoryModule cm
+      let pc = map getCategoryName cs''
+      ms <- maybeCreateMain cm m
+      return (pc,ms,xx)
+    parsePrivate d = do
       let ns1 = StaticNamespace $ privateNamespace (p </> fst d)
       (cs,ds) <- parseInternalSource d
       let cs' = map (setCategoryNamespace ns1) cs
-      tm' <- includeNewTypes tm cs'
-      hxx <- collectAllOrErrorM $ map (compileCategoryDeclaration tm') cs'
-      cxx <- collectAllOrErrorM $ map (compileConcreteDefinition tm' (ns0:ns1:ns2)) ds
-      let interfaces = filter (not . isValueConcrete) cs'
-      ms <- maybeCreateMain tm' m
-      cxx2 <- collectAllOrErrorM $ map compileInterfaceDefinition interfaces
-      return $ (ms,hxx ++ cxx ++ cxx2)
+      return $ PrivateSource ns1 cs' ds
+    addIncludes tm fs = do
+      cs <- fmap concat $ collectAllOrErrorM $ map parsePublicSource fs
+      includeNewTypes tm cs
     mergeInternal ds = (concat $ map fst ds,concat $ map snd ds)
     getBinaryName (CompileBinary n _) = canonicalizePath $ if null o then n else o
     getBinaryName _                   = return ""
@@ -385,12 +379,8 @@ runCompiler co@(CompileOptions h is is2 ds es ep p m o f) = do
           runCxxCommand command
           removeFile o'
     createBinary _ _ _ = return ()
-    maybeCreateMain tm (CompileBinary n f) = do
-      case (CategoryName n) `Map.lookup` tm of
-        Nothing -> return []
-        Just t -> do
-          (ns,main) <- createMainFile tm t f
-          return [CxxOutput Nothing mainFilename NoNamespace [ns] [getCategoryName t] main]
+    maybeCreateMain cm (CompileBinary n f) =
+      fmap (:[]) $ compileModuleMain cm (CategoryName n) (FunctionName f)
     maybeCreateMain _ _ = return []
 
 checkAllowedStale :: Bool -> ForceMode -> IO ()
