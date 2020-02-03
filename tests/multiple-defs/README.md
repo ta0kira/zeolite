@@ -13,7 +13,7 @@ To compile:
 The compiler error should look something like this:
 
 ```text
-Public category Type is defined 2 times
+Public category Type ["tests/multiple-defs/public.0rp" (line 19, column 1)] is defined 2 times
   Defined at "tests/multiple-defs/private2.0rx" (line 19, column 1)
   Defined at "tests/multiple-defs/private1.0rx" (line 19, column 1)
 ```

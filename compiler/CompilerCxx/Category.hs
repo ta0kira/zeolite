@@ -87,7 +87,7 @@ compileCategoryModule (CategoryModule tm ns cs xa) = do
   xa <- collectAllOrErrorM $ map compileInternal xa
   let xx = concat $ map snd xa
   let dm = Map.fromListWith (++) $ map (\d -> (dcName d,[d])) $ concat $ map fst xa
-  checkDuplicates dm (map getCategoryName cs)
+  checkDuplicates dm cs
   return $ hxx ++ cxx ++ xx where
     compileInternal (PrivateSource ns1 cs2 ds) = do
       let cs' = cs++cs2
@@ -101,12 +101,14 @@ compileCategoryModule (CategoryModule tm ns cs xa) = do
       tm' <- mergeInternalInheritance tm d
       compileConcreteDefinition tm' ns d
     checkDuplicates dm = mergeAllM . map (check dm)
-    check dm n =
-      case n `Map.lookup` dm of
+    check dm t =
+      case getCategoryName t `Map.lookup` dm of
            Nothing -> return ()
            Just [_] -> return ()
            Just ds ->
-             flip reviseError ("Public category " ++ show n ++ " is defined " ++ show (length ds) ++ " times") $
+             flip reviseError ("Public category " ++ show (getCategoryName t) ++ " [" ++
+                               formatFullContext (getCategoryContext t) ++
+                               "] is defined " ++ show (length ds) ++ " times") $
                mergeAllM $ map (\d -> compileError $ "Defined at " ++ formatFullContext (dcContext d)) ds
 
 compileModuleMain :: (Show c, Monad m, CompileErrorM m, MergeableM m) =>
