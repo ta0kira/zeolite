@@ -702,6 +702,8 @@ compileExpressionStart (BuiltinCall c f@(FunctionCall _ BuiltinReduce ps es)) = 
   let (ParamSet [t1,t2]) = ps
   r <- csResolver
   fa <- csAllFilters
+  lift $ validateGeneralInstance r fa t1
+  lift $ validateGeneralInstance r fa t2
   lift $ (checkValueTypeMatch r fa t0 (ValueType OptionalValue t1)) `reviseError`
     ("In argument to reduce call at " ++ formatFullContext c)
   -- TODO: If t1 -> t2 then just return e without a Reduce call.
@@ -711,6 +713,7 @@ compileExpressionStart (BuiltinCall c f@(FunctionCall _ BuiltinReduce ps es)) = 
   csRequiresTypes $ categoriesFromTypes t2
   return $ (ParamSet [ValueType OptionalValue t2],
             UnwrappedSingle $ typeBase ++ "::Reduce(" ++ t1' ++ ", " ++ t2' ++ ", " ++ useAsUnwrapped e ++ ")")
+-- TODO: Compile BuiltinCall like regular functions, for consistent validation.
 compileExpressionStart (BuiltinCall c f@(FunctionCall _ BuiltinRequire ps es)) = do
   when (length (psParams ps) /= 0) $
     lift $ compileError $ "Expected 0 type parameters [" ++ formatFullContext c ++ "]"
@@ -743,10 +746,14 @@ compileExpressionStart (BuiltinCall c f@(FunctionCall _ BuiltinTypename ps es)) 
     lift $ compileError $ "Expected 1 type parameter [" ++ formatFullContext c ++ "]"
   when (length (psParams es) /= 0) $
     lift $ compileError $ "Expected 0 arguments [" ++ formatFullContext c ++ "]"
-  t <- expandGeneralInstance (head $ psParams ps)
+  let t = head $ psParams ps
+  r <- csResolver
+  fa <- csAllFilters
+  lift $ validateGeneralInstance r fa t
+  t' <- expandGeneralInstance t
   csRequiresTypes $ Set.unions $ map categoriesFromTypes $ psParams ps
   return $ (ParamSet [formattedRequiredValue],
-            valueAsWrapped $ UnboxedPrimitive PrimString $ typeBase ++ "::TypeName(" ++ t ++ ")")
+            valueAsWrapped $ UnboxedPrimitive PrimString $ typeBase ++ "::TypeName(" ++ t' ++ ")")
 compileExpressionStart (ParensExpression c e) = compileExpression e
 compileExpressionStart (InlineAssignment c n e) = do
   (VariableValue c2 s t0 w) <- csGetVariable c n

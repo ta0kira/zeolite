@@ -448,3 +448,33 @@ define Test {
 concrete Test {
   @type run () -> ()
 }
+
+
+testcase "bad instance in param" {
+  error
+  require "Test"
+  require "define"
+  require "Equals"
+}
+
+@value interface Value<#x> {
+  #x defines Equals<#x>
+}
+
+concrete Call {
+  @type call<#x> () -> ()
+}
+
+define Call {
+  call () {}
+}
+
+define Test {
+  run () {
+    ~ Call$call<Value<Test>>()
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}

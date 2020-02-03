@@ -124,42 +124,6 @@ concrete Test {
 }
 
 
-testcase "LessThan typename" {
-  success Test$run()
-}
-
-define Test {
-  run () {
-    Formatted name <- typename<LessThan<Int>>()
-    if (name.formatted() != "LessThan<Int>") {
-      fail(name)
-    }
-  }
-}
-
-concrete Test {
-  @type run () -> ()
-}
-
-
-testcase "Equals typename" {
-  success Test$run()
-}
-
-define Test {
-  run () {
-    Formatted name <- typename<Equals<Int>>()
-    if (name.formatted() != "Equals<Int>") {
-      fail(name)
-    }
-  }
-}
-
-concrete Test {
-  @type run () -> ()
-}
-
-
 testcase "ReadPosition typename" {
   success Test$run()
 }
@@ -267,6 +231,36 @@ define Test {
     if (name.formatted() != "Type<String,LessThan<Int>>") {
       fail(name)
     }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "bad instance in typename param" {
+  error
+  require "Test"
+  require "define"
+  require "Equals"
+}
+
+@value interface Value<#x> {
+  #x defines Equals<#x>
+}
+
+concrete Call {
+  @type call<#x> () -> ()
+}
+
+define Call {
+  call () {}
+}
+
+define Test {
+  run () {
+    ~ typename<Value<Test>>()
   }
 }
 

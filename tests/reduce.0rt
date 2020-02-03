@@ -796,3 +796,33 @@ define Test {
 concrete Test {
   @type run () -> ()
 }
+
+
+testcase "bad instance in reduce param" {
+  error
+  require "Test"
+  require "define"
+  require "Equals"
+}
+
+@value interface Value<#x> {
+  #x defines Equals<#x>
+}
+
+concrete Call {
+  @type call<#x> () -> ()
+}
+
+define Call {
+  call () {}
+}
+
+define Test {
+  run () {
+    ~ reduce<Value<Test>,Formatted>(empty)
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
