@@ -146,3 +146,74 @@ define Test {
 concrete Test {
   @type run () -> ()
 }
+
+
+testcase "TextReader splits lines correctly" {
+  success Test$run()
+}
+
+concrete FakeFile {
+  refines BlockReader<String>
+
+  @type create () -> (FakeFile)
+}
+
+define FakeFile {
+  @value Int counter
+
+  create () {
+    return FakeFile{ 0 }
+  }
+
+  readBlock (_) {
+    cleanup {
+      counter <- counter+1
+    } in if (counter == 0) {
+      return "this is a "
+    } elif (counter == 1) {
+      return "partial line\nwith "
+    } elif (counter == 2) {
+      return "some more data\nand\nmore lines"
+    } elif (counter == 3) {
+      return "\nunfinished"
+    } else {
+      fail("too many reads")
+    }
+  }
+
+  pastEnd () {
+    return counter > 3
+  }
+}
+
+define Test {
+  run () {
+    TextReader reader <- TextReader$fromBlockReader(FakeFile$create())
+    ~ checkNext(reader,"this is a partial line")
+    ~ checkNext(reader,"with some more data")
+    ~ checkNext(reader,"and")
+    ~ checkNext(reader,"more lines")
+    ~ checkNext(reader,"unfinished")
+    if (!reader.pastEnd()) {
+      fail("not past end")
+    }
+    if (reader.readNextLine() != "") {
+      fail("reused data")
+    }
+  }
+
+  @type checkNext (TextReader,String) -> ()
+  checkNext (reader,line) {
+    if (reader.pastEnd()) {
+      fail("past end")
+    }
+    String value <- reader.readNextLine()
+    if (value != line) {
+      fail(value)
+    }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}

@@ -16,6 +16,8 @@ limitations under the License.
 
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
+// TODO: Split this up, or otherwise organize it better.
+
 @value interface ReadCurrent<|#x> {
   readCurrent () -> (#x)
 }
@@ -65,4 +67,23 @@ concrete Argv {
   refines ReadPosition<String>
 
   @type global () -> (ReadPosition<String>)
+}
+
+@value interface PersistentResource {
+  freeResource () -> ()
+}
+
+@value interface BlockReader<|#x> {
+  readBlock (Int) -> (#x)
+  pastEnd () -> (Bool)
+}
+
+@value interface BlockWriter<#x|> {
+  writeBlock (#x) -> (Int)
+}
+
+concrete TextReader {
+  @type fromBlockReader (BlockReader<String>) -> (TextReader)
+  @value readNextLine () -> (String)
+  @value pastEnd () -> (Bool)
 }

@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-Copyright 2019 Kevin P. Barry
+Copyright 2019-2020 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -88,5 +88,60 @@ define LazyStream {
   writeTo (writer) {
     ~ recursive(writer)
     ~ writer.flush()
+  }
+}
+
+define TextReader {
+  @value BlockReader<String> reader
+  @value String buffer
+
+  fromBlockReader (reader) {
+    return TextReader{ reader, "" }
+  }
+
+  readNextLine () {
+    while (true) {
+      Int newline <- findNewline()
+      if (newline < 0) {
+        if (reader.pastEnd()) {
+          String data <- buffer
+          buffer <- ""
+          return data
+        } else {
+          // TODO: Maybe the block size should be a factory argument.
+          buffer <- buffer+reader.readBlock(\x100)
+        }
+      } else {
+        return takeLine(newline)
+      }
+    }
+    return ""
+  }
+
+  pastEnd () {
+    return buffer.readSize() == 0 && reader.pastEnd()
+  }
+
+  @value findNewline () -> (Int)
+  findNewline () {
+    scoped {
+      Int position <- 0
+    } in while (position < buffer.readSize()) {
+      Char c <- buffer.readPosition(position)
+      // TODO: Maybe the line separator should be a factory argument.
+      if (c == '\n' || c == '\r') {
+        return position
+      }
+    } update {
+      position <- position+1
+    }
+    return -1
+  }
+
+  @value takeLine (Int) -> (String)
+  takeLine (position) {
+    String data <- buffer.subSequence(0,position)
+    buffer <- buffer.subSequence(position+1,buffer.readSize()-position-1)
+    return data
   }
 }

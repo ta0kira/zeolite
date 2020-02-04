@@ -672,6 +672,25 @@ concrete Test {
 }
 
 
+testcase "String empty subsequence at end" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+    String s <- ""
+    String s2 <- s.subSequence(0,0)
+    if (s2 != "") {
+      fail(s2)
+    }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
 testcase "String subsequence past end" {
   crash Test$run()
   require "100"

@@ -261,7 +261,7 @@ class Value_String : public TypeValue {
         &label == &Function_String_subSequence) {
       const int position = args.At(0)->AsInt();
       const int size = args.At(1)->AsInt();
-      if (position < 0 || position >= value_.size()) {
+      if (position < 0 || position > value_.size()) {
         FAIL() << "Subsequence position " << position << " is out of bounds";
       }
       if (size < 0 || position + size > value_.size()) {
