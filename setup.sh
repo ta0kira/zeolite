@@ -26,7 +26,7 @@ compiler_hs="$root/compiler/Cli/compiler"
 compiler_bin="$root/zeolite"
 modules=(
   "$root"
-  "$root/util"
+  "$root/lib/util"
   "$root/tests/visibility/internal"
   "$root/tests/visibility"
   "$root/tests/visibility2/internal"

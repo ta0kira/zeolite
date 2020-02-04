@@ -7,7 +7,7 @@ To run the example:
 
 ```shell
 # Compile the example.
-../../zeolite -i ../../util -m TreeDemo .
+../../zeolite -i ../../lib/util -m TreeDemo .
 
 # Run the unit tests.
 ../../zeolite -t .
