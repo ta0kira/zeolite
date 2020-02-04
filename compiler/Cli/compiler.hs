@@ -210,7 +210,7 @@ runCompiler co@(CompileOptions h is is2 ds es ep p m o f) = do
         rmMode = m,
         rmOutputName = o
       }
-      when (f == DoNotForce && f == ForceAll) $ writeRecompile (p </> d) rm
+      when (f == DoNotForce || f == ForceAll) $ writeRecompile (p </> d) rm
       (ps,xs,ts) <- findSourceFiles p d
       -- Lazy dependency loading, in case we aren't compiling anything.
       deps2 <- if null ps && null xs
