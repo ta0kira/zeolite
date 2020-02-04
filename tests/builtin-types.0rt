@@ -653,6 +653,42 @@ concrete Test {
 }
 
 
+testcase "String subsequence" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+    String s <- "abcde"
+    String s2 <- s.subSequence(1,3)
+    if (s2 != "bcd") {
+      fail(s2)
+    }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "String subsequence past end" {
+  crash Test$run()
+  require "100"
+  require "size"
+}
+
+define Test {
+  run () {
+    ~ ("abc").subSequence(1,100)
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
 testcase "Int max is accurate" {
   success Test$run()
 }

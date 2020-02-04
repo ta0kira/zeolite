@@ -101,6 +101,8 @@ builtinSource = concat $ map (++ "\n") [
     "",
     "  defines Equals<String>",
     "  defines LessThan<String>",
+    "",
+    "  @value subSequence (Int,Int) -> (String)",
     "}",
     "",
     "@type interface LessThan<#x|> {",
@@ -118,4 +120,5 @@ builtinSource = concat $ map (++ "\n") [
     "@value interface ReadPosition<|#x> {",
     "  readPosition (Int) -> (#x)",
     "  readSize () -> (Int)",
+    "  subSequence (Int,Int) -> (ReadPosition<#x>)",
     "}"]

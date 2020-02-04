@@ -250,12 +250,24 @@ class Value_String : public TypeValue {
     if (&label == &Function_ReadPosition_readPosition) {
       const int position = args.At(0)->AsInt();
       if (position < 0 || position >= value_.size()) {
-        FAIL() << "Position " << position << " is out of bounds";
+        FAIL() << "Read position " << position << " is out of bounds";
       }
       return ReturnTuple(Box_Char(value_[position]));
     }
     if (&label == &Function_ReadPosition_readSize) {
       return ReturnTuple(Box_Int(value_.size()));
+    }
+    if (&label == &Function_ReadPosition_subSequence ||
+        &label == &Function_String_subSequence) {
+      const int position = args.At(0)->AsInt();
+      const int size = args.At(1)->AsInt();
+      if (position < 0 || position >= value_.size()) {
+        FAIL() << "Subsequence position " << position << " is out of bounds";
+      }
+      if (size < 0 || position + size > value_.size()) {
+        FAIL() << "Subsequence size " << size << " is invalid";
+      }
+      return ReturnTuple(Box_String(value_.substr(position,size)));
     }
     return TypeValue::Dispatch(self, label, params, args);
   }
@@ -589,29 +601,37 @@ struct Type_Equals : public TypeInstance {
 const S<TypeValue>& Var_true = *new S<TypeValue>(new Value_Bool(true));
 const S<TypeValue>& Var_false = *new S<TypeValue>(new Value_Bool(false));
 
+const int Collection_LessThan = 0;
+const int Collection_Equals = 0;
+const int Collection_Formatted = 0;
+const int Collection_ReadPosition = 0;
+const int Collection_String = 0;
+
 }  // namespace
 
-const int Collection_LessThan = 0;
 const void* const Functions_LessThan = &Collection_LessThan;
 const TypeFunction& Function_LessThan_lessThan =
   *new TypeFunction{ 0, 2, 1, "LessThan", "lessThan", Functions_LessThan, 0 };
 
-const int Collection_Equals = 0;
 const void* const Functions_Equals = &Collection_Equals;
 const TypeFunction& Function_Equals_equals =
    *new TypeFunction{ 0, 2, 1, "Equals", "equals", Functions_Equals, 0 };
 
-const int Collection_Formatted = 0;
 const void* const Functions_Formatted = &Collection_Formatted;
 const ValueFunction& Function_Formatted_formatted =
    *new ValueFunction{ 0, 0, 1, "Formatted", "formatted", Functions_Formatted, 0 };
 
-const int Collection_ReadPosition = 0;
 const void* const Functions_ReadPosition = &Collection_ReadPosition;
 const ValueFunction& Function_ReadPosition_readPosition =
    *new ValueFunction{ 0, 1, 1, "ReadPosition", "readPosition", Functions_ReadPosition, 0 };
 const ValueFunction& Function_ReadPosition_readSize =
    *new ValueFunction{ 0, 0, 1, "ReadPosition", "readSize", Functions_ReadPosition, 1 };
+const ValueFunction& Function_ReadPosition_subSequence =
+   *new ValueFunction{ 0, 2, 1, "ReadPosition", "subSequence", Functions_ReadPosition, 2 };
+
+const void* const Functions_String = &Collection_String;
+const ValueFunction& Function_String_subSequence =
+   *new ValueFunction{ 0, 2, 1, "String", "subSequence", Functions_String, 0 };
 
 TypeInstance& Merge_Intersect(L<TypeInstance*> params) {
   static auto& cache = *new std::map<L<TypeInstance*>,R<Type_Intersect>>();

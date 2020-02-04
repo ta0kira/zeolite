@@ -36,6 +36,10 @@ extern const ValueFunction& Function_Formatted_formatted;
 extern const void* const Functions_ReadPosition;
 extern const ValueFunction& Function_ReadPosition_readPosition;
 extern const ValueFunction& Function_ReadPosition_readSize;
+extern const ValueFunction& Function_ReadPosition_subSequence;
+
+extern const void* const Functions_String;
+extern const ValueFunction& Function_String_subSequence;
 
 TypeInstance& Merge_Intersect(L<TypeInstance*> params);
 TypeInstance& Merge_Union(L<TypeInstance*> params);
