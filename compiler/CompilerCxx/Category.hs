@@ -224,7 +224,7 @@ compileConcreteDefinition ta ns dd@(DefinedCategory c n pi _ _ fi ms ps fs) = do
   let filters = getCategoryFilters t
   let filters2 = fi
   let allFilters = getFilterMap (getCategoryParams t ++ pi) $ filters ++ filters2
-  let r = categoriesToTypeResolver ta
+  let r = CategoryResolver ta
   fa <- setInternalFunctions r t fs
   checkInternalParams pi fi (getCategoryParams t) (Map.elems fa) r (getCategoryFilterMap t)
   -- Functions explicitly declared externally.
@@ -694,7 +694,7 @@ getContextForInit tm t d s = do
               then []
               else getCategoryFilters t
   let sa = Map.fromList $ zip (map vpParam $ getCategoryParams t) (repeat TypeScope)
-  let r = categoriesToTypeResolver tm
+  let r = CategoryResolver tm
   fa <- setInternalFunctions r t (dcFunctions d)
   let typeInstance = TypeInstance (getCategoryName t) $ fmap (SingleType . JustParamName . vpParam) ps
   let builtin = Map.filter ((== LocalScope) . vvScope) $ builtinVariables typeInstance

@@ -76,8 +76,8 @@ data VariableValue c =
     vvWritable :: Bool
   }
 
-setInternalFunctions :: (Show c, Monad m, CompileErrorM m, MergeableM m) =>
-  TypeResolver m -> AnyCategory c -> [ScopedFunction c] ->
+setInternalFunctions :: (Show c, Monad m, CompileErrorM m, MergeableM m, TypeResolver r) =>
+  r -> AnyCategory c -> [ScopedFunction c] ->
   m (Map.Map FunctionName (ScopedFunction c))
 setInternalFunctions r t fs = foldr update (return start) fs where
   start = Map.fromList $ map (\f -> (sfName f,f)) $ getCategoryFunctions t
@@ -165,7 +165,7 @@ mergeInternalInheritance tm d = do
   (_,t@(ValueConcrete c ns n ps rs ds vs fs)) <- getConcreteCategory tm ([],dcName d)
   let c2 = ValueConcrete c ns n ps (rs++rs2) (ds++ds2) vs fs
   let tm' = Map.insert (dcName d) c2 tm
-  let r = categoriesToTypeResolver tm'
+  let r = CategoryResolver tm'
   let fm = getCategoryFilterMap t
   rs' <- mergeRefines r fm (rs++rs2)
   noDuplicateRefines [] n rs'

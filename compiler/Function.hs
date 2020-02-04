@@ -50,8 +50,8 @@ instance Show FunctionType where
     where
       showFilters (n,fs) = map (\f -> show n ++ " " ++ show f ++ " ") fs
 
-validatateFunctionType :: (MergeableM m, CompileErrorM m, Monad m) =>
-  TypeResolver m -> ParamFilters -> ParamVariances -> FunctionType -> m ()
+validatateFunctionType :: (MergeableM m, CompileErrorM m, Monad m, TypeResolver r) =>
+  r -> ParamFilters -> ParamVariances -> FunctionType -> m ()
 validatateFunctionType r fm vm (FunctionType as rs ps fa) = do
   mergeAllM $ map checkCount $ group $ sort $ psParams ps
   mergeAllM $ map checkHides $ psParams ps
@@ -90,8 +90,8 @@ validatateFunctionType r fm vm (FunctionType as rs ps fa) = do
       validateGeneralInstance r fa t
       validateInstanceVariance r allVariances Covariant t
 
-assignFunctionParams :: (MergeableM m, CompileErrorM m, Monad m) =>
-  TypeResolver m -> ParamFilters -> ParamSet GeneralInstance ->
+assignFunctionParams :: (MergeableM m, CompileErrorM m, Monad m, TypeResolver r) =>
+  r -> ParamFilters -> ParamSet GeneralInstance ->
   FunctionType -> m FunctionType
 assignFunctionParams r fm ts ff@(FunctionType as rs ps fa) = do
   mergeAllM $ map (validateGeneralInstance r fm) $ psParams ts
@@ -107,8 +107,8 @@ assignFunctionParams r fm ts ff@(FunctionType as rs ps fa) = do
   where
     assignFilters fm fs = collectAllOrErrorM $ map (uncheckedSubFilter $ getValueForParam fm) fs
 
-checkFunctionConvert :: (MergeableM m, CompileErrorM m, Monad m) =>
-  TypeResolver m -> ParamFilters -> FunctionType -> FunctionType -> m ()
+checkFunctionConvert :: (MergeableM m, CompileErrorM m, Monad m, TypeResolver r) =>
+  r -> ParamFilters -> FunctionType -> FunctionType -> m ()
 checkFunctionConvert r fm ff1@(FunctionType as1 rs1 ps1 fa1) ff2 = do
   mapped <- fmap Map.fromList $ processParamPairs alwaysPairParams ps1 fa1
   let fm' = Map.union fm mapped

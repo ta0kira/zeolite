@@ -77,7 +77,7 @@ type CompilerState a m = StateT a m
 
 class Monad m => CompilerContext c m s a | a -> c s where
   ccCurrentScope :: a -> m SymbolScope
-  ccResolver :: a -> m (TypeResolver m)
+  ccResolver :: a -> m AnyTypeResolver
   ccSameType :: a -> TypeInstance -> m Bool
   ccAllFilters :: a -> m ParamFilters
   ccGetParamScope :: a -> ParamName -> m SymbolScope
@@ -144,7 +144,7 @@ csCurrentScope :: (Monad m, CompilerContext c m s a) =>
 csCurrentScope = fmap ccCurrentScope get >>= lift
 
 csResolver :: (Monad m, CompilerContext c m s a) =>
-  CompilerState a m (TypeResolver m)
+  CompilerState a m AnyTypeResolver
 csResolver = fmap ccResolver get >>= lift
 
 csSameType :: (Monad m, CompilerContext c m s a) =>

@@ -292,22 +292,22 @@ tests = [
       [("#x",["requires Type3"])]
       "Type2<Type0,Type0,Type0>" "Type2<#x,Type0,Type0>",
 
-    return $ checkTypeSuccess resolver
+    return $ checkTypeSuccess Resolver
       []
       "Type4<Type0>",
-    return $ checkTypeSuccess resolver
+    return $ checkTypeSuccess Resolver
       [("#x",["allows Type0"])]
       "Type4<[#x&Type0]>",
-    return $ checkTypeSuccess resolver
+    return $ checkTypeSuccess Resolver
       [("#x",["allows Type0"])]
       "Type4<[#x|Type0]>",
-    return $ checkTypeSuccess resolver
+    return $ checkTypeSuccess Resolver
       [("#x",["allows Type0"])]
       "Type4<[#x|Type3]>",
-    return $ checkTypeFail resolver
+    return $ checkTypeFail Resolver
       []
       "Type5<#x>",
-    return $ checkTypeSuccess resolver
+    return $ checkTypeSuccess Resolver
       [("#x",[])]
       "Type5<#x>",
 
@@ -428,137 +428,137 @@ tests = [
       "optional all"
       "optional Type3",
 
-    return $ checkTypeSuccess resolver
+    return $ checkTypeSuccess Resolver
       [("#x",[])]
       "#x",
-    return $ checkTypeFail resolver
+    return $ checkTypeFail Resolver
       [("#x",[])]
       "Type1<#x>",
-    return $ checkTypeFail resolver
+    return $ checkTypeFail Resolver
       [("#x",["requires Type3"])]
       "Type1<#x>",
-    return $ checkTypeFail resolver
+    return $ checkTypeFail Resolver
       [("#x",["defines Instance0"])]
       "Type1<#x>",
-    return $ checkTypeFail resolver
+    return $ checkTypeFail Resolver
       []
       "Type1<all>",
-    return $ checkTypeSuccess resolver
+    return $ checkTypeSuccess Resolver
       [("#x",["requires Type3","defines Instance0"])]
       "Type1<#x>",
-    return $ checkTypeSuccess resolver
+    return $ checkTypeSuccess Resolver
       []
       "Type1<Type3>",
-    return $ checkTypeFail resolver
+    return $ checkTypeFail Resolver
       []
       "Type1<Type1<Type3>>",
-    return $ checkTypeSuccess resolver
+    return $ checkTypeSuccess Resolver
       []
       "Type2<Type0,Type0,Type0>",
-    return $ checkTypeFail resolver
+    return $ checkTypeFail Resolver
       []
       "Type2<all,Type0,Type0>",
-    return $ checkTypeFail resolver
+    return $ checkTypeFail Resolver
       []
       "Type2<any,Type0,Type0>",
-    return $ checkTypeSuccess resolver
+    return $ checkTypeSuccess Resolver
       []
       "Type4<any>",
-    return $ checkTypeFail resolver
+    return $ checkTypeFail Resolver
       []
       "Type4<all>",
 
-    return $ checkTypeSuccess resolver
+    return $ checkTypeSuccess Resolver
       [("#x",["defines Instance1<Type0>",
              "defines Instance1<#x>",
              "defines Instance1<Type3>"])]
       "Type2<#x,#x,#x>",
-    return $ checkTypeFail resolver
+    return $ checkTypeFail Resolver
       [("#x",["defines Instance1<#x>",
              "defines Instance1<Type3>"])]
       "Type2<#x,#x,#x>",
-    return $ checkTypeFail resolver
+    return $ checkTypeFail Resolver
       [("#x",["defines Instance1<Type0>",
              "defines Instance1<Type3>"])]
       "Type2<#x,#x,#x>",
-    return $ checkTypeSuccess resolver
+    return $ checkTypeSuccess Resolver
       [("#x",["defines Instance1<Type0>",
              "defines Instance1<#x>"])]
       "Type2<#x,#x,#x>",
-    return $ checkTypeSuccess resolver
+    return $ checkTypeSuccess Resolver
       [("#x",["allows Type0", -- Type0 -> #x implies Type3 -> #x
              "defines Instance1<#x>"])]
       "Type2<#x,#x,#x>",
-    return $ checkTypeFail resolver
+    return $ checkTypeFail Resolver
       [("#x",["allows Type3", -- Type3 -> #x doesn't imply Type0 -> #x
              "defines Instance1<#x>"])]
       "Type2<#x,#x,#x>",
 
-    return $ checkTypeSuccess resolver
+    return $ checkTypeSuccess Resolver
       []
       "Type4<Type0>",
-    return $ checkTypeFail resolver
+    return $ checkTypeFail Resolver
       []
       "Type5<#x>",
-    return $ checkTypeSuccess resolver
+    return $ checkTypeSuccess Resolver
       [("#x",[])]
       "Type5<#x>",
 
-    return $ checkTypeSuccess resolver
+    return $ checkTypeSuccess Resolver
       []
       "[Type4<Type0>|Type1<Type3>]",
-    return $ checkTypeSuccess resolver
+    return $ checkTypeSuccess Resolver
       []
       "[Type4<Type0>&Type1<Type3>]",
-    return $ checkTypeSuccess resolver
+    return $ checkTypeSuccess Resolver
       [("#x",[])]
       "[Type5<#x>|Type1<Type3>]",
-    return $ checkTypeSuccess resolver
+    return $ checkTypeSuccess Resolver
       [("#x",[])]
       "[Type5<#x>&Type1<Type3>]",
-    return $ checkTypeSuccess resolver
+    return $ checkTypeSuccess Resolver
       [("#x",[])]
       "[#x|Type1<Type3>]",
-    return $ checkTypeSuccess resolver
+    return $ checkTypeSuccess Resolver
       [("#x",[])]
       "[#x&Type1<Type3>]",
-    return $ checkTypeFail resolver
+    return $ checkTypeFail Resolver
       [("#x",[])]
       "[Type4<Type0>|Instance0]",
-    return $ checkTypeFail resolver
+    return $ checkTypeFail Resolver
       [("#x",[])]
       "[Type4<Type0>&Instance0]",
 
-    return $ checkTypeSuccess resolver
+    return $ checkTypeSuccess Resolver
       []
       "[[Type4<Type0>&Type1<Type3>]|Type1<Type3>]",
-    return $ checkTypeSuccess resolver
+    return $ checkTypeSuccess Resolver
       []
       "[[Type4<Type0>|Type1<Type3>]&Type1<Type3>]",
-    return $ checkTypeSuccess resolver
+    return $ checkTypeSuccess Resolver
       [("#x",[])]
       "[[Type4<Type0>&#x]|Type1<Type3>]",
-    return $ checkTypeSuccess resolver
+    return $ checkTypeSuccess Resolver
       [("#x",[])]
       "[[Type4<Type0>|#x]&Type1<Type3>]",
 
-    return $ checkTypeFail resolver
+    return $ checkTypeFail Resolver
       []
       "[Type0]",
 
-    return $ checkDefinesFail resolver
+    return $ checkDefinesFail Resolver
       [("#x",[])]
       "Instance1<#x>",
-    return $ checkDefinesSuccess resolver
+    return $ checkDefinesSuccess Resolver
       [("#x",["requires Type3"])]
       "Instance1<#x>",
-    return $ checkDefinesFail resolver
+    return $ checkDefinesFail Resolver
       [("#x",["defines Instance1<#x>"])]
       "Instance1<#x>",
-    return $ checkDefinesSuccess resolver
+    return $ checkDefinesSuccess Resolver
       []
       "Instance1<Type3>",
-    return $ checkDefinesSuccess resolver
+    return $ checkDefinesSuccess Resolver
       []
       "Instance1<Type1<Type3>>"
   ]
@@ -674,7 +674,7 @@ checkConvertSuccess pa x y = return checked where
   prefix = x ++ " -> " ++ y ++ " " ++ showParams pa
   checked = do
     ([t1,t2],pa2) <- parseTheTest pa [x,y]
-    check $ checkValueTypeMatch resolver pa2 t1 t2
+    check $ checkValueTypeMatch Resolver pa2 t1 t2
   check c
     | isCompileError c = compileError $ prefix ++ ":\n" ++ show (getCompileError c)
     | otherwise = return ()
@@ -683,21 +683,22 @@ checkConvertFail pa x y = return checked where
   prefix = x ++ " /> " ++ y ++ " " ++ showParams pa
   checked = do
     ([t1,t2],pa2) <- parseTheTest pa [x,y]
-    check $ checkValueTypeMatch resolver pa2 t1 t2
+    check $ checkValueTypeMatch Resolver pa2 t1 t2
+  check :: CompileInfo a -> CompileInfo ()
   check c
     | isCompileError c = return ()
     | otherwise = compileError $ prefix ++ ": Expected failure\n"
 
-resolver :: TypeResolver CompileInfo
-resolver = TypeResolver {
-    trRefines = getParams refines,
-    trDefines = getParams defines,
-    trVariance = mapLookup variances,
-    trTypeFilters = getTypeFilters,
-    trDefinesFilters = getDefinesFilters,
-    -- Type5 is concrete, somewhat arbitrarily.
-    trConcrete = \t -> return (t == type5)
-  }
+data Resolver = Resolver
+
+instance TypeResolver Resolver where
+  trRefines _ = getParams refines
+  trDefines _ = getParams defines
+  trVariance _ = mapLookup variances
+  trTypeFilters _ = getTypeFilters
+  trDefinesFilters _ = getDefinesFilters
+  -- Type5 is concrete, somewhat arbitrarily.
+  trConcrete _ = \t -> return (t == type5)
 
 getParams ma (TypeInstance n1 ps1) n2 = do
   ra <- mapLookup ma n1

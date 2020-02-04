@@ -109,8 +109,8 @@ showParams :: [(String,[String])] -> String
 showParams pa = "[" ++ intercalate "," (concat $ map expand pa) ++ "]" where
   expand (n,ps) = map (\p -> n ++ " " ++ p) ps
 
-checkTypeSuccess :: TypeResolver CompileInfo -> [(String,[String])] ->
-                    String -> CompileInfo ()
+checkTypeSuccess :: (TypeResolver r) =>
+  r -> [(String,[String])] -> String -> CompileInfo ()
 checkTypeSuccess r pa x = do
   ([t],pa2) <- parseTheTest pa [x]
   check $ validateGeneralInstance r pa2 t
@@ -118,19 +118,20 @@ checkTypeSuccess r pa x = do
     prefix = x ++ " " ++ showParams pa
     check = flip reviseError (prefix ++ ":")
 
-checkTypeFail :: TypeResolver CompileInfo -> [(String,[String])] ->
-                 String -> CompileInfo ()
+checkTypeFail :: (TypeResolver r) =>
+  r -> [(String,[String])] -> String -> CompileInfo ()
 checkTypeFail r pa x = do
   ([t],pa2) <- parseTheTest pa [x]
   check $ validateGeneralInstance r pa2 t
   where
     prefix = x ++ " " ++ showParams pa
+    check :: CompileInfo a -> CompileInfo ()
     check c
       | isCompileError c = return ()
       | otherwise = compileError $ prefix ++ ": Expected failure\n"
 
-checkDefinesSuccess :: TypeResolver CompileInfo -> [(String,[String])] ->
-                       String -> CompileInfo ()
+checkDefinesSuccess :: (TypeResolver r) =>
+  r -> [(String,[String])] -> String -> CompileInfo ()
 checkDefinesSuccess r pa x = do
   ([t],pa2) <- parseTheTest pa [x]
   check $ validateDefinesInstance r pa2 t
@@ -138,13 +139,14 @@ checkDefinesSuccess r pa x = do
     prefix = x ++ " " ++ showParams pa
     check = flip reviseError (prefix ++ ":")
 
-checkDefinesFail :: TypeResolver CompileInfo -> [(String,[String])] ->
-                    String -> CompileInfo ()
+checkDefinesFail :: (TypeResolver r) =>
+  r -> [(String,[String])] -> String -> CompileInfo ()
 checkDefinesFail r pa x = do
   ([t],pa2) <- parseTheTest pa [x]
   check $ validateDefinesInstance r pa2 t
   where
     prefix = x ++ " " ++ showParams pa
+    check :: CompileInfo a -> CompileInfo ()
     check c
       | isCompileError c = return ()
       | otherwise = compileError $ prefix ++ ": Expected failure\n"

@@ -21,6 +21,7 @@ limitations under the License.
 module TypeCategory (
   AnyCategory(..),
   CategoryMap(..),
+  CategoryResolver(..),
   FunctionName(..),
   Namespace(..),
   ParamFilter(..),
@@ -29,7 +30,6 @@ module TypeCategory (
   ValueDefine(..),
   ValueParam(..),
   ValueRefine(..),
-  categoriesToTypeResolver,
   checkCategoryInstances,
   checkConnectedTypes,
   checkConnectionCycles,
@@ -285,6 +285,71 @@ data ParamFilter c =
 instance Show c => Show (ParamFilter c) where
   show (ParamFilter c n f) = show n ++ " " ++ show f ++ formatFullContextBrace c
 
+newtype CategoryResolver c =
+  CategoryResolver {
+    crCategories :: CategoryMap c
+  }
+
+instance (Show c) => TypeResolver (CategoryResolver c) where
+    trRefines (CategoryResolver tm) (TypeInstance n1 ps1) n2
+      | n1 == n2 = do
+        (_,t) <- getValueCategory tm ([],n1)
+        processParamPairs alwaysPairParams (ParamSet $ map vpParam $ getCategoryParams t) ps1
+        return ps1
+      | otherwise = do
+        (_,t) <- getValueCategory tm ([],n1)
+        let params = map vpParam $ getCategoryParams t
+        assigned <- fmap Map.fromList $ processParamPairs alwaysPairParams (ParamSet params) ps1
+        let pa = Map.fromList $ map (\r -> (tiName r,tiParams r)) $ map vrType $ getCategoryRefines t
+        ps2 <- case n2 `Map.lookup` pa of
+                    (Just x) -> return x
+                    _ -> compileError $ "Category " ++ show n1 ++ " does not refine " ++ show n2
+        fmap ParamSet $ collectAllOrErrorM $ map (subAllParams assigned) $ psParams ps2
+    trDefines (CategoryResolver tm) (TypeInstance n1 ps1) n2 = do
+      (_,t) <- getValueCategory tm ([],n1)
+      let params = map vpParam $ getCategoryParams t
+      assigned <- fmap Map.fromList $ processParamPairs alwaysPairParams (ParamSet params) ps1
+      let pa = Map.fromList $ map (\r -> (diName r,diParams r)) $ map vdType $ getCategoryDefines t
+      ps2 <- case n2 `Map.lookup` pa of
+                  (Just x) -> return x
+                  _ -> compileError $ "Category " ++ show n1 ++ " does not define " ++ show n2
+      fmap ParamSet $ collectAllOrErrorM $ map (subAllParams assigned) $ psParams ps2
+    trVariance (CategoryResolver tm) n = do
+      (_,t) <- getCategory tm ([],n)
+      return $ ParamSet $ map vpVariance $ getCategoryParams t
+    trTypeFilters (CategoryResolver tm) (TypeInstance n ps) = do
+      (_,t) <- getValueCategory tm ([],n)
+      checkFilters t ps
+    trDefinesFilters (CategoryResolver tm) (DefinesInstance n ps) = do
+      (_,t) <- getInstanceCategory tm ([],n)
+      checkFilters t ps
+    trConcrete (CategoryResolver tm) n = do
+      (_,t) <- getCategory tm ([],n)
+      return (isValueConcrete t)
+
+checkFilters :: (Monad m, CompileErrorM m, MergeableM m) =>
+  AnyCategory c -> ParamSet GeneralInstance -> m (ParamSet [TypeFilter])
+checkFilters t ps = do
+  let params = map vpParam $ getCategoryParams t
+  assigned <- fmap Map.fromList $ processParamPairs alwaysPairParams (ParamSet params) ps
+  fs <- collectAllOrErrorM $ map (subSingleFilter assigned . \f -> (pfParam f,pfFilter f))
+                                  (getCategoryFilters t)
+  let fa = Map.fromListWith (++) $ map (second (:[])) fs
+  fmap ParamSet $ collectAllOrErrorM $ map (assignFilter fa) params where
+    subSingleFilter pa (n,(TypeFilter v t)) = do
+      (SingleType t2) <- uncheckedSubInstance (getValueForParam pa) (SingleType t)
+      return (n,(TypeFilter v t2))
+    subSingleFilter pa (n,(DefinesFilter (DefinesInstance n2 ps))) = do
+      ps2 <- collectAllOrErrorM $ map (uncheckedSubInstance $ getValueForParam pa) (psParams ps)
+      return (n,(DefinesFilter (DefinesInstance n2 (ParamSet ps2))))
+    assignFilter fa n =
+      case n `Map.lookup` fa of
+            (Just x) -> return x
+            _ -> return []
+
+subAllParams :: (MergeableM m, CompileErrorM m, Monad m) =>
+  Map.Map ParamName GeneralInstance -> GeneralInstance -> m GeneralInstance
+subAllParams pa = uncheckedSubInstance (getValueForParam pa)
 
 type CategoryMap c = Map.Map CategoryName (AnyCategory c)
 
@@ -452,7 +517,7 @@ checkParamVariances :: (Show c, MergeableM m, CompileErrorM m, Monad m) =>
   CategoryMap c -> [AnyCategory c] -> m ()
 checkParamVariances tm0 ts = do
   tm <- declareAllTypes tm0 ts
-  let r = categoriesToTypeResolver tm
+  let r = CategoryResolver tm
   mergeAllM (map (checkCategory r) ts)
   where
     checkCategory r (ValueInterface c _ n ps rs fa _) = do
@@ -510,7 +575,7 @@ checkCategoryInstances :: (Show c, MergeableM m, CompileErrorM m, Monad m) =>
   CategoryMap c -> [AnyCategory c] -> m ()
 checkCategoryInstances tm0 ts = do
   tm <- declareAllTypes tm0 ts
-  let r = categoriesToTypeResolver tm
+  let r = CategoryResolver tm
   mergeAllM $ map (checkSingle r) ts
   where
     checkSingle r t = do
@@ -535,8 +600,8 @@ checkCategoryInstances tm0 ts = do
       validateTypeFilter r fm f `reviseError`
         (show n ++ " " ++ show f ++ formatFullContextBrace c)
 
-validateCategoryFunction :: (Show c, MergeableM m, CompileErrorM m, Monad m) =>
-  TypeResolver m -> AnyCategory c -> ScopedFunction c -> m ()
+validateCategoryFunction :: (Show c, MergeableM m, CompileErrorM m, Monad m, TypeResolver r) =>
+  r -> AnyCategory c -> ScopedFunction c -> m ()
 validateCategoryFunction r t f = do
   let fm = getCategoryFilterMap t
   let vm = Map.fromList $ map (\p -> (vpParam p,vpVariance p)) $ getCategoryParams t
@@ -580,8 +645,8 @@ mergeObjects f = return . merge [] where
             then [x] -- x is not redundant => keep.
             else []  -- x is redundant => remove.
 
-mergeRefines :: (MergeableM m, CompileErrorM m, Monad m) =>
-  TypeResolver m -> ParamFilters -> [ValueRefine c] -> m [ValueRefine c]
+mergeRefines :: (MergeableM m, CompileErrorM m, Monad m, TypeResolver r) =>
+  r -> ParamFilters -> [ValueRefine c] -> m [ValueRefine c]
 mergeRefines r f = mergeObjects check where
   check (ValueRefine _ t1@(TypeInstance n1 _)) (ValueRefine _ t2@(TypeInstance n2 _))
     | n1 /= n2 = compileError $ show t1 ++ " and " ++ show t2 ++ " are incompatible"
@@ -589,8 +654,8 @@ mergeRefines r f = mergeObjects check where
       checkGeneralMatch r f Covariant (SingleType $ JustTypeInstance $ t1)
                                       (SingleType $ JustTypeInstance $ t2)
 
-mergeDefines :: (MergeableM m, CompileErrorM m, Monad m) =>
-  TypeResolver m -> ParamFilters -> [ValueDefine c] -> m [ValueDefine c]
+mergeDefines :: (MergeableM m, CompileErrorM m, Monad m, TypeResolver r) =>
+  r -> ParamFilters -> [ValueDefine c] -> m [ValueDefine c]
 mergeDefines r f = mergeObjects check where
   check (ValueDefine _ t1@(DefinesInstance n1 _)) (ValueDefine _ t2@(DefinesInstance n2 _))
     | n1 /= n2 = compileError $ show t1 ++ " and " ++ show t2 ++ " are incompatible"
@@ -626,7 +691,7 @@ flattenAllConnections :: (Show c, MergeableM m, CompileErrorM m, Monad m) =>
 flattenAllConnections tm0 ts = do
   -- We need to process all refines before type-checking can be done.
   tm1 <- foldr preMerge (return tm0) (reverse ts)
-  let r = categoriesToTypeResolver tm1
+  let r = CategoryResolver tm1
   (ts',_) <- foldr (update r) (return ([],tm0)) (reverse ts)
   return ts'
   where
@@ -693,8 +758,8 @@ flattenAllConnections tm0 ts = do
       return ()
     checkConvert _ _ _ _ = return ()
 
-mergeFunctions :: (Show c, MergeableM m, CompileErrorM m, Monad m) =>
-  TypeResolver m -> CategoryMap c -> ParamFilters -> [ValueRefine c] ->
+mergeFunctions :: (Show c, MergeableM m, CompileErrorM m, Monad m, TypeResolver r) =>
+  r -> CategoryMap c -> ParamFilters -> [ValueRefine c] ->
   [ValueDefine c] -> [ScopedFunction c] -> m [ScopedFunction c]
 mergeFunctions r tm fm rs ds fs = do
   inheritValue <- fmap concat $ collectAllOrErrorM $ map (getRefinesFuncs tm) rs
@@ -748,71 +813,6 @@ tryMerge r fm n (Just is) (Just es)
             f1' <- parsedToFunctionType f1
             f2' <- parsedToFunctionType f2
             checkFunctionConvert r fm f2' f1'
-
-categoriesToTypeResolver :: (Show c, MergeableM m, CompileErrorM m, Monad m) =>
-  CategoryMap c -> TypeResolver m
-categoriesToTypeResolver tm =
-  TypeResolver {
-    trRefines = refines,
-    trDefines = defines,
-    trVariance = variance,
-    trTypeFilters = typeFilters,
-    trDefinesFilters = definesFilters,
-    trConcrete = concrete
-  } where
-    refines (TypeInstance n1 ps1) n2
-      | n1 == n2 = do
-        (_,t) <- getValueCategory tm ([],n1)
-        processParamPairs alwaysPairParams (ParamSet $ map vpParam $ getCategoryParams t) ps1
-        return ps1
-      | otherwise = do
-        (_,t) <- getValueCategory tm ([],n1)
-        let params = map vpParam $ getCategoryParams t
-        assigned <- fmap Map.fromList $ processParamPairs alwaysPairParams (ParamSet params) ps1
-        let pa = Map.fromList $ map (\r -> (tiName r,tiParams r)) $ map vrType $ getCategoryRefines t
-        ps2 <- case n2 `Map.lookup` pa of
-                    (Just x) -> return x
-                    _ -> compileError $ "Category " ++ show n1 ++ " does not refine " ++ show n2
-        fmap ParamSet $ collectAllOrErrorM $ map (subAllParams assigned) $ psParams ps2
-    defines (TypeInstance n1 ps1) n2 = do
-      (_,t) <- getValueCategory tm ([],n1)
-      let params = map vpParam $ getCategoryParams t
-      assigned <- fmap Map.fromList $ processParamPairs alwaysPairParams (ParamSet params) ps1
-      let pa = Map.fromList $ map (\r -> (diName r,diParams r)) $ map vdType $ getCategoryDefines t
-      ps2 <- case n2 `Map.lookup` pa of
-                  (Just x) -> return x
-                  _ -> compileError $ "Category " ++ show n1 ++ " does not define " ++ show n2
-      fmap ParamSet $ collectAllOrErrorM $ map (subAllParams assigned) $ psParams ps2
-    variance n = do
-      (_,t) <- getCategory tm ([],n)
-      return $ ParamSet $ map vpVariance $ getCategoryParams t
-    typeFilters (TypeInstance n ps) = do
-      (_,t) <- getValueCategory tm ([],n)
-      checkFilters t ps
-    definesFilters (DefinesInstance n ps) = do
-      (_,t) <- getInstanceCategory tm ([],n)
-      checkFilters t ps
-    checkFilters t ps = do
-      let params = map vpParam $ getCategoryParams t
-      assigned <- fmap Map.fromList $ processParamPairs alwaysPairParams (ParamSet params) ps
-      fs <- collectAllOrErrorM $ map (subSingleFilter assigned . \f -> (pfParam f,pfFilter f))
-                                     (getCategoryFilters t)
-      let fa = Map.fromListWith (++) $ map (second (:[])) fs
-      fmap ParamSet $ collectAllOrErrorM $ map (assignFilter fa) params
-    subAllParams pa = uncheckedSubInstance (getValueForParam pa)
-    subSingleFilter pa (n,(TypeFilter v t)) = do
-      (SingleType t2) <- uncheckedSubInstance (getValueForParam pa) (SingleType t)
-      return (n,(TypeFilter v t2))
-    subSingleFilter pa (n,(DefinesFilter (DefinesInstance n2 ps))) = do
-      ps2 <- collectAllOrErrorM $ map (uncheckedSubInstance $ getValueForParam pa) (psParams ps)
-      return (n,(DefinesFilter (DefinesInstance n2 (ParamSet ps2))))
-    assignFilter fa n =
-      case n `Map.lookup` fa of
-           (Just x) -> return x
-           _ -> return []
-    concrete n = do
-      (_,t) <- getCategory tm ([],n)
-      return (isValueConcrete t)
 
 data FunctionName =
   FunctionName {

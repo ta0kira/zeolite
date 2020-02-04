@@ -76,7 +76,7 @@ data ReturnValidation c =
 instance (Show c, MergeableM m, CompileErrorM m, Monad m) =>
   CompilerContext c m [String] (ProcedureContext c) where
   ccCurrentScope = return . pcScope
-  ccResolver = return . categoriesToTypeResolver . pcCategories
+  ccResolver = return . AnyTypeResolver . CategoryResolver . pcCategories
   ccSameType ctx = return . (== same) where
     same = TypeInstance (pcType ctx) (fmap (SingleType . JustParamName . vpParam) $ pcExtParams ctx)
   ccAllFilters = return . pcAllFilters

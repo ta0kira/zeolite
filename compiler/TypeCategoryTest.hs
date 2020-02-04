@@ -412,63 +412,63 @@ tests = [
       (\ts -> do
         ts <- topoSortCategories defaultCategories ts
         ta <- flattenAllConnections defaultCategories ts >>= declareAllTypes defaultCategories
-        let r = categoriesToTypeResolver ta
+        let r = CategoryResolver ta
         checkTypeSuccess r [] "Child"),
     checkOperationSuccess
       "testfiles/flatten.0rx"
       (\ts -> do
         ts <- topoSortCategories defaultCategories ts
         ta <- flattenAllConnections defaultCategories ts >>= declareAllTypes defaultCategories
-        let r = categoriesToTypeResolver ta
+        let r = CategoryResolver ta
         checkTypeSuccess r [] "[Child|Child]"),
     checkOperationSuccess
       "testfiles/flatten.0rx"
       (\ts -> do
         ts <- topoSortCategories defaultCategories ts
         ta <- flattenAllConnections defaultCategories ts >>= declareAllTypes defaultCategories
-        let r = categoriesToTypeResolver ta
+        let r = CategoryResolver ta
         checkTypeSuccess r [] "[Child&Child]"),
     checkOperationSuccess
       "testfiles/flatten.0rx"
       (\ts -> do
         ts <- topoSortCategories defaultCategories ts
         ta <- flattenAllConnections defaultCategories ts >>= declareAllTypes defaultCategories
-        let r = categoriesToTypeResolver ta
+        let r = CategoryResolver ta
         checkTypeSuccess r [] "Object2"),
     checkOperationSuccess
       "testfiles/flatten.0rx"
       (\ts -> do
         ts <- topoSortCategories defaultCategories ts
         ta <- flattenAllConnections defaultCategories ts >>= declareAllTypes defaultCategories
-        let r = categoriesToTypeResolver ta
+        let r = CategoryResolver ta
         checkTypeSuccess r [] "[Object2|Object2]"),
     checkOperationSuccess
       "testfiles/flatten.0rx"
       (\ts -> do
         ts <- topoSortCategories defaultCategories ts
         ta <- flattenAllConnections defaultCategories ts >>= declareAllTypes defaultCategories
-        let r = categoriesToTypeResolver ta
+        let r = CategoryResolver ta
         checkTypeSuccess r [] "[Object2&Object2]"),
     checkOperationSuccess
       "testfiles/flatten.0rx"
       (\ts -> do
         ts <- topoSortCategories defaultCategories ts
         ta <- flattenAllConnections defaultCategories ts >>= declareAllTypes defaultCategories
-        let r = categoriesToTypeResolver ta
+        let r = CategoryResolver ta
         checkTypeFail r [] "Type<Child>"),
     checkOperationSuccess
       "testfiles/flatten.0rx"
       (\ts -> do
         ts <- topoSortCategories defaultCategories ts
         ta <- flattenAllConnections defaultCategories ts >>= declareAllTypes defaultCategories
-        let r = categoriesToTypeResolver ta
+        let r = CategoryResolver ta
         checkTypeFail r [] "[Type<Child>|Type<Child>]"),
     checkOperationSuccess
       "testfiles/flatten.0rx"
       (\ts -> do
         ts <- topoSortCategories defaultCategories ts
         ta <- flattenAllConnections defaultCategories ts >>= declareAllTypes defaultCategories
-        let r = categoriesToTypeResolver ta
+        let r = CategoryResolver ta
         checkTypeFail r [] "[Type<Child>&Type<Child>]"),
 
     -- TODO: Clean these tests up.
@@ -477,28 +477,28 @@ tests = [
       (\ts -> do
         ts <- topoSortCategories Map.empty ts
         ta <- flattenAllConnections Map.empty ts >>= declareAllTypes Map.empty
-        let r = categoriesToTypeResolver ta
+        let r = CategoryResolver ta
         checkTypeSuccess r [] "Value0<Value1,Value2>"),
     checkOperationFail
       "testfiles/filters.0rx"
       (\ts -> do
         ts <- topoSortCategories Map.empty ts
         ta <- flattenAllConnections Map.empty ts >>= declareAllTypes Map.empty
-        let r = categoriesToTypeResolver ta
+        let r = CategoryResolver ta
         checkTypeSuccess r [] "Value0<Value1,Value1>"),
     checkOperationSuccess
       "testfiles/filters.0rx"
       (\ts -> do
         ts <- topoSortCategories Map.empty ts
         ta <- flattenAllConnections Map.empty ts >>= declareAllTypes Map.empty
-        let r = categoriesToTypeResolver ta
+        let r = CategoryResolver ta
         checkTypeSuccess r [] "Value0<Value3,Value2>"),
     checkOperationFail
       "testfiles/filters.0rx"
       (\ts -> do
         ts <- topoSortCategories Map.empty ts
         ta <- flattenAllConnections Map.empty ts >>= declareAllTypes Map.empty
-        let r = categoriesToTypeResolver ta
+        let r = CategoryResolver ta
         checkTypeSuccess r
           [("#x",[]),("#y",[])]
           "Value0<#x,#y>"),
@@ -507,7 +507,7 @@ tests = [
       (\ts -> do
         ts <- topoSortCategories Map.empty ts
         ta <- flattenAllConnections Map.empty ts >>= declareAllTypes Map.empty
-        let r = categoriesToTypeResolver ta
+        let r = CategoryResolver ta
         checkTypeSuccess r
           [("#x",["allows #y","requires Function<#x,#y>"]),
            ("#y",["requires #x","defines Equals<#y>"])]
@@ -517,7 +517,7 @@ tests = [
       (\ts -> do
         ts <- topoSortCategories Map.empty ts
         ta <- flattenAllConnections Map.empty ts >>= declareAllTypes Map.empty
-        let r = categoriesToTypeResolver ta
+        let r = CategoryResolver ta
         checkTypeSuccess r
           [("#x",["allows Value2","requires Function<#x,Value2>"])]
           "Value0<#x,Value2>"),
@@ -526,7 +526,7 @@ tests = [
       (\ts -> do
         ts <- topoSortCategories Map.empty ts
         ta <- flattenAllConnections Map.empty ts >>= declareAllTypes Map.empty
-        let r = categoriesToTypeResolver ta
+        let r = CategoryResolver ta
         checkTypeSuccess r
           [("#x",["allows Value2","requires Function<#x,Value2>"]),
            ("#y",["requires #x","defines Equals<#y>"])]
@@ -835,34 +835,34 @@ getDefines tm n =
 
 getTypeRefines ts s n = do
   ta <- declareAllTypes defaultCategories ts
-  let r = categoriesToTypeResolver ta
+  let r = CategoryResolver ta
   t <- readSingle "(string)" s
   ParamSet rs <- trRefines r t (CategoryName n)
   return $ map show rs
 
 getTypeDefines ts s n = do
   ta <- declareAllTypes defaultCategories ts
-  let r = categoriesToTypeResolver ta
+  let r = CategoryResolver ta
   t <- readSingle "(string)" s
   ParamSet ds <- trDefines r t (CategoryName n)
   return $ map show ds
 
 getTypeVariance ts n = do
   ta <- declareAllTypes defaultCategories ts
-  let r = categoriesToTypeResolver ta
+  let r = CategoryResolver ta
   (ParamSet vs) <- trVariance r (CategoryName n)
   return vs
 
 getTypeFilters ts s = do
   ta <- declareAllTypes defaultCategories ts
-  let r = categoriesToTypeResolver ta
+  let r = CategoryResolver ta
   t <- readSingle "(string)" s
   ParamSet vs <- trTypeFilters r t
   return $ map (map show) vs
 
 getTypeDefinesFilters ts s = do
   ta <- declareAllTypes defaultCategories ts
-  let r = categoriesToTypeResolver ta
+  let r = CategoryResolver ta
   t <- readSingle "(string)" s
   ParamSet vs <- trDefinesFilters r t
   return $ map (map show) vs
