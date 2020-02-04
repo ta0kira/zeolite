@@ -63,6 +63,10 @@ concrete SimpleOutput {
   @type error () -> (BufferedWriter<Formatted>)
 }
 
+concrete SimpleInput {
+  @type stdin () -> (BlockReader<String>)
+}
+
 concrete Argv {
   refines ReadPosition<String>
 
