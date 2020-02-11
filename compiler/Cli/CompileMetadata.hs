@@ -102,6 +102,9 @@ data CategoryIdentifier =
     ciPath :: String,
     ciCategory :: String,
     ciNamespace :: String
+  } |
+  UnresolvedCategory {
+    ucCategory :: String
   }
   deriving (Eq,Ord,Show,Read)
 
@@ -361,6 +364,7 @@ getObjectFileResolver os ns ds = resolved ++ nonCategories where
 resolveObjectDeps :: String -> [([String],CxxOutput)] -> [CompileMetadata] -> [ObjectFile]
 resolveObjectDeps p os deps = resolvedCategories ++ nonCategories where
   categories = filter (isJust . coCategory . snd) os
+  publicNamespaces = getNamespacesForDeps deps
   nonCategories = map OtherObjectFile $ concat $ map fst $ filter (not . isJust . coCategory . snd) os
   resolvedCategories = Map.elems $ Map.fromListWith mergeObjectFiles $ map resolveCategory categories
   categoryMap = Map.fromList $ directCategories ++ depCategories
@@ -371,7 +375,7 @@ resolveObjectDeps p os deps = resolvedCategories ++ nonCategories where
   resolveCategory (fs,ca@(CxxOutput _ _ _ ns2 ds _)) =
     (cxxToId ca,CategoryObjectFile (cxxToId ca) rs fs) where
       rs = concat $ map (resolveDep (map show ns2) . show) ds
-  resolveDep ns d = unwrap $ foldl (<|>) Nothing allChecks <|> Just [] where
-    allChecks = map (\n -> (d,n) `Map.lookup` categoryMap >>= return . (:[])) (ns ++ [""])
+  resolveDep ns d = unwrap $ foldl (<|>) Nothing allChecks where
+    allChecks = map (\n -> (d,n) `Map.lookup` categoryMap >>= return . (:[])) (ns ++ publicNamespaces)
     unwrap (Just xs) = xs
-    unwrap _         = []
+    unwrap _         = [UnresolvedCategory d]

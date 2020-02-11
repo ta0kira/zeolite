@@ -130,7 +130,8 @@ compileModuleMain (CategoryModule tm ns cs xa) n f = do
     reconcile []  = compileErrorM $ "No matches for main category " ++ show n
     reconcile _   = compileErrorM $ "Multiple matches for main category " ++ show n
 
-compileCategoryDeclaration :: Monad m => CategoryMap c -> AnyCategory c -> m CxxOutput
+compileCategoryDeclaration :: (Show c, Monad m, CompileErrorM m, MergeableM m) =>
+  CategoryMap c -> AnyCategory c -> m CxxOutput
 compileCategoryDeclaration _ t =
   return $ CxxOutput (Just $ getCategoryName t)
                      (headerFilename name)
@@ -139,11 +140,13 @@ compileCategoryDeclaration _ t =
                      (filter (not . isBuiltinCategory) $ Set.toList $ cdRequired file)
                      (cdOutput file) where
     file = mergeAll $ [
+        CompiledData depends [],
         onlyCodes guardTop,
         onlyCodes baseHeaderIncludes,
         addNamespace t content,
         onlyCodes guardBottom
       ]
+    depends = getCategoryDeps t
     content = onlyCodes $ collection ++ labels ++ getCategory ++ getType
     name = getCategoryName t
     guardTop = ["#ifndef " ++ guardName,"#define " ++ guardName]
@@ -542,7 +545,7 @@ commonDefineType t extra = do
     ]
   where
     name = getCategoryName t
-    depends = Set.unions $ map (categoriesFromTypes . SingleType . JustTypeInstance . vrType) $ getCategoryRefines t
+    depends = getCategoryDeps t
     createParams = mergeAll $ map createParam $ getCategoryParams t
     createParam p = onlyCode $ paramType ++ " " ++ paramName (vpParam p) ++ ";"
     canConvertFrom

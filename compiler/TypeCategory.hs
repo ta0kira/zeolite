@@ -41,6 +41,7 @@ module TypeCategory (
   getCategory,
   getCategoryContext,
   getCategoryDefines,
+  getCategoryDeps,
   getCategoryFilterMap,
   getCategoryFilters,
   getCategoryFunctions,
@@ -213,6 +214,24 @@ getCategoryFunctions :: AnyCategory c -> [ScopedFunction c]
 getCategoryFunctions (ValueInterface _ _ _ _ _ _ fs)  = fs
 getCategoryFunctions (InstanceInterface _ _ _ _ _ fs) = fs
 getCategoryFunctions (ValueConcrete _ _ _ _ _ _ _ fs) = fs
+
+getCategoryDeps :: AnyCategory c -> Set.Set CategoryName
+getCategoryDeps t = Set.fromList $ filter (/= getCategoryName t) $ refines ++ defines ++ filters ++ functions where
+  refines = concat $ map (fromInstance . SingleType . JustTypeInstance . vrType) $ getCategoryRefines t
+  defines = concat $ map (fromDefine . vdType) $ getCategoryDefines t
+  filters = concat $ map (fromFilter . pfFilter) $ getCategoryFilters t
+  functions = concat $ map fromFunction $ getCategoryFunctions t
+  fromInstance (TypeMerge _ ps) = concat $ map fromInstance ps
+  fromInstance (SingleType (JustTypeInstance (TypeInstance n ps))) = n:(concat $ map fromInstance $ psParams ps)
+  fromInstance _ = []
+  fromDefine (DefinesInstance n ps) = n:(concat $ map fromInstance $ psParams ps)
+  fromFilter (TypeFilter _ t2@(JustTypeInstance _)) = fromInstance (SingleType t2)
+  fromFilter (DefinesFilter t2) = fromDefine t2
+  fromType (ValueType _ t2) = fromInstance t2
+  fromFunction f = args ++ returns ++ filters where
+    args = concat $ map (fromType . pvType) $ psParams $ sfArgs f
+    returns = concat $ map (fromType . pvType) $ psParams $ sfReturns f
+    filters = concat $ map (fromFilter . pfFilter) $ sfFilters f
 
 isValueInterface :: AnyCategory c -> Bool
 isValueInterface (ValueInterface _ _ _ _ _ _ _) = True
