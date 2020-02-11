@@ -254,31 +254,34 @@ compileConcreteDefinition ta ns dd@(DefinedCategory c n pi _ _ fi ms ps fs) = do
       return $ onlyCode $ "class " ++ valueName n ++ ";",
       declareInternalValue n internalCount memberCount
     ]
+  cf <- collectAllOrErrorM $ map (compileExecutableProcedure ta n params params2 vm filters filters2 fa cv) cp
+  tf <- collectAllOrErrorM $ map (compileExecutableProcedure ta n params params2 vm filters filters2 fa tv) tp
+  vf <- collectAllOrErrorM $ map (compileExecutableProcedure ta n params params2 vm filters filters2 fa vv) vp
   defineValue <- mergeAllM [
       return $ onlyCode $ "struct " ++ valueName n ++ " : public " ++ valueBase ++ " {",
       fmap indentCompiled $ valueConstructor ta t vm,
       fmap indentCompiled $ valueDispatch allFuncs,
       return $ indentCompiled $ defineCategoryName2 n,
-      fmap indentCompiled $ mergeAllM $ map (compileExecutableProcedure ta n params params2 vm filters filters2 fa vv) vp,
+      return $ indentCompiled $ mergeAll $ map fst vf,
       fmap indentCompiled $ mergeAllM $ map (createMember r allFilters) vm,
       fmap indentCompiled $ createParams,
       return $ indentCompiled $ onlyCode $ typeName n ++ "& parent;",
       return $ onlyCode "};"
     ]
-  bottom <- mergeAllM [
+  bottom <- mergeAllM $ [
       return $ defineValue,
       defineInternalValue n internalCount memberCount
-    ]
+    ] ++ map (return . snd) (cf ++ tf ++ vf)
   ce <- mergeAllM [
       categoryConstructor ta t cm,
       categoryDispatch allFuncs,
-      mergeAllM $ map (compileExecutableProcedure ta n params params2 vm filters filters2 fa cv) cp,
+      return $ mergeAll $ map fst cf,
       mergeAllM $ map (createMemberLazy r allFilters) cm
     ]
   te <- mergeAllM [
       typeConstructor ta t tm,
       typeDispatch allFuncs,
-      mergeAllM $ map (compileExecutableProcedure ta n params params2 vm filters filters2 fa tv) tp,
+      return $ mergeAll $ map fst tf,
       mergeAllM $ map (createMember r allFilters) tm
     ]
   commonDefineAll t ns top bottom ce te fe

@@ -55,7 +55,7 @@ compileExecutableProcedure :: (Show c, Monad m, CompileErrorM m, MergeableM m) =
   CategoryMap c -> CategoryName -> ParamSet (ValueParam c) -> ParamSet (ValueParam c) ->
   [DefinedMember c] -> [ParamFilter c] -> [ParamFilter c] -> Map.Map FunctionName (ScopedFunction c) ->
   Map.Map VariableName (VariableValue c) ->
-  (ScopedFunction c,ExecutableProcedure c) -> m (CompiledData [String])
+  (ScopedFunction c,ExecutableProcedure c) -> m (CompiledData [String],CompiledData [String])
 compileExecutableProcedure tm t ps pi ms pa fi fa va
                  (ff@(ScopedFunction _ _ _ s as1 rs1 ps1 fs _),
                   (ExecutableProcedure _ c n as2 rs2 p)) = do
@@ -108,7 +108,7 @@ compileExecutableProcedure tm t ps pi ms pa fi fa va
       pcCleanupSetup = CleanupSetup [] []
     }
   output <- runDataCompiler compileWithReturn ctx
-  return $ wrapProcedure output
+  return (onlyCode header,wrapProcedure output)
   where
     compileWithReturn = do
       ctx0 <- getCleanContext
@@ -119,7 +119,7 @@ compileExecutableProcedure tm t ps pi ms pa fi fa va
     pairOutput (PassedValue c1 t) (OutputValue c2 n) = return $ (n,PassedValue (c2++c1) t)
     wrapProcedure output =
       mergeAll $ [
-          onlyCode header,
+          onlyCode header2,
           indentCompiled $ onlyCode setProcedureTrace,
           indentCompiled $ onlyCodes defineReturns,
           indentCompiled $ onlyCodes nameParams,
@@ -133,9 +133,17 @@ compileExecutableProcedure tm t ps pi ms pa fi fa va
     header
       | s == ValueScope =
         returnType ++ " " ++ name ++
-        "(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) {"
+        "(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args);"
       | otherwise =
-        returnType ++ " " ++ name ++ "(const ParamTuple& params, const ValueTuple& args) {"
+        returnType ++ " " ++ name ++ "(const ParamTuple& params, const ValueTuple& args);"
+    header2
+      | s == CategoryScope =
+        returnType ++ " " ++ categoryName t ++ "::" ++ name ++ "(const ParamTuple& params, const ValueTuple& args) {"
+      | s == TypeScope =
+        returnType ++ " " ++ typeName t ++ "::" ++ name ++ "(const ParamTuple& params, const ValueTuple& args) {"
+      | s == ValueScope =
+        returnType ++ " " ++ valueName t ++ "::" ++ name ++
+        "(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) {"
     returnType = "ReturnTuple"
     setProcedureTrace = startFunctionTracing $ show t ++ "." ++ show n
     defineReturns = [returnType ++ " returns(" ++ show (length $ psParams rs1) ++ ");"]
