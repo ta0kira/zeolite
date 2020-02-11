@@ -127,7 +127,7 @@ struct Value_SimpleInput : public TypeValue {
       if (size < 0) {
         FAIL() << "Read size " << size << " is invalid";
       }
-      std::string buffer(size,'\x00');
+      std::string buffer(size, '\x00');
       const int read_size = read(STDIN_FILENO, &buffer[0], size);
       if (read_size < 0) {
         return ReturnTuple(Box_String(""));

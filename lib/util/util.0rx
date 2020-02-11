@@ -104,9 +104,9 @@ define TextReader {
       Int newline <- findNewline()
       if (newline < 0) {
         if (reader.pastEnd()) {
-          String data <- buffer
-          buffer <- ""
-          return data
+          cleanup {
+            buffer <- ""
+          } in return buffer
         } else {
           // TODO: Maybe the block size should be a factory argument.
           buffer <- buffer+reader.readBlock(\x100)
