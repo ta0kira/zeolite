@@ -150,10 +150,10 @@ parseCompileOptions = parseAll emptyCompileOptions . zip [1..] where
     update ((n,e):os)
       | any (flip isSuffixOf e) allowedExtraTypes = do
           checkPathName n e "-e"
-          return (os,CompileOptions (maybeDisableHelp h) is is2 ds (es ++ [getCacheRelativePath e]) ep p m o f)
+          return (os,CompileOptions (maybeDisableHelp h) is is2 ds (es ++ [e]) ep p m o f)
       | takeExtension e == "" = do
           checkPathName n e "-e"
-          return (os,CompileOptions (maybeDisableHelp h) is is2 ds es (ep ++ [getCacheRelativePath e]) p m o f)
+          return (os,CompileOptions (maybeDisableHelp h) is is2 ds es (ep ++ [e]) p m o f)
       | otherwise = argError n "-e" $ "Only " ++ intercalate ", " allowedExtraTypes ++
                                       " and directory sources are allowed."
     update _ = argError n "-e" "Requires a source filename."

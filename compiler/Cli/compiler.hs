@@ -191,7 +191,8 @@ runCompiler co@(CompileOptions h is is2 ds es ep p m o f) = do
         let deps2 = map fst ma
         createBinary (deps ++ deps2) m ms
   hPutStrLn stderr $ "Zeolite compilation succeeded." where
-    ep' = fixPaths $ map (getCachedPath p "") ep
+    ep' = fixPaths $ map (p </>) ep
+    es' = fixPaths $ map (p </>) es
     processPath deps as as2 ss d = do
       isConfigured <- isPathConfigured d
       when (isConfigured && f == DoNotForce) $ do
@@ -226,7 +227,7 @@ runCompiler co@(CompileOptions h is is2 ds es ep p m o f) = do
       ns0 <- canonicalizePath (p </> d) >>= return . StaticNamespace . publicNamespace
       let ns2 = map StaticNamespace $ filter (not . null) $ getNamespacesForDeps deps
       let fs = compileAll ns0 ns2 ss ps' xs'
-      writeOutput (fixPaths $ paths ++ ep') ns0 deps2 d as as2
+      writeOutput paths ns0 deps2 d as as2
                   (map takeFileName ps)
                   (map takeFileName xs)
                   (map takeFileName ts) fs
@@ -239,13 +240,13 @@ runCompiler co@(CompileOptions h is is2 ds es ep p m o f) = do
       | otherwise = do
           formatWarnings fs
           let (pc,mf,fs') = getCompileSuccess fs
-          let ss = nub $ filter (not . null) $ map show $ [ns0] ++ map coNamespace fs'
-          let paths' = paths ++ map (\ns -> getCachedPath (p </> d) ns "") ss
+          let ss = map (\ns -> getCachedPath (p </> d) ns "") $ nub $ filter (not . null) $ map show $ [ns0] ++ map coNamespace fs'
+          let paths' = paths ++ ep' ++ ss
           let hxx   = filter (isSuffixOf ".hpp" . coFilename)       fs'
           let other = filter (not . isSuffixOf ".hpp" . coFilename) fs'
           os1 <- sequence $ map (writeOutputFile (show ns0) paths' d) $ hxx ++ other
-          os2 <- fmap concat $ sequence $ map (compileExtraFile (show ns0) paths' d) es
-          let (hxx,cxx,os') = sortCompiledFiles $ map (\f -> show (coNamespace f) </> coFilename f) fs' ++ es
+          os2 <- fmap concat $ sequence $ map (compileExtraFile (show ns0) paths' d) es'
+          let (hxx,cxx,os') = sortCompiledFiles $ map (\f -> show (coNamespace f) </> coFilename f) fs' ++ es'
           path <- canonicalizePath $ p </> d
           let os1' = resolveObjectDeps path os1 deps
           let cm = CompileMetadata {
@@ -254,7 +255,7 @@ runCompiler co@(CompileOptions h is is2 ds es ep p m o f) = do
               cmPublicDeps = as,
               cmPrivateDeps = as2,
               cmCategories = sort $ map show pc,
-              cmSubdirs = sort $ ss ++ ep,
+              cmSubdirs = sort $ ss ++ ep',
               cmPublicFiles = sort ps,
               cmPrivateFiles = sort xs,
               cmTestFiles = sort ts,
@@ -283,10 +284,9 @@ runCompiler co@(CompileOptions h is is2 ds es ep p m o f) = do
          else return ([],ca)
     compileExtraFile ns0 paths d f
       | isSuffixOf ".cpp" f || isSuffixOf ".cc" f = do
-          let f' = getCachedPath (p </> d) "" f
-          let p0 = getCachedPath (p </> d) "" ""
+          let f' = p </> d </> f
           createCachePath (p </> d)
-          let command = CompileToObject f' (getCachedPath (p </> d) "" "") ns0 (p0:paths) True
+          let command = CompileToObject f' (getCachedPath (p </> d) "" "") ns0 paths True
           o <- runCxxCommand command
           return [OtherObjectFile o]
       | otherwise = return []

@@ -253,8 +253,7 @@ getNamespacesForDeps :: [CompileMetadata] -> [String]
 getNamespacesForDeps = filter (not . null) . map cmNamespace
 
 getIncludePathsForDeps :: [CompileMetadata] -> [String]
-getIncludePathsForDeps = concat . map extract where
-  extract m = (cmPath m </> cachedDataPath):(map ((cmPath m </> cachedDataPath) </>) $ cmSubdirs m)
+getIncludePathsForDeps = concat . map cmSubdirs
 
 getObjectFilesForDeps :: [CompileMetadata] -> [ObjectFile]
 getObjectFilesForDeps = concat . map cmObjectFiles
