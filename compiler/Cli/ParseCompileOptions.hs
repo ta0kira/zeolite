@@ -17,8 +17,9 @@ limitations under the License.
 -- Author: Kevin P. Barry [ta0kira@gmail.com]
 
 module Cli.ParseCompileOptions (
-  parseCompileOptions,
   optionHelpText,
+  parseCompileOptions,
+  validateCompileOptions,
 ) where
 
 import Control.Monad (when)
@@ -151,7 +152,7 @@ parseCompileOptions = parseAll emptyCompileOptions . zip [1..] where
       | any (flip isSuffixOf e) allowedExtraTypes = do
           checkPathName n e "-e"
           return (os,CompileOptions (maybeDisableHelp h) is is2 ds (es ++ [e]) ep p m o f)
-      | takeExtension e == "" = do
+      | takeExtension e == "" || e == "." = do
           checkPathName n e "-e"
           return (os,CompileOptions (maybeDisableHelp h) is is2 ds es (ep ++ [e]) p m o f)
       | otherwise = argError n "-e" $ "Only " ++ intercalate ", " allowedExtraTypes ++
@@ -180,3 +181,40 @@ parseCompileOptions = parseAll emptyCompileOptions . zip [1..] where
       | otherwise = do
         checkPathName n d ""
         return (os,CompileOptions (maybeDisableHelp h) is is2 (ds ++ [d]) es ep p m o f)
+
+validateCompileOptions :: (CompileErrorM m, Monad m) => CompileOptions -> m CompileOptions
+validateCompileOptions co@(CompileOptions h is is2 ds es ep p m o _)
+  | h /= HelpNotNeeded = return co
+
+  | (not $ null o) && (isCompileIncremental m) =
+    compileError "Output filename (-o) is not allowed in compile-only mode (-c)."
+
+  | (not $ null o) && (isExecuteTests m) =
+    compileError "Output filename (-o) is not allowed in test mode (-t)."
+  | (not $ null $ is ++ is2) && (isExecuteTests m) =
+    compileError "Include paths (-i/-I) are not allowed in test mode (-t)."
+      | (not $ null $ es ++ ep) && (isExecuteTests m) =
+    compileError "Extra files (-e) are not allowed in test mode (-t)."
+
+  | (not $ null o) && (isCreateTemplates m) =
+    compileError "Output filename (-o) is not allowed in template mode (--templates)."
+      | (not $ null $ es ++ ep) && (isCreateTemplates m) =
+    compileError "Extra files (-e) are not allowed in template mode (--templates)."
+
+  | (not $ null p) && (isCompileRecompile m) =
+    compileError "Path prefix (-p) is not allowed in recompile mode (-r)."
+  | (not $ null o) && (isCompileRecompile m) =
+    compileError "Output filename (-o) is not allowed in recompile mode (-r)."
+  | (not $ null $ is ++ is2) && (isCompileRecompile m) =
+    compileError "Include paths (-i/-I) are not allowed in recompile mode (-r)."
+      | (not $ null $ es ++ ep) && (isCompileRecompile m) =
+    compileError "Extra files (-e) are not allowed in recompile mode (-r)."
+
+  | length ds > 1 && length (es ++ ep) > 0 =
+    compileError "Extra files and paths (-e) cannot be used with multiple input paths, to avoid ambiguity."
+
+  | null ds =
+    compileError "Please specify at least one input path."
+  | (length ds /= 1) && (isCompileBinary m) =
+    compileError "Specify exactly one input path for binary mode (-m)."
+  | otherwise = return co

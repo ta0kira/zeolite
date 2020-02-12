@@ -47,7 +47,7 @@ import Cli.ParseCompileOptions -- Not safe, due to Text.Regex.TDFA.
 
 main = do
   args <- getArgs
-  let options = parseCompileOptions args >>= validate
+  let options = parseCompileOptions args >>= validateCompileOptions
   compile options where
     compile co
       | isCompileError co = do
@@ -58,38 +58,6 @@ main = do
         let co' = getCompileSuccess co
         when (HelpNotNeeded /= (coHelp co')) $ showHelp >> exitFailure
         runCompiler co'
-    validate co@(CompileOptions h is is2 ds es ep p m o _)
-      | h /= HelpNotNeeded = return co
-
-      | (not $ null o) && (isCompileIncremental m) =
-        compileError "Output filename (-o) is not allowed in compile-only mode (-c)."
-
-      | (not $ null o) && (isExecuteTests m) =
-        compileError "Output filename (-o) is not allowed in test mode (-t)."
-      | (not $ null $ is ++ is2) && (isExecuteTests m) =
-        compileError "Include paths (-i/-I) are not allowed in test mode (-t)."
-          | (not $ null $ es ++ ep) && (isExecuteTests m) =
-        compileError "Extra files (-e) are not allowed in test mode (-t)."
-
-      | (not $ null o) && (isCreateTemplates m) =
-        compileError "Output filename (-o) is not allowed in template mode (--templates)."
-          | (not $ null $ es ++ ep) && (isCreateTemplates m) =
-        compileError "Extra files (-e) are not allowed in template mode (--templates)."
-
-      | (not $ null p) && (isCompileRecompile m) =
-        compileError "Path prefix (-p) is not allowed in recompile mode (-r)."
-      | (not $ null o) && (isCompileRecompile m) =
-        compileError "Output filename (-o) is not allowed in recompile mode (-r)."
-      | (not $ null $ is ++ is2) && (isCompileRecompile m) =
-        compileError "Include paths (-i/-I) are not allowed in recompile mode (-r)."
-          | (not $ null $ es ++ ep) && (isCompileRecompile m) =
-        compileError "Extra files (-e) are not allowed in recompile mode (-r)."
-
-      | null ds =
-        compileError "Please specify at least one input path."
-      | (length ds /= 1) && (isCompileBinary m) =
-        compileError "Specify exactly one input path for binary mode (-m)."
-      | otherwise = return co
 
 showHelp :: IO ()
 showHelp = do
