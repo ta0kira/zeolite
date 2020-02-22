@@ -33,7 +33,7 @@ concrete Test {
 }
 
 
-testcase "reduce Bool to Bool" {
+testcase "reduce Bool" {
   success Test$run()
 }
 
@@ -42,20 +42,18 @@ define Test {
     if (!present(reduce<Bool,Bool>(true))) {
       fail("Failed")
     }
-  }
-}
-
-concrete Test {
-  @type run () -> ()
-}
-
-
-testcase "reduce Bool to Formatted" {
-  success Test$run()
-}
-
-define Test {
-  run () {
+    if (!present(reduce<Bool,AsBool>(true))) {
+      fail("Failed")
+    }
+    if (present(reduce<Bool,AsChar>(true))) {
+      fail("Failed")
+    }
+    if (!present(reduce<Bool,AsInt>(true))) {
+      fail("Failed")
+    }
+    if (!present(reduce<Bool,AsFloat>(true))) {
+      fail("Failed")
+    }
     if (!present(reduce<Bool,Formatted>(true))) {
       fail("Failed")
     }
@@ -67,13 +65,28 @@ concrete Test {
 }
 
 
-testcase "reduce Int to Int" {
+testcase "reduce Char" {
   success Test$run()
 }
 
 define Test {
   run () {
-    if (!present(reduce<Int,Int>(1))) {
+    if (!present(reduce<Char,Char>('a'))) {
+      fail("Failed")
+    }
+    if (!present(reduce<Char,AsBool>('a'))) {
+      fail("Failed")
+    }
+    if (!present(reduce<Char,AsChar>('a'))) {
+      fail("Failed")
+    }
+    if (!present(reduce<Char,AsInt>('a'))) {
+      fail("Failed")
+    }
+    if (!present(reduce<Char,AsFloat>('a'))) {
+      fail("Failed")
+    }
+    if (!present(reduce<Char,Formatted>('a'))) {
       fail("Failed")
     }
   }
@@ -84,12 +97,27 @@ concrete Test {
 }
 
 
-testcase "reduce Int to Formatted" {
+testcase "reduce Int" {
   success Test$run()
 }
 
 define Test {
   run () {
+    if (!present(reduce<Int,Int>(1))) {
+      fail("Failed")
+    }
+    if (!present(reduce<Int,AsBool>(1))) {
+      fail("Failed")
+    }
+    if (!present(reduce<Int,AsChar>(1))) {
+      fail("Failed")
+    }
+    if (!present(reduce<Int,AsInt>(1))) {
+      fail("Failed")
+    }
+    if (!present(reduce<Int,AsFloat>(1))) {
+      fail("Failed")
+    }
     if (!present(reduce<Int,Formatted>(1))) {
       fail("Failed")
     }
@@ -101,13 +129,28 @@ concrete Test {
 }
 
 
-testcase "reduce String to String" {
+testcase "reduce Float" {
   success Test$run()
 }
 
 define Test {
   run () {
-    if (!present(reduce<String,String>("x"))) {
+    if (!present(reduce<Float,Float>(1.0))) {
+      fail("Failed")
+    }
+    if (!present(reduce<Float,AsBool>(1.0))) {
+      fail("Failed")
+    }
+    if (present(reduce<Float,AsChar>(1.0))) {
+      fail("Failed")
+    }
+    if (!present(reduce<Float,AsInt>(1.0))) {
+      fail("Failed")
+    }
+    if (!present(reduce<Float,AsFloat>(1.0))) {
+      fail("Failed")
+    }
+    if (!present(reduce<Float,Formatted>(1.0))) {
       fail("Failed")
     }
   }
@@ -118,47 +161,28 @@ concrete Test {
 }
 
 
-testcase "reduce String to Formatted" {
+testcase "reduce String" {
   success Test$run()
 }
 
 define Test {
   run () {
-    if (!present(reduce<String,Formatted>("x"))) {
+    if (!present(reduce<String,String>("a"))) {
       fail("Failed")
     }
-  }
-}
-
-concrete Test {
-  @type run () -> ()
-}
-
-
-testcase "reduce Float to Float" {
-  success Test$run()
-}
-
-define Test {
-  run () {
-    if (!present(reduce<Float,Float>(1.1))) {
+    if (!present(reduce<String,AsBool>("a"))) {
       fail("Failed")
     }
-  }
-}
-
-concrete Test {
-  @type run () -> ()
-}
-
-
-testcase "reduce Float to Formatted" {
-  success Test$run()
-}
-
-define Test {
-  run () {
-    if (!present(reduce<Float,Formatted>(1.1))) {
+    if (present(reduce<String,AsChar>("a"))) {
+      fail("Failed")
+    }
+    if (present(reduce<String,AsInt>("a"))) {
+      fail("Failed")
+    }
+    if (present(reduce<String,AsFloat>("a"))) {
+      fail("Failed")
+    }
+    if (!present(reduce<String,Formatted>("a"))) {
       fail("Failed")
     }
   }
@@ -849,6 +873,156 @@ define Test {
     }
     if (("abc\x00def").readPosition(4) != 'd') {
       fail("Failed")
+    }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "Bool conversions" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+    Bool b1 <- (false).asBool()
+    if (b1 != false) {
+      fail(b1)
+    }
+    Bool b2 <- (true).asBool()
+    if (b2 != true) {
+      fail(b2)
+    }
+    Int i <- (true).asInt()
+    if (i != 1) {
+      fail(i)
+    }
+    Float f <- (true).asFloat()
+    if (f != 1.0) {
+      fail(f)
+    }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "Char conversions" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+    Bool b1 <- ('\x00').asBool()
+    if (b1 != false) {
+      fail(b1)
+    }
+    Bool b2 <- ('\x10').asBool()
+    if (b2 != true) {
+      fail(b2)
+    }
+    Char c <- ('a').asChar()
+    if (c != 'a') {
+      fail(c)
+    }
+    Int i <- ('\x10').asInt()
+    if (i != 16) {
+      fail(i)
+    }
+    Float f <- ('\x10').asFloat()
+    if (f != 16.0) {
+      fail(f)
+    }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "Int conversions" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+    Bool b1 <- (0).asBool()
+    if (b1 != false) {
+      fail(b1)
+    }
+    Bool b2 <- (16).asBool()
+    if (b2 != true) {
+      fail(b2)
+    }
+    Char c <- (97).asChar()
+    if (c != 'a') {
+      fail(c)
+    }
+    Int i <- (16).asInt()
+    if (i != 16) {
+      fail(i)
+    }
+    Float f <- (16).asFloat()
+    if (f != 16.0) {
+      fail(f)
+    }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "Float conversions" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+    Bool b1 <- (0.0).asBool()
+    if (b1 != false) {
+      fail(b1)
+    }
+    Bool b2 <- (16.0).asBool()
+    if (b2 != true) {
+      fail(b2)
+    }
+    Int i <- (16.0).asInt()
+    if (i != 16) {
+      fail(i)
+    }
+    Float f <- (16.0).asFloat()
+    if (f != 16.0) {
+      fail(f)
+    }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "String conversions" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+    Bool b1 <- ("").asBool()
+    if (b1 != false) {
+      fail(b1)
+    }
+    Bool b2 <- ("\x00").asBool()
+    if (b2 != true) {
+      fail(b2)
     }
   }
 }

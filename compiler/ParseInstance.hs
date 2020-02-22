@@ -78,10 +78,14 @@ instance ParseFromSource CategoryName where
     where
       box n
         | n == "Bool"         = BuiltinBool
-        | n == "String"       = BuiltinString
         | n == "Char"         = BuiltinChar
         | n == "Int"          = BuiltinInt
         | n == "Float"        = BuiltinFloat
+        | n == "String"       = BuiltinString
+        | n == "AsBool"       = BuiltinAsBool
+        | n == "AsChar"       = BuiltinAsChar
+        | n == "AsInt"        = BuiltinAsInt
+        | n == "AsFloat"      = BuiltinAsFloat
         | n == "LessThan"     = BuiltinLessThan
         | n == "Equals"       = BuiltinEquals
         | n == "Formatted"    = BuiltinFormatted

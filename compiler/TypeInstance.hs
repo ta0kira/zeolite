@@ -102,10 +102,14 @@ data CategoryName =
     tnName :: String
   } |
   BuiltinBool |
-  BuiltinString |
   BuiltinChar |
   BuiltinInt |
   BuiltinFloat |
+  BuiltinString |
+  BuiltinAsBool |
+  BuiltinAsChar |
+  BuiltinAsInt |
+  BuiltinAsFloat |
   BuiltinLessThan |
   BuiltinEquals |
   BuiltinFormatted |
@@ -115,10 +119,14 @@ data CategoryName =
 instance Show CategoryName where
   show (CategoryName n)    = n
   show BuiltinBool         = "Bool"
-  show BuiltinString       = "String"
   show BuiltinChar         = "Char"
   show BuiltinInt          = "Int"
   show BuiltinFloat        = "Float"
+  show BuiltinString       = "String"
+  show BuiltinAsBool       = "AsBool"
+  show BuiltinAsChar       = "AsChar"
+  show BuiltinAsInt        = "AsInt"
+  show BuiltinAsFloat      = "AsFloat"
   show BuiltinLessThan     = "LessThan"
   show BuiltinEquals       = "Equals"
   show BuiltinFormatted    = "Formatted"
@@ -315,7 +323,7 @@ checkInstanceToInstance r f Covariant t1@(TypeInstance n1 ps1) t2@(TypeInstance 
     -- NOTE: Covariant is identity, so v2 has technically been composed with it.
     processParamPairs (\v2 (p1,p2) -> checkGeneralMatch r f v2 p1 p2) variance zipped >> mergeDefaultM
   | otherwise = do
-    ps1' <- trRefines r t1 n2 `reviseError` (show n1 ++ " does not refine " ++ show n2)
+    ps1' <- trRefines r t1 n2
     checkInstanceToInstance r f Covariant (TypeInstance n2 ps1') t2
 
 checkParamToInstance :: (MergeableM m, CompileErrorM m, Monad m, TypeResolver r) =>
@@ -451,7 +459,7 @@ validateAssignment r f t fs = mergeAllM (map (checkFilter t) fs) where
     (compileError $ "Multiple types in intersection define " ++ show t) `mergeNestedM`
       (mergeAllM $ map (compileError . show) ts)
   checkDefinesFilter f2@(DefinesInstance n2 _) (JustTypeInstance t1) = do
-    ps1' <- trDefines r t1 n2 `reviseError` (show (tiName t1) ++ " does not define " ++ show n2)
+    ps1' <- trDefines r t1 n2
     checkDefinesMatch r f f2 (DefinesInstance n2 ps1')
   checkDefinesFilter f2 (JustParamName n1) = do
       fs1 <- fmap (map dfType . filter isDefinesFilter) $ f `filterLookup` n1
