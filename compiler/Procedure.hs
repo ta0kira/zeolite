@@ -167,6 +167,7 @@ data VoidExpression c =
   Conditional (IfElifElse c) |
   Loop (WhileLoop c) |
   WithScope (ScopedBlock c) |
+  Unconditional (Procedure c) |
   LineComment String
   deriving (Show)
 

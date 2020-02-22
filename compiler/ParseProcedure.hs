@@ -109,7 +109,7 @@ instance ParseFromSource (Statement SourcePos) where
                  parseIgnore where
     parseAssign = labeled "statement" $ do
       c <- getPosition
-      as <- multiDest <|> try singleDest
+      as <- multiDest <|> singleDest
       e <- sourceParser
       statementEnd
       return $ Assignment [c] (ParamSet as) e
@@ -127,13 +127,13 @@ instance ParseFromSource (Statement SourcePos) where
       e <- between (sepAfter $ string "(") (sepAfter $ string ")") sourceParser
       return $ FailCall [c] e
     multiDest = do
-      as <- between (sepAfter $ string "{")
-                    (sepAfter $ string "}")
-                    (sepBy sourceParser (sepAfter $ string ","))
+      as <- try $ between (sepAfter $ string "{")
+                          (sepAfter $ string "}")
+                          (sepBy sourceParser (sepAfter $ string ","))
       assignOperator
       return as
     singleDest = do
-      a <- sourceParser
+      a <- try sourceParser
       assignOperator
       return [a]
     parseIgnore = do
@@ -236,17 +236,21 @@ instance ParseFromSource (ScopedBlock SourcePos) where
       p <- between (sepAfter $ string "{") (sepAfter $ string "}") sourceParser
       cl <- fmap Just parseCleanup <|> return Nothing
       kwIn
-      s <- sourceParser
+      s <- sourceParser <|> unconditional
       return $ ScopedBlock [c] p cl s
     justCleanup = do
       c <- getPosition
       cl <- parseCleanup
       kwIn
-      s <- sourceParser
+      s <- sourceParser <|> unconditional
       return $ ScopedBlock [c] (Procedure [] []) (Just cl) s
     parseCleanup = do
       try kwCleanup
       between (sepAfter $ string "{") (sepAfter $ string "}") sourceParser
+    unconditional = do
+      c <- getPosition
+      p <- between (sepAfter $ string "{") (sepAfter $ string "}") sourceParser
+      return $ NoValueExpression [c] (Unconditional p)
 
 unaryOperator :: Parser (Operator c)
 unaryOperator = op >>= return . NamedOperator where

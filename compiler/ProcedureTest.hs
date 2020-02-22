@@ -145,6 +145,9 @@ tests = [
     checkShortParseSuccess "if(v){~c()}elif(v){~c()}elif(v){~c()}",
     checkShortParseSuccess "while(var.func()){~val.call()}",
     checkShortParseSuccess "scoped{T<#x>x<-y}in~var.T<#x>$func()",
+    checkShortParseSuccess "scoped{T<#x>x<-y}in{x<-1}",
+    checkShortParseSuccess "scoped{T<#x>x<-y}in{x}<-1",
+    checkShortParseFail "scoped{T<#x>x<-y}in{x}",
 
     checkShortParseSuccess "x <- !y",
     checkShortParseSuccess "x <- !y",

@@ -330,6 +330,14 @@ compileVoidExpression (Conditional ie) = compileIfElifElse ie
 compileVoidExpression (Loop l) = compileWhileLoop l
 compileVoidExpression (WithScope s) = compileScopedBlock s
 compileVoidExpression (LineComment s) = csWrite $ map ("// " ++) $ lines s
+compileVoidExpression (Unconditional p) = do
+  ctx0 <- getCleanContext
+  ctx <- compileProcedure ctx0 p
+  (lift $ ccGetRequired ctx) >>= csRequiresTypes
+  csWrite ["{"]
+  (lift $ ccGetOutput ctx) >>= csWrite
+  csWrite ["}"]
+  csInheritReturns [ctx]
 
 compileIfElifElse :: (Show c, Monad m, CompileErrorM m, MergeableM m,
                       CompilerContext c m [String] a) =>

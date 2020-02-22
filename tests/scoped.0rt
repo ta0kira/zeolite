@@ -16,9 +16,53 @@ limitations under the License.
 
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
+testcase "scoped unconditional" {
+  success Test$run()
+}
+
+@value interface Value {}
+
+define Test {
+  run () {
+    scoped {
+      Int x <- 1
+    } in {
+      x <- 2
+    }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "unconditional has scoping" {
+  error
+  require "x"
+}
+
+@value interface Value {}
+
+define Test {
+  run () {
+    scoped {
+    } in {
+      Int x <- 1
+    }
+    x <- 2
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
 testcase "return inside scope" {
   success Test$run()
 }
+
 
 @value interface Value {}
 
@@ -525,6 +569,27 @@ define Test {
 
     value <- 1
     return _
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "cleanup unconditional" {
+  success Test$run()
+}
+
+@value interface Value {}
+
+define Test {
+  run () {
+    scoped {
+      Int x <- 1
+    } in {
+      ~ x
+    }
   }
 }
 
