@@ -25,7 +25,7 @@ root=$PWD
 compiler_hs="$root/compiler/Cli/compiler"
 compiler_bin="$root/zeolite"
 modules=(
-  "$root"
+  "$root/base"
   "$root/lib/util"
   "$root/lib/file"
   "$root/tests/visibility/internal"

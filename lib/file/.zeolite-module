@@ -1,1 +1,1 @@
-RecompileMetadata {rmRoot = "..", rmPath = "file", rmPublicDeps = ["../util"], rmPrivateDeps = [], rmExtraFiles = ["file/Category_RawFileReader.cpp","file/Category_RawFileWriter.cpp"], rmExtraPaths = [], rmMode = CompileUnspecified, rmOutputName = ""}
+RecompileMetadata {rmRoot = "..", rmPath = "file", rmPublicDeps = ["../util"], rmPrivateDeps = [], rmExtraFiles = ["file/Category_RawFileReader.cpp","file/Category_RawFileWriter.cpp"], rmExtraPaths = [], rmExtraRequires = [], rmMode = CompileUnspecified, rmOutputName = ""}

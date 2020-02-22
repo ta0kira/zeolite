@@ -106,14 +106,7 @@ data CategoryName =
   BuiltinInt |
   BuiltinFloat |
   BuiltinString |
-  BuiltinAsBool |
-  BuiltinAsChar |
-  BuiltinAsInt |
-  BuiltinAsFloat |
-  BuiltinLessThan |
-  BuiltinEquals |
   BuiltinFormatted |
-  BuiltinReadPosition |
   CategoryNone
 
 instance Show CategoryName where
@@ -123,14 +116,7 @@ instance Show CategoryName where
   show BuiltinInt          = "Int"
   show BuiltinFloat        = "Float"
   show BuiltinString       = "String"
-  show BuiltinAsBool       = "AsBool"
-  show BuiltinAsChar       = "AsChar"
-  show BuiltinAsInt        = "AsInt"
-  show BuiltinAsFloat      = "AsFloat"
-  show BuiltinLessThan     = "LessThan"
-  show BuiltinEquals       = "Equals"
   show BuiltinFormatted    = "Formatted"
-  show BuiltinReadPosition = "ReadPosition"
   show CategoryNone        = "(none)"
 
 instance Eq CategoryName where
@@ -140,8 +126,7 @@ instance Ord CategoryName where
   c1 <= c2 = show c1 <= show c2
 
 isBuiltinCategory :: CategoryName -> Bool
-isBuiltinCategory (CategoryName _) = False
-isBuiltinCategory _                = True
+isBuiltinCategory _ = False
 
 newtype ParamName =
   ParamName {

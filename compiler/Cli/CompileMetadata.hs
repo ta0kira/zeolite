@@ -35,6 +35,7 @@ module Cli.CompileMetadata (
   getObjectFilesForDeps,
   getObjectFileResolver,
   getRealPathsForDeps,
+  getRequiresFromDeps,
   getSourceFilesForDeps,
   isCategoryObjectFile,
   isPathConfigured,
@@ -43,6 +44,7 @@ module Cli.CompileMetadata (
   loadPublicDeps,
   loadMetadata,
   mergeObjectFiles,
+  resolveCategoryDeps,
   resolveObjectDeps,
   sortCompiledFiles,
   tryLoadRecompile,
@@ -75,6 +77,7 @@ data CompileMetadata =
     cmNamespace :: String, -- TODO: Use Namespace here?
     cmPublicDeps :: [String],
     cmPrivateDeps :: [String],
+    cmExtraRequires :: [CategoryIdentifier],
     cmCategories :: [String],
     cmSubdirs :: [String],
     cmPublicFiles :: [String],
@@ -125,6 +128,7 @@ data RecompileMetadata =
     rmPrivateDeps :: [String],
     rmExtraFiles :: [String],
     rmExtraPaths :: [String],
+    rmExtraRequires :: [String],
     rmMode :: CompileMode,
     rmOutputName :: String
   }
@@ -249,6 +253,9 @@ getSourceFilesForDeps :: [CompileMetadata] -> [String]
 getSourceFilesForDeps = concat . map extract where
   extract m = map (cmPath m </>) (cmPublicFiles m)
 
+getRequiresFromDeps :: [CompileMetadata] -> [CategoryIdentifier]
+getRequiresFromDeps = concat . map cmExtraRequires
+
 getNamespacesForDeps :: [CompileMetadata] -> [String]
 getNamespacesForDeps = filter (not . null) . map cmNamespace
 
@@ -312,7 +319,7 @@ sortCompiledFiles = foldl split ([],[],[]) where
     | otherwise = fs
 
 checkModuleFreshness :: String -> CompileMetadata -> IO Bool
-checkModuleFreshness p (CompileMetadata p2 _ is is2 _ _ ps xs ts hxx cxx _) = do
+checkModuleFreshness p (CompileMetadata p2 _ is is2 _ _ _ ps xs ts hxx cxx _) = do
   time <- getModificationTime $ getCachedPath p "" metadataFilename
   (ps2,xs2,ts2) <- findSourceFiles p ""
   let e1 = checkMissing ps ps2
@@ -333,8 +340,8 @@ checkModuleFreshness p (CompileMetadata p2 _ is is2 _ _ ps xs ts hxx cxx _) = do
            return (time2 > time)
     checkMissing s0 s1 = not $ null $ (Set.fromList s1) `Set.difference` (Set.fromList s0)
 
-getObjectFileResolver :: [ObjectFile] -> [Namespace] -> [CategoryName] -> [String]
-getObjectFileResolver os ns ds = resolved ++ nonCategories where
+getObjectFileResolver :: [CategoryIdentifier] -> [ObjectFile] -> [Namespace] -> [CategoryName] -> [String]
+getObjectFileResolver ce os ns ds = resolved ++ nonCategories where
   categories    = filter isCategoryObjectFile os
   nonCategories = map oofFile $ filter (not . isCategoryObjectFile) os
   categoryMap = Map.fromList $ map keyByCategory categories
@@ -342,7 +349,7 @@ getObjectFileResolver os ns ds = resolved ++ nonCategories where
   objectMap = Map.fromList $ map keyBySpec categories
   keyBySpec o = (cofCategory o,o)
   directDeps = concat $ map (resolveDep . show) ds
-  directResolved = map cofCategory directDeps
+  directResolved = map cofCategory directDeps ++ ce
   resolveDep d = unwrap $ foldl (<|>) Nothing allChecks <|> Just [] where
     allChecks = map (\n -> (d,n) `Map.lookup` categoryMap >>= return . (:[])) (map show ns ++ [""])
     unwrap (Just xs) = xs
@@ -368,13 +375,25 @@ resolveObjectDeps p os deps = resolvedCategories ++ nonCategories where
   resolvedCategories = Map.elems $ Map.fromListWith mergeObjectFiles $ map resolveCategory categories
   categoryMap = Map.fromList $ directCategories ++ depCategories
   directCategories = map (keyByCategory . cxxToId) $ map snd categories
-  depCategories = map (keyByCategory . cofCategory) $ filter isCategoryObjectFile $ concat $ map cmObjectFiles deps
-  keyByCategory c = ((ciCategory c,ciNamespace c),c)
+  depCategories = map keyByCategory $ concat $ map categoriesToIds deps
+  categoriesToIds dep = map (\c -> CategoryIdentifier (cmPath dep) c (cmNamespace dep)) (cmCategories dep)
   cxxToId (CxxOutput (Just c) _ ns _ _ _) = CategoryIdentifier p (show c) (show ns)
   resolveCategory (fs,ca@(CxxOutput _ _ _ ns2 ds _)) =
     (cxxToId ca,CategoryObjectFile (cxxToId ca) rs fs) where
-      rs = concat $ map (resolveDep (map show ns2) . show) ds
-  resolveDep ns d = unwrap $ foldl (<|>) Nothing allChecks where
-    allChecks = map (\n -> (d,n) `Map.lookup` categoryMap >>= return . (:[])) (ns ++ publicNamespaces)
-    unwrap (Just xs) = xs
-    unwrap _         = [UnresolvedCategory d]
+      rs = concat $ map (resolveDep categoryMap (map show ns2 ++ publicNamespaces) . show) ds
+
+resolveCategoryDeps :: [String] -> [CompileMetadata] -> [CategoryIdentifier]
+resolveCategoryDeps cs deps = resolvedCategories where
+  publicNamespaces = getNamespacesForDeps deps
+  resolvedCategories = concat $ map (resolveDep categoryMap publicNamespaces) cs
+  categoryMap = Map.fromList depCategories
+  depCategories = map (keyByCategory . cofCategory) $ filter isCategoryObjectFile $ concat $ map cmObjectFiles deps
+
+keyByCategory :: CategoryIdentifier -> ((String,String),CategoryIdentifier)
+keyByCategory c = ((ciCategory c,ciNamespace c),c)
+
+resolveDep :: Map.Map (String,String) CategoryIdentifier -> [String] -> String -> [CategoryIdentifier]
+resolveDep cm ns d = unwrap $ foldl (<|>) Nothing allChecks where
+  allChecks = map (\n -> (d,n) `Map.lookup` cm >>= return . (:[])) ns
+  unwrap (Just xs) = xs
+  unwrap _         = [UnresolvedCategory d]

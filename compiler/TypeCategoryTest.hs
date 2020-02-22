@@ -44,8 +44,6 @@ tests = [
     checkSingleParseSuccess "testfiles/value_interface.0rx",
     checkSingleParseSuccess "testfiles/type_interface.0rx",
     checkSingleParseSuccess "testfiles/concrete.0rx",
-    -- Checks that the builtin categories parse.
-    return (builtinCategories >> return ()),
 
     checkShortParseSuccess "concrete Type<#x> {}",
     checkShortParseSuccess "concrete Type {}",
@@ -79,12 +77,6 @@ tests = [
     checkOperationSuccess "testfiles/value_refines_value.0rx" (checkConnectedTypes defaultCategories),
     checkOperationFail "testfiles/value_refines_instance.0rx" (checkConnectedTypes defaultCategories),
     checkOperationFail "testfiles/value_refines_concrete.0rx" (checkConnectedTypes defaultCategories),
-
-    checkOperationFail
-      "testfiles/builtin_clash.0rx"
-      (\ts -> do
-        bs <- builtinCategories
-        checkConnectedTypes bs ts),
 
     checkOperationSuccess "testfiles/concrete_refines_value.0rx" (checkConnectedTypes defaultCategories),
     checkOperationFail "testfiles/concrete_refines_instance.0rx" (checkConnectedTypes defaultCategories),

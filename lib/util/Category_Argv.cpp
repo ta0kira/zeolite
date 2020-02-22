@@ -18,6 +18,8 @@ limitations under the License.
 
 #include "category-source.hpp"
 #include "Category_Argv.hpp"
+#include "Category_ReadPosition.hpp"
+#include "Category_String.hpp"
 
 
 #ifdef ZEOLITE_DYNAMIC_NAMESPACE

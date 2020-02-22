@@ -20,7 +20,6 @@ limitations under the License.
 
 module Builtin (
   boolRequiredValue,
-  builtinCategories,
   charRequiredValue,
   defaultCategories,
   emptyValue,
@@ -30,11 +29,8 @@ module Builtin (
   stringRequiredValue,
 ) where
 
-import Text.Parsec
 import qualified Data.Map as Map
 
-import ParseCategory
-import ParserBase
 import TypeCategory
 import TypeInstance
 import TypesBase
@@ -42,14 +38,6 @@ import TypesBase
 
 defaultCategories :: CategoryMap c
 defaultCategories = Map.empty
-
-builtinCategories :: (MergeableM m, CompileErrorM m, Monad m) => m (CategoryMap SourcePos)
-builtinCategories = unwrap parsed >>= mapNames where
-  parsed = parse (between optionalSpace endOfDoc (sepBy sourceParser optionalSpace)) sourceName builtinSource
-  unwrap (Left e)  = compileError (show e)
-  unwrap (Right t) = return t
-  mapNames = includeNewTypes Map.empty
-  sourceName = "(builtin)"
 
 boolRequiredValue :: ValueType
 boolRequiredValue = requiredSingleton BuiltinBool
@@ -65,91 +53,3 @@ formattedRequiredValue :: ValueType
 formattedRequiredValue = requiredSingleton BuiltinFormatted
 emptyValue :: ValueType
 emptyValue = ValueType OptionalValue $ TypeMerge MergeUnion []
-
-builtinSource :: String
-builtinSource = concat $ map (++ "\n") [
-    "concrete Bool {",
-    "  refines AsBool",
-    "  refines AsInt",
-    "  refines AsFloat",
-    "  refines Formatted",
-    "",
-    "  defines Equals<Bool>",
-    "}",
-    "",
-    "concrete Char {",
-    "  refines AsBool",
-    "  refines AsChar",
-    "  refines AsInt",
-    "  refines AsFloat",
-    "  refines Formatted",
-    "",
-    "  defines Equals<Char>",
-    "  defines LessThan<Char>",
-    "}",
-    "",
-    "concrete Int {",
-    "  refines AsBool",
-    "  refines AsChar",
-    "  refines AsInt",
-    "  refines AsFloat",
-    "  refines Formatted",
-    "",
-    "  defines Equals<Int>",
-    "  defines LessThan<Int>",
-    "}",
-    "",
-    "concrete Float {",
-    "  refines AsBool",
-    "  refines AsInt",
-    "  refines AsFloat",
-    "  refines Formatted",
-    "",
-    "  defines Equals<Float>",
-    "  defines LessThan<Float>",
-    "}",
-    "",
-    "concrete String {",
-    "  refines AsBool",
-    "  refines Formatted",
-    "  refines ReadPosition<Char>",
-    "",
-    "  defines Equals<String>",
-    "  defines LessThan<String>",
-    "",
-    "  @value subSequence (Int,Int) -> (String)",
-    "}",
-    "",
-    "@value interface AsBool {",
-    "  asBool () -> (Bool)",
-    "}",
-    "",
-    "@value interface AsInt {",
-    "  asInt () -> (Int)",
-    "}",
-    "",
-    "@value interface AsChar {",
-    "  asChar () -> (Char)",
-    "}",
-    "",
-    "@value interface AsFloat {",
-    "  asFloat () -> (Float)",
-    "}",
-    "",
-    "@type interface LessThan<#x|> {",
-    "  lessThan (#x,#x) -> (Bool)",
-    "}",
-    "",
-    "@type interface Equals<#x|> {",
-    "  equals (#x,#x) -> (Bool)",
-    "}",
-    "",
-    "@value interface Formatted {",
-    "  formatted () -> (String)",
-    "}",
-    "",
-    "@value interface ReadPosition<|#x> {",
-    "  readPosition (Int) -> (#x)",
-    "  readSize () -> (Int)",
-    "  subSequence (Int,Int) -> (ReadPosition<#x>)",
-    "}"]

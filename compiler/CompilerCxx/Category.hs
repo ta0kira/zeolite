@@ -442,10 +442,11 @@ commonDefineAll t ns top bottom ce te fe = do
     name = getCategoryName t
     createCollection = onlyCodes [
         "namespace {",
-        "const int collection = 0;",
+        "const int " ++ collectionValName ++ " = 0;",
         "}  // namespace",
-        "const void* const " ++ collectionName name ++ " = &collection;"
+        "const void* const " ++ collectionName name ++ " = &" ++ collectionValName ++ ";"
       ]
+    collectionValName = "collection_" ++ show name
     (fc,ft,fv) = partitionByScope sfScope $ getCategoryFunctions t ++ fe
     createAllLabels = onlyCodes $ concat $ map createLabels [fc,ft,fv]
     createLabels = map (uncurry createLabelForFunction) . zip [0..] . sortOn sfName . filter ((== name) . sfType)
@@ -628,7 +629,7 @@ declareGetCategory t = [categoryBase ++ "& " ++ categoryGetter (getCategoryName 
 defineGetCatetory :: AnyCategory c -> [String]
 defineGetCatetory t = [
     categoryBase ++ "& " ++ categoryGetter (getCategoryName t) ++ "() {",
-    "  return " ++ categoryCreator ++ "();",
+    "  return " ++ categoryCreator (getCategoryName t) ++ "();",
     "}"
   ]
 
@@ -640,13 +641,13 @@ defineGetType :: AnyCategory c -> [String]
 defineGetType t = [
     typeBase ++ "& " ++ typeGetter (getCategoryName t) ++ "(Params<" ++
             show (length $ getCategoryParams t) ++ ">::Type params) {",
-    "  return " ++ typeCreator ++ "(params);",
+    "  return " ++ typeCreator (getCategoryName t) ++ "(params);",
     "}"
   ]
 
 defineInternalCategory :: AnyCategory c -> [String]
 defineInternalCategory t = [
-    internal ++ "& " ++ categoryCreator ++ "() {",
+    internal ++ "& " ++ categoryCreator (getCategoryName t) ++ "() {",
     "  static auto& category = *new " ++ internal ++ "();",
     "  return category;",
     "}"
@@ -657,16 +658,16 @@ defineInternalCategory t = [
 declareInternalType :: Monad m =>
   CategoryName -> Int -> m (CompiledData [String])
 declareInternalType t n =
-  return $ onlyCode $ typeName t ++ "& " ++ typeCreator ++
+  return $ onlyCode $ typeName t ++ "& " ++ typeCreator t ++
                       "(Params<" ++ show n ++ ">::Type params);"
 
 defineInternalType :: Monad m =>
   CategoryName -> Int -> m (CompiledData [String])
 defineInternalType t n = return $ onlyCodes [
-    typeName t ++ "& " ++ typeCreator ++ "(Params<" ++ show n ++ ">::Type params) {",
+    typeName t ++ "& " ++ typeCreator t ++ "(Params<" ++ show n ++ ">::Type params) {",
     "  static auto& cache = *new InstanceMap<" ++ show n ++ "," ++ typeName t ++ ">();",
     "  auto& cached = cache[params];",
-    "  if (!cached) { cached = R_get(new " ++ typeName t ++ "(" ++ categoryCreator ++ "(), params)); }",
+    "  if (!cached) { cached = R_get(new " ++ typeName t ++ "(" ++ categoryCreator t ++ "(), params)); }",
     "  return *cached;",
     "}"
   ]
@@ -675,7 +676,7 @@ declareInternalValue :: Monad m =>
   CategoryName -> Int -> Int -> m (CompiledData [String])
 declareInternalValue t p n =
   return $ onlyCodes [
-      "S<TypeValue> " ++ valueCreator ++
+      "S<TypeValue> " ++ valueCreator t ++
       "(" ++ typeName t ++ "& parent, " ++
       "const ParamTuple& params, const ValueTuple& args);"
     ]
@@ -684,7 +685,7 @@ defineInternalValue :: Monad m =>
   CategoryName -> Int -> Int -> m (CompiledData [String])
 defineInternalValue t p n =
   return $ onlyCodes [
-      "S<TypeValue> " ++ valueCreator ++ "(" ++ typeName t ++ "& parent, " ++
+      "S<TypeValue> " ++ valueCreator t ++ "(" ++ typeName t ++ "& parent, " ++
       "const ParamTuple& params, const ValueTuple& args) {",
       "  return S_get(new " ++ valueName t ++ "(parent, params, args));",
       "}"

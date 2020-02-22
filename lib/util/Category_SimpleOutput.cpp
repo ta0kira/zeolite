@@ -24,6 +24,7 @@ limitations under the License.
 #include <sstream>
 
 #include "category-source.hpp"
+#include "Category_Formatted.hpp"
 #include "Category_Writer.hpp"
 #include "Category_BufferedWriter.hpp"
 

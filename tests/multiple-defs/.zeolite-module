@@ -1,1 +1,1 @@
-RecompileMetadata {rmRoot = "../..", rmPath = "tests/multiple-defs", rmPublicDeps = [], rmPrivateDeps = [], rmExtraFiles = [], rmExtraPaths = [], rmMode = CompileIncremental, rmOutputName = ""}
+RecompileMetadata {rmRoot = "../..", rmPath = "tests/multiple-defs", rmPublicDeps = [], rmPrivateDeps = [], rmExtraFiles = [], rmExtraPaths = [], rmExtraRequires = [], rmMode = CompileIncremental, rmOutputName = ""}

@@ -66,7 +66,7 @@ showHelp = do
   hPutStrLn stderr "Also see https://ta0kira.github.io/zeolite for more documentation."
 
 runCompiler :: CompileOptions -> IO ()
-runCompiler co@(CompileOptions _ _ _ ds _ _ p (ExecuteTests tp) _ f) = do
+runCompiler co@(CompileOptions _ _ _ ds _ _ _ p (ExecuteTests tp) _ f) = do
   ds' <- sequence $ map preloadModule ds
   let possibleTests = Set.fromList $ concat $ map getTestsFromPreload ds'
   case Set.toList $ allowTests `Set.difference` possibleTests of
@@ -99,12 +99,11 @@ runCompiler co@(CompileOptions _ _ _ ds _ _ p (ExecuteTests tp) _ f) = do
       ss' <- zipWithContents p ss
       ts' <- zipWithContents p (map (d </>) $ filter isTestAllowed $ cmTestFiles m)
       tm <- return $ do
-        tm0 <- builtinCategories
         cs <- fmap concat $ collectAllOrErrorM $ map parsePublicSource ss'
-        includeNewTypes tm0 cs
+        includeNewTypes defaultCategories cs
       if isCompileError tm
          then return [((0,0),tm >> return ())]
-         else sequence $ map (runSingleTest paths deps1 os (getCompileSuccess tm)) ts'
+         else sequence $ map (runSingleTest paths (m:deps1) os (getCompileSuccess tm)) ts'
     processResults passed failed rs
       | isCompileError rs = do
           hPutStr stderr $ "\nTest errors:\n" ++ (show $ getCompileError rs)
@@ -114,7 +113,7 @@ runCompiler co@(CompileOptions _ _ _ ds _ _ p (ExecuteTests tp) _ f) = do
       | otherwise = do
           hPutStrLn stderr $ "\nPassed: " ++ show passed ++ " test(s), Failed: " ++ show failed ++ " test(s)"
           hPutStrLn stderr $ "Zeolite tests passed."
-runCompiler co@(CompileOptions h _ _ ds _ _ _ CompileRecompile _ f) = do
+runCompiler co@(CompileOptions h _ _ ds _ _ _ _ CompileRecompile _ f) = do
   fmap mergeAll $ sequence $ map recompileSingle ds where
     recompileSingle d0 = do
       rm <- tryLoadRecompile d0
@@ -126,7 +125,7 @@ runCompiler co@(CompileOptions h _ _ ds _ _ _ CompileRecompile _ f) = do
         maybeCompile (Just rm') upToDate
           | f < ForceAll && upToDate = hPutStrLn stderr $ "Path " ++ d0 ++ " is up to date."
           | otherwise = do
-              let (RecompileMetadata p d is is2 es ep m o) = rm'
+              let (RecompileMetadata p d is is2 es ep ec m o) = rm'
               -- In case the module is manually configured with a p such as "..",
               -- since the absolute path might not be known ahead of time.
               absolute <- canonicalizePath d0
@@ -138,30 +137,29 @@ runCompiler co@(CompileOptions h _ _ ds _ _ _ CompileRecompile _ f) = do
                   coSources = [d],
                   coExtraFiles = es,
                   coExtraPaths = ep,
+                  coExtraRequires = ec,
                   coSourcePrefix = fixed,
                   coMode = m,
                   coOutputName = o,
                   coForce = if f == ForceAll then ForceRecompile else AllowRecompile
                 }
               runCompiler recompile
-runCompiler co@(CompileOptions h is is2 ds es ep p m o f) = do
+runCompiler co@(CompileOptions h is is2 ds es ep ec p m o f) = do
   (fr,deps) <- loadPublicDeps (is ++ is2)
   checkAllowedStale fr f
-  let ss = fixPaths $ getSourceFilesForDeps deps
   as  <- fmap fixPaths $ sequence $ map canonicalizePath is
   as2 <- fmap fixPaths $ sequence $ map canonicalizePath is2
-  ss' <- zipWithContents p ss
   if isCreateTemplates m
-      then sequence_ $ map (processTemplates ss') ds
+      then sequence_ $ map (processTemplates deps) ds
       else do
-        ma <- sequence $ map (processPath deps as as2 ss') ds
+        ma <- sequence $ map (processPath deps as as2) ds
         let ms = concat $ map snd ma
         let deps2 = map fst ma
         createBinary (deps ++ deps2) m ms
   hPutStrLn stderr $ "Zeolite compilation succeeded." where
     ep' = fixPaths $ map (p </>) ep
     es' = fixPaths $ map (p </>) es
-    processPath deps as as2 ss d = do
+    processPath deps as as2 d = do
       isConfigured <- isPathConfigured d
       when (isConfigured && f == DoNotForce) $ do
         hPutStrLn stderr $ "Module " ++ d ++ " has already been configured. " ++
@@ -176,25 +174,29 @@ runCompiler co@(CompileOptions h is is2 ds es ep p m o f) = do
         rmPrivateDeps = as2,
         rmExtraFiles = sort es,
         rmExtraPaths = sort ep,
+        rmExtraRequires = sort ec,
         rmMode = m,
         rmOutputName = o
       }
       when (f == DoNotForce || f == ForceAll) $ writeRecompile (p </> d) rm
       (ps,xs,ts) <- findSourceFiles p d
-      -- Lazy dependency loading, in case we aren't compiling anything.
-      deps2 <- if null ps && null xs
+      base <- getBasePath
+      actual <- canonicalizePath (p </> d)
+      -- Lazy dependency loading, in case we're compiling base.
+      deps2 <- if actual == base
                   then return deps
                   else do
-                    base <- getBasePath
                     (fr,bpDeps) <- loadPublicDeps [base]
                     checkAllowedStale fr f
                     return $ bpDeps ++ deps
+      let ss = fixPaths $ getSourceFilesForDeps deps2
+      ss' <- zipWithContents p ss
       let paths = getIncludePathsForDeps deps2
       ps' <- zipWithContents p ps
       xs' <- zipWithContents p xs
       ns0 <- canonicalizePath (p </> d) >>= return . StaticNamespace . publicNamespace
       let ns2 = map StaticNamespace $ filter (not . null) $ getNamespacesForDeps deps
-      let fs = compileAll ns0 ns2 ss ps' xs'
+      let fs = compileAll ns0 ns2 ss' ps' xs'
       writeOutput paths ns0 deps2 d as as2
                   (map takeFileName ps)
                   (map takeFileName xs)
@@ -213,15 +215,38 @@ runCompiler co@(CompileOptions h is is2 ds es ep p m o f) = do
           let hxx   = filter (isSuffixOf ".hpp" . coFilename)       fs'
           let other = filter (not . isSuffixOf ".hpp" . coFilename) fs'
           os1 <- sequence $ map (writeOutputFile (show ns0) paths' d) $ hxx ++ other
-          os2 <- fmap concat $ sequence $ map (compileExtraFile (show ns0) paths' d) es'
+          base <- getBasePath
+          actual <- canonicalizePath (p </> d)
+          -- Base files should be compiled to .o and not .a.
+          let extraComp = if actual == base
+                             then compileBuiltinFile
+                             else compileExtraFile
+          os2 <- fmap concat $ sequence $ map (extraComp (show ns0) paths' d) es'
           let (hxx,cxx,os') = sortCompiledFiles $ map (\f -> show (coNamespace f) </> coFilename f) fs' ++ es'
           path <- canonicalizePath $ p </> d
           let os1' = resolveObjectDeps path os1 deps
+          let cm0 = CompileMetadata {
+              cmPath = path,
+              cmNamespace = show ns0,
+              cmPublicDeps = as,
+              cmPrivateDeps = as2,
+              cmExtraRequires = [],
+              cmCategories = sort $ map show pc,
+              cmSubdirs = sort $ ss ++ ep',
+              cmPublicFiles = sort ps,
+              cmPrivateFiles = sort xs,
+              cmTestFiles = sort ts,
+              cmHxxFiles = sort hxx,
+              cmCxxFiles = sort cxx,
+              cmObjectFiles = os1' ++ os2 ++ map OtherObjectFile os'
+            }
+          let ec' = resolveCategoryDeps ec (cm0:deps)
           let cm = CompileMetadata {
               cmPath = path,
               cmNamespace = show ns0,
               cmPublicDeps = as,
               cmPrivateDeps = as2,
+              cmExtraRequires = ec',
               cmCategories = sort $ map show pc,
               cmSubdirs = sort $ ss ++ ep',
               cmPublicFiles = sort ps,
@@ -250,19 +275,23 @@ runCompiler co@(CompileOptions h is is2 ds es ep p m o f) = do
            o <- runCxxCommand command
            return $ ([o],ca)
          else return ([],ca)
-    compileExtraFile ns0 paths d f
+    compileExtraFile = compileExtraCommon True
+    compileBuiltinFile = compileExtraCommon False
+    compileExtraCommon e ns0 paths d f
       | isSuffixOf ".cpp" f || isSuffixOf ".cc" f = do
           let f' = p </> d </> f
           createCachePath (p </> d)
-          let command = CompileToObject f' (getCachedPath (p </> d) "" "") ns0 paths True
+          let command = CompileToObject f' (getCachedPath (p </> d) "" "") ns0 paths e
           o <- runCxxCommand command
           return [OtherObjectFile o]
       | otherwise = return []
-    processTemplates ss d = do
+    processTemplates deps d = do
       (ps,xs,_) <- findSourceFiles p d
       ps' <- zipWithContents p ps
       xs' <- zipWithContents p xs
-      let ts = createTemplates ss ps' xs' :: CompileInfo [CxxOutput]
+      let ss = fixPaths $ getSourceFilesForDeps deps
+      ss' <- zipWithContents p ss
+      let ts = createTemplates ss' ps' xs' :: CompileInfo [CxxOutput]
       if isCompileError ts
          then do
            formatWarnings ts
@@ -273,8 +302,7 @@ runCompiler co@(CompileOptions h is is2 ds es ep p m o f) = do
            formatWarnings ts
            sequence $ map (writeTemplate d) $ getCompileSuccess ts
     createTemplates is cs ds = do
-      tm0 <- builtinCategories
-      tm1 <- addIncludes tm0 is
+      tm1 <- addIncludes defaultCategories is
       cs' <- fmap concat $ collectAllOrErrorM $ map parsePublicSource cs
       let cs'' = map (setCategoryNamespace DynamicNamespace) cs'
       tm2 <- includeNewTypes tm1 cs''
@@ -294,8 +322,7 @@ runCompiler co@(CompileOptions h is is2 ds es ep p m o f) = do
            hPutStrLn stderr $ "Writing file " ++ n
            writeFile n' $ concat $ map (++ "\n") content
     compileAll ns0 ns2 is cs ds = do
-      tm0 <- builtinCategories
-      tm1 <- addIncludes tm0 is
+      tm1 <- addIncludes defaultCategories is
       cs' <- fmap concat $ collectAllOrErrorM $ map parsePublicSource cs
       let cs'' = map (setCategoryNamespace ns0) cs'
       xa <- collectAllOrErrorM $ map parsePrivate ds
@@ -340,7 +367,8 @@ runCompiler co@(CompileOptions h is is2 ds es ep p m o f) = do
           (_,deps2) <- loadPrivateDeps (bpDeps ++ deps)
           let paths = fixPaths $ getIncludePathsForDeps deps2
           let os    = getObjectFilesForDeps deps2
-          let ofr = getObjectFileResolver os
+          let req2 = getRequiresFromDeps deps2
+          let ofr = getObjectFileResolver req2 os
           let os' = ofr ns2 req
           let command = CompileToBinary o' os' f0 paths
           hPutStrLn stderr $ "Creating binary " ++ f0
@@ -362,7 +390,7 @@ fixPaths :: [String] -> [String]
 fixPaths = nub . map fixPath
 
 getBasePath :: IO String
-getBasePath = getExecutablePath >>= return . takeDirectory
+getBasePath = getExecutablePath >>= return . (</> "base") . takeDirectory
 
 zipWithContents :: String -> [String] -> IO [(String,String)]
 zipWithContents p fs = fmap (zip $ map fixPath fs) $ sequence $ map (readFile . (p </>)) fs

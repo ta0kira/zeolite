@@ -538,11 +538,11 @@ compileExpression = compile where
     let typeInstance = getType sameType s params
     -- TODO: This is unsafe if used in a type or category constructor.
     return (ParamSet [ValueType RequiredValue $ SingleType $ JustTypeInstance t],
-            UnwrappedSingle $ valueCreator ++ "(" ++ typeInstance ++ ", " ++ params2 ++ ", " ++ es'' ++ ")")
+            UnwrappedSingle $ valueCreator (tiName t) ++ "(" ++ typeInstance ++ ", " ++ params2 ++ ", " ++ es'' ++ ")")
     where
       getType True TypeScope  _ = "*this"
       getType True ValueScope _ = "parent"
-      getType _    _ params = typeCreator ++ "(" ++ params ++ ")"
+      getType _    _ params = typeCreator (tiName t) ++ "(" ++ params ++ ")"
       -- Single expression, but possibly multi-return.
       getValues [(ParamSet ts,e)] = return (ts,useAsArgs e)
       -- Multi-expression => must all be singles.

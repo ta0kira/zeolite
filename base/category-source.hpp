@@ -141,7 +141,7 @@ class TypeValue {
   static S<TypeValue> Strong(W<TypeValue> target);
 
   virtual bool AsBool() const;
-  virtual PrimString AsString() const;
+  virtual const PrimString& AsString() const;
   virtual PrimChar AsChar() const;
   virtual PrimInt AsInt() const;
   virtual PrimFloat AsFloat() const;

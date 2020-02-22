@@ -22,6 +22,19 @@ limitations under the License.
 #include <sstream>
 
 #include "category-source.hpp"
+#include "Category_AsBool.hpp"
+#include "Category_AsChar.hpp"
+#include "Category_AsInt.hpp"
+#include "Category_AsFloat.hpp"
+#include "Category_Bool.hpp"
+#include "Category_Char.hpp"
+#include "Category_Equals.hpp"
+#include "Category_Float.hpp"
+#include "Category_Formatted.hpp"
+#include "Category_Int.hpp"
+#include "Category_LessThan.hpp"
+#include "Category_ReadPosition.hpp"
+#include "Category_String.hpp"
 
 
 void BuiltinFail(const S<TypeValue>& formatted) {
@@ -103,30 +116,83 @@ struct Type_Union : public TypeInstance {
   const L<const TypeInstance*> params_;
 };
 
+}  // namespace
+
+
+TypeInstance& Merge_Intersect(L<TypeInstance*> params) {
+  static auto& cache = *new std::map<L<TypeInstance*>,R<Type_Intersect>>();
+  auto& cached = cache[params];
+  if (!cached) { cached = R_get(new Type_Intersect(params)); }
+  return *cached;
+}
+
+TypeInstance& Merge_Union(L<TypeInstance*> params) {
+  static auto& cache = *new std::map<L<TypeInstance*>,R<Type_Union>>();
+  auto& cached = cache[params];
+  if (!cached) { cached = R_get(new Type_Union(params)); }
+  return *cached;
+}
+
+TypeInstance& GetMerged_Any() {
+  static auto& instance = Merge_Intersect(L_get<TypeInstance*>());
+  return instance;
+}
+
+TypeInstance& GetMerged_All() {
+  static auto& instance = Merge_Union(L_get<TypeInstance*>());
+  return instance;
+}
+
+
+const S<TypeValue>& Var_empty = *new S<TypeValue>(new OptionalEmpty());
+
+
+// Bool
+
+#ifdef ZEOLITE_DYNAMIC_NAMESPACE
+namespace ZEOLITE_DYNAMIC_NAMESPACE {
+#endif  // ZEOLITE_DYNAMIC_NAMESPACE
+namespace {
+const int collection_Bool = 0;
+}  // namespace
+const void* const Functions_Bool = &collection_Bool;
+namespace {
+class Category_Bool;
+class Type_Bool;
+Type_Bool& CreateType_Bool(Params<0>::Type params);
+class Value_Bool;
+S<TypeValue> CreateValue(Type_Bool& parent, const ParamTuple& params, const ValueTuple& args);
 struct Category_Bool : public TypeCategory {
   std::string CategoryName() const final { return "Bool"; }
-};
-
-struct Type_Bool : public TypeInstance {
-  std::string CategoryName() const final { return "Bool"; }
-  void BuildTypeName(std::ostream& output) const final { output << CategoryName(); }
-
-  ReturnTuple Dispatch(const TypeFunction& label,
-                       const ParamTuple& params, const ValueTuple& args) final {
-    if (args.Size() != label.arg_count) {
-      FAIL() << "Wrong number of args";
-    }
-    if (params.Size() != label.param_count){
-      FAIL() << "Wrong number of params";
-    }
-    if (&label == &Function_Equals_equals) {
-      return ReturnTuple(Box_Bool(args.At(0)->AsBool()==args.At(1)->AsBool()));
-    }
-    return TypeInstance::Dispatch(label, params, args);
+  Category_Bool() {
+    CycleCheck<Category_Bool>::Check();
+    CycleCheck<Category_Bool> marker(*this);
+    TRACE_FUNCTION("Bool (init @category)")
   }
-
-  bool TypeArgsForParent(
-    const TypeCategory& category, std::vector<const TypeInstance*>& args) const final {
+  ReturnTuple Dispatch(const CategoryFunction& label, const ParamTuple& params, const ValueTuple& args) final {
+    using CallType = ReturnTuple(Category_Bool::*)(const ParamTuple&, const ValueTuple&);
+    return TypeCategory::Dispatch(label, params, args);
+  }
+};
+Category_Bool& CreateCategory_Bool() {
+  static auto& category = *new Category_Bool();
+  return category;
+}
+struct Type_Bool : public TypeInstance {
+  std::string CategoryName() const final { return parent.CategoryName(); }
+  void BuildTypeName(std::ostream& output) const final {
+    return TypeInstance::TypeNameFrom(output, parent);
+  }
+  Category_Bool& parent;
+  bool CanConvertFrom(const TypeInstance& from) const final {
+    std::vector<const TypeInstance*> args;
+    if (!from.TypeArgsForParent(parent, args)) return false;
+    if(args.size() != 0) {
+      FAIL() << "Wrong number of args (" << args.size() << ")  for " << CategoryName();
+    }
+    return true;
+  }
+  bool TypeArgsForParent(const TypeCategory& category, std::vector<const TypeInstance*>& args) const final {
     if (&category == &GetCategory_Bool()) {
       args = std::vector<const TypeInstance*>{};
       return true;
@@ -149,80 +215,166 @@ struct Type_Bool : public TypeInstance {
     }
     return false;
   }
-
-  bool CanConvertFrom(const TypeInstance& from) const final {
-    std::vector<const TypeInstance*> args;
-    if (!from.TypeArgsForParent(GetCategory_Bool(), args)) return false;
-    if (args.size() != 0) {
-      FAIL() << "Wrong number of args (" << args.size() << ") for " << CategoryName();
-    }
-    return true;
+  Type_Bool(Category_Bool& p, Params<0>::Type params) : parent(p) {
+    CycleCheck<Type_Bool>::Check();
+    CycleCheck<Type_Bool> marker(*this);
+    TRACE_FUNCTION("Bool (init @type)")
   }
-};
-
-class Value_Bool : public TypeValue {
- public:
-  Value_Bool(bool value) : value_(value) {}
-
-  std::string CategoryName() const final { return "Bool"; }
-
-  bool AsBool() const final { return value_; }
-
-  ReturnTuple Dispatch(const S<TypeValue>& self,
-                       const ValueFunction& label,
-                       const ParamTuple& params, const ValueTuple& args) final {
-    if (args.Size() != label.arg_count) {
-      FAIL() << "Wrong number of args";
-    }
-    if (params.Size() != label.param_count){
-      FAIL() << "Wrong number of params";
-    }
-    if (&label == &Function_AsBool_asBool) {
-      return ReturnTuple(self);
-    }
-    if (&label == &Function_AsInt_asInt) {
-      return ReturnTuple(Box_Int(value_? 1 : 0));
-    }
-    if (&label == &Function_AsFloat_asFloat) {
-      return ReturnTuple(Box_Float(value_ ? 1.0 : 0.0));
-    }
-    if (&label == &Function_Formatted_formatted) {
-      return ReturnTuple(Box_String(self->AsBool()? "true" : "false"));
-    }
-    return TypeValue::Dispatch(self, label, params, args);
-  }
-
- private:
-  const bool value_;
-};
-
-struct Category_Char : public TypeCategory {
-  std::string CategoryName() const final { return "Char"; }
-};
-
-struct Type_Char : public TypeInstance {
-  std::string CategoryName() const final { return "Char"; }
-  void BuildTypeName(std::ostream& output) const final { output << CategoryName(); }
-
-  ReturnTuple Dispatch(const TypeFunction& label,
-                       const ParamTuple& params, const ValueTuple& args) final {
-    if (args.Size() != label.arg_count) {
-      FAIL() << "Wrong number of args";
-    }
-    if (params.Size() != label.param_count){
-      FAIL() << "Wrong number of params";
-    }
-    if (&label == &Function_LessThan_lessThan) {
-      return ReturnTuple(Box_Bool(args.At(0)->AsChar()<args.At(1)->AsChar()));
-    }
-    if (&label == &Function_Equals_equals) {
-      return ReturnTuple(Box_Bool(args.At(0)->AsChar()==args.At(1)->AsChar()));
+  ReturnTuple Dispatch(const TypeFunction& label, const ParamTuple& params, const ValueTuple& args) final {
+    using CallType = ReturnTuple(Type_Bool::*)(const ParamTuple&, const ValueTuple&);
+    static const CallType Table_Equals[] = {
+      &Type_Bool::Call_equals,
+    };
+    if (label.collection == Functions_Equals) {
+      if (label.function_num < 0 || label.function_num >= 1) {
+        FAIL() << "Bad function call " << label;
+      }
+      return (this->*Table_Equals[label.function_num])(params, args);
     }
     return TypeInstance::Dispatch(label, params, args);
   }
+  ReturnTuple Call_equals(const ParamTuple& params, const ValueTuple& args);
+};
+Type_Bool& CreateType_Bool(Params<0>::Type params) {
+  static auto& cache = *new InstanceMap<0,Type_Bool>();
+  auto& cached = cache[params];
+  if (!cached) { cached = R_get(new Type_Bool(CreateCategory_Bool(), params)); }
+  return *cached;
+}
+struct Value_Bool : public TypeValue {
+  Value_Bool(Type_Bool& p, bool value) : parent(p), value_(value) {}
+  ReturnTuple Dispatch(const S<TypeValue>& self, const ValueFunction& label, const ParamTuple& params,const ValueTuple& args) final {
+    using CallType = ReturnTuple(Value_Bool::*)(const S<TypeValue>&, const ParamTuple&, const ValueTuple&);
+    static const CallType Table_AsBool[] = {
+      &Value_Bool::Call_asBool,
+    };
+    static const CallType Table_AsFloat[] = {
+      &Value_Bool::Call_asFloat,
+    };
+    static const CallType Table_AsInt[] = {
+      &Value_Bool::Call_asInt,
+    };
+    static const CallType Table_Formatted[] = {
+      &Value_Bool::Call_formatted,
+    };
+    if (label.collection == Functions_AsBool) {
+      if (label.function_num < 0 || label.function_num >= 1) {
+        FAIL() << "Bad function call " << label;
+      }
+      return (this->*Table_AsBool[label.function_num])(self, params, args);
+    }
+    if (label.collection == Functions_AsFloat) {
+      if (label.function_num < 0 || label.function_num >= 1) {
+        FAIL() << "Bad function call " << label;
+      }
+      return (this->*Table_AsFloat[label.function_num])(self, params, args);
+    }
+    if (label.collection == Functions_AsInt) {
+      if (label.function_num < 0 || label.function_num >= 1) {
+        FAIL() << "Bad function call " << label;
+      }
+      return (this->*Table_AsInt[label.function_num])(self, params, args);
+    }
+    if (label.collection == Functions_Formatted) {
+      if (label.function_num < 0 || label.function_num >= 1) {
+        FAIL() << "Bad function call " << label;
+      }
+      return (this->*Table_Formatted[label.function_num])(self, params, args);
+    }
+    return TypeValue::Dispatch(self, label, params, args);
+  }
+  std::string CategoryName() const final { return parent.CategoryName(); }
+  bool AsBool() const final { return value_; }
+  ReturnTuple Call_asBool(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args);
+  ReturnTuple Call_asFloat(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args);
+  ReturnTuple Call_asInt(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args);
+  ReturnTuple Call_formatted(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args);
+  Type_Bool& parent;
+  const bool value_;
+};
+ReturnTuple Type_Bool::Call_equals(const ParamTuple& params, const ValueTuple& args) {
+  TRACE_FUNCTION("Bool.equals")
+  const bool Var_arg1 = (args.At(0))->AsBool();
+  const bool Var_arg2 = (args.At(1))->AsBool();
+  return ReturnTuple(Box_Bool(Var_arg1==Var_arg2));
+}
+ReturnTuple Value_Bool::Call_asBool(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) {
+  TRACE_FUNCTION("Bool.asBool")
+  return ReturnTuple(Var_self);
+}
+ReturnTuple Value_Bool::Call_asFloat(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) {
+  TRACE_FUNCTION("Bool.asFloat")
+  return ReturnTuple(Box_Float(value_ ? 1.0 : 0.0));
+}
+ReturnTuple Value_Bool::Call_asInt(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) {
+  TRACE_FUNCTION("Bool.asInt")
+  return ReturnTuple(Box_Int(value_? 1 : 0));
+}
+ReturnTuple Value_Bool::Call_formatted(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) {
+  TRACE_FUNCTION("Bool.formatted")
+  return ReturnTuple(Box_String(value_? "true" : "false"));
+}
+const S<TypeValue>& Var_true = *new S<TypeValue>(new Value_Bool(CreateType_Bool(Params<0>::Type()), true));
+const S<TypeValue>& Var_false = *new S<TypeValue>(new Value_Bool(CreateType_Bool(Params<0>::Type()), false));
+}  // namespace
+TypeCategory& GetCategory_Bool() {
+  return CreateCategory_Bool();
+}
+TypeInstance& GetType_Bool(Params<0>::Type params) {
+  return CreateType_Bool(params);
+}
+#ifdef ZEOLITE_DYNAMIC_NAMESPACE
+}  // namespace ZEOLITE_DYNAMIC_NAMESPACE
+using namespace ZEOLITE_DYNAMIC_NAMESPACE;
+#endif  // ZEOLITE_DYNAMIC_NAMESPACE
 
-  bool TypeArgsForParent(
-    const TypeCategory& category, std::vector<const TypeInstance*>& args) const final {
+
+// Char
+
+#ifdef ZEOLITE_DYNAMIC_NAMESPACE
+namespace ZEOLITE_DYNAMIC_NAMESPACE {
+#endif  // ZEOLITE_DYNAMIC_NAMESPACE
+namespace {
+const int collection_Char = 0;
+}  // namespace
+const void* const Functions_Char = &collection_Char;
+namespace {
+class Category_Char;
+class Type_Char;
+Type_Char& CreateType_Char(Params<0>::Type params);
+class Value_Char;
+S<TypeValue> CreateValue(Type_Char& parent, const ParamTuple& params, const ValueTuple& args);
+struct Category_Char : public TypeCategory {
+  std::string CategoryName() const final { return "Char"; }
+  Category_Char() {
+    CycleCheck<Category_Char>::Check();
+    CycleCheck<Category_Char> marker(*this);
+    TRACE_FUNCTION("Char (init @category)")
+  }
+  ReturnTuple Dispatch(const CategoryFunction& label, const ParamTuple& params, const ValueTuple& args) final {
+    using CallType = ReturnTuple(Category_Char::*)(const ParamTuple&, const ValueTuple&);
+    return TypeCategory::Dispatch(label, params, args);
+  }
+};
+Category_Char& CreateCategory_Char() {
+  static auto& category = *new Category_Char();
+  return category;
+}
+struct Type_Char : public TypeInstance {
+  std::string CategoryName() const final { return parent.CategoryName(); }
+  void BuildTypeName(std::ostream& output) const final {
+    return TypeInstance::TypeNameFrom(output, parent);
+  }
+  Category_Char& parent;
+  bool CanConvertFrom(const TypeInstance& from) const final {
+    std::vector<const TypeInstance*> args;
+    if (!from.TypeArgsForParent(parent, args)) return false;
+    if(args.size() != 0) {
+      FAIL() << "Wrong number of args (" << args.size() << ")  for " << CategoryName();
+    }
+    return true;
+  }
+  bool TypeArgsForParent(const TypeCategory& category, std::vector<const TypeInstance*>& args) const final {
     if (&category == &GetCategory_Char()) {
       args = std::vector<const TypeInstance*>{};
       return true;
@@ -249,85 +401,196 @@ struct Type_Char : public TypeInstance {
     }
     return false;
   }
-
-  bool CanConvertFrom(const TypeInstance& from) const final {
-    std::vector<const TypeInstance*> args;
-    if (!from.TypeArgsForParent(GetCategory_Char(), args)) return false;
-    if (args.size() != 0) {
-      FAIL() << "Wrong number of args (" << args.size() << ") for " << CategoryName();
-    }
-    return true;
+  Type_Char(Category_Char& p, Params<0>::Type params) : parent(p) {
+    CycleCheck<Type_Char>::Check();
+    CycleCheck<Type_Char> marker(*this);
+    TRACE_FUNCTION("Char (init @type)")
   }
-};
-
-class Value_Char : public TypeValue {
- public:
-  Value_Char(PrimChar value) : value_(value) {}
-
-  std::string CategoryName() const final { return "Char"; }
-
-  PrimChar AsChar() const final { return value_; }
-
-  ReturnTuple Dispatch(const S<TypeValue>& self,
-                       const ValueFunction& label,
-                       const ParamTuple& params, const ValueTuple& args) final {
-    if (args.Size() != label.arg_count) {
-      FAIL() << "Wrong number of args";
+  ReturnTuple Dispatch(const TypeFunction& label, const ParamTuple& params, const ValueTuple& args) final {
+    using CallType = ReturnTuple(Type_Char::*)(const ParamTuple&, const ValueTuple&);
+    static const CallType Table_Equals[] = {
+      &Type_Char::Call_equals,
+    };
+    static const CallType Table_LessThan[] = {
+      &Type_Char::Call_lessThan,
+    };
+    if (label.collection == Functions_Equals) {
+      if (label.function_num < 0 || label.function_num >= 1) {
+        FAIL() << "Bad function call " << label;
+      }
+      return (this->*Table_Equals[label.function_num])(params, args);
     }
-    if (params.Size() != label.param_count){
-      FAIL() << "Wrong number of params";
-    }
-    if (&label == &Function_AsBool_asBool) {
-      return ReturnTuple(Box_Bool(value_ != '\0'));
-    }
-    if (&label == &Function_AsChar_asChar) {
-      return ReturnTuple(self);
-    }
-    if (&label == &Function_AsInt_asInt) {
-      return ReturnTuple(Box_Int(value_));
-    }
-    if (&label == &Function_AsFloat_asFloat) {
-      return ReturnTuple(Box_Float(value_));
-    }
-    if (&label == &Function_Formatted_formatted) {
-      std::ostringstream output;
-      output << self->AsChar();
-      return ReturnTuple(Box_String(output.str()));
-    }
-    return TypeValue::Dispatch(self, label, params, args);
-  }
-
- private:
-  const PrimChar value_;
-};
-
-struct Category_Int : public TypeCategory {
-  std::string CategoryName() const final { return "Int"; }
-};
-
-struct Type_Int : public TypeInstance {
-  std::string CategoryName() const final { return "Int"; }
-  void BuildTypeName(std::ostream& output) const final { output << CategoryName(); }
-
-  ReturnTuple Dispatch(const TypeFunction& label,
-                       const ParamTuple& params, const ValueTuple& args) final {
-    if (args.Size() != label.arg_count) {
-      FAIL() << "Wrong number of args";
-    }
-    if (params.Size() != label.param_count){
-      FAIL() << "Wrong number of params";
-    }
-    if (&label == &Function_LessThan_lessThan) {
-      return ReturnTuple(Box_Bool(args.At(0)->AsInt()<args.At(1)->AsInt()));
-    }
-    if (&label == &Function_Equals_equals) {
-      return ReturnTuple(Box_Bool(args.At(0)->AsInt()==args.At(1)->AsInt()));
+    if (label.collection == Functions_LessThan) {
+      if (label.function_num < 0 || label.function_num >= 1) {
+        FAIL() << "Bad function call " << label;
+      }
+      return (this->*Table_LessThan[label.function_num])(params, args);
     }
     return TypeInstance::Dispatch(label, params, args);
   }
+  ReturnTuple Call_equals(const ParamTuple& params, const ValueTuple& args);
+  ReturnTuple Call_lessThan(const ParamTuple& params, const ValueTuple& args);
+};
+Type_Char& CreateType_Char(Params<0>::Type params) {
+  static auto& cache = *new InstanceMap<0,Type_Char>();
+  auto& cached = cache[params];
+  if (!cached) { cached = R_get(new Type_Char(CreateCategory_Char(), params)); }
+  return *cached;
+}
+struct Value_Char : public TypeValue {
+  Value_Char(Type_Char& p, PrimChar value) : parent(p), value_(value) {}
+  ReturnTuple Dispatch(const S<TypeValue>& self, const ValueFunction& label, const ParamTuple& params,const ValueTuple& args) final {
+    using CallType = ReturnTuple(Value_Char::*)(const S<TypeValue>&, const ParamTuple&, const ValueTuple&);
+    static const CallType Table_AsBool[] = {
+      &Value_Char::Call_asBool,
+    };
+    static const CallType Table_AsChar[] = {
+      &Value_Char::Call_asChar,
+    };
+    static const CallType Table_AsFloat[] = {
+      &Value_Char::Call_asFloat,
+    };
+    static const CallType Table_AsInt[] = {
+      &Value_Char::Call_asInt,
+    };
+    static const CallType Table_Formatted[] = {
+      &Value_Char::Call_formatted,
+    };
+    if (label.collection == Functions_AsBool) {
+      if (label.function_num < 0 || label.function_num >= 1) {
+        FAIL() << "Bad function call " << label;
+      }
+      return (this->*Table_AsBool[label.function_num])(self, params, args);
+    }
+    if (label.collection == Functions_AsChar) {
+      if (label.function_num < 0 || label.function_num >= 1) {
+        FAIL() << "Bad function call " << label;
+      }
+      return (this->*Table_AsChar[label.function_num])(self, params, args);
+    }
+    if (label.collection == Functions_AsFloat) {
+      if (label.function_num < 0 || label.function_num >= 1) {
+        FAIL() << "Bad function call " << label;
+      }
+      return (this->*Table_AsFloat[label.function_num])(self, params, args);
+    }
+    if (label.collection == Functions_AsInt) {
+      if (label.function_num < 0 || label.function_num >= 1) {
+        FAIL() << "Bad function call " << label;
+      }
+      return (this->*Table_AsInt[label.function_num])(self, params, args);
+    }
+    if (label.collection == Functions_Formatted) {
+      if (label.function_num < 0 || label.function_num >= 1) {
+        FAIL() << "Bad function call " << label;
+      }
+      return (this->*Table_Formatted[label.function_num])(self, params, args);
+    }
+    return TypeValue::Dispatch(self, label, params, args);
+  }
+  std::string CategoryName() const final { return parent.CategoryName(); }
+  PrimChar AsChar() const final { return value_; }
+  ReturnTuple Call_asBool(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args);
+  ReturnTuple Call_asChar(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args);
+  ReturnTuple Call_asFloat(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args);
+  ReturnTuple Call_asInt(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args);
+  ReturnTuple Call_formatted(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args);
+  Type_Char& parent;
+  const PrimChar value_;
+};
+ReturnTuple Type_Char::Call_equals(const ParamTuple& params, const ValueTuple& args) {
+  TRACE_FUNCTION("Char.equals")
+  const PrimChar Var_arg1 = (args.At(0))->AsChar();
+  const PrimChar Var_arg2 = (args.At(1))->AsChar();
+      return ReturnTuple(Box_Bool(Var_arg1==Var_arg2));
+}
+ReturnTuple Type_Char::Call_lessThan(const ParamTuple& params, const ValueTuple& args) {
+  TRACE_FUNCTION("Char.lessThan")
+  const PrimChar Var_arg1 = (args.At(0))->AsChar();
+  const PrimChar Var_arg2 = (args.At(1))->AsChar();
+  return ReturnTuple(Box_Bool(Var_arg1<Var_arg2));
+}
+ReturnTuple Value_Char::Call_asBool(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) {
+  TRACE_FUNCTION("Char.asBool")
+  return ReturnTuple(Box_Bool(value_ != '\0'));
+}
+ReturnTuple Value_Char::Call_asChar(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) {
+  TRACE_FUNCTION("Char.asChar")
+  return ReturnTuple(Var_self);
+}
+ReturnTuple Value_Char::Call_asFloat(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) {
+  TRACE_FUNCTION("Char.asFloat")
+  return ReturnTuple(Box_Float(value_));
+}
+ReturnTuple Value_Char::Call_asInt(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) {
+  TRACE_FUNCTION("Char.asInt")
+  return ReturnTuple(Box_Int(value_));
+}
+ReturnTuple Value_Char::Call_formatted(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) {
+  TRACE_FUNCTION("Char.formatted")
+  std::ostringstream output;
+  output << value_;
+  return ReturnTuple(Box_String(output.str()));
+}
+}  // namespace
+TypeCategory& GetCategory_Char() {
+  return CreateCategory_Char();
+}
+TypeInstance& GetType_Char(Params<0>::Type params) {
+  return CreateType_Char(params);
+}
+#ifdef ZEOLITE_DYNAMIC_NAMESPACE
+}  // namespace ZEOLITE_DYNAMIC_NAMESPACE
+using namespace ZEOLITE_DYNAMIC_NAMESPACE;
+#endif  // ZEOLITE_DYNAMIC_NAMESPACE
 
-  bool TypeArgsForParent(
-    const TypeCategory& category, std::vector<const TypeInstance*>& args) const final {
+
+// Int
+
+#ifdef ZEOLITE_DYNAMIC_NAMESPACE
+namespace ZEOLITE_DYNAMIC_NAMESPACE {
+#endif  // ZEOLITE_DYNAMIC_NAMESPACE
+namespace {
+const int collection_Int = 0;
+}  // namespace
+const void* const Functions_Int = &collection_Int;
+namespace {
+class Category_Int;
+class Type_Int;
+Type_Int& CreateType_Int(Params<0>::Type params);
+class Value_Int;
+S<TypeValue> CreateValue(Type_Int& parent, const ParamTuple& params, const ValueTuple& args);
+struct Category_Int : public TypeCategory {
+  std::string CategoryName() const final { return "Int"; }
+  Category_Int() {
+    CycleCheck<Category_Int>::Check();
+    CycleCheck<Category_Int> marker(*this);
+    TRACE_FUNCTION("Int (init @category)")
+  }
+  ReturnTuple Dispatch(const CategoryFunction& label, const ParamTuple& params, const ValueTuple& args) final {
+    using CallType = ReturnTuple(Category_Int::*)(const ParamTuple&, const ValueTuple&);
+    return TypeCategory::Dispatch(label, params, args);
+  }
+};
+Category_Int& CreateCategory_Int() {
+  static auto& category = *new Category_Int();
+  return category;
+}
+struct Type_Int : public TypeInstance {
+  std::string CategoryName() const final { return parent.CategoryName(); }
+  void BuildTypeName(std::ostream& output) const final {
+    return TypeInstance::TypeNameFrom(output, parent);
+  }
+  Category_Int& parent;
+  bool CanConvertFrom(const TypeInstance& from) const final {
+    std::vector<const TypeInstance*> args;
+    if (!from.TypeArgsForParent(parent, args)) return false;
+    if(args.size() != 0) {
+      FAIL() << "Wrong number of args (" << args.size() << ")  for " << CategoryName();
+    }
+    return true;
+  }
+  bool TypeArgsForParent(const TypeCategory& category, std::vector<const TypeInstance*>& args) const final {
     if (&category == &GetCategory_Int()) {
       args = std::vector<const TypeInstance*>{};
       return true;
@@ -354,85 +617,196 @@ struct Type_Int : public TypeInstance {
     }
     return false;
   }
-
-  bool CanConvertFrom(const TypeInstance& from) const final {
-    std::vector<const TypeInstance*> args;
-    if (!from.TypeArgsForParent(GetCategory_Int(), args)) return false;
-    if (args.size() != 0) {
-      FAIL() << "Wrong number of args (" << args.size() << ") for " << CategoryName();
-    }
-    return true;
+  Type_Int(Category_Int& p, Params<0>::Type params) : parent(p) {
+    CycleCheck<Type_Int>::Check();
+    CycleCheck<Type_Int> marker(*this);
+    TRACE_FUNCTION("Int (init @type)")
   }
-};
-
-class Value_Int : public TypeValue {
- public:
-  Value_Int(PrimInt value) : value_(value) {}
-
-  std::string CategoryName() const final { return "Int"; }
-
-  PrimInt AsInt() const final { return value_; }
-
-  ReturnTuple Dispatch(const S<TypeValue>& self,
-                       const ValueFunction& label,
-                       const ParamTuple& params, const ValueTuple& args) final {
-    if (args.Size() != label.arg_count) {
-      FAIL() << "Wrong number of args";
+  ReturnTuple Dispatch(const TypeFunction& label, const ParamTuple& params, const ValueTuple& args) final {
+    using CallType = ReturnTuple(Type_Int::*)(const ParamTuple&, const ValueTuple&);
+    static const CallType Table_Equals[] = {
+      &Type_Int::Call_equals,
+    };
+    static const CallType Table_LessThan[] = {
+      &Type_Int::Call_lessThan,
+    };
+    if (label.collection == Functions_Equals) {
+      if (label.function_num < 0 || label.function_num >= 1) {
+        FAIL() << "Bad function call " << label;
+      }
+      return (this->*Table_Equals[label.function_num])(params, args);
     }
-    if (params.Size() != label.param_count){
-      FAIL() << "Wrong number of params";
-    }
-    if (&label == &Function_AsBool_asBool) {
-      return ReturnTuple(Box_Bool(value_ != 0));
-    }
-    if (&label == &Function_AsChar_asChar) {
-      return ReturnTuple(Box_Char(value_ % 0xff));
-    }
-    if (&label == &Function_AsInt_asInt) {
-      return ReturnTuple(self);
-    }
-    if (&label == &Function_AsFloat_asFloat) {
-      return ReturnTuple(Box_Float(value_));
-    }
-    if (&label == &Function_Formatted_formatted) {
-      std::ostringstream output;
-      output << self->AsInt();
-      return ReturnTuple(Box_String(output.str()));
-    }
-    return TypeValue::Dispatch(self, label, params, args);
-  }
-
- private:
-  const PrimInt value_;
-};
-
-struct Category_Float : public TypeCategory {
-  std::string CategoryName() const final { return "Float"; }
-};
-
-struct Type_Float : public TypeInstance {
-  std::string CategoryName() const final { return "Float"; }
-  void BuildTypeName(std::ostream& output) const final { output << CategoryName(); }
-
-  ReturnTuple Dispatch(const TypeFunction& label,
-                       const ParamTuple& params, const ValueTuple& args) final {
-    if (args.Size() != label.arg_count) {
-      FAIL() << "Wrong number of args";
-    }
-    if (params.Size() != label.param_count){
-      FAIL() << "Wrong number of params";
-    }
-    if (&label == &Function_LessThan_lessThan) {
-      return ReturnTuple(Box_Bool(args.At(0)->AsFloat()<args.At(1)->AsFloat()));
-    }
-    if (&label == &Function_Equals_equals) {
-      return ReturnTuple(Box_Bool(args.At(0)->AsFloat()==args.At(1)->AsFloat()));
+    if (label.collection == Functions_LessThan) {
+      if (label.function_num < 0 || label.function_num >= 1) {
+        FAIL() << "Bad function call " << label;
+      }
+      return (this->*Table_LessThan[label.function_num])(params, args);
     }
     return TypeInstance::Dispatch(label, params, args);
   }
+  ReturnTuple Call_equals(const ParamTuple& params, const ValueTuple& args);
+  ReturnTuple Call_lessThan(const ParamTuple& params, const ValueTuple& args);
+};
+Type_Int& CreateType_Int(Params<0>::Type params) {
+  static auto& cache = *new InstanceMap<0,Type_Int>();
+  auto& cached = cache[params];
+  if (!cached) { cached = R_get(new Type_Int(CreateCategory_Int(), params)); }
+  return *cached;
+}
+struct Value_Int : public TypeValue {
+  Value_Int(Type_Int& p, PrimInt value) : parent(p), value_(value) {}
+  ReturnTuple Dispatch(const S<TypeValue>& self, const ValueFunction& label, const ParamTuple& params,const ValueTuple& args) final {
+    using CallType = ReturnTuple(Value_Int::*)(const S<TypeValue>&, const ParamTuple&, const ValueTuple&);
+    static const CallType Table_AsBool[] = {
+      &Value_Int::Call_asBool,
+    };
+    static const CallType Table_AsChar[] = {
+      &Value_Int::Call_asChar,
+    };
+    static const CallType Table_AsFloat[] = {
+      &Value_Int::Call_asFloat,
+    };
+    static const CallType Table_AsInt[] = {
+      &Value_Int::Call_asInt,
+    };
+    static const CallType Table_Formatted[] = {
+      &Value_Int::Call_formatted,
+    };
+    if (label.collection == Functions_AsBool) {
+      if (label.function_num < 0 || label.function_num >= 1) {
+        FAIL() << "Bad function call " << label;
+      }
+      return (this->*Table_AsBool[label.function_num])(self, params, args);
+    }
+    if (label.collection == Functions_AsChar) {
+      if (label.function_num < 0 || label.function_num >= 1) {
+        FAIL() << "Bad function call " << label;
+      }
+      return (this->*Table_AsChar[label.function_num])(self, params, args);
+    }
+    if (label.collection == Functions_AsFloat) {
+      if (label.function_num < 0 || label.function_num >= 1) {
+        FAIL() << "Bad function call " << label;
+      }
+      return (this->*Table_AsFloat[label.function_num])(self, params, args);
+    }
+    if (label.collection == Functions_AsInt) {
+      if (label.function_num < 0 || label.function_num >= 1) {
+        FAIL() << "Bad function call " << label;
+      }
+      return (this->*Table_AsInt[label.function_num])(self, params, args);
+    }
+    if (label.collection == Functions_Formatted) {
+      if (label.function_num < 0 || label.function_num >= 1) {
+        FAIL() << "Bad function call " << label;
+      }
+      return (this->*Table_Formatted[label.function_num])(self, params, args);
+    }
+    return TypeValue::Dispatch(self, label, params, args);
+  }
+  std::string CategoryName() const final { return parent.CategoryName(); }
+  PrimInt AsInt() const final { return value_; }
+  ReturnTuple Call_asBool(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args);
+  ReturnTuple Call_asChar(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args);
+  ReturnTuple Call_asFloat(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args);
+  ReturnTuple Call_asInt(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args);
+  ReturnTuple Call_formatted(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args);
+  Type_Int& parent;
+  const PrimInt value_;
+};
+ReturnTuple Type_Int::Call_equals(const ParamTuple& params, const ValueTuple& args) {
+  TRACE_FUNCTION("Int.equals")
+  const PrimInt Var_arg1 = (args.At(0))->AsInt();
+  const PrimInt Var_arg2 = (args.At(1))->AsInt();
+  return ReturnTuple(Box_Bool(Var_arg1==Var_arg2));
+}
+ReturnTuple Type_Int::Call_lessThan(const ParamTuple& params, const ValueTuple& args) {
+  TRACE_FUNCTION("Int.lessThan")
+  const PrimInt Var_arg1 = (args.At(0))->AsInt();
+  const PrimInt Var_arg2 = (args.At(1))->AsInt();
+  return ReturnTuple(Box_Bool(Var_arg1<Var_arg2));
+}
+ReturnTuple Value_Int::Call_asBool(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) {
+  TRACE_FUNCTION("Int.asBool")
+  return ReturnTuple(Box_Bool(value_ != 0));
+}
+ReturnTuple Value_Int::Call_asChar(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) {
+  TRACE_FUNCTION("Int.asChar")
+  return ReturnTuple(Box_Char(value_ % 0xff));
+}
+ReturnTuple Value_Int::Call_asFloat(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) {
+  TRACE_FUNCTION("Int.asFloat")
+  return ReturnTuple(Box_Float(value_));
+}
+ReturnTuple Value_Int::Call_asInt(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) {
+  TRACE_FUNCTION("Int.asInt")
+  return ReturnTuple(Var_self);
+}
+ReturnTuple Value_Int::Call_formatted(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) {
+  TRACE_FUNCTION("Int.formatted")
+  std::ostringstream output;
+  output << value_;
+  return ReturnTuple(Box_String(output.str()));
+}
+}  // namespace
+TypeCategory& GetCategory_Int() {
+  return CreateCategory_Int();
+}
+TypeInstance& GetType_Int(Params<0>::Type params) {
+  return CreateType_Int(params);
+}
+#ifdef ZEOLITE_DYNAMIC_NAMESPACE
+}  // namespace ZEOLITE_DYNAMIC_NAMESPACE
+using namespace ZEOLITE_DYNAMIC_NAMESPACE;
+#endif  // ZEOLITE_DYNAMIC_NAMESPACE
 
-  bool TypeArgsForParent(
-    const TypeCategory& category, std::vector<const TypeInstance*>& args) const final {
+
+// Float
+
+#ifdef ZEOLITE_DYNAMIC_NAMESPACE
+namespace ZEOLITE_DYNAMIC_NAMESPACE {
+#endif  // ZEOLITE_DYNAMIC_NAMESPACE
+namespace {
+const int collection_Float = 0;
+}  // namespace
+const void* const Functions_Float = &collection_Float;
+namespace {
+class Category_Float;
+class Type_Float;
+Type_Float& CreateType_Float(Params<0>::Type params);
+class Value_Float;
+S<TypeValue> CreateValue(Type_Float& parent, const ParamTuple& params, const ValueTuple& args);
+struct Category_Float : public TypeCategory {
+  std::string CategoryName() const final { return "Float"; }
+  Category_Float() {
+    CycleCheck<Category_Float>::Check();
+    CycleCheck<Category_Float> marker(*this);
+    TRACE_FUNCTION("Float (init @category)")
+  }
+  ReturnTuple Dispatch(const CategoryFunction& label, const ParamTuple& params, const ValueTuple& args) final {
+    using CallType = ReturnTuple(Category_Float::*)(const ParamTuple&, const ValueTuple&);
+    return TypeCategory::Dispatch(label, params, args);
+  }
+};
+Category_Float& CreateCategory_Float() {
+  static auto& category = *new Category_Float();
+  return category;
+}
+struct Type_Float : public TypeInstance {
+  std::string CategoryName() const final { return parent.CategoryName(); }
+  void BuildTypeName(std::ostream& output) const final {
+    return TypeInstance::TypeNameFrom(output, parent);
+  }
+  Category_Float& parent;
+  bool CanConvertFrom(const TypeInstance& from) const final {
+    std::vector<const TypeInstance*> args;
+    if (!from.TypeArgsForParent(parent, args)) return false;
+    if(args.size() != 0) {
+      FAIL() << "Wrong number of args (" << args.size() << ")  for " << CategoryName();
+    }
+    return true;
+  }
+  bool TypeArgsForParent(const TypeCategory& category, std::vector<const TypeInstance*>& args) const final {
     if (&category == &GetCategory_Float()) {
       args = std::vector<const TypeInstance*>{};
       return true;
@@ -455,82 +829,183 @@ struct Type_Float : public TypeInstance {
     }
     return false;
   }
-
-  bool CanConvertFrom(const TypeInstance& from) const final {
-    std::vector<const TypeInstance*> args;
-    if (!from.TypeArgsForParent(GetCategory_Float(), args)) return false;
-    if (args.size() != 0) {
-      FAIL() << "Wrong number of args (" << args.size() << ") for " << CategoryName();
-    }
-    return true;
+  Type_Float(Category_Float& p, Params<0>::Type params) : parent(p) {
+    CycleCheck<Type_Float>::Check();
+    CycleCheck<Type_Float> marker(*this);
+    TRACE_FUNCTION("Float (init @type)")
   }
-};
-
-class Value_Float : public TypeValue {
- public:
-  Value_Float(double value) : value_(value) {}
-
-  std::string CategoryName() const final { return "Float"; }
-
-  PrimFloat AsFloat() const final { return value_; }
-
-  ReturnTuple Dispatch(const S<TypeValue>& self,
-                       const ValueFunction& label,
-                       const ParamTuple& params, const ValueTuple& args) final {
-    if (args.Size() != label.arg_count) {
-      FAIL() << "Wrong number of args";
+  ReturnTuple Dispatch(const TypeFunction& label, const ParamTuple& params, const ValueTuple& args) final {
+    using CallType = ReturnTuple(Type_Float::*)(const ParamTuple&, const ValueTuple&);
+    static const CallType Table_Equals[] = {
+      &Type_Float::Call_equals,
+    };
+    static const CallType Table_LessThan[] = {
+      &Type_Float::Call_lessThan,
+    };
+    if (label.collection == Functions_Equals) {
+      if (label.function_num < 0 || label.function_num >= 1) {
+        FAIL() << "Bad function call " << label;
+      }
+      return (this->*Table_Equals[label.function_num])(params, args);
     }
-    if (params.Size() != label.param_count){
-      FAIL() << "Wrong number of params";
-    }
-    if (&label == &Function_AsBool_asBool) {
-      return ReturnTuple(Box_Bool(value_ != 0.0));
-    }
-    if (&label == &Function_AsInt_asInt) {
-      return ReturnTuple(Box_Int(value_));
-    }
-    if (&label == &Function_AsFloat_asFloat) {
-      return ReturnTuple(Box_Float(value_));
-    }
-    if (&label == &Function_Formatted_formatted) {
-      std::ostringstream output;
-      output << self->AsFloat();
-      return ReturnTuple(Box_String(output.str()));
-    }
-    return TypeValue::Dispatch(self, label, params, args);
-  }
-
- private:
-  const double value_;
-};
-
-struct Category_String : public TypeCategory {
-  std::string CategoryName() const final { return "String"; }
-};
-
-struct Type_String : public TypeInstance {
-  std::string CategoryName() const final { return "String"; }
-  void BuildTypeName(std::ostream& output) const final { output << CategoryName(); }
-
-  ReturnTuple Dispatch(const TypeFunction& label,
-                       const ParamTuple& params, const ValueTuple& args) final {
-    if (args.Size() != label.arg_count) {
-      FAIL() << "Wrong number of args";
-    }
-    if (params.Size() != label.param_count){
-      FAIL() << "Wrong number of params";
-    }
-    if (&label == &Function_LessThan_lessThan) {
-      return ReturnTuple(Box_Bool(args.At(0)->AsString()<args.At(1)->AsString()));
-    }
-    if (&label == &Function_Equals_equals) {
-      return ReturnTuple(Box_Bool(args.At(0)->AsString()==args.At(1)->AsString()));
+    if (label.collection == Functions_LessThan) {
+      if (label.function_num < 0 || label.function_num >= 1) {
+        FAIL() << "Bad function call " << label;
+      }
+      return (this->*Table_LessThan[label.function_num])(params, args);
     }
     return TypeInstance::Dispatch(label, params, args);
   }
+  ReturnTuple Call_equals(const ParamTuple& params, const ValueTuple& args);
+  ReturnTuple Call_lessThan(const ParamTuple& params, const ValueTuple& args);
+};
+Type_Float& CreateType_Float(Params<0>::Type params) {
+  static auto& cache = *new InstanceMap<0,Type_Float>();
+  auto& cached = cache[params];
+  if (!cached) { cached = R_get(new Type_Float(CreateCategory_Float(), params)); }
+  return *cached;
+}
+struct Value_Float : public TypeValue {
+  Value_Float(Type_Float& p, PrimFloat value) : parent(p), value_(value) {}
+  ReturnTuple Dispatch(const S<TypeValue>& self, const ValueFunction& label, const ParamTuple& params,const ValueTuple& args) final {
+    using CallType = ReturnTuple(Value_Float::*)(const S<TypeValue>&, const ParamTuple&, const ValueTuple&);
+    static const CallType Table_AsBool[] = {
+      &Value_Float::Call_asBool,
+    };
+    static const CallType Table_AsFloat[] = {
+      &Value_Float::Call_asFloat,
+    };
+    static const CallType Table_AsInt[] = {
+      &Value_Float::Call_asInt,
+    };
+    static const CallType Table_Formatted[] = {
+      &Value_Float::Call_formatted,
+    };
+    if (label.collection == Functions_AsBool) {
+      if (label.function_num < 0 || label.function_num >= 1) {
+        FAIL() << "Bad function call " << label;
+      }
+      return (this->*Table_AsBool[label.function_num])(self, params, args);
+    }
+    if (label.collection == Functions_AsFloat) {
+      if (label.function_num < 0 || label.function_num >= 1) {
+        FAIL() << "Bad function call " << label;
+      }
+      return (this->*Table_AsFloat[label.function_num])(self, params, args);
+    }
+    if (label.collection == Functions_AsInt) {
+      if (label.function_num < 0 || label.function_num >= 1) {
+        FAIL() << "Bad function call " << label;
+      }
+      return (this->*Table_AsInt[label.function_num])(self, params, args);
+    }
+    if (label.collection == Functions_Formatted) {
+      if (label.function_num < 0 || label.function_num >= 1) {
+        FAIL() << "Bad function call " << label;
+      }
+      return (this->*Table_Formatted[label.function_num])(self, params, args);
+    }
+    return TypeValue::Dispatch(self, label, params, args);
+  }
+  std::string CategoryName() const final { return parent.CategoryName(); }
+  PrimFloat AsFloat() const final { return value_; }
+  ReturnTuple Call_asBool(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args);
+  ReturnTuple Call_asFloat(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args);
+  ReturnTuple Call_asInt(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args);
+  ReturnTuple Call_formatted(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args);
+  Type_Float& parent;
+  const PrimFloat value_;
+};
+ReturnTuple Type_Float::Call_equals(const ParamTuple& params, const ValueTuple& args) {
+  TRACE_FUNCTION("Float.equals")
+  const PrimFloat Var_arg1 = (args.At(0))->AsFloat();
+  const PrimFloat Var_arg2 = (args.At(1))->AsFloat();
+  return ReturnTuple(Box_Bool(Var_arg1==Var_arg2));
+}
+ReturnTuple Type_Float::Call_lessThan(const ParamTuple& params, const ValueTuple& args) {
+  TRACE_FUNCTION("Float.lessThan")
+  const PrimFloat Var_arg1 = (args.At(0))->AsFloat();
+  const PrimFloat Var_arg2 = (args.At(1))->AsFloat();
+  return ReturnTuple(Box_Bool(Var_arg1<Var_arg2));
+}
+ReturnTuple Value_Float::Call_asBool(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) {
+  TRACE_FUNCTION("Float.asBool")
+  return ReturnTuple(Box_Bool(value_ != 0.0));
+}
+ReturnTuple Value_Float::Call_asFloat(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) {
+  TRACE_FUNCTION("Float.asFloat")
+  return ReturnTuple(Var_self);
+}
+ReturnTuple Value_Float::Call_asInt(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) {
+  TRACE_FUNCTION("Float.asInt")
+  return ReturnTuple(Box_Int(value_));
+}
+ReturnTuple Value_Float::Call_formatted(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) {
+  TRACE_FUNCTION("Float.formatted")
+  std::ostringstream output;
+  output << value_;
+  return ReturnTuple(Box_String(output.str()));
+}
+}  // namespace
+TypeCategory& GetCategory_Float() {
+  return CreateCategory_Float();
+}
+TypeInstance& GetType_Float(Params<0>::Type params) {
+  return CreateType_Float(params);
+}
+#ifdef ZEOLITE_DYNAMIC_NAMESPACE
+}  // namespace ZEOLITE_DYNAMIC_NAMESPACE
+using namespace ZEOLITE_DYNAMIC_NAMESPACE;
+#endif  // ZEOLITE_DYNAMIC_NAMESPACE
 
-  bool TypeArgsForParent(
-    const TypeCategory& category, std::vector<const TypeInstance*>& args) const final {
+
+// String
+
+#ifdef ZEOLITE_DYNAMIC_NAMESPACE
+namespace ZEOLITE_DYNAMIC_NAMESPACE {
+#endif  // ZEOLITE_DYNAMIC_NAMESPACE
+namespace {
+const int collection_String = 0;
+}  // namespace
+const void* const Functions_String = &collection_String;
+const ValueFunction& Function_String_subSequence = (*new ValueFunction{ 0, 2, 1, "String", "subSequence", Functions_String, 0 });
+namespace {
+class Category_String;
+class Type_String;
+Type_String& CreateType_String(Params<0>::Type params);
+class Value_String;
+S<TypeValue> CreateValue(Type_String& parent, const ParamTuple& params, const ValueTuple& args);
+struct Category_String : public TypeCategory {
+  std::string CategoryName() const final { return "String"; }
+  Category_String() {
+    CycleCheck<Category_String>::Check();
+    CycleCheck<Category_String> marker(*this);
+    TRACE_FUNCTION("String (init @category)")
+  }
+  ReturnTuple Dispatch(const CategoryFunction& label, const ParamTuple& params, const ValueTuple& args) final {
+    using CallType = ReturnTuple(Category_String::*)(const ParamTuple&, const ValueTuple&);
+    return TypeCategory::Dispatch(label, params, args);
+  }
+};
+Category_String& CreateCategory_String() {
+  static auto& category = *new Category_String();
+  return category;
+}
+struct Type_String : public TypeInstance {
+  std::string CategoryName() const final { return parent.CategoryName(); }
+  void BuildTypeName(std::ostream& output) const final {
+    return TypeInstance::TypeNameFrom(output, parent);
+  }
+  Category_String& parent;
+  bool CanConvertFrom(const TypeInstance& from) const final {
+    std::vector<const TypeInstance*> args;
+    if (!from.TypeArgsForParent(parent, args)) return false;
+    if(args.size() != 0) {
+      FAIL() << "Wrong number of args (" << args.size() << ")  for " << CategoryName();
+    }
+    return true;
+  }
+  bool TypeArgsForParent(const TypeCategory& category, std::vector<const TypeInstance*>& args) const final {
     if (&category == &GetCategory_String()) {
       args = std::vector<const TypeInstance*>{};
       return true;
@@ -544,508 +1019,174 @@ struct Type_String : public TypeInstance {
       return true;
     }
     if (&category == &GetCategory_ReadPosition()) {
-      args = std::vector<const TypeInstance*>{&GetType_Char(Params<0>::Type())};
+      args = std::vector<const TypeInstance*>{&GetType_Char(T_get())};
       return true;
     }
     return false;
   }
-
-  bool CanConvertFrom(const TypeInstance& from) const final {
-    std::vector<const TypeInstance*> args;
-    if (!from.TypeArgsForParent(GetCategory_String(), args)) return false;
-    if (args.size() != 0) {
-      FAIL() << "Wrong number of args (" << args.size() << ") for " << CategoryName();
-    }
-    return true;
+  Type_String(Category_String& p, Params<0>::Type params) : parent(p) {
+    CycleCheck<Type_String>::Check();
+    CycleCheck<Type_String> marker(*this);
+    TRACE_FUNCTION("String (init @type)")
   }
+  ReturnTuple Dispatch(const TypeFunction& label, const ParamTuple& params, const ValueTuple& args) final {
+    using CallType = ReturnTuple(Type_String::*)(const ParamTuple&, const ValueTuple&);
+    static const CallType Table_Equals[] = {
+      &Type_String::Call_equals,
+    };
+    static const CallType Table_LessThan[] = {
+      &Type_String::Call_lessThan,
+    };
+    if (label.collection == Functions_Equals) {
+      if (label.function_num < 0 || label.function_num >= 1) {
+        FAIL() << "Bad function call " << label;
+      }
+      return (this->*Table_Equals[label.function_num])(params, args);
+    }
+    if (label.collection == Functions_LessThan) {
+      if (label.function_num < 0 || label.function_num >= 1) {
+        FAIL() << "Bad function call " << label;
+      }
+      return (this->*Table_LessThan[label.function_num])(params, args);
+    }
+    return TypeInstance::Dispatch(label, params, args);
+  }
+  ReturnTuple Call_equals(const ParamTuple& params, const ValueTuple& args);
+  ReturnTuple Call_lessThan(const ParamTuple& params, const ValueTuple& args);
 };
-
-class Value_String : public TypeValue {
- public:
-  Value_String(const PrimString& value) : value_(value) {}
-
-  std::string CategoryName() const final { return "String"; }
-
-  PrimString AsString() const final { return value_; }
-
-  ReturnTuple Dispatch(const S<TypeValue>& self,
-                       const ValueFunction& label,
-                       const ParamTuple& params, const ValueTuple& args) final {
-    if (args.Size() != label.arg_count) {
-      FAIL() << "Wrong number of args";
-    }
-    if (params.Size() != label.param_count){
-      FAIL() << "Wrong number of params";
-    }
-    if (&label == &Function_AsBool_asBool) {
-      return ReturnTuple(Box_Bool(value_.size() != 0));
-    }
-    if (&label == &Function_Formatted_formatted) {
-      return ReturnTuple(Box_String(self->AsString()));
-    }
-    if (&label == &Function_ReadPosition_readPosition) {
-      const int position = args.At(0)->AsInt();
-      if (position < 0 || position >= value_.size()) {
-        FAIL() << "Read position " << position << " is out of bounds";
+Type_String& CreateType_String(Params<0>::Type params) {
+  static auto& cache = *new InstanceMap<0,Type_String>();
+  auto& cached = cache[params];
+  if (!cached) { cached = R_get(new Type_String(CreateCategory_String(), params)); }
+  return *cached;
+}
+struct Value_String : public TypeValue {
+  Value_String(Type_String& p, const PrimString& value) : parent(p), value_(value) {}
+  ReturnTuple Dispatch(const S<TypeValue>& self, const ValueFunction& label, const ParamTuple& params,const ValueTuple& args) final {
+    using CallType = ReturnTuple(Value_String::*)(const S<TypeValue>&, const ParamTuple&, const ValueTuple&);
+    static const CallType Table_AsBool[] = {
+      &Value_String::Call_asBool,
+    };
+    static const CallType Table_Formatted[] = {
+      &Value_String::Call_formatted,
+    };
+    static const CallType Table_ReadPosition[] = {
+      &Value_String::Call_readPosition,
+      &Value_String::Call_readSize,
+      &Value_String::Call_subSequence,
+    };
+    static const CallType Table_String[] = {
+      &Value_String::Call_subSequence,
+    };
+    if (label.collection == Functions_AsBool) {
+      if (label.function_num < 0 || label.function_num >= 1) {
+        FAIL() << "Bad function call " << label;
       }
-      return ReturnTuple(Box_Char(value_[position]));
+      return (this->*Table_AsBool[label.function_num])(self, params, args);
     }
-    if (&label == &Function_ReadPosition_readSize) {
-      return ReturnTuple(Box_Int(value_.size()));
+    if (label.collection == Functions_Formatted) {
+      if (label.function_num < 0 || label.function_num >= 1) {
+        FAIL() << "Bad function call " << label;
+      }
+      return (this->*Table_Formatted[label.function_num])(self, params, args);
     }
-    if (&label == &Function_ReadPosition_subSequence ||
-        &label == &Function_String_subSequence) {
-      const int position = args.At(0)->AsInt();
-      const int size = args.At(1)->AsInt();
-      if (position < 0 || position > value_.size()) {
-        FAIL() << "Subsequence position " << position << " is out of bounds";
+    if (label.collection == Functions_ReadPosition) {
+      if (label.function_num < 0 || label.function_num >= 3) {
+        FAIL() << "Bad function call " << label;
       }
-      if (size < 0 || position + size > value_.size()) {
-        FAIL() << "Subsequence size " << size << " is invalid";
+      return (this->*Table_ReadPosition[label.function_num])(self, params, args);
+    }
+    if (label.collection == Functions_String) {
+      if (label.function_num < 0 || label.function_num >= 1) {
+        FAIL() << "Bad function call " << label;
       }
-      return ReturnTuple(Box_String(value_.substr(position,size)));
+      return (this->*Table_String[label.function_num])(self, params, args);
     }
     return TypeValue::Dispatch(self, label, params, args);
   }
-
- private:
+  std::string CategoryName() const final { return parent.CategoryName(); }
+  const PrimString& AsString() const final { return value_; }
+  ReturnTuple Call_asBool(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args);
+  ReturnTuple Call_formatted(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args);
+  ReturnTuple Call_readPosition(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args);
+  ReturnTuple Call_readSize(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args);
+  ReturnTuple Call_subSequence(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args);
+  Type_String& parent;
   const PrimString value_;
 };
-
-struct Category_AsBool : public TypeCategory {
-  std::string CategoryName() const final { return "AsBool"; }
-};
-
-struct Type_AsBool : public TypeInstance {
-  std::string CategoryName() const final { return "AsBool"; }
-  void BuildTypeName(std::ostream& output) const final { output << CategoryName(); }
-
-  bool TypeArgsForParent(
-    const TypeCategory& category, std::vector<const TypeInstance*>& args) const final {
-    if (&category == &GetCategory_AsBool()) {
-      args = std::vector<const TypeInstance*>{};
-      return true;
-    }
-    return false;
+ReturnTuple Type_String::Call_equals(const ParamTuple& params, const ValueTuple& args) {
+  TRACE_FUNCTION("String.equals")
+  const S<TypeValue>& Var_arg1 = (args.At(0));
+  const S<TypeValue>& Var_arg2 = (args.At(1));
+  return ReturnTuple(Box_Bool(Var_arg1->AsString()==Var_arg2->AsString()));
+}
+ReturnTuple Type_String::Call_lessThan(const ParamTuple& params, const ValueTuple& args) {
+  TRACE_FUNCTION("String.lessThan")
+  const S<TypeValue>& Var_arg1 = (args.At(0));
+  const S<TypeValue>& Var_arg2 = (args.At(1));
+  return ReturnTuple(Box_Bool(Var_arg1->AsString()<Var_arg2->AsString()));
+}
+ReturnTuple Value_String::Call_asBool(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) {
+  TRACE_FUNCTION("String.asBool")
+  return ReturnTuple(Box_Bool(value_.size() != 0));
+}
+ReturnTuple Value_String::Call_formatted(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) {
+  TRACE_FUNCTION("String.formatted")
+  return ReturnTuple(Var_self);
+}
+ReturnTuple Value_String::Call_readPosition(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) {
+  TRACE_FUNCTION("String.readPosition")
+  const PrimInt Var_arg1 = (args.At(0))->AsInt();
+  if (Var_arg1 < 0 || Var_arg1 >= value_.size()) {
+    FAIL() << "Read position " << Var_arg1 << " is out of bounds";
   }
-
-  bool CanConvertFrom(const TypeInstance& from) const final {
-    std::vector<const TypeInstance*> args;
-    if (!from.TypeArgsForParent(GetCategory_AsBool(), args)) return false;
-    if (args.size() != 0) {
-      FAIL() << "Wrong number of args (" << args.size() << ") for " << CategoryName();
-    }
-    return true;
+  return ReturnTuple(Box_Char(value_[Var_arg1]));
+}
+ReturnTuple Value_String::Call_readSize(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) {
+  TRACE_FUNCTION("String.readSize")
+  return ReturnTuple(Box_Int(value_.size()));
+}
+ReturnTuple Value_String::Call_subSequence(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) {
+  TRACE_FUNCTION("String.subSequence")
+  const PrimInt Var_arg1 = (args.At(0))->AsInt();
+  const PrimInt Var_arg2 = (args.At(1))->AsInt();
+  if (Var_arg1 < 0 || Var_arg1 > value_.size()) {
+    FAIL() << "Subsequence position " << Var_arg1 << " is out of bounds";
   }
-};
-
-struct Category_AsChar : public TypeCategory {
-  std::string CategoryName() const final { return "AsChar"; }
-};
-
-struct Type_AsChar : public TypeInstance {
-  std::string CategoryName() const final { return "AsChar"; }
-  void BuildTypeName(std::ostream& output) const final { output << CategoryName(); }
-
-  bool TypeArgsForParent(
-    const TypeCategory& category, std::vector<const TypeInstance*>& args) const final {
-    if (&category == &GetCategory_AsChar()) {
-      args = std::vector<const TypeInstance*>{};
-      return true;
-    }
-    return false;
+  if (Var_arg2 < 0 || Var_arg1 + Var_arg2 > value_.size()) {
+    FAIL() << "Subsequence size " << Var_arg2 << " is invalid";
   }
-
-  bool CanConvertFrom(const TypeInstance& from) const final {
-    std::vector<const TypeInstance*> args;
-    if (!from.TypeArgsForParent(GetCategory_AsChar(), args)) return false;
-    if (args.size() != 0) {
-      FAIL() << "Wrong number of args (" << args.size() << ") for " << CategoryName();
-    }
-    return true;
-  }
-};
-
-struct Category_AsInt : public TypeCategory {
-  std::string CategoryName() const final { return "AsInt"; }
-};
-
-struct Type_AsInt : public TypeInstance {
-  std::string CategoryName() const final { return "AsInt"; }
-  void BuildTypeName(std::ostream& output) const final { output << CategoryName(); }
-
-  bool TypeArgsForParent(
-    const TypeCategory& category, std::vector<const TypeInstance*>& args) const final {
-    if (&category == &GetCategory_AsInt()) {
-      args = std::vector<const TypeInstance*>{};
-      return true;
-    }
-    return false;
-  }
-
-  bool CanConvertFrom(const TypeInstance& from) const final {
-    std::vector<const TypeInstance*> args;
-    if (!from.TypeArgsForParent(GetCategory_AsInt(), args)) return false;
-    if (args.size() != 0) {
-      FAIL() << "Wrong number of args (" << args.size() << ") for " << CategoryName();
-    }
-    return true;
-  }
-};
-
-struct Category_AsFloat : public TypeCategory {
-  std::string CategoryName() const final { return "AsFloat"; }
-};
-
-struct Type_AsFloat : public TypeInstance {
-  std::string CategoryName() const final { return "AsFloat"; }
-  void BuildTypeName(std::ostream& output) const final { output << CategoryName(); }
-
-  bool TypeArgsForParent(
-    const TypeCategory& category, std::vector<const TypeInstance*>& args) const final {
-    if (&category == &GetCategory_AsFloat()) {
-      args = std::vector<const TypeInstance*>{};
-      return true;
-    }
-    return false;
-  }
-
-  bool CanConvertFrom(const TypeInstance& from) const final {
-    std::vector<const TypeInstance*> args;
-    if (!from.TypeArgsForParent(GetCategory_AsFloat(), args)) return false;
-    if (args.size() != 0) {
-      FAIL() << "Wrong number of args (" << args.size() << ") for " << CategoryName();
-    }
-    return true;
-  }
-};
-
-struct Category_Formatted : public TypeCategory {
-  std::string CategoryName() const final { return "Formatted"; }
-};
-
-struct Type_Formatted : public TypeInstance {
-  std::string CategoryName() const final { return "Formatted"; }
-  void BuildTypeName(std::ostream& output) const final { output << CategoryName(); }
-
-  bool TypeArgsForParent(
-    const TypeCategory& category, std::vector<const TypeInstance*>& args) const final {
-    if (&category == &GetCategory_Formatted()) {
-      args = std::vector<const TypeInstance*>{};
-      return true;
-    }
-    return false;
-  }
-
-  bool CanConvertFrom(const TypeInstance& from) const final {
-    std::vector<const TypeInstance*> args;
-    if (!from.TypeArgsForParent(GetCategory_Formatted(), args)) return false;
-    if (args.size() != 0) {
-      FAIL() << "Wrong number of args (" << args.size() << ") for " << CategoryName();
-    }
-    return true;
-  }
-};
-
-struct Category_ReadPosition : public TypeCategory {
-  std::string CategoryName() const final { return "ReadPosition"; }
-};
-
-struct Type_ReadPosition : public TypeInstance {
-  Type_ReadPosition(Params<1>::Type params) : Param_x(*std::get<0>(params)) {}
-  std::string CategoryName() const final { return "ReadPosition"; }
-
-  void BuildTypeName(std::ostream& output) const final {
-    TypeInstance::TypeNameFrom(output, GetCategory_ReadPosition(), Param_x);
-  }
-
-  bool TypeArgsForParent(
-    const TypeCategory& category, std::vector<const TypeInstance*>& args) const final {
-    if (&category == &GetCategory_ReadPosition()) {
-      args = std::vector<const TypeInstance*>{&Param_x};
-      return true;
-    }
-    return false;
-  }
-
-  bool CanConvertFrom(const TypeInstance& from) const final {
-    std::vector<const TypeInstance*> args;
-    if (!from.TypeArgsForParent(GetCategory_ReadPosition(), args)) return false;
-    if (args.size() != 1) {
-      FAIL() << "Wrong number of args (" << args.size() << ") for " << CategoryName();
-    }
-    if (!TypeInstance::CanConvert(*args[0], Param_x)) return false;
-    return true;
-  }
-
-  TypeInstance& Param_x;
-};
-
-struct Category_LessThan : public TypeCategory {
-  std::string CategoryName() const final { return "LessThan"; }
-};
-
-struct Type_LessThan : public TypeInstance {
-  Type_LessThan(Params<1>::Type params) : Param_x(*std::get<0>(params)) {}
-  std::string CategoryName() const final { return "LessThan"; }
-
-  void BuildTypeName(std::ostream& output) const final {
-    TypeInstance::TypeNameFrom(output, GetCategory_LessThan(), Param_x);
-  }
-
-  TypeInstance& Param_x;
-};
-
-struct Category_Equals : public TypeCategory {
-  std::string CategoryName() const final { return "Equals"; }
-};
-
-struct Type_Equals : public TypeInstance {
-  Type_Equals(Params<1>::Type params) : Param_x(*std::get<0>(params)) {}
-  std::string CategoryName() const final { return "Equals"; }
-
-  void BuildTypeName(std::ostream& output) const final {
-    TypeInstance::TypeNameFrom(output, GetCategory_Equals(), Param_x);
-  }
-
-  TypeInstance& Param_x;
-};
-
-const S<TypeValue>& Var_true = *new S<TypeValue>(new Value_Bool(true));
-const S<TypeValue>& Var_false = *new S<TypeValue>(new Value_Bool(false));
-
-const int Collection_AsBool = 0;
-const int Collection_AsChar = 0;
-const int Collection_AsInt = 0;
-const int Collection_AsFloat = 0;
-const int Collection_LessThan = 0;
-const int Collection_Equals = 0;
-const int Collection_Formatted = 0;
-const int Collection_ReadPosition = 0;
-const int Collection_String = 0;
-
+  return ReturnTuple(Box_String(value_.substr(Var_arg1,Var_arg2)));
+}
 }  // namespace
-
-const void* const Functions_AsBool = &Collection_AsBool;
-const ValueFunction& Function_AsBool_asBool =
-   *new ValueFunction{ 0, 0, 1, "AsBool", "asBool", Functions_AsBool, 0 };
-
-const void* const Functions_AsChar = &Collection_AsChar;
-const ValueFunction& Function_AsChar_asChar =
-   *new ValueFunction{ 0, 0, 1, "AsChar", "asChar", Functions_AsChar, 0 };
-
-const void* const Functions_AsInt = &Collection_AsInt;
-const ValueFunction& Function_AsInt_asInt =
-   *new ValueFunction{ 0, 0, 1, "AsInt", "asInt", Functions_AsInt, 0 };
-
-const void* const Functions_AsFloat = &Collection_AsFloat;
-const ValueFunction& Function_AsFloat_asFloat =
-   *new ValueFunction{ 0, 0, 1, "AsFloat", "asFloat", Functions_AsFloat, 0 };
-
-const void* const Functions_LessThan = &Collection_LessThan;
-const TypeFunction& Function_LessThan_lessThan =
-  *new TypeFunction{ 0, 2, 1, "LessThan", "lessThan", Functions_LessThan, 0 };
-
-const void* const Functions_Equals = &Collection_Equals;
-const TypeFunction& Function_Equals_equals =
-   *new TypeFunction{ 0, 2, 1, "Equals", "equals", Functions_Equals, 0 };
-
-const void* const Functions_Formatted = &Collection_Formatted;
-const ValueFunction& Function_Formatted_formatted =
-   *new ValueFunction{ 0, 0, 1, "Formatted", "formatted", Functions_Formatted, 0 };
-
-const void* const Functions_ReadPosition = &Collection_ReadPosition;
-const ValueFunction& Function_ReadPosition_readPosition =
-   *new ValueFunction{ 0, 1, 1, "ReadPosition", "readPosition", Functions_ReadPosition, 0 };
-const ValueFunction& Function_ReadPosition_readSize =
-   *new ValueFunction{ 0, 0, 1, "ReadPosition", "readSize", Functions_ReadPosition, 1 };
-const ValueFunction& Function_ReadPosition_subSequence =
-   *new ValueFunction{ 0, 2, 1, "ReadPosition", "subSequence", Functions_ReadPosition, 2 };
-
-const void* const Functions_String = &Collection_String;
-const ValueFunction& Function_String_subSequence =
-   *new ValueFunction{ 0, 2, 1, "String", "subSequence", Functions_String, 0 };
-
-TypeInstance& Merge_Intersect(L<TypeInstance*> params) {
-  static auto& cache = *new std::map<L<TypeInstance*>,R<Type_Intersect>>();
-  auto& cached = cache[params];
-  if (!cached) { cached = R_get(new Type_Intersect(params)); }
-  return *cached;
-}
-
-TypeInstance& Merge_Union(L<TypeInstance*> params) {
-  static auto& cache = *new std::map<L<TypeInstance*>,R<Type_Union>>();
-  auto& cached = cache[params];
-  if (!cached) { cached = R_get(new Type_Union(params)); }
-  return *cached;
-}
-
-TypeInstance& GetMerged_Any() {
-  static auto& instance = Merge_Intersect(L_get<TypeInstance*>());
-  return instance;
-}
-
-TypeInstance& GetMerged_All() {
-  static auto& instance = Merge_Union(L_get<TypeInstance*>());
-  return instance;
-}
-
-TypeCategory& GetCategory_Bool() {
-  static auto& category = *new Category_Bool();
-  return category;
-}
-
-TypeCategory& GetCategory_Char() {
-  static auto& category = *new Category_Char();
-  return category;
-}
-
-TypeCategory& GetCategory_Int() {
-  static auto& category = *new Category_Int();
-  return category;
-}
-
-TypeCategory& GetCategory_Float() {
-  static auto& category = *new Category_Float();
-  return category;
-}
-
 TypeCategory& GetCategory_String() {
-  static auto& category = *new Category_String();
-  return category;
+  return CreateCategory_String();
 }
-
-TypeCategory& GetCategory_AsBool() {
-  static auto& category = *new Category_AsBool();
-  return category;
+TypeInstance& GetType_String(Params<0>::Type params) {
+  return CreateType_String(params);
 }
+#ifdef ZEOLITE_DYNAMIC_NAMESPACE
+}  // namespace ZEOLITE_DYNAMIC_NAMESPACE
+using namespace ZEOLITE_DYNAMIC_NAMESPACE;
+#endif  // ZEOLITE_DYNAMIC_NAMESPACE
 
-TypeCategory& GetCategory_AsChar() {
-  static auto& category = *new Category_AsChar();
-  return category;
-}
-
-TypeCategory& GetCategory_AsInt() {
-  static auto& category = *new Category_AsInt();
-  return category;
-}
-
-TypeCategory& GetCategory_AsFloat() {
-  static auto& category = *new Category_AsFloat();
-  return category;
-}
-
-TypeCategory& GetCategory_Formatted() {
-  static auto& category = *new Category_Formatted();
-  return category;
-}
-
-TypeCategory& GetCategory_ReadPosition() {
-  static auto& category = *new Category_ReadPosition();
-  return category;
-}
-
-TypeCategory& GetCategory_LessThan() {
-  static auto& category = *new Category_LessThan();
-  return category;
-}
-
-TypeCategory& GetCategory_Equals() {
-  static auto& category = *new Category_Equals();
-  return category;
-}
-
-
-TypeInstance& GetType_Bool(Params<0>::Type) {
-  static auto& instance = *new Type_Bool();
-  return instance;
-}
-
-TypeInstance& GetType_Char(Params<0>::Type) {
-  static auto& instance = *new Type_Char();
-  return instance;
-}
-
-TypeInstance& GetType_Int(Params<0>::Type) {
-  static auto& instance = *new Type_Int();
-  return instance;
-}
-
-TypeInstance& GetType_Float(Params<0>::Type) {
-  static auto& instance = *new Type_Float();
-  return instance;
-}
-
-TypeInstance& GetType_String(Params<0>::Type) {
-  static auto& instance = *new Type_String();
-  return instance;
-}
-
-TypeInstance& GetType_AsBool(Params<0>::Type) {
-  static auto& instance = *new Type_AsBool();
-  return instance;
-}
-
-TypeInstance& GetType_AsChar(Params<0>::Type) {
-  static auto& instance = *new Type_AsChar();
-  return instance;
-}
-
-TypeInstance& GetType_AsInt(Params<0>::Type) {
-  static auto& instance = *new Type_AsInt();
-  return instance;
-}
-
-TypeInstance& GetType_AsFloat(Params<0>::Type) {
-  static auto& instance = *new Type_AsFloat();
-  return instance;
-}
-
-TypeInstance& GetType_Formatted(Params<0>::Type) {
-  static auto& instance = *new Type_Formatted();
-  return instance;
-}
-
-TypeInstance& GetType_ReadPosition(Params<1>::Type params){
-  static auto& cache = *new InstanceMap<1,Type_ReadPosition>();
-  auto& cached = cache[params];
-  if (!cached) { cached = R_get(new Type_ReadPosition(params)); }
-  return *cached;
-}
-
-TypeInstance& GetType_LessThan(Params<1>::Type params){
-  static auto& cache = *new InstanceMap<1,Type_LessThan>();
-  auto& cached = cache[params];
-  if (!cached) { cached = R_get(new Type_LessThan(params)); }
-  return *cached;
-}
-
-TypeInstance& GetType_Equals(Params<1>::Type params){
-  static auto& cache = *new InstanceMap<1,Type_Equals>();
-  auto& cached = cache[params];
-  if (!cached) { cached = R_get(new Type_Equals(params)); }
-  return *cached;
-}
 
 S<TypeValue> Box_Bool(bool value) {
   return value? Var_true : Var_false;
 }
 
-S<TypeValue> Box_String(const PrimString& value) {
-  return S_get(new Value_String(value));
-}
-
 S<TypeValue> Box_Char(PrimChar value) {
-  return S_get(new Value_Char(value));
+  return S_get(new Value_Char(CreateType_Char(Params<0>::Type()), value));
 }
 
 S<TypeValue> Box_Int(PrimInt value) {
-  return S_get(new Value_Int(value));
+  return S_get(new Value_Int(CreateType_Int(Params<0>::Type()), value));
 }
 
 S<TypeValue> Box_Float(PrimFloat value) {
-  return S_get(new Value_Float(value));
+  return S_get(new Value_Float(CreateType_Float(Params<0>::Type()), value));
 }
 
-
-const S<TypeValue>& Var_empty = *new S<TypeValue>(new OptionalEmpty());
+S<TypeValue> Box_String(const PrimString& value) {
+  return S_get(new Value_String(CreateType_String(Params<0>::Type()), value));
+}

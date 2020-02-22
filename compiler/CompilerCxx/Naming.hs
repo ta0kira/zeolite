@@ -126,14 +126,14 @@ collectionName n = "Functions_" ++ show n
 tableName :: CategoryName -> String
 tableName n = "Table_" ++ show n
 
-categoryCreator :: String
-categoryCreator = "CreateCategory"
+categoryCreator :: CategoryName -> String
+categoryCreator n = "CreateCategory_" ++ show n
 
-typeCreator :: String
-typeCreator = "CreateType"
+typeCreator :: CategoryName -> String
+typeCreator n = "CreateType_" ++ show n
 
-valueCreator :: String
-valueCreator = "CreateValue"
+valueCreator :: CategoryName -> String
+valueCreator n = "CreateValue_" ++ show n
 
 privateNamespace :: Hashable a => a -> String
 privateNamespace = ("private_" ++) . flip showHex "" . abs . hash

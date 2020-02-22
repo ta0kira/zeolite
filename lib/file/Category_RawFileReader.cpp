@@ -19,6 +19,7 @@ limitations under the License.
 #include <fstream>
 
 #include "category-source.hpp"
+#include "Category_String.hpp"
 #include "Category_BlockReader.hpp"
 #include "Category_PersistentResource.hpp"
 #include "Category_RawFileReader.hpp"

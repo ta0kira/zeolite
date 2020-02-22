@@ -1,1 +1,1 @@
-RecompileMetadata {rmRoot = "..", rmPath = "tests", rmPublicDeps = ["visibility","visibility2"], rmPrivateDeps = [], rmExtraFiles = [], rmExtraPaths = [], rmMode = CompileIncremental, rmOutputName = ""}
+RecompileMetadata {rmRoot = "..", rmPath = "tests", rmPublicDeps = ["visibility","visibility2"], rmPrivateDeps = [], rmExtraFiles = [], rmExtraPaths = [], rmExtraRequires = [], rmMode = CompileIncremental, rmOutputName = ""}

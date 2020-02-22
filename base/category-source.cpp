@@ -129,7 +129,7 @@ bool TypeValue::AsBool() const {
   __builtin_unreachable();
 }
 
-PrimString TypeValue::AsString() const {
+const PrimString& TypeValue::AsString() const {
   FAIL() << CategoryName() << " is not a String value";
   __builtin_unreachable();
 }
