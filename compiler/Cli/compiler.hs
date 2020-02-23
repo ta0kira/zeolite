@@ -242,19 +242,19 @@ runCompiler co@(CompileOptions h is is2 ds es ep ec p m o f) = do
             }
           let ec' = resolveCategoryDeps ec (cm0:deps)
           let cm = CompileMetadata {
-              cmPath = path,
-              cmNamespace = show ns0,
-              cmPublicDeps = as,
-              cmPrivateDeps = as2,
+              cmPath = cmPath cm0,
+              cmNamespace = cmNamespace cm0,
+              cmPublicDeps = cmPublicDeps cm0,
+              cmPrivateDeps = cmPrivateDeps cm0,
               cmExtraRequires = ec',
-              cmCategories = sort $ map show pc,
-              cmSubdirs = sort $ ss ++ ep',
-              cmPublicFiles = sort ps,
-              cmPrivateFiles = sort xs,
-              cmTestFiles = sort ts,
-              cmHxxFiles = sort hxx,
-              cmCxxFiles = sort cxx,
-              cmObjectFiles = os1' ++ os2 ++ map OtherObjectFile os'
+              cmCategories = cmCategories cm0,
+              cmSubdirs = cmSubdirs cm0,
+              cmPublicFiles = cmPublicFiles cm0,
+              cmPrivateFiles = cmPrivateFiles cm0,
+              cmTestFiles = cmTestFiles cm0,
+              cmHxxFiles = cmHxxFiles cm0,
+              cmCxxFiles = cmCxxFiles cm0,
+              cmObjectFiles = cmObjectFiles cm0
             }
           when (not $ isCreateTemplates m) $ writeMetadata (p </> d) cm
           return (cm,mf)
