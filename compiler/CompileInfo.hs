@@ -35,7 +35,7 @@ import TypesBase (CompileErrorM(..),Mergeable(..),MergeableM(..))
 data CompileMessage =
   CompileMessage {
     cmMessage :: String,
-    ccNested :: [CompileMessage]
+    cmNested :: [CompileMessage]
   }
 
 instance Show CompileMessage where
@@ -52,7 +52,7 @@ data CompileInfo a =
     cfErrors :: CompileMessage
   } |
   CompileSuccess {
-    cfWarnings :: [String],
+    csWarnings :: [String],
     csData :: a
   }
 
@@ -66,12 +66,12 @@ getCompileWarnings (CompileSuccess w _) = w
 
 
 instance Functor CompileInfo where
-  fmap f (CompileFail w e)    = (CompileFail w e) -- Not the same a.
+  fmap f (CompileFail w e)    = CompileFail w e -- Not the same a.
   fmap f (CompileSuccess w d) = CompileSuccess w (f d)
 
 instance Applicative CompileInfo where
   pure = CompileSuccess []
-  (CompileFail w e) <*> i = CompileFail (w ++ getCompileWarnings i) e -- Not the same a.
+  (CompileFail w e) <*> _ = CompileFail w e -- Not the same a.
   i <*> (CompileFail w e) = CompileFail (getCompileWarnings i ++ w) e -- Not the same a.
   (CompileSuccess w1 f) <*> (CompileSuccess w2 d) = CompileSuccess (w1 ++ w2) (f d)
 
