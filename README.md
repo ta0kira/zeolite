@@ -1058,7 +1058,10 @@ these meta-types act as "criteria" for any object that will be stored in them.
   any value but cannot be assigned to any other type.
 
   Intersections can be useful for requiring multiple interfaces without creating
-  a new category that refines all of those interfaces.
+  a new category that refines all of those interfaces. An intersection
+  `[Foo&Bar]` in Zeolite is semantically similar to a constraint
+  `forall a. (Foo a, Bar a)` in Haskell and `? extends Foo & Bar` in Java,
+  except that in Zeolite `[Foo&Bar]` can be used as a first-class type.
 
 <pre style='color:#1f1c1b;background-color:#ffffff;'>
 <span style='color:#644a9b;'>@value</span> <b>interface</b> <b><span style='color:#0057ae;'>Reader</span></b> {}
