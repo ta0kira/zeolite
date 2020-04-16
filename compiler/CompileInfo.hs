@@ -16,6 +16,7 @@ limitations under the License.
 
 -- Author: Kevin P. Barry [ta0kira@gmail.com]
 
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE Safe #-}
 
@@ -28,6 +29,10 @@ module CompileInfo (
 ) where
 
 import Data.List (intercalate)
+
+#if MIN_VERSION_base(4,9,0)
+import Control.Monad.Fail
+#endif
 
 import TypesBase (CompileErrorM(..),Mergeable(..),MergeableM(..))
 
@@ -110,6 +115,11 @@ instance MergeableM CompileInfo where
   (CompileFail w1 e)    `mergeNestedM` (CompileSuccess w2 _) = CompileFail (w1 ++ w2) e
   (CompileSuccess w1 _) `mergeNestedM` (CompileFail w2 e)    = CompileFail (w1 ++ w2) e
   (CompileFail w1 e1)   `mergeNestedM` (CompileFail w2 e2)   = CompileFail (w1 ++ w2) $ e1 `nestMessages` e2
+
+#if MIN_VERSION_base(4,9,0)
+instance MonadFail CompileInfo where
+  fail = compileErrorM
+#endif
 
 nestMessages (CompileMessage m1 ms1) (CompileMessage [] ms2) =
   CompileMessage m1 (ms1 ++ ms2)

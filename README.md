@@ -216,7 +216,7 @@ box on other operating systems at the moment.
    ```shell
    sudo apt-get install cabal-install
    cabal update
-   cabal install mtl parsec regex-tdfa
+   cabal install hashable mtl parsec regex-tdfa
    ```
 5. Run the compiler setup:
    ```shell

@@ -16,6 +16,7 @@ limitations under the License.
 
 -- Author: Kevin P. Barry [ta0kira@gmail.com]
 
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE Safe #-}
 
@@ -40,6 +41,10 @@ module TypesBase (
 ) where
 
 import Control.Monad.Trans (MonadTrans(..))
+
+#if MIN_VERSION_base(4,9,0)
+import Control.Monad.Fail
+#endif
 
 
 class Mergeable a where
@@ -76,8 +81,16 @@ class CompileError a where
   reviseError :: a -> String -> a
   reviseError e _ = e
 
+-- For some GHC versions, pattern-matching failures require MonadFail.
+#if MIN_VERSION_base(4,9,0)
+class MonadFail m => CompileErrorM m where
+#else
 class CompileErrorM m where
+#endif
   compileErrorM :: String -> m a
+#if MIN_VERSION_base(4,9,0)
+  compileErrorM = fail
+#endif
   isCompileErrorM :: m a -> Bool
   collectAllOrErrorM :: Foldable f => f (m a) -> m [a]
   collectOneOrErrorM :: Foldable f => f (m a) -> m a
