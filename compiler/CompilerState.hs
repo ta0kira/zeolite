@@ -139,103 +139,89 @@ instance Show c => Show (VariableValue c) where
 reviseErrorStateT :: (CompileErrorM m) => CompilerState a m b -> String -> CompilerState a m b
 reviseErrorStateT x s = mapStateT (`reviseError` s) x
 
-csCurrentScope :: (Monad m, CompilerContext c m s a) =>
-  CompilerState a m SymbolScope
+csCurrentScope :: CompilerContext c m s a => CompilerState a m SymbolScope
 csCurrentScope = fmap ccCurrentScope get >>= lift
 
-csResolver :: (Monad m, CompilerContext c m s a) =>
-  CompilerState a m AnyTypeResolver
+csResolver :: CompilerContext c m s a => CompilerState a m AnyTypeResolver
 csResolver = fmap ccResolver get >>= lift
 
-csSameType :: (Monad m, CompilerContext c m s a) =>
-  TypeInstance -> CompilerState a m Bool
+csSameType :: CompilerContext c m s a => TypeInstance -> CompilerState a m Bool
 csSameType t = fmap (\x -> ccSameType x t) get >>= lift
 
-csAllFilters :: (Monad m, CompilerContext c m s a) =>
-  CompilerState a m ParamFilters
+csAllFilters :: CompilerContext c m s a => CompilerState a m ParamFilters
 csAllFilters = fmap ccAllFilters get >>= lift
 
-csGetParamScope :: (Monad m, CompilerContext c m s a) =>
-  ParamName -> CompilerState a m SymbolScope
+csGetParamScope :: CompilerContext c m s a => ParamName -> CompilerState a m SymbolScope
 csGetParamScope n = fmap (\x -> ccGetParamScope x n) get >>= lift
 
-csRequiresTypes :: (Monad m, CompilerContext c m s a) =>
-  Set.Set CategoryName -> CompilerState a m ()
+csRequiresTypes :: CompilerContext c m s a => Set.Set CategoryName -> CompilerState a m ()
 csRequiresTypes ns = fmap (\x -> ccRequiresTypes x ns) get >>= lift >>= put
 
-csGetRequired :: (Monad m, CompilerContext c m s a) => CompilerState a m (Set.Set CategoryName)
+csGetRequired :: CompilerContext c m s a => CompilerState a m (Set.Set CategoryName)
 csGetRequired = fmap ccGetRequired get >>= lift
 
-csGetCategoryFunction :: (Monad m, CompilerContext c m s a) =>
+csGetCategoryFunction :: CompilerContext c m s a =>
   [c] -> Maybe CategoryName -> FunctionName -> CompilerState a m (ScopedFunction c)
 csGetCategoryFunction c t n = fmap (\x -> ccGetCategoryFunction x c t n) get >>= lift
 
-csGetTypeFunction :: (Monad m, CompilerContext c m s a) =>
+csGetTypeFunction :: CompilerContext c m s a =>
   [c] -> Maybe GeneralInstance -> FunctionName -> CompilerState a m (ScopedFunction c)
 csGetTypeFunction c t n = fmap (\x -> ccGetTypeFunction x c t n) get >>= lift
 
-csCheckValueInit :: (Monad m, CompilerContext c m s a) =>
+csCheckValueInit :: CompilerContext c m s a =>
   [c] -> TypeInstance -> ExpressionType -> ParamSet GeneralInstance -> CompilerState a m ()
 csCheckValueInit c t as ps = fmap (\x -> ccCheckValueInit x c t as ps) get >>= lift
 
-csGetVariable :: (Monad m, CompilerContext c m s a) =>
+csGetVariable :: CompilerContext c m s a =>
   [c] -> VariableName -> CompilerState a m (VariableValue c)
 csGetVariable c n = fmap (\x -> ccGetVariable x c n) get >>= lift
 
-csAddVariable :: (Monad m, CompilerContext c m s a) =>
+csAddVariable :: CompilerContext c m s a =>
   [c] -> VariableName -> VariableValue c -> CompilerState a m ()
 csAddVariable c n t = fmap (\x -> ccAddVariable x c n t) get >>= lift >>= put
 
-csCheckVariableInit :: (Monad m, CompilerContext c m s a) =>
+csCheckVariableInit :: CompilerContext c m s a =>
   [c] -> VariableName -> CompilerState a m ()
 csCheckVariableInit c n = fmap (\x -> ccCheckVariableInit x c n) get >>= lift
 
-csWrite :: (Monad m, CompilerContext c m s a) => s -> CompilerState a m ()
+csWrite :: CompilerContext c m s a => s -> CompilerState a m ()
 csWrite o = fmap (\x -> ccWrite x o) get >>= lift >>= put
 
-csClearOutput :: (Monad m, CompilerContext c m s a) => CompilerState a m ()
+csClearOutput :: CompilerContext c m s a => CompilerState a m ()
 csClearOutput = fmap (\x -> ccClearOutput x) get >>= lift >>= put
 
-csGetOutput :: (Monad m, CompilerContext c m s a) => CompilerState a m s
+csGetOutput :: CompilerContext c m s a => CompilerState a m s
 csGetOutput = fmap ccGetOutput get >>= lift
 
-csUpdateAssigned :: (Monad m, CompilerContext c m s a) =>
-  VariableName -> CompilerState a m ()
+csUpdateAssigned :: CompilerContext c m s a => VariableName -> CompilerState a m ()
 csUpdateAssigned n = fmap (\x -> ccUpdateAssigned x n) get >>= lift >>= put
 
-csInheritReturns :: (Monad m, CompilerContext c m s a) =>
-  [a] -> CompilerState a m ()
+csInheritReturns :: CompilerContext c m s a => [a] -> CompilerState a m ()
 csInheritReturns xs = fmap (\x -> ccInheritReturns x xs) get >>= lift >>= put
 
-csRegisterReturn :: (Monad m, CompilerContext c m s a) =>
+csRegisterReturn :: CompilerContext c m s a =>
   [c] -> Maybe ExpressionType -> CompilerState a m ()
 csRegisterReturn c rs = fmap (\x -> ccRegisterReturn x c rs) get >>= lift >>= put
 
-csPrimNamedReturns :: (Monad m, CompilerContext c m s a) =>
-  CompilerState a m [ReturnVariable]
+csPrimNamedReturns :: CompilerContext c m s a => CompilerState a m [ReturnVariable]
 csPrimNamedReturns = fmap ccPrimNamedReturns get >>= lift
 
-csIsUnreachable :: (Monad m, CompilerContext c m s a) =>
-  CompilerState a m Bool
+csIsUnreachable :: CompilerContext c m s a => CompilerState a m Bool
 csIsUnreachable = fmap ccIsUnreachable get >>= lift
 
-csSetNoReturn :: (Monad m, CompilerContext c m s a) => CompilerState a m ()
+csSetNoReturn :: CompilerContext c m s a => CompilerState a m ()
 csSetNoReturn = fmap ccSetNoReturn get >>= lift >>= put
 
-csStartLoop :: (Monad m, CompilerContext c m s a) =>
-  LoopSetup s -> CompilerState a m ()
+csStartLoop :: CompilerContext c m s a => LoopSetup s -> CompilerState a m ()
 csStartLoop l = fmap (\x -> ccStartLoop x l) get >>= lift >>= put
 
-csGetLoop :: (Monad m, CompilerContext c m s a) =>
-  CompilerState a m (LoopSetup s)
+csGetLoop :: CompilerContext c m s a => CompilerState a m (LoopSetup s)
 csGetLoop = fmap ccGetLoop get >>= lift
 
-csPushCleanup :: (Monad m, CompilerContext c m s a) =>
-  CleanupSetup a s -> CompilerState a m ()
+csPushCleanup :: CompilerContext c m s a => CleanupSetup a s -> CompilerState a m ()
 csPushCleanup l = fmap (\x -> ccPushCleanup x l) get >>= lift >>= put
 
-csGetCleanup :: (Monad m, CompilerContext c m s a) =>
-  CompilerState a m (CleanupSetup a s)
+csGetCleanup :: CompilerContext c m s a => CompilerState a m (CleanupSetup a s)
 csGetCleanup = fmap ccGetCleanup get >>= lift
 
 data CompiledData s =
@@ -254,7 +240,7 @@ instance Monoid s => Mergeable (CompiledData s) where
     req = Set.unions $ map cdRequired flat
     out = foldr (<>) mempty $ map cdOutput flat
 
-runDataCompiler :: (Monad m, CompilerContext c m s a) =>
+runDataCompiler :: CompilerContext c m s a =>
   CompilerState a m b -> a -> m (CompiledData s)
 runDataCompiler x ctx = do
   ctx' <- execStateT x ctx
@@ -265,5 +251,5 @@ runDataCompiler x ctx = do
       cdOutput = output
     }
 
-getCleanContext :: (Monad m, CompilerContext c m s a) => CompilerState a m a
+getCleanContext :: CompilerContext c m s a => CompilerState a m a
 getCleanContext = get >>= lift . ccClearOutput

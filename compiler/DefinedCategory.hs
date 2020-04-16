@@ -76,7 +76,7 @@ data VariableValue c =
     vvWritable :: Bool
   }
 
-setInternalFunctions :: (Show c, Monad m, CompileErrorM m, MergeableM m, TypeResolver r) =>
+setInternalFunctions :: (Show c, CompileErrorM m, MergeableM m, TypeResolver r) =>
   r -> AnyCategory c -> [ScopedFunction c] ->
   m (Map.Map FunctionName (ScopedFunction c))
 setInternalFunctions r t fs = foldr update (return start) fs where
@@ -95,7 +95,7 @@ setInternalFunctions r t fs = foldr update (return start) fs where
              checkFunctionConvert r filters f0' f'
            return $ Map.insert n (ScopedFunction (c++c2) n t2 s as rs ps fs ([f0]++ms++ms2)) fa'
 
-pairProceduresToFunctions :: (Show c, Monad m, CompileErrorM m, MergeableM m) =>
+pairProceduresToFunctions :: (Show c, CompileErrorM m, MergeableM m) =>
   Map.Map FunctionName (ScopedFunction c) -> [ExecutableProcedure c] ->
   m [(ScopedFunction c,ExecutableProcedure c)]
 pairProceduresToFunctions fa ps = do
@@ -142,7 +142,7 @@ pairProceduresToFunctions fa ps = do
            return ()
       return (f,p)
 
-mapMembers :: (Show c, Monad m, CompileErrorM m, MergeableM m) =>
+mapMembers :: (Show c, CompileErrorM m, MergeableM m) =>
   [DefinedMember c] -> m (Map.Map VariableName (VariableValue c))
 mapMembers ms = foldr update (return Map.empty) ms where
   update m ma = do
@@ -157,7 +157,7 @@ mapMembers ms = foldr update (return Map.empty) ms where
     return $ Map.insert (dmName m) (VariableValue (dmContext m) (dmScope m) (dmType m) True) ma'
 
 -- TODO: Most of this duplicates parts of flattenAllConnections.
-mergeInternalInheritance :: (Show c, Monad m, CompileErrorM m, MergeableM m) =>
+mergeInternalInheritance :: (Show c, CompileErrorM m, MergeableM m) =>
   CategoryMap c -> DefinedCategory c -> m (CategoryMap c)
 mergeInternalInheritance tm d = do
   let rs2 = dcRefines d

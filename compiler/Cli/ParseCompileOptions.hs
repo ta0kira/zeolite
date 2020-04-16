@@ -65,7 +65,7 @@ optionHelpText = [
 defaultMainFunc :: String
 defaultMainFunc = "run"
 
-parseCompileOptions :: (CompileErrorM m, Monad m) => [String] -> m CompileOptions
+parseCompileOptions :: CompileErrorM m => [String] -> m CompileOptions
 parseCompileOptions = parseAll emptyCompileOptions . zip [1..] where
   parseAll co [] = return co
   parseAll co os = do
@@ -182,7 +182,7 @@ parseCompileOptions = parseAll emptyCompileOptions . zip [1..] where
         checkPathName n d ""
         return (os,CompileOptions (maybeDisableHelp h) is is2 (ds ++ [d]) es ep ec p m o f)
 
-validateCompileOptions :: (CompileErrorM m, Monad m) => CompileOptions -> m CompileOptions
+validateCompileOptions :: CompileErrorM m => CompileOptions -> m CompileOptions
 validateCompileOptions co@(CompileOptions h is is2 ds es ep ec p m o _)
   | h /= HelpNotNeeded = return co
 

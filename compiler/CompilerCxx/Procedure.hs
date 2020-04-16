@@ -50,7 +50,7 @@ import CompilerCxx.Code
 import CompilerCxx.Naming
 
 
-compileExecutableProcedure :: (Show c, Monad m, CompileErrorM m, MergeableM m) =>
+compileExecutableProcedure :: (Show c, CompileErrorM m, MergeableM m) =>
   CategoryMap c -> CategoryName -> ParamSet (ValueParam c) -> ParamSet (ValueParam c) ->
   [DefinedMember c] -> [ParamFilter c] -> [ParamFilter c] -> Map.Map FunctionName (ScopedFunction c) ->
   Map.Map VariableName (VariableValue c) ->
@@ -160,7 +160,7 @@ compileExecutableProcedure tm t ps pi ms pa fi fa va
         variableProxyType t ++ " " ++ variableName (ovName n) ++
         " = " ++ writeStoredVariable t (UnwrappedSingle $ "returns.At(" ++ show i ++ ")") ++ ";"
 
-compileCondition :: (Show c, Monad m, CompileErrorM m, MergeableM m,
+compileCondition :: (Show c, CompileErrorM m, MergeableM m,
                      CompilerContext c m [String] a) =>
   a -> [c] -> Expression c -> CompilerState a m String
 compileCondition ctx c e = do
@@ -179,7 +179,7 @@ compileCondition ctx c e = do
                          intercalate "," (map show ts) ++ "}"
 
 -- Returns the state so that returns can be properly checked for if/elif/else.
-compileProcedure :: (Show c, Monad m, CompileErrorM m, MergeableM m,
+compileProcedure :: (Show c, CompileErrorM m, MergeableM m,
                      CompilerContext c m [String] a) =>
   a -> Procedure c -> CompilerState a m a
 compileProcedure ctx (Procedure c ss) = do
@@ -192,7 +192,7 @@ compileProcedure ctx (Procedure c ss) = do
                                     formatFullContext (getStatementContext s) ++
                                     " is unreachable"
 
-compileStatement :: (Show c, Monad m, CompileErrorM m, MergeableM m,
+compileStatement :: (Show c, CompileErrorM m, MergeableM m,
                      CompilerContext c m [String] a) =>
   Statement c -> CompilerState a m ()
 compileStatement (EmptyReturn c) = do
@@ -308,7 +308,7 @@ compileStatement (Assignment c as e) = do
     assignMulti _ = return ()
 compileStatement (NoValueExpression _ v) = compileVoidExpression v
 
-compileLazyInit :: (Show c, Monad m, CompileErrorM m, MergeableM m,
+compileLazyInit :: (Show c, CompileErrorM m, MergeableM m,
                    CompilerContext c m [String] a) =>
   DefinedMember c -> CompilerState a m ()
 compileLazyInit (DefinedMember _ _ _ _ Nothing) = return mergeDefault
@@ -323,7 +323,7 @@ compileLazyInit (DefinedMember c _ t1 n (Just e)) = do
     ("In initialization of " ++ show n ++ " at " ++ formatFullContext c)
   csWrite [variableName n ++ "([]() { return " ++ writeStoredVariable t1 e' ++ "; })"]
 
-compileVoidExpression :: (Show c, Monad m, CompileErrorM m, MergeableM m,
+compileVoidExpression :: (Show c, CompileErrorM m, MergeableM m,
                          CompilerContext c m [String] a) =>
   VoidExpression c -> CompilerState a m ()
 compileVoidExpression (Conditional ie) = compileIfElifElse ie
@@ -339,7 +339,7 @@ compileVoidExpression (Unconditional p) = do
   csWrite ["}"]
   csInheritReturns [ctx]
 
-compileIfElifElse :: (Show c, Monad m, CompileErrorM m, MergeableM m,
+compileIfElifElse :: (Show c, CompileErrorM m, MergeableM m,
                       CompilerContext c m [String] a) =>
   IfElifElse c -> CompilerState a m ()
 compileIfElifElse (IfStatement c e p es) = do
@@ -373,7 +373,7 @@ compileIfElifElse (IfStatement c e p es) = do
       return [ctx]
     unwind TerminateConditional = fmap (:[]) get
 
-compileWhileLoop :: (Show c, Monad m, CompileErrorM m, MergeableM m,
+compileWhileLoop :: (Show c, CompileErrorM m, MergeableM m,
                      CompilerContext c m [String] a) =>
   WhileLoop c -> CompilerState a m ()
 compileWhileLoop (WhileLoop c e p u) = do
@@ -395,7 +395,7 @@ compileWhileLoop (WhileLoop c e p u) = do
   csWrite $ ["{"] ++ u' ++ ["}"]
   csWrite ["}"]
 
-compileScopedBlock :: (Show c, Monad m, CompileErrorM m, MergeableM m,
+compileScopedBlock :: (Show c, CompileErrorM m, MergeableM m,
                        CompilerContext c m [String] a) =>
   ScopedBlock c -> CompilerState a m ()
 compileScopedBlock s = do
@@ -463,7 +463,7 @@ compileScopedBlock s = do
     rewriteScoped (ScopedBlock _ p cl s) =
       ([],p,cl,s)
 
-compileExpression :: (Show c, Monad m, CompileErrorM m, MergeableM m,
+compileExpression :: (Show c, CompileErrorM m, MergeableM m,
                       CompilerContext c m [String] a) =>
   Expression c -> CompilerState a m (ExpressionType,ExprValue)
 compileExpression = compile where
@@ -641,7 +641,7 @@ compileExpression = compile where
     lift $ compileError $ "Function call requires 1 return but found but found {" ++
                           intercalate "," (map show ts) ++ "}" ++ formatFullContextBrace c
 
-lookupValueFunction :: (Show c, Monad m, CompileErrorM m, MergeableM m,
+lookupValueFunction :: (Show c, CompileErrorM m, MergeableM m,
                         CompilerContext c m [String] a) =>
   ValueType -> FunctionCall c -> CompilerState a m (ScopedFunction c)
 lookupValueFunction (ValueType WeakValue t) (FunctionCall c _ _ _) =
@@ -653,7 +653,7 @@ lookupValueFunction (ValueType OptionalValue t) (FunctionCall c _ _ _) =
 lookupValueFunction (ValueType RequiredValue t) (FunctionCall c n _ _) =
   csGetTypeFunction c (Just t) n
 
-compileExpressionStart :: (Show c, Monad m, CompileErrorM m, MergeableM m,
+compileExpressionStart :: (Show c, CompileErrorM m, MergeableM m,
                            CompilerContext c m [String] a) =>
   ExpressionStart c -> CompilerState a m (ExpressionType,ExprValue)
 compileExpressionStart (NamedVariable (OutputValue c n)) = do
@@ -785,7 +785,7 @@ compileExpressionStart (InlineAssignment c n e) = do
   return (ParamSet [t0],readStoredVariable lazy t0 $ "(" ++ scoped ++ variableName n ++
                                                      " = " ++ writeStoredVariable t0 e' ++ ")")
 
-compileFunctionCall :: (Show c, Monad m, CompileErrorM m, MergeableM m,
+compileFunctionCall :: (Show c, CompileErrorM m, MergeableM m,
                         CompilerContext c m [String] a) =>
   Maybe String -> ScopedFunction c -> FunctionCall c ->
   CompilerState a m (ExpressionType,ExprValue)
@@ -832,7 +832,7 @@ compileFunctionCall e f (FunctionCall c _ ps es) = do
     checkArg r fa t0 (i,t1) = do
       checkValueTypeMatch r fa t1 t0 `reviseError` ("In argument " ++ show i)
 
-compileMainProcedure :: (Show c, Monad m, CompileErrorM m, MergeableM m) =>
+compileMainProcedure :: (Show c, CompileErrorM m, MergeableM m) =>
   CategoryMap c -> Expression c -> m (CompiledData [String])
 compileMainProcedure tm e = do
   let ctx = ProcedureContext {
@@ -862,7 +862,7 @@ compileMainProcedure tm e = do
       ctx0 <- getCleanContext
       compileProcedure ctx0 procedure >>= put
 
-autoScope :: (Monad m, CompilerContext c m s a) =>
+autoScope :: (CompilerContext c m s a) =>
   SymbolScope -> CompilerState a m String
 autoScope s = do
   s1 <- csCurrentScope
@@ -880,23 +880,23 @@ categoriesFromTypes = Set.fromList . getAll where
   getAll (SingleType (JustTypeInstance (TypeInstance t ps))) = t:(concat $ map getAll $ psParams ps)
   getAll _ = []
 
-expandParams :: (Monad m, CompilerContext c m s a) =>
+expandParams :: (CompilerContext c m s a) =>
   ParamSet GeneralInstance -> CompilerState a m String
 expandParams ps = do
   ps' <- sequence $ map expandGeneralInstance $ psParams ps
   return $ "T_get(" ++ intercalate "," (map ("&" ++) ps') ++ ")"
 
-expandParams2 :: (Monad m, CompilerContext c m s a) =>
+expandParams2 :: (CompilerContext c m s a) =>
   ParamSet GeneralInstance -> CompilerState a m String
 expandParams2 ps = do
   ps' <- sequence $ map expandGeneralInstance $ psParams ps
   return $ "ParamTuple(" ++ intercalate "," (map ("&" ++) ps') ++ ")"
 
-expandCategory :: (Monad m, CompilerContext c m s a) =>
+expandCategory :: (CompilerContext c m s a) =>
   CategoryName -> CompilerState a m String
 expandCategory t = return $ categoryGetter t ++ "()"
 
-expandGeneralInstance :: (Monad m, CompilerContext c m s a) =>
+expandGeneralInstance :: (CompilerContext c m s a) =>
   GeneralInstance -> CompilerState a m String
 expandGeneralInstance (TypeMerge MergeUnion     []) = return $ allGetter ++ "()"
 expandGeneralInstance (TypeMerge MergeIntersect []) = return $ anyGetter ++ "()"
@@ -915,7 +915,7 @@ expandGeneralInstance (SingleType (JustParamName p)) = do
   scoped <- autoScope s
   return $ scoped ++ paramName p
 
-doNamedReturn :: (Monad m, CompilerContext c m [String] a) => CompilerState a m ()
+doNamedReturn :: (CompilerContext c m [String] a) => CompilerState a m ()
 doNamedReturn = do
   vars <- csPrimNamedReturns
   sequence $ map (csWrite . (:[]) . assign) vars
@@ -925,7 +925,7 @@ doNamedReturn = do
     assign (ReturnVariable i n t) =
       "returns.At(" ++ show i ++ ") = " ++ useAsUnwrapped (readStoredVariable False t $ variableName n) ++ ";"
 
-doReturnCleanup :: (Monad m, CompilerContext c m [String] a) => CompilerState a m ()
+doReturnCleanup :: (CompilerContext c m [String] a) => CompilerState a m ()
 doReturnCleanup = do
   (CleanupSetup cs ss) <- csGetCleanup
   if null ss

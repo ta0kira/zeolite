@@ -50,7 +50,7 @@ instance Show FunctionType where
     where
       showFilters (n,fs) = map (\f -> show n ++ " " ++ show f ++ " ") fs
 
-validatateFunctionType :: (MergeableM m, CompileErrorM m, Monad m, TypeResolver r) =>
+validatateFunctionType :: (MergeableM m, CompileErrorM m, TypeResolver r) =>
   r -> ParamFilters -> ParamVariances -> FunctionType -> m ()
 validatateFunctionType r fm vm (FunctionType as rs ps fa) = do
   mergeAllM $ map checkCount $ group $ sort $ psParams ps
@@ -90,7 +90,7 @@ validatateFunctionType r fm vm (FunctionType as rs ps fa) = do
       validateGeneralInstance r fa t
       validateInstanceVariance r allVariances Covariant t
 
-assignFunctionParams :: (MergeableM m, CompileErrorM m, Monad m, TypeResolver r) =>
+assignFunctionParams :: (MergeableM m, CompileErrorM m, TypeResolver r) =>
   r -> ParamFilters -> ParamSet GeneralInstance ->
   FunctionType -> m FunctionType
 assignFunctionParams r fm ts ff@(FunctionType as rs ps fa) = do
@@ -107,7 +107,7 @@ assignFunctionParams r fm ts ff@(FunctionType as rs ps fa) = do
   where
     assignFilters fm fs = collectAllOrErrorM $ map (uncheckedSubFilter $ getValueForParam fm) fs
 
-checkFunctionConvert :: (MergeableM m, CompileErrorM m, Monad m, TypeResolver r) =>
+checkFunctionConvert :: (MergeableM m, CompileErrorM m, TypeResolver r) =>
   r -> ParamFilters -> FunctionType -> FunctionType -> m ()
 checkFunctionConvert r fm ff1@(FunctionType as1 rs1 ps1 fa1) ff2 = do
   mapped <- fmap Map.fromList $ processParamPairs alwaysPairParams ps1 fa1

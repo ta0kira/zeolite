@@ -70,26 +70,24 @@ forceParse :: ParseFromSource a => String -> a
 forceParse s = force $ parse sourceParser "(string)" s where
   force (Right x) = x
 
-readSingle :: (ParseFromSource a, Monad m, CompileErrorM m) => String -> String -> m a
+readSingle :: (ParseFromSource a, CompileErrorM m) => String -> String -> m a
 readSingle = readSingleWith (optionalSpace >> sourceParser)
 
-readSingleWith :: (Monad m, CompileErrorM m) => Parser a -> String -> String -> m a
+readSingleWith :: CompileErrorM m => Parser a -> String -> String -> m a
 readSingleWith p f s =
   unwrap $ parse (between nullParse endOfDoc p) f s
   where
     unwrap (Left e)  = compileError (show e)
     unwrap (Right t) = return t
 
-readMulti :: (Monad m, CompileErrorM m) =>
-  ParseFromSource a => String -> String -> m [a]
+readMulti :: CompileErrorM m => ParseFromSource a => String -> String -> m [a]
 readMulti f s =
   unwrap $ parse (between optionalSpace endOfDoc (sepBy sourceParser optionalSpace)) f s
   where
     unwrap (Left e)  = compileError (show e)
     unwrap (Right t) = return t
 
-parseFilterMap :: (Monad m, CompileErrorM m) =>
-  [(String,[String])] -> m ParamFilters
+parseFilterMap :: CompileErrorM m => [(String,[String])] -> m ParamFilters
 parseFilterMap pa = do
   pa2 <- collectAllOrErrorM $ map parseFilters pa
   return $ Map.fromList pa2
@@ -98,7 +96,7 @@ parseFilterMap pa = do
       fs2 <- collectAllOrErrorM $ map (readSingle "(string)") fs
       return (ParamName n,fs2)
 
-parseTheTest :: (ParseFromSource a, Monad m, CompileErrorM m) =>
+parseTheTest :: (ParseFromSource a, CompileErrorM m) =>
   [(String,[String])] -> [String] -> m ([a],ParamFilters)
 parseTheTest pa xs = do
   ts <- collectAllOrErrorM $ map (readSingle "(string)") xs
@@ -151,14 +149,14 @@ checkDefinesFail r pa x = do
       | isCompileError c = return ()
       | otherwise = compileError $ prefix ++ ": Expected failure\n"
 
-containsExactly :: (Ord a, Show a, Monad m, MergeableM m, CompileErrorM m) =>
+containsExactly :: (Ord a, Show a, MergeableM m, CompileErrorM m) =>
   [a] -> [a] -> m ()
 containsExactly actual expected = do
   containsNoDuplicates actual
   containsAtLeast actual expected
   containsAtMost actual expected
 
-containsNoDuplicates :: (Ord a, Show a, Monad m, MergeableM m, CompileErrorM m) =>
+containsNoDuplicates :: (Ord a, Show a, MergeableM m, CompileErrorM m) =>
   [a] -> m ()
 containsNoDuplicates expected =
   (mergeAllM $ map checkSingle $ group $ sort expected) `reviseError` (show expected)
@@ -167,7 +165,7 @@ containsNoDuplicates expected =
       compileError $ "Item " ++ show x ++ " occurs " ++ show (length xa) ++ " times"
     checkSingle _ = return ()
 
-containsAtLeast :: (Ord a, Show a, Monad m, MergeableM m, CompileErrorM m) =>
+containsAtLeast :: (Ord a, Show a, MergeableM m, CompileErrorM m) =>
   [a] -> [a] -> m ()
 containsAtLeast actual expected =
   (mergeAllM $ map (checkInActual $ Set.fromList actual) expected) `reviseError`
@@ -178,7 +176,7 @@ containsAtLeast actual expected =
          then return ()
          else compileError $ "Item " ++ show v ++ " was expected but not present"
 
-containsAtMost :: (Ord a, Show a, Monad m, MergeableM m, CompileErrorM m) =>
+containsAtMost :: (Ord a, Show a, MergeableM m, CompileErrorM m) =>
   [a] -> [a] -> m ()
 containsAtMost actual expected =
   (mergeAllM $ map (checkInExpected $ Set.fromList expected) actual) `reviseError`
@@ -189,7 +187,7 @@ containsAtMost actual expected =
          then return ()
          else compileError $ "Item " ++ show v ++ " is unexpected"
 
-checkEquals :: (Eq a, Show a, Monad m, MergeableM m, CompileErrorM m) =>
+checkEquals :: (Eq a, Show a, MergeableM m, CompileErrorM m) =>
   a -> a -> m ()
 checkEquals actual expected
   | actual == expected = return ()

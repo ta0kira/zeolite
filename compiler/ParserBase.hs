@@ -326,23 +326,23 @@ regexChar = escaped <|> notEscaped where
          _ -> return ['\\',v]
   notEscaped = fmap (:[]) $ noneOf "\""
 
-put12 :: (Monad m) => m a -> m ([a],[b])
+put12 :: Monad m => m a -> m ([a],[b])
 put12 = fmap put where put x = ([x],[])
 
-put22 :: (Monad m) => m b -> m ([a],[b])
+put22 :: Monad m => m b -> m ([a],[b])
 put22 = fmap put where put x = ([],[x])
 
 merge2 :: (Foldable f, Monoid a, Monoid b) => f (a,b) -> (a,b)
 merge2 = foldr merge (mempty,mempty) where
   merge (xs1,ys1) (xs2,ys2) = (xs1<>xs2,ys1<>ys2)
 
-put13 :: (Monad m) => m a -> m ([a],[b],[c])
+put13 :: Monad m => m a -> m ([a],[b],[c])
 put13 = fmap put where put x = ([x],[],[])
 
-put23 :: (Monad m) => m b -> m ([a],[b],[c])
+put23 :: Monad m => m b -> m ([a],[b],[c])
 put23 = fmap put where put x = ([],[x],[])
 
-put33 :: (Monad m) => m c -> m ([a],[b],[c])
+put33 :: Monad m => m c -> m ([a],[b],[c])
 put33 = fmap put where put x = ([],[],[x])
 
 merge3 :: (Foldable f, Monoid a, Monoid b, Monoid c) => f (a,b,c) -> (a,b,c)

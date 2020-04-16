@@ -73,7 +73,7 @@ data ReturnValidation c =
   } |
   UnreachableCode
 
-instance (Show c, MergeableM m, CompileErrorM m, Monad m) =>
+instance (Show c, MergeableM m, CompileErrorM m) =>
   CompilerContext c m [String] (ProcedureContext c) where
   ccCurrentScope = return . pcScope
   ccResolver = return . AnyTypeResolver . CategoryResolver . pcCategories
@@ -470,7 +470,7 @@ instance (Show c, MergeableM m, CompileErrorM m, Monad m) =>
       }
   ccGetCleanup = return . pcCleanupSetup
 
-updateReturnVariables :: (Show c, Monad m, CompileErrorM m, MergeableM m) =>
+updateReturnVariables :: (Show c, CompileErrorM m, MergeableM m) =>
   (Map.Map VariableName (VariableValue c)) ->
   ParamSet (PassedValue c) -> ReturnValues c ->
   m (Map.Map VariableName (VariableValue c))
@@ -489,7 +489,7 @@ updateReturnVariables ma rs1 rs2 = updated where
                                           " is already defined" ++
                                           formatFullContextBrace (vvContext v)
 
-updateArgVariables :: (Show c, Monad m, CompileErrorM m, MergeableM m) =>
+updateArgVariables :: (Show c, CompileErrorM m, MergeableM m) =>
   (Map.Map VariableName (VariableValue c)) ->
   ParamSet (PassedValue c) -> ArgValues c ->
   m (Map.Map VariableName (VariableValue c))

@@ -37,22 +37,20 @@ import TypeCategory
 import TypesBase
 
 
-parseInternalSource :: (CompileErrorM m, Monad m) =>
+parseInternalSource :: CompileErrorM m =>
   (String,String) -> m ([AnyCategory SourcePos],[DefinedCategory SourcePos])
 parseInternalSource (f,s) = unwrap parsed where
   parsed = parse (between optionalSpace endOfDoc parseAnySource) f s
   unwrap (Left e)  = compileError (show e)
   unwrap (Right t) = return t
 
-parsePublicSource :: (CompileErrorM m, Monad m) =>
-  (String,String) -> m [AnyCategory SourcePos]
+parsePublicSource :: CompileErrorM m => (String,String) -> m [AnyCategory SourcePos]
 parsePublicSource (f,s) = unwrap parsed where
   parsed = parse (between optionalSpace endOfDoc (sepBy sourceParser optionalSpace)) f s
   unwrap (Left e)  = compileError (show e)
   unwrap (Right t) = return t
 
-parseTestSource :: (CompileErrorM m, Monad m) =>
-  (String,String) -> m [IntegrationTest SourcePos]
+parseTestSource :: CompileErrorM m => (String,String) -> m [IntegrationTest SourcePos]
 parseTestSource (f,s) = unwrap parsed where
   parsed = parse (between optionalSpace endOfDoc (sepBy sourceParser optionalSpace)) f s
   unwrap (Left e)  = compileError (show e)

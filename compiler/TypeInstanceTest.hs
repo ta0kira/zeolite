@@ -714,7 +714,7 @@ getDefinesFilters (DefinesInstance n ps) = do
   return $ f ps
 
 
-mapLookup :: (Ord n, Show n, CompileErrorM m, Monad m) => Map.Map n a -> n -> m a
+mapLookup :: (Ord n, Show n, CompileErrorM m) => Map.Map n a -> n -> m a
 mapLookup ma n = resolve $ n `Map.lookup` ma where
   resolve (Just x) = return x
   resolve _        = compileError $ "Map key " ++ show n ++ " not found"

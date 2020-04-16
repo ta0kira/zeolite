@@ -40,6 +40,7 @@ module TypesBase (
   partitionByScope,
 ) where
 
+import Control.Monad (Monad(..))
 import Control.Monad.Trans (MonadTrans(..))
 
 #if MIN_VERSION_base(4,9,0)
@@ -55,7 +56,7 @@ class Mergeable a where
   mergeDefault :: a
   mergeDefault = mergeAll Nothing
 
-class MergeableM m where
+class Monad m => MergeableM m where
   mergeAnyM :: (Mergeable a, Foldable f) => f (m a) -> m a
   mergeAllM :: (Mergeable a, Foldable f) => f (m a) -> m a
   mergeNestedM :: Mergeable a => m a -> m a -> m a
@@ -83,9 +84,9 @@ class CompileError a where
 
 -- For some GHC versions, pattern-matching failures require MonadFail.
 #if MIN_VERSION_base(4,9,0)
-class MonadFail m => CompileErrorM m where
+class (Monad m, MonadFail m) => CompileErrorM m where
 #else
-class CompileErrorM m where
+class Monad m => CompileErrorM m where
 #endif
   compileErrorM :: String -> m a
 #if MIN_VERSION_base(4,9,0)
@@ -139,7 +140,7 @@ instance Functor ParamSet where
 alwaysPairParams :: Monad m => a -> b -> m (a,b)
 alwaysPairParams x y = return (x,y)
 
-processParamPairs :: (Show a, Show b, CompileErrorM m, Monad m) =>
+processParamPairs :: (Show a, Show b, CompileErrorM m) =>
   (a -> b -> m c) -> ParamSet a -> ParamSet b -> m [c]
 processParamPairs f (ParamSet ps1) (ParamSet ps2)
   | length ps1 == length ps2 =
@@ -147,7 +148,7 @@ processParamPairs f (ParamSet ps1) (ParamSet ps2)
   | otherwise =
     compileError $ "Parameter count mismatch: " ++ show ps1 ++ " vs. " ++ show ps2
 
-processParamPairsT :: (MonadTrans t, Monad (t m), Show a, Show b, CompileErrorM m, Monad m) =>
+processParamPairsT :: (MonadTrans t, Monad (t m), Show a, Show b, CompileErrorM m) =>
   (a -> b -> t m c) -> ParamSet a -> ParamSet b -> t m [c]
 processParamPairsT f (ParamSet ps1) (ParamSet ps2)
   | length ps1 == length ps2 =

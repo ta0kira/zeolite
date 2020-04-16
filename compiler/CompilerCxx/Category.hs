@@ -77,7 +77,7 @@ data PrivateSource c =
     psDefine :: [DefinedCategory c]
   }
 
-compileCategoryModule :: (Show c, Monad m, CompileErrorM m, MergeableM m) =>
+compileCategoryModule :: (Show c, CompileErrorM m, MergeableM m) =>
   CategoryModule c -> m [CxxOutput]
 compileCategoryModule (CategoryModule tm ns cs xa) = do
   tm' <- includeNewTypes tm cs
@@ -111,7 +111,7 @@ compileCategoryModule (CategoryModule tm ns cs xa) = do
                                " is defined " ++ show (length ds) ++ " times") $
                mergeAllM $ map (\d -> compileError $ "Defined at " ++ formatFullContext (dcContext d)) ds
 
-compileModuleMain :: (Show c, Monad m, CompileErrorM m, MergeableM m) =>
+compileModuleMain :: (Show c, CompileErrorM m, MergeableM m) =>
   CategoryModule c -> CategoryName -> FunctionName -> m CxxOutput
 compileModuleMain (CategoryModule tm ns cs xa) n f = do
   tm' <- includeNewTypes tm cs
@@ -130,7 +130,7 @@ compileModuleMain (CategoryModule tm ns cs xa) n f = do
     reconcile []  = compileErrorM $ "No matches for main category " ++ show n
     reconcile _   = compileErrorM $ "Multiple matches for main category " ++ show n
 
-compileCategoryDeclaration :: (Show c, Monad m, CompileErrorM m, MergeableM m) =>
+compileCategoryDeclaration :: (Show c, CompileErrorM m, MergeableM m) =>
   CategoryMap c -> AnyCategory c -> m CxxOutput
 compileCategoryDeclaration _ t =
   return $ CxxOutput (Just $ getCategoryName t)
@@ -167,7 +167,7 @@ compileCategoryDeclaration _ t =
       | isInstanceInterface t = []
       | otherwise             = declareGetType t
 
-compileInterfaceDefinition :: (MergeableM m, Monad m) => AnyCategory c -> m CxxOutput
+compileInterfaceDefinition :: MergeableM m => AnyCategory c -> m CxxOutput
 compileInterfaceDefinition t = do
   top <- return emptyCode
   bottom <- return emptyCode
@@ -185,7 +185,7 @@ compileInterfaceDefinition t = do
       let allInit = intercalate ", " $ initParent:initPassed
       return $ onlyCode $ typeName (getCategoryName t) ++ "(" ++ allArgs ++ ") : " ++ allInit ++ " {}"
 
-compileConcreteTemplate :: (Show c, Monad m, CompileErrorM m, MergeableM m) =>
+compileConcreteTemplate :: (Show c, CompileErrorM m, MergeableM m) =>
   CategoryMap c -> CategoryName -> m CxxOutput
 compileConcreteTemplate ta n = do
   (_,t) <- getConcreteCategory ta ([],n)
@@ -216,7 +216,7 @@ compileConcreteTemplate ta n = do
       ]
     funcName f = show (sfType f) ++ "." ++ show (sfName f)
 
-compileConcreteDefinition :: (Show c, Monad m, CompileErrorM m, MergeableM m) =>
+compileConcreteDefinition :: (Show c, CompileErrorM m, MergeableM m) =>
   CategoryMap c -> [Namespace] -> DefinedCategory c -> m CxxOutput
 compileConcreteDefinition ta ns dd@(DefinedCategory c n pi _ _ fi ms ps fs) = do
   -- TODO: Move most of this logic to DefinedCategory.
@@ -289,7 +289,7 @@ compileConcreteDefinition ta ns dd@(DefinedCategory c n pi _ _ fi ms ps fs) = do
     ]
   commonDefineAll t ns top bottom ce te fe
   where
-    disallowTypeMembers :: (Show c, Monad m, CompileErrorM m, MergeableM m) =>
+    disallowTypeMembers :: (Show c, CompileErrorM m, MergeableM m) =>
       [DefinedMember c] -> m ()
     disallowTypeMembers tm =
       mergeAllM $ flip map tm
@@ -400,7 +400,7 @@ compileConcreteDefinition ta ns dd@(DefinedCategory c n pi _ _ fi ms ps fs) = do
                                       " is already defined at " ++
                                       formatFullContext (vpContext p)
 
-commonDefineAll :: (MergeableM m, Monad m) =>
+commonDefineAll :: MergeableM m =>
   AnyCategory c -> [Namespace] -> CompiledData [String] -> CompiledData [String] ->
   CompiledData [String] -> CompiledData [String] ->
   [ScopedFunction c] -> m CxxOutput
@@ -517,7 +517,7 @@ createFunctionDispatch n s fs = [typedef] ++ concat (map table $ byCategory) ++
     | s == TypeScope     = "  return TypeInstance::Dispatch(label, params, args);"
     | s == ValueScope    = "  return TypeValue::Dispatch(self, label, params, args);"
 
-commonDefineCategory :: (MergeableM m, Monad m) =>
+commonDefineCategory :: MergeableM m =>
   AnyCategory c -> CompiledData [String] -> m (CompiledData [String])
 commonDefineCategory t extra = do
   mergeAllM $ [
@@ -529,7 +529,7 @@ commonDefineCategory t extra = do
   where
     name = getCategoryName t
 
-commonDefineType :: (MergeableM m, Monad m) =>
+commonDefineType :: MergeableM m =>
   AnyCategory c -> CompiledData [String] -> m (CompiledData [String])
 commonDefineType t extra = do
   mergeAllM [
@@ -691,7 +691,7 @@ defineInternalValue t p n =
       "}"
     ]
 
-getContextForInit :: (Show c, Monad m, CompileErrorM m, MergeableM m) =>
+getContextForInit :: (Show c, CompileErrorM m, MergeableM m) =>
   CategoryMap c -> AnyCategory c -> DefinedCategory c -> SymbolScope -> m (ProcedureContext c)
 getContextForInit tm t d s = do
   let ps = ParamSet $ getCategoryParams t
@@ -746,7 +746,7 @@ createMainCommon n (CompiledData req out) =
       depIncludes req = map (\i -> "#include \"" ++ headerFilename i ++ "\"") $
                           filter (not . isBuiltinCategory) $ Set.toList req
 
-createMainFile :: (Show c, Monad m, CompileErrorM m, MergeableM m) =>
+createMainFile :: (Show c, CompileErrorM m, MergeableM m) =>
   CategoryMap c -> CategoryName -> FunctionName -> m (Namespace,[String])
 createMainFile tm n f = flip reviseError ("In the creation of the main binary procedure") $ do
   ca <- fmap indentCompiled (compileMainProcedure tm expr)
@@ -757,7 +757,7 @@ createMainFile tm n f = flip reviseError ("In the creation of the main binary pr
     mainType = JustTypeInstance $ TypeInstance n (ParamSet [])
     expr = Expression [] (TypeCall [] mainType funcCall) []
 
-createTestFile :: (Show c, Monad m, CompileErrorM m, MergeableM m) =>
+createTestFile :: (Show c, CompileErrorM m, MergeableM m) =>
   CategoryMap c -> Expression c -> m ([CategoryName],[String])
 createTestFile tm e = flip reviseError ("In the creation of the test binary procedure") $ do
   ca@(CompiledData req _) <- fmap indentCompiled (compileMainProcedure tm e)
