@@ -32,6 +32,7 @@ module Types.TypeInstance (
   ParamFilters,
   ParamVariances,
   ParamName(..),
+  StorageType(..),
   TypeFilter(..),
   TypeInstance(..),
   TypeInstanceOrParam(..),
@@ -64,7 +65,11 @@ import Control.Monad (when)
 import Data.List (intercalate)
 import qualified Data.Map as Map
 
-import Base.TypesBase
+import Base.CompileError
+import Base.Mergeable
+import Types.GeneralType
+import Types.Positional
+import Types.Variance
 
 
 type GeneralInstance = GeneralType TypeInstanceOrParam
@@ -75,6 +80,12 @@ instance Show GeneralInstance where
   show (TypeMerge MergeUnion ts) = "[" ++ intercalate "|" (map show ts) ++ "]"
   show (TypeMerge MergeIntersect []) = "any"
   show (TypeMerge MergeIntersect ts) = "[" ++ intercalate "&" (map show ts) ++ "]"
+
+data StorageType =
+  WeakValue |
+  OptionalValue |
+  RequiredValue
+  deriving (Eq,Ord)
 
 data ValueType =
   ValueType {
@@ -92,7 +103,7 @@ isWeakValue :: ValueType -> Bool
 isWeakValue = (== WeakValue) . vtRequired
 
 requiredSingleton :: CategoryName -> ValueType
-requiredSingleton n = ValueType RequiredValue $ SingleType $ JustTypeInstance $ TypeInstance n (ParamSet [])
+requiredSingleton n = ValueType RequiredValue $ SingleType $ JustTypeInstance $ TypeInstance n (Positional [])
 
 requiredParam :: ParamName -> ValueType
 requiredParam n = ValueType RequiredValue $ SingleType $ JustParamName n
@@ -145,8 +156,8 @@ data TypeInstance =
   deriving (Eq,Ord)
 
 instance Show TypeInstance where
-  show (TypeInstance n (ParamSet [])) = show n
-  show (TypeInstance n (ParamSet ts)) =
+  show (TypeInstance n (Positional [])) = show n
+  show (TypeInstance n (Positional ts)) =
     show n ++ "<" ++ intercalate "," (map show ts) ++ ">"
 
 data DefinesInstance =
@@ -157,8 +168,8 @@ data DefinesInstance =
   deriving (Eq,Ord)
 
 instance Show DefinesInstance where
-  show (DefinesInstance n (ParamSet [])) = show n
-  show (DefinesInstance n (ParamSet ts)) =
+  show (DefinesInstance n (Positional [])) = show n
+  show (DefinesInstance n (Positional ts)) =
     show n ++ "<" ++ intercalate "," (map show ts) ++ ">"
 
 data TypeInstanceOrParam =
@@ -209,9 +220,9 @@ isDefinesFilter _                 = False
 viewTypeFilter :: ParamName -> TypeFilter -> String
 viewTypeFilter n f = show n ++ " " ++ show f
 
-type InstanceParams = ParamSet GeneralInstance
-type InstanceVariances = ParamSet Variance
-type InstanceFilters = ParamSet [TypeFilter]
+type InstanceParams = Positional GeneralInstance
+type InstanceVariances = Positional Variance
+type InstanceFilters = Positional [TypeFilter]
 
 type ParamFilters = Map.Map ParamName [TypeFilter]
 type ParamVariances = Map.Map ParamName Variance
@@ -302,11 +313,11 @@ checkInstanceToInstance r f Contravariant t1 t2 =
   checkInstanceToInstance r f Covariant t2 t1
 checkInstanceToInstance r f Covariant t1@(TypeInstance n1 ps1) t2@(TypeInstance n2 ps2)
   | n1 == n2 = do
-    paired <- processParamPairs alwaysPairParams ps1 ps2
-    let zipped = ParamSet paired
+    paired <- processPairs alwaysPair ps1 ps2
+    let zipped = Positional paired
     variance <- trVariance r n1
     -- NOTE: Covariant is identity, so v2 has technically been composed with it.
-    processParamPairs (\v2 (p1,p2) -> checkGeneralMatch r f v2 p1 p2) variance zipped >> mergeDefaultM
+    processPairs (\v2 (p1,p2) -> checkGeneralMatch r f v2 p1 p2) variance zipped >> mergeDefaultM
   | otherwise = do
     ps1' <- trRefines r t1 n2
     checkInstanceToInstance r f Covariant (TypeInstance n2 ps1') t2
@@ -408,16 +419,16 @@ validateTypeInstance :: (MergeableM m, CompileErrorM m, TypeResolver r) =>
   r -> ParamFilters -> TypeInstance -> m ()
 validateTypeInstance r f t@(TypeInstance n ps) = do
   fa <- trTypeFilters r t
-  processParamPairs (validateAssignment r f) ps fa
-  mergeAllM (map (validateGeneralInstance r f) (psParams ps)) `reviseError`
+  processPairs (validateAssignment r f) ps fa
+  mergeAllM (map (validateGeneralInstance r f) (pValues ps)) `reviseError`
     ("Recursive error in " ++ show t)
 
 validateDefinesInstance :: (MergeableM m, CompileErrorM m, TypeResolver r) =>
   r -> ParamFilters -> DefinesInstance -> m ()
 validateDefinesInstance r f t@(DefinesInstance n ps) = do
   fa <- trDefinesFilters r t
-  processParamPairs (validateAssignment r f) ps fa
-  mergeAllM (map (validateGeneralInstance r f) (psParams ps)) `reviseError`
+  processPairs (validateAssignment r f) ps fa
+  mergeAllM (map (validateGeneralInstance r f) (pValues ps)) `reviseError`
     ("Recursive error in " ++ show t)
 
 validateTypeFilter :: (MergeableM m, CompileErrorM m, TypeResolver r) =>
@@ -455,9 +466,9 @@ checkDefinesMatch :: (MergeableM m, CompileErrorM m, TypeResolver r) =>
   r -> ParamFilters -> DefinesInstance -> DefinesInstance -> m ()
 checkDefinesMatch r f f2@(DefinesInstance n2 ps2) f1@(DefinesInstance n1 ps1)
   | n1 == n2 = do
-    paired <- processParamPairs alwaysPairParams ps1 ps2
+    paired <- processPairs alwaysPair ps1 ps2
     variance <- trVariance r n2
-    processParamPairs (\v2 (p1,p2) -> checkGeneralMatch r f v2 p1 p2) variance (ParamSet paired)
+    processPairs (\v2 (p1,p2) -> checkGeneralMatch r f v2 p1 p2) variance (Positional paired)
     mergeDefaultM
   | otherwise = compileError $ "Constraint " ++ show f1 ++ " does not imply " ++ show f2
 
@@ -465,7 +476,7 @@ validateInstanceVariance :: (MergeableM m, CompileErrorM m, TypeResolver r) =>
   r -> ParamVariances -> Variance -> GeneralInstance -> m ()
 validateInstanceVariance r vm v (SingleType (JustTypeInstance (TypeInstance n ps))) = do
   vs <- trVariance r n
-  paired <- processParamPairs alwaysPairParams vs ps
+  paired <- processPairs alwaysPair vs ps
   mergeAllM (map (\(v2,p) -> validateInstanceVariance r vm (v `composeVariance` v2) p) paired)
 validateInstanceVariance r vm v (TypeMerge MergeUnion ts) =
   mergeAllM (map (validateInstanceVariance r vm v) ts)
@@ -481,7 +492,7 @@ validateDefinesVariance :: (MergeableM m, CompileErrorM m, TypeResolver r) =>
   r -> ParamVariances -> Variance -> DefinesInstance -> m ()
 validateDefinesVariance r vm v (DefinesInstance n ps) = do
   vs <- trVariance r n
-  paired <- processParamPairs alwaysPairParams vs ps
+  paired <- processPairs alwaysPair vs ps
   mergeAllM (map (\(v2,p) -> validateInstanceVariance r vm (v `composeVariance` v2) p) paired)
 
 uncheckedSubValueType :: (MergeableM m, CompileErrorM m) =>
@@ -500,9 +511,9 @@ uncheckedSubInstance replace = subAll where
     gs <- collectAllOrErrorM $ map subAll ts
     return (TypeMerge MergeIntersect gs)
   subAll (SingleType t) = subInstance t
-  subInstance (JustTypeInstance (TypeInstance n (ParamSet ts))) = do
+  subInstance (JustTypeInstance (TypeInstance n (Positional ts))) = do
     gs <- collectAllOrErrorM $ map subAll ts
-    let t2 = SingleType $ JustTypeInstance $ TypeInstance n (ParamSet gs)
+    let t2 = SingleType $ JustTypeInstance $ TypeInstance n (Positional gs)
     return (t2)
   subInstance (JustParamName n) = replace n
 
@@ -512,8 +523,8 @@ uncheckedSubFilter replace (TypeFilter d t) = do
   t' <- uncheckedSubInstance replace (SingleType t)
   return (TypeFilter d (stType t'))
 uncheckedSubFilter replace (DefinesFilter (DefinesInstance n ts)) = do
-  ts' <- collectAllOrErrorM $ map (uncheckedSubInstance replace) (psParams ts)
-  return (DefinesFilter (DefinesInstance n (ParamSet ts')))
+  ts' <- collectAllOrErrorM $ map (uncheckedSubInstance replace) (pValues ts)
+  return (DefinesFilter (DefinesInstance n (Positional ts')))
 
 uncheckedSubFilters :: (MergeableM m, CompileErrorM m) =>
   (ParamName -> m GeneralInstance) -> ParamFilters -> m ParamFilters

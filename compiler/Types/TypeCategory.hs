@@ -27,6 +27,7 @@ module Types.TypeCategory (
   ParamFilter(..),
   PassedValue(..),
   ScopedFunction(..),
+  SymbolScope(..),
   ValueDefine(..),
   ValueParam(..),
   ValueRefine(..),
@@ -67,6 +68,7 @@ module Types.TypeCategory (
   noDuplicateDefines,
   noDuplicateRefines,
   parsedToFunctionType,
+  partitionByScope,
   setCategoryNamespace,
   topoSortCategories,
   uncheckedSubFunction,
@@ -79,9 +81,13 @@ import Data.List (group,groupBy,intercalate,sort,sortBy)
 import qualified Data.Map as Map
 import qualified Data.Set as Set
 
-import Base.TypesBase
+import Base.CompileError
+import Base.Mergeable
 import Types.Function
+import Types.GeneralType
+import Types.Positional
 import Types.TypeInstance
+import Types.Variance
 
 
 data AnyCategory c =
@@ -222,15 +228,15 @@ getCategoryDeps t = Set.fromList $ filter (/= getCategoryName t) $ refines ++ de
   filters = concat $ map (fromFilter . pfFilter) $ getCategoryFilters t
   functions = concat $ map fromFunction $ getCategoryFunctions t
   fromInstance (TypeMerge _ ps) = concat $ map fromInstance ps
-  fromInstance (SingleType (JustTypeInstance (TypeInstance n ps))) = n:(concat $ map fromInstance $ psParams ps)
+  fromInstance (SingleType (JustTypeInstance (TypeInstance n ps))) = n:(concat $ map fromInstance $ pValues ps)
   fromInstance _ = []
-  fromDefine (DefinesInstance n ps) = n:(concat $ map fromInstance $ psParams ps)
+  fromDefine (DefinesInstance n ps) = n:(concat $ map fromInstance $ pValues ps)
   fromFilter (TypeFilter _ t2@(JustTypeInstance _)) = fromInstance (SingleType t2)
   fromFilter (DefinesFilter t2) = fromDefine t2
   fromType (ValueType _ t2) = fromInstance t2
   fromFunction f = args ++ returns ++ filters where
-    args = concat $ map (fromType . pvType) $ psParams $ sfArgs f
-    returns = concat $ map (fromType . pvType) $ psParams $ sfReturns f
+    args = concat $ map (fromType . pvType) $ pValues $ sfArgs f
+    returns = concat $ map (fromType . pvType) $ pValues $ sfReturns f
     filters = concat $ map (fromFilter . pfFilter) $ sfFilters f
 
 isValueInterface :: AnyCategory c -> Bool
@@ -313,29 +319,29 @@ instance (Show c) => TypeResolver (CategoryResolver c) where
     trRefines (CategoryResolver tm) (TypeInstance n1 ps1) n2
       | n1 == n2 = do
         (_,t) <- getValueCategory tm ([],n1)
-        processParamPairs alwaysPairParams (ParamSet $ map vpParam $ getCategoryParams t) ps1
+        processPairs alwaysPair (Positional $ map vpParam $ getCategoryParams t) ps1
         return ps1
       | otherwise = do
         (_,t) <- getValueCategory tm ([],n1)
         let params = map vpParam $ getCategoryParams t
-        assigned <- fmap Map.fromList $ processParamPairs alwaysPairParams (ParamSet params) ps1
+        assigned <- fmap Map.fromList $ processPairs alwaysPair (Positional params) ps1
         let pa = Map.fromList $ map (\r -> (tiName r,tiParams r)) $ map vrType $ getCategoryRefines t
         ps2 <- case n2 `Map.lookup` pa of
                     (Just x) -> return x
                     _ -> compileError $ "Category " ++ show n1 ++ " does not refine " ++ show n2
-        fmap ParamSet $ collectAllOrErrorM $ map (subAllParams assigned) $ psParams ps2
+        fmap Positional $ collectAllOrErrorM $ map (subAllParams assigned) $ pValues ps2
     trDefines (CategoryResolver tm) (TypeInstance n1 ps1) n2 = do
       (_,t) <- getValueCategory tm ([],n1)
       let params = map vpParam $ getCategoryParams t
-      assigned <- fmap Map.fromList $ processParamPairs alwaysPairParams (ParamSet params) ps1
+      assigned <- fmap Map.fromList $ processPairs alwaysPair (Positional params) ps1
       let pa = Map.fromList $ map (\r -> (diName r,diParams r)) $ map vdType $ getCategoryDefines t
       ps2 <- case n2 `Map.lookup` pa of
                   (Just x) -> return x
                   _ -> compileError $ "Category " ++ show n1 ++ " does not define " ++ show n2
-      fmap ParamSet $ collectAllOrErrorM $ map (subAllParams assigned) $ psParams ps2
+      fmap Positional $ collectAllOrErrorM $ map (subAllParams assigned) $ pValues ps2
     trVariance (CategoryResolver tm) n = do
       (_,t) <- getCategory tm ([],n)
-      return $ ParamSet $ map vpVariance $ getCategoryParams t
+      return $ Positional $ map vpVariance $ getCategoryParams t
     trTypeFilters (CategoryResolver tm) (TypeInstance n ps) = do
       (_,t) <- getValueCategory tm ([],n)
       checkFilters t ps
@@ -346,21 +352,37 @@ instance (Show c) => TypeResolver (CategoryResolver c) where
       (_,t) <- getCategory tm ([],n)
       return (isValueConcrete t)
 
+data SymbolScope =
+  LocalScope |
+  CategoryScope |
+  TypeScope |
+  ValueScope
+  deriving (Eq,Ord,Show)
+
+partitionByScope :: (a -> SymbolScope) -> [a] -> ([a],[a],[a])
+partitionByScope f = foldr bin empty where
+  empty = ([],[],[])
+  bin x (cs,ts,vs)
+    | f x == CategoryScope = (x:cs,ts,vs)
+    | f x == TypeScope     = (cs,x:ts,vs)
+    | f x == ValueScope    = (cs,ts,x:vs)
+    | otherwise = (cs,ts,vs)
+
 checkFilters :: (CompileErrorM m, MergeableM m) =>
-  AnyCategory c -> ParamSet GeneralInstance -> m (ParamSet [TypeFilter])
+  AnyCategory c -> Positional GeneralInstance -> m (Positional [TypeFilter])
 checkFilters t ps = do
   let params = map vpParam $ getCategoryParams t
-  assigned <- fmap Map.fromList $ processParamPairs alwaysPairParams (ParamSet params) ps
+  assigned <- fmap Map.fromList $ processPairs alwaysPair (Positional params) ps
   fs <- collectAllOrErrorM $ map (subSingleFilter assigned . \f -> (pfParam f,pfFilter f))
                                   (getCategoryFilters t)
   let fa = Map.fromListWith (++) $ map (second (:[])) fs
-  fmap ParamSet $ collectAllOrErrorM $ map (assignFilter fa) params where
+  fmap Positional $ collectAllOrErrorM $ map (assignFilter fa) params where
     subSingleFilter pa (n,(TypeFilter v t)) = do
       (SingleType t2) <- uncheckedSubInstance (getValueForParam pa) (SingleType t)
       return (n,(TypeFilter v t2))
     subSingleFilter pa (n,(DefinesFilter (DefinesInstance n2 ps))) = do
-      ps2 <- collectAllOrErrorM $ map (uncheckedSubInstance $ getValueForParam pa) (psParams ps)
-      return (n,(DefinesFilter (DefinesInstance n2 (ParamSet ps2))))
+      ps2 <- collectAllOrErrorM $ map (uncheckedSubInstance $ getValueForParam pa) (pValues ps)
+      return (n,(DefinesFilter (DefinesInstance n2 (Positional ps2))))
     assignFilter fa n =
       case n `Map.lookup` fa of
             (Just x) -> return x
@@ -449,7 +471,7 @@ getCategoryFilterMap t = getFilterMap (getCategoryParams t) (getCategoryFilters 
 
 -- TODO: Use this where it's needed in this file.
 getFunctionFilterMap :: ScopedFunction c -> ParamFilters
-getFunctionFilterMap f = getFilterMap (psParams $ sfParams f) (sfFilters f)
+getFunctionFilterMap f = getFilterMap (pValues $ sfParams f) (sfFilters f)
 
 checkConnectedTypes :: (Show c, MergeableM m, CompileErrorM m) =>
   CategoryMap c -> [AnyCategory c] -> m ()
@@ -765,7 +787,7 @@ flattenAllConnections tm0 ts = do
     assignParams tm c (TypeInstance n ps) = do
       (_,v) <- getValueCategory tm (c,n)
       let ns = map vpParam $ getCategoryParams v
-      paired <- processParamPairs alwaysPairParams (ParamSet ns) ps
+      paired <- processPairs alwaysPair (Positional ns) ps
       return $ Map.fromList paired
     checkMerged r fm rs rs2 = do
       let rm = Map.fromList $ map (\t -> (tiName $ vrType t,t)) rs
@@ -791,14 +813,14 @@ getRefinesFuncs tm ra@(ValueRefine c (TypeInstance n ts)) = flip reviseError (sh
   (_,t) <- getValueCategory tm (c,n)
   let ps = map vpParam $ getCategoryParams t
   let fs = getCategoryFunctions t
-  paired <- processParamPairs alwaysPairParams (ParamSet ps) ts
+  paired <- processPairs alwaysPair (Positional ps) ts
   let assigned = Map.fromList paired
   collectAllOrErrorM (map (uncheckedSubFunction assigned) fs)
 getDefinesFuncs tm da@(ValueDefine c (DefinesInstance n ts)) = flip reviseError (show da) $  do
   (_,t) <- getInstanceCategory tm (c,n)
   let ps = map vpParam $ getCategoryParams t
   let fs = getCategoryFunctions t
-  paired <- processParamPairs alwaysPairParams (ParamSet ps) ts
+  paired <- processPairs alwaysPair (Positional ps) ts
   let assigned = Map.fromList paired
   collectAllOrErrorM (map (uncheckedSubFunction assigned) fs)
 mergeByName r fm im em n =
@@ -858,9 +880,9 @@ data ScopedFunction c =
     sfName :: FunctionName,
     sfType :: CategoryName,
     sfScope :: SymbolScope,
-    sfArgs :: ParamSet (PassedValue c),
-    sfReturns :: ParamSet (PassedValue c),
-    sfParams :: ParamSet (ValueParam c),
+    sfArgs :: Positional (PassedValue c),
+    sfReturns :: Positional (PassedValue c),
+    sfParams :: Positional (ValueParam c),
     sfFilters :: [ParamFilter c],
     sfMerges :: [ScopedFunction c]
   }
@@ -871,10 +893,10 @@ instance Show c => Show (ScopedFunction c) where
 showFunctionInContext :: Show c => String -> String -> ScopedFunction c -> String
 showFunctionInContext s indent (ScopedFunction cs n t _ as rs ps fa ms) =
   indent ++ s ++ "/*" ++ show t ++ "*/ " ++ show n ++
-  showParams (psParams ps) ++ " " ++ formatContext cs ++ "\n" ++
+  showParams (pValues ps) ++ " " ++ formatContext cs ++ "\n" ++
   concat (map (\v -> indent ++ formatValue v ++ "\n") fa) ++
-  indent ++ "(" ++ intercalate "," (map (show . pvType) $ psParams as) ++ ") -> " ++
-  "(" ++ intercalate "," (map (show . pvType) $ psParams rs) ++ ")" ++ showMerges (flatten ms)
+  indent ++ "(" ++ intercalate "," (map (show . pvType) $ pValues as) ++ ") -> " ++
+  "(" ++ intercalate "," (map (show . pvType) $ pValues rs) ++ ")" ++ showMerges (flatten ms)
   where
     showParams [] = ""
     showParams ps = "<" ++ intercalate "," (map (show . vpParam) ps) ++ ">"
@@ -899,15 +921,15 @@ instance Show c => Show (PassedValue c) where
 parsedToFunctionType :: (Show c, MergeableM m, CompileErrorM m) =>
   ScopedFunction c -> m FunctionType
 parsedToFunctionType (ScopedFunction c n t _ as rs ps fa _) = do
-  let as' = ParamSet $ map pvType $ psParams as
-  let rs' = ParamSet $ map pvType $ psParams rs
-  let ps' = ParamSet $ map vpParam $ psParams ps
+  let as' = Positional $ map pvType $ pValues as
+  let rs' = Positional $ map pvType $ pValues rs
+  let ps' = Positional $ map vpParam $ pValues ps
   mergeAllM $ map checkFilter fa
   let fm = Map.fromListWith (++) $ map (\f -> (pfParam f,[pfFilter f])) fa
-  let fa' = ParamSet $ map (getFilters fm) $ psParams ps'
+  let fa' = Positional $ map (getFilters fm) $ pValues ps'
   return $ FunctionType as' rs' ps' fa'
   where
-    pa = Set.fromList $ map vpParam $ psParams ps
+    pa = Set.fromList $ map vpParam $ pValues ps
     checkFilter f =
       when (not $ (pfParam f) `Set.member` pa) $
       compileError $ "Filtered param " ++ show (pfParam f) ++
@@ -922,10 +944,10 @@ uncheckedSubFunction :: (Show c, MergeableM m, CompileErrorM m) =>
   Map.Map ParamName GeneralInstance -> ScopedFunction c -> m (ScopedFunction c)
 uncheckedSubFunction pa ff@(ScopedFunction c n t s as rs ps fa ms) =
   flip reviseError ("In function:\n---\n" ++ show ff ++ "\n---\n") $ do
-    let fixed = Map.fromList $ map (\n -> (n,SingleType $ JustParamName n)) $ map vpParam $ psParams ps
+    let fixed = Map.fromList $ map (\n -> (n,SingleType $ JustParamName n)) $ map vpParam $ pValues ps
     let pa' = Map.union pa fixed
-    as' <- fmap ParamSet $ collectAllOrErrorM $ map (subPassed pa') $ psParams as
-    rs' <- fmap ParamSet $ collectAllOrErrorM $ map (subPassed pa') $ psParams rs
+    as' <- fmap Positional $ collectAllOrErrorM $ map (subPassed pa') $ pValues as
+    rs' <- fmap Positional $ collectAllOrErrorM $ map (subPassed pa') $ pValues rs
     fa' <- collectAllOrErrorM $ map (subFilter pa') fa
     ms' <- collectAllOrErrorM $ map (uncheckedSubFunction pa) ms
     return $ (ScopedFunction c n t s as' rs' ps fa' ms')

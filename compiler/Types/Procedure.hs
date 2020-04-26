@@ -48,8 +48,8 @@ module Types.Procedure (
 
 import Data.List (intercalate)
 
-import Base.TypesBase
 import Types.Function
+import Types.Positional
 import Types.TypeCategory
 import Types.TypeInstance
 
@@ -70,18 +70,18 @@ data ExecutableProcedure c =
 data ArgValues c =
   ArgValues {
     avContext :: [c],
-    avNames :: ParamSet (InputValue c)
+    avNames :: Positional (InputValue c)
   }
 
 instance Show c => Show (ArgValues c) where
   show (ArgValues c v) =
-    "(" ++ intercalate ",\n" (map show $ psParams v) ++ ")" ++
+    "(" ++ intercalate ",\n" (map show $ pValues v) ++ ")" ++
     " /*" ++ formatFullContext c ++ "*/"
 
 data ReturnValues c =
   NamedReturns {
     nrContext :: [c],
-    nrNames :: ParamSet (OutputValue c)
+    nrNames :: Positional (OutputValue c)
   } |
   UnnamedReturns {
     urContext :: [c]
@@ -93,7 +93,7 @@ isUnnamedReturns _                  = False
 
 instance Show c => Show (ReturnValues c) where
   show (NamedReturns c v) =
-    "(" ++ intercalate ",\n" (map show $ psParams v) ++ ")" ++
+    "(" ++ intercalate ",\n" (map show $ pValues v) ++ ")" ++
     " /*" ++ formatFullContext c ++ "*/"
   show (UnnamedReturns c) = "/*unnamed returns: " ++ formatFullContext c ++ "*/"
 
@@ -139,12 +139,12 @@ data Procedure c =
 
 data Statement c =
   EmptyReturn [c] |
-  ExplicitReturn [c] (ParamSet (Expression c)) |
+  ExplicitReturn [c] (Positional (Expression c)) |
   LoopBreak [c] |
   LoopContinue [c] |
   FailCall [c] (Expression c) |
   IgnoreValues [c] (Expression c) |
-  Assignment [c] (ParamSet (Assignable c)) (Expression c) |
+  Assignment [c] (Positional (Assignable c)) (Expression c) |
   NoValueExpression [c] (VoidExpression c)
   deriving (Show)
 
@@ -190,7 +190,7 @@ data Expression c =
   Literal (ValueLiteral c) |
   UnaryExpression [c] (Operator c) (Expression c) |
   InfixExpression [c] (Expression c) (Operator c) (Expression c) |
-  InitializeValue [c] TypeInstance (ParamSet GeneralInstance) (ParamSet (Expression c))
+  InitializeValue [c] TypeInstance (Positional GeneralInstance) (Positional (Expression c))
   deriving (Show)
 
 data FunctionQualifier c =
@@ -202,7 +202,7 @@ data FunctionQualifier c =
   deriving (Show)
 
 data FunctionSpec c =
-  FunctionSpec [c] (FunctionQualifier c) FunctionName (ParamSet GeneralInstance)
+  FunctionSpec [c] (FunctionQualifier c) FunctionName (Positional GeneralInstance)
   deriving (Show)
 
 data Operator c =
@@ -218,7 +218,7 @@ getExpressionContext (InfixExpression c _ _ _) = c
 getExpressionContext (InitializeValue c _ _ _) = c
 
 data FunctionCall c =
-  FunctionCall [c] FunctionName (ParamSet GeneralInstance) (ParamSet (Expression c))
+  FunctionCall [c] FunctionName (Positional GeneralInstance) (Positional (Expression c))
   deriving (Show)
 
 data ExpressionStart c =

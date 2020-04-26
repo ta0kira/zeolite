@@ -27,13 +27,14 @@ module Parser.SourceFile (
 import Text.Parsec
 import Text.Parsec.String
 
-import Base.TypesBase
-import Parser.Base
+import Base.CompileError
+import Parser.Common
 import Parser.DefinedCategory
 import Parser.IntegrationTest
 import Parser.TypeCategory
 import Types.DefinedCategory
 import Types.IntegrationTest
+import Types.Positional
 import Types.TypeCategory
 
 

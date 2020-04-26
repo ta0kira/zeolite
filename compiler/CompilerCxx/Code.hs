@@ -57,11 +57,11 @@ import Data.Char
 import Data.List (intercalate)
 import qualified Data.Set as Set
 
-import Base.TypesBase
 import Compilation.CompilerState
 import CompilerCxx.Naming
 import Types.Builtin
 import Types.DefinedCategory
+import Types.Positional
 import Types.TypeCategory
 import Types.TypeInstance
 
@@ -285,9 +285,9 @@ newFunctionLabel i f = "(*new " ++ (getType $ sfScope f) ++ "{ " ++ intercalate 
       collection,
       functionNum
     ]
-  paramCount  = show $ length $ psParams $ sfParams f
-  argCount    = show $ length $ psParams $ sfArgs f
-  returnCount = show $ length $ psParams $ sfReturns f
+  paramCount  = show $ length $ pValues $ sfParams f
+  argCount    = show $ length $ pValues $ sfArgs f
+  returnCount = show $ length $ pValues $ sfReturns f
   category    = show $ show $ sfType f
   function    = show $ show $ sfName f
   collection  = collectionName $ sfType f

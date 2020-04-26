@@ -31,11 +31,12 @@ module Parser.TypeCategory (
 import Text.Parsec
 import Text.Parsec.String
 
-import Base.TypesBase
-import Parser.Base
+import Parser.Common
 import Parser.TypeInstance
+import Types.Positional
 import Types.TypeCategory
 import Types.TypeInstance
+import Types.Variance
 
 
 instance ParseFromSource (AnyCategory SourcePos) where
@@ -167,11 +168,11 @@ parseScopedFunction sp tp = labeled "function" $ do
   s <- try sp -- Could be a constant, i.e., nothing consumed.
   t <- try tp -- Same here.
   n <- try sourceParser
-  ps <- fmap ParamSet $ noParams <|> someParams
+  ps <- fmap Positional $ noParams <|> someParams
   fa <- parseFilters
-  as <- fmap ParamSet $ typeList "argument type"
+  as <- fmap Positional $ typeList "argument type"
   sepAfter $ string "->"
-  rs <- fmap ParamSet $ typeList "return type"
+  rs <- fmap Positional $ typeList "return type"
   return $ ScopedFunction [c] n t s as rs ps fa []
   where
     noParams = notFollowedBy (string "<") >> return []

@@ -23,10 +23,10 @@ module Test.DefinedCategory (tests) where
 import Text.Parsec
 import Text.Parsec.String
 
-import Base.CompileInfo
-import Base.TypesBase
+import Base.CompileError
+import Compilation.CompileInfo
 import Parser.DefinedCategory
-import Test.Base
+import Test.Common
 import Types.DefinedCategory
 
 

@@ -29,14 +29,17 @@ import Text.Parsec.String
 import qualified Data.Map as Map
 import qualified Data.Set as Set
 
-import Base.CompileInfo
-import Base.TypesBase
-import Parser.Base
+import Base.CompileError
+import Base.Mergeable
+import Compilation.CompileInfo
+import Parser.Common
 import Parser.TypeCategory
-import Test.Base
+import Test.Common
 import Types.Builtin
+import Types.Positional
 import Types.TypeCategory
 import Types.TypeInstance
+import Types.Variance
 
 
 tests :: [IO (CompileInfo ())]
@@ -173,8 +176,8 @@ tests = [
         existing  <- return $ Map.fromList [
             (CategoryName "Parent",
             ValueInterface [] NoNamespace (CategoryName "Parent") []
-                           [ValueRefine [] $ TypeInstance (CategoryName "Object1") (ParamSet []),
-                           ValueRefine [] $ TypeInstance (CategoryName "Object2") (ParamSet [])] [] []),
+                           [ValueRefine [] $ TypeInstance (CategoryName "Object1") (Positional []),
+                           ValueRefine [] $ TypeInstance (CategoryName "Object2") (Positional [])] [] []),
             -- NOTE: Object1 deliberately excluded here so that we catch
             -- unnecessary recursion in existing categories.
             (CategoryName "Object2",
@@ -829,34 +832,34 @@ getTypeRefines ts s n = do
   ta <- declareAllTypes defaultCategories ts
   let r = CategoryResolver ta
   t <- readSingle "(string)" s
-  ParamSet rs <- trRefines r t (CategoryName n)
+  Positional rs <- trRefines r t (CategoryName n)
   return $ map show rs
 
 getTypeDefines ts s n = do
   ta <- declareAllTypes defaultCategories ts
   let r = CategoryResolver ta
   t <- readSingle "(string)" s
-  ParamSet ds <- trDefines r t (CategoryName n)
+  Positional ds <- trDefines r t (CategoryName n)
   return $ map show ds
 
 getTypeVariance ts n = do
   ta <- declareAllTypes defaultCategories ts
   let r = CategoryResolver ta
-  (ParamSet vs) <- trVariance r (CategoryName n)
+  (Positional vs) <- trVariance r (CategoryName n)
   return vs
 
 getTypeFilters ts s = do
   ta <- declareAllTypes defaultCategories ts
   let r = CategoryResolver ta
   t <- readSingle "(string)" s
-  ParamSet vs <- trTypeFilters r t
+  Positional vs <- trTypeFilters r t
   return $ map (map show) vs
 
 getTypeDefinesFilters ts s = do
   ta <- declareAllTypes defaultCategories ts
   let r = CategoryResolver ta
   t <- readSingle "(string)" s
-  ParamSet vs <- trDefinesFilters r t
+  Positional vs <- trDefinesFilters r t
   return $ map (map show) vs
 
 scrapeAllRefines = map (show *** show) . concat . map scrapeSingle where

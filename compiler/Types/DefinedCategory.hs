@@ -32,8 +32,10 @@ module Types.DefinedCategory (
 import qualified Data.Map as Map
 import qualified Data.Set as Set
 
-import Base.TypesBase
+import Base.CompileError
+import Base.Mergeable
 import Types.Function
+import Types.Positional
 import Types.Procedure
 import Types.TypeCategory
 import Types.TypeInstance
@@ -126,7 +128,7 @@ pairProceduresToFunctions fa ps = do
                      formatFullContextBrace (epContext p) ++
                      " does not correspond to a function"
     getPair (Just f) (Just p) = do
-      processParamPairs alwaysPairParams (sfArgs f) (avNames $ epArgs p) `reviseError`
+      processPairs alwaysPair (sfArgs f) (avNames $ epArgs p) `reviseError`
         ("Procedure for " ++ show (sfName f) ++
          formatFullContextBrace (avContext $ epArgs p) ++
          " has the wrong number of arguments" ++
@@ -134,7 +136,7 @@ pairProceduresToFunctions fa ps = do
       if isUnnamedReturns (epReturns p)
          then return ()
          else do
-           processParamPairs alwaysPairParams (sfReturns f) (nrNames $ epReturns p) `reviseError`
+           processPairs alwaysPair (sfReturns f) (nrNames $ epReturns p) `reviseError`
              ("Procedure for " ++ show (sfName f) ++
               formatFullContextBrace (nrContext $ epReturns p) ++
               " has the wrong number of returns" ++

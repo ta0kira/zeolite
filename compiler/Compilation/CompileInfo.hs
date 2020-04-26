@@ -20,7 +20,7 @@ limitations under the License.
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE Safe #-}
 
-module Base.CompileInfo (
+module Compilation.CompileInfo (
   CompileInfo,
   CompileMessage,
   getCompileError,
@@ -34,7 +34,8 @@ import Data.List (intercalate)
 import Control.Monad.Fail
 #endif
 
-import Base.TypesBase (CompileErrorM(..),Mergeable(..),MergeableM(..))
+import Base.CompileError
+import Base.Mergeable
 
 
 data CompileMessage =
@@ -60,9 +61,6 @@ data CompileInfo a =
     csWarnings :: [String],
     csData :: a
   }
-
-isCompileError (CompileFail _ _) = True
-isCompileError _                 = False
 
 getCompileError   = cfErrors
 getCompileSuccess = csData
@@ -90,7 +88,8 @@ prependWarning w (CompileFail w2 e)    = CompileFail (w ++ w2) e
 
 instance CompileErrorM CompileInfo where
   compileErrorM = CompileFail [] . flip CompileMessage []
-  isCompileErrorM = isCompileError
+  isCompileErrorM (CompileFail _ _) = True
+  isCompileErrorM _                 = False
   collectAllOrErrorM = result . splitErrorsAndData where
     result ([],xs,ws) = CompileSuccess ws xs
     result (es,_,ws) = CompileFail ws $ CompileMessage "" es

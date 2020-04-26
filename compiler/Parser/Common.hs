@@ -18,7 +18,7 @@ limitations under the License.
 
 {-# LANGUAGE Safe #-}
 
-module Parser.Base (
+module Parser.Common (
   ParseFromSource(..),
   anyComment,
   assignOperator,

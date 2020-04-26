@@ -27,8 +27,7 @@ import Control.Monad (when)
 import Text.Parsec
 import Text.Parsec.String
 
-import Base.TypesBase
-import Parser.Base
+import Parser.Common
 import Parser.Procedure
 import Parser.TypeCategory
 import Parser.TypeInstance
@@ -36,6 +35,7 @@ import Types.DefinedCategory
 import Types.Procedure
 import Types.TypeCategory
 import Types.TypeInstance
+import Types.Variance
 
 
 instance ParseFromSource (DefinedCategory SourcePos) where

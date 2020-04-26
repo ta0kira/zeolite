@@ -38,7 +38,8 @@ import Data.List (intercalate,nub,sortOn)
 import qualified Data.Map as Map
 import qualified Data.Set as Set
 
-import Base.TypesBase
+import Base.CompileError
+import Base.Mergeable
 import Compilation.CategoryCompiler
 import Compilation.CompilerState
 import CompilerCxx.Code
@@ -47,9 +48,12 @@ import CompilerCxx.Procedure
 import Types.Builtin
 import Types.DefinedCategory
 import Types.Function
+import Types.GeneralType
+import Types.Positional
 import Types.Procedure
 import Types.TypeCategory
 import Types.TypeInstance
+import Types.Variance
 
 
 data CxxOutput =
@@ -205,7 +209,7 @@ compileConcreteTemplate ta n = do
         epContext = [],
         epEnd = [],
         epName = sfName f,
-        epArgs = ArgValues [] $ ParamSet $ map createArg [1..(length $ psParams $ sfArgs f)],
+        epArgs = ArgValues [] $ Positional $ map createArg [1..(length $ pValues $ sfArgs f)],
         epReturns = UnnamedReturns [],
         epProcedure = failProcedure f
       }
@@ -221,8 +225,8 @@ compileConcreteDefinition :: (Show c, CompileErrorM m, MergeableM m) =>
 compileConcreteDefinition ta ns dd@(DefinedCategory c n pi _ _ fi ms ps fs) = do
   -- TODO: Move most of this logic to DefinedCategory.
   (_,t) <- getConcreteCategory ta (c,n)
-  let params = ParamSet $ getCategoryParams t
-  let params2 = ParamSet pi
+  let params = Positional $ getCategoryParams t
+  let params2 = Positional pi
   let typeInstance = TypeInstance n $ fmap (SingleType . JustParamName . vpParam) params
   let filters = getCategoryFilters t
   let filters2 = fi
@@ -356,7 +360,7 @@ compileConcreteDefinition ta ns dd@(DefinedCategory c n pi _ _ fi ms ps fs) = do
     initMember (DefinedMember _ _ _ _ Nothing) = return mergeDefault
     initMember (DefinedMember c s t n (Just e)) = do
       csAddVariable c n (VariableValue c s t True)
-      let assign = Assignment c (ParamSet [ExistingVariable (InputValue c n)]) e
+      let assign = Assignment c (Positional [ExistingVariable (InputValue c n)]) e
       compileStatement assign
     categoryDispatch fs =
       return $ onlyCodes $ [
@@ -391,7 +395,7 @@ compileConcreteDefinition ta ns dd@(DefinedCategory c n pi _ _ fi ms ps fs) = do
         (show n ++ " " ++ show f ++ formatFullContextBrace c)
     checkFunction pm f =
       when (sfScope f == ValueScope) $
-        mergeAllM $ map (checkParam pm) $ psParams $ sfParams f
+        mergeAllM $ map (checkParam pm) $ pValues $ sfParams f
     checkParam pm p =
       case vpParam p `Map.lookup` pm of
            Nothing -> return ()
@@ -581,7 +585,7 @@ commonDefineType t extra = do
           "std::vector<const TypeInstance*>& args) const final {"
         ] ++ allCats ++ ["  return false;","}"]
     myType = (getCategoryName t,map (SingleType . JustParamName . fst) params)
-    refines = map (\r -> (tiName r,psParams $ tiParams r)) $ map vrType $ getCategoryRefines t
+    refines = map (\r -> (tiName r,pValues $ tiParams r)) $ map vrType $ getCategoryRefines t
     allCats = concat $ map singleCat (myType:refines)
     singleCat (t,ps) = [
         "  if (&category == &" ++ categoryGetter t ++ "()) {",
@@ -606,7 +610,7 @@ expandLocalType (TypeMerge m ps) =
 expandLocalType (SingleType (JustTypeInstance (TypeInstance t ps))) =
   typeGetter t ++ "(T_get(" ++ intercalate "," (map ("&" ++) ps') ++ "))"
   where
-    ps' = map expandLocalType $ psParams ps
+    ps' = map expandLocalType $ pValues ps
 expandLocalType (SingleType (JustParamName p)) = paramName p
 
 defineCategoryName :: CategoryName -> CompiledData [String]
@@ -694,7 +698,7 @@ defineInternalValue t p n =
 getContextForInit :: (Show c, CompileErrorM m, MergeableM m) =>
   CategoryMap c -> AnyCategory c -> DefinedCategory c -> SymbolScope -> m (ProcedureContext c)
 getContextForInit tm t d s = do
-  let ps = ParamSet $ getCategoryParams t
+  let ps = Positional $ getCategoryParams t
   -- NOTE: This is always ValueScope for initializer checks.
   let ms = filter ((== ValueScope) . dmScope) $ dcMembers d
   let pa = if s == CategoryScope
@@ -712,10 +716,10 @@ getContextForInit tm t d s = do
       pcScope = s,
       pcType = getCategoryName t,
       pcExtParams = ps,
-      pcIntParams = ParamSet [],
+      pcIntParams = Positional [],
       pcMembers = ms,
       pcCategories = tm,
-      pcAllFilters = getFilterMap (psParams ps) pa,
+      pcAllFilters = getFilterMap (pValues ps) pa,
       pcExtFilters = pa,
       pcIntFilters = [],
       pcParamScopes = sa,
@@ -753,8 +757,8 @@ createMainFile tm n f = flip reviseError ("In the creation of the main binary pr
   let file = createMainCommon "main" ca
   (_,t) <- getConcreteCategory tm ([],n)
   return (getCategoryNamespace t,file) where
-    funcCall = FunctionCall [] f (ParamSet []) (ParamSet [])
-    mainType = JustTypeInstance $ TypeInstance n (ParamSet [])
+    funcCall = FunctionCall [] f (Positional []) (Positional [])
+    mainType = JustTypeInstance $ TypeInstance n (Positional [])
     expr = Expression [] (TypeCall [] mainType funcCall) []
 
 createTestFile :: (Show c, CompileErrorM m, MergeableM m) =>

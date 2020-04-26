@@ -24,10 +24,11 @@ import Control.Monad
 import Text.Parsec
 import Text.Parsec.String
 
-import Base.CompileInfo
-import Base.TypesBase
+import Base.CompileError
+import Compilation.CompileInfo
 import Parser.Procedure
-import Test.Base
+import Test.Common
+import Types.Positional
 import Types.Procedure
 import Types.TypeCategory
 import Types.TypeInstance
@@ -243,8 +244,8 @@ tests = [
                                 (Literal (IntegerLiteral _ False 1))
                                 (FunctionOperator _ (
                                   FunctionSpec _
-                                    (TypeFunction _ (JustTypeInstance (TypeInstance BuiltinInt (ParamSet []))))
-                                    (FunctionName "lessThan") (ParamSet [])))
+                                    (TypeFunction _ (JustTypeInstance (TypeInstance BuiltinInt (Positional []))))
+                                    (FunctionName "lessThan") (Positional [])))
                                 (Literal (IntegerLiteral _ False 2))) -> True
                               _ -> False),
 
@@ -255,7 +256,7 @@ tests = [
                                 (FunctionOperator _
                                   (FunctionSpec _
                                     (CategoryFunction _ (CategoryName "Something"))
-                                    (FunctionName "foo") (ParamSet [])))
+                                    (FunctionName "foo") (Positional [])))
                                 (Literal (IntegerLiteral _ False 2))) -> True
                               _ -> False),
 
@@ -267,7 +268,7 @@ tests = [
                                   (FunctionSpec _
                                     (ValueFunction _
                                       (Expression _ (NamedVariable (OutputValue _ (VariableName "something"))) []))
-                                    (FunctionName "foo") (ParamSet [])))
+                                    (FunctionName "foo") (Positional [])))
                                 (Literal (IntegerLiteral _ False 2))) -> True
                               _ -> False),
 
@@ -278,9 +279,9 @@ tests = [
                                   (FunctionOperator _
                                     (FunctionSpec _
                                       (ValueFunction _
-                                        (Expression _ (BuiltinCall _ (FunctionCall _ BuiltinRequire (ParamSet [])
-                                          (ParamSet [Expression _ (NamedVariable (OutputValue _ (VariableName "x"))) []]))) []))
-                                        (FunctionName "foo") (ParamSet [])))
+                                        (Expression _ (BuiltinCall _ (FunctionCall _ BuiltinRequire (Positional [])
+                                          (Positional [Expression _ (NamedVariable (OutputValue _ (VariableName "x"))) []]))) []))
+                                        (FunctionName "foo") (Positional [])))
                                 (Literal (IntegerLiteral _ False 2)) -> True
                               _ -> False),
 
@@ -289,7 +290,7 @@ tests = [
                               (InfixExpression _
                                 (Literal (IntegerLiteral _ False 1))
                                 (FunctionOperator _
-                                  (FunctionSpec _ UnqualifiedFunction (FunctionName "foo") (ParamSet [])))
+                                  (FunctionSpec _ UnqualifiedFunction (FunctionName "foo") (Positional [])))
                                 (Literal (IntegerLiteral _ False 2))) -> True
                               _ -> False),
 
@@ -298,8 +299,8 @@ tests = [
                               (UnaryExpression _
                                 (FunctionOperator _ (
                                   FunctionSpec _
-                                    (TypeFunction _ (JustTypeInstance (TypeInstance (CategoryName "Bits") (ParamSet []))))
-                                    (FunctionName "not") (ParamSet [])))
+                                    (TypeFunction _ (JustTypeInstance (TypeInstance (CategoryName "Bits") (Positional []))))
+                                    (FunctionName "not") (Positional [])))
                                 (Literal (IntegerLiteral _ False 2))) -> True
                               _ -> False),
 
@@ -309,7 +310,7 @@ tests = [
                                 (FunctionOperator _
                                   (FunctionSpec _
                                     (CategoryFunction _ (CategoryName "Bits"))
-                                    (FunctionName "not") (ParamSet [])))
+                                    (FunctionName "not") (Positional [])))
                                 (Literal (IntegerLiteral _ False 2))) -> True
                               _ -> False),
 
@@ -320,7 +321,7 @@ tests = [
                                   (FunctionSpec _
                                     (ValueFunction _
                                       (Expression _ (NamedVariable (OutputValue _ (VariableName "bits"))) []))
-                                    (FunctionName "not") (ParamSet [])))
+                                    (FunctionName "not") (Positional [])))
                                 (Literal (IntegerLiteral _ False 2))) -> True
                               _ -> False),
 
@@ -330,9 +331,9 @@ tests = [
                                   (FunctionOperator _
                                     (FunctionSpec _
                                       (ValueFunction _
-                                        (Expression _ (BuiltinCall _ (FunctionCall _ BuiltinRequire (ParamSet [])
-                                          (ParamSet [Expression _ (NamedVariable (OutputValue _ (VariableName "x"))) []]))) []))
-                                        (FunctionName "not") (ParamSet [])))
+                                        (Expression _ (BuiltinCall _ (FunctionCall _ BuiltinRequire (Positional [])
+                                          (Positional [Expression _ (NamedVariable (OutputValue _ (VariableName "x"))) []]))) []))
+                                        (FunctionName "not") (Positional [])))
                                 (Literal (IntegerLiteral _ False 2)) -> True
                               _ -> False),
 
@@ -340,7 +341,7 @@ tests = [
                   (\e -> case e of
                               (UnaryExpression _
                                 (FunctionOperator _
-                                  (FunctionSpec _ UnqualifiedFunction (FunctionName "not") (ParamSet [])))
+                                  (FunctionSpec _ UnqualifiedFunction (FunctionName "not") (Positional [])))
                                 (Literal (IntegerLiteral _ False 2))) -> True
                               _ -> False),
 

@@ -31,10 +31,13 @@ import Control.Monad (when)
 import qualified Data.Map as Map
 import qualified Data.Set as Set
 
-import Base.TypesBase
+import Base.CompileError
+import Base.Mergeable
 import Compilation.CompilerState
 import Types.DefinedCategory
 import Types.Function
+import Types.GeneralType
+import Types.Positional
 import Types.Procedure
 import Types.TypeCategory
 import Types.TypeInstance
@@ -44,8 +47,8 @@ data ProcedureContext c =
   ProcedureContext {
     pcScope :: SymbolScope,
     pcType :: CategoryName,
-    pcExtParams :: ParamSet (ValueParam c),
-    pcIntParams :: ParamSet (ValueParam c),
+    pcExtParams :: Positional (ValueParam c),
+    pcIntParams :: Positional (ValueParam c),
     pcMembers :: [DefinedMember c],
     pcCategories :: CategoryMap c,
     pcAllFilters :: ParamFilters,
@@ -65,10 +68,10 @@ data ProcedureContext c =
 
 data ReturnValidation c =
   ValidatePositions {
-    vpReturns :: ParamSet (PassedValue c)
+    vpReturns :: Positional (PassedValue c)
   } |
   ValidateNames {
-    vnTypes :: ParamSet (PassedValue c),
+    vnTypes :: Positional (PassedValue c),
     vnRemaining :: Map.Map VariableName (PassedValue c)
   } |
   UnreachableCode
@@ -115,7 +118,7 @@ instance (Show c, MergeableM m, CompileErrorM m) =>
       -- A different category than the procedure.
       | otherwise = do
         (_,ca) <- getCategory (pcCategories ctx) (c,t)
-        let params = ParamSet $ map vpParam $ getCategoryParams ca
+        let params = Positional $ map vpParam $ getCategoryParams ca
         let fa = Map.fromList $ map (\f -> (sfName f,f)) $ getCategoryFunctions ca
         checkFunction $ n `Map.lookup` fa
     checkFunction (Just f) = do
@@ -153,7 +156,7 @@ instance (Show c, MergeableM m, CompileErrorM m) =>
       -- A different category than the procedure.
       | otherwise = do
         (_,ca) <- getCategory (pcCategories ctx) (c,tiName t)
-        let params = ParamSet $ map vpParam $ getCategoryParams ca
+        let params = Positional $ map vpParam $ getCategoryParams ca
         let fa = Map.fromList $ map (\f -> (sfName f,f)) $ getCategoryFunctions ca
         checkFunction (tiName t) params (tiParams t) $ n `Map.lookup` fa
     getFunction Nothing = do
@@ -161,7 +164,7 @@ instance (Show c, MergeableM m, CompileErrorM m) =>
       getFunction (Just $ SingleType $ JustTypeInstance $ TypeInstance (pcType ctx) ps)
     checkDefine t = do
       (_,ca) <- getCategory (pcCategories ctx) (c,diName t)
-      let params = ParamSet $ map vpParam $ getCategoryParams ca
+      let params = Positional $ map vpParam $ getCategoryParams ca
       let fa = Map.fromList $ map (\f -> (sfName f,f)) $ getCategoryFunctions ca
       checkFunction (diName t) params (diParams t) $ n `Map.lookup` fa
     checkFunction t2 ps1 ps2 (Just f) = do
@@ -171,7 +174,7 @@ instance (Show c, MergeableM m, CompileErrorM m) =>
       when (sfScope f == CategoryScope) $
         compileError $ "Function " ++ show n ++ " in " ++ show t2 ++
                        " is a category function" ++ formatFullContextBrace c
-      paired <- processParamPairs alwaysPairParams ps1 ps2 `reviseError`
+      paired <- processPairs alwaysPair ps1 ps2 `reviseError`
         ("In external function call at " ++ formatFullContext c)
       let assigned = Map.fromList paired
       uncheckedSubFunction assigned f
@@ -187,19 +190,19 @@ instance (Show c, MergeableM m, CompileErrorM m) =>
       let t' = TypeInstance (pcType ctx) as
       r <- ccResolver ctx
       allFilters <- ccAllFilters ctx
-      pa  <- fmap Map.fromList $ processParamPairs alwaysPairParams (fmap vpParam $ pcExtParams ctx) as
-      pa2 <- fmap Map.fromList $ processParamPairs alwaysPairParams (fmap vpParam $ pcIntParams ctx) ps
+      pa  <- fmap Map.fromList $ processPairs alwaysPair (fmap vpParam $ pcExtParams ctx) as
+      pa2 <- fmap Map.fromList $ processPairs alwaysPair (fmap vpParam $ pcIntParams ctx) ps
       let pa' = Map.union pa pa2
       validateTypeInstance r allFilters t'
       -- Check internal param substitution.
       let mapped = Map.fromListWith (++) $ map (\f -> (pfParam f,[pfFilter f])) (pcIntFilters ctx)
-      let positional = map (getFilters mapped) (map vpParam $ psParams $ pcIntParams ctx)
-      assigned <- fmap Map.fromList $ processParamPairs alwaysPairParams (fmap vpParam $ pcIntParams ctx) ps
-      subbed <- fmap ParamSet $ collectAllOrErrorM $ map (assignFilters assigned) positional
-      processParamPairs (validateAssignment r allFilters) ps subbed
+      let positional = map (getFilters mapped) (map vpParam $ pValues $ pcIntParams ctx)
+      assigned <- fmap Map.fromList $ processPairs alwaysPair (fmap vpParam $ pcIntParams ctx) ps
+      subbed <- fmap Positional $ collectAllOrErrorM $ map (assignFilters assigned) positional
+      processPairs (validateAssignment r allFilters) ps subbed
       -- Check initializer types.
-      ms <- fmap ParamSet $ collectAllOrErrorM $ map (subSingle pa') (pcMembers ctx)
-      processParamPairs (checkInit r allFilters) ms (ParamSet $ zip [1..] $ psParams ts)
+      ms <- fmap Positional $ collectAllOrErrorM $ map (subSingle pa') (pcMembers ctx)
+      processPairs (checkInit r allFilters) ms (Positional $ zip [1..] $ pValues ts)
       return ()
       where
         getFilters fm n =
@@ -376,9 +379,9 @@ instance (Show c, MergeableM m, CompileErrorM m) =>
     where
       check (ValidatePositions rs) = do
         let vs' = case vs of
-                       Nothing -> ParamSet []
+                       Nothing -> Positional []
                        Just vs -> vs
-        processParamPairs checkReturnType rs (ParamSet $ zip [1..] $ psParams vs') `reviseError`
+        processPairs checkReturnType rs (Positional $ zip [1..] $ pValues vs') `reviseError`
           ("In procedure return at " ++ formatFullContext c)
         return ()
         where
@@ -472,13 +475,13 @@ instance (Show c, MergeableM m, CompileErrorM m) =>
 
 updateReturnVariables :: (Show c, CompileErrorM m, MergeableM m) =>
   (Map.Map VariableName (VariableValue c)) ->
-  ParamSet (PassedValue c) -> ReturnValues c ->
+  Positional (PassedValue c) -> ReturnValues c ->
   m (Map.Map VariableName (VariableValue c))
 updateReturnVariables ma rs1 rs2 = updated where
   updated
     | isUnnamedReturns rs2 = return ma
     | otherwise = do
-      rs <- processParamPairs alwaysPairParams rs1 (nrNames rs2)
+      rs <- processPairs alwaysPair rs1 (nrNames rs2)
       foldr update (return ma) rs where
         update (PassedValue c t,r) va = do
           va' <- va
@@ -491,10 +494,10 @@ updateReturnVariables ma rs1 rs2 = updated where
 
 updateArgVariables :: (Show c, CompileErrorM m, MergeableM m) =>
   (Map.Map VariableName (VariableValue c)) ->
-  ParamSet (PassedValue c) -> ArgValues c ->
+  Positional (PassedValue c) -> ArgValues c ->
   m (Map.Map VariableName (VariableValue c))
 updateArgVariables ma as1 as2 = do
-  as <- processParamPairs alwaysPairParams as1 (avNames as2)
+  as <- processPairs alwaysPair as1 (avNames as2)
   let as' = filter (not . isDiscardedInput . snd) as
   foldr update (return ma) as' where
     update (PassedValue c t,a) va = do

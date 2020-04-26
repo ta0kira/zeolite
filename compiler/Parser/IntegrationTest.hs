@@ -25,7 +25,7 @@ module Parser.IntegrationTest (
 import Text.Parsec
 import Text.Parsec.String
 
-import Parser.Base
+import Parser.Common
 import Parser.DefinedCategory
 import Parser.Procedure
 import Parser.TypeCategory

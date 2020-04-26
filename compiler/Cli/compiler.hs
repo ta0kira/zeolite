@@ -29,13 +29,14 @@ import System.IO
 import qualified Data.Map as Map
 import qualified Data.Set as Set
 
-import Base.CompileInfo
-import Base.TypesBase
+import Base.CompileError
+import Base.Mergeable
 import Cli.CompileMetadata
 import Cli.CompileOptions
 import Cli.CompilerCommand
 import Cli.ParseCompileOptions -- Not safe, due to Text.Regex.TDFA.
 import Cli.TestRunner
+import Compilation.CompileInfo
 import CompilerCxx.Category
 import CompilerCxx.Naming
 import Parser.SourceFile

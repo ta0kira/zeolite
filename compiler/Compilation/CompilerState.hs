@@ -65,9 +65,11 @@ import Control.Monad.Trans.State (StateT(..),execStateT,get,mapStateT,put)
 import Data.Monoid
 import qualified Data.Set as Set
 
-import Base.TypesBase
+import Base.CompileError
+import Base.Mergeable
 import Types.DefinedCategory
 import Types.Function
+import Types.Positional
 import Types.Procedure
 import Types.TypeCategory
 import Types.TypeInstance
@@ -85,7 +87,7 @@ class Monad m => CompilerContext c m s a | a -> c s where
   ccGetRequired :: a -> m (Set.Set CategoryName)
   ccGetCategoryFunction :: a -> [c] -> Maybe CategoryName -> FunctionName -> m (ScopedFunction c)
   ccGetTypeFunction :: a -> [c] -> Maybe GeneralInstance -> FunctionName -> m (ScopedFunction c)
-  ccCheckValueInit :: a -> [c] -> TypeInstance -> ExpressionType -> ParamSet GeneralInstance -> m ()
+  ccCheckValueInit :: a -> [c] -> TypeInstance -> ExpressionType -> Positional GeneralInstance -> m ()
   ccGetVariable :: a -> [c] -> VariableName -> m (VariableValue c)
   ccAddVariable :: a -> [c] -> VariableName -> VariableValue c -> m a
   ccCheckVariableInit :: a -> [c] -> VariableName -> m ()
@@ -103,7 +105,7 @@ class Monad m => CompilerContext c m s a | a -> c s where
   ccPushCleanup :: a -> CleanupSetup a s -> m a
   ccGetCleanup :: a -> m (CleanupSetup a s)
 
-type ExpressionType = ParamSet ValueType
+type ExpressionType = Positional ValueType
 
 data MemberValue c =
   MemberValue {
@@ -169,7 +171,7 @@ csGetTypeFunction :: CompilerContext c m s a =>
 csGetTypeFunction c t n = fmap (\x -> ccGetTypeFunction x c t n) get >>= lift
 
 csCheckValueInit :: CompilerContext c m s a =>
-  [c] -> TypeInstance -> ExpressionType -> ParamSet GeneralInstance -> CompilerState a m ()
+  [c] -> TypeInstance -> ExpressionType -> Positional GeneralInstance -> CompilerState a m ()
 csCheckValueInit c t as ps = fmap (\x -> ccCheckValueInit x c t as ps) get >>= lift
 
 csGetVariable :: CompilerContext c m s a =>

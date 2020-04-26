@@ -24,10 +24,10 @@ import Control.Monad (when)
 import Text.Parsec
 import Text.Parsec.String
 
-import Base.CompileInfo
-import Base.TypesBase
-import Parser.Base
-import Test.Base
+import Base.CompileError
+import Compilation.CompileInfo
+import Parser.Common
+import Test.Common
 
 
 tests :: [IO (CompileInfo ())]

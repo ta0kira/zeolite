@@ -31,7 +31,7 @@ module Types.Builtin (
 
 import qualified Data.Map as Map
 
-import Base.TypesBase
+import Types.GeneralType
 import Types.TypeCategory
 import Types.TypeInstance
 

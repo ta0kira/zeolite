@@ -27,8 +27,9 @@ import Control.Monad (when)
 import Text.Parsec hiding ((<|>))
 import Text.Parsec.String
 
-import Base.TypesBase
-import Parser.Base
+import Parser.Common
+import Types.GeneralType
+import Types.Positional
 import Types.TypeInstance
 
 
@@ -97,7 +98,7 @@ instance ParseFromSource TypeInstance where
   sourceParser = labeled "type" $ do
     n <- sourceParser
     as <- labeled "type args" $ try args <|> return []
-    return $ TypeInstance n (ParamSet as)
+    return $ TypeInstance n (Positional as)
     where
       args = between (sepAfter $ string "<")
                      (sepAfter $ string ">")
@@ -107,7 +108,7 @@ instance ParseFromSource DefinesInstance where
   sourceParser = labeled "type" $ do
     n <- sourceParser
     as <- labeled "type args" $ try args <|> return []
-    return $ DefinesInstance n (ParamSet as)
+    return $ DefinesInstance n (Positional as)
     where
       args = between (sepAfter $ string "<")
                      (sepAfter $ string ">")

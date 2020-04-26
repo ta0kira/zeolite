@@ -30,10 +30,11 @@ import System.FilePath
 import Text.Parsec
 import Text.Regex.TDFA -- Not safe!
 
-import Base.CompileInfo
-import Base.TypesBase
+import Base.CompileError
+import Base.Mergeable
 import Cli.CompileMetadata
 import Cli.CompilerCommand
+import Compilation.CompileInfo
 import CompilerCxx.Category
 import CompilerCxx.Naming
 import Parser.SourceFile

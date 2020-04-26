@@ -18,9 +18,9 @@ limitations under the License.
 
 {-# LANGUAGE Safe #-}
 
-import Base.CompileInfo
-import Base.TypesBase
-import Test.Base
+import Base.CompileError
+import Compilation.CompileInfo
+import Test.Common
 import qualified Test.DefinedCategory as DefinedCategoryTest
 import qualified Test.IntegrationTest as IntegrationTestTest
 import qualified Test.Parser          as ParserTest

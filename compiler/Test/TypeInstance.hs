@@ -24,12 +24,14 @@ import Data.List
 import Text.Parsec
 import qualified Data.Map as Map
 
-import Base.CompileInfo
-import Base.TypesBase
-import Parser.Base
+import Base.CompileError
+import Compilation.CompileInfo
+import Parser.Common
 import Parser.TypeInstance
-import Test.Base
+import Test.Common
+import Types.Positional
 import Types.TypeInstance
+import Types.Variance
 
 
 tests :: [IO (CompileInfo ())]
@@ -575,14 +577,14 @@ instance1 = CategoryName "Instance1"
 
 variances :: Map.Map CategoryName InstanceVariances
 variances = Map.fromList $ [
-    (type0,ParamSet []), -- Type0<>
-    (type1,ParamSet [Invariant]), -- Type1<x>
-    (type2,ParamSet [Contravariant,Invariant,Covariant]), -- Type2<x|y|z>
-    (type3,ParamSet []), -- Type3<>
-    (type4,ParamSet [Invariant]), -- Type4<x>
-    (type5,ParamSet [Invariant]), -- Type5<x>
-    (instance0,ParamSet []), -- Instance0<>
-    (instance1,ParamSet [Contravariant]) -- Instance1<x|>
+    (type0,Positional []), -- Type0<>
+    (type1,Positional [Invariant]), -- Type1<x>
+    (type2,Positional [Contravariant,Invariant,Covariant]), -- Type2<x|y|z>
+    (type3,Positional []), -- Type3<>
+    (type4,Positional [Invariant]), -- Type4<x>
+    (type5,Positional [Invariant]), -- Type5<x>
+    (instance0,Positional []), -- Instance0<>
+    (instance1,Positional [Contravariant]) -- Instance1<x|>
   ]
 
 refines :: Map.Map CategoryName (Map.Map CategoryName (InstanceParams -> InstanceParams))
@@ -590,21 +592,21 @@ refines = Map.fromList $ [
     (type0,Map.fromList $ []),
     (type1,Map.fromList $ [
         -- Type1<x> -> Type0
-        (type0,\(ParamSet [_]) ->
-               ParamSet [])
+        (type0,\(Positional [_]) ->
+               Positional [])
       ]),
     (type2,Map.fromList $ [
         -- Type2<x,y,z> -> Type0 (inherited from Type1)
-        (type0,\(ParamSet [_,_,_]) ->
-               ParamSet []),
+        (type0,\(Positional [_,_,_]) ->
+               Positional []),
         -- Type2<x,y,z> -> Type1<x>
-        (type1,\(ParamSet [x,_,_]) ->
-               ParamSet [x])
+        (type1,\(Positional [x,_,_]) ->
+               Positional [x])
       ]),
     (type3,Map.fromList $ [
         -- Type3 -> Type0
-        (type0,\(ParamSet []) ->
-               ParamSet [])
+        (type0,\(Positional []) ->
+               Positional [])
       ]),
     (type4,Map.fromList $ []),
     (type5,Map.fromList $ [])
@@ -614,15 +616,15 @@ defines :: Map.Map CategoryName (Map.Map CategoryName (InstanceParams -> Instanc
 defines = Map.fromList $ [
     (type0,Map.fromList $ [
         -- Type0 defines Instance1<Type0>
-        (instance1,\(ParamSet []) ->
-                   ParamSet [forceParse "Type0"])
+        (instance1,\(Positional []) ->
+                   Positional [forceParse "Type0"])
       ]),
     (type1,Map.fromList $ []),
     (type2,Map.fromList $ []),
     (type3,Map.fromList $ [
         -- Type3 defines Instance0
-        (instance0,\(ParamSet []) ->
-                   ParamSet [])
+        (instance0,\(Positional []) ->
+                   Positional [])
       ]),
     (type4,Map.fromList $ []),
     (type5,Map.fromList $ [])
@@ -630,15 +632,15 @@ defines = Map.fromList $ [
 
 typeFilters :: Map.Map CategoryName (InstanceParams -> InstanceFilters)
 typeFilters = Map.fromList $ [
-    (type0,\(ParamSet []) -> ParamSet []),
-    (type1,\(ParamSet [_]) ->
-           ParamSet [
+    (type0,\(Positional []) -> Positional []),
+    (type1,\(Positional [_]) ->
+           Positional [
              -- x requires Type0
              -- x defines Instance0
              [forceParse "requires Type0",forceParse "defines Instance0"]
            ]),
-    (type2,\(ParamSet [_,y,_]) ->
-           ParamSet [
+    (type2,\(Positional [_,y,_]) ->
+           Positional [
              -- x defines Instance1<Type3>
              [forceParse $ "defines Instance1<Type3>"],
              -- y defines Instance1<y>
@@ -646,20 +648,20 @@ typeFilters = Map.fromList $ [
              -- z defines Instance1<Type0>
              [forceParse $ "defines Instance1<Type0>"]
            ]),
-    (type3,\(ParamSet []) -> ParamSet []),
-    (type4,\(ParamSet [_]) ->
-           ParamSet [
+    (type3,\(Positional []) -> Positional []),
+    (type4,\(Positional [_]) ->
+           Positional [
              -- x allows Type0
              [forceParse "allows Type0"]
            ]),
-    (type5,\(ParamSet [_]) -> ParamSet [[]])
+    (type5,\(Positional [_]) -> Positional [[]])
   ]
 
 definesFilters :: Map.Map CategoryName (InstanceParams -> InstanceFilters)
 definesFilters = Map.fromList $ [
-    (instance0,\(ParamSet []) -> ParamSet []),
-    (instance1,\(ParamSet [_]) ->
-           ParamSet [
+    (instance0,\(Positional []) -> Positional []),
+    (instance1,\(Positional [_]) ->
+           Positional [
              -- x requires Type0
              [forceParse "requires Type0"]
            ])

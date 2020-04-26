@@ -23,13 +23,14 @@ module Test.IntegrationTest (tests) where
 import Control.Monad (when)
 import Text.Parsec
 
-import Base.CompileInfo
-import Base.TypesBase
-import Parser.Base
+import Base.CompileError
+import Compilation.CompileInfo
+import Parser.Common
 import Parser.IntegrationTest
-import Test.Base
+import Test.Common
 import Types.DefinedCategory
 import Types.IntegrationTest
+import Types.Positional
 import Types.Procedure
 import Types.TypeCategory
 import Types.TypeInstance
@@ -64,8 +65,8 @@ tests = [
         let match = case ereExpression $ ithResult h of
                          (Expression _
                            (TypeCall _
-                             (JustTypeInstance (TypeInstance (CategoryName "Test") (ParamSet [])))
-                             (FunctionCall _ (FunctionName "execute") (ParamSet []) (ParamSet []))) []) -> True
+                             (JustTypeInstance (TypeInstance (CategoryName "Test") (Positional [])))
+                             (FunctionCall _ (FunctionName "execute") (Positional []) (Positional []))) []) -> True
                          _ -> False
         when (not match) $ compileError "Expected test expression \"Test$execute()\""
         containsExactly (getRequirePattern $ ithResult h) [
@@ -89,8 +90,8 @@ tests = [
         let match = case ersExpression $ ithResult h of
                          (Expression _
                            (TypeCall _
-                             (JustTypeInstance (TypeInstance (CategoryName "Test") (ParamSet [])))
-                             (FunctionCall _ (FunctionName "execute") (ParamSet []) (ParamSet []))) []) -> True
+                             (JustTypeInstance (TypeInstance (CategoryName "Test") (Positional [])))
+                             (FunctionCall _ (FunctionName "execute") (Positional []) (Positional []))) []) -> True
                          _ -> False
         when (not match) $ compileError "Expected test expression \"Test$execute()\""
         containsExactly (getRequirePattern $ ithResult h) [

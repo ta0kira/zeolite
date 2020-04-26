@@ -27,7 +27,7 @@ import Data.List (intercalate,isSuffixOf)
 import System.FilePath (takeExtension)
 import Text.Regex.TDFA -- Not safe!
 
-import Base.TypesBase
+import Base.CompileError
 import Cli.CompileMetadata (allowedExtraTypes,getCacheRelativePath)
 import Cli.CompileOptions
 

@@ -53,7 +53,6 @@ module CompilerCxx.Naming (
 import Data.Hashable (Hashable,hash)
 import Numeric (showHex)
 
-import Base.TypesBase
 import Types.Function
 import Types.Procedure
 import Types.TypeCategory
