@@ -40,8 +40,8 @@ import qualified Data.Set as Set
 
 import Base.CompileError
 import Base.Mergeable
-import Compilation.CategoryCompiler
 import Compilation.CompilerState
+import CompilerCxx.CategoryContext
 import CompilerCxx.Code
 import CompilerCxx.Naming
 import CompilerCxx.Procedure
@@ -261,9 +261,12 @@ compileConcreteDefinition ta ns dd@(DefinedCategory c n pi _ _ fi ms ps fs) = do
       return $ onlyCode $ "class " ++ valueName n ++ ";",
       declareInternalValue n internalCount memberCount
     ]
-  cf <- collectAllOrErrorM $ map (compileExecutableProcedure ta n params params2 vm filters filters2 fa cv) cp
-  tf <- collectAllOrErrorM $ map (compileExecutableProcedure ta n params params2 vm filters filters2 fa tv) tp
-  vf <- collectAllOrErrorM $ map (compileExecutableProcedure ta n params params2 vm filters filters2 fa vv) vp
+  let ctxC = ScopeContext ta n params params2 vm filters filters2 fa cv
+  let ctxT = ScopeContext ta n params params2 vm filters filters2 fa tv
+  let ctxV = ScopeContext ta n params params2 vm filters filters2 fa vv
+  cf <- collectAllOrErrorM $ map (uncurry $ compileExecutableProcedure ctxC) cp
+  tf <- collectAllOrErrorM $ map (uncurry $ compileExecutableProcedure ctxT) tp
+  vf <- collectAllOrErrorM $ map (uncurry $ compileExecutableProcedure ctxV) vp
   defineValue <- mergeAllM [
       return $ onlyCode $ "struct " ++ valueName n ++ " : public " ++ valueBase ++ " {",
       fmap indentCompiled $ valueConstructor ta t vm,
@@ -694,50 +697,6 @@ defineInternalValue t p n =
       "  return S_get(new " ++ valueName t ++ "(parent, params, args));",
       "}"
     ]
-
-getContextForInit :: (Show c, CompileErrorM m, MergeableM m) =>
-  CategoryMap c -> AnyCategory c -> DefinedCategory c -> SymbolScope -> m (ProcedureContext c)
-getContextForInit tm t d s = do
-  let ps = Positional $ getCategoryParams t
-  -- NOTE: This is always ValueScope for initializer checks.
-  let ms = filter ((== ValueScope) . dmScope) $ dcMembers d
-  let pa = if s == CategoryScope
-              then []
-              else getCategoryFilters t
-  let sa = Map.fromList $ zip (map vpParam $ getCategoryParams t) (repeat TypeScope)
-  let r = CategoryResolver tm
-  fa <- setInternalFunctions r t (dcFunctions d)
-  let typeInstance = TypeInstance (getCategoryName t) $ fmap (SingleType . JustParamName . vpParam) ps
-  let builtin = Map.filter ((== LocalScope) . vvScope) $ builtinVariables typeInstance
-  -- Using < ensures that variables can only be referenced after initialization.
-  -- TODO: This doesn't really help if access is done via a function.
-  members <- mapMembers $ filter ((< s) . dmScope) (dcMembers d)
-  return $ ProcedureContext {
-      pcScope = s,
-      pcType = getCategoryName t,
-      pcExtParams = ps,
-      pcIntParams = Positional [],
-      pcMembers = ms,
-      pcCategories = tm,
-      pcAllFilters = getFilterMap (pValues ps) pa,
-      pcExtFilters = pa,
-      pcIntFilters = [],
-      pcParamScopes = sa,
-      pcFunctions = fa,
-      pcVariables = Map.union builtin members,
-      pcReturns = UnreachableCode,
-      pcPrimNamed = [],
-      pcRequiredTypes = Set.empty,
-      pcOutput = [],
-      pcDisallowInit = True,
-      pcLoopSetup = NotInLoop,
-      pcCleanupSetup = CleanupSetup [] []
-    }
-
-builtinVariables :: TypeInstance -> Map.Map VariableName (VariableValue c)
-builtinVariables t = Map.fromList [
-    (VariableName "self",VariableValue [] ValueScope (ValueType RequiredValue $ SingleType $ JustTypeInstance t) False)
-  ]
 
 createMainCommon :: String -> CompiledData [String] -> [String]
 createMainCommon n (CompiledData req out) =

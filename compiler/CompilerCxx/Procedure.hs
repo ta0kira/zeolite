@@ -39,8 +39,8 @@ import qualified Data.Set as Set
 
 import Base.CompileError
 import Base.Mergeable
-import Compilation.CategoryCompiler
 import Compilation.CompilerState
+import CompilerCxx.CategoryContext
 import CompilerCxx.Code
 import CompilerCxx.Naming
 import Types.Builtin
@@ -54,71 +54,21 @@ import Types.TypeInstance
 
 
 compileExecutableProcedure :: (Show c, CompileErrorM m, MergeableM m) =>
-  CategoryMap c -> CategoryName -> Positional (ValueParam c) -> Positional (ValueParam c) ->
-  [DefinedMember c] -> [ParamFilter c] -> [ParamFilter c] -> Map.Map FunctionName (ScopedFunction c) ->
-  Map.Map VariableName (VariableValue c) ->
-  (ScopedFunction c,ExecutableProcedure c) -> m (CompiledData [String],CompiledData [String])
-compileExecutableProcedure tm t ps pi ms pa fi fa va
-                 (ff@(ScopedFunction _ _ _ s as1 rs1 ps1 fs _),
-                  (ExecutableProcedure _ c n as2 rs2 p)) = do
-  rs' <- if isUnnamedReturns rs2
-            then return $ ValidatePositions rs1
-            else fmap (ValidateNames rs1 . Map.fromList) $ processPairs pairOutput rs1 (nrNames rs2)
-  va' <- updateArgVariables va as1 as2
-  va'' <- updateReturnVariables va' rs1 rs2
-  let pa' = if s == CategoryScope
-               then fs
-               else pa ++ fs
-  let localScopes = Map.fromList $ zip (map vpParam $ pValues ps1) (repeat LocalScope)
-  let typeScopes = Map.fromList $ zip (map vpParam $ pValues ps) (repeat TypeScope)
-  let valueScopes = Map.fromList $ zip (map vpParam $ pValues pi) (repeat ValueScope)
-  let sa = case s of
-                CategoryScope -> localScopes
-                TypeScope -> Map.union typeScopes localScopes
-                ValueScope -> Map.unions [localScopes,typeScopes,valueScopes]
-  let localFilters = getFunctionFilterMap ff
-  let typeFilters = getFilterMap (pValues ps) pa
-  let valueFilters = getFilterMap (pValues pi) fi
-  let allFilters = case s of
-                   CategoryScope -> localFilters
-                   TypeScope -> Map.union localFilters typeFilters
-                   ValueScope -> Map.unions [localFilters,typeFilters,valueFilters]
-  let ns0 = if isUnnamedReturns rs2
-               then []
-               else zipWith3 ReturnVariable [0..] (map ovName $ pValues $ nrNames rs2) (map pvType $ pValues rs1)
-  let ns = filter (isPrimType . rvType) ns0
-  let ctx = ProcedureContext {
-      pcScope = s,
-      pcType = t,
-      pcExtParams = ps,
-      pcIntParams = pi,
-      pcMembers = ms,
-      pcCategories = tm,
-      pcAllFilters = allFilters,
-      pcExtFilters = pa',
-      -- fs is duplicated so value initialization checks work properly.
-      pcIntFilters = fi ++ fs,
-      pcParamScopes = sa,
-      pcFunctions = fa,
-      pcVariables = va'',
-      pcReturns = rs',
-      pcPrimNamed = ns,
-      pcRequiredTypes = Set.empty,
-      pcOutput = [],
-      pcDisallowInit = False,
-      pcLoopSetup = NotInLoop,
-      pcCleanupSetup = CleanupSetup [] []
-    }
-  output <- runDataCompiler compileWithReturn ctx
+  ScopeContext c -> ScopedFunction c -> ExecutableProcedure c ->
+  m (CompiledData [String],CompiledData [String])
+compileExecutableProcedure ctx ff@(ScopedFunction _ _ _ s as1 rs1 ps1 _ _)
+                               pp@(ExecutableProcedure _ c n as2 rs2 p) = do
+  ctx' <- getProcedureContext ctx ff pp
+  output <- runDataCompiler compileWithReturn ctx'
   return (onlyCode header,wrapProcedure output)
   where
+    t = scName ctx
     compileWithReturn = do
       ctx0 <- getCleanContext
       compileProcedure ctx0 p >>= put
       csRegisterReturn c Nothing `reviseErrorStateT`
         ("In implicit return from " ++ show n ++ formatFullContextBrace c)
       doNamedReturn
-    pairOutput (PassedValue c1 t) (OutputValue c2 n) = return $ (n,PassedValue (c2++c1) t)
     wrapProcedure output =
       mergeAll $ [
           onlyCode header2,
@@ -838,27 +788,7 @@ compileFunctionCall e f (FunctionCall c _ ps es) = do
 compileMainProcedure :: (Show c, CompileErrorM m, MergeableM m) =>
   CategoryMap c -> Expression c -> m (CompiledData [String])
 compileMainProcedure tm e = do
-  let ctx = ProcedureContext {
-      pcScope = LocalScope,
-      pcType = CategoryNone,
-      pcExtParams = Positional [],
-      pcIntParams = Positional [],
-      pcMembers = [],
-      pcCategories = tm,
-      pcAllFilters = Map.empty,
-      pcExtFilters = [],
-      pcIntFilters = [],
-      pcParamScopes = Map.empty,
-      pcFunctions = Map.empty,
-      pcVariables = Map.empty,
-      pcReturns = ValidatePositions (Positional []),
-      pcPrimNamed = [],
-      pcRequiredTypes = Set.empty,
-      pcOutput = [],
-      pcDisallowInit = False,
-      pcLoopSetup = NotInLoop,
-      pcCleanupSetup = CleanupSetup [] []
-    }
+  ctx <- getMainContext tm
   runDataCompiler compiler ctx where
     procedure = Procedure [] [IgnoreValues [] e]
     compiler = do

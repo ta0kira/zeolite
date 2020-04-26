@@ -20,7 +20,7 @@ limitations under the License.
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE Safe #-}
 
-module Compilation.CategoryCompiler (
+module Compilation.ProcedureContext (
   ProcedureContext(..),
   ReturnValidation(..),
   updateArgVariables,
