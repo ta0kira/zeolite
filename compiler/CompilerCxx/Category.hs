@@ -33,7 +33,6 @@ module CompilerCxx.Category (
   compileModuleMain,
 ) where
 
-import Control.Monad (when)
 import Data.List (intercalate,nub,sortOn)
 import qualified Data.Map as Map
 import qualified Data.Set as Set
@@ -41,6 +40,7 @@ import qualified Data.Set as Set
 import Base.CompileError
 import Base.Mergeable
 import Compilation.CompilerState
+import Compilation.ScopeContext
 import CompilerCxx.CategoryContext
 import CompilerCxx.Code
 import CompilerCxx.Naming
@@ -223,50 +223,31 @@ compileConcreteTemplate ta n = do
 compileConcreteDefinition :: (Show c, CompileErrorM m, MergeableM m) =>
   CategoryMap c -> [Namespace] -> DefinedCategory c -> m CxxOutput
 compileConcreteDefinition ta ns dd@(DefinedCategory c n pi _ _ fi ms ps fs) = do
-  -- TODO: Move most of this logic to DefinedCategory.
   (_,t) <- getConcreteCategory ta (c,n)
-  let params = Positional $ getCategoryParams t
-  let params2 = Positional pi
-  let typeInstance = TypeInstance n $ fmap (SingleType . JustParamName . vpParam) params
-  let filters = getCategoryFilters t
-  let filters2 = fi
-  let allFilters = getFilterMap (getCategoryParams t ++ pi) $ filters ++ filters2
   let r = CategoryResolver ta
-  fa <- setInternalFunctions r t fs
-  checkInternalParams pi fi (getCategoryParams t) (Map.elems fa) r (getCategoryFilterMap t)
+  [cp,tp,vp] <- getProcedureScopes ta ns dd
+  cf <- collectAllOrErrorM $ applyProcedureScope compileExecutableProcedure cp
+  tf <- collectAllOrErrorM $ applyProcedureScope compileExecutableProcedure tp
+  vf <- collectAllOrErrorM $ applyProcedureScope compileExecutableProcedure vp
   -- Functions explicitly declared externally.
   let externalFuncs = Set.fromList $ map sfName $ filter ((== n) . sfType) $ getCategoryFunctions t
   -- Functions explicitly declared internally.
   let overrideFuncs = Map.fromList $ map (\f -> (sfName f,f)) fs
   -- Functions only declared internally.
   let internalFuncs = Map.filter (not . (`Set.member` externalFuncs) . sfName) overrideFuncs
-  pa <- pairProceduresToFunctions fa ps
-  let (cp,tp,vp) = partitionByScope (sfScope . fst) pa
   let (cm,tm,vm) = partitionByScope dmScope ms
   disallowTypeMembers tm
-  let cm0 = builtins typeInstance CategoryScope
-  let tm0 = builtins typeInstance TypeScope
-  let vm0 = builtins typeInstance ValueScope
-  cm' <- mapMembers cm
-  tm' <- mapMembers $ cm ++ tm
-  vm' <- mapMembers $ cm ++ tm ++ vm
-  let cv = Map.union cm0 cm'
-  let tv = Map.union tm0 tm'
-  let vv = Map.union vm0 vm'
   let internalCount = length pi
   let memberCount = length vm
   let fe = Map.elems internalFuncs
   let allFuncs = getCategoryFunctions t ++ fe
+  let filters = getCategoryFilters t
+  let filters2 = fi
+  let allFilters = getFilterMap (getCategoryParams t ++ pi) $ filters ++ filters2
   top <- mergeAllM [
       return $ onlyCode $ "class " ++ valueName n ++ ";",
       declareInternalValue n internalCount memberCount
     ]
-  let ctxC = ScopeContext ta n params params2 vm filters filters2 fa cv
-  let ctxT = ScopeContext ta n params params2 vm filters filters2 fa tv
-  let ctxV = ScopeContext ta n params params2 vm filters filters2 fa vv
-  cf <- collectAllOrErrorM $ map (uncurry $ compileExecutableProcedure ctxC) cp
-  tf <- collectAllOrErrorM $ map (uncurry $ compileExecutableProcedure ctxT) tp
-  vf <- collectAllOrErrorM $ map (uncurry $ compileExecutableProcedure ctxV) vp
   defineValue <- mergeAllM [
       return $ onlyCode $ "struct " ++ valueName n ++ " : public " ++ valueBase ++ " {",
       fmap indentCompiled $ valueConstructor ta t vm,
@@ -305,7 +286,6 @@ compileConcreteDefinition ta ns dd@(DefinedCategory c n pi _ _ fi ms ps fs) = do
                               formatFullContextBrace (dmContext m))
     createParams = mergeAllM $ map createParam pi
     createParam p = return $ onlyCode $ paramType ++ " " ++ paramName (vpParam p) ++ ";"
-    builtins t s0 = Map.filter ((<= s0) . vvScope) $ builtinVariables t
     -- TODO: Can probably remove this if @type members are disallowed. Or, just
     -- skip it if there are no @type members.
     getCycleCheck n = [
@@ -387,25 +367,6 @@ compileConcreteDefinition ta ns dd@(DefinedCategory c n pi _ _ fi ms ps fs) = do
           "const ParamTuple& params," ++
           "const ValueTuple& args) final {"
         ] ++ createFunctionDispatch n ValueScope fs ++ ["}"]
-    checkInternalParams pi fi pe fs r fa = do
-      let pm = Map.fromList $ map (\p -> (vpParam p,vpContext p)) pi
-      mergeAllM $ map (checkFunction pm) fs
-      mergeAllM $ map (checkParam pm) pe
-      let fa' = Map.union fa $ getFilterMap pi fi
-      mergeAllM $ map (checkFilter r fa') fi
-    checkFilter r fa (ParamFilter c n f) =
-      validateTypeFilter r fa f `reviseError`
-        (show n ++ " " ++ show f ++ formatFullContextBrace c)
-    checkFunction pm f =
-      when (sfScope f == ValueScope) $
-        mergeAllM $ map (checkParam pm) $ pValues $ sfParams f
-    checkParam pm p =
-      case vpParam p `Map.lookup` pm of
-           Nothing -> return ()
-           (Just c) -> compileError $ "Internal param " ++ show (vpParam p) ++
-                                      formatFullContextBrace c ++
-                                      " is already defined at " ++
-                                      formatFullContext (vpContext p)
 
 commonDefineAll :: MergeableM m =>
   AnyCategory c -> [Namespace] -> CompiledData [String] -> CompiledData [String] ->

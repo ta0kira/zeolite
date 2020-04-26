@@ -20,7 +20,6 @@ limitations under the License.
 
 module CompilerCxx.CategoryContext (
   ScopeContext(..),
-  builtinVariables,
   getContextForInit,
   getMainContext,
   getProcedureContext,
@@ -33,6 +32,7 @@ import Base.CompileError
 import Base.Mergeable
 import Compilation.CompilerState
 import Compilation.ProcedureContext
+import Compilation.ScopeContext
 import CompilerCxx.Code
 import Types.DefinedCategory
 import Types.Function
@@ -81,20 +81,6 @@ getContextForInit tm t d s = do
       pcLoopSetup = NotInLoop,
       pcCleanupSetup = CleanupSetup [] []
     }
-
-data ScopeContext c =
-  ScopeContext {
-    scCategories :: CategoryMap c,
-    scName :: CategoryName,
-    scExternalParams :: Positional (ValueParam c),
-    scInternalparams :: Positional (ValueParam c),
-    scMembers :: [DefinedMember c],
-    scExternalFilters :: [ParamFilter c],
-    scInternalFilters :: [ParamFilter c],
-    scFunctions :: Map.Map FunctionName (ScopedFunction c),
-    scVariables :: Map.Map VariableName (VariableValue c)
-  }
-  deriving (Show)
 
 getProcedureContext :: (Show c, CompileErrorM m, MergeableM m) =>
   ScopeContext c -> ScopedFunction c -> ExecutableProcedure c -> m (ProcedureContext c)
@@ -174,8 +160,3 @@ getMainContext tm = return $ ProcedureContext {
     pcLoopSetup = NotInLoop,
     pcCleanupSetup = CleanupSetup [] []
   }
-
-builtinVariables :: TypeInstance -> Map.Map VariableName (VariableValue c)
-builtinVariables t = Map.fromList [
-    (VariableName "self",VariableValue [] ValueScope (ValueType RequiredValue $ SingleType $ JustTypeInstance t) False)
-  ]
