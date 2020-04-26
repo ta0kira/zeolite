@@ -30,17 +30,17 @@ import System.FilePath
 import Text.Parsec
 import Text.Regex.TDFA -- Not safe!
 
-import Builtin
-import CompileInfo
-import IntegrationTest
-import SourceFile
-import TypeCategory
-import TypeInstance
-import TypesBase
-import CompilerCxx.Category
-import CompilerCxx.Naming
+import Base.CompileInfo
+import Base.TypesBase
 import Cli.CompileMetadata
 import Cli.CompilerCommand
+import CompilerCxx.Category
+import CompilerCxx.Naming
+import Parser.SourceFile
+import Types.Builtin
+import Types.IntegrationTest
+import Types.TypeCategory
+import Types.TypeInstance
 
 
 runSingleTest :: [String] -> [CompileMetadata] -> [ObjectFile] ->

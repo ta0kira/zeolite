@@ -235,7 +235,7 @@ compiler.
 
 ```shell
 # Unit Tests.
-( cd compiler && ghc all-tests.hs && ./all-tests )
+( cd compiler && ghc Test/all-tests.hs && cd Test && ./all-tests )
 
 # Integration Tests.
 ./zeolite -t tests lib/util lib/file

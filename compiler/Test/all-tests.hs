@@ -18,18 +18,19 @@ limitations under the License.
 
 {-# LANGUAGE Safe #-}
 
-import CompileInfo
-import TestBase
-import TypesBase
-import qualified DefinitionTest as DefinitionTest
-import qualified TypeInstanceTest as TypeInstanceTest
-import qualified TypeCategoryTest as TypeCategoryTest
-import qualified ParserTest as ParserTest
-import qualified ProcedureTest as ProcedureTest
-import qualified IntegrationTestTest as IntegrationTestTest
+import Base.CompileInfo
+import Base.TypesBase
+import Test.Base
+import qualified Test.DefinedCategory as DefinedCategoryTest
+import qualified Test.IntegrationTest as IntegrationTestTest
+import qualified Test.Parser          as ParserTest
+import qualified Test.Procedure       as ProcedureTest
+import qualified Test.TypeCategory    as TypeCategoryTest
+import qualified Test.TypeInstance    as TypeInstanceTest
+
 
 main = runAllTests $ concat [
-    labelWith "DefinitionTest"      DefinitionTest.tests,
+    labelWith "DefinedCategoryTest"      DefinedCategoryTest.tests,
     labelWith "TypeInstanceTest"    TypeInstanceTest.tests,
     labelWith "ParserTest"          ParserTest.tests,
     labelWith "TypeCategoryTest"    TypeCategoryTest.tests,

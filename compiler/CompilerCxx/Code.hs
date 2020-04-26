@@ -57,13 +57,13 @@ import Data.Char
 import Data.List (intercalate)
 import qualified Data.Set as Set
 
-import Builtin
-import CompilerState
-import DefinedCategory
-import TypeCategory
-import TypeInstance
-import TypesBase
+import Base.TypesBase
+import Compilation.CompilerState
 import CompilerCxx.Naming
+import Types.Builtin
+import Types.DefinedCategory
+import Types.TypeCategory
+import Types.TypeInstance
 
 
 emptyCode :: CompiledData [String]

@@ -20,7 +20,7 @@ limitations under the License.
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE Safe #-}
 
-module CompileInfo (
+module Base.CompileInfo (
   CompileInfo,
   CompileMessage,
   getCompileError,
@@ -34,7 +34,7 @@ import Data.List (intercalate)
 import Control.Monad.Fail
 #endif
 
-import TypesBase (CompileErrorM(..),Mergeable(..),MergeableM(..))
+import Base.TypesBase (CompileErrorM(..),Mergeable(..),MergeableM(..))
 
 
 data CompileMessage =

@@ -20,7 +20,7 @@ limitations under the License.
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE Safe #-}
 
-module CategoryCompiler (
+module Compilation.CategoryCompiler (
   ProcedureContext(..),
   ReturnValidation(..),
   updateArgVariables,
@@ -31,13 +31,13 @@ import Control.Monad (when)
 import qualified Data.Map as Map
 import qualified Data.Set as Set
 
-import CompilerState
-import DefinedCategory
-import Function
-import Procedure
-import TypeCategory
-import TypeInstance
-import TypesBase
+import Base.TypesBase
+import Compilation.CompilerState
+import Types.DefinedCategory
+import Types.Function
+import Types.Procedure
+import Types.TypeCategory
+import Types.TypeInstance
 
 
 data ProcedureContext c =

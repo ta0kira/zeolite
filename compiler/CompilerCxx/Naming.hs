@@ -53,11 +53,11 @@ module CompilerCxx.Naming (
 import Data.Hashable (Hashable,hash)
 import Numeric (showHex)
 
-import Function
-import Procedure
-import TypeCategory
-import TypeInstance
-import TypesBase
+import Base.TypesBase
+import Types.Function
+import Types.Procedure
+import Types.TypeCategory
+import Types.TypeInstance
 
 
 headerFilename :: CategoryName -> String

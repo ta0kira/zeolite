@@ -37,17 +37,17 @@ import Data.List (intercalate)
 import qualified Data.Map as Map
 import qualified Data.Set as Set
 
-import Builtin
-import CategoryCompiler
-import CompilerState
-import DefinedCategory
-import Function
-import Procedure
-import TypeCategory
-import TypeInstance
-import TypesBase
+import Base.TypesBase
+import Compilation.CategoryCompiler
+import Compilation.CompilerState
 import CompilerCxx.Code
 import CompilerCxx.Naming
+import Types.Builtin
+import Types.DefinedCategory
+import Types.Function
+import Types.Procedure
+import Types.TypeCategory
+import Types.TypeInstance
 
 
 compileExecutableProcedure :: (Show c, CompileErrorM m, MergeableM m) =>

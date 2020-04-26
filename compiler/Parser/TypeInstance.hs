@@ -19,7 +19,7 @@ limitations under the License.
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE Safe #-}
 
-module ParseInstance (
+module Parser.TypeInstance (
 ) where
 
 import Control.Applicative ((<|>))
@@ -27,9 +27,9 @@ import Control.Monad (when)
 import Text.Parsec hiding ((<|>))
 import Text.Parsec.String
 
-import ParserBase
-import TypeInstance
-import TypesBase
+import Base.TypesBase
+import Parser.Base
+import Types.TypeInstance
 
 
 instance ParseFromSource GeneralInstance where

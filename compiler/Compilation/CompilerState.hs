@@ -21,7 +21,7 @@ limitations under the License.
 {-# LANGUAGE Safe #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
-module CompilerState (
+module Compilation.CompilerState (
   CleanupSetup(..),
   CompilerContext(..),
   CompiledData(..),
@@ -65,12 +65,12 @@ import Control.Monad.Trans.State (StateT(..),execStateT,get,mapStateT,put)
 import Data.Monoid
 import qualified Data.Set as Set
 
-import DefinedCategory
-import Function
-import Procedure
-import TypeCategory
-import TypeInstance
-import TypesBase
+import Base.TypesBase
+import Types.DefinedCategory
+import Types.Function
+import Types.Procedure
+import Types.TypeCategory
+import Types.TypeInstance
 
 
 type CompilerState a m = StateT a m

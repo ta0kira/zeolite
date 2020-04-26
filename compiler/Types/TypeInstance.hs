@@ -20,7 +20,7 @@ limitations under the License.
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE Safe #-}
 
-module TypeInstance (
+module Types.TypeInstance (
   AnyTypeResolver(..),
   CategoryName(..),
   DefinesInstance(..),
@@ -64,7 +64,7 @@ import Control.Monad (when)
 import Data.List (intercalate)
 import qualified Data.Map as Map
 
-import TypesBase
+import Base.TypesBase
 
 
 type GeneralInstance = GeneralType TypeInstanceOrParam

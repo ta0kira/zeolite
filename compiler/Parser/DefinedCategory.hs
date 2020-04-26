@@ -19,7 +19,7 @@ limitations under the License.
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE Safe #-}
 
-module ParseDefinition (
+module Parser.DefinedCategory (
   parseAnySource,
 ) where
 
@@ -27,15 +27,15 @@ import Control.Monad (when)
 import Text.Parsec
 import Text.Parsec.String
 
-import DefinedCategory
-import ParseCategory
-import ParseInstance
-import ParseProcedure
-import ParserBase
-import Procedure
-import TypeCategory
-import TypeInstance
-import TypesBase
+import Base.TypesBase
+import Parser.Base
+import Parser.Procedure
+import Parser.TypeCategory
+import Parser.TypeInstance
+import Types.DefinedCategory
+import Types.Procedure
+import Types.TypeCategory
+import Types.TypeInstance
 
 
 instance ParseFromSource (DefinedCategory SourcePos) where

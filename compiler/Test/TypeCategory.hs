@@ -18,7 +18,7 @@ limitations under the License.
 
 {-# LANGUAGE Safe #-}
 
-module TypeCategoryTest where
+module Test.TypeCategory (tests) where
 
 import Control.Arrow
 import Control.Monad
@@ -29,14 +29,14 @@ import Text.Parsec.String
 import qualified Data.Map as Map
 import qualified Data.Set as Set
 
-import Builtin
-import CompileInfo
-import ParseCategory
-import ParserBase
-import TestBase
-import TypeCategory
-import TypeInstance
-import TypesBase
+import Base.CompileInfo
+import Base.TypesBase
+import Parser.Base
+import Parser.TypeCategory
+import Test.Base
+import Types.Builtin
+import Types.TypeCategory
+import Types.TypeInstance
 
 
 tests :: [IO (CompileInfo ())]

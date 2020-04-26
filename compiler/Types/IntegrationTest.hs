@@ -18,7 +18,7 @@ limitations under the License.
 
 {-# LANGUAGE Safe #-}
 
-module IntegrationTest (
+module Types.IntegrationTest (
   ExpectedResult(..),
   IntegrationTest(..),
   IntegrationTestHeader(..),
@@ -31,9 +31,9 @@ module IntegrationTest (
   isExpectRuntimeSuccess,
 ) where
 
-import TypeCategory
-import DefinedCategory
-import Procedure (Expression)
+import Types.TypeCategory
+import Types.DefinedCategory
+import Types.Procedure (Expression)
 
 
 data IntegrationTestHeader c =

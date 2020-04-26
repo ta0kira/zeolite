@@ -18,7 +18,7 @@ limitations under the License.
 
 {-# LANGUAGE Safe #-}
 
-module TestBase (
+module Test.Base (
   checkDefinesFail,
   checkDefinesSuccess,
   checkEquals,
@@ -46,11 +46,11 @@ import Text.Parsec.String
 import qualified Data.Map as Map
 import qualified Data.Set as Set
 
-import CompileInfo
-import TypeInstance
-import ParseInstance
-import ParserBase
-import TypesBase
+import Base.CompileInfo
+import Base.TypesBase
+import Parser.Base
+import Parser.TypeInstance
+import Types.TypeInstance
 
 
 runAllTests :: [IO (CompileInfo ())] -> IO ()

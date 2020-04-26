@@ -18,7 +18,7 @@ limitations under the License.
 
 {-# LANGUAGE Safe #-}
 
-module TypeCategory (
+module Types.TypeCategory (
   AnyCategory(..),
   CategoryMap(..),
   CategoryResolver(..),
@@ -79,9 +79,9 @@ import Data.List (group,groupBy,intercalate,sort,sortBy)
 import qualified Data.Map as Map
 import qualified Data.Set as Set
 
-import Function
-import TypeInstance
-import TypesBase
+import Base.TypesBase
+import Types.Function
+import Types.TypeInstance
 
 
 data AnyCategory c =

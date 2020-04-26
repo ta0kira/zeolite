@@ -18,16 +18,16 @@ limitations under the License.
 
 {-# LANGUAGE Safe #-}
 
-module ParserTest where
+module Test.Parser (tests) where
 
 import Control.Monad (when)
 import Text.Parsec
 import Text.Parsec.String
 
-import CompileInfo
-import ParserBase
-import TestBase
-import TypesBase
+import Base.CompileInfo
+import Base.TypesBase
+import Parser.Base
+import Test.Base
 
 
 tests :: [IO (CompileInfo ())]

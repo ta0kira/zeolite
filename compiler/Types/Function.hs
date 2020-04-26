@@ -18,7 +18,7 @@ limitations under the License.
 
 {-# LANGUAGE Safe #-}
 
-module Function (
+module Types.Function (
   FunctionType(..),
   assignFunctionParams,
   checkFunctionConvert,
@@ -29,8 +29,9 @@ import Data.List (group,intercalate,sort)
 import Control.Monad (when)
 import qualified Data.Map as Map
 
-import TypeInstance
-import TypesBase
+import Base.TypesBase
+import Types.TypeInstance
+
 
 data FunctionType =
   FunctionType {

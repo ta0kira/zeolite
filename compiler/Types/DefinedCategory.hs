@@ -18,7 +18,7 @@ limitations under the License.
 
 {-# LANGUAGE Safe #-}
 
-module DefinedCategory (
+module Types.DefinedCategory (
   DefinedCategory(..),
   DefinedMember(..),
   VariableValue(..),
@@ -32,11 +32,11 @@ module DefinedCategory (
 import qualified Data.Map as Map
 import qualified Data.Set as Set
 
-import Function
-import Procedure
-import TypeCategory
-import TypeInstance
-import TypesBase
+import Base.TypesBase
+import Types.Function
+import Types.Procedure
+import Types.TypeCategory
+import Types.TypeInstance
 
 
 data DefinedCategory c =

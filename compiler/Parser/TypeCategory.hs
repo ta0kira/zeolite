@@ -19,7 +19,7 @@ limitations under the License.
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE Safe #-}
 
-module ParseCategory (
+module Parser.TypeCategory (
   parseFilters,
   parseScope,
   parseScopedFunction,
@@ -31,11 +31,11 @@ module ParseCategory (
 import Text.Parsec
 import Text.Parsec.String
 
-import ParseInstance
-import ParserBase
-import TypeCategory
-import TypeInstance
-import TypesBase
+import Base.TypesBase
+import Parser.Base
+import Parser.TypeInstance
+import Types.TypeCategory
+import Types.TypeInstance
 
 
 instance ParseFromSource (AnyCategory SourcePos) where

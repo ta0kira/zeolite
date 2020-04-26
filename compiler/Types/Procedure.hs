@@ -18,7 +18,7 @@ limitations under the License.
 
 {-# LANGUAGE Safe #-}
 
-module Procedure (
+module Types.Procedure (
   ArgValues(..),
   Assignable(..),
   ExecutableProcedure(..),
@@ -46,12 +46,12 @@ module Procedure (
   isUnnamedReturns,
 ) where
 
-import Function
-import TypeCategory
-import TypeInstance
-import TypesBase
-
 import Data.List (intercalate)
+
+import Base.TypesBase
+import Types.Function
+import Types.TypeCategory
+import Types.TypeInstance
 
 
 -- NOTE: Requires FunctionType and SymbolScope to compile, but those might not

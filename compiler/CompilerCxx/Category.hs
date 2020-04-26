@@ -38,18 +38,18 @@ import Data.List (intercalate,nub,sortOn)
 import qualified Data.Map as Map
 import qualified Data.Set as Set
 
-import Builtin
-import CategoryCompiler
-import CompilerState
-import DefinedCategory
-import Function
-import Procedure
-import TypeCategory
-import TypeInstance
-import TypesBase
+import Base.TypesBase
+import Compilation.CategoryCompiler
+import Compilation.CompilerState
 import CompilerCxx.Code
 import CompilerCxx.Naming
 import CompilerCxx.Procedure
+import Types.Builtin
+import Types.DefinedCategory
+import Types.Function
+import Types.Procedure
+import Types.TypeCategory
+import Types.TypeInstance
 
 
 data CxxOutput =

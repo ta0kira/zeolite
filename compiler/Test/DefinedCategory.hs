@@ -18,16 +18,16 @@ limitations under the License.
 
 {-# LANGUAGE Safe #-}
 
-module DefinitionTest where
+module Test.DefinedCategory (tests) where
 
 import Text.Parsec
 import Text.Parsec.String
 
-import CompileInfo
-import ParseDefinition
-import DefinedCategory
-import TestBase
-import TypesBase
+import Base.CompileInfo
+import Base.TypesBase
+import Parser.DefinedCategory
+import Test.Base
+import Types.DefinedCategory
 
 
 tests :: [IO (CompileInfo ())]

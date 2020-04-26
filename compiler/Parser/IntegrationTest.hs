@@ -19,17 +19,17 @@ limitations under the License.
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE Safe #-}
 
-module ParseIntegrationTest (
+module Parser.IntegrationTest (
 ) where
 
 import Text.Parsec
 import Text.Parsec.String
 
-import IntegrationTest
-import ParseCategory
-import ParseDefinition
-import ParseProcedure
-import ParserBase
+import Parser.Base
+import Parser.DefinedCategory
+import Parser.Procedure
+import Parser.TypeCategory
+import Types.IntegrationTest
 
 
 instance ParseFromSource (IntegrationTestHeader SourcePos) where

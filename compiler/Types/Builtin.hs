@@ -18,7 +18,7 @@ limitations under the License.
 
 {-# LANGUAGE Safe #-}
 
-module Builtin (
+module Types.Builtin (
   boolRequiredValue,
   charRequiredValue,
   defaultCategories,
@@ -31,9 +31,9 @@ module Builtin (
 
 import qualified Data.Map as Map
 
-import TypeCategory
-import TypeInstance
-import TypesBase
+import Base.TypesBase
+import Types.TypeCategory
+import Types.TypeInstance
 
 
 defaultCategories :: CategoryMap c

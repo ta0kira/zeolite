@@ -20,20 +20,20 @@ limitations under the License.
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE Safe #-}
 
-module ParseProcedure (
+module Parser.Procedure (
 ) where
 
 import Text.Parsec
 import Text.Parsec.String
 import qualified Data.Set as Set
 
-import ParseCategory
-import ParseInstance
-import ParserBase
-import Procedure
-import TypeCategory
-import TypeInstance
-import TypesBase
+import Base.TypesBase
+import Parser.Base
+import Parser.TypeCategory
+import Parser.TypeInstance
+import Types.Procedure
+import Types.TypeCategory
+import Types.TypeInstance
 
 
 instance ParseFromSource (ExecutableProcedure SourcePos) where

@@ -18,21 +18,21 @@ limitations under the License.
 
 {-# LANGUAGE Safe #-}
 
-module IntegrationTestTest where
+module Test.IntegrationTest (tests) where
 
 import Control.Monad (when)
 import Text.Parsec
 
-import CompileInfo
-import DefinedCategory
-import IntegrationTest
-import ParseIntegrationTest
-import ParserBase
-import Procedure
-import TestBase
-import TypeCategory
-import TypeInstance
-import TypesBase
+import Base.CompileInfo
+import Base.TypesBase
+import Parser.Base
+import Parser.IntegrationTest
+import Test.Base
+import Types.DefinedCategory
+import Types.IntegrationTest
+import Types.Procedure
+import Types.TypeCategory
+import Types.TypeInstance
 
 
 tests :: [IO (CompileInfo ())]

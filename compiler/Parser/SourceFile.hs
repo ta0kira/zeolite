@@ -18,7 +18,7 @@ limitations under the License.
 
 {-# LANGUAGE Safe #-}
 
-module SourceFile (
+module Parser.SourceFile (
   parseInternalSource,
   parsePublicSource,
   parseTestSource,
@@ -27,14 +27,14 @@ module SourceFile (
 import Text.Parsec
 import Text.Parsec.String
 
-import DefinedCategory
-import IntegrationTest
-import ParseCategory
-import ParseDefinition
-import ParseIntegrationTest
-import ParserBase
-import TypeCategory
-import TypesBase
+import Base.TypesBase
+import Parser.Base
+import Parser.DefinedCategory
+import Parser.IntegrationTest
+import Parser.TypeCategory
+import Types.DefinedCategory
+import Types.IntegrationTest
+import Types.TypeCategory
 
 
 parseInternalSource :: CompileErrorM m =>

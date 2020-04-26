@@ -18,19 +18,19 @@ limitations under the License.
 
 {-# LANGUAGE Safe #-}
 
-module ProcedureTest where
+module Test.Procedure (tests) where
 
 import Control.Monad
 import Text.Parsec
 import Text.Parsec.String
 
-import CompileInfo
-import ParseProcedure
-import Procedure
-import TestBase
-import TypeCategory
-import TypeInstance
-import TypesBase
+import Base.CompileInfo
+import Base.TypesBase
+import Parser.Procedure
+import Test.Base
+import Types.Procedure
+import Types.TypeCategory
+import Types.TypeInstance
 
 
 tests :: [IO (CompileInfo ())]

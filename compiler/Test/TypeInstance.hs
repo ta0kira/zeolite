@@ -18,18 +18,18 @@ limitations under the License.
 
 {-# LANGUAGE Safe #-}
 
-module TypeInstanceTest where
+module Test.TypeInstance (tests) where
 
 import Data.List
 import Text.Parsec
 import qualified Data.Map as Map
 
-import CompileInfo
-import ParseInstance
-import ParserBase
-import TestBase
-import TypeInstance
-import TypesBase
+import Base.CompileInfo
+import Base.TypesBase
+import Parser.Base
+import Parser.TypeInstance
+import Test.Base
+import Types.TypeInstance
 
 
 tests :: [IO (CompileInfo ())]

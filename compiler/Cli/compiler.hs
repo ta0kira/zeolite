@@ -29,20 +29,20 @@ import System.IO
 import qualified Data.Map as Map
 import qualified Data.Set as Set
 
-import Builtin
-import CompileInfo
-import DefinedCategory
-import SourceFile
-import TypesBase
-import TypeCategory
-import TypeInstance
-import CompilerCxx.Category
-import CompilerCxx.Naming
+import Base.CompileInfo
+import Base.TypesBase
 import Cli.CompileMetadata
 import Cli.CompileOptions
 import Cli.CompilerCommand
-import Cli.TestRunner
 import Cli.ParseCompileOptions -- Not safe, due to Text.Regex.TDFA.
+import Cli.TestRunner
+import CompilerCxx.Category
+import CompilerCxx.Naming
+import Parser.SourceFile
+import Types.Builtin
+import Types.DefinedCategory
+import Types.TypeCategory
+import Types.TypeInstance
 
 
 main = do

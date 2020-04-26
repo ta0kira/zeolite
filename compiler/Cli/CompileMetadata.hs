@@ -65,10 +65,10 @@ import System.IO
 import qualified Data.Map as Map
 import qualified Data.Set as Set
 
-import TypeCategory
-import TypeInstance
 import Cli.CompileOptions (CompileMode)
 import CompilerCxx.Category (CxxOutput(..))
+import Types.TypeCategory
+import Types.TypeInstance
 
 
 data CompileMetadata =

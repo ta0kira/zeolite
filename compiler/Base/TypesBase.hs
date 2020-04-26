@@ -20,7 +20,7 @@ limitations under the License.
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE Safe #-}
 
-module TypesBase (
+module Base.TypesBase (
   CompileError(..),
   CompileErrorM(..),
   GeneralType(..),
