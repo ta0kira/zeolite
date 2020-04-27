@@ -39,7 +39,7 @@ import System.IO
 import System.Posix.Process (ProcessStatus(..),executeFile,forkProcess,getProcessStatus)
 import System.Posix.Temp (mkstemps)
 
-import Paths_zeolite (getDataFileName)
+import Paths_zeolite_lang (getDataFileName)
 
 
 loadConfig :: IO (Backend,Resolver)

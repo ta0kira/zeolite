@@ -1,4 +1,4 @@
-name:                zeolite
+name:                zeolite-lang
 version:             0.1.0.0
 synopsis:            Zeolite is a statically-typed, general-purpose programming language.
 
@@ -18,7 +18,8 @@ description:
      then automatically build the supporting libraries.
   .
   Once the setup above is completed, you should run the integration tests to
-  ensure that code can be compiled and run:
+  ensure that code can be compiled and run. These can take quite a while to
+  complete.
   .
   @
   ZEOLITE_PATH=$(zeolite --get-path)
@@ -98,6 +99,7 @@ library zeolite-internal
                        Base.Mergeable,
                        Cli.CompileMetadata,
                        Cli.CompileOptions,
+                       Cli.Compiler,
                        Cli.ParseCompileOptions,
                        Cli.TestRunner,
                        Compilation.CompileInfo,
@@ -137,7 +139,7 @@ library zeolite-internal
                        Types.TypeInstance,
                        Types.Variance
 
-  other-modules:       Paths_zeolite
+  other-modules:       Paths_zeolite_lang
 
   other-extensions:    CPP,
                        ExistentialQuantification,
@@ -164,9 +166,7 @@ library zeolite-internal
 
 
 executable zeolite
-  main-is:             src/zeolite.hs
-
-  other-modules:       Paths_zeolite
+  main-is:             bin/zeolite.hs
 
   build-depends:       base,
                        containers,
@@ -179,7 +179,7 @@ executable zeolite
 
 
 executable zeolite-setup
-  main-is:             src/zeolite-setup.hs
+  main-is:             bin/zeolite-setup.hs
 
   build-depends:       base,
                        directory,
@@ -192,7 +192,7 @@ executable zeolite-setup
 test-suite zeolite-test
   type:                exitcode-stdio-1.0
 
-  main-is:             src/unit-tests.hs
+  main-is:             bin/unit-tests.hs
 
   build-depends:       base,
                        directory,

@@ -22,6 +22,8 @@ import System.Exit
 import System.FilePath
 import System.IO
 
+import Cli.CompileOptions
+import Cli.Compiler
 import Config.LoadConfig
 import Config.Paths
 import Config.Programs
@@ -36,10 +38,22 @@ main = do
   f <- localConfigPath
   hPutStrLn stderr $ "Writing local config to " ++ f ++ "."
   writeFile f (show config ++ "\n")
+  initLibraries
+  hPutStrLn stderr "Setup is now complete!"
 
 clangBinary = "clang++"
 gccBinary   = "g++"
 arBinary    = "ar"
+libraries = [
+    "base",
+    "lib/util",
+    "lib/file",
+    "tests/visibility/internal",
+    "tests/visibility",
+    "tests/visibility2/internal",
+    "tests/visibility2",
+    "tests"
+  ]
 
 createConfig :: IO LocalConfig
 createConfig = do
@@ -92,3 +106,22 @@ getInput = do
     hPutStrLn stderr "Canceled."
     exitFailure
   hGetLine stdin
+
+initLibraries :: IO ()
+initLibraries = do
+  path <- rootPath >>= canonicalizePath
+  let libraries' = map (path </>) libraries
+  let options = CompileOptions {
+      coHelp = HelpNotNeeded,
+      coPublicDeps = [],
+      coPrivateDeps = [],
+      coSources = libraries',
+      coExtraFiles = [],
+      coExtraPaths = [],
+      coExtraRequires = [],
+      coSourcePrefix = "",
+      coMode = CompileRecompile,
+      coOutputName = "",
+      coForce = ForceRecompile
+    }
+  runCompiler options

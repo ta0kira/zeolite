@@ -235,7 +235,7 @@ compiler.
 
 ```shell
 # Unit Tests.
-ghc -isrc src/unit-tests.hs && src/unit-tests
+ghc -isrc bin/unit-tests.hs && bin/unit-tests
 
 # Integration Tests.
 ./zeolite -t tests lib/util lib/file

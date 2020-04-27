@@ -16,6 +16,11 @@ limitations under the License.
 
 -- Author: Kevin P. Barry [ta0kira@gmail.com]
 
+module Cli.Compiler (
+  rootPath,
+  runCompiler,
+) where
+
 import Control.Applicative ((<|>))
 import Control.Monad (when)
 import Data.List (intercalate,isSuffixOf,nub,sort)
@@ -47,32 +52,15 @@ import Types.DefinedCategory
 import Types.TypeCategory
 import Types.TypeInstance
 
-import Paths_zeolite (getDataFileName)
+import Paths_zeolite_lang (getDataFileName)
 
 
-main = do
-  args <- getArgs
-  let options = parseCompileOptions args >>= validateCompileOptions
-  compile options where
-    compile co
-      | isCompileError co = do
-          hPutStr stderr $ show $ getCompileError co
-          hPutStrLn stderr "Use the -h option to show help."
-          exitFailure
-      | otherwise = do
-        let co' = getCompileSuccess co
-        when (HelpNotNeeded /= (coHelp co')) $ showHelp >> exitFailure
-        runCompiler co'
-
-showHelp :: IO ()
-showHelp = do
-  hPutStrLn stderr "Zeolite CLI Help:"
-  mapM_ (hPutStrLn stderr . ("  " ++)) optionHelpText
-  hPutStrLn stderr "Also see https://ta0kira.github.io/zeolite for more documentation."
+rootPath :: IO FilePath
+rootPath = getDataFileName ""
 
 runCompiler :: CompileOptions -> IO ()
 runCompiler (CompileOptions _ _ _ _ _ _ _ _ OnlyShowPath _ _) = do
-  p <- getDataFileName "" >>= canonicalizePath
+  p <- rootPath >>= canonicalizePath
   hPutStrLn stdout p
 runCompiler co@(CompileOptions _ _ _ ds _ _ _ p (ExecuteTests tp) _ f) = do
   (backend,resolver) <- loadConfig
@@ -123,11 +111,12 @@ runCompiler co@(CompileOptions _ _ _ ds _ _ _ p (ExecuteTests tp) _ f) = do
       | otherwise = do
           hPutStrLn stderr $ "\nPassed: " ++ show passed ++ " test(s), Failed: " ++ show failed ++ " test(s)"
           hPutStrLn stderr $ "Zeolite tests passed."
-runCompiler co@(CompileOptions h _ _ ds _ _ _ _ CompileRecompile _ f) = do
+runCompiler co@(CompileOptions h _ _ ds _ _ _ p CompileRecompile _ f) = do
   fmap mergeAll $ sequence $ map recompileSingle ds where
     recompileSingle d0 = do
-      rm <- tryLoadRecompile d0
-      upToDate <- isPathUpToDate d0
+      let d = p </> d0
+      rm <- tryLoadRecompile d
+      upToDate <- isPathUpToDate d
       maybeCompile rm upToDate where
         maybeCompile Nothing _ = do
           hPutStrLn stderr $ "Path " ++ d0 ++ " has not been configured or compiled yet."
