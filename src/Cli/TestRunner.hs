@@ -33,10 +33,10 @@ import Text.Regex.TDFA -- Not safe!
 import Base.CompileError
 import Base.Mergeable
 import Cli.CompileMetadata
-import Cli.CompilerCommand
 import Compilation.CompileInfo
 import CompilerCxx.Category
 import CompilerCxx.Naming
+import Config.Programs
 import Parser.SourceFile
 import Types.Builtin
 import Types.IntegrationTest
@@ -44,10 +44,10 @@ import Types.TypeCategory
 import Types.TypeInstance
 
 
-runSingleTest :: [String] -> [CompileMetadata] -> [ObjectFile] ->
-                 CategoryMap SourcePos -> (String,String) ->
+runSingleTest :: CompilerBackend b => b -> [String] -> [CompileMetadata] ->
+                 [ObjectFile] -> CategoryMap SourcePos -> (String,String) ->
                  IO ((Int,Int),CompileInfo ())
-runSingleTest paths deps os tm (f,s) = do
+runSingleTest b paths deps os tm (f,s) = do
   hPutStrLn stderr $ "\nExecuting tests from " ++ f
   allResults <- checkAndRun (parseTestSource (f,s))
   return $ second (flip reviseError $ "\nIn test file " ++ f) allResults where
@@ -108,7 +108,7 @@ runSingleTest paths deps os tm (f,s) = do
            let (req,main,ns,fs) = getCompileSuccess result
            binaryName <- createBinary main req [ns] fs
            let command = TestCommand binaryName (takeDirectory binaryName)
-           (TestCommandResult s' out err) <- runTestCommand command
+           (TestCommandResult s' out err) <- runTestCommand b command
            case (s,s') of
                 (True,False) -> return $ mergeAllM $ map compileError $ warnings ++ err ++ out
                 (False,True) -> return $ compileError "Expected runtime failure"
@@ -163,7 +163,7 @@ runSingleTest paths deps os tm (f,s) = do
       let ofr = getObjectFileResolver req2 (sources' ++ os)
       let os' = ofr ns req
       let command = CompileToBinary main os' binary paths'
-      runCxxCommand command
+      runCxxCommand b command
       return binary
     writeSingleFile d ca@(CxxOutput _ f _ _ _ content) = do
       writeFile (d </> f) $ concat $ map (++ "\n") content

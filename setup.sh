@@ -22,8 +22,6 @@ here=$PWD
 cd "$(dirname "$0")"
 
 root=$PWD
-compiler_hs="$root/src/compiler"
-compiler_bin="$root/zeolite"
 modules=(
   "$root/base"
   "$root/lib/util"
@@ -36,13 +34,13 @@ modules=(
 )
 
 build_compiler() {
-  local command=(ghc -O5 -i"$root/src" "$compiler_hs" -o "$compiler_bin")
+  local command=(cabal build)
   echo "${command[@]}" 1>&2
   "${command[@]}"
 }
 
 init_modules() {
-  local command=("$compiler_bin" -f -r "${modules[@]}")
+  local command=(cabal run zeolite -- -f -r "${modules[@]}")
   echo "${command[@]}" 1>&2
   "${command[@]}"
 }
