@@ -19,8 +19,10 @@ limitations under the License.
 {-# LANGUAGE Safe #-}
 
 module Config.LoadConfig (
-  Backend,
-  Resolver,
+  Backend(..),
+  LocalConfig(..),
+  Resolver(..),
+  localConfigPath,
   loadConfig,
 ) where
 
@@ -41,14 +43,20 @@ import Paths_zeolite (getDataFileName)
 
 
 loadConfig :: IO (Backend,Resolver)
-loadConfig = return (defaultCompiler,SimpleResolver)
-
-defaultCompiler :: Backend
-defaultCompiler = UnixBackend {
-    ucCxxBinary = "clang++",
-    ucCxxOptions = ["-O2", "-std=c++11"],
-    ucArBinary = "ar"
-  }
+loadConfig = do
+  f <- localConfigPath
+  isFile <- doesFileExist f
+  when (not isFile) $ do
+    hPutStrLn stderr "Zeolite has not been configured. Please run zeolite-setup."
+    exitFailure
+  c <- readFile f
+  lc <- check $ (reads c :: [(LocalConfig,String)])
+  return (lcBackend lc,lcResolver lc) where
+    check [(cm,"")] = return cm
+    check [(cm,"\n")] = return cm
+    check _ = do
+      hPutStrLn stderr "Zeolite configuration is corrupt. Please rerun zeolite-setup."
+      exitFailure
 
 data Backend =
   UnixBackend {
@@ -56,8 +64,21 @@ data Backend =
     ucCxxOptions :: [String],
     ucArBinary :: String
   }
+  deriving (Read,Show)
 
-data Resolver = SimpleResolver
+data Resolver = SimpleResolver deriving (Read,Show)
+
+data LocalConfig =
+  LocalConfig {
+    lcBackend :: Backend,
+    lcResolver :: Resolver
+  }
+  deriving (Read,Show)
+
+localConfigFilename = "local-config.txt"
+
+localConfigPath :: IO FilePath
+localConfigPath = getDataFileName localConfigFilename >>= canonicalizePath
 
 instance CompilerBackend Backend where
   runCxxCommand (UnixBackend cb co ab) (CompileToObject s p nm ns ps e) = do
