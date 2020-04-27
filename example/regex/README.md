@@ -6,11 +6,14 @@
 To run the example:
 
 ```shell
+# This is just to locate the example code. Not for normal use!
+ZEOLITE_PATH=$(zeolite --get-path)
+
 # Compile the example.
-../../zeolite -i ../../lib/util -m RegexDemo .
+zeolite -p "$ZEOLITE_PATH" -i lib/util -m RegexDemo example/regex
 
 # Run the unit tests.
-../../zeolite -t .
+zeolite -p "$ZEOLITE_PATH" -t example/regex
 
 # Execute the compiled binary.
 ./RegexDemo

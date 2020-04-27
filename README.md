@@ -30,8 +30,10 @@ It's the [any%](https://en.wiktionary.org/wiki/any%25) of programming.
 }</pre>
 
 ```shell
+cd helloworld
+
 # Compile.
-./zeolite -i util -m HelloWorld helloworld
+zeolite -i lib/util -m HelloWorld .
 
 # Execute.
 ./HelloWorld
@@ -199,47 +201,11 @@ Zeolite also *increases* flexbility in some ways:
 
 ### Installing Zeolite
 
-Zeolite is currently developed and tested on Linux. It might not work out of the
-box on other operating systems at the moment.
-
-1. Make sure that you have [`git`][git], [`clang++`][clang] (possibly installed
-   via a package just named "clang"), and [`ghc`][ghc] installed on your system.
-2. Clone this project in a local directory.
-   ```shell
-   git clone https://github.com/ta0kira/zeolite.git
-   ```
-3. Update the submodules used by this project.
-   ```shell
-   cd zeolite && git submodule init && git submodule update
-   ```
-4. Install a few Haskell dependencies via `cabal`.
-   ```shell
-   sudo apt-get install cabal-install
-   cabal update
-   cabal install hashable mtl parsec regex-tdfa
-   ```
-5. Run the compiler setup:
-   ```shell
-   ./setup.sh
-   ```
-   This will create the compiler binary `./zeolite`. If you modify the compiler
-   code or move the source directory, you will need to rerun `setup.sh`.
-
-`zeolite` was written for Linux systems that have the [`clang++`][clang] C++
-compiler and the [`ghc`][ghc] Haskell compiler. More flexibility will probably
-be added in the future.
-
-If you feel like running the unit and integration tests, you can run the
-commands below. This isn't required, but it might be useful if you modify the
-compiler.
-
-```shell
-# Unit Tests.
-ghc -isrc bin/unit-tests.hs && bin/unit-tests
-
-# Integration Tests.
-./zeolite -t tests lib/util lib/file
-```
+The Zeolite compiler can be installed from [Hackage][hackage] using
+[`cabal`][cabal]. Please follow the installation instructions for the
+[zeolite-lang][hackage-zeolite-lang]. Before starting, you will need the
+[`clang++`][clang] C++ compiler (or something compatible, such as `g++`) and the
+standard `ar` archiver tool installed.
 
 ### Source Files
 
@@ -262,6 +228,11 @@ you need to split it up, you must also use `.0rp` for sharing type declarations.
 
 ### Compiling Programs
 
+**IMPORTANT:** All programs or modules must be in their own directory so that
+`zeolite` is able to cache information about the build. Unlike some other
+compilers, you *do not* specify all command-line options every time you
+recompile a binary or module.
+
 To create a program, define a `concrete` category and implement the
 `@type run () -> ()` function. (The function signature means that it takes
 nothing and returns nothing, and it is called on a *type* rather than a
@@ -279,8 +250,11 @@ nothing and returns nothing, and it is called on a *type* rather than a
 }</pre>
 
 ```shell
+# The directory containing your project sources.
+cd yourprojectdir
+
 # Compile.
-./zeolite -i util -m YourCategory yourprojectdir
+zeolite -i lib/util -m YourCategory .
 
 # Execute.
 ./YourCategory
@@ -295,7 +269,7 @@ source files during compilation.
 To compile the module into a binary, call `zeolite` with the `-m` option,
 passing the name of the main category. The default binary name is the same as
 that of the category, placed in the current directory. Additional dependencies
-can be included using `-i`. You can call `./zeolite -h` for the most-current
+can be included using `-i`. You can call `zeolite -h` for the most-current
 options.
 
 ## Basic Ideas
@@ -1430,9 +1404,12 @@ actually contains one.
 Please experiment with Zeolite and share your thoughts. Please also contact me
 if you are interested in helping with development.
 
+[cabal]: https://www.haskell.org/cabal/#install-upgrade
 [clang]: https://clang.llvm.org/cxx_status.html
 [cov-con]: https://en.wikipedia.org/wiki/Covariance_and_contravariance_%28computer_science%29
 [example]: https://github.com/ta0kira/zeolite/tree/master/example/tree
 [ghc]: https://www.haskell.org/ghc/
 [git]: https://git-scm.com/
+[hackage]: http://hackage.haskell.org
+[hackage-zeolite-lang]: http://hackage.haskell.org/package/zeolite-lang
 [tests]: https://github.com/ta0kira/zeolite/tree/master/tests
