@@ -21,6 +21,7 @@ limitations under the License.
 module Test.IntegrationTest (tests) where
 
 import Control.Monad (when)
+import System.FilePath
 import Text.Parsec
 
 import Base.CompileError
@@ -39,7 +40,7 @@ import Types.TypeInstance
 tests :: [IO (CompileInfo ())]
 tests = [
     checkFileContents
-      "testfiles/basic_error_test.0rt"
+      ("testfiles" </> "basic_error_test.0rt")
       (\t -> return $ do
         let h = itHeader t
         when (not $ isExpectCompileError $ ithResult h) $ compileError "Expected ExpectCompileError"
@@ -57,7 +58,7 @@ tests = [
         ),
 
     checkFileContents
-      "testfiles/basic_crash_test.0rt"
+      ("testfiles" </> "basic_crash_test.0rt")
       (\t -> return $ do
         let h = itHeader t
         when (not $ isExpectRuntimeError $ ithResult h) $ compileError "Expected ExpectRuntimeError"
@@ -82,7 +83,7 @@ tests = [
         ),
 
     checkFileContents
-      "testfiles/basic_success_test.0rt"
+      ("testfiles" </> "basic_success_test.0rt")
       (\t -> return $ do
         let h = itHeader t
         when (not $ isExpectRuntimeSuccess $ ithResult h) $ compileError "Expected ExpectRuntimeSuccess"

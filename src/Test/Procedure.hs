@@ -21,6 +21,7 @@ limitations under the License.
 module Test.Procedure (tests) where
 
 import Control.Monad
+import System.FilePath
 import Text.Parsec
 import Text.Parsec.String
 
@@ -36,7 +37,7 @@ import Types.TypeInstance
 
 tests :: [IO (CompileInfo ())]
 tests = [
-    checkParseSuccess "testfiles/procedures.0rx",
+    checkParseSuccess ("testfiles" </> "procedures.0rx"),
 
     checkShortParseSuccess "return _",
     checkShortParseSuccess "return var",

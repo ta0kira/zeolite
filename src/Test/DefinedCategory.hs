@@ -20,6 +20,7 @@ limitations under the License.
 
 module Test.DefinedCategory (tests) where
 
+import System.FilePath
 import Text.Parsec
 import Text.Parsec.String
 
@@ -32,10 +33,10 @@ import Types.DefinedCategory
 
 tests :: [IO (CompileInfo ())]
 tests = [
-    checkParseSuccess "testfiles/definitions.0rx",
-    checkParseSuccess "testfiles/internal_inheritance.0rx",
-    checkParseSuccess "testfiles/internal_params.0rx",
-    checkParseSuccess "testfiles/internal_filters.0rx"
+    checkParseSuccess ("testfiles" </> "definitions.0rx"),
+    checkParseSuccess ("testfiles" </> "internal_inheritance.0rx"),
+    checkParseSuccess ("testfiles" </> "internal_params.0rx"),
+    checkParseSuccess ("testfiles" </> "internal_filters.0rx")
   ]
 
 checkParseSuccess f = do
