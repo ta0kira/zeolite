@@ -94,7 +94,7 @@ promptChoice p cs = do
                    Just n' | n' > 0 && n' <= length cs' -> return n'
                    _ -> getChoice
     getResponse = do
-      hPutStrLn stderr "Enter the full path: "
+      hPutStr stderr "Enter the full path: "
       getInput
     check [(cm,"")] = Just cm
     check _         = Nothing
