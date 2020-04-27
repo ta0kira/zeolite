@@ -16,5 +16,5 @@ zeolite -p "$ZEOLITE_PATH" -i lib/util -m RegexDemo example/regex
 zeolite -p "$ZEOLITE_PATH" -t example/regex
 
 # Execute the compiled binary.
-$ZEOLITE_PATH/RegexDemo
+$ZEOLITE_PATH/example/regex/RegexDemo
 ```
