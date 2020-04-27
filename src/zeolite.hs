@@ -47,6 +47,8 @@ import Types.DefinedCategory
 import Types.TypeCategory
 import Types.TypeInstance
 
+import Paths_zeolite (getDataFileName)
+
 
 main = do
   args <- getArgs
@@ -69,6 +71,9 @@ showHelp = do
   hPutStrLn stderr "Also see https://ta0kira.github.io/zeolite for more documentation."
 
 runCompiler :: CompileOptions -> IO ()
+runCompiler (CompileOptions _ _ _ _ _ _ _ _ OnlyShowPath _ _) = do
+  p <- getDataFileName "" >>= canonicalizePath
+  hPutStrLn stdout p
 runCompiler co@(CompileOptions _ _ _ ds _ _ _ p (ExecuteTests tp) _ f) = do
   (backend,resolver) <- loadConfig
   ds' <- sequence $ map (preloadModule resolver) ds

@@ -3,6 +3,31 @@ version:             0.1.0.0
 synopsis:            Zeolite is a statically-typed, general-purpose programming language.
 
 description:
+  Zeolite is an experimental general-purpose programming language. See
+  <https://github.com/ta0kira/zeolite Zeolite on GitHub> for more details
+  .
+  The installation process is still a bit rough, and so must be done in a few
+  stages:
+  .
+  1. Install the binaries using @cabal@. At this point, the compiler itself is
+     installed but cannot actually create executables from source code.
+  2. Ensure that you have a C++ compiler such as @clang++@ or @g++@ installed,
+     and an archiver such as @ar@ installed, all callable from a shell.
+  3. Execute the @zeolite-setup@ binary that gets installed by @cabal@. This
+     will give you a series of prompts to verify the binaries above. It will
+     then automatically build the supporting libraries.
+  .
+  Once the setup above is completed, you should run the integration tests to
+  ensure that code can be compiled and run:
+  .
+  @
+  ZEOLITE_PATH=$(zeolite --get-path)
+  zeolite -p "$ZEOLITE_PATH" -t tests lib/file lib/util
+  @
+  .
+  The code <https://github.com/ta0kira/zeolite/tree/master/example examples> are
+  located in @$ZEOLITE_PATH/example@. You should not normally need to use
+  @$ZEOLITE_PATH@ outside of running included tests and examples.
 
 homepage:            https://github.com/ta0kira/zeolite
 license:             Apache-2.0
@@ -140,6 +165,8 @@ library zeolite-internal
 
 executable zeolite
   main-is:             src/zeolite.hs
+
+  other-modules:       Paths_zeolite
 
   build-depends:       base,
                        containers,

@@ -29,6 +29,7 @@ module Cli.CompileOptions (
   isCompileRecompile,
   isCreateTemplates,
   isExecuteTests,
+  isOnlyShowPath,
   maybeDisableHelp,
 ) where
 
@@ -69,6 +70,7 @@ data HelpMode = HelpNeeded | HelpNotNeeded | HelpUnspecified deriving (Eq,Show)
 data ForceMode = DoNotForce | AllowRecompile | ForceRecompile | ForceAll deriving (Eq,Ord,Show)
 
 data CompileMode =
+  OnlyShowPath |
   CompileBinary {
     cbCategory :: String,
     cbFunction :: String
@@ -81,6 +83,9 @@ data CompileMode =
   CreateTemplates |
   CompileUnspecified
   deriving (Eq,Read,Show)
+
+isOnlyShowPath OnlyShowPath = True
+isOnlyShowPath _            = False
 
 isCompileBinary (CompileBinary _ _) = True
 isCompileBinary _                   = False

@@ -40,6 +40,7 @@ optionHelpText = [
     "zeolite [options...] -r [paths...]",
     "zeolite [options...] -t [paths...]",
     "zeolite [options...] --templates [paths...]",
+    "zeolite [options...] --get-path",
     "",
     "Modes:",
     "  -c: Only compile the individual files. (default)",
@@ -47,6 +48,7 @@ optionHelpText = [
     "  -r: Recompile using the previous compilation options.",
     "  -t: Only execute tests, without other compilation.",
     "  --templates: Only create C++ templates for undefined categories in .0rp sources.",
+    "  --get-path: Show the data path and immediately exit.",
     "",
     "Options:",
     "  -e [path|file]: Include an extra source file or path during compilation.",
@@ -106,6 +108,10 @@ parseCompileOptions = parseAll emptyCompileOptions . zip [1..] where
   parseSingle (CompileOptions h is is2 ds es ep ec p m o f) ((n,"--templates"):os)
     | m /= CompileUnspecified = argError n "-t" "Compiler mode already set."
     | otherwise = return (os,CompileOptions (maybeDisableHelp h) is is2 ds es ep ec p CreateTemplates o f)
+
+  parseSingle (CompileOptions h is is2 ds es ep ec p m o f) ((n,"--get-path"):os)
+    | m /= CompileUnspecified = argError n "-t" "Compiler mode already set."
+    | otherwise = return (os,CompileOptions (maybeDisableHelp h) is is2 ds es ep ec p OnlyShowPath o f)
 
   parseSingle (CompileOptions h is is2 ds es ep ec p m o f) ((n,"-m"):os)
     | m /= CompileUnspecified = argError n "-m" "Compiler mode already set."
@@ -193,12 +199,12 @@ validateCompileOptions co@(CompileOptions h is is2 ds es ep ec p m o _)
     compileError "Output filename (-o) is not allowed in test mode (-t)."
   | (not $ null $ is ++ is2) && (isExecuteTests m) =
     compileError "Include paths (-i/-I) are not allowed in test mode (-t)."
-      | (not $ null $ es ++ ep) && (isExecuteTests m) =
+  | (not $ null $ es ++ ep) && (isExecuteTests m) =
     compileError "Extra files (-e) are not allowed in test mode (-t)."
 
   | (not $ null o) && (isCreateTemplates m) =
     compileError "Output filename (-o) is not allowed in template mode (--templates)."
-      | (not $ null $ es ++ ep) && (isCreateTemplates m) =
+  | (not $ null $ es ++ ep) && (isCreateTemplates m) =
     compileError "Extra files (-e) are not allowed in template mode (--templates)."
 
   | (not $ null p) && (isCompileRecompile m) =
@@ -207,13 +213,24 @@ validateCompileOptions co@(CompileOptions h is is2 ds es ep ec p m o _)
     compileError "Output filename (-o) is not allowed in recompile mode (-r)."
   | (not $ null $ is ++ is2) && (isCompileRecompile m) =
     compileError "Include paths (-i/-I) are not allowed in recompile mode (-r)."
-      | (not $ null $ es ++ ep) && (isCompileRecompile m) =
+  | (not $ null $ es ++ ep) && (isCompileRecompile m) =
     compileError "Extra files (-e) are not allowed in recompile mode (-r)."
+
+  | (not $ null p) && (isOnlyShowPath m) =
+    compileError "Path prefix (-p) is not allowed in path mode (---get-path)."
+  | (not $ null o) && (isOnlyShowPath m) =
+    compileError "Output filename (-o) is not allowed in path mode (---get-path)."
+  | (not $ null $ is ++ is2) && (isOnlyShowPath m) =
+    compileError "Include paths (-i/-I) are not allowed in path mode (---get-path)."
+  | (not $ null $ es ++ ep) && (isOnlyShowPath m) =
+    compileError "Extra files (-e) are not allowed in path mode (---get-path)."
+  | (not $ null ds) && (isOnlyShowPath m) =
+    compileError "Input paths are not allowed in path mode (---get-path)."
 
   | length ds > 1 && length (es ++ ep) > 0 =
     compileError "Extra files and paths (-e) cannot be used with multiple input paths, to avoid ambiguity."
 
-  | null ds =
+  | not (isOnlyShowPath m) && null ds =
     compileError "Please specify at least one input path."
   | (length ds /= 1) && (isCompileBinary m) =
     compileError "Specify exactly one input path for binary mode (-m)."
