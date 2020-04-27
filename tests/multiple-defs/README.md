@@ -7,7 +7,8 @@ from a `.0rp` file.
 To compile:
 
 ```shell
-../../zeolite -r .
+ZEOLITE_PATH=$(zeolite --get-path)
+zeolite -r $ZEOLITE_PATH/tests/multiple-defs
 ```
 
 The compiler error should look something like this:
