@@ -30,7 +30,7 @@ import qualified Test.TypeInstance    as TypeInstanceTest
 
 
 main = runAllTests $ concat [
-    labelWith "DefinedCategoryTest"      DefinedCategoryTest.tests,
+    labelWith "DefinedCategoryTest" DefinedCategoryTest.tests,
     labelWith "TypeInstanceTest"    TypeInstanceTest.tests,
     labelWith "ParserTest"          ParserTest.tests,
     labelWith "TypeCategoryTest"    TypeCategoryTest.tests,
