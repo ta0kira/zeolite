@@ -41,7 +41,6 @@ module Test.Common (
 
 import Data.Either
 import Data.List
-import System.Environment
 import System.FilePath
 import System.IO
 import Text.Parsec
@@ -198,7 +197,4 @@ checkEquals actual expected
   | otherwise = compileError $ "Expected " ++ show expected ++ " but got " ++ show actual
 
 loadFile :: String -> IO String
-loadFile f = do
-  prog <- getProgName
-  let base = takeDirectory prog
-  readFile $ base </> "Test" </> f
+loadFile f = readFile ("src" </> "Test" </> f)
