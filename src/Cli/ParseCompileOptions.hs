@@ -207,8 +207,6 @@ validateCompileOptions co@(CompileOptions h is is2 ds es ep ec p m o _)
   | (not $ null $ es ++ ep) && (isCreateTemplates m) =
     compileError "Extra files (-e) are not allowed in template mode (--templates)."
 
-  | (not $ null p) && (isCompileRecompile m) =
-    compileError "Path prefix (-p) is not allowed in recompile mode (-r)."
   | (not $ null o) && (isCompileRecompile m) =
     compileError "Output filename (-o) is not allowed in recompile mode (-r)."
   | (not $ null $ is ++ is2) && (isCompileRecompile m) =

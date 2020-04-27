@@ -16,5 +16,5 @@ zeolite -p "$ZEOLITE_PATH" -i lib/util -m TreeDemo example/tree
 zeolite -p "$ZEOLITE_PATH" -t example/tree
 
 # Execute the compiled binary.
-./TreeDemo
+$ZEOLITE_PATH/TreeDemo
 ```

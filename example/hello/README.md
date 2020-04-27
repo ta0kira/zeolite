@@ -10,5 +10,5 @@ ZEOLITE_PATH=$(zeolite --get-path)
 zeolite -i lib/util -p "$ZEOLITE_PATH" -m HelloDemo example/hello
 
 # Execute the compiled binary.
-./HelloDemo
+$ZEOLITE_PATH/HelloDemo
 ```

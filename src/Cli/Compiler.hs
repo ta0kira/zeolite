@@ -347,8 +347,11 @@ runCompiler co@(CompileOptions h is is2 ds es ep ec p m o f) = do
       cs <- fmap concat $ collectAllOrErrorM $ map parsePublicSource fs
       includeNewTypes tm cs
     mergeInternal ds = (concat $ map fst ds,concat $ map snd ds)
-    getBinaryName (CompileBinary n _) = canonicalizePath $ if null o then n else o
-    getBinaryName _                   = return ""
+    getBinaryName (CompileBinary n _)
+      | null o              = canonicalizePath $ p </> head ds </> n
+      | o == takeFileName o = canonicalizePath $ p </> head ds </> o
+      | otherwise           = canonicalizePath o
+    getBinaryName _ = return ""
     createBinary b r deps ma@(CompileBinary n _) ms
       | length ms > 1 = do
         hPutStrLn stderr $ "Multiple matches for main category " ++ n ++ "."
@@ -358,7 +361,6 @@ runCompiler co@(CompileOptions h is is2 ds es ep ec p m o f) = do
         exitFailure
       | otherwise = do
           f0 <- getBinaryName ma
-          let f0 = if null o then n else o
           let (CxxOutput _ _ _ ns2 req content) = head ms
           -- TODO: Create a helper or a constant or something.
           (o',h) <- mkstemps "/tmp/zmain_" ".cpp"
