@@ -110,7 +110,7 @@ tests = [
 checkFileContents ::
   String -> (IntegrationTest SourcePos -> IO (CompileInfo ())) -> IO (CompileInfo ())
 checkFileContents f o = do
-  s <- readFile f
+  s <- loadFile f
   unwrap $ parse (between optionalSpace endOfDoc sourceParser) f s
   where
     unwrap (Left e)  = return $ compileError (show e)

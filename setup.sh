@@ -22,7 +22,7 @@ here=$PWD
 cd "$(dirname "$0")"
 
 root=$PWD
-compiler_hs="$root/compiler/Cli/compiler"
+compiler_hs="$root/src/compiler"
 compiler_bin="$root/zeolite"
 modules=(
   "$root/base"
@@ -36,7 +36,7 @@ modules=(
 )
 
 build_compiler() {
-  local command=(ghc -O5 -i"$root/compiler" "$compiler_hs" -o "$compiler_bin")
+  local command=(ghc -O5 -i"$root/src" "$compiler_hs" -o "$compiler_bin")
   echo "${command[@]}" 1>&2
   "${command[@]}"
 }

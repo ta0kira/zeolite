@@ -39,7 +39,7 @@ tests = [
   ]
 
 checkParseSuccess f = do
-  contents <- readFile f
+  contents <- loadFile f
   let parsed = readMulti f contents :: CompileInfo [DefinedCategory SourcePos]
   return $ check parsed
   where
@@ -48,7 +48,7 @@ checkParseSuccess f = do
     | otherwise = return ()
 
 checkParseFail f = do
-  contents <- readFile f
+  contents <- loadFile f
   let parsed = readMulti f contents :: CompileInfo [DefinedCategory SourcePos]
   return $ check parsed
   where

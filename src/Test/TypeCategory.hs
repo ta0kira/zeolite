@@ -888,14 +888,14 @@ containsPaired = checkPaired checkSingle where
     | otherwise = compileError $ show a ++ " (actual) vs. " ++ show e ++ " (expected)"
 
 checkOperationSuccess f o = do
-  contents <- readFile f
+  contents <- loadFile f
   let parsed = readMulti f contents :: CompileInfo [AnyCategory SourcePos]
   return $ check (parsed >>= o >> return ())
   where
     check = flip reviseError ("Check " ++ f ++ ":")
 
 checkOperationFail f o = do
-  contents <- readFile f
+  contents <- loadFile f
   let parsed = readMulti f contents :: CompileInfo [AnyCategory SourcePos]
   return $ check (parsed >>= o >> return ())
   where
@@ -905,7 +905,7 @@ checkOperationFail f o = do
                                    show (getCompileSuccess c) ++ "\n"
 
 checkSingleParseSuccess f = do
-  contents <- readFile f
+  contents <- loadFile f
   let parsed = readSingle f contents :: CompileInfo (AnyCategory SourcePos)
   return $ check parsed
   where
@@ -914,7 +914,7 @@ checkSingleParseSuccess f = do
       | otherwise = return ()
 
 checkSingleParseFail f = do
-  contents <- readFile f
+  contents <- loadFile f
   let parsed = readSingle f contents :: CompileInfo (AnyCategory SourcePos)
   return $ check parsed
   where

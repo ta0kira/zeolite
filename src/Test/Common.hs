@@ -29,6 +29,7 @@ module Test.Common (
   containsExactly,
   containsNoDuplicates,
   forceParse,
+  loadFile,
   parseFilterMap,
   parseTheTest,
   readMulti,
@@ -40,6 +41,8 @@ module Test.Common (
 
 import Data.Either
 import Data.List
+import System.Environment
+import System.FilePath
 import System.IO
 import Text.Parsec
 import Text.Parsec.String
@@ -193,3 +196,9 @@ checkEquals :: (Eq a, Show a, MergeableM m, CompileErrorM m) =>
 checkEquals actual expected
   | actual == expected = return ()
   | otherwise = compileError $ "Expected " ++ show expected ++ " but got " ++ show actual
+
+loadFile :: String -> IO String
+loadFile f = do
+  prog <- getProgName
+  let base = takeDirectory prog
+  readFile $ base </> "Test" </> f
