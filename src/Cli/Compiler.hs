@@ -348,9 +348,8 @@ runCompiler co@(CompileOptions h is is2 ds es ep ec p m o f) = do
       includeNewTypes tm cs
     mergeInternal ds = (concat $ map fst ds,concat $ map snd ds)
     getBinaryName (CompileBinary n _)
-      | null o              = canonicalizePath $ p </> head ds </> n
-      | o == takeFileName o = canonicalizePath $ p </> head ds </> o
-      | otherwise           = canonicalizePath o
+      | null o    = canonicalizePath $ p </> head ds </> n
+      | otherwise = canonicalizePath $ p </> head ds </> o
     getBinaryName _ = return ""
     createBinary b r deps ma@(CompileBinary n _) ms
       | length ms > 1 = do
