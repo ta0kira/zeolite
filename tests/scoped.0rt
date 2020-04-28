@@ -627,6 +627,29 @@ concrete Test {
 }
 
 
+testcase "scoped empty blocks" {
+  success Test$run()
+}
+
+@value interface Value {}
+
+define Test {
+  run () {
+    scoped {
+      // empty
+    } cleanup {
+      // empty
+    } in {
+      // empty
+    }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
 testcase "just cleanup" {
   success Test$run()
 }

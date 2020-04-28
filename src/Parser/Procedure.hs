@@ -236,7 +236,7 @@ instance ParseFromSource (ScopedBlock SourcePos) where
       p <- between (sepAfter $ string "{") (sepAfter $ string "}") sourceParser
       cl <- fmap Just parseCleanup <|> return Nothing
       kwIn
-      s <- sourceParser <|> unconditional
+      s <- unconditional <|> sourceParser
       return $ ScopedBlock [c] p cl s
     justCleanup = do
       c <- getPosition
