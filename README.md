@@ -788,6 +788,10 @@ has `@type interface`s that declare `@type` functions that must be defined.
   }
 }</pre>
 
+### Other Features
+
+This section discusses language features that are less frequently used.
+
 #### Meta Types
 
 Zeolite provides two **meta types** that allow unnamed combinations of other
@@ -859,6 +863,8 @@ Some other time. (Or just see
 Some other time. (Or just see
 [`internal-params.0rt`](https://github.com/ta0kira/zeolite/blob/master/tests/internal-params.0rt).)
 
+## Layout and Dependencies
+
 ### Using Public Source Files
 
 You can create **public** `.0rp` source files to declare `concrete` categories
@@ -894,7 +900,7 @@ and so their symbols are available to all source files in the module. There is
 currently no language syntax for explicitly importing or including modules or
 other symbols.
 
-### Integration Testing
+## Integration Testing
 
 Integration tests are an extension of `.0rx` files. They live in `.0rt` files
 within the project directory, and are compiled as needed to run the tests.
