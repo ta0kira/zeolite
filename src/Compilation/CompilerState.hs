@@ -44,6 +44,7 @@ module Compilation.CompilerState (
   csGetTypeFunction,
   csGetVariable,
   csInheritReturns,
+  csIsNamedReturns,
   csIsUnreachable,
   csPrimNamedReturns,
   csPushCleanup,
@@ -99,6 +100,7 @@ class Monad m => CompilerContext c m s a | a -> c s where
   ccRegisterReturn :: a -> [c] -> Maybe ExpressionType -> m a
   ccPrimNamedReturns :: a -> m [ReturnVariable]
   ccIsUnreachable :: a -> m Bool
+  ccIsNamedReturns :: a -> m Bool
   ccSetNoReturn :: a -> m a
   ccStartLoop :: a -> LoopSetup s -> m a
   ccGetLoop :: a -> m (LoopSetup s)
@@ -210,6 +212,9 @@ csPrimNamedReturns = fmap ccPrimNamedReturns get >>= lift
 
 csIsUnreachable :: CompilerContext c m s a => CompilerState a m Bool
 csIsUnreachable = fmap ccIsUnreachable get >>= lift
+
+csIsNamedReturns :: CompilerContext c m s a => CompilerState a m Bool
+csIsNamedReturns = fmap ccIsNamedReturns get >>= lift
 
 csSetNoReturn :: CompilerContext c m s a => CompilerState a m ()
 csSetNoReturn = fmap ccSetNoReturn get >>= lift >>= put

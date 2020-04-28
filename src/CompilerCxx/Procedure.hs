@@ -66,9 +66,10 @@ compileExecutableProcedure ctx ff@(ScopedFunction _ _ _ s as1 rs1 ps1 _ _)
     compileWithReturn = do
       ctx0 <- getCleanContext
       compileProcedure ctx0 p >>= put
-      csRegisterReturn c Nothing `reviseErrorStateT`
-        ("In implicit return from " ++ show n ++ formatFullContextBrace c)
-      doNamedReturn
+      unreachable <- csIsUnreachable
+      when (not unreachable) $
+        doImplicitReturn [] `reviseErrorStateT`
+          ("In implicit return from " ++ show n ++ formatFullContextBrace c)
     wrapProcedure output =
       mergeAll $ [
           onlyCode header2,
@@ -98,7 +99,9 @@ compileExecutableProcedure ctx ff@(ScopedFunction _ _ _ s as1 rs1 ps1 _ _)
         "(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) {"
     returnType = "ReturnTuple"
     setProcedureTrace = startFunctionTracing $ show t ++ "." ++ show n
-    defineReturns = [returnType ++ " returns(" ++ show (length $ pValues rs1) ++ ");"]
+    defineReturns
+      | isUnnamedReturns rs2 = []
+      | otherwise            = [returnType ++ " returns(" ++ show (length $ pValues rs1) ++ ");"]
     nameParams = flip map (zip [0..] $ pValues ps1) $
       (\(i,p) -> paramType ++ " " ++ paramName (vpParam p) ++ " = *params.At(" ++ show i ++ ");")
     nameArgs = flip map (zip [0..] $ filter (not . isDiscardedInput . snd) $ zip (pValues as1) (pValues $ avNames as2)) $
@@ -149,9 +152,8 @@ compileStatement :: (Show c, CompileErrorM m, MergeableM m,
                      CompilerContext c m [String] a) =>
   Statement c -> CompilerState a m ()
 compileStatement (EmptyReturn c) = do
-  csRegisterReturn c Nothing
   csWrite $ setTraceContext c
-  doNamedReturn
+  doImplicitReturn c
 compileStatement (ExplicitReturn c es) = do
   es' <- sequence $ map compileExpression $ pValues es
   getReturn $ zip (map getExpressionContext $ pValues es) es'
@@ -160,23 +162,18 @@ compileStatement (ExplicitReturn c es) = do
     getReturn [(_,(Positional ts,e))] = do
       csRegisterReturn c $ Just (Positional ts)
       csWrite $ setTraceContext c
-      csWrite ["returns = " ++ useAsReturns e ++ ";"]
-      doReturnCleanup
-      csWrite ["return returns;"]
+      autoPositionalCleanup e
     -- Multi-expression => must all be singles.
     getReturn rs = do
       lift $ mergeAllM (map checkArity $ zip [1..] $ map (fst . snd) rs) `reviseError`
         ("In return at " ++ formatFullContext c)
       csRegisterReturn c $ Just $ Positional $ map (head . pValues . fst . snd) rs
-      csWrite $ concat $ map bindReturn $ zip [0..] rs
-      doReturnCleanup
-      csWrite ["return returns;"]
+      let e = OpaqueMulti $ "ReturnTuple(" ++ intercalate "," (map (useAsUnwrapped . snd . snd) rs) ++ ")"
+      csWrite $ setTraceContext c
+      autoPositionalCleanup e
     checkArity (_,Positional [_]) = return ()
     checkArity (i,Positional ts)  =
       compileError $ "Return position " ++ show i ++ " has " ++ show (length ts) ++ " values but should have 1"
-    bindReturn (i,(c0,(_,e))) = setTraceContext c0 ++ [
-        "returns.At(" ++ show i ++ ") = " ++ useAsUnwrapped e ++ ";"
-      ]
 compileStatement (LoopBreak c) = do
   loop <- csGetLoop
   case loop of
@@ -848,21 +845,31 @@ expandGeneralInstance (SingleType (JustParamName p)) = do
   scoped <- autoScope s
   return $ scoped ++ paramName p
 
-doNamedReturn :: (CompilerContext c m [String] a) => CompilerState a m ()
-doNamedReturn = do
-  vars <- csPrimNamedReturns
-  sequence $ map (csWrite . (:[]) . assign) vars
-  doReturnCleanup
-  csWrite ["return returns;"]
+doImplicitReturn :: (Show c,CompilerContext c m [String] a) => [c] -> CompilerState a m ()
+doImplicitReturn c = do
+  named <- csIsNamedReturns
+  (CleanupSetup cs ss) <- csGetCleanup
+  when (not $ null ss) $ do
+    sequence $ map (csInheritReturns . (:[])) cs
+    csWrite ss
+  csRegisterReturn c Nothing
+  if not named
+     then csWrite ["return ReturnTuple(0);"]
+     else do
+       vars <- csPrimNamedReturns
+       sequence $ map (csWrite . (:[]) . assign) vars
+       csWrite ["return returns;"]
   where
     assign (ReturnVariable i n t) =
       "returns.At(" ++ show i ++ ") = " ++ useAsUnwrapped (readStoredVariable False t $ variableName n) ++ ";"
 
-doReturnCleanup :: (CompilerContext c m [String] a) => CompilerState a m ()
-doReturnCleanup = do
+autoPositionalCleanup :: (CompilerContext c m [String] a) => ExprValue -> CompilerState a m ()
+autoPositionalCleanup e = do
   (CleanupSetup cs ss) <- csGetCleanup
   if null ss
-     then return ()
+     then csWrite ["return " ++ useAsReturns e ++ ";"]
      else do
+       csWrite ["{","ReturnTuple returns = " ++ useAsReturns e ++ ";"]
        sequence $ map (csInheritReturns . (:[])) cs
        csWrite ss
+       csWrite ["return returns;","}"]

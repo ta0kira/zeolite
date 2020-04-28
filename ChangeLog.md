@@ -1,5 +1,15 @@
 # Revision history for zeolite
 
+## ?.?.?.?  -- ????-??-??
+
+* **[behavior]** Updates `cleanup` procedures to allow setting named-return
+  values. Previously, initializing a named return in `cleanup` was not
+  sufficient.
+
+* **[behavior]** Updates `zeolite-setup` to unconditionally rebuild supporting
+  libraries. Incidentally, this causes all existing user modules to be out of
+  date.
+
 ## 0.1.1.0  -- 2020-04-27
 
 * **[behavior]** Set the default output path for binaries to the module's path

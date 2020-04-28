@@ -260,9 +260,8 @@ concrete Test {
 }
 
 
-testcase "cleanup does not initialize return" {
-  error
-  require "value.+before return"
+testcase "cleanup initializes named return" {
+  success Test$run()
 }
 
 define Test {
@@ -275,7 +274,37 @@ define Test {
   }
 
   run () {
-    ~ get()
+    Int value <- get()
+    if (value != 1) {
+      fail(value)
+    }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "cleanup overrides named return" {
+  success Test$run()
+}
+
+define Test {
+  @type get () -> (Int)
+  get () (value) {
+    value <- 1
+    scoped {
+    } cleanup {
+      value <- 2
+    } in return _
+  }
+
+  run () {
+    Int value <- get()
+    if (value != 2) {
+      fail(value)
+    }
   }
 }
 

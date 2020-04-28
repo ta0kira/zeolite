@@ -122,6 +122,6 @@ initLibraries = do
       coSourcePrefix = "",
       coMode = CompileRecompile,
       coOutputName = "",
-      coForce = ForceRecompile
+      coForce = ForceAll
     }
   runCompiler options

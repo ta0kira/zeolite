@@ -403,6 +403,9 @@ instance (Show c, MergeableM m, CompileErrorM m) =>
   ccIsUnreachable ctx = return $ match (pcReturns ctx) where
     match UnreachableCode = True
     match _                 = False
+  ccIsNamedReturns ctx = return $ match (pcReturns ctx) where
+    match (ValidateNames _ _) = True
+    match _                   = False
   ccSetNoReturn ctx =
     return $ ProcedureContext {
         pcScope = pcScope ctx,
