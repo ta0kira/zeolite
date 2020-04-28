@@ -339,6 +339,30 @@ functionality without having an explicit parent for the overlap.
   <span style='color:#644a9b;'>@value</span> set (<i><span style='color:#0057ae;'>Int</span></i>) -&gt; ()
 }</pre>
 
+#### Functions As Operators
+
+Zeolite allows some functions to be used as **operators**. This allows users to
+avoid excessive parentheses when using named mathematical  functions.
+
+Functions with two arguments can use **infix** notation. The operator precedence
+is always between comparisons (e.g., `==`) and logical (e.g., `&&`).
+
+Functions with one argument can use **prefix** notation. These are evaluated
+strictly before all infix operators.
+
+<pre style='color:#1f1c1b;background-color:#ffffff;'>
+<b>concrete</b> <b><span style='color:#0057ae;'>Math</span></b> {
+  <span style='color:#644a9b;'>@type</span> plus (<i><span style='color:#0057ae;'>Int</span></i>,<i><span style='color:#0057ae;'>Int</span></i>) -&gt; (<i><span style='color:#0057ae;'>Int</span></i>)
+  <span style='color:#644a9b;'>@type</span> neg (<i><span style='color:#0057ae;'>Int</span></i>) -&gt; (<i><span style='color:#0057ae;'>Int</span></i>)
+}
+
+<span style='color:#898887;'>// ...</span>
+
+<span style='color:#898887;'>// Math$plus is evaluated first.</span>
+<i><span style='color:#0057ae;'>Int</span></i> x &lt;- <span style='color:#b08000;'>1</span> <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>Math</span><span style='color:#644a9b;'>$</span>plus<b><span style='color:#c02040;'>`</span></b> <span style='color:#b08000;'>2</span> * <span style='color:#b08000;'>5</span>
+<span style='color:#898887;'>// Math$neg is evaluated first.</span>
+<i><span style='color:#0057ae;'>Int</span></i> y &lt;- <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>Math</span><span style='color:#644a9b;'>$</span>neg<b><span style='color:#c02040;'>`</span></b> x <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>Math</span><span style='color:#644a9b;'>$</span>plus<b><span style='color:#c02040;'>`</span></b> <span style='color:#b08000;'>2</span></pre>
+
 #### Data Members and Value Creation
 
 Unlike Java and C++, there is no "default construction" in Zeolite. In addition,
