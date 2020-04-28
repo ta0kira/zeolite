@@ -1,6 +1,8 @@
-# Revision history for zeolite
+# Revision history for zeolite-lang
 
-## ?.?.?.?  -- ????-??-??
+## 0.1.2.0  -- 2020-04-28
+
+* **[fix]** Fixes a parser issue with empty `{}` blocks following `scoped`.
 
 * **[behavior]** Updates `cleanup` procedures to allow setting named-return
   values. Previously, initializing a named return in `cleanup` was not
