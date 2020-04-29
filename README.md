@@ -91,7 +91,7 @@ syntax-highlighted code in this document. See
 [`example/tree`](https://ta0kira.github.io/zeolite/example/tree/index.html) for
 something that is easier to visually parse.)
 
-<pre style='color:#1f1c1b;background-color:#ffffff;'>
+<pre style='color:#1f1c1b;background-color:#f6f8fa;'>
 <span style='color:#898887;'>// helloworld/hello-world.0rx</span>
 
 <b>concrete</b> <b><span style='color:#0057ae;'>HelloWorld</span></b> {
@@ -210,7 +210,7 @@ when the program is run.
 Code for both should be in files ending with `.0rx`. (The `.0rp` file type
 contains only declarations, and will be discussed later.)
 
-<pre style='color:#1f1c1b;background-color:#ffffff;'>
+<pre style='color:#1f1c1b;background-color:#f6f8fa;'>
 <span style='color:#898887;'>// myprogram/myprogram.0rx</span>
 
 <span style='color:#898887;'>// This declares the type.</span>
@@ -265,7 +265,7 @@ of a function, without specifying its behavior.
 All function names start with a lowercase letter and contain only letters and
 digits.
 
-<pre style='color:#1f1c1b;background-color:#ffffff;'>
+<pre style='color:#1f1c1b;background-color:#f6f8fa;'>
 <b>concrete</b> <b><span style='color:#0057ae;'>MyCategory</span></b> {
   <span style='color:#898887;'>// @value indicates that this function requires a value of type MyCategory.</span>
   <span style='color:#898887;'>// This function takes 2x Int and returns 2x Int.</span>
@@ -291,7 +291,7 @@ argument and return types for internal use.
 The category definition can also declare *additional* functions that are not
 visible externally.
 
-<pre style='color:#1f1c1b;background-color:#ffffff;'>
+<pre style='color:#1f1c1b;background-color:#f6f8fa;'>
 <b>concrete</b> <b><span style='color:#0057ae;'>MyCategory</span></b> {
   <span style='color:#644a9b;'>@type</span> minMax (<i><span style='color:#0057ae;'>Int</span></i>,<i><span style='color:#0057ae;'>Int</span></i>) -&gt; (<i><span style='color:#0057ae;'>Int</span></i>,<i><span style='color:#0057ae;'>Int</span></i>)
 }
@@ -329,7 +329,7 @@ digits. When a location is needed for assignment (e.g., handling a function
 return, taking a function argument), you can use `_` in place of a variable
 name to ignore the value.
 
-<pre style='color:#1f1c1b;background-color:#ffffff;'>
+<pre style='color:#1f1c1b;background-color:#f6f8fa;'>
 <span style='color:#898887;'>// Initialize with a literal.</span>
 <i><span style='color:#0057ae;'>Int</span></i> value &lt;- <span style='color:#b08000;'>0</span>
 
@@ -350,7 +350,7 @@ assigning them to a variable, passing them to another function or ignoring them.
 (This is required even if the function does not return anything, primarily to
 simplify parsing.)
 
-<pre style='color:#1f1c1b;background-color:#ffffff;'>
+<pre style='color:#1f1c1b;background-color:#f6f8fa;'>
 <span style='color:#898887;'>// Utilize the return.</span>
 <i><span style='color:#0057ae;'>Int</span></i> value &lt;- getValue()
 
@@ -376,7 +376,7 @@ The `fail` builtin can be used to immediately terminate the program. It *is not*
 considered a function since it cannot return; therefore, you do not need to
 precede it with `~`.
 
-<pre style='color:#1f1c1b;background-color:#ffffff;'>
+<pre style='color:#1f1c1b;background-color:#f6f8fa;'>
 <b>define</b> <b><span style='color:#0057ae;'>MyProgram</span></b> {
   run () {
     <b>fail</b>(<span style='color:#bf0303;'>&quot;MyProgram does nothing&quot;</span>)
@@ -388,7 +388,7 @@ a unique name. Functions inherited from different places can be explicitly
 merged, however. This can be useful if you want interfaces to have overlapping
 functionality without having an explicit parent for the overlap.
 
-<pre style='color:#1f1c1b;background-color:#ffffff;'>
+<pre style='color:#1f1c1b;background-color:#f6f8fa;'>
 <span style='color:#644a9b;'>@value</span> <b>interface</b> <b><span style='color:#0057ae;'>Container</span></b><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span> {
   set (<i><span style='color:#0057ae;'>#x</span></i>) -&gt; ()
 }
@@ -416,7 +416,7 @@ is always between comparisons (e.g., `==`) and logical (e.g., `&&`).
 Functions with one argument can use **prefix** notation. These are evaluated
 strictly before all infix operators.
 
-<pre style='color:#1f1c1b;background-color:#ffffff;'>
+<pre style='color:#1f1c1b;background-color:#f6f8fa;'>
 <b>concrete</b> <b><span style='color:#0057ae;'>Math</span></b> {
   <span style='color:#644a9b;'>@type</span> plus (<i><span style='color:#0057ae;'>Int</span></i>,<i><span style='color:#0057ae;'>Int</span></i>) -&gt; (<i><span style='color:#0057ae;'>Int</span></i>)
   <span style='color:#644a9b;'>@type</span> neg (<i><span style='color:#0057ae;'>Int</span></i>) -&gt; (<i><span style='color:#0057ae;'>Int</span></i>)
@@ -441,7 +441,7 @@ Data members are never externally visible; they only exist in the category
 definition. Any access outside of the category must be done using
 explicitly-defined functions.
 
-<pre style='color:#1f1c1b;background-color:#ffffff;'>
+<pre style='color:#1f1c1b;background-color:#f6f8fa;'>
 <b>concrete</b> <b><span style='color:#0057ae;'>MyCategory</span></b> {
   <span style='color:#644a9b;'>@type</span> create () -&gt; (<span style='color:#0057ae;'>MyCategory</span>)
 }
@@ -472,7 +472,7 @@ setters.
 Zeolite uses the `if`/`elif`/`else` conditional construct. The `elif` and `else`
 clauses are always optional.
 
-<pre style='color:#1f1c1b;background-color:#ffffff;'>
+<pre style='color:#1f1c1b;background-color:#f6f8fa;'>
 <b>if</b> (x) {
   <span style='color:#898887;'>// something</span>
 } <b>elif</b> (y) {
@@ -488,7 +488,7 @@ provide a cleanup procedure to be executed upon exit from the block of code.
 This is useful if you want to free resources without needing to explicitly do so
 for every `return` statement.
 
-<pre style='color:#1f1c1b;background-color:#ffffff;'>
+<pre style='color:#1f1c1b;background-color:#f6f8fa;'>
 <span style='color:#898887;'>// Simple scoping during evaluation.</span>
 <b>scoped</b> {
   <i><span style='color:#0057ae;'>Int</span></i> x &lt;- getValue()
@@ -526,7 +526,7 @@ Zeolite supports `while` loops. It does not explicitly support `for` loops,
 since such loops are idiosyncratic and do not scale well. Instead, they can be
 constructed using a combination of `while` and `scoped`.
 
-<pre style='color:#1f1c1b;background-color:#ffffff;'>
+<pre style='color:#1f1c1b;background-color:#f6f8fa;'>
 <span style='color:#898887;'>// With break and continue.</span>
 <b>while</b> (<b>true</b>) {
   <b>if</b> (<b>true</b>) {
@@ -559,7 +559,7 @@ A procedure definition has two options for returning multiple values:
 
 1. Return all values at once using `{}` notation.
 
-<pre style='color:#1f1c1b;background-color:#ffffff;'>
+<pre style='color:#1f1c1b;background-color:#f6f8fa;'>
 <b>define</b> <b><span style='color:#0057ae;'>MyCategory</span></b> {
   minMax (x,y) {
     <b>if</b> (x &lt; y) {
@@ -575,7 +575,7 @@ A procedure definition has two options for returning multiple values:
    The compiler uses static analysis to ensure that all named variables are
    guaranteed to be set via all possible control paths.
 
-<pre style='color:#1f1c1b;background-color:#ffffff;'>
+<pre style='color:#1f1c1b;background-color:#f6f8fa;'>
 <b>define</b> <b><span style='color:#0057ae;'>MyCategory</span></b> {
   <span style='color:#898887;'>// Returns are named on the first line.</span>
   minMax (x,y) (min,max) {
@@ -597,14 +597,14 @@ The caller of a function with multiple returns also has a few options:
 1. Assign the returns to a set of variables. You can ignore a position by using
    `_` in that position.
 
-<pre style='color:#1f1c1b;background-color:#ffffff;'>
+<pre style='color:#1f1c1b;background-color:#f6f8fa;'>
 { <i><span style='color:#0057ae;'>Int</span></i> min, <b>_</b> } &lt;- minMax(<span style='color:#b08000;'>4</span>,<span style='color:#b08000;'>3</span>)</pre>
 
 2. Pass them directly to a function that requires the same number of
    compatible arguments. (Note that you *cannot* concatenate the returns of
    multiple functions.)
 
-<pre style='color:#1f1c1b;background-color:#ffffff;'>
+<pre style='color:#1f1c1b;background-color:#f6f8fa;'>
 <i><span style='color:#0057ae;'>Int</span></i> delta &lt;- diff(minMax(<span style='color:#b08000;'>4</span>,<span style='color:#b08000;'>3</span>))</pre>
 
 #### Optional and Weak Values
@@ -614,7 +614,7 @@ Zeolite requires that all variables be initialized; however, it provides the
 **`empty`**. This *is not* the same as `null` in Java because `optional`
 variables need to be `require`d before use.
 
-<pre style='color:#1f1c1b;background-color:#ffffff;'>
+<pre style='color:#1f1c1b;background-color:#f6f8fa;'>
 <span style='color:#898887;'>// empty is a special value for use with optional.</span>
 <b>optional</b> <i><span style='color:#0057ae;'>Int</span></i> value &lt;- <b>empty</b>
 
@@ -631,7 +631,7 @@ value &lt;- <span style='color:#b08000;'>1</span>
 `optional` first. (`weak` values are a pragmatic solution to potential memory
 leaks that can arise with cyclic references.)
 
-<pre style='color:#1f1c1b;background-color:#ffffff;'>
+<pre style='color:#1f1c1b;background-color:#f6f8fa;'>
 <b>concrete</b> <b><span style='color:#0057ae;'>MyNode</span></b> {
   <span style='color:#644a9b;'>@type</span> create (<b>optional</b> <span style='color:#0057ae;'>MyNode</span>) -&gt; (<span style='color:#0057ae;'>MyNode</span>)
   <span style='color:#644a9b;'>@value</span> getNext () -&gt; (<b>optional</b> <span style='color:#0057ae;'>MyNode</span>)
@@ -664,7 +664,7 @@ letters and digits.
 Parameters are *never* repeated in the category or function definitions. (Doing
 so would just create more opportunity for unnecessary compile-time errors.)
 
-<pre style='color:#1f1c1b;background-color:#ffffff;'>
+<pre style='color:#1f1c1b;background-color:#f6f8fa;'>
 <span style='color:#898887;'>// #x is covariant (indicated by being to the right of |), which means that it</span>
 <span style='color:#898887;'>// can only be used for output purposes.</span>
 <span style='color:#644a9b;'>@value</span> <b>interface</b> <b><span style='color:#0057ae;'>Reader</span></b><span style='color:#c02040;'>&lt;</span><span style='color:#c04040;'>|</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span> {
@@ -694,7 +694,7 @@ so would just create more opportunity for unnecessary compile-time errors.)
   between different types. This is done recursively in terms of parameter
   substitution.
 
-<pre style='color:#1f1c1b;background-color:#ffffff;'>
+<pre style='color:#1f1c1b;background-color:#f6f8fa;'>
 <span style='color:#898887;'>// Covariance allows conversion upward.</span>
 <span style='color:#0057ae;'>Reader</span><span style='color:#c02040;'>&lt;</span><span style='color:#0057ae;'>MyValue</span><span style='color:#c02040;'>&gt;</span> reader &lt;- <span style='color:#898887;'>// ...</span>
 <span style='color:#0057ae;'>Reader</span><span style='color:#c02040;'>&lt;</span><span style='color:#0057ae;'>MyBase</span><span style='color:#c02040;'>&gt;</span>  reader2 &lt;- reader
@@ -714,7 +714,7 @@ so would just create more opportunity for unnecessary compile-time errors.)
 - You can apply **filters** to type parameters to require that the parameters
   meet certain requirements.
 
-<pre style='color:#1f1c1b;background-color:#ffffff;'>
+<pre style='color:#1f1c1b;background-color:#f6f8fa;'>
 <b>concrete</b> <b><span style='color:#0057ae;'>ShowMap</span></b><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#k</span></i>,<i><span style='color:#0057ae;'>#v</span></i><span style='color:#c02040;'>&gt;</span> {
   <span style='color:#898887;'>// #k must implement the LessThan builtin @type interface.</span>
   <i><span style='color:#0057ae;'>#k</span></i> <b>defines</b> <i><span style='color:#0057ae;'>LessThan</span></i><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#k</span></i><span style='color:#c02040;'>&gt;</span>
@@ -726,7 +726,7 @@ so would just create more opportunity for unnecessary compile-time errors.)
 - You can call `@type` functions on parameters as if they were regular types.
   You can only call functions that are implied by a `defines` filter.
 
-<pre style='color:#1f1c1b;background-color:#ffffff;'>
+<pre style='color:#1f1c1b;background-color:#f6f8fa;'>
 <b>concrete</b> <b><span style='color:#0057ae;'>MyCategory</span></b><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span> {
   <i><span style='color:#0057ae;'>#x</span></i> <b>defines</b> <i><span style='color:#0057ae;'>LessThan</span></i><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>
   <span style='color:#644a9b;'>@type</span> compare (<i><span style='color:#0057ae;'>#x</span></i>,<i><span style='color:#0057ae;'>#x</span></i>) -&gt; (<i><span style='color:#0057ae;'>Int</span></i>)
@@ -751,7 +751,7 @@ so would just create more opportunity for unnecessary compile-time errors.)
 - All of the above is also possible with **function parameters**, aside from
   specifying parameter variance.
 
-<pre style='color:#1f1c1b;background-color:#ffffff;'>
+<pre style='color:#1f1c1b;background-color:#f6f8fa;'>
 <b>concrete</b> <b><span style='color:#0057ae;'>MyCategory</span></b> {
   <span style='color:#644a9b;'>@type</span> compare&lt;<i><span style='color:#0057ae;'>#x</span></i>&gt;
     <i><span style='color:#0057ae;'>#x</span></i> <b>defines</b> <i><span style='color:#0057ae;'>LessThan</span></i><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>
@@ -787,7 +787,7 @@ declare functions that implementations must define. In addition, Zeolite also
 has `@type interface`s that declare `@type` functions that must be defined.
 (This would be like having `abstract static` functions in Java.)
 
-<pre style='color:#1f1c1b;background-color:#ffffff;'>
+<pre style='color:#1f1c1b;background-color:#f6f8fa;'>
 <span style='color:#898887;'>// @value indicates that the interface declares @value functions.</span>
 <span style='color:#644a9b;'>@value</span> <b>interface</b> <b><span style='color:#0057ae;'>Printable</span></b> {
   <span style='color:#898887;'>// @value is not allowed in the declaration.</span>
@@ -803,7 +803,7 @@ has `@type interface`s that declare `@type` functions that must be defined.
 - `@value interface`s can be **inherited** by other `@value interface`s and
   `concrete` categories using `refines`.
 
-<pre style='color:#1f1c1b;background-color:#ffffff;'>
+<pre style='color:#1f1c1b;background-color:#f6f8fa;'>
 <b>concrete</b> <b><span style='color:#0057ae;'>MyValue</span></b> {
   <b>refines</b> <span style='color:#0057ae;'>Printable</span>
 
@@ -813,7 +813,7 @@ has `@type interface`s that declare `@type` functions that must be defined.
 
 - `@type interface`s can only be **inherited** by `concrete` categories.
 
-<pre style='color:#1f1c1b;background-color:#ffffff;'>
+<pre style='color:#1f1c1b;background-color:#f6f8fa;'>
 <b>concrete</b> <b><span style='color:#0057ae;'>MyValue</span></b> {
   <b>defines</b> <span style='color:#0057ae;'>Diffable</span><span style='color:#c02040;'>&lt;</span><span style='color:#0057ae;'>MyValue</span><span style='color:#c02040;'>&gt;</span>
 
@@ -824,7 +824,7 @@ has `@type interface`s that declare `@type` functions that must be defined.
 - You can also specify `refines` and `defines` when *defining* a `concrete`
   category. This allows the inheritance to be private.
 
-<pre style='color:#1f1c1b;background-color:#ffffff;'>
+<pre style='color:#1f1c1b;background-color:#f6f8fa;'>
 <b>concrete</b> <b><span style='color:#0057ae;'>MyValue</span></b> {
   <span style='color:#644a9b;'>@type</span> create () -&gt; (<i><span style='color:#0057ae;'>Formatted</span></i>)
 }
@@ -863,7 +863,7 @@ types.
   `forall a. (Foo a, Bar a) => a` in Haskell and `? extends Foo & Bar` in Java,
   except that in Zeolite `[Foo&Bar]` can be used as a first-class type.
 
-<pre style='color:#1f1c1b;background-color:#ffffff;'>
+<pre style='color:#1f1c1b;background-color:#f6f8fa;'>
 <span style='color:#644a9b;'>@value</span> <b>interface</b> <b><span style='color:#0057ae;'>Reader</span></b> {}
 
 <span style='color:#644a9b;'>@value</span> <b>interface</b> <b><span style='color:#0057ae;'>Writer</span></b> {}
@@ -890,7 +890,7 @@ types.
   a particular `@value interface` are allowed by a function argument, e.g.,
   a specific set of "verified" implementations.
 
-<pre style='color:#1f1c1b;background-color:#ffffff;'>
+<pre style='color:#1f1c1b;background-color:#f6f8fa;'>
 <span style='color:#644a9b;'>@value</span> <b>interface</b> <b><span style='color:#0057ae;'>Printable</span></b> {}
 
 <b>concrete</b> <b><span style='color:#0057ae;'>Newspaper</span></b> {
@@ -1014,7 +1014,7 @@ other symbols.
 Integration tests are an extension of `.0rx` files. They live in `.0rt` files
 within the project directory, and are compiled as needed to run the tests.
 
-<pre style='color:#1f1c1b;background-color:#ffffff;'>
+<pre style='color:#1f1c1b;background-color:#f6f8fa;'>
 <span style='color:#898887;'>// myprogram/tests.0rt</span>
 
 <span style='color:#898887;'>// Each testcase starts with a header specifying the test name. Nothing in the</span>
