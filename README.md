@@ -5,7 +5,7 @@ system revolves around defining objects and their usage patterns.
 
 Zeolite prioritizes making code written with it simple to understand for readers
 who didn't write the original code. This is done by limiting flexibility in
-some places and increasing it in others. In particular, emphasis is places on
+some places and increasing it in others. In particular, emphasis is placed on
 the user's experience when troubleshooting code that is *incorrect*.
 
 The design of the type system and the language itself is influenced by positive
@@ -152,6 +152,9 @@ Zeolite programs use object-oriented and procedural programming paradigms.
 Java and C++. They *are not* called "classes", just to avoid confusion about
 semantic differences with Java and C++.
 
+All type-category names start with an uppercase letter and contain only letters
+and digits.
+
 All procedures and data live inside `concrete` type categories. Every program
 must have at least one `concrete` category with the procedure to be executed
 when the program is run.
@@ -212,6 +215,9 @@ A **function declaration** specifies the **scope** of the function and its
 filters, to be discussed later.) The declaration simply indicates the existence
 of a function, without specifying its behavior.
 
+All function names start with a lowercase letter and contain only letters and
+digits.
+
 <pre style='color:#1f1c1b;background-color:#ffffff;'>
 <b>concrete</b> <b><span style='color:#0057ae;'>MyCategory</span></b> {
   <span style='color:#898887;'>// @value indicates that this function requires a value of type MyCategory.</span>
@@ -262,11 +268,19 @@ visible externally.
 
 All arguments must either have a unique name or be ignored with `_`.
 
+`@value` functions have access to a special constant **`self`**, which refers to
+the object against which the function was called.
+
 #### Using Variables
 
 **Variables** are assigned with `<-` to indicate the direction of assignment.
 *Every* variable must be initialized; there are no `null` values in Zeolite.
 (However, see `optional` later on.)
+
+All variable names start with a lowercase letter and contain only letters and
+digits. When a location is needed for assignment (e.g., handling a function
+return, taking a function argument), you can use `_` in place of a variable
+name to ignore the value.
 
 <pre style='color:#1f1c1b;background-color:#ffffff;'>
 <span style='color:#898887;'>// Initialize with a literal.</span>
@@ -278,6 +292,9 @@ All arguments must either have a unique name or be ignored with `_`.
 Unlike other languages, Zeolite *does not* allow variable masking. For example,
 if there is already a variable named `x` available, you *cannot* create a new
 `x` variable even in a smaller scope.
+
+All variables are **shared** and their values *are not* scoped like they are in
+C++. You should not count on knowing the lifetime of any given value.
 
 #### Calling Functions
 
@@ -296,15 +313,17 @@ simplify parsing.)
 <span style='color:#898887;'>// Ignore all aspects of the return.</span>
 <span style='color:#006e28;'>~</span> printHelp()</pre>
 
-- Functions that are defined within the same category and in an equal or smaller
-  scope do not usually need to be qualified, e.g., the example above.
-- Calling functions with `@value` scope require a value of the correct type, and
-  use `.` notation, e.g., `foo.getValue()`.
-- Calling functions with `@type` scope require the type with parameter
-  substutition (if applicable), and use `$` notation, e.g.,
+- Calling a function with `@value` scope requires a value of the correct type,
+  and uses `.` notation, e.g., `foo.getValue()`.
+- Calling a function with `@type` scope requires the type with parameter
+  substutition (if applicable), and uses `$` notation, e.g.,
   `MyCategory<Int>$create()`.
-- Calling functions with `@category` scope require the category itself, and use
-  the `$$` notation, e.g., `MyCategory$$foo()`.
+- Calling a function with `@category` scope requires the category itself, and
+  uses the `$$` notation, e.g., `MyCategory$$foo()`.
+- You can skip qualifying function calls (e.g., in the example above) if the
+  function being called is in the same scope or higher. For example, you can
+  call a `@type` function from the procedure for a `@value` function in the
+  same category.
 
 The `fail` builtin can be used to immediately terminate the program. It *is not*
 considered a function since it cannot return; therefore, you do not need to
@@ -395,22 +414,11 @@ explicitly-defined functions.
 <span style='color:#898887;'>// Create a new value in some other procedure.</span>
 <span style='color:#0057ae;'>MyCategory</span> myValue &lt;- <span style='color:#0057ae;'>MyCategory</span><span style='color:#644a9b;'>$</span>create()</pre>
 
-All variables are **shared** and their values *are not* scoped like they are in
-C++. You should not count on knowing the lifetime of any given value.
-
-#### Builtin Types
-
-- **`Bool`**: Either `true` or `false`.
-- **`Char`**: Use single quotes, e.g., `'a'`. Use literal characters, standard
-  escapes (e.g., `'\n'`), 2-digit hex (e.g., `\x0B`), or 3-digit octal (e.g.,
-  `'\012'`). At the moment this only supports ASCII; see
-  [Issue #22](https://github.com/ta0kira/zeolite/issues/22).
-- **`Float`**: Use decimal notation, e.g., `0.0` or `1.0E1`. You *must* have
-  digits on both sides of the `.`.
-- **`Int`**: Use decimal (e.g., `1234`), hex (e.g., `\xABCD`), octal (e.g.,
-  `\o0123`), or binary (e.g., `\b0100`).
-- **`String`**: Use double quotes to sequence `Char` literals, e.g.,
-  `"hello\012"`.
+There *is no syntax* for accessing a data member from another object; even
+objects of the same type. This effectively makes all variables **internal**
+rather than just `private` like in Java and C++. As long as parameter variance
+is respected, you can provide access to an individual member with getters and
+setters.
 
 #### Conditionals
 
@@ -462,10 +470,8 @@ for every `return` statement.
 
 <span style='color:#898887;'>// Cleanup without scoping.</span>
 <b>cleanup</b> {
-  <span style='color:#898887;'>// ...</span>
-} <b>in</b> {
-  <span style='color:#898887;'>// ...</span>
-}</pre>
+  i &lt;- i+<span style='color:#b08000;'>1</span>  <span style='color:#898887;'>// Post-increment behavior.</span>
+} <b>in</b> <b>return</b> i</pre>
 
 #### Loops
 
@@ -557,9 +563,9 @@ The caller of a function with multiple returns also has a few options:
 #### Optional and Weak Values
 
 Zeolite requires that all variables be initialized; however, it provides the
-`optional` storage modifier to allow a *specific* variable to be `empty`. This
-*is not* the same as `null` in Java because `optional` variables need to be
-`require`d before use.
+**`optional`** storage modifier to allow a *specific* variable to be
+**`empty`**. This *is not* the same as `null` in Java because `optional`
+variables need to be `require`d before use.
 
 <pre style='color:#1f1c1b;background-color:#ffffff;'>
 <span style='color:#898887;'>// empty is a special value for use with optional.</span>
@@ -574,7 +580,7 @@ value &lt;- <span style='color:#b08000;'>1</span>
   <span style='color:#006e28;'>~</span> foo(<b>require</b>(value))
 }</pre>
 
-`weak` values are similar, but require an additional step to convert them to
+**`weak`** values are similar, but require an additional step to convert them to
 `optional` first. (`weak` values are a pragmatic solution to potential memory
 leaks that can arise with cyclic references.)
 
@@ -605,9 +611,11 @@ All `concrete` categories and all `interface`s can have type parameters. Each
 parameter can have a variance rule assigned to it. This allows the compiler to
 do type conversions between different parameterizations.
 
-Parameter names must start with `#` and a lowercase letter. Parameters are
-*never* repeated in the category or function definitions. (Doing so would just
-create more opportunity for unnecessary compile-time errors.)
+Parameter names must start with `#` and a lowercase letter, and can only contain
+letters and digits.
+
+Parameters are *never* repeated in the category or function definitions. (Doing
+so would just create more opportunity for unnecessary compile-time errors.)
 
 <pre style='color:#1f1c1b;background-color:#ffffff;'>
 <span style='color:#898887;'>// #x is covariant (indicated by being to the right of |), which means that it</span>
@@ -722,8 +730,8 @@ create more opportunity for unnecessary compile-time errors.)
 Unlike in Java and C++, you must *always* be explicit with type parameters; the
 compiler will not infer them for you. This is primarily to cut down on code
 ambiguity when troubleshooting code issues. It also makes it more clear that
-parameters are technically "type arguments", and not just named place-holders to
-be filled in by a preprocessor.
+parameters are technically **type arguments**, and not just named place-holders
+to be filled in by a preprocessor.
 
 ### Using Interfaces
 
@@ -788,12 +796,6 @@ has `@type interface`s that declare `@type` functions that must be defined.
   }
 }</pre>
 
-- There *is no syntax* for accessing a data member from another object; even
-  objects of the same type. This effectively makes all variables **internal**
-  rather than just `private` like in Java and C++. As long as parameter
-  variance is respected, you can provide access to an individual member with
-  getters and setters.
-
 ### Other Features
 
 This section discusses language features that are less frequently used.
@@ -805,8 +807,8 @@ types.
 
 - A value with an **intersection type** `[A&B]` can be assigned from something
   that is *both* `A` and `B`, and can be assigned to *either* an `A` or `B`.
-  There is a special *empty intersection* named `any` that can be assigned from
-  any value but cannot be assigned to any other type.
+  There is a special empty intersection named **`any`** that can be assigned
+  from any value but cannot be assigned to any other type.
 
   Intersections can be useful for requiring multiple interfaces without creating
   a new category that refines all of those interfaces. An intersection
@@ -833,9 +835,9 @@ types.
 
 - A value with a **union type** `[A|B]` can be assigned from *either* `A` or
   `B`, but can only be assigned to something that *both* `A` and `B` can be
-  assigned to. There is a special *empty union* named `all` that cannot ever be
-  assigned a value but that can be assigned to everything. (`empty` is actually
-  of type `optional all`.)
+  assigned to. There is a special empty union named **`all`** that cannot ever
+  be assigned a value but that can be assigned to everything. (`empty` is
+  actually of type `optional all`.)
 
   Unions can be useful if you want to artificially limit what implementations of
   a particular `@value interface` are allowed by a function argument, e.g.,
@@ -868,6 +870,60 @@ Some other time. (Or just see
 
 Some other time. (Or just see
 [`internal-params.0rt`](https://github.com/ta0kira/zeolite/blob/master/tests/internal-params.0rt).)
+
+### Builtins
+
+#### Builtin Types
+
+See
+[`builtin.0rp`](https://github.com/ta0kira/zeolite/blob/master/base/builtin.0rp)
+for more details about builtin types.
+
+Builtin `concrete` types:
+
+- **`Bool`**: Either `true` or `false`.
+- **`Char`**: Use single quotes, e.g., `'a'`. Use literal characters, standard
+  escapes (e.g., `'\n'`), 2-digit hex (e.g., `\x0B`), or 3-digit octal (e.g.,
+  `'\012'`). At the moment this only supports ASCII; see
+  [Issue #22](https://github.com/ta0kira/zeolite/issues/22).
+- **`Float`**: Use decimal notation, e.g., `0.0` or `1.0E1`. You *must* have
+  digits on both sides of the `.`.
+- **`Int`**: Use decimal (e.g., `1234`), hex (e.g., `\xABCD`), octal (e.g.,
+  `\o0123`), or binary (e.g., `\b0100`).
+- **`String`**: Use double quotes to sequence `Char` literals, e.g.,
+  `"hello\012"`.
+
+Builtin `@value interface`s:
+
+- **`AsBool`**: Convert a value to `Bool` using `asBool()`.
+- **`AsChar`**: Convert a value to `Char` using `asChar()`.
+- **`AsFloat`**: Convert a value to `Float` using `asFloat()`.
+- **`AsInt`**: Convert a value to `Int` using `asInt()`.
+- **`Formatted`**: Format a value as a `String` using `formatted()`.
+- **`ReadPosition<#x>`**: Random access reads from a container with values of
+  type `#x`.
+
+Builtin `@type interface`s:
+
+- **`Equals<#x>`**: Compare values using `equals(x,y)`.
+- **`LessThan<#x>`**: Compare values using `lessThan(x,y)`.
+
+Builtin meta types:
+
+- **`any`**: Value type that can be assigned a value of any type.
+- **`all`**: Value type that can be assigned to any other type.
+
+#### Builtin Constants
+
+- **`empty`**: A missing `optional` value.
+- **`self`**: The value being operated on in `@value` functions
+
+#### Builtin Functions
+
+- **`present`**: Check `optional` for `empty`.
+- **`reduce<#x,#y>`**: (Undocumented for now.)
+- **`require`**: Convert `optional` to non-`optional`.
+- **`strong`**: Convert `weak` to `optional`.
 
 ## Layout and Dependencies
 
