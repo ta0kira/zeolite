@@ -12,6 +12,14 @@ The design of the type system and the language itself is influenced by positive
 and negative experiences with Java, C++, Haskell, Python, and Go, with
 collaborative development, and with various systems of code-quality enforcement.
 
+Due to the way GitHub renders embedded HTML, the colors might not show up in the
+syntax-highlighted code in this document. If you use the Chrome browser, you can
+view the intended formatting using the
+[Markdown Viewer](https://chrome.google.com/webstore/detail/markdown-viewer/ckkdlimhmcjmikdlpkmbgfkaikojcbjk)
+extension to view the
+[raw version](https://raw.githubusercontent.com/ta0kira/zeolite/master/README.md)
+of this document.
+
 ## Table of Contents
 
 - [Project Status](#project-status)
@@ -85,14 +93,6 @@ highlighting in [`zeolite.xml`][zeolite.xml].
 ### Hello World
 
 It's the [any%](https://en.wiktionary.org/wiki/any%25) of programming.
-
-Due to the way GitHub renders embedded HTML, the colors might not show up in the
-syntax-highlighted code in this document. If you use the Chrome browser, you can
-view the intended formatting using the
-[Markdown Viewer](https://chrome.google.com/webstore/detail/markdown-viewer/ckkdlimhmcjmikdlpkmbgfkaikojcbjk)
-extension to view the
-[raw version](https://raw.githubusercontent.com/ta0kira/zeolite/master/README.md)
-of this document.
 
 <pre style='color:#1f1c1b;background-color:#f6f8fa;'>
 <span style='color:#898887;'>// helloworld/hello-world.0rx</span>
