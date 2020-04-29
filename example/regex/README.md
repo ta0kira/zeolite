@@ -1,7 +1,7 @@
 # Zeolite Regex Example
 
 *Also see
-[a highlighted version of the example code](https://ta0kira.github.io/zeolite/example/regex/index.html).*
+[a highlighted version of the example code](https://ta0kira.github.io/zeolite/example/regex).*
 
 To run the example:
 

@@ -1,7 +1,7 @@
 # Zeolite Hello Example
 
 *Also see
-[a highlighted version of the example code](https://ta0kira.github.io/zeolite/example/hello/index.html).*
+[a highlighted version of the example code](https://ta0kira.github.io/zeolite/example/hello).*
 
 To run the example:
 

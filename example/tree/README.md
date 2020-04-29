@@ -1,7 +1,7 @@
 # Zeolite Tree Example
 
 *Also see
-[a highlighted version of the example code](https://ta0kira.github.io/zeolite/example/tree/index.html).*
+[a highlighted version of the example code](https://ta0kira.github.io/zeolite/example/tree).*
 
 To run the example:
 
