@@ -90,12 +90,14 @@ It's the [any%](https://en.wiktionary.org/wiki/any%25) of programming.
 <span style='color:#898887;'>// helloworld/hello-world.0rx</span>
 
 <b>concrete</b> <b><span style='color:#0057ae;'>HelloWorld</span></b> {
-  <span style='color:#644a9b;'>@type</span> run () <b><span style='color:#006e28;'>-&gt;</span></b> ()
+  <span style='color:#644a9b;'>@type</span> run () -&gt; ()
 }
 
 <b>define</b> <b><span style='color:#0057ae;'>HelloWorld</span></b> {
   run () {
-    <span style='color:#006e28;'>~</span> <span style='color:#0057ae;'>LazyStream</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Formatted</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>$</span>new().append(<span style='color:#bf0303;'>&quot;Hello World</span><span style='color:#924c9d;'>\n</span><span style='color:#bf0303;'>&quot;</span>).writeTo(<span style='color:#0057ae;'>SimpleOutput</span><span style='color:#644a9b;'>$</span>stderr())
+    <span style='color:#006e28;'>~</span> <span style='color:#0057ae;'>LazyStream</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Formatted</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>$</span>new()
+        .append(<span style='color:#bf0303;'>&quot;Hello World</span><span style='color:#924c9d;'>\n</span><span style='color:#bf0303;'>&quot;</span>)
+        .writeTo(<span style='color:#0057ae;'>SimpleOutput</span><span style='color:#644a9b;'>$</span>stderr())
   }
 }</pre>
 
@@ -956,7 +958,7 @@ Builtin meta types:
 #### Builtin Constants
 
 - **`empty`**: A missing `optional` value.
-- **`self`**: The value being operated on in `@value` functions
+- **`self`**: The value being operated on in `@value` functions.
 
 #### Builtin Functions
 
