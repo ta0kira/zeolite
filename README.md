@@ -788,6 +788,12 @@ has `@type interface`s that declare `@type` functions that must be defined.
   }
 }</pre>
 
+- There *is no syntax* for accessing a data member from another object; even
+  objects of the same type. This effectively makes all variables **internal**
+  rather than just `private` like in Java and C++. As long as parameter
+  variance is respected, you can provide access to an individual member with
+  getters and setters.
+
 ### Other Features
 
 This section discusses language features that are less frequently used.
