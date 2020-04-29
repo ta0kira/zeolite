@@ -354,18 +354,17 @@ getObjectFileResolver ce os ns ds = resolved ++ nonCategories where
     allChecks = map (\n -> (d,n) `Map.lookup` categoryMap >>= return . (:[])) (map show ns ++ [""])
     unwrap (Just xs) = xs
     unwrap _         = []
-  resolved = reverse $ nub $ reverse $ collectAll Set.empty directResolved
-  collectAll ca = concat . map (collect ca)
-  -- NOTE: Object files are collected with deps following things that depend on
-  -- them, without skipping over deps that have already been seen. This is so
-  -- that a dep strictly follows everything that depends on it. This is
-  -- is necessary when linking .a files.
-  collect ca c
-    | c `Set.member` ca = []
+  (_,_,resolved) = collectAll Set.empty Set.empty directResolved
+  collectAll ca fa [] = (ca,fa,[])
+  collectAll ca fa (c:cs)
+    | c `Set.member` ca = collectAll ca fa cs
     | otherwise =
       case c `Map.lookup` objectMap of
-           Just (CategoryObjectFile _ ds fs) -> fs ++ collectAll (c `Set.insert` ca) ds
-           Nothing -> []
+           Nothing -> collectAll ca fa cs
+           Just (CategoryObjectFile _ ds fs) -> (ca',fa'',fs') where
+             (ca',fa',fs0) = collectAll (c `Set.insert` ca) fa (ds ++ cs)
+             fa'' = fa' `Set.union` (Set.fromList fs)
+             fs' = (filter (not . flip elem fa') fs) ++ fs0
 
 resolveObjectDeps :: String -> [([String],CxxOutput)] -> [CompileMetadata] -> [ObjectFile]
 resolveObjectDeps p os deps = resolvedCategories ++ nonCategories where
