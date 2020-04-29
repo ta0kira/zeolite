@@ -39,8 +39,10 @@ module Test.Common (
   showParams,
 ) where
 
+import Control.Monad (when)
 import Data.Either
 import Data.List
+import System.Exit
 import System.FilePath
 import System.IO
 import Text.Parsec
@@ -63,6 +65,7 @@ runAllTests ts = do
   mapM_ (\(n,e) -> hPutStr stderr ("Test " ++ show n ++ ": " ++ show e ++ "\n")) es
   hPutStr stderr $ show (length ps) ++ " tests passed + " ++
                    show (length es) ++ " tests failed\n"
+  when (not $ null es) exitFailure
 
 numberError :: a -> CompileInfo b -> Either (a,CompileMessage) b
 numberError n c

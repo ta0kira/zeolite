@@ -236,7 +236,9 @@ instance ParseFromSource (ScopedBlock SourcePos) where
       p <- between (sepAfter $ string "{") (sepAfter $ string "}") sourceParser
       cl <- fmap Just parseCleanup <|> return Nothing
       kwIn
-      s <- unconditional <|> sourceParser
+      -- TODO: If there's a parse error in an otherwise-valid {} then the actual
+      -- error might look like a multi-assignment issue.
+      s <- try unconditional <|> sourceParser
       return $ ScopedBlock [c] p cl s
     justCleanup = do
       c <- getPosition
