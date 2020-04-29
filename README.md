@@ -84,8 +84,9 @@ If you use a modern Linux distribution, most of the above can be installed using
 the package manager that comes with your distribution.
 
 Once you meet all of those requirements, follow the installation instructions
-for the [`zeolite-lang`][hackage-zeolite-lang] package on [Hackage][hackage].
-Please take a look at the [issues page][zeolite-issues] if you run into problems.
+for the [**`zeolite-lang`**][hackage-zeolite-lang] package on
+[Hackage][hackage]. Please take a look at the [issues page][zeolite-issues] if
+you run into problems.
 
 If you happen to use the [`kate`][kate] text editor, you can use the syntax
 highlighting in [`zeolite.xml`][zeolite.xml].
