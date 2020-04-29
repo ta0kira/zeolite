@@ -951,7 +951,7 @@ Builtin `@type interface`s:
 Builtin meta types:
 
 - **`any`**: Value type that can be assigned a value of any type.
-- **`all`**: Value type that can be assigned to any other type.
+- **`all`**: Value type that can be assigned to all other types.
 
 #### Builtin Constants
 
