@@ -86,10 +86,13 @@ highlighting in [`zeolite.xml`][zeolite.xml].
 
 It's the [any%](https://en.wiktionary.org/wiki/any%25) of programming.
 
-(Due to the way GitHub renders embedded HTML, the colors might not show up in the
-syntax-highlighted code in this document. See
-[`example/tree`](https://ta0kira.github.io/zeolite/example/tree/index.html) for
-something that is easier to visually parse.)
+Due to the way GitHub renders embedded HTML, the colors might not show up in the
+syntax-highlighted code in this document. If you use the Chrome browser, you can
+view the intended formatting using the
+[Markdown Viewer](https://chrome.google.com/webstore/detail/markdown-viewer/ckkdlimhmcjmikdlpkmbgfkaikojcbjk)
+extension to view the
+[raw version](https://raw.githubusercontent.com/ta0kira/zeolite/master/README.md)
+of this document.
 
 <pre style='color:#1f1c1b;background-color:#f6f8fa;'>
 <span style='color:#898887;'>// helloworld/hello-world.0rx</span>
