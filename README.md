@@ -12,6 +12,46 @@ The design of the type system and the language itself is influenced by positive
 and negative experiences with Java, C++, Haskell, Python, and Go, with
 collaborative development, and with various systems of code-quality enforcement.
 
+## Table of Contents
+
+- [Project Status](#project-status)
+- [Quick Start](#quick-start)
+  - [Installation](#installation)
+  - [Hello World](#hello-world)
+- [Language Overview](#language-overview)
+  - [Parameter Variance](#parameter-variance)
+  - [Usage Patterns vs. Information Structure](#usage-patterns-vs-information-structure)
+  - [Compilation Testing](#compilation-testing)
+- [Writing Programs](#writing-programs)
+  - [Basic Ideas](#basic-ideas)
+  - [Declaring Functions](#declaring-functions)
+  - [Defining Functions](#defining-functions)
+    - [Using Variables](#using-variables)
+    - [Calling Functions](#calling-functions)
+    - [Functions As Operators](#functions-as-operators)
+    - [Data Members and Value Creation](#data-members-and-value-creation)
+    - [Conditionals](#conditionals)
+    - [Scoping and Cleanup](#scoping-and-cleanup)
+    - [Loops](#loops)
+    - [Multiple Returns](#multiple-returns)
+    - [Optional and Weak Values](#optional-and-weak-values)
+  - [Using Parameters](#using-parameters)
+  - [Using Interfaces](#using-interfaces)
+  - [Other Features](#other-features)
+    - [Meta Types](#meta-types)
+    - [Runtime Type Reduction](#runtime-type-reduction)
+    - [Internal Type Parameters](#internal-type-parameters)
+  - [Builtins](#builtins)
+    - [Builtin Types](#builtin-types)
+    - [Builtin Constants](#builtin-constants)
+    - [Builtin Functions](#builtin-functions)
+- [Layout and Dependencies](#layout-and-dependencies)
+  - [Using Public Source Files](#using-public-source-files)
+  - [Standard Library](#standard-library)
+  - [Modules](#modules)
+- [Integration Testing](#integration-testing)
+- [Conclusion](#conclusion)
+
 ## Project Status
 
 Zeolite is currently very experimental, and still lacks a lot of standard
