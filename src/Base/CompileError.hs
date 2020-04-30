@@ -26,6 +26,7 @@ module Base.CompileError (
 ) where
 
 import Control.Monad (Monad(..))
+import Data.Foldable
 
 #if MIN_VERSION_base(4,9,0)
 import Control.Monad.Fail

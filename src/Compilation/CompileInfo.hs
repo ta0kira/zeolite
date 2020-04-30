@@ -28,7 +28,10 @@ module Compilation.CompileInfo (
   getCompileWarnings,
 ) where
 
+import Control.Applicative
 import Data.List (intercalate)
+import Data.Foldable
+import Data.Functor
 
 #if MIN_VERSION_base(4,9,0)
 import Control.Monad.Fail

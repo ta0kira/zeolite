@@ -99,7 +99,8 @@ module Parser.Common (
 ) where
 
 import Data.Char
-import Data.Monoid ((<>))
+import Data.Foldable
+import Data.Monoid
 import Text.Parsec
 import Text.Parsec.String
 import qualified Data.Set as Set

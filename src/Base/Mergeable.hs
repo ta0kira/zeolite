@@ -26,6 +26,7 @@ module Base.Mergeable (
 ) where
 
 import Control.Monad (Monad(..))
+import Data.Foldable
 
 
 class Mergeable a where
