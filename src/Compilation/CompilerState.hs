@@ -63,6 +63,7 @@ module Compilation.CompilerState (
 
 import Control.Monad.Trans (lift)
 import Control.Monad.Trans.State (StateT(..),execStateT,get,mapStateT,put)
+import Data.Functor
 import Data.Monoid
 import qualified Data.Set as Set
 
@@ -78,7 +79,7 @@ import Types.TypeInstance
 
 type CompilerState a m = StateT a m
 
-class Monad m => CompilerContext c m s a | a -> c s where
+class (Functor m, Monad m) => CompilerContext c m s a | a -> c s where
   ccCurrentScope :: a -> m SymbolScope
   ccResolver :: a -> m AnyTypeResolver
   ccSameType :: a -> TypeInstance -> m Bool

@@ -25,6 +25,7 @@ module Types.Positional (
 
 import Control.Monad (Monad(..))
 import Control.Monad.Trans (MonadTrans(..))
+import Data.Functor
 
 import Base.CompileError
 

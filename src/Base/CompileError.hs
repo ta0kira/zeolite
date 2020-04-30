@@ -27,6 +27,7 @@ module Base.CompileError (
 
 import Control.Monad (Monad(..))
 import Data.Foldable
+import Data.Functor
 
 #if MIN_VERSION_base(4,9,0)
 import Control.Monad.Fail
@@ -41,9 +42,9 @@ class CompileError a where
 
 -- For some GHC versions, pattern-matching failures require MonadFail.
 #if MIN_VERSION_base(4,9,0)
-class (Monad m, MonadFail m) => CompileErrorM m where
+class (Functor m, Monad m, MonadFail m) => CompileErrorM m where
 #else
-class Monad m => CompileErrorM m where
+class (Functor m, Monad m) => CompileErrorM m where
 #endif
   compileErrorM :: String -> m a
   isCompileErrorM :: m a -> Bool

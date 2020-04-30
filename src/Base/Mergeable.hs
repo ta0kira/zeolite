@@ -27,6 +27,7 @@ module Base.Mergeable (
 
 import Control.Monad (Monad(..))
 import Data.Foldable
+import Data.Functor
 
 
 class Mergeable a where
@@ -37,7 +38,7 @@ class Mergeable a where
   mergeDefault :: a
   mergeDefault = mergeAll Nothing
 
-class Monad m => MergeableM m where
+class (Functor m, Monad m) => MergeableM m where
   mergeAnyM :: (Mergeable a, Foldable f) => f (m a) -> m a
   mergeAllM :: (Mergeable a, Foldable f) => f (m a) -> m a
   mergeNestedM :: Mergeable a => m a -> m a -> m a
