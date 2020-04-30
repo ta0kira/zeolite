@@ -63,8 +63,10 @@ module Compilation.CompilerState (
 
 import Control.Monad.Trans (lift)
 import Control.Monad.Trans.State (StateT(..),execStateT,get,mapStateT,put)
+import Data.Foldable
 import Data.Functor
 import Data.Monoid
+import Prelude hiding (foldr)
 import qualified Data.Set as Set
 
 import Base.CompileError
