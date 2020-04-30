@@ -45,9 +45,6 @@ class (Monad m, MonadFail m) => CompileErrorM m where
 class Monad m => CompileErrorM m where
 #endif
   compileErrorM :: String -> m a
-#if MIN_VERSION_base(4,9,0)
-  compileErrorM = fail
-#endif
   isCompileErrorM :: m a -> Bool
   collectAllOrErrorM :: Foldable f => f (m a) -> m [a]
   collectOneOrErrorM :: Foldable f => f (m a) -> m a
