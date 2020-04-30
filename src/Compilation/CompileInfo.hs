@@ -32,6 +32,7 @@ import Control.Applicative
 import Data.List (intercalate)
 import Data.Foldable
 import Data.Functor
+import Prelude hiding (foldr)
 
 #if MIN_VERSION_base(4,9,0)
 import Control.Monad.Fail

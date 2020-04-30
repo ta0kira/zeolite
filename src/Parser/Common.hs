@@ -101,6 +101,7 @@ module Parser.Common (
 import Data.Char
 import Data.Foldable
 import Data.Monoid
+import Prelude hiding (foldl,foldr)
 import Text.Parsec
 import Text.Parsec.String
 import qualified Data.Set as Set

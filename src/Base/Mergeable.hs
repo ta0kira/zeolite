@@ -48,11 +48,3 @@ class Monad m => MergeableM m where
 instance Mergeable () where
   mergeAny = const ()
   mergeAll = const ()
-
-instance Mergeable Bool where
-  mergeAny = any id
-  mergeAll = all id
-
-instance Mergeable [a] where
-  mergeAny = foldr (++) []
-  mergeAll = foldr (++) []

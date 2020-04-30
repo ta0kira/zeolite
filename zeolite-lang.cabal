@@ -165,7 +165,7 @@ library zeolite-internal
 
   build-depends:       base >= 4.2 && < 4.14,
                        containers >= 0.3 && < 0.7,
-                       directory >= 1.1 && < 1.4,
+                       directory >= 1.2.7 && < 1.4,
                        filepath >= 1.0 && < 1.5,
                        hashable >= 1.0 && < 1.4,
                        mtl >= 1.0 && < 2.3,
