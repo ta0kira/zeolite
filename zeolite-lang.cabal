@@ -1,5 +1,5 @@
 name:                zeolite-lang
-version:             0.1.2.8
+version:             0.1.2.9
 synopsis:            Zeolite is a statically-typed, general-purpose programming language.
 
 description:
@@ -163,7 +163,7 @@ library zeolite-internal
                        Safe,
                        ScopedTypeVariables
 
-  build-depends:       base >= 4.2 && < 4.14,
+  build-depends:       base >= 4.8 && < 4.14,
                        containers >= 0.3 && < 0.7,
                        directory >= 1.2.7 && < 1.4,
                        filepath >= 1.0 && < 1.5,
@@ -172,7 +172,7 @@ library zeolite-internal
                        parsec >= 3.0 && < 3.2,
                        regex-tdfa >= 1.0 && < 1.4,
                        transformers >= 0.1 && < 0.6,
-                       unix >= 2.0 && <= 2.8
+                       unix >= 2.6 && <= 2.8
 
   hs-source-dirs:      src
   default-language:    Haskell2010
