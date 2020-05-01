@@ -25,6 +25,10 @@ module Base.CompileError (
   CompileErrorM(..),
 ) where
 
+#if MIN_VERSION_base(4,9,0)
+import Control.Monad.Fail ()
+#endif
+
 
 class CompileError a where
   compileError :: String -> a
