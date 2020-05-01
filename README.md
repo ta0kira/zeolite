@@ -1,5 +1,7 @@
 # [Zeolite Programming Language][zeolite]
 
+[![Build Status](https://travis-ci.org/ta0kira/zeolite.svg?branch=master)](https://travis-ci.org/ta0kira/zeolite)
+
 Zeolite is a statically-typed, general-purpose programming language. The type
 system revolves around defining objects and their usage patterns.
 
