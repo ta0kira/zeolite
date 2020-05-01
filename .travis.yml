@@ -143,14 +143,14 @@ script:
   - ${CABAL} v2-build $WITHCOMPILER ${TEST} ${BENCH} all
   # Testing...
   - ${CABAL} v2-test $WITHCOMPILER ${TEST} ${BENCH} all
+  # Run zeolite-zetup with defaults and execute integration tests
+  - "echo -e '\\n\\n' | ${CABAL} v2-run zeolite-setup"
+  - ${CABAL} v2-run zeolite -- -t tests lib/file lib/util
   # cabal check...
   - (cd ${PKGDIR_zeolite_lang} && ${CABAL} -vnormal check)
   # Building without installed constraints for packages in global-db...
   - rm -f cabal.project.local
   - ${CABAL} v2-build $WITHCOMPILER --disable-tests --disable-benchmarks all
-  # Run zeolite-zetup with defaults and execute integration tests
-  - "echo -e '\n\n' | ${CABAL} v2-run zeolite-setup"
-  - ${CABAL} v2-run zeolite -- -t tests lib/file lib/util
 
 # REGENDATA ("0.10",["zeolite-lang.cabal","--submodules","--output",".travis.yml"])
 # EOF
