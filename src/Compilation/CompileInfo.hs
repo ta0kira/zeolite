@@ -34,7 +34,7 @@ import Data.Foldable
 import Data.Functor
 import Prelude hiding (concat,foldr)
 
-#if MIN_VERSION_base(4,12,0)
+#if MIN_VERSION_base(4,13,0)
 import Control.Monad.Fail ()
 #endif
 
@@ -125,7 +125,7 @@ instance MergeableM CompileInfo where
   (CompileSuccess w1 _) `mergeNestedM` (CompileFail w2 e)    = CompileFail (w1 ++ w2) e
   (CompileFail w1 e1)   `mergeNestedM` (CompileFail w2 e2)   = CompileFail (w1 ++ w2) $ e1 `nestMessages` e2
 
-#if MIN_VERSION_base(4,12,0)
+#if MIN_VERSION_base(4,13,0)
 instance MonadFail CompileInfo where
   fail = compileErrorM
 #endif

@@ -25,7 +25,7 @@ module Base.CompileError (
   CompileErrorM(..),
 ) where
 
-#if MIN_VERSION_base(4,12,0)
+#if MIN_VERSION_base(4,13,0)
 import Control.Monad.Fail ()
 #endif
 
@@ -37,7 +37,7 @@ class CompileError a where
   reviseError e _ = e
 
 -- For some GHC versions, pattern-matching failures require MonadFail.
-#if MIN_VERSION_base(4,12,0)
+#if MIN_VERSION_base(4,13,0)
 class (Functor m, Monad m, MonadFail m) => CompileErrorM m where
 #else
 class (Functor m, Monad m) => CompileErrorM m where
