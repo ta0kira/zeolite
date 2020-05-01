@@ -34,6 +34,11 @@ import Data.Foldable
 import Data.Functor
 import Prelude hiding (concat,foldr)
 
+#if MIN_VERSION_base(4,8,0)
+#else
+import Data.Foldable
+#endif
+
 #if MIN_VERSION_base(4,13,0)
 import Control.Monad.Fail ()
 #elif MIN_VERSION_base(4,9,0)

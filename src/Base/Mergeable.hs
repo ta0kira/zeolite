@@ -25,6 +25,11 @@ module Base.Mergeable (
   MergeableM(..),
 ) where
 
+#if MIN_VERSION_base(4,8,0)
+#else
+import Data.Foldable
+#endif
+
 
 class Mergeable a where
   mergeAny :: Foldable f => f a -> a
