@@ -311,7 +311,7 @@ runCompiler (CompileOptions _ is is2 ds es ep ec p m o f) = do
       collectAllOrErrorM $ map (compileConcreteTemplate tm3) $ Set.toList ca'
     writeTemplate d (CxxOutput _ n _ _ _ content) = do
       let n' = p </> d </> n
-      exists <- doesPathExist n'
+      exists <- doesFileExist n'
       if exists && f /= ForceAll
          then hPutStrLn stderr $ "Skipping existing file " ++ n
          else do

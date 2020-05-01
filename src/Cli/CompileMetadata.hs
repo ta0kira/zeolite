@@ -338,13 +338,18 @@ checkModuleFreshness p (CompileMetadata p2 _ is is2 _ _ _ ps xs ts hxx cxx _) = 
   let fresh = not $ any id $ [rm,e1,e2,e3] ++ f1 ++ f2 ++ f3
   return fresh where
     check time f = do
-      exists <- doesPathExist f
+      exists <- doesFileOrDirExist f
       if not exists
          then return True
          else do
            time2 <- getModificationTime f
            return (time2 > time)
     checkMissing s0 s1 = not $ null $ (Set.fromList s1) `Set.difference` (Set.fromList s0)
+    doesFileOrDirExist f2 = do
+      existF <- doesFileExist f2
+      if existF
+        then return True
+        else doesDirectoryExist f2
 
 getObjectFileResolver :: [CategoryIdentifier] -> [ObjectFile] -> [Namespace] -> [CategoryName] -> [String]
 getObjectFileResolver ce os ns ds = resolved ++ nonCategories where
