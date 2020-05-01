@@ -23,9 +23,7 @@ module Parser.TypeInstance (
 ) where
 
 import Control.Applicative ((<|>))
-import Control.Monad (when)
 import Text.Parsec hiding ((<|>))
-import Text.Parsec.String
 
 import Parser.Common
 import Types.GeneralType
@@ -34,11 +32,11 @@ import Types.TypeInstance
 
 
 instance ParseFromSource GeneralInstance where
-  sourceParser = try all <|> try any <|> intersectOrUnion <|> single where
-    all = labeled "all" $ do
+  sourceParser = try allT <|> try anyT <|> intersectOrUnion <|> single where
+    allT = labeled "all" $ do
       kwAll
       return $ TypeMerge MergeUnion []
-    any = labeled "any" $ do
+    anyT = labeled "any" $ do
       kwAny
       return $ TypeMerge MergeIntersect []
     intersectOrUnion = try intersect <|> union
@@ -89,7 +87,7 @@ instance ParseFromSource CategoryName where
 instance ParseFromSource ParamName where
   sourceParser = labeled "param name" $ do
     noKeywords
-    char '#'
+    char_ '#'
     b <- lower
     e <- sepAfter $ many alphaNum
     return $ ParamName ('#':b:e)

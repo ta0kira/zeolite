@@ -27,7 +27,7 @@ import Text.Parsec
 import Base.CompileError
 import Compilation.CompileInfo
 import Parser.Common
-import Parser.IntegrationTest
+import Parser.IntegrationTest ()
 import Test.Common
 import Types.DefinedCategory
 import Types.IntegrationTest

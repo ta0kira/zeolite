@@ -25,8 +25,8 @@ module Compilation.CompilerState (
   CleanupSetup(..),
   CompilerContext(..),
   CompiledData(..),
-  CompilerState(..),
-  ExpressionType(..),
+  CompilerState,
+  ExpressionType,
   LoopSetup(..),
   MemberValue(..),
   ReturnVariable(..),
@@ -72,7 +72,6 @@ import qualified Data.Set as Set
 import Base.CompileError
 import Base.Mergeable
 import Types.DefinedCategory
-import Types.Function
 import Types.Positional
 import Types.Procedure
 import Types.TypeCategory

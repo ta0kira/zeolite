@@ -21,13 +21,12 @@ limitations under the License.
 module Test.Parser (tests) where
 
 import Control.Monad (when)
-import Text.Parsec
-import Text.Parsec.String
 
 import Base.CompileError
 import Compilation.CompileInfo
 import Parser.Common
 import Test.Common
+import Text.Parsec.String
 
 
 tests :: [IO (CompileInfo ())]
@@ -58,6 +57,7 @@ tests = [
     checkParseFail regexChar "\""
   ]
 
+checkParsesAs :: (Eq a, Show a) => Parser a -> [Char] -> a -> IO (CompileInfo ())
 checkParsesAs p s m = return $ do
   let parsed = readSingleWith p "(string)" s
   check parsed
@@ -69,6 +69,7 @@ checkParsesAs p s m = return $ do
       | isCompileError c = compileError $ "Parse '" ++ s ++ "':\n" ++ show (getCompileError c)
       | otherwise = return ()
 
+checkParseFail :: Show a => Parser a -> [Char] -> IO (CompileInfo ())
 checkParseFail p s = do
   let parsed = readSingleWith p "(string)" s
   return $ check parsed

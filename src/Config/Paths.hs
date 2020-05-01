@@ -22,8 +22,6 @@ module Config.Paths (
   PathResolver(..),
 ) where
 
-import System.FilePath
-
 
 class PathResolver r where
   resolveModule :: r -> FilePath -> FilePath -> IO FilePath

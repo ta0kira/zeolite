@@ -60,7 +60,6 @@ import qualified Data.Set as Set
 import Compilation.CompilerState
 import CompilerCxx.Naming
 import Types.Builtin
-import Types.DefinedCategory
 import Types.Positional
 import Types.TypeCategory
 import Types.TypeInstance
@@ -122,6 +121,7 @@ data ExprValue =
   LazySingle ExprValue
   deriving (Show)
 
+getFromLazy :: ExprValue -> ExprValue
 getFromLazy (OpaqueMulti e)        = OpaqueMulti $ e ++ ".Get()"
 getFromLazy (WrappedSingle e)      = WrappedSingle $ e ++ ".Get()"
 getFromLazy (UnwrappedSingle e)    = UnwrappedSingle $ e ++ ".Get()"
@@ -186,24 +186,21 @@ useAsUnwrapped (UnboxedPrimitive PrimFloat e)  = "Box_Float(" ++ e ++ ")"
 useAsUnwrapped (LazySingle e)                  = useAsUnwrapped $ getFromLazy e
 
 useAsUnboxed :: PrimitiveType -> ExprValue -> String
-useAsUnboxed t (OpaqueMulti e)
-  | t == PrimBool   = "(" ++ e ++ ").Only()->AsBool()"
-  | t == PrimString = "(" ++ e ++ ").Only()->AsString()"
-  | t == PrimChar   = "(" ++ e ++ ").Only()->AsChar()"
-  | t == PrimInt    = "(" ++ e ++ ").Only()->AsInt()"
-  | t == PrimFloat  = "(" ++ e ++ ").Only()->AsFloat()"
-useAsUnboxed t (WrappedSingle e)
-  | t == PrimBool   = "(" ++ e ++ ")->AsBool()"
-  | t == PrimString = "(" ++ e ++ ")->AsString()"
-  | t == PrimChar   = "(" ++ e ++ ")->AsChar()"
-  | t == PrimInt    = "(" ++ e ++ ")->AsInt()"
-  | t == PrimFloat  = "(" ++ e ++ ")->AsFloat()"
-useAsUnboxed t (UnwrappedSingle e)
-  | t == PrimBool   = "(" ++ e ++ ")->AsBool()"
-  | t == PrimString = "(" ++ e ++ ")->AsString()"
-  | t == PrimChar   = "(" ++ e ++ ")->AsChar()"
-  | t == PrimInt    = "(" ++ e ++ ")->AsInt()"
-  | t == PrimFloat  = "(" ++ e ++ ")->AsFloat()"
+useAsUnboxed PrimBool   (OpaqueMulti e) = "(" ++ e ++ ").Only()->AsBool()"
+useAsUnboxed PrimString (OpaqueMulti e) = "(" ++ e ++ ").Only()->AsString()"
+useAsUnboxed PrimChar   (OpaqueMulti e) = "(" ++ e ++ ").Only()->AsChar()"
+useAsUnboxed PrimInt    (OpaqueMulti e) = "(" ++ e ++ ").Only()->AsInt()"
+useAsUnboxed PrimFloat  (OpaqueMulti e) = "(" ++ e ++ ").Only()->AsFloat()"
+useAsUnboxed PrimBool   (WrappedSingle e) = "(" ++ e ++ ")->AsBool()"
+useAsUnboxed PrimString (WrappedSingle e) = "(" ++ e ++ ")->AsString()"
+useAsUnboxed PrimChar   (WrappedSingle e) = "(" ++ e ++ ")->AsChar()"
+useAsUnboxed PrimInt    (WrappedSingle e) = "(" ++ e ++ ")->AsInt()"
+useAsUnboxed PrimFloat  (WrappedSingle e) = "(" ++ e ++ ")->AsFloat()"
+useAsUnboxed PrimBool   (UnwrappedSingle e) = "(" ++ e ++ ")->AsBool()"
+useAsUnboxed PrimString (UnwrappedSingle e) = "(" ++ e ++ ")->AsString()"
+useAsUnboxed PrimChar   (UnwrappedSingle e) = "(" ++ e ++ ")->AsChar()"
+useAsUnboxed PrimInt    (UnwrappedSingle e) = "(" ++ e ++ ")->AsInt()"
+useAsUnboxed PrimFloat  (UnwrappedSingle e) = "(" ++ e ++ ")->AsFloat()"
 useAsUnboxed _ (BoxedPrimitive _ e)   = "(" ++ e ++ ")"
 useAsUnboxed _ (UnboxedPrimitive _ e) = "(" ++ e ++ ")"
 useAsUnboxed t (LazySingle e) = useAsUnboxed t $ getFromLazy e
@@ -273,6 +270,7 @@ functionLabelType = getType . sfScope where
   getType CategoryScope = "const CategoryFunction&"
   getType TypeScope     = "const TypeFunction&"
   getType ValueScope    = "const ValueFunction&"
+  getType _             = undefined
 
 newFunctionLabel :: Int -> ScopedFunction c -> String
 newFunctionLabel i f = "(*new " ++ (getType $ sfScope f) ++ "{ " ++ intercalate ", " args ++ " })" where
@@ -295,7 +293,7 @@ newFunctionLabel i f = "(*new " ++ (getType $ sfScope f) ++ "{ " ++ intercalate 
   getType CategoryScope = "CategoryFunction"
   getType TypeScope     = "TypeFunction"
   getType ValueScope    = "ValueFunction"
-
+  getType _             = undefined
 
 categoryBase :: String
 categoryBase = "TypeCategory"
@@ -327,12 +325,12 @@ escapeChars cs
   | null cs = "\"\""
   | otherwise = escapeAll False "" cs where
     -- Creates alternating substrings of (un)escaped characters.
-    escapeAll False ss (c:cs)
-      | c `Set.member` unescapedChars = escapeAll False (ss ++ [c]) cs
-      | otherwise = maybeQuote ss ++ escapeAll True "" (c:cs)
-    escapeAll True ss (c:cs)
-      | c `Set.member` unescapedChars = maybeQuote ss ++ escapeAll False "" (c:cs)
-      | otherwise = escapeAll True (ss ++ escapeChar c) cs
+    escapeAll False ss (c:cs2)
+      | c `Set.member` unescapedChars = escapeAll False (ss ++ [c]) cs2
+      | otherwise = maybeQuote ss ++ escapeAll True "" (c:cs2)
+    escapeAll True ss (c:cs2)
+      | c `Set.member` unescapedChars = maybeQuote ss ++ escapeAll False "" (c:cs2)
+      | otherwise = escapeAll True (ss ++ escapeChar c) cs2
     escapeAll _ ss "" = maybeQuote ss
     maybeQuote ss
       | null ss = ""

@@ -24,7 +24,6 @@ module Types.GeneralType (
   checkGeneralType,
 ) where
 
-import Base.CompileError
 import Base.Mergeable
 
 
@@ -44,7 +43,7 @@ data GeneralType a =
   deriving (Eq,Ord)
 
 checkGeneralType :: (MergeableM m, Mergeable c) => (a -> b -> m c) -> GeneralType a -> GeneralType b -> m c
-checkGeneralType f ti1 ti2 = singleCheck ti1 ti2 where
+checkGeneralType f = singleCheck where
   singleCheck (SingleType t1) (SingleType t2) = t1 `f` t2
   -- NOTE: The merge-alls must be expanded strictly before the merge-anys.
   singleCheck ti1 (TypeMerge MergeIntersect t2) = mergeAllM $ map (ti1 `singleCheck`) t2

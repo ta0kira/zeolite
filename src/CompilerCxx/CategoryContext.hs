@@ -25,6 +25,7 @@ module CompilerCxx.CategoryContext (
   getProcedureContext,
 ) where
 
+import Prelude hiding (pi)
 import qualified Data.Map as Map
 import qualified Data.Set as Set
 
@@ -35,7 +36,6 @@ import Compilation.ProcedureContext
 import Compilation.ScopeContext
 import CompilerCxx.Code
 import Types.DefinedCategory
-import Types.Function
 import Types.GeneralType
 import Types.Positional
 import Types.Procedure
@@ -86,7 +86,7 @@ getProcedureContext :: (Show c, CompileErrorM m, MergeableM m) =>
   ScopeContext c -> ScopedFunction c -> ExecutableProcedure c -> m (ProcedureContext c)
 getProcedureContext (ScopeContext tm t ps pi ms pa fi fa va)
                     ff@(ScopedFunction _ _ _ s as1 rs1 ps1 fs _)
-                    (ExecutableProcedure _ _ n as2 rs2 _) = do
+                    (ExecutableProcedure _ _ _ as2 rs2 _) = do
   rs' <- if isUnnamedReturns rs2
             then return $ ValidatePositions rs1
             else fmap (ValidateNames rs1 . Map.fromList) $ processPairs pairOutput rs1 (nrNames rs2)
@@ -102,6 +102,7 @@ getProcedureContext (ScopeContext tm t ps pi ms pa fi fa va)
                 CategoryScope -> localScopes
                 TypeScope -> Map.union typeScopes localScopes
                 ValueScope -> Map.unions [localScopes,typeScopes,valueScopes]
+                _ -> undefined
   let localFilters = getFunctionFilterMap ff
   let typeFilters = getFilterMap (pValues ps) pa
   let valueFilters = getFilterMap (pValues pi) fi
@@ -109,6 +110,7 @@ getProcedureContext (ScopeContext tm t ps pi ms pa fi fa va)
                    CategoryScope -> localFilters
                    TypeScope -> Map.union localFilters typeFilters
                    ValueScope -> Map.unions [localFilters,typeFilters,valueFilters]
+                   _ -> undefined
   let ns0 = if isUnnamedReturns rs2
                then []
                else zipWith3 ReturnVariable [0..] (map ovName $ pValues $ nrNames rs2) (map pvType $ pValues rs1)
@@ -136,7 +138,7 @@ getProcedureContext (ScopeContext tm t ps pi ms pa fi fa va)
       pcCleanupSetup = CleanupSetup [] []
     }
   where
-    pairOutput (PassedValue c1 t) (OutputValue c2 n) = return $ (n,PassedValue (c2++c1) t)
+    pairOutput (PassedValue c1 t2) (OutputValue c2 n2) = return $ (n2,PassedValue (c2++c1) t2)
 
 getMainContext :: CompileErrorM m => CategoryMap c -> m (ProcedureContext c)
 getMainContext tm = return $ ProcedureContext {

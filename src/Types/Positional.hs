@@ -20,12 +20,11 @@ module Types.Positional (
   Positional(..),
   alwaysPair,
   processPairs,
+  processPairs_,
   processPairsT,
 ) where
 
-import Control.Monad (Monad(..))
 import Control.Monad.Trans (MonadTrans(..))
-import Data.Functor
 
 import Base.CompileError
 
@@ -49,6 +48,10 @@ processPairs f (Positional ps1) (Positional ps2)
     collectAllOrErrorM $ map (uncurry f) (zip ps1 ps2)
   | otherwise =
     compileError $ "Parameter count mismatch: " ++ show ps1 ++ " vs. " ++ show ps2
+
+processPairs_ :: (Show a, Show b, CompileErrorM m) =>
+  (a -> b -> m c) -> Positional a -> Positional b -> m ()
+processPairs_ f xs ys = processPairs f xs ys >> return ()
 
 processPairsT :: (MonadTrans t, Monad (t m), Show a, Show b, CompileErrorM m) =>
   (a -> b -> t m c) -> Positional a -> Positional b -> t m [c]

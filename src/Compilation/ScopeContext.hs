@@ -27,13 +27,12 @@ module Compilation.ScopeContext (
 ) where
 
 import Control.Monad (when)
+import Prelude hiding (pi)
 import qualified Data.Map as Map
-import qualified Data.Set as Set
 
 import Base.CompileError
 import Base.Mergeable
 import Types.DefinedCategory
-import Types.Function
 import Types.GeneralType
 import Types.Positional
 import Types.Procedure
@@ -65,8 +64,8 @@ applyProcedureScope ::
 applyProcedureScope f (ProcedureScope ctx fs) = map (uncurry (f ctx)) fs
 
 getProcedureScopes :: (Show c, CompileErrorM m, MergeableM m) =>
-  CategoryMap c -> [Namespace] -> DefinedCategory c -> m [ProcedureScope c]
-getProcedureScopes ta ns dd@(DefinedCategory c n pi _ _ fi ms ps fs) = do
+  CategoryMap c -> DefinedCategory c -> m [ProcedureScope c]
+getProcedureScopes ta (DefinedCategory c n pi _ _ fi ms ps fs) = do
   (_,t) <- getConcreteCategory ta (c,n)
   let params = Positional $ getCategoryParams t
   let params2 = Positional pi
@@ -94,25 +93,25 @@ getProcedureScopes ta ns dd@(DefinedCategory c n pi _ _ fi ms ps fs) = do
   return [ProcedureScope ctxC cp,ProcedureScope ctxT tp,ProcedureScope ctxV vp]
   where
     builtins t s0 = Map.filter ((<= s0) . vvScope) $ builtinVariables t
-    checkInternalParams pi fi pe fs r fa = do
-      let pm = Map.fromList $ map (\p -> (vpParam p,vpContext p)) pi
-      mergeAllM $ map (checkFunction pm) fs
+    checkInternalParams pi2 fi2 pe fs2 r fa = do
+      let pm = Map.fromList $ map (\p -> (vpParam p,vpContext p)) pi2
+      mergeAllM $ map (checkFunction pm) fs2
       mergeAllM $ map (checkParam pm) pe
-      let fa' = Map.union fa $ getFilterMap pi fi
-      mergeAllM $ map (checkFilter r fa') fi
-    checkFilter r fa (ParamFilter c n f) =
+      let fa' = Map.union fa $ getFilterMap pi2 fi2
+      mergeAllM $ map (checkFilter r fa') fi2
+    checkFilter r fa (ParamFilter c2 n2 f) =
       validateTypeFilter r fa f `reviseError`
-        (show n ++ " " ++ show f ++ formatFullContextBrace c)
+        (show n2 ++ " " ++ show f ++ formatFullContextBrace c2)
     checkFunction pm f =
       when (sfScope f == ValueScope) $
         mergeAllM $ map (checkParam pm) $ pValues $ sfParams f
     checkParam pm p =
       case vpParam p `Map.lookup` pm of
            Nothing -> return ()
-           (Just c) -> compileError $ "Internal param " ++ show (vpParam p) ++
-                                      formatFullContextBrace c ++
-                                      " is already defined at " ++
-                                      formatFullContext (vpContext p)
+           (Just c2) -> compileError $ "Internal param " ++ show (vpParam p) ++
+                                       formatFullContextBrace (vpContext p) ++
+                                       " is already defined at " ++
+                                       formatFullContext c2
 
 -- TODO: This is probably in the wrong module.
 builtinVariables :: TypeInstance -> Map.Map VariableName (VariableValue c)

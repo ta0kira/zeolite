@@ -1,5 +1,5 @@
 {- -----------------------------------------------------------------------------
-Copyright 2019 Kevin P. Barry
+Copyright 2019-2020 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,14 +20,11 @@ limitations under the License.
 
 module Test.TypeInstance (tests) where
 
-import Data.List
-import Text.Parsec
 import qualified Data.Map as Map
 
 import Base.CompileError
 import Compilation.CompileInfo
-import Parser.Common
-import Parser.TypeInstance
+import Parser.TypeInstance ()
 import Test.Common
 import Types.Positional
 import Types.TypeInstance
@@ -566,13 +563,28 @@ tests = [
   ]
 
 
+type0 :: CategoryName
 type0 = CategoryName "Type0"
+
+type1 :: CategoryName
 type1 = CategoryName "Type1"
+
+type2 :: CategoryName
 type2 = CategoryName "Type2"
+
+type3 :: CategoryName
 type3 = CategoryName "Type3"
+
+type4 :: CategoryName
 type4 = CategoryName "Type4"
+
+type5 :: CategoryName
 type5 = CategoryName "Type5"
+
+instance0 :: CategoryName
 instance0 = CategoryName "Instance0"
+
+instance1 :: CategoryName
 instance1 = CategoryName "Instance1"
 
 variances :: Map.Map CategoryName InstanceVariances
@@ -667,11 +679,13 @@ definesFilters = Map.fromList $ [
            ])
   ]
 
-
+checkSimpleConvertSuccess :: [Char] -> [Char] -> IO (CompileInfo ())
 checkSimpleConvertSuccess = checkConvertSuccess []
 
+checkSimpleConvertFail :: [Char] -> [Char] -> IO (CompileInfo ())
 checkSimpleConvertFail = checkConvertFail []
 
+checkConvertSuccess :: [(String, [String])] -> [Char] -> [Char] -> IO (CompileInfo ())
 checkConvertSuccess pa x y = return checked where
   prefix = x ++ " -> " ++ y ++ " " ++ showParams pa
   checked = do
@@ -681,6 +695,7 @@ checkConvertSuccess pa x y = return checked where
     | isCompileError c = compileError $ prefix ++ ":\n" ++ show (getCompileError c)
     | otherwise = return ()
 
+checkConvertFail :: [(String, [String])] -> [Char] -> [Char] -> IO (CompileInfo ())
 checkConvertFail pa x y = return checked where
   prefix = x ++ " /> " ++ y ++ " " ++ showParams pa
   checked = do
@@ -702,19 +717,23 @@ instance TypeResolver Resolver where
   -- Type5 is concrete, somewhat arbitrarily.
   trConcrete _ = \t -> return (t == type5)
 
+getParams :: CompileErrorM m =>
+  Map.Map CategoryName (Map.Map CategoryName (InstanceParams -> InstanceParams))
+  -> TypeInstance -> CategoryName -> m InstanceParams
 getParams ma (TypeInstance n1 ps1) n2 = do
   ra <- mapLookup ma n1
   f <- mapLookup ra n2
   return $ f ps1
 
+getTypeFilters :: CompileErrorM m => TypeInstance -> m InstanceFilters
 getTypeFilters (TypeInstance n ps) = do
   f <- mapLookup typeFilters n
   return $ f ps
 
+getDefinesFilters :: CompileErrorM m => DefinesInstance -> m InstanceFilters
 getDefinesFilters (DefinesInstance n ps) = do
   f <- mapLookup definesFilters n
   return $ f ps
-
 
 mapLookup :: (Ord n, Show n, CompileErrorM m) => Map.Map n a -> n -> m a
 mapLookup ma n = resolve $ n `Map.lookup` ma where

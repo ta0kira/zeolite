@@ -84,23 +84,30 @@ data CompileMode =
   CompileUnspecified
   deriving (Eq,Read,Show)
 
+isOnlyShowPath :: CompileMode -> Bool
 isOnlyShowPath OnlyShowPath = True
 isOnlyShowPath _            = False
 
+isCompileBinary :: CompileMode -> Bool
 isCompileBinary (CompileBinary _ _) = True
 isCompileBinary _                   = False
 
+isCompileIncremental :: CompileMode -> Bool
 isCompileIncremental CompileIncremental = True
 isCompileIncremental _                  = False
 
+isCompileRecompile :: CompileMode -> Bool
 isCompileRecompile CompileRecompile = True
 isCompileRecompile _                = False
 
+isExecuteTests :: CompileMode -> Bool
 isExecuteTests (ExecuteTests _) = True
 isExecuteTests _                = False
 
+isCreateTemplates :: CompileMode -> Bool
 isCreateTemplates CreateTemplates = True
 isCreateTemplates _               = False
 
+maybeDisableHelp :: HelpMode -> HelpMode
 maybeDisableHelp HelpUnspecified = HelpNotNeeded
 maybeDisableHelp h               = h

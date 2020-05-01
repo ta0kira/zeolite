@@ -25,6 +25,7 @@ module Parser.Common (
   blockComment,
   builtinValues,
   categorySymbolGet,
+  char_,
   endOfDoc,
   escapeStart,
   infixFuncEnd,
@@ -90,7 +91,9 @@ module Parser.Common (
   regexChar,
   requiredSpace,
   sepAfter,
+  sepAfter_,
   sepAfter1,
+  string_,
   stringChar,
   statementEnd,
   statementStart,
@@ -112,17 +115,35 @@ class ParseFromSource a where
   -- Should never prune whitespace/comments from front, but always from back.
   sourceParser :: Parser a
 
+labeled :: String -> Parser a -> Parser a
 labeled = flip label
 
-escapeStart       = sepAfter (string "\\" >> return ())
-statementStart    = sepAfter (string "~" >> return ())
-statementEnd      = sepAfter (string "" >> return ())
-valueSymbolGet    = sepAfter (string "." >> return ())
-categorySymbolGet = sepAfter (string "$$" >> return ())
-typeSymbolGet     = sepAfter (string "$" >> notFollowedBy (string "$"))
-assignOperator    = operator "<-"
-infixFuncStart    = sepAfter (string "`" >> return ())
-infixFuncEnd      = sepAfter (string "`" >> return ())
+escapeStart :: Parser ()
+escapeStart = sepAfter (string_ "\\")
+
+statementStart :: Parser ()
+statementStart = sepAfter (string_ "~")
+
+statementEnd :: Parser ()
+statementEnd = sepAfter (string_ "")
+
+valueSymbolGet :: Parser ()
+valueSymbolGet = sepAfter (string_ ".")
+
+categorySymbolGet :: Parser ()
+categorySymbolGet = sepAfter (string_ "$$")
+
+typeSymbolGet :: Parser ()
+typeSymbolGet = sepAfter (string_ "$" >> notFollowedBy (string_ "$"))
+
+assignOperator :: Parser ()
+assignOperator = operator "<-" >> return ()
+
+infixFuncStart :: Parser ()
+infixFuncStart = sepAfter (string_ "`")
+
+infixFuncEnd :: Parser ()
+infixFuncEnd = sepAfter (string_ "`")
 
 -- TODO: Maybe this should not use strings.
 builtinValues :: Parser String
@@ -130,45 +151,121 @@ builtinValues = foldr (<|>) (fail "empty") $ map try [
     kwSelf >> return "self"
   ]
 
+kwAll :: Parser ()
 kwAll = keyword "all"
+
+kwAllows :: Parser ()
 kwAllows = keyword "allows"
+
+kwAny :: Parser ()
 kwAny = keyword "any"
+
+kwBreak :: Parser ()
 kwBreak = keyword "break"
+
+kwCategory :: Parser ()
 kwCategory = keyword "@category"
+
+kwCleanup :: Parser ()
 kwCleanup = keyword "cleanup"
+
+kwConcrete :: Parser ()
 kwConcrete = keyword "concrete"
+
+kwContinue :: Parser ()
 kwContinue = keyword "continue"
+
+kwDefine :: Parser ()
 kwDefine = keyword "define"
+
+kwDefines :: Parser ()
 kwDefines = keyword "defines"
+
+kwElif :: Parser ()
 kwElif = keyword "elif"
+
+kwElse :: Parser ()
 kwElse = keyword "else"
+
+kwEmpty :: Parser ()
 kwEmpty = keyword "empty"
+
+kwFail :: Parser ()
 kwFail = keyword "fail"
+
+kwFalse :: Parser ()
 kwFalse = keyword "false"
+
+kwIf :: Parser ()
 kwIf = keyword "if"
+
+kwIn :: Parser ()
 kwIn = keyword "in"
+
+kwIgnore :: Parser ()
 kwIgnore = keyword "_"
+
+kwInterface :: Parser ()
 kwInterface = keyword "interface"
+
+kwOptional :: Parser ()
 kwOptional = keyword "optional"
+
+kwPresent :: Parser ()
 kwPresent = keyword "present"
+
+kwReduce :: Parser ()
 kwReduce = keyword "reduce"
+
+kwRefines :: Parser ()
 kwRefines = keyword "refines"
+
+kwRequire :: Parser ()
 kwRequire = keyword "require"
+
+kwRequires :: Parser ()
 kwRequires = keyword "requires"
+
+kwReturn :: Parser ()
 kwReturn = keyword "return"
+
+kwSelf :: Parser ()
 kwSelf = keyword "self"
+
+kwScoped :: Parser ()
 kwScoped = keyword "scoped"
+
+kwStrong :: Parser ()
 kwStrong = keyword "strong"
+
+kwTestcase :: Parser ()
 kwTestcase = keyword "testcase"
+
+kwTrue :: Parser ()
 kwTrue = keyword "true"
+
+kwType :: Parser ()
 kwType = keyword "@type"
+
+kwTypename :: Parser ()
 kwTypename = keyword "typename"
+
+kwTypes :: Parser ()
 kwTypes = keyword "types"
+
+kwUpdate :: Parser ()
 kwUpdate = keyword "update"
+
+kwValue :: Parser ()
 kwValue = keyword "@value"
+
+kwWeak :: Parser ()
 kwWeak = keyword "weak"
+
+kwWhile :: Parser ()
 kwWhile = keyword "while"
 
+operatorSymbol :: Parser Char
 operatorSymbol = labeled "operator symbol" $ satisfy (`Set.member` Set.fromList "+-*/%=!<>&|")
 
 isKeyword :: Parser ()
@@ -216,15 +313,21 @@ isKeyword = foldr (<|>) nullParse $ map try [
 nullParse :: Parser ()
 nullParse = return ()
 
+char_ :: Char -> Parser ()
+char_ = (>> return ()) . char
+
+string_ :: String -> Parser ()
+string_ = (>> return ()) . string
+
 lineComment :: Parser String
-lineComment = between (string "//")
+lineComment = between (string_ "//")
                       endOfLine
                       (many $ satisfy (/= '\n'))
 
 blockComment :: Parser String
-blockComment = between (string "/*")
-                       (string "*/")
-                       (many $ notFollowedBy (string "*/") >> anyChar)
+blockComment = between (string_ "/*")
+                       (string_ "*/")
+                       (many $ notFollowedBy (string_ "*/") >> anyChar)
 
 anyComment :: Parser String
 anyComment = try blockComment <|> try lineComment
@@ -237,6 +340,9 @@ requiredSpace = labeled "break" $ eof <|> (many1 (anyComment <|> many1 space) >>
 
 sepAfter :: Parser a -> Parser a
 sepAfter = between nullParse optionalSpace
+
+sepAfter_ :: Parser a -> Parser ()
+sepAfter_ = (>> return ()) . between nullParse optionalSpace
 
 sepAfter1 :: Parser a -> Parser a
 sepAfter1 = between nullParse requiredSpace
@@ -256,7 +362,7 @@ notAllowed p s = (try p >> fail s) <|> return ()
 
 operator :: String -> Parser String
 operator o = labeled o $ do
-  string o
+  string_ o
   notFollowedBy operatorSymbol
   optionalSpace
   return o
@@ -264,7 +370,7 @@ operator o = labeled o $ do
 stringChar :: Parser Char
 stringChar = escaped <|> notEscaped where
   escaped = labeled "escaped char sequence" $ do
-    char '\\'
+    char_ '\\'
     octChar <|> otherEscape where
       otherEscape = do
         v <- anyChar
@@ -298,6 +404,7 @@ digitVal c
   | c >= '0' && c <= '9' = ord(c) - ord('0')
   | c >= 'A' && c <= 'F' = 10 + ord(c) - ord('A')
   | c >= 'a' && c <= 'f' = 10 + ord(c) - ord('a')
+  | otherwise = undefined
 
 parseDec :: Parser Integer
 parseDec = fmap snd $ parseIntCommon 10 digit
@@ -322,7 +429,7 @@ parseIntCommon b p = do
 regexChar :: Parser String
 regexChar = escaped <|> notEscaped where
   escaped = do
-    char '\\'
+    char_ '\\'
     v <- anyChar
     case v of
          '"' -> return "\""

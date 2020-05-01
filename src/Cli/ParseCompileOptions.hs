@@ -28,7 +28,7 @@ import System.FilePath (takeExtension)
 import Text.Regex.TDFA -- Not safe!
 
 import Base.CompileError
-import Cli.CompileMetadata (allowedExtraTypes,getCacheRelativePath)
+import Cli.CompileMetadata (allowedExtraTypes)
 import Cli.CompileOptions
 
 
@@ -68,7 +68,7 @@ defaultMainFunc :: String
 defaultMainFunc = "run"
 
 parseCompileOptions :: CompileErrorM m => [String] -> m CompileOptions
-parseCompileOptions = parseAll emptyCompileOptions . zip [1..] where
+parseCompileOptions = parseAll emptyCompileOptions . zip ([1..] :: [Int]) where
   parseAll co [] = return co
   parseAll co os = do
     (os',co') <- parseSingle co os
@@ -87,10 +87,12 @@ parseCompileOptions = parseAll emptyCompileOptions . zip [1..] where
     | null d    = argError n d "Invalid function name."
     | otherwise = argError n d $ "Invalid function name for " ++ o ++ "."
 
-  parseSingle (CompileOptions _ is is2 ds es ep ec p m o f) ((n,"-h"):os) =
+  parseSingle _ [] = undefined
+
+  parseSingle (CompileOptions _ is is2 ds es ep ec p m o f) ((_,"-h"):os) =
     return (os,CompileOptions HelpNeeded is is2 ds es ep ec p m o f)
 
-  parseSingle (CompileOptions h is is2 ds es ep ec p m o _) ((n,"-f"):os) =
+  parseSingle (CompileOptions h is is2 ds es ep ec p m o _) ((_,"-f"):os) =
     return (os,CompileOptions (maybeDisableHelp h) is is2 ds es ep ec p m o ForceAll)
 
   parseSingle (CompileOptions h is is2 ds es ep ec p m o f) ((n,"-c"):os)
@@ -116,64 +118,65 @@ parseCompileOptions = parseAll emptyCompileOptions . zip [1..] where
   parseSingle (CompileOptions h is is2 ds es ep ec p m o f) ((n,"-m"):os)
     | m /= CompileUnspecified = argError n "-m" "Compiler mode already set."
     | otherwise = update os where
-      update ((n,c):os) =  do
-        let (t,fn) = check $ break (== '.') c
-        checkCategoryName n t  "-m"
-        checkFunctionName n fn "-m"
-        return (os,CompileOptions (maybeDisableHelp h) is is2 ds es ep ec p (CompileBinary t fn) o f) where
-          check (t,"")     = (t,defaultMainFunc)
-          check (t,'.':fn) = (t,fn)
+      update ((n2,c):os2) =  do
+        (t,fn) <- check $ break (== '.') c
+        checkCategoryName n2 t  "-m"
+        checkFunctionName n2 fn "-m"
+        return (os2,CompileOptions (maybeDisableHelp h) is is2 ds es ep ec p (CompileBinary t fn) o f) where
+          check (t,"")     = return (t,defaultMainFunc)
+          check (t,'.':fn) = return (t,fn)
+          check _          = argError n2 "-m" $ "Invalid entry point \"" ++ c ++ "\"."
       update _ = argError n "-m" "Requires a category name."
 
   parseSingle (CompileOptions h is is2 ds es ep ec p m o f) ((n,"-o"):os)
     | not $ null o = argError n "-o" "Output name already set."
     | otherwise = update os where
-      update ((n,o):os) = do
-        checkPathName n o "-o"
-        return (os,CompileOptions (maybeDisableHelp h) is is2 ds es ep ec p m o f)
+      update ((n2,o2):os2) = do
+        checkPathName n2 o2 "-o"
+        return (os2,CompileOptions (maybeDisableHelp h) is is2 ds es ep ec p m o2 f)
       update _ = argError n "-o" "Requires an output name."
 
   parseSingle (CompileOptions h is is2 ds es ep ec p m o f) ((n,"-i"):os) = update os where
-    update ((n,d):os)
-      | isSuffixOf ".0rp" d = argError n d "Cannot directly include .0rp source files."
-      | isSuffixOf ".0rx" d = argError n d "Cannot directly include .0rx source files."
-      | isSuffixOf ".0rt" d = argError n d "Cannot directly include .0rt test files."
+    update ((n2,d):os2)
+      | isSuffixOf ".0rp" d = argError n2 d "Cannot directly include .0rp source files."
+      | isSuffixOf ".0rx" d = argError n2 d "Cannot directly include .0rx source files."
+      | isSuffixOf ".0rt" d = argError n2 d "Cannot directly include .0rt test files."
       | otherwise = do
-          checkPathName n d "-i"
-          return (os,CompileOptions (maybeDisableHelp h) (is ++ [d]) is2 ds es ep ec p m o f)
+          checkPathName n2 d "-i"
+          return (os2,CompileOptions (maybeDisableHelp h) (is ++ [d]) is2 ds es ep ec p m o f)
     update _ = argError n "-i" "Requires a source path."
 
   parseSingle (CompileOptions h is is2 ds es ep ec p m o f) ((n,"-I"):os) = update os where
-    update ((n,d):os)
-      | isSuffixOf ".0rp" d = argError n d "Cannot directly include .0rp source files."
-      | isSuffixOf ".0rx" d = argError n d "Cannot directly include .0rx source files."
-      | isSuffixOf ".0rt" d = argError n d "Cannot directly include .0rt test files."
+    update ((n2,d):os2)
+      | isSuffixOf ".0rp" d = argError n2 d "Cannot directly include .0rp source files."
+      | isSuffixOf ".0rx" d = argError n2 d "Cannot directly include .0rx source files."
+      | isSuffixOf ".0rt" d = argError n2 d "Cannot directly include .0rt test files."
       | otherwise = do
-          checkPathName n d "-i"
-          return (os,CompileOptions (maybeDisableHelp h) is (is2 ++ [d]) ds es ep ec p m o f)
+          checkPathName n2 d "-i"
+          return (os2,CompileOptions (maybeDisableHelp h) is (is2 ++ [d]) ds es ep ec p m o f)
     update _ = argError n "-I" "Requires a source path."
 
   parseSingle (CompileOptions h is is2 ds es ep ec p m o f) ((n,"-e"):os) = update os where
-    update ((n,e):os)
+    update ((n2,e):os2)
       | any (flip isSuffixOf e) allowedExtraTypes = do
-          checkPathName n e "-e"
-          return (os,CompileOptions (maybeDisableHelp h) is is2 ds (es ++ [e]) ep ec p m o f)
+          checkPathName n2 e "-e"
+          return (os2,CompileOptions (maybeDisableHelp h) is is2 ds (es ++ [e]) ep ec p m o f)
       | takeExtension e == "" || e == "." = do
-          checkPathName n e "-e"
-          return (os,CompileOptions (maybeDisableHelp h) is is2 ds es (ep ++ [e]) ec p m o f)
-      | otherwise = argError n "-e" $ "Only " ++ intercalate ", " allowedExtraTypes ++
-                                      " and directory sources are allowed."
+          checkPathName n2 e "-e"
+          return (os2,CompileOptions (maybeDisableHelp h) is is2 ds es (ep ++ [e]) ec p m o f)
+      | otherwise = argError n2 "-e" $ "Only " ++ intercalate ", " allowedExtraTypes ++
+                                       " and directory sources are allowed."
     update _ = argError n "-e" "Requires a source filename."
 
   parseSingle (CompileOptions h is is2 ds es ep ec p m o f) ((n,"-p"):os)
     | not $ null p = argError n "-p" "Path prefix already set."
     | otherwise = update os where
-      update ((n,p):os) = do
-        checkPathName n p "-p"
-        return (os,CompileOptions (maybeDisableHelp h) is is2 ds es ep ec p m o f)
+      update ((n2,p2):os2) = do
+        checkPathName n2 p2 "-p"
+        return (os2,CompileOptions (maybeDisableHelp h) is is2 ds es ep ec p2 m o f)
       update _ = argError n "-p" "Requires a path prefix."
 
-  parseSingle _ ((n,o@('-':_)):os) = argError n o "Unknown option."
+  parseSingle _ ((n,o@('-':_)):_) = argError n o "Unknown option."
 
   parseSingle (CompileOptions h is is2 ds es ep ec p m o f) ((n,d):os)
       | isSuffixOf ".0rp" d = argError n d "Cannot directly include .0rp source files."
@@ -189,7 +192,7 @@ parseCompileOptions = parseAll emptyCompileOptions . zip [1..] where
         return (os,CompileOptions (maybeDisableHelp h) is is2 (ds ++ [d]) es ep ec p m o f)
 
 validateCompileOptions :: CompileErrorM m => CompileOptions -> m CompileOptions
-validateCompileOptions co@(CompileOptions h is is2 ds es ep ec p m o _)
+validateCompileOptions co@(CompileOptions h is is2 ds es ep _ p m o _)
   | h /= HelpNotNeeded = return co
 
   | (not $ null o) && (isCompileIncremental m) =

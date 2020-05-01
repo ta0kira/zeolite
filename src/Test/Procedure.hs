@@ -23,11 +23,10 @@ module Test.Procedure (tests) where
 import Control.Monad
 import System.FilePath
 import Text.Parsec
-import Text.Parsec.String
 
 import Base.CompileError
 import Compilation.CompileInfo
-import Parser.Procedure
+import Parser.Procedure ()
 import Test.Common
 import Types.Positional
 import Types.Procedure
@@ -395,6 +394,7 @@ tests = [
                                           _ -> False)
   ]
 
+checkParseSuccess :: String -> IO (CompileInfo ())
 checkParseSuccess f = do
   contents <- loadFile f
   let parsed = readMulti f contents :: CompileInfo [ExecutableProcedure SourcePos]
@@ -404,6 +404,7 @@ checkParseSuccess f = do
       | isCompileError c = compileError $ "Parse " ++ f ++ ":\n" ++ show (getCompileError c)
       | otherwise = return ()
 
+checkParseFail :: String -> IO (CompileInfo ())
 checkParseFail f = do
   contents <- loadFile f
   let parsed = readMulti f contents :: CompileInfo [ExecutableProcedure SourcePos]
@@ -414,6 +415,7 @@ checkParseFail f = do
       | otherwise = compileError $ "Parse " ++ f ++ ": Expected failure but got\n" ++
                                    show (getCompileSuccess c) ++ "\n"
 
+checkShortParseSuccess :: String -> IO (CompileInfo ())
 checkShortParseSuccess s = do
   let parsed = readSingle "(string)" s :: CompileInfo (Statement SourcePos)
   return $ check parsed
@@ -422,6 +424,7 @@ checkShortParseSuccess s = do
       | isCompileError c = compileError $ "Parse '" ++ s ++ "':\n" ++ show (getCompileError c)
       | otherwise = return ()
 
+checkShortParseFail :: String -> IO (CompileInfo ())
 checkShortParseFail s = do
   let parsed = readSingle "(string)" s :: CompileInfo (Statement SourcePos)
   return $ check parsed
@@ -431,6 +434,7 @@ checkShortParseFail s = do
       | otherwise = compileError $ "Parse '" ++ s ++ "': Expected failure but got\n" ++
                                    show (getCompileSuccess c) ++ "\n"
 
+checkParsesAs :: [Char] -> (Expression SourcePos -> Bool) -> IO (CompileInfo ())
 checkParsesAs s m = return $ do
   let parsed = readSingle "(string)" s :: CompileInfo (Expression SourcePos)
   check parsed

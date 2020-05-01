@@ -23,12 +23,11 @@ module Parser.IntegrationTest (
 ) where
 
 import Text.Parsec
-import Text.Parsec.String
 
 import Parser.Common
 import Parser.DefinedCategory
-import Parser.Procedure
-import Parser.TypeCategory
+import Parser.Procedure ()
+import Parser.TypeCategory ()
 import Types.IntegrationTest
 
 
@@ -36,12 +35,12 @@ instance ParseFromSource (IntegrationTestHeader SourcePos) where
   sourceParser = labeled "testcase" $ do
     c <- getPosition
     sepAfter kwTestcase
-    string "\""
-    name <- manyTill stringChar (string "\"")
+    string_ "\""
+    name <- manyTill stringChar (string_ "\"")
     optionalSpace
-    sepAfter $ string "{"
+    sepAfter (string_ "{")
     result <- resultError <|> resultCrash <|> resultSuccess
-    sepAfter $ string "}"
+    sepAfter (string_ "}")
     return $ IntegrationTestHeader [c] name result where
       resultError = labeled "error expectation" $ do
         c <- getPosition
@@ -68,15 +67,15 @@ instance ParseFromSource (IntegrationTestHeader SourcePos) where
           require = do
             sepAfter (keyword "require")
             s <- outputScope
-            string "\""
-            r <- fmap concat $ manyTill regexChar (string "\"")
+            string_ "\""
+            r <- fmap concat $ manyTill regexChar (string_ "\"")
             optionalSpace
             return ([OutputPattern s r],[])
           exclude = do
             sepAfter (keyword "exclude")
             s <- outputScope
-            string "\""
-            e <- fmap concat $ manyTill regexChar (string "\"")
+            string_ "\""
+            e <- fmap concat $ manyTill regexChar (string_ "\"")
             optionalSpace
             return ([],[OutputPattern s e])
       outputScope = try anyScope <|>

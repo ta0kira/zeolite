@@ -21,20 +21,14 @@ limitations under the License.
 module Test.TypeCategory (tests) where
 
 import Control.Arrow
-import Control.Monad
-import Data.List
 import System.FilePath
-import System.IO
 import Text.Parsec
-import Text.Parsec.String
 import qualified Data.Map as Map
-import qualified Data.Set as Set
 
 import Base.CompileError
 import Base.Mergeable
 import Compilation.CompileInfo
-import Parser.Common
-import Parser.TypeCategory
+import Parser.TypeCategory ()
 import Test.Common
 import Types.Builtin
 import Types.Positional
@@ -124,22 +118,22 @@ tests = [
     checkOperationSuccess
       ("testfiles" </> "flatten.0rx")
       (\ts -> do
-        ts <- topoSortCategories defaultCategories ts
-        map (show . getCategoryName) ts `containsPaired` [
+        ts2 <- topoSortCategories defaultCategories ts
+        map (show . getCategoryName) ts2 `containsPaired` [
             "Type","Object2","Object3","Object1","Parent","Child"
           ]),
     checkOperationSuccess
       ("testfiles" </> "flatten.0rx")
       (\ts -> do
-        ts <- topoSortCategories defaultCategories ts
-        flattenAllConnections defaultCategories ts),
+        ts2 <- topoSortCategories defaultCategories ts
+        flattenAllConnections defaultCategories ts2),
 
     checkOperationSuccess
       ("testfiles" </> "flatten.0rx")
       (\ts -> do
-        ts <- topoSortCategories defaultCategories ts
-        ts <- flattenAllConnections defaultCategories ts
-        scrapeAllRefines ts `containsExactly` [
+        ts2 <- topoSortCategories defaultCategories ts
+        ts3 <- flattenAllConnections defaultCategories ts2
+        scrapeAllRefines ts3 `containsExactly` [
             ("Object1","Object3<#y>"),
             ("Object1","Object2"),
             ("Object3","Object2"),
@@ -151,7 +145,7 @@ tests = [
             ("Child","Object3<Object3<Object2>>"),
             ("Child","Object2")
           ]
-        scrapeAllDefines ts `containsExactly` [
+        scrapeAllDefines ts3 `containsExactly` [
             ("Child","Type<Child>")
           ]),
 
@@ -161,8 +155,8 @@ tests = [
         existing  <- return $ Map.fromList [
             (CategoryName "Parent2",InstanceInterface [] NoNamespace (CategoryName "Parent2") [] [] [])
           ]
-        ts <- topoSortCategories existing ts
-        flattenAllConnections existing ts),
+        ts2 <- topoSortCategories existing ts
+        flattenAllConnections existing ts2),
     checkOperationFail
       ("testfiles" </> "flatten.0rx")
       (\ts -> do
@@ -184,9 +178,9 @@ tests = [
             (CategoryName "Object2",
             ValueInterface [] NoNamespace (CategoryName "Object2") [] [] [] [])
           ]
-        ts <- topoSortCategories existing ts
-        ts <- flattenAllConnections existing ts
-        scrapeAllRefines ts `containsExactly` [
+        ts2 <- topoSortCategories existing ts
+        ts3 <- flattenAllConnections existing ts2
+        scrapeAllRefines ts3 `containsExactly` [
             ("Child","Parent"),
             ("Child","Object1"),
             ("Child","Object2")
@@ -250,56 +244,56 @@ tests = [
     checkOperationSuccess
       ("testfiles" </> "flatten.0rx")
       (\ts -> do
-        ts <- topoSortCategories defaultCategories ts
-        ts <- flattenAllConnections defaultCategories ts
-        rs <- getTypeRefines ts "Object1<#a,#b>" "Object1"
+        ts2 <- topoSortCategories defaultCategories ts
+        ts3 <- flattenAllConnections defaultCategories ts2
+        rs <- getTypeRefines ts3 "Object1<#a,#b>" "Object1"
         rs `containsPaired` ["#a","#b"]),
     checkOperationSuccess
       ("testfiles" </> "flatten.0rx")
       (\ts -> do
-        ts <- topoSortCategories defaultCategories ts
-        ts <- flattenAllConnections defaultCategories ts
-        rs <- getTypeRefines ts "Object1<#a,#b>" "Object3"
+        ts2 <- topoSortCategories defaultCategories ts
+        ts3 <- flattenAllConnections defaultCategories ts2
+        rs <- getTypeRefines ts3 "Object1<#a,#b>" "Object3"
         rs `containsPaired` ["#b"]),
     checkOperationFail
       ("testfiles" </> "flatten.0rx")
       (\ts -> do
-        ts <- topoSortCategories defaultCategories ts
-        ts <- flattenAllConnections defaultCategories ts
-        rs <- getTypeRefines ts "Undefined<#a,#b>" "Undefined"
+        ts2 <- topoSortCategories defaultCategories ts
+        ts3 <- flattenAllConnections defaultCategories ts2
+        rs <- getTypeRefines ts3 "Undefined<#a,#b>" "Undefined"
         rs `containsPaired` ["#a","#b"]),
     checkOperationFail
       ("testfiles" </> "flatten.0rx")
       (\ts -> do
-        ts <- topoSortCategories defaultCategories ts
-        ts <- flattenAllConnections defaultCategories ts
-        rs <- getTypeRefines ts "Object1<#a>" "Object1"
+        ts2 <- topoSortCategories defaultCategories ts
+        ts3 <- flattenAllConnections defaultCategories ts2
+        rs <- getTypeRefines ts3 "Object1<#a>" "Object1"
         rs `containsPaired` ["#a"]),
     checkOperationSuccess
       ("testfiles" </> "flatten.0rx")
       (\ts -> do
-        ts <- topoSortCategories defaultCategories ts
-        ts <- flattenAllConnections defaultCategories ts
-        rs <- getTypeRefines ts "Parent<#t>" "Object1"
+        ts2 <- topoSortCategories defaultCategories ts
+        ts3 <- flattenAllConnections defaultCategories ts2
+        rs <- getTypeRefines ts3 "Parent<#t>" "Object1"
         rs `containsPaired` ["#t","Object3<Object2>"]),
     checkOperationFail
       ("testfiles" </> "flatten.0rx")
       (\ts -> do
-        ts <- topoSortCategories defaultCategories ts
-        ts <- flattenAllConnections defaultCategories ts
-        getTypeRefines ts "Parent<#t>" "Child"),
+        ts2 <- topoSortCategories defaultCategories ts
+        ts3 <- flattenAllConnections defaultCategories ts2
+        getTypeRefines ts3 "Parent<#t>" "Child"),
     checkOperationFail
       ("testfiles" </> "flatten.0rx")
       (\ts -> do
-        ts <- topoSortCategories defaultCategories ts
-        ts <- flattenAllConnections defaultCategories ts
-        getTypeRefines ts "Child" "Type"),
+        ts2 <- topoSortCategories defaultCategories ts
+        ts3 <- flattenAllConnections defaultCategories ts2
+        getTypeRefines ts3 "Child" "Type"),
     checkOperationFail
       ("testfiles" </> "flatten.0rx")
       (\ts -> do
-        ts <- topoSortCategories defaultCategories ts
-        ts <- flattenAllConnections defaultCategories ts
-        getTypeRefines ts "Child" "Missing"),
+        ts2 <- topoSortCategories defaultCategories ts
+        ts3 <- flattenAllConnections defaultCategories ts2
+        getTypeRefines ts3 "Child" "Missing"),
 
     checkOperationSuccess
       ("testfiles" </> "flatten.0rx")
@@ -406,64 +400,64 @@ tests = [
     checkOperationSuccess
       ("testfiles" </> "flatten.0rx")
       (\ts -> do
-        ts <- topoSortCategories defaultCategories ts
-        ta <- flattenAllConnections defaultCategories ts >>= declareAllTypes defaultCategories
+        ts2 <- topoSortCategories defaultCategories ts
+        ta <- flattenAllConnections defaultCategories ts2 >>= declareAllTypes defaultCategories
         let r = CategoryResolver ta
         checkTypeSuccess r [] "Child"),
     checkOperationSuccess
       ("testfiles" </> "flatten.0rx")
       (\ts -> do
-        ts <- topoSortCategories defaultCategories ts
-        ta <- flattenAllConnections defaultCategories ts >>= declareAllTypes defaultCategories
+        ts2 <- topoSortCategories defaultCategories ts
+        ta <- flattenAllConnections defaultCategories ts2 >>= declareAllTypes defaultCategories
         let r = CategoryResolver ta
         checkTypeSuccess r [] "[Child|Child]"),
     checkOperationSuccess
       ("testfiles" </> "flatten.0rx")
       (\ts -> do
-        ts <- topoSortCategories defaultCategories ts
-        ta <- flattenAllConnections defaultCategories ts >>= declareAllTypes defaultCategories
+        ts2 <- topoSortCategories defaultCategories ts
+        ta <- flattenAllConnections defaultCategories ts2 >>= declareAllTypes defaultCategories
         let r = CategoryResolver ta
         checkTypeSuccess r [] "[Child&Child]"),
     checkOperationSuccess
       ("testfiles" </> "flatten.0rx")
       (\ts -> do
-        ts <- topoSortCategories defaultCategories ts
-        ta <- flattenAllConnections defaultCategories ts >>= declareAllTypes defaultCategories
+        ts2 <- topoSortCategories defaultCategories ts
+        ta <- flattenAllConnections defaultCategories ts2 >>= declareAllTypes defaultCategories
         let r = CategoryResolver ta
         checkTypeSuccess r [] "Object2"),
     checkOperationSuccess
       ("testfiles" </> "flatten.0rx")
       (\ts -> do
-        ts <- topoSortCategories defaultCategories ts
-        ta <- flattenAllConnections defaultCategories ts >>= declareAllTypes defaultCategories
+        ts2 <- topoSortCategories defaultCategories ts
+        ta <- flattenAllConnections defaultCategories ts2 >>= declareAllTypes defaultCategories
         let r = CategoryResolver ta
         checkTypeSuccess r [] "[Object2|Object2]"),
     checkOperationSuccess
       ("testfiles" </> "flatten.0rx")
       (\ts -> do
-        ts <- topoSortCategories defaultCategories ts
-        ta <- flattenAllConnections defaultCategories ts >>= declareAllTypes defaultCategories
+        ts2 <- topoSortCategories defaultCategories ts
+        ta <- flattenAllConnections defaultCategories ts2 >>= declareAllTypes defaultCategories
         let r = CategoryResolver ta
         checkTypeSuccess r [] "[Object2&Object2]"),
     checkOperationSuccess
       ("testfiles" </> "flatten.0rx")
       (\ts -> do
-        ts <- topoSortCategories defaultCategories ts
-        ta <- flattenAllConnections defaultCategories ts >>= declareAllTypes defaultCategories
+        ts2 <- topoSortCategories defaultCategories ts
+        ta <- flattenAllConnections defaultCategories ts2 >>= declareAllTypes defaultCategories
         let r = CategoryResolver ta
         checkTypeFail r [] "Type<Child>"),
     checkOperationSuccess
       ("testfiles" </> "flatten.0rx")
       (\ts -> do
-        ts <- topoSortCategories defaultCategories ts
-        ta <- flattenAllConnections defaultCategories ts >>= declareAllTypes defaultCategories
+        ts2 <- topoSortCategories defaultCategories ts
+        ta <- flattenAllConnections defaultCategories ts2 >>= declareAllTypes defaultCategories
         let r = CategoryResolver ta
         checkTypeFail r [] "[Type<Child>|Type<Child>]"),
     checkOperationSuccess
       ("testfiles" </> "flatten.0rx")
       (\ts -> do
-        ts <- topoSortCategories defaultCategories ts
-        ta <- flattenAllConnections defaultCategories ts >>= declareAllTypes defaultCategories
+        ts2 <- topoSortCategories defaultCategories ts
+        ta <- flattenAllConnections defaultCategories ts2 >>= declareAllTypes defaultCategories
         let r = CategoryResolver ta
         checkTypeFail r [] "[Type<Child>&Type<Child>]"),
 
@@ -471,29 +465,29 @@ tests = [
     checkOperationSuccess
       ("testfiles" </> "filters.0rx")
       (\ts -> do
-        ts <- topoSortCategories Map.empty ts
-        ta <- flattenAllConnections Map.empty ts >>= declareAllTypes Map.empty
+        ts2 <- topoSortCategories Map.empty ts
+        ta <- flattenAllConnections Map.empty ts2 >>= declareAllTypes Map.empty
         let r = CategoryResolver ta
         checkTypeSuccess r [] "Value0<Value1,Value2>"),
     checkOperationFail
       ("testfiles" </> "filters.0rx")
       (\ts -> do
-        ts <- topoSortCategories Map.empty ts
-        ta <- flattenAllConnections Map.empty ts >>= declareAllTypes Map.empty
+        ts2 <- topoSortCategories Map.empty ts
+        ta <- flattenAllConnections Map.empty ts2 >>= declareAllTypes Map.empty
         let r = CategoryResolver ta
         checkTypeSuccess r [] "Value0<Value1,Value1>"),
     checkOperationSuccess
       ("testfiles" </> "filters.0rx")
       (\ts -> do
-        ts <- topoSortCategories Map.empty ts
-        ta <- flattenAllConnections Map.empty ts >>= declareAllTypes Map.empty
+        ts2 <- topoSortCategories Map.empty ts
+        ta <- flattenAllConnections Map.empty ts2 >>= declareAllTypes Map.empty
         let r = CategoryResolver ta
         checkTypeSuccess r [] "Value0<Value3,Value2>"),
     checkOperationFail
       ("testfiles" </> "filters.0rx")
       (\ts -> do
-        ts <- topoSortCategories Map.empty ts
-        ta <- flattenAllConnections Map.empty ts >>= declareAllTypes Map.empty
+        ts2 <- topoSortCategories Map.empty ts
+        ta <- flattenAllConnections Map.empty ts2 >>= declareAllTypes Map.empty
         let r = CategoryResolver ta
         checkTypeSuccess r
           [("#x",[]),("#y",[])]
@@ -501,8 +495,8 @@ tests = [
     checkOperationSuccess
       ("testfiles" </> "filters.0rx")
       (\ts -> do
-        ts <- topoSortCategories Map.empty ts
-        ta <- flattenAllConnections Map.empty ts >>= declareAllTypes Map.empty
+        ts2 <- topoSortCategories Map.empty ts
+        ta <- flattenAllConnections Map.empty ts2 >>= declareAllTypes Map.empty
         let r = CategoryResolver ta
         checkTypeSuccess r
           [("#x",["allows #y","requires Function<#x,#y>"]),
@@ -511,8 +505,8 @@ tests = [
     checkOperationSuccess
       ("testfiles" </> "filters.0rx")
       (\ts -> do
-        ts <- topoSortCategories Map.empty ts
-        ta <- flattenAllConnections Map.empty ts >>= declareAllTypes Map.empty
+        ts2 <- topoSortCategories Map.empty ts
+        ta <- flattenAllConnections Map.empty ts2 >>= declareAllTypes Map.empty
         let r = CategoryResolver ta
         checkTypeSuccess r
           [("#x",["allows Value2","requires Function<#x,Value2>"])]
@@ -520,8 +514,8 @@ tests = [
     checkOperationFail
       ("testfiles" </> "filters.0rx")
       (\ts -> do
-        ts <- topoSortCategories Map.empty ts
-        ta <- flattenAllConnections Map.empty ts >>= declareAllTypes Map.empty
+        ts2 <- topoSortCategories Map.empty ts
+        ta <- flattenAllConnections Map.empty ts2 >>= declareAllTypes Map.empty
         let r = CategoryResolver ta
         checkTypeSuccess r
           [("#x",["allows Value2","requires Function<#x,Value2>"]),
@@ -531,71 +525,71 @@ tests = [
     checkOperationSuccess
       ("testfiles" </> "concrete_instances.0rx")
       (\ts -> do
-        ts <- topoSortCategories defaultCategories ts
-        ts <- flattenAllConnections defaultCategories ts
-        checkCategoryInstances defaultCategories ts),
+        ts2 <- topoSortCategories defaultCategories ts
+        ts3 <- flattenAllConnections defaultCategories ts2
+        checkCategoryInstances defaultCategories ts3),
     checkOperationFail
       ("testfiles" </> "concrete_missing_define.0rx")
       (\ts -> do
-        ts <- topoSortCategories defaultCategories ts
-        ts <- flattenAllConnections defaultCategories ts
-        checkCategoryInstances defaultCategories ts),
+        ts2 <- topoSortCategories defaultCategories ts
+        ts3 <- flattenAllConnections defaultCategories ts2
+        checkCategoryInstances defaultCategories ts3),
     checkOperationFail
       ("testfiles" </> "concrete_missing_refine.0rx")
       (\ts -> do
-        ts <- topoSortCategories defaultCategories ts
-        ts <- flattenAllConnections defaultCategories ts
-        checkCategoryInstances defaultCategories ts),
+        ts2 <- topoSortCategories defaultCategories ts
+        ts3 <- flattenAllConnections defaultCategories ts2
+        checkCategoryInstances defaultCategories ts3),
     checkOperationSuccess
       ("testfiles" </> "value_instances.0rx")
       (\ts -> do
-        ts <- topoSortCategories defaultCategories ts
-        ts <- flattenAllConnections defaultCategories ts
-        checkCategoryInstances defaultCategories ts),
+        ts2 <- topoSortCategories defaultCategories ts
+        ts3 <- flattenAllConnections defaultCategories ts2
+        checkCategoryInstances defaultCategories ts3),
     checkOperationFail
       ("testfiles" </> "value_missing_define.0rx")
       (\ts -> do
-        ts <- topoSortCategories defaultCategories ts
-        ts <- flattenAllConnections defaultCategories ts
-        checkCategoryInstances defaultCategories ts),
+        ts2 <- topoSortCategories defaultCategories ts
+        ts3 <- flattenAllConnections defaultCategories ts2
+        checkCategoryInstances defaultCategories ts3),
     checkOperationFail
       ("testfiles" </> "value_missing_refine.0rx")
       (\ts -> do
-        ts <- topoSortCategories defaultCategories ts
-        ts <- flattenAllConnections defaultCategories ts
-        checkCategoryInstances defaultCategories ts),
+        ts2 <- topoSortCategories defaultCategories ts
+        ts3 <- flattenAllConnections defaultCategories ts2
+        checkCategoryInstances defaultCategories ts3),
     checkOperationSuccess
       ("testfiles" </> "type_instances.0rx")
       (\ts -> do
-        ts <- topoSortCategories defaultCategories ts
-        ts <- flattenAllConnections defaultCategories ts
-        checkCategoryInstances defaultCategories ts),
+        ts2 <- topoSortCategories defaultCategories ts
+        ts3 <- flattenAllConnections defaultCategories ts2
+        checkCategoryInstances defaultCategories ts3),
     checkOperationFail
       ("testfiles" </> "type_missing_define.0rx")
       (\ts -> do
-        ts <- topoSortCategories defaultCategories ts
-        ts <- flattenAllConnections defaultCategories ts
-        checkCategoryInstances defaultCategories ts),
+        ts2 <- topoSortCategories defaultCategories ts
+        ts3 <- flattenAllConnections defaultCategories ts2
+        checkCategoryInstances defaultCategories ts3),
     checkOperationFail
       ("testfiles" </> "type_missing_refine.0rx")
       (\ts -> do
-        ts <- topoSortCategories defaultCategories ts
-        ts <- flattenAllConnections defaultCategories ts
-        checkCategoryInstances defaultCategories ts),
+        ts2 <- topoSortCategories defaultCategories ts
+        ts3 <- flattenAllConnections defaultCategories ts2
+        checkCategoryInstances defaultCategories ts3),
     checkOperationSuccess
       ("testfiles" </> "requires_concrete.0rx")
       (\ts -> do
-        ts <- topoSortCategories defaultCategories ts
-        ts <- flattenAllConnections defaultCategories ts
-        checkCategoryInstances defaultCategories ts),
+        ts2 <- topoSortCategories defaultCategories ts
+        ts3 <- flattenAllConnections defaultCategories ts2
+        checkCategoryInstances defaultCategories ts3),
 
     -- TODO: Clean these tests up.
     checkOperationSuccess
       ("testfiles" </> "merged.0rx")
       (\ts -> do
-        ts <- topoSortCategories defaultCategories ts
-        ts <- flattenAllConnections defaultCategories ts
-        tm <- declareAllTypes defaultCategories ts
+        ts2 <- topoSortCategories defaultCategories ts
+        ts3 <- flattenAllConnections defaultCategories ts2
+        tm <- declareAllTypes defaultCategories ts3
         rs <- getRefines tm "Test"
         rs `containsExactly` ["Value0","Value1","Value2","Value3",
                               "Value4<Value1,Value1>","Inherit1","Inherit2"]),
@@ -603,39 +597,33 @@ tests = [
     checkOperationSuccess
       ("testfiles" </> "merged.0rx")
       (\ts -> do
-        ts <- topoSortCategories defaultCategories ts
-        flattenAllConnections defaultCategories ts
-        return ()),
+        ts2 <- topoSortCategories defaultCategories ts
+        flattenAllConnections defaultCategories ts2 >> return ()),
     checkOperationSuccess
       ("testfiles" </> "duplicate_refine.0rx")
       (\ts -> do
-        ts <- topoSortCategories defaultCategories ts
-        flattenAllConnections defaultCategories ts
-        return ()),
+        ts2 <- topoSortCategories defaultCategories ts
+        flattenAllConnections defaultCategories ts2 >> return ()),
     checkOperationSuccess
       ("testfiles" </> "duplicate_define.0rx")
       (\ts -> do
-        ts <- topoSortCategories defaultCategories ts
-        flattenAllConnections defaultCategories ts
-        return ()),
+        ts2 <- topoSortCategories defaultCategories ts
+        flattenAllConnections defaultCategories ts2 >> return ()),
     checkOperationFail
       ("testfiles" </> "refine_wrong_direction.0rx")
       (\ts -> do
-        ts <- topoSortCategories defaultCategories ts
-        flattenAllConnections defaultCategories ts
-        return ()),
+        ts2 <- topoSortCategories defaultCategories ts
+        flattenAllConnections defaultCategories ts2 >> return ()),
     checkOperationFail
       ("testfiles" </> "inherit_incompatible.0rx")
       (\ts -> do
-        ts <- topoSortCategories defaultCategories ts
-        flattenAllConnections defaultCategories ts
-        return ()),
+        ts2 <- topoSortCategories defaultCategories ts
+        flattenAllConnections defaultCategories ts2 >> return ()),
     checkOperationSuccess
       ("testfiles" </> "merge_incompatible.0rx")
       (\ts -> do
-        ts <- topoSortCategories defaultCategories ts
-        flattenAllConnections defaultCategories ts
-        return ()),
+        ts2 <- topoSortCategories defaultCategories ts
+        flattenAllConnections defaultCategories ts2 >> return ()),
 
     checkOperationSuccess
       ("testfiles" </> "flatten.0rx")
@@ -746,89 +734,79 @@ tests = [
     checkOperationFail
       ("testfiles" </> "conflicting_declaration.0rx")
       (\ts -> do
-        ts <- topoSortCategories defaultCategories ts
-        flattenAllConnections defaultCategories ts
-        return ()),
+        ts2 <- topoSortCategories defaultCategories ts
+        flattenAllConnections defaultCategories ts2 >> return ()),
     checkOperationFail
       ("testfiles" </> "conflicting_inherited.0rx")
       (\ts -> do
-        ts <- topoSortCategories defaultCategories ts
-        flattenAllConnections defaultCategories ts
-        return ()),
+        ts2 <- topoSortCategories defaultCategories ts
+        flattenAllConnections defaultCategories ts2 >> return ()),
     checkOperationSuccess
       ("testfiles" </> "successful_merge.0rx")
       (\ts -> do
-        ts <- topoSortCategories defaultCategories ts
-        flattenAllConnections defaultCategories ts
-        return ()),
+        ts2 <- topoSortCategories defaultCategories ts
+        flattenAllConnections defaultCategories ts2 >> return ()),
     checkOperationSuccess
       ("testfiles" </> "merge_with_refine.0rx")
       (\ts -> do
-        ts <- topoSortCategories defaultCategories ts
-        flattenAllConnections defaultCategories ts
-        return ()),
+        ts2 <- topoSortCategories defaultCategories ts
+        flattenAllConnections defaultCategories ts2 >> return ()),
     checkOperationFail
       ("testfiles" </> "failed_merge.0rx")
       (\ts -> do
-        ts <- topoSortCategories defaultCategories ts
-        flattenAllConnections defaultCategories ts
-        return ()),
+        ts2 <- topoSortCategories defaultCategories ts
+        flattenAllConnections defaultCategories ts2 >> return ()),
     checkOperationFail
       ("testfiles" </> "ambiguous_merge_inherit.0rx")
       (\ts -> do
-        ts <- topoSortCategories defaultCategories ts
-        flattenAllConnections defaultCategories ts
-        return ()),
+        ts2 <- topoSortCategories defaultCategories ts
+        flattenAllConnections defaultCategories ts2 >> return ()),
     checkOperationFail
       ("testfiles" </> "merge_different_scopes.0rx")
       (\ts -> do
-        ts <- topoSortCategories defaultCategories ts
-        flattenAllConnections defaultCategories ts
-        return ()),
+        ts2 <- topoSortCategories defaultCategories ts
+        flattenAllConnections defaultCategories ts2 >> return ()),
 
     checkOperationSuccess
       ("testfiles" </> "successful_merge_params.0rx")
       (\ts -> do
-        ts <- topoSortCategories defaultCategories ts
-        flattenAllConnections defaultCategories ts
-        return ()),
+        ts2 <- topoSortCategories defaultCategories ts
+        flattenAllConnections defaultCategories ts2 >> return ()),
     checkOperationFail
       ("testfiles" </> "failed_merge_params.0rx")
       (\ts -> do
-        ts <- topoSortCategories defaultCategories ts
-        flattenAllConnections defaultCategories ts
-        return ()),
+        ts2 <- topoSortCategories defaultCategories ts
+        flattenAllConnections defaultCategories ts2 >> return ()),
     checkOperationSuccess
       ("testfiles" </> "preserve_merged.0rx")
       (\ts -> do
-        ts <- topoSortCategories defaultCategories ts
-        flattenAllConnections defaultCategories ts
-        return ()),
+        ts2 <- topoSortCategories defaultCategories ts
+        flattenAllConnections defaultCategories ts2 >> return ()),
     checkOperationFail
       ("testfiles" </> "conflict_in_preserved.0rx")
       (\ts -> do
-        ts <- topoSortCategories defaultCategories ts
-        flattenAllConnections defaultCategories ts
-        return ()),
+        ts2 <- topoSortCategories defaultCategories ts
+        flattenAllConnections defaultCategories ts2 >> return ()),
     checkOperationSuccess
       ("testfiles" </> "resolved_in_preserved.0rx")
       (\ts -> do
-        ts <- topoSortCategories defaultCategories ts
-        flattenAllConnections defaultCategories ts
-        return ())
+        ts2 <- topoSortCategories defaultCategories ts
+        flattenAllConnections defaultCategories ts2 >> return ())
   ]
 
-
+getRefines :: Map.Map CategoryName (AnyCategory c) -> String -> CompileInfo [String]
 getRefines tm n =
   case (CategoryName n) `Map.lookup` tm of
        (Just t) -> return $ map (show . vrType) (getCategoryRefines t)
        _ -> compileError $ "Type " ++ n ++ " not found"
 
+getDefines ::  Map.Map CategoryName (AnyCategory c) -> String -> CompileInfo [String]
 getDefines tm n =
   case (CategoryName n) `Map.lookup` tm of
        (Just t) -> return $ map (show . vdType) (getCategoryDefines t)
        _ -> compileError $ "Type " ++ n ++ " not found"
 
+getTypeRefines :: Show c => [AnyCategory c] -> String -> String -> CompileInfo [String]
 getTypeRefines ts s n = do
   ta <- declareAllTypes defaultCategories ts
   let r = CategoryResolver ta
@@ -836,6 +814,7 @@ getTypeRefines ts s n = do
   Positional rs <- trRefines r t (CategoryName n)
   return $ map show rs
 
+getTypeDefines :: Show c => [AnyCategory c] -> String -> String -> CompileInfo [String]
 getTypeDefines ts s n = do
   ta <- declareAllTypes defaultCategories ts
   let r = CategoryResolver ta
@@ -843,12 +822,14 @@ getTypeDefines ts s n = do
   Positional ds <- trDefines r t (CategoryName n)
   return $ map show ds
 
+getTypeVariance :: Show c => [AnyCategory c] -> String -> CompileInfo [Variance]
 getTypeVariance ts n = do
   ta <- declareAllTypes defaultCategories ts
   let r = CategoryResolver ta
   (Positional vs) <- trVariance r (CategoryName n)
   return vs
 
+getTypeFilters :: Show c => [AnyCategory c] -> String -> CompileInfo [[String]]
 getTypeFilters ts s = do
   ta <- declareAllTypes defaultCategories ts
   let r = CategoryResolver ta
@@ -856,6 +837,7 @@ getTypeFilters ts s = do
   Positional vs <- trTypeFilters r t
   return $ map (map show) vs
 
+getTypeDefinesFilters :: Show c => [AnyCategory c] -> String -> CompileInfo [[String]]
 getTypeDefinesFilters ts s = do
   ta <- declareAllTypes defaultCategories ts
   let r = CategoryResolver ta
@@ -863,11 +845,13 @@ getTypeDefinesFilters ts s = do
   Positional vs <- trDefinesFilters r t
   return $ map (map show) vs
 
+scrapeAllRefines :: [AnyCategory c] -> [(String, String)]
 scrapeAllRefines = map (show *** show) . concat . map scrapeSingle where
   scrapeSingle (ValueInterface _ _ n _ rs _ _) = map ((,) n . vrType) rs
   scrapeSingle (ValueConcrete _ _ n _ rs _ _ _) = map ((,) n . vrType) rs
   scrapeSingle _ = []
 
+scrapeAllDefines :: [AnyCategory c] -> [(String, String)]
 scrapeAllDefines = map (show *** show) . concat . map scrapeSingle where
   scrapeSingle (ValueConcrete _ _ n _ _ ds _ _) = map ((,) n . vdType) ds
   scrapeSingle _ = []
@@ -878,7 +862,7 @@ checkPaired f actual expected
   | length actual /= length expected =
     compileError $ "Different item counts: " ++ show actual ++ " (actual) vs. " ++
                    show expected ++ " (expected)"
-  | otherwise = mergeAllM $ map check (zip3 actual expected [1..]) where
+  | otherwise = mergeAllM $ map check (zip3 actual expected ([1..] :: [Int])) where
     check (a,e,n) = f a e `reviseError` ("Item " ++ show n ++ " mismatch")
 
 containsPaired :: (Eq a, Show a, CompileErrorM m, MergeableM m) =>
@@ -888,6 +872,7 @@ containsPaired = checkPaired checkSingle where
     | a == e = return ()
     | otherwise = compileError $ show a ++ " (actual) vs. " ++ show e ++ " (expected)"
 
+checkOperationSuccess :: String -> ([AnyCategory SourcePos] -> CompileInfo a) -> IO (CompileInfo ())
 checkOperationSuccess f o = do
   contents <- loadFile f
   let parsed = readMulti f contents :: CompileInfo [AnyCategory SourcePos]
@@ -895,6 +880,7 @@ checkOperationSuccess f o = do
   where
     check = flip reviseError ("Check " ++ f ++ ":")
 
+checkOperationFail :: String -> ([AnyCategory SourcePos] -> CompileInfo a) -> IO (CompileInfo ())
 checkOperationFail f o = do
   contents <- loadFile f
   let parsed = readMulti f contents :: CompileInfo [AnyCategory SourcePos]
@@ -905,6 +891,7 @@ checkOperationFail f o = do
       | otherwise = compileError $ "Check " ++ f ++ ": Expected failure but got\n" ++
                                    show (getCompileSuccess c) ++ "\n"
 
+checkSingleParseSuccess :: String -> IO (CompileInfo ())
 checkSingleParseSuccess f = do
   contents <- loadFile f
   let parsed = readSingle f contents :: CompileInfo (AnyCategory SourcePos)
@@ -914,6 +901,7 @@ checkSingleParseSuccess f = do
       | isCompileError c = compileError $ "Parse " ++ f ++ ":\n" ++ show (getCompileError c)
       | otherwise = return ()
 
+checkSingleParseFail :: String -> IO (CompileInfo ())
 checkSingleParseFail f = do
   contents <- loadFile f
   let parsed = readSingle f contents :: CompileInfo (AnyCategory SourcePos)
@@ -924,6 +912,7 @@ checkSingleParseFail f = do
       | otherwise = compileError $ "Parse " ++ f ++ ": Expected failure but got\n" ++
                                    show (getCompileSuccess c) ++ "\n"
 
+checkShortParseSuccess :: String -> IO (CompileInfo ())
 checkShortParseSuccess s = do
   let parsed = readSingle "(string)" s :: CompileInfo (AnyCategory SourcePos)
   return $ check parsed
@@ -932,6 +921,7 @@ checkShortParseSuccess s = do
       | isCompileError c = compileError $ "Parse '" ++ s ++ "':\n" ++ show (getCompileError c)
       | otherwise = return ()
 
+checkShortParseFail :: String -> IO (CompileInfo ())
 checkShortParseFail s = do
   let parsed = readSingle "(string)" s :: CompileInfo (AnyCategory SourcePos)
   return $ check parsed

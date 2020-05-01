@@ -23,7 +23,6 @@ module Cli.TestRunner (
 import Control.Arrow (second)
 import Control.Monad (when)
 import Data.List (isSuffixOf,nub)
-import System.Directory (setCurrentDirectory)
 import System.IO
 import System.Posix.Temp (mkdtemp)
 import System.FilePath
@@ -38,7 +37,6 @@ import CompilerCxx.Category
 import CompilerCxx.Naming
 import Config.Programs
 import Parser.SourceFile
-import Types.Builtin
 import Types.IntegrationTest
 import Types.TypeCategory
 import Types.TypeInstance
@@ -65,13 +63,13 @@ runSingleTest b paths deps os tm (f,s) = do
       let context = formatFullContextBrace (ithContext $ itHeader t)
       hPutStrLn stderr $ "\n*** Executing test \"" ++ name ++ "\" ***"
       outcome <- fmap (flip reviseError ("\nIn test \"" ++ name ++ "\"" ++ context)) $
-                   run name (ithResult $ itHeader t) (itCategory t) (itDefinition t)
+                   run (ithResult $ itHeader t) (itCategory t) (itDefinition t)
       if isCompileError outcome
          then hPutStrLn stderr $ "*** Test \"" ++ name ++ "\" failed ***"
          else hPutStrLn stderr $ "*** Test \"" ++ name ++ "\" passed ***"
       return outcome
 
-    run n (ExpectCompileError _ rs es) cs ds = do
+    run (ExpectCompileError _ rs es) cs ds = do
       let result = compileAll Nothing cs ds :: CompileInfo ([CategoryName],[String],Namespace,[CxxOutput])
       if not $ isCompileError result
          then return $ compileError "Expected compiler error"
@@ -80,8 +78,8 @@ runSingleTest b paths deps os tm (f,s) = do
            let errors = show $ getCompileError result
            checkContent rs es (warnings ++ lines errors) [] []
 
-    run n (ExpectRuntimeError   _ e rs es) cs ds = execute False n e rs es cs ds
-    run n (ExpectRuntimeSuccess _ e rs es) cs ds = execute True  n e rs es cs ds
+    run (ExpectRuntimeError   _ e rs es) cs ds = execute False e rs es cs ds
+    run (ExpectRuntimeSuccess _ e rs es) cs ds = execute True  e rs es cs ds
 
     checkContent rs es comp err out = do
       let cr = checkRequired rs comp err out
@@ -99,7 +97,7 @@ runSingleTest b paths deps os tm (f,s) = do
          then mergeAllM [cr,ce,compError,errError,outError]
          else mergeAllM [cr,ce]
 
-    execute s n e rs es cs ds = do
+    execute s2 e rs es cs ds = do
       let result = compileAll (Just e) cs ds :: CompileInfo ([CategoryName],[String],Namespace,[CxxOutput])
       if isCompileError result
          then return $ result >> return ()
@@ -108,8 +106,8 @@ runSingleTest b paths deps os tm (f,s) = do
            let (req,main,ns,fs) = getCompileSuccess result
            binaryName <- createBinary main req [ns] fs
            let command = TestCommand binaryName (takeDirectory binaryName)
-           (TestCommandResult s' out err) <- runTestCommand b command
-           case (s,s') of
+           (TestCommandResult s2' out err) <- runTestCommand b command
+           case (s2,s2') of
                 (True,False) -> return $ mergeAllM $ map compileError $ warnings ++ err ++ out
                 (False,True) -> return $ compileError "Expected runtime failure"
                 _ -> return $ checkContent rs es warnings err out
@@ -131,7 +129,7 @@ runSingleTest b paths deps os tm (f,s) = do
       xx <- compileCategoryModule cm
       tm' <- includeNewTypes tm cs'
       (req,main) <- case e of
-                         Just e -> createTestFile tm' e
+                         Just e2 -> createTestFile tm' e2
                          Nothing -> return ([],[])
       return (req,main,ns1,xx)
 
@@ -164,9 +162,8 @@ runSingleTest b paths deps os tm (f,s) = do
       let os' = ofr ns req
       let command = CompileToBinary main os' binary paths'
       runCxxCommand b command
-      return binary
-    writeSingleFile d ca@(CxxOutput _ f _ _ _ content) = do
-      writeFile (d </> f) $ concat $ map (++ "\n") content
-      if isSuffixOf ".cpp" f
-         then return ([d </> f],ca)
+    writeSingleFile d ca@(CxxOutput _ f2 _ _ _ content) = do
+      writeFile (d </> f2) $ concat $ map (++ "\n") content
+      if isSuffixOf ".cpp" f2
+         then return ([d </> f2],ca)
          else return ([],ca)

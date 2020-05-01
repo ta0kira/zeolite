@@ -58,7 +58,6 @@ import Control.Monad (when)
 import Data.List (nub,isSuffixOf)
 import Data.Maybe (isJust)
 import System.Directory
-import System.Environment
 import System.Exit (exitFailure)
 import System.FilePath
 import System.IO
@@ -134,9 +133,16 @@ data RecompileMetadata =
   }
   deriving (Show,Read)
 
+cachedDataPath :: String
 cachedDataPath = ".zeolite-cache"
+
+recompileFilename :: String
 recompileFilename = ".zeolite-module"
+
+metadataFilename :: String
 metadataFilename = "metadata.txt"
+
+allowedExtraTypes :: [String]
 allowedExtraTypes = [".hpp",".cpp",".h",".cc",".a",".o"]
 
 loadMetadata :: String -> IO CompileMetadata
@@ -186,8 +192,8 @@ isPathUpToDate p = do
   m <- tryLoadMetadata p
   case m of
        Nothing -> return False
-       Just m'-> do
-         (fr,_) <- loadDepsCommon True (\m -> cmPublicDeps m ++ cmPrivateDeps m) [p]
+       Just _ -> do
+         (fr,_) <- loadDepsCommon True (\m2 -> cmPublicDeps m2 ++ cmPrivateDeps m2) [p]
          return fr
 
 isPathConfigured :: String -> IO Bool
@@ -283,15 +289,15 @@ loadPrivateDeps ms = do
 loadDepsCommon :: Bool -> (CompileMetadata -> [String]) -> [String] -> IO (Bool,[CompileMetadata])
 loadDepsCommon s f ps = fmap snd $ fixedPaths >>= collect (Set.empty,(True,[])) where
   fixedPaths = sequence $ map canonicalizePath ps
-  collect xa@(pa,(fr,xs)) (p:ps)
-    | p `Set.member` pa = collect xa ps
+  collect xa@(pa,(fr,xs)) (p:ps2)
+    | p `Set.member` pa = collect xa ps2
     | otherwise = do
         when (not s) $ hPutStrLn stderr $ "Loading metadata for dependency \"" ++ p ++ "\"."
         m <- loadMetadata p
         fresh <- checkModuleFreshness p m
         when (not s && not fresh) $
           hPutStrLn stderr $ "Module \"" ++ p ++ "\" is out of date and should be recompiled."
-        collect (p `Set.insert` pa,(fresh && fr,xs ++ [m])) (ps ++ f m)
+        collect (p `Set.insert` pa,(fresh && fr,xs ++ [m])) (ps2 ++ f m)
   collect xa _ = return xa
 
 fixPath :: String -> String
@@ -326,7 +332,7 @@ checkModuleFreshness p (CompileMetadata p2 _ is is2 _ _ _ ps xs ts hxx cxx _) = 
   let e2 = checkMissing xs xs2
   let e3 = checkMissing ts ts2
   rm <- check time (p </> recompileFilename)
-  f1 <- sequence $ map (\p2 -> check time $ getCachedPath p2 "" metadataFilename) $ is ++ is2
+  f1 <- sequence $ map (\p3 -> check time $ getCachedPath p3 "" metadataFilename) $ is ++ is2
   f2 <- sequence $ map (check time . (p2 </>)) $ ps ++ xs
   f3 <- sequence $ map (check time . getCachedPath p2 "") $ hxx ++ cxx
   let fresh = not $ any id $ [rm,e1,e2,e3] ++ f1 ++ f2 ++ f3
@@ -344,13 +350,13 @@ getObjectFileResolver :: [CategoryIdentifier] -> [ObjectFile] -> [Namespace] -> 
 getObjectFileResolver ce os ns ds = resolved ++ nonCategories where
   categories    = filter isCategoryObjectFile os
   nonCategories = map oofFile $ filter (not . isCategoryObjectFile) os
-  categoryMap = Map.fromList $ map keyByCategory categories
-  keyByCategory o = ((ciCategory $ cofCategory o,ciNamespace $ cofCategory o),o)
+  categoryMap = Map.fromList $ map keyByCategory2 categories
+  keyByCategory2 o = ((ciCategory $ cofCategory o,ciNamespace $ cofCategory o),o)
   objectMap = Map.fromList $ map keyBySpec categories
   keyBySpec o = (cofCategory o,o)
-  directDeps = concat $ map (resolveDep . show) ds
+  directDeps = concat $ map (resolveDep2 . show) ds
   directResolved = map cofCategory directDeps ++ ce
-  resolveDep d = unwrap $ foldl (<|>) Nothing allChecks <|> Just [] where
+  resolveDep2 d = unwrap $ foldl (<|>) Nothing allChecks <|> Just [] where
     allChecks = map (\n -> (d,n) `Map.lookup` categoryMap >>= return . (:[])) (map show ns ++ [""])
     unwrap (Just xs) = xs
     unwrap _         = []
@@ -360,11 +366,11 @@ getObjectFileResolver ce os ns ds = resolved ++ nonCategories where
     | c `Set.member` ca = collectAll ca fa cs
     | otherwise =
       case c `Map.lookup` objectMap of
-           Nothing -> collectAll ca fa cs
-           Just (CategoryObjectFile _ ds fs) -> (ca',fa'',fs') where
-             (ca',fa',fs0) = collectAll (c `Set.insert` ca) fa (ds ++ cs)
+           Just (CategoryObjectFile _ ds2 fs) -> (ca',fa'',fs') where
+             (ca',fa',fs0) = collectAll (c `Set.insert` ca) fa (ds2 ++ cs)
              fa'' = fa' `Set.union` (Set.fromList fs)
              fs' = (filter (not . flip elem fa') fs) ++ fs0
+           _ -> collectAll ca fa cs
 
 resolveObjectDeps :: String -> [([String],CxxOutput)] -> [CompileMetadata] -> [ObjectFile]
 resolveObjectDeps p os deps = resolvedCategories ++ nonCategories where
@@ -377,6 +383,7 @@ resolveObjectDeps p os deps = resolvedCategories ++ nonCategories where
   depCategories = map keyByCategory $ concat $ map categoriesToIds deps
   categoriesToIds dep = map (\c -> CategoryIdentifier (cmPath dep) c (cmNamespace dep)) (cmCategories dep)
   cxxToId (CxxOutput (Just c) _ ns _ _ _) = CategoryIdentifier p (show c) (show ns)
+  cxxToId _                               = undefined
   resolveCategory (fs,ca@(CxxOutput _ _ _ ns2 ds _)) =
     (cxxToId ca,CategoryObjectFile (cxxToId ca) rs fs) where
       rs = concat $ map (resolveDep categoryMap (map show ns2 ++ publicNamespaces) . show) ds

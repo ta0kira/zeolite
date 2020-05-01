@@ -22,11 +22,10 @@ module Test.DefinedCategory (tests) where
 
 import System.FilePath
 import Text.Parsec
-import Text.Parsec.String
 
 import Base.CompileError
 import Compilation.CompileInfo
-import Parser.DefinedCategory
+import Parser.DefinedCategory ()
 import Test.Common
 import Types.DefinedCategory
 
@@ -39,6 +38,7 @@ tests = [
     checkParseSuccess ("testfiles" </> "internal_filters.0rx")
   ]
 
+checkParseSuccess :: String -> IO (CompileInfo ())
 checkParseSuccess f = do
   contents <- loadFile f
   let parsed = readMulti f contents :: CompileInfo [DefinedCategory SourcePos]
@@ -48,6 +48,7 @@ checkParseSuccess f = do
     | isCompileError c = compileError $ "Parse " ++ f ++ ":\n" ++ show (getCompileError c)
     | otherwise = return ()
 
+checkParseFail :: String -> IO (CompileInfo ())
 checkParseFail f = do
   contents <- loadFile f
   let parsed = readMulti f contents :: CompileInfo [DefinedCategory SourcePos]

@@ -78,19 +78,24 @@ data OutputPattern =
 
 data OutputScope = OutputAny | OutputCompiler | OutputStderr | OutputStdout deriving (Eq,Ord,Show)
 
+isExpectCompileError :: ExpectedResult c -> Bool
 isExpectCompileError (ExpectCompileError _ _ _) = True
 isExpectCompileError _                          = False
 
+isExpectRuntimeError :: ExpectedResult c -> Bool
 isExpectRuntimeError (ExpectRuntimeError _ _ _ _) = True
 isExpectRuntimeError _                            = False
 
+isExpectRuntimeSuccess :: ExpectedResult c -> Bool
 isExpectRuntimeSuccess (ExpectRuntimeSuccess _ _ _ _) = True
 isExpectRuntimeSuccess _                              = False
 
+getRequirePattern :: ExpectedResult c -> [OutputPattern]
 getRequirePattern (ExpectCompileError _ rs _)     = rs
 getRequirePattern (ExpectRuntimeError _ _ rs _)   = rs
 getRequirePattern (ExpectRuntimeSuccess _ _ rs _) = rs
 
+getExcludePattern :: ExpectedResult c -> [OutputPattern]
 getExcludePattern (ExpectCompileError _ _ es)     = es
 getExcludePattern (ExpectRuntimeError _ _ _ es)   = es
 getExcludePattern (ExpectRuntimeSuccess _ _ _ es) = es

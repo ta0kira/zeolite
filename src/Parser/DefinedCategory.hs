@@ -24,13 +24,14 @@ module Parser.DefinedCategory (
 ) where
 
 import Control.Monad (when)
+import Prelude hiding (pi)
 import Text.Parsec
 import Text.Parsec.String
 
 import Parser.Common
-import Parser.Procedure
+import Parser.Procedure ()
 import Parser.TypeCategory
-import Parser.TypeInstance
+import Parser.TypeInstance ()
 import Types.DefinedCategory
 import Types.Procedure
 import Types.TypeCategory
@@ -43,26 +44,26 @@ instance ParseFromSource (DefinedCategory SourcePos) where
     c <- getPosition
     kwDefine
     n <- sourceParser
-    sepAfter (string "{")
+    sepAfter (string_ "{")
     (ds,rs) <- parseRefinesDefines
     (pi,fi) <- parseInternalParams <|> return ([],[])
     (ms,ps,fs) <- parseMemberProcedureFunction n
-    sepAfter (string "}")
+    sepAfter (string_ "}")
     return $ DefinedCategory [c] n pi ds rs fi ms ps fs
     where
       parseRefinesDefines = fmap merge2 $ sepBy refineOrDefine optionalSpace
       refineOrDefine = labeled "refine or define" $ put12 singleRefine <|> put22 singleDefine
       parseInternalParams = labeled "internal params" $ do
         try kwTypes
-        pi <- between (sepAfter $ string "<")
-                      (sepAfter $ string ">")
-                      (sepBy singleParam (sepAfter $ string ","))
+        pi <- between (sepAfter $ string_ "<")
+                      (sepAfter $ string_ ">")
+                      (sepBy singleParam (sepAfter $ string_ ","))
         fi <- parseInternalFilters
         return (pi,fi)
       parseInternalFilters = do
-        try $ sepAfter (string "{")
+        try $ sepAfter (string_ "{")
         fi <- parseFilters
-        sepAfter (string "}")
+        sepAfter (string_ "}")
         return fi
       singleParam = labeled "param declaration" $ do
         c <- getPosition
@@ -110,7 +111,7 @@ parseMemberProcedureFunction n = parsed >>= return . foldr merge empty where
              " but got definition of " ++ show (epName p)
     return ([],[p],[f])
   catchUnscopedType = do
-    t <- try sourceParser :: Parser ValueType
+    _ <- try sourceParser :: Parser ValueType
     fail $ "members must have an explicit @value or @category scope"
 
 parseAnySource :: Parser ([AnyCategory SourcePos],[DefinedCategory SourcePos])
@@ -118,10 +119,10 @@ parseAnySource = parsed >>= return . foldr merge empty where
   empty = ([],[])
   merge (cs1,ds1) (cs2,ds2) = (cs1++cs2,ds1++ds2)
   parsed = sepBy anyType optionalSpace
-  anyType = singleCategory <|> singleDefine
+  anyType = singleCategory <|> singleDefine2
   singleCategory = do
     c <- sourceParser
     return ([c],[])
-  singleDefine = do
+  singleDefine2 = do
     d <- sourceParser
     return ([],[d])

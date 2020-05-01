@@ -32,7 +32,7 @@ import Text.Parsec
 import Text.Parsec.String
 
 import Parser.Common
-import Parser.TypeInstance
+import Parser.TypeInstance ()
 import Types.Positional
 import Types.TypeCategory
 import Types.TypeInstance
@@ -41,8 +41,8 @@ import Types.Variance
 
 instance ParseFromSource (AnyCategory SourcePos) where
   sourceParser = parseValue <|> parseInstance <|> parseConcrete where
-    open = sepAfter $ string "{"
-    close = sepAfter $ string "}"
+    open = sepAfter (string_ "{")
+    close = sepAfter (string_ "}")
     parseValue = labeled "value interface" $ do
       c <- getPosition
       try $ kwValue >> kwInterface
@@ -85,28 +85,28 @@ parseCategoryParams = do
       notFollowedBy (string "<")
       return ([],[],[])
     fixedOnly = do -- T<a,b,c>
-      inv <- between (sepAfter $ string "<")
-                     (sepAfter $ string ">")
-                     (sepBy singleParam (sepAfter $ string ","))
+      inv <- between (sepAfter $ string_ "<")
+                     (sepAfter $ string_ ">")
+                     (sepBy singleParam (sepAfter $ string_ ","))
       return ([],inv,[])
     noFixed = do -- T<a,b|c,d>
-      con <- between (sepAfter $ string "<")
-                     (sepAfter $ string "|")
-                     (sepBy singleParam (sepAfter $ string ","))
+      con <- between (sepAfter $ string_ "<")
+                     (sepAfter $ string_ "|")
+                     (sepBy singleParam (sepAfter $ string_ ","))
       cov <- between nullParse
-                     (sepAfter $ string ">")
-                     (sepBy singleParam (sepAfter $ string ","))
+                     (sepAfter $ string_ ">")
+                     (sepBy singleParam (sepAfter $ string_ ","))
       return (con,[],cov)
     explicitFixed = do -- T<a,b|c,d|e,f>
-      con <- between (sepAfter $ string "<")
-                     (sepAfter $ string "|")
-                     (sepBy singleParam (sepAfter $ string ","))
+      con <- between (sepAfter $ string_ "<")
+                     (sepAfter $ string_ "|")
+                     (sepBy singleParam (sepAfter $ string_ ","))
       inv <- between nullParse
-                     (sepAfter $ string "|")
-                     (sepBy singleParam (sepAfter $ string ","))
+                     (sepAfter $ string_ "|")
+                     (sepBy singleParam (sepAfter $ string_ ","))
       cov <- between nullParse
-                     (sepAfter $ string ">")
-                     (sepBy singleParam (sepAfter $ string ","))
+                     (sepAfter $ string_ ">")
+                     (sepBy singleParam (sepAfter $ string_ ","))
       return (con,inv,cov)
     singleParam = labeled "param declaration" $ do
       c <- getPosition
@@ -171,20 +171,20 @@ parseScopedFunction sp tp = labeled "function" $ do
   ps <- fmap Positional $ noParams <|> someParams
   fa <- parseFilters
   as <- fmap Positional $ typeList "argument type"
-  sepAfter $ string "->"
+  sepAfter_ (string "->")
   rs <- fmap Positional $ typeList "return type"
   return $ ScopedFunction [c] n t s as rs ps fa []
   where
     noParams = notFollowedBy (string "<") >> return []
-    someParams = between (sepAfter $ string "<")
-                         (sepAfter $ string ">")
+    someParams = between (sepAfter $ string_ "<")
+                         (sepAfter $ string_ ">")
                          (sepBy singleParam (sepAfter $ string ","))
     singleParam = labeled "param declaration" $ do
       c <- getPosition
       n <- sourceParser
       return $ ValueParam [c] n Invariant
-    typeList l = between (sepAfter $ string "(")
-                         (sepAfter $ string ")")
+    typeList l = between (sepAfter $ string_ "(")
+                         (sepAfter $ string_ ")")
                          (sepBy (labeled l $ singleType) (sepAfter $ string ","))
     singleType = do
       c <- getPosition
@@ -193,6 +193,12 @@ parseScopedFunction sp tp = labeled "function" $ do
 
 parseScope :: Parser SymbolScope
 parseScope = try categoryScope <|> try typeScope <|> valueScope
+
+categoryScope :: Parser SymbolScope
 categoryScope = kwCategory >> return CategoryScope
-typeScope     = kwType     >> return TypeScope
-valueScope    = kwValue    >> return ValueScope
+
+typeScope :: Parser SymbolScope
+typeScope = kwType >> return TypeScope
+
+valueScope :: Parser SymbolScope
+valueScope = kwValue >> return ValueScope

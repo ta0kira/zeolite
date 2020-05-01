@@ -25,10 +25,6 @@ module Base.Mergeable (
   MergeableM(..),
 ) where
 
-import Control.Monad (Monad(..))
-import Data.Foldable
-import Data.Functor
-
 
 class Mergeable a where
   mergeAny :: Foldable f => f a -> a

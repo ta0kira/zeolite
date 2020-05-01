@@ -75,6 +75,7 @@ data LocalConfig =
   }
   deriving (Read,Show)
 
+localConfigFilename :: String
 localConfigFilename = "local-config.txt"
 
 localConfigPath :: IO FilePath
@@ -96,7 +97,7 @@ instance CompilerBackend Backend where
       nsFlag
         | null ns = []
         | otherwise = ["-D" ++ nm ++ "=" ++ ns]
-  runCxxCommand (UnixBackend cb co ab) (CompileToBinary m ss o ps) = do
+  runCxxCommand (UnixBackend cb co _) (CompileToBinary m ss o ps) = do
     let arFiles    = filter (isSuffixOf ".a")       ss
     let otherFiles = filter (not . isSuffixOf ".a") ss
     executeProcess cb $ co ++ otherOptions ++ m:otherFiles ++ arFiles ++ ["-o", o]
@@ -134,7 +135,7 @@ instance PathResolver Resolver where
   resolveModule SimpleResolver p m = do
     m' <- getDataFileName m
     firstExisting m [p</>m,m']
-  resolveBaseModule r = do
+  resolveBaseModule _ = do
     let m = "base"
     m' <- getDataFileName m
     firstExisting m [m']

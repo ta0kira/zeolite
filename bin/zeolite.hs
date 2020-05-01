@@ -19,7 +19,6 @@ limitations under the License.
 import Control.Monad (when)
 import System.Environment
 import System.Exit
-import System.FilePath
 import System.IO
 
 import Base.CompileError
@@ -29,6 +28,7 @@ import Cli.ParseCompileOptions -- Not safe, due to Text.Regex.TDFA.
 import Compilation.CompileInfo
 
 
+main :: IO ()
 main = do
   args <- getArgs
   let options = parseCompileOptions args >>= validateCompileOptions

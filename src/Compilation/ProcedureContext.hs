@@ -35,7 +35,6 @@ import Base.CompileError
 import Base.Mergeable
 import Compilation.CompilerState
 import Types.DefinedCategory
-import Types.Function
 import Types.GeneralType
 import Types.Positional
 import Types.Procedure
@@ -118,7 +117,6 @@ instance (Show c, MergeableM m, CompileErrorM m) =>
       -- A different category than the procedure.
       | otherwise = do
         (_,ca) <- getCategory (pcCategories ctx) (c,t)
-        let params = Positional $ map vpParam $ getCategoryParams ca
         let fa = Map.fromList $ map (\f -> (sfName f,f)) $ getCategoryFunctions ca
         checkFunction $ n `Map.lookup` fa
     checkFunction (Just f) = do
@@ -133,10 +131,10 @@ instance (Show c, MergeableM m, CompileErrorM m) =>
                      " does not have a category function named " ++ show n ++
                      formatFullContextBrace c
   ccGetTypeFunction ctx c t n = getFunction t where
-    getFunction (Just t@(TypeMerge MergeUnion _)) =
+    getFunction (Just t2@(TypeMerge MergeUnion _)) =
       compileError $ "Use explicit type conversion to call " ++ show n ++ " for union type " ++
-                     show t ++ formatFullContextBrace c
-    getFunction (Just t@(TypeMerge MergeIntersect ts)) =
+                     show t2 ++ formatFullContextBrace c
+    getFunction (Just (TypeMerge MergeIntersect ts)) =
       collectOneOrErrorM $ map getFunction $ map Just ts
     getFunction (Just (SingleType (JustParamName p))) = do
       fa <- ccAllFilters ctx
@@ -149,24 +147,24 @@ instance (Show c, MergeableM m, CompileErrorM m) =>
         [compileError $ "Function " ++ show n ++ " not available for param " ++ show p ++
          formatFullContextBrace c] ++
         (map getFunction $ map (Just . SingleType) ts) ++ (map checkDefine ds)
-    getFunction (Just (SingleType (JustTypeInstance t)))
+    getFunction (Just (SingleType (JustTypeInstance t2)))
       -- Same category as the procedure itself.
-      | tiName t == pcType ctx =
-        checkFunction (tiName t) (fmap vpParam $ pcExtParams ctx) (tiParams t) $ n `Map.lookup` pcFunctions ctx
+      | tiName t2 == pcType ctx =
+        checkFunction (tiName t2) (fmap vpParam $ pcExtParams ctx) (tiParams t2) $ n `Map.lookup` pcFunctions ctx
       -- A different category than the procedure.
       | otherwise = do
-        (_,ca) <- getCategory (pcCategories ctx) (c,tiName t)
+        (_,ca) <- getCategory (pcCategories ctx) (c,tiName t2)
         let params = Positional $ map vpParam $ getCategoryParams ca
         let fa = Map.fromList $ map (\f -> (sfName f,f)) $ getCategoryFunctions ca
-        checkFunction (tiName t) params (tiParams t) $ n `Map.lookup` fa
+        checkFunction (tiName t2) params (tiParams t2) $ n `Map.lookup` fa
     getFunction Nothing = do
       let ps = fmap (SingleType . JustParamName . vpParam) $ pcExtParams ctx
       getFunction (Just $ SingleType $ JustTypeInstance $ TypeInstance (pcType ctx) ps)
-    checkDefine t = do
-      (_,ca) <- getCategory (pcCategories ctx) (c,diName t)
+    checkDefine t2 = do
+      (_,ca) <- getCategory (pcCategories ctx) (c,diName t2)
       let params = Positional $ map vpParam $ getCategoryParams ca
       let fa = Map.fromList $ map (\f -> (sfName f,f)) $ getCategoryFunctions ca
-      checkFunction (diName t) params (diParams t) $ n `Map.lookup` fa
+      checkFunction (diName t2) params (diParams t2) $ n `Map.lookup` fa
     checkFunction t2 ps1 ps2 (Just f) = do
       when (pcDisallowInit ctx && t2 == pcType ctx) $
         compileError $ "Function " ++ show n ++
@@ -199,10 +197,10 @@ instance (Show c, MergeableM m, CompileErrorM m) =>
       let positional = map (getFilters mapped) (map vpParam $ pValues $ pcIntParams ctx)
       assigned <- fmap Map.fromList $ processPairs alwaysPair (fmap vpParam $ pcIntParams ctx) ps
       subbed <- fmap Positional $ collectAllOrErrorM $ map (assignFilters assigned) positional
-      processPairs (validateAssignment r allFilters) ps subbed
+      processPairs_ (validateAssignment r allFilters) ps subbed
       -- Check initializer types.
       ms <- fmap Positional $ collectAllOrErrorM $ map (subSingle pa') (pcMembers ctx)
-      processPairs (checkInit r allFilters) ms (Positional $ zip [1..] $ pValues ts)
+      processPairs_ (checkInit r allFilters) ms (Positional $ zip ([1..] :: [Int]) $ pValues ts)
       return ()
       where
         getFilters fm n =
@@ -211,12 +209,12 @@ instance (Show c, MergeableM m, CompileErrorM m) =>
               _ -> []
         assignFilters fm fs = do
           collectAllOrErrorM $ map (uncheckedSubFilter $ getValueForParam fm) fs
-        checkInit r fa (MemberValue c n t0) (i,t1) = do
+        checkInit r fa (MemberValue c2 n t0) (i,t1) = do
           checkValueTypeMatch r fa t1 t0 `reviseError`
-            ("In initializer " ++ show i ++ " for " ++ show n ++ formatFullContextBrace c)
-        subSingle pa (DefinedMember c _ t n _) = do
-          t' <- uncheckedSubValueType (getValueForParam pa) t
-          return $ MemberValue c n t'
+            ("In initializer " ++ show i ++ " for " ++ show n ++ formatFullContextBrace c2)
+        subSingle pa (DefinedMember c2 _ t2 n _) = do
+          t2' <- uncheckedSubValueType (getValueForParam pa) t2
+          return $ MemberValue c2 n t2'
   ccGetVariable ctx c n =
     case n `Map.lookup` pcVariables ctx of
           (Just v) -> return v
@@ -353,6 +351,7 @@ instance (Show c, MergeableM m, CompileErrorM m) =>
       combineParallel r UnreachableCode = r
       combineParallel (ValidateNames ts ra1) (ValidateNames _ ra2) = ValidateNames ts $ Map.union ra1 ra2
       combineParallel r@(ValidatePositions _) _ = r
+      combineParallel _ r@(ValidatePositions _) = r
   ccRegisterReturn ctx c vs = do
     check (pcReturns ctx)
     return $ ProcedureContext {
@@ -380,12 +379,12 @@ instance (Show c, MergeableM m, CompileErrorM m) =>
       check (ValidatePositions rs) = do
         let vs' = case vs of
                        Nothing -> Positional []
-                       Just vs -> vs
-        processPairs checkReturnType rs (Positional $ zip [1..] $ pValues vs') `reviseError`
+                       Just vs2 -> vs2
+        processPairs_ checkReturnType rs (Positional $ zip ([0..] :: [Int]) $ pValues vs') `reviseError`
           ("In procedure return at " ++ formatFullContext c)
         return ()
         where
-          checkReturnType ta0@(PassedValue c0 t0) (n,t) = do
+          checkReturnType ta0@(PassedValue _ t0) (n,t) = do
             r <- ccResolver ctx
             pa <- ccAllFilters ctx
             checkValueTypeMatch r pa t t0 `reviseError`
@@ -393,7 +392,7 @@ instance (Show c, MergeableM m, CompileErrorM m) =>
                show n ++ " at " ++ formatFullContext c)
       check (ValidateNames ts ra) =
         case vs of
-             Just vs -> check (ValidatePositions ts)
+             Just _ -> check (ValidatePositions ts)
              Nothing -> mergeAllM $ map alwaysError $ Map.toList ra where
                alwaysError (n,t) = compileError $ "Named return " ++ show n ++ " (" ++ show t ++
                                                   ") might not have been set before return at " ++

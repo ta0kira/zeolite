@@ -54,14 +54,14 @@ import Base.CompileError
 import Base.Mergeable
 import Compilation.CompileInfo
 import Parser.Common
-import Parser.TypeInstance
+import Parser.TypeInstance ()
 import Types.TypeInstance
 
 
 runAllTests :: [IO (CompileInfo ())] -> IO ()
 runAllTests ts = do
   results <- sequence ts
-  let (es,ps) = partitionEithers $ zipWith numberError [1..] results
+  let (es,ps) = partitionEithers $ zipWith numberError ([1..] :: [Int]) results
   mapM_ (\(n,e) -> hPutStr stderr ("Test " ++ show n ++ ": " ++ show e ++ "\n")) es
   hPutStr stderr $ show (length ps) ++ " tests passed + " ++
                    show (length es) ++ " tests failed\n"
@@ -75,6 +75,7 @@ numberError n c
 forceParse :: ParseFromSource a => String -> a
 forceParse s = force $ parse sourceParser "(string)" s where
   force (Right x) = x
+  force _         = undefined
 
 readSingle :: (ParseFromSource a, CompileErrorM m) => String -> String -> m a
 readSingle = readSingleWith (optionalSpace >> sourceParser)

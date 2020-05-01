@@ -48,7 +48,6 @@ module Types.Procedure (
 
 import Data.List (intercalate)
 
-import Types.Function
 import Types.Positional
 import Types.TypeCategory
 import Types.TypeInstance

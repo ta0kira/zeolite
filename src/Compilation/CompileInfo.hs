@@ -34,10 +34,6 @@ import Data.Foldable
 import Data.Functor
 import Prelude hiding (concat,foldr)
 
-#if MIN_VERSION_base(4,9,0)
-import Control.Monad.Fail
-#endif
-
 import Base.CompileError
 import Base.Mergeable
 
@@ -66,14 +62,19 @@ data CompileInfo a =
     csData :: a
   }
 
+getCompileError :: CompileInfo a -> CompileMessage
 getCompileError   = cfErrors
+
+getCompileSuccess :: CompileInfo a -> a
 getCompileSuccess = csData
+
+getCompileWarnings :: CompileInfo a -> [String]
 getCompileWarnings (CompileFail w _)    = w
 getCompileWarnings (CompileSuccess w _) = w
 
 
 instance Functor CompileInfo where
-  fmap f (CompileFail w e)    = CompileFail w e -- Not the same a.
+  fmap _ (CompileFail w e)    = CompileFail w e -- Not the same a.
   fmap f (CompileSuccess w d) = CompileSuccess w (f d)
 
 instance Applicative CompileInfo where
@@ -87,6 +88,7 @@ instance Monad CompileInfo where
   (CompileSuccess w d) >>= f = prependWarning w $ f d
   return = CompileSuccess []
 
+prependWarning :: [String] -> CompileInfo a -> CompileInfo a
 prependWarning w (CompileSuccess w2 d) = CompileSuccess (w ++ w2) d
 prependWarning w (CompileFail w2 e)    = CompileFail (w ++ w2) e
 
@@ -102,13 +104,13 @@ instance CompileErrorM CompileInfo where
     result ([],_,ws)  = CompileFail ws $ CompileMessage "No choices found" []
     result (es,_,ws)  = CompileFail ws $ CompileMessage "" es
   reviseErrorM x@(CompileSuccess _ _) _ = x
-  reviseErrorM x@(CompileFail w (CompileMessage [] ms)) s = CompileFail w $ CompileMessage s ms
-  reviseErrorM x@(CompileFail w e) s = CompileFail w $ CompileMessage s [e]
+  reviseErrorM (CompileFail w (CompileMessage [] ms)) s = CompileFail w $ CompileMessage s ms
+  reviseErrorM (CompileFail w e) s = CompileFail w $ CompileMessage s [e]
   compileWarningM w = CompileSuccess [w] ()
 
 instance MergeableM CompileInfo where
   mergeAnyM = result . splitErrorsAndData where
-    result (_,xs@(x:_),ws) = CompileSuccess ws $ mergeAny xs
+    result (_,xs@(_:_),ws) = CompileSuccess ws $ mergeAny xs
     result ([],_,ws)       = CompileFail ws $ CompileMessage "No choices found" []
     result (es,_,ws)       = CompileFail ws $ CompileMessage "" es
   mergeAllM = result . splitErrorsAndData where
@@ -124,6 +126,7 @@ instance MonadFail CompileInfo where
   fail = compileErrorM
 #endif
 
+nestMessages :: CompileMessage -> CompileMessage -> CompileMessage
 nestMessages (CompileMessage m1 ms1) (CompileMessage [] ms2) =
   CompileMessage m1 (ms1 ++ ms2)
 nestMessages (CompileMessage [] ms1) (CompileMessage m2 ms2) =

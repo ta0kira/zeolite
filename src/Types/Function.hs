@@ -75,8 +75,8 @@ validatateFunctionType r fm vm (FunctionType as rs ps fa) = do
     checkHides n =
       when (n `Map.member` fm) $
         compileError $ "Param " ++ show n ++ " hides another param in a higher scope"
-    checkFilterType fa (n,f) =
-      validateTypeFilter r fa f `reviseError` ("In filter " ++ show n ++ " " ++ show f)
+    checkFilterType fa2 (n,f) =
+      validateTypeFilter r fa2 f `reviseError` ("In filter " ++ show n ++ " " ++ show f)
     checkFilterVariance (n,f@(TypeFilter FilterRequires t)) =
       validateInstanceVariance r allVariances Contravariant (SingleType t) `reviseError`
         ("In filter " ++ show n ++ " " ++ show f)
@@ -86,45 +86,45 @@ validatateFunctionType r fm vm (FunctionType as rs ps fa) = do
     checkFilterVariance (n,f@(DefinesFilter t)) =
       validateDefinesVariance r allVariances Contravariant t `reviseError`
         ("In filter " ++ show n ++ " " ++ show f)
-    checkArg fa ta@(ValueType _ t) = flip reviseError ("In argument " ++ show ta) $ do
+    checkArg fa2 ta@(ValueType _ t) = flip reviseError ("In argument " ++ show ta) $ do
       when (isWeakValue ta) $ compileError "Weak values not allowed as argument types"
-      validateGeneralInstance r fa t
+      validateGeneralInstance r fa2 t
       validateInstanceVariance r allVariances Contravariant t
-    checkReturn fa ta@(ValueType _ t) = flip reviseError ("In return " ++ show ta) $ do
+    checkReturn fa2 ta@(ValueType _ t) = flip reviseError ("In return " ++ show ta) $ do
       when (isWeakValue ta) $ compileError "Weak values not allowed as return types"
-      validateGeneralInstance r fa t
+      validateGeneralInstance r fa2 t
       validateInstanceVariance r allVariances Covariant t
 
 assignFunctionParams :: (MergeableM m, CompileErrorM m, TypeResolver r) =>
   r -> ParamFilters -> Positional GeneralInstance ->
   FunctionType -> m FunctionType
-assignFunctionParams r fm ts ff@(FunctionType as rs ps fa) = do
+assignFunctionParams r fm ts (FunctionType as rs ps fa) = do
   mergeAllM $ map (validateGeneralInstance r fm) $ pValues ts
   assigned <- fmap Map.fromList $ processPairs alwaysPair ps ts
   let allAssigned = Map.union assigned (Map.fromList $ map (\n -> (n,SingleType $ JustParamName n)) $ Map.keys fm)
   fa' <- fmap Positional $ collectAllOrErrorM $ map (assignFilters allAssigned) (pValues fa)
-  processPairs (validateAssignment r fm) ts fa'
+  processPairs_ (validateAssignment r fm) ts fa'
   as' <- fmap Positional $ collectAllOrErrorM $
          map (uncheckedSubValueType $ getValueForParam allAssigned) (pValues as)
   rs' <- fmap Positional $ collectAllOrErrorM $
          map (uncheckedSubValueType $ getValueForParam allAssigned) (pValues rs)
   return $ FunctionType as' rs' (Positional []) (Positional [])
   where
-    assignFilters fm fs = collectAllOrErrorM $ map (uncheckedSubFilter $ getValueForParam fm) fs
+    assignFilters fm2 fs = collectAllOrErrorM $ map (uncheckedSubFilter $ getValueForParam fm2) fs
 
 checkFunctionConvert :: (MergeableM m, CompileErrorM m, TypeResolver r) =>
   r -> ParamFilters -> FunctionType -> FunctionType -> m ()
-checkFunctionConvert r fm ff1@(FunctionType as1 rs1 ps1 fa1) ff2 = do
+checkFunctionConvert r fm (FunctionType as1 rs1 ps1 fa1) ff2 = do
   mapped <- fmap Map.fromList $ processPairs alwaysPair ps1 fa1
   let fm' = Map.union fm mapped
   let asTypes = Positional $ map (SingleType . JustParamName) $ pValues ps1
   -- Substitute params from ff2 into ff1.
   (FunctionType as2 rs2 _ _) <- assignFunctionParams r fm' asTypes ff2
   fixed <- processPairs alwaysPair ps1 fa1
-  let fm' = Map.union fm (Map.fromList fixed)
-  processPairs (validateArg fm') as1 as2
-  processPairs (validateReturn fm') rs1 rs2
+  let fm'' = Map.union fm (Map.fromList fixed)
+  processPairs_ (validateArg fm'') as1 as2
+  processPairs_ (validateReturn fm'') rs1 rs2
   return ()
   where
-    validateArg fm a1 a2 = checkValueTypeMatch r fm a1 a2
-    validateReturn fm r1 r2 = checkValueTypeMatch r fm r2 r1
+    validateArg fm2 a1 a2 = checkValueTypeMatch r fm2 a1 a2
+    validateReturn fm2 r1 r2 = checkValueTypeMatch r fm2 r2 r1

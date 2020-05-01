@@ -25,25 +25,30 @@ import System.IO
 import Cli.CompileOptions
 import Cli.Compiler
 import Config.LoadConfig
-import Config.Paths
-import Config.Programs
 
 
+main :: IO ()
 main = do
   f <- localConfigPath
   isFile <- doesFileExist f
   when isFile $ do
     hPutStrLn stderr $ "*** WARNING: Local config " ++ f ++ " will be overwritten. ***"
   config <- createConfig
-  f <- localConfigPath
   hPutStrLn stderr $ "Writing local config to " ++ f ++ "."
   writeFile f (show config ++ "\n")
   initLibraries
   hPutStrLn stderr "Setup is now complete!"
 
+clangBinary :: String
 clangBinary = "clang++"
+
+gccBinary :: String
 gccBinary   = "g++"
+
+arBinary :: String
 arBinary    = "ar"
+
+libraries :: [String]
 libraries = [
     "base",
     "lib/util",
@@ -83,7 +88,7 @@ promptChoice p cs = do
   where
     getChoice = do
       hPutStrLn stderr p
-      let cs' = zipWith (\n c -> show n ++ ") " ++ c) [1..] $ cs ++ ["other"]
+      let cs' = zipWith (\n c -> show n ++ ") " ++ c) ([1..] :: [Int]) $ cs ++ ["other"]
       let cs'' = (head cs' ++ " [default]"):(tail cs')
       mapM_ (hPutStrLn stderr) cs''
       hPutStr stderr "? "

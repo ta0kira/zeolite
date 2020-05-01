@@ -1,3 +1,5 @@
+cabal-version:       2.2
+
 name:                zeolite-lang
 version:             0.1.2.10
 synopsis:            Zeolite is a statically-typed, general-purpose programming language.
@@ -50,14 +52,15 @@ copyright:           (c) Kevin P. Barry 2019-2020
 category:            Compiler
 build-type:          Simple
 
-cabal-version:       2.0
 tested-with:         GHC == 8.10.1,
                      GHC == 8.8.3,
                      GHC == 8.6.5,
                      GHC == 8.4.4,
                      GHC == 8.2.2,
                      GHC == 8.0.2,
-                     GHC == 7.10.3
+                     GHC == 7.10.3,
+                     GHC == 7.8.4,
+                     GHC == 7.6.3
 
 extra-source-files:  ChangeLog.md
 extra-source-files:  src/Test/testfiles/*.0rt,
@@ -111,7 +114,14 @@ data-files:          base/.zeolite-module,
                      tests/visibility2/internal/*.0rx
 
 
+common defaults
+  default-language:    Haskell2010
+  ghc-options:         -Wall -Wno-unused-top-binds -Wno-orphans
+
+
 library zeolite-internal
+  import:              defaults
+
   exposed-modules:     Base.CompileError,
                        Base.Mergeable,
                        Cli.CompileMetadata,
@@ -169,7 +179,7 @@ library zeolite-internal
                        Safe,
                        ScopedTypeVariables
 
-  build-depends:       base >= 4.8 && < 4.15,
+  build-depends:       base >= 4.5 && < 4.15,
                        containers >= 0.3 && < 0.7,
                        directory >= 1.2.7 && < 1.4,
                        filepath >= 1.0 && < 1.5,
@@ -181,10 +191,11 @@ library zeolite-internal
                        unix >= 2.6 && <= 2.8
 
   hs-source-dirs:      src
-  default-language:    Haskell2010
 
 
 executable zeolite
+  import:              defaults
+
   main-is:             bin/zeolite.hs
 
   build-depends:       base,
@@ -194,10 +205,10 @@ executable zeolite
                        unix,
                        zeolite-internal
 
-  default-language:    Haskell2010
-
 
 executable zeolite-setup
+  import:              defaults
+
   main-is:             bin/zeolite-setup.hs
 
   build-depends:       base,
@@ -205,10 +216,10 @@ executable zeolite-setup
                        filepath,
                        zeolite-internal
 
-  default-language:    Haskell2010
-
 
 test-suite zeolite-test
+  import:              defaults
+
   type:                exitcode-stdio-1.0
 
   main-is:             bin/unit-tests.hs
@@ -217,5 +228,3 @@ test-suite zeolite-test
                        directory,
                        filepath,
                        zeolite-internal
-
-  default-language:    Haskell2010

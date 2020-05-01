@@ -84,7 +84,7 @@ setInternalFunctions :: (Show c, CompileErrorM m, MergeableM m, TypeResolver r) 
 setInternalFunctions r t fs = foldr update (return start) fs where
   start = Map.fromList $ map (\f -> (sfName f,f)) $ getCategoryFunctions t
   filters = getCategoryFilterMap t
-  update f@(ScopedFunction c n t2 s as rs ps fs ms) fa = do
+  update f@(ScopedFunction c n t2 s as rs ps fs2 ms) fa = do
     validateCategoryFunction r t f
     fa' <- fa
     case n `Map.lookup` fa' of
@@ -95,7 +95,7 @@ setInternalFunctions r t fs = foldr update (return start) fs where
              f0' <- parsedToFunctionType f0
              f' <- parsedToFunctionType f
              checkFunctionConvert r filters f0' f'
-           return $ Map.insert n (ScopedFunction (c++c2) n t2 s as rs ps fs ([f0]++ms++ms2)) fa'
+           return $ Map.insert n (ScopedFunction (c++c2) n t2 s as rs ps fs2 ([f0]++ms++ms2)) fa'
 
 pairProceduresToFunctions :: (Show c, CompileErrorM m, MergeableM m) =>
   Map.Map FunctionName (ScopedFunction c) -> [ExecutableProcedure c] ->
@@ -115,10 +115,10 @@ pairProceduresToFunctions fa ps = do
                                        " is already defined" ++
                                        formatFullContextBrace (epContext p0)
       return $ Map.insert (epName p) p pa'
-    updatePairs fa pa n ps = do
-      ps' <- ps
-      p <- getPair (n `Map.lookup` fa) (n `Map.lookup` pa)
-      return (p:ps')
+    updatePairs fa2 pa n ps2 = do
+      ps2' <- ps2
+      p <- getPair (n `Map.lookup` fa2) (n `Map.lookup` pa)
+      return (p:ps2')
     getPair (Just f) Nothing =
       compileError $ "Function " ++ show (sfName f) ++
                      formatFullContextBrace (sfContext f) ++
@@ -128,7 +128,7 @@ pairProceduresToFunctions fa ps = do
                      formatFullContextBrace (epContext p) ++
                      " does not correspond to a function"
     getPair (Just f) (Just p) = do
-      processPairs alwaysPair (sfArgs f) (avNames $ epArgs p) `reviseError`
+      processPairs_ alwaysPair (sfArgs f) (avNames $ epArgs p) `reviseError`
         ("Procedure for " ++ show (sfName f) ++
          formatFullContextBrace (avContext $ epArgs p) ++
          " has the wrong number of arguments" ++
@@ -136,13 +136,14 @@ pairProceduresToFunctions fa ps = do
       if isUnnamedReturns (epReturns p)
          then return ()
          else do
-           processPairs alwaysPair (sfReturns f) (nrNames $ epReturns p) `reviseError`
+           processPairs_ alwaysPair (sfReturns f) (nrNames $ epReturns p) `reviseError`
              ("Procedure for " ++ show (sfName f) ++
               formatFullContextBrace (nrContext $ epReturns p) ++
               " has the wrong number of returns" ++
               formatFullContextBrace (sfContext f))
            return ()
       return (f,p)
+    getPair _ _ = undefined
 
 mapMembers :: (Show c, CompileErrorM m, MergeableM m) =>
   [DefinedMember c] -> m (Map.Map VariableName (VariableValue c))
