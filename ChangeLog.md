@@ -1,5 +1,9 @@
 # Revision history for zeolite-lang
 
+## 0.1.3.0  -- 2020-05-01
+
+* **[new]** Adds support for more versions of GHC.
+
 ## 0.1.2.0  -- 2020-04-28
 
 * **[fix]** Fixes a parser issue with empty `{}` blocks following `scoped`.
