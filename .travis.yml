@@ -150,7 +150,7 @@ script:
   - ${CABAL} v2-build $WITHCOMPILER --disable-tests --disable-benchmarks all
   # Run zeolite-zetup with defaults and execute integration tests
   - "echo -e '\\n\\n' | ${CABAL} v2-run $WITHCOMPILER zeolite-setup"
-  - ZEOLITE_PATH=$(${CABAL} v2-run $WITHCOMPILER zeolite -- --get-path | sed 1d)
+  - ZEOLITE_PATH=$(${CABAL} v2-run $WITHCOMPILER zeolite -- --get-path | grep '^/')
   - ${CABAL} v2-run $WITHCOMPILER zeolite -- -p $ZEOLITE_PATH -t tests lib/file lib/util
 
 # REGENDATA ("0.10",["zeolite-lang.cabal","--submodules","--output",".travis.yml"])
