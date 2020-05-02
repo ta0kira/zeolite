@@ -60,7 +60,7 @@ of this document.
   - [Using Public Source Files](#using-public-source-files)
   - [Standard Library](#standard-library)
   - [Modules](#modules)
-- [Integration Testing](#integration-testing)
+- [Unit Testing](#unit-testing)
 - [Conclusion](#conclusion)
 
 ## Project Status
@@ -186,10 +186,10 @@ compile-time detection of code that *should not* be allowed. On the other hand,
 there is a major testability gap when it comes to ensuring that your
 statically-typed code *disallows* what you expect it to.
 
-Zeolite has a special source-file extension for integration tests, and a
-built-in compiler mode to run them. These tests can check for success,
-compilation failures, and even crashes. Normally you would need a third-party
-test runner to check for required compilation failures and crashes.
+Zeolite has a special source-file extension for unit tests, and a built-in
+compiler mode to run them. These tests can check for success, compilation
+failures, and even crashes. Normally you would need a third-party test runner to
+check for required compilation failures and crashes.
 
 All of the integration testing of the Zeolite language itself is done using
 this feature, but it is also supported for general use with Zeolite projects.
@@ -1016,10 +1016,15 @@ and so their symbols are available to all source files in the module. There is
 currently no language syntax for explicitly importing or including modules or
 other symbols.
 
-## Integration Testing
+## Unit Testing
 
-Integration tests are an extension of `.0rx` files. They live in `.0rt` files
-within the project directory, and are compiled as needed to run the tests.
+Unit testing is a built-in capability of Zeolite. Unit tests use `.0rt` source
+files, which are like `.0rx` source files with `testcase` metadata. The test
+files go in the same directory as the rest of your source files.
+
+(Elsewhere in this project these tests are referred to as "integration tests"
+because this testing mode is used to ensure that the `zeolite` compiler
+operates properly end-to-end.)
 
 <pre style='color:#1f1c1b;background-color:#f6f8fa;'>
 <span style='color:#898887;'>// myprogram/tests.0rt</span>
