@@ -150,6 +150,10 @@ script:
   - "echo -e '\\n\\n' | ${CABAL} v2-run $WITHCOMPILER zeolite-setup"
   - ZEOLITE_PATH=$(${CABAL} v2-run $WITHCOMPILER zeolite -- --get-path | grep '^/')
   - ${CABAL} v2-run $WITHCOMPILER zeolite -- -p $ZEOLITE_PATH -t tests lib/file lib/util
+  # Execute the quasi-test tests/multiple-defs
+  - "MULTIPLE_DEFS=$(${CABAL} v2-run $WITHCOMPILER zeolite -- -p $ZEOLITE_PATH -r tests/multiple-defs 2>&1 || true)"
+  - 'if echo "$MULTIPLE_DEFS" | egrep -q "Zeolite compilation succeeded."; then echo "Expected compiler error from tests/multiple-defs."; exit 1; fi'
+  - 'if ! echo "$MULTIPLE_DEFS" | egrep -q "Type .+ is defined 2 times"; then echo "Expected definition error from tests/multiple-defs."; exit 1; fi'
   # <<< MANUAL EDIT ***
 
 # REGENDATA ("0.10",["zeolite-lang.cabal","--submodules","--output",".travis.yml"])
