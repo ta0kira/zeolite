@@ -1,7 +1,7 @@
 # [Zeolite Programming Language][zeolite]
 
-[![Hackage Status][hackage-status]][hackage-zeolite-lang]
 [![Travis CI Status][travis-status]][travis-zeolite]
+[![Hackage Status][hackage-status]][hackage-zeolite-lang]
 
 Zeolite is a statically-typed, general-purpose programming language. The type
 system revolves around defining objects and their usage patterns.
