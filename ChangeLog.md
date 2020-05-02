@@ -1,5 +1,9 @@
 # Revision history for zeolite-lang
 
+## ?.?.?.?  -- ????-??-??
+
+* **[new]** Adds version checking to cached module data.
+
 ## 0.1.3.0  -- 2020-05-01
 
 * **[new]** Adds support for more versions of GHC.
