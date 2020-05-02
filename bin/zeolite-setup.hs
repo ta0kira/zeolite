@@ -18,6 +18,7 @@ limitations under the License.
 
 import Control.Monad (when)
 import System.Directory
+import System.Environment
 import System.Exit
 import System.IO
 
@@ -28,6 +29,8 @@ import Config.LoadConfig
 
 main :: IO ()
 main = do
+  args <- getArgs
+  when (not $ null args) $ hPutStrLn stderr $ "Ignoring extra arguments: " ++ show args
   f <- localConfigPath
   isFile <- doesFileExist f
   when isFile $ do

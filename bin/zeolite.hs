@@ -31,6 +31,7 @@ import Compilation.CompileInfo
 main :: IO ()
 main = do
   args <- getArgs
+  tryFastModes args
   let options = parseCompileOptions args >>= validateCompileOptions
   compile options where
     compile co

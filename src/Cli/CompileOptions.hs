@@ -23,15 +23,20 @@ module Cli.CompileOptions (
   CompileMode(..),
   ForceMode(..),
   HelpMode(..),
+  compilerVersion,
   emptyCompileOptions,
   isCompileBinary,
   isCompileIncremental,
   isCompileRecompile,
   isCreateTemplates,
   isExecuteTests,
-  isOnlyShowPath,
   maybeDisableHelp,
+  rootPath,
 ) where
+
+import Data.Version (showVersion)
+
+import Paths_zeolite_lang (getDataFileName,version)
 
 
 data CompileOptions =
@@ -70,7 +75,6 @@ data HelpMode = HelpNeeded | HelpNotNeeded | HelpUnspecified deriving (Eq,Show)
 data ForceMode = DoNotForce | AllowRecompile | ForceRecompile | ForceAll deriving (Eq,Ord,Show)
 
 data CompileMode =
-  OnlyShowPath |
   CompileBinary {
     cbCategory :: String,
     cbFunction :: String
@@ -83,10 +87,6 @@ data CompileMode =
   CreateTemplates |
   CompileUnspecified
   deriving (Eq,Read,Show)
-
-isOnlyShowPath :: CompileMode -> Bool
-isOnlyShowPath OnlyShowPath = True
-isOnlyShowPath _            = False
 
 isCompileBinary :: CompileMode -> Bool
 isCompileBinary (CompileBinary _ _) = True
@@ -111,3 +111,9 @@ isCreateTemplates _               = False
 maybeDisableHelp :: HelpMode -> HelpMode
 maybeDisableHelp HelpUnspecified = HelpNotNeeded
 maybeDisableHelp h               = h
+
+rootPath :: IO FilePath
+rootPath = getDataFileName ""
+
+compilerVersion :: String
+compilerVersion = showVersion version

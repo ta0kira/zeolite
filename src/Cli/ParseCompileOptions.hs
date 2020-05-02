@@ -19,12 +19,16 @@ limitations under the License.
 module Cli.ParseCompileOptions (
   optionHelpText,
   parseCompileOptions,
+  tryFastModes,
   validateCompileOptions,
 ) where
 
 import Control.Monad (when)
 import Data.List (intercalate,isSuffixOf)
+import System.Directory
+import System.Exit
 import System.FilePath (takeExtension)
+import System.IO
 import Text.Regex.TDFA -- Not safe!
 
 import Base.CompileError
@@ -40,7 +44,8 @@ optionHelpText = [
     "zeolite [options...] -r [paths...]",
     "zeolite [options...] -t [paths...]",
     "zeolite [options...] --templates [paths...]",
-    "zeolite [options...] --get-path",
+    "zeolite --get-path",
+    "zeolite --version",
     "",
     "Modes:",
     "  -c: Only compile the individual files. (default)",
@@ -49,6 +54,7 @@ optionHelpText = [
     "  -t: Only execute tests, without other compilation.",
     "  --templates: Only create C++ templates for undefined categories in .0rp sources.",
     "  --get-path: Show the data path and immediately exit.",
+    "  --version: Show the compiler version and immediately exit.",
     "",
     "Options:",
     "  -e [path|file]: Include an extra source file or path during compilation.",
@@ -66,6 +72,22 @@ optionHelpText = [
 
 defaultMainFunc :: String
 defaultMainFunc = "run"
+
+tryFastModes :: [String] -> IO ()
+tryFastModes ("--get-path":os) = do
+  when (not $ null os) $ hPutStrLn stderr $ "Ignoring extra arguments: " ++ show os
+  p <- rootPath >>= canonicalizePath
+  hPutStrLn stdout p
+  if null os
+     then exitSuccess
+     else exitFailure
+tryFastModes ("--version":os) = do
+  when (not $ null os) $ hPutStrLn stderr $ "Ignoring extra arguments: " ++ show os
+  hPutStrLn stdout compilerVersion
+  if null os
+     then exitSuccess
+     else exitFailure
+tryFastModes _ = return ()
 
 parseCompileOptions :: CompileErrorM m => [String] -> m CompileOptions
 parseCompileOptions = parseAll emptyCompileOptions . zip ([1..] :: [Int]) where
@@ -110,10 +132,6 @@ parseCompileOptions = parseAll emptyCompileOptions . zip ([1..] :: [Int]) where
   parseSingle (CompileOptions h is is2 ds es ep ec p m o f) ((n,"--templates"):os)
     | m /= CompileUnspecified = argError n "-t" "Compiler mode already set."
     | otherwise = return (os,CompileOptions (maybeDisableHelp h) is is2 ds es ep ec p CreateTemplates o f)
-
-  parseSingle (CompileOptions h is is2 ds es ep ec p m o f) ((n,"--get-path"):os)
-    | m /= CompileUnspecified = argError n "-t" "Compiler mode already set."
-    | otherwise = return (os,CompileOptions (maybeDisableHelp h) is is2 ds es ep ec p OnlyShowPath o f)
 
   parseSingle (CompileOptions h is is2 ds es ep ec p m o f) ((n,"-m"):os)
     | m /= CompileUnspecified = argError n "-m" "Compiler mode already set."
@@ -192,7 +210,7 @@ parseCompileOptions = parseAll emptyCompileOptions . zip ([1..] :: [Int]) where
         return (os,CompileOptions (maybeDisableHelp h) is is2 (ds ++ [d]) es ep ec p m o f)
 
 validateCompileOptions :: CompileErrorM m => CompileOptions -> m CompileOptions
-validateCompileOptions co@(CompileOptions h is is2 ds es ep _ p m o _)
+validateCompileOptions co@(CompileOptions h is is2 ds es ep _ _ m o _)
   | h /= HelpNotNeeded = return co
 
   | (not $ null o) && (isCompileIncremental m) =
@@ -217,21 +235,10 @@ validateCompileOptions co@(CompileOptions h is is2 ds es ep _ p m o _)
   | (not $ null $ es ++ ep) && (isCompileRecompile m) =
     compileError "Extra files (-e) are not allowed in recompile mode (-r)."
 
-  | (not $ null p) && (isOnlyShowPath m) =
-    compileError "Path prefix (-p) is not allowed in path mode (---get-path)."
-  | (not $ null o) && (isOnlyShowPath m) =
-    compileError "Output filename (-o) is not allowed in path mode (---get-path)."
-  | (not $ null $ is ++ is2) && (isOnlyShowPath m) =
-    compileError "Include paths (-i/-I) are not allowed in path mode (---get-path)."
-  | (not $ null $ es ++ ep) && (isOnlyShowPath m) =
-    compileError "Extra files (-e) are not allowed in path mode (---get-path)."
-  | (not $ null ds) && (isOnlyShowPath m) =
-    compileError "Input paths are not allowed in path mode (---get-path)."
-
   | length ds > 1 && length (es ++ ep) > 0 =
     compileError "Extra files and paths (-e) cannot be used with multiple input paths, to avoid ambiguity."
 
-  | not (isOnlyShowPath m) && null ds =
+  | null ds =
     compileError "Please specify at least one input path."
   | (length ds /= 1) && (isCompileBinary m) =
     compileError "Specify exactly one input path for binary mode (-m)."

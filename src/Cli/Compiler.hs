@@ -17,7 +17,6 @@ limitations under the License.
 -- Author: Kevin P. Barry [ta0kira@gmail.com]
 
 module Cli.Compiler (
-  rootPath,
   runCompiler,
 ) where
 
@@ -47,16 +46,8 @@ import Types.DefinedCategory
 import Types.TypeCategory
 import Types.TypeInstance
 
-import Paths_zeolite_lang (getDataFileName)
-
-
-rootPath :: IO FilePath
-rootPath = getDataFileName ""
 
 runCompiler :: CompileOptions -> IO ()
-runCompiler (CompileOptions _ _ _ _ _ _ _ _ OnlyShowPath _ _) = do
-  p <- rootPath >>= canonicalizePath
-  hPutStrLn stdout p
 runCompiler (CompileOptions _ _ _ ds _ _ _ p (ExecuteTests tp) _ f) = do
   (backend,resolver) <- loadConfig
   ds' <- sequence $ map (preloadModule resolver) ds
