@@ -1,6 +1,7 @@
 # [Zeolite Programming Language][zeolite]
 
-[![Build Status](https://travis-ci.org/ta0kira/zeolite.svg?branch=master)](https://travis-ci.org/ta0kira/zeolite)
+[![Hackage Status][hackage-status]][hackage-zeolite-lang]
+[![Travis CI Status][travis-status]][travis-zeolite]
 
 Zeolite is a statically-typed, general-purpose programming language. The type
 system revolves around defining objects and their usage patterns.
@@ -1091,9 +1092,12 @@ if you are interested in helping with development.
 [gcc]: https://gcc.gnu.org/
 [ghc]: https://www.haskell.org/ghc/
 [hackage]: http://hackage.haskell.org
+[hackage-status]: https://img.shields.io/hackage/v/zeolite-lang.svg?style=flat
 [hackage-zeolite-lang]: http://hackage.haskell.org/package/zeolite-lang
 [kate]: https://kate-editor.org/
 [lib]: https://github.com/ta0kira/zeolite/tree/master/lib
+[travis-status]: https://travis-ci.org/ta0kira/zeolite.svg?branch=master
+[travis-zeolite]: https://travis-ci.org/ta0kira/zeolite
 [variance]: https://en.wikipedia.org/wiki/Covariance_and_contravariance_%28computer_science%29
 [zeolite]: https://github.com/ta0kira/zeolite
 [zeolite-issues]: https://github.com/ta0kira/zeolite/issues
