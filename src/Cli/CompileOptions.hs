@@ -23,7 +23,6 @@ module Cli.CompileOptions (
   CompileMode(..),
   ForceMode(..),
   HelpMode(..),
-  compilerVersion,
   emptyCompileOptions,
   isCompileBinary,
   isCompileIncremental,
@@ -31,12 +30,7 @@ module Cli.CompileOptions (
   isCreateTemplates,
   isExecuteTests,
   maybeDisableHelp,
-  rootPath,
 ) where
-
-import Data.Version (showVersion)
-
-import Paths_zeolite_lang (getDataFileName,version)
 
 
 data CompileOptions =
@@ -111,9 +105,3 @@ isCreateTemplates _               = False
 maybeDisableHelp :: HelpMode -> HelpMode
 maybeDisableHelp HelpUnspecified = HelpNotNeeded
 maybeDisableHelp h               = h
-
-rootPath :: IO FilePath
-rootPath = getDataFileName ""
-
-compilerVersion :: String
-compilerVersion = showVersion version

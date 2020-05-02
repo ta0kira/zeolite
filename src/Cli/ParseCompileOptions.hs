@@ -34,6 +34,7 @@ import Text.Regex.TDFA -- Not safe!
 import Base.CompileError
 import Cli.CompileMetadata (allowedExtraTypes)
 import Cli.CompileOptions
+import Config.LoadConfig (compilerVersion,rootPath)
 
 
 optionHelpText :: [String]

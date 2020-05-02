@@ -29,6 +29,7 @@ module Config.Programs (
 class CompilerBackend b where
   runCxxCommand :: b -> CxxCommand -> IO String
   runTestCommand :: b -> TestCommand -> IO TestCommandResult
+  getCompilerHash :: b -> String
 
 data CxxCommand =
   CompileToObject {

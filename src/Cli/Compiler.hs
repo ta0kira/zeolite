@@ -50,7 +50,7 @@ import Types.TypeInstance
 runCompiler :: CompileOptions -> IO ()
 runCompiler (CompileOptions _ _ _ ds _ _ _ p (ExecuteTests tp) _ f) = do
   (backend,resolver) <- loadConfig
-  ds' <- sequence $ map (preloadModule resolver) ds
+  ds' <- sequence $ map (preloadModule backend resolver) ds
   let possibleTests = Set.fromList $ concat $ map getTestsFromPreload ds'
   case Set.toList $ allowTests `Set.difference` possibleTests of
        [] -> return ()
@@ -62,12 +62,12 @@ runCompiler (CompileOptions _ _ _ ds _ _ _ p (ExecuteTests tp) _ f) = do
   let passed = sum $ map (fst . fst) allResults
   let failed = sum $ map (snd . fst) allResults
   processResults passed failed (mergeAllM $ map snd allResults) where
-    preloadModule r d = do
+    preloadModule b r d = do
       m <- loadMetadata (p </> d)
       base <- resolveBaseModule r
-      (fr1,deps1) <- loadPublicDeps [base,p </> d]
+      (fr1,deps1) <- loadPublicDeps (getCompilerHash b) [base,p </> d]
       checkAllowedStale fr1 f
-      (fr2,deps2) <- loadPrivateDeps deps1
+      (fr2,deps2) <- loadPrivateDeps (getCompilerHash b) deps1
       checkAllowedStale fr2 f
       return (d,m,deps1,deps2)
     getTestsFromPreload (_,m,_,_) = cmTestFiles m
@@ -98,11 +98,12 @@ runCompiler (CompileOptions _ _ _ ds _ _ _ p (ExecuteTests tp) _ f) = do
           hPutStrLn stderr $ "\nPassed: " ++ show passed ++ " test(s), Failed: " ++ show failed ++ " test(s)"
           hPutStrLn stderr $ "Zeolite tests passed."
 runCompiler (CompileOptions h _ _ ds _ _ _ p CompileRecompile _ f) = do
-  fmap mergeAll $ sequence $ map recompileSingle ds where
-    recompileSingle d0 = do
+  (backend,_) <- loadConfig
+  fmap mergeAll $ sequence $ map (recompileSingle $ getCompilerHash backend) ds where
+    recompileSingle h2 d0 = do
       let d = p </> d0
       rm <- tryLoadRecompile d
-      upToDate <- isPathUpToDate d
+      upToDate <- isPathUpToDate h2 d
       maybeCompile rm upToDate where
         maybeCompile Nothing _ = do
           hPutStrLn stderr $ "Path " ++ d0 ++ " has not been configured or compiled yet."
@@ -133,7 +134,7 @@ runCompiler (CompileOptions _ is is2 ds es ep ec p m o f) = do
   (backend,resolver) <- loadConfig
   as  <- fmap fixPaths $ sequence $ map (resolveModule resolver p) is
   as2 <- fmap fixPaths $ sequence $ map (resolveModule resolver p) is2
-  (fr,deps) <- loadPublicDeps (as ++ as2)
+  (fr,deps) <- loadPublicDeps (getCompilerHash backend) (as ++ as2)
   checkAllowedStale fr f
   if isCreateTemplates m
       then sequence_ $ map (processTemplates deps) ds
@@ -173,7 +174,7 @@ runCompiler (CompileOptions _ is is2 ds es ep ec p m o f) = do
       deps2 <- if isBase
                   then return deps
                   else do
-                    (fr,bpDeps) <- loadPublicDeps [base]
+                    (fr,bpDeps) <- loadPublicDeps (getCompilerHash b) [base]
                     checkAllowedStale fr f
                     return $ bpDeps ++ deps
       let ss = fixPaths $ getSourceFilesForDeps deps2
@@ -213,6 +214,7 @@ runCompiler (CompileOptions _ is is2 ds es ep ec p m o f) = do
           path <- canonicalizePath $ p </> d
           let os1' = resolveObjectDeps path os1 deps
           let cm0 = CompileMetadata {
+              cmVersionHash = getCompilerHash b,
               cmPath = path,
               cmNamespace = show ns0,
               cmPublicDeps = as,
@@ -229,6 +231,7 @@ runCompiler (CompileOptions _ is is2 ds es ep ec p m o f) = do
             }
           let ec' = resolveCategoryDeps ec (cm0:deps)
           let cm = CompileMetadata {
+              cmVersionHash = cmVersionHash cm0,
               cmPath = cmPath cm0,
               cmNamespace = cmNamespace cm0,
               cmPublicDeps = cmPublicDeps cm0,
@@ -350,8 +353,8 @@ runCompiler (CompileOptions _ is is2 ds es ep ec p m o f) = do
           hPutStr h $ concat $ map (++ "\n") content
           hClose h
           base <- resolveBaseModule r
-          (_,bpDeps) <- loadPublicDeps [base]
-          (_,deps2) <- loadPrivateDeps (bpDeps ++ deps)
+          (_,bpDeps) <- loadPublicDeps (getCompilerHash b) [base]
+          (_,deps2) <- loadPrivateDeps (getCompilerHash b) (bpDeps ++ deps)
           let paths = fixPaths $ getIncludePathsForDeps deps2
           let os    = getObjectFilesForDeps deps2
           let req2 = getRequiresFromDeps deps2

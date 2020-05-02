@@ -22,16 +22,21 @@ module Config.LoadConfig (
   Backend(..),
   LocalConfig(..),
   Resolver(..),
+  compilerVersion,
   localConfigPath,
   loadConfig,
+  rootPath,
 ) where
 
 import Config.Paths
 import Config.Programs
 
 import Control.Monad (when)
-import GHC.IO.Handle
+import Data.Hashable (hash)
 import Data.List (intercalate,isSuffixOf)
+import Data.Version (showVersion)
+import GHC.IO.Handle
+import Numeric (showHex)
 import System.Directory
 import System.Exit
 import System.FilePath
@@ -39,7 +44,7 @@ import System.IO
 import System.Posix.Process (ProcessStatus(..),executeFile,forkProcess,getProcessStatus)
 import System.Posix.Temp (mkstemps)
 
-import Paths_zeolite_lang (getDataFileName)
+import Paths_zeolite_lang (getDataFileName,version)
 
 
 loadConfig :: IO (Backend,Resolver)
@@ -57,6 +62,12 @@ loadConfig = do
     check _ = do
       hPutStrLn stderr "Zeolite configuration is corrupt. Please rerun zeolite-setup."
       exitFailure
+
+rootPath :: IO FilePath
+rootPath = getDataFileName ""
+
+compilerVersion :: String
+compilerVersion = showVersion version
 
 data Backend =
   UnixBackend {
@@ -121,6 +132,7 @@ instance CompilerBackend Backend where
         hDuplicateTo h1 stdout
         hDuplicateTo h2 stderr
         executeFile b True [] Nothing
+  getCompilerHash b = flip showHex "" $ abs $ hash $ compilerVersion ++ show b
 
 executeProcess :: String -> [String] -> IO ()
 executeProcess c os = do

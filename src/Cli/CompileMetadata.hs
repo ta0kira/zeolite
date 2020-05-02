@@ -72,6 +72,7 @@ import Types.TypeInstance
 
 data CompileMetadata =
   CompileMetadata {
+    cmVersionHash :: String,
     cmPath :: String,
     cmNamespace :: String, -- TODO: Use Namespace here?
     cmPublicDeps :: [String],
@@ -187,13 +188,13 @@ tryLoadData f = do
         check [(cm,"\n")] = return (Just cm)
         check _           = return Nothing
 
-isPathUpToDate :: String -> IO Bool
-isPathUpToDate p = do
+isPathUpToDate :: String -> String -> IO Bool
+isPathUpToDate h p = do
   m <- tryLoadMetadata p
   case m of
        Nothing -> return False
        Just _ -> do
-         (fr,_) <- loadDepsCommon True (\m2 -> cmPublicDeps m2 ++ cmPrivateDeps m2) [p]
+         (fr,_) <- loadDepsCommon True h (\m2 -> cmPublicDeps m2 ++ cmPrivateDeps m2) [p]
          return fr
 
 isPathConfigured :: String -> IO Bool
@@ -271,12 +272,12 @@ getIncludePathsForDeps = concat . map cmSubdirs
 getObjectFilesForDeps :: [CompileMetadata] -> [ObjectFile]
 getObjectFilesForDeps = concat . map cmObjectFiles
 
-loadPublicDeps :: [String] -> IO (Bool,[CompileMetadata])
-loadPublicDeps = loadDepsCommon False cmPublicDeps
+loadPublicDeps :: String -> [String] -> IO (Bool,[CompileMetadata])
+loadPublicDeps h = loadDepsCommon False h cmPublicDeps
 
-loadPrivateDeps :: [CompileMetadata] -> IO (Bool,[CompileMetadata])
-loadPrivateDeps ms = do
-  (fr,new) <- loadDepsCommon False (\m -> cmPublicDeps m ++ cmPrivateDeps m) toFind
+loadPrivateDeps :: String -> [CompileMetadata] -> IO (Bool,[CompileMetadata])
+loadPrivateDeps h ms = do
+  (fr,new) <- loadDepsCommon False h (\m -> cmPublicDeps m ++ cmPrivateDeps m) toFind
   return (fr,ms ++ existing ++ new) where
     paths = concat $ map (\m -> cmPublicDeps m ++ cmPrivateDeps m) ms
     (existing,toFind) = foldl splitByExisting ([],[]) $ nub paths
@@ -286,8 +287,8 @@ loadPrivateDeps ms = do
           Just m  -> (es ++ [m],fs)
           Nothing -> (es,fs ++ [p])
 
-loadDepsCommon :: Bool -> (CompileMetadata -> [String]) -> [String] -> IO (Bool,[CompileMetadata])
-loadDepsCommon s f ps = fmap snd $ fixedPaths >>= collect (Set.empty,(True,[])) where
+loadDepsCommon :: Bool -> String -> (CompileMetadata -> [String]) -> [String] -> IO (Bool,[CompileMetadata])
+loadDepsCommon s h f ps = fmap snd $ fixedPaths >>= collect (Set.empty,(True,[])) where
   fixedPaths = sequence $ map canonicalizePath ps
   collect xa@(pa,(fr,xs)) (p:ps2)
     | p `Set.member` pa = collect xa ps2
@@ -297,7 +298,10 @@ loadDepsCommon s f ps = fmap snd $ fixedPaths >>= collect (Set.empty,(True,[])) 
         fresh <- checkModuleFreshness p m
         when (not s && not fresh) $
           hPutStrLn stderr $ "Module \"" ++ p ++ "\" is out of date and should be recompiled."
-        collect (p `Set.insert` pa,(fresh && fr,xs ++ [m])) (ps2 ++ f m)
+        let sameVersion = checkModuleVersionHash h m
+        when (not s && not sameVersion) $
+          hPutStrLn stderr $ "Module \"" ++ p ++ "\" was compiled with a different compiler setup."
+        collect (p `Set.insert` pa,(sameVersion && fresh && fr,xs ++ [m])) (ps2 ++ f m)
   collect xa _ = return xa
 
 fixPath :: String -> String
@@ -324,8 +328,11 @@ sortCompiledFiles = foldl split ([],[],[]) where
     | isSuffixOf ".o"   f = (hxx,cxx,os++[f])
     | otherwise = fs
 
+checkModuleVersionHash :: String -> CompileMetadata -> Bool
+checkModuleVersionHash h m = cmVersionHash m == h
+
 checkModuleFreshness :: String -> CompileMetadata -> IO Bool
-checkModuleFreshness p (CompileMetadata p2 _ is is2 _ _ _ ps xs ts hxx cxx _) = do
+checkModuleFreshness p (CompileMetadata _ p2 _ is is2 _ _ _ ps xs ts hxx cxx _) = do
   time <- getModificationTime $ getCachedPath p "" metadataFilename
   (ps2,xs2,ts2) <- findSourceFiles p ""
   let e1 = checkMissing ps ps2
