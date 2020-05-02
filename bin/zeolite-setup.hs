@@ -19,7 +19,6 @@ limitations under the License.
 import Control.Monad (when)
 import System.Directory
 import System.Exit
-import System.FilePath
 import System.IO
 
 import Cli.CompileOptions
@@ -115,16 +114,15 @@ getInput = do
 initLibraries :: IO ()
 initLibraries = do
   path <- rootPath >>= canonicalizePath
-  let libraries' = map (path </>) libraries
   let options = CompileOptions {
       coHelp = HelpNotNeeded,
       coPublicDeps = [],
       coPrivateDeps = [],
-      coSources = libraries',
+      coSources = libraries,
       coExtraFiles = [],
       coExtraPaths = [],
       coExtraRequires = [],
-      coSourcePrefix = "",
+      coSourcePrefix = path,
       coMode = CompileRecompile,
       coOutputName = "",
       coForce = ForceAll

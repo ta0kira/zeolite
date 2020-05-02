@@ -8,7 +8,7 @@ To compile:
 
 ```shell
 ZEOLITE_PATH=$(zeolite --get-path)
-zeolite -r $ZEOLITE_PATH/tests/multiple-defs
+zeolite -p $ZEOLITE_PATH -r tests/multiple-defs
 ```
 
 The compiler error should look something like this:

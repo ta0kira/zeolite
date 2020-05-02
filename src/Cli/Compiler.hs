@@ -122,7 +122,7 @@ runCompiler (CompileOptions h _ _ ds _ _ _ p CompileRecompile _ f) = do
               let (RecompileMetadata p2 d is is2 es ep ec m o) = rm'
               -- In case the module is manually configured with a p such as "..",
               -- since the absolute path might not be known ahead of time.
-              absolute <- canonicalizePath d0
+              absolute <- canonicalizePath (p </> d0)
               let fixed = fixPath (absolute </> p2)
               let recompile = CompileOptions {
                   coHelp = h,
