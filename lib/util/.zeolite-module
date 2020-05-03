@@ -5,4 +5,9 @@ extra_files: [
   "util/Category_SimpleInput.cpp"
   "util/Category_SimpleOutput.cpp"
 ]
+external: [
+  Argv
+  SimpleInput
+  SimpleOutput
+]
 mode: incremental

@@ -49,7 +49,7 @@ import Types.TypeInstance
 
 
 runCompiler :: CompileOptions -> IO ()
-runCompiler (CompileOptions _ _ _ ds _ _ _ p (ExecuteTests tp) _ f) = do
+runCompiler (CompileOptions _ _ _ ds _ _ _ p _ (ExecuteTests tp) _ f) = do
   (backend,resolver) <- loadConfig
   ds' <- sequence $ map (preloadModule backend resolver) ds
   let possibleTests = Set.fromList $ concat $ map getTestsFromPreload ds'
@@ -98,7 +98,7 @@ runCompiler (CompileOptions _ _ _ ds _ _ _ p (ExecuteTests tp) _ f) = do
       | otherwise = do
           hPutStrLn stderr $ "\nPassed: " ++ show passed ++ " test(s), Failed: " ++ show failed ++ " test(s)"
           hPutStrLn stderr $ "Zeolite tests passed."
-runCompiler (CompileOptions h _ _ ds _ _ _ p CompileRecompile _ f) = do
+runCompiler (CompileOptions h _ _ ds _ _ _ p _ CompileRecompile _ f) = do
   (backend,_) <- loadConfig
   fmap mergeAll $ sequence $ map (recompileSingle $ getCompilerHash backend) ds where
     recompileSingle h2 d0 = do
@@ -112,7 +112,7 @@ runCompiler (CompileOptions h _ _ ds _ _ _ p CompileRecompile _ f) = do
         maybeCompile (Just rm') upToDate
           | f < ForceAll && upToDate = hPutStrLn stderr $ "Path " ++ d0 ++ " is up to date."
           | otherwise = do
-              let (ModuleConfig p2 d is is2 es ep ec m o) = rm'
+              let (ModuleConfig p2 d is is2 es ep ec ex m o) = rm'
               -- In case the module is manually configured with a p such as "..",
               -- since the absolute path might not be known ahead of time.
               absolute <- canonicalizePath (p </> d0)
@@ -126,12 +126,13 @@ runCompiler (CompileOptions h _ _ ds _ _ _ p CompileRecompile _ f) = do
                   coExtraPaths = ep,
                   coExtraRequires = ec,
                   coSourcePrefix = fixed,
+                  coExternalDefs = ex,
                   coMode = m,
                   coOutputName = o,
                   coForce = if f == ForceAll then ForceRecompile else AllowRecompile
                 }
               runCompiler recompile
-runCompiler (CompileOptions _ is is2 ds es ep ec p m o f) = do
+runCompiler (CompileOptions _ is is2 ds es ep ec p ex m o f) = do
   (backend,resolver) <- loadConfig
   as  <- fmap fixPaths $ sequence $ map (resolveModule resolver p) is
   as2 <- fmap fixPaths $ sequence $ map (resolveModule resolver p) is2
@@ -163,6 +164,7 @@ runCompiler (CompileOptions _ is is2 ds es ep ec p m o f) = do
         rmExtraFiles = sort es,
         rmExtraPaths = sort ep,
         rmExtraRequires = sort ec,
+        rmExternalDefs = ex,
         rmMode = m,
         rmOutputName = o
       }
@@ -322,7 +324,8 @@ runCompiler (CompileOptions _ is is2 ds es ep ec p m o f) = do
           cnBase = tm1,
           cnNamespaces = ns0:ns2,
           cnPublic = cs'',
-          cnPrivate = xa
+          cnPrivate = xa,
+          cnExternal = ex
         }
       xx <- compileCategoryModule cm
       let pc = map getCategoryName cs''

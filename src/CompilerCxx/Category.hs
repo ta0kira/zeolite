@@ -70,7 +70,8 @@ data CategoryModule c =
     cnBase :: CategoryMap c,
     cnNamespaces :: [Namespace],
     cnPublic :: [AnyCategory c],
-    cnPrivate :: [PrivateSource c]
+    cnPrivate :: [PrivateSource c],
+    cnExternal :: [String]
   }
 
 data PrivateSource c =
@@ -82,7 +83,7 @@ data PrivateSource c =
 
 compileCategoryModule :: (Show c, CompileErrorM m, MergeableM m) =>
   CategoryModule c -> m [CxxOutput]
-compileCategoryModule (CategoryModule tm ns cs xa) = do
+compileCategoryModule (CategoryModule tm ns cs xa ex) = do
   tm' <- includeNewTypes tm cs
   hxx <- collectAllOrErrorM $ map (compileCategoryDeclaration tm' ns) cs
   let interfaces = filter (not . isValueConcrete) cs
@@ -116,7 +117,7 @@ compileCategoryModule (CategoryModule tm ns cs xa) = do
 
 compileModuleMain :: (Show c, CompileErrorM m, MergeableM m) =>
   CategoryModule c -> CategoryName -> FunctionName -> m CxxOutput
-compileModuleMain (CategoryModule tm _ cs xa) n f = do
+compileModuleMain (CategoryModule tm _ cs xa _) n f = do
   xx <- fmap concat $ collectAllOrErrorM $ filter (not . isCompileError) $ map maybeCompileMain xa
   reconcile xx where
     maybeCompileMain (PrivateSource _ cs2 ds) = do

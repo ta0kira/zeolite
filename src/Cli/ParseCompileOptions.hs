@@ -112,92 +112,92 @@ parseCompileOptions = parseAll emptyCompileOptions . zip ([1..] :: [Int]) where
 
   parseSingle _ [] = undefined
 
-  parseSingle (CompileOptions _ is is2 ds es ep ec p m o f) ((_,"-h"):os) =
-    return (os,CompileOptions HelpNeeded is is2 ds es ep ec p m o f)
+  parseSingle (CompileOptions _ is is2 ds es ep ec p ex m o f) ((_,"-h"):os) =
+    return (os,CompileOptions HelpNeeded is is2 ds es ep ec p ex m o f)
 
-  parseSingle (CompileOptions h is is2 ds es ep ec p m o _) ((_,"-f"):os) =
-    return (os,CompileOptions (maybeDisableHelp h) is is2 ds es ep ec p m o ForceAll)
+  parseSingle (CompileOptions h is is2 ds es ep ec p ex m o _) ((_,"-f"):os) =
+    return (os,CompileOptions (maybeDisableHelp h) is is2 ds es ep ec p ex m o ForceAll)
 
-  parseSingle (CompileOptions h is is2 ds es ep ec p m o f) ((n,"-c"):os)
+  parseSingle (CompileOptions h is is2 ds es ep ec p ex m o f) ((n,"-c"):os)
     | m /= CompileUnspecified = argError n "-c" "Compiler mode already set."
-    | otherwise = return (os,CompileOptions (maybeDisableHelp h) is is2 ds es ep ec p CompileIncremental o f)
+    | otherwise = return (os,CompileOptions (maybeDisableHelp h) is is2 ds es ep ec p ex CompileIncremental o f)
 
-  parseSingle (CompileOptions h is is2 ds es ep ec p m o f) ((n,"-r"):os)
+  parseSingle (CompileOptions h is is2 ds es ep ec p ex m o f) ((n,"-r"):os)
     | m /= CompileUnspecified = argError n "-r" "Compiler mode already set."
-    | otherwise = return (os,CompileOptions (maybeDisableHelp h) is is2 ds es ep ec p CompileRecompile o f)
+    | otherwise = return (os,CompileOptions (maybeDisableHelp h) is is2 ds es ep ec p ex CompileRecompile o f)
 
-  parseSingle (CompileOptions h is is2 ds es ep ec p m o f) ((n,"-t"):os)
+  parseSingle (CompileOptions h is is2 ds es ep ec p ex m o f) ((n,"-t"):os)
     | m /= CompileUnspecified = argError n "-t" "Compiler mode already set."
-    | otherwise = return (os,CompileOptions (maybeDisableHelp h) is is2 ds es ep ec p (ExecuteTests []) o f)
+    | otherwise = return (os,CompileOptions (maybeDisableHelp h) is is2 ds es ep ec p ex (ExecuteTests []) o f)
 
-  parseSingle (CompileOptions h is is2 ds es ep ec p m o f) ((n,"--templates"):os)
+  parseSingle (CompileOptions h is is2 ds es ep ec p ex m o f) ((n,"--templates"):os)
     | m /= CompileUnspecified = argError n "-t" "Compiler mode already set."
-    | otherwise = return (os,CompileOptions (maybeDisableHelp h) is is2 ds es ep ec p CreateTemplates o f)
+    | otherwise = return (os,CompileOptions (maybeDisableHelp h) is is2 ds es ep ec p ex CreateTemplates o f)
 
-  parseSingle (CompileOptions h is is2 ds es ep ec p m o f) ((n,"-m"):os)
+  parseSingle (CompileOptions h is is2 ds es ep ec p ex m o f) ((n,"-m"):os)
     | m /= CompileUnspecified = argError n "-m" "Compiler mode already set."
     | otherwise = update os where
       update ((n2,c):os2) =  do
         (t,fn) <- check $ break (== '.') c
         checkCategoryName n2 t  "-m"
         checkFunctionName n2 fn "-m"
-        return (os2,CompileOptions (maybeDisableHelp h) is is2 ds es ep ec p (CompileBinary t fn) o f) where
+        return (os2,CompileOptions (maybeDisableHelp h) is is2 ds es ep ec p ex (CompileBinary t fn) o f) where
           check (t,"")     = return (t,defaultMainFunc)
           check (t,'.':fn) = return (t,fn)
           check _          = argError n2 "-m" $ "Invalid entry point \"" ++ c ++ "\"."
       update _ = argError n "-m" "Requires a category name."
 
-  parseSingle (CompileOptions h is is2 ds es ep ec p m o f) ((n,"-o"):os)
+  parseSingle (CompileOptions h is is2 ds es ep ec p ex m o f) ((n,"-o"):os)
     | not $ null o = argError n "-o" "Output name already set."
     | otherwise = update os where
       update ((n2,o2):os2) = do
         checkPathName n2 o2 "-o"
-        return (os2,CompileOptions (maybeDisableHelp h) is is2 ds es ep ec p m o2 f)
+        return (os2,CompileOptions (maybeDisableHelp h) is is2 ds es ep ec p ex m o2 f)
       update _ = argError n "-o" "Requires an output name."
 
-  parseSingle (CompileOptions h is is2 ds es ep ec p m o f) ((n,"-i"):os) = update os where
+  parseSingle (CompileOptions h is is2 ds es ep ec p ex m o f) ((n,"-i"):os) = update os where
     update ((n2,d):os2)
       | isSuffixOf ".0rp" d = argError n2 d "Cannot directly include .0rp source files."
       | isSuffixOf ".0rx" d = argError n2 d "Cannot directly include .0rx source files."
       | isSuffixOf ".0rt" d = argError n2 d "Cannot directly include .0rt test files."
       | otherwise = do
           checkPathName n2 d "-i"
-          return (os2,CompileOptions (maybeDisableHelp h) (is ++ [d]) is2 ds es ep ec p m o f)
+          return (os2,CompileOptions (maybeDisableHelp h) (is ++ [d]) is2 ds es ep ec p ex m o f)
     update _ = argError n "-i" "Requires a source path."
 
-  parseSingle (CompileOptions h is is2 ds es ep ec p m o f) ((n,"-I"):os) = update os where
+  parseSingle (CompileOptions h is is2 ds es ep ec p ex m o f) ((n,"-I"):os) = update os where
     update ((n2,d):os2)
       | isSuffixOf ".0rp" d = argError n2 d "Cannot directly include .0rp source files."
       | isSuffixOf ".0rx" d = argError n2 d "Cannot directly include .0rx source files."
       | isSuffixOf ".0rt" d = argError n2 d "Cannot directly include .0rt test files."
       | otherwise = do
           checkPathName n2 d "-i"
-          return (os2,CompileOptions (maybeDisableHelp h) is (is2 ++ [d]) ds es ep ec p m o f)
+          return (os2,CompileOptions (maybeDisableHelp h) is (is2 ++ [d]) ds es ep ec p ex m o f)
     update _ = argError n "-I" "Requires a source path."
 
-  parseSingle (CompileOptions h is is2 ds es ep ec p m o f) ((n,"-e"):os) = update os where
+  parseSingle (CompileOptions h is is2 ds es ep ec p ex m o f) ((n,"-e"):os) = update os where
     update ((n2,e):os2)
       | any (flip isSuffixOf e) allowedExtraTypes = do
           checkPathName n2 e "-e"
-          return (os2,CompileOptions (maybeDisableHelp h) is is2 ds (es ++ [e]) ep ec p m o f)
+          return (os2,CompileOptions (maybeDisableHelp h) is is2 ds (es ++ [e]) ep ec p ex m o f)
       | takeExtension e == "" || e == "." = do
           checkPathName n2 e "-e"
-          return (os2,CompileOptions (maybeDisableHelp h) is is2 ds es (ep ++ [e]) ec p m o f)
+          return (os2,CompileOptions (maybeDisableHelp h) is is2 ds es (ep ++ [e]) ec p ex m o f)
       | otherwise = argError n2 "-e" $ "Only " ++ intercalate ", " allowedExtraTypes ++
                                        " and directory sources are allowed."
     update _ = argError n "-e" "Requires a source filename."
 
-  parseSingle (CompileOptions h is is2 ds es ep ec p m o f) ((n,"-p"):os)
+  parseSingle (CompileOptions h is is2 ds es ep ec p ex m o f) ((n,"-p"):os)
     | not $ null p = argError n "-p" "Path prefix already set."
     | otherwise = update os where
       update ((n2,p2):os2) = do
         checkPathName n2 p2 "-p"
-        return (os2,CompileOptions (maybeDisableHelp h) is is2 ds es ep ec p2 m o f)
+        return (os2,CompileOptions (maybeDisableHelp h) is is2 ds es ep ec p2 ex m o f)
       update _ = argError n "-p" "Requires a path prefix."
 
   parseSingle _ ((n,o@('-':_)):_) = argError n o "Unknown option."
 
-  parseSingle (CompileOptions h is is2 ds es ep ec p m o f) ((n,d):os)
+  parseSingle (CompileOptions h is is2 ds es ep ec p ex m o f) ((n,d):os)
       | isSuffixOf ".0rp" d = argError n d "Cannot directly include .0rp source files."
       | isSuffixOf ".0rx" d = argError n d "Cannot directly include .0rx source files."
       | isSuffixOf ".0rt" d = do
@@ -205,13 +205,13 @@ parseCompileOptions = parseAll emptyCompileOptions . zip ([1..] :: [Int]) where
           argError n d "Test mode (-t) must be enabled before listing any .0rt test files."
         checkPathName n d ""
         let (ExecuteTests tp) = m
-        return (os,CompileOptions (maybeDisableHelp h) is is2 ds es ep ec p (ExecuteTests $ tp ++ [d]) o f)
+        return (os,CompileOptions (maybeDisableHelp h) is is2 ds es ep ec p ex (ExecuteTests $ tp ++ [d]) o f)
       | otherwise = do
         checkPathName n d ""
-        return (os,CompileOptions (maybeDisableHelp h) is is2 (ds ++ [d]) es ep ec p m o f)
+        return (os,CompileOptions (maybeDisableHelp h) is is2 (ds ++ [d]) es ep ec p ex m o f)
 
 validateCompileOptions :: CompileErrorM m => CompileOptions -> m CompileOptions
-validateCompileOptions co@(CompileOptions h is is2 ds es ep _ _ m o _)
+validateCompileOptions co@(CompileOptions h is is2 ds es ep _ _ _ m o _)
   | h /= HelpNotNeeded = return co
 
   | (not $ null o) && (isCompileIncremental m) =

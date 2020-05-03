@@ -43,6 +43,7 @@ data CompileOptions =
     coExtraPaths :: [String],
     coExtraRequires :: [String],
     coSourcePrefix :: String,
+    coExternalDefs :: [String],
     coMode :: CompileMode,
     coOutputName :: String,
     coForce :: ForceMode
@@ -59,6 +60,7 @@ emptyCompileOptions =
     coExtraPaths = [],
     coExtraRequires = [],
     coSourcePrefix = "",
+    coExternalDefs = [],
     coMode = CompileUnspecified,
     coOutputName = "",
     coForce = DoNotForce

@@ -38,4 +38,20 @@ always_include: [
   LessThan
   ReadPosition
 ]
+external: [
+  Bool
+  Char
+  Int
+  Float
+  String
+  AsBool
+  AsChar
+  AsInt
+  AsFloat
+  AsString
+  Formatted
+  Equals
+  LessThan
+  ReadPosition
+]
 mode: incremental

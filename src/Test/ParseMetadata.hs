@@ -180,6 +180,10 @@ tests = [
         "Extra1",
         "Extra2"
       ],
+      rmExternalDefs = [
+        "External1",
+        "External1"
+      ],
       rmMode = CompileIncremental,
       rmOutputName = "binary"
     },
@@ -192,6 +196,22 @@ tests = [
       rmExtraFiles = [],
       rmExtraPaths = [],
       rmExtraRequires = [
+        "bad category"
+      ],
+      rmExternalDefs = [],
+      rmMode = CompileIncremental,
+      rmOutputName = ""
+    },
+
+    checkWriteFail "bad category" $ ModuleConfig {
+      rmRoot = "/home/projects",
+      rmPath = "special",
+      rmPublicDeps = [],
+      rmPrivateDeps = [],
+      rmExtraFiles = [],
+      rmExtraPaths = [],
+      rmExtraRequires = [],
+      rmExternalDefs = [
         "bad category"
       ],
       rmMode = CompileIncremental,

@@ -125,7 +125,8 @@ runSingleTest b paths deps os tm (f,s) = do
               psNamespace = ns1,
               psCategory = cs',
               psDefine = ds
-            }]
+            }],
+          cnExternal = []
         }
       xx <- compileCategoryModule cm
       tm' <- includeNewTypes tm cs'

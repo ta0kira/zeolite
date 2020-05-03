@@ -91,6 +91,7 @@ data ModuleConfig =
     rmExtraFiles :: [String],
     rmExtraPaths :: [String],
     rmExtraRequires :: [String],
+    rmExternalDefs :: [String],
     rmMode :: CompileMode,
     rmOutputName :: String
   }

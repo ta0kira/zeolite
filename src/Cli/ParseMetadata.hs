@@ -261,11 +261,13 @@ instance ConfigFormat ModuleConfig where
       es <-  parseOptional "extra_files:"    [] (parseList parseQuoted)
       ep <-  parseOptional "extra_paths:"    [] (parseList parseQuoted)
       ec <-  parseOptional "always_include:" [] (parseList parseCategoryName)
+      ex <-  parseOptional "external:"       [] (parseList parseCategoryName)
       m <-   parseRequired "mode:"              readConfig
       o <-   parseOptional "output:"         "" parseQuoted
-      return (ModuleConfig p d is is2 es ep ec m o)
+      return (ModuleConfig p d is is2 es ep ec ex m o)
   writeConfig m = do
     _ <- collectAllOrErrorM $ map validateCategoryName (rmExtraRequires m)
+    _ <- collectAllOrErrorM $ map validateCategoryName (rmExternalDefs m)
     mode <- writeConfig (rmMode m)
     return $ [
         "root: " ++ show (rmRoot m),
@@ -284,6 +286,9 @@ instance ConfigFormat ModuleConfig where
         "]",
         "always_include: ["
       ] ++ indents (rmExtraRequires m) ++ [
+        "]",
+        "external: ["
+      ] ++ indents (rmExternalDefs m) ++ [
         "]"
       ] ++ "mode: " `prependFirst` mode ++ output where
       output = if null (rmOutputName m)
