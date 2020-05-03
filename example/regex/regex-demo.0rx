@@ -70,7 +70,7 @@ define RegexDemo {
     // *adding* O(sqrt(2)^n) branches. This means the overall complexity is
     // O(n^m)+O(sqrt(2)^n): O(n^m) for smaller n, O(sqrt(2)^n) for larger n.
     ~ testMatch("[ab]*[ac]*[ad]*[ae]*[af]*",
-                "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaad",true)
+                "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaad",true)
   }
 
   @type testMatch (String,String,Bool) -> ()
