@@ -141,7 +141,7 @@ recompileFilename :: String
 recompileFilename = ".zeolite-module"
 
 metadataFilename :: String
-metadataFilename = "metadata.txt"
+metadataFilename = "compile-metadata"
 
 allowedExtraTypes :: [String]
 allowedExtraTypes = [".hpp",".cpp",".h",".cc",".a",".o"]

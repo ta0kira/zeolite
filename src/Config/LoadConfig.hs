@@ -87,7 +87,7 @@ data LocalConfig =
   deriving (Read,Show)
 
 localConfigFilename :: String
-localConfigFilename = "local-config.txt"
+localConfigFilename = ".local-config"
 
 localConfigPath :: IO FilePath
 localConfigPath = getDataFileName localConfigFilename >>= canonicalizePath
