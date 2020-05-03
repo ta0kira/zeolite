@@ -149,6 +149,7 @@ library zeolite-internal
                        Test.Common,
                        Test.DefinedCategory,
                        Test.IntegrationTest,
+                       Test.ParseMetadata,
                        Test.Parser,
                        Test.Procedure,
                        Test.TypeCategory,

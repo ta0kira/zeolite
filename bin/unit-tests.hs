@@ -16,12 +16,11 @@ limitations under the License.
 
 -- Author: Kevin P. Barry [ta0kira@gmail.com]
 
-{-# LANGUAGE Safe #-}
-
 import Base.CompileError
 import Test.Common
 import qualified Test.DefinedCategory as DefinedCategoryTest
 import qualified Test.IntegrationTest as IntegrationTestTest
+import qualified Test.ParseMetadata   as ParseMetadataTest
 import qualified Test.Parser          as ParserTest
 import qualified Test.Procedure       as ProcedureTest
 import qualified Test.TypeCategory    as TypeCategoryTest
@@ -32,6 +31,7 @@ main :: IO ()
 main = runAllTests $ concat [
     labelWith "DefinedCategoryTest" DefinedCategoryTest.tests,
     labelWith "TypeInstanceTest"    TypeInstanceTest.tests,
+    labelWith "ParseMetadataTest"   ParseMetadataTest.tests,
     labelWith "ParserTest"          ParserTest.tests,
     labelWith "TypeCategoryTest"    TypeCategoryTest.tests,
     labelWith "ProcedureTest"       ProcedureTest.tests,

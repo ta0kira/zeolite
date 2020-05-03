@@ -93,7 +93,7 @@ loadMetadata p = do
     hPutStrLn stderr $ "Module \"" ++ p ++ "\" has not been compiled yet."
     exitFailure
   c <- readFile f
-  let m = autoReadConfig (f,c)
+  let m = autoReadConfig f c
   if isCompileError m
      then do
        hPutStrLn stderr $ "Could not parse metadata from \"" ++ p ++ "\"; please recompile."
@@ -114,7 +114,7 @@ tryLoadData f = do
     then return Nothing
     else do
       c <- readFile f
-      let m = autoReadConfig (f,c)
+      let m = autoReadConfig f c
       if isCompileError m
          then do
            hPutStrLn stderr $ "Could not parse config file:"

@@ -49,7 +49,7 @@ data CompileMetadata =
     cmCxxFiles :: [String],
     cmObjectFiles :: [ObjectFile]
   }
-  deriving (Eq)
+  deriving (Eq,Show)
 
 data ObjectFile =
   CategoryObjectFile {
@@ -60,7 +60,7 @@ data ObjectFile =
   OtherObjectFile {
     oofFile :: String
   }
-  deriving (Eq)
+  deriving (Eq,Show)
 
 data CategoryIdentifier =
   CategoryIdentifier {
@@ -71,7 +71,7 @@ data CategoryIdentifier =
   UnresolvedCategory {
     ucCategory :: String
   }
-  deriving (Eq,Ord)
+  deriving (Eq,Ord,Show)
 
 mergeObjectFiles :: ObjectFile -> ObjectFile -> ObjectFile
 mergeObjectFiles (CategoryObjectFile c rs1 fs1) (CategoryObjectFile _ rs2 fs2) =
@@ -94,4 +94,4 @@ data ModuleConfig =
     rmMode :: CompileMode,
     rmOutputName :: String
   }
-  deriving (Eq)
+  deriving (Eq,Show)

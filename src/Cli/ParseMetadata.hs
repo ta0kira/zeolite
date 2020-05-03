@@ -41,8 +41,8 @@ class ConfigFormat a where
   readConfig :: Parser a
   writeConfig :: CompileErrorM m => a -> m [String]
 
-autoReadConfig :: (ConfigFormat a, CompileErrorM m) => (String,String) -> m a
-autoReadConfig (f,s) = unwrap parsed where
+autoReadConfig :: (ConfigFormat a, CompileErrorM m) => String -> String -> m a
+autoReadConfig f s  = unwrap parsed where
   parsed = parse (between optionalSpace endOfDoc readConfig) f s
   unwrap (Left e)  = compileError (show e)
   unwrap (Right t) = return t
@@ -148,6 +148,8 @@ instance ConfigFormat CompileMetadata where
     return (CompileMetadata h p ns is is2 es cs ds ps xs ts hxx cxx os)
   writeConfig m = do
     validateHash (cmVersionHash m)
+    validateNamespace (cmNamespace m)
+    _ <- collectAllOrErrorM $ map validateCategoryName (cmCategories m)
     extra   <- fmap concat $ collectAllOrErrorM $ map writeConfig $ cmExtraRequires m
     objects <- fmap concat $ collectAllOrErrorM $ map writeConfig $ cmObjectFiles m
     return $ [
@@ -278,7 +280,7 @@ instance ConfigFormat ModuleConfig where
       es <- parseList parseQuoted
       sepAfter (string_ "extra_paths:")
       ep <- parseList parseQuoted
-      sepAfter (string_ "extra_requires:")
+      sepAfter (string_ "always_include:")
       ec <- parseList parseCategoryName
       sepAfter (string_ "mode:")
       m <- readConfig
@@ -288,6 +290,7 @@ instance ConfigFormat ModuleConfig where
           sepAfter (string_ "output:")
           parseQuoted
   writeConfig m = do
+    _ <- collectAllOrErrorM $ map validateCategoryName (rmExtraRequires m)
     mode <- writeConfig (rmMode m)
     return $ [
         "root: " ++ show (rmRoot m),
@@ -304,7 +307,7 @@ instance ConfigFormat ModuleConfig where
         "extra_paths: ["
       ] ++ indents (map show $ rmExtraPaths m) ++ [
         "]",
-        "extra_requires: ["
+        "always_include: ["
       ] ++ indents (rmExtraRequires m) ++ [
         "]"
       ] ++ "mode: " `prependFirst` mode ++ output where

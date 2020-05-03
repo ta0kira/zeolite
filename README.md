@@ -1000,8 +1000,7 @@ the public `.0rp` sources in [`lib`][lib]. Documentation will eventually follow.
 ### Modules
 
 The module system is a work in progress. The best place to start is to look at
-how [`lib`][lib] is structured. At some point there will be instructions, but
-not until [Issue #2](https://github.com/ta0kira/zeolite/issues/2) is fixed.
+how [`lib`][lib] is structured. At some point there will be instructions.
 
 You can depend on another module using `-i lib/util` for a public dependency and
 `-I lib/util` for a private dependency when calling `zeolite`. (A private
