@@ -461,18 +461,18 @@ define Value {
     } cleanup {
       value2 <- 3
       value3 <- 3
-    } in return { value1, value2, value3 }
+    } in return value1, value2, value3
   }
 
   get () {
-    return { value1, value2, value3 }
+    return value1, value2, value3
   }
 }
 
 define Test {
   run () {
     Value value <- Value$create()
-    { Int value1, Int value2, Int value3 } <- value.call()
+    Int value1, Int value2, Int value3 <- value.call()
     if (value1 != 1) {
       fail(value1)
     }
@@ -482,7 +482,7 @@ define Test {
     if (value3 != 1) {
       fail(value3)
     }
-    { value1, value2, value3 } <- value.get()
+    value1, value2, value3 <- value.get()
     if (value1 != 2) {
       fail(value1)
     }

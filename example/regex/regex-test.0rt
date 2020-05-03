@@ -641,7 +641,7 @@ define Test {
     optional ReadSequence<MatchBrancher<Char>> branches <- empty
 
     // First character.
-    { state, branches } <- brancher.tryBranches('x')
+    state, branches <- brancher.tryBranches('x')
     if (!(state `MatchState$equals` MatchState$matchContinue())) {
       fail(state)
     }
@@ -659,7 +659,7 @@ define Test {
     }
 
     // Second character.
-    { state, branches } <- brancher.tryBranches('y')
+    state, branches <- brancher.tryBranches('y')
     if (!(state `MatchState$equals` MatchState$matchContinue())) {
       fail(state)
     }
@@ -677,7 +677,7 @@ define Test {
     }
 
     // Third character.
-    { state, branches } <- brancher.tryBranches('x')
+    state, branches <- brancher.tryBranches('x')
     if (!(state `MatchState$equals` MatchState$matchComplete())) {
       fail(state)
     }
@@ -689,7 +689,7 @@ define Test {
     brancher <- template.newBrancher()
 
     // Fourth character.
-    { state, branches } <- brancher.tryBranches('w')
+    state, branches <- brancher.tryBranches('w')
     if (!(state `MatchState$equals` MatchState$matchContinue())) {
       fail(state)
     }
@@ -728,7 +728,7 @@ define Test {
     optional ReadSequence<MatchBrancher<Char>> branches <- empty
 
     // First character.
-    { state, branches } <- brancher.tryBranches('x')
+    state, branches <- brancher.tryBranches('x')
     if (!(state `MatchState$equals` MatchState$matchContinue())) {
       fail(state)
     }
@@ -746,7 +746,7 @@ define Test {
     }
 
     // Second character.
-    { state, branches } <- brancher.tryBranches('x')
+    state, branches <- brancher.tryBranches('x')
     if (!(state `MatchState$equals` MatchState$matchContinue())) {
       fail(state)
     }
@@ -765,7 +765,7 @@ define Test {
     }
 
     // Third character, branch 1.
-    { state, _ } <- brancher.tryBranches('x')
+    state, _ <- brancher.tryBranches('x')
     if (!(state `MatchState$equals` MatchState$matchContinue())) {
       fail(state)
     }
@@ -781,7 +781,7 @@ define Test {
     }
 
     // Third character, branch 2.
-    { state, _ } <- brancher.tryBranches('x')
+    state, _ <- brancher.tryBranches('x')
     if (!(state `MatchState$equals` MatchState$matchContinue())) {
       fail(state)
     }
@@ -808,7 +808,7 @@ define Test {
     optional ReadSequence<MatchBrancher<Char>> branches <- empty
 
     // First character.
-    { state, branches } <- brancher.tryBranches('x')
+    state, branches <- brancher.tryBranches('x')
     if (!(state `MatchState$equals` MatchState$matchContinue())) {
       fail(state)
     }
@@ -826,7 +826,7 @@ define Test {
     }
 
     // Second character.
-    { state, branches } <- brancher.tryBranches('q')
+    state, branches <- brancher.tryBranches('q')
     if (!(state `MatchState$equals` MatchState$matchFail())) {
       fail(state)
     }
@@ -865,7 +865,7 @@ define Test {
     optional ReadSequence<MatchBrancher<Char>> branches <- empty
 
     // First character.
-    { state, branches } <- brancher.tryBranches('x')
+    state, branches <- brancher.tryBranches('x')
     if (!(state `MatchState$equals` MatchState$matchContinue())) {
       fail(state)
     }
@@ -880,7 +880,7 @@ define Test {
     }
 
     // Second character.
-    { state, branches } <- brancher.tryBranches('a')
+    state, branches <- brancher.tryBranches('a')
     if (!(state `MatchState$equals` MatchState$matchComplete())) {
       fail(state)
     }
@@ -892,7 +892,7 @@ define Test {
     if (!require(branches).value().matchSatisfied()) {
       fail("match not satisfied")
     }
-    { state, branches } <- require(branches).value().tryBranches('a')
+    state, branches <- require(branches).value().tryBranches('a')
     if (!(state `MatchState$equals` MatchState$matchFail())) {
       fail(state)
     }
@@ -901,7 +901,7 @@ define Test {
     brancher <- template.newBrancher()
 
     // Third character.
-    { state, branches } <- brancher.tryBranches('y')
+    state, branches <- brancher.tryBranches('y')
     if (!(state `MatchState$equals` MatchState$matchContinue())) {
       fail(state)
     }
@@ -933,7 +933,7 @@ define Test {
     optional ReadSequence<MatchBrancher<Char>> branches <- empty
 
     // First character.
-    { state, branches } <- brancher.tryBranches('q')
+    state, branches <- brancher.tryBranches('q')
     if (!(state `MatchState$equals` MatchState$matchFail())) {
       fail(state)
     }
@@ -942,7 +942,7 @@ define Test {
     }
 
     // Should keep failing to match.
-    { state, branches } <- brancher.tryBranches('x')
+    state, branches <- brancher.tryBranches('x')
     if (!(state `MatchState$equals` MatchState$matchFail())) {
       fail(state)
     }
@@ -981,7 +981,7 @@ define Test {
     optional ReadSequence<MatchBrancher<Char>> branches <- empty
 
     // First character.
-    { state, branches } <- brancher.tryBranches('b')
+    state, branches <- brancher.tryBranches('b')
     if (!(state `MatchState$equals` MatchState$matchComplete())) {
       fail(state)
     }
@@ -1023,7 +1023,7 @@ define Test {
     optional ReadSequence<MatchBrancher<Char>> branches <- empty
 
     // First character.
-    { state, branches } <- brancher.tryBranches('b')
+    state, branches <- brancher.tryBranches('b')
     if (!(state `MatchState$equals` MatchState$matchFail())) {
       fail(state)
     }
@@ -1066,7 +1066,7 @@ define Test {
     optional ReadSequence<MatchBrancher<Char>> branches <- empty
 
     // First character.
-    { state, branches } <- brancher.tryBranches('a')
+    state, branches <- brancher.tryBranches('a')
     if (!(state `MatchState$equals` MatchState$matchContinue())) {
       fail(state)
     }
@@ -1084,7 +1084,7 @@ define Test {
     // remaining sequence.
 
     // Second character, branch 1.
-    { state, _ } <- brancher.tryBranches('a')
+    state, _ <- brancher.tryBranches('a')
     if (!(state `MatchState$equals` MatchState$matchContinue())) {
       fail(state)
     }
@@ -1096,7 +1096,7 @@ define Test {
     }
 
     // Second character, branch 2.
-    { state, _ } <- brancher.tryBranches('a')
+    state, _ <- brancher.tryBranches('a')
     if (!(state `MatchState$equals` MatchState$matchComplete())) {
       fail(state)
     }

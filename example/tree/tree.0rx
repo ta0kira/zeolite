@@ -173,10 +173,10 @@ define Node {
   @type removeNode (Node<#k,#v>) -> (optional Node<#k,#v>)
   removeNode (node) (newNode) {
     if (node.getBalance() < 0) {
-      { optional Node<#k,#v> temp, newNode } <- removeHighest(node.getLower())
+      optional Node<#k,#v> temp, newNode <- removeHighest(node.getLower())
       ~ node.setLower(temp)
     } else {
-      { optional Node<#k,#v> temp, newNode } <- removeLowest(node.getHigher())
+      optional Node<#k,#v> temp, newNode <- removeLowest(node.getHigher())
       ~ node.setHigher(temp)
     }
     if (present(newNode)) {
@@ -188,11 +188,11 @@ define Node {
   @type removeHighest (optional Node<#k,#v>) -> (optional Node<#k,#v>,optional Node<#k,#v>)
   removeHighest (node) (newNode,removed) {
     if (!present(node)) {
-      return { empty, empty }
+      return empty, empty
     }
     Node<#k,#v> node2 <- require(node)
     if (present(node2.getHigher())) {
-      { optional Node<#k,#v> temp, removed } <- removeHighest(node2.getHigher())
+      optional Node<#k,#v> temp, removed <- removeHighest(node2.getHigher())
       ~ node2.setHigher(temp)
       newNode <- rebalance(node2)
     } else {
@@ -205,11 +205,11 @@ define Node {
   @type removeLowest (optional Node<#k,#v>) -> (optional Node<#k,#v>,optional Node<#k,#v>)
   removeLowest (node) (newNode,removed) {
     if (!present(node)) {
-      return { empty, empty }
+      return empty, empty
     }
     Node<#k,#v> node2 <- require(node)
     if (present(node2.getLower())) {
-      { optional Node<#k,#v> temp, removed } <- removeLowest(node2.getLower())
+      optional Node<#k,#v> temp, removed <- removeLowest(node2.getLower())
       ~ node2.setLower(temp)
       newNode <- rebalance(node2)
     } else {

@@ -2,7 +2,7 @@ define CharRegex {
   parse (pattern) (matcher) {
     ReadIterator<Char> p <- ReadIterator$$fromReadPosition<Char>(pattern)
     // TODO: Needs error handling.
-    { _, matcher } <- parseExpression(p)
+    _, matcher <- parseExpression(p)
   }
 
   match (template,data) {
@@ -25,22 +25,22 @@ define CharRegex {
                       (ReadIterator<Char>,optional ReadSequence<MatcherTemplate<Char>>)
   parseSequence (p) {
     if (p.pastForwardEnd()) {
-      return { p, empty }
+      return p, empty
     }
-    { ReadIterator<Char> p2, optional MatcherTemplate<Char> matcher } <- parseNonSequence(p)
+    ReadIterator<Char> p2, optional MatcherTemplate<Char> matcher <- parseNonSequence(p)
     if (!p2.pastForwardEnd() && (p2.readCurrent() == '|' || p2.readCurrent() == ')')) {
       // Requires choice matching or the end of a subexpression.
       if (present(matcher)) {
-        return { p2, LinkedNode<MatcherTemplate<Char>>$create(require(matcher),empty) }
+        return p2, LinkedNode<MatcherTemplate<Char>>$create(require(matcher),empty)
       } else {
         // TODO: Disregards errors from parseNonSequence.
-        return { p2, LinkedNode<MatcherTemplate<Char>>$create(MatchEmpty$create(),empty) }
+        return p2, LinkedNode<MatcherTemplate<Char>>$create(MatchEmpty$create(),empty)
       }
     } if (!present(matcher)) {
-      return { p2, empty }
+      return p2, empty
     } else {
-      { p2, optional ReadSequence<MatcherTemplate<Char>> sequence } <- parseSequence(p2)
-      return { p2, LinkedNode<MatcherTemplate<Char>>$create(require(matcher),sequence) }
+      p2, optional ReadSequence<MatcherTemplate<Char>> sequence <- parseSequence(p2)
+      return p2, LinkedNode<MatcherTemplate<Char>>$create(require(matcher),sequence)
     }
   }
 
@@ -56,38 +56,38 @@ define CharRegex {
         return _
       } elif (c == '*') {
         // TODO: Needs error handling.
-        return { p2.forward(),
-                 MatchBranches<Char>$create(BranchRepeat<Char>$createZeroPlus(require(matcher))) }
+        return p2.forward(),
+               MatchBranches<Char>$create(BranchRepeat<Char>$createZeroPlus(require(matcher)))
       } elif (c == '+') {
         // TODO: Needs error handling.
-        return { p2.forward(),
-                 MatchBranches<Char>$create(BranchRepeat<Char>$createOnePlus(require(matcher))) }
+        return p2.forward(),
+               MatchBranches<Char>$create(BranchRepeat<Char>$createOnePlus(require(matcher)))
       } elif (c == '{') {
-        { p2, Int min, Int max } <- parseRange(p2.forward())
+        p2, Int min, Int max <- parseRange(p2.forward())
         if (p2.pastForwardEnd() || p2.readCurrent() != '}') {
           // TODO: Needs error handling.
           fail("missing }")
         }
-        return { p2.forward(),
-                 MatchBranches<Char>$create(BranchRepeat<Char>$createRange(min,max,require(matcher))) }
+        return p2.forward(),
+               MatchBranches<Char>$create(BranchRepeat<Char>$createRange(min,max,require(matcher)))
       } elif (present(matcher)) {
         return _
       } elif (c == '[') {
-        { p2, matcher } <- parseCharChoices(p2.forward())
+        p2, matcher <- parseCharChoices(p2.forward())
         if (p2.pastForwardEnd() || p2.readCurrent() != ']') {
           // TODO: Needs error handling.
           fail("missing ]")
         }
         p2 <- p2.forward()
       } elif (c == '(') {
-        { p2, matcher } <- parseExpression(p2.forward())
+        p2, matcher <- parseExpression(p2.forward())
         if (p2.pastForwardEnd() || p2.readCurrent() != ')') {
           // TODO: Needs error handling.
           fail("missing )")
         }
         p2 <- p2.forward()
       } else {
-        { p2, matcher } <- parseSingleChar(p2)
+        p2, matcher <- parseSingleChar(p2)
       }
     }
   }
@@ -95,11 +95,11 @@ define CharRegex {
   @type parseRange (ReadIterator<Char>) -> (ReadIterator<Char>,Int,Int)
   parseRange (p) (p2,min,max) {
     max <- 0
-    { p2, min } <- parseCount(p)
+    p2, min <- parseCount(p)
     if (p2.pastForwardEnd() || p2.readCurrent() != ',') {
       max <- min
     } else {
-      { p2, max } <- parseCount(p2.forward())
+      p2, max <- parseCount(p2.forward())
     }
   }
 
@@ -126,7 +126,7 @@ define CharRegex {
     optional ReadSequence<MatcherTemplate<Char>> choices <- empty
     p2 <- p
     while (!p2.pastForwardEnd()) {
-      { p2, optional ReadSequence<MatcherTemplate<Char>> sequence } <- parseSequence(p2)
+      p2, optional ReadSequence<MatcherTemplate<Char>> sequence <- parseSequence(p2)
       if (!present(sequence)) {
         break
       }

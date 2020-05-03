@@ -158,12 +158,12 @@ testcase "returns in correct order" {
 define Test {
   @type get () -> (Int,Int)
   get () {
-    return { 1, 2 }
+    return 1, 2
   }
 
   run () {
     scoped {
-      { Int x, Int y } <- get()
+      Int x, Int y <- get()
     } in if (x != 1) {
       fail("Failed")
     } elif (y != 2) {
@@ -202,7 +202,7 @@ define Test {
 
   run () {
     scoped {
-      { _, Int x, Int y } <- get()
+      _, Int x, Int y <- get()
     } in if (x != 1) {
       fail("Failed")
     } elif (y != 2) {
@@ -230,7 +230,7 @@ define Test {
 
   run () {
     scoped {
-      { Int x, Int y } <- get()
+      Int x, Int y <- get()
     } in if (x != 1) {
       fail("Failed")
     } elif (y != 2) {

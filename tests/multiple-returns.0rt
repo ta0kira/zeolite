@@ -76,13 +76,13 @@ define Test {
 
   @value double () -> (Test,Test)
   double () {
-    return { self, self }
+    return self, self
   }
 
   run () {
     Test value <- create()
-    { _, Test value2 } <- value.double()
-    { value, _ } <- value2.double()
+    _, Test value2 <- value.double()
+    value, _ <- value2.double()
   }
 }
 
@@ -98,7 +98,7 @@ testcase "multi return as args" {
 define Test {
   @type get () -> (Int,Int)
   get () {
-    return { 1, 2 }
+    return 1, 2
   }
 
   @type call (Int,Int) -> ()
@@ -114,27 +114,6 @@ define Test {
   run () {
     ~ call(get())
   }
-}
-
-concrete Test {
-  @type run () -> ()
-}
-
-
-testcase "empty return is not return with assignments" {
-  error
-  require "count.+mismatch"
-}
-
-define Test {
-  @type process () -> (Int,Int)
-  process () (x,y) {
-   x <- 1
-   y <- 2
-   return { }
-  }
-
-  run () {}
 }
 
 concrete Test {

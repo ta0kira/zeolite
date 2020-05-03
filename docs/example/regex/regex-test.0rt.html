@@ -652,7 +652,7 @@
     <b>optional</b> <span style='color:#0057ae;'>ReadSequence</span><span style='color:#c02040;'>&lt;</span><span style='color:#0057ae;'>MatchBrancher</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;&gt;</span> branches &lt;- <b>empty</b>
 
     <span style='color:#898887;'>// First character.</span>
-    { state, branches } &lt;- brancher.tryBranches(<span style='color:#924c9d;'>'x'</span>)
+    state, branches &lt;- brancher.tryBranches(<span style='color:#924c9d;'>'x'</span>)
     <b>if</b> (!(state <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals<b><span style='color:#c02040;'>`</span></b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchContinue())) {
       <b>fail</b>(state)
     }
@@ -670,7 +670,7 @@
     }
 
     <span style='color:#898887;'>// Second character.</span>
-    { state, branches } &lt;- brancher.tryBranches(<span style='color:#924c9d;'>'y'</span>)
+    state, branches &lt;- brancher.tryBranches(<span style='color:#924c9d;'>'y'</span>)
     <b>if</b> (!(state <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals<b><span style='color:#c02040;'>`</span></b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchContinue())) {
       <b>fail</b>(state)
     }
@@ -688,7 +688,7 @@
     }
 
     <span style='color:#898887;'>// Third character.</span>
-    { state, branches } &lt;- brancher.tryBranches(<span style='color:#924c9d;'>'x'</span>)
+    state, branches &lt;- brancher.tryBranches(<span style='color:#924c9d;'>'x'</span>)
     <b>if</b> (!(state <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals<b><span style='color:#c02040;'>`</span></b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchComplete())) {
       <b>fail</b>(state)
     }
@@ -700,7 +700,7 @@
     brancher &lt;- template.newBrancher()
 
     <span style='color:#898887;'>// Fourth character.</span>
-    { state, branches } &lt;- brancher.tryBranches(<span style='color:#924c9d;'>'w'</span>)
+    state, branches &lt;- brancher.tryBranches(<span style='color:#924c9d;'>'w'</span>)
     <b>if</b> (!(state <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals<b><span style='color:#c02040;'>`</span></b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchContinue())) {
       <b>fail</b>(state)
     }
@@ -739,7 +739,7 @@
     <b>optional</b> <span style='color:#0057ae;'>ReadSequence</span><span style='color:#c02040;'>&lt;</span><span style='color:#0057ae;'>MatchBrancher</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;&gt;</span> branches &lt;- <b>empty</b>
 
     <span style='color:#898887;'>// First character.</span>
-    { state, branches } &lt;- brancher.tryBranches(<span style='color:#924c9d;'>'x'</span>)
+    state, branches &lt;- brancher.tryBranches(<span style='color:#924c9d;'>'x'</span>)
     <b>if</b> (!(state <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals<b><span style='color:#c02040;'>`</span></b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchContinue())) {
       <b>fail</b>(state)
     }
@@ -757,7 +757,7 @@
     }
 
     <span style='color:#898887;'>// Second character.</span>
-    { state, branches } &lt;- brancher.tryBranches(<span style='color:#924c9d;'>'x'</span>)
+    state, branches &lt;- brancher.tryBranches(<span style='color:#924c9d;'>'x'</span>)
     <b>if</b> (!(state <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals<b><span style='color:#c02040;'>`</span></b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchContinue())) {
       <b>fail</b>(state)
     }
@@ -776,7 +776,7 @@
     }
 
     <span style='color:#898887;'>// Third character, branch 1.</span>
-    { state, <b>_</b> } &lt;- brancher.tryBranches(<span style='color:#924c9d;'>'x'</span>)
+    state, <b>_</b> &lt;- brancher.tryBranches(<span style='color:#924c9d;'>'x'</span>)
     <b>if</b> (!(state <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals<b><span style='color:#c02040;'>`</span></b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchContinue())) {
       <b>fail</b>(state)
     }
@@ -792,7 +792,7 @@
     }
 
     <span style='color:#898887;'>// Third character, branch 2.</span>
-    { state, <b>_</b> } &lt;- brancher.tryBranches(<span style='color:#924c9d;'>'x'</span>)
+    state, <b>_</b> &lt;- brancher.tryBranches(<span style='color:#924c9d;'>'x'</span>)
     <b>if</b> (!(state <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals<b><span style='color:#c02040;'>`</span></b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchContinue())) {
       <b>fail</b>(state)
     }
@@ -819,7 +819,7 @@
     <b>optional</b> <span style='color:#0057ae;'>ReadSequence</span><span style='color:#c02040;'>&lt;</span><span style='color:#0057ae;'>MatchBrancher</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;&gt;</span> branches &lt;- <b>empty</b>
 
     <span style='color:#898887;'>// First character.</span>
-    { state, branches } &lt;- brancher.tryBranches(<span style='color:#924c9d;'>'x'</span>)
+    state, branches &lt;- brancher.tryBranches(<span style='color:#924c9d;'>'x'</span>)
     <b>if</b> (!(state <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals<b><span style='color:#c02040;'>`</span></b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchContinue())) {
       <b>fail</b>(state)
     }
@@ -837,7 +837,7 @@
     }
 
     <span style='color:#898887;'>// Second character.</span>
-    { state, branches } &lt;- brancher.tryBranches(<span style='color:#924c9d;'>'q'</span>)
+    state, branches &lt;- brancher.tryBranches(<span style='color:#924c9d;'>'q'</span>)
     <b>if</b> (!(state <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals<b><span style='color:#c02040;'>`</span></b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchFail())) {
       <b>fail</b>(state)
     }
@@ -876,7 +876,7 @@
     <b>optional</b> <span style='color:#0057ae;'>ReadSequence</span><span style='color:#c02040;'>&lt;</span><span style='color:#0057ae;'>MatchBrancher</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;&gt;</span> branches &lt;- <b>empty</b>
 
     <span style='color:#898887;'>// First character.</span>
-    { state, branches } &lt;- brancher.tryBranches(<span style='color:#924c9d;'>'x'</span>)
+    state, branches &lt;- brancher.tryBranches(<span style='color:#924c9d;'>'x'</span>)
     <b>if</b> (!(state <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals<b><span style='color:#c02040;'>`</span></b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchContinue())) {
       <b>fail</b>(state)
     }
@@ -891,7 +891,7 @@
     }
 
     <span style='color:#898887;'>// Second character.</span>
-    { state, branches } &lt;- brancher.tryBranches(<span style='color:#924c9d;'>'a'</span>)
+    state, branches &lt;- brancher.tryBranches(<span style='color:#924c9d;'>'a'</span>)
     <b>if</b> (!(state <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals<b><span style='color:#c02040;'>`</span></b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchComplete())) {
       <b>fail</b>(state)
     }
@@ -903,7 +903,7 @@
     <b>if</b> (!<b>require</b>(branches).value().matchSatisfied()) {
       <b>fail</b>(<span style='color:#bf0303;'>&quot;match not satisfied&quot;</span>)
     }
-    { state, branches } &lt;- <b>require</b>(branches).value().tryBranches(<span style='color:#924c9d;'>'a'</span>)
+    state, branches &lt;- <b>require</b>(branches).value().tryBranches(<span style='color:#924c9d;'>'a'</span>)
     <b>if</b> (!(state <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals<b><span style='color:#c02040;'>`</span></b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchFail())) {
       <b>fail</b>(state)
     }
@@ -912,7 +912,7 @@
     brancher &lt;- template.newBrancher()
 
     <span style='color:#898887;'>// Third character.</span>
-    { state, branches } &lt;- brancher.tryBranches(<span style='color:#924c9d;'>'y'</span>)
+    state, branches &lt;- brancher.tryBranches(<span style='color:#924c9d;'>'y'</span>)
     <b>if</b> (!(state <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals<b><span style='color:#c02040;'>`</span></b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchContinue())) {
       <b>fail</b>(state)
     }
@@ -944,7 +944,7 @@
     <b>optional</b> <span style='color:#0057ae;'>ReadSequence</span><span style='color:#c02040;'>&lt;</span><span style='color:#0057ae;'>MatchBrancher</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;&gt;</span> branches &lt;- <b>empty</b>
 
     <span style='color:#898887;'>// First character.</span>
-    { state, branches } &lt;- brancher.tryBranches(<span style='color:#924c9d;'>'q'</span>)
+    state, branches &lt;- brancher.tryBranches(<span style='color:#924c9d;'>'q'</span>)
     <b>if</b> (!(state <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals<b><span style='color:#c02040;'>`</span></b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchFail())) {
       <b>fail</b>(state)
     }
@@ -953,7 +953,7 @@
     }
 
     <span style='color:#898887;'>// Should keep failing to match.</span>
-    { state, branches } &lt;- brancher.tryBranches(<span style='color:#924c9d;'>'x'</span>)
+    state, branches &lt;- brancher.tryBranches(<span style='color:#924c9d;'>'x'</span>)
     <b>if</b> (!(state <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals<b><span style='color:#c02040;'>`</span></b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchFail())) {
       <b>fail</b>(state)
     }
@@ -992,7 +992,7 @@
     <b>optional</b> <span style='color:#0057ae;'>ReadSequence</span><span style='color:#c02040;'>&lt;</span><span style='color:#0057ae;'>MatchBrancher</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;&gt;</span> branches &lt;- <b>empty</b>
 
     <span style='color:#898887;'>// First character.</span>
-    { state, branches } &lt;- brancher.tryBranches(<span style='color:#924c9d;'>'b'</span>)
+    state, branches &lt;- brancher.tryBranches(<span style='color:#924c9d;'>'b'</span>)
     <b>if</b> (!(state <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals<b><span style='color:#c02040;'>`</span></b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchComplete())) {
       <b>fail</b>(state)
     }
@@ -1034,7 +1034,7 @@
     <b>optional</b> <span style='color:#0057ae;'>ReadSequence</span><span style='color:#c02040;'>&lt;</span><span style='color:#0057ae;'>MatchBrancher</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;&gt;</span> branches &lt;- <b>empty</b>
 
     <span style='color:#898887;'>// First character.</span>
-    { state, branches } &lt;- brancher.tryBranches(<span style='color:#924c9d;'>'b'</span>)
+    state, branches &lt;- brancher.tryBranches(<span style='color:#924c9d;'>'b'</span>)
     <b>if</b> (!(state <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals<b><span style='color:#c02040;'>`</span></b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchFail())) {
       <b>fail</b>(state)
     }
@@ -1077,7 +1077,7 @@
     <b>optional</b> <span style='color:#0057ae;'>ReadSequence</span><span style='color:#c02040;'>&lt;</span><span style='color:#0057ae;'>MatchBrancher</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;&gt;</span> branches &lt;- <b>empty</b>
 
     <span style='color:#898887;'>// First character.</span>
-    { state, branches } &lt;- brancher.tryBranches(<span style='color:#924c9d;'>'a'</span>)
+    state, branches &lt;- brancher.tryBranches(<span style='color:#924c9d;'>'a'</span>)
     <b>if</b> (!(state <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals<b><span style='color:#c02040;'>`</span></b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchContinue())) {
       <b>fail</b>(state)
     }
@@ -1095,7 +1095,7 @@
     <span style='color:#898887;'>// remaining sequence.</span>
 
     <span style='color:#898887;'>// Second character, branch 1.</span>
-    { state, <b>_</b> } &lt;- brancher.tryBranches(<span style='color:#924c9d;'>'a'</span>)
+    state, <b>_</b> &lt;- brancher.tryBranches(<span style='color:#924c9d;'>'a'</span>)
     <b>if</b> (!(state <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals<b><span style='color:#c02040;'>`</span></b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchContinue())) {
       <b>fail</b>(state)
     }
@@ -1107,7 +1107,7 @@
     }
 
     <span style='color:#898887;'>// Second character, branch 2.</span>
-    { state, <b>_</b> } &lt;- brancher.tryBranches(<span style='color:#924c9d;'>'a'</span>)
+    state, <b>_</b> &lt;- brancher.tryBranches(<span style='color:#924c9d;'>'a'</span>)
     <b>if</b> (!(state <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals<b><span style='color:#c02040;'>`</span></b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchComplete())) {
       <b>fail</b>(state)
     }

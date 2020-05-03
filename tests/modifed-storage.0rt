@@ -175,12 +175,12 @@ define Test {
   @type get () -> (Value,Value)
   get () {
     Value value <- Value$create()
-    return { value, value }
+    return value, value
   }
 
   run () {
     // value1 ensures value2 is present.
-    { Value value1, weak Value value2 } <- get()
+    Value value1, weak Value value2 <- get()
     if (!present(strong(value2))) {
       fail("Failed")
     }

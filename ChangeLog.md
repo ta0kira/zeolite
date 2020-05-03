@@ -1,5 +1,10 @@
 # Revision history for zeolite-lang
 
+## 0.3.0.0  -- ????-??-??
+
+* **[breaking]** Cleans up multiple-`return` syntax by removing `{}`. This
+  applies to *both* the `return` and the assignment.
+
 ## 0.2.0.0  -- 2020-05-03
 
 * **[breaking]** Requires that `concrete` categories defined in `.cpp` files be

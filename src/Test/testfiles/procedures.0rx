@@ -21,7 +21,7 @@ testFunction1 (a,b,c) (d,e,f) {
 
   scoped {
     optional T myvar <- reduce<#x,#y>(q)
-  } in { v, _ } <- x.process(myvar)
+  } in v, _ <- x.process(myvar)
 
   scoped {
     // ...
@@ -30,11 +30,11 @@ testFunction1 (a,b,c) (d,e,f) {
   } in ~ x.process()
 
   ~ z.call().call()
-  { x, weak [#k|Type] y, _ } <- z.call()
+  x, weak [#k|Type] y, _ <- z.call()
   x <- z.T<#z>$call().call()
   return _
   return a
-  return { a, z.call().call(), c }
+  return a, z.call().call(), c
 
   while (true) {
     ~ failure.to().execute()

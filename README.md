@@ -307,9 +307,9 @@ visible externally.
   <span style='color:#898887;'>// minMax is defined here.</span>
   minMax (x,y) {
     <b>if</b> (superfluousCheck(x,y)) {
-      <b>return</b> { x, y }
+      <b>return</b> x, y
     } <b>else</b> {
-      <b>return</b> { y, x }
+      <b>return</b> y, x
     }
   }
 
@@ -564,15 +564,16 @@ constructed using a combination of `while` and `scoped`.
 
 A procedure definition has two options for returning multiple values:
 
-1. Return all values at once using `{}` notation.
+1. Return all values. (Prior to compiler version `0.3.0.0`, multiple returns
+were enclosed in  `{}`, e.g., `return { x, y }`.)
 
 <pre style='color:#1f1c1b;background-color:#f6f8fa;'>
 <b>define</b> <b><span style='color:#0057ae;'>MyCategory</span></b> {
   minMax (x,y) {
     <b>if</b> (x &lt; y) {
-      <b>return</b> { x, y }
+      <b>return</b> x, y
     } <b>else</b> {
-      <b>return</b> { y, x }
+      <b>return</b> y, x
     }
   }
 }</pre>
@@ -602,10 +603,11 @@ A procedure definition has two options for returning multiple values:
 The caller of a function with multiple returns also has a few options:
 
 1. Assign the returns to a set of variables. You can ignore a position by using
-   `_` in that position.
+   `_` in that position. (Prior to compiler version `0.3.0.0`, multiple
+   assignments were enclosed in `{}`, e.g., `{ Int min, _ } <- minMax(4,3)`.)
 
 <pre style='color:#1f1c1b;background-color:#f6f8fa;'>
-{ <i><span style='color:#0057ae;'>Int</span></i> min, <b>_</b> } &lt;- minMax(<span style='color:#b08000;'>4</span>,<span style='color:#b08000;'>3</span>)</pre>
+<i><span style='color:#0057ae;'>Int</span></i> min, <b>_</b> &lt;- minMax(<span style='color:#b08000;'>4</span>,<span style='color:#b08000;'>3</span>)</pre>
 
 2. Pass them directly to a function that requires the same number of
    compatible arguments. (Note that you *cannot* concatenate the returns of

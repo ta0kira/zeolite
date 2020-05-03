@@ -443,7 +443,7 @@ define MatchBranchesMatcher {
     complete <- false
     scoped {
     } in while(present(current)) {
-      { MatchState state2, optional ReadSequence<MatchBrancher<#c>> branches2 } <-
+      MatchState state2, optional ReadSequence<MatchBrancher<#c>> branches2 <-
           require(current).value().tryBranches(data)
       if (state2 `MatchState$equals` MatchState$matchComplete()) {
         complete <- true
@@ -619,7 +619,7 @@ define BranchSequenceMatcher {
 
   tryBranches (data) {
     if (consumed) {
-      return { MatchState$matchFail(), empty }
+      return MatchState$matchFail(), empty
     }
     consumed <- true
     return recursiveBranch(data,continued,sequence)
@@ -640,7 +640,7 @@ define BranchSequenceMatcher {
       sequence2 <- require(sequence2).next()
     }
     if (require(continued2).matchSatisfied()) {
-      { MatchState state2, branch } <- recursiveBranch(data,empty,sequence2)
+      MatchState state2, branch <- recursiveBranch(data,empty,sequence2)
       if (state `MatchState$lessThan` state2) {
         state <- state2
       }

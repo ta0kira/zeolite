@@ -109,7 +109,8 @@ instance ParseFromSource (Statement SourcePos) where
                  parseIgnore where
     parseAssign = labeled "statement" $ do
       c <- getPosition
-      as <- multiDest <|> singleDest
+      as <- sepBy sourceParser (sepAfter $ string_ ",")
+      assignOperator
       e <- sourceParser
       statementEnd
       return $ Assignment [c] (Positional as) e
@@ -126,16 +127,6 @@ instance ParseFromSource (Statement SourcePos) where
       try kwFail
       e <- between (sepAfter $ string_ "(") (sepAfter $ string_ ")") sourceParser
       return $ FailCall [c] e
-    multiDest = do
-      as <- try $ between (sepAfter $ string_ "{")
-                          (sepAfter $ string_ "}")
-                          (sepBy sourceParser (sepAfter $ string_ ","))
-      assignOperator
-      return as
-    singleDest = do
-      a <- try sourceParser
-      assignOperator
-      return [a]
     parseIgnore = do
       c <- getPosition
       statementStart
@@ -145,19 +136,12 @@ instance ParseFromSource (Statement SourcePos) where
     parseReturn = labeled "return" $ do
       c <- getPosition
       try kwReturn
-      multiReturn c <|> singleReturn c <|> emptyReturn c
+      emptyReturn c <|> multiReturn c
     multiReturn :: SourcePos -> Parser (Statement SourcePos)
     multiReturn c = do
-      rs <- between (sepAfter $ string_ "{")
-                    (sepAfter $ string_ "}")
-                    (sepBy sourceParser (sepAfter $ string_ ","))
+      rs <- sepBy sourceParser (sepAfter $ string_ ",")
       statementEnd
       return $ ExplicitReturn [c] (Positional rs)
-    singleReturn :: SourcePos -> Parser (Statement SourcePos)
-    singleReturn c = do
-      r <- sourceParser
-      statementEnd
-      return $ ExplicitReturn [c] (Positional [r])
     emptyReturn :: SourcePos -> Parser (Statement SourcePos)
     emptyReturn c = do
       kwIgnore
@@ -238,7 +222,7 @@ instance ParseFromSource (ScopedBlock SourcePos) where
       kwIn
       -- TODO: If there's a parse error in an otherwise-valid {} then the actual
       -- error might look like a multi-assignment issue.
-      s <- try unconditional <|> sourceParser
+      s <- unconditional <|> sourceParser
       return $ ScopedBlock [c] p cl s
     justCleanup = do
       c <- getPosition

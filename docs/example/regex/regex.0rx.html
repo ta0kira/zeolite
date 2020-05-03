@@ -454,7 +454,7 @@
     complete &lt;- <b>false</b>
     <b>scoped</b> {
     } <b>in</b> <b>while</b>(<b>present</b>(current)) {
-      { <span style='color:#0057ae;'>MatchState</span> state2, <b>optional</b> <span style='color:#0057ae;'>ReadSequence</span><span style='color:#c02040;'>&lt;</span><span style='color:#0057ae;'>MatchBrancher</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;&gt;</span> branches2 } &lt;-
+      <span style='color:#0057ae;'>MatchState</span> state2, <b>optional</b> <span style='color:#0057ae;'>ReadSequence</span><span style='color:#c02040;'>&lt;</span><span style='color:#0057ae;'>MatchBrancher</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;&gt;</span> branches2 &lt;-
           <b>require</b>(current).value().tryBranches(data)
       <b>if</b> (state2 <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals<b><span style='color:#c02040;'>`</span></b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchComplete()) {
         complete &lt;- <b>true</b>
@@ -630,7 +630,7 @@
 
   tryBranches (data) {
     <b>if</b> (consumed) {
-      <b>return</b> { <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchFail(), <b>empty</b> }
+      <b>return</b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchFail(), <b>empty</b>
     }
     consumed &lt;- <b>true</b>
     <b>return</b> recursiveBranch(data,continued,sequence)
@@ -651,7 +651,7 @@
       sequence2 &lt;- <b>require</b>(sequence2).next()
     }
     <b>if</b> (<b>require</b>(continued2).matchSatisfied()) {
-      { <span style='color:#0057ae;'>MatchState</span> state2, branch } &lt;- recursiveBranch(data,<b>empty</b>,sequence2)
+      <span style='color:#0057ae;'>MatchState</span> state2, branch &lt;- recursiveBranch(data,<b>empty</b>,sequence2)
       <b>if</b> (state <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>lessThan<b><span style='color:#c02040;'>`</span></b> state2) {
         state &lt;- state2
       }

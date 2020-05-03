@@ -45,14 +45,14 @@ define Test {
     if (false) {
       x <- 1
     } else {
-      return { 3, 4 }
+      return 3, 4
     }
     y <- 2
   }
 
   run () {
     scoped {
-      { Int x, Int y } <- get()
+      Int x, Int y <- get()
     } in if (x != 3) {
       fail("Failed")
     } elif (y != 4) {
@@ -73,12 +73,12 @@ testcase "positional return instead of names" {
 define Test {
   @type get () -> (Int,Int)
   get () (x,y) {
-    return { 1, 2 }
+    return 1, 2
   }
 
   run () {
     scoped {
-      { Int x, Int y } <- get()
+      Int x, Int y <- get()
     } in if (x != 1) {
       fail("Failed")
     } elif (y != 2) {
@@ -103,13 +103,13 @@ define Test {
     if (false) {
       x <- 1
     } else {
-      return { 3, 4 }
+      return 3, 4
     }
   }
 
   run () {
     scoped {
-      { Int x, Int y } <- get()
+      Int x, Int y <- get()
     } in if (x != 3) {
       fail("Failed")
     } elif (y != 4) {
