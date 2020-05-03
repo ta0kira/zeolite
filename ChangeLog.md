@@ -1,6 +1,6 @@
 # Revision history for zeolite-lang
 
-## 0.3.0.0  -- ????-??-??
+## 0.3.0.0  -- 2020-05-03
 
 * **[breaking]** Updates syntax for discarding all returns to use `\` instead of
   `~`. This will allow `~` to be used for bitwise-not later on. (Not to mention
