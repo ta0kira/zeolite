@@ -1,12 +1,11 @@
 root: ".."
 path: "base"
 extra_files: [
+  "base/argv.cpp"
   "base/builtin.cpp"
   "base/builtin.hpp"
   "base/category-header.hpp"
   "base/category-source.cpp"
-  "base/argv.cpp"
-  "base/builtin.cpp"
   "base/category-source.hpp"
   "base/cycle-check.hpp"
   "base/function.hpp"
@@ -23,26 +22,26 @@ extra_paths: [
   "capture-thread/include"
 ]
 always_include: [
-  Bool
-  Char
-  Int
-  Float
-  String
   AsBool
   AsChar
-  AsInt
   AsFloat
+  AsInt
   AsString
-  Formatted
+  Bool
+  Char
   Equals
+  Float
+  Formatted
+  Int
   LessThan
   ReadPosition
+  String
 ]
 external: [
   Bool
   Char
-  Int
   Float
+  Int
   String
 ]
 mode: incremental
