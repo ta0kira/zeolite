@@ -116,15 +116,15 @@ compileCategoryModule (CategoryModule tm ns cs xa ex) = do
            (False,Just [_]) -> return ()
            (True,Nothing)   -> return ()
            (True,Just [d]) ->
-             compileError ("Public category " ++ show (getCategoryName t) ++
+             compileError ("Category " ++ show (getCategoryName t) ++
                            formatFullContextBrace (getCategoryContext t) ++
                            " was declared external but is also defined at " ++ formatFullContext (dcContext d))
            (False,Nothing) ->
-             compileError ("Public category " ++ show (getCategoryName t) ++
+             compileError ("Category " ++ show (getCategoryName t) ++
                            formatFullContextBrace (getCategoryContext t) ++
                            " has not been defined or declared external")
            (_,Just ds) ->
-             flip reviseError ("Public category " ++ show (getCategoryName t) ++
+             flip reviseError ("Category " ++ show (getCategoryName t) ++
                                formatFullContextBrace (getCategoryContext t) ++
                                " is defined " ++ show (length ds) ++ " times") $
                mergeAllM $ map (\d -> compileError $ "Defined at " ++ formatFullContext (dcContext d)) ds
