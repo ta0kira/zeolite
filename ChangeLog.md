@@ -2,6 +2,10 @@
 
 ## ?.?.?.?  -- ????-??-??
 
+* **[breaking]** Requires that `concrete` categories defined in `.cpp` files be
+  listed as `external` in `.zeolite-module`. This allows the compiler to ensure
+  that all categories have a definition, which helps avoid linker errors.
+
 * **[breaking]** Gives `.zeolite-module` configs a proper file format.
 
 * **[new]** Adds version checking to cached module data.

@@ -1,3 +1,0 @@
-concrete RegexTest {
-  @type runTests () -> ()
-}

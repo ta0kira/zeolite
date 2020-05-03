@@ -126,6 +126,7 @@ initLibraries = do
       coExtraPaths = [],
       coExtraRequires = [],
       coSourcePrefix = path,
+      coExternalDefs = [],
       coMode = CompileRecompile,
       coOutputName = "",
       coForce = ForceAll

@@ -84,14 +84,15 @@ data PrivateSource c =
 compileCategoryModule :: (Show c, CompileErrorM m, MergeableM m) =>
   CategoryModule c -> m [CxxOutput]
 compileCategoryModule (CategoryModule tm ns cs xa ex) = do
+  checkSupefluous $ Set.toList $ es `Set.difference` ca
   tm' <- includeNewTypes tm cs
   hxx <- collectAllOrErrorM $ map (compileCategoryDeclaration tm' ns) cs
   let interfaces = filter (not . isValueConcrete) cs
   cxx <- collectAllOrErrorM $ map compileInterfaceDefinition interfaces
   xa2 <- collectAllOrErrorM $ map (compileInternal ns) xa
   let xx = concat $ map snd xa2
-  let dm = Map.fromListWith (++) $ map (\d -> (dcName d,[d])) $ concat $ map fst xa2
-  checkDuplicates dm cs
+  let dm = mapByName $ concat $ map fst xa2
+  checkDefined dm $ filter isValueConcrete cs
   return $ hxx ++ cxx ++ xx where
     compileInternal ns0 (PrivateSource ns1 cs2 ds) = do
       let cs' = cs++cs2
@@ -100,20 +101,37 @@ compileCategoryModule (CategoryModule tm ns cs xa ex) = do
       let interfaces = filter (not . isValueConcrete) cs2
       cxx1 <- collectAllOrErrorM $ map compileInterfaceDefinition interfaces
       cxx2 <- collectAllOrErrorM $ map (compileDefinition tm' (ns1:ns)) ds
+      let dm = mapByName ds
+      checkDefined dm $ filter isValueConcrete cs2
       return (ds,hxx ++ cxx1 ++ cxx2)
     compileDefinition tm2 ns2 d = do
       tm2' <- mergeInternalInheritance tm2 d
       compileConcreteDefinition tm2' ns2 d
-    checkDuplicates dm = mergeAllM . map (check dm)
-    check dm t =
-      case getCategoryName t `Map.lookup` dm of
-           Nothing -> return ()
-           Just [_] -> return ()
-           Just ds ->
+    mapByName = Map.fromListWith (++) . map (\d -> (dcName d,[d]))
+    ca = Set.fromList $ map (show . getCategoryName) $ filter isValueConcrete cs
+    es = Set.fromList ex
+    checkDefined dm = mergeAllM . map (checkSingle dm)
+    checkSingle dm t =
+      case ((show $ getCategoryName t) `Set.member` es, getCategoryName t `Map.lookup` dm) of
+           (False,Just [_]) -> return ()
+           (True,Nothing)   -> return ()
+           (True,Just [d]) ->
+             compileError ("Public category " ++ show (getCategoryName t) ++
+                           formatFullContextBrace (getCategoryContext t) ++
+                           " was declared external but is also defined at " ++ formatFullContext (dcContext d))
+           (False,Nothing) ->
+             compileError ("Public category " ++ show (getCategoryName t) ++
+                           formatFullContextBrace (getCategoryContext t) ++
+                           " has not been defined or declared external")
+           (_,Just ds) ->
              flip reviseError ("Public category " ++ show (getCategoryName t) ++
                                formatFullContextBrace (getCategoryContext t) ++
                                " is defined " ++ show (length ds) ++ " times") $
                mergeAllM $ map (\d -> compileError $ "Defined at " ++ formatFullContext (dcContext d)) ds
+    checkSupefluous es2
+      | null es2 = return ()
+      | otherwise = compileError $ "External categories either not concrete or not present: " ++
+                                   intercalate ", " es2
 
 compileModuleMain :: (Show c, CompileErrorM m, MergeableM m) =>
   CategoryModule c -> CategoryName -> FunctionName -> m CxxOutput

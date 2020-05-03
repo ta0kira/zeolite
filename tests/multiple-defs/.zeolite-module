@@ -1,3 +1,0 @@
-root: "../.."
-path: "tests/multiple-defs"
-mode: incremental
