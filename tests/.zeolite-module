@@ -4,12 +4,4 @@ public_deps: [
   "visibility"
   "visibility2"
 ]
-private_deps: [
-]
-extra_files: [
-]
-extra_paths: [
-]
-always_include: [
-]
 mode: incremental

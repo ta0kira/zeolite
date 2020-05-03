@@ -115,36 +115,30 @@ parseList p = labeled "list" $ do
   optionalSpace
   return xs
 
+parseOptional :: String -> a -> Parser a -> Parser a
+parseOptional l def p = parseRequired l p <|> return def
+
+parseRequired :: String -> Parser a -> Parser a
+parseRequired l p = do
+    try $ sepAfter (string_ l)
+    p
+
 instance ConfigFormat CompileMetadata where
   readConfig = do
-    sepAfter (string_ "version_hash:")
-    h <- parseHash
-    sepAfter (string_ "path:")
-    p <- parseQuoted
-    sepAfter (string_ "namespace:")
-    ns <- parseNamespace
-    sepAfter (string_ "public_deps:")
-    is <- parseList parseQuoted
-    sepAfter (string_ "private_deps:")
-    is2 <- parseList parseQuoted
-    sepAfter (string_ "extra:")
-    es <- parseList readConfig
-    sepAfter (string_ "categories:")
-    cs <- parseList parseCategoryName
-    sepAfter (string_ "subdirs:")
-    ds <- parseList parseQuoted
-    sepAfter (string_ "public_files:")
-    ps <- parseList parseQuoted
-    sepAfter (string_ "private_files:")
-    xs <- parseList parseQuoted
-    sepAfter (string_ "test_files:")
-    ts <- parseList parseQuoted
-    sepAfter (string_ "hxx_files:")
-    hxx <- parseList parseQuoted
-    sepAfter (string_ "cxx_files:")
-    cxx <- parseList parseQuoted
-    sepAfter (string_ "object_files:")
-    os <- parseList readConfig
+    h <-   parseRequired "version_hash:"  parseHash
+    p <-   parseRequired "path:"          parseQuoted
+    ns <-  parseRequired "namespace:"     parseNamespace
+    is <-  parseRequired "public_deps:"   (parseList parseQuoted)
+    is2 <- parseRequired "private_deps:"  (parseList parseQuoted)
+    es <-  parseRequired "extra:"         (parseList readConfig)
+    cs <-  parseRequired "categories:"    (parseList parseCategoryName)
+    ds <-  parseRequired "subdirs:"       (parseList parseQuoted)
+    ps <-  parseRequired "public_files:"  (parseList parseQuoted)
+    xs <-  parseRequired "private_files:" (parseList parseQuoted)
+    ts <-  parseRequired "test_files:"    (parseList parseQuoted)
+    hxx <- parseRequired "hxx_files:"     (parseList parseQuoted)
+    cxx <- parseRequired "cxx_files:"     (parseList parseQuoted)
+    os <-  parseRequired "object_files:"  (parseList readConfig)
     return (CompileMetadata h p ns is is2 es cs ds ps xs ts hxx cxx os)
   writeConfig m = do
     validateHash (cmVersionHash m)
@@ -196,19 +190,15 @@ instance ConfigFormat ObjectFile where
     category = do
       sepAfter (string_ "category_object")
       structOpen
-      sepAfter (string_ "category:")
-      c <- readConfig
-      sepAfter (string_ "requires:")
-      rs <- parseList readConfig
-      sepAfter (string_ "files:")
-      fs <- parseList parseQuoted
+      c <-  parseRequired "category:" readConfig
+      rs <- parseRequired "requires:" (parseList readConfig)
+      fs <- parseRequired "files:"    (parseList parseQuoted)
       structClose
       return (CategoryObjectFile c rs fs)
     other = do
       sepAfter (string_ "other_object")
       structOpen
-      sepAfter (string_ "file:")
-      f <- parseQuoted
+      f <- parseRequired "file:" parseQuoted
       structClose
       return (OtherObjectFile f)
   writeConfig (CategoryObjectFile c rs fs) = do
@@ -237,19 +227,15 @@ instance ConfigFormat CategoryIdentifier where
     category = do
       sepAfter (string_ "category")
       structOpen
-      sepAfter (string_ "name:")
-      c <- parseCategoryName
-      sepAfter (string_ "namespace:")
-      ns <- parseNamespace
-      sepAfter (string_ "path:")
-      p <- parseQuoted
+      c <-  parseRequired "name:"      parseCategoryName
+      ns <- parseRequired "namespace:" parseNamespace
+      p <-  parseRequired "path:"      parseQuoted
       structClose
       return (CategoryIdentifier p c ns)
     unresolved = do
       sepAfter (string_ "unresolved")
       structOpen
-      sepAfter (string_ "name:")
-      c <- parseCategoryName
+      c <- parseRequired "name:" parseCategoryName
       structClose
       return (UnresolvedCategory c)
   writeConfig (CategoryIdentifier p c ns) = do
@@ -268,27 +254,16 @@ instance ConfigFormat CategoryIdentifier where
 
 instance ConfigFormat ModuleConfig where
   readConfig = do
-      sepAfter (string_ "root:")
-      p <- parseQuoted
-      sepAfter (string_ "path:")
-      d <- parseQuoted
-      sepAfter (string_ "public_deps:")
-      is <- parseList parseQuoted
-      sepAfter (string_ "private_deps:")
-      is2 <- parseList parseQuoted
-      sepAfter (string_ "extra_files:")
-      es <- parseList parseQuoted
-      sepAfter (string_ "extra_paths:")
-      ep <- parseList parseQuoted
-      sepAfter (string_ "always_include:")
-      ec <- parseList parseCategoryName
-      sepAfter (string_ "mode:")
-      m <- readConfig
-      o <- output <|> return ""
-      return ((ModuleConfig p d is is2 es ep ec m o)) where
-        output = do
-          sepAfter (string_ "output:")
-          parseQuoted
+      p <-   parseOptional "root:"           "" parseQuoted
+      d <-   parseRequired "path:"              parseQuoted
+      is <-  parseOptional "public_deps:"    [] (parseList parseQuoted)
+      is2 <- parseOptional "private_deps:"   [] (parseList parseQuoted)
+      es <-  parseOptional "extra_files:"    [] (parseList parseQuoted)
+      ep <-  parseOptional "extra_paths:"    [] (parseList parseQuoted)
+      ec <-  parseOptional "always_include:" [] (parseList parseCategoryName)
+      m <-   parseRequired "mode:"              readConfig
+      o <-   parseOptional "output:"         "" parseQuoted
+      return (ModuleConfig p d is is2 es ep ec m o)
   writeConfig m = do
     _ <- collectAllOrErrorM $ map validateCategoryName (rmExtraRequires m)
     mode <- writeConfig (rmMode m)
@@ -320,10 +295,8 @@ instance ConfigFormat CompileMode where
     binary = do
       sepAfter (string_ "binary")
       structOpen
-      sepAfter (string_ "category:")
-      c <- parseCategoryName
-      sepAfter (string_ "function:")
-      f <- parseFunctionName
+      c <- parseRequired "category:" parseCategoryName
+      f <- parseRequired "function:" parseFunctionName
       structClose
       return (CompileBinary c f)
     incremental = do

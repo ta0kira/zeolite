@@ -1,13 +1,3 @@
 root: "../.."
 path: "visibility2/internal"
-public_deps: [
-]
-private_deps: [
-]
-extra_files: [
-]
-extra_paths: [
-]
-always_include: [
-]
 mode: incremental

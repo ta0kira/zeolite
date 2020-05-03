@@ -1,16 +1,8 @@
 root: ".."
 path: "util"
-public_deps: [
-]
-private_deps: [
-]
 extra_files: [
   "util/Category_Argv.cpp"
   "util/Category_SimpleInput.cpp"
   "util/Category_SimpleOutput.cpp"
-]
-extra_paths: [
-]
-always_include: [
 ]
 mode: incremental

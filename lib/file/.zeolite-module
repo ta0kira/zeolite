@@ -3,14 +3,8 @@ path: "file"
 public_deps: [
   "../util"
 ]
-private_deps: [
-]
 extra_files: [
   "file/Category_RawFileReader.cpp"
   "file/Category_RawFileWriter.cpp"
-]
-extra_paths: [
-]
-always_include: [
 ]
 mode: incremental
