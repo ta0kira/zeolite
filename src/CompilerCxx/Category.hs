@@ -84,18 +84,18 @@ compileCategoryModule :: (Show c, CompileErrorM m, MergeableM m) =>
   CategoryModule c -> m [CxxOutput]
 compileCategoryModule (CategoryModule tm ns cs xa) = do
   tm' <- includeNewTypes tm cs
-  hxx <- collectAllOrErrorM $ map (compileCategoryDeclaration tm') cs
+  hxx <- collectAllOrErrorM $ map (compileCategoryDeclaration tm' ns) cs
   let interfaces = filter (not . isValueConcrete) cs
   cxx <- collectAllOrErrorM $ map compileInterfaceDefinition interfaces
-  xa2 <- collectAllOrErrorM $ map compileInternal xa
+  xa2 <- collectAllOrErrorM $ map (compileInternal ns) xa
   let xx = concat $ map snd xa2
   let dm = Map.fromListWith (++) $ map (\d -> (dcName d,[d])) $ concat $ map fst xa2
   checkDuplicates dm cs
   return $ hxx ++ cxx ++ xx where
-    compileInternal (PrivateSource ns1 cs2 ds) = do
+    compileInternal ns0 (PrivateSource ns1 cs2 ds) = do
       let cs' = cs++cs2
       tm' <- includeNewTypes tm cs'
-      hxx <- collectAllOrErrorM $ map (compileCategoryDeclaration tm') cs2
+      hxx <- collectAllOrErrorM $ map (compileCategoryDeclaration tm' ns0) cs2
       let interfaces = filter (not . isValueConcrete) cs2
       cxx1 <- collectAllOrErrorM $ map compileInterfaceDefinition interfaces
       cxx2 <- collectAllOrErrorM $ map (compileDefinition tm' (ns1:ns)) ds
@@ -133,12 +133,12 @@ compileModuleMain (CategoryModule tm _ cs xa) n f = do
     reconcile _   = compileErrorM $ "Multiple matches for main category " ++ show n
 
 compileCategoryDeclaration :: (Show c, CompileErrorM m, MergeableM m) =>
-  CategoryMap c -> AnyCategory c -> m CxxOutput
-compileCategoryDeclaration _ t =
+  CategoryMap c -> [Namespace] -> AnyCategory c -> m CxxOutput
+compileCategoryDeclaration _ ns t =
   return $ CxxOutput (Just $ getCategoryName t)
                      (headerFilename name)
                      (getCategoryNamespace t)
-                     [getCategoryNamespace t]
+                     (ns ++ [getCategoryNamespace t])
                      (filter (not . isBuiltinCategory) $ Set.toList $ cdRequired file)
                      (cdOutput file) where
     file = mergeAll $ [

@@ -357,7 +357,8 @@ keyByCategory :: CategoryIdentifier -> ((String,String),CategoryIdentifier)
 keyByCategory c = ((ciCategory c,ciNamespace c),c)
 
 resolveDep :: Map.Map (String,String) CategoryIdentifier -> [String] -> String -> [CategoryIdentifier]
-resolveDep cm ns d = unwrap $ foldl (<|>) Nothing allChecks where
-  allChecks = map (\n -> (d,n) `Map.lookup` cm >>= return . (:[])) ns
-  unwrap (Just xs) = xs
-  unwrap _         = [UnresolvedCategory d]
+resolveDep cm (n:ns) d =
+  case (d,n) `Map.lookup` cm of
+       Just xs -> [xs]
+       Nothing -> resolveDep cm ns d
+resolveDep _ _ d = [UnresolvedCategory d]
