@@ -26,7 +26,6 @@ always_include: [
   AsChar
   AsFloat
   AsInt
-  AsString
   Bool
   Char
   Equals
