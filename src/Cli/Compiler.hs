@@ -200,7 +200,8 @@ runCompiler (CompileOptions _ is is2 ds es ep ec p m o f) = do
           formatWarnings fs
           let (pc,mf,fs') = getCompileSuccess fs
           let ss = map (\ns -> getCachedPath (p </> d) ns "") $ nub $ filter (not . null) $ map show $ [ns0] ++ map coNamespace fs'
-          let paths' = paths ++ ep' ++ ss
+          ss' <- sequence $ map canonicalizePath ss
+          let paths' = paths ++ ep' ++ ss'
           let hxx   = filter (isSuffixOf ".hpp" . coFilename)       fs'
           let other = filter (not . isSuffixOf ".hpp" . coFilename) fs'
           os1 <- sequence $ map (writeOutputFile b (show ns0) paths' d) $ hxx ++ other
@@ -222,7 +223,7 @@ runCompiler (CompileOptions _ is is2 ds es ep ec p m o f) = do
               cmPrivateDeps = as2,
               cmExtraRequires = [],
               cmCategories = sort $ map show pc,
-              cmSubdirs = sort $ ss ++ ep',
+              cmSubdirs = sort $ ss' ++ ep',
               cmPublicFiles = sort ps,
               cmPrivateFiles = sort xs,
               cmTestFiles = sort ts,
