@@ -7,18 +7,18 @@ define HelloDemo {
     scoped {
       TextReader reader <- TextReader$fromBlockReader(SimpleInput$stdin())
     } cleanup {
-      ~ LazyStream<Formatted>$new()
+      \ LazyStream<Formatted>$new()
           .append("Goodbye.\n")
           .writeTo(SimpleOutput$stderr())
     } in while (!reader.pastEnd()) {
-      ~ LazyStream<Formatted>$new()
+      \ LazyStream<Formatted>$new()
           .append("What is your name? ")
           .writeTo(SimpleOutput$stderr())
       String name <- reader.readNextLine()
       if (name.readSize() == 0) {
         break
       }
-      ~ LazyStream<Formatted>$new()
+      \ LazyStream<Formatted>$new()
           .append("Hello \"")
           .append(name)
           .append("\", if that's your real name.\n")

@@ -53,13 +53,13 @@ define Node {
     }
     Node<#k,#v> node2 <- require(node)
     if (k `#k$lessThan` node2.getKey()) {
-      ~ node2.setLower(insert(node2.getLower(),k,v))
+      \ node2.setLower(insert(node2.getLower(),k,v))
       return rebalance(node2)
     } elif (node2.getKey() `#k$lessThan` k) {
-      ~ node2.setHigher(insert(node2.getHigher(),k,v))
+      \ node2.setHigher(insert(node2.getHigher(),k,v))
       return rebalance(node2)
     } else {
-      ~ node2.setValue(v)
+      \ node2.setValue(v)
       return node2
     }
   }
@@ -70,10 +70,10 @@ define Node {
     }
     Node<#k,#v> node2 <- require(node)
     if (k `#k$lessThan` node2.getKey()) {
-      ~ node2.setLower(delete(node2.getLower(),k))
+      \ node2.setLower(delete(node2.getLower(),k))
       return rebalance(node2)
     } elif (node2.getKey() `#k$lessThan` k) {
-      ~ node2.setHigher(delete(node2.getHigher(),k))
+      \ node2.setHigher(delete(node2.getHigher(),k))
       return rebalance(node2)
     } else {
       return rebalance(removeNode(node2))
@@ -134,7 +134,7 @@ define Node {
       return empty
     }
     Node<#k,#v> node2 <- require(node)
-    ~ node2.updateHeight()
+    \ node2.updateHeight()
     scoped {
       Int balance <- node2.getBalance()
     } in if (balance > 1) {
@@ -149,39 +149,39 @@ define Node {
   @type pivotHigher (Node<#k,#v>) -> (Node<#k,#v>)
   pivotHigher (node) (newNode) {
     if (require(node.getLower()).getBalance() > 0) {
-      ~ node.setLower(pivotLower(require(node.getLower())))
+      \ node.setLower(pivotLower(require(node.getLower())))
     }
     newNode <- require(node.getLower())
-    ~ node.setLower(newNode.getHigher())
-    ~ node.updateHeight()
-    ~ newNode.setHigher(node)
-    ~ newNode.updateHeight()
+    \ node.setLower(newNode.getHigher())
+    \ node.updateHeight()
+    \ newNode.setHigher(node)
+    \ newNode.updateHeight()
   }
 
   @type pivotLower (Node<#k,#v>) -> (Node<#k,#v>)
   pivotLower (node) (newNode) {
     if (require(node.getHigher()).getBalance() < 0) {
-      ~ node.setHigher(pivotHigher(require(node.getHigher())))
+      \ node.setHigher(pivotHigher(require(node.getHigher())))
     }
     newNode <- require(node.getHigher())
-    ~ node.setHigher(newNode.getLower())
-    ~ node.updateHeight()
-    ~ newNode.setLower(node)
-    ~ newNode.updateHeight()
+    \ node.setHigher(newNode.getLower())
+    \ node.updateHeight()
+    \ newNode.setLower(node)
+    \ newNode.updateHeight()
   }
 
   @type removeNode (Node<#k,#v>) -> (optional Node<#k,#v>)
   removeNode (node) (newNode) {
     if (node.getBalance() < 0) {
       optional Node<#k,#v> temp, newNode <- removeHighest(node.getLower())
-      ~ node.setLower(temp)
+      \ node.setLower(temp)
     } else {
       optional Node<#k,#v> temp, newNode <- removeLowest(node.getHigher())
-      ~ node.setHigher(temp)
+      \ node.setHigher(temp)
     }
     if (present(newNode)) {
-      ~ swapChildren(node,require(newNode))
-      ~ require(newNode).updateHeight()
+      \ swapChildren(node,require(newNode))
+      \ require(newNode).updateHeight()
     }
   }
 
@@ -193,11 +193,11 @@ define Node {
     Node<#k,#v> node2 <- require(node)
     if (present(node2.getHigher())) {
       optional Node<#k,#v> temp, removed <- removeHighest(node2.getHigher())
-      ~ node2.setHigher(temp)
+      \ node2.setHigher(temp)
       newNode <- rebalance(node2)
     } else {
       newNode <- node2.getLower()
-      ~ node2.setLower(empty)
+      \ node2.setLower(empty)
       removed <- node
     }
   }
@@ -210,11 +210,11 @@ define Node {
     Node<#k,#v> node2 <- require(node)
     if (present(node2.getLower())) {
       optional Node<#k,#v> temp, removed <- removeLowest(node2.getLower())
-      ~ node2.setLower(temp)
+      \ node2.setLower(temp)
       newNode <- rebalance(node2)
     } else {
       newNode <- node2.getHigher()
-      ~ node2.setHigher(empty)
+      \ node2.setHigher(empty)
       removed <- node
     }
   }
@@ -223,12 +223,12 @@ define Node {
   swapChildren (l,r) {
     scoped {
       optional Node<#k,#v> temp <- l.getLower()
-      ~ l.setLower(r.getLower())
-    } in ~ r.setLower(temp)
+      \ l.setLower(r.getLower())
+    } in \ r.setLower(temp)
     scoped {
       optional Node<#k,#v> temp <- l.getHigher()
-      ~ l.setHigher(r.getHigher())
-    } in ~ r.setHigher(temp)
+      \ l.setHigher(r.getHigher())
+    } in \ r.setHigher(temp)
   }
 
   @value getHeight () -> (Int)

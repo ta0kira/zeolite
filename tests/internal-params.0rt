@@ -59,7 +59,7 @@ define Value {
 
 define Test {
   run () {
-    ~ Value$something<Bool>()
+    \ Value$something<Bool>()
   }
 }
 
@@ -86,7 +86,7 @@ define Value {
 
 define Test {
   run () {
-    ~ Value$$something<Bool>()
+    \ Value$$something<Bool>()
   }
 }
 
@@ -117,7 +117,7 @@ define Value {
 
 define Test {
   run () {
-    ~ Value$create<Type1,Type2>()
+    \ Value$create<Type1,Type2>()
   }
 }
 
@@ -262,7 +262,7 @@ define Value {
 
 define Test {
   run () {
-    ~ Value$create<Bool>(Type<Bool>$create())
+    \ Value$create<Bool>(Type<Bool>$create())
   }
 }
 
@@ -305,7 +305,7 @@ define Value {
 
 define Test {
   run () {
-    ~ Value$create<String>(Type<Bool>$create())
+    \ Value$create<String>(Type<Bool>$create())
   }
 }
 

@@ -107,7 +107,7 @@ It's the [any%](https://en.wiktionary.org/wiki/any%25) of programming.
 
 <b>define</b> <b><span style='color:#0057ae;'>HelloWorld</span></b> {
   run () {
-    <span style='color:#006e28;'>~</span> <span style='color:#0057ae;'>LazyStream</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Formatted</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>$</span>new()
+    <span style='color:#006e28;'>\</span> <span style='color:#0057ae;'>LazyStream</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Formatted</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>$</span>new()
         .append(<span style='color:#bf0303;'>&quot;Hello World</span><span style='color:#924c9d;'>\n</span><span style='color:#bf0303;'>&quot;</span>)
         .writeTo(<span style='color:#0057ae;'>SimpleOutput</span><span style='color:#644a9b;'>$</span>stderr())
   }
@@ -365,7 +365,8 @@ simplify parsing.)
 <b>_</b> &lt;- getValue()
 
 <span style='color:#898887;'>// Ignore all aspects of the return.</span>
-<span style='color:#006e28;'>~</span> printHelp()</pre>
+<span style='color:#898887;'>// (Prior to compiler version 0.3.0.0, ~ was used instead of \.)</span>
+<span style='color:#006e28;'>\</span> printHelp()</pre>
 
 - Calling a function with `@value` scope requires a value of the correct type,
   and uses `.` notation, e.g., `foo.getValue()`.
@@ -381,7 +382,7 @@ simplify parsing.)
 
 The `fail` builtin can be used to immediately terminate the program. It *is not*
 considered a function since it cannot return; therefore, you do not need to
-precede it with `~`.
+precede it with `\`.
 
 <pre style='color:#1f1c1b;background-color:#f6f8fa;'>
 <b>define</b> <b><span style='color:#0057ae;'>MyProgram</span></b> {
@@ -633,7 +634,7 @@ value &lt;- <span style='color:#b08000;'>1</span>
 <span style='color:#898887;'>// present returns true iff the value is not empty.</span>
 <b>if</b> (<b>present</b>(value)) {
   <span style='color:#898887;'>// Use require to convert the value to something usable.</span>
-  <span style='color:#006e28;'>~</span> foo(<b>require</b>(value))
+  <span style='color:#006e28;'>\</span> foo(<b>require</b>(value))
 }</pre>
 
 **`weak`** values are similar, but require an additional step to convert them to

@@ -42,7 +42,7 @@ testcase "assign before logical" {
 define Test {
   @value process () -> (Bool)
   process () (value) {
-    ~ (value <- true) || false
+    \ (value <- true) || false
   }
 
   run () {}
@@ -61,7 +61,7 @@ testcase "assign after logical" {
 define Test {
   @value process () -> (Bool)
   process () (value) {
-    ~ false || (value <- true)
+    \ false || (value <- true)
   }
 
   run () {}
@@ -79,7 +79,7 @@ testcase "assign before arithmetic" {
 define Test {
   @value process () -> (Int)
   process () (value) {
-    ~ (value <- 1) + 2
+    \ (value <- 1) + 2
   }
 
   run () {}
@@ -97,7 +97,7 @@ testcase "assign after arithmetic" {
 define Test {
   @value process () -> (Int)
   process () (value) {
-    ~ 2 + (value <- 1)
+    \ 2 + (value <- 1)
   }
 
   run () {}

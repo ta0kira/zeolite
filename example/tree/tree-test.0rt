@@ -27,7 +27,7 @@ define Test {
       Int i <- 0
     } in while (i < count) {
       Int new <- ((i + 13) * 3547) % count
-      ~ tree.set(new,i)
+      \ tree.set(new,i)
     } update {
       i <- i+1
     }
@@ -40,14 +40,14 @@ define Test {
       scoped {
         optional Int value <- tree.get(new)
       } in if (!present(value)) {
-        ~ LazyStream<Formatted>$new()
+        \ LazyStream<Formatted>$new()
             .append("Not found ")
             .append(new)
             .append(" but should have been ")
             .append(i)
             .writeTo(SimpleOutput$error())
       } elif (require(value) != i) {
-        ~ LazyStream<Formatted>$new()
+        \ LazyStream<Formatted>$new()
             .append("Element ")
             .append(new)
             .append(" should have been ")
@@ -56,7 +56,7 @@ define Test {
             .append(require(value))
             .writeTo(SimpleOutput$error())
       }
-      ~ tree.remove(new)
+      \ tree.remove(new)
     } update {
       i <- i+1
     }

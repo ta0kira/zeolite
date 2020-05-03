@@ -262,7 +262,7 @@ define Call {
 
 define Test {
   run () {
-    ~ typename<Value<Test>>()
+    \ typename<Value<Test>>()
   }
 }
 

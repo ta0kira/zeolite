@@ -37,7 +37,7 @@ define ReadIterator {
 
   readCurrent () {
     if (pastForwardEnd() || pastReverseEnd()) {
-      ~ LazyStream<Formatted>$new()
+      \ LazyStream<Formatted>$new()
           .append("Position ")
           .append(position)
           .append(" is out of bounds")
@@ -78,16 +78,16 @@ define LazyStream {
   @value recursive (Writer<#x>) -> ()
   recursive (writer) {
     if (present(next)) {
-      ~ require(next).recursive(writer)
+      \ require(next).recursive(writer)
     }
     if (present(value)) {
-      ~ writer.write(require(value))
+      \ writer.write(require(value))
     }
   }
 
   writeTo (writer) {
-    ~ recursive(writer)
-    ~ writer.flush()
+    \ recursive(writer)
+    \ writer.flush()
   }
 }
 

@@ -32,7 +32,7 @@ define Value {
 
 define Test {
   run () {
-    ~ Value$$something<Bool>()
+    \ Value$$something<Bool>()
   }
 }
 

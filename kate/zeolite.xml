@@ -108,7 +108,7 @@
         <IncludeRules context="Any Expression" />
         <Detect2Chars attribute="Assign" context="#stay" char="&lt;" char1="-" />
         <Detect2Chars attribute="Assign" context="#stay" char="-" char1="&gt;" />
-        <DetectChar attribute="Voided" context="#stay" char="~" />
+        <DetectChar attribute="Voided" context="#stay" char="\\" />
       </context>
 
       <context name="Declare Type" attribute="Normal Text" lineEndContext="#stay" >
@@ -169,6 +169,7 @@
 
       <context name="Any Expression" attribute="Normal Text" lineEndContext="#stay" >
         <IncludeRules context="Any Comment" />
+        <RegExpr attribute="Normal Text" context="#stay" String="[a-z][a-zA-Z0-9]*" />
         <RegExpr attribute="Number" context="#stay" String="(-|)\\[xX][0-9a-fA-F]+" />
         <RegExpr attribute="Number" context="#stay" String="(-|)\\[dD][0-9]+" />
         <RegExpr attribute="Number" context="#stay" String="(-|)\\[oO][0-7]+" />

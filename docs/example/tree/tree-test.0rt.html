@@ -38,7 +38,7 @@
       <i><span style='color:#0057ae;'>Int</span></i> i &lt;- <span style='color:#b08000;'>0</span>
     } <b>in</b> <b>while</b> (i &lt; count) {
       <i><span style='color:#0057ae;'>Int</span></i> new &lt;- ((i + <span style='color:#b08000;'>13</span>) * <span style='color:#b08000;'>3547</span>) % count
-      <span style='color:#006e28;'>~</span> tree.set(new,i)
+      <span style='color:#006e28;'>\</span> tree.set(new,i)
     } <b>update</b> {
       i &lt;- i+<span style='color:#b08000;'>1</span>
     }
@@ -51,14 +51,14 @@
       <b>scoped</b> {
         <b>optional</b> <i><span style='color:#0057ae;'>Int</span></i> value &lt;- tree.get(new)
       } <b>in</b> <b>if</b> (!<b>present</b>(value)) {
-        <span style='color:#006e28;'>~</span> <span style='color:#0057ae;'>LazyStream</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Formatted</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>$</span>new()
+        <span style='color:#006e28;'>\</span> <span style='color:#0057ae;'>LazyStream</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Formatted</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>$</span>new()
             .append(<span style='color:#bf0303;'>&quot;Not found &quot;</span>)
             .append(new)
             .append(<span style='color:#bf0303;'>&quot; but should have been &quot;</span>)
             .append(i)
             .writeTo(<span style='color:#0057ae;'>SimpleOutput</span><span style='color:#644a9b;'>$</span>error())
       } <b>elif</b> (<b>require</b>(value) != i) {
-        <span style='color:#006e28;'>~</span> <span style='color:#0057ae;'>LazyStream</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Formatted</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>$</span>new()
+        <span style='color:#006e28;'>\</span> <span style='color:#0057ae;'>LazyStream</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Formatted</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>$</span>new()
             .append(<span style='color:#bf0303;'>&quot;Element &quot;</span>)
             .append(new)
             .append(<span style='color:#bf0303;'>&quot; should have been &quot;</span>)
@@ -67,7 +67,7 @@
             .append(<b>require</b>(value))
             .writeTo(<span style='color:#0057ae;'>SimpleOutput</span><span style='color:#644a9b;'>$</span>error())
       }
-      <span style='color:#006e28;'>~</span> tree.remove(new)
+      <span style='color:#006e28;'>\</span> tree.remove(new)
     } <b>update</b> {
       i &lt;- i+<span style='color:#b08000;'>1</span>
     }

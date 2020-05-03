@@ -72,7 +72,7 @@ testcase "require empty" {
 
 define Test {
   run () {
-    ~ require(empty)
+    \ require(empty)
   }
 }
 

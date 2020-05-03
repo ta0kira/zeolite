@@ -651,7 +651,7 @@ testcase "String access negative" {
 
 define Test {
   run () {
-    ~ ("abc").readPosition(-10)
+    \ ("abc").readPosition(-10)
   }
 }
 
@@ -668,7 +668,7 @@ testcase "String access past end" {
 
 define Test {
   run () {
-    ~ ("abc").readPosition(100)
+    \ ("abc").readPosition(100)
   }
 }
 
@@ -723,7 +723,7 @@ testcase "String subsequence past end" {
 
 define Test {
   run () {
-    ~ ("abc").subSequence(1,100)
+    \ ("abc").subSequence(1,100)
   }
 }
 
@@ -793,7 +793,7 @@ testcase "Int literal too large" {
 
 define Test {
   run () {
-    ~ 9223372036854775808
+    \ 9223372036854775808
   }
 }
 
@@ -810,7 +810,7 @@ testcase "Int unsigned literal too large" {
 
 define Test {
   run () {
-    ~ \x10000000000000000
+    \ \x10000000000000000
   }
 }
 
@@ -827,7 +827,7 @@ testcase "Int literal too small" {
 
 define Test {
   run () {
-    ~ -9223372036854775807
+    \ -9223372036854775807
   }
 }
 

@@ -37,13 +37,13 @@ define Test {
 
   @value check () -> ()
   check () {
-    ~ require(self2)
+    \ require(self2)
   }
 
   run () {
     Test value <- create()
-    ~ value.set()
-    ~ value.check()
+    \ value.set()
+    \ value.check()
   }
 }
 
@@ -82,8 +82,8 @@ define Test {
 
   run () {
     Test value <- create()
-    ~ value.set()
-    ~ value.check()
+    \ value.set()
+    \ value.check()
   }
 }
 
@@ -112,7 +112,7 @@ define Test {
 
   run () {
     Test value <- create()
-    ~ value.check()
+    \ value.check()
   }
 }
 
@@ -259,7 +259,7 @@ define Test {
 
   run () {
     Test value <- create()
-    ~ require(value).call()
+    \ require(value).call()
   }
 }
 

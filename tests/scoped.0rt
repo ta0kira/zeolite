@@ -71,7 +71,7 @@ define Test {
   process () {
     scoped {
       return empty
-    } in ~ empty
+    } in \ empty
   }
 
   run () {}
@@ -135,7 +135,7 @@ define Test {
   process () (value) {
     scoped {
       value <- empty
-    } in ~ empty
+    } in \ empty
   }
 
   run () {}
@@ -201,7 +201,7 @@ define Test {
       Int value <- 1
     } cleanup {
       Int value <- 2
-    } in ~ empty
+    } in \ empty
   }
 }
 
@@ -328,7 +328,7 @@ define Test {
   }
 
   run () {
-    ~ get()
+    \ get()
   }
 }
 
@@ -412,7 +412,7 @@ define Test {
     } cleanup {
       value2 <- 2
       value3 <- 2
-    } in ~ empty
+    } in \ empty
     if (value1 != 1) {
       fail(value1)
     }
@@ -532,7 +532,7 @@ define Test {
     } in scoped {
     } cleanup {
       value <- 1
-    } in ~ empty
+    } in \ empty
   }
 }
 
@@ -594,7 +594,7 @@ define Test {
       if (value != 0) {
         fail(value)
       }
-    } in ~ empty
+    } in \ empty
 
     value <- 1
     return _
@@ -617,7 +617,7 @@ define Test {
     scoped {
       Int x <- 1
     } in {
-      ~ x
+      \ x
     }
   }
 }

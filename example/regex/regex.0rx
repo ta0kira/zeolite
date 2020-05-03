@@ -280,14 +280,14 @@ define MatchRepeatMatcher {
     if (state `MatchState$equals` MatchState$matchFail() &&
         lastState `MatchState$equals` MatchState$matchContinue() && canSkip) {
       // Handle the case where an optional end to the pattern can be skipped.
-      ~ incrementMatch()
-      ~ startRepeat()
+      \ incrementMatch()
+      \ startRepeat()
       state <- matcher.tryNextMatch(data)
     }
     lastState <- state
     if (state `MatchState$equals` MatchState$matchComplete()) {
-      ~ incrementMatch()
-      ~ startRepeat()
+      \ incrementMatch()
+      \ startRepeat()
       if (atMax()) {
         state <- MatchState$matchComplete()
       } else {
@@ -514,8 +514,8 @@ define BranchRepeatMatcher {
                                        MatchState$matchContinue() },empty)
         }
         // Continue, skipping over the optional suffix.
-        ~ incrementMatch()
-        ~ startRepeat()
+        \ incrementMatch()
+        \ startRepeat()
         if (atMax()) {
           // Skipping the branch puts us at the max.
           return _
@@ -528,8 +528,8 @@ define BranchRepeatMatcher {
     }
     lastState <- state
     if (state `MatchState$equals` MatchState$matchComplete()) {
-      ~ incrementMatch()
-      ~ startRepeat()
+      \ incrementMatch()
+      \ startRepeat()
       if (!atMax()) {
         branch <- LinkedNode<BranchRepeatMatcher<#c>>$create(self,branch)
       }

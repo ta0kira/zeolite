@@ -41,7 +41,7 @@ define Test {
 
   @type call () -> ()
   call () {
-    ~ value
+    \ value
   }
 
   run () {}
@@ -61,7 +61,7 @@ define Test {
 
   @value call () -> ()
   call () {
-    ~ value
+    \ value
   }
 
   run () {}
@@ -193,7 +193,7 @@ define Test {
   @category Bool value <- Util$doNotUse()
 
   run () {
-    ~ value
+    \ value
   }
 }
 
@@ -257,7 +257,7 @@ define Value2 {
 
 define Test {
   run () {
-    ~ Value1$get()
+    \ Value1$get()
   }
 }
 

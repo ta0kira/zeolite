@@ -41,7 +41,7 @@ define Value {
 define Test {
   run () {
     Value value <- Value$create()
-    ~ value.Base$call()
+    \ value.Base$call()
   }
 }
 
@@ -75,7 +75,7 @@ define Value {
 define Test {
   run () {
     Value value <- Value$create()
-    ~ value.Base$call()
+    \ value.Base$call()
   }
 }
 
@@ -110,7 +110,7 @@ define Value {
 define Test {
   run () {
     [Base|Value] value <- Value$create()
-    ~ value.call()
+    \ value.call()
   }
 }
 
@@ -144,7 +144,7 @@ define Value {
 define Test {
   run () {
     [Base|Value] value <- Value$create()
-    ~ value.Base$call()
+    \ value.Base$call()
   }
 }
 
@@ -181,7 +181,7 @@ define Value {
 define Test {
   run () {
     [Base1&Base2] value <- Value$create()
-    ~ value.call()
+    \ value.call()
   }
 }
 
@@ -218,7 +218,7 @@ define Value {
 define Test {
   run () {
     [Base1&Base2] value <- Value$create()
-    ~ value.Base1$call()
+    \ value.Base1$call()
   }
 }
 
@@ -255,7 +255,7 @@ define Value {
 define Test {
   run () {
     [Base1&Base2] value <- Value$create()
-    ~ value.Base1$call()
+    \ value.Base1$call()
   }
 }
 
@@ -285,11 +285,11 @@ define Test {
     #x defines Base
   () -> ()
   check () {
-    ~ #x$call()
+    \ #x$call()
   }
 
   run () {
-    ~ check<Value>()
+    \ check<Value>()
   }
 }
 
@@ -311,7 +311,7 @@ define Test {
   @type check<#x>
   () -> ()
   check () {
-    ~ #x$call()
+    \ #x$call()
   }
 
   run () {}
@@ -349,12 +349,12 @@ define Test {
     #x requires Base
   (#x) -> ()
   check (value) {
-    ~ value.call()
+    \ value.call()
   }
 
   run () {
     Value value <- Value$create()
-    ~ check<Value>(value)
+    \ check<Value>(value)
   }
 }
 
@@ -376,7 +376,7 @@ define Test {
   @type check<#x>
   (#x) -> ()
   check (value) {
-    ~ value.call()
+    \ value.call()
   }
 
   run () {}
@@ -416,7 +416,7 @@ define Test {
   }
 
   run () {
-   ~ convert(Value$create()).call()
+   \ convert(Value$create()).call()
   }
 }
 
@@ -471,7 +471,7 @@ define Call {
 
 define Test {
   run () {
-    ~ Call$call<Value<Test>>()
+    \ Call$call<Value<Test>>()
   }
 }
 

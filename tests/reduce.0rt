@@ -819,7 +819,7 @@ define Call {
 
 define Test {
   run () {
-    ~ reduce<Value<Test>,Formatted>(empty)
+    \ reduce<Value<Test>,Formatted>(empty)
   }
 }
 

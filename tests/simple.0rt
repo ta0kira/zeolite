@@ -30,7 +30,7 @@ concrete Test {
 
 define Test {
   execute () {
-    ~ undefined()
+    \ undefined()
   }
 }
 

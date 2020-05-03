@@ -122,7 +122,7 @@ escapeStart :: Parser ()
 escapeStart = sepAfter (string_ "\\")
 
 statementStart :: Parser ()
-statementStart = sepAfter (string_ "~")
+statementStart = sepAfter (string_ "\\")
 
 statementEnd :: Parser ()
 statementEnd = sepAfter (string_ "")

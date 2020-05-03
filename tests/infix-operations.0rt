@@ -61,7 +61,7 @@ testcase "Int + Bool" {
 
 define Test {
   run () {
-    ~ \x10 + false
+    \ \x10 + false
   }
 }
 
@@ -77,7 +77,7 @@ testcase "Int + String" {
 
 define Test {
   run () {
-    ~ \x10 + ""
+    \ \x10 + ""
   }
 }
 
@@ -247,7 +247,7 @@ testcase "minus String" {
 
 define Test {
   run () {
-    ~ "x" - "x"
+    \ "x" - "x"
   }
 }
 
@@ -263,7 +263,7 @@ testcase "arithmetic Bool" {
 
 define Test {
   run () {
-    ~ true - false
+    \ true - false
   }
 }
 
@@ -347,7 +347,7 @@ testcase "Bool comparison" {
 
 define Test {
   run () {
-    ~ 1 < 2 < 3
+    \ 1 < 2 < 3
   }
 }
 

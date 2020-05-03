@@ -291,14 +291,14 @@
     <b>if</b> (state <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals<b><span style='color:#c02040;'>`</span></b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchFail() &amp;&amp;
         lastState <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals<b><span style='color:#c02040;'>`</span></b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchContinue() &amp;&amp; canSkip) {
       <span style='color:#898887;'>// Handle the case where an optional end to the pattern can be skipped.</span>
-      <span style='color:#006e28;'>~</span> incrementMatch()
-      <span style='color:#006e28;'>~</span> startRepeat()
+      <span style='color:#006e28;'>\</span> incrementMatch()
+      <span style='color:#006e28;'>\</span> startRepeat()
       state &lt;- matcher.tryNextMatch(data)
     }
     lastState &lt;- state
     <b>if</b> (state <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals<b><span style='color:#c02040;'>`</span></b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchComplete()) {
-      <span style='color:#006e28;'>~</span> incrementMatch()
-      <span style='color:#006e28;'>~</span> startRepeat()
+      <span style='color:#006e28;'>\</span> incrementMatch()
+      <span style='color:#006e28;'>\</span> startRepeat()
       <b>if</b> (atMax()) {
         state &lt;- <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchComplete()
       } <b>else</b> {
@@ -525,8 +525,8 @@
                                        <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchContinue() },<b>empty</b>)
         }
         <span style='color:#898887;'>// Continue, skipping over the optional suffix.</span>
-        <span style='color:#006e28;'>~</span> incrementMatch()
-        <span style='color:#006e28;'>~</span> startRepeat()
+        <span style='color:#006e28;'>\</span> incrementMatch()
+        <span style='color:#006e28;'>\</span> startRepeat()
         <b>if</b> (atMax()) {
           <span style='color:#898887;'>// Skipping the branch puts us at the max.</span>
           <b>return</b> <b>_</b>
@@ -539,8 +539,8 @@
     }
     lastState &lt;- state
     <b>if</b> (state <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>equals<b><span style='color:#c02040;'>`</span></b> <span style='color:#0057ae;'>MatchState</span><span style='color:#644a9b;'>$</span>matchComplete()) {
-      <span style='color:#006e28;'>~</span> incrementMatch()
-      <span style='color:#006e28;'>~</span> startRepeat()
+      <span style='color:#006e28;'>\</span> incrementMatch()
+      <span style='color:#006e28;'>\</span> startRepeat()
       <b>if</b> (!atMax()) {
         branch &lt;- <span style='color:#0057ae;'>LinkedNode</span><span style='color:#c02040;'>&lt;</span><span style='color:#0057ae;'>BranchRepeatMatcher</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#c</span></i><span style='color:#c02040;'>&gt;&gt;</span><span style='color:#644a9b;'>$</span>create(<b>self</b>,branch)
       }

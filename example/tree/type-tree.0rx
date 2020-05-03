@@ -12,12 +12,12 @@ define TypeTree {
   }
 
   set (k,v) {
-    ~ tree.set(k,LockedType$$create<#x>(k,v))
+    \ tree.set(k,LockedType$$create<#x>(k,v))
     return self
   }
 
   remove (k) {
-    ~ tree.remove(k)
+    \ tree.remove(k)
     return self
   }
 

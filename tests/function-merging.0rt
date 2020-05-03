@@ -42,7 +42,7 @@ define Value {
 
 define Test {
   run () {
-    ~ Value$create().call().call()
+    \ Value$create().call().call()
   }
 }
 
@@ -114,7 +114,7 @@ define Value {
 
 define Test {
   run () {
-    ~ Value$create().call().call()
+    \ Value$create().call().call()
   }
 }
 

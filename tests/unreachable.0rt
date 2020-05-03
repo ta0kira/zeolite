@@ -108,7 +108,7 @@ define Test {
     scoped {
     } cleanup {
       return 1
-    } in ~ empty
+    } in \ empty
     return 2
   }
   run () {}
@@ -131,7 +131,7 @@ define Test {
       return 1
     } cleanup {
       return 2
-    } in ~ empty
+    } in \ empty
   }
   run () {}
 }

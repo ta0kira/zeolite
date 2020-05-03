@@ -11,15 +11,15 @@ define TreeDemo {
     TypeKey<Float>  keyFloat  <- TypeKey<Float>$new()
     TypeKey<Value>  keyValue  <- TypeKey<Value>$new()
 
-    ~ tree.set<Int>(keyInt,1)
-    ~ tree.set<String>(keyString,"a")
+    \ tree.set<Int>(keyInt,1)
+    \ tree.set<String>(keyString,"a")
 
-    ~ check<Int>(tree,keyInt)
-    ~ check<String>(tree,keyString)
-    ~ check<Float>(tree,keyFloat)  // Not found, since we never added a value.
+    \ check<Int>(tree,keyInt)
+    \ check<String>(tree,keyString)
+    \ check<Float>(tree,keyFloat)  // Not found, since we never added a value.
 
-    ~ tree.set<Value>(keyValue,Value$new())
-    ~ check<Value>(tree,keyValue)
+    \ tree.set<Value>(keyValue,Value$new())
+    \ check<Value>(tree,keyValue)
   }
 
   @category check<#x>
@@ -29,13 +29,13 @@ define TreeDemo {
     scoped {
       optional #x value <- tree.get<#x>(key)
     } in if (present(value)) {
-      ~ LazyStream<Formatted>$new()
+      \ LazyStream<Formatted>$new()
           .append("Found '")
           .append(require(value))
           .append("'\n")
           .writeTo(SimpleOutput$stderr())
     } else {
-      ~ LazyStream<Formatted>$new()
+      \ LazyStream<Formatted>$new()
           .append(typename<TypeKey<#x>>())
           .append(" Not Found\n")
           .writeTo(SimpleOutput$stderr())

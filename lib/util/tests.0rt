@@ -24,7 +24,7 @@ testcase "stdout writer" {
 
 define Test {
   run () {
-    ~ LazyStream<Formatted>$new().append("message").writeTo(SimpleOutput$stdout())
+    \ LazyStream<Formatted>$new().append("message").writeTo(SimpleOutput$stdout())
   }
 }
 
@@ -41,7 +41,7 @@ testcase "stderr writer" {
 
 define Test {
   run () {
-    ~ LazyStream<Formatted>$new().append("message").writeTo(SimpleOutput$stderr())
+    \ LazyStream<Formatted>$new().append("message").writeTo(SimpleOutput$stderr())
   }
 }
 
@@ -57,7 +57,7 @@ testcase "error writer" {
 
 define Test {
   run () {
-    ~ LazyStream<Formatted>$new().append("message").writeTo(SimpleOutput$error())
+    \ LazyStream<Formatted>$new().append("message").writeTo(SimpleOutput$error())
   }
 }
 
@@ -136,7 +136,7 @@ define Test {
       fail(count)
     }
     String name <- Argv$global().readPosition(0)
-    ~ LazyStream<Formatted>$new()
+    \ LazyStream<Formatted>$new()
         .append(name)
         .append("\n")
         .writeTo(SimpleOutput$stdout())
@@ -189,11 +189,11 @@ define FakeFile {
 define Test {
   run () {
     TextReader reader <- TextReader$fromBlockReader(FakeFile$create())
-    ~ checkNext(reader,"this is a partial line")
-    ~ checkNext(reader,"with some more data")
-    ~ checkNext(reader,"and")
-    ~ checkNext(reader,"more lines")
-    ~ checkNext(reader,"unfinished")
+    \ checkNext(reader,"this is a partial line")
+    \ checkNext(reader,"with some more data")
+    \ checkNext(reader,"and")
+    \ checkNext(reader,"more lines")
+    \ checkNext(reader,"unfinished")
     if (!reader.pastEnd()) {
       fail("not past end")
     }

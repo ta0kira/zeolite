@@ -72,7 +72,7 @@ testcase "read empty file" {
 
 define Test {
   run () {
-    ~ RawFileWriter$open("testfile").freeResource()
+    \ RawFileWriter$open("testfile").freeResource()
     RawFileReader reader <- RawFileReader$open("testfile")
 
     String data <- reader.readBlock(10)

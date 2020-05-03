@@ -2,6 +2,10 @@
 
 ## 0.3.0.0  -- ????-??-??
 
+* **[breaking]** Updates syntax for discarding all returns to use `\` instead of
+  `~`. This will allow `~` to be used for bitwise-not later on. (Not to mention
+  that `~` was kind of ugly in that context.)
+
 * **[breaking]** Cleans up multiple-`return` syntax by removing `{}`. This
   applies to *both* the `return` and the assignment.
 
