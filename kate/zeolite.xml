@@ -108,6 +108,7 @@
         <IncludeRules context="Any Expression" />
         <Detect2Chars attribute="Assign" context="#stay" char="&lt;" char1="-" />
         <Detect2Chars attribute="Assign" context="#stay" char="-" char1="&gt;" />
+        <DetectChar attribute="Error" context="#stay" char="~" />
         <DetectChar attribute="Voided" context="#stay" char="\\" />
       </context>
 
