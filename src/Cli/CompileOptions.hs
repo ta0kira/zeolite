@@ -80,7 +80,7 @@ data CompileMode =
   CompileRecompile |
   CreateTemplates |
   CompileUnspecified
-  deriving (Eq,Read,Show)
+  deriving (Eq,Show)
 
 isCompileBinary :: CompileMode -> Bool
 isCompileBinary (CompileBinary _ _) = True

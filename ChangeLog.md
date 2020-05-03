@@ -2,6 +2,8 @@
 
 ## ?.?.?.?  -- ????-??-??
 
+* **[breaking]** Gives `.zeolite-module` configs a proper file format.
+
 * **[new]** Adds version checking to cached module data.
 
 ## 0.1.3.0  -- 2020-05-01

@@ -33,6 +33,7 @@ import Base.CompileError
 import Base.Mergeable
 import Cli.CompileMetadata
 import Cli.CompileOptions
+import Cli.ProcessMetadata
 import Cli.TestRunner -- Not safe, due to Text.Regex.TDFA.
 import Compilation.CompileInfo
 import CompilerCxx.Category
@@ -111,7 +112,7 @@ runCompiler (CompileOptions h _ _ ds _ _ _ p CompileRecompile _ f) = do
         maybeCompile (Just rm') upToDate
           | f < ForceAll && upToDate = hPutStrLn stderr $ "Path " ++ d0 ++ " is up to date."
           | otherwise = do
-              let (RecompileMetadata p2 d is is2 es ep ec m o) = rm'
+              let (ModuleConfig p2 d is is2 es ep ec m o) = rm'
               -- In case the module is manually configured with a p such as "..",
               -- since the absolute path might not be known ahead of time.
               absolute <- canonicalizePath (p </> d0)
@@ -154,7 +155,7 @@ runCompiler (CompileOptions _ is is2 ds es ep ec p m o f) = do
         exitFailure
       eraseCachedData (p </> d)
       absolute <- canonicalizePath p
-      let rm = RecompileMetadata {
+      let rm = ModuleConfig {
         rmRoot = absolute,
         rmPath = d,
         rmPublicDeps = as,

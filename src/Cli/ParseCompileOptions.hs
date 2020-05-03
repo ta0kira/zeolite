@@ -32,8 +32,8 @@ import System.IO
 import Text.Regex.TDFA -- Not safe!
 
 import Base.CompileError
-import Cli.CompileMetadata (allowedExtraTypes)
 import Cli.CompileOptions
+import Cli.ProcessMetadata (allowedExtraTypes)
 import Config.LoadConfig (compilerVersion,rootPath)
 
 

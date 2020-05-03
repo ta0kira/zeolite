@@ -32,6 +32,7 @@ import Text.Regex.TDFA -- Not safe!
 import Base.CompileError
 import Base.Mergeable
 import Cli.CompileMetadata
+import Cli.ProcessMetadata
 import Compilation.CompileInfo
 import CompilerCxx.Category
 import CompilerCxx.Naming

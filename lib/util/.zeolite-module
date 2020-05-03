@@ -1,1 +1,16 @@
-RecompileMetadata {rmRoot = "..", rmPath = "util", rmPublicDeps = [], rmPrivateDeps = [], rmExtraFiles = ["util/Category_Argv.cpp","util/Category_SimpleInput.cpp","util/Category_SimpleOutput.cpp"], rmExtraPaths = [], rmExtraRequires = [], rmMode = CompileIncremental, rmOutputName = ""}
+root: ".."
+path: "util"
+public_deps: [
+]
+private_deps: [
+]
+extra_files: [
+  "util/Category_Argv.cpp"
+  "util/Category_SimpleInput.cpp"
+  "util/Category_SimpleOutput.cpp"
+]
+extra_paths: [
+]
+extra_requires: [
+]
+mode: incremental
