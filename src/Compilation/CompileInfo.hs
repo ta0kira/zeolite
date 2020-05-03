@@ -97,7 +97,7 @@ instance Applicative CompileInfo where
 instance Monad CompileInfo where
   (CompileFail w e)    >>= _ = CompileFail w e -- Not the same a.
   (CompileSuccess w d) >>= f = prependWarning w $ f d
-  return = CompileSuccess []
+  return = pure
 
 prependWarning :: [String] -> CompileInfo a -> CompileInfo a
 prependWarning w (CompileSuccess w2 d) = CompileSuccess (w ++ w2) d
