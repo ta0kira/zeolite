@@ -311,7 +311,7 @@ instance ConfigFormat CompileMode where
     validateCategoryName c
     validateFunctionName f
     return $ [
-        "binary { ",
+        "binary {",
         indent ("category: " ++ c),
         indent ("function: " ++ f),
         "}"
