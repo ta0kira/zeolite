@@ -1,6 +1,6 @@
 # Revision history for zeolite-lang
 
-## ?.?.?.?  -- ????-??-??
+## 0.2.0.0  -- 2020-05-03
 
 * **[breaking]** Requires that `concrete` categories defined in `.cpp` files be
   listed as `external` in `.zeolite-module`. This allows the compiler to ensure
