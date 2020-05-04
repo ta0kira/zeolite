@@ -188,11 +188,11 @@ runCompiler (CompileOptions _ is is2 ds es ep ec p ex m o f) = do
       ns0 <- canonicalizePath (p </> d) >>= return . StaticNamespace . publicNamespace
       let ns2 = map StaticNamespace $ filter (not . null) $ getNamespacesForDeps deps
       let fs = compileAll ns0 ns2 ss' ps' xs'
-      writeOutput b r paths ns0 deps2 d as as2
+      writeOutput b paths ns0 deps2 d as as2
                   (map takeFileName ps)
                   (map takeFileName xs)
                   (map takeFileName ts) fs
-    writeOutput b r paths ns0 deps d as as2 ps xs ts fs
+    writeOutput b paths ns0 deps d as as2 ps xs ts fs
       | isCompileError fs = do
           formatWarnings fs
           hPutStr stderr $ "Compiler errors:\n" ++ (show $ getCompileError fs)
@@ -207,13 +207,7 @@ runCompiler (CompileOptions _ is is2 ds es ep ec p ex m o f) = do
           let hxx   = filter (isSuffixOf ".hpp" . coFilename)       fs'
           let other = filter (not . isSuffixOf ".hpp" . coFilename) fs'
           os1 <- sequence $ map (writeOutputFile b (show ns0) paths' d) $ hxx ++ other
-          actual <- resolveModule r p d
-          isBase <- isBaseModule r actual
-          -- Base files should be compiled to .o and not .a.
-          let extraComp = if isBase
-                             then compileBuiltinFile
-                             else compileExtraFile
-          os2 <- fmap concat $ sequence $ map (extraComp b (show ns0) paths' d) es'
+          os2 <- fmap concat $ sequence $ map (compileExtraFile b (show ns0) paths' d) es'
           let (hxx',cxx,os') = sortCompiledFiles $ map (\f2 -> show (coNamespace f2) </> coFilename f2) fs' ++ es'
           path <- canonicalizePath $ p </> d
           let os1' = resolveObjectDeps path os1 deps
@@ -269,13 +263,11 @@ runCompiler (CompileOptions _ is is2 ds es ep ec p ex m o f) = do
            o2 <- runCxxCommand b command
            return $ ([o2],ca)
          else return ([],ca)
-    compileExtraFile = compileExtraCommon True
-    compileBuiltinFile = compileExtraCommon False
-    compileExtraCommon e b ns0 paths d f2
+    compileExtraFile b ns0 paths d f2
       | isSuffixOf ".cpp" f2 || isSuffixOf ".cc" f2 = do
           let f2' = p </> d </> f2
           createCachePath (p </> d)
-          let command = CompileToObject f2' (getCachedPath (p </> d) "" "") dynamicNamespaceName ns0 paths e
+          let command = CompileToObject f2' (getCachedPath (p </> d) "" "") dynamicNamespaceName ns0 paths True
           o2 <- runCxxCommand b command
           return [OtherObjectFile o2]
       | otherwise = return []

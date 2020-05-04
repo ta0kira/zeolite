@@ -24,18 +24,10 @@ limitations under the License.
 
 void BuiltinFail(const S<TypeValue>& formatted) __attribute__ ((noreturn));
 
-TypeInstance& Merge_Intersect(L<TypeInstance*> params);
-TypeInstance& Merge_Union(L<TypeInstance*> params);
-
-TypeInstance& GetMerged_Any();
-TypeInstance& GetMerged_All();
-
 S<TypeValue> Box_Bool(bool value);
 S<TypeValue> Box_String(const PrimString& value);
 S<TypeValue> Box_Char(PrimChar value);
 S<TypeValue> Box_Int(PrimInt value);
 S<TypeValue> Box_Float(PrimFloat value);
-
-extern const S<TypeValue>& Var_empty;
 
 #endif  // BUILTIN_HPP_

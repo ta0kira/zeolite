@@ -31,4 +31,12 @@ class CategoryFunction;
 class TypeFunction;
 class ValueFunction;
 
+TypeInstance& Merge_Intersect(L<TypeInstance*> params);
+TypeInstance& Merge_Union(L<TypeInstance*> params);
+
+TypeInstance& GetMerged_Any();
+TypeInstance& GetMerged_All();
+
+extern const S<TypeValue>& Var_empty;
+
 #endif  // CATEGORY_HEADER_HPP_

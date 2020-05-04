@@ -22,6 +22,110 @@ limitations under the License.
 #include "builtin.hpp"
 
 
+namespace {
+
+struct OptionalEmpty : public TypeValue {
+  ReturnTuple Dispatch(const S<TypeValue>& self,
+                       const ValueFunction& label,
+                       const ParamTuple& params, const ValueTuple& args) final {
+    FAIL() << "Function called on empty value";
+    __builtin_unreachable();
+  }
+
+  std::string CategoryName() const final { return "empty"; }
+
+  bool Present() const final { return false; }
+};
+
+struct Type_Intersect : public TypeInstance {
+  Type_Intersect(L<TypeInstance*> params) : params_(params.begin(), params.end()) {}
+
+  std::string CategoryName() const final { return "(intersection)"; }
+
+  void BuildTypeName(std::ostream& output) const final {
+    if (params_.empty()) {
+      output << "any";
+    } else {
+      output << "[";
+      bool first = true;
+      for (const auto param : params_) {
+        if (!first) output << "&";
+        first = false;
+        param->BuildTypeName(output);
+      }
+      output << "]";
+    }
+  }
+
+  MergeType InstanceMergeType() const final
+  { return MergeType::INTERSECT; }
+
+  std::vector<const TypeInstance*> MergedTypes() const final
+  { return params_; }
+
+  const L<const TypeInstance*> params_;
+};
+
+struct Type_Union : public TypeInstance {
+  Type_Union(L<TypeInstance*> params) : params_(params.begin(), params.end()) {}
+
+  std::string CategoryName() const final { return "(union)"; }
+
+  void BuildTypeName(std::ostream& output) const final {
+    if (params_.empty()) {
+      output << "all";
+    } else {
+      output << "[";
+      bool first = true;
+      for (const auto param : params_) {
+        if (!first) output << "|";
+        first = false;
+        param->BuildTypeName(output);
+      }
+      output << "]";
+    }
+  }
+
+  MergeType InstanceMergeType() const final
+  { return MergeType::UNION; }
+
+  std::vector<const TypeInstance*> MergedTypes() const final
+  { return params_; }
+
+  const L<const TypeInstance*> params_;
+};
+
+}  // namespace
+
+
+TypeInstance& Merge_Intersect(L<TypeInstance*> params) {
+  static auto& cache = *new std::map<L<TypeInstance*>,R<Type_Intersect>>();
+  auto& cached = cache[params];
+  if (!cached) { cached = R_get(new Type_Intersect(params)); }
+  return *cached;
+}
+
+TypeInstance& Merge_Union(L<TypeInstance*> params) {
+  static auto& cache = *new std::map<L<TypeInstance*>,R<Type_Union>>();
+  auto& cached = cache[params];
+  if (!cached) { cached = R_get(new Type_Union(params)); }
+  return *cached;
+}
+
+TypeInstance& GetMerged_Any() {
+  static auto& instance = Merge_Intersect(L_get<TypeInstance*>());
+  return instance;
+}
+
+TypeInstance& GetMerged_All() {
+  static auto& instance = Merge_Union(L_get<TypeInstance*>());
+  return instance;
+}
+
+
+const S<TypeValue>& Var_empty = *new S<TypeValue>(new OptionalEmpty());
+
+
 ReturnTuple TypeCategory::Dispatch(const CategoryFunction& label,
                                    const ParamTuple& params, const ValueTuple& args) {
   FAIL() << CategoryName() << " does not implement " << label;
