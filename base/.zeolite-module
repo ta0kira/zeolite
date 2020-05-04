@@ -22,11 +22,14 @@ extra_paths: [
   "capture-thread/include"
 ]
 always_include: [
-  Bool
-  Char
-  Float
-  Int
-  String
+  AsBool
+  AsChar
+  AsFloat
+  AsInt
+  Equals
+  Formatted
+  LessThan
+  ReadPosition
 ]
 external: [
   Bool
