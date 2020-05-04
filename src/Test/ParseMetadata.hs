@@ -169,8 +169,17 @@ tests = [
         "/home/project/private-dep2"
       ],
       rmExtraFiles = [
-        "extra1.cpp",
-        "extra2.cpp"
+        ExtraSource {
+          esSource = "extra1.cpp",
+          esDepCategories = [
+            "DepCategory1",
+            "DepCategory2"
+          ]
+        },
+        ExtraSource {
+          esSource = "extra2.cpp",
+          esDepCategories = []
+        }
       ],
       rmExtraPaths = [
         "extra1",
@@ -181,8 +190,14 @@ tests = [
         "Extra2"
       ],
       rmExternalDefs = [
-        "External1",
-        "External1"
+        ExternalCategory {
+          ecName = "External1",
+          ecSource = "special/external1.cpp"
+        },
+        ExternalCategory {
+          ecName = "External2",
+          ecSource = "special/external2.cpp"
+        }
       ],
       rmMode = CompileIncremental,
       rmOutputName = "binary"
@@ -203,19 +218,16 @@ tests = [
       rmOutputName = ""
     },
 
-    checkWriteFail "bad category" $ ModuleConfig {
-      rmRoot = "/home/projects",
-      rmPath = "special",
-      rmPublicDeps = [],
-      rmPrivateDeps = [],
-      rmExtraFiles = [],
-      rmExtraPaths = [],
-      rmExtraRequires = [],
-      rmExternalDefs = [
+    checkWriteFail "bad category" $ ExtraSource {
+      esSource = "extra1.cpp",
+      esDepCategories = [
         "bad category"
-      ],
-      rmMode = CompileIncremental,
-      rmOutputName = ""
+      ]
+    },
+
+    checkWriteFail "bad category" $ ExternalCategory {
+      ecName = "bad category",
+      ecSource = "special/external1.cpp"
     },
 
     checkWriteFail "bad category" $ CategoryIdentifier {
@@ -260,7 +272,7 @@ tests = [
 checkWriteThenRead :: (Eq a, Show a, ConfigFormat a) => a -> IO (CompileInfo ())
 checkWriteThenRead m = return $ do
   text <- fmap spamComments $ autoWriteConfig m
-  m' <- autoReadConfig "(string)" text
+  m' <- autoReadConfig "(string)" text `reviseError` ("Serialized >>>\n\n" ++ text ++ "\n<<< Serialized\n\n")
   when (m' /= m) $
     compileError $ "Failed to match after write/read\n" ++
                    "Before:\n" ++ show m ++ "\n" ++

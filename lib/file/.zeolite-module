@@ -8,7 +8,13 @@ extra_files: [
   "file/Category_RawFileWriter.cpp"
 ]
 external: [
-  RawFileReader
-  RawFileWriter
+  external_category {
+    category: RawFileReader
+    source: "file/Category_RawFileReader.cpp"
+  }
+  external_category {
+    category: RawFileWriter
+    source: "file/Category_RawFileWriter.cpp"
+  }
 ]
 mode: incremental

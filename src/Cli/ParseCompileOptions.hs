@@ -24,16 +24,14 @@ module Cli.ParseCompileOptions (
 ) where
 
 import Control.Monad (when)
-import Data.List (intercalate,isSuffixOf)
+import Data.List (isSuffixOf)
 import System.Directory
 import System.Exit
-import System.FilePath (takeExtension)
 import System.IO
 import Text.Regex.TDFA -- Not safe!
 
 import Base.CompileError
 import Cli.CompileOptions
-import Cli.ProcessMetadata (allowedExtraTypes)
 import Config.LoadConfig (compilerVersion,rootPath)
 
 
@@ -58,7 +56,6 @@ optionHelpText = [
     "  --version: Show the compiler version and immediately exit.",
     "",
     "Options:",
-    "  -e [path|file]: Include an extra source file or path during compilation.",
     "  -f: Force compilation instead of recompiling with -r.",
     "  -i [path]: A single source path to include as a *public* dependency.",
     "  -I [path]: A single source path to include as a *private* dependency.",
@@ -175,18 +172,6 @@ parseCompileOptions = parseAll emptyCompileOptions . zip ([1..] :: [Int]) where
           return (os2,CompileOptions (maybeDisableHelp h) is (is2 ++ [d]) ds es ep ec p ex m o f)
     update _ = argError n "-I" "Requires a source path."
 
-  parseSingle (CompileOptions h is is2 ds es ep ec p ex m o f) ((n,"-e"):os) = update os where
-    update ((n2,e):os2)
-      | any (flip isSuffixOf e) allowedExtraTypes = do
-          checkPathName n2 e "-e"
-          return (os2,CompileOptions (maybeDisableHelp h) is is2 ds (es ++ [e]) ep ec p ex m o f)
-      | takeExtension e == "" || e == "." = do
-          checkPathName n2 e "-e"
-          return (os2,CompileOptions (maybeDisableHelp h) is is2 ds es (ep ++ [e]) ec p ex m o f)
-      | otherwise = argError n2 "-e" $ "Only " ++ intercalate ", " allowedExtraTypes ++
-                                       " and directory sources are allowed."
-    update _ = argError n "-e" "Requires a source filename."
-
   parseSingle (CompileOptions h is is2 ds es ep ec p ex m o f) ((n,"-p"):os)
     | not $ null p = argError n "-p" "Path prefix already set."
     | otherwise = update os where
@@ -211,7 +196,7 @@ parseCompileOptions = parseAll emptyCompileOptions . zip ([1..] :: [Int]) where
         return (os,CompileOptions (maybeDisableHelp h) is is2 (ds ++ [d]) es ep ec p ex m o f)
 
 validateCompileOptions :: CompileErrorM m => CompileOptions -> m CompileOptions
-validateCompileOptions co@(CompileOptions h is is2 ds es ep _ _ _ m o _)
+validateCompileOptions co@(CompileOptions h is is2 ds _ _ _ _ _ m o _)
   | h /= HelpNotNeeded = return co
 
   | (not $ null o) && (isCompileIncremental m) =
@@ -221,23 +206,14 @@ validateCompileOptions co@(CompileOptions h is is2 ds es ep _ _ _ m o _)
     compileError "Output filename (-o) is not allowed in test mode (-t)."
   | (not $ null $ is ++ is2) && (isExecuteTests m) =
     compileError "Include paths (-i/-I) are not allowed in test mode (-t)."
-  | (not $ null $ es ++ ep) && (isExecuteTests m) =
-    compileError "Extra files (-e) are not allowed in test mode (-t)."
 
   | (not $ null o) && (isCreateTemplates m) =
     compileError "Output filename (-o) is not allowed in template mode (--templates)."
-  | (not $ null $ es ++ ep) && (isCreateTemplates m) =
-    compileError "Extra files (-e) are not allowed in template mode (--templates)."
 
   | (not $ null o) && (isCompileRecompile m) =
     compileError "Output filename (-o) is not allowed in recompile mode (-r)."
   | (not $ null $ is ++ is2) && (isCompileRecompile m) =
     compileError "Include paths (-i/-I) are not allowed in recompile mode (-r)."
-  | (not $ null $ es ++ ep) && (isCompileRecompile m) =
-    compileError "Extra files (-e) are not allowed in recompile mode (-r)."
-
-  | length ds > 1 && length (es ++ ep) > 0 =
-    compileError "Extra files and paths (-e) cannot be used with multiple input paths, to avoid ambiguity."
 
   | null ds =
     compileError "Please specify at least one input path."

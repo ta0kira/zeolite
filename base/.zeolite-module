@@ -2,7 +2,6 @@ root: ".."
 path: "base"
 extra_files: [
   "base/argv.cpp"
-  "base/builtin.cpp"
   "base/builtin.hpp"
   "base/category-header.hpp"
   "base/category-source.cpp"
@@ -16,6 +15,19 @@ extra_files: [
   "capture-thread/include/thread-capture.h"
   "capture-thread/include/thread-crosser.h"
   "capture-thread/src/thread-crosser.cc"
+  extra_source {
+    source: "base/builtin.cpp"
+    category_deps: [
+      AsBool
+      AsChar
+      AsFloat
+      AsInt
+      Equals
+      Formatted
+      LessThan
+      ReadPosition
+    ]
+  }
 ]
 extra_paths: [
   "base"
@@ -32,10 +44,25 @@ always_include: [
   ReadPosition
 ]
 external: [
-  Bool
-  Char
-  Float
-  Int
-  String
+  external_category {
+    category: Bool
+    source: "base/builtin.cpp"
+  }
+  external_category {
+    category: Char
+    source: "base/builtin.cpp"
+  }
+  external_category {
+    category: Float
+    source: "base/builtin.cpp"
+  }
+  external_category {
+    category: Int
+    source: "base/builtin.cpp"
+  }
+  external_category {
+    category: String
+    source: "base/builtin.cpp"
+  }
 ]
 mode: incremental

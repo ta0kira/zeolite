@@ -147,7 +147,7 @@ runCompiler (CompileOptions _ is is2 ds es ep ec p ex m o f) = do
         createBinary backend resolver (deps ++ deps2) m ms
   hPutStrLn stderr $ "Zeolite compilation succeeded." where
     ep' = fixPaths $ map (p </>) ep
-    es' = fixPaths $ map (p </>) es
+    es' = fixPaths $ map (p </>) $ map esSource es
     processPath b r deps as as2 d = do
       isConfigured <- isPathConfigured d
       when (isConfigured && f == DoNotForce) $ do
@@ -161,9 +161,9 @@ runCompiler (CompileOptions _ is is2 ds es ep ec p ex m o f) = do
         rmPath = d,
         rmPublicDeps = as,
         rmPrivateDeps = as2,
-        rmExtraFiles = sort es,
-        rmExtraPaths = sort ep,
-        rmExtraRequires = sort ec,
+        rmExtraFiles = es,
+        rmExtraPaths = ep,
+        rmExtraRequires = ec,
         rmExternalDefs = ex,
         rmMode = m,
         rmOutputName = o
@@ -317,7 +317,7 @@ runCompiler (CompileOptions _ is is2 ds es ep ec p ex m o f) = do
           cnNamespaces = ns0:ns2,
           cnPublic = cs'',
           cnPrivate = xa,
-          cnExternal = ex
+          cnExternal = map ecName ex
         }
       xx <- compileCategoryModule cm
       let pc = map getCategoryName cs''

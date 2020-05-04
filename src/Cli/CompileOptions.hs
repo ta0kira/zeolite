@@ -21,6 +21,8 @@ limitations under the License.
 module Cli.CompileOptions (
   CompileOptions(..),
   CompileMode(..),
+  ExtraSource(..),
+  ExternalCategory(..),
   ForceMode(..),
   HelpMode(..),
   emptyCompileOptions,
@@ -39,11 +41,11 @@ data CompileOptions =
     coPublicDeps :: [String],
     coPrivateDeps :: [String],
     coSources :: [String],
-    coExtraFiles :: [String],
+    coExtraFiles :: [ExtraSource],
     coExtraPaths :: [String],
     coExtraRequires :: [String],
     coSourcePrefix :: String,
-    coExternalDefs :: [String],
+    coExternalDefs :: [ExternalCategory],
     coMode :: CompileMode,
     coOutputName :: String,
     coForce :: ForceMode
@@ -65,6 +67,20 @@ emptyCompileOptions =
     coOutputName = "",
     coForce = DoNotForce
   }
+
+data ExternalCategory =
+  ExternalCategory {
+    ecName :: String,
+    ecSource :: String
+  }
+  deriving (Eq,Show)
+
+data ExtraSource =
+  ExtraSource {
+    esSource :: String,
+    esDepCategories :: [String]
+  }
+  deriving (Eq,Show)
 
 data HelpMode = HelpNeeded | HelpNotNeeded | HelpUnspecified deriving (Eq,Show)
 

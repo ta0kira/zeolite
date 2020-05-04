@@ -6,8 +6,17 @@ extra_files: [
   "util/Category_SimpleOutput.cpp"
 ]
 external: [
-  Argv
-  SimpleInput
-  SimpleOutput
+  external_category {
+    category: Argv
+    source: "util/Category_Argv.cpp"
+  }
+  external_category {
+    category: SimpleInput
+    source: "util/Category_SimpleInput.cpp"
+  }
+  external_category {
+    category: SimpleOutput
+    source: "util/Category_SimpleOutput.cpp"
+  }
 ]
 mode: incremental

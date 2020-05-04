@@ -88,10 +88,10 @@ data ModuleConfig =
     rmPath :: String,
     rmPublicDeps :: [String],
     rmPrivateDeps :: [String],
-    rmExtraFiles :: [String],
+    rmExtraFiles :: [ExtraSource],
     rmExtraPaths :: [String],
     rmExtraRequires :: [String],
-    rmExternalDefs :: [String],
+    rmExternalDefs :: [ExternalCategory],
     rmMode :: CompileMode,
     rmOutputName :: String
   }
