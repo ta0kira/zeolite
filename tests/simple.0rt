@@ -82,3 +82,26 @@ testcase "attempt to define outside of this module" {
 
 // The declaration for String is in scope, but it lives outside of this module.
 define String {}
+
+
+testcase "no deadlock with recursive type" {
+  success Test$execute()
+}
+
+concrete Test {
+  @type execute () -> ()
+}
+
+concrete Type<#x> {
+  @type call () -> ()
+}
+
+define Type {
+  call () {}
+}
+
+define Test {
+  execute () {
+    \ Type<Type<Type<Int>>>$call()
+  }
+}
