@@ -47,7 +47,7 @@ module Cli.ProcessMetadata (
 
 import Control.Applicative ((<|>))
 import Control.Monad (when)
-import Data.List (nub,isSuffixOf)
+import Data.List (isSuffixOf)
 import Data.Maybe (isJust)
 import System.Directory
 import System.Exit (exitFailure)
@@ -128,7 +128,7 @@ isPathUpToDate h p = do
   case m of
        Nothing -> return False
        Just _ -> do
-         (fr,_) <- loadDepsCommon True h (\m2 -> cmPublicDeps m2 ++ cmPrivateDeps m2) [p]
+         (fr,_) <- loadDepsCommon True h Set.empty (\m2 -> cmPublicDeps m2 ++ cmPrivateDeps m2) [p]
          return fr
 
 isPathConfigured :: String -> IO Bool
@@ -226,22 +226,18 @@ getObjectFilesForDeps :: [CompileMetadata] -> [ObjectFile]
 getObjectFilesForDeps = concat . map cmObjectFiles
 
 loadPublicDeps :: String -> [String] -> IO (Bool,[CompileMetadata])
-loadPublicDeps h = loadDepsCommon False h cmPublicDeps
+loadPublicDeps h = loadDepsCommon False h Set.empty cmPublicDeps
 
 loadPrivateDeps :: String -> [CompileMetadata] -> IO (Bool,[CompileMetadata])
 loadPrivateDeps h ms = do
-  (fr,new) <- loadDepsCommon False h (\m -> cmPublicDeps m ++ cmPrivateDeps m) toFind
-  return (fr,ms ++ existing ++ new) where
+  (fr,new) <- loadDepsCommon False h pa (\m -> cmPublicDeps m ++ cmPrivateDeps m) paths
+  return (fr,ms ++ new) where
     paths = concat $ map (\m -> cmPublicDeps m ++ cmPrivateDeps m) ms
-    (existing,toFind) = foldl splitByExisting ([],[]) $ nub paths
-    byPath = Map.fromList $ map (\m -> (cmPath m,m)) ms
-    splitByExisting (es,fs) p =
-      case p `Map.lookup` byPath of
-          Just m  -> (es ++ [m],fs)
-          Nothing -> (es,fs ++ [p])
+    pa = Set.fromList $ map cmPath ms
 
-loadDepsCommon :: Bool -> String -> (CompileMetadata -> [String]) -> [String] -> IO (Bool,[CompileMetadata])
-loadDepsCommon s h f ps = fmap snd $ fixedPaths >>= collect (Set.empty,(True,[])) where
+loadDepsCommon :: Bool -> String -> Set.Set String->
+  (CompileMetadata -> [String]) -> [String] -> IO (Bool,[CompileMetadata])
+loadDepsCommon s h pa0 f ps = fmap snd $ fixedPaths >>= collect (pa0,(True,[])) where
   fixedPaths = sequence $ map canonicalizePath ps
   collect xa@(pa,(fr,xs)) (p:ps2)
     | p `Set.member` pa = collect xa ps2
