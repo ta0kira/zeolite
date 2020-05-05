@@ -109,10 +109,8 @@ struct Type_RawFileReader : public TypeInstance {
   ReturnTuple Call_open(const ParamTuple& params, const ValueTuple& args);
 };
 Type_RawFileReader& CreateType(Params<0>::Type params) {
-  static auto& cache = *new InstanceMap<0,Type_RawFileReader>();
-  auto& cached = cache[params];
-  if (!cached) { cached = R_get(new Type_RawFileReader(CreateCategory(), params)); }
-  return *cached;
+  static auto& cached = *new Type_RawFileReader(CreateCategory(), Params<0>::Type());
+  return cached;
 }
 struct Value_RawFileReader : public TypeValue {
   Value_RawFileReader(Type_RawFileReader& p, const ParamTuple& params, const ValueTuple& args)

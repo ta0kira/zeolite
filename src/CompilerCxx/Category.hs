@@ -656,14 +656,25 @@ declareInternalType t n =
 
 defineInternalType :: Monad m =>
   CategoryName -> Int -> m (CompiledData [String])
-defineInternalType t n = return $ onlyCodes [
-    typeName t ++ "& " ++ typeCreator t ++ "(Params<" ++ show n ++ ">::Type params) {",
-    "  static auto& cache = *new InstanceMap<" ++ show n ++ "," ++ typeName t ++ ">();",
-    "  auto& cached = cache[params];",
-    "  if (!cached) { cached = R_get(new " ++ typeName t ++ "(" ++ categoryCreator t ++ "(), params)); }",
-    "  return *cached;",
-    "}"
-  ]
+defineInternalType t n
+  | n < 1 =
+      return $ onlyCodes [
+        typeName t ++ "& " ++ typeCreator t ++ "(Params<" ++ show n ++ ">::Type params) {",
+        "  static auto& cached = *new " ++ typeName t ++ "(" ++ categoryCreator t ++ "(), Params<" ++ show n ++ ">::Type());",
+        "  return cached;",
+        "}"
+      ]
+  | otherwise =
+      return $ onlyCodes [
+        typeName t ++ "& " ++ typeCreator t ++ "(Params<" ++ show n ++ ">::Type params) {",
+        "  static auto& cache = *new InstanceMap<" ++ show n ++ "," ++ typeName t ++ ">();",
+        "  static auto& cache_mutex = *new std::mutex;",
+        "  std::lock_guard<std::mutex> lock(cache_mutex);",
+        "  auto& cached = cache[params];",
+        "  if (!cached) { cached = R_get(new " ++ typeName t ++ "(" ++ categoryCreator t ++ "(), params)); }",
+        "  return *cached;",
+        "}"
+      ]
 
 declareInternalValue :: Monad m =>
   CategoryName -> Int -> Int -> m (CompiledData [String])

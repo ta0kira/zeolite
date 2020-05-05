@@ -132,10 +132,8 @@ struct Type_Int : public TypeInstance {
   ReturnTuple Call_lessThan(const ParamTuple& params, const ValueTuple& args);
 };
 Type_Int& CreateType_Int(Params<0>::Type params) {
-  static auto& cache = *new InstanceMap<0,Type_Int>();
-  auto& cached = cache[params];
-  if (!cached) { cached = R_get(new Type_Int(CreateCategory_Int(), params)); }
-  return *cached;
+  static auto& cached = *new Type_Int(CreateCategory_Int(), Params<0>::Type());
+  return cached;
 }
 struct Value_Int : public TypeValue {
   Value_Int(Type_Int& p, PrimInt value) : parent(p), value_(value) {}

@@ -16,7 +16,7 @@ limitations under the License.
 
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
-concrete Templated {
-  @type create () -> (Templated)
-  @value get () -> (Int)
+concrete Templated<#x> {
+  @type create () -> (Templated<#x>)
+  @value get () -> (#x)
 }

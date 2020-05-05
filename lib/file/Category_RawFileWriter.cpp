@@ -109,10 +109,8 @@ struct Type_RawFileWriter : public TypeInstance {
   ReturnTuple Call_open(const ParamTuple& params, const ValueTuple& args);
 };
 Type_RawFileWriter& CreateType(Params<0>::Type params) {
-  static auto& cache = *new InstanceMap<0,Type_RawFileWriter>();
-  auto& cached = cache[params];
-  if (!cached) { cached = R_get(new Type_RawFileWriter(CreateCategory(), params)); }
-  return *cached;
+  static auto& cached = *new Type_RawFileWriter(CreateCategory(), Params<0>::Type());
+  return cached;
 }
 struct Value_RawFileWriter : public TypeValue {
   Value_RawFileWriter(Type_RawFileWriter& p, const ParamTuple& params, const ValueTuple& args)

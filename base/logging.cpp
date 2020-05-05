@@ -120,7 +120,7 @@ void SourceContext::AppendTrace(std::list<std::string>& trace) const {
 }
 
 const TraceContext* SourceContext::GetNext() const {
-  return cross_and_capture_to_.Previous();
+  return capture_to_.Previous();
 }
 
 
@@ -139,5 +139,5 @@ void CleanupContext::AppendTrace(std::list<std::string>& trace) const {
 }
 
 const TraceContext* CleanupContext::GetNext() const {
-  return cross_and_capture_to_.Previous();
+  return capture_to_.Previous();
 }

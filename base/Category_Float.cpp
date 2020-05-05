@@ -127,10 +127,8 @@ struct Type_Float : public TypeInstance {
   ReturnTuple Call_lessThan(const ParamTuple& params, const ValueTuple& args);
 };
 Type_Float& CreateType_Float(Params<0>::Type params) {
-  static auto& cache = *new InstanceMap<0,Type_Float>();
-  auto& cached = cache[params];
-  if (!cached) { cached = R_get(new Type_Float(CreateCategory_Float(), params)); }
-  return *cached;
+  static auto& cached = *new Type_Float(CreateCategory_Float(), Params<0>::Type());
+  return cached;
 }
 struct Value_Float : public TypeValue {
   Value_Float(Type_Float& p, PrimFloat value) : parent(p), value_(value) {}

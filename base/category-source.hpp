@@ -20,6 +20,7 @@ limitations under the License.
 #define CATEGORY_SOURCE_HPP_
 
 #include <map>
+#include <mutex>
 #include <sstream>
 #include <vector>
 

@@ -107,10 +107,8 @@ struct Type_Argv : public TypeInstance {
   }
 };
 Type_Argv& CreateType(Params<0>::Type params) {
-  static auto& cache = *new InstanceMap<0,Type_Argv>();
-  auto& cached = cache[params];
-  if (!cached) { cached = R_get(new Type_Argv(CreateCategory(), params)); }
-  return *cached;
+  static auto& cached = *new Type_Argv(CreateCategory(), Params<0>::Type());
+  return cached;
 }
 struct Value_Argv : public TypeValue {
   Value_Argv(Type_Argv& p, const ParamTuple& params, const ValueTuple& args) : parent(p) {}

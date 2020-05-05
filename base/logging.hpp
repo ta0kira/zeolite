@@ -108,7 +108,7 @@ class SourceContext : public TraceContext {
  public:
   template<int S>
   inline SourceContext(const char(&name)[S])
-    : at_(nullptr), name_(name), cross_and_capture_to_(this) {}
+    : at_(nullptr), name_(name), capture_to_(this) {}
 
  private:
   void SetLocal(const char*) final;
@@ -117,13 +117,13 @@ class SourceContext : public TraceContext {
 
   const char* at_;
   const char* const name_;
-  const AutoThreadCrosser cross_and_capture_to_;
+  const ScopedCapture capture_to_;
 };
 
 class CleanupContext : public TraceContext {
  public:
   inline CleanupContext()
-    : at_(nullptr), cross_and_capture_to_(this) {}
+    : at_(nullptr), capture_to_(this) {}
 
  private:
   void SetLocal(const char*) final;
@@ -131,7 +131,7 @@ class CleanupContext : public TraceContext {
   const TraceContext* GetNext() const final;
 
   const char* at_;
-  const AutoThreadCrosser cross_and_capture_to_;
+  const ScopedCapture capture_to_;
 };
 
 #endif  // LOGGING_HPP_

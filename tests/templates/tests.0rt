@@ -23,7 +23,7 @@ testcase "template compiles to binary" {
 
 define Test {
   run () {
-    \ Templated$create()
+    \ Templated<Int>$create()
   }
 }
 

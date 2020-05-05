@@ -172,10 +172,8 @@ struct Type_Math : public TypeInstance {
   ReturnTuple Call_trunc(const ParamTuple& params, const ValueTuple& args);
 };
 Type_Math& CreateType_Math(Params<0>::Type params) {
-  static auto& cache = *new InstanceMap<0,Type_Math>();
-  auto& cached = cache[params];
-  if (!cached) { cached = R_get(new Type_Math(CreateCategory_Math(), params)); }
-  return *cached;
+  static auto& cached = *new Type_Math(CreateCategory_Math(), Params<0>::Type());
+  return cached;
 }
 struct Value_Math : public TypeValue {
   Value_Math(Type_Math& p, const ParamTuple& params, const ValueTuple& args) : parent(p) {}

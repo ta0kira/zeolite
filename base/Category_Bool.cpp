@@ -116,10 +116,8 @@ struct Type_Bool : public TypeInstance {
   ReturnTuple Call_equals(const ParamTuple& params, const ValueTuple& args);
 };
 Type_Bool& CreateType_Bool(Params<0>::Type params) {
-  static auto& cache = *new InstanceMap<0,Type_Bool>();
-  auto& cached = cache[params];
-  if (!cached) { cached = R_get(new Type_Bool(CreateCategory_Bool(), params)); }
-  return *cached;
+  static auto& cached = *new Type_Bool(CreateCategory_Bool(), Params<0>::Type());
+  return cached;
 }
 struct Value_Bool : public TypeValue {
   Value_Bool(Type_Bool& p, bool value) : parent(p), value_(value) {}
