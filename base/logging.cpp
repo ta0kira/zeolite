@@ -22,8 +22,6 @@ limitations under the License.
 #include <csignal>
 #include <iostream>
 
-#include "argv.hpp"
-
 
 LogThenCrash::LogThenCrash(bool fail, const std::string& condition)
     : fail_(fail), signal_(SIGABRT), condition_(condition) {}
@@ -140,4 +138,25 @@ void CleanupContext::AppendTrace(std::list<std::string>& trace) const {
 
 const TraceContext* CleanupContext::GetNext() const {
   return capture_to_.Previous();
+}
+
+int Argv::ArgCount() {
+  if (GetCurrent()) {
+    return GetCurrent()->GetArgs().size();
+  } else {
+    return 0;
+  }
+}
+
+const std::string& Argv::GetArgAt(int pos) {
+  if (pos < 0 || pos >= ArgCount()) {
+    FAIL() << "Argv index " << pos << " is out of bounds";
+    __builtin_unreachable();
+  } else {
+    return GetCurrent()->GetArgs()[pos];
+  }
+}
+
+const std::vector<std::string>& ProgramArgv::GetArgs() const {
+  return argv_;
 }

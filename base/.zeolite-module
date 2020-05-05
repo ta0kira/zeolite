@@ -21,7 +21,6 @@ extra_files: [
     source: "base/Category_String.cpp"
     categories: [String]
   }
-  "base/argv.cpp"
   "base/category-header.hpp"
   "base/category-source.cpp"
   "base/category-source.hpp"

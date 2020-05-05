@@ -74,7 +74,7 @@ baseSourceIncludes :: [String]
 baseSourceIncludes = ["#include \"category-source.hpp\""]
 
 mainSourceIncludes :: [String]
-mainSourceIncludes = ["#include \"argv.hpp\""]
+mainSourceIncludes = ["#include \"logging.hpp\""]
 
 paramName :: ParamName -> String
 paramName p = "Param_" ++ tail (pnName p) -- Remove leading '#'.

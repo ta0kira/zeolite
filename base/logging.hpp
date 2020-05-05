@@ -22,6 +22,7 @@ limitations under the License.
 #include <list>
 #include <sstream>
 #include <string>
+#include <vector>
 
 #include "thread-capture.h"
 
@@ -131,6 +132,30 @@ class CleanupContext : public TraceContext {
   const TraceContext* GetNext() const final;
 
   const char* at_;
+  const ScopedCapture capture_to_;
+};
+
+class Argv : public capture_thread::ThreadCapture<Argv> {
+ public:
+  static int ArgCount();
+  static const std::string& GetArgAt(int pos);
+
+ protected:
+  virtual ~Argv() = default;
+
+ private:
+  virtual const std::vector<std::string>& GetArgs() const = 0;
+};
+
+class ProgramArgv : public Argv {
+ public:
+  inline ProgramArgv(int argc, const char** argv)
+    : argv_(argv, argv + argc), capture_to_(this) {}
+
+ private:
+  const std::vector<std::string>& GetArgs() const final;
+
+  const std::vector<std::string> argv_;
   const ScopedCapture capture_to_;
 };
 
