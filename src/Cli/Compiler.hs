@@ -137,7 +137,11 @@ runCompiler (CompileOptions _ is is2 ds es ep p m f) = do
   (fr,deps) <- loadPublicDeps (getCompilerHash backend) (as ++ as2)
   checkAllowedStale fr f
   if isCreateTemplates m
-      then sequence_ $ map (processTemplates deps) ds
+      then do
+        base <- resolveBaseModule resolver
+        (fr2,bpDeps) <- loadPublicDeps (getCompilerHash backend) [base]
+        checkAllowedStale fr2 f
+        sequence_ $ map (processTemplates $ bpDeps ++ deps) ds
       else do
         ma <- sequence $ map (processPath backend resolver deps as as2) ds
         let ms = concat $ map snd ma
