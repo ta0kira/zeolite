@@ -1,5 +1,11 @@
 # Revision history for zeolite-lang
 
+## 0.4.1.0  -- ??-??-??
+
+* **[new]** Adds support for bitwise `Int` operations.
+
+* **[fix]** Fixes broken `--templates` mode when builtin types are used.
+
 ## 0.4.0.0  -- 2020-05-05
 
 * **[new]** Allows modules to specify custom linker flags and private include
