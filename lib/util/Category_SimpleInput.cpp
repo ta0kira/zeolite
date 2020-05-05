@@ -135,7 +135,7 @@ struct Value_SimpleInput : public TypeValue {
         return ReturnTuple(Box_String(buffer.substr(0, read_size)));
       }
     }
-    if (&label == &Function_BlockReader_pastEnd) {{
+    if (&label == &Function_BlockReader_pastEnd) {
       TRACE_FUNCTION("SimpleInput.pastEnd")
       std::lock_guard<std::mutex> lock(mutex);
       return ReturnTuple(Box_Bool(zero_read));
