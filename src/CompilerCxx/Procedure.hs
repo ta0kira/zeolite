@@ -189,6 +189,7 @@ compileStatement (LoopContinue c) = do
        _ -> return ()
   csWrite $ ["{"] ++ lsUpdate loop ++ ["}","continue;"]
 compileStatement (FailCall c e) = do
+  csRequiresTypes (Set.fromList [BuiltinFormatted,BuiltinString])
   e' <- compileExpression e
   when (length (pValues $ fst e') /= 1) $
     lift $ compileError $ "Expected single return in argument" ++ formatFullContextBrace c
@@ -416,26 +417,33 @@ compileExpression :: (Show c, CompileErrorM m, MergeableM m,
   Expression c -> CompilerState a m (ExpressionType,ExprValue)
 compileExpression = compile where
   compile (Literal (StringLiteral _ l)) = do
+    csRequiresTypes (Set.fromList [BuiltinString])
     return (Positional [stringRequiredValue],UnboxedPrimitive PrimString $ "PrimString_FromLiteral(" ++ escapeChars l ++ ")")
   compile (Literal (CharLiteral _ l)) = do
+    csRequiresTypes (Set.fromList [BuiltinChar])
     return (Positional [charRequiredValue],UnboxedPrimitive PrimChar $ "PrimChar('" ++ escapeChar l ++ "')")
   compile (Literal (IntegerLiteral c True l)) = do
+    csRequiresTypes (Set.fromList [BuiltinInt])
     when (l > 2^(64 :: Integer) - 1) $ lift $ compileError $
       "Literal " ++ show l ++ formatFullContextBrace c ++ " is greater than the max value for 64-bit unsigned"
     let l' = if l > 2^(63 :: Integer) - 1 then l - 2^(64 :: Integer) else l
     return (Positional [intRequiredValue],UnboxedPrimitive PrimInt $ "PrimInt(" ++ show l' ++ ")")
   compile (Literal (IntegerLiteral c False l)) = do
+    csRequiresTypes (Set.fromList [BuiltinInt])
     when (l > 2^(63 :: Integer) - 1) $ lift $ compileError $
       "Literal " ++ show l ++ formatFullContextBrace c ++ " is greater than the max value for 64-bit signed"
     when ((-l) > (2^(63 :: Integer) - 2)) $ lift $ compileError $
       "Literal " ++ show l ++ formatFullContextBrace c ++ " is less than the min value for 64-bit signed"
     return (Positional [intRequiredValue],UnboxedPrimitive PrimInt $ "PrimInt(" ++ show l ++ ")")
   compile (Literal (DecimalLiteral _ l e)) = do
+    csRequiresTypes (Set.fromList [BuiltinFloat])
     -- TODO: Check bounds.
     return (Positional [floatRequiredValue],UnboxedPrimitive PrimFloat $ "PrimFloat(" ++ show l ++ "E" ++ show e ++ ")")
   compile (Literal (BoolLiteral _ True)) = do
+    csRequiresTypes (Set.fromList [BuiltinBool])
     return (Positional [boolRequiredValue],UnboxedPrimitive PrimBool "true")
   compile (Literal (BoolLiteral _ False)) = do
+    csRequiresTypes (Set.fromList [BuiltinBool])
     return (Positional [boolRequiredValue],UnboxedPrimitive PrimBool "false")
   compile (Literal (EmptyLiteral _)) = do
     return (Positional [emptyValue],UnwrappedSingle "Var_empty")
@@ -641,6 +649,7 @@ compileExpressionStart (UnqualifiedCall c f@(FunctionCall _ n _ _)) = do
       return f'
 -- TODO: Compile BuiltinCall like regular functions, for consistent validation.
 compileExpressionStart (BuiltinCall c (FunctionCall _ BuiltinPresent ps es)) = do
+  csRequiresTypes (Set.fromList [BuiltinBool])
   when (length (pValues ps) /= 0) $
     lift $ compileError $ "Expected 0 type parameters" ++ formatFullContextBrace c
   when (length (pValues es) /= 1) $
