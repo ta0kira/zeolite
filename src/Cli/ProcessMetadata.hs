@@ -148,6 +148,7 @@ writeMetadata p m = do
 writeRecompile :: String -> ModuleConfig -> IO ()
 writeRecompile p m = do
   p' <- canonicalizePath p
+  let f = p </> recompileFilename
   hPutStrLn stderr $ "Updating config for \"" ++ p' ++ "\"."
   let m' = autoWriteConfig m
   if isCompileError m'
@@ -155,7 +156,10 @@ writeRecompile p m = do
        hPutStrLn stderr $ "Could not serialize module config."
        hPutStrLn stderr $ show (getCompileError m')
        exitFailure
-     else writeFile (p </> recompileFilename) (getCompileSuccess m')
+     else do
+       exists <- doesFileExist f
+       when exists $ removeFile f
+       writeFile f (getCompileSuccess m')
 
 eraseCachedData :: String -> IO ()
 eraseCachedData p = do
