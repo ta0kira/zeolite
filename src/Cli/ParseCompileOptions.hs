@@ -41,6 +41,7 @@ optionHelpText = [
     "zeolite [options...] -m [category(.function)] -o [binary] [path]",
     "zeolite [options...] -c [paths...]",
     "zeolite [options...] -r [paths...]",
+    "zeolite [options...] -R [paths...]",
     "zeolite [options...] -t [paths...]",
     "zeolite [options...] --templates [paths...]",
     "zeolite --get-path",
@@ -50,13 +51,14 @@ optionHelpText = [
     "  -c: Only compile the individual files. (default)",
     "  -m [category(.function)]: Create a binary that executes the function.",
     "  -r: Recompile using the previous compilation options.",
+    "  -R: Recursively recompile using the previous compilation options.",
     "  -t: Only execute tests, without other compilation.",
     "  --templates: Only create C++ templates for undefined categories in .0rp sources.",
     "  --get-path: Show the data path and immediately exit.",
     "  --version: Show the compiler version and immediately exit.",
     "",
     "Options:",
-    "  -f: Force compilation instead of recompiling with -r.",
+    "  -f: Force compilation instead of recompiling with -r/-R.",
     "  -i [path]: A single source path to include as a *public* dependency.",
     "  -I [path]: A single source path to include as a *private* dependency.",
     "  -o [binary]: The name of the binary file to create with -m.",
@@ -120,6 +122,10 @@ parseCompileOptions = parseAll emptyCompileOptions . zip ([1..] :: [Int]) where
   parseSingle (CompileOptions h is is2 ds es ep p m f) ((n,"-r"):os)
     | m /= CompileUnspecified = argError n "-r" "Compiler mode already set."
     | otherwise = return (os,CompileOptions (maybeDisableHelp h) is is2 ds es ep p CompileRecompile f)
+
+  parseSingle (CompileOptions h is is2 ds es ep p m f) ((n,"-R"):os)
+    | m /= CompileUnspecified = argError n "-r" "Compiler mode already set."
+    | otherwise = return (os,CompileOptions (maybeDisableHelp h) is is2 ds es ep p CompileRecompileRecursive f)
 
   parseSingle (CompileOptions h is is2 ds es ep p m f) ((n,"-t"):os)
     | m /= CompileUnspecified = argError n "-t" "Compiler mode already set."
@@ -202,7 +208,7 @@ validateCompileOptions co@(CompileOptions h is is2 ds _ _ _ m _)
     compileError "Include paths (-i/-I) are not allowed in test mode (-t)."
 
   | (not $ null $ is ++ is2) && (isCompileRecompile m) =
-    compileError "Include paths (-i/-I) are not allowed in recompile mode (-r)."
+    compileError "Include paths (-i/-I) are not allowed in recompile mode (-r/-R)."
 
   | null ds =
     compileError "Please specify at least one input path."

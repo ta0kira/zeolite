@@ -101,6 +101,21 @@ runCompiler (CompileOptions _ _ _ ds _ _ p (ExecuteTests tp) f) = do
       | otherwise = do
           hPutStrLn stderr $ "\nPassed: " ++ show passed ++ " test(s), Failed: " ++ show failed ++ " test(s)"
           hPutStrLn stderr $ "Zeolite tests passed."
+runCompiler (CompileOptions h _ _ ds _ _ p CompileRecompileRecursive f) = do
+  recursiveSequence Set.empty ds where
+    recursiveSequence da (d0:ds2) = do
+      d <- canonicalizePath (p </> d0)
+      rm <- tryLoadRecompile d
+      case rm of
+           Nothing -> do
+             hPutStrLn stderr $ "Path " ++ d ++ " does not have a valid configuration."
+             exitFailure
+           Just m -> when (not $ rmPath m `Set.member` da) $ do
+             let ds3 = map (\d2 -> d </> d2) (rmPublicDeps m ++ rmPrivateDeps m)
+             let da' = rmPath m `Set.insert` da
+             recursiveSequence da' (ds3 ++ ds2)
+             runCompiler (CompileOptions h [] [] [d] [] [] "" CompileRecompile f)
+    recursiveSequence _ _ = return ()
 runCompiler (CompileOptions h _ _ ds _ _ p CompileRecompile f) = do
   (backend,_) <- loadConfig
   fmap mergeAll $ sequence $ map (recompileSingle $ getCompilerHash backend) ds where

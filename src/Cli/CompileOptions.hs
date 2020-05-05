@@ -106,6 +106,7 @@ data CompileMode =
     ciLinkFlags :: [String]
   } |
   CompileRecompile |
+  CompileRecompileRecursive |
   CreateTemplates |
   CompileUnspecified
   deriving (Eq,Show)
@@ -119,8 +120,9 @@ isCompileIncremental (CompileIncremental _) = True
 isCompileIncremental _                      = False
 
 isCompileRecompile :: CompileMode -> Bool
-isCompileRecompile CompileRecompile = True
-isCompileRecompile _                = False
+isCompileRecompile CompileRecompile          = True
+isCompileRecompile CompileRecompileRecursive = True
+isCompileRecompile _                         = False
 
 isExecuteTests :: CompileMode -> Bool
 isExecuteTests (ExecuteTests _) = True
