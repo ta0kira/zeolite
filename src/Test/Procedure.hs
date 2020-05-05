@@ -170,6 +170,11 @@ tests = [
     checkShortParseSuccess "\\ !x >= !y",
     checkShortParseSuccess "\\ !x && !y",
     checkShortParseSuccess "\\ !x || !y",
+    checkShortParseSuccess "\\ ~x >> ~y",
+    checkShortParseSuccess "\\ ~x << ~y",
+    checkShortParseSuccess "\\ ~x & ~y",
+    checkShortParseSuccess "\\ ~x | ~y",
+    checkShortParseSuccess "\\ ~x ^ ~y",
 
     checkShortParseSuccess "x <- y + z",
     checkShortParseSuccess "x <- !y == !z",

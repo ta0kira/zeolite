@@ -22,11 +22,60 @@ testcase "Int arithmetic with precedence" {
 
 define Test {
   run () {
-    scoped {
-      Int x <- \x10 + 1 * 2 - 8 / 2 - 3 % 2
-    } in if (x != 13) {
-      fail(x)
-    }
+    \ Testing$check<Int>(\x10 + 1 * 2 - 8 / 2 - 3 % 2,13)
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "Int arithmetic" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+    \ Testing$check<Int>(8 + 2,10)
+    \ Testing$check<Int>(8 - 2,6)
+    \ Testing$check<Int>(8 * 2,16)
+    \ Testing$check<Int>(8 / 2,4)
+    \ Testing$check<Int>(8 % 2,0)
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "Int bitwise" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+    \ Testing$check<Int>(1 << 2,4)
+    \ Testing$check<Int>(7 >> 1,3)
+    \ Testing$check<Int>(7 ^ 2 ,5)
+    \ Testing$check<Int>(7 & ~2,5)
+    \ Testing$check<Int>(5 | 2 ,7)
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "Int bitwise with precedence" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+    \ Testing$check<Int>(1 << 4 | 7 >> 1 & ~2,17)
   }
 }
 
@@ -41,11 +90,7 @@ testcase "same operators applied left to right" {
 
 define Test {
   run () {
-    scoped {
-      Int x <- 2 - 1 - 1
-    } in if (x != 0) {
-      fail(x)
-    }
+    \ Testing$check<Int>(2 - 1 - 1,0)
   }
 }
 
@@ -92,11 +137,7 @@ testcase "String arithmetic" {
 
 define Test {
   run () {
-    scoped {
-      String x <- "x" + "y" + "z"
-    } in if (x != "xyz") {
-      fail(x)
-    }
+    \ Testing$check<String>("x" + "y" + "z","xyz")
   }
 }
 
@@ -111,11 +152,22 @@ testcase "Float arithmetic with precedence" {
 
 define Test {
   run () {
-    scoped {
-      Float x <- 16.0 + 1.0 * 2.0 - 8.0 / 2.0 - 3.0 / 3.0
-    } in if (x != 13.0) {
-      fail(x)
-    }
+    \ Testing$check<Float>(16.0 + 1.0 * 2.0 - 8.0 / 2.0 - 3.0 / 3.0,13.0)
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "Char minus" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+    \ Testing$check<Int>('z' - 'a',25)
   }
 }
 

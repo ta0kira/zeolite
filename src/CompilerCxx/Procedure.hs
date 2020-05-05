@@ -470,6 +470,7 @@ compileExpression = compile where
       doUnary t e2
         | o == "!" = doNot t e2
         | o == "-" = doNeg t e2
+        | o == "~" = doComp t e2
         | otherwise = lift $ compileError $ "Unknown unary operator \"" ++ o ++ "\" " ++
                                             formatFullContextBrace c
       doNot t e2 = do
@@ -483,6 +484,11 @@ compileExpression = compile where
         | t == floatRequiredValue = return $ (Positional [floatRequiredValue],
                                              UnboxedPrimitive PrimFloat $ "-" ++ useAsUnboxed PrimFloat e2)
         | otherwise = lift $ compileError $ "Cannot use " ++ show t ++ " with unary - operator" ++
+                                            formatFullContextBrace c
+      doComp t e2
+        | t == intRequiredValue = return $ (Positional [intRequiredValue],
+                                            UnboxedPrimitive PrimInt $ "~" ++ useAsUnboxed PrimInt e2)
+        | otherwise = lift $ compileError $ "Cannot use " ++ show t ++ " with unary ~ operator" ++
                                             formatFullContextBrace c
   compile (InitializeValue c t ps es) = do
     es' <- sequence $ map compileExpression $ pValues es
@@ -536,6 +542,7 @@ compileExpression = compile where
   equals = Set.fromList ["==","!="]
   comparison = Set.fromList ["==","!=","<","<=",">",">="]
   logical = Set.fromList ["&&","||"]
+  bitwise = Set.fromList ["&","|","^",">>","<<"]
   bindInfix c (Positional ts1,e1) o (Positional ts2,e2) = do
     -- TODO: Needs better error messages.
     t1' <- requireSingle c ts1
@@ -555,6 +562,8 @@ compileExpression = compile where
         | o `Set.member` comparison && t1 == charRequiredValue = do
           return (Positional [boolRequiredValue],glueInfix PrimChar PrimBool e1 o e2)
         | o `Set.member` arithmetic1 && t1 == intRequiredValue = do
+          return (Positional [intRequiredValue],glueInfix PrimInt PrimInt e1 o e2)
+        | o `Set.member` bitwise && t1 == intRequiredValue = do
           return (Positional [intRequiredValue],glueInfix PrimInt PrimInt e1 o e2)
         | o `Set.member` arithmetic2 && t1 == intRequiredValue = do
           return (Positional [intRequiredValue],glueInfix PrimInt PrimInt e1 o e2)

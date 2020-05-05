@@ -240,24 +240,52 @@ instance ParseFromSource (ScopedBlock SourcePos) where
 
 unaryOperator :: Parser (Operator c)
 unaryOperator = op >>= return . NamedOperator where
-  op = labeled "unary operator" $ foldr (<|>) (fail "empty") $ map (try . operator) [
-      "!", "-"
-    ]
+  op = labeled "unary operator" $ foldr (<|>) (fail "empty") $ map (try . operator) ops
+  ops = logicalUnary ++ arithUnary ++ bitwiseUnary
+
+logicalUnary :: [String]
+logicalUnary = ["!"]
+
+arithUnary :: [String]
+arithUnary = ["-"]
+
+bitwiseUnary :: [String]
+bitwiseUnary = ["~"]
 
 infixOperator :: Parser (Operator c)
 infixOperator = op >>= return . NamedOperator where
-  op = labeled "binary operator" $ foldr (<|>) (fail "empty") $ map (try . operator) [
-      "+","-","*","/","%","==","!=","<","<=",">",">=","&&","||"
-    ]
+  op = labeled "binary operator" $ foldr (<|>) (fail "empty") $ map (try . operator) ops
+  ops = compareInfix ++ logicalInfix ++ addInfix ++ subInfix ++ multInfix ++ bitwiseInfix ++ bitshiftInfix
+
+compareInfix :: [String]
+compareInfix = ["==","!=","<","<=",">",">="]
+
+logicalInfix :: [String]
+logicalInfix = ["&&","||"]
+
+addInfix :: [String]
+addInfix = ["+"]
+
+subInfix :: [String]
+subInfix = ["-"]
+
+multInfix :: [String]
+multInfix = ["*","/","%"]
+
+bitwiseInfix :: [String]
+bitwiseInfix = ["&","|","^"]
+
+bitshiftInfix :: [String]
+bitshiftInfix = [">>","<<"]
 
 infixBefore :: Operator c -> Operator c -> Bool
 infixBefore o1 o2 = (infixOrder o1 :: Int) <= (infixOrder o2 :: Int) where
   infixOrder (NamedOperator o)
     -- TODO: Don't hard-code this.
-    | o `Set.member` Set.fromList ["*","/","%"] = 1
-    | o `Set.member` Set.fromList ["+","-"] = 2
-    | o `Set.member` Set.fromList ["==","!=","<","<=",">",">="] = 4
-    | o `Set.member` Set.fromList ["&&","||"] = 5
+    | o `Set.member` Set.fromList (multInfix ++ bitshiftInfix) = 1
+    | o `Set.member` Set.fromList (addInfix ++ subInfix ++ bitwiseInfix) = 2
+    | o `Set.member` Set.fromList compareInfix = 4
+    | o `Set.member` Set.fromList logicalInfix = 5
   infixOrder _ = 3
 
 functionOperator :: Parser (Operator SourcePos)
