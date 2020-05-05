@@ -67,11 +67,13 @@ runCompiler (CompileOptions _ _ _ ds _ _ p (ExecuteTests tp) f) = do
   processResults passed failed (mergeAllM $ map snd allResults) where
     preloadModule b base d = do
       m <- loadMetadata (p </> d)
-      (fr1,deps1) <- loadPublicDeps (getCompilerHash b) [base,p </> d]
+      (fr0,deps0) <- loadPublicDeps (getCompilerHash b) [base]
+      checkAllowedStale fr0 f
+      (fr1,deps1) <- loadTestingDeps (getCompilerHash b) (p </> d)
       checkAllowedStale fr1 f
-      (fr2,deps2) <- loadPrivateDeps (getCompilerHash b) deps1
+      (fr2,deps2) <- loadPrivateDeps (getCompilerHash b) (deps0++deps1)
       checkAllowedStale fr2 f
-      return (d,m,deps1,deps2)
+      return (d,m,deps0++deps1,deps2)
     getTestsFromPreload (_,m,_,_) = cmTestFiles m
     allowTests = Set.fromList tp
     isTestAllowed t = if null allowTests then True else t `Set.member` allowTests

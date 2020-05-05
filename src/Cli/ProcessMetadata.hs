@@ -35,6 +35,7 @@ module Cli.ProcessMetadata (
   isPathUpToDate,
   loadPrivateDeps,
   loadPublicDeps,
+  loadTestingDeps,
   loadMetadata,
   resolveCategoryDeps,
   resolveObjectDeps,
@@ -227,6 +228,11 @@ getObjectFilesForDeps = concat . map cmObjectFiles
 
 loadPublicDeps :: String -> [String] -> IO (Bool,[CompileMetadata])
 loadPublicDeps h = loadDepsCommon False h Set.empty cmPublicDeps
+
+loadTestingDeps :: String -> String -> IO (Bool,[CompileMetadata])
+loadTestingDeps h p = do
+  m <- loadMetadata p
+  loadDepsCommon False h Set.empty cmPublicDeps (p:cmPrivateDeps m)
 
 loadPrivateDeps :: String -> [CompileMetadata] -> IO (Bool,[CompileMetadata])
 loadPrivateDeps h ms = do
