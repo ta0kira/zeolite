@@ -159,8 +159,7 @@ runSingleTest b paths deps os tm (f,s) = do
       let binary = dir </> "testcase"
       writeFile main $ concat $ map (++ "\n") c
       let paths' = nub $ map fixPath (dir:paths)
-      let req2 = getRequiresFromDeps deps
-      let ofr = getObjectFileResolver req2 (sources' ++ os)
+      let ofr = getObjectFileResolver (sources' ++ os)
       let os' = ofr ns req
       let command = CompileToBinary main os' binary paths'
       runCxxCommand b command

@@ -1,20 +1,6 @@
 root: ".."
 path: "base"
 extra_files: [
-  "base/argv.cpp"
-  "base/builtin.hpp"
-  "base/category-header.hpp"
-  "base/category-source.cpp"
-  "base/category-source.hpp"
-  "base/cycle-check.hpp"
-  "base/function.hpp"
-  "base/logging.cpp"
-  "base/logging.hpp"
-  "base/types.cpp"
-  "base/types.hpp"
-  "capture-thread/include/thread-capture.h"
-  "capture-thread/include/thread-crosser.h"
-  "capture-thread/src/thread-crosser.cc"
   category_source {
     source: "base/builtin.cpp"
     categories: [
@@ -35,6 +21,20 @@ extra_files: [
       ReadPosition
     ]
   }
+  "base/argv.cpp"
+  "base/builtin.hpp"
+  "base/category-header.hpp"
+  "base/category-source.cpp"
+  "base/category-source.hpp"
+  "base/cycle-check.hpp"
+  "base/function.hpp"
+  "base/logging.cpp"
+  "base/logging.hpp"
+  "base/types.cpp"
+  "base/types.hpp"
+  "capture-thread/include/thread-capture.h"
+  "capture-thread/include/thread-crosser.h"
+  "capture-thread/src/thread-crosser.cc"
 ]
 extra_paths: [
   "base"

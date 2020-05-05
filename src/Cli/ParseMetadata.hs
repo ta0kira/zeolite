@@ -130,7 +130,6 @@ instance ConfigFormat CompileMetadata where
     ns <-  parseRequired "namespace:"     parseNamespace
     is <-  parseRequired "public_deps:"   (parseList parseQuoted)
     is2 <- parseRequired "private_deps:"  (parseList parseQuoted)
-    es <-  parseRequired "extra:"         (parseList readConfig)
     cs <-  parseRequired "categories:"    (parseList parseCategoryName)
     ds <-  parseRequired "subdirs:"       (parseList parseQuoted)
     ps <-  parseRequired "public_files:"  (parseList parseQuoted)
@@ -139,12 +138,11 @@ instance ConfigFormat CompileMetadata where
     hxx <- parseRequired "hxx_files:"     (parseList parseQuoted)
     cxx <- parseRequired "cxx_files:"     (parseList parseQuoted)
     os <-  parseRequired "object_files:"  (parseList readConfig)
-    return (CompileMetadata h p ns is is2 es cs ds ps xs ts hxx cxx os)
+    return (CompileMetadata h p ns is is2 cs ds ps xs ts hxx cxx os)
   writeConfig m = do
     validateHash (cmVersionHash m)
     validateNamespace (cmNamespace m)
     _ <- collectAllOrErrorM $ map validateCategoryName (cmCategories m)
-    extra   <- fmap concat $ collectAllOrErrorM $ map writeConfig $ cmExtraRequires m
     objects <- fmap concat $ collectAllOrErrorM $ map writeConfig $ cmObjectFiles m
     return $ [
         "version_hash: " ++ (cmVersionHash m),
@@ -155,9 +153,6 @@ instance ConfigFormat CompileMetadata where
         "]",
         "private_deps: ["
       ] ++ indents (map show $ cmPrivateDeps m) ++ [
-        "]",
-        "extra: ["
-      ] ++ indents extra ++ [
         "]",
         "categories: ["
       ] ++ indents (cmCategories m) ++ [

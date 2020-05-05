@@ -29,7 +29,6 @@ module Cli.ProcessMetadata (
   getObjectFilesForDeps,
   getObjectFileResolver,
   getRealPathsForDeps,
-  getRequiresFromDeps,
   getSourceFilesForDeps,
   isPathConfigured,
   isPathUpToDate,
@@ -206,9 +205,6 @@ getSourceFilesForDeps :: [CompileMetadata] -> [String]
 getSourceFilesForDeps = concat . map extract where
   extract m = map (cmPath m </>) (cmPublicFiles m)
 
-getRequiresFromDeps :: [CompileMetadata] -> [CategoryIdentifier]
-getRequiresFromDeps = concat . map cmExtraRequires
-
 getNamespacesForDeps :: [CompileMetadata] -> [String]
 getNamespacesForDeps = filter (not . null) . map cmNamespace
 
@@ -278,7 +274,7 @@ checkModuleVersionHash :: String -> CompileMetadata -> Bool
 checkModuleVersionHash h m = cmVersionHash m == h
 
 checkModuleFreshness :: String -> CompileMetadata -> IO Bool
-checkModuleFreshness p (CompileMetadata _ p2 _ is is2 _ _ _ ps xs ts hxx cxx _) = do
+checkModuleFreshness p (CompileMetadata _ p2 _ is is2 _ _ ps xs ts hxx cxx _) = do
   time <- getModificationTime $ getCachedPath p "" metadataFilename
   (ps2,xs2,ts2) <- findSourceFiles p ""
   let e1 = checkMissing ps ps2
@@ -304,8 +300,8 @@ checkModuleFreshness p (CompileMetadata _ p2 _ is is2 _ _ _ ps xs ts hxx cxx _) 
         then return True
         else doesDirectoryExist f2
 
-getObjectFileResolver :: [CategoryIdentifier] -> [ObjectFile] -> [Namespace] -> [CategoryName] -> [String]
-getObjectFileResolver ce os ns ds = resolved ++ nonCategories where
+getObjectFileResolver :: [ObjectFile] -> [Namespace] -> [CategoryName] -> [String]
+getObjectFileResolver os ns ds = resolved ++ nonCategories where
   categories    = filter isCategoryObjectFile os
   nonCategories = map oofFile $ filter (not . isCategoryObjectFile) os
   categoryMap = Map.fromList $ map keyByCategory2 categories
@@ -313,7 +309,7 @@ getObjectFileResolver ce os ns ds = resolved ++ nonCategories where
   objectMap = Map.fromList $ map keyBySpec categories
   keyBySpec o = (cofCategory o,o)
   directDeps = concat $ map (resolveDep2 . show) ds
-  directResolved = map cofCategory directDeps ++ ce
+  directResolved = map cofCategory directDeps
   resolveDep2 d = unwrap $ foldl (<|>) Nothing allChecks <|> Just [] where
     allChecks = map (\n -> (d,n) `Map.lookup` categoryMap >>= return . (:[])) (map show ns ++ [""])
     unwrap (Just xs) = xs

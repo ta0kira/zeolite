@@ -21,6 +21,7 @@ module Cli.Compiler (
 ) where
 
 import Control.Monad (when)
+import Data.Either (partitionEithers)
 import Data.List (intercalate,isSuffixOf,nub,sort)
 import System.Directory
 import System.Exit
@@ -144,9 +145,6 @@ runCompiler (CompileOptions _ is is2 ds es ep p m f) = do
         createBinary backend resolver (deps ++ deps2) m ms
   hPutStrLn stderr $ "Zeolite compilation succeeded." where
     ep' = fixPaths $ map (p </>) ep
-    es' = fixPaths $ map (p </>) $ map getSourceFile es
-    ec = concat $ map getSourceDeps es
-    ex = concat $ map getSourceCategories es
     processPath b r deps as as2 d = do
       isConfigured <- isPathConfigured d
       when (isConfigured && f == DoNotForce) $ do
@@ -203,17 +201,20 @@ runCompiler (CompileOptions _ is is2 ds es ep p m f) = do
           let hxx   = filter (isSuffixOf ".hpp" . coFilename)       fs'
           let other = filter (not . isSuffixOf ".hpp" . coFilename) fs'
           os1 <- sequence $ map (writeOutputFile b (show ns0) paths' d) $ hxx ++ other
-          os2 <- fmap concat $ sequence $ map (compileExtraFile b (show ns0) paths' d) es'
-          let (hxx',cxx,os') = sortCompiledFiles $ map (\f2 -> show (coNamespace f2) </> coFilename f2) fs' ++ es'
+          os2 <- fmap concat $ sequence $ map (compileExtraSource b (show ns0) paths' d) es
+          let (osCat,osOther) = partitionEithers os2
+          let files = map (\f2 -> getCachedPath (p </> d) (show $ coNamespace f2) (coFilename f2)) fs' ++
+                      map (\f2 -> p </> getSourceFile f2) es
+          files' <- sequence $ map canonicalizePath files
+          let (hxx',cxx,os') = sortCompiledFiles files'
           path <- canonicalizePath $ p </> d
-          let os1' = resolveObjectDeps path os1 deps
-          let cm0 = CompileMetadata {
+          let os1' = resolveObjectDeps path (os1 ++ osCat) deps
+          let cm = CompileMetadata {
               cmVersionHash = getCompilerHash b,
               cmPath = path,
               cmNamespace = show ns0,
               cmPublicDeps = as,
               cmPrivateDeps = as2,
-              cmExtraRequires = [],
               cmCategories = sort $ map show pc,
               cmSubdirs = sort $ ss' ++ ep',
               cmPublicFiles = sort ps,
@@ -221,24 +222,7 @@ runCompiler (CompileOptions _ is is2 ds es ep p m f) = do
               cmTestFiles = sort ts,
               cmHxxFiles = sort hxx',
               cmCxxFiles = sort cxx,
-              cmObjectFiles = os1' ++ os2 ++ map OtherObjectFile os'
-            }
-          let ec' = resolveCategoryDeps ec (cm0:deps)
-          let cm = CompileMetadata {
-              cmVersionHash = cmVersionHash cm0,
-              cmPath = cmPath cm0,
-              cmNamespace = cmNamespace cm0,
-              cmPublicDeps = cmPublicDeps cm0,
-              cmPrivateDeps = cmPrivateDeps cm0,
-              cmExtraRequires = ec',
-              cmCategories = cmCategories cm0,
-              cmSubdirs = cmSubdirs cm0,
-              cmPublicFiles = cmPublicFiles cm0,
-              cmPrivateFiles = cmPrivateFiles cm0,
-              cmTestFiles = cmTestFiles cm0,
-              cmHxxFiles = cmHxxFiles cm0,
-              cmCxxFiles = cmCxxFiles cm0,
-              cmObjectFiles = cmObjectFiles cm0
+              cmObjectFiles = os1' ++ osOther ++ map OtherObjectFile os'
             }
           when (not $ isCreateTemplates m) $ writeMetadata (p </> d) cm
           return (cm,mf)
@@ -259,14 +243,33 @@ runCompiler (CompileOptions _ is is2 ds es ep p m f) = do
            o2 <- runCxxCommand b command
            return $ ([o2],ca)
          else return ([],ca)
+    compileExtraSource b ns0 paths d (CategorySource f2 cs ds2) = do
+      f2' <- compileExtraFile b ns0 paths d f2
+      let ds2' = nub $ cs ++ ds2
+      case f2' of
+           Nothing -> return []
+           Just o  -> return $ map (\c -> Left $ ([o],fakeCxxForSource ns0 ds2' c)) cs
+    compileExtraSource b ns0 paths d (OtherSource f2) = do
+      f2' <- compileExtraFile b ns0 paths d f2
+      case f2' of
+           Just o  -> return [Right $ OtherObjectFile o]
+           Nothing -> return []
+    fakeCxxForSource ns ds2 c = CxxOutput {
+        coCategory = Just (CategoryName c),
+        coFilename = "",
+        coNamespace = ns',
+        coUsesNamespace = [ns'],
+        coUsesCategory = map CategoryName ds2,
+        coOutput = []
+      } where
+        ns' = if null ns then NoNamespace else StaticNamespace ns
     compileExtraFile b ns0 paths d f2
       | isSuffixOf ".cpp" f2 || isSuffixOf ".cc" f2 = do
-          let f2' = p </> d </> f2
+          let f2' = p </> f2
           createCachePath (p </> d)
           let command = CompileToObject f2' (getCachedPath (p </> d) "" "") dynamicNamespaceName ns0 paths True
-          o2 <- runCxxCommand b command
-          return [OtherObjectFile o2]
-      | otherwise = return []
+          fmap Just $ runCxxCommand b command
+      | otherwise = return Nothing
     processTemplates deps d = do
       (ps,xs,_) <- findSourceFiles p d
       ps' <- zipWithContents p ps
@@ -313,7 +316,7 @@ runCompiler (CompileOptions _ is is2 ds es ep p m f) = do
           cnNamespaces = ns0:ns2,
           cnPublic = cs'',
           cnPrivate = xa,
-          cnExternal = ex
+          cnExternal = concat $ map getSourceCategories es
         }
       xx <- compileCategoryModule cm
       let pc = map getCategoryName cs''
@@ -348,8 +351,7 @@ runCompiler (CompileOptions _ is is2 ds es ep p m f) = do
           (_,deps2) <- loadPrivateDeps (getCompilerHash b) (bpDeps ++ deps)
           let paths = fixPaths $ getIncludePathsForDeps deps2
           let os    = getObjectFilesForDeps deps2
-          let req2 = getRequiresFromDeps deps2
-          let ofr = getObjectFileResolver req2 os
+          let ofr = getObjectFileResolver os
           let os' = ofr ns2 req
           let command = CompileToBinary o' os' f0 paths
           hPutStrLn stderr $ "Creating binary " ++ f0

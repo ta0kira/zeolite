@@ -39,7 +39,6 @@ data CompileMetadata =
     cmNamespace :: String, -- TODO: Use Namespace here?
     cmPublicDeps :: [String],
     cmPrivateDeps :: [String],
-    cmExtraRequires :: [CategoryIdentifier],
     cmCategories :: [String],
     cmSubdirs :: [String],
     cmPublicFiles :: [String],

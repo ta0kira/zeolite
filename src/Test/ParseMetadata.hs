@@ -41,16 +41,6 @@ tests = [
         "/home/project/private-dep1",
         "/home/project/private-dep2"
       ],
-      cmExtraRequires = [
-        CategoryIdentifier {
-          ciPath = "/home/project/private-dep1",
-          ciCategory = "PrivateCategory",
-          ciNamespace = "private_123456"
-        },
-        UnresolvedCategory {
-          ucCategory = "UnresolvedCategory"
-        }
-      ],
       cmCategories = [
         "MyCategory",
         "MyOtherCategory"
@@ -110,7 +100,6 @@ tests = [
       cmNamespace = "public_ABCDEF",
       cmPublicDeps = [],
       cmPrivateDeps = [],
-      cmExtraRequires = [],
       cmCategories = [],
       cmSubdirs = [],
       cmPublicFiles = [],
@@ -127,7 +116,6 @@ tests = [
       cmNamespace = "bad namespace",
       cmPublicDeps = [],
       cmPrivateDeps = [],
-      cmExtraRequires = [],
       cmCategories = [],
       cmSubdirs = [],
       cmPublicFiles = [],
@@ -144,7 +132,6 @@ tests = [
       cmNamespace = "public_ABCDEF",
       cmPublicDeps = [],
       cmPrivateDeps = [],
-      cmExtraRequires = [],
       cmCategories = [
         "bad category"
       ],
