@@ -29,7 +29,11 @@ limitations under the License.
 #include "cycle-check.hpp"
 
 
-void BuiltinFail(const S<TypeValue>& formatted) __attribute__ ((noreturn));
+#define BUILTIN_FAIL(e) { \
+  FAIL() << TypeValue::Call((e), Function_Formatted_formatted, \
+                            ParamTuple(), ArgTuple()).Only()->AsString(); \
+  __builtin_unreachable(); \
+  }
 
 extern const S<TypeValue>& Var_empty;
 

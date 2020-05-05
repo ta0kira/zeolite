@@ -200,7 +200,7 @@ compileStatement (FailCall c e) = do
     ("In fail call at " ++ formatFullContext c)
   csSetNoReturn
   csWrite $ setTraceContext c
-  csWrite ["BuiltinFail(" ++ useAsUnwrapped e0 ++ ");"]
+  csWrite ["BUILTIN_FAIL(" ++ useAsUnwrapped e0 ++ ")"]
 compileStatement (IgnoreValues c e) = do
   (_,e') <- compileExpression e
   csWrite $ setTraceContext c
