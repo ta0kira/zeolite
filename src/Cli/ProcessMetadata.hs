@@ -289,10 +289,16 @@ checkModuleFreshness p (CompileMetadata _ p2 _ is is2 _ _ ps xs ts hxx cxx _) = 
     check time f = do
       exists <- doesFileOrDirExist f
       if not exists
-         then return True
+         then do
+           hPutStrLn stderr $ "Required path \"" ++ f ++ "\" is missing."
+           return True
          else do
            time2 <- getModificationTime f
-           return (time2 > time)
+           if time2 > time
+              then do
+                hPutStrLn stderr $ "Required path \"" ++ f ++ "\" is out of date."
+                return True
+              else return False
     checkMissing s0 s1 = not $ null $ (Set.fromList s1) `Set.difference` (Set.fromList s0)
     doesFileOrDirExist f2 = do
       existF <- doesFileExist f2

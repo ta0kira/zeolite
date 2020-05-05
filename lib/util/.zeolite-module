@@ -9,15 +9,11 @@ extra_files: [
   }
   category_source {
     source: "util/Category_SimpleInput.cpp"
-    categories: [
-      SimpleInput
-    ]
+    categories: [SimpleInput]
   }
   category_source {
     source: "util/Category_SimpleOutput.cpp"
-    categories: [
-      SimpleOutput
-    ]
+    categories: [SimpleOutput]
   }
 ]
 mode: incremental

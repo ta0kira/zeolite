@@ -157,7 +157,7 @@ compileCategoryDeclaration _ ns t =
                      (headerFilename name)
                      (getCategoryNamespace t)
                      (ns ++ [getCategoryNamespace t])
-                     (filter (not . isBuiltinCategory) $ Set.toList $ cdRequired file)
+                     (Set.toList $ cdRequired file)
                      (cdOutput file) where
     file = mergeAll $ [
         CompiledData depends [],
@@ -394,12 +394,12 @@ commonDefineAll t ns top bottom ce te fe = do
   let inherited = Set.fromList $ (map (tiName . vrType) $ getCategoryRefines t) ++
                                  (map (diName . vdType) $ getCategoryDefines t)
   let includes = map (\i -> "#include \"" ++ headerFilename i ++ "\"") $
-                   filter (not . isBuiltinCategory) $ Set.toList $ Set.union req inherited
+                   Set.toList $ Set.union req inherited
   return $ CxxOutput (Just $ getCategoryName t)
                      filename
                      (getCategoryNamespace t)
                      ((getCategoryNamespace t):ns)
-                     (filter (not . isBuiltinCategory) $ Set.toList req)
+                     (Set.toList req)
                      (baseSourceIncludes ++ includes ++ out)
   where
     conditionalContent
@@ -685,7 +685,7 @@ createMainCommon n (CompiledData req out) =
       "  " ++ startFunctionTracing n
     ] ++ out ++ ["}"] where
       depIncludes req2 = map (\i -> "#include \"" ++ headerFilename i ++ "\"") $
-                           filter (not . isBuiltinCategory) $ Set.toList req2
+                           Set.toList req2
 
 createMainFile :: (Show c, CompileErrorM m, MergeableM m) =>
   CategoryMap c -> CategoryName -> FunctionName -> m (Namespace,[String])
@@ -703,4 +703,4 @@ createTestFile :: (Show c, CompileErrorM m, MergeableM m) =>
 createTestFile tm e = flip reviseError ("In the creation of the test binary procedure") $ do
   ca@(CompiledData req _) <- fmap indentCompiled (compileMainProcedure tm e)
   let file = createMainCommon "main" ca
-  return (filter (not . isBuiltinCategory) $ Set.toList req,file)
+  return (Set.toList req,file)

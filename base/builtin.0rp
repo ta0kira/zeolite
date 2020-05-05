@@ -36,6 +36,16 @@ concrete Char {
   defines LessThan<Char>
 }
 
+concrete Float {
+  refines AsBool
+  refines AsInt
+  refines AsFloat
+  refines Formatted
+
+  defines Equals<Float>
+  defines LessThan<Float>
+}
+
 concrete Int {
   refines AsBool
   refines AsChar
@@ -45,16 +55,6 @@ concrete Int {
 
   defines Equals<Int>
   defines LessThan<Int>
-}
-
-concrete Float {
-  refines AsBool
-  refines AsInt
-  refines AsFloat
-  refines Formatted
-
-  defines Equals<Float>
-  defines LessThan<Float>
 }
 
 concrete String {
@@ -72,10 +72,6 @@ concrete String {
   asBool () -> (Bool)
 }
 
-@value interface AsInt {
-  asInt () -> (Int)
-}
-
 @value interface AsChar {
   asChar () -> (Char)
 }
@@ -84,12 +80,8 @@ concrete String {
   asFloat () -> (Float)
 }
 
-@type interface LessThan<#x|> {
-  lessThan (#x,#x) -> (Bool)
-}
-
-@type interface Equals<#x|> {
-  equals (#x,#x) -> (Bool)
+@value interface AsInt {
+  asInt () -> (Int)
 }
 
 @value interface Formatted {
@@ -100,4 +92,12 @@ concrete String {
   readPosition (Int) -> (#x)
   readSize () -> (Int)
   subSequence (Int,Int) -> (ReadPosition<#x>)
+}
+
+@type interface Equals<#x|> {
+  equals (#x,#x) -> (Bool)
+}
+
+@type interface LessThan<#x|> {
+  lessThan (#x,#x) -> (Bool)
 }

@@ -6,15 +6,11 @@ public_deps: [
 extra_files: [
   category_source {
     source: "file/Category_RawFileReader.cpp"
-    categories: [
-      RawFileReader
-    ]
+    categories: [RawFileReader]
   }
   category_source {
     source: "file/Category_RawFileWriter.cpp"
-    categories: [
-      RawFileWriter
-    ]
+    categories: [RawFileWriter]
   }
 ]
 mode: incremental

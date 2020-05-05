@@ -19,7 +19,7 @@ limitations under the License.
 #include "category-source.hpp"
 
 #include "logging.hpp"
-#include "builtin.hpp"
+#include "Category_Formatted.hpp"
 
 
 namespace {
@@ -255,4 +255,11 @@ PrimFloat TypeValue::AsFloat() const {
 
 bool TypeValue::Present() const {
   return true;
+}
+
+
+void BuiltinFail(const S<TypeValue>& formatted) {
+  FAIL() << TypeValue::Call(formatted, Function_Formatted_formatted,
+                            ParamTuple(), ArgTuple()).Only()->AsString();
+  __builtin_unreachable();
 }
