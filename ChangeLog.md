@@ -1,6 +1,6 @@
 # Revision history for zeolite-lang
 
-## 0.4.1.0  -- ????-??-??
+## 0.4.1.0  -- 2020-05-05
 
 * **[new]** Adds the `Builder` interface to make `String` concatenation more
   efficient.
