@@ -35,7 +35,7 @@ extra_files: [
   "capture-thread/include/thread-crosser.h"
   "capture-thread/src/thread-crosser.cc"
 ]
-extra_paths: [
+include_paths: [
   "base"
   "capture-thread/include"
 ]

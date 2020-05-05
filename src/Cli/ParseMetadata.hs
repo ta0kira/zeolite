@@ -249,13 +249,13 @@ instance ConfigFormat CategoryIdentifier where
 
 instance ConfigFormat ModuleConfig where
   readConfig = do
-      p <-   parseOptional "root:"         "" parseQuoted
-      d <-   parseRequired "path:"            parseQuoted
-      is <-  parseOptional "public_deps:"  [] (parseList parseQuoted)
-      is2 <- parseOptional "private_deps:" [] (parseList parseQuoted)
-      es <-  parseOptional "extra_files:"  [] (parseList readConfig)
-      ep <-  parseOptional "extra_paths:"  [] (parseList parseQuoted)
-      m <-   parseRequired "mode:"            readConfig
+      p <-   parseOptional "root:"          "" parseQuoted
+      d <-   parseRequired "path:"             parseQuoted
+      is <-  parseOptional "public_deps:"   [] (parseList parseQuoted)
+      is2 <- parseOptional "private_deps:"  [] (parseList parseQuoted)
+      es <-  parseOptional "extra_files:"   [] (parseList readConfig)
+      ep <-  parseOptional "include_paths:" [] (parseList parseQuoted)
+      m <-   parseRequired "mode:"             readConfig
       return (ModuleConfig p d is is2 es ep m)
   writeConfig m = do
     extra    <- fmap concat $ collectAllOrErrorM $ map writeConfig $ rmExtraFiles m
@@ -272,7 +272,7 @@ instance ConfigFormat ModuleConfig where
         "extra_files: ["
       ] ++ indents extra ++ [
         "]",
-        "extra_paths: ["
+        "include_paths: ["
       ] ++ indents (map show $ rmExtraPaths m) ++ [
         "]"
       ] ++ "mode: " `prependFirst` mode
