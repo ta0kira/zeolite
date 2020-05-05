@@ -1,0 +1,9 @@
+root: "../.."
+path: "lib/math"
+extra_files: [
+  category_source {
+    source: "lib/math/Category_Math.cpp"
+    categories: [Math]
+  }
+]
+mode: incremental {}

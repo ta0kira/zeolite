@@ -36,7 +36,7 @@ description:
     .
     @
     ZEOLITE_PATH=$(zeolite --get-path)
-    zeolite -p "$ZEOLITE_PATH" -t tests lib\/file lib\/util
+    zeolite -p "$ZEOLITE_PATH" -t tests lib\/file lib\/math lib\/util
     @
   .
   The <https://github.com/ta0kira/zeolite/tree/master/example code examples> are

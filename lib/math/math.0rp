@@ -1,0 +1,50 @@
+/* -----------------------------------------------------------------------------
+Copyright 2020 Kevin P. Barry
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+----------------------------------------------------------------------------- */
+
+// Author: Kevin P. Barry [ta0kira@gmail.com]
+
+concrete Math {
+  @type cos (Float) -> (Float)
+  @type sin (Float) -> (Float)
+  @type tan (Float) -> (Float)
+  @type acos (Float) -> (Float)
+  @type asin (Float) -> (Float)
+  @type atan (Float) -> (Float)
+
+  @type cosh (Float) -> (Float)
+  @type sinh (Float) -> (Float)
+  @type tanh (Float) -> (Float)
+  @type acosh (Float) -> (Float)
+  @type asinh (Float) -> (Float)
+  @type atanh (Float) -> (Float)
+
+  @type exp (Float) -> (Float)
+  @type log (Float) -> (Float)
+  @type log10 (Float) -> (Float)
+  @type log2 (Float) -> (Float)
+  @type pow (Float,Float) -> (Float)
+  @type sqrt (Float) -> (Float)
+
+  @type ceil (Float) -> (Float)
+  @type floor (Float) -> (Float)
+  @type fmod (Float,Float) -> (Float)
+  @type trunc (Float) -> (Float)
+  @type round (Float) -> (Float)
+  @type fabs (Float) -> (Float)
+
+  @type isinf (Float) -> (Float)
+  @type isnan (Float) -> (Float)
+}

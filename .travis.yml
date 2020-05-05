@@ -151,7 +151,7 @@ script:
   - ZEOLITE="${CABAL} v2-run $WITHCOMPILER zeolite --"
   - ZEOLITE_PATH=$($ZEOLITE --get-path | grep '^/')
   # Only run integration tests for one GHC version, since they should all be the same if setup succeeds
-  - if [ $HCNUMVER -eq 80803 ]; then $ZEOLITE -p $ZEOLITE_PATH -t tests lib/file lib/util; fi
+  - if [ $HCNUMVER -eq 80803 ]; then $ZEOLITE -p $ZEOLITE_PATH -t tests lib/file lib/math lib/util; fi
   # Execute the quasi-test tests/check-defs
   - "CHECK_DEFS=$($ZEOLITE -p $ZEOLITE_PATH -r tests/check-defs 2>&1 || true)"
   - 'if ! echo "$CHECK_DEFS" | egrep -q "Type .+ is defined 2 times"; then echo -e "Expected definition error from tests/check-defs:\n$CHECK_DEFS"; exit 1; fi'

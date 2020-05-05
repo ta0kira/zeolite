@@ -55,6 +55,7 @@ libraries = [
     "base",
     "lib/util",
     "lib/file",
+    "lib/math",
     "tests/visibility/internal",
     "tests/visibility",
     "tests/visibility2/internal",
