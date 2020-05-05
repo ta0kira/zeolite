@@ -1024,9 +1024,6 @@ the public `.0rp` sources in [`lib`][lib]. Documentation will eventually follow.
 
 ### Modules
 
-The module system is a work in progress. The best place to start is to look at
-how [`lib`][lib] is structured. At some point there will be instructions.
-
 You can depend on another module using `-i lib/util` for a public dependency and
 `-I lib/util` for a private dependency when calling `zeolite`. (A private
 dependency is not  visible to modules that depend on your module.)
@@ -1039,6 +1036,23 @@ Public `.0rp` source files are loaded from all dependencies during compilation,
 and so their symbols are available to all source files in the module. There is
 currently no language syntax for explicitly importing or including modules or
 other symbols.
+
+If you are interested in backing a `concrete` category with C++, you will need
+to write a custom `.zeolite-module` file. Better documentation will eventually
+follow, but for now:
+
+1. Create a `.0rp` with declarations of all of the `concrete` categories you
+   intend to define in C++ code.
+2. Run `zeolite` in `--templates` mode to generate `.cpp` templates for all
+   `concrete` categories that lack a definition in your module.
+3. Run `zeolite` in `-c` mode to get a basic `.zeolite-module`. After this,
+   *always* use recompile mode (`-r`) to use your `.zeolite-module`.
+4. Take a look at `.zeolite-module` in [`lib/file`][lib/file] to get an idea of
+   how to tell the compiler where your category definitions are.
+5. Add your code to the generated `.cpp` files. [`lib/file`][lib/file] is also
+   a reasonable example for this.
+6. If you need to depend on external libraries, fill in the `include_paths` and
+   `link_flags` sections of `.zeolite-module`.
 
 ## Unit Testing
 
@@ -1125,6 +1139,7 @@ if you are interested in helping with development.
 [hackage-zeolite-lang]: http://hackage.haskell.org/package/zeolite-lang
 [kate]: https://kate-editor.org/
 [lib]: https://github.com/ta0kira/zeolite/tree/master/lib
+[lib/file]: https://github.com/ta0kira/zeolite/tree/master/lib/file
 [travis-status]: https://travis-ci.org/ta0kira/zeolite.svg?branch=master
 [travis-zeolite]: https://travis-ci.org/ta0kira/zeolite
 [variance]: https://en.wikipedia.org/wiki/Covariance_and_contravariance_%28computer_science%29
