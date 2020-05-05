@@ -118,7 +118,7 @@ tryLoadData f = do
       if isCompileError m
          then do
            hPutStrLn stderr $ "Could not parse config file:"
-           hPutStrLn stderr $ show (getCompileError m)
+           hPutStr stderr $ show (getCompileError m)
            return Nothing
          else return $ Just (getCompileSuccess m)
 
@@ -132,7 +132,10 @@ isPathUpToDate h p = do
          return fr
 
 isPathConfigured :: String -> IO Bool
-isPathConfigured p = tryLoadRecompile p >>= return . isJust
+isPathConfigured p = do
+  -- Just for error messages.
+  _ <- tryLoadRecompile p
+  doesFileExist (p </> recompileFilename)
 
 writeMetadata :: String -> CompileMetadata -> IO ()
 writeMetadata p m = do

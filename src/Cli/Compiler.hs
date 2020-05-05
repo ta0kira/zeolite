@@ -108,7 +108,7 @@ runCompiler (CompileOptions h _ _ ds _ _ p CompileRecompile f) = do
       upToDate <- isPathUpToDate h2 d
       maybeCompile rm upToDate where
         maybeCompile Nothing _ = do
-          hPutStrLn stderr $ "Path " ++ d0 ++ " has not been configured or compiled yet."
+          hPutStrLn stderr $ "Path " ++ d0 ++ " does not have a valid configuration."
           exitFailure
         maybeCompile (Just rm') upToDate
           | f < ForceAll && upToDate = hPutStrLn stderr $ "Path " ++ d0 ++ " is up to date."
@@ -152,7 +152,7 @@ runCompiler (CompileOptions _ is is2 ds es ep p m f) = do
     processPath b r deps as as2 d = do
       isConfigured <- isPathConfigured d
       when (isConfigured && f == DoNotForce) $ do
-        hPutStrLn stderr $ "Module " ++ d ++ " has already been configured. " ++
+        hPutStrLn stderr $ "Module " ++ d ++ " has an existing configuration. " ++
                            "Recompile with -r or use -f to overwrite the config."
         exitFailure
       eraseCachedData (p </> d)
