@@ -96,19 +96,27 @@ compileCategoryModule (CategoryModule tm ns cs xa ex) = do
   return $ hxx ++ cxx ++ xx where
     compileInternal ns0 (PrivateSource ns1 cs2 ds) = do
       let cs' = cs++cs2
+      checkLocals ds (ex ++ map (show . getCategoryName) cs')
+      let dm = mapByName ds
+      checkDefined dm [] $ filter isValueConcrete cs2
       tm' <- includeNewTypes tm cs'
       hxx <- collectAllOrErrorM $ map (compileCategoryDeclaration tm' ns0) cs2
       let interfaces = filter (not . isValueConcrete) cs2
       cxx1 <- collectAllOrErrorM $ map compileInterfaceDefinition interfaces
       cxx2 <- collectAllOrErrorM $ map (compileDefinition tm' (ns1:ns)) ds
-      let dm = mapByName ds
-      checkDefined dm [] $ filter isValueConcrete cs2
       return (ds,hxx ++ cxx1 ++ cxx2)
     compileDefinition tm2 ns2 d = do
       tm2' <- mergeInternalInheritance tm2 d
       compileConcreteDefinition tm2' ns2 d
     mapByName = Map.fromListWith (++) . map (\d -> (dcName d,[d]))
     ca = Set.fromList $ map (show . getCategoryName) $ filter isValueConcrete cs
+    checkLocals ds cs2 = mergeAllM $ map (checkLocal $ Set.fromList cs2) ds
+    checkLocal cs2 d =
+      if (show $ dcName d) `Set.member` cs2
+         then return ()
+         else compileError ("Definition for " ++ show (dcName d) ++
+                            formatFullContextBrace (dcContext d) ++
+                            " does not correspond to a category in this module")
     checkDefined dm ex2 = mergeAllM . map (checkSingle dm (Set.fromList ex2))
     checkSingle dm es t =
       case ((show $ getCategoryName t) `Set.member` es, getCategoryName t `Map.lookup` dm) of

@@ -71,3 +71,14 @@ define Test {
 testcase "minimal linking works properly" {
   success empty
 }
+
+
+testcase "attempt to define outside of this module" {
+  error
+  require "String"
+  require "module"
+  exclude "procedure definition"
+}
+
+// The declaration for String is in scope, but it lives outside of this module.
+define String {}

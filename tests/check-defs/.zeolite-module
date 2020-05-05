@@ -1,6 +1,3 @@
 root: "../.."
 path: "tests/check-defs"
-external: [
-  External
-]
 mode: incremental {}

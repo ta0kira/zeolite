@@ -155,7 +155,6 @@ script:
   - "CHECK_DEFS=$(${CABAL} v2-run $WITHCOMPILER zeolite -- -p $ZEOLITE_PATH -r tests/check-defs 2>&1 || true)"
   - 'if ! echo "$CHECK_DEFS" | egrep -q "Type .+ is defined 2 times"; then echo -e "Expected definition error from tests/check-defs:\n$CHECK_DEFS"; exit 1; fi'
   - 'if ! echo "$CHECK_DEFS" | egrep -q "Undefined .+ has not been defined"; then echo -e "Expected definition error from tests/check-defs:\n$CHECK_DEFS"; exit 1; fi'
-  - 'if echo "$CHECK_DEFS" | egrep -q "External .+ has not been defined"; then echo -e "Unxpected definition error from tests/check-defs:\n$CHECK_DEFS"; exit 1; fi'
   # <<< MANUAL EDIT ***
 
 # REGENDATA ("0.10",["zeolite-lang.cabal","--submodules","--output",".travis.yml"])

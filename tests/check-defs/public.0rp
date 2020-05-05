@@ -19,5 +19,3 @@ limitations under the License.
 concrete Type {}
 
 concrete Undefined {}
-
-concrete External {}
