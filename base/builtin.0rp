@@ -66,6 +66,7 @@ concrete String {
   defines LessThan<String>
 
   @value subSequence (Int,Int) -> (String)
+  @type builder () -> (Builder<String>)
 }
 
 @value interface AsBool {
@@ -92,6 +93,11 @@ concrete String {
   readPosition (Int) -> (#x)
   readSize () -> (Int)
   subSequence (Int,Int) -> (ReadPosition<#x>)
+}
+
+@value interface Builder<#x> {
+  append (#x) -> (Builder<#x>)
+  build () -> (#x)
 }
 
 @type interface Equals<#x|> {

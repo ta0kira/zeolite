@@ -2,6 +2,9 @@
 
 ## 0.4.1.0  -- ????-??-??
 
+* **[new]** Adds the `Builder` interface to make `String` concatenation more
+  efficient.
+
 * **[new]** Adds support for basic mathematical `Float` operations, such as
   `sin`, `exp`, and `sqrt`.
 

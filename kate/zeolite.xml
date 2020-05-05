@@ -92,6 +92,7 @@
       <item> Equals </item>
       <item> Formatted </item>
       <item> ReadPosition </item>
+      <item> Builder </item>
     </list>
 
     <contexts>

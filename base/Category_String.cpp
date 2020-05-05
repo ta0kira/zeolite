@@ -28,6 +28,7 @@ limitations under the License.
 #include "Category_Char.hpp"
 #include "Category_Equals.hpp"
 #include "Category_LessThan.hpp"
+#include "Category_Builder.hpp"
 
 
 #ifdef ZEOLITE_DYNAMIC_NAMESPACE
@@ -38,6 +39,7 @@ const int collection_String = 0;
 }  // namespace
 const void* const Functions_String = &collection_String;
 const ValueFunction& Function_String_subSequence = (*new ValueFunction{ 0, 2, 1, "String", "subSequence", Functions_String, 0 });
+const TypeFunction& Function_String_builder = (*new TypeFunction{ 0, 0, 1, "String", "builder", Functions_String, 0 });
 namespace {
 class Category_String;
 class Type_String;
@@ -106,6 +108,9 @@ struct Type_String : public TypeInstance {
     static const CallType Table_LessThan[] = {
       &Type_String::Call_lessThan,
     };
+    static const CallType Table_String[] = {
+      &Type_String::Call_builder,
+    };
     if (label.collection == Functions_Equals) {
       if (label.function_num < 0 || label.function_num >= 1) {
         FAIL() << "Bad function call " << label;
@@ -118,8 +123,15 @@ struct Type_String : public TypeInstance {
       }
       return (this->*Table_LessThan[label.function_num])(params, args);
     }
+    if (label.collection == Functions_String) {
+      if (label.function_num < 0 || label.function_num >= 1) {
+        FAIL() << "Bad function call " << label;
+      }
+      return (this->*Table_String[label.function_num])(params, args);
+    }
     return TypeInstance::Dispatch(label, params, args);
   }
+  ReturnTuple Call_builder(const ParamTuple& params, const ValueTuple& args);
   ReturnTuple Call_equals(const ParamTuple& params, const ValueTuple& args);
   ReturnTuple Call_lessThan(const ParamTuple& params, const ValueTuple& args);
 };
@@ -183,6 +195,40 @@ struct Value_String : public TypeValue {
   Type_String& parent;
   const PrimString value_;
 };
+
+class Value_StringBuilder : public TypeValue {
+ public:
+  std::string CategoryName() const final { return "StringBuilder"; }
+
+  ReturnTuple Dispatch(const S<TypeValue>& self,
+                       const ValueFunction& label,
+                       const ParamTuple& params, const ValueTuple& args) final {
+    if (args.Size() != label.arg_count) {
+      FAIL() << "Wrong number of args";
+    }
+    if (params.Size() != label.param_count){
+      FAIL() << "Wrong number of params";
+    }
+    if (&label == &Function_Builder_append) {
+      TRACE_FUNCTION("StringBuilder.append")
+      output_ << args.At(0)->AsString();
+      return ReturnTuple(self);
+    }
+    if (&label == &Function_Builder_build) {
+      TRACE_FUNCTION("SimpleOutput.build")
+      return ReturnTuple(Box_String(output_.str()));
+    }
+    return TypeValue::Dispatch(self, label, params, args);
+  }
+
+ private:
+  std::ostringstream output_;
+};
+
+ReturnTuple Type_String::Call_builder(const ParamTuple& params, const ValueTuple& args) {
+  TRACE_FUNCTION("String.builder")
+  return ReturnTuple(S<TypeValue>(new Value_StringBuilder));
+}
 ReturnTuple Type_String::Call_equals(const ParamTuple& params, const ValueTuple& args) {
   TRACE_FUNCTION("String.equals")
   const S<TypeValue>& Var_arg1 = (args.At(0));
