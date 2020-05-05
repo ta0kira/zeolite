@@ -6,11 +6,12 @@
   written in C++ to specify extra libraries to link to, allowing Zeolite
   extensions of libraries written in other languages.
 
-* **[new]** Adds optimization of dependencies for categories that are defined
-  in C++ sources. This should improve compile times and reduce binary sizes.
+* **[new]** Improves optimization of dependency inclusion for categories that
+  are defined in C++ sources.
 
 * **[breaking]** Updates the `.zeolite-module` format to require associating
-  externally-defined categories with the `.cpp` sources that define them.
+  externally-defined categories with the source files that define them. This
+  allows finer-grained linking of binaries and tests.
 
 ## 0.3.0.0  -- 2020-05-03
 
