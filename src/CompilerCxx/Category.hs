@@ -236,7 +236,7 @@ compileConcreteTemplate ta n = do
       }
     createArg = InputValue [] . VariableName . ("arg" ++) . show
     failProcedure f = Procedure [] [
-        NoValueExpression [] $ LineComment $ "// TODO: Implement " ++ funcName f ++ ".",
+        NoValueExpression [] $ LineComment $ "TODO: Implement " ++ funcName f ++ ".",
         FailCall [] (Literal (StringLiteral [] $ funcName f ++ " is not implemented"))
       ]
     funcName f = show (sfType f) ++ "." ++ show (sfName f)
