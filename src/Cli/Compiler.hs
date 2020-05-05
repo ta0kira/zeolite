@@ -145,8 +145,9 @@ runCompiler (CompileOptions _ is is2 ds es ep p m f) = do
       else do
         ma <- sequence $ map (processPath backend resolver deps as as2) ds
         let ms = concat $ map snd ma
-        let deps2 = map fst ma
-        createBinary backend resolver (deps ++ deps2) m ms
+        let deps2 = map (snd . fst) ma
+        let paths2 = concat $ map (fst . fst) ma
+        createBinary backend resolver paths2 (deps ++ deps2) m ms
   hPutStrLn stderr $ "Zeolite compilation succeeded." where
     ep' = fixPaths $ map (p </>) ep
     processPath b r deps as as2 d = do
@@ -201,6 +202,7 @@ runCompiler (CompileOptions _ is is2 ds es ep p m f) = do
           let (pc,mf,fs') = getCompileSuccess fs
           let ss = map (\ns -> getCachedPath (p </> d) ns "") $ nub $ filter (not . null) $ map show $ [ns0] ++ map coNamespace fs'
           ss' <- sequence $ map canonicalizePath ss
+          s0 <- canonicalizePath $ getCachedPath (p </> d) (show ns0) ""
           let paths' = paths ++ ep' ++ ss'
           let hxx   = filter (isSuffixOf ".hpp" . coFilename)       fs'
           let other = filter (not . isSuffixOf ".hpp" . coFilename) fs'
@@ -220,7 +222,7 @@ runCompiler (CompileOptions _ is is2 ds es ep p m f) = do
               cmPublicDeps = as,
               cmPrivateDeps = as2,
               cmCategories = sort $ map show pc,
-              cmSubdirs = sort $ ss',
+              cmSubdirs = [s0],
               cmPublicFiles = sort ps,
               cmPrivateFiles = sort xs,
               cmTestFiles = sort ts,
@@ -230,7 +232,7 @@ runCompiler (CompileOptions _ is is2 ds es ep p m f) = do
               cmObjectFiles = os1' ++ osOther ++ map OtherObjectFile os'
             }
           when (not $ isCreateTemplates m) $ writeMetadata (p </> d) cm
-          return (cm,mf)
+          return ((ss',cm),mf)
     formatWarnings c
       | null $ getCompileWarnings c = return ()
       | otherwise = hPutStr stderr $ "Compiler warnings:\n" ++ (concat $ map (++ "\n") (getCompileWarnings c))
@@ -343,7 +345,7 @@ runCompiler (CompileOptions _ is is2 ds es ep p m f) = do
     addIncludes tm fs = do
       cs <- fmap concat $ collectAllOrErrorM $ map parsePublicSource fs
       includeNewTypes tm cs
-    createBinary b r deps (CompileBinary n _ o lf) ms
+    createBinary b r paths deps (CompileBinary n _ o lf) ms
       | length ms > 1 = do
         hPutStrLn stderr $ "Multiple matches for main category " ++ n ++ "."
         exitFailure
@@ -363,15 +365,15 @@ runCompiler (CompileOptions _ is is2 ds es ep p m f) = do
           (_,bpDeps) <- loadPublicDeps (getCompilerHash b) [base]
           (_,deps2) <- loadPrivateDeps (getCompilerHash b) (bpDeps ++ deps)
           let lf' = lf ++ getLinkFlagsForDeps deps2
-          let paths = fixPaths $ base:(getIncludePathsForDeps deps2)
+          let paths' = fixPaths $ paths ++ base:(getIncludePathsForDeps deps2)
           let os    = getObjectFilesForDeps deps2
           let ofr = getObjectFileResolver os
           let os' = ofr ns2 req
-          let command = CompileToBinary o' os' f0 paths lf'
+          let command = CompileToBinary o' os' f0 paths' lf'
           hPutStrLn stderr $ "Creating binary " ++ f0
           _ <- runCxxCommand b command
           removeFile o'
-    createBinary _ _ _ _ _ = return ()
+    createBinary _ _ _ _ _ _ = return ()
     maybeCreateMain cm (CompileBinary n f2 _ _) =
       fmap (:[]) $ compileModuleMain cm (CategoryName n) (FunctionName f2)
     maybeCreateMain _ _ = return []
