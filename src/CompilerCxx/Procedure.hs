@@ -22,6 +22,7 @@ limitations under the License.
 {-# LANGUAGE Safe #-}
 
 module CompilerCxx.Procedure (
+  categoriesFromTypes,
   compileExecutableProcedure,
   compileMainProcedure,
   compileExpression,

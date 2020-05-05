@@ -388,7 +388,7 @@ commonDefineAll :: MergeableM m =>
 commonDefineAll t ns top bottom ce te fe = do
   let filename = sourceFilename name
   (CompiledData req out) <- fmap (addNamespace t) $ mergeAllM $ [
-      return $ CompiledData (Set.fromList [name]) [],
+      return $ CompiledData (Set.fromList (name:getCategoryMentions t)) [],
       return $ mergeAll [createCollection,createAllLabels]
     ] ++ conditionalContent
   let inherited = Set.fromList $ (map (tiName . vrType) $ getCategoryRefines t) ++
@@ -704,3 +704,19 @@ createTestFile tm e = flip reviseError ("In the creation of the test binary proc
   ca@(CompiledData req _) <- fmap indentCompiled (compileMainProcedure tm e)
   let file = createMainCommon "main" ca
   return (Set.toList req,file)
+
+getCategoryMentions :: AnyCategory c -> [CategoryName]
+getCategoryMentions t = fromRefines (getCategoryRefines t) ++
+                        fromDefines (getCategoryDefines t) ++
+                        fromFunctions (getCategoryFunctions t) ++
+                        fromFilters (getCategoryFilters t) where
+  fromRefines rs = fromGenerals $ map (SingleType . JustTypeInstance . vrType) rs
+  fromDefines ds = concat $ map (fromDefine . vdType) ds
+  fromDefine (DefinesInstance d ps) = d:(fromGenerals $ pValues ps)
+  fromFunctions fs = concat $ map fromFunction fs
+  fromFunction (ScopedFunction _ _ t2 _ as rs _ fs _) =
+    [t2] ++ (fromGenerals $ map (vtType . pvType) (pValues as ++ pValues rs)) ++ fromFilters fs
+  fromFilters fs = concat $ map (fromFilter . pfFilter) fs
+  fromFilter (TypeFilter _ t2)  = Set.toList $ categoriesFromTypes $ SingleType t2
+  fromFilter (DefinesFilter t2) = fromDefine t2
+  fromGenerals = Set.toList . Set.unions . map categoriesFromTypes
