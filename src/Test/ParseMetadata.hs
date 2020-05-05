@@ -69,6 +69,10 @@ tests = [
         "/home/project/special/category1.cpp",
         "/home/project/special/category2.cpp"
       ],
+      cmLinkFlags = [
+        "-lm",
+        "-ldl"
+      ],
       cmObjectFiles = [
         CategoryObjectFile {
           cofCategory = CategoryIdentifier {
@@ -107,6 +111,7 @@ tests = [
       cmTestFiles = [],
       cmHxxFiles = [],
       cmCxxFiles = [],
+      cmLinkFlags = [],
       cmObjectFiles = []
     },
 
@@ -123,6 +128,7 @@ tests = [
       cmTestFiles = [],
       cmHxxFiles = [],
       cmCxxFiles = [],
+      cmLinkFlags = [],
       cmObjectFiles = []
     },
 
@@ -141,6 +147,7 @@ tests = [
       cmTestFiles = [],
       cmHxxFiles = [],
       cmCxxFiles = [],
+      cmLinkFlags = [],
       cmObjectFiles = []
     },
 
@@ -175,7 +182,12 @@ tests = [
         "extra1",
         "extra2"
       ],
-      rmMode = CompileIncremental
+      rmMode = CompileIncremental {
+        ciLinkFlags = [
+          "-lm",
+          "-ldl"
+        ]
+      }
     },
 
     checkWriteFail "bad category" $ CategorySource {
@@ -213,22 +225,30 @@ tests = [
     checkWriteThenRead $ CompileBinary {
       cbCategory = "SpecialCategory",
       cbFunction = "specialFunction",
-      cbOutputName = "binary"
+      cbOutputName = "binary",
+      cbLinkFlags = []
     },
 
     checkWriteFail "bad category" $ CompileBinary {
       cbCategory = "bad category",
       cbFunction = "specialFunction",
-      cbOutputName = "binary"
+      cbOutputName = "binary",
+      cbLinkFlags = []
     },
 
     checkWriteFail "bad function" $ CompileBinary {
       cbCategory = "SpecialCategory",
       cbFunction = "bad function",
-      cbOutputName = "binary"
+      cbOutputName = "binary",
+      cbLinkFlags = []
     },
 
-    checkWriteThenRead $ CompileIncremental,
+    checkWriteThenRead $ CompileIncremental {
+      ciLinkFlags = [
+        "-lm",
+        "-ldl"
+      ]
+    },
 
     checkWriteFail "compile mode" $ ExecuteTests { etInclude = [] },
     checkWriteFail "compile mode" $ CompileRecompile,

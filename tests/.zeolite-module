@@ -4,4 +4,4 @@ public_deps: [
   "visibility"
   "visibility2"
 ]
-mode: incremental
+mode: incremental {}

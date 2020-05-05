@@ -13,4 +13,4 @@ extra_files: [
     categories: [RawFileWriter]
   }
 ]
-mode: incremental
+mode: incremental {}

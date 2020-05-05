@@ -3,4 +3,4 @@ path: "visibility"
 private_deps: [
   "internal"
 ]
-mode: incremental
+mode: incremental {}

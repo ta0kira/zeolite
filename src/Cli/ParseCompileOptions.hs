@@ -115,7 +115,7 @@ parseCompileOptions = parseAll emptyCompileOptions . zip ([1..] :: [Int]) where
 
   parseSingle (CompileOptions h is is2 ds es ep p m f) ((n,"-c"):os)
     | m /= CompileUnspecified = argError n "-c" "Compiler mode already set."
-    | otherwise = return (os,CompileOptions (maybeDisableHelp h) is is2 ds es ep p CompileIncremental f)
+    | otherwise = return (os,CompileOptions (maybeDisableHelp h) is is2 ds es ep p (CompileIncremental []) f)
 
   parseSingle (CompileOptions h is is2 ds es ep p m f) ((n,"-r"):os)
     | m /= CompileUnspecified = argError n "-r" "Compiler mode already set."
@@ -136,18 +136,18 @@ parseCompileOptions = parseAll emptyCompileOptions . zip ([1..] :: [Int]) where
         (t,fn) <- check $ break (== '.') c
         checkCategoryName n2 t  "-m"
         checkFunctionName n2 fn "-m"
-        return (os2,CompileOptions (maybeDisableHelp h) is is2 ds es ep p (CompileBinary t fn "") f) where
+        return (os2,CompileOptions (maybeDisableHelp h) is is2 ds es ep p (CompileBinary t fn "" []) f) where
           check (t,"")     = return (t,defaultMainFunc)
           check (t,'.':fn) = return (t,fn)
           check _          = argError n2 "-m" $ "Invalid entry point \"" ++ c ++ "\"."
       update _ = argError n "-m" "Requires a category name."
 
-  parseSingle (CompileOptions h is is2 ds es ep p (CompileBinary t fn o) f) ((n,"-o"):os)
+  parseSingle (CompileOptions h is is2 ds es ep p (CompileBinary t fn o lf) f) ((n,"-o"):os)
     | not $ null o = argError n "-o" "Output name already set."
     | otherwise = update os where
       update ((n2,o2):os2) = do
         checkPathName n2 o2 "-o"
-        return (os2,CompileOptions (maybeDisableHelp h) is is2 ds es ep p (CompileBinary t fn o2) f)
+        return (os2,CompileOptions (maybeDisableHelp h) is is2 ds es ep p (CompileBinary t fn o2 lf) f)
       update _ = argError n "-o" "Requires an output name."
   parseSingle _ ((n,"-o"):_) = argError n "-o" "Set mode to binary (-m) first"
 

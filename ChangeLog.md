@@ -2,6 +2,10 @@
 
 ## 0.4.0.0  -- ????-??-??
 
+* **[new]** Allows modules to specify custom linker flags. This lets categories
+  written in C++ to specify extra libraries to link to, allowing Zeolite
+  extensions of libraries written in other languages.
+
 * **[new]** Adds optimization of dependencies for categories that are defined
   in C++ sources. This should improve compile times and reduce binary sizes.
 

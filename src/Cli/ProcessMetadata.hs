@@ -25,6 +25,7 @@ module Cli.ProcessMetadata (
   getCachedPath,
   getCacheRelativePath,
   getIncludePathsForDeps,
+  getLinkFlagsForDeps,
   getNamespacesForDeps,
   getObjectFilesForDeps,
   getObjectFileResolver,
@@ -215,6 +216,9 @@ getNamespacesForDeps = filter (not . null) . map cmNamespace
 getIncludePathsForDeps :: [CompileMetadata] -> [String]
 getIncludePathsForDeps = concat . map cmSubdirs
 
+getLinkFlagsForDeps :: [CompileMetadata] -> [String]
+getLinkFlagsForDeps = concat . map cmLinkFlags
+
 getObjectFilesForDeps :: [CompileMetadata] -> [ObjectFile]
 getObjectFilesForDeps = concat . map cmObjectFiles
 
@@ -278,7 +282,7 @@ checkModuleVersionHash :: String -> CompileMetadata -> Bool
 checkModuleVersionHash h m = cmVersionHash m == h
 
 checkModuleFreshness :: Bool -> String -> CompileMetadata -> IO Bool
-checkModuleFreshness s p (CompileMetadata _ p2 _ is is2 _ _ ps xs ts hxx cxx _) = do
+checkModuleFreshness s p (CompileMetadata _ p2 _ is is2 _ _ ps xs ts hxx cxx _ _) = do
   time <- getModificationTime $ getCachedPath p "" metadataFilename
   (ps2,xs2,ts2) <- findSourceFiles p ""
   let e1 = checkMissing ps ps2

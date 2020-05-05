@@ -108,12 +108,12 @@ instance CompilerBackend Backend where
       nsFlag
         | null ns = []
         | otherwise = ["-D" ++ nm ++ "=" ++ ns]
-  runCxxCommand (UnixBackend cb co _) (CompileToBinary m ss o ps) = do
+  runCxxCommand (UnixBackend cb co _) (CompileToBinary m ss o ps lf) = do
     let arFiles    = filter (isSuffixOf ".a")       ss
     let otherFiles = filter (not . isSuffixOf ".a") ss
     executeProcess cb $ co ++ otherOptions ++ m:otherFiles ++ arFiles ++ ["-o", o]
     return o where
-      otherOptions = map ("-I" ++) $ map normalise ps
+      otherOptions = lf ++ map ("-I" ++) (map normalise ps)
   runTestCommand _ (TestCommand b p) = do
     (outF,outH) <- mkstemps "/tmp/ztest_" ".txt"
     (errF,errH) <- mkstemps "/tmp/ztest_" ".txt"

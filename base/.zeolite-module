@@ -39,4 +39,4 @@ include_paths: [
   "base"
   "capture-thread/include"
 ]
-mode: incremental
+mode: incremental {}

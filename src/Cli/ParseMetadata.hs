@@ -137,8 +137,9 @@ instance ConfigFormat CompileMetadata where
     ts <-  parseRequired "test_files:"    (parseList parseQuoted)
     hxx <- parseRequired "hxx_files:"     (parseList parseQuoted)
     cxx <- parseRequired "cxx_files:"     (parseList parseQuoted)
+    lf  <- parseRequired "link_flags:"    (parseList parseQuoted)
     os <-  parseRequired "object_files:"  (parseList readConfig)
-    return (CompileMetadata h p ns is is2 cs ds ps xs ts hxx cxx os)
+    return (CompileMetadata h p ns is is2 cs ds ps xs ts hxx cxx lf os)
   writeConfig m = do
     validateHash (cmVersionHash m)
     validateNamespace (cmNamespace m)
@@ -174,6 +175,9 @@ instance ConfigFormat CompileMetadata where
         "]",
         "cxx_files: ["
       ] ++ indents (map show $ cmCxxFiles m) ++ [
+        "]",
+        "link_flags: ["
+      ] ++ indents (map show $ cmLinkFlags m) ++ [
         "]",
         "object_files: ["
       ] ++ indents objects ++ [
@@ -311,15 +315,19 @@ instance ConfigFormat CompileMode where
     binary = do
       sepAfter (string_ "binary")
       structOpen
-      c <- parseRequired "category:"    parseCategoryName
-      f <- parseRequired "function:"    parseFunctionName
-      o <- parseOptional "output:"   "" parseQuoted
+      c <-  parseRequired "category:"      parseCategoryName
+      f <-  parseRequired "function:"      parseFunctionName
+      o <-  parseOptional "output:"     "" parseQuoted
+      lf <- parseOptional "link_flags:" [] (parseList parseQuoted)
       structClose
-      return (CompileBinary c f o)
+      return (CompileBinary c f o lf)
     incremental = do
       sepAfter (string_ "incremental")
-      return CompileIncremental
-  writeConfig (CompileBinary c f o) = do
+      structOpen
+      lf <- parseOptional "link_flags:" [] (parseList parseQuoted)
+      structClose
+      return (CompileIncremental lf)
+  writeConfig (CompileBinary c f o lf) = do
     validateCategoryName c
     validateFunctionName f
     return $ [
@@ -327,7 +335,17 @@ instance ConfigFormat CompileMode where
         indent ("category: " ++ c),
         indent ("function: " ++ f),
         indent ("output: " ++ show o),
+        indent ("link_flags: [")
+      ] ++ (indents . indents) (map show lf) ++ [
+        indent "]",
         "}"
       ]
-  writeConfig CompileIncremental = return ["incremental"]
+  writeConfig (CompileIncremental lf) = do
+    return $ [
+        "incremental {",
+        indent ("link_flags: [")
+      ] ++ (indents . indents) (map show lf) ++ [
+        indent "]",
+        "}"
+      ]
   writeConfig _ = compileError "Invalid compile mode"

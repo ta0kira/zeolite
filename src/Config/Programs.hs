@@ -44,7 +44,8 @@ data CxxCommand =
     ctbMain :: String,
     ctbSources :: [String],
     ctbOutput :: String,
-    ctoPaths :: [String]
+    ctbPaths :: [String],
+    ctbLinkFlags :: [String]
   }
   deriving (Show)
 

@@ -16,4 +16,4 @@ extra_files: [
     categories: [SimpleOutput]
   }
 ]
-mode: incremental
+mode: incremental {}

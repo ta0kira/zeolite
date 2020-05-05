@@ -222,6 +222,7 @@ runCompiler (CompileOptions _ is is2 ds es ep p m f) = do
               cmTestFiles = sort ts,
               cmHxxFiles = sort hxx',
               cmCxxFiles = sort cxx,
+              cmLinkFlags = getLinkFlags m,
               cmObjectFiles = os1' ++ osOther ++ map OtherObjectFile os'
             }
           when (not $ isCreateTemplates m) $ writeMetadata (p </> d) cm
@@ -338,7 +339,7 @@ runCompiler (CompileOptions _ is is2 ds es ep p m f) = do
     addIncludes tm fs = do
       cs <- fmap concat $ collectAllOrErrorM $ map parsePublicSource fs
       includeNewTypes tm cs
-    createBinary b r deps (CompileBinary n _ o) ms
+    createBinary b r deps (CompileBinary n _ o lf) ms
       | length ms > 1 = do
         hPutStrLn stderr $ "Multiple matches for main category " ++ n ++ "."
         exitFailure
@@ -357,16 +358,17 @@ runCompiler (CompileOptions _ is is2 ds es ep p m f) = do
           base <- resolveBaseModule r
           (_,bpDeps) <- loadPublicDeps (getCompilerHash b) [base]
           (_,deps2) <- loadPrivateDeps (getCompilerHash b) (bpDeps ++ deps)
+          let lf' = lf ++ getLinkFlagsForDeps deps2
           let paths = fixPaths $ getIncludePathsForDeps deps2
           let os    = getObjectFilesForDeps deps2
           let ofr = getObjectFileResolver os
           let os' = ofr ns2 req
-          let command = CompileToBinary o' os' f0 paths
+          let command = CompileToBinary o' os' f0 paths lf'
           hPutStrLn stderr $ "Creating binary " ++ f0
           _ <- runCxxCommand b command
           removeFile o'
     createBinary _ _ _ _ _ = return ()
-    maybeCreateMain cm (CompileBinary n f2 _) =
+    maybeCreateMain cm (CompileBinary n f2 _ _) =
       fmap (:[]) $ compileModuleMain cm (CategoryName n) (FunctionName f2)
     maybeCreateMain _ _ = return []
 

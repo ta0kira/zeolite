@@ -158,10 +158,11 @@ runSingleTest b paths deps os tm (f,s) = do
       let main   = dir </> "testcase.cpp"
       let binary = dir </> "testcase"
       writeFile main $ concat $ map (++ "\n") c
+      let lf = getLinkFlagsForDeps deps
       let paths' = nub $ map fixPath (dir:paths)
       let ofr = getObjectFileResolver (sources' ++ os)
       let os' = ofr ns req
-      let command = CompileToBinary main os' binary paths'
+      let command = CompileToBinary main os' binary paths' lf
       runCxxCommand b command
     writeSingleFile d ca@(CxxOutput _ f2 _ _ _ content) = do
       writeFile (d </> f2) $ concat $ map (++ "\n") content

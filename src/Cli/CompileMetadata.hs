@@ -46,6 +46,7 @@ data CompileMetadata =
     cmTestFiles :: [String],
     cmHxxFiles :: [String],
     cmCxxFiles :: [String],
+    cmLinkFlags :: [String],
     cmObjectFiles :: [ObjectFile]
   }
   deriving (Eq,Show)

@@ -3,4 +3,4 @@ path: "tests/check-defs"
 external: [
   External
 ]
-mode: incremental
+mode: incremental {}

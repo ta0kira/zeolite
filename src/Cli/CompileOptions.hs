@@ -25,6 +25,7 @@ module Cli.CompileOptions (
   ForceMode(..),
   HelpMode(..),
   emptyCompileOptions,
+  getLinkFlags,
   getSourceCategories,
   getSourceDeps,
   getSourceFile,
@@ -95,24 +96,27 @@ data CompileMode =
   CompileBinary {
     cbCategory :: String,
     cbFunction :: String,
-    cbOutputName :: String
+    cbOutputName :: String,
+    cbLinkFlags :: [String]
   } |
   ExecuteTests {
     etInclude :: [String]
   } |
-  CompileIncremental |
+  CompileIncremental {
+    ciLinkFlags :: [String]
+  } |
   CompileRecompile |
   CreateTemplates |
   CompileUnspecified
   deriving (Eq,Show)
 
 isCompileBinary :: CompileMode -> Bool
-isCompileBinary (CompileBinary _ _ _) = True
-isCompileBinary _                     = False
+isCompileBinary (CompileBinary _ _ _ _) = True
+isCompileBinary _                       = False
 
 isCompileIncremental :: CompileMode -> Bool
-isCompileIncremental CompileIncremental = True
-isCompileIncremental _                  = False
+isCompileIncremental (CompileIncremental _) = True
+isCompileIncremental _                      = False
 
 isCompileRecompile :: CompileMode -> Bool
 isCompileRecompile CompileRecompile = True
@@ -129,3 +133,8 @@ isCreateTemplates _               = False
 maybeDisableHelp :: HelpMode -> HelpMode
 maybeDisableHelp HelpUnspecified = HelpNotNeeded
 maybeDisableHelp h               = h
+
+getLinkFlags :: CompileMode -> [String]
+getLinkFlags (CompileBinary _ _ _ lf) = lf
+getLinkFlags (CompileIncremental lf)  = lf
+getLinkFlags _                        = []
