@@ -1,0 +1,9 @@
+root: "../.."
+path: "tests/templates"
+extra_files: [
+  category_source {
+    source: "tests/templates/Category_Templated.cpp"
+    categories: [Templated]
+  }
+]
+mode: incremental {}
