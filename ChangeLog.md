@@ -6,8 +6,12 @@
   paths in `.zeolite-module`. This lets categories written in C++ depend on
   external libraries written in other languages.
 
-* **[new]** Improves optimization of dependency inclusion for categories that
-  are defined in C++ sources.
+* **[behavior]** Adds optimization of dependency inclusion for categories that
+  are defined in C++ sources. This should eliminate linking in object files that
+  are not needed by the binary.
+
+* **[behavior]** Adds checks to prevent a module from defining a category that
+  was declared in another module.
 
 * **[breaking]** Updates the `.zeolite-module` format to require associating
   externally-defined categories with the source files that define them. This
