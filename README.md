@@ -31,6 +31,7 @@ of this document.
   - [Hello World](#hello-world)
 - [Language Overview](#language-overview)
   - [Parameter Variance](#parameter-variance)
+  - [Parameters as Variables](#parameters-as-variables)
   - [Usage Patterns vs. Information Structure](#usage-patterns-vs-information-structure)
   - [Compilation Testing](#compilation-testing)
 - [Writing Programs](#writing-programs)
@@ -144,6 +145,27 @@ Zeolite, on the other hand, allows the code author to assign a
 [variance][variance] to each parameter. (C# also does this to a lesser extent.)
 This allows the language to support very powerful recursive type conversions for
 parameterized types.
+
+### Parameters as Variables
+
+Zeolite treats type parameters both as type place-holders (like in C++ and
+Java) and as *type variables* that you can call functions on. This further
+allows Zeolite to have interfaces that declare functions that operate on *types*
+in addition to interfaces that declare functions that operate on *values*. (This
+would be like having `abstract static` methods in Java.)
+
+This helps solve a few separate problems:
+
+- Operations like `equals` comparisons in Java are always dispatched to the
+  *left* object, which could lead to inconsistent results if the objects are
+  swapped: `foo.equals(bar);` is different than `bar.equals(foo);`. Such
+  problems can be mitigated by making `equals` a *type* function in an interface
+  rather than a *value* function.
+
+- Factory patterns can be abstracted out into interfaces, allowing the concept
+  of default construction (used by Java, C++, and others) to be eliminated. One
+  common issue in C++ is forgetting to *disallow* direct construction or copying
+  of objects of your `class`.
 
 ### Usage Patterns vs. Information Structure
 
