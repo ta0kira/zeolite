@@ -141,6 +141,16 @@ concrete Value {
   @value call () -> (Interface)
 }
 
+define Value {
+  create () {
+    return Value{}
+  }
+
+  call () {
+    return self
+  }
+}
+
 define Test {
   run () {}
 }

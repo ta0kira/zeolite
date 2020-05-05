@@ -3,9 +3,7 @@ path: "util"
 extra_files: [
   category_source {
     source: "util/Category_Argv.cpp"
-    categories: [
-      Argv
-    ]
+    categories: [Argv]
   }
   category_source {
     source: "util/Category_SimpleInput.cpp"
