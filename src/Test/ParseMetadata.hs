@@ -169,65 +169,42 @@ tests = [
         "/home/project/private-dep2"
       ],
       rmExtraFiles = [
-        ExtraSource {
-          esSource = "extra1.cpp",
-          esDepCategories = [
+        CategorySource {
+          csSource = "extra1.cpp",
+          csCategories = [
+            "Category1",
+            "Category2"
+          ],
+          csDepCategories = [
             "DepCategory1",
             "DepCategory2"
           ]
         },
-        ExtraSource {
-          esSource = "extra2.cpp",
-          esDepCategories = []
+        OtherSource {
+          osSource = "extra2.cpp"
         }
       ],
       rmExtraPaths = [
         "extra1",
         "extra2"
       ],
-      rmExtraRequires = [
-        "Extra1",
-        "Extra2"
-      ],
-      rmExternalDefs = [
-        ExternalCategory {
-          ecName = "External1",
-          ecSource = "special/external1.cpp"
-        },
-        ExternalCategory {
-          ecName = "External2",
-          ecSource = "special/external2.cpp"
-        }
-      ],
-      rmMode = CompileIncremental,
-      rmOutputName = "binary"
+      rmMode = CompileIncremental
     },
 
-    checkWriteFail "bad category" $ ModuleConfig {
-      rmRoot = "/home/projects",
-      rmPath = "special",
-      rmPublicDeps = [],
-      rmPrivateDeps = [],
-      rmExtraFiles = [],
-      rmExtraPaths = [],
-      rmExtraRequires = [
+    checkWriteFail "bad category" $ CategorySource {
+      csSource = "extra1.cpp",
+      csCategories = [
         "bad category"
       ],
-      rmExternalDefs = [],
-      rmMode = CompileIncremental,
-      rmOutputName = ""
+      csDepCategories = []
     },
 
-    checkWriteFail "bad category" $ ExtraSource {
-      esSource = "extra1.cpp",
-      esDepCategories = [
+    checkWriteFail "bad category" $ CategorySource {
+      csSource = "extra1.cpp",
+      csCategories = [],
+      csDepCategories = [
         "bad category"
       ]
-    },
-
-    checkWriteFail "bad category" $ ExternalCategory {
-      ecName = "bad category",
-      ecSource = "special/external1.cpp"
     },
 
     checkWriteFail "bad category" $ CategoryIdentifier {
@@ -248,17 +225,20 @@ tests = [
 
     checkWriteThenRead $ CompileBinary {
       cbCategory = "SpecialCategory",
-      cbFunction = "specialFunction"
+      cbFunction = "specialFunction",
+      cbOutputName = "binary"
     },
 
     checkWriteFail "bad category" $ CompileBinary {
       cbCategory = "bad category",
-      cbFunction = "specialFunction"
+      cbFunction = "specialFunction",
+      cbOutputName = "binary"
     },
 
     checkWriteFail "bad function" $ CompileBinary {
       cbCategory = "SpecialCategory",
-      cbFunction = "bad function"
+      cbFunction = "bad function",
+      cbOutputName = "binary"
     },
 
     checkWriteThenRead $ CompileIncremental,

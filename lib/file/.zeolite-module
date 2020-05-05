@@ -4,17 +4,17 @@ public_deps: [
   "../util"
 ]
 extra_files: [
-  "file/Category_RawFileReader.cpp"
-  "file/Category_RawFileWriter.cpp"
-]
-external: [
-  external_category {
-    category: RawFileReader
+  category_source {
     source: "file/Category_RawFileReader.cpp"
+    categories: [
+      RawFileReader
+    ]
   }
-  external_category {
-    category: RawFileWriter
+  category_source {
     source: "file/Category_RawFileWriter.cpp"
+    categories: [
+      RawFileWriter
+    ]
   }
 ]
 mode: incremental

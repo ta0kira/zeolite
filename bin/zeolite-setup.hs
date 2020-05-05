@@ -124,11 +124,8 @@ initLibraries = do
       coSources = libraries,
       coExtraFiles = [],
       coExtraPaths = [],
-      coExtraRequires = [],
       coSourcePrefix = path,
-      coExternalDefs = [],
       coMode = CompileRecompile,
-      coOutputName = "",
       coForce = ForceAll
     }
   runCompiler options

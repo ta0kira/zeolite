@@ -22,10 +22,12 @@ module Cli.CompileOptions (
   CompileOptions(..),
   CompileMode(..),
   ExtraSource(..),
-  ExternalCategory(..),
   ForceMode(..),
   HelpMode(..),
   emptyCompileOptions,
+  getSourceCategories,
+  getSourceDeps,
+  getSourceFile,
   isCompileBinary,
   isCompileIncremental,
   isCompileRecompile,
@@ -43,11 +45,8 @@ data CompileOptions =
     coSources :: [String],
     coExtraFiles :: [ExtraSource],
     coExtraPaths :: [String],
-    coExtraRequires :: [String],
     coSourcePrefix :: String,
-    coExternalDefs :: [ExternalCategory],
     coMode :: CompileMode,
-    coOutputName :: String,
     coForce :: ForceMode
   } deriving (Show)
 
@@ -60,27 +59,33 @@ emptyCompileOptions =
     coSources = [],
     coExtraFiles = [],
     coExtraPaths = [],
-    coExtraRequires = [],
     coSourcePrefix = "",
-    coExternalDefs = [],
     coMode = CompileUnspecified,
-    coOutputName = "",
     coForce = DoNotForce
   }
 
-data ExternalCategory =
-  ExternalCategory {
-    ecName :: String,
-    ecSource :: String
+data ExtraSource =
+  CategorySource {
+    csSource :: String,
+    csCategories :: [String],
+    csDepCategories :: [String]
+  } |
+  OtherSource {
+    osSource :: String
   }
   deriving (Eq,Show)
 
-data ExtraSource =
-  ExtraSource {
-    esSource :: String,
-    esDepCategories :: [String]
-  }
-  deriving (Eq,Show)
+getSourceFile :: ExtraSource -> String
+getSourceFile (CategorySource s _ _) = s
+getSourceFile (OtherSource s)        = s
+
+getSourceCategories :: ExtraSource -> [String]
+getSourceCategories (CategorySource _ cs _) = cs
+getSourceCategories (OtherSource _)         = []
+
+getSourceDeps :: ExtraSource -> [String]
+getSourceDeps (CategorySource _ _ ds) = ds
+getSourceDeps (OtherSource _)         = []
 
 data HelpMode = HelpNeeded | HelpNotNeeded | HelpUnspecified deriving (Eq,Show)
 
@@ -89,7 +94,8 @@ data ForceMode = DoNotForce | AllowRecompile | ForceRecompile | ForceAll derivin
 data CompileMode =
   CompileBinary {
     cbCategory :: String,
-    cbFunction :: String
+    cbFunction :: String,
+    cbOutputName :: String
   } |
   ExecuteTests {
     etInclude :: [String]
@@ -101,8 +107,8 @@ data CompileMode =
   deriving (Eq,Show)
 
 isCompileBinary :: CompileMode -> Bool
-isCompileBinary (CompileBinary _ _) = True
-isCompileBinary _                   = False
+isCompileBinary (CompileBinary _ _ _) = True
+isCompileBinary _                     = False
 
 isCompileIncremental :: CompileMode -> Bool
 isCompileIncremental CompileIncremental = True

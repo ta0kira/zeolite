@@ -90,9 +90,6 @@ data ModuleConfig =
     rmPrivateDeps :: [String],
     rmExtraFiles :: [ExtraSource],
     rmExtraPaths :: [String],
-    rmExtraRequires :: [String],
-    rmExternalDefs :: [ExternalCategory],
-    rmMode :: CompileMode,
-    rmOutputName :: String
+    rmMode :: CompileMode
   }
   deriving (Eq,Show)

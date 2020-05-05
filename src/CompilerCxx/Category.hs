@@ -84,7 +84,7 @@ data PrivateSource c =
 compileCategoryModule :: (Show c, CompileErrorM m, MergeableM m) =>
   CategoryModule c -> m [CxxOutput]
 compileCategoryModule (CategoryModule tm ns cs xa ex) = do
-  checkSupefluous $ Set.toList $ es `Set.difference` ca
+  checkSupefluous $ Set.toList $ (Set.fromList ex) `Set.difference` ca
   tm' <- includeNewTypes tm cs
   hxx <- collectAllOrErrorM $ map (compileCategoryDeclaration tm' ns) cs
   let interfaces = filter (not . isValueConcrete) cs
@@ -92,7 +92,7 @@ compileCategoryModule (CategoryModule tm ns cs xa ex) = do
   xa2 <- collectAllOrErrorM $ map (compileInternal ns) xa
   let xx = concat $ map snd xa2
   let dm = mapByName $ concat $ map fst xa2
-  checkDefined dm $ filter isValueConcrete cs
+  checkDefined dm ex $ filter isValueConcrete cs
   return $ hxx ++ cxx ++ xx where
     compileInternal ns0 (PrivateSource ns1 cs2 ds) = do
       let cs' = cs++cs2
@@ -102,16 +102,15 @@ compileCategoryModule (CategoryModule tm ns cs xa ex) = do
       cxx1 <- collectAllOrErrorM $ map compileInterfaceDefinition interfaces
       cxx2 <- collectAllOrErrorM $ map (compileDefinition tm' (ns1:ns)) ds
       let dm = mapByName ds
-      checkDefined dm $ filter isValueConcrete cs2
+      checkDefined dm [] $ filter isValueConcrete cs2
       return (ds,hxx ++ cxx1 ++ cxx2)
     compileDefinition tm2 ns2 d = do
       tm2' <- mergeInternalInheritance tm2 d
       compileConcreteDefinition tm2' ns2 d
     mapByName = Map.fromListWith (++) . map (\d -> (dcName d,[d]))
     ca = Set.fromList $ map (show . getCategoryName) $ filter isValueConcrete cs
-    es = Set.fromList ex
-    checkDefined dm = mergeAllM . map (checkSingle dm)
-    checkSingle dm t =
+    checkDefined dm ex2 = mergeAllM . map (checkSingle dm (Set.fromList ex2))
+    checkSingle dm es t =
       case ((show $ getCategoryName t) `Set.member` es, getCategoryName t `Map.lookup` dm) of
            (False,Just [_]) -> return ()
            (True,Nothing)   -> return ()

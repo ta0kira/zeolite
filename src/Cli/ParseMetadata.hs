@@ -254,21 +254,16 @@ instance ConfigFormat CategoryIdentifier where
 
 instance ConfigFormat ModuleConfig where
   readConfig = do
-      p <-   parseOptional "root:"           "" parseQuoted
-      d <-   parseRequired "path:"              parseQuoted
-      is <-  parseOptional "public_deps:"    [] (parseList parseQuoted)
-      is2 <- parseOptional "private_deps:"   [] (parseList parseQuoted)
-      es <-  parseOptional "extra_files:"    [] (parseList readConfig)
-      ep <-  parseOptional "extra_paths:"    [] (parseList parseQuoted)
-      ec <-  parseOptional "always_include:" [] (parseList parseCategoryName)
-      ex <-  parseOptional "external:"       [] (parseList readConfig)
-      m <-   parseRequired "mode:"              readConfig
-      o <-   parseOptional "output:"         "" parseQuoted
-      return (ModuleConfig p d is is2 es ep ec ex m o)
+      p <-   parseOptional "root:"         "" parseQuoted
+      d <-   parseRequired "path:"            parseQuoted
+      is <-  parseOptional "public_deps:"  [] (parseList parseQuoted)
+      is2 <- parseOptional "private_deps:" [] (parseList parseQuoted)
+      es <-  parseOptional "extra_files:"  [] (parseList readConfig)
+      ep <-  parseOptional "extra_paths:"  [] (parseList parseQuoted)
+      m <-   parseRequired "mode:"            readConfig
+      return (ModuleConfig p d is is2 es ep m)
   writeConfig m = do
-    _ <- collectAllOrErrorM $ map validateCategoryName (rmExtraRequires m)
     extra    <- fmap concat $ collectAllOrErrorM $ map writeConfig $ rmExtraFiles m
-    external <- fmap concat $ collectAllOrErrorM $ map writeConfig $ rmExternalDefs m
     mode <- writeConfig (rmMode m)
     return $ [
         "root: " ++ show (rmRoot m),
@@ -284,77 +279,59 @@ instance ConfigFormat ModuleConfig where
         "]",
         "extra_paths: ["
       ] ++ indents (map show $ rmExtraPaths m) ++ [
-        "]",
-        "always_include: ["
-      ] ++ indents (rmExtraRequires m) ++ [
-        "]",
-        "external: ["
-      ] ++ indents external ++ [
         "]"
-      ] ++ "mode: " `prependFirst` mode ++ output where
-      output = if null (rmOutputName m)
-                  then []
-                  else ["output: " ++ show (rmOutputName m)]
-
-instance ConfigFormat ExternalCategory where
-  readConfig = do
-    sepAfter (string_ "external_category")
-    structOpen
-    c <- parseRequired "category:" parseCategoryName
-    f <- parseRequired "source:"   parseQuoted
-    structClose
-    return (ExternalCategory c f)
-  writeConfig (ExternalCategory c f) = do
-    validateCategoryName c
-    return $ [
-        "external_category {",
-        indent ("category: " ++ c),
-        indent ("source: " ++ show f),
-        "}"
-      ]
+      ] ++ "mode: " `prependFirst` mode
 
 instance ConfigFormat ExtraSource where
-  readConfig = flat <|> withDeps where
-    flat = do
-      f <- parseQuoted
-      return (ExtraSource f [])
-    withDeps = do
-      sepAfter (string_ "extra_source")
+  readConfig = category <|> other where
+    category = do
+      sepAfter (string_ "category_source")
       structOpen
       f <-  parseRequired "source:"        parseQuoted
-      cs <- parseOptional "category_deps:" [] (parseList parseCategoryName)
+      cs <- parseOptional "categories:" [] (parseList parseCategoryName)
+      ds <- parseOptional "requires:"   [] (parseList parseCategoryName)
       structClose
-      return (ExtraSource f cs)
-  writeConfig (ExtraSource f cs) = do
+      return (CategorySource f cs ds)
+    other = do
+      f <- parseQuoted
+      return (OtherSource f)
+  writeConfig (CategorySource f cs ds) = do
     _ <- collectAllOrErrorM $ map validateCategoryName cs
+    _ <- collectAllOrErrorM $ map validateCategoryName ds
     return $ [
-        "extra_source {",
+        "category_source {",
         indent ("source: " ++ show f),
-        indent "category_deps: ["
+        indent "categories: ["
       ] ++ (indents . indents) cs ++ [
+        indent "]",
+        indent "requires: ["
+      ] ++ (indents . indents) ds ++ [
         indent "]",
         "}"
       ]
+  writeConfig (OtherSource f) = return [show f]
 
 instance ConfigFormat CompileMode where
   readConfig = labeled "compile mode" $ binary <|> incremental where
     binary = do
       sepAfter (string_ "binary")
       structOpen
-      c <- parseRequired "category:" parseCategoryName
-      f <- parseRequired "function:" parseFunctionName
+      c <- parseRequired "category:"    parseCategoryName
+      f <- parseRequired "function:"    parseFunctionName
+      o <- parseOptional "output:"   "" parseQuoted
       structClose
-      return (CompileBinary c f)
+      return (CompileBinary c f o)
     incremental = do
       sepAfter (string_ "incremental")
       return CompileIncremental
-  writeConfig (CompileBinary c f) = do
+  writeConfig (CompileBinary c f o) = do
     validateCategoryName c
     validateFunctionName f
     return $ [
         "binary {",
         indent ("category: " ++ c),
         indent ("function: " ++ f),
+        indent ("output: " ++ show o),
         "}"
       ]
   writeConfig CompileIncremental = return ["incremental"]

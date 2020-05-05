@@ -1,22 +1,23 @@
 root: ".."
 path: "util"
 extra_files: [
-  "util/Category_Argv.cpp"
-  "util/Category_SimpleInput.cpp"
-  "util/Category_SimpleOutput.cpp"
-]
-external: [
-  external_category {
-    category: Argv
+  category_source {
     source: "util/Category_Argv.cpp"
+    categories: [
+      Argv
+    ]
   }
-  external_category {
-    category: SimpleInput
+  category_source {
     source: "util/Category_SimpleInput.cpp"
+    categories: [
+      SimpleInput
+    ]
   }
-  external_category {
-    category: SimpleOutput
+  category_source {
     source: "util/Category_SimpleOutput.cpp"
+    categories: [
+      SimpleOutput
+    ]
   }
 ]
 mode: incremental
