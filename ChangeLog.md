@@ -1,10 +1,10 @@
 # Revision history for zeolite-lang
 
-## 0.4.0.0  -- ????-??-??
+## 0.4.0.0  -- 2020-05-05
 
-* **[new]** Allows modules to specify custom linker flags. This lets categories
-  written in C++ to specify extra libraries to link to, allowing Zeolite
-  extensions of libraries written in other languages.
+* **[new]** Allows modules to specify custom linker flags and private include
+  paths in `.zeolite-module`. This lets categories written in C++ depend on
+  external libraries written in other languages.
 
 * **[new]** Improves optimization of dependency inclusion for categories that
   are defined in C++ sources.
