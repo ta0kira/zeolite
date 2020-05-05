@@ -26,7 +26,7 @@ import Data.List (intercalate,isSuffixOf,nub,sort)
 import System.Directory
 import System.Exit
 import System.FilePath
-import System.Posix.Temp (mkstemps)
+import System.Posix.Temp (mkdtemp,mkstemps)
 import System.IO
 import qualified Data.Set as Set
 
@@ -101,6 +101,23 @@ runCompiler (CompileOptions _ _ _ ds _ _ p (ExecuteTests tp) f) = do
       | otherwise = do
           hPutStrLn stderr $ "\nPassed: " ++ show passed ++ " test(s), Failed: " ++ show failed ++ " test(s)"
           hPutStrLn stderr $ "Zeolite tests passed."
+runCompiler (CompileOptions h is is2 _ _ _ p (CompileFast c fn f2) f) = do
+  dir <- mkdtemp "/tmp/zfast_"
+  absolute <- canonicalizePath p
+  is' <- sequence $ map (canonicalizePath . (p </>)) is
+  is2' <- sequence $ map (canonicalizePath . (p </>)) is2
+  f2' <- canonicalizePath (p </> f2)
+  let config = ModuleConfig {
+      rmRoot = absolute,
+      rmPath = dir,
+      rmPublicDeps = is',
+      rmPrivateDeps = is2',
+      rmExtraFiles = [OtherSource f2'],
+      rmExtraPaths = [],
+      rmMode = (CompileBinary c fn (absolute </> c) [])
+    }
+  writeRecompile dir config
+  runCompiler (CompileOptions h [] [] [dir] [] [] "" CompileRecompile f)
 runCompiler (CompileOptions h _ _ ds _ _ p CompileRecompileRecursive f) = do
   recursiveSequence Set.empty ds where
     recursiveSequence da (d0:ds2) = do
@@ -186,6 +203,9 @@ runCompiler (CompileOptions _ is is2 ds es ep p m f) = do
       }
       when (f == DoNotForce || f == ForceAll) $ writeRecompile (p </> d) rm
       (ps,xs,ts) <- findSourceFiles p d
+      ps2 <- sequence $ map canonicalizePath $ filter (isSuffixOf ".0rp") $ map ((p </>) . getSourceFile) es
+      xs2 <- sequence $ map canonicalizePath $ filter (isSuffixOf ".0rx") $ map ((p </>) . getSourceFile) es
+      ts2 <- sequence $ map canonicalizePath $ filter (isSuffixOf ".0rt") $ map ((p </>) . getSourceFile) es
       base <- resolveBaseModule r
       actual <- resolveModule r p d
       isBase <- isBaseModule r actual
@@ -199,15 +219,15 @@ runCompiler (CompileOptions _ is is2 ds es ep p m f) = do
       let ss = fixPaths $ getSourceFilesForDeps deps2
       ss' <- zipWithContents p ss
       let paths = base:(getIncludePathsForDeps deps2)
-      ps' <- zipWithContents p ps
-      xs' <- zipWithContents p xs
+      ps' <- zipWithContents p (ps ++ ps2)
+      xs' <- zipWithContents p (xs ++ xs2)
       ns0 <- canonicalizePath (p </> d) >>= return . StaticNamespace . publicNamespace
       let ns2 = map StaticNamespace $ filter (not . null) $ getNamespacesForDeps deps
       let fs = compileAll ns0 ns2 ss' ps' xs'
       writeOutput b paths ns0 deps2 d as as2
-                  (map takeFileName ps)
-                  (map takeFileName xs)
-                  (map takeFileName ts) fs
+                  (map takeFileName ps ++ ps2)
+                  (map takeFileName xs ++ xs2)
+                  (map takeFileName ts ++ ts2) fs
     writeOutput b paths ns0 deps d as as2 ps xs ts fs
       | isCompileError fs = do
           formatWarnings fs

@@ -100,7 +100,7 @@ highlighting in [`zeolite.xml`][zeolite.xml].
 It's the [any%](https://en.wiktionary.org/wiki/any%25) of programming.
 
 <pre style='color:#1f1c1b;background-color:#f6f8fa;'>
-<span style='color:#898887;'>// helloworld/hello-world.0rx</span>
+<span style='color:#898887;'>// hello-world.0rx</span>
 
 <b>concrete</b> <b><span style='color:#0057ae;'>HelloWorld</span></b> {
   <span style='color:#644a9b;'>@type</span> run () -&gt; ()
@@ -116,10 +116,10 @@ It's the [any%](https://en.wiktionary.org/wiki/any%25) of programming.
 
 ```shell
 # Compile.
-zeolite -i lib/util -m HelloWorld helloworld
+zeolite -i lib/util --fast HelloWorld hello-world.0rx
 
 # Execute.
-helloworld/HelloWorld
+./HelloWorld
 ```
 
 Also see some [full examples][examples] for more complete feature usage.
@@ -283,6 +283,12 @@ zeolite -r myprogram
 # Force compilation from scratch.
 zeolite -f -m MyProgram myprogram
 ```
+
+An alternative to this is the `--fast` mode (as of compiler version `0.4.1.0`),
+which allows you to create a binary from a single `.0rx` file. This mode does
+not require the source to be in a separate directory and does not preserve any
+info about the compiler setup. This is useful for simple testing and
+experimentation, and should generally not be used otherwise.
 
 ### Declaring Functions
 

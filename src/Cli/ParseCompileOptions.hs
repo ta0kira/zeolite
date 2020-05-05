@@ -39,6 +39,7 @@ optionHelpText :: [String]
 optionHelpText = [
     "",
     "zeolite [options...] -m [category(.function)] -o [binary] [path]",
+    "zeolite [options...] --fast [category(.function)] [.0rx source]",
     "zeolite [options...] -c [paths...]",
     "zeolite [options...] -r [paths...]",
     "zeolite [options...] -R [paths...]",
@@ -50,6 +51,7 @@ optionHelpText = [
     "Modes:",
     "  -c: Only compile the individual files. (default)",
     "  -m [category(.function)]: Create a binary that executes the function.",
+    "  --fast [category(.function)] [.0rx source]: Create a binary without needing a module.",
     "  -r: Recompile using the previous compilation options.",
     "  -R: Recursively recompile using the previous compilation options.",
     "  -t: Only execute tests, without other compilation.",
@@ -145,8 +147,22 @@ parseCompileOptions = parseAll emptyCompileOptions . zip ([1..] :: [Int]) where
         return (os2,CompileOptions (maybeDisableHelp h) is is2 ds es ep p (CompileBinary t fn "" []) f) where
           check (t,"")     = return (t,defaultMainFunc)
           check (t,'.':fn) = return (t,fn)
-          check _          = argError n2 "-m" $ "Invalid entry point \"" ++ c ++ "\"."
+          check _          = argError n2 c $ "Invalid entry point."
       update _ = argError n "-m" "Requires a category name."
+
+  parseSingle (CompileOptions h is is2 ds es ep p m f) ((n,"--fast"):os)
+    | m /= CompileUnspecified = argError n "--fast" "Compiler mode already set."
+    | otherwise = update os where
+      update ((n2,c):(n3,f2):os2) =  do
+        (t,fn) <- check $ break (== '.') c
+        checkCategoryName n2 t  "--fast"
+        checkFunctionName n2 fn "--fast"
+        when (not $ isSuffixOf ".0rx" f2) $ argError n3 f2 $ "Must specify a .0rx source file."
+        return (os2,CompileOptions (maybeDisableHelp h) is is2 ds es ep p (CompileFast t fn f2) f) where
+          check (t,"")     = return (t,defaultMainFunc)
+          check (t,'.':fn) = return (t,fn)
+          check _          = argError n2 c $ "Invalid entry point."
+      update _ = argError n "--fast" "Requires a category name and a .0rx file."
 
   parseSingle (CompileOptions h is is2 ds es ep p (CompileBinary t fn o lf) f) ((n,"-o"):os)
     | not $ null o = argError n "-o" "Output name already set."
@@ -210,8 +226,11 @@ validateCompileOptions co@(CompileOptions h is is2 ds _ _ _ m _)
   | (not $ null $ is ++ is2) && (isCompileRecompile m) =
     compileError "Include paths (-i/-I) are not allowed in recompile mode (-r/-R)."
 
-  | null ds =
+  | null ds && (not $ isCompileFast m) =
     compileError "Please specify at least one input path."
   | (length ds /= 1) && (isCompileBinary m) =
     compileError "Specify exactly one input path for binary mode (-m)."
+  | (length ds /= 0) && (isCompileFast m) =
+    compileError "Specify exactly one input path for fast mode (--fast)."
+
   | otherwise = return co

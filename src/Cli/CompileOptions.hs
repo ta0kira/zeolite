@@ -30,6 +30,7 @@ module Cli.CompileOptions (
   getSourceDeps,
   getSourceFile,
   isCompileBinary,
+  isCompileFast,
   isCompileIncremental,
   isCompileRecompile,
   isCreateTemplates,
@@ -99,6 +100,11 @@ data CompileMode =
     cbOutputName :: String,
     cbLinkFlags :: [String]
   } |
+  CompileFast {
+    cfCategory :: String,
+    cfFunction :: String,
+    cfSource :: String
+  } |
   ExecuteTests {
     etInclude :: [String]
   } |
@@ -114,6 +120,10 @@ data CompileMode =
 isCompileBinary :: CompileMode -> Bool
 isCompileBinary (CompileBinary _ _ _ _) = True
 isCompileBinary _                       = False
+
+isCompileFast :: CompileMode -> Bool
+isCompileFast (CompileFast _ _ _) = True
+isCompileFast _                   = False
 
 isCompileIncremental :: CompileMode -> Bool
 isCompileIncremental (CompileIncremental _) = True

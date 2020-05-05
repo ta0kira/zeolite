@@ -243,6 +243,12 @@ tests = [
       cbLinkFlags = []
     },
 
+    checkWriteFail "compile mode" $ CompileFast {
+      cfCategory = "SpecialCategory",
+      cfFunction = "specialFunction",
+      cfSource = "source.0rx"
+    },
+
     checkWriteThenRead $ CompileIncremental {
       ciLinkFlags = [
         "-lm",

@@ -2,6 +2,9 @@
 
 ## 0.4.1.0  -- 2020-05-05
 
+* **[new]** Adds a compiler mode (`--fast`) to quickly compile a binary from a
+  single source file without needing to create a module.
+
 * **[new]** Adds a compiler mode (`-R`) to recursively recompile modules.
 
 * **[new]** Improves thread-safety of internal code so that thread support can
