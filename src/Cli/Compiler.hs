@@ -201,12 +201,12 @@ runCompiler (CompileOptions _ is is2 ds es ep p m f) = do
           let hxx   = filter (isSuffixOf ".hpp" . coFilename)       fs'
           let other = filter (not . isSuffixOf ".hpp" . coFilename) fs'
           os1 <- sequence $ map (writeOutputFile b (show ns0) paths' d) $ hxx ++ other
-          os2 <- fmap concat $ sequence $ map (compileExtraSource b (show ns0) paths' d) es
-          let (osCat,osOther) = partitionEithers os2
           let files = map (\f2 -> getCachedPath (p </> d) (show $ coNamespace f2) (coFilename f2)) fs' ++
                       map (\f2 -> p </> getSourceFile f2) es
-          files' <- sequence $ map canonicalizePath files
+          files' <- sequence $ map checkOwnedFile files
+          os2 <- fmap concat $ sequence $ map (compileExtraSource b (show ns0) paths' d) es
           let (hxx',cxx,os') = sortCompiledFiles files'
+          let (osCat,osOther) = partitionEithers os2
           path <- canonicalizePath $ p </> d
           let os1' = resolveObjectDeps path (os1 ++ osCat) deps
           let cm = CompileMetadata {
@@ -263,6 +263,13 @@ runCompiler (CompileOptions _ is is2 ds es ep p m f) = do
         coOutput = []
       } where
         ns' = if null ns then NoNamespace else StaticNamespace ns
+    checkOwnedFile f2 = do
+      exists <- doesFileExist f2
+      when (not exists) $ do
+        hPutStrLn stderr $ "Owned file \"" ++ f2 ++ "\" does not exist."
+        hPutStrLn stderr $ "Zeolite compilation failed."
+        exitFailure
+      canonicalizePath f2
     compileExtraFile e b ns0 paths d f2
       | isSuffixOf ".cpp" f2 || isSuffixOf ".cc" f2 = do
           let f2' = p </> f2

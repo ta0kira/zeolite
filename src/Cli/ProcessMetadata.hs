@@ -237,7 +237,7 @@ loadDepsCommon s h f ps = fmap snd $ fixedPaths >>= collect (Set.empty,(True,[])
     | otherwise = do
         when (not s) $ hPutStrLn stderr $ "Loading metadata for dependency \"" ++ p ++ "\"."
         m <- loadMetadata p
-        fresh <- checkModuleFreshness p m
+        fresh <- checkModuleFreshness s p m
         when (not s && not fresh) $
           hPutStrLn stderr $ "Module \"" ++ p ++ "\" is out of date and should be recompiled."
         let sameVersion = checkModuleVersionHash h m
@@ -273,8 +273,8 @@ sortCompiledFiles = foldl split ([],[],[]) where
 checkModuleVersionHash :: String -> CompileMetadata -> Bool
 checkModuleVersionHash h m = cmVersionHash m == h
 
-checkModuleFreshness :: String -> CompileMetadata -> IO Bool
-checkModuleFreshness p (CompileMetadata _ p2 _ is is2 _ _ ps xs ts hxx cxx _) = do
+checkModuleFreshness :: Bool -> String -> CompileMetadata -> IO Bool
+checkModuleFreshness s p (CompileMetadata _ p2 _ is is2 _ _ ps xs ts hxx cxx _) = do
   time <- getModificationTime $ getCachedPath p "" metadataFilename
   (ps2,xs2,ts2) <- findSourceFiles p ""
   let e1 = checkMissing ps ps2
@@ -290,13 +290,13 @@ checkModuleFreshness p (CompileMetadata _ p2 _ is is2 _ _ ps xs ts hxx cxx _) = 
       exists <- doesFileOrDirExist f
       if not exists
          then do
-           hPutStrLn stderr $ "Required path \"" ++ f ++ "\" is missing."
+           when (not s) $ hPutStrLn stderr $ "Required path \"" ++ f ++ "\" is missing."
            return True
          else do
            time2 <- getModificationTime f
            if time2 > time
               then do
-                hPutStrLn stderr $ "Required path \"" ++ f ++ "\" is out of date."
+                when (not s) $ hPutStrLn stderr $ "Required path \"" ++ f ++ "\" is out of date."
                 return True
               else return False
     checkMissing s0 s1 = not $ null $ (Set.fromList s1) `Set.difference` (Set.fromList s0)
