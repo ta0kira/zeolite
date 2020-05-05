@@ -98,6 +98,7 @@ class Value_SimpleOutput : public TypeValue {
     }
     if (&label == &Function_Writer_write) {
       TRACE_FUNCTION("SimpleOutput.write")
+      std::lock_guard<std::mutex> lock(mutex_);
       output_ << TypeValue::Call(args.At(0), Function_Formatted_formatted,
                                  ParamTuple(), ArgTuple()).Only()->AsString();
       return ReturnTuple();
@@ -109,6 +110,7 @@ class Value_SimpleOutput : public TypeValue {
   }
 
  private:
+  std::mutex mutex_;
   std::ostream& output_;
 };
 
@@ -127,12 +129,14 @@ class Value_SimpleError : public TypeValue {
     }
     if (&label == &Function_Writer_write) {
       TRACE_FUNCTION("SimpleOutput.write")
+      std::lock_guard<std::mutex> lock(mutex_);
       output_ << TypeValue::Call(args.At(0), Function_Formatted_formatted,
                                  ParamTuple(), ArgTuple()).Only()->AsString();
       return ReturnTuple();
     }
     if (&label == &Function_BufferedWriter_flush) {
       TRACE_FUNCTION("SimpleOutput.flush")
+      std::lock_guard<std::mutex> lock(mutex_);
       FAIL() << output_.str();
       return ReturnTuple();
     }
@@ -140,6 +144,7 @@ class Value_SimpleError : public TypeValue {
   }
 
  private:
+  std::mutex mutex_;
   std::ostringstream output_;
 };
 

@@ -155,6 +155,7 @@ struct Value_RawFileReader : public TypeValue {
   ReturnTuple Call_readBlock(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args);
   Type_RawFileReader& parent;
 
+  std::mutex mutex;
   R<std::istream> file;
 };
 S<TypeValue> CreateValue(Type_RawFileReader& parent, const ParamTuple& params, const ValueTuple& args) {
@@ -168,6 +169,7 @@ ReturnTuple Type_RawFileReader::Call_open(const ParamTuple& params, const ValueT
 
 ReturnTuple Value_RawFileReader::Call_freeResource(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) {
   TRACE_FUNCTION("RawFileReader.freeResource")
+  std::lock_guard<std::mutex> lock(mutex);
   if (file) {
     file = nullptr;
   }
@@ -176,6 +178,7 @@ ReturnTuple Value_RawFileReader::Call_freeResource(const S<TypeValue>& Var_self,
 
 ReturnTuple Value_RawFileReader::Call_getFileError(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) {
   TRACE_FUNCTION("RawFileReader.getFileError")
+  std::lock_guard<std::mutex> lock(mutex);
   if (!file) {
     return ReturnTuple(Box_String(PrimString_FromLiteral("file has already been closed")));
   }
@@ -190,11 +193,13 @@ ReturnTuple Value_RawFileReader::Call_getFileError(const S<TypeValue>& Var_self,
 
 ReturnTuple Value_RawFileReader::Call_pastEnd(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) {
   TRACE_FUNCTION("RawFileReader.pastEnd")
+  std::lock_guard<std::mutex> lock(mutex);
   return ReturnTuple(Box_Bool(!file || file->fail() || file->eof()));
 }
 
 ReturnTuple Value_RawFileReader::Call_readBlock(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) {
   TRACE_FUNCTION("RawFileReader.readBlock")
+  std::lock_guard<std::mutex> lock(mutex);
   const PrimInt Var_arg1 = (args.At(0))->AsInt();
   if (Var_arg1 < 0) {
     FAIL() << "Read size " << Var_arg1 << " is invalid";

@@ -104,10 +104,8 @@ struct Type_SimpleInput : public TypeInstance {
   }
 };
 Type_SimpleInput& CreateType(Params<0>::Type params) {
-  static auto& cache = *new InstanceMap<0,Type_SimpleInput>();
-  auto& cached = cache[params];
-  if (!cached) { cached = R_get(new Type_SimpleInput(CreateCategory(), params)); }
-  return *cached;
+  static auto& cached = *new Type_SimpleInput(CreateCategory(), Params<0>::Type());
+  return cached;
 }
 struct Value_SimpleInput : public TypeValue {
   Value_SimpleInput(Type_SimpleInput& p, const ParamTuple& params, const ValueTuple& args) : parent(p) {}
@@ -123,6 +121,7 @@ struct Value_SimpleInput : public TypeValue {
     }
     if (&label == &Function_BlockReader_readBlock) {
       TRACE_FUNCTION("SimpleInput.readBlock")
+      std::lock_guard<std::mutex> lock(mutex);
       const int size = args.At(0)->AsInt();
       if (size < 0) {
         FAIL() << "Read size " << size << " is invalid";
@@ -136,7 +135,9 @@ struct Value_SimpleInput : public TypeValue {
         return ReturnTuple(Box_String(buffer.substr(0, read_size)));
       }
     }
-    if (&label == &Function_BlockReader_pastEnd) {
+    if (&label == &Function_BlockReader_pastEnd) {{
+      TRACE_FUNCTION("SimpleInput.pastEnd")
+      std::lock_guard<std::mutex> lock(mutex);
       return ReturnTuple(Box_Bool(zero_read));
     }
     return TypeValue::Dispatch(self, label, params, args);
@@ -144,6 +145,7 @@ struct Value_SimpleInput : public TypeValue {
 
   std::string CategoryName() const final { return parent.CategoryName(); }
   bool zero_read = false;
+  std::mutex mutex;
   Type_SimpleInput& parent;
 };
 S<TypeValue> CreateValue(Type_SimpleInput& parent, const ParamTuple& params, const ValueTuple& args) {

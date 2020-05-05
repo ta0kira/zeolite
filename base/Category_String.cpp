@@ -209,17 +209,20 @@ class Value_StringBuilder : public TypeValue {
     }
     if (&label == &Function_Builder_append) {
       TRACE_FUNCTION("StringBuilder.append")
+      std::lock_guard<std::mutex> lock(mutex);
       output_ << args.At(0)->AsString();
       return ReturnTuple(self);
     }
     if (&label == &Function_Builder_build) {
       TRACE_FUNCTION("SimpleOutput.build")
+      std::lock_guard<std::mutex> lock(mutex);
       return ReturnTuple(Box_String(output_.str()));
     }
     return TypeValue::Dispatch(self, label, params, args);
   }
 
  private:
+  std::mutex mutex;
   std::ostringstream output_;
 };
 

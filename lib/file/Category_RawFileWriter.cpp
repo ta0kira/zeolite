@@ -153,6 +153,7 @@ struct Value_RawFileWriter : public TypeValue {
   ReturnTuple Call_writeBlock(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args);
   Type_RawFileWriter& parent;
 
+  std::mutex mutex;
   R<std::ostream> file;
 };
 S<TypeValue> CreateValue(Type_RawFileWriter& parent, const ParamTuple& params, const ValueTuple& args) {
@@ -165,6 +166,7 @@ ReturnTuple Type_RawFileWriter::Call_open(const ParamTuple& params, const ValueT
 }
 ReturnTuple Value_RawFileWriter::Call_freeResource(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) {
   TRACE_FUNCTION("RawFileWriter.freeResource")
+  std::lock_guard<std::mutex> lock(mutex);
   if (file) {
     file = nullptr;
   }
@@ -172,6 +174,7 @@ ReturnTuple Value_RawFileWriter::Call_freeResource(const S<TypeValue>& Var_self,
 }
 ReturnTuple Value_RawFileWriter::Call_getFileError(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) {
   TRACE_FUNCTION("RawFileWriter.getFileError")
+  std::lock_guard<std::mutex> lock(mutex);
   if (!file) {
     return ReturnTuple(Box_String(PrimString_FromLiteral("file has already been closed")));
   }
@@ -185,6 +188,7 @@ ReturnTuple Value_RawFileWriter::Call_getFileError(const S<TypeValue>& Var_self,
 }
 ReturnTuple Value_RawFileWriter::Call_writeBlock(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) {
   TRACE_FUNCTION("RawFileWriter.writeBlock")
+  std::lock_guard<std::mutex> lock(mutex);
   const PrimString& Var_arg1 = args.At(0)->AsString();
   int write_size = 0;
   if (file) {
