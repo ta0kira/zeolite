@@ -244,13 +244,13 @@ runCompiler (CompileOptions _ is is2 ds es ep p m f) = do
            return $ ([o2],ca)
          else return ([],ca)
     compileExtraSource b ns0 paths d (CategorySource f2 cs ds2) = do
-      f2' <- compileExtraFile b ns0 paths d f2
+      f2' <- compileExtraFile False b ns0 paths d f2
       let ds2' = nub $ cs ++ ds2
       case f2' of
            Nothing -> return []
            Just o  -> return $ map (\c -> Left $ ([o],fakeCxxForSource ns0 ds2' c)) cs
     compileExtraSource b ns0 paths d (OtherSource f2) = do
-      f2' <- compileExtraFile b ns0 paths d f2
+      f2' <- compileExtraFile True b ns0 paths d f2
       case f2' of
            Just o  -> return [Right $ OtherObjectFile o]
            Nothing -> return []
@@ -263,11 +263,11 @@ runCompiler (CompileOptions _ is is2 ds es ep p m f) = do
         coOutput = []
       } where
         ns' = if null ns then NoNamespace else StaticNamespace ns
-    compileExtraFile b ns0 paths d f2
+    compileExtraFile e b ns0 paths d f2
       | isSuffixOf ".cpp" f2 || isSuffixOf ".cc" f2 = do
           let f2' = p </> f2
           createCachePath (p </> d)
-          let command = CompileToObject f2' (getCachedPath (p </> d) "" "") dynamicNamespaceName ns0 paths True
+          let command = CompileToObject f2' (getCachedPath (p </> d) "" "") dynamicNamespaceName ns0 paths e
           fmap Just $ runCxxCommand b command
       | otherwise = return Nothing
     processTemplates deps d = do
