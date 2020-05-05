@@ -16,6 +16,8 @@ limitations under the License.
 
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
+#include <cmath>
+
 #include "category-source.hpp"
 #include "Category_Float.hpp"
 #include "Category_Formatted.hpp"
@@ -191,185 +193,159 @@ S<TypeValue> CreateValue_Math(Type_Math& parent, const ParamTuple& params, const
 ReturnTuple Type_Math::Call_acos(const ParamTuple& params, const ValueTuple& args) {
   TRACE_FUNCTION("Math.acos")
   const PrimFloat Var_arg1 = (args.At(0))->AsFloat();
-  // TODO: Implement Math.acos.
-  BUILTIN_FAIL(Box_String(PrimString_FromLiteral("Math.acos is not implemented")))
+  return ReturnTuple(Box_Float(std::acos(Var_arg1)));
 }
 
 ReturnTuple Type_Math::Call_acosh(const ParamTuple& params, const ValueTuple& args) {
   TRACE_FUNCTION("Math.acosh")
   const PrimFloat Var_arg1 = (args.At(0))->AsFloat();
-  // TODO: Implement Math.acosh.
-  BUILTIN_FAIL(Box_String(PrimString_FromLiteral("Math.acosh is not implemented")))
+  return ReturnTuple(Box_Float(std::acosh(Var_arg1)));
 }
 
 ReturnTuple Type_Math::Call_asin(const ParamTuple& params, const ValueTuple& args) {
   TRACE_FUNCTION("Math.asin")
   const PrimFloat Var_arg1 = (args.At(0))->AsFloat();
-  // TODO: Implement Math.asin.
-  BUILTIN_FAIL(Box_String(PrimString_FromLiteral("Math.asin is not implemented")))
+  return ReturnTuple(Box_Float(std::asin(Var_arg1)));
 }
 
 ReturnTuple Type_Math::Call_asinh(const ParamTuple& params, const ValueTuple& args) {
   TRACE_FUNCTION("Math.asinh")
   const PrimFloat Var_arg1 = (args.At(0))->AsFloat();
-  // TODO: Implement Math.asinh.
-  BUILTIN_FAIL(Box_String(PrimString_FromLiteral("Math.asinh is not implemented")))
+  return ReturnTuple(Box_Float(std::asinh(Var_arg1)));
 }
 
 ReturnTuple Type_Math::Call_atan(const ParamTuple& params, const ValueTuple& args) {
   TRACE_FUNCTION("Math.atan")
   const PrimFloat Var_arg1 = (args.At(0))->AsFloat();
-  // TODO: Implement Math.atan.
-  BUILTIN_FAIL(Box_String(PrimString_FromLiteral("Math.atan is not implemented")))
+  return ReturnTuple(Box_Float(std::atan(Var_arg1)));
 }
 
 ReturnTuple Type_Math::Call_atanh(const ParamTuple& params, const ValueTuple& args) {
   TRACE_FUNCTION("Math.atanh")
   const PrimFloat Var_arg1 = (args.At(0))->AsFloat();
-  // TODO: Implement Math.atanh.
-  BUILTIN_FAIL(Box_String(PrimString_FromLiteral("Math.atanh is not implemented")))
+  return ReturnTuple(Box_Float(std::atanh(Var_arg1)));
 }
 
 ReturnTuple Type_Math::Call_ceil(const ParamTuple& params, const ValueTuple& args) {
   TRACE_FUNCTION("Math.ceil")
   const PrimFloat Var_arg1 = (args.At(0))->AsFloat();
-  // TODO: Implement Math.ceil.
-  BUILTIN_FAIL(Box_String(PrimString_FromLiteral("Math.ceil is not implemented")))
+  return ReturnTuple(Box_Float(std::ceil(Var_arg1)));
 }
 
 ReturnTuple Type_Math::Call_cos(const ParamTuple& params, const ValueTuple& args) {
   TRACE_FUNCTION("Math.cos")
   const PrimFloat Var_arg1 = (args.At(0))->AsFloat();
-  // TODO: Implement Math.cos.
-  BUILTIN_FAIL(Box_String(PrimString_FromLiteral("Math.cos is not implemented")))
+  return ReturnTuple(Box_Float(std::cos(Var_arg1)));
 }
 
 ReturnTuple Type_Math::Call_cosh(const ParamTuple& params, const ValueTuple& args) {
   TRACE_FUNCTION("Math.cosh")
   const PrimFloat Var_arg1 = (args.At(0))->AsFloat();
-  // TODO: Implement Math.cosh.
-  BUILTIN_FAIL(Box_String(PrimString_FromLiteral("Math.cosh is not implemented")))
+  return ReturnTuple(Box_Float(std::cosh(Var_arg1)));
 }
 
 ReturnTuple Type_Math::Call_exp(const ParamTuple& params, const ValueTuple& args) {
   TRACE_FUNCTION("Math.exp")
   const PrimFloat Var_arg1 = (args.At(0))->AsFloat();
-  // TODO: Implement Math.exp.
-  BUILTIN_FAIL(Box_String(PrimString_FromLiteral("Math.exp is not implemented")))
+  return ReturnTuple(Box_Float(std::exp(Var_arg1)));
 }
 
 ReturnTuple Type_Math::Call_fabs(const ParamTuple& params, const ValueTuple& args) {
   TRACE_FUNCTION("Math.fabs")
   const PrimFloat Var_arg1 = (args.At(0))->AsFloat();
-  // TODO: Implement Math.fabs.
-  BUILTIN_FAIL(Box_String(PrimString_FromLiteral("Math.fabs is not implemented")))
+  return ReturnTuple(Box_Float(std::fabs(Var_arg1)));
 }
 
 ReturnTuple Type_Math::Call_floor(const ParamTuple& params, const ValueTuple& args) {
   TRACE_FUNCTION("Math.floor")
   const PrimFloat Var_arg1 = (args.At(0))->AsFloat();
-  // TODO: Implement Math.floor.
-  BUILTIN_FAIL(Box_String(PrimString_FromLiteral("Math.floor is not implemented")))
+  return ReturnTuple(Box_Float(std::floor(Var_arg1)));
 }
 
 ReturnTuple Type_Math::Call_fmod(const ParamTuple& params, const ValueTuple& args) {
   TRACE_FUNCTION("Math.fmod")
   const PrimFloat Var_arg1 = (args.At(0))->AsFloat();
   const PrimFloat Var_arg2 = (args.At(1))->AsFloat();
-  // TODO: Implement Math.fmod.
-  BUILTIN_FAIL(Box_String(PrimString_FromLiteral("Math.fmod is not implemented")))
+  return ReturnTuple(Box_Float(std::fmod(Var_arg1,Var_arg2)));
 }
 
 ReturnTuple Type_Math::Call_isinf(const ParamTuple& params, const ValueTuple& args) {
   TRACE_FUNCTION("Math.isinf")
   const PrimFloat Var_arg1 = (args.At(0))->AsFloat();
-  // TODO: Implement Math.isinf.
-  BUILTIN_FAIL(Box_String(PrimString_FromLiteral("Math.isinf is not implemented")))
+  return ReturnTuple(Box_Bool(std::isinf(Var_arg1)));
 }
 
 ReturnTuple Type_Math::Call_isnan(const ParamTuple& params, const ValueTuple& args) {
   TRACE_FUNCTION("Math.isnan")
   const PrimFloat Var_arg1 = (args.At(0))->AsFloat();
-  // TODO: Implement Math.isnan.
-  BUILTIN_FAIL(Box_String(PrimString_FromLiteral("Math.isnan is not implemented")))
+  return ReturnTuple(Box_Bool(std::isnan(Var_arg1)));
 }
 
 ReturnTuple Type_Math::Call_log(const ParamTuple& params, const ValueTuple& args) {
   TRACE_FUNCTION("Math.log")
   const PrimFloat Var_arg1 = (args.At(0))->AsFloat();
-  // TODO: Implement Math.log.
-  BUILTIN_FAIL(Box_String(PrimString_FromLiteral("Math.log is not implemented")))
+  return ReturnTuple(Box_Float(std::log(Var_arg1)));
 }
 
 ReturnTuple Type_Math::Call_log10(const ParamTuple& params, const ValueTuple& args) {
   TRACE_FUNCTION("Math.log10")
   const PrimFloat Var_arg1 = (args.At(0))->AsFloat();
-  // TODO: Implement Math.log10.
-  BUILTIN_FAIL(Box_String(PrimString_FromLiteral("Math.log10 is not implemented")))
+  return ReturnTuple(Box_Float(std::log10(Var_arg1)));
 }
 
 ReturnTuple Type_Math::Call_log2(const ParamTuple& params, const ValueTuple& args) {
   TRACE_FUNCTION("Math.log2")
   const PrimFloat Var_arg1 = (args.At(0))->AsFloat();
-  // TODO: Implement Math.log2.
-  BUILTIN_FAIL(Box_String(PrimString_FromLiteral("Math.log2 is not implemented")))
+  return ReturnTuple(Box_Float(std::log2(Var_arg1)));
 }
 
 ReturnTuple Type_Math::Call_pow(const ParamTuple& params, const ValueTuple& args) {
   TRACE_FUNCTION("Math.pow")
   const PrimFloat Var_arg1 = (args.At(0))->AsFloat();
   const PrimFloat Var_arg2 = (args.At(1))->AsFloat();
-  // TODO: Implement Math.pow.
-  BUILTIN_FAIL(Box_String(PrimString_FromLiteral("Math.pow is not implemented")))
+  return ReturnTuple(Box_Float(std::pow(Var_arg1,Var_arg2)));
 }
 
 ReturnTuple Type_Math::Call_round(const ParamTuple& params, const ValueTuple& args) {
   TRACE_FUNCTION("Math.round")
   const PrimFloat Var_arg1 = (args.At(0))->AsFloat();
-  // TODO: Implement Math.round.
-  BUILTIN_FAIL(Box_String(PrimString_FromLiteral("Math.round is not implemented")))
+  return ReturnTuple(Box_Float(std::round(Var_arg1)));
 }
 
 ReturnTuple Type_Math::Call_sin(const ParamTuple& params, const ValueTuple& args) {
   TRACE_FUNCTION("Math.sin")
   const PrimFloat Var_arg1 = (args.At(0))->AsFloat();
-  // TODO: Implement Math.sin.
-  BUILTIN_FAIL(Box_String(PrimString_FromLiteral("Math.sin is not implemented")))
+  return ReturnTuple(Box_Float(std::sin(Var_arg1)));
 }
 
 ReturnTuple Type_Math::Call_sinh(const ParamTuple& params, const ValueTuple& args) {
   TRACE_FUNCTION("Math.sinh")
   const PrimFloat Var_arg1 = (args.At(0))->AsFloat();
-  // TODO: Implement Math.sinh.
-  BUILTIN_FAIL(Box_String(PrimString_FromLiteral("Math.sinh is not implemented")))
+  return ReturnTuple(Box_Float(std::sinh(Var_arg1)));
 }
 
 ReturnTuple Type_Math::Call_sqrt(const ParamTuple& params, const ValueTuple& args) {
   TRACE_FUNCTION("Math.sqrt")
   const PrimFloat Var_arg1 = (args.At(0))->AsFloat();
-  // TODO: Implement Math.sqrt.
-  BUILTIN_FAIL(Box_String(PrimString_FromLiteral("Math.sqrt is not implemented")))
+  return ReturnTuple(Box_Float(std::sqrt(Var_arg1)));
 }
 
 ReturnTuple Type_Math::Call_tan(const ParamTuple& params, const ValueTuple& args) {
   TRACE_FUNCTION("Math.tan")
   const PrimFloat Var_arg1 = (args.At(0))->AsFloat();
-  // TODO: Implement Math.tan.
-  BUILTIN_FAIL(Box_String(PrimString_FromLiteral("Math.tan is not implemented")))
+  return ReturnTuple(Box_Float(std::tan(Var_arg1)));
 }
 
 ReturnTuple Type_Math::Call_tanh(const ParamTuple& params, const ValueTuple& args) {
   TRACE_FUNCTION("Math.tanh")
   const PrimFloat Var_arg1 = (args.At(0))->AsFloat();
-  // TODO: Implement Math.tanh.
-  BUILTIN_FAIL(Box_String(PrimString_FromLiteral("Math.tanh is not implemented")))
+  return ReturnTuple(Box_Float(std::tanh(Var_arg1)));
 }
 
 ReturnTuple Type_Math::Call_trunc(const ParamTuple& params, const ValueTuple& args) {
   TRACE_FUNCTION("Math.trunc")
   const PrimFloat Var_arg1 = (args.At(0))->AsFloat();
-  // TODO: Implement Math.trunc.
-  BUILTIN_FAIL(Box_String(PrimString_FromLiteral("Math.trunc is not implemented")))
+  return ReturnTuple(Box_Float(std::trunc(Var_arg1)));
 }
 
 }  // namespace

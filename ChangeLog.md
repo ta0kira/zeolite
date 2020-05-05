@@ -1,6 +1,9 @@
 # Revision history for zeolite-lang
 
-## 0.4.1.0  -- ??-??-??
+## 0.4.1.0  -- ????-??-??
+
+* **[new]** Adds support for basic mathematical `Float` operations, such as
+  `sin`, `exp`, and `sqrt`.
 
 * **[new]** Adds support for bitwise `Int` operations.
 

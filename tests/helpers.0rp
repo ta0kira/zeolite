@@ -21,4 +21,10 @@ concrete Testing {
     #x requires Formatted
     #x defines Equals<#x>
   (#x /*actual*/, #x /*expected*/) -> ()
+
+  @type checkBetween<#x>
+    #x requires Formatted
+    #x defines Equals<#x>
+    #x defines LessThan<#x>
+  (#x /*actual*/, #x /*lower*/, #x /*upper*/) -> ()
 }

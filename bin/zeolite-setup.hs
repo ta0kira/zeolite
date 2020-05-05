@@ -53,14 +53,14 @@ arBinary    = "ar"
 libraries :: [String]
 libraries = [
     "base",
-    "lib/util",
-    "lib/file",
-    "lib/math",
     "tests/visibility/internal",
     "tests/visibility",
     "tests/visibility2/internal",
     "tests/visibility2",
-    "tests"
+    "tests",
+    "lib/util",
+    "lib/file",
+    "lib/math"
   ]
 
 createConfig :: IO LocalConfig

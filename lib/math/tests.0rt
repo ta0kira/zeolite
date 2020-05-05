@@ -15,3 +15,396 @@ limitations under the License.
 ----------------------------------------------------------------------------- */
 
 // Author: Kevin P. Barry [ta0kira@gmail.com]
+
+testcase "sanity check cos" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+   \ Testing$checkBetween<Float>(Math$cos(2.0),-0.42,-0.41)
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "sanity check sin" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+   \ Testing$checkBetween<Float>(Math$sin(2.0),0.90,0.91)
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "sanity check tan" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+   \ Testing$checkBetween<Float>(Math$tan(2.0),-2.19,-2.18)
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "sanity check acos" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+   \ Testing$checkBetween<Float>(Math$acos(0.5),1.04,1.05)
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "sanity check asin" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+   \ Testing$checkBetween<Float>(Math$asin(0.5),0.52,0.53)
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "sanity check atan" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+   \ Testing$checkBetween<Float>(Math$atan(0.5),0.46,0.47)
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "sanity check cosh" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+   \ Testing$checkBetween<Float>(Math$cosh(2.0),3.76,3.77)
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "sanity check sinh" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+   \ Testing$checkBetween<Float>(Math$sinh(2.0),3.62,3.63)
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "sanity check tanh" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+   \ Testing$checkBetween<Float>(Math$tanh(2.0),0.96,0.97)
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "sanity check acosh" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+   \ Testing$checkBetween<Float>(Math$acosh(2.0),1.31,1.32)
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "sanity check asinh" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+   \ Testing$checkBetween<Float>(Math$asinh(2.0),1.44,1.45)
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "sanity check atanh" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+   \ Testing$checkBetween<Float>(Math$atanh(0.5),0.54,0.55)
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "sanity check exp" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+   \ Testing$checkBetween<Float>(Math$exp(1.0),2.71,2.72)
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "sanity check log" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+   \ Testing$checkBetween<Float>(Math$log(9.0),2.19,2.20)
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "sanity check log10" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+   \ Testing$checkBetween<Float>(Math$log10(100.0),1.99,2.01)
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "sanity check log2" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+   \ Testing$checkBetween<Float>(Math$log2(8.0),2.99,3.01)
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "sanity check pow" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+   \ Testing$checkBetween<Float>(Math$pow(2.0,3.0),7.99,8.01)
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "sanity check sqrt" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+   \ Testing$checkBetween<Float>(Math$sqrt(4.0),1.99,2.01)
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "sanity check ceil" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+   \ Testing$checkBetween<Float>(Math$ceil(2.2),2.99,3.01)
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "sanity check floor" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+   \ Testing$checkBetween<Float>(Math$floor(2.2),1.99,2.01)
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "sanity check fmod" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+   \ Testing$checkBetween<Float>(Math$fmod(7.0,4.0),2.99,3.01)
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "sanity check trunc" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+   \ Testing$checkBetween<Float>(Math$trunc(2.2),1.99,2.01)
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "sanity check round" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+   \ Testing$checkBetween<Float>(Math$round(2.7),2.99,3.01)
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "sanity check fabs" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+   \ Testing$checkBetween<Float>(Math$fabs(-10.0),9.99,10.01)
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "sanity check isinf" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+    if (!Math$isinf(Math$log(0.0))) {
+      fail("Failed")
+    }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "sanity check isnan" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+    if (!Math$isnan(Math$sqrt(-1.0))) {
+      fail("Failed")
+    }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}

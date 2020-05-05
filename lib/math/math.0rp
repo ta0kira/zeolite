@@ -45,6 +45,6 @@ concrete Math {
   @type round (Float) -> (Float)
   @type fabs (Float) -> (Float)
 
-  @type isinf (Float) -> (Float)
-  @type isnan (Float) -> (Float)
+  @type isinf (Float) -> (Bool)
+  @type isnan (Float) -> (Bool)
 }

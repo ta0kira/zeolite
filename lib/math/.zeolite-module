@@ -1,5 +1,8 @@
 root: "../.."
 path: "lib/math"
+private_deps: [
+  "../../tests"
+]
 extra_files: [
   category_source {
     source: "lib/math/Category_Math.cpp"
