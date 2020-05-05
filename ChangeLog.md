@@ -1,5 +1,13 @@
 # Revision history for zeolite-lang
 
+## 0.4.0.0  -- ????-??-??
+
+* **[new]** Adds optimization of dependencies for categories that are defined
+  in C++ sources. This should improve compile times and reduce binary sizes.
+
+* **[breaking]** Updates the `.zeolite-module` format to require associating
+  externally-defined categories with the `.cpp` sources that define them.
+
 ## 0.3.0.0  -- 2020-05-03
 
 * **[breaking]** Updates syntax for discarding all returns to use `\` instead of
