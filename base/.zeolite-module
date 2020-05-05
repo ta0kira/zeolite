@@ -31,12 +31,8 @@ extra_files: [
   "base/logging.hpp"
   "base/types.cpp"
   "base/types.hpp"
-  "capture-thread/include/thread-capture.h"
-  "capture-thread/include/thread-crosser.h"
-  "capture-thread/src/thread-crosser.cc"
-]
-include_paths: [
-  "base"
-  "capture-thread/include"
+  "base/thread-capture.h"
+  "base/thread-crosser.h"
+  "base/thread-crosser.cc"
 ]
 mode: incremental {}

@@ -52,7 +52,8 @@ import Types.TypeInstance
 runCompiler :: CompileOptions -> IO ()
 runCompiler (CompileOptions _ _ _ ds _ _ p (ExecuteTests tp) f) = do
   (backend,resolver) <- loadConfig
-  ds' <- sequence $ map (preloadModule backend resolver) ds
+  base <- resolveBaseModule resolver
+  ds' <- sequence $ map (preloadModule backend base) ds
   let possibleTests = Set.fromList $ concat $ map getTestsFromPreload ds'
   case Set.toList $ allowTests `Set.difference` possibleTests of
        [] -> return ()
@@ -60,13 +61,12 @@ runCompiler (CompileOptions _ _ _ ds _ _ p (ExecuteTests tp) f) = do
          hPutStr stderr $ "Some test files do not occur in the selected modules: " ++
                           intercalate ", " (map show ts) ++ "\n"
          exitFailure
-  allResults <- fmap concat $ sequence $ map (runTests backend) ds'
+  allResults <- fmap concat $ sequence $ map (runTests backend base) ds'
   let passed = sum $ map (fst . fst) allResults
   let failed = sum $ map (snd . fst) allResults
   processResults passed failed (mergeAllM $ map snd allResults) where
-    preloadModule b r d = do
+    preloadModule b base d = do
       m <- loadMetadata (p </> d)
-      base <- resolveBaseModule r
       (fr1,deps1) <- loadPublicDeps (getCompilerHash b) [base,p </> d]
       checkAllowedStale fr1 f
       (fr2,deps2) <- loadPrivateDeps (getCompilerHash b) deps1
@@ -75,11 +75,11 @@ runCompiler (CompileOptions _ _ _ ds _ _ p (ExecuteTests tp) f) = do
     getTestsFromPreload (_,m,_,_) = cmTestFiles m
     allowTests = Set.fromList tp
     isTestAllowed t = if null allowTests then True else t `Set.member` allowTests
-    runTests :: CompilerBackend b => b ->
+    runTests :: CompilerBackend b => b -> String ->
                 (String,CompileMetadata,[CompileMetadata],[CompileMetadata]) ->
                 IO [((Int,Int),CompileInfo ())]
-    runTests b (d,m,deps1,deps2) = do
-      let paths = getIncludePathsForDeps deps1
+    runTests b base (d,m,deps1,deps2) = do
+      let paths = base:(getIncludePathsForDeps deps1)
       let ss = fixPaths $ getSourceFilesForDeps deps1
       let os = getObjectFilesForDeps deps2
       ss' <- zipWithContents p ss
@@ -176,7 +176,7 @@ runCompiler (CompileOptions _ is is2 ds es ep p m f) = do
                     return $ bpDeps ++ deps
       let ss = fixPaths $ getSourceFilesForDeps deps2
       ss' <- zipWithContents p ss
-      let paths = getIncludePathsForDeps deps2
+      let paths = base:(getIncludePathsForDeps deps2)
       ps' <- zipWithContents p ps
       xs' <- zipWithContents p xs
       ns0 <- canonicalizePath (p </> d) >>= return . StaticNamespace . publicNamespace
@@ -216,7 +216,7 @@ runCompiler (CompileOptions _ is is2 ds es ep p m f) = do
               cmPublicDeps = as,
               cmPrivateDeps = as2,
               cmCategories = sort $ map show pc,
-              cmSubdirs = sort $ ss' ++ ep',
+              cmSubdirs = sort $ ss',
               cmPublicFiles = sort ps,
               cmPrivateFiles = sort xs,
               cmTestFiles = sort ts,
@@ -359,7 +359,7 @@ runCompiler (CompileOptions _ is is2 ds es ep p m f) = do
           (_,bpDeps) <- loadPublicDeps (getCompilerHash b) [base]
           (_,deps2) <- loadPrivateDeps (getCompilerHash b) (bpDeps ++ deps)
           let lf' = lf ++ getLinkFlagsForDeps deps2
-          let paths = fixPaths $ getIncludePathsForDeps deps2
+          let paths = fixPaths $ base:(getIncludePathsForDeps deps2)
           let os    = getObjectFilesForDeps deps2
           let ofr = getObjectFileResolver os
           let os' = ofr ns2 req
