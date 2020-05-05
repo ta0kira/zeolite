@@ -276,6 +276,7 @@ runCompiler (CompileOptions _ is is2 ds es ep p m f) = do
           createCachePath (p </> d)
           let command = CompileToObject f2' (getCachedPath (p </> d) "" "") dynamicNamespaceName ns0 paths e
           fmap Just $ runCxxCommand b command
+      | isSuffixOf ".a" f2 || isSuffixOf ".o" f2 = return (Just f2)
       | otherwise = return Nothing
     processTemplates deps d = do
       (ps,xs,_) <- findSourceFiles p d
