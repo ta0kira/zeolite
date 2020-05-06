@@ -1,6 +1,6 @@
 root: ".."
 path: "tests"
-public_deps: [
+private_deps: [
   "visibility"
   "visibility2"
 ]
