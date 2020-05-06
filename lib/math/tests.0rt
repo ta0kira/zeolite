@@ -22,7 +22,7 @@ testcase "sanity check cos" {
 
 define Test {
   run () {
-   \ Testing$checkBetween<Float>(Math$cos(2.0),-0.42,-0.41)
+    \ Testing$checkBetween<Float>(Math$cos(2.0),-0.42,-0.41)
   }
 }
 
@@ -37,7 +37,7 @@ testcase "sanity check sin" {
 
 define Test {
   run () {
-   \ Testing$checkBetween<Float>(Math$sin(2.0),0.90,0.91)
+    \ Testing$checkBetween<Float>(Math$sin(2.0),0.90,0.91)
   }
 }
 
@@ -52,7 +52,7 @@ testcase "sanity check tan" {
 
 define Test {
   run () {
-   \ Testing$checkBetween<Float>(Math$tan(2.0),-2.19,-2.18)
+    \ Testing$checkBetween<Float>(Math$tan(2.0),-2.19,-2.18)
   }
 }
 
@@ -67,7 +67,7 @@ testcase "sanity check acos" {
 
 define Test {
   run () {
-   \ Testing$checkBetween<Float>(Math$acos(0.5),1.04,1.05)
+    \ Testing$checkBetween<Float>(Math$acos(0.5),1.04,1.05)
   }
 }
 
@@ -82,7 +82,7 @@ testcase "sanity check asin" {
 
 define Test {
   run () {
-   \ Testing$checkBetween<Float>(Math$asin(0.5),0.52,0.53)
+    \ Testing$checkBetween<Float>(Math$asin(0.5),0.52,0.53)
   }
 }
 
@@ -97,7 +97,7 @@ testcase "sanity check atan" {
 
 define Test {
   run () {
-   \ Testing$checkBetween<Float>(Math$atan(0.5),0.46,0.47)
+    \ Testing$checkBetween<Float>(Math$atan(0.5),0.46,0.47)
   }
 }
 
@@ -112,7 +112,7 @@ testcase "sanity check cosh" {
 
 define Test {
   run () {
-   \ Testing$checkBetween<Float>(Math$cosh(2.0),3.76,3.77)
+    \ Testing$checkBetween<Float>(Math$cosh(2.0),3.76,3.77)
   }
 }
 
@@ -127,7 +127,7 @@ testcase "sanity check sinh" {
 
 define Test {
   run () {
-   \ Testing$checkBetween<Float>(Math$sinh(2.0),3.62,3.63)
+    \ Testing$checkBetween<Float>(Math$sinh(2.0),3.62,3.63)
   }
 }
 
@@ -142,7 +142,7 @@ testcase "sanity check tanh" {
 
 define Test {
   run () {
-   \ Testing$checkBetween<Float>(Math$tanh(2.0),0.96,0.97)
+    \ Testing$checkBetween<Float>(Math$tanh(2.0),0.96,0.97)
   }
 }
 
@@ -157,7 +157,7 @@ testcase "sanity check acosh" {
 
 define Test {
   run () {
-   \ Testing$checkBetween<Float>(Math$acosh(2.0),1.31,1.32)
+    \ Testing$checkBetween<Float>(Math$acosh(2.0),1.31,1.32)
   }
 }
 
@@ -172,7 +172,7 @@ testcase "sanity check asinh" {
 
 define Test {
   run () {
-   \ Testing$checkBetween<Float>(Math$asinh(2.0),1.44,1.45)
+    \ Testing$checkBetween<Float>(Math$asinh(2.0),1.44,1.45)
   }
 }
 
@@ -187,7 +187,7 @@ testcase "sanity check atanh" {
 
 define Test {
   run () {
-   \ Testing$checkBetween<Float>(Math$atanh(0.5),0.54,0.55)
+    \ Testing$checkBetween<Float>(Math$atanh(0.5),0.54,0.55)
   }
 }
 
@@ -202,7 +202,7 @@ testcase "sanity check exp" {
 
 define Test {
   run () {
-   \ Testing$checkBetween<Float>(Math$exp(1.0),2.71,2.72)
+    \ Testing$checkBetween<Float>(Math$exp(1.0),2.71,2.72)
   }
 }
 
@@ -217,7 +217,7 @@ testcase "sanity check log" {
 
 define Test {
   run () {
-   \ Testing$checkBetween<Float>(Math$log(9.0),2.19,2.20)
+    \ Testing$checkBetween<Float>(Math$log(9.0),2.19,2.20)
   }
 }
 
@@ -232,7 +232,7 @@ testcase "sanity check log10" {
 
 define Test {
   run () {
-   \ Testing$checkBetween<Float>(Math$log10(100.0),1.99,2.01)
+    \ Testing$checkBetween<Float>(Math$log10(100.0),1.99,2.01)
   }
 }
 
@@ -247,7 +247,7 @@ testcase "sanity check log2" {
 
 define Test {
   run () {
-   \ Testing$checkBetween<Float>(Math$log2(8.0),2.99,3.01)
+    \ Testing$checkBetween<Float>(Math$log2(8.0),2.99,3.01)
   }
 }
 
@@ -262,7 +262,7 @@ testcase "sanity check pow" {
 
 define Test {
   run () {
-   \ Testing$checkBetween<Float>(Math$pow(2.0,3.0),7.99,8.01)
+    \ Testing$checkBetween<Float>(Math$pow(2.0,3.0),7.99,8.01)
   }
 }
 
@@ -277,7 +277,7 @@ testcase "sanity check sqrt" {
 
 define Test {
   run () {
-   \ Testing$checkBetween<Float>(Math$sqrt(4.0),1.99,2.01)
+    \ Testing$checkBetween<Float>(Math$sqrt(4.0),1.99,2.01)
   }
 }
 
@@ -292,7 +292,7 @@ testcase "sanity check ceil" {
 
 define Test {
   run () {
-   \ Testing$checkBetween<Float>(Math$ceil(2.2),2.99,3.01)
+    \ Testing$checkBetween<Float>(Math$ceil(2.2),2.99,3.01)
   }
 }
 
@@ -307,7 +307,7 @@ testcase "sanity check floor" {
 
 define Test {
   run () {
-   \ Testing$checkBetween<Float>(Math$floor(2.2),1.99,2.01)
+    \ Testing$checkBetween<Float>(Math$floor(2.2),1.99,2.01)
   }
 }
 
@@ -322,7 +322,7 @@ testcase "sanity check fmod" {
 
 define Test {
   run () {
-   \ Testing$checkBetween<Float>(Math$fmod(7.0,4.0),2.99,3.01)
+    \ Testing$checkBetween<Float>(Math$fmod(7.0,4.0),2.99,3.01)
   }
 }
 
@@ -337,7 +337,7 @@ testcase "sanity check trunc" {
 
 define Test {
   run () {
-   \ Testing$checkBetween<Float>(Math$trunc(2.2),1.99,2.01)
+    \ Testing$checkBetween<Float>(Math$trunc(2.2),1.99,2.01)
   }
 }
 
@@ -352,7 +352,7 @@ testcase "sanity check round" {
 
 define Test {
   run () {
-   \ Testing$checkBetween<Float>(Math$round(2.7),2.99,3.01)
+    \ Testing$checkBetween<Float>(Math$round(2.7),2.99,3.01)
   }
 }
 
@@ -367,7 +367,7 @@ testcase "sanity check fabs" {
 
 define Test {
   run () {
-   \ Testing$checkBetween<Float>(Math$fabs(-10.0),9.99,10.01)
+    \ Testing$checkBetween<Float>(Math$fabs(-10.0),9.99,10.01)
   }
 }
 
