@@ -348,4 +348,5 @@ instance ConfigFormat CompileMode where
         indent "]",
         "}"
       ]
+  writeConfig CompileUnspecified = writeConfig (CompileIncremental [])
   writeConfig _ = compileError "Invalid compile mode"

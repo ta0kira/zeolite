@@ -259,8 +259,7 @@ tests = [
     checkWriteFail "compile mode" $ ExecuteTests { etInclude = [] },
     checkWriteFail "compile mode" $ CompileRecompile,
     checkWriteFail "compile mode" $ CompileRecompileRecursive,
-    checkWriteFail "compile mode" $ CreateTemplates,
-    checkWriteFail "compile mode" $ CompileUnspecified
+    checkWriteFail "compile mode" $ CreateTemplates
   ]
 
 checkWriteThenRead :: (Eq a, Show a, ConfigFormat a) => a -> IO (CompileInfo ())
