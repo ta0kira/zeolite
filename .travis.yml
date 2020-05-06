@@ -156,7 +156,7 @@ script:
   # Only run integration tests for a few GHC version, since they should all be the same if setup succeeds
   - if [ $HCNUMVER -eq 80803 ] || [ $HCNUMVER -eq 81001 ]; then $ZEOLITE -p $ZEOLITE_PATH -t tests lib/file lib/math lib/util; fi
   # Run extra CLI tests
-  - $ZEOLITE_PATH/tests/cli-tests.sh $ZEOLITE
+  - bash $ZEOLITE_PATH/tests/cli-tests.sh $ZEOLITE
   # <<< MANUAL EDIT ***
 
 # REGENDATA ("0.10",["zeolite-lang.cabal","--submodules","--output",".travis.yml"])

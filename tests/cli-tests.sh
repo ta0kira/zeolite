@@ -29,7 +29,7 @@ ZEOLITE=("$@")
 
 execute() {
   echo "Executing:" $(printf ' %q' "$@") 1>&2
-  "$@"
+  "$@" 2>&1
 }
 
 do_zeolite() {
@@ -40,7 +40,7 @@ ZEOLITE_PATH=$(do_zeolite --get-path | grep '^/')
 
 
 test_check_defs() {
-  local output=$(do_zeolite -p "$ZEOLITE_PATH" -r tests/check-defs 2>&1 || true)
+  local output=$(do_zeolite -p "$ZEOLITE_PATH" -r tests/check-defs || true)
   if ! echo "$output" | egrep -q "Type .+ is defined 2 times"; then
     echo 'Expected Type definition error from tests/check-defs:' 1>&2
     echo "$output" 1>&2
@@ -108,4 +108,4 @@ run_all() {
   fi
 }
 
-run_all test_check_defs test_templates test_fast
+run_all test_check_defs test_templates test_fast 1>&2
