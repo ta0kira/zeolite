@@ -31,7 +31,9 @@ import System.IO
 import Text.Regex.TDFA -- Not safe!
 
 import Base.CompileError
+import Cli.CompileMetadata
 import Cli.CompileOptions
+import Cli.ProcessMetadata
 import Config.LoadConfig (compilerVersion,rootPath)
 
 
@@ -44,19 +46,24 @@ optionHelpText = [
     "zeolite [options...] -r [paths...]",
     "zeolite [options...] -R [paths...]",
     "zeolite [options...] -t [paths...]",
+    "",
     "zeolite [options...] --templates [paths...]",
     "zeolite --get-path",
+    "zeolite --show-deps [paths...]",
     "zeolite --version",
     "",
-    "Modes:",
+    "Normal Modes:",
     "  -c: Only compile the individual files. (default)",
     "  -m [category(.function)]: Create a binary that executes the function.",
     "  --fast [category(.function)] [.0rx source]: Create a binary without needing a module.",
     "  -r: Recompile using the previous compilation options.",
     "  -R: Recursively recompile using the previous compilation options.",
     "  -t: Only execute tests, without other compilation.",
+    "",
+    "Special Modes:",
     "  --templates: Only create C++ templates for undefined categories in .0rp sources.",
     "  --get-path: Show the data path and immediately exit.",
+    "  --show-deps: Show category dependencies for the modules.",
     "  --version: Show the compiler version and immediately exit.",
     "",
     "Options:",
@@ -89,6 +96,17 @@ tryFastModes ("--version":os) = do
   if null os
      then exitSuccess
      else exitFailure
+tryFastModes ("--show-deps":ps) = do
+  mapM_ showDeps ps
+  exitSuccess where
+    showDeps p = do
+      p' <- canonicalizePath p
+      m <- loadMetadata p'
+      hPutStrLn stdout $ show p'
+      mapM_ showDep (cmObjectFiles m)
+    showDep (CategoryObjectFile c ds _) = do
+      mapM_ (\d -> hPutStrLn stdout $ "  " ++ ciCategory c ++ " -> " ++ ciCategory d ++ " " ++ show (ciPath d)) ds
+    showDep _ = return ()
 tryFastModes _ = return ()
 
 parseCompileOptions :: CompileErrorM m => [String] -> m CompileOptions

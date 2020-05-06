@@ -2,6 +2,9 @@
 
 ## 0.4.1.0  -- 2020-05-05
 
+* **[new]** Adds a compiler mode (`--show-deps`) to display the symbolic
+  dependencies of a module.
+
 * **[new]** Adds a compiler mode (`--fast`) to quickly compile a binary from a
   single source file without needing to create a module.
 
