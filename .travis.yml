@@ -146,12 +146,15 @@ script:
   - rm -f cabal.project.local
   - ${CABAL} v2-build $WITHCOMPILER --disable-tests --disable-benchmarks all
   # *** MANUAL EDIT >>>
-  # Run zeolite-zetup with defaults and execute integration tests
+  # Change to a temp directory so that $ZEOLITE_PATH != $PWD
+  - TEMP=$(mktemp -d)
+  - ZEOLITE="${CABAL} v2-run --project-file=$PWD/cabal.project $WITHCOMPILER zeolite --"
+  - cd "$TEMP"
+  # Run zeolite-zetup
   - "ZEOLITE_SETUP='\\n\\n'"
   # Use g++ for one of the environments (g++ shows up as the second option)
   - "if [ $HCNUMVER -eq 81001 ]; then ZEOLITE_SETUP='2\\n\\n'; fi"
   - 'echo -e "$ZEOLITE_SETUP" | ${CABAL} v2-run $WITHCOMPILER zeolite-setup'
-  - ZEOLITE="${CABAL} v2-run $WITHCOMPILER zeolite --"
   - ZEOLITE_PATH=$($ZEOLITE --get-path | grep '^/')
   # Only run integration tests for a few GHC version, since they should all be the same if setup succeeds
   - if [ $HCNUMVER -eq 80803 ] || [ $HCNUMVER -eq 81001 ]; then $ZEOLITE -p $ZEOLITE_PATH -t tests lib/file lib/math lib/util; fi
