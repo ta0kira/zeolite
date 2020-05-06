@@ -635,7 +635,7 @@ compileExpressionStart (CategoryCall c t f@(FunctionCall _ n _ _)) = do
 compileExpressionStart (TypeCall c t f@(FunctionCall _ n _ _)) = do
   r <- csResolver
   fa <- csAllFilters
-  lift $ validateGeneralInstance r fa (SingleType t)
+  lift $ validateGeneralInstance r fa (SingleType t) `reviseError` ("In function call at " ++ formatFullContext c)
   f' <- csGetTypeFunction c (Just $ SingleType t) n
   when (sfScope f' /= TypeScope) $ lift $ compileError $ "Function " ++ show n ++
                                           " cannot be used as a type function" ++
