@@ -155,15 +155,8 @@ script:
   - ZEOLITE_PATH=$($ZEOLITE --get-path | grep '^/')
   # Only run integration tests for a few GHC version, since they should all be the same if setup succeeds
   - if [ $HCNUMVER -eq 80803 ] || [ $HCNUMVER -eq 81001 ]; then $ZEOLITE -p $ZEOLITE_PATH -t tests lib/file lib/math lib/util; fi
-  # Execute the quasi-test tests/check-defs
-  - "CHECK_DEFS=$($ZEOLITE -p $ZEOLITE_PATH -r tests/check-defs 2>&1 || true)"
-  - 'if ! echo "$CHECK_DEFS" | egrep -q "Type .+ is defined 2 times"; then echo -e "Expected definition error from tests/check-defs:\n$CHECK_DEFS"; exit 1; fi'
-  - 'if ! echo "$CHECK_DEFS" | egrep -q "Undefined .+ has not been defined"; then echo -e "Expected definition error from tests/check-defs:\n$CHECK_DEFS"; exit 1; fi'
-  # Execute the test tests/templates
-  - rm -f $ZEOLITE_PATH/tests/templates/Category_Templated.cpp
-  - $ZEOLITE -p $ZEOLITE_PATH --templates tests/templates
-  - $ZEOLITE -p $ZEOLITE_PATH -r tests/templates
-  - $ZEOLITE -p $ZEOLITE_PATH -t tests/templates
+  # Run extra CLI tests
+  - $ZEOLITE_PATH/tests/cli-tests.sh $ZEOLITE
   # <<< MANUAL EDIT ***
 
 # REGENDATA ("0.10",["zeolite-lang.cabal","--submodules","--output",".travis.yml"])
