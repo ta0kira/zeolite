@@ -118,6 +118,7 @@ runCompiler (CompileOptions h is is2 _ _ _ p (CompileFast c fn f2) f) = do
     }
   writeRecompile dir config
   runCompiler (CompileOptions h [] [] [dir] [] [] "" CompileRecompile f)
+  removeDirectoryRecursive dir
 runCompiler (CompileOptions h _ _ ds _ _ p CompileRecompileRecursive f) = do
   recursiveSequence Set.empty ds where
     recursiveSequence da (d0:ds2) = do

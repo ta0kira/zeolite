@@ -122,7 +122,9 @@ instance CompilerBackend Backend where
     hClose errH
     status <- getProcessStatus True True pid
     out <- readFile outF
+    removeFile outF
     err <- readFile errF
+    removeFile errF
     let success = case status of
                       Just (Exited ExitSuccess) -> True
                       _ -> False

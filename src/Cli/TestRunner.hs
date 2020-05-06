@@ -23,6 +23,7 @@ module Cli.TestRunner (
 import Control.Arrow (second)
 import Control.Monad (when)
 import Data.List (isSuffixOf,nub)
+import System.Directory
 import System.IO
 import System.Posix.Temp (mkdtemp)
 import System.FilePath
@@ -105,13 +106,16 @@ runSingleTest b paths deps os tm (f,s) = do
          else do
            let warnings = getCompileWarnings result
            let (req,main,ns,fs) = getCompileSuccess result
-           binaryName <- createBinary main req [ns] fs
+           (dir,binaryName) <- createBinary main req [ns] fs
            let command = TestCommand binaryName (takeDirectory binaryName)
            (TestCommandResult s2' out err) <- runTestCommand b command
            case (s2,s2') of
                 (True,False) -> return $ mergeAllM $ map compileError $ warnings ++ err ++ out
                 (False,True) -> return $ compileError "Expected runtime failure"
-                _ -> return $ checkContent rs es warnings err out
+                _ -> do
+                  let result2 = checkContent rs es warnings err out
+                  when (not $ isCompileError result) $ removeDirectoryRecursive dir
+                  return result2
 
     compileAll e cs ds = do
       let ns0 = map (StaticNamespace . cmNamespace) deps
@@ -163,7 +167,8 @@ runSingleTest b paths deps os tm (f,s) = do
       let ofr = getObjectFileResolver (sources' ++ os)
       let os' = ofr ns req
       let command = CompileToBinary main os' binary paths' lf
-      runCxxCommand b command
+      file <- runCxxCommand b command
+      return (dir,file)
     writeSingleFile d ca@(CxxOutput _ f2 _ _ _ content) = do
       writeFile (d </> f2) $ concat $ map (++ "\n") content
       if isSuffixOf ".cpp" f2
