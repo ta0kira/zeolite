@@ -154,7 +154,7 @@ script:
   - "ZEOLITE_SETUP='\\n\\n'"
   # Use g++ for one of the environments (g++ shows up as the second option)
   - "if [ $HCNUMVER -eq 81001 ]; then ZEOLITE_SETUP='2\\n\\n'; fi"
-  - 'echo -e "$ZEOLITE_SETUP" | ${CABAL} v2-run $WITHCOMPILER zeolite-setup'
+  - 'echo -e "$ZEOLITE_SETUP" | $ZEOLITE zeolite-setup'
   - ZEOLITE_PATH=$($ZEOLITE --get-path | grep '^/')
   # Only run integration tests for a few GHC version, since they should all be the same if setup succeeds
   - if [ $HCNUMVER -eq 80803 ] || [ $HCNUMVER -eq 81001 ]; then $ZEOLITE -p $ZEOLITE_PATH -t tests lib/file lib/math lib/util; fi
