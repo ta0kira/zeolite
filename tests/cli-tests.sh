@@ -82,7 +82,7 @@ define $category {
 }
 END
   do_zeolite -i lib/util --fast $category "$file"
-  local output=$(execute "./$category")
+  local output=$(execute "$PWD/$category")
   if ! echo "$output" | fgrep -xq 'Hello World'; then
     echo 'Expected "Hello World" in program output:' 1>&2
     echo "$output" 1>&2
