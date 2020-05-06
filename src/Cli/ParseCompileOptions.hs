@@ -42,7 +42,7 @@ optionHelpText = [
     "",
     "zeolite [options...] -m [category(.function)] -o [binary] [path]",
     "zeolite [options...] --fast [category(.function)] [.0rx source]",
-    "zeolite [options...] -c [paths...]",
+    "zeolite [options...] -c [path]",
     "zeolite [options...] -r [paths...]",
     "zeolite [options...] -R [paths...]",
     "zeolite [options...] -t [paths...]",
@@ -244,11 +244,11 @@ validateCompileOptions co@(CompileOptions h is is2 ds _ _ _ m _)
   | (not $ null $ is ++ is2) && (isCompileRecompile m) =
     compileError "Include paths (-i/-I) are not allowed in recompile mode (-r/-R)."
 
+  | (length ds /= 0) && (isCompileFast m) =
+    compileError "Input path is not allowed with fast mode (--fast)."
   | null ds && (not $ isCompileFast m) =
     compileError "Please specify at least one input path."
-  | (length ds /= 1) && (isCompileBinary m) =
-    compileError "Specify exactly one input path for binary mode (-m)."
-  | (length ds /= 0) && (isCompileFast m) =
-    compileError "Specify exactly one input path for fast mode (--fast)."
+  | (length ds > 1) && (not $ isCompileRecompile m) && (not $ isExecuteTests m) =
+    compileError "Multiple input paths are only allowed with recompile mode (-r/-R) and test mode (-t)."
 
   | otherwise = return co
