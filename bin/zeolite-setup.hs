@@ -53,10 +53,6 @@ arBinary    = "ar"
 libraries :: [String]
 libraries = [
     "base",
-    "tests/visibility/internal",
-    "tests/visibility",
-    "tests/visibility2/internal",
-    "tests/visibility2",
     "tests",
     "lib/util",
     "lib/file",
@@ -126,7 +122,7 @@ initLibraries = do
       coExtraFiles = [],
       coExtraPaths = [],
       coSourcePrefix = path,
-      coMode = CompileRecompile,
+      coMode = CompileRecompileRecursive,
       coForce = ForceAll
     }
   runCompiler options

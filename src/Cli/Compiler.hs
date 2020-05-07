@@ -20,7 +20,7 @@ module Cli.Compiler (
   runCompiler,
 ) where
 
-import Control.Monad (when)
+import Control.Monad (foldM,when)
 import Data.Either (partitionEithers)
 import Data.List (intercalate,isSuffixOf,nub,sort)
 import System.Directory
@@ -118,20 +118,22 @@ runCompiler (CompileOptions h is is2 _ _ _ p (CompileFast c fn f2) f) = do
   runCompiler (CompileOptions h [] [] [dir] [] [] "" CompileRecompile f)
   removeDirectoryRecursive dir
 runCompiler (CompileOptions h _ _ ds _ _ p CompileRecompileRecursive f) = do
-  recursiveSequence Set.empty ds where
-    recursiveSequence da (d0:ds2) = do
+  foldM recursive Set.empty ds >> return () where
+    recursive da d0 = do
       d <- canonicalizePath (p </> d0)
       rm <- tryLoadRecompile d
       case rm of
            Nothing -> do
              hPutStrLn stderr $ "Path " ++ d ++ " does not have a valid configuration."
              exitFailure
-           Just m -> when (not $ rmPath m `Set.member` da) $ do
-             let ds3 = map (\d2 -> d </> d2) (rmPublicDeps m ++ rmPrivateDeps m)
-             let da' = rmPath m `Set.insert` da
-             recursiveSequence da' (ds3 ++ ds2)
-             runCompiler (CompileOptions h [] [] [d] [] [] "" CompileRecompile f)
-    recursiveSequence _ _ = return ()
+           Just m ->
+             if rmPath m `Set.member` da
+                then return da
+                else do
+                  let ds3 = map (\d2 -> d </> d2) (rmPublicDeps m ++ rmPrivateDeps m)
+                  da' <- foldM recursive (rmPath m `Set.insert` da) ds3
+                  runCompiler (CompileOptions h [] [] [d] [] [] "" CompileRecompile f)
+                  return da'
 runCompiler (CompileOptions h _ _ ds _ _ p CompileRecompile f) = do
   (backend,_) <- loadConfig
   fmap mergeAll $ sequence $ map (recompileSingle $ getCompilerHash backend) ds where
