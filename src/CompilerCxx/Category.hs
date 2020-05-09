@@ -33,7 +33,6 @@ module CompilerCxx.Category (
   compileModuleMain,
 ) where
 
-import Control.Applicative ((<|>))
 import Data.List (intercalate,sortBy)
 import Prelude hiding (pi)
 import qualified Data.Map as Map
@@ -401,7 +400,9 @@ commonDefineAll t ns rs top bottom ce te fe = do
       return $ CompiledData (Set.fromList (name:getCategoryMentions t)) [],
       return $ mergeAll [createCollection,createAllLabels]
     ] ++ conditionalContent
-  let rs' = foldl (<>) [] rs
+  let rs' = case rs of
+                 Nothing -> []
+                 Just rs2 -> rs2
   let inherited = Set.unions $ (map (categoriesFromRefine . vrType) (getCategoryRefines t ++ rs')) ++
                                (map (categoriesFromDefine . vdType) $ getCategoryDefines t)
   let includes = map (\i -> "#include \"" ++ headerFilename i ++ "\"") $
@@ -529,7 +530,9 @@ commonDefineCategory t extra = do
 commonDefineType :: MergeableM m =>
   AnyCategory c -> Maybe [ValueRefine c] -> CompiledData [String] -> m (CompiledData [String])
 commonDefineType t rs extra = do
-  let rs' = foldl (<>) [] $ rs <|> (Just $ getCategoryRefines t)
+  let rs' = case rs of
+                 Nothing -> getCategoryRefines t
+                 Just rs2 -> rs2
   mergeAllM [
       return $ CompiledData depends [],
       return $ onlyCode $ "struct " ++ typeName (getCategoryName t) ++ " : public " ++ typeBase ++ " {",
