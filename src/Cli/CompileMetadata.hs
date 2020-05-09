@@ -35,18 +35,18 @@ import Cli.CompileOptions
 data CompileMetadata =
   CompileMetadata {
     cmVersionHash :: String,
-    cmPath :: String,
+    cmPath :: FilePath,
     cmNamespace :: String, -- TODO: Use Namespace here?
-    cmPublicDeps :: [String],
-    cmPrivateDeps :: [String],
+    cmPublicDeps :: [FilePath],
+    cmPrivateDeps :: [FilePath],
     cmCategories :: [String],
-    cmSubdirs :: [String],
-    cmPublicFiles :: [String],
-    cmPrivateFiles :: [String],
-    cmTestFiles :: [String],
-    cmHxxFiles :: [String],
-    cmCxxFiles :: [String],
-    cmLinkFlags :: [String],
+    cmSubdirs :: [FilePath],
+    cmPublicFiles :: [FilePath],
+    cmPrivateFiles :: [FilePath],
+    cmTestFiles :: [FilePath],
+    cmHxxFiles :: [FilePath],
+    cmCxxFiles :: [FilePath],
+    cmLinkFlags :: [FilePath],
     cmObjectFiles :: [ObjectFile]
   }
   deriving (Eq,Show)
@@ -55,10 +55,10 @@ data ObjectFile =
   CategoryObjectFile {
     cofCategory :: CategoryIdentifier,
     cofRequires :: [CategoryIdentifier],
-    cofFiles :: [String]
+    cofFiles :: [FilePath]
   } |
   OtherObjectFile {
-    oofFile :: String
+    oofFile :: FilePath
   }
   deriving (Eq,Show)
 
@@ -84,12 +84,12 @@ isCategoryObjectFile (OtherObjectFile _)        = False
 
 data ModuleConfig =
   ModuleConfig {
-    rmRoot :: String,
-    rmPath :: String,
-    rmPublicDeps :: [String],
-    rmPrivateDeps :: [String],
+    rmRoot :: FilePath,
+    rmPath :: FilePath,
+    rmPublicDeps :: [FilePath],
+    rmPrivateDeps :: [FilePath],
     rmExtraFiles :: [ExtraSource],
-    rmExtraPaths :: [String],
+    rmExtraPaths :: [FilePath],
     rmMode :: CompileMode
   }
   deriving (Eq,Show)

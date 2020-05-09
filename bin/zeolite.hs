@@ -23,8 +23,8 @@ import System.IO
 
 import Base.CompileError
 import Cli.CompileOptions
-import Cli.Compiler
 import Cli.ParseCompileOptions -- Not safe, due to Text.Regex.TDFA.
+import Cli.RunCompiler
 import Compilation.CompileInfo
 
 

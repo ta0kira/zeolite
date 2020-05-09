@@ -23,7 +23,7 @@ import System.Exit
 import System.IO
 
 import Cli.CompileOptions
-import Cli.Compiler
+import Cli.RunCompiler
 import Config.LoadConfig
 
 
@@ -118,7 +118,7 @@ initLibraries = do
       coHelp = HelpNotNeeded,
       coPublicDeps = [],
       coPrivateDeps = [],
-      coSources = libraries,
+      coPaths = libraries,
       coExtraFiles = [],
       coExtraPaths = [],
       coSourcePrefix = path,

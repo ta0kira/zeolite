@@ -137,6 +137,7 @@ library zeolite-internal
                        Cli.ParseCompileOptions,
                        Cli.ParseMetadata,
                        Cli.ProcessMetadata,
+                       Cli.RunCompiler,
                        Cli.TestRunner,
                        Compilation.CompileInfo,
                        Compilation.CompilerState,

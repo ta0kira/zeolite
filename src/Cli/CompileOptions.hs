@@ -42,15 +42,16 @@ module Cli.CompileOptions (
 data CompileOptions =
   CompileOptions {
     coHelp :: HelpMode,
-    coPublicDeps :: [String],
-    coPrivateDeps :: [String],
-    coSources :: [String],
+    coPublicDeps :: [FilePath],
+    coPrivateDeps :: [FilePath],
+    coPaths :: [FilePath],
     coExtraFiles :: [ExtraSource],
-    coExtraPaths :: [String],
-    coSourcePrefix :: String,
+    coExtraPaths :: [FilePath],
+    coSourcePrefix :: FilePath,
     coMode :: CompileMode,
     coForce :: ForceMode
-  } deriving (Show)
+  }
+  deriving (Show)
 
 emptyCompileOptions :: CompileOptions
 emptyCompileOptions =
@@ -58,7 +59,7 @@ emptyCompileOptions =
     coHelp = HelpUnspecified,
     coPublicDeps = [],
     coPrivateDeps = [],
-    coSources = [],
+    coPaths = [],
     coExtraFiles = [],
     coExtraPaths = [],
     coSourcePrefix = "",
@@ -68,12 +69,12 @@ emptyCompileOptions =
 
 data ExtraSource =
   CategorySource {
-    csSource :: String,
+    csSource :: FilePath,
     csCategories :: [String],
     csDepCategories :: [String]
   } |
   OtherSource {
-    osSource :: String
+    osSource :: FilePath
   }
   deriving (Eq,Show)
 
@@ -91,22 +92,22 @@ getSourceDeps (OtherSource _)         = []
 
 data HelpMode = HelpNeeded | HelpNotNeeded | HelpUnspecified deriving (Eq,Show)
 
-data ForceMode = DoNotForce | AllowRecompile | ForceRecompile | ForceAll deriving (Eq,Ord,Show)
+data ForceMode = DoNotForce | ForceAll deriving (Eq,Ord,Show)
 
 data CompileMode =
   CompileBinary {
     cbCategory :: String,
     cbFunction :: String,
-    cbOutputName :: String,
+    cbOutputName :: FilePath,
     cbLinkFlags :: [String]
   } |
   CompileFast {
     cfCategory :: String,
     cfFunction :: String,
-    cfSource :: String
+    cfSource :: FilePath
   } |
   ExecuteTests {
-    etInclude :: [String]
+    etInclude :: [FilePath]
   } |
   CompileIncremental {
     ciLinkFlags :: [String]

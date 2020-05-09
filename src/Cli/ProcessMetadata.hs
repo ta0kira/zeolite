@@ -17,11 +17,12 @@ limitations under the License.
 -- Author: Kevin P. Barry [ta0kira@gmail.com]
 
 module Cli.ProcessMetadata (
-  allowedExtraTypes,
+  checkAllowedStale,
   createCachePath,
   eraseCachedData,
   findSourceFiles,
   fixPath,
+  fixPaths,
   getCachedPath,
   getCacheRelativePath,
   getIncludePathsForDeps,
@@ -48,7 +49,7 @@ module Cli.ProcessMetadata (
 
 import Control.Applicative ((<|>))
 import Control.Monad (when)
-import Data.List (isSuffixOf)
+import Data.List (nub,isSuffixOf)
 import Data.Maybe (isJust)
 import System.Directory
 import System.Exit (exitFailure)
@@ -59,6 +60,7 @@ import qualified Data.Set as Set
 
 import Base.CompileError
 import Cli.CompileMetadata
+import Cli.CompileOptions
 import Cli.ParseMetadata -- Not safe, due to Text.Regex.TDFA.
 import Compilation.CompileInfo
 import CompilerCxx.Category (CxxOutput(..))
@@ -66,19 +68,23 @@ import Types.TypeCategory
 import Types.TypeInstance
 
 
-cachedDataPath :: String
+cachedDataPath :: FilePath
 cachedDataPath = ".zeolite-cache"
 
-recompileFilename :: String
+recompileFilename :: FilePath
 recompileFilename = ".zeolite-module"
 
-metadataFilename :: String
+metadataFilename :: FilePath
 metadataFilename = "compile-metadata"
 
-allowedExtraTypes :: [String]
-allowedExtraTypes = [".hpp",".cpp",".h",".cc",".a",".o"]
+checkAllowedStale :: Bool -> ForceMode -> IO ()
+checkAllowedStale fr f = do
+  when (not fr && f < ForceAll) $ do
+    hPutStrLn stderr $ "Some dependencies are out of date. " ++
+                       "Recompile them or use -f to force."
+    exitFailure
 
-loadMetadata :: String -> IO CompileMetadata
+loadMetadata :: FilePath -> IO CompileMetadata
 loadMetadata p = do
   let f = p </> cachedDataPath </> metadataFilename
   isFile <- doesFileExist p
@@ -102,13 +108,13 @@ loadMetadata p = do
        exitFailure
      else return (getCompileSuccess m)
 
-tryLoadMetadata :: String -> IO (Maybe CompileMetadata)
+tryLoadMetadata :: FilePath -> IO (Maybe CompileMetadata)
 tryLoadMetadata p = tryLoadData $ (p </> cachedDataPath </> metadataFilename)
 
-tryLoadRecompile :: String -> IO (Maybe ModuleConfig)
+tryLoadRecompile :: FilePath -> IO (Maybe ModuleConfig)
 tryLoadRecompile p = tryLoadData $ (p </> recompileFilename)
 
-tryLoadData :: ConfigFormat a => String -> IO (Maybe a)
+tryLoadData :: ConfigFormat a => FilePath -> IO (Maybe a)
 tryLoadData f = do
   filePresent <- doesFileExist f
   if not filePresent
@@ -123,7 +129,7 @@ tryLoadData f = do
            return Nothing
          else return $ Just (getCompileSuccess m)
 
-isPathUpToDate :: String -> String -> IO Bool
+isPathUpToDate :: String -> FilePath -> IO Bool
 isPathUpToDate h p = do
   m <- tryLoadMetadata p
   case m of
@@ -132,13 +138,13 @@ isPathUpToDate h p = do
          (fr,_) <- loadDepsCommon True h Set.empty (\m2 -> cmPublicDeps m2 ++ cmPrivateDeps m2) [p]
          return fr
 
-isPathConfigured :: String -> IO Bool
+isPathConfigured :: FilePath -> IO Bool
 isPathConfigured p = do
   -- Just for error messages.
   _ <- tryLoadRecompile p
   doesFileExist (p </> recompileFilename)
 
-writeMetadata :: String -> CompileMetadata -> IO ()
+writeMetadata :: FilePath -> CompileMetadata -> IO ()
 writeMetadata p m = do
   p' <- canonicalizePath p
   hPutStrLn stderr $ "Writing metadata for \"" ++ p' ++ "\"."
@@ -150,7 +156,7 @@ writeMetadata p m = do
        exitFailure
      else writeCachedFile p' "" metadataFilename (getCompileSuccess m')
 
-writeRecompile :: String -> ModuleConfig -> IO ()
+writeRecompile :: FilePath -> ModuleConfig -> IO ()
 writeRecompile p m = do
   p' <- canonicalizePath p
   let f = p </> recompileFilename
@@ -166,31 +172,31 @@ writeRecompile p m = do
        when exists $ removeFile f
        writeFile f (getCompileSuccess m')
 
-eraseCachedData :: String -> IO ()
+eraseCachedData :: FilePath -> IO ()
 eraseCachedData p = do
   let d  = p </> cachedDataPath
   dirExists <- doesDirectoryExist d
   when dirExists $ removeDirectoryRecursive d
 
-createCachePath :: String -> IO ()
+createCachePath :: FilePath -> IO ()
 createCachePath p = do
   let f = p </> cachedDataPath
   exists <- doesDirectoryExist f
   when (not exists) $ createDirectoryIfMissing False f
 
-writeCachedFile :: String -> String -> String -> String -> IO ()
+writeCachedFile :: FilePath -> String -> FilePath -> String -> IO ()
 writeCachedFile p ns f c = do
   createCachePath p
   createDirectoryIfMissing False $ p </> cachedDataPath </> ns
   writeFile (getCachedPath p ns f) c
 
-getCachedPath :: String -> String -> String -> String
+getCachedPath :: FilePath -> String -> FilePath -> FilePath
 getCachedPath p ns f = fixPath $ p </> cachedDataPath </> ns </> f
 
-getCacheRelativePath :: String -> String
+getCacheRelativePath :: FilePath -> FilePath
 getCacheRelativePath f = ".." </> f
 
-findSourceFiles :: String -> String -> IO ([String],[String],[String])
+findSourceFiles :: FilePath -> FilePath -> IO ([FilePath],[FilePath],[FilePath])
 findSourceFiles p0 p = do
   let absolute = p0 </> p
   isFile <- doesFileExist absolute
@@ -207,17 +213,17 @@ findSourceFiles p0 p = do
   let ts = filter (isSuffixOf ".0rt") ds
   return (ps,xs,ts)
 
-getRealPathsForDeps :: [CompileMetadata] -> [String]
+getRealPathsForDeps :: [CompileMetadata] -> [FilePath]
 getRealPathsForDeps = map cmPath
 
-getSourceFilesForDeps :: [CompileMetadata] -> [String]
+getSourceFilesForDeps :: [CompileMetadata] -> [FilePath]
 getSourceFilesForDeps = concat . map extract where
   extract m = map (cmPath m </>) (cmPublicFiles m)
 
 getNamespacesForDeps :: [CompileMetadata] -> [String]
 getNamespacesForDeps = filter (not . null) . map cmNamespace
 
-getIncludePathsForDeps :: [CompileMetadata] -> [String]
+getIncludePathsForDeps :: [CompileMetadata] -> [FilePath]
 getIncludePathsForDeps = concat . map cmSubdirs
 
 getLinkFlagsForDeps :: [CompileMetadata] -> [String]
@@ -226,10 +232,10 @@ getLinkFlagsForDeps = concat . map cmLinkFlags
 getObjectFilesForDeps :: [CompileMetadata] -> [ObjectFile]
 getObjectFilesForDeps = concat . map cmObjectFiles
 
-loadPublicDeps :: String -> [String] -> IO (Bool,[CompileMetadata])
+loadPublicDeps :: String -> [FilePath] -> IO (Bool,[CompileMetadata])
 loadPublicDeps h = loadDepsCommon False h Set.empty cmPublicDeps
 
-loadTestingDeps :: String -> String -> IO (Bool,[CompileMetadata])
+loadTestingDeps :: String -> FilePath -> IO (Bool,[CompileMetadata])
 loadTestingDeps h p = do
   m <- loadMetadata p
   loadDepsCommon False h Set.empty cmPublicDeps (p:cmPrivateDeps m)
@@ -241,8 +247,8 @@ loadPrivateDeps h ms = do
     paths = concat $ map (\m -> cmPublicDeps m ++ cmPrivateDeps m) ms
     pa = Set.fromList $ map cmPath ms
 
-loadDepsCommon :: Bool -> String -> Set.Set String->
-  (CompileMetadata -> [String]) -> [String] -> IO (Bool,[CompileMetadata])
+loadDepsCommon :: Bool -> String -> Set.Set FilePath->
+  (CompileMetadata -> [FilePath]) -> [FilePath] -> IO (Bool,[CompileMetadata])
 loadDepsCommon s h pa0 f ps = fmap snd $ fixedPaths >>= collect (pa0,(True,[])) where
   fixedPaths = sequence $ map canonicalizePath ps
   collect xa@(pa,(fr,xs)) (p:ps2)
@@ -259,7 +265,7 @@ loadDepsCommon s h pa0 f ps = fmap snd $ fixedPaths >>= collect (pa0,(True,[])) 
         collect (p `Set.insert` pa,(sameVersion && fresh && fr,xs ++ [m])) (ps2 ++ f m)
   collect xa _ = return xa
 
-fixPath :: String -> String
+fixPath :: FilePath -> FilePath
 fixPath = foldl (</>) "" . process [] . map dropSlash . splitPath where
   dropSlash "/" = "/"
   dropSlash d
@@ -272,7 +278,10 @@ fixPath = foldl (</>) "" . process [] . map dropSlash . splitPath where
   process rs        (d:ds)    = process (d:rs) ds
   process rs        _         = reverse rs
 
-sortCompiledFiles :: [String] -> ([String],[String],[String])
+fixPaths :: [FilePath] -> [FilePath]
+fixPaths = nub . map fixPath
+
+sortCompiledFiles :: [FilePath] -> ([FilePath],[FilePath],[FilePath])
 sortCompiledFiles = foldl split ([],[],[]) where
   split fs@(hxx,cxx,os) f
     | isSuffixOf ".hpp" f = (hxx++[f],cxx,os)
@@ -286,7 +295,7 @@ sortCompiledFiles = foldl split ([],[],[]) where
 checkModuleVersionHash :: String -> CompileMetadata -> Bool
 checkModuleVersionHash h m = cmVersionHash m == h
 
-checkModuleFreshness :: Bool -> String -> CompileMetadata -> IO Bool
+checkModuleFreshness :: Bool -> FilePath -> CompileMetadata -> IO Bool
 checkModuleFreshness s p (CompileMetadata _ p2 _ is is2 _ _ ps xs ts hxx cxx _ _) = do
   time <- getModificationTime $ getCachedPath p "" metadataFilename
   (ps2,xs2,ts2) <- findSourceFiles p ""
@@ -319,7 +328,7 @@ checkModuleFreshness s p (CompileMetadata _ p2 _ is is2 _ _ ps xs ts hxx cxx _ _
         then return True
         else doesDirectoryExist f2
 
-getObjectFileResolver :: [ObjectFile] -> [Namespace] -> [CategoryName] -> [String]
+getObjectFileResolver :: [ObjectFile] -> [Namespace] -> [CategoryName] -> [FilePath]
 getObjectFileResolver os ns ds = resolved ++ nonCategories where
   categories    = filter isCategoryObjectFile os
   nonCategories = map oofFile $ filter (not . isCategoryObjectFile) os
@@ -345,7 +354,7 @@ getObjectFileResolver os ns ds = resolved ++ nonCategories where
              fs' = (filter (not . flip elem fa') fs) ++ fs0
            _ -> collectAll ca fa cs
 
-resolveObjectDeps :: String -> [([String],CxxOutput)] -> [CompileMetadata] -> [ObjectFile]
+resolveObjectDeps :: FilePath -> [([FilePath],CxxOutput)] -> [CompileMetadata] -> [ObjectFile]
 resolveObjectDeps p os deps = resolvedCategories ++ nonCategories where
   categories = filter (isJust . coCategory . snd) os
   publicNamespaces = getNamespacesForDeps deps
