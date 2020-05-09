@@ -148,8 +148,6 @@ class TypeValue {
     return target->Dispatch(target, label, params, args);
   }
 
-  virtual std::string CategoryName() const = 0;
-
   static bool Present(S<TypeValue> target);
   static S<TypeValue> Require(S<TypeValue> target);
   static S<TypeValue> Strong(W<TypeValue> target);
@@ -165,6 +163,9 @@ class TypeValue {
 
  protected:
   TypeValue() = default;
+
+  // NOTE: For some reason, making this private causes a segfault.
+  virtual std::string CategoryName() const = 0;
 
   virtual bool Present() const;
 
