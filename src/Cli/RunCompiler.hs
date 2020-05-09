@@ -79,7 +79,6 @@ runCompiler (CompileOptions _ _ _ ds _ _ p (ExecuteTests tp) f) = do
           hPutStrLn stderr $ "Zeolite tests passed."
 
 runCompiler (CompileOptions _ is is2 _ _ _ p (CompileFast c fn f2) f) = do
-  (_,resolver) <- loadConfig
   dir <- mkdtemp "/tmp/zfast_"
   absolute <- canonicalizePath p
   f2' <- canonicalizePath (p </> f2)
@@ -118,7 +117,7 @@ runCompiler (CompileOptions h _ _ ds _ _ p CompileRecompileRecursive f) = do
                   return da'
 
 runCompiler (CompileOptions _ _ _ ds _ _ p CompileRecompile f) = do
-  (backend,resolver) <- loadConfig
+  (backend,_) <- loadConfig
   fmap mergeAll $ sequence $ map (recompileSingle $ getCompilerHash backend) ds where
     recompileSingle h2 d0 = do
       let d = p </> d0

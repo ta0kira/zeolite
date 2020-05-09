@@ -33,7 +33,7 @@ import Config.Programs
 
 import Control.Monad (when)
 import Data.Hashable (hash)
-import Data.List (intercalate,isSuffixOf)
+import Data.List (intercalate,isPrefixOf,isSuffixOf)
 import Data.Version (showVersion)
 import GHC.IO.Handle
 import Numeric (showHex)
@@ -71,13 +71,18 @@ compilerVersion = showVersion version
 
 data Backend =
   UnixBackend {
-    ucCxxBinary :: String,
+    ucCxxBinary :: FilePath,
     ucCxxOptions :: [String],
-    ucArBinary :: String
+    ucArBinary :: FilePath
   }
   deriving (Read,Show)
 
-data Resolver = SimpleResolver deriving (Read,Show)
+data Resolver =
+  SimpleResolver {
+    srVisibleSystem :: [FilePath],
+    srExtraPaths :: [FilePath]
+  }
+  deriving (Read,Show)
 
 data LocalConfig =
   LocalConfig {
@@ -86,7 +91,7 @@ data LocalConfig =
   }
   deriving (Read,Show)
 
-localConfigFilename :: String
+localConfigFilename :: FilePath
 localConfigFilename = ".local-config"
 
 localConfigPath :: IO FilePath
@@ -146,15 +151,17 @@ executeProcess c os = do
        _ -> exitFailure
 
 instance PathResolver Resolver where
-  resolveModule SimpleResolver p m = do
-    m' <- getDataFileName m
-    firstExisting m [p</>m,m']
+  resolveModule (SimpleResolver ls ps) p m = do
+    m0 <- if any (\l -> isPrefixOf (l ++ "/") m) ls
+             then getDataFileName m >>= return . (:[])
+             else return []
+    let m2 = map (</> m) ps
+    firstExisting m $ [p</>m] ++ m0 ++ m2
   resolveBaseModule _ = do
     let m = "base"
-    m' <- getDataFileName m
-    firstExisting m [m']
-  resolveBinary SimpleResolver = canonicalizePath
-  isBaseModule r@SimpleResolver f = do
+    m0 <- getDataFileName m
+    firstExisting m [m0]
+  isBaseModule r f = do
     b <- resolveBaseModule r
     return (f == b)
 

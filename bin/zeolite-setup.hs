@@ -74,7 +74,10 @@ createConfig = do
         ucCxxOptions = options,
         ucArBinary = archiver
       },
-      lcResolver = SimpleResolver
+      lcResolver = SimpleResolver {
+        srVisibleSystem = ["lib"],
+        srExtraPaths = []
+      }
     }
   return config
 

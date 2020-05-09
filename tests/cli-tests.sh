@@ -88,6 +88,21 @@ END
     echo "$output" 1>&2
     return 1
   fi
+  execute rm -r "$temp" "$PWD/$category" || true
+}
+
+
+test_bad_system_include() {
+  local temp=$(execute mktemp -d)
+  local file="$temp/empty.0rx"
+  touch "$file"
+  local output=$(do_zeolite -i tests -c "$temp" || true)
+  if ! echo "$output" | fgrep -q 'Could not find path tests'; then
+    echo 'Expected error finding "tests":' 1>&2
+    echo "$output" 1>&2
+    return 1
+  fi
+  execute rm -r "$temp" || true
 }
 
 
@@ -108,4 +123,4 @@ run_all() {
   fi
 }
 
-run_all test_check_defs test_templates test_fast 1>&2
+run_all test_check_defs test_templates test_fast test_bad_system_include 1>&2
