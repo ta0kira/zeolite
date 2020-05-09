@@ -20,6 +20,8 @@
 
 set -e -u
 
+PROGRAM=$(basename "$0")
+
 if [ $# -lt 1 ]; then
   echo "$0: Pass the command to execute the zeolite CLI." 1>&2
   exit 1
@@ -27,8 +29,12 @@ fi
 
 ZEOLITE=("$@")
 
+show_message() {
+  echo -e "[$PROGRAM]" "$@" 1>&2
+}
+
 execute() {
-  echo "Executing:" $(printf ' %q' "$@") 1>&2
+  show_message "Executing:" $(printf ' %q' "$@")
   "$@" 2>&1
 }
 
@@ -36,18 +42,21 @@ do_zeolite() {
   execute "${ZEOLITE[@]}" "$@"
 }
 
-ZEOLITE_PATH=$(do_zeolite --get-path | grep '^/')
+create_file() {
+  show_message "Creating file $1"
+  cat > "$1"
+}
 
 
 test_check_defs() {
   local output=$(do_zeolite -p "$ZEOLITE_PATH" -r tests/check-defs || true)
   if ! echo "$output" | egrep -q "Type .+ is defined 2 times"; then
-    echo 'Expected Type definition error from tests/check-defs:' 1>&2
+    show_message 'Expected Type definition error from tests/check-defs:'
     echo "$output" 1>&2
     return 1
   fi
   if ! echo "$output" | egrep -q "Undefined .+ has not been defined"; then
-    echo 'Expected Undefined definition error from tests/check-defs:' 1>&2
+    show_message 'Expected Undefined definition error from tests/check-defs:'
     echo "$output" 1>&2
     return 1
   fi
@@ -66,7 +75,7 @@ test_fast() {
   local temp=$(execute mktemp -d)
   local category='HelloWorld'
   local file="$temp/hello-world.0rx"
-  cat > "$file" <<END
+  create_file "$file" <<END
 // $file
 
 concrete $category {
@@ -84,7 +93,7 @@ END
   do_zeolite -i lib/util --fast $category "$file"
   local output=$(execute "$PWD/$category")
   if ! echo "$output" | fgrep -xq 'Hello World'; then
-    echo 'Expected "Hello World" in program output:' 1>&2
+    show_message 'Expected "Hello World" in program output:'
     echo "$output" 1>&2
     return 1
   fi
@@ -98,7 +107,7 @@ test_bad_system_include() {
   touch "$file"
   local output=$(do_zeolite -i tests -c "$temp" || true)
   if ! echo "$output" | fgrep -q 'Could not find path tests'; then
-    echo 'Expected error finding "tests":' 1>&2
+    show_message 'Expected error finding "tests":'
     echo "$output" 1>&2
     return 1
   fi
@@ -107,19 +116,24 @@ test_bad_system_include() {
 
 
 run_all() {
+  ZEOLITE_PATH=$(do_zeolite --get-path | grep '^/')
+  echo 1>&2
   local failed=0
   for t in "$@"; do
-    echo -e "Testing $t >>>\n" 1>&2
+    show_message "Testing $t >>>"
+    echo 1>&2
     if ! "$t"; then
       failed=1
     fi
-    echo -e "\n<<< Testing $t\n" 1>&2
+    echo 1>&2
+    show_message "<<< Testing $t"
+    echo 1>&2
   done
   if (($failed)); then
-    echo 'One or more tests failed.' 1>&2
+    show_message 'One or more tests failed.'
     return 1
   else
-    echo 'All tests passed.' 1>&2
+    show_message 'All tests passed.'
   fi
 }
 
