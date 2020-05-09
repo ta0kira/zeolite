@@ -318,7 +318,7 @@ checkModuleFreshness s p (CompileMetadata _ p2 _ is is2 _ _ ps xs ts hxx cxx _ _
            time2 <- getModificationTime f
            if time2 > time
               then do
-                when (not s) $ hPutStrLn stderr $ "Required path \"" ++ f ++ "\" is out of date."
+                when (not s) $ hPutStrLn stderr $ "Required path \"" ++ f ++ "\" is newer than cached data."
                 return True
               else return False
     checkMissing s0 s1 = not $ null $ (Set.fromList s1) `Set.difference` (Set.fromList s0)
