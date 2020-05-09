@@ -23,6 +23,8 @@ limitations under the License.
 
 module CompilerCxx.Procedure (
   categoriesFromTypes,
+  categoriesFromDefine,
+  categoriesFromRefine,
   compileExecutableProcedure,
   compileMainProcedure,
   compileExpression,
@@ -826,6 +828,12 @@ categoriesFromTypes = Set.fromList . getAll where
   getAll (TypeMerge _ ps) = concat $ map getAll ps
   getAll (SingleType (JustTypeInstance (TypeInstance t ps))) = t:(concat $ map getAll $ pValues ps)
   getAll _ = []
+
+categoriesFromRefine :: TypeInstance -> Set.Set CategoryName
+categoriesFromRefine (TypeInstance t ps) = t `Set.insert` (Set.unions $ map categoriesFromTypes $ pValues ps)
+
+categoriesFromDefine :: DefinesInstance -> Set.Set CategoryName
+categoriesFromDefine (DefinesInstance t ps) = t `Set.insert` (Set.unions $ map categoriesFromTypes $ pValues ps)
 
 expandParams :: (CompilerContext c m s a) =>
   Positional GeneralInstance -> CompilerState a m String

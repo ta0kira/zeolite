@@ -826,3 +826,79 @@ define Test {
 concrete Test {
   @type run () -> ()
 }
+
+
+testcase "reduce from interface" {
+  success Test$run()
+}
+
+@value interface Base0 {
+}
+
+@value interface Base1 {
+  refines Base0
+}
+
+concrete Value {
+  refines Base1
+  @type create () -> (Value)
+}
+
+define Value {
+  create () {
+    return Value{ }
+  }
+}
+
+define Test {
+  run () {
+    if (!present(reduce<Base1,Base0>(Value$create()))) {
+      fail("Failed")
+    }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "reduce with internal override" {
+  success Test$run()
+}
+
+@value interface Base0 {}
+
+@value interface Base1 {
+  refines Base0
+}
+
+@value interface Base2<|#x> {}
+
+concrete Value {
+  refines Base2<Base0>
+  @type create () -> (Value)
+}
+
+define Value {
+  refines Base2<Base1>
+
+  create () {
+    return Value{ }
+  }
+}
+
+define Test {
+  run () {
+    if (!present(reduce<Value,Base2<Base0>>(Value$create()))) {
+      fail("Failed")
+    }
+    if (present(reduce<Value,Base2<Base1>>(Value$create()))) {
+      fail("Failed")
+    }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}

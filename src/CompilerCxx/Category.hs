@@ -107,7 +107,8 @@ compileCategoryModule (CategoryModule tm ns cs xa ex) = do
       return (ds,hxx ++ cxx1 ++ cxx2)
     compileDefinition tm2 ns2 d = do
       tm2' <- mergeInternalInheritance tm2 d
-      compileConcreteDefinition tm2' ns2 d
+      let refines = dcName d `Map.lookup` tm2 >>= return . getCategoryRefines
+      compileConcreteDefinition tm2' ns2 refines d
     mapByName = Map.fromListWith (++) . map (\d -> (dcName d,[d]))
     ca = Set.fromList $ map (show . getCategoryName) $ filter isValueConcrete cs
     checkLocals ds cs2 = mergeAllM $ map (checkLocal $ Set.fromList cs2) ds
@@ -198,7 +199,7 @@ compileCategoryDeclaration _ ns t =
 compileInterfaceDefinition :: MergeableM m => AnyCategory c -> m CxxOutput
 compileInterfaceDefinition t = do
   te <- typeConstructor
-  commonDefineAll t [] emptyCode emptyCode emptyCode te []
+  commonDefineAll t [] Nothing emptyCode emptyCode emptyCode te []
   where
     typeConstructor = do
       let ps = map vpParam $ getCategoryParams t
@@ -214,7 +215,7 @@ compileConcreteTemplate :: (Show c, CompileErrorM m, MergeableM m) =>
   CategoryMap c -> CategoryName -> m CxxOutput
 compileConcreteTemplate ta n = do
   (_,t) <- getConcreteCategory ta ([],n)
-  compileConcreteDefinition ta [] (defined t) `reviseError` ("In generated template for " ++ show n) where
+  compileConcreteDefinition ta [] Nothing (defined t) `reviseError` ("In generated template for " ++ show n) where
     defined t = DefinedCategory {
         dcContext = [],
         dcName = getCategoryName t,
@@ -242,8 +243,8 @@ compileConcreteTemplate ta n = do
     funcName f = show (sfType f) ++ "." ++ show (sfName f)
 
 compileConcreteDefinition :: (Show c, CompileErrorM m, MergeableM m) =>
-  CategoryMap c -> [Namespace] -> DefinedCategory c -> m CxxOutput
-compileConcreteDefinition ta ns dd@(DefinedCategory c n pi _ _ fi ms _ fs) = do
+  CategoryMap c -> [Namespace] -> Maybe [ValueRefine c] -> DefinedCategory c -> m CxxOutput
+compileConcreteDefinition ta ns rs dd@(DefinedCategory c n pi _ _ fi ms _ fs) = do
   (_,t) <- getConcreteCategory ta (c,n)
   let r = CategoryResolver ta
   [cp,tp,vp] <- getProcedureScopes ta dd
@@ -296,7 +297,7 @@ compileConcreteDefinition ta ns dd@(DefinedCategory c n pi _ _ fi ms _ fs) = do
       return $ mergeAll $ map fst tf,
       mergeAllM $ map (createMember r allFilters) tm
     ]
-  commonDefineAll t ns top bottom ce te fe
+  commonDefineAll t ns rs top bottom ce te fe
   where
     disallowTypeMembers :: (Show c, CompileErrorM m, MergeableM m) =>
       [DefinedMember c] -> m ()
@@ -390,17 +391,20 @@ compileConcreteDefinition ta ns dd@(DefinedCategory c n pi _ _ fi ms _ fs) = do
         ] ++ createFunctionDispatch n ValueScope fs2 ++ ["}"]
 
 commonDefineAll :: MergeableM m =>
-  AnyCategory c -> [Namespace] -> CompiledData [String] -> CompiledData [String] ->
-  CompiledData [String] -> CompiledData [String] ->
+  AnyCategory c -> [Namespace] -> Maybe [ValueRefine c] -> CompiledData [String] ->
+  CompiledData [String] -> CompiledData [String] -> CompiledData [String] ->
   [ScopedFunction c] -> m CxxOutput
-commonDefineAll t ns top bottom ce te fe = do
+commonDefineAll t ns rs top bottom ce te fe = do
   let filename = sourceFilename name
   (CompiledData req out) <- fmap (addNamespace t) $ mergeAllM $ [
       return $ CompiledData (Set.fromList (name:getCategoryMentions t)) [],
       return $ mergeAll [createCollection,createAllLabels]
     ] ++ conditionalContent
-  let inherited = Set.fromList $ (map (tiName . vrType) $ getCategoryRefines t) ++
-                                 (map (diName . vdType) $ getCategoryDefines t)
+  let rs' = case rs of
+                 Nothing -> []
+                 Just rs2 -> rs2
+  let inherited = Set.unions $ (map (categoriesFromRefine . vrType) (getCategoryRefines t ++ rs')) ++
+                               (map (categoriesFromDefine . vdType) $ getCategoryDefines t)
   let includes = map (\i -> "#include \"" ++ headerFilename i ++ "\"") $
                    Set.toList $ Set.union req inherited
   return $ CxxOutput (Just $ getCategoryName t)
@@ -419,7 +423,7 @@ commonDefineAll t ns top bottom ce te fe = do
         return top,
         commonDefineCategory t ce,
         return $ onlyCodes getInternal,
-        commonDefineType t te,
+        commonDefineType t rs te,
         defineInternalType name paramCount,
         return bottom,
         return $ onlyCode $ "}  // namespace",
@@ -524,8 +528,11 @@ commonDefineCategory t extra = do
     name = getCategoryName t
 
 commonDefineType :: MergeableM m =>
-  AnyCategory c -> CompiledData [String] -> m (CompiledData [String])
-commonDefineType t extra = do
+  AnyCategory c -> Maybe [ValueRefine c] -> CompiledData [String] -> m (CompiledData [String])
+commonDefineType t rs extra = do
+  let rs' = case rs of
+                 Nothing -> getCategoryRefines t
+                 Just rs2 -> rs2
   mergeAllM [
       return $ CompiledData depends [],
       return $ onlyCode $ "struct " ++ typeName (getCategoryName t) ++ " : public " ++ typeBase ++ " {",
@@ -534,7 +541,7 @@ commonDefineType t extra = do
       return $ indentCompiled $ onlyCode $ categoryName (getCategoryName t) ++ "& parent;",
       return $ indentCompiled createParams,
       return $ indentCompiled canConvertFrom,
-      return $ indentCompiled typeArgsForParent,
+      return $ indentCompiled $ typeArgsForParent rs',
       return $ indentCompiled extra,
       return $ onlyCode "};"
     ]
@@ -567,16 +574,16 @@ commonDefineType t extra = do
         "  if (!TypeInstance::CanConvert(*args[" ++ show i ++ "], " ++ paramName p ++ ")) return false;",
         "  if (!TypeInstance::CanConvert(" ++ paramName p ++ ", *args[" ++ show i ++ "])) return false;"
       ]
-    typeArgsForParent
+    typeArgsForParent rs2
       | isInstanceInterface t = emptyCode
       | otherwise = onlyCodes $ [
           "bool TypeArgsForParent(" ++
           "const TypeCategory& category, " ++
           "std::vector<const TypeInstance*>& args) const final {"
-        ] ++ allCats ++ ["  return false;","}"]
+        ] ++ allCats rs2 ++ ["  return false;","}"]
     myType = (getCategoryName t,map (SingleType . JustParamName . fst) params)
-    refines = map (\r -> (tiName r,pValues $ tiParams r)) $ map vrType $ getCategoryRefines t
-    allCats = concat $ map singleCat (myType:refines)
+    refines rs2 = map (\r -> (tiName r,pValues $ tiParams r)) $ map vrType rs2
+    allCats rs2 = concat $ map singleCat (myType:refines rs2)
     singleCat (t2,ps) = [
         "  if (&category == &" ++ categoryGetter t2 ++ "()) {",
         "    args = std::vector<const TypeInstance*>{" ++ expanded ++ "};",
@@ -729,8 +736,8 @@ getCategoryMentions t = fromRefines (getCategoryRefines t) ++
                         fromDefines (getCategoryDefines t) ++
                         fromFunctions (getCategoryFunctions t) ++
                         fromFilters (getCategoryFilters t) where
-  fromRefines rs = fromGenerals $ map (SingleType . JustTypeInstance . vrType) rs
-  fromDefines ds = concat $ map (fromDefine . vdType) ds
+  fromRefines rs = Set.toList $ Set.unions $ map (categoriesFromRefine . vrType) rs
+  fromDefines ds = Set.toList $ Set.unions $ map (categoriesFromDefine . vdType) ds
   fromDefine (DefinesInstance d ps) = d:(fromGenerals $ pValues ps)
   fromFunctions fs = concat $ map fromFunction fs
   fromFunction (ScopedFunction _ _ t2 _ as rs _ fs _) =
