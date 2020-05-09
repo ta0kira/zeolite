@@ -34,7 +34,7 @@ import Config.Programs
 import Control.Monad (when)
 import Data.Hashable (hash)
 import Data.List (intercalate,isPrefixOf,isSuffixOf)
-import Data.Version (showVersion)
+import Data.Version (showVersion,versionBranch)
 import GHC.IO.Handle
 import Numeric (showHex)
 import System.Directory
@@ -139,7 +139,8 @@ instance CompilerBackend Backend where
         hDuplicateTo h1 stdout
         hDuplicateTo h2 stderr
         executeFile b True [] Nothing
-  getCompilerHash b = flip showHex "" $ abs $ hash $ compilerVersion ++ show b
+  getCompilerHash b = flip showHex "" $ abs $ hash $ minorVersion ++ show b where
+    minorVersion = show $ take 3 $ versionBranch version
 
 executeProcess :: String -> [String] -> IO ()
 executeProcess c os = do
