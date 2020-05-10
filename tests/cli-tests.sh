@@ -105,8 +105,11 @@ test_bad_system_include() {
   local temp=$(execute mktemp -d)
   local file="$temp/empty.0rx"
   touch "$file"
-  local output=$(do_zeolite -i tests -c "$temp" || true)
-  if ! echo "$output" | fgrep -q 'Could not find path tests'; then
+  local prev=$PWD
+  cd "$temp"
+  local output=$(do_zeolite -i lib/../tests -c "$temp" || true)
+  cd "$prev"
+  if ! echo "$output" | egrep -q 'Could not find .+tests'; then
     show_message 'Expected error finding "tests":'
     echo "$output" 1>&2
     return 1

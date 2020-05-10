@@ -131,8 +131,8 @@ instance CompilerBackend Backend where
     err <- readFile errF
     removeFile errF
     let success = case status of
-                      Just (Exited ExitSuccess) -> True
-                      _ -> False
+                       Just (Exited ExitSuccess) -> True
+                       _ -> False
     return $ TestCommandResult success (lines out) (lines err) where
       execWithCapture h1 h2 = do
         when (not $ null p) $ setCurrentDirectory p
@@ -153,11 +153,16 @@ executeProcess c os = do
 
 instance PathResolver Resolver where
   resolveModule (SimpleResolver ls ps) p m = do
-    m0 <- if any (\l -> isPrefixOf (l ++ "/") m) ls
+    let allowGlobal = not (".." `elem` components)
+    m0 <- if allowGlobal && any (\l -> isPrefixOf (l ++ "/") m) ls
              then getDataFileName m >>= return . (:[])
              else return []
-    let m2 = map (</> m) ps
-    firstExisting m $ [p</>m] ++ m0 ++ m2
+    let m2 = if allowGlobal
+                then map (</> m) ps
+                else []
+    firstExisting m $ [p</>m] ++ m0 ++ m2 where
+      components = map stripSlash $ splitPath m
+      stripSlash = reverse . dropWhile (== '/') . reverse
   resolveBaseModule _ = do
     let m = "base"
     m0 <- getDataFileName m
