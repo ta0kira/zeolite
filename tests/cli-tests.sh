@@ -103,18 +103,35 @@ END
 
 test_bad_system_include() {
   local temp=$(execute mktemp -d)
-  local file="$temp/empty.0rx"
-  touch "$file"
   local prev=$PWD
-  cd "$temp"
+  execute cd "$temp"
   local output=$(do_zeolite -i lib/../tests -c "$temp" || true)
-  cd "$prev"
+  execute cd "$prev"
   if ! echo "$output" | egrep -q 'Could not find .+tests'; then
     show_message 'Expected error finding "tests":'
     echo "$output" 1>&2
     return 1
   fi
   execute rm -r "$temp" || true
+}
+
+
+test_global_include() {
+  local global="$ZEOLITE_PATH/global-paths"
+  if [ -f "$global" ]; then
+    show_message "Skipping test that overwrites existing $global."
+    return 0
+  fi
+  local temp0=$(execute mktemp -d)
+  execute mkdir "$temp0/fakedep"
+  do_zeolite -p "$temp0" -c 'fakedep'
+  create_file "$global" <<< "$temp0"
+  local temp=$(execute mktemp -d)
+  local prev=$PWD
+  execute cd "$temp"
+  do_zeolite -i fakedep -c "$temp" || { execute cd "$prev"; execute rm "$global"; return 1; }
+  execute cd "$prev"
+  execute rm -r "$temp0" "$temp" "$global" || true
 }
 
 
@@ -140,4 +157,12 @@ run_all() {
   fi
 }
 
-run_all test_check_defs test_templates test_fast test_bad_system_include 1>&2
+ALL_TESTS=(
+  test_check_defs
+  test_templates
+  test_fast
+  test_bad_system_include
+  test_global_include
+)
+
+run_all "${ALL_TESTS[@]}" 1>&2

@@ -49,14 +49,19 @@ import Paths_zeolite_lang (getDataFileName,version)
 
 loadConfig :: IO (Backend,Resolver)
 loadConfig = do
-  f <- localConfigPath
-  isFile <- doesFileExist f
+  configFile <- localConfigPath
+  isFile <- doesFileExist configFile
   when (not isFile) $ do
     hPutStrLn stderr "Zeolite has not been configured. Please run zeolite-setup."
     exitFailure
-  c <- readFile f
-  lc <- check $ (reads c :: [(LocalConfig,String)])
-  return (lcBackend lc,lcResolver lc) where
+  configString <- readFile configFile
+  lc <- check $ (reads configString :: [(LocalConfig,String)])
+  pathsFile <- globalPathsPath
+  pathsExists <- doesFileExist pathsFile
+  paths <- if pathsExists
+              then readFile pathsFile >>= return . lines
+              else return []
+  return (lcBackend lc,addPaths (lcResolver lc) paths) where
     check [(cm,"")] = return cm
     check [(cm,"\n")] = return cm
     check _ = do
@@ -94,8 +99,17 @@ data LocalConfig =
 localConfigFilename :: FilePath
 localConfigFilename = ".local-config"
 
+globalPathsFilename :: FilePath
+globalPathsFilename = "global-paths"
+
 localConfigPath :: IO FilePath
 localConfigPath = getDataFileName localConfigFilename >>= canonicalizePath
+
+globalPathsPath :: IO FilePath
+globalPathsPath = getDataFileName globalPathsFilename >>= canonicalizePath
+
+addPaths :: Resolver -> [FilePath] -> Resolver
+addPaths (SimpleResolver ls ps) ps2 = SimpleResolver ls (ps ++ ps2)
 
 instance CompilerBackend Backend where
   runCxxCommand (UnixBackend cb co ab) (CompileToObject s p nm ns ps e) = do
