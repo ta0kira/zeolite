@@ -56,10 +56,11 @@ runSingleTest b paths deps os tm (f,s) = do
         hPutStrLn stderr $ "Failed to parse tests in " ++ f
         return ((0,1),ts >> return ())
       | otherwise = do
-        allResults <- sequence $ map runSingle $ getCompileSuccess ts
-        let passed = length $ filter (not . isCompileError) allResults
-        let failed = length $ filter isCompileError allResults
-        return ((passed,failed),mergeAllM allResults)
+          let (_,ts') = getCompileSuccess ts
+          allResults <- sequence $ map runSingle ts'
+          let passed = length $ filter (not . isCompileError) allResults
+          let failed = length $ filter isCompileError allResults
+          return ((passed,failed),mergeAllM allResults)
     runSingle t = do
       let name = ithTestName $ itHeader t
       let context = formatFullContextBrace (ithContext $ itHeader t)

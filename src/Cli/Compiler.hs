@@ -200,8 +200,8 @@ compileModule (ModuleSpec p d is is2 ps xs ts es ep m f) = do
       | otherwise = return Nothing
     compileAll ns0 ns2 is3 cs ds2 = do
       tm1 <- addIncludes defaultCategories is3
-      cs' <- fmap concat $ collectAllOrErrorM $ map parsePublicSource cs
-      let cs'' = map (setCategoryNamespace ns0) cs'
+      cs' <- collectAllOrErrorM $ map parsePublicSource cs
+      let cs'' = map (setCategoryNamespace ns0) (concat $ map snd cs')
       xa <- collectAllOrErrorM $ map parsePrivate ds2
       let cm = CategoryModule {
           cnBase = tm1,
@@ -216,7 +216,7 @@ compileModule (ModuleSpec p d is is2 ps xs ts es ep m f) = do
       return (pc,ms,xx)
     parsePrivate ds = do
       let ns1 = StaticNamespace $ privateNamespace (p </> fst ds)
-      (cs,ds') <- parseInternalSource ds
+      (_,cs,ds') <- parseInternalSource ds
       let cs' = map (setCategoryNamespace ns1) cs
       return $ PrivateSource ns1 cs' ds'
     createBinary b r paths deps (CompileBinary n _ o lf) ms
@@ -271,14 +271,14 @@ createModuleTemplates p d deps = do
         sequence_ $ map writeTemplate $ getCompileSuccess ts where
   createTemplates is cs ds2 = do
     tm <- addIncludes defaultCategories is
-    cs' <- fmap concat $ collectAllOrErrorM $ map parsePublicSource cs
-    let cs'' = map (setCategoryNamespace DynamicNamespace) cs'
+    cs' <- collectAllOrErrorM $ map parsePublicSource cs
+    let cs'' = map (setCategoryNamespace DynamicNamespace) (concat $ map snd cs')
     tm2 <- includeNewTypes tm cs''
     da <- collectAllOrErrorM $ map parseInternalSource ds2
-    let ds2' = concat $ map snd da
-    let cs2 = concat $ map fst da
+    let ds2' = concat $ map (\(_,_,d2) -> d2) da
+    let cs2 = concat $ map (\(_,c,_) -> c) da
     tm3 <- includeNewTypes tm2 cs2
-    let ca = Set.fromList $ map getCategoryName $ filter isValueConcrete cs'
+    let ca = Set.fromList $ map getCategoryName $ filter isValueConcrete (concat $ map snd cs')
     let ca' = foldr Set.delete ca $ map dcName ds2'
     collectAllOrErrorM $ map (compileConcreteTemplate tm3) $ Set.toList ca'
   writeTemplate (CxxOutput _ n _ _ _ content) = do
@@ -299,8 +299,8 @@ runModuleTests b base tp (LoadedTests p d m deps1 deps2) = do
   mapM_ showSkipped $ filter (not . isTestAllowed) $ cmTestFiles m
   ts' <- zipWithContents p $ map (d </>) $ filter isTestAllowed $ cmTestFiles m
   tm <- return $ do
-    cs <- fmap concat $ collectAllOrErrorM $ map parsePublicSource ss'
-    includeNewTypes defaultCategories cs
+    cs <- collectAllOrErrorM $ map parsePublicSource ss'
+    includeNewTypes defaultCategories (concat $ map snd cs)
   if isCompileError tm
       then return [((0,0),tm >> return ())]
       else sequence $ map (runSingleTest b paths (m:deps1) os (getCompileSuccess tm)) ts' where
@@ -316,8 +316,8 @@ formatWarnings c
 
 addIncludes :: CategoryMap SourcePos -> [(FilePath,String)] -> CompileInfo (CategoryMap SourcePos)
 addIncludes tm fs = do
-  cs <- fmap concat $ collectAllOrErrorM $ map parsePublicSource fs
-  includeNewTypes tm cs
+  cs <- collectAllOrErrorM $ map parsePublicSource fs
+  includeNewTypes tm (concat $ map snd cs)
 
 zipWithContents :: FilePath -> [FilePath] -> IO [(FilePath,String)]
 zipWithContents p fs = fmap (zip $ map fixPath fs) $ sequence $ map (readFile . (p </>)) fs

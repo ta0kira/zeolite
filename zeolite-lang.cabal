@@ -166,6 +166,7 @@ library zeolite-internal
                        Test.Parser,
                        Test.Pragma,
                        Test.Procedure,
+                       Test.SourceFile,
                        Test.TypeCategory,
                        Test.TypeInstance,
                        Types.Builtin,

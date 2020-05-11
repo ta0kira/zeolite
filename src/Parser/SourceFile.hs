@@ -25,32 +25,56 @@ module Parser.SourceFile (
 ) where
 
 import Text.Parsec
+import Text.Parsec.String
 
 import Base.CompileError
 import Parser.Common
 import Parser.DefinedCategory
 import Parser.IntegrationTest ()
+import Parser.Pragma
 import Parser.TypeCategory ()
 import Types.DefinedCategory
 import Types.IntegrationTest
+import Types.Pragma
 import Types.TypeCategory
 
 
 parseInternalSource :: CompileErrorM m =>
-  (FilePath,String) -> m ([AnyCategory SourcePos],[DefinedCategory SourcePos])
+  (FilePath,String) -> m ([Pragma SourcePos],[AnyCategory SourcePos],[DefinedCategory SourcePos])
 parseInternalSource (f,s) = unwrap parsed where
-  parsed = parse (between optionalSpace endOfDoc parseAnySource) f s
+  parsed = parse (between optionalSpace endOfDoc withPragmas) f s
   unwrap (Left e)  = compileError (show e)
   unwrap (Right t) = return t
+  withPragmas = do
+    pragmas <- parsePragmas internalSourcePragmas
+    (cs,ds) <- parseAnySource
+    return (pragmas,cs,ds)
 
-parsePublicSource :: CompileErrorM m => (FilePath,String) -> m [AnyCategory SourcePos]
+parsePublicSource :: CompileErrorM m => (FilePath,String) -> m ([Pragma SourcePos],[AnyCategory SourcePos])
 parsePublicSource (f,s) = unwrap parsed where
-  parsed = parse (between optionalSpace endOfDoc (sepBy sourceParser optionalSpace)) f s
+  parsed = parse (between optionalSpace endOfDoc withPragmas) f s
   unwrap (Left e)  = compileError (show e)
   unwrap (Right t) = return t
+  withPragmas = do
+    pragmas <- parsePragmas internalSourcePragmas
+    cs <- sepBy sourceParser optionalSpace
+    return (pragmas,cs)
 
-parseTestSource :: CompileErrorM m => (FilePath,String) -> m [IntegrationTest SourcePos]
+parseTestSource :: CompileErrorM m => (FilePath,String) -> m ([Pragma SourcePos],[IntegrationTest SourcePos])
 parseTestSource (f,s) = unwrap parsed where
-  parsed = parse (between optionalSpace endOfDoc (sepBy sourceParser optionalSpace)) f s
+  parsed = parse (between optionalSpace endOfDoc withPragmas) f s
   unwrap (Left e)  = compileError (show e)
   unwrap (Right t) = return t
+  withPragmas = do
+    pragmas <- parsePragmas internalSourcePragmas
+    ts <- sepBy sourceParser optionalSpace
+    return (pragmas,ts)
+
+publicSourcePragmas :: [Parser (Pragma SourcePos)]
+publicSourcePragmas = [pragmaModuleOnly,pragmaTestsOnly]
+
+internalSourcePragmas :: [Parser (Pragma SourcePos)]
+internalSourcePragmas = [pragmaTestsOnly]
+
+testSourcePragmas :: [Parser (Pragma SourcePos)]
+testSourcePragmas = []

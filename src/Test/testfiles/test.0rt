@@ -1,0 +1,11 @@
+testcase "test" {
+  success Test$run()
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+define Test {
+  run () {}
+}
