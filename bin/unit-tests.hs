@@ -18,24 +18,26 @@ limitations under the License.
 
 import Base.CompileError
 import Test.Common
-import qualified Test.DefinedCategory as DefinedCategoryTest
-import qualified Test.IntegrationTest as IntegrationTestTest
-import qualified Test.ParseMetadata   as ParseMetadataTest
-import qualified Test.Parser          as ParserTest
-import qualified Test.Procedure       as ProcedureTest
-import qualified Test.TypeCategory    as TypeCategoryTest
-import qualified Test.TypeInstance    as TypeInstanceTest
+import qualified Test.DefinedCategory as TestDefinedCategory
+import qualified Test.IntegrationTest as TestIntegrationTest
+import qualified Test.ParseMetadata   as TestParseMetadata
+import qualified Test.Parser          as TestParser
+import qualified Test.Pragma          as TestPragma
+import qualified Test.Procedure       as TestProcedure
+import qualified Test.TypeCategory    as TestTypeCategory
+import qualified Test.TypeInstance    as TestTypeInstance
 
 
 main :: IO ()
 main = runAllTests $ concat [
-    labelWith "DefinedCategoryTest" DefinedCategoryTest.tests,
-    labelWith "TypeInstanceTest"    TypeInstanceTest.tests,
-    labelWith "ParseMetadataTest"   ParseMetadataTest.tests,
-    labelWith "ParserTest"          ParserTest.tests,
-    labelWith "TypeCategoryTest"    TypeCategoryTest.tests,
-    labelWith "ProcedureTest"       ProcedureTest.tests,
-    labelWith "IntegrationTestTest" IntegrationTestTest.tests
+    labelWith "DefinedCategory" TestDefinedCategory.tests,
+    labelWith "TypeInstance"    TestTypeInstance.tests,
+    labelWith "ParseMetadata"   TestParseMetadata.tests,
+    labelWith "Parser"          TestParser.tests,
+    labelWith "Pragma"          TestPragma.tests,
+    labelWith "TypeCategory"    TestTypeCategory.tests,
+    labelWith "Procedure"       TestProcedure.tests,
+    labelWith "IntegrationTest" TestIntegrationTest.tests
   ]
 
 labelWith :: CompileErrorM m => String -> [IO (m ())] -> [IO (m ())]

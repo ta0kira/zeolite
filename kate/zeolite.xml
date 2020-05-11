@@ -106,6 +106,8 @@
         <keyword attribute="Testcase Keyword" context="Test Name" String="testHeader" />
         <keyword attribute="Keyword" context="Declare Type" String="typeDeclare" />
         <keyword attribute="Keyword" context="Define Type" String="typeDefine" />
+        <RegExpr attribute="Pragma Head" context="#stay" String="\$[a-zA-Z0-9]+\$" />
+        <RegExpr attribute="Pragma Head" context="Pragma" String="\$[a-zA-Z0-9]+\[" />
         <IncludeRules context="Any Expression" />
         <Detect2Chars attribute="Assign" context="#stay" char="&lt;" char1="-" />
         <Detect2Chars attribute="Assign" context="#stay" char="-" char1="&gt;" />
@@ -129,6 +131,17 @@
         <IncludeRules context="Any Comment" />
         <AnyChar attribute="Error" context="#stay" String="#$}.*@!=%+-/\&lt;&gt;()[]" />
         <RegExpr attribute="Error" context="#stay" String="[a-z0-9][a-zA-Z0-9]*\b" />
+      </context>
+
+      <context name="Pragma" attribute="Pragma Tail" lineEndContext="#stay" >
+        <IncludeRules context="Any Comment" />
+        <DetectChar attribute="Pragma Tail" context="Pragma String" char="&quot;" />
+        <Detect2Chars attribute="Pragma Head" context="#pop" char="]" char1="$" />
+      </context>
+
+      <context name="Pragma String" attribute="Pragma Tail" lineEndContext="#stay" >
+        <HlCStringChar attribute="Escaped Char" context="#stay" />
+        <DetectChar attribute="Pragma Tail" context="#pop" char="&quot;" />
       </context>
 
       <context name="Test Name" attribute="Normal Text" lineEndContext="#stay" >
@@ -211,20 +224,17 @@
         <RegExpr attribute="Error" context="#stay" String="#[A-Z0-9][a-zA-Z0-9]*\b" />
       </context>
 
-      <context name="Any Comment" attribute="Normal Text" lineEndContext="#pop" >
+      <context name="Any Comment" attribute="Normal Text" lineEndContext="#stay" >
         <DetectSpaces />
         <Detect2Chars attribute="Comment" context="Line Comment" char="/" char1="/" />
         <Detect2Chars attribute="Comment" context="Block Comment" char="/" char1="*" beginRegion="Comment" />
       </context>
 
       <context name="Line Comment" attribute="Comment" lineEndContext="#pop" >
-        <LineContinue attribute="Comment" context="#stay" />
         <DetectIdentifier />
       </context>
 
       <context name="Block Comment" attribute="Comment" lineEndContext="#stay">
-        <DetectSpaces />
-        <LineContinue attribute="Comment" context="#stay" />
         <Detect2Chars attribute="Comment" context="#pop" char="*" char1="/" endRegion="Comment" />
         <DetectIdentifier />
       </context>
@@ -313,6 +323,8 @@
       <itemData name="Builtin Category Name" defStyleNum="dsDataType" italic="true" spellChecking="false" />
       <itemData name="Category Name" defStyleNum="dsDataType" spellChecking="false" />
       <itemData name="Define Category Name" defStyleNum="dsDataType" bold="true" spellChecking="false" />
+      <itemData name="Pragma Head" defStyleNum="dsOthers" bold="true" italic="true" underline="true" spellChecking="false" />
+      <itemData name="Pragma Tail" defStyleNum="dsOthers" bold="false" italic="true" underline="true" spellChecking="false" />
       <itemData name="Param Name" defStyleNum="dsDataType" italic="true" spellChecking="false" />
       <itemData name="String" defStyleNum="dsString" spellChecking="true" />
       <itemData name="Char" defStyleNum="dsChar" spellChecking="true" />

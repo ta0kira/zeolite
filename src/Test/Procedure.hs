@@ -439,7 +439,7 @@ checkShortParseFail s = do
       | otherwise = compileError $ "Parse '" ++ s ++ "': Expected failure but got\n" ++
                                    show (getCompileSuccess c) ++ "\n"
 
-checkParsesAs :: [Char] -> (Expression SourcePos -> Bool) -> IO (CompileInfo ())
+checkParsesAs :: String -> (Expression SourcePos -> Bool) -> IO (CompileInfo ())
 checkParsesAs s m = return $ do
   let parsed = readSingle "(string)" s :: CompileInfo (Expression SourcePos)
   check parsed

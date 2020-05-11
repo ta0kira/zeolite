@@ -47,8 +47,8 @@ module Parser.Common (
   kwFail,
   kwFalse,
   kwIf,
-  kwIn,
   kwIgnore,
+  kwIn,
   kwInterface,
   kwOptional,
   kwPresent,
@@ -57,8 +57,8 @@ module Parser.Common (
   kwRequire,
   kwRequires,
   kwReturn,
-  kwSelf,
   kwScoped,
+  kwSelf,
   kwStrong,
   kwTestcase,
   kwTrue,
@@ -71,6 +71,7 @@ module Parser.Common (
   kwWhile,
   labeled,
   lineComment,
+  lineEnd,
   merge2,
   merge3,
   noKeywords,
@@ -83,6 +84,10 @@ module Parser.Common (
   parseHex,
   parseOct,
   parseSubOne,
+  pragmaArgsEnd,
+  pragmaArgsStart,
+  pragmaEnd,
+  pragmaStart,
   put12,
   put13,
   put22,
@@ -91,12 +96,12 @@ module Parser.Common (
   regexChar,
   requiredSpace,
   sepAfter,
-  sepAfter_,
   sepAfter1,
-  string_,
-  stringChar,
+  sepAfter_,
   statementEnd,
   statementStart,
+  stringChar,
+  string_,
   typeSymbolGet,
   valueSymbolGet,
 ) where
@@ -319,9 +324,12 @@ char_ = (>> return ()) . char
 string_ :: String -> Parser ()
 string_ = (>> return ()) . string
 
+lineEnd :: Parser ()
+lineEnd = (endOfLine >> return ()) <|> endOfDoc
+
 lineComment :: Parser String
 lineComment = between (string_ "//")
-                      endOfLine
+                      lineEnd
                       (many $ satisfy (/= '\n'))
 
 blockComment :: Parser String
@@ -359,6 +367,18 @@ endOfDoc = labeled "" $ optionalSpace >> eof
 notAllowed :: Parser a -> String -> Parser ()
 -- Based on implementation of notFollowedBy.
 notAllowed p s = (try p >> fail s) <|> return ()
+
+pragmaStart :: Parser ()
+pragmaStart = string_ "$"
+
+pragmaEnd :: Parser ()
+pragmaEnd = string_ "$"
+
+pragmaArgsStart :: Parser ()
+pragmaArgsStart = string_ "["
+
+pragmaArgsEnd :: Parser ()
+pragmaArgsEnd = string_ "]"
 
 operator :: String -> Parser String
 operator o = labeled o $ do
