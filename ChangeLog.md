@@ -1,5 +1,24 @@
 # Revision history for zeolite-lang
 
+## 0.5.0.0  -- ????-??-??
+
+* **[new]** Adds compiler support for pragmas, which will allow compiler
+  features that aren't a part of the language:
+
+  - **[new]** `$ModuleOnly$` pragma for `.0rp` files, which limits their
+    visibility to the modules that own them.
+
+  - **[new]** `$TestsOnly$` pragma for `.0rp` files, which limits their
+    visibility to `.0rt` files, and `.0rx` files that also use `$TestsOnly$`.
+
+* **[new]** Adds support for global seach paths for dependencies via a
+  plain-text file at `$(zeolite --get-path)/global-paths`. This can be used to
+  set up a separate directory for general-use Zeolite modules.
+
+* **[breaking]** Better handling of symbols from dependencies. This might break
+  code that inavertently relied on broken visibility. In particular, `..` in a
+  dependency path precludes it from resolving to a system module.
+
 ## 0.4.1.0  -- 2020-05-05
 
 * **[new]** Adds a compiler mode (`--show-deps`) to display the symbolic

@@ -1043,6 +1043,10 @@ and so their symbols are available to all source files in the module. There is
 currently no language syntax for explicitly importing or including modules or
 other symbols.
 
+You can use the `$ModuleOnly$` pragma at the top of the `.0rp` to prevent other
+modules from using it, and/or `$TestsOnly$` to ensure that it can only be used
+by `.0rt` sources, or `.0rx` sources that also have `$TestsOnly$`.
+
 If you are interested in backing a `concrete` category with C++, you will need
 to write a custom `.zeolite-module` file. Better documentation will eventually
 follow, but for now:
