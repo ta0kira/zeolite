@@ -35,6 +35,8 @@ import Cli.CompileMetadata
 import Cli.CompileOptions
 import Cli.ProcessMetadata
 import Config.LoadConfig (compilerVersion,rootPath)
+import Types.TypeCategory (FunctionName(..))
+import Types.TypeInstance (CategoryName(..))
 
 
 optionHelpText :: [String]
@@ -105,7 +107,9 @@ tryFastModes ("--show-deps":ps) = do
       hPutStrLn stdout $ show p'
       mapM_ showDep (cmObjectFiles m)
     showDep (CategoryObjectFile c ds _) = do
-      mapM_ (\d -> hPutStrLn stdout $ "  " ++ ciCategory c ++ " -> " ++ ciCategory d ++ " " ++ show (ciPath d)) ds
+      mapM_ (\d -> hPutStrLn stdout $ "  " ++ show (ciCategory c) ++
+                                      " -> " ++ show (ciCategory d) ++
+                                      " " ++ show (ciPath d)) ds
     showDep _ = return ()
 tryFastModes _ = return ()
 
@@ -162,7 +166,8 @@ parseCompileOptions = parseAll emptyCompileOptions . zip ([1..] :: [Int]) where
         (t,fn) <- check $ break (== '.') c
         checkCategoryName n2 t  "-m"
         checkFunctionName n2 fn "-m"
-        return (os2,CompileOptions (maybeDisableHelp h) is is2 ds es ep p (CompileBinary t fn "" []) f) where
+        let m2 = CompileBinary (CategoryName t) (FunctionName fn) "" []
+        return (os2,CompileOptions (maybeDisableHelp h) is is2 ds es ep p m2 f) where
           check (t,"")     = return (t,defaultMainFunc)
           check (t,'.':fn) = return (t,fn)
           check _          = argError n2 c $ "Invalid entry point."
@@ -176,7 +181,8 @@ parseCompileOptions = parseAll emptyCompileOptions . zip ([1..] :: [Int]) where
         checkCategoryName n2 t  "--fast"
         checkFunctionName n2 fn "--fast"
         when (not $ isSuffixOf ".0rx" f2) $ argError n3 f2 $ "Must specify a .0rx source file."
-        return (os2,CompileOptions (maybeDisableHelp h) is is2 ds es ep p (CompileFast t fn f2) f) where
+        let m2 = CompileFast (CategoryName t) (FunctionName fn) f2
+        return (os2,CompileOptions (maybeDisableHelp h) is is2 ds es ep p m2 f) where
           check (t,"")     = return (t,defaultMainFunc)
           check (t,'.':fn) = return (t,fn)
           check _          = argError n2 c $ "Invalid entry point."

@@ -134,10 +134,10 @@ compileModule (ModuleSpec p d is is2 ps xs ts es ep m f) = do
   let cm2 = CompileMetadata {
       cmVersionHash = hash,
       cmPath = path,
-      cmNamespace = show ns0,
+      cmNamespace = ns0,
       cmPublicDeps = as,
       cmPrivateDeps = as2,
-      cmCategories = sort $ map show pc,
+      cmCategories = sort pc,
       cmSubdirs = [s0],
       cmPublicFiles = sort ps2,
       cmPrivateFiles = sort xs2,
@@ -183,11 +183,11 @@ compileModule (ModuleSpec p d is is2 ps xs ts es ep m f) = do
            Just o  -> return [Right $ OtherObjectFile o]
            Nothing -> return []
     fakeCxxForSource ns ds2 c = CxxOutput {
-        coCategory = Just (CategoryName c),
+        coCategory = Just c,
         coFilename = "",
         coNamespace = ns',
         coUsesNamespace = [ns'],
-        coUsesCategory = map CategoryName ds2,
+        coUsesCategory = ds2,
         coOutput = []
       } where
         ns' = if null ns then NoNamespace else StaticNamespace ns
@@ -208,14 +208,14 @@ compileModule (ModuleSpec p d is is2 ps xs ts es ep m f) = do
       | otherwise = return Nothing
     createBinary b r paths deps (CompileBinary n _ o lf) ms
       | length ms > 1 = do
-        hPutStrLn stderr $ "Multiple matches for main category " ++ n ++ "."
+        hPutStrLn stderr $ "Multiple matches for main category " ++ show n ++ "."
         exitFailure
       | length ms == 0 = do
-        hPutStrLn stderr $ "Main category " ++ n ++ " not found."
+        hPutStrLn stderr $ "Main category " ++ show n ++ " not found."
         exitFailure
       | otherwise = do
           f0 <- if null o
-                   then canonicalizePath $ p </> d </> n
+                   then canonicalizePath $ p </> d </> show n
                    else canonicalizePath $ p </> d </> o
           let (CxxOutput _ _ _ ns2 req content) = head ms
           -- TODO: Create a helper or a constant or something.
@@ -236,7 +236,7 @@ compileModule (ModuleSpec p d is is2 ps xs ts es ep m f) = do
           removeFile o'
     createBinary _ _ _ _ _ _ = return ()
     maybeCreateMain cm2 xs2 (CompileBinary n f2 _ _) =
-      fmap (:[]) $ compileModuleMain cm2 xs2 (CategoryName n) (FunctionName f2)
+      fmap (:[]) $ compileModuleMain cm2 xs2 n f2
     maybeCreateMain _ _ _ = return []
 
 createModuleTemplates :: FilePath -> FilePath -> [CompileMetadata] -> [CompileMetadata] -> IO ()
@@ -311,8 +311,9 @@ loadPrivateSource p f = do
     let testing = any isTestsOnly pragmas
     return $ PrivateSource ns testing cs' ds
 
-loadLanguageModule :: CompileErrorM m => FilePath -> Namespace -> [String] -> [FilePath] ->
-  [CompileMetadata] -> [CompileMetadata] -> IO (m (LanguageModule SourcePos,[CategoryName]))
+loadLanguageModule :: CompileErrorM m => FilePath -> Namespace -> [CategoryName] ->
+  [FilePath] -> [CompileMetadata] -> [CompileMetadata] ->
+  IO (m (LanguageModule SourcePos,[CategoryName]))
 loadLanguageModule p ns2 ex fs deps1 deps2 = do
   let deps1' = getSourceFilesForDeps deps1
   let deps2' = getSourceFilesForDeps deps2
@@ -320,8 +321,8 @@ loadLanguageModule p ns2 ex fs deps1 deps2 = do
   m1 <- loadAllPublic deps2'
   m2 <- loadAllPublic fs
   return $ construct m0 m1 m2 where
-    ns0 = map StaticNamespace $ filter (not . null) $ getNamespacesForDeps deps1
-    ns1 = map StaticNamespace $ filter (not . null) $ getNamespacesForDeps deps2
+    ns0 = filter (not . isNoNamespace) $ getNamespacesForDeps deps1
+    ns1 = filter (not . isNoNamespace) $ getNamespacesForDeps deps2
     construct m0 m1 m2 = do
       (ps0,_,tsA0,_)      <- m0
       (ps1,_,tsA1,_)      <- m1

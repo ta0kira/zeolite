@@ -77,7 +77,7 @@ data LanguageModule c =
     lmPublicLocal :: [AnyCategory c],
     lmPrivateLocal :: [AnyCategory c],
     lmTestingLocal :: [AnyCategory c],
-    lmExternal :: [String]
+    lmExternal :: [CategoryName]
   }
 
 data PrivateSource c =
@@ -126,7 +126,7 @@ compileLanguageModule (LanguageModule ns0 ns1 ns2 cs0 ps0 ts0 cs1 ps1 ts1 ex) xa
       let cs = if testing
                   then cs1 ++ ps1 ++ ts1
                   else cs1 ++ ps1
-      checkLocals ds (ex ++ map (show . getCategoryName) (cs2 ++ cs))
+      checkLocals ds (ex ++ map getCategoryName (cs2 ++ cs))
       let dm = mapByName ds
       checkDefined dm [] $ filter isValueConcrete cs2
       tm' <- includeNewTypes tm cs2
@@ -146,17 +146,17 @@ compileLanguageModule (LanguageModule ns0 ns1 ns2 cs0 ps0 ts0 cs1 ps1 ts1 ex) xa
       let refines = dcName d `Map.lookup` tm >>= return . getCategoryRefines
       compileConcreteDefinition tm' ns4 refines d
     mapByName = Map.fromListWith (++) . map (\d -> (dcName d,[d]))
-    ca = Set.fromList $ map (show . getCategoryName) $ filter isValueConcrete (cs1 ++ ps1 ++ ts1)
+    ca = Set.fromList $ map getCategoryName $ filter isValueConcrete (cs1 ++ ps1 ++ ts1)
     checkLocals ds cs2 = mergeAllM $ map (checkLocal $ Set.fromList cs2) ds
     checkLocal cs2 d =
-      if (show $ dcName d) `Set.member` cs2
+      if dcName d `Set.member` cs2
          then return ()
          else compileError ("Definition for " ++ show (dcName d) ++
                             formatFullContextBrace (dcContext d) ++
                             " does not correspond to a visible category in this module")
     checkDefined dm ex2 = mergeAllM . map (checkSingle dm (Set.fromList ex2))
     checkSingle dm es t =
-      case ((show $ getCategoryName t) `Set.member` es, getCategoryName t `Map.lookup` dm) of
+      case (getCategoryName t `Set.member` es, getCategoryName t `Map.lookup` dm) of
            (False,Just [_]) -> return ()
            (True,Nothing)   -> return ()
            (True,Just [d]) ->
@@ -175,7 +175,7 @@ compileLanguageModule (LanguageModule ns0 ns1 ns2 cs0 ps0 ts0 cs1 ps1 ts1 ex) xa
     checkSupefluous es2
       | null es2 = return ()
       | otherwise = compileError $ "External categories either not concrete or not present: " ++
-                                   intercalate ", " es2
+                                   intercalate ", " (map show es2)
 
 compileTestMain :: (Show c, CompileErrorM m, MergeableM m) =>
   LanguageModule c -> PrivateSource c -> Expression c -> m CxxOutput

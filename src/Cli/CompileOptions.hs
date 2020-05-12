@@ -38,6 +38,9 @@ module Cli.CompileOptions (
   maybeDisableHelp,
 ) where
 
+import Types.TypeCategory (FunctionName)
+import Types.TypeInstance (CategoryName)
+
 
 data CompileOptions =
   CompileOptions {
@@ -70,8 +73,8 @@ emptyCompileOptions =
 data ExtraSource =
   CategorySource {
     csSource :: FilePath,
-    csCategories :: [String],
-    csDepCategories :: [String]
+    csCategories :: [CategoryName],
+    csDepCategories :: [CategoryName]
   } |
   OtherSource {
     osSource :: FilePath
@@ -82,11 +85,11 @@ getSourceFile :: ExtraSource -> String
 getSourceFile (CategorySource s _ _) = s
 getSourceFile (OtherSource s)        = s
 
-getSourceCategories :: ExtraSource -> [String]
+getSourceCategories :: ExtraSource -> [CategoryName]
 getSourceCategories (CategorySource _ cs _) = cs
 getSourceCategories (OtherSource _)         = []
 
-getSourceDeps :: ExtraSource -> [String]
+getSourceDeps :: ExtraSource -> [CategoryName]
 getSourceDeps (CategorySource _ _ ds) = ds
 getSourceDeps (OtherSource _)         = []
 
@@ -96,14 +99,14 @@ data ForceMode = DoNotForce | ForceAll deriving (Eq,Ord,Show)
 
 data CompileMode =
   CompileBinary {
-    cbCategory :: String,
-    cbFunction :: String,
+    cbCategory :: CategoryName,
+    cbFunction :: FunctionName,
     cbOutputName :: FilePath,
     cbLinkFlags :: [String]
   } |
   CompileFast {
-    cfCategory :: String,
-    cfFunction :: String,
+    cfCategory :: CategoryName,
+    cfFunction :: FunctionName,
     cfSource :: FilePath
   } |
   ExecuteTests {

@@ -30,16 +30,19 @@ module Cli.CompileMetadata (
 import Data.List (nub)
 
 import Cli.CompileOptions
+import Config.Programs (VersionHash)
+import Types.TypeCategory (Namespace)
+import Types.TypeInstance (CategoryName)
 
 
 data CompileMetadata =
   CompileMetadata {
-    cmVersionHash :: String,
+    cmVersionHash :: VersionHash,
     cmPath :: FilePath,
-    cmNamespace :: String, -- TODO: Use Namespace here?
+    cmNamespace :: Namespace,
     cmPublicDeps :: [FilePath],
     cmPrivateDeps :: [FilePath],
-    cmCategories :: [String],
+    cmCategories :: [CategoryName],
     cmSubdirs :: [FilePath],
     cmPublicFiles :: [FilePath],
     cmPrivateFiles :: [FilePath],
@@ -64,12 +67,12 @@ data ObjectFile =
 
 data CategoryIdentifier =
   CategoryIdentifier {
-    ciPath :: String,
-    ciCategory :: String,
-    ciNamespace :: String
+    ciPath :: FilePath,
+    ciCategory :: CategoryName,
+    ciNamespace :: Namespace
   } |
   UnresolvedCategory {
-    ucCategory :: String
+    ucCategory :: CategoryName
   }
   deriving (Eq,Ord,Show)
 

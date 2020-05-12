@@ -92,7 +92,7 @@ runCompiler (CompileOptions _ is is2 _ _ _ p (CompileFast c fn f2) f) = do
     msTestFiles = [],
     msExtraFiles = [],
     msExtraPaths = [],
-    msMode = (CompileBinary c fn (absolute </> c) []),
+    msMode = (CompileBinary c fn (absolute </> show c) []),
     msForce = f
   }
   compileModule spec

@@ -26,13 +26,16 @@ import Compilation.CompileInfo
 import Cli.CompileMetadata
 import Cli.CompileOptions
 import Cli.ParseMetadata
+import Config.Programs (VersionHash(..))
+import Types.TypeCategory (FunctionName(..),Namespace(..))
+import Types.TypeInstance (CategoryName(..))
 
 tests :: [IO (CompileInfo ())]
 tests = [
     checkWriteThenRead $ CompileMetadata {
-      cmVersionHash = "0123456789ABCDEFabcdef",
+      cmVersionHash = VersionHash "0123456789ABCDEFabcdef",
       cmPath = "/home/project/special",
-      cmNamespace = "public_ABCDEF",
+      cmNamespace = StaticNamespace "public_ABCDEF",
       cmPublicDeps = [
         "/home/project/public-dep1",
         "/home/project/public-dep2"
@@ -42,8 +45,8 @@ tests = [
         "/home/project/private-dep2"
       ],
       cmCategories = [
-        "MyCategory",
-        "MyOtherCategory"
+        CategoryName "MyCategory",
+        CategoryName "MyOtherCategory"
       ],
       cmSubdirs = [
         "/home/project/special/subdir1",
@@ -77,17 +80,17 @@ tests = [
         CategoryObjectFile {
           cofCategory = CategoryIdentifier {
             ciPath = "/home/project/special",
-            ciCategory = "SpecialCategory",
-            ciNamespace = "public_ABCDEF"
+            ciCategory = CategoryName "SpecialCategory",
+            ciNamespace = StaticNamespace "public_ABCDEF"
           },
           cofRequires = [
             CategoryIdentifier {
               ciPath = "/home/project/private-dep1",
-              ciCategory = "PrivateCategory",
-              ciNamespace = "private_123456"
+              ciCategory = CategoryName "PrivateCategory",
+              ciNamespace = NoNamespace
             },
             UnresolvedCategory {
-              ucCategory = "UnresolvedCategory"
+              ucCategory = CategoryName "UnresolvedCategory"
             }
           ],
           cofFiles = [
@@ -99,9 +102,9 @@ tests = [
     },
 
     checkWriteFail "bad hash" $ CompileMetadata {
-      cmVersionHash = "bad hash",
+      cmVersionHash = VersionHash "bad hash",
       cmPath = "/home/project/special",
-      cmNamespace = "public_ABCDEF",
+      cmNamespace = NoNamespace,
       cmPublicDeps = [],
       cmPrivateDeps = [],
       cmCategories = [],
@@ -116,9 +119,9 @@ tests = [
     },
 
     checkWriteFail "bad namespace" $ CompileMetadata {
-      cmVersionHash = "0123456789ABCDEFabcdef",
+      cmVersionHash = VersionHash "0123456789ABCDEFabcdef",
       cmPath = "/home/project/special",
-      cmNamespace = "bad namespace",
+      cmNamespace = StaticNamespace "bad namespace",
       cmPublicDeps = [],
       cmPrivateDeps = [],
       cmCategories = [],
@@ -133,13 +136,13 @@ tests = [
     },
 
     checkWriteFail "bad category" $ CompileMetadata {
-      cmVersionHash = "0123456789ABCDEFabcdef",
+      cmVersionHash = VersionHash "0123456789ABCDEFabcdef",
       cmPath = "/home/project/special",
-      cmNamespace = "public_ABCDEF",
+      cmNamespace = NoNamespace,
       cmPublicDeps = [],
       cmPrivateDeps = [],
       cmCategories = [
-        "bad category"
+        CategoryName "bad category"
       ],
       cmSubdirs = [],
       cmPublicFiles = [],
@@ -166,12 +169,12 @@ tests = [
         CategorySource {
           csSource = "extra1.cpp",
           csCategories = [
-            "Category1",
-            "Category2"
+            CategoryName "Category1",
+            CategoryName "Category2"
           ],
           csDepCategories = [
-            "DepCategory1",
-            "DepCategory2"
+            CategoryName "DepCategory1",
+            CategoryName "DepCategory2"
           ]
         },
         OtherSource {
@@ -193,7 +196,7 @@ tests = [
     checkWriteFail "bad category" $ CategorySource {
       csSource = "extra1.cpp",
       csCategories = [
-        "bad category"
+        CategoryName "bad category"
       ],
       csDepCategories = []
     },
@@ -202,50 +205,50 @@ tests = [
       csSource = "extra1.cpp",
       csCategories = [],
       csDepCategories = [
-        "bad category"
+        CategoryName "bad category"
       ]
     },
 
     checkWriteFail "bad category" $ CategoryIdentifier {
       ciPath = "/home/project/special",
-      ciCategory = "bad category",
-      ciNamespace = "public_ABCDEF"
+      ciCategory = CategoryName "bad category",
+      ciNamespace = NoNamespace
     },
 
     checkWriteFail "bad namespace" $ CategoryIdentifier {
       ciPath = "/home/project/special",
-      ciCategory = "bad namespace",
-      ciNamespace = "SpecialCategory"
+      ciCategory = CategoryName "SpecialCategory",
+      ciNamespace = StaticNamespace "bad namespace"
     },
 
     checkWriteFail "bad category" $ UnresolvedCategory {
-      ucCategory = "bad category"
+      ucCategory = CategoryName "bad category"
     },
 
     checkWriteThenRead $ CompileBinary {
-      cbCategory = "SpecialCategory",
-      cbFunction = "specialFunction",
+      cbCategory = CategoryName "SpecialCategory",
+      cbFunction = FunctionName "specialFunction",
       cbOutputName = "binary",
       cbLinkFlags = []
     },
 
     checkWriteFail "bad category" $ CompileBinary {
-      cbCategory = "bad category",
-      cbFunction = "specialFunction",
+      cbCategory = CategoryName "bad category",
+      cbFunction = FunctionName "specialFunction",
       cbOutputName = "binary",
       cbLinkFlags = []
     },
 
     checkWriteFail "bad function" $ CompileBinary {
-      cbCategory = "SpecialCategory",
-      cbFunction = "bad function",
+      cbCategory = CategoryName "SpecialCategory",
+      cbFunction = FunctionName "bad function",
       cbOutputName = "binary",
       cbLinkFlags = []
     },
 
     checkWriteFail "compile mode" $ CompileFast {
-      cfCategory = "SpecialCategory",
-      cfFunction = "specialFunction",
+      cfCategory = CategoryName "SpecialCategory",
+      cfFunction = FunctionName "specialFunction",
       cfSource = "source.0rx"
     },
 

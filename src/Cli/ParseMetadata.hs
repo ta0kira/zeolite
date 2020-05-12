@@ -29,12 +29,13 @@ import Text.Parsec.String
 import Base.CompileError
 import Cli.CompileMetadata
 import Cli.CompileOptions
+import Config.Programs (VersionHash(..))
 import Parser.Common
 import Parser.TypeCategory ()
 import Parser.TypeInstance ()
 import Text.Regex.TDFA -- Not safe!
-import Types.TypeCategory (FunctionName)
-import Types.TypeInstance (CategoryName)
+import Types.TypeCategory (FunctionName(..),Namespace(..))
+import Types.TypeInstance (CategoryName(..))
 
 
 class ConfigFormat a where
@@ -66,40 +67,42 @@ prependFirst :: String -> [String] -> [String]
 prependFirst s0 (s:ss) = (s0 ++ s):ss
 prependFirst s0 _      = [s0]
 
-validateCategoryName :: CompileErrorM m => String -> m ()
+validateCategoryName :: CompileErrorM m => CategoryName -> m ()
 validateCategoryName c =
-    when (not $ c =~ "^[A-Z][A-Za-z0-9]*$") $
-      compileError $ "Invalid category name: \"" ++ c ++ "\""
+    when (not $ show c =~ "^[A-Z][A-Za-z0-9]*$") $
+      compileError $ "Invalid category name: \"" ++ show c ++ "\""
 
-parseCategoryName :: Parser String
-parseCategoryName = fmap show (sourceParser :: Parser CategoryName)
+parseCategoryName :: Parser CategoryName
+parseCategoryName = sourceParser :: Parser CategoryName
 
-validateFunctionName :: CompileErrorM m => String -> m ()
+validateFunctionName :: CompileErrorM m => FunctionName -> m ()
 validateFunctionName f =
-    when (not $ f =~ "^[a-z][A-Za-z0-9]*$") $
-      compileError $ "Invalid function name: \"" ++ f ++ "\""
+    when (not $ show f =~ "^[a-z][A-Za-z0-9]*$") $
+      compileError $ "Invalid function name: \"" ++ show f ++ "\""
 
-parseFunctionName :: Parser String
-parseFunctionName = fmap show (sourceParser :: Parser FunctionName)
+parseFunctionName :: Parser FunctionName
+parseFunctionName = sourceParser :: Parser FunctionName
 
-validateHash :: CompileErrorM m => String -> m ()
+validateHash :: CompileErrorM m => VersionHash -> m ()
 validateHash h =
-    when (not $ h =~ "^[A-Za-z0-9]+$") $
-      compileError $ "Version hash must be a hex string: \"" ++ h ++ "\""
+    when (not $ show h =~ "^[A-Za-z0-9]+$") $
+      compileError $ "Version hash must be a hex string: \"" ++ show h ++ "\""
 
-parseHash :: Parser String
-parseHash = labeled "version hash" $ sepAfter (many1 hexDigit)
+parseHash :: Parser VersionHash
+parseHash = labeled "version hash" $ sepAfter (fmap VersionHash $ many1 hexDigit)
 
-validateNamespace :: CompileErrorM m => String -> m ()
-validateNamespace ns =
-    when (not $ ns =~ "^[A-Za-z][A-Za-z0-9_]*$") $
-      compileError $ "Invalid category namespace: \"" ++ ns ++ "\""
+maybeShowNamespace :: CompileErrorM m => String -> Namespace -> m [String]
+maybeShowNamespace l (StaticNamespace ns) = do
+  when (not $ ns =~ "^[A-Za-z][A-Za-z0-9_]*$") $
+    compileError $ "Invalid category namespace: \"" ++ ns ++ "\""
+  return [l ++ " " ++ ns]
+maybeShowNamespace _ _ = return []
 
-parseNamespace :: Parser String
+parseNamespace :: Parser Namespace
 parseNamespace = labeled "namespace" $ do
-    b <- lower
-    e <- sepAfter $ many (alphaNum <|> char '_')
-    return (b:e)
+  b <- lower
+  e <- sepAfter $ many (alphaNum <|> char '_')
+  return $ StaticNamespace (b:e)
 
 parseQuoted :: Parser String
 parseQuoted = labeled "quoted string" $ do
@@ -127,7 +130,7 @@ instance ConfigFormat CompileMetadata where
   readConfig = do
     h <-   parseRequired "version_hash:"  parseHash
     p <-   parseRequired "path:"          parseQuoted
-    ns <-  parseRequired "namespace:"     parseNamespace
+    ns <-  parseOptional "namespace:"     NoNamespace parseNamespace
     is <-  parseRequired "public_deps:"   (parseList parseQuoted)
     is2 <- parseRequired "private_deps:"  (parseList parseQuoted)
     cs <-  parseRequired "categories:"    (parseList parseCategoryName)
@@ -142,13 +145,13 @@ instance ConfigFormat CompileMetadata where
     return (CompileMetadata h p ns is is2 cs ds ps xs ts hxx cxx lf os)
   writeConfig m = do
     validateHash (cmVersionHash m)
-    validateNamespace (cmNamespace m)
+    namespace <- maybeShowNamespace "namespace:" (cmNamespace m)
     _ <- collectAllOrErrorM $ map validateCategoryName (cmCategories m)
     objects <- fmap concat $ collectAllOrErrorM $ map writeConfig $ cmObjectFiles m
     return $ [
-        "version_hash: " ++ (cmVersionHash m),
-        "path: " ++ (show $ cmPath m),
-        "namespace: " ++ (cmNamespace m),
+        "version_hash: " ++ (show $ cmVersionHash m),
+        "path: " ++ (show $ cmPath m)
+      ] ++ namespace ++ [
         "public_deps: ["
       ] ++ indents (map show $ cmPublicDeps m) ++ [
         "]",
@@ -156,7 +159,7 @@ instance ConfigFormat CompileMetadata where
       ] ++ indents (map show $ cmPrivateDeps m) ++ [
         "]",
         "categories: ["
-      ] ++ indents (cmCategories m) ++ [
+      ] ++ indents (map show $ cmCategories m) ++ [
         "]",
         "subdirs: ["
       ] ++ indents (map show $ cmSubdirs m) ++ [
@@ -227,7 +230,7 @@ instance ConfigFormat CategoryIdentifier where
       sepAfter (string_ "category")
       structOpen
       c <-  parseRequired "name:"      parseCategoryName
-      ns <- parseRequired "namespace:" parseNamespace
+      ns <- parseOptional "namespace:" NoNamespace parseNamespace
       p <-  parseRequired "path:"      parseQuoted
       structClose
       return (CategoryIdentifier p c ns)
@@ -239,17 +242,17 @@ instance ConfigFormat CategoryIdentifier where
       return (UnresolvedCategory c)
   writeConfig (CategoryIdentifier p c ns) = do
     validateCategoryName c
-    validateNamespace ns
+    namespace <- maybeShowNamespace "namespace:" ns
     return $ [
         "category {",
-        indent $ "name: " ++ c,
-        indent $ "namespace: " ++ ns,
+        indent $ "name: " ++ show c
+      ] ++ indents namespace ++ [
         indent $ "path: " ++ show p,
         "}"
       ]
   writeConfig (UnresolvedCategory c) = do
     validateCategoryName c
-    return $ ["unresolved { " ++ "name: " ++ c ++ " " ++ "}"]
+    return $ ["unresolved { " ++ "name: " ++ show c ++ " " ++ "}"]
 
 instance ConfigFormat ModuleConfig where
   readConfig = do
@@ -301,10 +304,10 @@ instance ConfigFormat ExtraSource where
         "category_source {",
         indent ("source: " ++ show f),
         indent "categories: ["
-      ] ++ (indents . indents) cs ++ [
+      ] ++ (indents . indents . map show) cs ++ [
         indent "]",
         indent "requires: ["
-      ] ++ (indents . indents) ds ++ [
+      ] ++ (indents . indents . map show) ds ++ [
         indent "]",
         "}"
       ]
@@ -332,8 +335,8 @@ instance ConfigFormat CompileMode where
     validateFunctionName f
     return $ [
         "binary {",
-        indent ("category: " ++ c),
-        indent ("function: " ++ f),
+        indent ("category: " ++ show c),
+        indent ("function: " ++ show f),
         indent ("output: " ++ show o),
         indent ("link_flags: [")
       ] ++ (indents . indents) (map show lf) ++ [

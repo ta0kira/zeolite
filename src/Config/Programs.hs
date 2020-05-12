@@ -23,13 +23,19 @@ module Config.Programs (
   CxxCommand(..),
   TestCommand(..),
   TestCommandResult(..),
+  VersionHash(..),
 ) where
 
 
 class CompilerBackend b where
   runCxxCommand :: b -> CxxCommand -> IO String
   runTestCommand :: b -> TestCommand -> IO TestCommandResult
-  getCompilerHash :: b -> String
+  getCompilerHash :: b -> VersionHash
+
+newtype VersionHash = VersionHash String deriving (Eq)
+
+instance Show VersionHash where
+  show (VersionHash h) = h
 
 data CxxCommand =
   CompileToObject {

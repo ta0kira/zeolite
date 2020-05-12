@@ -64,6 +64,7 @@ import Cli.CompileOptions
 import Cli.ParseMetadata -- Not safe, due to Text.Regex.TDFA.
 import Compilation.CompileInfo
 import CompilerCxx.Category (CxxOutput(..))
+import Config.Programs (VersionHash(..))
 import Types.TypeCategory
 import Types.TypeInstance
 
@@ -71,8 +72,8 @@ import Types.TypeInstance
 cachedDataPath :: FilePath
 cachedDataPath = ".zeolite-cache"
 
-recompileFilename :: FilePath
-recompileFilename = ".zeolite-module"
+moduleFilename :: FilePath
+moduleFilename = ".zeolite-module"
 
 metadataFilename :: FilePath
 metadataFilename = "compile-metadata"
@@ -112,7 +113,7 @@ tryLoadMetadata :: FilePath -> IO (Maybe CompileMetadata)
 tryLoadMetadata p = tryLoadData $ (p </> cachedDataPath </> metadataFilename)
 
 tryLoadRecompile :: FilePath -> IO (Maybe ModuleConfig)
-tryLoadRecompile p = tryLoadData $ (p </> recompileFilename)
+tryLoadRecompile p = tryLoadData $ (p </> moduleFilename)
 
 tryLoadData :: ConfigFormat a => FilePath -> IO (Maybe a)
 tryLoadData f = do
@@ -129,7 +130,7 @@ tryLoadData f = do
            return Nothing
          else return $ Just (getCompileSuccess m)
 
-isPathUpToDate :: String -> FilePath -> IO Bool
+isPathUpToDate :: VersionHash -> FilePath -> IO Bool
 isPathUpToDate h p = do
   m <- tryLoadMetadata p
   case m of
@@ -142,7 +143,7 @@ isPathConfigured :: FilePath -> IO Bool
 isPathConfigured p = do
   -- Just for error messages.
   _ <- tryLoadRecompile p
-  doesFileExist (p </> recompileFilename)
+  doesFileExist (p </> moduleFilename)
 
 writeMetadata :: FilePath -> CompileMetadata -> IO ()
 writeMetadata p m = do
@@ -159,7 +160,7 @@ writeMetadata p m = do
 writeRecompile :: FilePath -> ModuleConfig -> IO ()
 writeRecompile p m = do
   p' <- canonicalizePath p
-  let f = p </> recompileFilename
+  let f = p </> moduleFilename
   hPutStrLn stderr $ "Updating config for \"" ++ p' ++ "\"."
   let m' = autoWriteConfig m
   if isCompileError m'
@@ -220,8 +221,8 @@ getSourceFilesForDeps :: [CompileMetadata] -> [FilePath]
 getSourceFilesForDeps = concat . map extract where
   extract m = map (cmPath m </>) (cmPublicFiles m)
 
-getNamespacesForDeps :: [CompileMetadata] -> [String]
-getNamespacesForDeps = filter (not . null) . map cmNamespace
+getNamespacesForDeps :: [CompileMetadata] -> [Namespace]
+getNamespacesForDeps = filter (not . isNoNamespace) . map cmNamespace
 
 getIncludePathsForDeps :: [CompileMetadata] -> [FilePath]
 getIncludePathsForDeps = concat . map cmSubdirs
@@ -232,20 +233,20 @@ getLinkFlagsForDeps = concat . map cmLinkFlags
 getObjectFilesForDeps :: [CompileMetadata] -> [ObjectFile]
 getObjectFilesForDeps = concat . map cmObjectFiles
 
-loadPublicDeps :: String -> [FilePath] -> IO (Bool,[CompileMetadata])
+loadPublicDeps :: VersionHash -> [FilePath] -> IO (Bool,[CompileMetadata])
 loadPublicDeps h = loadDepsCommon False h Set.empty cmPublicDeps
 
-loadTestingDeps :: String -> CompileMetadata -> IO (Bool,[CompileMetadata])
+loadTestingDeps :: VersionHash -> CompileMetadata -> IO (Bool,[CompileMetadata])
 loadTestingDeps h m = loadDepsCommon False h (Set.fromList [cmPath m]) cmPublicDeps (cmPublicDeps m ++ cmPrivateDeps m)
 
-loadPrivateDeps :: String -> [CompileMetadata] -> IO (Bool,[CompileMetadata])
+loadPrivateDeps :: VersionHash -> [CompileMetadata] -> IO (Bool,[CompileMetadata])
 loadPrivateDeps h ms = do
   (fr,new) <- loadDepsCommon False h pa (\m -> cmPublicDeps m ++ cmPrivateDeps m) paths
   return (fr,ms ++ new) where
     paths = concat $ map (\m -> cmPublicDeps m ++ cmPrivateDeps m) ms
     pa = Set.fromList $ map cmPath ms
 
-loadDepsCommon :: Bool -> String -> Set.Set FilePath ->
+loadDepsCommon :: Bool -> VersionHash -> Set.Set FilePath ->
   (CompileMetadata -> [FilePath]) -> [FilePath] -> IO (Bool,[CompileMetadata])
 loadDepsCommon s h pa0 f ps = fmap snd $ fixedPaths >>= collect (pa0,(True,[])) where
   fixedPaths = sequence $ map canonicalizePath ps
@@ -290,7 +291,7 @@ sortCompiledFiles = foldl split ([],[],[]) where
     | isSuffixOf ".o"   f = (hxx,cxx,os++[f])
     | otherwise = fs
 
-checkModuleVersionHash :: String -> CompileMetadata -> Bool
+checkModuleVersionHash :: VersionHash -> CompileMetadata -> Bool
 checkModuleVersionHash h m = cmVersionHash m == h
 
 checkModuleFreshness :: Bool -> FilePath -> CompileMetadata -> IO Bool
@@ -300,7 +301,7 @@ checkModuleFreshness s p (CompileMetadata _ p2 _ is is2 _ _ ps xs ts hxx cxx _ _
   let e1 = checkMissing ps ps2
   let e2 = checkMissing xs xs2
   let e3 = checkMissing ts ts2
-  rm <- check time (p </> recompileFilename)
+  rm <- check time (p </> moduleFilename)
   f1 <- sequence $ map (\p3 -> check time $ getCachedPath p3 "" metadataFilename) $ is ++ is2
   f2 <- sequence $ map (check time . (p2 </>)) $ ps ++ xs
   f3 <- sequence $ map (check time . getCachedPath p2 "") $ hxx ++ cxx
@@ -334,10 +335,10 @@ getObjectFileResolver os ns ds = resolved ++ nonCategories where
   keyByCategory2 o = ((ciCategory $ cofCategory o,ciNamespace $ cofCategory o),o)
   objectMap = Map.fromList $ map keyBySpec categories
   keyBySpec o = (cofCategory o,o)
-  directDeps = concat $ map (resolveDep2 . show) ds
+  directDeps = concat $ map resolveDep2 ds
   directResolved = map cofCategory directDeps
   resolveDep2 d = unwrap $ foldl (<|>) Nothing allChecks <|> Just [] where
-    allChecks = map (\n -> (d,n) `Map.lookup` categoryMap >>= return . (:[])) (map show ns ++ [""])
+    allChecks = map (\n -> (d,n) `Map.lookup` categoryMap >>= return . (:[])) (ns ++ [NoNamespace])
     unwrap (Just xs) = xs
     unwrap _         = []
   (_,_,resolved) = collectAll Set.empty Set.empty directResolved
@@ -362,23 +363,24 @@ resolveObjectDeps deps p os = resolvedCategories ++ nonCategories where
   directCategories = map (keyByCategory . cxxToId) $ map snd categories
   depCategories = map keyByCategory $ concat $ map categoriesToIds deps
   categoriesToIds dep = map (\c -> CategoryIdentifier (cmPath dep) c (cmNamespace dep)) (cmCategories dep)
-  cxxToId (CxxOutput (Just c) _ ns _ _ _) = CategoryIdentifier p (show c) (show ns)
+  cxxToId (CxxOutput (Just c) _ ns _ _ _) = CategoryIdentifier p c ns
   cxxToId _                               = undefined
   resolveCategory (fs,ca@(CxxOutput _ _ _ ns2 ds _)) =
     (cxxToId ca,CategoryObjectFile (cxxToId ca) (filter (/= cxxToId ca) rs) fs) where
-      rs = concat $ map (resolveDep categoryMap (map show ns2 ++ publicNamespaces) . show) ds
+      rs = concat $ map (resolveDep categoryMap (ns2 ++ publicNamespaces)) ds
 
-resolveCategoryDeps :: [String] -> [CompileMetadata] -> [CategoryIdentifier]
+resolveCategoryDeps :: [CategoryName] -> [CompileMetadata] -> [CategoryIdentifier]
 resolveCategoryDeps cs deps = resolvedCategories where
   publicNamespaces = getNamespacesForDeps deps
   resolvedCategories = concat $ map (resolveDep categoryMap publicNamespaces) cs
   categoryMap = Map.fromList depCategories
   depCategories = map (keyByCategory . cofCategory) $ filter isCategoryObjectFile $ concat $ map cmObjectFiles deps
 
-keyByCategory :: CategoryIdentifier -> ((String,String),CategoryIdentifier)
+keyByCategory :: CategoryIdentifier -> ((CategoryName,Namespace),CategoryIdentifier)
 keyByCategory c = ((ciCategory c,ciNamespace c),c)
 
-resolveDep :: Map.Map (String,String) CategoryIdentifier -> [String] -> String -> [CategoryIdentifier]
+resolveDep :: Map.Map (CategoryName,Namespace) CategoryIdentifier ->
+  [Namespace] -> CategoryName -> [CategoryIdentifier]
 resolveDep cm (n:ns) d =
   case (d,n) `Map.lookup` cm of
        Just xs -> [xs]

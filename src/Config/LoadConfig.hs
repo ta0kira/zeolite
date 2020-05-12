@@ -153,7 +153,7 @@ instance CompilerBackend Backend where
         hDuplicateTo h1 stdout
         hDuplicateTo h2 stderr
         executeFile b True [] Nothing
-  getCompilerHash b = flip showHex "" $ abs $ hash $ minorVersion ++ show b where
+  getCompilerHash b = VersionHash $ flip showHex "" $ abs $ hash $ minorVersion ++ show b where
     minorVersion = show $ take 3 $ versionBranch version
 
 executeProcess :: String -> [String] -> IO ()
