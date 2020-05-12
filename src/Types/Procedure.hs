@@ -222,6 +222,7 @@ data FunctionCall c =
 
 data ExpressionStart c =
   NamedVariable (OutputValue c) |
+  NamedMacro [c] String |
   CategoryCall [c] CategoryName (FunctionCall c) |
   TypeCall [c] TypeInstanceOrParam (FunctionCall c) |
   UnqualifiedCall [c] (FunctionCall c) |

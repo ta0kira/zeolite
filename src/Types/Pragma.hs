@@ -22,6 +22,7 @@ module Types.Pragma (
   CodeVisibility(..),
   Pragma(..),
   getPragmaContext,
+  isExprLookup,
   isModuleOnly,
   isTestsOnly,
 ) where
@@ -34,6 +35,10 @@ data Pragma c =
     pvContext :: [c],
     pvScopes :: CodeVisibility
   } |
+  PragmaExprLookup {
+    pelContext :: [c],
+    pelName :: String
+  } |
   -- This is mostly for testing purposes.
   PragmaComment {
     pcContext :: [c],
@@ -43,11 +48,16 @@ data Pragma c =
 
 getPragmaContext :: Pragma c -> [c]
 getPragmaContext (PragmaVisibility c _) = c
+getPragmaContext (PragmaExprLookup c _) = c
 getPragmaContext (PragmaComment c _)    = c
 
 isModuleOnly :: Pragma c -> Bool
 isModuleOnly (PragmaVisibility _ ModuleOnly) = True
 isModuleOnly _                               = False
+
+isExprLookup :: Pragma c -> Bool
+isExprLookup (PragmaExprLookup _ _) = True
+isExprLookup _                      = False
 
 isTestsOnly :: Pragma c -> Bool
 isTestsOnly (PragmaVisibility _ TestsOnly) = True

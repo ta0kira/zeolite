@@ -47,6 +47,11 @@ tests = [
                   [PragmaComment _ "this is a pragma with args"] -> True
                   _ -> False),
 
+    checkParsesAs "$ExprLookup[ MODULE_PATH /*comment*/ ]$" (fmap (:[]) pragmaExprLookup)
+      (\e -> case e of
+                  [PragmaExprLookup _ "MODULE_PATH"] -> True
+                  _ -> False),
+
     checkParsesAs "/*only comments*/" (parsePragmas [pragmaModuleOnly,pragmaTestsOnly])
       (\e -> case e of
                   [] -> True
@@ -73,7 +78,9 @@ tests = [
 
     checkParseError "$TestsOnly[ extra ]$" "does not allow arguments" pragmaTestsOnly,
 
-    checkParseError "$Comment$" "requires arguments" pragmaComment
+    checkParseError "$Comment$" "requires arguments" pragmaComment,
+
+    checkParseError "$ExprLookup[ \"bad stuff\" ]$" "macro name" pragmaExprLookup
   ]
 
 checkParsesAs :: String -> Parser [Pragma SourcePos] -> ([Pragma SourcePos] -> Bool) -> IO (CompileInfo ())

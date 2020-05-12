@@ -28,8 +28,10 @@ import Text.Parsec.String
 import qualified Data.Set as Set
 
 import Parser.Common
+import Parser.Pragma
 import Parser.TypeCategory ()
 import Parser.TypeInstance ()
+import Types.Pragma
 import Types.Positional
 import Types.Procedure
 import Types.TypeCategory
@@ -413,6 +415,7 @@ instance ParseFromSource (ExpressionStart SourcePos) where
                  variableOrUnqualified <|>
                  builtinCall <|>
                  builtinValue <|>
+                 exprLookup <|>
                  try typeOrCategoryCall <|>
                  typeCall where
     parens = do
@@ -440,6 +443,11 @@ instance ParseFromSource (ExpressionStart SourcePos) where
       c <- getPosition
       n <- builtinValues
       return $ NamedVariable (OutputValue [c] (VariableName n))
+    exprLookup = do
+      pragma <- pragmaExprLookup
+      case pragma of
+           (PragmaExprLookup c name) -> return $ NamedMacro c name
+           _ -> undefined  -- Should be caught above.
     variableOrUnqualified = do
       c <- getPosition
       n <- sourceParser :: Parser VariableName

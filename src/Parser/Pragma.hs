@@ -21,6 +21,7 @@ limitations under the License.
 module Parser.Pragma (
   parsePragmas,
   pragmaComment,
+  pragmaExprLookup,
   pragmaModuleOnly,
   pragmaTestsOnly
 ) where
@@ -39,6 +40,13 @@ parsePragmas = many . foldr ((<|>)) unknownPragma
 pragmaModuleOnly :: Parser (Pragma SourcePos)
 pragmaModuleOnly = autoPragma "ModuleOnly" $ Left parseAt where
   parseAt c = PragmaVisibility [c] ModuleOnly
+
+pragmaExprLookup :: Parser (Pragma SourcePos)
+pragmaExprLookup = autoPragma "ExprLookup" $ Right parseAt where
+  parseAt c = do
+    name <- labeled "macro name" $ many1 (upper <|> char '_')
+    optionalSpace
+    return $ PragmaExprLookup [c] name
 
 pragmaTestsOnly :: Parser (Pragma SourcePos)
 pragmaTestsOnly = autoPragma "TestsOnly" $ Left parseAt where

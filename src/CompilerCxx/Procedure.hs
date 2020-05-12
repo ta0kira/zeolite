@@ -629,6 +629,9 @@ compileExpressionStart (NamedVariable (OutputValue c n)) = do
   scoped <- autoScope s
   let lazy = s == CategoryScope
   return (Positional [t],readStoredVariable lazy t (scoped ++ variableName n))
+compileExpressionStart (NamedMacro c n) = do
+  lift $ delegate `reviseError` ("In env lookup at " ++ formatFullContext c) where
+    delegate = compileError $ "Env expression " ++ n ++ " is not defined"
 compileExpressionStart (CategoryCall c t f@(FunctionCall _ n _ _)) = do
   f' <- csGetCategoryFunction c (Just t) n
   csRequiresTypes $ Set.fromList [t,sfType f']
