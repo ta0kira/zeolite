@@ -33,6 +33,7 @@ import System.FilePath
 import System.Posix.Temp (mkstemps)
 import System.IO
 import Text.Parsec (SourcePos)
+import qualified Data.Map as Map
 import qualified Data.Set as Set
 
 import Base.CompileError
@@ -41,6 +42,7 @@ import Cli.CompileOptions
 import Cli.ProcessMetadata
 import Cli.TestRunner -- Not safe, due to Text.Regex.TDFA.
 import Compilation.CompileInfo
+import Compilation.ProcedureContext (ExprMap)
 import CompilerCxx.Category
 import CompilerCxx.Naming
 import Config.LoadConfig
@@ -58,6 +60,7 @@ data ModuleSpec =
   ModuleSpec {
     msRoot :: FilePath,
     msPath :: FilePath,
+    msExprMap :: ExprMap SourcePos,
     msPublicDeps :: [FilePath],
     msPrivateDeps :: [FilePath],
     msPublicFiles :: [FilePath],
@@ -75,13 +78,14 @@ data LoadedTests =
     ltRoot :: FilePath,
     ltPath :: FilePath,
     ltMetadata :: CompileMetadata,
+    ltExprMap :: ExprMap SourcePos,
     ltPublicDeps :: [CompileMetadata],
     ltPrivateDeps :: [CompileMetadata]
   }
   deriving (Show)
 
 compileModule :: ModuleSpec -> IO ()
-compileModule (ModuleSpec p d is is2 ps xs ts es ep m f) = do
+compileModule (ModuleSpec p d em is is2 ps xs ts es ep m f) = do
   (backend,resolver) <- loadConfig
   let hash = getCompilerHash backend
   as  <- fmap fixPaths $ sequence $ map (resolveModule resolver (p </> d)) is
@@ -102,7 +106,7 @@ compileModule (ModuleSpec p d is is2 ps xs ts es ep m f) = do
                  return $ bpDeps ++ deps1
   ns0 <- createPublicNamespace p d
   let ex = concat $ map getSourceCategories es
-  cm <- loadLanguageModule p ns0 ex ps deps1' deps2
+  cm <- loadLanguageModule p ns0 ex em ps deps1' deps2
   xa <- fmap collectAllOrErrorM $ sequence $ map (loadPrivateSource p) xs
   let fs = compileAll cm xa
   eraseCachedData (p </> d)
@@ -264,7 +268,7 @@ createModuleTemplates :: FilePath -> FilePath -> [CompileMetadata] -> [CompileMe
 createModuleTemplates p d deps1 deps2 = do
   ns0 <- createPublicNamespace p d
   (ps,xs,_) <- findSourceFiles p d
-  cm <- fmap (fmap fst) $ loadLanguageModule p ns0 [] ps deps1 deps2
+  cm <- fmap (fmap fst) $ loadLanguageModule p ns0 [] Map.empty ps deps1 deps2
   xs' <- zipWithContents p xs
   let ts = createTemplates cm xs'
   if isCompileError ts
@@ -277,7 +281,7 @@ createModuleTemplates p d deps1 deps2 = do
         formatWarnings ts
         sequence_ $ map writeTemplate $ getCompileSuccess ts where
   createTemplates cm xs = do
-    (LanguageModule _ _ _ cs0 ps0 ts0 cs1 ps1 ts1 _) <- cm
+    (LanguageModule _ _ _ cs0 ps0 ts0 cs1 ps1 ts1 _ _) <- cm
     ds <- collectAllOrErrorM $ map parseInternalSource xs
     let ds2 = concat $ map (\(_,_,d2) -> d2) ds
     tm <- foldM includeNewTypes defaultCategories [cs0,cs1,ps0,ps1,ts0,ts1]
@@ -295,12 +299,12 @@ createModuleTemplates p d deps1 deps2 = do
           writeFile n' $ concat $ map (++ "\n") content
 
 runModuleTests :: CompilerBackend b => b -> FilePath -> [FilePath] -> LoadedTests -> IO [((Int,Int),CompileInfo ())]
-runModuleTests b base tp (LoadedTests p d m deps1 deps2) = do
+runModuleTests b base tp (LoadedTests p d m em deps1 deps2) = do
   let paths = base:(getIncludePathsForDeps deps1)
   mapM_ showSkipped $ filter (not . isTestAllowed) $ cmTestFiles m
   ts' <- zipWithContents p $ map (d </>) $ filter isTestAllowed $ cmTestFiles m
   path <- canonicalizePath (p </> d)
-  cm <- fmap (fmap fst) $ loadLanguageModule path NoNamespace [] [] deps1 []
+  cm <- fmap (fmap fst) $ loadLanguageModule path NoNamespace [] em [] deps1 []
   if isCompileError cm
       then return [((0,0),cm >> return ())]
       else sequence $ map (runSingleTest b (getCompileSuccess cm) path paths (m:deps2)) ts' where
@@ -333,10 +337,10 @@ loadPrivateSource p f = do
     let testing = any isTestsOnly pragmas
     return $ PrivateSource ns testing cs' ds
 
-loadLanguageModule :: CompileErrorM m => FilePath -> Namespace -> [CategoryName] ->
-  [FilePath] -> [CompileMetadata] -> [CompileMetadata] ->
-  IO (m (LanguageModule SourcePos,([CategoryName],[CategoryName])))
-loadLanguageModule p ns2 ex fs deps1 deps2 = do
+loadLanguageModule :: CompileErrorM m => FilePath -> Namespace ->
+  [CategoryName] -> ExprMap SourcePos -> [FilePath] -> [CompileMetadata] ->
+  [CompileMetadata] -> IO (m (LanguageModule SourcePos,([CategoryName],[CategoryName])))
+loadLanguageModule p ns2 ex em fs deps1 deps2 = do
   m0 <- fmap merge $ sequence $ map processAll deps1
   m1 <- fmap merge $ sequence $ map processAll deps2
   m2 <- loadAllPublic "" fs
@@ -357,7 +361,8 @@ loadLanguageModule p ns2 ex fs deps1 deps2 = do
           lmPublicLocal = map (setCategoryNamespace ns2) ps2,
           lmPrivateLocal = map (setCategoryNamespace ns2) xs2,
           lmTestingLocal = map (setCategoryNamespace ns2) $ tsA2 ++ tsB2,
-          lmExternal = ex
+          lmExternal = ex,
+          lmExprMap = em
         }
       return (cm,(map getCategoryName $ ps2++tsA2,map getCategoryName $ xs2++tsB2))
     loadPublic p2 p3 = parsePublicSource p3 >>= return . uncurry (partition p2)

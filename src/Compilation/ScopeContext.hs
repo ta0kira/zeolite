@@ -32,6 +32,7 @@ import qualified Data.Map as Map
 
 import Base.CompileError
 import Base.Mergeable
+import Compilation.ProcedureContext
 import Types.DefinedCategory
 import Types.GeneralType
 import Types.Positional
@@ -50,7 +51,8 @@ data ScopeContext c =
     scExternalFilters :: [ParamFilter c],
     scInternalFilters :: [ParamFilter c],
     scFunctions :: Map.Map FunctionName (ScopedFunction c),
-    scVariables :: Map.Map VariableName (VariableValue c)
+    scVariables :: Map.Map VariableName (VariableValue c),
+    scExprMap :: ExprMap c
   }
 
 data ProcedureScope c =
@@ -64,8 +66,8 @@ applyProcedureScope ::
 applyProcedureScope f (ProcedureScope ctx fs) = map (uncurry (f ctx)) fs
 
 getProcedureScopes :: (Show c, CompileErrorM m, MergeableM m) =>
-  CategoryMap c -> DefinedCategory c -> m [ProcedureScope c]
-getProcedureScopes ta (DefinedCategory c n pi _ _ fi ms ps fs) = do
+  CategoryMap c -> ExprMap c -> DefinedCategory c -> m [ProcedureScope c]
+getProcedureScopes ta em (DefinedCategory c n pi _ _ fi ms ps fs) = do
   (_,t) <- getConcreteCategory ta (c,n)
   let params = Positional $ getCategoryParams t
   let params2 = Positional pi
@@ -87,9 +89,9 @@ getProcedureScopes ta (DefinedCategory c n pi _ _ fi ms ps fs) = do
   let cv = Map.union cm0 cm'
   let tv = Map.union tm0 tm'
   let vv = Map.union vm0 vm'
-  let ctxC = ScopeContext ta n params params2 vm filters filters2 fa cv
-  let ctxT = ScopeContext ta n params params2 vm filters filters2 fa tv
-  let ctxV = ScopeContext ta n params params2 vm filters filters2 fa vv
+  let ctxC = ScopeContext ta n params params2 vm filters filters2 fa cv em
+  let ctxT = ScopeContext ta n params params2 vm filters filters2 fa tv em
+  let ctxV = ScopeContext ta n params params2 vm filters filters2 fa vv em
   return [ProcedureScope ctxC cp,ProcedureScope ctxT tp,ProcedureScope ctxV vp]
   where
     builtins t s0 = Map.filter ((<= s0) . vvScope) $ builtinVariables t

@@ -41,6 +41,7 @@ import qualified Data.Set as Set
 import Base.CompileError
 import Base.Mergeable
 import Compilation.CompilerState
+import Compilation.ProcedureContext (ExprMap)
 import Compilation.ScopeContext
 import CompilerCxx.CategoryContext
 import CompilerCxx.Code
@@ -78,7 +79,8 @@ data LanguageModule c =
     lmPublicLocal :: [AnyCategory c],
     lmPrivateLocal :: [AnyCategory c],
     lmTestingLocal :: [AnyCategory c],
-    lmExternal :: [CategoryName]
+    lmExternal :: [CategoryName],
+    lmExprMap :: ExprMap c
   }
 
 data PrivateSource c =
@@ -91,7 +93,7 @@ data PrivateSource c =
 
 compileLanguageModule :: (Show c, CompileErrorM m, MergeableM m) =>
   LanguageModule c -> [PrivateSource c] -> m ([CxxOutput],[CxxOutput])
-compileLanguageModule (LanguageModule ns0 ns1 ns2 cs0 ps0 ts0 cs1 ps1 ts1 ex) xa = do
+compileLanguageModule (LanguageModule ns0 ns1 ns2 cs0 ps0 ts0 cs1 ps1 ts1 ex em) xa = do
   checkSupefluous $ Set.toList $ (Set.fromList ex) `Set.difference` ca
   (hxx1,cxx1) <- fmap mergeGeneratedP $ collectAllOrErrorM $ map (compileSourceP tmPublic  nsPublic)  cs1
   (hxx2,cxx2) <- fmap mergeGeneratedP $ collectAllOrErrorM $ map (compileSourceP tmPrivate nsPrivate) ps1
@@ -145,7 +147,7 @@ compileLanguageModule (LanguageModule ns0 ns1 ns2 cs0 ps0 ts0 cs1 ps1 ts1 ex) xa
     compileDefinition tm ns4 d = do
       tm' <- mergeInternalInheritance tm d
       let refines = dcName d `Map.lookup` tm >>= return . getCategoryRefines
-      compileConcreteDefinition tm' ns4 refines d
+      compileConcreteDefinition tm' em ns4 refines d
     mapByName = Map.fromListWith (++) . map (\d -> (dcName d,[d]))
     ca = Set.fromList $ map getCategoryName $ filter isValueConcrete (cs1 ++ ps1 ++ ts1)
     checkLocals ds cs2 = mergeAllM $ map (checkLocal $ Set.fromList cs2) ds
@@ -180,21 +182,21 @@ compileLanguageModule (LanguageModule ns0 ns1 ns2 cs0 ps0 ts0 cs1 ps1 ts1 ex) xa
 
 compileTestMain :: (Show c, CompileErrorM m, MergeableM m) =>
   LanguageModule c -> PrivateSource c -> Expression c -> m CxxOutput
-compileTestMain (LanguageModule ns0 ns1 ns2 cs0 ps0 ts0 cs1 ps1 ts1 _) ts2 e = do
+compileTestMain (LanguageModule ns0 ns1 ns2 cs0 ps0 ts0 cs1 ps1 ts1 _ em) ts2 e = do
   tm' <- tm
-  (req,main) <- createTestFile tm' e
+  (req,main) <- createTestFile tm' em e
   return $ CxxOutput Nothing testFilename NoNamespace ([psNamespace ts2]++ns0++ns1++ns2) req main where
   tm = foldM includeNewTypes defaultCategories [cs0,cs1,ps0,ps1,ts0,ts1,psCategory ts2]
 
 compileModuleMain :: (Show c, CompileErrorM m, MergeableM m) =>
   LanguageModule c -> [PrivateSource c] -> CategoryName -> FunctionName -> m CxxOutput
-compileModuleMain (LanguageModule ns0 ns1 ns2 cs0 ps0 ts0 cs1 ps1 ts1 _) xa n f = do
+compileModuleMain (LanguageModule ns0 ns1 ns2 cs0 ps0 ts0 cs1 ps1 ts1 _ em) xa n f = do
   let resolved = filter (\d -> dcName d == n) $ concat $ map psDefine xa
   reconcile resolved
   tm' <- tm
   let cs = filter (\c -> getCategoryName c == n) $ concat $ map psCategory xa
   tm'' <- includeNewTypes tm' cs
-  (ns,main) <- createMainFile tm'' n f
+  (ns,main) <- createMainFile tm'' em n f
   return $ CxxOutput Nothing mainFilename NoNamespace ([ns]++ns0++ns1++ns2) [n] main where
     tm = foldM includeNewTypes defaultCategories [cs0,cs1,ps0,ps1,ts0,ts1]
     reconcile [_] = return ()
@@ -259,7 +261,7 @@ compileConcreteTemplate :: (Show c, CompileErrorM m, MergeableM m) =>
   CategoryMap c -> CategoryName -> m CxxOutput
 compileConcreteTemplate ta n = do
   (_,t) <- getConcreteCategory ta ([],n)
-  compileConcreteDefinition ta [] Nothing (defined t) `reviseError` ("In generated template for " ++ show n) where
+  compileConcreteDefinition ta Map.empty [] Nothing (defined t) `reviseError` ("In generated template for " ++ show n) where
     defined t = DefinedCategory {
         dcContext = [],
         dcName = getCategoryName t,
@@ -287,11 +289,12 @@ compileConcreteTemplate ta n = do
     funcName f = show (sfType f) ++ "." ++ show (sfName f)
 
 compileConcreteDefinition :: (Show c, CompileErrorM m, MergeableM m) =>
-  CategoryMap c -> [Namespace] -> Maybe [ValueRefine c] -> DefinedCategory c -> m CxxOutput
-compileConcreteDefinition ta ns rs dd@(DefinedCategory c n pi _ _ fi ms _ fs) = do
+  CategoryMap c -> ExprMap c -> [Namespace] -> Maybe [ValueRefine c] ->
+  DefinedCategory c -> m CxxOutput
+compileConcreteDefinition ta em ns rs dd@(DefinedCategory c n pi _ _ fi ms _ fs) = do
   (_,t) <- getConcreteCategory ta (c,n)
   let r = CategoryResolver ta
-  [cp,tp,vp] <- getProcedureScopes ta dd
+  [cp,tp,vp] <- getProcedureScopes ta em dd
   cf <- collectAllOrErrorM $ applyProcedureScope compileExecutableProcedure cp
   tf <- collectAllOrErrorM $ applyProcedureScope compileExecutableProcedure tp
   vf <- collectAllOrErrorM $ applyProcedureScope compileExecutableProcedure vp
@@ -359,7 +362,7 @@ compileConcreteDefinition ta ns rs dd@(DefinedCategory c n pi _ _ fi ms _ fs) = 
         "CycleCheck<" ++ n2 ++ "> marker(*this);"
       ]
     categoryConstructor t ms2 = do
-      ctx <- getContextForInit ta t dd CategoryScope
+      ctx <- getContextForInit ta em t dd CategoryScope
       initMembers <- runDataCompiler (sequence $ map compileLazyInit ms2) ctx
       let initMembersStr = intercalate ", " $ cdOutput initMembers
       let initColon = if null initMembersStr then "" else " : "
@@ -378,7 +381,7 @@ compileConcreteDefinition ta ns rs dd@(DefinedCategory c n pi _ _ fi ms _ fs) = 
       let initParent = "parent(p)"
       let initPassed = map (\(i,p) -> paramName p ++ "(*std::get<" ++ show i ++ ">(params))") $ zip ([0..] :: [Int]) ps2
       let allInit = intercalate ", " $ initParent:initPassed
-      ctx <- getContextForInit ta t dd TypeScope
+      ctx <- getContextForInit ta em t dd TypeScope
       initMembers <- runDataCompiler (sequence $ map initMember ms2) ctx
       mergeAllM [
           return $ onlyCode $ typeName n ++ "(" ++ allArgs ++ ") : " ++ allInit ++ " {",
@@ -758,9 +761,9 @@ createMainCommon n (CompiledData req out) =
                            Set.toList req2
 
 createMainFile :: (Show c, CompileErrorM m, MergeableM m) =>
-  CategoryMap c -> CategoryName -> FunctionName -> m (Namespace,[String])
-createMainFile tm n f = flip reviseError ("In the creation of the main binary procedure") $ do
-  ca <- fmap indentCompiled (compileMainProcedure tm expr)
+  CategoryMap c -> ExprMap c -> CategoryName -> FunctionName -> m (Namespace,[String])
+createMainFile tm em n f = flip reviseError ("In the creation of the main binary procedure") $ do
+  ca <- fmap indentCompiled (compileMainProcedure tm em expr)
   let file = createMainCommon "main" ca
   (_,t) <- getConcreteCategory tm ([],n)
   return (getCategoryNamespace t,file) where
@@ -769,10 +772,10 @@ createMainFile tm n f = flip reviseError ("In the creation of the main binary pr
     expr = Expression [] (TypeCall [] mainType funcCall) []
 
 createTestFile :: (Show c, CompileErrorM m, MergeableM m) =>
-  CategoryMap c -> Expression c -> m ([CategoryName],[String])
-createTestFile tm e = flip reviseError ("In the creation of the test binary procedure") $ do
-  ca@(CompiledData req _) <- fmap indentCompiled (compileMainProcedure tm e)
-  let file = createMainCommon "main" ca
+  CategoryMap c -> ExprMap c  -> Expression c -> m ([CategoryName],[String])
+createTestFile tm em e = flip reviseError ("In the creation of the test binary procedure") $ do
+  ca@(CompiledData req _) <- fmap indentCompiled (compileMainProcedure tm em e)
+  let file = createMainCommon "test" ca
   return (Set.toList req,file)
 
 getCategoryMentions :: AnyCategory c -> [CategoryName]

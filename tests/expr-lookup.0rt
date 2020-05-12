@@ -30,3 +30,67 @@ define Test {
 concrete Test {
   @type run () -> ()
 }
+
+
+testcase "MODULE_PATH is absolute" {
+  crash Test$run()
+  require "Failed condition: /.+/tests"
+}
+
+define Test {
+  run () {
+    fail($ExprLookup[MODULE_PATH]$)
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "MODULE_PATH from regular source" {
+  crash Test$run()
+  require "Failed condition: /.+/tests"
+}
+
+define Test {
+  run () {
+    fail(ExprLookup$modulePath())
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "mismatched macro type" {
+  error
+  require "String.+Int"
+}
+
+define Test {
+  run () {
+    Int value <- $ExprLookup[MODULE_PATH]$
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "macro used inline in expressions" {
+  crash Test$run()
+  require "Failed condition: /.+/tests is the path"
+}
+
+define Test {
+  run () {
+    fail($ExprLookup[MODULE_PATH]$ + " is the path")
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}

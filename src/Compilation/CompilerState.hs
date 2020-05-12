@@ -36,6 +36,7 @@ module Compilation.CompilerState (
   csCheckVariableInit,
   csClearOutput,
   csCurrentScope,
+  csExprLookup,
   csGetCategoryFunction,
   csGetCleanup,
   csGetLoop,
@@ -108,6 +109,7 @@ class (Functor m, Monad m) => CompilerContext c m s a | a -> c s where
   ccGetLoop :: a -> m (LoopSetup s)
   ccPushCleanup :: a -> CleanupSetup a s -> m a
   ccGetCleanup :: a -> m (CleanupSetup a s)
+  ccExprLookup :: a -> [c] -> String -> m (Expression c)
 
 type ExpressionType = Positional ValueType
 
@@ -232,6 +234,9 @@ csPushCleanup l = fmap (\x -> ccPushCleanup x l) get >>= lift >>= put
 
 csGetCleanup :: CompilerContext c m s a => CompilerState a m (CleanupSetup a s)
 csGetCleanup = fmap ccGetCleanup get >>= lift
+
+csExprLookup :: CompilerContext c m s a => [c] -> String -> CompilerState a m (Expression c)
+csExprLookup c n = fmap (\x -> ccExprLookup x c n) get >>= lift
 
 data CompiledData s =
   CompiledData {

@@ -53,13 +53,20 @@ runCompiler (CompileOptions _ _ _ ds _ _ p (ExecuteTests tp) f) = do
   processResults passed failed (mergeAllM $ map snd allResults) where
     preloadTests b base d = do
       m <- loadMetadata (p </> d)
+      rm <- tryLoadRecompile (p </> d)
+      rm' <- case rm of
+                  Just rm2 -> return rm2
+                  Nothing -> do
+                    hPutStr stderr $ "Module config for " ++ d ++ " is missing."
+                    exitFailure
       (fr0,deps0) <- loadPublicDeps (getCompilerHash b) [base]
       checkAllowedStale fr0 f
       (fr1,deps1) <- loadTestingDeps (getCompilerHash b) m
       checkAllowedStale fr1 f
       (fr2,deps2) <- loadPrivateDeps (getCompilerHash b) (deps0++[m]++deps1)
       checkAllowedStale fr2 f
-      return $ LoadedTests p d m (deps0++[m]++deps1) deps2
+      em <- getExprMap rm'
+      return $ LoadedTests p d m em (deps0++[m]++deps1) deps2
     checkTestFilters ts = do
       let possibleTests = Set.fromList $ concat $ map (cmTestFiles . ltMetadata) ts
       case Set.toList $ (Set.fromList tp) `Set.difference` possibleTests of
@@ -82,9 +89,20 @@ runCompiler (CompileOptions _ is is2 _ _ _ p (CompileFast c fn f2) f) = do
   dir <- mkdtemp "/tmp/zfast_"
   absolute <- canonicalizePath p
   f2' <- canonicalizePath (p </> f2)
+  let rm = ModuleConfig {
+    rmRoot = p,
+    rmPath = ".",
+    rmPublicDeps = [],
+    rmPrivateDeps = [],
+    rmExtraFiles = [],
+    rmExtraPaths = [],
+    rmMode = CompileUnspecified
+  }
+  em <- getExprMap rm
   let spec = ModuleSpec {
     msRoot = absolute,
     msPath = dir,
+    msExprMap = em,
     msPublicDeps = is,
     msPrivateDeps = is2,
     msPublicFiles = [],
@@ -136,9 +154,11 @@ runCompiler (CompileOptions _ _ _ ds _ _ p CompileRecompile f) = do
               absolute <- canonicalizePath (p </> d0)
               let fixed = fixPath (absolute </> p2)
               (ps,xs,ts) <- findSourceFiles fixed d
+              em <- getExprMap rm'
               let spec = ModuleSpec {
                 msRoot = fixed,
                 msPath = d,
+                msExprMap = em,
                 msPublicDeps = is,
                 msPrivateDeps = is2,
                 msPublicFiles = ps,

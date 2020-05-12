@@ -76,6 +76,7 @@ autoPragma p f = do
      then do
        extra <- manyTill anyChar (string_ "]$")
        when (not $ null extra) $ fail $ "Content unused by pragma " ++ p ++ ": " ++ extra
+       optionalSpace
      else sepAfter pragmaEnd
   return x where
     delegate False (Left f2)  c = return $ f2 c

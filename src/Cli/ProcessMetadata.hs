@@ -25,6 +25,7 @@ module Cli.ProcessMetadata (
   fixPaths,
   getCachedPath,
   getCacheRelativePath,
+  getExprMap,
   getIncludePathsForDeps,
   getLinkFlagsForDeps,
   getNamespacesForDeps,
@@ -55,6 +56,7 @@ import System.Directory
 import System.Exit (exitFailure)
 import System.FilePath
 import System.IO
+import Text.Parsec (SourcePos)
 import qualified Data.Map as Map
 import qualified Data.Set as Set
 
@@ -63,8 +65,10 @@ import Cli.CompileMetadata
 import Cli.CompileOptions
 import Cli.ParseMetadata -- Not safe, due to Text.Regex.TDFA.
 import Compilation.CompileInfo
+import Compilation.ProcedureContext (ExprMap)
 import CompilerCxx.Category (CxxOutput(..))
 import Config.Programs (VersionHash(..))
+import Types.Procedure (Expression(Literal),ValueLiteral(..))
 import Types.TypeCategory
 import Types.TypeInstance
 
@@ -213,6 +217,12 @@ findSourceFiles p0 p = do
   let xs = filter (isSuffixOf ".0rx") ds
   let ts = filter (isSuffixOf ".0rt") ds
   return (ps,xs,ts)
+
+getExprMap :: ModuleConfig -> IO (ExprMap SourcePos)
+getExprMap m = do
+  path <- canonicalizePath (rmRoot m </> rmPath m)
+  let defaults = Map.fromList [("MODULE_PATH",Literal (StringLiteral [] path))]
+  return defaults
 
 getRealPathsForDeps :: [CompileMetadata] -> [FilePath]
 getRealPathsForDeps = map cmPath

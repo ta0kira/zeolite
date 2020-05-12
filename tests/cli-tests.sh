@@ -115,6 +115,7 @@ concrete $category {
 define $category {
   run () {
     \ LazyStream<Formatted>\$new()
+        .append(\$ExprLookup[MODULE_PATH]\$ + "\n")
         .append("Hello World\n")
         .writeTo(SimpleOutput\$stdout())
   }
@@ -124,6 +125,11 @@ END
   local output=$(execute "$PWD/$category")
   if ! echo "$output" | fgrep -xq 'Hello World'; then
     show_message 'Expected "Hello World" in program output:'
+    echo "$output" 1>&2
+    return 1
+  fi
+  if ! echo "$output" | fgrep -xq "$PWD"; then
+    show_message 'Expected $PWD in program output:'
     echo "$output" 1>&2
     return 1
   fi

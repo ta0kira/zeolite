@@ -19,7 +19,6 @@ limitations under the License.
 {-# LANGUAGE Safe #-}
 
 module CompilerCxx.CategoryContext (
-  ScopeContext(..),
   getContextForInit,
   getMainContext,
   getProcedureContext,
@@ -44,8 +43,9 @@ import Types.TypeInstance
 
 
 getContextForInit :: (Show c, CompileErrorM m, MergeableM m) =>
-  CategoryMap c -> AnyCategory c -> DefinedCategory c -> SymbolScope -> m (ProcedureContext c)
-getContextForInit tm t d s = do
+  CategoryMap c -> ExprMap c -> AnyCategory c -> DefinedCategory c ->
+  SymbolScope -> m (ProcedureContext c)
+getContextForInit tm em t d s = do
   let ps = Positional $ getCategoryParams t
   -- NOTE: This is always ValueScope for initializer checks.
   let ms = filter ((== ValueScope) . dmScope) $ dcMembers d
@@ -79,12 +79,13 @@ getContextForInit tm t d s = do
       pcOutput = [],
       pcDisallowInit = True,
       pcLoopSetup = NotInLoop,
-      pcCleanupSetup = CleanupSetup [] []
+      pcCleanupSetup = CleanupSetup [] [],
+      pcExprMap = em
     }
 
 getProcedureContext :: (Show c, CompileErrorM m, MergeableM m) =>
   ScopeContext c -> ScopedFunction c -> ExecutableProcedure c -> m (ProcedureContext c)
-getProcedureContext (ScopeContext tm t ps pi ms pa fi fa va)
+getProcedureContext (ScopeContext tm t ps pi ms pa fi fa va em)
                     ff@(ScopedFunction _ _ _ s as1 rs1 ps1 fs _)
                     (ExecutableProcedure _ _ _ as2 rs2 _) = do
   rs' <- if isUnnamedReturns rs2
@@ -135,13 +136,14 @@ getProcedureContext (ScopeContext tm t ps pi ms pa fi fa va)
       pcOutput = [],
       pcDisallowInit = False,
       pcLoopSetup = NotInLoop,
-      pcCleanupSetup = CleanupSetup [] []
+      pcCleanupSetup = CleanupSetup [] [],
+      pcExprMap = em
     }
   where
     pairOutput (PassedValue c1 t2) (OutputValue c2 n2) = return $ (n2,PassedValue (c2++c1) t2)
 
-getMainContext :: CompileErrorM m => CategoryMap c -> m (ProcedureContext c)
-getMainContext tm = return $ ProcedureContext {
+getMainContext :: CompileErrorM m => CategoryMap c -> ExprMap c -> m (ProcedureContext c)
+getMainContext tm em = return $ ProcedureContext {
     pcScope = LocalScope,
     pcType = CategoryNone,
     pcExtParams = Positional [],
@@ -160,5 +162,6 @@ getMainContext tm = return $ ProcedureContext {
     pcOutput = [],
     pcDisallowInit = False,
     pcLoopSetup = NotInLoop,
-    pcCleanupSetup = CleanupSetup [] []
+    pcCleanupSetup = CleanupSetup [] [],
+    pcExprMap = em
   }

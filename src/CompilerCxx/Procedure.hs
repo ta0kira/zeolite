@@ -42,6 +42,8 @@ import qualified Data.Set as Set
 import Base.CompileError
 import Base.Mergeable
 import Compilation.CompilerState
+import Compilation.ProcedureContext (ExprMap)
+import Compilation.ScopeContext
 import CompilerCxx.CategoryContext
 import CompilerCxx.Code
 import CompilerCxx.Naming
@@ -630,8 +632,8 @@ compileExpressionStart (NamedVariable (OutputValue c n)) = do
   let lazy = s == CategoryScope
   return (Positional [t],readStoredVariable lazy t (scoped ++ variableName n))
 compileExpressionStart (NamedMacro c n) = do
-  lift $ delegate `reviseError` ("In env lookup at " ++ formatFullContext c) where
-    delegate = compileError $ "Env expression " ++ n ++ " is not defined"
+  e <- csExprLookup c n
+  compileExpression e `reviseErrorStateT` ("In env lookup at " ++ formatFullContext c)
 compileExpressionStart (CategoryCall c t f@(FunctionCall _ n _ _)) = do
   f' <- csGetCategoryFunction c (Just t) n
   csRequiresTypes $ Set.fromList [t,sfType f']
@@ -805,9 +807,9 @@ compileFunctionCall e f (FunctionCall c _ ps es) = do
       checkValueTypeMatch r fa t1 t0 `reviseError` ("In argument " ++ show i)
 
 compileMainProcedure :: (Show c, CompileErrorM m, MergeableM m) =>
-  CategoryMap c -> Expression c -> m (CompiledData [String])
-compileMainProcedure tm e = do
-  ctx <- getMainContext tm
+  CategoryMap c -> ExprMap c -> Expression c -> m (CompiledData [String])
+compileMainProcedure tm em e = do
+  ctx <- getMainContext tm em
   runDataCompiler compiler ctx where
     procedure = Procedure [] [IgnoreValues [] e]
     compiler = do

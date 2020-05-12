@@ -21,6 +21,7 @@ limitations under the License.
 {-# LANGUAGE Safe #-}
 
 module Compilation.ProcedureContext (
+  ExprMap,
   ProcedureContext(..),
   ReturnValidation(..),
   updateArgVariables,
@@ -62,8 +63,11 @@ data ProcedureContext c =
     pcOutput :: [String],
     pcDisallowInit :: Bool,
     pcLoopSetup :: LoopSetup [String],
-    pcCleanupSetup :: CleanupSetup (ProcedureContext c) [String]
+    pcCleanupSetup :: CleanupSetup (ProcedureContext c) [String],
+    pcExprMap :: ExprMap c
   }
+
+type ExprMap c = Map.Map String (Expression c)
 
 data ReturnValidation c =
   ValidatePositions {
@@ -106,7 +110,8 @@ instance (Show c, MergeableM m, CompileErrorM m) =>
       pcOutput = pcOutput ctx,
       pcDisallowInit = pcDisallowInit ctx,
       pcLoopSetup = pcLoopSetup ctx,
-      pcCleanupSetup = pcCleanupSetup ctx
+      pcCleanupSetup = pcCleanupSetup ctx,
+      pcExprMap = pcExprMap ctx
     }
   ccGetRequired = return . pcRequiredTypes
   ccGetCategoryFunction ctx c Nothing n = ccGetCategoryFunction ctx c (Just $ pcType ctx) n
@@ -245,7 +250,8 @@ instance (Show c, MergeableM m, CompileErrorM m) =>
         pcOutput = pcOutput ctx,
         pcDisallowInit = pcDisallowInit ctx,
         pcLoopSetup = pcLoopSetup ctx,
-        pcCleanupSetup = pcCleanupSetup ctx
+        pcCleanupSetup = pcCleanupSetup ctx,
+        pcExprMap = pcExprMap ctx
       }
   ccCheckVariableInit ctx c n =
     case pcReturns ctx of
@@ -272,7 +278,8 @@ instance (Show c, MergeableM m, CompileErrorM m) =>
       pcOutput = pcOutput ctx ++ ss,
       pcDisallowInit = pcDisallowInit ctx,
       pcLoopSetup = pcLoopSetup ctx,
-      pcCleanupSetup = pcCleanupSetup ctx
+      pcCleanupSetup = pcCleanupSetup ctx,
+      pcExprMap = pcExprMap ctx
     }
   ccGetOutput = return . pcOutput
   ccClearOutput ctx = return $ ProcedureContext {
@@ -294,7 +301,8 @@ instance (Show c, MergeableM m, CompileErrorM m) =>
         pcOutput = [],
         pcDisallowInit = pcDisallowInit ctx,
         pcLoopSetup = pcLoopSetup ctx,
-        pcCleanupSetup = pcCleanupSetup ctx
+        pcCleanupSetup = pcCleanupSetup ctx,
+        pcExprMap = pcExprMap ctx
       }
   ccUpdateAssigned ctx n = update (pcReturns ctx) where
     update (ValidateNames ts ra) = return $ ProcedureContext {
@@ -316,7 +324,8 @@ instance (Show c, MergeableM m, CompileErrorM m) =>
         pcOutput = pcOutput ctx,
         pcDisallowInit = pcDisallowInit ctx,
         pcLoopSetup = pcLoopSetup ctx,
-        pcCleanupSetup = pcCleanupSetup ctx
+        pcCleanupSetup = pcCleanupSetup ctx,
+        pcExprMap = pcExprMap ctx
       }
     update _ = return ctx
   ccInheritReturns ctx cs = return $ ProcedureContext {
@@ -338,7 +347,8 @@ instance (Show c, MergeableM m, CompileErrorM m) =>
       pcOutput = pcOutput ctx,
       pcDisallowInit = pcDisallowInit ctx,
       pcLoopSetup = pcLoopSetup ctx,
-      pcCleanupSetup = pcCleanupSetup ctx
+      pcCleanupSetup = pcCleanupSetup ctx,
+      pcExprMap = pcExprMap ctx
     }
     where
       inherited = foldr combineParallel UnreachableCode (map pcReturns cs)
@@ -373,7 +383,8 @@ instance (Show c, MergeableM m, CompileErrorM m) =>
         pcOutput = pcOutput ctx,
         pcDisallowInit = pcDisallowInit ctx,
         pcLoopSetup = pcLoopSetup ctx,
-        pcCleanupSetup = pcCleanupSetup ctx
+        pcCleanupSetup = pcCleanupSetup ctx,
+        pcExprMap = pcExprMap ctx
       }
     where
       check (ValidatePositions rs) = do
@@ -425,7 +436,8 @@ instance (Show c, MergeableM m, CompileErrorM m) =>
         pcOutput = pcOutput ctx,
         pcDisallowInit = pcDisallowInit ctx,
         pcLoopSetup = pcLoopSetup ctx,
-        pcCleanupSetup = pcCleanupSetup ctx
+        pcCleanupSetup = pcCleanupSetup ctx,
+        pcExprMap = pcExprMap ctx
       }
   ccStartLoop ctx l =
     return $ ProcedureContext {
@@ -447,7 +459,8 @@ instance (Show c, MergeableM m, CompileErrorM m) =>
         pcOutput = pcOutput ctx,
         pcDisallowInit = pcDisallowInit ctx,
         pcLoopSetup = l,
-        pcCleanupSetup = pcCleanupSetup ctx
+        pcCleanupSetup = pcCleanupSetup ctx,
+        pcExprMap = pcExprMap ctx
       }
   ccGetLoop = return . pcLoopSetup
   ccPushCleanup ctx (CleanupSetup cs ss) =
@@ -471,9 +484,14 @@ instance (Show c, MergeableM m, CompileErrorM m) =>
         pcDisallowInit = pcDisallowInit ctx,
         pcLoopSetup = pcLoopSetup ctx,
         pcCleanupSetup = CleanupSetup (cs ++ (csReturnContext $ pcCleanupSetup ctx))
-                                      (ss ++ (csCleanup $ pcCleanupSetup ctx))
+                                      (ss ++ (csCleanup $ pcCleanupSetup ctx)),
+        pcExprMap = pcExprMap ctx
       }
   ccGetCleanup = return . pcCleanupSetup
+  ccExprLookup ctx c n =
+    case n `Map.lookup` pcExprMap ctx of
+         Nothing -> compileError $ "Env expression " ++ n ++ " is not defined" ++ formatFullContextBrace c
+         Just e -> return e
 
 updateReturnVariables :: (Show c, CompileErrorM m, MergeableM m) =>
   (Map.Map VariableName (VariableValue c)) ->
