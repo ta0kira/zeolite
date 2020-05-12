@@ -41,6 +41,7 @@ module CompilerCxx.Naming (
   qualifiedTypeGetter,
   sourceFilename,
   tableName,
+  testFilename,
   typeCreator,
   typeGetter,
   typeName,
@@ -66,6 +67,9 @@ sourceFilename n = "Category_" ++ show n ++ ".cpp"
 
 mainFilename :: String
 mainFilename = "main.cpp"
+
+testFilename :: String
+testFilename = "test.cpp"
 
 baseHeaderIncludes :: [String]
 baseHeaderIncludes = ["#include \"category-header.hpp\""]

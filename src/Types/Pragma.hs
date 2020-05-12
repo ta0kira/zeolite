@@ -22,6 +22,8 @@ module Types.Pragma (
   CodeVisibility(..),
   Pragma(..),
   getPragmaContext,
+  isModuleOnly,
+  isTestsOnly,
 ) where
 
 
@@ -42,3 +44,11 @@ data Pragma c =
 getPragmaContext :: Pragma c -> [c]
 getPragmaContext (PragmaVisibility c _) = c
 getPragmaContext (PragmaComment c _)    = c
+
+isModuleOnly :: Pragma c -> Bool
+isModuleOnly (PragmaVisibility _ ModuleOnly) = True
+isModuleOnly _                               = False
+
+isTestsOnly :: Pragma c -> Bool
+isTestsOnly (PragmaVisibility _ TestsOnly) = True
+isTestsOnly _                              = False

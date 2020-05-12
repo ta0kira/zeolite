@@ -16,30 +16,9 @@ limitations under the License.
 
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
-$TestsOnly$
+concrete Test {}
 
-define Testing {
-  check (x,y) {
-    if (!#x$equals(x,y)) {
-      fail(x)
-    }
-  }
-
-  checkBetween (x,l,h) {
-    if (!lessEquals<#x>(l,h)) {
-      fail("Invalid range")
-    }
-    if (!lessEquals<#x>(l,x) || !lessEquals<#x>(x,h)) {
-      fail(x)
-    }
-  }
-
-  @type lessEquals<#x>
-    #x defines Equals<#x>
-    #x defines LessThan<#x>
-  (#x,#x) -> (Bool)
-  lessEquals (x,y) {
-    // Using !#x$lessThan(y,x) wouldn't account for NaNs.
-    return #x$lessThan(x,y) || #x$equals(x,y)
-  }
+define Test {
+  @value Type1 val1
+  @value Type2 val2
 }

@@ -1,0 +1,6 @@
+root: "../.."
+path: "tests/module-only"
+private_deps: [
+  "internal"
+]
+mode: incremental {}

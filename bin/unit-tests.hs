@@ -24,6 +24,7 @@ import qualified Test.ParseMetadata   as TestParseMetadata
 import qualified Test.Parser          as TestParser
 import qualified Test.Pragma          as TestPragma
 import qualified Test.Procedure       as TestProcedure
+import qualified Test.SourceFile      as TestSourceFile
 import qualified Test.TypeCategory    as TestTypeCategory
 import qualified Test.TypeInstance    as TestTypeInstance
 
@@ -31,13 +32,14 @@ import qualified Test.TypeInstance    as TestTypeInstance
 main :: IO ()
 main = runAllTests $ concat [
     labelWith "DefinedCategory" TestDefinedCategory.tests,
-    labelWith "TypeInstance"    TestTypeInstance.tests,
+    labelWith "IntegrationTest" TestIntegrationTest.tests,
     labelWith "ParseMetadata"   TestParseMetadata.tests,
     labelWith "Parser"          TestParser.tests,
     labelWith "Pragma"          TestPragma.tests,
-    labelWith "TypeCategory"    TestTypeCategory.tests,
     labelWith "Procedure"       TestProcedure.tests,
-    labelWith "IntegrationTest" TestIntegrationTest.tests
+    labelWith "SourceFile"      TestSourceFile.tests,
+    labelWith "TypeCategory"    TestTypeCategory.tests,
+    labelWith "TypeInstance"    TestTypeInstance.tests
   ]
 
 labelWith :: CompileErrorM m => String -> [IO (m ())] -> [IO (m ())]

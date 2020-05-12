@@ -20,19 +20,19 @@ limitations under the License.
 {-# LANGUAGE Safe #-}
 
 module CompilerCxx.Category (
-  CategoryModule(..),
   CxxOutput(..),
+  LanguageModule(..),
   PrivateSource(..),
-  createMainFile,
-  createTestFile,
   compileCategoryDeclaration,
-  compileCategoryModule,
+  compileLanguageModule,
   compileConcreteDefinition,
   compileConcreteTemplate,
   compileInterfaceDefinition,
   compileModuleMain,
+  compileTestMain,
 ) where
 
+import Control.Monad (foldM)
 import Data.List (intercalate,sortBy)
 import Prelude hiding (pi)
 import qualified Data.Map as Map
@@ -46,6 +46,7 @@ import CompilerCxx.CategoryContext
 import CompilerCxx.Code
 import CompilerCxx.Naming
 import CompilerCxx.Procedure
+import Types.Builtin
 import Types.DefinedCategory
 import Types.GeneralType
 import Types.Positional
@@ -65,59 +66,94 @@ data CxxOutput =
     coOutput :: [String]
   }
 
-data CategoryModule c =
-  CategoryModule {
-    cnBase :: CategoryMap c,
-    cnNamespaces :: [Namespace],
-    cnPublic :: [AnyCategory c],
-    cnPrivate :: [PrivateSource c],
-    cnExternal :: [String]
+data LanguageModule c =
+  LanguageModule {
+    lmPublicNamespaces :: [Namespace],
+    lmPrivateNamespaces :: [Namespace],
+    lmLocalNamespaces :: [Namespace],
+    lmPublicDeps :: [AnyCategory c],
+    lmPrivateDeps :: [AnyCategory c],
+    lmTestingDeps :: [AnyCategory c],
+    lmPublicLocal :: [AnyCategory c],
+    lmPrivateLocal :: [AnyCategory c],
+    lmTestingLocal :: [AnyCategory c],
+    lmExternal :: [String]
   }
 
 data PrivateSource c =
   PrivateSource {
     psNamespace :: Namespace,
+    psTesting :: Bool,
     psCategory :: [AnyCategory c],
     psDefine :: [DefinedCategory c]
   }
 
-compileCategoryModule :: (Show c, CompileErrorM m, MergeableM m) =>
-  CategoryModule c -> m [CxxOutput]
-compileCategoryModule (CategoryModule tm ns cs xa ex) = do
+compileLanguageModule :: (Show c, CompileErrorM m, MergeableM m) =>
+  LanguageModule c -> [PrivateSource c] -> m [CxxOutput]
+compileLanguageModule (LanguageModule ns0 ns1 ns2 cs0 ps0 ts0 cs1 ps1 ts1 ex) xa = do
   checkSupefluous $ Set.toList $ (Set.fromList ex) `Set.difference` ca
-  tm' <- includeNewTypes tm cs
-  hxx <- collectAllOrErrorM $ map (compileCategoryDeclaration tm' ns) cs
-  let interfaces = filter (not . isValueConcrete) cs
-  cxx <- collectAllOrErrorM $ map compileInterfaceDefinition interfaces
-  xa2 <- collectAllOrErrorM $ map (compileInternal ns) xa
-  let xx = concat $ map snd xa2
-  let dm = mapByName $ concat $ map fst xa2
-  checkDefined dm ex $ filter isValueConcrete cs
-  return $ hxx ++ cxx ++ xx where
-    compileInternal ns0 (PrivateSource ns1 cs2 ds) = do
-      let cs' = cs++cs2
-      checkLocals ds (ex ++ map (show . getCategoryName) cs')
+  (hxx1,cxx1) <- fmap mergeGeneratedP $ collectAllOrErrorM $ map (compileSourceP tmPublic  nsPublic)  cs1
+  (hxx2,cxx2) <- fmap mergeGeneratedP $ collectAllOrErrorM $ map (compileSourceP tmPrivate nsPrivate) ps1
+  (hxx3,cxx3) <- fmap mergeGeneratedP $ collectAllOrErrorM $ map (compileSourceP tmTesting nsTesting) ts1
+  (ds,xx) <- fmap mergeGeneratedX $ collectAllOrErrorM $ map compileSourceX xa
+  -- TODO: This should account for a name clash between a category declared in a
+  -- TestsOnly .0rp and one declared in a non-TestOnly .0rx.
+  let dm = mapByName ds
+  checkDefined dm ex $ filter isValueConcrete (cs1 ++ ps1 ++ ts1)
+  return $ hxx1 ++ hxx2 ++ hxx3 ++ cxx1 ++ cxx2 ++ cxx3 ++ xx where
+    tmPublic  = foldM includeNewTypes defaultCategories [cs0,cs1]
+    tmPrivate = tmPublic  >>= \tm -> foldM includeNewTypes tm [ps0,ps1]
+    tmTesting = tmPrivate >>= \tm -> foldM includeNewTypes tm [ts0,ts1]
+    nsPublic = ns0 ++ ns2
+    nsPrivate = nsPublic ++ ns1
+    nsTesting = nsPrivate
+    compileSourceP tm ns c = do
+      tm' <- tm
+      hxx <- compileCategoryDeclaration tm' ns c
+      cxx <- if isValueConcrete c
+                then return []
+                else compileInterfaceDefinition c >>= return . (:[])
+      return (hxx,cxx)
+    mergeGeneratedP ((hxx,cxx):ps) = let (hxx2,cxx2) = mergeGeneratedP ps in (hxx:hxx2,cxx++cxx2)
+    mergeGeneratedP _              = ([],[])
+    compileSourceX (PrivateSource ns testing cs2 ds) = do
+      tm <- if testing
+               then tmTesting
+               else tmPrivate
+      let ns4 = if testing
+                then nsTesting
+                else nsPrivate
+      let cs = if testing
+                  then cs1 ++ ps1 ++ ts1
+                  else cs1 ++ ps1
+      checkLocals ds (ex ++ map (show . getCategoryName) (cs2 ++ cs))
       let dm = mapByName ds
       checkDefined dm [] $ filter isValueConcrete cs2
-      tm' <- includeNewTypes tm cs'
-      hxx <- collectAllOrErrorM $ map (compileCategoryDeclaration tm' ns0) cs2
+      tm' <- includeNewTypes tm cs2
+      -- Ensures that there isn't an inavertent collision when resolving
+      -- dependencies for the module later on.
+      tmTesting' <- tmTesting
+      _ <- includeNewTypes tmTesting' cs2 `reviseError` "In a module source that is conditionally public"
+      hxx <- collectAllOrErrorM $ map (compileCategoryDeclaration tm' ns4) cs2
       let interfaces = filter (not . isValueConcrete) cs2
       cxx1 <- collectAllOrErrorM $ map compileInterfaceDefinition interfaces
-      cxx2 <- collectAllOrErrorM $ map (compileDefinition tm' (ns1:ns)) ds
+      cxx2 <- collectAllOrErrorM $ map (compileDefinition tm' (ns:ns4)) ds
       return (ds,hxx ++ cxx1 ++ cxx2)
-    compileDefinition tm2 ns2 d = do
-      tm2' <- mergeInternalInheritance tm2 d
-      let refines = dcName d `Map.lookup` tm2 >>= return . getCategoryRefines
-      compileConcreteDefinition tm2' ns2 refines d
+    mergeGeneratedX ((ds,xx):xs2) = let (ds2,xx2) = mergeGeneratedX xs2 in (ds++ds2,xx++xx2)
+    mergeGeneratedX _             = ([],[])
+    compileDefinition tm ns4 d = do
+      tm' <- mergeInternalInheritance tm d
+      let refines = dcName d `Map.lookup` tm >>= return . getCategoryRefines
+      compileConcreteDefinition tm' ns4 refines d
     mapByName = Map.fromListWith (++) . map (\d -> (dcName d,[d]))
-    ca = Set.fromList $ map (show . getCategoryName) $ filter isValueConcrete cs
+    ca = Set.fromList $ map (show . getCategoryName) $ filter isValueConcrete (cs1 ++ ps1 ++ ts1)
     checkLocals ds cs2 = mergeAllM $ map (checkLocal $ Set.fromList cs2) ds
     checkLocal cs2 d =
       if (show $ dcName d) `Set.member` cs2
          then return ()
          else compileError ("Definition for " ++ show (dcName d) ++
                             formatFullContextBrace (dcContext d) ++
-                            " does not correspond to a category in this module")
+                            " does not correspond to a visible category in this module")
     checkDefined dm ex2 = mergeAllM . map (checkSingle dm (Set.fromList ex2))
     checkSingle dm es t =
       case ((show $ getCategoryName t) `Set.member` es, getCategoryName t `Map.lookup` dm) of
@@ -141,23 +177,30 @@ compileCategoryModule (CategoryModule tm ns cs xa ex) = do
       | otherwise = compileError $ "External categories either not concrete or not present: " ++
                                    intercalate ", " es2
 
+compileTestMain :: (Show c, CompileErrorM m, MergeableM m) =>
+  LanguageModule c -> PrivateSource c -> Expression c -> m CxxOutput
+compileTestMain (LanguageModule ns0 ns1 ns2 cs0 ps0 ts0 cs1 ps1 ts1 _) ts2 e = do
+  tm' <- tm
+  (req,main) <- createTestFile tm' e
+  return $ CxxOutput Nothing testFilename NoNamespace ([psNamespace ts2]++ns0++ns1++ns2) req main where
+  tm = foldM includeNewTypes defaultCategories [cs0,cs1,ps0,ps1,ts0,ts1,psCategory ts2]
+
 compileModuleMain :: (Show c, CompileErrorM m, MergeableM m) =>
-  CategoryModule c -> CategoryName -> FunctionName -> m CxxOutput
-compileModuleMain (CategoryModule tm _ cs xa _) n f = do
-  xx <- fmap concat $ collectAllOrErrorM $ filter (not . isCompileError) $ map maybeCompileMain xa
-  reconcile xx where
-    maybeCompileMain (PrivateSource _ cs2 ds) = do
-      let cs' = cs++cs2
-      tm' <- includeNewTypes tm cs'
-      let dm = Set.fromList $ map dcName ds
-      if n `Set.member` dm
-         then do
-           (ns2,main) <- createMainFile tm' n f
-           return [CxxOutput Nothing mainFilename NoNamespace [ns2] [n] main]
-         else return []
-    reconcile [x] = return x
+  LanguageModule c -> [PrivateSource c] -> CategoryName -> FunctionName -> m CxxOutput
+compileModuleMain (LanguageModule ns0 ns1 ns2 cs0 ps0 ts0 cs1 ps1 ts1 _) xa n f = do
+  let resolved = filter (\d -> dcName d == n) $ concat $ map psDefine xa
+  reconcile resolved
+  tm' <- tm
+  let cs = filter (\c -> getCategoryName c == n) $ concat $ map psCategory xa
+  tm'' <- includeNewTypes tm' cs
+  (ns,main) <- createMainFile tm'' n f
+  return $ CxxOutput Nothing mainFilename NoNamespace ([ns]++ns0++ns1++ns2) [n] main where
+    tm = foldM includeNewTypes defaultCategories [cs0,cs1,ps0,ps1,ts0,ts1]
+    reconcile [_] = return ()
     reconcile []  = compileErrorM $ "No matches for main category " ++ show n
-    reconcile _   = compileErrorM $ "Multiple matches for main category " ++ show n
+    reconcile ds  =
+      flip reviseError ("Multiple matches for main category " ++ show n) $
+        mergeAllM $ map (\d -> compileError $ "Defined at " ++ formatFullContext (dcContext d)) ds
 
 compileCategoryDeclaration :: (Show c, CompileErrorM m, MergeableM m) =>
   CategoryMap c -> [Namespace] -> AnyCategory c -> m CxxOutput

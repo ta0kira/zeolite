@@ -235,10 +235,8 @@ getObjectFilesForDeps = concat . map cmObjectFiles
 loadPublicDeps :: String -> [FilePath] -> IO (Bool,[CompileMetadata])
 loadPublicDeps h = loadDepsCommon False h Set.empty cmPublicDeps
 
-loadTestingDeps :: String -> FilePath -> IO (Bool,[CompileMetadata])
-loadTestingDeps h p = do
-  m <- loadMetadata p
-  loadDepsCommon False h Set.empty cmPublicDeps (p:cmPrivateDeps m)
+loadTestingDeps :: String -> CompileMetadata -> IO (Bool,[CompileMetadata])
+loadTestingDeps h m = loadDepsCommon False h (Set.fromList [cmPath m]) cmPublicDeps (cmPublicDeps m ++ cmPrivateDeps m)
 
 loadPrivateDeps :: String -> [CompileMetadata] -> IO (Bool,[CompileMetadata])
 loadPrivateDeps h ms = do
@@ -247,7 +245,7 @@ loadPrivateDeps h ms = do
     paths = concat $ map (\m -> cmPublicDeps m ++ cmPrivateDeps m) ms
     pa = Set.fromList $ map cmPath ms
 
-loadDepsCommon :: Bool -> String -> Set.Set FilePath->
+loadDepsCommon :: Bool -> String -> Set.Set FilePath ->
   (CompileMetadata -> [FilePath]) -> [FilePath] -> IO (Bool,[CompileMetadata])
 loadDepsCommon s h pa0 f ps = fmap snd $ fixedPaths >>= collect (pa0,(True,[])) where
   fixedPaths = sequence $ map canonicalizePath ps
@@ -354,8 +352,8 @@ getObjectFileResolver os ns ds = resolved ++ nonCategories where
              fs' = (filter (not . flip elem fa') fs) ++ fs0
            _ -> collectAll ca fa cs
 
-resolveObjectDeps :: FilePath -> [([FilePath],CxxOutput)] -> [CompileMetadata] -> [ObjectFile]
-resolveObjectDeps p os deps = resolvedCategories ++ nonCategories where
+resolveObjectDeps :: [CompileMetadata] -> FilePath -> [([FilePath],CxxOutput)] -> [ObjectFile]
+resolveObjectDeps deps p os = resolvedCategories ++ nonCategories where
   categories = filter (isJust . coCategory . snd) os
   publicNamespaces = getNamespacesForDeps deps
   nonCategories = map OtherObjectFile $ concat $ map fst $ filter (not . isJust . coCategory . snd) os

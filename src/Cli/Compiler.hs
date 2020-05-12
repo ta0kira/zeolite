@@ -24,7 +24,7 @@ module Cli.Compiler (
   runModuleTests,
 ) where
 
-import Control.Monad (when)
+import Control.Monad (foldM,when)
 import Data.Either (partitionEithers)
 import Data.List (isSuffixOf,nub,sort)
 import System.Directory
@@ -49,6 +49,7 @@ import Config.Programs
 import Parser.SourceFile
 import Types.Builtin
 import Types.DefinedCategory
+import Types.Pragma
 import Types.TypeCategory
 import Types.TypeInstance
 
@@ -85,25 +86,26 @@ compileModule (ModuleSpec p d is is2 ps xs ts es ep m f) = do
   let hash = getCompilerHash backend
   as  <- fmap fixPaths $ sequence $ map (resolveModule resolver (p </> d)) is
   as2 <- fmap fixPaths $ sequence $ map (resolveModule resolver (p </> d)) is2
-  (fr,deps) <- loadPublicDeps hash (as ++ as2)
-  checkAllowedStale fr f
+  (fr1,deps1) <- loadPublicDeps hash as
+  checkAllowedStale fr1 f
+  (fr2,deps2) <- loadPublicDeps hash as2
+  checkAllowedStale fr2 f
   base <- resolveBaseModule resolver
   actual <- resolveModule resolver p d
   isBase <- isBaseModule resolver actual
   -- Lazy dependency loading, in case we're compiling base.
-  deps2 <- if isBase
-              then return deps
-              else do
-                (fr2,bpDeps) <- loadPublicDeps hash [base]
-                checkAllowedStale fr2 f
-                return $ bpDeps ++ deps
-  let ss = fixPaths $ getSourceFilesForDeps deps2
-  ss' <- zipWithContents p ss
-  ps' <- zipWithContents p ps
-  xs' <- zipWithContents p xs
-  ns0 <- canonicalizePath (p </> d) >>= return . StaticNamespace . publicNamespace
-  let ns2 = map StaticNamespace $ filter (not . null) $ getNamespacesForDeps deps
-  let fs = compileAll ns0 ns2 ss' ps' xs'
+  deps1' <- if isBase
+               then return deps1
+               else do
+                 (fr3,bpDeps) <- loadPublicDeps hash [base]
+                 checkAllowedStale fr3 f
+                 return $ bpDeps ++ deps1
+  ns0 <- createPublicNamespace p d
+  let ex = concat $ map getSourceCategories es
+  cm <- loadLanguageModule p ns0 ex ps deps1' deps2
+  xa <- fmap collectAllOrErrorM $ sequence $ map (loadPrivateSource p) xs
+  let fs = compileAll cm xa
+  eraseCachedData (p </> d)
   when (isCompileError fs) $ do
     formatWarnings fs
     hPutStr stderr $ "Compiler errors:\n" ++ (show $ getCompileError fs)
@@ -117,7 +119,7 @@ compileModule (ModuleSpec p d is is2 ps xs ts es ep m f) = do
   let paths = map (\ns -> getCachedPath (p </> d) ns "") $ nub $ filter (not . null) $ map show $ [ns0] ++ map coNamespace fs'
   paths' <- sequence $ map canonicalizePath paths
   s0 <- canonicalizePath $ getCachedPath (p </> d) (show ns0) ""
-  let paths2 = base:(getIncludePathsForDeps deps2) ++ ep' ++ paths'
+  let paths2 = base:(getIncludePathsForDeps (deps1' ++ deps2)) ++ ep' ++ paths'
   let hxx   = filter (isSuffixOf ".hpp" . coFilename)       fs'
   let other = filter (not . isSuffixOf ".hpp" . coFilename) fs'
   os1 <- sequence $ map (writeOutputFile backend (show ns0) paths2) $ hxx ++ other
@@ -128,8 +130,8 @@ compileModule (ModuleSpec p d is is2 ps xs ts es ep m f) = do
   let (hxx',cxx,os') = sortCompiledFiles files'
   let (osCat,osOther) = partitionEithers os2
   path <- canonicalizePath $ p </> d
-  let os1' = resolveObjectDeps path (os1 ++ osCat) deps2
-  let cm = CompileMetadata {
+  let os1' = resolveObjectDeps (deps1' ++ deps2) path (os1 ++ osCat)
+  let cm2 = CompileMetadata {
       cmVersionHash = hash,
       cmPath = path,
       cmNamespace = show ns0,
@@ -145,9 +147,15 @@ compileModule (ModuleSpec p d is is2 ps xs ts es ep m f) = do
       cmLinkFlags = getLinkFlags m,
       cmObjectFiles = os1' ++ osOther ++ map OtherObjectFile os'
     }
-  writeMetadata (p </> d) cm
-  createBinary backend resolver paths' (cm:deps) m mf
+  createBinary backend resolver paths' (cm2:(deps1' ++ deps2)) m mf
+  writeMetadata (p </> d) cm2
   hPutStrLn stderr $ "Zeolite compilation succeeded." where
+    compileAll cm xa = do
+      (cm',pc) <- cm
+      xa' <- xa
+      xx <- compileLanguageModule cm' xa'
+      ms <- maybeCreateMain cm' xa' m
+      return (pc,ms,xx)
     ep' = fixPaths $ map (p </>) ep
     writeOutputFile b ns0 paths ca@(CxxOutput _ f2 ns _ _ content) = do
       hPutStrLn stderr $ "Writing file " ++ f2
@@ -198,27 +206,6 @@ compileModule (ModuleSpec p d is is2 ps xs ts es ep m f) = do
           fmap Just $ runCxxCommand b command
       | isSuffixOf ".a" f2 || isSuffixOf ".o" f2 = return (Just f2)
       | otherwise = return Nothing
-    compileAll ns0 ns2 is3 cs ds2 = do
-      tm1 <- addIncludes defaultCategories is3
-      cs' <- collectAllOrErrorM $ map parsePublicSource cs
-      let cs'' = map (setCategoryNamespace ns0) (concat $ map snd cs')
-      xa <- collectAllOrErrorM $ map parsePrivate ds2
-      let cm = CategoryModule {
-          cnBase = tm1,
-          cnNamespaces = ns0:ns2,
-          cnPublic = cs'',
-          cnPrivate = xa,
-          cnExternal = concat $ map getSourceCategories es
-        }
-      xx <- compileCategoryModule cm
-      let pc = map getCategoryName cs''
-      ms <- maybeCreateMain cm m
-      return (pc,ms,xx)
-    parsePrivate ds = do
-      let ns1 = StaticNamespace $ privateNamespace (p </> fst ds)
-      (_,cs,ds') <- parseInternalSource ds
-      let cs' = map (setCategoryNamespace ns1) cs
-      return $ PrivateSource ns1 cs' ds'
     createBinary b r paths deps (CompileBinary n _ o lf) ms
       | length ms > 1 = do
         hPutStrLn stderr $ "Multiple matches for main category " ++ n ++ "."
@@ -236,11 +223,11 @@ compileModule (ModuleSpec p d is is2 ps xs ts es ep m f) = do
           hPutStr h $ concat $ map (++ "\n") content
           hClose h
           base <- resolveBaseModule r
-          (_,bpDeps) <- loadPublicDeps (getCompilerHash b) [base]
-          (_,deps2) <- loadPrivateDeps (getCompilerHash b) (bpDeps ++ deps)
+          (fr,deps2)  <- loadPrivateDeps (getCompilerHash b) deps
+          checkAllowedStale fr f
           let lf' = lf ++ getLinkFlagsForDeps deps2
-          let paths' = fixPaths $ paths ++ base:(getIncludePathsForDeps deps2)
-          let os    = getObjectFilesForDeps deps2
+          let paths' = fixPaths $ paths ++ base:(getIncludePathsForDeps deps)
+          let os     = getObjectFilesForDeps deps2
           let ofr = getObjectFileResolver os
           let os' = ofr ns2 req
           let command = CompileToBinary o' os' f0 paths' lf'
@@ -248,18 +235,17 @@ compileModule (ModuleSpec p d is is2 ps xs ts es ep m f) = do
           _ <- runCxxCommand b command
           removeFile o'
     createBinary _ _ _ _ _ _ = return ()
-    maybeCreateMain cm (CompileBinary n f2 _ _) =
-      fmap (:[]) $ compileModuleMain cm (CategoryName n) (FunctionName f2)
-    maybeCreateMain _ _ = return []
+    maybeCreateMain cm2 xs2 (CompileBinary n f2 _ _) =
+      fmap (:[]) $ compileModuleMain cm2 xs2 (CategoryName n) (FunctionName f2)
+    maybeCreateMain _ _ _ = return []
 
-createModuleTemplates :: FilePath -> FilePath -> [CompileMetadata] -> IO ()
-createModuleTemplates p d deps = do
+createModuleTemplates :: FilePath -> FilePath -> [CompileMetadata] -> [CompileMetadata] -> IO ()
+createModuleTemplates p d deps1 deps2 = do
+  ns0 <- createPublicNamespace p d
   (ps,xs,_) <- findSourceFiles p d
-  let ss = fixPaths $ getSourceFilesForDeps deps
-  ps' <- zipWithContents p ps
+  cm <- fmap (fmap fst) $ loadLanguageModule p ns0 [] ps deps1 deps2
   xs' <- zipWithContents p xs
-  ss' <- zipWithContents p ss
-  let ts = createTemplates ss' ps' xs' :: CompileInfo [CxxOutput]
+  let ts = createTemplates cm xs'
   if isCompileError ts
       then do
         formatWarnings ts
@@ -269,18 +255,15 @@ createModuleTemplates p d deps = do
       else do
         formatWarnings ts
         sequence_ $ map writeTemplate $ getCompileSuccess ts where
-  createTemplates is cs ds2 = do
-    tm <- addIncludes defaultCategories is
-    cs' <- collectAllOrErrorM $ map parsePublicSource cs
-    let cs'' = map (setCategoryNamespace DynamicNamespace) (concat $ map snd cs')
-    tm2 <- includeNewTypes tm cs''
-    da <- collectAllOrErrorM $ map parseInternalSource ds2
-    let ds2' = concat $ map (\(_,_,d2) -> d2) da
-    let cs2 = concat $ map (\(_,c,_) -> c) da
-    tm3 <- includeNewTypes tm2 cs2
-    let ca = Set.fromList $ map getCategoryName $ filter isValueConcrete (concat $ map snd cs')
-    let ca' = foldr Set.delete ca $ map dcName ds2'
-    collectAllOrErrorM $ map (compileConcreteTemplate tm3) $ Set.toList ca'
+  createTemplates cm xs = do
+    (LanguageModule _ _ _ cs0 ps0 ts0 cs1 ps1 ts1 _) <- cm
+    ds <- collectAllOrErrorM $ map parseInternalSource xs
+    let ds2 = concat $ map (\(_,_,d2) -> d2) ds
+    tm <- foldM includeNewTypes defaultCategories [cs0,cs1,ps0,ps1,ts0,ts1]
+    let cs = filter isValueConcrete $ cs1++ps1++ts1
+    let ca = Set.fromList $ map getCategoryName $ filter isValueConcrete cs
+    let ca' = foldr Set.delete ca $ map dcName ds2
+    collectAllOrErrorM $ map (compileConcreteTemplate tm) $ Set.toList ca'
   writeTemplate (CxxOutput _ n _ _ _ content) = do
     let n' = p </> d </> n
     exists <- doesFileExist n'
@@ -293,31 +276,78 @@ createModuleTemplates p d deps = do
 runModuleTests :: CompilerBackend b => b -> FilePath -> [FilePath] -> LoadedTests -> IO [((Int,Int),CompileInfo ())]
 runModuleTests b base tp (LoadedTests p d m deps1 deps2) = do
   let paths = base:(getIncludePathsForDeps deps1)
-  let ss = fixPaths $ getSourceFilesForDeps deps1
-  let os = getObjectFilesForDeps deps2
-  ss' <- zipWithContents p ss
   mapM_ showSkipped $ filter (not . isTestAllowed) $ cmTestFiles m
   ts' <- zipWithContents p $ map (d </>) $ filter isTestAllowed $ cmTestFiles m
-  tm <- return $ do
-    cs <- collectAllOrErrorM $ map parsePublicSource ss'
-    includeNewTypes defaultCategories (concat $ map snd cs)
-  if isCompileError tm
-      then return [((0,0),tm >> return ())]
-      else sequence $ map (runSingleTest b paths (m:deps1) os (getCompileSuccess tm)) ts' where
+  cm <- fmap (fmap fst) $ loadLanguageModule p NoNamespace [] [] deps1 []
+  if isCompileError cm
+      then return [((0,0),cm >> return ())]
+      else sequence $ map (runSingleTest b (getCompileSuccess cm) paths (m:deps2)) ts' where
     allowTests = Set.fromList tp
     isTestAllowed t = if null allowTests then True else t `Set.member` allowTests
     showSkipped f = do
       hPutStrLn stderr $ "Skipping tests in " ++ f ++ " due to explicit test filter."
+
+createPublicNamespace :: FilePath -> FilePath -> IO Namespace
+createPublicNamespace p d = canonicalizePath (p </> d) >>= return . StaticNamespace . publicNamespace
+
+createPrivateNamespace :: FilePath -> FilePath -> IO Namespace
+createPrivateNamespace p f = canonicalizePath (p </> f) >>= return . StaticNamespace . publicNamespace
 
 formatWarnings :: CompileInfo a -> IO ()
 formatWarnings c
   | null $ getCompileWarnings c = return ()
   | otherwise = hPutStr stderr $ "Compiler warnings:\n" ++ (concat $ map (++ "\n") (getCompileWarnings c))
 
-addIncludes :: CategoryMap SourcePos -> [(FilePath,String)] -> CompileInfo (CategoryMap SourcePos)
-addIncludes tm fs = do
-  cs <- collectAllOrErrorM $ map parsePublicSource fs
-  includeNewTypes tm (concat $ map snd cs)
-
 zipWithContents :: FilePath -> [FilePath] -> IO [(FilePath,String)]
 zipWithContents p fs = fmap (zip $ map fixPath fs) $ sequence $ map (readFile . (p </>)) fs
+
+loadPrivateSource :: CompileErrorM m => FilePath -> FilePath -> IO (m (PrivateSource SourcePos))
+loadPrivateSource p f = do
+  [f'] <- zipWithContents p [f]
+  ns <- createPrivateNamespace p f
+  return $ do
+    (pragmas,cs,ds) <- parseInternalSource f'
+    let cs' = map (setCategoryNamespace ns) cs
+    let testing = any isTestsOnly pragmas
+    return $ PrivateSource ns testing cs' ds
+
+loadLanguageModule :: CompileErrorM m => FilePath -> Namespace -> [String] -> [FilePath] ->
+  [CompileMetadata] -> [CompileMetadata] -> IO (m (LanguageModule SourcePos,[CategoryName]))
+loadLanguageModule p ns2 ex fs deps1 deps2 = do
+  let deps1' = getSourceFilesForDeps deps1
+  let deps2' = getSourceFilesForDeps deps2
+  m0 <- loadAllPublic deps1'
+  m1 <- loadAllPublic deps2'
+  m2 <- loadAllPublic fs
+  return $ construct m0 m1 m2 where
+    ns0 = map StaticNamespace $ filter (not . null) $ getNamespacesForDeps deps1
+    ns1 = map StaticNamespace $ filter (not . null) $ getNamespacesForDeps deps2
+    construct m0 m1 m2 = do
+      (ps0,_,tsA0,_)      <- m0
+      (ps1,_,tsA1,_)      <- m1
+      (ps2,xs2,tsA2,tsB2) <- m2
+      let cm = LanguageModule {
+          lmPublicNamespaces = ns0,
+          lmPrivateNamespaces = ns1,
+          lmLocalNamespaces = [ns2],
+          lmPublicDeps = ps0,
+          lmPrivateDeps = ps1,
+          lmTestingDeps = tsA0++tsA1,
+          lmPublicLocal = map (setCategoryNamespace ns2) ps2,
+          lmPrivateLocal = map (setCategoryNamespace ns2) xs2,
+          lmTestingLocal = map (setCategoryNamespace ns2) $ tsA2 ++ tsB2,
+          lmExternal = ex
+        }
+      return (cm,map getCategoryName $ ps2++xs2++tsA2)
+    loadPublic p2 = parsePublicSource p2 >>= return . uncurry partition
+    partition pragmas cs
+      | (any isModuleOnly pragmas) && (any isTestsOnly pragmas) = ([],[],[],cs)
+      | (any isTestsOnly pragmas)                               = ([],[],cs,[])
+      | (any isModuleOnly pragmas)                              = ([],cs,[],[])
+      | otherwise                                               = (cs,[],[],[])
+    loadAllPublic fs2 = do
+      fs2' <- zipWithContents p fs2
+      return $ do
+        as <- collectAllOrErrorM $ map loadPublic fs2'
+        return $ foldl merge4 ([],[],[],[]) as
+    merge4 (ps1,xs1,tsA1,tsB1) (ps2,xs2,tsA2,tsB2) = (ps1++ps2,xs1++xs2,tsA1++tsA2,tsB1++tsB2)

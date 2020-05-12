@@ -1,0 +1,3 @@
+root: "../../.."
+path: "tests/module-only/internal"
+mode: incremental {}

@@ -50,13 +50,43 @@ create_file() {
 
 test_check_defs() {
   local output=$(do_zeolite -p "$ZEOLITE_PATH" -r tests/check-defs || true)
-  if ! echo "$output" | egrep -q "Type .+ is defined 2 times"; then
+  if ! echo "$output" | egrep -q 'Type .+ is defined 2 times'; then
     show_message 'Expected Type definition error from tests/check-defs:'
     echo "$output" 1>&2
     return 1
   fi
-  if ! echo "$output" | egrep -q "Undefined .+ has not been defined"; then
+  if ! echo "$output" | egrep -q 'Undefined .+ has not been defined'; then
     show_message 'Expected Undefined definition error from tests/check-defs:'
+    echo "$output" 1>&2
+    return 1
+  fi
+}
+
+
+test_tests_only() {
+  local output=$(do_zeolite -p "$ZEOLITE_PATH" -r tests/tests-only || true)
+  if ! echo "$output" | egrep -q 'Definition for Type1 .+ visible category'; then
+    show_message 'Expected Type1 definition error from tests/tests-only:'
+    echo "$output" 1>&2
+    return 1
+  fi
+  if echo "$output" | egrep -q 'Type2'; then
+    show_message 'Unexpected Type2 definition error from tests/tests-only:'
+    echo "$output" 1>&2
+    return 1
+  fi
+}
+
+
+test_module_only() {
+  local output=$(do_zeolite -p "$ZEOLITE_PATH" -r tests/module-only || true)
+  if ! echo "$output" | egrep -q "Type1 not found"; then
+    show_message 'Expected Type1 definition error from tests/module-only:'
+    echo "$output" 1>&2
+    return 1
+  fi
+  if echo "$output" | egrep -q 'Type2'; then
+    show_message 'Unexpected Type2 definition error from tests/module-only:'
     echo "$output" 1>&2
     return 1
   fi
@@ -159,6 +189,8 @@ run_all() {
 
 ALL_TESTS=(
   test_check_defs
+  test_tests_only
+  test_module_only
   test_templates
   test_fast
   test_bad_system_include

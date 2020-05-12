@@ -55,11 +55,11 @@ runCompiler (CompileOptions _ _ _ ds _ _ p (ExecuteTests tp) f) = do
       m <- loadMetadata (p </> d)
       (fr0,deps0) <- loadPublicDeps (getCompilerHash b) [base]
       checkAllowedStale fr0 f
-      (fr1,deps1) <- loadTestingDeps (getCompilerHash b) (p </> d)
+      (fr1,deps1) <- loadTestingDeps (getCompilerHash b) m
       checkAllowedStale fr1 f
-      (fr2,deps2) <- loadPrivateDeps (getCompilerHash b) (deps0++deps1)
+      (fr2,deps2) <- loadPrivateDeps (getCompilerHash b) (deps0++[m]++deps1)
       checkAllowedStale fr2 f
-      return $ LoadedTests p d m (deps0++deps1) (deps2)
+      return $ LoadedTests p d m (deps0++[m]++deps1) deps2
     checkTestFilters ts = do
       let possibleTests = Set.fromList $ concat $ map (cmTestFiles . ltMetadata) ts
       case Set.toList $ (Set.fromList tp) `Set.difference` possibleTests of
@@ -157,10 +157,12 @@ runCompiler (CompileOptions _ is is2 ds _ _ p CreateTemplates f) = mapM_ compile
     base <- resolveBaseModule resolver
     as  <- fmap fixPaths $ sequence $ map (resolveModule resolver (p </> d)) is
     as2 <- fmap fixPaths $ sequence $ map (resolveModule resolver (p </> d)) is2
-    (fr,deps) <- loadPublicDeps (getCompilerHash backend) ([base] ++ as ++ as2)
-    checkAllowedStale fr f
+    (fr1,deps1) <- loadPublicDeps (getCompilerHash backend) (base:as)
+    checkAllowedStale fr1 f
+    (fr2,deps2) <- loadPublicDeps (getCompilerHash backend) as2
+    checkAllowedStale fr2 f
     path <- canonicalizePath p
-    createModuleTemplates path d deps
+    createModuleTemplates path d deps1 deps2
 
 runCompiler (CompileOptions h is is2 ds es ep p m f) = mapM_ compileSingle ds where
   compileSingle d = do
@@ -172,7 +174,6 @@ runCompiler (CompileOptions h is is2 ds es ep p m f) = mapM_ compileSingle ds wh
       hPutStrLn stderr $ "Module " ++ d ++ " has an existing configuration. " ++
                         "Recompile with -r or use -f to overwrite the config."
       exitFailure
-    eraseCachedData (p </> d)
     absolute <- canonicalizePath p
     let rm = ModuleConfig {
       rmRoot = absolute,

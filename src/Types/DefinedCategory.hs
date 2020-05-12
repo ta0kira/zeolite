@@ -165,7 +165,7 @@ mergeInternalInheritance :: (Show c, CompileErrorM m, MergeableM m) =>
 mergeInternalInheritance tm d = do
   let rs2 = dcRefines d
   let ds2 = dcDefines d
-  (_,t@(ValueConcrete c ns n ps rs ds vs fs)) <- getConcreteCategory tm ([],dcName d)
+  (_,t@(ValueConcrete c ns n ps rs ds vs fs)) <- getConcreteCategory tm (dcContext d,dcName d)
   let c2 = ValueConcrete c ns n ps (rs++rs2) (ds++ds2) vs fs
   let tm' = Map.insert (dcName d) c2 tm
   let r = CategoryResolver tm'

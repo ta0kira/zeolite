@@ -16,6 +16,8 @@ limitations under the License.
 
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
+$TestsOnly$
+
 concrete Testing {
   @type check<#x>
     #x requires Formatted

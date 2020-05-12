@@ -41,13 +41,11 @@ import Config.Programs
 import Parser.SourceFile
 import Types.IntegrationTest
 import Types.TypeCategory
-import Types.TypeInstance
 
 
-runSingleTest :: CompilerBackend b => b -> [String] -> [CompileMetadata] ->
-                 [ObjectFile] -> CategoryMap SourcePos -> (String,String) ->
-                 IO ((Int,Int),CompileInfo ())
-runSingleTest b paths deps os tm (f,s) = do
+runSingleTest :: CompilerBackend b => b -> LanguageModule SourcePos ->
+  [FilePath] -> [CompileMetadata] -> (String,String) -> IO ((Int,Int),CompileInfo ())
+runSingleTest b cm paths deps (f,s) = do
   hPutStrLn stderr $ "\nExecuting tests from " ++ f
   allResults <- checkAndRun (parseTestSource (f,s))
   return $ second (flip reviseError $ "\nIn test file " ++ f) allResults where
@@ -73,9 +71,9 @@ runSingleTest b paths deps os tm (f,s) = do
       return outcome
 
     run (ExpectCompileError _ rs es) cs ds = do
-      let result = compileAll Nothing cs ds :: CompileInfo ([CategoryName],[String],Namespace,[CxxOutput])
+      let result = compileAll Nothing cs ds
       if not $ isCompileError result
-         then return $ compileError "Expected compiler error"
+         then undefined  -- Should be caught in compileAll.
          else return $ do
            let warnings = getCompileWarnings result
            let errors = show $ getCompileError result
@@ -101,13 +99,13 @@ runSingleTest b paths deps os tm (f,s) = do
          else mergeAllM [cr,ce]
 
     execute s2 e rs es cs ds = do
-      let result = compileAll (Just e) cs ds :: CompileInfo ([CategoryName],[String],Namespace,[CxxOutput])
+      let result = compileAll (Just e) cs ds
       if isCompileError result
          then return $ result >> return ()
          else do
            let warnings = getCompileWarnings result
-           let (req,main,ns,fs) = getCompileSuccess result
-           (dir,binaryName) <- createBinary main req [ns] fs
+           let (xx,main) = getCompileSuccess result
+           (dir,binaryName) <- createBinary main xx
            let command = TestCommand binaryName (takeDirectory binaryName)
            (TestCommandResult s2' out err) <- runTestCommand b command
            case (s2,s2') of
@@ -119,26 +117,19 @@ runSingleTest b paths deps os tm (f,s) = do
                   return result2
 
     compileAll e cs ds = do
-      let ns0 = map (StaticNamespace . cmNamespace) deps
       let ns1 = StaticNamespace $ privateNamespace s
       let cs' = map (setCategoryNamespace ns1) cs
-      let cm = CategoryModule {
-          cnBase = tm,
-          cnNamespaces = ns0,
-          cnPublic = [],
-          cnPrivate = [PrivateSource {
-              psNamespace = ns1,
-              psCategory = cs',
-              psDefine = ds
-            }],
-          cnExternal = []
+      let xs = PrivateSource {
+          psNamespace = ns1,
+          psTesting = True,
+          psCategory = cs',
+          psDefine = ds
         }
-      xx <- compileCategoryModule cm
-      tm' <- includeNewTypes tm cs'
-      (req,main) <- case e of
-                         Just e2 -> createTestFile tm' e2
-                         Nothing -> return ([],[])
-      return (req,main,ns1,xx)
+      xx <- compileLanguageModule cm [xs]
+      main <- case e of
+                   Just e2 -> compileTestMain cm xs e2
+                   Nothing -> compileError "Expected compiler error"
+      return (xx,main)
 
     checkRequired rs comp err out = mergeAllM $ map (checkSubsetForRegex True  comp err out) rs
     checkExcluded es comp err out = mergeAllM $ map (checkSubsetForRegex False comp err out) es
@@ -155,19 +146,21 @@ runSingleTest b paths deps os tm (f,s) = do
       let found = any (=~ r) ms
       when (found && not expected) $ compileError $ "Pattern \"" ++ r ++ "\" present in " ++ n
       when (not found && expected) $ compileError $ "Pattern \"" ++ r ++ "\" missing from " ++ n
-    createBinary c req ns fs = do
+    createBinary (CxxOutput _ f2 _ ns req content) xx = do
       dir <- mkdtemp "/tmp/ztest_"
       hPutStrLn stderr $ "Writing temporary files to " ++ dir
-      sources <- sequence $ map (writeSingleFile dir) fs
-      let sources' = resolveObjectDeps dir sources deps
-      let main   = dir </> "testcase.cpp"
+      sources <- sequence $ map (writeSingleFile dir) xx
+      -- TODO: Cache CompileMetadata here for debugging failures.
+      let sources' = resolveObjectDeps deps dir sources
+      let main   = dir </> f2
       let binary = dir </> "testcase"
-      writeFile main $ concat $ map (++ "\n") c
-      let lf = getLinkFlagsForDeps deps
+      writeFile main $ concat $ map (++ "\n") content
+      let flags = getLinkFlagsForDeps deps
       let paths' = nub $ map fixPath (dir:paths)
+      let os  = getObjectFilesForDeps deps
       let ofr = getObjectFileResolver (sources' ++ os)
       let os' = ofr ns req
-      let command = CompileToBinary main os' binary paths' lf
+      let command = CompileToBinary main os' binary paths' flags
       file <- runCxxCommand b command
       return (dir,file)
     writeSingleFile d ca@(CxxOutput _ f2 _ _ _ content) = do

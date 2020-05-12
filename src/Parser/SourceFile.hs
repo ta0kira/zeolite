@@ -47,6 +47,7 @@ parseInternalSource (f,s) = unwrap parsed where
   unwrap (Right t) = return t
   withPragmas = do
     pragmas <- parsePragmas internalSourcePragmas
+    optionalSpace
     (cs,ds) <- parseAnySource
     return (pragmas,cs,ds)
 
@@ -56,7 +57,8 @@ parsePublicSource (f,s) = unwrap parsed where
   unwrap (Left e)  = compileError (show e)
   unwrap (Right t) = return t
   withPragmas = do
-    pragmas <- parsePragmas internalSourcePragmas
+    pragmas <- parsePragmas publicSourcePragmas
+    optionalSpace
     cs <- sepBy sourceParser optionalSpace
     return (pragmas,cs)
 
@@ -66,7 +68,8 @@ parseTestSource (f,s) = unwrap parsed where
   unwrap (Left e)  = compileError (show e)
   unwrap (Right t) = return t
   withPragmas = do
-    pragmas <- parsePragmas internalSourcePragmas
+    pragmas <- parsePragmas testSourcePragmas
+    optionalSpace
     ts <- sepBy sourceParser optionalSpace
     return (pragmas,ts)
 
