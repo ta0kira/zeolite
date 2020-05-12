@@ -188,3 +188,18 @@ define Test {
 concrete Test {
   @type run () -> ()
 }
+
+
+testcase "function called on expression" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+    \ Testing$check<String>($ExprLookup[INT_EXPR]$.formatted(),"4")
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}

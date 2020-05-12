@@ -1,5 +1,10 @@
 # Revision history for zeolite-lang
 
+## 0.5.1.0  -- ????-??-??
+
+* **[new]** Adds the `$ExprLookup[`*`MACRO_NAME`*`]$` pragma, which allows the
+  user to define expression substitutions in `.zeolite-module`.
+
 ## 0.5.0.0  -- 2020-05-12
 
 * **[new]** Adds compiler support for pragmas, which will allow compiler

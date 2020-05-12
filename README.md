@@ -61,6 +61,7 @@ of this document.
   - [Using Public Source Files](#using-public-source-files)
   - [Standard Library](#standard-library)
   - [Modules](#modules)
+  - [Compiler Pragmas](#compiler-pragmas)
 - [Unit Testing](#unit-testing)
 - [Conclusion](#conclusion)
 
@@ -1043,10 +1044,6 @@ and so their symbols are available to all source files in the module. There is
 currently no language syntax for explicitly importing or including modules or
 other symbols.
 
-You can use the `$ModuleOnly$` pragma at the top of the `.0rp` to prevent other
-modules from using it, and/or `$TestsOnly$` to ensure that it can only be used
-by `.0rt` sources, or `.0rx` sources that also have `$TestsOnly$`.
-
 If you are interested in backing a `concrete` category with C++, you will need
 to write a custom `.zeolite-module` file. Better documentation will eventually
 follow, but for now:
@@ -1063,6 +1060,78 @@ follow, but for now:
    a reasonable example for this.
 6. If you need to depend on external libraries, fill in the `include_paths` and
    `link_flags` sections of `.zeolite-module`.
+
+### Compiler Pragmas
+
+(As of compiler version `0.5.0.0`.)
+
+Pragmas allow compiler-specific directives within source files that do not
+otherwise need to be a part of the language syntax. The syntax for pragmas is
+`$SomePragma$` (no options) `$AnotherPragma[`*`OPTIONS`*`]$` (requires options).
+The syntax of _`OPTIONS`_ depends on the pragma being used. All supported
+pragmas are built into the compiler; you cannot add your own.
+
+`zeolite` pragmas are specific to the context they are used in:
+
+- **Source Files.** These must be at the top of the source file, before
+  declaring or defining categories or `testcase`s.
+
+  - **`$ModuleOnly$`**. This can only be used in `.0rp` files. It takes an
+    otherwise-public source file and limits visibility to the module. (This is
+    similar to package-private in Java.)
+
+  - **`$TestsOnly$`**. This can be used in `.0rp` and `.0rx` files. When used,
+    the file is only visible to other sources that use it, as well as `.0rt`
+    sources. `.0rp` sources still remain public unless `$ModuleOnly$` is used.
+
+- **Expressions.** These can be used in place of language expressions.
+
+  - **`$ExprLookup[`**_`MACRO_NAME`_**`]$`**. (As of compiler version
+    `0.5.1.0`.) This directly substitutes in a language expression, as if it was
+    parsed from that exact code location. _`MACRO_NAME`_ is the key used to look
+    up the expression. Symbols will be resolved in the context that the
+    substutition happens in.
+
+    - **`MODULE_PATH`** is always defined. It is a `String`-literal containing
+      the absolute path to the module owning the source file. This can be useful
+      for locating data directories within your module independently of `$PWD`.
+
+    - Custom macros can be included in the `.zeolite-module` for your module.
+      This can be useful if your module requires different parameters from one
+      system to another.
+
+      ```text
+      // my-module/.zeolite-module
+
+      // (Standard part of .zeolite-module.)
+      path: "."
+
+      // Define your macros here.
+      expression_map: [
+        expression_macro {
+          name: USE_DATA_VERSION    // Access using $ExprLookup[USE_DATA_VERSION]$.
+          expression: "2020-05-12"  // Substituted in as a Zeolite expression.
+        }
+        expression_macro {
+          name: RECURSION_LIMIT
+          expression: 100000
+        }
+        expression_macro {
+          name: SHOW_LIMIT
+          // All Zeolite expressions are allowed.
+          expression: "limit: " + $ExprLookup[RECURSION_LIMIT]$.formatted()
+        }
+      ]
+
+      // (Standard part of .zeolite-module.)
+      mode: incremental {}
+      ```
+
+      The `name:` must only contain uppercase letters and `_`, and the
+      `expression:` must parse as a valid Zeolite expression. This is similar to
+      C++ macros, except that the substitution must be *independently* parsable
+      as a valid expression, and it can only be used where expressions are
+      otherwise allowed.
 
 ## Unit Testing
 
