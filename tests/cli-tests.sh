@@ -79,13 +79,13 @@ test_tests_only() {
 
 
 test_module_only() {
-  local output=$(do_zeolite -p "$ZEOLITE_PATH" -r tests/module-only || true)
-  if ! echo "$output" | egrep -q "Type1 not found"; then
+  local output=$(do_zeolite -p "$ZEOLITE_PATH" -R tests/module-only || true)
+  if ! echo "$output" | egrep -q 'Type1 not found'; then
     show_message 'Expected Type1 definition error from tests/module-only:'
     echo "$output" 1>&2
     return 1
   fi
-  if echo "$output" | egrep -q 'Type2'; then
+  if echo "$output" | egrep -q 'Type2 not found'; then
     show_message 'Unexpected Type2 definition error from tests/module-only:'
     echo "$output" 1>&2
     return 1

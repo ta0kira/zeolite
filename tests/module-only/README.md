@@ -8,7 +8,7 @@ To compile:
 
 ```shell
 ZEOLITE_PATH=$(zeolite --get-path)
-zeolite -p $ZEOLITE_PATH -r tests/module-only
+zeolite -p $ZEOLITE_PATH -R tests/module-only
 ```
 
 The compiler errors should look something like this:
