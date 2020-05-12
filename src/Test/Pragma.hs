@@ -47,7 +47,7 @@ tests = [
                   [PragmaComment _ "this is a pragma with args"] -> True
                   _ -> False),
 
-    checkParsesAs "$ExprLookup[ MODULE_PATH /*comment*/ ]$" (fmap (:[]) pragmaExprLookup)
+    checkParsesAs "$ExprLookup[ \nMODULE_PATH /*comment*/\n ]$" (fmap (:[]) pragmaExprLookup)
       (\e -> case e of
                   [PragmaExprLookup _ "MODULE_PATH"] -> True
                   _ -> False),
