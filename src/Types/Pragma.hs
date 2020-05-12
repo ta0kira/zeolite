@@ -24,6 +24,7 @@ module Types.Pragma (
   getPragmaContext,
   isExprLookup,
   isModuleOnly,
+  isNoTrace,
   isTestsOnly,
 ) where
 
@@ -39,6 +40,9 @@ data Pragma c =
     pelContext :: [c],
     pelName :: String
   } |
+  PragmaNoTrace {
+    pntContext :: [c]
+  } |
   -- This is mostly for testing purposes.
   PragmaComment {
     pcContext :: [c],
@@ -49,6 +53,7 @@ data Pragma c =
 getPragmaContext :: Pragma c -> [c]
 getPragmaContext (PragmaVisibility c _) = c
 getPragmaContext (PragmaExprLookup c _) = c
+getPragmaContext (PragmaNoTrace c)      = c
 getPragmaContext (PragmaComment c _)    = c
 
 isModuleOnly :: Pragma c -> Bool
@@ -58,6 +63,10 @@ isModuleOnly _                               = False
 isExprLookup :: Pragma c -> Bool
 isExprLookup (PragmaExprLookup _ _) = True
 isExprLookup _                      = False
+
+isNoTrace :: Pragma c -> Bool
+isNoTrace (PragmaNoTrace _) = True
+isNoTrace _                 = False
 
 isTestsOnly :: Pragma c -> Bool
 isTestsOnly (PragmaVisibility _ TestsOnly) = True

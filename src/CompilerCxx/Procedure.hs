@@ -52,6 +52,7 @@ import Types.DefinedCategory
 import Types.Function
 import Types.GeneralType
 import Types.Positional
+import Types.Pragma
 import Types.Procedure
 import Types.TypeCategory
 import Types.TypeInstance
@@ -61,14 +62,14 @@ compileExecutableProcedure :: (Show c, CompileErrorM m, MergeableM m) =>
   ScopeContext c -> ScopedFunction c -> ExecutableProcedure c ->
   m (CompiledData [String],CompiledData [String])
 compileExecutableProcedure ctx ff@(ScopedFunction _ _ _ s as1 rs1 ps1 _ _)
-                               pp@(ExecutableProcedure _ c n as2 rs2 p) = do
+                               pp@(ExecutableProcedure _ pragmas c n as2 rs2 p) = do
   ctx' <- getProcedureContext ctx ff pp
   output <- runDataCompiler compileWithReturn ctx'
   return (onlyCode header,wrapProcedure output)
   where
     t = scName ctx
     compileWithReturn = do
-      ctx0 <- getCleanContext
+      ctx0 <- getCleanContext >>= lift . flip ccSetNoTrace (any isNoTrace pragmas)
       compileProcedure ctx0 p >>= put
       unreachable <- csIsUnreachable
       when (not unreachable) $
@@ -77,7 +78,7 @@ compileExecutableProcedure ctx ff@(ScopedFunction _ _ _ s as1 rs1 ps1 _ _)
     wrapProcedure output =
       mergeAll $ [
           onlyCode header2,
-          indentCompiled $ onlyCode setProcedureTrace,
+          indentCompiled $ onlyCodes setProcedureTrace,
           indentCompiled $ onlyCodes defineReturns,
           indentCompiled $ onlyCodes nameParams,
           indentCompiled $ onlyCodes nameArgs,
@@ -103,7 +104,9 @@ compileExecutableProcedure ctx ff@(ScopedFunction _ _ _ s as1 rs1 ps1 _ _)
         "(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) {"
       | otherwise = undefined
     returnType = "ReturnTuple"
-    setProcedureTrace = startFunctionTracing $ show t ++ "." ++ show n
+    setProcedureTrace
+      | any isNoTrace pragmas = []
+      | otherwise             = [startFunctionTracing $ show t ++ "." ++ show n]
     defineReturns
       | isUnnamedReturns rs2 = []
       | otherwise            = [returnType ++ " returns(" ++ show (length $ pValues rs1) ++ ");"]
@@ -127,7 +130,10 @@ compileCondition :: (Show c, CompileErrorM m, MergeableM m,
 compileCondition ctx c e = do
   (e',ctx') <- lift $ runStateT compile ctx
   lift (ccGetRequired ctx') >>= csRequiresTypes
-  return $ predTraceContext c ++ e'
+  noTrace <- csGetNoTrace
+  if noTrace
+     then return e'
+     else return $ predTraceContext c ++ e'
   where
     compile = flip reviseErrorStateT ("In condition at " ++ formatFullContext c) $ do
       (ts,e') <- compileExpression e
@@ -153,11 +159,18 @@ compileProcedure ctx (Procedure _ ss) = do
                                     formatFullContext (getStatementContext s) ++
                                     " is unreachable"
 
+maybeSetTrace :: (Show c, CompileErrorM m, MergeableM m,
+                  CompilerContext c m [String] a) =>
+  [c] -> CompilerState a m ()
+maybeSetTrace c = do
+  noTrace <- csGetNoTrace
+  when (not noTrace) $ csWrite $ setTraceContext c
+
 compileStatement :: (Show c, CompileErrorM m, MergeableM m,
                      CompilerContext c m [String] a) =>
   Statement c -> CompilerState a m ()
 compileStatement (EmptyReturn c) = do
-  csWrite $ setTraceContext c
+  maybeSetTrace c
   doImplicitReturn c
 compileStatement (ExplicitReturn c es) = do
   es' <- sequence $ map compileExpression $ pValues es
@@ -166,7 +179,7 @@ compileStatement (ExplicitReturn c es) = do
     -- Single expression, but possibly multi-return.
     getReturn [(_,(Positional ts,e))] = do
       csRegisterReturn c $ Just (Positional ts)
-      csWrite $ setTraceContext c
+      maybeSetTrace c
       autoPositionalCleanup e
     -- Multi-expression => must all be singles.
     getReturn rs = do
@@ -174,7 +187,7 @@ compileStatement (ExplicitReturn c es) = do
         ("In return at " ++ formatFullContext c)
       csRegisterReturn c $ Just $ Positional $ map (head . pValues . fst . snd) rs
       let e = OpaqueMulti $ "ReturnTuple(" ++ intercalate "," (map (useAsUnwrapped . snd . snd) rs) ++ ")"
-      csWrite $ setTraceContext c
+      maybeSetTrace c
       autoPositionalCleanup e
     checkArity (_,Positional [_]) = return ()
     checkArity (i,Positional ts)  =
@@ -204,11 +217,11 @@ compileStatement (FailCall c e) = do
   lift $ (checkValueTypeMatch r fa t0 formattedRequiredValue) `reviseError`
     ("In fail call at " ++ formatFullContext c)
   csSetNoReturn
-  csWrite $ setTraceContext c
+  maybeSetTrace c
   csWrite ["BUILTIN_FAIL(" ++ useAsUnwrapped e0 ++ ")"]
 compileStatement (IgnoreValues c e) = do
   (_,e') <- compileExpression e
-  csWrite $ setTraceContext c
+  maybeSetTrace c
   csWrite ["(void) (" ++ useAsWhatever e' ++ ");"]
 compileStatement (Assignment c as e) = do
   (ts,e') <- compileExpression e
@@ -216,7 +229,7 @@ compileStatement (Assignment c as e) = do
   fa <- csAllFilters
   _ <- processPairsT (createVariable r fa) as ts `reviseErrorStateT`
     ("In assignment at " ++ formatFullContext c)
-  csWrite $ setTraceContext c
+  maybeSetTrace c
   variableTypes <- sequence $ map (uncurry getVariableType) $ zip (pValues as) (pValues ts)
   assignAll (zip3 ([0..] :: [Int]) variableTypes (pValues as)) e'
   where
@@ -369,9 +382,12 @@ compileScopedBlock s = do
            ctx0' <- lift $ ccClearOutput ctxP
            ctxCl <- compileProcedure ctx0' p2
            p2' <- lift $ ccGetOutput ctxCl
+           noTrace <- csGetNoTrace
            -- TODO: It might be helpful to add a new trace-context line for this
            -- so that the line that triggered the cleanup is still in the trace.
-           let p2'' = ["{",startCleanupTracing] ++ p2' ++ ["}"]
+           let p2'' = if noTrace
+                      then []
+                      else ["{",startCleanupTracing] ++ p2' ++ ["}"]
            ctxP' <- lift $ ccPushCleanup ctxP (CleanupSetup [ctxCl] p2'')
            return (ctxP',p2'',ctxCl)
          Nothing -> return (ctxP,[],ctxP)

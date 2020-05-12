@@ -23,6 +23,7 @@ module Parser.Pragma (
   parsePragmas,
   pragmaComment,
   pragmaExprLookup,
+  pragmaNoTrace,
   pragmaModuleOnly,
   pragmaTestsOnly
 ) where
@@ -54,6 +55,10 @@ pragmaExprLookup = autoPragma "ExprLookup" $ Right parseAt where
     name <- parseMacroName
     return $ PragmaExprLookup [c] name
 
+pragmaNoTrace :: Parser (Pragma SourcePos)
+pragmaNoTrace = autoPragma "NoTrace" $ Left parseAt where
+  parseAt c = PragmaNoTrace [c]
+
 pragmaTestsOnly :: Parser (Pragma SourcePos)
 pragmaTestsOnly = autoPragma "TestsOnly" $ Left parseAt where
   parseAt c = PragmaVisibility [c] TestsOnly
@@ -75,7 +80,7 @@ unknownPragma = do
 autoPragma :: String -> Either (SourcePos -> a) (SourcePos -> Parser a) -> Parser a
 autoPragma p f = do
   c <- getPosition
-  try $ pragmaStart >> string_ p
+  try $ pragmaStart >> string_ p >> notFollowedBy alphaNum
   hasArgs <- (pragmaArgsStart >> optionalSpace >> return True) <|> return False
   x <- delegate hasArgs f c
   if hasArgs

@@ -275,6 +275,7 @@ compileConcreteTemplate ta n = do
       }
     defaultFail f = ExecutableProcedure {
         epContext = [],
+        epPragmas = [],
         epEnd = [],
         epName = sfName f,
         epArgs = ArgValues [] $ Positional $ map createArg [1..(length $ pValues $ sfArgs f)],

@@ -48,6 +48,7 @@ module Types.Procedure (
 
 import Data.List (intercalate)
 
+import Types.Pragma
 import Types.Positional
 import Types.TypeCategory
 import Types.TypeInstance
@@ -58,6 +59,7 @@ import Types.TypeInstance
 data ExecutableProcedure c =
   ExecutableProcedure {
     epContext :: [c],
+    epPragmas :: [Pragma c],
     epEnd :: [c],
     epName :: FunctionName,
     epArgs :: ArgValues c,

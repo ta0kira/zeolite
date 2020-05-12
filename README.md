@@ -1084,6 +1084,14 @@ pragmas are built into the compiler; you cannot add your own.
     the file is only visible to other sources that use it, as well as `.0rt`
     sources. `.0rp` sources still remain public unless `$ModuleOnly$` is used.
 
+- **Function Definitions.** These must occur at the very top of a function
+  definition.
+
+  - **`$NoTrace$`**. Disable stack-tracing within this procedure. This is useful
+    for recursive functions, so that trace information does not take up stack
+    space. This does not affect tracing for functions that are called from
+    within the procedure.
+
 - **Expressions.** These can be used in place of language expressions.
 
   - **`$ExprLookup[`**_`MACRO_NAME`_**`]$`**. (As of compiler version

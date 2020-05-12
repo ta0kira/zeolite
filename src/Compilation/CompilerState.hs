@@ -40,6 +40,7 @@ module Compilation.CompilerState (
   csGetCategoryFunction,
   csGetCleanup,
   csGetLoop,
+  csGetNoTrace,
   csGetOutput,
   csGetParamScope,
   csGetTypeFunction,
@@ -54,6 +55,7 @@ module Compilation.CompilerState (
   csResolver,
   csSameType,
   csSetNoReturn,
+  csSetNoTrace,
   csStartLoop,
   csUpdateAssigned,
   csWrite,
@@ -110,6 +112,8 @@ class (Functor m, Monad m) => CompilerContext c m s a | a -> c s where
   ccPushCleanup :: a -> CleanupSetup a s -> m a
   ccGetCleanup :: a -> m (CleanupSetup a s)
   ccExprLookup :: a -> [c] -> String -> m (Expression c)
+  ccSetNoTrace :: a -> Bool -> m a
+  ccGetNoTrace :: a -> m Bool
 
 type ExpressionType = Positional ValueType
 
@@ -237,6 +241,12 @@ csGetCleanup = fmap ccGetCleanup get >>= lift
 
 csExprLookup :: CompilerContext c m s a => [c] -> String -> CompilerState a m (Expression c)
 csExprLookup c n = fmap (\x -> ccExprLookup x c n) get >>= lift
+
+csSetNoTrace :: CompilerContext c m s a => Bool -> CompilerState a m ()
+csSetNoTrace t = fmap (\x -> ccSetNoTrace x t) get >>= lift >>= put
+
+csGetNoTrace :: CompilerContext c m s a => CompilerState a m Bool
+csGetNoTrace = fmap ccGetNoTrace get >>= lift
 
 data CompiledData s =
   CompiledData {

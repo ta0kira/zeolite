@@ -80,14 +80,15 @@ getContextForInit tm em t d s = do
       pcDisallowInit = True,
       pcLoopSetup = NotInLoop,
       pcCleanupSetup = CleanupSetup [] [],
-      pcExprMap = em
+      pcExprMap = em,
+      pcNoTrace = False
     }
 
 getProcedureContext :: (Show c, CompileErrorM m, MergeableM m) =>
   ScopeContext c -> ScopedFunction c -> ExecutableProcedure c -> m (ProcedureContext c)
 getProcedureContext (ScopeContext tm t ps pi ms pa fi fa va em)
                     ff@(ScopedFunction _ _ _ s as1 rs1 ps1 fs _)
-                    (ExecutableProcedure _ _ _ as2 rs2 _) = do
+                    (ExecutableProcedure _ _ _ _ as2 rs2 _) = do
   rs' <- if isUnnamedReturns rs2
             then return $ ValidatePositions rs1
             else fmap (ValidateNames rs1 . Map.fromList) $ processPairs pairOutput rs1 (nrNames rs2)
@@ -137,7 +138,8 @@ getProcedureContext (ScopeContext tm t ps pi ms pa fi fa va em)
       pcDisallowInit = False,
       pcLoopSetup = NotInLoop,
       pcCleanupSetup = CleanupSetup [] [],
-      pcExprMap = em
+      pcExprMap = em,
+      pcNoTrace = False
     }
   where
     pairOutput (PassedValue c1 t2) (OutputValue c2 n2) = return $ (n2,PassedValue (c2++c1) t2)
@@ -163,5 +165,6 @@ getMainContext tm em = return $ ProcedureContext {
     pcDisallowInit = False,
     pcLoopSetup = NotInLoop,
     pcCleanupSetup = CleanupSetup [] [],
-    pcExprMap = em
+    pcExprMap = em,
+    pcNoTrace = False
   }
