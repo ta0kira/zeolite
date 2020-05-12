@@ -1,6 +1,6 @@
 # Revision history for zeolite-lang
 
-## 0.5.0.0  -- ????-??-??
+## 0.5.0.0  -- 2020-05-12
 
 * **[new]** Adds compiler support for pragmas, which will allow compiler
   features that aren't a part of the language:
