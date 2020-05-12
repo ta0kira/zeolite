@@ -65,6 +65,7 @@ data CxxOutput =
     coUsesCategory :: [CategoryName],
     coOutput :: [String]
   }
+  deriving (Show)
 
 data LanguageModule c =
   LanguageModule {
@@ -89,7 +90,7 @@ data PrivateSource c =
   }
 
 compileLanguageModule :: (Show c, CompileErrorM m, MergeableM m) =>
-  LanguageModule c -> [PrivateSource c] -> m [CxxOutput]
+  LanguageModule c -> [PrivateSource c] -> m ([CxxOutput],[CxxOutput])
 compileLanguageModule (LanguageModule ns0 ns1 ns2 cs0 ps0 ts0 cs1 ps1 ts1 ex) xa = do
   checkSupefluous $ Set.toList $ (Set.fromList ex) `Set.difference` ca
   (hxx1,cxx1) <- fmap mergeGeneratedP $ collectAllOrErrorM $ map (compileSourceP tmPublic  nsPublic)  cs1
@@ -100,7 +101,7 @@ compileLanguageModule (LanguageModule ns0 ns1 ns2 cs0 ps0 ts0 cs1 ps1 ts1 ex) xa
   -- TestsOnly .0rp and one declared in a non-TestOnly .0rx.
   let dm = mapByName ds
   checkDefined dm ex $ filter isValueConcrete (cs1 ++ ps1 ++ ts1)
-  return $ hxx1 ++ hxx2 ++ hxx3 ++ cxx1 ++ cxx2 ++ cxx3 ++ xx where
+  return (hxx1 ++ hxx2 ++ hxx3 ++ cxx1 ++ cxx2 ++ cxx3,xx) where
     tmPublic  = foldM includeNewTypes defaultCategories [cs0,cs1]
     tmPrivate = tmPublic  >>= \tm -> foldM includeNewTypes tm [ps0,ps1]
     tmTesting = tmPrivate >>= \tm -> foldM includeNewTypes tm [ts0,ts1]

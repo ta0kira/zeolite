@@ -44,8 +44,9 @@ import Types.TypeCategory
 
 
 runSingleTest :: CompilerBackend b => b -> LanguageModule SourcePos ->
-  [FilePath] -> [CompileMetadata] -> (String,String) -> IO ((Int,Int),CompileInfo ())
-runSingleTest b cm paths deps (f,s) = do
+  FilePath -> [FilePath] -> [CompileMetadata] -> (String,String) ->
+  IO ((Int,Int),CompileInfo ())
+runSingleTest b cm p paths deps (f,s) = do
   hPutStrLn stderr $ "\nExecuting tests from " ++ f
   allResults <- checkAndRun (parseTestSource (f,s))
   return $ second (flip reviseError $ "\nIn test file " ++ f) allResults where
@@ -125,7 +126,7 @@ runSingleTest b cm paths deps (f,s) = do
           psCategory = cs',
           psDefine = ds
         }
-      xx <- compileLanguageModule cm [xs]
+      (_,xx) <- compileLanguageModule cm [xs]
       main <- case e of
                    Just e2 -> compileTestMain cm xs e2
                    Nothing -> compileError "Expected compiler error"
@@ -151,7 +152,7 @@ runSingleTest b cm paths deps (f,s) = do
       hPutStrLn stderr $ "Writing temporary files to " ++ dir
       sources <- sequence $ map (writeSingleFile dir) xx
       -- TODO: Cache CompileMetadata here for debugging failures.
-      let sources' = resolveObjectDeps deps dir sources
+      let sources' = resolveObjectDeps deps p dir sources
       let main   = dir </> f2
       let binary = dir </> "testcase"
       writeFile main $ concat $ map (++ "\n") content

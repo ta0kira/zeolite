@@ -105,3 +105,18 @@ define Test {
     \ Type<Type<Type<Int>>>$call()
   }
 }
+
+
+testcase "ModuleOnly is visible to tests" {
+  success Test$execute()
+}
+
+concrete Test {
+  @type execute () -> ()
+}
+
+define Test {
+  execute () {
+    optional ModuleOnly value <- empty
+  }
+}

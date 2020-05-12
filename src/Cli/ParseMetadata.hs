@@ -128,25 +128,27 @@ parseRequired l p = do
 
 instance ConfigFormat CompileMetadata where
   readConfig = do
-    h <-   parseRequired "version_hash:"  parseHash
-    p <-   parseRequired "path:"          parseQuoted
-    ns <-  parseOptional "namespace:"     NoNamespace parseNamespace
-    is <-  parseRequired "public_deps:"   (parseList parseQuoted)
-    is2 <- parseRequired "private_deps:"  (parseList parseQuoted)
-    cs <-  parseRequired "categories:"    (parseList parseCategoryName)
-    ds <-  parseRequired "subdirs:"       (parseList parseQuoted)
-    ps <-  parseRequired "public_files:"  (parseList parseQuoted)
-    xs <-  parseRequired "private_files:" (parseList parseQuoted)
-    ts <-  parseRequired "test_files:"    (parseList parseQuoted)
-    hxx <- parseRequired "hxx_files:"     (parseList parseQuoted)
-    cxx <- parseRequired "cxx_files:"     (parseList parseQuoted)
-    lf  <- parseRequired "link_flags:"    (parseList parseQuoted)
-    os <-  parseRequired "object_files:"  (parseList readConfig)
-    return (CompileMetadata h p ns is is2 cs ds ps xs ts hxx cxx lf os)
+    h <-   parseRequired "version_hash:"       parseHash
+    p <-   parseRequired "path:"               parseQuoted
+    ns <-  parseOptional "namespace:"          NoNamespace parseNamespace
+    is <-  parseRequired "public_deps:"        (parseList parseQuoted)
+    is2 <- parseRequired "private_deps:"       (parseList parseQuoted)
+    cs1 <- parseRequired "public_categories:"  (parseList parseCategoryName)
+    cs2 <- parseRequired "private_categories:" (parseList parseCategoryName)
+    ds <-  parseRequired "subdirs:"            (parseList parseQuoted)
+    ps <-  parseRequired "public_files:"       (parseList parseQuoted)
+    xs <-  parseRequired "private_files:"      (parseList parseQuoted)
+    ts <-  parseRequired "test_files:"         (parseList parseQuoted)
+    hxx <- parseRequired "hxx_files:"          (parseList parseQuoted)
+    cxx <- parseRequired "cxx_files:"          (parseList parseQuoted)
+    lf  <- parseRequired "link_flags:"         (parseList parseQuoted)
+    os <-  parseRequired "object_files:"       (parseList readConfig)
+    return (CompileMetadata h p ns is is2 cs1 cs2 ds ps xs ts hxx cxx lf os)
   writeConfig m = do
     validateHash (cmVersionHash m)
     namespace <- maybeShowNamespace "namespace:" (cmNamespace m)
-    _ <- collectAllOrErrorM $ map validateCategoryName (cmCategories m)
+    _ <- collectAllOrErrorM $ map validateCategoryName (cmPublicCategories m)
+    _ <- collectAllOrErrorM $ map validateCategoryName (cmPrivateCategories m)
     objects <- fmap concat $ collectAllOrErrorM $ map writeConfig $ cmObjectFiles m
     return $ [
         "version_hash: " ++ (show $ cmVersionHash m),
@@ -158,8 +160,11 @@ instance ConfigFormat CompileMetadata where
         "private_deps: ["
       ] ++ indents (map show $ cmPrivateDeps m) ++ [
         "]",
-        "categories: ["
-      ] ++ indents (map show $ cmCategories m) ++ [
+        "public_categories: ["
+      ] ++ indents (map show $ cmPublicCategories m) ++ [
+        "]",
+        "private_categories: ["
+      ] ++ indents (map show $ cmPrivateCategories m) ++ [
         "]",
         "subdirs: ["
       ] ++ indents (map show $ cmSubdirs m) ++ [

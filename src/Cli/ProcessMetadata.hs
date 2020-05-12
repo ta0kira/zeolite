@@ -295,7 +295,7 @@ checkModuleVersionHash :: VersionHash -> CompileMetadata -> Bool
 checkModuleVersionHash h m = cmVersionHash m == h
 
 checkModuleFreshness :: Bool -> FilePath -> CompileMetadata -> IO Bool
-checkModuleFreshness s p (CompileMetadata _ p2 _ is is2 _ _ ps xs ts hxx cxx _ _) = do
+checkModuleFreshness s p (CompileMetadata _ p2 _ is is2 _ _ _ ps xs ts hxx cxx _ _) = do
   time <- getModificationTime $ getCachedPath p "" metadataFilename
   (ps2,xs2,ts2) <- findSourceFiles p ""
   let e1 = checkMissing ps ps2
@@ -353,17 +353,21 @@ getObjectFileResolver os ns ds = resolved ++ nonCategories where
              fs' = (filter (not . flip elem fa') fs) ++ fs0
            _ -> collectAll ca fa cs
 
-resolveObjectDeps :: [CompileMetadata] -> FilePath -> [([FilePath],CxxOutput)] -> [ObjectFile]
-resolveObjectDeps deps p os = resolvedCategories ++ nonCategories where
+resolveObjectDeps :: [CompileMetadata] -> FilePath -> FilePath -> [([FilePath],CxxOutput)] -> [ObjectFile]
+resolveObjectDeps deps p d os = resolvedCategories ++ nonCategories where
   categories = filter (isJust . coCategory . snd) os
   publicNamespaces = getNamespacesForDeps deps
   nonCategories = map OtherObjectFile $ concat $ map fst $ filter (not . isJust . coCategory . snd) os
   resolvedCategories = Map.elems $ Map.fromListWith mergeObjectFiles $ map resolveCategory categories
   categoryMap = Map.fromList $ directCategories ++ depCategories
   directCategories = map (keyByCategory . cxxToId) $ map snd categories
-  depCategories = map keyByCategory $ concat $ map categoriesToIds deps
-  categoriesToIds dep = map (\c -> CategoryIdentifier (cmPath dep) c (cmNamespace dep)) (cmCategories dep)
-  cxxToId (CxxOutput (Just c) _ ns _ _ _) = CategoryIdentifier p c ns
+  depCategories = map keyByCategory $ concat (map categoriesToIds deps)
+  getCats dep
+    -- Allow ModuleOnly when the path is the same. Only needed for tests.
+    | cmPath dep == p = cmPrivateCategories dep ++ cmPublicCategories dep
+    | otherwise       = cmPublicCategories dep
+  categoriesToIds dep = map (\c -> CategoryIdentifier (cmPath dep) c (cmNamespace dep)) $ getCats dep
+  cxxToId (CxxOutput (Just c) _ ns _ _ _) = CategoryIdentifier d c ns
   cxxToId _                               = undefined
   resolveCategory (fs,ca@(CxxOutput _ _ _ ns2 ds _)) =
     (cxxToId ca,CategoryObjectFile (cxxToId ca) (filter (/= cxxToId ca) rs) fs) where

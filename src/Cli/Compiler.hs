@@ -112,7 +112,7 @@ compileModule (ModuleSpec p d is is2 ps xs ts es ep m f) = do
     hPutStrLn stderr $ "Zeolite compilation failed."
     exitFailure
   formatWarnings fs
-  let (pc,mf,fs') = getCompileSuccess fs
+  let (pc,tc,mf,fs') = getCompileSuccess fs
   let ps2 = map takeFileName ps
   let xs2 = map takeFileName xs
   let ts2 = map takeFileName ts
@@ -130,14 +130,15 @@ compileModule (ModuleSpec p d is is2 ps xs ts es ep m f) = do
   let (hxx',cxx,os') = sortCompiledFiles files'
   let (osCat,osOther) = partitionEithers os2
   path <- canonicalizePath $ p </> d
-  let os1' = resolveObjectDeps (deps1' ++ deps2) path (os1 ++ osCat)
+  let os1' = resolveObjectDeps (deps1' ++ deps2) path path (os1 ++ osCat)
   let cm2 = CompileMetadata {
       cmVersionHash = hash,
       cmPath = path,
       cmNamespace = ns0,
       cmPublicDeps = as,
       cmPrivateDeps = as2,
-      cmCategories = sort pc,
+      cmPublicCategories = sort pc,
+      cmPrivateCategories = sort tc,
       cmSubdirs = [s0],
       cmPublicFiles = sort ps2,
       cmPrivateFiles = sort xs2,
@@ -151,11 +152,11 @@ compileModule (ModuleSpec p d is is2 ps xs ts es ep m f) = do
   writeMetadata (p </> d) cm2
   hPutStrLn stderr $ "Zeolite compilation succeeded." where
     compileAll cm xa = do
-      (cm',pc) <- cm
+      (cm',(pc,tc)) <- cm
       xa' <- xa
-      xx <- compileLanguageModule cm' xa'
+      (xx1,xx2) <- compileLanguageModule cm' xa'
       ms <- maybeCreateMain cm' xa' m
-      return (pc,ms,xx)
+      return (pc,tc,ms,xx1++xx2)
     ep' = fixPaths $ map (p </>) ep
     writeOutputFile b ns0 paths ca@(CxxOutput _ f2 ns _ _ content) = do
       hPutStrLn stderr $ "Writing file " ++ f2
@@ -278,10 +279,11 @@ runModuleTests b base tp (LoadedTests p d m deps1 deps2) = do
   let paths = base:(getIncludePathsForDeps deps1)
   mapM_ showSkipped $ filter (not . isTestAllowed) $ cmTestFiles m
   ts' <- zipWithContents p $ map (d </>) $ filter isTestAllowed $ cmTestFiles m
-  cm <- fmap (fmap fst) $ loadLanguageModule p NoNamespace [] [] deps1 []
+  path <- canonicalizePath (p </> d)
+  cm <- fmap (fmap fst) $ loadLanguageModule path NoNamespace [] [] deps1 []
   if isCompileError cm
       then return [((0,0),cm >> return ())]
-      else sequence $ map (runSingleTest b (getCompileSuccess cm) paths (m:deps2)) ts' where
+      else sequence $ map (runSingleTest b (getCompileSuccess cm) path paths (m:deps2)) ts' where
     allowTests = Set.fromList tp
     isTestAllowed t = if null allowTests then True else t `Set.member` allowTests
     showSkipped f = do
@@ -313,13 +315,11 @@ loadPrivateSource p f = do
 
 loadLanguageModule :: CompileErrorM m => FilePath -> Namespace -> [CategoryName] ->
   [FilePath] -> [CompileMetadata] -> [CompileMetadata] ->
-  IO (m (LanguageModule SourcePos,[CategoryName]))
+  IO (m (LanguageModule SourcePos,([CategoryName],[CategoryName])))
 loadLanguageModule p ns2 ex fs deps1 deps2 = do
-  let deps1' = getSourceFilesForDeps deps1
-  let deps2' = getSourceFilesForDeps deps2
-  m0 <- loadAllPublic deps1'
-  m1 <- loadAllPublic deps2'
-  m2 <- loadAllPublic fs
+  m0 <- fmap merge $ sequence $ map processAll deps1
+  m1 <- fmap merge $ sequence $ map processAll deps2
+  m2 <- loadAllPublic "" fs
   return $ construct m0 m1 m2 where
     ns0 = filter (not . isNoNamespace) $ getNamespacesForDeps deps1
     ns1 = filter (not . isNoNamespace) $ getNamespacesForDeps deps2
@@ -339,16 +339,25 @@ loadLanguageModule p ns2 ex fs deps1 deps2 = do
           lmTestingLocal = map (setCategoryNamespace ns2) $ tsA2 ++ tsB2,
           lmExternal = ex
         }
-      return (cm,map getCategoryName $ ps2++xs2++tsA2)
-    loadPublic p2 = parsePublicSource p2 >>= return . uncurry partition
-    partition pragmas cs
+      return (cm,(map getCategoryName $ ps2++tsA2,map getCategoryName $ xs2++tsB2))
+    loadPublic p2 p3 = parsePublicSource p3 >>= return . uncurry (partition p2)
+    partition p2 pragmas cs
+      -- Allow ModuleOnly when the path is the same. Only needed for tests.
+      | p2 == p && (any isTestsOnly pragmas) = ([],[],cs,[])
+      | p2 == p                              = (cs,[],[],[])
       | (any isModuleOnly pragmas) && (any isTestsOnly pragmas) = ([],[],[],cs)
       | (any isTestsOnly pragmas)                               = ([],[],cs,[])
       | (any isModuleOnly pragmas)                              = ([],cs,[],[])
       | otherwise                                               = (cs,[],[],[])
-    loadAllPublic fs2 = do
+    processAll dep = do
+      let dep' = getSourceFilesForDeps [dep]
+      loadAllPublic (cmPath dep) dep'
+    merge as = do
+      as' <- collectAllOrErrorM as
+      return $ foldl merge4 ([],[],[],[]) as'
+    loadAllPublic p2 fs2 = do
       fs2' <- zipWithContents p fs2
       return $ do
-        as <- collectAllOrErrorM $ map loadPublic fs2'
+        as <- collectAllOrErrorM $ map (loadPublic p2) fs2'
         return $ foldl merge4 ([],[],[],[]) as
     merge4 (ps1,xs1,tsA1,tsB1) (ps2,xs2,tsA2,tsB2) = (ps1++ps2,xs1++xs2,tsA1++tsA2,tsB1++tsB2)
