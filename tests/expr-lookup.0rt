@@ -94,3 +94,82 @@ define Test {
 concrete Test {
   @type run () -> ()
 }
+
+
+testcase "constant defined in .zeolite-module" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+    \ Testing$check<Int>($ExprLookup[INT_EXPR]$,4)
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "constant defined in .zeolite-module from regular source" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+    \ Testing$check<Int>(ExprLookup$intExpr(),4)
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "in context defined in .zeolite-module" {
+  success Test$run()
+}
+
+define Test {
+  @category String macroLocalVar <- "hello"
+
+  run () {
+    \ Testing$check<String>($ExprLookup[LOCAL_VAR]$,"hello")
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "undefined in context defined in .zeolite-module" {
+  error
+  require "\.zeolite-module"
+  require "macroLocalVar"
+}
+
+define Test {
+  run () {
+    String value <- $ExprLookup[LOCAL_VAR]$
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "in context defined in .zeolite-module from regular source" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+    \ Testing$check<Int>(ExprLookup$localVar(),99)
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}

@@ -19,6 +19,7 @@ limitations under the License.
 {-# LANGUAGE Safe #-}
 
 module Parser.Pragma (
+  parseMacroName,
   parsePragmas,
   pragmaComment,
   pragmaExprLookup,
@@ -41,11 +42,16 @@ pragmaModuleOnly :: Parser (Pragma SourcePos)
 pragmaModuleOnly = autoPragma "ModuleOnly" $ Left parseAt where
   parseAt c = PragmaVisibility [c] ModuleOnly
 
+parseMacroName :: Parser String
+parseMacroName = do
+  name <- labeled "macro name" $ many1 (upper <|> char '_')
+  optionalSpace
+  return name
+
 pragmaExprLookup :: Parser (Pragma SourcePos)
 pragmaExprLookup = autoPragma "ExprLookup" $ Right parseAt where
   parseAt c = do
-    name <- labeled "macro name" $ many1 (upper <|> char '_')
-    optionalSpace
+    name <- parseMacroName
     return $ PragmaExprLookup [c] name
 
 pragmaTestsOnly :: Parser (Pragma SourcePos)

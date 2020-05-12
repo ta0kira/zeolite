@@ -31,9 +31,12 @@ import Cli.CompileMetadata
 import Cli.CompileOptions
 import Config.Programs (VersionHash(..))
 import Parser.Common
+import Parser.Procedure ()
+import Parser.Pragma (parseMacroName)
 import Parser.TypeCategory ()
 import Parser.TypeInstance ()
 import Text.Regex.TDFA -- Not safe!
+import Types.Procedure (Expression)
 import Types.TypeCategory (FunctionName(..),Namespace(..))
 import Types.TypeInstance (CategoryName(..))
 
@@ -265,20 +268,23 @@ instance ConfigFormat CategoryIdentifier where
 
 instance ConfigFormat ModuleConfig where
   readConfig = do
-      p <-   parseOptional "root:"          "" parseQuoted
-      d <-   parseRequired "path:"             parseQuoted
-      is <-  parseOptional "public_deps:"   [] (parseList parseQuoted)
-      is2 <- parseOptional "private_deps:"  [] (parseList parseQuoted)
-      es <-  parseOptional "extra_files:"   [] (parseList readConfig)
-      ep <-  parseOptional "include_paths:" [] (parseList parseQuoted)
-      m <-   parseRequired "mode:"             readConfig
-      return (ModuleConfig p d is is2 es ep m)
+      p   <- parseOptional "root:"           "" parseQuoted
+      d   <- parseRequired "path:"              parseQuoted
+      em  <- parseOptional "expression_map:" [] (parseList parseExprMacro)
+      is  <- parseOptional "public_deps:"    [] (parseList parseQuoted)
+      is2 <- parseOptional "private_deps:"   [] (parseList parseQuoted)
+      es  <- parseOptional "extra_files:"    [] (parseList readConfig)
+      ep  <- parseOptional "include_paths:"  [] (parseList parseQuoted)
+      m   <- parseRequired "mode:"              readConfig
+      return (ModuleConfig p d em is is2 es ep m)
   writeConfig m = do
     extra    <- fmap concat $ collectAllOrErrorM $ map writeConfig $ rmExtraFiles m
     mode <- writeConfig (rmMode m)
     return $ [
         "root: " ++ show (rmRoot m),
         "path: " ++ show (rmPath m),
+        -- NOTE: expression_map isn't output because that would require making
+        -- all Expression serializable.
         "public_deps: ["
       ] ++ indents (map show $ rmPublicDeps m) ++ [
         "]",
@@ -362,3 +368,12 @@ instance ConfigFormat CompileMode where
       ]
   writeConfig CompileUnspecified = writeConfig (CompileIncremental [])
   writeConfig _ = compileError "Invalid compile mode"
+
+parseExprMacro :: Parser (String,Expression SourcePos)
+parseExprMacro = do
+  sepAfter (string_ "expression_macro")
+  structOpen
+  n <- parseRequired "name:"       parseMacroName
+  e <- parseRequired "expression:" sourceParser
+  structClose
+  return (n,e)

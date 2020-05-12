@@ -27,6 +27,10 @@ import Cli.CompileMetadata
 import Cli.CompileOptions
 import Cli.ParseMetadata
 import Config.Programs (VersionHash(..))
+import System.FilePath
+import Test.Common
+import Types.Positional
+import Types.Procedure
 import Types.TypeCategory (FunctionName(..),Namespace(..))
 import Types.TypeInstance (CategoryName(..))
 
@@ -192,6 +196,7 @@ tests = [
     checkWriteThenRead $ ModuleConfig {
       rmRoot = "/home/projects",
       rmPath = "special",
+      rmExprMap = [],
       rmPublicDeps = [
         "/home/project/public-dep1",
         "/home/project/public-dep2"
@@ -297,7 +302,21 @@ tests = [
     checkWriteFail "compile mode" $ ExecuteTests { etInclude = [] },
     checkWriteFail "compile mode" $ CompileRecompile,
     checkWriteFail "compile mode" $ CompileRecompileRecursive,
-    checkWriteFail "compile mode" $ CreateTemplates
+    checkWriteFail "compile mode" $ CreateTemplates,
+
+    checkParsesAs ("testfiles" </> "module-config.txt")
+      (\m -> case rmExprMap m of
+                  [("MY_MACRO",
+                    Expression _ (BuiltinCall _
+                      (FunctionCall _ BuiltinRequire (Positional [])
+                        (Positional [Literal (EmptyLiteral _)]))) []),
+                   ("MY_OTHER_MACRO",
+                    Expression _
+                      (TypeCall _ _
+                        (FunctionCall _ (FunctionName "execute") (Positional [])
+                          (Positional [Literal (StringLiteral _ "this is a string\n")]))) [])
+                    ] -> True
+                  _ -> False)
   ]
 
 checkWriteThenRead :: (Eq a, Show a, ConfigFormat a) => a -> IO (CompileInfo ())
@@ -323,3 +342,16 @@ checkWriteFail p m = return $ do
             compileError $ "Expected pattern " ++ show p ++ " in error output but got\n" ++ text
       | otherwise =
           compileError $ "Expected write failure but got\n" ++ getCompileSuccess c
+
+checkParsesAs :: (Show a, ConfigFormat a) => String -> (a -> Bool) -> IO (CompileInfo ())
+checkParsesAs f m = do
+  contents <- loadFile f
+  let parsed = autoReadConfig f contents
+  return $ check parsed contents
+  where
+    check x contents = do
+      x' <- x `reviseError` ("While parsing " ++ f)
+      when (not $ m x') $
+        compileError $ "Failed to match after write/read\n" ++
+                       "Unparsed:\n" ++ contents ++ "\n" ++
+                       "Parsed:\n" ++ show x' ++ "\n"

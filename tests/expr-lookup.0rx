@@ -22,4 +22,13 @@ define ExprLookup {
   modulePath () {
     return $ExprLookup[MODULE_PATH]$
   }
+
+  intExpr () {
+    return $ExprLookup[INT_EXPR]$
+  }
+
+  localVar () {
+    Int macroLocalVar <- 99
+    return $ExprLookup[LOCAL_VAR]$
+  }
 }

@@ -1,5 +1,16 @@
 root: ".."
 path: "tests"
+expression_map: [
+  // See expr-lookup.0rt and expr-lookup.0rx.
+  expression_macro {
+    name: INT_EXPR
+    expression: 1+3
+  }
+  expression_macro {
+    name: LOCAL_VAR
+    expression: macroLocalVar
+  }
+]
 private_deps: [
   "visibility"
   "visibility2"

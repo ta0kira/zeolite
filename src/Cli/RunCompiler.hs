@@ -92,6 +92,7 @@ runCompiler (CompileOptions _ is is2 _ _ _ p (CompileFast c fn f2) f) = do
   let rm = ModuleConfig {
     rmRoot = p,
     rmPath = ".",
+    rmExprMap = [],
     rmPublicDeps = [],
     rmPrivateDeps = [],
     rmExtraFiles = [],
@@ -148,7 +149,7 @@ runCompiler (CompileOptions _ _ _ ds _ _ p CompileRecompile f) = do
         maybeCompile (Just rm') upToDate
           | f < ForceAll && upToDate = hPutStrLn stderr $ "Path " ++ d0 ++ " is up to date."
           | otherwise = do
-              let (ModuleConfig p2 d is is2 es ep m) = rm'
+              let (ModuleConfig p2 d _ is is2 es ep m) = rm'
               -- In case the module is manually configured with a p such as "..",
               -- since the absolute path might not be known ahead of time.
               absolute <- canonicalizePath (p </> d0)
@@ -198,6 +199,7 @@ runCompiler (CompileOptions h is is2 ds es ep p m f) = mapM_ compileSingle ds wh
     let rm = ModuleConfig {
       rmRoot = absolute,
       rmPath = d,
+      rmExprMap = [],
       rmPublicDeps = as,
       rmPrivateDeps = as2,
       rmExtraFiles = es,

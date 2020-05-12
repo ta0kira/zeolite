@@ -28,9 +28,11 @@ module Cli.CompileMetadata (
 ) where
 
 import Data.List (nub)
+import Text.Parsec (SourcePos)
 
 import Cli.CompileOptions
 import Config.Programs (VersionHash)
+import Types.Procedure (Expression)
 import Types.TypeCategory (Namespace)
 import Types.TypeInstance (CategoryName)
 
@@ -91,10 +93,23 @@ data ModuleConfig =
   ModuleConfig {
     rmRoot :: FilePath,
     rmPath :: FilePath,
+    rmExprMap :: [(String,Expression SourcePos)],
     rmPublicDeps :: [FilePath],
     rmPrivateDeps :: [FilePath],
     rmExtraFiles :: [ExtraSource],
     rmExtraPaths :: [FilePath],
     rmMode :: CompileMode
   }
-  deriving (Eq,Show)
+  deriving (Show)
+
+instance Eq ModuleConfig where
+  (ModuleConfig pA dA _ isA is2A esA epA mA) == (ModuleConfig pB dB _ isB is2B esB epB mB) =
+    all id [
+        pA == pB,
+        dA == dB,
+        isA == isB,
+        is2A == is2B,
+        esA == esB,
+        epA == epB,
+        mA == mB
+      ]

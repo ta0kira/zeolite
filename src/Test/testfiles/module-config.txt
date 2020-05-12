@@ -1,0 +1,12 @@
+path: "testfiles"
+expression_map: [
+  expression_macro {
+    name: MY_MACRO
+    expression: require(empty)
+  }
+  expression_macro {
+    name: MY_OTHER_MACRO
+    expression: Type<Int>$execute("this is a string\012")
+  }
+]
+mode: incremental {}
