@@ -323,8 +323,8 @@
       <itemData name="Builtin Category Name" defStyleNum="dsDataType" italic="true" spellChecking="false" />
       <itemData name="Category Name" defStyleNum="dsDataType" spellChecking="false" />
       <itemData name="Define Category Name" defStyleNum="dsDataType" bold="true" spellChecking="false" />
-      <itemData name="Pragma Head" defStyleNum="dsOthers" bold="true" italic="true" underline="true" spellChecking="false" />
-      <itemData name="Pragma Tail" defStyleNum="dsOthers" bold="false" italic="true" underline="true" spellChecking="false" />
+      <itemData name="Pragma Head" defStyleNum="dsOthers" bold="true" italic="true" color="#8060c0" spellChecking="false" />
+      <itemData name="Pragma Tail" defStyleNum="dsOthers" bold="false" italic="true" color="#8060c0" spellChecking="false" />
       <itemData name="Param Name" defStyleNum="dsDataType" italic="true" spellChecking="false" />
       <itemData name="String" defStyleNum="dsString" spellChecking="true" />
       <itemData name="Char" defStyleNum="dsChar" spellChecking="true" />
