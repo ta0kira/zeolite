@@ -60,6 +60,7 @@ tested-with:         GHC == 8.10.1,
                      GHC == 8.0.2
 
 extra-source-files:  ChangeLog.md,
+                     src/Test/testfiles/*.0rp,
                      src/Test/testfiles/*.0rt,
                      src/Test/testfiles/*.0rx
 
