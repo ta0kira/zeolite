@@ -233,6 +233,19 @@ tests = [
       }
     },
 
+    checkWriteFail "empty.+map" $ ModuleConfig {
+      rmRoot = "/home/projects",
+      rmPath = "special",
+      rmExprMap = [("MACRO",Literal (StringLiteral [] "something"))],
+      rmPublicDeps = [],
+      rmPrivateDeps = [],
+      rmExtraFiles = [],
+      rmExtraPaths = [],
+      rmMode = CompileIncremental {
+        ciLinkFlags = []
+      }
+    },
+
     checkWriteFail "bad category" $ CategorySource {
       csSource = "extra1.cpp",
       csCategories = [

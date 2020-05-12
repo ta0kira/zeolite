@@ -280,11 +280,14 @@ instance ConfigFormat ModuleConfig where
   writeConfig m = do
     extra    <- fmap concat $ collectAllOrErrorM $ map writeConfig $ rmExtraFiles m
     mode <- writeConfig (rmMode m)
+    when (not $ null $ rmExprMap m) $ compileError "Only empty expression maps are allowed when writing"
     return $ [
         "root: " ++ show (rmRoot m),
         "path: " ++ show (rmPath m),
+        "expression_map: [",
         -- NOTE: expression_map isn't output because that would require making
         -- all Expression serializable.
+        "]",
         "public_deps: ["
       ] ++ indents (map show $ rmPublicDeps m) ++ [
         "]",
