@@ -128,22 +128,23 @@ parseRequired l p = do
 
 instance ConfigFormat CompileMetadata where
   readConfig = do
-    h <-   parseRequired "version_hash:"       parseHash
-    p <-   parseRequired "path:"               parseQuoted
-    ns <-  parseOptional "namespace:"          NoNamespace parseNamespace
-    is <-  parseRequired "public_deps:"        (parseList parseQuoted)
+    h   <- parseRequired "version_hash:"       parseHash
+    p   <- parseRequired "path:"               parseQuoted
+    ns  <- parseOptional "namespace:"          NoNamespace parseNamespace
+    is  <- parseRequired "public_deps:"        (parseList parseQuoted)
     is2 <- parseRequired "private_deps:"       (parseList parseQuoted)
     cs1 <- parseRequired "public_categories:"  (parseList parseCategoryName)
     cs2 <- parseRequired "private_categories:" (parseList parseCategoryName)
-    ds <-  parseRequired "subdirs:"            (parseList parseQuoted)
-    ps <-  parseRequired "public_files:"       (parseList parseQuoted)
-    xs <-  parseRequired "private_files:"      (parseList parseQuoted)
-    ts <-  parseRequired "test_files:"         (parseList parseQuoted)
+    ds  <- parseRequired "subdirs:"            (parseList parseQuoted)
+    ps  <- parseRequired "public_files:"       (parseList parseQuoted)
+    xs  <- parseRequired "private_files:"      (parseList parseQuoted)
+    ts  <- parseRequired "test_files:"         (parseList parseQuoted)
     hxx <- parseRequired "hxx_files:"          (parseList parseQuoted)
     cxx <- parseRequired "cxx_files:"          (parseList parseQuoted)
+    bs  <- parseRequired "binaries:"           (parseList parseQuoted)
     lf  <- parseRequired "link_flags:"         (parseList parseQuoted)
-    os <-  parseRequired "object_files:"       (parseList readConfig)
-    return (CompileMetadata h p ns is is2 cs1 cs2 ds ps xs ts hxx cxx lf os)
+    os  <- parseRequired "object_files:"       (parseList readConfig)
+    return (CompileMetadata h p ns is is2 cs1 cs2 ds ps xs ts hxx cxx bs lf os)
   writeConfig m = do
     validateHash (cmVersionHash m)
     namespace <- maybeShowNamespace "namespace:" (cmNamespace m)
@@ -183,6 +184,9 @@ instance ConfigFormat CompileMetadata where
         "]",
         "cxx_files: ["
       ] ++ indents (map show $ cmCxxFiles m) ++ [
+        "]",
+        "binaries: ["
+      ] ++ indents (map show $ cmBinaries m) ++ [
         "]",
         "link_flags: ["
       ] ++ indents (map show $ cmLinkFlags m) ++ [

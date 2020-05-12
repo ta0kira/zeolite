@@ -145,11 +145,30 @@ compileModule (ModuleSpec p d is is2 ps xs ts es ep m f) = do
       cmTestFiles = sort ts2,
       cmHxxFiles = sort hxx',
       cmCxxFiles = sort cxx,
+      cmBinaries = [],
       cmLinkFlags = getLinkFlags m,
       cmObjectFiles = os1' ++ osOther ++ map OtherObjectFile os'
     }
-  createBinary backend resolver paths' (cm2:(deps1' ++ deps2)) m mf
-  writeMetadata (p </> d) cm2
+  bs <- createBinary backend resolver paths' (cm2:(deps1' ++ deps2)) m mf
+  let cm2' = CompileMetadata {
+      cmVersionHash = cmVersionHash cm2,
+      cmPath = cmPath cm2,
+      cmNamespace = cmNamespace cm2,
+      cmPublicDeps = cmPublicDeps cm2,
+      cmPrivateDeps = cmPrivateDeps cm2,
+      cmPublicCategories = cmPublicCategories cm2,
+      cmPrivateCategories = cmPrivateCategories cm2,
+      cmSubdirs = cmSubdirs cm2,
+      cmPublicFiles = cmPublicFiles cm2,
+      cmPrivateFiles = cmPrivateFiles cm2,
+      cmTestFiles = cmTestFiles cm2,
+      cmHxxFiles = cmHxxFiles cm2,
+      cmCxxFiles = cmCxxFiles cm2,
+      cmBinaries = bs,
+      cmLinkFlags = cmLinkFlags cm2,
+      cmObjectFiles = cmObjectFiles cm2
+    }
+  writeMetadata (p </> d) cm2'
   hPutStrLn stderr $ "Zeolite compilation succeeded." where
     compileAll cm xa = do
       (cm',(pc,tc)) <- cm
@@ -235,7 +254,8 @@ compileModule (ModuleSpec p d is is2 ps xs ts es ep m f) = do
           hPutStrLn stderr $ "Creating binary " ++ f0
           _ <- runCxxCommand b command
           removeFile o'
-    createBinary _ _ _ _ _ _ = return ()
+          return [f0]
+    createBinary _ _ _ _ _ _ = return []
     maybeCreateMain cm2 xs2 (CompileBinary n f2 _ _) =
       fmap (:[]) $ compileModuleMain cm2 xs2 n f2
     maybeCreateMain _ _ _ = return []

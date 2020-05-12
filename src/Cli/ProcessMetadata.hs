@@ -295,19 +295,20 @@ checkModuleVersionHash :: VersionHash -> CompileMetadata -> Bool
 checkModuleVersionHash h m = cmVersionHash m == h
 
 checkModuleFreshness :: Bool -> FilePath -> CompileMetadata -> IO Bool
-checkModuleFreshness s p (CompileMetadata _ p2 _ is is2 _ _ _ ps xs ts hxx cxx _ _) = do
+checkModuleFreshness s p (CompileMetadata _ p2 _ is is2 _ _ _ ps xs ts hxx cxx bs _ _) = do
   time <- getModificationTime $ getCachedPath p "" metadataFilename
   (ps2,xs2,ts2) <- findSourceFiles p ""
   let e1 = checkMissing ps ps2
   let e2 = checkMissing xs xs2
   let e3 = checkMissing ts ts2
-  rm <- check time (p </> moduleFilename)
-  f1 <- sequence $ map (\p3 -> check time $ getCachedPath p3 "" metadataFilename) $ is ++ is2
-  f2 <- sequence $ map (check time . (p2 </>)) $ ps ++ xs
-  f3 <- sequence $ map (check time . getCachedPath p2 "") $ hxx ++ cxx
-  let fresh = not $ any id $ [rm,e1,e2,e3] ++ f1 ++ f2 ++ f3
+  rm <- checkInput time (p </> moduleFilename)
+  f1 <- sequence $ map (\p3 -> checkInput time $ getCachedPath p3 "" metadataFilename) $ is ++ is2
+  f2 <- sequence $ map (checkInput time . (p2 </>)) $ ps ++ xs
+  f3 <- sequence $ map (checkInput time . getCachedPath p2 "") $ hxx ++ cxx
+  f4 <- sequence $ map checkOutput bs
+  let fresh = not $ any id $ [rm,e1,e2,e3] ++ f1 ++ f2 ++ f3 ++ f4
   return fresh where
-    check time f = do
+    checkInput time f = do
       exists <- doesFileOrDirExist f
       if not exists
          then do
@@ -320,6 +321,13 @@ checkModuleFreshness s p (CompileMetadata _ p2 _ is is2 _ _ _ ps xs ts hxx cxx _
                 when (not s) $ hPutStrLn stderr $ "Required path \"" ++ f ++ "\" is newer than cached data."
                 return True
               else return False
+    checkOutput f = do
+      exists <- doesFileExist f
+      if not exists
+         then do
+           when (not s) $ hPutStrLn stderr $ "Output file \"" ++ f ++ "\" is missing."
+           return True
+         else return False
     checkMissing s0 s1 = not $ null $ (Set.fromList s1) `Set.difference` (Set.fromList s0)
     doesFileOrDirExist f2 = do
       existF <- doesFileExist f2

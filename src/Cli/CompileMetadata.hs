@@ -50,6 +50,7 @@ data CompileMetadata =
     cmTestFiles :: [FilePath],
     cmHxxFiles :: [FilePath],
     cmCxxFiles :: [FilePath],
+    cmBinaries :: [FilePath],
     cmLinkFlags :: [FilePath],
     cmObjectFiles :: [ObjectFile]
   }

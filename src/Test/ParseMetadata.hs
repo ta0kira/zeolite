@@ -76,6 +76,10 @@ tests = [
         "/home/project/special/category1.cpp",
         "/home/project/special/category2.cpp"
       ],
+      cmBinaries = [
+        "/home/project/special/binary1",
+        "/home/project/special/binary2"
+      ],
       cmLinkFlags = [
         "-lm",
         "-ldl"
@@ -119,6 +123,7 @@ tests = [
       cmTestFiles = [],
       cmHxxFiles = [],
       cmCxxFiles = [],
+      cmBinaries = [],
       cmLinkFlags = [],
       cmObjectFiles = []
     },
@@ -137,6 +142,7 @@ tests = [
       cmTestFiles = [],
       cmHxxFiles = [],
       cmCxxFiles = [],
+      cmBinaries = [],
       cmLinkFlags = [],
       cmObjectFiles = []
     },
@@ -157,6 +163,7 @@ tests = [
       cmTestFiles = [],
       cmHxxFiles = [],
       cmCxxFiles = [],
+      cmBinaries = [],
       cmLinkFlags = [],
       cmObjectFiles = []
     },
@@ -177,6 +184,7 @@ tests = [
       cmTestFiles = [],
       cmHxxFiles = [],
       cmCxxFiles = [],
+      cmBinaries = [],
       cmLinkFlags = [],
       cmObjectFiles = []
     },
