@@ -10,6 +10,10 @@ expression_map: [
     name: LOCAL_VAR
     expression: macroLocalVar
   }
+  expression_macro {
+    name: META_VAR
+    expression: $ExprLookup[INT_EXPR]$*5
+  }
 ]
 private_deps: [
   "visibility"

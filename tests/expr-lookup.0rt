@@ -173,3 +173,18 @@ define Test {
 concrete Test {
   @type run () -> ()
 }
+
+
+testcase "nested expression defined in .zeolite-module" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+    \ Testing$check<Int>($ExprLookup[META_VAR]$,20)
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
