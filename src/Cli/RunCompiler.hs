@@ -118,22 +118,29 @@ runCompiler (CompileOptions _ is is2 _ _ _ p (CompileFast c fn f2) f) = do
   removeDirectoryRecursive dir
 
 runCompiler (CompileOptions h _ _ ds _ _ p CompileRecompileRecursive f) = do
-  foldM recursive Set.empty ds >> return () where
-    recursive da d0 = do
-      d <- canonicalizePath (p </> d0)
-      rm <- tryLoadRecompile d
-      case rm of
-           Nothing -> do
-             hPutStrLn stderr $ "Path " ++ d ++ " does not have a valid configuration."
-             exitFailure
-           Just m ->
-             if rmPath m `Set.member` da
-                then return da
-                else do
-                  let ds3 = map (\d2 -> d </> d2) (rmPublicDeps m ++ rmPrivateDeps m)
-                  da' <- foldM recursive (rmPath m `Set.insert` da) ds3
-                  runCompiler (CompileOptions h [] [] [d] [] [] p CompileRecompile f)
-                  return da'
+  (_,resolver) <- loadConfig
+  foldM (recursive resolver) Set.empty ds >> return () where
+    recursive r da d0 = do
+      isSystem <- isSystemModule r p d0
+      if isSystem
+         then do
+           hPutStrLn stderr $ "Skipping system module " ++ d0 ++ "."
+           exitFailure
+         else do
+           d <- canonicalizePath (p </> d0)
+           rm <- tryLoadRecompile d
+           case rm of
+                Nothing -> do
+                  hPutStrLn stderr $ "Path " ++ d ++ " does not have a valid configuration."
+                  exitFailure
+                Just m ->
+                  if rmPath m `Set.member` da
+                     then return da
+                     else do
+                       let ds3 = map (\d2 -> d </> d2) (rmPublicDeps m ++ rmPrivateDeps m)
+                       da' <- foldM (recursive r) (rmPath m `Set.insert` da) ds3
+                       runCompiler (CompileOptions h [] [] [d] [] [] p CompileRecompile f)
+                       return da'
 
 runCompiler (CompileOptions _ _ _ ds _ _ p CompileRecompile f) = do
   (backend,_) <- loadConfig

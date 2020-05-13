@@ -25,5 +25,6 @@ module Config.Paths (
 
 class PathResolver r where
   resolveModule :: r -> FilePath -> FilePath -> IO FilePath
+  isSystemModule :: r -> FilePath -> FilePath -> IO Bool
   resolveBaseModule :: r -> IO FilePath
   isBaseModule :: r -> FilePath -> IO Bool

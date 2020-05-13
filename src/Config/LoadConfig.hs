@@ -34,6 +34,7 @@ import Config.Programs
 import Control.Monad (when)
 import Data.Hashable (hash)
 import Data.List (intercalate,isPrefixOf,isSuffixOf)
+import Data.Maybe (isJust)
 import Data.Version (showVersion,versionBranch)
 import GHC.IO.Handle
 import Numeric (showHex)
@@ -166,17 +167,16 @@ executeProcess c os = do
        _ -> exitFailure
 
 instance PathResolver Resolver where
-  resolveModule (SimpleResolver ls ps) p m = do
-    let allowGlobal = not (".." `elem` components)
-    m0 <- if allowGlobal && any (\l -> isPrefixOf (l ++ "/") m) ls
-             then getDataFileName m >>= return . (:[])
-             else return []
-    let m2 = if allowGlobal
-                then map (</> m) ps
-                else []
-    firstExisting m $ [p</>m] ++ m0 ++ m2 where
-      components = map stripSlash $ splitPath m
-      stripSlash = reverse . dropWhile (== '/') . reverse
+  resolveModule r p m = do
+    ps2 <- potentialSystemPaths r m
+    firstExisting m $ [p</>m] ++ ps2
+  isSystemModule r p m = do
+    isDir <- doesDirectoryExist (p</>m)
+    if isDir
+       then return True
+       else do
+         ps2 <- potentialSystemPaths r m
+         findModule ps2 >>= return . not . isJust
   resolveBaseModule _ = do
     let m = "base"
     m0 <- getDataFileName m
@@ -185,13 +185,32 @@ instance PathResolver Resolver where
     b <- resolveBaseModule r
     return (f == b)
 
+potentialSystemPaths :: Resolver -> FilePath -> IO [FilePath]
+potentialSystemPaths (SimpleResolver ls ps) m = do
+  let allowGlobal = not (".." `elem` components)
+  m0 <- if allowGlobal && any (\l -> isPrefixOf (l ++ "/") m) ls
+           then getDataFileName m >>= return . (:[])
+           else return []
+  let m2 = if allowGlobal
+              then map (</> m) ps
+              else []
+  return $ m0 ++ m2 where
+    components = map stripSlash $ splitPath m
+    stripSlash = reverse . dropWhile (== '/') . reverse
+
 firstExisting :: FilePath -> [FilePath] -> IO FilePath
-firstExisting n [] = do
-  -- TODO: Allow error recovery here.
-  hPutStrLn stderr $ "Could not find path " ++ n
-  exitFailure
-firstExisting n (p:ps) = do
+firstExisting m ps = do
+  p <- findModule ps
+  case p of
+       Nothing -> do
+         hPutStrLn stderr $ "Could not find path " ++ m
+         exitFailure
+       Just p2 -> return p2
+
+findModule :: [FilePath] -> IO (Maybe FilePath)
+findModule [] = return Nothing
+findModule (p:ps) = do
   isDir <- doesDirectoryExist p
   if isDir
-     then canonicalizePath p
-     else firstExisting n ps
+     then fmap Just $ canonicalizePath p
+     else findModule ps
