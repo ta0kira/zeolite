@@ -190,6 +190,9 @@ ReturnTuple Value_RawFileWriter::Call_writeBlock(const S<TypeValue>& Var_self, c
   TRACE_FUNCTION("RawFileWriter.writeBlock")
   std::lock_guard<std::mutex> lock(mutex);
   const PrimString& Var_arg1 = args.At(0)->AsString();
+  if (!file || file->rdstate() != std::ios::goodbit) {
+    FAIL() << "Error reading file (check status using getFileError)";
+  }
   int write_size = 0;
   if (file) {
     file->write(&Var_arg1[0], Var_arg1.size());

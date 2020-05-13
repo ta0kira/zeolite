@@ -204,6 +204,9 @@ ReturnTuple Value_RawFileReader::Call_readBlock(const S<TypeValue>& Var_self, co
   if (Var_arg1 < 0) {
     FAIL() << "Read size " << Var_arg1 << " is invalid";
   }
+  if (!file || file->rdstate() != std::ios::goodbit) {
+    FAIL() << "Error reading file (check status using getFileError)";
+  }
   std::string buffer(Var_arg1, '\x00');
   int read_size = 0;
   if (file) {

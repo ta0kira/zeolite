@@ -2,6 +2,9 @@
 
 ## 0.6.0.0  -- ????-??-??
 
+* **[breaking]** Adds crashes when attempting to read `RawFileReader` or write
+  `RawFileWriter` if there is a preexisting file error.
+
 * **[fix]** Fixes parsing of `'"'` `Char`-literals.
 
 * **[new]** Adds the `readAll` function to `TextReader` (in `lib/util`) to

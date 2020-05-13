@@ -103,17 +103,22 @@ define Test {
     if (!present(reader.getFileError())) {
       fail("expected file error")
     }
+  }
+}
 
-    String data <- reader.readBlock(10)
-    if (data != "") {
-      fail("\"" + data + "\"")
-    }
-    if (!present(reader.getFileError())) {
-      fail("expected file error")
-    }
-    if (!reader.pastEnd()) {
-      fail("more data in file")
-    }
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "read missing file crash" {
+  crash Test$run()
+}
+
+define Test {
+  run () {
+    RawFileReader reader <- RawFileReader$open("do-not-create-this-file")
+    \ reader.readBlock(0)
   }
 }
 
@@ -132,6 +137,22 @@ define Test {
     if (!present(writer.getFileError())) {
       fail("expected file error")
     }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "unwritable file crash" {
+  crash Test$run()
+}
+
+define Test {
+  run () {
+    RawFileWriter writer <- RawFileWriter$open("/")
+    \ writer.writeBlock("")
   }
 }
 
