@@ -1,0 +1,330 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="Generator" content="Kate, the KDE Advanced Text Editor" />
+<title>parser.0rx</title>
+</head>
+<!-- Highlighting: "Zeolite" -->
+<body>
+<pre style='color:#1f1c1b;background-color:#ffffff;'>
+<b>define</b> <b><span style='color:#0057ae;'>ParseState</span></b> {
+  <span style='color:#644a9b;'>@value</span> <i><span style='color:#0057ae;'>String</span></i> data
+  <span style='color:#644a9b;'>@value</span> <i><span style='color:#0057ae;'>Int</span></i> index
+  <span style='color:#644a9b;'>@value</span> <i><span style='color:#0057ae;'>Int</span></i> line
+  <span style='color:#644a9b;'>@value</span> <i><span style='color:#0057ae;'>Int</span></i> char
+  <span style='color:#644a9b;'>@value</span> <span style='color:#0057ae;'>ErrorOr</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span> value
+  <span style='color:#644a9b;'>@value</span> <b>optional</b> <i><span style='color:#0057ae;'>Formatted</span></i> error
+
+  new (data) {
+    <b>return</b> <span style='color:#0057ae;'>ParseState</span><span style='color:#c02040;'>&lt;</span><span style='color:#0057ae;'>Void</span><span style='color:#c02040;'>&gt;</span>{ data, <span style='color:#b08000;'>0</span>, <span style='color:#b08000;'>0</span>, <span style='color:#b08000;'>0</span>, <span style='color:#0057ae;'>ErrorOr</span><span style='color:#644a9b;'>$$</span>value&lt;<span style='color:#0057ae;'>Void</span>&gt;(<span style='color:#0057ae;'>Void</span><span style='color:#644a9b;'>$</span>void()), <b>empty</b> }
+  }
+
+  getValue () {
+    <b>if</b> (<b>present</b>(error)) {
+      <b>return</b> <span style='color:#0057ae;'>ErrorOr</span><span style='color:#644a9b;'>$$</span>error(<b>require</b>(error))
+    } <b>else</b> {
+      <b>return</b> value
+    }
+  }
+
+  setValue (value2) {
+    <b>if</b> (hasBrokenInput()) {
+      <b>return</b> convertError&lt;<i><span style='color:#0057ae;'>#y</span></i>&gt;()
+    } <b>else</b> {
+      <b>return</b> <span style='color:#0057ae;'>ParseState</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#y</span></i><span style='color:#c02040;'>&gt;</span>{ data, index, line, char, value2, error }
+    }
+  }
+
+  getPosition () {
+    <b>return</b> <i><span style='color:#0057ae;'>String</span></i><span style='color:#644a9b;'>$</span>builder()
+        .append(<span style='color:#bf0303;'>&quot;(&quot;</span>)
+        .append(line.formatted())
+        .append(<span style='color:#bf0303;'>&quot;,&quot;</span>)
+        .append(char.formatted())
+        .append(<span style='color:#bf0303;'>&quot;)&quot;</span>)
+        .build()
+  }
+
+  atEof () {
+    <b>return</b> index &gt;= data.readSize()
+  }
+
+  hasAnyError () {
+    <b>return</b> <b>present</b>(error) || value.isError()
+  }
+
+  hasBrokenInput () {
+    <b>return</b> <b>present</b>(error)
+  }
+
+  current () {
+    <span style='color:#006e28;'>\</span> sanityCheck()
+    <b>return</b> data.readPosition(index)
+  }
+
+  advance () {
+    <span style='color:#006e28;'>\</span> sanityCheck()
+    <b>if</b> (data.readPosition(index) == <span style='color:#924c9d;'>'\n'</span>) {
+      <b>return</b> <span style='color:#0057ae;'>ParseState</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>{ data, index+<span style='color:#b08000;'>1</span>, line+<span style='color:#b08000;'>1</span>, <span style='color:#b08000;'>0</span>, value, error }
+    } <b>else</b> {
+      <b>return</b> <span style='color:#0057ae;'>ParseState</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>{ data, index+<span style='color:#b08000;'>1</span>, line, char+<span style='color:#b08000;'>1</span>, value, error }
+    }
+  }
+
+  setBroken (message) {
+    <b>return</b> <span style='color:#0057ae;'>ParseState</span><span style='color:#c02040;'>&lt;</span><b>all</b><span style='color:#c02040;'>&gt;</span>{ data, index, line, char, <span style='color:#0057ae;'>ErrorOr</span><span style='color:#644a9b;'>$$</span>error(message), message }
+  }
+
+  convertError () {
+    <b>return</b> <span style='color:#0057ae;'>ParseState</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#y</span></i><span style='color:#c02040;'>&gt;</span>{ data, index, line, char, <span style='color:#0057ae;'>ErrorOr</span><span style='color:#644a9b;'>$$</span>error(getError()), error }
+  }
+
+  <span style='color:#644a9b;'>@value</span> getError () -&gt; (<i><span style='color:#0057ae;'>Formatted</span></i>)
+  getError () {
+    <b>if</b> (<b>present</b>(error)) {
+      <b>return</b> <b>require</b>(error)
+    } <b>else</b> {
+      <b>return</b> value.getError()
+    }
+  }
+
+  <span style='color:#644a9b;'>@value</span> sanityCheck () -&gt; ()
+  sanityCheck () {
+    <b>if</b> (hasBrokenInput()) {
+      <span style='color:#006e28;'>\</span> <span style='color:#0057ae;'>LazyStream</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Formatted</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>$</span>new()
+          .append(<span style='color:#bf0303;'>&quot;Error at &quot;</span>)
+          .append(getPosition())
+          .append(<span style='color:#bf0303;'>&quot;: &quot;</span>)
+          .append(getError())
+          .writeTo(<span style='color:#0057ae;'>SimpleOutput</span><span style='color:#644a9b;'>$</span>error())
+    }
+    <b>if</b> (atEof()) {
+      <span style='color:#006e28;'>\</span> <span style='color:#0057ae;'>LazyStream</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Formatted</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>$</span>new()
+          .append(<span style='color:#bf0303;'>&quot;Reached end of input at &quot;</span>)
+          .append(getPosition())
+          .writeTo(<span style='color:#0057ae;'>SimpleOutput</span><span style='color:#644a9b;'>$</span>error())
+    }
+  }
+}
+
+<b>concrete</b> <b><span style='color:#0057ae;'>TryParser</span></b><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span> {
+  <span style='color:#644a9b;'>@type</span> create (<span style='color:#0057ae;'>Parser</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>) -&gt; (<span style='color:#0057ae;'>Parser</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>)
+}
+
+<b>define</b> <b><span style='color:#0057ae;'>TryParser</span></b> {
+  <b>refines</b> <span style='color:#0057ae;'>Parser</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>
+
+  <span style='color:#644a9b;'>@value</span> <span style='color:#0057ae;'>Parser</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span> parser
+
+  run (stateOld) (state) {
+    <b>if</b> (stateOld.hasAnyError()) {
+      <b>return</b> stateOld.convertError&lt;<i><span style='color:#0057ae;'>#x</span></i>&gt;()
+    }
+    state &lt;- parser.run(stateOld)
+    <b>if</b> (state.hasAnyError()) {
+      state &lt;- stateOld.setValue&lt;<i><span style='color:#0057ae;'>#x</span></i>&gt;(state.getValue())
+    }
+  }
+
+  create (parser) {
+    <b>return</b> <span style='color:#0057ae;'>TryParser</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>{ parser }
+  }
+}
+
+<b>concrete</b> <b><span style='color:#0057ae;'>StringParser</span></b> {
+  <span style='color:#644a9b;'>@type</span> create (<i><span style='color:#0057ae;'>String</span></i>) -&gt; (<span style='color:#0057ae;'>Parser</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>String</span></i><span style='color:#c02040;'>&gt;</span>)
+}
+
+<b>define</b> <b><span style='color:#0057ae;'>StringParser</span></b> {
+  <b>refines</b> <span style='color:#0057ae;'>Parser</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>String</span></i><span style='color:#c02040;'>&gt;</span>
+
+  <span style='color:#644a9b;'>@value</span> <i><span style='color:#0057ae;'>String</span></i> match
+
+  run (stateOld) (state) {
+    <b>if</b> (stateOld.hasAnyError()) {
+      <b>return</b> stateOld.convertError&lt;<i><span style='color:#0057ae;'>String</span></i>&gt;()
+    }
+    <i><span style='color:#0057ae;'>String</span></i> message &lt;- <span style='color:#bf0303;'>&quot;Failed to match </span><span style='color:#924c9d;'>\&quot;</span><span style='color:#bf0303;'>&quot;</span> + match + <span style='color:#bf0303;'>&quot;</span><span style='color:#924c9d;'>\&quot;</span><span style='color:#bf0303;'> at &quot;</span> + stateOld.getPosition()
+    state &lt;- stateOld.setValue&lt;<i><span style='color:#0057ae;'>String</span></i>&gt;(<span style='color:#0057ae;'>ErrorOr</span><span style='color:#644a9b;'>$$</span>error(message))
+    <b>scoped</b> {
+      <i><span style='color:#0057ae;'>Int</span></i> index &lt;- <span style='color:#b08000;'>0</span>
+    } <b>in</b> <b>while</b> (index &lt; match.readSize()) {
+      <b>if</b> (state.atEof() || state.current() != match.readPosition(index)) {
+        <b>if</b> (index &gt; <span style='color:#b08000;'>0</span>) {
+          <span style='color:#898887;'>// Partial match =&gt; set error state.</span>
+          state &lt;- state.setBroken(message)
+        }
+        <b>return</b> <b>_</b>
+      }
+    } <b>update</b> {
+      index &lt;- index+<span style='color:#b08000;'>1</span>
+      state &lt;- state.advance()
+    }
+    state &lt;- state.setValue&lt;<i><span style='color:#0057ae;'>String</span></i>&gt;(<span style='color:#0057ae;'>ErrorOr</span><span style='color:#644a9b;'>$$</span>value&lt;<i><span style='color:#0057ae;'>String</span></i>&gt;(match))
+  }
+
+  create (match) {
+    <b>return</b> <span style='color:#0057ae;'>StringParser</span>{ match }
+  }
+}
+
+<b>concrete</b> <b><span style='color:#0057ae;'>SequenceOfParser</span></b> {
+  <span style='color:#644a9b;'>@type</span> create (<i><span style='color:#0057ae;'>String</span></i>,<i><span style='color:#0057ae;'>Int</span></i>,<i><span style='color:#0057ae;'>Int</span></i>) -&gt; (<span style='color:#0057ae;'>Parser</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>String</span></i><span style='color:#c02040;'>&gt;</span>)
+}
+
+<b>define</b> <b><span style='color:#0057ae;'>SequenceOfParser</span></b> {
+  <b>refines</b> <span style='color:#0057ae;'>Parser</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>String</span></i><span style='color:#c02040;'>&gt;</span>
+
+  <span style='color:#644a9b;'>@value</span> <i><span style='color:#0057ae;'>String</span></i> matches
+  <span style='color:#644a9b;'>@value</span> <i><span style='color:#0057ae;'>Int</span></i> min
+  <span style='color:#644a9b;'>@value</span> <i><span style='color:#0057ae;'>Int</span></i> max
+
+  run (stateOld) (state) {
+    <b>if</b> (stateOld.hasAnyError()) {
+      <b>return</b> stateOld.convertError&lt;<i><span style='color:#0057ae;'>String</span></i>&gt;()
+    }
+    <i><span style='color:#0057ae;'>String</span></i> message &lt;- <span style='color:#bf0303;'>&quot;Failed to match [&quot;</span> + matches + <span style='color:#bf0303;'>&quot;]{&quot;</span> +
+                      min.formatted() + <span style='color:#bf0303;'>&quot;,&quot;</span> + max.formatted() + <span style='color:#bf0303;'>&quot;} at &quot;</span> +
+                      stateOld.getPosition()
+    state &lt;- stateOld.setValue&lt;<i><span style='color:#0057ae;'>String</span></i>&gt;(<span style='color:#0057ae;'>ErrorOr</span><span style='color:#644a9b;'>$$</span>error(message))
+    <i><span style='color:#0057ae;'>Builder</span></i><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>String</span></i><span style='color:#c02040;'>&gt;</span> builder &lt;- <i><span style='color:#0057ae;'>String</span></i><span style='color:#644a9b;'>$</span>builder()
+    <i><span style='color:#0057ae;'>Int</span></i> count &lt;- <span style='color:#b08000;'>0</span>
+    <b>while</b> (!state.atEof() &amp;&amp; (max == <span style='color:#b08000;'>0</span> || count &lt; max)) {
+      <i><span style='color:#0057ae;'>Bool</span></i> found &lt;- <b>false</b>
+      <b>scoped</b> {
+        <i><span style='color:#0057ae;'>Int</span></i> index &lt;- <span style='color:#b08000;'>0</span>
+      } <b>in</b> <b>while</b> (index &lt; matches.readSize()) {
+        <b>if</b> (state.current() == matches.readPosition(index)) {
+          <span style='color:#006e28;'>\</span> builder.append(matches.readPosition(index).formatted())
+          found &lt;- <b>true</b>
+          <b>break</b>
+        }
+      } <b>update</b> {
+        index &lt;- index+<span style='color:#b08000;'>1</span>
+      }
+      <b>if</b> (!found) {
+        <b>break</b>
+      }
+    } <b>update</b> {
+      count &lt;- count+<span style='color:#b08000;'>1</span>
+      state &lt;- state.advance()
+    }
+    <b>if</b> (count &gt;= min) {
+      state &lt;- state.setValue&lt;<i><span style='color:#0057ae;'>String</span></i>&gt;(<span style='color:#0057ae;'>ErrorOr</span><span style='color:#644a9b;'>$$</span>value&lt;<i><span style='color:#0057ae;'>String</span></i>&gt;(builder.build()))
+    } <b>elif</b> (count &gt; <span style='color:#b08000;'>0</span>) {
+      <span style='color:#898887;'>// Partial match =&gt; set error state.</span>
+      state &lt;- state.setBroken(message)
+    }
+  }
+
+  create (matches,min,max) {
+    <b>return</b> <span style='color:#0057ae;'>SequenceOfParser</span>{ matches, min, max }
+  }
+}
+
+<b>concrete</b> <b><span style='color:#0057ae;'>CharParser</span></b> {
+  <span style='color:#644a9b;'>@type</span> create (<i><span style='color:#0057ae;'>Char</span></i>) -&gt; (<span style='color:#0057ae;'>Parser</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;</span>)
+}
+
+<b>define</b> <b><span style='color:#0057ae;'>CharParser</span></b> {
+  <b>refines</b> <span style='color:#0057ae;'>Parser</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;</span>
+
+  <span style='color:#644a9b;'>@value</span> <i><span style='color:#0057ae;'>Char</span></i> match
+
+  run (stateOld) {
+    <b>if</b> (stateOld.hasAnyError()) {
+      <b>return</b> stateOld.convertError&lt;<i><span style='color:#0057ae;'>Char</span></i>&gt;()
+    }
+    <b>if</b> (stateOld.atEof() || stateOld.current() != match) {
+      <i><span style='color:#0057ae;'>String</span></i> message &lt;- <span style='color:#bf0303;'>&quot;Failed to match '&quot;</span> + match.formatted() + <span style='color:#bf0303;'>&quot;' at &quot;</span> + stateOld.getPosition()
+      <b>return</b> stateOld.setValue&lt;<i><span style='color:#0057ae;'>Char</span></i>&gt;(<span style='color:#0057ae;'>ErrorOr</span><span style='color:#644a9b;'>$$</span>error(message))
+    } <b>else</b> {
+      <b>return</b> stateOld.advance().setValue&lt;<i><span style='color:#0057ae;'>Char</span></i>&gt;(<span style='color:#0057ae;'>ErrorOr</span><span style='color:#644a9b;'>$$</span>value&lt;<i><span style='color:#0057ae;'>Char</span></i>&gt;(match))
+    }
+  }
+
+  create (match) {
+    <b>return</b> <span style='color:#0057ae;'>CharParser</span>{ match }
+  }
+}
+
+<b>concrete</b> <b><span style='color:#0057ae;'>OrParser</span></b><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span> {
+  <span style='color:#644a9b;'>@type</span> create (<span style='color:#0057ae;'>Parser</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>,<span style='color:#0057ae;'>Parser</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>) -&gt; (<span style='color:#0057ae;'>Parser</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>)
+}
+
+<b>define</b> <b><span style='color:#0057ae;'>OrParser</span></b> {
+  <b>refines</b> <span style='color:#0057ae;'>Parser</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>
+
+  <span style='color:#644a9b;'>@value</span> <span style='color:#0057ae;'>Parser</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span> parser1
+  <span style='color:#644a9b;'>@value</span> <span style='color:#0057ae;'>Parser</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span> parser2
+
+  run (stateOld) (state) {
+    <b>if</b> (stateOld.hasAnyError()) {
+      <b>return</b> stateOld.convertError&lt;<i><span style='color:#0057ae;'>#x</span></i>&gt;()
+    }
+    state &lt;- parser1.run(stateOld)
+    <b>if</b> (state.hasAnyError() &amp;&amp; !state.hasBrokenInput()) {
+      state &lt;- parser2.run(stateOld)
+    }
+  }
+
+  create (parser1,parser2) {
+    <b>return</b> <span style='color:#0057ae;'>OrParser</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>{ parser1, parser2 }
+  }
+}
+
+<b>concrete</b> <b><span style='color:#0057ae;'>ThenParser</span></b><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span> {
+  <span style='color:#644a9b;'>@type</span> create (<span style='color:#0057ae;'>Parser</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>,<span style='color:#0057ae;'>Parser</span><span style='color:#c02040;'>&lt;</span><b>any</b><span style='color:#c02040;'>&gt;</span>) -&gt; (<span style='color:#0057ae;'>Parser</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>)
+}
+
+<b>define</b> <b><span style='color:#0057ae;'>ThenParser</span></b> {
+  <b>refines</b> <span style='color:#0057ae;'>Parser</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>
+
+  <span style='color:#644a9b;'>@value</span> <span style='color:#0057ae;'>Parser</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>  parser1
+  <span style='color:#644a9b;'>@value</span> <span style='color:#0057ae;'>Parser</span><span style='color:#c02040;'>&lt;</span><b>any</b><span style='color:#c02040;'>&gt;</span> parser2
+
+  run (stateOld) (state) {
+    <b>if</b> (stateOld.hasAnyError()) {
+      <b>return</b> stateOld.convertError&lt;<i><span style='color:#0057ae;'>#x</span></i>&gt;()
+    }
+    state &lt;- parser1.run(stateOld)
+    <b>if</b> (!state.hasAnyError()) {
+      state &lt;- parser2.run(state).setValue&lt;<i><span style='color:#0057ae;'>#x</span></i>&gt;(state.getValue())
+    }
+  }
+
+  create (parser1,parser2) {
+    <b>return</b> <span style='color:#0057ae;'>ThenParser</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>{ parser1, parser2 }
+  }
+}
+
+<b>define</b> <b><span style='color:#0057ae;'>Parse</span></b> {
+  try (x) {
+    <b>return</b> <span style='color:#0057ae;'>TryParser</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>$</span>create(x)
+  }
+
+  string (match) {
+    <b>return</b> <span style='color:#0057ae;'>StringParser</span><span style='color:#644a9b;'>$</span>create(match)
+  }
+
+  sequenceOf (match,min,max) {
+    <b>return</b> <span style='color:#0057ae;'>SequenceOfParser</span><span style='color:#644a9b;'>$</span>create(match,min,max)
+  }
+
+  char (match) {
+    <b>return</b> <span style='color:#0057ae;'>CharParser</span><span style='color:#644a9b;'>$</span>create(match)
+  }
+
+  or (x,y) {
+    <b>return</b> <span style='color:#0057ae;'>OrParser</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>$</span>create(x,y)
+  }
+
+  then (x,y) {
+    <b>return</b> <span style='color:#0057ae;'>ThenParser</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>$</span>create(x,y)
+  }
+}
+</pre>
+</body>
+</html>
