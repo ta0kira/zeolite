@@ -30,8 +30,7 @@ define Test {
   }
 
   @type noTrace () -> ()
-  noTrace () {
-    $NoTrace$
+  noTrace () { $NoTrace$
     \ error()
   }
 
