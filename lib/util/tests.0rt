@@ -265,7 +265,7 @@ define Test {
     if (!value.isError()) {
       fail("Failed")
     }
-    \ Testing$check<String>(value.getError(),"error message")
+    \ Testing$check<String>(value.getError().formatted(),"error message")
   }
 }
 

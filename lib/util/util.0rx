@@ -168,7 +168,7 @@ define TextReader {
 
 define ErrorOr {
   @value optional #x maybeValue
-  @value optional String maybeError
+  @value optional Formatted maybeError
 
   value (x) {
     return ErrorOr<#x>{ x, empty }

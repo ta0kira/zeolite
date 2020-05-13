@@ -102,11 +102,11 @@ concrete TextReader {
 }
 
 concrete ErrorOr<|#x> {
-  @category value<#x> (#x)     -> (ErrorOr<#x>)
-  @category error     (String) -> (ErrorOr<all>)
+  @category value<#x> (#x)        -> (ErrorOr<#x>)
+  @category error     (Formatted) -> (ErrorOr<all>)
 
   @value isError () -> (Bool)
 
   @value getValue () -> (#x)
-  @value getError () -> (String)
+  @value getError () -> (Formatted)
 }
