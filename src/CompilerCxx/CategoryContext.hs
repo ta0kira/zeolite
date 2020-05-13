@@ -57,9 +57,7 @@ getContextForInit tm em t d s = do
   fa <- setInternalFunctions r t (dcFunctions d)
   let typeInstance = TypeInstance (getCategoryName t) $ fmap (SingleType . JustParamName . vpParam) ps
   let builtin = Map.filter ((== LocalScope) . vvScope) $ builtinVariables typeInstance
-  -- Using < ensures that variables can only be referenced after initialization.
-  -- TODO: This doesn't really help if access is done via a function.
-  members <- mapMembers $ filter ((< s) . dmScope) (dcMembers d)
+  members <- mapMembers $ filter ((<= s) . dmScope) (dcMembers d)
   return $ ProcedureContext {
       pcScope = s,
       pcType = getCategoryName t,

@@ -93,6 +93,29 @@ concrete Test {
 }
 
 
+testcase "@category member refers to @category member" {
+  success Test$run()
+}
+
+define Test {
+  @category Int value1 <- 1
+  @category Int value2 <- value1+1
+
+  @category get () -> (Int)
+  get () {
+    return value2
+  }
+
+  run () {
+    \ Testing$check<Int>(get(),2)
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
 testcase "@category member is lazy" {
   success Test$run()
 }

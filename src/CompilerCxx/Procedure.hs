@@ -290,7 +290,7 @@ compileLazyInit (DefinedMember c _ t1 n (Just e)) = do
   let Positional [t2] = ts
   lift $ (checkValueTypeMatch r fa t2 t1) `reviseError`
     ("In initialization of " ++ show n ++ " at " ++ formatFullContext c)
-  csWrite [variableName n ++ "([]() { return " ++ writeStoredVariable t1 e' ++ "; })"]
+  csWrite [variableName n ++ "([this]() { return " ++ writeStoredVariable t1 e' ++ "; })"]
 
 compileVoidExpression :: (Show c, CompileErrorM m, MergeableM m,
                          CompilerContext c m [String] a) =>

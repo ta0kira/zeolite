@@ -2,6 +2,9 @@
 
 ## 0.6.0.0  -- ????-??-??
 
+* **[new]** Allows `@category` members in `concrete` types to refer to each
+  other during initialization.
+
 * **[breaking]** Adds crashes when attempting to read `RawFileReader` or write
   `RawFileWriter` if there is a preexisting file error.
 
