@@ -65,7 +65,7 @@ runCompiler (CompileOptions _ _ _ ds _ _ p (ExecuteTests tp) f) = do
       checkAllowedStale fr1 f
       (fr2,deps2) <- loadPrivateDeps (getCompilerHash b) (deps0++[m]++deps1)
       checkAllowedStale fr2 f
-      em <- getExprMap rm'
+      em <- getExprMap p rm'
       return $ LoadedTests p d m em (deps0++[m]++deps1) deps2
     checkTestFilters ts = do
       let possibleTests = Set.fromList $ concat $ map (cmTestFiles . ltMetadata) ts
@@ -90,7 +90,7 @@ runCompiler (CompileOptions _ is is2 _ _ _ p (CompileFast c fn f2) f) = do
   absolute <- canonicalizePath p
   f2' <- canonicalizePath (p </> f2)
   let rm = ModuleConfig {
-    rmRoot = p,
+    rmRoot = "",
     rmPath = ".",
     rmExprMap = [],
     rmPublicDeps = [],
@@ -99,7 +99,7 @@ runCompiler (CompileOptions _ is is2 _ _ _ p (CompileFast c fn f2) f) = do
     rmExtraPaths = [],
     rmMode = CompileUnspecified
   }
-  em <- getExprMap rm
+  em <- getExprMap p rm
   let spec = ModuleSpec {
     msRoot = absolute,
     msPath = dir,
@@ -162,7 +162,7 @@ runCompiler (CompileOptions _ _ _ ds _ _ p CompileRecompile f) = do
               absolute <- canonicalizePath (p </> d0)
               let fixed = fixPath (absolute </> p2)
               (ps,xs,ts) <- findSourceFiles fixed d
-              em <- getExprMap rm'
+              em <- getExprMap p rm'
               let spec = ModuleSpec {
                 msRoot = fixed,
                 msPath = d,

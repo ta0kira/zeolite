@@ -173,7 +173,7 @@ instance PathResolver Resolver where
   isSystemModule r p m = do
     isDir <- doesDirectoryExist (p</>m)
     if isDir
-       then return True
+       then return False
        else do
          ps2 <- potentialSystemPaths r m
          findModule ps2 >>= return . not . isJust

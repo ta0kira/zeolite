@@ -218,9 +218,9 @@ findSourceFiles p0 p = do
   let ts = filter (isSuffixOf ".0rt") ds
   return (ps,xs,ts)
 
-getExprMap :: ModuleConfig -> IO (ExprMap SourcePos)
-getExprMap m = do
-  path <- canonicalizePath (rmRoot m </> rmPath m)
+getExprMap :: FilePath -> ModuleConfig -> IO (ExprMap SourcePos)
+getExprMap p m = do
+  path <- canonicalizePath (p </> rmRoot m </> rmPath m)
   let defaults = [("MODULE_PATH",Literal (StringLiteral [] path))]
   return $ Map.fromList $ rmExprMap m ++ defaults
 
