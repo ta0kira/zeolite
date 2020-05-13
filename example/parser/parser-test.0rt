@@ -1,0 +1,103 @@
+testcase "parser sequence" {
+  success Test$execute()
+}
+
+concrete Test {
+  @type execute () -> ()
+}
+
+define Test {
+  execute () {
+    TestData data <- TestData$parseFrom(loadTestData())
+
+    if (data.getName() != "example data") {
+      fail(data.getName())
+    }
+    if (data.getDescription() != "THIS_IS_A_TOKEN") {
+      fail(data.getDescription())
+    }
+  }
+
+  @type loadTestData () -> (String)
+  loadTestData () {
+    scoped {
+      RawFileReader reader <- RawFileReader$open($ExprLookup[MODULE_PATH]$ + "/test-data.txt")
+    } cleanup {
+      \ reader.freeResource()
+    } in return TextReader$readAll(reader)
+  }
+}
+
+concrete SentenceParser {
+  @type create () -> (Parser<String>)
+}
+
+define SentenceParser {
+  refines Parser<String>
+
+  @category String sentenceChars <- "ABCDEFGHIJKLMNOPQRSTUVWXYZ" +
+                                    "abcdefghijklmnopqrstuvwxyz" +
+                                    "., !?-"
+
+  run (stateOld) {
+    if (stateOld.hasAnyError()) {
+      return stateOld.convertError<String>()
+    }
+    ParseState<any>    state1 <- Parse$char('"').run(stateOld)
+    ParseState<String> text   <- Parse$sequenceOf(sentenceChars,0,0).run(state1)
+    ParseState<any>    state2 <- Parse$char('"').run(text)
+    return state2.setValue<String>(text.getValue())
+  }
+
+  create () {
+    return SentenceParser{ }
+  }
+}
+
+concrete TestData {
+  @type parseFrom (String) -> (TestData)
+
+  @value getName        () -> (String)
+  @value getDescription () -> (String)
+}
+
+define TestData {
+  @category Parser<any>    whitespace      <- Parse$sequenceOf(" \n\t",1,0)
+  @category Parser<String> sentence        <- SentenceParser$create()
+  @category Parser<String> token           <- Parse$sequenceOf("ABCDEFGHIJKLMNOPQRSTUVWXYZ_",1,0)
+  @category Parser<any>    fileStart       <- Parse$string("file_start")   `Parse$then<any>` whitespace
+  @category Parser<any>    fileEnd         <- Parse$string("file_end")     `Parse$then<any>` whitespace
+  @category Parser<any>    nameTag         <- Parse$string("name:")        `Parse$then<any>` whitespace
+  @category Parser<any>    descriptionTag  <- Parse$string("description:") `Parse$then<any>` whitespace
+  @category Parser<String> sentenceOrToken <- sentence `Parse$or<String>` token `Parse$then<String>` whitespace
+
+  @value String name
+  @value String description
+
+  parseFrom (data) {
+    ParseState<any>    start       <- ParseState$$new(data)
+    ParseState<any>    state1      <- fileStart.run(start)
+    ParseState<any>    state2      <- nameTag.run(state1)
+    ParseState<String> name        <- sentenceOrToken.run(state2)
+    ParseState<any>    state3      <- descriptionTag.run(name)
+    ParseState<String> description <- sentenceOrToken.run(state3)
+    ParseState<any>    final       <- fileEnd.run(description)
+
+    if (final.hasAnyError()) {
+      \ LazyStream<Formatted>$new()
+          .append("Parsing failed: ")
+          .append(final.getValue().getError())
+          .writeTo(SimpleOutput$error())
+    }
+
+    return TestData{ name.getValue().getValue(), description.getValue().getValue() }
+  }
+
+  getName () {
+    return name
+  }
+
+  getDescription () {
+    return description
+  }
+}
