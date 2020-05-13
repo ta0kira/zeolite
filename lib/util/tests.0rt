@@ -217,3 +217,75 @@ define Test {
 concrete Test {
   @type run () -> ()
 }
+
+
+testcase "ErrorOr value" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+    ErrorOr<Int> value <- ErrorOr$$value<Int>(10)
+    if (value.isError()) {
+      fail("Failed")
+    }
+    \ Testing$check<Int>(value.getValue(),10)
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "ErrorOr getError() crashes with value" {
+  crash Test$run()
+  require "empty"
+}
+
+define Test {
+  run () {
+    ErrorOr<Int> value <- ErrorOr$$value<Int>(10)
+    \ value.getError()
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "ErrorOr error" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+    ErrorOr<String> value <- ErrorOr$$error("error message")
+    if (!value.isError()) {
+      fail("Failed")
+    }
+    \ Testing$check<String>(value.getError(),"error message")
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "ErrorOr getValue() crashes with error" {
+  crash Test$run()
+  require "error message"
+}
+
+define Test {
+  run () {
+    ErrorOr<String> value <- ErrorOr$$error("error message")
+    \ value.getValue()
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}

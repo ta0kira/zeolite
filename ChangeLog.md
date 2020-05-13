@@ -2,6 +2,9 @@
 
 ## 0.6.0.0  -- ????-??-??
 
+* **[new]** Adds the `ErrorOr` type to `lib/util`. This allows functions to
+  return either the expected type or an error message.
+
 * **[new]** Adds the `Void` type to `lib/util`. This can be used to ignore type
   parameters when a value still needs to be instantiated.
 

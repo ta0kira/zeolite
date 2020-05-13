@@ -165,3 +165,32 @@ define TextReader {
     return data
   }
 }
+
+define ErrorOr {
+  @value optional #x maybeValue
+  @value optional String maybeError
+
+  value (x) {
+    return ErrorOr<#x>{ x, empty }
+  }
+
+  error (message) {
+    return ErrorOr<all>{ empty, message }
+  }
+
+  isError () {
+    return !present(maybeValue) && present(maybeError)
+  }
+
+  getValue () {
+    if (present(maybeValue)) {
+      return require(maybeValue)
+    } else {
+      fail(require(maybeError))
+    }
+  }
+
+  getError () {
+    return require(maybeError)
+  }
+}
