@@ -2,6 +2,9 @@
 
 ## 0.6.0.0  -- ????-??-??
 
+* **[new]** Adds the `Void` type to `lib/util`. This can be used to ignore type
+  parameters when a value still needs to be instantiated.
+
 * **[new]** Adds the `$ExprLookup[`*`MACRO_NAME`*`]$` pragma, which allows the
   user to define expression substitutions in `.zeolite-module`.
 

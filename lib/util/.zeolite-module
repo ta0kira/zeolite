@@ -1,5 +1,8 @@
 root: ".."
 path: "util"
+private_deps: [
+  "../../tests"
+]
 extra_files: [
   category_source {
     source: "util/Category_Argv.cpp"

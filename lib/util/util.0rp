@@ -18,6 +18,15 @@ limitations under the License.
 
 // TODO: Split this up, or otherwise organize it better.
 
+concrete Void {
+  refines Formatted
+
+  defines Equals<Void>
+  defines LessThan<Void>
+
+  @type void () -> (Void)
+}
+
 @value interface ReadCurrent<|#x> {
   readCurrent () -> (#x)
 }

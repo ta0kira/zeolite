@@ -16,6 +16,26 @@ limitations under the License.
 
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
+define Void {
+  @category Void singleton <- Void{ }
+
+  formatted () {
+    return "void"
+  }
+
+  equals (_,_) {
+    return true
+  }
+
+  lessThan (_,_) {
+    return true
+  }
+
+  void () {
+    return singleton
+  }
+}
+
 define ReadIterator {
   @value ReadPosition<#x> reader
   @value Int position
