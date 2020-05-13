@@ -2,6 +2,8 @@
 
 ## 0.6.0.0  -- ????-??-??
 
+* **[fix]** Fixes parsing of `'"'` `Char`-literals.
+
 * **[new]** Adds the `readAll` function to `TextReader` (in `lib/util`) to
   support reading an entire file at once.
 

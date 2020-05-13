@@ -210,6 +210,11 @@ tests = [
     checkShortParseFail " x <- 'xx'",
     checkShortParseSuccess " x <- \"'xx\"",
 
+    checkParsesAs "'\"'"
+                  (\e -> case e of
+                              (Literal (CharLiteral _ '"')) -> True
+                              _ -> False),
+
     checkParsesAs "1 + 2 < 4 && 3 >= 1 * 2 + 1 || true"
                   (\e -> case e of
                               (InfixExpression _

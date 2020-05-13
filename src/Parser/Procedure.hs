@@ -497,7 +497,7 @@ instance ParseFromSource (ValueLiteral SourcePos) where
     charLiteral = do
       c <- getPosition
       string_ "'"
-      ch <- stringChar
+      ch <- stringChar <|> char '"'
       string_ "'"
       optionalSpace
       return $ CharLiteral [c] ch
