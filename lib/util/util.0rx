@@ -200,4 +200,8 @@ define ErrorOr {
   getError () {
     return require(maybeError)
   }
+
+  convertError () {
+    return ErrorOr<all>{ empty, maybeError }
+  }
 }

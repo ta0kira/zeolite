@@ -110,4 +110,5 @@ concrete ErrorOr<|#x> {
 
   @value getValue () -> (#x)
   @value getError () -> (Formatted)
+  @value convertError () -> (ErrorOr<all>)
 }

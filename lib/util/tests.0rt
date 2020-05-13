@@ -339,3 +339,21 @@ define Test {
 concrete Test {
   @type run () -> ()
 }
+
+
+testcase "ErrorOr convert error" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+    scoped {
+      ErrorOr<String> error <- ErrorOr$$error("error message")
+    } in ErrorOr<Int> value <- error.convertError()
+    \ Testing$check<String>(value.getError().formatted(),"error message")
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
