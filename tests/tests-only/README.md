@@ -1,4 +1,4 @@
-# `$TestsOnly$` Pragma Test
+# `$TestsOnly$` Visibility Test - Incremental
 
 Compiling this module should **always fail**. It tests that the `$TestsOnly$`
 pragma limits visibility to only `.0rx` sources that also have the `$TestsOnly$`

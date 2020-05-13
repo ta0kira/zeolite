@@ -1,6 +1,6 @@
 # Revision history for zeolite-lang
 
-## 0.5.1.0  -- ????-??-??
+## 0.6.0.0  -- ????-??-??
 
 * **[new]** Adds the `$ExprLookup[`*`MACRO_NAME`*`]$` pragma, which allows the
   user to define expression substitutions in `.zeolite-module`.
@@ -8,6 +8,10 @@
 * **[new]** Adds the `$NoTrace$` pragma, which skips generating stack-trace
   information for specific functions. This is useful for deeply-recursive
   functions whose full trace would not be useful.
+
+* **[breaking]** Prevents binaries from being created from main categories that
+  are defined in `$TestsOnly$` `.0rx` sources. (This was the original intention,
+  but it was missed the first time around.)
 
 ## 0.5.0.0  -- 2020-05-12
 

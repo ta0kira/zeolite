@@ -78,6 +78,16 @@ test_tests_only() {
 }
 
 
+test_tests_only2() {
+  local output=$(do_zeolite -p "$ZEOLITE_PATH" -r tests/tests-only2 || true)
+  if ! echo "$output" | egrep -q 'main.+ Testing'; then
+    show_message 'Expected Testing definition error from tests/tests-only:'
+    echo "$output" 1>&2
+    return 1
+  fi
+}
+
+
 test_module_only() {
   local output=$(do_zeolite -p "$ZEOLITE_PATH" -R tests/module-only || true)
   if ! echo "$output" | egrep -q 'Type1 not found'; then
@@ -196,6 +206,7 @@ run_all() {
 ALL_TESTS=(
   test_check_defs
   test_tests_only
+  test_tests_only2
   test_module_only
   test_templates
   test_fast

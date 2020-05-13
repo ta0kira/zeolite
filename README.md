@@ -1084,11 +1084,13 @@ pragmas are built into the compiler; you cannot add your own.
   - **`$TestsOnly$`**. This can be used in `.0rp` and `.0rx` files. When used,
     the file is only visible to other sources that use it, as well as `.0rt`
     sources. `.0rp` sources still remain public unless `$ModuleOnly$` is used.
+    The transitive effect of `$TestsOnly$` is preventing the use of particular
+    categories in output binaries.
 
 - **Function Definitions.** These must occur at the very top of a function
   definition.
 
-  - **`$NoTrace$`**. (As of compiler version `0.5.1.0`.) Disables stack-tracing
+  - **`$NoTrace$`**. (As of compiler version `0.6.0.0`.) Disables stack-tracing
     within this procedure. This is useful for recursive functions, so that trace
     information does not take up stack space. This does not affect tracing for
     functions that are called from within the procedure.
@@ -1096,7 +1098,7 @@ pragmas are built into the compiler; you cannot add your own.
 - **Expressions.** These can be used in place of language expressions.
 
   - **`$ExprLookup[`**_`MACRO_NAME`_**`]$`**. (As of compiler version
-    `0.5.1.0`.) This directly substitutes in a language expression, as if it was
+    `0.6.0.0`.) This directly substitutes in a language expression, as if it was
     parsed from that exact code location. _`MACRO_NAME`_ is the key used to look
     up the expression. Symbols will be resolved in the context that the
     substutition happens in.

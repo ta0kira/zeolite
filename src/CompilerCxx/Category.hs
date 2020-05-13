@@ -190,17 +190,17 @@ compileTestMain (LanguageModule ns0 ns1 ns2 cs0 ps0 ts0 cs1 ps1 ts1 _ em) ts2 e 
 
 compileModuleMain :: (Show c, CompileErrorM m, MergeableM m) =>
   LanguageModule c -> [PrivateSource c] -> CategoryName -> FunctionName -> m CxxOutput
-compileModuleMain (LanguageModule ns0 ns1 ns2 cs0 ps0 ts0 cs1 ps1 ts1 _ em) xa n f = do
-  let resolved = filter (\d -> dcName d == n) $ concat $ map psDefine xa
+compileModuleMain (LanguageModule ns0 ns1 ns2 cs0 ps0 _ cs1 ps1 _ _ em) xa n f = do
+  let resolved = filter (\d -> dcName d == n) $ concat $ map psDefine $ filter (not . psTesting) xa
   reconcile resolved
   tm' <- tm
   let cs = filter (\c -> getCategoryName c == n) $ concat $ map psCategory xa
   tm'' <- includeNewTypes tm' cs
   (ns,main) <- createMainFile tm'' em n f
   return $ CxxOutput Nothing mainFilename NoNamespace ([ns]++ns0++ns1++ns2) [n] main where
-    tm = foldM includeNewTypes defaultCategories [cs0,cs1,ps0,ps1,ts0,ts1]
+    tm = foldM includeNewTypes defaultCategories [cs0,cs1,ps0,ps1]
     reconcile [_] = return ()
-    reconcile []  = compileErrorM $ "No matches for main category " ++ show n
+    reconcile []  = compileErrorM $ "No matches for main category " ++ show n ++ " ($TestsOnly$ sources excluded)"
     reconcile ds  =
       flip reviseError ("Multiple matches for main category " ++ show n) $
         mergeAllM $ map (\d -> compileError $ "Defined at " ++ formatFullContext (dcContext d)) ds

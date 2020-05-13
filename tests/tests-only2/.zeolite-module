@@ -1,0 +1,6 @@
+root: "../.."
+path: "tests/tests-only2"
+mode: binary {
+  category: Testing
+  function: run
+}
