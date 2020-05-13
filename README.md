@@ -1087,10 +1087,10 @@ pragmas are built into the compiler; you cannot add your own.
 - **Function Definitions.** These must occur at the very top of a function
   definition.
 
-  - **`$NoTrace$`**. Disable stack-tracing within this procedure. This is useful
-    for recursive functions, so that trace information does not take up stack
-    space. This does not affect tracing for functions that are called from
-    within the procedure.
+  - **`$NoTrace$`**. (As of compiler version `0.5.1.0`.) Disables stack-tracing
+    within this procedure. This is useful for recursive functions, so that trace
+    information does not take up stack space. This does not affect tracing for
+    functions that are called from within the procedure.
 
 - **Expressions.** These can be used in place of language expressions.
 
