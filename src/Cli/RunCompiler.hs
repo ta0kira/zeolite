@@ -65,7 +65,7 @@ runCompiler (CompileOptions _ _ _ ds _ _ p (ExecuteTests tp) f) = do
       checkAllowedStale fr1 f
       (fr2,deps2) <- loadPrivateDeps (getCompilerHash b) (deps0++[m]++deps1)
       checkAllowedStale fr2 f
-      em <- getExprMap p rm'
+      em <- getExprMap (p </> d) rm'
       return $ LoadedTests p d m em (deps0++[m]++deps1) deps2
     checkTestFilters ts = do
       let possibleTests = Set.fromList $ concat $ map (cmTestFiles . ltMetadata) ts
@@ -162,7 +162,7 @@ runCompiler (CompileOptions _ _ _ ds _ _ p CompileRecompile f) = do
               absolute <- canonicalizePath (p </> d0)
               let fixed = fixPath (absolute </> p2)
               (ps,xs,ts) <- findSourceFiles fixed d
-              em <- getExprMap p rm'
+              em <- getExprMap (p </> d0) rm'
               let spec = ModuleSpec {
                 msRoot = fixed,
                 msPath = d,
