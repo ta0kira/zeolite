@@ -185,18 +185,22 @@ run_all() {
   ZEOLITE_PATH=$(do_zeolite --get-path | grep '^/')
   echo 1>&2
   local failed=0
+  local list=()
   for t in "$@"; do
     show_message "Testing $t >>>"
     echo 1>&2
     if ! "$t"; then
       failed=1
+      list=("${list[@]}" "$t")
     fi
     echo 1>&2
     show_message "<<< Testing $t"
     echo 1>&2
   done
   if (($failed)); then
-    show_message 'One or more tests failed.'
+    for t in "${list[@]}"; do
+      show_message "*** $t FAILED ***"
+    done
     return 1
   else
     show_message 'All tests passed.'
