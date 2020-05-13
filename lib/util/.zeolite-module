@@ -1,5 +1,11 @@
 root: ".."
 path: "util"
+expression_map: [
+  expression_macro {
+    name: BLOCK_READ_SIZE
+    expression: \x1000
+  }
+]
 private_deps: [
   "../../tests"
 ]

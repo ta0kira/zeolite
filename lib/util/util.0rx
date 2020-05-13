@@ -119,6 +119,14 @@ define TextReader {
     return TextReader{ reader, "" }
   }
 
+  readAll (reader) {
+    Builder<String> builder <- String$builder()
+    while (!reader.pastEnd()) {
+      \ builder.append(reader.readBlock($ExprLookup[BLOCK_READ_SIZE]$))
+    }
+    return builder.build()
+  }
+
   readNextLine () {
     while (true) {
       Int newline <- findNewline()
@@ -128,8 +136,7 @@ define TextReader {
             buffer <- ""
           } in return buffer
         } else {
-          // TODO: Maybe the block size should be a factory argument.
-          buffer <- buffer+reader.readBlock(\x100)
+          buffer <- buffer+reader.readBlock($ExprLookup[BLOCK_READ_SIZE]$)
         }
       } else {
         return takeLine(newline)

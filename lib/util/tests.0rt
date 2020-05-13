@@ -219,6 +219,56 @@ concrete Test {
 }
 
 
+testcase "TextReader readAll" {
+  success Test$run()
+}
+
+concrete FakeFile {
+  refines BlockReader<String>
+
+  @type create () -> (FakeFile)
+}
+
+define FakeFile {
+  @value Int counter
+
+  create () {
+    return FakeFile{ 0 }
+  }
+
+  readBlock (_) {
+    cleanup {
+      counter <- counter+1
+    } in if (counter == 0) {
+      return "this is a "
+    } elif (counter == 1) {
+      return "partial line\nwith "
+    } elif (counter == 2) {
+      return "some more data\nand\nmore lines"
+    } elif (counter == 3) {
+      return "\nunfinished"
+    } else {
+      fail("too many reads")
+    }
+  }
+
+  pastEnd () {
+    return counter > 3
+  }
+}
+
+define Test {
+  run () {
+    String allContents <- TextReader$readAll(FakeFile$create())
+    \ Testing$check<String>(allContents,"this is a partial line\nwith some more data\nand\nmore lines\nunfinished")
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
 testcase "ErrorOr value" {
   success Test$run()
 }

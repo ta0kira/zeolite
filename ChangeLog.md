@@ -2,6 +2,9 @@
 
 ## 0.6.0.0  -- ????-??-??
 
+* **[new]** Adds the `readAll` function to `TextReader` (in `lib/util`) to
+  support reading an entire file at once.
+
 * **[new]** Adds the `ErrorOr` type to `lib/util`. This allows functions to
   return either the expected type or an error message.
 

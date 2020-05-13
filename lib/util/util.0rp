@@ -97,6 +97,7 @@ concrete Argv {
 
 concrete TextReader {
   @type fromBlockReader (BlockReader<String>) -> (TextReader)
+  @type readAll (BlockReader<String>) -> (String)
   @value readNextLine () -> (String)
   @value pastEnd () -> (Bool)
 }
