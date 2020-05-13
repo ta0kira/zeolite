@@ -95,6 +95,9 @@ compileLanguageModule :: (Show c, CompileErrorM m, MergeableM m) =>
   LanguageModule c -> [PrivateSource c] -> m ([CxxOutput],[CxxOutput])
 compileLanguageModule (LanguageModule ns0 ns1 ns2 cs0 ps0 ts0 cs1 ps1 ts1 ex em) xa = do
   checkSupefluous $ Set.toList $ (Set.fromList ex) `Set.difference` ca
+  -- Check public sources up front so that error messages aren't duplicated for
+  -- every source file.
+  _ <- tmTesting
   (hxx1,cxx1) <- fmap mergeGeneratedP $ collectAllOrErrorM $ map (compileSourceP tmPublic  nsPublic)  cs1
   (hxx2,cxx2) <- fmap mergeGeneratedP $ collectAllOrErrorM $ map (compileSourceP tmPrivate nsPrivate) ps1
   (hxx3,cxx3) <- fmap mergeGeneratedP $ collectAllOrErrorM $ map (compileSourceP tmTesting nsTesting) ts1
