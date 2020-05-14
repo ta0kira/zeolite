@@ -185,6 +185,7 @@
       <context name="Any Expression" attribute="Normal Text" lineEndContext="#stay" >
         <IncludeRules context="Any Comment" />
         <IncludeRules context="Any Type" />
+        <DetectChar attribute="Normal Text" context="Initializer" char="{" />
         <RegExpr attribute="Normal Text" context="#stay" String="[a-z][a-zA-Z0-9]*" />
         <RegExpr attribute="Number" context="#stay" String="(-|)\\[xX][0-9a-fA-F]+\b" />
         <RegExpr attribute="Number" context="#stay" String="(-|)\\[dD][0-9]+\b" />
@@ -222,6 +223,12 @@
         <RegExpr attribute="Category Name" context="Type Name" String="\b[A-Z][a-zA-Z0-9]*\b" />
         <RegExpr attribute="Param Name" context="#stay" String="#[a-z][a-zA-Z0-9]*\b" />
         <RegExpr attribute="Error" context="#stay" String="#[A-Z0-9][a-zA-Z0-9]*\b" />
+      </context>
+
+      <context name="Initializer" attribute="Normal Text" lineEndContext="#stay" >
+        <IncludeRules context="Any Comment" />
+        <IncludeRules context="Any Expression" />
+        <DetectChar attribute="Normal Text" context="#pop" char="}" />
       </context>
 
       <context name="Any Comment" attribute="Normal Text" lineEndContext="#stay" >
