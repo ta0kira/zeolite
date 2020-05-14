@@ -2,24 +2,21 @@
 
 ## 0.6.0.0  -- ????-??-??
 
+### Compiler CLI
+
 * **[fix]** Fixes module-staleness check when running tests (`-t`).
+
+* **[behavior]** Improves error messages for type mismatches and return-count
+  mismatches.
+
+* **[breaking]** Prevents binaries from being created from main categories that
+  are defined in `$TestsOnly$` sources. (This was the original intention, but it
+  was missed the first time around.)
+
+### Language
 
 * **[new]** Allows `@category` members in `concrete` types to refer to each
   other during initialization.
-
-* **[breaking]** Adds crashes when attempting to read `RawFileReader` or write
-  `RawFileWriter` if there is a preexisting file error.
-
-* **[fix]** Fixes parsing of `'"'` `Char`-literals.
-
-* **[new]** Adds the `readAll` function to `TextReader` (in `lib/util`) to
-  support reading an entire file at once.
-
-* **[new]** Adds the `ErrorOr` type to `lib/util`. This allows functions to
-  return either the expected type or an error message.
-
-* **[new]** Adds the `Void` type to `lib/util`. This can be used to ignore type
-  parameters when a value still needs to be instantiated.
 
 * **[new]** Adds the `$ExprLookup[`*`MACRO_NAME`*`]$` pragma, which allows the
   user to define expression substitutions in `.zeolite-module`.
@@ -28,9 +25,25 @@
   information for specific functions. This is useful for deeply-recursive
   functions whose full trace would not be useful.
 
-* **[breaking]** Prevents binaries from being created from main categories that
-  are defined in `$TestsOnly$` `.0rx` sources. (This was the original intention,
-  but it was missed the first time around.)
+* **[new]** Adds the `$TraceCreation$` pragma, which appends a trace for the
+  creation of a value when there is a crash in one of its functions. This is
+  useful when the crash stems from value initialization.
+
+* **[fix]** Fixes parsing of the `'"'` `Char`-literal.
+
+### Libraries
+
+* **[new]** Adds the `ErrorOr<#x>` category to `lib/util`. This allows functions
+  to return either the expected type or an error message.
+
+* **[new]** Adds the `Void` category to `lib/util`. This can be used to ignore
+  type parameters when a value still needs to be instantiated.
+
+* **[new]** Adds the `readAll` function to `TextReader` (in `lib/util`) to
+  support reading an entire file at once.
+
+* **[breaking]** Adds crashes when attempting to read `RawFileReader` or write
+  `RawFileWriter` if there is a preexisting file error.
 
 ## 0.5.0.0  -- 2020-05-12
 

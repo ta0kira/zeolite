@@ -43,3 +43,135 @@ define Test {
 concrete Test {
   @type run () -> ()
 }
+
+
+testcase "TraceCreation captures trace" {
+  crash Test$run()
+  require "message"
+  require "Type.+created at"
+}
+
+concrete Type {
+  @type create () -> (Type)
+  @value call () -> ()
+}
+
+define Type {
+  create () {
+    return Type{ }
+  }
+
+  call ()  { $TraceCreation$
+    fail("message")
+  }
+}
+
+define Test {
+  run () {
+    Type value <- Type$create()
+    \ value.call()
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "TraceCreation ignored in @type" {
+  success Test$run()
+  require compiler "tracing ignored"
+}
+
+define Test {
+  run () { $TraceCreation$ }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "TraceCreation still works with NoTrace" {
+  crash Test$run()
+  require "message"
+  require "Type.+created at"
+  exclude "Type\.call"
+}
+
+concrete Type {
+  @type create () -> (Type)
+  @value call () -> ()
+}
+
+define Type {
+  create () {
+    return Type{ }
+  }
+
+  call ()  { $NoTrace$ $TraceCreation$
+    fail("message")
+  }
+}
+
+define Test {
+  run () {
+    Type value <- Type$create()
+    \ value.call()
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "TraceCreation only uses the latest" {
+  crash Test$run()
+  require "message"
+  require "Type1.+created at"
+  exclude "Type2.+created at"
+}
+
+concrete Type1 {
+  @type create () -> (Type1)
+  @value call () -> ()
+}
+
+define Type1 {
+  create () {
+    return Type1{ }
+  }
+
+  call ()  { $TraceCreation$
+    fail("message")
+  }
+}
+
+concrete Type2 {
+  @type create () -> (Type2)
+  @value call () -> ()
+}
+
+define Type2 {
+  @value Type1 value
+
+  create () {
+    return Type2{ Type1$create() }
+  }
+
+  call ()  { $TraceCreation$
+    \ value.call()
+  }
+}
+
+define Test {
+  run () {
+    Type2 value <- Type2$create()
+    \ value.call()
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}

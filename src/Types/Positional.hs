@@ -46,8 +46,7 @@ processPairs :: (Show a, Show b, CompileErrorM m) =>
 processPairs f (Positional ps1) (Positional ps2)
   | length ps1 == length ps2 =
     collectAllOrErrorM $ map (uncurry f) (zip ps1 ps2)
-  | otherwise =
-    compileError $ "Parameter count mismatch: " ++ show ps1 ++ " vs. " ++ show ps2
+  | otherwise = mismatchError ps1 ps2
 
 processPairs_ :: (Show a, Show b, CompileErrorM m) =>
   (a -> b -> m c) -> Positional a -> Positional b -> m ()
@@ -58,5 +57,8 @@ processPairsT :: (MonadTrans t, Monad (t m), Show a, Show b, CompileErrorM m) =>
 processPairsT f (Positional ps1) (Positional ps2)
   | length ps1 == length ps2 =
     sequence $ map (uncurry f) (zip ps1 ps2)
-  | otherwise =
-    lift $ compileError $ "Parameter count mismatch: " ++ show ps1 ++ " vs. " ++ show ps2
+  | otherwise = lift $ mismatchError ps1 ps2
+
+mismatchError :: (Show a, Show b, CompileErrorM m) => [a] -> [b] -> m c
+mismatchError ps1 ps2 = compileError $ "Count mismatch: " ++ show ps1 ++
+                                       " (expected) vs. " ++ show ps2 ++ " (actual)"

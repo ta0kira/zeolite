@@ -398,6 +398,9 @@ instance (Show c, MergeableM m, CompileErrorM m) =>
         let vs' = case vs of
                        Nothing -> Positional []
                        Just vs2 -> vs2
+        -- Check for a count match first, to avoid the default error message.
+        processPairs_ alwaysPair (fmap pvType rs) vs' `reviseError`
+          ("In procedure return at " ++ formatFullContext c)
         processPairs_ checkReturnType rs (Positional $ zip ([0..] :: [Int]) $ pValues vs') `reviseError`
           ("In procedure return at " ++ formatFullContext c)
         return ()

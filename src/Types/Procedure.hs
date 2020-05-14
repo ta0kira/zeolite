@@ -40,6 +40,7 @@ module Types.Procedure (
   VariableName(..),
   VoidExpression(..),
   WhileLoop(..),
+  assignableName,
   getExpressionContext,
   getStatementContext,
   isDiscardedInput,
@@ -120,6 +121,9 @@ isDiscardedInput :: InputValue c -> Bool
 isDiscardedInput (DiscardInput _) = True
 isDiscardedInput _                = False
 
+discardInputName :: VariableName
+discardInputName = VariableName "_"
+
 instance Show c => Show (InputValue c) where
   show (InputValue c v) = show v ++ " /*" ++ formatFullContext c ++ "*/"
   show (DiscardInput c) = "_" ++ " /*" ++ formatFullContext c ++ "*/"
@@ -163,6 +167,11 @@ data Assignable c =
   CreateVariable [c] ValueType VariableName |
   ExistingVariable (InputValue c)
   deriving (Show)
+
+assignableName :: Assignable c -> VariableName
+assignableName (CreateVariable _ _ n)              = n
+assignableName (ExistingVariable (InputValue _ n)) = n
+assignableName _                                   = discardInputName
 
 data VoidExpression c =
   Conditional (IfElifElse c) |

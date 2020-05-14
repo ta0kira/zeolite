@@ -51,6 +51,7 @@ import Types.Builtin
 import Types.DefinedCategory
 import Types.GeneralType
 import Types.Positional
+import Types.Pragma
 import Types.Procedure
 import Types.TypeCategory
 import Types.TypeInstance
@@ -330,6 +331,7 @@ compileConcreteDefinition ta em ns rs dd@(DefinedCategory c n pi _ _ fi ms _ fs)
       fmap indentCompiled $ mergeAllM $ map (createMember r allFilters) vm,
       fmap indentCompiled $ createParams,
       return $ indentCompiled $ onlyCode $ typeName n ++ "& parent;",
+      return $ indentCompiled $ onlyCodes $ traceCreation (psProcedures vp),
       return $ onlyCode "};"
     ]
   bottom <- mergeAllM $ [
@@ -440,6 +442,9 @@ compileConcreteDefinition ta em ns rs dd@(DefinedCategory c n pi _ _ fi ms _ fs)
           "const ParamTuple& params," ++
           "const ValueTuple& args) final {"
         ] ++ createFunctionDispatch n ValueScope fs2 ++ ["}"]
+    traceCreation vp
+      | any isTraceCreation $ concat $ map (epPragmas . snd) vp = [captureCreationTrace]
+      | otherwise = []
 
 commonDefineAll :: MergeableM m =>
   AnyCategory c -> [Namespace] -> Maybe [ValueRefine c] -> CompiledData [String] ->

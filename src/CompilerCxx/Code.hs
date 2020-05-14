@@ -22,6 +22,7 @@ module CompilerCxx.Code (
   ExprValue(..),
   PrimitiveType(..),
   categoryBase,
+  captureCreationTrace,
   clearCompiled,
   emptyCode,
   escapeChar,
@@ -36,6 +37,7 @@ module CompilerCxx.Code (
   predTraceContext,
   readStoredVariable,
   setTraceContext,
+  showCreationTrace,
   startCleanupTracing,
   startFunctionTracing,
   typeBase,
@@ -95,6 +97,12 @@ predTraceContext :: Show c => [c] -> String
 predTraceContext c
   | null c = ""
   | otherwise = "PRED_CONTEXT_POINT(" ++ escapeChars (formatFullContext c) ++ ")"
+
+captureCreationTrace :: String
+captureCreationTrace = "CAPTURE_CREATION"
+
+showCreationTrace :: String
+showCreationTrace = "TRACE_CREATION"
 
 data PrimitiveType =
   PrimBool |

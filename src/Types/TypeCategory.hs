@@ -165,13 +165,7 @@ instance Show c => Show (AnyCategory c) where
     formatValue v = show (pfParam v) ++ " " ++ show (pfFilter v) ++
                     " " ++ formatContext (pfContext v)
     formatInterfaceFunc f = showFunctionInContext "" "  " f
-    formatConcreteFunc f = showFunctionInContext (showScope (sfScope f) ++ " ") "  " f
-
-showScope :: SymbolScope -> String
-showScope CategoryScope = "@category"
-showScope TypeScope     = "@type"
-showScope ValueScope    = "@value"
-showScope LocalScope    = "@local"
+    formatConcreteFunc f = showFunctionInContext (show (sfScope f) ++ " ") "  " f
 
 getCategoryName :: AnyCategory c -> CategoryName
 getCategoryName (ValueInterface _ _ n _ _ _ _)  = n
@@ -358,7 +352,13 @@ data SymbolScope =
   CategoryScope |
   TypeScope |
   ValueScope
-  deriving (Eq,Ord,Show)
+  deriving (Eq,Ord)
+
+instance Show SymbolScope where
+  show CategoryScope = "@category"
+  show TypeScope     = "@type"
+  show ValueScope    = "@value"
+  show LocalScope    = "@local"
 
 partitionByScope :: (a -> SymbolScope) -> [a] -> ([a],[a],[a])
 partitionByScope f = foldr bin empty where
@@ -846,8 +846,8 @@ mergeFunctions r tm fm rs ds fs = do
         where
           checkMerge r3 fm3 f1 f2
             | sfScope f1 /= sfScope f2 =
-              compileError $ "Cannot merge " ++ showScope (sfScope f2) ++ " with " ++
-                             showScope (sfScope f1) ++ " in function merge:\n---\n" ++
+              compileError $ "Cannot merge " ++ show (sfScope f2) ++ " with " ++
+                             show (sfScope f1) ++ " in function merge:\n---\n" ++
                              show f2 ++ "\n  ->\n" ++ show f1
             | otherwise =
               flip reviseError ("In function merge:\n---\n" ++ show f2 ++
@@ -889,7 +889,7 @@ data ScopedFunction c =
   }
 
 instance Show c => Show (ScopedFunction c) where
-  show f = showFunctionInContext (showScope (sfScope f) ++ " ") "" f
+  show f = showFunctionInContext (show (sfScope f) ++ " ") "" f
 
 showFunctionInContext :: Show c => String -> String -> ScopedFunction c -> String
 showFunctionInContext s indent (ScopedFunction cs n t _ as rs ps fa ms) =

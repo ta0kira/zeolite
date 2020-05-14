@@ -62,10 +62,12 @@ compileExecutableProcedure :: (Show c, CompileErrorM m, MergeableM m) =>
   ScopeContext c -> ScopedFunction c -> ExecutableProcedure c ->
   m (CompiledData [String],CompiledData [String])
 compileExecutableProcedure ctx ff@(ScopedFunction _ _ _ s as1 rs1 ps1 _ _)
-                               pp@(ExecutableProcedure _ pragmas c n as2 rs2 p) = do
+                               pp@(ExecutableProcedure c0 pragmas c n as2 rs2 p) = do
   ctx' <- getProcedureContext ctx ff pp
   output <- runDataCompiler compileWithReturn ctx'
-  return (onlyCode header,wrapProcedure output)
+  procedureTrace <- setProcedureTrace
+  creationTrace  <- setCreationTrace
+  return (onlyCode header,wrapProcedure output procedureTrace creationTrace)
   where
     t = scName ctx
     compileWithReturn = do
@@ -75,10 +77,11 @@ compileExecutableProcedure ctx ff@(ScopedFunction _ _ _ s as1 rs1 ps1 _ _)
       when (not unreachable) $
         doImplicitReturn [] `reviseErrorStateT`
           ("In implicit return from " ++ show n ++ formatFullContextBrace c)
-    wrapProcedure output =
+    wrapProcedure output pt ct =
       mergeAll $ [
           onlyCode header2,
-          indentCompiled $ onlyCodes setProcedureTrace,
+          indentCompiled $ onlyCodes pt,
+          indentCompiled $ onlyCodes ct,
           indentCompiled $ onlyCodes defineReturns,
           indentCompiled $ onlyCodes nameParams,
           indentCompiled $ onlyCodes nameArgs,
@@ -105,8 +108,14 @@ compileExecutableProcedure ctx ff@(ScopedFunction _ _ _ s as1 rs1 ps1 _ _)
       | otherwise = undefined
     returnType = "ReturnTuple"
     setProcedureTrace
-      | any isNoTrace pragmas = []
-      | otherwise             = [startFunctionTracing $ show t ++ "." ++ show n]
+      | any isNoTrace pragmas = return []
+      | otherwise             = return [startFunctionTracing $ show t ++ "." ++ show n]
+    setCreationTrace
+      | not $ any isTraceCreation pragmas = return []
+      | s /= ValueScope =
+          (compileWarningM $ "Creation tracing ignored for " ++ show s ++
+             " functions" ++ formatFullContextBrace c0) >> return []
+      | otherwise = return [showCreationTrace]
     defineReturns
       | isUnnamedReturns rs2 = []
       | otherwise            = [returnType ++ " returns(" ++ show (length $ pValues rs1) ++ ");"]
@@ -227,6 +236,9 @@ compileStatement (Assignment c as e) = do
   (ts,e') <- compileExpression e
   r <- csResolver
   fa <- csAllFilters
+  -- Check for a count match first, to avoid the default error message.
+  _ <- processPairsT alwaysPair (fmap assignableName as) ts `reviseErrorStateT`
+    ("In assignment at " ++ formatFullContext c)
   _ <- processPairsT (createVariable r fa) as ts `reviseErrorStateT`
     ("In assignment at " ++ formatFullContext c)
   maybeSetTrace c

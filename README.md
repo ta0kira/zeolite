@@ -1099,6 +1099,15 @@ pragmas are built into the compiler; you cannot add your own.
     information does not take up stack space. This does not affect tracing for
     functions that are called from within the procedure.
 
+  - **`$TraceCreation$`**. (As of compiler version `0.6.0.0`.) Includes a trace
+    of the value's creation when the given `@value` function is called. If
+    multiple functions in a call stack use `$TraceCreation$`, only the trace
+    from the bottom-most function will be included.
+
+    `$TraceCreation$` is useful when the context where the value was created is
+    relevant when debugging crashes. The execution cost is minimal; however, it
+    adds the *full text of the trace* to the value upon initialization.
+
 - **Expressions.** These can be used in place of language expressions.
 
   - **`$ExprLookup[`**_`MACRO_NAME`_**`]$`**. (As of compiler version
