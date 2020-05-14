@@ -26,7 +26,6 @@ of this document.
 ## Table of Contents
 
 - [Project Status](#project-status)
-- [Project Status](#project-status)
 - [Quick Start](#quick-start)
   - [Installation](#installation)
   - [Hello World](#hello-world)
