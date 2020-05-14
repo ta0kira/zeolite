@@ -1,4 +1,4 @@
-testcase "parser sequence" {
+testcase "parse data from a file" {
   success Test$execute()
 }
 
