@@ -1142,7 +1142,7 @@ pragmas are built into the compiler; you cannot add your own.
       mode: incremental {}
       ```
 
-      The `name:` must only contain uppercase letters and `_`, and the
+      The `name:` must only contain uppercase letters, numbers, and `_`, and the
       `expression:` must parse as a valid Zeolite expression. This is similar to
       C++ macros, except that the substitution must be *independently* parsable
       as a valid expression, and it can only be used where expressions are

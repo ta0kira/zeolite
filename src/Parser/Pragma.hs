@@ -44,10 +44,11 @@ pragmaModuleOnly = autoPragma "ModuleOnly" $ Left parseAt where
   parseAt c = PragmaVisibility [c] ModuleOnly
 
 parseMacroName :: Parser String
-parseMacroName = do
-  name <- labeled "macro name" $ many1 (upper <|> char '_')
+parseMacroName = labeled "macro name" $ do
+  h <- upper <|> char '_'
+  t <- many (upper <|> digit <|> char '_')
   optionalSpace
-  return name
+  return (h:t)
 
 pragmaExprLookup :: Parser (Pragma SourcePos)
 pragmaExprLookup = autoPragma "ExprLookup" $ Right parseAt where
