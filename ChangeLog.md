@@ -2,6 +2,8 @@
 
 ## 0.6.0.0  -- ????-??-??
 
+* **[fix]** Fixes module-staleness check when running tests (`-t`).
+
 * **[new]** Allows `@category` members in `concrete` types to refer to each
   other during initialization.
 

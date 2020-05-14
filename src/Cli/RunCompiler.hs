@@ -53,6 +53,8 @@ runCompiler (CompileOptions _ _ _ ds _ _ p (ExecuteTests tp) f) = do
   processResults passed failed (mergeAllM $ map snd allResults) where
     preloadTests b base d = do
       m <- loadMetadata (p </> d)
+      fr <- checkMetadataFreshness (p </> d) m
+      checkAllowedStale fr f
       rm <- tryLoadRecompile (p </> d)
       rm' <- case rm of
                   Just rm2 -> return rm2

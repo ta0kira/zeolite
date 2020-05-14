@@ -18,6 +18,7 @@ limitations under the License.
 
 module Cli.ProcessMetadata (
   checkAllowedStale,
+  checkMetadataFreshness,
   createCachePath,
   eraseCachedData,
   findSourceFiles,
@@ -112,6 +113,9 @@ loadMetadata p = do
        hPutStrLn stderr $ show (getCompileError m)
        exitFailure
      else return (getCompileSuccess m)
+
+checkMetadataFreshness :: FilePath -> CompileMetadata -> IO Bool
+checkMetadataFreshness = checkModuleFreshness False
 
 tryLoadMetadata :: FilePath -> IO (Maybe CompileMetadata)
 tryLoadMetadata p = tryLoadData $ (p </> cachedDataPath </> metadataFilename)
