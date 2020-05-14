@@ -194,8 +194,8 @@ test_example_tree() {
 
 
 test_example_parser() {
-  do_zeolite -p "$ZEOLITE_PATH" -r example/tree
-  do_zeolite -p "$ZEOLITE_PATH" -t example/tree
+  do_zeolite -p "$ZEOLITE_PATH" -r example/parser -f
+  do_zeolite -p "$ZEOLITE_PATH" -t example/parser
 }
 
 
