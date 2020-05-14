@@ -341,13 +341,15 @@ loadLanguageModule :: CompileErrorM m => FilePath -> Namespace ->
   [CategoryName] -> ExprMap SourcePos -> [FilePath] -> [CompileMetadata] ->
   [CompileMetadata] -> IO (m (LanguageModule SourcePos,([CategoryName],[CategoryName])))
 loadLanguageModule p ns2 ex em fs deps1 deps2 = do
+  let public = Set.fromList $ map cmPath deps1
+  let deps2' = filter (\cm -> not $ cmPath cm `Set.member` public) deps2
+  let ns0 = filter (not . isNoNamespace) $ getNamespacesForDeps deps1
+  let ns1 = filter (not . isNoNamespace) $ getNamespacesForDeps deps2'
   m0 <- fmap merge $ sequence $ map processAll deps1
-  m1 <- fmap merge $ sequence $ map processAll deps2
+  m1 <- fmap merge $ sequence $ map processAll deps2'
   m2 <- loadAllPublic "" fs
-  return $ construct m0 m1 m2 where
-    ns0 = filter (not . isNoNamespace) $ getNamespacesForDeps deps1
-    ns1 = filter (not . isNoNamespace) $ getNamespacesForDeps deps2
-    construct m0 m1 m2 = do
+  return $ construct m0 m1 m2 ns0 ns1 where
+    construct m0 m1 m2 ns0 ns1 = do
       (ps0,_,tsA0,_)      <- m0
       (ps1,_,tsA1,_)      <- m1
       (ps2,xs2,tsA2,tsB2) <- m2
