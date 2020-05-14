@@ -1,21 +1,21 @@
 $TestsOnly$
 
 define TestData {
-  @category Parser<any>    whitespace <- SequenceOfParser$create(" \n\t",1,0)
+  @category Parser<any> whitespace <- SequenceOfParser$create(" \n\t",1,0)
 
   @category Parser<String> sentence        <- SentenceParser$create()
   @category Parser<String> token           <- SequenceOfParser$create("ABCDEFGHIJKLMNOPQRSTUVWXYZ_",1,0)
   @category Parser<String> sentenceOrToken <- sentence `Parse$or<String>` token `Parse$left<String>` whitespace
 
-  @category Parser<Bool>   acronym           <- StringParser$create("acronym")  `Parse$right<Bool>` Parse$const<Bool>(true)
-  @category Parser<Bool>   aardvark          <- StringParser$create("aardvark") `Parse$right<Bool>` Parse$const<Bool>(false)
-  @category Parser<Bool>   acronymOrAardvark <- `Parse$try<Bool>` acronym `Parse$or<Bool>` aardvark `Parse$left<Bool>` whitespace
+  @category Parser<Bool> acronym           <- StringParser$create("acronym")  `Parse$right<Bool>` Parse$const<Bool>(true)
+  @category Parser<Bool> aardvark          <- StringParser$create("aardvark") `Parse$right<Bool>` Parse$const<Bool>(false)
+  @category Parser<Bool> acronymOrAardvark <- `Parse$try<Bool>` acronym `Parse$or<Bool>` aardvark `Parse$left<Bool>` whitespace
 
-  @category Parser<any>    fileStart      <- StringParser$create("file_start")   `Parse$left<any>` whitespace
-  @category Parser<any>    fileEnd        <- StringParser$create("file_end")     `Parse$left<any>` whitespace
-  @category Parser<any>    nameTag        <- StringParser$create("name:")        `Parse$left<any>` whitespace
-  @category Parser<any>    descriptionTag <- StringParser$create("description:") `Parse$left<any>` whitespace
-  @category Parser<any>    aWordTag       <- StringParser$create("a_word:")      `Parse$left<any>` whitespace
+  @category Parser<any> fileStart      <- StringParser$create("file_start")   `Parse$left<any>` whitespace
+  @category Parser<any> fileEnd        <- StringParser$create("file_end")     `Parse$left<any>` whitespace
+  @category Parser<any> nameTag        <- StringParser$create("name:")        `Parse$left<any>` whitespace
+  @category Parser<any> descriptionTag <- StringParser$create("description:") `Parse$left<any>` whitespace
+  @category Parser<any> aWordTag       <- StringParser$create("a_word:")      `Parse$left<any>` whitespace
 
   @value String name
   @value String description
