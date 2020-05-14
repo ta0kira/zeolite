@@ -1158,12 +1158,10 @@ all tests for module `myprogram` using `zeolite -t myprogram`.
 (As of compiler version `0.5.0.0`.)
 
 Pragmas allow compiler-specific directives within source files that do not
-otherwise need to be a part of the language syntax. The syntax for pragmas is
-`$SomePragma$` (no options) `$AnotherPragma[`*`OPTIONS`*`]$` (requires options).
-The syntax of _`OPTIONS`_ depends on the pragma being used. All supported
-pragmas are built into the compiler; you cannot add your own.
-
-`zeolite` pragmas are specific to the context they are used in:
+otherwise need to be a part of the language syntax. The syntax for `zeolite`
+pragmas is `$SomePragma$` (no options) or `$AnotherPragma[`*`OPTIONS`*`]$`
+(uses pragma-specific options). The syntax for _`OPTIONS`_ depends on the pragma
+being used. Pragmas are specific to the context they are used in.
 
 ### Source File Pragmas
 
