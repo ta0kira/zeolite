@@ -112,7 +112,7 @@ instance CompileErrorM CompileInfo where
     result (es,_,ws) = CompileFail ws $ CompileMessage "" es
   collectOneOrErrorM = result . splitErrorsAndData where
     result (_,x:_,ws) = CompileSuccess ws x
-    result ([],_,ws)  = CompileFail ws $ CompileMessage "No choices found" []
+    result ([],_,ws)  = CompileFail ws $ CompileMessage "" []
     result (es,_,ws)  = CompileFail ws $ CompileMessage "" es
   reviseErrorM x@(CompileSuccess _ _) _ = x
   reviseErrorM (CompileFail w (CompileMessage [] ms)) s = CompileFail w $ CompileMessage s ms
@@ -122,7 +122,7 @@ instance CompileErrorM CompileInfo where
 instance MergeableM CompileInfo where
   mergeAnyM = result . splitErrorsAndData where
     result (_,xs@(_:_),ws) = CompileSuccess ws $ mergeAny xs
-    result ([],_,ws)       = CompileFail ws $ CompileMessage "No choices found" []
+    result ([],_,ws)       = CompileFail ws $ CompileMessage "" []
     result (es,_,ws)       = CompileFail ws $ CompileMessage "" es
   mergeAllM = result . splitErrorsAndData where
     result ([],xs,ws) = CompileSuccess ws $ mergeAll xs

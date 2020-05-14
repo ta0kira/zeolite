@@ -613,7 +613,7 @@ compileExpression = compile where
     fa <- csAllFilters
     let vt = ValueType RequiredValue $ SingleType $ JustTypeInstance t
     lift $ (checkValueTypeMatch r fa t' vt) `reviseError`
-      ("In conversion at " ++ formatFullContext c)
+      ("In converted call at " ++ formatFullContext c)
     f' <- lookupValueFunction vt f
     compileFunctionCall (Just $ useAsUnwrapped e') f' f
   transform e (ValueCall c f) = do
@@ -820,7 +820,7 @@ compileFunctionCall e f (FunctionCall c _ ps es) = do
     checkArity (i,Positional ts)  =
       compileError $ "Return position " ++ show i ++ " has " ++ show (length ts) ++ " values but should have 1"
     checkArg r fa t0 (i,t1) = do
-      checkValueTypeMatch r fa t1 t0 `reviseError` ("In argument " ++ show i)
+      checkValueTypeMatch r fa t1 t0 `reviseError` ("In argument " ++ show i ++ " to " ++ show (sfName f))
 
 compileMainProcedure :: (Show c, CompileErrorM m, MergeableM m) =>
   CategoryMap c -> ExprMap c -> Expression c -> m (CompiledData [String])

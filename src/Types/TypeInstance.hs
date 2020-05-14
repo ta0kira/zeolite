@@ -275,7 +275,8 @@ checkValueTypeMatch :: (MergeableM m, CompileErrorM m, TypeResolver r) =>
 checkValueTypeMatch r f ts1@(ValueType r1 t1) ts2@(ValueType r2 t2)
   | r1 < r2 =
     compileError $ "Cannot convert " ++ show ts1 ++ " to " ++ show ts2
-  | otherwise = checkGeneralMatch r f Covariant t1 t2
+  | otherwise = checkGeneralMatch r f Covariant t1 t2 `reviseError`
+      ("Cannot convert " ++ show ts1 ++ " to " ++ show ts2)
 
 checkGeneralMatch :: (MergeableM m, CompileErrorM m, TypeResolver r) =>
   r -> ParamFilters -> Variance ->
