@@ -106,13 +106,17 @@
         <keyword attribute="Testcase Keyword" context="Test Name" String="testHeader" />
         <keyword attribute="Keyword" context="Declare Type" String="typeDeclare" />
         <keyword attribute="Keyword" context="Define Type" String="typeDefine" />
-        <RegExpr attribute="Pragma Head" context="#stay" String="\$[a-zA-Z0-9]+\$" />
-        <RegExpr attribute="Pragma Head" context="Pragma" String="\$[a-zA-Z0-9]+\[" />
+        <IncludeRules context="Any Pragma" />
         <IncludeRules context="Any Expression" />
         <Detect2Chars attribute="Assign" context="#stay" char="&lt;" char1="-" />
         <Detect2Chars attribute="Assign" context="#stay" char="-" char1="&gt;" />
         <DetectChar attribute="Error" context="#stay" char="~" />
         <DetectChar attribute="Voided" context="#stay" char="\\" />
+      </context>
+
+      <context name="Any Pragma" attribute="Normal Text" lineEndContext="#stay" >
+        <RegExpr attribute="Pragma Head" context="#stay" String="\$[a-zA-Z0-9]+\$" />
+        <RegExpr attribute="Pragma Head" context="Pragma" String="\$[a-zA-Z0-9]+\[" />
       </context>
 
       <context name="Declare Type" attribute="Normal Text" lineEndContext="#stay" >
@@ -185,6 +189,7 @@
       <context name="Any Expression" attribute="Normal Text" lineEndContext="#stay" >
         <IncludeRules context="Any Comment" />
         <IncludeRules context="Any Type" />
+        <IncludeRules context="Any Pragma" />
         <DetectChar attribute="Normal Text" context="Initializer" char="{" />
         <RegExpr attribute="Normal Text" context="#stay" String="[a-z][a-zA-Z0-9]*" />
         <RegExpr attribute="Number" context="#stay" String="(-|)\\[xX][0-9a-fA-F]+\b" />
