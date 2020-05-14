@@ -36,8 +36,8 @@ define SequenceOfParser {
   refines Parser<String>
 
   @value String matches
-  @value Int min
-  @value Int max
+  @value Int    min
+  @value Int    max
 
   run (contextOld) {
     if (contextOld.hasAnyError()) {

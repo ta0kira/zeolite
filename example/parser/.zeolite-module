@@ -1,7 +1,9 @@
 root: "../.."
 path: "example/parser"
 public_deps: [
-  "lib/file"
   "lib/util"
+]
+private_deps: [
+  "lib/file"
 ]
 mode: incremental {}

@@ -8,11 +8,11 @@ define ParseState {
   // superfluous interface that both categories refine.
   refines ParseContext<#x>
 
-  @value String data
-  @value Int index
-  @value Int line
-  @value Int char
-  @value ErrorOr<#x> value
+  @value String             data
+  @value Int                index
+  @value Int                line
+  @value Int                char
+  @value ErrorOr<#x>        value
   @value optional Formatted error
 
   new (data) {
