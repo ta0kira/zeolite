@@ -26,14 +26,16 @@ of this document.
 ## Table of Contents
 
 - [Project Status](#project-status)
+- [Project Status](#project-status)
 - [Quick Start](#quick-start)
   - [Installation](#installation)
   - [Hello World](#hello-world)
 - [Language Overview](#language-overview)
+  - [Data Encapsulation](#data-encapsulation)
   - [Parameter Variance](#parameter-variance)
   - [Parameters as Variables](#parameters-as-variables)
-  - [Usage Patterns vs. Information Structure](#usage-patterns-vs-information-structure)
   - [Compilation Testing](#compilation-testing)
+  - [Integrated Build System](#integrated-build-system)
 - [Writing Programs](#writing-programs)
   - [Basic Ideas](#basic-ideas)
   - [Declaring Functions](#declaring-functions)
@@ -133,6 +135,32 @@ Also see some [full examples][examples] for more complete feature usage.
 This section discusses some of the features that make Zeolite unique. It does
 not go into detail about all of the language's features.
 
+### Data Encapsulation
+
+The design of Zeolite revolves around data encapsulation:
+
+- There is no "default construction", unlike in C++ and Java. This means that
+  objects can only be created by explicit factory functions, further implying
+  that the code author need to explicitly decide what types can be instantiated.
+
+- There is no procedure or data-member inheritance; only abstract interfaces can
+  be inherited. This encourages the code author to think more about usage
+  patterns and less about data representation when designing interactions
+  between types. This means that the Zeolite inheritance graph has
+  implementations strictly at the bottom, with everything above that being
+  relationships between capabilities that implementations can express.
+
+- There is no data-member visibility other than "internal". No object has direct
+  access to the data members of any other object; not even other objects of the
+  same type. (Private getters and setters are allowed, however.) This forces the
+  code author to also think about usage patterns when dealing with other objects
+  of the same type.
+
+Although all of these limitations preclude a lot of design decisions allowed in
+languages like Java, C++, and Python, they also drastically reduce the possible
+complexity of inter-object interactions. Additionally, they generally *do not*
+require ugly work-arounds; see the [full examples][examples].
+
 ### Parameter Variance
 
 The initial motivation for Zeolite was a type system that allows implicit
@@ -171,40 +199,6 @@ This helps solve a few separate problems:
   common issue in C++ is forgetting to *disallow* direct construction or copying
   of objects of your `class`.
 
-### Usage Patterns vs. Information Structure
-
-In languages like Java and C++, it is common for `class`/`interface` inheritance
-to be based on "is a" relationships, e.g., a `HashMap` is a `Map`. When such
-types are used as function arguments, the caller of the function is restricted
-by the *structure* of the information rather than the *usage pattern* that the
-function actually needs. This can be very problematic when refactoring needs to
-happen because the function arguments are much more rigid than is necessary.
-
-On the other hand, type `class`es in Haskell are based on usage patterns, without
-regard for how the information is represented. For example, `Foldable` instances
-must provide a very small number of *operations*, without any other constraints
-placed on *structure*.
-
-Although the two different approaches are primarily driven by coding style and
-adopted best-practices, the languages themselves have a lot of influence over
-what style is preferred.
-
-- Both C++ and Java allow inheritance of procedures and data members from parent
-  `class`es. This encourages using `class` inheritance as a way to express
-  varying degrees of generality of structure.
-- Haskell treats `class`es strictly as "capabilities" of a particular type of
-  `data`, rather than `class`es actually indicating an object type. This means
-  that inheritance of function definitions and data members is not even possible
-  in Haskell.
-
-Zeolite takes an approach somewhere in between. Zeolite provides a concept of
-`interface`s much like Java, but it *does not* support inheriting procedures and
-data members.
-
-This means that the Zeolite inheritance graph has implementations strictly at
-the bottom, with everything above that being relationships between  capabilities
-that implementations can express.
-
 ### Compilation Testing
 
 The major advantage of statically-typed programming languages is their
@@ -219,6 +213,23 @@ check for required compilation failures and crashes.
 
 All of the integration testing of the Zeolite language itself is done using
 this feature, but it is also supported for general use with Zeolite projects.
+
+### Integrated Build System
+
+The Zeolite compiler supports a module system that can incrementally compile
+projects without the user needing to create build scripts or `Makefile`s.
+
+- Modules are configured via a simple config file.
+- File-level and symbol-level imports and includes *are not* necessary, allowing
+  module authors to freely rearrange file structure.
+- Type dependencies are automatically resolved during linking so that output
+  binaries contain only the code that is relevant.
+- Module authors can back Zeolite code with C++.
+- The module system is integrated with the compiler's built-in testing mode.
+
+This means that the code author can focus on code rather than on build rules,
+and module authors can avoid writing verbose build instructions for the users of
+their modules.
 
 ## Writing Programs
 

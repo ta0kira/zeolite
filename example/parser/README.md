@@ -3,12 +3,62 @@
 *Also see
 [a highlighted version of the example code](https://ta0kira.github.io/zeolite/example/parser).*
 
-This example demonstrates parsing a text file using a parser-combinator
-approach. It also uses monad-like semantics to handle errors that occur during
-parsing, in the absense of actual monads and exceptions.
+This example demonstrates parsing text using a parser-combinator approach
+inspired by [`parsec`][parsec]. (The Haskell library that the `zeolite` compiler
+uses to parse source and config files.)
 
-The code here is more about testing the limitations of the Zeolite language, and
-less about demonstrating proper language usage.
+## Notes
+
+This example highlights several distinguishing features of the
+[Zeolite language][zeolite]:
+
+- **Encapsulation.** Data encapsulation is mandatory in Zeolite. This forces the
+  code author to think about usage patterns before data representation.
+
+- **Factory Functions.** There is no "default construction" in Zeolite; the code
+  author must explicitly expose factory functions if needed. In this example,
+  most of the factory functions return an interface, rather than the actual
+  `concrete` type being constructed.
+
+- **Internal Inheritance.** `ParseState` inherits `ParseContext` internally
+  (see `parser.0rp` and `parser.0rx`), which allows `ParseState` to
+  conditionally expose the `ParseContext` interface to other functions.
+
+- **Function Merging.** `ParseState` and `ParseContext` declare some of the same
+  functions in `parser.0rp`. When `ParseState` inherits `ParseContext`
+  internally in `parser.0rx`, functions with the same names are merged by the
+  compiler. This allows `ParseState` to expose a subset of `ParseContext`
+  without needing a superfluous interface with the shared functions.
+
+- **Parameter Variance.** Several categories used in this example (e.g.,
+  `ParseState` and `ParseContext`) have a *covariant* parameter, which allows
+  their parameters to be converted to other types. Specifically:
+
+  - Any `ParseContext<#x>` can be converted to `ParseContext<any>` when calling
+    `Parser.run`. (In C++ this would require a `template` and in Java it would
+    require using `<?>`.)
+
+  - The `ParseState<all>` returned from `ParseContext.setBrokenInput` can be
+    converted to all other `ParseState<#x>`. (In C++ or Java this would require
+    the caller to explicitly pass a type parameter to `setBrokenInput`.)
+
+- **Multiple Returns.** Many of the functions in this example return more than
+  one value to the caller. (In C++ and Java this would require a data structure
+  for grouping objects together.)
+
+- **Test Sources.** The `parser-test.0rt` source file contains a `testcase` that
+  the compiler itself can execute.
+
+- **Expression Pragmas.** `parser-test.0rt` uses the `$ExprLookup[MODULE_PATH]$`
+  pragma to get the absolute path to its own module in order to locate a data
+  file. This might otherwise require hard-coding a path or relying on the tests
+  being executed from the module path.
+
+- **Module Config.** The `.zeolite-module` file contains the build configuration
+  for this example. This means that building and running the example does not
+  require special instructions, scripting, or `Makefile`s.
+
+## Running
 
 To run the example:
 
@@ -23,5 +73,7 @@ zeolite -p "$ZEOLITE_PATH" -r example/parser
 zeolite -p "$ZEOLITE_PATH" -t example/parser
 ```
 
-There is currently no binary target in this example. This example also uses a
-`.zeolite-module`, unlike the other examples.
+(There is currently no binary target in this example.)
+
+[parsec]: https://hackage.haskell.org/package/parsec
+[zeolite]: https://github.com/ta0kira/zeolite
