@@ -1,13 +1,13 @@
 # Revision history for zeolite-lang
 
-## 0.6.0.0  -- ????-??-??
+## 0.6.0.0  -- 2020-05-14
 
 ### Compiler CLI
 
-* **[fix]** Fixes module-staleness check when running tests (`-t`).
-
 * **[behavior]** Improves error messages for type mismatches and return-count
   mismatches.
+
+* **[breaking]** Fixes module-staleness check when running tests (`-t`).
 
 * **[breaking]** Prevents binaries from being created from main categories that
   are defined in `$TestsOnly$` sources. (This was the original intention, but it
@@ -15,7 +15,7 @@
 
 ### Language
 
-* **[new]** Allows `@category` members in `concrete` types to refer to each
+* **[new]** Allows `@category` members in `concrete` categories to refer to each
   other during initialization.
 
 * **[new]** Adds the `$ExprLookup[`*`MACRO_NAME`*`]$` pragma, which allows the
