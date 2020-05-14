@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- Copy or link this file to $HOME/.local/share/katepart5/syntax/zeolite-module.xml
+     to enable syntax highlighting in Kate (https://kate-editor.org/). -->
+
+<language
+    name="Zeolite Module"
+    section="Configuration"
+    version="1.0"
+    kateversion="2.4"
+    indenter="cstyle"
+    style="Zeolite Module"
+    extensions=".zeolite-module"
+    author="Kevin P. Barry (ta0kira@gmail.com)"
+    priority="0"
+  >
+
+  <highlighting>
+    <list name="structures">
+      <item> binary </item>
+      <item> category_source </item>
+      <item> expression_macro </item>
+      <item> incremental </item>
+    </list>
+
+    <contexts>
+
+      <context name="Normal Text" attribute="Normal Text" lineEndContext="#stay" >
+        <IncludeRules context="Any Comment" />
+        <IncludeRules context="Sections" />
+        <keyword attribute="Structure" context="#stay" String="structures" />
+        <DetectChar attribute="String" context="String" char="&quot;" />
+      </context>
+
+      <context name="Sections" attribute="Normal Text" lineEndContext="#stay" >
+        <StringDetect attribute="Keyword" context="Categories Start" String="categories:" />
+        <StringDetect attribute="Keyword" context="Category" String="category:" />
+        <StringDetect attribute="Keyword" context="Expression" String="expression:" />
+        <StringDetect attribute="Keyword" context="#stay" String="expression_map:" />
+        <StringDetect attribute="Keyword" context="#stay" String="extra_files:" />
+        <StringDetect attribute="Keyword" context="Function" String="function:" />
+        <StringDetect attribute="Keyword" context="#stay" String="include_paths:" />
+        <StringDetect attribute="Keyword" context="#stay" String="link_flags:" />
+        <StringDetect attribute="Keyword" context="#stay" String="mode:" />
+        <StringDetect attribute="Keyword" context="Macro Name" String="name:" />
+        <StringDetect attribute="Keyword" context="#stay" String="output:" />
+        <StringDetect attribute="Keyword" context="#stay" String="path:" />
+        <StringDetect attribute="Keyword" context="#stay" String="private_deps:" />
+        <StringDetect attribute="Keyword" context="#stay" String="public_deps:" />
+        <StringDetect attribute="Keyword" context="#stay" String="requires:" />
+        <StringDetect attribute="Keyword" context="#stay" String="root:" />
+        <StringDetect attribute="Keyword" context="#stay" String="source:" />
+      </context>
+
+      <context name="String" attribute="String" lineEndContext="#stay" >
+        <HlCStringChar attribute="Escaped Char" context="#stay" />
+        <DetectChar attribute="String" context="#pop" char="&quot;" />
+      </context>
+
+      <context name="Categories Start" attribute="Normal Text" lineEndContext="#stay" >
+        <DetectSpaces />
+        <IncludeRules context="Any Comment" />
+        <DetectChar attribute="Normal Text" context="Categories" char="[" />
+      </context>
+
+      <context name="Categories" attribute="Normal Text" lineEndContext="#stay" >
+        <DetectSpaces />
+        <IncludeRules context="Any Comment" />
+        <RegExpr attribute="Category Name" context="#stay" String="\b[A-Z][a-zA-Z0-9]*\b" />
+        <DetectChar attribute="Normal Text" context="#pop#pop" char="]" />
+        <RegExpr attribute="Error" context="#stay" String="[^ \]]+" />
+      </context>
+
+      <context name="Category" attribute="Normal Text" lineEndContext="#stay" >
+        <DetectSpaces />
+        <IncludeRules context="Any Comment" />
+        <RegExpr attribute="Category Name" context="#pop" String="\b[A-Z][a-zA-Z0-9]*\b" />
+        <RegExpr attribute="Error" context="#pop" String="[^ \]]+" />
+      </context>
+
+      <context name="Function" attribute="Normal Text" lineEndContext="#stay" >
+        <DetectSpaces />
+        <IncludeRules context="Any Comment" />
+        <RegExpr attribute="Category Name" context="#pop" String="\b[a-z][a-zA-Z0-9]*\b" />
+        <RegExpr attribute="Error" context="#pop" String="[^ \]]+" />
+      </context>
+
+      <context name="Expression" attribute="Normal Text" lineEndContext="#stay" >
+        <DetectSpaces />
+        <IncludeRules context="Any Comment" />
+        <IncludeRules context="Any Expression" />
+        <DetectChar context="#pop" char="}" lookAhead="true" />
+        <RegExpr attribute="Error" context="#pop" String="[^ }]+" />
+      </context>
+
+      <context name="Macro Name" attribute="Normal Text" lineEndContext="#stay" >
+        <DetectSpaces />
+        <IncludeRules context="Any Comment" />
+        <RegExpr attribute="Macro Name" context="#pop" String="\b[A-Z_][A-Z_0-9]*\b" />
+        <RegExpr attribute="Error" context="#pop" String="[^ \]]+" />
+      </context>
+
+      <context name="Any Comment" attribute="Normal Text" lineEndContext="#stay" >
+        <IncludeRules context="Any Comment##Zeolite" />
+      </context>
+
+      <context name="Any Expression" attribute="Normal Text" lineEndContext="#stay" >
+        <IncludeRules context="Any Expression##Zeolite" />
+      </context>
+
+    </contexts>
+
+    <itemDatas>
+      <itemData name="Normal Text" defStyleNum="dsNormal" spellChecking="false" />
+      <itemData name="Keyword" defStyleNum="dsKeyword" spellChecking="false" />
+      <itemData name="Structure" defStyleNum="dsNormal" italic="true" spellChecking="false" />
+      <itemData name="String" defStyleNum="dsString" spellChecking="false" />
+      <itemData name="Category Name" defStyleNum="dsDataType" spellChecking="false" />
+      <itemData name="Macro Name" defStyleNum="dsOthers" spellChecking="false" />
+      <itemData name="Error" defStyleNum="dsError" spellChecking="false" />
+    </itemDatas>
+
+  </highlighting>
+
+  <general>
+    <comments>
+      <comment name="singleLine" start="//" />
+       <comment name="multiLine" start="/*" end="*/" />
+    </comments>
+    <keywords casesensitive="1" additionalDeliminator="$" />
+  </general>
+
+</language>
+<!-- kate: indent-width 2; tab-width 2; -->
