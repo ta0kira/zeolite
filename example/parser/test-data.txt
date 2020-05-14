@@ -1,4 +1,5 @@
 file_start
   name:        "example data"
   description: THIS_IS_A_TOKEN
+  a_word:      aardvark
 file_end

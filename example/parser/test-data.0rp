@@ -7,4 +7,5 @@ concrete TestData {
 
   @value getName        () -> (String)
   @value getDescription () -> (String)
+  @value getBoolean     () -> (Bool)
 }

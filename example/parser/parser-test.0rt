@@ -13,8 +13,13 @@ define Test {
     if (data.getName() != "example data") {
       fail(data.getName())
     }
+
     if (data.getDescription() != "THIS_IS_A_TOKEN") {
       fail(data.getDescription())
+    }
+
+    if (data.getBoolean() != false) {
+      fail(data.getBoolean())
     }
   }
 

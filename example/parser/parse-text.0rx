@@ -105,6 +105,24 @@ define CharParser {
   }
 }
 
+concrete ConstParser<#x> {
+  @type create (#x) -> (Parser<#x>)
+}
+
+define ConstParser {
+  refines Parser<#x>
+
+  @value #x value
+
+  run (contextOld) {
+    return contextOld.setValue<#x>(ErrorOr$$value<#x>(value))
+  }
+
+  create (value) {
+    return ConstParser<#x>{ value }
+  }
+}
+
 concrete TryParser<#x> {
   @type create (Parser<#x>) -> (Parser<#x>)
 }
@@ -158,11 +176,11 @@ define OrParser {
   }
 }
 
-concrete ThenParser<#x> {
+concrete LeftParser<#x> {
   @type create (Parser<#x>,Parser<any>) -> (Parser<#x>)
 }
 
-define ThenParser {
+define LeftParser {
   refines Parser<#x>
 
   @value Parser<#x>  parser1
@@ -181,20 +199,55 @@ define ThenParser {
   }
 
   create (parser1,parser2) {
-    return ThenParser<#x>{ parser1, parser2 }
+    return LeftParser<#x>{ parser1, parser2 }
+  }
+}
+
+concrete RightParser<#x> {
+  @type create (Parser<any>,Parser<#x>) -> (Parser<#x>)
+}
+
+define RightParser {
+  refines Parser<#x>
+
+  @value Parser<any> parser1
+  @value Parser<#x>  parser2
+
+  run (contextOld) {
+    if (contextOld.hasAnyError()) {
+      return contextOld.convertError<#x>()
+    }
+    ParseContext<any> context <- contextOld.run<any>(parser1)
+    if (!context.hasAnyError()) {
+      return context.run<#x>(parser2).toState()
+    } else {
+      return context.convertError<#x>()
+    }
+  }
+
+  create (parser1,parser2) {
+    return RightParser<#x>{ parser1, parser2 }
   }
 }
 
 define Parse {
-  try (x) {
-    return TryParser<#x>$create(x)
+  const (value) {
+    return ConstParser<#x>$create(value)
   }
 
-  or (x,y) {
-    return OrParser<#x>$create(x,y)
+  try (parser) {
+    return TryParser<#x>$create(parser)
   }
 
-  then (x,y) {
-    return ThenParser<#x>$create(x,y)
+  or (parser1,parser2) {
+    return OrParser<#x>$create(parser1,parser2)
+  }
+
+  left (parser1,parser2) {
+    return LeftParser<#x>$create(parser1,parser2)
+  }
+
+  right (parser1,parser2) {
+    return RightParser<#x>$create(parser1,parser2)
   }
 }

@@ -1,15 +1,25 @@
+$TestsOnly$
+
 define TestData {
-  @category Parser<any>    whitespace      <- SequenceOfParser$create(" \n\t",1,0)
-  @category Parser<String> sentence        <- SentenceParser$create()
-  @category Parser<String> token           <- SequenceOfParser$create("ABCDEFGHIJKLMNOPQRSTUVWXYZ_",1,0)
-  @category Parser<any>    fileStart       <- StringParser$create("file_start")   `Parse$then<any>` whitespace
-  @category Parser<any>    fileEnd         <- StringParser$create("file_end")     `Parse$then<any>` whitespace
-  @category Parser<any>    nameTag         <- StringParser$create("name:")        `Parse$then<any>` whitespace
-  @category Parser<any>    descriptionTag  <- StringParser$create("description:") `Parse$then<any>` whitespace
-  @category Parser<String> sentenceOrToken <- sentence `Parse$or<String>` token `Parse$then<String>` whitespace
+  @category Parser<any>    whitespace        <- SequenceOfParser$create(" \n\t",1,0)
+  @category Parser<String> sentence          <- SentenceParser$create()
+  @category Parser<String> token             <- SequenceOfParser$create("ABCDEFGHIJKLMNOPQRSTUVWXYZ_",1,0)
+
+  @category Parser<Bool>   acronym           <- StringParser$create("acronym")  `Parse$right<Bool>` Parse$const<Bool>(true)
+  @category Parser<Bool>   aardvark          <- StringParser$create("aardvark") `Parse$right<Bool>` Parse$const<Bool>(false)
+
+  @category Parser<String> sentenceOrToken   <- sentence `Parse$or<String>` token `Parse$left<String>` whitespace
+  @category Parser<Bool>   acronymOrAardvark <- Parse$try<Bool>(acronym) `Parse$or<Bool>` aardvark `Parse$left<Bool>` whitespace
+
+  @category Parser<any>    fileStart         <- StringParser$create("file_start")   `Parse$left<any>` whitespace
+  @category Parser<any>    fileEnd           <- StringParser$create("file_end")     `Parse$left<any>` whitespace
+  @category Parser<any>    nameTag           <- StringParser$create("name:")        `Parse$left<any>` whitespace
+  @category Parser<any>    descriptionTag    <- StringParser$create("description:") `Parse$left<any>` whitespace
+  @category Parser<any>    aOrATag           <- StringParser$create("a_word:")      `Parse$left<any>` whitespace
 
   @value String name
   @value String description
+  @value Bool   boolean
 
   parseFrom (data) {
     ParseState<any> state <- ParseState$$new(data)
@@ -18,6 +28,8 @@ define TestData {
     state, ErrorOr<String> name        <- state.runAndGet<String>(sentenceOrToken)
     state                              <- state.run<any>(descriptionTag)
     state, ErrorOr<String> description <- state.runAndGet<String>(sentenceOrToken)
+    state                              <- state.run<any>(aOrATag)
+    state, ErrorOr<Bool> boolean       <- state.runAndGet<Bool>(acronymOrAardvark)
     state                              <- state.run<any>(fileEnd)
 
     if (state.hasAnyError()) {
@@ -25,7 +37,9 @@ define TestData {
     } elif (!state.atEof()) {
       return ErrorOr$$error("Parsing did not consume all of the data")
     } else {
-      return ErrorOr$$value<TestData>(TestData{ name.getValue(), description.getValue() })
+      return ErrorOr$$value<TestData>(TestData{ name.getValue(),
+                                                description.getValue(),
+                                                boolean.getValue() })
     }
   }
 
@@ -35,6 +49,10 @@ define TestData {
 
   getDescription () {
     return description
+  }
+
+  getBoolean () {
+    return boolean
   }
 }
 

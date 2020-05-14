@@ -19,7 +19,9 @@ concrete CharParser {
 /* Parser combinators
  */
 concrete Parse {
-  @type try<#x>  (Parser<#x>)             -> (Parser<#x>)
-  @type or<#x>   (Parser<#x>,Parser<#x>)  -> (Parser<#x>)
-  @type then<#x> (Parser<#x>,Parser<any>) -> (Parser<#x>)
+  @type const<#x> (#x)                     -> (Parser<#x>)
+  @type try<#x>   (Parser<#x>)             -> (Parser<#x>)
+  @type or<#x>    (Parser<#x>,Parser<#x>)  -> (Parser<#x>)
+  @type left<#x>  (Parser<#x>,Parser<any>) -> (Parser<#x>)
+  @type right<#x> (Parser<any>,Parser<#x>) -> (Parser<#x>)
 }
