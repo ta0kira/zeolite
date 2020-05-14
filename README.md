@@ -1186,8 +1186,8 @@ operates properly end-to-end.)
   <span style='color:#898887;'>// The test is expected to have a compilation error. Note that this cannot be</span>
   <span style='color:#898887;'>// used to check for parser failures!</span>
   <span style='color:#04e040;'>error</span>
-  <span style='color:#04e040;'>require</span> <span style='color:#bf0303;'>&quot;run&quot;</span>  <span style='color:#898887;'>// The compiler error should include &quot;run&quot;.</span>
-  <span style='color:#04e040;'>exclude</span> <span style='color:#bf0303;'>&quot;foo&quot;</span>  <span style='color:#898887;'>// The compiler error should not include &quot;foo&quot;.</span>
+  <span style='color:#04e040;'>require</span> <span style='color:#04e040;'>compiler</span> <span style='color:#bf0303;'>&quot;run&quot;</span>  <span style='color:#898887;'>// The compiler error should include &quot;run&quot;.</span>
+  <span style='color:#04e040;'>exclude</span> <span style='color:#04e040;'>compiler</span> <span style='color:#bf0303;'>&quot;foo&quot;</span>  <span style='color:#898887;'>// The compiler error should not include &quot;foo&quot;.</span>
 }
 
 <b>define</b> <b><span style='color:#0057ae;'>Test</span></b> {
