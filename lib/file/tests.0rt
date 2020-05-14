@@ -113,6 +113,7 @@ concrete Test {
 
 testcase "read missing file crash" {
   crash Test$run()
+  require "RawFileReader .*originally created"
 }
 
 define Test {
@@ -147,6 +148,7 @@ concrete Test {
 
 testcase "unwritable file crash" {
   crash Test$run()
+  require "RawFileWriter .*originally created"
 }
 
 define Test {

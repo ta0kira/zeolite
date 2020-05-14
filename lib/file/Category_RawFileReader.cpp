@@ -157,6 +157,7 @@ struct Value_RawFileReader : public TypeValue {
 
   std::mutex mutex;
   R<std::istream> file;
+  CAPTURE_CREATION
 };
 S<TypeValue> CreateValue(Type_RawFileReader& parent, const ParamTuple& params, const ValueTuple& args) {
   return S_get(new Value_RawFileReader(parent, params, args));
@@ -199,6 +200,7 @@ ReturnTuple Value_RawFileReader::Call_pastEnd(const S<TypeValue>& Var_self, cons
 
 ReturnTuple Value_RawFileReader::Call_readBlock(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) {
   TRACE_FUNCTION("RawFileReader.readBlock")
+  TRACE_CREATION
   std::lock_guard<std::mutex> lock(mutex);
   const PrimInt Var_arg1 = (args.At(0))->AsInt();
   if (Var_arg1 < 0) {

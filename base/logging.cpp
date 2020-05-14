@@ -40,9 +40,19 @@ LogThenCrash::~LogThenCrash() {
       std::cerr << " '" << condition_ << "'";
     }
     std::cerr << ": " << output_.str() << std::endl;
-    for (const auto& trace : TraceContext::GetTrace()) {
+    const TraceList call_trace = TraceContext::GetTrace();
+    for (const auto& trace : call_trace) {
       if (!trace.empty()) {
         std::cerr << "  " << trace << std::endl;
+      }
+    }
+    const TraceList creation_trace = TraceCreation::GetTrace();
+    if (!creation_trace.empty()) {
+      std::cerr << TraceCreation::GetType() << " value originally created at:" << std::endl;
+      for (const auto& trace : creation_trace) {
+        if (!trace.empty()) {
+          std::cerr << "  " << trace << std::endl;
+        }
       }
     }
     std::raise(signal_);
@@ -92,8 +102,8 @@ void SetSignalHandler() {
 }
 
 
-std::list<std::string> TraceContext::GetTrace() {
-  std::list<std::string> trace;
+TraceList TraceContext::GetTrace() {
+  TraceList trace;
   const TraceContext* current = GetCurrent();
   while (current) {
     current->AppendTrace(trace);
@@ -107,7 +117,7 @@ void SourceContext::SetLocal(const char* at) {
   at_ = at;
 }
 
-void SourceContext::AppendTrace(std::list<std::string>& trace) const {
+void SourceContext::AppendTrace(TraceList& trace) const {
   std::ostringstream output;
   if (at_ == nullptr || at_[0] == 0x00) {
     output << "From " << name_;
@@ -126,7 +136,7 @@ void CleanupContext::SetLocal(const char* at) {
   at_ = at;
 }
 
-void CleanupContext::AppendTrace(std::list<std::string>& trace) const {
+void CleanupContext::AppendTrace(TraceList& trace) const {
   std::ostringstream output;
   if (at_ == nullptr || at_[0] == 0x00) {
     output << "In cleanup block";

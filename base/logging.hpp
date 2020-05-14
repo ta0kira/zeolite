@@ -73,6 +73,12 @@ class LogThenCrash {
   #define PRED_CONTEXT_POINT(point) \
     TraceContext::SetContext(point),
 
+  #define CAPTURE_CREATION \
+    CreationTrace creation_context_;
+
+  #define TRACE_CREATION \
+    TraceCreation trace_creation(TypeInstance::TypeName(parent), creation_context_);
+
 #else
 
   #define TRACE_FUNCTION(name)
@@ -83,11 +89,19 @@ class LogThenCrash {
 
   #define PRED_CONTEXT_POINT(point)
 
+  #define CAPTURE_CREATION
+
+  #define TRACE_CREATION
+
 #endif
+
+
+using TraceList = std::list<std::string>;
+
 
 class TraceContext : public capture_thread::ThreadCapture<TraceContext> {
  public:
-  static std::list<std::string> GetTrace();
+  static TraceList GetTrace();
 
   template<int S>
   static inline void SetContext(const char(&at)[S]) {
@@ -101,7 +115,7 @@ class TraceContext : public capture_thread::ThreadCapture<TraceContext> {
 
  private:
   virtual void SetLocal(const char*) = 0;
-  virtual void AppendTrace(std::list<std::string>& trace) const = 0;
+  virtual void AppendTrace(TraceList& trace) const = 0;
   virtual const TraceContext* GetNext() const = 0;
 };
 
@@ -113,7 +127,7 @@ class SourceContext : public TraceContext {
 
  private:
   void SetLocal(const char*) final;
-  void AppendTrace(std::list<std::string>& trace) const final;
+  void AppendTrace(TraceList& trace) const final;
   const TraceContext* GetNext() const final;
 
   const char* at_;
@@ -128,7 +142,7 @@ class CleanupContext : public TraceContext {
 
  private:
   void SetLocal(const char*) final;
-  void AppendTrace(std::list<std::string>& trace) const final;
+  void AppendTrace(TraceList& trace) const final;
   const TraceContext* GetNext() const final;
 
   const char* at_;
@@ -156,6 +170,46 @@ class ProgramArgv : public Argv {
   const std::vector<std::string>& GetArgs() const final;
 
   const std::vector<std::string> argv_;
+  const ScopedCapture capture_to_;
+};
+
+class CreationTrace {
+ public:
+  inline CreationTrace() : trace_(TraceContext::GetTrace()) {}
+
+  inline const TraceList& GetTrace() const {
+    return trace_;
+  }
+
+ private:
+  const TraceList trace_;
+};
+
+class TraceCreation : public capture_thread::ThreadCapture<TraceCreation> {
+ public:
+  inline TraceCreation(std::string type, const CreationTrace& trace)
+    : type_(type), trace_(trace), capture_to_(this) {}
+
+  static inline std::string GetType() {
+    if (GetCurrent()) {
+      return GetCurrent()->type_;
+    } else {
+      return std::string();
+    }
+  }
+
+  static inline TraceList GetTrace() {
+    if (GetCurrent()) {
+      return GetCurrent()->trace_.GetTrace();
+    } else {
+      return TraceList();
+    }
+  }
+
+ private:
+
+  const std::string type_;
+  const CreationTrace& trace_;
   const ScopedCapture capture_to_;
 };
 

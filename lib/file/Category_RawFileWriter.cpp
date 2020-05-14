@@ -155,6 +155,7 @@ struct Value_RawFileWriter : public TypeValue {
 
   std::mutex mutex;
   R<std::ostream> file;
+  CAPTURE_CREATION
 };
 S<TypeValue> CreateValue(Type_RawFileWriter& parent, const ParamTuple& params, const ValueTuple& args) {
   return S_get(new Value_RawFileWriter(parent, params, args));
@@ -188,6 +189,7 @@ ReturnTuple Value_RawFileWriter::Call_getFileError(const S<TypeValue>& Var_self,
 }
 ReturnTuple Value_RawFileWriter::Call_writeBlock(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) {
   TRACE_FUNCTION("RawFileWriter.writeBlock")
+  TRACE_CREATION
   std::lock_guard<std::mutex> lock(mutex);
   const PrimString& Var_arg1 = args.At(0)->AsString();
   if (!file || file->rdstate() != std::ios::goodbit) {
