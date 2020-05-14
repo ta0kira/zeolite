@@ -19,13 +19,18 @@
 
 <b>define</b> <b><span style='color:#0057ae;'>Test</span></b> {
   execute () {
-    <span style='color:#0057ae;'>TestData</span> data &lt;- <span style='color:#0057ae;'>TestData</span><span style='color:#644a9b;'>$</span>parseFrom(loadTestData())
+    <span style='color:#0057ae;'>TestData</span> data &lt;- <span style='color:#0057ae;'>TestData</span><span style='color:#644a9b;'>$</span>parseFrom(loadTestData()).getValue()
 
     <b>if</b> (data.getName() != <span style='color:#bf0303;'>&quot;example data&quot;</span>) {
       <b>fail</b>(data.getName())
     }
+
     <b>if</b> (data.getDescription() != <span style='color:#bf0303;'>&quot;THIS_IS_A_TOKEN&quot;</span>) {
       <b>fail</b>(data.getDescription())
+    }
+
+    <b>if</b> (data.getBoolean() != <b>false</b>) {
+      <b>fail</b>(data.getBoolean())
     }
   }
 
@@ -36,80 +41,6 @@
     } <b>cleanup</b> {
       <span style='color:#006e28;'>\</span> reader.freeResource()
     } <b>in</b> <b>return</b> <span style='color:#0057ae;'>TextReader</span><span style='color:#644a9b;'>$</span>readAll(reader)
-  }
-}
-
-<b>concrete</b> <b><span style='color:#0057ae;'>SentenceParser</span></b> {
-  <span style='color:#644a9b;'>@type</span> create () -&gt; (<span style='color:#0057ae;'>Parser</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>String</span></i><span style='color:#c02040;'>&gt;</span>)
-}
-
-<b>define</b> <b><span style='color:#0057ae;'>SentenceParser</span></b> {
-  <b>refines</b> <span style='color:#0057ae;'>Parser</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>String</span></i><span style='color:#c02040;'>&gt;</span>
-
-  <span style='color:#644a9b;'>@category</span> <i><span style='color:#0057ae;'>String</span></i> sentenceChars &lt;- <span style='color:#bf0303;'>&quot;ABCDEFGHIJKLMNOPQRSTUVWXYZ&quot;</span> +
-                                    <span style='color:#bf0303;'>&quot;abcdefghijklmnopqrstuvwxyz&quot;</span> +
-                                    <span style='color:#bf0303;'>&quot;., !?-&quot;</span>
-
-  run (stateOld) {
-    <b>if</b> (stateOld.hasAnyError()) {
-      <b>return</b> stateOld.convertError&lt;<i><span style='color:#0057ae;'>String</span></i>&gt;()
-    }
-    <span style='color:#0057ae;'>ParseState</span><span style='color:#c02040;'>&lt;</span><b>any</b><span style='color:#c02040;'>&gt;</span>    state1 &lt;- <span style='color:#0057ae;'>Parse</span><span style='color:#644a9b;'>$</span>char(<span style='color:#924c9d;'>'&quot;'</span>).run(stateOld)
-    <span style='color:#0057ae;'>ParseState</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>String</span></i><span style='color:#c02040;'>&gt;</span> text   &lt;- <span style='color:#0057ae;'>Parse</span><span style='color:#644a9b;'>$</span>sequenceOf(sentenceChars,<span style='color:#b08000;'>0</span>,<span style='color:#b08000;'>0</span>).run(state1)
-    <span style='color:#0057ae;'>ParseState</span><span style='color:#c02040;'>&lt;</span><b>any</b><span style='color:#c02040;'>&gt;</span>    state2 &lt;- <span style='color:#0057ae;'>Parse</span><span style='color:#644a9b;'>$</span>char(<span style='color:#924c9d;'>'&quot;'</span>).run(text)
-    <b>return</b> state2.setValue&lt;<i><span style='color:#0057ae;'>String</span></i>&gt;(text.getValue())
-  }
-
-  create () {
-    <b>return</b> <span style='color:#0057ae;'>SentenceParser</span>{ }
-  }
-}
-
-<b>concrete</b> <b><span style='color:#0057ae;'>TestData</span></b> {
-  <span style='color:#644a9b;'>@type</span> parseFrom (<i><span style='color:#0057ae;'>String</span></i>) -&gt; (<span style='color:#0057ae;'>TestData</span>)
-
-  <span style='color:#644a9b;'>@value</span> getName        () -&gt; (<i><span style='color:#0057ae;'>String</span></i>)
-  <span style='color:#644a9b;'>@value</span> getDescription () -&gt; (<i><span style='color:#0057ae;'>String</span></i>)
-}
-
-<b>define</b> <b><span style='color:#0057ae;'>TestData</span></b> {
-  <span style='color:#644a9b;'>@category</span> <span style='color:#0057ae;'>Parser</span><span style='color:#c02040;'>&lt;</span><b>any</b><span style='color:#c02040;'>&gt;</span>    whitespace      &lt;- <span style='color:#0057ae;'>Parse</span><span style='color:#644a9b;'>$</span>sequenceOf(<span style='color:#bf0303;'>&quot; </span><span style='color:#924c9d;'>\n\t</span><span style='color:#bf0303;'>&quot;</span>,<span style='color:#b08000;'>1</span>,<span style='color:#b08000;'>0</span>)
-  <span style='color:#644a9b;'>@category</span> <span style='color:#0057ae;'>Parser</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>String</span></i><span style='color:#c02040;'>&gt;</span> sentence        &lt;- <span style='color:#0057ae;'>SentenceParser</span><span style='color:#644a9b;'>$</span>create()
-  <span style='color:#644a9b;'>@category</span> <span style='color:#0057ae;'>Parser</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>String</span></i><span style='color:#c02040;'>&gt;</span> token           &lt;- <span style='color:#0057ae;'>Parse</span><span style='color:#644a9b;'>$</span>sequenceOf(<span style='color:#bf0303;'>&quot;ABCDEFGHIJKLMNOPQRSTUVWXYZ_&quot;</span>,<span style='color:#b08000;'>1</span>,<span style='color:#b08000;'>0</span>)
-  <span style='color:#644a9b;'>@category</span> <span style='color:#0057ae;'>Parser</span><span style='color:#c02040;'>&lt;</span><b>any</b><span style='color:#c02040;'>&gt;</span>    fileStart       &lt;- <span style='color:#0057ae;'>Parse</span><span style='color:#644a9b;'>$</span>string(<span style='color:#bf0303;'>&quot;file_start&quot;</span>)   <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>Parse</span><span style='color:#644a9b;'>$</span>then&lt;<b>any</b>&gt;<b><span style='color:#c02040;'>`</span></b> whitespace
-  <span style='color:#644a9b;'>@category</span> <span style='color:#0057ae;'>Parser</span><span style='color:#c02040;'>&lt;</span><b>any</b><span style='color:#c02040;'>&gt;</span>    fileEnd         &lt;- <span style='color:#0057ae;'>Parse</span><span style='color:#644a9b;'>$</span>string(<span style='color:#bf0303;'>&quot;file_end&quot;</span>)     <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>Parse</span><span style='color:#644a9b;'>$</span>then&lt;<b>any</b>&gt;<b><span style='color:#c02040;'>`</span></b> whitespace
-  <span style='color:#644a9b;'>@category</span> <span style='color:#0057ae;'>Parser</span><span style='color:#c02040;'>&lt;</span><b>any</b><span style='color:#c02040;'>&gt;</span>    nameTag         &lt;- <span style='color:#0057ae;'>Parse</span><span style='color:#644a9b;'>$</span>string(<span style='color:#bf0303;'>&quot;name:&quot;</span>)        <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>Parse</span><span style='color:#644a9b;'>$</span>then&lt;<b>any</b>&gt;<b><span style='color:#c02040;'>`</span></b> whitespace
-  <span style='color:#644a9b;'>@category</span> <span style='color:#0057ae;'>Parser</span><span style='color:#c02040;'>&lt;</span><b>any</b><span style='color:#c02040;'>&gt;</span>    descriptionTag  &lt;- <span style='color:#0057ae;'>Parse</span><span style='color:#644a9b;'>$</span>string(<span style='color:#bf0303;'>&quot;description:&quot;</span>) <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>Parse</span><span style='color:#644a9b;'>$</span>then&lt;<b>any</b>&gt;<b><span style='color:#c02040;'>`</span></b> whitespace
-  <span style='color:#644a9b;'>@category</span> <span style='color:#0057ae;'>Parser</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>String</span></i><span style='color:#c02040;'>&gt;</span> sentenceOrToken &lt;- sentence <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>Parse</span><span style='color:#644a9b;'>$</span>or&lt;<i><span style='color:#0057ae;'>String</span></i>&gt;<b><span style='color:#c02040;'>`</span></b> token <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>Parse</span><span style='color:#644a9b;'>$</span>then&lt;<i><span style='color:#0057ae;'>String</span></i>&gt;<b><span style='color:#c02040;'>`</span></b> whitespace
-
-  <span style='color:#644a9b;'>@value</span> <i><span style='color:#0057ae;'>String</span></i> name
-  <span style='color:#644a9b;'>@value</span> <i><span style='color:#0057ae;'>String</span></i> description
-
-  parseFrom (data) {
-    <span style='color:#0057ae;'>ParseState</span><span style='color:#c02040;'>&lt;</span><b>any</b><span style='color:#c02040;'>&gt;</span>    start       &lt;- <span style='color:#0057ae;'>ParseState</span><span style='color:#644a9b;'>$$</span>new(data)
-    <span style='color:#0057ae;'>ParseState</span><span style='color:#c02040;'>&lt;</span><b>any</b><span style='color:#c02040;'>&gt;</span>    state1      &lt;- fileStart.run(start)
-    <span style='color:#0057ae;'>ParseState</span><span style='color:#c02040;'>&lt;</span><b>any</b><span style='color:#c02040;'>&gt;</span>    state2      &lt;- nameTag.run(state1)
-    <span style='color:#0057ae;'>ParseState</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>String</span></i><span style='color:#c02040;'>&gt;</span> name        &lt;- sentenceOrToken.run(state2)
-    <span style='color:#0057ae;'>ParseState</span><span style='color:#c02040;'>&lt;</span><b>any</b><span style='color:#c02040;'>&gt;</span>    state3      &lt;- descriptionTag.run(name)
-    <span style='color:#0057ae;'>ParseState</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>String</span></i><span style='color:#c02040;'>&gt;</span> description &lt;- sentenceOrToken.run(state3)
-    <span style='color:#0057ae;'>ParseState</span><span style='color:#c02040;'>&lt;</span><b>any</b><span style='color:#c02040;'>&gt;</span>    final       &lt;- fileEnd.run(description)
-
-    <b>if</b> (final.hasAnyError()) {
-      <span style='color:#006e28;'>\</span> <span style='color:#0057ae;'>LazyStream</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Formatted</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>$</span>new()
-          .append(<span style='color:#bf0303;'>&quot;Parsing failed: &quot;</span>)
-          .append(final.getValue().getError())
-          .writeTo(<span style='color:#0057ae;'>SimpleOutput</span><span style='color:#644a9b;'>$</span>error())
-    }
-
-    <b>return</b> <span style='color:#0057ae;'>TestData</span>{ name.getValue().getValue(), description.getValue().getValue() }
-  }
-
-  getName () {
-    <b>return</b> name
-  }
-
-  getDescription () {
-    <b>return</b> description
   }
 }
 </pre>
