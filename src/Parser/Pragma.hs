@@ -25,7 +25,8 @@ module Parser.Pragma (
   pragmaExprLookup,
   pragmaNoTrace,
   pragmaModuleOnly,
-  pragmaTestsOnly
+  pragmaTestsOnly,
+  pragmaTraceCreation,
 ) where
 
 import Control.Monad (when)
@@ -58,7 +59,11 @@ pragmaExprLookup = autoPragma "ExprLookup" $ Right parseAt where
 
 pragmaNoTrace :: Parser (Pragma SourcePos)
 pragmaNoTrace = autoPragma "NoTrace" $ Left parseAt where
-  parseAt c = PragmaNoTrace [c]
+  parseAt c = PragmaTracing [c] NoTrace
+
+pragmaTraceCreation :: Parser (Pragma SourcePos)
+pragmaTraceCreation = autoPragma "TraceCreation" $ Left parseAt where
+  parseAt c = PragmaTracing [c] TraceCreation
 
 pragmaTestsOnly :: Parser (Pragma SourcePos)
 pragmaTestsOnly = autoPragma "TestsOnly" $ Left parseAt where

@@ -44,7 +44,12 @@ tests = [
 
     checkParsesAs "$NoTrace$" (fmap (:[]) pragmaNoTrace)
       (\e -> case e of
-                  [PragmaNoTrace _] -> True
+                  [PragmaTracing _ NoTrace] -> True
+                  _ -> False),
+
+    checkParsesAs "$TraceCreation$" (fmap (:[]) pragmaTraceCreation)
+      (\e -> case e of
+                  [PragmaTracing _ TraceCreation] -> True
                   _ -> False),
 
     checkParsesAs "$Comment[ \"this is a pragma with args\" ]$" (fmap (:[]) pragmaComment)

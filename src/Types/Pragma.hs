@@ -21,15 +21,19 @@ limitations under the License.
 module Types.Pragma (
   CodeVisibility(..),
   Pragma(..),
+  TraceType(..),
   getPragmaContext,
   isExprLookup,
   isModuleOnly,
   isNoTrace,
   isTestsOnly,
+  isTraceCreation,
 ) where
 
 
 data CodeVisibility = ModuleOnly | TestsOnly deriving (Show)
+
+data TraceType = NoTrace | TraceCreation deriving (Show)
 
 data Pragma c =
   PragmaVisibility {
@@ -40,8 +44,9 @@ data Pragma c =
     pelContext :: [c],
     pelName :: String
   } |
-  PragmaNoTrace {
-    pntContext :: [c]
+  PragmaTracing {
+    ptContext :: [c],
+    ptType :: TraceType
   } |
   -- This is mostly for testing purposes.
   PragmaComment {
@@ -53,7 +58,7 @@ data Pragma c =
 getPragmaContext :: Pragma c -> [c]
 getPragmaContext (PragmaVisibility c _) = c
 getPragmaContext (PragmaExprLookup c _) = c
-getPragmaContext (PragmaNoTrace c)      = c
+getPragmaContext (PragmaTracing c _)    = c
 getPragmaContext (PragmaComment c _)    = c
 
 isModuleOnly :: Pragma c -> Bool
@@ -65,8 +70,12 @@ isExprLookup (PragmaExprLookup _ _) = True
 isExprLookup _                      = False
 
 isNoTrace :: Pragma c -> Bool
-isNoTrace (PragmaNoTrace _) = True
-isNoTrace _                 = False
+isNoTrace (PragmaTracing _ NoTrace) = True
+isNoTrace _                         = False
+
+isTraceCreation :: Pragma c -> Bool
+isTraceCreation (PragmaTracing _ TraceCreation) = True
+isTraceCreation _                               = False
 
 isTestsOnly :: Pragma c -> Bool
 isTestsOnly (PragmaVisibility _ TestsOnly) = True

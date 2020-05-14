@@ -45,7 +45,7 @@ instance ParseFromSource (ExecutableProcedure SourcePos) where
     as <- sourceParser
     rs <- sourceParser
     sepAfter (string_ "{")
-    pragmas <- parsePragmas [pragmaNoTrace]
+    pragmas <- parsePragmas [pragmaNoTrace,pragmaTraceCreation]
     pp <- sourceParser
     c2 <- getPosition
     sepAfter (string_ "}")
