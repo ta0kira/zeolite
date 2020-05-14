@@ -60,6 +60,8 @@ This example highlights several distinguishing features of the
 
 ## Running
 
+(Included with compiler package starting with version `0.6.0.0`.)
+
 To run the example:
 
 ```shell
