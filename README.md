@@ -1241,4 +1241,4 @@ if you are interested in helping with development.
 [variance]: https://en.wikipedia.org/wiki/Covariance_and_contravariance_%28computer_science%29
 [zeolite]: https://github.com/ta0kira/zeolite
 [zeolite-issues]: https://github.com/ta0kira/zeolite/issues
-[zeolite.xml]: https://github.com/ta0kira/zeolite/blob/master/kate/zeolite.xml
+[zeolite.xml]: https://github.com/ta0kira/zeolite/blob/master/highlighting/kate/zeolite.xml
