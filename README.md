@@ -597,38 +597,38 @@ A procedure definition has two options for returning multiple values:
 1. Return all values. (Prior to compiler version `0.3.0.0`, multiple returns
 were enclosed in  `{}`, e.g., `return { x, y }`.)
 
-<pre style='color:#1f1c1b;background-color:#f6f8fa;'>
-<b>define</b> <b><span style='color:#0057ae;'>MyCategory</span></b> {
-  minMax (x,y) {
-    <b>if</b> (x &lt; y) {
-      <b>return</b> x, y
-    } <b>else</b> {
-      <b>return</b> y, x
+  <pre style='color:#1f1c1b;background-color:#f6f8fa;'>
+  <b>define</b> <b><span style='color:#0057ae;'>MyCategory</span></b> {
+    minMax (x,y) {
+      <b>if</b> (x &lt; y) {
+        <b>return</b> x, y
+      } <b>else</b> {
+        <b>return</b> y, x
+      }
     }
-  }
-}</pre>
+  }</pre>
 
 2. Naming the return values and assigning them individually. This can be useful
    (and less error-prone) if the values are determined at different times.
    The compiler uses static analysis to ensure that all named variables are
    guaranteed to be set via all possible control paths.
 
-<pre style='color:#1f1c1b;background-color:#f6f8fa;'>
-<b>define</b> <b><span style='color:#0057ae;'>MyCategory</span></b> {
-  <span style='color:#898887;'>// Returns are named on the first line.</span>
-  minMax (x,y) (min,max) {
-    <span style='color:#898887;'>// Returns are optionally initialized up front.</span>
-    min &lt;- y
-    max &lt;- x
-    <b>if</b> (x &lt; y) {
-      <span style='color:#898887;'>// Returns are overwritten.</span>
-      min &lt;- x
-      max &lt;- y
+  <pre style='color:#1f1c1b;background-color:#f6f8fa;'>
+  <b>define</b> <b><span style='color:#0057ae;'>MyCategory</span></b> {
+    <span style='color:#898887;'>// Returns are named on the first line.</span>
+    minMax (x,y) (min,max) {
+      <span style='color:#898887;'>// Returns are optionally initialized up front.</span>
+      min &lt;- y
+      max &lt;- x
+      <b>if</b> (x &lt; y) {
+        <span style='color:#898887;'>// Returns are overwritten.</span>
+        min &lt;- x
+        max &lt;- y
+      }
+      <span style='color:#898887;'>// Implicit return makes sure that all returns are assigned. Optionally,</span>
+      <span style='color:#898887;'>// you can use return _.</span>
     }
-    <span style='color:#898887;'>// Implicit return makes sure that all returns are assigned. Optionally,</span>
-    <span style='color:#898887;'>// you can use return _.</span>
-  }
-}</pre>
+  }</pre>
 
 The caller of a function with multiple returns also has a few options:
 
@@ -636,15 +636,15 @@ The caller of a function with multiple returns also has a few options:
    `_` in that position. (Prior to compiler version `0.3.0.0`, multiple
    assignments were enclosed in `{}`, e.g., `{ Int min, _ } <- minMax(4,3)`.)
 
-<pre style='color:#1f1c1b;background-color:#f6f8fa;'>
-<i><span style='color:#0057ae;'>Int</span></i> min, <b>_</b> &lt;- minMax(<span style='color:#b08000;'>4</span>,<span style='color:#b08000;'>3</span>)</pre>
+  <pre style='color:#1f1c1b;background-color:#f6f8fa;'>
+  <i><span style='color:#0057ae;'>Int</span></i> min, <b>_</b> &lt;- minMax(<span style='color:#b08000;'>4</span>,<span style='color:#b08000;'>3</span>)</pre>
 
 2. Pass them directly to a function that requires the same number of
    compatible arguments. (Note that you *cannot* concatenate the returns of
    multiple functions.)
 
-<pre style='color:#1f1c1b;background-color:#f6f8fa;'>
-<i><span style='color:#0057ae;'>Int</span></i> delta &lt;- diff(minMax(<span style='color:#b08000;'>4</span>,<span style='color:#b08000;'>3</span>))</pre>
+  <pre style='color:#1f1c1b;background-color:#f6f8fa;'>
+  <i><span style='color:#0057ae;'>Int</span></i> delta &lt;- diff(minMax(<span style='color:#b08000;'>4</span>,<span style='color:#b08000;'>3</span>))</pre>
 
 #### Optional and Weak Values
 
@@ -733,85 +733,85 @@ so would just create more opportunity for unnecessary compile-time errors.)
   between different types. This is done recursively in terms of parameter
   substitution.
 
-<pre style='color:#1f1c1b;background-color:#f6f8fa;'>
-<span style='color:#898887;'>// Covariance allows conversion upward.</span>
-<span style='color:#0057ae;'>Reader</span><span style='color:#c02040;'>&lt;</span><span style='color:#0057ae;'>MyValue</span><span style='color:#c02040;'>&gt;</span> reader &lt;- <span style='color:#898887;'>// ...</span>
-<span style='color:#0057ae;'>Reader</span><span style='color:#c02040;'>&lt;</span><span style='color:#0057ae;'>MyBase</span><span style='color:#c02040;'>&gt;</span>  reader2 &lt;- reader
+  <pre style='color:#1f1c1b;background-color:#f6f8fa;'>
+  <span style='color:#898887;'>// Covariance allows conversion upward.</span>
+  <span style='color:#0057ae;'>Reader</span><span style='color:#c02040;'>&lt;</span><span style='color:#0057ae;'>MyValue</span><span style='color:#c02040;'>&gt;</span> reader &lt;- <span style='color:#898887;'>// ...</span>
+  <span style='color:#0057ae;'>Reader</span><span style='color:#c02040;'>&lt;</span><span style='color:#0057ae;'>MyBase</span><span style='color:#c02040;'>&gt;</span>  reader2 &lt;- reader
 
-<span style='color:#898887;'>// Contravariance allows conversion downward.</span>
-<span style='color:#0057ae;'>Writer</span><span style='color:#c02040;'>&lt;</span><span style='color:#0057ae;'>MyBase</span><span style='color:#c02040;'>&gt;</span>  writer &lt;- <span style='color:#898887;'>// ...</span>
-<span style='color:#0057ae;'>Writer</span><span style='color:#c02040;'>&lt;</span><span style='color:#0057ae;'>MyValue</span><span style='color:#c02040;'>&gt;</span> writer2 &lt;- writer
+  <span style='color:#898887;'>// Contravariance allows conversion downward.</span>
+  <span style='color:#0057ae;'>Writer</span><span style='color:#c02040;'>&lt;</span><span style='color:#0057ae;'>MyBase</span><span style='color:#c02040;'>&gt;</span>  writer &lt;- <span style='color:#898887;'>// ...</span>
+  <span style='color:#0057ae;'>Writer</span><span style='color:#c02040;'>&lt;</span><span style='color:#0057ae;'>MyValue</span><span style='color:#c02040;'>&gt;</span> writer2 &lt;- writer
 
-<span style='color:#898887;'>// Conversion is also recursive.</span>
-<span style='color:#0057ae;'>Writer</span><span style='color:#c02040;'>&lt;</span><span style='color:#0057ae;'>Reader</span><span style='color:#c02040;'>&lt;</span><span style='color:#0057ae;'>MyBase</span><span style='color:#c02040;'>&gt;&gt;</span>  readerWriter &lt;- <span style='color:#898887;'>// ...</span>
-<span style='color:#0057ae;'>Writer</span><span style='color:#c02040;'>&lt;</span><span style='color:#0057ae;'>Reader</span><span style='color:#c02040;'>&lt;</span><span style='color:#0057ae;'>MyValue</span><span style='color:#c02040;'>&gt;&gt;</span> readerWriter2 &lt;- readerWriter
+  <span style='color:#898887;'>// Conversion is also recursive.</span>
+  <span style='color:#0057ae;'>Writer</span><span style='color:#c02040;'>&lt;</span><span style='color:#0057ae;'>Reader</span><span style='color:#c02040;'>&lt;</span><span style='color:#0057ae;'>MyBase</span><span style='color:#c02040;'>&gt;&gt;</span>  readerWriter &lt;- <span style='color:#898887;'>// ...</span>
+  <span style='color:#0057ae;'>Writer</span><span style='color:#c02040;'>&lt;</span><span style='color:#0057ae;'>Reader</span><span style='color:#c02040;'>&lt;</span><span style='color:#0057ae;'>MyValue</span><span style='color:#c02040;'>&gt;&gt;</span> readerWriter2 &lt;- readerWriter
 
-<span style='color:#898887;'>// Invariance does not allow conversions.</span>
-<span style='color:#0057ae;'>List</span><span style='color:#c02040;'>&lt;</span><span style='color:#0057ae;'>MyValue</span><span style='color:#c02040;'>&gt;</span> list &lt;- <span style='color:#898887;'>// ...</span>
-<span style='color:#0057ae;'>List</span><span style='color:#c02040;'>&lt;</span><span style='color:#0057ae;'>MyBase</span><span style='color:#c02040;'>&gt;</span>  list2 &lt;- <span style='color:#898887;'>// ...</span></pre>
+  <span style='color:#898887;'>// Invariance does not allow conversions.</span>
+  <span style='color:#0057ae;'>List</span><span style='color:#c02040;'>&lt;</span><span style='color:#0057ae;'>MyValue</span><span style='color:#c02040;'>&gt;</span> list &lt;- <span style='color:#898887;'>// ...</span>
+  <span style='color:#0057ae;'>List</span><span style='color:#c02040;'>&lt;</span><span style='color:#0057ae;'>MyBase</span><span style='color:#c02040;'>&gt;</span>  list2 &lt;- <span style='color:#898887;'>// ...</span></pre>
 
 - You can apply **filters** to type parameters to require that the parameters
   meet certain requirements.
 
-<pre style='color:#1f1c1b;background-color:#f6f8fa;'>
-<b>concrete</b> <b><span style='color:#0057ae;'>ShowMap</span></b><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#k</span></i>,<i><span style='color:#0057ae;'>#v</span></i><span style='color:#c02040;'>&gt;</span> {
-  <span style='color:#898887;'>// #k must implement the LessThan builtin @type interface.</span>
-  <i><span style='color:#0057ae;'>#k</span></i> <b>defines</b> <i><span style='color:#0057ae;'>LessThan</span></i><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#k</span></i><span style='color:#c02040;'>&gt;</span>
+  <pre style='color:#1f1c1b;background-color:#f6f8fa;'>
+  <b>concrete</b> <b><span style='color:#0057ae;'>ShowMap</span></b><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#k</span></i>,<i><span style='color:#0057ae;'>#v</span></i><span style='color:#c02040;'>&gt;</span> {
+    <span style='color:#898887;'>// #k must implement the LessThan builtin @type interface.</span>
+    <i><span style='color:#0057ae;'>#k</span></i> <b>defines</b> <i><span style='color:#0057ae;'>LessThan</span></i><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#k</span></i><span style='color:#c02040;'>&gt;</span>
 
-  <span style='color:#898887;'>// #v must implement the Formatted builtin @value interface.</span>
-  <i><span style='color:#0057ae;'>#v</span></i> <b>requires</b> <i><span style='color:#0057ae;'>Formatted</span></i>
-}</pre>
+    <span style='color:#898887;'>// #v must implement the Formatted builtin @value interface.</span>
+    <i><span style='color:#0057ae;'>#v</span></i> <b>requires</b> <i><span style='color:#0057ae;'>Formatted</span></i>
+  }</pre>
 
 - You can call `@type` functions on parameters as if they were regular types.
   You can only call functions that are implied by a `defines` filter.
 
-<pre style='color:#1f1c1b;background-color:#f6f8fa;'>
-<b>concrete</b> <b><span style='color:#0057ae;'>MyCategory</span></b><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span> {
-  <i><span style='color:#0057ae;'>#x</span></i> <b>defines</b> <i><span style='color:#0057ae;'>LessThan</span></i><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>
-  <span style='color:#644a9b;'>@type</span> compare (<i><span style='color:#0057ae;'>#x</span></i>,<i><span style='color:#0057ae;'>#x</span></i>) -&gt; (<i><span style='color:#0057ae;'>Int</span></i>)
-}
+  <pre style='color:#1f1c1b;background-color:#f6f8fa;'>
+  <b>concrete</b> <b><span style='color:#0057ae;'>MyCategory</span></b><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span> {
+    <i><span style='color:#0057ae;'>#x</span></i> <b>defines</b> <i><span style='color:#0057ae;'>LessThan</span></i><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>
+    <span style='color:#644a9b;'>@type</span> compare (<i><span style='color:#0057ae;'>#x</span></i>,<i><span style='color:#0057ae;'>#x</span></i>) -&gt; (<i><span style='color:#0057ae;'>Int</span></i>)
+  }
 
-<b>define</b> <b><span style='color:#0057ae;'>MyCategory</span></b> {
-  compare (x,y) {
-    <b>if</b> (<i><span style='color:#0057ae;'>#x</span></i><span style='color:#644a9b;'>$</span>lessThan(x,y)) {
-      <b>return</b> -<span style='color:#b08000;'>1</span>
-    } <b>elif</b> (<i><span style='color:#0057ae;'>#x</span></i><span style='color:#644a9b;'>$</span>lessThan(y,x)) {
-      <b>return</b> <span style='color:#b08000;'>1</span>
-    } <b>else</b> {
-      <b>return</b> <span style='color:#b08000;'>0</span>
+  <b>define</b> <b><span style='color:#0057ae;'>MyCategory</span></b> {
+    compare (x,y) {
+      <b>if</b> (<i><span style='color:#0057ae;'>#x</span></i><span style='color:#644a9b;'>$</span>lessThan(x,y)) {
+        <b>return</b> -<span style='color:#b08000;'>1</span>
+      } <b>elif</b> (<i><span style='color:#0057ae;'>#x</span></i><span style='color:#644a9b;'>$</span>lessThan(y,x)) {
+        <b>return</b> <span style='color:#b08000;'>1</span>
+      } <b>else</b> {
+        <b>return</b> <span style='color:#b08000;'>0</span>
+      }
     }
   }
-}
 
-<span style='color:#898887;'>// ...</span>
+  <span style='color:#898887;'>// ...</span>
 
-<i><span style='color:#0057ae;'>Int</span></i> comp &lt;- <span style='color:#0057ae;'>MyCategory</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>String</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>$</span>compare(<span style='color:#bf0303;'>&quot;x&quot;</span>,<span style='color:#bf0303;'>&quot;y&quot;</span>)</pre>
+  <i><span style='color:#0057ae;'>Int</span></i> comp &lt;- <span style='color:#0057ae;'>MyCategory</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>String</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>$</span>compare(<span style='color:#bf0303;'>&quot;x&quot;</span>,<span style='color:#bf0303;'>&quot;y&quot;</span>)</pre>
 
 - All of the above is also possible with **function parameters**, aside from
   specifying parameter variance.
 
-<pre style='color:#1f1c1b;background-color:#f6f8fa;'>
-<b>concrete</b> <b><span style='color:#0057ae;'>MyCategory</span></b> {
-  <span style='color:#644a9b;'>@type</span> compare&lt;<i><span style='color:#0057ae;'>#x</span></i>&gt;
-    <i><span style='color:#0057ae;'>#x</span></i> <b>defines</b> <i><span style='color:#0057ae;'>LessThan</span></i><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>
-  (<i><span style='color:#0057ae;'>#x</span></i>,<i><span style='color:#0057ae;'>#x</span></i>) -&gt; (<i><span style='color:#0057ae;'>Int</span></i>)
-}
+  <pre style='color:#1f1c1b;background-color:#f6f8fa;'>
+  <b>concrete</b> <b><span style='color:#0057ae;'>MyCategory</span></b> {
+    <span style='color:#644a9b;'>@type</span> compare&lt;<i><span style='color:#0057ae;'>#x</span></i>&gt;
+      <i><span style='color:#0057ae;'>#x</span></i> <b>defines</b> <i><span style='color:#0057ae;'>LessThan</span></i><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>
+    (<i><span style='color:#0057ae;'>#x</span></i>,<i><span style='color:#0057ae;'>#x</span></i>) -&gt; (<i><span style='color:#0057ae;'>Int</span></i>)
+  }
 
-<b>define</b> <b><span style='color:#0057ae;'>MyCategory</span></b> {
-  compare (x,y) {
-    <b>if</b> (<i><span style='color:#0057ae;'>#x</span></i><span style='color:#644a9b;'>$</span>lessThan(x,y)) {
-      <b>return</b> -<span style='color:#b08000;'>1</span>
-    } <b>elif</b> (<i><span style='color:#0057ae;'>#x</span></i><span style='color:#644a9b;'>$</span>lessThan(y,x)) {
-      <b>return</b> <span style='color:#b08000;'>1</span>
-    } <b>else</b> {
-      <b>return</b> <span style='color:#b08000;'>0</span>
+  <b>define</b> <b><span style='color:#0057ae;'>MyCategory</span></b> {
+    compare (x,y) {
+      <b>if</b> (<i><span style='color:#0057ae;'>#x</span></i><span style='color:#644a9b;'>$</span>lessThan(x,y)) {
+        <b>return</b> -<span style='color:#b08000;'>1</span>
+      } <b>elif</b> (<i><span style='color:#0057ae;'>#x</span></i><span style='color:#644a9b;'>$</span>lessThan(y,x)) {
+        <b>return</b> <span style='color:#b08000;'>1</span>
+      } <b>else</b> {
+        <b>return</b> <span style='color:#b08000;'>0</span>
+      }
     }
   }
-}
 
-<span style='color:#898887;'>// ...</span>
+  <span style='color:#898887;'>// ...</span>
 
-<i><span style='color:#0057ae;'>Int</span></i> comp &lt;- <span style='color:#0057ae;'>MyCategory</span><span style='color:#644a9b;'>$</span>compare&lt;<i><span style='color:#0057ae;'>String</span></i>&gt;(<span style='color:#bf0303;'>&quot;x&quot;</span>,<span style='color:#bf0303;'>&quot;y&quot;</span>)</pre>
+  <i><span style='color:#0057ae;'>Int</span></i> comp &lt;- <span style='color:#0057ae;'>MyCategory</span><span style='color:#644a9b;'>$</span>compare&lt;<i><span style='color:#0057ae;'>String</span></i>&gt;(<span style='color:#bf0303;'>&quot;x&quot;</span>,<span style='color:#bf0303;'>&quot;y&quot;</span>)</pre>
 
 Unlike in Java and C++, you must *always* be explicit with type parameters; the
 compiler will not infer them for you. This is primarily to cut down on code
@@ -842,45 +842,45 @@ has `@type interface`s that declare `@type` functions that must be defined.
 - `@value interface`s can be **inherited** by other `@value interface`s and
   `concrete` categories using `refines`.
 
-<pre style='color:#1f1c1b;background-color:#f6f8fa;'>
-<b>concrete</b> <b><span style='color:#0057ae;'>MyValue</span></b> {
-  <b>refines</b> <span style='color:#0057ae;'>Printable</span>
+  <pre style='color:#1f1c1b;background-color:#f6f8fa;'>
+  <b>concrete</b> <b><span style='color:#0057ae;'>MyValue</span></b> {
+    <b>refines</b> <span style='color:#0057ae;'>Printable</span>
 
-  <span style='color:#898887;'>// The functions of Printable do not need to be declared again, but you can do</span>
-  <span style='color:#898887;'>// so to refine the argument and return types.</span>
-}</pre>
+    <span style='color:#898887;'>// The functions of Printable do not need to be declared again, but you can do</span>
+    <span style='color:#898887;'>// so to refine the argument and return types.</span>
+  }</pre>
 
 - `@type interface`s can only be **inherited** by `concrete` categories.
 
-<pre style='color:#1f1c1b;background-color:#f6f8fa;'>
-<b>concrete</b> <b><span style='color:#0057ae;'>MyValue</span></b> {
-  <b>defines</b> <span style='color:#0057ae;'>Diffable</span><span style='color:#c02040;'>&lt;</span><span style='color:#0057ae;'>MyValue</span><span style='color:#c02040;'>&gt;</span>
+  <pre style='color:#1f1c1b;background-color:#f6f8fa;'>
+  <b>concrete</b> <b><span style='color:#0057ae;'>MyValue</span></b> {
+    <b>defines</b> <span style='color:#0057ae;'>Diffable</span><span style='color:#c02040;'>&lt;</span><span style='color:#0057ae;'>MyValue</span><span style='color:#c02040;'>&gt;</span>
 
-  <span style='color:#898887;'>// The functions of Diffable do not need to be declared again, but you can do</span>
-  <span style='color:#898887;'>// so to refine the argument and return types.</span>
-}</pre>
+    <span style='color:#898887;'>// The functions of Diffable do not need to be declared again, but you can do</span>
+    <span style='color:#898887;'>// so to refine the argument and return types.</span>
+  }</pre>
 
 - You can also specify `refines` and `defines` when *defining* a `concrete`
   category. This allows the inheritance to be private.
 
-<pre style='color:#1f1c1b;background-color:#f6f8fa;'>
-<b>concrete</b> <b><span style='color:#0057ae;'>MyValue</span></b> {
-  <span style='color:#644a9b;'>@type</span> create () -&gt; (<i><span style='color:#0057ae;'>Formatted</span></i>)
-}
-
-<b>define</b> <b><span style='color:#0057ae;'>MyValue</span></b> {
-  <span style='color:#898887;'>// Formatted is not a visible parent outside of MyValue.</span>
-  <b>refines</b> <i><span style='color:#0057ae;'>Formatted</span></i>
-
-  create () {
-    <b>return</b> <span style='color:#0057ae;'>MyValue</span>{ }
+  <pre style='color:#1f1c1b;background-color:#f6f8fa;'>
+  <b>concrete</b> <b><span style='color:#0057ae;'>MyValue</span></b> {
+    <span style='color:#644a9b;'>@type</span> create () -&gt; (<i><span style='color:#0057ae;'>Formatted</span></i>)
   }
 
-  <span style='color:#898887;'>// Inherited from Formatted.</span>
-  formatted () {
-    <b>return</b> <span style='color:#bf0303;'>&quot;MyValue&quot;</span>
-  }
-}</pre>
+  <b>define</b> <b><span style='color:#0057ae;'>MyValue</span></b> {
+    <span style='color:#898887;'>// Formatted is not a visible parent outside of MyValue.</span>
+    <b>refines</b> <i><span style='color:#0057ae;'>Formatted</span></i>
+
+    create () {
+      <b>return</b> <span style='color:#0057ae;'>MyValue</span>{ }
+    }
+
+    <span style='color:#898887;'>// Inherited from Formatted.</span>
+    formatted () {
+      <b>return</b> <span style='color:#bf0303;'>&quot;MyValue&quot;</span>
+    }
+  }</pre>
 
 ### Other Features
 
@@ -902,22 +902,22 @@ types.
   `forall a. (Foo a, Bar a) => a` in Haskell and `? extends Foo & Bar` in Java,
   except that in Zeolite `[Foo&Bar]` can be used as a first-class type.
 
-<pre style='color:#1f1c1b;background-color:#f6f8fa;'>
-<span style='color:#644a9b;'>@value</span> <b>interface</b> <b><span style='color:#0057ae;'>Reader</span></b> {}
+  <pre style='color:#1f1c1b;background-color:#f6f8fa;'>
+  <span style='color:#644a9b;'>@value</span> <b>interface</b> <b><span style='color:#0057ae;'>Reader</span></b> {}
 
-<span style='color:#644a9b;'>@value</span> <b>interface</b> <b><span style='color:#0057ae;'>Writer</span></b> {}
+  <span style='color:#644a9b;'>@value</span> <b>interface</b> <b><span style='color:#0057ae;'>Writer</span></b> {}
 
-<b>concrete</b> <b><span style='color:#0057ae;'>Data</span></b> {
-  <b>refines</b> <span style='color:#0057ae;'>Reader</span>
-  <b>refines</b> <span style='color:#0057ae;'>Writer</span>
-  <span style='color:#644a9b;'>@type</span> new () <b><span style='color:#006e28;'>-&gt;</span></b> (<span style='color:#0057ae;'>Data</span>)
-}
+  <b>concrete</b> <b><span style='color:#0057ae;'>Data</span></b> {
+    <b>refines</b> <span style='color:#0057ae;'>Reader</span>
+    <b>refines</b> <span style='color:#0057ae;'>Writer</span>
+    <span style='color:#644a9b;'>@type</span> new () <b><span style='color:#006e28;'>-&gt;</span></b> (<span style='color:#0057ae;'>Data</span>)
+  }
 
-<span style='color:#898887;'>// ...</span>
+  <span style='color:#898887;'>// ...</span>
 
-<b><span style='color:#006e28;'>[</span></b><span style='color:#0057ae;'>Reader</span><span style='color:#006e28;'>&amp;</span><span style='color:#0057ae;'>Writer</span><b><span style='color:#006e28;'>]</span></b> val <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#0057ae;'>Data</span><span style='color:#644a9b;'>$</span>new()
-<span style='color:#0057ae;'>Reader</span> val2 <b><span style='color:#006e28;'>&lt;-</span></b> val
-<span style='color:#0057ae;'>Writer</span> val3 <b><span style='color:#006e28;'>&lt;-</span></b> val</pre>
+  <b><span style='color:#006e28;'>[</span></b><span style='color:#0057ae;'>Reader</span><span style='color:#006e28;'>&amp;</span><span style='color:#0057ae;'>Writer</span><b><span style='color:#006e28;'>]</span></b> val <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#0057ae;'>Data</span><span style='color:#644a9b;'>$</span>new()
+  <span style='color:#0057ae;'>Reader</span> val2 <b><span style='color:#006e28;'>&lt;-</span></b> val
+  <span style='color:#0057ae;'>Writer</span> val3 <b><span style='color:#006e28;'>&lt;-</span></b> val</pre>
 
 - A value with a **union type** `[A|B]` can be assigned from *either* `A` or
   `B`, but can only be assigned to something that *both* `A` and `B` can be
@@ -929,23 +929,23 @@ types.
   a particular `@value interface` are allowed by a function argument, e.g.,
   a specific set of "verified" implementations.
 
-<pre style='color:#1f1c1b;background-color:#f6f8fa;'>
-<span style='color:#644a9b;'>@value</span> <b>interface</b> <b><span style='color:#0057ae;'>Printable</span></b> {}
+  <pre style='color:#1f1c1b;background-color:#f6f8fa;'>
+  <span style='color:#644a9b;'>@value</span> <b>interface</b> <b><span style='color:#0057ae;'>Printable</span></b> {}
 
-<b>concrete</b> <b><span style='color:#0057ae;'>Newspaper</span></b> {
-  <b>refines</b> <span style='color:#0057ae;'>Printable</span>
-  <span style='color:#644a9b;'>@type</span> new () <b><span style='color:#006e28;'>-&gt;</span></b> (<span style='color:#0057ae;'>Newspaper</span>)
-}
+  <b>concrete</b> <b><span style='color:#0057ae;'>Newspaper</span></b> {
+    <b>refines</b> <span style='color:#0057ae;'>Printable</span>
+    <span style='color:#644a9b;'>@type</span> new () <b><span style='color:#006e28;'>-&gt;</span></b> (<span style='color:#0057ae;'>Newspaper</span>)
+  }
 
-<b>concrete</b> <b><span style='color:#0057ae;'>Magazine</span></b> {
-  <b>refines</b> <span style='color:#0057ae;'>Printable</span>
-  <span style='color:#644a9b;'>@type</span> new () <b><span style='color:#006e28;'>-&gt;</span></b> (<span style='color:#0057ae;'>Magazine</span>)
-}
+  <b>concrete</b> <b><span style='color:#0057ae;'>Magazine</span></b> {
+    <b>refines</b> <span style='color:#0057ae;'>Printable</span>
+    <span style='color:#644a9b;'>@type</span> new () <b><span style='color:#006e28;'>-&gt;</span></b> (<span style='color:#0057ae;'>Magazine</span>)
+  }
 
-<span style='color:#898887;'>// ...</span>
+  <span style='color:#898887;'>// ...</span>
 
-<b><span style='color:#006e28;'>[</span></b><span style='color:#0057ae;'>Newspaper</span><span style='color:#006e28;'>|</span><span style='color:#0057ae;'>Magazine</span><b><span style='color:#006e28;'>]</span></b> val <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#0057ae;'>Newspaper</span><span style='color:#644a9b;'>$</span>new()
-<span style='color:#0057ae;'>Printable</span> val2 <b><span style='color:#006e28;'>&lt;-</span></b> val</pre>
+  <b><span style='color:#006e28;'>[</span></b><span style='color:#0057ae;'>Newspaper</span><span style='color:#006e28;'>|</span><span style='color:#0057ae;'>Magazine</span><b><span style='color:#006e28;'>]</span></b> val <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#0057ae;'>Newspaper</span><span style='color:#644a9b;'>$</span>new()
+  <span style='color:#0057ae;'>Printable</span> val2 <b><span style='color:#006e28;'>&lt;-</span></b> val</pre>
 
 #### Runtime Type Reduction
 
@@ -1124,32 +1124,32 @@ pragmas are built into the compiler; you cannot add your own.
       This can be useful if your module requires different parameters from one
       system to another.
 
-      ```text
-      // my-module/.zeolite-module
+      <pre style='color:#1f1c1b;background-color:#f6f8fa;'>
+      <span style='color:#898887;'>// my-module/.zeolite-module</span>
 
-      // (Standard part of .zeolite-module.)
-      path: "."
+      <span style='color:#898887;'>// (Standard part of .zeolite-module.)</span>
+      <b>path:</b> <span style='color:#bf0303;'>&quot;.&quot;</span>
 
-      // Define your macros here.
-      expression_map: [
-        expression_macro {
-          name: USE_DATA_VERSION    // Access using $ExprLookup[USE_DATA_VERSION]$.
-          expression: "2020-05-12"  // Substituted in as a Zeolite expression.
+      <span style='color:#898887;'>// Define your macros here.</span>
+      <b>expression_map:</b> [
+        <i>expression_macro</i> {
+          <b>name:</b> <span style='color:#006e28;'>USE_DATA_VERSION</span>    <span style='color:#898887;'>// Access using $ExprLookup[USE_DATA_VERSION]$.</span>
+          <b>expression:</b> <span style='color:#bf0303;'>&quot;2020-05-12&quot;</span>  <span style='color:#898887;'>// Substituted in as a Zeolite expression.</span>
         }
-        expression_macro {
-          name: RECURSION_LIMIT
-          expression: 100000
+        <i>expression_macro</i> {
+          <b>name:</b> <span style='color:#006e28;'>RECURSION_LIMIT</span>
+          <b>expression:</b> <span style='color:#b08000;'>100000</span>
         }
-        expression_macro {
-          name: SHOW_LIMIT
-          // All Zeolite expressions are allowed.
-          expression: "limit: " + $ExprLookup[RECURSION_LIMIT]$.formatted()
+        <i>expression_macro</i> {
+          <b>name:</b> <span style='color:#006e28;'>SHOW_LIMIT</span>
+          <span style='color:#898887;'>// All Zeolite expressions are allowed.</span>
+          <b>expression:</b> <span style='color:#bf0303;'>&quot;limit: &quot;</span> + <b><i><span style='color:#8060c0;'>$ExprLookup[</span></i></b><i><span style='color:#8060c0;'>RECURSION_LIMIT</span></i><b><i><span style='color:#8060c0;'>]$</span></i></b>.formatted()
         }
       ]
 
-      // (Standard part of .zeolite-module.)
-      mode: incremental {}
-      ```
+      <span style='color:#898887;'>// (Standard part of .zeolite-module.)</span>
+      <b>mode:</b> <i>incremental</i> {}
+      </pre>
 
       The `name:` must only contain uppercase letters, numbers, and `_`, and the
       `expression:` must parse as a valid Zeolite expression. This is similar to

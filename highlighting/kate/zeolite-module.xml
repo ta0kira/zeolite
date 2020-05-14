@@ -6,7 +6,7 @@
 <language
     name="Zeolite Module"
     section="Configuration"
-    version="1.0"
+    version="1.1"
     kateversion="2.4"
     indenter="cstyle"
     style="Zeolite Module"
@@ -90,7 +90,6 @@
         <IncludeRules context="Any Comment" />
         <IncludeRules context="Any Expression" />
         <DetectChar context="#pop" char="}" lookAhead="true" />
-        <RegExpr attribute="Error" context="#pop" String="[^ }]+" />
       </context>
 
       <context name="Macro Name" attribute="Normal Text" lineEndContext="#stay" >
