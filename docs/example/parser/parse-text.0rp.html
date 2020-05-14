@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="Generator" content="Kate, the KDE Advanced Text Editor" />
+<title>parse-text.0rp</title>
+</head>
+<!-- Highlighting: "Zeolite" -->
+<body>
+<pre style='color:#1f1c1b;background-color:#ffffff;'>
+<span style='color:#898887;'>/*</span><span style='color:#898887;'> Parses a fixed string.</span>
+<span style='color:#898887;'> </span><span style='color:#898887;'>*/</span>
+<b>concrete</b> <b><span style='color:#0057ae;'>StringParser</span></b> {
+  <span style='color:#644a9b;'>@type</span> create (<i><span style='color:#0057ae;'>String</span></i>) -&gt; (<span style='color:#0057ae;'>Parser</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>String</span></i><span style='color:#c02040;'>&gt;</span>)
+}
+
+<span style='color:#898887;'>/*</span><span style='color:#898887;'> Parses a string containing a limited set of characters.</span>
+<span style='color:#898887;'> </span><span style='color:#898887;'>*/</span>
+<b>concrete</b> <b><span style='color:#0057ae;'>SequenceOfParser</span></b> {
+  <span style='color:#644a9b;'>@type</span> create (<i><span style='color:#0057ae;'>String</span></i>, <i><span style='color:#0057ae;'>Int</span></i> <span style='color:#898887;'>/*</span><span style='color:#898887;'>min</span><span style='color:#898887;'>*/</span>, <i><span style='color:#0057ae;'>Int</span></i> <span style='color:#898887;'>/*</span><span style='color:#898887;'>max</span><span style='color:#898887;'>*/</span>) -&gt; (<span style='color:#0057ae;'>Parser</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>String</span></i><span style='color:#c02040;'>&gt;</span>)
+}
+
+<span style='color:#898887;'>/*</span><span style='color:#898887;'> Parses a fixed character.</span>
+<span style='color:#898887;'> </span><span style='color:#898887;'>*/</span>
+<b>concrete</b> <b><span style='color:#0057ae;'>CharParser</span></b> {
+  <span style='color:#644a9b;'>@type</span> create (<i><span style='color:#0057ae;'>Char</span></i>) -&gt; (<span style='color:#0057ae;'>Parser</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;</span>)
+}
+
+<span style='color:#898887;'>/*</span><span style='color:#898887;'> Parser combinators</span>
+<span style='color:#898887;'> </span><span style='color:#898887;'>*/</span>
+<b>concrete</b> <b><span style='color:#0057ae;'>Parse</span></b> {
+  <span style='color:#644a9b;'>@type</span> const&lt;<i><span style='color:#0057ae;'>#x</span></i>&gt; (<i><span style='color:#0057ae;'>#x</span></i>)                     -&gt; (<span style='color:#0057ae;'>Parser</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>)
+  <span style='color:#644a9b;'>@type</span> try&lt;<i><span style='color:#0057ae;'>#x</span></i>&gt;   (<span style='color:#0057ae;'>Parser</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>)             -&gt; (<span style='color:#0057ae;'>Parser</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>)
+  <span style='color:#644a9b;'>@type</span> or&lt;<i><span style='color:#0057ae;'>#x</span></i>&gt;    (<span style='color:#0057ae;'>Parser</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>,<span style='color:#0057ae;'>Parser</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>)  -&gt; (<span style='color:#0057ae;'>Parser</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>)
+  <span style='color:#644a9b;'>@type</span> left&lt;<i><span style='color:#0057ae;'>#x</span></i>&gt;  (<span style='color:#0057ae;'>Parser</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>,<span style='color:#0057ae;'>Parser</span><span style='color:#c02040;'>&lt;</span><b>any</b><span style='color:#c02040;'>&gt;</span>) -&gt; (<span style='color:#0057ae;'>Parser</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>)
+  <span style='color:#644a9b;'>@type</span> right&lt;<i><span style='color:#0057ae;'>#x</span></i>&gt; (<span style='color:#0057ae;'>Parser</span><span style='color:#c02040;'>&lt;</span><b>any</b><span style='color:#c02040;'>&gt;</span>,<span style='color:#0057ae;'>Parser</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>) -&gt; (<span style='color:#0057ae;'>Parser</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>)
+}
+</pre>
+</body>
+</html>
