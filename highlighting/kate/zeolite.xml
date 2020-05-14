@@ -6,7 +6,7 @@
 <language
     name="Zeolite"
     section="Sources"
-    version="3.1"
+    version="3.2"
     kateversion="2.4"
     indenter="cstyle"
     style="Zeolite"
@@ -24,9 +24,7 @@
       <item> defines </item>
       <item> elif </item>
       <item> else </item>
-      <item> empty </item>
       <item> fail </item>
-      <item> false </item>
       <item> if </item>
       <item> in </item>
       <item> _ </item>
@@ -36,13 +34,18 @@
       <item> require </item>
       <item> requires </item>
       <item> return </item>
-      <item> self </item>
       <item> scoped </item>
       <item> strong </item>
-      <item> true </item>
       <item> typename </item>
       <item> update </item>
       <item> while </item>
+    </list>
+
+    <list name="constants">
+      <item> empty </item>
+      <item> false </item>
+      <item> self </item>
+      <item> true </item>
     </list>
 
     <list name="typeDeclare">
@@ -100,12 +103,7 @@
       <context name="Normal Text" attribute="Normal Text" lineEndContext="#stay" >
         <DetectSpaces />
         <IncludeRules context="Any Comment" />
-        <keyword attribute="Keyword" context="#stay" String="keywords" />
-        <keyword attribute="Scope Qualifier" context="#stay" String="scope" />
-        <keyword attribute="Storage Qualifier" context="#stay" String="storage" />
-        <keyword attribute="Testcase Keyword" context="Test Name" String="testHeader" />
-        <keyword attribute="Keyword" context="Declare Type" String="typeDeclare" />
-        <keyword attribute="Keyword" context="Define Type" String="typeDefine" />
+        <IncludeRules context="Keywords Allowed" />
         <IncludeRules context="Any Pragma" />
         <!--This prevents Initializer from capturing categories and statements.-->
         <DetectChar attribute="Normal Text" context="Braces" char="{" />
@@ -114,6 +112,24 @@
         <Detect2Chars attribute="Assign" context="#stay" char="-" char1="&gt;" />
         <DetectChar attribute="Error" context="#stay" char="~" />
         <DetectChar attribute="Voided" context="#stay" char="\\" />
+      </context>
+
+      <context name="Keywords Allowed" attribute="Normal Text" lineEndContext="#stay" >
+        <keyword attribute="Keyword" context="#stay" String="keywords" />
+        <keyword attribute="Scope Qualifier" context="#stay" String="scope" />
+        <keyword attribute="Storage Qualifier" context="#stay" String="storage" />
+        <keyword attribute="Testcase Keyword" context="Test Name" String="testHeader" />
+        <keyword attribute="Keyword" context="Declare Type" String="typeDeclare" />
+        <keyword attribute="Keyword" context="Define Type" String="typeDefine" />
+      </context>
+
+      <context name="Keywords Disallowed" attribute="Normal Text" lineEndContext="#stay" >
+        <keyword attribute="Error" context="#stay" String="keywords" />
+        <keyword attribute="Error" context="#stay" String="scope" />
+        <keyword attribute="Error" context="#stay" String="storage" />
+        <keyword attribute="Error" context="Test Name" String="testHeader" />
+        <keyword attribute="Error" context="Declare Type" String="typeDeclare" />
+        <keyword attribute="Error" context="Define Type" String="typeDefine" />
       </context>
 
       <context name="Braces" attribute="Normal Text" lineEndContext="#stay" >
@@ -196,7 +212,9 @@
       <context name="Any Expression" attribute="Normal Text" lineEndContext="#stay" >
         <IncludeRules context="Any Comment" />
         <IncludeRules context="Any Type" />
+        <IncludeRules context="Keywords Disallowed" />
         <IncludeRules context="Any Pragma" />
+        <keyword attribute="Keyword" context="#stay" String="constants" />
         <DetectChar attribute="Normal Text" context="Initializer" char="{" />
         <RegExpr attribute="Normal Text" context="#stay" String="[a-z][a-zA-Z0-9]*" />
         <RegExpr attribute="Number" context="#stay" String="(-|)\\[xX][0-9a-fA-F]+\b" />
