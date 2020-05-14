@@ -1194,6 +1194,10 @@ operates properly end-to-end.)
 <b><span style='color:#bf0303;background:#f7e6e6;'>testcase</span></b> <span style='color:#bf0303;'>&quot;missing function&quot;</span> {
   <span style='color:#898887;'>// The test is expected to have a compilation error. Note that this cannot be</span>
   <span style='color:#898887;'>// used to check for parser failures!</span>
+  <span style='color:#898887;'>//</span>
+  <span style='color:#898887;'>// Any testcase can specify require and exclude regex patterns for checking</span>
+  <span style='color:#898887;'>// test output. Each pattern can optionally be qualified with one of compiler,</span>
+  <span style='color:#898887;'>// stderr, or stdout, to specify the source of the output.</span>
   <span style='color:#04e040;'>error</span>
   <span style='color:#04e040;'>require</span> <span style='color:#04e040;'>compiler</span> <span style='color:#bf0303;'>&quot;run&quot;</span>  <span style='color:#898887;'>// The compiler error should include &quot;run&quot;.</span>
   <span style='color:#04e040;'>exclude</span> <span style='color:#04e040;'>compiler</span> <span style='color:#bf0303;'>&quot;foo&quot;</span>  <span style='color:#898887;'>// The compiler error should not include &quot;foo&quot;.</span>
