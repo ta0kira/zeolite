@@ -7,6 +7,8 @@
 * **[behavior]** Improves error messages for type mismatches and return-count
   mismatches.
 
+* **[behavior]** Improves the efficiency of loading metadata for dependencies.
+
 * **[breaking]** Fixes module-staleness check when running tests (`-t`).
 
 * **[breaking]** Prevents binaries from being created from main categories that

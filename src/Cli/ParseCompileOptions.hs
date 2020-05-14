@@ -29,6 +29,7 @@ import System.Directory
 import System.Exit
 import System.IO
 import Text.Regex.TDFA -- Not safe!
+import qualified Data.Map as Map
 
 import Base.CompileError
 import Cli.CompileMetadata
@@ -103,7 +104,7 @@ tryFastModes ("--show-deps":ps) = do
   exitSuccess where
     showDeps p = do
       p' <- canonicalizePath p
-      m <- loadMetadata p'
+      m <- loadMetadata Map.empty p'
       hPutStrLn stdout $ show p'
       mapM_ showDep (cmObjectFiles m)
     showDep (CategoryObjectFile c ds _) = do

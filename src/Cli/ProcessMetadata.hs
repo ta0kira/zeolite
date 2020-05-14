@@ -17,6 +17,7 @@ limitations under the License.
 -- Author: Kevin P. Barry [ta0kira@gmail.com]
 
 module Cli.ProcessMetadata (
+  MetadataMap,
   checkAllowedStale,
   checkMetadataFreshness,
   createCachePath,
@@ -40,6 +41,7 @@ module Cli.ProcessMetadata (
   loadPublicDeps,
   loadTestingDeps,
   loadMetadata,
+  mapMetadata,
   resolveCategoryDeps,
   resolveObjectDeps,
   sortCompiledFiles,
@@ -90,29 +92,38 @@ checkAllowedStale fr f = do
                        "Recompile them or use -f to force."
     exitFailure
 
-loadMetadata :: FilePath -> IO CompileMetadata
-loadMetadata p = do
-  let f = p </> cachedDataPath </> metadataFilename
-  isFile <- doesFileExist p
-  when isFile $ do
-    hPutStrLn stderr $ "Path \"" ++ p ++ "\" is not a directory."
-    exitFailure
-  isDir <- doesDirectoryExist p
-  when (not isDir) $ do
-    hPutStrLn stderr $ "Path \"" ++ p ++ "\" does not exist."
-    exitFailure
-  filePresent <- doesFileExist f
-  when (not filePresent) $ do
-    hPutStrLn stderr $ "Module \"" ++ p ++ "\" has not been compiled yet."
-    exitFailure
-  c <- readFile f
-  let m = autoReadConfig f c
-  if isCompileError m
-     then do
-       hPutStrLn stderr $ "Could not parse metadata from \"" ++ p ++ "\"; please recompile."
-       hPutStrLn stderr $ show (getCompileError m)
-       exitFailure
-     else return (getCompileSuccess m)
+type MetadataMap = Map.Map FilePath CompileMetadata
+
+mapMetadata :: [CompileMetadata] -> MetadataMap
+mapMetadata cs = Map.fromList $ zip (map cmPath cs) cs
+
+loadMetadata :: MetadataMap -> FilePath -> IO CompileMetadata
+loadMetadata ca p = do
+  path <- canonicalizePath p
+  case path `Map.lookup` ca of
+       Just cm -> return cm
+       Nothing -> do
+         let f = p </> cachedDataPath </> metadataFilename
+         isFile <- doesFileExist p
+         when isFile $ do
+           hPutStrLn stderr $ "Path \"" ++ p ++ "\" is not a directory."
+           exitFailure
+         isDir <- doesDirectoryExist p
+         when (not isDir) $ do
+           hPutStrLn stderr $ "Path \"" ++ p ++ "\" does not exist."
+           exitFailure
+         filePresent <- doesFileExist f
+         when (not filePresent) $ do
+           hPutStrLn stderr $ "Module \"" ++ p ++ "\" has not been compiled yet."
+           exitFailure
+         c <- readFile f
+         let m = autoReadConfig f c
+         if isCompileError m
+            then do
+              hPutStrLn stderr $ "Could not parse metadata from \"" ++ p ++ "\"; please recompile."
+              hPutStrLn stderr $ show (getCompileError m)
+              exitFailure
+            else return (getCompileSuccess m)
 
 checkMetadataFreshness :: FilePath -> CompileMetadata -> IO Bool
 checkMetadataFreshness = checkModuleFreshness False
@@ -144,7 +155,7 @@ isPathUpToDate h p = do
   case m of
        Nothing -> return False
        Just _ -> do
-         (fr,_) <- loadDepsCommon True h Set.empty (\m2 -> cmPublicDeps m2 ++ cmPrivateDeps m2) [p]
+         (fr,_) <- loadDepsCommon True h Map.empty Set.empty (\m2 -> cmPublicDeps m2 ++ cmPrivateDeps m2) [p]
          return fr
 
 isPathConfigured :: FilePath -> IO Bool
@@ -247,35 +258,40 @@ getLinkFlagsForDeps = concat . map cmLinkFlags
 getObjectFilesForDeps :: [CompileMetadata] -> [ObjectFile]
 getObjectFilesForDeps = concat . map cmObjectFiles
 
-loadPublicDeps :: VersionHash -> [FilePath] -> IO (Bool,[CompileMetadata])
-loadPublicDeps h = loadDepsCommon False h Set.empty cmPublicDeps
+loadPublicDeps :: VersionHash -> MetadataMap -> [FilePath] -> IO (Bool,[CompileMetadata])
+loadPublicDeps h ca = loadDepsCommon False h ca Set.empty cmPublicDeps
 
-loadTestingDeps :: VersionHash -> CompileMetadata -> IO (Bool,[CompileMetadata])
-loadTestingDeps h m = loadDepsCommon False h (Set.fromList [cmPath m]) cmPublicDeps (cmPublicDeps m ++ cmPrivateDeps m)
+loadTestingDeps :: VersionHash -> MetadataMap -> CompileMetadata -> IO (Bool,[CompileMetadata])
+loadTestingDeps h ca m = loadDepsCommon False h ca (Set.fromList [cmPath m]) cmPublicDeps (cmPublicDeps m ++ cmPrivateDeps m)
 
-loadPrivateDeps :: VersionHash -> [CompileMetadata] -> IO (Bool,[CompileMetadata])
-loadPrivateDeps h ms = do
-  (fr,new) <- loadDepsCommon False h pa (\m -> cmPublicDeps m ++ cmPrivateDeps m) paths
+loadPrivateDeps :: VersionHash -> MetadataMap -> [CompileMetadata] -> IO (Bool,[CompileMetadata])
+loadPrivateDeps h ca ms = do
+  (fr,new) <- loadDepsCommon False h ca pa (\m -> cmPublicDeps m ++ cmPrivateDeps m) paths
   return (fr,ms ++ new) where
     paths = concat $ map (\m -> cmPublicDeps m ++ cmPrivateDeps m) ms
     pa = Set.fromList $ map cmPath ms
 
-loadDepsCommon :: Bool -> VersionHash -> Set.Set FilePath ->
+loadDepsCommon :: Bool -> VersionHash -> MetadataMap -> Set.Set FilePath ->
   (CompileMetadata -> [FilePath]) -> [FilePath] -> IO (Bool,[CompileMetadata])
-loadDepsCommon s h pa0 f ps = fmap snd $ fixedPaths >>= collect (pa0,(True,[])) where
+loadDepsCommon s h ca pa0 f ps = fmap snd $ fixedPaths >>= collect (pa0,(True,[])) where
   fixedPaths = sequence $ map canonicalizePath ps
   collect xa@(pa,(fr,xs)) (p:ps2)
     | p `Set.member` pa = collect xa ps2
     | otherwise = do
-        when (not s) $ hPutStrLn stderr $ "Loading metadata for dependency \"" ++ p ++ "\"."
-        m <- loadMetadata p
-        fresh <- checkModuleFreshness s p m
-        when (not s && not fresh) $
-          hPutStrLn stderr $ "Module \"" ++ p ++ "\" is out of date and should be recompiled."
-        let sameVersion = checkModuleVersionHash h m
-        when (not s && not sameVersion) $
-          hPutStrLn stderr $ "Module \"" ++ p ++ "\" was compiled with a different compiler setup."
-        collect (p `Set.insert` pa,(sameVersion && fresh && fr,xs ++ [m])) (ps2 ++ f m)
+        (m,fr2) <-
+          case p `Map.lookup` ca of
+               Just m2 -> return (m2,True)
+               Nothing -> do
+                 when (not s) $ hPutStrLn stderr $ "Loading metadata for dependency \"" ++ p ++ "\"."
+                 m2 <- loadMetadata ca p
+                 fresh <- checkModuleFreshness s p m2
+                 when (not s && not fresh) $
+                   hPutStrLn stderr $ "Module \"" ++ p ++ "\" is out of date and should be recompiled."
+                 let sameVersion = checkModuleVersionHash h m2
+                 when (not s && not sameVersion) $
+                   hPutStrLn stderr $ "Module \"" ++ p ++ "\" was compiled with a different compiler setup."
+                 return (m2,sameVersion && fresh)
+        collect (p `Set.insert` pa,(fr2 && fr,xs ++ [m])) (ps2 ++ f m)
   collect xa _ = return xa
 
 fixPath :: FilePath -> FilePath

@@ -27,6 +27,7 @@ import System.Exit
 import System.FilePath
 import System.Posix.Temp (mkdtemp)
 import System.IO
+import qualified Data.Map as Map
 import qualified Data.Set as Set
 
 import Base.CompileError
@@ -45,14 +46,15 @@ runCompiler :: CompileOptions -> IO ()
 runCompiler (CompileOptions _ _ _ ds _ _ p (ExecuteTests tp) f) = do
   (backend,resolver) <- loadConfig
   base <- resolveBaseModule resolver
-  ts <- sequence $ map (preloadTests backend base) ds
+  ts <- fmap snd $ foldM (preloadTests backend base) (Map.empty,[]) ds
   checkTestFilters ts
   allResults <- fmap concat $ sequence $ map (runModuleTests backend base tp) ts
   let passed = sum $ map (fst . fst) allResults
   let failed = sum $ map (snd . fst) allResults
   processResults passed failed (mergeAllM $ map snd allResults) where
-    preloadTests b base d = do
-      m <- loadMetadata (p </> d)
+    preloadTests b base (ca,ms) d = do
+      m <- loadMetadata ca (p </> d)
+      let ca2 = ca `Map.union` mapMetadata [m]
       fr <- checkMetadataFreshness (p </> d) m
       checkAllowedStale fr f
       rm <- tryLoadRecompile (p </> d)
@@ -61,14 +63,17 @@ runCompiler (CompileOptions _ _ _ ds _ _ p (ExecuteTests tp) f) = do
                   Nothing -> do
                     hPutStr stderr $ "Module config for " ++ d ++ " is missing."
                     exitFailure
-      (fr0,deps0) <- loadPublicDeps (getCompilerHash b) [base]
+      (fr0,deps0) <- loadPublicDeps (getCompilerHash b) ca2 [base]
+      let ca3 = ca2 `Map.union` mapMetadata deps0
       checkAllowedStale fr0 f
-      (fr1,deps1) <- loadTestingDeps (getCompilerHash b) m
+      (fr1,deps1) <- loadTestingDeps (getCompilerHash b) ca3 m
+      let ca4 = ca3 `Map.union` mapMetadata deps1
       checkAllowedStale fr1 f
-      (fr2,deps2) <- loadPrivateDeps (getCompilerHash b) (deps0++[m]++deps1)
+      (fr2,deps2) <- loadPrivateDeps (getCompilerHash b) ca4 (deps0++[m]++deps1)
+      let ca5 = ca4 `Map.union` mapMetadata deps2
       checkAllowedStale fr2 f
       em <- getExprMap (p </> d) rm'
-      return $ LoadedTests p d m em (deps0++[m]++deps1) deps2
+      return (ca5,ms ++ [LoadedTests p d m em (deps0++[m]++deps1) deps2])
     checkTestFilters ts = do
       let possibleTests = Set.fromList $ concat $ map (cmTestFiles . ltMetadata) ts
       case Set.toList $ (Set.fromList tp) `Set.difference` possibleTests of
@@ -187,9 +192,9 @@ runCompiler (CompileOptions _ is is2 ds _ _ p CreateTemplates f) = mapM_ compile
     base <- resolveBaseModule resolver
     as  <- fmap fixPaths $ sequence $ map (resolveModule resolver (p </> d)) is
     as2 <- fmap fixPaths $ sequence $ map (resolveModule resolver (p </> d)) is2
-    (fr1,deps1) <- loadPublicDeps (getCompilerHash backend) (base:as)
+    (fr1,deps1) <- loadPublicDeps (getCompilerHash backend) Map.empty (base:as)
     checkAllowedStale fr1 f
-    (fr2,deps2) <- loadPublicDeps (getCompilerHash backend) as2
+    (fr2,deps2) <- loadPublicDeps (getCompilerHash backend) (mapMetadata deps1) as2
     checkAllowedStale fr2 f
     path <- canonicalizePath p
     createModuleTemplates path d deps1 deps2
