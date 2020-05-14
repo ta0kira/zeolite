@@ -997,8 +997,12 @@ Builtin `@type interface`s:
 
 Builtin meta types:
 
-- **`any`**: Value type that can be assigned a value of any type.
-- **`all`**: Value type that can be assigned to all other types.
+- **`any`**: Value type that can be assigned a value of any type. (This is the
+  [terminal object][initial-terminal] in the [category][category] of Zeolite
+  types.)
+- **`all`**: Value type that can be assigned to all other types. (This is the
+  [initial object][initial-terminal] in the [category][category] of Zeolite
+  types.)
 
 #### Builtin Constants
 
@@ -1220,6 +1224,7 @@ Please experiment with Zeolite and share your thoughts. Please also contact me
 if you are interested in helping with development.
 
 [cabal]: https://www.haskell.org/cabal/#install-upgrade
+[category]: https://en.wikipedia.org/wiki/Category_theory
 [clang]: https://clang.llvm.org/cxx_status.html
 [examples]: https://github.com/ta0kira/zeolite/tree/master/example
 [gcc]: https://gcc.gnu.org/
@@ -1227,6 +1232,7 @@ if you are interested in helping with development.
 [hackage]: http://hackage.haskell.org
 [hackage-status]: https://img.shields.io/hackage/v/zeolite-lang.svg?style=flat
 [hackage-zeolite-lang]: http://hackage.haskell.org/package/zeolite-lang
+[initial-terminal]: https://en.wikipedia.org/wiki/Initial_and_terminal_objects
 [kate]: https://kate-editor.org/
 [lib]: https://github.com/ta0kira/zeolite/tree/master/lib
 [lib/file]: https://github.com/ta0kira/zeolite/tree/master/lib/file
