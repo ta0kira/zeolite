@@ -114,7 +114,8 @@ Type_RawFileReader& CreateType(Params<0>::Type params) {
 }
 struct Value_RawFileReader : public TypeValue {
   Value_RawFileReader(Type_RawFileReader& p, const ParamTuple& params, const ValueTuple& args)
-    : parent(p), file(new std::ifstream(args.At(0)->AsString(), std::ios::in | std::ios::binary)) {}
+    : parent(p), filename(args.At(0)->AsString()),
+    file(new std::ifstream(filename, std::ios::in | std::ios::binary)) {}
 
   ReturnTuple Dispatch(const S<TypeValue>& self, const ValueFunction& label, const ParamTuple& params,const ValueTuple& args) final {
     using CallType = ReturnTuple(Value_RawFileReader::*)(const S<TypeValue>&, const ParamTuple&, const ValueTuple&);
@@ -156,6 +157,7 @@ struct Value_RawFileReader : public TypeValue {
   Type_RawFileReader& parent;
 
   std::mutex mutex;
+  const std::string filename;
   R<std::istream> file;
   CAPTURE_CREATION
 };
@@ -207,7 +209,7 @@ ReturnTuple Value_RawFileReader::Call_readBlock(const S<TypeValue>& Var_self, co
     FAIL() << "Read size " << Var_arg1 << " is invalid";
   }
   if (!file || file->rdstate() != std::ios::goodbit) {
-    FAIL() << "Error reading file (check status using getFileError)";
+    FAIL() << "Error reading file \"" << filename << "\"";
   }
   std::string buffer(Var_arg1, '\x00');
   int read_size = 0;

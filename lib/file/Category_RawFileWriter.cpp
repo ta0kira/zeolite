@@ -114,7 +114,8 @@ Type_RawFileWriter& CreateType(Params<0>::Type params) {
 }
 struct Value_RawFileWriter : public TypeValue {
   Value_RawFileWriter(Type_RawFileWriter& p, const ParamTuple& params, const ValueTuple& args)
-    : parent(p), file(new std::ofstream(args.At(0)->AsString(), std::ios::out | std::ios::binary | std::ios::trunc | std::ios::ate)) {}
+    : parent(p), filename(args.At(0)->AsString()),
+    file(new std::ofstream(filename, std::ios::out | std::ios::binary | std::ios::trunc | std::ios::ate)) {}
 
   ReturnTuple Dispatch(const S<TypeValue>& self, const ValueFunction& label, const ParamTuple& params,const ValueTuple& args) final {
     using CallType = ReturnTuple(Value_RawFileWriter::*)(const S<TypeValue>&, const ParamTuple&, const ValueTuple&);
@@ -154,6 +155,7 @@ struct Value_RawFileWriter : public TypeValue {
   Type_RawFileWriter& parent;
 
   std::mutex mutex;
+  const std::string filename;
   R<std::ostream> file;
   CAPTURE_CREATION
 };
@@ -193,7 +195,7 @@ ReturnTuple Value_RawFileWriter::Call_writeBlock(const S<TypeValue>& Var_self, c
   std::lock_guard<std::mutex> lock(mutex);
   const PrimString& Var_arg1 = args.At(0)->AsString();
   if (!file || file->rdstate() != std::ios::goodbit) {
-    FAIL() << "Error reading file (check status using getFileError)";
+    FAIL() << "Error writing file \"" << filename << "\"";
   }
   int write_size = 0;
   if (file) {

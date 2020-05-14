@@ -113,6 +113,7 @@ concrete Test {
 
 testcase "read missing file crash" {
   crash Test$run()
+  require "do-not-create-this-file"
   require "RawFileReader .*originally created"
 }
 
@@ -134,7 +135,8 @@ testcase "unwritable file" {
 
 define Test {
   run () {
-    RawFileWriter writer <- RawFileWriter$open("/")
+    RawFileWriter writer <- RawFileWriter$open("testfile")
+    \ writer.freeResource()
     if (!present(writer.getFileError())) {
       fail("expected file error")
     }
@@ -148,12 +150,14 @@ concrete Test {
 
 testcase "unwritable file crash" {
   crash Test$run()
+  require "testfile"
   require "RawFileWriter .*originally created"
 }
 
 define Test {
   run () {
-    RawFileWriter writer <- RawFileWriter$open("/")
+    RawFileWriter writer <- RawFileWriter$open("testfile")
+    \ writer.freeResource()
     \ writer.writeBlock("")
   }
 }
