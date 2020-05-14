@@ -6,7 +6,7 @@
 <language
     name="Zeolite"
     section="Sources"
-    version="3.0"
+    version="3.1"
     kateversion="2.4"
     indenter="cstyle"
     style="Zeolite"
@@ -107,11 +107,18 @@
         <keyword attribute="Keyword" context="Declare Type" String="typeDeclare" />
         <keyword attribute="Keyword" context="Define Type" String="typeDefine" />
         <IncludeRules context="Any Pragma" />
+        <!--This prevents Initializer from capturing categories and statements.-->
+        <DetectChar attribute="Normal Text" context="Braces" char="{" />
         <IncludeRules context="Any Expression" />
         <Detect2Chars attribute="Assign" context="#stay" char="&lt;" char1="-" />
         <Detect2Chars attribute="Assign" context="#stay" char="-" char1="&gt;" />
         <DetectChar attribute="Error" context="#stay" char="~" />
         <DetectChar attribute="Voided" context="#stay" char="\\" />
+      </context>
+
+      <context name="Braces" attribute="Normal Text" lineEndContext="#stay" >
+        <IncludeRules context="Normal Text" />
+        <DetectChar attribute="Normal Text" context="#pop" char="}" />
       </context>
 
       <context name="Any Pragma" attribute="Normal Text" lineEndContext="#stay" >
@@ -231,7 +238,6 @@
       </context>
 
       <context name="Initializer" attribute="Normal Text" lineEndContext="#stay" >
-        <IncludeRules context="Any Comment" />
         <IncludeRules context="Any Expression" />
         <DetectChar attribute="Normal Text" context="#pop" char="}" />
       </context>
