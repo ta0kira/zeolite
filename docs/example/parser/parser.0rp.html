@@ -9,12 +9,15 @@
 <!-- Highlighting: "Zeolite" -->
 <body>
 <pre style='color:#1f1c1b;background-color:#ffffff;'>
-<span style='color:#898887;'>/*</span><span style='color:#898887;'> Manages state for parsing operations.</span>
+<span style='color:#898887;'>/*</span><span style='color:#898887;'> Manages state for parsing operations outside of a Parser.</span>
 <span style='color:#898887;'> *</span>
 <span style='color:#898887;'> * The state is immutable; all update operations return a new state.</span>
+<span style='color:#898887;'> *</span>
+<span style='color:#898887;'> * Since #x is covariant, any ParseState can convert to ParseState&lt;any&gt;, and</span>
+<span style='color:#898887;'> * ParseState&lt;all&gt; can convert to all other ParseState.</span>
 <span style='color:#898887;'> </span><span style='color:#898887;'>*/</span>
 <b>concrete</b> <b><span style='color:#0057ae;'>ParseState</span></b><span style='color:#c02040;'>&lt;</span><span style='color:#c04040;'>|</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span> {
-  <span style='color:#644a9b;'>@category</span> new (<i><span style='color:#0057ae;'>String</span></i>) -&gt; (<span style='color:#0057ae;'>ParseState</span><span style='color:#c02040;'>&lt;</span><span style='color:#0057ae;'>Void</span><span style='color:#c02040;'>&gt;</span>)
+  <span style='color:#644a9b;'>@category</span> new (<i><span style='color:#0057ae;'>String</span></i>) -&gt; (<span style='color:#0057ae;'>ParseState</span><span style='color:#c02040;'>&lt;</span><b>any</b><span style='color:#c02040;'>&gt;</span>)
 
   <span style='color:#644a9b;'>@value</span> run&lt;<i><span style='color:#0057ae;'>#y</span></i>&gt;       (<span style='color:#0057ae;'>Parser</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#y</span></i><span style='color:#c02040;'>&gt;</span>) -&gt; (<span style='color:#0057ae;'>ParseState</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#y</span></i><span style='color:#c02040;'>&gt;</span>)
   <span style='color:#644a9b;'>@value</span> runAndGet&lt;<i><span style='color:#0057ae;'>#y</span></i>&gt; (<span style='color:#0057ae;'>Parser</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#y</span></i><span style='color:#c02040;'>&gt;</span>) -&gt; (<span style='color:#0057ae;'>ParseState</span><span style='color:#c02040;'>&lt;</span><b>any</b><span style='color:#c02040;'>&gt;</span>,<span style='color:#0057ae;'>ErrorOr</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#y</span></i><span style='color:#c02040;'>&gt;</span>)
@@ -25,33 +28,37 @@
 }
 
 <span style='color:#898887;'>/*</span><span style='color:#898887;'> A self-contained parser operation.</span>
+<span style='color:#898887;'> *</span>
+<span style='color:#898887;'> * Since #x is covariant, any Parser can convert to Parser&lt;any&gt;, and Parser&lt;all&gt;</span>
+<span style='color:#898887;'> * can convert to all other Parser.</span>
 <span style='color:#898887;'> </span><span style='color:#898887;'>*/</span>
 <span style='color:#644a9b;'>@value</span> <b>interface</b> <b><span style='color:#0057ae;'>Parser</span></b><span style='color:#c02040;'>&lt;</span><span style='color:#c04040;'>|</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span> {
   run (<span style='color:#0057ae;'>ParseContext</span><span style='color:#c02040;'>&lt;</span><b>any</b><span style='color:#c02040;'>&gt;</span>) -&gt; (<span style='color:#0057ae;'>ParseState</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>)
 }
 
 <span style='color:#898887;'>/*</span><span style='color:#898887;'> Parser context available when running a Parser.</span>
+<span style='color:#898887;'> *</span>
+<span style='color:#898887;'> * Since #x is covariant, any ParseContext can convert to ParseContext&lt;any&gt;, and</span>
+<span style='color:#898887;'> * ParseContext&lt;all&gt; can convert to all other ParseContext.</span>
 <span style='color:#898887;'> </span><span style='color:#898887;'>*/</span>
 <span style='color:#644a9b;'>@value</span> <b>interface</b> <b><span style='color:#0057ae;'>ParseContext</span></b><span style='color:#c02040;'>&lt;</span><span style='color:#c04040;'>|</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span> {
   run&lt;<i><span style='color:#0057ae;'>#y</span></i>&gt;       (<span style='color:#0057ae;'>Parser</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#y</span></i><span style='color:#c02040;'>&gt;</span>) -&gt; (<span style='color:#0057ae;'>ParseContext</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#y</span></i><span style='color:#c02040;'>&gt;</span>)
   runAndGet&lt;<i><span style='color:#0057ae;'>#y</span></i>&gt; (<span style='color:#0057ae;'>Parser</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#y</span></i><span style='color:#c02040;'>&gt;</span>) -&gt; (<span style='color:#0057ae;'>ParseContext</span><span style='color:#c02040;'>&lt;</span><b>any</b><span style='color:#c02040;'>&gt;</span>,<span style='color:#0057ae;'>ErrorOr</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#y</span></i><span style='color:#c02040;'>&gt;</span>)
 
-  getValue () -&gt; (<span style='color:#0057ae;'>ErrorOr</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>)
-  setValue&lt;<i><span style='color:#0057ae;'>#y</span></i>&gt; (<span style='color:#0057ae;'>ErrorOr</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#y</span></i><span style='color:#c02040;'>&gt;</span>) -&gt; (<span style='color:#0057ae;'>ParseState</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#y</span></i><span style='color:#c02040;'>&gt;</span>)
+  convertError&lt;<i><span style='color:#0057ae;'>#y</span></i>&gt; ()            -&gt; (<span style='color:#0057ae;'>ParseState</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#y</span></i><span style='color:#c02040;'>&gt;</span>)
+  getValue         ()            -&gt; (<span style='color:#0057ae;'>ErrorOr</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>)
+  setValue&lt;<i><span style='color:#0057ae;'>#y</span></i>&gt;     (<span style='color:#0057ae;'>ErrorOr</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#y</span></i><span style='color:#c02040;'>&gt;</span>) -&gt; (<span style='color:#0057ae;'>ParseState</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#y</span></i><span style='color:#c02040;'>&gt;</span>)
+  setBrokenInput   (<i><span style='color:#0057ae;'>Formatted</span></i>)   -&gt; (<span style='color:#0057ae;'>ParseState</span><span style='color:#c02040;'>&lt;</span><b>all</b><span style='color:#c02040;'>&gt;</span>)
+  toState          ()            -&gt; (<span style='color:#0057ae;'>ParseState</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>)
 
   getPosition () -&gt; (<i><span style='color:#0057ae;'>String</span></i>)
 
-  atEof () -&gt; (<i><span style='color:#0057ae;'>Bool</span></i>)
-
-  hasAnyError () -&gt; (<i><span style='color:#0057ae;'>Bool</span></i>)
+  atEof          () -&gt; (<i><span style='color:#0057ae;'>Bool</span></i>)
+  hasAnyError    () -&gt; (<i><span style='color:#0057ae;'>Bool</span></i>)
   hasBrokenInput () -&gt; (<i><span style='color:#0057ae;'>Bool</span></i>)
-
-  setBroken (<i><span style='color:#0057ae;'>Formatted</span></i>) -&gt; (<span style='color:#0057ae;'>ParseState</span><span style='color:#c02040;'>&lt;</span><b>all</b><span style='color:#c02040;'>&gt;</span>)
-  convertError&lt;<i><span style='color:#0057ae;'>#y</span></i>&gt; () -&gt; (<span style='color:#0057ae;'>ParseState</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#y</span></i><span style='color:#c02040;'>&gt;</span>)
 
   current () -&gt; (<i><span style='color:#0057ae;'>Char</span></i>)
   advance () -&gt; (<span style='color:#0057ae;'>ParseContext</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>)
-  toState () -&gt; (<span style='color:#0057ae;'>ParseState</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>)
 }
 </pre>
 </body>

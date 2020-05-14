@@ -25,7 +25,8 @@
     } <b>in</b> <b>while</b> (index &lt; match.readSize()) {
       <b>if</b> (context.atEof() || context.current() != match.readPosition(index)) {
         <b>if</b> (index &gt; <span style='color:#b08000;'>0</span>) {
-          <b>return</b> context.setBroken(message)
+          <span style='color:#898887;'>// Partial match =&gt; set error context.</span>
+          <b>return</b> context.setBrokenInput(message)
         } <b>else</b> {
           <b>return</b> context.setValue&lt;<i><span style='color:#0057ae;'>String</span></i>&gt;(<span style='color:#0057ae;'>ErrorOr</span><span style='color:#644a9b;'>$$</span>error(message))
         }
@@ -83,7 +84,7 @@
       <b>return</b> context.setValue&lt;<i><span style='color:#0057ae;'>String</span></i>&gt;(<span style='color:#0057ae;'>ErrorOr</span><span style='color:#644a9b;'>$$</span>value&lt;<i><span style='color:#0057ae;'>String</span></i>&gt;(builder.build()))
     } <b>elif</b> (count &gt; <span style='color:#b08000;'>0</span>) {
       <span style='color:#898887;'>// Partial match =&gt; set error context.</span>
-      <b>return</b> context.setBroken(message)
+      <b>return</b> context.setBrokenInput(message)
     } <b>else</b> {
       <b>return</b> context.setValue&lt;<i><span style='color:#0057ae;'>String</span></i>&gt;(<span style='color:#0057ae;'>ErrorOr</span><span style='color:#644a9b;'>$$</span>error(message))
     }

@@ -14,7 +14,8 @@ define StringParser {
     } in while (index < match.readSize()) {
       if (context.atEof() || context.current() != match.readPosition(index)) {
         if (index > 0) {
-          return context.setBroken(message)
+          // Partial match => set error context.
+          return context.setBrokenInput(message)
         } else {
           return context.setValue<String>(ErrorOr$$error(message))
         }
@@ -72,7 +73,7 @@ define SequenceOfParser {
       return context.setValue<String>(ErrorOr$$value<String>(builder.build()))
     } elif (count > 0) {
       // Partial match => set error context.
-      return context.setBroken(message)
+      return context.setBrokenInput(message)
     } else {
       return context.setValue<String>(ErrorOr$$error(message))
     }

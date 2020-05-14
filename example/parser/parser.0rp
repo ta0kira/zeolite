@@ -1,9 +1,12 @@
-/* Manages state for parsing operations.
+/* Manages state for parsing operations outside of a Parser.
  *
  * The state is immutable; all update operations return a new state.
+ *
+ * Since #x is covariant, any ParseState can convert to ParseState<any>, and
+ * ParseState<all> can convert to all other ParseState.
  */
 concrete ParseState<|#x> {
-  @category new (String) -> (ParseState<Void>)
+  @category new (String) -> (ParseState<any>)
 
   @value run<#y>       (Parser<#y>) -> (ParseState<#y>)
   @value runAndGet<#y> (Parser<#y>) -> (ParseState<any>,ErrorOr<#y>)
@@ -14,31 +17,35 @@ concrete ParseState<|#x> {
 }
 
 /* A self-contained parser operation.
+ *
+ * Since #x is covariant, any Parser can convert to Parser<any>, and Parser<all>
+ * can convert to all other Parser.
  */
 @value interface Parser<|#x> {
   run (ParseContext<any>) -> (ParseState<#x>)
 }
 
 /* Parser context available when running a Parser.
+ *
+ * Since #x is covariant, any ParseContext can convert to ParseContext<any>, and
+ * ParseContext<all> can convert to all other ParseContext.
  */
 @value interface ParseContext<|#x> {
   run<#y>       (Parser<#y>) -> (ParseContext<#y>)
   runAndGet<#y> (Parser<#y>) -> (ParseContext<any>,ErrorOr<#y>)
 
-  getValue () -> (ErrorOr<#x>)
-  setValue<#y> (ErrorOr<#y>) -> (ParseState<#y>)
+  convertError<#y> ()            -> (ParseState<#y>)
+  getValue         ()            -> (ErrorOr<#x>)
+  setValue<#y>     (ErrorOr<#y>) -> (ParseState<#y>)
+  setBrokenInput   (Formatted)   -> (ParseState<all>)
+  toState          ()            -> (ParseState<#x>)
 
   getPosition () -> (String)
 
-  atEof () -> (Bool)
-
-  hasAnyError () -> (Bool)
+  atEof          () -> (Bool)
+  hasAnyError    () -> (Bool)
   hasBrokenInput () -> (Bool)
-
-  setBroken (Formatted) -> (ParseState<all>)
-  convertError<#y> () -> (ParseState<#y>)
 
   current () -> (Char)
   advance () -> (ParseContext<#x>)
-  toState () -> (ParseState<#x>)
 }

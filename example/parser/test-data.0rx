@@ -9,7 +9,7 @@ define TestData {
   @category Parser<Bool>   aardvark          <- StringParser$create("aardvark") `Parse$right<Bool>` Parse$const<Bool>(false)
 
   @category Parser<String> sentenceOrToken   <- sentence `Parse$or<String>` token `Parse$left<String>` whitespace
-  @category Parser<Bool>   acronymOrAardvark <- Parse$try<Bool>(acronym) `Parse$or<Bool>` aardvark `Parse$left<Bool>` whitespace
+  @category Parser<Bool>   acronymOrAardvark <- `Parse$try<Bool>` acronym `Parse$or<Bool>` aardvark `Parse$left<Bool>` whitespace
 
   @category Parser<any>    fileStart         <- StringParser$create("file_start")   `Parse$left<any>` whitespace
   @category Parser<any>    fileEnd           <- StringParser$create("file_end")     `Parse$left<any>` whitespace

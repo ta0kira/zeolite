@@ -16,7 +16,7 @@ concrete CharParser {
   @type create (Char) -> (Parser<Char>)
 }
 
-/* Parser combinators
+/* Parser combinators.
  */
 concrete Parse {
   @type const<#x> (#x)                     -> (Parser<#x>)

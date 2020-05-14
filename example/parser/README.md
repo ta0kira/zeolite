@@ -3,9 +3,12 @@
 *Also see
 [a highlighted version of the example code](https://ta0kira.github.io/zeolite/example/parser).*
 
-This (incomplete) example demonstrates parsing a text file using a
-parser-combinator approach. The code here is more about testing the limitations
-of the Zeolite language, and less about demonstrating proper language usage.
+This example demonstrates parsing a text file using a parser-combinator
+approach. It also uses monad-like semantics to handle errors that occur during
+parsing, in the absense of actual monads and exceptions.
+
+The code here is more about testing the limitations of the Zeolite language, and
+less about demonstrating proper language usage.
 
 To run the example:
 

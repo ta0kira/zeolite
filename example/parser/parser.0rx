@@ -1,4 +1,11 @@
 define ParseState {
+  // This internal inheritance takes advantage of function merging.
+  //
+  // Notice that several functions (e.g., run, hasAnyError) appear to be
+  // declared separately in ParseState and ParseContext in parser.0rp. Since the
+  // function types are compatible, the compiler automatically merges them. This
+  // allows ParseState to expose a subset of ParseContext without needing a
+  // superfluous interface that both categories refine.
   refines ParseContext<#x>
 
   @value String data
@@ -9,7 +16,7 @@ define ParseState {
   @value optional Formatted error
 
   new (data) {
-    return ParseState<Void>{ data, 0, 0, 0, ErrorOr$$value<Void>(Void$void()), empty }
+    return ParseState<any>{ data, 0, 0, 0, ErrorOr$$value<Void>(Void$void()), empty }
   }
 
   run (parser) {
@@ -19,6 +26,10 @@ define ParseState {
   runAndGet (parser) {
     ParseState<#y> context <- parser.run(self)
     return context, context.getValue()
+  }
+
+  convertError () {
+    return ParseState<#y>{ data, index, line, char, ErrorOr$$error(getError()), error }
   }
 
   getValue () {
@@ -35,6 +46,14 @@ define ParseState {
     } else {
       return ParseState<#y>{ data, index, line, char, value2, error }
     }
+  }
+
+  setBrokenInput (message) {
+    return ParseState<all>{ data, index, line, char, ErrorOr$$error(message), message }
+  }
+
+  toState () {
+    return self
   }
 
   getPosition () {
@@ -55,14 +74,6 @@ define ParseState {
     return present(error) || value.isError()
   }
 
-  getError () {
-    if (present(error)) {
-      return require(error)
-    } else {
-      return value.getError()
-    }
-  }
-
   hasBrokenInput () {
     return present(error)
   }
@@ -81,16 +92,12 @@ define ParseState {
     }
   }
 
-  toState () {
-    return self
-  }
-
-  setBroken (message) {
-    return ParseState<all>{ data, index, line, char, ErrorOr$$error(message), message }
-  }
-
-  convertError () {
-    return ParseState<#y>{ data, index, line, char, ErrorOr$$error(getError()), error }
+  getError () {
+    if (present(error)) {
+      return require(error)
+    } else {
+      return value.getError()
+    }
   }
 
   @value sanityCheck () -> ()
