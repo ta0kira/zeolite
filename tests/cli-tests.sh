@@ -181,6 +181,24 @@ test_global_include() {
 }
 
 
+test_example_hello() {
+  do_zeolite -p "$ZEOLITE_PATH" -i lib/util -m HelloDemo example/hello -f
+  do_zeolite -p "$ZEOLITE_PATH" -t example/hello
+}
+
+
+test_example_tree() {
+  do_zeolite -p "$ZEOLITE_PATH" -i lib/util -m TreeDemo example/tree -f
+  do_zeolite -p "$ZEOLITE_PATH" -t example/tree
+}
+
+
+test_example_parser() {
+  do_zeolite -p "$ZEOLITE_PATH" -r example/tree
+  do_zeolite -p "$ZEOLITE_PATH" -t example/tree
+}
+
+
 run_all() {
   ZEOLITE_PATH=$(do_zeolite --get-path | grep '^/')
   echo 1>&2
@@ -216,6 +234,9 @@ ALL_TESTS=(
   test_fast
   test_bad_system_include
   test_global_include
+  test_example_hello
+  test_example_tree
+  test_example_parser
 )
 
 run_all "${ALL_TESTS[@]}" 1>&2
