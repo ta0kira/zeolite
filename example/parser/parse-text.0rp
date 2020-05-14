@@ -1,0 +1,25 @@
+/* Parses a fixed string.
+ */
+concrete StringParser {
+  @type create (String) -> (Parser<String>)
+}
+
+/* Parses a string containing a limited set of characters.
+ */
+concrete SequenceOfParser {
+  @type create (String, Int /*min*/, Int /*max*/) -> (Parser<String>)
+}
+
+/* Parses a fixed character.
+ */
+concrete CharParser {
+  @type create (Char) -> (Parser<Char>)
+}
+
+/* Parser combinators
+ */
+concrete Parse {
+  @type try<#x>  (Parser<#x>)             -> (Parser<#x>)
+  @type or<#x>   (Parser<#x>,Parser<#x>)  -> (Parser<#x>)
+  @type then<#x> (Parser<#x>,Parser<any>) -> (Parser<#x>)
+}

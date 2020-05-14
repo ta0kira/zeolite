@@ -1,0 +1,10 @@
+$TestsOnly$
+
+/* Parses the test-data.txt file using a one-off format.
+ */
+concrete TestData {
+  @type parseFrom (String) -> (ErrorOr<TestData>)
+
+  @value getName        () -> (String)
+  @value getDescription () -> (String)
+}

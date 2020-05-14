@@ -1,4 +1,6 @@
 define ParseState {
+  refines ParseContext<#x>
+
   @value String data
   @value Int index
   @value Int line
@@ -8,6 +10,15 @@ define ParseState {
 
   new (data) {
     return ParseState<Void>{ data, 0, 0, 0, ErrorOr$$value<Void>(Void$void()), empty }
+  }
+
+  run (parser) {
+    return parser.run(self)
+  }
+
+  runAndGet (parser) {
+    ParseState<#y> context <- parser.run(self)
+    return context, context.getValue()
   }
 
   getValue () {
@@ -44,6 +55,14 @@ define ParseState {
     return present(error) || value.isError()
   }
 
+  getError () {
+    if (present(error)) {
+      return require(error)
+    } else {
+      return value.getError()
+    }
+  }
+
   hasBrokenInput () {
     return present(error)
   }
@@ -62,21 +81,16 @@ define ParseState {
     }
   }
 
+  toState () {
+    return self
+  }
+
   setBroken (message) {
     return ParseState<all>{ data, index, line, char, ErrorOr$$error(message), message }
   }
 
   convertError () {
     return ParseState<#y>{ data, index, line, char, ErrorOr$$error(getError()), error }
-  }
-
-  @value getError () -> (Formatted)
-  getError () {
-    if (present(error)) {
-      return require(error)
-    } else {
-      return value.getError()
-    }
   }
 
   @value sanityCheck () -> ()
@@ -95,222 +109,5 @@ define ParseState {
           .append(getPosition())
           .writeTo(SimpleOutput$error())
     }
-  }
-}
-
-concrete TryParser<#x> {
-  @type create (Parser<#x>) -> (Parser<#x>)
-}
-
-define TryParser {
-  refines Parser<#x>
-
-  @value Parser<#x> parser
-
-  run (stateOld) (state) {
-    if (stateOld.hasAnyError()) {
-      return stateOld.convertError<#x>()
-    }
-    state <- parser.run(stateOld)
-    if (state.hasAnyError()) {
-      state <- stateOld.setValue<#x>(state.getValue())
-    }
-  }
-
-  create (parser) {
-    return TryParser<#x>{ parser }
-  }
-}
-
-concrete StringParser {
-  @type create (String) -> (Parser<String>)
-}
-
-define StringParser {
-  refines Parser<String>
-
-  @value String match
-
-  run (stateOld) (state) {
-    if (stateOld.hasAnyError()) {
-      return stateOld.convertError<String>()
-    }
-    String message <- "Failed to match \"" + match + "\" at " + stateOld.getPosition()
-    state <- stateOld.setValue<String>(ErrorOr$$error(message))
-    scoped {
-      Int index <- 0
-    } in while (index < match.readSize()) {
-      if (state.atEof() || state.current() != match.readPosition(index)) {
-        if (index > 0) {
-          // Partial match => set error state.
-          state <- state.setBroken(message)
-        }
-        return _
-      }
-    } update {
-      index <- index+1
-      state <- state.advance()
-    }
-    state <- state.setValue<String>(ErrorOr$$value<String>(match))
-  }
-
-  create (match) {
-    return StringParser{ match }
-  }
-}
-
-concrete SequenceOfParser {
-  @type create (String,Int,Int) -> (Parser<String>)
-}
-
-define SequenceOfParser {
-  refines Parser<String>
-
-  @value String matches
-  @value Int min
-  @value Int max
-
-  run (stateOld) (state) {
-    if (stateOld.hasAnyError()) {
-      return stateOld.convertError<String>()
-    }
-    String message <- "Failed to match [" + matches + "]{" +
-                      min.formatted() + "," + max.formatted() + "} at " +
-                      stateOld.getPosition()
-    state <- stateOld.setValue<String>(ErrorOr$$error(message))
-    Builder<String> builder <- String$builder()
-    Int count <- 0
-    while (!state.atEof() && (max == 0 || count < max)) {
-      Bool found <- false
-      scoped {
-        Int index <- 0
-      } in while (index < matches.readSize()) {
-        if (state.current() == matches.readPosition(index)) {
-          \ builder.append(matches.readPosition(index).formatted())
-          found <- true
-          break
-        }
-      } update {
-        index <- index+1
-      }
-      if (!found) {
-        break
-      }
-    } update {
-      count <- count+1
-      state <- state.advance()
-    }
-    if (count >= min) {
-      state <- state.setValue<String>(ErrorOr$$value<String>(builder.build()))
-    } elif (count > 0) {
-      // Partial match => set error state.
-      state <- state.setBroken(message)
-    }
-  }
-
-  create (matches,min,max) {
-    return SequenceOfParser{ matches, min, max }
-  }
-}
-
-concrete CharParser {
-  @type create (Char) -> (Parser<Char>)
-}
-
-define CharParser {
-  refines Parser<Char>
-
-  @value Char match
-
-  run (stateOld) {
-    if (stateOld.hasAnyError()) {
-      return stateOld.convertError<Char>()
-    }
-    if (stateOld.atEof() || stateOld.current() != match) {
-      String message <- "Failed to match '" + match.formatted() + "' at " + stateOld.getPosition()
-      return stateOld.setValue<Char>(ErrorOr$$error(message))
-    } else {
-      return stateOld.advance().setValue<Char>(ErrorOr$$value<Char>(match))
-    }
-  }
-
-  create (match) {
-    return CharParser{ match }
-  }
-}
-
-concrete OrParser<#x> {
-  @type create (Parser<#x>,Parser<#x>) -> (Parser<#x>)
-}
-
-define OrParser {
-  refines Parser<#x>
-
-  @value Parser<#x> parser1
-  @value Parser<#x> parser2
-
-  run (stateOld) (state) {
-    if (stateOld.hasAnyError()) {
-      return stateOld.convertError<#x>()
-    }
-    state <- parser1.run(stateOld)
-    if (state.hasAnyError() && !state.hasBrokenInput()) {
-      state <- parser2.run(stateOld)
-    }
-  }
-
-  create (parser1,parser2) {
-    return OrParser<#x>{ parser1, parser2 }
-  }
-}
-
-concrete ThenParser<#x> {
-  @type create (Parser<#x>,Parser<any>) -> (Parser<#x>)
-}
-
-define ThenParser {
-  refines Parser<#x>
-
-  @value Parser<#x>  parser1
-  @value Parser<any> parser2
-
-  run (stateOld) (state) {
-    if (stateOld.hasAnyError()) {
-      return stateOld.convertError<#x>()
-    }
-    state <- parser1.run(stateOld)
-    if (!state.hasAnyError()) {
-      state <- parser2.run(state).setValue<#x>(state.getValue())
-    }
-  }
-
-  create (parser1,parser2) {
-    return ThenParser<#x>{ parser1, parser2 }
-  }
-}
-
-define Parse {
-  try (x) {
-    return TryParser<#x>$create(x)
-  }
-
-  string (match) {
-    return StringParser$create(match)
-  }
-
-  sequenceOf (match,min,max) {
-    return SequenceOfParser$create(match,min,max)
-  }
-
-  char (match) {
-    return CharParser$create(match)
-  }
-
-  or (x,y) {
-    return OrParser<#x>$create(x,y)
-  }
-
-  then (x,y) {
-    return ThenParser<#x>$create(x,y)
   }
 }

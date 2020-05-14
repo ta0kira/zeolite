@@ -1,0 +1,67 @@
+define TestData {
+  @category Parser<any>    whitespace      <- SequenceOfParser$create(" \n\t",1,0)
+  @category Parser<String> sentence        <- SentenceParser$create()
+  @category Parser<String> token           <- SequenceOfParser$create("ABCDEFGHIJKLMNOPQRSTUVWXYZ_",1,0)
+  @category Parser<any>    fileStart       <- StringParser$create("file_start")   `Parse$then<any>` whitespace
+  @category Parser<any>    fileEnd         <- StringParser$create("file_end")     `Parse$then<any>` whitespace
+  @category Parser<any>    nameTag         <- StringParser$create("name:")        `Parse$then<any>` whitespace
+  @category Parser<any>    descriptionTag  <- StringParser$create("description:") `Parse$then<any>` whitespace
+  @category Parser<String> sentenceOrToken <- sentence `Parse$or<String>` token `Parse$then<String>` whitespace
+
+  @value String name
+  @value String description
+
+  parseFrom (data) {
+    ParseState<any> state <- ParseState$$new(data)
+    state                              <- state.run<any>(fileStart)
+    state                              <- state.run<any>(nameTag)
+    state, ErrorOr<String> name        <- state.runAndGet<String>(sentenceOrToken)
+    state                              <- state.run<any>(descriptionTag)
+    state, ErrorOr<String> description <- state.runAndGet<String>(sentenceOrToken)
+    state                              <- state.run<any>(fileEnd)
+
+    if (state.hasAnyError()) {
+      return ErrorOr$$error(state.getError())
+    } elif (!state.atEof()) {
+      return ErrorOr$$error("Parsing did not consume all of the data")
+    } else {
+      return ErrorOr$$value<TestData>(TestData{ name.getValue(), description.getValue() })
+    }
+  }
+
+  getName () {
+    return name
+  }
+
+  getDescription () {
+    return description
+  }
+}
+
+concrete SentenceParser {
+  @type create () -> (Parser<String>)
+}
+
+define SentenceParser {
+  refines Parser<String>
+
+  @category String sentenceChars <- "ABCDEFGHIJKLMNOPQRSTUVWXYZ" +
+                                    "abcdefghijklmnopqrstuvwxyz" +
+                                    "., !?-"
+  @category Parser<String> string <- SequenceOfParser$create(sentenceChars,0,0)
+
+  run (contextOld) {
+    if (contextOld.hasAnyError()) {
+      return contextOld.convertError<String>()
+    }
+    ParseContext<any> context <- contextOld
+    context                       <- context.run<any>(CharParser$create('"'))
+    context, ErrorOr<String> text <- context.runAndGet<String>(string)
+    context                       <- context.run<any>(CharParser$create('"'))
+    return context.setValue<String>(text)
+  }
+
+  create () {
+    return SentenceParser{ }
+  }
+}

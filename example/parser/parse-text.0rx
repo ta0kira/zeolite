@@ -1,0 +1,200 @@
+define StringParser {
+  refines Parser<String>
+
+  @value String match
+
+  run (contextOld) {
+    if (contextOld.hasAnyError()) {
+      return contextOld.convertError<String>()
+    }
+    String message <- "Failed to match \"" + match + "\" at " + contextOld.getPosition()
+    ParseContext<any> context <- contextOld
+    scoped {
+      Int index <- 0
+    } in while (index < match.readSize()) {
+      if (context.atEof() || context.current() != match.readPosition(index)) {
+        if (index > 0) {
+          return context.setBroken(message)
+        } else {
+          return context.setValue<String>(ErrorOr$$error(message))
+        }
+      }
+    } update {
+      index <- index+1
+      context <- context.advance()
+    }
+    return context.setValue<String>(ErrorOr$$value<String>(match))
+  }
+
+  create (match) {
+    return StringParser{ match }
+  }
+}
+
+define SequenceOfParser {
+  refines Parser<String>
+
+  @value String matches
+  @value Int min
+  @value Int max
+
+  run (contextOld) {
+    if (contextOld.hasAnyError()) {
+      return contextOld.convertError<String>()
+    }
+    String message <- "Failed to match [" + matches + "]{" +
+                      min.formatted() + "," + max.formatted() + "} at " +
+                      contextOld.getPosition()
+    ParseContext<any> context <- contextOld
+    Builder<String> builder <- String$builder()
+    Int count <- 0
+    while (!context.atEof() && (max == 0 || count < max)) {
+      Bool found <- false
+      scoped {
+        Int index <- 0
+      } in while (index < matches.readSize()) {
+        if (context.current() == matches.readPosition(index)) {
+          \ builder.append(matches.readPosition(index).formatted())
+          found <- true
+          break
+        }
+      } update {
+        index <- index+1
+      }
+      if (!found) {
+        break
+      }
+    } update {
+      count <- count+1
+      context <- context.advance()
+    }
+    if (count >= min) {
+      return context.setValue<String>(ErrorOr$$value<String>(builder.build()))
+    } elif (count > 0) {
+      // Partial match => set error context.
+      return context.setBroken(message)
+    } else {
+      return context.setValue<String>(ErrorOr$$error(message))
+    }
+  }
+
+  create (matches,min,max) {
+    return SequenceOfParser{ matches, min, max }
+  }
+}
+
+define CharParser {
+  refines Parser<Char>
+
+  @value Char match
+
+  run (contextOld) {
+    if (contextOld.hasAnyError()) {
+      return contextOld.convertError<Char>()
+    }
+    if (contextOld.atEof() || contextOld.current() != match) {
+      String message <- "Failed to match '" + match.formatted() + "' at " + contextOld.getPosition()
+      return contextOld.setValue<Char>(ErrorOr$$error(message))
+    } else {
+      return contextOld.advance().setValue<Char>(ErrorOr$$value<Char>(match))
+    }
+  }
+
+  create (match) {
+    return CharParser{ match }
+  }
+}
+
+concrete TryParser<#x> {
+  @type create (Parser<#x>) -> (Parser<#x>)
+}
+
+define TryParser {
+  refines Parser<#x>
+
+  @value Parser<#x> parser
+
+  run (contextOld) {
+    if (contextOld.hasAnyError()) {
+      return contextOld.convertError<#x>()
+    }
+    ParseContext<#x> context <- contextOld.run<#x>(parser)
+    if (context.hasAnyError()) {
+      return contextOld.setValue<#x>(context.getValue().convertError())
+    } else {
+      return context.toState()
+    }
+  }
+
+  create (parser) {
+    return TryParser<#x>{ parser }
+  }
+}
+
+concrete OrParser<#x> {
+  @type create (Parser<#x>,Parser<#x>) -> (Parser<#x>)
+}
+
+define OrParser {
+  refines Parser<#x>
+
+  @value Parser<#x> parser1
+  @value Parser<#x> parser2
+
+  run (contextOld) {
+    if (contextOld.hasAnyError()) {
+      return contextOld.convertError<#x>()
+    }
+    ParseContext<#x> context <- contextOld.run<#x>(parser1)
+    if (context.hasAnyError() && !context.hasBrokenInput()) {
+      return contextOld.run<#x>(parser2).toState()
+    } else {
+      return context.toState()
+    }
+  }
+
+  create (parser1,parser2) {
+    return OrParser<#x>{ parser1, parser2 }
+  }
+}
+
+concrete ThenParser<#x> {
+  @type create (Parser<#x>,Parser<any>) -> (Parser<#x>)
+}
+
+define ThenParser {
+  refines Parser<#x>
+
+  @value Parser<#x>  parser1
+  @value Parser<any> parser2
+
+  run (contextOld) {
+    if (contextOld.hasAnyError()) {
+      return contextOld.convertError<#x>()
+    }
+    ParseContext<#x> context <- contextOld.run<#x>(parser1)
+    if (!context.hasAnyError()) {
+      return context.run<any>(parser2).setValue<#x>(context.getValue())
+    } else {
+      return context.toState()
+    }
+  }
+
+  create (parser1,parser2) {
+    return ThenParser<#x>{ parser1, parser2 }
+  }
+}
+
+define Parse {
+  try (x) {
+    return TryParser<#x>$create(x)
+  }
+
+  or (x,y) {
+    return OrParser<#x>$create(x,y)
+  }
+
+  then (x,y) {
+    return ThenParser<#x>$create(x,y)
+  }
+}

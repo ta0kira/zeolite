@@ -1,32 +1,44 @@
-@value interface Parser<|#x> {
-  run (ParseState<any>) -> (ParseState<#x>)
-}
-
+/* Manages state for parsing operations.
+ *
+ * The state is immutable; all update operations return a new state.
+ */
 concrete ParseState<|#x> {
   @category new (String) -> (ParseState<Void>)
 
-  @value getValue () -> (ErrorOr<#x>)
-  @value setValue<#y> (ErrorOr<#y>) -> (ParseState<#y>)
+  @value run<#y>       (Parser<#y>) -> (ParseState<#y>)
+  @value runAndGet<#y> (Parser<#y>) -> (ParseState<any>,ErrorOr<#y>)
 
-  @value getPosition () -> (String)
-
-  @value atEof () -> (Bool)
-
+  @value atEof       () -> (Bool)
   @value hasAnyError () -> (Bool)
-  @value hasBrokenInput () -> (Bool)
-
-  @value setBroken (Formatted) -> (ParseState<all>)
-  @value convertError<#y> () -> (ParseState<#y>)
-
-  @value current () -> (Char)
-  @value advance () -> (ParseState<#x>)
+  @value getError    () -> (Formatted)
 }
 
-concrete Parse {
-  @type try<#x> (Parser<#x>) -> (Parser<#x>)
-  @type string (String) -> (Parser<String>)
-  @type sequenceOf (String, Int /*min*/, Int /*max*/) -> (Parser<String>)
-  @type char (Char) -> (Parser<Char>)
-  @type or<#x> (Parser<#x>,Parser<#x>) -> (Parser<#x>)
-  @type then<#x> (Parser<#x>,Parser<any>) -> (Parser<#x>)
+/* A self-contained parser operation.
+ */
+@value interface Parser<|#x> {
+  run (ParseContext<any>) -> (ParseState<#x>)
+}
+
+/* Parser context available when running a Parser.
+ */
+@value interface ParseContext<|#x> {
+  run<#y>       (Parser<#y>) -> (ParseContext<#y>)
+  runAndGet<#y> (Parser<#y>) -> (ParseContext<any>,ErrorOr<#y>)
+
+  getValue () -> (ErrorOr<#x>)
+  setValue<#y> (ErrorOr<#y>) -> (ParseState<#y>)
+
+  getPosition () -> (String)
+
+  atEof () -> (Bool)
+
+  hasAnyError () -> (Bool)
+  hasBrokenInput () -> (Bool)
+
+  setBroken (Formatted) -> (ParseState<all>)
+  convertError<#y> () -> (ParseState<#y>)
+
+  current () -> (Char)
+  advance () -> (ParseContext<#x>)
+  toState () -> (ParseState<#x>)
 }
