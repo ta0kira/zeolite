@@ -23,7 +23,10 @@ limitations under the License.
 module Base.CompileError (
   CompileError(..),
   CompileErrorM(..),
+  CompileErrorT(..),
 ) where
+
+import Control.Monad.Trans
 
 #if MIN_VERSION_base(4,8,0)
 #else
@@ -45,9 +48,9 @@ class CompileError a where
 
 -- For some GHC versions, pattern-matching failures require MonadFail.
 #if MIN_VERSION_base(4,9,0)
-class (Functor m, Monad m, MonadFail m) => CompileErrorM m where
+class (Monad m, MonadFail m) => CompileErrorM m where
 #else
-class (Functor m, Monad m) => CompileErrorM m where
+class Monad m => CompileErrorM m where
 #endif
   compileErrorM :: String -> m a
   isCompileErrorM :: m a -> Bool
@@ -58,6 +61,14 @@ class (Functor m, Monad m) => CompileErrorM m where
   compileWarningM :: String -> m ()
 
 instance CompileErrorM m => CompileError (m a) where
-  compileError = compileErrorM
+  compileError   = compileErrorM
   isCompileError = isCompileErrorM
-  reviseError = reviseErrorM
+  reviseError    = reviseErrorM
+
+class MonadTrans t => CompileErrorT t where
+  compileErrorT :: Monad m => String -> t m a
+  collectAllOrErrorT :: Monad m => Foldable f => f (t m a) -> t m [a]
+  collectOneOrErrorT :: Monad m => Foldable f => f (t m a) -> t m a
+  reviseErrorT :: Monad m => t m a -> String -> t m a
+  reviseErrorT e _ = e
+  compileWarningT :: Monad m => String -> t m ()

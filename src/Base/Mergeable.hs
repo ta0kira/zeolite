@@ -23,7 +23,10 @@ limitations under the License.
 module Base.Mergeable (
   Mergeable(..),
   MergeableM(..),
+  MergeableT(..),
 ) where
+
+import Control.Monad.Trans
 
 #if MIN_VERSION_base(4,8,0)
 #else
@@ -39,13 +42,21 @@ class Mergeable a where
   mergeDefault :: a
   mergeDefault = mergeAll Nothing
 
-class (Functor m, Monad m) => MergeableM m where
+class Monad m => MergeableM m where
   mergeAnyM :: (Mergeable a, Foldable f) => f (m a) -> m a
   mergeAllM :: (Mergeable a, Foldable f) => f (m a) -> m a
   mergeNestedM :: Mergeable a => m a -> m a -> m a
   mergeNestedM x y = mergeAllM [x,y]
   mergeDefaultM :: Mergeable a => m a
   mergeDefaultM = mergeAllM Nothing
+
+class MonadTrans t => MergeableT t where
+  mergeAnyT :: (Monad m, Mergeable a, Foldable f) => f (t m a) -> t m a
+  mergeAllT :: (Monad m, Mergeable a, Foldable f) => f (t m a) -> t m a
+  mergeNestedT :: (Monad m, Mergeable a) => t m a -> t m a -> t m a
+  mergeNestedT x y = mergeAllT [x,y]
+  mergeDefaultT :: (Monad m, Mergeable a) => t m a
+  mergeDefaultT = mergeAllT Nothing
 
 instance Mergeable () where
   mergeAny = const ()
