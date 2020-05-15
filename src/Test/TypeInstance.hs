@@ -692,7 +692,7 @@ checkConvertSuccess pa x y = return checked where
     ([t1,t2],pa2) <- parseTheTest pa [x,y]
     check $ checkValueTypeMatch Resolver pa2 t1 t2
   check c
-    | isCompileError c = compileError $ prefix ++ ":\n" ++ show (getCompileError c)
+    | isCompileErrorM c = compileErrorM $ prefix ++ ":\n" ++ show (getCompileError c)
     | otherwise = return ()
 
 checkConvertFail :: [(String, [String])] -> [Char] -> [Char] -> IO (CompileInfo ())
@@ -703,8 +703,8 @@ checkConvertFail pa x y = return checked where
     check $ checkValueTypeMatch Resolver pa2 t1 t2
   check :: CompileInfo a -> CompileInfo ()
   check c
-    | isCompileError c = return ()
-    | otherwise = compileError $ prefix ++ ": Expected failure\n"
+    | isCompileErrorM c = return ()
+    | otherwise = compileErrorM $ prefix ++ ": Expected failure\n"
 
 data Resolver = Resolver
 
@@ -738,4 +738,4 @@ getDefinesFilters (DefinesInstance n ps) = do
 mapLookup :: (Ord n, Show n, CompileErrorM m) => Map.Map n a -> n -> m a
 mapLookup ma n = resolve $ n `Map.lookup` ma where
   resolve (Just x) = return x
-  resolve _        = compileError $ "Map key " ++ show n ++ " not found"
+  resolve _        = compileErrorM $ "Map key " ++ show n ++ " not found"

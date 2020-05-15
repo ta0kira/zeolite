@@ -69,7 +69,7 @@ runAllTests ts = do
 
 numberError :: a -> CompileInfo b -> Either (a,CompileMessage) b
 numberError n c
-  | isCompileError c = Left (n,getCompileError c)
+  | isCompileErrorM c = Left (n,getCompileError c)
   | otherwise        = Right (getCompileSuccess c)
 
 forceParse :: ParseFromSource a => String -> a
@@ -84,14 +84,14 @@ readSingleWith :: CompileErrorM m => Parser a -> String -> String -> m a
 readSingleWith p f s =
   unwrap $ parse (between nullParse endOfDoc p) f s
   where
-    unwrap (Left e)  = compileError (show e)
+    unwrap (Left e)  = compileErrorM (show e)
     unwrap (Right t) = return t
 
 readMulti :: CompileErrorM m => ParseFromSource a => String -> String -> m [a]
 readMulti f s =
   unwrap $ parse (between optionalSpace endOfDoc (sepBy sourceParser optionalSpace)) f s
   where
-    unwrap (Left e)  = compileError (show e)
+    unwrap (Left e)  = compileErrorM (show e)
     unwrap (Right t) = return t
 
 parseFilterMap :: CompileErrorM m => [(String,[String])] -> m ParamFilters
@@ -121,7 +121,7 @@ checkTypeSuccess r pa x = do
   check $ validateGeneralInstance r pa2 t
   where
     prefix = x ++ " " ++ showParams pa
-    check = flip reviseError (prefix ++ ":")
+    check = flip reviseErrorM (prefix ++ ":")
 
 checkTypeFail :: (TypeResolver r) =>
   r -> [(String,[String])] -> String -> CompileInfo ()
@@ -132,8 +132,8 @@ checkTypeFail r pa x = do
     prefix = x ++ " " ++ showParams pa
     check :: CompileInfo a -> CompileInfo ()
     check c
-      | isCompileError c = return ()
-      | otherwise = compileError $ prefix ++ ": Expected failure\n"
+      | isCompileErrorM c = return ()
+      | otherwise = compileErrorM $ prefix ++ ": Expected failure\n"
 
 checkDefinesSuccess :: (TypeResolver r) =>
   r -> [(String,[String])] -> String -> CompileInfo ()
@@ -142,7 +142,7 @@ checkDefinesSuccess r pa x = do
   check $ validateDefinesInstance r pa2 t
   where
     prefix = x ++ " " ++ showParams pa
-    check = flip reviseError (prefix ++ ":")
+    check = flip reviseErrorM (prefix ++ ":")
 
 checkDefinesFail :: (TypeResolver r) =>
   r -> [(String,[String])] -> String -> CompileInfo ()
@@ -153,8 +153,8 @@ checkDefinesFail r pa x = do
     prefix = x ++ " " ++ showParams pa
     check :: CompileInfo a -> CompileInfo ()
     check c
-      | isCompileError c = return ()
-      | otherwise = compileError $ prefix ++ ": Expected failure\n"
+      | isCompileErrorM c = return ()
+      | otherwise = compileErrorM $ prefix ++ ": Expected failure\n"
 
 containsExactly :: (Ord a, Show a, MergeableM m, CompileErrorM m) =>
   [a] -> [a] -> m ()
@@ -166,39 +166,39 @@ containsExactly actual expected = do
 containsNoDuplicates :: (Ord a, Show a, MergeableM m, CompileErrorM m) =>
   [a] -> m ()
 containsNoDuplicates expected =
-  (mergeAllM $ map checkSingle $ group $ sort expected) `reviseError` (show expected)
+  (mergeAllM $ map checkSingle $ group $ sort expected) `reviseErrorM` (show expected)
   where
     checkSingle xa@(x:_:_) =
-      compileError $ "Item " ++ show x ++ " occurs " ++ show (length xa) ++ " times"
+      compileErrorM $ "Item " ++ show x ++ " occurs " ++ show (length xa) ++ " times"
     checkSingle _ = return ()
 
 containsAtLeast :: (Ord a, Show a, MergeableM m, CompileErrorM m) =>
   [a] -> [a] -> m ()
 containsAtLeast actual expected =
-  (mergeAllM $ map (checkInActual $ Set.fromList actual) expected) `reviseError`
+  (mergeAllM $ map (checkInActual $ Set.fromList actual) expected) `reviseErrorM`
         (show actual ++ " (actual) vs. " ++ show expected ++ " (expected)")
   where
     checkInActual va v =
       if v `Set.member` va
          then return ()
-         else compileError $ "Item " ++ show v ++ " was expected but not present"
+         else compileErrorM $ "Item " ++ show v ++ " was expected but not present"
 
 containsAtMost :: (Ord a, Show a, MergeableM m, CompileErrorM m) =>
   [a] -> [a] -> m ()
 containsAtMost actual expected =
-  (mergeAllM $ map (checkInExpected $ Set.fromList expected) actual) `reviseError`
+  (mergeAllM $ map (checkInExpected $ Set.fromList expected) actual) `reviseErrorM`
         (show actual ++ " (actual) vs. " ++ show expected ++ " (expected)")
   where
     checkInExpected va v =
       if v `Set.member` va
          then return ()
-         else compileError $ "Item " ++ show v ++ " is unexpected"
+         else compileErrorM $ "Item " ++ show v ++ " is unexpected"
 
 checkEquals :: (Eq a, Show a, MergeableM m, CompileErrorM m) =>
   a -> a -> m ()
 checkEquals actual expected
   | actual == expected = return ()
-  | otherwise = compileError $ "Expected " ++ show expected ++ " but got " ++ show actual
+  | otherwise = compileErrorM $ "Expected " ++ show expected ++ " but got " ++ show actual
 
 loadFile :: String -> IO String
 loadFile f = readFile ("src" </> "Test" </> f)

@@ -90,7 +90,7 @@ setInternalFunctions r t fs = foldr update (return start) fs where
     case n `Map.lookup` fa' of
          Nothing -> return $ Map.insert n f fa'
          (Just f0@(ScopedFunction c2 _ _ _ _ _ _ _ ms2)) -> do
-           flip reviseError ("In function merge:\n---\n" ++ show f0 ++
+           flip reviseErrorM ("In function merge:\n---\n" ++ show f0 ++
                              "\n  ->\n" ++ show f ++ "\n---\n") $ do
              f0' <- parsedToFunctionType f0
              f' <- parsedToFunctionType f
@@ -110,7 +110,7 @@ pairProceduresToFunctions fa ps = do
       case epName p `Map.lookup` pa' of
            Nothing -> return ()
            -- TODO: The error might show things in the wrong order.
-           (Just p0) -> compileError $ "Procedure " ++ show (epName p) ++
+           (Just p0) -> compileErrorM $ "Procedure " ++ show (epName p) ++
                                        formatFullContextBrace (epContext p) ++
                                        " is already defined" ++
                                        formatFullContextBrace (epContext p0)
@@ -120,15 +120,15 @@ pairProceduresToFunctions fa ps = do
       p <- getPair (n `Map.lookup` fa2) (n `Map.lookup` pa)
       return (p:ps2')
     getPair (Just f) Nothing =
-      compileError $ "Function " ++ show (sfName f) ++
+      compileErrorM $ "Function " ++ show (sfName f) ++
                      formatFullContextBrace (sfContext f) ++
                      " has no procedure definition"
     getPair Nothing (Just p) =
-      compileError $ "Procedure " ++ show (epName p) ++
+      compileErrorM $ "Procedure " ++ show (epName p) ++
                      formatFullContextBrace (epContext p) ++
                      " does not correspond to a function"
     getPair (Just f) (Just p) = do
-      processPairs_ alwaysPair (sfArgs f) (avNames $ epArgs p) `reviseError`
+      processPairs_ alwaysPair (sfArgs f) (avNames $ epArgs p) `reviseErrorM`
         ("Procedure for " ++ show (sfName f) ++
          formatFullContextBrace (avContext $ epArgs p) ++
          " has the wrong number of arguments" ++
@@ -136,7 +136,7 @@ pairProceduresToFunctions fa ps = do
       if isUnnamedReturns (epReturns p)
          then return ()
          else do
-           processPairs_ alwaysPair (sfReturns f) (nrNames $ epReturns p) `reviseError`
+           processPairs_ alwaysPair (sfReturns f) (nrNames $ epReturns p) `reviseErrorM`
              ("Procedure for " ++ show (sfName f) ++
               formatFullContextBrace (nrContext $ epReturns p) ++
               " has the wrong number of returns" ++
@@ -153,7 +153,7 @@ mapMembers ms = foldr update (return Map.empty) ms where
     case dmName m `Map.lookup` ma' of
          Nothing ->  return ()
          -- TODO: The error might show things in the wrong order.
-         (Just m0) -> compileError $ "Member " ++ show (dmName m) ++
+         (Just m0) -> compileErrorM $ "Member " ++ show (dmName m) ++
                                      formatFullContextBrace (dmContext m) ++
                                      " is already defined" ++
                                      formatFullContextBrace (vvContext m0)

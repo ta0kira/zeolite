@@ -43,7 +43,7 @@ parseInternalSource :: CompileErrorM m =>
   (FilePath,String) -> m ([Pragma SourcePos],[AnyCategory SourcePos],[DefinedCategory SourcePos])
 parseInternalSource (f,s) = unwrap parsed where
   parsed = parse (between optionalSpace endOfDoc withPragmas) f s
-  unwrap (Left e)  = compileError (show e)
+  unwrap (Left e)  = compileErrorM (show e)
   unwrap (Right t) = return t
   withPragmas = do
     pragmas <- parsePragmas internalSourcePragmas
@@ -54,7 +54,7 @@ parseInternalSource (f,s) = unwrap parsed where
 parsePublicSource :: CompileErrorM m => (FilePath,String) -> m ([Pragma SourcePos],[AnyCategory SourcePos])
 parsePublicSource (f,s) = unwrap parsed where
   parsed = parse (between optionalSpace endOfDoc withPragmas) f s
-  unwrap (Left e)  = compileError (show e)
+  unwrap (Left e)  = compileErrorM (show e)
   unwrap (Right t) = return t
   withPragmas = do
     pragmas <- parsePragmas publicSourcePragmas
@@ -65,7 +65,7 @@ parsePublicSource (f,s) = unwrap parsed where
 parseTestSource :: CompileErrorM m => (FilePath,String) -> m ([Pragma SourcePos],[IntegrationTest SourcePos])
 parseTestSource (f,s) = unwrap parsed where
   parsed = parse (between optionalSpace endOfDoc withPragmas) f s
-  unwrap (Left e)  = compileError (show e)
+  unwrap (Left e)  = compileErrorM (show e)
   unwrap (Right t) = return t
   withPragmas = do
     pragmas <- parsePragmas testSourcePragmas

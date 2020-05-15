@@ -140,7 +140,7 @@ compileLanguageModule (LanguageModule ns0 ns1 ns2 cs0 ps0 ts0 cs1 ps1 ts1 ex em)
       -- Ensures that there isn't an inavertent collision when resolving
       -- dependencies for the module later on.
       tmTesting' <- tmTesting
-      _ <- includeNewTypes tmTesting' cs2 `reviseError` "In a module source that is conditionally public"
+      _ <- includeNewTypes tmTesting' cs2 `reviseErrorM` "In a module source that is conditionally public"
       hxx <- collectAllOrErrorM $ map (compileCategoryDeclaration tm' ns4) cs2
       let interfaces = filter (not . isValueConcrete) cs2
       cxx1 <- collectAllOrErrorM $ map compileInterfaceDefinition interfaces
@@ -158,7 +158,7 @@ compileLanguageModule (LanguageModule ns0 ns1 ns2 cs0 ps0 ts0 cs1 ps1 ts1 ex em)
     checkLocal cs2 d =
       if dcName d `Set.member` cs2
          then return ()
-         else compileError ("Definition for " ++ show (dcName d) ++
+         else compileErrorM ("Definition for " ++ show (dcName d) ++
                             formatFullContextBrace (dcContext d) ++
                             " does not correspond to a visible category in this module")
     checkDefined dm ex2 = mergeAllM . map (checkSingle dm (Set.fromList ex2))
@@ -167,21 +167,21 @@ compileLanguageModule (LanguageModule ns0 ns1 ns2 cs0 ps0 ts0 cs1 ps1 ts1 ex em)
            (False,Just [_]) -> return ()
            (True,Nothing)   -> return ()
            (True,Just [d]) ->
-             compileError ("Category " ++ show (getCategoryName t) ++
+             compileErrorM ("Category " ++ show (getCategoryName t) ++
                            formatFullContextBrace (getCategoryContext t) ++
                            " was declared external but is also defined at " ++ formatFullContext (dcContext d))
            (False,Nothing) ->
-             compileError ("Category " ++ show (getCategoryName t) ++
+             compileErrorM ("Category " ++ show (getCategoryName t) ++
                            formatFullContextBrace (getCategoryContext t) ++
                            " has not been defined or declared external")
            (_,Just ds) ->
-             flip reviseError ("Category " ++ show (getCategoryName t) ++
+             flip reviseErrorM ("Category " ++ show (getCategoryName t) ++
                                formatFullContextBrace (getCategoryContext t) ++
                                " is defined " ++ show (length ds) ++ " times") $
-               mergeAllM $ map (\d -> compileError $ "Defined at " ++ formatFullContext (dcContext d)) ds
+               mergeAllM $ map (\d -> compileErrorM $ "Defined at " ++ formatFullContext (dcContext d)) ds
     checkSupefluous es2
       | null es2 = return ()
-      | otherwise = compileError $ "External categories either not concrete or not present: " ++
+      | otherwise = compileErrorM $ "External categories either not concrete or not present: " ++
                                    intercalate ", " (map show es2)
 
 compileTestMain :: (Show c, CompileErrorM m, MergeableM m) =>
@@ -206,8 +206,8 @@ compileModuleMain (LanguageModule ns0 ns1 ns2 cs0 ps0 _ cs1 ps1 _ _ em) xa n f =
     reconcile [_] = return ()
     reconcile []  = compileErrorM $ "No matches for main category " ++ show n ++ " ($TestsOnly$ sources excluded)"
     reconcile ds  =
-      flip reviseError ("Multiple matches for main category " ++ show n) $
-        mergeAllM $ map (\d -> compileError $ "Defined at " ++ formatFullContext (dcContext d)) ds
+      flip reviseErrorM ("Multiple matches for main category " ++ show n) $
+        mergeAllM $ map (\d -> compileErrorM $ "Defined at " ++ formatFullContext (dcContext d)) ds
 
 compileCategoryDeclaration :: (Show c, CompileErrorM m, MergeableM m) =>
   CategoryMap c -> [Namespace] -> AnyCategory c -> m CxxOutput
@@ -265,7 +265,7 @@ compileConcreteTemplate :: (Show c, CompileErrorM m, MergeableM m) =>
   CategoryMap c -> CategoryName -> m CxxOutput
 compileConcreteTemplate ta n = do
   (_,t) <- getConcreteCategory ta ([],n)
-  compileConcreteDefinition ta Map.empty [] Nothing (defined t) `reviseError` ("In generated template for " ++ show n) where
+  compileConcreteDefinition ta Map.empty [] Nothing (defined t) `reviseErrorM` ("In generated template for " ++ show n) where
     defined t = DefinedCategory {
         dcContext = [],
         dcName = getCategoryName t,
@@ -356,7 +356,7 @@ compileConcreteDefinition ta em ns rs dd@(DefinedCategory c n pi _ _ fi ms _ fs)
       [DefinedMember c] -> m ()
     disallowTypeMembers tm =
       mergeAllM $ flip map tm
-        (\m -> compileError $ "Member " ++ show (dmName m) ++
+        (\m -> compileErrorM $ "Member " ++ show (dmName m) ++
                               " is not allowed to be @type-scoped" ++
                               formatFullContextBrace (dmContext m))
     createParams = mergeAllM $ map createParam pi
@@ -408,11 +408,11 @@ compileConcreteDefinition ta em ns rs dd@(DefinedCategory c n pi _ _ fi ms _ fs)
       return $ onlyCode $ valueName n ++ "(" ++ allArgs ++ ") : " ++ allInit ++ " {}"
     unwrappedArg i m = writeStoredVariable (dmType m) (UnwrappedSingle $ "args.At(" ++ show i ++ ")")
     createMember r filters m = do
-      validateGeneralInstance r filters (vtType $ dmType m) `reviseError`
+      validateGeneralInstance r filters (vtType $ dmType m) `reviseErrorM`
         ("In creation of " ++ show (dmName m) ++ " at " ++ formatFullContext (dmContext m))
       return $ onlyCode $ variableStoredType (dmType m) ++ " " ++ variableName (dmName m) ++ ";"
     createMemberLazy r filters m = do
-      validateGeneralInstance r filters (vtType $ dmType m) `reviseError`
+      validateGeneralInstance r filters (vtType $ dmType m) `reviseErrorM`
         ("In creation of " ++ show (dmName m) ++ " at " ++ formatFullContext (dmContext m))
       return $ onlyCode $ variableLazyType (dmType m) ++ " " ++ variableName (dmName m) ++ ";"
     initMember (DefinedMember _ _ _ _ Nothing) = return mergeDefault
@@ -771,7 +771,7 @@ createMainCommon n (CompiledData req out) =
 
 createMainFile :: (Show c, CompileErrorM m, MergeableM m) =>
   CategoryMap c -> ExprMap c -> CategoryName -> FunctionName -> m (Namespace,[String])
-createMainFile tm em n f = flip reviseError ("In the creation of the main binary procedure") $ do
+createMainFile tm em n f = flip reviseErrorM ("In the creation of the main binary procedure") $ do
   ca <- fmap indentCompiled (compileMainProcedure tm em expr)
   let file = createMainCommon "main" ca
   (_,t) <- getConcreteCategory tm ([],n)
@@ -782,7 +782,7 @@ createMainFile tm em n f = flip reviseError ("In the creation of the main binary
 
 createTestFile :: (Show c, CompileErrorM m, MergeableM m) =>
   CategoryMap c -> ExprMap c  -> Expression c -> m ([CategoryName],[String])
-createTestFile tm em e = flip reviseError ("In the creation of the test binary procedure") $ do
+createTestFile tm em e = flip reviseErrorM ("In the creation of the test binary procedure") $ do
   ca@(CompiledData req _) <- fmap indentCompiled (compileMainProcedure tm em e)
   let file = createMainCommon "test" ca
   return (Set.toList req,file)

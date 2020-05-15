@@ -63,10 +63,10 @@ checkParsesAs p s m = return $ do
   check parsed
   e <- parsed
   when (e /= m) $
-    compileError $ show s ++ " does not parse as " ++ show m ++ ":\n" ++ show e
+    compileErrorM $ show s ++ " does not parse as " ++ show m ++ ":\n" ++ show e
   where
     check c
-      | isCompileError c = compileError $ "Parse '" ++ s ++ "':\n" ++ show (getCompileError c)
+      | isCompileErrorM c = compileErrorM $ "Parse '" ++ s ++ "':\n" ++ show (getCompileError c)
       | otherwise = return ()
 
 checkParseFail :: Show a => Parser a -> [Char] -> IO (CompileInfo ())
@@ -75,6 +75,6 @@ checkParseFail p s = do
   return $ check parsed
   where
     check c
-      | isCompileError c = return ()
-      | otherwise = compileError $ "Parse '" ++ s ++ "': Expected failure but got\n" ++
+      | isCompileErrorM c = return ()
+      | otherwise = compileErrorM $ "Parse '" ++ s ++ "': Expected failure but got\n" ++
                                    show (getCompileSuccess c) ++ "\n"

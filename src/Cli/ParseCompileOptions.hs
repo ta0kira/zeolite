@@ -120,7 +120,7 @@ parseCompileOptions = parseAll emptyCompileOptions . zip ([1..] :: [Int]) where
   parseAll co os = do
     (os',co') <- parseSingle co os
     parseAll co' os'
-  argError n o m = compileError $ "Argument " ++ show n ++ " (\"" ++ o ++ "\"): " ++ m
+  argError n o m = compileErrorM $ "Argument " ++ show n ++ " (\"" ++ o ++ "\"): " ++ m
   checkPathName n f o
     | f =~ "^(/[^/]+|[^-/][^/]*)(/[^/]+)*$" = return ()
     | null o    = argError n f "Invalid file path."
@@ -246,16 +246,16 @@ validateCompileOptions co@(CompileOptions h is is2 ds _ _ _ m _)
   | h /= HelpNotNeeded = return co
 
   | (not $ null $ is ++ is2) && (isExecuteTests m) =
-    compileError "Include paths (-i/-I) are not allowed in test mode (-t)."
+    compileErrorM "Include paths (-i/-I) are not allowed in test mode (-t)."
 
   | (not $ null $ is ++ is2) && (isCompileRecompile m) =
-    compileError "Include paths (-i/-I) are not allowed in recompile mode (-r/-R)."
+    compileErrorM "Include paths (-i/-I) are not allowed in recompile mode (-r/-R)."
 
   | (length ds /= 0) && (isCompileFast m) =
-    compileError "Input path is not allowed with fast mode (--fast)."
+    compileErrorM "Input path is not allowed with fast mode (--fast)."
   | null ds && (not $ isCompileFast m) =
-    compileError "Please specify at least one input path."
+    compileErrorM "Please specify at least one input path."
   | (length ds > 1) && (not $ isCompileRecompile m) && (not $ isExecuteTests m) =
-    compileError "Multiple input paths are only allowed with recompile mode (-r/-R) and test mode (-t)."
+    compileErrorM "Multiple input paths are only allowed with recompile mode (-r/-R) and test mode (-t)."
 
   | otherwise = return co

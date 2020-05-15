@@ -70,28 +70,28 @@ validatateFunctionType r fm vm (FunctionType as rs ps fa) = do
   where
     allVariances = Map.union vm (Map.fromList $ zip (pValues ps) (repeat Invariant))
     checkCount xa@(x:_:_) =
-      compileError $ "Param " ++ show x ++ " occurs " ++ show (length xa) ++ " times"
+      compileErrorM $ "Param " ++ show x ++ " occurs " ++ show (length xa) ++ " times"
     checkCount _ = return ()
     checkHides n =
       when (n `Map.member` fm) $
-        compileError $ "Param " ++ show n ++ " hides another param in a higher scope"
+        compileErrorM $ "Param " ++ show n ++ " hides another param in a higher scope"
     checkFilterType fa2 (n,f) =
-      validateTypeFilter r fa2 f `reviseError` ("In filter " ++ show n ++ " " ++ show f)
+      validateTypeFilter r fa2 f `reviseErrorM` ("In filter " ++ show n ++ " " ++ show f)
     checkFilterVariance (n,f@(TypeFilter FilterRequires t)) =
-      validateInstanceVariance r allVariances Contravariant (SingleType t) `reviseError`
+      validateInstanceVariance r allVariances Contravariant (SingleType t) `reviseErrorM`
         ("In filter " ++ show n ++ " " ++ show f)
     checkFilterVariance (n,f@(TypeFilter FilterAllows t)) =
-      validateInstanceVariance r allVariances Covariant (SingleType t) `reviseError`
+      validateInstanceVariance r allVariances Covariant (SingleType t) `reviseErrorM`
         ("In filter " ++ show n ++ " " ++ show f)
     checkFilterVariance (n,f@(DefinesFilter t)) =
-      validateDefinesVariance r allVariances Contravariant t `reviseError`
+      validateDefinesVariance r allVariances Contravariant t `reviseErrorM`
         ("In filter " ++ show n ++ " " ++ show f)
-    checkArg fa2 ta@(ValueType _ t) = flip reviseError ("In argument " ++ show ta) $ do
-      when (isWeakValue ta) $ compileError "Weak values not allowed as argument types"
+    checkArg fa2 ta@(ValueType _ t) = flip reviseErrorM ("In argument " ++ show ta) $ do
+      when (isWeakValue ta) $ compileErrorM "Weak values not allowed as argument types"
       validateGeneralInstance r fa2 t
       validateInstanceVariance r allVariances Contravariant t
-    checkReturn fa2 ta@(ValueType _ t) = flip reviseError ("In return " ++ show ta) $ do
-      when (isWeakValue ta) $ compileError "Weak values not allowed as return types"
+    checkReturn fa2 ta@(ValueType _ t) = flip reviseErrorM ("In return " ++ show ta) $ do
+      when (isWeakValue ta) $ compileErrorM "Weak values not allowed as return types"
       validateGeneralInstance r fa2 t
       validateInstanceVariance r allVariances Covariant t
 

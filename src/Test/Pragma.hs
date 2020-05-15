@@ -99,10 +99,10 @@ checkParsesAs s p m = return $ do
   check parsed
   e <- parsed
   when (not $ m e) $
-    compileError $ "No match in '" ++ s ++ "':\n" ++ show e
+    compileErrorM $ "No match in '" ++ s ++ "':\n" ++ show e
   where
     check c
-      | isCompileError c = compileError $ "Parse '" ++ s ++ "':\n" ++ show (getCompileError c)
+      | isCompileErrorM c = compileErrorM $ "Parse '" ++ s ++ "':\n" ++ show (getCompileError c)
       | otherwise = return ()
 
 checkParseError :: String -> String -> Parser (Pragma SourcePos) -> IO (CompileInfo ())
@@ -111,9 +111,9 @@ checkParseError s m p = return $ do
   check parsed
   where
     check c
-      | isCompileError c = do
+      | isCompileErrorM c = do
           let text = show (getCompileError c)
           when (not $ text =~ m) $
-            compileError $ "Expected pattern " ++ show m ++ " in error output but got\n" ++ text
+            compileErrorM $ "Expected pattern " ++ show m ++ " in error output but got\n" ++ text
       | otherwise =
-          compileError $ "Expected write failure but got\n" ++ show (getCompileSuccess c)
+          compileErrorM $ "Expected write failure but got\n" ++ show (getCompileSuccess c)

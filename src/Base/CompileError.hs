@@ -21,7 +21,6 @@ limitations under the License.
 {-# LANGUAGE Safe #-}
 
 module Base.CompileError (
-  CompileError(..),
   CompileErrorM(..),
   CompileErrorT(..),
 ) where
@@ -40,12 +39,6 @@ import Control.Monad.Fail
 #endif
 
 
-class CompileError a where
-  compileError :: String -> a
-  isCompileError :: a -> Bool
-  reviseError :: a -> String -> a
-  reviseError e _ = e
-
 -- For some GHC versions, pattern-matching failures require MonadFail.
 #if MIN_VERSION_base(4,9,0)
 class (Monad m, MonadFail m) => CompileErrorM m where
@@ -59,11 +52,6 @@ class Monad m => CompileErrorM m where
   reviseErrorM :: m a -> String -> m a
   reviseErrorM e _ = e
   compileWarningM :: String -> m ()
-
-instance CompileErrorM m => CompileError (m a) where
-  compileError   = compileErrorM
-  isCompileError = isCompileErrorM
-  reviseError    = reviseErrorM
 
 class MonadTrans t => CompileErrorT t where
   compileErrorT :: Monad m => String -> t m a

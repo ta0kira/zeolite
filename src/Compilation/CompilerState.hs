@@ -149,7 +149,7 @@ instance Show c => Show (VariableValue c) where
   show (VariableValue c _ t _) = show t ++ formatFullContextBrace c
 
 reviseErrorStateT :: (CompileErrorM m) => CompilerState a m b -> String -> CompilerState a m b
-reviseErrorStateT x s = mapStateT (`reviseError` s) x
+reviseErrorStateT x s = mapStateT (`reviseErrorM` s) x
 
 csCurrentScope :: CompilerContext c m s a => CompilerState a m SymbolScope
 csCurrentScope = fmap ccCurrentScope get >>= lift

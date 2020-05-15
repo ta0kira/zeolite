@@ -48,7 +48,7 @@ class ConfigFormat a where
 autoReadConfig :: (ConfigFormat a, CompileErrorM m) => String -> String -> m a
 autoReadConfig f s  = unwrap parsed where
   parsed = parse (between optionalSpace endOfDoc readConfig) f s
-  unwrap (Left e)  = compileError (show e)
+  unwrap (Left e)  = compileErrorM (show e)
   unwrap (Right t) = return t
 
 autoWriteConfig ::  (ConfigFormat a, CompileErrorM m) => a -> m String
@@ -73,7 +73,7 @@ prependFirst s0 _      = [s0]
 validateCategoryName :: CompileErrorM m => CategoryName -> m ()
 validateCategoryName c =
     when (not $ show c =~ "^[A-Z][A-Za-z0-9]*$") $
-      compileError $ "Invalid category name: \"" ++ show c ++ "\""
+      compileErrorM $ "Invalid category name: \"" ++ show c ++ "\""
 
 parseCategoryName :: Parser CategoryName
 parseCategoryName = sourceParser :: Parser CategoryName
@@ -81,7 +81,7 @@ parseCategoryName = sourceParser :: Parser CategoryName
 validateFunctionName :: CompileErrorM m => FunctionName -> m ()
 validateFunctionName f =
     when (not $ show f =~ "^[a-z][A-Za-z0-9]*$") $
-      compileError $ "Invalid function name: \"" ++ show f ++ "\""
+      compileErrorM $ "Invalid function name: \"" ++ show f ++ "\""
 
 parseFunctionName :: Parser FunctionName
 parseFunctionName = sourceParser :: Parser FunctionName
@@ -89,7 +89,7 @@ parseFunctionName = sourceParser :: Parser FunctionName
 validateHash :: CompileErrorM m => VersionHash -> m ()
 validateHash h =
     when (not $ show h =~ "^[A-Za-z0-9]+$") $
-      compileError $ "Version hash must be a hex string: \"" ++ show h ++ "\""
+      compileErrorM $ "Version hash must be a hex string: \"" ++ show h ++ "\""
 
 parseHash :: Parser VersionHash
 parseHash = labeled "version hash" $ sepAfter (fmap VersionHash $ many1 hexDigit)
@@ -97,7 +97,7 @@ parseHash = labeled "version hash" $ sepAfter (fmap VersionHash $ many1 hexDigit
 maybeShowNamespace :: CompileErrorM m => String -> Namespace -> m [String]
 maybeShowNamespace l (StaticNamespace ns) = do
   when (not $ ns =~ "^[A-Za-z][A-Za-z0-9_]*$") $
-    compileError $ "Invalid category namespace: \"" ++ ns ++ "\""
+    compileErrorM $ "Invalid category namespace: \"" ++ ns ++ "\""
   return [l ++ " " ++ ns]
 maybeShowNamespace _ _ = return []
 
@@ -280,7 +280,7 @@ instance ConfigFormat ModuleConfig where
   writeConfig m = do
     extra    <- fmap concat $ collectAllOrErrorM $ map writeConfig $ rmExtraFiles m
     mode <- writeConfig (rmMode m)
-    when (not $ null $ rmExprMap m) $ compileError "Only empty expression maps are allowed when writing"
+    when (not $ null $ rmExprMap m) $ compileErrorM "Only empty expression maps are allowed when writing"
     return $ [
         "root: " ++ show (rmRoot m),
         "path: " ++ show (rmPath m),
@@ -370,7 +370,7 @@ instance ConfigFormat CompileMode where
         "}"
       ]
   writeConfig CompileUnspecified = writeConfig (CompileIncremental [])
-  writeConfig _ = compileError "Invalid compile mode"
+  writeConfig _ = compileErrorM "Invalid compile mode"
 
 parseExprMacro :: Parser (String,Expression SourcePos)
 parseExprMacro = do

@@ -335,9 +335,9 @@ tests = [
 checkWriteThenRead :: (Eq a, Show a, ConfigFormat a) => a -> IO (CompileInfo ())
 checkWriteThenRead m = return $ do
   text <- fmap spamComments $ autoWriteConfig m
-  m' <- autoReadConfig "(string)" text `reviseError` ("Serialized >>>\n\n" ++ text ++ "\n<<< Serialized\n\n")
+  m' <- autoReadConfig "(string)" text `reviseErrorM` ("Serialized >>>\n\n" ++ text ++ "\n<<< Serialized\n\n")
   when (m' /= m) $
-    compileError $ "Failed to match after write/read\n" ++
+    compileErrorM $ "Failed to match after write/read\n" ++
                    "Before:\n" ++ show m ++ "\n" ++
                    "After:\n" ++ show m' ++ "\n" ++
                    "Intermediate:\n" ++ text where
@@ -349,12 +349,12 @@ checkWriteFail p m = return $ do
   check m'
   where
     check c
-      | isCompileError c = do
+      | isCompileErrorM c = do
           let text = show (getCompileError c)
           when (not $ text =~ p) $
-            compileError $ "Expected pattern " ++ show p ++ " in error output but got\n" ++ text
+            compileErrorM $ "Expected pattern " ++ show p ++ " in error output but got\n" ++ text
       | otherwise =
-          compileError $ "Expected write failure but got\n" ++ getCompileSuccess c
+          compileErrorM $ "Expected write failure but got\n" ++ getCompileSuccess c
 
 checkParsesAs :: (Show a, ConfigFormat a) => String -> (a -> Bool) -> IO (CompileInfo ())
 checkParsesAs f m = do
@@ -363,8 +363,8 @@ checkParsesAs f m = do
   return $ check parsed contents
   where
     check x contents = do
-      x' <- x `reviseError` ("While parsing " ++ f)
+      x' <- x `reviseErrorM` ("While parsing " ++ f)
       when (not $ m x') $
-        compileError $ "Failed to match after write/read\n" ++
+        compileErrorM $ "Failed to match after write/read\n" ++
                        "Unparsed:\n" ++ contents ++ "\n" ++
                        "Parsed:\n" ++ show x' ++ "\n"

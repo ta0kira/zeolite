@@ -43,4 +43,4 @@ main = runAllTests $ concat [
   ]
 
 labelWith :: CompileErrorM m => String -> [IO (m ())] -> [IO (m ())]
-labelWith s ts = map (\(n,t) -> fmap (`reviseError` ("In " ++ s ++ " (#" ++ show n ++ "):")) t) (zip ([1..] :: [Int]) ts)
+labelWith s ts = map (\(n,t) -> fmap (`reviseErrorM` ("In " ++ s ++ " (#" ++ show n ++ "):")) t) (zip ([1..] :: [Int]) ts)

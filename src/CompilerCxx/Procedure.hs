@@ -151,7 +151,7 @@ compileCondition ctx c e = do
       where
         checkCondition (Positional [t]) | t == boolRequiredValue = return ()
         checkCondition (Positional ts) =
-          compileError $ "Conditionals must have exactly one Bool return but found {" ++
+          compileErrorM $ "Conditionals must have exactly one Bool return but found {" ++
                          intercalate "," (map show ts) ++ "}"
 
 -- Returns the state so that returns can be properly checked for if/elif/else.
@@ -192,7 +192,7 @@ compileStatement (ExplicitReturn c es) = do
       autoPositionalCleanup e
     -- Multi-expression => must all be singles.
     getReturn rs = do
-      lift $ mergeAllM (map checkArity $ zip ([0..] :: [Int]) $ map (fst . snd) rs) `reviseError`
+      lift $ mergeAllM (map checkArity $ zip ([0..] :: [Int]) $ map (fst . snd) rs) `reviseErrorM`
         ("In return at " ++ formatFullContext c)
       csRegisterReturn c $ Just $ Positional $ map (head . pValues . fst . snd) rs
       let e = OpaqueMulti $ "ReturnTuple(" ++ intercalate "," (map (useAsUnwrapped . snd . snd) rs) ++ ")"
@@ -200,30 +200,30 @@ compileStatement (ExplicitReturn c es) = do
       autoPositionalCleanup e
     checkArity (_,Positional [_]) = return ()
     checkArity (i,Positional ts)  =
-      compileError $ "Return position " ++ show i ++ " has " ++ show (length ts) ++ " values but should have 1"
+      compileErrorM $ "Return position " ++ show i ++ " has " ++ show (length ts) ++ " values but should have 1"
 compileStatement (LoopBreak c) = do
   loop <- csGetLoop
   case loop of
        NotInLoop ->
-         lift $ compileError $ "Using break outside of while is no allowed" ++ formatFullContextBrace c
+         lift $ compileErrorM $ "Using break outside of while is no allowed" ++ formatFullContextBrace c
        _ -> return ()
   csWrite ["break;"]
 compileStatement (LoopContinue c) = do
   loop <- csGetLoop
   case loop of
        NotInLoop ->
-         lift $ compileError $ "Using continue outside of while is no allowed" ++ formatFullContextBrace c
+         lift $ compileErrorM $ "Using continue outside of while is no allowed" ++ formatFullContextBrace c
        _ -> return ()
   csWrite $ ["{"] ++ lsUpdate loop ++ ["}","continue;"]
 compileStatement (FailCall c e) = do
   csRequiresTypes (Set.fromList [BuiltinFormatted,BuiltinString])
   e' <- compileExpression e
   when (length (pValues $ fst e') /= 1) $
-    lift $ compileError $ "Expected single return in argument" ++ formatFullContextBrace c
+    lift $ compileErrorM $ "Expected single return in argument" ++ formatFullContextBrace c
   let (Positional [t0],e0) = e'
   r <- csResolver
   fa <- csAllFilters
-  lift $ (checkValueTypeMatch r fa t0 formattedRequiredValue) `reviseError`
+  lift $ (checkValueTypeMatch r fa t0 formattedRequiredValue) `reviseErrorM`
     ("In fail call at " ++ formatFullContext c)
   csSetNoReturn
   maybeSetTrace c
@@ -258,16 +258,16 @@ compileStatement (Assignment c as e) = do
     createVariable r fa (CreateVariable c2 t1 n) t2 = do
       -- TODO: Call csRequiresTypes for t1. (Maybe needs a helper function.)
       lift $ mergeAllM [validateGeneralInstance r fa (vtType t1),
-                        checkValueTypeMatch r fa t2 t1] `reviseError`
+                        checkValueTypeMatch r fa t2 t1] `reviseErrorM`
         ("In creation of " ++ show n ++ " at " ++ formatFullContext c2)
       csAddVariable c2 n (VariableValue c2 LocalScope t1 True)
       csWrite [variableStoredType t1 ++ " " ++ variableName n ++ ";"]
     createVariable r fa (ExistingVariable (InputValue c2 n)) t2 = do
       (VariableValue _ _ t1 w) <- csGetVariable c2 n
-      when (not w) $ lift $ compileError $ "Cannot assign to read-only variable " ++
+      when (not w) $ lift $ compileErrorM $ "Cannot assign to read-only variable " ++
                                            show n ++ formatFullContextBrace c2
       -- TODO: Also show original context.
-      lift $ (checkValueTypeMatch r fa t2 t1) `reviseError`
+      lift $ (checkValueTypeMatch r fa t2 t1) `reviseErrorM`
         ("In assignment to " ++ show n ++ " at " ++ formatFullContext c2)
       csUpdateAssigned n
     createVariable _ _ _ _ = return ()
@@ -296,11 +296,11 @@ compileLazyInit (DefinedMember _ _ _ _ Nothing) = return mergeDefault
 compileLazyInit (DefinedMember c _ t1 n (Just e)) = do
   (ts,e') <- compileExpression e
   when (length (pValues ts) /= 1) $
-    lift $ compileError $ "Expected single return in initializer" ++ formatFullContextBrace (getExpressionContext e)
+    lift $ compileErrorM $ "Expected single return in initializer" ++ formatFullContextBrace (getExpressionContext e)
   r <- csResolver
   fa <- csAllFilters
   let Positional [t2] = ts
-  lift $ (checkValueTypeMatch r fa t2 t1) `reviseError`
+  lift $ (checkValueTypeMatch r fa t2 t1) `reviseErrorM`
     ("In initialization of " ++ show n ++ " at " ++ formatFullContext c)
   csWrite [variableName n ++ "([this]() { return " ++ writeStoredVariable t1 e' ++ "; })"]
 
@@ -418,7 +418,7 @@ compileScopedBlock s = do
   csInheritReturns [ctxCl]
   where
     createVariable r fa (c,t,n) = do
-      lift $ validateGeneralInstance r fa (vtType t) `reviseError`
+      lift $ validateGeneralInstance r fa (vtType t) `reviseErrorM`
         ("In creation of " ++ show n ++ " at " ++ formatFullContext c)
       csWrite [variableStoredType t ++ " " ++ variableName n ++ ";"]
     showVariable (c,t,n) = do
@@ -457,15 +457,15 @@ compileExpression = compile where
     return (Positional [charRequiredValue],UnboxedPrimitive PrimChar $ "PrimChar('" ++ escapeChar l ++ "')")
   compile (Literal (IntegerLiteral c True l)) = do
     csRequiresTypes (Set.fromList [BuiltinInt])
-    when (l > 2^(64 :: Integer) - 1) $ lift $ compileError $
+    when (l > 2^(64 :: Integer) - 1) $ lift $ compileErrorM $
       "Literal " ++ show l ++ formatFullContextBrace c ++ " is greater than the max value for 64-bit unsigned"
     let l' = if l > 2^(63 :: Integer) - 1 then l - 2^(64 :: Integer) else l
     return (Positional [intRequiredValue],UnboxedPrimitive PrimInt $ "PrimInt(" ++ show l' ++ ")")
   compile (Literal (IntegerLiteral c False l)) = do
     csRequiresTypes (Set.fromList [BuiltinInt])
-    when (l > 2^(63 :: Integer) - 1) $ lift $ compileError $
+    when (l > 2^(63 :: Integer) - 1) $ lift $ compileErrorM $
       "Literal " ++ show l ++ formatFullContextBrace c ++ " is greater than the max value for 64-bit signed"
-    when ((-l) > (2^(63 :: Integer) - 2)) $ lift $ compileError $
+    when ((-l) > (2^(63 :: Integer) - 2)) $ lift $ compileErrorM $
       "Literal " ++ show l ++ formatFullContextBrace c ++ " is less than the min value for 64-bit signed"
     return (Positional [intRequiredValue],UnboxedPrimitive PrimInt $ "PrimInt(" ++ show l ++ ")")
   compile (Literal (DecimalLiteral _ l e)) = do
@@ -503,11 +503,11 @@ compileExpression = compile where
         | o == "!" = doNot t e2
         | o == "-" = doNeg t e2
         | o == "~" = doComp t e2
-        | otherwise = lift $ compileError $ "Unknown unary operator \"" ++ o ++ "\" " ++
+        | otherwise = lift $ compileErrorM $ "Unknown unary operator \"" ++ o ++ "\" " ++
                                             formatFullContextBrace c
       doNot t e2 = do
         when (t /= boolRequiredValue) $
-          lift $ compileError $ "Cannot use " ++ show t ++ " with unary ! operator" ++
+          lift $ compileErrorM $ "Cannot use " ++ show t ++ " with unary ! operator" ++
                                 formatFullContextBrace c
         return $ (Positional [boolRequiredValue],UnboxedPrimitive PrimBool $ "!" ++ useAsUnboxed PrimBool e2)
       doNeg t e2
@@ -515,12 +515,12 @@ compileExpression = compile where
                                             UnboxedPrimitive PrimInt $ "-" ++ useAsUnboxed PrimInt e2)
         | t == floatRequiredValue = return $ (Positional [floatRequiredValue],
                                              UnboxedPrimitive PrimFloat $ "-" ++ useAsUnboxed PrimFloat e2)
-        | otherwise = lift $ compileError $ "Cannot use " ++ show t ++ " with unary - operator" ++
+        | otherwise = lift $ compileErrorM $ "Cannot use " ++ show t ++ " with unary - operator" ++
                                             formatFullContextBrace c
       doComp t e2
         | t == intRequiredValue = return $ (Positional [intRequiredValue],
                                             UnboxedPrimitive PrimInt $ "~" ++ useAsUnboxed PrimInt e2)
-        | otherwise = lift $ compileError $ "Cannot use " ++ show t ++ " with unary ~ operator" ++
+        | otherwise = lift $ compileErrorM $ "Cannot use " ++ show t ++ " with unary ~ operator" ++
                                             formatFullContextBrace c
   compile (InitializeValue c t ps es) = do
     es' <- sequence $ map compileExpression $ pValues es
@@ -542,13 +542,13 @@ compileExpression = compile where
       getValues [(Positional ts,e)] = return (ts,useAsArgs e)
       -- Multi-expression => must all be singles.
       getValues rs = do
-        lift $ mergeAllM (map checkArity $ zip ([0..] :: [Int]) $ map fst rs) `reviseError`
+        lift $ mergeAllM (map checkArity $ zip ([0..] :: [Int]) $ map fst rs) `reviseErrorM`
           ("In return at " ++ formatFullContext c)
         return (map (head . pValues . fst) rs,
                 "ArgTuple(" ++ intercalate ", " (map (useAsUnwrapped . snd) rs) ++ ")")
       checkArity (_,Positional [_]) = return ()
       checkArity (i,Positional ts)  =
-        compileError $ "Initializer position " ++ show i ++ " has " ++ show (length ts) ++ " values but should have 1"
+        compileErrorM $ "Initializer position " ++ show i ++ " has " ++ show (length ts) ++ " values but should have 1"
   compile (InfixExpression c e1 (FunctionOperator _ (FunctionSpec _ (CategoryFunction c2 cn) fn ps)) e2) =
     compile (Expression c (CategoryCall c2 cn (FunctionCall c fn ps (Positional [e1,e2]))) [])
   compile (InfixExpression c e1 (FunctionOperator _ (FunctionSpec _ (TypeFunction c2 tn) fn ps)) e2) =
@@ -583,7 +583,7 @@ compileExpression = compile where
     where
       bind t1 t2
         | t1 /= t2 =
-          lift $ compileError $ "Cannot " ++ show o ++ " " ++ show t1 ++ " and " ++
+          lift $ compileErrorM $ "Cannot " ++ show o ++ " " ++ show t1 ++ " and " ++
                                 show t2 ++ formatFullContextBrace c
         | o `Set.member` comparison && t1 == intRequiredValue = do
           return (Positional [boolRequiredValue],glueInfix PrimInt PrimBool e1 o e2)
@@ -614,7 +614,7 @@ compileExpression = compile where
         | o `Set.member` equals && t1 == boolRequiredValue = do
           return (Positional [boolRequiredValue],glueInfix PrimBool PrimBool e1 o e2)
         | otherwise =
-          lift $ compileError $ "Cannot " ++ show o ++ " " ++ show t1 ++ " and " ++
+          lift $ compileErrorM $ "Cannot " ++ show o ++ " " ++ show t1 ++ " and " ++
                                 show t2 ++ formatFullContextBrace c
       glueInfix t1 t2 e3 o2 e4 =
         UnboxedPrimitive t2 $ useAsUnboxed t1 e3 ++ o2 ++ useAsUnboxed t1 e4
@@ -624,7 +624,7 @@ compileExpression = compile where
     r <- csResolver
     fa <- csAllFilters
     let vt = ValueType RequiredValue $ SingleType $ JustTypeInstance t
-    lift $ (checkValueTypeMatch r fa t' vt) `reviseError`
+    lift $ (checkValueTypeMatch r fa t' vt) `reviseErrorM`
       ("In converted call at " ++ formatFullContext c)
     f' <- lookupValueFunction vt f
     compileFunctionCall (Just $ useAsUnwrapped e') f' f
@@ -635,17 +635,17 @@ compileExpression = compile where
     compileFunctionCall (Just $ useAsUnwrapped e') f' f
   requireSingle _ [t] = return t
   requireSingle c2 ts =
-    lift $ compileError $ "Function call requires 1 return but found but found {" ++
+    lift $ compileErrorM $ "Function call requires 1 return but found but found {" ++
                           intercalate "," (map show ts) ++ "}" ++ formatFullContextBrace c2
 
 lookupValueFunction :: (Show c, CompileErrorM m, MergeableM m,
                         CompilerContext c m [String] a) =>
   ValueType -> FunctionCall c -> CompilerState a m (ScopedFunction c)
 lookupValueFunction (ValueType WeakValue t) (FunctionCall c _ _ _) =
-  lift $ compileError $ "Use strong to convert " ++ show t ++
+  lift $ compileErrorM $ "Use strong to convert " ++ show t ++
                         " to optional first" ++ formatFullContextBrace c
 lookupValueFunction (ValueType OptionalValue t) (FunctionCall c _ _ _) =
-  lift $ compileError $ "Use require to convert " ++ show t ++
+  lift $ compileErrorM $ "Use require to convert " ++ show t ++
                         " to required first" ++ formatFullContextBrace c
 lookupValueFunction (ValueType RequiredValue t) (FunctionCall c n _ _) =
   csGetTypeFunction c (Just t) n
@@ -670,9 +670,9 @@ compileExpressionStart (CategoryCall c t f@(FunctionCall _ n _ _)) = do
 compileExpressionStart (TypeCall c t f@(FunctionCall _ n _ _)) = do
   r <- csResolver
   fa <- csAllFilters
-  lift $ validateGeneralInstance r fa (SingleType t) `reviseError` ("In function call at " ++ formatFullContext c)
+  lift $ validateGeneralInstance r fa (SingleType t) `reviseErrorM` ("In function call at " ++ formatFullContext c)
   f' <- csGetTypeFunction c (Just $ SingleType t) n
-  when (sfScope f' /= TypeScope) $ lift $ compileError $ "Function " ++ show n ++
+  when (sfScope f' /= TypeScope) $ lift $ compileErrorM $ "Function " ++ show n ++
                                           " cannot be used as a type function" ++
                                           formatFullContextBrace c
   csRequiresTypes $ Set.unions $ map categoriesFromTypes [SingleType t]
@@ -689,39 +689,39 @@ compileExpressionStart (UnqualifiedCall c f@(FunctionCall _ n _ _)) = do
     tryNonCategory ctx = do
       f' <- ccGetTypeFunction ctx c Nothing n
       s <- ccCurrentScope ctx
-      when (sfScope f' > s) $ compileError $
+      when (sfScope f' > s) $ compileErrorM $
         "Function " ++ show n ++ " is not in scope here" ++ formatFullContextBrace c
       return f'
 -- TODO: Compile BuiltinCall like regular functions, for consistent validation.
 compileExpressionStart (BuiltinCall c (FunctionCall _ BuiltinPresent ps es)) = do
   csRequiresTypes (Set.fromList [BuiltinBool])
   when (length (pValues ps) /= 0) $
-    lift $ compileError $ "Expected 0 type parameters" ++ formatFullContextBrace c
+    lift $ compileErrorM $ "Expected 0 type parameters" ++ formatFullContextBrace c
   when (length (pValues es) /= 1) $
-    lift $ compileError $ "Expected 1 argument" ++ formatFullContextBrace c
+    lift $ compileErrorM $ "Expected 1 argument" ++ formatFullContextBrace c
   es' <- sequence $ map compileExpression $ pValues es
   when (length (pValues $ fst $ head es') /= 1) $
-    lift $ compileError $ "Expected single return in argument" ++ formatFullContextBrace c
+    lift $ compileErrorM $ "Expected single return in argument" ++ formatFullContextBrace c
   let (Positional [t0],e) = head es'
   when (isWeakValue t0) $
-    lift $ compileError $ "Weak values not allowed here" ++ formatFullContextBrace c
+    lift $ compileErrorM $ "Weak values not allowed here" ++ formatFullContextBrace c
   return $ (Positional [boolRequiredValue],
             UnboxedPrimitive PrimBool $ valueBase ++ "::Present(" ++ useAsUnwrapped e ++ ")")
 compileExpressionStart (BuiltinCall c (FunctionCall _ BuiltinReduce ps es)) = do
   when (length (pValues ps) /= 2) $
-    lift $ compileError $ "Expected 2 type parameters" ++ formatFullContextBrace c
+    lift $ compileErrorM $ "Expected 2 type parameters" ++ formatFullContextBrace c
   when (length (pValues es) /= 1) $
-    lift $ compileError $ "Expected 1 argument" ++ formatFullContextBrace c
+    lift $ compileErrorM $ "Expected 1 argument" ++ formatFullContextBrace c
   es' <- sequence $ map compileExpression $ pValues es
   when (length (pValues $ fst $ head es') /= 1) $
-    lift $ compileError $ "Expected single return in argument" ++ formatFullContextBrace c
+    lift $ compileErrorM $ "Expected single return in argument" ++ formatFullContextBrace c
   let (Positional [t0],e) = head es'
   let (Positional [t1,t2]) = ps
   r <- csResolver
   fa <- csAllFilters
   lift $ validateGeneralInstance r fa t1
   lift $ validateGeneralInstance r fa t2
-  lift $ (checkValueTypeMatch r fa t0 (ValueType OptionalValue t1)) `reviseError`
+  lift $ (checkValueTypeMatch r fa t0 (ValueType OptionalValue t1)) `reviseErrorM`
     ("In argument to reduce call at " ++ formatFullContext c)
   -- TODO: If t1 -> t2 then just return e without a Reduce call.
   t1' <- expandGeneralInstance t1
@@ -732,25 +732,25 @@ compileExpressionStart (BuiltinCall c (FunctionCall _ BuiltinReduce ps es)) = do
             UnwrappedSingle $ typeBase ++ "::Reduce(" ++ t1' ++ ", " ++ t2' ++ ", " ++ useAsUnwrapped e ++ ")")
 compileExpressionStart (BuiltinCall c (FunctionCall _ BuiltinRequire ps es)) = do
   when (length (pValues ps) /= 0) $
-    lift $ compileError $ "Expected 0 type parameters" ++ formatFullContextBrace c
+    lift $ compileErrorM $ "Expected 0 type parameters" ++ formatFullContextBrace c
   when (length (pValues es) /= 1) $
-    lift $ compileError $ "Expected 1 argument" ++ formatFullContextBrace c
+    lift $ compileErrorM $ "Expected 1 argument" ++ formatFullContextBrace c
   es' <- sequence $ map compileExpression $ pValues es
   when (length (pValues $ fst $ head es') /= 1) $
-    lift $ compileError $ "Expected single return in argument" ++ formatFullContextBrace c
+    lift $ compileErrorM $ "Expected single return in argument" ++ formatFullContextBrace c
   let (Positional [t0],e) = head es'
   when (isWeakValue t0) $
-    lift $ compileError $ "Weak values not allowed here" ++ formatFullContextBrace c
+    lift $ compileErrorM $ "Weak values not allowed here" ++ formatFullContextBrace c
   return $ (Positional [ValueType RequiredValue (vtType t0)],
             UnwrappedSingle $ valueBase ++ "::Require(" ++ useAsUnwrapped e ++ ")")
 compileExpressionStart (BuiltinCall c (FunctionCall _ BuiltinStrong ps es)) = do
   when (length (pValues ps) /= 0) $
-    lift $ compileError $ "Expected 0 type parameters" ++ formatFullContextBrace c
+    lift $ compileErrorM $ "Expected 0 type parameters" ++ formatFullContextBrace c
   when (length (pValues es) /= 1) $
-    lift $ compileError $ "Expected 1 argument" ++ formatFullContextBrace c
+    lift $ compileErrorM $ "Expected 1 argument" ++ formatFullContextBrace c
   es' <- sequence $ map compileExpression $ pValues es
   when (length (pValues $ fst $ head es') /= 1) $
-    lift $ compileError $ "Expected single return in argument" ++ formatFullContextBrace c
+    lift $ compileErrorM $ "Expected single return in argument" ++ formatFullContextBrace c
   let (Positional [t0],e) = head es'
   let t1 = Positional [ValueType OptionalValue (vtType t0)]
   if isWeakValue t0
@@ -759,9 +759,9 @@ compileExpressionStart (BuiltinCall c (FunctionCall _ BuiltinStrong ps es)) = do
      else return (t1,e)
 compileExpressionStart (BuiltinCall c (FunctionCall _ BuiltinTypename ps es)) = do
   when (length (pValues ps) /= 1) $
-    lift $ compileError $ "Expected 1 type parameter" ++ formatFullContextBrace c
+    lift $ compileErrorM $ "Expected 1 type parameter" ++ formatFullContextBrace c
   when (length (pValues es) /= 0) $
-    lift $ compileError $ "Expected 0 arguments" ++ formatFullContextBrace c
+    lift $ compileErrorM $ "Expected 0 arguments" ++ formatFullContextBrace c
   let t = head $ pValues ps
   r <- csResolver
   fa <- csAllFilters
@@ -774,12 +774,12 @@ compileExpressionStart (BuiltinCall _ _) = undefined
 compileExpressionStart (ParensExpression _ e) = compileExpression e
 compileExpressionStart (InlineAssignment c n e) = do
   (VariableValue _ s t0 w) <- csGetVariable c n
-  when (not w) $ lift $ compileError $ "Cannot assign to read-only variable " ++
+  when (not w) $ lift $ compileErrorM $ "Cannot assign to read-only variable " ++
                                         show n ++ formatFullContextBrace c
   (Positional [t],e') <- compileExpression e -- TODO: Get rid of the Positional matching here.
   r <- csResolver
   fa <- csAllFilters
-  lift $ (checkValueTypeMatch r fa t t0) `reviseError`
+  lift $ (checkValueTypeMatch r fa t t0) `reviseErrorM`
     ("In assignment at " ++ formatFullContext c)
   csUpdateAssigned n
   scoped <- autoScope s
@@ -794,16 +794,16 @@ compileFunctionCall :: (Show c, CompileErrorM m, MergeableM m,
 compileFunctionCall e f (FunctionCall c _ ps es) = do
   r <- csResolver
   fa <- csAllFilters
-  f' <- lift $ parsedToFunctionType f `reviseError`
+  f' <- lift $ parsedToFunctionType f `reviseErrorM`
           ("In function call at " ++ formatFullContext c)
-  f'' <- lift $ assignFunctionParams r fa ps f' `reviseError`
+  f'' <- lift $ assignFunctionParams r fa ps f' `reviseErrorM`
           ("In function call at " ++ formatFullContext c)
   es' <- sequence $ map compileExpression $ pValues es
   (ts,es'') <- getValues es'
   -- Called an extra time so arg count mismatches have reasonable errors.
-  lift $ processPairs_ (\_ _ -> return ()) (ftArgs f'') (Positional ts) `reviseError`
+  lift $ processPairs_ (\_ _ -> return ()) (ftArgs f'') (Positional ts) `reviseErrorM`
     ("In function call at " ++ formatFullContext c)
-  lift $ processPairs_ (checkArg r fa) (ftArgs f'') (Positional $ zip ([0..] :: [Int]) ts) `reviseError`
+  lift $ processPairs_ (checkArg r fa) (ftArgs f'') (Positional $ zip ([0..] :: [Int]) ts) `reviseErrorM`
     ("In function call at " ++ formatFullContext c)
   csRequiresTypes $ Set.unions $ map categoriesFromTypes $ pValues ps
   csRequiresTypes (Set.fromList [sfType f])
@@ -825,14 +825,14 @@ compileFunctionCall e f (FunctionCall c _ ps es) = do
     getValues [(Positional ts,e2)] = return (ts,useAsArgs e2)
     -- Multi-expression => must all be singles.
     getValues rs = do
-      lift $ mergeAllM (map checkArity $ zip ([0..] :: [Int]) $ map fst rs) `reviseError`
+      lift $ mergeAllM (map checkArity $ zip ([0..] :: [Int]) $ map fst rs) `reviseErrorM`
         ("In return at " ++ formatFullContext c)
       return (map (head . pValues . fst) rs, "ArgTuple(" ++ intercalate ", " (map (useAsUnwrapped . snd) rs) ++ ")")
     checkArity (_,Positional [_]) = return ()
     checkArity (i,Positional ts)  =
-      compileError $ "Return position " ++ show i ++ " has " ++ show (length ts) ++ " values but should have 1"
+      compileErrorM $ "Return position " ++ show i ++ " has " ++ show (length ts) ++ " values but should have 1"
     checkArg r fa t0 (i,t1) = do
-      checkValueTypeMatch r fa t1 t0 `reviseError` ("In argument " ++ show i ++ " to " ++ show (sfName f))
+      checkValueTypeMatch r fa t1 t0 `reviseErrorM` ("In argument " ++ show i ++ " to " ++ show (sfName f))
 
 compileMainProcedure :: (Show c, CompileErrorM m, MergeableM m) =>
   CategoryMap c -> ExprMap c -> Expression c -> m (CompiledData [String])

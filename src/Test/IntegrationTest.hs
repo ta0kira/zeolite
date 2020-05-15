@@ -43,7 +43,7 @@ tests = [
       ("testfiles" </> "basic_error_test.0rt")
       (\t -> return $ do
         let h = itHeader t
-        when (not $ isExpectCompileError $ ithResult h) $ compileError "Expected ExpectCompileError"
+        when (not $ isExpectCompileError $ ithResult h) $ compileErrorM "Expected ExpectCompileError"
         checkEquals (ithTestName h) "basic error test"
         containsExactly (getRequirePattern $ ithResult h) [
             OutputPattern OutputCompiler "pattern in output 1",
@@ -61,7 +61,7 @@ tests = [
       ("testfiles" </> "basic_crash_test.0rt")
       (\t -> return $ do
         let h = itHeader t
-        when (not $ isExpectRuntimeError $ ithResult h) $ compileError "Expected ExpectRuntimeError"
+        when (not $ isExpectRuntimeError $ ithResult h) $ compileErrorM "Expected ExpectRuntimeError"
         checkEquals (ithTestName h) "basic crash test"
         let match = case ereExpression $ ithResult h of
                          (Expression _
@@ -69,7 +69,7 @@ tests = [
                              (JustTypeInstance (TypeInstance (CategoryName "Test") (Positional [])))
                              (FunctionCall _ (FunctionName "execute") (Positional []) (Positional []))) []) -> True
                          _ -> False
-        when (not match) $ compileError "Expected test expression \"Test$execute()\""
+        when (not match) $ compileErrorM "Expected test expression \"Test$execute()\""
         containsExactly (getRequirePattern $ ithResult h) [
             OutputPattern OutputAny "pattern in output 1",
             OutputPattern OutputAny "pattern in output 2"
@@ -86,7 +86,7 @@ tests = [
       ("testfiles" </> "basic_success_test.0rt")
       (\t -> return $ do
         let h = itHeader t
-        when (not $ isExpectRuntimeSuccess $ ithResult h) $ compileError "Expected ExpectRuntimeSuccess"
+        when (not $ isExpectRuntimeSuccess $ ithResult h) $ compileErrorM "Expected ExpectRuntimeSuccess"
         checkEquals (ithTestName h) "basic success test"
         let match = case ersExpression $ ithResult h of
                          (Expression _
@@ -94,7 +94,7 @@ tests = [
                              (JustTypeInstance (TypeInstance (CategoryName "Test") (Positional [])))
                              (FunctionCall _ (FunctionName "execute") (Positional []) (Positional []))) []) -> True
                          _ -> False
-        when (not match) $ compileError "Expected test expression \"Test$execute()\""
+        when (not match) $ compileErrorM "Expected test expression \"Test$execute()\""
         containsExactly (getRequirePattern $ ithResult h) [
             OutputPattern OutputAny "pattern in output 1",
             OutputPattern OutputAny "pattern in output 2"
@@ -114,8 +114,8 @@ checkFileContents f o = do
   s <- loadFile f
   unwrap $ parse (between optionalSpace endOfDoc sourceParser) f s
   where
-    unwrap (Left e)  = return $ compileError (show e)
-    unwrap (Right t) = fmap (flip reviseError ("Check " ++ f ++ ":")) $ o t
+    unwrap (Left e)  = return $ compileErrorM (show e)
+    unwrap (Right t) = fmap (flip reviseErrorM ("Check " ++ f ++ ":")) $ o t
 
 extractCategoryNames :: IntegrationTest c -> [String]
 extractCategoryNames = map (show . getCategoryName) . itCategory

@@ -102,7 +102,7 @@ getProcedureScopes ta em (DefinedCategory c n pi _ _ fi ms ps fs) = do
       let fa' = Map.union fa $ getFilterMap pi2 fi2
       mergeAllM $ map (checkFilter r fa') fi2
     checkFilter r fa (ParamFilter c2 n2 f) =
-      validateTypeFilter r fa f `reviseError`
+      validateTypeFilter r fa f `reviseErrorM`
         (show n2 ++ " " ++ show f ++ formatFullContextBrace c2)
     checkFunction pm f =
       when (sfScope f == ValueScope) $
@@ -110,7 +110,7 @@ getProcedureScopes ta em (DefinedCategory c n pi _ _ fi ms ps fs) = do
     checkParam pm p =
       case vpParam p `Map.lookup` pm of
            Nothing -> return ()
-           (Just c2) -> compileError $ "Internal param " ++ show (vpParam p) ++
+           (Just c2) -> compileErrorM $ "Internal param " ++ show (vpParam p) ++
                                        formatFullContextBrace (vpContext p) ++
                                        " is already defined at " ++
                                        formatFullContext c2

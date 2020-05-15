@@ -60,5 +60,5 @@ processPairsT f (Positional ps1) (Positional ps2)
   | otherwise = lift $ mismatchError ps1 ps2
 
 mismatchError :: (Show a, Show b, CompileErrorM m) => [a] -> [b] -> m c
-mismatchError ps1 ps2 = compileError $ "Count mismatch: " ++ show ps1 ++
+mismatchError ps1 ps2 = compileErrorM $ "Count mismatch: " ++ show ps1 ++
                                        " (expected) vs. " ++ show ps2 ++ " (actual)"

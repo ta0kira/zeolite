@@ -83,7 +83,7 @@ runCompiler (CompileOptions _ _ _ ds _ _ p (ExecuteTests tp) f) = do
                              intercalate ", " (map show fs) ++ "\n"
             exitFailure
     processResults passed failed rs
-      | isCompileError rs = do
+      | isCompileErrorM rs = do
           hPutStr stderr $ "\nTest errors:\n" ++ (show $ getCompileError rs)
           hPutStrLn stderr $ "\nPassed: " ++ show passed ++ " test(s), Failed: " ++ show failed ++ " test(s)"
           hPutStrLn stderr $ "Zeolite tests failed."

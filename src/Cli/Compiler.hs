@@ -113,7 +113,7 @@ compileModule (ModuleSpec p d em is is2 ps xs ts es ep m f) = do
   xa <- fmap collectAllOrErrorM $ sequence $ map (loadPrivateSource p) xs
   let fs = compileAll cm xa
   eraseCachedData (p </> d)
-  when (isCompileError fs) $ do
+  when (isCompileErrorM fs) $ do
     formatWarnings fs
     hPutStr stderr $ "Compiler errors:\n" ++ (show $ getCompileError fs)
     hPutStrLn stderr $ "Zeolite compilation failed."
@@ -274,7 +274,7 @@ createModuleTemplates p d deps1 deps2 = do
   cm <- fmap (fmap fst) $ loadLanguageModule p ns0 [] Map.empty ps deps1 deps2
   xs' <- zipWithContents p xs
   let ts = createTemplates cm xs'
-  if isCompileError ts
+  if isCompileErrorM ts
       then do
         formatWarnings ts
         hPutStr stderr $ "Compiler errors:\n" ++ (show $ getCompileError ts)
@@ -308,7 +308,7 @@ runModuleTests b base tp (LoadedTests p d m em deps1 deps2) = do
   ts' <- zipWithContents p $ map (d </>) $ filter isTestAllowed $ cmTestFiles m
   path <- canonicalizePath (p </> d)
   cm <- fmap (fmap fst) $ loadLanguageModule path NoNamespace [] em [] deps1 []
-  if isCompileError cm
+  if isCompileErrorM cm
       then return [((0,0),cm >> return ())]
       else sequence $ map (runSingleTest b (getCompileSuccess cm) path paths (m:deps2)) ts' where
     allowTests = Set.fromList tp

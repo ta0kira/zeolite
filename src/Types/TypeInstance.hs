@@ -261,21 +261,21 @@ filterLookup :: (CompileErrorM m) =>
   ParamFilters -> ParamName -> m [TypeFilter]
 filterLookup ps n = resolve $ n `Map.lookup` ps where
   resolve (Just x) = return x
-  resolve _        = compileError $ "Param " ++ show n ++ " not found"
+  resolve _        = compileErrorM $ "Param " ++ show n ++ " not found"
 
 getValueForParam :: (CompileErrorM m) =>
   Map.Map ParamName GeneralInstance -> ParamName -> m GeneralInstance
 getValueForParam pa n =
   case n `Map.lookup` pa of
         (Just x) -> return x
-        _ -> compileError $ "Param " ++ show n ++ " does not exist"
+        _ -> compileErrorM $ "Param " ++ show n ++ " does not exist"
 
 checkValueTypeMatch :: (MergeableM m, CompileErrorM m, TypeResolver r) =>
   r -> ParamFilters -> ValueType -> ValueType -> m ()
 checkValueTypeMatch r f ts1@(ValueType r1 t1) ts2@(ValueType r2 t2)
   | r1 < r2 =
-    compileError $ "Cannot convert " ++ show ts1 ++ " to " ++ show ts2
-  | otherwise = checkGeneralMatch r f Covariant t1 t2 `reviseError`
+    compileErrorM $ "Cannot convert " ++ show ts1 ++ " to " ++ show ts2
+  | otherwise = checkGeneralMatch r f Covariant t1 t2 `reviseErrorM`
       ("Cannot convert " ++ show ts1 ++ " to " ++ show ts2)
 
 checkGeneralMatch :: (MergeableM m, CompileErrorM m, TypeResolver r) =>
@@ -333,7 +333,7 @@ checkParamToInstance r f Contravariant p1 t2 =
   checkInstanceToParam r f Covariant t2 p1
 checkParamToInstance r f Covariant n1 t2@(TypeInstance _ _) = do
   cs1 <- fmap (filter isTypeFilter) $ f `filterLookup` n1
-  mergeAnyM (map checkConstraintToInstance cs1) `reviseError`
+  mergeAnyM (map checkConstraintToInstance cs1) `reviseErrorM`
     ("No filters imply " ++ show n1 ++ " -> " ++ show t2)
   where
     checkConstraintToInstance (TypeFilter FilterRequires t) =
@@ -342,7 +342,7 @@ checkParamToInstance r f Covariant n1 t2@(TypeInstance _ _) = do
     checkConstraintToInstance f2 =
       -- F -> x cannot imply x -> T
       -- DefinesInstance cannot be converted to TypeInstance
-      compileError $ "Constraint " ++ viewTypeFilter n1 f2 ++
+      compileErrorM $ "Constraint " ++ viewTypeFilter n1 f2 ++
                     " does not imply " ++ show n1 ++ " -> " ++ show t2
 
 checkInstanceToParam :: (MergeableM m, CompileErrorM m, TypeResolver r) =>
@@ -355,7 +355,7 @@ checkInstanceToParam r f Contravariant t1 p2 =
   checkParamToInstance r f Covariant p2 t1
 checkInstanceToParam r f Covariant t1@(TypeInstance _ _) n2 = do
   cs2 <- fmap (filter isTypeFilter) $ f `filterLookup` n2
-  mergeAnyM (map checkInstanceToConstraint cs2) `reviseError`
+  mergeAnyM (map checkInstanceToConstraint cs2) `reviseErrorM`
     ("No filters imply " ++ show t1 ++ " -> " ++ show n2)
   where
     checkInstanceToConstraint (TypeFilter FilterAllows t) =
@@ -363,7 +363,7 @@ checkInstanceToParam r f Covariant t1@(TypeInstance _ _) n2 = do
       checkSingleMatch r f Covariant (JustTypeInstance t1) t
     checkInstanceToConstraint f2 =
       -- x -> F cannot imply T -> x
-      compileError $ "Constraint " ++ viewTypeFilter n2 f2 ++
+      compileErrorM $ "Constraint " ++ viewTypeFilter n2 f2 ++
                     " does not imply " ++ show t1 ++ " -> " ++ show n2
 
 checkParamToParam :: (MergeableM m, CompileErrorM m, TypeResolver r) =>
@@ -384,28 +384,28 @@ checkParamToParam r f Covariant n1 n2
     let typeFilters = [(c1,c2) | c1 <- cs1, c2 <- cs2] ++
                       [(self1,c2) | c2 <- cs2] ++
                       [(c1,self2) | c1 <- cs1]
-    mergeAnyM (map (\(c1,c2) -> checkConstraintToConstraint c1 c2) typeFilters) `reviseError`
+    mergeAnyM (map (\(c1,c2) -> checkConstraintToConstraint c1 c2) typeFilters) `reviseErrorM`
       ("No filters imply " ++ show n1 ++ " -> " ++ show n2)
     where
       self1 = TypeFilter FilterRequires (JustParamName n1)
       self2 = TypeFilter FilterAllows   (JustParamName n2)
       checkConstraintToConstraint (TypeFilter FilterRequires t1) (TypeFilter FilterAllows t2)
         | t1 == (JustParamName n1) && t2 == (JustParamName n2) =
-          compileError $ "Infinite recursion in " ++ show n1 ++ " -> " ++ show n2
+          compileErrorM $ "Infinite recursion in " ++ show n1 ++ " -> " ++ show n2
         -- x -> F1, F2 -> y implies x -> y only if F1 -> F2
         | otherwise = checkSingleMatch r f Covariant t1 t2
       checkConstraintToConstraint f1 f2 =
         -- x -> F1, y -> F2 cannot imply x -> y
         -- F1 -> x, F1 -> y cannot imply x -> y
         -- F1 -> x, y -> F2 cannot imply x -> y
-        compileError $ "Constraints " ++ viewTypeFilter n1 f1 ++ " and " ++
+        compileErrorM $ "Constraints " ++ viewTypeFilter n1 f1 ++ " and " ++
                       viewTypeFilter n2 f2 ++ " do not imply " ++
                       show n1 ++ " -> " ++ show n2
 
 validateGeneralInstance :: (MergeableM m, CompileErrorM m, TypeResolver r) =>
   r -> ParamFilters -> GeneralInstance -> m ()
 validateGeneralInstance _ _ (TypeMerge _ ts)
-  | length ts == 1 = compileError $ "Unions and intersections must have at least 2 types to avoid ambiguity"
+  | length ts == 1 = compileErrorM $ "Unions and intersections must have at least 2 types to avoid ambiguity"
 validateGeneralInstance r f (TypeMerge MergeIntersect ts) =
   mergeAllM (map (validateGeneralInstance r f) ts)
 validateGeneralInstance r f (TypeMerge _ ts) =
@@ -414,14 +414,14 @@ validateGeneralInstance r f (SingleType (JustTypeInstance t)) =
   validateTypeInstance r f t
 validateGeneralInstance _ f (SingleType (JustParamName n)) =
   when (not $ n `Map.member` f) $
-    compileError $ "Param " ++ show n ++ " does not exist"
+    compileErrorM $ "Param " ++ show n ++ " does not exist"
 
 validateTypeInstance :: (MergeableM m, CompileErrorM m, TypeResolver r) =>
   r -> ParamFilters -> TypeInstance -> m ()
 validateTypeInstance r f t@(TypeInstance _ ps) = do
   fa <- trTypeFilters r t
   processPairs_ (validateAssignment r f) ps fa
-  mergeAllM (map (validateGeneralInstance r f) (pValues ps)) `reviseError`
+  mergeAllM (map (validateGeneralInstance r f) (pValues ps)) `reviseErrorM`
     ("Recursive error in " ++ show t)
 
 validateDefinesInstance :: (MergeableM m, CompileErrorM m, TypeResolver r) =>
@@ -429,7 +429,7 @@ validateDefinesInstance :: (MergeableM m, CompileErrorM m, TypeResolver r) =>
 validateDefinesInstance r f t@(DefinesInstance _ ps) = do
   fa <- trDefinesFilters r t
   processPairs_ (validateAssignment r f) ps fa
-  mergeAllM (map (validateGeneralInstance r f) (pValues ps)) `reviseError`
+  mergeAllM (map (validateGeneralInstance r f) (pValues ps)) `reviseErrorM`
     ("Recursive error in " ++ show t)
 
 validateTypeFilter :: (MergeableM m, CompileErrorM m, TypeResolver r) =>
@@ -447,14 +447,14 @@ validateAssignment r f t fs = mergeAllM (map (checkFilter t) fs) where
   checkFilter t1 (TypeFilter FilterAllows t2) = do
     checkGeneralMatch r f Contravariant t1 (SingleType t2)
   checkFilter t1@(TypeMerge _ _) (DefinesFilter t2) =
-    compileError $ "Merged type " ++ show t1 ++ " cannot satisfy defines constraint " ++ show t2
+    compileErrorM $ "Merged type " ++ show t1 ++ " cannot satisfy defines constraint " ++ show t2
   checkFilter (SingleType t1) (DefinesFilter f2) = checkDefinesFilter f2 t1
   checkDefinesFilter f2@(DefinesInstance n2 _) (JustTypeInstance t1) = do
     ps1' <- trDefines r t1 n2
     checkDefinesMatch r f f2 (DefinesInstance n2 ps1')
   checkDefinesFilter f2 (JustParamName n1) = do
       fs1 <- fmap (map dfType . filter isDefinesFilter) $ f `filterLookup` n1
-      mergeAnyM (map (checkDefinesMatch r f f2) fs1) `reviseError`
+      mergeAnyM (map (checkDefinesMatch r f f2) fs1) `reviseErrorM`
         ("No filters imply " ++ show n1 ++ " defines " ++ show f2)
 
 checkDefinesMatch :: (MergeableM m, CompileErrorM m, TypeResolver r) =>
@@ -465,7 +465,7 @@ checkDefinesMatch r f f2@(DefinesInstance n2 ps2) f1@(DefinesInstance n1 ps1)
     variance <- trVariance r n2
     processPairs_ (\v2 (p1,p2) -> checkGeneralMatch r f v2 p1 p2) variance (Positional paired)
     mergeDefaultM
-  | otherwise = compileError $ "Constraint " ++ show f1 ++ " does not imply " ++ show f2
+  | otherwise = compileErrorM $ "Constraint " ++ show f1 ++ " does not imply " ++ show f2
 
 validateInstanceVariance :: (MergeableM m, CompileErrorM m, TypeResolver r) =>
   r -> ParamVariances -> Variance -> GeneralInstance -> m ()
@@ -479,9 +479,9 @@ validateInstanceVariance r vm v (TypeMerge MergeIntersect ts) =
   mergeAllM (map (validateInstanceVariance r vm v) ts)
 validateInstanceVariance _ vm v (SingleType (JustParamName n)) =
   case n `Map.lookup` vm of
-      Nothing -> compileError $ "Param " ++ show n ++ " is undefined"
+      Nothing -> compileErrorM $ "Param " ++ show n ++ " is undefined"
       (Just v0) -> when (not $ v0 `paramAllowsVariance` v) $
-                        compileError $ "Param " ++ show n ++ " cannot be " ++ show v
+                        compileErrorM $ "Param " ++ show n ++ " cannot be " ++ show v
 
 validateDefinesVariance :: (MergeableM m, CompileErrorM m, TypeResolver r) =>
   r -> ParamVariances -> Variance -> DefinesInstance -> m ()

@@ -798,13 +798,13 @@ getRefines :: Map.Map CategoryName (AnyCategory c) -> String -> CompileInfo [Str
 getRefines tm n =
   case (CategoryName n) `Map.lookup` tm of
        (Just t) -> return $ map (show . vrType) (getCategoryRefines t)
-       _ -> compileError $ "Type " ++ n ++ " not found"
+       _ -> compileErrorM $ "Type " ++ n ++ " not found"
 
 getDefines ::  Map.Map CategoryName (AnyCategory c) -> String -> CompileInfo [String]
 getDefines tm n =
   case (CategoryName n) `Map.lookup` tm of
        (Just t) -> return $ map (show . vdType) (getCategoryDefines t)
-       _ -> compileError $ "Type " ++ n ++ " not found"
+       _ -> compileErrorM $ "Type " ++ n ++ " not found"
 
 getTypeRefines :: Show c => [AnyCategory c] -> String -> String -> CompileInfo [String]
 getTypeRefines ts s n = do
@@ -860,17 +860,17 @@ checkPaired :: (Show a, CompileErrorM m, MergeableM m) =>
   (a -> a -> m ()) -> [a] -> [a] -> m ()
 checkPaired f actual expected
   | length actual /= length expected =
-    compileError $ "Different item counts: " ++ show actual ++ " (actual) vs. " ++
+    compileErrorM $ "Different item counts: " ++ show actual ++ " (actual) vs. " ++
                    show expected ++ " (expected)"
   | otherwise = mergeAllM $ map check (zip3 actual expected ([1..] :: [Int])) where
-    check (a,e,n) = f a e `reviseError` ("Item " ++ show n ++ " mismatch")
+    check (a,e,n) = f a e `reviseErrorM` ("Item " ++ show n ++ " mismatch")
 
 containsPaired :: (Eq a, Show a, CompileErrorM m, MergeableM m) =>
   [a] -> [a] -> m ()
 containsPaired = checkPaired checkSingle where
   checkSingle a e
     | a == e = return ()
-    | otherwise = compileError $ show a ++ " (actual) vs. " ++ show e ++ " (expected)"
+    | otherwise = compileErrorM $ show a ++ " (actual) vs. " ++ show e ++ " (expected)"
 
 checkOperationSuccess :: String -> ([AnyCategory SourcePos] -> CompileInfo a) -> IO (CompileInfo ())
 checkOperationSuccess f o = do
@@ -878,7 +878,7 @@ checkOperationSuccess f o = do
   let parsed = readMulti f contents :: CompileInfo [AnyCategory SourcePos]
   return $ check (parsed >>= o >> return ())
   where
-    check = flip reviseError ("Check " ++ f ++ ":")
+    check = flip reviseErrorM ("Check " ++ f ++ ":")
 
 checkOperationFail :: String -> ([AnyCategory SourcePos] -> CompileInfo a) -> IO (CompileInfo ())
 checkOperationFail f o = do
@@ -887,8 +887,8 @@ checkOperationFail f o = do
   return $ check (parsed >>= o >> return ())
   where
     check c
-      | isCompileError c = return ()
-      | otherwise = compileError $ "Check " ++ f ++ ": Expected failure but got\n" ++
+      | isCompileErrorM c = return ()
+      | otherwise = compileErrorM $ "Check " ++ f ++ ": Expected failure but got\n" ++
                                    show (getCompileSuccess c) ++ "\n"
 
 checkSingleParseSuccess :: String -> IO (CompileInfo ())
@@ -898,7 +898,7 @@ checkSingleParseSuccess f = do
   return $ check parsed
   where
     check c
-      | isCompileError c = compileError $ "Parse " ++ f ++ ":\n" ++ show (getCompileError c)
+      | isCompileErrorM c = compileErrorM $ "Parse " ++ f ++ ":\n" ++ show (getCompileError c)
       | otherwise = return ()
 
 checkSingleParseFail :: String -> IO (CompileInfo ())
@@ -908,8 +908,8 @@ checkSingleParseFail f = do
   return $ check parsed
   where
     check c
-      | isCompileError c = return ()
-      | otherwise = compileError $ "Parse " ++ f ++ ": Expected failure but got\n" ++
+      | isCompileErrorM c = return ()
+      | otherwise = compileErrorM $ "Parse " ++ f ++ ": Expected failure but got\n" ++
                                    show (getCompileSuccess c) ++ "\n"
 
 checkShortParseSuccess :: String -> IO (CompileInfo ())
@@ -918,7 +918,7 @@ checkShortParseSuccess s = do
   return $ check parsed
   where
     check c
-      | isCompileError c = compileError $ "Parse '" ++ s ++ "':\n" ++ show (getCompileError c)
+      | isCompileErrorM c = compileErrorM $ "Parse '" ++ s ++ "':\n" ++ show (getCompileError c)
       | otherwise = return ()
 
 checkShortParseFail :: String -> IO (CompileInfo ())
@@ -927,6 +927,6 @@ checkShortParseFail s = do
   return $ check parsed
   where
     check c
-      | isCompileError c = return ()
-      | otherwise = compileError $ "Parse '" ++ s ++ "': Expected failure but got\n" ++
+      | isCompileErrorM c = return ()
+      | otherwise = compileErrorM $ "Parse '" ++ s ++ "': Expected failure but got\n" ++
                                    show (getCompileSuccess c) ++ "\n"

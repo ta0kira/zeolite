@@ -411,7 +411,7 @@ checkParseSuccess f = do
   return $ check parsed
   where
     check c
-      | isCompileError c = compileError $ "Parse " ++ f ++ ":\n" ++ show (getCompileError c)
+      | isCompileErrorM c = compileErrorM $ "Parse " ++ f ++ ":\n" ++ show (getCompileError c)
       | otherwise = return ()
 
 checkParseFail :: String -> IO (CompileInfo ())
@@ -421,8 +421,8 @@ checkParseFail f = do
   return $ check parsed
   where
     check c
-      | isCompileError c = return ()
-      | otherwise = compileError $ "Parse " ++ f ++ ": Expected failure but got\n" ++
+      | isCompileErrorM c = return ()
+      | otherwise = compileErrorM $ "Parse " ++ f ++ ": Expected failure but got\n" ++
                                    show (getCompileSuccess c) ++ "\n"
 
 checkShortParseSuccess :: String -> IO (CompileInfo ())
@@ -431,7 +431,7 @@ checkShortParseSuccess s = do
   return $ check parsed
   where
     check c
-      | isCompileError c = compileError $ "Parse '" ++ s ++ "':\n" ++ show (getCompileError c)
+      | isCompileErrorM c = compileErrorM $ "Parse '" ++ s ++ "':\n" ++ show (getCompileError c)
       | otherwise = return ()
 
 checkShortParseFail :: String -> IO (CompileInfo ())
@@ -440,8 +440,8 @@ checkShortParseFail s = do
   return $ check parsed
   where
     check c
-      | isCompileError c = return ()
-      | otherwise = compileError $ "Parse '" ++ s ++ "': Expected failure but got\n" ++
+      | isCompileErrorM c = return ()
+      | otherwise = compileErrorM $ "Parse '" ++ s ++ "': Expected failure but got\n" ++
                                    show (getCompileSuccess c) ++ "\n"
 
 checkParsesAs :: String -> (Expression SourcePos -> Bool) -> IO (CompileInfo ())
@@ -450,8 +450,8 @@ checkParsesAs s m = return $ do
   check parsed
   e <- parsed
   when (not $ m e) $
-    compileError $ "No match in '" ++ s ++ "':\n" ++ show e
+    compileErrorM $ "No match in '" ++ s ++ "':\n" ++ show e
   where
     check c
-      | isCompileError c = compileError $ "Parse '" ++ s ++ "':\n" ++ show (getCompileError c)
+      | isCompileErrorM c = compileErrorM $ "Parse '" ++ s ++ "':\n" ++ show (getCompileError c)
       | otherwise = return ()
