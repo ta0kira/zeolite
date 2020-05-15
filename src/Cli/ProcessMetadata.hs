@@ -63,7 +63,6 @@ import Text.Parsec (SourcePos)
 import qualified Data.Map as Map
 import qualified Data.Set as Set
 
-import Base.CompileError
 import Cli.CompileMetadata
 import Cli.CompileOptions
 import Cli.ParseMetadata -- Not safe, due to Text.Regex.TDFA.
@@ -118,7 +117,7 @@ loadMetadata ca p = do
            exitFailure
          c <- readFile f
          let m = autoReadConfig f c
-         if isCompileErrorM m
+         if isCompileError m
             then do
               hPutStrLn stderr $ "Could not parse metadata from \"" ++ p ++ "\"; please recompile."
               hPutStrLn stderr $ show (getCompileError m)
@@ -142,7 +141,7 @@ tryLoadData f = do
     else do
       c <- readFile f
       let m = autoReadConfig f c
-      if isCompileErrorM m
+      if isCompileError m
          then do
            hPutStrLn stderr $ "Could not parse config file:"
            hPutStr stderr $ show (getCompileError m)
@@ -169,7 +168,7 @@ writeMetadata p m = do
   p' <- canonicalizePath p
   hPutStrLn stderr $ "Writing metadata for \"" ++ p' ++ "\"."
   let m' = autoWriteConfig m
-  if isCompileErrorM m'
+  if isCompileError m'
      then do
        hPutStrLn stderr $ "Could not serialize metadata."
        hPutStrLn stderr $ show (getCompileError m')
@@ -182,7 +181,7 @@ writeRecompile p m = do
   let f = p </> moduleFilename
   hPutStrLn stderr $ "Updating config for \"" ++ p' ++ "\"."
   let m' = autoWriteConfig m
-  if isCompileErrorM m'
+  if isCompileError m'
      then do
        hPutStrLn stderr $ "Could not serialize module config."
        hPutStrLn stderr $ show (getCompileError m')

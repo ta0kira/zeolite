@@ -51,14 +51,14 @@ runSingleTest b cm p paths deps (f,s) = do
   allResults <- checkAndRun (parseTestSource (f,s))
   return $ second (flip reviseErrorM $ "\nIn test file " ++ f) allResults where
     checkAndRun ts
-      | isCompileErrorM ts = do
+      | isCompileError ts = do
         hPutStrLn stderr $ "Failed to parse tests in " ++ f
         return ((0,1),ts >> return ())
       | otherwise = do
           let (_,ts') = getCompileSuccess ts
           allResults <- sequence $ map runSingle ts'
-          let passed = length $ filter (not . isCompileErrorM) allResults
-          let failed = length $ filter isCompileErrorM allResults
+          let passed = length $ filter (not . isCompileError) allResults
+          let failed = length $ filter isCompileError allResults
           return ((passed,failed),mergeAllM allResults)
     runSingle t = do
       let name = ithTestName $ itHeader t
@@ -66,14 +66,14 @@ runSingleTest b cm p paths deps (f,s) = do
       hPutStrLn stderr $ "\n*** Executing test \"" ++ name ++ "\" ***"
       outcome <- fmap (flip reviseErrorM ("\nIn test \"" ++ name ++ "\"" ++ context)) $
                    run (ithResult $ itHeader t) (itCategory t) (itDefinition t)
-      if isCompileErrorM outcome
+      if isCompileError outcome
          then hPutStrLn stderr $ "*** Test \"" ++ name ++ "\" failed ***"
          else hPutStrLn stderr $ "*** Test \"" ++ name ++ "\" passed ***"
       return outcome
 
     run (ExpectCompileError _ rs es) cs ds = do
       let result = compileAll Nothing cs ds
-      if not $ isCompileErrorM result
+      if not $ isCompileError result
          then undefined  -- Should be caught in compileAll.
          else return $ do
            let warnings = getCompileWarnings result
@@ -95,13 +95,13 @@ runSingleTest b cm p paths deps (f,s) = do
       let outError = if null out
                         then return ()
                         else (mergeAllM $ map compileErrorM out) `reviseErrorM` "\nOutput to stdout from test:"
-      if isCompileErrorM cr || isCompileErrorM ce
+      if isCompileError cr || isCompileError ce
          then mergeAllM [cr,ce,compError,errError,outError]
          else mergeAllM [cr,ce]
 
     execute s2 e rs es cs ds = do
       let result = compileAll (Just e) cs ds
-      if isCompileErrorM result
+      if isCompileError result
          then return $ result >> return ()
          else do
            let warnings = getCompileWarnings result
@@ -114,7 +114,7 @@ runSingleTest b cm p paths deps (f,s) = do
                 (False,True) -> return $ compileErrorM "Expected runtime failure"
                 _ -> do
                   let result2 = checkContent rs es warnings err out
-                  when (not $ isCompileErrorM result) $ removeDirectoryRecursive dir
+                  when (not $ isCompileError result) $ removeDirectoryRecursive dir
                   return result2
 
     compileAll e cs ds = do

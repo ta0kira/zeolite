@@ -887,7 +887,7 @@ checkOperationFail f o = do
   return $ check (parsed >>= o >> return ())
   where
     check c
-      | isCompileErrorM c = return ()
+      | isCompileError c = return ()
       | otherwise = compileErrorM $ "Check " ++ f ++ ": Expected failure but got\n" ++
                                    show (getCompileSuccess c) ++ "\n"
 
@@ -898,7 +898,7 @@ checkSingleParseSuccess f = do
   return $ check parsed
   where
     check c
-      | isCompileErrorM c = compileErrorM $ "Parse " ++ f ++ ":\n" ++ show (getCompileError c)
+      | isCompileError c = compileErrorM $ "Parse " ++ f ++ ":\n" ++ show (getCompileError c)
       | otherwise = return ()
 
 checkSingleParseFail :: String -> IO (CompileInfo ())
@@ -908,7 +908,7 @@ checkSingleParseFail f = do
   return $ check parsed
   where
     check c
-      | isCompileErrorM c = return ()
+      | isCompileError c = return ()
       | otherwise = compileErrorM $ "Parse " ++ f ++ ": Expected failure but got\n" ++
                                    show (getCompileSuccess c) ++ "\n"
 
@@ -918,7 +918,7 @@ checkShortParseSuccess s = do
   return $ check parsed
   where
     check c
-      | isCompileErrorM c = compileErrorM $ "Parse '" ++ s ++ "':\n" ++ show (getCompileError c)
+      | isCompileError c = compileErrorM $ "Parse '" ++ s ++ "':\n" ++ show (getCompileError c)
       | otherwise = return ()
 
 checkShortParseFail :: String -> IO (CompileInfo ())
@@ -927,6 +927,6 @@ checkShortParseFail s = do
   return $ check parsed
   where
     check c
-      | isCompileErrorM c = return ()
+      | isCompileError c = return ()
       | otherwise = compileErrorM $ "Parse '" ++ s ++ "': Expected failure but got\n" ++
                                    show (getCompileSuccess c) ++ "\n"

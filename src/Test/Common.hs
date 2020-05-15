@@ -69,7 +69,7 @@ runAllTests ts = do
 
 numberError :: a -> CompileInfo b -> Either (a,CompileMessage) b
 numberError n c
-  | isCompileErrorM c = Left (n,getCompileError c)
+  | isCompileError c = Left (n,getCompileError c)
   | otherwise        = Right (getCompileSuccess c)
 
 forceParse :: ParseFromSource a => String -> a
@@ -132,7 +132,7 @@ checkTypeFail r pa x = do
     prefix = x ++ " " ++ showParams pa
     check :: CompileInfo a -> CompileInfo ()
     check c
-      | isCompileErrorM c = return ()
+      | isCompileError c = return ()
       | otherwise = compileErrorM $ prefix ++ ": Expected failure\n"
 
 checkDefinesSuccess :: (TypeResolver r) =>
@@ -153,7 +153,7 @@ checkDefinesFail r pa x = do
     prefix = x ++ " " ++ showParams pa
     check :: CompileInfo a -> CompileInfo ()
     check c
-      | isCompileErrorM c = return ()
+      | isCompileError c = return ()
       | otherwise = compileErrorM $ prefix ++ ": Expected failure\n"
 
 containsExactly :: (Ord a, Show a, MergeableM m, CompileErrorM m) =>

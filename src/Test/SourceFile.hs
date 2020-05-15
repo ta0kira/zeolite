@@ -42,5 +42,5 @@ checkParseSuccess f p = do
   return $ check parsed
   where
     check c
-      | isCompileErrorM c = compileErrorM $ "Parse " ++ f ++ ":\n" ++ show (getCompileError c)
+      | isCompileError c = compileErrorM $ "Parse " ++ f ++ ":\n" ++ show (getCompileError c)
       | otherwise = return ()

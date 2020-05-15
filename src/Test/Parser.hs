@@ -66,7 +66,7 @@ checkParsesAs p s m = return $ do
     compileErrorM $ show s ++ " does not parse as " ++ show m ++ ":\n" ++ show e
   where
     check c
-      | isCompileErrorM c = compileErrorM $ "Parse '" ++ s ++ "':\n" ++ show (getCompileError c)
+      | isCompileError c = compileErrorM $ "Parse '" ++ s ++ "':\n" ++ show (getCompileError c)
       | otherwise = return ()
 
 checkParseFail :: Show a => Parser a -> [Char] -> IO (CompileInfo ())
@@ -75,6 +75,6 @@ checkParseFail p s = do
   return $ check parsed
   where
     check c
-      | isCompileErrorM c = return ()
+      | isCompileError c = return ()
       | otherwise = compileErrorM $ "Parse '" ++ s ++ "': Expected failure but got\n" ++
                                    show (getCompileSuccess c) ++ "\n"

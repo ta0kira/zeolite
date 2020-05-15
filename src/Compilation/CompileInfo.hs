@@ -30,6 +30,7 @@ module Compilation.CompileInfo (
   getCompileSuccessT,
   getCompileWarnings,
   getCompileWarningsT,
+  isCompileError,
 ) where
 
 import Control.Applicative
@@ -94,6 +95,12 @@ getCompileSuccessT = fmap csData . citState
 
 getCompileWarningsT :: Monad m => CompileInfoT m a -> m [String]
 getCompileWarningsT = fmap getWarnings . citState
+
+isCompileError :: CompileInfo a -> Bool
+isCompileError x =
+  case runIdentity (citState x) of
+       CompileFail _ _ -> True
+       _               -> False
 
 getCompileError :: CompileInfo a -> CompileMessage
 getCompileError = runIdentity . getCompileErrorT
@@ -160,17 +167,6 @@ instance Monad m => MonadFail (CompileInfoT m) where
   fail = compileErrorT
 #endif
 
-instance CompileErrorM (CompileInfoT Identity) where
-  compileErrorM      = compileErrorT
-  collectAllOrErrorM = collectAllOrErrorT
-  collectOneOrErrorM = collectOneOrErrorT
-  reviseErrorM       = reviseErrorT
-  compileWarningM    = compileWarningT
-  isCompileErrorM x =
-    case runIdentity (citState x) of
-         CompileFail _ _ -> True
-         _               -> False
-
 instance MergeableT CompileInfoT where
   mergeAnyT xs = CompileInfoT $ do
     xs' <- sequence $ map citState $ foldr (:) [] xs
@@ -191,6 +187,13 @@ instance MergeableT CompileInfoT where
          (CompileFail w1 e,    CompileSuccess w2 _)  -> return $ CompileFail (w1 ++ w2) e
          (CompileSuccess w1 _, CompileFail w2 e)     -> return $ CompileFail (w1 ++ w2) e
          (CompileFail w1 e1,   CompileFail w2 e2)    -> return $ CompileFail (w1 ++ w2) $ e1 `nestMessages` e2
+
+instance Monad m => CompileErrorM (CompileInfoT m) where
+  compileErrorM      = compileErrorT
+  collectAllOrErrorM = collectAllOrErrorT
+  collectOneOrErrorM = collectOneOrErrorT
+  reviseErrorM       = reviseErrorT
+  compileWarningM    = compileWarningT
 
 instance Monad m => MergeableM (CompileInfoT m) where
   mergeAnyM     = mergeAnyT

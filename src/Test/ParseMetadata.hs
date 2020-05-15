@@ -349,7 +349,7 @@ checkWriteFail p m = return $ do
   check m'
   where
     check c
-      | isCompileErrorM c = do
+      | isCompileError c = do
           let text = show (getCompileError c)
           when (not $ text =~ p) $
             compileErrorM $ "Expected pattern " ++ show p ++ " in error output but got\n" ++ text

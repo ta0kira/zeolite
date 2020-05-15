@@ -692,7 +692,7 @@ checkConvertSuccess pa x y = return checked where
     ([t1,t2],pa2) <- parseTheTest pa [x,y]
     check $ checkValueTypeMatch Resolver pa2 t1 t2
   check c
-    | isCompileErrorM c = compileErrorM $ prefix ++ ":\n" ++ show (getCompileError c)
+    | isCompileError c = compileErrorM $ prefix ++ ":\n" ++ show (getCompileError c)
     | otherwise = return ()
 
 checkConvertFail :: [(String, [String])] -> [Char] -> [Char] -> IO (CompileInfo ())
@@ -703,7 +703,7 @@ checkConvertFail pa x y = return checked where
     check $ checkValueTypeMatch Resolver pa2 t1 t2
   check :: CompileInfo a -> CompileInfo ()
   check c
-    | isCompileErrorM c = return ()
+    | isCompileError c = return ()
     | otherwise = compileErrorM $ prefix ++ ": Expected failure\n"
 
 data Resolver = Resolver

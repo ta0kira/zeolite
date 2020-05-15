@@ -677,15 +677,14 @@ topoSortCategories tm0 ts = do
 
 mergeObjects :: (MergeableM m, CompileErrorM m) =>
   (a -> a -> m ()) -> [a] -> m [a]
-mergeObjects f = return . merge [] where
-  merge cs [] = cs
-  merge cs (x:xs) = merge (cs ++ ys) xs where
-    -- TODO: Should f just perform merging? In case we want to preserve info
-    -- about what was merged, e.g., return m [(p,a)].
-    checker x2 = f x2 x
-    ys = if isCompileErrorM $ mergeAnyM (map checker (cs ++ xs))
-            then [x] -- x is not redundant => keep.
-            else []  -- x is redundant => remove.
+mergeObjects f = merge [] where
+  merge cs [] = return cs
+  merge cs (x:xs) = do
+    ys <- collectOneOrErrorM $ map check (cs ++ xs) ++ [return [x]]
+    merge (cs ++ ys) xs where
+      -- TODO: Should f just perform merging? In case we want to preserve info
+      -- about what was merged, e.g., return m [(p,a)].
+      check x2 = x2 `f` x >> return []
 
 mergeRefines :: (MergeableM m, CompileErrorM m, TypeResolver r) =>
   r -> ParamFilters -> [ValueRefine c] -> m [ValueRefine c]

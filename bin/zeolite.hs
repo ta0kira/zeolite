@@ -35,7 +35,7 @@ main = do
   let options = parseCompileOptions args >>= validateCompileOptions
   compile options where
     compile co
-      | isCompileErrorM co = do
+      | isCompileError co = do
           hPutStr stderr $ show $ getCompileError co
           hPutStrLn stderr "Use the -h option to show help."
           exitFailure

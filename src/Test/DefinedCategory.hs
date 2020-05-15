@@ -45,7 +45,7 @@ checkParseSuccess f = do
   return $ check parsed
   where
   check c
-    | isCompileErrorM c = compileErrorM $ "Parse " ++ f ++ ":\n" ++ show (getCompileError c)
+    | isCompileError c = compileErrorM $ "Parse " ++ f ++ ":\n" ++ show (getCompileError c)
     | otherwise = return ()
 
 checkParseFail :: String -> IO (CompileInfo ())
@@ -55,6 +55,6 @@ checkParseFail f = do
   return $ check parsed
   where
   check c
-    | isCompileErrorM c = return ()
+    | isCompileError c = return ()
     | otherwise = compileErrorM $ "Parse " ++ f ++ ": Expected failure but got\n" ++
                                  show (getCompileSuccess c) ++ "\n"
