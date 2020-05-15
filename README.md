@@ -1192,9 +1192,10 @@ These must occur at the very top of a function definition.
   multiple functions in a call stack use `$TraceCreation$`, only the trace
   from the bottom-most function will be included.
 
-  `$TraceCreation$` is useful when the context where the value was created is
-  relevant when debugging crashes. The execution cost is minimal; however, it
-  adds the *full text of the trace* to the value upon initialization.
+  `$TraceCreation$` is useful when the context that the value was created in is
+  relevant when debugging crashes. The added execution cost for the function is
+  trivial; however, it increases the memory size of the value by a few bytes per
+  call currently on the stack at the time it gets created.
 
 ### Expression Pragmas
 

@@ -19,6 +19,7 @@ limitations under the License.
 #ifndef LOGGING_HPP_
 #define LOGGING_HPP_
 
+#include <functional>
 #include <list>
 #include <sstream>
 #include <string>
@@ -30,6 +31,8 @@ limitations under the License.
 #define FAIL() LogThenCrash(true)
 
 void SetSignalHandler();
+
+using TraceList = std::list<std::function<std::string()>>;
 
 class LogThenCrash {
  public:
@@ -51,6 +54,8 @@ class LogThenCrash {
   LogThenCrash& operator =(const LogThenCrash&) = delete;
   LogThenCrash& operator =(LogThenCrash&&) = delete;
   void* operator new(std::size_t size) = delete;
+
+  static void PrintTrace(const TraceList&);
 
   const bool fail_;
   const int signal_;
@@ -94,9 +99,6 @@ class LogThenCrash {
   #define TRACE_CREATION
 
 #endif
-
-
-using TraceList = std::list<std::string>;
 
 
 class TraceContext : public capture_thread::ThreadCapture<TraceContext> {

@@ -40,22 +40,23 @@ LogThenCrash::~LogThenCrash() {
       std::cerr << " '" << condition_ << "'";
     }
     std::cerr << ": " << output_.str() << std::endl;
-    const TraceList call_trace = TraceContext::GetTrace();
-    for (const auto& trace : call_trace) {
-      if (!trace.empty()) {
-        std::cerr << "  " << trace << std::endl;
-      }
-    }
+    PrintTrace(TraceContext::GetTrace());
     const TraceList creation_trace = TraceCreation::GetTrace();
     if (!creation_trace.empty()) {
       std::cerr << TraceCreation::GetType() << " value originally created at:" << std::endl;
-      for (const auto& trace : creation_trace) {
-        if (!trace.empty()) {
-          std::cerr << "  " << trace << std::endl;
-        }
-      }
+      PrintTrace(creation_trace);
     }
     std::raise(signal_);
+  }
+}
+
+// static
+void LogThenCrash::PrintTrace(const TraceList &call_trace) {
+  for (const auto& trace : call_trace) {
+    const std::string message = trace();
+    if (!message.empty()) {
+      std::cerr << "  " << message << std::endl;
+    }
   }
 }
 
@@ -118,13 +119,17 @@ void SourceContext::SetLocal(const char* at) {
 }
 
 void SourceContext::AppendTrace(TraceList& trace) const {
-  std::ostringstream output;
-  if (at_ == nullptr || at_[0] == 0x00) {
-    output << "From " << name_;
-  } else {
-    output << "From " << name_ << " at " << at_;
-  }
-  trace.push_back(output.str());
+  const char* const name = name_;
+  const char* const at   = at_;
+  trace.push_back([name,at]() {
+      std::ostringstream output;
+      if (at == nullptr || at[0] == 0x00) {
+        output << "From " << name;
+      } else {
+        output << "From " << name << " at " << at;
+      }
+      return output.str();
+    });
 }
 
 const TraceContext* SourceContext::GetNext() const {
@@ -137,13 +142,16 @@ void CleanupContext::SetLocal(const char* at) {
 }
 
 void CleanupContext::AppendTrace(TraceList& trace) const {
-  std::ostringstream output;
-  if (at_ == nullptr || at_[0] == 0x00) {
-    output << "In cleanup block";
-  } else {
-    output << "In cleanup block at " << at_;
-  }
-  trace.push_back(output.str());
+  const char* const at = at_;
+  trace.push_back([at]() {
+      std::ostringstream output;
+      if (at == nullptr || at[0] == 0x00) {
+        output << "In cleanup block";
+      } else {
+        output << "In cleanup block at " << at;
+      }
+      return output.str();
+    });
 }
 
 const TraceContext* CleanupContext::GetNext() const {

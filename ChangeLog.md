@@ -1,5 +1,16 @@
 # Revision history for zeolite-lang
 
+## 0.6.0.1  -- ????-??-??
+
+### Compiler CLI
+
+### Language
+
+* **[behavior]** Reduces the memory cost of `$TraceCreation$` by avoiding
+  storing the entire trace text.
+
+### Libraries
+
 ## 0.6.0.0  -- 2020-05-14
 
 ### Compiler CLI
