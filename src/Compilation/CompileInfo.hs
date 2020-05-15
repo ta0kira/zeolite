@@ -179,14 +179,6 @@ instance Monad m => MergeableM (CompileInfoT m) where
     return $ result $ splitErrorsAndData xs' where
       result ([],xs2,ws) = CompileSuccess ws $ mergeAll xs2
       result (es,_,ws)   = CompileFail ws $ CompileMessage "" es
-  mergeNestedM x y = CompileInfoT $ do
-    x' <- citState x
-    y' <- citState y
-    case (x',y') of
-         (CompileSuccess w1 x2,CompileSuccess w2 y2) -> return $ CompileSuccess (w1 ++ w2) $ x2 `mergeNested` y2
-         (CompileFail w1 e,    CompileSuccess w2 _)  -> return $ CompileFail (w1 ++ w2) e
-         (CompileSuccess w1 _, CompileFail w2 e)     -> return $ CompileFail (w1 ++ w2) e
-         (CompileFail w1 e1,   CompileFail w2 e2)    -> return $ CompileFail (w1 ++ w2) $ e1 `nestMessages` e2
 
 getWarnings :: CompileInfoState a -> [String]
 getWarnings (CompileFail w _)    = w
@@ -195,14 +187,6 @@ getWarnings (CompileSuccess w _) = w
 prependWarning :: [String] -> CompileInfoState a -> CompileInfoState a
 prependWarning w (CompileSuccess w2 d) = CompileSuccess (w ++ w2) d
 prependWarning w (CompileFail w2 e)    = CompileFail (w ++ w2) e
-
-nestMessages :: CompileMessage -> CompileMessage -> CompileMessage
-nestMessages (CompileMessage m1 ms1) (CompileMessage [] ms2) =
-  CompileMessage m1 (ms1 ++ ms2)
-nestMessages (CompileMessage [] ms1) (CompileMessage m2 ms2) =
-  CompileMessage m2 (ms1 ++ ms2)
-nestMessages (CompileMessage m1 ms1) ma@(CompileMessage _ _) =
-  CompileMessage m1 (ms1 ++ [ma])
 
 splitErrorsAndData :: Foldable f => f (CompileInfoState a) -> ([CompileMessage],[a],[String])
 splitErrorsAndData = foldr partition ([],[],[]) where
