@@ -1,9 +1,11 @@
 $TestsOnly$
 
-/* Parses the test-data.txt file using a one-off format.
+/* A contrived object for test data.
  */
 concrete TestData {
-  @type parseFrom (String) -> (ErrorOr<TestData>)
+  // Parses the test-data.txt file using a one-off format.
+  @type parseFrom (String)             -> (ErrorOr<TestData>)
+  @type create    (String,String,Bool) -> (TestData)
 
   @value getName        () -> (String)
   @value getDescription () -> (String)

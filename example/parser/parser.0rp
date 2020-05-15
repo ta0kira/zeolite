@@ -6,14 +6,8 @@
  * ParseState<all> can convert to all other ParseState.
  */
 concrete ParseState<|#x> {
-  @category new (String) -> (ParseState<any>)
-
-  @value run<#y>       (Parser<#y>) -> (ParseState<#y>)
-  @value runAndGet<#y> (Parser<#y>) -> (ParseState<any>,ErrorOr<#y>)
-
-  @value atEof       () -> (Bool)
-  @value hasAnyError () -> (Bool)
-  @value getError    () -> (Formatted)
+  // Consumes all input and returns the result.
+  @category consumeAll<#y> (Parser<#y>,String) -> (ErrorOr<#y>)
 }
 
 /* A self-contained parser operation.
@@ -31,21 +25,24 @@ concrete ParseState<|#x> {
  * ParseContext<all> can convert to all other ParseContext.
  */
 @value interface ParseContext<|#x> {
+  // Continue computation.
   run<#y>       (Parser<#y>) -> (ParseContext<#y>)
   runAndGet<#y> (Parser<#y>) -> (ParseContext<any>,ErrorOr<#y>)
+  getValue      ()           -> (ErrorOr<#x>)
 
+  // End computation and pass on the next state.
   convertError<#y> ()            -> (ParseState<#y>)
-  getValue         ()            -> (ErrorOr<#x>)
   setValue<#y>     (ErrorOr<#y>) -> (ParseState<#y>)
   setBrokenInput   (Formatted)   -> (ParseState<all>)
   toState          ()            -> (ParseState<#x>)
 
-  getPosition () -> (String)
-
+  // Context metadata.
+  getPosition    () -> (String)
   atEof          () -> (Bool)
   hasAnyError    () -> (Bool)
   hasBrokenInput () -> (Bool)
 
+  // Reading data.
   current () -> (Char)
   advance () -> (ParseContext<#x>)
 }

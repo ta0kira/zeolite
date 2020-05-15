@@ -135,6 +135,24 @@
   }
 }
 
+<b>concrete</b> <b><span style='color:#0057ae;'>ErrorParser</span></b> {
+  <span style='color:#644a9b;'>@type</span> create (<i><span style='color:#0057ae;'>Formatted</span></i>) -&gt; (<span style='color:#0057ae;'>Parser</span><span style='color:#c02040;'>&lt;</span><b>all</b><span style='color:#c02040;'>&gt;</span>)
+}
+
+<b>define</b> <b><span style='color:#0057ae;'>ErrorParser</span></b> {
+  <b>refines</b> <span style='color:#0057ae;'>Parser</span><span style='color:#c02040;'>&lt;</span><b>all</b><span style='color:#c02040;'>&gt;</span>
+
+  <span style='color:#644a9b;'>@value</span> <i><span style='color:#0057ae;'>Formatted</span></i> message
+
+  run (contextOld) {
+    <b>return</b> contextOld.setValue&lt;<b>all</b>&gt;(<span style='color:#0057ae;'>ErrorOr</span><span style='color:#644a9b;'>$$</span>error(message))
+  }
+
+  create (message) {
+    <b>return</b> <span style='color:#0057ae;'>ErrorParser</span>{ message }
+  }
+}
+
 <b>concrete</b> <b><span style='color:#0057ae;'>TryParser</span></b><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span> {
   <span style='color:#644a9b;'>@type</span> create (<span style='color:#0057ae;'>Parser</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>) -&gt; (<span style='color:#0057ae;'>Parser</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>)
 }
@@ -203,10 +221,15 @@
       <b>return</b> contextOld.convertError&lt;<i><span style='color:#0057ae;'>#x</span></i>&gt;()
     }
     <span style='color:#0057ae;'>ParseContext</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span> context &lt;- contextOld.run&lt;<i><span style='color:#0057ae;'>#x</span></i>&gt;(parser1)
-    <b>if</b> (!context.hasAnyError()) {
-      <b>return</b> context.run&lt;<b>any</b>&gt;(parser2).setValue&lt;<i><span style='color:#0057ae;'>#x</span></i>&gt;(context.getValue())
-    } <b>else</b> {
+    <b>if</b> (context.hasAnyError()) {
       <b>return</b> context.toState()
+    } <b>else</b> {
+      <span style='color:#0057ae;'>ParseContext</span><span style='color:#c02040;'>&lt;</span><b>any</b><span style='color:#c02040;'>&gt;</span> context2 &lt;- context.run&lt;<b>any</b>&gt;(parser2)
+      <b>if</b> (context2.hasAnyError()) {
+        <b>return</b> context2.convertError&lt;<i><span style='color:#0057ae;'>#x</span></i>&gt;()
+      } <b>else</b> {
+        <b>return</b> context2.setValue&lt;<i><span style='color:#0057ae;'>#x</span></i>&gt;(context.getValue())
+      }
     }
   }
 
@@ -230,10 +253,10 @@
       <b>return</b> contextOld.convertError&lt;<i><span style='color:#0057ae;'>#x</span></i>&gt;()
     }
     <span style='color:#0057ae;'>ParseContext</span><span style='color:#c02040;'>&lt;</span><b>any</b><span style='color:#c02040;'>&gt;</span> context &lt;- contextOld.run&lt;<b>any</b>&gt;(parser1)
-    <b>if</b> (!context.hasAnyError()) {
-      <b>return</b> context.run&lt;<i><span style='color:#0057ae;'>#x</span></i>&gt;(parser2).toState()
-    } <b>else</b> {
+    <b>if</b> (context.hasAnyError()) {
       <b>return</b> context.convertError&lt;<i><span style='color:#0057ae;'>#x</span></i>&gt;()
+    } <b>else</b> {
+      <b>return</b> context.run&lt;<i><span style='color:#0057ae;'>#x</span></i>&gt;(parser2).toState()
     }
   }
 
@@ -245,6 +268,10 @@
 <b>define</b> <b><span style='color:#0057ae;'>Parse</span></b> {
   const (value) {
     <b>return</b> <span style='color:#0057ae;'>ConstParser</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>$</span>create(value)
+  }
+
+  error (message) {
+    <b>return</b> <span style='color:#0057ae;'>ErrorParser</span><span style='color:#644a9b;'>$</span>create(message)
   }
 
   try (parser) {

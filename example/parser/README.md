@@ -24,12 +24,6 @@ This example highlights several distinguishing features of the
   (see `parser.0rp` and `parser.0rx`), which allows `ParseState` to
   conditionally expose the `ParseContext` interface to other functions.
 
-- **Function Merging.** `ParseState` and `ParseContext` declare some of the same
-  functions in `parser.0rp`. When `ParseState` inherits `ParseContext`
-  internally in `parser.0rx`, functions with the same names are merged by the
-  compiler. This allows `ParseState` to expose a subset of `ParseContext`
-  without needing a superfluous interface with the shared functions.
-
 - **Parameter Variance.** Several categories used in this example (e.g.,
   `ParseState` and `ParseContext`) have a *covariant* parameter, which allows
   their parameters to be converted to other types. Specifically:

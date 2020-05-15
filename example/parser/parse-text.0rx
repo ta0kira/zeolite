@@ -124,6 +124,24 @@ define ConstParser {
   }
 }
 
+concrete ErrorParser {
+  @type create (Formatted) -> (Parser<all>)
+}
+
+define ErrorParser {
+  refines Parser<all>
+
+  @value Formatted message
+
+  run (contextOld) {
+    return contextOld.setValue<all>(ErrorOr$$error(message))
+  }
+
+  create (message) {
+    return ErrorParser{ message }
+  }
+}
+
 concrete TryParser<#x> {
   @type create (Parser<#x>) -> (Parser<#x>)
 }
@@ -192,10 +210,15 @@ define LeftParser {
       return contextOld.convertError<#x>()
     }
     ParseContext<#x> context <- contextOld.run<#x>(parser1)
-    if (!context.hasAnyError()) {
-      return context.run<any>(parser2).setValue<#x>(context.getValue())
-    } else {
+    if (context.hasAnyError()) {
       return context.toState()
+    } else {
+      ParseContext<any> context2 <- context.run<any>(parser2)
+      if (context2.hasAnyError()) {
+        return context2.convertError<#x>()
+      } else {
+        return context2.setValue<#x>(context.getValue())
+      }
     }
   }
 
@@ -219,10 +242,10 @@ define RightParser {
       return contextOld.convertError<#x>()
     }
     ParseContext<any> context <- contextOld.run<any>(parser1)
-    if (!context.hasAnyError()) {
-      return context.run<#x>(parser2).toState()
-    } else {
+    if (context.hasAnyError()) {
       return context.convertError<#x>()
+    } else {
+      return context.run<#x>(parser2).toState()
     }
   }
 
@@ -234,6 +257,10 @@ define RightParser {
 define Parse {
   const (value) {
     return ConstParser<#x>$create(value)
+  }
+
+  error (message) {
+    return ErrorParser$create(message)
   }
 
   try (parser) {

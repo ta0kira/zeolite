@@ -1,11 +1,4 @@
 define ParseState {
-  // This internal inheritance takes advantage of function merging.
-  //
-  // Notice that several functions (e.g., run, hasAnyError) appear to be
-  // declared separately in ParseState and ParseContext in parser.0rp. Since the
-  // function types are compatible, the compiler automatically merges them. This
-  // allows ParseState to expose a subset of ParseContext without needing a
-  // superfluous interface that both categories refine.
   refines ParseContext<#x>
 
   @value String             data
@@ -15,8 +8,15 @@ define ParseState {
   @value ErrorOr<#x>        value
   @value optional Formatted error
 
-  new (data) {
-    return ParseState<any>{ data, 0, 0, 0, ErrorOr$$value<Void>(Void$void()), empty }
+  consumeAll (parser,data) {
+    ParseContext<#y> context <- parser.run(new(data))
+    if (context.hasAnyError()) {
+      return context.getValue()
+    } elif (!context.atEof()) {
+      return ErrorOr$$error("Parsing did not consume all of the data " + context.getPosition())
+    } else {
+      return context.getValue()
+    }
   }
 
   run (parser) {
@@ -24,12 +24,8 @@ define ParseState {
   }
 
   runAndGet (parser) {
-    ParseState<#y> context <- parser.run(self)
+    ParseContext<#y> context <- parser.run(self)
     return context, context.getValue()
-  }
-
-  convertError () {
-    return ParseState<#y>{ data, index, line, char, ErrorOr$$error(getError()), error }
   }
 
   getValue () {
@@ -38,6 +34,10 @@ define ParseState {
     } else {
       return value
     }
+  }
+
+  convertError () {
+    return ParseState<#y>{ data, index, line, char, ErrorOr$$error(getError()), error }
   }
 
   setValue (value2) {
@@ -58,11 +58,11 @@ define ParseState {
 
   getPosition () {
     return String$builder()
-        .append("(")
+        .append("[line: ")
         .append(line.formatted())
-        .append(",")
+        .append(", char: ")
         .append(char.formatted())
-        .append(")")
+        .append("]")
         .build()
   }
 
@@ -86,12 +86,18 @@ define ParseState {
   advance () {
     \ sanityCheck()
     if (data.readPosition(index) == '\n') {
-      return ParseState<#x>{ data, index+1, line+1, 0, value, error }
+      return ParseState<#x>{ data, index+1, line+1, 1, value, error }
     } else {
       return ParseState<#x>{ data, index+1, line, char+1, value, error }
     }
   }
 
+  @category new (String) -> (ParseState<any>)
+  new (data) {
+    return ParseState<any>{ data, 0, 1, 1, ErrorOr$$value<Void>(Void$void()), empty }
+  }
+
+  @value getError () -> (Formatted)
   getError () {
     if (present(error)) {
       return require(error)

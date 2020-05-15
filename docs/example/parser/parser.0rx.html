@@ -10,13 +10,6 @@
 <body>
 <pre style='color:#1f1c1b;background-color:#ffffff;'>
 <b>define</b> <b><span style='color:#0057ae;'>ParseState</span></b> {
-  <span style='color:#898887;'>// This internal inheritance takes advantage of function merging.</span>
-  <span style='color:#898887;'>//</span>
-  <span style='color:#898887;'>// Notice that several functions (e.g., run, hasAnyError) appear to be</span>
-  <span style='color:#898887;'>// declared separately in ParseState and ParseContext in parser.0rp. Since the</span>
-  <span style='color:#898887;'>// function types are compatible, the compiler automatically merges them. This</span>
-  <span style='color:#898887;'>// allows ParseState to expose a subset of ParseContext without needing a</span>
-  <span style='color:#898887;'>// superfluous interface that both categories refine.</span>
   <b>refines</b> <span style='color:#0057ae;'>ParseContext</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>
 
   <span style='color:#644a9b;'>@value</span> <i><span style='color:#0057ae;'>String</span></i>             data
@@ -26,8 +19,15 @@
   <span style='color:#644a9b;'>@value</span> <span style='color:#0057ae;'>ErrorOr</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>        value
   <span style='color:#644a9b;'>@value</span> <b>optional</b> <i><span style='color:#0057ae;'>Formatted</span></i> error
 
-  new (data) {
-    <b>return</b> <span style='color:#0057ae;'>ParseState</span><span style='color:#c02040;'>&lt;</span><b>any</b><span style='color:#c02040;'>&gt;</span>{ data, <span style='color:#b08000;'>0</span>, <span style='color:#b08000;'>0</span>, <span style='color:#b08000;'>0</span>, <span style='color:#0057ae;'>ErrorOr</span><span style='color:#644a9b;'>$$</span>value&lt;<span style='color:#0057ae;'>Void</span>&gt;(<span style='color:#0057ae;'>Void</span><span style='color:#644a9b;'>$</span>void()), <b>empty</b> }
+  consumeAll (parser,data) {
+    <span style='color:#0057ae;'>ParseContext</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#y</span></i><span style='color:#c02040;'>&gt;</span> context &lt;- parser.run(new(data))
+    <b>if</b> (context.hasAnyError()) {
+      <b>return</b> context.getValue()
+    } <b>elif</b> (!context.atEof()) {
+      <b>return</b> <span style='color:#0057ae;'>ErrorOr</span><span style='color:#644a9b;'>$$</span>error(<span style='color:#bf0303;'>&quot;Parsing did not consume all of the data &quot;</span> + context.getPosition())
+    } <b>else</b> {
+      <b>return</b> context.getValue()
+    }
   }
 
   run (parser) {
@@ -35,12 +35,8 @@
   }
 
   runAndGet (parser) {
-    <span style='color:#0057ae;'>ParseState</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#y</span></i><span style='color:#c02040;'>&gt;</span> context &lt;- parser.run(<b>self</b>)
+    <span style='color:#0057ae;'>ParseContext</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#y</span></i><span style='color:#c02040;'>&gt;</span> context &lt;- parser.run(<b>self</b>)
     <b>return</b> context, context.getValue()
-  }
-
-  convertError () {
-    <b>return</b> <span style='color:#0057ae;'>ParseState</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#y</span></i><span style='color:#c02040;'>&gt;</span>{ data, index, line, char, <span style='color:#0057ae;'>ErrorOr</span><span style='color:#644a9b;'>$$</span>error(getError()), error }
   }
 
   getValue () {
@@ -49,6 +45,10 @@
     } <b>else</b> {
       <b>return</b> value
     }
+  }
+
+  convertError () {
+    <b>return</b> <span style='color:#0057ae;'>ParseState</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#y</span></i><span style='color:#c02040;'>&gt;</span>{ data, index, line, char, <span style='color:#0057ae;'>ErrorOr</span><span style='color:#644a9b;'>$$</span>error(getError()), error }
   }
 
   setValue (value2) {
@@ -69,11 +69,11 @@
 
   getPosition () {
     <b>return</b> <i><span style='color:#0057ae;'>String</span></i><span style='color:#644a9b;'>$</span>builder()
-        .append(<span style='color:#bf0303;'>&quot;(&quot;</span>)
+        .append(<span style='color:#bf0303;'>&quot;[line: &quot;</span>)
         .append(line.formatted())
-        .append(<span style='color:#bf0303;'>&quot;,&quot;</span>)
+        .append(<span style='color:#bf0303;'>&quot;, char: &quot;</span>)
         .append(char.formatted())
-        .append(<span style='color:#bf0303;'>&quot;)&quot;</span>)
+        .append(<span style='color:#bf0303;'>&quot;]&quot;</span>)
         .build()
   }
 
@@ -97,12 +97,18 @@
   advance () {
     <span style='color:#006e28;'>\</span> sanityCheck()
     <b>if</b> (data.readPosition(index) == <span style='color:#924c9d;'>'\n'</span>) {
-      <b>return</b> <span style='color:#0057ae;'>ParseState</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>{ data, index+<span style='color:#b08000;'>1</span>, line+<span style='color:#b08000;'>1</span>, <span style='color:#b08000;'>0</span>, value, error }
+      <b>return</b> <span style='color:#0057ae;'>ParseState</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>{ data, index+<span style='color:#b08000;'>1</span>, line+<span style='color:#b08000;'>1</span>, <span style='color:#b08000;'>1</span>, value, error }
     } <b>else</b> {
       <b>return</b> <span style='color:#0057ae;'>ParseState</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>{ data, index+<span style='color:#b08000;'>1</span>, line, char+<span style='color:#b08000;'>1</span>, value, error }
     }
   }
 
+  <span style='color:#644a9b;'>@category</span> new (<i><span style='color:#0057ae;'>String</span></i>) -&gt; (<span style='color:#0057ae;'>ParseState</span><span style='color:#c02040;'>&lt;</span><b>any</b><span style='color:#c02040;'>&gt;</span>)
+  new (data) {
+    <b>return</b> <span style='color:#0057ae;'>ParseState</span><span style='color:#c02040;'>&lt;</span><b>any</b><span style='color:#c02040;'>&gt;</span>{ data, <span style='color:#b08000;'>0</span>, <span style='color:#b08000;'>1</span>, <span style='color:#b08000;'>1</span>, <span style='color:#0057ae;'>ErrorOr</span><span style='color:#644a9b;'>$$</span>value&lt;<span style='color:#0057ae;'>Void</span>&gt;(<span style='color:#0057ae;'>Void</span><span style='color:#644a9b;'>$</span>void()), <b>empty</b> }
+  }
+
+  <span style='color:#644a9b;'>@value</span> getError () -&gt; (<i><span style='color:#0057ae;'>Formatted</span></i>)
   getError () {
     <b>if</b> (<b>present</b>(error)) {
       <b>return</b> <b>require</b>(error)
