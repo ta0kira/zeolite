@@ -22,10 +22,7 @@ limitations under the License.
 
 module Base.CompileError (
   CompileErrorM(..),
-  CompileErrorT(..),
 ) where
-
-import Control.Monad.Trans
 
 #if MIN_VERSION_base(4,8,0)
 #else
@@ -51,11 +48,3 @@ class Monad m => CompileErrorM m where
   reviseErrorM :: m a -> String -> m a
   reviseErrorM e _ = e
   compileWarningM :: String -> m ()
-
-class MonadTrans t => CompileErrorT t where
-  compileErrorT :: Monad m => String -> t m a
-  collectAllOrErrorT :: Monad m => Foldable f => f (t m a) -> t m [a]
-  collectOneOrErrorT :: Monad m => Foldable f => f (t m a) -> t m a
-  reviseErrorT :: Monad m => t m a -> String -> t m a
-  reviseErrorT e _ = e
-  compileWarningT :: Monad m => String -> t m ()

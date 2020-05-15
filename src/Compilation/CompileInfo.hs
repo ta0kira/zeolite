@@ -138,48 +138,48 @@ instance Monad m => Monad (CompileInfoT m) where
            return $ prependWarning w d2
   return = pure
 
+#if MIN_VERSION_base(4,9,0)
+instance Monad m => MonadFail (CompileInfoT m) where
+  fail = compileErrorM
+#endif
+
 instance MonadTrans CompileInfoT where
   lift = CompileInfoT . fmap (CompileSuccess [])
 
-instance CompileErrorT CompileInfoT where
-  compileErrorT e = CompileInfoT (return $ CompileFail [] $ CompileMessage e [])
-  collectAllOrErrorT xs = CompileInfoT $ do
+instance Monad m => CompileErrorM (CompileInfoT m) where
+  compileErrorM e = CompileInfoT (return $ CompileFail [] $ CompileMessage e [])
+  collectAllOrErrorM xs = CompileInfoT $ do
     xs' <- sequence $ map citState $ foldr (:) [] xs
     return $ result $ splitErrorsAndData xs' where
       result ([],xs2,ws) = CompileSuccess ws xs2
       result (es,_,ws)   = CompileFail ws $ CompileMessage "" es
-  collectOneOrErrorT xs = CompileInfoT $ do
+  collectOneOrErrorM xs = CompileInfoT $ do
     xs' <- sequence $ map citState $ foldr (:) [] xs
     return $ result $ splitErrorsAndData xs' where
       result (_,x:_,ws) = CompileSuccess ws x
       result ([],_,ws)  = CompileFail ws $ CompileMessage "" []
       result (es,_,ws)  = CompileFail ws $ CompileMessage "" es
-  reviseErrorT x e2 = CompileInfoT $ do
+  reviseErrorM x e2 = CompileInfoT $ do
     x' <- citState x
     case x' of
          CompileFail w (CompileMessage [] ms) -> return $ CompileFail w $ CompileMessage e2 ms
          CompileFail w e                      -> return $ CompileFail w $ CompileMessage e2 [e]
          x2                                   -> return x2
-  compileWarningT w = CompileInfoT (return $ CompileSuccess [w] ())
+  compileWarningM w = CompileInfoT (return $ CompileSuccess [w] ())
 
-#if MIN_VERSION_base(4,9,0)
-instance Monad m => MonadFail (CompileInfoT m) where
-  fail = compileErrorT
-#endif
-
-instance MergeableT CompileInfoT where
-  mergeAnyT xs = CompileInfoT $ do
+instance Monad m => MergeableM (CompileInfoT m) where
+  mergeAnyM xs = CompileInfoT $ do
     xs' <- sequence $ map citState $ foldr (:) [] xs
     return $ result $ splitErrorsAndData xs' where
       result (_,xs2@(_:_),ws) = CompileSuccess ws $ mergeAny xs2
       result ([],_,ws)        = CompileFail ws $ CompileMessage "" []
       result (es,_,ws)        = CompileFail ws $ CompileMessage "" es
-  mergeAllT xs = CompileInfoT $ do
+  mergeAllM xs = CompileInfoT $ do
     xs' <- sequence $ map citState $ foldr (:) [] xs
     return $ result $ splitErrorsAndData xs' where
       result ([],xs2,ws) = CompileSuccess ws $ mergeAll xs2
       result (es,_,ws)   = CompileFail ws $ CompileMessage "" es
-  mergeNestedT x y = CompileInfoT $ do
+  mergeNestedM x y = CompileInfoT $ do
     x' <- citState x
     y' <- citState y
     case (x',y') of
@@ -187,19 +187,6 @@ instance MergeableT CompileInfoT where
          (CompileFail w1 e,    CompileSuccess w2 _)  -> return $ CompileFail (w1 ++ w2) e
          (CompileSuccess w1 _, CompileFail w2 e)     -> return $ CompileFail (w1 ++ w2) e
          (CompileFail w1 e1,   CompileFail w2 e2)    -> return $ CompileFail (w1 ++ w2) $ e1 `nestMessages` e2
-
-instance Monad m => CompileErrorM (CompileInfoT m) where
-  compileErrorM      = compileErrorT
-  collectAllOrErrorM = collectAllOrErrorT
-  collectOneOrErrorM = collectOneOrErrorT
-  reviseErrorM       = reviseErrorT
-  compileWarningM    = compileWarningT
-
-instance Monad m => MergeableM (CompileInfoT m) where
-  mergeAnyM     = mergeAnyT
-  mergeAllM     = mergeAllT
-  mergeNestedM  = mergeNestedT
-  mergeDefaultM = mergeDefaultT
 
 getWarnings :: CompileInfoState a -> [String]
 getWarnings (CompileFail w _)    = w
