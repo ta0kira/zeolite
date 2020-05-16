@@ -21,7 +21,6 @@ import System.Environment
 import System.Exit
 import System.IO
 
-import Base.CompileError
 import Cli.CompileOptions
 import Cli.ParseCompileOptions -- Not safe, due to Text.Regex.TDFA.
 import Cli.RunCompiler

@@ -856,17 +856,15 @@ scrapeAllDefines = map (show *** show) . concat . map scrapeSingle where
   scrapeSingle (ValueConcrete _ _ n _ _ ds _ _) = map ((,) n . vdType) ds
   scrapeSingle _ = []
 
-checkPaired :: (Show a, CompileErrorM m, MergeableM m) =>
-  (a -> a -> m ()) -> [a] -> [a] -> m ()
+checkPaired :: Show a => (a -> a -> CompileInfo ()) -> [a] -> [a] -> CompileInfo ()
 checkPaired f actual expected
   | length actual /= length expected =
     compileErrorM $ "Different item counts: " ++ show actual ++ " (actual) vs. " ++
                    show expected ++ " (expected)"
-  | otherwise = mergeAllM $ map check (zip3 actual expected ([1..] :: [Int])) where
+  | otherwise = mergeAll $ map check (zip3 actual expected ([1..] :: [Int])) where
     check (a,e,n) = f a e `reviseErrorM` ("Item " ++ show n ++ " mismatch")
 
-containsPaired :: (Eq a, Show a, CompileErrorM m, MergeableM m) =>
-  [a] -> [a] -> m ()
+containsPaired :: (Eq a, Show a) => [a] -> [a] -> CompileInfo ()
 containsPaired = checkPaired checkSingle where
   checkSingle a e
     | a == e = return ()

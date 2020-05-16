@@ -50,7 +50,7 @@ runCompiler (CompileOptions _ _ _ ds _ _ p (ExecuteTests tp) f) = do
   allResults <- fmap concat $ sequence $ map (runModuleTests backend base tp) ts
   let passed = sum $ map (fst . fst) allResults
   let failed = sum $ map (snd . fst) allResults
-  processResults passed failed (mergeAllM $ map snd allResults) where
+  processResults passed failed (mergeAll $ map snd allResults) where
     preloadTests b base (ca,ms) d = do
       m <- loadMetadata ca (p </> d)
       let ca2 = ca `Map.union` mapMetadata [m]

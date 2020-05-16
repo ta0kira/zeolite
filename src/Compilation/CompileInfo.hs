@@ -22,7 +22,7 @@ limitations under the License.
 
 module Compilation.CompileInfo (
   CompileInfo,
-  CompileInfoT,
+  CompileInfoIO,
   CompileMessage,
   getCompileError,
   getCompileErrorT,
@@ -31,9 +31,11 @@ module Compilation.CompileInfo (
   getCompileWarnings,
   getCompileWarningsT,
   isCompileError,
+  isCompileErrorT,
 ) where
 
 import Control.Applicative
+import Control.Monad ((>=>))
 import Control.Monad.Trans
 import Data.Foldable
 import Data.Functor
@@ -55,6 +57,43 @@ import Control.Monad.Fail
 import Base.CompileError
 import Base.Mergeable
 
+
+type CompileInfo a = CompileInfoT Identity a
+
+type CompileInfoIO a = CompileInfoT IO a
+
+data CompileInfoT m a =
+  CompileInfoT {
+    citState :: m (CompileInfoState a)
+  }
+
+getCompileErrorT :: Monad m => CompileInfoT m a -> m CompileMessage
+getCompileErrorT = fmap cfErrors . citState
+
+getCompileSuccessT :: Monad m => CompileInfoT m a -> m a
+getCompileSuccessT = fmap csData . citState
+
+getCompileWarningsT :: Monad m => CompileInfoT m a -> m [String]
+getCompileWarningsT = fmap getWarnings . citState
+
+isCompileErrorT :: Monad m => CompileInfoT m a -> m Bool
+isCompileErrorT x = do
+  x' <- citState x
+  case x' of
+       CompileFail _ _ -> return True
+       _               -> return False
+
+getCompileError :: CompileInfo a -> CompileMessage
+getCompileError = runIdentity . getCompileErrorT
+
+getCompileSuccess :: CompileInfo a -> a
+getCompileSuccess = runIdentity . getCompileSuccessT
+
+getCompileWarnings :: CompileInfo a -> [String]
+getCompileWarnings = runIdentity . getCompileWarningsT
+
+isCompileError :: CompileInfo a -> Bool
+isCompileError = runIdentity . isCompileErrorT
 
 data CompileMessage =
   CompileMessage {
@@ -79,37 +118,6 @@ data CompileInfoState a =
     csWarnings :: [String],
     csData :: a
   }
-
-data CompileInfoT m a =
-  CompileInfoT {
-    citState :: m (CompileInfoState a)
-  }
-
-type CompileInfo a = CompileInfoT Identity a
-
-getCompileErrorT :: Monad m => CompileInfoT m a -> m CompileMessage
-getCompileErrorT = fmap cfErrors . citState
-
-getCompileSuccessT :: Monad m => CompileInfoT m a -> m a
-getCompileSuccessT = fmap csData . citState
-
-getCompileWarningsT :: Monad m => CompileInfoT m a -> m [String]
-getCompileWarningsT = fmap getWarnings . citState
-
-isCompileError :: CompileInfo a -> Bool
-isCompileError x =
-  case runIdentity (citState x) of
-       CompileFail _ _ -> True
-       _               -> False
-
-getCompileError :: CompileInfo a -> CompileMessage
-getCompileError = runIdentity . getCompileErrorT
-
-getCompileSuccess :: CompileInfo a -> a
-getCompileSuccess = runIdentity . getCompileSuccessT
-
-getCompileWarnings :: CompileInfo a -> [String]
-getCompileWarnings = runIdentity . getCompileWarningsT
 
 instance (Functor m, Monad m) => Functor (CompileInfoT m) where
   fmap f x = CompileInfoT $ do
@@ -168,17 +176,12 @@ instance Monad m => CompileErrorM (CompileInfoT m) where
   compileWarningM w = CompileInfoT (return $ CompileSuccess [w] ())
 
 instance Monad m => MergeableM (CompileInfoT m) where
-  mergeAnyM xs = CompileInfoT $ do
-    xs' <- sequence $ map citState $ foldr (:) [] xs
-    return $ result $ splitErrorsAndData xs' where
-      result (_,xs2@(_:_),ws) = CompileSuccess ws $ mergeAny xs2
-      result ([],_,ws)        = CompileFail ws $ CompileMessage "" []
-      result (es,_,ws)        = CompileFail ws $ CompileMessage "" es
-  mergeAllM xs = CompileInfoT $ do
-    xs' <- sequence $ map citState $ foldr (:) [] xs
-    return $ result $ splitErrorsAndData xs' where
-      result ([],xs2,ws) = CompileSuccess ws $ mergeAll xs2
-      result (es,_,ws)   = CompileFail ws $ CompileMessage "" es
+  mergeAnyM = collectOneOrErrorM
+  mergeAllM = collectAllOrErrorM >=> return . mergeAll
+
+instance (Monad m, Mergeable a) => Mergeable (CompileInfoT m a) where
+  mergeAny = mergeAnyM
+  mergeAll = mergeAllM
 
 getWarnings :: CompileInfoState a -> [String]
 getWarnings (CompileFail w _)    = w

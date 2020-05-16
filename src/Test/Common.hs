@@ -77,24 +77,24 @@ forceParse s = force $ parse sourceParser "(string)" s where
   force (Right x) = x
   force _         = undefined
 
-readSingle :: (ParseFromSource a, CompileErrorM m) => String -> String -> m a
+readSingle :: ParseFromSource a => String -> String -> CompileInfo a
 readSingle = readSingleWith (optionalSpace >> sourceParser)
 
-readSingleWith :: CompileErrorM m => Parser a -> String -> String -> m a
+readSingleWith :: Parser a -> String -> String -> CompileInfo a
 readSingleWith p f s =
   unwrap $ parse (between nullParse endOfDoc p) f s
   where
     unwrap (Left e)  = compileErrorM (show e)
     unwrap (Right t) = return t
 
-readMulti :: CompileErrorM m => ParseFromSource a => String -> String -> m [a]
+readMulti :: ParseFromSource a => String -> String -> CompileInfo [a]
 readMulti f s =
   unwrap $ parse (between optionalSpace endOfDoc (sepBy sourceParser optionalSpace)) f s
   where
     unwrap (Left e)  = compileErrorM (show e)
     unwrap (Right t) = return t
 
-parseFilterMap :: CompileErrorM m => [(String,[String])] -> m ParamFilters
+parseFilterMap :: [(String,[String])] -> CompileInfo ParamFilters
 parseFilterMap pa = do
   pa2 <- collectAllOrErrorM $ map parseFilters pa
   return $ Map.fromList pa2
@@ -103,8 +103,7 @@ parseFilterMap pa = do
       fs2 <- collectAllOrErrorM $ map (readSingle "(string)") fs
       return (ParamName n,fs2)
 
-parseTheTest :: (ParseFromSource a, CompileErrorM m) =>
-  [(String,[String])] -> [String] -> m ([a],ParamFilters)
+parseTheTest :: ParseFromSource a => [(String,[String])] -> [String] -> CompileInfo ([a],ParamFilters)
 parseTheTest pa xs = do
   ts <- collectAllOrErrorM $ map (readSingle "(string)") xs
   pa2 <- parseFilterMap pa
@@ -114,8 +113,7 @@ showParams :: [(String,[String])] -> String
 showParams pa = "[" ++ intercalate "," (concat $ map expand pa) ++ "]" where
   expand (n,ps) = map (\p -> n ++ " " ++ p) ps
 
-checkTypeSuccess :: (TypeResolver r) =>
-  r -> [(String,[String])] -> String -> CompileInfo ()
+checkTypeSuccess :: TypeResolver r => r -> [(String,[String])] -> String -> CompileInfo ()
 checkTypeSuccess r pa x = do
   ([t],pa2) <- parseTheTest pa [x]
   check $ validateGeneralInstance r pa2 t
@@ -123,8 +121,7 @@ checkTypeSuccess r pa x = do
     prefix = x ++ " " ++ showParams pa
     check = flip reviseErrorM (prefix ++ ":")
 
-checkTypeFail :: (TypeResolver r) =>
-  r -> [(String,[String])] -> String -> CompileInfo ()
+checkTypeFail :: TypeResolver r => r -> [(String,[String])] -> String -> CompileInfo ()
 checkTypeFail r pa x = do
   ([t],pa2) <- parseTheTest pa [x]
   check $ validateGeneralInstance r pa2 t
@@ -135,8 +132,7 @@ checkTypeFail r pa x = do
       | isCompileError c = return ()
       | otherwise = compileErrorM $ prefix ++ ": Expected failure\n"
 
-checkDefinesSuccess :: (TypeResolver r) =>
-  r -> [(String,[String])] -> String -> CompileInfo ()
+checkDefinesSuccess :: TypeResolver r => r -> [(String,[String])] -> String -> CompileInfo ()
 checkDefinesSuccess r pa x = do
   ([t],pa2) <- parseTheTest pa [x]
   check $ validateDefinesInstance r pa2 t
@@ -144,8 +140,7 @@ checkDefinesSuccess r pa x = do
     prefix = x ++ " " ++ showParams pa
     check = flip reviseErrorM (prefix ++ ":")
 
-checkDefinesFail :: (TypeResolver r) =>
-  r -> [(String,[String])] -> String -> CompileInfo ()
+checkDefinesFail :: TypeResolver r => r -> [(String,[String])] -> String -> CompileInfo ()
 checkDefinesFail r pa x = do
   ([t],pa2) <- parseTheTest pa [x]
   check $ validateDefinesInstance r pa2 t
@@ -156,26 +151,23 @@ checkDefinesFail r pa x = do
       | isCompileError c = return ()
       | otherwise = compileErrorM $ prefix ++ ": Expected failure\n"
 
-containsExactly :: (Ord a, Show a, MergeableM m, CompileErrorM m) =>
-  [a] -> [a] -> m ()
+containsExactly :: (Ord a, Show a) => [a] -> [a] -> CompileInfo ()
 containsExactly actual expected = do
   containsNoDuplicates actual
   containsAtLeast actual expected
   containsAtMost actual expected
 
-containsNoDuplicates :: (Ord a, Show a, MergeableM m, CompileErrorM m) =>
-  [a] -> m ()
+containsNoDuplicates :: (Ord a, Show a) => [a] -> CompileInfo ()
 containsNoDuplicates expected =
-  (mergeAllM $ map checkSingle $ group $ sort expected) `reviseErrorM` (show expected)
+  (mergeAll $ map checkSingle $ group $ sort expected) `reviseErrorM` (show expected)
   where
     checkSingle xa@(x:_:_) =
       compileErrorM $ "Item " ++ show x ++ " occurs " ++ show (length xa) ++ " times"
     checkSingle _ = return ()
 
-containsAtLeast :: (Ord a, Show a, MergeableM m, CompileErrorM m) =>
-  [a] -> [a] -> m ()
+containsAtLeast :: (Ord a, Show a) => [a] -> [a] -> CompileInfo ()
 containsAtLeast actual expected =
-  (mergeAllM $ map (checkInActual $ Set.fromList actual) expected) `reviseErrorM`
+  (mergeAll $ map (checkInActual $ Set.fromList actual) expected) `reviseErrorM`
         (show actual ++ " (actual) vs. " ++ show expected ++ " (expected)")
   where
     checkInActual va v =
@@ -183,10 +175,9 @@ containsAtLeast actual expected =
          then return ()
          else compileErrorM $ "Item " ++ show v ++ " was expected but not present"
 
-containsAtMost :: (Ord a, Show a, MergeableM m, CompileErrorM m) =>
-  [a] -> [a] -> m ()
+containsAtMost :: (Ord a, Show a) => [a] -> [a] -> CompileInfo ()
 containsAtMost actual expected =
-  (mergeAllM $ map (checkInExpected $ Set.fromList expected) actual) `reviseErrorM`
+  (mergeAll $ map (checkInExpected $ Set.fromList expected) actual) `reviseErrorM`
         (show actual ++ " (actual) vs. " ++ show expected ++ " (expected)")
   where
     checkInExpected va v =
@@ -194,8 +185,7 @@ containsAtMost actual expected =
          then return ()
          else compileErrorM $ "Item " ++ show v ++ " is unexpected"
 
-checkEquals :: (Eq a, Show a, MergeableM m, CompileErrorM m) =>
-  a -> a -> m ()
+checkEquals :: (Eq a, Show a) => a -> a -> CompileInfo ()
 checkEquals actual expected
   | actual == expected = return ()
   | otherwise = compileErrorM $ "Expected " ++ show expected ++ " but got " ++ show actual

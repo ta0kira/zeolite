@@ -16,7 +16,7 @@ limitations under the License.
 
 -- Author: Kevin P. Barry [ta0kira@gmail.com]
 
-import Base.CompileError
+import Compilation.CompileInfo
 import Test.Common
 import qualified Test.DefinedCategory as TestDefinedCategory
 import qualified Test.IntegrationTest as TestIntegrationTest
@@ -42,5 +42,5 @@ main = runAllTests $ concat [
     labelWith "TypeInstance"    TestTypeInstance.tests
   ]
 
-labelWith :: CompileErrorM m => String -> [IO (m ())] -> [IO (m ())]
+labelWith :: String -> [IO (CompileInfo ())] -> [IO (CompileInfo ())]
 labelWith s ts = map (\(n,t) -> fmap (`reviseErrorM` ("In " ++ s ++ " (#" ++ show n ++ "):")) t) (zip ([1..] :: [Int]) ts)
