@@ -128,7 +128,9 @@ executeProcess c os = do
   status <- errorFromIO $ getProcessStatus True True pid
   case status of
        Just (Exited ExitSuccess) -> return ()
-       _ -> compileErrorM $ "Execution of " ++ c ++ " failed"
+       _ -> do
+         errorFromIO $ hPutStrLn stderr $ "Execution of " ++ c ++ " failed"
+         compileErrorM $ "Execution of " ++ c ++ " failed"
 
 instance PathIOHandler Resolver where
   resolveModule r p m = do
