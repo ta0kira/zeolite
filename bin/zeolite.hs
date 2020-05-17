@@ -44,10 +44,10 @@ main = do
           hPutStr stderr $ show $ getCompileError co
           hPutStrLn stderr "Use the -h option to show help."
           exitFailure
-      | otherwise = do
-        (resolver,backend) <- failFast $ loadConfig
+      | otherwise = tryCompileInfoIO "Zeolite execution failed." $ do
         let co' = getCompileSuccess co
-        when (HelpNotNeeded /= (coHelp co')) $ showHelp >> exitFailure
+        (resolver,backend) <- loadConfig
+        when (HelpNotNeeded /= (coHelp co')) $ lift $ showHelp >> exitFailure
         runCompiler resolver backend co'
 
 showHelp :: IO ()
