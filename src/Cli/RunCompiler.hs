@@ -50,24 +50,21 @@ runCompiler resolver backend (CompileOptions _ _ _ ds _ _ p (ExecuteTests tp) f)
   processResults passed failed (mergeAll $ map snd allResults) where
     compilerHash = getCompilerHash backend
     preloadTests base (ca,ms) d = do
-      m <- lift $ loadMetadata ca (p </> d)
+      m <- loadMetadata ca (p </> d)
       let ca2 = ca `Map.union` mapMetadata [m]
-      fr <- lift $ checkMetadataFreshness (p </> d) m
-      lift $ checkAllowedStale fr f
-      rm <- lift $ tryLoadRecompile (p </> d)
-      rm' <- case rm of
-                  Just rm2 -> return rm2
-                  Nothing -> compileErrorM $ "Module config for " ++ d ++ " is missing."
-      (fr0,deps0) <- lift $ loadPublicDeps compilerHash ca2 [base]
+      fr <- checkMetadataFreshness (p </> d) m
+      checkAllowedStale fr f
+      rm <- loadRecompile (p </> d)
+      (fr0,deps0) <- loadPublicDeps compilerHash ca2 [base]
       let ca3 = ca2 `Map.union` mapMetadata deps0
-      lift $ checkAllowedStale fr0 f
-      (fr1,deps1) <- lift $ loadTestingDeps compilerHash ca3 m
+      checkAllowedStale fr0 f
+      (fr1,deps1) <- loadTestingDeps compilerHash ca3 m
       let ca4 = ca3 `Map.union` mapMetadata deps1
-      lift $ checkAllowedStale fr1 f
-      (fr2,deps2) <- lift $ loadPrivateDeps compilerHash ca4 (deps0++[m]++deps1)
+      checkAllowedStale fr1 f
+      (fr2,deps2) <- loadPrivateDeps compilerHash ca4 (deps0++[m]++deps1)
       let ca5 = ca4 `Map.union` mapMetadata deps2
-      lift $ checkAllowedStale fr2 f
-      em <- lift $ getExprMap (p </> d) rm'
+      checkAllowedStale fr2 f
+      em <- getExprMap (p </> d) rm
       return (ca5,ms ++ [LoadedTests p d m em (deps0++[m]++deps1) deps2])
     checkTestFilters ts = do
       let possibleTests = Set.fromList $ concat $ map (cmTestFiles . ltMetadata) ts
@@ -96,7 +93,7 @@ runCompiler resolver backend (CompileOptions _ is is2 _ _ _ p (CompileFast c fn 
     rmExtraPaths = [],
     rmMode = CompileUnspecified
   }
-  em <- lift $ getExprMap p rm
+  em <- getExprMap p rm
   let spec = ModuleSpec {
     msRoot = absolute,
     msPath = dir,
@@ -124,52 +121,46 @@ runCompiler resolver backend (CompileOptions h _ _ ds _ _ p CompileRecompileRecu
            return da
          else do
            d <- lift $ canonicalizePath (p </> d0)
-           rm <- lift $ tryLoadRecompile d
-           case rm of
-                Nothing -> compileErrorM $ "Path " ++ d ++ " does not have a valid configuration."
-                Just m ->
-                  if rmPath m `Set.member` da
-                     then return da
-                     else do
-                       let ds3 = map (\d2 -> d </> d2) (rmPublicDeps m ++ rmPrivateDeps m)
-                       da' <- foldM (recursive r) (rmPath m `Set.insert` da) ds3
-                       runCompiler resolver backend (CompileOptions h [] [] [d] [] [] p CompileRecompile f)
-                       return da'
+           rm <- loadRecompile d
+           if rmPath rm `Set.member` da
+               then return da
+               else do
+                 let ds3 = map (\d2 -> d </> d2) (rmPublicDeps rm ++ rmPrivateDeps rm)
+                 da' <- foldM (recursive r) (rmPath rm `Set.insert` da) ds3
+                 runCompiler resolver backend (CompileOptions h [] [] [d] [] [] p CompileRecompile f)
+                 return da'
 
 runCompiler resolver backend (CompileOptions _ _ _ ds _ _ p CompileRecompile f) = do
   mergeAllM $ map recompileSingle ds where
     compilerHash = getCompilerHash backend
     recompileSingle d0 = do
       let d = p </> d0
-      rm <- lift $ tryLoadRecompile d
-      upToDate <- lift $ isPathUpToDate compilerHash d
-      maybeCompile rm upToDate where
-        maybeCompile Nothing _ = compileErrorM $ "Path " ++ d0 ++ " does not have a valid configuration."
-        maybeCompile (Just rm') upToDate
-          | f < ForceAll && upToDate = compileWarningM $ "Path " ++ d0 ++ " is up to date."
-          | otherwise = do
-              let (ModuleConfig p2 d _ is is2 es ep m) = rm'
-              -- In case the module is manually configured with a p such as "..",
-              -- since the absolute path might not be known ahead of time.
-              absolute <- lift $ canonicalizePath (p </> d0)
-              let fixed = fixPath (absolute </> p2)
-              (ps,xs,ts) <- lift $ findSourceFiles fixed d
-              em <- lift $ getExprMap (p </> d0) rm'
-              let spec = ModuleSpec {
-                msRoot = fixed,
-                msPath = d,
-                msExprMap = em,
-                msPublicDeps = is,
-                msPrivateDeps = is2,
-                msPublicFiles = ps,
-                msPrivateFiles = xs,
-                msTestFiles = ts,
-                msExtraFiles = es,
-                msExtraPaths = ep,
-                msMode = m,
-                msForce = f
-              }
-              compileModule resolver backend spec
+      upToDate <- isPathUpToDate compilerHash d
+      if f < ForceAll && upToDate
+         then compileWarningM $ "Path " ++ d0 ++ " is up to date"
+         else do
+           rm@(ModuleConfig p2 d2 _ is is2 es ep m) <- loadRecompile d
+           -- In case the module is manually configured with a p such as "..",
+           -- since the absolute path might not be known ahead of time.
+           absolute <- lift $ canonicalizePath (p </> d0)
+           let fixed = fixPath (absolute </> p2)
+           (ps,xs,ts) <- findSourceFiles fixed d2
+           em <- getExprMap (p </> d0) rm
+           let spec = ModuleSpec {
+             msRoot = fixed,
+             msPath = d2,
+             msExprMap = em,
+             msPublicDeps = is,
+             msPrivateDeps = is2,
+             msPublicFiles = ps,
+             msPrivateFiles = xs,
+             msTestFiles = ts,
+             msExtraFiles = es,
+             msExtraPaths = ep,
+             msMode = m,
+             msForce = f
+           }
+           compileModule resolver backend spec
 
 runCompiler resolver backend (CompileOptions _ is is2 ds _ _ p CreateTemplates f) = mapM_ compileSingle ds where
   compilerHash = getCompilerHash backend
@@ -177,10 +168,10 @@ runCompiler resolver backend (CompileOptions _ is is2 ds _ _ p CreateTemplates f
     base <- resolveBaseModule resolver
     as  <- fmap fixPaths $ mapErrorsM (resolveModule resolver (p </> d)) is
     as2 <- fmap fixPaths $ mapErrorsM (resolveModule resolver (p </> d)) is2
-    (fr1,deps1) <- lift $ loadPublicDeps compilerHash Map.empty (base:as)
-    lift $ checkAllowedStale fr1 f
-    (fr2,deps2) <- lift $ loadPublicDeps compilerHash (mapMetadata deps1) as2
-    lift $ checkAllowedStale fr2 f
+    (fr1,deps1) <- loadPublicDeps compilerHash Map.empty (base:as)
+    checkAllowedStale fr1 f
+    (fr2,deps2) <- loadPublicDeps compilerHash (mapMetadata deps1) as2
+    checkAllowedStale fr2 f
     path <- lift $ canonicalizePath p
     createModuleTemplates path d deps1 deps2
 
@@ -188,7 +179,7 @@ runCompiler resolver backend (CompileOptions h is is2 ds es ep p m f) = mapM_ co
   compileSingle d = do
     as  <- fmap fixPaths $ mapErrorsM (resolveModule resolver (p </> d)) is
     as2 <- fmap fixPaths $ mapErrorsM (resolveModule resolver (p </> d)) is2
-    isConfigured <- lift $ isPathConfigured d
+    isConfigured <- isPathConfigured d
     when (isConfigured && f == DoNotForce) $ do
       compileErrorM $ "Module " ++ d ++ " has an existing configuration. " ++
                       "Recompile with -r or use -f to overwrite the config."
@@ -203,5 +194,5 @@ runCompiler resolver backend (CompileOptions h is is2 ds es ep p m f) = mapM_ co
       rmExtraPaths = ep,
       rmMode = m
     }
-    lift $ writeRecompile (p </> d) rm
+    writeRecompile (p </> d) rm
     runCompiler resolver backend (CompileOptions h [] [] [d] [] [] p CompileRecompile DoNotForce)

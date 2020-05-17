@@ -72,13 +72,13 @@ tryFastModes ("--version":os) = do
      then exitSuccess
      else exitFailure
 tryFastModes ("--show-deps":ps) = do
-  mapM_ showDeps ps
+  tryCompileInfoIO "Zeolite execution failed." $ mapM_ showDeps ps
   exitSuccess where
     showDeps p = do
-      p' <- canonicalizePath p
+      p' <- lift $ canonicalizePath p
       m <- loadMetadata Map.empty p'
-      hPutStrLn stdout $ show p'
-      mapM_ showDep (cmObjectFiles m)
+      lift $ hPutStrLn stdout $ show p'
+      lift $ mapM_ showDep (cmObjectFiles m)
     showDep (CategoryObjectFile c ds _) = do
       mapM_ (\d -> hPutStrLn stdout $ "  " ++ show (ciCategory c) ++
                                       " -> " ++ show (ciCategory d) ++

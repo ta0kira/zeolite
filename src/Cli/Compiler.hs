@@ -87,12 +87,12 @@ compileModule resolver backend (ModuleSpec p d em is is2 ps xs ts es ep m f) = d
   as  <- fmap fixPaths $ mapErrorsM (resolveModule resolver (p </> d)) is
   as2 <- fmap fixPaths $ mapErrorsM (resolveModule resolver (p </> d)) is2
   let ca0 = Map.empty
-  (fr1,deps1) <- lift $ loadPublicDeps compilerHash ca0 as
+  (fr1,deps1) <- loadPublicDeps compilerHash ca0 as
   let ca1 = ca0 `Map.union` mapMetadata deps1
-  lift $ checkAllowedStale fr1 f
-  (fr2,deps2) <- lift $ loadPublicDeps compilerHash ca1 as2
+  checkAllowedStale fr1 f
+  (fr2,deps2) <- loadPublicDeps compilerHash ca1 as2
   let ca2 = ca1 `Map.union` mapMetadata deps2
-  lift $ checkAllowedStale fr2 f
+  checkAllowedStale fr2 f
   base <- resolveBaseModule resolver
   actual <- resolveModule resolver p d
   isBase <- isBaseModule resolver actual
@@ -100,8 +100,8 @@ compileModule resolver backend (ModuleSpec p d em is is2 ps xs ts es ep m f) = d
   deps1' <- if isBase
                then return deps1
                else do
-                 (fr3,bpDeps) <- lift $ loadPublicDeps compilerHash ca2 [base]
-                 lift $ checkAllowedStale fr3 f
+                 (fr3,bpDeps) <- loadPublicDeps compilerHash ca2 [base]
+                 checkAllowedStale fr3 f
                  return $ bpDeps ++ deps1
   ns0 <- createPublicNamespace p d
   let ex = concat $ map getSourceCategories es
@@ -111,12 +111,12 @@ compileModule resolver backend (ModuleSpec p d em is is2 ps xs ts es ep m f) = d
     (xx1,xx2) <- compileLanguageModule cm xa
     ms <- maybeCreateMain cm xa m
     return (ms,xx1++xx2)
-  lift $ eraseCachedData (p </> d)
+  eraseCachedData (p </> d)
   let ps2 = map takeFileName ps
   let xs2 = map takeFileName xs
   let ts2 = map takeFileName ts
   let paths = map (\ns -> getCachedPath (p </> d) ns "") $ nub $ filter (not . null) $ map show $ [ns0] ++ map coNamespace fs'
-  paths' <- lift $ mapM canonicalizePath paths
+  paths' <- mapM (lift . canonicalizePath) paths
   s0 <- lift $ canonicalizePath $ getCachedPath (p </> d) (show ns0) ""
   let paths2 = base:(getIncludePathsForDeps (deps1' ++ deps2)) ++ ep' ++ paths'
   let hxx   = filter (isSuffixOf ".hpp" . coFilename)       fs'
@@ -167,18 +167,18 @@ compileModule resolver backend (ModuleSpec p d em is is2 ps xs ts es ep m f) = d
       cmLinkFlags = cmLinkFlags cm2,
       cmObjectFiles = cmObjectFiles cm2
     }
-  lift $ writeMetadata (p </> d) cm2' where
+  writeMetadata (p </> d) cm2' where
     compilerHash = getCompilerHash backend
     ep' = fixPaths $ map (p </>) ep
     writeOutputFile ns0 paths ca@(CxxOutput _ f2 ns _ _ content) = do
       lift $ hPutStrLn stderr $ "Writing file " ++ f2
-      lift $ writeCachedFile (p </> d) (show ns) f2 $ concat $ map (++ "\n") content
+      writeCachedFile (p </> d) (show ns) f2 $ concat $ map (++ "\n") content
       if isSuffixOf ".cpp" f2 || isSuffixOf ".cc" f2
          then do
            let f2' = getCachedPath (p </> d) (show ns) f2
            let p0 = getCachedPath (p </> d) "" ""
            let p1 = getCachedPath (p </> d) (show ns) ""
-           lift $ createCachePath (p </> d)
+           createCachePath (p </> d)
            let ns' = if isStaticNamespace ns then show ns else show ns0
            let command = CompileToObject f2' (getCachedPath (p </> d) ns' "") dynamicNamespaceName "" (p0:p1:paths) False
            o2 <- runCxxCommand backend command
@@ -211,7 +211,7 @@ compileModule resolver backend (ModuleSpec p d em is is2 ps xs ts es ep m f) = d
     compileExtraFile e ns0 paths f2
       | isSuffixOf ".cpp" f2 || isSuffixOf ".cc" f2 = do
           let f2' = p </> f2
-          lift $ createCachePath (p </> d)
+          createCachePath (p </> d)
           let command = CompileToObject f2' (getCachedPath (p </> d) "" "") dynamicNamespaceName ns0 paths e
           fmap Just $ runCxxCommand backend command
       | isSuffixOf ".a" f2 || isSuffixOf ".o" f2 = return (Just f2)
@@ -229,8 +229,8 @@ compileModule resolver backend (ModuleSpec p d em is is2 ps xs ts es ep m f) = d
           lift $ hPutStr h $ concat $ map (++ "\n") content
           lift $ hClose h
           base <- resolveBaseModule resolver
-          (fr,deps2)  <- lift $ loadPrivateDeps compilerHash (mapMetadata deps) deps
-          lift $ checkAllowedStale fr f
+          (fr,deps2)  <- loadPrivateDeps compilerHash (mapMetadata deps) deps
+          checkAllowedStale fr f
           let lf' = lf ++ getLinkFlagsForDeps deps2
           let paths' = fixPaths $ paths ++ base:(getIncludePathsForDeps deps)
           let os     = getObjectFilesForDeps deps2
@@ -249,7 +249,7 @@ compileModule resolver backend (ModuleSpec p d em is is2 ps xs ts es ep m f) = d
 createModuleTemplates :: FilePath -> FilePath -> [CompileMetadata] -> [CompileMetadata] -> CompileInfoIO ()
 createModuleTemplates p d deps1 deps2 = do
   ns0 <- createPublicNamespace p d
-  (ps,xs,_) <- lift $ findSourceFiles p d
+  (ps,xs,_) <- findSourceFiles p d
   (LanguageModule _ _ _ cs0 ps0 ts0 cs1 ps1 ts1 _ _,_) <-
     fmap (fmap fst) $ loadLanguageModule p ns0 [] Map.empty ps deps1 deps2
   xs' <- zipWithContents p xs
