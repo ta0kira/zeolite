@@ -38,7 +38,8 @@ main = do
   args <- getArgs
   tryFastModes args
   let options = parseCompileOptions args >>= validateCompileOptions
-  compile options where
+  compile options
+  hPutStrLn stderr "Zeolite execution succeeded." where
     compile co
       | isCompileError co = do
           hPutStr stderr $ show $ getCompileError co
@@ -49,7 +50,6 @@ main = do
           (resolver,backend) <- loadConfig
           when (HelpNotNeeded /= (coHelp co')) $ lift $ showHelp >> exitFailure
           runCompiler resolver backend co'
-          lift $ hPutStrLn stderr "Zeolite execution succeeded."
 
 showHelp :: IO ()
 showHelp = do

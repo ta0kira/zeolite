@@ -120,7 +120,9 @@ tryCompileInfoIO message x = do
        hPutStr stderr $ concat $ map (++ "\n") (getCompileWarnings x')
        hPutStr stderr $ show $ getCompileError x'
        exitFailure
-     else return $ getCompileSuccess x'
+     else do
+       hPutStr stderr $ concat $ map (++ "\n") (getCompileWarnings x')
+       return $ getCompileSuccess x'
 
 data CompileMessage =
   CompileMessage {
