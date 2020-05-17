@@ -28,6 +28,7 @@ import Cli.CompileMetadata
 import Cli.CompileOptions
 import Cli.ProcessMetadata
 import Cli.ParseCompileOptions -- Not safe, due to Text.Regex.TDFA.
+import Cli.Programs
 import Cli.RunCompiler
 import Compilation.CompileInfo
 import Config.LoadConfig
@@ -76,8 +77,9 @@ tryFastModes ("--show-deps":ps) = do
   tryCompileInfoIO "Zeolite execution failed." $ mapM_ showDeps ps
   exitSuccess where
     showDeps p = do
+      (_,backend) <- loadConfig
       p' <- errorFromIO $ canonicalizePath p
-      m <- loadMetadata Map.empty p'
+      m <- loadModuleMetadata (getCompilerHash backend) ForceAll Map.empty p'
       errorFromIO $ hPutStrLn stdout $ show p'
       errorFromIO $ mapM_ showDep (cmObjectFiles m)
     showDep (CategoryObjectFile c ds _) = do

@@ -18,8 +18,6 @@ limitations under the License.
 
 module Cli.ProcessMetadata (
   MetadataMap,
-  checkAllowedStale,
-  checkMetadataFreshness,
   createCachePath,
   eraseCachedData,
   findSourceFiles,
@@ -37,11 +35,11 @@ module Cli.ProcessMetadata (
   getSourceFilesForDeps,
   isPathConfigured,
   isPathUpToDate,
+  loadModuleMetadata,
   loadPrivateDeps,
   loadPublicDeps,
-  loadTestingDeps,
-  loadMetadata,
   loadRecompile,
+  loadTestingDeps,
   mapMetadata,
   resolveCategoryDeps,
   resolveObjectDeps,
@@ -84,37 +82,10 @@ moduleFilename = ".zeolite-module"
 metadataFilename :: FilePath
 metadataFilename = "compile-metadata"
 
--- TODO: Integrate this dependency loading.
-checkAllowedStale :: Bool -> ForceMode -> CompileInfoIO ()
-checkAllowedStale fr f = do
-  when (not fr && f < ForceAll) $
-    compileErrorM $ "Some dependencies are out of date; recompile them or use -f to force"
-
--- TODO: Integrate this dependency loading.
-checkMetadataFreshness :: FilePath -> CompileMetadata -> CompileInfoIO Bool
-checkMetadataFreshness = checkModuleFreshness False
-
 type MetadataMap = Map.Map FilePath CompileMetadata
 
 mapMetadata :: [CompileMetadata] -> MetadataMap
 mapMetadata cs = Map.fromList $ zip (map cmPath cs) cs
-
-loadMetadata :: MetadataMap -> FilePath -> CompileInfoIO CompileMetadata
-loadMetadata ca p = do
-  path <- errorFromIO $ canonicalizePath p
-  case path `Map.lookup` ca of
-       Just cm -> return cm
-       Nothing -> do
-         let f = p </> cachedDataPath </> metadataFilename
-         isFile <- errorFromIO $ doesFileExist p
-         when isFile $ compileErrorM $ "Path \"" ++ p ++ "\" is not a directory"
-         isDir <- errorFromIO $ doesDirectoryExist p
-         when (not isDir) $ compileErrorM $ "Path \"" ++ p ++ "\" does not exist"
-         filePresent <- errorFromIO $ doesFileExist f
-         when (not filePresent) $ compileErrorM $ "Module \"" ++ p ++ "\" has not been compiled yet"
-         c <- errorFromIO $ readFile f
-         (autoReadConfig f c) `reviseErrorM`
-            ("Could not parse metadata from \"" ++ p ++ "\"; please recompile")
 
 loadRecompile :: FilePath -> CompileInfoIO ModuleConfig
 loadRecompile p = do
@@ -129,14 +100,10 @@ loadRecompile p = do
   (autoReadConfig f c) `reviseErrorM`
     ("Could not parse metadata from \"" ++ p ++ "\"; please reconfigure")
 
-isPathUpToDate :: VersionHash -> FilePath -> CompileInfoIO Bool
-isPathUpToDate h p = do
-  m <- errorFromIO $ toCompileInfo $ loadMetadata Map.empty p
-  if isCompileError m
-     then return False
-     else do
-       (fr,_) <- loadDepsCommon True h Map.empty Set.empty (\m2 -> cmPublicDeps m2 ++ cmPrivateDeps m2) [p]
-       return fr
+isPathUpToDate :: VersionHash -> ForceMode -> FilePath -> CompileInfoIO Bool
+isPathUpToDate h f p = do
+  m <- errorFromIO $ toCompileInfo $ loadDepsCommon f h Map.empty Set.empty (\m2 -> cmPublicDeps m2 ++ cmPrivateDeps m2) [p]
+  return $ not $ isCompileError m
 
 isPathConfigured :: FilePath -> CompileInfoIO Bool
 isPathConfigured p = do
@@ -220,41 +187,72 @@ getLinkFlagsForDeps = concat . map cmLinkFlags
 getObjectFilesForDeps :: [CompileMetadata] -> [ObjectFile]
 getObjectFilesForDeps = concat . map cmObjectFiles
 
-loadPublicDeps :: VersionHash -> MetadataMap -> [FilePath] -> CompileInfoIO (Bool,[CompileMetadata])
-loadPublicDeps h ca = loadDepsCommon False h ca Set.empty cmPublicDeps
+loadModuleMetadata :: VersionHash -> ForceMode -> MetadataMap -> FilePath ->
+  CompileInfoIO CompileMetadata
+loadModuleMetadata h f ca = fmap head . loadDepsCommon f h ca Set.empty (const []) . (:[])
 
-loadTestingDeps :: VersionHash -> MetadataMap -> CompileMetadata -> CompileInfoIO (Bool,[CompileMetadata])
-loadTestingDeps h ca m = loadDepsCommon False h ca (Set.fromList [cmPath m]) cmPublicDeps (cmPublicDeps m ++ cmPrivateDeps m)
+loadPublicDeps :: VersionHash -> ForceMode -> MetadataMap -> [FilePath] ->
+  CompileInfoIO [CompileMetadata]
+loadPublicDeps h f ca = loadDepsCommon f h ca Set.empty cmPublicDeps
 
-loadPrivateDeps :: VersionHash -> MetadataMap -> [CompileMetadata] -> CompileInfoIO (Bool,[CompileMetadata])
-loadPrivateDeps h ca ms = do
-  (fr,new) <- loadDepsCommon False h ca pa (\m -> cmPublicDeps m ++ cmPrivateDeps m) paths
-  return (fr,ms ++ new) where
+loadTestingDeps :: VersionHash -> ForceMode -> MetadataMap -> CompileMetadata ->
+  CompileInfoIO [CompileMetadata]
+loadTestingDeps h f ca m = loadDepsCommon f h ca (Set.fromList [cmPath m]) cmPublicDeps (cmPublicDeps m ++ cmPrivateDeps m)
+
+loadPrivateDeps :: VersionHash -> ForceMode -> MetadataMap -> [CompileMetadata] ->
+  CompileInfoIO [CompileMetadata]
+loadPrivateDeps h f ca ms = do
+  new <- loadDepsCommon f h ca pa (\m -> cmPublicDeps m ++ cmPrivateDeps m) paths
+  return $ ms ++ new where
     paths = concat $ map (\m -> cmPublicDeps m ++ cmPrivateDeps m) ms
     pa = Set.fromList $ map cmPath ms
 
-loadDepsCommon :: Bool -> VersionHash -> MetadataMap -> Set.Set FilePath ->
-  (CompileMetadata -> [FilePath]) -> [FilePath] -> CompileInfoIO (Bool,[CompileMetadata])
-loadDepsCommon s h ca pa0 f ps = fmap snd $ fixedPaths >>= collect (pa0,(True,[])) where
-  fixedPaths = mapM (errorFromIO . canonicalizePath) ps
-  collect xa@(pa,(fr,xs)) (p:ps2)
-    | p `Set.member` pa = collect xa ps2
-    | otherwise = do
-        (m,fr2) <-
+loadDepsCommon :: ForceMode -> VersionHash -> MetadataMap -> Set.Set FilePath ->
+  (CompileMetadata -> [FilePath]) -> [FilePath] -> CompileInfoIO [CompileMetadata]
+loadDepsCommon f h ca pa0 getDeps ps = do
+  (_,processed) <- fixedPaths >>= collect (pa0,[])
+  mapErrorsM check processed where
+    enforce = f /= ForceAll
+    fixedPaths = mapM (errorFromIO . canonicalizePath) ps
+    collect xa@(pa,xs) (p:ps2)
+      | p `Set.member` pa = collect xa ps2
+      | otherwise = do
+          let continue m ds = collect (p `Set.insert` pa,xs ++ [m]) (ps2 ++ ds)
           case p `Map.lookup` ca of
-               Just m2 -> return (m2,True)
+               Just m2 -> continue m2 []
                Nothing -> do
-                 when (not s) $ errorFromIO $ hPutStrLn stderr $ "Loading metadata for dependency \"" ++ p ++ "\"."
+                 errorFromIO $ hPutStrLn stderr $ "Loading metadata for dependency \"" ++ p ++ "\"."
                  m2 <- loadMetadata ca p
-                 fresh <- checkModuleFreshness s p m2
-                 when (not s && not fresh) $
-                   compileWarningM $ "Module \"" ++ p ++ "\" is out of date and should be recompiled"
-                 let sameVersion = checkModuleVersionHash h m2
-                 when (not s && not sameVersion) $
-                   compileWarningM $ "Module \"" ++ p ++ "\" was compiled with a different compiler setup"
-                 return (m2,sameVersion && fresh)
-        collect (p `Set.insert` pa,(fr2 && fr,xs ++ [m])) (ps2 ++ f m)
-  collect xa _ = return xa
+                 let ds = getDeps m2
+                 continue m2 ds
+    collect xa _ = return xa
+    check m
+      | cmPath m `Map.member` ca = return m
+      | otherwise = do
+          fresh <- checkModuleFreshness (cmPath m) m
+          let sameVersion = checkModuleVersionHash h m
+          when (enforce && not fresh) $
+            compileErrorM $ "Module \"" ++ cmPath m ++ "\" is out of date and should be recompiled"
+          when (enforce && not sameVersion) $
+            compileErrorM $ "Module \"" ++ cmPath m ++ "\" was compiled with a different compiler setup"
+          return m
+
+loadMetadata :: MetadataMap -> FilePath -> CompileInfoIO CompileMetadata
+loadMetadata ca p = do
+  path <- errorFromIO $ canonicalizePath p
+  case path `Map.lookup` ca of
+       Just cm -> return cm
+       Nothing -> do
+         let f = p </> cachedDataPath </> metadataFilename
+         isFile <- errorFromIO $ doesFileExist p
+         when isFile $ compileErrorM $ "Path \"" ++ p ++ "\" is not a directory"
+         isDir <- errorFromIO $ doesDirectoryExist p
+         when (not isDir) $ compileErrorM $ "Path \"" ++ p ++ "\" does not exist"
+         filePresent <- errorFromIO $ doesFileExist f
+         when (not filePresent) $ compileErrorM $ "Module \"" ++ p ++ "\" has not been compiled yet"
+         c <- errorFromIO $ readFile f
+         (autoReadConfig f c) `reviseErrorM`
+            ("Could not parse metadata from \"" ++ p ++ "\"; please recompile")
 
 fixPath :: FilePath -> FilePath
 fixPath = foldl (</>) "" . process [] . map dropSlash . splitPath where
@@ -286,8 +284,8 @@ sortCompiledFiles = foldl split ([],[],[]) where
 checkModuleVersionHash :: VersionHash -> CompileMetadata -> Bool
 checkModuleVersionHash h m = cmVersionHash m == h
 
-checkModuleFreshness :: Bool -> FilePath -> CompileMetadata -> CompileInfoIO Bool
-checkModuleFreshness s p (CompileMetadata _ p2 _ is is2 _ _ _ ps xs ts hxx cxx bs _ _) = do
+checkModuleFreshness :: FilePath -> CompileMetadata -> CompileInfoIO Bool
+checkModuleFreshness p (CompileMetadata _ p2 _ is is2 _ _ _ ps xs ts hxx cxx bs _ _) = do
   time <- errorFromIO $ getModificationTime $ getCachedPath p "" metadataFilename
   (ps2,xs2,ts2) <- findSourceFiles p ""
   let e1 = checkMissing ps ps2
@@ -304,20 +302,20 @@ checkModuleFreshness s p (CompileMetadata _ p2 _ is is2 _ _ _ ps xs ts hxx cxx b
       exists <- doesFileOrDirExist f
       if not exists
          then do
-           when (not s) $ compileWarningM $ "Required path \"" ++ f ++ "\" is missing"
+           compileWarningM $ "Required path \"" ++ f ++ "\" is missing"
            return True
          else do
            time2 <- errorFromIO $ getModificationTime f
            if time2 > time
               then do
-                when (not s) $ compileWarningM $ "Required path \"" ++ f ++ "\" is newer than cached data"
+                compileWarningM $ "Required path \"" ++ f ++ "\" is newer than cached data"
                 return True
               else return False
     checkOutput f = do
       exists <- errorFromIO $ doesFileExist f
       if not exists
          then do
-           when (not s) $ compileWarningM $ "Output file \"" ++ f ++ "\" is missing"
+           compileWarningM $ "Output file \"" ++ f ++ "\" is missing"
            return True
          else return False
     checkMissing s0 s1 = not $ null $ (Set.fromList s1) `Set.difference` (Set.fromList s0)

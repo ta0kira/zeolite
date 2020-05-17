@@ -50,20 +50,15 @@ runCompiler resolver backend (CompileOptions _ _ _ ds _ _ p (ExecuteTests tp) f)
   processResults passed failed (mergeAll $ map snd allResults) where
     compilerHash = getCompilerHash backend
     preloadTests base (ca,ms) d = do
-      m <- loadMetadata ca (p </> d)
+      m <- loadModuleMetadata compilerHash f ca (p </> d)
       let ca2 = ca `Map.union` mapMetadata [m]
-      fr <- checkMetadataFreshness (p </> d) m
-      checkAllowedStale fr f
       rm <- loadRecompile (p </> d)
-      (fr0,deps0) <- loadPublicDeps compilerHash ca2 [base]
+      deps0 <- loadPublicDeps compilerHash f ca2 [base]
       let ca3 = ca2 `Map.union` mapMetadata deps0
-      checkAllowedStale fr0 f
-      (fr1,deps1) <- loadTestingDeps compilerHash ca3 m
+      deps1 <- loadTestingDeps compilerHash f ca3 m
       let ca4 = ca3 `Map.union` mapMetadata deps1
-      checkAllowedStale fr1 f
-      (fr2,deps2) <- loadPrivateDeps compilerHash ca4 (deps0++[m]++deps1)
+      deps2 <- loadPrivateDeps compilerHash f ca4 (deps0++[m]++deps1)
       let ca5 = ca4 `Map.union` mapMetadata deps2
-      checkAllowedStale fr2 f
       em <- getExprMap (p </> d) rm
       return (ca5,ms ++ [LoadedTests p d m em (deps0++[m]++deps1) deps2])
     checkTestFilters ts = do
@@ -135,7 +130,7 @@ runCompiler resolver backend (CompileOptions _ _ _ ds _ _ p CompileRecompile f) 
     compilerHash = getCompilerHash backend
     recompileSingle d0 = do
       let d = p </> d0
-      upToDate <- isPathUpToDate compilerHash d
+      upToDate <- isPathUpToDate compilerHash f d
       if f < ForceAll && upToDate
          then compileWarningM $ "Path " ++ d0 ++ " is up to date"
          else do
@@ -168,10 +163,8 @@ runCompiler resolver backend (CompileOptions _ is is2 ds _ _ p CreateTemplates f
     base <- resolveBaseModule resolver
     as  <- fmap fixPaths $ mapErrorsM (resolveModule resolver (p </> d)) is
     as2 <- fmap fixPaths $ mapErrorsM (resolveModule resolver (p </> d)) is2
-    (fr1,deps1) <- loadPublicDeps compilerHash Map.empty (base:as)
-    checkAllowedStale fr1 f
-    (fr2,deps2) <- loadPublicDeps compilerHash (mapMetadata deps1) as2
-    checkAllowedStale fr2 f
+    deps1 <- loadPublicDeps compilerHash f Map.empty (base:as)
+    deps2 <- loadPublicDeps compilerHash f (mapMetadata deps1) as2
     path <- errorFromIO $ canonicalizePath p
     createModuleTemplates path d deps1 deps2
 

@@ -87,12 +87,10 @@ compileModule resolver backend (ModuleSpec p d em is is2 ps xs ts es ep m f) = d
   as  <- fmap fixPaths $ mapErrorsM (resolveModule resolver (p </> d)) is
   as2 <- fmap fixPaths $ mapErrorsM (resolveModule resolver (p </> d)) is2
   let ca0 = Map.empty
-  (fr1,deps1) <- loadPublicDeps compilerHash ca0 as
+  deps1 <- loadPublicDeps compilerHash f ca0 as
   let ca1 = ca0 `Map.union` mapMetadata deps1
-  checkAllowedStale fr1 f
-  (fr2,deps2) <- loadPublicDeps compilerHash ca1 as2
+  deps2 <- loadPublicDeps compilerHash f ca1 as2
   let ca2 = ca1 `Map.union` mapMetadata deps2
-  checkAllowedStale fr2 f
   base <- resolveBaseModule resolver
   actual <- resolveModule resolver p d
   isBase <- isBaseModule resolver actual
@@ -100,8 +98,7 @@ compileModule resolver backend (ModuleSpec p d em is is2 ps xs ts es ep m f) = d
   deps1' <- if isBase
                then return deps1
                else do
-                 (fr3,bpDeps) <- loadPublicDeps compilerHash ca2 [base]
-                 checkAllowedStale fr3 f
+                 bpDeps <- loadPublicDeps compilerHash f ca2 [base]
                  return $ bpDeps ++ deps1
   ns0 <- createPublicNamespace p d
   let ex = concat $ map getSourceCategories es
@@ -229,8 +226,7 @@ compileModule resolver backend (ModuleSpec p d em is is2 ps xs ts es ep m f) = d
           errorFromIO $ hPutStr h $ concat $ map (++ "\n") content
           errorFromIO $ hClose h
           base <- resolveBaseModule resolver
-          (fr,deps2)  <- loadPrivateDeps compilerHash (mapMetadata deps) deps
-          checkAllowedStale fr f
+          deps2  <- loadPrivateDeps compilerHash f (mapMetadata deps) deps
           let lf' = lf ++ getLinkFlagsForDeps deps2
           let paths' = fixPaths $ paths ++ base:(getIncludePathsForDeps deps)
           let os     = getObjectFilesForDeps deps2
