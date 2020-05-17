@@ -22,6 +22,8 @@ limitations under the License.
 
 module Base.CompileError (
   CompileErrorM(..),
+  mapErrorsM,
+  mapErrorsM_,
 ) where
 
 #if MIN_VERSION_base(4,8,0)
@@ -48,3 +50,9 @@ class Monad m => CompileErrorM m where
   reviseErrorM :: m a -> String -> m a
   reviseErrorM e _ = e
   compileWarningM :: String -> m ()
+
+mapErrorsM :: CompileErrorM m => (a -> m b) -> [a] -> m [b]
+mapErrorsM f = collectAllOrErrorM . map f
+
+mapErrorsM_ :: CompileErrorM m => (a -> m b) -> [a] -> m ()
+mapErrorsM_ f xs = mapErrorsM f xs >> return ()

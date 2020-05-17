@@ -44,7 +44,7 @@ runCompiler resolver backend (CompileOptions _ _ _ ds _ _ p (ExecuteTests tp) f)
   base <- resolveBaseModule resolver
   ts <- fmap snd $ foldM (preloadTests base) (Map.empty,[]) ds
   checkTestFilters ts
-  allResults <- lift $ fmap concat $ sequence $ map (runModuleTests resolver backend base tp) ts
+  allResults <- fmap concat $ mapErrorsM (runModuleTests resolver backend base tp) ts
   let passed = sum $ map (fst . fst) allResults
   let failed = sum $ map (snd . fst) allResults
   processResults passed failed (mergeAll $ map snd allResults) where
@@ -111,7 +111,7 @@ runCompiler resolver backend (CompileOptions _ is is2 _ _ _ p (CompileFast c fn 
     msMode = (CompileBinary c fn (absolute </> show c) []),
     msForce = f
   }
-  lift $ compileModule resolver backend spec
+  compileModule resolver backend spec
   lift $ removeDirectoryRecursive dir
 
 runCompiler resolver backend (CompileOptions h _ _ ds _ _ p CompileRecompileRecursive f) = do
@@ -169,25 +169,25 @@ runCompiler resolver backend (CompileOptions _ _ _ ds _ _ p CompileRecompile f) 
                 msMode = m,
                 msForce = f
               }
-              lift $ compileModule resolver backend spec
+              compileModule resolver backend spec
 
 runCompiler resolver backend (CompileOptions _ is is2 ds _ _ p CreateTemplates f) = mapM_ compileSingle ds where
   compilerHash = getCompilerHash backend
   compileSingle d = do
     base <- resolveBaseModule resolver
-    as  <- fmap fixPaths $ sequence $ map (resolveModule resolver (p </> d)) is
-    as2 <- fmap fixPaths $ sequence $ map (resolveModule resolver (p </> d)) is2
+    as  <- fmap fixPaths $ mapErrorsM (resolveModule resolver (p </> d)) is
+    as2 <- fmap fixPaths $ mapErrorsM (resolveModule resolver (p </> d)) is2
     (fr1,deps1) <- lift $ loadPublicDeps compilerHash Map.empty (base:as)
     lift $ checkAllowedStale fr1 f
     (fr2,deps2) <- lift $ loadPublicDeps compilerHash (mapMetadata deps1) as2
     lift $ checkAllowedStale fr2 f
     path <- lift $ canonicalizePath p
-    lift $ createModuleTemplates path d deps1 deps2
+    createModuleTemplates path d deps1 deps2
 
 runCompiler resolver backend (CompileOptions h is is2 ds es ep p m f) = mapM_ compileSingle ds where
   compileSingle d = do
-    as  <- fmap fixPaths $ sequence $ map (resolveModule resolver (p </> d)) is
-    as2 <- fmap fixPaths $ sequence $ map (resolveModule resolver (p </> d)) is2
+    as  <- fmap fixPaths $ mapErrorsM (resolveModule resolver (p </> d)) is
+    as2 <- fmap fixPaths $ mapErrorsM (resolveModule resolver (p </> d)) is2
     isConfigured <- lift $ isPathConfigured d
     when (isConfigured && f == DoNotForce) $ do
       compileErrorM $ "Module " ++ d ++ " has an existing configuration. " ++
