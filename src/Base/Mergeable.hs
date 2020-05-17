@@ -23,6 +23,8 @@ limitations under the License.
 module Base.Mergeable (
   Mergeable(..),
   MergeableM(..),
+  mergeDefault,
+  mergeDefaultM,
 ) where
 
 #if MIN_VERSION_base(4,8,0)
@@ -34,14 +36,16 @@ import Data.Foldable
 class Mergeable a where
   mergeAny :: Foldable f => f a -> a
   mergeAll :: Foldable f => f a -> a
-  mergeDefault :: a
-  mergeDefault = mergeAll Nothing
 
 class Monad m => MergeableM m where
   mergeAnyM :: (Mergeable a, Foldable f) => f (m a) -> m a
   mergeAllM :: (Mergeable a, Foldable f) => f (m a) -> m a
-  mergeDefaultM :: Mergeable a => m a
-  mergeDefaultM = mergeAllM Nothing
+
+mergeDefault :: Mergeable a => a
+mergeDefault = mergeAll Nothing
+
+mergeDefaultM :: (MergeableM m, Mergeable a) => m a
+mergeDefaultM = mergeAllM Nothing
 
 instance Mergeable () where
   mergeAny = const ()
