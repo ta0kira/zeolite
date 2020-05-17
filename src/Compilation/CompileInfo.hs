@@ -24,7 +24,6 @@ module Compilation.CompileInfo (
   CompileInfo,
   CompileInfoIO,
   CompileMessage,
-  failFast,
   fromCompileInfo,
   getCompileError,
   getCompileErrorT,
@@ -65,10 +64,6 @@ import Control.Monad.Fail
 import Base.CompileError
 import Base.Mergeable
 
-
-{-# DEPRECATED failFast "Temporarily available while fixing Issue #63." #-}
-failFast :: CompileInfoIO a -> IO a
-failFast = tryCompileInfoIO "Compilation failed."
 
 type CompileInfo a = CompileInfoT Identity a
 

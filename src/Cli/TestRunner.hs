@@ -99,23 +99,23 @@ runSingleTest b cm p paths deps (f,s) = do
          then mergeAll [cr,ce,compError,errError,outError]
          else mergeAll [cr,ce]
 
-    execute s2 e rs es cs ds = do
+    execute s2 e rs es cs ds = toCompileInfo $ do
       let result = compileAll (Just e) cs ds
       if isCompileError result
-         then return $ result >> return ()
+         then fromCompileInfo result >> return ()
          else do
            let warnings = getCompileWarnings result
            let (xx,main) = getCompileSuccess result
            (dir,binaryName) <- createBinary main xx
            let command = TestCommand binaryName (takeDirectory binaryName)
-           (TestCommandResult s2' out err) <- failFast $ runTestCommand b command
+           (TestCommandResult s2' out err) <- runTestCommand b command
            case (s2,s2') of
-                (True,False) -> return $ mergeAll $ map compileErrorM $ warnings ++ err ++ out
-                (False,True) -> return $ compileErrorM "Expected runtime failure"
+                (True,False) -> mergeAll $ map compileErrorM $ warnings ++ err ++ out
+                (False,True) -> compileErrorM "Expected runtime failure"
                 _ -> do
                   let result2 = checkContent rs es warnings err out
-                  when (not $ isCompileError result) $ removeDirectoryRecursive dir
-                  return result2
+                  when (not $ isCompileError result) $ lift $ removeDirectoryRecursive dir
+                  fromCompileInfo result2
 
     compileAll e cs ds = do
       let ns1 = StaticNamespace $ privateNamespace s
@@ -148,24 +148,24 @@ runSingleTest b cm p paths deps (f,s) = do
       when (found && not expected) $ compileErrorM $ "Pattern \"" ++ r ++ "\" present in " ++ n
       when (not found && expected) $ compileErrorM $ "Pattern \"" ++ r ++ "\" missing from " ++ n
     createBinary (CxxOutput _ f2 _ ns req content) xx = do
-      dir <- mkdtemp "/tmp/ztest_"
-      hPutStrLn stderr $ "Writing temporary files to " ++ dir
-      sources <- sequence $ map (writeSingleFile dir) xx
+      dir <- lift $ mkdtemp "/tmp/ztest_"
+      lift $ hPutStrLn stderr $ "Writing temporary files to " ++ dir
+      sources <- mapErrorsM (writeSingleFile dir) xx
       -- TODO: Cache CompileMetadata here for debugging failures.
       let sources' = resolveObjectDeps deps p dir sources
       let main   = dir </> f2
       let binary = dir </> "testcase"
-      writeFile main $ concat $ map (++ "\n") content
+      lift $ writeFile main $ concat $ map (++ "\n") content
       let flags = getLinkFlagsForDeps deps
       let paths' = nub $ map fixPath (dir:paths)
       let os  = getObjectFilesForDeps deps
       let ofr = getObjectFileResolver (sources' ++ os)
       let os' = ofr ns req
       let command = CompileToBinary main os' binary paths' flags
-      file <- failFast $ runCxxCommand b command
+      file <- runCxxCommand b command
       return (dir,file)
     writeSingleFile d ca@(CxxOutput _ f2 _ _ _ content) = do
-      writeFile (d </> f2) $ concat $ map (++ "\n") content
+      lift $ writeFile (d </> f2) $ concat $ map (++ "\n") content
       if isSuffixOf ".cpp" f2
          then return ([d </> f2],ca)
          else return ([],ca)
