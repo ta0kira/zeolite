@@ -80,9 +80,9 @@ runCompiler resolver backend (CompileOptions _ _ _ ds _ _ p (ExecuteTests tp) f)
         compileWarningM $ "\nPassed: " ++ show passed ++ " test(s), Failed: " ++ show failed ++ " test(s)"
 
 runCompiler resolver backend (CompileOptions _ is is2 _ _ _ p (CompileFast c fn f2) f) = do
-  dir <- lift $ mkdtemp "/tmp/zfast_"
-  absolute <- lift $ canonicalizePath p
-  f2' <- lift $ canonicalizePath (p </> f2)
+  dir <- errorFromIO $ mkdtemp "/tmp/zfast_"
+  absolute <- errorFromIO $ canonicalizePath p
+  f2' <- errorFromIO $ canonicalizePath (p </> f2)
   let rm = ModuleConfig {
     rmRoot = "",
     rmPath = ".",
@@ -109,7 +109,7 @@ runCompiler resolver backend (CompileOptions _ is is2 _ _ _ p (CompileFast c fn 
     msForce = f
   }
   compileModule resolver backend spec
-  lift $ removeDirectoryRecursive dir
+  errorFromIO $ removeDirectoryRecursive dir
 
 runCompiler resolver backend (CompileOptions h _ _ ds _ _ p CompileRecompileRecursive f) = do
   foldM (recursive resolver) Set.empty ds >> return () where
@@ -120,7 +120,7 @@ runCompiler resolver backend (CompileOptions h _ _ ds _ _ p CompileRecompileRecu
            compileWarningM $ "Skipping system module " ++ d0 ++ "."
            return da
          else do
-           d <- lift $ canonicalizePath (p </> d0)
+           d <- errorFromIO $ canonicalizePath (p </> d0)
            rm <- loadRecompile d
            if rmPath rm `Set.member` da
                then return da
@@ -142,7 +142,7 @@ runCompiler resolver backend (CompileOptions _ _ _ ds _ _ p CompileRecompile f) 
            rm@(ModuleConfig p2 d2 _ is is2 es ep m) <- loadRecompile d
            -- In case the module is manually configured with a p such as "..",
            -- since the absolute path might not be known ahead of time.
-           absolute <- lift $ canonicalizePath (p </> d0)
+           absolute <- errorFromIO $ canonicalizePath (p </> d0)
            let fixed = fixPath (absolute </> p2)
            (ps,xs,ts) <- findSourceFiles fixed d2
            em <- getExprMap (p </> d0) rm
@@ -172,7 +172,7 @@ runCompiler resolver backend (CompileOptions _ is is2 ds _ _ p CreateTemplates f
     checkAllowedStale fr1 f
     (fr2,deps2) <- loadPublicDeps compilerHash (mapMetadata deps1) as2
     checkAllowedStale fr2 f
-    path <- lift $ canonicalizePath p
+    path <- errorFromIO $ canonicalizePath p
     createModuleTemplates path d deps1 deps2
 
 runCompiler resolver backend (CompileOptions h is is2 ds es ep p m f) = mapM_ compileSingle ds where
@@ -183,7 +183,7 @@ runCompiler resolver backend (CompileOptions h is is2 ds es ep p m f) = mapM_ co
     when (isConfigured && f == DoNotForce) $ do
       compileErrorM $ "Module " ++ d ++ " has an existing configuration. " ++
                       "Recompile with -r or use -f to overwrite the config."
-    absolute <- lift $ canonicalizePath p
+    absolute <- errorFromIO $ canonicalizePath p
     let rm = ModuleConfig {
       rmRoot = absolute,
       rmPath = d,

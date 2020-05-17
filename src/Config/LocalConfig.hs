@@ -78,13 +78,13 @@ compilerVersion = showVersion version
 
 instance CompilerBackend Backend where
   runCxxCommand (UnixBackend cb co ab) (CompileToObject s p nm ns ps e) = do
-    objName <- liftIO $ canonicalizePath $ p </> (takeFileName $ dropExtension s ++ ".o")
+    objName <- errorFromIO $ canonicalizePath $ p </> (takeFileName $ dropExtension s ++ ".o")
     executeProcess cb $ co ++ otherOptions ++ ["-c", s, "-o", objName]
     if e
       then do
         -- Extra files are put into .a since they will be unconditionally
         -- included. This prevents unwanted symbol dependencies.
-        arName  <- liftIO $ canonicalizePath $ p </> (takeFileName $ dropExtension s ++ ".a")
+        arName  <- errorFromIO $ canonicalizePath $ p </> (takeFileName $ dropExtension s ++ ".a")
         executeProcess ab ["-q",arName,objName]
         return arName
       else return objName where
@@ -98,7 +98,7 @@ instance CompilerBackend Backend where
     executeProcess cb $ co ++ otherOptions ++ m:otherFiles ++ arFiles ++ ["-o", o]
     return o where
       otherOptions = lf ++ map ("-I" ++) (map normalise ps)
-  runTestCommand _ (TestCommand b p) = liftIO $ do
+  runTestCommand _ (TestCommand b p) = errorFromIO $ do
     (outF,outH) <- mkstemps "/tmp/ztest_" ".txt"
     (errF,errH) <- mkstemps "/tmp/ztest_" ".txt"
     pid <- forkProcess (execWithCapture outH errH)
@@ -123,27 +123,27 @@ instance CompilerBackend Backend where
 
 executeProcess :: (MonadIO m, CompileErrorM m) => String -> [String] -> m ()
 executeProcess c os = do
-  liftIO $ hPutStrLn stderr $ "Executing: " ++ intercalate " " (c:os)
-  pid    <- liftIO $ forkProcess $ executeFile c True os Nothing
-  status <- liftIO $ getProcessStatus True True pid
+  errorFromIO $ hPutStrLn stderr $ "Executing: " ++ intercalate " " (c:os)
+  pid    <- errorFromIO $ forkProcess $ executeFile c True os Nothing
+  status <- errorFromIO $ getProcessStatus True True pid
   case status of
        Just (Exited ExitSuccess) -> return ()
        _ -> compileErrorM $ "Execution of " ++ c ++ " failed"
 
 instance PathIOHandler Resolver where
   resolveModule r p m = do
-    ps2 <- liftIO $ potentialSystemPaths r m
+    ps2 <- errorFromIO $ potentialSystemPaths r m
     firstExisting m $ [p</>m] ++ ps2
   isSystemModule r p m = do
-    isDir <- liftIO $ doesDirectoryExist (p</>m)
+    isDir <- errorFromIO $ doesDirectoryExist (p</>m)
     if isDir
        then return False
        else do
-         ps2 <- liftIO $ potentialSystemPaths r m
-         liftIO (findModule ps2) >>= return . not . isJust
+         ps2 <- errorFromIO $ potentialSystemPaths r m
+         errorFromIO (findModule ps2) >>= return . not . isJust
   resolveBaseModule _ = do
     let m = "base"
-    m0 <- liftIO $ getDataFileName m
+    m0 <- errorFromIO $ getDataFileName m
     firstExisting m [m0]
   isBaseModule r f = do
     b <- resolveBaseModule r
@@ -164,7 +164,7 @@ potentialSystemPaths (SimpleResolver ls ps) m = do
 
 firstExisting :: (MonadIO m, CompileErrorM m) => FilePath -> [FilePath] -> m FilePath
 firstExisting m ps = do
-  p <- liftIO $ findModule ps
+  p <- errorFromIO $ findModule ps
   case p of
        Nothing -> compileErrorM $ "Could not find path " ++ m
        Just p2 -> return p2

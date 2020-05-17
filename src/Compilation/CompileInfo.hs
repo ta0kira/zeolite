@@ -35,7 +35,6 @@ module Compilation.CompileInfo (
   isCompileErrorT,
   toCompileInfo,
   tryCompileInfoIO,
-  lift, -- TODO: Create catchIO to catch exceptions, then remove this.
 ) where
 
 import Control.Applicative

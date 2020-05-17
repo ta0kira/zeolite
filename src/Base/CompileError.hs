@@ -22,9 +22,13 @@ limitations under the License.
 
 module Base.CompileError (
   CompileErrorM(..),
+  errorFromIO,
   mapErrorsM,
   mapErrorsM_,
 ) where
+
+import Control.Monad.IO.Class
+import System.IO.Error (catchIOError)
 
 #if MIN_VERSION_base(4,8,0)
 #else
@@ -56,3 +60,10 @@ mapErrorsM f = collectAllOrErrorM . map f
 
 mapErrorsM_ :: CompileErrorM m => (a -> m b) -> [a] -> m ()
 mapErrorsM_ f xs = mapErrorsM f xs >> return ()
+
+errorFromIO :: (MonadIO m, CompileErrorM m) => IO a -> m a
+errorFromIO x = do
+  x' <- liftIO $ fmap Right x `catchIOError` (return . Left . show)
+  case x' of
+       (Right x2) -> return x2
+       (Left e)   -> compileErrorM e

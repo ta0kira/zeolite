@@ -116,8 +116,8 @@ compileModule resolver backend (ModuleSpec p d em is is2 ps xs ts es ep m f) = d
   let xs2 = map takeFileName xs
   let ts2 = map takeFileName ts
   let paths = map (\ns -> getCachedPath (p </> d) ns "") $ nub $ filter (not . null) $ map show $ [ns0] ++ map coNamespace fs'
-  paths' <- mapM (lift . canonicalizePath) paths
-  s0 <- lift $ canonicalizePath $ getCachedPath (p </> d) (show ns0) ""
+  paths' <- mapM (errorFromIO . canonicalizePath) paths
+  s0 <- errorFromIO $ canonicalizePath $ getCachedPath (p </> d) (show ns0) ""
   let paths2 = base:(getIncludePathsForDeps (deps1' ++ deps2)) ++ ep' ++ paths'
   let hxx   = filter (isSuffixOf ".hpp" . coFilename)       fs'
   let other = filter (not . isSuffixOf ".hpp" . coFilename) fs'
@@ -128,7 +128,7 @@ compileModule resolver backend (ModuleSpec p d em is is2 ps xs ts es ep m f) = d
   os2 <- fmap concat $ mapErrorsM (compileExtraSource (show ns0) paths2) es
   let (hxx',cxx,os') = sortCompiledFiles files'
   let (osCat,osOther) = partitionEithers os2
-  path <- lift $ canonicalizePath $ p </> d
+  path <- errorFromIO $ canonicalizePath $ p </> d
   let os1' = resolveObjectDeps (deps1' ++ deps2) path path (os1 ++ osCat)
   let cm2 = CompileMetadata {
       cmVersionHash = compilerHash,
@@ -171,7 +171,7 @@ compileModule resolver backend (ModuleSpec p d em is is2 ps xs ts es ep m f) = d
     compilerHash = getCompilerHash backend
     ep' = fixPaths $ map (p </>) ep
     writeOutputFile ns0 paths ca@(CxxOutput _ f2 ns _ _ content) = do
-      lift $ hPutStrLn stderr $ "Writing file " ++ f2
+      errorFromIO $ hPutStrLn stderr $ "Writing file " ++ f2
       writeCachedFile (p </> d) (show ns) f2 $ concat $ map (++ "\n") content
       if isSuffixOf ".cpp" f2 || isSuffixOf ".cc" f2
          then do
@@ -205,9 +205,9 @@ compileModule resolver backend (ModuleSpec p d em is is2 ps xs ts es ep m f) = d
       } where
         ns' = if null ns then NoNamespace else StaticNamespace ns
     checkOwnedFile f2 = do
-      exists <- lift $ doesFileExist f2
+      exists <- errorFromIO $ doesFileExist f2
       when (not exists) $ compileErrorM $ "Owned file " ++ f2 ++ " does not exist."
-      lift $ canonicalizePath f2
+      errorFromIO $ canonicalizePath f2
     compileExtraFile e ns0 paths f2
       | isSuffixOf ".cpp" f2 || isSuffixOf ".cc" f2 = do
           let f2' = p </> f2
@@ -221,13 +221,13 @@ compileModule resolver backend (ModuleSpec p d em is is2 ps xs ts es ep m f) = d
       | length ms == 0 = compileErrorM $ "Main category " ++ show n ++ " not found."
       | otherwise = do
           f0 <- if null o
-                   then lift $ canonicalizePath $ p </> d </> show n
-                   else lift $ canonicalizePath $ p </> d </> o
+                   then errorFromIO $ canonicalizePath $ p </> d </> show n
+                   else errorFromIO $ canonicalizePath $ p </> d </> o
           let (CxxOutput _ _ _ ns2 req content) = head ms
           -- TODO: Create a helper or a constant or something.
-          (o',h) <- lift $ mkstemps "/tmp/zmain_" ".cpp"
-          lift $ hPutStr h $ concat $ map (++ "\n") content
-          lift $ hClose h
+          (o',h) <- errorFromIO $ mkstemps "/tmp/zmain_" ".cpp"
+          errorFromIO $ hPutStr h $ concat $ map (++ "\n") content
+          errorFromIO $ hClose h
           base <- resolveBaseModule resolver
           (fr,deps2)  <- loadPrivateDeps compilerHash (mapMetadata deps) deps
           checkAllowedStale fr f
@@ -237,9 +237,9 @@ compileModule resolver backend (ModuleSpec p d em is is2 ps xs ts es ep m f) = d
           let ofr = getObjectFileResolver os
           let os' = ofr ns2 req
           let command = CompileToBinary o' os' f0 paths' lf'
-          lift $ hPutStrLn stderr $ "Creating binary " ++ f0
+          errorFromIO $ hPutStrLn stderr $ "Creating binary " ++ f0
           f1 <- runCxxCommand backend command
-          lift $ removeFile o'
+          errorFromIO $ removeFile o'
           return [f1]
     createBinary _ _ _ _ = return []
     maybeCreateMain cm2 xs2 (CompileBinary n f2 _ _) =
@@ -263,12 +263,12 @@ createModuleTemplates p d deps1 deps2 = do
   mapErrorsM_ writeTemplate ts where
   writeTemplate (CxxOutput _ n _ _ _ content) = do
     let n' = p </> d </> n
-    exists <- lift $ doesFileExist n'
+    exists <- errorFromIO $ doesFileExist n'
     if exists
         then compileWarningM $ "Skipping existing file " ++ n
         else do
-          lift $ hPutStrLn stderr $ "Writing file " ++ n
-          lift $ writeFile n' $ concat $ map (++ "\n") content
+          errorFromIO $ hPutStrLn stderr $ "Writing file " ++ n
+          errorFromIO $ writeFile n' $ concat $ map (++ "\n") content
 
 runModuleTests :: (PathIOHandler r, CompilerBackend b) => r -> b -> FilePath ->
   [FilePath] -> LoadedTests -> CompileInfoIO [((Int,Int),CompileInfo ())]
@@ -276,21 +276,21 @@ runModuleTests _ backend base tp (LoadedTests p d m em deps1 deps2) = do
   let paths = base:(getIncludePathsForDeps deps1)
   mapErrorsM_ showSkipped $ filter (not . isTestAllowed) $ cmTestFiles m
   ts' <- zipWithContents p $ map (d </>) $ filter isTestAllowed $ cmTestFiles m
-  path <- lift $ canonicalizePath (p </> d)
+  path <- errorFromIO $ canonicalizePath (p </> d)
   (cm,_) <- loadLanguageModule path NoNamespace [] em [] deps1 []
-  lift $ mapM (runSingleTest backend cm path paths (m:deps2)) ts' where
+  errorFromIO $ mapM (runSingleTest backend cm path paths (m:deps2)) ts' where
     allowTests = Set.fromList tp
     isTestAllowed t = if null allowTests then True else t `Set.member` allowTests
     showSkipped f = compileWarningM $ "Skipping tests in " ++ f ++ " due to explicit test filter."
 
 createPublicNamespace :: FilePath -> FilePath -> CompileInfoIO Namespace
-createPublicNamespace p d = (lift $ canonicalizePath (p </> d)) >>= return . StaticNamespace . publicNamespace
+createPublicNamespace p d = (errorFromIO $ canonicalizePath (p </> d)) >>= return . StaticNamespace . publicNamespace
 
 createPrivateNamespace :: FilePath -> FilePath -> CompileInfoIO Namespace
-createPrivateNamespace p f = (lift $ canonicalizePath (p </> f)) >>= return . StaticNamespace . publicNamespace
+createPrivateNamespace p f = (errorFromIO $ canonicalizePath (p </> f)) >>= return . StaticNamespace . publicNamespace
 
 zipWithContents :: FilePath -> [FilePath] -> CompileInfoIO [(FilePath,String)]
-zipWithContents p fs = fmap (zip $ map fixPath fs) $ mapM (lift . readFile . (p </>)) fs
+zipWithContents p fs = fmap (zip $ map fixPath fs) $ mapM (errorFromIO . readFile . (p </>)) fs
 
 loadPrivateSource :: FilePath -> FilePath -> CompileInfoIO (PrivateSource SourcePos)
 loadPrivateSource p f = do

@@ -23,6 +23,7 @@ import System.Exit
 import System.IO
 import qualified Data.Map as Map
 
+import Base.CompileError
 import Cli.CompileMetadata
 import Cli.CompileOptions
 import Cli.ProcessMetadata
@@ -48,7 +49,7 @@ main = do
       | otherwise = tryCompileInfoIO "Zeolite execution failed." $ do
           let co' = getCompileSuccess co
           (resolver,backend) <- loadConfig
-          when (HelpNotNeeded /= (coHelp co')) $ lift $ showHelp >> exitFailure
+          when (HelpNotNeeded /= (coHelp co')) $ errorFromIO $ showHelp >> exitFailure
           runCompiler resolver backend co'
 
 showHelp :: IO ()
@@ -75,10 +76,10 @@ tryFastModes ("--show-deps":ps) = do
   tryCompileInfoIO "Zeolite execution failed." $ mapM_ showDeps ps
   exitSuccess where
     showDeps p = do
-      p' <- lift $ canonicalizePath p
+      p' <- errorFromIO $ canonicalizePath p
       m <- loadMetadata Map.empty p'
-      lift $ hPutStrLn stdout $ show p'
-      lift $ mapM_ showDep (cmObjectFiles m)
+      errorFromIO $ hPutStrLn stdout $ show p'
+      errorFromIO $ mapM_ showDep (cmObjectFiles m)
     showDep (CategoryObjectFile c ds _) = do
       mapM_ (\d -> hPutStrLn stdout $ "  " ++ show (ciCategory c) ++
                                       " -> " ++ show (ciCategory d) ++

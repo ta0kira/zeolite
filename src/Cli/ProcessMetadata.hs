@@ -101,37 +101,37 @@ mapMetadata cs = Map.fromList $ zip (map cmPath cs) cs
 
 loadMetadata :: MetadataMap -> FilePath -> CompileInfoIO CompileMetadata
 loadMetadata ca p = do
-  path <- lift $ canonicalizePath p
+  path <- errorFromIO $ canonicalizePath p
   case path `Map.lookup` ca of
        Just cm -> return cm
        Nothing -> do
          let f = p </> cachedDataPath </> metadataFilename
-         isFile <- lift $ doesFileExist p
+         isFile <- errorFromIO $ doesFileExist p
          when isFile $ compileErrorM $ "Path \"" ++ p ++ "\" is not a directory"
-         isDir <- lift $ doesDirectoryExist p
+         isDir <- errorFromIO $ doesDirectoryExist p
          when (not isDir) $ compileErrorM $ "Path \"" ++ p ++ "\" does not exist"
-         filePresent <- lift $ doesFileExist f
+         filePresent <- errorFromIO $ doesFileExist f
          when (not filePresent) $ compileErrorM $ "Module \"" ++ p ++ "\" has not been compiled yet"
-         c <- lift $ readFile f
+         c <- errorFromIO $ readFile f
          (autoReadConfig f c) `reviseErrorM`
             ("Could not parse metadata from \"" ++ p ++ "\"; please recompile")
 
 loadRecompile :: FilePath -> CompileInfoIO ModuleConfig
 loadRecompile p = do
   let f = p </> moduleFilename
-  isFile <- lift $ doesFileExist p
+  isFile <- errorFromIO $ doesFileExist p
   when isFile $ compileErrorM $ "Path \"" ++ p ++ "\" is not a directory"
-  isDir <- lift $ doesDirectoryExist p
+  isDir <- errorFromIO $ doesDirectoryExist p
   when (not isDir) $ compileErrorM $ "Path \"" ++ p ++ "\" does not exist"
-  filePresent <- lift $ doesFileExist f
+  filePresent <- errorFromIO $ doesFileExist f
   when (not filePresent) $ compileErrorM $ "Module \"" ++ p ++ "\" has not been configured yet"
-  c <- lift $ readFile f
+  c <- errorFromIO $ readFile f
   (autoReadConfig f c) `reviseErrorM`
     ("Could not parse metadata from \"" ++ p ++ "\"; please reconfigure")
 
 isPathUpToDate :: VersionHash -> FilePath -> CompileInfoIO Bool
 isPathUpToDate h p = do
-  m <- lift $ toCompileInfo $ loadMetadata Map.empty p
+  m <- errorFromIO $ toCompileInfo $ loadMetadata Map.empty p
   if isCompileError m
      then return False
      else do
@@ -140,41 +140,41 @@ isPathUpToDate h p = do
 
 isPathConfigured :: FilePath -> CompileInfoIO Bool
 isPathConfigured p = do
-  m <- lift $ toCompileInfo $ loadRecompile p
+  m <- errorFromIO $ toCompileInfo $ loadRecompile p
   return $ not $ isCompileError m
 
 writeMetadata :: FilePath -> CompileMetadata -> CompileInfoIO ()
 writeMetadata p m = do
-  p' <- lift $ canonicalizePath p
-  lift $ hPutStrLn stderr $ "Writing metadata for \"" ++ p' ++ "\"."
+  p' <- errorFromIO $ canonicalizePath p
+  errorFromIO $ hPutStrLn stderr $ "Writing metadata for \"" ++ p' ++ "\"."
   m' <- fromCompileInfo $ autoWriteConfig m `reviseErrorM` ("In data for " ++ p)
   writeCachedFile p' "" metadataFilename m'
 
 writeRecompile :: FilePath -> ModuleConfig -> CompileInfoIO ()
 writeRecompile p m = do
-  p' <- lift $ canonicalizePath p
+  p' <- errorFromIO $ canonicalizePath p
   let f = p </> moduleFilename
-  lift $ hPutStrLn stderr $ "Updating config for \"" ++ p' ++ "\"."
+  errorFromIO $ hPutStrLn stderr $ "Updating config for \"" ++ p' ++ "\"."
   m' <- fromCompileInfo $ autoWriteConfig m `reviseErrorM` ("In data for " ++ p)
-  lift $ writeFile f m'
+  errorFromIO $ writeFile f m'
 
 eraseCachedData :: FilePath -> CompileInfoIO ()
 eraseCachedData p = do
   let d  = p </> cachedDataPath
-  dirExists <- lift $ doesDirectoryExist d
-  when dirExists $ lift $ removeDirectoryRecursive d
+  dirExists <- errorFromIO $ doesDirectoryExist d
+  when dirExists $ errorFromIO $ removeDirectoryRecursive d
 
 createCachePath :: FilePath -> CompileInfoIO ()
 createCachePath p = do
   let f = p </> cachedDataPath
-  exists <- lift $ doesDirectoryExist f
-  when (not exists) $ lift $ createDirectoryIfMissing False f
+  exists <- errorFromIO $ doesDirectoryExist f
+  when (not exists) $ errorFromIO $ createDirectoryIfMissing False f
 
 writeCachedFile :: FilePath -> String -> FilePath -> String -> CompileInfoIO ()
 writeCachedFile p ns f c = do
   createCachePath p
-  lift $ createDirectoryIfMissing False $ p </> cachedDataPath </> ns
-  lift $ writeFile (getCachedPath p ns f) c
+  errorFromIO $ createDirectoryIfMissing False $ p </> cachedDataPath </> ns
+  errorFromIO $ writeFile (getCachedPath p ns f) c
 
 getCachedPath :: FilePath -> String -> FilePath -> FilePath
 getCachedPath p ns f = fixPath $ p </> cachedDataPath </> ns </> f
@@ -185,11 +185,11 @@ getCacheRelativePath f = ".." </> f
 findSourceFiles :: FilePath -> FilePath -> CompileInfoIO ([FilePath],[FilePath],[FilePath])
 findSourceFiles p0 p = do
   let absolute = p0 </> p
-  isFile <- lift $ doesFileExist absolute
+  isFile <- errorFromIO $ doesFileExist absolute
   when isFile $ compileErrorM $ "Path \"" ++ absolute ++ "\" is not a directory"
-  isDir <- lift $ doesDirectoryExist absolute
+  isDir <- errorFromIO $ doesDirectoryExist absolute
   when (not isDir) $ compileErrorM $ "Path \"" ++ absolute ++ "\" does not exist"
-  ds <- lift $ getDirectoryContents absolute >>= return . map (p </>)
+  ds <- errorFromIO $ getDirectoryContents absolute >>= return . map (p </>)
   let ps = filter (isSuffixOf ".0rp") ds
   let xs = filter (isSuffixOf ".0rx") ds
   let ts = filter (isSuffixOf ".0rt") ds
@@ -197,7 +197,7 @@ findSourceFiles p0 p = do
 
 getExprMap :: FilePath -> ModuleConfig -> CompileInfoIO (ExprMap SourcePos)
 getExprMap p m = do
-  path <- lift $ canonicalizePath (p </> rmRoot m </> rmPath m)
+  path <- errorFromIO $ canonicalizePath (p </> rmRoot m </> rmPath m)
   let defaults = [("MODULE_PATH",Literal (StringLiteral [] path))]
   return $ Map.fromList $ rmExprMap m ++ defaults
 
@@ -236,7 +236,7 @@ loadPrivateDeps h ca ms = do
 loadDepsCommon :: Bool -> VersionHash -> MetadataMap -> Set.Set FilePath ->
   (CompileMetadata -> [FilePath]) -> [FilePath] -> CompileInfoIO (Bool,[CompileMetadata])
 loadDepsCommon s h ca pa0 f ps = fmap snd $ fixedPaths >>= collect (pa0,(True,[])) where
-  fixedPaths = mapM (lift . canonicalizePath) ps
+  fixedPaths = mapM (errorFromIO . canonicalizePath) ps
   collect xa@(pa,(fr,xs)) (p:ps2)
     | p `Set.member` pa = collect xa ps2
     | otherwise = do
@@ -244,7 +244,7 @@ loadDepsCommon s h ca pa0 f ps = fmap snd $ fixedPaths >>= collect (pa0,(True,[]
           case p `Map.lookup` ca of
                Just m2 -> return (m2,True)
                Nothing -> do
-                 when (not s) $ lift $ hPutStrLn stderr $ "Loading metadata for dependency \"" ++ p ++ "\"."
+                 when (not s) $ errorFromIO $ hPutStrLn stderr $ "Loading metadata for dependency \"" ++ p ++ "\"."
                  m2 <- loadMetadata ca p
                  fresh <- checkModuleFreshness s p m2
                  when (not s && not fresh) $
@@ -288,7 +288,7 @@ checkModuleVersionHash h m = cmVersionHash m == h
 
 checkModuleFreshness :: Bool -> FilePath -> CompileMetadata -> CompileInfoIO Bool
 checkModuleFreshness s p (CompileMetadata _ p2 _ is is2 _ _ _ ps xs ts hxx cxx bs _ _) = do
-  time <- lift $ getModificationTime $ getCachedPath p "" metadataFilename
+  time <- errorFromIO $ getModificationTime $ getCachedPath p "" metadataFilename
   (ps2,xs2,ts2) <- findSourceFiles p ""
   let e1 = checkMissing ps ps2
   let e2 = checkMissing xs xs2
@@ -307,14 +307,14 @@ checkModuleFreshness s p (CompileMetadata _ p2 _ is is2 _ _ _ ps xs ts hxx cxx b
            when (not s) $ compileWarningM $ "Required path \"" ++ f ++ "\" is missing"
            return True
          else do
-           time2 <- lift $ getModificationTime f
+           time2 <- errorFromIO $ getModificationTime f
            if time2 > time
               then do
                 when (not s) $ compileWarningM $ "Required path \"" ++ f ++ "\" is newer than cached data"
                 return True
               else return False
     checkOutput f = do
-      exists <- lift $ doesFileExist f
+      exists <- errorFromIO $ doesFileExist f
       if not exists
          then do
            when (not s) $ compileWarningM $ "Output file \"" ++ f ++ "\" is missing"
@@ -322,10 +322,10 @@ checkModuleFreshness s p (CompileMetadata _ p2 _ is is2 _ _ _ ps xs ts hxx cxx b
          else return False
     checkMissing s0 s1 = not $ null $ (Set.fromList s1) `Set.difference` (Set.fromList s0)
     doesFileOrDirExist f2 = do
-      existF <- lift $ doesFileExist f2
+      existF <- errorFromIO $ doesFileExist f2
       if existF
         then return True
-        else lift $ doesDirectoryExist f2
+        else errorFromIO $ doesDirectoryExist f2
 
 getObjectFileResolver :: [ObjectFile] -> [Namespace] -> [CategoryName] -> [FilePath]
 getObjectFileResolver os ns ds = resolved ++ nonCategories where
