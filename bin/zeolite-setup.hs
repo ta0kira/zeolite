@@ -25,6 +25,7 @@ import System.IO
 import Cli.CompileOptions
 import Cli.RunCompiler
 import Config.LoadConfig
+import Config.LocalConfig
 
 
 main :: IO ()
@@ -38,7 +39,7 @@ main = do
   config <- createConfig
   hPutStrLn stderr $ "Writing local config to " ++ f ++ "."
   writeFile f (show config ++ "\n")
-  initLibraries
+  initLibraries config
   hPutStrLn stderr "Setup is now complete!"
 
 clangBinary :: String
@@ -114,8 +115,8 @@ getInput = do
     exitFailure
   hGetLine stdin
 
-initLibraries :: IO ()
-initLibraries = do
+initLibraries :: LocalConfig -> IO ()
+initLibraries (LocalConfig backend resolver) = do
   path <- rootPath >>= canonicalizePath
   let options = CompileOptions {
       coHelp = HelpNotNeeded,
@@ -128,4 +129,4 @@ initLibraries = do
       coMode = CompileRecompileRecursive,
       coForce = ForceAll
     }
-  runCompiler options
+  runCompiler resolver backend options

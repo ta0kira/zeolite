@@ -29,7 +29,7 @@ import Text.Parsec.String
 import Base.CompileError
 import Cli.CompileMetadata
 import Cli.CompileOptions
-import Config.Programs (VersionHash(..))
+import Cli.Programs (VersionHash(..))
 import Parser.Common
 import Parser.Procedure ()
 import Parser.Pragma (parseMacroName)

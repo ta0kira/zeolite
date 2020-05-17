@@ -31,7 +31,7 @@ import Data.List (nub)
 import Text.Parsec (SourcePos)
 
 import Cli.CompileOptions
-import Config.Programs (VersionHash)
+import Cli.Programs (VersionHash)
 import Types.Procedure (Expression)
 import Types.TypeCategory (Namespace)
 import Types.TypeInstance (CategoryName)

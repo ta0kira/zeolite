@@ -34,10 +34,10 @@ import Base.CompileError
 import Base.Mergeable
 import Cli.CompileMetadata
 import Cli.ProcessMetadata
+import Cli.Programs
 import Compilation.CompileInfo
 import CompilerCxx.Category
 import CompilerCxx.Naming
-import Config.Programs
 import Parser.SourceFile
 import Types.IntegrationTest
 import Types.TypeCategory
@@ -108,7 +108,7 @@ runSingleTest b cm p paths deps (f,s) = do
            let (xx,main) = getCompileSuccess result
            (dir,binaryName) <- createBinary main xx
            let command = TestCommand binaryName (takeDirectory binaryName)
-           (TestCommandResult s2' out err) <- runTestCommand b command
+           (TestCommandResult s2' out err) <- failFast $ runTestCommand b command
            case (s2,s2') of
                 (True,False) -> return $ mergeAll $ map compileErrorM $ warnings ++ err ++ out
                 (False,True) -> return $ compileErrorM "Expected runtime failure"
@@ -162,7 +162,7 @@ runSingleTest b cm p paths deps (f,s) = do
       let ofr = getObjectFileResolver (sources' ++ os)
       let os' = ofr ns req
       let command = CompileToBinary main os' binary paths' flags
-      file <- runCxxCommand b command
+      file <- failFast $ runCxxCommand b command
       return (dir,file)
     writeSingleFile d ca@(CxxOutput _ f2 _ _ _ content) = do
       writeFile (d </> f2) $ concat $ map (++ "\n") content

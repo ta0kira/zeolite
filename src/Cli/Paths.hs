@@ -18,13 +18,17 @@ limitations under the License.
 
 {-# LANGUAGE Safe #-}
 
-module Config.Paths (
-  PathResolver(..),
+module Cli.Paths (
+  PathIOHandler(..),
 ) where
 
+import Control.Monad.IO.Class
 
-class PathResolver r where
-  resolveModule :: r -> FilePath -> FilePath -> IO FilePath
-  isSystemModule :: r -> FilePath -> FilePath -> IO Bool
-  resolveBaseModule :: r -> IO FilePath
-  isBaseModule :: r -> FilePath -> IO Bool
+import Base.CompileError
+
+
+class PathIOHandler r where
+  resolveModule     :: (MonadIO m, CompileErrorM m) => r -> FilePath -> FilePath -> m FilePath
+  isSystemModule    :: (MonadIO m, CompileErrorM m) => r -> FilePath -> FilePath -> m Bool
+  resolveBaseModule :: (MonadIO m, CompileErrorM m) => r -> m FilePath
+  isBaseModule      :: (MonadIO m, CompileErrorM m) => r -> FilePath -> m Bool

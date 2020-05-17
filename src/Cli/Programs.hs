@@ -18,7 +18,7 @@ limitations under the License.
 
 {-# LANGUAGE Safe #-}
 
-module Config.Programs (
+module Cli.Programs (
   CompilerBackend(..),
   CxxCommand(..),
   TestCommand(..),
@@ -26,10 +26,14 @@ module Config.Programs (
   VersionHash(..),
 ) where
 
+import Control.Monad.IO.Class
+
+import Base.CompileError
+
 
 class CompilerBackend b where
-  runCxxCommand :: b -> CxxCommand -> IO String
-  runTestCommand :: b -> TestCommand -> IO TestCommandResult
+  runCxxCommand   :: (MonadIO m, CompileErrorM m) => b -> CxxCommand -> m String
+  runTestCommand  :: (MonadIO m, CompileErrorM m) => b -> TestCommand -> m TestCommandResult
   getCompilerHash :: b -> VersionHash
 
 newtype VersionHash = VersionHash String deriving (Eq)

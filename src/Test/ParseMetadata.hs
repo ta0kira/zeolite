@@ -26,7 +26,7 @@ import Compilation.CompileInfo
 import Cli.CompileMetadata
 import Cli.CompileOptions
 import Cli.ParseMetadata
-import Config.Programs (VersionHash(..))
+import Cli.Programs (VersionHash(..))
 import System.FilePath
 import Test.Common
 import Types.Positional

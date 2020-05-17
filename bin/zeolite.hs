@@ -17,14 +17,20 @@ limitations under the License.
 -- Author: Kevin P. Barry [ta0kira@gmail.com]
 
 import Control.Monad (when)
+import System.Directory
 import System.Environment
 import System.Exit
 import System.IO
+import qualified Data.Map as Map
 
+import Cli.CompileMetadata
 import Cli.CompileOptions
+import Cli.ProcessMetadata
 import Cli.ParseCompileOptions -- Not safe, due to Text.Regex.TDFA.
 import Cli.RunCompiler
 import Compilation.CompileInfo
+import Config.LoadConfig
+import Config.LocalConfig
 
 
 main :: IO ()
@@ -39,12 +45,42 @@ main = do
           hPutStrLn stderr "Use the -h option to show help."
           exitFailure
       | otherwise = do
+        (resolver,backend) <- failFast $ loadConfig
         let co' = getCompileSuccess co
         when (HelpNotNeeded /= (coHelp co')) $ showHelp >> exitFailure
-        runCompiler co'
+        runCompiler resolver backend co'
 
 showHelp :: IO ()
 showHelp = do
   hPutStrLn stderr "Zeolite CLI Help:"
   mapM_ (hPutStrLn stderr . ("  " ++)) optionHelpText
   hPutStrLn stderr "Also see https://ta0kira.github.io/zeolite for more documentation."
+
+tryFastModes :: [String] -> IO ()
+tryFastModes ("--get-path":os) = do
+  when (not $ null os) $ hPutStrLn stderr $ "Ignoring extra arguments: " ++ show os
+  p <- rootPath >>= canonicalizePath
+  hPutStrLn stdout p
+  if null os
+     then exitSuccess
+     else exitFailure
+tryFastModes ("--version":os) = do
+  when (not $ null os) $ hPutStrLn stderr $ "Ignoring extra arguments: " ++ show os
+  hPutStrLn stdout compilerVersion
+  if null os
+     then exitSuccess
+     else exitFailure
+tryFastModes ("--show-deps":ps) = do
+  mapM_ showDeps ps
+  exitSuccess where
+    showDeps p = do
+      p' <- canonicalizePath p
+      m <- loadMetadata Map.empty p'
+      hPutStrLn stdout $ show p'
+      mapM_ showDep (cmObjectFiles m)
+    showDep (CategoryObjectFile c ds _) = do
+      mapM_ (\d -> hPutStrLn stdout $ "  " ++ show (ciCategory c) ++
+                                      " -> " ++ show (ciCategory d) ++
+                                      " " ++ show (ciPath d)) ds
+    showDep _ = return ()
+tryFastModes _ = return ()

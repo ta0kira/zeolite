@@ -39,15 +39,14 @@ import qualified Data.Set as Set
 import Base.CompileError
 import Cli.CompileMetadata
 import Cli.CompileOptions
+import Cli.Paths
 import Cli.ProcessMetadata
+import Cli.Programs
 import Cli.TestRunner -- Not safe, due to Text.Regex.TDFA.
 import Compilation.CompileInfo
 import Compilation.ProcedureContext (ExprMap)
 import CompilerCxx.Category
 import CompilerCxx.Naming
-import Config.LoadConfig
-import Config.Paths
-import Config.Programs
 import Parser.SourceFile
 import Types.Builtin
 import Types.DefinedCategory
@@ -84,27 +83,25 @@ data LoadedTests =
   }
   deriving (Show)
 
-compileModule :: ModuleSpec -> IO ()
-compileModule (ModuleSpec p d em is is2 ps xs ts es ep m f) = do
-  (backend,resolver) <- loadConfig
-  let hash = getCompilerHash backend
-  as  <- fmap fixPaths $ sequence $ map (resolveModule resolver (p </> d)) is
-  as2 <- fmap fixPaths $ sequence $ map (resolveModule resolver (p </> d)) is2
+compileModule :: (PathIOHandler r, CompilerBackend b) => r -> b -> ModuleSpec -> IO ()
+compileModule resolver backend (ModuleSpec p d em is is2 ps xs ts es ep m f) = do
+  as  <- fmap fixPaths $ sequence $ map (failFast . resolveModule resolver (p </> d)) is
+  as2 <- fmap fixPaths $ sequence $ map (failFast . resolveModule resolver (p </> d)) is2
   let ca0 = Map.empty
-  (fr1,deps1) <- loadPublicDeps hash ca0 as
+  (fr1,deps1) <- loadPublicDeps compilerHash ca0 as
   let ca1 = ca0 `Map.union` mapMetadata deps1
   checkAllowedStale fr1 f
-  (fr2,deps2) <- loadPublicDeps hash ca1 as2
+  (fr2,deps2) <- loadPublicDeps compilerHash ca1 as2
   let ca2 = ca1 `Map.union` mapMetadata deps2
   checkAllowedStale fr2 f
-  base <- resolveBaseModule resolver
-  actual <- resolveModule resolver p d
-  isBase <- isBaseModule resolver actual
+  base <- failFast $ resolveBaseModule resolver
+  actual <- failFast $ resolveModule resolver p d
+  isBase <- failFast $ isBaseModule resolver actual
   -- Lazy dependency loading, in case we're compiling base.
   deps1' <- if isBase
                then return deps1
                else do
-                 (fr3,bpDeps) <- loadPublicDeps hash ca2 [base]
+                 (fr3,bpDeps) <- loadPublicDeps compilerHash ca2 [base]
                  checkAllowedStale fr3 f
                  return $ bpDeps ++ deps1
   ns0 <- createPublicNamespace p d
@@ -129,17 +126,17 @@ compileModule (ModuleSpec p d em is is2 ps xs ts es ep m f) = do
   let paths2 = base:(getIncludePathsForDeps (deps1' ++ deps2)) ++ ep' ++ paths'
   let hxx   = filter (isSuffixOf ".hpp" . coFilename)       fs'
   let other = filter (not . isSuffixOf ".hpp" . coFilename) fs'
-  os1 <- sequence $ map (writeOutputFile backend (show ns0) paths2) $ hxx ++ other
+  os1 <- sequence $ map (writeOutputFile (show ns0) paths2) $ hxx ++ other
   let files = map (\f2 -> getCachedPath (p </> d) (show $ coNamespace f2) (coFilename f2)) fs' ++
               map (\f2 -> p </> getSourceFile f2) es
   files' <- sequence $ map checkOwnedFile files
-  os2 <- fmap concat $ sequence $ map (compileExtraSource backend (show ns0) paths2) es
+  os2 <- fmap concat $ sequence $ map (compileExtraSource (show ns0) paths2) es
   let (hxx',cxx,os') = sortCompiledFiles files'
   let (osCat,osOther) = partitionEithers os2
   path <- canonicalizePath $ p </> d
   let os1' = resolveObjectDeps (deps1' ++ deps2) path path (os1 ++ osCat)
   let cm2 = CompileMetadata {
-      cmVersionHash = hash,
+      cmVersionHash = compilerHash,
       cmPath = path,
       cmNamespace = ns0,
       cmPublicDeps = as,
@@ -156,7 +153,7 @@ compileModule (ModuleSpec p d em is is2 ps xs ts es ep m f) = do
       cmLinkFlags = getLinkFlags m,
       cmObjectFiles = os1' ++ osOther ++ map OtherObjectFile os'
     }
-  bs <- createBinary backend resolver paths' (cm2:(deps1' ++ deps2)) m mf
+  bs <- createBinary paths' (cm2:(deps1' ++ deps2)) m mf
   let cm2' = CompileMetadata {
       cmVersionHash = cmVersionHash cm2,
       cmPath = cmPath cm2,
@@ -177,6 +174,7 @@ compileModule (ModuleSpec p d em is is2 ps xs ts es ep m f) = do
     }
   writeMetadata (p </> d) cm2'
   hPutStrLn stderr $ "Zeolite compilation succeeded." where
+    compilerHash = getCompilerHash backend
     compileAll cm xa = do
       (cm',(pc,tc)) <- cm
       xa' <- xa
@@ -184,7 +182,7 @@ compileModule (ModuleSpec p d em is is2 ps xs ts es ep m f) = do
       ms <- maybeCreateMain cm' xa' m
       return (pc,tc,ms,xx1++xx2)
     ep' = fixPaths $ map (p </>) ep
-    writeOutputFile b ns0 paths ca@(CxxOutput _ f2 ns _ _ content) = do
+    writeOutputFile ns0 paths ca@(CxxOutput _ f2 ns _ _ content) = do
       hPutStrLn stderr $ "Writing file " ++ f2
       writeCachedFile (p </> d) (show ns) f2 $ concat $ map (++ "\n") content
       if isSuffixOf ".cpp" f2 || isSuffixOf ".cc" f2
@@ -195,17 +193,17 @@ compileModule (ModuleSpec p d em is is2 ps xs ts es ep m f) = do
            createCachePath (p </> d)
            let ns' = if isStaticNamespace ns then show ns else show ns0
            let command = CompileToObject f2' (getCachedPath (p </> d) ns' "") dynamicNamespaceName "" (p0:p1:paths) False
-           o2 <- runCxxCommand b command
+           o2 <- failFast $ runCxxCommand backend command
            return $ ([o2],ca)
          else return ([],ca)
-    compileExtraSource b ns0 paths (CategorySource f2 cs ds2) = do
-      f2' <- compileExtraFile False b ns0 paths f2
+    compileExtraSource ns0 paths (CategorySource f2 cs ds2) = do
+      f2' <- compileExtraFile False ns0 paths f2
       let ds2' = nub $ cs ++ ds2
       case f2' of
            Nothing -> return []
            Just o  -> return $ map (\c -> Left $ ([o],fakeCxxForSource ns0 ds2' c)) cs
-    compileExtraSource b ns0 paths (OtherSource f2) = do
-      f2' <- compileExtraFile True b ns0 paths f2
+    compileExtraSource ns0 paths (OtherSource f2) = do
+      f2' <- compileExtraFile True ns0 paths f2
       case f2' of
            Just o  -> return [Right $ OtherObjectFile o]
            Nothing -> return []
@@ -225,15 +223,15 @@ compileModule (ModuleSpec p d em is is2 ps xs ts es ep m f) = do
         hPutStrLn stderr $ "Zeolite compilation failed."
         exitFailure
       canonicalizePath f2
-    compileExtraFile e b ns0 paths f2
+    compileExtraFile e ns0 paths f2
       | isSuffixOf ".cpp" f2 || isSuffixOf ".cc" f2 = do
           let f2' = p </> f2
           createCachePath (p </> d)
           let command = CompileToObject f2' (getCachedPath (p </> d) "" "") dynamicNamespaceName ns0 paths e
-          fmap Just $ runCxxCommand b command
+          fmap Just $ failFast $ runCxxCommand backend command
       | isSuffixOf ".a" f2 || isSuffixOf ".o" f2 = return (Just f2)
       | otherwise = return Nothing
-    createBinary b r paths deps (CompileBinary n _ o lf) ms
+    createBinary paths deps (CompileBinary n _ o lf) ms
       | length ms > 1 = do
         hPutStrLn stderr $ "Multiple matches for main category " ++ show n ++ "."
         exitFailure
@@ -249,8 +247,8 @@ compileModule (ModuleSpec p d em is is2 ps xs ts es ep m f) = do
           (o',h) <- mkstemps "/tmp/zmain_" ".cpp"
           hPutStr h $ concat $ map (++ "\n") content
           hClose h
-          base <- resolveBaseModule r
-          (fr,deps2)  <- loadPrivateDeps (getCompilerHash b) (mapMetadata deps) deps
+          base <- failFast $ resolveBaseModule resolver
+          (fr,deps2)  <- loadPrivateDeps compilerHash (mapMetadata deps) deps
           checkAllowedStale fr f
           let lf' = lf ++ getLinkFlagsForDeps deps2
           let paths' = fixPaths $ paths ++ base:(getIncludePathsForDeps deps)
@@ -259,10 +257,10 @@ compileModule (ModuleSpec p d em is is2 ps xs ts es ep m f) = do
           let os' = ofr ns2 req
           let command = CompileToBinary o' os' f0 paths' lf'
           hPutStrLn stderr $ "Creating binary " ++ f0
-          _ <- runCxxCommand b command
+          _ <- failFast $ runCxxCommand backend command
           removeFile o'
           return [f0]
-    createBinary _ _ _ _ _ _ = return []
+    createBinary _ _ _ _ = return []
     maybeCreateMain cm2 xs2 (CompileBinary n f2 _ _) =
       fmap (:[]) $ compileModuleMain cm2 xs2 n f2
     maybeCreateMain _ _ _ = return []
@@ -301,8 +299,9 @@ createModuleTemplates p d deps1 deps2 = do
           hPutStrLn stderr $ "Writing file " ++ n
           writeFile n' $ concat $ map (++ "\n") content
 
-runModuleTests :: CompilerBackend b => b -> FilePath -> [FilePath] -> LoadedTests -> IO [((Int,Int),CompileInfo ())]
-runModuleTests b base tp (LoadedTests p d m em deps1 deps2) = do
+runModuleTests :: (PathIOHandler r, CompilerBackend b) => r -> b -> FilePath ->
+  [FilePath] -> LoadedTests -> IO [((Int,Int),CompileInfo ())]
+runModuleTests _ backend base tp (LoadedTests p d m em deps1 deps2) = do
   let paths = base:(getIncludePathsForDeps deps1)
   mapM_ showSkipped $ filter (not . isTestAllowed) $ cmTestFiles m
   ts' <- zipWithContents p $ map (d </>) $ filter isTestAllowed $ cmTestFiles m
@@ -310,7 +309,7 @@ runModuleTests b base tp (LoadedTests p d m em deps1 deps2) = do
   cm <- fmap (fmap fst) $ loadLanguageModule path NoNamespace [] em [] deps1 []
   if isCompileError cm
       then return [((0,0),cm >> return ())]
-      else sequence $ map (runSingleTest b (getCompileSuccess cm) path paths (m:deps2)) ts' where
+      else sequence $ map (runSingleTest backend (getCompileSuccess cm) path paths (m:deps2)) ts' where
     allowTests = Set.fromList tp
     isTestAllowed t = if null allowTests then True else t `Set.member` allowTests
     showSkipped f = do

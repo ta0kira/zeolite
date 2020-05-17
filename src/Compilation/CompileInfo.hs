@@ -24,6 +24,8 @@ module Compilation.CompileInfo (
   CompileInfo,
   CompileInfoIO,
   CompileMessage,
+  failFast,
+  fromCompileInfo,
   getCompileError,
   getCompileErrorT,
   getCompileSuccess,
@@ -32,16 +34,22 @@ module Compilation.CompileInfo (
   getCompileWarningsT,
   isCompileError,
   isCompileErrorT,
+  toCompileInfo,
+  tryCompileInfoIO,
+  lift, -- From Control.Monad.Trans.
 ) where
 
 import Control.Applicative
 import Control.Monad ((>=>))
+import Control.Monad.IO.Class ()
 import Control.Monad.Trans
 import Data.Foldable
 import Data.Functor
 import Data.Functor.Identity
 import Data.List (intercalate)
 import Prelude hiding (concat,foldr)
+import System.Exit
+import System.IO
 
 #if MIN_VERSION_base(4,8,0)
 #else
@@ -58,6 +66,10 @@ import Base.CompileError
 import Base.Mergeable
 
 
+{-# DEPRECATED failFast "Temporarily available while fixing Issue #63." #-}
+failFast :: CompileInfoIO a -> IO a
+failFast = tryCompileInfoIO "Compilation failed."
+
 type CompileInfo a = CompileInfoT Identity a
 
 type CompileInfoIO a = CompileInfoT IO a
@@ -66,6 +78,18 @@ data CompileInfoT m a =
   CompileInfoT {
     citState :: m (CompileInfoState a)
   }
+
+getCompileError :: CompileInfo a -> CompileMessage
+getCompileError = runIdentity . getCompileErrorT
+
+getCompileSuccess :: CompileInfo a -> a
+getCompileSuccess = runIdentity . getCompileSuccessT
+
+getCompileWarnings :: CompileInfo a -> [String]
+getCompileWarnings = runIdentity . getCompileWarningsT
+
+isCompileError :: CompileInfo a -> Bool
+isCompileError = runIdentity . isCompileErrorT
 
 getCompileErrorT :: Monad m => CompileInfoT m a -> m CompileMessage
 getCompileErrorT = fmap cfErrors . citState
@@ -83,17 +107,25 @@ isCompileErrorT x = do
        CompileFail _ _ -> return True
        _               -> return False
 
-getCompileError :: CompileInfo a -> CompileMessage
-getCompileError = runIdentity . getCompileErrorT
+fromCompileInfo :: Monad m => CompileInfo a -> CompileInfoT m a
+fromCompileInfo x = runIdentity $ do
+  x' <- citState x
+  return $ CompileInfoT $ return x'
 
-getCompileSuccess :: CompileInfo a -> a
-getCompileSuccess = runIdentity . getCompileSuccessT
+toCompileInfo :: Monad m => CompileInfoT m a -> m (CompileInfo a)
+toCompileInfo x = do
+  x' <- citState x
+  return $ CompileInfoT $ return x'
 
-getCompileWarnings :: CompileInfo a -> [String]
-getCompileWarnings = runIdentity . getCompileWarningsT
-
-isCompileError :: CompileInfo a -> Bool
-isCompileError = runIdentity . isCompileErrorT
+tryCompileInfoIO :: String -> CompileInfoIO a -> IO a
+tryCompileInfoIO message x = do
+  x' <- toCompileInfo $ x `reviseErrorM` message
+  if isCompileError x'
+     then do
+       hPutStr stderr $ concat $ map (++ "\n") (getCompileWarnings x')
+       hPutStr stderr $ show $ getCompileError x'
+       exitFailure
+     else return $ getCompileSuccess x'
 
 data CompileMessage =
   CompileMessage {
@@ -153,6 +185,9 @@ instance Monad m => MonadFail (CompileInfoT m) where
 
 instance MonadTrans CompileInfoT where
   lift = CompileInfoT . fmap (CompileSuccess [])
+
+instance MonadIO m => MonadIO (CompileInfoT m) where
+  liftIO = lift . liftIO
 
 instance Monad m => CompileErrorM (CompileInfoT m) where
   compileErrorM e = CompileInfoT (return $ CompileFail [] $ CompileMessage e [])

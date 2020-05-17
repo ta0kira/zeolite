@@ -19,23 +19,15 @@ limitations under the License.
 module Cli.ParseCompileOptions (
   optionHelpText,
   parseCompileOptions,
-  tryFastModes,
   validateCompileOptions,
 ) where
 
 import Control.Monad (when)
 import Data.List (isSuffixOf)
-import System.Directory
-import System.Exit
-import System.IO
 import Text.Regex.TDFA -- Not safe!
-import qualified Data.Map as Map
 
 import Base.CompileError
-import Cli.CompileMetadata
 import Cli.CompileOptions
-import Cli.ProcessMetadata
-import Config.LoadConfig (compilerVersion,rootPath)
 import Types.TypeCategory (FunctionName(..))
 import Types.TypeInstance (CategoryName(..))
 
@@ -84,35 +76,6 @@ optionHelpText = [
 
 defaultMainFunc :: String
 defaultMainFunc = "run"
-
-tryFastModes :: [String] -> IO ()
-tryFastModes ("--get-path":os) = do
-  when (not $ null os) $ hPutStrLn stderr $ "Ignoring extra arguments: " ++ show os
-  p <- rootPath >>= canonicalizePath
-  hPutStrLn stdout p
-  if null os
-     then exitSuccess
-     else exitFailure
-tryFastModes ("--version":os) = do
-  when (not $ null os) $ hPutStrLn stderr $ "Ignoring extra arguments: " ++ show os
-  hPutStrLn stdout compilerVersion
-  if null os
-     then exitSuccess
-     else exitFailure
-tryFastModes ("--show-deps":ps) = do
-  mapM_ showDeps ps
-  exitSuccess where
-    showDeps p = do
-      p' <- canonicalizePath p
-      m <- loadMetadata Map.empty p'
-      hPutStrLn stdout $ show p'
-      mapM_ showDep (cmObjectFiles m)
-    showDep (CategoryObjectFile c ds _) = do
-      mapM_ (\d -> hPutStrLn stdout $ "  " ++ show (ciCategory c) ++
-                                      " -> " ++ show (ciCategory d) ++
-                                      " " ++ show (ciPath d)) ds
-    showDep _ = return ()
-tryFastModes _ = return ()
 
 parseCompileOptions :: CompileErrorM m => [String] -> m CompileOptions
 parseCompileOptions = parseAll emptyCompileOptions . zip ([1..] :: [Int]) where
