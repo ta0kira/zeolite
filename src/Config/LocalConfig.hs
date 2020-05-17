@@ -128,7 +128,7 @@ executeProcess c os = do
   status <- liftIO $ getProcessStatus True True pid
   case status of
        Just (Exited ExitSuccess) -> return ()
-       _ -> compileErrorM "Command execution failed"
+       _ -> compileErrorM $ "Execution of " ++ c ++ " failed"
 
 instance PathIOHandler Resolver where
   resolveModule r p m = do

@@ -255,7 +255,7 @@ createModuleTemplates p d deps1 deps2 = do
   xs' <- zipWithContents p xs
   ds <- mapErrorsM parseInternalSource xs'
   let ds2 = concat $ map (\(_,_,d2) -> d2) ds
-  tm <- foldM includeNewTypes defaultCategories [cs0,cs1,ps0,ps1,ts0,ts1]
+  tm <- fromCompileInfo $ foldM includeNewTypes defaultCategories [cs0,cs1,ps0,ps1,ts0,ts1]
   let cs = filter isValueConcrete $ cs1++ps1++ts1
   let ca = Set.fromList $ map getCategoryName $ filter isValueConcrete cs
   let ca' = foldr Set.delete ca $ map dcName ds2
