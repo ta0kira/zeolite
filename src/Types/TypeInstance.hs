@@ -66,7 +66,7 @@ module Types.TypeInstance (
 ) where
 
 import Control.Monad (when)
-import Data.List (intercalate)
+import Data.List (intercalate,nub)
 import qualified Data.Map as Map
 
 import Base.CompileError
@@ -304,7 +304,7 @@ noInferredTypes is = do
   is' <- is
   case is' of
        []  -> return ()
-       is2 -> compileErrorM $ "Unresolved inferred types: " ++ show is2
+       is2 -> compileErrorM $ "Unresolved inferred types: " ++ show (nub is2)
 
 checkValueTypeMatch_ :: (MergeableM m, CompileErrorM m, TypeResolver r) =>
   r -> ParamFilters -> ValueType -> ValueType -> m ()

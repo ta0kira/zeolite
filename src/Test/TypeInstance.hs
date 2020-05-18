@@ -26,6 +26,7 @@ import Base.CompileError
 import Compilation.CompileInfo
 import Parser.TypeInstance ()
 import Test.Common
+import Types.GeneralType
 import Types.Positional
 import Types.TypeInstance
 import Types.Variance
@@ -559,7 +560,65 @@ tests = [
       "Instance1<Type3>",
     return $ checkDefinesSuccess Resolver
       []
-      "Instance1<Type1<Type3>>"
+      "Instance1<Type1<Type3>>",
+
+    checkInferenceSuccess
+      [("#x","foo")] [("#x",[])]
+      "Type1<Type0>" "Type1<#x>"
+      [("foo","Type0",Invariant)],
+    checkInferenceFail
+      [("#x","foo")] [("#x",[])]
+      "Type1<Type3>" "Type4<#x>",
+
+    checkInferenceSuccess
+      [("#x","foo")] [("#x",[])]
+      "Instance1<Type1<Type3>>" "Instance1<#x>"
+      [("foo","Type1<Type3>",Contravariant)],
+    checkInferenceSuccess
+      [("#x","foo")] [("#x",[])]
+      "Instance1<Type1<Type3>>" "Instance1<Type1<#x>>"
+      [("foo","Type3",Invariant)],
+
+    checkInferenceSuccess
+      [("#x","foo")] [("#x",[])]
+      "Type2<Type3,Type0,Type3>" "Type2<#x,Type0,#x>"
+      [("foo","Type3",Covariant),
+       ("foo","Type3",Contravariant)],
+    checkInferenceSuccess
+      [("#x","foo")] [("#x",[]),("#y",[])]
+      "Type2<Type3,#y,Type3>" "Type2<#x,#y,#x>"
+      [("foo","Type3",Covariant),
+       ("foo","Type3",Contravariant)],
+    checkInferenceFail
+      [("#x","foo")] [("#x",[]),("#y",[])]
+      "Type2<Type3,Type0,Type3>" "Type2<#x,#y,#x>",
+
+    checkInferenceSuccess
+      [("#x","foo")] [("#x",[]),("#y",[])]
+      "Type2<Type3,#y,Type0>" "Type1<#x>"
+      [("foo","Type3",Invariant)],
+
+    checkInferenceSuccess
+      [("#x","foo")] [("#x",[]),("#y",[])]
+      "Instance1<#y>" "Instance1<#x>"
+      [("foo","#y",Contravariant)],
+
+    checkInferenceSuccess
+      [("#x","foo")] [("#x",[])]
+      "Instance1<Instance0>" "Instance1<[#x&Type0]>"
+      [("foo","Instance0",Contravariant)],
+    checkInferenceFail
+      [("#x","foo")] [("#x",[])]
+      "Instance1<Instance0>" "Instance1<[#x|Type0]>",
+    checkInferenceSuccess
+      [("#x","foo")] [("#x",[])]
+      "Instance1<Type1<Type0>>" "Instance1<[Type0&Type1<#x>]>"
+      [("foo","Type0",Invariant)],
+    checkInferenceSuccess
+      [("#x","foo")] [("#x",[])]
+      "Instance1<Type1<Type0>>" "Instance1<[#x&Type1<#x>]>"
+      [("foo","Type1<Type0>",Contravariant),
+       ("foo","Type0",Invariant)]
   ]
 
 
@@ -694,6 +753,44 @@ checkConvertSuccess pa x y = return checked where
   check c
     | isCompileError c = compileErrorM $ prefix ++ ":\n" ++ show (getCompileError c)
     | otherwise = return ()
+
+checkInferenceSuccess :: [(String, String)] -> [(String, [String])] -> [Char] ->
+  [Char] -> [(String,String,Variance)] -> IO (CompileInfo ())
+checkInferenceSuccess ia pa x y gs = checkInferenceCommon check ia pa x y gs where
+  prefix = x ++ " -> " ++ y ++ " " ++ showParams pa
+  check gs2 c
+    | isCompileError c = compileErrorM $ prefix ++ ":\n" ++ show (getCompileError c)
+    | otherwise        = getCompileSuccess c `containsExactly` gs2
+
+checkInferenceFail :: [(String, String)] -> [(String, [String])] -> [Char] ->
+  [Char] -> IO (CompileInfo ())
+checkInferenceFail ia pa x y = checkInferenceCommon check ia pa x y [] where
+  prefix = x ++ " -> " ++ y ++ " " ++ showParams pa
+  check _ c
+    | isCompileError c = return ()
+    | otherwise = compileErrorM $ prefix ++ ": Expected failure\n"
+
+checkInferenceCommon :: ([InferredTypeGuess] -> CompileInfo [InferredTypeGuess] -> CompileInfo ()) ->
+  [(String, String)] -> [(String, [String])] -> [Char] -> [Char] ->
+  [(String,String,Variance)] -> IO (CompileInfo ())
+checkInferenceCommon check ia pa x y gs = return checked where
+  checked = do
+    ([t1,t2],pa2) <- parseTheTest pa [x,y]
+    ia2 <- mapErrorsM readInferred ia
+    gs' <- mapErrorsM parseGuess gs
+    let iaMap = Map.fromList ia2
+    t2' <- uncheckedSubInstance (weakLookup iaMap) t2
+    check gs' $ checkGeneralMatch Resolver pa2 Covariant t1 t2'
+  readInferred (p,n) = do
+    p' <- readSingle "(string)" p
+    return (p',SingleType $ JustInferredType $ InferredType n)
+  parseGuess (i,t,v) = do
+    t' <- readSingle "(string)" t
+    return $ InferredTypeGuess (InferredType i) t' v
+  weakLookup tm n =
+    case n `Map.lookup` tm of
+         Just t  -> return t
+         Nothing -> return $ SingleType $ JustParamName n
 
 checkConvertFail :: [(String, [String])] -> [Char] -> [Char] -> IO (CompileInfo ())
 checkConvertFail pa x y = return checked where

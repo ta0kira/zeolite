@@ -52,5 +52,5 @@ instance Mergeable () where
   mergeAll = const ()
 
 instance Mergeable [a] where
-  mergeAny = head . foldr (:) [[]]
+  mergeAny = foldr (++) []
   mergeAll = foldr (++) []

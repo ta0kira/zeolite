@@ -42,17 +42,9 @@ tests = [
     checkSuccess []                 (mergeAllM [] :: CompileInfoIO [Char]),
     checkError   "error1\nerror2\n" (mergeAllM [compileErrorM "error1",return ['b'],compileErrorM "error2"]),
 
-    checkSuccess ['a'] (mergeAnyM [return ['a'],return ['b']]),
-    checkError   ""    (mergeAnyM [] :: CompileInfoIO [Char]),
-    checkSuccess ['b'] (mergeAnyM [compileErrorM "error1",return ['b'],compileErrorM "error2"]),
-
-    checkSuccess (AlwaysMerge ['a','b','c']) (mergeAllM [return $ AlwaysMerge ['a'],return $ AlwaysMerge ['b','c']]),
-    checkSuccess (AlwaysMerge [])            (mergeAllM [] :: CompileInfoIO AlwaysMerge),
-    checkError   "error1\nerror2\n"          (mergeAllM [compileErrorM "error1",return $ AlwaysMerge ['b'],compileErrorM "error2"]),
-
-    checkSuccess (AlwaysMerge ['a','b']) (mergeAnyM [return $ AlwaysMerge ['a'],return $ AlwaysMerge ['b']]),
-    checkError   ""                      (mergeAnyM [] :: CompileInfoIO AlwaysMerge),
-    checkSuccess (AlwaysMerge ['b'])     (mergeAnyM [compileErrorM "error1",return $ AlwaysMerge ['b'],compileErrorM "error2"]),
+    checkSuccess ['a','b'] (mergeAnyM [return ['a'],return ['b']]),
+    checkError   ""        (mergeAnyM [] :: CompileInfoIO [Char]),
+    checkSuccess ['b']     (mergeAnyM [compileErrorM "error1",return ['b'],compileErrorM "error2"]),
 
     checkSuccessAndWarnings ["warning1","warning2"] ()
       (compileWarningM "warning1" >> return () >> compileWarningM "warning2"),
@@ -63,12 +55,6 @@ tests = [
     checkSuccess []         (sequence [] :: CompileInfoIO [Char]),
     checkError   "error1\n" (sequence [compileErrorM "error1",return 'b',compileErrorM "error2"])
   ]
-
-newtype AlwaysMerge = AlwaysMerge { amData :: [Char] } deriving (Eq,Show)
-
-instance Mergeable AlwaysMerge where
-  mergeAny = AlwaysMerge . concat . map amData . foldr (:) []
-  mergeAll = AlwaysMerge . concat . map amData . foldr (:) []
 
 checkSuccess :: (Eq a, Show a) => a -> CompileInfoIO a -> IO (CompileInfo ())
 checkSuccess x y = do
