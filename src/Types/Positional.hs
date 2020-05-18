@@ -45,7 +45,7 @@ processPairs :: (Show a, Show b, CompileErrorM m) =>
   (a -> b -> m c) -> Positional a -> Positional b -> m [c]
 processPairs f (Positional ps1) (Positional ps2)
   | length ps1 == length ps2 =
-    collectAllOrErrorM $ map (uncurry f) (zip ps1 ps2)
+    mapErrorsM (uncurry f) (zip ps1 ps2)
   | otherwise = mismatchError ps1 ps2
 
 processPairs_ :: (Show a, Show b, CompileErrorM m) =>

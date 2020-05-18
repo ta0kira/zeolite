@@ -500,14 +500,14 @@ uncheckedSubInstance :: (MergeableM m, CompileErrorM m) =>
   (ParamName -> m GeneralInstance) -> GeneralInstance -> m GeneralInstance
 uncheckedSubInstance replace = subAll where
   subAll (TypeMerge MergeUnion ts) = do
-    gs <- collectAllOrErrorM $ map subAll ts
+    gs <- mapErrorsM subAll ts
     return (TypeMerge MergeUnion gs)
   subAll (TypeMerge MergeIntersect ts) = do
-    gs <- collectAllOrErrorM $ map subAll ts
+    gs <- mapErrorsM subAll ts
     return (TypeMerge MergeIntersect gs)
   subAll (SingleType t) = subInstance t
   subInstance (JustTypeInstance (TypeInstance n (Positional ts))) = do
-    gs <- collectAllOrErrorM $ map subAll ts
+    gs <- mapErrorsM subAll ts
     let t2 = SingleType $ JustTypeInstance $ TypeInstance n (Positional gs)
     return (t2)
   subInstance (JustParamName n) = replace n
@@ -518,15 +518,15 @@ uncheckedSubFilter replace (TypeFilter d t) = do
   t' <- uncheckedSubInstance replace (SingleType t)
   return (TypeFilter d (stType t'))
 uncheckedSubFilter replace (DefinesFilter (DefinesInstance n ts)) = do
-  ts' <- collectAllOrErrorM $ map (uncheckedSubInstance replace) (pValues ts)
+  ts' <- mapErrorsM (uncheckedSubInstance replace) (pValues ts)
   return (DefinesFilter (DefinesInstance n (Positional ts')))
 
 uncheckedSubFilters :: (MergeableM m, CompileErrorM m) =>
   (ParamName -> m GeneralInstance) -> ParamFilters -> m ParamFilters
 uncheckedSubFilters replace fa = do
-  fa' <- collectAllOrErrorM $ map subParam $ Map.toList fa
+  fa' <- mapErrorsM subParam $ Map.toList fa
   return $ Map.fromList fa'
   where
     subParam (n,fs) = do
-      fs' <- collectAllOrErrorM $ map (uncheckedSubFilter replace) fs
+      fs' <- mapErrorsM (uncheckedSubFilter replace) fs
       return (n,fs')

@@ -99,10 +99,10 @@ compileLanguageModule (LanguageModule ns0 ns1 ns2 cs0 ps0 ts0 cs1 ps1 ts1 ex em)
   -- Check public sources up front so that error messages aren't duplicated for
   -- every source file.
   _ <- tmTesting
-  (hxx1,cxx1) <- fmap mergeGeneratedP $ collectAllOrErrorM $ map (compileSourceP tmPublic  nsPublic)  cs1
-  (hxx2,cxx2) <- fmap mergeGeneratedP $ collectAllOrErrorM $ map (compileSourceP tmPrivate nsPrivate) ps1
-  (hxx3,cxx3) <- fmap mergeGeneratedP $ collectAllOrErrorM $ map (compileSourceP tmTesting nsTesting) ts1
-  (ds,xx) <- fmap mergeGeneratedX $ collectAllOrErrorM $ map compileSourceX xa
+  (hxx1,cxx1) <- fmap mergeGeneratedP $ mapErrorsM (compileSourceP tmPublic  nsPublic)  cs1
+  (hxx2,cxx2) <- fmap mergeGeneratedP $ mapErrorsM (compileSourceP tmPrivate nsPrivate) ps1
+  (hxx3,cxx3) <- fmap mergeGeneratedP $ mapErrorsM (compileSourceP tmTesting nsTesting) ts1
+  (ds,xx) <- fmap mergeGeneratedX $ mapErrorsM compileSourceX xa
   -- TODO: This should account for a name clash between a category declared in a
   -- TestsOnly .0rp and one declared in a non-TestOnly .0rx.
   let dm = mapByName ds
@@ -141,10 +141,10 @@ compileLanguageModule (LanguageModule ns0 ns1 ns2 cs0 ps0 ts0 cs1 ps1 ts1 ex em)
       -- dependencies for the module later on.
       tmTesting' <- tmTesting
       _ <- includeNewTypes tmTesting' cs2 `reviseErrorM` "In a module source that is conditionally public"
-      hxx <- collectAllOrErrorM $ map (compileCategoryDeclaration tm' ns4) cs2
+      hxx <- mapErrorsM (compileCategoryDeclaration tm' ns4) cs2
       let interfaces = filter (not . isValueConcrete) cs2
-      cxx1 <- collectAllOrErrorM $ map compileInterfaceDefinition interfaces
-      cxx2 <- collectAllOrErrorM $ map (compileDefinition tm' (ns:ns4)) ds
+      cxx1 <- mapErrorsM compileInterfaceDefinition interfaces
+      cxx2 <- mapErrorsM (compileDefinition tm' (ns:ns4)) ds
       return (ds,hxx ++ cxx1 ++ cxx2)
     mergeGeneratedX ((ds,xx):xs2) = let (ds2,xx2) = mergeGeneratedX xs2 in (ds++ds2,xx++xx2)
     mergeGeneratedX _             = ([],[])

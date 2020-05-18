@@ -324,7 +324,7 @@ instance (Show c) => TypeResolver (CategoryResolver c) where
         ps2 <- case n2 `Map.lookup` pa of
                     (Just x) -> return x
                     _ -> compileErrorM $ "Category " ++ show n1 ++ " does not refine " ++ show n2
-        fmap Positional $ collectAllOrErrorM $ map (subAllParams assigned) $ pValues ps2
+        fmap Positional $ mapErrorsM (subAllParams assigned) $ pValues ps2
     trDefines (CategoryResolver tm) (TypeInstance n1 ps1) n2 = do
       (_,t) <- getValueCategory tm ([],n1)
       let params = map vpParam $ getCategoryParams t
@@ -333,7 +333,7 @@ instance (Show c) => TypeResolver (CategoryResolver c) where
       ps2 <- case n2 `Map.lookup` pa of
                   (Just x) -> return x
                   _ -> compileErrorM $ "Category " ++ show n1 ++ " does not define " ++ show n2
-      fmap Positional $ collectAllOrErrorM $ map (subAllParams assigned) $ pValues ps2
+      fmap Positional $ mapErrorsM (subAllParams assigned) $ pValues ps2
     trVariance (CategoryResolver tm) n = do
       (_,t) <- getCategory tm ([],n)
       return $ Positional $ map vpVariance $ getCategoryParams t
@@ -374,15 +374,15 @@ checkFilters :: (CompileErrorM m, MergeableM m) =>
 checkFilters t ps = do
   let params = map vpParam $ getCategoryParams t
   assigned <- fmap Map.fromList $ processPairs alwaysPair (Positional params) ps
-  fs <- collectAllOrErrorM $ map (subSingleFilter assigned . \f -> (pfParam f,pfFilter f))
+  fs <- mapErrorsM (subSingleFilter assigned . \f -> (pfParam f,pfFilter f))
                                   (getCategoryFilters t)
   let fa = Map.fromListWith (++) $ map (second (:[])) fs
-  fmap Positional $ collectAllOrErrorM $ map (assignFilter fa) params where
+  fmap Positional $ mapErrorsM (assignFilter fa) params where
     subSingleFilter pa (n,(TypeFilter v t2)) = do
       (SingleType t3) <- uncheckedSubInstance (getValueForParam pa) (SingleType t2)
       return (n,(TypeFilter v t3))
     subSingleFilter pa (n,(DefinesFilter (DefinesInstance n2 ps2))) = do
-      ps3 <- collectAllOrErrorM $ map (uncheckedSubInstance $ getValueForParam pa) (pValues ps2)
+      ps3 <- mapErrorsM (uncheckedSubInstance $ getValueForParam pa) (pValues ps2)
       return (n,(DefinesFilter (DefinesInstance n2 (Positional ps3))))
     assignFilter fa n =
       case n `Map.lookup` fa of
@@ -482,14 +482,14 @@ checkConnectedTypes tm0 ts = do
   where
     checkSingle tm (ValueInterface c _ n _ rs _ _) = do
       let ts2 = map (\r -> (vrContext r,tiName $ vrType r)) rs
-      is <- collectAllOrErrorM $ map (getCategory tm) ts2
+      is <- mapErrorsM (getCategory tm) ts2
       mergeAllM (map (valueRefinesInstanceError c n) is)
       mergeAllM (map (valueRefinesConcreteError c n) is)
     checkSingle tm (ValueConcrete c _ n _ rs ds _ _) = do
       let ts2 = map (\r -> (vrContext r,tiName $ vrType r)) rs
       let ts3 = map (\d -> (vdContext d,diName $ vdType d)) ds
-      is1 <- collectAllOrErrorM $ map (getCategory tm) ts2
-      is2 <- collectAllOrErrorM $ map (getCategory tm) ts3
+      is1 <- mapErrorsM (getCategory tm) ts2
+      is2 <- mapErrorsM (getCategory tm) ts3
       mergeAllM (map (concreteRefinesInstanceError c n) is1)
       mergeAllM (map (concreteDefinesValueError c n) is2)
       mergeAllM (map (concreteRefinesConcreteError c n) is1)
@@ -541,12 +541,12 @@ checkConnectionCycles tm0 ts = mergeAllM (map (checker []) ts) where
   checker us (ValueInterface c _ n _ rs _ _) = do
     failIfCycle n c us
     let ts2 = map (\r -> (vrContext r,tiName $ vrType r)) rs
-    is <- collectAllOrErrorM $ map (getValueCategory tm) ts2
+    is <- mapErrorsM (getValueCategory tm) ts2
     mergeAllM (map (checker (us ++ [n]) . snd) is)
   checker us (ValueConcrete c _ n _ rs _ _ _) = do
     failIfCycle n c us
     let ts2 = map (\r -> (vrContext r,tiName $ vrType r)) rs
-    is <- collectAllOrErrorM $ map (getValueCategory tm) ts2
+    is <- mapErrorsM (getValueCategory tm) ts2
     mergeAllM (map (checker (us ++ [n]) . snd) is)
   checker _ _ = return ()
   failIfCycle n c us =
@@ -666,10 +666,8 @@ topoSortCategories tm0 ts = do
       if getCategoryName t `Set.member` ta
          then u
          else do
-          refines <- collectAllOrErrorM $
-                    map (\r -> getCategory tm (vrContext r,tiName $ vrType r)) $ getCategoryRefines t
-          defines <- collectAllOrErrorM $
-                    map (\d -> getCategory tm (vdContext d,diName $ vdType d)) $ getCategoryDefines t
+          refines <- mapErrorsM (\r -> getCategory tm (vrContext r,tiName $ vrType r)) $ getCategoryRefines t
+          defines <- mapErrorsM (\d -> getCategory tm (vdContext d,diName $ vdType d)) $ getCategoryDefines t
           (ts',ta') <- foldr (update tm) u (map snd $ refines ++ defines)
           let ts'' = ts' ++ [t]
           let ta'' = Set.insert (getCategoryName t) ta'
@@ -741,10 +739,10 @@ flattenAllConnections tm0 ts = do
       t' <- preMergeSingle tm t
       return $ Map.insert (getCategoryName t') t' tm
     preMergeSingle tm (ValueInterface c ns n ps rs vs fs) = do
-      rs' <- fmap concat $ collectAllOrErrorM $ map (getRefines tm) rs
+      rs' <- fmap concat $ mapErrorsM (getRefines tm) rs
       return $ ValueInterface c ns n ps rs' vs fs
     preMergeSingle tm (ValueConcrete c ns n ps rs ds vs fs) = do
-      rs' <- fmap concat $ collectAllOrErrorM $ map (getRefines tm) rs
+      rs' <- fmap concat $ mapErrorsM (getRefines tm) rs
       return $ ValueConcrete c ns n ps rs' ds vs fs
     preMergeSingle _ t = return t
     update r t u = do
@@ -755,7 +753,7 @@ flattenAllConnections tm0 ts = do
       return (ts2 ++ [t'],Map.insert (getCategoryName t') t' tm)
     updateSingle r tm t@(ValueInterface c ns n ps rs vs fs) = do
       let fm = getCategoryFilterMap t
-      rs' <- fmap concat $ collectAllOrErrorM $ map (getRefines tm) rs
+      rs' <- fmap concat $ mapErrorsM (getRefines tm) rs
       rs'' <- mergeRefines r fm rs'
       noDuplicateRefines c n rs''
       checkMerged r fm rs rs''
@@ -765,7 +763,7 @@ flattenAllConnections tm0 ts = do
     -- TODO: Remove duplication below and/or have separate tests.
     updateSingle r tm t@(ValueConcrete c ns n ps rs ds vs fs) = do
       let fm = getCategoryFilterMap t
-      rs' <- fmap concat $ collectAllOrErrorM $ map (getRefines tm) rs
+      rs' <- fmap concat $ mapErrorsM (getRefines tm) rs
       rs'' <- mergeRefines r fm rs'
       noDuplicateRefines c n rs''
       checkMerged r fm rs rs''
@@ -779,7 +777,7 @@ flattenAllConnections tm0 ts = do
       (_,v) <- getValueCategory tm (c,n)
       let refines = getCategoryRefines v
       pa <- assignParams tm c t
-      fmap (ra:) $ collectAllOrErrorM $ map (subAll c pa) refines
+      fmap (ra:) $ mapErrorsM (subAll c pa) refines
     subAll c pa (ValueRefine c1 t1) = do
       (SingleType (JustTypeInstance t2)) <-
         uncheckedSubInstance (getValueForParam pa) (SingleType (JustTypeInstance t1))
@@ -803,26 +801,26 @@ mergeFunctions :: (Show c, MergeableM m, CompileErrorM m, TypeResolver r) =>
   r -> CategoryMap c -> ParamFilters -> [ValueRefine c] ->
   [ValueDefine c] -> [ScopedFunction c] -> m [ScopedFunction c]
 mergeFunctions r tm fm rs ds fs = do
-  inheritValue <- fmap concat $ collectAllOrErrorM $ map (getRefinesFuncs tm) rs
-  inheritType  <- fmap concat $ collectAllOrErrorM $ map (getDefinesFuncs tm) ds
+  inheritValue <- fmap concat $ mapErrorsM (getRefinesFuncs tm) rs
+  inheritType  <- fmap concat $ mapErrorsM (getDefinesFuncs tm) ds
   let inheritByName  = Map.fromListWith (++) $ map (\f -> (sfName f,[f])) $ inheritValue ++ inheritType
   let explicitByName = Map.fromListWith (++) $ map (\f -> (sfName f,[f])) fs
   let allNames = Set.toList $ Set.union (Map.keysSet inheritByName) (Map.keysSet explicitByName)
-  collectAllOrErrorM $ map (mergeByName r fm inheritByName explicitByName) allNames where
+  mapErrorsM (mergeByName r fm inheritByName explicitByName) allNames where
     getRefinesFuncs tm2 ra@(ValueRefine c (TypeInstance n ts2)) = flip reviseErrorM (show ra) $ do
       (_,t) <- getValueCategory tm2 (c,n)
       let ps = map vpParam $ getCategoryParams t
       let fs2 = getCategoryFunctions t
       paired <- processPairs alwaysPair (Positional ps) ts2
       let assigned = Map.fromList paired
-      collectAllOrErrorM (map (uncheckedSubFunction assigned) fs2)
+      mapErrorsM (uncheckedSubFunction assigned) fs2
     getDefinesFuncs tm2 da@(ValueDefine c (DefinesInstance n ts2)) = flip reviseErrorM (show da) $  do
       (_,t) <- getInstanceCategory tm2 (c,n)
       let ps = map vpParam $ getCategoryParams t
       let fs2 = getCategoryFunctions t
       paired <- processPairs alwaysPair (Positional ps) ts2
       let assigned = Map.fromList paired
-      collectAllOrErrorM (map (uncheckedSubFunction assigned) fs2)
+      mapErrorsM (uncheckedSubFunction assigned) fs2
     mergeByName r2 fm2 im em n =
       tryMerge r2 fm2 n (n `Map.lookup` im) (n `Map.lookup` em)
     -- Inherited without an override.
@@ -946,10 +944,10 @@ uncheckedSubFunction pa ff@(ScopedFunction c n t s as rs ps fa ms) =
   flip reviseErrorM ("In function:\n---\n" ++ show ff ++ "\n---\n") $ do
     let fixed = Map.fromList $ map (\n2 -> (n2,SingleType $ JustParamName n2)) $ map vpParam $ pValues ps
     let pa' = Map.union pa fixed
-    as' <- fmap Positional $ collectAllOrErrorM $ map (subPassed pa') $ pValues as
-    rs' <- fmap Positional $ collectAllOrErrorM $ map (subPassed pa') $ pValues rs
-    fa' <- collectAllOrErrorM $ map (subFilter pa') fa
-    ms' <- collectAllOrErrorM $ map (uncheckedSubFunction pa) ms
+    as' <- fmap Positional $ mapErrorsM (subPassed pa') $ pValues as
+    rs' <- fmap Positional $ mapErrorsM (subPassed pa') $ pValues rs
+    fa' <- mapErrorsM (subFilter pa') fa
+    ms' <- mapErrorsM (uncheckedSubFunction pa) ms
     return $ (ScopedFunction c n t s as' rs' ps fa' ms')
     where
       subPassed pa2 (PassedValue c2 t2) = do

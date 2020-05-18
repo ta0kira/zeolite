@@ -151,9 +151,9 @@ instance ConfigFormat CompileMetadata where
   writeConfig m = do
     validateHash (cmVersionHash m)
     namespace <- maybeShowNamespace "namespace:" (cmNamespace m)
-    _ <- collectAllOrErrorM $ map validateCategoryName (cmPublicCategories m)
-    _ <- collectAllOrErrorM $ map validateCategoryName (cmPrivateCategories m)
-    objects <- fmap concat $ collectAllOrErrorM $ map writeConfig $ cmObjectFiles m
+    _ <- mapErrorsM validateCategoryName (cmPublicCategories m)
+    _ <- mapErrorsM validateCategoryName (cmPrivateCategories m)
+    objects <- fmap concat $ mapErrorsM writeConfig $ cmObjectFiles m
     return $ [
         "version_hash: " ++ (show $ cmVersionHash m),
         "path: " ++ (show $ cmPath m)
@@ -217,7 +217,7 @@ instance ConfigFormat ObjectFile where
       return (OtherObjectFile f)
   writeConfig (CategoryObjectFile c rs fs) = do
     category <- writeConfig c
-    requires <- fmap concat $ collectAllOrErrorM $ map writeConfig rs
+    requires <- fmap concat $ mapErrorsM writeConfig rs
     return $ [
         "category_object {"
       ] ++ indents ("category: " `prependFirst` category) ++ [
@@ -278,7 +278,7 @@ instance ConfigFormat ModuleConfig where
       m   <- parseRequired "mode:"              readConfig
       return (ModuleConfig p d em is is2 es ep m)
   writeConfig m = do
-    extra    <- fmap concat $ collectAllOrErrorM $ map writeConfig $ rmExtraFiles m
+    extra    <- fmap concat $ mapErrorsM writeConfig $ rmExtraFiles m
     mode <- writeConfig (rmMode m)
     when (not $ null $ rmExprMap m) $ compileErrorM "Only empty expression maps are allowed when writing"
     return $ [
@@ -316,8 +316,8 @@ instance ConfigFormat ExtraSource where
       f <- parseQuoted
       return (OtherSource f)
   writeConfig (CategorySource f cs ds) = do
-    _ <- collectAllOrErrorM $ map validateCategoryName cs
-    _ <- collectAllOrErrorM $ map validateCategoryName ds
+    _ <- mapErrorsM validateCategoryName cs
+    _ <- mapErrorsM validateCategoryName ds
     return $ [
         "category_source {",
         indent ("source: " ++ show f),

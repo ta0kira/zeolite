@@ -202,10 +202,10 @@ instance (Show c, MergeableM m, CompileErrorM m) =>
       let mapped = Map.fromListWith (++) $ map (\f -> (pfParam f,[pfFilter f])) (pcIntFilters ctx)
       let positional = map (getFilters mapped) (map vpParam $ pValues $ pcIntParams ctx)
       assigned <- fmap Map.fromList $ processPairs alwaysPair (fmap vpParam $ pcIntParams ctx) ps
-      subbed <- fmap Positional $ collectAllOrErrorM $ map (assignFilters assigned) positional
+      subbed <- fmap Positional $ mapErrorsM (assignFilters assigned) positional
       processPairs_ (validateAssignment r allFilters) ps subbed
       -- Check initializer types.
-      ms <- fmap Positional $ collectAllOrErrorM $ map (subSingle pa') (pcMembers ctx)
+      ms <- fmap Positional $ mapErrorsM (subSingle pa') (pcMembers ctx)
       processPairs_ (checkInit r allFilters) ms (Positional $ zip ([1..] :: [Int]) $ pValues ts)
       return ()
       where
@@ -214,7 +214,7 @@ instance (Show c, MergeableM m, CompileErrorM m) =>
               (Just fs) -> fs
               _ -> []
         assignFilters fm fs = do
-          collectAllOrErrorM $ map (uncheckedSubFilter $ getValueForParam fm) fs
+          mapErrorsM (uncheckedSubFilter $ getValueForParam fm) fs
         checkInit r fa (MemberValue c2 n t0) (i,t1) = do
           checkValueTypeMatch r fa t1 t0 `reviseErrorM`
             ("In initializer " ++ show i ++ " for " ++ show n ++ formatFullContextBrace c2)

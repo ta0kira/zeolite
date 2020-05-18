@@ -47,7 +47,7 @@ runCompiler resolver backend (CompileOptions _ _ _ ds _ _ p (ExecuteTests tp) f)
   allResults <- fmap concat $ mapErrorsM (runModuleTests resolver backend base tp) ts
   let passed = sum $ map (fst . fst) allResults
   let failed = sum $ map (snd . fst) allResults
-  processResults passed failed (mergeAll $ map snd allResults) where
+  processResults passed failed (mapErrorsM_ snd allResults) where
     compilerHash = getCompilerHash backend
     preloadTests base (ca,ms) d = do
       m <- loadModuleMetadata compilerHash f ca (p </> d)
@@ -69,7 +69,7 @@ runCompiler resolver backend (CompileOptions _ _ _ ds _ _ p (ExecuteTests tp) f)
                                 intercalate ", " (map show fs) ++ "\n"
     processResults passed failed rs
       | isCompileError rs =
-        (fromCompileInfo rs >> return ()) `reviseErrorM`
+        (fromCompileInfo rs) `reviseErrorM`
           ("\nPassed: " ++ show passed ++ " test(s), Failed: " ++ show failed ++ " test(s)")
       | otherwise =
         compileWarningM $ "\nPassed: " ++ show passed ++ " test(s), Failed: " ++ show failed ++ " test(s)"

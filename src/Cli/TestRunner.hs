@@ -45,14 +45,14 @@ import Types.TypeCategory
 
 runSingleTest :: CompilerBackend b => b -> LanguageModule SourcePos ->
   FilePath -> [FilePath] -> [CompileMetadata] -> (String,String) ->
-  IO ((Int,Int),CompileInfo ())
+  CompileInfoIO ((Int,Int),CompileInfo ())
 runSingleTest b cm p paths deps (f,s) = do
-  hPutStrLn stderr $ "\nExecuting tests from " ++ f
+  errorFromIO $ hPutStrLn stderr $ "\nExecuting tests from " ++ f
   allResults <- checkAndRun (parseTestSource (f,s))
   return $ second (flip reviseErrorM $ "\nIn test file " ++ f) allResults where
     checkAndRun ts
       | isCompileError ts = do
-        hPutStrLn stderr $ "Failed to parse tests in " ++ f
+        errorFromIO $ hPutStrLn stderr $ "Failed to parse tests in " ++ f
         return ((0,1),ts >> return ())
       | otherwise = do
           let (_,ts') = getCompileSuccess ts
@@ -63,12 +63,12 @@ runSingleTest b cm p paths deps (f,s) = do
     runSingle t = do
       let name = ithTestName $ itHeader t
       let context = formatFullContextBrace (ithContext $ itHeader t)
-      hPutStrLn stderr $ "\n*** Executing test \"" ++ name ++ "\" ***"
+      errorFromIO $ hPutStrLn stderr $ "\n*** Executing test \"" ++ name ++ "\" ***"
       outcome <- fmap (flip reviseErrorM ("\nIn test \"" ++ name ++ "\"" ++ context)) $
                    run (ithResult $ itHeader t) (itCategory t) (itDefinition t)
       if isCompileError outcome
-         then hPutStrLn stderr $ "*** Test \"" ++ name ++ "\" failed ***"
-         else hPutStrLn stderr $ "*** Test \"" ++ name ++ "\" passed ***"
+         then errorFromIO $ hPutStrLn stderr $ "*** Test \"" ++ name ++ "\" failed ***"
+         else errorFromIO $ hPutStrLn stderr $ "*** Test \"" ++ name ++ "\" passed ***"
       return outcome
 
     run (ExpectCompileError _ rs es) cs ds = do

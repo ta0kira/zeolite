@@ -114,7 +114,7 @@ writeMetadata :: FilePath -> CompileMetadata -> CompileInfoIO ()
 writeMetadata p m = do
   p' <- errorFromIO $ canonicalizePath p
   errorFromIO $ hPutStrLn stderr $ "Writing metadata for \"" ++ p' ++ "\"."
-  m' <- fromCompileInfo $ autoWriteConfig m `reviseErrorM` ("In data for " ++ p)
+  m' <- autoWriteConfig m `reviseErrorM` ("In data for " ++ p)
   writeCachedFile p' "" metadataFilename m'
 
 writeRecompile :: FilePath -> ModuleConfig -> CompileInfoIO ()
@@ -122,7 +122,7 @@ writeRecompile p m = do
   p' <- errorFromIO $ canonicalizePath p
   let f = p </> moduleFilename
   errorFromIO $ hPutStrLn stderr $ "Updating config for \"" ++ p' ++ "\"."
-  m' <- fromCompileInfo $ autoWriteConfig m `reviseErrorM` ("In data for " ++ p)
+  m' <- autoWriteConfig m `reviseErrorM` ("In data for " ++ p)
   errorFromIO $ writeFile f m'
 
 eraseCachedData :: FilePath -> CompileInfoIO ()

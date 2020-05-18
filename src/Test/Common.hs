@@ -96,16 +96,16 @@ readMulti f s =
 
 parseFilterMap :: [(String,[String])] -> CompileInfo ParamFilters
 parseFilterMap pa = do
-  pa2 <- collectAllOrErrorM $ map parseFilters pa
+  pa2 <- mapErrorsM parseFilters pa
   return $ Map.fromList pa2
   where
     parseFilters (n,fs) = do
-      fs2 <- collectAllOrErrorM $ map (readSingle "(string)") fs
+      fs2 <- mapErrorsM (readSingle "(string)") fs
       return (ParamName n,fs2)
 
 parseTheTest :: ParseFromSource a => [(String,[String])] -> [String] -> CompileInfo ([a],ParamFilters)
 parseTheTest pa xs = do
-  ts <- collectAllOrErrorM $ map (readSingle "(string)") xs
+  ts <- mapErrorsM (readSingle "(string)") xs
   pa2 <- parseFilterMap pa
   return (ts,pa2)
 
