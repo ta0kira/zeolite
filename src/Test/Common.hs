@@ -159,7 +159,7 @@ containsExactly actual expected = do
 
 containsNoDuplicates :: (Ord a, Show a) => [a] -> CompileInfo ()
 containsNoDuplicates expected =
-  (mergeAll $ map checkSingle $ group $ sort expected) `reviseErrorM` (show expected)
+  (mergeAllM $ map checkSingle $ group $ sort expected) `reviseErrorM` (show expected)
   where
     checkSingle xa@(x:_:_) =
       compileErrorM $ "Item " ++ show x ++ " occurs " ++ show (length xa) ++ " times"
@@ -167,7 +167,7 @@ containsNoDuplicates expected =
 
 containsAtLeast :: (Ord a, Show a) => [a] -> [a] -> CompileInfo ()
 containsAtLeast actual expected =
-  (mergeAll $ map (checkInActual $ Set.fromList actual) expected) `reviseErrorM`
+  (mergeAllM $ map (checkInActual $ Set.fromList actual) expected) `reviseErrorM`
         (show actual ++ " (actual) vs. " ++ show expected ++ " (expected)")
   where
     checkInActual va v =
@@ -177,7 +177,7 @@ containsAtLeast actual expected =
 
 containsAtMost :: (Ord a, Show a) => [a] -> [a] -> CompileInfo ()
 containsAtMost actual expected =
-  (mergeAll $ map (checkInExpected $ Set.fromList expected) actual) `reviseErrorM`
+  (mergeAllM $ map (checkInExpected $ Set.fromList expected) actual) `reviseErrorM`
         (show actual ++ " (actual) vs. " ++ show expected ++ " (expected)")
   where
     checkInExpected va v =

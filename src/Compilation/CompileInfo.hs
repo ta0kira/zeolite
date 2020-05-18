@@ -210,10 +210,6 @@ instance Monad m => MergeableM (CompileInfoT m) where
   mergeAnyM = collectOneOrErrorM
   mergeAllM = collectAllOrErrorM >=> return . mergeAll
 
-instance (Monad m, Mergeable a) => Mergeable (CompileInfoT m a) where
-  mergeAny = mergeAnyM
-  mergeAll = mergeAllM
-
 getWarnings :: CompileInfoState a -> [String]
 getWarnings (CompileFail w _)    = w
 getWarnings (CompileSuccess w _) = w

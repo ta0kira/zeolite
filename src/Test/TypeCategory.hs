@@ -861,7 +861,7 @@ checkPaired f actual expected
   | length actual /= length expected =
     compileErrorM $ "Different item counts: " ++ show actual ++ " (actual) vs. " ++
                    show expected ++ " (expected)"
-  | otherwise = mergeAll $ map check (zip3 actual expected ([1..] :: [Int])) where
+  | otherwise = mergeAllM $ map check (zip3 actual expected ([1..] :: [Int])) where
     check (a,e,n) = f a e `reviseErrorM` ("Item " ++ show n ++ " mismatch")
 
 containsPaired :: (Eq a, Show a) => [a] -> [a] -> CompileInfo ()

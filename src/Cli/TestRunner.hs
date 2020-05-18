@@ -59,7 +59,7 @@ runSingleTest b cm p paths deps (f,s) = do
           allResults <- sequence $ map runSingle ts'
           let passed = length $ filter (not . isCompileError) allResults
           let failed = length $ filter isCompileError allResults
-          return ((passed,failed),mergeAll allResults)
+          return ((passed,failed),mergeAllM allResults)
     runSingle t = do
       let name = ithTestName $ itHeader t
       let context = formatFullContextBrace (ithContext $ itHeader t)
@@ -88,16 +88,16 @@ runSingleTest b cm p paths deps (f,s) = do
       let ce = checkExcluded es comp err out
       let compError = if null comp
                          then return ()
-                         else (mergeAll $ map compileErrorM comp) `reviseErrorM` "\nOutput from compiler:"
+                         else (mergeAllM $ map compileErrorM comp) `reviseErrorM` "\nOutput from compiler:"
       let errError = if null err
                         then return ()
-                        else (mergeAll $ map compileErrorM err) `reviseErrorM` "\nOutput to stderr from test:"
+                        else (mergeAllM $ map compileErrorM err) `reviseErrorM` "\nOutput to stderr from test:"
       let outError = if null out
                         then return ()
-                        else (mergeAll $ map compileErrorM out) `reviseErrorM` "\nOutput to stdout from test:"
+                        else (mergeAllM $ map compileErrorM out) `reviseErrorM` "\nOutput to stdout from test:"
       if isCompileError cr || isCompileError ce
-         then mergeAll [cr,ce,compError,errError,outError]
-         else mergeAll [cr,ce]
+         then mergeAllM [cr,ce,compError,errError,outError]
+         else mergeAllM [cr,ce]
 
     execute s2 e rs es cs ds = toCompileInfo $ do
       let result = compileAll (Just e) cs ds
@@ -110,7 +110,7 @@ runSingleTest b cm p paths deps (f,s) = do
            let command = TestCommand binaryName (takeDirectory binaryName)
            (TestCommandResult s2' out err) <- runTestCommand b command
            case (s2,s2') of
-                (True,False) -> mergeAll $ map compileErrorM $ warnings ++ err ++ out
+                (True,False) -> mergeAllM $ map compileErrorM $ warnings ++ err ++ out
                 (False,True) -> compileErrorM "Expected runtime failure"
                 _ -> do
                   let result2 = checkContent rs es warnings err out
@@ -132,8 +132,8 @@ runSingleTest b cm p paths deps (f,s) = do
                    Nothing -> compileErrorM "Expected compiler error"
       return (xx,main)
 
-    checkRequired rs comp err out = mergeAll $ map (checkSubsetForRegex True  comp err out) rs
-    checkExcluded es comp err out = mergeAll $ map (checkSubsetForRegex False comp err out) es
+    checkRequired rs comp err out = mergeAllM $ map (checkSubsetForRegex True  comp err out) rs
+    checkExcluded es comp err out = mergeAllM $ map (checkSubsetForRegex False comp err out) es
     checkSubsetForRegex expected comp err out (OutputPattern OutputAny r) =
       checkForRegex expected (comp ++ err ++ out) r "compiler output or test output"
     checkSubsetForRegex expected comp _ _ (OutputPattern OutputCompiler r) =
