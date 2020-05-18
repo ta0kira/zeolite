@@ -326,7 +326,7 @@ checkGeneralMatch _ _ _ (SingleType (JustInferredType (InferredType _))) _ =
 checkGeneralMatch _ _ v t1 (SingleType (JustInferredType i2@(InferredType _))) =
   return [InferredTypeGuess i2 t1 v]
 checkGeneralMatch r f Invariant ts1 ts2 =
-  -- NOTE: Covariant is identity, so v2 has technically been composed with it.
+  -- This ensures that any and all behave as expected in Invariant positions.
   mergeAllM [checkGeneralMatch r f Covariant     ts1 ts2,
              checkGeneralMatch r f Contravariant ts1 ts2]
 checkGeneralMatch r f Contravariant ts1 ts2 =

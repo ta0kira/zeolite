@@ -675,8 +675,6 @@ mergeObjects f = merge [] where
   merge cs (x:xs) = do
     ys <- collectOneOrErrorM $ map check (cs ++ xs) ++ [return [x]]
     merge (cs ++ ys) xs where
-      -- TODO: Should f just perform merging? In case we want to preserve info
-      -- about what was merged, e.g., return m [(p,a)].
       check x2 = x2 `f` x >> return []
 
 mergeRefines :: (MergeableM m, CompileErrorM m, TypeResolver r) =>
