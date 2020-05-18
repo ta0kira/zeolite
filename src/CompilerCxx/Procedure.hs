@@ -223,7 +223,7 @@ compileStatement (FailCall c e) = do
   let (Positional [t0],e0) = e'
   r <- csResolver
   fa <- csAllFilters
-  lift $ (checkValueTypeMatch r fa t0 formattedRequiredValue) `reviseErrorM`
+  lift $ (checkValueTypeMatch_ r fa t0 formattedRequiredValue) `reviseErrorM`
     ("In fail call at " ++ formatFullContext c)
   csSetNoReturn
   maybeSetTrace c
@@ -258,7 +258,7 @@ compileStatement (Assignment c as e) = do
     createVariable r fa (CreateVariable c2 t1 n) t2 = do
       -- TODO: Call csRequiresTypes for t1. (Maybe needs a helper function.)
       lift $ mergeAllM [validateGeneralInstance r fa (vtType t1),
-                        checkValueTypeMatch r fa t2 t1] `reviseErrorM`
+                        checkValueTypeMatch_ r fa t2 t1] `reviseErrorM`
         ("In creation of " ++ show n ++ " at " ++ formatFullContext c2)
       csAddVariable c2 n (VariableValue c2 LocalScope t1 True)
       csWrite [variableStoredType t1 ++ " " ++ variableName n ++ ";"]
@@ -267,7 +267,7 @@ compileStatement (Assignment c as e) = do
       when (not w) $ lift $ compileErrorM $ "Cannot assign to read-only variable " ++
                                            show n ++ formatFullContextBrace c2
       -- TODO: Also show original context.
-      lift $ (checkValueTypeMatch r fa t2 t1) `reviseErrorM`
+      lift $ (checkValueTypeMatch_ r fa t2 t1) `reviseErrorM`
         ("In assignment to " ++ show n ++ " at " ++ formatFullContext c2)
       csUpdateAssigned n
     createVariable _ _ _ _ = return ()
@@ -300,7 +300,7 @@ compileLazyInit (DefinedMember c _ t1 n (Just e)) = do
   r <- csResolver
   fa <- csAllFilters
   let Positional [t2] = ts
-  lift $ (checkValueTypeMatch r fa t2 t1) `reviseErrorM`
+  lift $ (checkValueTypeMatch_ r fa t2 t1) `reviseErrorM`
     ("In initialization of " ++ show n ++ " at " ++ formatFullContext c)
   csWrite [variableName n ++ "([this]() { return " ++ writeStoredVariable t1 e' ++ "; })"]
 
@@ -624,7 +624,7 @@ compileExpression = compile where
     r <- csResolver
     fa <- csAllFilters
     let vt = ValueType RequiredValue $ SingleType $ JustTypeInstance t
-    lift $ (checkValueTypeMatch r fa t' vt) `reviseErrorM`
+    lift $ (checkValueTypeMatch_ r fa t' vt) `reviseErrorM`
       ("In converted call at " ++ formatFullContext c)
     f' <- lookupValueFunction vt f
     compileFunctionCall (Just $ useAsUnwrapped e') f' f
@@ -721,7 +721,7 @@ compileExpressionStart (BuiltinCall c (FunctionCall _ BuiltinReduce ps es)) = do
   fa <- csAllFilters
   lift $ validateGeneralInstance r fa t1
   lift $ validateGeneralInstance r fa t2
-  lift $ (checkValueTypeMatch r fa t0 (ValueType OptionalValue t1)) `reviseErrorM`
+  lift $ (checkValueTypeMatch_ r fa t0 (ValueType OptionalValue t1)) `reviseErrorM`
     ("In argument to reduce call at " ++ formatFullContext c)
   -- TODO: If t1 -> t2 then just return e without a Reduce call.
   t1' <- expandGeneralInstance t1
@@ -779,7 +779,7 @@ compileExpressionStart (InlineAssignment c n e) = do
   (Positional [t],e') <- compileExpression e -- TODO: Get rid of the Positional matching here.
   r <- csResolver
   fa <- csAllFilters
-  lift $ (checkValueTypeMatch r fa t t0) `reviseErrorM`
+  lift $ (checkValueTypeMatch_ r fa t t0) `reviseErrorM`
     ("In assignment at " ++ formatFullContext c)
   csUpdateAssigned n
   scoped <- autoScope s
@@ -868,13 +868,13 @@ categoriesFromRefine (TypeInstance t ps) = t `Set.insert` (Set.unions $ map cate
 categoriesFromDefine :: DefinesInstance -> Set.Set CategoryName
 categoriesFromDefine (DefinesInstance t ps) = t `Set.insert` (Set.unions $ map categoriesFromTypes $ pValues ps)
 
-expandParams :: (CompilerContext c m s a) =>
+expandParams :: (CompileErrorM m, CompilerContext c m s a) =>
   Positional GeneralInstance -> CompilerState a m String
 expandParams ps = do
   ps' <- sequence $ map expandGeneralInstance $ pValues ps
   return $ "T_get(" ++ intercalate "," (map ("&" ++) ps') ++ ")"
 
-expandParams2 :: (CompilerContext c m s a) =>
+expandParams2 :: (CompileErrorM m, CompilerContext c m s a) =>
   Positional GeneralInstance -> CompilerState a m String
 expandParams2 ps = do
   ps' <- sequence $ map expandGeneralInstance $ pValues ps
@@ -884,7 +884,7 @@ expandCategory :: (CompilerContext c m s a) =>
   CategoryName -> CompilerState a m String
 expandCategory t = return $ categoryGetter t ++ "()"
 
-expandGeneralInstance :: (CompilerContext c m s a) =>
+expandGeneralInstance :: (CompileErrorM m, CompilerContext c m s a) =>
   GeneralInstance -> CompilerState a m String
 expandGeneralInstance (TypeMerge MergeUnion     []) = return $ allGetter ++ "()"
 expandGeneralInstance (TypeMerge MergeIntersect []) = return $ anyGetter ++ "()"
@@ -901,6 +901,7 @@ expandGeneralInstance (SingleType (JustParamName p)) = do
   s <- csGetParamScope p
   scoped <- autoScope s
   return $ scoped ++ paramName p
+expandGeneralInstance t = lift $ compileErrorM $ "Type " ++ show t ++ " contains unresolved types"
 
 doImplicitReturn :: (Show c,CompilerContext c m [String] a) => [c] -> CompilerState a m ()
 doImplicitReturn c = do

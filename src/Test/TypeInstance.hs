@@ -721,17 +721,17 @@ getParams :: CompileErrorM m =>
   Map.Map CategoryName (Map.Map CategoryName (InstanceParams -> InstanceParams))
   -> TypeInstance -> CategoryName -> m InstanceParams
 getParams ma (TypeInstance n1 ps1) n2 = do
-  ra <- mapLookup ma n1
-  f <- mapLookup ra n2
+  ra <- mapLookup ma n1 `reviseErrorM` ("In lookup of category " ++ show n1)
+  f <- mapLookup ra n2 `reviseErrorM` ("In lookup of parent " ++ show n2 ++ " of " ++ show n1)
   return $ f ps1
 
 getTypeFilters :: CompileErrorM m => TypeInstance -> m InstanceFilters
-getTypeFilters (TypeInstance n ps) = do
+getTypeFilters (TypeInstance n ps) = flip reviseErrorM "In type filters lookup" $ do
   f <- mapLookup typeFilters n
   return $ f ps
 
 getDefinesFilters :: CompileErrorM m => DefinesInstance -> m InstanceFilters
-getDefinesFilters (DefinesInstance n ps) = do
+getDefinesFilters (DefinesInstance n ps) = flip reviseErrorM "In defines filters lookup" $ do
   f <- mapLookup definesFilters n
   return $ f ps
 

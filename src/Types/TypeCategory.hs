@@ -684,9 +684,10 @@ mergeRefines :: (MergeableM m, CompileErrorM m, TypeResolver r) =>
 mergeRefines r f = mergeObjects check where
   check (ValueRefine _ t1@(TypeInstance n1 _)) (ValueRefine _ t2@(TypeInstance n2 _))
     | n1 /= n2 = compileErrorM $ show t1 ++ " and " ++ show t2 ++ " are incompatible"
-    | otherwise = do
-      checkGeneralMatch r f Covariant (SingleType $ JustTypeInstance $ t1)
-                                      (SingleType $ JustTypeInstance $ t2)
+    | otherwise =
+      noInferredTypes $ checkGeneralMatch r f Covariant
+                        (SingleType $ JustTypeInstance $ t1)
+                        (SingleType $ JustTypeInstance $ t2)
 
 mergeDefines :: (MergeableM m, CompileErrorM m, TypeResolver r) =>
   r -> ParamFilters -> [ValueDefine c] -> m [ValueDefine c]
@@ -786,9 +787,10 @@ flattenAllConnections tm0 ts = do
       let rm = Map.fromList $ map (\t -> (tiName $ vrType t,t)) rs
       mergeAllM $ map (\t -> checkConvert r fm (tiName (vrType t) `Map.lookup` rm) t) rs2
     checkConvert r fm (Just ta1@(ValueRefine _ t1)) ta2@(ValueRefine _ t2) = do
-      checkGeneralMatch r fm Covariant (SingleType $ JustTypeInstance t1)
-                                       (SingleType $ JustTypeInstance t2) `reviseErrorM`
-        ("Cannot refine " ++ show ta1 ++ " from inherited " ++ show ta2)
+      noInferredTypes $ checkGeneralMatch r fm Covariant
+                        (SingleType $ JustTypeInstance t1)
+                        (SingleType $ JustTypeInstance t2) `reviseErrorM`
+                        ("Cannot refine " ++ show ta1 ++ " from inherited " ++ show ta2)
       return ()
     checkConvert _ _ _ _ = return ()
 

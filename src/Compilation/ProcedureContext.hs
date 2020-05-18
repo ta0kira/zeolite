@@ -166,6 +166,7 @@ instance (Show c, MergeableM m, CompileErrorM m) =>
     getFunction Nothing = do
       let ps = fmap (SingleType . JustParamName . vpParam) $ pcExtParams ctx
       getFunction (Just $ SingleType $ JustTypeInstance $ TypeInstance (pcType ctx) ps)
+    getFunction (Just t2) = compileErrorM $ "Type " ++ show t2 ++ " contains unresolved types"
     checkDefine t2 = do
       (_,ca) <- getCategory (pcCategories ctx) (c,diName t2)
       let params = Positional $ map vpParam $ getCategoryParams ca

@@ -664,6 +664,7 @@ expandLocalType (SingleType (JustTypeInstance (TypeInstance t ps))) =
   where
     ps' = map expandLocalType $ pValues ps
 expandLocalType (SingleType (JustParamName p)) = paramName p
+expandLocalType _ = undefined  -- The instance is an InferredType.
 
 defineCategoryName :: CategoryName -> CompiledData [String]
 defineCategoryName t = onlyCode $ "std::string CategoryName() const final { return \"" ++ show t ++ "\"; }"

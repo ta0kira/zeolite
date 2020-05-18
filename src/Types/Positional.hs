@@ -21,12 +21,14 @@ module Types.Positional (
   alwaysPair,
   processPairs,
   processPairs_,
+  processPairsM,
   processPairsT,
 ) where
 
 import Control.Monad.Trans (MonadTrans(..))
 
 import Base.CompileError
+import Base.Mergeable
 
 
 newtype Positional a =
@@ -47,6 +49,10 @@ processPairs f (Positional ps1) (Positional ps2)
   | length ps1 == length ps2 =
     mapErrorsM (uncurry f) (zip ps1 ps2)
   | otherwise = mismatchError ps1 ps2
+
+processPairsM :: (Show a, Show b, Mergeable c, CompileErrorM m) =>
+  (a -> b -> m c) -> Positional a -> Positional b -> m c
+processPairsM f x y = fmap mergeAll $ processPairs f x y
 
 processPairs_ :: (Show a, Show b, CompileErrorM m) =>
   (a -> b -> m c) -> Positional a -> Positional b -> m ()
