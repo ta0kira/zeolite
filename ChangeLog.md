@@ -4,7 +4,9 @@
 
 ### Compiler CLI
 
-* **[behavior]** Improves handling of I/O errors.
+* **[behavior]** Improves handling of I/O errors when calling `zeolite`, and
+  allows compilation to continue in `-r`/`-R` modes if compilation of one module
+  fails.
 
 ### Language
 

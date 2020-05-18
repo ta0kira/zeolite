@@ -103,7 +103,7 @@ runCompiler resolver backend (CompileOptions _ is is2 _ _ _ p (CompileFast c fn 
     msMode = (CompileBinary c fn (absolute </> show c) []),
     msForce = f
   }
-  compileModule resolver backend spec
+  compileModule resolver backend spec `reviseErrorM` ("In compilation of \"" ++ f2' ++ "\"")
   errorFromIO $ removeDirectoryRecursive dir
 
 runCompiler resolver backend (CompileOptions h _ _ ds _ _ p CompileRecompileRecursive f) = do
@@ -129,7 +129,7 @@ runCompiler resolver backend (CompileOptions _ _ _ ds _ _ p CompileRecompile f) 
   mergeAllM $ map recompileSingle ds where
     compilerHash = getCompilerHash backend
     recompileSingle d0 = do
-      let d = p </> d0
+      d <- errorFromIO $ canonicalizePath (p </> d0)
       upToDate <- isPathUpToDate compilerHash f d
       if f < ForceAll && upToDate
          then compileWarningM $ "Path " ++ d0 ++ " is up to date"
@@ -155,18 +155,19 @@ runCompiler resolver backend (CompileOptions _ _ _ ds _ _ p CompileRecompile f) 
              msMode = m,
              msForce = f
            }
-           compileModule resolver backend spec
+           compileModule resolver backend spec `reviseErrorM` ("In compilation of module \"" ++ d ++ "\"")
 
 runCompiler resolver backend (CompileOptions _ is is2 ds _ _ p CreateTemplates f) = mapM_ compileSingle ds where
   compilerHash = getCompilerHash backend
   compileSingle d = do
+    d' <- errorFromIO $ canonicalizePath (p </> d)
     base <- resolveBaseModule resolver
-    as  <- fmap fixPaths $ mapErrorsM (resolveModule resolver (p </> d)) is
-    as2 <- fmap fixPaths $ mapErrorsM (resolveModule resolver (p </> d)) is2
+    as  <- fmap fixPaths $ mapErrorsM (resolveModule resolver d') is
+    as2 <- fmap fixPaths $ mapErrorsM (resolveModule resolver d') is2
     deps1 <- loadPublicDeps compilerHash f Map.empty (base:as)
     deps2 <- loadPublicDeps compilerHash f (mapMetadata deps1) as2
     path <- errorFromIO $ canonicalizePath p
-    createModuleTemplates path d deps1 deps2
+    createModuleTemplates path d deps1 deps2 `reviseErrorM` ("In module \"" ++ d' ++ "\"")
 
 runCompiler resolver backend (CompileOptions h is is2 ds es ep p m f) = mapM_ compileSingle ds where
   compileSingle d = do
