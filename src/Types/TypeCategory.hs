@@ -453,13 +453,10 @@ declareAllTypes tm0 = foldr (\t tm -> tm >>= update t) (return tm0) where
   update t tm =
     case getCategoryName t `Map.lookup` tm of
         (Just t2) -> compileErrorM $ "Type " ++ show (getCategoryName t) ++
-                                    formatFullContextBrace (getCategoryContext t) ++
-                                    " has already been declared" ++
-                                    showExisting t2
+                                     formatFullContextBrace (getCategoryContext t) ++
+                                     " has already been declared" ++
+                                     formatFullContextBrace (getCategoryContext t2)
         _ -> return $ Map.insert (getCategoryName t) t tm
-  showExisting t
-    | isBuiltinCategory (getCategoryName t) = " [builtin type]"
-    | otherwise = formatFullContextBrace (getCategoryContext t)
 
 getFilterMap :: [ValueParam c] -> [ParamFilter c] -> ParamFilters
 getFilterMap ps fs = getFilters $ zip (Set.toList pa) (repeat []) where
@@ -498,21 +495,21 @@ checkConnectedTypes tm0 ts = do
     valueRefinesInstanceError c n (c2,t)
       | isInstanceInterface t =
         compileErrorM $ "Value interface " ++ show n ++ formatFullContextBrace c ++
-                      " cannot refine type interface " ++
-                      show (iiName t) ++ formatFullContextBrace c2
+                        " cannot refine type interface " ++
+                        show (iiName t) ++ formatFullContextBrace c2
       | otherwise = return ()
     valueRefinesConcreteError c n (c2,t)
       | isValueConcrete t =
         compileErrorM $ "Value interface " ++ show n ++ formatFullContextBrace c ++
-                      " cannot refine concrete type " ++
-                      show (getCategoryName t) ++ formatFullContextBrace c2
+                        " cannot refine concrete type " ++
+                        show (getCategoryName t) ++ formatFullContextBrace c2
       | otherwise = return ()
     concreteRefinesInstanceError c n (c2,t)
       | isInstanceInterface t =
         compileErrorM $ "Concrete type " ++ show n ++ formatFullContextBrace c ++
-                      " cannot refine instance interface " ++
-                      show (getCategoryName t) ++ formatFullContextBrace c2 ++
-                      " => use defines instead"
+                        " cannot refine instance interface " ++
+                        show (getCategoryName t) ++ formatFullContextBrace c2 ++
+                        " => use defines instead"
       | otherwise = return ()
     concreteDefinesValueError c n (c2,t)
       | isValueInterface t =
@@ -658,20 +655,18 @@ topoSortCategories :: (Show c, MergeableM m, CompileErrorM m) =>
   CategoryMap c -> [AnyCategory c] -> m [AnyCategory c]
 topoSortCategories tm0 ts = do
   tm <- declareAllTypes tm0 ts
-  (ts',_) <- foldr (update tm) (return ([],Map.keysSet tm0)) ts
-  return ts'
+  fmap fst $ update tm (Map.keysSet tm0) ts
   where
-    update tm t u = do
-      (_,ta) <- u
+    update tm ta (t:ts2) = do
       if getCategoryName t `Set.member` ta
-         then u
+         then update tm ta ts2
          else do
-          refines <- mapErrorsM (\r -> getCategory tm (vrContext r,tiName $ vrType r)) $ getCategoryRefines t
-          defines <- mapErrorsM (\d -> getCategory tm (vdContext d,diName $ vdType d)) $ getCategoryDefines t
-          (ts',ta') <- foldr (update tm) u (map snd $ refines ++ defines)
-          let ts'' = ts' ++ [t]
-          let ta'' = Set.insert (getCategoryName t) ta'
-          return (ts'',ta'')
+           refines <- mapErrorsM (\r -> getCategory tm (vrContext r,tiName $ vrType r)) $ getCategoryRefines t
+           defines <- mapErrorsM (\d -> getCategory tm (vdContext d,diName $ vdType d)) $ getCategoryDefines t
+           (ts3,ta2) <- update tm (getCategoryName t `Set.insert` ta) (map snd $ refines ++ defines)
+           (ts4,ta3) <- update tm ta2 ts2
+           return (ts3 ++ [t] ++ ts4,ta3)
+    update _ ta _ = return ([],ta)
 
 mergeObjects :: (MergeableM m, CompileErrorM m) =>
   (a -> a -> m ()) -> [a] -> m [a]

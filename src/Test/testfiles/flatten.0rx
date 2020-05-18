@@ -5,16 +5,6 @@
 
 @value interface Object2 {}
 
-@value interface Object3<#x> {
-  refines Object2
-}
-
-@value interface Parent<#x> {
-  refines Object1<#x,Object3<Object2>>
-  // -> refines Object3<Object3<Object2>>
-  // -> refines Object2
-}
-
 @type interface Type<#x> {}
 
 concrete Child {
@@ -24,4 +14,14 @@ concrete Child {
   // -> refines Object2
 
   defines Type<Child>
+}
+
+@value interface Parent<#x> {
+  refines Object1<#x,Object3<Object2>>
+  // -> refines Object3<Object3<Object2>>
+  // -> refines Object2
+}
+
+@value interface Object3<#x> {
+  refines Object2
 }

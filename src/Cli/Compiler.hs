@@ -104,7 +104,7 @@ compileModule resolver backend (ModuleSpec p d em is is2 ps xs ts es ep m f) = d
   let ex = concat $ map getSourceCategories es
   (cm,(pc,tc)) <- loadLanguageModule p ns0 ex em ps deps1' deps2
   xa <- mapErrorsM (loadPrivateSource p) xs
-  (xx1,xx2) <- fromCompileInfo $ compileLanguageModule cm xa
+  (xx1,xx2) <- compileLanguageModule cm xa
   mf <- maybeCreateMain cm xa m
   let fs' = xx1++xx2
   eraseCachedData (p </> d)
@@ -238,7 +238,7 @@ compileModule resolver backend (ModuleSpec p d em is is2 ps xs ts es ep m f) = d
           return [f1]
     createBinary _ _ _ _ = return []
     maybeCreateMain cm2 xs2 (CompileBinary n f2 _ _) =
-      fmap (:[]) $ fromCompileInfo $ compileModuleMain cm2 xs2 n f2
+      fmap (:[]) $ compileModuleMain cm2 xs2 n f2
     maybeCreateMain _ _ _ = return []
 
 createModuleTemplates :: FilePath -> FilePath -> [CompileMetadata] -> [CompileMetadata] -> CompileInfoIO ()
@@ -250,11 +250,11 @@ createModuleTemplates p d deps1 deps2 = do
   xs' <- zipWithContents p xs
   ds <- mapErrorsM parseInternalSource xs'
   let ds2 = concat $ map (\(_,_,d2) -> d2) ds
-  tm <- fromCompileInfo $ foldM includeNewTypes defaultCategories [cs0,cs1,ps0,ps1,ts0,ts1]
+  tm <- foldM includeNewTypes defaultCategories [cs0,cs1,ps0,ps1,ts0,ts1]
   let cs = filter isValueConcrete $ cs1++ps1++ts1
   let ca = Set.fromList $ map getCategoryName $ filter isValueConcrete cs
   let ca' = foldr Set.delete ca $ map dcName ds2
-  ts <- fromCompileInfo $ mapErrorsM (compileConcreteTemplate tm) $ Set.toList ca'
+  ts <- mapErrorsM (compileConcreteTemplate tm) $ Set.toList ca'
   mapErrorsM_ writeTemplate ts where
   writeTemplate (CxxOutput _ n _ _ _ content) = do
     let n' = p </> d </> n

@@ -120,7 +120,7 @@ tests = [
       (\ts -> do
         ts2 <- topoSortCategories defaultCategories ts
         map (show . getCategoryName) ts2 `containsPaired` [
-            "Type","Object2","Object3","Object1","Parent","Child"
+            "Object2","Object3","Object1","Type","Parent","Child"
           ]),
     checkOperationSuccess
       ("testfiles" </> "flatten.0rx")
