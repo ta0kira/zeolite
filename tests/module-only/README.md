@@ -14,7 +14,7 @@ zeolite -p $ZEOLITE_PATH -R tests/module-only
 The compiler errors should look something like this:
 
 ```text
-Compiler errors:
-In creation of val1 at "tests/module-only/private.0rx" (line 22, column 3)
-  Type Type1 not found
+Zeolite execution failed.
+  In creation of val1 at "tests/module-only/private.0rx" (line 22, column 3)
+    Type Type1 not found
 ```

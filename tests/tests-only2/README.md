@@ -13,6 +13,6 @@ zeolite -p $ZEOLITE_PATH -r tests/tests-only2
 The compiler errors should look something like this:
 
 ```text
-Compiler errors:
-No matches for main category Testing ($TestsOnly$ sources excluded)
+Zeolite execution failed.
+  No matches for main category Testing ($TestsOnly$ sources excluded)
 ```

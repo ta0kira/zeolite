@@ -14,6 +14,6 @@ zeolite -p $ZEOLITE_PATH -r tests/tests-only
 The compiler errors should look something like this:
 
 ```text
-Compiler errors:
-Definition for Type1 ["tests/tests-only/private.0rx" (line 19, column 1)] does not correspond to a visible category in this module
+Zeolite execution failed.
+  Definition for Type1 ["tests/tests-only/private.0rx" (line 19, column 1)] does not correspond to a visible category in this module
 ```
