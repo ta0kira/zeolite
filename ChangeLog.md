@@ -4,6 +4,8 @@
 
 ### Compiler CLI
 
+* **[behavior]** Improves handling of I/O errors.
+
 ### Language
 
 * **[behavior]** Reduces the memory cost of `$TraceCreation$` by avoiding
