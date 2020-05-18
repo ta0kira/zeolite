@@ -19,6 +19,7 @@ limitations under the License.
 import Base.CompileError
 import Compilation.CompileInfo
 import Test.Common
+import qualified Test.CompileInfo     as TestCompileInfo
 import qualified Test.DefinedCategory as TestDefinedCategory
 import qualified Test.IntegrationTest as TestIntegrationTest
 import qualified Test.ParseMetadata   as TestParseMetadata
@@ -32,6 +33,7 @@ import qualified Test.TypeInstance    as TestTypeInstance
 
 main :: IO ()
 main = runAllTests $ concat [
+    labelWith "CompileInfo"     TestCompileInfo.tests,
     labelWith "DefinedCategory" TestDefinedCategory.tests,
     labelWith "IntegrationTest" TestIntegrationTest.tests,
     labelWith "ParseMetadata"   TestParseMetadata.tests,

@@ -207,7 +207,12 @@ instance Monad m => CompileErrorM (CompileInfoT m) where
   compileWarningM w = CompileInfoT (return $ CompileSuccess [w] ())
 
 instance Monad m => MergeableM (CompileInfoT m) where
-  mergeAnyM = collectOneOrErrorM
+  mergeAnyM xs = CompileInfoT $ do
+    xs' <- sequence $ map citState $ foldr (:) [] xs
+    return $ result $ splitErrorsAndData xs' where
+      result ([],[],ws) = CompileFail ws $ CompileMessage "" []
+      result (es,[],ws) = CompileFail ws $ CompileMessage "" es
+      result (_,xs2,ws) = CompileSuccess ws (mergeAny xs2)
   mergeAllM = collectAllOrErrorM >=> return . mergeAll
 
 getWarnings :: CompileInfoState a -> [String]

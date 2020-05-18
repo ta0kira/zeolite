@@ -50,3 +50,7 @@ mergeDefaultM = mergeAllM Nothing
 instance Mergeable () where
   mergeAny = const ()
   mergeAll = const ()
+
+instance Mergeable [a] where
+  mergeAny = head . foldr (:) [[]]
+  mergeAll = foldr (++) []

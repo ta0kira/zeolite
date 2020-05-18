@@ -178,6 +178,7 @@ library zeolite-internal
                        Parser.TypeCategory,
                        Parser.TypeInstance,
                        Test.Common,
+                       Test.CompileInfo,
                        Test.DefinedCategory,
                        Test.IntegrationTest,
                        Test.ParseMetadata,

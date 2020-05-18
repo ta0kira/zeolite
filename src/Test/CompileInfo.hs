@@ -1,0 +1,103 @@
+{- -----------------------------------------------------------------------------
+Copyright 2020 Kevin P. Barry
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+----------------------------------------------------------------------------- -}
+
+-- Author: Kevin P. Barry [ta0kira@gmail.com]
+
+{-# LANGUAGE Safe #-}
+
+module Test.CompileInfo (tests) where
+
+import Base.CompileError
+import Base.Mergeable
+import Compilation.CompileInfo
+
+
+tests :: [IO (CompileInfo ())]
+tests = [
+    checkSuccess 'a' (return 'a'),
+    checkError "error\n" (compileErrorM "error" :: CompileInfoIO Char),
+
+    checkSuccess ['a','b']          (collectAllOrErrorM [return 'a',return 'b']),
+    checkSuccess []                 (collectAllOrErrorM [] :: CompileInfoIO [Char]),
+    checkError   "error1\nerror2\n" (collectAllOrErrorM [compileErrorM "error1",return 'b',compileErrorM "error2"]),
+
+    checkSuccess 'a' (collectOneOrErrorM [return 'a',return 'b']),
+    checkError   ""  (collectOneOrErrorM [] :: CompileInfoIO Char),
+    checkSuccess 'b' (collectOneOrErrorM [compileErrorM "error1",return 'b',compileErrorM "error2"]),
+
+    checkSuccess ['a','b','c']      (mergeAllM [return ['a'],return ['b','c']]),
+    checkSuccess []                 (mergeAllM [] :: CompileInfoIO [Char]),
+    checkError   "error1\nerror2\n" (mergeAllM [compileErrorM "error1",return ['b'],compileErrorM "error2"]),
+
+    checkSuccess ['a'] (mergeAnyM [return ['a'],return ['b']]),
+    checkError   ""    (mergeAnyM [] :: CompileInfoIO [Char]),
+    checkSuccess ['b'] (mergeAnyM [compileErrorM "error1",return ['b'],compileErrorM "error2"]),
+
+    checkSuccess (AlwaysMerge ['a','b','c']) (mergeAllM [return $ AlwaysMerge ['a'],return $ AlwaysMerge ['b','c']]),
+    checkSuccess (AlwaysMerge [])            (mergeAllM [] :: CompileInfoIO AlwaysMerge),
+    checkError   "error1\nerror2\n"          (mergeAllM [compileErrorM "error1",return $ AlwaysMerge ['b'],compileErrorM "error2"]),
+
+    checkSuccess (AlwaysMerge ['a','b']) (mergeAnyM [return $ AlwaysMerge ['a'],return $ AlwaysMerge ['b']]),
+    checkError   ""                      (mergeAnyM [] :: CompileInfoIO AlwaysMerge),
+    checkSuccess (AlwaysMerge ['b'])     (mergeAnyM [compileErrorM "error1",return $ AlwaysMerge ['b'],compileErrorM "error2"]),
+
+    checkSuccessAndWarnings ["warning1","warning2"] ()
+      (compileWarningM "warning1" >> return () >> compileWarningM "warning2"),
+    checkErrorAndWarnings ["warning1"] "error\n"
+      (compileWarningM "warning1" >> compileErrorM "error" >> compileWarningM "warning2" :: CompileInfoIO ()),
+
+    checkSuccess ['a','b']  (sequence [return 'a',return 'b']),
+    checkSuccess []         (sequence [] :: CompileInfoIO [Char]),
+    checkError   "error1\n" (sequence [compileErrorM "error1",return 'b',compileErrorM "error2"])
+  ]
+
+newtype AlwaysMerge = AlwaysMerge { amData :: [Char] } deriving (Eq,Show)
+
+instance Mergeable AlwaysMerge where
+  mergeAny = AlwaysMerge . concat . map amData . foldr (:) []
+  mergeAll = AlwaysMerge . concat . map amData . foldr (:) []
+
+checkSuccess :: (Eq a, Show a) => a -> CompileInfoIO a -> IO (CompileInfo ())
+checkSuccess x y = do
+  y' <- toCompileInfo y
+  if isCompileError y' || getCompileSuccess y' == x
+     then return $ y' >> return ()
+     else return $ compileErrorM $ "Expected value " ++ show x ++ " but got value " ++ show (getCompileSuccess y')
+
+checkError :: (Eq a, Show a) => String -> CompileInfoIO a -> IO (CompileInfo ())
+checkError e y = do
+  y' <- toCompileInfo y
+  if not (isCompileError y')
+     then return $ compileErrorM $ "Expected error \"" ++ e ++ "\" but got value " ++ show (getCompileSuccess y')
+     else if show (getCompileError y') == e
+          then return $ return ()
+          else return $ compileErrorM $ "Expected error \"" ++ e ++ "\" but got error \"" ++ show (getCompileError y') ++ "\""
+
+checkSuccessAndWarnings :: (Eq a, Show a) => [String] -> a -> CompileInfoIO a -> IO (CompileInfo ())
+checkSuccessAndWarnings w x y = do
+  y' <- toCompileInfo y
+  outcome <- checkSuccess x y
+  if getCompileWarnings y' == w
+     then return $ outcome >> return ()
+     else return $ compileErrorM $ "Expected warnings " ++ show w ++ " but got warnings " ++ show (getCompileWarnings y')
+
+checkErrorAndWarnings :: (Eq a, Show a) => [String] -> String -> CompileInfoIO a -> IO (CompileInfo ())
+checkErrorAndWarnings w e y = do
+  y' <- toCompileInfo y
+  outcome <- checkError e y
+  if getCompileWarnings y' == w
+     then return $ outcome >> return ()
+     else return $ compileErrorM $ "Expected warnings " ++ show w ++ " but got warnings " ++ show (getCompileWarnings y')
