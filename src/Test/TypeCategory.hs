@@ -942,7 +942,26 @@ tests = [
         checkInferenceSuccess tm
           [("#x",[])] ["#x"]
           [("Interface2<Type0>","Interface2<[#x|Type1]>")]
-          [("#x","Type0",Contravariant)])
+          [("#x","Type0",Contravariant)]),
+
+    checkOperationSuccess
+      ("testfiles" </> "inference.0rx")
+      (\ts -> do
+        tm <- includeNewTypes defaultCategories ts
+        checkInferenceSuccess tm
+          [("#x",[])] ["#x"]
+          [("Interface3<Type0>","[Interface1<#x>|Interface3<#x>]")]
+          -- Guesses are either Type0 or Type1, and Type1 is more specific.
+          [("#x","Type1",Covariant)]),
+    checkOperationSuccess
+      ("testfiles" </> "inference.0rx")
+      (\ts -> do
+        tm <- includeNewTypes defaultCategories ts
+        checkInferenceSuccess tm
+          [("#x",[])] ["#x"]
+          -- Guesses are both Type0 and Type1, and Type0 is more general.
+          [("Interface3<Type0>","[Interface1<#x>&Interface3<#x>]")]
+          [("#x","Type0",Invariant)])
   ]
 
 getRefines :: Map.Map CategoryName (AnyCategory c) -> String -> CompileInfo [String]

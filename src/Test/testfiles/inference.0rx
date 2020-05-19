@@ -2,7 +2,9 @@
 
 @value interface Interface2<#y|> {}
 
-@value interface Interface3<#z> {}
+@value interface Interface3<#z> {
+  refines Interface1<Type1>
+}
 
 @value interface Interface4<#x|#y|#z> {}
 
