@@ -273,7 +273,7 @@ concrete Test {
 
 testcase "value mismatch with internal param" {
   error
-  require "call"
+  require "create"
   require "Bool"
   require "String"
 }

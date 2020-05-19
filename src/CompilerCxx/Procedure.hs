@@ -798,21 +798,17 @@ compileFunctionCall :: (Show c, CompileErrorM m, MergeableM m,
                         CompilerContext c m [String] a) =>
   Maybe String -> ScopedFunction c -> FunctionCall c ->
   CompilerState a m (ExpressionType,ExprValue)
-compileFunctionCall e f (FunctionCall c _ ps es) = do
+compileFunctionCall e f (FunctionCall c _ ps es) = flip reviseErrorStateT errorContext $ do
   r <- csResolver
   fa <- csAllFilters
   es' <- sequence $ map compileExpression $ pValues es
   (ts,es'') <- getValues es'
   ps2 <- lift $ guessParamsFromArgs r fa f ps (Positional ts)
-  f' <- lift $ parsedToFunctionType f `reviseErrorM`
-          ("In function call at " ++ formatFullContext c)
-  f'' <- lift $ assignFunctionParams r fa ps2 f' `reviseErrorM`
-          ("In function call at " ++ formatFullContext c)
+  f' <- lift $ parsedToFunctionType f
+  f'' <- lift $ assignFunctionParams r fa ps2 f'
   -- Called an extra time so arg count mismatches have reasonable errors.
-  lift $ processPairs_ (\_ _ -> return ()) (ftArgs f'') (Positional ts) `reviseErrorM`
-    ("In function call at " ++ formatFullContext c)
-  lift $ processPairs_ (checkArg r fa) (ftArgs f'') (Positional $ zip ([0..] :: [Int]) ts) `reviseErrorM`
-    ("In function call at " ++ formatFullContext c)
+  lift $ processPairs_ (\_ _ -> return ()) (ftArgs f'') (Positional ts)
+  lift $ processPairs_ (checkArg r fa) (ftArgs f'') (Positional $ zip ([0..] :: [Int]) ts)
   csRequiresTypes $ Set.unions $ map categoriesFromTypes $ pValues ps2
   csRequiresTypes (Set.fromList [sfType f])
   params <- expandParams2 ps2
@@ -820,6 +816,7 @@ compileFunctionCall e f (FunctionCall c _ ps es) = do
   call <- assemble e scoped (sfScope f) params es''
   return $ (ftReturns f'',OpaqueMulti call)
   where
+    errorContext = "In call to " ++ show (sfName f) ++ " at " ++ formatFullContext c
     assemble Nothing _ ValueScope ps2 es2 =
       return $ callName (sfName f) ++ "(Var_self, " ++ ps2 ++ ", " ++ es2 ++ ")"
     assemble Nothing scoped _ ps2 es2 =
