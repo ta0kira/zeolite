@@ -909,7 +909,40 @@ tests = [
           [("#x",[]),("#y",["allows #x"])] ["#x"]
           [("Interface1<Type1>","Interface1<#x>"),
            ("Type2","#y")]
-          [("#x","Type1",Covariant)])
+          [("#x","Type1",Covariant)]),
+
+    checkOperationSuccess
+      ("testfiles" </> "inference.0rx")
+      (\ts -> do
+        tm <- includeNewTypes defaultCategories ts
+        checkInferenceSuccess tm
+          [("#x",[])] ["#x"]
+          [("Interface1<Type1>","Interface1<[#x|Interface2<#x>]>")]
+          [("#x","Type1",Covariant)]),
+    checkOperationSuccess
+      ("testfiles" </> "inference.0rx")
+      (\ts -> do
+        tm <- includeNewTypes defaultCategories ts
+        checkInferenceSuccess tm
+          [("#x",[])] ["#x"]
+          [("Interface1<Type2>","Interface1<[#x&Type1]>")]
+          [("#x","Type2",Covariant)]),
+    checkOperationSuccess
+      ("testfiles" </> "inference.0rx")
+      (\ts -> do
+        tm <- includeNewTypes defaultCategories ts
+        checkInferenceSuccess tm
+          [("#x",[])] ["#x"]
+          [("Interface2<Type1>","Interface2<[#x&Interface2<#x>]>")]
+          [("#x","Type1",Contravariant)]),
+    checkOperationSuccess
+      ("testfiles" </> "inference.0rx")
+      (\ts -> do
+        tm <- includeNewTypes defaultCategories ts
+        checkInferenceSuccess tm
+          [("#x",[])] ["#x"]
+          [("Interface2<Type0>","Interface2<[#x|Type1]>")]
+          [("#x","Type0",Contravariant)])
   ]
 
 getRefines :: Map.Map CategoryName (AnyCategory c) -> String -> CompileInfo [String]
