@@ -455,7 +455,7 @@ functionality without having an explicit parent for the overlap.
   <span style='color:#644a9b;'>@value</span> set (<i><span style='color:#0057ae;'>Int</span></i>) -&gt; ()
 }</pre>
 
-Starting with compiler version `0.6.1.0`, Zeolite supports optional inference of
+Starting with compiler version `0.7.0.0`, Zeolite supports optional inference of
 specific function parameters by using **`?`**. This must be at the top level (no
 nesting), and it cannot be used outside of the parameters of the function.
 
