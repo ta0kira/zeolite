@@ -5,7 +5,7 @@ define StringParser {
 
   run (contextOld) {
     if (contextOld.hasAnyError()) {
-      return contextOld.convertError<String>()
+      return contextOld.convertError()
     }
     String message <- "Failed to match \"" + match + "\" at " + contextOld.getPosition()
     ParseContext<any> context <- contextOld
@@ -41,7 +41,7 @@ define SequenceOfParser {
 
   run (contextOld) {
     if (contextOld.hasAnyError()) {
-      return contextOld.convertError<String>()
+      return contextOld.convertError()
     }
     String message <- "Failed to match [" + matches + "]{" +
                       min.formatted() + "," + max.formatted() + "} at " +
@@ -91,7 +91,7 @@ define CharParser {
 
   run (contextOld) {
     if (contextOld.hasAnyError()) {
-      return contextOld.convertError<Char>()
+      return contextOld.convertError()
     }
     if (contextOld.atEof() || contextOld.current() != match) {
       String message <- "Failed to match '" + match.formatted() + "' at " + contextOld.getPosition()
@@ -153,7 +153,7 @@ define TryParser {
 
   run (contextOld) {
     if (contextOld.hasAnyError()) {
-      return contextOld.convertError<#x>()
+      return contextOld.convertError()
     }
     ParseContext<#x> context <- contextOld.run<#x>(parser)
     if (context.hasAnyError()) {
@@ -180,7 +180,7 @@ define OrParser {
 
   run (contextOld) {
     if (contextOld.hasAnyError()) {
-      return contextOld.convertError<#x>()
+      return contextOld.convertError()
     }
     ParseContext<#x> context <- contextOld.run<#x>(parser1)
     if (context.hasAnyError() && !context.hasBrokenInput()) {
@@ -207,7 +207,7 @@ define LeftParser {
 
   run (contextOld) {
     if (contextOld.hasAnyError()) {
-      return contextOld.convertError<#x>()
+      return contextOld.convertError()
     }
     ParseContext<#x> context <- contextOld.run<#x>(parser1)
     if (context.hasAnyError()) {
@@ -215,7 +215,7 @@ define LeftParser {
     } else {
       ParseContext<any> context2 <- context.run<any>(parser2)
       if (context2.hasAnyError()) {
-        return context2.convertError<#x>()
+        return context2.convertError()
       } else {
         return context2.setValue<?>(context.getValue())
       }
@@ -239,11 +239,11 @@ define RightParser {
 
   run (contextOld) {
     if (contextOld.hasAnyError()) {
-      return contextOld.convertError<#x>()
+      return contextOld.convertError()
     }
     ParseContext<any> context <- contextOld.run<any>(parser1)
     if (context.hasAnyError()) {
-      return context.convertError<#x>()
+      return context.convertError()
     } else {
       return context.run<#x>(parser2).toState()
     }

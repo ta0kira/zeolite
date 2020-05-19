@@ -37,12 +37,12 @@ define ParseState {
   }
 
   convertError () {
-    return ParseState<#y>{ data, index, line, char, ErrorOr$$error(getError()), error }
+    return ParseState<all>{ data, index, line, char, ErrorOr$$error(getError()), error }
   }
 
   setValue (value2) {
     if (hasBrokenInput()) {
-      return convertError<#y>()
+      return convertError()
     } else {
       return ParseState<#y>{ data, index, line, char, value2, error }
     }

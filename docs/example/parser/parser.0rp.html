@@ -42,10 +42,10 @@
   getValue      ()           -&gt; (<span style='color:#0057ae;'>ErrorOr</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>)
 
   <span style='color:#898887;'>// End computation and pass on the next state.</span>
-  convertError&lt;<i><span style='color:#0057ae;'>#y</span></i>&gt; ()            -&gt; (<span style='color:#0057ae;'>ParseState</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#y</span></i><span style='color:#c02040;'>&gt;</span>)
-  setValue&lt;<i><span style='color:#0057ae;'>#y</span></i>&gt;     (<span style='color:#0057ae;'>ErrorOr</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#y</span></i><span style='color:#c02040;'>&gt;</span>) -&gt; (<span style='color:#0057ae;'>ParseState</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#y</span></i><span style='color:#c02040;'>&gt;</span>)
-  setBrokenInput   (<i><span style='color:#0057ae;'>Formatted</span></i>)   -&gt; (<span style='color:#0057ae;'>ParseState</span><span style='color:#c02040;'>&lt;</span><b>all</b><span style='color:#c02040;'>&gt;</span>)
-  toState          ()            -&gt; (<span style='color:#0057ae;'>ParseState</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>)
+  convertError   ()            -&gt; (<span style='color:#0057ae;'>ParseState</span><span style='color:#c02040;'>&lt;</span><b>all</b><span style='color:#c02040;'>&gt;</span>)
+  setValue&lt;<i><span style='color:#0057ae;'>#y</span></i>&gt;   (<span style='color:#0057ae;'>ErrorOr</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#y</span></i><span style='color:#c02040;'>&gt;</span>) -&gt; (<span style='color:#0057ae;'>ParseState</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#y</span></i><span style='color:#c02040;'>&gt;</span>)
+  setBrokenInput (<i><span style='color:#0057ae;'>Formatted</span></i>)   -&gt; (<span style='color:#0057ae;'>ParseState</span><span style='color:#c02040;'>&lt;</span><b>all</b><span style='color:#c02040;'>&gt;</span>)
+  toState        ()            -&gt; (<span style='color:#0057ae;'>ParseState</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>)
 
   <span style='color:#898887;'>// Context metadata.</span>
   getPosition    () -&gt; (<i><span style='color:#0057ae;'>String</span></i>)

@@ -78,7 +78,7 @@
     context                              &lt;- context.run&lt;<b>?</b>&gt;(fileEnd)
 
     <b>if</b> (context.hasAnyError()) {
-      <b>return</b> context.convertError&lt;<span style='color:#0057ae;'>TestData</span>&gt;()
+      <b>return</b> context.convertError()
     } <b>else</b> {
       <b>return</b> context.setValue&lt;<b>?</b>&gt;(
         <span style='color:#0057ae;'>ErrorOr</span><span style='color:#644a9b;'>$$</span>value&lt;<b>?</b>&gt;(<span style='color:#0057ae;'>TestData</span><span style='color:#644a9b;'>$</span>create(name.getValue(),

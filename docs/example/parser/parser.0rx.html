@@ -48,12 +48,12 @@
   }
 
   convertError () {
-    <b>return</b> <span style='color:#0057ae;'>ParseState</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#y</span></i><span style='color:#c02040;'>&gt;</span>{ data, index, line, char, <span style='color:#0057ae;'>ErrorOr</span><span style='color:#644a9b;'>$$</span>error(getError()), error }
+    <b>return</b> <span style='color:#0057ae;'>ParseState</span><span style='color:#c02040;'>&lt;</span><b>all</b><span style='color:#c02040;'>&gt;</span>{ data, index, line, char, <span style='color:#0057ae;'>ErrorOr</span><span style='color:#644a9b;'>$$</span>error(getError()), error }
   }
 
   setValue (value2) {
     <b>if</b> (hasBrokenInput()) {
-      <b>return</b> convertError&lt;<i><span style='color:#0057ae;'>#y</span></i>&gt;()
+      <b>return</b> convertError()
     } <b>else</b> {
       <b>return</b> <span style='color:#0057ae;'>ParseState</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#y</span></i><span style='color:#c02040;'>&gt;</span>{ data, index, line, char, value2, error }
     }

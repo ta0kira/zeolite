@@ -67,7 +67,7 @@ define TestDataParser {
     context                              <- context.run<?>(fileEnd)
 
     if (context.hasAnyError()) {
-      return context.convertError<TestData>()
+      return context.convertError()
     } else {
       return context.setValue<?>(
         ErrorOr$$value<?>(TestData$create(name.getValue(),

@@ -31,10 +31,10 @@ concrete ParseState<|#x> {
   getValue      ()           -> (ErrorOr<#x>)
 
   // End computation and pass on the next state.
-  convertError<#y> ()            -> (ParseState<#y>)
-  setValue<#y>     (ErrorOr<#y>) -> (ParseState<#y>)
-  setBrokenInput   (Formatted)   -> (ParseState<all>)
-  toState          ()            -> (ParseState<#x>)
+  convertError   ()            -> (ParseState<all>)
+  setValue<#y>   (ErrorOr<#y>) -> (ParseState<#y>)
+  setBrokenInput (Formatted)   -> (ParseState<all>)
+  toState        ()            -> (ParseState<#x>)
 
   // Context metadata.
   getPosition    () -> (String)
