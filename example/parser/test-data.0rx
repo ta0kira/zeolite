@@ -6,7 +6,7 @@ define TestData {
   @value Bool   boolean
 
   parseFrom (data) {
-    return TestDataParser$create() `ParseState$$consumeAll<TestData>` data
+    return TestDataParser$create() `ParseState$$consumeAll<?>` data
   }
 
   create (name,description,boolean) {
@@ -33,7 +33,7 @@ concrete TestDataParser {
 define TestDataParser {
   refines Parser<TestData>
 
-  @category Parser<any> whitespace <- SequenceOfParser$create(" \n\t",1,0) `Parse$or<any>` Parse$error("Expected whitespace")
+  @category Parser<any> whitespace <- SequenceOfParser$create(" \n\t",1,0) `Parse$or<?>` Parse$error("Expected whitespace")
 
   @category String sentenceChars <- "ABCDEFGHIJKLMNOPQRSTUVWXYZ" +
                                     "abcdefghijklmnopqrstuvwxyz" +
@@ -41,38 +41,38 @@ define TestDataParser {
   @category Parser<String> sentence <- SequenceOfParser$create(sentenceChars,0,0)
   @category Parser<any>    quote    <- CharParser$create('"')
 
-  @category Parser<String> quotedSentence  <- quote `Parse$right<String>` sentence `Parse$left<String>` quote
+  @category Parser<String> quotedSentence  <- quote `Parse$right<?>` sentence `Parse$left<?>` quote
   @category Parser<String> token           <- SequenceOfParser$create("ABCDEFGHIJKLMNOPQRSTUVWXYZ_",1,0)
-  @category Parser<String> sentenceOrToken <- quotedSentence `Parse$or<String>` token `Parse$left<String>` whitespace
+  @category Parser<String> sentenceOrToken <- quotedSentence `Parse$or<?>` token `Parse$left<?>` whitespace
 
-  @category Parser<Bool> acronym           <- StringParser$create("acronym")  `Parse$right<Bool>` Parse$const<Bool>(true)
-  @category Parser<Bool> aardvark          <- StringParser$create("aardvark") `Parse$right<Bool>` Parse$const<Bool>(false)
-  @category Parser<Bool> acronymOrAardvark <- Parse$try<Bool>(acronym) `Parse$or<Bool>` aardvark `Parse$left<Bool>` whitespace
+  @category Parser<Bool> acronym           <- StringParser$create("acronym")  `Parse$right<?>` Parse$const<?>(true)
+  @category Parser<Bool> aardvark          <- StringParser$create("aardvark") `Parse$right<?>` Parse$const<?>(false)
+  @category Parser<Bool> acronymOrAardvark <- Parse$try<?>(acronym) `Parse$or<?>` aardvark `Parse$left<?>` whitespace
 
-  @category Parser<any> fileStart      <- StringParser$create("file_start")   `Parse$left<any>` whitespace
-  @category Parser<any> fileEnd        <- StringParser$create("file_end")     `Parse$left<any>` whitespace
-  @category Parser<any> nameTag        <- StringParser$create("name:")        `Parse$left<any>` whitespace
-  @category Parser<any> descriptionTag <- StringParser$create("description:") `Parse$left<any>` whitespace
-  @category Parser<any> aWordTag       <- StringParser$create("a_word:")      `Parse$left<any>` whitespace
+  @category Parser<any> fileStart      <- StringParser$create("file_start")   `Parse$left<?>` whitespace
+  @category Parser<any> fileEnd        <- StringParser$create("file_end")     `Parse$left<?>` whitespace
+  @category Parser<any> nameTag        <- StringParser$create("name:")        `Parse$left<?>` whitespace
+  @category Parser<any> descriptionTag <- StringParser$create("description:") `Parse$left<?>` whitespace
+  @category Parser<any> aWordTag       <- StringParser$create("a_word:")      `Parse$left<?>` whitespace
 
   run (contextOld) {
     ParseContext<any> context <- contextOld
-    context                              <- context.run<any>(fileStart)
-    context                              <- context.run<any>(nameTag)
-    context, ErrorOr<String> name        <- context.runAndGet<String>(sentenceOrToken)
-    context                              <- context.run<any>(descriptionTag)
-    context, ErrorOr<String> description <- context.runAndGet<String>(sentenceOrToken)
-    context                              <- context.run<any>(aWordTag)
-    context, ErrorOr<Bool> boolean       <- context.runAndGet<Bool>(acronymOrAardvark)
-    context                              <- context.run<any>(fileEnd)
+    context                              <- context.run<?>(fileStart)
+    context                              <- context.run<?>(nameTag)
+    context, ErrorOr<String> name        <- context.runAndGet<?>(sentenceOrToken)
+    context                              <- context.run<?>(descriptionTag)
+    context, ErrorOr<String> description <- context.runAndGet<?>(sentenceOrToken)
+    context                              <- context.run<?>(aWordTag)
+    context, ErrorOr<Bool> boolean       <- context.runAndGet<?>(acronymOrAardvark)
+    context                              <- context.run<?>(fileEnd)
 
     if (context.hasAnyError()) {
       return context.convertError<TestData>()
     } else {
-      return context.setValue<TestData>(
-        ErrorOr$$value<TestData>(TestData$create(name.getValue(),
-                                                 description.getValue(),
-                                                 boolean.getValue())))
+      return context.setValue<?>(
+        ErrorOr$$value<?>(TestData$create(name.getValue(),
+                                          description.getValue(),
+                                          boolean.getValue())))
     }
   }
 

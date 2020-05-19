@@ -2,12 +2,6 @@
 
 ## 0.6.1.0  -- ????-??-??
 
-### Compiler CLI
-
-* **[behavior]** Improves handling of I/O errors when calling `zeolite`, and
-  allows compilation to continue in `-r`/`-R` modes if compilation of one module
-  fails.
-
 ### Language
 
 * **[new]** Adds limited inference of type parameters in function calls. The new
@@ -17,7 +11,11 @@
 * **[behavior]** Reduces the memory cost of `$TraceCreation$` by avoiding
   storing the entire trace text.
 
-### Libraries
+### Compiler CLI
+
+* **[behavior]** Improves handling of I/O errors when calling `zeolite`, and
+  allows compilation to continue in `-r`/`-R` modes if compilation of one module
+  fails.
 
 ## 0.6.0.0  -- 2020-05-14
 

@@ -28,14 +28,14 @@
           <span style='color:#898887;'>// Partial match =&gt; set error context.</span>
           <b>return</b> context.setBrokenInput(message)
         } <b>else</b> {
-          <b>return</b> context.setValue&lt;<i><span style='color:#0057ae;'>String</span></i>&gt;(<span style='color:#0057ae;'>ErrorOr</span><span style='color:#644a9b;'>$$</span>error(message))
+          <b>return</b> context.setValue&lt;<b>?</b>&gt;(<span style='color:#0057ae;'>ErrorOr</span><span style='color:#644a9b;'>$$</span>error(message))
         }
       }
     } <b>update</b> {
       index &lt;- index+<span style='color:#b08000;'>1</span>
       context &lt;- context.advance()
     }
-    <b>return</b> context.setValue&lt;<i><span style='color:#0057ae;'>String</span></i>&gt;(<span style='color:#0057ae;'>ErrorOr</span><span style='color:#644a9b;'>$$</span>value&lt;<i><span style='color:#0057ae;'>String</span></i>&gt;(match))
+    <b>return</b> context.setValue&lt;<b>?</b>&gt;(<span style='color:#0057ae;'>ErrorOr</span><span style='color:#644a9b;'>$$</span>value&lt;<b>?</b>&gt;(match))
   }
 
   create (match) {
@@ -81,12 +81,12 @@
       context &lt;- context.advance()
     }
     <b>if</b> (count &gt;= min) {
-      <b>return</b> context.setValue&lt;<i><span style='color:#0057ae;'>String</span></i>&gt;(<span style='color:#0057ae;'>ErrorOr</span><span style='color:#644a9b;'>$$</span>value&lt;<i><span style='color:#0057ae;'>String</span></i>&gt;(builder.build()))
+      <b>return</b> context.setValue&lt;<b>?</b>&gt;(<span style='color:#0057ae;'>ErrorOr</span><span style='color:#644a9b;'>$$</span>value&lt;<b>?</b>&gt;(builder.build()))
     } <b>elif</b> (count &gt; <span style='color:#b08000;'>0</span>) {
       <span style='color:#898887;'>// Partial match =&gt; set error context.</span>
       <b>return</b> context.setBrokenInput(message)
     } <b>else</b> {
-      <b>return</b> context.setValue&lt;<i><span style='color:#0057ae;'>String</span></i>&gt;(<span style='color:#0057ae;'>ErrorOr</span><span style='color:#644a9b;'>$$</span>error(message))
+      <b>return</b> context.setValue&lt;<b>?</b>&gt;(<span style='color:#0057ae;'>ErrorOr</span><span style='color:#644a9b;'>$$</span>error(message))
     }
   }
 
@@ -106,9 +106,9 @@
     }
     <b>if</b> (contextOld.atEof() || contextOld.current() != match) {
       <i><span style='color:#0057ae;'>String</span></i> message &lt;- <span style='color:#bf0303;'>&quot;Failed to match '&quot;</span> + match.formatted() + <span style='color:#bf0303;'>&quot;' at &quot;</span> + contextOld.getPosition()
-      <b>return</b> contextOld.setValue&lt;<i><span style='color:#0057ae;'>Char</span></i>&gt;(<span style='color:#0057ae;'>ErrorOr</span><span style='color:#644a9b;'>$$</span>error(message))
+      <b>return</b> contextOld.setValue&lt;<b>?</b>&gt;(<span style='color:#0057ae;'>ErrorOr</span><span style='color:#644a9b;'>$$</span>error(message))
     } <b>else</b> {
-      <b>return</b> contextOld.advance().setValue&lt;<i><span style='color:#0057ae;'>Char</span></i>&gt;(<span style='color:#0057ae;'>ErrorOr</span><span style='color:#644a9b;'>$$</span>value&lt;<i><span style='color:#0057ae;'>Char</span></i>&gt;(match))
+      <b>return</b> contextOld.advance().setValue&lt;<b>?</b>&gt;(<span style='color:#0057ae;'>ErrorOr</span><span style='color:#644a9b;'>$$</span>value&lt;<b>?</b>&gt;(match))
     }
   }
 
@@ -127,7 +127,7 @@
   <span style='color:#644a9b;'>@value</span> <i><span style='color:#0057ae;'>#x</span></i> value
 
   run (contextOld) {
-    <b>return</b> contextOld.setValue&lt;<i><span style='color:#0057ae;'>#x</span></i>&gt;(<span style='color:#0057ae;'>ErrorOr</span><span style='color:#644a9b;'>$$</span>value&lt;<i><span style='color:#0057ae;'>#x</span></i>&gt;(value))
+    <b>return</b> contextOld.setValue&lt;<b>?</b>&gt;(<span style='color:#0057ae;'>ErrorOr</span><span style='color:#644a9b;'>$$</span>value&lt;<b>?</b>&gt;(value))
   }
 
   create (value) {
@@ -145,7 +145,7 @@
   <span style='color:#644a9b;'>@value</span> <i><span style='color:#0057ae;'>Formatted</span></i> message
 
   run (contextOld) {
-    <b>return</b> contextOld.setValue&lt;<b>all</b>&gt;(<span style='color:#0057ae;'>ErrorOr</span><span style='color:#644a9b;'>$$</span>error(message))
+    <b>return</b> contextOld.setValue&lt;<b>?</b>&gt;(<span style='color:#0057ae;'>ErrorOr</span><span style='color:#644a9b;'>$$</span>error(message))
   }
 
   create (message) {
@@ -168,7 +168,7 @@
     }
     <span style='color:#0057ae;'>ParseContext</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span> context &lt;- contextOld.run&lt;<i><span style='color:#0057ae;'>#x</span></i>&gt;(parser)
     <b>if</b> (context.hasAnyError()) {
-      <b>return</b> contextOld.setValue&lt;<i><span style='color:#0057ae;'>#x</span></i>&gt;(context.getValue().convertError())
+      <b>return</b> contextOld.setValue&lt;<b>?</b>&gt;(context.getValue().convertError())
     } <b>else</b> {
       <b>return</b> context.toState()
     }
@@ -228,7 +228,7 @@
       <b>if</b> (context2.hasAnyError()) {
         <b>return</b> context2.convertError&lt;<i><span style='color:#0057ae;'>#x</span></i>&gt;()
       } <b>else</b> {
-        <b>return</b> context2.setValue&lt;<i><span style='color:#0057ae;'>#x</span></i>&gt;(context.getValue())
+        <b>return</b> context2.setValue&lt;<b>?</b>&gt;(context.getValue())
       }
     }
   }

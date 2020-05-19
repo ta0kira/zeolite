@@ -455,6 +455,33 @@ functionality without having an explicit parent for the overlap.
   <span style='color:#644a9b;'>@value</span> set (<i><span style='color:#0057ae;'>Int</span></i>) -&gt; ()
 }</pre>
 
+Starting with compiler version `0.6.1.0`, Zeolite supports optional inference of
+specific function parameters by using **`?`**. This must be at the top level (no
+nesting), and it cannot be used outside of the parameters of the function.
+
+<pre style='color:#1f1c1b;background-color:#f6f8fa;'>
+<b>concrete</b> <b><span style='color:#0057ae;'>Value</span></b><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span> {
+  <span style='color:#644a9b;'>@category</span> create1&lt;<i><span style='color:#0057ae;'>#x</span></i>&gt; (<i><span style='color:#0057ae;'>#x</span></i>) -&gt; (<span style='color:#0057ae;'>Value</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>)
+  <span style='color:#644a9b;'>@type</span>     create2     (<i><span style='color:#0057ae;'>#x</span></i>) -&gt; (<span style='color:#0057ae;'>Value</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>)
+}
+
+<span style='color:#898887;'>// ...</span>
+
+<span style='color:#898887;'>// This is fine.</span>
+<span style='color:#0057ae;'>Value</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Int</span></i><span style='color:#c02040;'>&gt;</span> value1 &lt;- <span style='color:#0057ae;'>Value</span><span style='color:#644a9b;'>$$</span>create1&lt;<b>?</b>&gt;(<span style='color:#b08000;'>10</span>)
+
+<span style='color:#898887;'>// This is not allowed, since &lt;?&gt; is used with a type and not a function.</span>
+<span style='color:#898887;'>// Value&lt;Int&gt; value2 &lt;- Value&lt;?&gt;$create2(10)</span></pre>
+
+Only the function arguments and the parameter filters are used to infer the type
+substitution; return types are ignored. If inference fails, you will see a
+compiler error and will need to explicitly write out the type.
+
+Type inference in the context of parameterized types is specifically disallowed
+in order to limit the amount of code the reader needs to search to figure out
+what types are being used. Forcing explicit types for local variables is more
+work for the code author, but it makes the code easier to reason about.
+
 #### Functions As Operators
 
 Zeolite allows some functions to be used as **operators**. This allows users to

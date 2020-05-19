@@ -94,7 +94,7 @@ define ParseState {
 
   @category new (String) -> (ParseState<any>)
   new (data) {
-    return ParseState<any>{ data, 0, 1, 1, ErrorOr$$value<Void>(Void$void()), empty }
+    return ParseState<any>{ data, 0, 1, 1, ErrorOr$$value<?>(Void$void()), empty }
   }
 
   @value getError () -> (Formatted)

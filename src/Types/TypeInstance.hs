@@ -201,7 +201,7 @@ data TypeInstanceOrParam =
 instance Show TypeInstanceOrParam where
   show (JustTypeInstance t) = show t
   show (JustParamName n)    = show n
-  show (JustInferredType i) = show i ++ "/*inferred*/"
+  show (JustInferredType i) = show i ++ " /*inferred*/"
 
 data FilterDirection =
   FilterRequires |
