@@ -12,7 +12,7 @@ define TypeTree {
   }
 
   set (k,v) {
-    \ tree.set(k,LockedType$$create<#x>(k,v))
+    \ tree.set(k,LockedType$$create<?>(k,v))
     return self
   }
 
@@ -25,7 +25,7 @@ define TypeTree {
     scoped {
       optional LockedType<any> value <- tree.get(k)
     } in if (present(value)) {
-      return require(value).check<#x>(k)
+      return require(value).check<?>(k)
     } else {
       return empty
     }
