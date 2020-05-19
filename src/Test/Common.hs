@@ -52,7 +52,7 @@ import qualified Data.Set as Set
 
 import Base.CompileError
 import Base.Mergeable
-import Compilation.CompileInfo
+import Base.CompileInfo
 import Parser.Common
 import Parser.TypeInstance ()
 import Types.TypeInstance

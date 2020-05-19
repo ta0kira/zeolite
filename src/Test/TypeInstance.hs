@@ -23,7 +23,7 @@ module Test.TypeInstance (tests) where
 import qualified Data.Map as Map
 
 import Base.CompileError
-import Compilation.CompileInfo
+import Base.CompileInfo
 import Parser.TypeInstance ()
 import Test.Common
 import Types.GeneralType

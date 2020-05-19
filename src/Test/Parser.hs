@@ -23,7 +23,7 @@ module Test.Parser (tests) where
 import Control.Monad (when)
 
 import Base.CompileError
-import Compilation.CompileInfo
+import Base.CompileInfo
 import Parser.Common
 import Test.Common
 import Text.Parsec.String

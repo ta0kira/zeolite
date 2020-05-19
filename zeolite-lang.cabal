@@ -147,6 +147,7 @@ library zeolite-internal
   import:              defaults
 
   exposed-modules:     Base.CompileError,
+                       Base.CompileInfo,
                        Base.Mergeable,
                        Cli.CompileMetadata,
                        Cli.CompileOptions,
@@ -158,7 +159,6 @@ library zeolite-internal
                        Cli.Programs,
                        Cli.RunCompiler,
                        Cli.TestRunner,
-                       Compilation.CompileInfo,
                        Compilation.CompilerState,
                        Compilation.ProcedureContext,
                        Compilation.ScopeContext,

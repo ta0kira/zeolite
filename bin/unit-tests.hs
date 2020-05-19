@@ -17,7 +17,7 @@ limitations under the License.
 -- Author: Kevin P. Barry [ta0kira@gmail.com]
 
 import Base.CompileError
-import Compilation.CompileInfo
+import Base.CompileInfo
 import Test.Common
 import qualified Test.CompileInfo     as TestCompileInfo
 import qualified Test.DefinedCategory as TestDefinedCategory

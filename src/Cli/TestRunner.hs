@@ -35,7 +35,7 @@ import Base.Mergeable
 import Cli.CompileMetadata
 import Cli.ProcessMetadata
 import Cli.Programs
-import Compilation.CompileInfo
+import Base.CompileInfo
 import CompilerCxx.Category
 import CompilerCxx.Naming
 import Parser.SourceFile

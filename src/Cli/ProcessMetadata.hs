@@ -65,7 +65,7 @@ import Cli.CompileMetadata
 import Cli.CompileOptions
 import Cli.ParseMetadata -- Not safe, due to Text.Regex.TDFA.
 import Cli.Programs (VersionHash(..))
-import Compilation.CompileInfo
+import Base.CompileInfo
 import Compilation.ProcedureContext (ExprMap)
 import CompilerCxx.Category (CxxOutput(..))
 import Types.Procedure (Expression(Literal),ValueLiteral(..))

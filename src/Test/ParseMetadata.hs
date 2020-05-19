@@ -22,7 +22,7 @@ import Control.Monad (when)
 import Text.Regex.TDFA -- Not safe!
 
 import Base.CompileError
-import Compilation.CompileInfo
+import Base.CompileInfo
 import Cli.CompileMetadata
 import Cli.CompileOptions
 import Cli.ParseMetadata

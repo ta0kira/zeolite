@@ -25,7 +25,7 @@ import System.FilePath
 import Text.Parsec
 
 import Base.CompileError
-import Compilation.CompileInfo
+import Base.CompileInfo
 import Parser.Common
 import Parser.IntegrationTest ()
 import Test.Common

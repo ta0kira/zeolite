@@ -36,7 +36,7 @@ import Cli.Compiler
 import Cli.Paths
 import Cli.ProcessMetadata
 import Cli.Programs
-import Compilation.CompileInfo
+import Base.CompileInfo
 
 
 runCompiler :: (PathIOHandler r, CompilerBackend b) => r -> b -> CompileOptions -> CompileInfoIO ()

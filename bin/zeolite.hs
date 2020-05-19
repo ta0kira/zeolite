@@ -30,7 +30,7 @@ import Cli.ProcessMetadata
 import Cli.ParseCompileOptions -- Not safe, due to Text.Regex.TDFA.
 import Cli.Programs
 import Cli.RunCompiler
-import Compilation.CompileInfo
+import Base.CompileInfo
 import Config.LoadConfig
 import Config.LocalConfig
 

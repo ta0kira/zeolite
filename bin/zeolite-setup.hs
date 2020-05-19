@@ -24,7 +24,7 @@ import System.IO
 
 import Cli.CompileOptions
 import Cli.RunCompiler
-import Compilation.CompileInfo
+import Base.CompileInfo
 import Config.LoadConfig
 import Config.LocalConfig
 

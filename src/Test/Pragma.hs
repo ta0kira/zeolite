@@ -24,7 +24,7 @@ import Text.Parsec.String
 import Text.Regex.TDFA -- Not safe!
 
 import Base.CompileError
-import Compilation.CompileInfo
+import Base.CompileInfo
 import Parser.Pragma
 import Test.Common
 import Types.Pragma

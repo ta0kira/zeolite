@@ -24,7 +24,7 @@ import System.FilePath
 import Text.Parsec
 
 import Base.CompileError
-import Compilation.CompileInfo
+import Base.CompileInfo
 import Parser.DefinedCategory ()
 import Test.Common
 import Types.DefinedCategory

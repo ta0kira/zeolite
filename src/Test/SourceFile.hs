@@ -23,7 +23,7 @@ module Test.SourceFile (tests) where
 import System.FilePath
 
 import Base.CompileError
-import Compilation.CompileInfo
+import Base.CompileInfo
 import Parser.SourceFile
 import Test.Common
 

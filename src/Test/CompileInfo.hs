@@ -22,7 +22,7 @@ module Test.CompileInfo (tests) where
 
 import Base.CompileError
 import Base.Mergeable
-import Compilation.CompileInfo
+import Base.CompileInfo
 
 
 tests :: [IO (CompileInfo ())]

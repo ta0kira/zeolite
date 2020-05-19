@@ -42,7 +42,7 @@ import Cli.Paths
 import Cli.ProcessMetadata
 import Cli.Programs
 import Cli.TestRunner -- Not safe, due to Text.Regex.TDFA.
-import Compilation.CompileInfo
+import Base.CompileInfo
 import Compilation.ProcedureContext (ExprMap)
 import CompilerCxx.Category
 import CompilerCxx.Naming

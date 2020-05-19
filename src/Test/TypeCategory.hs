@@ -27,7 +27,7 @@ import qualified Data.Map as Map
 
 import Base.CompileError
 import Base.Mergeable
-import Compilation.CompileInfo
+import Base.CompileInfo
 import Parser.TypeCategory ()
 import Test.Common
 import Types.Builtin
