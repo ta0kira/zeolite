@@ -52,19 +52,35 @@ tests = [
               (mergeAny $ map MergeLeaf [1..3] :: MergeTree Int),
    checkError "1 is odd\n" (sequence . fmap oddError)
               (mergeAll $ map MergeLeaf [1..3] :: MergeTree Int),
+   checkSuccess (mergeAny $ map MergeLeaf [1..3]) (sequence . fmap return)
+                (mergeAny $ map MergeLeaf [1..3] :: MergeTree Int),
+   checkSuccess (mergeAll $ map MergeLeaf [1..3]) (sequence . fmap return)
+                (mergeAll $ map MergeLeaf [1..3] :: MergeTree Int),
+
+   checkSuccess (mergeAny $ map MergeLeaf [2,4]) (pruneMergeTree . fmap oddError)
+                (mergeAny $ map MergeLeaf [1..4] :: MergeTree Int),
+   checkError "1 is odd\n3 is odd\n" (pruneMergeTree . fmap oddError)
+              (mergeAll $ map MergeLeaf [1..4] :: MergeTree Int),
+   checkSuccess (mergeAny $ map MergeLeaf [1..4]) (pruneMergeTree . fmap return)
+                (mergeAny $ map MergeLeaf [1..4] :: MergeTree Int),
+   checkSuccess (mergeAll $ map MergeLeaf [1..4]) (pruneMergeTree . fmap return)
+                (mergeAll $ map MergeLeaf [1..4] :: MergeTree Int),
 
    checkSuccess [2,4]
-                (reduceMergeTree return (\xs -> compileErrorM $ "mergeAll " ++ show xs) oddError)
+                (reduceMergeTree return (\xs -> compileErrorM $ "mergeAll " ++ show xs) oddError2)
                 (mergeAny $ map MergeLeaf [1..4] :: MergeTree Int),
    checkError "1 is odd\n3 is odd\n"
-              (reduceMergeTree (\xs -> compileErrorM $ "mergeAny " ++ show xs) return oddError)
+              (reduceMergeTree (\xs -> compileErrorM $ "mergeAny " ++ show xs) return oddError2)
               (mergeAll $ map MergeLeaf [1..4] :: MergeTree Int)
  ]
 
-oddError :: Int -> CompileInfo [Int]
+oddError :: Int -> CompileInfo Int
 oddError x = do
   when (x `mod` 2 == 1) $ compileErrorM $ show x ++ " is odd"
-  return [x]
+  return x
+
+oddError2 :: Int -> CompileInfo [Int]
+oddError2 = fmap (:[]) . oddError
 
 checkMatch :: (Eq b, Show b) => b -> (a -> b) -> a -> IO (CompileInfo ())
 checkMatch x f y = let y' = f y in

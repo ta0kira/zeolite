@@ -20,6 +20,7 @@ limitations under the License.
 
 module Base.MergeTree (
   MergeTree(MergeLeaf),
+  pruneMergeTree,
   reduceMergeTree,
 ) where
 
@@ -70,3 +71,6 @@ reduceMergeTree anyOp allOp leafOp xa = reduce xa where
     xs' <- mergeAllM $ map reduce xs
     allOp xs'
   reduce (MergeLeaf x) = leafOp x
+
+pruneMergeTree :: MergeableM m => MergeTree (m a) -> m (MergeTree a)
+pruneMergeTree = reduceMergeTree return return (fmap MergeLeaf)
