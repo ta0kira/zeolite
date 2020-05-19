@@ -799,75 +799,75 @@ tests = [
       (\ts -> do
         tm <- includeNewTypes defaultCategories ts
         checkInferenceSuccess tm
-          [("#x",[])] [("#x","foo")]
+          [("#x",[])] ["#x"]
           [("Type1","#x")]
-          [("foo","Type1",Covariant)]),
+          [("#x","Type1",Covariant)]),
     checkOperationSuccess
       ("testfiles" </> "inference.0rx")
       (\ts -> do
         tm <- includeNewTypes defaultCategories ts
         checkInferenceSuccess tm
-          [("#x",[])] [("#x","foo")]
+          [("#x",[])] ["#x"]
           [("Type2","#x"),("Type1","#x")]
-          [("foo","Type1",Covariant)]),
+          [("#x","Type1",Covariant)]),
 
     checkOperationSuccess
       ("testfiles" </> "inference.0rx")
       (\ts -> do
         tm <- includeNewTypes defaultCategories ts
         checkInferenceSuccess tm
-          [("#x",[])] [("#x","foo")]
+          [("#x",[])] ["#x"]
           [("Interface1<Type2>","#x"),("Interface1<Type1>","#x")]
-          [("foo","Interface1<Type1>",Covariant)]),
+          [("#x","Interface1<Type1>",Covariant)]),
 
     checkOperationSuccess
       ("testfiles" </> "inference.0rx")
       (\ts -> do
         tm <- includeNewTypes defaultCategories ts
         checkInferenceSuccess tm
-          [("#x",[])] [("#x","foo")]
+          [("#x",[])] ["#x"]
           [("Interface2<Type2>","#x"),("Interface2<Type1>","#x")]
-          [("foo","Interface2<Type2>",Covariant)]),
+          [("#x","Interface2<Type2>",Covariant)]),
     checkOperationSuccess
       ("testfiles" </> "inference.0rx")
       (\ts -> do
         tm <- includeNewTypes defaultCategories ts
         checkInferenceSuccess tm
-          [("#x",[])] [("#x","foo")]
+          [("#x",[])] ["#x"]
           [("Interface2<Type2>","Interface2<#x>"),
            ("Interface2<Type1>","Interface2<#x>")]
-          [("foo","Type2",Contravariant)]),
+          [("#x","Type2",Contravariant)]),
 
     checkOperationSuccess
       ("testfiles" </> "inference.0rx")
       (\ts -> do
         tm <- includeNewTypes defaultCategories ts
         checkInferenceSuccess tm
-          [("#x",[])] [("#x","foo")]
+          [("#x",[])] ["#x"]
           [("Interface3<Type1>","#x"),("Interface3<Type1>","#x")]
-          [("foo","Interface3<Type1>",Covariant)]),
+          [("#x","Interface3<Type1>",Covariant)]),
     checkOperationSuccess
       ("testfiles" </> "inference.0rx")
       (\ts -> do
         tm <- includeNewTypes defaultCategories ts
         checkInferenceFail tm
-          [("#x",[])] [("#x","foo")]
+          [("#x",[])] ["#x"]
           [("Interface3<Type1>","#x"),("Interface3<Type2>","#x")]),
     checkOperationSuccess
       ("testfiles" </> "inference.0rx")
       (\ts -> do
         tm <- includeNewTypes defaultCategories ts
         checkInferenceSuccess tm
-          [("#x",[])] [("#x","foo")]
+          [("#x",[])] ["#x"]
           [("Interface3<Type1>","Interface3<#x>"),
            ("Interface3<Type1>","Interface3<#x>")]
-          [("foo","Type1",Invariant)]),
+          [("#x","Type1",Invariant)]),
     checkOperationSuccess
       ("testfiles" </> "inference.0rx")
       (\ts -> do
         tm <- includeNewTypes defaultCategories ts
         checkInferenceFail tm
-          [("#x",[])] [("#x","foo")]
+          [("#x",[])] ["#x"]
           [("Interface3<Type1>","Interface3<#x>"),
            ("Interface3<Type2>","Interface3<#x>")]),
 
@@ -876,40 +876,40 @@ tests = [
       (\ts -> do
         tm <- includeNewTypes defaultCategories ts
         checkInferenceSuccess tm
-          [("#x",[])] [("#x","foo")]
+          [("#x",[])] ["#x"]
           [("Type1","#x"),
            ("Interface1<Type2>","Interface1<#x>"),
            ("Interface2<Type0>","Interface2<#x>")]
-          [("foo","Type1",Covariant)]),
+          [("#x","Type1",Covariant)]),
     checkOperationSuccess
       ("testfiles" </> "inference.0rx")
       (\ts -> do
         tm <- includeNewTypes defaultCategories ts
         checkInferenceSuccess tm
-          [("#x",[])] [("#x","foo")]
+          [("#x",[])] ["#x"]
           [("Interface3<Type2>","Interface3<#x>"),
            ("Interface1<Type2>","Interface1<#x>"),
            ("Interface2<Type1>","Interface2<#x>")]
-          [("foo","Type2",Invariant)]),
+          [("#x","Type2",Invariant)]),
 
     checkOperationSuccess
       ("testfiles" </> "inference.0rx")
       (\ts -> do
         tm <- includeNewTypes defaultCategories ts
         checkInferenceSuccess tm
-          [("#x",[]),("#y",["allows #x"])] [("#x","foo")]
+          [("#x",[]),("#y",["allows #x"])] ["#x"]
           [("Interface1<Type1>","Interface1<#x>"),
            ("Type0","#y")]  -- The filter for #y influences the guess for #x.
-          [("foo","Type0",Covariant)]),
+          [("#x","Type0",Covariant)]),
     checkOperationSuccess
       ("testfiles" </> "inference.0rx")
       (\ts -> do
         tm <- includeNewTypes defaultCategories ts
         checkInferenceSuccess tm
-          [("#x",[]),("#y",["allows #x"])] [("#x","foo")]
+          [("#x",[]),("#y",["allows #x"])] ["#x"]
           [("Interface1<Type1>","Interface1<#x>"),
            ("Type2","#y")]
-          [("foo","Type1",Covariant)])
+          [("#x","Type1",Covariant)])
   ]
 
 getRefines :: Map.Map CategoryName (AnyCategory c) -> String -> CompileInfo [String]
@@ -1048,30 +1048,30 @@ checkShortParseFail s = do
                                    show (getCompileSuccess c) ++ "\n"
 
 checkInferenceSuccess :: CategoryMap SourcePos -> [(String, [String])] ->
-  [(String, String)] -> [(String,String)] -> [(String,String,Variance)] -> CompileInfo ()
-checkInferenceSuccess tm pa ia ts gs = checkInferenceCommon check tm pa ia ts gs where
+  [String] -> [(String, String)] -> [(String,String,Variance)] -> CompileInfo ()
+checkInferenceSuccess tm pa is ts gs = checkInferenceCommon check tm pa is ts gs where
   prefix = show ts ++ " " ++ showParams pa
   check gs2 c
     | isCompileError c = compileErrorM $ prefix ++ ":\n" ++ show (getCompileError c)
     | otherwise        = getCompileSuccess c `containsExactly` gs2
 
 checkInferenceFail :: CategoryMap SourcePos -> [(String, [String])] ->
-  [(String, String)] -> [(String,String)] -> CompileInfo ()
-checkInferenceFail tm pa ia ts = checkInferenceCommon check tm pa ia ts [] where
+  [String] -> [(String, String)] -> CompileInfo ()
+checkInferenceFail tm pa is ts = checkInferenceCommon check tm pa is ts [] where
   prefix = show ts ++ " " ++ showParams pa
   check _ c
     | isCompileError c = return ()
     | otherwise = compileErrorM $ prefix ++ ": Expected failure\n"
 
 checkInferenceCommon :: ([InferredTypeGuess] -> CompileInfo [InferredTypeGuess] -> CompileInfo ()) ->
-  CategoryMap SourcePos -> [(String, [String])] -> [(String, String)] ->
+  CategoryMap SourcePos -> [(String, [String])] -> [String] ->
   [(String,String)] -> [(String,String,Variance)] -> CompileInfo ()
-checkInferenceCommon check tm pa ia ts gs = checked where
+checkInferenceCommon check tm pa is ts gs = checked where
   checked = do
     let r = CategoryResolver tm
     pa2 <- parseFilterMap pa
     ts2 <- mapErrorsM parsePair ts
-    ia2 <- mapErrorsM readInferred ia
+    ia2 <- mapErrorsM readInferred is
     gs' <- mapErrorsM parseGuess gs
     let iaMap = Map.fromList ia2
     -- TODO: Put the next few lines in a function in TypeCategory.
@@ -1081,12 +1081,13 @@ checkInferenceCommon check tm pa ia ts gs = checked where
   subAndInfer r f im (t1,t2) = do
     t2' <- uncheckedSubInstance (weakLookup im) t2
     checkGeneralMatch r f Covariant t1 t2'
-  readInferred (p,n) = do
+  readInferred p = do
     p' <- readSingle "(string)" p
-    return (p',SingleType $ JustInferredType $ InferredType n)
-  parseGuess (i,t,v) = do
+    return (p',SingleType $ JustInferredType p')
+  parseGuess (p,t,v) = do
+    p' <- readSingle "(string)" p
     t' <- readSingle "(string)" t
-    return $ InferredTypeGuess (InferredType i) t' v
+    return $ InferredTypeGuess p' t' v
   parsePair (t1,t2) = do
     t1' <- readSingle "(string)" t1
     t2' <- readSingle "(string)" t2

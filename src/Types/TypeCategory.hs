@@ -962,25 +962,19 @@ inferParamTypes r f ps ts = do
   f2  <- fmap Map.fromList $ mapErrorsM filterSub $ Map.toList f
   gs  <- mergeAllM $ map (uncurry $ checkValueTypeMatch r f2) ts2
   gs2 <- mergeInferredTypes r f2 gs
-  let ga = Map.fromList $ zip (map itgType gs2) (map itgGuess gs2)
-  fmap Map.fromList $ mapErrorsM (replace ga) $ Map.toList ps
-  where
+  let ga = Map.fromList $ zip (map itgParam gs2) (map itgGuess gs2)
+  return $ ga `Map.union` ps where
     subAll (t1,t2) = do
       t2' <- uncheckedSubValueType (getValueForParam ps) t2
       return (t1,t2')
     filterSub (k,fs) = do
       fs' <- mapErrorsM (uncheckedSubFilter (getValueForParam ps)) fs
       return (k,fs')
-    replace ga (k,SingleType (JustInferredType i)) =
-      case i `Map.lookup` ga of
-           Just t  -> return (k,t)
-           Nothing -> compileErrorM $ "Failed to infer " ++ show i
-    replace _ kv = return kv
 
 mergeInferredTypes :: (MergeableM m, CompileErrorM m, TypeResolver r) =>
   r -> ParamFilters -> [InferredTypeGuess] -> m [InferredTypeGuess]
 mergeInferredTypes r f is = do
-  let ia = Map.fromListWith (++) $ zip (map itgType is) (map (:[]) is)
+  let ia = Map.fromListWith (++) $ zip (map itgParam is) (map (:[]) is)
   gs <- mergeAllM $ map tryMerge $ Map.toList ia
   mergeAllM $ map (noInferred . itgGuess) gs
   return gs where
@@ -990,7 +984,7 @@ mergeInferredTypes r f is = do
            []   -> undefined  -- Shouldn't happen.
            [i2] -> return [i2]
            is3  -> compileErrorM $ "Could not reconcile guesses for " ++ show i ++
-                                  ": " ++ show is3
+                                   ": " ++ show is3
     check (InferredTypeGuess _ g1 v1) (InferredTypeGuess _ g2 v2) =
       mergeAnyM $ concat [
         if v2 == Contravariant || v1 == Invariant

@@ -29,6 +29,7 @@ module Types.Procedure (
   FunctionSpec(..),
   IfElifElse(..),
   InputValue(..),
+  InstanceOrInferred(..),
   Operator(..),
   OutputValue(..),
   Procedure(..),
@@ -211,8 +212,13 @@ data FunctionQualifier c =
   UnqualifiedFunction
   deriving (Show)
 
+data InstanceOrInferred c =
+  AssignedInstance [c] GeneralInstance |
+  InferredInstance [c]
+  deriving (Show)
+
 data FunctionSpec c =
-  FunctionSpec [c] (FunctionQualifier c) FunctionName (Positional GeneralInstance)
+  FunctionSpec [c] (FunctionQualifier c) FunctionName (Positional (InstanceOrInferred c))
   deriving (Show)
 
 data Operator c =
@@ -228,7 +234,7 @@ getExpressionContext (InfixExpression c _ _ _) = c
 getExpressionContext (InitializeValue c _ _ _) = c
 
 data FunctionCall c =
-  FunctionCall [c] FunctionName (Positional GeneralInstance) (Positional (Expression c))
+  FunctionCall [c] FunctionName (Positional (InstanceOrInferred c)) (Positional (Expression c))
   deriving (Show)
 
 data ExpressionStart c =

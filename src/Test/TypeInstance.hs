@@ -563,67 +563,67 @@ tests = [
       "Instance1<Type1<Type3>>",
 
     checkInferenceSuccess
-      [("#x","foo")] [("#x",[])]
+      [("#x",[])] ["#x"]
       "Type1<Type0>" "Type1<#x>"
-      [("foo","Type0",Invariant)],
+      [("#x","Type0",Invariant)],
     checkInferenceFail
-      [("#x","foo")] [("#x",[])]
+      [("#x",[])] ["#x"]
       "Type1<Type3>" "Type4<#x>",
 
     checkInferenceSuccess
-      [("#x","foo")] [("#x",[])]
+      [("#x",[])] ["#x"]
       "Instance1<Type1<Type3>>" "Instance1<#x>"
-      [("foo","Type1<Type3>",Contravariant)],
+      [("#x","Type1<Type3>",Contravariant)],
     checkInferenceSuccess
-      [("#x","foo")] [("#x",[])]
+      [("#x",[])] ["#x"]
       "Instance1<Type1<Type3>>" "Instance1<Type1<#x>>"
-      [("foo","Type3",Invariant)],
+      [("#x","Type3",Invariant)],
 
     checkInferenceSuccess
-      [("#x","foo")] [("#x",[])]
+      [("#x",[])] ["#x"]
       "Type2<Type3,Type0,Type3>" "Type2<#x,Type0,#x>"
-      [("foo","Type3",Covariant),
-       ("foo","Type3",Contravariant)],
+      [("#x","Type3",Covariant),
+       ("#x","Type3",Contravariant)],
     checkInferenceSuccess
-      [("#x","foo")] [("#x",[]),("#y",[])]
+      [("#x",[]),("#y",[])] ["#x"]
       "Type2<Type3,#y,Type3>" "Type2<#x,#y,#x>"
-      [("foo","Type3",Covariant),
-       ("foo","Type3",Contravariant)],
+      [("#x","Type3",Covariant),
+       ("#x","Type3",Contravariant)],
     checkInferenceFail
-      [("#x","foo")] [("#x",[]),("#y",[])]
+      [("#x",[]),("#y",[])] ["#x"]
       "Type2<Type3,Type0,Type3>" "Type2<#x,#y,#x>",
 
     checkInferenceSuccess
-      [("#x","foo")] [("#x",[]),("#y",[])]
+      [("#x",[]),("#y",[])] ["#x"]
       "Type2<Type3,#y,Type0>" "Type1<#x>"
-      [("foo","Type3",Invariant)],
+      [("#x","Type3",Invariant)],
 
     checkInferenceSuccess
-      [("#x","foo")] [("#x",[]),("#y",[])]
+      [("#x",[]),("#y",[])] ["#x"]
       "Instance1<#y>" "Instance1<#x>"
-      [("foo","#y",Contravariant)],
+      [("#x","#y",Contravariant)],
 
     checkInferenceSuccess
-      [("#x","foo")] [("#x",[])]
+      [("#x",[])] ["#x"]
       "Instance1<Instance0>" "Instance1<[#x&Type0]>"
-      [("foo","Instance0",Contravariant)],
+      [("#x","Instance0",Contravariant)],
     checkInferenceFail
-      [("#x","foo")] [("#x",[])]
+      [("#x",[])] ["#x"]
       "Instance1<Instance0>" "Instance1<[#x|Type0]>",
     checkInferenceSuccess
-      [("#x","foo")] [("#x",[])]
+      [("#x",[])] ["#x"]
       "Instance1<Type1<Type0>>" "Instance1<[Type0&Type1<#x>]>"
-      [("foo","Type0",Invariant)],
+      [("#x","Type0",Invariant)],
     checkInferenceSuccess
-      [("#x","foo")] [("#x",[])]
+      [("#x",[])] ["#x"]
       "Instance1<Type1<Type0>>" "Instance1<[#x&Type1<#x>]>"
-      [("foo","Type1<Type0>",Contravariant),
-       ("foo","Type0",Invariant)],
+      [("#x","Type1<Type0>",Contravariant),
+       ("#x","Type0",Invariant)],
 
     checkInferenceSuccess
-      [("#x","foo")] [("#x",[]),("#y",["allows #x"])]
+      [("#x",[]),("#y",["allows #x"])] ["#x"]
       "Type0" "#y"  -- The filter for #y influences the guess for #x.
-      [("foo","Type0",Covariant)]
+      [("#x","Type0",Covariant)]
   ]
 
 
@@ -743,13 +743,13 @@ definesFilters = Map.fromList $ [
            ])
   ]
 
-checkSimpleConvertSuccess :: [Char] -> [Char] -> IO (CompileInfo ())
+checkSimpleConvertSuccess :: String -> String -> IO (CompileInfo ())
 checkSimpleConvertSuccess = checkConvertSuccess []
 
-checkSimpleConvertFail :: [Char] -> [Char] -> IO (CompileInfo ())
+checkSimpleConvertFail :: String -> String -> IO (CompileInfo ())
 checkSimpleConvertFail = checkConvertFail []
 
-checkConvertSuccess :: [(String, [String])] -> [Char] -> [Char] -> IO (CompileInfo ())
+checkConvertSuccess :: [(String, [String])] -> String -> String -> IO (CompileInfo ())
 checkConvertSuccess pa x y = return checked where
   prefix = x ++ " -> " ++ y ++ " " ++ showParams pa
   checked = do
@@ -759,41 +759,42 @@ checkConvertSuccess pa x y = return checked where
     | isCompileError c = compileErrorM $ prefix ++ ":\n" ++ show (getCompileError c)
     | otherwise = return ()
 
-checkInferenceSuccess :: [(String, String)] -> [(String, [String])] -> [Char] ->
-  [Char] -> [(String,String,Variance)] -> IO (CompileInfo ())
-checkInferenceSuccess ia pa x y gs = checkInferenceCommon check ia pa x y gs where
+checkInferenceSuccess :: [(String, [String])] -> [String] -> String ->
+  String -> [(String,String,Variance)] -> IO (CompileInfo ())
+checkInferenceSuccess pa is x y gs = checkInferenceCommon check pa is x y gs where
   prefix = x ++ " -> " ++ y ++ " " ++ showParams pa
   check gs2 c
     | isCompileError c = compileErrorM $ prefix ++ ":\n" ++ show (getCompileError c)
     | otherwise        = getCompileSuccess c `containsExactly` gs2
 
-checkInferenceFail :: [(String, String)] -> [(String, [String])] -> [Char] ->
-  [Char] -> IO (CompileInfo ())
-checkInferenceFail ia pa x y = checkInferenceCommon check ia pa x y [] where
+checkInferenceFail :: [(String, [String])] -> [String] -> String ->
+  String -> IO (CompileInfo ())
+checkInferenceFail pa is x y = checkInferenceCommon check pa is x y [] where
   prefix = x ++ " -> " ++ y ++ " " ++ showParams pa
   check _ c
     | isCompileError c = return ()
     | otherwise = compileErrorM $ prefix ++ ": Expected failure\n"
 
 checkInferenceCommon :: ([InferredTypeGuess] -> CompileInfo [InferredTypeGuess] -> CompileInfo ()) ->
-  [(String, String)] -> [(String, [String])] -> [Char] -> [Char] ->
+  [(String, [String])] -> [String] -> String -> String ->
   [(String,String,Variance)] -> IO (CompileInfo ())
-checkInferenceCommon check ia pa x y gs = return checked where
+checkInferenceCommon check pa is x y gs = return checked where
   checked = do
     ([t1,t2],pa2) <- parseTheTest pa [x,y]
-    ia2 <- mapErrorsM readInferred ia
+    ia2 <- mapErrorsM readInferred is
     gs' <- mapErrorsM parseGuess gs
     let iaMap = Map.fromList ia2
     -- TODO: Merge duplication with Test.TypeCategory.
     pa3 <- fmap Map.fromList $ mapErrorsM (filterSub iaMap) $ Map.toList pa2
     t2' <- uncheckedSubInstance (weakLookup iaMap) t2
     check gs' $ checkGeneralMatch Resolver pa3 Covariant t1 t2'
-  readInferred (p,n) = do
+  readInferred p = do
     p' <- readSingle "(string)" p
-    return (p',SingleType $ JustInferredType $ InferredType n)
-  parseGuess (i,t,v) = do
+    return (p',SingleType $ JustInferredType p')
+  parseGuess (p,t,v) = do
+    p' <- readSingle "(string)" p
     t' <- readSingle "(string)" t
-    return $ InferredTypeGuess (InferredType i) t' v
+    return $ InferredTypeGuess p' t' v
   weakLookup tm n =
     case n `Map.lookup` tm of
          Just t  -> return t
@@ -802,7 +803,7 @@ checkInferenceCommon check ia pa x y gs = return checked where
     fs' <- mapErrorsM (uncheckedSubFilter (weakLookup im)) fs
     return (k,fs')
 
-checkConvertFail :: [(String, [String])] -> [Char] -> [Char] -> IO (CompileInfo ())
+checkConvertFail :: [(String, [String])] -> String -> String -> IO (CompileInfo ())
 checkConvertFail pa x y = return checked where
   prefix = x ++ " /> " ++ y ++ " " ++ showParams pa
   checked = do

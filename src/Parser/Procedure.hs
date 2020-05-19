@@ -31,7 +31,6 @@ import Parser.Common
 import Parser.Pragma
 import Parser.TypeCategory ()
 import Parser.TypeInstance ()
-import Types.GeneralType
 import Types.Positional
 import Types.Pragma
 import Types.Procedure
@@ -390,21 +389,28 @@ instance ParseFromSource (FunctionSpec SourcePos) where
                           (sepBy sourceParser (sepAfter $ string_ ",")) <|> return []
       return $ FunctionSpec [c] UnqualifiedFunction n (Positional ps)
 
+instance ParseFromSource (InstanceOrInferred SourcePos) where
+  sourceParser = assigned <|> inferred where
+    assigned = do
+      c <- getPosition
+      t <- sourceParser
+      return $ AssignedInstance [c] t
+    inferred = do
+      c <- getPosition
+      sepAfter_ inferredParam
+      return $ InferredInstance [c]
+
 parseFunctionCall :: SourcePos -> FunctionName -> Parser (FunctionCall SourcePos)
 parseFunctionCall c n = do
   -- NOTE: try is needed here so that < operators work when the left side is
   -- just a variable name, e.g., x < y.
   ps <- try $ between (sepAfter $ string_ "<")
                       (sepAfter $ string_ ">")
-                      (sepBy (sourceParser <|> inferred) (sepAfter $ string_ ",")) <|> return []
+                      (sepBy sourceParser (sepAfter $ string_ ",")) <|> return []
   es <- between (sepAfter $ string_ "(")
                 (sepAfter $ string_ ")")
                 (sepBy sourceParser (sepAfter $ string_ ","))
-  return $ FunctionCall [c] n (Positional ps) (Positional es) where
-    inferred = do
-      c2 <- getPosition
-      sepAfter_ inferredParam
-      return $ SingleType $ JustInferredType $ InferredType $ show c2
+  return $ FunctionCall [c] n (Positional ps) (Positional es)
 
 builtinFunction :: Parser FunctionName
 builtinFunction = foldr (<|>) (fail "empty") $ map try [

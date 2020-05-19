@@ -717,7 +717,7 @@ compileExpressionStart (BuiltinCall c (FunctionCall _ BuiltinReduce ps es)) = do
   when (length (pValues $ fst $ head es') /= 1) $
     lift $ compileErrorM $ "Expected single return in argument" ++ formatFullContextBrace c
   let (Positional [t0],e) = head es'
-  let (Positional [t1,t2]) = ps
+  [t1,t2] <- lift $ disallowInferred ps
   r <- csResolver
   fa <- csAllFilters
   lift $ validateGeneralInstance r fa t1
@@ -763,12 +763,12 @@ compileExpressionStart (BuiltinCall c (FunctionCall _ BuiltinTypename ps es)) = 
     lift $ compileErrorM $ "Expected 1 type parameter" ++ formatFullContextBrace c
   when (length (pValues es) /= 0) $
     lift $ compileErrorM $ "Expected 0 arguments" ++ formatFullContextBrace c
-  let t = head $ pValues ps
+  [t] <- lift $ disallowInferred ps
   r <- csResolver
   fa <- csAllFilters
   lift $ validateGeneralInstance r fa t
   t' <- expandGeneralInstance t
-  csRequiresTypes $ Set.unions $ map categoriesFromTypes $ pValues ps
+  csRequiresTypes $ Set.unions $ map categoriesFromTypes [t]
   return $ (Positional [formattedRequiredValue],
             valueAsWrapped $ UnboxedPrimitive PrimString $ typeBase ++ "::TypeName(" ++ t' ++ ")")
 compileExpressionStart (BuiltinCall _ _) = undefined
@@ -787,6 +787,12 @@ compileExpressionStart (InlineAssignment c n e) = do
   let lazy = s == CategoryScope
   return (Positional [t0],readStoredVariable lazy t0 $ "(" ++ scoped ++ variableName n ++
                                                      " = " ++ writeStoredVariable t0 e' ++ ")")
+
+disallowInferred :: (Show c, CompileErrorM m) => Positional (InstanceOrInferred c) -> m [GeneralInstance]
+disallowInferred = mapErrorsM disallow . pValues where
+  disallow (AssignedInstance _ t) = return t
+  disallow (InferredInstance c) =
+    compileErrorM $ "Type inference is not allowed in reduce calls" ++ formatFullContextBrace c
 
 compileFunctionCall :: (Show c, CompileErrorM m, MergeableM m,
                         CompilerContext c m [String] a) =>
@@ -837,12 +843,12 @@ compileFunctionCall e f (FunctionCall c _ ps es) = do
       checkValueTypeMatch r fa t1 t0 `reviseErrorM` ("In argument " ++ show i ++ " to " ++ show (sfName f))
 
 guessParamsFromArgs :: (Show c, MergeableM m, CompileErrorM m, TypeResolver r) =>
-  r -> ParamFilters -> ScopedFunction c -> Positional GeneralInstance ->
+  r -> ParamFilters -> ScopedFunction c -> Positional (InstanceOrInferred c) ->
   Positional ValueType -> m (Positional GeneralInstance)
 guessParamsFromArgs r fa f ps ts = do
   let fa2 = fa `Map.union` getFunctionFilterMap f
   args <- processPairs alwaysPair ts (fmap pvType $ sfArgs f)
-  pa <- fmap Map.fromList $ processPairs alwaysPair (fmap vpParam $ sfParams f) ps
+  pa <- fmap Map.fromList $ processPairs toInstance (fmap vpParam $ sfParams f) ps
   let pa2 = pa `Map.union` (Map.fromList $ zip (Map.keys fa2) (map (SingleType . JustParamName) $ Map.keys fa2))
   pa3 <- inferParamTypes r fa2 pa2 args
   fmap Positional $ mapErrorsM (subPosition pa3) (pValues $ sfParams f) where
@@ -851,6 +857,8 @@ guessParamsFromArgs r fa f ps ts = do
            Just t  -> return t
            Nothing -> compileErrorM $ "Something went wrong inferring " ++
                       show (vpParam p) ++ formatFullContextBrace (vpContext p)
+    toInstance p1 (AssignedInstance _ t) = return (p1,t)
+    toInstance p1 (InferredInstance _)   = return (p1,SingleType $ JustInferredType p1)
 
 compileMainProcedure :: (Show c, CompileErrorM m, MergeableM m) =>
   CategoryMap c -> ExprMap c -> Expression c -> m (CompiledData [String])

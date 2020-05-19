@@ -26,7 +26,6 @@ module Types.TypeInstance (
   DefinesInstance(..),
   FilterDirection(..),
   GeneralInstance,
-  InferredType(..),
   InferredTypeGuess(..),
   InstanceFilters,
   InstanceParams,
@@ -51,7 +50,6 @@ module Types.TypeInstance (
   getValueForParam,
   isBuiltinCategory,
   isDefinesFilter,
-  isInferredType,
   isRequiresFilter,
   isWeakValue,
   noInferredTypes,
@@ -153,16 +151,6 @@ newtype ParamName =
 instance Show ParamName where
   show (ParamName n) = n
 
-newtype InferredType =
-  InferredType {
-    itLocation :: String
-  }
-  deriving (Eq,Ord)
-
-instance Show InferredType where
-  -- NOTE: This might change.
-  show (InferredType i) = "? /*" ++ i ++ "*/"
-
 data TypeInstance =
   TypeInstance {
     tiName :: CategoryName,
@@ -189,14 +177,14 @@ instance Show DefinesInstance where
 
 data InferredTypeGuess =
   InferredTypeGuess {
-    itgType :: InferredType,
+    itgParam :: ParamName,
     itgGuess :: GeneralInstance,
     itgVariance :: Variance
   }
   deriving (Eq,Ord)
 
 instance Show InferredTypeGuess where
-  show (InferredTypeGuess _ g v) = show g ++ " (" ++ show v ++ ")"
+  show (InferredTypeGuess n g v) = show n ++ " = " ++ show g ++ " (" ++ show v ++ ")"
 
 data TypeInstanceOrParam =
   JustTypeInstance {
@@ -206,18 +194,14 @@ data TypeInstanceOrParam =
     jpnName :: ParamName
   } |
   JustInferredType {
-    jitType :: InferredType
+    jitParam :: ParamName
   }
   deriving (Eq,Ord)
-
-isInferredType :: GeneralInstance -> Bool
-isInferredType (SingleType (JustInferredType _)) = True
-isInferredType _                                 = False
 
 instance Show TypeInstanceOrParam where
   show (JustTypeInstance t) = show t
   show (JustParamName n)    = show n
-  show (JustInferredType i) = show i
+  show (JustInferredType i) = show i ++ "/*inferred*/"
 
 data FilterDirection =
   FilterRequires |
@@ -326,10 +310,10 @@ checkValueTypeMatch r f ts1@(ValueType r1 t1) ts2@(ValueType r2 t2)
 checkGeneralMatch :: (MergeableM m, CompileErrorM m, TypeResolver r) =>
   r -> ParamFilters -> Variance ->
   GeneralInstance -> GeneralInstance -> m [InferredTypeGuess]
-checkGeneralMatch _ _ _ (SingleType (JustInferredType (InferredType _))) _ =
+checkGeneralMatch _ _ _ (SingleType (JustInferredType _)) _ =
   compileErrorM $ "Inferred types are not allowed on the left"
-checkGeneralMatch _ _ v t1 (SingleType (JustInferredType i2@(InferredType _))) =
-  return [InferredTypeGuess i2 t1 v]
+checkGeneralMatch _ _ v t1 (SingleType (JustInferredType p2)) =
+  return [InferredTypeGuess p2 t1 v]
 checkGeneralMatch r f Invariant ts1 ts2 =
   -- This ensures that any and all behave as expected in Invariant positions.
   mergeAllM [checkGeneralMatch r f Covariant     ts1 ts2,
@@ -344,10 +328,10 @@ checkGeneralMatch r f v ts1 ts2 = checkGeneralType (checkSingleMatch r f v) ts1 
 checkSingleMatch :: (MergeableM m, CompileErrorM m, TypeResolver r) =>
   r -> ParamFilters -> Variance ->
   TypeInstanceOrParam -> TypeInstanceOrParam -> m [InferredTypeGuess]
-checkSingleMatch _ _ _ (JustInferredType (InferredType _)) _ =
+checkSingleMatch _ _ _ (JustInferredType _) _ =
   compileErrorM $ "Inferred types are not allowed on the left"
-checkSingleMatch _ _ v t1 (JustInferredType i2@(InferredType _)) =
-  return [InferredTypeGuess i2 (SingleType t1) v]
+checkSingleMatch _ _ v t1 (JustInferredType p2) =
+  return [InferredTypeGuess p2 (SingleType t1) v]
 checkSingleMatch r f v (JustTypeInstance t1) (JustTypeInstance t2) =
   checkInstanceToInstance r f v t1 t2
 checkSingleMatch r f v (JustParamName p1) (JustTypeInstance t2) =
