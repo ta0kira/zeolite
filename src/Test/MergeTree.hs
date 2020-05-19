@@ -30,48 +30,48 @@ import Base.Mergeable
 
 tests :: [IO (CompileInfo ())]
 tests = [
-   checkMatch (mergeAny $ fmap MergeLeaf [2,4,6]) (fmap (*2))
-              (mergeAny $ map MergeLeaf [1..3] :: MergeTree Int),
-   checkMatch (mergeAll $ fmap MergeLeaf [2,4,6]) (fmap (*2))
-              (mergeAll $ map MergeLeaf [1..3] :: MergeTree Int),
+   checkMatch (mergeAny $ fmap mergeLeaf [2,4,6]) (fmap (*2))
+              (mergeAny $ map mergeLeaf [1..3] :: MergeTree Int),
+   checkMatch (mergeAll $ fmap mergeLeaf [2,4,6]) (fmap (*2))
+              (mergeAll $ map mergeLeaf [1..3] :: MergeTree Int),
 
-   checkMatch (MergeLeaf 1) id (mergeAny [MergeLeaf 1,mergeAny []] :: MergeTree Int),
-   checkMatch (MergeLeaf 1) id (mergeAll [MergeLeaf 1,mergeAll []] :: MergeTree Int),
+   checkMatch (mergeLeaf 1) id (mergeAny [mergeLeaf 1,mergeAny []] :: MergeTree Int),
+   checkMatch (mergeLeaf 1) id (mergeAll [mergeLeaf 1,mergeAll []] :: MergeTree Int),
 
    checkMatch ([1,2]) (foldr (:) [])
-              (mergeAny [MergeLeaf 1,mergeAll [MergeLeaf 2]] :: MergeTree Int),
+              (mergeAny [mergeLeaf 1,mergeAll [mergeLeaf 2]] :: MergeTree Int),
    checkMatch ([1,2]) (foldr (:) [])
-              (mergeAll [MergeLeaf 1,mergeAny [MergeLeaf 2]] :: MergeTree Int),
+              (mergeAll [mergeLeaf 1,mergeAny [mergeLeaf 2]] :: MergeTree Int),
 
-   checkSuccess (mergeAny $ fmap MergeLeaf [1,2,3]) (sequence . fmap return)
-                (mergeAny $ map MergeLeaf [1..3] :: MergeTree Int),
-   checkSuccess (mergeAll $ fmap MergeLeaf [1,2,3]) (sequence . fmap return)
-                (mergeAll $ map MergeLeaf [1..3] :: MergeTree Int),
+   checkSuccess (mergeAny $ fmap mergeLeaf [1,2,3]) (sequence . fmap return)
+                (mergeAny $ map mergeLeaf [1..3] :: MergeTree Int),
+   checkSuccess (mergeAll $ fmap mergeLeaf [1,2,3]) (sequence . fmap return)
+                (mergeAll $ map mergeLeaf [1..3] :: MergeTree Int),
 
    checkError "1 is odd\n" (sequence . fmap oddError)
-              (mergeAny $ map MergeLeaf [1..3] :: MergeTree Int),
+              (mergeAny $ map mergeLeaf [1..3] :: MergeTree Int),
    checkError "1 is odd\n" (sequence . fmap oddError)
-              (mergeAll $ map MergeLeaf [1..3] :: MergeTree Int),
-   checkSuccess (mergeAny $ map MergeLeaf [1..3]) (sequence . fmap return)
-                (mergeAny $ map MergeLeaf [1..3] :: MergeTree Int),
-   checkSuccess (mergeAll $ map MergeLeaf [1..3]) (sequence . fmap return)
-                (mergeAll $ map MergeLeaf [1..3] :: MergeTree Int),
+              (mergeAll $ map mergeLeaf [1..3] :: MergeTree Int),
+   checkSuccess (mergeAny $ map mergeLeaf [1..3]) (sequence . fmap return)
+                (mergeAny $ map mergeLeaf [1..3] :: MergeTree Int),
+   checkSuccess (mergeAll $ map mergeLeaf [1..3]) (sequence . fmap return)
+                (mergeAll $ map mergeLeaf [1..3] :: MergeTree Int),
 
-   checkSuccess (mergeAny $ map MergeLeaf [2,4]) (pruneMergeTree . fmap oddError)
-                (mergeAny $ map MergeLeaf [1..4] :: MergeTree Int),
+   checkSuccess (mergeAny $ map mergeLeaf [2,4]) (pruneMergeTree . fmap oddError)
+                (mergeAny $ map mergeLeaf [1..4] :: MergeTree Int),
    checkError "1 is odd\n3 is odd\n" (pruneMergeTree . fmap oddError)
-              (mergeAll $ map MergeLeaf [1..4] :: MergeTree Int),
-   checkSuccess (mergeAny $ map MergeLeaf [1..4]) (pruneMergeTree . fmap return)
-                (mergeAny $ map MergeLeaf [1..4] :: MergeTree Int),
-   checkSuccess (mergeAll $ map MergeLeaf [1..4]) (pruneMergeTree . fmap return)
-                (mergeAll $ map MergeLeaf [1..4] :: MergeTree Int),
+              (mergeAll $ map mergeLeaf [1..4] :: MergeTree Int),
+   checkSuccess (mergeAny $ map mergeLeaf [1..4]) (pruneMergeTree . fmap return)
+                (mergeAny $ map mergeLeaf [1..4] :: MergeTree Int),
+   checkSuccess (mergeAll $ map mergeLeaf [1..4]) (pruneMergeTree . fmap return)
+                (mergeAll $ map mergeLeaf [1..4] :: MergeTree Int),
 
    checkSuccess [2,4]
                 (reduceMergeTree return (\xs -> compileErrorM $ "mergeAll " ++ show xs) oddError2)
-                (mergeAny $ map MergeLeaf [1..4] :: MergeTree Int),
+                (mergeAny $ map mergeLeaf [1..4] :: MergeTree Int),
    checkError "1 is odd\n3 is odd\n"
               (reduceMergeTree (\xs -> compileErrorM $ "mergeAny " ++ show xs) return oddError2)
-              (mergeAll $ map MergeLeaf [1..4] :: MergeTree Int)
+              (mergeAll $ map mergeLeaf [1..4] :: MergeTree Int)
  ]
 
 oddError :: Int -> CompileInfo Int

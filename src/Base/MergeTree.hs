@@ -19,7 +19,8 @@ limitations under the License.
 {-# LANGUAGE Safe #-}
 
 module Base.MergeTree (
-  MergeTree(MergeLeaf),
+  MergeTree,
+  mergeLeaf,
   pruneMergeTree,
   reduceMergeTree,
 ) where
@@ -31,7 +32,29 @@ data MergeTree a =
   MergeAny [MergeTree a] |
   MergeAll [MergeTree a] |
   MergeLeaf a
-  deriving (Eq,Show)
+  deriving (Eq)
+
+instance Show a => Show (MergeTree a) where
+  show (MergeAny xs) = "mergeAny " ++ show xs
+  show (MergeAll xs) = "mergeAll " ++ show xs
+  show (MergeLeaf x) = "mergeLeaf " ++ show x
+
+mergeLeaf :: a -> MergeTree a
+mergeLeaf = MergeLeaf
+
+reduceMergeTree :: (Mergeable b, MergeableM m) => (b -> m b) -> (b -> m b) ->
+  (a -> m b) -> MergeTree a -> m b
+reduceMergeTree anyOp allOp leafOp xa = reduce xa where
+  reduce (MergeAny xs) = do
+    xs' <- mergeAnyM $ map reduce xs
+    anyOp xs'
+  reduce (MergeAll xs) = do
+    xs' <- mergeAllM $ map reduce xs
+    allOp xs'
+  reduce (MergeLeaf x) = leafOp x
+
+pruneMergeTree :: MergeableM m => MergeTree (m a) -> m (MergeTree a)
+pruneMergeTree = reduceMergeTree return return (fmap MergeLeaf)
 
 instance Functor MergeTree where
   fmap f (MergeAny xs) = MergeAny (map (fmap f) xs)
@@ -57,17 +80,3 @@ instance Mergeable (MergeTree a) where
     isEmptyAll _             = False
     unnest [x] = x
     unnest xs  = MergeAll xs
-
-reduceMergeTree :: (Mergeable b, MergeableM m) => (b -> m b) -> (b -> m b) ->
-  (a -> m b) -> MergeTree a -> m b
-reduceMergeTree anyOp allOp leafOp xa = reduce xa where
-  reduce (MergeAny xs) = do
-    xs' <- mergeAnyM $ map reduce xs
-    anyOp xs'
-  reduce (MergeAll xs) = do
-    xs' <- mergeAllM $ map reduce xs
-    allOp xs'
-  reduce (MergeLeaf x) = leafOp x
-
-pruneMergeTree :: MergeableM m => MergeTree (m a) -> m (MergeTree a)
-pruneMergeTree = reduceMergeTree return return (fmap MergeLeaf)

@@ -963,7 +963,7 @@ inferParamTypes r f ps ts = do
   f2  <- fmap Map.fromList $ mapErrorsM filterSub $ Map.toList f
   gs  <- mergeAllM $ map (uncurry $ checkValueTypeMatch r f2) ts2
   let gs2 = concat $ map (filtersToGuess f2) $ Map.elems ps
-  let gs3 = mergeAll $ gs:(map MergeLeaf gs2)
+  let gs3 = mergeAll $ gs:(map mergeLeaf gs2)
   gs4 <- mergeInferredTypes r f2 gs3
   let ga = Map.fromList $ zip (map itgParam gs4) (map itgGuess gs4)
   return $ ga `Map.union` ps where

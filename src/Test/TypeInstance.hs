@@ -567,7 +567,7 @@ tests = [
     checkInferenceSuccess
       [("#x",[])] ["#x"]
       "Type1<Type0>" "Type1<#x>"
-      (MergeLeaf ("#x","Type0",Invariant)),
+      (mergeLeaf ("#x","Type0",Invariant)),
     checkInferenceFail
       [("#x",[])] ["#x"]
       "Type1<Type3>" "Type4<#x>",
@@ -575,22 +575,22 @@ tests = [
     checkInferenceSuccess
       [("#x",[])] ["#x"]
       "Instance1<Type1<Type3>>" "Instance1<#x>"
-      (MergeLeaf ("#x","Type1<Type3>",Contravariant)),
+      (mergeLeaf ("#x","Type1<Type3>",Contravariant)),
     checkInferenceSuccess
       [("#x",[])] ["#x"]
       "Instance1<Type1<Type3>>" "Instance1<Type1<#x>>"
-      (MergeLeaf ("#x","Type3",Invariant)),
+      (mergeLeaf ("#x","Type3",Invariant)),
 
     checkInferenceSuccess
       [("#x",[])] ["#x"]
       "Type2<Type3,Type0,Type3>" "Type2<#x,Type0,#x>"
-      (mergeAll [MergeLeaf ("#x","Type3",Contravariant),
-                 MergeLeaf ("#x","Type3",Covariant)]),
+      (mergeAll [mergeLeaf ("#x","Type3",Contravariant),
+                 mergeLeaf ("#x","Type3",Covariant)]),
     checkInferenceSuccess
       [("#x",[]),("#y",[])] ["#x"]
       "Type2<Type3,#y,Type3>" "Type2<#x,#y,#x>"
-      (mergeAll [MergeLeaf ("#x","Type3",Contravariant),
-                 MergeLeaf ("#x","Type3",Covariant)]),
+      (mergeAll [mergeLeaf ("#x","Type3",Contravariant),
+                 mergeLeaf ("#x","Type3",Covariant)]),
     checkInferenceFail
       [("#x",[]),("#y",[])] ["#x"]
       "Type2<Type3,Type0,Type3>" "Type2<#x,#y,#x>",
@@ -598,34 +598,34 @@ tests = [
     checkInferenceSuccess
       [("#x",[]),("#y",[])] ["#x"]
       "Type2<Type3,#y,Type0>" "Type1<#x>"
-      (MergeLeaf ("#x","Type3",Invariant)),
+      (mergeLeaf ("#x","Type3",Invariant)),
 
     checkInferenceSuccess
       [("#x",[]),("#y",[])] ["#x"]
       "Instance1<#y>" "Instance1<#x>"
-      (MergeLeaf ("#x","#y",Contravariant)),
+      (mergeLeaf ("#x","#y",Contravariant)),
 
     checkInferenceSuccess
       [("#x",[])] ["#x"]
       "Instance1<Instance0>" "Instance1<[#x&Type0]>"
-      (MergeLeaf ("#x","Instance0",Contravariant)),
+      (mergeLeaf ("#x","Instance0",Contravariant)),
     checkInferenceFail
       [("#x",[])] ["#x"]
       "Instance1<Instance0>" "Instance1<[#x|Type0]>",
     checkInferenceSuccess
       [("#x",[])] ["#x"]
       "Instance1<Type1<Type0>>" "Instance1<[Type0&Type1<#x>]>"
-      (MergeLeaf ("#x","Type0",Invariant)),
+      (mergeLeaf ("#x","Type0",Invariant)),
     checkInferenceSuccess
       [("#x",[])] ["#x"]
       "Instance1<Type1<Type0>>" "Instance1<[#x&Type1<#x>]>"
-      (mergeAny [MergeLeaf ("#x","Type1<Type0>",Contravariant),
-                 MergeLeaf ("#x","Type0",Invariant)]),
+      (mergeAny [mergeLeaf ("#x","Type1<Type0>",Contravariant),
+                 mergeLeaf ("#x","Type0",Invariant)]),
 
     checkInferenceSuccess
       [("#x",[]),("#y",["allows #x"])] ["#x"]
       "Type0" "#y"  -- The filter for #y influences the guess for #x.
-      (MergeLeaf ("#x","Type0",Covariant))
+      (mergeLeaf ("#x","Type0",Covariant))
   ]
 
 

@@ -312,7 +312,7 @@ checkGeneralMatch r f v (SingleType (JustInferredType p1)) t2 = do
   compileWarningM $ "Treating inferred parameter " ++ show p1 ++ " on the left as a regular parameter"
   checkGeneralMatch r f v (SingleType $ JustParamName p1) t2
 checkGeneralMatch _ _ v t1 (SingleType (JustInferredType p2)) =
-  return $ MergeLeaf $ InferredTypeGuess p2 t1 v
+  return $ mergeLeaf $ InferredTypeGuess p2 t1 v
 checkGeneralMatch r f Invariant ts1 ts2 =
   -- This ensures that any and all behave as expected in Invariant positions.
   mergeAllM [checkGeneralMatch r f Covariant     ts1 ts2,
@@ -331,7 +331,7 @@ checkSingleMatch r f v (JustInferredType p1) t2 = do
   compileWarningM $ "Treating inferred parameter " ++ show p1 ++ " on the left as a regular parameter"
   checkSingleMatch r f v (JustParamName p1) t2
 checkSingleMatch _ _ v t1 (JustInferredType p2) =
-  return $ MergeLeaf $ InferredTypeGuess p2 (SingleType t1) v
+  return $ mergeLeaf $ InferredTypeGuess p2 (SingleType t1) v
 checkSingleMatch r f v (JustTypeInstance t1) (JustTypeInstance t2) =
   checkInstanceToInstance r f v t1 t2
 checkSingleMatch r f v (JustParamName p1) (JustTypeInstance t2) =
