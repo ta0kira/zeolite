@@ -39,10 +39,7 @@ instance Functor MergeTree where
   fmap f (MergeLeaf x) = MergeLeaf (f x)
 
 instance Foldable MergeTree where
-  foldr f y xa = foldr f y (flatten xa) where
-    flatten (MergeAny xs) = concat $ map flatten xs
-    flatten (MergeAll xs) = concat $ map flatten xs
-    flatten (MergeLeaf x) = [x]
+  foldr f y = foldr f y . maybe [] id . reduceMergeTree return return (return . (:[]))
 
 instance Traversable MergeTree where
   traverse f (MergeAny xs) = MergeAny <$> foldr (<*>) (pure []) (map (fmap (:) . traverse f) xs)

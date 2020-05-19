@@ -54,3 +54,7 @@ instance Mergeable () where
 instance Mergeable [a] where
   mergeAny = foldr (++) []
   mergeAll = foldr (++) []
+
+instance MergeableM Maybe where
+  mergeAnyM = fmap mergeAny . foldr ((<>) . fmap (:[])) Nothing
+  mergeAllM = fmap mergeAll . sequence . foldr (:) []
