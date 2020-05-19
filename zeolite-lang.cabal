@@ -148,6 +148,7 @@ library zeolite-internal
 
   exposed-modules:     Base.CompileError,
                        Base.CompileInfo,
+                       Base.MergeTree,
                        Base.Mergeable,
                        Cli.CompileMetadata,
                        Cli.CompileOptions,
@@ -181,6 +182,7 @@ library zeolite-internal
                        Test.CompileInfo,
                        Test.DefinedCategory,
                        Test.IntegrationTest,
+                       Test.MergeTree,
                        Test.ParseMetadata,
                        Test.Parser,
                        Test.Pragma,

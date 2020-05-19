@@ -22,6 +22,7 @@ import Test.Common
 import qualified Test.CompileInfo     as TestCompileInfo
 import qualified Test.DefinedCategory as TestDefinedCategory
 import qualified Test.IntegrationTest as TestIntegrationTest
+import qualified Test.MergeTree       as TestMergeTree
 import qualified Test.ParseMetadata   as TestParseMetadata
 import qualified Test.Parser          as TestParser
 import qualified Test.Pragma          as TestPragma
@@ -36,6 +37,7 @@ main = runAllTests $ concat [
     labelWith "CompileInfo"     TestCompileInfo.tests,
     labelWith "DefinedCategory" TestDefinedCategory.tests,
     labelWith "IntegrationTest" TestIntegrationTest.tests,
+    labelWith "MergeTree"       TestMergeTree.tests,
     labelWith "ParseMetadata"   TestParseMetadata.tests,
     labelWith "Parser"          TestParser.tests,
     labelWith "Pragma"          TestPragma.tests,
