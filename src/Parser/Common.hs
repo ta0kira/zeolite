@@ -28,6 +28,7 @@ module Parser.Common (
   char_,
   endOfDoc,
   escapeStart,
+  inferredParam,
   infixFuncEnd,
   infixFuncStart,
   keyword,
@@ -379,6 +380,9 @@ pragmaArgsStart = string_ "["
 
 pragmaArgsEnd :: Parser ()
 pragmaArgsEnd = string_ "]"
+
+inferredParam :: Parser ()
+inferredParam = string_ "?"
 
 operator :: String -> Parser String
 operator o = labeled o $ do

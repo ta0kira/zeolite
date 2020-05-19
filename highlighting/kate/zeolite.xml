@@ -6,7 +6,7 @@
 <language
     name="Zeolite"
     section="Sources"
-    version="3.2"
+    version="3.3"
     kateversion="2.4"
     indenter="cstyle"
     style="Zeolite"
@@ -156,7 +156,7 @@
         <RegExpr attribute="Define Category Name" context="#stay" String="\b[A-Z][a-zA-Z0-9]*\b" />
         <DetectChar context="#pop" char="{" lookAhead="true" />
         <IncludeRules context="Any Comment" />
-        <AnyChar attribute="Error" context="#stay" String="#$}.*@!=%+-/\&lt;&gt;()[]" />
+        <AnyChar attribute="Error" context="#stay" String="#$}.*@!=%+-/\&lt;&gt;()[]?" />
         <RegExpr attribute="Error" context="#stay" String="[a-z0-9][a-zA-Z0-9]*\b" />
       </context>
 
@@ -215,6 +215,7 @@
         <IncludeRules context="Keywords Disallowed" />
         <IncludeRules context="Any Pragma" />
         <keyword attribute="Keyword" context="#stay" String="constants" />
+        <DetectChar attribute="Keyword" context="#stay" char="?" />
         <DetectChar attribute="Normal Text" context="Initializer" char="{" />
         <RegExpr attribute="Normal Text" context="#stay" String="[a-z][a-zA-Z0-9]*" />
         <RegExpr attribute="Number" context="#stay" String="(-|)\\[xX][0-9a-fA-F]+\b" />
@@ -298,7 +299,7 @@
         <IncludeRules context="Any Comment" />
         <keyword attribute="Error" context="#stay" String="storage" />
         <keyword attribute="Error" context="#stay" String="scope" />
-        <AnyChar attribute="Error" context="#stay" String="${}.&amp;*@!=%+-/\&lt;]|()" />
+        <AnyChar attribute="Error" context="#stay" String="${}.&amp;*@!=%+-/\&lt;]|()?" />
         <IncludeRules context="Any Type" />
         <RegExpr attribute="Error" context="#stay" String="\b[a-z][a-zA-Z0-9]*" />
       </context>
@@ -310,13 +311,14 @@
         <DetectChar attribute="Type Delim" context="#stay" char="|" />
         <RegExpr attribute="Param Name" context="#stay" String="#[a-z][a-zA-Z0-9]*\b" />
         <RegExpr attribute="Error" context="#stay" String="#[A-Z0-9][a-zA-Z0-9]*\b" />
-        <AnyChar attribute="Error" context="#stay" String="${}.&amp;*@!=%+-/\&lt;[]()" />
+        <AnyChar attribute="Error" context="#stay" String="${}.&amp;*@!=%+-/\&lt;[]()?" />
         <RegExpr attribute="Error" context="#stay" String="\b[a-zA-Z][a-zA-Z0-9]*" />
       </context>
 
       <context name="Merge Types" attribute="Normal Text" lineEndContext="#stay" >
         <DetectSpaces />
         <IncludeRules context="Any Comment" />
+        <DetectChar attribute="Error" context="#stay" char="?" />
         <DetectChar attribute="Merge Delim" context="Merge Union" char="|" />
         <DetectChar attribute="Merge Delim" context="Merge Intersect" char="&amp;" />
         <DetectChar attribute="Error" context="#pop" char="]" />
@@ -342,6 +344,7 @@
       <context name="Merge Common" attribute="Normal Text" lineEndContext="#stay" >
         <DetectSpaces />
         <IncludeRules context="Any Comment" />
+        <DetectChar attribute="Error" context="#stay" char="?" />
         <keyword attribute="Error" context="#stay" String="storage" />
         <keyword attribute="Error" context="#stay" String="scope" />
         <AnyChar attribute="Error" context="#stay" String="${}.*@!=%+-/\&lt;&gt;()," />

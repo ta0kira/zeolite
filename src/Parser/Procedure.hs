@@ -31,8 +31,9 @@ import Parser.Common
 import Parser.Pragma
 import Parser.TypeCategory ()
 import Parser.TypeInstance ()
-import Types.Pragma
+import Types.GeneralType
 import Types.Positional
+import Types.Pragma
 import Types.Procedure
 import Types.TypeCategory
 import Types.TypeInstance
@@ -395,11 +396,15 @@ parseFunctionCall c n = do
   -- just a variable name, e.g., x < y.
   ps <- try $ between (sepAfter $ string_ "<")
                       (sepAfter $ string_ ">")
-                      (sepBy sourceParser (sepAfter $ string_ ",")) <|> return []
+                      (sepBy (sourceParser <|> inferred) (sepAfter $ string_ ",")) <|> return []
   es <- between (sepAfter $ string_ "(")
                 (sepAfter $ string_ ")")
                 (sepBy sourceParser (sepAfter $ string_ ","))
-  return $ FunctionCall [c] n (Positional ps) (Positional es)
+  return $ FunctionCall [c] n (Positional ps) (Positional es) where
+    inferred = do
+      c2 <- getPosition
+      sepAfter_ inferredParam
+      return $ SingleType $ JustInferredType $ InferredType $ show c2
 
 builtinFunction :: Parser FunctionName
 builtinFunction = foldr (<|>) (fail "empty") $ map try [

@@ -51,6 +51,7 @@ module Types.TypeInstance (
   getValueForParam,
   isBuiltinCategory,
   isDefinesFilter,
+  isInferredType,
   isRequiresFilter,
   isWeakValue,
   noInferredTypes,
@@ -195,7 +196,7 @@ data InferredTypeGuess =
   deriving (Eq,Ord)
 
 instance Show InferredTypeGuess where
-  show (InferredTypeGuess (InferredType n) g v) = show g ++ " (" ++ show v ++ ") at " ++ n
+  show (InferredTypeGuess _ g v) = show g ++ " (" ++ show v ++ ")"
 
 data TypeInstanceOrParam =
   JustTypeInstance {
@@ -208,6 +209,10 @@ data TypeInstanceOrParam =
     jitType :: InferredType
   }
   deriving (Eq,Ord)
+
+isInferredType :: GeneralInstance -> Bool
+isInferredType (SingleType (JustInferredType _)) = True
+isInferredType _                                 = False
 
 instance Show TypeInstanceOrParam where
   show (JustTypeInstance t) = show t

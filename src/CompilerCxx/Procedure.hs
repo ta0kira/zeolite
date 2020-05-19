@@ -37,6 +37,7 @@ import Control.Monad (when)
 import Control.Monad.Trans.State (execStateT,get,put,runStateT)
 import Control.Monad.Trans (lift)
 import Data.List (intercalate)
+import qualified Data.Map as Map
 import qualified Data.Set as Set
 
 import Base.CompileError
@@ -794,20 +795,21 @@ compileFunctionCall :: (Show c, CompileErrorM m, MergeableM m,
 compileFunctionCall e f (FunctionCall c _ ps es) = do
   r <- csResolver
   fa <- csAllFilters
-  f' <- lift $ parsedToFunctionType f `reviseErrorM`
-          ("In function call at " ++ formatFullContext c)
-  f'' <- lift $ assignFunctionParams r fa ps f' `reviseErrorM`
-          ("In function call at " ++ formatFullContext c)
   es' <- sequence $ map compileExpression $ pValues es
   (ts,es'') <- getValues es'
+  ps2 <- lift $ guessParamsFromArgs r fa f ps (Positional ts)
+  f' <- lift $ parsedToFunctionType f `reviseErrorM`
+          ("In function call at " ++ formatFullContext c)
+  f'' <- lift $ assignFunctionParams r fa ps2 f' `reviseErrorM`
+          ("In function call at " ++ formatFullContext c)
   -- Called an extra time so arg count mismatches have reasonable errors.
   lift $ processPairs_ (\_ _ -> return ()) (ftArgs f'') (Positional ts) `reviseErrorM`
     ("In function call at " ++ formatFullContext c)
   lift $ processPairs_ (checkArg r fa) (ftArgs f'') (Positional $ zip ([0..] :: [Int]) ts) `reviseErrorM`
     ("In function call at " ++ formatFullContext c)
-  csRequiresTypes $ Set.unions $ map categoriesFromTypes $ pValues ps
+  csRequiresTypes $ Set.unions $ map categoriesFromTypes $ pValues ps2
   csRequiresTypes (Set.fromList [sfType f])
-  params <- expandParams2 ps
+  params <- expandParams2 ps2
   scoped <- autoScope (sfScope f)
   call <- assemble e scoped (sfScope f) params es''
   return $ (ftReturns f'',OpaqueMulti call)
@@ -833,6 +835,22 @@ compileFunctionCall e f (FunctionCall c _ ps es) = do
       compileErrorM $ "Return position " ++ show i ++ " has " ++ show (length ts) ++ " values but should have 1"
     checkArg r fa t0 (i,t1) = do
       checkValueTypeMatch r fa t1 t0 `reviseErrorM` ("In argument " ++ show i ++ " to " ++ show (sfName f))
+
+guessParamsFromArgs :: (Show c, MergeableM m, CompileErrorM m, TypeResolver r) =>
+  r -> ParamFilters -> ScopedFunction c -> Positional GeneralInstance ->
+  Positional ValueType -> m (Positional GeneralInstance)
+guessParamsFromArgs r fa f ps ts = do
+  let fa2 = fa `Map.union` getFunctionFilterMap f
+  args <- processPairs alwaysPair ts (fmap pvType $ sfArgs f)
+  pa <- fmap Map.fromList $ processPairs alwaysPair (fmap vpParam $ sfParams f) ps
+  let pa2 = pa `Map.union` (Map.fromList $ zip (Map.keys fa2) (map (SingleType . JustParamName) $ Map.keys fa2))
+  pa3 <- inferParamTypes r fa2 pa2 args
+  fmap Positional $ mapErrorsM (subPosition pa3) (pValues $ sfParams f) where
+    subPosition pa2 p =
+      case (vpParam p) `Map.lookup` pa2 of
+           Just t  -> return t
+           Nothing -> compileErrorM $ "Something went wrong inferring " ++
+                      show (vpParam p) ++ formatFullContextBrace (vpContext p)
 
 compileMainProcedure :: (Show c, CompileErrorM m, MergeableM m) =>
   CategoryMap c -> ExprMap c -> Expression c -> m (CompiledData [String])

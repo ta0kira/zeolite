@@ -56,6 +56,7 @@ module Types.TypeCategory (
   getInstanceCategory,
   getValueCategory,
   includeNewTypes,
+  inferParamTypes,
   isInstanceInterface,
   isDynamicNamespace,
   isNoNamespace,
@@ -953,11 +954,36 @@ uncheckedSubFunction pa ff@(ScopedFunction c n t s as rs ps fa ms) =
         f' <- uncheckedSubFilter (getValueForParam pa2) f
         return $ ParamFilter c2 n2 f'
 
+inferParamTypes :: (MergeableM m, CompileErrorM m, TypeResolver r) =>
+  r -> ParamFilters -> Map.Map ParamName GeneralInstance ->
+  [(ValueType,ValueType)] -> m (Map.Map ParamName GeneralInstance)
+inferParamTypes r f ps ts = do
+  ts2 <- mapErrorsM subAll ts
+  f2  <- fmap Map.fromList $ mapErrorsM filterSub $ Map.toList f
+  gs  <- mergeAllM $ map (uncurry $ checkValueTypeMatch r f2) ts2
+  gs2 <- mergeInferredTypes r f2 gs
+  let ga = Map.fromList $ zip (map itgType gs2) (map itgGuess gs2)
+  fmap Map.fromList $ mapErrorsM (replace ga) $ Map.toList ps
+  where
+    subAll (t1,t2) = do
+      t2' <- uncheckedSubValueType (getValueForParam ps) t2
+      return (t1,t2')
+    filterSub (k,fs) = do
+      fs' <- mapErrorsM (uncheckedSubFilter (getValueForParam ps)) fs
+      return (k,fs')
+    replace ga (k,SingleType (JustInferredType i)) =
+      case i `Map.lookup` ga of
+           Just t  -> return (k,t)
+           Nothing -> compileErrorM $ "Failed to infer " ++ show i
+    replace _ kv = return kv
+
 mergeInferredTypes :: (MergeableM m, CompileErrorM m, TypeResolver r) =>
   r -> ParamFilters -> [InferredTypeGuess] -> m [InferredTypeGuess]
 mergeInferredTypes r f is = do
   let ia = Map.fromListWith (++) $ zip (map itgType is) (map (:[]) is)
-  mergeAllM $ map tryMerge $ Map.toList ia where
+  gs <- mergeAllM $ map tryMerge $ Map.toList ia
+  mergeAllM $ map (noInferred . itgGuess) gs
+  return gs where
     tryMerge (i,is2) = do
       is2' <- mergeObjects check is2
       case is2' of
@@ -976,3 +1002,7 @@ mergeInferredTypes r f is = do
            then [noInferredTypes $ checkGeneralMatch r f v1 g2 g1]
            else []
       ]
+    noInferred (TypeMerge _ ts) = mergeAllM $ map noInferred ts
+    noInferred (SingleType (JustTypeInstance (TypeInstance _ (Positional ts)))) = mergeAllM $ map noInferred ts
+    noInferred (SingleType (JustInferredType i)) = compileErrorM $ "Failed to infer " ++ show i
+    noInferred _ = return ()
