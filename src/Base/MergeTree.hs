@@ -19,7 +19,7 @@ limitations under the License.
 {-# LANGUAGE Safe #-}
 
 module Base.MergeTree (
-  MergeTree(..),
+  MergeTree(MergeLeaf),
   reduceMergeTree,
 ) where
 
@@ -49,8 +49,16 @@ instance Traversable MergeTree where
   traverse f (MergeLeaf x) = fmap MergeLeaf (f x)
 
 instance Mergeable (MergeTree a) where
-  mergeAny = MergeAny . foldr (:) []
-  mergeAll = MergeAll . foldr (:) []
+  mergeAny = unnest . filter (not . isEmptyAny) . foldr (:) [] where
+    isEmptyAny (MergeAny []) = True
+    isEmptyAny _             = False
+    unnest [x] = x
+    unnest xs  = MergeAny xs
+  mergeAll = unnest . filter (not . isEmptyAll) . foldr (:) [] where
+    isEmptyAll (MergeAll []) = True
+    isEmptyAll _             = False
+    unnest [x] = x
+    unnest xs  = MergeAll xs
 
 reduceMergeTree :: (Mergeable b, MergeableM m) => (b -> m b) -> (b -> m b) ->
   (a -> m b) -> MergeTree a -> m b

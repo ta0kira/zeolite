@@ -64,11 +64,12 @@ module Types.TypeInstance (
   validateTypeInstance,
 ) where
 
-import Control.Monad (when)
-import Data.List (intercalate,nub)
+import Control.Monad ((>=>),when)
+import Data.List (intercalate)
 import qualified Data.Map as Map
 
 import Base.CompileError
+import Base.MergeTree
 import Base.Mergeable
 import Types.GeneralType
 import Types.Positional
@@ -288,19 +289,16 @@ getValueForParam pa n =
         (Just x) -> return x
         _ -> compileErrorM $ "Param " ++ show n ++ " does not exist"
 
-noInferredTypes :: CompileErrorM m => m [InferredTypeGuess] -> m ()
-noInferredTypes is = do
-  is' <- is
-  case is' of
-       []  -> return ()
-       is2 -> compileErrorM $ "Unresolved inferred types: " ++ show (nub is2)
+noInferredTypes :: (MergeableM m, CompileErrorM m) => m (MergeTree InferredTypeGuess) -> m ()
+noInferredTypes = id >=> reduceMergeTree return return message where
+  message i = compileErrorM $ "Type guess " ++ show i ++ " not allowed here"
 
 checkValueTypeMatch_ :: (MergeableM m, CompileErrorM m, TypeResolver r) =>
   r -> ParamFilters -> ValueType -> ValueType -> m ()
 checkValueTypeMatch_ r f t1 t2 = noInferredTypes $ checkValueTypeMatch r f t1 t2
 
 checkValueTypeMatch :: (MergeableM m, CompileErrorM m, TypeResolver r) =>
-  r -> ParamFilters -> ValueType -> ValueType -> m [InferredTypeGuess]
+  r -> ParamFilters -> ValueType -> ValueType -> m (MergeTree InferredTypeGuess)
 checkValueTypeMatch r f ts1@(ValueType r1 t1) ts2@(ValueType r2 t2)
   | r1 < r2 =
     compileErrorM $ "Cannot convert " ++ show ts1 ++ " to " ++ show ts2
@@ -309,12 +307,12 @@ checkValueTypeMatch r f ts1@(ValueType r1 t1) ts2@(ValueType r2 t2)
 
 checkGeneralMatch :: (MergeableM m, CompileErrorM m, TypeResolver r) =>
   r -> ParamFilters -> Variance ->
-  GeneralInstance -> GeneralInstance -> m [InferredTypeGuess]
+  GeneralInstance -> GeneralInstance -> m (MergeTree InferredTypeGuess)
 checkGeneralMatch r f v (SingleType (JustInferredType p1)) t2 = do
   compileWarningM $ "Treating inferred parameter " ++ show p1 ++ " on the left as a regular parameter"
   checkGeneralMatch r f v (SingleType $ JustParamName p1) t2
 checkGeneralMatch _ _ v t1 (SingleType (JustInferredType p2)) =
-  return [InferredTypeGuess p2 t1 v]
+  return $ MergeLeaf $ InferredTypeGuess p2 t1 v
 checkGeneralMatch r f Invariant ts1 ts2 =
   -- This ensures that any and all behave as expected in Invariant positions.
   mergeAllM [checkGeneralMatch r f Covariant     ts1 ts2,
@@ -328,12 +326,12 @@ checkGeneralMatch r f v ts1 ts2 = checkGeneralType (checkSingleMatch r f v) ts1 
 
 checkSingleMatch :: (MergeableM m, CompileErrorM m, TypeResolver r) =>
   r -> ParamFilters -> Variance ->
-  TypeInstanceOrParam -> TypeInstanceOrParam -> m [InferredTypeGuess]
+  TypeInstanceOrParam -> TypeInstanceOrParam -> m (MergeTree InferredTypeGuess)
 checkSingleMatch r f v (JustInferredType p1) t2 = do
   compileWarningM $ "Treating inferred parameter " ++ show p1 ++ " on the left as a regular parameter"
   checkSingleMatch r f v (JustParamName p1) t2
 checkSingleMatch _ _ v t1 (JustInferredType p2) =
-  return [InferredTypeGuess p2 (SingleType t1) v]
+  return $ MergeLeaf $ InferredTypeGuess p2 (SingleType t1) v
 checkSingleMatch r f v (JustTypeInstance t1) (JustTypeInstance t2) =
   checkInstanceToInstance r f v t1 t2
 checkSingleMatch r f v (JustParamName p1) (JustTypeInstance t2) =
@@ -344,7 +342,7 @@ checkSingleMatch r f v (JustParamName p1) (JustParamName p2) =
   checkParamToParam r f v p1 p2
 
 checkInstanceToInstance :: (MergeableM m, CompileErrorM m, TypeResolver r) =>
-  r -> ParamFilters -> Variance -> TypeInstance -> TypeInstance -> m [InferredTypeGuess]
+  r -> ParamFilters -> Variance -> TypeInstance -> TypeInstance -> m (MergeTree InferredTypeGuess)
 checkInstanceToInstance r f Invariant t1 t2
     | t1 == t2 = mergeDefaultM
     | otherwise =
@@ -371,7 +369,7 @@ checkInstanceToInstance r f Covariant t1@(TypeInstance n1 ps1) t2@(TypeInstance 
     checkInstanceToInstance r f Covariant (TypeInstance n2 ps1') t2
 
 checkParamToInstance :: (MergeableM m, CompileErrorM m, TypeResolver r) =>
-  r -> ParamFilters -> Variance -> ParamName -> TypeInstance -> m [InferredTypeGuess]
+  r -> ParamFilters -> Variance -> ParamName -> TypeInstance -> m (MergeTree InferredTypeGuess)
 checkParamToInstance r f Invariant n1 t2 =
   -- Implicit equality, inferred by n1 <-> t2.
   mergeAllM [checkParamToInstance r f Covariant     n1 t2,
@@ -403,7 +401,7 @@ checkParamToInstance r f v@Covariant n1 t2@(TypeInstance _ _) = do
                       " does not imply " ++ show n1 ++ " -> " ++ show t2
 
 checkInstanceToParam :: (MergeableM m, CompileErrorM m, TypeResolver r) =>
-  r -> ParamFilters -> Variance -> TypeInstance -> ParamName -> m [InferredTypeGuess]
+  r -> ParamFilters -> Variance -> TypeInstance -> ParamName -> m (MergeTree InferredTypeGuess)
 checkInstanceToParam r f Invariant t1 n2 =
   -- Implicit equality, inferred by t1 <-> n2.
   mergeAllM [checkInstanceToParam r f Covariant     t1 n2,
@@ -435,7 +433,7 @@ checkInstanceToParam r f v@Covariant t1@(TypeInstance _ _) n2 = do
                       " does not imply " ++ show t1 ++ " -> " ++ show n2
 
 checkParamToParam :: (MergeableM m, CompileErrorM m, TypeResolver r) =>
-  r -> ParamFilters -> Variance -> ParamName -> ParamName -> m [InferredTypeGuess]
+  r -> ParamFilters -> Variance -> ParamName -> ParamName -> m (MergeTree InferredTypeGuess)
 checkParamToParam r f Invariant n1 n2
     | n1 == n2 = mergeDefaultM
     | otherwise =

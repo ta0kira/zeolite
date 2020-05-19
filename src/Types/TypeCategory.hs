@@ -84,6 +84,7 @@ import qualified Data.Map as Map
 import qualified Data.Set as Set
 
 import Base.CompileError
+import Base.MergeTree
 import Base.Mergeable
 import Types.Function
 import Types.GeneralType
@@ -962,7 +963,7 @@ inferParamTypes r f ps ts = do
   f2  <- fmap Map.fromList $ mapErrorsM filterSub $ Map.toList f
   gs  <- mergeAllM $ map (uncurry $ checkValueTypeMatch r f2) ts2
   let gs2 = concat $ map (filtersToGuess f2) $ Map.elems ps
-  let gs3 = gs++gs2
+  let gs3 = mergeAll $ gs:(map MergeLeaf gs2)
   gs4 <- mergeInferredTypes r f2 gs3
   let ga = Map.fromList $ zip (map itgParam gs4) (map itgGuess gs4)
   return $ ga `Map.union` ps where
@@ -978,39 +979,34 @@ inferParamTypes r f ps ts = do
            Just fs -> concat $ map (filterToGuess p) fs
     filtersToGuess _ _ = []
     filterToGuess p (TypeFilter FilterRequires t) =
-      -- The guess is an upper bound => it can only convert downward.
       [InferredTypeGuess p (SingleType t) Contravariant]
     filterToGuess p (TypeFilter FilterAllows t) =
-      -- The guess is a lower bound => it can only convert upward.
       [InferredTypeGuess p (SingleType t) Covariant]
     filterToGuess _ _ = []
 
 mergeInferredTypes :: (MergeableM m, CompileErrorM m, TypeResolver r) =>
-  r -> ParamFilters -> [InferredTypeGuess] -> m [InferredTypeGuess]
-mergeInferredTypes r f is = do
-  let ia = Map.fromListWith (++) $ zip (map itgParam is) (map (:[]) is)
-  gs <- mergeAllM $ map tryMerge $ Map.toList ia
-  mergeAllM $ map (noInferred . itgGuess) gs
-  return gs where
-    tryMerge (i,is2) = do
-      is2' <- mergeObjects check is2
-      case is2' of
-           []   -> undefined  -- Shouldn't happen.
-           [i2] -> return [i2]
-           is3  -> compileErrorM $ "Could not reconcile guesses for " ++ show i ++
-                                   ": " ++ show is3
-    check (InferredTypeGuess _ g1 v1) (InferredTypeGuess _ g2 v2) =
-      mergeAnyM $ concat [
-        if v2 == Contravariant || v2 == Covariant
-           -- Bound the type guesses.
-           then [noInferredTypes $ checkGeneralMatch r f v2 g2 g1]
-           else [],
-        if v1 == Invariant && v2 == Invariant
-           -- Try to get rid of duplication.
-           then [noInferredTypes $ checkGeneralMatch r f Invariant g1 g2]
-           else []
-      ]
-    noInferred (TypeMerge _ ts) = mergeAllM $ map noInferred ts
-    noInferred (SingleType (JustTypeInstance (TypeInstance _ (Positional ts)))) = mergeAllM $ map noInferred ts
-    noInferred (SingleType (JustInferredType i)) = compileErrorM $ "Failed to infer " ++ show i
-    noInferred _ = return ()
+  r -> ParamFilters -> MergeTree InferredTypeGuess -> m [InferredTypeGuess]
+mergeInferredTypes r f = reduceMergeTree anyOp allOp leafOp where
+  leafOp i = noInferred (itgGuess i) >> return [i]
+  anyOp = mergeCommon anyCheck
+  allOp = mergeCommon allCheck
+  mergeCommon check is = do
+    let ia = Map.fromListWith (++) $ zip (map itgParam is) (map (:[]) is)
+    mergeAllM $ map (tryMerge check) $ Map.toList ia
+  tryMerge check (i,is) = do
+    is' <- mergeObjects check is
+    case is' of
+         []   -> undefined  -- Shouldn't happen.
+         [i2] -> return [i2]
+         is2  -> compileErrorM $ "Could not reconcile guesses for " ++ show i ++
+                                 ": " ++ show is2
+  noInferred (TypeMerge _ ts) = mergeAllM $ map noInferred ts
+  noInferred (SingleType (JustTypeInstance (TypeInstance _ (Positional ts)))) = mergeAllM $ map noInferred ts
+  noInferred (SingleType (JustInferredType i)) = compileErrorM $ "Failed to infer " ++ show i
+  noInferred _ = return ()
+  anyCheck (InferredTypeGuess _ g1 v1) (InferredTypeGuess _ g2 _) =
+    -- Find the least-general guess: If g1 can be replaced with g2, prefer g1.
+    noInferredTypes $ checkGeneralMatch r f v1 g1 g2
+  allCheck (InferredTypeGuess _ g1 _) (InferredTypeGuess _ g2 v2) =
+    -- Find the most-general guess: If g2 can be replaced with g1, prefer g1.
+    noInferredTypes $ checkGeneralMatch r f v2 g2 g1

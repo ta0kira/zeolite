@@ -30,14 +30,22 @@ import Base.Mergeable
 
 tests :: [IO (CompileInfo ())]
 tests = [
-   checkMatch (MergeAny $ fmap MergeLeaf [2,4,6]) (fmap (*2))
+   checkMatch (mergeAny $ fmap MergeLeaf [2,4,6]) (fmap (*2))
               (mergeAny $ map MergeLeaf [1..3] :: MergeTree Int),
-   checkMatch (MergeAll $ fmap MergeLeaf [2,4,6]) (fmap (*2))
+   checkMatch (mergeAll $ fmap MergeLeaf [2,4,6]) (fmap (*2))
               (mergeAll $ map MergeLeaf [1..3] :: MergeTree Int),
 
-   checkSuccess (MergeAny $ fmap MergeLeaf [1,2,3]) (sequence . fmap return)
+   checkMatch (MergeLeaf 1) id (mergeAny [MergeLeaf 1,mergeAny []] :: MergeTree Int),
+   checkMatch (MergeLeaf 1) id (mergeAll [MergeLeaf 1,mergeAll []] :: MergeTree Int),
+
+   checkMatch ([1,2]) (foldr (:) [])
+              (mergeAny [MergeLeaf 1,mergeAll [MergeLeaf 2]] :: MergeTree Int),
+   checkMatch ([1,2]) (foldr (:) [])
+              (mergeAll [MergeLeaf 1,mergeAny [MergeLeaf 2]] :: MergeTree Int),
+
+   checkSuccess (mergeAny $ fmap MergeLeaf [1,2,3]) (sequence . fmap return)
                 (mergeAny $ map MergeLeaf [1..3] :: MergeTree Int),
-   checkSuccess (MergeAll $ fmap MergeLeaf [1,2,3]) (sequence . fmap return)
+   checkSuccess (mergeAll $ fmap MergeLeaf [1,2,3]) (sequence . fmap return)
                 (mergeAll $ map MergeLeaf [1..3] :: MergeTree Int),
 
    checkError "1 is odd\n" (sequence . fmap oddError)

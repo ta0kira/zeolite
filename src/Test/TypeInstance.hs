@@ -24,6 +24,8 @@ import qualified Data.Map as Map
 
 import Base.CompileError
 import Base.CompileInfo
+import Base.MergeTree
+import Base.Mergeable
 import Parser.TypeInstance ()
 import Test.Common
 import Types.GeneralType
@@ -565,7 +567,7 @@ tests = [
     checkInferenceSuccess
       [("#x",[])] ["#x"]
       "Type1<Type0>" "Type1<#x>"
-      [("#x","Type0",Invariant)],
+      (MergeLeaf ("#x","Type0",Invariant)),
     checkInferenceFail
       [("#x",[])] ["#x"]
       "Type1<Type3>" "Type4<#x>",
@@ -573,22 +575,22 @@ tests = [
     checkInferenceSuccess
       [("#x",[])] ["#x"]
       "Instance1<Type1<Type3>>" "Instance1<#x>"
-      [("#x","Type1<Type3>",Contravariant)],
+      (MergeLeaf ("#x","Type1<Type3>",Contravariant)),
     checkInferenceSuccess
       [("#x",[])] ["#x"]
       "Instance1<Type1<Type3>>" "Instance1<Type1<#x>>"
-      [("#x","Type3",Invariant)],
+      (MergeLeaf ("#x","Type3",Invariant)),
 
     checkInferenceSuccess
       [("#x",[])] ["#x"]
       "Type2<Type3,Type0,Type3>" "Type2<#x,Type0,#x>"
-      [("#x","Type3",Covariant),
-       ("#x","Type3",Contravariant)],
+      (mergeAll [MergeLeaf ("#x","Type3",Contravariant),
+                 MergeLeaf ("#x","Type3",Covariant)]),
     checkInferenceSuccess
       [("#x",[]),("#y",[])] ["#x"]
       "Type2<Type3,#y,Type3>" "Type2<#x,#y,#x>"
-      [("#x","Type3",Covariant),
-       ("#x","Type3",Contravariant)],
+      (mergeAll [MergeLeaf ("#x","Type3",Contravariant),
+                 MergeLeaf ("#x","Type3",Covariant)]),
     checkInferenceFail
       [("#x",[]),("#y",[])] ["#x"]
       "Type2<Type3,Type0,Type3>" "Type2<#x,#y,#x>",
@@ -596,34 +598,34 @@ tests = [
     checkInferenceSuccess
       [("#x",[]),("#y",[])] ["#x"]
       "Type2<Type3,#y,Type0>" "Type1<#x>"
-      [("#x","Type3",Invariant)],
+      (MergeLeaf ("#x","Type3",Invariant)),
 
     checkInferenceSuccess
       [("#x",[]),("#y",[])] ["#x"]
       "Instance1<#y>" "Instance1<#x>"
-      [("#x","#y",Contravariant)],
+      (MergeLeaf ("#x","#y",Contravariant)),
 
     checkInferenceSuccess
       [("#x",[])] ["#x"]
       "Instance1<Instance0>" "Instance1<[#x&Type0]>"
-      [("#x","Instance0",Contravariant)],
+      (MergeLeaf ("#x","Instance0",Contravariant)),
     checkInferenceFail
       [("#x",[])] ["#x"]
       "Instance1<Instance0>" "Instance1<[#x|Type0]>",
     checkInferenceSuccess
       [("#x",[])] ["#x"]
       "Instance1<Type1<Type0>>" "Instance1<[Type0&Type1<#x>]>"
-      [("#x","Type0",Invariant)],
+      (MergeLeaf ("#x","Type0",Invariant)),
     checkInferenceSuccess
       [("#x",[])] ["#x"]
       "Instance1<Type1<Type0>>" "Instance1<[#x&Type1<#x>]>"
-      [("#x","Type1<Type0>",Contravariant),
-       ("#x","Type0",Invariant)],
+      (mergeAny [MergeLeaf ("#x","Type1<Type0>",Contravariant),
+                 MergeLeaf ("#x","Type0",Invariant)]),
 
     checkInferenceSuccess
       [("#x",[]),("#y",["allows #x"])] ["#x"]
       "Type0" "#y"  -- The filter for #y influences the guess for #x.
-      [("#x","Type0",Covariant)]
+      (MergeLeaf ("#x","Type0",Covariant))
   ]
 
 
@@ -760,29 +762,31 @@ checkConvertSuccess pa x y = return checked where
     | otherwise = return ()
 
 checkInferenceSuccess :: [(String, [String])] -> [String] -> String ->
-  String -> [(String,String,Variance)] -> IO (CompileInfo ())
+  String -> MergeTree (String,String,Variance) -> IO (CompileInfo ())
 checkInferenceSuccess pa is x y gs = checkInferenceCommon check pa is x y gs where
   prefix = x ++ " -> " ++ y ++ " " ++ showParams pa
   check gs2 c
     | isCompileError c = compileErrorM $ prefix ++ ":\n" ++ show (getCompileError c)
-    | otherwise        = getCompileSuccess c `containsExactly` gs2
+    | otherwise        = getCompileSuccess c `checkEquals` gs2
 
 checkInferenceFail :: [(String, [String])] -> [String] -> String ->
   String -> IO (CompileInfo ())
-checkInferenceFail pa is x y = checkInferenceCommon check pa is x y [] where
+checkInferenceFail pa is x y = checkInferenceCommon check pa is x y (mergeAll []) where
   prefix = x ++ " -> " ++ y ++ " " ++ showParams pa
   check _ c
     | isCompileError c = return ()
     | otherwise = compileErrorM $ prefix ++ ": Expected failure\n"
 
-checkInferenceCommon :: ([InferredTypeGuess] -> CompileInfo [InferredTypeGuess] -> CompileInfo ()) ->
+checkInferenceCommon ::
+  (MergeTree InferredTypeGuess -> CompileInfo (MergeTree InferredTypeGuess) -> CompileInfo ()) ->
   [(String, [String])] -> [String] -> String -> String ->
-  [(String,String,Variance)] -> IO (CompileInfo ())
-checkInferenceCommon check pa is x y gs = return checked where
+  MergeTree (String,String,Variance) -> IO (CompileInfo ())
+checkInferenceCommon check pa is x y gs = return $ checked `reviseErrorM` context where
+  context = "With params = " ++ show pa ++ ", pair = (" ++ show x ++ "," ++ show y ++ ")"
   checked = do
     ([t1,t2],pa2) <- parseTheTest pa [x,y]
     ia2 <- mapErrorsM readInferred is
-    gs' <- mapErrorsM parseGuess gs
+    gs' <- sequence $ fmap parseGuess gs
     let iaMap = Map.fromList ia2
     -- TODO: Merge duplication with Test.TypeCategory.
     pa3 <- fmap Map.fromList $ mapErrorsM (filterSub iaMap) $ Map.toList pa2

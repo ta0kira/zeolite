@@ -1066,7 +1066,8 @@ checkInferenceFail tm pa is ts = checkInferenceCommon check tm pa is ts [] where
 checkInferenceCommon :: ([InferredTypeGuess] -> CompileInfo [InferredTypeGuess] -> CompileInfo ()) ->
   CategoryMap SourcePos -> [(String, [String])] -> [String] ->
   [(String,String)] -> [(String,String,Variance)] -> CompileInfo ()
-checkInferenceCommon check tm pa is ts gs = checked where
+checkInferenceCommon check tm pa is ts gs = checked `reviseErrorM` context where
+  context = "With params = " ++ show pa ++ ", pairs = " ++ show ts
   checked = do
     let r = CategoryResolver tm
     pa2 <- parseFilterMap pa
