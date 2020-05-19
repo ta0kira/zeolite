@@ -61,14 +61,14 @@ runSingleTest b cm p paths deps (f,s) = do
           let failed = length $ filter isCompileError allResults
           return ((passed,failed),mergeAllM allResults)
     runSingle t = do
-      let name = ithTestName $ itHeader t
+      let name = "\"" ++ ithTestName (itHeader t) ++ "\" (from " ++ f ++ ")"
       let context = formatFullContextBrace (ithContext $ itHeader t)
-      errorFromIO $ hPutStrLn stderr $ "\n*** Executing test \"" ++ name ++ "\" ***"
+      errorFromIO $ hPutStrLn stderr $ "\n*** Executing test " ++ name ++ " ***"
       outcome <- fmap (flip reviseErrorM ("\nIn test \"" ++ name ++ "\"" ++ context)) $
                    run (ithResult $ itHeader t) (itCategory t) (itDefinition t)
       if isCompileError outcome
-         then errorFromIO $ hPutStrLn stderr $ "*** Test \"" ++ name ++ "\" failed ***"
-         else errorFromIO $ hPutStrLn stderr $ "*** Test \"" ++ name ++ "\" passed ***"
+         then errorFromIO $ hPutStrLn stderr $ "*** Test " ++ name ++ " failed ***"
+         else errorFromIO $ hPutStrLn stderr $ "*** Test " ++ name ++ " passed ***"
       return outcome
 
     run (ExpectCompileError _ rs es) cs ds = do
