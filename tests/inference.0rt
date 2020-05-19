@@ -190,3 +190,30 @@ define Test {
 concrete Test {
   @type run () -> ()
 }
+
+
+testcase "inference from filter" {
+  error
+  require "Formatted"
+  require "String"
+  require "value2"
+  exclude "value1"
+}
+
+define Test {
+  run () {
+    Formatted value1 <- get<?>("value")
+    String    value2 <- get<?>("value")
+  }
+
+  @type get<#x>
+    #x allows Formatted
+  (#x) -> (#x)
+  get (x) {
+    return x
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}

@@ -961,8 +961,10 @@ inferParamTypes r f ps ts = do
   ts2 <- mapErrorsM subAll ts
   f2  <- fmap Map.fromList $ mapErrorsM filterSub $ Map.toList f
   gs  <- mergeAllM $ map (uncurry $ checkValueTypeMatch r f2) ts2
-  gs2 <- mergeInferredTypes r f2 gs
-  let ga = Map.fromList $ zip (map itgParam gs2) (map itgGuess gs2)
+  let gs2 = concat $ map (filtersToGuess f2) $ Map.elems ps
+  let gs3 = gs++gs2
+  gs4 <- mergeInferredTypes r f2 gs3
+  let ga = Map.fromList $ zip (map itgParam gs4) (map itgGuess gs4)
   return $ ga `Map.union` ps where
     subAll (t1,t2) = do
       t2' <- uncheckedSubValueType (getValueForParam ps) t2
@@ -970,6 +972,18 @@ inferParamTypes r f ps ts = do
     filterSub (k,fs) = do
       fs' <- mapErrorsM (uncheckedSubFilter (getValueForParam ps)) fs
       return (k,fs')
+    filtersToGuess f2 (SingleType (JustInferredType p)) =
+      case p `Map.lookup` f2 of
+           Nothing -> []
+           Just fs -> concat $ map (filterToGuess p) fs
+    filtersToGuess _ _ = []
+    filterToGuess p (TypeFilter FilterRequires t) =
+      -- The guess is an upper bound => it can only convert downward.
+      [InferredTypeGuess p (SingleType t) Contravariant]
+    filterToGuess p (TypeFilter FilterAllows t) =
+      -- The guess is a lower bound => it can only convert upward.
+      [InferredTypeGuess p (SingleType t) Covariant]
+    filterToGuess _ _ = []
 
 mergeInferredTypes :: (MergeableM m, CompileErrorM m, TypeResolver r) =>
   r -> ParamFilters -> [InferredTypeGuess] -> m [InferredTypeGuess]
@@ -987,13 +1001,13 @@ mergeInferredTypes r f is = do
                                    ": " ++ show is3
     check (InferredTypeGuess _ g1 v1) (InferredTypeGuess _ g2 v2) =
       mergeAnyM $ concat [
-        if v2 == Contravariant || v1 == Invariant
-           -- Attempt to make g2 more specific.
+        if v2 == Contravariant || v2 == Covariant
+           -- Bound the type guesses.
            then [noInferredTypes $ checkGeneralMatch r f v2 g2 g1]
            else [],
-        if v2 == Covariant && v1 == Covariant
-           -- Attempt to get rid of duplication.
-           then [noInferredTypes $ checkGeneralMatch r f v1 g2 g1]
+        if v1 == Invariant && v2 == Invariant
+           -- Try to get rid of duplication.
+           then [noInferredTypes $ checkGeneralMatch r f Invariant g1 g2]
            else []
       ]
     noInferred (TypeMerge _ ts) = mergeAllM $ map noInferred ts

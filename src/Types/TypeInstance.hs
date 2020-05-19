@@ -310,8 +310,9 @@ checkValueTypeMatch r f ts1@(ValueType r1 t1) ts2@(ValueType r2 t2)
 checkGeneralMatch :: (MergeableM m, CompileErrorM m, TypeResolver r) =>
   r -> ParamFilters -> Variance ->
   GeneralInstance -> GeneralInstance -> m [InferredTypeGuess]
-checkGeneralMatch _ _ _ (SingleType (JustInferredType _)) _ =
-  compileErrorM $ "Inferred types are not allowed on the left"
+checkGeneralMatch r f v (SingleType (JustInferredType p1)) t2 = do
+  compileWarningM $ "Treating inferred parameter " ++ show p1 ++ " on the left as a regular parameter"
+  checkGeneralMatch r f v (SingleType $ JustParamName p1) t2
 checkGeneralMatch _ _ v t1 (SingleType (JustInferredType p2)) =
   return [InferredTypeGuess p2 t1 v]
 checkGeneralMatch r f Invariant ts1 ts2 =
@@ -328,8 +329,9 @@ checkGeneralMatch r f v ts1 ts2 = checkGeneralType (checkSingleMatch r f v) ts1 
 checkSingleMatch :: (MergeableM m, CompileErrorM m, TypeResolver r) =>
   r -> ParamFilters -> Variance ->
   TypeInstanceOrParam -> TypeInstanceOrParam -> m [InferredTypeGuess]
-checkSingleMatch _ _ _ (JustInferredType _) _ =
-  compileErrorM $ "Inferred types are not allowed on the left"
+checkSingleMatch r f v (JustInferredType p1) t2 = do
+  compileWarningM $ "Treating inferred parameter " ++ show p1 ++ " on the left as a regular parameter"
+  checkSingleMatch r f v (JustParamName p1) t2
 checkSingleMatch _ _ v t1 (JustInferredType p2) =
   return [InferredTypeGuess p2 (SingleType t1) v]
 checkSingleMatch r f v (JustTypeInstance t1) (JustTypeInstance t2) =

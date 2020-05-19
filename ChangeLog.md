@@ -1,6 +1,6 @@
 # Revision history for zeolite-lang
 
-## 0.6.0.1  -- ????-??-??
+## 0.6.1.0  -- ????-??-??
 
 ### Compiler CLI
 
@@ -9,6 +9,10 @@
   fails.
 
 ### Language
+
+* **[new]** Adds limited inference of type parameters in function calls. The new
+  syntax is `call<?,Int>(foo,bar)`, where `?` designates that inference is
+  requested for the first position.
 
 * **[behavior]** Reduces the memory cost of `$TraceCreation$` by avoiding
   storing the entire trace text.
