@@ -154,7 +154,7 @@ instance Show ParamName where
 
 newtype InferredType =
   InferredType {
-    itIdentifier :: String
+    itLocation :: String
   }
   deriving (Eq,Ord)
 
@@ -385,26 +385,26 @@ checkParamToInstance r f Invariant n1 t2 =
   -- Implicit equality, inferred by n1 <-> t2.
   mergeAllM [checkParamToInstance r f Covariant     n1 t2,
              checkParamToInstance r f Contravariant n1 t2]
-checkParamToInstance r f Contravariant n1 t2@(TypeInstance _ _) = do
+checkParamToInstance r f v@Contravariant n1 t2@(TypeInstance _ _) = do
   cs2 <- fmap (filter isTypeFilter) $ f `filterLookup` n1
-  mergeAnyM (map checkInstanceToConstraint cs2) `reviseErrorM`
-    ("No filters imply " ++ show t2 ++ " <- " ++ show n1)
+  mergeAnyM (map checkConstraintToInstance cs2) `reviseErrorM`
+    ("No filters imply " ++ show t2 ++ " <- " ++ show n1 ++ " in " ++ show v ++ " contexts")
   where
-    checkInstanceToConstraint (TypeFilter FilterAllows t) =
+    checkConstraintToInstance (TypeFilter FilterAllows t) =
       -- F -> x implies T -> x only if T -> F
-      checkSingleMatch r f Contravariant t (JustTypeInstance t2)
-    checkInstanceToConstraint f2 =
+      checkSingleMatch r f v t (JustTypeInstance t2)
+    checkConstraintToInstance f2 =
       -- x -> F cannot imply T -> x
       compileErrorM $ "Constraint " ++ viewTypeFilter n1 f2 ++
                       " does not imply " ++ show t2 ++ " <- " ++ show n1
-checkParamToInstance r f Covariant n1 t2@(TypeInstance _ _) = do
+checkParamToInstance r f v@Covariant n1 t2@(TypeInstance _ _) = do
   cs1 <- fmap (filter isTypeFilter) $ f `filterLookup` n1
   mergeAnyM (map checkConstraintToInstance cs1) `reviseErrorM`
-    ("No filters imply " ++ show n1 ++ " -> " ++ show t2)
+    ("No filters imply " ++ show n1 ++ " -> " ++ show t2 ++ " in " ++ show v ++ " contexts")
   where
     checkConstraintToInstance (TypeFilter FilterRequires t) =
       -- x -> F implies x -> T only if F -> T
-      checkSingleMatch r f Covariant t (JustTypeInstance t2)
+      checkSingleMatch r f v t (JustTypeInstance t2)
     checkConstraintToInstance f2 =
       -- F -> x cannot imply x -> T
       -- DefinesInstance cannot be converted to TypeInstance
@@ -417,27 +417,27 @@ checkInstanceToParam r f Invariant t1 n2 =
   -- Implicit equality, inferred by t1 <-> n2.
   mergeAllM [checkInstanceToParam r f Covariant     t1 n2,
              checkInstanceToParam r f Contravariant t1 n2]
-checkInstanceToParam r f Contravariant t1@(TypeInstance _ _) n2 = do
+checkInstanceToParam r f v@Contravariant t1@(TypeInstance _ _) n2 = do
   cs1 <- fmap (filter isTypeFilter) $ f `filterLookup` n2
-  mergeAnyM (map checkConstraintToInstance cs1) `reviseErrorM`
-    ("No filters imply " ++ show n2 ++ " <- " ++ show t1)
+  mergeAnyM (map checkInstanceToConstraint cs1) `reviseErrorM`
+    ("No filters imply " ++ show n2 ++ " <- " ++ show t1 ++ " in " ++ show v ++ " contexts")
   where
-    checkConstraintToInstance (TypeFilter FilterRequires t) =
+    checkInstanceToConstraint (TypeFilter FilterRequires t) =
       -- x -> F implies x -> T only if F -> T
-      checkSingleMatch r f Contravariant (JustTypeInstance t1) t
-    checkConstraintToInstance f2 =
+      checkSingleMatch r f v (JustTypeInstance t1) t
+    checkInstanceToConstraint f2 =
       -- F -> x cannot imply x -> T
       -- DefinesInstance cannot be converted to TypeInstance
       compileErrorM $ "Constraint " ++ viewTypeFilter n2 f2 ++
                       " does not imply " ++ show n2 ++ " <- " ++ show t1
-checkInstanceToParam r f Covariant t1@(TypeInstance _ _) n2 = do
+checkInstanceToParam r f v@Covariant t1@(TypeInstance _ _) n2 = do
   cs2 <- fmap (filter isTypeFilter) $ f `filterLookup` n2
   mergeAnyM (map checkInstanceToConstraint cs2) `reviseErrorM`
-    ("No filters imply " ++ show t1 ++ " -> " ++ show n2)
+    ("No filters imply " ++ show t1 ++ " -> " ++ show n2 ++ " in " ++ show v ++ " contexts")
   where
     checkInstanceToConstraint (TypeFilter FilterAllows t) =
       -- F -> x implies T -> x only if T -> F
-      checkSingleMatch r f Covariant (JustTypeInstance t1) t
+      checkSingleMatch r f v (JustTypeInstance t1) t
     checkInstanceToConstraint f2 =
       -- x -> F cannot imply T -> x
       compileErrorM $ "Constraint " ++ viewTypeFilter n2 f2 ++

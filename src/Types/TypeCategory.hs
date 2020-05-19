@@ -64,6 +64,7 @@ module Types.TypeCategory (
   isValueInterface,
   mergeDefines,
   mergeFunctions,
+  mergeInferredTypes,
   mergeRefines,
   noDuplicateDefines,
   noDuplicateRefines,
@@ -951,3 +952,27 @@ uncheckedSubFunction pa ff@(ScopedFunction c n t s as rs ps fa ms) =
       subFilter pa2 (ParamFilter c2 n2 f) = do
         f' <- uncheckedSubFilter (getValueForParam pa2) f
         return $ ParamFilter c2 n2 f'
+
+mergeInferredTypes :: (MergeableM m, CompileErrorM m, TypeResolver r) =>
+  r -> ParamFilters -> [InferredTypeGuess] -> m [InferredTypeGuess]
+mergeInferredTypes r f is = do
+  let ia = Map.fromListWith (++) $ zip (map itgType is) (map (:[]) is)
+  mergeAllM $ map tryMerge $ Map.toList ia where
+    tryMerge (i,is2) = do
+      is2' <- mergeObjects check is2
+      case is2' of
+           []   -> undefined  -- Shouldn't happen.
+           [i2] -> return [i2]
+           is3  -> compileErrorM $ "Could not reconcile guesses for " ++ show i ++
+                                  ": " ++ show is3
+    check (InferredTypeGuess _ g1 v1) (InferredTypeGuess _ g2 v2) =
+      mergeAnyM $ concat [
+        if v2 == Contravariant || v1 == Invariant
+           -- Attempt to make g2 more specific.
+           then [noInferredTypes $ checkGeneralMatch r f v2 g2 g1]
+           else [],
+        if v2 == Covariant && v1 == Covariant
+           -- Attempt to get rid of duplication.
+           then [noInferredTypes $ checkGeneralMatch r f v1 g2 g1]
+           else []
+      ]

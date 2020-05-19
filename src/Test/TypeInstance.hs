@@ -618,7 +618,12 @@ tests = [
       [("#x","foo")] [("#x",[])]
       "Instance1<Type1<Type0>>" "Instance1<[#x&Type1<#x>]>"
       [("foo","Type1<Type0>",Contravariant),
-       ("foo","Type0",Invariant)]
+       ("foo","Type0",Invariant)],
+
+    checkInferenceSuccess
+      [("#x","foo")] [("#x",[]),("#y",["allows #x"])]
+      "Type0" "#y"  -- The filter for #y influences the guess for #x.
+      [("foo","Type0",Covariant)]
   ]
 
 
@@ -779,8 +784,10 @@ checkInferenceCommon check ia pa x y gs = return checked where
     ia2 <- mapErrorsM readInferred ia
     gs' <- mapErrorsM parseGuess gs
     let iaMap = Map.fromList ia2
+    -- TODO: Merge duplication with Test.TypeCategory.
+    pa3 <- fmap Map.fromList $ mapErrorsM (filterSub iaMap) $ Map.toList pa2
     t2' <- uncheckedSubInstance (weakLookup iaMap) t2
-    check gs' $ checkGeneralMatch Resolver pa2 Covariant t1 t2'
+    check gs' $ checkGeneralMatch Resolver pa3 Covariant t1 t2'
   readInferred (p,n) = do
     p' <- readSingle "(string)" p
     return (p',SingleType $ JustInferredType $ InferredType n)
@@ -791,6 +798,9 @@ checkInferenceCommon check ia pa x y gs = return checked where
     case n `Map.lookup` tm of
          Just t  -> return t
          Nothing -> return $ SingleType $ JustParamName n
+  filterSub im (k,fs) = do
+    fs' <- mapErrorsM (uncheckedSubFilter (weakLookup im)) fs
+    return (k,fs')
 
 checkConvertFail :: [(String, [String])] -> [Char] -> [Char] -> IO (CompileInfo ())
 checkConvertFail pa x y = return checked where
