@@ -285,9 +285,9 @@ testcase "String Builder" {
 define Test {
   run () {
     Builder<String> builder <- String$builder()
-    \ Testing$check<String>(builder.build(),"")
-    \ Testing$check<String>(builder.append("xyz").build(),"xyz")
-    \ Testing$check<String>(builder.append("123").build(),"xyz123")
+    \ Testing$check<?>(builder.build(),"")
+    \ Testing$check<?>(builder.append("xyz").build(),"xyz")
+    \ Testing$check<?>(builder.append("123").build(),"xyz123")
   }
 }
 
