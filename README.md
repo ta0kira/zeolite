@@ -50,6 +50,7 @@ of this document.
     - [Optional and Weak Values](#optional-and-weak-values)
   - [Using Parameters](#using-parameters)
   - [Using Interfaces](#using-interfaces)
+  - [Type Inference](#type-inference)
   - [Other Features](#other-features)
     - [Meta Types](#meta-types)
     - [Runtime Type Reduction](#runtime-type-reduction)
@@ -454,33 +455,6 @@ functionality without having an explicit parent for the overlap.
   <span style='color:#898887;'>// An explicit override is required in order to merge set from both parents.</span>
   <span style='color:#644a9b;'>@value</span> set (<i><span style='color:#0057ae;'>Int</span></i>) -&gt; ()
 }</pre>
-
-Starting with compiler version `0.7.0.0`, Zeolite supports optional inference of
-specific function parameters by using **`?`**. This must be at the top level (no
-nesting), and it cannot be used outside of the parameters of the function.
-
-<pre style='color:#1f1c1b;background-color:#f6f8fa;'>
-<b>concrete</b> <b><span style='color:#0057ae;'>Value</span></b><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span> {
-  <span style='color:#644a9b;'>@category</span> create1&lt;<i><span style='color:#0057ae;'>#x</span></i>&gt; (<i><span style='color:#0057ae;'>#x</span></i>) -&gt; (<span style='color:#0057ae;'>Value</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>)
-  <span style='color:#644a9b;'>@type</span>     create2     (<i><span style='color:#0057ae;'>#x</span></i>) -&gt; (<span style='color:#0057ae;'>Value</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>)
-}
-
-<span style='color:#898887;'>// ...</span>
-
-<span style='color:#898887;'>// This is fine.</span>
-<span style='color:#0057ae;'>Value</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Int</span></i><span style='color:#c02040;'>&gt;</span> value1 &lt;- <span style='color:#0057ae;'>Value</span><span style='color:#644a9b;'>$$</span>create1&lt;<b>?</b>&gt;(<span style='color:#b08000;'>10</span>)
-
-<span style='color:#898887;'>// This is not allowed, since &lt;?&gt; is used with a type and not a function.</span>
-<span style='color:#898887;'>// Value&lt;Int&gt; value2 &lt;- Value&lt;?&gt;$create2(10)</span></pre>
-
-Only the function arguments and the parameter filters are used to infer the type
-substitution; return types are ignored. If inference fails, you will see a
-compiler error and will need to explicitly write out the type.
-
-Type inference in the context of parameterized types is specifically disallowed
-in order to limit the amount of code the reader needs to search to figure out
-what types are being used. Forcing explicit types for local variables is more
-work for the code author, but it makes the code easier to reason about.
 
 #### Functions As Operators
 
@@ -921,6 +895,59 @@ has `@type interface`s that declare `@type` functions that must be defined.
       <b>return</b> <span style='color:#bf0303;'>&quot;MyValue&quot;</span>
     }
   }</pre>
+
+### Type Inference
+
+Starting with compiler version `0.7.0.0`, Zeolite supports optional inference of
+specific function parameters by using **`?`**. This must be at the top level (no
+nesting), and it cannot be used outside of the parameters of the function.
+
+The type-inference system is intentionally "just clever enough" to do things
+that the code author can easily guess. More sophisticated inference is feasible
+in theory (like Haskell uses); however, type errors with such systems can draw
+a significant amount of attention away from the task at hand. (For example, a
+common issue with Haskell is not knowing *which line of code* contains the
+actual mistake causing a type error.)
+
+<pre style='color:#1f1c1b;background-color:#f6f8fa;'>
+<b>concrete</b> <b><span style='color:#0057ae;'>Value</span></b><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span> {
+  <span style='color:#644a9b;'>@category</span> create1&lt;<i><span style='color:#0057ae;'>#x</span></i>&gt; (<i><span style='color:#0057ae;'>#x</span></i>) -&gt; (<span style='color:#0057ae;'>Value</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>)
+  <span style='color:#644a9b;'>@type</span>     create2     (<i><span style='color:#0057ae;'>#x</span></i>) -&gt; (<span style='color:#0057ae;'>Value</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>)
+}
+
+<span style='color:#898887;'>// ...</span>
+
+<span style='color:#898887;'>// This is fine.</span>
+<span style='color:#0057ae;'>Value</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Int</span></i><span style='color:#c02040;'>&gt;</span> value1 &lt;- <span style='color:#0057ae;'>Value</span><span style='color:#644a9b;'>$$</span>create1&lt;<b>?</b>&gt;(<span style='color:#b08000;'>10</span>)
+
+<span style='color:#898887;'>// These uses of ? are not allowed:</span>
+<span style='color:#898887;'>// Value&lt;Int&gt; value2 &lt;- Value&lt;?&gt;$create2(10)</span>
+<span style='color:#898887;'>// Value&lt;?&gt;   value2 &lt;- Value&lt;Int&gt;$create2(10)</span>
+</pre>
+
+Only the function arguments and the parameter filters are used to infer the type
+substitution; return types are ignored. If inference fails, you will see a
+compiler error and will need to explicitly write out the type.
+
+Type inference might fail if:
+
+- There is no possible parameter substitution that will make the given
+  argument(s) valid for the function. This *could* happen if the function
+  parameter is nested in the argument type, e.g., `call<#x> (Type<#x>) -> ()`
+  and there is no possible conversion of the argument to `Type`.
+
+- The best guess for one parameter contains another inferred parameter.
+
+- The type parameter to be inferred is not actually used in the argument types.
+
+- There *is* a possible parameter substitution, but that type cannot be easily
+  inferred. For example, if the best guesses are `Type1` and `Type2`, and the
+  best substitution is a common child `Type0`.
+
+Type inference in the context of parameterized types is specifically disallowed
+in order to limit the amount of code the reader needs to search to figure out
+what types are being used. Forcing explicit types for local variables is more
+work for the code author, but it makes the code easier to reason about.
 
 ### Other Features
 
