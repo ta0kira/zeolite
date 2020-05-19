@@ -49,11 +49,6 @@ import Prelude hiding (concat,foldr)
 import System.Exit
 import System.IO
 
-#if MIN_VERSION_base(4,8,0)
-#else
-import Data.Foldable
-#endif
-
 #if MIN_VERSION_base(4,13,0)
 import Control.Monad.Fail ()
 #elif MIN_VERSION_base(4,9,0)
