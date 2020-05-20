@@ -83,7 +83,8 @@ setInternalFunctions :: (Show c, CompileErrorM m, MergeableM m, TypeResolver r) 
   m (Map.Map FunctionName (ScopedFunction c))
 setInternalFunctions r t fs = foldr update (return start) fs where
   start = Map.fromList $ map (\f -> (sfName f,f)) $ getCategoryFunctions t
-  filters = getCategoryFilterMap t
+  fm = getCategoryFilterMap t
+  pm = getCategoryParamMap t
   update f@(ScopedFunction c n t2 s as rs ps fs2 ms) fa = do
     validateCategoryFunction r t f
     fa' <- fa
@@ -94,7 +95,7 @@ setInternalFunctions r t fs = foldr update (return start) fs where
                              "\n  ->\n" ++ show f ++ "\n---\n") $ do
              f0' <- parsedToFunctionType f0
              f' <- parsedToFunctionType f
-             checkFunctionConvert r filters f0' f'
+             checkFunctionConvert r fm pm f0' f'
            return $ Map.insert n (ScopedFunction (c++c2) n t2 s as rs ps fs2 ([f0]++ms++ms2)) fa'
 
 pairProceduresToFunctions :: (Show c, CompileErrorM m, MergeableM m) =>
@@ -170,11 +171,12 @@ mergeInternalInheritance tm d = do
   let tm' = Map.insert (dcName d) c2 tm
   let r = CategoryResolver tm'
   let fm = getCategoryFilterMap t
+  let pm = getCategoryParamMap t
   rs' <- mergeRefines r fm (rs++rs2)
   noDuplicateRefines [] n rs'
   ds' <- mergeDefines r fm (ds++ds2)
   noDuplicateDefines [] n ds'
-  fs' <- mergeFunctions r tm' fm rs' ds' fs
+  fs' <- mergeFunctions r tm' pm fm rs' ds' fs
   let c2' = ValueConcrete c ns n ps rs' ds' vs fs'
   let tm0 = (dcName d) `Map.delete` tm
   checkCategoryInstances tm0 [c2']

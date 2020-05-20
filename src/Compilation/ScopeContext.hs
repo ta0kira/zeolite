@@ -71,7 +71,7 @@ getProcedureScopes ta em (DefinedCategory c n pi _ _ fi ms ps fs) = do
   (_,t) <- getConcreteCategory ta (c,n)
   let params = Positional $ getCategoryParams t
   let params2 = Positional pi
-  let typeInstance = TypeInstance n $ fmap (SingleType . JustParamName . vpParam) params
+  let typeInstance = TypeInstance n $ fmap (SingleType . JustParamName False . vpParam) params
   let filters = getCategoryFilters t
   let filters2 = fi
   let r = CategoryResolver ta

@@ -817,7 +817,7 @@ compileFunctionCall e f (FunctionCall c _ ps es) = flip reviseErrorStateT errorC
   ps2 <- lift $ guessParamsFromArgs r fa f ps (Positional ts)
   lift $ mergeAllM $ map backgroundMessage $ zip3 (map vpParam $ pValues $ sfParams f) (pValues ps) (pValues ps2)
   f' <- lift $ parsedToFunctionType f
-  f'' <- lift $ assignFunctionParams r fa ps2 f'
+  f'' <- lift $ assignFunctionParams r fa Map.empty ps2 f'
   -- Called an extra time so arg count mismatches have reasonable errors.
   lift $ processPairs_ (\_ _ -> return ()) (ftArgs f'') (Positional ts)
   lift $ processPairs_ (checkArg r fa) (ftArgs f'') (Positional $ zip ([0..] :: [Int]) ts)
@@ -935,7 +935,7 @@ expandGeneralInstance (TypeMerge m ps) = do
 expandGeneralInstance (SingleType (JustTypeInstance (TypeInstance t ps))) = do
   ps' <- sequence $ map expandGeneralInstance $ pValues ps
   return $ typeGetter t ++ "(T_get(" ++ intercalate "," (map ("&" ++) ps') ++ "))"
-expandGeneralInstance (SingleType (JustParamName p)) = do
+expandGeneralInstance (SingleType (JustParamName _ p)) = do
   s <- csGetParamScope p
   scoped <- autoScope s
   return $ scoped ++ paramName p

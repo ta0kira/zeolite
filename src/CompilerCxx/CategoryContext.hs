@@ -55,7 +55,7 @@ getContextForInit tm em t d s = do
   let sa = Map.fromList $ zip (map vpParam $ getCategoryParams t) (repeat TypeScope)
   let r = CategoryResolver tm
   fa <- setInternalFunctions r t (dcFunctions d)
-  let typeInstance = TypeInstance (getCategoryName t) $ fmap (SingleType . JustParamName . vpParam) ps
+  let typeInstance = TypeInstance (getCategoryName t) $ fmap (SingleType . JustParamName False . vpParam) ps
   let builtin = Map.filter ((== LocalScope) . vvScope) $ builtinVariables typeInstance
   members <- mapMembers $ filter ((<= s) . dmScope) (dcMembers d)
   return $ ProcedureContext {

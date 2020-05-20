@@ -632,7 +632,7 @@ commonDefineType t rs extra = do
           "const TypeCategory& category, " ++
           "std::vector<const TypeInstance*>& args) const final {"
         ] ++ allCats rs2 ++ ["  return false;","}"]
-    myType = (getCategoryName t,map (SingleType . JustParamName . fst) params)
+    myType = (getCategoryName t,map (SingleType . JustParamName False . fst) params)
     refines rs2 = map (\r -> (tiName r,pValues $ tiParams r)) $ map vrType rs2
     allCats rs2 = concat $ map singleCat (myType:refines rs2)
     singleCat (t2,ps) = [
@@ -658,7 +658,7 @@ expandLocalType (SingleType (JustTypeInstance (TypeInstance t ps))) =
   typeGetter t ++ "(T_get(" ++ intercalate "," (map ("&" ++) ps') ++ "))"
   where
     ps' = map expandLocalType $ pValues ps
-expandLocalType (SingleType (JustParamName p)) = paramName p
+expandLocalType (SingleType (JustParamName _ p)) = paramName p
 expandLocalType _ = undefined  -- The instance is an InferredType.
 
 defineCategoryName :: CategoryName -> CompiledData [String]

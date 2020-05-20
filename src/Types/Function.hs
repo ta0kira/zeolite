@@ -96,34 +96,34 @@ validatateFunctionType r fm vm (FunctionType as rs ps fa) = do
       validateInstanceVariance r allVariances Covariant t
 
 assignFunctionParams :: (MergeableM m, CompileErrorM m, TypeResolver r) =>
-  r -> ParamFilters -> Positional GeneralInstance ->
+  r -> ParamFilters -> ParamValues -> Positional GeneralInstance ->
   FunctionType -> m FunctionType
-assignFunctionParams r fm ts (FunctionType as rs ps fa) = do
+assignFunctionParams r fm pm ts (FunctionType as rs ps fa) = do
   mergeAllM $ map (validateGeneralInstance r fm) $ pValues ts
   assigned <- fmap Map.fromList $ processPairs alwaysPair ps ts
-  fa' <- fmap Positional $ mapErrorsM (assignFilters assigned) (pValues fa)
+  let pa = pm `Map.union` assigned
+  fa' <- fmap Positional $ mapErrorsM (assignFilters pa) (pValues fa)
   processPairs_ (validateAssignment r fm) ts fa'
   as' <- fmap Positional $
-         mapErrorsM (uncheckedSubValueType $ weakGetValueForParam assigned) (pValues as)
+         mapErrorsM (uncheckedSubValueType $ getValueForParam pa) (pValues as)
   rs' <- fmap Positional $
-         mapErrorsM (uncheckedSubValueType $ weakGetValueForParam assigned) (pValues rs)
+         mapErrorsM (uncheckedSubValueType $ getValueForParam pa) (pValues rs)
   return $ FunctionType as' rs' (Positional []) (Positional [])
   where
-    assignFilters fm2 fs = mapErrorsM (uncheckedSubFilter $ weakGetValueForParam fm2) fs
+    assignFilters fm2 fs = mapErrorsM (uncheckedSubFilter $ getValueForParam fm2) fs
 
 checkFunctionConvert :: (MergeableM m, CompileErrorM m, TypeResolver r) =>
-  r -> ParamFilters -> FunctionType -> FunctionType -> m ()
-checkFunctionConvert r fm (FunctionType as1 rs1 ps1 fa1) ff2 = do
+  r -> ParamFilters -> ParamValues -> FunctionType -> FunctionType -> m ()
+checkFunctionConvert r fm pm (FunctionType as1 rs1 ps1 fa1) ff2 = do
   mapped <- fmap Map.fromList $ processPairs alwaysPair ps1 fa1
   let fm' = Map.union fm mapped
-  let asTypes = Positional $ map (SingleType . JustParamName) $ pValues ps1
+  let asTypes = Positional $ map (SingleType . JustParamName False) $ pValues ps1
   -- Substitute params from ff2 into ff1.
-  (FunctionType as2 rs2 _ _) <- assignFunctionParams r fm' asTypes ff2
+  (FunctionType as2 rs2 _ _) <- assignFunctionParams r fm' pm asTypes ff2
   fixed <- processPairs alwaysPair ps1 fa1
   let fm'' = Map.union fm (Map.fromList fixed)
   processPairs_ (validateArg fm'') as1 as2
   processPairs_ (validateReturn fm'') rs1 rs2
-  return ()
   where
     validateArg fm2 a1 a2 = checkValueTypeMatch r fm2 a1 a2
     validateReturn fm2 r1 r2 = checkValueTypeMatch r fm2 r2 r1

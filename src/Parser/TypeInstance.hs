@@ -116,7 +116,7 @@ instance ParseFromSource TypeInstanceOrParam where
   sourceParser = try param <|> inst where
     param = labeled "param" $ do
       n <- sourceParser
-      return $ JustParamName n
+      return $ JustParamName False n
     inst = labeled "type" $ do
       t <- sourceParser
       return $ JustTypeInstance t

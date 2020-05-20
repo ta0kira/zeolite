@@ -85,7 +85,7 @@ instance (Show c, MergeableM m, CompileErrorM m) =>
   ccCurrentScope = return . pcScope
   ccResolver = return . AnyTypeResolver . CategoryResolver . pcCategories
   ccSameType ctx = return . (== same) where
-    same = TypeInstance (pcType ctx) (fmap (SingleType . JustParamName . vpParam) $ pcExtParams ctx)
+    same = TypeInstance (pcType ctx) (fmap (SingleType . JustParamName False . vpParam) $ pcExtParams ctx)
   ccAllFilters = return . pcAllFilters
   ccGetParamScope ctx p = do
     case p `Map.lookup` pcParamScopes ctx of
@@ -144,7 +144,7 @@ instance (Show c, MergeableM m, CompileErrorM m) =>
     getFunction (Just ta@(TypeMerge MergeIntersect ts)) =
       collectOneOrErrorM (map getFunction $ map Just ts) `reviseErrorM`
         ("Function " ++ show n ++ " not available for type " ++ show ta ++ formatFullContextBrace c)
-    getFunction (Just (SingleType (JustParamName p))) = do
+    getFunction (Just (SingleType (JustParamName _ p))) = do
       fa <- ccAllFilters ctx
       fs <- case p `Map.lookup` fa of
                 (Just fs) -> return fs
@@ -156,23 +156,23 @@ instance (Show c, MergeableM m, CompileErrorM m) =>
     getFunction (Just (SingleType (JustTypeInstance t2)))
       -- Same category as the procedure itself.
       | tiName t2 == pcType ctx =
-        checkFunction (tiName t2) (fmap vpParam $ pcExtParams ctx) (tiParams t2) $ n `Map.lookup` pcFunctions ctx
+        subAndCheckFunction (tiName t2) (fmap vpParam $ pcExtParams ctx) (tiParams t2) $ n `Map.lookup` pcFunctions ctx
       -- A different category than the procedure.
       | otherwise = do
         (_,ca) <- getCategory (pcCategories ctx) (c,tiName t2)
         let params = Positional $ map vpParam $ getCategoryParams ca
         let fa = Map.fromList $ map (\f -> (sfName f,f)) $ getCategoryFunctions ca
-        checkFunction (tiName t2) params (tiParams t2) $ n `Map.lookup` fa
+        subAndCheckFunction (tiName t2) params (tiParams t2) $ n `Map.lookup` fa
     getFunction Nothing = do
-      let ps = fmap (SingleType . JustParamName . vpParam) $ pcExtParams ctx
+      let ps = fmap (SingleType . JustParamName False . vpParam) $ pcExtParams ctx
       getFunction (Just $ SingleType $ JustTypeInstance $ TypeInstance (pcType ctx) ps)
     getFunction (Just t2) = compileErrorM $ "Type " ++ show t2 ++ " contains unresolved types"
     checkDefine t2 = do
       (_,ca) <- getCategory (pcCategories ctx) (c,diName t2)
       let params = Positional $ map vpParam $ getCategoryParams ca
       let fa = Map.fromList $ map (\f -> (sfName f,f)) $ getCategoryFunctions ca
-      checkFunction (diName t2) params (diParams t2) $ n `Map.lookup` fa
-    checkFunction t2 ps1 ps2 (Just f) = do
+      subAndCheckFunction (diName t2) params (diParams t2) $ n `Map.lookup` fa
+    subAndCheckFunction t2 ps1 ps2 (Just f) = do
       when (pcDisallowInit ctx && t2 == pcType ctx) $
         compileErrorM $ "Function " ++ show n ++
                        " disallowed during initialization" ++ formatFullContextBrace c
@@ -183,7 +183,7 @@ instance (Show c, MergeableM m, CompileErrorM m) =>
         ("In external function call at " ++ formatFullContext c)
       let assigned = Map.fromList paired
       uncheckedSubFunction assigned f
-    checkFunction t2 _ _ _ =
+    subAndCheckFunction t2 _ _ _ =
       compileErrorM $ "Category " ++ show t2 ++
                      " does not have a type or value function named " ++ show n ++
                      formatFullContextBrace c

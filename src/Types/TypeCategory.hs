@@ -48,6 +48,7 @@ module Types.TypeCategory (
   getCategoryFunctions,
   getCategoryName,
   getCategoryNamespace,
+  getCategoryParamMap,
   getCategoryParams,
   getCategoryRefines,
   getConcreteCategory,
@@ -78,7 +79,7 @@ module Types.TypeCategory (
 ) where
 
 import Control.Arrow (second)
-import Control.Monad (when)
+import Control.Monad ((>=>),when)
 import Data.List (group,groupBy,intercalate,sort,sortBy)
 import qualified Data.Map as Map
 import qualified Data.Set as Set
@@ -393,7 +394,7 @@ checkFilters t ps = do
             _ -> return []
 
 subAllParams :: (MergeableM m, CompileErrorM m) =>
-  Map.Map ParamName GeneralInstance -> GeneralInstance -> m GeneralInstance
+  ParamValues -> GeneralInstance -> m GeneralInstance
 subAllParams pa = uncheckedSubInstance (getValueForParam pa)
 
 type CategoryMap c = Map.Map CategoryName (AnyCategory c)
@@ -469,6 +470,10 @@ getFilterMap ps fs = getFilters $ zip (Set.toList pa) (repeat []) where
 
 getCategoryFilterMap :: AnyCategory c -> ParamFilters
 getCategoryFilterMap t = getFilterMap (getCategoryParams t) (getCategoryFilters t)
+
+getCategoryParamMap :: AnyCategory c -> ParamValues
+getCategoryParamMap t = let ps = map vpParam $ getCategoryParams t in
+                          Map.fromList $ zip ps (map (SingleType . JustParamName False) ps)
 
 -- TODO: Use this where it's needed in this file.
 getFunctionFilterMap :: ScopedFunction c -> ParamFilters
@@ -750,16 +755,18 @@ flattenAllConnections tm0 ts = do
       return (ts2 ++ [t'],Map.insert (getCategoryName t') t' tm)
     updateSingle r tm t@(ValueInterface c ns n ps rs vs fs) = do
       let fm = getCategoryFilterMap t
+      let pm = getCategoryParamMap t
       rs' <- fmap concat $ mapErrorsM (getRefines tm) rs
       rs'' <- mergeRefines r fm rs'
       noDuplicateRefines c n rs''
       checkMerged r fm rs rs''
       -- Only merge from direct parents.
-      fs' <- mergeFunctions r tm fm rs [] fs
+      fs' <- mergeFunctions r tm pm fm rs [] fs
       return $ ValueInterface c ns n ps rs'' vs fs'
     -- TODO: Remove duplication below and/or have separate tests.
     updateSingle r tm t@(ValueConcrete c ns n ps rs ds vs fs) = do
       let fm = getCategoryFilterMap t
+      let pm = getCategoryParamMap t
       rs' <- fmap concat $ mapErrorsM (getRefines tm) rs
       rs'' <- mergeRefines r fm rs'
       noDuplicateRefines c n rs''
@@ -767,7 +774,7 @@ flattenAllConnections tm0 ts = do
       ds' <- mergeDefines r fm ds
       noDuplicateDefines c n ds'
       -- Only merge from direct parents.
-      fs' <- mergeFunctions r tm fm rs ds fs
+      fs' <- mergeFunctions r tm pm fm rs ds fs
       return $ ValueConcrete c ns n ps rs'' ds' vs fs'
     updateSingle _ _ t = return t
     getRefines tm ra@(ValueRefine c t@(TypeInstance n _)) = do
@@ -796,29 +803,33 @@ flattenAllConnections tm0 ts = do
     checkConvert _ _ _ _ = return ()
 
 mergeFunctions :: (Show c, MergeableM m, CompileErrorM m, TypeResolver r) =>
-  r -> CategoryMap c -> ParamFilters -> [ValueRefine c] ->
+  r -> CategoryMap c -> ParamValues -> ParamFilters -> [ValueRefine c] ->
   [ValueDefine c] -> [ScopedFunction c] -> m [ScopedFunction c]
-mergeFunctions r tm fm rs ds fs = do
+mergeFunctions r tm pm fm rs ds fs = do
   inheritValue <- fmap concat $ mapErrorsM (getRefinesFuncs tm) rs
   inheritType  <- fmap concat $ mapErrorsM (getDefinesFuncs tm) ds
   let inheritByName  = Map.fromListWith (++) $ map (\f -> (sfName f,[f])) $ inheritValue ++ inheritType
   let explicitByName = Map.fromListWith (++) $ map (\f -> (sfName f,[f])) fs
   let allNames = Set.toList $ Set.union (Map.keysSet inheritByName) (Map.keysSet explicitByName)
   mapErrorsM (mergeByName r fm inheritByName explicitByName) allNames where
-    getRefinesFuncs tm2 ra@(ValueRefine c (TypeInstance n ts2)) = flip reviseErrorM (show ra) $ do
+    getRefinesFuncs tm2 (ValueRefine c (TypeInstance n ts2)) = do
       (_,t) <- getValueCategory tm2 (c,n)
       let ps = map vpParam $ getCategoryParams t
       let fs2 = getCategoryFunctions t
       paired <- processPairs alwaysPair (Positional ps) ts2
       let assigned = Map.fromList paired
-      mapErrorsM (uncheckedSubFunction assigned) fs2
-    getDefinesFuncs tm2 da@(ValueDefine c (DefinesInstance n ts2)) = flip reviseErrorM (show da) $  do
+      mapErrorsM (subFunction assigned) fs2
+    getDefinesFuncs tm2 (ValueDefine c (DefinesInstance n ts2)) = do
       (_,t) <- getInstanceCategory tm2 (c,n)
       let ps = map vpParam $ getCategoryParams t
       let fs2 = getCategoryFunctions t
       paired <- processPairs alwaysPair (Positional ps) ts2
       let assigned = Map.fromList paired
-      mapErrorsM (uncheckedSubFunction assigned) fs2
+      mapErrorsM (subFunction assigned) fs2
+    -- uncheckedSubFunction fixes params so that subsequent substitutions of the
+    -- function's own params can't cause a name clash. unfixFunctionParams
+    -- un-fixes them so that actual substitution later will succeed.
+    subFunction as = uncheckedSubFunction as >=> return . unfixFunctionParams
     mergeByName r2 fm2 im em n =
       tryMerge r2 fm2 n (n `Map.lookup` im) (n `Map.lookup` em)
     -- Inherited without an override.
@@ -849,7 +860,7 @@ mergeFunctions r tm fm rs ds fs = do
                                 "\n  ->\n" ++ show f1 ++ "\n---\n") $ do
                 f1' <- parsedToFunctionType f1
                 f2' <- parsedToFunctionType f2
-                checkFunctionConvert r3 fm3 f2' f1'
+                checkFunctionConvert r3 fm3 pm f2' f1'
 
 data FunctionName =
   FunctionName {
@@ -937,11 +948,11 @@ parsedToFunctionType (ScopedFunction c n _ _ as rs ps fa _) = do
            _ -> []
 
 uncheckedSubFunction :: (Show c, MergeableM m, CompileErrorM m) =>
-  Map.Map ParamName GeneralInstance -> ScopedFunction c -> m (ScopedFunction c)
+  ParamValues -> ScopedFunction c -> m (ScopedFunction c)
 uncheckedSubFunction pa ff@(ScopedFunction c n t s as rs ps fa ms) =
   flip reviseErrorM ("In function:\n---\n" ++ show ff ++ "\n---\n") $ do
-    let fixed = Map.fromList $ map (\n2 -> (n2,SingleType $ JustParamName n2)) $ map vpParam $ pValues ps
-    let pa' = Map.union pa fixed
+    let unresolved = Map.fromList $ map (\n2 -> (n2,SingleType $ JustParamName False n2)) $ map vpParam $ pValues ps
+    let pa' = (fmap fixTypeParams pa) `Map.union` unresolved
     as' <- fmap Positional $ mapErrorsM (subPassed pa') $ pValues as
     rs' <- fmap Positional $ mapErrorsM (subPassed pa') $ pValues rs
     fa' <- mapErrorsM (subFilter pa') fa
@@ -955,9 +966,27 @@ uncheckedSubFunction pa ff@(ScopedFunction c n t s as rs ps fa ms) =
         f' <- uncheckedSubFilter (getValueForParam pa2) f
         return $ ParamFilter c2 n2 f'
 
+unfixFunctionParams :: ScopedFunction c -> ScopedFunction c
+unfixFunctionParams (ScopedFunction c n t s as rs ps fa ms) = updated where
+  updated = ScopedFunction c n t s as2 rs2 ps fa2 ms2
+  as2 = fmap unfixPassed as
+  rs2 = fmap unfixPassed rs
+  fa2 = map unfixFilter fa
+  ms2 = map unfixFunctionParams ms
+  unfixPassed (PassedValue c2 (ValueType r t2)) = PassedValue c2 (ValueType r (unfixTypeParams t2))
+  unfixFilter (ParamFilter c2 n2 (TypeFilter d (JustTypeInstance t2))) =
+    ParamFilter c2 n2 (TypeFilter d (JustTypeInstance (unfixInstance t2)))
+  unfixFilter (ParamFilter c2 n2 (TypeFilter d (JustParamName _ n3))) =
+    ParamFilter c2 n2 (TypeFilter d (JustParamName False n3))
+  unfixFilter (ParamFilter c2 n2 (DefinesFilter t2)) =
+    ParamFilter c2 n2 (DefinesFilter (unfixDefines t2))
+  unfixFilter f = f
+  unfixInstance (TypeInstance    t2 ps2) = TypeInstance    t2 (fmap unfixTypeParams ps2)
+  unfixDefines  (DefinesInstance t2 ps2) = DefinesInstance t2 (fmap unfixTypeParams ps2)
+
 inferParamTypes :: (MergeableM m, CompileErrorM m, TypeResolver r) =>
-  r -> ParamFilters -> ParamFilters -> Map.Map ParamName GeneralInstance ->
-  [(ValueType,ValueType)] -> m (Map.Map ParamName GeneralInstance)
+  r -> ParamFilters -> ParamFilters -> ParamValues ->
+  [(ValueType,ValueType)] -> m (ParamValues)
 inferParamTypes r f ff ps ts = do
   ts2 <- mapErrorsM subAll ts
   ff2 <- fmap Map.fromList $ mapErrorsM filterSub $ Map.toList ff
@@ -968,10 +997,10 @@ inferParamTypes r f ff ps ts = do
   let ga = Map.fromList $ zip (map itgParam gs4) (map itgGuess gs4)
   return $ ga `Map.union` ps where
     subAll (t1,t2) = do
-      t2' <- uncheckedSubValueType (weakGetValueForParam ps) t2
+      t2' <- uncheckedSubValueType (getValueForParam ps) t2
       return (t1,t2')
     filterSub (k,fs) = do
-      fs' <- mapErrorsM (uncheckedSubFilter (weakGetValueForParam ps)) fs
+      fs' <- mapErrorsM (uncheckedSubFilter (getValueForParam ps)) fs
       return (k,fs')
     filtersToGuess f2 (SingleType (JustInferredType p)) =
       case p `Map.lookup` f2 of

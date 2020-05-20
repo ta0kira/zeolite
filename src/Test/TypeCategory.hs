@@ -1148,7 +1148,7 @@ checkInferenceCommon check tm pa is ts gs = checked `reviseErrorM` context where
   weakLookup tm2 n =
     case n `Map.lookup` tm2 of
          Just t  -> return t
-         Nothing -> return $ SingleType $ JustParamName n
+         Nothing -> return $ SingleType $ JustParamName True n
   filterSub im (k,fs) = do
     fs' <- mapErrorsM (uncheckedSubFilter (weakLookup im)) fs
     return (k,fs')
