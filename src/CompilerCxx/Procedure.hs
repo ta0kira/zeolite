@@ -822,7 +822,7 @@ compileFunctionCall e f (FunctionCall c _ ps es) = flip reviseErrorStateT errorC
   where
     errorContext = "In call to " ++ show (sfName f) ++ " at " ++ formatFullContext c
     backgroundMessage (n,(InferredInstance c2),t) =
-      compileBackgroundM $ "Param " ++ show n ++ " (from " ++ show (sfType f) ++ "." ++
+      compileBackgroundM $ "Parameter " ++ show n ++ " (from " ++ show (sfType f) ++ "." ++
         show (sfName f) ++ ") inferred as " ++ show t ++ " at " ++ formatFullContext c2
     backgroundMessage _ = return ()
     assemble Nothing _ ValueScope ps2 es2 =

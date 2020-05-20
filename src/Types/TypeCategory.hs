@@ -987,7 +987,7 @@ inferParamTypes r f ff ps ts = do
 mergeInferredTypes :: (MergeableM m, CompileErrorM m, TypeResolver r) =>
   r -> ParamFilters -> MergeTree InferredTypeGuess -> m [InferredTypeGuess]
 mergeInferredTypes r f = reduceMergeTree anyOp allOp leafOp where
-  leafOp i = noInferred (itgGuess i) >> return [i]
+  leafOp i = noInferred i >> return [i]
   anyOp = mergeCommon anyCheck
   allOp = mergeCommon allCheck
   mergeCommon check is = do
@@ -1000,10 +1000,12 @@ mergeInferredTypes r f = reduceMergeTree anyOp allOp leafOp where
          [i2] -> return [i2]
          is2  -> compileErrorM $ "Could not reconcile guesses for " ++ show i ++
                                  ": " ++ show is2
-  noInferred (TypeMerge _ ts) = mergeAllM $ map noInferred ts
-  noInferred (SingleType (JustTypeInstance (TypeInstance _ (Positional ts)))) = mergeAllM $ map noInferred ts
-  noInferred (SingleType (JustInferredType i)) = compileErrorM $ "Failed to infer " ++ show i
-  noInferred _ = return ()
+  noInferred (InferredTypeGuess n t _) =
+    checkInferred t `reviseErrorM` ("Guess " ++ show t ++ " for parameter " ++ show n ++ " contains inferred types")
+  checkInferred (TypeMerge _ ts) = mergeAllM $ map checkInferred ts
+  checkInferred (SingleType (JustTypeInstance (TypeInstance _ (Positional ts)))) = mergeAllM $ map checkInferred ts
+  checkInferred (SingleType (JustInferredType _)) = compileErrorM ""
+  checkInferred _ = return ()
   anyCheck (InferredTypeGuess _ g1 v1) (InferredTypeGuess _ g2 _) =
     -- Find the least-general guess: If g1 can be replaced with g2, prefer g1.
     noInferredTypes $ checkGeneralMatch r f v1 g1 g2

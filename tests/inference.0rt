@@ -248,7 +248,7 @@ concrete Test {
 
 testcase "inference from filter including param" {
   error
-  require "Failed to infer #x"
+  require "#x.+inferred"
 }
 
 concrete Type<#x> {
