@@ -59,12 +59,20 @@ tests = [
     checkError "message\n  error\n" (compileErrorM "error" `reviseErrorM` "message" :: CompileInfoIO ()),
 
     checkSuccess 'a' (compileBackgroundM "background" >> return 'a'),
-    checkError   "error\n  background\n" (compileBackgroundM "background" >> compileErrorM "error" :: CompileInfoIO ()),
-    checkError   "error\n" ((resetBackgroundM $ compileBackgroundM "background") >> compileErrorM "error" :: CompileInfoIO ()),
-    checkError   "error\n  background\n" (collectAllOrErrorM [compileBackgroundM "background"] >> compileErrorM "error" :: CompileInfoIO [()]),
-    checkError   "error\n  background\n" (collectOneOrErrorM [compileBackgroundM "background"] >> compileErrorM "error" :: CompileInfoIO ()),
-    checkError   "error\n  background\n" (mergeAllM [compileBackgroundM "background"] >> compileErrorM "error" :: CompileInfoIO ()),
-    checkError   "error\n  background\n" (mergeAnyM [compileBackgroundM "background"] >> compileErrorM "error" :: CompileInfoIO ())
+    checkError "error\n  background\n"
+      (compileBackgroundM "background" >> compileErrorM "error" :: CompileInfoIO ()),
+    checkError "error\n  background\n"
+      (collectAllOrErrorM [compileBackgroundM "background"] >> compileErrorM "error" :: CompileInfoIO [()]),
+    checkError "error\n  background\n"
+      (collectOneOrErrorM [compileBackgroundM "background"] >> compileErrorM "error" :: CompileInfoIO ()),
+    checkError "error\n  background\n"
+      (mergeAllM [compileBackgroundM "background"] >> compileErrorM "error" :: CompileInfoIO ()),
+    checkError "error\n  background\n"
+      (mergeAnyM [compileBackgroundM "background"] >> compileErrorM "error" :: CompileInfoIO ()),
+
+    checkSuccess 'a' ((resetBackgroundM $ compileBackgroundM "background") >> return 'a'),
+    checkError "error\n"
+      ((resetBackgroundM $ compileBackgroundM "background") >> compileErrorM "error" :: CompileInfoIO ())
   ]
 
 checkSuccess :: (Eq a, Show a) => a -> CompileInfoIO a -> IO (CompileInfo ())
