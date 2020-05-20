@@ -1,5 +1,14 @@
 # Revision history for zeolite-lang
 
+## 0.7.0.1  -- ????-??-??
+
+### Language
+
+* **[fix]** Fixes an edge-case where type-inference can be influenced by a
+  param filter for a param with the same name in the scope that is calling the
+  function. (For example, having `#x requires Foo` in scope while calling a
+  function that also happens to have a param named `#x`.)
+
 ## 0.7.0.0  -- 2020-05-19
 
 ### Language

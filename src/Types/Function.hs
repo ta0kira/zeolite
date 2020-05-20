@@ -101,16 +101,15 @@ assignFunctionParams :: (MergeableM m, CompileErrorM m, TypeResolver r) =>
 assignFunctionParams r fm ts (FunctionType as rs ps fa) = do
   mergeAllM $ map (validateGeneralInstance r fm) $ pValues ts
   assigned <- fmap Map.fromList $ processPairs alwaysPair ps ts
-  let allAssigned = Map.union assigned (Map.fromList $ map (\n -> (n,SingleType $ JustParamName n)) $ Map.keys fm)
-  fa' <- fmap Positional $ mapErrorsM (assignFilters allAssigned) (pValues fa)
+  fa' <- fmap Positional $ mapErrorsM (assignFilters assigned) (pValues fa)
   processPairs_ (validateAssignment r fm) ts fa'
   as' <- fmap Positional $
-         mapErrorsM (uncheckedSubValueType $ getValueForParam allAssigned) (pValues as)
+         mapErrorsM (uncheckedSubValueType $ weakGetValueForParam assigned) (pValues as)
   rs' <- fmap Positional $
-         mapErrorsM (uncheckedSubValueType $ getValueForParam allAssigned) (pValues rs)
+         mapErrorsM (uncheckedSubValueType $ weakGetValueForParam assigned) (pValues rs)
   return $ FunctionType as' rs' (Positional []) (Positional [])
   where
-    assignFilters fm2 fs = mapErrorsM (uncheckedSubFilter $ getValueForParam fm2) fs
+    assignFilters fm2 fs = mapErrorsM (uncheckedSubFilter $ weakGetValueForParam fm2) fs
 
 checkFunctionConvert :: (MergeableM m, CompileErrorM m, TypeResolver r) =>
   r -> ParamFilters -> FunctionType -> FunctionType -> m ()

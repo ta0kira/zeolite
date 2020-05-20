@@ -956,22 +956,22 @@ uncheckedSubFunction pa ff@(ScopedFunction c n t s as rs ps fa ms) =
         return $ ParamFilter c2 n2 f'
 
 inferParamTypes :: (MergeableM m, CompileErrorM m, TypeResolver r) =>
-  r -> ParamFilters -> Map.Map ParamName GeneralInstance ->
+  r -> ParamFilters -> ParamFilters -> Map.Map ParamName GeneralInstance ->
   [(ValueType,ValueType)] -> m (Map.Map ParamName GeneralInstance)
-inferParamTypes r f ps ts = do
+inferParamTypes r f ff ps ts = do
   ts2 <- mapErrorsM subAll ts
-  f2  <- fmap Map.fromList $ mapErrorsM filterSub $ Map.toList f
-  gs  <- mergeAllM $ map (uncurry $ checkValueTypeMatch r f2) ts2
-  let gs2 = concat $ map (filtersToGuess f2) $ Map.elems ps
+  ff2 <- fmap Map.fromList $ mapErrorsM filterSub $ Map.toList ff
+  gs  <- mergeAllM $ map (uncurry $ checkValueTypeMatch r f) ts2
+  let gs2 = concat $ map (filtersToGuess ff2) $ Map.elems ps
   let gs3 = mergeAll $ gs:(map mergeLeaf gs2)
-  gs4 <- mergeInferredTypes r f2 gs3
+  gs4 <- mergeInferredTypes r f gs3
   let ga = Map.fromList $ zip (map itgParam gs4) (map itgGuess gs4)
   return $ ga `Map.union` ps where
     subAll (t1,t2) = do
-      t2' <- uncheckedSubValueType (getValueForParam ps) t2
+      t2' <- uncheckedSubValueType (weakGetValueForParam ps) t2
       return (t1,t2')
     filterSub (k,fs) = do
-      fs' <- mapErrorsM (uncheckedSubFilter (getValueForParam ps)) fs
+      fs' <- mapErrorsM (uncheckedSubFilter (weakGetValueForParam ps)) fs
       return (k,fs')
     filtersToGuess f2 (SingleType (JustInferredType p)) =
       case p `Map.lookup` f2 of

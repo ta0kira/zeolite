@@ -62,6 +62,7 @@ module Types.TypeInstance (
   validateInstanceVariance,
   validateTypeFilter,
   validateTypeInstance,
+  weakGetValueForParam,
 ) where
 
 import Control.Monad ((>=>),when)
@@ -289,6 +290,13 @@ getValueForParam pa n =
         (Just x) -> return x
         _ -> compileErrorM $ "Param " ++ show n ++ " does not exist"
 
+weakGetValueForParam :: (CompileErrorM m) =>
+  Map.Map ParamName GeneralInstance -> ParamName -> m GeneralInstance
+weakGetValueForParam pa n =
+  case n `Map.lookup` pa of
+        (Just x) -> return x
+        _ -> return $ SingleType $ JustParamName n
+
 noInferredTypes :: (MergeableM m, CompileErrorM m) => m (MergeTree InferredTypeGuess) -> m ()
 noInferredTypes = id >=> reduceMergeTree return return message where
   message i = compileErrorM $ "Type guess " ++ show i ++ " not allowed here"
@@ -308,9 +316,8 @@ checkValueTypeMatch r f ts1@(ValueType r1 t1) ts2@(ValueType r2 t2)
 checkGeneralMatch :: (MergeableM m, CompileErrorM m, TypeResolver r) =>
   r -> ParamFilters -> Variance ->
   GeneralInstance -> GeneralInstance -> m (MergeTree InferredTypeGuess)
-checkGeneralMatch r f v (SingleType (JustInferredType p1)) t2 = do
-  compileWarningM $ "Treating inferred parameter " ++ show p1 ++ " on the left as a regular parameter"
-  checkGeneralMatch r f v (SingleType $ JustParamName p1) t2
+checkGeneralMatch _ _ _ (SingleType (JustInferredType p1)) _ =
+  compileErrorM $ "Inferred parameter " ++ show p1 ++ " is not allowed on the left"
 checkGeneralMatch _ _ v t1 (SingleType (JustInferredType p2)) =
   return $ mergeLeaf $ InferredTypeGuess p2 t1 v
 checkGeneralMatch r f Invariant ts1 ts2 =
@@ -327,9 +334,8 @@ checkGeneralMatch r f v ts1 ts2 = checkGeneralType (checkSingleMatch r f v) ts1 
 checkSingleMatch :: (MergeableM m, CompileErrorM m, TypeResolver r) =>
   r -> ParamFilters -> Variance ->
   TypeInstanceOrParam -> TypeInstanceOrParam -> m (MergeTree InferredTypeGuess)
-checkSingleMatch r f v (JustInferredType p1) t2 = do
-  compileWarningM $ "Treating inferred parameter " ++ show p1 ++ " on the left as a regular parameter"
-  checkSingleMatch r f v (JustParamName p1) t2
+checkSingleMatch _ _ _ (JustInferredType p1) _ =
+  compileErrorM $ "Inferred parameter " ++ show p1 ++ " is not allowed on the left"
 checkSingleMatch _ _ v t1 (JustInferredType p2) =
   return $ mergeLeaf $ InferredTypeGuess p2 (SingleType t1) v
 checkSingleMatch r f v (JustTypeInstance t1) (JustTypeInstance t2) =

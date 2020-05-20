@@ -217,3 +217,30 @@ define Test {
 concrete Test {
   @type run () -> ()
 }
+
+
+testcase "clashing param filter in the same scope" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+    \ get1<Int>()
+  }
+
+  @type get1<#x>
+    #x requires Int
+  () -> ()
+  get1 () {
+    String value <- get2<?>("message")
+  }
+
+  @type get2<#x> (#x) -> (#x)
+  get2 (x) {
+    return x
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
