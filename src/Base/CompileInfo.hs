@@ -161,7 +161,7 @@ instance (Applicative m, Monad m) => Applicative (CompileInfoT m) where
          (i,CompileFail w e) ->
            return $ CompileFail (getWarnings i ++ w) (addBackground (getBackground i) e)
          (CompileSuccess w1 b1 f2,CompileSuccess w2 b2 d) ->
-           return $ CompileSuccess (w1 ++ w2) (b1 ++ b2) (f2 d)
+           return $ CompileSuccess (w1 ++ w2) (b2 ++ b1) (f2 d)
 
 instance Monad m => Monad (CompileInfoT m) where
   x >>= f = CompileInfoT $ do
@@ -205,6 +205,11 @@ instance Monad m => CompileErrorM (CompileInfoT m) where
          x2                                   -> return x2
   compileWarningM w = CompileInfoT (return $ CompileSuccess [w] [] ())
   compileBackgroundM b = CompileInfoT (return $ CompileSuccess [] [b] ())
+  resetBackgroundM x = CompileInfoT $ do
+    x' <- citState x
+    case x' of
+         CompileSuccess w _ d -> return $ CompileSuccess w [] d
+         x2                   -> return x2
 
 instance Monad m => MergeableM (CompileInfoT m) where
   mergeAnyM xs = CompileInfoT $ do
@@ -229,7 +234,7 @@ getBackground (CompileSuccess _ b _) = b
 
 includeBackground :: [String] -> CompileInfoState a -> CompileInfoState a
 includeBackground b  (CompileFail w e)       = CompileFail w (addBackground b e)
-includeBackground b1 (CompileSuccess w b2 d) = CompileSuccess w (b1 ++ b2) d
+includeBackground b1 (CompileSuccess w b2 d) = CompileSuccess w (b2 ++ b1) d
 
 addBackground :: [String] -> CompileMessage -> CompileMessage
 addBackground b (CompileMessage e es) = CompileMessage e (es ++ map (flip CompileMessage []) b)

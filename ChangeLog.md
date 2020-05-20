@@ -9,6 +9,9 @@
   function. (For example, having `#x requires Foo` in scope while calling a
   function that also happens to have a param named `#x`.)
 
+* **[behavior]** Adds inferred-type assignments to error messages related to
+  expressions containing inferred types.
+
 ## 0.7.0.0  -- 2020-05-19
 
 ### Language

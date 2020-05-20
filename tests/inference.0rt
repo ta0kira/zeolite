@@ -194,7 +194,7 @@ concrete Test {
 
 testcase "inference from filter" {
   error
-  require "Formatted"
+  require "#x.+get.+Formatted"
   require "String"
   require "value2"
   exclude "value1"

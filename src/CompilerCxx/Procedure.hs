@@ -34,7 +34,7 @@ module CompilerCxx.Procedure (
 
 import Control.Applicative ((<|>))
 import Control.Monad (when)
-import Control.Monad.Trans.State (execStateT,get,put,runStateT)
+import Control.Monad.Trans.State (execStateT,get,mapStateT,put,runStateT)
 import Control.Monad.Trans (lift)
 import Data.List (intercalate)
 import qualified Data.Map as Map
@@ -146,7 +146,7 @@ compileCondition ctx c e = do
      else return $ predTraceContext c ++ e'
   where
     compile = flip reviseErrorStateT ("In condition at " ++ formatFullContext c) $ do
-      (ts,e') <- compileExpression e
+      (ts,e') <- mapStateT resetBackgroundM $ compileExpression e
       lift $ checkCondition ts
       return $ useAsUnboxed PrimBool e'
       where
@@ -160,8 +160,11 @@ compileProcedure :: (Show c, CompileErrorM m, MergeableM m,
                      CompilerContext c m [String] a) =>
   a -> Procedure c -> CompilerState a m a
 compileProcedure ctx (Procedure _ ss) = do
-  ctx' <- lift $ execStateT (sequence $ map (\s -> warnUnreachable s >> compileStatement s) ss) ctx
+  ctx' <- lift $ execStateT (sequence $ map compileOne ss) ctx
   return ctx' where
+    compileOne s = do
+      warnUnreachable s
+      mapStateT resetBackgroundM $ compileStatement s
     warnUnreachable s = do
       unreachable <- csIsUnreachable
       lift $ when unreachable $
@@ -803,6 +806,8 @@ compileFunctionCall e f (FunctionCall c _ ps es) = flip reviseErrorStateT errorC
   es' <- sequence $ map compileExpression $ pValues es
   (ts,es'') <- getValues es'
   ps2 <- lift $ guessParamsFromArgs r fa f ps (Positional ts)
+  -- NOTE: mergeAllM and mapErrorsM will discard the background => use sequence.
+  _ <- lift $ sequence $ map backgroundMessage $ zip3 (map vpParam $ pValues $ sfParams f) (pValues ps) (pValues ps2)
   f' <- lift $ parsedToFunctionType f
   f'' <- lift $ assignFunctionParams r fa ps2 f'
   -- Called an extra time so arg count mismatches have reasonable errors.
@@ -816,6 +821,10 @@ compileFunctionCall e f (FunctionCall c _ ps es) = flip reviseErrorStateT errorC
   return $ (ftReturns f'',OpaqueMulti call)
   where
     errorContext = "In call to " ++ show (sfName f) ++ " at " ++ formatFullContext c
+    backgroundMessage (n,(InferredInstance c2),t) =
+      compileBackgroundM $ "Param " ++ show n ++ " (from " ++ show (sfType f) ++ "." ++
+        show (sfName f) ++ ") inferred as " ++ show t ++ " at " ++ formatFullContext c2
+    backgroundMessage _ = return ()
     assemble Nothing _ ValueScope ps2 es2 =
       return $ callName (sfName f) ++ "(Var_self, " ++ ps2 ++ ", " ++ es2 ++ ")"
     assemble Nothing scoped _ ps2 es2 =
