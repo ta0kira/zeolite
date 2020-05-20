@@ -48,6 +48,7 @@ module Types.TypeInstance (
   uncheckedSubInstance,
   uncheckedSubValueType,
   getValueForParam,
+  hasInferredParams,
   isBuiltinCategory,
   isDefinesFilter,
   isRequiresFilter,
@@ -239,6 +240,14 @@ isDefinesFilter _                 = False
 
 viewTypeFilter :: ParamName -> TypeFilter -> String
 viewTypeFilter n f = show n ++ " " ++ show f
+
+hasInferredParams :: GeneralInstance -> Bool
+hasInferredParams (TypeMerge _ ts) =
+  any hasInferredParams ts
+hasInferredParams (SingleType (JustTypeInstance (TypeInstance _ (Positional ts)))) =
+  any hasInferredParams ts
+hasInferredParams (SingleType (JustInferredType _)) = True
+hasInferredParams _                                 = False
 
 type InstanceParams = Positional GeneralInstance
 type InstanceVariances = Positional Variance

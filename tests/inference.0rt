@@ -248,7 +248,7 @@ concrete Test {
 
 testcase "inference from filter including param" {
   error
-  require "#x.+inferred"
+  require "#x.+get.+Type<String>"
 }
 
 concrete Type<#x> {
@@ -263,7 +263,7 @@ define Type {
 
 define Test {
   run () {
-    String value2 <- get<?>(Type<String>$create())
+    Type<String> value2 <- get<?>(Type<String>$create())
   }
 
   @type get<#x>

@@ -978,10 +978,12 @@ inferParamTypes r f ff ps ts = do
            Nothing -> []
            Just fs -> concat $ map (filterToGuess p) fs
     filtersToGuess _ _ = []
-    filterToGuess p (TypeFilter FilterRequires t) =
-      [InferredTypeGuess p (SingleType t) Contravariant]
-    filterToGuess p (TypeFilter FilterAllows t) =
-      [InferredTypeGuess p (SingleType t) Covariant]
+    filterToGuess p (TypeFilter FilterRequires t)
+      | hasInferredParams (SingleType t) = []
+      | otherwise = [InferredTypeGuess p (SingleType t) Contravariant]
+    filterToGuess p (TypeFilter FilterAllows t)
+      | hasInferredParams (SingleType t) = []
+      | otherwise = [InferredTypeGuess p (SingleType t) Covariant]
     filterToGuess _ _ = []
 
 mergeInferredTypes :: (MergeableM m, CompileErrorM m, TypeResolver r) =>
@@ -1001,11 +1003,8 @@ mergeInferredTypes r f = reduceMergeTree anyOp allOp leafOp where
          is2  -> compileErrorM $ "Could not reconcile guesses for " ++ show i ++
                                  ": " ++ show is2
   noInferred (InferredTypeGuess n t _) =
-    checkInferred t `reviseErrorM` ("Guess " ++ show t ++ " for parameter " ++ show n ++ " contains inferred types")
-  checkInferred (TypeMerge _ ts) = mergeAllM $ map checkInferred ts
-  checkInferred (SingleType (JustTypeInstance (TypeInstance _ (Positional ts)))) = mergeAllM $ map checkInferred ts
-  checkInferred (SingleType (JustInferredType _)) = compileErrorM ""
-  checkInferred _ = return ()
+    when (hasInferredParams t) $
+      compileErrorM $ "Guess " ++ show t ++ " for parameter " ++ show n ++ " contains inferred types"
   anyCheck (InferredTypeGuess _ g1 v1) (InferredTypeGuess _ g2 _) =
     -- Find the least-general guess: If g1 can be replaced with g2, prefer g1.
     noInferredTypes $ checkGeneralMatch r f v1 g1 g2
