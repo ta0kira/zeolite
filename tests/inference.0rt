@@ -219,6 +219,66 @@ concrete Test {
 }
 
 
+testcase "inference from filter without param" {
+  error
+  require "#x.+get.+Formatted"
+  require "String"
+  require "value2"
+  exclude "value1"
+}
+
+define Test {
+  run () {
+    Formatted value1 <- get<Formatted,?>("value")
+    String    value2 <- get<Formatted,?>("value")
+  }
+
+  @type get<#y,#x>
+    #x allows #y
+  (#x) -> (#x)
+  get (x) {
+    return x
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "inference from filter including param" {
+  error
+  require "Failed to infer #x"
+}
+
+concrete Type<#x> {
+  @type create () -> (Type<#x>)
+}
+
+define Type {
+  create () {
+    return Type<#x>{ }
+  }
+}
+
+define Test {
+  run () {
+    String value2 <- get<?>(Type<String>$create())
+  }
+
+  @type get<#x>
+    #x allows Type<#x>
+  (#x) -> (#x)
+  get (x) {
+    return x
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
 testcase "clashing param filter in the same scope" {
   success Test$run()
 }
