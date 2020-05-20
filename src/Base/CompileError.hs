@@ -49,6 +49,7 @@ class Monad m => CompileErrorM m where
   reviseErrorM :: m a -> String -> m a
   reviseErrorM e _ = e
   compileWarningM :: String -> m ()
+  compileBackgroundM :: String -> m ()
 
 mapErrorsM :: CompileErrorM m => (a -> m b) -> [a] -> m [b]
 mapErrorsM f = collectAllOrErrorM . map f

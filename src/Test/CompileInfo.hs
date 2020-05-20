@@ -53,7 +53,14 @@ tests = [
 
     checkSuccess ['a','b']  (sequence [return 'a',return 'b']),
     checkSuccess []         (sequence [] :: CompileInfoIO [Char]),
-    checkError   "error1\n" (sequence [compileErrorM "error1",return 'b',compileErrorM "error2"])
+    checkError   "error1\n" (sequence [compileErrorM "error1",return 'b',compileErrorM "error2"]),
+
+    checkSuccess 'a' (compileBackgroundM "background" >> return 'a'),
+    checkError   "error\n  background\n" (compileBackgroundM "background" >> compileErrorM "error" :: CompileInfoIO ()),
+    checkError   "error\n" (collectAllOrErrorM [compileBackgroundM "background"] >> compileErrorM "error" :: CompileInfoIO [()]),
+    checkError   "error\n" (collectOneOrErrorM [compileBackgroundM "background"] >> compileErrorM "error" :: CompileInfoIO ()),
+    checkError   "error\n" (mergeAllM [compileBackgroundM "background"] >> compileErrorM "error" :: CompileInfoIO ()),
+    checkError   "error\n" (mergeAnyM [compileBackgroundM "background"] >> compileErrorM "error" :: CompileInfoIO ())
   ]
 
 checkSuccess :: (Eq a, Show a) => a -> CompileInfoIO a -> IO (CompileInfo ())
