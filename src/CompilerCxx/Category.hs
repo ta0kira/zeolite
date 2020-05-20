@@ -388,7 +388,7 @@ compileConcreteDefinition ta em ns rs dd@(DefinedCategory c n pi _ _ fi ms _ fs)
       let initPassed = map (\(i,p) -> paramName p ++ "(*std::get<" ++ show i ++ ">(params))") $ zip ([0..] :: [Int]) ps2
       let allInit = intercalate ", " $ initParent:initPassed
       ctx <- getContextForInit ta em t dd TypeScope
-      initMembers <- runDataCompiler (sequence $ map initMember ms2) ctx
+      initMembers <- runDataCompiler (sequence $ map compileRegularInit ms2) ctx
       mergeAllM [
           return $ onlyCode $ typeName n ++ "(" ++ allArgs ++ ") : " ++ allInit ++ " {",
           return $ indentCompiled $ onlyCodes $ getCycleCheck (typeName n),
@@ -415,11 +415,6 @@ compileConcreteDefinition ta em ns rs dd@(DefinedCategory c n pi _ _ fi ms _ fs)
       validateGeneralInstance r filters (vtType $ dmType m) `reviseErrorM`
         ("In creation of " ++ show (dmName m) ++ " at " ++ formatFullContext (dmContext m))
       return $ onlyCode $ variableLazyType (dmType m) ++ " " ++ variableName (dmName m) ++ ";"
-    initMember (DefinedMember _ _ _ _ Nothing) = return mergeDefault
-    initMember (DefinedMember c2 s t n2 (Just e)) = do
-      csAddVariable c2 n2 (VariableValue c2 s t True)
-      let assign = Assignment c2 (Positional [ExistingVariable (InputValue c2 n2)]) e
-      compileStatement assign
     categoryDispatch fs2 =
       return $ onlyCodes $ [
           "ReturnTuple Dispatch(" ++

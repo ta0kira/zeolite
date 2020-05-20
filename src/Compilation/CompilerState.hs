@@ -60,6 +60,7 @@ module Compilation.CompilerState (
   csUpdateAssigned,
   csWrite,
   getCleanContext,
+  resetBackgroundStateT,
   reviseErrorStateT,
   runDataCompiler,
 ) where
@@ -150,6 +151,9 @@ instance Show c => Show (VariableValue c) where
 
 reviseErrorStateT :: (CompileErrorM m) => CompilerState a m b -> String -> CompilerState a m b
 reviseErrorStateT x s = mapStateT (`reviseErrorM` s) x
+
+resetBackgroundStateT :: (CompileErrorM m) => CompilerState a m b -> CompilerState a m b
+resetBackgroundStateT x = mapStateT resetBackgroundM x
 
 csCurrentScope :: CompilerContext c m s a => CompilerState a m SymbolScope
 csCurrentScope = fmap ccCurrentScope get >>= lift

@@ -27,14 +27,13 @@ module CompilerCxx.Procedure (
   categoriesFromRefine,
   compileExecutableProcedure,
   compileMainProcedure,
-  compileExpression,
   compileLazyInit,
-  compileStatement,
+  compileRegularInit,
 ) where
 
 import Control.Applicative ((<|>))
 import Control.Monad (when)
-import Control.Monad.Trans.State (execStateT,get,mapStateT,put,runStateT)
+import Control.Monad.Trans.State (execStateT,get,put,runStateT)
 import Control.Monad.Trans (lift)
 import Data.List (intercalate)
 import qualified Data.Map as Map
@@ -138,7 +137,7 @@ compileCondition :: (Show c, CompileErrorM m, MergeableM m,
                      CompilerContext c m [String] a) =>
   a -> [c] -> Expression c -> CompilerState a m String
 compileCondition ctx c e = do
-  (e',ctx') <- lift $ runStateT compile ctx
+  (e',ctx') <- resetBackgroundStateT $ lift $ runStateT compile ctx
   lift (ccGetRequired ctx') >>= csRequiresTypes
   noTrace <- csGetNoTrace
   if noTrace
@@ -146,7 +145,7 @@ compileCondition ctx c e = do
      else return $ predTraceContext c ++ e'
   where
     compile = flip reviseErrorStateT ("In condition at " ++ formatFullContext c) $ do
-      (ts,e') <- mapStateT resetBackgroundM $ compileExpression e
+      (ts,e') <- compileExpression e
       lift $ checkCondition ts
       return $ useAsUnboxed PrimBool e'
       where
@@ -164,7 +163,8 @@ compileProcedure ctx (Procedure _ ss) = do
   return ctx' where
     compileOne s = do
       warnUnreachable s
-      mapStateT resetBackgroundM $ compileStatement s
+      s' <- resetBackgroundStateT $ compileStatement s
+      return s'
     warnUnreachable s = do
       unreachable <- csIsUnreachable
       lift $ when unreachable $
@@ -292,11 +292,20 @@ compileStatement (Assignment c as e) = flip reviseErrorStateT message $ do
     assignMulti _ = return ()
 compileStatement (NoValueExpression _ v) = compileVoidExpression v
 
+compileRegularInit :: (Show c, CompileErrorM m, MergeableM m,
+                       CompilerContext c m [String] a) =>
+  DefinedMember c -> CompilerState a m ()
+compileRegularInit (DefinedMember _ _ _ _ Nothing) = return mergeDefault
+compileRegularInit (DefinedMember c2 s t n2 (Just e)) = resetBackgroundStateT $ do
+  csAddVariable c2 n2 (VariableValue c2 s t True)
+  let assign = Assignment c2 (Positional [ExistingVariable (InputValue c2 n2)]) e
+  compileStatement assign
+
 compileLazyInit :: (Show c, CompileErrorM m, MergeableM m,
                    CompilerContext c m [String] a) =>
   DefinedMember c -> CompilerState a m ()
 compileLazyInit (DefinedMember _ _ _ _ Nothing) = return mergeDefault
-compileLazyInit (DefinedMember c _ t1 n (Just e)) = do
+compileLazyInit (DefinedMember c _ t1 n (Just e)) = resetBackgroundStateT $ do
   (ts,e') <- compileExpression e
   when (length (pValues ts) /= 1) $
     lift $ compileErrorM $ "Expected single return in initializer" ++ formatFullContextBrace (getExpressionContext e)
@@ -806,8 +815,7 @@ compileFunctionCall e f (FunctionCall c _ ps es) = flip reviseErrorStateT errorC
   es' <- sequence $ map compileExpression $ pValues es
   (ts,es'') <- getValues es'
   ps2 <- lift $ guessParamsFromArgs r fa f ps (Positional ts)
-  -- NOTE: mergeAllM and mapErrorsM will discard the background => use sequence.
-  _ <- lift $ sequence $ map backgroundMessage $ zip3 (map vpParam $ pValues $ sfParams f) (pValues ps) (pValues ps2)
+  lift $ mergeAllM $ map backgroundMessage $ zip3 (map vpParam $ pValues $ sfParams f) (pValues ps) (pValues ps2)
   f' <- lift $ parsedToFunctionType f
   f'' <- lift $ assignFunctionParams r fa ps2 f'
   -- Called an extra time so arg count mismatches have reasonable errors.

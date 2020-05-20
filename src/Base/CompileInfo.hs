@@ -161,7 +161,7 @@ instance (Applicative m, Monad m) => Applicative (CompileInfoT m) where
          (i,CompileFail w e) ->
            return $ CompileFail (getWarnings i ++ w) (addBackground (getBackground i) e)
          (CompileSuccess w1 b1 f2,CompileSuccess w2 b2 d) ->
-           return $ CompileSuccess (w1 ++ w2) (b2 ++ b1) (f2 d)
+           return $ CompileSuccess (w1 ++ w2) (b1 ++ b2) (f2 d)
 
 instance Monad m => Monad (CompileInfoT m) where
   x >>= f = CompileInfoT $ do
@@ -189,14 +189,14 @@ instance Monad m => CompileErrorM (CompileInfoT m) where
   collectAllOrErrorM xs = CompileInfoT $ do
     xs' <- sequence $ map citState $ foldr (:) [] xs
     return $ result $ splitErrorsAndData xs' where
-      result ([],xs2,ws) = CompileSuccess ws [] xs2
-      result (es,_,ws)   = CompileFail ws $ CompileMessage "" es
+      result ([],xs2,bs,ws) = CompileSuccess ws bs xs2
+      result (es,_,bs,ws)   = CompileFail ws $ addBackground bs $ CompileMessage "" es
   collectOneOrErrorM xs = CompileInfoT $ do
     xs' <- sequence $ map citState $ foldr (:) [] xs
     return $ result $ splitErrorsAndData xs' where
-      result (_,x:_,ws) = CompileSuccess ws [] x
-      result ([],_,ws)  = CompileFail ws $ CompileMessage "" []
-      result (es,_,ws)  = CompileFail ws $ CompileMessage "" es
+      result (_,x:_,bs,ws) = CompileSuccess ws bs x
+      result ([],_,bs,ws)  = CompileFail ws $ addBackground bs $ CompileMessage "" []
+      result (es,_,bs,ws)  = CompileFail ws $ addBackground bs $ CompileMessage "" es
   reviseErrorM x e2 = CompileInfoT $ do
     x' <- citState x
     case x' of
@@ -215,9 +215,9 @@ instance Monad m => MergeableM (CompileInfoT m) where
   mergeAnyM xs = CompileInfoT $ do
     xs' <- sequence $ map citState $ foldr (:) [] xs
     return $ result $ splitErrorsAndData xs' where
-      result ([],[],ws) = CompileFail ws $ CompileMessage "" []
-      result (es,[],ws) = CompileFail ws $ CompileMessage "" es
-      result (_,xs2,ws) = CompileSuccess ws [] (mergeAny xs2)
+      result ([],[],bs,ws) = CompileFail ws $ addBackground bs $ CompileMessage "" []
+      result (es,[],bs,ws) = CompileFail ws $ addBackground bs $ CompileMessage "" es
+      result (_,xs2,bs,ws) = CompileSuccess ws bs (mergeAny xs2)
   mergeAllM = collectAllOrErrorM >=> return . mergeAll
 
 getWarnings :: CompileInfoState a -> [String]
@@ -229,17 +229,17 @@ prependWarning w (CompileSuccess w2 b d) = CompileSuccess (w ++ w2) b d
 prependWarning w (CompileFail w2 e)      = CompileFail (w ++ w2) e
 
 getBackground :: CompileInfoState a -> [String]
-getBackground (CompileFail _ _)      = []
 getBackground (CompileSuccess _ b _) = b
+getBackground _                      = []
 
 includeBackground :: [String] -> CompileInfoState a -> CompileInfoState a
 includeBackground b  (CompileFail w e)       = CompileFail w (addBackground b e)
-includeBackground b1 (CompileSuccess w b2 d) = CompileSuccess w (b2 ++ b1) d
+includeBackground b1 (CompileSuccess w b2 d) = CompileSuccess w (b1 ++ b2) d
 
 addBackground :: [String] -> CompileMessage -> CompileMessage
 addBackground b (CompileMessage e es) = CompileMessage e (es ++ map (flip CompileMessage []) b)
 
-splitErrorsAndData :: Foldable f => f (CompileInfoState a) -> ([CompileMessage],[a],[String])
-splitErrorsAndData = foldr partition ([],[],[]) where
-  partition (CompileFail w e)      (es,ds,ws) = (e:es,ds,w++ws)
-  partition (CompileSuccess w _ d) (es,ds,ws) = (es,d:ds,w++ws)
+splitErrorsAndData :: Foldable f => f (CompileInfoState a) -> ([CompileMessage],[a],[String],[String])
+splitErrorsAndData = foldr partition ([],[],[],[]) where
+  partition (CompileFail w e)      (es,ds,bs,ws) = (e:es,ds,bs,w++ws)
+  partition (CompileSuccess w b d) (es,ds,bs,ws) = (es,d:ds,b++bs,w++ws)
