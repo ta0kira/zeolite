@@ -300,24 +300,36 @@ compileConcreteDefinition ta em ns rs dd@(DefinedCategory c n pi _ _ fi ms _ fs)
   (_,t) <- getConcreteCategory ta (c,n)
   let r = CategoryResolver ta
   [cp,tp,vp] <- getProcedureScopes ta em dd
-  cf <- collectAllOrErrorM $ applyProcedureScope compileExecutableProcedure cp
-  tf <- collectAllOrErrorM $ applyProcedureScope compileExecutableProcedure tp
-  vf <- collectAllOrErrorM $ applyProcedureScope compileExecutableProcedure vp
+  let (cm,tm,vm) = partitionByScope dmScope ms
+  let filters = getCategoryFilters t
+  let filters2 = fi
+  let allFilters = getFilterMap (getCategoryParams t ++ pi) $ filters ++ filters2
   -- Functions explicitly declared externally.
   let externalFuncs = Set.fromList $ map sfName $ filter ((== n) . sfType) $ getCategoryFunctions t
   -- Functions explicitly declared internally.
   let overrideFuncs = Map.fromList $ map (\f -> (sfName f,f)) fs
   -- Functions only declared internally.
   let internalFuncs = Map.filter (not . (`Set.member` externalFuncs) . sfName) overrideFuncs
-  let (cm,tm,vm) = partitionByScope dmScope ms
-  disallowTypeMembers tm
-  let internalCount = length pi
-  let memberCount = length vm
   let fe = Map.elems internalFuncs
   let allFuncs = getCategoryFunctions t ++ fe
-  let filters = getCategoryFilters t
-  let filters2 = fi
-  let allFilters = getFilterMap (getCategoryParams t ++ pi) $ filters ++ filters2
+  cf <- collectAllOrErrorM $ applyProcedureScope compileExecutableProcedure cp
+  ce <- mergeAllM [
+      categoryConstructor t cm,
+      categoryDispatch allFuncs,
+      return $ mergeAll $ map fst cf,
+      mergeAllM $ map (createMemberLazy r allFilters) cm
+    ]
+  tf <- collectAllOrErrorM $ applyProcedureScope compileExecutableProcedure tp
+  disallowTypeMembers tm
+  te <- mergeAllM [
+      typeConstructor t tm,
+      typeDispatch allFuncs,
+      return $ mergeAll $ map fst tf,
+      mergeAllM $ map (createMember r allFilters) tm
+    ]
+  vf <- collectAllOrErrorM $ applyProcedureScope compileExecutableProcedure vp
+  let internalCount = length pi
+  let memberCount = length vm
   top <- mergeAllM [
       return $ onlyCode $ "class " ++ valueName n ++ ";",
       declareInternalValue n internalCount memberCount
@@ -338,18 +350,6 @@ compileConcreteDefinition ta em ns rs dd@(DefinedCategory c n pi _ _ fi ms _ fs)
       return $ defineValue,
       defineInternalValue n internalCount memberCount
     ] ++ map (return . snd) (cf ++ tf ++ vf)
-  ce <- mergeAllM [
-      categoryConstructor t cm,
-      categoryDispatch allFuncs,
-      return $ mergeAll $ map fst cf,
-      mergeAllM $ map (createMemberLazy r allFilters) cm
-    ]
-  te <- mergeAllM [
-      typeConstructor t tm,
-      typeDispatch allFuncs,
-      return $ mergeAll $ map fst tf,
-      mergeAllM $ map (createMember r allFilters) tm
-    ]
   commonDefineAll t ns rs top bottom ce te fe
   where
     disallowTypeMembers :: (Show c, CompileErrorM m, MergeableM m) =>
