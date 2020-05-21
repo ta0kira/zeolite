@@ -27,6 +27,8 @@ module Base.Mergeable (
   mergeDefaultM,
 ) where
 
+import Data.Map as Map hiding (foldr)
+
 #if MIN_VERSION_base(4,11,0)
 #else
 import Data.Monoid ((<>))
@@ -54,6 +56,10 @@ instance Mergeable () where
 instance Mergeable [a] where
   mergeAny = foldr (++) []
   mergeAll = foldr (++) []
+
+instance (Ord k, Mergeable a) => Mergeable (Map k a) where
+  mergeAny = Map.fromListWith (\x y -> mergeAny [x,y]) . foldr ((++) . Map.toList) []
+  mergeAll = Map.fromListWith (\x y -> mergeAll [x,y]) . foldr ((++) . Map.toList) []
 
 instance MergeableM Maybe where
   mergeAnyM = fmap mergeAny . foldr ((<>) . fmap (:[])) Nothing
