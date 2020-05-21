@@ -1,5 +1,12 @@
 # Revision history for zeolite-lang
 
+## 0.7.0.2  -- 2020-05-21
+
+### Language
+
+* **[fix]** Improves the likelihood of successful type inference when unions,
+  intersections, or filters are used inheritance and with type nesting.
+
 ## 0.7.0.1  -- 2020-05-20
 
 ### Language

@@ -80,6 +80,7 @@ module Types.TypeCategory (
 
 import Control.Arrow (second)
 import Control.Monad (when)
+import Data.Functor.Identity (runIdentity)
 import Data.List (group,groupBy,intercalate,sort,sortBy)
 import qualified Data.Map as Map
 import qualified Data.Set as Set
@@ -998,30 +999,34 @@ inferParamTypes r f ff ps ts = do
       | otherwise = [InferredTypeGuess p (SingleType t) Covariant]
     filterToGuess _ _ = []
 
+separateParamGuesses :: MergeableM m => MergeTree InferredTypeGuess ->
+  m (Map.Map ParamName (MergeTree InferredTypeGuess))
+separateParamGuesses = reduceMergeTree return return (return . toMap) where
+  toMap i = Map.fromList [(itgParam i,mergeLeaf i)]
+
 mergeInferredTypes :: (MergeableM m, CompileErrorM m, TypeResolver r) =>
   r -> ParamFilters -> MergeTree InferredTypeGuess -> m [InferredTypeGuess]
-mergeInferredTypes r f = reduceMergeTree anyOp allOp leafOp where
-  leafOp i = noInferred i >> return [i]
-  anyOp = mergeCommon lessGeneral anyCheck
-  allOp = mergeCommon moreGeneral allCheck
-  mergeCommon order check is = do
-    let ia = Map.fromListWith (++) $ zip (map itgParam is) (map (:[]) is)
-    mergeAllM $ map (tryMerge order check) $ Map.toList ia
-  tryMerge order check (i,is) = do
-    is' <- mergeObjects check $ sortBy order is
-    case is' of
-         []   -> undefined  -- Shouldn't happen.
-         [i2] -> return [i2]
-         is2  -> compileErrorM $ "Could not reconcile guesses for " ++ show i ++
-                                 ": " ++ show is2
-  noInferred (InferredTypeGuess n t _) =
-    when (hasInferredParams t) $
-      compileErrorM $ "Guess " ++ show t ++ " for parameter " ++ show n ++ " contains inferred types"
-  lessGeneral x y = itgVariance y `compare` itgVariance x
-  moreGeneral x y = itgVariance x `compare` itgVariance y
-  anyCheck (InferredTypeGuess _ g1 v1) (InferredTypeGuess _ g2 _) =
-    -- Find the least-general guess: If g1 can be replaced with g2, prefer g1.
-    noInferredTypes $ checkGeneralMatch r f v1 g1 g2
-  allCheck (InferredTypeGuess _ g1 _) (InferredTypeGuess _ g2 v2) =
-    -- Find the most-general guess: If g2 can be replaced with g1, prefer g1.
-    noInferredTypes $ checkGeneralMatch r f v2 g2 g1
+mergeInferredTypes r f gs = do
+  let gs' = runIdentity $ separateParamGuesses gs
+  mapErrorsM reduce $ Map.toList gs' where
+    reduce (i,is) = do
+      is' <- reduceMergeTree anyOp allOp leafOp is
+      let is2 = foldr (:) [] is'
+      case is2 of
+           []   -> undefined  -- Shouldn't happen.
+           [i2] -> return i2
+           is3  -> compileErrorM $ "Could not reconcile guesses for " ++ show i ++ ": " ++ show is3
+    leafOp i = noInferred i >> return [i]
+    anyOp = mergeObjects anyCheck . sortBy lessGeneral
+    allOp = mergeObjects allCheck . sortBy moreGeneral
+    noInferred (InferredTypeGuess n t _) =
+      when (hasInferredParams t) $
+        compileErrorM $ "Guess " ++ show t ++ " for parameter " ++ show n ++ " contains inferred types"
+    lessGeneral x y = itgVariance y `compare` itgVariance x
+    moreGeneral x y = itgVariance x `compare` itgVariance y
+    anyCheck (InferredTypeGuess _ g1 v1) (InferredTypeGuess _ g2 _) =
+      -- Find the least-general guess: If g1 can be replaced with g2, prefer g1.
+      noInferredTypes $ checkGeneralMatch r f v1 g1 g2
+    allCheck (InferredTypeGuess _ g1 _) (InferredTypeGuess _ g2 v2) =
+      -- Find the most-general guess: If g2 can be replaced with g1, prefer g1.
+      noInferredTypes $ checkGeneralMatch r f v2 g2 g1

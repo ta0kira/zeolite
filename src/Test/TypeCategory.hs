@@ -961,7 +961,46 @@ tests = [
           [("#x",[])] ["#x"]
           -- Guesses are both Type0 and Type1, and Type0 is more general.
           [("Interface3<Type0>","[Interface1<#x>&Interface3<#x>]")]
-          [("#x","Type0",Invariant)])
+          [("#x","Type0",Invariant)]),
+
+    checkOperationSuccess
+      ("testfiles" </> "inference.0rx")
+      (\ts -> do
+        tm <- includeNewTypes defaultCategories ts
+        checkInferenceSuccess tm
+          [("#x",[])] ["#x"]
+          -- An unrelated union shouldn't cause problems.
+          [("Type1","#x"),("Type2","[Type2|Type0]")]
+          [("#x","Type1",Covariant)]),
+
+    checkOperationSuccess
+      ("testfiles" </> "inference.0rx")
+      (\ts -> do
+        tm <- includeNewTypes defaultCategories ts
+        checkInferenceSuccess tm
+          [("#x",[]),("#y",[])] ["#x","#y"]
+          [("Interface3<Type0>","[Interface1<#x>&Interface3<#x>]"),
+           ("Interface3<Type0>","[Interface1<#y>|Interface3<#y>]")]
+          [("#x","Type0",Invariant),("#y","Type1",Covariant)]),
+
+    checkOperationSuccess
+      ("testfiles" </> "delayed_merging.0rx")
+      (\ts -> do
+        tm <- includeNewTypes defaultCategories ts
+        checkInferenceFail tm
+          [("#x",[])] ["#x"]
+          -- Guesses are either Type1 or Type2.
+          [("Type","[Interface1<#x>|Interface2<#x>]")]),
+    checkOperationSuccess
+      ("testfiles" </> "delayed_merging.0rx")
+      (\ts -> do
+        tm <- includeNewTypes defaultCategories ts
+        checkInferenceSuccess tm
+          [("#x",[])] ["#x"]
+          -- Failure to merge Type1 and Type2 is resolved by Base.
+          [("Base","#x"),
+           ("Type","[Interface1<#x>|Interface2<#x>]")]
+          [("#x","Base",Covariant)])
   ]
 
 getRefines :: Map.Map CategoryName (AnyCategory c) -> String -> CompileInfo [String]

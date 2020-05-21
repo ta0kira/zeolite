@@ -1,0 +1,18 @@
+@value interface Base {}
+
+concrete Type1 {
+  refines Base
+}
+
+concrete Type2 {
+  refines Base
+}
+
+@value interface Interface1<|#x> {}
+
+@value interface Interface2<|#x> {}
+
+concrete Type {
+  refines Interface1<Type1>
+  refines Interface2<Type2>
+}
