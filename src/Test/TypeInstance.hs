@@ -781,7 +781,7 @@ checkInferenceCommon ::
   (MergeTree InferredTypeGuess -> CompileInfo (MergeTree InferredTypeGuess) -> CompileInfo ()) ->
   [(String, [String])] -> [String] -> String -> String ->
   MergeTree (String,String,Variance) -> IO (CompileInfo ())
-checkInferenceCommon check pa is x y gs = return $ checked `reviseErrorM` context where
+checkInferenceCommon check pa is x y gs = return $ checked <?? context where
   context = "With params = " ++ show pa ++ ", pair = (" ++ show x ++ "," ++ show y ++ ")"
   checked = do
     ([t1,t2],pa2) <- parseTheTest pa [x,y]
@@ -833,17 +833,17 @@ getParams :: CompileErrorM m =>
   Map.Map CategoryName (Map.Map CategoryName (InstanceParams -> InstanceParams))
   -> TypeInstance -> CategoryName -> m InstanceParams
 getParams ma (TypeInstance n1 ps1) n2 = do
-  ra <- mapLookup ma n1 `reviseErrorM` ("In lookup of category " ++ show n1)
-  f <- mapLookup ra n2 `reviseErrorM` ("In lookup of parent " ++ show n2 ++ " of " ++ show n1)
+  ra <- mapLookup ma n1 <?? ("In lookup of category " ++ show n1)
+  f <- mapLookup ra n2 <?? ("In lookup of parent " ++ show n2 ++ " of " ++ show n1)
   return $ f ps1
 
 getTypeFilters :: CompileErrorM m => TypeInstance -> m InstanceFilters
-getTypeFilters (TypeInstance n ps) = flip reviseErrorM "In type filters lookup" $ do
+getTypeFilters (TypeInstance n ps) = "In type filters lookup" ??> do
   f <- mapLookup typeFilters n
   return $ f ps
 
 getDefinesFilters :: CompileErrorM m => DefinesInstance -> m InstanceFilters
-getDefinesFilters (DefinesInstance n ps) = flip reviseErrorM "In defines filters lookup" $ do
+getDefinesFilters (DefinesInstance n ps) = "In defines filters lookup" ??> do
   f <- mapLookup definesFilters n
   return $ f ps
 

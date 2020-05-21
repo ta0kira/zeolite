@@ -49,7 +49,7 @@ runSingleTest :: CompilerBackend b => b -> LanguageModule SourcePos ->
 runSingleTest b cm p paths deps (f,s) = do
   errorFromIO $ hPutStrLn stderr $ "\nExecuting tests from " ++ f
   allResults <- checkAndRun (parseTestSource (f,s))
-  return $ second (flip reviseErrorM $ "\nIn test file " ++ f) allResults where
+  return $ second (("\nIn test file " ++ f) ??>) allResults where
     checkAndRun ts
       | isCompileError ts = do
         errorFromIO $ hPutStrLn stderr $ "Failed to parse tests in " ++ f
@@ -64,7 +64,7 @@ runSingleTest b cm p paths deps (f,s) = do
       let name = "\"" ++ ithTestName (itHeader t) ++ "\" (from " ++ f ++ ")"
       let context = formatFullContextBrace (ithContext $ itHeader t)
       errorFromIO $ hPutStrLn stderr $ "\n*** Executing test " ++ name ++ " ***"
-      outcome <- fmap (flip reviseErrorM ("\nIn test \"" ++ ithTestName (itHeader t) ++ "\"" ++ context)) $
+      outcome <- fmap (("\nIn test \"" ++ ithTestName (itHeader t) ++ "\"" ++ context) ??>) $
                    run (ithResult $ itHeader t) (itCategory t) (itDefinition t)
       if isCompileError outcome
          then errorFromIO $ hPutStrLn stderr $ "*** Test " ++ name ++ " failed ***"
@@ -88,13 +88,13 @@ runSingleTest b cm p paths deps (f,s) = do
       let ce = checkExcluded es comp err out
       let compError = if null comp
                          then return ()
-                         else (mergeAllM $ map compileErrorM comp) `reviseErrorM` "\nOutput from compiler:"
+                         else (mergeAllM $ map compileErrorM comp) <?? "\nOutput from compiler:"
       let errError = if null err
                         then return ()
-                        else (mergeAllM $ map compileErrorM err) `reviseErrorM` "\nOutput to stderr from test:"
+                        else (mergeAllM $ map compileErrorM err) <?? "\nOutput to stderr from test:"
       let outError = if null out
                         then return ()
-                        else (mergeAllM $ map compileErrorM out) `reviseErrorM` "\nOutput to stdout from test:"
+                        else (mergeAllM $ map compileErrorM out) <?? "\nOutput to stdout from test:"
       if isCompileError cr || isCompileError ce
          then mergeAllM [cr,ce,compError,errError,outError]
          else mergeAllM [cr,ce]

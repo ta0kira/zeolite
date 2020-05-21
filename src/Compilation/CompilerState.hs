@@ -30,6 +30,8 @@ module Compilation.CompilerState (
   LoopSetup(..),
   MemberValue(..),
   ReturnVariable(..),
+  (<???),
+  (???>),
   csAddVariable,
   csAllFilters,
   csCheckValueInit,
@@ -61,7 +63,6 @@ module Compilation.CompilerState (
   csWrite,
   getCleanContext,
   resetBackgroundStateT,
-  reviseErrorStateT,
   runDataCompiler,
 ) where
 
@@ -149,8 +150,11 @@ data CleanupSetup a s =
 instance Show c => Show (VariableValue c) where
   show (VariableValue c _ t _) = show t ++ formatFullContextBrace c
 
-reviseErrorStateT :: (CompileErrorM m) => CompilerState a m b -> String -> CompilerState a m b
-reviseErrorStateT x s = mapStateT (`reviseErrorM` s) x
+(<???) :: (CompileErrorM m) => CompilerState a m b -> String -> CompilerState a m b
+(<???) x s = mapStateT (<?? s) x
+
+(???>) :: (CompileErrorM m) => String -> CompilerState a m b -> CompilerState a m b
+(???>) s x = mapStateT (s ??>) x
 
 resetBackgroundStateT :: (CompileErrorM m) => CompilerState a m b -> CompilerState a m b
 resetBackgroundStateT x = mapStateT resetBackgroundM x

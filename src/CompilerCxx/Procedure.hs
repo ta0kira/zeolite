@@ -75,7 +75,7 @@ compileExecutableProcedure ctx ff@(ScopedFunction _ _ _ s as1 rs1 ps1 _ _)
       compileProcedure ctx0 p >>= put
       unreachable <- csIsUnreachable
       when (not unreachable) $
-        doImplicitReturn [] `reviseErrorStateT`
+        doImplicitReturn [] <???
           ("In implicit return from " ++ show n ++ formatFullContextBrace c)
     wrapProcedure output pt ct =
       mergeAll $ [
@@ -144,7 +144,7 @@ compileCondition ctx c e = do
      then return e'
      else return $ predTraceContext c ++ e'
   where
-    compile = flip reviseErrorStateT ("In condition at " ++ formatFullContext c) $ do
+    compile = ("In condition at " ++ formatFullContext c) ???> do
       (ts,e') <- compileExpression e
       lift $ checkCondition ts
       return $ useAsUnboxed PrimBool e'
@@ -196,7 +196,7 @@ compileStatement (ExplicitReturn c es) = do
       autoPositionalCleanup e
     -- Multi-expression => must all be singles.
     getReturn rs = do
-      lift $ mergeAllM (map checkArity $ zip ([0..] :: [Int]) $ map (fst . snd) rs) `reviseErrorM`
+      lift $ mergeAllM (map checkArity $ zip ([0..] :: [Int]) $ map (fst . snd) rs) <??
         ("In return at " ++ formatFullContext c)
       csRegisterReturn c $ Just $ Positional $ map (head . pValues . fst . snd) rs
       let e = OpaqueMulti $ "ReturnTuple(" ++ intercalate "," (map (useAsUnwrapped . snd . snd) rs) ++ ")"
@@ -227,7 +227,7 @@ compileStatement (FailCall c e) = do
   let (Positional [t0],e0) = e'
   r <- csResolver
   fa <- csAllFilters
-  lift $ (checkValueTypeMatch_ r fa t0 formattedRequiredValue) `reviseErrorM`
+  lift $ (checkValueTypeMatch_ r fa t0 formattedRequiredValue) <??
     ("In fail call at " ++ formatFullContext c)
   csSetNoReturn
   maybeSetTrace c
@@ -236,7 +236,7 @@ compileStatement (IgnoreValues c e) = do
   (_,e') <- compileExpression e
   maybeSetTrace c
   csWrite ["(void) (" ++ useAsWhatever e' ++ ");"]
-compileStatement (Assignment c as e) = flip reviseErrorStateT message $ do
+compileStatement (Assignment c as e) = message ???> do
   (ts,e') <- compileExpression e
   r <- csResolver
   fa <- csAllFilters
@@ -259,14 +259,14 @@ compileStatement (Assignment c as e) = flip reviseErrorStateT message $ do
       return t
     getVariableType (ExistingVariable (DiscardInput _)) t = return t
     createVariable r fa (CreateVariable c2 t1 n) t2 =
-      flip reviseErrorStateT ("In creation of " ++ show n ++ " at " ++ formatFullContext c2) $ do
+      ("In creation of " ++ show n ++ " at " ++ formatFullContext c2) ???> do
         -- TODO: Call csRequiresTypes for t1. (Maybe needs a helper function.)
         lift $ mergeAllM [validateGeneralInstance r fa (vtType t1),
                           checkValueTypeMatch_ r fa t2 t1]
         csAddVariable c2 n (VariableValue c2 LocalScope t1 True)
         csWrite [variableStoredType t1 ++ " " ++ variableName n ++ ";"]
     createVariable r fa (ExistingVariable (InputValue c2 n)) t2 =
-      flip reviseErrorStateT ("In assignment to " ++ show n ++ " at " ++ formatFullContext c2) $ do
+      ("In assignment to " ++ show n ++ " at " ++ formatFullContext c2) ???> do
         (VariableValue _ _ t1 w) <- csGetVariable c2 n
         when (not w) $ lift $ compileErrorM $ "Cannot assign to read-only variable " ++
                                               show n ++ formatFullContextBrace c2
@@ -312,7 +312,7 @@ compileLazyInit (DefinedMember c _ t1 n (Just e)) = resetBackgroundStateT $ do
   r <- csResolver
   fa <- csAllFilters
   let Positional [t2] = ts
-  lift $ (checkValueTypeMatch_ r fa t2 t1) `reviseErrorM`
+  lift $ (checkValueTypeMatch_ r fa t2 t1) <??
     ("In initialization of " ++ show n ++ " at " ++ formatFullContext c)
   csWrite [variableName n ++ "([this]() { return " ++ writeStoredVariable t1 e' ++ "; })"]
 
@@ -430,7 +430,7 @@ compileScopedBlock s = do
   csInheritReturns [ctxCl]
   where
     createVariable r fa (c,t,n) = do
-      lift $ validateGeneralInstance r fa (vtType t) `reviseErrorM`
+      lift $ validateGeneralInstance r fa (vtType t) <??
         ("In creation of " ++ show n ++ " at " ++ formatFullContext c)
       csWrite [variableStoredType t ++ " " ++ variableName n ++ ";"]
     showVariable (c,t,n) = do
@@ -554,7 +554,7 @@ compileExpression = compile where
       getValues [(Positional ts,e)] = return (ts,useAsArgs e)
       -- Multi-expression => must all be singles.
       getValues rs = do
-        lift $ mergeAllM (map checkArity $ zip ([0..] :: [Int]) $ map fst rs) `reviseErrorM`
+        lift $ mergeAllM (map checkArity $ zip ([0..] :: [Int]) $ map fst rs) <??
           ("In return at " ++ formatFullContext c)
         return (map (head . pValues . fst) rs,
                 "ArgTuple(" ++ intercalate ", " (map (useAsUnwrapped . snd) rs) ++ ")")
@@ -636,7 +636,7 @@ compileExpression = compile where
     r <- csResolver
     fa <- csAllFilters
     let vt = ValueType RequiredValue $ SingleType $ JustTypeInstance t
-    lift $ (checkValueTypeMatch_ r fa t' vt) `reviseErrorM`
+    lift $ (checkValueTypeMatch_ r fa t' vt) <??
       ("In converted call at " ++ formatFullContext c)
     f' <- lookupValueFunction vt f
     compileFunctionCall (Just $ useAsUnwrapped e') f' f
@@ -673,7 +673,7 @@ compileExpressionStart (NamedVariable (OutputValue c n)) = do
   return (Positional [t],readStoredVariable lazy t (scoped ++ variableName n))
 compileExpressionStart (NamedMacro c n) = do
   e <- csExprLookup c n
-  compileExpression e `reviseErrorStateT` ("In env lookup at " ++ formatFullContext c)
+  compileExpression e <??? ("In env lookup at " ++ formatFullContext c)
 compileExpressionStart (CategoryCall c t f@(FunctionCall _ n _ _)) = do
   f' <- csGetCategoryFunction c (Just t) n
   csRequiresTypes $ Set.fromList [t,sfType f']
@@ -682,7 +682,7 @@ compileExpressionStart (CategoryCall c t f@(FunctionCall _ n _ _)) = do
 compileExpressionStart (TypeCall c t f@(FunctionCall _ n _ _)) = do
   r <- csResolver
   fa <- csAllFilters
-  lift $ validateGeneralInstance r fa (SingleType t) `reviseErrorM` ("In function call at " ++ formatFullContext c)
+  lift $ validateGeneralInstance r fa (SingleType t) <?? ("In function call at " ++ formatFullContext c)
   f' <- csGetTypeFunction c (Just $ SingleType t) n
   when (sfScope f' /= TypeScope) $ lift $ compileErrorM $ "Function " ++ show n ++
                                           " cannot be used as a type function" ++
@@ -733,7 +733,7 @@ compileExpressionStart (BuiltinCall c (FunctionCall _ BuiltinReduce ps es)) = do
   fa <- csAllFilters
   lift $ validateGeneralInstance r fa t1
   lift $ validateGeneralInstance r fa t2
-  lift $ (checkValueTypeMatch_ r fa t0 (ValueType OptionalValue t1)) `reviseErrorM`
+  lift $ (checkValueTypeMatch_ r fa t0 (ValueType OptionalValue t1)) <??
     ("In argument to reduce call at " ++ formatFullContext c)
   -- TODO: If t1 -> t2 then just return e without a Reduce call.
   t1' <- expandGeneralInstance t1
@@ -791,7 +791,7 @@ compileExpressionStart (InlineAssignment c n e) = do
   (Positional [t],e') <- compileExpression e -- TODO: Get rid of the Positional matching here.
   r <- csResolver
   fa <- csAllFilters
-  lift $ (checkValueTypeMatch_ r fa t t0) `reviseErrorM`
+  lift $ (checkValueTypeMatch_ r fa t t0) <??
     ("In assignment at " ++ formatFullContext c)
   csUpdateAssigned n
   scoped <- autoScope s
@@ -809,7 +809,7 @@ compileFunctionCall :: (Show c, CompileErrorM m, MergeableM m,
                         CompilerContext c m [String] a) =>
   Maybe String -> ScopedFunction c -> FunctionCall c ->
   CompilerState a m (ExpressionType,ExprValue)
-compileFunctionCall e f (FunctionCall c _ ps es) = flip reviseErrorStateT errorContext $ do
+compileFunctionCall e f (FunctionCall c _ ps es) = errorContext ???> do
   r <- csResolver
   fa <- csAllFilters
   es' <- sequence $ map compileExpression $ pValues es
@@ -846,14 +846,14 @@ compileFunctionCall e f (FunctionCall c _ ps es) = flip reviseErrorStateT errorC
     getValues [(Positional ts,e2)] = return (ts,useAsArgs e2)
     -- Multi-expression => must all be singles.
     getValues rs = do
-      lift $ mergeAllM (map checkArity $ zip ([0..] :: [Int]) $ map fst rs) `reviseErrorM`
+      lift $ mergeAllM (map checkArity $ zip ([0..] :: [Int]) $ map fst rs) <??
         ("In return at " ++ formatFullContext c)
       return (map (head . pValues . fst) rs, "ArgTuple(" ++ intercalate ", " (map (useAsUnwrapped . snd) rs) ++ ")")
     checkArity (_,Positional [_]) = return ()
     checkArity (i,Positional ts)  =
       compileErrorM $ "Return position " ++ show i ++ " has " ++ show (length ts) ++ " values but should have 1"
     checkArg r fa t0 (i,t1) = do
-      checkValueTypeMatch r fa t1 t0 `reviseErrorM` ("In argument " ++ show i ++ " to " ++ show (sfName f))
+      checkValueTypeMatch r fa t1 t0 <?? ("In argument " ++ show i ++ " to " ++ show (sfName f))
 
 guessParamsFromArgs :: (Show c, MergeableM m, CompileErrorM m, TypeResolver r) =>
   r -> ParamFilters -> ScopedFunction c -> Positional (InstanceOrInferred c) ->

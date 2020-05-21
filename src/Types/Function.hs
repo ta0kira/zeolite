@@ -76,21 +76,21 @@ validatateFunctionType r fm vm (FunctionType as rs ps fa) = do
       when (n `Map.member` fm) $
         compileErrorM $ "Param " ++ show n ++ " hides another param in a higher scope"
     checkFilterType fa2 (n,f) =
-      validateTypeFilter r fa2 f `reviseErrorM` ("In filter " ++ show n ++ " " ++ show f)
+      validateTypeFilter r fa2 f <?? ("In filter " ++ show n ++ " " ++ show f)
     checkFilterVariance (n,f@(TypeFilter FilterRequires t)) =
-      validateInstanceVariance r allVariances Contravariant (SingleType t) `reviseErrorM`
+      validateInstanceVariance r allVariances Contravariant (SingleType t) <??
         ("In filter " ++ show n ++ " " ++ show f)
     checkFilterVariance (n,f@(TypeFilter FilterAllows t)) =
-      validateInstanceVariance r allVariances Covariant (SingleType t) `reviseErrorM`
+      validateInstanceVariance r allVariances Covariant (SingleType t) <??
         ("In filter " ++ show n ++ " " ++ show f)
     checkFilterVariance (n,f@(DefinesFilter t)) =
-      validateDefinesVariance r allVariances Contravariant t `reviseErrorM`
+      validateDefinesVariance r allVariances Contravariant t <??
         ("In filter " ++ show n ++ " " ++ show f)
-    checkArg fa2 ta@(ValueType _ t) = flip reviseErrorM ("In argument " ++ show ta) $ do
+    checkArg fa2 ta@(ValueType _ t) = ("In argument " ++ show ta) ??> do
       when (isWeakValue ta) $ compileErrorM "Weak values not allowed as argument types"
       validateGeneralInstance r fa2 t
       validateInstanceVariance r allVariances Contravariant t
-    checkReturn fa2 ta@(ValueType _ t) = flip reviseErrorM ("In return " ++ show ta) $ do
+    checkReturn fa2 ta@(ValueType _ t) = ("In return " ++ show ta) ??> do
       when (isWeakValue ta) $ compileErrorM "Weak values not allowed as return types"
       validateGeneralInstance r fa2 t
       validateInstanceVariance r allVariances Covariant t

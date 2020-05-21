@@ -115,7 +115,7 @@ checkFileContents f o = do
   unwrap $ parse (between optionalSpace endOfDoc sourceParser) f s
   where
     unwrap (Left e)  = return $ compileErrorM (show e)
-    unwrap (Right t) = fmap (flip reviseErrorM ("Check " ++ f ++ ":")) $ o t
+    unwrap (Right t) = fmap (("Check " ++ f ++ ":") ??>) $ o t
 
 extractCategoryNames :: IntegrationTest c -> [String]
 extractCategoryNames = map (show . getCategoryName) . itCategory

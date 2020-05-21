@@ -142,7 +142,7 @@ instance (Show c, MergeableM m, CompileErrorM m) =>
       compileErrorM $ "Use explicit type conversion to call " ++ show n ++ " for union type " ++
                      show t2 ++ formatFullContextBrace c
     getFunction (Just ta@(TypeMerge MergeIntersect ts)) =
-      collectOneOrErrorM (map getFunction $ map Just ts) `reviseErrorM`
+      collectOneOrErrorM (map getFunction $ map Just ts) <??
         ("Function " ++ show n ++ " not available for type " ++ show ta ++ formatFullContextBrace c)
     getFunction (Just (SingleType (JustParamName _ p))) = do
       fa <- ccAllFilters ctx
@@ -151,7 +151,7 @@ instance (Show c, MergeableM m, CompileErrorM m) =>
                 _ -> compileErrorM $ "Param " ++ show p ++ " does not exist"
       let ts = map tfType $ filter isRequiresFilter fs
       let ds = map dfType $ filter isDefinesFilter  fs
-      collectOneOrErrorM (map (getFunction . Just . SingleType) ts ++ map checkDefine ds) `reviseErrorM`
+      collectOneOrErrorM (map (getFunction . Just . SingleType) ts ++ map checkDefine ds) <??
         ("Function " ++ show n ++ " not available for param " ++ show p ++ formatFullContextBrace c)
     getFunction (Just (SingleType (JustTypeInstance t2)))
       -- Same category as the procedure itself.
@@ -179,7 +179,7 @@ instance (Show c, MergeableM m, CompileErrorM m) =>
       when (sfScope f == CategoryScope) $
         compileErrorM $ "Function " ++ show n ++ " in " ++ show t2 ++
                        " is a category function" ++ formatFullContextBrace c
-      paired <- processPairs alwaysPair ps1 ps2 `reviseErrorM`
+      paired <- processPairs alwaysPair ps1 ps2 <??
         ("In external function call at " ++ formatFullContext c)
       let assigned = Map.fromList paired
       uncheckedSubFunction assigned f
@@ -191,7 +191,7 @@ instance (Show c, MergeableM m, CompileErrorM m) =>
     | t /= pcType ctx =
       compileErrorM $ "Category " ++ show (pcType ctx) ++ " cannot initialize values from " ++
                      show t ++ formatFullContextBrace c
-    | otherwise = flip reviseErrorM ("In initialization at " ++ formatFullContext c) $ do
+    | otherwise = ("In initialization at " ++ formatFullContext c) ??> do
       let t' = TypeInstance (pcType ctx) as
       r <- ccResolver ctx
       allFilters <- ccAllFilters ctx
@@ -217,7 +217,7 @@ instance (Show c, MergeableM m, CompileErrorM m) =>
         assignFilters fm fs = do
           mapErrorsM (uncheckedSubFilter $ getValueForParam fm) fs
         checkInit r fa (MemberValue c2 n t0) (i,t1) = do
-          checkValueTypeMatch r fa t1 t0 `reviseErrorM`
+          checkValueTypeMatch r fa t1 t0 <??
             ("In initializer " ++ show i ++ " for " ++ show n ++ formatFullContextBrace c2)
         subSingle pa (DefinedMember c2 _ t2 n _) = do
           t2' <- uncheckedSubValueType (getValueForParam pa) t2
@@ -400,16 +400,16 @@ instance (Show c, MergeableM m, CompileErrorM m) =>
                        Nothing -> Positional []
                        Just vs2 -> vs2
         -- Check for a count match first, to avoid the default error message.
-        processPairs_ alwaysPair (fmap pvType rs) vs' `reviseErrorM`
+        processPairs_ alwaysPair (fmap pvType rs) vs' <??
           ("In procedure return at " ++ formatFullContext c)
-        processPairs_ checkReturnType rs (Positional $ zip ([0..] :: [Int]) $ pValues vs') `reviseErrorM`
+        processPairs_ checkReturnType rs (Positional $ zip ([0..] :: [Int]) $ pValues vs') <??
           ("In procedure return at " ++ formatFullContext c)
         return ()
         where
           checkReturnType ta0@(PassedValue _ t0) (n,t) = do
             r <- ccResolver ctx
             pa <- ccAllFilters ctx
-            checkValueTypeMatch r pa t t0 `reviseErrorM`
+            checkValueTypeMatch r pa t t0 <??
               ("Cannot convert " ++ show t ++ " to " ++ show ta0 ++ " in return " ++
                show n ++ " at " ++ formatFullContext c)
       check (ValidateNames ts ra) =

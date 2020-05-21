@@ -588,13 +588,13 @@ checkParamVariances tm0 ts = do
                       " times in " ++ show n ++ formatFullContextBrace c
       checkCount _ = return ()
     checkRefine r vm (ValueRefine c t) =
-      validateInstanceVariance r vm Covariant (SingleType $ JustTypeInstance t) `reviseErrorM`
+      validateInstanceVariance r vm Covariant (SingleType $ JustTypeInstance t) <??
         (show t ++ formatFullContextBrace c)
     checkDefine r vm (ValueDefine c t) =
-      validateDefinesVariance r vm Covariant t `reviseErrorM`
+      validateDefinesVariance r vm Covariant t <??
         (show t ++ formatFullContextBrace c)
     checkFilterVariance r vs (ParamFilter c n f@(TypeFilter FilterRequires t)) =
-      flip reviseErrorM ("In filter " ++ show n ++ " " ++ show f ++ formatFullContextBrace c) $ do
+      ("In filter " ++ show n ++ " " ++ show f ++ formatFullContextBrace c) ??> do
         case n `Map.lookup` vs of
              Just Contravariant -> compileErrorM $ "Contravariant param " ++ show n ++
                                                   " cannot have a requires filter"
@@ -602,7 +602,7 @@ checkParamVariances tm0 ts = do
              _ -> return ()
         validateInstanceVariance r vs Contravariant (SingleType t)
     checkFilterVariance r vs (ParamFilter c n f@(TypeFilter FilterAllows t)) =
-      flip reviseErrorM ("In filter " ++ show n ++ " " ++ show f ++ formatFullContextBrace c) $ do
+      ("In filter " ++ show n ++ " " ++ show f ++ formatFullContextBrace c) ??> do
         case n `Map.lookup` vs of
              Just Covariant -> compileErrorM $ "Covariant param " ++ show n ++
                                               " cannot have an allows filter"
@@ -610,7 +610,7 @@ checkParamVariances tm0 ts = do
              _ -> return ()
         validateInstanceVariance r vs Covariant (SingleType t)
     checkFilterVariance r vs (ParamFilter c n f@(DefinesFilter t)) =
-      flip reviseErrorM ("In filter " ++ show n ++ " " ++ show f ++ formatFullContextBrace c) $ do
+      ("In filter " ++ show n ++ " " ++ show f ++ formatFullContextBrace c) ??> do
         case n `Map.lookup` vs of
              Just Contravariant -> compileErrorM $ "Contravariant param " ++ show n ++
                                                   " cannot have a defines filter"
@@ -637,13 +637,13 @@ checkCategoryInstances tm0 ts = do
       when (not $ n `Set.member` pa) $
         compileErrorM $ "Param " ++ show n ++ formatFullContextBrace c ++ " does not exist"
     checkRefine r fm (ValueRefine c t) =
-      validateTypeInstance r fm t `reviseErrorM`
+      validateTypeInstance r fm t <??
         (show t ++ formatFullContextBrace c)
     checkDefine r fm (ValueDefine c t) =
-      validateDefinesInstance r fm t `reviseErrorM`
+      validateDefinesInstance r fm t <??
         (show t ++ formatFullContextBrace c)
     checkFilter r fm (ParamFilter c n f) =
-      validateTypeFilter r fm f `reviseErrorM`
+      validateTypeFilter r fm f <??
         (show n ++ " " ++ show f ++ formatFullContextBrace c)
 
 validateCategoryFunction :: (Show c, MergeableM m, CompileErrorM m, TypeResolver r) =>
@@ -651,7 +651,7 @@ validateCategoryFunction :: (Show c, MergeableM m, CompileErrorM m, TypeResolver
 validateCategoryFunction r t f = do
   let fm = getCategoryFilterMap t
   let vm = Map.fromList $ map (\p -> (vpParam p,vpVariance p)) $ getCategoryParams t
-  flip reviseErrorM ("In function:\n---\n" ++ show f ++ "\n---\n") $ do
+  ("In function:\n---\n" ++ show f ++ "\n---\n") ??> do
     funcType <- parsedToFunctionType f
     case sfScope f of
          CategoryScope -> validatateFunctionType r Map.empty Map.empty funcType
@@ -749,7 +749,7 @@ flattenAllConnections tm0 ts = do
     preMergeSingle _ t = return t
     update r t u = do
       (ts2,tm) <- u
-      t' <- updateSingle r tm t `reviseErrorM`
+      t' <- updateSingle r tm t <??
               ("In category " ++ show (getCategoryName t) ++
                formatFullContextBrace (getCategoryContext t))
       return (ts2 ++ [t'],Map.insert (getCategoryName t') t' tm)
@@ -797,7 +797,7 @@ flattenAllConnections tm0 ts = do
     checkConvert r fm (Just ta1@(ValueRefine _ t1)) ta2@(ValueRefine _ t2) = do
       noInferredTypes $ checkGeneralMatch r fm Covariant
                         (SingleType $ JustTypeInstance t1)
-                        (SingleType $ JustTypeInstance t2) `reviseErrorM`
+                        (SingleType $ JustTypeInstance t2) <??
                         ("Cannot refine " ++ show ta1 ++ " from inherited " ++ show ta2)
       return ()
     checkConvert _ _ _ _ = return ()
@@ -856,8 +856,8 @@ mergeFunctions r tm pm fm rs ds fs = do
                              show (sfScope f1) ++ " in function merge:\n---\n" ++
                              show f2 ++ "\n  ->\n" ++ show f1
             | otherwise =
-              flip reviseErrorM ("In function merge:\n---\n" ++ show f2 ++
-                                "\n  ->\n" ++ show f1 ++ "\n---\n") $ do
+              ("In function merge:\n---\n" ++ show f2 ++
+               "\n  ->\n" ++ show f1 ++ "\n---\n") ??> do
                 f1' <- parsedToFunctionType f1
                 f2' <- parsedToFunctionType f2
                 checkFunctionConvert r3 fm3 pm f2' f1'
@@ -950,7 +950,7 @@ parsedToFunctionType (ScopedFunction c n _ _ as rs ps fa _) = do
 uncheckedSubFunction :: (Show c, MergeableM m, CompileErrorM m) =>
   ParamValues -> ScopedFunction c -> m (ScopedFunction c)
 uncheckedSubFunction pa ff@(ScopedFunction c n t s as rs ps fa ms) =
-  flip reviseErrorM ("In function:\n---\n" ++ show ff ++ "\n---\n") $ do
+  ("In function:\n---\n" ++ show ff ++ "\n---\n") ??> do
     let unresolved = Map.fromList $ map (\n2 -> (n2,SingleType $ JustParamName False n2)) $ map vpParam $ pValues ps
     let pa' = (fmap fixTypeParams pa) `Map.union` unresolved
     as' <- fmap Positional $ mapErrorsM (subPassed pa') $ pValues as

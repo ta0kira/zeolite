@@ -331,7 +331,7 @@ checkValueTypeMatch :: (MergeableM m, CompileErrorM m, TypeResolver r) =>
 checkValueTypeMatch r f ts1@(ValueType r1 t1) ts2@(ValueType r2 t2)
   | r1 < r2 =
     compileErrorM $ "Cannot convert " ++ show ts1 ++ " to " ++ show ts2
-  | otherwise = checkGeneralMatch r f Covariant t1 t2 `reviseErrorM`
+  | otherwise = checkGeneralMatch r f Covariant t1 t2 <??
       ("Cannot convert " ++ show ts1 ++ " to " ++ show ts2)
 
 checkGeneralMatch :: (MergeableM m, CompileErrorM m, TypeResolver r) =>
@@ -403,7 +403,7 @@ checkParamToInstance r f Invariant n1 t2 =
              checkParamToInstance r f Contravariant n1 t2]
 checkParamToInstance r f v@Contravariant n1 t2@(TypeInstance _ _) = do
   cs2 <- fmap (filter isTypeFilter) $ f `filterLookup` n1
-  mergeAnyM (map checkConstraintToInstance cs2) `reviseErrorM`
+  mergeAnyM (map checkConstraintToInstance cs2) <??
     ("No filters imply " ++ show t2 ++ " <- " ++ show n1 ++ " in " ++ show v ++ " contexts")
   where
     checkConstraintToInstance (TypeFilter FilterAllows t) =
@@ -415,7 +415,7 @@ checkParamToInstance r f v@Contravariant n1 t2@(TypeInstance _ _) = do
                       " does not imply " ++ show t2 ++ " <- " ++ show n1
 checkParamToInstance r f v@Covariant n1 t2@(TypeInstance _ _) = do
   cs1 <- fmap (filter isTypeFilter) $ f `filterLookup` n1
-  mergeAnyM (map checkConstraintToInstance cs1) `reviseErrorM`
+  mergeAnyM (map checkConstraintToInstance cs1) <??
     ("No filters imply " ++ show n1 ++ " -> " ++ show t2 ++ " in " ++ show v ++ " contexts")
   where
     checkConstraintToInstance (TypeFilter FilterRequires t) =
@@ -435,7 +435,7 @@ checkInstanceToParam r f Invariant t1 n2 =
              checkInstanceToParam r f Contravariant t1 n2]
 checkInstanceToParam r f v@Contravariant t1@(TypeInstance _ _) n2 = do
   cs1 <- fmap (filter isTypeFilter) $ f `filterLookup` n2
-  mergeAnyM (map checkInstanceToConstraint cs1) `reviseErrorM`
+  mergeAnyM (map checkInstanceToConstraint cs1) <??
     ("No filters imply " ++ show n2 ++ " <- " ++ show t1 ++ " in " ++ show v ++ " contexts")
   where
     checkInstanceToConstraint (TypeFilter FilterRequires t) =
@@ -448,7 +448,7 @@ checkInstanceToParam r f v@Contravariant t1@(TypeInstance _ _) n2 = do
                       " does not imply " ++ show n2 ++ " <- " ++ show t1
 checkInstanceToParam r f v@Covariant t1@(TypeInstance _ _) n2 = do
   cs2 <- fmap (filter isTypeFilter) $ f `filterLookup` n2
-  mergeAnyM (map checkInstanceToConstraint cs2) `reviseErrorM`
+  mergeAnyM (map checkInstanceToConstraint cs2) <??
     ("No filters imply " ++ show t1 ++ " -> " ++ show n2 ++ " in " ++ show v ++ " contexts")
   where
     checkInstanceToConstraint (TypeFilter FilterAllows t) =
@@ -475,7 +475,7 @@ checkParamToParam r f v n1 n2
     let typeFilters = [(c1,c2) | c1 <- cs1, c2 <- cs2] ++
                       [(self1,c2) | c2 <- cs2] ++
                       [(c1,self2) | c1 <- cs1]
-    mergeAnyM (map (\(c1,c2) -> checkConstraintToConstraint v c1 c2) typeFilters) `reviseErrorM`
+    mergeAnyM (map (\(c1,c2) -> checkConstraintToConstraint v c1 c2) typeFilters) <??
       ("No filters imply " ++ show n1 ++ " -> " ++ show n2)
     where
       selfParam1 = JustParamName False n1
@@ -529,7 +529,7 @@ validateTypeInstance :: (MergeableM m, CompileErrorM m, TypeResolver r) =>
 validateTypeInstance r f t@(TypeInstance _ ps) = do
   fa <- trTypeFilters r t
   processPairs_ (validateAssignment r f) ps fa
-  mergeAllM (map (validateGeneralInstance r f) (pValues ps)) `reviseErrorM`
+  mergeAllM (map (validateGeneralInstance r f) (pValues ps)) <??
     ("Recursive error in " ++ show t)
 
 validateDefinesInstance :: (MergeableM m, CompileErrorM m, TypeResolver r) =>
@@ -537,7 +537,7 @@ validateDefinesInstance :: (MergeableM m, CompileErrorM m, TypeResolver r) =>
 validateDefinesInstance r f t@(DefinesInstance _ ps) = do
   fa <- trDefinesFilters r t
   processPairs_ (validateAssignment r f) ps fa
-  mergeAllM (map (validateGeneralInstance r f) (pValues ps)) `reviseErrorM`
+  mergeAllM (map (validateGeneralInstance r f) (pValues ps)) <??
     ("Recursive error in " ++ show t)
 
 validateTypeFilter :: (MergeableM m, CompileErrorM m, TypeResolver r) =>
@@ -562,7 +562,7 @@ validateAssignment r f t fs = mergeAllM (map (checkFilter t) fs) where
     checkDefinesMatch r f f2 (DefinesInstance n2 ps1')
   checkDefinesFilter f2 (JustParamName _ n1) = do
       fs1 <- fmap (map dfType . filter isDefinesFilter) $ f `filterLookup` n1
-      mergeAnyM (map (checkDefinesMatch r f f2) fs1) `reviseErrorM`
+      mergeAnyM (map (checkDefinesMatch r f f2) fs1) <??
         ("No filters imply " ++ show n1 ++ " defines " ++ show f2)
   checkDefinesFilter _ t2 = compileErrorM $ "Type " ++ show t2 ++ " contains unresolved types"
 

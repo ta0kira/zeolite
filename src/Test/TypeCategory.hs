@@ -1032,7 +1032,7 @@ checkPaired f actual expected
     compileErrorM $ "Different item counts: " ++ show actual ++ " (actual) vs. " ++
                    show expected ++ " (expected)"
   | otherwise = mergeAllM $ map check (zip3 actual expected ([1..] :: [Int])) where
-    check (a,e,n) = f a e `reviseErrorM` ("Item " ++ show n ++ " mismatch")
+    check (a,e,n) = f a e <?? ("Item " ++ show n ++ " mismatch")
 
 containsPaired :: (Eq a, Show a) => [a] -> [a] -> CompileInfo ()
 containsPaired = checkPaired checkSingle where
@@ -1046,7 +1046,7 @@ checkOperationSuccess f o = do
   let parsed = readMulti f contents :: CompileInfo [AnyCategory SourcePos]
   return $ check (parsed >>= o >> return ())
   where
-    check = flip reviseErrorM ("Check " ++ f ++ ":")
+    check x = x <?? ("Check " ++ f ++ ":")
 
 checkOperationFail :: String -> ([AnyCategory SourcePos] -> CompileInfo a) -> IO (CompileInfo ())
 checkOperationFail f o = do
@@ -1118,7 +1118,7 @@ checkInferenceFail tm pa is ts = checkInferenceCommon check tm pa is ts [] where
 checkInferenceCommon :: ([InferredTypeGuess] -> CompileInfo [InferredTypeGuess] -> CompileInfo ()) ->
   CategoryMap SourcePos -> [(String, [String])] -> [String] ->
   [(String,String)] -> [(String,String,Variance)] -> CompileInfo ()
-checkInferenceCommon check tm pa is ts gs = checked `reviseErrorM` context where
+checkInferenceCommon check tm pa is ts gs = checked <?? context where
   context = "With params = " ++ show pa ++ ", pairs = " ++ show ts
   checked = do
     let r = CategoryResolver tm

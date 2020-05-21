@@ -91,11 +91,11 @@ setInternalFunctions r t fs = foldr update (return start) fs where
     case n `Map.lookup` fa' of
          Nothing -> return $ Map.insert n f fa'
          (Just f0@(ScopedFunction c2 _ _ _ _ _ _ _ ms2)) -> do
-           flip reviseErrorM ("In function merge:\n---\n" ++ show f0 ++
-                             "\n  ->\n" ++ show f ++ "\n---\n") $ do
-             f0' <- parsedToFunctionType f0
-             f' <- parsedToFunctionType f
-             checkFunctionConvert r fm pm f0' f'
+           ("In function merge:\n---\n" ++ show f0 ++
+             "\n  ->\n" ++ show f ++ "\n---\n") ??> do
+              f0' <- parsedToFunctionType f0
+              f' <- parsedToFunctionType f
+              checkFunctionConvert r fm pm f0' f'
            return $ Map.insert n (ScopedFunction (c++c2) n t2 s as rs ps fs2 ([f0]++ms++ms2)) fa'
 
 pairProceduresToFunctions :: (Show c, CompileErrorM m, MergeableM m) =>
@@ -129,7 +129,7 @@ pairProceduresToFunctions fa ps = do
                      formatFullContextBrace (epContext p) ++
                      " does not correspond to a function"
     getPair (Just f) (Just p) = do
-      processPairs_ alwaysPair (sfArgs f) (avNames $ epArgs p) `reviseErrorM`
+      processPairs_ alwaysPair (sfArgs f) (avNames $ epArgs p) <??
         ("Procedure for " ++ show (sfName f) ++
          formatFullContextBrace (avContext $ epArgs p) ++
          " has the wrong number of arguments" ++
@@ -137,7 +137,7 @@ pairProceduresToFunctions fa ps = do
       if isUnnamedReturns (epReturns p)
          then return ()
          else do
-           processPairs_ alwaysPair (sfReturns f) (nrNames $ epReturns p) `reviseErrorM`
+           processPairs_ alwaysPair (sfReturns f) (nrNames $ epReturns p) <??
              ("Procedure for " ++ show (sfName f) ++
               formatFullContextBrace (nrContext $ epReturns p) ++
               " has the wrong number of returns" ++

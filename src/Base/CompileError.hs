@@ -22,6 +22,8 @@ limitations under the License.
 
 module Base.CompileError (
   CompileErrorM(..),
+  (<??),
+  (??>),
   errorFromIO,
   mapErrorsM,
   mapErrorsM_,
@@ -54,6 +56,12 @@ class Monad m => CompileErrorM m where
   compileBackgroundM _ = return ()
   resetBackgroundM :: m a -> m a
   resetBackgroundM = id
+
+(<??) :: CompileErrorM m => m a -> String -> m a
+(<??) = reviseErrorM
+
+(??>) :: CompileErrorM m => String -> m a -> m a
+(??>) = flip reviseErrorM
 
 mapErrorsM :: CompileErrorM m => (a -> m b) -> [a] -> m [b]
 mapErrorsM f = collectAllOrErrorM . map f
