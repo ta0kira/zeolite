@@ -79,7 +79,7 @@ module Types.TypeCategory (
 ) where
 
 import Control.Arrow (second)
-import Control.Monad ((>=>),when)
+import Control.Monad (when)
 import Data.List (group,groupBy,intercalate,sort,sortBy)
 import qualified Data.Map as Map
 import qualified Data.Set as Set
@@ -818,18 +818,14 @@ mergeFunctions r tm pm fm rs ds fs = do
       let fs2 = getCategoryFunctions t
       paired <- processPairs alwaysPair (Positional ps) ts2
       let assigned = Map.fromList paired
-      mapErrorsM (subFunction assigned) fs2
+      mapErrorsM (unfixedSubFunction assigned) fs2
     getDefinesFuncs tm2 (ValueDefine c (DefinesInstance n ts2)) = do
       (_,t) <- getInstanceCategory tm2 (c,n)
       let ps = map vpParam $ getCategoryParams t
       let fs2 = getCategoryFunctions t
       paired <- processPairs alwaysPair (Positional ps) ts2
       let assigned = Map.fromList paired
-      mapErrorsM (subFunction assigned) fs2
-    -- uncheckedSubFunction fixes params so that subsequent substitutions of the
-    -- function's own params can't cause a name clash. unfixFunctionParams
-    -- un-fixes them so that actual substitution later will succeed.
-    subFunction as = uncheckedSubFunction as >=> return . unfixFunctionParams
+      mapErrorsM (unfixedSubFunction assigned) fs2
     mergeByName r2 fm2 im em n =
       tryMerge r2 fm2 n (n `Map.lookup` im) (n `Map.lookup` em)
     -- Inherited without an override.
@@ -947,12 +943,17 @@ parsedToFunctionType (ScopedFunction c n _ _ as rs ps fa _) = do
            (Just fs) -> fs
            _ -> []
 
+
 uncheckedSubFunction :: (Show c, MergeableM m, CompileErrorM m) =>
   ParamValues -> ScopedFunction c -> m (ScopedFunction c)
-uncheckedSubFunction pa ff@(ScopedFunction c n t s as rs ps fa ms) =
+uncheckedSubFunction = unfixedSubFunction . fmap fixTypeParams
+
+unfixedSubFunction :: (Show c, MergeableM m, CompileErrorM m) =>
+  ParamValues -> ScopedFunction c -> m (ScopedFunction c)
+unfixedSubFunction pa ff@(ScopedFunction c n t s as rs ps fa ms) =
   ("In function:\n---\n" ++ show ff ++ "\n---\n") ??> do
     let unresolved = Map.fromList $ map (\n2 -> (n2,SingleType $ JustParamName False n2)) $ map vpParam $ pValues ps
-    let pa' = (fmap fixTypeParams pa) `Map.union` unresolved
+    let pa' = pa `Map.union` unresolved
     as' <- fmap Positional $ mapErrorsM (subPassed pa') $ pValues as
     rs' <- fmap Positional $ mapErrorsM (subPassed pa') $ pValues rs
     fa' <- mapErrorsM (subFilter pa') fa
@@ -965,24 +966,6 @@ uncheckedSubFunction pa ff@(ScopedFunction c n t s as rs ps fa ms) =
       subFilter pa2 (ParamFilter c2 n2 f) = do
         f' <- uncheckedSubFilter (getValueForParam pa2) f
         return $ ParamFilter c2 n2 f'
-
-unfixFunctionParams :: ScopedFunction c -> ScopedFunction c
-unfixFunctionParams (ScopedFunction c n t s as rs ps fa ms) = updated where
-  updated = ScopedFunction c n t s as2 rs2 ps fa2 ms2
-  as2 = fmap unfixPassed as
-  rs2 = fmap unfixPassed rs
-  fa2 = map unfixFilter fa
-  ms2 = map unfixFunctionParams ms
-  unfixPassed (PassedValue c2 (ValueType r t2)) = PassedValue c2 (ValueType r (unfixTypeParams t2))
-  unfixFilter (ParamFilter c2 n2 (TypeFilter d (JustTypeInstance t2))) =
-    ParamFilter c2 n2 (TypeFilter d (JustTypeInstance (unfixInstance t2)))
-  unfixFilter (ParamFilter c2 n2 (TypeFilter d (JustParamName _ n3))) =
-    ParamFilter c2 n2 (TypeFilter d (JustParamName False n3))
-  unfixFilter (ParamFilter c2 n2 (DefinesFilter t2)) =
-    ParamFilter c2 n2 (DefinesFilter (unfixDefines t2))
-  unfixFilter f = f
-  unfixInstance (TypeInstance    t2 ps2) = TypeInstance    t2 (fmap unfixTypeParams ps2)
-  unfixDefines  (DefinesInstance t2 ps2) = DefinesInstance t2 (fmap unfixTypeParams ps2)
 
 inferParamTypes :: (MergeableM m, CompileErrorM m, TypeResolver r) =>
   r -> ParamFilters -> ParamFilters -> ParamValues ->
