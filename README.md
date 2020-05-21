@@ -156,6 +156,14 @@ The design of Zeolite revolves around data encapsulation:
   code author to also think about usage patterns when dealing with other objects
   of the same type.
 
+- Data members, private functions, and function definitions *never* show up in
+  the public declaration of a type. This means that the public declaration only
+  shows the readers what they can use. For comparison, Java does not allow
+  separation of declarations from definitions (except with superfluous
+  interfaces), C++ requires data members and `private` and `protected`
+  functions to show up in the `class` body, and Haskell requires function
+  definitions to immediately follow their type signatures.
+
 Although all of these limitations preclude a lot of design decisions allowed in
 languages like Java, C++, and Python, they also drastically reduce the possible
 complexity of inter-object interactions. Additionally, they generally *do not*
