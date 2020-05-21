@@ -64,7 +64,7 @@ runSingleTest b cm p paths deps (f,s) = do
       let name = "\"" ++ ithTestName (itHeader t) ++ "\" (from " ++ f ++ ")"
       let context = formatFullContextBrace (ithContext $ itHeader t)
       errorFromIO $ hPutStrLn stderr $ "\n*** Executing test " ++ name ++ " ***"
-      outcome <- fmap (flip reviseErrorM ("\nIn test \"" ++ name ++ "\"" ++ context)) $
+      outcome <- fmap (flip reviseErrorM ("\nIn test \"" ++ ithTestName (itHeader t) ++ "\"" ++ context)) $
                    run (ithResult $ itHeader t) (itCategory t) (itDefinition t)
       if isCompileError outcome
          then errorFromIO $ hPutStrLn stderr $ "*** Test " ++ name ++ " failed ***"
