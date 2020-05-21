@@ -38,10 +38,12 @@ tests = [
    checkMatch (mergeLeaf 1) id (mergeAny [mergeLeaf 1,mergeAny []] :: MergeTree Int),
    checkMatch (mergeLeaf 1) id (mergeAll [mergeLeaf 1,mergeAll []] :: MergeTree Int),
 
-   checkMatch (mergeAny [mergeLeaf 1,mergeLeaf 2,mergeAll [mergeLeaf 3]]) id
-              (mergeAny [mergeAny [mergeLeaf 1],mergeLeaf 2,mergeAll [mergeLeaf 3]] :: MergeTree Int),
-   checkMatch (mergeAll [mergeLeaf 1,mergeLeaf 2,mergeAny [mergeLeaf 3]]) id
-              (mergeAll [mergeAll [mergeLeaf 1],mergeLeaf 2,mergeAny [mergeLeaf 3]] :: MergeTree Int),
+   checkMatch2 (mergeAny [mergeLeaf 1,mergeLeaf 2,mergeAll [mergeLeaf 3,mergeLeaf 4]])
+               (mergeAny [mergeLeaf 1,mergeLeaf 2,mergeLeaf 3,mergeLeaf 4])
+               (mergeAny [mergeAny [mergeLeaf 1],mergeLeaf 2,mergeAll [mergeLeaf 3,mergeLeaf 4]] :: MergeTree Int),
+   checkMatch2 (mergeAll [mergeLeaf 1,mergeLeaf 2,mergeAny [mergeLeaf 3,mergeLeaf 4]])
+               (mergeAll [mergeLeaf 1,mergeLeaf 2,mergeLeaf 3,mergeLeaf 4])
+               (mergeAll [mergeAll [mergeLeaf 1],mergeLeaf 2,mergeAny [mergeLeaf 3,mergeLeaf 4]] :: MergeTree Int),
 
    checkMatch ([1,2]) (foldr (:) [])
               (mergeAny [mergeLeaf 1,mergeAll [mergeLeaf 2]] :: MergeTree Int),
@@ -92,6 +94,11 @@ checkMatch x f y = let y' = f y in
   return $ if x /= y'
               then compileErrorM $ "Expected " ++ show x ++ " but got " ++ show y'
               else return ()
+
+checkMatch2 :: (Eq a, Show a) => a -> a -> a -> IO (CompileInfo ())
+checkMatch2 x y z = return $ do
+  when (x /= z) $ compileErrorM $ "Expected " ++ show x ++ " but got " ++ show z
+  when (y == z) $ compileErrorM $ "Expected something besides " ++ show y
 
 checkSuccess :: (Eq b, Show b) => b -> (a -> CompileInfo b) -> a -> IO (CompileInfo ())
 checkSuccess x f y = let y' = f y in
