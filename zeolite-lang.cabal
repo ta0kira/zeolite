@@ -28,20 +28,21 @@ description:
     zeolite-setup
     @
     .
-  * (Optional) Once the setup above is completed, you should run the
-    integration tests to ensure that code can be compiled and run. These can
-    take quite a while to complete. Please create an
+  * (Optional) As a sanity check, compile and run
+    @<https://github.com/ta0kira/zeolite/tree/master/example/hello example/hello>@.
+    Please create an
     <https://github.com/ta0kira/zeolite/issues issue on GitHub> if you encounter
     any errors.
     .
     @
     ZEOLITE_PATH=$(zeolite --get-path)
-    zeolite -p "$ZEOLITE_PATH" -t tests lib\/file lib\/math lib\/util
+    zeolite -p "$ZEOLITE_PATH" -f -i lib\/util -m HelloDemo example\/hello
+    $ZEOLITE_PATH\/example\/hello\/HelloDemo
     @
   .
   The <https://github.com/ta0kira/zeolite/tree/master/example code examples> are
   located in @$ZEOLITE_PATH/example@. You should not normally need to use
-  @$ZEOLITE_PATH@ outside of running included tests and examples.
+  @$ZEOLITE_PATH@ outside of running the included tests and examples.
 
 homepage:            https://github.com/ta0kira/zeolite
 license:             Apache-2.0
