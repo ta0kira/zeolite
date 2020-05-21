@@ -1002,13 +1002,13 @@ mergeInferredTypes :: (MergeableM m, CompileErrorM m, TypeResolver r) =>
   r -> ParamFilters -> MergeTree InferredTypeGuess -> m [InferredTypeGuess]
 mergeInferredTypes r f = reduceMergeTree anyOp allOp leafOp where
   leafOp i = noInferred i >> return [i]
-  anyOp = mergeCommon anyCheck
-  allOp = mergeCommon allCheck
-  mergeCommon check is = do
+  anyOp = mergeCommon lessGeneral anyCheck
+  allOp = mergeCommon moreGeneral allCheck
+  mergeCommon order check is = do
     let ia = Map.fromListWith (++) $ zip (map itgParam is) (map (:[]) is)
-    mergeAllM $ map (tryMerge check) $ Map.toList ia
-  tryMerge check (i,is) = do
-    is' <- mergeObjects check is
+    mergeAllM $ map (tryMerge order check) $ Map.toList ia
+  tryMerge order check (i,is) = do
+    is' <- mergeObjects check $ sortBy order is
     case is' of
          []   -> undefined  -- Shouldn't happen.
          [i2] -> return [i2]
@@ -1017,6 +1017,8 @@ mergeInferredTypes r f = reduceMergeTree anyOp allOp leafOp where
   noInferred (InferredTypeGuess n t _) =
     when (hasInferredParams t) $
       compileErrorM $ "Guess " ++ show t ++ " for parameter " ++ show n ++ " contains inferred types"
+  lessGeneral x y = itgVariance y `compare` itgVariance x
+  moreGeneral x y = itgVariance x `compare` itgVariance y
   anyCheck (InferredTypeGuess _ g1 v1) (InferredTypeGuess _ g2 _) =
     -- Find the least-general guess: If g1 can be replaced with g2, prefer g1.
     noInferredTypes $ checkGeneralMatch r f v1 g1 g2

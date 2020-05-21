@@ -25,10 +25,12 @@ module Types.Variance (
 ) where
 
 
+-- NOTE: The ordering here is used when prioritizing multiple constraints on an
+-- inferred type.
 data Variance =
   Contravariant |
-  Invariant |
-  Covariant
+  Covariant |
+  Invariant
   deriving (Eq,Ord)
 
 instance Show Variance where
