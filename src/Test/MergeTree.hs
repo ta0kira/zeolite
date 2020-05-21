@@ -38,6 +38,11 @@ tests = [
    checkMatch (mergeLeaf 1) id (mergeAny [mergeLeaf 1,mergeAny []] :: MergeTree Int),
    checkMatch (mergeLeaf 1) id (mergeAll [mergeLeaf 1,mergeAll []] :: MergeTree Int),
 
+   checkMatch (mergeAny [mergeLeaf 1,mergeLeaf 2,mergeAll [mergeLeaf 3]]) id
+              (mergeAny [mergeAny [mergeLeaf 1],mergeLeaf 2,mergeAll [mergeLeaf 3]] :: MergeTree Int),
+   checkMatch (mergeAll [mergeLeaf 1,mergeLeaf 2,mergeAny [mergeLeaf 3]]) id
+              (mergeAll [mergeAll [mergeLeaf 1],mergeLeaf 2,mergeAny [mergeLeaf 3]] :: MergeTree Int),
+
    checkMatch ([1,2]) (foldr (:) [])
               (mergeAny [mergeLeaf 1,mergeAll [mergeLeaf 2]] :: MergeTree Int),
    checkMatch ([1,2]) (foldr (:) [])

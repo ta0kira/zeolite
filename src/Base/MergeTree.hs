@@ -63,7 +63,7 @@ instance Functor MergeTree where
 
 instance Foldable MergeTree where
   -- Note: mergeAny [] branches are turned to Nothing => mergeAll containing a
-  -- mergeAny[] will also be pruned, i.e., as "failed" branches.
+  -- mergeAny [] will also be pruned, i.e., as "failed" branches.
   foldr f y = foldr f y . maybe [] id . reduceMergeTree return return (return . (:[]))
 
 instance Traversable MergeTree where
@@ -72,13 +72,13 @@ instance Traversable MergeTree where
   traverse f (MergeLeaf x) = fmap MergeLeaf (f x)
 
 instance Mergeable (MergeTree a) where
-  mergeAny = unnest . filter (not . isEmptyAny) . foldr (:) [] where
-    isEmptyAny (MergeAny []) = True
-    isEmptyAny _             = False
+  mergeAny = unnest . foldr ((++) . flattenAny) [] where
+    flattenAny (MergeAny xs) = xs
+    flattenAny x             = [x]
     unnest [x] = x
     unnest xs  = MergeAny xs
-  mergeAll = unnest . filter (not . isEmptyAll) . foldr (:) [] where
-    isEmptyAll (MergeAll []) = True
-    isEmptyAll _             = False
+  mergeAll = unnest . foldr ((++) . flattenAll) [] where
+    flattenAll (MergeAll xs) = xs
+    flattenAll x             = [x]
     unnest [x] = x
     unnest xs  = MergeAll xs
