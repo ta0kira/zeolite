@@ -27,6 +27,7 @@ module Base.Mergeable (
   mergeDefaultM,
 ) where
 
+import Data.Functor.Identity
 import Data.Map as Map hiding (foldr)
 
 #if MIN_VERSION_base(4,11,0)
@@ -64,3 +65,7 @@ instance (Ord k, Mergeable a) => Mergeable (Map k a) where
 instance MergeableM Maybe where
   mergeAnyM = fmap mergeAny . foldr ((<>) . fmap (:[])) Nothing
   mergeAllM = fmap mergeAll . sequence . foldr (:) []
+
+instance MergeableM Identity where
+  mergeAnyM = Identity . mergeAny . foldr ((:) . runIdentity) []
+  mergeAllM = Identity . mergeAll . foldr ((:) . runIdentity) []

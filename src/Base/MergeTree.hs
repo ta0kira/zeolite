@@ -25,6 +25,8 @@ module Base.MergeTree (
   reduceMergeTree,
 ) where
 
+import Data.Functor.Identity (runIdentity)
+
 import Base.Mergeable
 
 
@@ -62,9 +64,7 @@ instance Functor MergeTree where
   fmap f (MergeLeaf x) = MergeLeaf (f x)
 
 instance Foldable MergeTree where
-  -- Note: mergeAny [] branches are turned to Nothing => mergeAll containing a
-  -- mergeAny [] will also be pruned, i.e., as "failed" branches.
-  foldr f y = foldr f y . maybe [] id . reduceMergeTree return return (return . (:[]))
+  foldr f y = foldr f y . runIdentity . reduceMergeTree return return (return . (:[]))
 
 instance Traversable MergeTree where
   traverse f (MergeAny xs) = MergeAny <$> foldr (<*>) (pure []) (map (fmap (:) . traverse f) xs)
