@@ -70,11 +70,11 @@ validatateFunctionType r fm vm (FunctionType as rs ps fa) = do
   where
     allVariances = Map.union vm (Map.fromList $ zip (pValues ps) (repeat Invariant))
     checkCount xa@(x:_:_) =
-      compileErrorM $ "Param " ++ show x ++ " occurs " ++ show (length xa) ++ " times"
+      compileErrorM $ "Function parameter " ++ show x ++ " occurs " ++ show (length xa) ++ " times"
     checkCount _ = return ()
     checkHides n =
       when (n `Map.member` fm) $
-        compileErrorM $ "Param " ++ show n ++ " hides another param in a higher scope"
+        compileErrorM $ "Function parameter " ++ show n ++ " hides a category-level parameter"
     checkFilterType fa2 (n,f) =
       validateTypeFilter r fa2 f <?? ("In filter " ++ show n ++ " " ++ show f)
     checkFilterVariance (n,f@(TypeFilter FilterRequires t)) =

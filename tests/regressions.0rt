@@ -52,31 +52,30 @@ define Value {
 }
 
 
-testcase "Issue #73 (2) is still broken" {
+testcase "Issue #73 (2) is fixed" {
   error
   require "from Base"
   require "#x hides"
+  require "call1"
+  exclude "call2"
 }
 
 @value interface Base {
-  call<#x> (#x) -> ()
+  call1<#x> (#x) -> ()
+  call2<#x> (#x) -> ()
 }
 
 concrete Child<#x> {
   refines Base
-  // call is inherited with #x, which conflicts with #x in child.
+
+  // call1 is inherited with #x, which conflicts with #x in Child.
+  // @value call1<#y> (#y) -> ()
+
+  // call2 explicitly overrides #x with #y.
+  @value call2<#y> (#y) -> ()
 }
 
 define Child {
-  call (_) {}
-}
-
-concrete Test {
-  @type run () -> ()
-}
-
-define Test {
-  run () {
-    \ Child<Int>$call<String>("message")
-  }
+  call1 (_) {}
+  call2 (_) {}
 }

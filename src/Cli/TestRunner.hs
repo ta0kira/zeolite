@@ -129,7 +129,7 @@ runSingleTest b cm p paths deps (f,s) = do
       (_,xx) <- compileLanguageModule cm [xs]
       main <- case e of
                    Just e2 -> compileTestMain cm xs e2
-                   Nothing -> compileErrorM "Expected compiler error"
+                   Nothing -> compileErrorM ""
       return (xx,main)
 
     checkRequired rs comp err out = mergeAllM $ map (checkSubsetForRegex True  comp err out) rs

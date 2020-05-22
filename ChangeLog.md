@@ -1,5 +1,12 @@
 # Revision history for zeolite-lang
 
+## 0.7.0.3  -- ????-??-??
+
+### Language
+
+* **[fix]** Adds context to error messages related to inherited functions that
+  have not been overridden.
+
 ## 0.7.0.2  -- 2020-05-21
 
 ### Language
