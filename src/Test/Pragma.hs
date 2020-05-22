@@ -42,6 +42,11 @@ tests = [
                   [PragmaVisibility _ TestsOnly] -> True
                   _ -> False),
 
+    checkParsesAs "$SourceContext$" (fmap (:[]) pragmaSourceContext)
+      (\e -> case e of
+                  [PragmaSourceContext _] -> True
+                  _ -> False),
+
     checkParsesAs "$NoTrace$" (fmap (:[]) pragmaNoTrace)
       (\e -> case e of
                   [PragmaTracing _ NoTrace] -> True

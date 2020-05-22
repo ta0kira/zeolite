@@ -64,10 +64,10 @@ of this document.
   - [Standard Library](#standard-library)
   - [Modules](#modules)
 - [Unit Testing](#unit-testing)
-- [Compiler Pragmas](#compiler-pragmas)
+- [Compiler Pragmas and Macros](#compiler-pragmas-and-macros)
   - [Source File Pragmas](#source-file-pragmas)
   - [Procedure Pragmas](#procedure-pragmas)
-  - [Expression Pragmas](#expression-pragmas)
+  - [Expression Macros](#expression-macros)
 - [Conclusion](#conclusion)
 
 ## Project Status
@@ -1215,15 +1215,18 @@ operates properly end-to-end.)
 Integration tests have access to all public symbols in the module. You can run
 all tests for module `myprogram` using `zeolite -t myprogram`.
 
-## Compiler Pragmas
+## Compiler Pragmas and Macros
 
 (As of compiler version `0.5.0.0`.)
 
 Pragmas allow compiler-specific directives within source files that do not
-otherwise need to be a part of the language syntax. The syntax for `zeolite`
-pragmas is `$SomePragma$` (no options) or `$AnotherPragma[`*`OPTIONS`*`]$`
-(uses pragma-specific options). The syntax for _`OPTIONS`_ depends on the pragma
-being used. Pragmas are specific to the context they are used in.
+otherwise need to be a part of the language syntax. Macros have the same format,
+and are used to insert code *after* parsing but *before* compilation.
+
+The syntax for both is `$SomePragma$` (no options) or
+`$AnotherPragma[`*`OPTIONS`*`]$` (uses pragma-specific options). The syntax for
+_`OPTIONS`_ depends on the pragma being used. Pragmas are specific to the
+context they are used in.
 
 ### Source File Pragmas
 
@@ -1259,9 +1262,16 @@ These must occur at the very top of a function definition.
   trivial; however, it increases the memory size of the value by a few bytes per
   call currently on the stack at the time it gets created.
 
-### Expression Pragmas
+### Expression Macros
 
 These can be used in place of language expressions.
+
+- **`$SourceContext$`**. (As of compiler version `0.7.1.0`.) Inserts a
+  `String`-literal with information about the macro's location within the
+  source file. Note that if this is used within an expression macro in
+  `.zeolite-module` (see `ExprLookup` below), the context will be within the
+  `.zeolite-module` file itself. (Remember that macro substitution *is not* a
+  preprocessor stage, unlike the C preprocessor.)
 
 - **`$ExprLookup[`**_`MACRO_NAME`_**`]$`**. (As of compiler version
   `0.6.0.0`.) This directly substitutes in a language expression, as if it was

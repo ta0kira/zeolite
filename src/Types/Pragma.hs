@@ -26,6 +26,7 @@ module Types.Pragma (
   isExprLookup,
   isModuleOnly,
   isNoTrace,
+  isSourceContext,
   isTestsOnly,
   isTraceCreation,
 ) where
@@ -44,6 +45,9 @@ data Pragma c =
     pelContext :: [c],
     pelName :: String
   } |
+  PragmaSourceContext {
+    pscContext :: c
+  } |
   PragmaTracing {
     ptContext :: [c],
     ptType :: TraceType
@@ -56,10 +60,11 @@ data Pragma c =
   deriving (Show)
 
 getPragmaContext :: Pragma c -> [c]
-getPragmaContext (PragmaVisibility c _) = c
-getPragmaContext (PragmaExprLookup c _) = c
-getPragmaContext (PragmaTracing c _)    = c
-getPragmaContext (PragmaComment c _)    = c
+getPragmaContext (PragmaVisibility c _)  = c
+getPragmaContext (PragmaExprLookup c _)  = c
+getPragmaContext (PragmaSourceContext c) = [c]
+getPragmaContext (PragmaTracing c _)     = c
+getPragmaContext (PragmaComment c _)     = c
 
 isModuleOnly :: Pragma c -> Bool
 isModuleOnly (PragmaVisibility _ ModuleOnly) = True
@@ -68,6 +73,10 @@ isModuleOnly _                               = False
 isExprLookup :: Pragma c -> Bool
 isExprLookup (PragmaExprLookup _ _) = True
 isExprLookup _                      = False
+
+isSourceContext :: Pragma c -> Bool
+isSourceContext (PragmaSourceContext _) = True
+isSourceContext _                       = False
 
 isNoTrace :: Pragma c -> Bool
 isNoTrace (PragmaTracing _ NoTrace) = True

@@ -203,3 +203,19 @@ define Test {
 concrete Test {
   @type run () -> ()
 }
+
+
+testcase "source context" {
+  crash Test$run()
+  require "tests/expr-lookup\.0rt"
+}
+
+define Test {
+  run () {
+    fail($SourceContext$)
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}

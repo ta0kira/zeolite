@@ -25,6 +25,7 @@ module Parser.Pragma (
   pragmaExprLookup,
   pragmaNoTrace,
   pragmaModuleOnly,
+  pragmaSourceContext,
   pragmaTestsOnly,
   pragmaTraceCreation,
 ) where
@@ -56,6 +57,10 @@ pragmaExprLookup = autoPragma "ExprLookup" $ Right parseAt where
   parseAt c = do
     name <- parseMacroName
     return $ PragmaExprLookup [c] name
+
+pragmaSourceContext :: Parser (Pragma SourcePos)
+pragmaSourceContext = autoPragma "SourceContext" $ Left parseAt where
+  parseAt c = PragmaSourceContext c
 
 pragmaNoTrace :: Parser (Pragma SourcePos)
 pragmaNoTrace = autoPragma "NoTrace" $ Left parseAt where
@@ -98,5 +103,5 @@ autoPragma p f = do
   return x where
     delegate False (Left f2)  c = return $ f2 c
     delegate True  (Right f2) c = f2 c
-    delegate _     (Left _)   _ = fail $ "Pragma " ++ p ++ " does not allow arguments with []"
-    delegate _     (Right _)  _ = fail $ "Pragma " ++ p ++ " requires arguments with []"
+    delegate _     (Left _)   _ = fail $ "Pragma " ++ p ++ " does not allow arguments using []"
+    delegate _     (Right _)  _ = fail $ "Pragma " ++ p ++ " requires arguments using []"

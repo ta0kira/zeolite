@@ -427,6 +427,7 @@ instance ParseFromSource (ExpressionStart SourcePos) where
                  variableOrUnqualified <|>
                  builtinCall <|>
                  builtinValue <|>
+                 sourceContext <|>
                  exprLookup <|>
                  try typeOrCategoryCall <|>
                  typeCall where
@@ -455,6 +456,11 @@ instance ParseFromSource (ExpressionStart SourcePos) where
       c <- getPosition
       n <- builtinValues
       return $ NamedVariable (OutputValue [c] (VariableName n))
+    sourceContext = do
+      pragma <- pragmaSourceContext
+      case pragma of
+           (PragmaSourceContext c) -> return $ ParensExpression [c] $ Literal (StringLiteral [c] (show c))
+           _ -> undefined  -- Should be caught above.
     exprLookup = do
       pragma <- pragmaExprLookup
       case pragma of

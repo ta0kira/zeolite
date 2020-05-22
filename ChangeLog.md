@@ -1,8 +1,11 @@
 # Revision history for zeolite-lang
 
-## 0.7.0.3  -- ????-??-??
+## 0.7.1.0  -- ????-??-??
 
 ### Language
+
+* **[new]** Adds the `$SourceContext$` macro, which inserts a `String` with
+  info about source file and code location.
 
 * **[fix]** Adds context to error messages related to inherited functions that
   have not been overridden.
