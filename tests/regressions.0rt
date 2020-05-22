@@ -50,3 +50,32 @@ define Value {
     return Value<#z>{ }
   }
 }
+
+
+testcase "Issue #73 (2) is still broken" {
+  error
+  require "#x hides"
+}
+
+@value interface Base {
+  call<#x> (#x) -> ()
+}
+
+concrete Child<#x> {
+  refines Base
+  // call is inherited with #x, which conflicts with #x in child.
+}
+
+define Child {
+  call (_) {}
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+define Test {
+  run () {
+    \ Child<Int>$call<String>("message")
+  }
+}
