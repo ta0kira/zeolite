@@ -54,6 +54,7 @@ define Value {
 
 testcase "Issue #73 (2) is still broken" {
   error
+  require "from Base"
   require "#x hides"
 }
 

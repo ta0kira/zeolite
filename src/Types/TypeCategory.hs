@@ -652,13 +652,18 @@ validateCategoryFunction :: (Show c, MergeableM m, CompileErrorM m, TypeResolver
 validateCategoryFunction r t f = do
   let fm = getCategoryFilterMap t
   let vm = Map.fromList $ map (\p -> (vpParam p,vpVariance p)) $ getCategoryParams t
-  ("In function:\n---\n" ++ show f ++ "\n---\n") ??> do
+  message ??> do
     funcType <- parsedToFunctionType f
     case sfScope f of
          CategoryScope -> validatateFunctionType r Map.empty Map.empty funcType
          TypeScope     -> validatateFunctionType r fm vm funcType
          ValueScope    -> validatateFunctionType r fm vm funcType
          _             -> return ()
+    where
+      message
+        | getCategoryName t == sfType f = "In function:\n---\n" ++ show f ++ "\n---\n"
+        | otherwise = "In function inherited from " ++ show (sfType f) ++
+                      formatFullContextBrace (getCategoryContext t) ++ ":\n---\n" ++ show f ++ "\n---\n"
 
 topoSortCategories :: (Show c, MergeableM m, CompileErrorM m) =>
   CategoryMap c -> [AnyCategory c] -> m [AnyCategory c]
