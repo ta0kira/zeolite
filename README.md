@@ -141,10 +141,10 @@ The design of Zeolite revolves around data encapsulation:
 
 - There is no "default construction", unlike in C++ and Java. This means that
   objects can only be created by explicit factory functions, further implying
-  that the code author need to explicitly decide what types can be instantiated.
+  that the programmer needs to explicitly decide what types can be instantiated.
 
 - There is no procedure or data-member inheritance; only abstract interfaces can
-  be inherited. This encourages the code author to think more about usage
+  be inherited. This encourages the programmer to think more about usage
   patterns and less about data representation when designing interactions
   between types. This means that the Zeolite inheritance graph has
   implementations strictly at the bottom, with everything above that being
@@ -153,7 +153,7 @@ The design of Zeolite revolves around data encapsulation:
 - There is no data-member visibility other than "internal". No object has direct
   access to the data members of any other object; not even other objects of the
   same type. (Private getters and setters are allowed, however.) This forces the
-  code author to also think about usage patterns when dealing with other objects
+  programmer to also think about usage patterns when dealing with other objects
   of the same type.
 
 - Data members, private functions, and function definitions *never* show up in
@@ -181,7 +181,7 @@ parameterizations. For example, you cannot safely convert a `List<String>` into
 a `List<Object>` in Java. This is primarily because `List` uses its type
 parameter for both input and output.
 
-Zeolite, on the other hand, allows the code author to assign a
+Zeolite, on the other hand, allows the programmer to assign a
 [variance][variance] to each parameter. (C# also does this to a lesser extent.)
 This allows the language to support very powerful recursive type conversions for
 parameterized types.
@@ -198,7 +198,7 @@ This helps solve a few separate problems:
 
 - Operations like `equals` comparisons in Java are always dispatched to the
   *left* object, which could lead to inconsistent results if the objects are
-  swapped: `foo.equals(bar);` is different than `bar.equals(foo);`. Such
+  swapped: `foo.equals(bar);` is not the same as `bar.equals(foo);`. Such
   problems can be mitigated by making `equals` a *type* function in an interface
   rather than a *value* function.
 
@@ -235,8 +235,8 @@ projects without the user needing to create build scripts or `Makefile`s.
 - Module authors can back Zeolite code with C++.
 - The module system is integrated with the compiler's built-in testing mode.
 
-This means that the code author can focus on code rather than on build rules,
-and module authors can avoid writing verbose build instructions for the users of
+This means that the programmer can focus on code rather than on build rules, and
+module authors can avoid writing verbose build instructions for the users of
 their modules.
 
 ## Writing Programs
@@ -619,38 +619,38 @@ A procedure definition has two options for returning multiple values:
 1. Return all values. (Prior to compiler version `0.3.0.0`, multiple returns
 were enclosed in  `{}`, e.g., `return { x, y }`.)
 
-  <pre style='color:#1f1c1b;background-color:#f6f8fa;'>
-  <b>define</b> <b><span style='color:#0057ae;'>MyCategory</span></b> {
-    minMax (x,y) {
-      <b>if</b> (x &lt; y) {
-        <b>return</b> x, y
-      } <b>else</b> {
-        <b>return</b> y, x
-      }
-    }
-  }</pre>
+   <pre style='color:#1f1c1b;background-color:#f6f8fa;'>
+   <b>define</b> <b><span style='color:#0057ae;'>MyCategory</span></b> {
+     minMax (x,y) {
+       <b>if</b> (x &lt; y) {
+         <b>return</b> x, y
+       } <b>else</b> {
+         <b>return</b> y, x
+       }
+     }
+   }</pre>
 
 2. Naming the return values and assigning them individually. This can be useful
    (and less error-prone) if the values are determined at different times.
    The compiler uses static analysis to ensure that all named variables are
    guaranteed to be set via all possible control paths.
 
-  <pre style='color:#1f1c1b;background-color:#f6f8fa;'>
-  <b>define</b> <b><span style='color:#0057ae;'>MyCategory</span></b> {
-    <span style='color:#898887;'>// Returns are named on the first line.</span>
-    minMax (x,y) (min,max) {
-      <span style='color:#898887;'>// Returns are optionally initialized up front.</span>
-      min &lt;- y
-      max &lt;- x
-      <b>if</b> (x &lt; y) {
-        <span style='color:#898887;'>// Returns are overwritten.</span>
-        min &lt;- x
-        max &lt;- y
-      }
-      <span style='color:#898887;'>// Implicit return makes sure that all returns are assigned. Optionally,</span>
-      <span style='color:#898887;'>// you can use return _.</span>
-    }
-  }</pre>
+   <pre style='color:#1f1c1b;background-color:#f6f8fa;'>
+   <b>define</b> <b><span style='color:#0057ae;'>MyCategory</span></b> {
+     <span style='color:#898887;'>// Returns are named on the first line.</span>
+     minMax (x,y) (min,max) {
+       <span style='color:#898887;'>// Returns are optionally initialized up front.</span>
+       min &lt;- y
+       max &lt;- x
+       <b>if</b> (x &lt; y) {
+         <span style='color:#898887;'>// Returns are overwritten.</span>
+         min &lt;- x
+         max &lt;- y
+       }
+       <span style='color:#898887;'>// Implicit return makes sure that all returns are assigned. Optionally,</span>
+       <span style='color:#898887;'>// you can use return _.</span>
+     }
+   }</pre>
 
 The caller of a function with multiple returns also has a few options:
 
@@ -911,7 +911,7 @@ specific function parameters by using **`?`**. This must be at the top level (no
 nesting), and it cannot be used outside of the parameters of the function.
 
 The type-inference system is intentionally "just clever enough" to do things
-that the code author can easily guess. More sophisticated inference is feasible
+that the programmer can easily guess. More sophisticated inference is feasible
 in theory (like Haskell uses); however, type errors with such systems can draw
 a significant amount of attention away from the task at hand. (For example, a
 common issue with Haskell is not knowing *which line of code* contains the
@@ -954,8 +954,9 @@ Type inference might fail if:
 
 Type inference in the context of parameterized types is specifically disallowed
 in order to limit the amount of code the reader needs to search to figure out
-what types are being used. Forcing explicit types for local variables is more
-work for the code author, but it makes the code easier to reason about.
+what types are being used. Forcing explicit specification of types for local
+variables is more work for the programmer, but it makes the code easier to
+reason about later on.
 
 ### Other Features
 
@@ -1212,8 +1213,8 @@ operates properly end-to-end.)
   <span style='color:#644a9b;'>@type</span> run () -&gt; ()
 }</pre>
 
-Integration tests have access to all public symbols in the module. You can run
-all tests for module `myprogram` using `zeolite -t myprogram`.
+Unit tests have access to all public symbols in the module. You can run all
+tests for module `myprogram` using `zeolite -t myprogram`.
 
 ## Compiler Pragmas and Macros
 
