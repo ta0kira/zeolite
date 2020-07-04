@@ -949,7 +949,6 @@ parsedToFunctionType (ScopedFunction c n _ _ as rs ps fa _) = do
            (Just fs) -> fs
            _ -> []
 
-
 uncheckedSubFunction :: (Show c, MergeableM m, CompileErrorM m) =>
   ParamValues -> ScopedFunction c -> m (ScopedFunction c)
 uncheckedSubFunction = unfixedSubFunction . fmap fixTypeParams
@@ -1016,9 +1015,7 @@ mergeInferredTypes r f gs = do
   mapErrorsM reduce $ Map.toList gs' where
     reduce (i,is) = do
       is' <- reduceMergeTree anyOp allOp leafOp is
-      let is2 = foldr (:) [] is'
-      case is2 of
-           []   -> undefined  -- Shouldn't happen.
+      case is' of
            [i2] -> return i2
            is3  -> compileErrorM $ "Could not reconcile guesses for " ++ show i ++ ": " ++ show is3
     leafOp i = noInferred i >> return [i]
