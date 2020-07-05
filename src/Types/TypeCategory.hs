@@ -683,7 +683,7 @@ topoSortCategories tm0 ts = do
     update _ ta _ = return ([],ta)
 
 mergeObjects :: (MergeableM m, CompileErrorM m) =>
-  (a -> a -> m ()) -> [a] -> m [a]
+  (a -> a -> m b) -> [a] -> m [a]
 mergeObjects f = merge [] where
   merge cs [] = return cs
   merge cs (x:xs) = do
@@ -1016,9 +1016,11 @@ mergeInferredTypes r f gs = do
     reduce (i,is) = do
       is' <- reduceMergeTree anyOp allOp leafOp is
       case is' of
-           [i2] -> return i2
+           [i2] -> noInferred i2 >> return i2
            is3  -> compileErrorM $ "Could not reconcile guesses for " ++ show i ++ ": " ++ show is3
-    leafOp i = noInferred i >> return [i]
+    -- Skip filtering out inferred types here, in case the guess can be replaced
+    -- with something better that doesn't have an inferred type.
+    leafOp i = return [i]
     anyOp = mergeObjects anyCheck . sortBy lessGeneral
     allOp = mergeObjects allCheck . sortBy moreGeneral
     noInferred (InferredTypeGuess n t _) =
@@ -1026,9 +1028,11 @@ mergeInferredTypes r f gs = do
         compileErrorM $ "Guess " ++ show t ++ " for parameter " ++ show n ++ " contains inferred types"
     lessGeneral x y = itgVariance y `compare` itgVariance x
     moreGeneral x y = itgVariance x `compare` itgVariance y
-    anyCheck (InferredTypeGuess _ g1 v1) (InferredTypeGuess _ g2 _) =
+    anyCheck ga@(InferredTypeGuess _ g1 v1) (InferredTypeGuess _ g2 _) = do
+      noInferred ga
       -- Find the least-general guess: If g1 can be replaced with g2, prefer g1.
-      noInferredTypes $ checkGeneralMatch r f v1 g1 g2
-    allCheck (InferredTypeGuess _ g1 _) (InferredTypeGuess _ g2 v2) =
+      checkGeneralMatch r f v1 g1 g2
+    allCheck ga@(InferredTypeGuess _ g1 _) (InferredTypeGuess _ g2 v2) = do
+      noInferred ga
       -- Find the most-general guess: If g2 can be replaced with g1, prefer g1.
-      noInferredTypes $ checkGeneralMatch r f v2 g2 g1
+      checkGeneralMatch r f v2 g2 g1
