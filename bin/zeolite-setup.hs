@@ -61,6 +61,12 @@ libraries = [
     "lib/math"
   ]
 
+includePaths :: [String]
+includePaths = ["lib"]
+
+cxxFlags :: [String]
+cxxFlags = ["-O2", "-std=c++11"]
+
 createConfig :: IO LocalConfig
 createConfig = do
   clang <- findExecutables clangBinary
@@ -69,7 +75,7 @@ createConfig = do
   compiler <- promptChoice "Which clang-compatible C++ compiler should be used?" (clang ++ gcc)
   archiver <- promptChoice "Which ar-compatible archiver should be used?" ar
   -- Cannot be overridden at this point.
-  let options = ["-O2", "-std=c++11"]
+  let options = cxxFlags
   let config = LocalConfig {
       lcBackend = UnixBackend {
         ucCxxBinary = compiler,
@@ -77,7 +83,7 @@ createConfig = do
         ucArBinary = archiver
       },
       lcResolver = SimpleResolver {
-        srVisibleSystem = ["lib"],
+        srVisibleSystem = includePaths,
         srExtraPaths = []
       }
     }
