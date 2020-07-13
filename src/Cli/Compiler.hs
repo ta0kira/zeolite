@@ -36,16 +36,16 @@ import qualified Data.Map as Map
 import qualified Data.Set as Set
 
 import Base.CompileError
-import Cli.CompileMetadata
+import Base.CompileInfo
 import Cli.CompileOptions
 import Cli.Paths
-import Cli.ProcessMetadata
 import Cli.Programs
 import Cli.TestRunner -- Not safe, due to Text.Regex.TDFA.
-import Base.CompileInfo
 import Compilation.ProcedureContext (ExprMap)
 import CompilerCxx.Category
 import CompilerCxx.Naming
+import Module.CompileMetadata
+import Module.ProcessMetadata
 import Parser.SourceFile
 import Types.Builtin
 import Types.DefinedCategory

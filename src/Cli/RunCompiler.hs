@@ -29,14 +29,14 @@ import qualified Data.Map as Map
 import qualified Data.Set as Set
 
 import Base.CompileError
+import Base.CompileInfo
 import Base.Mergeable
-import Cli.CompileMetadata
 import Cli.CompileOptions
 import Cli.Compiler
 import Cli.Paths
-import Cli.ProcessMetadata
 import Cli.Programs
-import Base.CompileInfo
+import Module.CompileMetadata
+import Module.ProcessMetadata
 
 
 runCompiler :: (PathIOHandler r, CompilerBackend b) => r -> b -> CompileOptions -> CompileInfoIO ()

@@ -18,7 +18,7 @@ limitations under the License.
 
 {-# LANGUAGE Safe #-}
 
-module Cli.CompileMetadata (
+module Module.CompileMetadata (
   CategoryIdentifier(..),
   CompileMetadata(..),
   ModuleConfig(..),

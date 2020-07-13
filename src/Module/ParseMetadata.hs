@@ -16,7 +16,7 @@ limitations under the License.
 
 -- Author: Kevin P. Barry [ta0kira@gmail.com]
 
-module Cli.ParseMetadata (
+module Module.ParseMetadata (
   ConfigFormat,
   autoReadConfig,
   autoWriteConfig,
@@ -27,9 +27,9 @@ import Text.Parsec
 import Text.Parsec.String
 
 import Base.CompileError
-import Cli.CompileMetadata
 import Cli.CompileOptions
 import Cli.Programs (VersionHash(..))
+import Module.CompileMetadata
 import Parser.Common
 import Parser.Procedure ()
 import Parser.Pragma (parseMacroName)

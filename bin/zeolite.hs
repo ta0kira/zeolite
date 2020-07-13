@@ -24,13 +24,13 @@ import System.IO
 import qualified Data.Map as Map
 
 import Base.CompileError
-import Cli.CompileMetadata
+import Base.CompileInfo
 import Cli.CompileOptions
-import Cli.ProcessMetadata
 import Cli.ParseCompileOptions -- Not safe, due to Text.Regex.TDFA.
 import Cli.Programs
 import Cli.RunCompiler
-import Base.CompileInfo
+import Module.CompileMetadata
+import Module.ProcessMetadata
 import Config.LoadConfig
 import Config.LocalConfig
 

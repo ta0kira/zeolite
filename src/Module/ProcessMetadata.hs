@@ -16,7 +16,7 @@ limitations under the License.
 
 -- Author: Kevin P. Barry [ta0kira@gmail.com]
 
-module Cli.ProcessMetadata (
+module Module.ProcessMetadata (
   MetadataMap,
   createCachePath,
   eraseCachedData,
@@ -61,13 +61,13 @@ import qualified Data.Map as Map
 import qualified Data.Set as Set
 
 import Base.CompileError
-import Cli.CompileMetadata
-import Cli.CompileOptions
-import Cli.ParseMetadata -- Not safe, due to Text.Regex.TDFA.
-import Cli.Programs (VersionHash(..))
 import Base.CompileInfo
+import Cli.CompileOptions
+import Cli.Programs (VersionHash(..))
 import Compilation.ProcedureContext (ExprMap)
 import CompilerCxx.Category (CxxOutput(..))
+import Module.CompileMetadata
+import Module.ParseMetadata -- Not safe, due to Text.Regex.TDFA.
 import Types.Procedure (Expression(Literal),ValueLiteral(..))
 import Types.TypeCategory
 import Types.TypeInstance

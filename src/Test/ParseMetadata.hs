@@ -23,10 +23,10 @@ import Text.Regex.TDFA -- Not safe!
 
 import Base.CompileError
 import Base.CompileInfo
-import Cli.CompileMetadata
 import Cli.CompileOptions
-import Cli.ParseMetadata
 import Cli.Programs (VersionHash(..))
+import Module.CompileMetadata
+import Module.ParseMetadata
 import System.FilePath
 import Test.Common
 import Types.Positional

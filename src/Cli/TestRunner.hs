@@ -31,13 +31,13 @@ import Text.Parsec
 import Text.Regex.TDFA -- Not safe!
 
 import Base.CompileError
-import Base.Mergeable
-import Cli.CompileMetadata
-import Cli.ProcessMetadata
-import Cli.Programs
 import Base.CompileInfo
+import Base.Mergeable
+import Cli.Programs
 import CompilerCxx.Category
 import CompilerCxx.Naming
+import Module.CompileMetadata
+import Module.ProcessMetadata
 import Parser.SourceFile
 import Types.IntegrationTest
 import Types.TypeCategory
