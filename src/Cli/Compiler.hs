@@ -282,7 +282,7 @@ createPublicNamespace :: FilePath -> FilePath -> CompileInfoIO Namespace
 createPublicNamespace p d = (errorFromIO $ canonicalizePath (p </> d)) >>= return . StaticNamespace . publicNamespace
 
 createPrivateNamespace :: FilePath -> FilePath -> CompileInfoIO Namespace
-createPrivateNamespace p f = (errorFromIO $ canonicalizePath (p </> f)) >>= return . StaticNamespace . publicNamespace
+createPrivateNamespace p f = (errorFromIO $ canonicalizePath (p </> f)) >>= return . StaticNamespace . privateNamespace
 
 zipWithContents :: FilePath -> [FilePath] -> CompileInfoIO [(FilePath,String)]
 zipWithContents p fs = fmap (zip $ map fixPath fs) $ mapM (errorFromIO . readFile . (p </>)) fs
