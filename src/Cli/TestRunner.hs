@@ -37,6 +37,7 @@ import Cli.Programs
 import CompilerCxx.Category
 import CompilerCxx.Naming
 import Module.CompileMetadata
+import Module.Paths
 import Module.ProcessMetadata
 import Parser.SourceFile
 import Types.IntegrationTest

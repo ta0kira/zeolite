@@ -21,8 +21,6 @@ module Module.ProcessMetadata (
   createCachePath,
   eraseCachedData,
   findSourceFiles,
-  fixPath,
-  fixPaths,
   getCachedPath,
   getCacheRelativePath,
   getExprMap,
@@ -35,6 +33,7 @@ module Module.ProcessMetadata (
   getSourceFilesForDeps,
   isPathConfigured,
   isPathUpToDate,
+  loadModuleGlobals,
   loadModuleMetadata,
   loadPrivateDeps,
   loadPublicDeps,
@@ -51,7 +50,7 @@ module Module.ProcessMetadata (
 
 import Control.Applicative ((<|>))
 import Control.Monad (when)
-import Data.List (nub,isSuffixOf)
+import Data.List (isSuffixOf)
 import Data.Maybe (isJust)
 import System.Directory
 import System.FilePath
@@ -68,6 +67,9 @@ import Compilation.ProcedureContext (ExprMap)
 import CompilerCxx.Category (CxxOutput(..))
 import Module.CompileMetadata
 import Module.ParseMetadata -- Not safe, due to Text.Regex.TDFA.
+import Module.Paths
+import Parser.SourceFile
+import Types.Pragma
 import Types.Procedure (Expression(Literal),ValueLiteral(..))
 import Types.TypeCategory
 import Types.TypeInstance
@@ -254,22 +256,6 @@ loadMetadata ca p = do
          (autoReadConfig f c) <??
             ("Could not parse metadata from \"" ++ p ++ "\"; please recompile")
 
-fixPath :: FilePath -> FilePath
-fixPath = foldl (</>) "" . process [] . map dropSlash . splitPath where
-  dropSlash "/" = "/"
-  dropSlash d
-    | isSuffixOf "/" d = reverse $ tail $ reverse d
-    | otherwise        = d
-  process rs        (".":ds)  = process rs ds
-  process ("..":rs) ("..":ds) = process ("..":"..":rs) ds
-  process ("/":[])  ("..":ds) = process ("/":[]) ds
-  process (_:rs)    ("..":ds) = process rs ds
-  process rs        (d:ds)    = process (d:rs) ds
-  process rs        _         = reverse rs
-
-fixPaths :: [FilePath] -> [FilePath]
-fixPaths = nub . map fixPath
-
 sortCompiledFiles :: [FilePath] -> ([FilePath],[FilePath],[FilePath])
 sortCompiledFiles = foldl split ([],[],[]) where
   split fs@(hxx,cxx,os) f
@@ -388,3 +374,31 @@ resolveDep cm (n:ns) d =
        Just xs -> [xs]
        Nothing -> resolveDep cm ns d
 resolveDep _ _ d = [UnresolvedCategory d]
+
+loadModuleGlobals :: PathIOHandler r => r -> FilePath -> Namespace -> [FilePath] ->
+  [CompileMetadata] -> [CompileMetadata] -> CompileInfoIO ([WithVisibility (AnyCategory SourcePos)])
+loadModuleGlobals r p ns2 fs deps1 deps2 = do
+  let public = Set.fromList $ map cmPath deps1
+  let deps2' = filter (\cm -> not $ cmPath cm `Set.member` public) deps2
+  cs0 <- fmap concat $ mapErrorsM (processDeps [FromDependency])            deps1
+  cs1 <- fmap concat $ mapErrorsM (processDeps [FromDependency,ModuleOnly]) deps2'
+  cs2 <- loadAllPublic ns2 fs
+  return (cs0++cs1++cs2) where
+    processDeps ss dep = do
+      let fs2 = getSourceFilesForDeps [dep]
+      cs <- loadAllPublic (cmNamespace dep) fs2
+      let cs' = if cmPath dep /= p
+                   -- Allow ModuleOnly if the dep is the same module being
+                   -- compiled. (Tests load the module being tested as a dep.)
+                   then filter (not . hasCodeVisibility ModuleOnly) cs
+                   else cs
+      return $ map (updateCodeVisibility (Set.union (Set.fromList ss))) cs'
+    loadAllPublic ns fs2 = do
+      fs2' <- zipWithContents r p fs2
+      fmap concat $ mapErrorsM loadPublic fs2'
+      where
+        loadPublic p3 = do
+          (pragmas,cs) <- parsePublicSource p3
+          let tags = (if any isTestsOnly  pragmas then [TestsOnly]  else []) ++
+                     (if any isModuleOnly pragmas then [ModuleOnly] else [])
+          return $ map (WithVisibility (Set.fromList tags) . setCategoryNamespace ns) cs

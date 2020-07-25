@@ -38,13 +38,13 @@ import qualified Data.Set as Set
 import Base.CompileError
 import Base.CompileInfo
 import Cli.CompileOptions
-import Cli.Paths
 import Cli.Programs
 import Cli.TestRunner -- Not safe, due to Text.Regex.TDFA.
 import Compilation.ProcedureContext (ExprMap)
 import CompilerCxx.Category
 import CompilerCxx.Naming
 import Module.CompileMetadata
+import Module.Paths
 import Module.ProcessMetadata
 import Parser.SourceFile
 import Types.Builtin
@@ -102,8 +102,12 @@ compileModule resolver backend (ModuleSpec p d em is is2 ps xs ts es ep m f) = d
                  return $ bpDeps ++ deps1
   ns0 <- createPublicNamespace p d
   let ex = concat $ map getSourceCategories es
-  (cm,(pc,tc)) <- loadLanguageModule p ns0 ex em ps deps1' deps2
-  xa <- mapErrorsM (loadPrivateSource p) xs
+  cs <- loadModuleGlobals resolver p ns0 ps deps1' deps2
+  let cm = createLanguageModule ex em cs
+  let cs2 = filter (not . hasCodeVisibility FromDependency) cs
+  let pc = map (getCategoryName . wvData) $ filter (not . hasCodeVisibility ModuleOnly) cs2
+  let tc = map (getCategoryName . wvData) $ filter (hasCodeVisibility ModuleOnly)       cs2
+  xa <- mapErrorsM (loadPrivateSource resolver p) xs
   (xx1,xx2) <- compileLanguageModule cm xa
   mf <- maybeCreateMain cm xa m
   let fs' = xx1++xx2
@@ -241,13 +245,14 @@ compileModule resolver backend (ModuleSpec p d em is is2 ps xs ts es ep m f) = d
       fmap (:[]) $ compileModuleMain cm2 xs2 n f2
     maybeCreateMain _ _ _ = return []
 
-createModuleTemplates :: FilePath -> FilePath -> [CompileMetadata] -> [CompileMetadata] -> CompileInfoIO ()
-createModuleTemplates p d deps1 deps2 = do
+createModuleTemplates :: PathIOHandler r => r -> FilePath -> FilePath ->
+  [CompileMetadata] -> [CompileMetadata] -> CompileInfoIO ()
+createModuleTemplates resolver p d deps1 deps2 = do
   ns0 <- createPublicNamespace p d
   (ps,xs,_) <- findSourceFiles p d
-  (LanguageModule _ _ _ cs0 ps0 ts0 cs1 ps1 ts1 _ _,_) <-
-    fmap (fmap fst) $ loadLanguageModule p ns0 [] Map.empty ps deps1 deps2
-  xs' <- zipWithContents p xs
+  (LanguageModule _ _ _ cs0 ps0 ts0 cs1 ps1 ts1 _ _) <-
+    fmap (createLanguageModule [] Map.empty) $ loadModuleGlobals resolver p ns0 ps deps1 deps2
+  xs' <- zipWithContents resolver p xs
   ds <- mapErrorsM parseInternalSource xs'
   let ds2 = concat $ map (\(_,_,d2) -> d2) ds
   tm <- foldM includeNewTypes defaultCategories [cs0,cs1,ps0,ps1,ts0,ts1]
@@ -267,12 +272,12 @@ createModuleTemplates p d deps1 deps2 = do
 
 runModuleTests :: (PathIOHandler r, CompilerBackend b) => r -> b -> FilePath ->
   [FilePath] -> LoadedTests -> CompileInfoIO [((Int,Int),CompileInfo ())]
-runModuleTests _ backend base tp (LoadedTests p d m em deps1 deps2) = do
+runModuleTests resolver backend base tp (LoadedTests p d m em deps1 deps2) = do
   let paths = base:(getIncludePathsForDeps deps1)
   mapErrorsM_ showSkipped $ filter (not . isTestAllowed) $ cmTestFiles m
-  ts' <- zipWithContents p $ map (d </>) $ filter isTestAllowed $ cmTestFiles m
+  ts' <- zipWithContents resolver p $ map (d </>) $ filter isTestAllowed $ cmTestFiles m
   path <- errorFromIO $ canonicalizePath (p </> d)
-  (cm,_) <- loadLanguageModule path NoNamespace [] em [] deps1 []
+  cm <- fmap (createLanguageModule [] em) $ loadModuleGlobals resolver path NoNamespace [] deps1 []
   mapErrorsM (runSingleTest backend cm path paths (m:deps2)) ts' where
     allowTests = Set.fromList tp
     isTestAllowed t = if null allowTests then True else t `Set.member` allowTests
@@ -284,58 +289,32 @@ createPublicNamespace p d = (errorFromIO $ canonicalizePath (p </> d)) >>= retur
 createPrivateNamespace :: FilePath -> FilePath -> CompileInfoIO Namespace
 createPrivateNamespace p f = (errorFromIO $ canonicalizePath (p </> f)) >>= return . StaticNamespace . privateNamespace
 
-zipWithContents :: FilePath -> [FilePath] -> CompileInfoIO [(FilePath,String)]
-zipWithContents p fs = fmap (zip $ map fixPath fs) $ mapM (errorFromIO . readFile . (p </>)) fs
-
-loadPrivateSource :: FilePath -> FilePath -> CompileInfoIO (PrivateSource SourcePos)
-loadPrivateSource p f = do
-  [f'] <- zipWithContents p [f]
+loadPrivateSource :: PathIOHandler r => r -> FilePath -> FilePath -> CompileInfoIO (PrivateSource SourcePos)
+loadPrivateSource resolver p f = do
+  [f'] <- zipWithContents resolver p [f]
   ns <- createPrivateNamespace p f
   (pragmas,cs,ds) <- parseInternalSource f'
   let cs' = map (setCategoryNamespace ns) cs
   let testing = any isTestsOnly pragmas
   return $ PrivateSource ns testing cs' ds
 
-loadLanguageModule :: FilePath -> Namespace -> [CategoryName] ->
-  ExprMap SourcePos -> [FilePath] -> [CompileMetadata] -> [CompileMetadata] ->
-  CompileInfoIO (LanguageModule SourcePos,([CategoryName],[CategoryName]))
-loadLanguageModule p ns2 ex em fs deps1 deps2 = do
-  let public = Set.fromList $ map cmPath deps1
-  let deps2' = filter (\cm -> not $ cmPath cm `Set.member` public) deps2
-  let ns0 = filter (not . isNoNamespace) $ getNamespacesForDeps deps1
-  let ns1 = filter (not . isNoNamespace) $ getNamespacesForDeps deps2'
-  (ps0,_,  tsA0,_)    <- fmap merge $ mapErrorsM processAll deps1
-  (ps1,_,  tsA1,_)    <- fmap merge $ mapErrorsM processAll deps2'
-  (ps2,xs2,tsA2,tsB2) <- loadAllPublic "" fs
-  let cm = LanguageModule {
-      lmPublicNamespaces = ns0,
-      lmPrivateNamespaces = ns1,
-      lmLocalNamespaces = [ns2],
-      lmPublicDeps = ps0,
-      lmPrivateDeps = ps1,
-      lmTestingDeps = tsA0++tsA1,
-      lmPublicLocal = map (setCategoryNamespace ns2) ps2,
-      lmPrivateLocal = map (setCategoryNamespace ns2) xs2,
-      lmTestingLocal = map (setCategoryNamespace ns2) $ tsA2 ++ tsB2,
+createLanguageModule :: [CategoryName] -> ExprMap c ->
+  [WithVisibility (AnyCategory c)] -> LanguageModule c
+createLanguageModule ex em cs = lm where
+  lm = LanguageModule {
+      lmPublicNamespaces  = map wvData $ apply ns [with    FromDependency,without ModuleOnly,without TestsOnly],
+      lmPrivateNamespaces = map wvData $ apply ns [with    FromDependency,with    ModuleOnly,without TestsOnly],
+      lmLocalNamespaces   = map wvData $ apply ns [without FromDependency],
+      lmPublicDeps        = map wvData $ apply cs [with    FromDependency,without ModuleOnly,without TestsOnly],
+      lmPrivateDeps       = map wvData $ apply cs [with    FromDependency,with    ModuleOnly,without TestsOnly],
+      lmTestingDeps       = map wvData $ apply cs [with    FromDependency,with TestsOnly],
+      lmPublicLocal       = map wvData $ apply cs [without FromDependency,without ModuleOnly,without TestsOnly],
+      lmPrivateLocal      = map wvData $ apply cs [without FromDependency,with    ModuleOnly,without TestsOnly],
+      lmTestingLocal      = map wvData $ apply cs [without FromDependency,with TestsOnly],
       lmExternal = ex,
-      lmExprMap = em
+      lmExprMap  = em
     }
-  return (cm,(map getCategoryName $ ps2++tsA2,map getCategoryName $ xs2++tsB2)) where
-    loadPublic p2 p3 = parsePublicSource p3 >>= return . uncurry (partition p2)
-    partition p2 pragmas cs
-      -- Allow ModuleOnly when the path is the same. Only needed for tests.
-      | p2 == p && (any isTestsOnly pragmas) = ([],[],cs,[])
-      | p2 == p                              = (cs,[],[],[])
-      | (any isModuleOnly pragmas) && (any isTestsOnly pragmas) = ([],[],[],cs)
-      | (any isTestsOnly pragmas)                               = ([],[],cs,[])
-      | (any isModuleOnly pragmas)                              = ([],cs,[],[])
-      | otherwise                                               = (cs,[],[],[])
-    processAll dep = do
-      let dep' = getSourceFilesForDeps [dep]
-      loadAllPublic (cmPath dep) dep'
-    loadAllPublic p2 fs2 = do
-      fs2' <- zipWithContents p fs2
-      as <- mapErrorsM (loadPublic p2) fs2'
-      return $ merge as
-    merge = foldl merge4 ([],[],[],[])
-    merge4 (ps1,xs1,tsA1,tsB1) (ps2,xs2,tsA2,tsB2) = (ps1++ps2,xs1++xs2,tsA1++tsA2,tsB1++tsB2)
+  ns = map (mapCodeVisibility getCategoryNamespace) cs
+  with    v = hasCodeVisibility v
+  without v = not . hasCodeVisibility v
+  apply = foldr filter

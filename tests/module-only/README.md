@@ -1,8 +1,7 @@
-# `$ModuleOnly$` Pragma Test
+# `$ModuleOnly$` Pragma Test - Dependency
 
 Compiling this module should **always fail**. It tests that the `$ModuleOnly$`
-pragma limits visibility to only `.0rx` and `.0rt` sources in the same module,
-and `.0rp` sources in the same module that also have the `$ModuleOnly$` pragma.
+pragma limits visibility to only `.0rx` and `.0rt` sources in the same module.
 
 To compile:
 
@@ -15,6 +14,7 @@ The compiler errors should look something like this:
 
 ```text
 Zeolite execution failed.
-  In creation of val1 at "tests/module-only/private.0rx" (line 22, column 3)
-    Type Type1 not found
+  In compilation of module "/home/ta0kira/checkouts/zeolite/tests/module-only"
+    In creation of val1 at "tests/module-only/private.0rx" (line 22, column 3)
+      Type Type1 not found
 ```

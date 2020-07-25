@@ -22,17 +22,40 @@ module Types.Pragma (
   CodeVisibility(..),
   Pragma(..),
   TraceType(..),
+  WithVisibility(..),
   getPragmaContext,
+  hasCodeVisibility,
   isExprLookup,
   isModuleOnly,
   isNoTrace,
   isSourceContext,
   isTestsOnly,
   isTraceCreation,
+  mapCodeVisibility,
+  updateCodeVisibility,
 ) where
 
+import qualified Data.Set as Set
 
-data CodeVisibility = ModuleOnly | TestsOnly deriving (Show)
+
+data CodeVisibility = ModuleOnly | TestsOnly | FromDependency deriving (Eq,Ord,Show)
+
+data WithVisibility a =
+  WithVisibility {
+    wvVisibility :: Set.Set CodeVisibility,
+    wvData :: a
+  }
+  deriving (Show)
+
+hasCodeVisibility :: CodeVisibility -> WithVisibility a -> Bool
+hasCodeVisibility v = Set.member v . wvVisibility
+
+mapCodeVisibility :: (a -> b) -> WithVisibility a -> WithVisibility b
+mapCodeVisibility f (WithVisibility v x) = WithVisibility v (f x)
+
+updateCodeVisibility :: (Set.Set CodeVisibility -> Set.Set CodeVisibility) ->
+  WithVisibility a -> WithVisibility a
+updateCodeVisibility f (WithVisibility v x) = WithVisibility (f v) x
 
 data TraceType = NoTrace | TraceCreation deriving (Show)
 

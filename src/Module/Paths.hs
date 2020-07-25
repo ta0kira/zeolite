@@ -18,11 +18,15 @@ limitations under the License.
 
 {-# LANGUAGE Safe #-}
 
-module Cli.Paths (
+module Module.Paths (
   PathIOHandler(..),
+  fixPath,
+  fixPaths,
 ) where
 
 import Control.Monad.IO.Class
+import Data.List (nub,isSuffixOf)
+import System.FilePath
 
 import Base.CompileError
 
@@ -32,3 +36,20 @@ class PathIOHandler r where
   isSystemModule    :: (MonadIO m, CompileErrorM m) => r -> FilePath -> FilePath -> m Bool
   resolveBaseModule :: (MonadIO m, CompileErrorM m) => r -> m FilePath
   isBaseModule      :: (MonadIO m, CompileErrorM m) => r -> FilePath -> m Bool
+  zipWithContents   :: (MonadIO m, CompileErrorM m) => r -> FilePath -> [FilePath] -> m [(FilePath,String)]
+
+fixPath :: FilePath -> FilePath
+fixPath = foldl (</>) "" . process [] . map dropSlash . splitPath where
+  dropSlash "/" = "/"
+  dropSlash d
+    | isSuffixOf "/" d = reverse $ tail $ reverse d
+    | otherwise        = d
+  process rs        (".":ds)  = process rs ds
+  process ("..":rs) ("..":ds) = process ("..":"..":rs) ds
+  process ("/":[])  ("..":ds) = process ("/":[]) ds
+  process (_:rs)    ("..":ds) = process rs ds
+  process rs        (d:ds)    = process (d:rs) ds
+  process rs        _         = reverse rs
+
+fixPaths :: [FilePath] -> [FilePath]
+fixPaths = nub . map fixPath

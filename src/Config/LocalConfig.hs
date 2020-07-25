@@ -42,8 +42,8 @@ import System.Posix.Process (ProcessStatus(..),executeFile,forkProcess,getProces
 import System.Posix.Temp (mkstemps)
 
 import Base.CompileError
-import Cli.Paths
 import Cli.Programs
+import Module.Paths
 
 import Paths_zeolite_lang (getDataFileName,version)
 
@@ -150,6 +150,7 @@ instance PathIOHandler Resolver where
   isBaseModule r f = do
     b <- resolveBaseModule r
     return (f == b)
+  zipWithContents _ p fs = fmap (zip $ map fixPath fs) $ mapM (errorFromIO . readFile . (p </>)) fs
 
 potentialSystemPaths :: Resolver -> FilePath -> IO [FilePath]
 potentialSystemPaths (SimpleResolver ls ps) m = do

@@ -33,9 +33,9 @@ import Base.CompileInfo
 import Base.Mergeable
 import Cli.CompileOptions
 import Cli.Compiler
-import Cli.Paths
 import Cli.Programs
 import Module.CompileMetadata
+import Module.Paths
 import Module.ProcessMetadata
 
 
@@ -167,7 +167,7 @@ runCompiler resolver backend (CompileOptions _ is is2 ds _ _ p CreateTemplates f
     deps1 <- loadPublicDeps compilerHash f Map.empty (base:as)
     deps2 <- loadPublicDeps compilerHash f (mapMetadata deps1) as2
     path <- errorFromIO $ canonicalizePath p
-    createModuleTemplates path d deps1 deps2 <?? ("In module \"" ++ d' ++ "\"")
+    createModuleTemplates resolver path d deps1 deps2 <?? ("In module \"" ++ d' ++ "\"")
 
 runCompiler resolver backend (CompileOptions h is is2 ds es ep p m f) = mapM_ compileSingle ds where
   compileSingle d = do

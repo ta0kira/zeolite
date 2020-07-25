@@ -49,7 +49,7 @@ create_file() {
 
 
 test_check_defs() {
-  local output=$(do_zeolite -p "$ZEOLITE_PATH" -r tests/check-defs || true)
+  local output=$(do_zeolite -p "$ZEOLITE_PATH" -r tests/check-defs -f || true)
   if ! echo "$output" | egrep -q 'Type .+ is defined 2 times'; then
     show_message 'Expected Type definition error from tests/check-defs:'
     echo "$output" 1>&2
@@ -64,7 +64,7 @@ test_check_defs() {
 
 
 test_tests_only() {
-  local output=$(do_zeolite -p "$ZEOLITE_PATH" -r tests/tests-only || true)
+  local output=$(do_zeolite -p "$ZEOLITE_PATH" -r tests/tests-only -f || true)
   if ! echo "$output" | egrep -q 'Definition for Type1 .+ visible category'; then
     show_message 'Expected Type1 definition error from tests/tests-only:'
     echo "$output" 1>&2
@@ -79,7 +79,7 @@ test_tests_only() {
 
 
 test_tests_only2() {
-  local output=$(do_zeolite -p "$ZEOLITE_PATH" -r tests/tests-only2 || true)
+  local output=$(do_zeolite -p "$ZEOLITE_PATH" -r tests/tests-only2 -f || true)
   if ! echo "$output" | egrep -q 'main.+ Testing'; then
     show_message 'Expected Testing definition error from tests/tests-only:'
     echo "$output" 1>&2
@@ -89,7 +89,7 @@ test_tests_only2() {
 
 
 test_module_only() {
-  local output=$(do_zeolite -p "$ZEOLITE_PATH" -R tests/module-only || true)
+  local output=$(do_zeolite -p "$ZEOLITE_PATH" -R tests/module-only -f || true)
   if ! echo "$output" | egrep -q 'Type1 not found'; then
     show_message 'Expected Type1 definition error from tests/module-only:'
     echo "$output" 1>&2
@@ -97,6 +97,26 @@ test_module_only() {
   fi
   if echo "$output" | egrep -q 'Type2 not found'; then
     show_message 'Unexpected Type2 definition error from tests/module-only:'
+    echo "$output" 1>&2
+    return 1
+  fi
+}
+
+
+test_module_only2() {
+  local output=$(do_zeolite -p "$ZEOLITE_PATH" -R tests/module-only2 -f || true)
+  if ! echo "$output" | egrep -q 'Type1'; then
+    show_message 'Expected Type1 definition error from tests/module-only2:'
+    echo "$output" 1>&2
+    return 1
+  fi
+  if echo "$output" | egrep -q 'Type2'; then
+    show_message 'Unexpected Type2 definition error from tests/module-only2:'
+    echo "$output" 1>&2
+    return 1
+  fi
+  if echo "$output" | egrep -q 'private2'; then
+    show_message 'Unexpected private2 definition error from tests/module-only2:'
     echo "$output" 1>&2
     return 1
   fi
@@ -230,6 +250,7 @@ ALL_TESTS=(
   test_tests_only
   test_tests_only2
   test_module_only
+  test_module_only2
   test_templates
   test_fast
   test_bad_system_include
