@@ -123,6 +123,21 @@ test_module_only2() {
 }
 
 
+test_warn_public() {
+  local output=$(do_zeolite -p "$ZEOLITE_PATH" -R tests/warn-public -f)
+  if ! echo "$output" | egrep -q '"internal" .+ public'; then
+    show_message 'Expected "internal" dependency warning from tests/warn-public:'
+    echo "$output" 1>&2
+    return 1
+  fi
+  if echo "$output" | egrep -q '"internal2" .+ public'; then
+    show_message 'Unexpected "internal2" dependency warning from tests/warn-public:'
+    echo "$output" 1>&2
+    return 1
+  fi
+}
+
+
 test_templates() {
   execute rm -f $ZEOLITE_PATH/tests/templates/Category_Templated.cpp
   do_zeolite -p "$ZEOLITE_PATH" --templates tests/templates
@@ -251,6 +266,7 @@ ALL_TESTS=(
   test_tests_only2
   test_module_only
   test_module_only2
+  test_warn_public
   test_templates
   test_fast
   test_bad_system_include

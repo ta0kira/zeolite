@@ -109,13 +109,14 @@ toCompileInfo x = do
 tryCompileInfoIO :: String -> CompileInfoIO a -> IO a
 tryCompileInfoIO message x = do
   x' <- toCompileInfo $ x `reviseErrorM` message
+  let warnings = map (\w -> "Warning: " ++ w ++ "\n") (getCompileWarnings x')
   if isCompileError x'
      then do
-       hPutStr stderr $ concat $ map (++ "\n") (getCompileWarnings x')
+       hPutStr stderr $ concat warnings
        hPutStr stderr $ show $ getCompileError x'
        exitFailure
      else do
-       hPutStr stderr $ concat $ map (++ "\n") (getCompileWarnings x')
+       hPutStr stderr $ concat warnings
        return $ getCompileSuccess x'
 
 data CompileMessage =

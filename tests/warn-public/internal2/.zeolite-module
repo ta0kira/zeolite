@@ -1,0 +1,3 @@
+root: "../../.."
+path: "tests/warn-public/internal2"
+mode: incremental {}

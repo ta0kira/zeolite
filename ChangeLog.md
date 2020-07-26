@@ -1,5 +1,13 @@
 # Revision history for zeolite-lang
 
+## 0.7.1.1  -- ????-??-??
+
+### Compiler CLI
+
+* **[behavior]** Adds a compiler warning for `public_deps` that are not required
+  by public `.0rp` sources within the same module, since they are potentially
+  just cluttering the public namespace of the module.
+
 ## 0.7.1.0  -- 2020-07-13
 
 ### Language

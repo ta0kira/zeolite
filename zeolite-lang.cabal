@@ -137,7 +137,14 @@ data-files:          base/.zeolite-module,
                      tests/visibility2/*.0rx,
                      tests/visibility2/internal/.zeolite-module,
                      tests/visibility2/internal/*.0rp,
-                     tests/visibility2/internal/*.0rx
+                     tests/visibility2/internal/*.0rx,
+                     tests/warn-public/.zeolite-module,
+                     tests/warn-public/*.0rp,
+                     tests/warn-public/README.md,
+                     tests/warn-public/internal/.zeolite-module,
+                     tests/warn-public/internal/*.0rp,
+                     tests/warn-public/internal2/.zeolite-module,
+                     tests/warn-public/internal2/*.0rp
 
 
 common defaults

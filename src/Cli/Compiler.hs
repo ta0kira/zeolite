@@ -107,6 +107,7 @@ compileModule resolver backend (ModuleSpec p d em is is2 ps xs ts es ep m f) = d
   let cs2 = filter (not . hasCodeVisibility FromDependency) cs
   let pc = map (getCategoryName . wvData) $ filter (not . hasCodeVisibility ModuleOnly) cs2
   let tc = map (getCategoryName . wvData) $ filter (hasCodeVisibility ModuleOnly)       cs2
+  let dc = map (getCategoryName . wvData) $ filter (hasCodeVisibility FromDependency) $ filter (not . hasCodeVisibility ModuleOnly) cs
   xa <- mapErrorsM (loadPrivateSource resolver p) xs
   (xx1,xx2) <- compileLanguageModule cm xa
   mf <- maybeCreateMain cm xa m
@@ -130,6 +131,7 @@ compileModule resolver backend (ModuleSpec p d em is is2 ps xs ts es ep m f) = d
   let (osCat,osOther) = partitionEithers os2
   path <- errorFromIO $ canonicalizePath $ p </> d
   let os1' = resolveObjectDeps (deps1' ++ deps2) path path (os1 ++ osCat)
+  warnPublic resolver (p </> d) pc dc os1' is
   let cm2 = CompileMetadata {
       cmVersionHash = compilerHash,
       cmPath = path,
@@ -318,3 +320,16 @@ createLanguageModule ex em cs = lm where
   with    v = hasCodeVisibility v
   without v = not . hasCodeVisibility v
   apply = foldr filter
+
+warnPublic :: PathIOHandler r => r -> FilePath -> [CategoryName] ->
+  [CategoryName] -> [ObjectFile] -> [FilePath] -> CompileInfoIO ()
+warnPublic resolver p pc dc os = mapErrorsM_ checkPublic where
+  checkPublic d = do
+    d2 <- resolveModule resolver p d
+    when (not $ d2 `Set.member` neededPublic) $ compileWarningM $ "Dependency \"" ++ d ++ "\" does not need to be public"
+  pc' = Set.fromList pc
+  dc' = Set.fromList dc
+  neededPublic = Set.fromList $ concat $ map checkDep os
+  checkDep (CategoryObjectFile (CategoryIdentifier _ n _) ds _)
+    | n `Set.member` pc' = map ciPath $ filter ((`Set.member` dc') . ciCategory) ds
+  checkDep _ = []
