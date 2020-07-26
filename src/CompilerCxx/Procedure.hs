@@ -965,7 +965,14 @@ autoPositionalCleanup e = do
   if null ss
      then csWrite ["return " ++ useAsReturns e ++ ";"]
      else do
-       csWrite ["{","ReturnTuple returns = " ++ useAsReturns e ++ ";"]
+       named <- csIsNamedReturns
        sequence_ $ map (csInheritReturns . (:[])) cs
-       csWrite ss
-       csWrite ["return returns;","}"]
+       if named
+          then do
+            csWrite ["returns = " ++ useAsReturns e ++ ";"]
+            csWrite ss
+            csWrite ["return returns;"]
+          else do
+            csWrite ["{","ReturnTuple returns = " ++ useAsReturns e ++ ";"]
+            csWrite ss
+            csWrite ["return returns;","}"]

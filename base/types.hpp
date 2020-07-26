@@ -149,7 +149,7 @@ class ReturnTuple : public ValueTuple {
   ReturnTuple(int size) : returns_(size) {}
 
   ReturnTuple(ReturnTuple&&) = default;
-  ReturnTuple& operator =(ReturnTuple&&) = default;
+  ReturnTuple& operator =(ReturnTuple&&);
 
   template<class...Ts>
   explicit ReturnTuple(Ts... returns) : returns_{std::move(returns)...} {}
@@ -177,7 +177,9 @@ class ArgTuple : public ValueTuple {
 
  private:
   ArgTuple(const ArgTuple&) = delete;
+  ArgTuple(ArgTuple&&) = delete;
   ArgTuple& operator =(const ArgTuple&) = delete;
+  ArgTuple& operator =(ArgTuple&&) =  delete;
 
   std::vector<const S<TypeValue>*> args_;
 };

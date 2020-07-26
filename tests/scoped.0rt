@@ -313,6 +313,34 @@ concrete Test {
 }
 
 
+testcase "positional return sets named returns for cleanup" {
+  crash Test$run()
+  require "message"
+  exclude "failed"
+}
+
+define Test {
+  // Using a second return ensures that assignment works properly when the
+  // ReturnTuple is constructed during assignment.
+  @type get () -> (String,Int)
+  get () (value,value2) {
+    value <- "failed"
+    cleanup {
+      fail(value)
+    } in return "message", 1
+  }
+
+  run () {
+    String value, _ <- get()
+    fail(value)
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
 testcase "cannot refer to cleanup variables" {
   error
   require "value.+not defined"
