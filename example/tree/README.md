@@ -10,7 +10,7 @@ To run the example:
 ZEOLITE_PATH=$(zeolite --get-path)
 
 # Compile the example.
-zeolite -p "$ZEOLITE_PATH" -i lib/util -m TreeDemo example/tree
+zeolite -p "$ZEOLITE_PATH" -I lib/util -m TreeDemo example/tree
 
 # Run the unit tests.
 zeolite -p "$ZEOLITE_PATH" -t example/tree

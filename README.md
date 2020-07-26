@@ -122,7 +122,7 @@ It's the [any%](https://en.wiktionary.org/wiki/any%25) of programming.
 
 ```shell
 # Compile.
-zeolite -i lib/util --fast HelloWorld hello-world.0rx
+zeolite -I lib/util --fast HelloWorld hello-world.0rx
 
 # Execute.
 ./HelloWorld

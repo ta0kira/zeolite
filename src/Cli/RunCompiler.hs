@@ -24,6 +24,7 @@ import Control.Monad (foldM,when)
 import Data.List (intercalate)
 import System.Directory
 import System.FilePath
+import System.IO
 import System.Posix.Temp (mkdtemp)
 import qualified Data.Map as Map
 import qualified Data.Set as Set
@@ -72,7 +73,7 @@ runCompiler resolver backend (CompileOptions _ _ _ ds _ _ p (ExecuteTests tp) f)
         (fromCompileInfo rs) <??
           ("\nPassed: " ++ show passed ++ " test(s), Failed: " ++ show failed ++ " test(s)")
       | otherwise =
-        compileWarningM $ "\nPassed: " ++ show passed ++ " test(s), Failed: " ++ show failed ++ " test(s)"
+        errorFromIO $ hPutStrLn stderr $ "\nPassed: " ++ show passed ++ " test(s), Failed: " ++ show failed ++ " test(s)"
 
 runCompiler resolver backend (CompileOptions _ is is2 _ _ _ p (CompileFast c fn f2) f) = do
   dir <- errorFromIO $ mkdtemp "/tmp/zfast_"

@@ -166,7 +166,7 @@ define $category {
   }
 }
 END
-  do_zeolite -i lib/util --fast $category "$file"
+  do_zeolite -I lib/util --fast $category "$file"
   local output=$(execute "$PWD/$category")
   if ! echo "$output" | fgrep -xq 'Hello World'; then
     show_message 'Expected "Hello World" in program output:'
@@ -210,20 +210,20 @@ test_global_include() {
   local temp=$(execute mktemp -d)
   local prev=$PWD
   execute cd "$temp"
-  do_zeolite -i fakedep -c "$temp" || { execute cd "$prev"; execute rm "$global"; return 1; }
+  do_zeolite -I fakedep -c "$temp" || { execute cd "$prev"; execute rm "$global"; return 1; }
   execute cd "$prev"
   execute rm -r "$temp0" "$temp" "$global" || true
 }
 
 
 test_example_hello() {
-  do_zeolite -p "$ZEOLITE_PATH" -i lib/util -m HelloDemo example/hello -f
+  do_zeolite -p "$ZEOLITE_PATH" -I lib/util -m HelloDemo example/hello -f
   do_zeolite -p "$ZEOLITE_PATH" -t example/hello
 }
 
 
 test_example_tree() {
-  do_zeolite -p "$ZEOLITE_PATH" -i lib/util -m TreeDemo example/tree -f
+  do_zeolite -p "$ZEOLITE_PATH" -I lib/util -m TreeDemo example/tree -f
   do_zeolite -p "$ZEOLITE_PATH" -t example/tree
 }
 
