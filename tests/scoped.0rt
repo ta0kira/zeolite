@@ -745,3 +745,107 @@ define Test {
 concrete Test {
   @type run () -> ()
 }
+
+
+testcase "partial cleanup with while and break" {
+  success Test$run()
+}
+
+define Test {
+  run () {
+    Int x <- 0
+    Int y <- 0
+    Int z <- 0
+    cleanup {
+      x <- 1
+    } in {
+      while (true) {
+        cleanup {
+          y <- 2
+        } in if (true) {
+          cleanup {
+            z <- 3
+          } in if (true) {
+            break
+          }
+        }
+      }
+      \ Testing$check<?>(x,0)
+      \ Testing$check<?>(y,2)
+      \ Testing$check<?>(z,3)
+    }
+    \ Testing$check<?>(x,1)
+    \ Testing$check<?>(y,2)
+    \ Testing$check<?>(z,3)
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "full cleanup with while and return" {
+  success Test$run()
+}
+
+concrete Value {
+  @type create () -> (Value)
+  @value call () -> (Int,Int,Int)
+  @value get () -> (Int,Int,Int)
+}
+
+define Value {
+  @value Int x
+  @value Int y
+  @value Int z
+
+  create () {
+    return Value{ 0, 0, 0 }
+  }
+
+  call () {
+    cleanup {
+      x <- 1
+    } in while (true) {
+      cleanup {
+        y <- 2
+      } in if (true) {
+        cleanup {
+          z <- 3
+        } in if (true) {
+          return get()
+        }
+      }
+    }
+    fail("Failed")
+  }
+
+  get () {
+    return x, y, z
+  }
+}
+
+define Test {
+  run () {
+    Value value <- Value$create()
+    scoped {
+      Int x, Int y, Int z <- value.call()
+    } in {
+      \ Testing$check<?>(x,0)
+      \ Testing$check<?>(y,0)
+      \ Testing$check<?>(z,0)
+    }
+    scoped {
+      Int x, Int y, Int z <- value.get()
+    } in {
+      \ Testing$check<?>(x,1)
+      \ Testing$check<?>(y,2)
+      \ Testing$check<?>(z,3)
+    }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}

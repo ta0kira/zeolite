@@ -58,13 +58,15 @@ data ProcedureContext c =
     pcFunctions :: Map.Map FunctionName (ScopedFunction c),
     pcVariables :: Map.Map VariableName (VariableValue c),
     pcReturns :: ReturnValidation c,
+    pcJumpType :: JumpType,
     pcIsNamed :: Bool,
     pcPrimNamed :: [ReturnVariable],
     pcRequiredTypes :: Set.Set CategoryName,
     pcOutput :: [String],
     pcDisallowInit :: Bool,
     pcLoopSetup :: LoopSetup [String],
-    pcCleanupSetup :: CleanupSetup (ProcedureContext c) [String],
+    pcCleanupSetup :: [CleanupSetup (ProcedureContext c) [String]],
+    pcInCleanup :: Bool,
     pcExprMap :: ExprMap c,
     pcNoTrace :: Bool
   }
@@ -78,8 +80,7 @@ data ReturnValidation c =
   ValidateNames {
     vnTypes :: Positional (PassedValue c),
     vnRemaining :: Map.Map VariableName (PassedValue c)
-  } |
-  UnreachableCode
+  }
 
 instance (Show c, MergeableM m, CompileErrorM m) =>
   CompilerContext c m [String] (ProcedureContext c) where
@@ -107,6 +108,7 @@ instance (Show c, MergeableM m, CompileErrorM m) =>
       pcFunctions = pcFunctions ctx,
       pcVariables = pcVariables ctx,
       pcReturns = pcReturns ctx,
+      pcJumpType = pcJumpType ctx,
       pcIsNamed = pcIsNamed ctx,
       pcPrimNamed = pcPrimNamed ctx,
       pcRequiredTypes = Set.union (pcRequiredTypes ctx) ts,
@@ -114,6 +116,7 @@ instance (Show c, MergeableM m, CompileErrorM m) =>
       pcDisallowInit = pcDisallowInit ctx,
       pcLoopSetup = pcLoopSetup ctx,
       pcCleanupSetup = pcCleanupSetup ctx,
+      pcInCleanup = pcInCleanup ctx,
       pcExprMap = pcExprMap ctx,
       pcNoTrace = pcNoTrace ctx
     }
@@ -249,6 +252,7 @@ instance (Show c, MergeableM m, CompileErrorM m) =>
         pcFunctions = pcFunctions ctx,
         pcVariables = Map.insert n t (pcVariables ctx),
         pcReturns = pcReturns ctx,
+        pcJumpType = pcJumpType ctx,
         pcIsNamed = pcIsNamed ctx,
         pcPrimNamed = pcPrimNamed ctx,
         pcRequiredTypes = pcRequiredTypes ctx,
@@ -256,6 +260,7 @@ instance (Show c, MergeableM m, CompileErrorM m) =>
         pcDisallowInit = pcDisallowInit ctx,
         pcLoopSetup = pcLoopSetup ctx,
         pcCleanupSetup = pcCleanupSetup ctx,
+        pcInCleanup = pcInCleanup ctx,
         pcExprMap = pcExprMap ctx,
         pcNoTrace = pcNoTrace ctx
       }
@@ -279,6 +284,7 @@ instance (Show c, MergeableM m, CompileErrorM m) =>
       pcFunctions = pcFunctions ctx,
       pcVariables = pcVariables ctx,
       pcReturns = pcReturns ctx,
+      pcJumpType = pcJumpType ctx,
       pcIsNamed = pcIsNamed ctx,
       pcPrimNamed = pcPrimNamed ctx,
       pcRequiredTypes = pcRequiredTypes ctx,
@@ -286,6 +292,7 @@ instance (Show c, MergeableM m, CompileErrorM m) =>
       pcDisallowInit = pcDisallowInit ctx,
       pcLoopSetup = pcLoopSetup ctx,
       pcCleanupSetup = pcCleanupSetup ctx,
+      pcInCleanup = pcInCleanup ctx,
       pcExprMap = pcExprMap ctx,
       pcNoTrace = pcNoTrace ctx
     }
@@ -304,6 +311,7 @@ instance (Show c, MergeableM m, CompileErrorM m) =>
         pcFunctions = pcFunctions ctx,
         pcVariables = pcVariables ctx,
         pcReturns = pcReturns ctx,
+        pcJumpType = pcJumpType ctx,
         pcIsNamed = pcIsNamed ctx,
         pcPrimNamed = pcPrimNamed ctx,
         pcRequiredTypes = pcRequiredTypes ctx,
@@ -311,6 +319,7 @@ instance (Show c, MergeableM m, CompileErrorM m) =>
         pcDisallowInit = pcDisallowInit ctx,
         pcLoopSetup = pcLoopSetup ctx,
         pcCleanupSetup = pcCleanupSetup ctx,
+        pcInCleanup = pcInCleanup ctx,
         pcExprMap = pcExprMap ctx,
         pcNoTrace = pcNoTrace ctx
       }
@@ -329,6 +338,7 @@ instance (Show c, MergeableM m, CompileErrorM m) =>
         pcFunctions = pcFunctions ctx,
         pcVariables = pcVariables ctx,
         pcReturns = ValidateNames ts $ Map.delete n ra,
+        pcJumpType = pcJumpType ctx,
         pcIsNamed = pcIsNamed ctx,
         pcPrimNamed = pcPrimNamed ctx,
         pcRequiredTypes = pcRequiredTypes ctx,
@@ -336,6 +346,7 @@ instance (Show c, MergeableM m, CompileErrorM m) =>
         pcDisallowInit = pcDisallowInit ctx,
         pcLoopSetup = pcLoopSetup ctx,
         pcCleanupSetup = pcCleanupSetup ctx,
+        pcInCleanup = pcInCleanup ctx,
         pcExprMap = pcExprMap ctx,
         pcNoTrace = pcNoTrace ctx
       }
@@ -353,7 +364,8 @@ instance (Show c, MergeableM m, CompileErrorM m) =>
       pcParamScopes = pcParamScopes ctx,
       pcFunctions = pcFunctions ctx,
       pcVariables = pcVariables ctx,
-      pcReturns = combineSeries (pcReturns ctx) inherited,
+      pcReturns = returns,
+      pcJumpType = jump,
       pcIsNamed = pcIsNamed ctx,
       pcPrimNamed = pcPrimNamed ctx,
       pcRequiredTypes = pcRequiredTypes ctx,
@@ -361,21 +373,22 @@ instance (Show c, MergeableM m, CompileErrorM m) =>
       pcDisallowInit = pcDisallowInit ctx,
       pcLoopSetup = pcLoopSetup ctx,
       pcCleanupSetup = pcCleanupSetup ctx,
+      pcInCleanup = pcInCleanup ctx,
       pcExprMap = pcExprMap ctx,
       pcNoTrace = pcNoTrace ctx
     }
     where
-      inherited = foldr combineParallel UnreachableCode (map pcReturns cs)
-      combineSeries _ UnreachableCode = UnreachableCode
-      combineSeries UnreachableCode _ = UnreachableCode
-      combineSeries r@(ValidatePositions _) _ = r
-      combineSeries _ r@(ValidatePositions _) = r
-      combineSeries (ValidateNames ts ra1) (ValidateNames _ ra2) = ValidateNames ts $ Map.intersection ra1 ra2
-      combineParallel UnreachableCode r = r
-      combineParallel r UnreachableCode = r
-      combineParallel (ValidateNames ts ra1) (ValidateNames _ ra2) = ValidateNames ts $ Map.union ra1 ra2
-      combineParallel r@(ValidatePositions _) _ = r
-      combineParallel _ r@(ValidatePositions _) = r
+      (returns,jump) = combineSeries (pcReturns ctx,pcJumpType ctx) inherited
+      inherited = foldr combineParallel (ValidatePositions (Positional []),JumpMax) $ zip (map pcReturns cs) (map pcJumpType cs)
+      combineSeries (r@(ValidatePositions _),j1) (_,j2) = (r,max j1 j2)
+      combineSeries (_,j1) (r@(ValidatePositions _),j2) = (r,max j1 j2)
+      combineSeries (ValidateNames ts ra1,j1) (ValidateNames _ ra2,j2) = (ValidateNames ts $ Map.intersection ra1 ra2,max j1 j2)
+      combineParallel (_,j) ra
+        -- Ignore a branch if it jumps to a higher scope.
+        | (if pcInCleanup ctx then j > JumpReturn else j > NextStatement) = ra
+      combineParallel (ValidateNames ts ra1,j1) (ValidateNames _ ra2,j2) = (ValidateNames ts $ Map.union ra1 ra2,min j1 j2)
+      combineParallel (r@(ValidatePositions _),j1) (_,j2) = (r,min j1 j2)
+      combineParallel (_,j1) (r@(ValidatePositions _),j2) = (r,min j1 j2)
   ccRegisterReturn ctx c vs = do
     check (pcReturns ctx)
     return $ ProcedureContext {
@@ -391,7 +404,8 @@ instance (Show c, MergeableM m, CompileErrorM m) =>
         pcParamScopes = pcParamScopes ctx,
         pcFunctions = pcFunctions ctx,
         pcVariables = pcVariables ctx,
-        pcReturns = UnreachableCode,
+        pcReturns = pcReturns ctx,
+        pcJumpType = JumpReturn,
         pcIsNamed = pcIsNamed ctx,
         pcPrimNamed = pcPrimNamed ctx,
         pcRequiredTypes = pcRequiredTypes ctx,
@@ -399,10 +413,13 @@ instance (Show c, MergeableM m, CompileErrorM m) =>
         pcDisallowInit = pcDisallowInit ctx,
         pcLoopSetup = pcLoopSetup ctx,
         pcCleanupSetup = pcCleanupSetup ctx,
+        pcInCleanup = pcInCleanup ctx,
         pcExprMap = pcExprMap ctx,
         pcNoTrace = pcNoTrace ctx
       }
     where
+      check _ | pcInCleanup ctx =
+        compileErrorM $ "Explicit return at " ++ formatFullContext c ++ " not allowed in cleanup"
       check (ValidatePositions rs) = do
         let vs' = case vs of
                        Nothing -> Positional []
@@ -427,13 +444,12 @@ instance (Show c, MergeableM m, CompileErrorM m) =>
                alwaysError (n,t) = compileErrorM $ "Named return " ++ show n ++ " (" ++ show t ++
                                                   ") might not have been set before return at " ++
                                                   formatFullContext c
-      check _ = return ()
   ccPrimNamedReturns = return . pcPrimNamed
-  ccIsUnreachable ctx = return $ match (pcReturns ctx) where
-    match UnreachableCode = True
-    match _                 = False
+  ccIsUnreachable ctx
+    | pcInCleanup ctx = return $ pcJumpType ctx > JumpReturn
+    | otherwise       = return $ pcJumpType ctx > NextStatement
   ccIsNamedReturns = return . pcIsNamed
-  ccSetNoReturn ctx =
+  ccSetJumpType ctx j =
     return $ ProcedureContext {
         pcScope = pcScope ctx,
         pcType = pcType ctx,
@@ -447,7 +463,8 @@ instance (Show c, MergeableM m, CompileErrorM m) =>
         pcParamScopes = pcParamScopes ctx,
         pcFunctions = pcFunctions ctx,
         pcVariables = pcVariables ctx,
-        pcReturns = UnreachableCode,
+        pcReturns = pcReturns ctx,
+        pcJumpType = j,
         pcIsNamed = pcIsNamed ctx,
         pcPrimNamed = pcPrimNamed ctx,
         pcRequiredTypes = pcRequiredTypes ctx,
@@ -455,6 +472,7 @@ instance (Show c, MergeableM m, CompileErrorM m) =>
         pcDisallowInit = pcDisallowInit ctx,
         pcLoopSetup = pcLoopSetup ctx,
         pcCleanupSetup = pcCleanupSetup ctx,
+        pcInCleanup = pcInCleanup ctx,
         pcExprMap = pcExprMap ctx,
         pcNoTrace = pcNoTrace ctx
       }
@@ -473,18 +491,20 @@ instance (Show c, MergeableM m, CompileErrorM m) =>
         pcFunctions = pcFunctions ctx,
         pcVariables = pcVariables ctx,
         pcReturns = pcReturns ctx,
+        pcJumpType = pcJumpType ctx,
         pcIsNamed = pcIsNamed ctx,
         pcPrimNamed = pcPrimNamed ctx,
         pcRequiredTypes = pcRequiredTypes ctx,
         pcOutput = pcOutput ctx,
         pcDisallowInit = pcDisallowInit ctx,
         pcLoopSetup = l,
-        pcCleanupSetup = pcCleanupSetup ctx,
+        pcCleanupSetup = LoopBoundary:(pcCleanupSetup ctx),
+        pcInCleanup = pcInCleanup ctx,
         pcExprMap = pcExprMap ctx,
         pcNoTrace = pcNoTrace ctx
       }
   ccGetLoop = return . pcLoopSetup
-  ccPushCleanup ctx (CleanupSetup cs ss) =
+  ccStartCleanup ctx =
     return $ ProcedureContext {
         pcScope = pcScope ctx,
         pcType = pcType ctx,
@@ -499,18 +519,51 @@ instance (Show c, MergeableM m, CompileErrorM m) =>
         pcFunctions = pcFunctions ctx,
         pcVariables = pcVariables ctx,
         pcReturns = pcReturns ctx,
+        pcJumpType = pcJumpType ctx,
         pcIsNamed = pcIsNamed ctx,
         pcPrimNamed = pcPrimNamed ctx,
         pcRequiredTypes = pcRequiredTypes ctx,
         pcOutput = pcOutput ctx,
         pcDisallowInit = pcDisallowInit ctx,
         pcLoopSetup = pcLoopSetup ctx,
-        pcCleanupSetup = CleanupSetup (cs ++ (csReturnContext $ pcCleanupSetup ctx))
-                                      (ss ++ (csCleanup $ pcCleanupSetup ctx)),
+        pcCleanupSetup = pcCleanupSetup ctx,
+        pcInCleanup = True,
         pcExprMap = pcExprMap ctx,
         pcNoTrace = pcNoTrace ctx
       }
-  ccGetCleanup = return . pcCleanupSetup
+  ccPushCleanup ctx cs =
+    return $ ProcedureContext {
+        pcScope = pcScope ctx,
+        pcType = pcType ctx,
+        pcExtParams = pcExtParams ctx,
+        pcIntParams = pcIntParams ctx,
+        pcMembers = pcMembers ctx,
+        pcCategories = pcCategories ctx,
+        pcAllFilters = pcAllFilters ctx,
+        pcExtFilters = pcExtFilters ctx,
+        pcIntFilters = pcIntFilters ctx,
+        pcParamScopes = pcParamScopes ctx,
+        pcFunctions = pcFunctions ctx,
+        pcVariables = pcVariables ctx,
+        pcReturns = pcReturns ctx,
+        pcJumpType = pcJumpType ctx,
+        pcIsNamed = pcIsNamed ctx,
+        pcPrimNamed = pcPrimNamed ctx,
+        pcRequiredTypes = pcRequiredTypes ctx,
+        pcOutput = pcOutput ctx,
+        pcDisallowInit = pcDisallowInit ctx,
+        pcLoopSetup = pcLoopSetup ctx,
+        pcCleanupSetup = cs:(pcCleanupSetup ctx),
+        pcInCleanup = pcInCleanup ctx,
+        pcExprMap = pcExprMap ctx,
+        pcNoTrace = pcNoTrace ctx
+      }
+  ccGetCleanup ctx j = return combined where
+    combined
+      | j == JumpReturn                   = combine $ filter    (not . isLoopBoundary) $ pcCleanupSetup ctx
+      | j == JumpBreak || j == JumpReturn = combine $ takeWhile (not . isLoopBoundary) $ pcCleanupSetup ctx
+      | otherwise = CleanupSetup [] []
+    combine cs = CleanupSetup (concat $ map csReturnContext cs) (concat $ map csCleanup cs)
   ccExprLookup ctx c n =
     case n `Map.lookup` pcExprMap ctx of
          Nothing -> compileErrorM $ "Env expression " ++ n ++ " is not defined" ++ formatFullContextBrace c
@@ -530,6 +583,7 @@ instance (Show c, MergeableM m, CompileErrorM m) =>
         pcFunctions = pcFunctions ctx,
         pcVariables = pcVariables ctx,
         pcReturns = pcReturns ctx,
+        pcJumpType = pcJumpType ctx,
         pcIsNamed = pcIsNamed ctx,
         pcPrimNamed = pcPrimNamed ctx,
         pcRequiredTypes = pcRequiredTypes ctx,
@@ -537,6 +591,7 @@ instance (Show c, MergeableM m, CompileErrorM m) =>
         pcDisallowInit = pcDisallowInit ctx,
         pcLoopSetup = pcLoopSetup ctx,
         pcCleanupSetup = pcCleanupSetup ctx,
+        pcInCleanup = pcInCleanup ctx,
         pcExprMap = pcExprMap ctx,
         pcNoTrace = t
       }

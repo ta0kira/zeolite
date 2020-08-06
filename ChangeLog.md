@@ -1,6 +1,13 @@
 # Revision history for zeolite-lang
 
-## 0.7.1.1  -- ????-??-??
+## 0.8.0.0  -- ????-??-??
+
+### Language
+
+* **[breaking]** Makes the semantics of `cleanup` more consistent:
+
+  * **[breaking]** Adds unwinding of `cleanup` blocks when used with `break` and
+  `continue`, respecting loop boundaries.
 
 ### Compiler CLI
 

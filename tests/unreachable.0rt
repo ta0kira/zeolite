@@ -27,6 +27,25 @@ define Test {
     fail("Failed")
     return 1
   }
+
+  run () {}
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+testcase "unreachable not compiled" {
+  success Test$run()
+}
+
+define Test {
+  @category failedReturn () -> (Int)
+  failedReturn () {
+    fail("Failed")
+    \ foo()
+  }
+
   run () {}
 }
 
@@ -46,6 +65,7 @@ define Test {
     return 0
     return 1
   }
+
   run () {}
 }
 
@@ -69,6 +89,7 @@ define Test {
     }
     return 3
   }
+
   run () {}
 }
 
@@ -89,6 +110,7 @@ define Test {
       return 1
     } in return 2
   }
+
   run () {}
 }
 
@@ -111,6 +133,7 @@ define Test {
     } in \ empty
     return 2
   }
+
   run () {}
 }
 
@@ -133,7 +156,46 @@ define Test {
       return 2
     } in \ empty
   }
+
   run () {}
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "warning statement after break" {
+  success Test$run()
+  require compiler "unreachable"
+}
+
+define Test {
+  run () {
+    while (false) {
+      break
+      fail("Failed")
+    }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "warning statement after continue" {
+  success Test$run()
+  require compiler "unreachable"
+}
+
+define Test {
+  run () {
+    while (false) {
+      continue
+      fail("Failed")
+    }
+  }
 }
 
 concrete Test {

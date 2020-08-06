@@ -28,6 +28,7 @@ module Compilation.CompilerState (
   CompilerState,
   ExpressionType,
   LoopSetup(..),
+  JumpType(..),
   MemberValue(..),
   ReturnVariable(..),
   (<???),
@@ -56,12 +57,14 @@ module Compilation.CompilerState (
   csRequiresTypes,
   csResolver,
   csSameType,
-  csSetNoReturn,
+  csSetJumpType,
   csSetNoTrace,
+  csStartCleanup,
   csStartLoop,
   csUpdateAssigned,
   csWrite,
   getCleanContext,
+  isLoopBoundary,
   resetBackgroundStateT,
   runDataCompiler,
 ) where
@@ -108,11 +111,12 @@ class (Functor m, Monad m) => CompilerContext c m s a | a -> c s where
   ccPrimNamedReturns :: a -> m [ReturnVariable]
   ccIsUnreachable :: a -> m Bool
   ccIsNamedReturns :: a -> m Bool
-  ccSetNoReturn :: a -> m a
+  ccSetJumpType :: a -> JumpType -> m a
   ccStartLoop :: a -> LoopSetup s -> m a
   ccGetLoop :: a -> m (LoopSetup s)
+  ccStartCleanup :: a -> m a
   ccPushCleanup :: a -> CleanupSetup a s -> m a
-  ccGetCleanup :: a -> m (CleanupSetup a s)
+  ccGetCleanup :: a -> JumpType -> m (CleanupSetup a s)
   ccExprLookup :: a -> [c] -> String -> m (Expression c)
   ccSetNoTrace :: a -> Bool -> m a
   ccGetNoTrace :: a -> m Bool
@@ -145,7 +149,21 @@ data CleanupSetup a s =
   CleanupSetup {
     csReturnContext :: [a],
     csCleanup :: s
-  }
+  } |
+  LoopBoundary
+
+isLoopBoundary :: CleanupSetup a s -> Bool
+isLoopBoundary LoopBoundary = True
+isLoopBoundary _            = False
+
+data JumpType =
+  NextStatement |
+  JumpContinue |
+  JumpBreak |
+  JumpReturn |
+  JumpFailCall |
+  JumpMax  -- Max value for use as initial state in folds.
+  deriving (Eq,Ord,Show)
 
 instance Show c => Show (VariableValue c) where
   show (VariableValue c _ t _) = show t ++ formatFullContextBrace c
@@ -232,11 +250,14 @@ csIsUnreachable = fmap ccIsUnreachable get >>= lift
 csIsNamedReturns :: CompilerContext c m s a => CompilerState a m Bool
 csIsNamedReturns = fmap ccIsNamedReturns get >>= lift
 
-csSetNoReturn :: CompilerContext c m s a => CompilerState a m ()
-csSetNoReturn = fmap ccSetNoReturn get >>= lift >>= put
+csSetJumpType :: CompilerContext c m s a => JumpType -> CompilerState a m ()
+csSetJumpType j = fmap (\x -> ccSetJumpType x j) get >>= lift >>= put
 
 csStartLoop :: CompilerContext c m s a => LoopSetup s -> CompilerState a m ()
 csStartLoop l = fmap (\x -> ccStartLoop x l) get >>= lift >>= put
+
+csStartCleanup :: CompilerContext c m s a => CompilerState a m ()
+csStartCleanup = fmap (\x -> ccStartCleanup x) get >>= lift >>= put
 
 csGetLoop :: CompilerContext c m s a => CompilerState a m (LoopSetup s)
 csGetLoop = fmap ccGetLoop get >>= lift
@@ -244,8 +265,8 @@ csGetLoop = fmap ccGetLoop get >>= lift
 csPushCleanup :: CompilerContext c m s a => CleanupSetup a s -> CompilerState a m ()
 csPushCleanup l = fmap (\x -> ccPushCleanup x l) get >>= lift >>= put
 
-csGetCleanup :: CompilerContext c m s a => CompilerState a m (CleanupSetup a s)
-csGetCleanup = fmap ccGetCleanup get >>= lift
+csGetCleanup :: CompilerContext c m s a => JumpType -> CompilerState a m (CleanupSetup a s)
+csGetCleanup j = fmap (\x -> ccGetCleanup x j) get >>= lift
 
 csExprLookup :: CompilerContext c m s a => [c] -> String -> CompilerState a m (Expression c)
 csExprLookup c n = fmap (\x -> ccExprLookup x c n) get >>= lift

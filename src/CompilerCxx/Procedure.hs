@@ -159,18 +159,17 @@ compileProcedure :: (Show c, CompileErrorM m, MergeableM m,
                      CompilerContext c m [String] a) =>
   a -> Procedure c -> CompilerState a m a
 compileProcedure ctx (Procedure _ ss) = do
-  ctx' <- lift $ execStateT (sequence $ map compileOne ss) ctx
+  ctx' <- lift $ execStateT (sequence $ map compile ss) ctx
   return ctx' where
-    compileOne s = do
-      warnUnreachable s
-      s' <- resetBackgroundStateT $ compileStatement s
-      return s'
-    warnUnreachable s = do
+    compile s = do
       unreachable <- csIsUnreachable
-      lift $ when unreachable $
-                  compileWarningM $ "Statement at " ++
-                                    formatFullContext (getStatementContext s) ++
-                                    " is unreachable"
+      if unreachable
+         then lift $ compileWarningM $ "Statement at " ++
+                                       formatFullContext (getStatementContext s) ++
+                                       " is unreachable (skipping compilation)"
+         else do
+           s' <- resetBackgroundStateT $ compileStatement s
+           return s'
 
 maybeSetTrace :: (Show c, CompileErrorM m, MergeableM m,
                   CompilerContext c m [String] a) =>
@@ -211,6 +210,10 @@ compileStatement (LoopBreak c) = do
        NotInLoop ->
          lift $ compileErrorM $ "Using break outside of while is no allowed" ++ formatFullContextBrace c
        _ -> return ()
+  (CleanupSetup cs ss) <- csGetCleanup JumpBreak
+  sequence_ $ map (csInheritReturns . (:[])) cs
+  csWrite ss
+  csSetJumpType JumpBreak
   csWrite ["break;"]
 compileStatement (LoopContinue c) = do
   loop <- csGetLoop
@@ -218,6 +221,10 @@ compileStatement (LoopContinue c) = do
        NotInLoop ->
          lift $ compileErrorM $ "Using continue outside of while is no allowed" ++ formatFullContextBrace c
        _ -> return ()
+  (CleanupSetup cs ss) <- csGetCleanup JumpContinue
+  sequence_ $ map (csInheritReturns . (:[])) cs
+  csWrite ss
+  csSetJumpType JumpContinue
   csWrite $ ["{"] ++ lsUpdate loop ++ ["}","continue;"]
 compileStatement (FailCall c e) = do
   csRequiresTypes (Set.fromList [BuiltinFormatted,BuiltinString])
@@ -229,7 +236,7 @@ compileStatement (FailCall c e) = do
   fa <- csAllFilters
   lift $ (checkValueTypeMatch_ r fa t0 formattedRequiredValue) <??
     ("In fail call at " ++ formatFullContext c)
-  csSetNoReturn
+  csSetJumpType JumpFailCall
   maybeSetTrace c
   csWrite ["BUILTIN_FAIL(" ++ useAsUnwrapped e0 ++ ")"]
 compileStatement (IgnoreValues c e) = do
@@ -941,10 +948,11 @@ expandGeneralInstance (SingleType (JustParamName _ p)) = do
   return $ scoped ++ paramName p
 expandGeneralInstance t = lift $ compileErrorM $ "Type " ++ show t ++ " contains unresolved types"
 
-doImplicitReturn :: (Show c,CompilerContext c m [String] a) => [c] -> CompilerState a m ()
+doImplicitReturn :: (CompileErrorM m, Show c, CompilerContext c m [String] a) =>
+  [c] -> CompilerState a m ()
 doImplicitReturn c = do
   named <- csIsNamedReturns
-  (CleanupSetup cs ss) <- csGetCleanup
+  (CleanupSetup cs ss) <- csGetCleanup JumpReturn
   when (not $ null ss) $ do
     sequence_ $ map (csInheritReturns . (:[])) cs
     csWrite ss
@@ -959,9 +967,10 @@ doImplicitReturn c = do
     assign (ReturnVariable i n t) =
       "returns.At(" ++ show i ++ ") = " ++ useAsUnwrapped (readStoredVariable False t $ variableName n) ++ ";"
 
-autoPositionalCleanup :: (CompilerContext c m [String] a) => ExprValue -> CompilerState a m ()
+autoPositionalCleanup :: (CompileErrorM m, CompilerContext c m [String] a) =>
+  ExprValue -> CompilerState a m ()
 autoPositionalCleanup e = do
-  (CleanupSetup cs ss) <- csGetCleanup
+  (CleanupSetup cs ss) <- csGetCleanup JumpReturn
   if null ss
      then csWrite ["return " ++ useAsReturns e ++ ";"]
      else do
