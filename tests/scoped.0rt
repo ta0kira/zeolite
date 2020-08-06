@@ -394,35 +394,6 @@ concrete Test {
 }
 
 
-testcase "no infinite loop in cleanup return" {
-  success Test$run()
-}
-
-define Test {
-  @type get () -> (Int)
-  get () {
-    Int value <- 0
-    scoped {
-      value <- 1
-    } cleanup {
-      value <- 2
-      return value
-    } in return 3
-  }
-
-  run () {
-    Int value <- get()
-    if (value != 2) {
-      fail(value)
-    }
-  }
-}
-
-concrete Test {
-  @type run () -> ()
-}
-
-
 testcase "multiple cleanup" {
   success Test$run()
 }
@@ -843,6 +814,45 @@ define Test {
       \ Testing$check<?>(y,2)
       \ Testing$check<?>(z,3)
     }
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "positional return not allowed in cleanup" {
+  error
+  require compiler "return.+cleanup"
+}
+
+define Test {
+  @type get () -> (Int)
+  get () (value) {
+    cleanup {
+      return 0
+    } in \ empty
+  }
+
+  run () {}
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "default return not allowed in cleanup" {
+  error
+  require compiler "return.+cleanup"
+}
+
+define Test {
+  run () {
+    cleanup {
+      return _
+    } in \ empty
   }
 }
 

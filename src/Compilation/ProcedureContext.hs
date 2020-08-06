@@ -379,10 +379,10 @@ instance (Show c, MergeableM m, CompileErrorM m) =>
     }
     where
       (returns,jump) = combineSeries (pcReturns ctx,pcJumpType ctx) inherited
-      inherited = foldr combineParallel (ValidatePositions (Positional []),JumpMax) $ zip (map pcReturns cs) (map pcJumpType cs)
       combineSeries (r@(ValidatePositions _),j1) (_,j2) = (r,max j1 j2)
       combineSeries (_,j1) (r@(ValidatePositions _),j2) = (r,max j1 j2)
       combineSeries (ValidateNames ts ra1,j1) (ValidateNames _ ra2,j2) = (ValidateNames ts $ Map.intersection ra1 ra2,max j1 j2)
+      inherited = foldr combineParallel (ValidateNames (Positional []) Map.empty,JumpMax) $ zip (map pcReturns cs) (map pcJumpType cs)
       combineParallel (_,j) ra
         -- Ignore a branch if it jumps to a higher scope.
         | (if pcInCleanup ctx then j > JumpReturn else j > NextStatement) = ra

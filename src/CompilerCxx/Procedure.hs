@@ -410,15 +410,13 @@ compileScopedBlock s = do
   (ctxP',cl',ctxCl) <-
     case cl of
          Just p2 -> do
-           ctx0' <- lift $ ccClearOutput ctxP
+           ctx0' <- lift $ (ccClearOutput ctxP >>= ccStartCleanup)
            ctxCl <- compileProcedure ctx0' p2
            p2' <- lift $ ccGetOutput ctxCl
            noTrace <- csGetNoTrace
-           -- TODO: It might be helpful to add a new trace-context line for this
-           -- so that the line that triggered the cleanup is still in the trace.
            let p2'' = if noTrace
-                      then []
-                      else ["{",startCleanupTracing] ++ p2' ++ ["}"]
+                         then []
+                         else ["{",startCleanupTracing] ++ p2' ++ ["}"]
            ctxP' <- lift $ ccPushCleanup ctxP (CleanupSetup [ctxCl] p2'')
            return (ctxP',p2'',ctxCl)
          Nothing -> return (ctxP,[],ctxP)

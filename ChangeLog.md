@@ -6,6 +6,9 @@
 
 * **[breaking]** Makes the semantics of `cleanup` more consistent:
 
+  * **[breaking]** Disallows statements that modify `return` values within
+    `cleanup` blocks, i.e., `return` with values and assigning named returns.
+
   * **[breaking]** Adds unwinding of `cleanup` blocks when used with `break` and
   `continue`, respecting loop boundaries.
 
