@@ -119,9 +119,10 @@ concrete Test {
 }
 
 
-testcase "warning statement after cleanup return" {
-  success Test$run()
+testcase "warning statement after cleanup fail" {
+  crash Test$run()
   require compiler "unreachable"
+  require "message"
 }
 
 define Test {
@@ -129,12 +130,14 @@ define Test {
   failedReturn () {
     scoped {
     } cleanup {
-      return 1
+      fail("message")
     } in \ empty
     return 2
   }
 
-  run () {}
+  run () {
+    \ failedReturn()
+  }
 }
 
 concrete Test {
@@ -143,21 +146,24 @@ concrete Test {
 
 
 testcase "warning statement in cleanup after scoped return" {
-  success Test$run()
+  crash Test$run()
   require compiler "unreachable"
+  require "message"
 }
 
 define Test {
-  @category failedReturn () -> (Int)
+  @category failedReturn () -> ()
   failedReturn () {
     scoped {
-      return 1
+      fail("message")
     } cleanup {
-      return 2
-    } in \ empty
+      \ empty
+    } in {}
   }
 
-  run () {}
+  run () {
+    \ failedReturn()
+  }
 }
 
 concrete Test {
