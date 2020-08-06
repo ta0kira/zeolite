@@ -9,6 +9,10 @@
   * **[breaking]** Disallows statements that modify `return` values within
     `cleanup` blocks, i.e., `return` with values and assigning named returns.
 
+  * **[new]** Allows `cleanup` to access named returns that are initialized
+    within the corresponding `in` statement. Previously, access required
+    initialization *before* the `in` statement.
+
   * **[breaking]** Adds unwinding of `cleanup` blocks when used with `break` and
   `continue`, respecting loop boundaries.
 

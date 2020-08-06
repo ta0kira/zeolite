@@ -78,6 +78,7 @@ data ReturnValidation c =
     vpReturns :: Positional (PassedValue c)
   } |
   ValidateNames {
+    vnNames :: Positional VariableName,
     vnTypes :: Positional (PassedValue c),
     vnRemaining :: Map.Map VariableName (PassedValue c)
   }
@@ -231,13 +232,13 @@ instance (Show c, MergeableM m, CompileErrorM m) =>
     case n `Map.lookup` pcVariables ctx of
           (Just v) -> return v
           _ -> compileErrorM $ "Variable " ++ show n ++ " is not defined" ++
-                              formatFullContextBrace c
+                               formatFullContextBrace c
   ccAddVariable ctx c n t = do
     case n `Map.lookup` pcVariables ctx of
           Nothing -> return ()
           (Just v) -> compileErrorM $ "Variable " ++ show n ++
-                                    formatFullContextBrace c ++
-                                    " is already defined: " ++ show v
+                                      formatFullContextBrace c ++
+                                      " is already defined: " ++ show v
     return $ ProcedureContext {
         pcScope = pcScope ctx,
         pcType = pcType ctx,
@@ -266,7 +267,7 @@ instance (Show c, MergeableM m, CompileErrorM m) =>
       }
   ccCheckVariableInit ctx c n =
     case pcReturns ctx of
-         ValidateNames _ na -> when (n `Map.member` na) $
+         ValidateNames _ _ na -> when (n `Map.member` na) $
            compileErrorM $ "Named return " ++ show n ++ " might not be initialized" ++ formatFullContextBrace c
          _ -> return ()
   ccWrite ctx ss = return $
@@ -324,7 +325,7 @@ instance (Show c, MergeableM m, CompileErrorM m) =>
         pcNoTrace = pcNoTrace ctx
       }
   ccUpdateAssigned ctx n = update (pcReturns ctx) where
-    update (ValidateNames ts ra) = return $ ProcedureContext {
+    update (ValidateNames ns ts ra) = return $ ProcedureContext {
         pcScope = pcScope ctx,
         pcType = pcType ctx,
         pcExtParams = pcExtParams ctx,
@@ -337,7 +338,7 @@ instance (Show c, MergeableM m, CompileErrorM m) =>
         pcParamScopes = pcParamScopes ctx,
         pcFunctions = pcFunctions ctx,
         pcVariables = pcVariables ctx,
-        pcReturns = ValidateNames ts $ Map.delete n ra,
+        pcReturns = ValidateNames ns ts $ Map.delete n ra,
         pcJumpType = pcJumpType ctx,
         pcIsNamed = pcIsNamed ctx,
         pcPrimNamed = pcPrimNamed ctx,
@@ -381,12 +382,12 @@ instance (Show c, MergeableM m, CompileErrorM m) =>
       (returns,jump) = combineSeries (pcReturns ctx,pcJumpType ctx) inherited
       combineSeries (r@(ValidatePositions _),j1) (_,j2) = (r,max j1 j2)
       combineSeries (_,j1) (r@(ValidatePositions _),j2) = (r,max j1 j2)
-      combineSeries (ValidateNames ts ra1,j1) (ValidateNames _ ra2,j2) = (ValidateNames ts $ Map.intersection ra1 ra2,max j1 j2)
-      inherited = foldr combineParallel (ValidateNames (Positional []) Map.empty,JumpMax) $ zip (map pcReturns cs) (map pcJumpType cs)
+      combineSeries (ValidateNames ns ts ra1,j1) (ValidateNames _ _ ra2,j2) = (ValidateNames ns ts $ Map.intersection ra1 ra2,max j1 j2)
+      inherited = foldr combineParallel (ValidateNames (Positional []) (Positional []) Map.empty,JumpMax) $ zip (map pcReturns cs) (map pcJumpType cs)
       combineParallel (_,j) ra
         -- Ignore a branch if it jumps to a higher scope.
         | (if pcInCleanup ctx then j > JumpReturn else j > NextStatement) = ra
-      combineParallel (ValidateNames ts ra1,j1) (ValidateNames _ ra2,j2) = (ValidateNames ts $ Map.union ra1 ra2,min j1 j2)
+      combineParallel (ValidateNames ns ts ra1,j1) (ValidateNames _ _ ra2,j2) = (ValidateNames ns ts $ Map.union ra1 ra2,min j1 j2)
       combineParallel (r@(ValidatePositions _),j1) (_,j2) = (r,min j1 j2)
       combineParallel (_,j1) (r@(ValidatePositions _),j2) = (r,min j1 j2)
   ccRegisterReturn ctx c vs = do
@@ -437,13 +438,13 @@ instance (Show c, MergeableM m, CompileErrorM m) =>
             checkValueTypeMatch r pa t t0 <??
               ("Cannot convert " ++ show t ++ " to " ++ show ta0 ++ " in return " ++
                show n ++ " at " ++ formatFullContext c)
-      check (ValidateNames ts ra) =
+      check (ValidateNames _ ts ra) =
         case vs of
              Just _ -> check (ValidatePositions ts)
              Nothing -> mergeAllM $ map alwaysError $ Map.toList ra where
                alwaysError (n,t) = compileErrorM $ "Named return " ++ show n ++ " (" ++ show t ++
-                                                  ") might not have been set before return at " ++
-                                                  formatFullContext c
+                                                   ") might not have been set before return at " ++
+                                                   formatFullContext c
   ccPrimNamedReturns = return . pcPrimNamed
   ccIsUnreachable ctx
     | pcInCleanup ctx = return $ pcJumpType ctx > JumpReturn
@@ -504,7 +505,8 @@ instance (Show c, MergeableM m, CompileErrorM m) =>
         pcNoTrace = pcNoTrace ctx
       }
   ccGetLoop = return . pcLoopSetup
-  ccStartCleanup ctx =
+  ccStartCleanup ctx = do
+    let vars = protectReturns (pcReturns ctx) (pcVariables ctx)
     return $ ProcedureContext {
         pcScope = pcScope ctx,
         pcType = pcType ctx,
@@ -517,7 +519,7 @@ instance (Show c, MergeableM m, CompileErrorM m) =>
         pcIntFilters = pcIntFilters ctx,
         pcParamScopes = pcParamScopes ctx,
         pcFunctions = pcFunctions ctx,
-        pcVariables = pcVariables ctx,
+        pcVariables = vars,
         pcReturns = pcReturns ctx,
         pcJumpType = pcJumpType ctx,
         pcIsNamed = pcIsNamed ctx,
@@ -531,6 +533,13 @@ instance (Show c, MergeableM m, CompileErrorM m) =>
         pcExprMap = pcExprMap ctx,
         pcNoTrace = pcNoTrace ctx
       }
+    where
+      protectReturns (ValidateNames ns _ _) vs = foldr protect vs (pValues ns)
+      protectReturns _                      vs = vs
+      protect n vs =
+        case n `Map.lookup` vs of
+             Just (VariableValue c s@LocalScope t _) -> Map.insert n (VariableValue c s t False) vs
+             _ -> vs
   ccPushCleanup ctx cs =
     return $ ProcedureContext {
         pcScope = pcScope ctx,

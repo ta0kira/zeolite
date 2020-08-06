@@ -260,59 +260,6 @@ concrete Test {
 }
 
 
-testcase "cleanup initializes named return" {
-  success Test$run()
-}
-
-define Test {
-  @type get () -> (Int)
-  get () (value) {
-    scoped {
-    } cleanup {
-      value <- 1
-    } in return _
-  }
-
-  run () {
-    Int value <- get()
-    if (value != 1) {
-      fail(value)
-    }
-  }
-}
-
-concrete Test {
-  @type run () -> ()
-}
-
-
-testcase "cleanup overrides named return" {
-  success Test$run()
-}
-
-define Test {
-  @type get () -> (Int)
-  get () (value) {
-    value <- 1
-    scoped {
-    } cleanup {
-      value <- 2
-    } in return _
-  }
-
-  run () {
-    Int value <- get()
-    if (value != 2) {
-      fail(value)
-    }
-  }
-}
-
-concrete Test {
-  @type run () -> ()
-}
-
-
 testcase "positional return sets named returns for cleanup" {
   crash Test$run()
   require "message"
@@ -815,6 +762,27 @@ define Test {
       \ Testing$check<?>(z,3)
     }
   }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "named return cannot be modified in cleanup" {
+  error
+  require compiler "assign.+value"
+}
+
+define Test {
+  @type get () -> (String)
+  get () (value) {
+    cleanup {
+      value <- "error"
+    } in return "message"
+  }
+
+  run () {}
 }
 
 concrete Test {

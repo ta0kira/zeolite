@@ -145,7 +145,7 @@ concrete Test {
 }
 
 
-testcase "warning statement in cleanup after scoped return" {
+testcase "warning statement in cleanup after scoped fail" {
   crash Test$run()
   require compiler "unreachable"
   require "message"
