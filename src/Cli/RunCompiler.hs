@@ -174,7 +174,7 @@ runCompiler resolver backend (CompileOptions h is is2 ds es ep p m f) = mapM_ co
   compileSingle d = do
     as  <- fmap fixPaths $ mapErrorsM (resolveModule resolver (p </> d)) is
     as2 <- fmap fixPaths $ mapErrorsM (resolveModule resolver (p </> d)) is2
-    isConfigured <- isPathConfigured d
+    isConfigured <- isPathConfigured p d
     when (isConfigured && f == DoNotForce) $ do
       compileErrorM $ "Module " ++ d ++ " has an existing configuration. " ++
                       "Recompile with -r or use -f to overwrite the config."

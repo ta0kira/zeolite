@@ -1,5 +1,12 @@
 # Revision history for zeolite-lang
 
+## 0.8.0.1  -- ????-??-??
+
+### Compiler CLI
+
+* **[fix]** Fixes regression where calling `zeolite` with `-p` would overwrite
+  an existing `.zeolite-module`.
+
 ## 0.8.0.0  -- 2020-08-07
 
 ### Language

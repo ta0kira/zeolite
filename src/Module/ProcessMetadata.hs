@@ -107,9 +107,9 @@ isPathUpToDate h f p = do
   m <- errorFromIO $ toCompileInfo $ loadDepsCommon f h Map.empty Set.empty (\m2 -> cmPublicDeps m2 ++ cmPrivateDeps m2) [p]
   return $ not $ isCompileError m
 
-isPathConfigured :: FilePath -> CompileInfoIO Bool
-isPathConfigured p = do
-  m <- errorFromIO $ toCompileInfo $ loadRecompile p
+isPathConfigured :: FilePath -> FilePath -> CompileInfoIO Bool
+isPathConfigured p d = do
+  m <- errorFromIO $ toCompileInfo $ loadRecompile (p </> d)
   return $ not $ isCompileError m
 
 writeMetadata :: FilePath -> CompileMetadata -> CompileInfoIO ()
