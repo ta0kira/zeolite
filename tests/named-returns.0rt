@@ -151,6 +151,25 @@ concrete Test {
 }
 
 
+testcase "return used as return before assigned" {
+  error
+  require "value.+initialized"
+}
+
+define Test {
+  @category process () -> (Int)
+  process () (value) {
+    return value
+  }
+
+  run () {}
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
 testcase "returns in correct order" {
   success Test$run()
 }
