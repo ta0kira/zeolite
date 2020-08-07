@@ -580,7 +580,7 @@ for every `return` statement.
 } <b>in</b> <b>return</b> i</pre>
 
 **IMPORTANT**: Explicit `return` statements and modification of *named* return
-values is *disallowed* inside of a `cleanup` block. This is because if an `in`
+values are *disallowed* inside of a `cleanup` block. This is because if an `in`
 statement also contains a `return`, the behavior of the `cleanup` would be
 ambiguous. Although using `return` within `cleanup` would be safe in some
 situations, making that determination would be nuanced and complex, for both the
