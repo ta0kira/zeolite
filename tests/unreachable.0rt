@@ -171,6 +171,30 @@ concrete Test {
 }
 
 
+testcase "warning statement in cleanup after in fail" {
+  crash Test$run()
+  require compiler "unreachable"
+  require "message"
+}
+
+define Test {
+  @category failedReturn () -> ()
+  failedReturn () {
+    cleanup {
+      \ empty
+    } in fail("message")
+  }
+
+  run () {
+    \ failedReturn()
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
 testcase "warning statement after break" {
   success Test$run()
   require compiler "unreachable"

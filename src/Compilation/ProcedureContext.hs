@@ -384,14 +384,15 @@ instance (Show c, MergeableM m, CompileErrorM m) =>
       combineSeries (_,j1) (r@(ValidatePositions _),j2) = (r,max j1 j2)
       combineSeries (ValidateNames ns ts ra1,j1) (ValidateNames _ _ ra2,j2) = (ValidateNames ns ts $ Map.intersection ra1 ra2,max j1 j2)
       inherited = foldr combineParallel (ValidateNames (Positional []) (Positional []) Map.empty,JumpMax) $ zip (map pcReturns cs) (map pcJumpType cs)
-      combineParallel (_,j) ra
+      combineParallel (_,j1) (r,j2)
         -- Ignore a branch if it jumps to a higher scope.
-        | (if pcInCleanup ctx then j > JumpReturn else j > NextStatement) = ra
+        | (if pcInCleanup ctx then j1 > JumpReturn else j1 > NextStatement) = (r,min j1 j2)
       combineParallel (ValidateNames ns ts ra1,j1) (ValidateNames _ _ ra2,j2) = (ValidateNames ns ts $ Map.union ra1 ra2,min j1 j2)
       combineParallel (r@(ValidatePositions _),j1) (_,j2) = (r,min j1 j2)
       combineParallel (_,j1) (r@(ValidatePositions _),j2) = (r,min j1 j2)
   ccRegisterReturn ctx c vs = do
-    check (pcReturns ctx)
+    when (pcInCleanup ctx) $ compileErrorM $ "Explicit return at " ++ formatFullContext c ++ " not allowed in cleanup"
+    returns <- check (pcReturns ctx)
     return $ ProcedureContext {
         pcScope = pcScope ctx,
         pcType = pcType ctx,
@@ -405,7 +406,7 @@ instance (Show c, MergeableM m, CompileErrorM m) =>
         pcParamScopes = pcParamScopes ctx,
         pcFunctions = pcFunctions ctx,
         pcVariables = pcVariables ctx,
-        pcReturns = pcReturns ctx,
+        pcReturns = returns,
         pcJumpType = JumpReturn,
         pcIsNamed = pcIsNamed ctx,
         pcPrimNamed = pcPrimNamed ctx,
@@ -419,8 +420,6 @@ instance (Show c, MergeableM m, CompileErrorM m) =>
         pcNoTrace = pcNoTrace ctx
       }
     where
-      check _ | pcInCleanup ctx =
-        compileErrorM $ "Explicit return at " ++ formatFullContext c ++ " not allowed in cleanup"
       check (ValidatePositions rs) = do
         let vs' = case vs of
                        Nothing -> Positional []
@@ -430,7 +429,7 @@ instance (Show c, MergeableM m, CompileErrorM m) =>
           ("In procedure return at " ++ formatFullContext c)
         processPairs_ checkReturnType rs (Positional $ zip ([0..] :: [Int]) $ pValues vs') <??
           ("In procedure return at " ++ formatFullContext c)
-        return ()
+        return (ValidatePositions rs)
         where
           checkReturnType ta0@(PassedValue _ t0) (n,t) = do
             r <- ccResolver ctx
@@ -438,13 +437,14 @@ instance (Show c, MergeableM m, CompileErrorM m) =>
             checkValueTypeMatch r pa t t0 <??
               ("Cannot convert " ++ show t ++ " to " ++ show ta0 ++ " in return " ++
                show n ++ " at " ++ formatFullContext c)
-      check (ValidateNames _ ts ra) =
+      check (ValidateNames ns ts ra) = do
         case vs of
-             Just _ -> check (ValidatePositions ts)
-             Nothing -> mergeAllM $ map alwaysError $ Map.toList ra where
-               alwaysError (n,t) = compileErrorM $ "Named return " ++ show n ++ " (" ++ show t ++
-                                                   ") might not have been set before return at " ++
-                                                   formatFullContext c
+             Just _ -> check (ValidatePositions ts) >> return ()
+             Nothing -> mergeAllM $ map alwaysError $ Map.toList ra
+        return (ValidateNames ns ts Map.empty)
+      alwaysError (n,t) = compileErrorM $ "Named return " ++ show n ++ " (" ++ show t ++
+                                          ") might not have been set before return at " ++
+                                          formatFullContext c
   ccPrimNamedReturns = return . pcPrimNamed
   ccIsUnreachable ctx
     | pcInCleanup ctx = return $ pcJumpType ctx > JumpReturn

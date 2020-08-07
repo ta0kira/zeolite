@@ -401,29 +401,35 @@ compileScopedBlock :: (Show c, CompileErrorM m, MergeableM m,
   ScopedBlock c -> CompilerState a m ()
 compileScopedBlock s = do
   let (vs,p,cl,st) = rewriteScoped s
-  -- Capture context so we can discard scoped variable names.
-  ctx0 <- getCleanContext
   r <- csResolver
   fa <- csAllFilters
   sequence_ $ map (createVariable r fa) vs
-  ctxP <- compileProcedure ctx0 p
-  (ctxP',cl',ctxCl) <-
+  -- Compile the scoped block for the base context of the statement and the
+  -- cleanup block.
+  ctxP0 <- getCleanContext >>= flip compileProcedure p
+  -- Precompile the statement to get static analysis of returns, for use when
+  -- compiling the cleanup block. The output will be discarded; the statement is
+  -- compiled with cleanup below.
+  ctxCl0 <- do
+    ctxS0 <- lift $ execStateT (sequence $ map showVariable vs) ctxP0
+    ctxS0' <- compileProcedure ctxS0 (Procedure [] [st])
+    lift (ccInheritReturns ctxP0 [ctxS0'] >>= ccStartCleanup)
+  (ctxP,cl',ctxCl) <-
     case cl of
          Just p2 -> do
-           ctx0' <- lift $ (ccClearOutput ctxP >>= ccStartCleanup)
-           ctxCl <- compileProcedure ctx0' p2
+           ctxCl <- compileProcedure ctxCl0 p2
            p2' <- lift $ ccGetOutput ctxCl
            noTrace <- csGetNoTrace
            let p2'' = if noTrace
                          then []
                          else ["{",startCleanupTracing] ++ p2' ++ ["}"]
-           ctxP' <- lift $ ccPushCleanup ctxP (CleanupSetup [ctxCl] p2'')
-           return (ctxP',p2'',ctxCl)
-         Nothing -> return (ctxP,[],ctxP)
+           ctxP <- lift $ ccPushCleanup ctxP0 (CleanupSetup [ctxCl] p2'')
+           return (ctxP,p2'',ctxCl)
+         Nothing -> return (ctxP0,[],ctxP0)
   -- Make variables to be created visible *after* p has been compiled so that p
   -- can't refer to them.
-  ctxP'' <- lift $ execStateT (sequence $ map showVariable vs) ctxP'
-  ctxS <- compileProcedure ctxP'' (Procedure [] [st])
+  ctxP' <- lift $ execStateT (sequence $ map showVariable vs) ctxP
+  ctxS <- compileProcedure ctxP' (Procedure [] [st])
   csWrite ["{"]
   (lift $ ccGetOutput ctxS) >>= csWrite
   csWrite cl'

@@ -112,7 +112,11 @@ runSingleTest b cm p paths deps (f,s) = do
            (TestCommandResult s2' out err) <- runTestCommand b command
            case (s2,s2') of
                 (True,False) -> mergeAllM $ map compileErrorM $ warnings ++ err ++ out
-                (False,True) -> compileErrorM "Expected runtime failure"
+                (False,True) ->
+                  if null warnings
+                     then compileErrorM "Expected runtime failure"
+                     else mergeAllM [compileErrorM "Expected runtime failure",
+                                     (mergeAllM $ map compileErrorM warnings) <?? "\nOutput from compiler:"]
                 _ -> do
                   let result2 = checkContent rs es warnings err out
                   when (not $ isCompileError result) $ errorFromIO $ removeDirectoryRecursive dir

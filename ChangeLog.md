@@ -13,8 +13,28 @@
     within the corresponding `in` statement. Previously, access required
     initialization *before* the `in` statement.
 
-  * **[breaking]** Adds unwinding of `cleanup` blocks when used with `break` and
-  `continue`, respecting loop boundaries.
+  * **[new]** An explicit *positional* return (e.g., `return 1, 2`) will assign
+    the values to the respective named returns, if applicable. This will make
+    the actual return values available within `cleanup`.
+
+    ```text
+    @type get () -> (Int)
+    get () (foo) {   // foo is the name of the return variable
+      cleanup {
+        \ bar(foo)   // foo has been initialized by the time this is called
+      } in return 1  // 1 is assigned to foo here
+    }
+    ```
+
+  * **[fix]** Adds unwinding of `cleanup` blocks when used with `break` and
+  `continue`, respecting loop boundaries. Previously, `cleanup` was ignored.
+
+* **[breaking]** Skips compilation of unreachable statements. The target
+  use-case is temporary changes to code that circumvent parts of a procedure,
+  e.g., an early `return` for the purposes of debugging.
+
+* **[breaking]** Marks statements following `break` and `continue` as
+  unreachable.
 
 ### Compiler CLI
 

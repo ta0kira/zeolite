@@ -242,3 +242,26 @@ define Test {
 concrete Test {
   @type run () -> ()
 }
+
+
+testcase "positional return sets named return" {
+  crash Test$run()
+  require "message"
+}
+
+define Test {
+  @type get () -> (String)
+  get () (value) {
+    cleanup {
+      fail(value)
+    } in return "message"
+  }
+
+  run () {
+    \ get()
+  }
+}
+
+concrete Test {
+  @type run () -> ()
+}
