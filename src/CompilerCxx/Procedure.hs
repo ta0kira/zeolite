@@ -416,9 +416,9 @@ compileScopedBlock s = do
     lift $ ccInheritReturns ctxP0 [ctxS0']
   (ctxP,cl',ctxCl) <-
     case cl of
-         Just p2 -> do
+         Just p2@(Procedure c _) -> do
            ctxCl0' <- lift $ ccStartCleanup ctxCl0
-           ctxCl <- compileProcedure ctxCl0' p2
+           ctxCl <- compileProcedure ctxCl0' p2 <??? ("In cleanup starting at " ++ formatFullContext c)
            p2' <- lift $ ccGetOutput ctxCl
            noTrace <- csGetNoTrace
            let p2'' = if noTrace
