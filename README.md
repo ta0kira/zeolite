@@ -951,8 +951,6 @@ Type inference might fail if:
   parameter is nested in the argument type, e.g., `call<#x> (Type<#x>) -> ()`
   and there is no possible conversion of the argument to `Type`.
 
-- The best guess for one parameter contains another inferred parameter.
-
 - The type parameter to be inferred is not actually used in the argument types.
 
 - There *is* a possible parameter substitution, but that type cannot be easily
