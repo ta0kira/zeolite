@@ -119,7 +119,7 @@ runSingleTest b cm p paths deps (f,s) = do
                                      (mergeAllM $ map compileErrorM warnings) <?? "\nOutput from compiler:"]
                 _ -> do
                   let result2 = checkContent rs es warnings err out
-                  when (not $ isCompileError result) $ errorFromIO $ removeDirectoryRecursive dir
+                  when (not $ isCompileError result2) $ errorFromIO $ removeDirectoryRecursive dir
                   fromCompileInfo result2
 
     compileAll e cs ds = do

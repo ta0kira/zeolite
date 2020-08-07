@@ -413,11 +413,12 @@ compileScopedBlock s = do
   ctxCl0 <- do
     ctxS0 <- lift $ execStateT (sequence $ map showVariable vs) ctxP0
     ctxS0' <- compileProcedure ctxS0 (Procedure [] [st])
-    lift (ccInheritReturns ctxP0 [ctxS0'] >>= ccStartCleanup)
+    lift $ ccInheritReturns ctxP0 [ctxS0']
   (ctxP,cl',ctxCl) <-
     case cl of
          Just p2 -> do
-           ctxCl <- compileProcedure ctxCl0 p2
+           ctxCl0' <- lift $ ccStartCleanup ctxCl0
+           ctxCl <- compileProcedure ctxCl0' p2
            p2' <- lift $ ccGetOutput ctxCl
            noTrace <- csGetNoTrace
            let p2'' = if noTrace
@@ -430,15 +431,17 @@ compileScopedBlock s = do
   -- can't refer to them.
   ctxP' <- lift $ execStateT (sequence $ map showVariable vs) ctxP
   ctxS <- compileProcedure ctxP' (Procedure [] [st])
-  csWrite ["{"]
-  (lift $ ccGetOutput ctxS) >>= csWrite
-  csWrite cl'
-  csWrite ["}"]
-  sequence_ $ map showVariable vs
   (lift $ ccGetRequired ctxS)  >>= csRequiresTypes
   (lift $ ccGetRequired ctxCl) >>= csRequiresTypes
   csInheritReturns [ctxS]
   csInheritReturns [ctxCl]
+  csWrite ["{"]
+  (lift $ ccGetOutput ctxS) >>= csWrite
+  -- Skip fallthrough cleanup if the emitted output will be unreachable.
+  unreachable <- lift $ ccIsUnreachable ctxCl0
+  when (not unreachable) $ csWrite cl'
+  csWrite ["}"]
+  sequence_ $ map showVariable vs
   where
     createVariable r fa (c,t,n) = do
       lift $ validateGeneralInstance r fa (vtType t) <??
