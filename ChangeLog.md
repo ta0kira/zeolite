@@ -1,11 +1,15 @@
 # Revision history for zeolite-lang
 
-## 0.8.0.1  -- ????-??-??
+## 0.9.0.0  -- ????-??-??
 
 ### Compiler CLI
 
 * **[fix]** Fixes regression where calling `zeolite` with `-p` would overwrite
   an existing `.zeolite-module`.
+
+* **[breaking]** Corrects hole in `$ModuleOnly$` visibility in C++ extensions.
+  Previously, C++ extensions could directly access categories defined in
+  `$ModuleOnly$` sources in dependencies.
 
 ## 0.8.0.0  -- 2020-08-07
 

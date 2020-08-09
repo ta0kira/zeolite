@@ -61,7 +61,7 @@ runCompiler resolver backend (CompileOptions _ _ _ ds _ _ p (ExecuteTests tp) f)
       deps2 <- loadPrivateDeps compilerHash f ca4 (deps0++[m]++deps1)
       let ca5 = ca4 `Map.union` mapMetadata deps2
       em <- getExprMap (p </> d) rm
-      return (ca5,ms ++ [LoadedTests p d m em (deps0++[m]++deps1) deps2])
+      return (ca5,ms ++ [LoadedTests p d m em (deps0++deps1) deps2])
     checkTestFilters ts = do
       let possibleTests = Set.fromList $ concat $ map (cmTestFiles . ltMetadata) ts
       case Set.toList $ (Set.fromList tp) `Set.difference` possibleTests of

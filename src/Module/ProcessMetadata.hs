@@ -178,10 +178,10 @@ getSourceFilesForDeps = concat . map extract where
   extract m = map (cmPath m </>) (cmPublicFiles m)
 
 getNamespacesForDeps :: [CompileMetadata] -> [Namespace]
-getNamespacesForDeps = filter (not . isNoNamespace) . map cmNamespace
+getNamespacesForDeps = filter (not . isNoNamespace) . map cmPublicNamespace
 
 getIncludePathsForDeps :: [CompileMetadata] -> [FilePath]
-getIncludePathsForDeps = concat . map cmSubdirs
+getIncludePathsForDeps = concat . map cmPublicSubdirs
 
 getLinkFlagsForDeps :: [CompileMetadata] -> [String]
 getLinkFlagsForDeps = concat . map cmLinkFlags
@@ -271,7 +271,7 @@ checkModuleVersionHash :: VersionHash -> CompileMetadata -> Bool
 checkModuleVersionHash h m = cmVersionHash m == h
 
 checkModuleFreshness :: FilePath -> CompileMetadata -> CompileInfoIO Bool
-checkModuleFreshness p (CompileMetadata _ p2 _ is is2 _ _ _ ps xs ts hxx cxx bs _ _) = do
+checkModuleFreshness p (CompileMetadata _ p2 _ _ is is2 _ _ _ _ ps xs ts hxx cxx bs _ _) = do
   time <- errorFromIO $ getModificationTime $ getCachedPath p "" metadataFilename
   (ps2,xs2,ts2) <- findSourceFiles p ""
   let e1 = checkMissing ps ps2
@@ -346,11 +346,11 @@ resolveObjectDeps deps p d os = resolvedCategories ++ nonCategories where
   categoryMap = Map.fromList $ directCategories ++ depCategories
   directCategories = map (keyByCategory . cxxToId) $ map snd categories
   depCategories = map keyByCategory $ concat (map categoriesToIds deps)
-  getCats dep
-    -- Allow ModuleOnly when the path is the same. Only needed for tests.
-    | cmPath dep == p = cmPrivateCategories dep ++ cmPublicCategories dep
-    | otherwise       = cmPublicCategories dep
-  categoriesToIds dep = map (\c -> CategoryIdentifier (cmPath dep) c (cmNamespace dep)) $ getCats dep
+  getCats dep = zip (cmPublicCategories dep) (repeat $ cmPublicNamespace dep) ++
+                -- Allow ModuleOnly when the path is the same. Only needed for tests.
+                -- TODO: The path comparison here is sloppy.
+                (if cmPath dep == p then zip (cmPrivateCategories dep) (repeat $ cmPrivateNamespace dep) else [])
+  categoriesToIds dep = map (uncurry $ CategoryIdentifier $ cmPath dep) $ getCats dep
   cxxToId (CxxOutput (Just c) _ ns _ _ _) = CategoryIdentifier d c ns
   cxxToId _                               = undefined
   resolveCategory (fs,ca@(CxxOutput _ _ _ ns2 ds _)) =
@@ -375,30 +375,38 @@ resolveDep cm (n:ns) d =
        Nothing -> resolveDep cm ns d
 resolveDep _ _ d = [UnresolvedCategory d]
 
-loadModuleGlobals :: PathIOHandler r => r -> FilePath -> Namespace -> [FilePath] ->
-  [CompileMetadata] -> [CompileMetadata] -> CompileInfoIO ([WithVisibility (AnyCategory SourcePos)])
-loadModuleGlobals r p ns2 fs deps1 deps2 = do
+loadModuleGlobals :: PathIOHandler r => r -> FilePath -> (Namespace,Namespace) -> [FilePath] ->
+  Maybe CompileMetadata -> [CompileMetadata] -> [CompileMetadata] ->
+  CompileInfoIO ([WithVisibility (AnyCategory SourcePos)])
+loadModuleGlobals r p (ns0,ns1) fs m deps1 deps2 = do
   let public = Set.fromList $ map cmPath deps1
   let deps2' = filter (\cm -> not $ cmPath cm `Set.member` public) deps2
-  cs0 <- fmap concat $ mapErrorsM (processDeps [FromDependency])            deps1
-  cs1 <- fmap concat $ mapErrorsM (processDeps [FromDependency,ModuleOnly]) deps2'
-  cs2 <- loadAllPublic ns2 fs
-  return (cs0++cs1++cs2) where
-    processDeps ss dep = do
+  cs0 <- fmap concat $ mapErrorsM (processDeps False [FromDependency])            deps1
+  cs1 <- fmap concat $ mapErrorsM (processDeps False [FromDependency,ModuleOnly]) deps2'
+  cs2 <- loadAllPublic (ns0,ns1) fs
+  cs3 <- case m of
+              Just m2 -> processDeps True [FromDependency] m2
+              _       -> return []
+  return (cs0++cs1++cs2++cs3) where
+    processDeps same ss dep = do
       let fs2 = getSourceFilesForDeps [dep]
-      cs <- loadAllPublic (cmNamespace dep) fs2
-      let cs' = if cmPath dep /= p
+      cs <- loadAllPublic (cmPublicNamespace dep,cmPrivateNamespace dep) fs2
+      let cs' = if not same
                    -- Allow ModuleOnly if the dep is the same module being
                    -- compiled. (Tests load the module being tested as a dep.)
                    then filter (not . hasCodeVisibility ModuleOnly) cs
                    else cs
       return $ map (updateCodeVisibility (Set.union (Set.fromList ss))) cs'
-    loadAllPublic ns fs2 = do
+    loadAllPublic (ns2,ns3) fs2 = do
       fs2' <- zipWithContents r p fs2
       fmap concat $ mapErrorsM loadPublic fs2'
       where
         loadPublic p3 = do
           (pragmas,cs) <- parsePublicSource p3
-          let tags = (if any isTestsOnly  pragmas then [TestsOnly]  else []) ++
+          let tags = Set.fromList $
+                     (if any isTestsOnly  pragmas then [TestsOnly]  else []) ++
                      (if any isModuleOnly pragmas then [ModuleOnly] else [])
-          return $ map (WithVisibility (Set.fromList tags) . setCategoryNamespace ns) cs
+          let cs' = if any isModuleOnly pragmas
+                       then map (setCategoryNamespace ns3) cs
+                       else map (setCategoryNamespace ns2) cs
+          return $ map (WithVisibility tags) cs'

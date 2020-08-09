@@ -123,6 +123,26 @@ test_module_only2() {
 }
 
 
+test_module_only3() {
+  local output=$(do_zeolite -p "$ZEOLITE_PATH" -R tests/module-only3 -f || true)
+  if ! echo "$output" | egrep -q 'Category_Type1\.hpp'; then
+    show_message 'Expected Type1 visibility error from tests/module-only3:'
+    echo "$output" 1>&2
+    return 1
+  fi
+  if echo "$output" | grep -v 'Writing file' | egrep -q 'Category_Type2\.hpp'; then
+    show_message 'Unexpected Type2 visibility error from tests/module-only3:'
+    echo "$output" 1>&2
+    return 1
+  fi
+  if echo "$output" | egrep -q 'GetCategory_Type2'; then
+    show_message 'Unexpected Type2 visibility error from tests/module-only3:'
+    echo "$output" 1>&2
+    return 1
+  fi
+}
+
+
 test_warn_public() {
   local output=$(do_zeolite -p "$ZEOLITE_PATH" -R tests/warn-public -f)
   if ! echo "$output" | egrep -q '"internal" .+ public'; then
@@ -266,6 +286,7 @@ ALL_TESTS=(
   test_tests_only2
   test_module_only
   test_module_only2
+  test_module_only3
   test_warn_public
   test_templates
   test_fast

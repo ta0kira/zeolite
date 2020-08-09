@@ -101,8 +101,9 @@ compileModule resolver backend (ModuleSpec p d em is is2 ps xs ts es ep m f) = d
                  bpDeps <- loadPublicDeps compilerHash f ca2 [base]
                  return $ bpDeps ++ deps1
   ns0 <- createPublicNamespace p d
+  ns1 <- createPrivateNamespace p d
   let ex = concat $ map getSourceCategories es
-  cs <- loadModuleGlobals resolver p ns0 ps deps1' deps2
+  cs <- loadModuleGlobals resolver p (ns0,ns1) ps Nothing deps1' deps2
   let cm = createLanguageModule ex em cs
   let cs2 = filter (not . hasCodeVisibility FromDependency) cs
   let pc = map (getCategoryName . wvData) $ filter (not . hasCodeVisibility ModuleOnly) cs2
@@ -116,10 +117,11 @@ compileModule resolver backend (ModuleSpec p d em is is2 ps xs ts es ep m f) = d
   let ps2 = map takeFileName ps
   let xs2 = map takeFileName xs
   let ts2 = map takeFileName ts
-  let paths = map (\ns -> getCachedPath (p </> d) ns "") $ nub $ filter (not . null) $ map show $ [ns0] ++ map coNamespace fs'
+  let paths = map (\ns -> getCachedPath (p </> d) ns "") $ nub $ filter (not . null) $ map show $ map coNamespace fs'
   paths' <- mapM (errorFromIO . canonicalizePath) paths
   s0 <- errorFromIO $ canonicalizePath $ getCachedPath (p </> d) (show ns0) ""
-  let paths2 = base:(getIncludePathsForDeps (deps1' ++ deps2)) ++ ep' ++ paths'
+  s1 <- errorFromIO $ canonicalizePath $ getCachedPath (p </> d) (show ns1) ""
+  let paths2 = base:s0:s1:(getIncludePathsForDeps (deps1' ++ deps2)) ++ ep' ++ paths'
   let hxx   = filter (isSuffixOf ".hpp" . coFilename)       fs'
   let other = filter (not . isSuffixOf ".hpp" . coFilename) fs'
   os1 <- mapErrorsM (writeOutputFile (show ns0) paths2) $ hxx ++ other
@@ -135,12 +137,14 @@ compileModule resolver backend (ModuleSpec p d em is is2 ps xs ts es ep m f) = d
   let cm2 = CompileMetadata {
       cmVersionHash = compilerHash,
       cmPath = path,
-      cmNamespace = ns0,
+      cmPublicNamespace = ns0,
+      cmPrivateNamespace = ns1,
       cmPublicDeps = as,
       cmPrivateDeps = as2,
       cmPublicCategories = sort pc,
       cmPrivateCategories = sort tc,
-      cmSubdirs = [s0],
+      cmPublicSubdirs = [s0],
+      cmPrivateSubdirs = [s1],
       cmPublicFiles = sort ps2,
       cmPrivateFiles = sort xs2,
       cmTestFiles = sort ts2,
@@ -154,12 +158,14 @@ compileModule resolver backend (ModuleSpec p d em is is2 ps xs ts es ep m f) = d
   let cm2' = CompileMetadata {
       cmVersionHash = cmVersionHash cm2,
       cmPath = cmPath cm2,
-      cmNamespace = cmNamespace cm2,
+      cmPublicNamespace = cmPublicNamespace cm2,
+      cmPrivateNamespace = cmPrivateNamespace cm2,
       cmPublicDeps = cmPublicDeps cm2,
       cmPrivateDeps = cmPrivateDeps cm2,
       cmPublicCategories = cmPublicCategories cm2,
       cmPrivateCategories = cmPrivateCategories cm2,
-      cmSubdirs = cmSubdirs cm2,
+      cmPublicSubdirs = cmPublicSubdirs cm2,
+      cmPrivateSubdirs = cmPrivateSubdirs cm2,
       cmPublicFiles = cmPublicFiles cm2,
       cmPrivateFiles = cmPrivateFiles cm2,
       cmTestFiles = cmTestFiles cm2,
@@ -251,9 +257,10 @@ createModuleTemplates :: PathIOHandler r => r -> FilePath -> FilePath ->
   [CompileMetadata] -> [CompileMetadata] -> CompileInfoIO ()
 createModuleTemplates resolver p d deps1 deps2 = do
   ns0 <- createPublicNamespace p d
+  ns1 <- createPrivateNamespace p d
   (ps,xs,_) <- findSourceFiles p d
   (LanguageModule _ _ _ cs0 ps0 ts0 cs1 ps1 ts1 _ _) <-
-    fmap (createLanguageModule [] Map.empty) $ loadModuleGlobals resolver p ns0 ps deps1 deps2
+    fmap (createLanguageModule [] Map.empty) $ loadModuleGlobals resolver p (ns0,ns1) ps Nothing deps1 deps2
   xs' <- zipWithContents resolver p xs
   ds <- mapErrorsM parseInternalSource xs'
   let ds2 = concat $ map (\(_,_,d2) -> d2) ds
@@ -275,11 +282,11 @@ createModuleTemplates resolver p d deps1 deps2 = do
 runModuleTests :: (PathIOHandler r, CompilerBackend b) => r -> b -> FilePath ->
   [FilePath] -> LoadedTests -> CompileInfoIO [((Int,Int),CompileInfo ())]
 runModuleTests resolver backend base tp (LoadedTests p d m em deps1 deps2) = do
-  let paths = base:(getIncludePathsForDeps deps1)
+  let paths = base:(cmPublicSubdirs m ++ cmPrivateSubdirs m ++ getIncludePathsForDeps deps1)
   mapErrorsM_ showSkipped $ filter (not . isTestAllowed) $ cmTestFiles m
   ts' <- zipWithContents resolver p $ map (d </>) $ filter isTestAllowed $ cmTestFiles m
   path <- errorFromIO $ canonicalizePath (p </> d)
-  cm <- fmap (createLanguageModule [] em) $ loadModuleGlobals resolver path NoNamespace [] deps1 []
+  cm <- fmap (createLanguageModule [] em) $ loadModuleGlobals resolver path (NoNamespace,NoNamespace) [] (Just m) deps1 []
   mapErrorsM (runSingleTest backend cm path paths (m:deps2)) ts' where
     allowTests = Set.fromList tp
     isTestAllowed t = if null allowTests then True else t `Set.member` allowTests

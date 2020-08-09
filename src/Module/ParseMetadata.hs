@@ -133,12 +133,14 @@ instance ConfigFormat CompileMetadata where
   readConfig = do
     h   <- parseRequired "version_hash:"       parseHash
     p   <- parseRequired "path:"               parseQuoted
-    ns  <- parseOptional "namespace:"          NoNamespace parseNamespace
+    ns1 <- parseOptional "public_namespace:"   NoNamespace parseNamespace
+    ns2 <- parseOptional "private_namespace:"  NoNamespace parseNamespace
     is  <- parseRequired "public_deps:"        (parseList parseQuoted)
     is2 <- parseRequired "private_deps:"       (parseList parseQuoted)
     cs1 <- parseRequired "public_categories:"  (parseList parseCategoryName)
     cs2 <- parseRequired "private_categories:" (parseList parseCategoryName)
-    ds  <- parseRequired "subdirs:"            (parseList parseQuoted)
+    ds1 <- parseRequired "public_subdirs:"     (parseList parseQuoted)
+    ds2 <- parseRequired "private_subdirs:"    (parseList parseQuoted)
     ps  <- parseRequired "public_files:"       (parseList parseQuoted)
     xs  <- parseRequired "private_files:"      (parseList parseQuoted)
     ts  <- parseRequired "test_files:"         (parseList parseQuoted)
@@ -147,17 +149,18 @@ instance ConfigFormat CompileMetadata where
     bs  <- parseRequired "binaries:"           (parseList parseQuoted)
     lf  <- parseRequired "link_flags:"         (parseList parseQuoted)
     os  <- parseRequired "object_files:"       (parseList readConfig)
-    return (CompileMetadata h p ns is is2 cs1 cs2 ds ps xs ts hxx cxx bs lf os)
+    return (CompileMetadata h p ns1 ns2 is is2 cs1 cs2 ds1 ds2 ps xs ts hxx cxx bs lf os)
   writeConfig m = do
     validateHash (cmVersionHash m)
-    namespace <- maybeShowNamespace "namespace:" (cmNamespace m)
+    ns1 <- maybeShowNamespace "public_namespace:"  (cmPublicNamespace m)
+    ns2 <- maybeShowNamespace "private_namespace:" (cmPrivateNamespace m)
     _ <- mapErrorsM validateCategoryName (cmPublicCategories m)
     _ <- mapErrorsM validateCategoryName (cmPrivateCategories m)
     objects <- fmap concat $ mapErrorsM writeConfig $ cmObjectFiles m
     return $ [
         "version_hash: " ++ (show $ cmVersionHash m),
         "path: " ++ (show $ cmPath m)
-      ] ++ namespace ++ [
+      ] ++ ns1 ++ ns2 ++ [
         "public_deps: ["
       ] ++ indents (map show $ cmPublicDeps m) ++ [
         "]",
@@ -170,8 +173,11 @@ instance ConfigFormat CompileMetadata where
         "private_categories: ["
       ] ++ indents (map show $ cmPrivateCategories m) ++ [
         "]",
-        "subdirs: ["
-      ] ++ indents (map show $ cmSubdirs m) ++ [
+        "public_subdirs: ["
+      ] ++ indents (map show $ cmPublicSubdirs m) ++ [
+        "]",
+        "private_subdirs: ["
+      ] ++ indents (map show $ cmPrivateSubdirs m) ++ [
         "]",
         "public_files: ["
       ] ++ indents (map show $ cmPublicFiles m) ++ [

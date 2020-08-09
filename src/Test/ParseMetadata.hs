@@ -39,7 +39,8 @@ tests = [
     checkWriteThenRead $ CompileMetadata {
       cmVersionHash = VersionHash "0123456789ABCDEFabcdef",
       cmPath = "/home/project/special",
-      cmNamespace = StaticNamespace "public_ABCDEF",
+      cmPublicNamespace = StaticNamespace "public_ABCDEF",
+      cmPrivateNamespace = StaticNamespace "private_ABCDEF",
       cmPublicDeps = [
         "/home/project/public-dep1",
         "/home/project/public-dep2"
@@ -56,7 +57,11 @@ tests = [
         CategoryName "PrivateCategory",
         CategoryName "PrivateOtherCategory"
       ],
-      cmSubdirs = [
+      cmPublicSubdirs = [
+        "/home/project/special/subdir1",
+        "/home/project/special/subdir2"
+      ],
+      cmPrivateSubdirs = [
         "/home/project/special/subdir1",
         "/home/project/special/subdir2"
       ],
@@ -116,12 +121,14 @@ tests = [
     checkWriteFail "bad hash" $ CompileMetadata {
       cmVersionHash = VersionHash "bad hash",
       cmPath = "/home/project/special",
-      cmNamespace = NoNamespace,
+      cmPublicNamespace = NoNamespace,
+      cmPrivateNamespace = NoNamespace,
       cmPublicDeps = [],
       cmPrivateDeps = [],
       cmPublicCategories = [],
       cmPrivateCategories = [],
-      cmSubdirs = [],
+      cmPublicSubdirs = [],
+      cmPrivateSubdirs = [],
       cmPublicFiles = [],
       cmPrivateFiles = [],
       cmTestFiles = [],
@@ -135,12 +142,35 @@ tests = [
     checkWriteFail "bad namespace" $ CompileMetadata {
       cmVersionHash = VersionHash "0123456789ABCDEFabcdef",
       cmPath = "/home/project/special",
-      cmNamespace = StaticNamespace "bad namespace",
+      cmPublicNamespace = StaticNamespace "bad namespace",
+      cmPrivateNamespace = NoNamespace,
       cmPublicDeps = [],
       cmPrivateDeps = [],
       cmPublicCategories = [],
       cmPrivateCategories = [],
-      cmSubdirs = [],
+      cmPublicSubdirs = [],
+      cmPrivateSubdirs = [],
+      cmPublicFiles = [],
+      cmPrivateFiles = [],
+      cmTestFiles = [],
+      cmHxxFiles = [],
+      cmCxxFiles = [],
+      cmBinaries = [],
+      cmLinkFlags = [],
+      cmObjectFiles = []
+    },
+
+    checkWriteFail "bad namespace" $ CompileMetadata {
+      cmVersionHash = VersionHash "0123456789ABCDEFabcdef",
+      cmPath = "/home/project/special",
+      cmPublicNamespace = NoNamespace,
+      cmPrivateNamespace = StaticNamespace "bad namespace",
+      cmPublicDeps = [],
+      cmPrivateDeps = [],
+      cmPublicCategories = [],
+      cmPrivateCategories = [],
+      cmPublicSubdirs = [],
+      cmPrivateSubdirs = [],
       cmPublicFiles = [],
       cmPrivateFiles = [],
       cmTestFiles = [],
@@ -154,14 +184,16 @@ tests = [
     checkWriteFail "bad category" $ CompileMetadata {
       cmVersionHash = VersionHash "0123456789ABCDEFabcdef",
       cmPath = "/home/project/special",
-      cmNamespace = NoNamespace,
+      cmPublicNamespace = NoNamespace,
+      cmPrivateNamespace = NoNamespace,
       cmPublicDeps = [],
       cmPrivateDeps = [],
       cmPublicCategories = [
         CategoryName "bad category"
       ],
       cmPrivateCategories = [],
-      cmSubdirs = [],
+      cmPublicSubdirs = [],
+      cmPrivateSubdirs = [],
       cmPublicFiles = [],
       cmPrivateFiles = [],
       cmTestFiles = [],
@@ -175,14 +207,16 @@ tests = [
     checkWriteFail "bad category" $ CompileMetadata {
       cmVersionHash = VersionHash "0123456789ABCDEFabcdef",
       cmPath = "/home/project/special",
-      cmNamespace = NoNamespace,
+      cmPublicNamespace = NoNamespace,
+      cmPrivateNamespace = NoNamespace,
       cmPublicDeps = [],
       cmPrivateDeps = [],
       cmPublicCategories = [],
       cmPrivateCategories = [
         CategoryName "bad category"
       ],
-      cmSubdirs = [],
+      cmPublicSubdirs = [],
+      cmPrivateSubdirs = [],
       cmPublicFiles = [],
       cmPrivateFiles = [],
       cmTestFiles = [],
