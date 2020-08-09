@@ -1,0 +1,10 @@
+root: "../.."
+path: "tests/module-only3"
+private_deps: [
+  "internal"
+]
+extra_files: [
+  "tests/module-only3/source1.cpp"
+  "tests/module-only3/source2.cpp"
+]
+mode: incremental {}
