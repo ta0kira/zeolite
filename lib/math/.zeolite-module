@@ -8,5 +8,9 @@ extra_files: [
     source: "lib/math/Category_Math.cpp"
     categories: [Math]
   }
+  category_source {
+    source: "lib/math/Source_Math.cpp"
+    categories: [Math]
+  }
 ]
 mode: incremental {}
