@@ -12,5 +12,6 @@ extra_files: [
     source: "lib/math/Source_Math.cpp"
     categories: [Math]
   }
+  "lib/math/Source_Math.hpp"
 ]
 mode: incremental {}
