@@ -22,10 +22,7 @@ limitations under the License.
 #include <cmath>
 
 #include "category-source.hpp"
-#include "Category_Float.hpp"
-#include "Category_Formatted.hpp"
 #include "Category_Math.hpp"
-#include "Category_String.hpp"
 
 
 #ifdef ZEOLITE_DYNAMIC_NAMESPACE
