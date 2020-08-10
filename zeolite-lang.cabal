@@ -240,6 +240,7 @@ library zeolite-internal
                        mtl >= 1.0 && < 2.3,
                        parsec >= 3.0 && < 3.2,
                        regex-tdfa >= 1.0 && < 1.4,
+                       time >= 1.8 && < 1.12,
                        transformers >= 0.1 && < 0.6,
                        unix >= 2.6 && <= 2.8
 

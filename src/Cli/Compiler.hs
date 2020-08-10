@@ -27,6 +27,7 @@ module Cli.Compiler (
 import Control.Monad (foldM,when)
 import Data.Either (partitionEithers)
 import Data.List (isSuffixOf,nub,sort)
+import Data.Time.Clock.System (getSystemTime)
 import System.Directory
 import System.FilePath
 import System.Posix.Temp (mkstemps)
@@ -100,8 +101,10 @@ compileModule resolver backend (ModuleSpec p d em is is2 ps xs ts es ep m f) = d
                else do
                  bpDeps <- loadPublicDeps compilerHash f ca2 [base]
                  return $ bpDeps ++ deps1
-  ns0 <- createPublicNamespace p d
-  ns1 <- createPrivateNamespace p d
+  time <- errorFromIO getSystemTime
+  path <- errorFromIO $ canonicalizePath $ p </> d
+  let ns0 = StaticNamespace $ publicNamespace  $ show time ++ show compilerHash ++ path
+  let ns1 = StaticNamespace . privateNamespace $ show time ++ show compilerHash ++ path
   let ex = concat $ map getSourceCategories es
   cs <- loadModuleGlobals resolver p (ns0,ns1) ps Nothing deps1' deps2
   let cm = createLanguageModule ex em cs
@@ -109,7 +112,7 @@ compileModule resolver backend (ModuleSpec p d em is is2 ps xs ts es ep m f) = d
   let pc = map (getCategoryName . wvData) $ filter (not . hasCodeVisibility ModuleOnly) cs2
   let tc = map (getCategoryName . wvData) $ filter (hasCodeVisibility ModuleOnly)       cs2
   let dc = map (getCategoryName . wvData) $ filter (hasCodeVisibility FromDependency) $ filter (not . hasCodeVisibility ModuleOnly) cs
-  xa <- mapErrorsM (loadPrivateSource resolver p) xs
+  xa <- mapErrorsM (loadPrivateSource resolver compilerHash p) xs
   (xx1,xx2) <- compileLanguageModule cm xa
   mf <- maybeCreateMain cm xa m
   let fs' = xx1++xx2
@@ -131,7 +134,6 @@ compileModule resolver backend (ModuleSpec p d em is is2 ps xs ts es ep m f) = d
   os2 <- fmap concat $ mapErrorsM (compileExtraSource (show ns0) paths2) es
   let (hxx',cxx,os') = sortCompiledFiles files'
   let (osCat,osOther) = partitionEithers os2
-  path <- errorFromIO $ canonicalizePath $ p </> d
   let os1' = resolveObjectDeps (deps1' ++ deps2) path path (os1 ++ osCat)
   warnPublic resolver (p </> d) pc dc os1' is
   let cm2 = CompileMetadata {
@@ -256,11 +258,9 @@ compileModule resolver backend (ModuleSpec p d em is is2 ps xs ts es ep m f) = d
 createModuleTemplates :: PathIOHandler r => r -> FilePath -> FilePath ->
   [CompileMetadata] -> [CompileMetadata] -> CompileInfoIO ()
 createModuleTemplates resolver p d deps1 deps2 = do
-  ns0 <- createPublicNamespace p d
-  ns1 <- createPrivateNamespace p d
   (ps,xs,_) <- findSourceFiles p d
   (LanguageModule _ _ _ cs0 ps0 ts0 cs1 ps1 ts1 _ _) <-
-    fmap (createLanguageModule [] Map.empty) $ loadModuleGlobals resolver p (ns0,ns1) ps Nothing deps1 deps2
+    fmap (createLanguageModule [] Map.empty) $ loadModuleGlobals resolver p (DynamicNamespace,DynamicNamespace) ps Nothing deps1 deps2
   xs' <- zipWithContents resolver p xs
   ds <- mapErrorsM parseInternalSource xs'
   let ds2 = concat $ map (\(_,_,d2) -> d2) ds
@@ -292,16 +292,12 @@ runModuleTests resolver backend base tp (LoadedTests p d m em deps1 deps2) = do
     isTestAllowed t = if null allowTests then True else t `Set.member` allowTests
     showSkipped f = compileWarningM $ "Skipping tests in " ++ f ++ " due to explicit test filter."
 
-createPublicNamespace :: FilePath -> FilePath -> CompileInfoIO Namespace
-createPublicNamespace p d = (errorFromIO $ canonicalizePath (p </> d)) >>= return . StaticNamespace . publicNamespace
-
-createPrivateNamespace :: FilePath -> FilePath -> CompileInfoIO Namespace
-createPrivateNamespace p f = (errorFromIO $ canonicalizePath (p </> f)) >>= return . StaticNamespace . privateNamespace
-
-loadPrivateSource :: PathIOHandler r => r -> FilePath -> FilePath -> CompileInfoIO (PrivateSource SourcePos)
-loadPrivateSource resolver p f = do
+loadPrivateSource :: PathIOHandler r => r -> VersionHash -> FilePath -> FilePath -> CompileInfoIO (PrivateSource SourcePos)
+loadPrivateSource resolver h p f = do
   [f'] <- zipWithContents resolver p [f]
-  ns <- createPrivateNamespace p f
+  time <- errorFromIO getSystemTime
+  path <- errorFromIO $ canonicalizePath (p </> f)
+  let ns = StaticNamespace $ privateNamespace $ show time ++ show h ++ path
   (pragmas,cs,ds) <- parseInternalSource f'
   let cs' = map (setCategoryNamespace ns) cs
   let testing = any isTestsOnly pragmas
