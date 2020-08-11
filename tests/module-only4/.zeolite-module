@@ -2,8 +2,8 @@ root: "../.."
 path: "tests/module-only4"
 extra_files: [
   category_source {
-    source: "tests/module-only4/Category_Type1.cpp"
-    categories: [Type1]
+    source: "tests/module-only4/common-source.cpp"
+    categories: [Type1 Type3]
     requires: [Type2]
   }
 ]

@@ -16,16 +16,8 @@ limitations under the License.
 
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
-$ModuleOnly$
-
 // Defined in common-source.cpp.
-concrete Type1 {
-  @type create () -> (Type1)
-  @value get () -> (String)
-}
-
-// Defined in private.0rx.
-concrete Type2 {
-  @type create () -> (Type2)
+concrete Type3 {
+  @type create () -> (Type3)
   @value get () -> (String)
 }
