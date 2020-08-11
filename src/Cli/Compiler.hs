@@ -27,7 +27,7 @@ module Cli.Compiler (
 import Control.Monad (foldM,when)
 import Data.Either (partitionEithers)
 import Data.List (isSuffixOf,nub,sort)
-import Data.Time.Clock.System (getSystemTime)
+import Data.Time.LocalTime (getZonedTime)
 import System.Directory
 import System.FilePath
 import System.Posix.Temp (mkstemps)
@@ -101,7 +101,7 @@ compileModule resolver backend (ModuleSpec p d em is is2 ps xs ts es ep m f) = d
                else do
                  bpDeps <- loadPublicDeps compilerHash f ca2 [base]
                  return $ bpDeps ++ deps1
-  time <- errorFromIO getSystemTime
+  time <- errorFromIO getZonedTime
   path <- errorFromIO $ canonicalizePath $ p </> d
   let ns0 = StaticNamespace $ publicNamespace  $ show time ++ show compilerHash ++ path
   let ns1 = StaticNamespace . privateNamespace $ show time ++ show compilerHash ++ path
@@ -298,7 +298,7 @@ runModuleTests resolver backend base tp (LoadedTests p d m em deps1 deps2) = do
 loadPrivateSource :: PathIOHandler r => r -> VersionHash -> FilePath -> FilePath -> CompileInfoIO (PrivateSource SourcePos)
 loadPrivateSource resolver h p f = do
   [f'] <- zipWithContents resolver p [f]
-  time <- errorFromIO getSystemTime
+  time <- errorFromIO getZonedTime
   path <- errorFromIO $ canonicalizePath (p </> f)
   let ns = StaticNamespace $ privateNamespace $ show time ++ show h ++ path
   (pragmas,cs,ds) <- parseInternalSource f'
