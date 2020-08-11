@@ -11,6 +11,10 @@
   Previously, C++ extensions could directly access categories defined in
   `$ModuleOnly$` sources in dependencies.
 
+* **[breaking]** Randomizes cache paths and `namespace`s for generated C++ code
+  so that C++ extensions cannot use static `#include` paths to circumvent
+  the visibility rules of a dependency.
+
 ## 0.8.0.0  -- 2020-08-07
 
 ### Language
