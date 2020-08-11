@@ -127,7 +127,7 @@ compileModule resolver backend (ModuleSpec p d em is is2 ps xs ts es ep m f) = d
   let paths2 = base:s0:s1:(getIncludePathsForDeps (deps1' ++ deps2)) ++ ep' ++ paths'
   let hxx   = filter (isSuffixOf ".hpp" . coFilename)       fs'
   let other = filter (not . isSuffixOf ".hpp" . coFilename) fs'
-  os1 <- mapErrorsM (writeOutputFile (ns0,ns1) paths2) $ hxx ++ other
+  os1 <- mapErrorsM (writeOutputFile paths2) $ hxx ++ other
   let files = map (\f2 -> getCachedPath (p </> d) (show $ coNamespace f2) (coFilename f2)) fs' ++
               map (\f2 -> p </> getSourceFile f2) es
   files' <- mapErrorsM checkOwnedFile files
@@ -181,7 +181,7 @@ compileModule resolver backend (ModuleSpec p d em is is2 ps xs ts es ep m f) = d
   writeMetadata (p </> d) cm2' where
     compilerHash = getCompilerHash backend
     ep' = fixPaths $ map (p </>) ep
-    writeOutputFile (ns0,ns1) paths ca@(CxxOutput _ f2 ns _ _ content) = do
+    writeOutputFile paths ca@(CxxOutput _ f2 ns _ _ content) = do
       errorFromIO $ hPutStrLn stderr $ "Writing file " ++ f2
       writeCachedFile (p </> d) (show ns) f2 $ concat $ map (++ "\n") content
       if isSuffixOf ".cpp" f2 || isSuffixOf ".cc" f2
@@ -190,7 +190,7 @@ compileModule resolver backend (ModuleSpec p d em is is2 ps xs ts es ep m f) = d
            let p0 = getCachedPath (p </> d) "" ""
            let p1 = getCachedPath (p </> d) (show ns) ""
            createCachePath (p </> d)
-           let ms = [(publicNamespaceMacro,Just $ show ns0),(privateNamespaceMacro,Just $ show ns1)]
+           let ms = []
            let command = CompileToObject f2' (getCachedPath (p </> d) (show ns) "") ms (p0:p1:paths) False
            o2 <- runCxxCommand backend command
            return $ ([o2],ca)
