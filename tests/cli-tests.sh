@@ -172,6 +172,22 @@ test_templates() {
 }
 
 
+test_show_deps() {
+  local output=$(do_zeolite -p "$ZEOLITE_PATH" --show-deps tests)
+  local patterns=(
+    'ExprLookup -> Int ".*zeolite/base"'
+    'ExprLookup -> String ".*zeolite/base"'
+  )
+  for pattern in "${patterns[@]}"; do
+    if echo "$output" | egrep -q "$pattern"; then
+      show_message "Expected \"$pattern\" in --show-deps for tests:"
+      echo "$output" 1>&2
+      return 1
+    fi
+  done
+}
+
+
 test_fast() {
   local temp=$(execute mktemp -d)
   local category='HelloWorld'
@@ -296,6 +312,7 @@ ALL_TESTS=(
   test_module_only4
   test_warn_public
   test_templates
+  test_show_deps
   test_fast
   test_bad_system_include
   test_global_include
