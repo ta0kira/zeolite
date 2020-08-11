@@ -197,12 +197,10 @@ compileModule resolver backend (ModuleSpec p d em is is2 ps xs ts es ep m f) = d
          else return ([],ca)
     compileExtraSource (ns0,ns1) ca paths (CategorySource f2 cs ds2) = do
       f2' <- compileExtraFile False (ns0,ns1) paths f2
-      let
       case f2' of
            Nothing -> return []
            Just o  -> return $ map (\c -> Left $ ([o],fakeCxx c)) cs
       where
-        ds2' = nub $ cs ++ ds2
         fakeCxx c = CxxOutput {
             coCategory = Just c,
             coFilename = "",
@@ -210,11 +208,11 @@ compileModule resolver backend (ModuleSpec p d em is is2 ps xs ts es ep m f) = d
                                Just ns2 -> ns2
                                Nothing  -> NoNamespace,
             coUsesNamespace = [ns0,ns1],
-            coUsesCategory = ds2',
+            coUsesCategory = ds2,
             coOutput = []
           }
-    compileExtraSource (ns0,ns1) _ paths (OtherSource f2) = do
-      f2' <- compileExtraFile True (ns0,ns1) paths f2
+    compileExtraSource _ _ paths (OtherSource f2) = do
+      f2' <- compileExtraFile True (NoNamespace,NoNamespace) paths f2
       case f2' of
            Just o  -> return [Right $ OtherObjectFile o]
            Nothing -> return []
