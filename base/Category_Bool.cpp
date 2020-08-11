@@ -29,9 +29,9 @@ limitations under the License.
 #include "Category_Equals.hpp"
 
 
-#ifdef ZEOLITE_DYNAMIC_NAMESPACE
-namespace ZEOLITE_DYNAMIC_NAMESPACE {
-#endif  // ZEOLITE_DYNAMIC_NAMESPACE
+#ifdef ZEOLITE_PUBLIC_NAMESPACE
+namespace ZEOLITE_PUBLIC_NAMESPACE {
+#endif  // ZEOLITE_PUBLIC_NAMESPACE
 namespace {
 const int collection_Bool = 0;
 }  // namespace
@@ -201,10 +201,10 @@ TypeCategory& GetCategory_Bool() {
 TypeInstance& GetType_Bool(Params<0>::Type params) {
   return CreateType_Bool(params);
 }
-#ifdef ZEOLITE_DYNAMIC_NAMESPACE
-}  // namespace ZEOLITE_DYNAMIC_NAMESPACE
-using namespace ZEOLITE_DYNAMIC_NAMESPACE;
-#endif  // ZEOLITE_DYNAMIC_NAMESPACE
+#ifdef ZEOLITE_PUBLIC_NAMESPACE
+}  // namespace ZEOLITE_PUBLIC_NAMESPACE
+using namespace ZEOLITE_PUBLIC_NAMESPACE;
+#endif  // ZEOLITE_PUBLIC_NAMESPACE
 
 
 S<TypeValue> Box_Bool(bool value) {

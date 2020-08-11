@@ -39,4 +39,8 @@ TypeInstance& GetMerged_All();
 
 extern const S<TypeValue>& Var_empty;
 
+#if defined(ZEOLITE_PUBLIC_NAMESPACE) && !defined(ZEOLITE_DYNAMIC_NAMESPACE)
+#define ZEOLITE_DYNAMIC_NAMESPACE ZEOLITE_PUBLIC_NAMESPACE
+#endif
+
 #endif  // CATEGORY_HEADER_HPP_

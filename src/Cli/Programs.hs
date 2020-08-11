@@ -45,8 +45,7 @@ data CxxCommand =
   CompileToObject {
     ctoSource :: String,
     ctoPath :: String,
-    ctoNamespaceMacro :: String,
-    ctoNamespace :: String,
+    ctoMacros :: [(String,Maybe String)],
     ctoPaths :: [String],
     ctoExtra :: Bool
   } |

@@ -507,15 +507,25 @@ addNamespace t cs
       onlyCode $ "}  // namespace " ++ show (getCategoryNamespace t),
       onlyCode $ "using namespace " ++ show (getCategoryNamespace t) ++ ";"
     ]
-  | isDynamicNamespace $ getCategoryNamespace t = mergeAll [
-      onlyCode $ "#ifdef " ++ dynamicNamespaceName,
-      onlyCode $ "namespace " ++ dynamicNamespaceName ++ " {",
-      onlyCode $ "#endif  // " ++ dynamicNamespaceName,
+  | isPublicNamespace $ getCategoryNamespace t = mergeAll [
+      onlyCode $ "#ifdef " ++ publicNamespaceMacro,
+      onlyCode $ "namespace " ++ publicNamespaceMacro ++ " {",
+      onlyCode $ "#endif  // " ++ publicNamespaceMacro,
       cs,
-      onlyCode $ "#ifdef " ++ dynamicNamespaceName,
-      onlyCode $ "}  // namespace " ++ dynamicNamespaceName,
-      onlyCode $ "using namespace " ++ dynamicNamespaceName ++ ";",
-      onlyCode $ "#endif  // " ++ dynamicNamespaceName
+      onlyCode $ "#ifdef " ++ publicNamespaceMacro,
+      onlyCode $ "}  // namespace " ++ publicNamespaceMacro,
+      onlyCode $ "using namespace " ++ publicNamespaceMacro ++ ";",
+      onlyCode $ "#endif  // " ++ publicNamespaceMacro
+    ]
+  | isPrivateNamespace $ getCategoryNamespace t = mergeAll [
+      onlyCode $ "#ifdef " ++ privateNamespaceMacro,
+      onlyCode $ "namespace " ++ privateNamespaceMacro ++ " {",
+      onlyCode $ "#endif  // " ++ privateNamespaceMacro,
+      cs,
+      onlyCode $ "#ifdef " ++ privateNamespaceMacro,
+      onlyCode $ "}  // namespace " ++ privateNamespaceMacro,
+      onlyCode $ "using namespace " ++ privateNamespaceMacro ++ ";",
+      onlyCode $ "#endif  // " ++ privateNamespaceMacro
     ]
   | otherwise = cs
 

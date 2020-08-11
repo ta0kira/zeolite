@@ -25,9 +25,9 @@ limitations under the License.
 #include "Category_RawFileWriter.hpp"
 
 
-#ifdef ZEOLITE_DYNAMIC_NAMESPACE
-namespace ZEOLITE_DYNAMIC_NAMESPACE {
-#endif  // ZEOLITE_DYNAMIC_NAMESPACE
+#ifdef ZEOLITE_PUBLIC_NAMESPACE
+namespace ZEOLITE_PUBLIC_NAMESPACE {
+#endif  // ZEOLITE_PUBLIC_NAMESPACE
 
 namespace {
 const int collection = 0;
@@ -215,7 +215,7 @@ TypeInstance& GetType_RawFileWriter(Params<0>::Type params) {
   return CreateType(params);
 }
 
-#ifdef ZEOLITE_DYNAMIC_NAMESPACE
-}  // namespace ZEOLITE_DYNAMIC_NAMESPACE
-using namespace ZEOLITE_DYNAMIC_NAMESPACE;
-#endif  // ZEOLITE_DYNAMIC_NAMESPACE
+#ifdef ZEOLITE_PUBLIC_NAMESPACE
+}  // namespace ZEOLITE_PUBLIC_NAMESPACE
+using namespace ZEOLITE_PUBLIC_NAMESPACE;
+#endif  // ZEOLITE_PUBLIC_NAMESPACE

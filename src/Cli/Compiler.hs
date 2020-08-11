@@ -127,11 +127,12 @@ compileModule resolver backend (ModuleSpec p d em is is2 ps xs ts es ep m f) = d
   let paths2 = base:s0:s1:(getIncludePathsForDeps (deps1' ++ deps2)) ++ ep' ++ paths'
   let hxx   = filter (isSuffixOf ".hpp" . coFilename)       fs'
   let other = filter (not . isSuffixOf ".hpp" . coFilename) fs'
-  os1 <- mapErrorsM (writeOutputFile (show ns0) paths2) $ hxx ++ other
+  os1 <- mapErrorsM (writeOutputFile (ns0,ns1) paths2) $ hxx ++ other
   let files = map (\f2 -> getCachedPath (p </> d) (show $ coNamespace f2) (coFilename f2)) fs' ++
               map (\f2 -> p </> getSourceFile f2) es
   files' <- mapErrorsM checkOwnedFile files
-  os2 <- fmap concat $ mapErrorsM (compileExtraSource (show ns0) paths2) es
+  let ca = Map.fromList $ map (\c -> (getCategoryName c,getCategoryNamespace c)) $ map wvData cs2
+  os2 <- fmap concat $ mapErrorsM (compileExtraSource (ns0,ns1) ca paths2) es
   let (hxx',cxx,os') = sortCompiledFiles files'
   let (osCat,osOther) = partitionEithers os2
   let os1' = resolveObjectDeps (deps1' ++ deps2) path path (os1 ++ osCat)
@@ -180,7 +181,7 @@ compileModule resolver backend (ModuleSpec p d em is is2 ps xs ts es ep m f) = d
   writeMetadata (p </> d) cm2' where
     compilerHash = getCompilerHash backend
     ep' = fixPaths $ map (p </>) ep
-    writeOutputFile ns0 paths ca@(CxxOutput _ f2 ns _ _ content) = do
+    writeOutputFile (ns0,ns1) paths ca@(CxxOutput _ f2 ns _ _ content) = do
       errorFromIO $ hPutStrLn stderr $ "Writing file " ++ f2
       writeCachedFile (p </> d) (show ns) f2 $ concat $ map (++ "\n") content
       if isSuffixOf ".cpp" f2 || isSuffixOf ".cc" f2
@@ -189,40 +190,44 @@ compileModule resolver backend (ModuleSpec p d em is is2 ps xs ts es ep m f) = d
            let p0 = getCachedPath (p </> d) "" ""
            let p1 = getCachedPath (p </> d) (show ns) ""
            createCachePath (p </> d)
-           let ns' = if isStaticNamespace ns then show ns else show ns0
-           let command = CompileToObject f2' (getCachedPath (p </> d) ns' "") dynamicNamespaceName "" (p0:p1:paths) False
+           let ms = [(publicNamespaceMacro,Just $ show ns0),(privateNamespaceMacro,Just $ show ns1)]
+           let command = CompileToObject f2' (getCachedPath (p </> d) (show ns) "") ms (p0:p1:paths) False
            o2 <- runCxxCommand backend command
            return $ ([o2],ca)
          else return ([],ca)
-    compileExtraSource ns0 paths (CategorySource f2 cs ds2) = do
-      f2' <- compileExtraFile False ns0 paths f2
-      let ds2' = nub $ cs ++ ds2
+    compileExtraSource (ns0,ns1) ca paths (CategorySource f2 cs ds2) = do
+      f2' <- compileExtraFile False (ns0,ns1) paths f2
+      let
       case f2' of
            Nothing -> return []
-           Just o  -> return $ map (\c -> Left $ ([o],fakeCxxForSource ns0 ds2' c)) cs
-    compileExtraSource ns0 paths (OtherSource f2) = do
-      f2' <- compileExtraFile True ns0 paths f2
+           Just o  -> return $ map (\c -> Left $ ([o],fakeCxx c)) cs
+      where
+        ds2' = nub $ cs ++ ds2
+        fakeCxx c = CxxOutput {
+            coCategory = Just c,
+            coFilename = "",
+            coNamespace = case c `Map.lookup` ca of
+                               Just ns2 -> ns2
+                               Nothing  -> NoNamespace,
+            coUsesNamespace = [ns0,ns1],
+            coUsesCategory = ds2',
+            coOutput = []
+          }
+    compileExtraSource (ns0,ns1) _ paths (OtherSource f2) = do
+      f2' <- compileExtraFile True (ns0,ns1) paths f2
       case f2' of
            Just o  -> return [Right $ OtherObjectFile o]
            Nothing -> return []
-    fakeCxxForSource ns ds2 c = CxxOutput {
-        coCategory = Just c,
-        coFilename = "",
-        coNamespace = ns',
-        coUsesNamespace = [ns'],
-        coUsesCategory = ds2,
-        coOutput = []
-      } where
-        ns' = if null ns then NoNamespace else StaticNamespace ns
     checkOwnedFile f2 = do
       exists <- errorFromIO $ doesFileExist f2
       when (not exists) $ compileErrorM $ "Owned file " ++ f2 ++ " does not exist."
       errorFromIO $ canonicalizePath f2
-    compileExtraFile e ns0 paths f2
+    compileExtraFile e (ns0,ns1) paths f2
       | isSuffixOf ".cpp" f2 || isSuffixOf ".cc" f2 = do
           let f2' = p </> f2
           createCachePath (p </> d)
-          let command = CompileToObject f2' (getCachedPath (p </> d) "" "") dynamicNamespaceName ns0 paths e
+          let ms = [(publicNamespaceMacro,Just $ show ns0),(privateNamespaceMacro,Just $ show ns1)]
+          let command = CompileToObject f2' (getCachedPath (p </> d) "" "") ms paths e
           fmap Just $ runCxxCommand backend command
       | isSuffixOf ".a" f2 || isSuffixOf ".o" f2 = return (Just f2)
       | otherwise = return Nothing
@@ -260,7 +265,7 @@ createModuleTemplates :: PathIOHandler r => r -> FilePath -> FilePath ->
 createModuleTemplates resolver p d deps1 deps2 = do
   (ps,xs,_) <- findSourceFiles p d
   (LanguageModule _ _ _ cs0 ps0 ts0 cs1 ps1 ts1 _ _) <-
-    fmap (createLanguageModule [] Map.empty) $ loadModuleGlobals resolver p (DynamicNamespace,DynamicNamespace) ps Nothing deps1 deps2
+    fmap (createLanguageModule [] Map.empty) $ loadModuleGlobals resolver p (PublicNamespace,PrivateNamespace) ps Nothing deps1 deps2
   xs' <- zipWithContents resolver p xs
   ds <- mapErrorsM parseInternalSource xs'
   let ds2 = concat $ map (\(_,_,d2) -> d2) ds

@@ -30,9 +30,9 @@ limitations under the License.
 #include "Category_LessThan.hpp"
 
 
-#ifdef ZEOLITE_DYNAMIC_NAMESPACE
-namespace ZEOLITE_DYNAMIC_NAMESPACE {
-#endif  // ZEOLITE_DYNAMIC_NAMESPACE
+#ifdef ZEOLITE_PUBLIC_NAMESPACE
+namespace ZEOLITE_PUBLIC_NAMESPACE {
+#endif  // ZEOLITE_PUBLIC_NAMESPACE
 namespace {
 const int collection_Float = 0;
 }  // namespace
@@ -218,10 +218,10 @@ TypeCategory& GetCategory_Float() {
 TypeInstance& GetType_Float(Params<0>::Type params) {
   return CreateType_Float(params);
 }
-#ifdef ZEOLITE_DYNAMIC_NAMESPACE
-}  // namespace ZEOLITE_DYNAMIC_NAMESPACE
-using namespace ZEOLITE_DYNAMIC_NAMESPACE;
-#endif  // ZEOLITE_DYNAMIC_NAMESPACE
+#ifdef ZEOLITE_PUBLIC_NAMESPACE
+}  // namespace ZEOLITE_PUBLIC_NAMESPACE
+using namespace ZEOLITE_PUBLIC_NAMESPACE;
+#endif  // ZEOLITE_PUBLIC_NAMESPACE
 
 
 S<TypeValue> Box_Float(PrimFloat value) {

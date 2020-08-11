@@ -23,9 +23,9 @@ limitations under the License.
 #include "Category_String.hpp"
 
 
-#ifdef ZEOLITE_DYNAMIC_NAMESPACE
-namespace ZEOLITE_DYNAMIC_NAMESPACE {
-#endif  // ZEOLITE_DYNAMIC_NAMESPACE
+#ifdef ZEOLITE_PUBLIC_NAMESPACE
+namespace ZEOLITE_PUBLIC_NAMESPACE {
+#endif  // ZEOLITE_PUBLIC_NAMESPACE
 
 namespace {
 
@@ -213,7 +213,7 @@ S<TypeValue> CreateValue_Math(Type_Math& parent, const ParamTuple& params, const
   return S_get(new Impl_Value_Math(parent, params, args));
 }
 
-#ifdef ZEOLITE_DYNAMIC_NAMESPACE
-}  // namespace ZEOLITE_DYNAMIC_NAMESPACE
-using namespace ZEOLITE_DYNAMIC_NAMESPACE;
-#endif  // ZEOLITE_DYNAMIC_NAMESPACE
+#ifdef ZEOLITE_PUBLIC_NAMESPACE
+}  // namespace ZEOLITE_PUBLIC_NAMESPACE
+using namespace ZEOLITE_PUBLIC_NAMESPACE;
+#endif  // ZEOLITE_PUBLIC_NAMESPACE

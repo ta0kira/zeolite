@@ -59,8 +59,9 @@ module Types.TypeCategory (
   includeNewTypes,
   inferParamTypes,
   isInstanceInterface,
-  isDynamicNamespace,
   isNoNamespace,
+  isPrivateNamespace,
+  isPublicNamespace,
   isStaticNamespace,
   isValueConcrete,
   isValueInterface,
@@ -253,7 +254,8 @@ data Namespace =
     snName :: String
   } |
   NoNamespace |
-  DynamicNamespace
+  PublicNamespace |
+  PrivateNamespace
   deriving (Eq,Ord)
 
 instance Show Namespace where
@@ -268,9 +270,13 @@ isNoNamespace :: Namespace -> Bool
 isNoNamespace NoNamespace = True
 isNoNamespace _           = False
 
-isDynamicNamespace :: Namespace -> Bool
-isDynamicNamespace DynamicNamespace = True
-isDynamicNamespace _                = False
+isPublicNamespace :: Namespace -> Bool
+isPublicNamespace PublicNamespace = True
+isPublicNamespace _                = False
+
+isPrivateNamespace :: Namespace -> Bool
+isPrivateNamespace PrivateNamespace = True
+isPrivateNamespace _                = False
 
 data ValueRefine c =
   ValueRefine {

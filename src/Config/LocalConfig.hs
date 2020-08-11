@@ -77,7 +77,7 @@ compilerVersion :: String
 compilerVersion = showVersion version
 
 instance CompilerBackend Backend where
-  runCxxCommand (UnixBackend cb co ab) (CompileToObject s p nm ns ps e) = do
+  runCxxCommand (UnixBackend cb co ab) (CompileToObject s p ms ps e) = do
     objName <- errorFromIO $ canonicalizePath $ p </> (takeFileName $ dropExtension s ++ ".o")
     executeProcess cb (co ++ otherOptions ++ ["-c", s, "-o", objName]) <?? ("In compilation of " ++ s)
     if e
@@ -88,10 +88,9 @@ instance CompilerBackend Backend where
         executeProcess ab ["-q",arName,objName] <?? ("In packaging of " ++ objName)
         return arName
       else return objName where
-      otherOptions = map (("-I" ++) . normalise) ps ++ nsFlag
-      nsFlag
-        | null ns = []
-        | otherwise = ["-D" ++ nm ++ "=" ++ ns]
+      otherOptions = map (("-I" ++) . normalise) ps ++ map macro ms
+      macro (n,Just v)  = "-D" ++ n ++ "=" ++ v
+      macro (n,Nothing) = "-D" ++ n
   runCxxCommand (UnixBackend cb co _) (CompileToBinary m ss o ps lf) = do
     let arFiles    = filter (isSuffixOf ".a")       ss
     let otherFiles = filter (not . isSuffixOf ".a") ss

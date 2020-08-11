@@ -28,7 +28,6 @@ module CompilerCxx.Naming (
   categoryGetter,
   categoryName,
   collectionName,
-  dynamicNamespaceName,
   functionName,
   headerFilename,
   initializerName,
@@ -37,7 +36,9 @@ module CompilerCxx.Naming (
   mainSourceIncludes,
   paramName,
   privateNamespace,
+  privateNamespaceMacro,
   publicNamespace,
+  publicNamespaceMacro,
   qualifiedTypeGetter,
   sourceFilename,
   tableName,
@@ -149,5 +150,8 @@ qualifiedTypeGetter t
     show (getCategoryNamespace t) ++ "::" ++ (typeGetter $ getCategoryName t)
   | otherwise = typeGetter $ getCategoryName t
 
-dynamicNamespaceName :: String
-dynamicNamespaceName = "ZEOLITE_DYNAMIC_NAMESPACE"
+publicNamespaceMacro :: String
+publicNamespaceMacro = "ZEOLITE_PUBLIC_NAMESPACE"
+
+privateNamespaceMacro :: String
+privateNamespaceMacro = "ZEOLITE_PRIVATE_NAMESPACE"
