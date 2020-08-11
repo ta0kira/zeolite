@@ -246,7 +246,7 @@ tests = [
             CategoryName "Category1",
             CategoryName "Category2"
           ],
-          csDepCategories = [
+          csRequires = [
             CategoryName "DepCategory1",
             CategoryName "DepCategory2"
           ]
@@ -285,13 +285,13 @@ tests = [
       csCategories = [
         CategoryName "bad category"
       ],
-      csDepCategories = []
+      csRequires = []
     },
 
     checkWriteFail "bad category" $ CategorySource {
       csSource = "extra1.cpp",
       csCategories = [],
-      csDepCategories = [
+      csRequires = [
         CategoryName "bad category"
       ]
     },

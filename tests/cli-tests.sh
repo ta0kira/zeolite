@@ -143,6 +143,12 @@ test_module_only3() {
 }
 
 
+test_module_only4() {
+  do_zeolite -p "$ZEOLITE_PATH" -r tests/module-only4 -f
+  do_zeolite -p "$ZEOLITE_PATH" -t tests/module-only4
+}
+
+
 test_warn_public() {
   local output=$(do_zeolite -p "$ZEOLITE_PATH" -R tests/warn-public -f)
   if ! echo "$output" | egrep -q '"internal" .+ public'; then
@@ -287,6 +293,7 @@ ALL_TESTS=(
   test_module_only
   test_module_only2
   test_module_only3
+  test_module_only4
   test_warn_public
   test_templates
   test_fast

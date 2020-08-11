@@ -74,7 +74,7 @@ data ExtraSource =
   CategorySource {
     csSource :: FilePath,
     csCategories :: [CategoryName],
-    csDepCategories :: [CategoryName]
+    csRequires :: [CategoryName]
   } |
   OtherSource {
     osSource :: FilePath

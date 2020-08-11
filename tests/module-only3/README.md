@@ -1,4 +1,4 @@
-# `$ModuleOnly$` Pragma Test - C++ Extension
+# `$ModuleOnly$` Pragma Test - Visibility in C++
 
 Compiling this module should **always fail**. It tests that the `$ModuleOnly$`
 pragma limits visibility even in C++ source files.

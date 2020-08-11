@@ -7,7 +7,7 @@
     name="Zeolite Module"
     section="Configuration"
     version="1.1"
-    kateversion="2.4"
+    kateversion="2.5"
     indenter="cstyle"
     style="Zeolite Module"
     extensions=".zeolite-module"
@@ -34,6 +34,7 @@
 
       <context name="Sections" attribute="Normal Text" lineEndContext="#stay" >
         <StringDetect attribute="Keyword" context="Categories Start" String="categories:" />
+        <StringDetect attribute="Keyword" context="Categories Start" String="requires:" />
         <StringDetect attribute="Keyword" context="Category" String="category:" />
         <StringDetect attribute="Keyword" context="Expression" String="expression:" />
         <StringDetect attribute="Keyword" context="#stay" String="expression_map:" />
@@ -47,7 +48,6 @@
         <StringDetect attribute="Keyword" context="#stay" String="path:" />
         <StringDetect attribute="Keyword" context="#stay" String="private_deps:" />
         <StringDetect attribute="Keyword" context="#stay" String="public_deps:" />
-        <StringDetect attribute="Keyword" context="#stay" String="requires:" />
         <StringDetect attribute="Keyword" context="#stay" String="root:" />
         <StringDetect attribute="Keyword" context="#stay" String="source:" />
       </context>
