@@ -2,6 +2,13 @@
 
 ## 0.9.0.0  -- ????-??-??
 
+### Language
+
+* **[breaking]** Prohibits having a `$TestsOnly$` definition for a
+  non-`$TestsOnly$` category. Previously, a `concrete` category declared in a
+  non-`$TestsOnly$` `.0rp` could be `define`d in a `$TestsOnly$` `.0rx`, which
+  creates a loophole that allows binaries to utilize `$TestsOnly$` code.
+
 ### Compiler CLI
 
 * **[fix]** Fixes regression where calling `zeolite` with `-p` would overwrite
@@ -14,11 +21,6 @@
 * **[breaking]** Randomizes cache paths and `namespace`s for generated C++ code
   so that C++ extensions cannot use static `#include` paths to circumvent
   the visibility rules of a dependency.
-
-* **[breaking]** Prohibits having a `$TestsOnly$` definition for a
-  non-`$TestsOnly$` category. Previously, a `concrete` category declared in a
-  non-`$TestsOnly$` `.0rp` could be `define`d in a `$TestsOnly$` `.0rx`, which
-  creates a loophole that allows binaries to utilize `$TestsOnly$` code.
 
 ## 0.8.0.0  -- 2020-08-07
 

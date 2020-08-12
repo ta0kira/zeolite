@@ -297,19 +297,19 @@ run_all() {
     echo 1>&2
     if ! "$t"; then
       failed=1
-      failed_list=("${failed_list[@]}" "$t")
+      failed_list=(${failed_list[@]-} "$t")
     else
-      passed_list=("${passed_list[@]}" "$t")
+      passed_list=(${passed_list[@]-} "$t")
     fi
     echo 1>&2
     show_message "<<< Testing $t"
     echo 1>&2
   done
-  for t in "${passed_list[@]}"; do
+  for t in ${passed_list[@]-}; do
     show_message "*** $t PASSED ***"
   done
   if (($failed)); then
-    for t in "${failed_list[@]}"; do
+    for t in ${failed_list[@]-}; do
       show_message "*** $t FAILED ***"
     done
     return 1
