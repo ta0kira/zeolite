@@ -150,58 +150,58 @@ instance ConfigFormat CompileMetadata where
     lf  <- parseRequired "link_flags:"         (parseList parseQuoted)
     os  <- parseRequired "object_files:"       (parseList readConfig)
     return (CompileMetadata h p ns1 ns2 is is2 cs1 cs2 ds1 ds2 ps xs ts hxx cxx bs lf os)
-  writeConfig m = do
-    validateHash (cmVersionHash m)
-    ns1 <- maybeShowNamespace "public_namespace:"  (cmPublicNamespace m)
-    ns2 <- maybeShowNamespace "private_namespace:" (cmPrivateNamespace m)
-    _ <- mapErrorsM validateCategoryName (cmPublicCategories m)
-    _ <- mapErrorsM validateCategoryName (cmPrivateCategories m)
-    objects <- fmap concat $ mapErrorsM writeConfig $ cmObjectFiles m
+  writeConfig (CompileMetadata h p ns1 ns2 is is2 cs1 cs2 ds1 ds2 ps xs ts hxx cxx bs lf os) = do
+    validateHash h
+    ns1' <- maybeShowNamespace "public_namespace:"  ns1
+    ns2' <- maybeShowNamespace "private_namespace:" ns2
+    mapErrorsM_ validateCategoryName cs1
+    mapErrorsM_ validateCategoryName cs2
+    os' <- fmap concat $ mapErrorsM writeConfig os
     return $ [
-        "version_hash: " ++ (show $ cmVersionHash m),
-        "path: " ++ (show $ cmPath m)
-      ] ++ ns1 ++ ns2 ++ [
+        "version_hash: " ++ show h,
+        "path: " ++ show p
+      ] ++ ns1' ++ ns2' ++ [
         "public_deps: ["
-      ] ++ indents (map show $ cmPublicDeps m) ++ [
+      ] ++ indents (map show is) ++ [
         "]",
         "private_deps: ["
-      ] ++ indents (map show $ cmPrivateDeps m) ++ [
+      ] ++ indents (map show is2) ++ [
         "]",
         "public_categories: ["
-      ] ++ indents (map show $ cmPublicCategories m) ++ [
+      ] ++ indents (map show cs1) ++ [
         "]",
         "private_categories: ["
-      ] ++ indents (map show $ cmPrivateCategories m) ++ [
+      ] ++ indents (map show cs2) ++ [
         "]",
         "public_subdirs: ["
-      ] ++ indents (map show $ cmPublicSubdirs m) ++ [
+      ] ++ indents (map show ds1) ++ [
         "]",
         "private_subdirs: ["
-      ] ++ indents (map show $ cmPrivateSubdirs m) ++ [
+      ] ++ indents (map show ds2) ++ [
         "]",
         "public_files: ["
-      ] ++ indents (map show $ cmPublicFiles m) ++ [
+      ] ++ indents (map show ps) ++ [
         "]",
         "private_files: ["
-      ] ++ indents (map show $ cmPrivateFiles m) ++ [
+      ] ++ indents (map show xs) ++ [
         "]",
         "test_files: ["
-      ] ++ indents (map show $ cmTestFiles m) ++ [
+      ] ++ indents (map show ts) ++ [
         "]",
         "hxx_files: ["
-      ] ++ indents (map show $ cmHxxFiles m) ++ [
+      ] ++ indents (map show hxx) ++ [
         "]",
         "cxx_files: ["
-      ] ++ indents (map show $ cmCxxFiles m) ++ [
+      ] ++ indents (map show cxx) ++ [
         "]",
         "binaries: ["
-      ] ++ indents (map show $ cmBinaries m) ++ [
+      ] ++ indents (map show bs) ++ [
         "]",
         "link_flags: ["
-      ] ++ indents (map show $ cmLinkFlags m) ++ [
+      ] ++ indents (map show lf) ++ [
         "]",
         "object_files: ["
-      ] ++ indents objects ++ [
+      ] ++ indents os' ++ [
         "]"
       ]
 
@@ -279,34 +279,39 @@ instance ConfigFormat ModuleConfig where
       em  <- parseOptional "expression_map:" [] (parseList parseExprMacro)
       is  <- parseOptional "public_deps:"    [] (parseList parseQuoted)
       is2 <- parseOptional "private_deps:"   [] (parseList parseQuoted)
+      ss  <- parseOptional "streamlined:"    [] (parseList parseCategoryName)
       es  <- parseOptional "extra_files:"    [] (parseList readConfig)
       ep  <- parseOptional "include_paths:"  [] (parseList parseQuoted)
       m   <- parseRequired "mode:"              readConfig
-      return (ModuleConfig p d em is is2 es ep m)
-  writeConfig m = do
-    extra    <- fmap concat $ mapErrorsM writeConfig $ rmExtraFiles m
-    mode <- writeConfig (rmMode m)
-    when (not $ null $ rmExprMap m) $ compileErrorM "Only empty expression maps are allowed when writing"
+      return (ModuleConfig p d em is is2 ss es ep m)
+  writeConfig (ModuleConfig p d em is is2 ss es ep m) = do
+    es' <- fmap concat $ mapErrorsM writeConfig es
+    m' <- writeConfig m
+    when (not $ null em) $ compileErrorM "Only empty expression maps are allowed when writing"
+    mapErrorsM_ validateCategoryName ss
     return $ [
-        "root: " ++ show (rmRoot m),
-        "path: " ++ show (rmPath m),
+        "root: " ++ show p,
+        "path: " ++ show d,
         "expression_map: [",
         -- NOTE: expression_map isn't output because that would require making
         -- all Expression serializable.
         "]",
         "public_deps: ["
-      ] ++ indents (map show $ rmPublicDeps m) ++ [
+      ] ++ indents (map show is) ++ [
         "]",
         "private_deps: ["
-      ] ++ indents (map show $ rmPrivateDeps m) ++ [
+      ] ++ indents (map show is2) ++ [
+        "]",
+        "streamlined: ["
+      ] ++ (indents $ indents $ map show ss) ++ [
         "]",
         "extra_files: ["
-      ] ++ indents extra ++ [
+      ] ++ indents es' ++ [
         "]",
         "include_paths: ["
-      ] ++ indents (map show $ rmExtraPaths m) ++ [
+      ] ++ indents (map show ep) ++ [
         "]"
-      ] ++ "mode: " `prependFirst` mode
+      ] ++ "mode: " `prependFirst` m'
 
 instance ConfigFormat ExtraSource where
   readConfig = category <|> other where
@@ -322,8 +327,8 @@ instance ConfigFormat ExtraSource where
       f <- parseQuoted
       return (OtherSource f)
   writeConfig (CategorySource f cs ds) = do
-    _ <- mapErrorsM validateCategoryName cs
-    _ <- mapErrorsM validateCategoryName ds
+    mapErrorsM_ validateCategoryName cs
+    mapErrorsM_ validateCategoryName ds
     return $ [
         "category_source {",
         indent ("source: " ++ show f),

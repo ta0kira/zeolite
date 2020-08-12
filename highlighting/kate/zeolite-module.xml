@@ -35,6 +35,7 @@
       <context name="Sections" attribute="Normal Text" lineEndContext="#stay" >
         <StringDetect attribute="Keyword" context="Categories Start" String="categories:" />
         <StringDetect attribute="Keyword" context="Categories Start" String="requires:" />
+        <StringDetect attribute="Keyword" context="Categories Start" String="streamlined:" />
         <StringDetect attribute="Keyword" context="Category" String="category:" />
         <StringDetect attribute="Keyword" context="Expression" String="expression:" />
         <StringDetect attribute="Keyword" context="#stay" String="expression_map:" />

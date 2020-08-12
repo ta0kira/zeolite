@@ -3,6 +3,7 @@ path: "lib/math"
 private_deps: [
   "../../tests"
 ]
+streamlined: [Math]
 extra_files: [
   category_source {
     source: "lib/math/Category_Math.cpp"

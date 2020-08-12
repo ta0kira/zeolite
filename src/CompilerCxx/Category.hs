@@ -81,6 +81,7 @@ data LanguageModule c =
     lmPrivateLocal :: [AnyCategory c],
     lmTestingLocal :: [AnyCategory c],
     lmExternal :: [CategoryName],
+    lmStreamlined :: [CategoryName],
     lmExprMap :: ExprMap c
   }
 
@@ -94,7 +95,7 @@ data PrivateSource c =
 
 compileLanguageModule :: (Show c, CompileErrorM m, MergeableM m) =>
   LanguageModule c -> [PrivateSource c] -> m ([CxxOutput],[CxxOutput])
-compileLanguageModule (LanguageModule ns0 ns1 ns2 cs0 ps0 ts0 cs1 ps1 ts1 ex em) xa = do
+compileLanguageModule (LanguageModule ns0 ns1 ns2 cs0 ps0 ts0 cs1 ps1 ts1 ex ss em) xa = do
   checkSupefluous $ Set.toList $ (Set.fromList ex) `Set.difference` ca
   -- Check public sources up front so that error messages aren't duplicated for
   -- every source file.
@@ -107,6 +108,7 @@ compileLanguageModule (LanguageModule ns0 ns1 ns2 cs0 ps0 ts0 cs1 ps1 ts1 ex em)
   -- TestsOnly .0rp and one declared in a non-TestOnly .0rx.
   let dm = mapByName ds
   checkDefined dm ex $ filter isValueConcrete (cs1 ++ ps1 ++ ts1)
+  checkStreamlined
   return (hxx1 ++ hxx2 ++ hxx3 ++ cxx1 ++ cxx2 ++ cxx3,xx) where
     tmPublic  = foldM includeNewTypes defaultCategories [cs0,cs1]
     tmPrivate = tmPublic  >>= \tm -> foldM includeNewTypes tm [ps0,ps1]
@@ -193,10 +195,13 @@ compileLanguageModule (LanguageModule ns0 ns1 ns2 cs0 ps0 ts0 cs1 ps1 ts1 ex em)
       | null es2 = return ()
       | otherwise = compileErrorM $ "External categories either not concrete or not present: " ++
                                     intercalate ", " (map show es2)
+    checkStreamlined =  mapErrorsM_  streamlinedError $ Set.toList $ Set.difference (Set.fromList ss) (Set.fromList ex)
+    streamlinedError n =
+      compileErrorM $ "Category " ++ show n ++ " cannot be streamlined because it was not declared external"
 
 compileTestMain :: (Show c, CompileErrorM m, MergeableM m) =>
   LanguageModule c -> PrivateSource c -> Expression c -> m CxxOutput
-compileTestMain (LanguageModule ns0 ns1 ns2 cs0 ps0 ts0 cs1 ps1 ts1 _ em) ts2 e = do
+compileTestMain (LanguageModule ns0 ns1 ns2 cs0 ps0 ts0 cs1 ps1 ts1 _ _ em) ts2 e = do
   tm' <- tm
   (req,main) <- createTestFile tm' em e
   return $ CxxOutput Nothing testFilename NoNamespace ([psNamespace ts2]++ns0++ns1++ns2) req main where
@@ -204,7 +209,7 @@ compileTestMain (LanguageModule ns0 ns1 ns2 cs0 ps0 ts0 cs1 ps1 ts1 _ em) ts2 e 
 
 compileModuleMain :: (Show c, CompileErrorM m, MergeableM m) =>
   LanguageModule c -> [PrivateSource c] -> CategoryName -> FunctionName -> m CxxOutput
-compileModuleMain (LanguageModule ns0 ns1 ns2 cs0 ps0 _ cs1 ps1 _ _ em) xa n f = do
+compileModuleMain (LanguageModule ns0 ns1 ns2 cs0 ps0 _ cs1 ps1 _ _ _ em) xa n f = do
   let resolved = filter (\d -> dcName d == n) $ concat $ map psDefine $ filter (not . psTesting) xa
   reconcile resolved
   tm' <- tm

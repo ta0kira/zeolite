@@ -62,6 +62,7 @@ data ModuleSpec =
     msExprMap :: ExprMap SourcePos,
     msPublicDeps :: [FilePath],
     msPrivateDeps :: [FilePath],
+    msStreamlined :: [CategoryName],
     msPublicFiles :: [FilePath],
     msPrivateFiles :: [FilePath],
     msTestFiles :: [FilePath],
@@ -84,7 +85,7 @@ data LoadedTests =
   deriving (Show)
 
 compileModule :: (PathIOHandler r, CompilerBackend b) => r -> b -> ModuleSpec -> CompileInfoIO ()
-compileModule resolver backend (ModuleSpec p d em is is2 ps xs ts es ep m f) = do
+compileModule resolver backend (ModuleSpec p d em is is2 ss ps xs ts es ep m f) = do
   as  <- fmap fixPaths $ mapErrorsM (resolveModule resolver (p </> d)) is
   as2 <- fmap fixPaths $ mapErrorsM (resolveModule resolver (p </> d)) is2
   let ca0 = Map.empty
@@ -107,7 +108,7 @@ compileModule resolver backend (ModuleSpec p d em is is2 ps xs ts es ep m f) = d
   let ns1 = StaticNamespace . privateNamespace $ show time ++ show compilerHash ++ path
   let ex = concat $ map getSourceCategories es
   cs <- loadModuleGlobals resolver p (ns0,ns1) ps Nothing deps1' deps2
-  let cm = createLanguageModule ex em cs
+  let cm = createLanguageModule ex ss em cs
   let cs2 = filter (not . hasCodeVisibility FromDependency) cs
   let pc = map (getCategoryName . wvData) $ filter (not . hasCodeVisibility ModuleOnly) cs2
   let tc = map (getCategoryName . wvData) $ filter (hasCodeVisibility ModuleOnly)       cs2
@@ -262,8 +263,8 @@ createModuleTemplates :: PathIOHandler r => r -> FilePath -> FilePath ->
   [CompileMetadata] -> [CompileMetadata] -> CompileInfoIO ()
 createModuleTemplates resolver p d deps1 deps2 = do
   (ps,xs,_) <- findSourceFiles p d
-  (LanguageModule _ _ _ cs0 ps0 ts0 cs1 ps1 ts1 _ _) <-
-    fmap (createLanguageModule [] Map.empty) $ loadModuleGlobals resolver p (PublicNamespace,PrivateNamespace) ps Nothing deps1 deps2
+  (LanguageModule _ _ _ cs0 ps0 ts0 cs1 ps1 ts1 _ _ _) <-
+    fmap (createLanguageModule [] [] Map.empty) $ loadModuleGlobals resolver p (PublicNamespace,PrivateNamespace) ps Nothing deps1 deps2
   xs' <- zipWithContents resolver p xs
   ds <- mapErrorsM parseInternalSource xs'
   let ds2 = concat $ map (\(_,_,d2) -> d2) ds
@@ -289,7 +290,7 @@ runModuleTests resolver backend base tp (LoadedTests p d m em deps1 deps2) = do
   mapErrorsM_ showSkipped $ filter (not . isTestAllowed) $ cmTestFiles m
   ts' <- zipWithContents resolver p $ map (d </>) $ filter isTestAllowed $ cmTestFiles m
   path <- errorFromIO $ canonicalizePath (p </> d)
-  cm <- fmap (createLanguageModule [] em) $ loadModuleGlobals resolver path (NoNamespace,NoNamespace) [] (Just m) deps1 []
+  cm <- fmap (createLanguageModule [] [] em) $ loadModuleGlobals resolver path (NoNamespace,NoNamespace) [] (Just m) deps1 []
   mapErrorsM (runSingleTest backend cm path paths (m:deps2)) ts' where
     allowTests = Set.fromList tp
     isTestAllowed t = if null allowTests then True else t `Set.member` allowTests
@@ -306,9 +307,9 @@ loadPrivateSource resolver h p f = do
   let testing = any isTestsOnly pragmas
   return $ PrivateSource ns testing cs' ds
 
-createLanguageModule :: [CategoryName] -> ExprMap c ->
+createLanguageModule :: [CategoryName] -> [CategoryName] -> ExprMap c ->
   [WithVisibility (AnyCategory c)] -> LanguageModule c
-createLanguageModule ex em cs = lm where
+createLanguageModule ex ss em cs = lm where
   lm = LanguageModule {
       lmPublicNamespaces  = map wvData $ apply ns [with    FromDependency,without ModuleOnly,without TestsOnly],
       lmPrivateNamespaces = map wvData $ apply ns [with    FromDependency,with    ModuleOnly,without TestsOnly],
@@ -320,6 +321,7 @@ createLanguageModule ex em cs = lm where
       lmPrivateLocal      = map wvData $ apply cs [without FromDependency,with    ModuleOnly,without TestsOnly],
       lmTestingLocal      = map wvData $ apply cs [without FromDependency,with TestsOnly],
       lmExternal = ex,
+      lmStreamlined = ss,
       lmExprMap  = em
     }
   ns = map (mapCodeVisibility getCategoryNamespace) cs
