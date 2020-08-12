@@ -166,9 +166,9 @@ findSourceFiles p0 p = do
 
 getExprMap :: FilePath -> ModuleConfig -> CompileInfoIO (ExprMap SourcePos)
 getExprMap p m = do
-  path <- errorFromIO $ canonicalizePath (p </> rmRoot m </> rmPath m)
+  path <- errorFromIO $ canonicalizePath (p </> mcRoot m </> mcPath m)
   let defaults = [("MODULE_PATH",Literal (StringLiteral [] path))]
-  return $ Map.fromList $ rmExprMap m ++ defaults
+  return $ Map.fromList $ mcExprMap m ++ defaults
 
 getRealPathsForDeps :: [CompileMetadata] -> [FilePath]
 getRealPathsForDeps = map cmPath

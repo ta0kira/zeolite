@@ -228,22 +228,22 @@ tests = [
     },
 
     checkWriteThenRead $ ModuleConfig {
-      rmRoot = "/home/projects",
-      rmPath = "special",
-      rmExprMap = [],
-      rmPublicDeps = [
+      mcRoot = "/home/projects",
+      mcPath = "special",
+      mcExprMap = [],
+      mcPublicDeps = [
         "/home/project/public-dep1",
         "/home/project/public-dep2"
       ],
-      rmPrivateDeps = [
+      mcPrivateDeps = [
         "/home/project/private-dep1",
         "/home/project/private-dep2"
       ],
-      rmStreamlined = [
+      mcStreamlined = [
           CategoryName "Category1",
           CategoryName "Category2"
         ],
-      rmExtraFiles = [
+      mcExtraFiles = [
         CategorySource {
           csSource = "extra1.cpp",
           csCategories = [
@@ -259,11 +259,11 @@ tests = [
           osSource = "extra2.cpp"
         }
       ],
-      rmExtraPaths = [
+      mcExtraPaths = [
         "extra1",
         "extra2"
       ],
-      rmMode = CompileIncremental {
+      mcMode = CompileIncremental {
         ciLinkFlags = [
           "-lm",
           "-ldl"
@@ -272,29 +272,29 @@ tests = [
     },
 
     checkWriteFail "empty.+map" $ ModuleConfig {
-      rmRoot = "/home/projects",
-      rmPath = "special",
-      rmExprMap = [("MACRO",Literal (StringLiteral [] "something"))],
-      rmPublicDeps = [],
-      rmPrivateDeps = [],
-      rmStreamlined = [],
-      rmExtraFiles = [],
-      rmExtraPaths = [],
-      rmMode = CompileIncremental {
+      mcRoot = "/home/projects",
+      mcPath = "special",
+      mcExprMap = [("MACRO",Literal (StringLiteral [] "something"))],
+      mcPublicDeps = [],
+      mcPrivateDeps = [],
+      mcStreamlined = [],
+      mcExtraFiles = [],
+      mcExtraPaths = [],
+      mcMode = CompileIncremental {
         ciLinkFlags = []
       }
     },
 
     checkWriteFail "bad category" $ ModuleConfig {
-      rmRoot = "/home/projects",
-      rmPath = "special",
-      rmExprMap = [],
-      rmPublicDeps = [],
-      rmPrivateDeps = [],
-      rmStreamlined = [CategoryName "bad category"],
-      rmExtraFiles = [],
-      rmExtraPaths = [],
-      rmMode = CompileIncremental {
+      mcRoot = "/home/projects",
+      mcPath = "special",
+      mcExprMap = [],
+      mcPublicDeps = [],
+      mcPrivateDeps = [],
+      mcStreamlined = [CategoryName "bad category"],
+      mcExtraFiles = [],
+      mcExtraPaths = [],
+      mcMode = CompileIncremental {
         ciLinkFlags = []
       }
     },
@@ -371,7 +371,7 @@ tests = [
     checkWriteFail "compile mode" $ CreateTemplates,
 
     checkParsesAs ("testfiles" </> "module-config.txt")
-      (\m -> case rmExprMap m of
+      (\m -> case mcExprMap m of
                   [("MY_MACRO",
                     Expression _ (BuiltinCall _
                       (FunctionCall _ BuiltinRequire (Positional [])

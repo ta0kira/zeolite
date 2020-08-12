@@ -93,15 +93,15 @@ isCategoryObjectFile (OtherObjectFile _)        = False
 
 data ModuleConfig =
   ModuleConfig {
-    rmRoot :: FilePath,
-    rmPath :: FilePath,
-    rmExprMap :: [(String,Expression SourcePos)],
-    rmPublicDeps :: [FilePath],
-    rmPrivateDeps :: [FilePath],
-    rmStreamlined :: [CategoryName],
-    rmExtraFiles :: [ExtraSource],
-    rmExtraPaths :: [FilePath],
-    rmMode :: CompileMode
+    mcRoot :: FilePath,
+    mcPath :: FilePath,
+    mcExprMap :: [(String,Expression SourcePos)],
+    mcPublicDeps :: [FilePath],
+    mcPrivateDeps :: [FilePath],
+    mcStreamlined :: [CategoryName],
+    mcExtraFiles :: [ExtraSource],
+    mcExtraPaths :: [FilePath],
+    mcMode :: CompileMode
   }
   deriving (Show)
 

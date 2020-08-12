@@ -80,15 +80,15 @@ runCompiler resolver backend (CompileOptions _ is is2 _ _ _ p (CompileFast c fn 
   absolute <- errorFromIO $ canonicalizePath p
   f2' <- errorFromIO $ canonicalizePath (p </> f2)
   let rm = ModuleConfig {
-    rmRoot = "",
-    rmPath = ".",
-    rmExprMap = [],
-    rmPublicDeps = [],
-    rmPrivateDeps = [],
-    rmStreamlined = [],
-    rmExtraFiles = [],
-    rmExtraPaths = [],
-    rmMode = CompileUnspecified
+    mcRoot = "",
+    mcPath = ".",
+    mcExprMap = [],
+    mcPublicDeps = [],
+    mcPrivateDeps = [],
+    mcStreamlined = [],
+    mcExtraFiles = [],
+    mcExtraPaths = [],
+    mcMode = CompileUnspecified
   }
   em <- getExprMap p rm
   let spec = ModuleSpec {
@@ -120,11 +120,11 @@ runCompiler resolver backend (CompileOptions h _ _ ds _ _ p CompileRecompileRecu
          else do
            d <- errorFromIO $ canonicalizePath (p </> d0)
            rm <- loadRecompile d
-           if rmPath rm `Set.member` da
+           if mcPath rm `Set.member` da
                then return da
                else do
-                 let ds3 = map (\d2 -> d </> d2) (rmPublicDeps rm ++ rmPrivateDeps rm)
-                 da' <- foldM (recursive r) (rmPath rm `Set.insert` da) ds3
+                 let ds3 = map (\d2 -> d </> d2) (mcPublicDeps rm ++ mcPrivateDeps rm)
+                 da' <- foldM (recursive r) (mcPath rm `Set.insert` da) ds3
                  runCompiler resolver backend (CompileOptions h [] [] [d] [] [] p CompileRecompile f)
                  return da'
 
@@ -183,15 +183,15 @@ runCompiler resolver backend (CompileOptions h is is2 ds es ep p m f) = mapM_ co
                       "Recompile with -r or use -f to overwrite the config."
     absolute <- errorFromIO $ canonicalizePath p
     let rm = ModuleConfig {
-      rmRoot = absolute,
-      rmPath = d,
-      rmExprMap = [],
-      rmPublicDeps = as,
-      rmPrivateDeps = as2,
-      rmStreamlined = [],
-      rmExtraFiles = es,
-      rmExtraPaths = ep,
-      rmMode = m
+      mcRoot = absolute,
+      mcPath = d,
+      mcExprMap = [],
+      mcPublicDeps = as,
+      mcPrivateDeps = as2,
+      mcStreamlined = [],
+      mcExtraFiles = es,
+      mcExtraPaths = ep,
+      mcMode = m
     }
     writeRecompile (p </> d) rm
     runCompiler resolver backend (CompileOptions h [] [] [d] [] [] p CompileRecompile DoNotForce)
