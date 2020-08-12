@@ -104,8 +104,8 @@ compileModule resolver backend (ModuleSpec p d em is is2 ss ps xs ts es ep m f) 
                  return $ bpDeps ++ deps1
   time <- errorFromIO getZonedTime
   path <- errorFromIO $ canonicalizePath $ p </> d
-  -- NOTE: The pubic namespace must be determined deterministically from at most
-  -- the compiler hash and the absolute path.
+  -- NOTE: Making the public namespace deterministic allows freshness checks to
+  -- skip checking all inputs/outputs for each dependency.
   let ns0 = StaticNamespace $ publicNamespace  $ show compilerHash ++ path
   let ns1 = StaticNamespace . privateNamespace $ show time ++ show compilerHash ++ path
   let ex = concat $ map getSourceCategories es
