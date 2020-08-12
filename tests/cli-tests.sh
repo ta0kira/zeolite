@@ -88,6 +88,16 @@ test_tests_only2() {
 }
 
 
+test_tests_only3() {
+  local output=$(do_zeolite -p "$ZEOLITE_PATH" -r tests/tests-only3 -f || true)
+  if ! echo "$output" | egrep -q 'NotTestsOnly.+\$TestsOnly\$'; then
+    show_message 'Expected NotTestsOnly definition error from tests/tests-only:'
+    echo "$output" 1>&2
+    return 1
+  fi
+}
+
+
 test_module_only() {
   local output=$(do_zeolite -p "$ZEOLITE_PATH" -R tests/module-only -f || true)
   if ! echo "$output" | egrep -q 'Type1 not found'; then
@@ -280,20 +290,26 @@ run_all() {
   ZEOLITE_PATH=$(do_zeolite --get-path | grep '^/')
   echo 1>&2
   local failed=0
-  local list=()
+  local passed_list=()
+  local failed_list=()
   for t in "$@"; do
     show_message "Testing $t >>>"
     echo 1>&2
     if ! "$t"; then
       failed=1
-      list=("${list[@]}" "$t")
+      failed_list=("${failed_list[@]}" "$t")
+    else
+      passed_list=("${passed_list[@]}" "$t")
     fi
     echo 1>&2
     show_message "<<< Testing $t"
     echo 1>&2
   done
+  for t in "${passed_list[@]}"; do
+    show_message "*** $t PASSED ***"
+  done
   if (($failed)); then
-    for t in "${list[@]}"; do
+    for t in "${failed_list[@]}"; do
       show_message "*** $t FAILED ***"
     done
     return 1
@@ -306,6 +322,7 @@ ALL_TESTS=(
   test_check_defs
   test_tests_only
   test_tests_only2
+  test_tests_only3
   test_module_only
   test_module_only2
   test_module_only3

@@ -32,7 +32,7 @@ module CompilerCxx.Category (
   compileTestMain,
 ) where
 
-import Control.Monad (foldM)
+import Control.Monad (foldM,when)
 import Data.List (intercalate,sortBy)
 import Prelude hiding (pi)
 import qualified Data.Map as Map
@@ -134,6 +134,7 @@ compileLanguageModule (LanguageModule ns0 ns1 ns2 cs0 ps0 ts0 cs1 ps1 ts1 ex em)
                   then cs1 ++ ps1 ++ ts1
                   else cs1 ++ ps1
       checkLocals ds (ex ++ map getCategoryName (cs2 ++ cs))
+      when testing $ checkTests ds (cs1 ++ ps1)
       let dm = mapByName ds
       checkDefined dm [] $ filter isValueConcrete cs2
       tm' <- includeNewTypes tm cs2
@@ -154,14 +155,23 @@ compileLanguageModule (LanguageModule ns0 ns1 ns2 cs0 ps0 ts0 cs1 ps1 ts1 ex em)
       compileConcreteDefinition tm' em ns4 refines d
     mapByName = Map.fromListWith (++) . map (\d -> (dcName d,[d]))
     ca = Set.fromList $ map getCategoryName $ filter isValueConcrete (cs1 ++ ps1 ++ ts1)
-    checkLocals ds cs2 = mergeAllM $ map (checkLocal $ Set.fromList cs2) ds
+    checkLocals ds cs2 = mapErrorsM_ (checkLocal $ Set.fromList cs2) ds
     checkLocal cs2 d =
-      if dcName d `Set.member` cs2
-         then return ()
-         else compileErrorM ("Definition for " ++ show (dcName d) ++
+      when (not $ dcName d `Set.member` cs2) $
+        compileErrorM ("Definition for " ++ show (dcName d) ++
+                       formatFullContextBrace (dcContext d) ++
+                       " does not correspond to a visible category in this module")
+    checkTests ds ps = do
+      let pa = Map.fromList $ map (\c -> (getCategoryName c,getCategoryContext c)) $ filter isValueConcrete ps
+      mapErrorsM_ (checkTest pa) ds
+    checkTest pa d =
+      case dcName d `Map.lookup` pa of
+           Nothing -> return ()
+           Just c  ->
+             compileErrorM ("Category " ++ show (dcName d) ++
                             formatFullContextBrace (dcContext d) ++
-                            " does not correspond to a visible category in this module")
-    checkDefined dm ex2 = mergeAllM . map (checkSingle dm (Set.fromList ex2))
+                            " was not declared as $TestsOnly$" ++ formatFullContextBrace c)
+    checkDefined dm ex2 = mapErrorsM_ (checkSingle dm (Set.fromList ex2))
     checkSingle dm es t =
       case (getCategoryName t `Set.member` es, getCategoryName t `Map.lookup` dm) of
            (False,Just [_]) -> return ()
@@ -178,11 +188,11 @@ compileLanguageModule (LanguageModule ns0 ns1 ns2 cs0 ps0 ts0 cs1 ps1 ts1 ex em)
              ("Category " ++ show (getCategoryName t) ++
               formatFullContextBrace (getCategoryContext t) ++
               " is defined " ++ show (length ds) ++ " times") ??>
-               (mergeAllM $ map (\d -> compileErrorM $ "Defined at " ++ formatFullContext (dcContext d)) ds)
+               (mapErrorsM_ (\d -> compileErrorM $ "Defined at " ++ formatFullContext (dcContext d)) ds)
     checkSupefluous es2
       | null es2 = return ()
       | otherwise = compileErrorM $ "External categories either not concrete or not present: " ++
-                                   intercalate ", " (map show es2)
+                                    intercalate ", " (map show es2)
 
 compileTestMain :: (Show c, CompileErrorM m, MergeableM m) =>
   LanguageModule c -> PrivateSource c -> Expression c -> m CxxOutput
