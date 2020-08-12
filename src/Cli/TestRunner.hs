@@ -131,7 +131,7 @@ runSingleTest b cm p paths deps (f,s) = do
           psCategory = cs',
           psDefine = ds
         }
-      (_,xx) <- compileLanguageModule cm [xs]
+      xx <- compileLanguageModule cm [xs]
       main <- case e of
                    Just e2 -> compileTestMain cm xs e2
                    Nothing -> compileErrorM ""

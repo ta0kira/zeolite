@@ -30,6 +30,7 @@ module CompilerCxx.Naming (
   collectionName,
   functionName,
   headerFilename,
+  headerStreamlined,
   initializerName,
   intersectGetter,
   mainFilename,
@@ -41,6 +42,7 @@ module CompilerCxx.Naming (
   publicNamespaceMacro,
   qualifiedTypeGetter,
   sourceFilename,
+  sourceStreamlined,
   tableName,
   testFilename,
   typeCreator,
@@ -65,6 +67,12 @@ headerFilename n = "Category_" ++ show n ++ ".hpp"
 
 sourceFilename :: CategoryName -> String
 sourceFilename n = "Category_" ++ show n ++ ".cpp"
+
+headerStreamlined :: CategoryName -> String
+headerStreamlined n = "Streamlined_" ++ show n ++ ".hpp"
+
+sourceStreamlined :: CategoryName -> String
+sourceStreamlined n = "Streamlined_" ++ show n ++ ".cpp"
 
 mainFilename :: String
 mainFilename = "main.cpp"

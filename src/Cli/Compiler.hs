@@ -114,22 +114,21 @@ compileModule resolver backend (ModuleSpec p d em is is2 ss ps xs ts es ep m f) 
   let tc = map (getCategoryName . wvData) $ filter (hasCodeVisibility ModuleOnly)       cs2
   let dc = map (getCategoryName . wvData) $ filter (hasCodeVisibility FromDependency) $ filter (not . hasCodeVisibility ModuleOnly) cs
   xa <- mapErrorsM (loadPrivateSource resolver compilerHash p) xs
-  (xx1,xx2) <- compileLanguageModule cm xa
+  fs <- compileLanguageModule cm xa
   mf <- maybeCreateMain cm xa m
-  let fs' = xx1++xx2
   eraseCachedData (p </> d)
   let ps2 = map takeFileName ps
   let xs2 = map takeFileName xs
   let ts2 = map takeFileName ts
-  let paths = map (\ns -> getCachedPath (p </> d) ns "") $ nub $ filter (not . null) $ map show $ map coNamespace fs'
+  let paths = map (\ns -> getCachedPath (p </> d) ns "") $ nub $ filter (not . null) $ map show $ map coNamespace fs
   paths' <- mapM (errorFromIO . canonicalizePath) paths
   s0 <- errorFromIO $ canonicalizePath $ getCachedPath (p </> d) (show ns0) ""
   s1 <- errorFromIO $ canonicalizePath $ getCachedPath (p </> d) (show ns1) ""
   let paths2 = base:s0:s1:(getIncludePathsForDeps (deps1' ++ deps2)) ++ ep' ++ paths'
-  let hxx   = filter (isSuffixOf ".hpp" . coFilename)       fs'
-  let other = filter (not . isSuffixOf ".hpp" . coFilename) fs'
+  let hxx   = filter (isSuffixOf ".hpp" . coFilename)       fs
+  let other = filter (not . isSuffixOf ".hpp" . coFilename) fs
   os1 <- mapErrorsM (writeOutputFile paths2) $ hxx ++ other
-  let files = map (\f2 -> getCachedPath (p </> d) (show $ coNamespace f2) (coFilename f2)) fs' ++
+  let files = map (\f2 -> getCachedPath (p </> d) (show $ coNamespace f2) (coFilename f2)) fs ++
               map (\f2 -> p </> getSourceFile f2) es
   files' <- mapErrorsM checkOwnedFile files
   let ca = Map.fromList $ map (\c -> (getCategoryName c,getCategoryNamespace c)) $ map wvData cs2

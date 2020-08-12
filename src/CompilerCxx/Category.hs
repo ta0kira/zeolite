@@ -94,22 +94,23 @@ data PrivateSource c =
   }
 
 compileLanguageModule :: (Show c, CompileErrorM m, MergeableM m) =>
-  LanguageModule c -> [PrivateSource c] -> m ([CxxOutput],[CxxOutput])
+  LanguageModule c -> [PrivateSource c] -> m [CxxOutput]
 compileLanguageModule (LanguageModule ns0 ns1 ns2 cs0 ps0 ts0 cs1 ps1 ts1 ex ss em) xa = do
   checkSupefluous $ Set.toList $ (Set.fromList ex) `Set.difference` ca
   -- Check public sources up front so that error messages aren't duplicated for
   -- every source file.
-  _ <- tmTesting
-  (hxx1,cxx1) <- fmap mergeGeneratedP $ mapErrorsM (compileSourceP tmPublic  nsPublic)  cs1
-  (hxx2,cxx2) <- fmap mergeGeneratedP $ mapErrorsM (compileSourceP tmPrivate nsPrivate) ps1
-  (hxx3,cxx3) <- fmap mergeGeneratedP $ mapErrorsM (compileSourceP tmTesting nsTesting) ts1
-  (ds,xx) <- fmap mergeGeneratedX $ mapErrorsM compileSourceX xa
+  ta <- tmTesting
+  xx1 <- fmap concat $ mapErrorsM (compileSourceP tmPublic  nsPublic)  cs1
+  xx2 <- fmap concat $ mapErrorsM (compileSourceP tmPrivate nsPrivate) ps1
+  xx3 <- fmap concat $ mapErrorsM (compileSourceP tmTesting nsTesting) ts1
+  (ds,xx4) <- fmap mergeGeneratedX $ mapErrorsM compileSourceX xa
+  xx5 <- fmap concat $ mapErrorsM (compileConcreteStreamlined ta) ss
   -- TODO: This should account for a name clash between a category declared in a
   -- TestsOnly .0rp and one declared in a non-TestOnly .0rx.
   let dm = mapByName ds
   checkDefined dm ex $ filter isValueConcrete (cs1 ++ ps1 ++ ts1)
   checkStreamlined
-  return (hxx1 ++ hxx2 ++ hxx3 ++ cxx1 ++ cxx2 ++ cxx3,xx) where
+  return $ xx1 ++ xx2 ++ xx3 ++ xx4 ++ xx5 where
     tmPublic  = foldM includeNewTypes defaultCategories [cs0,cs1]
     tmPrivate = tmPublic  >>= \tm -> foldM includeNewTypes tm [ps0,ps1]
     tmTesting = tmPrivate >>= \tm -> foldM includeNewTypes tm [ts0,ts1]
@@ -122,9 +123,7 @@ compileLanguageModule (LanguageModule ns0 ns1 ns2 cs0 ps0 ts0 cs1 ps1 ts1 ex ss 
       cxx <- if isValueConcrete c
                 then return []
                 else compileInterfaceDefinition c >>= return . (:[])
-      return (hxx,cxx)
-    mergeGeneratedP ((hxx,cxx):ps) = let (hxx2,cxx2) = mergeGeneratedP ps in (hxx:hxx2,cxx++cxx2)
-    mergeGeneratedP _              = ([],[])
+      return (hxx:cxx)
     compileSourceX (PrivateSource ns testing cs2 ds) = do
       tm <- if testing
                then tmTesting
@@ -307,6 +306,25 @@ compileConcreteTemplate ta n = do
         FailCall [] (Literal (StringLiteral [] $ funcName f ++ " is not implemented"))
       ]
     funcName f = show (sfType f) ++ "." ++ show (sfName f)
+
+compileConcreteStreamlined :: (Show c, CompileErrorM m, MergeableM m) =>
+  CategoryMap c -> CategoryName -> m [CxxOutput]
+compileConcreteStreamlined ta n =  ("In streamlined compilation of " ++ show n) ??> do
+  (_,t) <- getConcreteCategory ta ([],n)
+  -- TODO: Implement this.
+  let hxx = CxxOutput (Just $ getCategoryName t)
+                      (headerStreamlined $ getCategoryName t)
+                      (getCategoryNamespace t)
+                      [getCategoryNamespace t]
+                      (getCategoryMentions t)
+                      []
+  let cxx = CxxOutput (Just $ getCategoryName t)
+                      (sourceStreamlined $ getCategoryName t)
+                      (getCategoryNamespace t)
+                      [getCategoryNamespace t]
+                      (getCategoryMentions t)
+                      []
+  return [hxx,cxx]
 
 compileConcreteDefinition :: (Show c, CompileErrorM m, MergeableM m) =>
   CategoryMap c -> ExprMap c -> [Namespace] -> Maybe [ValueRefine c] ->
