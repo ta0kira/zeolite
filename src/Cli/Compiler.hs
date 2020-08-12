@@ -104,7 +104,9 @@ compileModule resolver backend (ModuleSpec p d em is is2 ss ps xs ts es ep m f) 
                  return $ bpDeps ++ deps1
   time <- errorFromIO getZonedTime
   path <- errorFromIO $ canonicalizePath $ p </> d
-  let ns0 = StaticNamespace $ publicNamespace  $ show time ++ show compilerHash ++ path
+  -- NOTE: The pubic namespace must be determined deterministically from at most
+  -- the compiler hash and the absolute path.
+  let ns0 = StaticNamespace $ publicNamespace  $ show compilerHash ++ path
   let ns1 = StaticNamespace . privateNamespace $ show time ++ show compilerHash ++ path
   let ex = concat $ map getSourceCategories es
   cs <- loadModuleGlobals resolver p (ns0,ns1) ps Nothing deps1' deps2

@@ -219,7 +219,7 @@ loadDepsCommon f h ca pa0 getDeps ps = do
     collect xa@(pa,xs) (p:ps2)
       | p `Set.member` pa = collect xa ps2
       | otherwise = do
-          let continue m ds = collect (p `Set.insert` pa,xs ++ [m]) (ps2 ++ ds)
+          let continue m ds = collect (p `Set.insert` pa,xs ++ [(p,m)]) (ps2 ++ ds)
           case p `Map.lookup` ca of
                Just m2 -> continue m2 []
                Nothing -> do
@@ -228,15 +228,18 @@ loadDepsCommon f h ca pa0 getDeps ps = do
                  let ds = getDeps m2
                  continue m2 ds
     collect xa _ = return xa
-    check m
-      | cmPath m `Map.member` ca = return m
+    check (p,m)
+      | p `Map.member` ca = return m
       | otherwise = do
-          fresh <- checkModuleFreshness (cmPath m) m
-          let sameVersion = checkModuleVersionHash h m
+          p' <- errorFromIO $ canonicalizePath p
+          when (cmPath m /= p') $
+            compileErrorM $ "Module \"" ++ p ++ "\" has an invalid cache path and must be recompiled"
+          fresh <- checkModuleFreshness p m
           when (enforce && not fresh) $
-            compileErrorM $ "Module \"" ++ cmPath m ++ "\" is out of date and should be recompiled"
+            compileErrorM $ "Module \"" ++ p ++ "\" is out of date and should be recompiled"
+          let sameVersion = checkModuleVersionHash h m
           when (enforce && not sameVersion) $
-            compileErrorM $ "Module \"" ++ cmPath m ++ "\" was compiled with a different compiler setup"
+            compileErrorM $ "Module \"" ++ p ++ "\" was compiled with a different compiler setup"
           return m
 
 loadMetadata :: MetadataMap -> FilePath -> CompileInfoIO CompileMetadata
@@ -283,7 +286,8 @@ checkModuleFreshness p (CompileMetadata _ p2 _ _ is is2 _ _ _ _ ps xs ts hxx cxx
   f3 <- mapErrorsM (checkInput time . getCachedPath p2 "") $ hxx ++ cxx
   f4 <- mapErrorsM checkOutput bs
   let fresh = not $ any id $ [rm,e1,e2,e3] ++ f1 ++ f2 ++ f3 ++ f4
-  return fresh where
+  return fresh
+  where
     checkInput time f = do
       exists <- doesFileOrDirExist f
       if not exists
