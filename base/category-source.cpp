@@ -97,27 +97,29 @@ struct Type_Union : public TypeInstance {
 }  // namespace
 
 
-TypeInstance& Merge_Intersect(L<TypeInstance*> params) {
-  static auto& cache = *new std::map<L<TypeInstance*>,R<Type_Intersect>>();
+S<TypeInstance> Merge_Intersect(L<TypeInstance*> params) {
+  static auto& cache = *new std::map<L<TypeInstance*>,W<Type_Intersect>>();
   auto& cached = cache[params];
-  if (!cached) { cached = R_get(new Type_Intersect(params)); }
-  return *cached;
+  S<Type_Intersect> type = cached.lock();
+  if (!type) { cached = type = S_get(new Type_Intersect(params)); }
+  return type;
 }
 
-TypeInstance& Merge_Union(L<TypeInstance*> params) {
-  static auto& cache = *new std::map<L<TypeInstance*>,R<Type_Union>>();
+S<TypeInstance> Merge_Union(L<TypeInstance*> params) {
+  static auto& cache = *new std::map<L<TypeInstance*>,W<Type_Union>>();
   auto& cached = cache[params];
-  if (!cached) { cached = R_get(new Type_Union(params)); }
-  return *cached;
+  S<Type_Union> type = cached.lock();
+  if (!type) { cached = type = S_get(new Type_Union(params)); }
+  return type;
 }
 
-TypeInstance& GetMerged_Any() {
-  static auto& instance = Merge_Intersect(L_get<TypeInstance*>());
+const S<TypeInstance>& GetMerged_Any() {
+  static const auto instance = Merge_Intersect(L_get<TypeInstance*>());
   return instance;
 }
 
-TypeInstance& GetMerged_All() {
-  static auto& instance = Merge_Union(L_get<TypeInstance*>());
+const S<TypeInstance>& GetMerged_All() {
+  static const auto instance = Merge_Union(L_get<TypeInstance*>());
   return instance;
 }
 
@@ -131,14 +133,13 @@ ReturnTuple TypeCategory::Dispatch(const CategoryFunction& label,
   __builtin_unreachable();
 }
 
-ReturnTuple TypeInstance::Dispatch(const TypeFunction& label,
+ReturnTuple TypeInstance::Dispatch(const S<TypeInstance>& self, const TypeFunction& label,
                                    const ParamTuple& params, const ValueTuple& args) {
   FAIL() << CategoryName() << " does not implement " << label;
   __builtin_unreachable();
 }
 
-ReturnTuple TypeValue::Dispatch(const S<TypeValue>& self,
-                                const ValueFunction& label,
+ReturnTuple TypeValue::Dispatch(const S<TypeValue>& self, const ValueFunction& label,
                                 const ParamTuple& params, const ValueTuple& args) {
   FAIL() << CategoryName() << " does not implement " << label;
   __builtin_unreachable();

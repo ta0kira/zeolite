@@ -121,7 +121,7 @@ class TypeValue;
 
 template<int N, class...Ts>
 struct Params {
-  using Type = typename Params<N-1, TypeInstance*, Ts...>::Type;
+  using Type = typename Params<N-1, const S<TypeInstance>&, Ts...>::Type;
 };
 
 template<class...Ts>
@@ -189,17 +189,17 @@ class ParamTuple {
   ParamTuple(ParamTuple&& other) : params_(std::move(other.params_)) {}
 
   template<class...Ts>
-  explicit ParamTuple(Ts*... args) : params_{args...} {}
+  explicit ParamTuple(const Ts&... args) : params_{&args...} {}
 
   int Size() const;
-  TypeInstance* At(int pos) const;
+  const S<TypeInstance>& At(int pos) const;
 
  private:
   ParamTuple(const ParamTuple&) = delete;
   ParamTuple& operator =(const ParamTuple&) = delete;
   void* operator new(std::size_t size) = delete;
 
-  std::vector<TypeInstance*> params_;
+  std::vector<const S<TypeInstance>*> params_;
 };
 
 #endif  // TYPES_HPP_

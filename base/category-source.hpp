@@ -43,6 +43,14 @@ S<TypeValue> Box_Char(PrimChar value);
 S<TypeValue> Box_Int(PrimInt value);
 S<TypeValue> Box_Float(PrimFloat value);
 
+S<TypeInstance> Merge_Intersect(L<TypeInstance*> params);
+S<TypeInstance> Merge_Union(L<TypeInstance*> params);
+
+const S<TypeInstance>& GetMerged_Any();
+const S<TypeInstance>& GetMerged_All();
+
+extern const S<TypeValue>& Var_empty;
+
 
 class TypeCategory {
  public:
@@ -65,9 +73,13 @@ class TypeCategory {
 
 class TypeInstance {
  public:
-  inline ReturnTuple Call(const TypeFunction& label,
-                          ParamTuple params, const ValueTuple& args) {
-    return Dispatch(label, params, args);
+  inline static ReturnTuple Call(const S<TypeInstance>& target,
+                                 const TypeFunction& label,
+                                 ParamTuple params, const ValueTuple& args) {
+    if (target == nullptr) {
+      FAIL() << "Function called on null value";
+    }
+    return target->Dispatch(target, label, params, args);
   }
 
   virtual std::string CategoryName() const = 0;
@@ -86,7 +98,7 @@ class TypeInstance {
   }
 
   virtual bool TypeArgsForParent(
-    const TypeCategory& category, std::vector<const TypeInstance*>& args) const
+    const TypeCategory& category, std::vector<S<const TypeInstance>>& args) const
   { return false; }
 
   ALWAYS_PERMANENT(TypeInstance)
@@ -95,7 +107,7 @@ class TypeInstance {
  protected:
   TypeInstance() = default;
 
-  virtual ReturnTuple Dispatch(const TypeFunction& label,
+  virtual ReturnTuple Dispatch(const S<TypeInstance>& self, const TypeFunction& label,
                                const ParamTuple& params, const ValueTuple& args);
 
   virtual bool CanConvertFrom(const TypeInstance& from) const
@@ -106,7 +118,7 @@ class TypeInstance {
   template<class...Ts>
   static void TypeNameFrom(std::ostream& output, const TypeCategory& category,
                            const Ts&... params) {
-    std::vector<const TypeInstance*> params2{&params...};
+    std::vector<const TypeInstance*> params2{params.get()...};
     output << category.CategoryName();
     if (!params2.empty()) {
       output << "<";
@@ -169,12 +181,11 @@ class TypeValue {
 
   virtual bool Present() const;
 
-  virtual ReturnTuple Dispatch(const S<TypeValue>& self,
-                               const ValueFunction& label,
+  virtual ReturnTuple Dispatch(const S<TypeValue>& self, const ValueFunction& label,
                                const ParamTuple& params, const ValueTuple& args);
 };
 
 template<int P, class T>
-using InstanceMap = std::map<typename Params<P>::Type, R<T>>;
+using WeakInstanceMap = std::map<typename Params<P>::Type, W<T>>;
 
 #endif  // CATEGORY_SOURCE_HPP_

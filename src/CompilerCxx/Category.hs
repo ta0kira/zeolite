@@ -271,7 +271,7 @@ compileInterfaceDefinition t = do
       let argsPassed = "Params<" ++ show (length ps) ++ ">::Type params"
       let allArgs = intercalate ", " [argParent,argsPassed]
       let initParent = "parent(p)"
-      let initPassed = map (\(i,p) -> paramName p ++ "(*std::get<" ++ show i ++ ">(params))") $ zip ([0..] :: [Int]) ps
+      let initPassed = map (\(i,p) -> paramName p ++ "(std::get<" ++ show i ++ ">(params))") $ zip ([0..] :: [Int]) ps
       let allInit = intercalate ", " $ initParent:initPassed
       return $ onlyCode $ typeName (getCategoryName t) ++ "(" ++ allArgs ++ ") : " ++ allInit ++ " {}"
 
@@ -371,11 +371,11 @@ compileConcreteDefinition ta em ns rs dd@(DefinedCategory c n pi _ _ fi ms _ fs)
       return $ onlyCode $ "struct " ++ valueName n ++ " : public " ++ valueBase ++ " {",
       fmap indentCompiled $ valueConstructor vm,
       fmap indentCompiled $ valueDispatch allFuncs,
-      return $ indentCompiled $ defineCategoryName2 n,
+      return $ indentCompiled $ defineCategoryName ValueScope n,
       return $ indentCompiled $ mergeAll $ map fst vf,
       fmap indentCompiled $ mergeAllM $ map (createMember r allFilters) vm,
       fmap indentCompiled $ createParams,
-      return $ indentCompiled $ onlyCode $ typeName n ++ "& parent;",
+      return $ indentCompiled $ onlyCode $ "const S<" ++ typeName n ++ "> parent;",
       return $ indentCompiled $ onlyCodes $ traceCreation (psProcedures vp),
       return $ onlyCode "};"
     ]
@@ -418,7 +418,7 @@ compileConcreteDefinition ta em ns rs dd@(DefinedCategory c n pi _ _ fi ms _ fs)
       let paramsPassed = "Params<" ++ show (length ps2) ++ ">::Type params"
       let allArgs = intercalate ", " [argParent,paramsPassed]
       let initParent = "parent(p)"
-      let initPassed = map (\(i,p) -> paramName p ++ "(*std::get<" ++ show i ++ ">(params))") $ zip ([0..] :: [Int]) ps2
+      let initPassed = map (\(i,p) -> paramName p ++ "(std::get<" ++ show i ++ ">(params))") $ zip ([0..] :: [Int]) ps2
       let allInit = intercalate ", " $ initParent:initPassed
       ctx <- getContextForInit ta em t dd TypeScope
       initMembers <- runDataCompiler (sequence $ map compileRegularInit ms2) ctx
@@ -430,7 +430,7 @@ compileConcreteDefinition ta em ns rs dd@(DefinedCategory c n pi _ _ fi ms _ fs)
           return $ onlyCode "}"
         ]
     valueConstructor ms2 = do
-      let argParent = typeName n ++ "& p"
+      let argParent = "S<" ++ typeName n ++ "> p"
       let paramsPassed = "const ParamTuple& params"
       let argsPassed = "const ValueTuple& args"
       let allArgs = intercalate ", " [argParent,paramsPassed,argsPassed]
@@ -458,6 +458,7 @@ compileConcreteDefinition ta em ns rs dd@(DefinedCategory c n pi _ _ fi ms _ fs)
     typeDispatch fs2 =
       return $ onlyCodes $ [
           "ReturnTuple Dispatch(" ++
+          "const S<TypeInstance>& self, " ++
           "const TypeFunction& label, " ++
           "const ParamTuple& params, " ++
           "const ValueTuple& args) final {"
@@ -577,7 +578,7 @@ createFunctionDispatch n s fs = [typedef] ++ concat (map table $ byCategory) ++
     | s == CategoryScope = "  using CallType = ReturnTuple(" ++ categoryName n ++
                            "::*)(const ParamTuple&, const ValueTuple&);"
     | s == TypeScope     = "  using CallType = ReturnTuple(" ++ typeName n ++
-                           "::*)(const ParamTuple&, const ValueTuple&);"
+                           "::*)(const S<TypeInstance>&, const ParamTuple&, const ValueTuple&);"
     | s == ValueScope    = "  using CallType = ReturnTuple(" ++ valueName n ++
                            "::*)(const S<TypeValue>&, const ParamTuple&, const ValueTuple&);"
     | otherwise = undefined
@@ -600,12 +601,12 @@ createFunctionDispatch n s fs = [typedef] ++ concat (map table $ byCategory) ++
     ]
   args
     | s == CategoryScope = "params, args"
-    | s == TypeScope     = "params, args"
+    | s == TypeScope     = "self, params, args"
     | s == ValueScope    = "self, params, args"
     | otherwise = undefined
   fallback
     | s == CategoryScope = "  return TypeCategory::Dispatch(label, params, args);"
-    | s == TypeScope     = "  return TypeInstance::Dispatch(label, params, args);"
+    | s == TypeScope     = "  return TypeInstance::Dispatch(self, label, params, args);"
     | s == ValueScope    = "  return TypeValue::Dispatch(self, label, params, args);"
     | otherwise = undefined
 
@@ -614,7 +615,7 @@ commonDefineCategory :: MergeableM m =>
 commonDefineCategory t extra = do
   mergeAllM $ [
       return $ onlyCode $ "struct " ++ categoryName name ++ " : public " ++ categoryBase ++ " {",
-      return $ indentCompiled $ defineCategoryName name,
+      return $ indentCompiled $ defineCategoryName CategoryScope name,
       return $ indentCompiled extra,
       return $ onlyCode "};"
     ]
@@ -630,7 +631,7 @@ commonDefineType t rs extra = do
   mergeAllM [
       return $ CompiledData depends [],
       return $ onlyCode $ "struct " ++ typeName (getCategoryName t) ++ " : public " ++ typeBase ++ " {",
-      return $ indentCompiled $ defineCategoryName2 name,
+      return $ indentCompiled $ defineCategoryName TypeScope name,
       return $ indentCompiled $ defineTypeName name (map vpParam $ getCategoryParams t),
       return $ indentCompiled $ onlyCode $ categoryName (getCategoryName t) ++ "& parent;",
       return $ indentCompiled createParams,
@@ -649,7 +650,7 @@ commonDefineType t rs extra = do
       | otherwise = onlyCodes $ [
           "bool CanConvertFrom(const TypeInstance& from) const final {",
           -- TODO: This should be a typedef.
-          "  std::vector<const TypeInstance*> args;",
+          "  std::vector<S<const TypeInstance>> args;",
           "  if (!from.TypeArgsForParent(parent, args)) return false;",
           -- TODO: Create a helper function for this error.
           "  if(args.size() != " ++ show (length params) ++ ") {",
@@ -658,34 +659,29 @@ commonDefineType t rs extra = do
         ] ++ checks ++ ["  return true;","}"]
     params = map (\p -> (vpParam p,vpVariance p)) $ getCategoryParams t
     checks = concat $ map singleCheck $ zip ([0..] :: [Int]) params
-    singleCheck (i,(p,Covariant)) = [
-        "  if (!TypeInstance::CanConvert(*args[" ++ show i ++ "], " ++ paramName p ++ ")) return false;"
-      ]
-    singleCheck (i,(p,Contravariant)) = [
-        "  if (!TypeInstance::CanConvert(" ++ paramName p ++ ", *args[" ++ show i ++ "])) return false;"
-      ]
-    singleCheck (i,(p,Invariant)) = [
-        "  if (!TypeInstance::CanConvert(*args[" ++ show i ++ "], " ++ paramName p ++ ")) return false;",
-        "  if (!TypeInstance::CanConvert(" ++ paramName p ++ ", *args[" ++ show i ++ "])) return false;"
-      ]
+    singleCheck (i,(p,Covariant))     = [checkCov i p]
+    singleCheck (i,(p,Contravariant)) = [checkCon i p]
+    singleCheck (i,(p,Invariant))     = [checkCov i p,checkCon i p]
+    checkCov i p = "  if (!TypeInstance::CanConvert(*args[" ++ show i ++ "], *" ++ paramName p ++ ")) return false;"
+    checkCon i p = "  if (!TypeInstance::CanConvert(*" ++ paramName p ++ ", *args[" ++ show i ++ "])) return false;"
     typeArgsForParent rs2
       | isInstanceInterface t = emptyCode
       | otherwise = onlyCodes $ [
           "bool TypeArgsForParent(" ++
           "const TypeCategory& category, " ++
-          "std::vector<const TypeInstance*>& args) const final {"
+          "std::vector<S<const TypeInstance>>& args) const final {"
         ] ++ allCats rs2 ++ ["  return false;","}"]
     myType = (getCategoryName t,map (SingleType . JustParamName False . fst) params)
     refines rs2 = map (\r -> (tiName r,pValues $ tiParams r)) $ map vrType rs2
     allCats rs2 = concat $ map singleCat (myType:refines rs2)
     singleCat (t2,ps) = [
         "  if (&category == &" ++ categoryGetter t2 ++ "()) {",
-        "    args = std::vector<const TypeInstance*>{" ++ expanded ++ "};",
+        "    args = std::vector<S<const TypeInstance>>{" ++ expanded ++ "};",
         "    return true;",
         "  }"
       ]
       where
-        expanded = intercalate "," $ map ('&':) $ map expandLocalType ps
+        expanded = intercalate ", " $ map expandLocalType ps
 
 -- Similar to Procedure.expandGeneralInstance but doesn't account for scope.
 expandLocalType :: GeneralInstance -> String
@@ -698,17 +694,16 @@ expandLocalType (TypeMerge m ps) =
     getter MergeUnion     = unionGetter
     getter MergeIntersect = intersectGetter
 expandLocalType (SingleType (JustTypeInstance (TypeInstance t ps))) =
-  typeGetter t ++ "(T_get(" ++ intercalate "," (map ("&" ++) ps') ++ "))"
+  typeGetter t ++ "(T_get(" ++ intercalate ", " ps' ++ "))"
   where
     ps' = map expandLocalType $ pValues ps
 expandLocalType (SingleType (JustParamName _ p)) = paramName p
 expandLocalType _ = undefined  -- The instance is an InferredType.
 
-defineCategoryName :: CategoryName -> CompiledData [String]
-defineCategoryName t = onlyCode $ "std::string CategoryName() const final { return \"" ++ show t ++ "\"; }"
-
-defineCategoryName2 :: CategoryName -> CompiledData [String]
-defineCategoryName2 _ = onlyCode $ "std::string CategoryName() const final { return parent.CategoryName(); }"
+defineCategoryName :: SymbolScope -> CategoryName -> CompiledData [String]
+defineCategoryName TypeScope     _ = onlyCode $ "std::string CategoryName() const final { return parent.CategoryName(); }"
+defineCategoryName ValueScope    _ = onlyCode $ "std::string CategoryName() const final { return parent->CategoryName(); }"
+defineCategoryName _             t = onlyCode $ "std::string CategoryName() const final { return \"" ++ show t ++ "\"; }"
 
 defineTypeName :: CategoryName -> [ParamName] -> CompiledData [String]
 defineTypeName _ ps =
@@ -729,12 +724,12 @@ defineGetCatetory t = [
   ]
 
 declareGetType :: AnyCategory c -> [String]
-declareGetType t = [typeBase ++ "& " ++ typeGetter (getCategoryName t) ++ "(Params<" ++
+declareGetType t = ["S<" ++ typeBase ++ "> " ++ typeGetter (getCategoryName t) ++ "(Params<" ++
             show (length $getCategoryParams t) ++ ">::Type params);"]
 
 defineGetType :: AnyCategory c -> [String]
 defineGetType t = [
-    typeBase ++ "& " ++ typeGetter (getCategoryName t) ++ "(Params<" ++
+    "S<" ++ typeBase ++ "> " ++ typeGetter (getCategoryName t) ++ "(Params<" ++
             show (length $ getCategoryParams t) ++ ">::Type params) {",
     "  return " ++ typeCreator (getCategoryName t) ++ "(params);",
     "}"
@@ -753,7 +748,7 @@ defineInternalCategory t = [
 declareInternalType :: Monad m =>
   CategoryName -> Int -> m (CompiledData [String])
 declareInternalType t n =
-  return $ onlyCode $ typeName t ++ "& " ++ typeCreator t ++
+  return $ onlyCode $ "S<" ++ typeName t ++ "> " ++ typeCreator t ++
                       "(Params<" ++ show n ++ ">::Type params);"
 
 defineInternalType :: Monad m =>
@@ -761,20 +756,21 @@ defineInternalType :: Monad m =>
 defineInternalType t n
   | n < 1 =
       return $ onlyCodes [
-        typeName t ++ "& " ++ typeCreator t ++ "(Params<" ++ show n ++ ">::Type params) {",
-        "  static auto& cached = *new " ++ typeName t ++ "(" ++ categoryCreator t ++ "(), Params<" ++ show n ++ ">::Type());",
+        "S<" ++ typeName t ++ "> " ++ typeCreator t ++ "(Params<" ++ show n ++ ">::Type params) {",
+        "  static const auto cached = S_get(new " ++ typeName t ++ "(" ++ categoryCreator t ++ "(), Params<" ++ show n ++ ">::Type()));",
         "  return cached;",
         "}"
       ]
   | otherwise =
       return $ onlyCodes [
-        typeName t ++ "& " ++ typeCreator t ++ "(Params<" ++ show n ++ ">::Type params) {",
-        "  static auto& cache = *new InstanceMap<" ++ show n ++ "," ++ typeName t ++ ">();",
+        "S<" ++ typeName t ++ "> " ++ typeCreator t ++ "(Params<" ++ show n ++ ">::Type params) {",
+        "  static auto& cache = *new WeakInstanceMap<" ++ show n ++ ", " ++ typeName t ++ ">();",
         "  static auto& cache_mutex = *new std::mutex;",
         "  std::lock_guard<std::mutex> lock(cache_mutex);",
         "  auto& cached = cache[params];",
-        "  if (!cached) { cached = R_get(new " ++ typeName t ++ "(" ++ categoryCreator t ++ "(), params)); }",
-        "  return *cached;",
+        "  S<" ++ typeName t ++ "> type = cached.lock();",
+        "  if (!type) { type = (cached = S_get(new " ++ typeName t ++ "(" ++ categoryCreator t ++ "(), params))).lock(); }",
+        "  return type;",
         "}"
       ]
 
@@ -783,7 +779,7 @@ declareInternalValue :: Monad m =>
 declareInternalValue t _ _ =
   return $ onlyCodes [
       "S<TypeValue> " ++ valueCreator t ++
-      "(" ++ typeName t ++ "& parent, " ++
+      "(S<" ++ typeName t ++ "> parent, " ++
       "const ParamTuple& params, const ValueTuple& args);"
     ]
 
@@ -791,7 +787,7 @@ defineInternalValue :: Monad m =>
   CategoryName -> Int -> Int -> m (CompiledData [String])
 defineInternalValue t _ _ =
   return $ onlyCodes [
-      "S<TypeValue> " ++ valueCreator t ++ "(" ++ typeName t ++ "& parent, " ++
+      "S<TypeValue> " ++ valueCreator t ++ "(S<" ++ typeName t ++ "> parent, " ++
       "const ParamTuple& params, const ValueTuple& args) {",
       "  return S_get(new " ++ valueName t ++ "(parent, params, args));",
       "}"

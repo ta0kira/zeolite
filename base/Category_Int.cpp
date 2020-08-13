@@ -41,7 +41,6 @@ const void* const Functions_Int = &collection_Int;
 namespace {
 class Category_Int;
 class Type_Int;
-Type_Int& CreateType_Int(Params<0>::Type params);
 class Value_Int;
 S<TypeValue> CreateValue(Type_Int& parent, const ParamTuple& params, const ValueTuple& args);
 struct Category_Int : public TypeCategory {
@@ -67,36 +66,36 @@ struct Type_Int : public TypeInstance {
   }
   Category_Int& parent;
   bool CanConvertFrom(const TypeInstance& from) const final {
-    std::vector<const TypeInstance*> args;
+    std::vector<S<const TypeInstance>> args;
     if (!from.TypeArgsForParent(parent, args)) return false;
     if(args.size() != 0) {
       FAIL() << "Wrong number of args (" << args.size() << ")  for " << CategoryName();
     }
     return true;
   }
-  bool TypeArgsForParent(const TypeCategory& category, std::vector<const TypeInstance*>& args) const final {
+  bool TypeArgsForParent(const TypeCategory& category, std::vector<S<const TypeInstance>>& args) const final {
     if (&category == &GetCategory_Int()) {
-      args = std::vector<const TypeInstance*>{};
+      args = std::vector<S<const TypeInstance>>{};
       return true;
     }
     if (&category == &GetCategory_AsBool()) {
-      args = std::vector<const TypeInstance*>{};
+      args = std::vector<S<const TypeInstance>>{};
       return true;
     }
     if (&category == &GetCategory_AsChar()) {
-      args = std::vector<const TypeInstance*>{};
+      args = std::vector<S<const TypeInstance>>{};
       return true;
     }
     if (&category == &GetCategory_AsInt()) {
-      args = std::vector<const TypeInstance*>{};
+      args = std::vector<S<const TypeInstance>>{};
       return true;
     }
     if (&category == &GetCategory_AsFloat()) {
-      args = std::vector<const TypeInstance*>{};
+      args = std::vector<S<const TypeInstance>>{};
       return true;
     }
     if (&category == &GetCategory_Formatted()) {
-      args = std::vector<const TypeInstance*>{};
+      args = std::vector<S<const TypeInstance>>{};
       return true;
     }
     return false;
@@ -106,7 +105,8 @@ struct Type_Int : public TypeInstance {
     CycleCheck<Type_Int> marker(*this);
     TRACE_FUNCTION("Int (init @type)")
   }
-  ReturnTuple Dispatch(const TypeFunction& label, const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Dispatch(const S<TypeInstance>& self, const TypeFunction& label,
+                       const ParamTuple& params, const ValueTuple& args) final {
     using CallType = ReturnTuple(Type_Int::*)(const ParamTuple&, const ValueTuple&);
     static const CallType Table_Equals[] = {
       &Type_Int::Call_equals,
@@ -126,17 +126,17 @@ struct Type_Int : public TypeInstance {
       }
       return (this->*Table_LessThan[label.function_num])(params, args);
     }
-    return TypeInstance::Dispatch(label, params, args);
+    return TypeInstance::Dispatch(self, label, params, args);
   }
   ReturnTuple Call_equals(const ParamTuple& params, const ValueTuple& args);
   ReturnTuple Call_lessThan(const ParamTuple& params, const ValueTuple& args);
 };
-Type_Int& CreateType_Int(Params<0>::Type params) {
-  static auto& cached = *new Type_Int(CreateCategory_Int(), Params<0>::Type());
+S<Type_Int> CreateType_Int(Params<0>::Type params) {
+  static const auto cached = S_get(new Type_Int(CreateCategory_Int(), Params<0>::Type()));
   return cached;
 }
 struct Value_Int : public TypeValue {
-  Value_Int(Type_Int& p, PrimInt value) : parent(p), value_(value) {}
+  Value_Int(S<Type_Int> p, PrimInt value) : parent(p), value_(value) {}
   ReturnTuple Dispatch(const S<TypeValue>& self, const ValueFunction& label, const ParamTuple& params,const ValueTuple& args) final {
     using CallType = ReturnTuple(Value_Int::*)(const S<TypeValue>&, const ParamTuple&, const ValueTuple&);
     static const CallType Table_AsBool[] = {
@@ -186,14 +186,14 @@ struct Value_Int : public TypeValue {
     }
     return TypeValue::Dispatch(self, label, params, args);
   }
-  std::string CategoryName() const final { return parent.CategoryName(); }
+  std::string CategoryName() const final { return parent->CategoryName(); }
   PrimInt AsInt() const final { return value_; }
   ReturnTuple Call_asBool(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args);
   ReturnTuple Call_asChar(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args);
   ReturnTuple Call_asFloat(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args);
   ReturnTuple Call_asInt(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args);
   ReturnTuple Call_formatted(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args);
-  Type_Int& parent;
+  const S<Type_Int> parent;
   const PrimInt value_;
 };
 ReturnTuple Type_Int::Call_equals(const ParamTuple& params, const ValueTuple& args) {
@@ -234,7 +234,7 @@ ReturnTuple Value_Int::Call_formatted(const S<TypeValue>& Var_self, const ParamT
 TypeCategory& GetCategory_Int() {
   return CreateCategory_Int();
 }
-TypeInstance& GetType_Int(Params<0>::Type params) {
+S<TypeInstance> GetType_Int(Params<0>::Type params) {
   return CreateType_Int(params);
 }
 #ifdef ZEOLITE_PUBLIC_NAMESPACE

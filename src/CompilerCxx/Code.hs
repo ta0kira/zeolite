@@ -313,7 +313,7 @@ valueBase :: String
 valueBase = "TypeValue"
 
 paramType :: String
-paramType = typeBase ++ "&"
+paramType = "const S<" ++ typeBase ++ ">"
 
 unescapedChars :: Set.Set Char
 unescapedChars = Set.fromList $ ['a'..'z'] ++ ['A'..'Z'] ++ ['0'..'9'] ++ [' ','.']

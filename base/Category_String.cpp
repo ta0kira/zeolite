@@ -43,7 +43,6 @@ const TypeFunction& Function_String_builder = (*new TypeFunction{ 0, 0, 1, "Stri
 namespace {
 class Category_String;
 class Type_String;
-Type_String& CreateType_String(Params<0>::Type params);
 class Value_String;
 S<TypeValue> CreateValue(Type_String& parent, const ParamTuple& params, const ValueTuple& args);
 struct Category_String : public TypeCategory {
@@ -69,28 +68,28 @@ struct Type_String : public TypeInstance {
   }
   Category_String& parent;
   bool CanConvertFrom(const TypeInstance& from) const final {
-    std::vector<const TypeInstance*> args;
+    std::vector<S<const TypeInstance>> args;
     if (!from.TypeArgsForParent(parent, args)) return false;
     if(args.size() != 0) {
       FAIL() << "Wrong number of args (" << args.size() << ")  for " << CategoryName();
     }
     return true;
   }
-  bool TypeArgsForParent(const TypeCategory& category, std::vector<const TypeInstance*>& args) const final {
+  bool TypeArgsForParent(const TypeCategory& category, std::vector<S<const TypeInstance>>& args) const final {
     if (&category == &GetCategory_String()) {
-      args = std::vector<const TypeInstance*>{};
+      args = std::vector<S<const TypeInstance>>{};
       return true;
     }
     if (&category == &GetCategory_AsBool()) {
-      args = std::vector<const TypeInstance*>{};
+      args = std::vector<S<const TypeInstance>>{};
       return true;
     }
     if (&category == &GetCategory_Formatted()) {
-      args = std::vector<const TypeInstance*>{};
+      args = std::vector<S<const TypeInstance>>{};
       return true;
     }
     if (&category == &GetCategory_ReadPosition()) {
-      args = std::vector<const TypeInstance*>{&GetType_Char(T_get())};
+      args = std::vector<S<const TypeInstance>>{GetType_Char(T_get())};
       return true;
     }
     return false;
@@ -100,7 +99,8 @@ struct Type_String : public TypeInstance {
     CycleCheck<Type_String> marker(*this);
     TRACE_FUNCTION("String (init @type)")
   }
-  ReturnTuple Dispatch(const TypeFunction& label, const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Dispatch(const S<TypeInstance>& self, const TypeFunction& label,
+                       const ParamTuple& params, const ValueTuple& args) final {
     using CallType = ReturnTuple(Type_String::*)(const ParamTuple&, const ValueTuple&);
     static const CallType Table_Equals[] = {
       &Type_String::Call_equals,
@@ -129,18 +129,18 @@ struct Type_String : public TypeInstance {
       }
       return (this->*Table_String[label.function_num])(params, args);
     }
-    return TypeInstance::Dispatch(label, params, args);
+    return TypeInstance::Dispatch(self, label, params, args);
   }
   ReturnTuple Call_builder(const ParamTuple& params, const ValueTuple& args);
   ReturnTuple Call_equals(const ParamTuple& params, const ValueTuple& args);
   ReturnTuple Call_lessThan(const ParamTuple& params, const ValueTuple& args);
 };
-Type_String& CreateType_String(Params<0>::Type params) {
-  static auto& cached = *new Type_String(CreateCategory_String(), Params<0>::Type());
+S<Type_String> CreateType_String(Params<0>::Type params) {
+  static const auto cached = S_get(new Type_String(CreateCategory_String(), Params<0>::Type()));
   return cached;
 }
 struct Value_String : public TypeValue {
-  Value_String(Type_String& p, const PrimString& value) : parent(p), value_(value) {}
+  Value_String(S<Type_String> p, const PrimString& value) : parent(p), value_(value) {}
   ReturnTuple Dispatch(const S<TypeValue>& self, const ValueFunction& label, const ParamTuple& params,const ValueTuple& args) final {
     using CallType = ReturnTuple(Value_String::*)(const S<TypeValue>&, const ParamTuple&, const ValueTuple&);
     static const CallType Table_AsBool[] = {
@@ -183,14 +183,14 @@ struct Value_String : public TypeValue {
     }
     return TypeValue::Dispatch(self, label, params, args);
   }
-  std::string CategoryName() const final { return parent.CategoryName(); }
+  std::string CategoryName() const final { return parent->CategoryName(); }
   const PrimString& AsString() const final { return value_; }
   ReturnTuple Call_asBool(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args);
   ReturnTuple Call_formatted(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args);
   ReturnTuple Call_readPosition(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args);
   ReturnTuple Call_readSize(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args);
   ReturnTuple Call_subSequence(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args);
-  Type_String& parent;
+  const S<Type_String> parent;
   const PrimString value_;
 };
 
@@ -278,7 +278,7 @@ ReturnTuple Value_String::Call_subSequence(const S<TypeValue>& Var_self, const P
 TypeCategory& GetCategory_String() {
   return CreateCategory_String();
 }
-TypeInstance& GetType_String(Params<0>::Type params) {
+S<TypeInstance> GetType_String(Params<0>::Type params) {
   return CreateType_String(params);
 }
 #ifdef ZEOLITE_PUBLIC_NAMESPACE

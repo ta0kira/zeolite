@@ -40,7 +40,6 @@ const void* const Functions_Float = &collection_Float;
 namespace {
 class Category_Float;
 class Type_Float;
-Type_Float& CreateType_Float(Params<0>::Type params);
 class Value_Float;
 S<TypeValue> CreateValue(Type_Float& parent, const ParamTuple& params, const ValueTuple& args);
 struct Category_Float : public TypeCategory {
@@ -66,32 +65,32 @@ struct Type_Float : public TypeInstance {
   }
   Category_Float& parent;
   bool CanConvertFrom(const TypeInstance& from) const final {
-    std::vector<const TypeInstance*> args;
+    std::vector<S<const TypeInstance>> args;
     if (!from.TypeArgsForParent(parent, args)) return false;
     if(args.size() != 0) {
       FAIL() << "Wrong number of args (" << args.size() << ")  for " << CategoryName();
     }
     return true;
   }
-  bool TypeArgsForParent(const TypeCategory& category, std::vector<const TypeInstance*>& args) const final {
+  bool TypeArgsForParent(const TypeCategory& category, std::vector<S<const TypeInstance>>& args) const final {
     if (&category == &GetCategory_Float()) {
-      args = std::vector<const TypeInstance*>{};
+      args = std::vector<S<const TypeInstance>>{};
       return true;
     }
     if (&category == &GetCategory_AsBool()) {
-      args = std::vector<const TypeInstance*>{};
+      args = std::vector<S<const TypeInstance>>{};
       return true;
     }
     if (&category == &GetCategory_AsInt()) {
-      args = std::vector<const TypeInstance*>{};
+      args = std::vector<S<const TypeInstance>>{};
       return true;
     }
     if (&category == &GetCategory_AsFloat()) {
-      args = std::vector<const TypeInstance*>{};
+      args = std::vector<S<const TypeInstance>>{};
       return true;
     }
     if (&category == &GetCategory_Formatted()) {
-      args = std::vector<const TypeInstance*>{};
+      args = std::vector<S<const TypeInstance>>{};
       return true;
     }
     return false;
@@ -101,7 +100,8 @@ struct Type_Float : public TypeInstance {
     CycleCheck<Type_Float> marker(*this);
     TRACE_FUNCTION("Float (init @type)")
   }
-  ReturnTuple Dispatch(const TypeFunction& label, const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Dispatch(const S<TypeInstance>& self, const TypeFunction& label,
+                       const ParamTuple& params, const ValueTuple& args) final {
     using CallType = ReturnTuple(Type_Float::*)(const ParamTuple&, const ValueTuple&);
     static const CallType Table_Equals[] = {
       &Type_Float::Call_equals,
@@ -121,17 +121,17 @@ struct Type_Float : public TypeInstance {
       }
       return (this->*Table_LessThan[label.function_num])(params, args);
     }
-    return TypeInstance::Dispatch(label, params, args);
+    return TypeInstance::Dispatch(self, label, params, args);
   }
   ReturnTuple Call_equals(const ParamTuple& params, const ValueTuple& args);
   ReturnTuple Call_lessThan(const ParamTuple& params, const ValueTuple& args);
 };
-Type_Float& CreateType_Float(Params<0>::Type params) {
-  static auto& cached = *new Type_Float(CreateCategory_Float(), Params<0>::Type());
+S<Type_Float> CreateType_Float(Params<0>::Type params) {
+  static const auto cached = S_get(new Type_Float(CreateCategory_Float(), Params<0>::Type()));
   return cached;
 }
 struct Value_Float : public TypeValue {
-  Value_Float(Type_Float& p, PrimFloat value) : parent(p), value_(value) {}
+  Value_Float(S<Type_Float> p, PrimFloat value) : parent(p), value_(value) {}
   ReturnTuple Dispatch(const S<TypeValue>& self, const ValueFunction& label, const ParamTuple& params,const ValueTuple& args) final {
     using CallType = ReturnTuple(Value_Float::*)(const S<TypeValue>&, const ParamTuple&, const ValueTuple&);
     static const CallType Table_AsBool[] = {
@@ -172,13 +172,13 @@ struct Value_Float : public TypeValue {
     }
     return TypeValue::Dispatch(self, label, params, args);
   }
-  std::string CategoryName() const final { return parent.CategoryName(); }
+  std::string CategoryName() const final { return parent->CategoryName(); }
   PrimFloat AsFloat() const final { return value_; }
   ReturnTuple Call_asBool(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args);
   ReturnTuple Call_asFloat(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args);
   ReturnTuple Call_asInt(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args);
   ReturnTuple Call_formatted(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args);
-  Type_Float& parent;
+  const S<Type_Float> parent;
   const PrimFloat value_;
 };
 ReturnTuple Type_Float::Call_equals(const ParamTuple& params, const ValueTuple& args) {
@@ -215,7 +215,7 @@ ReturnTuple Value_Float::Call_formatted(const S<TypeValue>& Var_self, const Para
 TypeCategory& GetCategory_Float() {
   return CreateCategory_Float();
 }
-TypeInstance& GetType_Float(Params<0>::Type params) {
+S<TypeInstance> GetType_Float(Params<0>::Type params) {
   return CreateType_Float(params);
 }
 #ifdef ZEOLITE_PUBLIC_NAMESPACE

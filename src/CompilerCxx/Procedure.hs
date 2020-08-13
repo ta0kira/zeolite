@@ -92,16 +92,23 @@ compileExecutableProcedure ctx ff@(ScopedFunction _ _ _ s as1 rs1 ps1 _ _)
     close = "}"
     name = callName n
     header
+      | s == CategoryScope =
+        returnType ++ " " ++ name ++ "(const ParamTuple& params, const ValueTuple& args);"
+      | s == TypeScope =
+        returnType ++ " " ++ name ++
+        -- NOTE: Don't use Var_self, since self isn't accessible to @type functions.
+        "(const S<TypeInstance>& self, const ParamTuple& params, const ValueTuple& args);"
       | s == ValueScope =
         returnType ++ " " ++ name ++
         "(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args);"
-      | otherwise =
-        returnType ++ " " ++ name ++ "(const ParamTuple& params, const ValueTuple& args);"
+      | otherwise = undefined
     header2
       | s == CategoryScope =
         returnType ++ " " ++ categoryName t ++ "::" ++ name ++ "(const ParamTuple& params, const ValueTuple& args) {"
       | s == TypeScope =
-        returnType ++ " " ++ typeName t ++ "::" ++ name ++ "(const ParamTuple& params, const ValueTuple& args) {"
+        returnType ++ " " ++ typeName t ++ "::" ++ name ++
+        -- NOTE: Don't use Var_self, since self isn't accessible to @type functions.
+        "(const S<TypeInstance>& self, const ParamTuple& params, const ValueTuple& args) {"
       | s == ValueScope =
         returnType ++ " " ++ valueName t ++ "::" ++ name ++
         "(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) {"
@@ -120,7 +127,7 @@ compileExecutableProcedure ctx ff@(ScopedFunction _ _ _ s as1 rs1 ps1 _ _)
       | isUnnamedReturns rs2 = []
       | otherwise            = [returnType ++ " returns(" ++ show (length $ pValues rs1) ++ ");"]
     nameParams = flip map (zip ([0..] :: [Int]) $ pValues ps1) $
-      (\(i,p2) -> paramType ++ " " ++ paramName (vpParam p2) ++ " = *params.At(" ++ show i ++ ");")
+      (\(i,p2) -> paramType ++ " " ++ paramName (vpParam p2) ++ " = params.At(" ++ show i ++ ");")
     nameArgs = flip map (zip ([0..] :: [Int]) $ filter (not . isDiscardedInput . snd) $ zip (pValues as1) (pValues $ avNames as2)) $
       (\(i,(t2,n2)) -> "const " ++ variableProxyType (pvType t2) ++ " " ++ variableName (ivName n2) ++
                        " = " ++ writeStoredVariable (pvType t2) (UnwrappedSingle $ "args.At(" ++ show i ++ ")") ++ ";")
@@ -561,9 +568,8 @@ compileExpression = compile where
     return (Positional [ValueType RequiredValue $ SingleType $ JustTypeInstance t],
             UnwrappedSingle $ valueCreator (tiName t) ++ "(" ++ typeInstance ++ ", " ++ params2 ++ ", " ++ es'' ++ ")")
     where
-      getType True TypeScope  _ = "*this"
-      getType True ValueScope _ = "parent"
-      getType _    _ params = typeCreator (tiName t) ++ "(" ++ params ++ ")"
+      getType True ValueScope _      = "parent"
+      getType _    _          params = typeCreator (tiName t) ++ "(" ++ params ++ ")"
       -- Single expression, but possibly multi-return.
       getValues [(Positional ts,e)] = return (ts,useAsArgs e)
       -- Multi-expression => must all be singles.
@@ -755,7 +761,7 @@ compileExpressionStart (BuiltinCall c (FunctionCall _ BuiltinReduce ps es)) = do
   csRequiresTypes $ categoriesFromTypes t1
   csRequiresTypes $ categoriesFromTypes t2
   return $ (Positional [ValueType OptionalValue t2],
-            UnwrappedSingle $ typeBase ++ "::Reduce(" ++ t1' ++ ", " ++ t2' ++ ", " ++ useAsUnwrapped e ++ ")")
+            UnwrappedSingle $ typeBase ++ "::Reduce(*" ++ t1' ++ ", *" ++ t2' ++ ", " ++ useAsUnwrapped e ++ ")")
 compileExpressionStart (BuiltinCall c (FunctionCall _ BuiltinRequire ps es)) = do
   when (length (pValues ps) /= 0) $
     lift $ compileErrorM $ "Expected 0 type parameters" ++ formatFullContextBrace c
@@ -849,10 +855,14 @@ compileFunctionCall e f (FunctionCall c _ ps es) = errorContext ???> do
     backgroundMessage _ = return ()
     assemble Nothing _ ValueScope ps2 es2 =
       return $ callName (sfName f) ++ "(Var_self, " ++ ps2 ++ ", " ++ es2 ++ ")"
+    assemble Nothing _ TypeScope ps2 es2 =
+      return $ callName (sfName f) ++ "(self, " ++ ps2 ++ ", " ++ es2 ++ ")"
     assemble Nothing scoped _ ps2 es2 =
       return $ scoped ++ callName (sfName f) ++ "(" ++ ps2 ++ ", " ++ es2 ++ ")"
     assemble (Just e2) _ ValueScope ps2 es2 =
       return $ valueBase ++ "::Call(" ++ e2 ++ ", " ++ functionName f ++ ", " ++ ps2 ++ ", " ++ es2 ++ ")"
+    assemble (Just e2) _ TypeScope ps2 es2 =
+      return $ typeBase ++ "::Call(" ++ e2 ++ ", " ++ functionName f ++ ", " ++ ps2 ++ ", " ++ es2 ++ ")"
     assemble (Just e2) _ _ ps2 es2 =
       return $ e2 ++ ".Call(" ++ functionName f ++ ", " ++ ps2 ++ ", " ++ es2 ++ ")"
     -- TODO: Lots of duplication with assignments and initialization.
@@ -902,8 +912,8 @@ autoScope s = do
   s1 <- csCurrentScope
   return $ scoped s1 s
   where
-    scoped ValueScope TypeScope     = "parent."
-    scoped ValueScope CategoryScope = "parent.parent."
+    scoped ValueScope TypeScope     = "parent->"
+    scoped ValueScope CategoryScope = "parent->parent."
     scoped TypeScope  CategoryScope = "parent."
     -- NOTE: Don't use this->; otherwise, self won't work properly.
     scoped _ _ = ""
@@ -924,13 +934,13 @@ expandParams :: (CompileErrorM m, CompilerContext c m s a) =>
   Positional GeneralInstance -> CompilerState a m String
 expandParams ps = do
   ps' <- sequence $ map expandGeneralInstance $ pValues ps
-  return $ "T_get(" ++ intercalate "," (map ("&" ++) ps') ++ ")"
+  return $ "T_get(" ++ intercalate ", " ps' ++ ")"
 
 expandParams2 :: (CompileErrorM m, CompilerContext c m s a) =>
   Positional GeneralInstance -> CompilerState a m String
 expandParams2 ps = do
   ps' <- sequence $ map expandGeneralInstance $ pValues ps
-  return $ "ParamTuple(" ++ intercalate "," (map ("&" ++) ps') ++ ")"
+  return $ "ParamTuple(" ++ intercalate "," ps' ++ ")"
 
 expandCategory :: (CompilerContext c m s a) =>
   CategoryName -> CompilerState a m String
@@ -948,7 +958,7 @@ expandGeneralInstance (TypeMerge m ps) = do
     getter MergeIntersect = intersectGetter
 expandGeneralInstance (SingleType (JustTypeInstance (TypeInstance t ps))) = do
   ps' <- sequence $ map expandGeneralInstance $ pValues ps
-  return $ typeGetter t ++ "(T_get(" ++ intercalate "," (map ("&" ++) ps') ++ "))"
+  return $ typeGetter t ++ "(T_get(" ++ intercalate "," ps' ++ "))"
 expandGeneralInstance (SingleType (JustParamName _ p)) = do
   s <- csGetParamScope p
   scoped <- autoScope s
