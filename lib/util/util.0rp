@@ -67,12 +67,16 @@ concrete LazyStream<#x> {
 }
 
 concrete SimpleOutput {
+  refines BufferedWriter<Formatted>
+
   @type stdout () -> (BufferedWriter<Formatted>)
   @type stderr () -> (BufferedWriter<Formatted>)
   @type error () -> (BufferedWriter<Formatted>)
 }
 
 concrete SimpleInput {
+  refines BlockReader<String>
+
   @type stdin () -> (BlockReader<String>)
 }
 
