@@ -801,7 +801,7 @@ compileExpressionStart (BuiltinCall c (FunctionCall _ BuiltinTypename ps es)) = 
   t' <- expandGeneralInstance t
   csRequiresTypes $ Set.unions $ map categoriesFromTypes [t]
   return $ (Positional [formattedRequiredValue],
-            valueAsWrapped $ UnboxedPrimitive PrimString $ typeBase ++ "::TypeName(" ++ t' ++ ")")
+            valueAsWrapped $ UnboxedPrimitive PrimString $ typeBase ++ "::TypeName(*" ++ t' ++ ")")
 compileExpressionStart (BuiltinCall _ _) = undefined
 compileExpressionStart (ParensExpression _ e) = compileExpression e
 compileExpressionStart (InlineAssignment c n e) = do
