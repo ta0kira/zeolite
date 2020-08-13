@@ -61,6 +61,7 @@ import qualified Data.Set as Set
 
 import Base.CompileError
 import Base.CompileInfo
+import Base.Mergeable
 import Cli.CompileOptions
 import Cli.Programs (VersionHash(..))
 import Compilation.ProcedureContext (ExprMap)
@@ -235,12 +236,8 @@ loadDepsCommon f h ca pa0 getDeps ps = do
           p' <- errorFromIO $ canonicalizePath p
           when (cmPath m /= p') $
             compileErrorM $ "Module \"" ++ p ++ "\" has an invalid cache path and must be recompiled"
-          fresh <- checkModuleFreshness cm p m
-          when (enforce && not fresh) $
-            compileErrorM $ "Module \"" ++ p ++ "\" is out of date and should be recompiled"
-          let sameVersion = checkModuleVersionHash h m
-          when (enforce && not sameVersion) $
-            compileErrorM $ "Module \"" ++ p ++ "\" was compiled with a different compiler setup"
+          when (enforce) $ checkModuleFreshness h cm p m <??
+            ("Module \"" ++ p ++ "\" is out of date and should be recompiled")
           return m
 
 loadMetadata :: MetadataMap -> FilePath -> CompileInfoIO CompileMetadata
@@ -274,61 +271,52 @@ sortCompiledFiles = foldl split ([],[],[]) where
 checkModuleVersionHash :: VersionHash -> CompileMetadata -> Bool
 checkModuleVersionHash h m = cmVersionHash m == h
 
-checkModuleFreshness :: MetadataMap -> FilePath -> CompileMetadata -> CompileInfoIO Bool
-checkModuleFreshness ca p (CompileMetadata _ p2 _ _ is is2 _ _ _ _ ps xs ts hxx cxx bs _ os) = do
+checkModuleFreshness :: VersionHash -> MetadataMap -> FilePath -> CompileMetadata -> CompileInfoIO ()
+checkModuleFreshness h ca p m@(CompileMetadata _ p2 _ _ is is2 _ _ _ _ ps xs ts hxx cxx bs _ os) = do
   time <- errorFromIO $ getModificationTime $ getCachedPath p "" metadataFilename
   (ps2,xs2,ts2) <- findSourceFiles p ""
-  let e1 = checkMissing ps ps2
-  let e2 = checkMissing xs xs2
-  let e3 = checkMissing ts ts2
-  rm <- checkInput time (p </> moduleFilename)
-  f1 <- fmap concat $ mapErrorsM (checkDep time) $ is ++ is2
-  f2 <- mapErrorsM (checkInput time . (p2 </>)) $ ps ++ xs
-  f3 <- mapErrorsM (checkInput time . getCachedPath p2 "") $ hxx ++ cxx
-  f4 <- mapErrorsM checkOutput bs
-  f5 <- fmap concat $ mapErrorsM checkObject os
-  let fresh = not $ any id $ [rm,e1,e2,e3] ++ f1 ++ f2 ++ f3 ++ f4 ++ f5
-  return fresh
+  let rs = Set.toList $ Set.fromList $ concat $ map getRequires os
+  mergeAllM $ [
+      checkHash,
+      checkInput time (p </> moduleFilename),
+      checkMissing ps ps2,
+      checkMissing xs xs2,
+      checkMissing ts ts2
+    ] ++
+    (map (checkDep time) $ is ++ is2) ++
+    (map (checkInput time . (p2 </>)) $ ps ++ xs) ++
+    (map (checkInput time . getCachedPath p2 "") $ hxx ++ cxx) ++
+    (map checkOutput bs) ++
+    (map checkObject os) ++
+    (map checkRequire rs)
   where
+    checkHash =
+      when (not $ checkModuleVersionHash h m) $
+        compileErrorM $ "Module \"" ++ p ++ "\" was compiled with a different compiler setup"
     checkInput time f = do
       exists <- doesFileOrDirExist f
-      if not exists
-         then do
-           compileWarningM $ "Required path \"" ++ f ++ "\" is missing"
-           return True
-         else do
-           time2 <- errorFromIO $ getModificationTime f
-           if time2 > time
-              then do
-                compileWarningM $ "Required path \"" ++ f ++ "\" is newer than cached data"
-                return True
-              else return False
+      when (not exists) $ compileErrorM $ "Required path \"" ++ f ++ "\" is missing"
+      time2 <- errorFromIO $ getModificationTime f
+      when (time2 > time) $ compileErrorM $ "Required path \"" ++ f ++ "\" is newer than cached data"
     checkOutput f = do
       exists <- errorFromIO $ doesFileExist f
-      if not exists
-         then do
-           compileWarningM $ "Output file \"" ++ f ++ "\" is missing"
-           return True
-         else return False
+      when (not exists) $ compileErrorM $ "Output file \"" ++ f ++ "\" is missing"
     checkDep time dep = do
       cm <- loadMetadata ca dep
-      mapErrorsM (checkInput time . (cmPath cm </>)) $ cmPublicFiles cm
-    checkObject (CategoryObjectFile _ rs fs) = do
-      fs2 <- mapErrorsM checkOutput fs
-      rs2 <- mapErrorsM checkRequire rs
-      return $ fs2 ++ rs2
-    checkObject (OtherObjectFile f) = fmap (:[]) $ checkOutput f
+      mergeAllM $ map (checkInput time . (cmPath cm </>)) $ cmPublicFiles cm
+    checkObject (CategoryObjectFile _ _ fs) = mergeAllM $ map checkOutput fs
+    checkObject (OtherObjectFile f)         = checkOutput f
+    getRequires (CategoryObjectFile _ rs _) = rs
+    getRequires _                           = []
     checkRequire (CategoryIdentifier d c ns) = do
       cm <- loadMetadata ca d
-      if cmPath cm /= p2 && ns /= cmPublicNamespace cm
-        then do
-          compileWarningM $ "Required category " ++ show c ++ " is newer than cached data"
-          return True
-        else return False
-    checkRequire (UnresolvedCategory c) = do
-      compileWarningM $ "Required category " ++ show c ++ " is unresolved"
-      return True
-    checkMissing s0 s1 = not $ null $ (Set.fromList s1) `Set.difference` (Set.fromList s0)
+      when (cmPath cm /= p2 && ns /= cmPublicNamespace cm) $
+        compileErrorM $ "Required category " ++ show c ++ " is newer than cached data"
+    checkRequire (UnresolvedCategory c) =
+      compileErrorM $ "Required category " ++ show c ++ " is unresolved"
+    checkMissing s0 s1 = do
+      let missing = Set.toList $ Set.fromList s1 `Set.difference` Set.fromList s0
+      mergeAllM $ map (\f -> compileErrorM $ "Required path \"" ++ f ++ "\" has not been compiled") missing
     doesFileOrDirExist f2 = do
       existF <- errorFromIO $ doesFileExist f2
       if existF

@@ -58,6 +58,10 @@ instance Mergeable [a] where
   mergeAny = foldr (++) []
   mergeAll = foldr (++) []
 
+instance Mergeable Bool where
+  mergeAny = foldr (||) False
+  mergeAll = foldr (&&) True
+
 instance (Ord k, Mergeable a) => Mergeable (Map k a) where
   mergeAny = Map.fromListWith (\x y -> mergeAny [x,y]) . foldr ((++) . Map.toList) []
   mergeAll = Map.fromListWith (\x y -> mergeAll [x,y]) . foldr ((++) . Map.toList) []
