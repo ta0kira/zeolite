@@ -82,7 +82,7 @@ void Type_Math::BuildTypeName(std::ostream& output) const {
 }
 
 bool Type_Math::CanConvertFrom(const TypeInstance& from) const {
-  std::vector<const TypeInstance*> args;
+  std::vector<S<const TypeInstance>> args;
   if (!from.TypeArgsForParent(parent, args)) return false;
   if(args.size() != 0) {
     FAIL() << "Wrong number of args (" << args.size() << ")  for " << CategoryName();
@@ -90,16 +90,17 @@ bool Type_Math::CanConvertFrom(const TypeInstance& from) const {
   return true;
 }
 
-bool Type_Math::TypeArgsForParent(const TypeCategory& category, std::vector<const TypeInstance*>& args) const {
+bool Type_Math::TypeArgsForParent(const TypeCategory& category, std::vector<S<const TypeInstance>>& args) const {
   if (&category == &GetCategory_Math()) {
-    args = std::vector<const TypeInstance*>{};
+    args = std::vector<S<const TypeInstance>>{};
     return true;
   }
   return false;
 }
 
-ReturnTuple Type_Math::Dispatch(const TypeFunction& label, const ParamTuple& params, const ValueTuple& args) {
-  using CallType = ReturnTuple(Type_Math::*)(const ParamTuple&, const ValueTuple&);
+ReturnTuple Type_Math::Dispatch(const S<TypeInstance>& self, const TypeFunction& label,
+                                const ParamTuple& params, const ValueTuple& args) {
+  using CallType = ReturnTuple(Type_Math::*)(const S<TypeInstance>&, const ParamTuple&, const ValueTuple&);
   static const CallType Table_Math[] = {
     &Type_Math::Call_acos,
     &Type_Math::Call_acosh,
@@ -132,24 +133,24 @@ ReturnTuple Type_Math::Dispatch(const TypeFunction& label, const ParamTuple& par
     if (label.function_num < 0 || label.function_num >= 26) {
       FAIL() << "Bad function call " << label;
     }
-    return (this->*Table_Math[label.function_num])(params, args);
+    return (this->*Table_Math[label.function_num])(self, params, args);
   }
-  return TypeInstance::Dispatch(label, params, args);
+  return TypeInstance::Dispatch(self, label, params, args);
 }
 
-Value_Math::Value_Math(Type_Math& p) : parent(p) {}
+Value_Math::Value_Math(S<Type_Math> p) : parent(p) {}
 
 ReturnTuple Value_Math::Dispatch(const S<TypeValue>& self, const ValueFunction& label, const ParamTuple& params,const ValueTuple& args) {
   using CallType = ReturnTuple(Value_Math::*)(const S<TypeValue>&, const ParamTuple&, const ValueTuple&);
   return TypeValue::Dispatch(self, label, params, args);
 }
 
-std::string Value_Math::CategoryName() const { return parent.CategoryName(); }
+std::string Value_Math::CategoryName() const { return parent->CategoryName(); }
 
 TypeCategory& GetCategory_Math() {
   return CreateCategory_Math();
 }
-TypeInstance& GetType_Math(Params<0>::Type params) {
+S<TypeInstance> GetType_Math(Params<0>::Type params) {
   return CreateType_Math(params);
 }
 

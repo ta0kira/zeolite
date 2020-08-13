@@ -47,39 +47,40 @@ class Type_Math : public TypeInstance {
 
   bool CanConvertFrom(const TypeInstance& from) const final;
 
-  bool TypeArgsForParent(const TypeCategory& category, std::vector<const TypeInstance*>& args) const final;
+  bool TypeArgsForParent(const TypeCategory& category, std::vector<S<const TypeInstance>>& args) const final;
 
-  ReturnTuple Dispatch(const TypeFunction& label, const ParamTuple& params, const ValueTuple& args) final;
+  ReturnTuple Dispatch(const S<TypeInstance>& self, const TypeFunction& label,
+                       const ParamTuple& params, const ValueTuple& args) final;
 
  protected:
   Type_Math(Category_Math& p, Params<0>::Type params);
 
-  virtual ReturnTuple Call_acos(const ParamTuple& params, const ValueTuple& args) = 0;
-  virtual ReturnTuple Call_acosh(const ParamTuple& params, const ValueTuple& args) = 0;
-  virtual ReturnTuple Call_asin(const ParamTuple& params, const ValueTuple& args) = 0;
-  virtual ReturnTuple Call_asinh(const ParamTuple& params, const ValueTuple& args) = 0;
-  virtual ReturnTuple Call_atan(const ParamTuple& params, const ValueTuple& args) = 0;
-  virtual ReturnTuple Call_atanh(const ParamTuple& params, const ValueTuple& args) = 0;
-  virtual ReturnTuple Call_ceil(const ParamTuple& params, const ValueTuple& args) = 0;
-  virtual ReturnTuple Call_cos(const ParamTuple& params, const ValueTuple& args) = 0;
-  virtual ReturnTuple Call_cosh(const ParamTuple& params, const ValueTuple& args) = 0;
-  virtual ReturnTuple Call_exp(const ParamTuple& params, const ValueTuple& args) = 0;
-  virtual ReturnTuple Call_fabs(const ParamTuple& params, const ValueTuple& args) = 0;
-  virtual ReturnTuple Call_floor(const ParamTuple& params, const ValueTuple& args) = 0;
-  virtual ReturnTuple Call_fmod(const ParamTuple& params, const ValueTuple& args) = 0;
-  virtual ReturnTuple Call_isinf(const ParamTuple& params, const ValueTuple& args) = 0;
-  virtual ReturnTuple Call_isnan(const ParamTuple& params, const ValueTuple& args) = 0;
-  virtual ReturnTuple Call_log(const ParamTuple& params, const ValueTuple& args) = 0;
-  virtual ReturnTuple Call_log10(const ParamTuple& params, const ValueTuple& args) = 0;
-  virtual ReturnTuple Call_log2(const ParamTuple& params, const ValueTuple& args) = 0;
-  virtual ReturnTuple Call_pow(const ParamTuple& params, const ValueTuple& args) = 0;
-  virtual ReturnTuple Call_round(const ParamTuple& params, const ValueTuple& args) = 0;
-  virtual ReturnTuple Call_sin(const ParamTuple& params, const ValueTuple& args) = 0;
-  virtual ReturnTuple Call_sinh(const ParamTuple& params, const ValueTuple& args) = 0;
-  virtual ReturnTuple Call_sqrt(const ParamTuple& params, const ValueTuple& args) = 0;
-  virtual ReturnTuple Call_tan(const ParamTuple& params, const ValueTuple& args) = 0;
-  virtual ReturnTuple Call_tanh(const ParamTuple& params, const ValueTuple& args) = 0;
-  virtual ReturnTuple Call_trunc(const ParamTuple& params, const ValueTuple& args) = 0;
+  virtual ReturnTuple Call_acos(const S<TypeInstance>& self, const ParamTuple& params, const ValueTuple& args) = 0;
+  virtual ReturnTuple Call_acosh(const S<TypeInstance>& self, const ParamTuple& params, const ValueTuple& args) = 0;
+  virtual ReturnTuple Call_asin(const S<TypeInstance>& self, const ParamTuple& params, const ValueTuple& args) = 0;
+  virtual ReturnTuple Call_asinh(const S<TypeInstance>& self, const ParamTuple& params, const ValueTuple& args) = 0;
+  virtual ReturnTuple Call_atan(const S<TypeInstance>& self, const ParamTuple& params, const ValueTuple& args) = 0;
+  virtual ReturnTuple Call_atanh(const S<TypeInstance>& self, const ParamTuple& params, const ValueTuple& args) = 0;
+  virtual ReturnTuple Call_ceil(const S<TypeInstance>& self, const ParamTuple& params, const ValueTuple& args) = 0;
+  virtual ReturnTuple Call_cos(const S<TypeInstance>& self, const ParamTuple& params, const ValueTuple& args) = 0;
+  virtual ReturnTuple Call_cosh(const S<TypeInstance>& self, const ParamTuple& params, const ValueTuple& args) = 0;
+  virtual ReturnTuple Call_exp(const S<TypeInstance>& self, const ParamTuple& params, const ValueTuple& args) = 0;
+  virtual ReturnTuple Call_fabs(const S<TypeInstance>& self, const ParamTuple& params, const ValueTuple& args) = 0;
+  virtual ReturnTuple Call_floor(const S<TypeInstance>& self, const ParamTuple& params, const ValueTuple& args) = 0;
+  virtual ReturnTuple Call_fmod(const S<TypeInstance>& self, const ParamTuple& params, const ValueTuple& args) = 0;
+  virtual ReturnTuple Call_isinf(const S<TypeInstance>& self, const ParamTuple& params, const ValueTuple& args) = 0;
+  virtual ReturnTuple Call_isnan(const S<TypeInstance>& self, const ParamTuple& params, const ValueTuple& args) = 0;
+  virtual ReturnTuple Call_log(const S<TypeInstance>& self, const ParamTuple& params, const ValueTuple& args) = 0;
+  virtual ReturnTuple Call_log10(const S<TypeInstance>& self, const ParamTuple& params, const ValueTuple& args) = 0;
+  virtual ReturnTuple Call_log2(const S<TypeInstance>& self, const ParamTuple& params, const ValueTuple& args) = 0;
+  virtual ReturnTuple Call_pow(const S<TypeInstance>& self, const ParamTuple& params, const ValueTuple& args) = 0;
+  virtual ReturnTuple Call_round(const S<TypeInstance>& self, const ParamTuple& params, const ValueTuple& args) = 0;
+  virtual ReturnTuple Call_sin(const S<TypeInstance>& self, const ParamTuple& params, const ValueTuple& args) = 0;
+  virtual ReturnTuple Call_sinh(const S<TypeInstance>& self, const ParamTuple& params, const ValueTuple& args) = 0;
+  virtual ReturnTuple Call_sqrt(const S<TypeInstance>& self, const ParamTuple& params, const ValueTuple& args) = 0;
+  virtual ReturnTuple Call_tan(const S<TypeInstance>& self, const ParamTuple& params, const ValueTuple& args) = 0;
+  virtual ReturnTuple Call_tanh(const S<TypeInstance>& self, const ParamTuple& params, const ValueTuple& args) = 0;
+  virtual ReturnTuple Call_trunc(const S<TypeInstance>& self, const ParamTuple& params, const ValueTuple& args) = 0;
 
   Category_Math& parent;
 };
@@ -91,14 +92,14 @@ class Value_Math : public TypeValue {
   std::string CategoryName() const final;
 
  protected:
-  Value_Math(Type_Math& p);
+  Value_Math(S<Type_Math> p);
 
-  Type_Math& parent;
+  S<Type_Math> parent;
 };
 
 Category_Math& CreateCategory_Math();
 
-Type_Math& CreateType_Math(Params<0>::Type params);
+S<Type_Math> CreateType_Math(Params<0>::Type params);
 
 S<TypeValue> CreateValue_Math(Type_Math& parent, const ParamTuple& params, const ValueTuple& args);
 
