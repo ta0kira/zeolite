@@ -236,8 +236,11 @@ loadDepsCommon f h ca pa0 getDeps ps = do
           p' <- errorFromIO $ canonicalizePath p
           when (cmPath m /= p') $
             compileErrorM $ "Module \"" ++ p ++ "\" has an invalid cache path and must be recompiled"
-          when (enforce) $ checkModuleFreshness h cm p m <??
+          fresh <- errorFromIO $ toCompileInfo $ checkModuleFreshness h cm p m <??
             ("Module \"" ++ p ++ "\" is out of date and should be recompiled")
+          if enforce
+             then fromCompileInfo   fresh
+             else asCompileWarnings fresh
           return m
 
 loadMetadata :: MetadataMap -> FilePath -> CompileInfoIO CompileMetadata

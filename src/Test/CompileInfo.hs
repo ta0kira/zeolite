@@ -29,6 +29,7 @@ tests :: [IO (CompileInfo ())]
 tests = [
     checkSuccess 'a' (return 'a'),
     checkError "error\n" (compileErrorM "error" :: CompileInfoIO Char),
+    checkError "" (compileErrorM "" :: CompileInfoIO Char),
 
     checkSuccess ['a','b']          (collectAllOrErrorM [return 'a',return 'b']),
     checkSuccess []                 (collectAllOrErrorM [] :: CompileInfoIO [Char]),
@@ -46,9 +47,9 @@ tests = [
     checkError   ""        (mergeAnyM [] :: CompileInfoIO [Char]),
     checkSuccess ['b']     (mergeAnyM [compileErrorM "error1",return ['b'],compileErrorM "error2"]),
 
-    checkSuccessAndWarnings ["warning1","warning2"] ()
+    checkSuccessAndWarnings "warning1\nwarning2\n" ()
       (compileWarningM "warning1" >> return () >> compileWarningM "warning2"),
-    checkErrorAndWarnings ["warning1"] "error\n"
+    checkErrorAndWarnings "warning1\n" "error\n"
       (compileWarningM "warning1" >> compileErrorM "error" >> compileWarningM "warning2" :: CompileInfoIO ()),
 
     checkSuccess ['a','b']  (sequence [return 'a',return 'b']),
@@ -57,6 +58,17 @@ tests = [
 
     checkSuccess 'a' (return 'a' `reviseErrorM` "message"),
     checkError "message\n  error\n" (compileErrorM "error" `reviseErrorM` "message" :: CompileInfoIO ()),
+    checkSuccessAndWarnings "message\n  warning\n" ()
+      (compileWarningM "warning" `reviseErrorM` "message" :: CompileInfoIO ()),
+    checkErrorAndWarnings "message\n  warning\n" "message\n  error\n"
+      ((compileWarningM "warning" >> compileErrorM "error") `reviseErrorM` "message" :: CompileInfoIO ()),
+    checkSuccessAndWarnings "" () (return () `reviseErrorM` "message"),
+    checkErrorAndWarnings "" "message\n" (compileErrorM "" `reviseErrorM` "message" :: CompileInfoIO ()),
+
+    checkSuccessAndWarnings "error\n" ()
+      (asCompileWarnings $ compileErrorM "error" :: CompileInfoIO ()),
+    checkErrorAndWarnings "" "warning\n"
+      (asCompileError $ compileWarningM "warning" :: CompileInfoIO ()),
 
     checkSuccess 'a' (compileBackgroundM "background" >> return 'a'),
     checkError "error\n  background\n"
@@ -91,18 +103,18 @@ checkError e y = do
           then return $ return ()
           else return $ compileErrorM $ "Expected error \"" ++ e ++ "\" but got error \"" ++ show (getCompileError y') ++ "\""
 
-checkSuccessAndWarnings :: (Eq a, Show a) => [String] -> a -> CompileInfoIO a -> IO (CompileInfo ())
+checkSuccessAndWarnings :: (Eq a, Show a) => String -> a -> CompileInfoIO a -> IO (CompileInfo ())
 checkSuccessAndWarnings w x y = do
   y' <- toCompileInfo y
   outcome <- checkSuccess x y
-  if getCompileWarnings y' == w
+  if show (getCompileWarnings y') == w
      then return $ outcome >> return ()
-     else return $ compileErrorM $ "Expected warnings " ++ show w ++ " but got warnings " ++ show (getCompileWarnings y')
+     else return $ compileErrorM $ "Expected warnings " ++ show w ++ " but got warnings \"" ++ show (getCompileWarnings y') ++ "\""
 
-checkErrorAndWarnings :: (Eq a, Show a) => [String] -> String -> CompileInfoIO a -> IO (CompileInfo ())
+checkErrorAndWarnings :: (Eq a, Show a) => String -> String -> CompileInfoIO a -> IO (CompileInfo ())
 checkErrorAndWarnings w e y = do
   y' <- toCompileInfo y
   outcome <- checkError e y
-  if getCompileWarnings y' == w
+  if show (getCompileWarnings y') == w
      then return $ outcome >> return ()
-     else return $ compileErrorM $ "Expected warnings " ++ show w ++ " but got warnings " ++ show (getCompileWarnings y')
+     else return $ compileErrorM $ "Expected warnings " ++ show w ++ " but got warnings \"" ++ show (getCompileWarnings y') ++ "\""

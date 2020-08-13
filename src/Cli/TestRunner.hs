@@ -77,9 +77,9 @@ runSingleTest b cm p paths deps (f,s) = do
       if not $ isCompileError result
          then undefined  -- Should be caught in compileAll.
          else return $ do
-           let warnings = getCompileWarnings result
-           let errors = show $ getCompileError result
-           checkContent rs es (warnings ++ lines errors) [] []
+           let warnings = show $ getCompileWarnings result
+           let errors   = show $ getCompileError result
+           checkContent rs es (lines warnings ++ lines errors) [] []
 
     run (ExpectRuntimeError   _ e rs es) cs ds = execute False e rs es cs ds
     run (ExpectRuntimeSuccess _ e rs es) cs ds = execute True  e rs es cs ds
@@ -111,14 +111,14 @@ runSingleTest b cm p paths deps (f,s) = do
            let command = TestCommand binaryName (takeDirectory binaryName)
            (TestCommandResult s2' out err) <- runTestCommand b command
            case (s2,s2') of
-                (True,False) -> mergeAllM $ map compileErrorM $ warnings ++ err ++ out
+                (True,False) -> mergeAllM $ (asCompileError result):(map compileErrorM $ err ++ out)
                 (False,True) ->
-                  if null warnings
+                  if isEmptyCompileMessage warnings
                      then compileErrorM "Expected runtime failure"
                      else mergeAllM [compileErrorM "Expected runtime failure",
-                                     (mergeAllM $ map compileErrorM warnings) <?? "\nOutput from compiler:"]
+                                     asCompileError result <?? "\nOutput from compiler:"]
                 _ -> do
-                  let result2 = checkContent rs es warnings err out
+                  let result2 = checkContent rs es (lines $ show warnings) err out
                   when (not $ isCompileError result2) $ errorFromIO $ removeDirectoryRecursive dir
                   fromCompileInfo result2
 
