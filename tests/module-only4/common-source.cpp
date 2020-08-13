@@ -40,7 +40,7 @@ namespace {
 
 class Category_Type1;
 class Type_Type1;
-Type_Type1& CreateType_Type1(Params<0>::Type params);
+S<Type_Type1> CreateType_Type1(Params<0>::Type params);
 class Value_Type1;
 S<TypeValue> CreateValue_Type1(Type_Type1& parent, const ParamTuple& params, const ValueTuple& args);
 
@@ -68,17 +68,17 @@ struct Type_Type1 : public TypeInstance {
     return TypeInstance::TypeNameFrom(output, parent);
   }
   Category_Type1& parent;
-  bool CanConvertFrom(const TypeInstance& from) const final {
-    std::vector<const TypeInstance*> args;
-    if (!from.TypeArgsForParent(parent, args)) return false;
+  bool CanConvertFrom(const S<const TypeInstance>& from) const final {
+    std::vector<S<const TypeInstance>> args;
+    if (!from->TypeArgsForParent(parent, args)) return false;
     if(args.size() != 0) {
       FAIL() << "Wrong number of args (" << args.size() << ")  for " << CategoryName();
     }
     return true;
   }
-  bool TypeArgsForParent(const TypeCategory& category, std::vector<const TypeInstance*>& args) const final {
+  bool TypeArgsForParent(const TypeCategory& category, std::vector<S<const TypeInstance>>& args) const final {
     if (&category == &GetCategory_Type1()) {
-      args = std::vector<const TypeInstance*>{};
+      args = std::vector<S<const TypeInstance>>{};
       return true;
     }
     return false;
@@ -88,8 +88,9 @@ struct Type_Type1 : public TypeInstance {
     CycleCheck<Type_Type1> marker(*this);
     TRACE_FUNCTION("Type1 (init @type)")
   }
-  ReturnTuple Dispatch(const TypeFunction& label, const ParamTuple& params, const ValueTuple& args) final {
-    using CallType = ReturnTuple(Type_Type1::*)(const ParamTuple&, const ValueTuple&);
+  ReturnTuple Dispatch(const S<TypeInstance>& self, const TypeFunction& label,
+                       const ParamTuple& params, const ValueTuple& args) final {
+    using CallType = ReturnTuple(Type_Type1::*)(const S<TypeInstance>&, const ParamTuple&, const ValueTuple&);
     static const CallType Table_Type1[] = {
       &Type_Type1::Call_create,
     };
@@ -97,15 +98,15 @@ struct Type_Type1 : public TypeInstance {
       if (label.function_num < 0 || label.function_num >= 1) {
         FAIL() << "Bad function call " << label;
       }
-      return (this->*Table_Type1[label.function_num])(params, args);
+      return (this->*Table_Type1[label.function_num])(self, params, args);
     }
-    return TypeInstance::Dispatch(label, params, args);
+    return TypeInstance::Dispatch(self, label, params, args);
   }
-  ReturnTuple Call_create(const ParamTuple& params, const ValueTuple& args);
+  ReturnTuple Call_create(const S<TypeInstance>& self, const ParamTuple& params, const ValueTuple& args);
 };
 
-Type_Type1& CreateType_Type1(Params<0>::Type params) {
-  static auto& cached = *new Type_Type1(CreateCategory_Type1(), Params<0>::Type());
+S<Type_Type1> CreateType_Type1(Params<0>::Type params) {
+  static const auto cached = S_get(new Type_Type1(CreateCategory_Type1(), Params<0>::Type()));
   return cached;
 }
 
@@ -136,10 +137,10 @@ S<TypeValue> CreateValue_Type1(Type_Type1& parent, const ParamTuple& params, con
   return S_get(new Value_Type1(parent, params, args));
 }
 
-ReturnTuple Type_Type1::Call_create(const ParamTuple& params, const ValueTuple& args) {
+ReturnTuple Type_Type1::Call_create(const S<TypeInstance>& self, const ParamTuple& params, const ValueTuple& args) {
   TRACE_FUNCTION("Type1.create")
   return ReturnTuple(CreateValue_Type1(*this, ParamTuple(),
-    GetType_Type2(Params<0>::Type()).Call(Function_Type2_create, ParamTuple(), ArgTuple())));
+    TypeInstance::Call(GetType_Type2(Params<0>::Type()), Function_Type2_create, ParamTuple(), ArgTuple())));
 }
 
 ReturnTuple Value_Type1::Call_get(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) {
@@ -153,7 +154,7 @@ TypeCategory& GetCategory_Type1() {
   return CreateCategory_Type1();
 }
 
-TypeInstance& GetType_Type1(Params<0>::Type params) {
+S<TypeInstance> GetType_Type1(Params<0>::Type params) {
   return CreateType_Type1(params);
 }
 
@@ -180,7 +181,7 @@ namespace {
 
 class Category_Type3;
 class Type_Type3;
-Type_Type3& CreateType_Type3(Params<0>::Type params);
+S<Type_Type3> CreateType_Type3(Params<0>::Type params);
 class Value_Type3;
 S<TypeValue> CreateValue_Type3(Type_Type3& parent, const ParamTuple& params, const ValueTuple& args);
 
@@ -208,17 +209,17 @@ struct Type_Type3 : public TypeInstance {
     return TypeInstance::TypeNameFrom(output, parent);
   }
   Category_Type3& parent;
-  bool CanConvertFrom(const TypeInstance& from) const final {
-    std::vector<const TypeInstance*> args;
-    if (!from.TypeArgsForParent(parent, args)) return false;
+  bool CanConvertFrom(const S<const TypeInstance>& from) const final {
+    std::vector<S<const TypeInstance>> args;
+    if (!from->TypeArgsForParent(parent, args)) return false;
     if(args.size() != 0) {
       FAIL() << "Wrong number of args (" << args.size() << ")  for " << CategoryName();
     }
     return true;
   }
-  bool TypeArgsForParent(const TypeCategory& category, std::vector<const TypeInstance*>& args) const final {
+  bool TypeArgsForParent(const TypeCategory& category, std::vector<S<const TypeInstance>>& args) const final {
     if (&category == &GetCategory_Type3()) {
-      args = std::vector<const TypeInstance*>{};
+      args = std::vector<S<const TypeInstance>>{};
       return true;
     }
     return false;
@@ -228,8 +229,9 @@ struct Type_Type3 : public TypeInstance {
     CycleCheck<Type_Type3> marker(*this);
     TRACE_FUNCTION("Type3 (init @type)")
   }
-  ReturnTuple Dispatch(const TypeFunction& label, const ParamTuple& params, const ValueTuple& args) final {
-    using CallType = ReturnTuple(Type_Type3::*)(const ParamTuple&, const ValueTuple&);
+  ReturnTuple Dispatch(const S<TypeInstance>& self, const TypeFunction& label,
+                       const ParamTuple& params, const ValueTuple& args) final {
+    using CallType = ReturnTuple(Type_Type3::*)(const S<TypeInstance>&, const ParamTuple&, const ValueTuple&);
     static const CallType Table_Type3[] = {
       &Type_Type3::Call_create,
     };
@@ -237,15 +239,15 @@ struct Type_Type3 : public TypeInstance {
       if (label.function_num < 0 || label.function_num >= 1) {
         FAIL() << "Bad function call " << label;
       }
-      return (this->*Table_Type3[label.function_num])(params, args);
+      return (this->*Table_Type3[label.function_num])(self, params, args);
     }
-    return TypeInstance::Dispatch(label, params, args);
+    return TypeInstance::Dispatch(self, label, params, args);
   }
-  ReturnTuple Call_create(const ParamTuple& params, const ValueTuple& args);
+  ReturnTuple Call_create(const S<TypeInstance>& self, const ParamTuple& params, const ValueTuple& args);
 };
 
-Type_Type3& CreateType_Type3(Params<0>::Type params) {
-  static auto& cached = *new Type_Type3(CreateCategory_Type3(), Params<0>::Type());
+S<Type_Type3> CreateType_Type3(Params<0>::Type params) {
+  static const auto cached = S_get(new Type_Type3(CreateCategory_Type3(), Params<0>::Type()));
   return cached;
 }
 
@@ -276,10 +278,10 @@ S<TypeValue> CreateValue_Type3(Type_Type3& parent, const ParamTuple& params, con
   return S_get(new Value_Type3(parent, params, args));
 }
 
-ReturnTuple Type_Type3::Call_create(const ParamTuple& params, const ValueTuple& args) {
+ReturnTuple Type_Type3::Call_create(const S<TypeInstance>& self, const ParamTuple& params, const ValueTuple& args) {
   TRACE_FUNCTION("Type3.create")
   return ReturnTuple(CreateValue_Type3(*this, ParamTuple(),
-    GetType_Type2(Params<0>::Type()).Call(Function_Type2_create, ParamTuple(), ArgTuple())));
+    TypeInstance::Call(GetType_Type2(Params<0>::Type()), Function_Type2_create, ParamTuple(), ArgTuple())));
 }
 
 ReturnTuple Value_Type3::Call_get(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) {
@@ -293,7 +295,7 @@ TypeCategory& GetCategory_Type3() {
   return CreateCategory_Type3();
 }
 
-TypeInstance& GetType_Type3(Params<0>::Type params) {
+S<TypeInstance> GetType_Type3(Params<0>::Type params) {
   return CreateType_Type3(params);
 }
 

@@ -761,7 +761,7 @@ compileExpressionStart (BuiltinCall c (FunctionCall _ BuiltinReduce ps es)) = do
   csRequiresTypes $ categoriesFromTypes t1
   csRequiresTypes $ categoriesFromTypes t2
   return $ (Positional [ValueType OptionalValue t2],
-            UnwrappedSingle $ typeBase ++ "::Reduce(*" ++ t1' ++ ", *" ++ t2' ++ ", " ++ useAsUnwrapped e ++ ")")
+            UnwrappedSingle $ typeBase ++ "::Reduce(" ++ t1' ++ ", " ++ t2' ++ ", " ++ useAsUnwrapped e ++ ")")
 compileExpressionStart (BuiltinCall c (FunctionCall _ BuiltinRequire ps es)) = do
   when (length (pValues ps) /= 0) $
     lift $ compileErrorM $ "Expected 0 type parameters" ++ formatFullContextBrace c
@@ -801,7 +801,7 @@ compileExpressionStart (BuiltinCall c (FunctionCall _ BuiltinTypename ps es)) = 
   t' <- expandGeneralInstance t
   csRequiresTypes $ Set.unions $ map categoriesFromTypes [t]
   return $ (Positional [formattedRequiredValue],
-            valueAsWrapped $ UnboxedPrimitive PrimString $ typeBase ++ "::TypeName(*" ++ t' ++ ")")
+            valueAsWrapped $ UnboxedPrimitive PrimString $ typeBase ++ "::TypeName(" ++ t' ++ ")")
 compileExpressionStart (BuiltinCall _ _) = undefined
 compileExpressionStart (ParensExpression _ e) = compileExpression e
 compileExpressionStart (InlineAssignment c n e) = do
@@ -844,8 +844,9 @@ compileFunctionCall e f (FunctionCall c _ ps es) = errorContext ???> do
   csRequiresTypes $ Set.unions $ map categoriesFromTypes $ pValues ps2
   csRequiresTypes (Set.fromList [sfType f])
   params <- expandParams2 ps2
+  scope <- csCurrentScope
   scoped <- autoScope (sfScope f)
-  call <- assemble e scoped (sfScope f) params es''
+  call <- assemble e scoped scope (sfScope f) params es''
   return $ (ftReturns f'',OpaqueMulti call)
   where
     errorContext = "In call to " ++ show (sfName f) ++ " at " ++ formatFullContext c
@@ -853,17 +854,19 @@ compileFunctionCall e f (FunctionCall c _ ps es) = errorContext ???> do
       compileBackgroundM $ "Parameter " ++ show n ++ " (from " ++ show (sfType f) ++ "." ++
         show (sfName f) ++ ") inferred as " ++ show t ++ " at " ++ formatFullContext c2
     backgroundMessage _ = return ()
-    assemble Nothing _ ValueScope ps2 es2 =
+    assemble Nothing _ ValueScope ValueScope ps2 es2 =
       return $ callName (sfName f) ++ "(Var_self, " ++ ps2 ++ ", " ++ es2 ++ ")"
-    assemble Nothing _ TypeScope ps2 es2 =
+    assemble Nothing _ TypeScope TypeScope ps2 es2 =
       return $ callName (sfName f) ++ "(self, " ++ ps2 ++ ", " ++ es2 ++ ")"
-    assemble Nothing scoped _ ps2 es2 =
+    assemble Nothing _ ValueScope TypeScope ps2 es2 =
+      return $ typeBase ++ "::Call(parent, " ++ functionName f ++ ", " ++ ps2 ++ ", " ++ es2 ++ ")"
+    assemble Nothing scoped _ _ ps2 es2 =
       return $ scoped ++ callName (sfName f) ++ "(" ++ ps2 ++ ", " ++ es2 ++ ")"
-    assemble (Just e2) _ ValueScope ps2 es2 =
+    assemble (Just e2) _ _ ValueScope ps2 es2 =
       return $ valueBase ++ "::Call(" ++ e2 ++ ", " ++ functionName f ++ ", " ++ ps2 ++ ", " ++ es2 ++ ")"
-    assemble (Just e2) _ TypeScope ps2 es2 =
+    assemble (Just e2) _ _ TypeScope ps2 es2 =
       return $ typeBase ++ "::Call(" ++ e2 ++ ", " ++ functionName f ++ ", " ++ ps2 ++ ", " ++ es2 ++ ")"
-    assemble (Just e2) _ _ ps2 es2 =
+    assemble (Just e2) _ _ _ ps2 es2 =
       return $ e2 ++ ".Call(" ++ functionName f ++ ", " ++ ps2 ++ ", " ++ es2 ++ ")"
     -- TODO: Lots of duplication with assignments and initialization.
     -- Single expression, but possibly multi-return.
@@ -952,7 +955,7 @@ expandGeneralInstance (TypeMerge MergeUnion     []) = return $ allGetter ++ "()"
 expandGeneralInstance (TypeMerge MergeIntersect []) = return $ anyGetter ++ "()"
 expandGeneralInstance (TypeMerge m ps) = do
   ps' <- sequence $ map expandGeneralInstance ps
-  return $ getter m ++ "(L_get<" ++ typeBase ++ "*>(" ++ intercalate "," (map ("&" ++) ps') ++ "))"
+  return $ getter m ++ "(L_get<S<const " ++ typeBase ++ ">>(" ++ intercalate "," ps' ++ "))"
   where
     getter MergeUnion     = unionGetter
     getter MergeIntersect = intersectGetter

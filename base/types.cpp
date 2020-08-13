@@ -83,5 +83,5 @@ const S<TypeInstance>& ParamTuple::At(int pos) const {
   if (pos < 0 || pos >= params_.size()) {
     FAIL() << "Bad ParamTuple index";
   }
-  return *params_[pos];
+  return params_[pos];
 }

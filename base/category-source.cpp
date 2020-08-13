@@ -37,7 +37,7 @@ struct OptionalEmpty : public TypeValue {
 };
 
 struct Type_Intersect : public TypeInstance {
-  Type_Intersect(L<TypeInstance*> params) : params_(params.begin(), params.end()) {}
+  Type_Intersect(L<S<const TypeInstance>> params) : params_(params.begin(), params.end()) {}
 
   std::string CategoryName() const final { return "(intersection)"; }
 
@@ -59,14 +59,14 @@ struct Type_Intersect : public TypeInstance {
   MergeType InstanceMergeType() const final
   { return MergeType::INTERSECT; }
 
-  std::vector<const TypeInstance*> MergedTypes() const final
+  std::vector<S<const TypeInstance>> MergedTypes() const final
   { return params_; }
 
-  const L<const TypeInstance*> params_;
+  const L<S<const TypeInstance>> params_;
 };
 
 struct Type_Union : public TypeInstance {
-  Type_Union(L<TypeInstance*> params) : params_(params.begin(), params.end()) {}
+  Type_Union(L<S<const TypeInstance>> params) : params_(params.begin(), params.end()) {}
 
   std::string CategoryName() const final { return "(union)"; }
 
@@ -88,38 +88,32 @@ struct Type_Union : public TypeInstance {
   MergeType InstanceMergeType() const final
   { return MergeType::UNION; }
 
-  std::vector<const TypeInstance*> MergedTypes() const final
+  std::vector<S<const TypeInstance>> MergedTypes() const final
   { return params_; }
 
-  const L<const TypeInstance*> params_;
+  const L<S<const TypeInstance>> params_;
 };
 
 }  // namespace
 
 
-S<TypeInstance> Merge_Intersect(L<TypeInstance*> params) {
-  static auto& cache = *new std::map<L<TypeInstance*>,W<Type_Intersect>>();
-  auto& cached = cache[params];
-  S<Type_Intersect> type = cached.lock();
-  if (!type) { cached = type = S_get(new Type_Intersect(params)); }
-  return type;
+S<TypeInstance> Merge_Intersect(L<S<const TypeInstance>> params) {
+  // Caching is more work than just creating a new instance.
+  return S_get(new Type_Intersect(params));
 }
 
-S<TypeInstance> Merge_Union(L<TypeInstance*> params) {
-  static auto& cache = *new std::map<L<TypeInstance*>,W<Type_Union>>();
-  auto& cached = cache[params];
-  S<Type_Union> type = cached.lock();
-  if (!type) { cached = type = S_get(new Type_Union(params)); }
-  return type;
+S<TypeInstance> Merge_Union(L<S<const TypeInstance>> params) {
+  // Caching is more work than just creating a new instance.
+  return S_get(new Type_Union(params));
 }
 
 const S<TypeInstance>& GetMerged_Any() {
-  static const auto instance = Merge_Intersect(L_get<TypeInstance*>());
+  static const auto instance = Merge_Intersect(L_get<S<const TypeInstance>>());
   return instance;
 }
 
 const S<TypeInstance>& GetMerged_All() {
-  static const auto instance = Merge_Union(L_get<TypeInstance*>());
+  static const auto instance = Merge_Union(L_get<S<const TypeInstance>>());
   return instance;
 }
 
@@ -145,64 +139,41 @@ ReturnTuple TypeValue::Dispatch(const S<TypeValue>& self, const ValueFunction& l
   __builtin_unreachable();
 }
 
-bool TypeInstance::CanConvert(const TypeInstance& x, const TypeInstance& y) {
-  if (&x == &y) {
+bool TypeInstance::CanConvert(const S<const TypeInstance>& x,
+                              const S<const TypeInstance>& y) {
+  // See checkGeneralType for the ordering here.
+  if (x.get() == y.get()) {
     return true;
-  }
-  if (x.InstanceMergeType() == MergeType::SINGLE &&
-      y.InstanceMergeType() == MergeType::SINGLE) {
-    return y.CanConvertFrom(x);
-  }
-  return ExpandCheckLeft(x,y);
-}
-
-bool TypeInstance::ExpandCheckLeft(const TypeInstance& x, const TypeInstance& y) {
-  for (const TypeInstance* left : x.MergedTypes()) {
-    const bool result = ExpandCheckRight(*left,y);
-    switch (x.InstanceMergeType()) {
-      case MergeType::SINGLE:
-        return result;
-      case MergeType::UNION:
-        if (!result) {
-          return false;
-        }
-        break;
-      case MergeType::INTERSECT:
-        if (result) {
-          return true;
-        }
-        break;
+  } else if (y->InstanceMergeType() == MergeType::INTERSECT) {
+    for (const auto& right : y->MergedTypes()) {
+      if (!TypeInstance::CanConvert(x, right)) {
+        return false;
+      }
     }
-  }
-  switch (x.InstanceMergeType()) {
-    case MergeType::SINGLE:    return false;
-    case MergeType::UNION:     return true;
-    case MergeType::INTERSECT: return false;
-  }
-}
-
-bool TypeInstance::ExpandCheckRight(const TypeInstance& x, const TypeInstance& y) {
-  for (const TypeInstance* right : y.MergedTypes()) {
-    const bool result = TypeInstance::CanConvert(x,*right);
-    switch (y.InstanceMergeType()) {
-      case MergeType::SINGLE:
-        return result;
-      case MergeType::UNION:
-        if (result) {
-          return true;
-        }
-        break;
-      case MergeType::INTERSECT:
-        if (!result) {
-          return false;
-        }
-        break;
+    return true;
+  } else if (x->InstanceMergeType() == MergeType::UNION) {
+    for (const auto& left : x->MergedTypes()) {
+      if (!TypeInstance::CanConvert(left, y)) {
+        return false;
+      }
     }
-  }
-  switch (y.InstanceMergeType()) {
-    case MergeType::SINGLE:    return false;
-    case MergeType::UNION:     return false;
-    case MergeType::INTERSECT: return true;
+    return true;
+  } else if (x->InstanceMergeType() == MergeType::INTERSECT) {
+    for (const auto& left : x->MergedTypes()) {
+      if (TypeInstance::CanConvert(left, y)) {
+        return true;
+      }
+    }
+    return false;
+  } else if (y->InstanceMergeType() == MergeType::UNION) {
+    for (const auto right : y->MergedTypes()) {
+      if (TypeInstance::CanConvert(x, right)) {
+        return true;
+      }
+    }
+    return false;
+  } else {
+    return y->CanConvertFrom(x);
   }
 }
 

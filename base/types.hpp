@@ -129,6 +129,34 @@ struct Params<0, Ts...> {
   using Type = T<Ts...>;
 };
 
+template<int N, class...Ts>
+struct ParamsKey {
+  using Type = typename ParamsKey<N-1, const TypeInstance*, Ts...>::Type;
+};
+
+template<class...Ts>
+struct ParamsKey<0, Ts...> {
+  using Type = T<Ts...>;
+};
+
+template<int N, int K, class...Ts>
+struct KeyFromParams {
+  static typename ParamsKey<N>::Type Get(const typename Params<N>::Type& from, Ts... args) {
+    return KeyFromParams<N, K+1, Ts..., const TypeInstance*>::Get(from, args..., std::get<K>(from).get());
+  }
+};
+
+template<int N, class...Ts>
+struct KeyFromParams<N, N, Ts...> {
+  static typename ParamsKey<N>::Type Get(const typename Params<N>::Type&, Ts... args) {
+    return typename ParamsKey<N>::Type(args...);
+  }
+};
+
+template<int N>
+typename ParamsKey<N>::Type GetKeyFromParams(const typename Params<N>::Type& from) {
+  return KeyFromParams<N, 0>::Get(from);
+}
 
 class ValueTuple {
  public:
@@ -189,7 +217,7 @@ class ParamTuple {
   ParamTuple(ParamTuple&& other) : params_(std::move(other.params_)) {}
 
   template<class...Ts>
-  explicit ParamTuple(const Ts&... args) : params_{&args...} {}
+  explicit ParamTuple(const Ts&... args) : params_{args...} {}
 
   int Size() const;
   const S<TypeInstance>& At(int pos) const;
@@ -199,7 +227,7 @@ class ParamTuple {
   ParamTuple& operator =(const ParamTuple&) = delete;
   void* operator new(std::size_t size) = delete;
 
-  std::vector<const S<TypeInstance>*> params_;
+  std::vector<S<TypeInstance>> params_;
 };
 
 #endif  // TYPES_HPP_

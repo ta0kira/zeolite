@@ -81,9 +81,9 @@ void Type_Math::BuildTypeName(std::ostream& output) const {
   return TypeInstance::TypeNameFrom(output, parent);
 }
 
-bool Type_Math::CanConvertFrom(const TypeInstance& from) const {
+bool Type_Math::CanConvertFrom(const S<const TypeInstance>& from) const {
   std::vector<S<const TypeInstance>> args;
-  if (!from.TypeArgsForParent(parent, args)) return false;
+  if (!from->TypeArgsForParent(parent, args)) return false;
   if(args.size() != 0) {
     FAIL() << "Wrong number of args (" << args.size() << ")  for " << CategoryName();
   }

@@ -65,9 +65,9 @@ struct Type_Int : public TypeInstance {
     return TypeInstance::TypeNameFrom(output, parent);
   }
   Category_Int& parent;
-  bool CanConvertFrom(const TypeInstance& from) const final {
+  bool CanConvertFrom(const S<const TypeInstance>& from) const final {
     std::vector<S<const TypeInstance>> args;
-    if (!from.TypeArgsForParent(parent, args)) return false;
+    if (!from->TypeArgsForParent(parent, args)) return false;
     if(args.size() != 0) {
       FAIL() << "Wrong number of args (" << args.size() << ")  for " << CategoryName();
     }

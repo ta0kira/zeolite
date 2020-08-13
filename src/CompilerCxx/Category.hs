@@ -435,7 +435,7 @@ compileConcreteDefinition ta em ns rs dd@(DefinedCategory c n pi _ _ fi ms _ fs)
       let argsPassed = "const ValueTuple& args"
       let allArgs = intercalate ", " [argParent,paramsPassed,argsPassed]
       let initParent = "parent(p)"
-      let initParams = map (\(i,p) -> paramName (vpParam p) ++ "(*params.At(" ++ show i ++ "))") $ zip ([0..] :: [Int]) pi
+      let initParams = map (\(i,p) -> paramName (vpParam p) ++ "(params.At(" ++ show i ++ "))") $ zip ([0..] :: [Int]) pi
       let initArgs = map (\(i,m) -> variableName (dmName m) ++ "(" ++ unwrappedArg i m ++ ")") $ zip ([0..] :: [Int]) ms2
       let allInit = intercalate ", " $ initParent:(initParams ++ initArgs)
       return $ onlyCode $ valueName n ++ "(" ++ allArgs ++ ") : " ++ allInit ++ " {}"
@@ -648,10 +648,10 @@ commonDefineType t rs extra = do
     canConvertFrom
       | isInstanceInterface t = emptyCode
       | otherwise = onlyCodes $ [
-          "bool CanConvertFrom(const TypeInstance& from) const final {",
+          "bool CanConvertFrom(const S<const TypeInstance>& from) const final {",
           -- TODO: This should be a typedef.
           "  std::vector<S<const TypeInstance>> args;",
-          "  if (!from.TypeArgsForParent(parent, args)) return false;",
+          "  if (!from->TypeArgsForParent(parent, args)) return false;",
           -- TODO: Create a helper function for this error.
           "  if(args.size() != " ++ show (length params) ++ ") {",
           "    FAIL() << \"Wrong number of args (\" << args.size() << \")  for \" << CategoryName();",
@@ -662,8 +662,8 @@ commonDefineType t rs extra = do
     singleCheck (i,(p,Covariant))     = [checkCov i p]
     singleCheck (i,(p,Contravariant)) = [checkCon i p]
     singleCheck (i,(p,Invariant))     = [checkCov i p,checkCon i p]
-    checkCov i p = "  if (!TypeInstance::CanConvert(*args[" ++ show i ++ "], *" ++ paramName p ++ ")) return false;"
-    checkCon i p = "  if (!TypeInstance::CanConvert(*" ++ paramName p ++ ", *args[" ++ show i ++ "])) return false;"
+    checkCov i p = "  if (!TypeInstance::CanConvert(args[" ++ show i ++ "], " ++ paramName p ++ ")) return false;"
+    checkCon i p = "  if (!TypeInstance::CanConvert(" ++ paramName p ++ ", args[" ++ show i ++ "])) return false;"
     typeArgsForParent rs2
       | isInstanceInterface t = emptyCode
       | otherwise = onlyCodes $ [
@@ -767,9 +767,9 @@ defineInternalType t n
         "  static auto& cache = *new WeakInstanceMap<" ++ show n ++ ", " ++ typeName t ++ ">();",
         "  static auto& cache_mutex = *new std::mutex;",
         "  std::lock_guard<std::mutex> lock(cache_mutex);",
-        "  auto& cached = cache[params];",
+        "  auto& cached = cache[GetKeyFromParams<" ++ show n ++ ">(params)];",
         "  S<" ++ typeName t ++ "> type = cached.lock();",
-        "  if (!type) { type = (cached = S_get(new " ++ typeName t ++ "(" ++ categoryCreator t ++ "(), params))).lock(); }",
+        "  if (!type) { cached = type = S_get(new " ++ typeName t ++ "(" ++ categoryCreator t ++ "(), params)); }",
         "  return type;",
         "}"
       ]

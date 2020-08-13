@@ -45,7 +45,7 @@ class Type_Math : public TypeInstance {
 
   void BuildTypeName(std::ostream& output) const final;
 
-  bool CanConvertFrom(const TypeInstance& from) const final;
+  bool CanConvertFrom(const S<const TypeInstance>& from) const final;
 
   bool TypeArgsForParent(const TypeCategory& category, std::vector<S<const TypeInstance>>& args) const final;
 

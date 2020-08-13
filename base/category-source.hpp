@@ -19,6 +19,7 @@ limitations under the License.
 #ifndef CATEGORY_SOURCE_HPP_
 #define CATEGORY_SOURCE_HPP_
 
+#include <iostream>  // For occasional debugging output in generated code.
 #include <map>
 #include <mutex>
 #include <sstream>
@@ -43,8 +44,8 @@ S<TypeValue> Box_Char(PrimChar value);
 S<TypeValue> Box_Int(PrimInt value);
 S<TypeValue> Box_Float(PrimFloat value);
 
-S<TypeInstance> Merge_Intersect(L<TypeInstance*> params);
-S<TypeInstance> Merge_Union(L<TypeInstance*> params);
+S<TypeInstance> Merge_Intersect(L<S<const TypeInstance>> params);
+S<TypeInstance> Merge_Union(L<S<const TypeInstance>> params);
 
 const S<TypeInstance>& GetMerged_Any();
 const S<TypeInstance>& GetMerged_All();
@@ -86,13 +87,15 @@ class TypeInstance {
   virtual void BuildTypeName(std::ostream& output) const = 0;
 
 
-  static std::string TypeName(const TypeInstance& type) {
+  static std::string TypeName(const S<const TypeInstance>& type) {
+    TRACE_FUNCTION("typename")
     std::ostringstream output;
-    type.BuildTypeName(output);
+    type->BuildTypeName(output);
     return output.str();
   }
 
-  static S<TypeValue> Reduce(TypeInstance& from, TypeInstance& to, S<TypeValue> target) {
+  static S<TypeValue> Reduce(const S<const TypeInstance>& from,
+                             const S<const TypeInstance>& to, S<TypeValue> target) {
     TRACE_FUNCTION("reduce")
     return CanConvert(from, to)? target : Var_empty;
   }
@@ -110,10 +113,10 @@ class TypeInstance {
   virtual ReturnTuple Dispatch(const S<TypeInstance>& self, const TypeFunction& label,
                                const ParamTuple& params, const ValueTuple& args);
 
-  virtual bool CanConvertFrom(const TypeInstance& from) const
+  virtual bool CanConvertFrom(const S<const TypeInstance>& from) const
   { return false; }
 
-  static bool CanConvert(const TypeInstance& from, const TypeInstance& to);
+  static bool CanConvert(const S<const TypeInstance>& from, const S<const TypeInstance>& to);
 
   template<class...Ts>
   static void TypeNameFrom(std::ostream& output, const TypeCategory& category,
@@ -142,11 +145,10 @@ class TypeInstance {
   virtual MergeType InstanceMergeType() const
   { return MergeType::SINGLE; }
 
-  virtual std::vector<const TypeInstance*> MergedTypes() const
-  { return std::vector<const TypeInstance*>{this}; }
-
-  static bool ExpandCheckLeft(const TypeInstance& from, const TypeInstance& to);
-  static bool ExpandCheckRight(const TypeInstance& from, const TypeInstance& to);
+  virtual std::vector<S<const TypeInstance>> MergedTypes() const {
+    FAIL() << "Category " << CategoryName() << " is not a merged type";
+    __builtin_unreachable();
+  }
 };
 
 class TypeValue {
@@ -186,6 +188,6 @@ class TypeValue {
 };
 
 template<int P, class T>
-using WeakInstanceMap = std::map<typename Params<P>::Type, W<T>>;
+using WeakInstanceMap = std::map<typename ParamsKey<P>::Type, W<T>>;
 
 #endif  // CATEGORY_SOURCE_HPP_
