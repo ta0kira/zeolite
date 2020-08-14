@@ -188,6 +188,6 @@ class TypeValue {
 };
 
 template<int P, class T>
-using WeakInstanceMap = std::map<typename ParamsKey<P>::Type, W<T>>;
+using WeakInstanceMap = std::map<typename ParamsKey<P>::Type, S<T>>;
 
 #endif  // CATEGORY_SOURCE_HPP_

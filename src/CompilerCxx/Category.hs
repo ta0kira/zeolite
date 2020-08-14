@@ -768,7 +768,7 @@ defineInternalType t n
         "  static auto& cache_mutex = *new std::mutex;",
         "  std::lock_guard<std::mutex> lock(cache_mutex);",
         "  auto& cached = cache[GetKeyFromParams<" ++ show n ++ ">(params)];",
-        "  S<" ++ typeName t ++ "> type = cached.lock();",
+        "  S<" ++ typeName t ++ "> type = cached;",
         "  if (!type) { cached = type = S_get(new " ++ typeName t ++ "(" ++ categoryCreator t ++ "(), params)); }",
         "  return type;",
         "}"
