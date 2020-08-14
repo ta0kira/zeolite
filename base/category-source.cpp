@@ -18,6 +18,8 @@ limitations under the License.
 
 #include "category-source.hpp"
 
+#include <algorithm>
+
 #include "logging.hpp"
 
 
@@ -94,17 +96,32 @@ struct Type_Union : public TypeInstance {
   const L<S<const TypeInstance>> params_;
 };
 
+L<const TypeInstance*> ParamsToKey(const L<S<const TypeInstance>>& params) {
+  L<const TypeInstance*> key;
+  for (const auto& param : params) {
+    key.push_back(param.get());
+  }
+  std::sort(key.begin(), key.end());
+  return key;
+}
+
 }  // namespace
 
 
 S<TypeInstance> Merge_Intersect(L<S<const TypeInstance>> params) {
-  // Caching is more work than just creating a new instance.
-  return S_get(new Type_Intersect(params));
+  static auto& cache = *new std::map<L<const TypeInstance*>,S<Type_Intersect>>();
+  auto& cached = cache[ParamsToKey(params)];
+  S<Type_Intersect> type = cached;
+  if (!type) { cached = type = S_get(new Type_Intersect(params)); }
+  return type;
 }
 
 S<TypeInstance> Merge_Union(L<S<const TypeInstance>> params) {
-  // Caching is more work than just creating a new instance.
-  return S_get(new Type_Union(params));
+  static auto& cache = *new std::map<L<const TypeInstance*>,S<Type_Union>>();
+  auto& cached = cache[ParamsToKey(params)];
+  S<Type_Union> type = cached;
+  if (!type) { cached = type = S_get(new Type_Union(params)); }
+  return type;
 }
 
 const S<TypeInstance>& GetMerged_Any() {
