@@ -100,7 +100,7 @@ S<Type_Argv> CreateType_Argv(Params<0>::Type params) {
   return cached;
 }
 struct Value_Argv : public TypeValue {
-  Value_Argv(S<Type_Argv> p, const ParamTuple& params, const ValueTuple& args) : parent(p) {}
+  Value_Argv(int start, int size) : start_(start), size_(size) {}
   ReturnTuple Dispatch(const S<TypeValue>& self, const ValueFunction& label, const ParamTuple& params,const ValueTuple& args) final {
     using CallType = ReturnTuple(Value_Argv::*)(const S<TypeValue>&, const ParamTuple&, const ValueTuple&);
     static const CallType Table_ReadPosition[] = {
@@ -116,15 +116,13 @@ struct Value_Argv : public TypeValue {
     }
     return TypeValue::Dispatch(self, label, params, args);
   }
-  std::string CategoryName() const final { return parent->CategoryName(); }
+  std::string CategoryName() const final { return "Argv"; }
   ReturnTuple Call_readPosition(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args);
   ReturnTuple Call_readSize(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args);
   ReturnTuple Call_subSequence(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args);
-  const S<Type_Argv> parent;
+  const int start_;
+  const int size_;
 };
-S<TypeValue> CreateValue_Argv(S<Type_Argv> parent, const ParamTuple& params, const ValueTuple& args) {
-  return S_get(new Value_Argv(parent, params, args));
-}
 ReturnTuple Type_Argv::Call_global(const S<TypeInstance>& self, const ParamTuple& params, const ValueTuple& args) {
   TRACE_FUNCTION("Argv.global")
   return ReturnTuple(Var_global);
@@ -132,7 +130,7 @@ ReturnTuple Type_Argv::Call_global(const S<TypeInstance>& self, const ParamTuple
 ReturnTuple Value_Argv::Call_readPosition(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) {
   TRACE_FUNCTION("Argv.readPosition")
   const PrimInt Var_arg1 = (args.At(0))->AsInt();
-  return ReturnTuple(Box_String(Argv::GetArgAt(Var_arg1)));
+  return ReturnTuple(Box_String(Argv::GetArgAt(start_ + Var_arg1)));
 }
 ReturnTuple Value_Argv::Call_readSize(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) {
   TRACE_FUNCTION("Argv.readSize")
@@ -148,11 +146,9 @@ ReturnTuple Value_Argv::Call_subSequence(const S<TypeValue>& Var_self, const Par
   if (Var_arg2 < 0 || Var_arg1 + Var_arg2 > Argv::ArgCount()) {
     FAIL() << "Subsequence size " << Var_arg2 << " is invalid";
   }
-  // TODO: This requires a general random-access data structure, or adding
-  // artificial bounds on Value_Argv.
-  BUILTIN_FAIL(Box_String(PrimString_FromLiteral("ReadPosition.subSequence is not implemented")))
+  return ReturnTuple(S<TypeValue>(new Value_Argv(start_ + Var_arg1, Var_arg2)));
 }
-const S<TypeValue>& Var_global = *new S<TypeValue>(CreateValue_Argv(CreateType_Argv(Params<0>::Type()), ParamTuple(), ArgTuple()));
+const S<TypeValue>& Var_global = *new S<TypeValue>(new Value_Argv(0, Argv::ArgCount()));
 }  // namespace
 TypeCategory& GetCategory_Argv() {
   return CreateCategory_Argv();

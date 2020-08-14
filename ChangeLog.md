@@ -25,6 +25,12 @@
 * **[breaking]** Makes `TypeInstance`s shared in generated C++ and in C++
   extensions, to allow for better memory management of `@type`s in the future.
 
+### Libraries
+
+* **[fix]** Implements `subSequence` for `Argv` in `lib/util`. This is required
+  by `ReadPosition` but was forgotten. Calling it prior to this would cause a
+  failure.
+
 ## 0.8.0.0  -- 2020-08-07
 
 ### Language
