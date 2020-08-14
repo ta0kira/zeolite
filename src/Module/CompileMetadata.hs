@@ -98,7 +98,6 @@ data ModuleConfig =
     mcExprMap :: [(String,Expression SourcePos)],
     mcPublicDeps :: [FilePath],
     mcPrivateDeps :: [FilePath],
-    mcStreamlined :: [CategoryName],
     mcExtraFiles :: [ExtraSource],
     mcExtraPaths :: [FilePath],
     mcMode :: CompileMode
@@ -106,13 +105,12 @@ data ModuleConfig =
   deriving (Show)
 
 instance Eq ModuleConfig where
-  (ModuleConfig pA dA _ isA is2A ssA esA epA mA) == (ModuleConfig pB dB _ isB is2B ssB esB epB mB) =
+  (ModuleConfig pA dA _ isA is2A esA epA mA) == (ModuleConfig pB dB _ isB is2B esB epB mB) =
     all id [
         pA == pB,
         dA == dB,
         isA == isB,
         is2A == is2B,
-        ssA == ssB,
         esA == esB,
         epA == epB,
         mA == mB

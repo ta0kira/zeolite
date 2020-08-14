@@ -3,7 +3,6 @@ path: "file"
 public_deps: [
   "../util"
 ]
-streamlined: [RawFileReader RawFileWriter]
 extra_files: [
   category_source {
     source: "file/Category_RawFileReader.cpp"

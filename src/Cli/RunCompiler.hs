@@ -85,7 +85,6 @@ runCompiler resolver backend (CompileOptions _ is is2 _ _ _ p (CompileFast c fn 
     mcExprMap = [],
     mcPublicDeps = [],
     mcPrivateDeps = [],
-    mcStreamlined = [],
     mcExtraFiles = [],
     mcExtraPaths = [],
     mcMode = CompileUnspecified
@@ -97,7 +96,6 @@ runCompiler resolver backend (CompileOptions _ is is2 _ _ _ p (CompileFast c fn 
     msExprMap = em,
     msPublicDeps = is,
     msPrivateDeps = is2,
-    msStreamlined = [],
     msPublicFiles = [],
     msPrivateFiles = [f2'],
     msTestFiles = [],
@@ -137,7 +135,7 @@ runCompiler resolver backend (CompileOptions _ _ _ ds _ _ p CompileRecompile f) 
       if f < ForceAll && upToDate
          then compileWarningM $ "Path " ++ d0 ++ " is up to date"
          else do
-           rm@(ModuleConfig p2 d2 _ is is2 ss es ep m) <- loadRecompile d
+           rm@(ModuleConfig p2 d2 _ is is2 es ep m) <- loadRecompile d
            -- In case the module is manually configured with a p such as "..",
            -- since the absolute path might not be known ahead of time.
            absolute <- errorFromIO $ canonicalizePath (p </> d0)
@@ -150,7 +148,6 @@ runCompiler resolver backend (CompileOptions _ _ _ ds _ _ p CompileRecompile f) 
              msExprMap = em,
              msPublicDeps = is,
              msPrivateDeps = is2,
-             msStreamlined = ss,
              msPublicFiles = ps,
              msPrivateFiles = xs,
              msTestFiles = ts,
@@ -188,7 +185,6 @@ runCompiler resolver backend (CompileOptions h is is2 ds es ep p m f) = mapM_ co
       mcExprMap = [],
       mcPublicDeps = as,
       mcPrivateDeps = as2,
-      mcStreamlined = [],
       mcExtraFiles = es,
       mcExtraPaths = ep,
       mcMode = m

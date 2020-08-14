@@ -9,7 +9,6 @@ expression_map: [
 private_deps: [
   "../../tests"
 ]
-streamlined: [Argv SimpleInput SimpleOutput]
 extra_files: [
   category_source {
     source: "util/Category_Argv.cpp"

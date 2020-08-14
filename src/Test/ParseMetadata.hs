@@ -239,10 +239,6 @@ tests = [
         "/home/project/private-dep1",
         "/home/project/private-dep2"
       ],
-      mcStreamlined = [
-          CategoryName "Category1",
-          CategoryName "Category2"
-        ],
       mcExtraFiles = [
         CategorySource {
           csSource = "extra1.cpp",
@@ -277,21 +273,6 @@ tests = [
       mcExprMap = [("MACRO",Literal (StringLiteral [] "something"))],
       mcPublicDeps = [],
       mcPrivateDeps = [],
-      mcStreamlined = [],
-      mcExtraFiles = [],
-      mcExtraPaths = [],
-      mcMode = CompileIncremental {
-        ciLinkFlags = []
-      }
-    },
-
-    checkWriteFail "bad category" $ ModuleConfig {
-      mcRoot = "/home/projects",
-      mcPath = "special",
-      mcExprMap = [],
-      mcPublicDeps = [],
-      mcPrivateDeps = [],
-      mcStreamlined = [CategoryName "bad category"],
       mcExtraFiles = [],
       mcExtraPaths = [],
       mcMode = CompileIncremental {

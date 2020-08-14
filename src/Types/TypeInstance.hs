@@ -47,7 +47,6 @@ module Types.TypeInstance (
   fixTypeParams,
   getValueForParam,
   hasInferredParams,
-  isBuiltinCategory,
   isDefinesFilter,
   isRequiresFilter,
   isWeakValue,
@@ -143,9 +142,6 @@ instance Eq CategoryName where
 
 instance Ord CategoryName where
   c1 <= c2 = show c1 <= show c2
-
-isBuiltinCategory :: CategoryName -> Bool
-isBuiltinCategory _ = False
 
 newtype ParamName =
   ParamName {

@@ -51,6 +51,7 @@ import Parser.SourceFile
 import Types.Builtin
 import Types.DefinedCategory
 import Types.Pragma
+import Types.Procedure (isLiteralCategory)
 import Types.TypeCategory
 import Types.TypeInstance
 
@@ -62,7 +63,6 @@ data ModuleSpec =
     msExprMap :: ExprMap SourcePos,
     msPublicDeps :: [FilePath],
     msPrivateDeps :: [FilePath],
-    msStreamlined :: [CategoryName],
     msPublicFiles :: [FilePath],
     msPrivateFiles :: [FilePath],
     msTestFiles :: [FilePath],
@@ -85,7 +85,7 @@ data LoadedTests =
   deriving (Show)
 
 compileModule :: (PathIOHandler r, CompilerBackend b) => r -> b -> ModuleSpec -> CompileInfoIO ()
-compileModule resolver backend (ModuleSpec p d em is is2 ss ps xs ts es ep m f) = do
+compileModule resolver backend (ModuleSpec p d em is is2 ps xs ts es ep m f) = do
   as  <- fmap fixPaths $ mapErrorsM (resolveModule resolver (p </> d)) is
   as2 <- fmap fixPaths $ mapErrorsM (resolveModule resolver (p </> d)) is2
   let ca0 = Map.empty
@@ -109,6 +109,7 @@ compileModule resolver backend (ModuleSpec p d em is is2 ss ps xs ts es ep m f) 
   let ns0 = StaticNamespace $ publicNamespace  $ show compilerHash ++ path
   let ns1 = StaticNamespace . privateNamespace $ show time ++ show compilerHash ++ path
   let ex = concat $ map getSourceCategories es
+  let ss = filter (not . isLiteralCategory) ex
   cs <- loadModuleGlobals resolver p (ns0,ns1) ps Nothing deps1' deps2
   let cm = createLanguageModule ex ss em cs
   let cs2 = filter (not . hasCodeVisibility FromDependency) cs

@@ -279,16 +279,14 @@ instance ConfigFormat ModuleConfig where
       em  <- parseOptional "expression_map:" [] (parseList parseExprMacro)
       is  <- parseOptional "public_deps:"    [] (parseList parseQuoted)
       is2 <- parseOptional "private_deps:"   [] (parseList parseQuoted)
-      ss  <- parseOptional "streamlined:"    [] (parseList parseCategoryName)
       es  <- parseOptional "extra_files:"    [] (parseList readConfig)
       ep  <- parseOptional "include_paths:"  [] (parseList parseQuoted)
       m   <- parseRequired "mode:"              readConfig
-      return (ModuleConfig p d em is is2 ss es ep m)
-  writeConfig (ModuleConfig p d em is is2 ss es ep m) = do
+      return (ModuleConfig p d em is is2 es ep m)
+  writeConfig (ModuleConfig p d em is is2 es ep m) = do
     es' <- fmap concat $ mapErrorsM writeConfig es
     m' <- writeConfig m
     when (not $ null em) $ compileErrorM "Only empty expression maps are allowed when writing"
-    mapErrorsM_ validateCategoryName ss
     return $ [
         "root: " ++ show p,
         "path: " ++ show d,
@@ -301,9 +299,6 @@ instance ConfigFormat ModuleConfig where
         "]",
         "private_deps: ["
       ] ++ indents (map show is2) ++ [
-        "]",
-        "streamlined: ["
-      ] ++ (indents $ indents $ map show ss) ++ [
         "]",
         "extra_files: ["
       ] ++ indents es' ++ [
