@@ -117,6 +117,7 @@ struct Value_Argv : public TypeValue {
     return TypeValue::Dispatch(self, label, params, args);
   }
   std::string CategoryName() const final { return "Argv"; }
+  inline int GetSize() const { return size_ < 0 ? Argv::ArgCount() : size_; }
   ReturnTuple Call_readPosition(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args);
   ReturnTuple Call_readSize(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args);
   ReturnTuple Call_subSequence(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args);
@@ -134,21 +135,21 @@ ReturnTuple Value_Argv::Call_readPosition(const S<TypeValue>& Var_self, const Pa
 }
 ReturnTuple Value_Argv::Call_readSize(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) {
   TRACE_FUNCTION("Argv.readSize")
-  return ReturnTuple(Box_Int(Argv::ArgCount()));
+  return ReturnTuple(Box_Int(GetSize()));
 }
 ReturnTuple Value_Argv::Call_subSequence(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) {
   TRACE_FUNCTION("Argv.subSequence")
   const PrimInt Var_arg1 = (args.At(0))->AsInt();
   const PrimInt Var_arg2 = (args.At(1))->AsInt();
-  if (Var_arg1 < 0 || Var_arg1 > Argv::ArgCount()) {
+  if (Var_arg1 < 0 || (Var_arg1 > 0 && Var_arg1 >= GetSize())) {
     FAIL() << "Subsequence position " << Var_arg1 << " is out of bounds";
   }
-  if (Var_arg2 < 0 || Var_arg1 + Var_arg2 > Argv::ArgCount()) {
+  if (Var_arg2 < 0 || Var_arg1 + Var_arg2 > GetSize()) {
     FAIL() << "Subsequence size " << Var_arg2 << " is invalid";
   }
   return ReturnTuple(S<TypeValue>(new Value_Argv(start_ + Var_arg1, Var_arg2)));
 }
-const S<TypeValue>& Var_global = *new S<TypeValue>(new Value_Argv(0, Argv::ArgCount()));
+const S<TypeValue>& Var_global = *new S<TypeValue>(new Value_Argv(0, -1));
 }  // namespace
 TypeCategory& GetCategory_Argv() {
   return CreateCategory_Argv();
