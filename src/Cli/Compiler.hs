@@ -274,7 +274,8 @@ createModuleTemplates resolver p d deps1 deps2 = do
   let cs = filter isValueConcrete $ cs1++ps1++ts1
   let ca = Set.fromList $ map getCategoryName $ filter isValueConcrete cs
   let ca' = foldr Set.delete ca $ map dcName ds2
-  ts <- mapErrorsM (compileConcreteTemplate tm) $ Set.toList ca'
+  let testingCats = Set.fromList $ map getCategoryName ts1
+  ts <- mapErrorsM (\n -> compileConcreteTemplate (n `Set.member` testingCats) tm n) $ Set.toList ca'
   mapErrorsM_ writeTemplate ts where
   writeTemplate (CxxOutput _ n _ _ _ content) = do
     let n' = p </> d </> n

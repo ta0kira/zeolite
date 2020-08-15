@@ -2,28 +2,33 @@
 
 ## 0.9.0.0  -- ????-??-??
 
+### Compiler CLI
+
+* **[breaking]** Major changes to C++ extensions:
+
+  * **[breaking]** Corrects hole in `$ModuleOnly$` visibility in C++ extensions.
+    Previously, C++ extensions could directly access categories defined in
+    `$ModuleOnly$` sources in dependencies.
+
+  * **[breaking]** Randomizes cache paths and `namespace`s for generated C++
+    code so that C++ extensions cannot use static `#include` paths to circumvent
+    the visibility rules of a dependency.
+
+  * **[breaking]** Makes `TypeInstance`s shared in generated C++ and in C++
+    extensions, to allow for better memory management of `@type`s in the future.
+
+  * **[breaking]** Adds guards to C++ headers for `$TestsOnly$` categories, to
+    prevent them from being used in non-`$TestsOnly$` C++ extensions.
+
+* **[fix]** Fixes regression where calling `zeolite` with `-p` would overwrite
+  an existing `.zeolite-module`.
+
 ### Language
 
 * **[breaking]** Prohibits having a `$TestsOnly$` definition for a
   non-`$TestsOnly$` category. Previously, a `concrete` category declared in a
   non-`$TestsOnly$` `.0rp` could be `define`d in a `$TestsOnly$` `.0rx`, which
   creates a loophole that allows binaries to utilize `$TestsOnly$` code.
-
-### Compiler CLI
-
-* **[fix]** Fixes regression where calling `zeolite` with `-p` would overwrite
-  an existing `.zeolite-module`.
-
-* **[breaking]** Corrects hole in `$ModuleOnly$` visibility in C++ extensions.
-  Previously, C++ extensions could directly access categories defined in
-  `$ModuleOnly$` sources in dependencies.
-
-* **[breaking]** Randomizes cache paths and `namespace`s for generated C++ code
-  so that C++ extensions cannot use static `#include` paths to circumvent
-  the visibility rules of a dependency.
-
-* **[breaking]** Makes `TypeInstance`s shared in generated C++ and in C++
-  extensions, to allow for better memory management of `@type`s in the future.
 
 ### Libraries
 

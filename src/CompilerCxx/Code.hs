@@ -31,6 +31,7 @@ module CompilerCxx.Code (
   indentCompiled,
   isPrimType,
   newFunctionLabel,
+  noTestsOnlySourceGuard,
   onlyCode,
   onlyCodes,
   paramType,
@@ -40,6 +41,8 @@ module CompilerCxx.Code (
   showCreationTrace,
   startCleanupTracing,
   startFunctionTracing,
+  testsOnlyCategoryGuard,
+  testsOnlySourceGuard,
   typeBase,
   useAsArgs,
   useAsReturns,
@@ -343,3 +346,36 @@ escapeChars cs
     maybeQuote ss
       | null ss = ""
       | otherwise = "\"" ++ ss ++ "\""
+
+testsOnlyMacro :: String
+testsOnlyMacro = "ZEOLITE_TESTS_ONLY__YOUR_MODULE_IS_BROKEN_IF_YOU_USE_THIS_IN_HAND_WRITTEN_CODE"
+
+noTestsOnlyMacro :: String
+noTestsOnlyMacro = "ZEOLITE_NO_TESTS_ONLY__YOUR_MODULE_IS_BROKEN_IF_YOU_USE_THIS_IN_HAND_WRITTEN_CODE"
+
+testsOnlyCategoryGuard :: CategoryName -> [String]
+testsOnlyCategoryGuard n = [
+    "#ifndef " ++ testsOnlyMacro,
+    "#error Category " ++ show n ++ " can only be used by $TestsOnly$ categories",
+    "#endif  // " ++ testsOnlyMacro
+  ]
+
+testsOnlySourceGuard :: [String]
+testsOnlySourceGuard = [
+    "#ifndef " ++ testsOnlyMacro,
+    "#define " ++ testsOnlyMacro,
+    "#endif  // " ++ testsOnlyMacro,
+    "#ifdef " ++ noTestsOnlyMacro,
+    "#error Cannot define both $TestsOnly$ and non-$TestsOnly$ categories in the same source file",
+    "#endif  // " ++ noTestsOnlyMacro
+  ]
+
+noTestsOnlySourceGuard :: [String]
+noTestsOnlySourceGuard = [
+    "#ifndef " ++ noTestsOnlyMacro,
+    "#define " ++ noTestsOnlyMacro,
+    "#endif  // " ++ noTestsOnlyMacro,
+    "#ifdef " ++ testsOnlyMacro,
+    "#error Cannot define both $TestsOnly$ and non-$TestsOnly$ categories in the same source file",
+    "#endif  // " ++ testsOnlyMacro
+  ]

@@ -100,29 +100,30 @@ compileLanguageModule (LanguageModule ns0 ns1 ns2 cs0 ps0 ts0 cs1 ps1 ts1 ex ss 
   -- Check public sources up front so that error messages aren't duplicated for
   -- every source file.
   ta <- tmTesting
-  xx1 <- fmap concat $ mapErrorsM (compileSourceP tmPublic  nsPublic)  cs1
-  xx2 <- fmap concat $ mapErrorsM (compileSourceP tmPrivate nsPrivate) ps1
-  xx3 <- fmap concat $ mapErrorsM (compileSourceP tmTesting nsTesting) ts1
+  xx1 <- fmap concat $ mapErrorsM (compileSourceP False tmPublic  nsPublic)  cs1
+  xx2 <- fmap concat $ mapErrorsM (compileSourceP False tmPrivate nsPrivate) ps1
+  xx3 <- fmap concat $ mapErrorsM (compileSourceP True  tmTesting nsTesting) ts1
   (ds,xx4) <- fmap mergeGeneratedX $ mapErrorsM compileSourceX xa
-  xx5 <- fmap concat $ mapErrorsM (compileConcreteStreamlined ta) ss
+  xx5 <- fmap concat $ mapErrorsM (\s -> compileConcreteStreamlined (s `Set.member` testingCats) ta s) ss
   -- TODO: This should account for a name clash between a category declared in a
   -- TestsOnly .0rp and one declared in a non-TestOnly .0rx.
   let dm = mapByName ds
   checkDefined dm ex $ filter isValueConcrete (cs1 ++ ps1 ++ ts1)
   checkStreamlined
   return $ xx1 ++ xx2 ++ xx3 ++ xx4 ++ xx5 where
+    testingCats = Set.fromList $ map getCategoryName ts1
     tmPublic  = foldM includeNewTypes defaultCategories [cs0,cs1]
     tmPrivate = tmPublic  >>= \tm -> foldM includeNewTypes tm [ps0,ps1]
     tmTesting = tmPrivate >>= \tm -> foldM includeNewTypes tm [ts0,ts1]
     nsPublic = ns0 ++ ns2
     nsPrivate = nsPublic ++ ns1
     nsTesting = nsPrivate
-    compileSourceP tm ns c = do
+    compileSourceP testing tm ns c = do
       tm' <- tm
-      hxx <- compileCategoryDeclaration tm' ns c
+      hxx <- compileCategoryDeclaration testing tm' ns c
       cxx <- if isValueConcrete c
                 then return []
-                else compileInterfaceDefinition c >>= return . (:[])
+                else compileInterfaceDefinition testing c >>= return . (:[])
       return (hxx:cxx)
     compileSourceX (PrivateSource ns testing cs2 ds) = do
       tm <- if testing
@@ -143,17 +144,17 @@ compileLanguageModule (LanguageModule ns0 ns1 ns2 cs0 ps0 ts0 cs1 ps1 ts1 ex ss 
       -- dependencies for the module later on.
       tmTesting' <- tmTesting
       _ <- (includeNewTypes tmTesting' cs2) <?? "In a module source that is conditionally public"
-      hxx <- mapErrorsM (compileCategoryDeclaration tm' ns4) cs2
+      hxx <- mapErrorsM (compileCategoryDeclaration testing tm' ns4) cs2
       let interfaces = filter (not . isValueConcrete) cs2
-      cxx1 <- mapErrorsM compileInterfaceDefinition interfaces
-      cxx2 <- mapErrorsM (compileDefinition tm' (ns:ns4)) ds
+      cxx1 <- mapErrorsM (compileInterfaceDefinition testing) interfaces
+      cxx2 <- mapErrorsM (compileDefinition testing tm' (ns:ns4)) ds
       return (ds,hxx ++ cxx1 ++ cxx2)
     mergeGeneratedX ((ds,xx):xs2) = let (ds2,xx2) = mergeGeneratedX xs2 in (ds++ds2,xx++xx2)
     mergeGeneratedX _             = ([],[])
-    compileDefinition tm ns4 d = do
+    compileDefinition testing tm ns4 d = do
       tm' <- mergeInternalInheritance tm d
       let refines = dcName d `Map.lookup` tm >>= return . getCategoryRefines
-      compileConcreteDefinition tm' em ns4 refines d
+      compileConcreteDefinition testing tm' em ns4 refines d
     mapByName = Map.fromListWith (++) . map (\d -> (dcName d,[d]))
     ca = Set.fromList $ map getCategoryName $ filter isValueConcrete (cs1 ++ ps1 ++ ts1)
     checkLocals ds cs2 = mapErrorsM_ (checkLocal $ Set.fromList cs2) ds
@@ -224,8 +225,8 @@ compileModuleMain (LanguageModule ns0 ns1 ns2 cs0 ps0 _ cs1 ps1 _ _ _ em) xa n f
         (mergeAllM $ map (\d -> compileErrorM $ "Defined at " ++ formatFullContext (dcContext d)) ds)
 
 compileCategoryDeclaration :: (Show c, CompileErrorM m, MergeableM m) =>
-  CategoryMap c -> [Namespace] -> AnyCategory c -> m CxxOutput
-compileCategoryDeclaration _ ns t =
+  Bool -> CategoryMap c -> [Namespace] -> AnyCategory c -> m CxxOutput
+compileCategoryDeclaration testing _ ns t =
   return $ CxxOutput (Just $ getCategoryName t)
                      (headerFilename name)
                      (getCategoryNamespace t)
@@ -235,6 +236,7 @@ compileCategoryDeclaration _ ns t =
     file = mergeAll $ [
         CompiledData depends [],
         onlyCodes guardTop,
+        onlyCodes $ (if testing then testsOnlyCategoryGuard (getCategoryName t) else []),
         onlyCodes baseHeaderIncludes,
         addNamespace t content,
         onlyCodes guardBottom
@@ -260,10 +262,10 @@ compileCategoryDeclaration _ ns t =
       | isInstanceInterface t = []
       | otherwise             = declareGetType t
 
-compileInterfaceDefinition :: MergeableM m => AnyCategory c -> m CxxOutput
-compileInterfaceDefinition t = do
+compileInterfaceDefinition :: MergeableM m => Bool -> AnyCategory c -> m CxxOutput
+compileInterfaceDefinition testing t = do
   te <- typeConstructor
-  commonDefineAll t [] Nothing emptyCode emptyCode emptyCode te []
+  commonDefineAll testing t [] Nothing emptyCode emptyCode emptyCode te []
   where
     typeConstructor = do
       let ps = map vpParam $ getCategoryParams t
@@ -276,10 +278,10 @@ compileInterfaceDefinition t = do
       return $ onlyCode $ typeName (getCategoryName t) ++ "(" ++ allArgs ++ ") : " ++ allInit ++ " {}"
 
 compileConcreteTemplate :: (Show c, CompileErrorM m, MergeableM m) =>
-  CategoryMap c -> CategoryName -> m CxxOutput
-compileConcreteTemplate ta n = do
+  Bool -> CategoryMap c -> CategoryName -> m CxxOutput
+compileConcreteTemplate testing ta n = do
   (_,t) <- getConcreteCategory ta ([],n)
-  compileConcreteDefinition ta Map.empty [] Nothing (defined t) <?? ("In generated template for " ++ show n) where
+  compileConcreteDefinition testing ta Map.empty [] Nothing (defined t) <?? ("In generated template for " ++ show n) where
     defined t = DefinedCategory {
         dcContext = [],
         dcName = getCategoryName t,
@@ -308,16 +310,19 @@ compileConcreteTemplate ta n = do
     funcName f = show (sfType f) ++ "." ++ show (sfName f)
 
 compileConcreteStreamlined :: (Show c, CompileErrorM m, MergeableM m) =>
-  CategoryMap c -> CategoryName -> m [CxxOutput]
-compileConcreteStreamlined ta n =  ("In streamlined compilation of " ++ show n) ??> do
+  Bool -> CategoryMap c -> CategoryName -> m [CxxOutput]
+compileConcreteStreamlined testing ta n =  ("In streamlined compilation of " ++ show n) ??> do
   (_,t) <- getConcreteCategory ta ([],n)
+  let guard = if testing
+                 then testsOnlySourceGuard
+                 else noTestsOnlySourceGuard
   -- TODO: Implement this.
   let hxx = CxxOutput (Just $ getCategoryName t)
                       (headerStreamlined $ getCategoryName t)
                       (getCategoryNamespace t)
                       [getCategoryNamespace t]
                       (getCategoryMentions t)
-                      []
+                      guard
   let cxx = CxxOutput (Just $ getCategoryName t)
                       (sourceStreamlined $ getCategoryName t)
                       (getCategoryNamespace t)
@@ -327,9 +332,9 @@ compileConcreteStreamlined ta n =  ("In streamlined compilation of " ++ show n) 
   return [hxx,cxx]
 
 compileConcreteDefinition :: (Show c, CompileErrorM m, MergeableM m) =>
-  CategoryMap c -> ExprMap c -> [Namespace] -> Maybe [ValueRefine c] ->
+  Bool -> CategoryMap c -> ExprMap c -> [Namespace] -> Maybe [ValueRefine c] ->
   DefinedCategory c -> m CxxOutput
-compileConcreteDefinition ta em ns rs dd@(DefinedCategory c n pi _ _ fi ms _ fs) = do
+compileConcreteDefinition testing ta em ns rs dd@(DefinedCategory c n pi _ _ fi ms _ fs) = do
   (_,t) <- getConcreteCategory ta (c,n)
   let r = CategoryResolver ta
   [cp,tp,vp] <- getProcedureScopes ta em dd
@@ -383,7 +388,7 @@ compileConcreteDefinition ta em ns rs dd@(DefinedCategory c n pi _ _ fi ms _ fs)
       return $ defineValue,
       defineInternalValue n internalCount memberCount
     ] ++ map (return . snd) (cf ++ tf ++ vf)
-  commonDefineAll t ns rs top bottom ce te fe
+  commonDefineAll testing t ns rs top bottom ce te fe
   where
     disallowTypeMembers :: (Show c, CompileErrorM m, MergeableM m) =>
       [DefinedMember c] -> m ()
@@ -476,10 +481,10 @@ compileConcreteDefinition ta em ns rs dd@(DefinedCategory c n pi _ _ fi ms _ fs)
       | otherwise = []
 
 commonDefineAll :: MergeableM m =>
-  AnyCategory c -> [Namespace] -> Maybe [ValueRefine c] -> CompiledData [String] ->
+  Bool -> AnyCategory c -> [Namespace] -> Maybe [ValueRefine c] ->
   CompiledData [String] -> CompiledData [String] -> CompiledData [String] ->
-  [ScopedFunction c] -> m CxxOutput
-commonDefineAll t ns rs top bottom ce te fe = do
+  CompiledData [String] -> [ScopedFunction c] -> m CxxOutput
+commonDefineAll testing t ns rs top bottom ce te fe = do
   let filename = sourceFilename name
   (CompiledData req out) <- fmap (addNamespace t) $ mergeAllM $ [
       return $ CompiledData (Set.fromList (name:getCategoryMentions t)) [],
@@ -488,6 +493,9 @@ commonDefineAll t ns rs top bottom ce te fe = do
   let rs' = case rs of
                  Nothing -> []
                  Just rs2 -> rs2
+  let guard = if testing
+                 then testsOnlySourceGuard
+                 else noTestsOnlySourceGuard
   let inherited = Set.unions $ (map (categoriesFromRefine . vrType) (getCategoryRefines t ++ rs')) ++
                                (map (categoriesFromDefine . vdType) $ getCategoryDefines t)
   let includes = map (\i -> "#include \"" ++ headerFilename i ++ "\"") $
@@ -497,7 +505,7 @@ commonDefineAll t ns rs top bottom ce te fe = do
                      (getCategoryNamespace t)
                      ((getCategoryNamespace t):ns)
                      (Set.toList req)
-                     (baseSourceIncludes ++ includes ++ out)
+                     (guard ++ baseSourceIncludes ++ includes ++ out)
   where
     conditionalContent
       | isInstanceInterface t = []
@@ -808,7 +816,7 @@ createMainFile :: (Show c, CompileErrorM m, MergeableM m) =>
   CategoryMap c -> ExprMap c -> CategoryName -> FunctionName -> m (Namespace,[String])
 createMainFile tm em n f = ("In the creation of the main binary procedure") ??> do
   ca <- fmap indentCompiled (compileMainProcedure tm em expr)
-  let file = createMainCommon "main" ca
+  let file = noTestsOnlySourceGuard ++ createMainCommon "main" ca
   (_,t) <- getConcreteCategory tm ([],n)
   return (getCategoryNamespace t,file) where
     funcCall = FunctionCall [] f (Positional []) (Positional [])
@@ -819,7 +827,7 @@ createTestFile :: (Show c, CompileErrorM m, MergeableM m) =>
   CategoryMap c -> ExprMap c  -> Expression c -> m ([CategoryName],[String])
 createTestFile tm em e = ("In the creation of the test binary procedure") ??> do
   ca@(CompiledData req _) <- fmap indentCompiled (compileMainProcedure tm em e)
-  let file = createMainCommon "test" ca
+  let file = testsOnlySourceGuard ++ createMainCommon "test" ca
   return (Set.toList req,file)
 
 getCategoryMentions :: AnyCategory c -> [CategoryName]
