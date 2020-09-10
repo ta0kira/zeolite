@@ -842,12 +842,6 @@ so would just create more opportunity for unnecessary compile-time errors.)
 
   <i><span style='color:#0057ae;'>Int</span></i> comp &lt;- <span style='color:#0057ae;'>MyCategory</span><span style='color:#644a9b;'>$</span>compare&lt;<i><span style='color:#0057ae;'>String</span></i>&gt;(<span style='color:#bf0303;'>&quot;x&quot;</span>,<span style='color:#bf0303;'>&quot;y&quot;</span>)</pre>
 
-Unlike in Java and C++, you must *always* be explicit with type parameters; the
-compiler will not infer them for you. This is primarily to cut down on code
-ambiguity when troubleshooting code issues. It also makes it more clear that
-parameters are technically **type arguments**, and not just named place-holders
-to be filled in by a preprocessor.
-
 ### Using Interfaces
 
 Zeolite has `@value interface`s that are similar to Java `interface`s, which
