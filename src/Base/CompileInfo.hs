@@ -211,12 +211,12 @@ instance MonadIO m => MonadIO (CompileInfoT m) where
 
 instance Monad m => CompileErrorM (CompileInfoT m) where
   compileErrorM e = CompileInfoT $ return $ CompileFail emptyMessage $ CompileMessage e []
-  collectAllOrErrorM xs = CompileInfoT $ do
+  collectAllM xs = CompileInfoT $ do
     xs' <- sequence $ map citState $ foldr (:) [] xs
     return $ result $ splitErrorsAndData xs' where
       result ([],xs2,bs,ws) = CompileSuccess (CompileMessage "" ws) bs xs2
       result (es,_,bs,ws)   = CompileFail (CompileMessage "" ws) $ addBackground bs $ CompileMessage "" es
-  collectOneOrErrorM xs = CompileInfoT $ do
+  collectOneM xs = CompileInfoT $ do
     xs' <- sequence $ map citState $ foldr (:) [] xs
     return $ result $ splitErrorsAndData xs' where
       result (_,x:_,bs,ws) = CompileSuccess (CompileMessage "" ws) bs x
@@ -242,7 +242,7 @@ instance Monad m => MergeableM (CompileInfoT m) where
       result ([],[],bs,ws) = CompileFail (CompileMessage "" ws) $ addBackground bs emptyMessage
       result (es,[],bs,ws) = CompileFail (CompileMessage "" ws) $ addBackground bs $ CompileMessage "" es
       result (_,xs2,bs,ws) = CompileSuccess (CompileMessage "" ws) bs (mergeAny xs2)
-  mergeAllM = collectAllOrErrorM >=> return . mergeAll
+  mergeAllM = collectAllM >=> return . mergeAll
 
 emptyMessage :: CompileMessage
 emptyMessage = CompileMessage "" []

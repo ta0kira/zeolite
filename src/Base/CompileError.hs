@@ -46,8 +46,8 @@ class (Monad m, MonadFail m) => CompileErrorM m where
 class Monad m => CompileErrorM m where
 #endif
   compileErrorM :: String -> m a
-  collectAllOrErrorM :: Foldable f => f (m a) -> m [a]
-  collectOneOrErrorM :: Foldable f => f (m a) -> m a
+  collectAllM :: Foldable f => f (m a) -> m [a]
+  collectOneM :: Foldable f => f (m a) -> m a
   reviseErrorM :: m a -> String -> m a
   reviseErrorM e _ = e
   compileWarningM :: String -> m ()
@@ -64,7 +64,7 @@ class Monad m => CompileErrorM m where
 (??>) = flip reviseErrorM
 
 mapErrorsM :: CompileErrorM m => (a -> m b) -> [a] -> m [b]
-mapErrorsM f = collectAllOrErrorM . map f
+mapErrorsM f = collectAllM . map f
 
 mapErrorsM_ :: CompileErrorM m => (a -> m b) -> [a] -> m ()
 mapErrorsM_ f xs = mapErrorsM f xs >> return ()

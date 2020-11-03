@@ -693,7 +693,7 @@ mergeObjects :: (MergeableM m, CompileErrorM m) =>
 mergeObjects f = merge [] where
   merge cs [] = return cs
   merge cs (x:xs) = do
-    ys <- collectOneOrErrorM $ map check (cs ++ xs) ++ [return [x]]
+    ys <- collectOneM $ map check (cs ++ xs) ++ [return [x]]
     merge (cs ++ ys) xs where
       check x2 = x2 `f` x >> return []
 

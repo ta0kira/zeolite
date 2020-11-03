@@ -31,13 +31,13 @@ tests = [
     checkError "error\n" (compileErrorM "error" :: CompileInfoIO Char),
     checkError "" (compileErrorM "" :: CompileInfoIO Char),
 
-    checkSuccess ['a','b']          (collectAllOrErrorM [return 'a',return 'b']),
-    checkSuccess []                 (collectAllOrErrorM [] :: CompileInfoIO [Char]),
-    checkError   "error1\nerror2\n" (collectAllOrErrorM [compileErrorM "error1",return 'b',compileErrorM "error2"]),
+    checkSuccess ['a','b']          (collectAllM [return 'a',return 'b']),
+    checkSuccess []                 (collectAllM [] :: CompileInfoIO [Char]),
+    checkError   "error1\nerror2\n" (collectAllM [compileErrorM "error1",return 'b',compileErrorM "error2"]),
 
-    checkSuccess 'a' (collectOneOrErrorM [return 'a',return 'b']),
-    checkError   ""  (collectOneOrErrorM [] :: CompileInfoIO Char),
-    checkSuccess 'b' (collectOneOrErrorM [compileErrorM "error1",return 'b',compileErrorM "error2"]),
+    checkSuccess 'a' (collectOneM [return 'a',return 'b']),
+    checkError   ""  (collectOneM [] :: CompileInfoIO Char),
+    checkSuccess 'b' (collectOneM [compileErrorM "error1",return 'b',compileErrorM "error2"]),
 
     checkSuccess ['a','b','c']      (mergeAllM [return ['a'],return ['b','c']]),
     checkSuccess []                 (mergeAllM [] :: CompileInfoIO [Char]),
@@ -74,9 +74,9 @@ tests = [
     checkError "error\n  background\n"
       (compileBackgroundM "background" >> compileErrorM "error" :: CompileInfoIO ()),
     checkError "error\n  background\n"
-      (collectAllOrErrorM [compileBackgroundM "background"] >> compileErrorM "error" :: CompileInfoIO [()]),
+      (collectAllM [compileBackgroundM "background"] >> compileErrorM "error" :: CompileInfoIO [()]),
     checkError "error\n  background\n"
-      (collectOneOrErrorM [compileBackgroundM "background"] >> compileErrorM "error" :: CompileInfoIO ()),
+      (collectOneM [compileBackgroundM "background"] >> compileErrorM "error" :: CompileInfoIO ()),
     checkError "error\n  background\n"
       (mergeAllM [compileBackgroundM "background"] >> compileErrorM "error" :: CompileInfoIO ()),
     checkError "error\n  background\n"

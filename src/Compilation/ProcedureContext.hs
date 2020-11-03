@@ -148,7 +148,7 @@ instance (Show c, MergeableM m, CompileErrorM m) =>
       compileErrorM $ "Use explicit type conversion to call " ++ show n ++ " for union type " ++
                      show t2 ++ formatFullContextBrace c
     getFunction (Just ta@(TypeMerge MergeIntersect ts)) =
-      collectOneOrErrorM (map getFunction $ map Just ts) <??
+      collectOneM (map getFunction $ map Just ts) <??
         ("Function " ++ show n ++ " not available for type " ++ show ta ++ formatFullContextBrace c)
     getFunction (Just (SingleType (JustParamName _ p))) = do
       fa <- ccAllFilters ctx
@@ -157,7 +157,7 @@ instance (Show c, MergeableM m, CompileErrorM m) =>
                 _ -> compileErrorM $ "Param " ++ show p ++ " does not exist"
       let ts = map tfType $ filter isRequiresFilter fs
       let ds = map dfType $ filter isDefinesFilter  fs
-      collectOneOrErrorM (map (getFunction . Just . SingleType) ts ++ map checkDefine ds) <??
+      collectOneM (map (getFunction . Just . SingleType) ts ++ map checkDefine ds) <??
         ("Function " ++ show n ++ " not available for param " ++ show p ++ formatFullContextBrace c)
     getFunction (Just (SingleType (JustTypeInstance t2)))
       -- Same category as the procedure itself.

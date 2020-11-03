@@ -350,14 +350,14 @@ compileConcreteDefinition testing ta em ns rs dd@(DefinedCategory c n pi _ _ fi 
   let internalFuncs = Map.filter (not . (`Set.member` externalFuncs) . sfName) overrideFuncs
   let fe = Map.elems internalFuncs
   let allFuncs = getCategoryFunctions t ++ fe
-  cf <- collectAllOrErrorM $ applyProcedureScope compileExecutableProcedure cp
+  cf <- collectAllM $ applyProcedureScope compileExecutableProcedure cp
   ce <- mergeAllM [
       categoryConstructor t cm,
       categoryDispatch allFuncs,
       return $ mergeAll $ map fst cf,
       mergeAllM $ map (createMemberLazy r allFilters) cm
     ]
-  tf <- collectAllOrErrorM $ applyProcedureScope compileExecutableProcedure tp
+  tf <- collectAllM $ applyProcedureScope compileExecutableProcedure tp
   disallowTypeMembers tm
   te <- mergeAllM [
       typeConstructor t tm,
@@ -365,7 +365,7 @@ compileConcreteDefinition testing ta em ns rs dd@(DefinedCategory c n pi _ _ fi 
       return $ mergeAll $ map fst tf,
       mergeAllM $ map (createMember r allFilters) tm
     ]
-  vf <- collectAllOrErrorM $ applyProcedureScope compileExecutableProcedure vp
+  vf <- collectAllM $ applyProcedureScope compileExecutableProcedure vp
   let internalCount = length pi
   let memberCount = length vm
   top <- mergeAllM [
