@@ -56,20 +56,20 @@ reduceMergeTree anyOp allOp leafOp xa = reduce xa where
   reduce (MergeLeaf x) = leafOp x
 
 pruneMergeTree :: MergeableM m => MergeTree (m a) -> m (MergeTree a)
-pruneMergeTree = reduceMergeTree return return (fmap MergeLeaf)
+pruneMergeTree = reduceMergeTree return return (fmap mergeLeaf)
 
 instance Functor MergeTree where
-  fmap f (MergeAny xs) = MergeAny (map (fmap f) xs)
-  fmap f (MergeAll xs) = MergeAll (map (fmap f) xs)
-  fmap f (MergeLeaf x) = MergeLeaf (f x)
+  fmap f (MergeAny xs) = mergeAny (map (fmap f) xs)
+  fmap f (MergeAll xs) = mergeAll (map (fmap f) xs)
+  fmap f (MergeLeaf x) = mergeLeaf (f x)
 
 instance Foldable MergeTree where
   foldr f y = foldr f y . runIdentity . reduceMergeTree return return (return . (:[]))
 
 instance Traversable MergeTree where
-  traverse f (MergeAny xs) = MergeAny <$> foldr (<*>) (pure []) (map (fmap (:) . traverse f) xs)
-  traverse f (MergeAll xs) = MergeAll <$> foldr (<*>) (pure []) (map (fmap (:) . traverse f) xs)
-  traverse f (MergeLeaf x) = fmap MergeLeaf (f x)
+  traverse f (MergeAny xs) = mergeAny <$> foldr (<*>) (pure []) (map (fmap (:) . traverse f) xs)
+  traverse f (MergeAll xs) = mergeAll <$> foldr (<*>) (pure []) (map (fmap (:) . traverse f) xs)
+  traverse f (MergeLeaf x) = fmap mergeLeaf (f x)
 
 instance Mergeable (MergeTree a) where
   mergeAny = unnest . foldr ((++) . flattenAny) [] where
