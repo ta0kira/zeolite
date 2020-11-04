@@ -20,35 +20,35 @@
   <span style='color:#644a9b;'>@value</span> <b>optional</b> <i><span style='color:#0057ae;'>Formatted</span></i> error
 
   consumeAll (parser,data) {
-    <span style='color:#0057ae;'>ParseContext</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#y</span></i><span style='color:#c02040;'>&gt;</span> context &lt;- parser.run(new(data))
-    <b>if</b> (context.hasAnyError()) {
-      <b>return</b> context.getValue()
-    } <b>elif</b> (!context.atEof()) {
-      <b>return</b> <span style='color:#0057ae;'>ErrorOr</span><span style='color:#644a9b;'>$$</span>error(<span style='color:#bf0303;'>&quot;Parsing did not consume all of the data &quot;</span> + context.getPosition())
+    <span style='color:#0057ae;'>ParseContext</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#y</span></i><span style='color:#c02040;'>&gt;</span> context &lt;- parser<span style='color:#644a9b;'>.</span>run(new(data))
+    <b>if</b> (context<span style='color:#644a9b;'>.</span>hasAnyError()) {
+      <b>return</b> context<span style='color:#644a9b;'>.</span>getValue()
+    } <b>elif</b> (!context<span style='color:#644a9b;'>.</span>atEof()) {
+      <b>return</b> <span style='color:#0057ae;'>ErrorOr</span><span style='color:#644a9b;'>:</span>error(<span style='color:#bf0303;'>&quot;Parsing did not consume all of the data &quot;</span> + context<span style='color:#644a9b;'>.</span>getPosition())
     } <b>else</b> {
-      <b>return</b> context.getValue()
+      <b>return</b> context<span style='color:#644a9b;'>.</span>getValue()
     }
   }
 
   run (parser) {
-    <b>return</b> parser.run(<b>self</b>)
+    <b>return</b> parser<span style='color:#644a9b;'>.</span>run(<b>self</b>)
   }
 
   runAndGet (parser) {
-    <span style='color:#0057ae;'>ParseContext</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#y</span></i><span style='color:#c02040;'>&gt;</span> context &lt;- parser.run(<b>self</b>)
-    <b>return</b> context, context.getValue()
+    <span style='color:#0057ae;'>ParseContext</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#y</span></i><span style='color:#c02040;'>&gt;</span> context &lt;- parser<span style='color:#644a9b;'>.</span>run(<b>self</b>)
+    <b>return</b> context, context<span style='color:#644a9b;'>.</span>getValue()
   }
 
   getValue () {
     <b>if</b> (<b>present</b>(error)) {
-      <b>return</b> <span style='color:#0057ae;'>ErrorOr</span><span style='color:#644a9b;'>$$</span>error(<b>require</b>(error))
+      <b>return</b> <span style='color:#0057ae;'>ErrorOr</span><span style='color:#644a9b;'>:</span>error(<b>require</b>(error))
     } <b>else</b> {
       <b>return</b> value
     }
   }
 
   convertError () {
-    <b>return</b> <span style='color:#0057ae;'>ParseState</span><span style='color:#c02040;'>&lt;</span><b>all</b><span style='color:#c02040;'>&gt;</span>{ data, index, line, char, <span style='color:#0057ae;'>ErrorOr</span><span style='color:#644a9b;'>$$</span>error(getError()), error }
+    <b>return</b> <span style='color:#0057ae;'>ParseState</span><span style='color:#c02040;'>&lt;</span><b>all</b><span style='color:#c02040;'>&gt;</span>{ data, index, line, char, <span style='color:#0057ae;'>ErrorOr</span><span style='color:#644a9b;'>:</span>error(getError()), error }
   }
 
   setValue (value2) {
@@ -60,7 +60,7 @@
   }
 
   setBrokenInput (message) {
-    <b>return</b> <span style='color:#0057ae;'>ParseState</span><span style='color:#c02040;'>&lt;</span><b>all</b><span style='color:#c02040;'>&gt;</span>{ data, index, line, char, <span style='color:#0057ae;'>ErrorOr</span><span style='color:#644a9b;'>$$</span>error(message), message }
+    <b>return</b> <span style='color:#0057ae;'>ParseState</span><span style='color:#c02040;'>&lt;</span><b>all</b><span style='color:#c02040;'>&gt;</span>{ data, index, line, char, <span style='color:#0057ae;'>ErrorOr</span><span style='color:#644a9b;'>:</span>error(message), message }
   }
 
   toState () {
@@ -69,20 +69,20 @@
 
   getPosition () {
     <b>return</b> <i><span style='color:#0057ae;'>String</span></i><span style='color:#644a9b;'>$</span>builder()
-        .append(<span style='color:#bf0303;'>&quot;[line: &quot;</span>)
-        .append(line.formatted())
-        .append(<span style='color:#bf0303;'>&quot;, char: &quot;</span>)
-        .append(char.formatted())
-        .append(<span style='color:#bf0303;'>&quot;]&quot;</span>)
-        .build()
+        <span style='color:#644a9b;'>.</span>append(<span style='color:#bf0303;'>&quot;[line: &quot;</span>)
+        <span style='color:#644a9b;'>.</span>append(line<span style='color:#644a9b;'>.</span>formatted())
+        <span style='color:#644a9b;'>.</span>append(<span style='color:#bf0303;'>&quot;, char: &quot;</span>)
+        <span style='color:#644a9b;'>.</span>append(char<span style='color:#644a9b;'>.</span>formatted())
+        <span style='color:#644a9b;'>.</span>append(<span style='color:#bf0303;'>&quot;]&quot;</span>)
+        <span style='color:#644a9b;'>.</span>build()
   }
 
   atEof () {
-    <b>return</b> index &gt;= data.readSize()
+    <b>return</b> index &gt;= data<span style='color:#644a9b;'>.</span>readSize()
   }
 
   hasAnyError () {
-    <b>return</b> <b>present</b>(error) || value.isError()
+    <b>return</b> <b>present</b>(error) || value<span style='color:#644a9b;'>.</span>isError()
   }
 
   hasBrokenInput () {
@@ -91,12 +91,12 @@
 
   current () {
     <span style='color:#006e28;'>\</span> sanityCheck()
-    <b>return</b> data.readPosition(index)
+    <b>return</b> data<span style='color:#644a9b;'>.</span>readPosition(index)
   }
 
   advance () {
     <span style='color:#006e28;'>\</span> sanityCheck()
-    <b>if</b> (data.readPosition(index) == <span style='color:#924c9d;'>'\n'</span>) {
+    <b>if</b> (data<span style='color:#644a9b;'>.</span>readPosition(index) == <span style='color:#924c9d;'>'\n'</span>) {
       <b>return</b> <span style='color:#0057ae;'>ParseState</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>{ data, index+<span style='color:#b08000;'>1</span>, line+<span style='color:#b08000;'>1</span>, <span style='color:#b08000;'>1</span>, value, error }
     } <b>else</b> {
       <b>return</b> <span style='color:#0057ae;'>ParseState</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>{ data, index+<span style='color:#b08000;'>1</span>, line, char+<span style='color:#b08000;'>1</span>, value, error }
@@ -105,7 +105,7 @@
 
   <span style='color:#644a9b;'>@category</span> new (<i><span style='color:#0057ae;'>String</span></i>) -&gt; (<span style='color:#0057ae;'>ParseState</span><span style='color:#c02040;'>&lt;</span><b>any</b><span style='color:#c02040;'>&gt;</span>)
   new (data) {
-    <b>return</b> <span style='color:#0057ae;'>ParseState</span><span style='color:#c02040;'>&lt;</span><b>any</b><span style='color:#c02040;'>&gt;</span>{ data, <span style='color:#b08000;'>0</span>, <span style='color:#b08000;'>1</span>, <span style='color:#b08000;'>1</span>, <span style='color:#0057ae;'>ErrorOr</span><span style='color:#644a9b;'>$$</span>value&lt;<b>?</b>&gt;(<span style='color:#0057ae;'>Void</span><span style='color:#644a9b;'>$</span>void()), <b>empty</b> }
+    <b>return</b> <span style='color:#0057ae;'>ParseState</span><span style='color:#c02040;'>&lt;</span><b>any</b><span style='color:#c02040;'>&gt;</span>{ data, <span style='color:#b08000;'>0</span>, <span style='color:#b08000;'>1</span>, <span style='color:#b08000;'>1</span>, <span style='color:#0057ae;'>ErrorOr</span><span style='color:#644a9b;'>:</span>value&lt;<b>?</b>&gt;(<span style='color:#0057ae;'>Void</span><span style='color:#644a9b;'>$</span>void()), <b>empty</b> }
   }
 
   <span style='color:#644a9b;'>@value</span> getError () -&gt; (<i><span style='color:#0057ae;'>Formatted</span></i>)
@@ -113,7 +113,7 @@
     <b>if</b> (<b>present</b>(error)) {
       <b>return</b> <b>require</b>(error)
     } <b>else</b> {
-      <b>return</b> value.getError()
+      <b>return</b> value<span style='color:#644a9b;'>.</span>getError()
     }
   }
 
@@ -121,17 +121,17 @@
   sanityCheck () {
     <b>if</b> (hasBrokenInput()) {
       <span style='color:#006e28;'>\</span> <span style='color:#0057ae;'>LazyStream</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Formatted</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>$</span>new()
-          .append(<span style='color:#bf0303;'>&quot;Error at &quot;</span>)
-          .append(getPosition())
-          .append(<span style='color:#bf0303;'>&quot;: &quot;</span>)
-          .append(getError())
-          .writeTo(<span style='color:#0057ae;'>SimpleOutput</span><span style='color:#644a9b;'>$</span>error())
+          <span style='color:#644a9b;'>.</span>append(<span style='color:#bf0303;'>&quot;Error at &quot;</span>)
+          <span style='color:#644a9b;'>.</span>append(getPosition())
+          <span style='color:#644a9b;'>.</span>append(<span style='color:#bf0303;'>&quot;: &quot;</span>)
+          <span style='color:#644a9b;'>.</span>append(getError())
+          <span style='color:#644a9b;'>.</span>writeTo(<span style='color:#0057ae;'>SimpleOutput</span><span style='color:#644a9b;'>$</span>error())
     }
     <b>if</b> (atEof()) {
       <span style='color:#006e28;'>\</span> <span style='color:#0057ae;'>LazyStream</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Formatted</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>$</span>new()
-          .append(<span style='color:#bf0303;'>&quot;Reached end of input at &quot;</span>)
-          .append(getPosition())
-          .writeTo(<span style='color:#0057ae;'>SimpleOutput</span><span style='color:#644a9b;'>$</span>error())
+          <span style='color:#644a9b;'>.</span>append(<span style='color:#bf0303;'>&quot;Reached end of input at &quot;</span>)
+          <span style='color:#644a9b;'>.</span>append(getPosition())
+          <span style='color:#644a9b;'>.</span>writeTo(<span style='color:#0057ae;'>SimpleOutput</span><span style='color:#644a9b;'>$</span>error())
     }
   }
 }

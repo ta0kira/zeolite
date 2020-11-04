@@ -75,7 +75,7 @@ define Test {
     String s <- "abcde"
     Int count <- 0
     scoped {
-      ReadIterator<Char> iter <- ReadIterator$$fromReadPosition<Char>(s)
+      ReadIterator<Char> iter <- ReadIterator:fromReadPosition<Char>(s)
     } in while (!iter.pastForwardEnd()) {
       if (iter.readCurrent() != s.readPosition(count)) {
         fail(iter.readCurrent())
@@ -104,7 +104,7 @@ define Test {
     String s <- "abcde"
     Int count <- s.readSize()-1
     scoped {
-      ReadIterator<Char> iter <- ReadIterator$$fromReadPositionAt<Char>(s,count)
+      ReadIterator<Char> iter <- ReadIterator:fromReadPositionAt<Char>(s,count)
     } in while (!iter.pastReverseEnd()) {
       if (iter.readCurrent() != s.readPosition(count)) {
         fail(iter.readCurrent())
@@ -316,7 +316,7 @@ testcase "ErrorOr value" {
 
 define Test {
   run () {
-    ErrorOr<Int> value <- ErrorOr$$value<Int>(10)
+    ErrorOr<Int> value <- ErrorOr:value<Int>(10)
     if (value.isError()) {
       fail("Failed")
     }
@@ -336,7 +336,7 @@ testcase "ErrorOr getError() crashes with value" {
 
 define Test {
   run () {
-    ErrorOr<Int> value <- ErrorOr$$value<Int>(10)
+    ErrorOr<Int> value <- ErrorOr:value<Int>(10)
     \ value.getError()
   }
 }
@@ -352,7 +352,7 @@ testcase "ErrorOr error" {
 
 define Test {
   run () {
-    ErrorOr<String> value <- ErrorOr$$error("error message")
+    ErrorOr<String> value <- ErrorOr:error("error message")
     if (!value.isError()) {
       fail("Failed")
     }
@@ -372,7 +372,7 @@ testcase "ErrorOr getValue() crashes with error" {
 
 define Test {
   run () {
-    ErrorOr<String> value <- ErrorOr$$error("error message")
+    ErrorOr<String> value <- ErrorOr:error("error message")
     \ value.getValue()
   }
 }
@@ -389,7 +389,7 @@ testcase "ErrorOr convert error" {
 define Test {
   run () {
     scoped {
-      ErrorOr<String> error <- ErrorOr$$error("error message")
+      ErrorOr<String> error <- ErrorOr:error("error message")
     } in ErrorOr<Int> value <- error.convertError()
     \ Testing$check<?>(value.getError().formatted(),"error message")
   }

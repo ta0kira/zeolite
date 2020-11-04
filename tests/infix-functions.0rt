@@ -27,7 +27,7 @@ define Test {
   }
 
   run () {
-    Int value <- 1 `Test$$add` 2
+    Int value <- 1 `Test:add` 2
     if (value != 3) {
       fail(value)
     }

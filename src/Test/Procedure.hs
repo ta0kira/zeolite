@@ -49,10 +49,11 @@ tests = [
     checkShortParseFail "return var, _",
     checkShortParseFail "return T<#x> var",
     checkShortParseSuccess "return T<#x>{ val }",
-    checkShortParseSuccess "\\ T$$func()",
-    checkShortParseFail "\\ T<#x>$$func()",
-    checkShortParseFail "\\ var.T$$func()",
+    checkShortParseSuccess "\\ T:func()",
+    checkShortParseFail "\\ T$$func()",
     checkShortParseFail "\\ T$ $func()",
+    checkShortParseFail "\\ T<#x>:func()",
+    checkShortParseFail "\\ var.T:func()",
 
     checkShortParseSuccess "break",
     checkShortParseFail "break var",
@@ -259,7 +260,7 @@ tests = [
                                 (Literal (IntegerLiteral _ False 2))) -> True
                               _ -> False),
 
-    checkParsesAs "1 `Something$$foo` 2"
+    checkParsesAs "1 `Something:foo` 2"
                   (\e -> case e of
                               (InfixExpression _
                                 (Literal (IntegerLiteral _ False 1))
@@ -314,7 +315,7 @@ tests = [
                                 (Literal (IntegerLiteral _ False 2))) -> True
                               _ -> False),
 
-    checkParsesAs "`Bits$$not` 2"
+    checkParsesAs "`Bits:not` 2"
                   (\e -> case e of
                               (UnaryExpression _
                                 (FunctionOperator _

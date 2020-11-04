@@ -30,6 +30,10 @@
   non-`$TestsOnly$` `.0rp` could be `define`d in a `$TestsOnly$` `.0rx`, which
   creates a loophole that allows binaries to utilize `$TestsOnly$` code.
 
+* **[breaking]** Changes the syntax for calling `@category` functions from `$$`
+  to `:`, e.g., `Foo:create()` instead of `Foo$$create()`. A new error message
+  (to be removed later) will remind the user to stop using `$$`.
+
 ### Libraries
 
 * **[fix]** Implements `subSequence` for `Argv` in `lib/util`. This is required

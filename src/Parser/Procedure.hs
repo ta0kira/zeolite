@@ -35,7 +35,6 @@ import Types.Positional
 import Types.Pragma
 import Types.Procedure
 import Types.TypeCategory
-import Types.TypeInstance
 
 
 instance ParseFromSource (ExecutableProcedure SourcePos) where
@@ -168,7 +167,7 @@ instance ParseFromSource (Assignable SourcePos) where
       strayFuncCall <|> return ()
       return $ ExistingVariable n
     strayFuncCall = do
-      valueSymbolGet <|> try typeSymbolGet <|> categorySymbolGet
+      valueSymbolGet <|> typeSymbolGet <|> categorySymbolGet
       fail "function returns must be explicitly handled"
 
 instance ParseFromSource (VoidExpression SourcePos) where
@@ -304,7 +303,7 @@ instance ParseFromSource (Expression SourcePos) where
     e <- notInfix
     asInfix [e] [] <|> return e
     where
-      notInfix = literal <|> unary <|> expression <|> initalize
+      notInfix = literal <|> unary <|> initalize <|> expression
       asInfix es os = do
         c <- getPosition
         o <- infixOperator <|> functionOperator
@@ -331,13 +330,15 @@ instance ParseFromSource (Expression SourcePos) where
         return $ UnaryExpression [c] o e
       expression = labeled "expression" $ do
         c <- getPosition
-        s <- try sourceParser
+        s <- sourceParser
         vs <- many sourceParser
         return $ Expression [c] s vs
       initalize = do
         c <- getPosition
-        t <- try sourceParser :: Parser TypeInstance
-        sepAfter (string_ "{")
+        t <- try $ do  -- Avoids consuming the type name if { isn't present.
+          t2 <- sourceParser
+          sepAfter (labeled "@value initializer" $ string_ "{")
+          return t2
         withParams c t <|> withoutParams c t
       withParams c t = do
         try kwTypes
@@ -354,22 +355,24 @@ instance ParseFromSource (Expression SourcePos) where
 
 instance ParseFromSource (FunctionQualifier SourcePos) where
   -- TODO: This is probably better done iteratively.
-  sourceParser = try valueFunc <|> try categoryFunc <|> try typeFunc where
+  sourceParser = valueFunc <|> categoryFunc <|> typeFunc where
+    valueFunc = do
+      c <- getPosition
+      q <- try sourceParser
+      valueSymbolGet
+      return $ ValueFunction [c] q
     categoryFunc = do
       c <- getPosition
-      q <- sourceParser
-      categorySymbolGet
+      q <- try $ do  -- Avoids consuming the type name if : isn't present.
+        q2 <- sourceParser
+        categorySymbolGet
+        return q2
       return $ CategoryFunction [c] q
     typeFunc = do
       c <- getPosition
-      q <- sourceParser
+      q <- try sourceParser
       typeSymbolGet
       return $ TypeFunction [c] q
-    valueFunc = do
-      c <- getPosition
-      q <- sourceParser
-      valueSymbolGet
-      return $ ValueFunction [c] q
 
 instance ParseFromSource (FunctionSpec SourcePos) where
   sourceParser = try qualified <|> unqualified where
@@ -429,7 +432,7 @@ instance ParseFromSource (ExpressionStart SourcePos) where
                  builtinValue <|>
                  sourceContext <|>
                  exprLookup <|>
-                 try typeOrCategoryCall <|>
+                 categoryCall <|>
                  typeCall where
     parens = do
       c <- getPosition
@@ -475,24 +478,19 @@ instance ParseFromSource (ExpressionStart SourcePos) where
     asUnqualifiedCall c n = do
       f <- parseFunctionCall c (FunctionName (vnName n))
       return $ UnqualifiedCall [c] f
-    typeOrCategoryCall = do
+    categoryCall = do
       c <- getPosition
-      t <- sourceParser :: Parser CategoryName
-      asType c t <|> asCategory c t
-    asType c t = do
-      try typeSymbolGet
-      n <- sourceParser
-      f <- parseFunctionCall c n
-      return $ TypeCall [c] (JustTypeInstance $ TypeInstance t $ Positional []) f
-    asCategory c t = do
-      categorySymbolGet
+      t <- try $ do  -- Avoids consuming the type name if : isn't present.
+        t2 <- sourceParser
+        categorySymbolGet
+        return t2
       n <- sourceParser
       f <- parseFunctionCall c n
       return $ CategoryCall [c] t f
     typeCall = do
       c <- getPosition
       t <- try sourceParser
-      try typeSymbolGet
+      typeSymbolGet
       n <- sourceParser
       f <- parseFunctionCall c n
       return $ TypeCall [c] t f

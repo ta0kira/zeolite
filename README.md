@@ -425,7 +425,8 @@ simplify parsing.)
   substutition (if applicable), and uses `$` notation, e.g.,
   `MyCategory<Int>$create()`.
 - Calling a function with `@category` scope requires the category itself, and
-  uses the `$$` notation, e.g., `MyCategory$$foo()`.
+  uses the `:` notation, e.g., `MyCategory:foo()`. (Prior to compiler version
+  `0.9.0.0`, `$$` was used instead of `:`.)
 - You can skip qualifying function calls (e.g., in the example above) if the
   function being called is in the same scope or higher. For example, you can
   call a `@type` function from the procedure for a `@value` function in the
@@ -927,7 +928,7 @@ actual mistake causing a type error.)
 <span style='color:#898887;'>// ...</span>
 
 <span style='color:#898887;'>// This is fine.</span>
-<span style='color:#0057ae;'>Value</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Int</span></i><span style='color:#c02040;'>&gt;</span> value1 &lt;- <span style='color:#0057ae;'>Value</span><span style='color:#644a9b;'>$$</span>create1&lt;<b>?</b>&gt;(<span style='color:#b08000;'>10</span>)
+<span style='color:#0057ae;'>Value</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Int</span></i><span style='color:#c02040;'>&gt;</span> value1 &lt;- <span style='color:#0057ae;'>Value</span><span style='color:#644a9b;'>:</span>create1&lt;<b>?</b>&gt;(<span style='color:#b08000;'>10</span>)
 
 <span style='color:#898887;'>// These uses of ? are not allowed:</span>
 <span style='color:#898887;'>// Value&lt;Int&gt; value2 &lt;- Value&lt;?&gt;$create2(10)</span>

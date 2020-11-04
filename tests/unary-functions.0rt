@@ -27,7 +27,7 @@ define Test {
   }
 
   run () {
-    Int value <- `Test$$neg` 2
+    Int value <- `Test:neg` 2
     if (value != -2) {
       fail(value)
     }

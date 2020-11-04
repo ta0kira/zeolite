@@ -137,10 +137,16 @@ valueSymbolGet :: Parser ()
 valueSymbolGet = sepAfter (string_ ".")
 
 categorySymbolGet :: Parser ()
-categorySymbolGet = sepAfter (string_ "$$")
+categorySymbolGet = labeled ":" $ useNewCategoryOperator <|> sepAfter (string_ ":")
 
 typeSymbolGet :: Parser ()
-typeSymbolGet = sepAfter (string_ "$" >> notFollowedBy (string_ "$"))
+typeSymbolGet = labeled "$" $ useNewCategoryOperator <|> sepAfter (string_ "$")
+
+-- TODO: Remove this after a reasonable amount of time.
+useNewCategoryOperator :: Parser ()
+useNewCategoryOperator = do
+  try $ string_ "$$"
+  fail "use \":\" instead of \"$$\" to call @category functions"
 
 assignOperator :: Parser ()
 assignOperator = operator "<-" >> return ()

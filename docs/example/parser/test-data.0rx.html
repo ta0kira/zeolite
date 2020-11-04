@@ -17,7 +17,7 @@
   <span style='color:#644a9b;'>@value</span> <i><span style='color:#0057ae;'>Bool</span></i>   boolean
 
   parseFrom (data) {
-    <b>return</b> <span style='color:#0057ae;'>TestDataParser</span><span style='color:#644a9b;'>$</span>create() <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>ParseState</span><span style='color:#644a9b;'>$$</span>consumeAll&lt;<b>?</b>&gt;<b><span style='color:#c02040;'>`</span></b> data
+    <b>return</b> <span style='color:#0057ae;'>TestDataParser</span><span style='color:#644a9b;'>$</span>create() <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>ParseState</span><span style='color:#644a9b;'>:</span>consumeAll&lt;<b>?</b>&gt;<b><span style='color:#c02040;'>`</span></b> data
   }
 
   create (name,description,boolean) {
@@ -68,22 +68,22 @@
 
   run (contextOld) {
     <span style='color:#0057ae;'>ParseContext</span><span style='color:#c02040;'>&lt;</span><b>any</b><span style='color:#c02040;'>&gt;</span> context &lt;- contextOld
-    context                              &lt;- context.run&lt;<b>?</b>&gt;(fileStart)
-    context                              &lt;- context.run&lt;<b>?</b>&gt;(nameTag)
-    context, <span style='color:#0057ae;'>ErrorOr</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>String</span></i><span style='color:#c02040;'>&gt;</span> name        &lt;- context.runAndGet&lt;<b>?</b>&gt;(sentenceOrToken)
-    context                              &lt;- context.run&lt;<b>?</b>&gt;(descriptionTag)
-    context, <span style='color:#0057ae;'>ErrorOr</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>String</span></i><span style='color:#c02040;'>&gt;</span> description &lt;- context.runAndGet&lt;<b>?</b>&gt;(sentenceOrToken)
-    context                              &lt;- context.run&lt;<b>?</b>&gt;(aWordTag)
-    context, <span style='color:#0057ae;'>ErrorOr</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Bool</span></i><span style='color:#c02040;'>&gt;</span> boolean       &lt;- context.runAndGet&lt;<b>?</b>&gt;(acronymOrAardvark)
-    context                              &lt;- context.run&lt;<b>?</b>&gt;(fileEnd)
+    context                              &lt;- context<span style='color:#644a9b;'>.</span>run&lt;<b>?</b>&gt;(fileStart)
+    context                              &lt;- context<span style='color:#644a9b;'>.</span>run&lt;<b>?</b>&gt;(nameTag)
+    context, <span style='color:#0057ae;'>ErrorOr</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>String</span></i><span style='color:#c02040;'>&gt;</span> name        &lt;- context<span style='color:#644a9b;'>.</span>runAndGet&lt;<b>?</b>&gt;(sentenceOrToken)
+    context                              &lt;- context<span style='color:#644a9b;'>.</span>run&lt;<b>?</b>&gt;(descriptionTag)
+    context, <span style='color:#0057ae;'>ErrorOr</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>String</span></i><span style='color:#c02040;'>&gt;</span> description &lt;- context<span style='color:#644a9b;'>.</span>runAndGet&lt;<b>?</b>&gt;(sentenceOrToken)
+    context                              &lt;- context<span style='color:#644a9b;'>.</span>run&lt;<b>?</b>&gt;(aWordTag)
+    context, <span style='color:#0057ae;'>ErrorOr</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Bool</span></i><span style='color:#c02040;'>&gt;</span> boolean       &lt;- context<span style='color:#644a9b;'>.</span>runAndGet&lt;<b>?</b>&gt;(acronymOrAardvark)
+    context                              &lt;- context<span style='color:#644a9b;'>.</span>run&lt;<b>?</b>&gt;(fileEnd)
 
-    <b>if</b> (context.hasAnyError()) {
-      <b>return</b> context.convertError()
+    <b>if</b> (context<span style='color:#644a9b;'>.</span>hasAnyError()) {
+      <b>return</b> context<span style='color:#644a9b;'>.</span>convertError()
     } <b>else</b> {
-      <b>return</b> context.setValue&lt;<b>?</b>&gt;(
-        <span style='color:#0057ae;'>ErrorOr</span><span style='color:#644a9b;'>$$</span>value&lt;<b>?</b>&gt;(<span style='color:#0057ae;'>TestData</span><span style='color:#644a9b;'>$</span>create(name.getValue(),
-                                          description.getValue(),
-                                          boolean.getValue())))
+      <b>return</b> context<span style='color:#644a9b;'>.</span>setValue&lt;<b>?</b>&gt;(
+        <span style='color:#0057ae;'>ErrorOr</span><span style='color:#644a9b;'>:</span>value&lt;<b>?</b>&gt;(<span style='color:#0057ae;'>TestData</span><span style='color:#644a9b;'>$</span>create(name<span style='color:#644a9b;'>.</span>getValue(),
+                                          description<span style='color:#644a9b;'>.</span>getValue(),
+                                          boolean<span style='color:#644a9b;'>.</span>getValue())))
     }
   }
 

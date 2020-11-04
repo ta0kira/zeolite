@@ -6,7 +6,7 @@
 <language
     name="Zeolite"
     section="Sources"
-    version="3.4"
+    version="3.5"
     kateversion="2.4"
     indenter="cstyle"
     style="Zeolite"
@@ -231,7 +231,6 @@
         <DetectChar attribute="Infix Func" context="#stay" char="`" />
         <DetectChar attribute="String" context="String" char="&quot;" />
         <DetectChar attribute="Char" context="Char" char="'" />
-        <Detect2Chars attribute="Caller" context="#stay" char="$" char1="$" />
         <Detect2Chars attribute="Operator" context="#stay" char="|" char1="|" />
         <DetectChar attribute="Operator" context="#stay" char="&amp;" />
         <DetectChar attribute="Operator" context="#stay" char="|" />
@@ -245,7 +244,10 @@
         <Detect2Chars attribute="Operator" context="#stay" char="&lt;" char1="=" />
         <Detect2Chars attribute="Operator" context="#stay" char="&gt;" char1="=" />
         <AnyChar attribute="Operator" context="#stay" String="&lt;&gt;+-*%/" />
+        <Detect2Chars attribute="Error" context="#stay" char="$" char1="$" />
         <DetectChar attribute="Caller" context="#stay" char="$" />
+        <DetectChar attribute="Caller" context="#stay" char=":" />
+        <DetectChar attribute="Caller" context="#stay" char="." />
         <AnyChar attribute="Error" context="#stay" String="]|&amp;" />
       </context>
 

@@ -53,7 +53,7 @@ This example highlights several distinguishing features of the
   require special instructions, scripting, or `Makefile`s.
 
 - **Type Inference.** Several of the function definitions in the `.0rx` files
-  request parameter type-inference using `?`, e.g., `ErrorOr$$value<?>(match)`.
+  request parameter type-inference using `?`, e.g., `ErrorOr:value<?>(match)`.
   This is useful when the parameter value can be easily guessed by the reader of
   the code from its context.
 

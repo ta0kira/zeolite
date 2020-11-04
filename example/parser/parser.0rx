@@ -13,7 +13,7 @@ define ParseState {
     if (context.hasAnyError()) {
       return context.getValue()
     } elif (!context.atEof()) {
-      return ErrorOr$$error("Parsing did not consume all of the data " + context.getPosition())
+      return ErrorOr:error("Parsing did not consume all of the data " + context.getPosition())
     } else {
       return context.getValue()
     }
@@ -30,14 +30,14 @@ define ParseState {
 
   getValue () {
     if (present(error)) {
-      return ErrorOr$$error(require(error))
+      return ErrorOr:error(require(error))
     } else {
       return value
     }
   }
 
   convertError () {
-    return ParseState<all>{ data, index, line, char, ErrorOr$$error(getError()), error }
+    return ParseState<all>{ data, index, line, char, ErrorOr:error(getError()), error }
   }
 
   setValue (value2) {
@@ -49,7 +49,7 @@ define ParseState {
   }
 
   setBrokenInput (message) {
-    return ParseState<all>{ data, index, line, char, ErrorOr$$error(message), message }
+    return ParseState<all>{ data, index, line, char, ErrorOr:error(message), message }
   }
 
   toState () {
@@ -94,7 +94,7 @@ define ParseState {
 
   @category new (String) -> (ParseState<any>)
   new (data) {
-    return ParseState<any>{ data, 0, 1, 1, ErrorOr$$value<?>(Void$void()), empty }
+    return ParseState<any>{ data, 0, 1, 1, ErrorOr:value<?>(Void$void()), empty }
   }
 
   @value getError () -> (Formatted)
