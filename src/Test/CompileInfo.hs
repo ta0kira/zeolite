@@ -56,14 +56,14 @@ tests = [
     checkSuccess []         (sequence [] :: CompileInfoIO [Char]),
     checkError   "error1\n" (sequence [compileErrorM "error1",return 'b',compileErrorM "error2"]),
 
-    checkSuccess 'a' (return 'a' `reviseErrorM` "message"),
-    checkError "message\n  error\n" (compileErrorM "error" `reviseErrorM` "message" :: CompileInfoIO ()),
+    checkSuccess 'a' (return 'a' `withContextM` "message"),
+    checkError "message\n  error\n" (compileErrorM "error" `withContextM` "message" :: CompileInfoIO ()),
     checkSuccessAndWarnings "message\n  warning\n" ()
-      (compileWarningM "warning" `reviseErrorM` "message" :: CompileInfoIO ()),
+      (compileWarningM "warning" `withContextM` "message" :: CompileInfoIO ()),
     checkErrorAndWarnings "message\n  warning\n" "message\n  error\n"
-      ((compileWarningM "warning" >> compileErrorM "error") `reviseErrorM` "message" :: CompileInfoIO ()),
-    checkSuccessAndWarnings "" () (return () `reviseErrorM` "message"),
-    checkErrorAndWarnings "" "message\n" (compileErrorM "" `reviseErrorM` "message" :: CompileInfoIO ()),
+      ((compileWarningM "warning" >> compileErrorM "error") `withContextM` "message" :: CompileInfoIO ()),
+    checkSuccessAndWarnings "" () (return () `withContextM` "message"),
+    checkErrorAndWarnings "" "message\n" (compileErrorM "" `withContextM` "message" :: CompileInfoIO ()),
 
     checkSuccessAndWarnings "error\n" ()
       (asCompileWarnings $ compileErrorM "error" :: CompileInfoIO ()),

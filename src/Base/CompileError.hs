@@ -48,8 +48,8 @@ class Monad m => CompileErrorM m where
   compileErrorM :: String -> m a
   collectAllM :: Foldable f => f (m a) -> m [a]
   collectFirstM :: Foldable f => f (m a) -> m a
-  reviseErrorM :: m a -> String -> m a
-  reviseErrorM e _ = e
+  withContextM :: m a -> String -> m a
+  withContextM e _ = e
   compileWarningM :: String -> m ()
   compileWarningM _ = return ()
   compileBackgroundM :: String -> m ()
@@ -58,10 +58,10 @@ class Monad m => CompileErrorM m where
   resetBackgroundM = id
 
 (<??) :: CompileErrorM m => m a -> String -> m a
-(<??) = reviseErrorM
+(<??) = withContextM
 
 (??>) :: CompileErrorM m => String -> m a -> m a
-(??>) = flip reviseErrorM
+(??>) = flip withContextM
 
 mapErrorsM :: CompileErrorM m => (a -> m b) -> [a] -> m [b]
 mapErrorsM f = collectAllM . map f
