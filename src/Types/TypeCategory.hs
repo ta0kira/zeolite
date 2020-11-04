@@ -81,7 +81,6 @@ module Types.TypeCategory (
 
 import Control.Arrow (second)
 import Control.Monad (when)
-import Data.Functor.Identity (runIdentity)
 import Data.List (group,groupBy,intercalate,sort,sortBy)
 import qualified Data.Map as Map
 import qualified Data.Set as Set
@@ -1009,15 +1008,15 @@ inferParamTypes r f ff ps ts = do
       | otherwise = [InferredTypeGuess p (SingleType t) Covariant]
     filterToGuess _ _ = []
 
-separateParamGuesses :: MergeableM m => MergeTree InferredTypeGuess ->
-  m (Map.Map ParamName (MergeTree InferredTypeGuess))
-separateParamGuesses = reduceMergeTree return return (return . toMap) where
+separateParamGuesses :: MergeTree InferredTypeGuess ->
+  (Map.Map ParamName (MergeTree InferredTypeGuess))
+separateParamGuesses = evalMergeTree toMap where
   toMap i = Map.fromList [(itgParam i,mergeLeaf i)]
 
 mergeInferredTypes :: (MergeableM m, CompileErrorM m, TypeResolver r) =>
   r -> ParamFilters -> MergeTree InferredTypeGuess -> m [InferredTypeGuess]
 mergeInferredTypes r f gs = do
-  let gs' = runIdentity $ separateParamGuesses gs
+  let gs' = separateParamGuesses gs
   mapErrorsM reduce $ Map.toList gs' where
     reduce (i,is) = do
       is' <- reduceMergeTree anyOp allOp leafOp is

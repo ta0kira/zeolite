@@ -20,6 +20,7 @@ limitations under the License.
 
 module Base.MergeTree (
   MergeTree,
+  evalMergeTree,
   mergeLeaf,
   pruneMergeTree,
   reduceMergeTree,
@@ -46,7 +47,7 @@ mergeLeaf = MergeLeaf
 
 reduceMergeTree :: (Mergeable b, MergeableM m) => (b -> m b) -> (b -> m b) ->
   (a -> m b) -> MergeTree a -> m b
-reduceMergeTree anyOp allOp leafOp xa = reduce xa where
+reduceMergeTree anyOp allOp leafOp = reduce where
   reduce (MergeAny xs) = do
     xs' <- mergeAnyM $ map reduce xs
     anyOp xs'
@@ -54,6 +55,9 @@ reduceMergeTree anyOp allOp leafOp xa = reduce xa where
     xs' <- mergeAllM $ map reduce xs
     allOp xs'
   reduce (MergeLeaf x) = leafOp x
+
+evalMergeTree :: Mergeable b => (a -> b) -> MergeTree a -> b
+evalMergeTree f = runIdentity . reduceMergeTree return return (return . f)
 
 pruneMergeTree :: MergeableM m => MergeTree (m a) -> m (MergeTree a)
 pruneMergeTree = reduceMergeTree return return (fmap mergeLeaf)
@@ -64,7 +68,7 @@ instance Functor MergeTree where
   fmap f (MergeLeaf x) = mergeLeaf (f x)
 
 instance Foldable MergeTree where
-  foldr f y = foldr f y . runIdentity . reduceMergeTree return return (return . (:[]))
+  foldr f y = foldr f y . evalMergeTree (:[])
 
 instance Traversable MergeTree where
   traverse f (MergeAny xs) = mergeAny <$> foldr (<*>) (pure []) (map (fmap (:) . traverse f) xs)
