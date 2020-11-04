@@ -309,7 +309,7 @@ compileStatement (NoValueExpression _ v) = compileVoidExpression v
 compileRegularInit :: (Show c, CompileErrorM m, MergeableM m,
                        CompilerContext c m [String] a) =>
   DefinedMember c -> CompilerState a m ()
-compileRegularInit (DefinedMember _ _ _ _ Nothing) = return mergeDefault
+compileRegularInit (DefinedMember _ _ _ _ Nothing) = return ()
 compileRegularInit (DefinedMember c2 s t n2 (Just e)) = resetBackgroundStateT $ do
   csAddVariable c2 n2 (VariableValue c2 s t True)
   let assign = Assignment c2 (Positional [ExistingVariable (InputValue c2 n2)]) e
@@ -318,7 +318,7 @@ compileRegularInit (DefinedMember c2 s t n2 (Just e)) = resetBackgroundStateT $ 
 compileLazyInit :: (Show c, CompileErrorM m, MergeableM m,
                    CompilerContext c m [String] a) =>
   DefinedMember c -> CompilerState a m ()
-compileLazyInit (DefinedMember _ _ _ _ Nothing) = return mergeDefault
+compileLazyInit (DefinedMember _ _ _ _ Nothing) = return ()
 compileLazyInit (DefinedMember c _ t1 n (Just e)) = resetBackgroundStateT $ do
   (ts,e') <- compileExpression e
   when (length (pValues ts) /= 1) $

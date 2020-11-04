@@ -369,11 +369,11 @@ checkSingleMatch r f v (JustParamName _ p1) (JustParamName _ p2) =
 checkInstanceToInstance :: (MergeableM m, CompileErrorM m, TypeResolver r) =>
   r -> ParamFilters -> Variance -> TypeInstance -> TypeInstance -> m (MergeTree InferredTypeGuess)
 checkInstanceToInstance r f Invariant t1 t2
-    | t1 == t2 = mergeDefaultM
-    | otherwise =
-      -- Implicit equality, inferred by t1 <-> t2.
-      mergeAllM [checkInstanceToInstance r f Covariant     t1 t2,
-                 checkInstanceToInstance r f Contravariant t1 t2]
+  | t1 == t2 = mergeAllM Nothing
+  | otherwise =
+    -- Implicit equality, inferred by t1 <-> t2.
+    mergeAllM [checkInstanceToInstance r f Covariant     t1 t2,
+               checkInstanceToInstance r f Contravariant t1 t2]
 checkInstanceToInstance r f Contravariant t1@(TypeInstance n1 ps1) t2@(TypeInstance n2 ps2)
   | n1 == n2 = do
     paired <- processPairs alwaysPair ps1 ps2
@@ -460,13 +460,13 @@ checkInstanceToParam r f v@Covariant t1@(TypeInstance _ _) n2 = do
 checkParamToParam :: (MergeableM m, CompileErrorM m, TypeResolver r) =>
   r -> ParamFilters -> Variance -> ParamName -> ParamName -> m (MergeTree InferredTypeGuess)
 checkParamToParam r f Invariant n1 n2
-    | n1 == n2 = mergeDefaultM
-    | otherwise =
-      -- Implicit equality, inferred by n1 <-> n2.
-      mergeAllM [checkParamToParam r f Covariant     n1 n2,
-                 checkParamToParam r f Contravariant n1 n2]
+  | n1 == n2 = mergeAllM Nothing
+  | otherwise = do
+    -- Implicit equality, inferred by n1 <-> n2.
+    mergeAllM [checkParamToParam r f Covariant     n1 n2,
+               checkParamToParam r f Contravariant n1 n2]
 checkParamToParam r f v n1 n2
-  | n1 == n2 = mergeDefaultM
+  | n1 == n2 = mergeAllM Nothing
   | otherwise = do
     cs1 <- fmap (filter isTypeFilter) $ f `filterLookup` n1
     cs2 <- fmap (filter isTypeFilter) $ f `filterLookup` n2

@@ -23,8 +23,6 @@ limitations under the License.
 module Base.Mergeable (
   Mergeable(..),
   MergeableM(..),
-  mergeDefault,
-  mergeDefaultM,
 ) where
 
 import Data.Map as Map hiding (foldr)
@@ -42,12 +40,6 @@ class Mergeable a where
 class Monad m => MergeableM m where
   mergeAnyM :: (Mergeable a, Foldable f) => f (m a) -> m a
   mergeAllM :: (Mergeable a, Foldable f) => f (m a) -> m a
-
-mergeDefault :: Mergeable a => a
-mergeDefault = mergeAll Nothing
-
-mergeDefaultM :: (MergeableM m, Mergeable a) => m a
-mergeDefaultM = mergeAllM Nothing
 
 instance Mergeable () where
   mergeAny = const ()
