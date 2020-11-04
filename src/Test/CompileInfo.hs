@@ -35,9 +35,9 @@ tests = [
     checkSuccess []                 (collectAllM [] :: CompileInfoIO [Char]),
     checkError   "error1\nerror2\n" (collectAllM [compileErrorM "error1",return 'b',compileErrorM "error2"]),
 
-    checkSuccess 'a' (collectOneM [return 'a',return 'b']),
-    checkError   ""  (collectOneM [] :: CompileInfoIO Char),
-    checkSuccess 'b' (collectOneM [compileErrorM "error1",return 'b',compileErrorM "error2"]),
+    checkSuccess 'a' (collectFirstM [return 'a',return 'b']),
+    checkError   ""  (collectFirstM [] :: CompileInfoIO Char),
+    checkSuccess 'b' (collectFirstM [compileErrorM "error1",return 'b',compileErrorM "error2"]),
 
     checkSuccess ['a','b','c']      (mergeAllM [return ['a'],return ['b','c']]),
     checkSuccess []                 (mergeAllM [] :: CompileInfoIO [Char]),
@@ -76,7 +76,7 @@ tests = [
     checkError "error\n  background\n"
       (collectAllM [compileBackgroundM "background"] >> compileErrorM "error" :: CompileInfoIO [()]),
     checkError "error\n  background\n"
-      (collectOneM [compileBackgroundM "background"] >> compileErrorM "error" :: CompileInfoIO ()),
+      (collectFirstM [compileBackgroundM "background"] >> compileErrorM "error" :: CompileInfoIO ()),
     checkError "error\n  background\n"
       (mergeAllM [compileBackgroundM "background"] >> compileErrorM "error" :: CompileInfoIO ()),
     checkError "error\n  background\n"

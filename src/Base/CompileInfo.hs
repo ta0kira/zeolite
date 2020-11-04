@@ -216,11 +216,10 @@ instance Monad m => CompileErrorM (CompileInfoT m) where
     return $ result $ splitErrorsAndData xs' where
       result ([],xs2,bs,ws) = CompileSuccess (CompileMessage "" ws) bs xs2
       result (es,_,bs,ws)   = CompileFail (CompileMessage "" ws) $ addBackground bs $ CompileMessage "" es
-  collectOneM xs = CompileInfoT $ do
+  collectFirstM xs = CompileInfoT $ do
     xs' <- sequence $ map citState $ foldr (:) [] xs
     return $ result $ splitErrorsAndData xs' where
       result (_,x:_,bs,ws) = CompileSuccess (CompileMessage "" ws) bs x
-      result ([],_,bs,ws)  = CompileFail (CompileMessage "" ws) $ addBackground bs emptyMessage
       result (es,_,bs,ws)  = CompileFail (CompileMessage "" ws) $ addBackground bs $ CompileMessage "" es
   reviseErrorM x e2 = CompileInfoT $ do
     x' <- citState x
@@ -239,7 +238,6 @@ instance Monad m => MergeableM (CompileInfoT m) where
   mergeAnyM xs = CompileInfoT $ do
     xs' <- sequence $ map citState $ foldr (:) [] xs
     return $ result $ splitErrorsAndData xs' where
-      result ([],[],bs,ws) = CompileFail (CompileMessage "" ws) $ addBackground bs emptyMessage
       result (es,[],bs,ws) = CompileFail (CompileMessage "" ws) $ addBackground bs $ CompileMessage "" es
       result (_,xs2,bs,ws) = CompileSuccess (CompileMessage "" ws) bs (mergeAny xs2)
   mergeAllM = collectAllM >=> return . mergeAll

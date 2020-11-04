@@ -344,9 +344,11 @@ checkGeneralMatch r f Invariant ts1 ts2 =
 checkGeneralMatch r f Contravariant ts1 ts2 =
   -- NOTE: ts1 and ts2 can't be swapped in checkSingleMatch due to type
   -- inference; however, checkGeneralType is sensitive to which side the empty
-  -- union or intersection is on.
+  -- union or intersection is on. So, checkGeneralType checks t2 -> t1 and
+  -- checkSingleMatch checks t1 <- t2.
   checkGeneralType (flip $ checkSingleMatch r f Contravariant) ts2 ts1
-checkGeneralMatch r f v ts1 ts2 = checkGeneralType (checkSingleMatch r f v) ts1 ts2
+checkGeneralMatch r f Covariant ts1 ts2 =
+  checkGeneralType (checkSingleMatch r f Covariant) ts1 ts2
 
 checkSingleMatch :: (MergeableM m, CompileErrorM m, TypeResolver r) =>
   r -> ParamFilters -> Variance ->

@@ -48,7 +48,5 @@ composeVariance _              _              = Invariant
 paramAllowsVariance :: Variance -> Variance -> Bool
 Covariant     `paramAllowsVariance` Covariant     = True
 Contravariant `paramAllowsVariance` Contravariant = True
-Invariant     `paramAllowsVariance` Covariant     = True
-Invariant     `paramAllowsVariance` Invariant     = True
-Invariant     `paramAllowsVariance` Contravariant = True
+Invariant     `paramAllowsVariance` _             = True
 _             `paramAllowsVariance` _             = False

@@ -47,7 +47,7 @@ class Monad m => CompileErrorM m where
 #endif
   compileErrorM :: String -> m a
   collectAllM :: Foldable f => f (m a) -> m [a]
-  collectOneM :: Foldable f => f (m a) -> m a
+  collectFirstM :: Foldable f => f (m a) -> m a
   reviseErrorM :: m a -> String -> m a
   reviseErrorM e _ = e
   compileWarningM :: String -> m ()
