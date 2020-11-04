@@ -211,16 +211,12 @@ instance MonadIO m => MonadIO (CompileInfoT m) where
 
 instance Monad m => CompileErrorM (CompileInfoT m) where
   compileErrorM e = CompileInfoT $ return $ CompileFail emptyMessage $ CompileMessage e []
-  collectAllM xs = CompileInfoT $ do
-    xs' <- sequence $ map citState $ foldr (:) [] xs
-    return $ result $ splitErrorsAndData xs' where
-      result ([],xs2,bs,ws) = CompileSuccess (CompileMessage "" ws) bs xs2
-      result (es,_,bs,ws)   = CompileFail (CompileMessage "" ws) $ addBackground bs $ CompileMessage "" es
-  collectFirstM xs = CompileInfoT $ do
-    xs' <- sequence $ map citState $ foldr (:) [] xs
-    return $ result $ splitErrorsAndData xs' where
-      result (_,x:_,bs,ws) = CompileSuccess (CompileMessage "" ws) bs x
-      result (es,_,bs,ws)  = CompileFail (CompileMessage "" ws) $ addBackground bs $ CompileMessage "" es
+  collectAllM = combineResults (select . splitErrorsAndData) where
+      select ([],xs2,bs,ws) = CompileSuccess (CompileMessage "" ws) bs xs2
+      select (es,_,bs,ws)   = CompileFail (CompileMessage "" ws) $ addBackground bs $ CompileMessage "" es
+  collectFirstM = combineResults (select . splitErrorsAndData) where
+      select (_,x:_,bs,ws) = CompileSuccess (CompileMessage "" ws) bs x
+      select (es,_,bs,ws)  = CompileFail (CompileMessage "" ws) $ addBackground bs $ CompileMessage "" es
   reviseErrorM x e2 = CompileInfoT $ do
     x' <- citState x
     case x' of
@@ -235,12 +231,14 @@ instance Monad m => CompileErrorM (CompileInfoT m) where
          x2                   -> return x2
 
 instance Monad m => MergeableM (CompileInfoT m) where
-  mergeAnyM xs = CompileInfoT $ do
-    xs' <- sequence $ map citState $ foldr (:) [] xs
-    return $ result $ splitErrorsAndData xs' where
-      result (es,[],bs,ws) = CompileFail (CompileMessage "" ws) $ addBackground bs $ CompileMessage "" es
-      result (_,xs2,bs,ws) = CompileSuccess (CompileMessage "" ws) bs (mergeAny xs2)
+  mergeAnyM = combineResults (select . splitErrorsAndData) where
+      select (es,[],bs,ws) = CompileFail (CompileMessage "" ws) $ addBackground bs $ CompileMessage "" es
+      select (_,xs2,bs,ws) = CompileSuccess (CompileMessage "" ws) bs (mergeAny xs2)
   mergeAllM = collectAllM >=> return . mergeAll
+
+combineResults :: (Monad m, Foldable f) =>
+  ([CompileInfoState a] -> CompileInfoState b) -> f (CompileInfoT m a) -> CompileInfoT m b
+combineResults f = CompileInfoT . fmap f . sequence . map citState . foldr (:) []
 
 emptyMessage :: CompileMessage
 emptyMessage = CompileMessage "" []
