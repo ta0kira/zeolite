@@ -74,12 +74,15 @@ tryFastModes ("--version":os) = do
      then exitSuccess
      else exitFailure
 tryFastModes ("--show-deps":ps) = do
-  tryCompileInfoIO "Zeolite execution failed." $ mapM_ showDeps ps
+  tryCompileInfoIO "Zeolite execution failed." allDeps
   exitSuccess where
-    showDeps p = do
+    allDeps = do
       (_,backend) <- loadConfig
+      let h = getCompilerHash backend
+      mapM_ (showDeps h) ps
+    showDeps h p = do
       p' <- errorFromIO $ canonicalizePath p
-      m <- loadModuleMetadata (getCompilerHash backend) ForceAll Map.empty p'
+      m <- loadModuleMetadata h ForceAll Map.empty p'
       errorFromIO $ hPutStrLn stdout $ show p'
       errorFromIO $ mapM_ showDep (cmObjectFiles m)
     showDep (CategoryObjectFile c ds _) = do
