@@ -47,7 +47,7 @@ main = do
           hPutStr stderr $ show $ getCompileError co
           hPutStrLn stderr "Use the -h option to show help."
           exitFailure
-      | otherwise = tryCompileInfoIO "Zeolite execution failed." $ do
+      | otherwise = tryZeoliteIO $ do
           let co' = getCompileSuccess co
           (resolver,backend) <- loadConfig
           when (HelpNotNeeded /= (coHelp co')) $ errorFromIO $ showHelp >> exitFailure
@@ -74,12 +74,11 @@ tryFastModes ("--version":os) = do
      then exitSuccess
      else exitFailure
 tryFastModes ("--show-deps":ps) = do
-  tryCompileInfoIO "Zeolite execution failed." allDeps
+  tryZeoliteIO $ do
+    (_,backend) <- loadConfig
+    let h = getCompilerHash backend
+    mapM_ (showDeps h) ps
   exitSuccess where
-    allDeps = do
-      (_,backend) <- loadConfig
-      let h = getCompilerHash backend
-      mapM_ (showDeps h) ps
     showDeps h p = do
       p' <- errorFromIO $ canonicalizePath p
       m <- loadModuleMetadata h ForceAll Map.empty p'
@@ -91,3 +90,6 @@ tryFastModes ("--show-deps":ps) = do
                                       " " ++ show (ciPath d)) ds
     showDep _ = return ()
 tryFastModes _ = return ()
+
+tryZeoliteIO :: CompileInfoIO a -> IO a
+tryZeoliteIO = tryCompileInfoIO "Warnings (ignored):" "Zeolite execution failed:"

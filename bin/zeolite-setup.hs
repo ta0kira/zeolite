@@ -136,4 +136,4 @@ initLibraries (LocalConfig backend resolver) = do
       coMode = CompileRecompileRecursive,
       coForce = ForceAll
     }
-  tryCompileInfoIO "Zeolite setup failed." $ runCompiler resolver backend options
+  tryCompileInfoIO "Warnings:" "Zeolite setup failed:" $ runCompiler resolver backend options

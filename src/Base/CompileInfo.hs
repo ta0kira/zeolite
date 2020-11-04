@@ -129,11 +129,11 @@ toCompileInfo x = do
   x' <- citState x
   return $ CompileInfoT $ return x'
 
-tryCompileInfoIO :: String -> CompileInfoIO a -> IO a
-tryCompileInfoIO message x = do
+tryCompileInfoIO :: String -> String -> CompileInfoIO a -> IO a
+tryCompileInfoIO warn err x = do
   x' <- toCompileInfo x
-  let w = getCompileWarnings $ x' <?? "Warnings (ingored):"
-  let e = getCompileError    $ x' <?? message
+  let w = getCompileWarnings $ x' <?? warn
+  let e = getCompileError    $ x' <?? err
   if isCompileError x'
      then do
        hPutStr stderr $ show w
