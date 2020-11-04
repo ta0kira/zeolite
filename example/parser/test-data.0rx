@@ -71,8 +71,8 @@ define TestDataParser {
     } else {
       return context.setValue<?>(
         ErrorOr:value<?>(TestData$create(name.getValue(),
-                                          description.getValue(),
-                                          boolean.getValue())))
+                                         description.getValue(),
+                                         boolean.getValue())))
     }
   }
 
