@@ -21,6 +21,7 @@ limitations under the License.
 module Test.MergeTree (tests) where
 
 import Control.Monad (when)
+import Data.Char (toUpper)
 
 import Base.CompileError
 import Base.CompileInfo
@@ -45,25 +46,6 @@ tests = [
                (mergeAll [mergeLeaf 1,mergeLeaf 2,mergeLeaf 3,mergeLeaf 4])
                (mergeAll [mergeAll [mergeLeaf 1],mergeLeaf 2,mergeAny [mergeLeaf 3,mergeLeaf 4]] :: MergeTree Int),
 
-   checkMatch ([1,2]) (foldr (:) [])
-              (mergeAny [mergeLeaf 1,mergeAll [mergeLeaf 2]] :: MergeTree Int),
-   checkMatch ([1,2]) (foldr (:) [])
-              (mergeAll [mergeLeaf 1,mergeAny [mergeLeaf 2]] :: MergeTree Int),
-
-   checkSuccess (mergeAny $ fmap mergeLeaf [1,2,3]) (sequence . fmap return)
-                (mergeAny $ map mergeLeaf [1..3] :: MergeTree Int),
-   checkSuccess (mergeAll $ fmap mergeLeaf [1,2,3]) (sequence . fmap return)
-                (mergeAll $ map mergeLeaf [1..3] :: MergeTree Int),
-
-   checkError "1 is odd\n" (sequence . fmap oddError)
-              (mergeAny $ map mergeLeaf [1..3] :: MergeTree Int),
-   checkError "1 is odd\n" (sequence . fmap oddError)
-              (mergeAll $ map mergeLeaf [1..3] :: MergeTree Int),
-   checkSuccess (mergeAny $ map mergeLeaf [1..3]) (sequence . fmap return)
-                (mergeAny $ map mergeLeaf [1..3] :: MergeTree Int),
-   checkSuccess (mergeAll $ map mergeLeaf [1..3]) (sequence . fmap return)
-                (mergeAll $ map mergeLeaf [1..3] :: MergeTree Int),
-
    checkSuccess (mergeAny $ map mergeLeaf [2,4]) (pruneMergeTree . fmap oddError)
                 (mergeAny $ map mergeLeaf [1..4] :: MergeTree Int),
    checkError "1 is odd\n3 is odd\n" (pruneMergeTree . fmap oddError)
@@ -78,12 +60,36 @@ tests = [
                 (mergeAny $ map mergeLeaf [1..4] :: MergeTree Int),
    checkError "1 is odd\n3 is odd\n"
               (reduceMergeTree (\xs -> compileErrorM $ "mergeAny " ++ show xs) return oddError2)
-              (mergeAll $ map mergeLeaf [1..4] :: MergeTree Int)
+              (mergeAll $ map mergeLeaf [1..4] :: MergeTree Int),
+
+   checkMatch False (evalMergeTree odd) (mergeAll [mergeLeaf 1,mergeLeaf 2] :: MergeTree Int),
+   checkMatch True  (evalMergeTree odd) (mergeAll [mergeLeaf 1,mergeLeaf 1] :: MergeTree Int),
+   checkMatch True  (evalMergeTree odd) (mergeAny [mergeLeaf 1,mergeLeaf 2] :: MergeTree Int),
+   checkMatch False (evalMergeTree odd) (mergeAny [mergeLeaf 2,mergeLeaf 2] :: MergeTree Int),
+   checkMatch True  (evalMergeTree odd) (mergeAll [] :: MergeTree Int),
+   checkMatch False (evalMergeTree odd) (mergeAny [] :: MergeTree Int),
+
+   -- a*(b&c)*(d|e) = (a*b&a*c)*(d|e) = (a*b*(d|e)&a*c*(d|e)) = (a*b*d|a*b*e)&(a*c*d|a*c*e)
+   checkMatch (mergeAll [mergeAny [mergeLeaf "abd",mergeLeaf "abe"],mergeAny [mergeLeaf "acd",mergeLeaf "ace"]]) sequence
+              [mergeLeaf 'a',mergeAll [mergeLeaf 'b',mergeLeaf 'c'],mergeAny [mergeLeaf 'd',mergeLeaf 'e']],
+
+   checkMatch (mergeAny [mergeAll [mergeLeaf False,mergeLeaf False],mergeAll [mergeLeaf False,mergeLeaf True]]) mergeAllM
+              ([mergeAny [mergeLeaf False,mergeLeaf True],mergeAll [mergeLeaf False,mergeLeaf True]]),
+   checkMatch (mergeAny [mergeAll [mergeLeaf False,mergeLeaf True],mergeAll [mergeLeaf True,mergeLeaf True]]) mergeAnyM
+              ([mergeAny [mergeLeaf False,mergeLeaf True],mergeAll [mergeLeaf False,mergeLeaf True]]),
+
+   checkMatch (mergeAll [mergeAll [mergeLeaf 'a',mergeLeaf 'A'],
+                         mergeAny [mergeAll [mergeLeaf 'b',mergeLeaf 'B'],
+                                   mergeAll [mergeLeaf 'c',mergeLeaf 'C']]])
+              (\x -> do
+                x' <- x
+                mergeAll [return x',return (toUpper x')])
+              (mergeAll [mergeLeaf 'a',mergeAny [mergeLeaf 'b',mergeLeaf 'c']])
  ]
 
 oddError :: Int -> CompileInfo Int
 oddError x = do
-  when (x `mod` 2 == 1) $ compileErrorM $ show x ++ " is odd"
+  when (odd x) $ compileErrorM $ show x ++ " is odd"
   return x
 
 oddError2 :: Int -> CompileInfo [Int]
