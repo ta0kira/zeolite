@@ -39,7 +39,9 @@ class Mergeable a where
 
 class Monad m => MergeableM m where
   mergeAnyM :: (Mergeable a, Foldable f) => f (m a) -> m a
+  mergeAnyM = fmap mergeAny . sequence . foldr (:) []
   mergeAllM :: (Mergeable a, Foldable f) => f (m a) -> m a
+  mergeAllM = fmap mergeAll . sequence . foldr (:) []
 
 instance Mergeable () where
   mergeAny = const ()
@@ -59,4 +61,3 @@ instance (Ord k, Mergeable a) => Mergeable (Map k a) where
 
 instance MergeableM Maybe where
   mergeAnyM = fmap mergeAny . foldr ((<>) . fmap (:[])) Nothing
-  mergeAllM = fmap mergeAll . sequence . foldr (:) []

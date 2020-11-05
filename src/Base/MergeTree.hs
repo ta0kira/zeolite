@@ -92,5 +92,3 @@ instance Mergeable (MergeTree a) where
     unnest xs  = MergeAll xs
 
 instance MergeableM MergeTree where
-  mergeAnyM = fmap mergeAny . sequence . foldr (:) []
-  mergeAllM = fmap mergeAll . sequence . foldr (:) []

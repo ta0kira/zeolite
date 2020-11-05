@@ -461,7 +461,7 @@ checkParamToParam :: (MergeableM m, CompileErrorM m, TypeResolver r) =>
   r -> ParamFilters -> Variance -> ParamName -> ParamName -> m (MergeTree InferredTypeGuess)
 checkParamToParam r f Invariant n1 n2
   | n1 == n2 = mergeAllM Nothing
-  | otherwise = do
+  | otherwise =
     -- Implicit equality, inferred by n1 <-> n2.
     mergeAllM [checkParamToParam r f Covariant     n1 n2,
                checkParamToParam r f Contravariant n1 n2]
