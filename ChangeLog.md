@@ -34,9 +34,9 @@
   to `:`, e.g., `Foo:create()` instead of `Foo$$create()`. A new error message
   (to be removed later) will remind the user to stop using `$$`.
 
-* **[breaking]** Fixes how param inference handles invariant guesses. Some
-  inferences that previously succeeded "accidentally" in the past might now
-  fail, although that is unlikely.
+* **[breaking]** Updates how param inference merges guesses from union and
+  intersection types. This *might* break existing code that relied on some
+  idiosyncrasy in the previous code, but probably not.
 
 ### Libraries
 

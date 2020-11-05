@@ -1026,26 +1026,26 @@ mergeInferredTypes r f gs = do
     -- Skip filtering out inferred types here, in case the guess can be replaced
     -- with something better that doesn't have an inferred type.
     leafOp i = return [i]
-    anyOp = mergeObjects (branchMerge preferCon)
-    allOp = mergeObjects (branchMerge preferCov)
+    anyOp = mergeObjects anyMerge . sortBy invFirst
+    allOp = mergeObjects allMerge . sortBy conFirst
     noInferred (InferredTypeGuess n t _) =
       when (hasInferredParams t) $
         compileErrorM $ "Guess " ++ show t ++ " for parameter " ++ show n ++ " contains inferred types"
-    branchMerge pref ga1@(InferredTypeGuess _ g1 v1) ga2@(InferredTypeGuess _ g2 v2)
+    invFirst x y = itgVariance y `compare` itgVariance x
+    conFirst x y = itgVariance x `compare` itgVariance y
+    anyMerge (InferredTypeGuess _ g1 v1) (InferredTypeGuess _ g2 v2)
+      -- If g1 ~ g2 (replacing ~ with variance arrow) then eliminate g2.
+      | v1 == v2 = checkGeneralMatch r f v1 g1 g2
+      -- g2 should be removed if g2 is invariant.
+      | v2 == Invariant = checkGeneralMatch r f v1 g1 g2
+      -- Drop lower bounds. (v1 should be Contravariant here.)
+      | v2 == Covariant = checkGeneralMatch r f v1 g1 g2
+      | otherwise = compileErrorM "merge skipped"
+    allMerge (InferredTypeGuess _ g1 v1) (InferredTypeGuess _ g2 v2)
       -- If g2 ~ g1 (replacing ~ with variance arrow) then eliminate g2.
       | v1 == v2 = checkGeneralMatch r f v1 g2 g1
-      -- g1 must be kept if it's invariant => try to get rid of g2.
+      -- g2 should be removed if g1 is invariant.
       | v1 == Invariant = checkGeneralMatch r f v2 g2 g1
-      | otherwise = pref ga1 ga2
-    preferCov (InferredTypeGuess _ g1 _) (InferredTypeGuess _ g2 Contravariant) =
-      -- Get rid of contravariant guesses where possible.
-      checkGeneralMatch r f Contravariant g2 g1
-    preferCov (InferredTypeGuess _ g1 _) (InferredTypeGuess _ g2 _) =
-      -- If nothing else, eliminate things that are the same.
-      checkGeneralMatch r f Invariant g2 g1
-    preferCon (InferredTypeGuess _ g1 _) (InferredTypeGuess _ g2 Covariant) =
-      -- Get rid of covariant guesses where possible.
-      checkGeneralMatch r f Covariant g2 g1
-    preferCon (InferredTypeGuess _ g1 _) (InferredTypeGuess _ g2 _) =
-      -- If nothing else, eliminate things that are the same.
-      checkGeneralMatch r f Invariant g2 g1
+      -- Drop upper bounds. (v1 should be Covariant here.)
+      | v2 == Contravariant = checkGeneralMatch r f v1 g1 g2
+      | otherwise = compileErrorM "merge skipped"

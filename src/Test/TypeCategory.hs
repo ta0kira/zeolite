@@ -951,8 +951,8 @@ tests = [
         checkInferenceSuccess tm
           [("#x",[])] ["#x"]
           [("Interface3<Type0>","[Interface1<#x>|Interface3<#x>]")]
-          -- Guesses are Type0 and Type1, but the Type0 guess is invariant.
-          [("#x","Type0",Invariant)]),
+          -- Guesses are either Type0 or Type1, and Type1 is more specific.
+          [("#x","Type1",Covariant)]),
     checkOperationSuccess
       ("testfiles" </> "inference.0rx")
       (\ts -> do
@@ -981,7 +981,7 @@ tests = [
           [("#x",[]),("#y",[])] ["#x","#y"]
           [("Interface3<Type0>","[Interface1<#x>&Interface3<#x>]"),
            ("Interface3<Type0>","[Interface1<#y>|Interface3<#y>]")]
-          [("#x","Type0",Invariant),("#y","Type0",Invariant)]),
+          [("#x","Type0",Invariant),("#y","Type1",Covariant)]),
 
     checkOperationSuccess
       ("testfiles" </> "delayed_merging.0rx")
