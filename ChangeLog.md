@@ -34,6 +34,10 @@
   to `:`, e.g., `Foo:create()` instead of `Foo$$create()`. A new error message
   (to be removed later) will remind the user to stop using `$$`.
 
+* **[breaking]** Fixes how param inference handles invariant guesses. Some
+  inferences that previously succeeded "accidentally" in the past might now
+  fail, although that is unlikely.
+
 ### Libraries
 
 * **[fix]** Implements `subSequence` for `Argv` in `lib/util`. This is required

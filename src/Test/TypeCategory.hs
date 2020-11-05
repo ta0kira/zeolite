@@ -951,8 +951,8 @@ tests = [
         checkInferenceSuccess tm
           [("#x",[])] ["#x"]
           [("Interface3<Type0>","[Interface1<#x>|Interface3<#x>]")]
-          -- Guesses are either Type0 or Type1, and Type1 is more specific.
-          [("#x","Type1",Covariant)]),
+          -- Guesses are Type0 and Type1, but the Type0 guess is invariant.
+          [("#x","Type0",Invariant)]),
     checkOperationSuccess
       ("testfiles" </> "inference.0rx")
       (\ts -> do
@@ -981,7 +981,7 @@ tests = [
           [("#x",[]),("#y",[])] ["#x","#y"]
           [("Interface3<Type0>","[Interface1<#x>&Interface3<#x>]"),
            ("Interface3<Type0>","[Interface1<#y>|Interface3<#y>]")]
-          [("#x","Type0",Invariant),("#y","Type1",Covariant)]),
+          [("#x","Type0",Invariant),("#y","Type0",Invariant)]),
 
     checkOperationSuccess
       ("testfiles" </> "delayed_merging.0rx")
@@ -1139,7 +1139,7 @@ checkShortParseFail s = do
                                    show (getCompileSuccess c) ++ "\n"
 
 checkInferenceSuccess :: CategoryMap SourcePos -> [(String, [String])] ->
-  [String] -> [(String, String)] -> [(String,String,Variance)] -> CompileInfo ()
+  [String] -> [(String,String)] -> [(String,String,Variance)] -> CompileInfo ()
 checkInferenceSuccess tm pa is ts gs = checkInferenceCommon check tm pa is ts gs where
   prefix = show ts ++ " " ++ showParams pa
   check gs2 c
@@ -1147,7 +1147,7 @@ checkInferenceSuccess tm pa is ts gs = checkInferenceCommon check tm pa is ts gs
     | otherwise        = getCompileSuccess c `containsExactly` gs2
 
 checkInferenceFail :: CategoryMap SourcePos -> [(String, [String])] ->
-  [String] -> [(String, String)] -> CompileInfo ()
+  [String] -> [(String,String)] -> CompileInfo ()
 checkInferenceFail tm pa is ts = checkInferenceCommon check tm pa is ts [] where
   prefix = show ts ++ " " ++ showParams pa
   check _ c
@@ -1155,7 +1155,7 @@ checkInferenceFail tm pa is ts = checkInferenceCommon check tm pa is ts [] where
     | otherwise = compileErrorM $ prefix ++ ": Expected failure\n"
 
 checkInferenceCommon :: ([InferredTypeGuess] -> CompileInfo [InferredTypeGuess] -> CompileInfo ()) ->
-  CategoryMap SourcePos -> [(String, [String])] -> [String] ->
+  CategoryMap SourcePos -> [(String,[String])] -> [String] ->
   [(String,String)] -> [(String,String,Variance)] -> CompileInfo ()
 checkInferenceCommon check tm pa is ts gs = checked <?? context where
   context = "With params = " ++ show pa ++ ", pairs = " ++ show ts

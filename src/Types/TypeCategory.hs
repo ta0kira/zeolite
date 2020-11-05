@@ -687,8 +687,8 @@ topoSortCategories tm0 ts = do
            return (ts3 ++ [t] ++ ts4,ta3)
     update _ ta _ = return ([],ta)
 
-mergeObjects :: (MergeableM m, CompileErrorM m) =>
-  (a -> a -> m b) -> [a] -> m [a]
+-- For fixed x, if f y x succeeds for some y then x is removed.
+mergeObjects :: (MergeableM m, CompileErrorM m) => (a -> a -> m b) -> [a] -> m [a]
 mergeObjects f = merge [] where
   merge cs [] = return cs
   merge cs (x:xs) = do
@@ -1026,18 +1026,26 @@ mergeInferredTypes r f gs = do
     -- Skip filtering out inferred types here, in case the guess can be replaced
     -- with something better that doesn't have an inferred type.
     leafOp i = return [i]
-    anyOp = mergeObjects anyCheck . sortBy lessGeneral
-    allOp = mergeObjects allCheck . sortBy moreGeneral
+    anyOp = mergeObjects (branchMerge preferCon)
+    allOp = mergeObjects (branchMerge preferCov)
     noInferred (InferredTypeGuess n t _) =
       when (hasInferredParams t) $
         compileErrorM $ "Guess " ++ show t ++ " for parameter " ++ show n ++ " contains inferred types"
-    lessGeneral x y = itgVariance y `compare` itgVariance x
-    moreGeneral x y = itgVariance x `compare` itgVariance y
-    anyCheck ga@(InferredTypeGuess _ g1 v1) (InferredTypeGuess _ g2 _) = do
-      noInferred ga
-      -- Find the least-general guess: If g1 can be replaced with g2, prefer g1.
-      checkGeneralMatch r f v1 g1 g2
-    allCheck ga@(InferredTypeGuess _ g1 _) (InferredTypeGuess _ g2 v2) = do
-      noInferred ga
-      -- Find the most-general guess: If g2 can be replaced with g1, prefer g1.
-      checkGeneralMatch r f v2 g2 g1
+    branchMerge pref ga1@(InferredTypeGuess _ g1 v1) ga2@(InferredTypeGuess _ g2 v2)
+      -- If g2 ~ g1 (replacing ~ with variance arrow) then eliminate g2.
+      | v1 == v2 = checkGeneralMatch r f v1 g2 g1
+      -- g1 must be kept if it's invariant => try to get rid of g2.
+      | v1 == Invariant = checkGeneralMatch r f v2 g2 g1
+      | otherwise = pref ga1 ga2
+    preferCov (InferredTypeGuess _ g1 _) (InferredTypeGuess _ g2 Contravariant) =
+      -- Get rid of contravariant guesses where possible.
+      checkGeneralMatch r f Contravariant g2 g1
+    preferCov (InferredTypeGuess _ g1 _) (InferredTypeGuess _ g2 _) =
+      -- If nothing else, eliminate things that are the same.
+      checkGeneralMatch r f Invariant g2 g1
+    preferCon (InferredTypeGuess _ g1 _) (InferredTypeGuess _ g2 Covariant) =
+      -- Get rid of covariant guesses where possible.
+      checkGeneralMatch r f Covariant g2 g1
+    preferCon (InferredTypeGuess _ g1 _) (InferredTypeGuess _ g2 _) =
+      -- If nothing else, eliminate things that are the same.
+      checkGeneralMatch r f Invariant g2 g1
