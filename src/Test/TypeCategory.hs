@@ -810,6 +810,14 @@ tests = [
           [("#x",[])] ["#x"]
           [("Type2","#x"),("Type1","#x")]
           [("#x","Type1",Covariant)]),
+    checkOperationSuccess
+      ("testfiles" </> "inference.0rx")
+      (\ts -> do
+        tm <- includeNewTypes defaultCategories ts
+        checkInferenceSuccess tm
+          [("#x",[])] ["#x"]
+          []
+          []),
 
     checkOperationSuccess
       ("testfiles" </> "inference.0rx")
@@ -974,6 +982,23 @@ tests = [
           [("Interface3<Type0>","[Interface1<#x>&Interface3<#x>]"),
            ("Interface3<Type0>","[Interface1<#y>|Interface3<#y>]")]
           [("#x","Type0",Invariant),("#y","Type1",Covariant)]),
+
+    checkOperationSuccess
+      ("testfiles" </> "inference.0rx")
+      (\ts -> do
+        tm <- includeNewTypes defaultCategories ts
+        checkInferenceSuccess tm
+          [("#x",[])] ["#x"]
+          [("Interface1<any>","Interface1<#x>")]
+          [("#x","any",Covariant)]),
+    checkOperationSuccess
+      ("testfiles" </> "inference.0rx")
+      (\ts -> do
+        tm <- includeNewTypes defaultCategories ts
+        checkInferenceSuccess tm
+          [("#x",[])] ["#x"]
+          [("Interface2<all>","Interface2<#x>")]
+          [("#x","all",Contravariant)]),
 
     checkOperationSuccess
       ("testfiles" </> "delayed_merging.0rx")
