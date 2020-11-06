@@ -26,6 +26,7 @@ module Types.TypeCategory (
   Namespace(..),
   ParamFilter(..),
   PassedValue(..),
+  PatternMatch(..),
   ScopedFunction(..),
   SymbolScope(..),
   ValueDefine(..),
@@ -978,18 +979,31 @@ unfixedSubFunction pa ff@(ScopedFunction c n t s as rs ps fa ms) =
         f' <- uncheckedSubFilter (getValueForParam pa2) f
         return $ ParamFilter c2 n2 f'
 
+data PatternMatch a =
+  PatternMatch {
+    pmVariance :: Variance,
+    pmData :: a,
+    pmPattern :: a
+  }
+
+instance Show a => Show (PatternMatch a) where
+  show (PatternMatch Covariant     l r) = show l ++ " -> "  ++ show r
+  show (PatternMatch Contravariant l r) = show l ++ " <- "  ++ show r
+  show (PatternMatch Invariant     l r) = show l ++ " <-> " ++ show r
+
 inferParamTypes :: (MergeableM m, CompileErrorM m, TypeResolver r) =>
   r -> ParamFilters -> ParamFilters -> ParamValues ->
-  [(ValueType,ValueType)] -> m (MergeTree InferredTypeGuess)
+  [PatternMatch ValueType] -> m (MergeTree InferredTypeGuess)
 inferParamTypes r f ff ps ts = do
   ts2 <- mapErrorsM subAll ts
   ff2 <- fmap Map.fromList $ mapErrorsM filterSub $ Map.toList ff
-  gs  <- mergeAllM $ map (uncurry $ checkValueTypeMatch r f) ts2
+  gs  <- mergeAllM $ map matchPattern ts2
   let gs2 = concat $ map (filtersToGuess ff2) $ Map.elems ps
   return $ mergeAll $ gs:(map mergeLeaf gs2) where
-    subAll (t1,t2) = do
+    subAll (PatternMatch v t1 t2) = do
       t2' <- uncheckedSubValueType (getValueForParam ps) t2
-      return (t1,t2')
+      return (PatternMatch v t1 t2')
+    matchPattern (PatternMatch v t1 t2) = checkValueTypeMatch r f v t1 t2
     filterSub (k,fs) = do
       fs' <- mapErrorsM (uncheckedSubFilter (getValueForParam ps)) fs
       return (k,fs')

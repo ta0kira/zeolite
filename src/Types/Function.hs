@@ -125,5 +125,5 @@ checkFunctionConvert r fm pm (FunctionType as1 rs1 ps1 fa1) ff2 = do
   processPairs_ (validateArg fm'') as1 as2
   processPairs_ (validateReturn fm'') rs1 rs2
   where
-    validateArg fm2 a1 a2 = checkValueTypeMatch r fm2 a1 a2
-    validateReturn fm2 r1 r2 = checkValueTypeMatch r fm2 r2 r1
+    validateArg fm2 a1 a2 = checkValueAssignment r fm2 a1 a2
+    validateReturn fm2 r1 r2 = checkValueAssignment r fm2 r2 r1

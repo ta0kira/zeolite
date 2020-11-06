@@ -56,6 +56,7 @@ import Types.Pragma
 import Types.Procedure
 import Types.TypeCategory
 import Types.TypeInstance
+import Types.Variance
 
 
 compileExecutableProcedure :: (Show c, CompileErrorM m, MergeableM m) =>
@@ -241,7 +242,7 @@ compileStatement (FailCall c e) = do
   let (Positional [t0],e0) = e'
   r <- csResolver
   fa <- csAllFilters
-  lift $ (checkValueTypeMatch_ r fa t0 formattedRequiredValue) <??
+  lift $ (checkValueAssignment r fa t0 formattedRequiredValue) <??
     ("In fail call at " ++ formatFullContext c)
   csSetJumpType JumpFailCall
   maybeSetTrace c
@@ -276,7 +277,7 @@ compileStatement (Assignment c as e) = message ???> do
       ("In creation of " ++ show n ++ " at " ++ formatFullContext c2) ???> do
         -- TODO: Call csRequiresTypes for t1. (Maybe needs a helper function.)
         lift $ mergeAllM [validateGeneralInstance r fa (vtType t1),
-                          checkValueTypeMatch_ r fa t2 t1]
+                          checkValueAssignment r fa t2 t1]
         csAddVariable c2 n (VariableValue c2 LocalScope t1 True)
         csWrite [variableStoredType t1 ++ " " ++ variableName n ++ ";"]
     createVariable r fa (ExistingVariable (InputValue c2 n)) t2 =
@@ -285,7 +286,7 @@ compileStatement (Assignment c as e) = message ???> do
         when (not w) $ lift $ compileErrorM $ "Cannot assign to read-only variable " ++
                                               show n ++ formatFullContextBrace c2
         -- TODO: Also show original context.
-        lift $ (checkValueTypeMatch_ r fa t2 t1)
+        lift $ (checkValueAssignment r fa t2 t1)
         csUpdateAssigned n
     createVariable _ _ _ _ = return ()
     assignSingle (_,t,CreateVariable _ _ n) e2 =
@@ -326,7 +327,7 @@ compileLazyInit (DefinedMember c _ t1 n (Just e)) = resetBackgroundStateT $ do
   r <- csResolver
   fa <- csAllFilters
   let Positional [t2] = ts
-  lift $ (checkValueTypeMatch_ r fa t2 t1) <??
+  lift $ (checkValueAssignment r fa t2 t1) <??
     ("In initialization of " ++ show n ++ " at " ++ formatFullContext c)
   csWrite [variableName n ++ "([this]() { return " ++ writeStoredVariable t1 e' ++ "; })"]
 
@@ -656,7 +657,7 @@ compileExpression = compile where
     r <- csResolver
     fa <- csAllFilters
     let vt = ValueType RequiredValue $ SingleType $ JustTypeInstance t
-    lift $ (checkValueTypeMatch_ r fa t' vt) <??
+    lift $ (checkValueAssignment r fa t' vt) <??
       ("In converted call at " ++ formatFullContext c)
     f' <- lookupValueFunction vt f
     compileFunctionCall (Just $ useAsUnwrapped e') f' f
@@ -753,7 +754,7 @@ compileExpressionStart (BuiltinCall c (FunctionCall _ BuiltinReduce ps es)) = do
   fa <- csAllFilters
   lift $ validateGeneralInstance r fa t1
   lift $ validateGeneralInstance r fa t2
-  lift $ (checkValueTypeMatch_ r fa t0 (ValueType OptionalValue t1)) <??
+  lift $ (checkValueAssignment r fa t0 (ValueType OptionalValue t1)) <??
     ("In argument to reduce call at " ++ formatFullContext c)
   -- TODO: If t1 -> t2 then just return e without a Reduce call.
   t1' <- expandGeneralInstance t1
@@ -811,7 +812,7 @@ compileExpressionStart (InlineAssignment c n e) = do
   (Positional [t],e') <- compileExpression e -- TODO: Get rid of the Positional matching here.
   r <- csResolver
   fa <- csAllFilters
-  lift $ (checkValueTypeMatch_ r fa t t0) <??
+  lift $ (checkValueAssignment r fa t t0) <??
     ("In assignment at " ++ formatFullContext c)
   csUpdateAssigned n
   scoped <- autoScope s
@@ -880,14 +881,14 @@ compileFunctionCall e f (FunctionCall c _ ps es) = errorContext ???> do
     checkArity (i,Positional ts)  =
       compileErrorM $ "Return position " ++ show i ++ " has " ++ show (length ts) ++ " values but should have 1"
     checkArg r fa t0 (i,t1) = do
-      checkValueTypeMatch r fa t1 t0 <?? ("In argument " ++ show i ++ " to " ++ show (sfName f))
+      checkValueAssignment r fa t1 t0 <?? ("In argument " ++ show i ++ " to " ++ show (sfName f))
 
 guessParamsFromArgs :: (Show c, MergeableM m, CompileErrorM m, TypeResolver r) =>
   r -> ParamFilters -> ScopedFunction c -> Positional (InstanceOrInferred c) ->
   Positional ValueType -> m (Positional GeneralInstance)
 guessParamsFromArgs r fa f ps ts = do
   let ff = getFunctionFilterMap f
-  args <- processPairs alwaysPair ts (fmap pvType $ sfArgs f)
+  args <- processPairs (\t1 t2 -> return $ PatternMatch Covariant t1 t2) ts (fmap pvType $ sfArgs f)
   pa <- fmap Map.fromList $ processPairs toInstance (fmap vpParam $ sfParams f) ps
   gs <- inferParamTypes r fa ff pa args
   gs' <- mergeInferredTypes r fa gs

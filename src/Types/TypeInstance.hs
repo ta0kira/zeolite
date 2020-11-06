@@ -42,8 +42,8 @@ module Types.TypeInstance (
   ValueType(..),
   checkDefinesMatch,
   checkGeneralMatch,
+  checkValueAssignment,
   checkValueTypeMatch,
-  checkValueTypeMatch_,
   fixTypeParams,
   getValueForParam,
   hasInferredParams,
@@ -318,17 +318,24 @@ noInferredTypes :: (MergeableM m, CompileErrorM m) => m (MergeTree InferredTypeG
 noInferredTypes = id >=> reduceMergeTree return return message where
   message i = compileErrorM $ "Type guess " ++ show i ++ " not allowed here"
 
-checkValueTypeMatch_ :: (MergeableM m, CompileErrorM m, TypeResolver r) =>
+checkValueAssignment :: (MergeableM m, CompileErrorM m, TypeResolver r) =>
   r -> ParamFilters -> ValueType -> ValueType -> m ()
-checkValueTypeMatch_ r f t1 t2 = noInferredTypes $ checkValueTypeMatch r f t1 t2
+checkValueAssignment r f t1 t2 = noInferredTypes $ checkValueTypeMatch r f Covariant t1 t2
 
 checkValueTypeMatch :: (MergeableM m, CompileErrorM m, TypeResolver r) =>
-  r -> ParamFilters -> ValueType -> ValueType -> m (MergeTree InferredTypeGuess)
-checkValueTypeMatch r f ts1@(ValueType r1 t1) ts2@(ValueType r2 t2)
-  | r1 < r2 =
-    compileErrorM $ "Cannot convert " ++ show ts1 ++ " to " ++ show ts2
-  | otherwise = checkGeneralMatch r f Covariant t1 t2 <??
-      ("Cannot convert " ++ show ts1 ++ " to " ++ show ts2)
+  r -> ParamFilters -> Variance -> ValueType -> ValueType -> m (MergeTree InferredTypeGuess)
+checkValueTypeMatch r f v ts1@(ValueType r1 t1) ts2@(ValueType r2 t2) = result <?? message where
+  message
+    | v == Covariant     = "Cannot convert " ++ show ts1 ++ " -> "  ++ show ts2
+    | v == Contravariant = "Cannot convert " ++ show ts1 ++ " <- "  ++ show ts2
+    | otherwise          = "Cannot convert " ++ show ts1 ++ " <-> " ++ show ts2
+  storageDir
+    | r1 > r2   = Covariant
+    | r1 < r2   = Contravariant
+    | otherwise = Invariant
+  result = do
+    when (not $ storageDir `allowsVariance` v) $ compileErrorM "Incompatible storage modifiers"
+    checkGeneralMatch r f v t1 t2
 
 checkGeneralMatch :: (MergeableM m, CompileErrorM m, TypeResolver r) =>
   r -> ParamFilters -> Variance ->
@@ -586,7 +593,7 @@ validateInstanceVariance r vm v (TypeMerge MergeIntersect ts) =
 validateInstanceVariance _ vm v (SingleType (JustParamName _ n)) =
   case n `Map.lookup` vm of
       Nothing -> compileErrorM $ "Param " ++ show n ++ " is undefined"
-      (Just v0) -> when (not $ v0 `paramAllowsVariance` v) $
+      (Just v0) -> when (not $ v0 `allowsVariance` v) $
                         compileErrorM $ "Param " ++ show n ++ " cannot be " ++ show v
 validateInstanceVariance _ _ _ t = compileErrorM $ "Type " ++ show t ++ " contains unresolved types"
 

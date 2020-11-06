@@ -1253,7 +1253,7 @@ checkInferenceCommon check tm pa is ts gs = checked <?? context where
   checked = do
     let r = CategoryResolver tm
     pa2 <- parseFilterMap pa
-    ts2 <- mapErrorsM parsePair ts
+    ts2 <- mapErrorsM (parsePair Covariant) ts
     ia2 <- mapErrorsM readInferred is
     gs' <- mapErrorsM parseGuess gs
     let iaMap = Map.fromList ia2 `Map.union` defaultParams pa2
@@ -1268,10 +1268,10 @@ checkInferenceCommon check tm pa is ts gs = checked <?? context where
     p' <- readSingle "(string)" p
     t' <- readSingle "(string)" t
     return $ InferredTypeGuess p' t' v
-  parsePair (t1,t2) = do
+  parsePair v (t1,t2) = do
     t1' <- readSingle "(string)" t1
     t2' <- readSingle "(string)" t2
-    return (t1',t2')
+    return (PatternMatch v t1' t2')
   weakLookup tm2 n =
     case n `Map.lookup` tm2 of
          Just t  -> return t

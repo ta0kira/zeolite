@@ -756,7 +756,7 @@ checkConvertSuccess pa x y = return checked where
   prefix = x ++ " -> " ++ y ++ " " ++ showParams pa
   checked = do
     ([t1,t2],pa2) <- parseTheTest pa [x,y]
-    check $ checkValueTypeMatch Resolver pa2 t1 t2
+    check $ checkValueAssignment Resolver pa2 t1 t2
   check c
     | isCompileError c = compileErrorM $ prefix ++ ":\n" ++ show (getCompileError c)
     | otherwise = return ()
@@ -814,7 +814,7 @@ checkConvertFail pa x y = return checked where
   prefix = x ++ " /> " ++ y ++ " " ++ showParams pa
   checked = do
     ([t1,t2],pa2) <- parseTheTest pa [x,y]
-    check $ checkValueTypeMatch Resolver pa2 t1 t2
+    check $ checkValueAssignment Resolver pa2 t1 t2
   check :: CompileInfo a -> CompileInfo ()
   check c
     | isCompileError c = return ()

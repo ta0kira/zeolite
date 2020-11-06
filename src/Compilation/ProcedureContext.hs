@@ -223,7 +223,7 @@ instance (Show c, MergeableM m, CompileErrorM m) =>
         assignFilters fm fs = do
           mapErrorsM (uncheckedSubFilter $ getValueForParam fm) fs
         checkInit r fa (MemberValue c2 n t0) (i,t1) = do
-          checkValueTypeMatch r fa t1 t0 <??
+          checkValueAssignment r fa t1 t0 <??
             ("In initializer " ++ show i ++ " for " ++ show n ++ formatFullContextBrace c2)
         subSingle pa (DefinedMember c2 _ t2 n _) = do
           t2' <- uncheckedSubValueType (getValueForParam pa) t2
@@ -434,7 +434,7 @@ instance (Show c, MergeableM m, CompileErrorM m) =>
           checkReturnType ta0@(PassedValue _ t0) (n,t) = do
             r <- ccResolver ctx
             pa <- ccAllFilters ctx
-            checkValueTypeMatch r pa t t0 <??
+            checkValueAssignment r pa t t0 <??
               ("Cannot convert " ++ show t ++ " to " ++ show ta0 ++ " in return " ++
                show n ++ " at " ++ formatFullContext c)
       check (ValidateNames ns ts ra) = do

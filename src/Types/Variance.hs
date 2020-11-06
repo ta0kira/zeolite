@@ -20,8 +20,8 @@ limitations under the License.
 
 module Types.Variance (
   Variance(..),
+  allowsVariance,
   composeVariance,
-  paramAllowsVariance,
 ) where
 
 
@@ -45,8 +45,8 @@ composeVariance Contravariant  Covariant      = Contravariant
 composeVariance Covariant      Contravariant  = Contravariant
 composeVariance _              _              = Invariant
 
-paramAllowsVariance :: Variance -> Variance -> Bool
-Covariant     `paramAllowsVariance` Covariant     = True
-Contravariant `paramAllowsVariance` Contravariant = True
-Invariant     `paramAllowsVariance` _             = True
-_             `paramAllowsVariance` _             = False
+allowsVariance :: Variance -> Variance -> Bool
+Covariant     `allowsVariance` Covariant     = True
+Contravariant `allowsVariance` Contravariant = True
+Invariant     `allowsVariance` _             = True
+_             `allowsVariance` _             = False
