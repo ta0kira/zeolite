@@ -1256,17 +1256,14 @@ checkInferenceCommon check tm pa is ts gs = checked <?? context where
     ts2 <- mapErrorsM parsePair ts
     ia2 <- mapErrorsM readInferred is
     gs' <- mapErrorsM parseGuess gs
-    let iaMap = Map.fromList ia2
-    -- TODO: Put the next few lines in a function in TypeCategory.
+    let iaMap = Map.fromList ia2 `Map.union` defaultParams pa2
     pa3 <- fmap Map.fromList $ mapErrorsM (filterSub iaMap) $ Map.toList pa2
-    gs2 <- mergeAllM $ map (subAndInfer r pa3 iaMap) ts2
+    gs2 <- inferParamTypes r pa3 Map.empty iaMap ts2
     check gs' $ mergeInferredTypes r pa3 gs2
-  subAndInfer r f im (t1,t2) = do
-    t2' <- uncheckedSubInstance (weakLookup im) t2
-    checkGeneralMatch r f Covariant t1 t2'
   readInferred p = do
     p' <- readSingle "(string)" p
     return (p',SingleType $ JustInferredType p')
+  defaultParams = Map.fromList . map (\p -> (p,SingleType $ JustParamName False p)) . Map.keys
   parseGuess (p,t,v) = do
     p' <- readSingle "(string)" p
     t' <- readSingle "(string)" t

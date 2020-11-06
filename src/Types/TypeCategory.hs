@@ -56,6 +56,7 @@ module Types.TypeCategory (
   getFunctionFilterMap,
   getInstanceCategory,
   getValueCategory,
+  guessesAsParams,
   includeNewTypes,
   inferParamTypes,
   isInstanceInterface,
@@ -979,16 +980,13 @@ unfixedSubFunction pa ff@(ScopedFunction c n t s as rs ps fa ms) =
 
 inferParamTypes :: (MergeableM m, CompileErrorM m, TypeResolver r) =>
   r -> ParamFilters -> ParamFilters -> ParamValues ->
-  [(ValueType,ValueType)] -> m (ParamValues)
+  [(ValueType,ValueType)] -> m (MergeTree InferredTypeGuess)
 inferParamTypes r f ff ps ts = do
   ts2 <- mapErrorsM subAll ts
   ff2 <- fmap Map.fromList $ mapErrorsM filterSub $ Map.toList ff
   gs  <- mergeAllM $ map (uncurry $ checkValueTypeMatch r f) ts2
   let gs2 = concat $ map (filtersToGuess ff2) $ Map.elems ps
-  let gs3 = mergeAll $ gs:(map mergeLeaf gs2)
-  gs4 <- mergeInferredTypes r f gs3
-  let ga = Map.fromList $ zip (map itgParam gs4) (map itgGuess gs4)
-  return $ ga `Map.union` ps where
+  return $ mergeAll $ gs:(map mergeLeaf gs2) where
     subAll (t1,t2) = do
       t2' <- uncheckedSubValueType (getValueForParam ps) t2
       return (t1,t2')
@@ -1008,16 +1006,15 @@ inferParamTypes r f ff ps ts = do
       | otherwise = [InferredTypeGuess p (SingleType t) Covariant]
     filterToGuess _ _ = []
 
-separateParamGuesses :: MergeTree InferredTypeGuess ->
-  (Map.Map ParamName (MergeTree InferredTypeGuess))
-separateParamGuesses = evalMergeTree toMap where
-  toMap i = Map.fromList [(itgParam i,mergeLeaf i)]
+guessesAsParams :: [InferredTypeGuess] -> ParamValues
+guessesAsParams gs = Map.fromList $ zip (map itgParam gs) (map itgGuess gs)
 
 mergeInferredTypes :: (MergeableM m, CompileErrorM m, TypeResolver r) =>
   r -> ParamFilters -> MergeTree InferredTypeGuess -> m [InferredTypeGuess]
 mergeInferredTypes r f gs = do
-  let gs' = separateParamGuesses gs
+  let gs' = evalMergeTree leafToMap gs
   mapErrorsM reduce $ Map.toList gs' where
+    leafToMap i = Map.fromList [(itgParam i,mergeLeaf i)]
     reduce (i,is) = do
       is' <- reduceMergeTree (anyOp i) (allOp i) leafOp is
       is'' <- mergeObjects finalMerge is'

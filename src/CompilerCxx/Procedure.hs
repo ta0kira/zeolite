@@ -889,7 +889,9 @@ guessParamsFromArgs r fa f ps ts = do
   let ff = getFunctionFilterMap f
   args <- processPairs alwaysPair ts (fmap pvType $ sfArgs f)
   pa <- fmap Map.fromList $ processPairs toInstance (fmap vpParam $ sfParams f) ps
-  pa3 <- inferParamTypes r fa ff pa args
+  gs <- inferParamTypes r fa ff pa args
+  gs' <- mergeInferredTypes r fa gs
+  let pa3 = guessesAsParams gs' `Map.union` pa
   fmap Positional $ mapErrorsM (subPosition pa3) (pValues $ sfParams f) where
     subPosition pa2 p =
       case (vpParam p) `Map.lookup` pa2 of
