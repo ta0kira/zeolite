@@ -1,0 +1,25 @@
+@value interface Type0 {}
+
+@value interface Type1 {
+  refines Type0
+}
+
+@value interface Type2 {
+  refines Type1
+}
+
+@value interface Type4 {}
+
+@value interface Interface0<|#x> {}
+
+@value interface Interface1<#y|> {}
+
+@value interface Interface2<#y> {
+  refines Interface0<#y>
+  refines Interface1<#y>
+}
+
+@value interface Interface3<#y> {
+  refines Interface0<#y>
+  refines Interface1<#y>
+}

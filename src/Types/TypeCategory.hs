@@ -1019,33 +1019,48 @@ mergeInferredTypes r f gs = do
   let gs' = separateParamGuesses gs
   mapErrorsM reduce $ Map.toList gs' where
     reduce (i,is) = do
-      is' <- reduceMergeTree anyOp allOp leafOp is
-      case is' of
+      is' <- reduceMergeTree (anyOp i) (allOp i) leafOp is
+      is'' <- mergeObjects finalMerge is'
+      case is'' of
            [i2] -> noInferred i2 >> return i2
            is3  -> compileErrorM $ "Could not reconcile guesses for " ++ show i ++ ": " ++ show is3
     -- Skip filtering out inferred types here, in case the guess can be replaced
     -- with something better that doesn't have an inferred type.
     leafOp i = return [i]
-    anyOp = mergeObjects anyMerge . sortBy invFirst
-    allOp = mergeObjects allMerge . sortBy conFirst
+    anyOp n gs2 = do
+      let (cov,inv,con) = splitByVariance gs2
+      cov' <- fmap (asUnion     n Covariant)     $ mergeObjects keepLeft  (map itgGuess cov)
+      con' <- fmap (asIntersect n Contravariant) $ mergeObjects keepRight (map itgGuess con)
+      mergeObjects mergeInvariant $ cov' ++ inv ++ con'
+    allOp n gs2 = do
+      let (cov,inv,con) = splitByVariance gs2
+      cov' <- fmap (asUnion     n Covariant)     $ mergeObjects keepRight (map itgGuess cov)
+      con' <- fmap (asIntersect n Contravariant) $ mergeObjects keepLeft  (map itgGuess con)
+      return $ cov' ++ inv ++ con'
+    -- NOTE: Checking for [] must precede calling mergeAny/mergeAll in case an
+    -- actual guess is any or all.
+    asUnion _ _ [] = []
+    asUnion n v ts = [InferredTypeGuess n (mergeAny ts) v]
+    asIntersect _ _ [] = []
+    asIntersect n v ts = [InferredTypeGuess n (mergeAll ts) v]
     noInferred (InferredTypeGuess n t _) =
       when (hasInferredParams t) $
         compileErrorM $ "Guess " ++ show t ++ " for parameter " ++ show n ++ " contains inferred types"
-    invFirst x y = itgVariance y `compare` itgVariance x
-    conFirst x y = itgVariance x `compare` itgVariance y
-    anyMerge (InferredTypeGuess _ g1 v1) (InferredTypeGuess _ g2 v2)
-      -- If g1 ~ g2 (replacing ~ with variance arrow) then eliminate g2.
-      | v1 == v2 = checkGeneralMatch r f v1 g1 g2
-      -- g2 should be removed if g2 is invariant.
-      | v2 == Invariant = checkGeneralMatch r f v1 g1 g2
-      -- Drop lower bounds. (v1 should be Contravariant here.)
-      | v2 == Covariant = checkGeneralMatch r f v1 g1 g2
-      | otherwise = compileErrorM "merge skipped"
-    allMerge (InferredTypeGuess _ g1 v1) (InferredTypeGuess _ g2 v2)
-      -- If g2 ~ g1 (replacing ~ with variance arrow) then eliminate g2.
-      | v1 == v2 = checkGeneralMatch r f v1 g2 g1
-      -- g2 should be removed if g1 is invariant.
-      | v1 == Invariant = checkGeneralMatch r f v2 g2 g1
-      -- Drop upper bounds. (v1 should be Covariant here.)
-      | v2 == Contravariant = checkGeneralMatch r f v1 g1 g2
-      | otherwise = compileErrorM "merge skipped"
+    splitByVariance gs2 = (filter ((== Covariant)     . itgVariance) gs2,
+                           filter ((== Invariant)     . itgVariance) gs2,
+                           filter ((== Contravariant) . itgVariance) gs2)
+    -- If t1 -> t2 then eliminate t2.
+    keepLeft = checkGeneralMatch r f Covariant
+    -- If t1 <- t2 then eliminate t2.
+    keepRight = checkGeneralMatch r f Contravariant
+    finalMerge (InferredTypeGuess _ g1 Invariant) (InferredTypeGuess _ g2 v2) =
+      -- Try to merge everything with the invariant guess(es).
+      checkGeneralMatch r f v2 g2 g1
+    finalMerge (InferredTypeGuess _ g1 Covariant) (InferredTypeGuess _ g2 Contravariant) =
+      -- Try to merge contravariant with covariant.
+      checkGeneralMatch r f Covariant g1 g2
+    finalMerge _ _ = compileErrorM "merge skipped"
+    mergeInvariant (InferredTypeGuess _ g1 v1) (InferredTypeGuess _ g2 Invariant) =
+      -- Merge invariant with anything else.
+      checkGeneralMatch r f v1 g1 g2
+    mergeInvariant _ _ = compileErrorM "merge skipped"

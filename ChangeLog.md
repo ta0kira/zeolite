@@ -34,9 +34,14 @@
   to `:`, e.g., `Foo:create()` instead of `Foo$$create()`. A new error message
   (to be removed later) will remind the user to stop using `$$`.
 
-* **[breaking]** Updates how param inference merges guesses from union and
-  intersection types. This *might* break existing code that relied on some
-  idiosyncrasy in the previous code, but probably not.
+* **[fix]** Fixes param inference to be more accurate with invariant params,
+  intersections, and unions. Previously, some inferred param types might have
+  been invalid, and some inferences might have failed.
+
+  For example, if guesses `Type1` and `Type2` were derived from contravariant
+  positions, the best match might be a common child. This would have failed
+  previously, whereas now it will result in `[Type1&Type2]`, which converts to
+  both `Type1` and `Type2`.
 
 ### Libraries
 

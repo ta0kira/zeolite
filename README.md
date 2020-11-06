@@ -941,16 +941,16 @@ compiler error and will need to explicitly write out the type.
 
 Type inference might fail if:
 
-- There is no possible parameter substitution that will make the given
-  argument(s) valid for the function. This *could* happen if the function
-  parameter is nested in the argument type, e.g., `call<#x> (Type<#x>) -> ()`
-  and there is no possible conversion of the argument to `Type`.
+- The type parameter to be inferred is not actually used in the argument types,
+  e.g., it is only in the return types.
 
-- The type parameter to be inferred is not actually used in the argument types.
+- Pattern matching fails, e.g., the argument type is `Foo<#x>` and you pass
+  `Bar`, and `Foo` is not a parent of `Bar`.
 
-- There *is* a possible parameter substitution, but that type cannot be easily
-  inferred. For example, if the best guesses are `Type1` and `Type2`, and the
-  best substitution is a common child `Type0`.
+- The combination of argument types and passed values imply that the param must
+  be multiple different types, e.g., both `Int` and `String`.
+
+In most other situations, inference should succeed.
 
 Type inference in the context of parameterized types is specifically disallowed
 in order to limit the amount of code the reader needs to search to figure out

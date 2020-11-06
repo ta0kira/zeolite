@@ -850,9 +850,10 @@ tests = [
       ("testfiles" </> "inference.0rx")
       (\ts -> do
         tm <- includeNewTypes defaultCategories ts
-        checkInferenceFail tm
+        checkInferenceSuccess tm
           [("#x",[])] ["#x"]
-          [("Interface3<Type1>","#x"),("Interface3<Type2>","#x")]),
+          [("Interface3<Type1>","#x"),("Interface3<Type2>","#x")]
+          [("#x","[Interface3<Type2>|Interface3<Type1>]",Covariant)]),
     checkOperationSuccess
       ("testfiles" </> "inference.0rx")
       (\ts -> do
@@ -950,15 +951,6 @@ tests = [
         tm <- includeNewTypes defaultCategories ts
         checkInferenceSuccess tm
           [("#x",[])] ["#x"]
-          [("Interface3<Type0>","[Interface1<#x>|Interface3<#x>]")]
-          -- Guesses are either Type0 or Type1, and Type1 is more specific.
-          [("#x","Type1",Covariant)]),
-    checkOperationSuccess
-      ("testfiles" </> "inference.0rx")
-      (\ts -> do
-        tm <- includeNewTypes defaultCategories ts
-        checkInferenceSuccess tm
-          [("#x",[])] ["#x"]
           -- Guesses are both Type0 and Type1, and Type0 is more general.
           [("Interface3<Type0>","[Interface1<#x>&Interface3<#x>]")]
           [("#x","Type0",Invariant)]),
@@ -987,10 +979,11 @@ tests = [
       ("testfiles" </> "delayed_merging.0rx")
       (\ts -> do
         tm <- includeNewTypes defaultCategories ts
-        checkInferenceFail tm
+        checkInferenceSuccess tm
           [("#x",[])] ["#x"]
           -- Guesses are either Type1 or Type2.
-          [("Type","[Interface1<#x>|Interface2<#x>]")]),
+          [("Type","[Interface1<#x>|Interface2<#x>]")]
+          [("#x","[Type2|Type1]",Covariant)]),
     checkOperationSuccess
       ("testfiles" </> "delayed_merging.0rx")
       (\ts -> do
@@ -1000,7 +993,80 @@ tests = [
           -- Failure to merge Type1 and Type2 is resolved by Base.
           [("Base","#x"),
            ("Type","[Interface1<#x>|Interface2<#x>]")]
-          [("#x","Base",Covariant)])
+          [("#x","Base",Covariant)]),
+
+    checkOperationSuccess
+      ("testfiles" </> "infer_meta.0rx")
+      (\ts -> do
+        tm <- includeNewTypes defaultCategories ts
+        checkInferenceSuccess tm
+          [("#x",[])] ["#x"]
+          [("[Interface2<Type1>|Interface3<Type2>]","Interface0<#x>")]
+          -- Guesses are Type1 and Type2, and Type1 is more general.
+          [("#x","Type1",Covariant)]),
+    checkOperationSuccess
+      ("testfiles" </> "infer_meta.0rx")
+      (\ts -> do
+        tm <- includeNewTypes defaultCategories ts
+        checkInferenceSuccess tm
+          [("#x",[])] ["#x"]
+          [("[Interface2<Type0>|Interface3<Type4>]","Interface0<#x>")]
+          -- Guesses are Type0 and Type4, which can't be merged.
+          [("#x","[Type4|Type0]",Covariant)]),
+    checkOperationSuccess
+      ("testfiles" </> "infer_meta.0rx")
+      (\ts -> do
+        tm <- includeNewTypes defaultCategories ts
+        checkInferenceSuccess tm
+          [("#x",[])] ["#x"]
+          [("[Interface2<Type1>&Interface3<Type2>]","Interface0<#x>")]
+          -- Guesses are Type1 or Type2, and Type2 is more specific.
+          [("#x","Type2",Covariant)]),
+    checkOperationSuccess
+      ("testfiles" </> "infer_meta.0rx")
+      (\ts -> do
+        tm <- includeNewTypes defaultCategories ts
+        checkInferenceSuccess tm
+          [("#x",[])] ["#x"]
+          [("[Interface2<Type0>&Interface3<Type4>]","Interface0<#x>")]
+          -- Guesses are Type0 or Type4, which can't be merged.
+          [("#x","[Type4|Type0]",Covariant)]),
+    checkOperationSuccess
+      ("testfiles" </> "infer_meta.0rx")
+      (\ts -> do
+        tm <- includeNewTypes defaultCategories ts
+        checkInferenceSuccess tm
+          [("#x",[])] ["#x"]
+          [("[Interface2<Type1>|Interface3<Type2>]","Interface1<#x>")]
+          -- Guesses are Type1 and Type2, and Type2 is more general.
+          [("#x","Type2",Contravariant)]),
+    checkOperationSuccess
+      ("testfiles" </> "infer_meta.0rx")
+      (\ts -> do
+        tm <- includeNewTypes defaultCategories ts
+        checkInferenceSuccess tm
+          [("#x",[])] ["#x"]
+          [("[Interface2<Type0>|Interface3<Type4>]","Interface1<#x>")]
+          -- Guesses are Type0 and Type4, which can't be merged.
+          [("#x","[Type4&Type0]",Contravariant)]),
+    checkOperationSuccess
+      ("testfiles" </> "infer_meta.0rx")
+      (\ts -> do
+        tm <- includeNewTypes defaultCategories ts
+        checkInferenceSuccess tm
+          [("#x",[])] ["#x"]
+          [("[Interface2<Type1>&Interface3<Type2>]","Interface1<#x>")]
+          -- Guesses are Type1 or Type2, and Type1 is more specific.
+          [("#x","Type1",Contravariant)]),
+    checkOperationSuccess
+      ("testfiles" </> "infer_meta.0rx")
+      (\ts -> do
+        tm <- includeNewTypes defaultCategories ts
+        checkInferenceSuccess tm
+          [("#x",[])] ["#x"]
+          [("[Interface2<Type0>&Interface3<Type4>]","Interface1<#x>")]
+          -- Guesses are Type0 or Type4, which can't be merged.
+          [("#x","[Type4&Type0]",Contravariant)])
   ]
 
 getRefines :: Map.Map CategoryName (AnyCategory c) -> String -> CompileInfo [String]
