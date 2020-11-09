@@ -102,7 +102,7 @@ testcase "constant defined in .zeolite-module" {
 
 define Test {
   run () {
-    \ Testing$check<?>($ExprLookup[INT_EXPR]$,4)
+    \ Testing$check<Int>($ExprLookup[INT_EXPR]$,4)
   }
 }
 
@@ -117,7 +117,7 @@ testcase "constant defined in .zeolite-module from regular source" {
 
 define Test {
   run () {
-    \ Testing$check<?>(ExprLookup$intExpr(),4)
+    \ Testing$check<Int>(ExprLookup$intExpr(),4)
   }
 }
 
@@ -134,7 +134,7 @@ define Test {
   @category String macroLocalVar <- "hello"
 
   run () {
-    \ Testing$check<?>($ExprLookup[LOCAL_VAR]$,"hello")
+    \ Testing$check<String>($ExprLookup[LOCAL_VAR]$,"hello")
   }
 }
 
@@ -166,7 +166,7 @@ testcase "in context defined in .zeolite-module from regular source" {
 
 define Test {
   run () {
-    \ Testing$check<?>(ExprLookup$localVar(),99)
+    \ Testing$check<Int>(ExprLookup$localVar(),99)
   }
 }
 
@@ -181,7 +181,7 @@ testcase "nested expression defined in .zeolite-module" {
 
 define Test {
   run () {
-    \ Testing$check<?>($ExprLookup[META_VAR]$,20)
+    \ Testing$check<Int>($ExprLookup[META_VAR]$,20)
   }
 }
 
@@ -196,7 +196,7 @@ testcase "function called on expression" {
 
 define Test {
   run () {
-    \ Testing$check<?>($ExprLookup[INT_EXPR]$.formatted(),"4")
+    \ Testing$check<String>($ExprLookup[INT_EXPR]$.formatted(),"4")
   }
 }
 

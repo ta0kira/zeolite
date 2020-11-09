@@ -162,8 +162,7 @@ concrete Test {
 
 testcase "inference conflict" {
   error
-  require "String"
-  require "Int"
+  require "#x"
 }
 
 concrete Type<#x> {

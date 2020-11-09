@@ -22,7 +22,7 @@ testcase "Int arithmetic with precedence" {
 
 define Test {
   run () {
-    \ Testing$check<?>(\x10 + 1 * 2 - 8 / 2 - 3 % 2,13)
+    \ Testing$check<Int>(\x10 + 1 * 2 - 8 / 2 - 3 % 2,13)
   }
 }
 
@@ -37,11 +37,11 @@ testcase "Int arithmetic" {
 
 define Test {
   run () {
-    \ Testing$check<?>(8 + 2,10)
-    \ Testing$check<?>(8 - 2,6)
-    \ Testing$check<?>(8 * 2,16)
-    \ Testing$check<?>(8 / 2,4)
-    \ Testing$check<?>(8 % 2,0)
+    \ Testing$check<Int>(8 + 2,10)
+    \ Testing$check<Int>(8 - 2,6)
+    \ Testing$check<Int>(8 * 2,16)
+    \ Testing$check<Int>(8 / 2,4)
+    \ Testing$check<Int>(8 % 2,0)
   }
 }
 
@@ -56,11 +56,11 @@ testcase "Int bitwise" {
 
 define Test {
   run () {
-    \ Testing$check<?>(1 << 2,4)
-    \ Testing$check<?>(7 >> 1,3)
-    \ Testing$check<?>(7 ^ 2 ,5)
-    \ Testing$check<?>(7 & ~2,5)
-    \ Testing$check<?>(5 | 2 ,7)
+    \ Testing$check<Int>(1 << 2,4)
+    \ Testing$check<Int>(7 >> 1,3)
+    \ Testing$check<Int>(7 ^ 2 ,5)
+    \ Testing$check<Int>(7 & ~2,5)
+    \ Testing$check<Int>(5 | 2 ,7)
   }
 }
 
@@ -75,7 +75,7 @@ testcase "Int bitwise with precedence" {
 
 define Test {
   run () {
-    \ Testing$check<?>(1 << 4 | 7 >> 1 & ~2,17)
+    \ Testing$check<Int>(1 << 4 | 7 >> 1 & ~2,17)
   }
 }
 
@@ -90,7 +90,7 @@ testcase "same operators applied left to right" {
 
 define Test {
   run () {
-    \ Testing$check<?>(2 - 1 - 1,0)
+    \ Testing$check<Int>(2 - 1 - 1,0)
   }
 }
 
@@ -137,7 +137,7 @@ testcase "String arithmetic" {
 
 define Test {
   run () {
-    \ Testing$check<?>("x" + "y" + "z","xyz")
+    \ Testing$check<String>("x" + "y" + "z","xyz")
   }
 }
 
@@ -152,7 +152,7 @@ testcase "Float arithmetic with precedence" {
 
 define Test {
   run () {
-    \ Testing$check<?>(16.0 + 1.0 * 2.0 - 8.0 / 2.0 - 3.0 / 3.0,13.0)
+    \ Testing$check<Float>(16.0 + 1.0 * 2.0 - 8.0 / 2.0 - 3.0 / 3.0,13.0)
   }
 }
 
@@ -167,7 +167,7 @@ testcase "Char minus" {
 
 define Test {
   run () {
-    \ Testing$check<?>('z' - 'a',25)
+    \ Testing$check<Int>('z' - 'a',25)
   }
 }
 

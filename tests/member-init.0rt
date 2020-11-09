@@ -107,7 +107,7 @@ define Test {
   }
 
   run () {
-    \ Testing$check<?>(get(),2)
+    \ Testing$check<Int>(get(),2)
   }
 }
 
