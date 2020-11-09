@@ -43,24 +43,21 @@ instance Show a => Show (MergeTree a) where
 mergeLeaf :: a -> MergeTree a
 mergeLeaf = MergeLeaf
 
-reduceMergeTree :: (Mergeable b, MergeableM m) => (b -> m b) -> (b -> m b) ->
-  (a -> m b) -> MergeTree a -> m b
+reduceMergeTree :: MergeableM m => ([b] -> m b) -> ([b] -> m b) -> (a -> m b) -> MergeTree a -> m b
 reduceMergeTree anyOp allOp leafOp = reduce where
   reduce (MergeAny xs) = do
-    xs' <- mergeAnyM $ map reduce xs
+    xs' <- mergeAnyM $ map (fmap (:[]) . reduce) xs
     anyOp xs'
   reduce (MergeAll xs) = do
-    xs' <- mergeAllM $ map reduce xs
+    xs' <- mergeAllM $ map (fmap (:[]) . reduce) xs
     allOp xs'
   reduce (MergeLeaf x) = leafOp x
 
--- The pattern-matching below works because mergeAllM and mergeAnyM will always
--- result in a MergeLeaf if the list *doesn't* contain MergeAll or MergeAny.
-evalMergeTree :: Mergeable b => (a -> b) -> MergeTree a -> b
-evalMergeTree f x = let (MergeLeaf y) = reduceMergeTree mergeLeaf mergeLeaf (mergeLeaf . f) x in y
+evalMergeTree :: (Mergeable b, MergeableM m) => (a -> m b) -> MergeTree a -> m b
+evalMergeTree f = reduceMergeTree (return . mergeAny) (return . mergeAll) f
 
 pruneMergeTree :: MergeableM m => MergeTree (m a) -> m (MergeTree a)
-pruneMergeTree = reduceMergeTree return return (fmap mergeLeaf)
+pruneMergeTree = evalMergeTree (fmap mergeLeaf)
 
 instance Functor MergeTree where
   fmap f (MergeAny xs) = mergeAny (map (fmap f) xs)

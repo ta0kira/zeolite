@@ -315,7 +315,7 @@ setParamsFixed f (SingleType (JustParamName _ n2)) =
 setParamsFixed _ t = t
 
 noInferredTypes :: (MergeableM m, CompileErrorM m) => m (MergeTree InferredTypeGuess) -> m ()
-noInferredTypes = id >=> reduceMergeTree return return message where
+noInferredTypes = id >=> evalMergeTree message where
   message i = compileErrorM $ "Type guess " ++ show i ++ " not allowed here"
 
 checkValueAssignment :: (MergeableM m, CompileErrorM m, TypeResolver r) =>

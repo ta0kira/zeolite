@@ -83,6 +83,7 @@ module Types.TypeCategory (
 
 import Control.Arrow (second)
 import Control.Monad (when)
+import Data.Functor.Identity
 import Data.List (group,groupBy,intercalate,sort,sortBy)
 import qualified Data.Map as Map
 import qualified Data.Set as Set
@@ -1026,11 +1027,11 @@ guessesAsParams gs = Map.fromList $ zip (map itgParam gs) (map itgGuess gs)
 mergeInferredTypes :: (MergeableM m, CompileErrorM m, TypeResolver r) =>
   r -> ParamFilters -> MergeTree InferredTypeGuess -> m [InferredTypeGuess]
 mergeInferredTypes r f gs = do
-  let gs' = evalMergeTree leafToMap gs
+  let gs' = runIdentity $ evalMergeTree (return . leafToMap) gs
   mapErrorsM reduce $ Map.toList gs' where
     leafToMap i = Map.fromList [(itgParam i,mergeLeaf i)]
     reduce (i,is) = do
-      is' <- reduceMergeTree (anyOp i) (allOp i) leafOp is
+      is' <- reduceMergeTree (anyOp i . concat) (allOp i . concat) leafOp is
       is'' <- mergeObjects finalMerge is'
       case is'' of
            [i2] -> noInferred i2 >> return i2

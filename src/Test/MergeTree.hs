@@ -23,6 +23,8 @@ module Test.MergeTree (tests) where
 import Control.Monad (when)
 import Data.Char (toUpper)
 
+import Data.Functor.Identity
+
 import Base.CompileError
 import Base.CompileInfo
 import Base.MergeTree
@@ -56,18 +58,18 @@ tests = [
                 (mergeAll $ map mergeLeaf [1..4] :: MergeTree Int),
 
    checkSuccess [2,4]
-                (reduceMergeTree return (\xs -> compileErrorM $ "mergeAll " ++ show xs) oddError2)
+                (reduceMergeTree (return . mergeAny) (\xs -> compileErrorM $ "mergeAll " ++ show xs) oddError2)
                 (mergeAny $ map mergeLeaf [1..4] :: MergeTree Int),
    checkError "1 is odd\n3 is odd\n"
-              (reduceMergeTree (\xs -> compileErrorM $ "mergeAny " ++ show xs) return oddError2)
+              (reduceMergeTree (\xs -> compileErrorM $ "mergeAny " ++ show xs) (return . mergeAll) oddError2)
               (mergeAll $ map mergeLeaf [1..4] :: MergeTree Int),
 
-   checkMatch False (evalMergeTree odd) (mergeAll [mergeLeaf 1,mergeLeaf 2] :: MergeTree Int),
-   checkMatch True  (evalMergeTree odd) (mergeAll [mergeLeaf 1,mergeLeaf 1] :: MergeTree Int),
-   checkMatch True  (evalMergeTree odd) (mergeAny [mergeLeaf 1,mergeLeaf 2] :: MergeTree Int),
-   checkMatch False (evalMergeTree odd) (mergeAny [mergeLeaf 2,mergeLeaf 2] :: MergeTree Int),
-   checkMatch True  (evalMergeTree odd) (mergeAll [] :: MergeTree Int),
-   checkMatch False (evalMergeTree odd) (mergeAny [] :: MergeTree Int),
+   checkMatch False (runIdentity . evalMergeTree (return . odd)) (mergeAll [mergeLeaf 1,mergeLeaf 2] :: MergeTree Int),
+   checkMatch True  (runIdentity . evalMergeTree (return . odd)) (mergeAll [mergeLeaf 1,mergeLeaf 1] :: MergeTree Int),
+   checkMatch True  (runIdentity . evalMergeTree (return . odd)) (mergeAny [mergeLeaf 1,mergeLeaf 2] :: MergeTree Int),
+   checkMatch False (runIdentity . evalMergeTree (return . odd)) (mergeAny [mergeLeaf 2,mergeLeaf 2] :: MergeTree Int),
+   checkMatch True  (runIdentity . evalMergeTree (return . odd)) (mergeAll [] :: MergeTree Int),
+   checkMatch False (runIdentity . evalMergeTree (return . odd)) (mergeAny [] :: MergeTree Int),
 
    -- a*(b&c)*(d|e) = (a*b&a*c)*(d|e) = (a*b*(d|e)&a*c*(d|e)) = (a*b*d|a*b*e)&(a*c*d|a*c*e)
    checkMatch (mergeAll [mergeAny [mergeLeaf "abd",mergeLeaf "abe"],mergeAny [mergeLeaf "acd",mergeLeaf "ace"]]) sequence
