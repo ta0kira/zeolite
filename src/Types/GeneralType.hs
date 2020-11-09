@@ -43,12 +43,16 @@ data GeneralType a =
   deriving (Eq,Ord)
 
 instance Mergeable (GeneralType a) where
-  mergeAll xs = case foldr (:) [] xs of
-                     [x] -> x
-                     xs2 -> TypeMerge MergeIntersect xs2
-  mergeAny xs = case foldr (:) [] xs of
-                     [x] -> x
-                     xs2 -> TypeMerge MergeUnion xs2
+  mergeAny = unnest . foldr ((++) . flattenAny) [] where
+    flattenAny (TypeMerge MergeUnion xs) = xs
+    flattenAny x                         = [x]
+    unnest [x] = x
+    unnest xs  = TypeMerge MergeUnion xs
+  mergeAll = unnest . foldr ((++) . flattenAll) [] where
+    flattenAll (TypeMerge MergeIntersect xs) = xs
+    flattenAll x                             = [x]
+    unnest [x] = x
+    unnest xs  = TypeMerge MergeIntersect xs
 
 checkGeneralType :: (MergeableM m, Mergeable c) => (a -> b -> m c) -> GeneralType a -> GeneralType b -> m c
 checkGeneralType f = singleCheck where
