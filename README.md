@@ -939,18 +939,19 @@ Only the function arguments and the parameter filters are used to infer the type
 substitution; return types are ignored. If inference fails, you will see a
 compiler error and will need to explicitly write out the type.
 
-Type inference might fail if:
+Type inference will *only* succeed if:
 
-- The type parameter to be inferred is not actually used in the argument types,
-  e.g., it is only in the return types.
+1. There is a valid pattern match between the expected argument types and the
+   types of the passed arguments.
 
-- Pattern matching fails, e.g., the argument type is `Foo<#x>` and you pass
-  `Bar`, and `Foo` is not a parent of `Bar`.
+2. There is *exactly one* type that matches best:
 
-- The combination of argument types and passed values imply that the param must
-  be multiple different types, e.g., both `Int` and `String`.
-
-In most other situations, inference should succeed.
+  - For params only used in *covariant* positions, the *lower bound* of the type
+    is unambiguous.
+  - For params only used in *contravariant* positions, the *upper bound* of the
+    type is unambiguous.
+  - For all other situations, the *upper and lower bounds* are unambiguous and
+    *equal* to each other.
 
 Type inference in the context of parameterized types is specifically disallowed
 in order to limit the amount of code the reader needs to search to figure out

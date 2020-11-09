@@ -1024,55 +1024,92 @@ inferParamTypes r f ff ps ts = do
 guessesAsParams :: [InferredTypeGuess] -> ParamValues
 guessesAsParams gs = Map.fromList $ zip (map itgParam gs) (map itgGuess gs)
 
+data GuessRange a =
+  GuessRange {
+    grLower :: a,
+    grUpper :: a
+  }
+
+instance Show a => Show (GuessRange a) where
+  show (GuessRange lo hi) = "Something between " ++ show lo ++ " and " ++ show hi
+
+data GuessUnion a =
+  GuessUnion {
+    guGuesses :: [GuessRange a]
+  }
+
 mergeInferredTypes :: (MergeableM m, CompileErrorM m, TypeResolver r) =>
   r -> ParamFilters -> MergeTree InferredTypeGuess -> m [InferredTypeGuess]
-mergeInferredTypes r f gs = do
-  let gs' = runIdentity $ evalMergeTree (return . leafToMap) gs
-  mapErrorsM reduce $ Map.toList gs' where
+
+mergeInferredTypes r f gs0 = do
+  let gs0' = runIdentity $ evalMergeTree (return . leafToMap) gs0
+  mapErrorsM reduce $ Map.toList gs0' where
     leafToMap i = Map.fromList [(itgParam i,mergeLeaf i)]
     reduce (i,is) = do
-      is' <- reduceMergeTree (anyOp i . concat) (allOp i . concat) leafOp is
-      is'' <- mergeObjects finalMerge is'
-      case is'' of
-           [i2] -> noInferred i2 >> return i2
-           is3  -> compileErrorM $ "Could not reconcile guesses for " ++ show i ++ ": " ++ show is3
-    -- Skip filtering out inferred types here, in case the guess can be replaced
-    -- with something better that doesn't have an inferred type.
-    leafOp i = return [i]
-    anyOp n gs2 = do
-      let (cov,inv,con) = splitByVariance gs2
-      cov' <- fmap (asUnion     n Covariant)     $ mergeObjects keepLeft  (map itgGuess cov)
-      con' <- fmap (asIntersect n Contravariant) $ mergeObjects keepRight (map itgGuess con)
-      mergeObjects mergeInvariant $ cov' ++ inv ++ con'
-    allOp n gs2 = do
-      let (cov,inv,con) = splitByVariance gs2
-      cov' <- fmap (asUnion     n Covariant)     $ mergeObjects keepRight (map itgGuess cov)
-      con' <- fmap (asIntersect n Contravariant) $ mergeObjects keepLeft  (map itgGuess con)
-      return $ cov' ++ inv ++ con'
-    -- NOTE: Checking for [] must precede calling mergeAny/mergeAll in case an
-    -- actual guess is any or all.
-    asUnion _ _ [] = []
-    asUnion n v ts = [InferredTypeGuess n (mergeAny ts) v]
-    asIntersect _ _ [] = []
-    asIntersect n v ts = [InferredTypeGuess n (mergeAll ts) v]
-    noInferred (InferredTypeGuess n t _) =
-      when (hasInferredParams t) $
-        compileErrorM $ "Guess " ++ show t ++ " for parameter " ++ show n ++ " contains inferred types"
-    splitByVariance gs2 = (filter ((== Covariant)     . itgVariance) gs2,
-                           filter ((== Invariant)     . itgVariance) gs2,
-                           filter ((== Contravariant) . itgVariance) gs2)
-    -- If t1 -> t2 then eliminate t2.
-    keepLeft = checkGeneralMatch r f Covariant
-    -- If t1 <- t2 then eliminate t2.
-    keepRight = checkGeneralMatch r f Contravariant
-    finalMerge (InferredTypeGuess _ g1 Invariant) (InferredTypeGuess _ g2 v2) =
-      -- Try to merge everything with the invariant guess(es).
-      checkGeneralMatch r f v2 g2 g1
-    finalMerge (InferredTypeGuess _ g1 Covariant) (InferredTypeGuess _ g2 Contravariant) =
-      -- Try to merge contravariant with covariant.
-      checkGeneralMatch r f Covariant g1 g2
-    finalMerge _ _ = compileErrorM "merge skipped"
-    mergeInvariant (InferredTypeGuess _ g1 v1) (InferredTypeGuess _ g2 Invariant) =
-      -- Merge invariant with anything else.
-      checkGeneralMatch r f v1 g1 g2
-    mergeInvariant _ _ = compileErrorM "merge skipped"
+      (GuessUnion gs) <- reduceMergeTree anyOp allOp leafOp is
+      t <- takeBest i gs
+      return (InferredTypeGuess i t Invariant)
+    minType = TypeMerge MergeUnion     []
+    maxType = TypeMerge MergeIntersect []
+    leafOp (InferredTypeGuess _ t Covariant)     = return $ GuessUnion [GuessRange t maxType]
+    leafOp (InferredTypeGuess _ t Contravariant) = return $ GuessUnion [GuessRange minType t]
+    leafOp (InferredTypeGuess _ t _)             = return $ GuessUnion [GuessRange t t]
+    anyOp = fmap GuessUnion . simplifyUnion . concat . map guGuesses
+    allOp [] = return $ GuessUnion []
+    allOp [g] = return g
+    allOp ((GuessUnion g1):(GuessUnion g2):gs) = do
+      g <- g1 `guessProd` g2
+      g' <- simplifyUnion g
+      allOp (GuessUnion g':gs)
+    guessProd xs ys = mergeAnyM $ do
+      x <- xs
+      y <- ys
+      [fmap (:[]) $ x `guessIntersect` y]
+    guessIntersect (GuessRange loX hiX) (GuessRange loY hiY) = do
+      q1 <- loX `convertsTo` hiY
+      q2 <- loY `convertsTo` hiX
+      -- This suppresses conversion errors in the error message, so that a
+      -- a failure to make a guess doesn't result in an incomprehensible error.
+      when (not $ q1 || q2) $ compileErrorM ""
+      loZ <- tryMerge Covariant     loX loY mergeAny
+      hiZ <- tryMerge Contravariant hiX hiY mergeAll
+      return $ GuessRange loZ hiZ
+    convertsTo t1 t2 = collectFirstM [
+        checkGeneralMatch r f Covariant t1 t2 >> return True,
+        return False
+      ]
+    tryMerge v t1 t2 defOp = collectFirstM [
+        checkGeneralMatch r f v t1 t2 >> return t2,
+        checkGeneralMatch r f v t2 t1 >> return t1,
+        return $ defOp [t1,t2]
+      ]
+    simplifyUnion [] = return []
+    simplifyUnion (g:gs) = do
+      ga <- mergeUnions [] g gs
+      case ga of
+           Right gs2 -> simplifyUnion gs2
+           Left  g2  -> do
+             gs2 <- simplifyUnion gs
+             return (g2:gs2)
+    mergeUnions _ g [] = return $ Left g
+    mergeUnions ms g1@(GuessRange loX hiX) (g2@(GuessRange loY hiY):gs) = do
+      q1 <- loX `convertsTo` hiY
+      q2 <- loY `convertsTo` hiX
+      if q1 && q2
+         then do
+           loZ <- tryMerge Contravariant loX loY mergeAny
+           hiZ <- tryMerge Covariant     hiX hiY mergeAll
+           return $ Right $ ms ++ [GuessRange loZ hiZ] ++ gs
+         else mergeUnions (ms ++ [g2]) g1 gs
+    takeBest i [] = compileErrorM $ "Could not infer param " ++ show i
+    takeBest i [g@(GuessRange lo hi)] = do
+      same <- hi `convertsTo` lo
+      let openHi = hi == maxType
+      let openLo = lo == minType
+      case (same,openHi,openLo) of
+           (True,_,_)     -> return lo
+           (_,True,False) -> return lo
+           (_,False,True) -> return hi
+           _ -> compileErrorM (show g) <?? ("Type for param " ++ show i ++ " is ambiguous")
+    takeBest i gs = (collectFirstM $ map (compileErrorM . show) gs) <??
+      ("Type for param " ++ show i ++ " is ambiguous")

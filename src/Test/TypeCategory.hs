@@ -801,7 +801,7 @@ tests = [
         checkInferenceSuccess tm
           [("#x",[])] ["#x"]
           [("Type1","#x")]
-          [("#x","Type1",Covariant)]),
+          [("#x","Type1")]),
     checkOperationSuccess
       ("testfiles" </> "inference.0rx")
       (\ts -> do
@@ -809,7 +809,7 @@ tests = [
         checkInferenceSuccess tm
           [("#x",[])] ["#x"]
           [("Type2","#x"),("Type1","#x")]
-          [("#x","Type1",Covariant)]),
+          [("#x","Type1")]),
     checkOperationSuccess
       ("testfiles" </> "inference.0rx")
       (\ts -> do
@@ -826,7 +826,7 @@ tests = [
         checkInferenceSuccess tm
           [("#x",[])] ["#x"]
           [("Interface1<Type2>","#x"),("Interface1<Type1>","#x")]
-          [("#x","Interface1<Type1>",Covariant)]),
+          [("#x","Interface1<Type1>")]),
 
     checkOperationSuccess
       ("testfiles" </> "inference.0rx")
@@ -835,7 +835,7 @@ tests = [
         checkInferenceSuccess tm
           [("#x",[])] ["#x"]
           [("Interface2<Type2>","#x"),("Interface2<Type1>","#x")]
-          [("#x","Interface2<Type2>",Covariant)]),
+          [("#x","Interface2<Type2>")]),
     checkOperationSuccess
       ("testfiles" </> "inference.0rx")
       (\ts -> do
@@ -844,7 +844,7 @@ tests = [
           [("#x",[])] ["#x"]
           [("Interface2<Type2>","Interface2<#x>"),
            ("Interface2<Type1>","Interface2<#x>")]
-          [("#x","Type2",Contravariant)]),
+          [("#x","Type2")]),
 
     checkOperationSuccess
       ("testfiles" </> "inference.0rx")
@@ -853,7 +853,7 @@ tests = [
         checkInferenceSuccess tm
           [("#x",[])] ["#x"]
           [("Interface3<Type1>","#x"),("Interface3<Type1>","#x")]
-          [("#x","Interface3<Type1>",Covariant)]),
+          [("#x","Interface3<Type1>")]),
     checkOperationSuccess
       ("testfiles" </> "inference.0rx")
       (\ts -> do
@@ -861,7 +861,7 @@ tests = [
         checkInferenceSuccess tm
           [("#x",[])] ["#x"]
           [("Interface3<Type1>","#x"),("Interface3<Type2>","#x")]
-          [("#x","[Interface3<Type2>|Interface3<Type1>]",Covariant)]),
+          [("#x","[Interface3<Type2>|Interface3<Type1>]")]),
     checkOperationSuccess
       ("testfiles" </> "inference.0rx")
       (\ts -> do
@@ -870,26 +870,26 @@ tests = [
           [("#x",[])] ["#x"]
           [("Interface3<Type1>","Interface3<#x>"),
            ("Interface3<Type1>","Interface3<#x>")]
-          [("#x","Type1",Invariant)]),
-    checkOperationSuccess
-      ("testfiles" </> "inference.0rx")
-      (\ts -> do
-        tm <- includeNewTypes defaultCategories ts
-        checkInferenceFail tm
-          [("#x",[])] ["#x"]
-          [("Interface3<Type1>","Interface3<#x>"),
-           ("Interface3<Type2>","Interface3<#x>")]),
-
+          [("#x","Type1")]),
     checkOperationSuccess
       ("testfiles" </> "inference.0rx")
       (\ts -> do
         tm <- includeNewTypes defaultCategories ts
         checkInferenceSuccess tm
           [("#x",[])] ["#x"]
+          [("Interface3<Type1>","Interface3<#x>"),
+           ("Interface3<Type2>","Interface3<#x>")]
+          [("#x","Type1")]),
+
+    checkOperationSuccess
+      ("testfiles" </> "inference.0rx")
+      (\ts -> do
+        tm <- includeNewTypes defaultCategories ts
+        checkInferenceFail tm
+          [("#x",[])] ["#x"]
           [("Type1","#x"),
            ("Interface1<Type2>","Interface1<#x>"),
-           ("Interface2<Type0>","Interface2<#x>")]
-          [("#x","Type1",Covariant)]),
+           ("Interface2<Type0>","Interface2<#x>")]),
     checkOperationSuccess
       ("testfiles" </> "inference.0rx")
       (\ts -> do
@@ -899,7 +899,7 @@ tests = [
           [("Interface3<Type2>","Interface3<#x>"),
            ("Interface1<Type2>","Interface1<#x>"),
            ("Interface2<Type1>","Interface2<#x>")]
-          [("#x","Type2",Invariant)]),
+          [("#x","Type2")]),
 
     checkOperationSuccess
       ("testfiles" </> "inference.0rx")
@@ -909,7 +909,7 @@ tests = [
           [("#x",[]),("#y",["allows #x"])] ["#x"]
           [("Interface1<Type1>","Interface1<#x>"),
            ("Type0","#y")]  -- The filter for #y influences the guess for #x.
-          [("#x","Type0",Covariant)]),
+          [("#x","Type0")]),
     checkOperationSuccess
       ("testfiles" </> "inference.0rx")
       (\ts -> do
@@ -918,7 +918,7 @@ tests = [
           [("#x",[]),("#y",["allows #x"])] ["#x"]
           [("Interface1<Type1>","Interface1<#x>"),
            ("Type2","#y")]
-          [("#x","Type1",Covariant)]),
+          [("#x","Type1")]),
 
     checkOperationSuccess
       ("testfiles" </> "inference.0rx")
@@ -927,7 +927,7 @@ tests = [
         checkInferenceSuccess tm
           [("#x",[])] ["#x"]
           [("Interface1<Type1>","Interface1<[#x|Interface2<#x>]>")]
-          [("#x","Type1",Covariant)]),
+          [("#x","Type1")]),
     checkOperationSuccess
       ("testfiles" </> "inference.0rx")
       (\ts -> do
@@ -935,7 +935,7 @@ tests = [
         checkInferenceSuccess tm
           [("#x",[])] ["#x"]
           [("Interface1<Type2>","Interface1<[#x&Type1]>")]
-          [("#x","Type2",Covariant)]),
+          [("#x","Type2")]),
     checkOperationSuccess
       ("testfiles" </> "inference.0rx")
       (\ts -> do
@@ -943,7 +943,7 @@ tests = [
         checkInferenceSuccess tm
           [("#x",[])] ["#x"]
           [("Interface2<Type1>","Interface2<[#x&Interface2<#x>]>")]
-          [("#x","Type1",Contravariant)]),
+          [("#x","Type1")]),
     checkOperationSuccess
       ("testfiles" </> "inference.0rx")
       (\ts -> do
@@ -951,7 +951,7 @@ tests = [
         checkInferenceSuccess tm
           [("#x",[])] ["#x"]
           [("Interface2<Type0>","Interface2<[#x|Type1]>")]
-          [("#x","Type0",Contravariant)]),
+          [("#x","Type0")]),
 
     checkOperationSuccess
       ("testfiles" </> "inference.0rx")
@@ -961,7 +961,7 @@ tests = [
           [("#x",[])] ["#x"]
           -- Guesses are both Type0 and Type1, and Type0 is more general.
           [("Interface3<Type0>","[Interface1<#x>&Interface3<#x>]")]
-          [("#x","Type0",Invariant)]),
+          [("#x","Type0")]),
 
     checkOperationSuccess
       ("testfiles" </> "inference.0rx")
@@ -971,7 +971,7 @@ tests = [
           [("#x",[])] ["#x"]
           -- An unrelated union shouldn't cause problems.
           [("Type1","#x"),("Type2","[Type2|Type0]")]
-          [("#x","Type1",Covariant)]),
+          [("#x","Type1")]),
 
     checkOperationSuccess
       ("testfiles" </> "inference.0rx")
@@ -981,7 +981,7 @@ tests = [
           [("#x",[]),("#y",[])] ["#x","#y"]
           [("Interface3<Type0>","[Interface1<#x>&Interface3<#x>]"),
            ("Interface3<Type0>","[Interface1<#y>|Interface3<#y>]")]
-          [("#x","Type0",Invariant),("#y","Type1",Covariant)]),
+          [("#x","Type0"),("#y","Type1")]),
 
     checkOperationSuccess
       ("testfiles" </> "inference.0rx")
@@ -990,7 +990,7 @@ tests = [
         checkInferenceSuccess tm
           [("#x",[])] ["#x"]
           [("Interface1<any>","Interface1<#x>")]
-          [("#x","any",Covariant)]),
+          [("#x","any")]),
     checkOperationSuccess
       ("testfiles" </> "inference.0rx")
       (\ts -> do
@@ -998,7 +998,7 @@ tests = [
         checkInferenceSuccess tm
           [("#x",[])] ["#x"]
           [("Interface2<all>","Interface2<#x>")]
-          [("#x","all",Contravariant)]),
+          [("#x","all")]),
 
     checkOperationSuccess
       ("testfiles" </> "delayed_merging.0rx")
@@ -1008,7 +1008,7 @@ tests = [
           [("#x",[])] ["#x"]
           -- Guesses are either Type1 or Type2.
           [("Type","[Interface1<#x>|Interface2<#x>]")]
-          [("#x","[Type2|Type1]",Covariant)]),
+          [("#x","[Type2|Type1]")]),
     checkOperationSuccess
       ("testfiles" </> "delayed_merging.0rx")
       (\ts -> do
@@ -1018,7 +1018,7 @@ tests = [
           -- Failure to merge Type1 and Type2 is resolved by Base.
           [("Base","#x"),
            ("Type","[Interface1<#x>|Interface2<#x>]")]
-          [("#x","Base",Covariant)]),
+          [("#x","Base")]),
 
     checkOperationSuccess
       ("testfiles" </> "infer_meta.0rx")
@@ -1028,7 +1028,7 @@ tests = [
           [("#x",[])] ["#x"]
           [("[Interface2<Type1>|Interface3<Type2>]","Interface0<#x>")]
           -- Guesses are Type1 and Type2, and Type1 is more general.
-          [("#x","Type1",Covariant)]),
+          [("#x","Type1")]),
     checkOperationSuccess
       ("testfiles" </> "infer_meta.0rx")
       (\ts -> do
@@ -1037,7 +1037,7 @@ tests = [
           [("#x",[])] ["#x"]
           [("[Interface2<Type0>|Interface3<Type4>]","Interface0<#x>")]
           -- Guesses are Type0 and Type4, which can't be merged.
-          [("#x","[Type4|Type0]",Covariant)]),
+          [("#x","[Type4|Type0]")]),
     checkOperationSuccess
       ("testfiles" </> "infer_meta.0rx")
       (\ts -> do
@@ -1046,7 +1046,7 @@ tests = [
           [("#x",[])] ["#x"]
           [("[Interface2<Type1>&Interface3<Type2>]","Interface0<#x>")]
           -- Guesses are Type1 or Type2, and Type2 is more specific.
-          [("#x","Type2",Covariant)]),
+          [("#x","Type2")]),
     checkOperationSuccess
       ("testfiles" </> "infer_meta.0rx")
       (\ts -> do
@@ -1055,7 +1055,7 @@ tests = [
           [("#x",[])] ["#x"]
           [("[Interface2<Type0>&Interface3<Type4>]","Interface0<#x>")]
           -- Guesses are Type0 or Type4, which can't be merged.
-          [("#x","[Type4|Type0]",Covariant)]),
+          [("#x","[Type4|Type0]")]),
     checkOperationSuccess
       ("testfiles" </> "infer_meta.0rx")
       (\ts -> do
@@ -1064,7 +1064,7 @@ tests = [
           [("#x",[])] ["#x"]
           [("[Interface2<Type1>|Interface3<Type2>]","Interface1<#x>")]
           -- Guesses are Type1 and Type2, and Type2 is more general.
-          [("#x","Type2",Contravariant)]),
+          [("#x","Type2")]),
     checkOperationSuccess
       ("testfiles" </> "infer_meta.0rx")
       (\ts -> do
@@ -1073,7 +1073,7 @@ tests = [
           [("#x",[])] ["#x"]
           [("[Interface2<Type0>|Interface3<Type4>]","Interface1<#x>")]
           -- Guesses are Type0 and Type4, which can't be merged.
-          [("#x","[Type4&Type0]",Contravariant)]),
+          [("#x","[Type4&Type0]")]),
     checkOperationSuccess
       ("testfiles" </> "infer_meta.0rx")
       (\ts -> do
@@ -1082,7 +1082,7 @@ tests = [
           [("#x",[])] ["#x"]
           [("[Interface2<Type1>&Interface3<Type2>]","Interface1<#x>")]
           -- Guesses are Type1 or Type2, and Type1 is more specific.
-          [("#x","Type1",Contravariant)]),
+          [("#x","Type1")]),
     checkOperationSuccess
       ("testfiles" </> "infer_meta.0rx")
       (\ts -> do
@@ -1091,7 +1091,7 @@ tests = [
           [("#x",[])] ["#x"]
           [("[Interface2<Type0>&Interface3<Type4>]","Interface1<#x>")]
           -- Guesses are Type0 or Type4, which can't be merged.
-          [("#x","[Type4&Type0]",Contravariant)])
+          [("#x","[Type4&Type0]")])
   ]
 
 getRefines :: Map.Map CategoryName (AnyCategory c) -> String -> CompileInfo [String]
@@ -1230,11 +1230,11 @@ checkShortParseFail s = do
                                    show (getCompileSuccess c) ++ "\n"
 
 checkInferenceSuccess :: CategoryMap SourcePos -> [(String, [String])] ->
-  [String] -> [(String,String)] -> [(String,String,Variance)] -> CompileInfo ()
+  [String] -> [(String,String)] -> [(String,String)] -> CompileInfo ()
 checkInferenceSuccess tm pa is ts gs = checkInferenceCommon check tm pa is ts gs where
   prefix = show ts ++ " " ++ showParams pa
   check gs2 c
-    | isCompileError c = compileErrorM $ prefix ++ ":\n" ++ show (getCompileError c)
+    | isCompileError c = compileErrorM $ prefix ++ ":\n" ++ show (getCompileWarnings c) ++ show (getCompileError c)
     | otherwise        = getCompileSuccess c `containsExactly` gs2
 
 checkInferenceFail :: CategoryMap SourcePos -> [(String, [String])] ->
@@ -1247,7 +1247,7 @@ checkInferenceFail tm pa is ts = checkInferenceCommon check tm pa is ts [] where
 
 checkInferenceCommon :: ([InferredTypeGuess] -> CompileInfo [InferredTypeGuess] -> CompileInfo ()) ->
   CategoryMap SourcePos -> [(String,[String])] -> [String] ->
-  [(String,String)] -> [(String,String,Variance)] -> CompileInfo ()
+  [(String,String)] -> [(String,String)] -> CompileInfo ()
 checkInferenceCommon check tm pa is ts gs = checked <?? context where
   context = "With params = " ++ show pa ++ ", pairs = " ++ show ts
   checked = do
@@ -1264,10 +1264,10 @@ checkInferenceCommon check tm pa is ts gs = checked <?? context where
     p' <- readSingle "(string)" p
     return (p',SingleType $ JustInferredType p')
   defaultParams = Map.fromList . map (\p -> (p,SingleType $ JustParamName False p)) . Map.keys
-  parseGuess (p,t,v) = do
+  parseGuess (p,t) = do
     p' <- readSingle "(string)" p
     t' <- readSingle "(string)" t
-    return $ InferredTypeGuess p' t' v
+    return $ InferredTypeGuess p' t' Invariant
   parsePair v (t1,t2) = do
     t1' <- readSingle "(string)" t1
     t2' <- readSingle "(string)" t2
