@@ -946,12 +946,12 @@ Type inference will *only* succeed if:
 
 2. There is *exactly one* type that matches best:
 
-  - For params only used in *covariant* positions, the *lower bound* of the type
-    is unambiguous.
-  - For params only used in *contravariant* positions, the *upper bound* of the
-    type is unambiguous.
-  - For all other situations, the *upper and lower bounds* are unambiguous and
-    *equal* to each other.
+   - For params only used in *covariant* positions, the *lower bound* of the
+     type is unambiguous.
+   - For params only used in *contravariant* positions, the *upper bound* of the
+     type is unambiguous.
+   - For all other situations, the *upper and lower bounds* are unambiguous and
+     *equal* to each other.
 
 Type inference in the context of parameterized types is specifically disallowed
 in order to limit the amount of code the reader needs to search to figure out
