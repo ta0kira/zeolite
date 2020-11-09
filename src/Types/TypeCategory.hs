@@ -1070,18 +1070,21 @@ mergeInferredTypes r f gs0 = do
       q2 <- loY `convertsTo` hiX
       if q1 && q2
          then do
-           loZ <- tryMerge Covariant     loX loY mergeAny
-           hiZ <- tryMerge Contravariant hiX hiY mergeAll
+           loZ <- tryMerge Covariant     loX loY
+           hiZ <- tryMerge Contravariant hiX hiY
            return [GuessRange loZ hiZ]
          else return []
     convertsTo t1 t2 = collectFirstM [
         checkGeneralMatch r f Covariant t1 t2 >> return True,
         return False
       ]
-    tryMerge v t1 t2 defOp = collectFirstM [
+    tryMerge v t1 t2 = collectFirstM [
         checkGeneralMatch r f v t1 t2 >> return t2,
         checkGeneralMatch r f v t2 t1 >> return t1,
-        return $ defOp [t1,t2]
+        return $ case v of
+                      Covariant     -> mergeAny [t1,t2]
+                      Contravariant -> mergeAll [t1,t2]
+                      _ -> undefined
       ]
     simplifyUnion [] = return []
     simplifyUnion (g:gs) = do
@@ -1093,14 +1096,21 @@ mergeInferredTypes r f gs0 = do
              return (g2:gs2)
     mergeUnions _ g [] = return $ Left g
     mergeUnions ms g1@(GuessRange loX hiX) (g2@(GuessRange loY hiY):gs) = do
-      q1 <- loX `convertsTo` hiY
-      q2 <- loY `convertsTo` hiX
-      if q1 && q2
-         then do
-           loZ <- tryMerge Contravariant loX loY mergeAny
-           hiZ <- tryMerge Covariant     hiX hiY mergeAll
-           return $ Right $ ms ++ [GuessRange loZ hiZ] ++ gs
-         else mergeUnions (ms ++ [g2]) g1 gs
+      l1 <- loX `convertsTo` loY
+      l2 <- loY `convertsTo` loX
+      let loZ = case (l1,l2) of
+                     (True,_) -> Just loX
+                     (_,True) -> Just loY
+                     _ -> Nothing
+      h1 <- hiX `convertsTo` hiY
+      h2 <- hiY `convertsTo` hiX
+      let hiZ = case (h1,h2) of
+                     (True,_) -> Just hiY
+                     (_,True) -> Just hiX
+                     _ -> Nothing
+      case (loZ,hiZ) of
+           (Just lo,Just hi) -> return $ Right $ ms ++ [GuessRange lo hi] ++ gs
+           _                 -> mergeUnions (ms ++ [g2]) g1 gs
     takeBest i [] = compileErrorM $ "No valid guesses for param " ++ show i
     takeBest i [g@(GuessRange lo hi)] = do
       same <- hi `convertsTo` lo

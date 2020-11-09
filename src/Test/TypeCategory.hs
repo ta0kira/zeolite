@@ -1003,11 +1003,10 @@ tests = [
       ("testfiles" </> "delayed_merging.0rx")
       (\ts -> do
         tm <- includeNewTypes defaultCategories ts
-        checkInferenceSuccess tm
+        checkInferenceFail tm
           [("#x",[])] ["#x"]
           -- Guesses are either Type1 or Type2.
-          [("Type","[Interface1<#x>|Interface2<#x>]")]
-          [("#x","[Type2|Type1]")]),
+          [("Type","[Interface1<#x>|Interface2<#x>]")]),
     checkOperationSuccess
       ("testfiles" </> "delayed_merging.0rx")
       (\ts -> do
@@ -1050,11 +1049,10 @@ tests = [
       ("testfiles" </> "infer_meta.0rx")
       (\ts -> do
         tm <- includeNewTypes defaultCategories ts
-        checkInferenceSuccess tm
+        checkInferenceFail tm
           [("#x",[])] ["#x"]
-          [("[Interface2<Type0>&Interface3<Type4>]","Interface0<#x>")]
           -- Guesses are Type0 or Type4, which can't be merged.
-          [("#x","[Type4|Type0]")]),
+          [("[Interface2<Type0>&Interface3<Type4>]","Interface0<#x>")]),
     checkOperationSuccess
       ("testfiles" </> "infer_meta.0rx")
       (\ts -> do
@@ -1086,11 +1084,10 @@ tests = [
       ("testfiles" </> "infer_meta.0rx")
       (\ts -> do
         tm <- includeNewTypes defaultCategories ts
-        checkInferenceSuccess tm
+        checkInferenceFail tm
           [("#x",[])] ["#x"]
-          [("[Interface2<Type0>&Interface3<Type4>]","Interface1<#x>")]
           -- Guesses are Type0 or Type4, which can't be merged.
-          [("#x","[Type4&Type0]")])
+          [("[Interface2<Type0>&Interface3<Type4>]","Interface1<#x>")])
   ]
 
 getRefines :: Map.Map CategoryName (AnyCategory c) -> String -> CompileInfo [String]
