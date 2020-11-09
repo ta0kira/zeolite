@@ -1064,16 +1064,16 @@ mergeInferredTypes r f gs0 = do
     guessProd xs ys = mergeAnyM $ do
       x <- xs
       y <- ys
-      [fmap (:[]) $ x `guessIntersect` y]
+      [x `guessIntersect` y]
     guessIntersect (GuessRange loX hiX) (GuessRange loY hiY) = do
       q1 <- loX `convertsTo` hiY
       q2 <- loY `convertsTo` hiX
-      -- This suppresses conversion errors in the error message, so that a
-      -- a failure to make a guess doesn't result in an incomprehensible error.
-      when (not $ q1 || q2) $ compileErrorM ""
-      loZ <- tryMerge Covariant     loX loY mergeAny
-      hiZ <- tryMerge Contravariant hiX hiY mergeAll
-      return $ GuessRange loZ hiZ
+      if q1 && q2
+         then do
+           loZ <- tryMerge Covariant     loX loY mergeAny
+           hiZ <- tryMerge Contravariant hiX hiY mergeAll
+           return [GuessRange loZ hiZ]
+         else return []
     convertsTo t1 t2 = collectFirstM [
         checkGeneralMatch r f Covariant t1 t2 >> return True,
         return False
@@ -1101,7 +1101,7 @@ mergeInferredTypes r f gs0 = do
            hiZ <- tryMerge Covariant     hiX hiY mergeAll
            return $ Right $ ms ++ [GuessRange loZ hiZ] ++ gs
          else mergeUnions (ms ++ [g2]) g1 gs
-    takeBest i [] = compileErrorM $ "Could not infer param " ++ show i
+    takeBest i [] = compileErrorM $ "No valid guesses for param " ++ show i
     takeBest i [g@(GuessRange lo hi)] = do
       same <- hi `convertsTo` lo
       let openHi = hi == maxType

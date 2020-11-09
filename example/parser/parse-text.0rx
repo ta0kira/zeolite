@@ -17,7 +17,7 @@ define StringParser {
           // Partial match => set error context.
           return context.setBrokenInput(message)
         } else {
-          return context.setValue<?>(ErrorOr:error(message))
+          return context.setValue<all>(ErrorOr:error(message))
         }
       }
     } update {
@@ -75,7 +75,7 @@ define SequenceOfParser {
       // Partial match => set error context.
       return context.setBrokenInput(message)
     } else {
-      return context.setValue<?>(ErrorOr:error(message))
+      return context.setValue<all>(ErrorOr:error(message))
     }
   }
 
@@ -95,7 +95,7 @@ define CharParser {
     }
     if (contextOld.atEof() || contextOld.current() != match) {
       String message <- "Failed to match '" + match.formatted() + "' at " + contextOld.getPosition()
-      return contextOld.setValue<?>(ErrorOr:error(message))
+      return contextOld.setValue<all>(ErrorOr:error(message))
     } else {
       return contextOld.advance().setValue<?>(ErrorOr:value<?>(match))
     }
@@ -134,7 +134,7 @@ define ErrorParser {
   @value Formatted message
 
   run (contextOld) {
-    return contextOld.setValue<?>(ErrorOr:error(message))
+    return contextOld.setValue<all>(ErrorOr:error(message))
   }
 
   create (message) {
@@ -157,7 +157,7 @@ define TryParser {
     }
     ParseContext<#x> context <- contextOld.run<#x>(parser)
     if (context.hasAnyError()) {
-      return contextOld.setValue<?>(context.getValue().convertError())
+      return contextOld.setValue<all>(context.getValue().convertError())
     } else {
       return context.toState()
     }

@@ -875,11 +875,10 @@ tests = [
       ("testfiles" </> "inference.0rx")
       (\ts -> do
         tm <- includeNewTypes defaultCategories ts
-        checkInferenceSuccess tm
+        checkInferenceFail tm
           [("#x",[])] ["#x"]
           [("Interface3<Type1>","Interface3<#x>"),
-           ("Interface3<Type2>","Interface3<#x>")]
-          [("#x","Type1")]),
+           ("Interface3<Type2>","Interface3<#x>")]),
 
     checkOperationSuccess
       ("testfiles" </> "inference.0rx")
