@@ -1061,7 +1061,9 @@ mergeInferredTypes r f gs0 = do
       g <- g1 `guessProd` g2
       g' <- simplifyUnion g
       allOp (GuessUnion g':gs)
-    guessProd xs ys = mergeAnyM $ do
+    -- NOTE: mergeAllM is used instead of mergeAnyM so that xs or ys being empty
+    -- doesn't cause an error at this point.
+    guessProd xs ys = mergeAllM $ do
       x <- xs
       y <- ys
       [x `guessIntersect` y]
