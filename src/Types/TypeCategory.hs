@@ -1088,14 +1088,14 @@ mergeInferredTypes r f gs0 = do
       ]
     simplifyUnion [] = return []
     simplifyUnion (g:gs) = do
-      ga <- mergeUnions [] g gs
+      ga <- tryRangeUnion [] g gs
       case ga of
-           Right gs2 -> simplifyUnion gs2
-           Left  g2  -> do
+           Just gs2 -> simplifyUnion gs2
+           Nothing -> do
              gs2 <- simplifyUnion gs
-             return (g2:gs2)
-    mergeUnions _ g [] = return $ Left g
-    mergeUnions ms g1@(GuessRange loX hiX) (g2@(GuessRange loY hiY):gs) = do
+             return (g:gs2)
+    -- Returns Just a new list if there was a merge, and Nothing otherwise.
+    tryRangeUnion ms g1@(GuessRange loX hiX) (g2@(GuessRange loY hiY):gs) = do
       l1 <- loX `convertsTo` loY
       l2 <- loY `convertsTo` loX
       let loZ = case (l1,l2) of
@@ -1109,8 +1109,9 @@ mergeInferredTypes r f gs0 = do
                      (_,True) -> Just hiX
                      _ -> Nothing
       case (loZ,hiZ) of
-           (Just lo,Just hi) -> return $ Right $ ms ++ [GuessRange lo hi] ++ gs
-           _                 -> mergeUnions (ms ++ [g2]) g1 gs
+           (Just lo,Just hi) -> return $ Just $ ms ++ [GuessRange lo hi] ++ gs
+           _                 -> tryRangeUnion (ms ++ [g2]) g1 gs
+    tryRangeUnion _ _ _ = return Nothing
     takeBest i [] = compileErrorM $ "No valid guesses for param " ++ show i
     takeBest i [g@(GuessRange lo hi)] = do
       same <- hi `convertsTo` lo
