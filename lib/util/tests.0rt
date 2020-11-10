@@ -301,7 +301,7 @@ define FakeFile {
 define Test {
   run () {
     String allContents <- TextReader$readAll(FakeFile$create())
-    \ Testing$check<String>(allContents,"this is a partial line\nwith some more data\nand\nmore lines\nunfinished")
+    \ Testing$check<?>(allContents,"this is a partial line\nwith some more data\nand\nmore lines\nunfinished")
   }
 }
 
@@ -320,7 +320,7 @@ define Test {
     if (value.isError()) {
       fail("Failed")
     }
-    \ Testing$check<Int>(value.getValue(),10)
+    \ Testing$check<?>(value.getValue(),10)
   }
 }
 
@@ -356,7 +356,7 @@ define Test {
     if (!value.isError()) {
       fail("Failed")
     }
-    \ Testing$check<String>(value.getError().formatted(),"error message")
+    \ Testing$check<?>(value.getError().formatted(),"error message")
   }
 }
 
@@ -391,7 +391,7 @@ define Test {
     scoped {
       ErrorOr<String> error <- ErrorOr:error("error message")
     } in ErrorOr<Int> value <- error.convertError()
-    \ Testing$check<String>(value.getError().formatted(),"error message")
+    \ Testing$check<?>(value.getError().formatted(),"error message")
   }
 }
 

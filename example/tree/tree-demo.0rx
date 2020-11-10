@@ -14,12 +14,12 @@ define TreeDemo {
     \ tree.set<?>(keyInt,1)
     \ tree.set<?>(keyString,"a")
 
-    \ check<Int>(tree,keyInt)
-    \ check<String>(tree,keyString)
-    \ check<Float>(tree,keyFloat)  // Not found, since we never added a value.
+    \ check<?>(tree,keyInt)
+    \ check<?>(tree,keyString)
+    \ check<?>(tree,keyFloat)  // Not found, since we never added a value.
 
     \ tree.set<?>(keyValue,Value$new())
-    \ check<Value>(tree,keyValue)
+    \ check<?>(tree,keyValue)
   }
 
   @category check<#x>
