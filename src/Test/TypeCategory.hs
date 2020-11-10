@@ -1087,7 +1087,38 @@ tests = [
         checkInferenceFail tm
           [("#x",[])] ["#x"]
           -- Guesses are Type0 or Type4, which can't be merged.
-          [("[Interface2<Type0>&Interface3<Type4>]","Interface1<#x>")])
+          [("[Interface2<Type0>&Interface3<Type4>]","Interface1<#x>")]),
+
+    checkOperationSuccess
+      ("testfiles" </> "infer_meta.0rx")
+      (\ts -> do
+        tm <- includeNewTypes defaultCategories ts
+        checkInferenceSuccess tm
+          [("#x",["requires Type0"])] ["#x"]
+          -- Guesses are Type1 or Type4, which can't be merged, but the filter
+          -- eliminates Type4.
+          [("[Interface2<Type1>&Interface3<Type4>]","Interface0<#x>")]
+          [("#x","Type1")]),
+    checkOperationSuccess
+      ("testfiles" </> "infer_meta.0rx")
+      (\ts -> do
+        tm <- includeNewTypes defaultCategories ts
+        checkInferenceSuccess tm
+          [("#x",["allows Type2"])] ["#x"]
+          -- Guesses are Type1 or Type4, which can't be merged, but the filter
+          -- eliminates Type4.
+          [("[Interface2<Type1>&Interface3<Type4>]","Interface0<#x>")]
+          [("#x","Type1")]),
+    checkOperationSuccess
+      ("testfiles" </> "infer_meta.0rx")
+      (\ts -> do
+        tm <- includeNewTypes defaultCategories ts
+        checkInferenceSuccess tm
+          [("#x",["defines Defined<#x>"])] ["#x"]
+          -- Guesses are Type1 or Type4, which can't be merged, but the filter
+          -- eliminates Type1.
+          [("[Interface2<Type1>&Interface3<Type4>]","Interface0<#x>")]
+          [("#x","Type4")])
   ]
 
 getRefines :: Map.Map CategoryName (AnyCategory c) -> String -> CompileInfo [String]
@@ -1254,8 +1285,8 @@ checkInferenceCommon check tm pa is ts gs = checked <?? context where
     gs' <- mapErrorsM parseGuess gs
     let iaMap = Map.fromList ia2 `Map.union` defaultParams pa2
     pa3 <- fmap Map.fromList $ mapErrorsM (filterSub iaMap) $ Map.toList pa2
-    gs2 <- inferParamTypes r pa3 Map.empty iaMap ts2
-    check gs' $ mergeInferredTypes r pa3 gs2
+    gs2 <- inferParamTypes r pa3 iaMap ts2
+    check gs' $ mergeInferredTypes r pa3 iaMap gs2
   readInferred p = do
     p' <- readSingle "(string)" p
     return (p',SingleType $ JustInferredType p')

@@ -8,7 +8,11 @@
   refines Type1
 }
 
-@value interface Type4 {}
+concrete Type4 {
+  defines Defined<Type4>
+}
+
+@type interface Defined<#x> {}
 
 @value interface Interface0<|#x> {}
 

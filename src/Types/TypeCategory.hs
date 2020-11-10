@@ -993,33 +993,15 @@ instance Show a => Show (PatternMatch a) where
   show (PatternMatch Invariant     l r) = show l ++ " <-> " ++ show r
 
 inferParamTypes :: (MergeableM m, CompileErrorM m, TypeResolver r) =>
-  r -> ParamFilters -> ParamFilters -> ParamValues ->
-  [PatternMatch ValueType] -> m (MergeTree InferredTypeGuess)
-inferParamTypes r f ff ps ts = do
+  r -> ParamFilters -> ParamValues -> [PatternMatch ValueType] ->
+  m (MergeTree InferredTypeGuess)
+inferParamTypes r f ps ts = do
   ts2 <- mapErrorsM subAll ts
-  ff2 <- fmap Map.fromList $ mapErrorsM filterSub $ Map.toList ff
-  gs  <- mergeAllM $ map matchPattern ts2
-  let gs2 = concat $ map (filtersToGuess ff2) $ Map.elems ps
-  return $ mergeAll $ gs:(map mergeLeaf gs2) where
+  mergeAllM $ map matchPattern ts2 where
     subAll (PatternMatch v t1 t2) = do
       t2' <- uncheckedSubValueType (getValueForParam ps) t2
       return (PatternMatch v t1 t2')
     matchPattern (PatternMatch v t1 t2) = checkValueTypeMatch r f v t1 t2
-    filterSub (k,fs) = do
-      fs' <- mapErrorsM (uncheckedSubFilter (getValueForParam ps)) fs
-      return (k,fs')
-    filtersToGuess f2 (SingleType (JustInferredType p)) =
-      case p `Map.lookup` f2 of
-           Nothing -> []
-           Just fs -> concat $ map (filterToGuess p) fs
-    filtersToGuess _ _ = []
-    filterToGuess p (TypeFilter FilterRequires t)
-      | hasInferredParams (SingleType t) = []
-      | otherwise = [InferredTypeGuess p (SingleType t) Contravariant]
-    filterToGuess p (TypeFilter FilterAllows t)
-      | hasInferredParams (SingleType t) = []
-      | otherwise = [InferredTypeGuess p (SingleType t) Covariant]
-    filterToGuess _ _ = []
 
 guessesAsParams :: [InferredTypeGuess] -> ParamValues
 guessesAsParams gs = Map.fromList $ zip (map itgParam gs) (map itgGuess gs)
@@ -1039,14 +1021,13 @@ data GuessUnion a =
   }
 
 mergeInferredTypes :: (MergeableM m, CompileErrorM m, TypeResolver r) =>
-  r -> ParamFilters -> MergeTree InferredTypeGuess -> m [InferredTypeGuess]
-
-mergeInferredTypes r f gs0 = do
+  r -> ParamFilters -> ParamValues -> MergeTree InferredTypeGuess -> m [InferredTypeGuess]
+mergeInferredTypes r f ps gs0 = do
   let gs0' = runIdentity $ evalMergeTree (return . leafToMap) gs0
   mapErrorsM reduce $ Map.toList gs0' where
     leafToMap i = Map.fromList [(itgParam i,mergeLeaf i)]
     reduce (i,is) = do
-      (GuessUnion gs) <- reduceMergeTree anyOp allOp leafOp is
+      (GuessUnion gs) <- reduceMergeTree anyOp allOp leafOp is >>= filterGuesses i
       t <- takeBest i gs
       return (InferredTypeGuess i t Invariant)
     minType = TypeMerge MergeUnion     []
@@ -1058,9 +1039,8 @@ mergeInferredTypes r f gs0 = do
     allOp [] = return $ GuessUnion []
     allOp [g] = return g
     allOp ((GuessUnion g1):(GuessUnion g2):gs) = do
-      g <- g1 `guessProd` g2
-      g' <- simplifyUnion g
-      allOp (GuessUnion g':gs)
+      g <- g1 `guessProd` g2 >>= simplifyUnion
+      allOp (GuessUnion g:gs)
     -- NOTE: mergeAllM is used instead of mergeAnyM so that xs or ys being empty
     -- doesn't cause an error at this point.
     guessProd xs ys = mergeAllM $ do
@@ -1126,3 +1106,26 @@ mergeInferredTypes r f gs0 = do
            _ -> compileErrorM (show g) <?? ("Type for param " ++ show i ++ " is ambiguous")
     takeBest i gs = (collectFirstM $ map (compileErrorM . show) gs) <??
       ("Type for param " ++ show i ++ " is ambiguous")
+    filterGuesses i (GuessUnion gs) = do
+      -- If all guesses got filtered out, the type errors leading to the
+      -- filtering will be collected by mergeAnyM.
+      gs2 <- mergeAnyM (map (filterGuess i) gs) <?? ("No valid guesses for param " ++ show i)
+      gs2' <- simplifyUnion gs2
+      return $ GuessUnion gs2'
+    filterGuess i (GuessRange lo hi) = do
+      new <- mergeAnyM [
+          checkSubFilters i lo >> return [lo],
+          checkSubFilters i hi >> return [hi]
+        ]
+      case new of
+           [t]       -> return [GuessRange t t]
+           [lo2,hi2] -> return [GuessRange lo2 hi2]
+           _ -> undefined  -- mergeAnyM will catch an empty list.
+    checkSubFilters i t = do
+      let ps' = Map.insert i t ps
+      f' <- fmap Map.fromList $ mapErrorsM (subFilters ps') $ Map.toList f
+      fs <- f' `filterLookup` i
+      validateAssignment r f' t fs
+    subFilters ps2 (p,fs2) = do
+      fs2' <- mapErrorsM (uncheckedSubFilter (getValueForParam ps2)) fs2
+      return (p,fs2')

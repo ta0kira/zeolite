@@ -44,6 +44,7 @@ module Types.TypeInstance (
   checkGeneralMatch,
   checkValueAssignment,
   checkValueTypeMatch,
+  filterLookup,
   fixTypeParams,
   getValueForParam,
   hasInferredParams,
@@ -626,7 +627,7 @@ uncheckedSubInstance replace = subAll where
     return (t2)
   subInstance p@(JustParamName True _) = return $ SingleType p
   subInstance (JustParamName _ n)      = replace n
-  subInstance t = compileErrorM $ "Type " ++ show t ++ " contains unresolved types"
+  subInstance (JustInferredType n)     = replace n
 
 uncheckedSubFilter :: (MergeableM m, CompileErrorM m) =>
   (ParamName -> m GeneralInstance) -> TypeFilter -> m TypeFilter
