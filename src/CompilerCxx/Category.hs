@@ -693,14 +693,15 @@ commonDefineType t rs extra = do
 
 -- Similar to Procedure.expandGeneralInstance but doesn't account for scope.
 expandLocalType :: GeneralInstance -> String
-expandLocalType (TypeMerge MergeUnion     []) = allGetter ++ "()"
-expandLocalType (TypeMerge MergeIntersect []) = anyGetter ++ "()"
+expandLocalType t
+  | t == minBound = allGetter ++ "()"
+  | t == maxBound = anyGetter ++ "()"
 expandLocalType (TypeMerge m ps) =
   getter m  ++ "(L_get<" ++ typeBase ++ "*>(" ++ intercalate "," (map ("&" ++) ps') ++ "))"
   where
     ps' = map expandLocalType ps
-    getter MergeUnion     = unionGetter
-    getter MergeIntersect = intersectGetter
+    getter AllowAnyOf   = unionGetter
+    getter RequireAllOf = intersectGetter
 expandLocalType (SingleType (JustTypeInstance (TypeInstance t ps))) =
   typeGetter t ++ "(T_get(" ++ intercalate ", " ps' ++ "))"
   where

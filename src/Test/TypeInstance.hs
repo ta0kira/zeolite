@@ -65,20 +65,20 @@ tests = [
 
     checkParseSuccess
       "[Type1&Type0&Type1]"
-      (TypeMerge MergeIntersect [
+      (TypeMerge RequireAllOf [
           SingleType $ JustTypeInstance $ TypeInstance (CategoryName "Type0") (Positional []),
           SingleType $ JustTypeInstance $ TypeInstance (CategoryName "Type1") (Positional [])
         ]),
     checkParseSuccess
       "[Type1|Type0|Type1]"
-      (TypeMerge MergeUnion [
+      (TypeMerge AllowAnyOf [
           SingleType $ JustTypeInstance $ TypeInstance (CategoryName "Type0") (Positional []),
           SingleType $ JustTypeInstance $ TypeInstance (CategoryName "Type1") (Positional [])
         ]),
     checkParseFail "[Type0&Type1|Type2]",
     checkParseSuccess
       "[Type0<#x>&#x]"
-      (TypeMerge MergeIntersect [
+      (TypeMerge RequireAllOf [
           SingleType $ JustTypeInstance $ TypeInstance (CategoryName "Type0") (Positional [
               SingleType $ JustParamName False $ ParamName "#x"
             ]),
@@ -90,7 +90,7 @@ tests = [
 
     checkParseSuccess
       "[Type0&[Type1&Type3]&Type2]"
-      (TypeMerge MergeIntersect [
+      (TypeMerge RequireAllOf [
           SingleType $ JustTypeInstance $ TypeInstance (CategoryName "Type0") (Positional []),
           SingleType $ JustTypeInstance $ TypeInstance (CategoryName "Type1") (Positional []),
           SingleType $ JustTypeInstance $ TypeInstance (CategoryName "Type2") (Positional []),
@@ -98,7 +98,7 @@ tests = [
         ]),
     checkParseSuccess
       "[Type0|[Type1|Type3]|Type2]"
-      (TypeMerge MergeUnion [
+      (TypeMerge AllowAnyOf [
           SingleType $ JustTypeInstance $ TypeInstance (CategoryName "Type0") (Positional []),
           SingleType $ JustTypeInstance $ TypeInstance (CategoryName "Type1") (Positional []),
           SingleType $ JustTypeInstance $ TypeInstance (CategoryName "Type2") (Positional []),
@@ -106,20 +106,20 @@ tests = [
         ]),
     checkParseSuccess
       "[Type0&[Type1|Type3]&Type2]"
-      (TypeMerge MergeIntersect [
+      (TypeMerge RequireAllOf [
           SingleType $ JustTypeInstance $ TypeInstance (CategoryName "Type0") (Positional []),
           SingleType $ JustTypeInstance $ TypeInstance (CategoryName "Type2") (Positional []),
-          TypeMerge MergeUnion [
+          TypeMerge AllowAnyOf [
               SingleType $ JustTypeInstance $ TypeInstance (CategoryName "Type1") (Positional []),
               SingleType $ JustTypeInstance $ TypeInstance (CategoryName "Type3") (Positional [])
             ]
         ]),
     checkParseSuccess
       "[Type0|[Type1&Type3]|Type2]"
-      (TypeMerge MergeUnion [
+      (TypeMerge AllowAnyOf [
           SingleType $ JustTypeInstance $ TypeInstance (CategoryName "Type0") (Positional []),
           SingleType $ JustTypeInstance $ TypeInstance (CategoryName "Type2") (Positional []),
-          TypeMerge MergeIntersect [
+          TypeMerge RequireAllOf [
               SingleType $ JustTypeInstance $ TypeInstance (CategoryName "Type1") (Positional []),
               SingleType $ JustTypeInstance $ TypeInstance (CategoryName "Type3") (Positional [])
             ]

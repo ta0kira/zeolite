@@ -144,10 +144,10 @@ instance (Show c, MergeableM m, CompileErrorM m) =>
                      " does not have a category function named " ++ show n ++
                      formatFullContextBrace c
   ccGetTypeFunction ctx c t n = getFunction t where
-    getFunction (Just t2@(TypeMerge MergeUnion _)) =
+    getFunction (Just t2@(TypeMerge AllowAnyOf _)) =
       compileErrorM $ "Use explicit type conversion to call " ++ show n ++ " for union type " ++
                      show t2 ++ formatFullContextBrace c
-    getFunction (Just ta@(TypeMerge MergeIntersect ts)) =
+    getFunction (Just ta@(TypeMerge RequireAllOf ts)) =
       collectFirstM (map getFunction $ map Just ts) <!!
         ("Function " ++ show n ++ " not available for type " ++ show ta ++ formatFullContextBrace c)
     getFunction (Just (SingleType (JustParamName _ p))) = do

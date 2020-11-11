@@ -22,6 +22,7 @@ module Types.GeneralType (
   GeneralType(..),
   MergeType(..),
   checkGeneralType,
+  dualGeneralType,
   mapGeneralType,
 ) where
 
@@ -31,8 +32,8 @@ import Base.Mergeable
 
 
 data MergeType =
-  MergeUnion |
-  MergeIntersect
+  AllowAnyOf |
+  RequireAllOf
   deriving (Eq,Ord)
 
 data GeneralType a =
@@ -47,30 +48,37 @@ data GeneralType a =
 
 instance (Eq a,Ord a) => Mergeable (GeneralType a) where
   mergeAny = unnest . nub . sort . foldr ((++) . flattenAny) [] where
-    flattenAny (TypeMerge MergeUnion xs) = xs
+    flattenAny (TypeMerge AllowAnyOf xs) = xs
     flattenAny x                         = [x]
     unnest [x] = x
-    unnest xs  = TypeMerge MergeUnion xs
+    unnest xs  = TypeMerge AllowAnyOf xs
   mergeAll = unnest . nub . sort . foldr ((++) . flattenAll) [] where
-    flattenAll (TypeMerge MergeIntersect xs) = xs
-    flattenAll x                             = [x]
+    flattenAll (TypeMerge RequireAllOf xs) = xs
+    flattenAll x                           = [x]
     unnest [x] = x
-    unnest xs  = TypeMerge MergeIntersect xs
+    unnest xs  = TypeMerge RequireAllOf xs
 
 instance (Eq a,Ord a) => Bounded (GeneralType a) where
   minBound = mergeAny Nothing  -- all
   maxBound = mergeAll Nothing  -- any
 
+dualGeneralType :: GeneralType a -> GeneralType a
+dualGeneralType (TypeMerge AllowAnyOf xs) =
+  TypeMerge RequireAllOf $ map dualGeneralType xs
+dualGeneralType (TypeMerge RequireAllOf xs) =
+  TypeMerge AllowAnyOf $ map dualGeneralType xs
+dualGeneralType x = x
+
 mapGeneralType :: (Eq b,Ord b) => (a -> b) -> GeneralType a -> GeneralType b
-mapGeneralType f (TypeMerge MergeUnion     xs) = mergeAny $ map (mapGeneralType f) xs
-mapGeneralType f (TypeMerge MergeIntersect xs) = mergeAll $ map (mapGeneralType f) xs
+mapGeneralType f (TypeMerge AllowAnyOf   xs) = mergeAny $ map (mapGeneralType f) xs
+mapGeneralType f (TypeMerge RequireAllOf xs) = mergeAll $ map (mapGeneralType f) xs
 mapGeneralType f (SingleType x) = SingleType $ f x
 
 checkGeneralType :: (MergeableM m, Mergeable c) => (a -> b -> m c) -> GeneralType a -> GeneralType b -> m c
 checkGeneralType f = singleCheck where
   singleCheck (SingleType t1) (SingleType t2) = t1 `f` t2
   -- NOTE: The merge-alls must be expanded strictly before the merge-anys.
-  singleCheck ti1 (TypeMerge MergeIntersect t2) = mergeAllM $ map (ti1 `singleCheck`) t2
-  singleCheck (TypeMerge MergeUnion     t1) ti2 = mergeAllM $ map (`singleCheck` ti2) t1
-  singleCheck (TypeMerge MergeIntersect t1) ti2 = mergeAnyM $ map (`singleCheck` ti2) t1
-  singleCheck ti1 (TypeMerge MergeUnion     t2) = mergeAnyM $ map (ti1 `singleCheck`) t2
+  singleCheck ti1 (TypeMerge RequireAllOf t2) = mergeAllM $ map (ti1 `singleCheck`) t2
+  singleCheck (TypeMerge AllowAnyOf   t1) ti2 = mergeAllM $ map (`singleCheck` ti2) t1
+  singleCheck (TypeMerge RequireAllOf t1) ti2 = mergeAnyM $ map (`singleCheck` ti2) t1
+  singleCheck ti1 (TypeMerge AllowAnyOf   t2) = mergeAnyM $ map (ti1 `singleCheck`) t2

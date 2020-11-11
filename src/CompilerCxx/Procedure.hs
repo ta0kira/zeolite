@@ -954,14 +954,15 @@ expandCategory t = return $ categoryGetter t ++ "()"
 
 expandGeneralInstance :: (CompileErrorM m, CompilerContext c m s a) =>
   GeneralInstance -> CompilerState a m String
-expandGeneralInstance (TypeMerge MergeUnion     []) = return $ allGetter ++ "()"
-expandGeneralInstance (TypeMerge MergeIntersect []) = return $ anyGetter ++ "()"
+expandGeneralInstance t
+  | t == minBound = return $ allGetter ++ "()"
+  | t == maxBound = return $ anyGetter ++ "()"
 expandGeneralInstance (TypeMerge m ps) = do
   ps' <- sequence $ map expandGeneralInstance ps
   return $ getter m ++ "(L_get<S<const " ++ typeBase ++ ">>(" ++ intercalate "," ps' ++ "))"
   where
-    getter MergeUnion     = unionGetter
-    getter MergeIntersect = intersectGetter
+    getter AllowAnyOf   = unionGetter
+    getter RequireAllOf = intersectGetter
 expandGeneralInstance (SingleType (JustTypeInstance (TypeInstance t ps))) = do
   ps' <- sequence $ map expandGeneralInstance $ pValues ps
   return $ typeGetter t ++ "(T_get(" ++ intercalate "," ps' ++ "))"

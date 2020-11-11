@@ -87,8 +87,8 @@ instance Show GeneralInstance where
     | t == minBound = "all"
     | t == maxBound = "any"
   show (SingleType t) = show t
-  show (TypeMerge MergeUnion ts)     = "[" ++ intercalate "|" (map show ts) ++ "]"
-  show (TypeMerge MergeIntersect ts) = "[" ++ intercalate "&" (map show ts) ++ "]"
+  show (TypeMerge AllowAnyOf ts)     = "[" ++ intercalate "|" (map show ts) ++ "]"
+  show (TypeMerge RequireAllOf ts) = "[" ++ intercalate "&" (map show ts) ++ "]"
 
 data StorageType =
   WeakValue |
@@ -350,11 +350,8 @@ checkGeneralMatch r f Invariant ts1 ts2 =
   mergeAllM [checkGeneralMatch r f Covariant     ts1 ts2,
              checkGeneralMatch r f Contravariant ts1 ts2]
 checkGeneralMatch r f Contravariant ts1 ts2 =
-  -- NOTE: ts1 and ts2 can't be swapped in checkSingleMatch due to type
-  -- inference; however, checkGeneralType is sensitive to which side the empty
-  -- union or intersection is on. So, checkGeneralType checks t2 -> t1 and
-  -- checkSingleMatch checks t1 <- t2.
-  checkGeneralType (flip $ checkSingleMatch r f Contravariant) ts2 ts1
+  -- Reversing direction means reversing the roles of "any" and "all" aggregations.
+  checkGeneralType (checkSingleMatch r f Contravariant) (dualGeneralType ts1) (dualGeneralType ts2)
 checkGeneralMatch r f Covariant ts1 ts2 =
   checkGeneralType (checkSingleMatch r f Covariant) ts1 ts2
 
@@ -586,9 +583,9 @@ validateInstanceVariance r vm v (SingleType (JustTypeInstance (TypeInstance n ps
   vs <- trVariance r n
   paired <- processPairs alwaysPair vs ps
   mergeAllM (map (\(v2,p) -> validateInstanceVariance r vm (v `composeVariance` v2) p) paired)
-validateInstanceVariance r vm v (TypeMerge MergeUnion ts) =
+validateInstanceVariance r vm v (TypeMerge AllowAnyOf ts) =
   mergeAllM (map (validateInstanceVariance r vm v) ts)
-validateInstanceVariance r vm v (TypeMerge MergeIntersect ts) =
+validateInstanceVariance r vm v (TypeMerge RequireAllOf ts) =
   mergeAllM (map (validateInstanceVariance r vm v) ts)
 validateInstanceVariance _ vm v (SingleType (JustParamName _ n)) =
   case n `Map.lookup` vm of
@@ -613,10 +610,10 @@ uncheckedSubValueType replace (ValueType s t) = do
 uncheckedSubInstance :: (MergeableM m, CompileErrorM m) =>
   (ParamName -> m GeneralInstance) -> GeneralInstance -> m GeneralInstance
 uncheckedSubInstance replace = subAll where
-  subAll (TypeMerge MergeUnion ts) = do
+  subAll (TypeMerge AllowAnyOf ts) = do
     gs <- mapErrorsM subAll ts
     return $ mergeAny gs
-  subAll (TypeMerge MergeIntersect ts) = do
+  subAll (TypeMerge RequireAllOf ts) = do
     gs <- mapErrorsM subAll ts
     return $ mergeAll gs
   subAll (SingleType t) = subInstance t
