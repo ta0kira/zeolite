@@ -25,6 +25,7 @@ module Parser.TypeInstance (
 import Control.Applicative ((<|>))
 import Text.Parsec hiding ((<|>))
 
+import Base.Mergeable (mergeAll,mergeAny)
 import Parser.Common
 import Types.GeneralType
 import Types.Positional
@@ -35,21 +36,22 @@ instance ParseFromSource GeneralInstance where
   sourceParser = try allT <|> try anyT <|> intersectOrUnion <|> single where
     allT = labeled "all" $ do
       kwAll
-      return $ TypeMerge MergeUnion []
+      return minBound
     anyT = labeled "any" $ do
       kwAny
-      return $ TypeMerge MergeIntersect []
-    intersectOrUnion = try intersect <|> union
-    intersect = labeled "intersection" $ do
-      ts <- between (sepAfter $ string "[")
-                    (sepAfter $ string "]")
-                    (sepBy1 (labeled "type" $ sourceParser) (sepAfter $ string "&"))
-      return $ TypeMerge MergeIntersect ts
-    union = labeled "union" $ do
-      ts <- between (sepAfter $ string "[")
-                    (sepAfter $ string "]")
-                    (sepBy1 (labeled "type" $ sourceParser) (sepAfter $ string "|"))
-      return $ TypeMerge MergeUnion ts
+      return maxBound
+    intersectOrUnion = labeled "union or intersection" $ do
+      sepAfter $ string_ "["
+      t1 <- labeled "type" $ sepAfter sourceParser
+      t <- intersect t1 <|> union t1
+      sepAfter $ string_ "]"
+      return t
+    intersect t1 = do
+      ts <- many1 (sepAfter (string_ "&") >> labeled "type" sourceParser)
+      return $ mergeAll (t1:ts)
+    union t1 = do
+      ts <- many1 (sepAfter (string_ "|") >> labeled "type" sourceParser)
+      return $ mergeAny (t1:ts)
     single = do
       t <- sourceParser
       return $ SingleType t

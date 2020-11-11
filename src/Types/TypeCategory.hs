@@ -1032,10 +1032,8 @@ mergeInferredTypes r f ff ps gs0 = do
       (GuessUnion gs) <- reduceMergeTree anyOp allOp leafOp is >>= filterGuesses i
       t <- takeBest i gs
       return (InferredTypeGuess i t Invariant)
-    minType = mergeAny []
-    maxType = mergeAll []
-    leafOp (InferredTypeGuess _ t Covariant)     = return $ GuessUnion [GuessRange t maxType]
-    leafOp (InferredTypeGuess _ t Contravariant) = return $ GuessUnion [GuessRange minType t]
+    leafOp (InferredTypeGuess _ t Covariant)     = return $ GuessUnion [GuessRange t maxBound]
+    leafOp (InferredTypeGuess _ t Contravariant) = return $ GuessUnion [GuessRange minBound t]
     leafOp (InferredTypeGuess _ t _)             = return $ GuessUnion [GuessRange t t]
     anyOp = return . GuessUnion . concat . map guGuesses
     allOp [] = return $ GuessUnion []
@@ -1098,8 +1096,8 @@ mergeInferredTypes r f ff ps gs0 = do
     tryRangeUnion _ _ _ = return Nothing
     takeBest i [g@(GuessRange lo hi)] = do
       same <- hi `convertsTo` lo
-      let openHi = hi == maxType
-      let openLo = lo == minType
+      let openHi = hi == maxBound
+      let openLo = lo == minBound
       case (same,openHi,openLo) of
            (True,_,_)     -> return lo
            (_,True,False) -> return lo
@@ -1113,7 +1111,7 @@ mergeInferredTypes r f ff ps gs0 = do
       gs2 <- mergeAnyM (map (filterGuess i) gs) <!! ("No valid guesses for param " ++ show i)
       simplifyUnion gs2 >>= return . GuessUnion
     filterGuess i g@(GuessRange lo hi) = do
-      case (lo == minType,hi == maxType) of
+      case (lo == minBound,hi == maxBound) of
            (False,False) -> do
              new <- mergeAnyM [
                  checkSubFilters i lo >> return [lo],

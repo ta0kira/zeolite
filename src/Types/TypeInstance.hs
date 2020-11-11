@@ -83,10 +83,11 @@ import Types.Variance
 type GeneralInstance = GeneralType TypeInstanceOrParam
 
 instance Show GeneralInstance where
+  show t
+    | t == minBound = "all"
+    | t == maxBound = "any"
   show (SingleType t) = show t
-  show (TypeMerge MergeUnion []) = "all"
-  show (TypeMerge MergeUnion ts) = "[" ++ intercalate "|" (map show ts) ++ "]"
-  show (TypeMerge MergeIntersect []) = "any"
+  show (TypeMerge MergeUnion ts)     = "[" ++ intercalate "|" (map show ts) ++ "]"
   show (TypeMerge MergeIntersect ts) = "[" ++ intercalate "&" (map show ts) ++ "]"
 
 data StorageType =
@@ -308,12 +309,11 @@ unfixTypeParams :: GeneralInstance -> GeneralInstance
 unfixTypeParams = setParamsFixed False
 
 setParamsFixed :: Bool -> GeneralInstance -> GeneralInstance
-setParamsFixed f (TypeMerge m ts) = TypeMerge m $ map (setParamsFixed f) ts
-setParamsFixed f (SingleType (JustTypeInstance (TypeInstance t ts))) =
-  SingleType $ JustTypeInstance $ TypeInstance t $ fmap (setParamsFixed f) ts
-setParamsFixed f (SingleType (JustParamName _ n2)) =
-  SingleType $ JustParamName f n2
-setParamsFixed _ t = t
+setParamsFixed f = mapGeneralType set where
+  set (JustTypeInstance (TypeInstance t ts)) =
+    JustTypeInstance $ TypeInstance t $ fmap (setParamsFixed f) ts
+  set (JustParamName _ n2) = JustParamName f n2
+  set t = t
 
 noInferredTypes :: (MergeableM m, CompileErrorM m) => m (MergeTree InferredTypeGuess) -> m ()
 noInferredTypes = id >=> evalMergeTree message where
@@ -520,9 +520,7 @@ checkParamToParam r f v n1 n2
 
 validateGeneralInstance :: (MergeableM m, CompileErrorM m, TypeResolver r) =>
   r -> ParamFilters -> GeneralInstance -> m ()
-validateGeneralInstance r f (TypeMerge _ ts)
-  | length ts == 1 = compileErrorM $ "Unions and intersections must have at least 2 types to avoid ambiguity"
-  | otherwise      = mergeAllM (map (validateGeneralInstance r f) ts)
+validateGeneralInstance r f (TypeMerge _ ts) = mergeAllM (map (validateGeneralInstance r f) ts)
 validateGeneralInstance r f (SingleType (JustTypeInstance t)) =
   validateTypeInstance r f t
 validateGeneralInstance _ f (SingleType (JustParamName _ n)) =
@@ -617,10 +615,10 @@ uncheckedSubInstance :: (MergeableM m, CompileErrorM m) =>
 uncheckedSubInstance replace = subAll where
   subAll (TypeMerge MergeUnion ts) = do
     gs <- mapErrorsM subAll ts
-    return (TypeMerge MergeUnion gs)
+    return $ mergeAny gs
   subAll (TypeMerge MergeIntersect ts) = do
     gs <- mapErrorsM subAll ts
-    return (TypeMerge MergeIntersect gs)
+    return $ mergeAll gs
   subAll (SingleType t) = subInstance t
   subInstance (JustTypeInstance (TypeInstance n (Positional ts))) = do
     gs <- mapErrorsM subAll ts

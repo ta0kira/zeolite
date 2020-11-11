@@ -20,6 +20,7 @@ limitations under the License.
 
 module Test.TypeInstance (tests) where
 
+import Control.Monad (when)
 import qualified Data.Map as Map
 
 import Base.CompileError
@@ -36,6 +37,94 @@ import Types.Variance
 
 tests :: [IO (CompileInfo ())]
 tests = [
+    checkParseSuccess
+      "Type0"
+      (SingleType $ JustTypeInstance $ TypeInstance (CategoryName "Type0") (Positional [])),
+    checkParseSuccess
+      "Type0<Type1,Type2>"
+      (SingleType $ JustTypeInstance $ TypeInstance (CategoryName "Type0") (Positional [
+          SingleType $ JustTypeInstance $ TypeInstance (CategoryName "Type1") (Positional []),
+          SingleType $ JustTypeInstance $ TypeInstance (CategoryName "Type2") (Positional [])
+        ])),
+    checkParseSuccess
+      "#x"
+      (SingleType $ JustParamName False $ ParamName "#x"),
+    checkParseFail "x",
+    checkParseFail "",
+
+    checkParseSuccess
+      "[Type0&Type0]"
+      (SingleType $ JustTypeInstance $ TypeInstance (CategoryName "Type0") (Positional [])),
+    checkParseSuccess
+      "[Type0|Type0]"
+      (SingleType $ JustTypeInstance $ TypeInstance (CategoryName "Type0") (Positional [])),
+    checkParseSuccess "all" minBound,
+    checkParseSuccess "any" maxBound,
+    checkParseFail "[Type0]",
+    checkParseFail "[]",
+
+    checkParseSuccess
+      "[Type1&Type0&Type1]"
+      (TypeMerge MergeIntersect [
+          SingleType $ JustTypeInstance $ TypeInstance (CategoryName "Type0") (Positional []),
+          SingleType $ JustTypeInstance $ TypeInstance (CategoryName "Type1") (Positional [])
+        ]),
+    checkParseSuccess
+      "[Type1|Type0|Type1]"
+      (TypeMerge MergeUnion [
+          SingleType $ JustTypeInstance $ TypeInstance (CategoryName "Type0") (Positional []),
+          SingleType $ JustTypeInstance $ TypeInstance (CategoryName "Type1") (Positional [])
+        ]),
+    checkParseFail "[Type0&Type1|Type2]",
+    checkParseSuccess
+      "[Type0<#x>&#x]"
+      (TypeMerge MergeIntersect [
+          SingleType $ JustTypeInstance $ TypeInstance (CategoryName "Type0") (Positional [
+              SingleType $ JustParamName False $ ParamName "#x"
+            ]),
+          SingleType $ JustParamName False $ ParamName "#x"
+        ]),
+    checkParseFail "[Type0&]",
+    checkParseFail "[Type0|]",
+    checkParseFail "[Type0 Type1]",
+
+    checkParseSuccess
+      "[Type0&[Type1&Type3]&Type2]"
+      (TypeMerge MergeIntersect [
+          SingleType $ JustTypeInstance $ TypeInstance (CategoryName "Type0") (Positional []),
+          SingleType $ JustTypeInstance $ TypeInstance (CategoryName "Type1") (Positional []),
+          SingleType $ JustTypeInstance $ TypeInstance (CategoryName "Type2") (Positional []),
+          SingleType $ JustTypeInstance $ TypeInstance (CategoryName "Type3") (Positional [])
+        ]),
+    checkParseSuccess
+      "[Type0|[Type1|Type3]|Type2]"
+      (TypeMerge MergeUnion [
+          SingleType $ JustTypeInstance $ TypeInstance (CategoryName "Type0") (Positional []),
+          SingleType $ JustTypeInstance $ TypeInstance (CategoryName "Type1") (Positional []),
+          SingleType $ JustTypeInstance $ TypeInstance (CategoryName "Type2") (Positional []),
+          SingleType $ JustTypeInstance $ TypeInstance (CategoryName "Type3") (Positional [])
+        ]),
+    checkParseSuccess
+      "[Type0&[Type1|Type3]&Type2]"
+      (TypeMerge MergeIntersect [
+          SingleType $ JustTypeInstance $ TypeInstance (CategoryName "Type0") (Positional []),
+          SingleType $ JustTypeInstance $ TypeInstance (CategoryName "Type2") (Positional []),
+          TypeMerge MergeUnion [
+              SingleType $ JustTypeInstance $ TypeInstance (CategoryName "Type1") (Positional []),
+              SingleType $ JustTypeInstance $ TypeInstance (CategoryName "Type3") (Positional [])
+            ]
+        ]),
+    checkParseSuccess
+      "[Type0|[Type1&Type3]|Type2]"
+      (TypeMerge MergeUnion [
+          SingleType $ JustTypeInstance $ TypeInstance (CategoryName "Type0") (Positional []),
+          SingleType $ JustTypeInstance $ TypeInstance (CategoryName "Type2") (Positional []),
+          TypeMerge MergeIntersect [
+              SingleType $ JustTypeInstance $ TypeInstance (CategoryName "Type1") (Positional []),
+              SingleType $ JustTypeInstance $ TypeInstance (CategoryName "Type3") (Positional [])
+            ]
+        ]),
+
     checkSimpleConvertSuccess
       "Type0"
       "Type0",
@@ -544,10 +633,6 @@ tests = [
       [("#x",[])]
       "[[Type4<Type0>|#x]&Type1<Type3>]",
 
-    return $ checkTypeFail Resolver
-      []
-      "[Type0]",
-
     return $ checkDefinesFail Resolver
       [("#x",[])]
       "Instance1<#x>",
@@ -619,8 +704,8 @@ tests = [
     checkInferenceSuccess
       [("#x",[])] ["#x"]
       "Instance1<Type1<Type0>>" "Instance1<[#x&Type1<#x>]>"
-      (mergeAny [mergeLeaf ("#x","Type1<Type0>",Contravariant),
-                 mergeLeaf ("#x","Type0",Invariant)]),
+      (mergeAny [mergeLeaf ("#x","Type0",Invariant),
+                 mergeLeaf ("#x","Type1<Type0>",Contravariant)]),
 
     checkInferenceSuccess
       [("#x",[]),("#y",["allows #x"])] ["#x"]
@@ -744,6 +829,18 @@ definesFilters = Map.fromList $ [
              [forceParse "requires Type0"]
            ])
   ]
+
+checkParseSuccess :: String -> GeneralInstance -> IO (CompileInfo ())
+checkParseSuccess x y = return $ do
+  t <- readSingle "(string)" x <!! ("When parsing " ++ show x)
+  when (t /= y) $ compileErrorM $ "Expected " ++ show x ++ " to parse as " ++ show y
+
+checkParseFail :: String -> IO (CompileInfo ())
+checkParseFail x = return $ do
+  let t = readSingle "(string)" x :: CompileInfo GeneralInstance
+  when (not $ isCompileError t) $
+    compileErrorM $ "Expected failure to parse " ++ show x ++
+                    " but got " ++ show (getCompileSuccess t)
 
 checkSimpleConvertSuccess :: String -> String -> IO (CompileInfo ())
 checkSimpleConvertSuccess = checkConvertSuccess []

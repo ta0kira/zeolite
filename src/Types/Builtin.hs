@@ -31,7 +31,6 @@ module Types.Builtin (
 
 import qualified Data.Map as Map
 
-import Types.GeneralType
 import Types.TypeCategory
 import Types.TypeInstance
 
@@ -52,4 +51,4 @@ floatRequiredValue = requiredSingleton BuiltinFloat
 formattedRequiredValue :: ValueType
 formattedRequiredValue = requiredSingleton BuiltinFormatted
 emptyValue :: ValueType
-emptyValue = ValueType OptionalValue $ TypeMerge MergeUnion []
+emptyValue = ValueType OptionalValue minBound
