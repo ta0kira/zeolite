@@ -24,6 +24,7 @@ import Control.Arrow
 import System.FilePath
 import Text.Parsec
 import qualified Data.Map as Map
+import qualified Data.Set as Set
 
 import Base.CompileError
 import Base.Mergeable
@@ -905,25 +906,6 @@ tests = [
       (\ts -> do
         tm <- includeNewTypes defaultCategories ts
         checkInferenceSuccess tm
-          [("#x",[]),("#y",["allows #x"])] ["#x"]
-          [("Interface1<Type1>","Interface1<#x>"),
-           ("Type0","#y")]  -- The filter for #y influences the guess for #x.
-          [("#x","Type0")]),
-    checkOperationSuccess
-      ("testfiles" </> "inference.0rx")
-      (\ts -> do
-        tm <- includeNewTypes defaultCategories ts
-        checkInferenceSuccess tm
-          [("#x",[]),("#y",["allows #x"])] ["#x"]
-          [("Interface1<Type1>","Interface1<#x>"),
-           ("Type2","#y")]
-          [("#x","Type1")]),
-
-    checkOperationSuccess
-      ("testfiles" </> "inference.0rx")
-      (\ts -> do
-        tm <- includeNewTypes defaultCategories ts
-        checkInferenceSuccess tm
           [("#x",[])] ["#x"]
           [("Interface1<Type1>","Interface1<[#x|Interface2<#x>]>")]
           [("#x","Type1")]),
@@ -1280,29 +1262,26 @@ checkInferenceCommon check tm pa is ts gs = checked <?? context where
   checked = do
     let r = CategoryResolver tm
     pa2 <- parseFilterMap pa
-    ts2 <- mapErrorsM (parsePair Covariant) ts
-    ia2 <- mapErrorsM readInferred is
+    ia2 <- fmap Map.fromList $ mapErrorsM readInferred is
+    ts2 <- mapErrorsM (parsePair ia2 Covariant) ts
+    let ka = Map.keysSet ia2
     gs' <- mapErrorsM parseGuess gs
-    let iaMap = Map.fromList ia2 `Map.union` defaultParams pa2
-    pa3 <- fmap Map.fromList $ mapErrorsM (filterSub iaMap) $ Map.toList pa2
-    gs2 <- inferParamTypes r pa3 iaMap ts2
-    check gs' $ mergeInferredTypes r pa3 iaMap gs2
+    let f  = Map.filterWithKey (\k _ -> not $ k `Set.member` ka) pa2
+    let ff = Map.filterWithKey (\k _ -> k `Set.member` ka) pa2
+    gs2 <- inferParamTypes r f ia2 ts2
+    check gs' $ mergeInferredTypes r f ff ia2 gs2
   readInferred p = do
     p' <- readSingle "(string)" p
     return (p',SingleType $ JustInferredType p')
-  defaultParams = Map.fromList . map (\p -> (p,SingleType $ JustParamName False p)) . Map.keys
   parseGuess (p,t) = do
     p' <- readSingle "(string)" p
     t' <- readSingle "(string)" t
     return $ InferredTypeGuess p' t' Invariant
-  parsePair v (t1,t2) = do
+  parsePair im v (t1,t2) = do
     t1' <- readSingle "(string)" t1
-    t2' <- readSingle "(string)" t2
+    t2' <- readSingle "(string)" t2 >>= uncheckedSubValueType (weakLookup im)
     return (PatternMatch v t1' t2')
   weakLookup tm2 n =
     case n `Map.lookup` tm2 of
          Just t  -> return t
          Nothing -> return $ SingleType $ JustParamName True n
-  filterSub im (k,fs) = do
-    fs' <- mapErrorsM (uncheckedSubFilter (weakLookup im)) fs
-    return (k,fs')

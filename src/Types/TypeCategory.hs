@@ -1021,8 +1021,9 @@ data GuessUnion a =
   }
 
 mergeInferredTypes :: (MergeableM m, CompileErrorM m, TypeResolver r) =>
-  r -> ParamFilters -> ParamValues -> MergeTree InferredTypeGuess -> m [InferredTypeGuess]
-mergeInferredTypes r f ps gs0 = do
+  r -> ParamFilters -> ParamFilters -> ParamValues -> MergeTree InferredTypeGuess ->
+  m [InferredTypeGuess]
+mergeInferredTypes r f ff ps gs0 = do
   let gs0' = runIdentity $ evalMergeTree (return . leafToMap) gs0
   mapErrorsM reduce $ Map.toList gs0' where
     leafToMap i = Map.fromList [(itgParam i,mergeLeaf i)]
@@ -1113,19 +1114,19 @@ mergeInferredTypes r f ps gs0 = do
       gs2' <- simplifyUnion gs2
       return $ GuessUnion gs2'
     filterGuess i (GuessRange lo hi) = do
-      new <- mergeAnyM [
-          checkSubFilters i lo >> return [lo],
-          checkSubFilters i hi >> return [hi]
-        ]
+      let tryLo = if lo == minType
+                     then []
+                     else [checkSubFilters i lo >> return [lo]]
+      let tryHi = if hi == maxType
+                     then []
+                     else [checkSubFilters i hi >> return [hi]]
+      new <- mergeAnyM $ tryLo ++ tryHi
       case new of
            [t]       -> return [GuessRange t t]
            [lo2,hi2] -> return [GuessRange lo2 hi2]
            _ -> undefined  -- mergeAnyM will catch an empty list.
     checkSubFilters i t = do
       let ps' = Map.insert i t ps
-      f' <- fmap Map.fromList $ mapErrorsM (subFilters ps') $ Map.toList f
-      fs <- f' `filterLookup` i
-      validateAssignment r f' t fs
-    subFilters ps2 (p,fs2) = do
-      fs2' <- mapErrorsM (uncheckedSubFilter (getValueForParam ps2)) fs2
-      return (p,fs2')
+      fs <- ff `filterLookup` i
+      fs' <- mapErrorsM (uncheckedSubFilter (getValueForParam ps'))fs
+      validateAssignment r f t fs'

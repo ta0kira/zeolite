@@ -191,18 +191,15 @@ concrete Test {
 }
 
 
-testcase "inference from filter" {
+testcase "elimination by filter" {
   error
-  require "#x.+get.+Formatted"
-  require "String"
-  require "value2"
-  exclude "value1"
+  require "#x"
+  require "Formatted.+String"
 }
 
 define Test {
   run () {
-    Formatted value1 <- get<?>("value")
-    String    value2 <- get<?>("value")
+    \ get<?>("value")
   }
 
   @type get<#x>
@@ -218,18 +215,15 @@ concrete Test {
 }
 
 
-testcase "inference from filter without param" {
+testcase "elimination by filter without param" {
   error
-  require "#x.+get.+Formatted"
-  require "String"
-  require "value2"
-  exclude "value1"
+  require "#x"
+  require "Formatted.+String"
 }
 
 define Test {
   run () {
-    Formatted value1 <- get<Formatted,?>("value")
-    String    value2 <- get<Formatted,?>("value")
+    \ get<Formatted,?>("value")
   }
 
   @type get<#y,#x>
@@ -245,9 +239,11 @@ concrete Test {
 }
 
 
-testcase "inference from filter including param" {
+testcase "elimination by filter including param" {
   error
-  require "#x.+get.+Type<String>"
+  require "#x"
+  require "String.+Type"
+  require "Type.+String"
 }
 
 concrete Type<#x> {
@@ -262,7 +258,7 @@ define Type {
 
 define Test {
   run () {
-    Type<String> value2 <- get<?>(Type<String>$create())
+    \ get<?>(Type<String>$create())
   }
 
   @type get<#x>
