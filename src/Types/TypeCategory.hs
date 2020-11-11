@@ -84,7 +84,7 @@ module Types.TypeCategory (
 import Control.Arrow (second)
 import Control.Monad (when)
 import Data.Functor.Identity
-import Data.List (group,groupBy,intercalate,sort,sortBy)
+import Data.List (group,groupBy,intercalate,nub,sort,sortBy)
 import qualified Data.Map as Map
 import qualified Data.Set as Set
 
@@ -1011,6 +1011,7 @@ data GuessRange a =
     grLower :: a,
     grUpper :: a
   }
+  deriving (Eq,Ord)
 
 instance Show a => Show (GuessRange a) where
   show (GuessRange lo hi) = "Something between " ++ show lo ++ " and " ++ show hi
@@ -1031,22 +1032,22 @@ mergeInferredTypes r f ff ps gs0 = do
       (GuessUnion gs) <- reduceMergeTree anyOp allOp leafOp is >>= filterGuesses i
       t <- takeBest i gs
       return (InferredTypeGuess i t Invariant)
-    minType = TypeMerge MergeUnion     []
-    maxType = TypeMerge MergeIntersect []
+    minType = mergeAny []
+    maxType = mergeAll []
     leafOp (InferredTypeGuess _ t Covariant)     = return $ GuessUnion [GuessRange t maxType]
     leafOp (InferredTypeGuess _ t Contravariant) = return $ GuessUnion [GuessRange minType t]
     leafOp (InferredTypeGuess _ t _)             = return $ GuessUnion [GuessRange t t]
     anyOp = return . GuessUnion . concat . map guGuesses
     allOp [] = return $ GuessUnion []
-    allOp [g] = return g
+    allOp [GuessUnion gs] = return $ GuessUnion $ nub gs
     allOp ((GuessUnion g1):(GuessUnion g2):gs) = do
       g <- g1 `guessProd` g2
       allOp (GuessUnion g:gs)
     -- NOTE: mergeAllM is used instead of mergeAnyM so that xs or ys being empty
     -- doesn't cause an error at this point.
     guessProd xs ys = mergeAllM $ do
-      x <- xs
-      y <- ys
+      x <- nub xs
+      y <- nub ys
       [x `guessIntersect` y]
     guessIntersect (GuessRange loX hiX) (GuessRange loY hiY) = do
       q1 <- loX `convertsTo` hiY
@@ -1110,8 +1111,7 @@ mergeInferredTypes r f ff ps gs0 = do
       -- If all guesses got filtered out, the type errors leading to the
       -- filtering will be collected by mergeAnyM.
       gs2 <- mergeAnyM (map (filterGuess i) gs) <?? ("No valid guesses for param " ++ show i)
-      gs2' <- simplifyUnion gs2
-      return $ GuessUnion gs2'
+      simplifyUnion gs2 >>= return . GuessUnion
     filterGuess i g@(GuessRange lo hi) = do
       case (lo == minType,hi == maxType) of
            (False,False) -> do
