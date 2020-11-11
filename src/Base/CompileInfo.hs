@@ -168,6 +168,20 @@ data CompileInfoState a =
     csData :: a
   }
 
+instance Show a => Show (CompileInfoState a) where
+  show = format where
+    format (CompileFail w e) = intercalate "\n" $ errors ++ warnings where
+      errors   = showAs "Errors:"   $ lines $ show e
+      warnings = showAs "Warnings:" $ lines $ show w
+    format (CompileSuccess w b x) = intercalate "\n" $ content ++ warnings ++ background where
+      content    = [show x]
+      warnings   = showAs "Warnings:" $ lines $ show w
+      background = showAs "Background:" b
+    showAs m = (m:) . map ("  " ++)
+
+instance Show a => Show (CompileInfo a) where
+  show = show . runIdentity . citState
+
 instance (Functor m, Monad m) => Functor (CompileInfoT m) where
   fmap f x = CompileInfoT $ do
     x' <- citState x
