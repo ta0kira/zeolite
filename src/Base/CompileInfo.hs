@@ -231,11 +231,16 @@ instance Monad m => CompileErrorM (CompileInfoT m) where
   collectFirstM = combineResults (select . splitErrorsAndData) where
       select (_,x:_,bs,ws) = CompileSuccess (CompileMessage "" ws) bs x
       select (es,_,bs,ws)  = CompileFail (CompileMessage "" ws) $ addBackground bs $ CompileMessage "" es
-  withContextM x e2 = CompileInfoT $ do
+  withContextM x c = CompileInfoT $ do
     x' <- citState x
     case x' of
-         CompileFail w e        -> return $ CompileFail (pushWarningScope e2 w) (pushErrorScope e2 e)
-         CompileSuccess w bs x2 -> return $ CompileSuccess (pushWarningScope e2 w) bs x2
+         CompileFail w e        -> return $ CompileFail (pushWarningScope c w) (pushErrorScope c e)
+         CompileSuccess w bs x2 -> return $ CompileSuccess (pushWarningScope c w) bs x2
+  summarizeErrorsM x e2 = CompileInfoT $ do
+    x' <- citState x
+    case x' of
+         CompileFail w e -> return $ CompileFail w (pushErrorScope e2 e)
+         x2 -> return x2
   compileWarningM w = CompileInfoT (return $ CompileSuccess (CompileMessage w []) [] ())
   compileBackgroundM b = CompileInfoT (return $ CompileSuccess emptyMessage [b] ())
   resetBackgroundM x = CompileInfoT $ do

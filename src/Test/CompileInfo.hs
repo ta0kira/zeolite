@@ -65,6 +65,15 @@ tests = [
     checkSuccessAndWarnings "" () (return () `withContextM` "message"),
     checkErrorAndWarnings "" "message\n" (compileErrorM "" `withContextM` "message" :: CompileInfoIO ()),
 
+    checkSuccess 'a' (return 'a' `summarizeErrorsM` "message"),
+    checkError "message\n  error\n" (compileErrorM "error" `summarizeErrorsM` "message" :: CompileInfoIO ()),
+    checkSuccessAndWarnings "warning\n" ()
+      (compileWarningM "warning" `summarizeErrorsM` "message" :: CompileInfoIO ()),
+    checkErrorAndWarnings "warning\n" "message\n  error\n"
+      ((compileWarningM "warning" >> compileErrorM "error") `summarizeErrorsM` "message" :: CompileInfoIO ()),
+    checkSuccessAndWarnings "" () (return () `summarizeErrorsM` "message"),
+    checkErrorAndWarnings "" "message\n" (compileErrorM "" `summarizeErrorsM` "message" :: CompileInfoIO ()),
+
     checkSuccessAndWarnings "error\n" ()
       (asCompileWarnings $ compileErrorM "error" :: CompileInfoIO ()),
     checkErrorAndWarnings "" "warning\n"

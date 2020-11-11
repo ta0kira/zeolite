@@ -24,6 +24,8 @@ module Base.CompileError (
   CompileErrorM(..),
   (<??),
   (??>),
+  (<!!),
+  (!!>),
   errorFromIO,
   mapErrorsM,
   mapErrorsM_,
@@ -49,7 +51,9 @@ class Monad m => CompileErrorM m where
   collectAllM :: Foldable f => f (m a) -> m [a]
   collectFirstM :: Foldable f => f (m a) -> m a
   withContextM :: m a -> String -> m a
-  withContextM e _ = e
+  withContextM c _ = c
+  summarizeErrorsM :: m a -> String -> m a
+  summarizeErrorsM e _ = e
   compileWarningM :: String -> m ()
   compileWarningM _ = return ()
   compileBackgroundM :: String -> m ()
@@ -62,6 +66,12 @@ class Monad m => CompileErrorM m where
 
 (??>) :: CompileErrorM m => String -> m a -> m a
 (??>) = flip withContextM
+
+(<!!) :: CompileErrorM m => m a -> String -> m a
+(<!!) = summarizeErrorsM
+
+(!!>) :: CompileErrorM m => String -> m a -> m a
+(!!>) = flip summarizeErrorsM
 
 mapErrorsM :: CompileErrorM m => (a -> m b) -> [a] -> m [b]
 mapErrorsM f = collectAllM . map f
