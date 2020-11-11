@@ -70,7 +70,7 @@ runCompiler resolver backend (CompileOptions _ _ _ ds _ _ p (ExecuteTests tp) f)
                                 intercalate ", " (map show fs) ++ "\n"
     processResults passed failed rs
       | isCompileError rs =
-        (fromCompileInfo rs) <??
+        (fromCompileInfo rs) <!!
           ("\nPassed: " ++ show passed ++ " test(s), Failed: " ++ show failed ++ " test(s)")
       | otherwise =
         errorFromIO $ hPutStrLn stderr $ "\nPassed: " ++ show passed ++ " test(s), Failed: " ++ show failed ++ " test(s)"

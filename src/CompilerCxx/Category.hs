@@ -143,7 +143,7 @@ compileLanguageModule (LanguageModule ns0 ns1 ns2 cs0 ps0 ts0 cs1 ps1 ts1 ex ss 
       -- Ensures that there isn't an inavertent collision when resolving
       -- dependencies for the module later on.
       tmTesting' <- tmTesting
-      _ <- (includeNewTypes tmTesting' cs2) <?? "In a module source that is conditionally public"
+      _ <- (includeNewTypes tmTesting' cs2)
       hxx <- mapErrorsM (compileCategoryDeclaration testing tm' ns4) cs2
       let interfaces = filter (not . isValueConcrete) cs2
       cxx1 <- mapErrorsM (compileInterfaceDefinition testing) interfaces
@@ -189,7 +189,7 @@ compileLanguageModule (LanguageModule ns0 ns1 ns2 cs0 ps0 ts0 cs1 ps1 ts1 ex ss 
            (_,Just ds) ->
              ("Category " ++ show (getCategoryName t) ++
               formatFullContextBrace (getCategoryContext t) ++
-              " is defined " ++ show (length ds) ++ " times") ??>
+              " is defined " ++ show (length ds) ++ " times") !!>
                (mapErrorsM_ (\d -> compileErrorM $ "Defined at " ++ formatFullContext (dcContext d)) ds)
     checkSupefluous es2
       | null es2 = return ()
@@ -221,7 +221,7 @@ compileModuleMain (LanguageModule ns0 ns1 ns2 cs0 ps0 _ cs1 ps1 _ _ _ em) xa n f
     reconcile [_] = return ()
     reconcile []  = compileErrorM $ "No matches for main category " ++ show n ++ " ($TestsOnly$ sources excluded)"
     reconcile ds  =
-      ("Multiple matches for main category " ++ show n) ??>
+      ("Multiple matches for main category " ++ show n) !!>
         (mergeAllM $ map (\d -> compileErrorM $ "Defined at " ++ formatFullContext (dcContext d)) ds)
 
 compileCategoryDeclaration :: (Show c, CompileErrorM m, MergeableM m) =>

@@ -830,7 +830,7 @@ compileFunctionCall :: (Show c, CompileErrorM m, MergeableM m,
                         CompilerContext c m [String] a) =>
   Maybe String -> ScopedFunction c -> FunctionCall c ->
   CompilerState a m (ExpressionType,ExprValue)
-compileFunctionCall e f (FunctionCall c _ ps es) = errorContext ???> do
+compileFunctionCall e f (FunctionCall c _ ps es) = message ???> do
   r <- csResolver
   fa <- csAllFilters
   es' <- sequence $ map compileExpression $ pValues es
@@ -850,7 +850,7 @@ compileFunctionCall e f (FunctionCall c _ ps es) = errorContext ???> do
   call <- assemble e scoped scope (sfScope f) params es''
   return $ (ftReturns f'',OpaqueMulti call)
   where
-    errorContext = "In call to " ++ show (sfName f) ++ " at " ++ formatFullContext c
+    message = "In call to " ++ show (sfName f) ++ " at " ++ formatFullContext c
     backgroundMessage (n,(InferredInstance c2),t) =
       compileBackgroundM $ "Parameter " ++ show n ++ " (from " ++ show (sfType f) ++ "." ++
         show (sfName f) ++ ") inferred as " ++ show t ++ " at " ++ formatFullContext c2

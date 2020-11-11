@@ -781,7 +781,7 @@ checkInferenceCommon ::
   (MergeTree InferredTypeGuess -> CompileInfo (MergeTree InferredTypeGuess) -> CompileInfo ()) ->
   [(String, [String])] -> [String] -> String -> String ->
   MergeTree (String,String,Variance) -> IO (CompileInfo ())
-checkInferenceCommon check pa is x y gs = return $ checked <?? context where
+checkInferenceCommon check pa is x y gs = return $ checked <!! context where
   context = "With params = " ++ show pa ++ ", pair = (" ++ show x ++ "," ++ show y ++ ")"
   checked = do
     ([t1,t2],pa2) <- parseTheTest pa [x,y]

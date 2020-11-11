@@ -33,6 +33,8 @@ module Compilation.CompilerState (
   ReturnVariable(..),
   (<???),
   (???>),
+  (<!!!),
+  (!!!>),
   csAddVariable,
   csAllFilters,
   csCheckValueInit,
@@ -173,6 +175,12 @@ instance Show c => Show (VariableValue c) where
 
 (???>) :: (CompileErrorM m) => String -> CompilerState a m b -> CompilerState a m b
 (???>) s x = mapStateT (s ??>) x
+
+(<!!!) :: (CompileErrorM m) => CompilerState a m b -> String -> CompilerState a m b
+(<!!!) x s = mapStateT (<!! s) x
+
+(!!!>) :: (CompileErrorM m) => String -> CompilerState a m b -> CompilerState a m b
+(!!!>) s x = mapStateT (s !!>) x
 
 resetBackgroundStateT :: (CompileErrorM m) => CompilerState a m b -> CompilerState a m b
 resetBackgroundStateT x = mapStateT resetBackgroundM x

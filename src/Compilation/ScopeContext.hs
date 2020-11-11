@@ -102,7 +102,7 @@ getProcedureScopes ta em (DefinedCategory c n pi _ _ fi ms ps fs) = do
       let fa' = Map.union fa $ getFilterMap pi2 fi2
       mergeAllM $ map (checkFilter r fa') fi2
     checkFilter r fa (ParamFilter c2 n2 f) =
-      validateTypeFilter r fa f <?? (show n2 ++ " " ++ show f ++ formatFullContextBrace c2)
+      validateTypeFilter r fa f <?? ("In " ++ show n2 ++ " " ++ show f ++ formatFullContextBrace c2)
     checkFunction pm f =
       when (sfScope f == ValueScope) $
         mergeAllM $ map (checkParam pm) $ pValues $ sfParams f
@@ -110,9 +110,9 @@ getProcedureScopes ta em (DefinedCategory c n pi _ _ fi ms ps fs) = do
       case vpParam p `Map.lookup` pm of
            Nothing -> return ()
            (Just c2) -> compileErrorM $ "Internal param " ++ show (vpParam p) ++
-                                       formatFullContextBrace (vpContext p) ++
-                                       " is already defined at " ++
-                                       formatFullContext c2
+                                        formatFullContextBrace (vpContext p) ++
+                                        " is already defined at " ++
+                                        formatFullContext c2
 
 -- TODO: This is probably in the wrong module.
 builtinVariables :: TypeInstance -> Map.Map VariableName (VariableValue c)

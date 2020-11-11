@@ -598,10 +598,10 @@ checkParamVariances tm0 ts = do
       checkCount _ = return ()
     checkRefine r vm (ValueRefine c t) =
       validateInstanceVariance r vm Covariant (SingleType $ JustTypeInstance t) <??
-        (show t ++ formatFullContextBrace c)
+        ("In " ++ show t ++ formatFullContextBrace c)
     checkDefine r vm (ValueDefine c t) =
       validateDefinesVariance r vm Covariant t <??
-        (show t ++ formatFullContextBrace c)
+        ("In " ++ show t ++ formatFullContextBrace c)
     checkFilterVariance r vs (ParamFilter c n f@(TypeFilter FilterRequires t)) =
       ("In filter " ++ show n ++ " " ++ show f ++ formatFullContextBrace c) ??> do
         case n `Map.lookup` vs of
@@ -647,13 +647,13 @@ checkCategoryInstances tm0 ts = do
         compileErrorM $ "Param " ++ show n ++ formatFullContextBrace c ++ " does not exist"
     checkRefine r fm (ValueRefine c t) =
       validateTypeInstance r fm t <??
-        (show t ++ formatFullContextBrace c)
+        ("In " ++ show t ++ formatFullContextBrace c)
     checkDefine r fm (ValueDefine c t) =
       validateDefinesInstance r fm t <??
-        (show t ++ formatFullContextBrace c)
+        ("In " ++ show t ++ formatFullContextBrace c)
     checkFilter r fm (ParamFilter c n f) =
       validateTypeFilter r fm f <??
-        (show n ++ " " ++ show f ++ formatFullContextBrace c)
+        ("In " ++ show n ++ " " ++ show f ++ formatFullContextBrace c)
 
 validateCategoryFunction :: (Show c, MergeableM m, CompileErrorM m, TypeResolver r) =>
   r -> AnyCategory c -> ScopedFunction c -> m ()
@@ -811,7 +811,7 @@ flattenAllConnections tm0 ts = do
     checkConvert r fm (Just ta1@(ValueRefine _ t1)) ta2@(ValueRefine _ t2) = do
       noInferredTypes $ checkGeneralMatch r fm Covariant
                         (SingleType $ JustTypeInstance t1)
-                        (SingleType $ JustTypeInstance t2) <??
+                        (SingleType $ JustTypeInstance t2) <!!
                         ("Cannot refine " ++ show ta1 ++ " from inherited " ++ show ta2)
       return ()
     checkConvert _ _ _ _ = return ()
@@ -1104,13 +1104,13 @@ mergeInferredTypes r f ff ps gs0 = do
            (True,_,_)     -> return lo
            (_,True,False) -> return lo
            (_,False,True) -> return hi
-           _ -> compileErrorM (show g) <?? ("Type for param " ++ show i ++ " is ambiguous")
-    takeBest i gs = (collectFirstM $ map (compileErrorM . show) gs) <??
+           _ -> compileErrorM (show g) <!! ("Type for param " ++ show i ++ " is ambiguous")
+    takeBest i gs = (collectFirstM $ map (compileErrorM . show) gs) <!!
       ("Type for param " ++ show i ++ " is ambiguous")
     filterGuesses i (GuessUnion gs) = do
       -- If all guesses got filtered out, the type errors leading to the
       -- filtering will be collected by mergeAnyM.
-      gs2 <- mergeAnyM (map (filterGuess i) gs) <?? ("No valid guesses for param " ++ show i)
+      gs2 <- mergeAnyM (map (filterGuess i) gs) <!! ("No valid guesses for param " ++ show i)
       simplifyUnion gs2 >>= return . GuessUnion
     filterGuess i g@(GuessRange lo hi) = do
       case (lo == minType,hi == maxType) of

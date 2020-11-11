@@ -129,7 +129,7 @@ pairProceduresToFunctions fa ps = do
                      formatFullContextBrace (epContext p) ++
                      " does not correspond to a function"
     getPair (Just f) (Just p) = do
-      processPairs_ alwaysPair (sfArgs f) (avNames $ epArgs p) <??
+      processPairs_ alwaysPair (sfArgs f) (avNames $ epArgs p) <!!
         ("Procedure for " ++ show (sfName f) ++
          formatFullContextBrace (avContext $ epArgs p) ++
          " has the wrong number of arguments" ++
@@ -137,7 +137,7 @@ pairProceduresToFunctions fa ps = do
       if isUnnamedReturns (epReturns p)
          then return ()
          else do
-           processPairs_ alwaysPair (sfReturns f) (nrNames $ epReturns p) <??
+           processPairs_ alwaysPair (sfReturns f) (nrNames $ epReturns p) <!!
              ("Procedure for " ++ show (sfName f) ++
               formatFullContextBrace (nrContext $ epReturns p) ++
               " has the wrong number of returns" ++

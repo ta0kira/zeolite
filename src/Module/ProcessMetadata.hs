@@ -100,7 +100,7 @@ loadRecompile p = do
   filePresent <- errorFromIO $ doesFileExist f
   when (not filePresent) $ compileErrorM $ "Module \"" ++ p ++ "\" has not been configured yet"
   c <- errorFromIO $ readFile f
-  (autoReadConfig f c) <??
+  (autoReadConfig f c) <!!
     ("Could not parse metadata from \"" ++ p ++ "\"; please reconfigure")
 
 isPathUpToDate :: VersionHash -> ForceMode -> FilePath -> CompileInfoIO Bool
@@ -236,7 +236,7 @@ loadDepsCommon f h ca pa0 getDeps ps = do
           p' <- errorFromIO $ canonicalizePath p
           when (cmPath m /= p') $
             compileErrorM $ "Module \"" ++ p ++ "\" has an invalid cache path and must be recompiled"
-          fresh <- errorFromIO $ toCompileInfo $ checkModuleFreshness h cm p m <??
+          fresh <- errorFromIO $ toCompileInfo $ checkModuleFreshness h cm p m <!!
             ("Module \"" ++ p ++ "\" is out of date and should be recompiled")
           if enforce
              then fromCompileInfo   fresh
@@ -257,7 +257,7 @@ loadMetadata ca p = do
          filePresent <- errorFromIO $ doesFileExist f
          when (not filePresent) $ compileErrorM $ "Module \"" ++ p ++ "\" has not been compiled yet"
          c <- errorFromIO $ readFile f
-         (autoReadConfig f c) <??
+         (autoReadConfig f c) <!!
             ("Could not parse metadata from \"" ++ p ++ "\"; please recompile")
 
 sortCompiledFiles :: [FilePath] -> ([FilePath],[FilePath],[FilePath])
