@@ -1125,7 +1125,7 @@ mergeInferredTypes r f ff ps gs0 = do
            [t]       -> return [GuessRange t t]
            [lo2,hi2] -> return [GuessRange lo2 hi2]
            _ -> undefined  -- mergeAnyM will catch an empty list.
-    checkSubFilters i t = do
+    checkSubFilters i t = ("In guess " ++ show t ++ " for param " ++ show i) ??> do
       let ps' = Map.insert i t ps
       fs <- ff `filterLookup` i
       fs' <- mapErrorsM (uncheckedSubFilter (getValueForParam ps'))fs

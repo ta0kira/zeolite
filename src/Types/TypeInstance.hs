@@ -555,7 +555,8 @@ validateTypeFilter r f (DefinesFilter t) =
 
 validateAssignment :: (MergeableM m, CompileErrorM m, TypeResolver r) =>
   r -> ParamFilters -> GeneralInstance -> [TypeFilter] -> m ()
-validateAssignment r f t fs = mergeAllM (map (checkFilter t) fs) where
+validateAssignment r f t fs = mergeAllM (map checkWithMessage fs) where
+  checkWithMessage f2 = checkFilter t f2 <?? ("In verification of filter " ++ show t ++ " " ++ show f2)
   checkFilter t1 (TypeFilter FilterRequires t2) =
     noInferredTypes $ checkGeneralMatch r f Covariant t1 (SingleType t2)
   checkFilter t1 (TypeFilter FilterAllows t2) =

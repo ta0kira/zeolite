@@ -38,6 +38,7 @@ concrete Test {
 
 testcase "inference mismatch" {
   error
+  require "get"
   require "String"
   require "Int"
 }
@@ -110,6 +111,7 @@ concrete Test {
 
 testcase "inference mismatch with qualification" {
   error
+  require "get"
   require "String"
   require "Int"
 }
@@ -162,6 +164,7 @@ concrete Test {
 
 testcase "inference conflict" {
   error
+  require "get"
   require "#x"
 }
 
@@ -193,6 +196,7 @@ concrete Test {
 
 testcase "elimination by filter" {
   error
+  require "get"
   require "#x"
   require "Formatted.+String"
 }
@@ -217,6 +221,7 @@ concrete Test {
 
 testcase "elimination by filter without param" {
   error
+  require "get"
   require "#x"
   require "Formatted.+String"
 }
@@ -241,6 +246,7 @@ concrete Test {
 
 testcase "elimination by filter including param" {
   error
+  require "get"
   require "#x"
   require "String.+Type"
   require "Type.+String"
@@ -294,6 +300,32 @@ define Test {
   get2 (x) {
     return x
   }
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "mutually dependent inferences" {
+  error
+  require "get"
+  require "#x.+\[String&Formatted\]"
+  require "#y.+String"
+}
+
+define Test {
+  run () {
+    String             x <- "message"
+    [String&Formatted] y <- "message"
+    \ get<?,?>(x,y)
+  }
+
+  @type get<#x,#y>
+    #x requires #y
+    #y requires #x
+  (#x,#y) -> ()
+  get (_,_) {}
 }
 
 concrete Test {
