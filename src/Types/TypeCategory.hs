@@ -1036,11 +1036,11 @@ mergeInferredTypes r f ff ps gs0 = do
     leafOp (InferredTypeGuess _ t Covariant)     = return $ GuessUnion [GuessRange t maxType]
     leafOp (InferredTypeGuess _ t Contravariant) = return $ GuessUnion [GuessRange minType t]
     leafOp (InferredTypeGuess _ t _)             = return $ GuessUnion [GuessRange t t]
-    anyOp = fmap GuessUnion . simplifyUnion . concat . map guGuesses
+    anyOp = return . GuessUnion . concat . map guGuesses
     allOp [] = return $ GuessUnion []
     allOp [g] = return g
     allOp ((GuessUnion g1):(GuessUnion g2):gs) = do
-      g <- g1 `guessProd` g2 >>= simplifyUnion
+      g <- g1 `guessProd` g2
       allOp (GuessUnion g:gs)
     -- NOTE: mergeAllM is used instead of mergeAnyM so that xs or ys being empty
     -- doesn't cause an error at this point.
@@ -1095,7 +1095,6 @@ mergeInferredTypes r f ff ps gs0 = do
            (Just lo,Just hi) -> return $ Just $ ms ++ [GuessRange lo hi] ++ gs
            _                 -> tryRangeUnion (ms ++ [g2]) g1 gs
     tryRangeUnion _ _ _ = return Nothing
-    takeBest i [] = compileErrorM $ "No valid guesses for param " ++ show i
     takeBest i [g@(GuessRange lo hi)] = do
       same <- hi `convertsTo` lo
       let openHi = hi == maxType
@@ -1113,18 +1112,21 @@ mergeInferredTypes r f ff ps gs0 = do
       gs2 <- mergeAnyM (map (filterGuess i) gs) <?? ("No valid guesses for param " ++ show i)
       gs2' <- simplifyUnion gs2
       return $ GuessUnion gs2'
-    filterGuess i (GuessRange lo hi) = do
-      let tryLo = if lo == minType
-                     then []
-                     else [checkSubFilters i lo >> return [lo]]
-      let tryHi = if hi == maxType
-                     then []
-                     else [checkSubFilters i hi >> return [hi]]
-      new <- mergeAnyM $ tryLo ++ tryHi
-      case new of
-           [t]       -> return [GuessRange t t]
-           [lo2,hi2] -> return [GuessRange lo2 hi2]
-           _ -> undefined  -- mergeAnyM will catch an empty list.
+    filterGuess i g@(GuessRange lo hi) = do
+      case (lo == minType,hi == maxType) of
+           (False,False) -> do
+             new <- mergeAnyM [
+                 checkSubFilters i lo >> return [lo],
+                 checkSubFilters i hi >> return [hi]
+               ]
+             case new of
+                  [t]       -> return [GuessRange t t]
+                  [lo2,hi2] -> return [GuessRange lo2 hi2]
+                  _ -> undefined  -- mergeAnyM will catch an empty list.
+           (loP,hiP) -> do
+             when (not loP) $ checkSubFilters i lo
+             when (not hiP) $ checkSubFilters i hi
+             return [g]
     checkSubFilters i t = ("In guess " ++ show t ++ " for param " ++ show i) ??> do
       let ps' = Map.insert i t ps
       fs <- ff `filterLookup` i
