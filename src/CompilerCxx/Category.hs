@@ -679,7 +679,7 @@ commonDefineType t rs extra = do
           "const TypeCategory& category, " ++
           "std::vector<S<const TypeInstance>>& args) const final {"
         ] ++ allCats rs2 ++ ["  return false;","}"]
-    myType = (getCategoryName t,map (SingleType . JustParamName False . fst) params)
+    myType = (getCategoryName t,map (singleType . JustParamName False . fst) params)
     refines rs2 = map (\r -> (tiName r,pValues $ tiParams r)) $ map vrType rs2
     allCats rs2 = concat $ map singleCat (myType:refines rs2)
     singleCat (t2,ps) = [
@@ -696,18 +696,14 @@ expandLocalType :: GeneralInstance -> String
 expandLocalType t
   | t == minBound = allGetter ++ "()"
   | t == maxBound = anyGetter ++ "()"
-expandLocalType (TypeMerge m ps) =
-  getter m  ++ "(L_get<" ++ typeBase ++ "*>(" ++ intercalate "," (map ("&" ++) ps') ++ "))"
-  where
-    ps' = map expandLocalType ps
-    getter AllowAnyOf   = unionGetter
-    getter RequireAllOf = intersectGetter
-expandLocalType (SingleType (JustTypeInstance (TypeInstance t ps))) =
-  typeGetter t ++ "(T_get(" ++ intercalate ", " ps' ++ "))"
-  where
-    ps' = map expandLocalType $ pValues ps
-expandLocalType (SingleType (JustParamName _ p)) = paramName p
-expandLocalType _ = undefined  -- The instance is an InferredType.
+expandLocalType t = reduceGeneralType getAny getAll getSingle t where
+  getAny ts = unionGetter     ++ combine ts
+  getAll ts = intersectGetter ++ combine ts
+  getSingle (JustTypeInstance (TypeInstance t2 ps)) =
+    typeGetter t2 ++ "(T_get(" ++ intercalate ", " (map expandLocalType $ pValues ps) ++ "))"
+  getSingle (JustParamName _ p)  = paramName p
+  getSingle (JustInferredType p) = paramName p
+  combine ps = "(L_get<" ++ typeBase ++ "*>(" ++ intercalate "," (map ("&" ++) ps) ++ "))"
 
 defineCategoryName :: SymbolScope -> CategoryName -> CompiledData [String]
 defineCategoryName TypeScope     _ = onlyCode $ "std::string CategoryName() const final { return parent.CategoryName(); }"
@@ -843,6 +839,6 @@ getCategoryMentions t = fromRefines (getCategoryRefines t) ++
   fromFunction (ScopedFunction _ _ t2 _ as rs _ fs _) =
     [t2] ++ (fromGenerals $ map (vtType . pvType) (pValues as ++ pValues rs)) ++ fromFilters fs
   fromFilters fs = concat $ map (fromFilter . pfFilter) fs
-  fromFilter (TypeFilter _ t2)  = Set.toList $ categoriesFromTypes $ SingleType t2
+  fromFilter (TypeFilter _ t2)  = Set.toList $ categoriesFromTypes t2
   fromFilter (DefinesFilter t2) = fromDefine t2
   fromGenerals = Set.toList . Set.unions . map categoriesFromTypes

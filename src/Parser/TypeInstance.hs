@@ -54,7 +54,7 @@ instance ParseFromSource GeneralInstance where
       return $ mergeAny (t1:ts)
     single = do
       t <- sourceParser
-      return $ SingleType t
+      return $ singleType t
 
 instance ParseFromSource ValueType where
   sourceParser = do
@@ -128,11 +128,11 @@ instance ParseFromSource TypeFilter where
     requires = labeled "requires filter" $ do
       try kwRequires
       t <- sourceParser
-      return $ TypeFilter FilterRequires t
+      return $ TypeFilter FilterRequires $ singleType t
     allows = labeled "allows filter" $ do
       try kwAllows
       t <- sourceParser
-      return $ TypeFilter FilterAllows t
+      return $ TypeFilter FilterAllows $ singleType t
     defines = labeled "defines filter" $ do
       try kwDefines
       t <- sourceParser

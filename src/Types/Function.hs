@@ -78,10 +78,10 @@ validatateFunctionType r fm vm (FunctionType as rs ps fa) = do
     checkFilterType fa2 (n,f) =
       validateTypeFilter r fa2 f <?? ("In filter " ++ show n ++ " " ++ show f)
     checkFilterVariance (n,f@(TypeFilter FilterRequires t)) =
-      validateInstanceVariance r allVariances Contravariant (SingleType t) <??
+      validateInstanceVariance r allVariances Contravariant t <??
         ("In filter " ++ show n ++ " " ++ show f)
     checkFilterVariance (n,f@(TypeFilter FilterAllows t)) =
-      validateInstanceVariance r allVariances Covariant (SingleType t) <??
+      validateInstanceVariance r allVariances Covariant t <??
         ("In filter " ++ show n ++ " " ++ show f)
     checkFilterVariance (n,f@(DefinesFilter t)) =
       validateDefinesVariance r allVariances Contravariant t <??
@@ -117,7 +117,7 @@ checkFunctionConvert :: (MergeableM m, CompileErrorM m, TypeResolver r) =>
 checkFunctionConvert r fm pm (FunctionType as1 rs1 ps1 fa1) ff2 = do
   mapped <- fmap Map.fromList $ processPairs alwaysPair ps1 fa1
   let fm' = Map.union fm mapped
-  let asTypes = Positional $ map (SingleType . JustParamName False) $ pValues ps1
+  let asTypes = Positional $ map (singleType . JustParamName False) $ pValues ps1
   -- Substitute params from ff2 into ff1.
   (FunctionType as2 rs2 _ _) <- assignFunctionParams r fm' pm asTypes ff2
   fixed <- processPairs alwaysPair ps1 fa1

@@ -185,7 +185,7 @@ testcase "intersect typename" {
 define Test {
   run () {
     Formatted name <- typename<[String&Int]>()
-    if (name.formatted() != "[String&Int]") {
+    if (name.formatted() != "[Int&String]") {
       fail(name)
     }
   }
@@ -203,7 +203,7 @@ testcase "union typename" {
 define Test {
   run () {
     Formatted name <- typename<[String|Int]>()
-    if (name.formatted() != "[String|Int]") {
+    if (name.formatted() != "[Int|String]") {
       fail(name)
     }
   }

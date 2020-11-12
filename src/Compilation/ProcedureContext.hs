@@ -88,7 +88,7 @@ instance (Show c, MergeableM m, CompileErrorM m) =>
   ccCurrentScope = return . pcScope
   ccResolver = return . AnyTypeResolver . CategoryResolver . pcCategories
   ccSameType ctx = return . (== same) where
-    same = TypeInstance (pcType ctx) (fmap (SingleType . JustParamName False . vpParam) $ pcExtParams ctx)
+    same = TypeInstance (pcType ctx) (fmap (singleType . JustParamName False . vpParam) $ pcExtParams ctx)
   ccAllFilters = return . pcAllFilters
   ccGetParamScope ctx p = do
     case p `Map.lookup` pcParamScopes ctx of
@@ -144,22 +144,25 @@ instance (Show c, MergeableM m, CompileErrorM m) =>
                      " does not have a category function named " ++ show n ++
                      formatFullContextBrace c
   ccGetTypeFunction ctx c t n = getFunction t where
-    getFunction (Just t2@(TypeMerge AllowAnyOf _)) =
-      compileErrorM $ "Use explicit type conversion to call " ++ show n ++ " for union type " ++
-                     show t2 ++ formatFullContextBrace c
-    getFunction (Just ta@(TypeMerge RequireAllOf ts)) =
-      collectFirstM (map getFunction $ map Just ts) <!!
-        ("Function " ++ show n ++ " not available for type " ++ show ta ++ formatFullContextBrace c)
-    getFunction (Just (SingleType (JustParamName _ p))) = do
+    getFunction (Just t2) = reduceGeneralType getFromAny getFromAll getFromSingle t2
+    getFunction Nothing = do
+      let ps = fmap (singleType . JustParamName False . vpParam) $ pcExtParams ctx
+      getFunction (Just $ singleType $ JustTypeInstance $ TypeInstance (pcType ctx) ps)
+    getFromAny _ =
+      compileErrorM $ "Use explicit type conversion to call " ++ show n ++ " from " ++ show t
+    getFromAll ts = do
+      collectFirstM ts <!!
+        ("Function " ++ show n ++ " not available for type " ++ show t ++ formatFullContextBrace c)
+    getFromSingle (JustParamName _ p) = do
       fa <- ccAllFilters ctx
       fs <- case p `Map.lookup` fa of
                 (Just fs) -> return fs
                 _ -> compileErrorM $ "Param " ++ show p ++ " does not exist"
       let ts = map tfType $ filter isRequiresFilter fs
       let ds = map dfType $ filter isDefinesFilter  fs
-      collectFirstM (map (getFunction . Just . SingleType) ts ++ map checkDefine ds) <!!
+      collectFirstM (map (getFunction . Just) ts ++ map checkDefine ds) <!!
         ("Function " ++ show n ++ " not available for param " ++ show p ++ formatFullContextBrace c)
-    getFunction (Just (SingleType (JustTypeInstance t2)))
+    getFromSingle (JustTypeInstance t2)
       -- Same category as the procedure itself.
       | tiName t2 == pcType ctx =
         subAndCheckFunction (tiName t2) (fmap vpParam $ pcExtParams ctx) (tiParams t2) $ n `Map.lookup` pcFunctions ctx
@@ -169,10 +172,7 @@ instance (Show c, MergeableM m, CompileErrorM m) =>
         let params = Positional $ map vpParam $ getCategoryParams ca
         let fa = Map.fromList $ map (\f -> (sfName f,f)) $ getCategoryFunctions ca
         subAndCheckFunction (tiName t2) params (tiParams t2) $ n `Map.lookup` fa
-    getFunction Nothing = do
-      let ps = fmap (SingleType . JustParamName False . vpParam) $ pcExtParams ctx
-      getFunction (Just $ SingleType $ JustTypeInstance $ TypeInstance (pcType ctx) ps)
-    getFunction (Just t2) = compileErrorM $ "Type " ++ show t2 ++ " contains unresolved types"
+    getFromSingle _ = compileErrorM $ "Type " ++ show t ++ " contains unresolved types"
     checkDefine t2 = do
       (_,ca) <- getCategory (pcCategories ctx) (c,diName t2)
       let params = Positional $ map vpParam $ getCategoryParams ca

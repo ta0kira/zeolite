@@ -310,7 +310,7 @@ concrete Test {
 testcase "mutually dependent inferences" {
   error
   require "get"
-  require "#x.+\[String&Formatted\]"
+  require "#x.+\[Formatted&String\]"
   require "#y.+String"
 }
 

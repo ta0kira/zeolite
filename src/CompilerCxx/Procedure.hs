@@ -566,7 +566,7 @@ compileExpression = compile where
     s <- csCurrentScope
     let typeInstance = getType sameType s params
     -- TODO: This is unsafe if used in a type or category constructor.
-    return (Positional [ValueType RequiredValue $ SingleType $ JustTypeInstance t],
+    return (Positional [ValueType RequiredValue $ singleType $ JustTypeInstance t],
             UnwrappedSingle $ valueCreator (tiName t) ++ "(" ++ typeInstance ++ ", " ++ params2 ++ ", " ++ es'' ++ ")")
     where
       getType True ValueScope _      = "parent"
@@ -656,7 +656,7 @@ compileExpression = compile where
     t' <- requireSingle c ts
     r <- csResolver
     fa <- csAllFilters
-    let vt = ValueType RequiredValue $ SingleType $ JustTypeInstance t
+    let vt = ValueType RequiredValue $ singleType $ JustTypeInstance t
     lift $ (checkValueAssignment r fa t' vt) <??
       ("In converted call at " ++ formatFullContext c)
     f' <- lookupValueFunction vt f
@@ -703,14 +703,14 @@ compileExpressionStart (CategoryCall c t f@(FunctionCall _ n _ _)) = do
 compileExpressionStart (TypeCall c t f@(FunctionCall _ n _ _)) = do
   r <- csResolver
   fa <- csAllFilters
-  lift $ validateGeneralInstance r fa (SingleType t) <?? ("In function call at " ++ formatFullContext c)
-  f' <- csGetTypeFunction c (Just $ SingleType t) n
+  lift $ validateGeneralInstance r fa (singleType t) <?? ("In function call at " ++ formatFullContext c)
+  f' <- csGetTypeFunction c (Just $ singleType t) n
   when (sfScope f' /= TypeScope) $ lift $ compileErrorM $ "Function " ++ show n ++
                                           " cannot be used as a type function" ++
                                           formatFullContextBrace c
-  csRequiresTypes $ Set.unions $ map categoriesFromTypes [SingleType t]
+  csRequiresTypes $ Set.unions $ map categoriesFromTypes [singleType t]
   csRequiresTypes $ Set.fromList [sfType f']
-  t' <- expandGeneralInstance $ SingleType t
+  t' <- expandGeneralInstance $ singleType t
   compileFunctionCall (Just t') f' f
 compileExpressionStart (UnqualifiedCall c f@(FunctionCall _ n _ _)) = do
   ctx <- get
@@ -900,7 +900,7 @@ guessParamsFromArgs r fa f ps ts = do
            Nothing -> compileErrorM $ "Something went wrong inferring " ++
                       show (vpParam p) ++ formatFullContextBrace (vpContext p)
     toInstance p1 (AssignedInstance _ t) = return (p1,t)
-    toInstance p1 (InferredInstance _)   = return (p1,SingleType $ JustInferredType p1)
+    toInstance p1 (InferredInstance _)   = return (p1,singleType $ JustInferredType p1)
 
 compileMainProcedure :: (Show c, CompileErrorM m, MergeableM m) =>
   CategoryMap c -> ExprMap c -> Expression c -> m (CompiledData [String])
@@ -925,10 +925,10 @@ autoScope s = do
     scoped _ _ = ""
 
 categoriesFromTypes :: GeneralInstance -> Set.Set CategoryName
-categoriesFromTypes = Set.fromList . getAll where
-  getAll (TypeMerge _ ps) = concat $ map getAll ps
-  getAll (SingleType (JustTypeInstance (TypeInstance t ps))) = t:(concat $ map getAll $ pValues ps)
-  getAll _ = []
+categoriesFromTypes = reduceGeneralType Set.unions Set.unions getAll where
+  getAll (JustTypeInstance (TypeInstance t ps)) =
+    t `Set.insert` (Set.unions $ map categoriesFromTypes $ pValues ps)
+  getAll _ = Set.empty
 
 categoriesFromRefine :: TypeInstance -> Set.Set CategoryName
 categoriesFromRefine (TypeInstance t ps) = t `Set.insert` (Set.unions $ map categoriesFromTypes $ pValues ps)
@@ -957,20 +957,20 @@ expandGeneralInstance :: (CompileErrorM m, CompilerContext c m s a) =>
 expandGeneralInstance t
   | t == minBound = return $ allGetter ++ "()"
   | t == maxBound = return $ anyGetter ++ "()"
-expandGeneralInstance (TypeMerge m ps) = do
-  ps' <- sequence $ map expandGeneralInstance ps
-  return $ getter m ++ "(L_get<S<const " ++ typeBase ++ ">>(" ++ intercalate "," ps' ++ "))"
-  where
-    getter AllowAnyOf   = unionGetter
-    getter RequireAllOf = intersectGetter
-expandGeneralInstance (SingleType (JustTypeInstance (TypeInstance t ps))) = do
-  ps' <- sequence $ map expandGeneralInstance $ pValues ps
-  return $ typeGetter t ++ "(T_get(" ++ intercalate "," ps' ++ "))"
-expandGeneralInstance (SingleType (JustParamName _ p)) = do
-  s <- csGetParamScope p
-  scoped <- autoScope s
-  return $ scoped ++ paramName p
-expandGeneralInstance t = lift $ compileErrorM $ "Type " ++ show t ++ " contains unresolved types"
+expandGeneralInstance t = reduceGeneralType getAny getAll getSingle t where
+  getAny ts = combine ts >>= return . (unionGetter ++)
+  getAll ts = combine ts >>= return . (intersectGetter ++)
+  getSingle (JustTypeInstance (TypeInstance t2 ps)) = do
+    ps' <- sequence $ map expandGeneralInstance $ pValues ps
+    return $ typeGetter t2 ++ "(T_get(" ++ intercalate "," ps' ++ "))"
+  getSingle (JustParamName _ p)  = do
+    s <- csGetParamScope p
+    scoped <- autoScope s
+    return $ scoped ++ paramName p
+  getSingle (JustInferredType p) = getSingle (JustParamName False p)
+  combine ps = do
+    ps' <- sequence ps
+    return $ "(L_get<S<const " ++ typeBase ++ ">>(" ++ intercalate "," ps' ++ "))"
 
 doImplicitReturn :: (CompileErrorM m, Show c, CompilerContext c m [String] a) =>
   [c] -> CompilerState a m ()

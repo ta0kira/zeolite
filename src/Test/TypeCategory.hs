@@ -1100,7 +1100,31 @@ tests = [
           -- Guesses are Type1 or Type4, which can't be merged, but the filter
           -- eliminates Type1.
           [("[Interface2<Type1>&Interface3<Type4>]","Interface0<#x>")]
-          [("#x","Type4")])
+          [("#x","Type4")]),
+
+    checkOperationSuccess
+      ("testfiles" </> "infer_meta.0rx")
+      (\ts -> do
+        tm <- includeNewTypes defaultCategories ts
+        checkInferenceSuccess tm
+          [("#x",["requires Type0"])] ["#x"]
+          [("[Type1|Type2]","#x")]
+          [("#x","[Type1|Type2]")]),
+    checkOperationSuccess
+      ("testfiles" </> "infer_meta.0rx")
+      (\ts -> do
+        tm <- includeNewTypes defaultCategories ts
+        checkInferenceSuccess tm
+          [("#x",["requires #x"])] ["#x"]
+          [("[Type1|Type2]","#x")]
+          [("#x","[Type1|Type2]")]),
+    checkOperationSuccess
+      ("testfiles" </> "infer_meta.0rx")
+      (\ts -> do
+        tm <- includeNewTypes defaultCategories ts
+        checkInferenceFail tm
+          [("#x",["requires Type0"])] ["#x"]
+          [("[Type1|Type4]","#x")])
   ]
 
 getRefines :: Map.Map CategoryName (AnyCategory c) -> String -> CompileInfo [String]
@@ -1272,7 +1296,7 @@ checkInferenceCommon check tm pa is ts gs = checked <!! context where
     check gs' $ mergeInferredTypes r f ff ia2 gs2
   readInferred p = do
     p' <- readSingle "(string)" p
-    return (p',SingleType $ JustInferredType p')
+    return (p',singleType $ JustInferredType p')
   parseGuess (p,t) = do
     p' <- readSingle "(string)" p
     t' <- readSingle "(string)" t
@@ -1284,4 +1308,4 @@ checkInferenceCommon check tm pa is ts gs = checked <!! context where
   weakLookup tm2 n =
     case n `Map.lookup` tm2 of
          Just t  -> return t
-         Nothing -> return $ SingleType $ JustParamName True n
+         Nothing -> return $ singleType $ JustParamName True n

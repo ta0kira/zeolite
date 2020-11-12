@@ -222,17 +222,16 @@ getCategoryFunctions (ValueConcrete _ _ _ _ _ _ _ fs) = fs
 
 getCategoryDeps :: AnyCategory c -> Set.Set CategoryName
 getCategoryDeps t = Set.fromList $ filter (/= getCategoryName t) $ refines ++ defines ++ filters ++ functions where
-  refines = concat $ map (fromInstance . SingleType . JustTypeInstance . vrType) $ getCategoryRefines t
+  refines = concat $ map (fromInstance . singleType . JustTypeInstance . vrType) $ getCategoryRefines t
   defines = concat $ map (fromDefine . vdType) $ getCategoryDefines t
   filters = concat $ map (fromFilter . pfFilter) $ getCategoryFilters t
   functions = concat $ map fromFunction $ getCategoryFunctions t
-  fromInstance (TypeMerge _ ps)                                    = concat $ map fromInstance ps
-  fromInstance (SingleType (JustTypeInstance (TypeInstance n ps))) = n:(concat $ map fromInstance $ pValues ps)
-  fromInstance _                                                   = []
+  fromInstance = reduceGeneralType concat concat fromSingle
+  fromSingle (JustTypeInstance (TypeInstance n ps)) = n:(concat $ map fromInstance $ pValues ps)
+  fromSingle _ = []
   fromDefine (DefinesInstance n ps) = n:(concat $ map fromInstance $ pValues ps)
-  fromFilter (TypeFilter _ t2@(JustTypeInstance _)) = fromInstance (SingleType t2)
-  fromFilter (DefinesFilter t2)                     = fromDefine t2
-  fromFilter _                                      = []
+  fromFilter (TypeFilter _ t2)  = fromInstance t2
+  fromFilter (DefinesFilter t2) = fromDefine t2
   fromType (ValueType _ t2) = fromInstance t2
   fromFunction f = args ++ returns ++ filters2 where
     args = concat $ map (fromType . pvType) $ pValues $ sfArgs f
@@ -392,7 +391,7 @@ checkFilters t ps = do
   let fa = Map.fromListWith (++) $ map (second (:[])) fs
   fmap Positional $ mapErrorsM (assignFilter fa) params where
     subSingleFilter pa (n,(TypeFilter v t2)) = do
-      (SingleType t3) <- uncheckedSubInstance (getValueForParam pa) (SingleType t2)
+      t3<- uncheckedSubInstance (getValueForParam pa) t2
       return (n,(TypeFilter v t3))
     subSingleFilter pa (n,(DefinesFilter (DefinesInstance n2 ps2))) = do
       ps3 <- mapErrorsM (uncheckedSubInstance $ getValueForParam pa) (pValues ps2)
@@ -482,7 +481,7 @@ getCategoryFilterMap t = getFilterMap (getCategoryParams t) (getCategoryFilters 
 
 getCategoryParamMap :: AnyCategory c -> ParamValues
 getCategoryParamMap t = let ps = map vpParam $ getCategoryParams t in
-                          Map.fromList $ zip ps (map (SingleType . JustParamName False) ps)
+                          Map.fromList $ zip ps (map (singleType . JustParamName False) ps)
 
 -- TODO: Use this where it's needed in this file.
 getFunctionFilterMap :: ScopedFunction c -> ParamFilters
@@ -597,7 +596,7 @@ checkParamVariances tm0 ts = do
                       " times in " ++ show n ++ formatFullContextBrace c
       checkCount _ = return ()
     checkRefine r vm (ValueRefine c t) =
-      validateInstanceVariance r vm Covariant (SingleType $ JustTypeInstance t) <??
+      validateInstanceVariance r vm Covariant (singleType $ JustTypeInstance t) <??
         ("In " ++ show t ++ formatFullContextBrace c)
     checkDefine r vm (ValueDefine c t) =
       validateDefinesVariance r vm Covariant t <??
@@ -609,7 +608,7 @@ checkParamVariances tm0 ts = do
                                                   " cannot have a requires filter"
              Nothing -> compileErrorM $ "Param " ++ show n ++ " is undefined"
              _ -> return ()
-        validateInstanceVariance r vs Contravariant (SingleType t)
+        validateInstanceVariance r vs Contravariant t
     checkFilterVariance r vs (ParamFilter c n f@(TypeFilter FilterAllows t)) =
       ("In filter " ++ show n ++ " " ++ show f ++ formatFullContextBrace c) ??> do
         case n `Map.lookup` vs of
@@ -617,7 +616,7 @@ checkParamVariances tm0 ts = do
                                               " cannot have an allows filter"
              Nothing -> compileErrorM $ "Param " ++ show n ++ " is undefined"
              _ -> return ()
-        validateInstanceVariance r vs Covariant (SingleType t)
+        validateInstanceVariance r vs Covariant t
     checkFilterVariance r vs (ParamFilter c n f@(DefinesFilter t)) =
       ("In filter " ++ show n ++ " " ++ show f ++ formatFullContextBrace c) ??> do
         case n `Map.lookup` vs of
@@ -706,8 +705,8 @@ mergeRefines r f = mergeObjects check where
     | n1 /= n2 = compileErrorM $ show t1 ++ " and " ++ show t2 ++ " are incompatible"
     | otherwise =
       noInferredTypes $ checkGeneralMatch r f Covariant
-                        (SingleType $ JustTypeInstance $ t1)
-                        (SingleType $ JustTypeInstance $ t2)
+                        (singleType $ JustTypeInstance $ t1)
+                        (singleType $ JustTypeInstance $ t2)
 
 mergeDefines :: (MergeableM m, CompileErrorM m, TypeResolver r) =>
   r -> ParamFilters -> [ValueDefine c] -> m [ValueDefine c]
@@ -797,8 +796,7 @@ flattenAllConnections tm0 ts = do
       pa <- assignParams tm c t
       fmap (ra:) $ mapErrorsM (subAll c pa) refines
     subAll c pa (ValueRefine c1 t1) = do
-      (SingleType (JustTypeInstance t2)) <-
-        uncheckedSubInstance (getValueForParam pa) (SingleType (JustTypeInstance t1))
+      t2 <- uncheckedSubSingle (getValueForParam pa) t1
       return $ ValueRefine (c ++ c1) t2
     assignParams tm c (TypeInstance n ps) = do
       (_,v) <- getValueCategory tm (c,n)
@@ -810,8 +808,8 @@ flattenAllConnections tm0 ts = do
       mergeAllM $ map (\t -> checkConvert r fm (tiName (vrType t) `Map.lookup` rm) t) rs2
     checkConvert r fm (Just ta1@(ValueRefine _ t1)) ta2@(ValueRefine _ t2) = do
       noInferredTypes $ checkGeneralMatch r fm Covariant
-                        (SingleType $ JustTypeInstance t1)
-                        (SingleType $ JustTypeInstance t2) <!!
+                        (singleType $ JustTypeInstance t1)
+                        (singleType $ JustTypeInstance t2) <!!
                         ("Cannot refine " ++ show ta1 ++ " from inherited " ++ show ta2)
       return ()
     checkConvert _ _ _ _ = return ()
@@ -965,7 +963,7 @@ unfixedSubFunction :: (Show c, MergeableM m, CompileErrorM m) =>
   ParamValues -> ScopedFunction c -> m (ScopedFunction c)
 unfixedSubFunction pa ff@(ScopedFunction c n t s as rs ps fa ms) =
   ("In function:\n---\n" ++ show ff ++ "\n---\n") ??> do
-    let unresolved = Map.fromList $ map (\n2 -> (n2,SingleType $ JustParamName False n2)) $ map vpParam $ pValues ps
+    let unresolved = Map.fromList $ map (\n2 -> (n2,singleType $ JustParamName False n2)) $ map vpParam $ pValues ps
     let pa' = pa `Map.union` unresolved
     as' <- fmap Positional $ mapErrorsM (subPassed pa') $ pValues as
     rs' <- fmap Positional $ mapErrorsM (subPassed pa') $ pValues rs

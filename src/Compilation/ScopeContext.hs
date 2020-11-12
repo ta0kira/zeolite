@@ -71,7 +71,7 @@ getProcedureScopes ta em (DefinedCategory c n pi _ _ fi ms ps fs) = do
   (_,t) <- getConcreteCategory ta (c,n)
   let params = Positional $ getCategoryParams t
   let params2 = Positional pi
-  let typeInstance = TypeInstance n $ fmap (SingleType . JustParamName False . vpParam) params
+  let typeInstance = TypeInstance n $ fmap (singleType . JustParamName False . vpParam) params
   let filters = getCategoryFilters t
   let filters2 = fi
   let r = CategoryResolver ta
@@ -117,5 +117,5 @@ getProcedureScopes ta em (DefinedCategory c n pi _ _ fi ms ps fs) = do
 -- TODO: This is probably in the wrong module.
 builtinVariables :: TypeInstance -> Map.Map VariableName (VariableValue c)
 builtinVariables t = Map.fromList [
-    (VariableName "self",VariableValue [] ValueScope (ValueType RequiredValue $ SingleType $ JustTypeInstance t) False)
+    (VariableName "self",VariableValue [] ValueScope (ValueType RequiredValue $ singleType $ JustTypeInstance t) False)
   ]

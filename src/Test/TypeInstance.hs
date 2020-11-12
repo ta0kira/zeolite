@@ -39,25 +39,25 @@ tests :: [IO (CompileInfo ())]
 tests = [
     checkParseSuccess
       "Type0"
-      (SingleType $ JustTypeInstance $ TypeInstance (CategoryName "Type0") (Positional [])),
+      (singleType $ JustTypeInstance $ TypeInstance (CategoryName "Type0") (Positional [])),
     checkParseSuccess
       "Type0<Type1,Type2>"
-      (SingleType $ JustTypeInstance $ TypeInstance (CategoryName "Type0") (Positional [
-          SingleType $ JustTypeInstance $ TypeInstance (CategoryName "Type1") (Positional []),
-          SingleType $ JustTypeInstance $ TypeInstance (CategoryName "Type2") (Positional [])
+      (singleType $ JustTypeInstance $ TypeInstance (CategoryName "Type0") (Positional [
+          singleType $ JustTypeInstance $ TypeInstance (CategoryName "Type1") (Positional []),
+          singleType $ JustTypeInstance $ TypeInstance (CategoryName "Type2") (Positional [])
         ])),
     checkParseSuccess
       "#x"
-      (SingleType $ JustParamName False $ ParamName "#x"),
+      (singleType $ JustParamName False $ ParamName "#x"),
     checkParseFail "x",
     checkParseFail "",
 
     checkParseSuccess
       "[Type0&Type0]"
-      (SingleType $ JustTypeInstance $ TypeInstance (CategoryName "Type0") (Positional [])),
+      (singleType $ JustTypeInstance $ TypeInstance (CategoryName "Type0") (Positional [])),
     checkParseSuccess
       "[Type0|Type0]"
-      (SingleType $ JustTypeInstance $ TypeInstance (CategoryName "Type0") (Positional [])),
+      (singleType $ JustTypeInstance $ TypeInstance (CategoryName "Type0") (Positional [])),
     checkParseSuccess "all" minBound,
     checkParseSuccess "any" maxBound,
     checkParseFail "[Type0]",
@@ -65,24 +65,24 @@ tests = [
 
     checkParseSuccess
       "[Type1&Type0&Type1]"
-      (TypeMerge RequireAllOf [
-          SingleType $ JustTypeInstance $ TypeInstance (CategoryName "Type0") (Positional []),
-          SingleType $ JustTypeInstance $ TypeInstance (CategoryName "Type1") (Positional [])
+      (mergeAll [
+          singleType $ JustTypeInstance $ TypeInstance (CategoryName "Type0") (Positional []),
+          singleType $ JustTypeInstance $ TypeInstance (CategoryName "Type1") (Positional [])
         ]),
     checkParseSuccess
       "[Type1|Type0|Type1]"
-      (TypeMerge AllowAnyOf [
-          SingleType $ JustTypeInstance $ TypeInstance (CategoryName "Type0") (Positional []),
-          SingleType $ JustTypeInstance $ TypeInstance (CategoryName "Type1") (Positional [])
+      (mergeAny [
+          singleType $ JustTypeInstance $ TypeInstance (CategoryName "Type0") (Positional []),
+          singleType $ JustTypeInstance $ TypeInstance (CategoryName "Type1") (Positional [])
         ]),
     checkParseFail "[Type0&Type1|Type2]",
     checkParseSuccess
       "[Type0<#x>&#x]"
-      (TypeMerge RequireAllOf [
-          SingleType $ JustTypeInstance $ TypeInstance (CategoryName "Type0") (Positional [
-              SingleType $ JustParamName False $ ParamName "#x"
+      (mergeAll [
+          singleType $ JustTypeInstance $ TypeInstance (CategoryName "Type0") (Positional [
+              singleType $ JustParamName False $ ParamName "#x"
             ]),
-          SingleType $ JustParamName False $ ParamName "#x"
+          singleType $ JustParamName False $ ParamName "#x"
         ]),
     checkParseFail "[Type0&]",
     checkParseFail "[Type0|]",
@@ -90,38 +90,38 @@ tests = [
 
     checkParseSuccess
       "[Type0&[Type1&Type3]&Type2]"
-      (TypeMerge RequireAllOf [
-          SingleType $ JustTypeInstance $ TypeInstance (CategoryName "Type0") (Positional []),
-          SingleType $ JustTypeInstance $ TypeInstance (CategoryName "Type1") (Positional []),
-          SingleType $ JustTypeInstance $ TypeInstance (CategoryName "Type2") (Positional []),
-          SingleType $ JustTypeInstance $ TypeInstance (CategoryName "Type3") (Positional [])
+      (mergeAll [
+          singleType $ JustTypeInstance $ TypeInstance (CategoryName "Type0") (Positional []),
+          singleType $ JustTypeInstance $ TypeInstance (CategoryName "Type1") (Positional []),
+          singleType $ JustTypeInstance $ TypeInstance (CategoryName "Type2") (Positional []),
+          singleType $ JustTypeInstance $ TypeInstance (CategoryName "Type3") (Positional [])
         ]),
     checkParseSuccess
       "[Type0|[Type1|Type3]|Type2]"
-      (TypeMerge AllowAnyOf [
-          SingleType $ JustTypeInstance $ TypeInstance (CategoryName "Type0") (Positional []),
-          SingleType $ JustTypeInstance $ TypeInstance (CategoryName "Type1") (Positional []),
-          SingleType $ JustTypeInstance $ TypeInstance (CategoryName "Type2") (Positional []),
-          SingleType $ JustTypeInstance $ TypeInstance (CategoryName "Type3") (Positional [])
+      (mergeAny [
+          singleType $ JustTypeInstance $ TypeInstance (CategoryName "Type0") (Positional []),
+          singleType $ JustTypeInstance $ TypeInstance (CategoryName "Type1") (Positional []),
+          singleType $ JustTypeInstance $ TypeInstance (CategoryName "Type2") (Positional []),
+          singleType $ JustTypeInstance $ TypeInstance (CategoryName "Type3") (Positional [])
         ]),
     checkParseSuccess
       "[Type0&[Type1|Type3]&Type2]"
-      (TypeMerge RequireAllOf [
-          SingleType $ JustTypeInstance $ TypeInstance (CategoryName "Type0") (Positional []),
-          SingleType $ JustTypeInstance $ TypeInstance (CategoryName "Type2") (Positional []),
-          TypeMerge AllowAnyOf [
-              SingleType $ JustTypeInstance $ TypeInstance (CategoryName "Type1") (Positional []),
-              SingleType $ JustTypeInstance $ TypeInstance (CategoryName "Type3") (Positional [])
+      (mergeAll [
+          singleType $ JustTypeInstance $ TypeInstance (CategoryName "Type0") (Positional []),
+          singleType $ JustTypeInstance $ TypeInstance (CategoryName "Type2") (Positional []),
+          mergeAny [
+              singleType $ JustTypeInstance $ TypeInstance (CategoryName "Type1") (Positional []),
+              singleType $ JustTypeInstance $ TypeInstance (CategoryName "Type3") (Positional [])
             ]
         ]),
     checkParseSuccess
       "[Type0|[Type1&Type3]|Type2]"
-      (TypeMerge AllowAnyOf [
-          SingleType $ JustTypeInstance $ TypeInstance (CategoryName "Type0") (Positional []),
-          SingleType $ JustTypeInstance $ TypeInstance (CategoryName "Type2") (Positional []),
-          TypeMerge RequireAllOf [
-              SingleType $ JustTypeInstance $ TypeInstance (CategoryName "Type1") (Positional []),
-              SingleType $ JustTypeInstance $ TypeInstance (CategoryName "Type3") (Positional [])
+      (mergeAny [
+          singleType $ JustTypeInstance $ TypeInstance (CategoryName "Type0") (Positional []),
+          singleType $ JustTypeInstance $ TypeInstance (CategoryName "Type2") (Positional []),
+          mergeAll [
+              singleType $ JustTypeInstance $ TypeInstance (CategoryName "Type1") (Positional []),
+              singleType $ JustTypeInstance $ TypeInstance (CategoryName "Type3") (Positional [])
             ]
         ]),
 
@@ -893,7 +893,7 @@ checkInferenceCommon check pa is x y gs = return $ checked <!! context where
     check gs' $ checkGeneralMatch Resolver pa3 Covariant t1 t2'
   readInferred p = do
     p' <- readSingle "(string)" p
-    return (p',SingleType $ JustInferredType p')
+    return (p',singleType $ JustInferredType p')
   parseGuess (p,t,v) = do
     p' <- readSingle "(string)" p
     t' <- readSingle "(string)" t
@@ -901,7 +901,7 @@ checkInferenceCommon check pa is x y gs = return $ checked <!! context where
   weakLookup tm n =
     case n `Map.lookup` tm of
          Just t  -> return t
-         Nothing -> return $ SingleType $ JustParamName True n
+         Nothing -> return $ singleType $ JustParamName True n
   filterSub im (k,fs) = do
     fs' <- mapErrorsM (uncheckedSubFilter (weakLookup im)) fs
     return (k,fs')
