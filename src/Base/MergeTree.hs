@@ -16,20 +16,13 @@ limitations under the License.
 
 -- Author: Kevin P. Barry [ta0kira@gmail.com]
 
-{-# LANGUAGE CPP #-}
 {-# LANGUAGE Safe #-}
 
 module Base.MergeTree (
   MergeTree,
   mergeLeaf,
-  pruneMergeTree,
   reduceMergeTree,
 ) where
-
-#if MIN_VERSION_base(4,11,0)
-#else
-import Data.Monoid ((<>),mconcat)
-#endif
 
 import Base.Mergeable
 
@@ -40,13 +33,13 @@ data MergeTree a =
   MergeLeaf a
   deriving (Eq)
 
+mergeLeaf :: a -> MergeTree a
+mergeLeaf = MergeLeaf
+
 instance Show a => Show (MergeTree a) where
   show (MergeAny xs) = "mergeAny " ++ show xs
   show (MergeAll xs) = "mergeAll " ++ show xs
   show (MergeLeaf x) = "mergeLeaf " ++ show x
-
-mergeLeaf :: a -> MergeTree a
-mergeLeaf = MergeLeaf
 
 reduceMergeTree :: ([b] -> b) -> ([b] -> b) -> (a -> b) -> MergeTree a -> b
 reduceMergeTree anyOp allOp leafOp = reduce where
@@ -54,25 +47,25 @@ reduceMergeTree anyOp allOp leafOp = reduce where
   reduce (MergeAll xs) = allOp $ map reduce xs
   reduce (MergeLeaf x) = leafOp x
 
-pruneMergeTree :: Monad m => MergeTree (m a) -> m (MergeTree a)
-pruneMergeTree = reduceMergeTree (fmap mergeAny . sequence) (fmap mergeAll . sequence) (fmap mergeLeaf)
-
 instance Functor MergeTree where
-  fmap f (MergeAny xs) = mergeAny (map (fmap f) xs)
-  fmap f (MergeAll xs) = mergeAll (map (fmap f) xs)
-  fmap f (MergeLeaf x) = mergeLeaf (f x)
+  fmap f = reduceMergeTree mergeAny mergeAll (mergeLeaf . f)
 
 instance Applicative MergeTree where
   pure = mergeLeaf
-  (MergeAny fs) <*> x = mergeAny $ map (<*> x) fs
-  (MergeAll fs) <*> x = mergeAll $ map (<*> x) fs
-  (MergeLeaf f) <*> x = f <$> x
+  f <*> x = reduceMergeTree mergeAny mergeAll (<$> x) f
 
 instance Monad MergeTree where
   return = pure
-  (MergeAny xs) >>= f = mergeAny $ map (>>= f) xs
-  (MergeAll xs) >>= f = mergeAll $ map (>>= f) xs
-  (MergeLeaf x) >>= f = f x
+  x >>= f = reduceMergeTree mergeAny mergeAll f x
+
+instance Foldable MergeTree where
+  foldr f y = foldr f y . reduceMergeTree concat concat (:[])
+
+instance Traversable MergeTree where
+  traverse f = reduceMergeTree anyOp allOp leafOp where
+    anyOp = (mergeAny <$>) . foldr (<*>) (pure []) . (map (fmap (:)))
+    allOp = (mergeAll <$>) . foldr (<*>) (pure []) . (map (fmap (:)))
+    leafOp = (mergeLeaf <$>) . f
 
 instance Mergeable (MergeTree a) where
   mergeAny = unnest . foldr ((++) . flattenAny) [] where

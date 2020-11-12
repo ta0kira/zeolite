@@ -56,7 +56,47 @@ tests = [
               (\x -> do
                 x' <- x
                 mergeAll [return x',return (toUpper x')])
-              (mergeAll [mergeLeaf 'a',mergeAny [mergeLeaf 'b',mergeLeaf 'c']])
+              (mergeAll [mergeLeaf 'a',mergeAny [mergeLeaf 'b',mergeLeaf 'c']]),
+
+    checkMatch [mergeAll [mergeAny [mergeLeaf 'a',mergeLeaf 'b'],
+                          mergeAny [mergeLeaf 'c',
+                                    mergeAll [mergeLeaf 'd',mergeLeaf 'e']],
+                          mergeLeaf 'f']]
+               sequence  -- MergeTree [Char] -> [MergeTree Char]
+               (mergeAll [mergeAny [mergeLeaf "a",mergeLeaf "b"],
+                          mergeAny [mergeLeaf "c",
+                                    mergeAll [mergeLeaf "d",mergeLeaf "e"]],
+                          mergeLeaf "f"]),
+
+    checkMatch (mergeAll [mergeAny [mergeLeaf "a",mergeLeaf "b"],
+                          mergeAny [mergeLeaf "c",
+                                    mergeAll [mergeLeaf "d",mergeLeaf "e"]],
+                          mergeLeaf "f"])
+               sequence  -- [MergeTree Char] -> MergeTree [Char]
+               [mergeAll [mergeAny [mergeLeaf 'a',mergeLeaf 'b'],
+                          mergeAny [mergeLeaf 'c',
+                                    mergeAll [mergeLeaf 'd',mergeLeaf 'e']],
+                          mergeLeaf 'f']],
+
+    checkMatch (mergeAll [mergeAny [mergeLeaf 'A',mergeLeaf 'B'],
+                          mergeAny [mergeLeaf 'C',
+                                    mergeAll [mergeLeaf 'D',mergeLeaf 'E']],
+                          mergeLeaf 'F'])
+               (toUpper <$>)
+               (mergeAll [mergeAny [mergeLeaf 'a',mergeLeaf 'b'],
+                          mergeAny [mergeLeaf 'c',
+                                    mergeAll [mergeLeaf 'd',mergeLeaf 'e']],
+                          mergeLeaf 'f']),
+
+    checkMatch (mergeAll [mergeAny [mergeLeaf 'A',mergeLeaf 'B'],
+                          mergeAny [mergeLeaf 'C',
+                                    mergeAll [mergeLeaf 'D',mergeLeaf 'E']],
+                          mergeLeaf 'F'])
+               ((mergeAll [mergeAny [mergeLeaf ($'a'),mergeLeaf ($'b')],
+                           mergeAny [mergeLeaf ($'c'),
+                                     mergeAll [mergeLeaf ($'d'),mergeLeaf ($'e')]],
+                           mergeLeaf ($'f')]) <*>)
+               (mergeLeaf toUpper)
  ]
 
 oddError :: Int -> CompileInfo Int
