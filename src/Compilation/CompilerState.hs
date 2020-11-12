@@ -81,7 +81,6 @@ import qualified Data.Set as Set
 
 #if MIN_VERSION_base(4,11,0)
 #else
-import Data.Monoid hiding ((<>))
 import Data.Semigroup
 #endif
 
@@ -302,6 +301,7 @@ instance Semigroup s => Semigroup (CompiledData s) where
 
 instance Monoid s => Monoid (CompiledData s) where
   mempty = CompiledData Set.empty mempty
+  mappend = (<>)
 
 runDataCompiler :: CompilerContext c m s a =>
   CompilerState a m b -> a -> m (CompiledData s)
