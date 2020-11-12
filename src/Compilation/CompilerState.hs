@@ -16,6 +16,7 @@ limitations under the License.
 
 -- Author: Kevin P. Barry [ta0kira@gmail.com]
 
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE Safe #-}
@@ -78,6 +79,11 @@ import Data.Functor
 import Data.Monoid
 import Prelude hiding (foldr)
 import qualified Data.Set as Set
+
+#if MIN_VERSION_base(4,11,0)
+#else
+import Data.Semigroup
+#endif
 
 import Base.CompileError
 import Types.DefinedCategory
