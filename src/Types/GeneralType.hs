@@ -31,6 +31,7 @@ module Types.GeneralType (
 import Data.List (nub,sort)
 
 import Base.CompileError
+import Base.MergeTree
 import Base.Mergeable
 
 
@@ -74,17 +75,14 @@ dualGeneralType = reduceGeneralType mergeAll mergeAny singleType
 mapGeneralType :: (Eq b, Ord b) => (a -> b) -> GeneralType a -> GeneralType b
 mapGeneralType = reduceGeneralType mergeAny mergeAll . (singleType .)
 
+toMergeTree :: GeneralType a -> MergeTree a
+toMergeTree (AllowAnyOf   xs) = mergeAny $ map toMergeTree xs
+toMergeTree (RequireAllOf xs) = mergeAll $ map toMergeTree xs
+toMergeTree (SingleType x)    = mergeLeaf x
+
 reduceGeneralType :: ([b] -> b) -> ([b] -> b) -> (a -> b) -> GeneralType a -> b
-reduceGeneralType anyOp allOp singleOp = reduce where
-  reduce (AllowAnyOf   xs) = anyOp $ map reduce xs
-  reduce (RequireAllOf xs) = allOp $ map reduce xs
-  reduce (SingleType x) = singleOp x
+reduceGeneralType anyOp allOp singleOp = reduceMergeTree anyOp allOp singleOp . toMergeTree
 
 pairGeneralType :: ([c] -> c) -> ([c] -> c) -> (a -> b -> c) -> GeneralType a -> GeneralType b -> c
-pairGeneralType anyOp allOp singleOp = singleCheck where
-  singleCheck (SingleType t1) (SingleType t2) = t1 `singleOp` t2
-  -- NOTE: The merge-alls must be expanded strictly before the merge-anys.
-  singleCheck ti1 (RequireAllOf t2) = allOp $ map (ti1 `singleCheck`) t2
-  singleCheck (AllowAnyOf   t1) ti2 = allOp $ map (`singleCheck` ti2) t1
-  singleCheck (RequireAllOf t1) ti2 = anyOp $ map (`singleCheck` ti2) t1
-  singleCheck ti1 (AllowAnyOf   t2) = anyOp $ map (ti1 `singleCheck`) t2
+pairGeneralType anyOp allOp singleOp x y =
+  pairMergeTree anyOp allOp singleOp (toMergeTree x) (toMergeTree y)

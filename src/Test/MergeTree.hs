@@ -96,7 +96,45 @@ tests = [
                            mergeAny [mergeLeaf ($'c'),
                                      mergeAll [mergeLeaf ($'d'),mergeLeaf ($'e')]],
                            mergeLeaf ($'f')]) <*>)
-               (mergeLeaf toUpper)
+               (mergeLeaf toUpper),
+
+    checkMatch True
+               (uncurry $ pairMergeTree mergeAny mergeAll (==))
+               (minBound,minBound :: MergeTree ()),
+    checkMatch True
+               (uncurry $ pairMergeTree mergeAny mergeAll (==))
+               (maxBound,maxBound :: MergeTree ()),
+    checkMatch True
+               (uncurry $ pairMergeTree mergeAny mergeAll (==))
+               (minBound,maxBound :: MergeTree ()),
+    checkMatch False
+               (uncurry $ pairMergeTree mergeAny mergeAll (==))
+               (maxBound,minBound :: MergeTree ()),
+
+    checkMatch True
+               (uncurry $ pairMergeTree mergeAny mergeAll (==))
+               (mergeAll [mergeLeaf 'a',mergeLeaf 'b'],
+                mergeAny [mergeLeaf 'a',mergeLeaf 'b',mergeLeaf 'c']),
+    checkMatch True
+               (uncurry $ pairMergeTree mergeAny mergeAll (==))
+               (mergeAll [mergeLeaf 'a',mergeLeaf 'b',mergeLeaf 'c'],
+                mergeAny [mergeLeaf 'a',mergeLeaf 'b']),
+    checkMatch False
+               (uncurry $ pairMergeTree mergeAny mergeAll (==))
+               (mergeAny [mergeLeaf 'a',mergeLeaf 'b'],
+                mergeAll [mergeLeaf 'a',mergeLeaf 'b',mergeLeaf 'c']),
+    checkMatch False
+               (uncurry $ pairMergeTree mergeAny mergeAll (==))
+               (mergeAny [mergeLeaf 'a',mergeLeaf 'b',mergeLeaf 'c'],
+                mergeAll [mergeLeaf 'a',mergeLeaf 'b']),
+    checkMatch True
+               (uncurry $ pairMergeTree mergeAny mergeAll (==))
+               (mergeAny [mergeLeaf 'a',mergeLeaf 'b'],
+                mergeAny [mergeLeaf 'a',mergeLeaf 'b']),
+    checkMatch True
+               (uncurry $ pairMergeTree mergeAny mergeAll (==))
+               (mergeAll [mergeLeaf 'a',mergeLeaf 'b'],
+                mergeAll [mergeLeaf 'a',mergeLeaf 'b'])
  ]
 
 oddError :: Int -> CompileInfo Int

@@ -21,6 +21,7 @@ limitations under the License.
 module Base.MergeTree (
   MergeTree,
   mergeLeaf,
+  pairMergeTree,
   reduceMergeTree,
 ) where
 
@@ -46,6 +47,17 @@ reduceMergeTree anyOp allOp leafOp = reduce where
   reduce (MergeAny xs) = anyOp $ map reduce xs
   reduce (MergeAll xs) = allOp $ map reduce xs
   reduce (MergeLeaf x) = leafOp x
+
+pairMergeTree :: ([c] -> c) -> ([c] -> c) -> (a -> b -> c) -> MergeTree a -> MergeTree b -> c
+pairMergeTree anyOp allOp leafOp = pair where
+  pair (MergeLeaf t1) (MergeLeaf t2) = t1 `leafOp` t2
+  -- NOTE: allOp is expanded first so that anyOp is ignored when either both
+  -- sides are minBound or both sides are maxBound. This allows
+  -- pairMergeTree mergeAny mergeAll (==) to be a partial order.
+  pair (MergeAny t1) ti2 = allOp $ map (`pair` ti2) t1
+  pair ti1 (MergeAll t2) = allOp $ map (ti1 `pair`) t2
+  pair (MergeAll t1) ti2 = anyOp $ map (`pair` ti2) t1
+  pair ti1 (MergeAny t2) = anyOp $ map (ti1 `pair`) t2
 
 instance Functor MergeTree where
   fmap f = reduceMergeTree mergeAny mergeAll (mergeLeaf . f)
