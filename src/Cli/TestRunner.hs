@@ -32,7 +32,6 @@ import Text.Regex.TDFA -- Not safe!
 
 import Base.CompileError
 import Base.CompileInfo
-import Base.Mergeable
 import Cli.Programs
 import CompilerCxx.Category
 import CompilerCxx.Naming
@@ -60,7 +59,7 @@ runSingleTest b cm p paths deps (f,s) = do
           allResults <- sequence $ map runSingle ts'
           let passed = length $ filter (not . isCompileError) allResults
           let failed = length $ filter isCompileError allResults
-          return ((passed,failed),mergeAllM allResults)
+          return ((passed,failed),collectAllM_ allResults)
     runSingle t = do
       let name = "\"" ++ ithTestName (itHeader t) ++ "\" (from " ++ f ++ ")"
       let context = formatFullContextBrace (ithContext $ itHeader t)
@@ -89,16 +88,16 @@ runSingleTest b cm p paths deps (f,s) = do
       let ce = checkExcluded es comp err out
       let compError = if null comp
                          then return ()
-                         else (mergeAllM $ map compileErrorM comp) <?? "\nOutput from compiler:"
+                         else (mapErrorsM_ compileErrorM comp) <?? "\nOutput from compiler:"
       let errError = if null err
                         then return ()
-                        else (mergeAllM $ map compileErrorM err) <?? "\nOutput to stderr from test:"
+                        else (mapErrorsM_ compileErrorM err) <?? "\nOutput to stderr from test:"
       let outError = if null out
                         then return ()
-                        else (mergeAllM $ map compileErrorM out) <?? "\nOutput to stdout from test:"
+                        else (mapErrorsM_ compileErrorM out) <?? "\nOutput to stdout from test:"
       if isCompileError cr || isCompileError ce
-         then mergeAllM [cr,ce,compError,errError,outError]
-         else mergeAllM [cr,ce]
+         then collectAllM_ [cr,ce,compError,errError,outError]
+         else collectAllM_ [cr,ce]
 
     execute s2 e rs es cs ds = toCompileInfo $ do
       let result = compileAll (Just e) cs ds
@@ -111,12 +110,12 @@ runSingleTest b cm p paths deps (f,s) = do
            let command = TestCommand binaryName (takeDirectory binaryName)
            (TestCommandResult s2' out err) <- runTestCommand b command
            case (s2,s2') of
-                (True,False) -> mergeAllM $ (asCompileError result):(map compileErrorM $ err ++ out)
+                (True,False) -> collectAllM_ $ (asCompileError result):(map compileErrorM $ err ++ out)
                 (False,True) ->
                   if isEmptyCompileMessage warnings
                      then compileErrorM "Expected runtime failure"
-                     else mergeAllM [compileErrorM "Expected runtime failure",
-                                     asCompileError result <?? "\nOutput from compiler:"]
+                     else collectAllM_ [compileErrorM "Expected runtime failure",
+                                        asCompileError result <?? "\nOutput from compiler:"]
                 _ -> do
                   let result2 = checkContent rs es (lines $ show warnings) err out
                   when (not $ isCompileError result2) $ errorFromIO $ removeDirectoryRecursive dir
@@ -137,8 +136,8 @@ runSingleTest b cm p paths deps (f,s) = do
                    Nothing -> compileErrorM ""
       return (xx,main)
 
-    checkRequired rs comp err out = mergeAllM $ map (checkSubsetForRegex True  comp err out) rs
-    checkExcluded es comp err out = mergeAllM $ map (checkSubsetForRegex False comp err out) es
+    checkRequired rs comp err out = mapErrorsM_ (checkSubsetForRegex True  comp err out) rs
+    checkExcluded es comp err out = mapErrorsM_ (checkSubsetForRegex False comp err out) es
     checkSubsetForRegex expected comp err out (OutputPattern OutputAny r) =
       checkForRegex expected (comp ++ err ++ out) r "compiler output or test output"
     checkSubsetForRegex expected comp _ _ (OutputPattern OutputCompiler r) =

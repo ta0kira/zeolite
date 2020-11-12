@@ -30,7 +30,6 @@ import Control.Monad (when)
 import qualified Data.Map as Map
 
 import Base.CompileError
-import Base.Mergeable
 import Types.GeneralType
 import Types.Positional
 import Types.TypeInstance
@@ -55,18 +54,18 @@ instance Show FunctionType where
     where
       showFilters (n,fs) = map (\f -> show n ++ " " ++ show f ++ " ") fs
 
-validatateFunctionType :: (MergeableM m, CompileErrorM m, TypeResolver r) =>
+validatateFunctionType :: (CompileErrorM m, TypeResolver r) =>
   r -> ParamFilters -> ParamVariances -> FunctionType -> m ()
 validatateFunctionType r fm vm (FunctionType as rs ps fa) = do
-  mergeAllM $ map checkCount $ group $ sort $ pValues ps
-  mergeAllM $ map checkHides $ pValues ps
+  mapErrorsM_ checkCount $ group $ sort $ pValues ps
+  mapErrorsM_ checkHides $ pValues ps
   paired <- processPairs alwaysPair ps fa
   let allFilters = Map.union fm (Map.fromList paired)
   expanded <- fmap concat $ processPairs (\n fs -> return $ zip (repeat n) fs) ps fa
-  mergeAllM $ map (checkFilterType allFilters) expanded
-  mergeAllM $ map checkFilterVariance expanded
-  mergeAllM $ map (checkArg allFilters) $ pValues as
-  mergeAllM $ map (checkReturn allFilters) $ pValues rs
+  mapErrorsM_ (checkFilterType allFilters) expanded
+  mapErrorsM_ checkFilterVariance expanded
+  mapErrorsM_ (checkArg allFilters) $ pValues as
+  mapErrorsM_ (checkReturn allFilters) $ pValues rs
   where
     allVariances = Map.union vm (Map.fromList $ zip (pValues ps) (repeat Invariant))
     checkCount xa@(x:_:_) =
@@ -95,11 +94,11 @@ validatateFunctionType r fm vm (FunctionType as rs ps fa) = do
       validateGeneralInstance r fa2 t
       validateInstanceVariance r allVariances Covariant t
 
-assignFunctionParams :: (MergeableM m, CompileErrorM m, TypeResolver r) =>
+assignFunctionParams :: (CompileErrorM m, TypeResolver r) =>
   r -> ParamFilters -> ParamValues -> Positional GeneralInstance ->
   FunctionType -> m FunctionType
 assignFunctionParams r fm pm ts (FunctionType as rs ps fa) = do
-  mergeAllM $ map (validateGeneralInstance r fm) $ pValues ts
+  mapErrorsM_ (validateGeneralInstance r fm) $ pValues ts
   assigned <- fmap Map.fromList $ processPairs alwaysPair ps ts
   let pa = pm `Map.union` assigned
   fa' <- fmap Positional $ mapErrorsM (assignFilters pa) (pValues fa)
@@ -112,7 +111,7 @@ assignFunctionParams r fm pm ts (FunctionType as rs ps fa) = do
   where
     assignFilters fm2 fs = mapErrorsM (uncheckedSubFilter $ getValueForParam fm2) fs
 
-checkFunctionConvert :: (MergeableM m, CompileErrorM m, TypeResolver r) =>
+checkFunctionConvert :: (CompileErrorM m, TypeResolver r) =>
   r -> ParamFilters -> ParamValues -> FunctionType -> FunctionType -> m ()
 checkFunctionConvert r fm pm (FunctionType as1 rs1 ps1 fa1) ff2 = do
   mapped <- fmap Map.fromList $ processPairs alwaysPair ps1 fa1

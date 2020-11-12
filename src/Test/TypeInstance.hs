@@ -883,8 +883,6 @@ checkInferenceCommon check pa is x y gs = return $ checked <!! context where
   checked = do
     ([t1,t2],pa2) <- parseTheTest pa [x,y]
     ia2 <- mapErrorsM readInferred is
-    -- NOTE: This has the strange side-effect that a bad parseGuess within
-    -- a mergeAny will be silently missing from the expectation.
     gs' <- pruneMergeTree $ fmap parseGuess gs
     let iaMap = Map.fromList ia2
     -- TODO: Merge duplication with Test.TypeCategory.

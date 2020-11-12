@@ -31,7 +31,6 @@ import qualified Data.Set as Set
 
 import Base.CompileError
 import Base.CompileInfo
-import Base.Mergeable
 import Cli.CompileOptions
 import Cli.Compiler
 import Cli.Programs
@@ -127,7 +126,7 @@ runCompiler resolver backend (CompileOptions h _ _ ds _ _ p CompileRecompileRecu
                  return da'
 
 runCompiler resolver backend (CompileOptions _ _ _ ds _ _ p CompileRecompile f) = do
-  mergeAllM $ map recompileSingle ds where
+  mapErrorsM_ recompileSingle ds where
     compilerHash = getCompilerHash backend
     recompileSingle d0 = do
       d <- errorFromIO $ canonicalizePath (p </> d0)

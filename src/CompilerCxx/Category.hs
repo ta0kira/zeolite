@@ -39,7 +39,6 @@ import qualified Data.Map as Map
 import qualified Data.Set as Set
 
 import Base.CompileError
-import Base.Mergeable
 import Compilation.CompilerState
 import Compilation.ProcedureContext (ExprMap)
 import Compilation.ScopeContext
@@ -93,7 +92,7 @@ data PrivateSource c =
     psDefine :: [DefinedCategory c]
   }
 
-compileLanguageModule :: (Show c, CompileErrorM m, MergeableM m) =>
+compileLanguageModule :: (Show c, CompileErrorM m) =>
   LanguageModule c -> [PrivateSource c] -> m [CxxOutput]
 compileLanguageModule (LanguageModule ns0 ns1 ns2 cs0 ps0 ts0 cs1 ps1 ts1 ex ss em) xa = do
   checkSupefluous $ Set.toList $ (Set.fromList ex) `Set.difference` ca
@@ -199,7 +198,7 @@ compileLanguageModule (LanguageModule ns0 ns1 ns2 cs0 ps0 ts0 cs1 ps1 ts1 ex ss 
     streamlinedError n =
       compileErrorM $ "Category " ++ show n ++ " cannot be streamlined because it was not declared external"
 
-compileTestMain :: (Show c, CompileErrorM m, MergeableM m) =>
+compileTestMain :: (Show c, CompileErrorM m) =>
   LanguageModule c -> PrivateSource c -> Expression c -> m CxxOutput
 compileTestMain (LanguageModule ns0 ns1 ns2 cs0 ps0 ts0 cs1 ps1 ts1 _ _ em) ts2 e = do
   tm' <- tm
@@ -207,7 +206,7 @@ compileTestMain (LanguageModule ns0 ns1 ns2 cs0 ps0 ts0 cs1 ps1 ts1 _ _ em) ts2 
   return $ CxxOutput Nothing testFilename NoNamespace ([psNamespace ts2]++ns0++ns1++ns2) req main where
   tm = foldM includeNewTypes defaultCategories [cs0,cs1,ps0,ps1,ts0,ts1,psCategory ts2]
 
-compileModuleMain :: (Show c, CompileErrorM m, MergeableM m) =>
+compileModuleMain :: (Show c, CompileErrorM m) =>
   LanguageModule c -> [PrivateSource c] -> CategoryName -> FunctionName -> m CxxOutput
 compileModuleMain (LanguageModule ns0 ns1 ns2 cs0 ps0 _ cs1 ps1 _ _ _ em) xa n f = do
   let resolved = filter (\d -> dcName d == n) $ concat $ map psDefine $ filter (not . psTesting) xa
@@ -222,9 +221,9 @@ compileModuleMain (LanguageModule ns0 ns1 ns2 cs0 ps0 _ cs1 ps1 _ _ _ em) xa n f
     reconcile []  = compileErrorM $ "No matches for main category " ++ show n ++ " ($TestsOnly$ sources excluded)"
     reconcile ds  =
       ("Multiple matches for main category " ++ show n) !!>
-        (mergeAllM $ map (\d -> compileErrorM $ "Defined at " ++ formatFullContext (dcContext d)) ds)
+        mapErrorsM_ (\d -> compileErrorM $ "Defined at " ++ formatFullContext (dcContext d)) ds
 
-compileCategoryDeclaration :: (Show c, CompileErrorM m, MergeableM m) =>
+compileCategoryDeclaration :: (Show c, CompileErrorM m) =>
   Bool -> CategoryMap c -> [Namespace] -> AnyCategory c -> m CxxOutput
 compileCategoryDeclaration testing _ ns t =
   return $ CxxOutput (Just $ getCategoryName t)
@@ -233,7 +232,7 @@ compileCategoryDeclaration testing _ ns t =
                      (ns ++ [getCategoryNamespace t])
                      (Set.toList $ cdRequired file)
                      (cdOutput file) where
-    file = mergeAll $ [
+    file = mconcat $ [
         CompiledData depends [],
         onlyCodes guardTop,
         onlyCodes $ (if testing then testsOnlyCategoryGuard (getCategoryName t) else []),
@@ -262,7 +261,7 @@ compileCategoryDeclaration testing _ ns t =
       | isInstanceInterface t = []
       | otherwise             = declareGetType t
 
-compileInterfaceDefinition :: MergeableM m => Bool -> AnyCategory c -> m CxxOutput
+compileInterfaceDefinition :: CompileErrorM m => Bool -> AnyCategory c -> m CxxOutput
 compileInterfaceDefinition testing t = do
   te <- typeConstructor
   commonDefineAll testing t [] Nothing emptyCode emptyCode emptyCode te []
@@ -277,7 +276,7 @@ compileInterfaceDefinition testing t = do
       let allInit = intercalate ", " $ initParent:initPassed
       return $ onlyCode $ typeName (getCategoryName t) ++ "(" ++ allArgs ++ ") : " ++ allInit ++ " {}"
 
-compileConcreteTemplate :: (Show c, CompileErrorM m, MergeableM m) =>
+compileConcreteTemplate :: (Show c, CompileErrorM m) =>
   Bool -> CategoryMap c -> CategoryName -> m CxxOutput
 compileConcreteTemplate testing ta n = do
   (_,t) <- getConcreteCategory ta ([],n)
@@ -309,7 +308,7 @@ compileConcreteTemplate testing ta n = do
       ]
     funcName f = show (sfType f) ++ "." ++ show (sfName f)
 
-compileConcreteStreamlined :: (Show c, CompileErrorM m, MergeableM m) =>
+compileConcreteStreamlined :: (Show c, CompileErrorM m) =>
   Bool -> CategoryMap c -> CategoryName -> m [CxxOutput]
 compileConcreteStreamlined testing ta n =  ("In streamlined compilation of " ++ show n) ??> do
   (_,t) <- getConcreteCategory ta ([],n)
@@ -331,7 +330,7 @@ compileConcreteStreamlined testing ta n =  ("In streamlined compilation of " ++ 
                       []
   return [hxx,cxx]
 
-compileConcreteDefinition :: (Show c, CompileErrorM m, MergeableM m) =>
+compileConcreteDefinition :: (Show c, CompileErrorM m) =>
   Bool -> CategoryMap c -> ExprMap c -> [Namespace] -> Maybe [ValueRefine c] ->
   DefinedCategory c -> m CxxOutput
 compileConcreteDefinition testing ta em ns rs dd@(DefinedCategory c n pi _ _ fi ms _ fs) = do
@@ -351,53 +350,53 @@ compileConcreteDefinition testing ta em ns rs dd@(DefinedCategory c n pi _ _ fi 
   let fe = Map.elems internalFuncs
   let allFuncs = getCategoryFunctions t ++ fe
   cf <- collectAllM $ applyProcedureScope compileExecutableProcedure cp
-  ce <- mergeAllM [
+  ce <- concatM [
       categoryConstructor t cm,
       categoryDispatch allFuncs,
-      return $ mergeAll $ map fst cf,
-      mergeAllM $ map (createMemberLazy r allFilters) cm
+      return $ mconcat $ map fst cf,
+      concatM $ map (createMemberLazy r allFilters) cm
     ]
   tf <- collectAllM $ applyProcedureScope compileExecutableProcedure tp
   disallowTypeMembers tm
-  te <- mergeAllM [
+  te <- concatM [
       typeConstructor t tm,
       typeDispatch allFuncs,
-      return $ mergeAll $ map fst tf,
-      mergeAllM $ map (createMember r allFilters) tm
+      return $ mconcat $ map fst tf,
+      concatM $ map (createMember r allFilters) tm
     ]
   vf <- collectAllM $ applyProcedureScope compileExecutableProcedure vp
   let internalCount = length pi
   let memberCount = length vm
-  top <- mergeAllM [
+  top <- concatM [
       return $ onlyCode $ "class " ++ valueName n ++ ";",
       declareInternalValue n internalCount memberCount
     ]
-  defineValue <- mergeAllM [
+  defineValue <- concatM [
       return $ onlyCode $ "struct " ++ valueName n ++ " : public " ++ valueBase ++ " {",
       fmap indentCompiled $ valueConstructor vm,
       fmap indentCompiled $ valueDispatch allFuncs,
       return $ indentCompiled $ defineCategoryName ValueScope n,
-      return $ indentCompiled $ mergeAll $ map fst vf,
-      fmap indentCompiled $ mergeAllM $ map (createMember r allFilters) vm,
+      return $ indentCompiled $ mconcat $ map fst vf,
+      fmap indentCompiled $ concatM $ map (createMember r allFilters) vm,
       fmap indentCompiled $ createParams,
       return $ indentCompiled $ onlyCode $ "const S<" ++ typeName n ++ "> parent;",
       return $ indentCompiled $ onlyCodes $ traceCreation (psProcedures vp),
       return $ onlyCode "};"
     ]
-  bottom <- mergeAllM $ [
+  bottom <- concatM $ [
       return $ defineValue,
       defineInternalValue n internalCount memberCount
     ] ++ map (return . snd) (cf ++ tf ++ vf)
   commonDefineAll testing t ns rs top bottom ce te fe
   where
-    disallowTypeMembers :: (Show c, CompileErrorM m, MergeableM m) =>
+    disallowTypeMembers :: (Show c, CompileErrorM m) =>
       [DefinedMember c] -> m ()
     disallowTypeMembers tm =
-      mergeAllM $ flip map tm
+      collectAllM_ $ flip map tm
         (\m -> compileErrorM $ "Member " ++ show (dmName m) ++
-                              " is not allowed to be @type-scoped" ++
-                              formatFullContextBrace (dmContext m))
-    createParams = mergeAllM $ map createParam pi
+                               " is not allowed to be @type-scoped" ++
+                               formatFullContextBrace (dmContext m))
+    createParams = concatM $ map createParam pi
     createParam p = return $ onlyCode $ paramType ++ " " ++ paramName (vpParam p) ++ ";"
     -- TODO: Can probably remove this if @type members are disallowed. Or, just
     -- skip it if there are no @type members.
@@ -410,7 +409,7 @@ compileConcreteDefinition testing ta em ns rs dd@(DefinedCategory c n pi _ _ fi 
       initMembers <- runDataCompiler (sequence $ map compileLazyInit ms2) ctx
       let initMembersStr = intercalate ", " $ cdOutput initMembers
       let initColon = if null initMembersStr then "" else " : "
-      mergeAllM [
+      concatM [
           return $ onlyCode $ categoryName n ++ "()" ++ initColon ++ initMembersStr ++ " {",
           return $ indentCompiled $ onlyCodes $ getCycleCheck (categoryName n),
           return $ indentCompiled $ onlyCode $ startFunctionTracing $ show n ++ " (init @category)",
@@ -427,7 +426,7 @@ compileConcreteDefinition testing ta em ns rs dd@(DefinedCategory c n pi _ _ fi 
       let allInit = intercalate ", " $ initParent:initPassed
       ctx <- getContextForInit ta em t dd TypeScope
       initMembers <- runDataCompiler (sequence $ map compileRegularInit ms2) ctx
-      mergeAllM [
+      concatM [
           return $ onlyCode $ typeName n ++ "(" ++ allArgs ++ ") : " ++ allInit ++ " {",
           return $ indentCompiled $ onlyCodes $ getCycleCheck (typeName n),
           return $ indentCompiled $ onlyCode $ startFunctionTracing $ show n ++ " (init @type)",
@@ -480,15 +479,15 @@ compileConcreteDefinition testing ta em ns rs dd@(DefinedCategory c n pi _ _ fi 
       | any isTraceCreation $ concat $ map (epPragmas . snd) vp = [captureCreationTrace]
       | otherwise = []
 
-commonDefineAll :: MergeableM m =>
+commonDefineAll :: CompileErrorM m =>
   Bool -> AnyCategory c -> [Namespace] -> Maybe [ValueRefine c] ->
   CompiledData [String] -> CompiledData [String] -> CompiledData [String] ->
   CompiledData [String] -> [ScopedFunction c] -> m CxxOutput
 commonDefineAll testing t ns rs top bottom ce te fe = do
   let filename = sourceFilename name
-  (CompiledData req out) <- fmap (addNamespace t) $ mergeAllM $ [
+  (CompiledData req out) <- fmap (addNamespace t) $ concatM $ [
       return $ CompiledData (Set.fromList (name:getCategoryMentions t)) [],
-      return $ mergeAll [createCollection,createAllLabels]
+      return $ mconcat [createCollection,createAllLabels]
     ] ++ conditionalContent
   let rs' = case rs of
                  Nothing -> []
@@ -543,13 +542,13 @@ commonDefineAll testing t ns rs top bottom ce te fe = do
 
 addNamespace :: AnyCategory c -> CompiledData [String] -> CompiledData [String]
 addNamespace t cs
-  | isStaticNamespace $ getCategoryNamespace t = mergeAll [
+  | isStaticNamespace $ getCategoryNamespace t = mconcat [
       onlyCode $ "namespace " ++ show (getCategoryNamespace t) ++ " {",
       cs,
       onlyCode $ "}  // namespace " ++ show (getCategoryNamespace t),
       onlyCode $ "using namespace " ++ show (getCategoryNamespace t) ++ ";"
     ]
-  | isPublicNamespace $ getCategoryNamespace t = mergeAll [
+  | isPublicNamespace $ getCategoryNamespace t = mconcat [
       onlyCode $ "#ifdef " ++ publicNamespaceMacro,
       onlyCode $ "namespace " ++ publicNamespaceMacro ++ " {",
       onlyCode $ "#endif  // " ++ publicNamespaceMacro,
@@ -559,7 +558,7 @@ addNamespace t cs
       onlyCode $ "using namespace " ++ publicNamespaceMacro ++ ";",
       onlyCode $ "#endif  // " ++ publicNamespaceMacro
     ]
-  | isPrivateNamespace $ getCategoryNamespace t = mergeAll [
+  | isPrivateNamespace $ getCategoryNamespace t = mconcat [
       onlyCode $ "#ifdef " ++ privateNamespaceMacro,
       onlyCode $ "namespace " ++ privateNamespaceMacro ++ " {",
       onlyCode $ "#endif  // " ++ privateNamespaceMacro,
@@ -618,10 +617,10 @@ createFunctionDispatch n s fs = [typedef] ++ concat (map table $ byCategory) ++
     | s == ValueScope    = "  return TypeValue::Dispatch(self, label, params, args);"
     | otherwise = undefined
 
-commonDefineCategory :: MergeableM m =>
+commonDefineCategory :: CompileErrorM m =>
   AnyCategory c -> CompiledData [String] -> m (CompiledData [String])
 commonDefineCategory t extra = do
-  mergeAllM $ [
+  concatM $ [
       return $ onlyCode $ "struct " ++ categoryName name ++ " : public " ++ categoryBase ++ " {",
       return $ indentCompiled $ defineCategoryName CategoryScope name,
       return $ indentCompiled extra,
@@ -630,13 +629,13 @@ commonDefineCategory t extra = do
   where
     name = getCategoryName t
 
-commonDefineType :: MergeableM m =>
+commonDefineType :: CompileErrorM m =>
   AnyCategory c -> Maybe [ValueRefine c] -> CompiledData [String] -> m (CompiledData [String])
 commonDefineType t rs extra = do
   let rs' = case rs of
                  Nothing -> getCategoryRefines t
                  Just rs2 -> rs2
-  mergeAllM [
+  concatM [
       return $ CompiledData depends [],
       return $ onlyCode $ "struct " ++ typeName (getCategoryName t) ++ " : public " ++ typeBase ++ " {",
       return $ indentCompiled $ defineCategoryName TypeScope name,
@@ -651,7 +650,7 @@ commonDefineType t rs extra = do
   where
     name = getCategoryName t
     depends = getCategoryDeps t
-    createParams = mergeAll $ map createParam $ getCategoryParams t
+    createParams = mconcat $ map createParam $ getCategoryParams t
     createParam p = onlyCode $ paramType ++ " " ++ paramName (vpParam p) ++ ";"
     canConvertFrom
       | isInstanceInterface t = emptyCode
@@ -809,7 +808,7 @@ createMainCommon n (CompiledData req out) =
       depIncludes req2 = map (\i -> "#include \"" ++ headerFilename i ++ "\"") $
                            Set.toList req2
 
-createMainFile :: (Show c, CompileErrorM m, MergeableM m) =>
+createMainFile :: (Show c, CompileErrorM m) =>
   CategoryMap c -> ExprMap c -> CategoryName -> FunctionName -> m (Namespace,[String])
 createMainFile tm em n f = ("In the creation of the main binary procedure") ??> do
   ca <- fmap indentCompiled (compileMainProcedure tm em expr)
@@ -820,7 +819,7 @@ createMainFile tm em n f = ("In the creation of the main binary procedure") ??> 
     mainType = JustTypeInstance $ TypeInstance n (Positional [])
     expr = Expression [] (TypeCall [] mainType funcCall) []
 
-createTestFile :: (Show c, CompileErrorM m, MergeableM m) =>
+createTestFile :: (Show c, CompileErrorM m) =>
   CategoryMap c -> ExprMap c  -> Expression c -> m ([CategoryName],[String])
 createTestFile tm em e = ("In the creation of the test binary procedure") ??> do
   ca@(CompiledData req _) <- fmap indentCompiled (compileMainProcedure tm em e)

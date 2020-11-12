@@ -20,10 +20,10 @@ limitations under the License.
 
 module Types.GeneralType (
   GeneralType,
-  checkGeneralType,
   dualGeneralType,
   mapGeneralType,
   matchSingleType,
+  pairGeneralType,
   reduceGeneralType,
   singleType,
 ) where
@@ -80,11 +80,11 @@ reduceGeneralType anyOp allOp singleOp = reduce where
   reduce (RequireAllOf xs) = allOp $ map reduce xs
   reduce (SingleType x) = singleOp x
 
-checkGeneralType :: (MergeableM m, Mergeable c) => (a -> b -> m c) -> GeneralType a -> GeneralType b -> m c
-checkGeneralType f = singleCheck where
-  singleCheck (SingleType t1) (SingleType t2) = t1 `f` t2
+pairGeneralType :: ([c] -> c) -> ([c] -> c) -> (a -> b -> c) -> GeneralType a -> GeneralType b -> c
+pairGeneralType anyOp allOp singleOp = singleCheck where
+  singleCheck (SingleType t1) (SingleType t2) = t1 `singleOp` t2
   -- NOTE: The merge-alls must be expanded strictly before the merge-anys.
-  singleCheck ti1 (RequireAllOf t2) = mergeAllM $ map (ti1 `singleCheck`) t2
-  singleCheck (AllowAnyOf   t1) ti2 = mergeAllM $ map (`singleCheck` ti2) t1
-  singleCheck (RequireAllOf t1) ti2 = mergeAnyM $ map (`singleCheck` ti2) t1
-  singleCheck ti1 (AllowAnyOf   t2) = mergeAnyM $ map (ti1 `singleCheck`) t2
+  singleCheck ti1 (RequireAllOf t2) = allOp $ map (ti1 `singleCheck`) t2
+  singleCheck (AllowAnyOf   t1) ti2 = allOp $ map (`singleCheck` ti2) t1
+  singleCheck (RequireAllOf t1) ti2 = anyOp $ map (`singleCheck` ti2) t1
+  singleCheck ti1 (AllowAnyOf   t2) = anyOp $ map (ti1 `singleCheck`) t2

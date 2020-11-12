@@ -16,41 +16,19 @@ limitations under the License.
 
 -- Author: Kevin P. Barry [ta0kira@gmail.com]
 
-{-# LANGUAGE CPP #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE Safe #-}
 
 module Base.Mergeable (
   Mergeable(..),
-  MergeableM(..),
 ) where
 
-import Data.Functor.Identity
 import Data.Map as Map hiding (foldr)
-
-#if MIN_VERSION_base(4,11,0)
-#else
-import Data.Monoid ((<>))
-#endif
 
 
 class Mergeable a where
   mergeAny :: Foldable f => f a -> a
   mergeAll :: Foldable f => f a -> a
-
-class Monad m => MergeableM m where
-  mergeAnyM :: (Mergeable a, Foldable f) => f (m a) -> m a
-  mergeAnyM = fmap mergeAny . sequence . foldr (:) []
-  mergeAllM :: (Mergeable a, Foldable f) => f (m a) -> m a
-  mergeAllM = fmap mergeAll . sequence . foldr (:) []
-
-instance Mergeable () where
-  mergeAny = const ()
-  mergeAll = const ()
-
-instance Mergeable [a] where
-  mergeAny = foldr (++) []
-  mergeAll = foldr (++) []
 
 instance Mergeable Bool where
   mergeAny = foldr (||) False
@@ -59,8 +37,3 @@ instance Mergeable Bool where
 instance (Ord k, Mergeable a) => Mergeable (Map k a) where
   mergeAny = Map.fromListWith (\x y -> mergeAny [x,y]) . foldr ((++) . Map.toList) []
   mergeAll = Map.fromListWith (\x y -> mergeAll [x,y]) . foldr ((++) . Map.toList) []
-
-instance MergeableM Maybe where
-  mergeAnyM = fmap mergeAny . foldr ((<>) . fmap (:[])) Nothing
-
-instance MergeableM Identity where

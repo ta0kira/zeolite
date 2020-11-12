@@ -26,9 +26,15 @@ module Base.CompileError (
   (??>),
   (<!!),
   (!!>),
+  collectAllM_,
+  collectFirstM_,
   errorFromIO,
+  isCompileErrorM,
+  isCompileSuccessM,
   mapErrorsM,
   mapErrorsM_,
+  mergeAllM,
+  mergeAnyM,
 ) where
 
 import Control.Monad.IO.Class
@@ -40,6 +46,8 @@ import Control.Monad.Fail ()
 import Control.Monad.Fail
 #endif
 
+import Base.Mergeable
+
 
 -- For some GHC versions, pattern-matching failures require MonadFail.
 #if MIN_VERSION_base(4,9,0)
@@ -49,6 +57,7 @@ class Monad m => CompileErrorM m where
 #endif
   compileErrorM :: String -> m a
   collectAllM :: Foldable f => f (m a) -> m [a]
+  collectAnyM :: Foldable f => f (m a) -> m [a]
   collectFirstM :: Foldable f => f (m a) -> m a
   withContextM :: m a -> String -> m a
   withContextM c _ = c
@@ -73,11 +82,31 @@ class Monad m => CompileErrorM m where
 (!!>) :: CompileErrorM m => String -> m a -> m a
 (!!>) = flip summarizeErrorsM
 
+collectAllM_ :: (Foldable f, CompileErrorM m) => f (m a) -> m ()
+collectAllM_ = fmap (const ()) . collectAllM
+
+collectFirstM_ :: (Foldable f, CompileErrorM m) => f (m a) -> m ()
+collectFirstM_ = fmap (const ()) . collectFirstM
+
 mapErrorsM :: CompileErrorM m => (a -> m b) -> [a] -> m [b]
 mapErrorsM f = collectAllM . map f
 
 mapErrorsM_ :: CompileErrorM m => (a -> m b) -> [a] -> m ()
-mapErrorsM_ f xs = mapErrorsM f xs >> return ()
+mapErrorsM_ f = collectAllM_ . map f
+
+isCompileErrorM :: CompileErrorM m => m a -> m Bool
+isCompileErrorM x = collectFirstM [x >> return False,return True]
+
+isCompileSuccessM :: CompileErrorM m => m a -> m Bool
+isCompileSuccessM x = collectFirstM [x >> return True,return False]
+
+mergeAnyM :: (CompileErrorM m, Mergeable a) => [m a] -> m a
+mergeAnyM xs = do
+  collectFirstM_ xs
+  fmap mergeAny $ collectAnyM xs
+
+mergeAllM :: (CompileErrorM m, Mergeable a) => [m a] -> m a
+mergeAllM = fmap mergeAll . collectAllM
 
 errorFromIO :: (MonadIO m, CompileErrorM m) => IO a -> m a
 errorFromIO x = do

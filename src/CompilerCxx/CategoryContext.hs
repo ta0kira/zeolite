@@ -29,7 +29,6 @@ import qualified Data.Map as Map
 import qualified Data.Set as Set
 
 import Base.CompileError
-import Base.Mergeable
 import Compilation.CompilerState
 import Compilation.ProcedureContext
 import Compilation.ScopeContext
@@ -42,7 +41,7 @@ import Types.TypeCategory
 import Types.TypeInstance
 
 
-getContextForInit :: (Show c, CompileErrorM m, MergeableM m) =>
+getContextForInit :: (Show c, CompileErrorM m) =>
   CategoryMap c -> ExprMap c -> AnyCategory c -> DefinedCategory c ->
   SymbolScope -> m (ProcedureContext c)
 getContextForInit tm em t d s = do
@@ -85,7 +84,7 @@ getContextForInit tm em t d s = do
       pcNoTrace = False
     }
 
-getProcedureContext :: (Show c, CompileErrorM m, MergeableM m) =>
+getProcedureContext :: (Show c, CompileErrorM m) =>
   ScopeContext c -> ScopedFunction c -> ExecutableProcedure c -> m (ProcedureContext c)
 getProcedureContext (ScopeContext tm t ps pi ms pa fi fa va em)
                     ff@(ScopedFunction _ _ _ s as1 rs1 ps1 fs _)

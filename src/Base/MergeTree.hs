@@ -16,15 +16,20 @@ limitations under the License.
 
 -- Author: Kevin P. Barry [ta0kira@gmail.com]
 
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE Safe #-}
 
 module Base.MergeTree (
   MergeTree,
-  evalMergeTree,
   mergeLeaf,
   pruneMergeTree,
   reduceMergeTree,
 ) where
+
+#if MIN_VERSION_base(4,11,0)
+#else
+import Data.Monoid ((<>),mconcat)
+#endif
 
 import Base.Mergeable
 
@@ -43,21 +48,14 @@ instance Show a => Show (MergeTree a) where
 mergeLeaf :: a -> MergeTree a
 mergeLeaf = MergeLeaf
 
-reduceMergeTree :: MergeableM m => ([b] -> m b) -> ([b] -> m b) -> (a -> m b) -> MergeTree a -> m b
+reduceMergeTree :: ([b] -> b) -> ([b] -> b) -> (a -> b) -> MergeTree a -> b
 reduceMergeTree anyOp allOp leafOp = reduce where
-  reduce (MergeAny xs) = do
-    xs' <- mergeAnyM $ map (fmap (:[]) . reduce) xs
-    anyOp xs'
-  reduce (MergeAll xs) = do
-    xs' <- mergeAllM $ map (fmap (:[]) . reduce) xs
-    allOp xs'
+  reduce (MergeAny xs) = anyOp $ map reduce xs
+  reduce (MergeAll xs) = allOp $ map reduce xs
   reduce (MergeLeaf x) = leafOp x
 
-evalMergeTree :: (Mergeable b, MergeableM m) => (a -> m b) -> MergeTree a -> m b
-evalMergeTree f = reduceMergeTree (return . mergeAny) (return . mergeAll) f
-
-pruneMergeTree :: MergeableM m => MergeTree (m a) -> m (MergeTree a)
-pruneMergeTree = evalMergeTree (fmap mergeLeaf)
+pruneMergeTree :: Monad m => MergeTree (m a) -> m (MergeTree a)
+pruneMergeTree = reduceMergeTree (fmap mergeAny . sequence) (fmap mergeAll . sequence) (fmap mergeLeaf)
 
 instance Functor MergeTree where
   fmap f (MergeAny xs) = mergeAny (map (fmap f) xs)
@@ -91,5 +89,3 @@ instance Mergeable (MergeTree a) where
 instance (Eq a, Ord a) => Bounded (MergeTree a) where
   minBound = mergeAny Nothing
   maxBound = mergeAll Nothing
-
-instance MergeableM MergeTree where

@@ -33,7 +33,6 @@ import qualified Data.Map as Map
 import qualified Data.Set as Set
 
 import Base.CompileError
-import Base.Mergeable
 import Compilation.CompilerState
 import Types.DefinedCategory
 import Types.GeneralType
@@ -83,7 +82,7 @@ data ReturnValidation c =
     vnRemaining :: Map.Map VariableName (PassedValue c)
   }
 
-instance (Show c, MergeableM m, CompileErrorM m) =>
+instance (Show c, CompileErrorM m) =>
   CompilerContext c m [String] (ProcedureContext c) where
   ccCurrentScope = return . pcScope
   ccResolver = return . AnyTypeResolver . CategoryResolver . pcCategories
@@ -439,8 +438,8 @@ instance (Show c, MergeableM m, CompileErrorM m) =>
                show n ++ " at " ++ formatFullContext c)
       check (ValidateNames ns ts ra) = do
         case vs of
-             Just _ -> check (ValidatePositions ts) >> return ()
-             Nothing -> mergeAllM $ map alwaysError $ Map.toList ra
+             Just _  -> check (ValidatePositions ts) >> return ()
+             Nothing -> mapErrorsM_ alwaysError $ Map.toList ra
         return (ValidateNames ns ts Map.empty)
       alwaysError (n,t) = compileErrorM $ "Named return " ++ show n ++ " (" ++ show t ++
                                           ") might not have been set before return at " ++
@@ -606,7 +605,7 @@ instance (Show c, MergeableM m, CompileErrorM m) =>
       }
   ccGetNoTrace = return . pcNoTrace
 
-updateReturnVariables :: (Show c, CompileErrorM m, MergeableM m) =>
+updateReturnVariables :: (Show c, CompileErrorM m) =>
   (Map.Map VariableName (VariableValue c)) ->
   Positional (PassedValue c) -> ReturnValues c ->
   m (Map.Map VariableName (VariableValue c))
@@ -625,7 +624,7 @@ updateReturnVariables ma rs1 rs2 = updated where
                                           " is already defined" ++
                                           formatFullContextBrace (vvContext v)
 
-updateArgVariables :: (Show c, CompileErrorM m, MergeableM m) =>
+updateArgVariables :: (Show c, CompileErrorM m) =>
   (Map.Map VariableName (VariableValue c)) ->
   Positional (PassedValue c) -> ArgValues c ->
   m (Map.Map VariableName (VariableValue c))

@@ -31,7 +31,6 @@ import Prelude hiding (pi)
 import qualified Data.Map as Map
 
 import Base.CompileError
-import Base.Mergeable
 import Compilation.ProcedureContext
 import Types.DefinedCategory
 import Types.GeneralType
@@ -65,7 +64,7 @@ applyProcedureScope ::
   (ScopeContext c -> ScopedFunction c -> ExecutableProcedure c -> a) -> ProcedureScope c -> [a]
 applyProcedureScope f (ProcedureScope ctx fs) = map (uncurry (f ctx)) fs
 
-getProcedureScopes :: (Show c, CompileErrorM m, MergeableM m) =>
+getProcedureScopes :: (Show c, CompileErrorM m) =>
   CategoryMap c -> ExprMap c -> DefinedCategory c -> m [ProcedureScope c]
 getProcedureScopes ta em (DefinedCategory c n pi _ _ fi ms ps fs) = do
   (_,t) <- getConcreteCategory ta (c,n)
@@ -97,15 +96,15 @@ getProcedureScopes ta em (DefinedCategory c n pi _ _ fi ms ps fs) = do
     builtins t s0 = Map.filter ((<= s0) . vvScope) $ builtinVariables t
     checkInternalParams pi2 fi2 pe fs2 r fa = do
       let pm = Map.fromList $ map (\p -> (vpParam p,vpContext p)) pi2
-      mergeAllM $ map (checkFunction pm) fs2
-      mergeAllM $ map (checkParam pm) pe
+      mapErrorsM_ (checkFunction pm) fs2
+      mapErrorsM_ (checkParam pm) pe
       let fa' = Map.union fa $ getFilterMap pi2 fi2
-      mergeAllM $ map (checkFilter r fa') fi2
+      mapErrorsM_ (checkFilter r fa') fi2
     checkFilter r fa (ParamFilter c2 n2 f) =
       validateTypeFilter r fa f <?? ("In " ++ show n2 ++ " " ++ show f ++ formatFullContextBrace c2)
     checkFunction pm f =
       when (sfScope f == ValueScope) $
-        mergeAllM $ map (checkParam pm) $ pValues $ sfParams f
+        mapErrorsM_ (checkParam pm) $ pValues $ sfParams f
     checkParam pm p =
       case vpParam p `Map.lookup` pm of
            Nothing -> return ()

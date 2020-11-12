@@ -35,6 +35,7 @@ module Compilation.CompilerState (
   (???>),
   (<!!!),
   (!!!>),
+  concatM,
   csAddVariable,
   csAllFilters,
   csCheckValueInit,
@@ -73,14 +74,12 @@ module Compilation.CompilerState (
 
 import Control.Monad.Trans (lift)
 import Control.Monad.Trans.State (StateT(..),execStateT,get,mapStateT,put)
-import Data.Foldable
 import Data.Functor
 import Data.Monoid
 import Prelude hiding (foldr)
 import qualified Data.Set as Set
 
 import Base.CompileError
-import Base.Mergeable
 import Types.DefinedCategory
 import Types.Positional
 import Types.Procedure
@@ -170,19 +169,19 @@ data JumpType =
 instance Show c => Show (VariableValue c) where
   show (VariableValue c _ t _) = show t ++ formatFullContextBrace c
 
-(<???) :: (CompileErrorM m) => CompilerState a m b -> String -> CompilerState a m b
+(<???) :: CompileErrorM m => CompilerState a m b -> String -> CompilerState a m b
 (<???) x s = mapStateT (<?? s) x
 
-(???>) :: (CompileErrorM m) => String -> CompilerState a m b -> CompilerState a m b
+(???>) :: CompileErrorM m => String -> CompilerState a m b -> CompilerState a m b
 (???>) s x = mapStateT (s ??>) x
 
-(<!!!) :: (CompileErrorM m) => CompilerState a m b -> String -> CompilerState a m b
+(<!!!) :: CompileErrorM m => CompilerState a m b -> String -> CompilerState a m b
 (<!!!) x s = mapStateT (<!! s) x
 
-(!!!>) :: (CompileErrorM m) => String -> CompilerState a m b -> CompilerState a m b
+(!!!>) :: CompileErrorM m => String -> CompilerState a m b -> CompilerState a m b
 (!!!>) s x = mapStateT (s !!>) x
 
-resetBackgroundStateT :: (CompileErrorM m) => CompilerState a m b -> CompilerState a m b
+resetBackgroundStateT :: CompileErrorM m => CompilerState a m b -> CompilerState a m b
 resetBackgroundStateT x = mapStateT resetBackgroundM x
 
 csCurrentScope :: CompilerContext c m s a => CompilerState a m SymbolScope
@@ -291,15 +290,12 @@ data CompiledData s =
     cdOutput :: s
   }
 
-instance Monoid s => Mergeable (CompiledData s) where
-  mergeAny ds = CompiledData req out where
-    flat = foldr (:) [] ds
-    req = Set.unions $ map cdRequired flat
-    out = foldr (<>) mempty $ map cdOutput flat
-  mergeAll ds = CompiledData req out where
-    flat = foldr (:) [] ds
-    req = Set.unions $ map cdRequired flat
-    out = foldr (<>) mempty $ map cdOutput flat
+instance Semigroup s => Semigroup (CompiledData s) where
+  (CompiledData r1 s1) <> (CompiledData r2 s2) =
+    CompiledData (r1 `Set.union` r2) (s1 <> s2)
+
+instance Monoid s => Monoid (CompiledData s) where
+  mempty = CompiledData Set.empty mempty
 
 runDataCompiler :: CompilerContext c m s a =>
   CompilerState a m b -> a -> m (CompiledData s)
@@ -311,6 +307,9 @@ runDataCompiler x ctx = do
       cdRequired = required,
       cdOutput = output
     }
+
+concatM :: (Monoid s, CompileErrorM m) => [m (CompiledData s)] -> m (CompiledData s)
+concatM = fmap mconcat . collectAllM
 
 getCleanContext :: CompilerContext c m s a => CompilerState a m a
 getCleanContext = get >>= lift . ccClearOutput

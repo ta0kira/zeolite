@@ -21,7 +21,6 @@ limitations under the License.
 module Test.CompileInfo (tests) where
 
 import Base.CompileError
-import Base.Mergeable
 import Base.CompileInfo
 
 
@@ -35,17 +34,13 @@ tests = [
     checkSuccess []                 (collectAllM [] :: CompileInfoIO [Char]),
     checkError   "error1\nerror2\n" (collectAllM [compileErrorM "error1",return 'b',compileErrorM "error2"]),
 
+    checkSuccess "ab" (collectAnyM [return 'a',return 'b']),
+    checkSuccess ""   (collectAnyM [] :: CompileInfoIO [Char]),
+    checkSuccess "b"  (collectAnyM [compileErrorM "error1",return 'b',compileErrorM "error2"]),
+
     checkSuccess 'a' (collectFirstM [return 'a',return 'b']),
     checkError   ""  (collectFirstM [] :: CompileInfoIO Char),
     checkSuccess 'b' (collectFirstM [compileErrorM "error1",return 'b',compileErrorM "error2"]),
-
-    checkSuccess ['a','b','c']      (mergeAllM [return ['a'],return ['b','c']]),
-    checkSuccess []                 (mergeAllM [] :: CompileInfoIO [Char]),
-    checkError   "error1\nerror2\n" (mergeAllM [compileErrorM "error1",return ['b'],compileErrorM "error2"]),
-
-    checkSuccess ['a','b'] (mergeAnyM [return ['a'],return ['b']]),
-    checkError   ""        (mergeAnyM [] :: CompileInfoIO [Char]),
-    checkSuccess ['b']     (mergeAnyM [compileErrorM "error1",return ['b'],compileErrorM "error2"]),
 
     checkSuccessAndWarnings "warning1\nwarning2\n" ()
       (compileWarningM "warning1" >> return () >> compileWarningM "warning2"),
@@ -86,10 +81,6 @@ tests = [
       (collectAllM [compileBackgroundM "background"] >> compileErrorM "error" :: CompileInfoIO [()]),
     checkError "error\n  background\n"
       (collectFirstM [compileBackgroundM "background"] >> compileErrorM "error" :: CompileInfoIO ()),
-    checkError "error\n  background\n"
-      (mergeAllM [compileBackgroundM "background"] >> compileErrorM "error" :: CompileInfoIO ()),
-    checkError "error\n  background\n"
-      (mergeAnyM [compileBackgroundM "background"] >> compileErrorM "error" :: CompileInfoIO ()),
 
     checkSuccess 'a' ((resetBackgroundM $ compileBackgroundM "background") >> return 'a'),
     checkError "error\n"

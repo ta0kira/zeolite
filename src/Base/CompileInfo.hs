@@ -41,7 +41,6 @@ module Base.CompileInfo (
 ) where
 
 import Control.Applicative
-import Control.Monad ((>=>))
 import Control.Monad.IO.Class ()
 import Control.Monad.Trans
 import Data.Foldable
@@ -59,7 +58,6 @@ import Control.Monad.Fail
 #endif
 
 import Base.CompileError
-import Base.Mergeable
 
 
 type CompileInfo a = CompileInfoT Identity a
@@ -226,11 +224,13 @@ instance MonadIO m => MonadIO (CompileInfoT m) where
 instance Monad m => CompileErrorM (CompileInfoT m) where
   compileErrorM e = CompileInfoT $ return $ CompileFail emptyMessage $ CompileMessage e []
   collectAllM = combineResults (select . splitErrorsAndData) where
-      select ([],xs2,bs,ws) = CompileSuccess (CompileMessage "" ws) bs xs2
-      select (es,_,bs,ws)   = CompileFail (CompileMessage "" ws) $ addBackground bs $ CompileMessage "" es
+    select ([],xs2,bs,ws) = CompileSuccess (CompileMessage "" ws) bs xs2
+    select (es,_,bs,ws)   = CompileFail (CompileMessage "" ws) $ addBackground bs $ CompileMessage "" es
+  collectAnyM = combineResults (select . splitErrorsAndData) where
+    select (_,xs2,bs,ws) = CompileSuccess (CompileMessage "" ws) bs xs2
   collectFirstM = combineResults (select . splitErrorsAndData) where
-      select (_,x:_,bs,ws) = CompileSuccess (CompileMessage "" ws) bs x
-      select (es,_,bs,ws)  = CompileFail (CompileMessage "" ws) $ addBackground bs $ CompileMessage "" es
+    select (_,x:_,bs,ws) = CompileSuccess (CompileMessage "" ws) bs x
+    select (es,_,bs,ws)  = CompileFail (CompileMessage "" ws) $ addBackground bs $ CompileMessage "" es
   withContextM x c = CompileInfoT $ do
     x' <- citState x
     case x' of
@@ -248,12 +248,6 @@ instance Monad m => CompileErrorM (CompileInfoT m) where
     case x' of
          CompileSuccess w _ d -> return $ CompileSuccess w [] d
          x2                   -> return x2
-
-instance Monad m => MergeableM (CompileInfoT m) where
-  mergeAnyM = combineResults (select . splitErrorsAndData) where
-      select (es,[],bs,ws) = CompileFail (CompileMessage "" ws) $ addBackground bs $ CompileMessage "" es
-      select (_,xs2,bs,ws) = CompileSuccess (CompileMessage "" ws) bs (mergeAny xs2)
-  mergeAllM = collectAllM >=> return . mergeAll
 
 combineResults :: (Monad m, Foldable f) =>
   ([CompileInfoState a] -> CompileInfoState b) -> f (CompileInfoT m a) -> CompileInfoT m b

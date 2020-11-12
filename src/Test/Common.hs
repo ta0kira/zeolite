@@ -51,7 +51,6 @@ import qualified Data.Map as Map
 import qualified Data.Set as Set
 
 import Base.CompileError
-import Base.Mergeable
 import Base.CompileInfo
 import Parser.Common
 import Parser.TypeInstance ()
@@ -159,7 +158,7 @@ containsExactly actual expected = do
 
 containsNoDuplicates :: (Ord a, Show a) => [a] -> CompileInfo ()
 containsNoDuplicates expected =
-  (mergeAllM $ map checkSingle $ group $ sort expected) <!! (show expected)
+  (mapErrorsM_ checkSingle $ group $ sort expected) <!! (show expected)
   where
     checkSingle xa@(x:_:_) =
       compileErrorM $ "Item " ++ show x ++ " occurs " ++ show (length xa) ++ " times"
@@ -167,7 +166,7 @@ containsNoDuplicates expected =
 
 containsAtLeast :: (Ord a, Show a) => [a] -> [a] -> CompileInfo ()
 containsAtLeast actual expected =
-  (mergeAllM $ map (checkInActual $ Set.fromList actual) expected) <!!
+  (mapErrorsM_ (checkInActual $ Set.fromList actual) expected) <!!
         (show actual ++ " (actual) vs. " ++ show expected ++ " (expected)")
   where
     checkInActual va v =
@@ -177,7 +176,7 @@ containsAtLeast actual expected =
 
 containsAtMost :: (Ord a, Show a) => [a] -> [a] -> CompileInfo ()
 containsAtMost actual expected =
-  (mergeAllM $ map (checkInExpected $ Set.fromList expected) actual) <!!
+  (mapErrorsM_ (checkInExpected $ Set.fromList expected) actual) <!!
         (show actual ++ " (actual) vs. " ++ show expected ++ " (expected)")
   where
     checkInExpected va v =

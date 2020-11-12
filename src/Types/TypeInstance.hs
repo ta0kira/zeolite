@@ -69,7 +69,7 @@ module Types.TypeInstance (
   validateTypeInstance,
 ) where
 
-import Control.Monad ((>=>),when)
+import Control.Monad (when)
 import Data.List (intercalate)
 import qualified Data.Map as Map
 
@@ -260,22 +260,22 @@ type ParamValues    = Map.Map ParamName GeneralInstance
 
 class TypeResolver r where
   -- Performs parameter substitution for refines.
-  trRefines :: (MergeableM m, CompileErrorM m) =>
+  trRefines :: CompileErrorM m =>
     r -> TypeInstance -> CategoryName -> m InstanceParams
   -- Performs parameter substitution for defines.
-  trDefines :: (MergeableM m, CompileErrorM m) =>
+  trDefines :: CompileErrorM m =>
     r -> TypeInstance -> CategoryName -> m InstanceParams
   -- Get the parameter variances for the category.
-  trVariance :: (MergeableM m, CompileErrorM m) =>
+  trVariance :: CompileErrorM m =>
     r -> CategoryName -> m InstanceVariances
   -- Gets filters for the assigned parameters.
-  trTypeFilters :: (MergeableM m, CompileErrorM m) =>
+  trTypeFilters :: CompileErrorM m =>
     r -> TypeInstance -> m InstanceFilters
   -- Gets filters for the assigned parameters.
-  trDefinesFilters :: (MergeableM m, CompileErrorM m) =>
+  trDefinesFilters :: CompileErrorM m =>
     r -> DefinesInstance -> m InstanceFilters
   -- Returns True if the type is concrete.
-  trConcrete :: (MergeableM m, CompileErrorM m) =>
+  trConcrete :: CompileErrorM m =>
     r -> CategoryName -> m Bool
 
 data AnyTypeResolver = forall r. TypeResolver r => AnyTypeResolver r
@@ -288,13 +288,13 @@ instance TypeResolver AnyTypeResolver where
   trDefinesFilters (AnyTypeResolver r) = trDefinesFilters r
   trConcrete (AnyTypeResolver r) = trConcrete r
 
-filterLookup :: (CompileErrorM m) =>
+filterLookup :: CompileErrorM m =>
   ParamFilters -> ParamName -> m [TypeFilter]
 filterLookup ps n = resolve $ n `Map.lookup` ps where
   resolve (Just x) = return x
   resolve _        = compileErrorM $ "Param " ++ show n ++ " not found"
 
-getValueForParam :: (CompileErrorM m) =>
+getValueForParam :: CompileErrorM m =>
   ParamValues -> ParamName -> m GeneralInstance
 getValueForParam pa n =
   case n `Map.lookup` pa of
@@ -314,15 +314,17 @@ setParamsFixed f = mapGeneralType set where
   set (JustParamName _ n2) = JustParamName f n2
   set t = t
 
-noInferredTypes :: (MergeableM m, CompileErrorM m) => m (MergeTree InferredTypeGuess) -> m ()
-noInferredTypes = id >=> evalMergeTree message where
-  message i = compileErrorM $ "Type guess " ++ show i ++ " not allowed here"
+noInferredTypes :: CompileErrorM m => m (MergeTree InferredTypeGuess) -> m ()
+noInferredTypes g = do
+  g' <- g
+  let empty = reduceMergeTree mergeAll mergeAll (const False) g'
+  when (not empty) $ compileErrorM $ "Type guesses " ++ show g' ++ " are not allowed here"
 
-checkValueAssignment :: (MergeableM m, CompileErrorM m, TypeResolver r) =>
+checkValueAssignment :: (CompileErrorM m, TypeResolver r) =>
   r -> ParamFilters -> ValueType -> ValueType -> m ()
 checkValueAssignment r f t1 t2 = noInferredTypes $ checkValueTypeMatch r f Covariant t1 t2
 
-checkValueTypeMatch :: (MergeableM m, CompileErrorM m, TypeResolver r) =>
+checkValueTypeMatch :: (CompileErrorM m, TypeResolver r) =>
   r -> ParamFilters -> Variance -> ValueType -> ValueType -> m (MergeTree InferredTypeGuess)
 checkValueTypeMatch r f v ts1@(ValueType r1 t1) ts2@(ValueType r2 t2) = result <!! message where
   message
@@ -337,7 +339,7 @@ checkValueTypeMatch r f v ts1@(ValueType r1 t1) ts2@(ValueType r2 t2) = result <
     when (not $ storageDir `allowsVariance` v) $ compileErrorM "Incompatible storage modifiers"
     checkGeneralMatch r f v t1 t2
 
-checkGeneralMatch :: (MergeableM m, CompileErrorM m, TypeResolver r) =>
+checkGeneralMatch :: (CompileErrorM m, TypeResolver r) =>
   r -> ParamFilters -> Variance ->
   GeneralInstance -> GeneralInstance -> m (MergeTree InferredTypeGuess)
 checkGeneralMatch r f v t1 t2 = collectFirstM [matchInferredRight,matchNormal v] where
@@ -346,14 +348,14 @@ checkGeneralMatch r f v t1 t2 = collectFirstM [matchInferredRight,matchNormal v]
     mergeAllM [matchNormal Contravariant,matchNormal Covariant]
   matchNormal Contravariant =
     -- Reversing direction means reversing the roles of "any" and "all" aggregations.
-    checkGeneralType (checkSingleMatch r f Contravariant) (dualGeneralType t1) (dualGeneralType t2)
+    pairGeneralType mergeAnyM mergeAllM (checkSingleMatch r f Contravariant) (dualGeneralType t1) (dualGeneralType t2)
   matchNormal Covariant =
-    checkGeneralType (checkSingleMatch r f Covariant) t1 t2
+    pairGeneralType mergeAnyM mergeAllM (checkSingleMatch r f Covariant) t1 t2
   matchInferredRight = matchSingleType t2 >>= inferFrom
   inferFrom (JustInferredType p) = return $ mergeLeaf $ InferredTypeGuess p t1 v
   inferFrom _ = compileErrorM ""
 
-checkSingleMatch :: (MergeableM m, CompileErrorM m, TypeResolver r) =>
+checkSingleMatch :: (CompileErrorM m, TypeResolver r) =>
   r -> ParamFilters -> Variance ->
   TypeInstanceOrParam -> TypeInstanceOrParam -> m (MergeTree InferredTypeGuess)
 checkSingleMatch _ _ _ (JustInferredType p1) _ =
@@ -369,14 +371,16 @@ checkSingleMatch r f v (JustTypeInstance t1) (JustParamName _ p2) =
 checkSingleMatch r f v (JustParamName _ p1) (JustParamName _ p2) =
   checkParamToParam r f v p1 p2
 
-checkInstanceToInstance :: (MergeableM m, CompileErrorM m, TypeResolver r) =>
+checkInstanceToInstance :: (CompileErrorM m, TypeResolver r) =>
   r -> ParamFilters -> Variance -> TypeInstance -> TypeInstance -> m (MergeTree InferredTypeGuess)
 checkInstanceToInstance r f Invariant t1 t2
-  | t1 == t2 = mergeAllM Nothing
+  | t1 == t2 = return maxBound
   | otherwise =
     -- Implicit equality, inferred by t1 <-> t2.
-    mergeAllM [checkInstanceToInstance r f Covariant     t1 t2,
-               checkInstanceToInstance r f Contravariant t1 t2]
+    mergeAllM [
+        checkInstanceToInstance r f Covariant     t1 t2,
+        checkInstanceToInstance r f Contravariant t1 t2
+      ]
 checkInstanceToInstance r f Contravariant t1@(TypeInstance n1 ps1) t2@(TypeInstance n2 ps2)
   | n1 == n2 = do
     paired <- processPairs alwaysPair ps1 ps2
@@ -396,12 +400,14 @@ checkInstanceToInstance r f Covariant t1@(TypeInstance n1 ps1) t2@(TypeInstance 
     ps1' <- trRefines r t1 n2
     checkInstanceToInstance r f Covariant (TypeInstance n2 ps1') t2
 
-checkParamToInstance :: (MergeableM m, CompileErrorM m, TypeResolver r) =>
+checkParamToInstance :: (CompileErrorM m, TypeResolver r) =>
   r -> ParamFilters -> Variance -> ParamName -> TypeInstance -> m (MergeTree InferredTypeGuess)
 checkParamToInstance r f Invariant n1 t2 =
   -- Implicit equality, inferred by n1 <-> t2.
-  mergeAllM [checkParamToInstance r f Covariant     n1 t2,
-             checkParamToInstance r f Contravariant n1 t2]
+  mergeAllM [
+      checkParamToInstance r f Covariant     n1 t2,
+      checkParamToInstance r f Contravariant n1 t2
+    ]
 checkParamToInstance r f v@Contravariant n1 t2@(TypeInstance _ _) = do
   cs2 <- fmap (filter isTypeFilter) $ f `filterLookup` n1
   mergeAnyM (map checkConstraintToInstance cs2) <!!
@@ -428,12 +434,14 @@ checkParamToInstance r f v@Covariant n1 t2@(TypeInstance _ _) = do
       compileErrorM $ "Constraint " ++ viewTypeFilter n1 f2 ++
                       " does not imply " ++ show n1 ++ " -> " ++ show t2
 
-checkInstanceToParam :: (MergeableM m, CompileErrorM m, TypeResolver r) =>
+checkInstanceToParam :: (CompileErrorM m, TypeResolver r) =>
   r -> ParamFilters -> Variance -> TypeInstance -> ParamName -> m (MergeTree InferredTypeGuess)
 checkInstanceToParam r f Invariant t1 n2 =
   -- Implicit equality, inferred by t1 <-> n2.
-  mergeAllM [checkInstanceToParam r f Covariant     t1 n2,
-             checkInstanceToParam r f Contravariant t1 n2]
+  mergeAllM [
+      checkInstanceToParam r f Covariant     t1 n2,
+      checkInstanceToParam r f Contravariant t1 n2
+    ]
 checkInstanceToParam r f v@Contravariant t1@(TypeInstance _ _) n2 = do
   cs1 <- fmap (filter isTypeFilter) $ f `filterLookup` n2
   mergeAnyM (map checkInstanceToConstraint cs1) <!!
@@ -460,16 +468,18 @@ checkInstanceToParam r f v@Covariant t1@(TypeInstance _ _) n2 = do
       compileErrorM $ "Constraint " ++ viewTypeFilter n2 f2 ++
                       " does not imply " ++ show t1 ++ " -> " ++ show n2
 
-checkParamToParam :: (MergeableM m, CompileErrorM m, TypeResolver r) =>
+checkParamToParam :: (CompileErrorM m, TypeResolver r) =>
   r -> ParamFilters -> Variance -> ParamName -> ParamName -> m (MergeTree InferredTypeGuess)
 checkParamToParam r f Invariant n1 n2
-  | n1 == n2 = mergeAllM Nothing
+  | n1 == n2 = return maxBound
   | otherwise =
     -- Implicit equality, inferred by n1 <-> n2.
-    mergeAllM [checkParamToParam r f Covariant     n1 n2,
-               checkParamToParam r f Contravariant n1 n2]
+    mergeAllM [
+        checkParamToParam r f Covariant     n1 n2,
+        checkParamToParam r f Contravariant n1 n2
+      ]
 checkParamToParam r f v n1 n2
-  | n1 == n2 = mergeAllM Nothing
+  | n1 == n2 = return maxBound
   | otherwise = do
     cs1 <- fmap (filter isTypeFilter) $ f `filterLookup` n1
     cs2 <- fmap (filter isTypeFilter) $ f `filterLookup` n2
@@ -513,36 +523,36 @@ checkParamToParam r f v n1 n2
                         show n1 ++ " <- " ++ show n2
       checkConstraintToConstraint _ _ _ = undefined
 
-validateGeneralInstance :: (MergeableM m, CompileErrorM m, TypeResolver r) =>
+validateGeneralInstance :: (CompileErrorM m, TypeResolver r) =>
   r -> ParamFilters -> GeneralInstance -> m ()
-validateGeneralInstance r f = reduceGeneralType mergeAllM mergeAllM validateSingle where
+validateGeneralInstance r f = reduceGeneralType collectAllM_ collectAllM_ validateSingle where
   validateSingle (JustTypeInstance t) = validateTypeInstance r f t
   validateSingle (JustParamName _ n) = when (not $ n `Map.member` f) $
       compileErrorM $ "Param " ++ show n ++ " does not exist"
   validateSingle (JustInferredType n) = compileErrorM $ "Inferred param " ++ show n ++ " is not allowed here"
 
-validateTypeInstance :: (MergeableM m, CompileErrorM m, TypeResolver r) =>
+validateTypeInstance :: (CompileErrorM m, TypeResolver r) =>
   r -> ParamFilters -> TypeInstance -> m ()
 validateTypeInstance r f t@(TypeInstance _ ps) = do
   fa <- trTypeFilters r t
   processPairs_ (validateAssignment r f) ps fa
-  mergeAllM (map (validateGeneralInstance r f) (pValues ps)) <?? ("In " ++ show t)
+  mapErrorsM_ (validateGeneralInstance r f) (pValues ps) <?? ("In " ++ show t)
 
-validateDefinesInstance :: (MergeableM m, CompileErrorM m, TypeResolver r) =>
+validateDefinesInstance :: (CompileErrorM m, TypeResolver r) =>
   r -> ParamFilters -> DefinesInstance -> m ()
 validateDefinesInstance r f t@(DefinesInstance _ ps) = do
   fa <- trDefinesFilters r t
   processPairs_ (validateAssignment r f) ps fa
-  mergeAllM (map (validateGeneralInstance r f) (pValues ps)) <?? ("In " ++ show t)
+  mapErrorsM_ (validateGeneralInstance r f) (pValues ps) <?? ("In " ++ show t)
 
-validateTypeFilter :: (MergeableM m, CompileErrorM m, TypeResolver r) =>
+validateTypeFilter :: (CompileErrorM m, TypeResolver r) =>
   r -> ParamFilters -> TypeFilter -> m ()
 validateTypeFilter r f (TypeFilter _ t)  = validateGeneralInstance r f t
 validateTypeFilter r f (DefinesFilter t) = validateDefinesInstance r f t
 
-validateAssignment :: (MergeableM m, CompileErrorM m, TypeResolver r) =>
+validateAssignment :: (CompileErrorM m, TypeResolver r) =>
   r -> ParamFilters -> GeneralInstance -> [TypeFilter] -> m ()
-validateAssignment r f t fs = mergeAllM (map checkWithMessage fs) where
+validateAssignment r f t fs = mapErrorsM_ checkWithMessage fs where
   checkWithMessage f2 = checkFilter t f2 <?? ("In verification of filter " ++ show t ++ " " ++ show f2)
   checkFilter t1 (TypeFilter FilterRequires t2) =
     noInferredTypes $ checkGeneralMatch r f Covariant t1 t2
@@ -556,12 +566,12 @@ validateAssignment r f t fs = mergeAllM (map checkWithMessage fs) where
     checkDefinesMatch r f f2 (DefinesInstance n2 ps1')
   checkDefinesFilter f2 (JustParamName _ n1) = do
       fs1 <- fmap (map dfType . filter isDefinesFilter) $ f `filterLookup` n1
-      mergeAnyM (map (checkDefinesMatch r f f2) fs1) <!!
+      (collectFirstM_ $ map (checkDefinesMatch r f f2) fs1) <!!
         ("No filters imply " ++ show n1 ++ " defines " ++ show f2)
   checkDefinesFilter _ (JustInferredType n) =
     compileErrorM $ "Inferred param " ++ show n ++ " is not allowed here"
 
-checkDefinesMatch :: (MergeableM m, CompileErrorM m, TypeResolver r) =>
+checkDefinesMatch :: (CompileErrorM m, TypeResolver r) =>
   r -> ParamFilters -> DefinesInstance -> DefinesInstance -> m ()
 checkDefinesMatch r f f2@(DefinesInstance n2 ps2) f1@(DefinesInstance n1 ps1)
   | n1 == n2 = do
@@ -570,13 +580,13 @@ checkDefinesMatch r f f2@(DefinesInstance n2 ps2) f1@(DefinesInstance n1 ps1)
     processPairs_ (\v2 (p1,p2) -> checkGeneralMatch r f v2 p1 p2) variance (Positional paired)
   | otherwise = compileErrorM $ "Constraint " ++ show f1 ++ " does not imply " ++ show f2
 
-validateInstanceVariance :: (MergeableM m, CompileErrorM m, TypeResolver r) =>
+validateInstanceVariance :: (CompileErrorM m, TypeResolver r) =>
   r -> ParamVariances -> Variance -> GeneralInstance -> m ()
-validateInstanceVariance r vm v = reduceGeneralType mergeAllM mergeAllM validateSingle where
+validateInstanceVariance r vm v = reduceGeneralType collectAllM_ collectAllM_ validateSingle where
   validateSingle (JustTypeInstance (TypeInstance n ps)) = do
     vs <- trVariance r n
     paired <- processPairs alwaysPair vs ps
-    mergeAllM (map (\(v2,p) -> validateInstanceVariance r vm (v `composeVariance` v2) p) paired)
+    mapErrorsM_ (\(v2,p) -> validateInstanceVariance r vm (v `composeVariance` v2) p) paired
   validateSingle (JustParamName _ n) =
     case n `Map.lookup` vm of
         Nothing -> compileErrorM $ "Param " ++ show n ++ " is undefined"
@@ -585,14 +595,14 @@ validateInstanceVariance r vm v = reduceGeneralType mergeAllM mergeAllM validate
   validateSingle (JustInferredType n) =
     compileErrorM $ "Inferred param " ++ show n ++ " is not allowed here"
 
-validateDefinesVariance :: (MergeableM m, CompileErrorM m, TypeResolver r) =>
+validateDefinesVariance :: (CompileErrorM m, TypeResolver r) =>
   r -> ParamVariances -> Variance -> DefinesInstance -> m ()
 validateDefinesVariance r vm v (DefinesInstance n ps) = do
   vs <- trVariance r n
   paired <- processPairs alwaysPair vs ps
-  mergeAllM (map (\(v2,p) -> validateInstanceVariance r vm (v `composeVariance` v2) p) paired)
+  mapErrorsM_ (\(v2,p) -> validateInstanceVariance r vm (v `composeVariance` v2) p) paired
 
-uncheckedSubValueType :: (MergeableM m, CompileErrorM m) =>
+uncheckedSubValueType :: CompileErrorM m =>
   (ParamName -> m GeneralInstance) -> ValueType -> m ValueType
 uncheckedSubValueType replace (ValueType s t) = do
   t' <- uncheckedSubInstance replace t
@@ -615,7 +625,7 @@ uncheckedSubSingle replace (TypeInstance n (Positional ts)) = do
   ts' <- mapErrorsM (uncheckedSubInstance replace) ts
   return $ TypeInstance n (Positional ts')
 
-uncheckedSubFilter :: (MergeableM m, CompileErrorM m) =>
+uncheckedSubFilter :: CompileErrorM m =>
   (ParamName -> m GeneralInstance) -> TypeFilter -> m TypeFilter
 uncheckedSubFilter replace (TypeFilter d t) = do
   t' <- uncheckedSubInstance replace t
@@ -624,7 +634,7 @@ uncheckedSubFilter replace (DefinesFilter (DefinesInstance n ts)) = do
   ts' <- mapErrorsM (uncheckedSubInstance replace) (pValues ts)
   return (DefinesFilter (DefinesInstance n (Positional ts')))
 
-uncheckedSubFilters :: (MergeableM m, CompileErrorM m) =>
+uncheckedSubFilters :: CompileErrorM m =>
   (ParamName -> m GeneralInstance) -> ParamFilters -> m ParamFilters
 uncheckedSubFilters replace fa = do
   fa' <- mapErrorsM subParam $ Map.toList fa

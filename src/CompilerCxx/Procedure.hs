@@ -40,7 +40,6 @@ import qualified Data.Map as Map
 import qualified Data.Set as Set
 
 import Base.CompileError
-import Base.Mergeable
 import Compilation.CompilerState
 import Compilation.ProcedureContext (ExprMap)
 import Compilation.ScopeContext
@@ -59,7 +58,7 @@ import Types.TypeInstance
 import Types.Variance
 
 
-compileExecutableProcedure :: (Show c, CompileErrorM m, MergeableM m) =>
+compileExecutableProcedure :: (Show c, CompileErrorM m) =>
   ScopeContext c -> ScopedFunction c -> ExecutableProcedure c ->
   m (CompiledData [String],CompiledData [String])
 compileExecutableProcedure ctx ff@(ScopedFunction _ _ _ s as1 rs1 ps1 _ _)
@@ -79,7 +78,7 @@ compileExecutableProcedure ctx ff@(ScopedFunction _ _ _ s as1 rs1 ps1 _ _)
         doImplicitReturn [] <???
           ("In implicit return from " ++ show n ++ formatFullContextBrace c)
     wrapProcedure output pt ct =
-      mergeAll $ [
+      mconcat [
           onlyCode header2,
           indentCompiled $ onlyCodes pt,
           indentCompiled $ onlyCodes ct,
@@ -141,7 +140,7 @@ compileExecutableProcedure ctx ff@(ScopedFunction _ _ _ s as1 rs1 ps1 _ _)
         variableProxyType t2 ++ " " ++ variableName (ovName n2) ++
         " = " ++ writeStoredVariable t2 (UnwrappedSingle $ "returns.At(" ++ show i ++ ")") ++ ";"
 
-compileCondition :: (Show c, CompileErrorM m, MergeableM m,
+compileCondition :: (Show c, CompileErrorM m,
                      CompilerContext c m [String] a) =>
   a -> [c] -> Expression c -> CompilerState a m String
 compileCondition ctx c e = do
@@ -163,7 +162,7 @@ compileCondition ctx c e = do
                          intercalate "," (map show ts) ++ "}"
 
 -- Returns the state so that returns can be properly checked for if/elif/else.
-compileProcedure :: (Show c, CompileErrorM m, MergeableM m,
+compileProcedure :: (Show c, CompileErrorM m,
                      CompilerContext c m [String] a) =>
   a -> Procedure c -> CompilerState a m a
 compileProcedure ctx (Procedure _ ss) = do
@@ -179,14 +178,14 @@ compileProcedure ctx (Procedure _ ss) = do
            s' <- resetBackgroundStateT $ compileStatement s
            return s'
 
-maybeSetTrace :: (Show c, CompileErrorM m, MergeableM m,
+maybeSetTrace :: (Show c, CompileErrorM m,
                   CompilerContext c m [String] a) =>
   [c] -> CompilerState a m ()
 maybeSetTrace c = do
   noTrace <- csGetNoTrace
   when (not noTrace) $ csWrite $ setTraceContext c
 
-compileStatement :: (Show c, CompileErrorM m, MergeableM m,
+compileStatement :: (Show c, CompileErrorM m,
                      CompilerContext c m [String] a) =>
   Statement c -> CompilerState a m ()
 compileStatement (EmptyReturn c) = do
@@ -203,7 +202,7 @@ compileStatement (ExplicitReturn c es) = do
       autoPositionalCleanup e
     -- Multi-expression => must all be singles.
     getReturn rs = do
-      lift $ mergeAllM (map checkArity $ zip ([0..] :: [Int]) $ map (fst . snd) rs) <??
+      (lift $ mapErrorsM_ checkArity $ zip ([0..] :: [Int]) $ map (fst . snd) rs) <???
         ("In return at " ++ formatFullContext c)
       csRegisterReturn c $ Just $ Positional $ map (head . pValues . fst . snd) rs
       let e = OpaqueMulti $ "ReturnTuple(" ++ intercalate "," (map (useAsUnwrapped . snd . snd) rs) ++ ")"
@@ -276,8 +275,8 @@ compileStatement (Assignment c as e) = message ???> do
     createVariable r fa (CreateVariable c2 t1 n) t2 =
       ("In creation of " ++ show n ++ " at " ++ formatFullContext c2) ???> do
         -- TODO: Call csRequiresTypes for t1. (Maybe needs a helper function.)
-        lift $ mergeAllM [validateGeneralInstance r fa (vtType t1),
-                          checkValueAssignment r fa t2 t1]
+        lift $ collectAllM_ [validateGeneralInstance r fa (vtType t1),
+                             checkValueAssignment r fa t2 t1]
         csAddVariable c2 n (VariableValue c2 LocalScope t1 True)
         csWrite [variableStoredType t1 ++ " " ++ variableName n ++ ";"]
     createVariable r fa (ExistingVariable (InputValue c2 n)) t2 =
@@ -307,7 +306,7 @@ compileStatement (Assignment c as e) = message ???> do
     assignMulti _ = return ()
 compileStatement (NoValueExpression _ v) = compileVoidExpression v
 
-compileRegularInit :: (Show c, CompileErrorM m, MergeableM m,
+compileRegularInit :: (Show c, CompileErrorM m,
                        CompilerContext c m [String] a) =>
   DefinedMember c -> CompilerState a m ()
 compileRegularInit (DefinedMember _ _ _ _ Nothing) = return ()
@@ -316,7 +315,7 @@ compileRegularInit (DefinedMember c2 s t n2 (Just e)) = resetBackgroundStateT $ 
   let assign = Assignment c2 (Positional [ExistingVariable (InputValue c2 n2)]) e
   compileStatement assign
 
-compileLazyInit :: (Show c, CompileErrorM m, MergeableM m,
+compileLazyInit :: (Show c, CompileErrorM m,
                    CompilerContext c m [String] a) =>
   DefinedMember c -> CompilerState a m ()
 compileLazyInit (DefinedMember _ _ _ _ Nothing) = return ()
@@ -331,7 +330,7 @@ compileLazyInit (DefinedMember c _ t1 n (Just e)) = resetBackgroundStateT $ do
     ("In initialization of " ++ show n ++ " at " ++ formatFullContext c)
   csWrite [variableName n ++ "([this]() { return " ++ writeStoredVariable t1 e' ++ "; })"]
 
-compileVoidExpression :: (Show c, CompileErrorM m, MergeableM m,
+compileVoidExpression :: (Show c, CompileErrorM m,
                          CompilerContext c m [String] a) =>
   VoidExpression c -> CompilerState a m ()
 compileVoidExpression (Conditional ie) = compileIfElifElse ie
@@ -347,7 +346,7 @@ compileVoidExpression (Unconditional p) = do
   csWrite ["}"]
   csInheritReturns [ctx]
 
-compileIfElifElse :: (Show c, CompileErrorM m, MergeableM m,
+compileIfElifElse :: (Show c, CompileErrorM m,
                       CompilerContext c m [String] a) =>
   IfElifElse c -> CompilerState a m ()
 compileIfElifElse (IfStatement c e p es) = do
@@ -382,7 +381,7 @@ compileIfElifElse (IfStatement c e p es) = do
     unwind TerminateConditional = fmap (:[]) get
 compileIfElifElse _ = undefined
 
-compileWhileLoop :: (Show c, CompileErrorM m, MergeableM m,
+compileWhileLoop :: (Show c, CompileErrorM m,
                      CompilerContext c m [String] a) =>
   WhileLoop c -> CompilerState a m ()
 compileWhileLoop (WhileLoop c e p u) = do
@@ -404,7 +403,7 @@ compileWhileLoop (WhileLoop c e p u) = do
   csWrite $ ["{"] ++ u' ++ ["}"]
   csWrite ["}"]
 
-compileScopedBlock :: (Show c, CompileErrorM m, MergeableM m,
+compileScopedBlock :: (Show c, CompileErrorM m,
                        CompilerContext c m [String] a) =>
   ScopedBlock c -> CompilerState a m ()
 compileScopedBlock s = do
@@ -479,7 +478,7 @@ compileScopedBlock s = do
     rewriteScoped (ScopedBlock _ p cl s2) =
       ([],p,cl,s2)
 
-compileExpression :: (Show c, CompileErrorM m, MergeableM m,
+compileExpression :: (Show c, CompileErrorM m,
                       CompilerContext c m [String] a) =>
   Expression c -> CompilerState a m (ExpressionType,ExprValue)
 compileExpression = compile where
@@ -538,11 +537,11 @@ compileExpression = compile where
         | o == "-" = doNeg t e2
         | o == "~" = doComp t e2
         | otherwise = lift $ compileErrorM $ "Unknown unary operator \"" ++ o ++ "\" " ++
-                                            formatFullContextBrace c
+                                             formatFullContextBrace c
       doNot t e2 = do
         when (t /= boolRequiredValue) $
           lift $ compileErrorM $ "Cannot use " ++ show t ++ " with unary ! operator" ++
-                                formatFullContextBrace c
+                                 formatFullContextBrace c
         return $ (Positional [boolRequiredValue],UnboxedPrimitive PrimBool $ "!" ++ useAsUnboxed PrimBool e2)
       doNeg t e2
         | t == intRequiredValue = return $ (Positional [intRequiredValue],
@@ -550,15 +549,15 @@ compileExpression = compile where
         | t == floatRequiredValue = return $ (Positional [floatRequiredValue],
                                              UnboxedPrimitive PrimFloat $ "-" ++ useAsUnboxed PrimFloat e2)
         | otherwise = lift $ compileErrorM $ "Cannot use " ++ show t ++ " with unary - operator" ++
-                                            formatFullContextBrace c
+                                             formatFullContextBrace c
       doComp t e2
         | t == intRequiredValue = return $ (Positional [intRequiredValue],
                                             UnboxedPrimitive PrimInt $ "~" ++ useAsUnboxed PrimInt e2)
         | otherwise = lift $ compileErrorM $ "Cannot use " ++ show t ++ " with unary ~ operator" ++
-                                            formatFullContextBrace c
+                                             formatFullContextBrace c
   compile (InitializeValue c t ps es) = do
     es' <- sequence $ map compileExpression $ pValues es
-    (ts,es'') <- getValues es'
+    (ts,es'') <- lift $ getValues es'
     csCheckValueInit c t (Positional ts) ps
     params <- expandParams $ tiParams t
     params2 <- expandParams2 $ ps
@@ -575,7 +574,7 @@ compileExpression = compile where
       getValues [(Positional ts,e)] = return (ts,useAsArgs e)
       -- Multi-expression => must all be singles.
       getValues rs = do
-        lift $ mergeAllM (map checkArity $ zip ([0..] :: [Int]) $ map fst rs) <??
+        (mapErrorsM_ checkArity $ zip ([0..] :: [Int]) $ map fst rs) <??
           ("In return at " ++ formatFullContext c)
         return (map (head . pValues . fst) rs,
                 "ArgTuple(" ++ intercalate ", " (map (useAsUnwrapped . snd) rs) ++ ")")
@@ -617,7 +616,7 @@ compileExpression = compile where
       bind t1 t2
         | t1 /= t2 =
           lift $ compileErrorM $ "Cannot " ++ show o ++ " " ++ show t1 ++ " and " ++
-                                show t2 ++ formatFullContextBrace c
+                                 show t2 ++ formatFullContextBrace c
         | o `Set.member` comparison && t1 == intRequiredValue = do
           return (Positional [boolRequiredValue],glueInfix PrimInt PrimBool e1 o e2)
         | o `Set.member` comparison && t1 == floatRequiredValue = do
@@ -648,7 +647,7 @@ compileExpression = compile where
           return (Positional [boolRequiredValue],glueInfix PrimBool PrimBool e1 o e2)
         | otherwise =
           lift $ compileErrorM $ "Cannot " ++ show o ++ " " ++ show t1 ++ " and " ++
-                                show t2 ++ formatFullContextBrace c
+                                 show t2 ++ formatFullContextBrace c
       glueInfix t1 t2 e3 o2 e4 =
         UnboxedPrimitive t2 $ useAsUnboxed t1 e3 ++ o2 ++ useAsUnboxed t1 e4
   transform e (ConvertedCall c t f) = do
@@ -657,7 +656,7 @@ compileExpression = compile where
     r <- csResolver
     fa <- csAllFilters
     let vt = ValueType RequiredValue $ singleType $ JustTypeInstance t
-    lift $ (checkValueAssignment r fa t' vt) <??
+    (lift $ checkValueAssignment r fa t' vt) <???
       ("In converted call at " ++ formatFullContext c)
     f' <- lookupValueFunction vt f
     compileFunctionCall (Just $ useAsUnwrapped e') f' f
@@ -669,9 +668,9 @@ compileExpression = compile where
   requireSingle _ [t] = return t
   requireSingle c2 ts =
     lift $ compileErrorM $ "Function call requires 1 return but found but found {" ++
-                          intercalate "," (map show ts) ++ "}" ++ formatFullContextBrace c2
+                            intercalate "," (map show ts) ++ "}" ++ formatFullContextBrace c2
 
-lookupValueFunction :: (Show c, CompileErrorM m, MergeableM m,
+lookupValueFunction :: (Show c, CompileErrorM m,
                         CompilerContext c m [String] a) =>
   ValueType -> FunctionCall c -> CompilerState a m (ScopedFunction c)
 lookupValueFunction (ValueType WeakValue t) (FunctionCall c _ _ _) =
@@ -683,7 +682,7 @@ lookupValueFunction (ValueType OptionalValue t) (FunctionCall c _ _ _) =
 lookupValueFunction (ValueType RequiredValue t) (FunctionCall c n _ _) =
   csGetTypeFunction c (Just t) n
 
-compileExpressionStart :: (Show c, CompileErrorM m, MergeableM m,
+compileExpressionStart :: (Show c, CompileErrorM m,
                            CompilerContext c m [String] a) =>
   ExpressionStart c -> CompilerState a m (ExpressionType,ExprValue)
 compileExpressionStart (NamedVariable (OutputValue c n)) = do
@@ -826,7 +825,7 @@ disallowInferred = mapErrorsM disallow . pValues where
   disallow (InferredInstance c) =
     compileErrorM $ "Type inference is not allowed in reduce calls" ++ formatFullContextBrace c
 
-compileFunctionCall :: (Show c, CompileErrorM m, MergeableM m,
+compileFunctionCall :: (Show c, CompileErrorM m,
                         CompilerContext c m [String] a) =>
   Maybe String -> ScopedFunction c -> FunctionCall c ->
   CompilerState a m (ExpressionType,ExprValue)
@@ -834,9 +833,9 @@ compileFunctionCall e f (FunctionCall c _ ps es) = message ???> do
   r <- csResolver
   fa <- csAllFilters
   es' <- sequence $ map compileExpression $ pValues es
-  (ts,es'') <- getValues es'
+  (ts,es'') <- lift $ getValues es'
   ps2 <- lift $ guessParamsFromArgs r fa f ps (Positional ts)
-  lift $ mergeAllM $ map backgroundMessage $ zip3 (map vpParam $ pValues $ sfParams f) (pValues ps) (pValues ps2)
+  lift $ mapErrorsM_ backgroundMessage $ zip3 (map vpParam $ pValues $ sfParams f) (pValues ps) (pValues ps2)
   f' <- lift $ parsedToFunctionType f
   f'' <- lift $ assignFunctionParams r fa Map.empty ps2 f'
   -- Called an extra time so arg count mismatches have reasonable errors.
@@ -874,7 +873,7 @@ compileFunctionCall e f (FunctionCall c _ ps es) = message ???> do
     getValues [(Positional ts,e2)] = return (ts,useAsArgs e2)
     -- Multi-expression => must all be singles.
     getValues rs = do
-      lift $ mergeAllM (map checkArity $ zip ([0..] :: [Int]) $ map fst rs) <??
+      (mapErrorsM_ checkArity $ zip ([0..] :: [Int]) $ map fst rs) <??
         ("In return at " ++ formatFullContext c)
       return (map (head . pValues . fst) rs, "ArgTuple(" ++ intercalate ", " (map (useAsUnwrapped . snd) rs) ++ ")")
     checkArity (_,Positional [_]) = return ()
@@ -883,7 +882,7 @@ compileFunctionCall e f (FunctionCall c _ ps es) = message ???> do
     checkArg r fa t0 (i,t1) = do
       checkValueAssignment r fa t1 t0 <?? ("In argument " ++ show i ++ " to " ++ show (sfName f))
 
-guessParamsFromArgs :: (Show c, MergeableM m, CompileErrorM m, TypeResolver r) =>
+guessParamsFromArgs :: (Show c, CompileErrorM m, TypeResolver r) =>
   r -> ParamFilters -> ScopedFunction c -> Positional (InstanceOrInferred c) ->
   Positional ValueType -> m (Positional GeneralInstance)
 guessParamsFromArgs r fa f ps ts = do
@@ -902,7 +901,7 @@ guessParamsFromArgs r fa f ps ts = do
     toInstance p1 (AssignedInstance _ t) = return (p1,t)
     toInstance p1 (InferredInstance _)   = return (p1,singleType $ JustInferredType p1)
 
-compileMainProcedure :: (Show c, CompileErrorM m, MergeableM m) =>
+compileMainProcedure :: (Show c, CompileErrorM m) =>
   CategoryMap c -> ExprMap c -> Expression c -> m (CompiledData [String])
 compileMainProcedure tm em e = do
   ctx <- getMainContext tm em
@@ -912,7 +911,7 @@ compileMainProcedure tm em e = do
       ctx0 <- getCleanContext
       compileProcedure ctx0 procedure >>= put
 
-autoScope :: (CompilerContext c m s a) =>
+autoScope :: CompilerContext c m s a =>
   SymbolScope -> CompilerState a m String
 autoScope s = do
   s1 <- csCurrentScope
@@ -948,7 +947,7 @@ expandParams2 ps = do
   ps' <- sequence $ map expandGeneralInstance $ pValues ps
   return $ "ParamTuple(" ++ intercalate "," ps' ++ ")"
 
-expandCategory :: (CompilerContext c m s a) =>
+expandCategory :: CompilerContext c m s a =>
   CategoryName -> CompilerState a m String
 expandCategory t = return $ categoryGetter t ++ "()"
 

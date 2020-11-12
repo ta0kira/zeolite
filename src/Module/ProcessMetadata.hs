@@ -61,7 +61,6 @@ import qualified Data.Set as Set
 
 import Base.CompileError
 import Base.CompileInfo
-import Base.Mergeable
 import Cli.CompileOptions
 import Cli.Programs (VersionHash(..))
 import Compilation.ProcedureContext (ExprMap)
@@ -279,7 +278,7 @@ checkModuleFreshness h ca p m@(CompileMetadata _ p2 _ _ is is2 _ _ _ _ ps xs ts 
   time <- errorFromIO $ getModificationTime $ getCachedPath p "" metadataFilename
   (ps2,xs2,ts2) <- findSourceFiles p ""
   let rs = Set.toList $ Set.fromList $ concat $ map getRequires os
-  mergeAllM $ [
+  collectAllM_ $ [
       checkHash,
       checkInput time (p </> moduleFilename),
       checkMissing ps ps2,
@@ -306,8 +305,8 @@ checkModuleFreshness h ca p m@(CompileMetadata _ p2 _ _ is is2 _ _ _ _ ps xs ts 
       when (not exists) $ compileErrorM $ "Output file \"" ++ f ++ "\" is missing"
     checkDep time dep = do
       cm <- loadMetadata ca dep
-      mergeAllM $ map (checkInput time . (cmPath cm </>)) $ cmPublicFiles cm
-    checkObject (CategoryObjectFile _ _ fs) = mergeAllM $ map checkOutput fs
+      mapErrorsM_ (checkInput time . (cmPath cm </>)) $ cmPublicFiles cm
+    checkObject (CategoryObjectFile _ _ fs) = mapErrorsM_ checkOutput fs
     checkObject (OtherObjectFile f)         = checkOutput f
     getRequires (CategoryObjectFile _ rs _) = rs
     getRequires _                           = []
@@ -319,7 +318,7 @@ checkModuleFreshness h ca p m@(CompileMetadata _ p2 _ _ is is2 _ _ _ _ ps xs ts 
       compileErrorM $ "Required category " ++ show c ++ " is unresolved"
     checkMissing s0 s1 = do
       let missing = Set.toList $ Set.fromList s1 `Set.difference` Set.fromList s0
-      mergeAllM $ map (\f -> compileErrorM $ "Required path \"" ++ f ++ "\" has not been compiled") missing
+      mapErrorsM_ (\f -> compileErrorM $ "Required path \"" ++ f ++ "\" has not been compiled") missing
     doesFileOrDirExist f2 = do
       existF <- errorFromIO $ doesFileExist f2
       if existF
