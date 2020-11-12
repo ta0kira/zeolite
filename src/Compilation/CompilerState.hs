@@ -76,12 +76,12 @@ module Compilation.CompilerState (
 import Control.Monad.Trans (lift)
 import Control.Monad.Trans.State (StateT(..),execStateT,get,mapStateT,put)
 import Data.Functor
-import Data.Monoid
 import Prelude hiding (foldr)
 import qualified Data.Set as Set
 
 #if MIN_VERSION_base(4,11,0)
 #else
+import Data.Monoid hiding ((<>))
 import Data.Semigroup
 #endif
 
