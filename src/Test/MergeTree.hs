@@ -38,8 +38,8 @@ tests = [
    checkMatch (mergeAll $ fmap mergeLeaf [2,4,6]) (fmap (*2))
               (mergeAll $ map mergeLeaf [1..3] :: MergeTree Int),
 
-   checkMatch (mergeLeaf 1) id (mergeAny [mergeLeaf 1,mergeAny []] :: MergeTree Int),
-   checkMatch (mergeLeaf 1) id (mergeAll [mergeLeaf 1,mergeAll []] :: MergeTree Int),
+   checkMatch (mergeLeaf 1) id (mergeAny [mergeLeaf 1,minBound] :: MergeTree Int),
+   checkMatch (mergeLeaf 1) id (mergeAll [mergeLeaf 1,maxBound] :: MergeTree Int),
 
    checkMatch2 (mergeAny [mergeLeaf 1,mergeLeaf 2,mergeAll [mergeLeaf 3,mergeLeaf 4]])
                (mergeAny [mergeLeaf 1,mergeLeaf 2,mergeLeaf 3,mergeLeaf 4])
@@ -68,8 +68,8 @@ tests = [
    checkMatch True  (runIdentity . evalMergeTree (return . odd)) (mergeAll [mergeLeaf 1,mergeLeaf 1] :: MergeTree Int),
    checkMatch True  (runIdentity . evalMergeTree (return . odd)) (mergeAny [mergeLeaf 1,mergeLeaf 2] :: MergeTree Int),
    checkMatch False (runIdentity . evalMergeTree (return . odd)) (mergeAny [mergeLeaf 2,mergeLeaf 2] :: MergeTree Int),
-   checkMatch True  (runIdentity . evalMergeTree (return . odd)) (mergeAll [] :: MergeTree Int),
-   checkMatch False (runIdentity . evalMergeTree (return . odd)) (mergeAny [] :: MergeTree Int),
+   checkMatch True  (runIdentity . evalMergeTree (return . odd)) (maxBound :: MergeTree Int),
+   checkMatch False (runIdentity . evalMergeTree (return . odd)) (minBound :: MergeTree Int),
 
    -- a*(b&c)*(d|e) = (a*b&a*c)*(d|e) = (a*b*(d|e)&a*c*(d|e)) = (a*b*d|a*b*e)&(a*c*d|a*c*e)
    checkMatch (mergeAll [mergeAny [mergeLeaf "abd",mergeLeaf "abe"],mergeAny [mergeLeaf "acd",mergeLeaf "ace"]]) sequence

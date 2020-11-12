@@ -88,4 +88,8 @@ instance Mergeable (MergeTree a) where
     unnest [x] = x
     unnest xs  = MergeAll xs
 
+instance (Eq a, Ord a) => Bounded (MergeTree a) where
+  minBound = mergeAny Nothing
+  maxBound = mergeAll Nothing
+
 instance MergeableM MergeTree where
