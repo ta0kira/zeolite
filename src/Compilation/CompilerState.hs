@@ -299,7 +299,7 @@ instance Semigroup s => Semigroup (CompiledData s) where
   (CompiledData r1 s1) <> (CompiledData r2 s2) =
     CompiledData (r1 `Set.union` r2) (s1 <> s2)
 
-instance Monoid s => Monoid (CompiledData s) where
+instance (Semigroup s, Monoid s) => Monoid (CompiledData s) where
   mempty = CompiledData Set.empty mempty
   mappend = (<>)
 
