@@ -314,7 +314,7 @@ runDataCompiler x ctx = do
       cdOutput = output
     }
 
-concatM :: (Monoid s, CompileErrorM m) => [m (CompiledData s)] -> m (CompiledData s)
+concatM :: (Semigroup s, Monoid s, CompileErrorM m) => [m (CompiledData s)] -> m (CompiledData s)
 concatM = fmap mconcat . collectAllM
 
 getCleanContext :: CompilerContext c m s a => CompilerState a m a
