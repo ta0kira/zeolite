@@ -342,18 +342,20 @@ checkValueTypeMatch r f v ts1@(ValueType r1 t1) ts2@(ValueType r2 t2) = result <
 checkGeneralMatch :: (CompileErrorM m, TypeResolver r) =>
   r -> ParamFilters -> Variance ->
   GeneralInstance -> GeneralInstance -> m (MergeTree InferredTypeGuess)
-checkGeneralMatch r f v t1 t2 = collectFirstM [matchInferredRight,matchNormal v] where
+checkGeneralMatch r f v t1 t2 = collectFirstM [matchInferredRight,bothSingle,matchNormal v] where
   matchNormal Invariant =
-    -- This ensures that any and all behave as expected in Invariant positions.
     mergeAllM [matchNormal Contravariant,matchNormal Covariant]
   matchNormal Contravariant =
-    -- Reversing direction means reversing the roles of "any" and "all" aggregations.
     pairGeneralType mergeAnyM mergeAllM (checkSingleMatch r f Contravariant) (dualGeneralType t1) (dualGeneralType t2)
   matchNormal Covariant =
     pairGeneralType mergeAnyM mergeAllM (checkSingleMatch r f Covariant) t1 t2
   matchInferredRight = matchSingleType t2 >>= inferFrom
   inferFrom (JustInferredType p) = return $ mergeLeaf $ InferredTypeGuess p t1 v
   inferFrom _ = compileErrorM ""
+  bothSingle = do
+    t1' <- matchSingleType t1
+    t2' <- matchSingleType t2
+    checkSingleMatch r f v t1' t2'
 
 checkSingleMatch :: (CompileErrorM m, TypeResolver r) =>
   r -> ParamFilters -> Variance ->
@@ -373,32 +375,18 @@ checkSingleMatch r f v (JustParamName _ p1) (JustParamName _ p2) =
 
 checkInstanceToInstance :: (CompileErrorM m, TypeResolver r) =>
   r -> ParamFilters -> Variance -> TypeInstance -> TypeInstance -> m (MergeTree InferredTypeGuess)
-checkInstanceToInstance r f Invariant t1 t2
-  | t1 == t2 = return maxBound
-  | otherwise =
-    -- Implicit equality, inferred by t1 <-> t2.
-    mergeAllM [
-        checkInstanceToInstance r f Covariant     t1 t2,
-        checkInstanceToInstance r f Contravariant t1 t2
-      ]
-checkInstanceToInstance r f Contravariant t1@(TypeInstance n1 ps1) t2@(TypeInstance n2 ps2)
+checkInstanceToInstance r f v t1@(TypeInstance n1 ps1) t2@(TypeInstance n2 ps2)
   | n1 == n2 = do
-    paired <- processPairs alwaysPair ps1 ps2
-    let zipped = Positional paired
-    variance <- fmap (fmap (composeVariance Contravariant)) $ trVariance r n1
-    processPairsM (\v2 (p1,p2) -> checkGeneralMatch r f v2 p1 p2) variance zipped
-  | otherwise = do
-    ps2' <- trRefines r t2 n1
-    checkInstanceToInstance r f Contravariant t1 (TypeInstance n1 ps2')
-checkInstanceToInstance r f Covariant t1@(TypeInstance n1 ps1) t2@(TypeInstance n2 ps2)
-  | n1 == n2 = do
-    paired <- processPairs alwaysPair ps1 ps2
-    let zipped = Positional paired
-    variance <- fmap (fmap (composeVariance Covariant)) $ trVariance r n1
-    processPairsM (\v2 (p1,p2) -> checkGeneralMatch r f v2 p1 p2) variance zipped
-  | otherwise = do
+    paired <- fmap Positional $ processPairs alwaysPair ps1 ps2
+    variance <- fmap (fmap (composeVariance v)) $ trVariance r n1
+    processPairsM (\v2 (p1,p2) -> checkGeneralMatch r f v2 p1 p2) variance paired
+  | v == Covariant = do
     ps1' <- trRefines r t1 n2
     checkInstanceToInstance r f Covariant (TypeInstance n2 ps1') t2
+  | v == Contravariant = do
+    ps2' <- trRefines r t2 n1
+    checkInstanceToInstance r f Contravariant t1 (TypeInstance n1 ps2')
+  | otherwise = compileErrorM $ "Category " ++ show n2 ++ " is required but got " ++ show n2
 
 checkParamToInstance :: (CompileErrorM m, TypeResolver r) =>
   r -> ParamFilters -> Variance -> ParamName -> TypeInstance -> m (MergeTree InferredTypeGuess)

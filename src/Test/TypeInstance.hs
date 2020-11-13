@@ -216,6 +216,18 @@ tests = [
     checkSimpleConvertFail
       "Type1<all>"
       "Type1<Type0>",
+    checkSimpleConvertFail
+      "Type1<all>"
+      "Type1<any>",
+    checkSimpleConvertFail
+      "Type1<any>"
+      "Type1<all>",
+    checkSimpleConvertSuccess
+      "Type1<any>"
+      "Type1<any>",
+    checkSimpleConvertSuccess
+      "Type1<all>"
+      "Type1<all>",
 
     checkConvertSuccess
       [("#x",[])]
@@ -656,6 +668,12 @@ tests = [
     checkInferenceFail
       [("#x",[])] ["#x"]
       "Type1<Type3>" "Type4<#x>",
+
+    checkInferenceSuccess
+      [("#x",[])] ["#x"]
+      -- Invariant should not be split for non-merged types.
+      "Type1<Type1<Type1<Type0>>>" "Type1<Type1<Type1<#x>>>"
+      (mergeLeaf ("#x","Type0",Invariant)),
 
     checkInferenceSuccess
       [("#x",[])] ["#x"]
