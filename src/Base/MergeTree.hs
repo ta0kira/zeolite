@@ -21,7 +21,6 @@ limitations under the License.
 
 module Base.MergeTree (
   MergeTree,
-  PreserveMerge(..),
   matchOnlyLeaf,
   mergeAllM,
   mergeAnyM,
@@ -46,53 +45,55 @@ mergeLeaf :: a -> MergeTree a
 mergeLeaf = MergeLeaf
 
 instance Show a => Show (MergeTree a) where
-  show = reduceMergeTree anyOp allOp leafOp where
+  show = reduceMergeCommon anyOp allOp leafOp where
     anyOp xs = "mergeAny [" ++ intercalate "," xs ++ "]"
     allOp xs = "mergeAll [" ++ intercalate "," xs ++ "]"
     leafOp x = "mergeLeaf " ++ show x
 
-class (Bounded t, Mergeable t) => PreserveMerge t where
-  type T t :: *
-  toMergeTree :: t -> MergeTree (T t)
-
 instance PreserveMerge (MergeTree a) where
   type T (MergeTree a) = a
-  toMergeTree = id
+  convertMerge = reduceMergeCommon mergeAny mergeAll
 
-reduceMergeTree :: PreserveMerge t => ([b] -> b) -> ([b] -> b) -> (T t -> b) -> t -> b
-reduceMergeTree anyOp allOp leafOp = reduce . toMergeTree where
+reduceMergeTree :: PreserveMerge a => ([b] -> b) -> ([b] -> b) -> (T a -> b) -> a -> b
+reduceMergeTree anyOp allOp leafOp = reduceMergeCommon anyOp allOp leafOp . toMergeTree
+
+toMergeTree :: PreserveMerge a => a -> MergeTree (T a)
+toMergeTree = convertMerge mergeLeaf
+
+reduceMergeCommon :: ([b] -> b) -> ([b] -> b) -> (a -> b) -> MergeTree a -> b
+reduceMergeCommon anyOp allOp leafOp = reduce where
   reduce (MergeAny xs) = anyOp $ map reduce xs
   reduce (MergeAll xs) = allOp $ map reduce xs
   reduce (MergeLeaf x) = leafOp x
 
-pairMergeTree :: (PreserveMerge t1, PreserveMerge t2) =>
-  ([c] -> c) -> ([c] -> c) -> (T t1 -> T t2 -> c) -> t1 -> t2 -> c
+pairMergeTree :: (PreserveMerge a, PreserveMerge b) =>
+  ([c] -> c) -> ([c] -> c) -> (T a -> T b -> c) -> a -> b -> c
 pairMergeTree anyOp allOp leafOp x y = pair (toMergeTree x) (toMergeTree y) where
-  pair (MergeLeaf t1) (MergeLeaf t2) = t1 `leafOp` t2
+  pair (MergeLeaf x2) (MergeLeaf y2) = x2 `leafOp` y2
   -- NOTE: allOp is expanded first so that anyOp is ignored when either both
   -- sides are minBound or both sides are maxBound. This allows
   -- pairMergeTree mergeAny mergeAll (==) to be a partial order.
-  pair (MergeAny t1) ti2 = allOp $ map (`pair` ti2) t1
-  pair ti1 (MergeAll t2) = allOp $ map (ti1 `pair`) t2
-  pair (MergeAll t1) ti2 = anyOp $ map (`pair` ti2) t1
-  pair ti1 (MergeAny t2) = anyOp $ map (ti1 `pair`) t2
+  pair (MergeAny xs) y2 = allOp $ map (`pair` y2) xs
+  pair x2 (MergeAll ys) = allOp $ map (x2 `pair`) ys
+  pair (MergeAll xs) y2 = anyOp $ map (`pair` y2) xs
+  pair x2 (MergeAny ys) = anyOp $ map (x2 `pair`) ys
 
 instance Functor MergeTree where
-  fmap f = reduceMergeTree mergeAny mergeAll (mergeLeaf . f)
+  fmap f = reduceMergeCommon mergeAny mergeAll (mergeLeaf . f)
 
 instance Applicative MergeTree where
   pure = mergeLeaf
-  f <*> x = reduceMergeTree mergeAny mergeAll (<$> x) f
+  f <*> x = reduceMergeCommon mergeAny mergeAll (<$> x) f
 
 instance Monad MergeTree where
   return = pure
-  x >>= f = reduceMergeTree mergeAny mergeAll f x
+  x >>= f = reduceMergeCommon mergeAny mergeAll f x
 
 instance Foldable MergeTree where
-  foldr f y = foldr f y . reduceMergeTree concat concat (:[])
+  foldr f y = foldr f y . reduceMergeCommon concat concat (:[])
 
 instance Traversable MergeTree where
-  traverse f = reduceMergeTree anyOp allOp leafOp where
+  traverse f = reduceMergeCommon anyOp allOp leafOp where
     anyOp = (mergeAny <$>) . foldr (<*>) (pure []) . (map (fmap (:)))
     allOp = (mergeAll <$>) . foldr (<*>) (pure []) . (map (fmap (:)))
     leafOp = (mergeLeaf <$>) . f
@@ -113,13 +114,13 @@ instance Bounded (MergeTree a) where
   minBound = mergeAny Nothing
   maxBound = mergeAll Nothing
 
-mergeAnyM :: (PreserveMerge t, CompileErrorM m) => [m t] -> m t
+mergeAnyM :: (PreserveMerge a, CompileErrorM m) => [m a] -> m a
 mergeAnyM xs = do
   collectFirstM_ xs
   fmap mergeAny $ collectAnyM xs
 
-mergeAllM :: (PreserveMerge t, CompileErrorM m) => [m t] -> m t
+mergeAllM :: (PreserveMerge a, CompileErrorM m) => [m a] -> m a
 mergeAllM = fmap mergeAll . collectAllM
 
-matchOnlyLeaf :: (PreserveMerge t, CompileErrorM m) => t -> m (T t)
+matchOnlyLeaf :: (PreserveMerge a, CompileErrorM m) => a -> m (T a)
 matchOnlyLeaf = reduceMergeTree (const $ compileErrorM "") (const $ compileErrorM "") return

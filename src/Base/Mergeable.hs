@@ -18,9 +18,11 @@ limitations under the License.
 
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE Safe #-}
+{-# LANGUAGE TypeFamilies #-}
 
 module Base.Mergeable (
   Mergeable(..),
+  PreserveMerge(..),
 ) where
 
 import Data.Map as Map hiding (foldr)
@@ -29,6 +31,10 @@ import Data.Map as Map hiding (foldr)
 class Mergeable a where
   mergeAny :: Foldable f => f a -> a
   mergeAll :: Foldable f => f a -> a
+
+class (Bounded a, Mergeable a) => PreserveMerge a where
+  type T a :: *
+  convertMerge :: Mergeable b => (T a -> b) -> a -> b
 
 instance Mergeable Bool where
   mergeAny = foldr (||) False

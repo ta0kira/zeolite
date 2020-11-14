@@ -63,9 +63,9 @@ instance (Eq a, Ord a) => Mergeable (GeneralType a) where
 
 instance (Eq a, Ord a) => PreserveMerge (GeneralType a) where
   type T (GeneralType a) = a
-  toMergeTree (AllowAnyOf   xs) = mergeAny $ map toMergeTree $ Set.toList xs
-  toMergeTree (RequireAllOf xs) = mergeAll $ map toMergeTree $ Set.toList xs
-  toMergeTree (SingleType x)    = mergeLeaf x
+  convertMerge f (AllowAnyOf   xs) = mergeAny $ map (convertMerge f) $ Set.toList xs
+  convertMerge f (RequireAllOf xs) = mergeAll $ map (convertMerge f) $ Set.toList xs
+  convertMerge f (SingleType x)    = f x
 
 instance (Eq a, Ord a) => Bounded (GeneralType a) where
   minBound = mergeAny Nothing  -- all
