@@ -100,16 +100,16 @@ tests = [
 
     checkMatch True
                (uncurry $ pairMergeTree mergeAny mergeAll (==))
-               (minBound,minBound :: MergeTree ()),
+               (minBound :: MergeTree (),minBound :: MergeTree ()),
     checkMatch True
                (uncurry $ pairMergeTree mergeAny mergeAll (==))
-               (maxBound,maxBound :: MergeTree ()),
+               (maxBound :: MergeTree (),maxBound :: MergeTree ()),
     checkMatch True
                (uncurry $ pairMergeTree mergeAny mergeAll (==))
-               (minBound,maxBound :: MergeTree ()),
+               (minBound :: MergeTree (),maxBound :: MergeTree ()),
     checkMatch False
                (uncurry $ pairMergeTree mergeAny mergeAll (==))
-               (maxBound,minBound :: MergeTree ()),
+               (maxBound :: MergeTree (),minBound :: MergeTree ()),
 
     checkMatch True
                (uncurry $ pairMergeTree mergeAny mergeAll (==))

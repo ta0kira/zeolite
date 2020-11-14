@@ -40,6 +40,7 @@ import qualified Data.Map as Map
 import qualified Data.Set as Set
 
 import Base.CompileError
+import Base.MergeTree
 import Compilation.CompilerState
 import Compilation.ProcedureContext (ExprMap)
 import Compilation.ScopeContext
@@ -924,7 +925,7 @@ autoScope s = do
     scoped _ _ = ""
 
 categoriesFromTypes :: GeneralInstance -> Set.Set CategoryName
-categoriesFromTypes = reduceGeneralType Set.unions Set.unions getAll where
+categoriesFromTypes = reduceMergeTree Set.unions Set.unions getAll where
   getAll (JustTypeInstance (TypeInstance t ps)) =
     t `Set.insert` (Set.unions $ map categoriesFromTypes $ pValues ps)
   getAll _ = Set.empty
@@ -956,7 +957,7 @@ expandGeneralInstance :: (CompileErrorM m, CompilerContext c m s a) =>
 expandGeneralInstance t
   | t == minBound = return $ allGetter ++ "()"
   | t == maxBound = return $ anyGetter ++ "()"
-expandGeneralInstance t = reduceGeneralType getAny getAll getSingle t where
+expandGeneralInstance t = reduceMergeTree getAny getAll getSingle t where
   getAny ts = combine ts >>= return . (unionGetter ++)
   getAll ts = combine ts >>= return . (intersectGetter ++)
   getSingle (JustTypeInstance (TypeInstance t2 ps)) = do

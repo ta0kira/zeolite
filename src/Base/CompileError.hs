@@ -33,8 +33,6 @@ module Base.CompileError (
   isCompileSuccessM,
   mapErrorsM,
   mapErrorsM_,
-  mergeAllM,
-  mergeAnyM,
 ) where
 
 import Control.Monad.IO.Class
@@ -45,8 +43,6 @@ import Control.Monad.Fail ()
 #elif MIN_VERSION_base(4,9,0)
 import Control.Monad.Fail
 #endif
-
-import Base.Mergeable
 
 
 -- For some GHC versions, pattern-matching failures require MonadFail.
@@ -99,14 +95,6 @@ isCompileErrorM x = collectFirstM [x >> return False,return True]
 
 isCompileSuccessM :: CompileErrorM m => m a -> m Bool
 isCompileSuccessM x = collectFirstM [x >> return True,return False]
-
-mergeAnyM :: (CompileErrorM m, Mergeable a) => [m a] -> m a
-mergeAnyM xs = do
-  collectFirstM_ xs
-  fmap mergeAny $ collectAnyM xs
-
-mergeAllM :: (CompileErrorM m, Mergeable a) => [m a] -> m a
-mergeAllM = fmap mergeAll . collectAllM
 
 errorFromIO :: (MonadIO m, CompileErrorM m) => IO a -> m a
 errorFromIO x = do

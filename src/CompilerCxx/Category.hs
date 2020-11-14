@@ -39,6 +39,7 @@ import qualified Data.Map as Map
 import qualified Data.Set as Set
 
 import Base.CompileError
+import Base.MergeTree
 import Compilation.CompilerState
 import Compilation.ProcedureContext (ExprMap)
 import Compilation.ScopeContext
@@ -695,7 +696,7 @@ expandLocalType :: GeneralInstance -> String
 expandLocalType t
   | t == minBound = allGetter ++ "()"
   | t == maxBound = anyGetter ++ "()"
-expandLocalType t = reduceGeneralType getAny getAll getSingle t where
+expandLocalType t = reduceMergeTree getAny getAll getSingle t where
   getAny ts = unionGetter     ++ combine ts
   getAll ts = intersectGetter ++ combine ts
   getSingle (JustTypeInstance (TypeInstance t2 ps)) =

@@ -17,20 +17,17 @@ limitations under the License.
 -- Author: Kevin P. Barry [ta0kira@gmail.com]
 
 {-# LANGUAGE Safe #-}
+{-# LANGUAGE TypeFamilies #-}
 
 module Types.GeneralType (
   GeneralType,
   dualGeneralType,
   mapGeneralType,
-  matchSingleType,
-  pairGeneralType,
-  reduceGeneralType,
   singleType,
 ) where
 
-import Data.List (nub,sort)
+import qualified Data.Set as Set
 
-import Base.CompileError
 import Base.MergeTree
 import Base.Mergeable
 
@@ -40,49 +37,42 @@ data GeneralType a =
     stType :: a
   } |
   AllowAnyOf {
-    aaoTypes :: [GeneralType a]
+    aaoTypes :: Set.Set (GeneralType a)
   } |
   RequireAllOf {
-    raoTypes :: [GeneralType a]
+    raoTypes :: Set.Set (GeneralType a)
   }
   deriving (Eq,Ord)
 
-singleType :: a -> GeneralType a
+singleType :: (Eq a, Ord a) => a -> GeneralType a
 singleType = SingleType
 
 instance (Eq a, Ord a) => Mergeable (GeneralType a) where
-  mergeAny = unnest . nub . sort . foldr ((++) . flattenAny) [] where
+  mergeAny = unnest . foldr (Set.union . flattenAny) Set.empty where
     flattenAny (AllowAnyOf xs) = xs
-    flattenAny x               = [x]
-    unnest [x] = x
-    unnest xs  = AllowAnyOf xs
-  mergeAll = unnest . nub . sort . foldr ((++) . flattenAll) [] where
+    flattenAny x               = Set.fromList [x]
+    unnest xs = case Set.toList xs of
+                     [x] -> x
+                     _ -> AllowAnyOf xs
+  mergeAll = unnest . foldr (Set.union . flattenAll) Set.empty where
     flattenAll (RequireAllOf xs) = xs
-    flattenAll x                 = [x]
-    unnest [x] = x
-    unnest xs  = RequireAllOf xs
+    flattenAll x                 = Set.fromList [x]
+    unnest xs = case Set.toList xs of
+                     [x] -> x
+                     _ -> RequireAllOf xs
+
+instance (Eq a, Ord a) => PreserveMerge (GeneralType a) where
+  type T (GeneralType a) = a
+  toMergeTree (AllowAnyOf   xs) = mergeAny $ map toMergeTree $ Set.toList xs
+  toMergeTree (RequireAllOf xs) = mergeAll $ map toMergeTree $ Set.toList xs
+  toMergeTree (SingleType x)    = mergeLeaf x
 
 instance (Eq a, Ord a) => Bounded (GeneralType a) where
   minBound = mergeAny Nothing  -- all
   maxBound = mergeAll Nothing  -- any
 
-matchSingleType :: CompileErrorM m => GeneralType a -> m a
-matchSingleType = reduceGeneralType (const $ compileErrorM "") (const $ compileErrorM "") return
-
 dualGeneralType :: (Eq a, Ord a) => GeneralType a -> GeneralType a
-dualGeneralType = reduceGeneralType mergeAll mergeAny singleType
+dualGeneralType = reduceMergeTree mergeAll mergeAny singleType
 
-mapGeneralType :: (Eq b, Ord b) => (a -> b) -> GeneralType a -> GeneralType b
-mapGeneralType = reduceGeneralType mergeAny mergeAll . (singleType .)
-
-toMergeTree :: GeneralType a -> MergeTree a
-toMergeTree (AllowAnyOf   xs) = mergeAny $ map toMergeTree xs
-toMergeTree (RequireAllOf xs) = mergeAll $ map toMergeTree xs
-toMergeTree (SingleType x)    = mergeLeaf x
-
-reduceGeneralType :: ([b] -> b) -> ([b] -> b) -> (a -> b) -> GeneralType a -> b
-reduceGeneralType anyOp allOp singleOp = reduceMergeTree anyOp allOp singleOp . toMergeTree
-
-pairGeneralType :: ([c] -> c) -> ([c] -> c) -> (a -> b -> c) -> GeneralType a -> GeneralType b -> c
-pairGeneralType anyOp allOp singleOp x y =
-  pairMergeTree anyOp allOp singleOp (toMergeTree x) (toMergeTree y)
+mapGeneralType :: (Eq a, Ord a, Eq b, Ord b) => (a -> b) -> GeneralType a -> GeneralType b
+mapGeneralType = reduceMergeTree mergeAny mergeAll . (singleType .)

@@ -84,7 +84,7 @@ import Types.Variance
 type GeneralInstance = GeneralType TypeInstanceOrParam
 
 instance Show GeneralInstance where
-  show = reduceGeneralType showAny showAll show where
+  show = reduceMergeTree showAny showAll show where
     showAny [] = "all"
     showAny ts = "[" ++ intercalate "|" ts ++ "]"
     showAll [] = "any"
@@ -246,7 +246,7 @@ viewTypeFilter :: ParamName -> TypeFilter -> String
 viewTypeFilter n f = show n ++ " " ++ show f
 
 hasInferredParams :: GeneralInstance -> Bool
-hasInferredParams = reduceGeneralType mergeAny mergeAny checkSingle where
+hasInferredParams = reduceMergeTree mergeAny mergeAny checkSingle where
   checkSingle (JustInferredType _) = True
   checkSingle _                    = False
 
@@ -346,15 +346,15 @@ checkGeneralMatch r f v t1 t2 = collectFirstM [matchInferredRight,bothSingle,mat
   matchNormal Invariant =
     mergeAllM [matchNormal Contravariant,matchNormal Covariant]
   matchNormal Contravariant =
-    pairGeneralType mergeAnyM mergeAllM (checkSingleMatch r f Contravariant) (dualGeneralType t1) (dualGeneralType t2)
+    pairMergeTree mergeAnyM mergeAllM (checkSingleMatch r f Contravariant) (dualGeneralType t1) (dualGeneralType t2)
   matchNormal Covariant =
-    pairGeneralType mergeAnyM mergeAllM (checkSingleMatch r f Covariant) t1 t2
-  matchInferredRight = matchSingleType t2 >>= inferFrom
+    pairMergeTree mergeAnyM mergeAllM (checkSingleMatch r f Covariant) t1 t2
+  matchInferredRight = matchOnlyLeaf t2 >>= inferFrom
   inferFrom (JustInferredType p) = return $ mergeLeaf $ InferredTypeGuess p t1 v
   inferFrom _ = compileErrorM ""
   bothSingle = do
-    t1' <- matchSingleType t1
-    t2' <- matchSingleType t2
+    t1' <- matchOnlyLeaf t1
+    t2' <- matchOnlyLeaf t2
     checkSingleMatch r f v t1' t2'
 
 checkSingleMatch :: (CompileErrorM m, TypeResolver r) =>
@@ -513,7 +513,7 @@ checkParamToParam r f v n1 n2
 
 validateGeneralInstance :: (CompileErrorM m, TypeResolver r) =>
   r -> ParamFilters -> GeneralInstance -> m ()
-validateGeneralInstance r f = reduceGeneralType collectAllM_ collectAllM_ validateSingle where
+validateGeneralInstance r f = reduceMergeTree collectAllM_ collectAllM_ validateSingle where
   validateSingle (JustTypeInstance t) = validateTypeInstance r f t
   validateSingle (JustParamName _ n) = when (not $ n `Map.member` f) $
       compileErrorM $ "Param " ++ show n ++ " does not exist"
@@ -547,7 +547,7 @@ validateAssignment r f t fs = mapErrorsM_ checkWithMessage fs where
   checkFilter t1 (TypeFilter FilterAllows t2) =
     noInferredTypes $ checkGeneralMatch r f Contravariant t1 t2
   checkFilter t1 (DefinesFilter t2) = do
-    t1' <- matchSingleType t1 <!! ("Merged type " ++ show t1 ++ " cannot satisfy defines constraint " ++ show t2)
+    t1' <- matchOnlyLeaf t1 <!! ("Merged type " ++ show t1 ++ " cannot satisfy defines constraint " ++ show t2)
     checkDefinesFilter t2 t1'
   checkDefinesFilter f2@(DefinesInstance n2 _) (JustTypeInstance t1) = do
     ps1' <- trDefines r t1 n2
@@ -570,7 +570,7 @@ checkDefinesMatch r f f2@(DefinesInstance n2 ps2) f1@(DefinesInstance n1 ps1)
 
 validateInstanceVariance :: (CompileErrorM m, TypeResolver r) =>
   r -> ParamVariances -> Variance -> GeneralInstance -> m ()
-validateInstanceVariance r vm v = reduceGeneralType collectAllM_ collectAllM_ validateSingle where
+validateInstanceVariance r vm v = reduceMergeTree collectAllM_ collectAllM_ validateSingle where
   validateSingle (JustTypeInstance (TypeInstance n ps)) = do
     vs <- trVariance r n
     paired <- processPairs alwaysPair vs ps
@@ -598,7 +598,7 @@ uncheckedSubValueType replace (ValueType s t) = do
 
 uncheckedSubInstance :: CompileErrorM m => (ParamName -> m GeneralInstance) ->
   GeneralInstance -> m GeneralInstance
-uncheckedSubInstance replace = reduceGeneralType subAny subAll subSingle where
+uncheckedSubInstance replace = reduceMergeTree subAny subAll subSingle where
   -- NOTE: Don't use mergeAnyM because it will fail if the union is empty.
   subAny = fmap mergeAny . sequence
   subAll = fmap mergeAll . sequence

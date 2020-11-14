@@ -33,6 +33,7 @@ import qualified Data.Map as Map
 import qualified Data.Set as Set
 
 import Base.CompileError
+import Base.MergeTree
 import Compilation.CompilerState
 import Types.DefinedCategory
 import Types.GeneralType
@@ -143,7 +144,7 @@ instance (Show c, CompileErrorM m) =>
                      " does not have a category function named " ++ show n ++
                      formatFullContextBrace c
   ccGetTypeFunction ctx c t n = getFunction t where
-    getFunction (Just t2) = reduceGeneralType getFromAny getFromAll getFromSingle t2
+    getFunction (Just t2) = reduceMergeTree getFromAny getFromAll getFromSingle t2
     getFunction Nothing = do
       let ps = fmap (singleType . JustParamName False . vpParam) $ pcExtParams ctx
       getFunction (Just $ singleType $ JustTypeInstance $ TypeInstance (pcType ctx) ps)

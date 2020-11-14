@@ -17,6 +17,7 @@ limitations under the License.
 -- Author: Kevin P. Barry [ta0kira@gmail.com]
 
 {-# LANGUAGE Safe #-}
+{-# LANGUAGE TypeFamilies #-}
 
 module Types.TypeCategory (
   AnyCategory(..),
@@ -225,7 +226,7 @@ getCategoryDeps t = Set.fromList $ filter (/= getCategoryName t) $ refines ++ de
   defines = concat $ map (fromDefine . vdType) $ getCategoryDefines t
   filters = concat $ map (fromFilter . pfFilter) $ getCategoryFilters t
   functions = concat $ map fromFunction $ getCategoryFunctions t
-  fromInstance = reduceGeneralType concat concat fromSingle
+  fromInstance = reduceMergeTree concat concat fromSingle
   fromSingle (JustTypeInstance (TypeInstance n ps)) = n:(concat $ map fromInstance $ pValues ps)
   fromSingle _ = []
   fromDefine (DefinesInstance n ps) = n:(concat $ map fromInstance $ pValues ps)

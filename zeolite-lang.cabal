@@ -239,7 +239,8 @@ library zeolite-internal
                        FunctionalDependencies,
                        MultiParamTypeClasses,
                        Safe,
-                       ScopedTypeVariables
+                       ScopedTypeVariables,
+                       TypeFamilies
 
   build-depends:       base >= 4.8 && < 4.15,
                        containers >= 0.3 && < 0.7,

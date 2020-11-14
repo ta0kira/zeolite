@@ -17,14 +17,22 @@ limitations under the License.
 -- Author: Kevin P. Barry [ta0kira@gmail.com]
 
 {-# LANGUAGE Safe #-}
+{-# LANGUAGE TypeFamilies #-}
 
 module Base.MergeTree (
   MergeTree,
+  PreserveMerge(..),
+  matchOnlyLeaf,
+  mergeAllM,
+  mergeAnyM,
   mergeLeaf,
   pairMergeTree,
   reduceMergeTree,
 ) where
 
+import Data.List (intercalate)
+
+import Base.CompileError
 import Base.Mergeable
 
 
@@ -38,18 +46,28 @@ mergeLeaf :: a -> MergeTree a
 mergeLeaf = MergeLeaf
 
 instance Show a => Show (MergeTree a) where
-  show (MergeAny xs) = "mergeAny " ++ show xs
-  show (MergeAll xs) = "mergeAll " ++ show xs
-  show (MergeLeaf x) = "mergeLeaf " ++ show x
+  show = reduceMergeTree anyOp allOp leafOp where
+    anyOp xs = "mergeAny [" ++ intercalate "," xs ++ "]"
+    allOp xs = "mergeAll [" ++ intercalate "," xs ++ "]"
+    leafOp x = "mergeLeaf " ++ show x
 
-reduceMergeTree :: ([b] -> b) -> ([b] -> b) -> (a -> b) -> MergeTree a -> b
-reduceMergeTree anyOp allOp leafOp = reduce where
+class (Bounded t, Mergeable t) => PreserveMerge t where
+  type T t :: *
+  toMergeTree :: t -> MergeTree (T t)
+
+instance PreserveMerge (MergeTree a) where
+  type T (MergeTree a) = a
+  toMergeTree = id
+
+reduceMergeTree :: PreserveMerge t => ([b] -> b) -> ([b] -> b) -> (T t -> b) -> t -> b
+reduceMergeTree anyOp allOp leafOp = reduce . toMergeTree where
   reduce (MergeAny xs) = anyOp $ map reduce xs
   reduce (MergeAll xs) = allOp $ map reduce xs
   reduce (MergeLeaf x) = leafOp x
 
-pairMergeTree :: ([c] -> c) -> ([c] -> c) -> (a -> b -> c) -> MergeTree a -> MergeTree b -> c
-pairMergeTree anyOp allOp leafOp = pair where
+pairMergeTree :: (PreserveMerge t1, PreserveMerge t2) =>
+  ([c] -> c) -> ([c] -> c) -> (T t1 -> T t2 -> c) -> t1 -> t2 -> c
+pairMergeTree anyOp allOp leafOp x y = pair (toMergeTree x) (toMergeTree y) where
   pair (MergeLeaf t1) (MergeLeaf t2) = t1 `leafOp` t2
   -- NOTE: allOp is expanded first so that anyOp is ignored when either both
   -- sides are minBound or both sides are maxBound. This allows
@@ -91,6 +109,17 @@ instance Mergeable (MergeTree a) where
     unnest [x] = x
     unnest xs  = MergeAll xs
 
-instance (Eq a, Ord a) => Bounded (MergeTree a) where
+instance Bounded (MergeTree a) where
   minBound = mergeAny Nothing
   maxBound = mergeAll Nothing
+
+mergeAnyM :: (PreserveMerge t, CompileErrorM m) => [m t] -> m t
+mergeAnyM xs = do
+  collectFirstM_ xs
+  fmap mergeAny $ collectAnyM xs
+
+mergeAllM :: (PreserveMerge t, CompileErrorM m) => [m t] -> m t
+mergeAllM = fmap mergeAll . collectAllM
+
+matchOnlyLeaf :: (PreserveMerge t, CompileErrorM m) => t -> m (T t)
+matchOnlyLeaf = reduceMergeTree (const $ compileErrorM "") (const $ compileErrorM "") return
