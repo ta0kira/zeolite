@@ -70,6 +70,7 @@ pairMergeTree :: (PreserveMerge a, PreserveMerge b) =>
   ([c] -> c) -> ([c] -> c) -> (T a -> T b -> c) -> a -> b -> c
 pairMergeTree anyOp allOp leafOp x y = pair (toMergeTree x) (toMergeTree y) where
   pair (MergeLeaf x2) (MergeLeaf y2) = x2 `leafOp` y2
+  pair x2@(MergeAll xs) y2@(MergeAny ys) = anyOp $ map (`pair` y2) xs ++ map (x2 `pair`) ys
   -- NOTE: allOp is expanded first so that anyOp is ignored when either both
   -- sides are minBound or both sides are maxBound. This allows
   -- pairMergeTree mergeAny mergeAll (==) to be a partial order.

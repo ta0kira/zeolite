@@ -38,6 +38,11 @@
   will infer a param type iff the best choice is unambiguous given the expected
   and actual function arguments.
 
+* **[fix]** Fixes a latent type-checking bug that could occur when attempting to
+  assign a value with an intersection type to a variable with a union type, if
+  one or both types has another nested type, e.g., `[A&B]`→`[[A&B]|C]` or
+  `[[A|B]&C]`→`[A|B]`. This change *shouldn't* cause new type-checking failures.
+
 ### Libraries
 
 * **[fix]** Implements `subSequence` for `Argv` in `lib/util`. This is required

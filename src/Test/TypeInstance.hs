@@ -186,6 +186,15 @@ tests = [
       "[Type0|Type3]"
       "[Type0&Type3]",
 
+    -- Make sure that both sides are separately expanded with checks from
+    -- intersection to union.
+    checkSimpleConvertSuccess
+      "[Type1<Type0>&Type4<Type0>]"
+      "[[Type1<Type0>&Type4<Type0>]|Type5<Type0>]",
+    checkSimpleConvertSuccess
+      "[[Type1<Type0>|Type4<Type0>]&Type5<Type0>]"
+      "[Type1<Type0>|Type4<Type0>]",
+
     checkSimpleConvertSuccess
       "any"
       "any",
