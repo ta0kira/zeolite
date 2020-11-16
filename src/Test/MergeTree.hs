@@ -139,11 +139,23 @@ tests = [
     checkMatch True
                (uncurry $ pairMergeTree mergeAny mergeAll (==))
                (mergeAll [mergeLeaf 'a',mergeLeaf 'b'],
-                mergeAny [mergeAll[mergeLeaf 'a',mergeLeaf 'b'],mergeLeaf 'c']),
+                mergeAny [mergeAll [mergeLeaf 'a',mergeLeaf 'b'],mergeLeaf 'c']),
     checkMatch True
                (uncurry $ pairMergeTree mergeAny mergeAll (==))
-               (mergeAll [mergeAny[mergeLeaf 'a',mergeLeaf 'b'],mergeLeaf 'c'],
-                mergeAny [mergeLeaf 'a',mergeLeaf 'b'])
+               (mergeAll [mergeAny [mergeLeaf 'a',mergeLeaf 'b'],mergeLeaf 'c'],
+                mergeAny [mergeLeaf 'a',mergeLeaf 'b']),
+    checkMatch True
+               (uncurry $ pairMergeTree mergeAny mergeAll (==))
+               (mergeAny [mergeAll [mergeLeaf 'a',mergeLeaf 'b'],mergeLeaf 'c'],
+                mergeAny [mergeAll [mergeLeaf 'a',mergeLeaf 'b'],mergeLeaf 'c']),
+    checkMatch True
+               (uncurry $ pairMergeTree mergeAny mergeAll (==))
+               (mergeAll [mergeAny [mergeLeaf 'a',mergeLeaf 'b'],mergeLeaf 'c'],
+                mergeAll [mergeAny [mergeLeaf 'a',mergeLeaf 'b'],mergeLeaf 'c']),
+    checkMatch False
+               (uncurry $ pairMergeTree mergeAny mergeAll (==))
+               (mergeAny [mergeLeaf 'a',mergeLeaf 'b'],
+                mergeAll [mergeLeaf 'a',mergeLeaf 'b'])
  ]
 
 oddError :: Int -> CompileInfo Int
