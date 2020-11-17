@@ -70,7 +70,18 @@ pairMergeTree :: (PreserveMerge a, PreserveMerge b) =>
   ([c] -> c) -> ([c] -> c) -> (T a -> T b -> c) -> a -> b -> c
 pairMergeTree anyOp allOp leafOp x y = pair (toMergeTree x) (toMergeTree y) where
   pair (MergeLeaf x2) (MergeLeaf y2) = x2 `leafOp` y2
-  pair x2@(MergeAll xs) y2@(MergeAny ys) = anyOp $ map (`pair` y2) xs ++ map (x2 `pair`) ys
+  pair x2@(MergeAll xs) y2@(MergeAny ys) =
+    anyOp $ leafComp ++ leftComp ++ rightComp where
+    (xs2,xl) = separateLeaves xs
+    (ys2,yl) = separateLeaves ys
+    -- Non-leaves need the entire other side available.
+    leftComp  = map (`pair` y2) xs2
+    rightComp = map (x2 `pair`) ys2
+    -- Leaves can be expanded either side first.
+    leafComp = do
+      xx <- xl
+      yy <- yl
+      [xx `leafOp` yy]
   -- NOTE: allOp is expanded first so that anyOp is ignored when either both
   -- sides are minBound or both sides are maxBound. This allows
   -- pairMergeTree mergeAny mergeAll (==) to be a partial order.
@@ -78,6 +89,11 @@ pairMergeTree anyOp allOp leafOp x y = pair (toMergeTree x) (toMergeTree y) wher
   pair x2 (MergeAll ys) = allOp $ map (x2 `pair`) ys
   pair (MergeAll xs) y2 = anyOp $ map (`pair` y2) xs
   pair x2 (MergeAny ys) = anyOp $ map (x2 `pair`) ys
+
+separateLeaves :: [MergeTree a] -> ([MergeTree a],[a])
+separateLeaves = foldr split ([],[]) where
+  split (MergeLeaf x) (ms,ls) = (ms,x:ls)
+  split x             (ms,ls) = (x:ms,ls)
 
 instance Functor MergeTree where
   fmap f = reduceMergeCommon mergeAny mergeAll (mergeLeaf . f)
