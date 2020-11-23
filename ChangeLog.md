@@ -38,6 +38,15 @@
   will infer a param type iff the best choice is unambiguous given the expected
   and actual function arguments.
 
+* **[breaking]** Disallows bounding a single param both above and below, e.g.,
+  having both `#x requires Foo` and `#x allows Bar`. This is primarily to
+  prevent cycles and contradictions in the type system.
+
+  Previously, the *best case* for such restrictions was that there are extremely
+  few choices for `#x`, and the *worst case* was that it implies `Bar` converts
+  to `Foo` when it isn't true, thus making `#x` unusable. Having either of
+  those requirements likely indicates a design flaw.
+
 * **[fix]** Fixes a latent type-checking bug that could occur when attempting to
   assign a value with an intersection type to a variable with a union type, if
   one or both types has another nested type, e.g., `[A&B]`→`[[A&B]|C]` or

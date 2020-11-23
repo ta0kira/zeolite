@@ -39,3 +39,77 @@ define Test {
 concrete Test {
   @type run () -> ()
 }
+
+
+testcase "category param bounded on both sides" {
+  error
+  require compiler "#x.+bound"
+}
+
+@value interface Type1 {}
+
+@value interface Type2 {}
+
+@value interface Value<#x> {
+  #x requires Type1
+  #x allows   Type2
+}
+
+
+testcase "implicit bound from reversing another filter" {
+  error
+  require compiler "#x.+bound"
+  require compiler "#x allows #y"
+}
+
+@value interface Type {}
+
+@value interface Value<#x,#y> {
+  #x requires Type
+  #y requires #x
+}
+
+
+testcase "defines filter is not an upper bound" {
+  success empty
+}
+
+@type interface Type1 {}
+
+@value interface Type2 {}
+
+@value interface Value<#x> {
+  #x defines Type1
+  #x allows  Type2
+}
+
+
+testcase "defines filter is not a lower bound" {
+  success empty
+}
+
+@type interface Type1 {}
+
+@value interface Type2 {}
+
+@value interface Value<#x> {
+  #x defines  Type1
+  #x requires Type2
+}
+
+
+testcase "function param bounded on both sides" {
+  error
+  require compiler "#x.+bound"
+}
+
+@value interface Type1 {}
+
+@value interface Type2 {}
+
+@value interface Value {
+  call<#x>
+    #x requires Type1
+    #x allows   Type2
+  () -> ()
+}

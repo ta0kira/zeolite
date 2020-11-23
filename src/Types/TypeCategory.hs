@@ -498,6 +498,24 @@ getCategoryParamMap :: AnyCategory c -> ParamValues
 getCategoryParamMap t = let ps = map vpParam $ getCategoryParams t in
                           Map.fromList $ zip ps (map (singleType . JustParamName False) ps)
 
+disallowBoundedParams :: CompileErrorM m => ParamFilters -> m ()
+disallowBoundedParams = mapErrorsM_ checkBounds . Map.toList where
+  checkBounds (p,fs) = do
+    let bs = splitBounds fs
+    case bs of
+         ([],_) -> return ()
+         (_,[]) -> return ()
+         (ls,hs) -> ("Param " ++ show p ++ " cannot have both lower and upper bounds") !!>
+           collectAllM_ [
+               mapErrorsM_ (filterAsError p) ls <!! "Lower bound:",
+               mapErrorsM_ (filterAsError p) hs <!! "Upper bound:"
+             ]
+  splitBounds (f@(TypeFilter FilterRequires _):fs) = let (ls,hs) = splitBounds fs in (ls,f:hs)
+  splitBounds (f@(TypeFilter FilterAllows   _):fs) = let (ls,hs) = splitBounds fs in (f:ls,hs)
+  splitBounds (_:fs) = splitBounds fs
+  splitBounds _ = ([],[])
+  filterAsError p f = compileErrorM $ show p ++ " " ++ show f
+
 checkConnectedTypes :: (Show c, CompileErrorM m) =>
   CategoryMap c -> [AnyCategory c] -> m ()
 checkConnectedTypes tm0 ts = do
@@ -584,20 +602,24 @@ checkParamVariances :: (Show c, CompileErrorM m) =>
 checkParamVariances tm0 ts = do
   tm <- declareAllTypes tm0 ts
   let r = CategoryResolver tm
-  collectAllM_ (map (checkCategory r) ts)
+  mapErrorsM_ (checkCategory r) ts
+  mapErrorsM_ checkBounds ts
   where
-    checkCategory r (ValueInterface c _ n ps rs fa _) = do
+    categoryContext t =
+      "In " ++ show (getCategoryName t) ++ formatFullContextBrace (getCategoryContext t)
+    checkBounds t = categoryContext t ??> (getCategoryFilterMap t >>= disallowBoundedParams)
+    checkCategory r t@(ValueInterface c _ n ps rs fa _) = categoryContext t ??> do
       noDuplicates c n ps
       let vm = Map.fromList $ map (\p -> (vpParam p,vpVariance p)) ps
       collectAllM_ (map (checkRefine r vm) rs)
       mapErrorsM_ (checkFilterVariance r vm) fa
-    checkCategory r (ValueConcrete c _ n ps rs ds fa _) = do
+    checkCategory r t@(ValueConcrete c _ n ps rs ds fa _) = categoryContext t ??> do
       noDuplicates c n ps
       let vm = Map.fromList $ map (\p -> (vpParam p,vpVariance p)) ps
       collectAllM_ (map (checkRefine r vm) rs)
       collectAllM_ (map (checkDefine r vm) ds)
       mapErrorsM_ (checkFilterVariance r vm) fa
-    checkCategory r (InstanceInterface c _ n ps fa _) = do
+    checkCategory r t@(InstanceInterface c _ n ps fa _) = categoryContext t ??> do
       noDuplicates c n ps
       let vm = Map.fromList $ map (\p -> (vpParam p,vpVariance p)) ps
       mapErrorsM_ (checkFilterVariance r vm) fa
@@ -677,7 +699,7 @@ validateCategoryFunction r t f = do
          TypeScope     -> validatateFunctionType r fm vm funcType
          ValueScope    -> validatateFunctionType r fm vm funcType
          _             -> return ()
-    where
+    getFunctionFilterMap f >>= disallowBoundedParams where
       message
         | getCategoryName t == sfType f = "In function:\n---\n" ++ show f ++ "\n---\n"
         | otherwise = "In function inherited from " ++ show (sfType f) ++
@@ -1034,9 +1056,8 @@ mergeInferredTypes :: (CompileErrorM m, TypeResolver r) =>
   r -> ParamFilters -> ParamFilters -> ParamValues -> MergeTree InferredTypeGuess ->
   m [InferredTypeGuess]
 mergeInferredTypes r f ff ps gs0 = do
-  let gs0' = reduceMergeTree mergeAny mergeAll leafToMap gs0
+  let gs0' = mapTypeGuesses gs0
   mapErrorsM reduce $ Map.toList gs0' where
-    leafToMap i = Map.fromList [(itgParam i,mergeLeaf i)]
     reduce (i,is) = do
       (GuessUnion gs) <- reduceMergeTree anyOp allOp leafOp is >>= filterGuesses i
       t <- takeBest i gs

@@ -310,20 +310,30 @@ concrete Test {
 testcase "mutually dependent inferences" {
   error
   require "get"
-  require "#x.+\[Formatted&String\]"
+  require "#x.+Int"
   require "#y.+String"
+}
+
+concrete Type<#x> {
+  @type create () -> (Type<#x>)
+}
+
+define Type {
+  create () {
+    return Type<#x>{ }
+  }
 }
 
 define Test {
   run () {
-    String             x <- "message"
-    [String&Formatted] y <- "message"
+    Type<String> x <- Type<String>$create()
+    Type<Int>    y <- Type<Int>$create()
     \ get<?,?>(x,y)
   }
 
   @type get<#x,#y>
-    #x requires #y
-    #y requires #x
+    #x requires Type<#y>
+    #y requires Type<#x>
   (#x,#y) -> ()
   get (_,_) {}
 }

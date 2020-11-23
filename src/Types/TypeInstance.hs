@@ -52,6 +52,7 @@ module Types.TypeInstance (
   isDefinesFilter,
   isRequiresFilter,
   isWeakValue,
+  mapTypeGuesses,
   noInferredTypes,
   requiredParam,
   requiredSingleton,
@@ -319,11 +320,18 @@ setParamsFixed f = mapGeneralType set where
   set (JustParamName _ n2) = JustParamName f n2
   set t = t
 
+mapTypeGuesses :: MergeTree InferredTypeGuess -> Map.Map ParamName (MergeTree InferredTypeGuess)
+mapTypeGuesses = reduceMergeTree mergeAny mergeAll leafToMap where
+  leafToMap i = Map.fromList [(itgParam i,mergeLeaf i)]
+
 noInferredTypes :: CompileErrorM m => m (MergeTree InferredTypeGuess) -> m ()
 noInferredTypes g = do
   g' <- g
-  let empty = reduceMergeTree mergeAll mergeAll (const False) g'
-  when (not empty) $ compileErrorM $ "Type guesses " ++ show g' ++ " are not allowed here"
+  let gm = mapTypeGuesses g'
+  "Type inference is not allowed here" !!> (mapErrorsM_ format $ Map.elems gm) where
+    format = compileErrorM . reduceMergeTree showAny showAll show
+    showAny gs = "Any of [ " ++ intercalate ", " gs ++ " ]"
+    showAll gs = "All of [ " ++ intercalate ", " gs ++ " ]"
 
 checkValueAssignment :: (CompileErrorM m, TypeResolver r) =>
   r -> ParamFilters -> ValueType -> ValueType -> m ()

@@ -1,23 +1,23 @@
 @type interface Type1<#x> {}
 
-@value interface Type2<#x> {}
+@value interface Type2<#x|> {}
 
-@value interface Type3<#x> {}
+@value interface Type3<#x|> {}
 
-concrete Type4<#x> {
-  #x requires Type2<#x>
+concrete Type4<#w,#x> {
+  #w requires Type2<#w>
   #x allows Type3<#x>
-  #x defines Type1<#x>
+  #w defines Type1<#w>
 
-  @type something<#y>
+  @type something<#y,#z>
     #y requires Type2<#y>
-    #y allows Type3<#y>
+    #z allows Type3<#z>
     #y defines Type1<#y>
-  () -> (Type4<#y>)
+  () -> (Type4<#y,#z>)
 
-  @type something2<#y>
-    #y requires #x
-    #y allows #x
+  @type something2<#y,#z>
+    #y requires #w
+    #z allows #x
     #y defines Type1<#y>
-  () -> (Type4<#y>)
+  () -> (Type4<#y,#z>)
 }
