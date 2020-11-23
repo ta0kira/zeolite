@@ -57,11 +57,11 @@ define ReadIterator {
 
   readCurrent () {
     if (pastForwardEnd() || pastReverseEnd()) {
-      \ LazyStream<Formatted>$new()
+      \ LazyStream<Formatted>.new()
           .append("Position ")
           .append(position)
           .append(" is out of bounds")
-          .writeTo(SimpleOutput$error())
+          .writeTo(SimpleOutput.error())
     }
     return reader.readPosition(position)
   }
@@ -120,7 +120,7 @@ define TextReader {
   }
 
   readAll (reader) {
-    Builder<String> builder <- String$builder()
+    Builder<String> builder <- String.builder()
     while (!reader.pastEnd()) {
       \ builder.append(reader.readBlock($ExprLookup[BLOCK_READ_SIZE]$))
     }

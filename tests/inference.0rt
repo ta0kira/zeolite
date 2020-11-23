@@ -17,7 +17,7 @@ limitations under the License.
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
 testcase "simple inference" {
-  success Test$run()
+  success Test.run()
 }
 
 define Test {
@@ -60,7 +60,7 @@ concrete Test {
 
 
 testcase "nested inference" {
-  success Test$run()
+  success Test.run()
 }
 
 concrete Type<#x> {
@@ -75,7 +75,7 @@ define Type {
 
 define Test {
   run () {
-    Type<Int> value <- get<?>(Type<Int>$create())
+    Type<Int> value <- get<?>(Type<Int>.create())
   }
 
   @type get<#x> (Type<#x>) -> (Type<#x>)
@@ -90,12 +90,12 @@ concrete Test {
 
 
 testcase "simple inference with qualification" {
-  success Test$run()
+  success Test.run()
 }
 
 define Test {
   run () {
-    Int value <- Test$get<?>(10)
+    Int value <- Test.get<?>(10)
   }
 
   @type get<#x> (#x) -> (#x)
@@ -118,7 +118,7 @@ testcase "inference mismatch with qualification" {
 
 define Test {
   run () {
-    String value <- Test$get<?>(10)
+    String value <- Test.get<?>(10)
   }
 
   @type get<#x> (#x) -> (#x)
@@ -133,7 +133,7 @@ concrete Test {
 
 
 testcase "nested inference with qualification" {
-  success Test$run()
+  success Test.run()
 }
 
 concrete Type<#x> {
@@ -148,7 +148,7 @@ define Type {
 
 define Test {
   run () {
-    Type<Int> value <- Test$get<?>(Type<Int>$create())
+    Type<Int> value <- Test.get<?>(Type<Int>.create())
   }
 
   @type get<#x> (Type<#x>) -> (Type<#x>)
@@ -180,7 +180,7 @@ define Type {
 
 define Test {
   run () {
-    Type<Int> value <- get<?>(Type<Int>$create(),"bad")
+    Type<Int> value <- get<?>(Type<Int>.create(),"bad")
   }
 
   @type get<#x> (Type<#x>,#x) -> (Type<#x>)
@@ -264,7 +264,7 @@ define Type {
 
 define Test {
   run () {
-    \ get<?>(Type<String>$create())
+    \ get<?>(Type<String>.create())
   }
 
   @type get<#x>
@@ -281,7 +281,7 @@ concrete Test {
 
 
 testcase "clashing param filter in the same scope" {
-  success Test$run()
+  success Test.run()
 }
 
 define Test {
@@ -326,8 +326,8 @@ define Type {
 
 define Test {
   run () {
-    Type<String> x <- Type<String>$create()
-    Type<Int>    y <- Type<Int>$create()
+    Type<String> x <- Type<String>.create()
+    Type<Int>    y <- Type<Int>.create()
     \ get<?,?>(x,y)
   }
 

@@ -20,7 +20,7 @@ $TestsOnly$
 
 define Testing {
   check (x,y) {
-    if (!#x$equals(x,y)) {
+    if (!#x.equals(x,y)) {
       fail(x)
     }
   }
@@ -39,7 +39,7 @@ define Testing {
     #x defines LessThan<#x>
   (#x,#x) -> (Bool)
   lessEquals (x,y) {
-    // Using !#x$lessThan(y,x) wouldn't account for NaNs.
-    return #x$lessThan(x,y) || #x$equals(x,y)
+    // Using !#x.lessThan(y,x) wouldn't account for NaNs.
+    return #x.lessThan(x,y) || #x.equals(x,y)
   }
 }

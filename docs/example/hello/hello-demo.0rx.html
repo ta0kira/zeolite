@@ -16,24 +16,24 @@
 <b>define</b> <b><span style='color:#0057ae;'>HelloDemo</span></b> {
   run () {
     <b>scoped</b> {
-      <span style='color:#0057ae;'>TextReader</span> reader &lt;- <span style='color:#0057ae;'>TextReader</span><span style='color:#644a9b;'>$</span>fromBlockReader(<span style='color:#0057ae;'>SimpleInput</span><span style='color:#644a9b;'>$</span>stdin())
+      <span style='color:#0057ae;'>TextReader</span> reader &lt;- <span style='color:#0057ae;'>TextReader</span><span style='color:#644a9b;'>.</span>fromBlockReader(<span style='color:#0057ae;'>SimpleInput</span><span style='color:#644a9b;'>.</span>stdin())
     } <b>cleanup</b> {
-      <span style='color:#006e28;'>\</span> <span style='color:#0057ae;'>LazyStream</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Formatted</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>$</span>new()
-          .append(<span style='color:#bf0303;'>&quot;Goodbye.</span><span style='color:#924c9d;'>\n</span><span style='color:#bf0303;'>&quot;</span>)
-          .writeTo(<span style='color:#0057ae;'>SimpleOutput</span><span style='color:#644a9b;'>$</span>stderr())
-    } <b>in</b> <b>while</b> (!reader.pastEnd()) {
-      <span style='color:#006e28;'>\</span> <span style='color:#0057ae;'>LazyStream</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Formatted</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>$</span>new()
-          .append(<span style='color:#bf0303;'>&quot;What is your name? &quot;</span>)
-          .writeTo(<span style='color:#0057ae;'>SimpleOutput</span><span style='color:#644a9b;'>$</span>stderr())
-      <i><span style='color:#0057ae;'>String</span></i> name &lt;- reader.readNextLine()
-      <b>if</b> (name.readSize() == <span style='color:#b08000;'>0</span>) {
+      <span style='color:#006e28;'>\</span> <span style='color:#0057ae;'>LazyStream</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Formatted</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>.</span>new()
+          <span style='color:#644a9b;'>.</span>append(<span style='color:#bf0303;'>&quot;Goodbye.</span><span style='color:#924c9d;'>\n</span><span style='color:#bf0303;'>&quot;</span>)
+          <span style='color:#644a9b;'>.</span>writeTo(<span style='color:#0057ae;'>SimpleOutput</span><span style='color:#644a9b;'>.</span>stderr())
+    } <b>in</b> <b>while</b> (!reader<span style='color:#644a9b;'>.</span>pastEnd()) {
+      <span style='color:#006e28;'>\</span> <span style='color:#0057ae;'>LazyStream</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Formatted</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>.</span>new()
+          <span style='color:#644a9b;'>.</span>append(<span style='color:#bf0303;'>&quot;What is your name? &quot;</span>)
+          <span style='color:#644a9b;'>.</span>writeTo(<span style='color:#0057ae;'>SimpleOutput</span><span style='color:#644a9b;'>.</span>stderr())
+      <i><span style='color:#0057ae;'>String</span></i> name &lt;- reader<span style='color:#644a9b;'>.</span>readNextLine()
+      <b>if</b> (name<span style='color:#644a9b;'>.</span>readSize() == <span style='color:#b08000;'>0</span>) {
         <b>break</b>
       }
-      <span style='color:#006e28;'>\</span> <span style='color:#0057ae;'>LazyStream</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Formatted</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>$</span>new()
-          .append(<span style='color:#bf0303;'>&quot;Hello </span><span style='color:#924c9d;'>\&quot;</span><span style='color:#bf0303;'>&quot;</span>)
-          .append(name)
-          .append(<span style='color:#bf0303;'>&quot;</span><span style='color:#924c9d;'>\&quot;</span><span style='color:#bf0303;'>, if that's your real name.</span><span style='color:#924c9d;'>\n</span><span style='color:#bf0303;'>&quot;</span>)
-          .writeTo(<span style='color:#0057ae;'>SimpleOutput</span><span style='color:#644a9b;'>$</span>stderr())
+      <span style='color:#006e28;'>\</span> <span style='color:#0057ae;'>LazyStream</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Formatted</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>.</span>new()
+          <span style='color:#644a9b;'>.</span>append(<span style='color:#bf0303;'>&quot;Hello </span><span style='color:#924c9d;'>\&quot;</span><span style='color:#bf0303;'>&quot;</span>)
+          <span style='color:#644a9b;'>.</span>append(name)
+          <span style='color:#644a9b;'>.</span>append(<span style='color:#bf0303;'>&quot;</span><span style='color:#924c9d;'>\&quot;</span><span style='color:#bf0303;'>, if that's your real name.</span><span style='color:#924c9d;'>\n</span><span style='color:#bf0303;'>&quot;</span>)
+          <span style='color:#644a9b;'>.</span>writeTo(<span style='color:#0057ae;'>SimpleOutput</span><span style='color:#644a9b;'>.</span>stderr())
     }
   }
 }

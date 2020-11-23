@@ -19,7 +19,7 @@
   <span style='color:#644a9b;'>@value</span> <span style='color:#0057ae;'>Tree</span><span style='color:#c02040;'>&lt;</span><span style='color:#0057ae;'>TypeKey</span><span style='color:#c02040;'>&lt;</span><b>any</b><span style='color:#c02040;'>&gt;</span>,<span style='color:#0057ae;'>LockedType</span><span style='color:#c02040;'>&lt;</span><b>any</b><span style='color:#c02040;'>&gt;&gt;</span> tree
 
   new () {
-    <b>return</b> <span style='color:#0057ae;'>TypeTree</span>{ <span style='color:#0057ae;'>Tree</span><span style='color:#c02040;'>&lt;</span><span style='color:#0057ae;'>TypeKey</span><span style='color:#c02040;'>&lt;</span><b>any</b><span style='color:#c02040;'>&gt;</span>,<span style='color:#0057ae;'>LockedType</span><span style='color:#c02040;'>&lt;</span><b>any</b><span style='color:#c02040;'>&gt;&gt;</span><span style='color:#644a9b;'>$</span>new() }
+    <b>return</b> <span style='color:#0057ae;'>TypeTree</span>{ <span style='color:#0057ae;'>Tree</span><span style='color:#c02040;'>&lt;</span><span style='color:#0057ae;'>TypeKey</span><span style='color:#c02040;'>&lt;</span><b>any</b><span style='color:#c02040;'>&gt;</span>,<span style='color:#0057ae;'>LockedType</span><span style='color:#c02040;'>&lt;</span><b>any</b><span style='color:#c02040;'>&gt;&gt;</span><span style='color:#644a9b;'>.</span>new() }
   }
 
   set (k,v) {
@@ -87,7 +87,7 @@
   }
 
   check (k) {
-    <b>if</b> (key <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>TypeKey</span><span style='color:#c02040;'>&lt;</span><b>any</b><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>$</span>equals<b><span style='color:#c02040;'>`</span></b> k) {
+    <b>if</b> (key <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>TypeKey</span><span style='color:#c02040;'>&lt;</span><b>any</b><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>.</span>equals<b><span style='color:#c02040;'>`</span></b> k) {
       <span style='color:#898887;'>// reduce is a builtin that returns value (as optional #y) iff #x -&gt; #y.</span>
       <span style='color:#898887;'>// The runtime type of value does not matter here; it just needs to be of</span>
       <span style='color:#898887;'>// type optional #x at compile time.</span>

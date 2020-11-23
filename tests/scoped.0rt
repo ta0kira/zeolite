@@ -17,7 +17,7 @@ limitations under the License.
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
 testcase "scoped unconditional" {
-  success Test$run()
+  success Test.run()
 }
 
 @value interface Value {}
@@ -60,7 +60,7 @@ concrete Test {
 
 
 testcase "return inside scope" {
-  success Test$run()
+  success Test.run()
 }
 
 
@@ -83,7 +83,7 @@ concrete Test {
 
 
 testcase "return from scoped" {
-  success Test$run()
+  success Test.run()
 }
 
 @value interface Value {}
@@ -125,7 +125,7 @@ concrete Test {
 
 
 testcase "assign inside scope" {
-  success Test$run()
+  success Test.run()
 }
 
 @value interface Value {}
@@ -147,7 +147,7 @@ concrete Test {
 
 
 testcase "assign from scoped" {
-  success Test$run()
+  success Test.run()
 }
 
 @value interface Value {}
@@ -168,7 +168,7 @@ concrete Test {
 
 
 testcase "simple cleanup" {
-  success Test$run()
+  success Test.run()
 }
 
 define Test {
@@ -211,7 +211,7 @@ concrete Test {
 
 
 testcase "cleanup before return" {
-  success Test$run()
+  success Test.run()
 }
 
 concrete Value {
@@ -243,7 +243,7 @@ define Value {
 
 define Test {
   run () {
-    Value value <- Value$create()
+    Value value <- Value.create()
     Int value1 <- value.call()
     if (value1 != 2) {
       fail(value1)
@@ -261,7 +261,7 @@ concrete Test {
 
 
 testcase "positional return sets named returns for cleanup" {
-  crash Test$run()
+  crash Test.run()
   require "message"
   exclude "failed"
 }
@@ -313,7 +313,7 @@ concrete Test {
 
 
 testcase "cleanup skipped in scoped return" {
-  success Test$run()
+  success Test.run()
 }
 
 define Test {
@@ -342,7 +342,7 @@ concrete Test {
 
 
 testcase "multiple cleanup" {
-  success Test$run()
+  success Test.run()
 }
 
 define Test {
@@ -377,7 +377,7 @@ concrete Test {
 
 
 testcase "multiple cleanup with return" {
-  success Test$run()
+  success Test.run()
 }
 
 concrete Value {
@@ -417,7 +417,7 @@ define Value {
 
 define Test {
   run () {
-    Value value <- Value$create()
+    Value value <- Value.create()
     Int value1, Int value2, Int value3 <- value.call()
     if (value1 != 1) {
       fail(value1)
@@ -488,7 +488,7 @@ concrete Test {
 
 
 testcase "no name clash in nested scope with return" {
-  success Test$run()
+  success Test.run()
 }
 
 define Test {
@@ -509,7 +509,7 @@ concrete Test {
 
 
 testcase "cleanup skipped for fail" {
-  crash Test$run()
+  crash Test.run()
   require "scoped"
 }
 
@@ -529,7 +529,7 @@ concrete Test {
 
 
 testcase "cleanup not applied to returns outside of scope" {
-  success Test$run()
+  success Test.run()
 }
 
 define Test {
@@ -553,7 +553,7 @@ concrete Test {
 
 
 testcase "cleanup unconditional" {
-  success Test$run()
+  success Test.run()
 }
 
 @value interface Value {}
@@ -574,7 +574,7 @@ concrete Test {
 
 
 testcase "scoped empty blocks" {
-  success Test$run()
+  success Test.run()
 }
 
 @value interface Value {}
@@ -597,7 +597,7 @@ concrete Test {
 
 
 testcase "just cleanup" {
-  success Test$run()
+  success Test.run()
 }
 
 concrete Value {
@@ -626,7 +626,7 @@ define Value {
 
 define Test {
   run () {
-    Value value <- Value$create()
+    Value value <- Value.create()
     Int value1 <- value.postIncrement()
     if (value1 != 0) {
       fail(value1)
@@ -644,7 +644,7 @@ concrete Test {
 
 
 testcase "separate trace context for cleanup" {
-  crash Test$run()
+  crash Test.run()
   require "Failed"
   require "cleanup block"
   require "Test\.run"
@@ -666,7 +666,7 @@ concrete Test {
 
 
 testcase "partial cleanup with while and break" {
-  success Test$run()
+  success Test.run()
 }
 
 define Test {
@@ -688,13 +688,13 @@ define Test {
           }
         }
       }
-      \ Testing$check<?>(x,0)
-      \ Testing$check<?>(y,2)
-      \ Testing$check<?>(z,3)
+      \ Testing.check<?>(x,0)
+      \ Testing.check<?>(y,2)
+      \ Testing.check<?>(z,3)
     }
-    \ Testing$check<?>(x,1)
-    \ Testing$check<?>(y,2)
-    \ Testing$check<?>(z,3)
+    \ Testing.check<?>(x,1)
+    \ Testing.check<?>(y,2)
+    \ Testing.check<?>(z,3)
   }
 }
 
@@ -704,7 +704,7 @@ concrete Test {
 
 
 testcase "full cleanup with while and return" {
-  success Test$run()
+  success Test.run()
 }
 
 concrete Value {
@@ -746,20 +746,20 @@ define Value {
 
 define Test {
   run () {
-    Value value <- Value$create()
+    Value value <- Value.create()
     scoped {
       Int x, Int y, Int z <- value.call()
     } in {
-      \ Testing$check<?>(x,0)
-      \ Testing$check<?>(y,0)
-      \ Testing$check<?>(z,0)
+      \ Testing.check<?>(x,0)
+      \ Testing.check<?>(y,0)
+      \ Testing.check<?>(z,0)
     }
     scoped {
       Int x, Int y, Int z <- value.get()
     } in {
-      \ Testing$check<?>(x,1)
-      \ Testing$check<?>(y,2)
-      \ Testing$check<?>(z,3)
+      \ Testing.check<?>(x,1)
+      \ Testing.check<?>(y,2)
+      \ Testing.check<?>(z,3)
     }
   }
 }

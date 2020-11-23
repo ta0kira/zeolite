@@ -17,7 +17,7 @@ limitations under the License.
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
 testcase "assign if/elif/else" {
-  success Test$run()
+  success Test.run()
 }
 
 @value interface Value {}
@@ -43,7 +43,7 @@ concrete Test {
 
 
 testcase "return if/elif/else" {
-  success Test$run()
+  success Test.run()
 }
 
 @value interface Value {}
@@ -223,7 +223,7 @@ concrete Test {
 
 
 testcase "crash in if" {
-  crash Test$run()
+  crash Test.run()
   require "empty"
 }
 
@@ -242,7 +242,7 @@ concrete Test {
 
 
 testcase "crash in elif" {
-  crash Test$run()
+  crash Test.run()
   require "empty"
 }
 
@@ -262,7 +262,7 @@ concrete Test {
 
 
 testcase "multi assign if/elif/else" {
-  success Test$run()
+  success Test.run()
 }
 
 @value interface Value {}
@@ -378,7 +378,7 @@ concrete Test {
 
 
 testcase "cleanup before return in if" {
-  success Test$run()
+  success Test.run()
 }
 
 concrete Value {
@@ -413,7 +413,7 @@ define Value {
 
 define Test {
   run () {
-    Value value <- Value$create()
+    Value value <- Value.create()
     Int value1 <- value.call()
     if (value1 != 2) {
       fail(value1)

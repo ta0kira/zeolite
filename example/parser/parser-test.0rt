@@ -1,5 +1,5 @@
 testcase "parse data from a file" {
-  success Test$execute()
+  success Test.execute()
 }
 
 concrete Test {
@@ -8,7 +8,7 @@ concrete Test {
 
 define Test {
   execute () {
-    TestData data <- TestData$parseFrom(loadTestData()).getValue()
+    TestData data <- TestData.parseFrom(loadTestData()).getValue()
 
     if (data.getName() != "example data") {
       fail(data.getName())
@@ -26,9 +26,9 @@ define Test {
   @type loadTestData () -> (String)
   loadTestData () {
     scoped {
-      RawFileReader reader <- RawFileReader$open($ExprLookup[MODULE_PATH]$ + "/test-data.txt")
+      RawFileReader reader <- RawFileReader.open($ExprLookup[MODULE_PATH]$ + "/test-data.txt")
     } cleanup {
       \ reader.freeResource()
-    } in return TextReader$readAll(reader)
+    } in return TextReader.readAll(reader)
   }
 }

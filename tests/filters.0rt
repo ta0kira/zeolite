@@ -17,7 +17,7 @@ limitations under the License.
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
 testcase "external filter not applied in @category" {
-  success Test$run()
+  success Test.run()
 }
 
 concrete Value<#x> {

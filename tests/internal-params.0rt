@@ -42,7 +42,7 @@ concrete Test {
 
 
 testcase "internal filter not applied in @type" {
-  success Test$run()
+  success Test.run()
 }
 
 concrete Value {
@@ -59,7 +59,7 @@ define Value {
 
 define Test {
   run () {
-    \ Value$something<Bool>()
+    \ Value.something<Bool>()
   }
 }
 
@@ -69,7 +69,7 @@ concrete Test {
 
 
 testcase "internal filter not applied in @category" {
-  success Test$run()
+  success Test.run()
 }
 
 concrete Value {
@@ -96,7 +96,7 @@ concrete Test {
 
 
 testcase "internal params" {
-  success Test$run()
+  success Test.run()
 }
 
 concrete Value {
@@ -117,7 +117,7 @@ define Value {
 
 define Test {
   run () {
-    \ Value$create<Type1,Type2>()
+    \ Value.create<Type1,Type2>()
   }
 }
 
@@ -127,7 +127,7 @@ concrete Test {
 
 
 testcase "internal params with filters" {
-  success Test$run()
+  success Test.run()
 }
 
 @value interface Get<|#x> {
@@ -204,7 +204,7 @@ concrete Test {
 
 
 testcase "internal params with values" {
-  success Test$run()
+  success Test.run()
 }
 
 concrete Value {
@@ -232,7 +232,7 @@ concrete Test {
 
 
 testcase "value depends on internal param" {
-  success Test$run()
+  success Test.run()
 }
 
 concrete Type<#y> {
@@ -262,7 +262,7 @@ define Value {
 
 define Test {
   run () {
-    \ Value$create<Bool>(Type<Bool>$create())
+    \ Value.create<Bool>(Type<Bool>.create())
   }
 }
 
@@ -305,7 +305,7 @@ define Value {
 
 define Test {
   run () {
-    \ Value$create<String>(Type<Bool>$create())
+    \ Value.create<String>(Type<Bool>.create())
   }
 }
 
@@ -380,7 +380,7 @@ concrete Test {
 
 
 testcase "internal param no clash with category" {
-  success Test$run()
+  success Test.run()
 }
 
 concrete Value {
@@ -405,7 +405,7 @@ concrete Test {
 
 
 testcase "reduce internal param success" {
-  success Test$run()
+  success Test.run()
 }
 
 concrete Value {
@@ -427,7 +427,7 @@ define Value {
 
 define Test {
   run () {
-    Value value <- Value$create<Formatted>()
+    Value value <- Value.create<Formatted>()
     if (!value.check<String>("")) {
       fail("Failed")
     }
@@ -440,7 +440,7 @@ concrete Test {
 
 
 testcase "reduce internal param fail" {
-  success Test$run()
+  success Test.run()
 }
 
 concrete Value {
@@ -462,7 +462,7 @@ define Value {
 
 define Test {
   run () {
-    Value value <- Value$create<Formatted>()
+    Value value <- Value.create<Formatted>()
     if (value.check<Value>(value)) {
       fail("Failed")
     }

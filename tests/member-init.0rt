@@ -33,7 +33,7 @@ concrete Test {
 
 
 testcase "@category member from @type" {
-  success Test$run()
+  success Test.run()
 }
 
 define Test {
@@ -53,7 +53,7 @@ concrete Test {
 
 
 testcase "@category member from @value" {
-  success Test$run()
+  success Test.run()
 }
 
 define Test {
@@ -94,7 +94,7 @@ concrete Test {
 
 
 testcase "@category member refers to @category member" {
-  success Test$run()
+  success Test.run()
 }
 
 define Test {
@@ -107,7 +107,7 @@ define Test {
   }
 
   run () {
-    \ Testing$check<?>(get(),2)
+    \ Testing.check<?>(get(),2)
   }
 }
 
@@ -117,7 +117,7 @@ concrete Test {
 
 
 testcase "@category member is lazy" {
-  success Test$run()
+  success Test.run()
 }
 
 concrete Util {
@@ -131,7 +131,7 @@ define Util {
 }
 
 define Test {
-  @category Bool value <- Util$doNotUse()
+  @category Bool value <- Util.doNotUse()
 
   run () {}
 }
@@ -142,7 +142,7 @@ concrete Test {
 
 
 testcase "@category member init when read" {
-  crash Test$run()
+  crash Test.run()
   require "do not use"
 }
 
@@ -157,7 +157,7 @@ define Util {
 }
 
 define Test {
-  @category Bool value <- Util$doNotUse()
+  @category Bool value <- Util.doNotUse()
 
   run () {
     Bool value2 <- value
@@ -170,7 +170,7 @@ concrete Test {
 
 
 testcase "@category member init when assigned" {
-  crash Test$run()
+  crash Test.run()
   require "do not use"
 }
 
@@ -185,7 +185,7 @@ define Util {
 }
 
 define Test {
-  @category Bool value <- Util$doNotUse()
+  @category Bool value <- Util.doNotUse()
 
   run () {
     value <- false
@@ -198,7 +198,7 @@ concrete Test {
 
 
 testcase "@category member init when ignored" {
-  crash Test$run()
+  crash Test.run()
   require "do not use"
 }
 
@@ -213,7 +213,7 @@ define Util {
 }
 
 define Test {
-  @category Bool value <- Util$doNotUse()
+  @category Bool value <- Util.doNotUse()
 
   run () {
     \ value
@@ -226,7 +226,7 @@ concrete Test {
 
 
 testcase "@category member inline assignment" {
-  success Test$run()
+  success Test.run()
 }
 
 define Test {
@@ -250,7 +250,7 @@ concrete Test {
 
 
 testcase "@category init cycle" {
-  crash Test$run()
+  crash Test.run()
   require "Value1|Value2"
 }
 
@@ -263,7 +263,7 @@ concrete Value2 {
 }
 
 define Value1 {
-  @category Bool value <- Value2$get()
+  @category Bool value <- Value2.get()
 
   get () {
     return value
@@ -271,7 +271,7 @@ define Value1 {
 }
 
 define Value2 {
-  @category Bool value <- Value1$get()
+  @category Bool value <- Value1.get()
 
   get () {
     return value
@@ -280,7 +280,7 @@ define Value2 {
 
 define Test {
   run () {
-    \ Value1$get()
+    \ Value1.get()
   }
 }
 

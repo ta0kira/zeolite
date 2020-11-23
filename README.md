@@ -114,9 +114,9 @@ It's the [any%](https://en.wiktionary.org/wiki/any%25) of programming.
 
 <b>define</b> <b><span style='color:#0057ae;'>HelloWorld</span></b> {
   run () {
-    <span style='color:#006e28;'>\</span> <span style='color:#0057ae;'>LazyStream</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Formatted</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>$</span>new()
+    <span style='color:#006e28;'>\</span> <span style='color:#0057ae;'>LazyStream</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Formatted</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>.</span>new()
         .append(<span style='color:#bf0303;'>&quot;Hello World</span><span style='color:#924c9d;'>\n</span><span style='color:#bf0303;'>&quot;</span>)
-        .writeTo(<span style='color:#0057ae;'>SimpleOutput</span><span style='color:#644a9b;'>$</span>stderr())
+        .writeTo(<span style='color:#0057ae;'>SimpleOutput</span><span style='color:#644a9b;'>.</span>stderr())
   }
 }</pre>
 
@@ -422,8 +422,9 @@ simplify parsing.)
 - Calling a function with `@value` scope requires a value of the correct type,
   and uses `.` notation, e.g., `foo.getValue()`.
 - Calling a function with `@type` scope requires the type with parameter
-  substutition (if applicable), and uses `$` notation, e.g.,
-  `MyCategory<Int>$create()`.
+  substutition (if applicable), and uses `.` notation, e.g.,
+  `MyCategory<Int>.create()`. (Prior to compiler version `0.9.0.0`, `$` was used
+  instead of `.`.)
 - Calling a function with `@category` scope requires the category itself, and
   uses the `:` notation, e.g., `MyCategory:foo()`. (Prior to compiler version
   `0.9.0.0`, `$$` was used instead of `:`.)
@@ -484,10 +485,10 @@ strictly before all infix operators.
 
 <span style='color:#898887;'>// ...</span>
 
-<span style='color:#898887;'>// Math$plus is evaluated first.</span>
-<i><span style='color:#0057ae;'>Int</span></i> x &lt;- <span style='color:#b08000;'>1</span> <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>Math</span><span style='color:#644a9b;'>$</span>plus<b><span style='color:#c02040;'>`</span></b> <span style='color:#b08000;'>2</span> * <span style='color:#b08000;'>5</span>
-<span style='color:#898887;'>// Math$neg is evaluated first.</span>
-<i><span style='color:#0057ae;'>Int</span></i> y &lt;- <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>Math</span><span style='color:#644a9b;'>$</span>neg<b><span style='color:#c02040;'>`</span></b> x <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>Math</span><span style='color:#644a9b;'>$</span>plus<b><span style='color:#c02040;'>`</span></b> <span style='color:#b08000;'>2</span></pre>
+<span style='color:#898887;'>// Math.plus is evaluated first.</span>
+<i><span style='color:#0057ae;'>Int</span></i> x &lt;- <span style='color:#b08000;'>1</span> <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>Math</span><span style='color:#644a9b;'>.</span>plus<b><span style='color:#c02040;'>`</span></b> <span style='color:#b08000;'>2</span> * <span style='color:#b08000;'>5</span>
+<span style='color:#898887;'>// Math.neg is evaluated first.</span>
+<i><span style='color:#0057ae;'>Int</span></i> y &lt;- <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>Math</span><span style='color:#644a9b;'>.</span>neg<b><span style='color:#c02040;'>`</span></b> x <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>Math</span><span style='color:#644a9b;'>.</span>plus<b><span style='color:#c02040;'>`</span></b> <span style='color:#b08000;'>2</span></pre>
 
 #### Data Members and Value Creation
 
@@ -519,7 +520,7 @@ explicitly-defined functions.
 <span style='color:#898887;'>// ...</span>
 
 <span style='color:#898887;'>// Create a new value in some other procedure.</span>
-<span style='color:#0057ae;'>MyCategory</span> myValue &lt;- <span style='color:#0057ae;'>MyCategory</span><span style='color:#644a9b;'>$</span>create()</pre>
+<span style='color:#0057ae;'>MyCategory</span> myValue &lt;- <span style='color:#0057ae;'>MyCategory</span><span style='color:#644a9b;'>.</span>create()</pre>
 
 There *is no syntax* for accessing a data member from another object; even
 objects of the same type. This effectively makes all variables **internal**
@@ -803,9 +804,9 @@ so would just create more opportunity for unnecessary compile-time errors.)
 
   <b>define</b> <b><span style='color:#0057ae;'>MyCategory</span></b> {
     compare (x,y) {
-      <b>if</b> (<i><span style='color:#0057ae;'>#x</span></i><span style='color:#644a9b;'>$</span>lessThan(x,y)) {
+      <b>if</b> (<i><span style='color:#0057ae;'>#x</span></i><span style='color:#644a9b;'>.</span>lessThan(x,y)) {
         <b>return</b> -<span style='color:#b08000;'>1</span>
-      } <b>elif</b> (<i><span style='color:#0057ae;'>#x</span></i><span style='color:#644a9b;'>$</span>lessThan(y,x)) {
+      } <b>elif</b> (<i><span style='color:#0057ae;'>#x</span></i><span style='color:#644a9b;'>.</span>lessThan(y,x)) {
         <b>return</b> <span style='color:#b08000;'>1</span>
       } <b>else</b> {
         <b>return</b> <span style='color:#b08000;'>0</span>
@@ -815,7 +816,7 @@ so would just create more opportunity for unnecessary compile-time errors.)
 
   <span style='color:#898887;'>// ...</span>
 
-  <i><span style='color:#0057ae;'>Int</span></i> comp &lt;- <span style='color:#0057ae;'>MyCategory</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>String</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>$</span>compare(<span style='color:#bf0303;'>&quot;x&quot;</span>,<span style='color:#bf0303;'>&quot;y&quot;</span>)</pre>
+  <i><span style='color:#0057ae;'>Int</span></i> comp &lt;- <span style='color:#0057ae;'>MyCategory</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>String</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>.</span>compare(<span style='color:#bf0303;'>&quot;x&quot;</span>,<span style='color:#bf0303;'>&quot;y&quot;</span>)</pre>
 
 - All of the above is also possible with **function parameters**, aside from
   specifying parameter variance.
@@ -829,9 +830,9 @@ so would just create more opportunity for unnecessary compile-time errors.)
 
   <b>define</b> <b><span style='color:#0057ae;'>MyCategory</span></b> {
     compare (x,y) {
-      <b>if</b> (<i><span style='color:#0057ae;'>#x</span></i><span style='color:#644a9b;'>$</span>lessThan(x,y)) {
+      <b>if</b> (<i><span style='color:#0057ae;'>#x</span></i><span style='color:#644a9b;'>.</span>lessThan(x,y)) {
         <b>return</b> -<span style='color:#b08000;'>1</span>
-      } <b>elif</b> (<i><span style='color:#0057ae;'>#x</span></i><span style='color:#644a9b;'>$</span>lessThan(y,x)) {
+      } <b>elif</b> (<i><span style='color:#0057ae;'>#x</span></i><span style='color:#644a9b;'>.</span>lessThan(y,x)) {
         <b>return</b> <span style='color:#b08000;'>1</span>
       } <b>else</b> {
         <b>return</b> <span style='color:#b08000;'>0</span>
@@ -841,7 +842,7 @@ so would just create more opportunity for unnecessary compile-time errors.)
 
   <span style='color:#898887;'>// ...</span>
 
-  <i><span style='color:#0057ae;'>Int</span></i> comp &lt;- <span style='color:#0057ae;'>MyCategory</span><span style='color:#644a9b;'>$</span>compare&lt;<i><span style='color:#0057ae;'>String</span></i>&gt;(<span style='color:#bf0303;'>&quot;x&quot;</span>,<span style='color:#bf0303;'>&quot;y&quot;</span>)</pre>
+  <i><span style='color:#0057ae;'>Int</span></i> comp &lt;- <span style='color:#0057ae;'>MyCategory</span><span style='color:#644a9b;'>.</span>compare&lt;<i><span style='color:#0057ae;'>String</span></i>&gt;(<span style='color:#bf0303;'>&quot;x&quot;</span>,<span style='color:#bf0303;'>&quot;y&quot;</span>)</pre>
 
 ### Using Interfaces
 
@@ -931,8 +932,8 @@ actual mistake causing a type error.)
 <span style='color:#0057ae;'>Value</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Int</span></i><span style='color:#c02040;'>&gt;</span> value1 &lt;- <span style='color:#0057ae;'>Value</span><span style='color:#644a9b;'>:</span>create1&lt;<b>?</b>&gt;(<span style='color:#b08000;'>10</span>)
 
 <span style='color:#898887;'>// These uses of ? are not allowed:</span>
-<span style='color:#898887;'>// Value&lt;Int&gt; value2 &lt;- Value&lt;?&gt;$create2(10)</span>
-<span style='color:#898887;'>// Value&lt;?&gt;   value2 &lt;- Value&lt;Int&gt;$create2(10)</span>
+<span style='color:#898887;'>// Value&lt;Int&gt; value2 &lt;- Value&lt;?&gt;.create2(10)</span>
+<span style='color:#898887;'>// Value&lt;?&gt;   value2 &lt;- Value&lt;Int&gt;.create2(10)</span>
 </pre>
 
 Only the function arguments and the parameter filters are used to infer the type
@@ -992,7 +993,7 @@ types.
 
   <span style='color:#898887;'>// ...</span>
 
-  <b><span style='color:#006e28;'>[</span></b><span style='color:#0057ae;'>Reader</span><span style='color:#006e28;'>&amp;</span><span style='color:#0057ae;'>Writer</span><b><span style='color:#006e28;'>]</span></b> val <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#0057ae;'>Data</span><span style='color:#644a9b;'>$</span>new()
+  <b><span style='color:#006e28;'>[</span></b><span style='color:#0057ae;'>Reader</span><span style='color:#006e28;'>&amp;</span><span style='color:#0057ae;'>Writer</span><b><span style='color:#006e28;'>]</span></b> val <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#0057ae;'>Data</span><span style='color:#644a9b;'>.</span>new()
   <span style='color:#0057ae;'>Reader</span> val2 <b><span style='color:#006e28;'>&lt;-</span></b> val
   <span style='color:#0057ae;'>Writer</span> val3 <b><span style='color:#006e28;'>&lt;-</span></b> val</pre>
 
@@ -1021,7 +1022,7 @@ types.
 
   <span style='color:#898887;'>// ...</span>
 
-  <b><span style='color:#006e28;'>[</span></b><span style='color:#0057ae;'>Newspaper</span><span style='color:#006e28;'>|</span><span style='color:#0057ae;'>Magazine</span><b><span style='color:#006e28;'>]</span></b> val <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#0057ae;'>Newspaper</span><span style='color:#644a9b;'>$</span>new()
+  <b><span style='color:#006e28;'>[</span></b><span style='color:#0057ae;'>Newspaper</span><span style='color:#006e28;'>|</span><span style='color:#0057ae;'>Magazine</span><b><span style='color:#006e28;'>]</span></b> val <b><span style='color:#006e28;'>&lt;-</span></b> <span style='color:#0057ae;'>Newspaper</span><span style='color:#644a9b;'>.</span>new()
   <span style='color:#0057ae;'>Printable</span> val2 <b><span style='color:#006e28;'>&lt;-</span></b> val</pre>
 
 #### Runtime Type Reduction
@@ -1054,7 +1055,7 @@ Builtin `concrete` types:
 - **`Int`**: Use decimal (e.g., `1234`), hex (e.g., `\xABCD`), octal (e.g.,
   `\o0123`), or binary (e.g., `\b0100`).
 - **`String`**: Use double quotes to sequence `Char` literals, e.g.,
-  `"hello\012"`. You can build a string efficiently using `String$builder()`.
+  `"hello\012"`. You can build a string efficiently using `String.builder()`.
 
 Builtin `@value interface`s:
 
@@ -1160,7 +1161,7 @@ operates properly end-to-end.)
 <span style='color:#898887;'>// testcase is available outside of this specific test!</span>
 <b><span style='color:#bf0303;background:#f7e6e6;'>testcase</span></b> <span style='color:#bf0303;'>&quot;passing test&quot;</span> {
   <span style='color:#898887;'>// The test is expected to execute without any issues.</span>
-  <span style='color:#04e040;'>success</span> <span style='color:#0057ae;'>Test</span><span style='color:#644a9b;'>$</span>run()
+  <span style='color:#04e040;'>success</span> <span style='color:#0057ae;'>Test</span><span style='color:#644a9b;'>.</span>run()
 }
 
 <span style='color:#898887;'>// Everything after the testcase is like a .0rx.</span>
@@ -1200,7 +1201,7 @@ operates properly end-to-end.)
 
 <b><span style='color:#bf0303;background:#f7e6e6;'>testcase</span></b> <span style='color:#bf0303;'>&quot;intentional crash&quot;</span> {
   <span style='color:#898887;'>// The test is expected to crash.</span>
-  <span style='color:#04e040;'>crash</span> <span style='color:#0057ae;'>Test</span><span style='color:#644a9b;'>$</span>run()
+  <span style='color:#04e040;'>crash</span> <span style='color:#0057ae;'>Test</span><span style='color:#644a9b;'>.</span>run()
   <span style='color:#04e040;'>require</span> <span style='color:#04e040;'>stderr</span> <span style='color:#bf0303;'>&quot;message&quot;</span>  <span style='color:#898887;'>// stderr should include &quot;message&quot;.</span>
 }
 

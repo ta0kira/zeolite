@@ -37,7 +37,7 @@ define Type2 {
     // Value<#y> gets subbed in for #x, so call is re-parameterized with an
     // argument of type Value<#y>. When the compiler processes call<Int>, it
     // looks for #y, which it finds; however, it's a different #y.
-    \ Type1<Value<#y>>$call<Int>(Value<#y>$create())
+    \ Type1<Value<#y>>.call<Int>(Value<#y>.create())
   }
 }
 

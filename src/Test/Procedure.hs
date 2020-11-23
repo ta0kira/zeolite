@@ -43,9 +43,9 @@ tests = [
     checkShortParseFail "return var var",
     checkShortParseFail "return _ var",
     checkShortParseSuccess "return call()",
-    checkShortParseSuccess "return var.T<#x>$func()",
-    checkShortParseSuccess "return var, var.T<#x>$func()",
-    checkShortParseFail "return var  var.T<#x>$func()",
+    checkShortParseSuccess "return var.T<#x>.func()",
+    checkShortParseSuccess "return var, var.T<#x>.func()",
+    checkShortParseFail "return var  var.T<#x>.func()",
     checkShortParseFail "return var, _",
     checkShortParseFail "return T<#x> var",
     checkShortParseSuccess "return T<#x>{ val }",
@@ -62,18 +62,17 @@ tests = [
 
     checkShortParseSuccess "\\ var",
     checkShortParseFail "\\ var var",
-    checkShortParseSuccess "\\ var.T<#x>$func().func2().func3()",
-    checkShortParseSuccess "\\ T<#x>$func().func2().func3()",
-    checkShortParseSuccess "\\ #x$func().func2().func3()",
-    checkShortParseFail "\\ var.T<#x>.T<#x>$func()",
-    checkShortParseFail "\\ var.T<#x>$T<#x>$func()",
-    checkShortParseFail "\\ T<#x>$func()$func2()",
-    checkShortParseFail "\\ var$func2()",
+    checkShortParseSuccess "\\ var.T<#x>.func().func2().func3()",
+    checkShortParseSuccess "\\ T<#x>.func().func2().func3()",
+    checkShortParseSuccess "\\ #x.func().func2().func3()",
+    checkShortParseFail "\\ var.T<#x>.T<#x>.func()",
+    checkShortParseFail "\\ var.T<#x>.T<#x>.func()",
     checkShortParseFail "\\ var.T<#x>",
     checkShortParseFail "\\ T<#x> var",
-    checkShortParseSuccess "\\ T<#x>{ val, var.T<#x>$func() }",
-    checkShortParseFail "\\ T<#x>{ val var.T<#x>$func() }",
+    checkShortParseSuccess "\\ T<#x>{ val, var.T<#x>.func() }",
+    checkShortParseFail "\\ T<#x>{ val var.T<#x>.func() }",
     checkShortParseFail "\\ T<#x>{}.call()",
+    checkShortParseFail "\\ T<#x>$call()",
     checkShortParseSuccess "\\ (T<#x>{}).call()",
 
     checkShortParseSuccess "x <- var.func()",
@@ -117,28 +116,28 @@ tests = [
     checkShortParseSuccess "while (var.func()) { \\ val.call() } update { \\ call() }",
 
     checkShortParseSuccess "scoped { T<#x> x <- y } in return _",
-    checkShortParseSuccess "scoped { T<#x> x <- y } in return var, var.T<#x>$func()",
-    checkShortParseSuccess "scoped { T<#x> x <- y } in \\ var.T<#x>$func()",
+    checkShortParseSuccess "scoped { T<#x> x <- y } in return var, var.T<#x>.func()",
+    checkShortParseSuccess "scoped { T<#x> x <- y } in \\ var.T<#x>.func()",
     checkShortParseSuccess "scoped { T<#x> x <- y } in _, weak T<#x> x <- var.func()",
 
     checkShortParseSuccess "scoped { T<#x> x <- y } in if (var.func()) { \\ val.call() }",
     checkShortParseSuccess "scoped { T<#x> x <- y } in while (var.func()) { \\ val.call() }",
 
-    checkShortParseSuccess "x <- (((var.func())).T$call())",
+    checkShortParseSuccess "x <- (((var.func())).T.call())",
     checkShortParseSuccess "\\ (x <- var).func()",
     checkShortParseFail "x <- (((var.func()))",
     checkShortParseFail "(((x <- var.func())))",
     checkShortParseFail "(x) <- y",
     checkShortParseFail "T (x) <- y",
     checkShortParseFail "\\ (T x <- var).func()",
-    checkShortParseSuccess "\\ call(((var.func())).T$call())",
-    checkShortParseSuccess "if (((var.func()).T$call())) { }",
+    checkShortParseSuccess "\\ call(((var.func())).T.call())",
+    checkShortParseSuccess "if (((var.func()).T.call())) { }",
     checkShortParseSuccess "fail(\"reason\")",
     checkShortParseFail "\\ fail(\"reason\")",
     checkShortParseSuccess "failed <- 10",
 
-    checkShortParseSuccess "\\var.T<#x>$func().func2().func3()",
-    checkShortParseSuccess "\\T<#x>{val,var.T<#x>$func()}",
+    checkShortParseSuccess "\\var.T<#x>.func().func2().func3()",
+    checkShortParseSuccess "\\T<#x>{val,var.T<#x>.func()}",
     checkShortParseSuccess "x<-var.func()",
     checkShortParseSuccess "T<#x>x<-var.func()",
     checkShortParseSuccess "_,weak T<#x>x<-var.func()",
@@ -146,7 +145,7 @@ tests = [
     checkShortParseSuccess "if(v){\\c()}elif(v){\\c()}else{\\c()}",
     checkShortParseSuccess "if(v){\\c()}elif(v){\\c()}elif(v){\\c()}",
     checkShortParseSuccess "while(var.func()){\\val.call()}",
-    checkShortParseSuccess "scoped{T<#x>x<-y}in\\var.T<#x>$func()",
+    checkShortParseSuccess "scoped{T<#x>x<-y}in\\var.T<#x>.func()",
     checkShortParseSuccess "scoped{T<#x>x<-y}in{x<-1}",
     checkShortParseSuccess "scoped{T<#x>x<-y}in x<-1",
     checkShortParseFail "scoped{T<#x>x<-y}in{x}",
@@ -249,7 +248,7 @@ tests = [
                                   (Expression _ (NamedVariable (OutputValue _ (VariableName "z"))) []))) -> True
                               _ -> False),
 
-    checkParsesAs "1 `Int$lessThan` 2"
+    checkParsesAs "1 `Int.lessThan` 2"
                   (\e -> case e of
                               (InfixExpression _
                                 (Literal (IntegerLiteral _ False 1))
@@ -305,7 +304,7 @@ tests = [
                                 (Literal (IntegerLiteral _ False 2))) -> True
                               _ -> False),
 
-    checkParsesAs "`Bits$not` 2"
+    checkParsesAs "`Bits.not` 2"
                   (\e -> case e of
                               (UnaryExpression _
                                 (FunctionOperator _ (

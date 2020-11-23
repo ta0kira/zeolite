@@ -65,7 +65,7 @@ concrete Test {
 
 
 testcase "multi return assign" {
-  success Test$run()
+  success Test.run()
 }
 
 define Test {
@@ -92,7 +92,7 @@ concrete Test {
 
 
 testcase "multi return as args" {
-  success Test$run()
+  success Test.run()
 }
 
 define Test {

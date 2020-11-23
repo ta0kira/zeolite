@@ -17,7 +17,7 @@ limitations under the License.
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
 testcase "category unary" {
-  success Test$run()
+  success Test.run()
 }
 
 define Test {
@@ -40,7 +40,7 @@ concrete Test {
 
 
 testcase "type unary" {
-  success Test$run()
+  success Test.run()
 }
 
 define Test {
@@ -50,7 +50,7 @@ define Test {
   }
 
   run () {
-    Int value <- `Test$neg` 2
+    Int value <- `Test.neg` 2
     if (value != -2) {
       fail(value)
     }
@@ -63,7 +63,7 @@ concrete Test {
 
 
 testcase "value unary" {
-  success Test$run()
+  success Test.run()
 }
 
 concrete Arithmetic {
@@ -83,7 +83,7 @@ define Arithmetic {
 
 define Test {
   run () {
-    Int value <- `Arithmetic$create().neg` 2
+    Int value <- `Arithmetic.create().neg` 2
     if (value != -2) {
       fail(value)
     }
@@ -96,7 +96,7 @@ concrete Test {
 
 
 testcase "unqualified unary" {
-  success Test$run()
+  success Test.run()
 }
 
 define Test {
@@ -119,7 +119,7 @@ concrete Test {
 
 
 testcase "unary function with infix function" {
-  success Test$run()
+  success Test.run()
 }
 
 define Test {

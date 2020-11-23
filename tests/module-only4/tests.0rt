@@ -17,12 +17,12 @@ limitations under the License.
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
 testcase "ModuleOnly using ModuleOnly" {
-  success Test$run()
+  success Test.run()
 }
 
 define Test {
   run () {
-    Type1 value <- Type1$create()
+    Type1 value <- Type1.create()
     String message <- value.get()
     if (message != "message") {
       fail(message)
@@ -36,12 +36,12 @@ concrete Test {
 
 
 testcase "non-ModuleOnly using ModuleOnly" {
-  success Test$run()
+  success Test.run()
 }
 
 define Test {
   run () {
-    Type3 value <- Type3$create()
+    Type3 value <- Type3.create()
     String message <- value.get()
     if (message != "message") {
       fail(message)

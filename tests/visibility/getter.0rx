@@ -1,5 +1,5 @@
 define Getter {
   getValue () {
-    return Internal$create().get()
+    return Internal.create().get()
   }
 }

@@ -17,13 +17,13 @@ limitations under the License.
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
 testcase "template compiles to binary" {
-  crash Test$run()
+  crash Test.run()
   require "Templated\.create is not implemented"
 }
 
 define Test {
   run () {
-    \ Templated<Int>$create()
+    \ Templated<Int>.create()
   }
 }
 

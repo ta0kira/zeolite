@@ -17,12 +17,12 @@ limitations under the License.
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
 testcase "Int arithmetic with precedence" {
-  success Test$run()
+  success Test.run()
 }
 
 define Test {
   run () {
-    \ Testing$check<?>(\x10 + 1 * 2 - 8 / 2 - 3 % 2,13)
+    \ Testing.check<?>(\x10 + 1 * 2 - 8 / 2 - 3 % 2,13)
   }
 }
 
@@ -32,16 +32,16 @@ concrete Test {
 
 
 testcase "Int arithmetic" {
-  success Test$run()
+  success Test.run()
 }
 
 define Test {
   run () {
-    \ Testing$check<?>(8 + 2,10)
-    \ Testing$check<?>(8 - 2,6)
-    \ Testing$check<?>(8 * 2,16)
-    \ Testing$check<?>(8 / 2,4)
-    \ Testing$check<?>(8 % 2,0)
+    \ Testing.check<?>(8 + 2,10)
+    \ Testing.check<?>(8 - 2,6)
+    \ Testing.check<?>(8 * 2,16)
+    \ Testing.check<?>(8 / 2,4)
+    \ Testing.check<?>(8 % 2,0)
   }
 }
 
@@ -51,16 +51,16 @@ concrete Test {
 
 
 testcase "Int bitwise" {
-  success Test$run()
+  success Test.run()
 }
 
 define Test {
   run () {
-    \ Testing$check<?>(1 << 2,4)
-    \ Testing$check<?>(7 >> 1,3)
-    \ Testing$check<?>(7 ^ 2 ,5)
-    \ Testing$check<?>(7 & ~2,5)
-    \ Testing$check<?>(5 | 2 ,7)
+    \ Testing.check<?>(1 << 2,4)
+    \ Testing.check<?>(7 >> 1,3)
+    \ Testing.check<?>(7 ^ 2 ,5)
+    \ Testing.check<?>(7 & ~2,5)
+    \ Testing.check<?>(5 | 2 ,7)
   }
 }
 
@@ -70,12 +70,12 @@ concrete Test {
 
 
 testcase "Int bitwise with precedence" {
-  success Test$run()
+  success Test.run()
 }
 
 define Test {
   run () {
-    \ Testing$check<?>(1 << 4 | 7 >> 1 & ~2,17)
+    \ Testing.check<?>(1 << 4 | 7 >> 1 & ~2,17)
   }
 }
 
@@ -85,12 +85,12 @@ concrete Test {
 
 
 testcase "same operators applied left to right" {
-  success Test$run()
+  success Test.run()
 }
 
 define Test {
   run () {
-    \ Testing$check<?>(2 - 1 - 1,0)
+    \ Testing.check<?>(2 - 1 - 1,0)
   }
 }
 
@@ -132,12 +132,12 @@ concrete Test {
 
 
 testcase "String arithmetic" {
-  success Test$run()
+  success Test.run()
 }
 
 define Test {
   run () {
-    \ Testing$check<?>("x" + "y" + "z","xyz")
+    \ Testing.check<?>("x" + "y" + "z","xyz")
   }
 }
 
@@ -147,12 +147,12 @@ concrete Test {
 
 
 testcase "Float arithmetic with precedence" {
-  success Test$run()
+  success Test.run()
 }
 
 define Test {
   run () {
-    \ Testing$check<?>(16.0 + 1.0 * 2.0 - 8.0 / 2.0 - 3.0 / 3.0,13.0)
+    \ Testing.check<?>(16.0 + 1.0 * 2.0 - 8.0 / 2.0 - 3.0 / 3.0,13.0)
   }
 }
 
@@ -162,12 +162,12 @@ concrete Test {
 
 
 testcase "Char minus" {
-  success Test$run()
+  success Test.run()
 }
 
 define Test {
   run () {
-    \ Testing$check<?>('z' - 'a',25)
+    \ Testing.check<?>('z' - 'a',25)
   }
 }
 
@@ -177,7 +177,7 @@ concrete Test {
 
 
 testcase "Bool comparison" {
-  success Test$run()
+  success Test.run()
 }
 
 define Test {
@@ -194,7 +194,7 @@ concrete Test {
 
 
 testcase "Int comparison" {
-  success Test$run()
+  success Test.run()
 }
 
 define Test {
@@ -214,7 +214,7 @@ concrete Test {
 
 
 testcase "Float comparison" {
-  success Test$run()
+  success Test.run()
 }
 
 define Test {
@@ -234,7 +234,7 @@ concrete Test {
 
 
 testcase "String comparison" {
-  success Test$run()
+  success Test.run()
 }
 
 define Test {
@@ -254,7 +254,7 @@ concrete Test {
 
 
 testcase "Char comparison" {
-  success Test$run()
+  success Test.run()
 }
 
 define Test {
@@ -274,7 +274,7 @@ concrete Test {
 
 
 testcase "Bool logic with precedence" {
-  success Test$run()
+  success Test.run()
 }
 
 define Test {
@@ -325,7 +325,7 @@ concrete Test {
 
 
 testcase "String plus with comparison" {
-  success Test$run()
+  success Test.run()
 }
 
 define Test {
@@ -342,7 +342,7 @@ concrete Test {
 
 
 testcase "Char minus with comparison" {
-  success Test$run()
+  success Test.run()
 }
 
 define Test {
@@ -359,7 +359,7 @@ concrete Test {
 
 
 testcase "Int arithmetic with comparison" {
-  success Test$run()
+  success Test.run()
 }
 
 define Test {
@@ -376,7 +376,7 @@ concrete Test {
 
 
 testcase "Float arithmetic with comparison" {
-  success Test$run()
+  success Test.run()
 }
 
 define Test {
@@ -409,7 +409,7 @@ concrete Test {
 
 
 testcase "arithmetic, comparison, logic" {
-  success Test$run()
+  success Test.run()
 }
 
 define Test {

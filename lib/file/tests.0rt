@@ -17,16 +17,16 @@ limitations under the License.
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
 testcase "read and write" {
-  success Test$run()
+  success Test.run()
 }
 
 define Test {
   run () {
-    RawFileWriter writer <- RawFileWriter$open("testfile")
+    RawFileWriter writer <- RawFileWriter.open("testfile")
     if (present(writer.getFileError())) {
       fail(require(writer.getFileError()))
     }
-    RawFileReader reader <- RawFileReader$open("testfile")
+    RawFileReader reader <- RawFileReader.open("testfile")
     if (present(reader.getFileError())) {
       fail(require(reader.getFileError()))
     }
@@ -67,13 +67,13 @@ concrete Test {
 
 
 testcase "read empty file" {
-  success Test$run()
+  success Test.run()
 }
 
 define Test {
   run () {
-    \ RawFileWriter$open("testfile").freeResource()
-    RawFileReader reader <- RawFileReader$open("testfile")
+    \ RawFileWriter.open("testfile").freeResource()
+    RawFileReader reader <- RawFileReader.open("testfile")
 
     String data <- reader.readBlock(10)
     if (data != "") {
@@ -94,12 +94,12 @@ concrete Test {
 
 
 testcase "read missing file" {
-  success Test$run()
+  success Test.run()
 }
 
 define Test {
   run () {
-    RawFileReader reader <- RawFileReader$open("do-not-create-this-file")
+    RawFileReader reader <- RawFileReader.open("do-not-create-this-file")
     if (!present(reader.getFileError())) {
       fail("expected file error")
     }
@@ -112,14 +112,14 @@ concrete Test {
 
 
 testcase "read missing file crash" {
-  crash Test$run()
+  crash Test.run()
   require "do-not-create-this-file"
   require "RawFileReader .*originally created"
 }
 
 define Test {
   run () {
-    RawFileReader reader <- RawFileReader$open("do-not-create-this-file")
+    RawFileReader reader <- RawFileReader.open("do-not-create-this-file")
     \ reader.readBlock(0)
   }
 }
@@ -130,12 +130,12 @@ concrete Test {
 
 
 testcase "unwritable file" {
-  success Test$run()
+  success Test.run()
 }
 
 define Test {
   run () {
-    RawFileWriter writer <- RawFileWriter$open("testfile")
+    RawFileWriter writer <- RawFileWriter.open("testfile")
     \ writer.freeResource()
     if (!present(writer.getFileError())) {
       fail("expected file error")
@@ -149,14 +149,14 @@ concrete Test {
 
 
 testcase "unwritable file crash" {
-  crash Test$run()
+  crash Test.run()
   require "testfile"
   require "RawFileWriter .*originally created"
 }
 
 define Test {
   run () {
-    RawFileWriter writer <- RawFileWriter$open("testfile")
+    RawFileWriter writer <- RawFileWriter.open("testfile")
     \ writer.freeResource()
     \ writer.writeBlock("")
   }

@@ -58,7 +58,7 @@
                       min<span style='color:#644a9b;'>.</span>formatted() + <span style='color:#bf0303;'>&quot;,&quot;</span> + max<span style='color:#644a9b;'>.</span>formatted() + <span style='color:#bf0303;'>&quot;} at &quot;</span> +
                       contextOld<span style='color:#644a9b;'>.</span>getPosition()
     <span style='color:#0057ae;'>ParseContext</span><span style='color:#c02040;'>&lt;</span><b>any</b><span style='color:#c02040;'>&gt;</span> context &lt;- contextOld
-    <i><span style='color:#0057ae;'>Builder</span></i><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>String</span></i><span style='color:#c02040;'>&gt;</span> builder &lt;- <i><span style='color:#0057ae;'>String</span></i><span style='color:#644a9b;'>$</span>builder()
+    <i><span style='color:#0057ae;'>Builder</span></i><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>String</span></i><span style='color:#c02040;'>&gt;</span> builder &lt;- <i><span style='color:#0057ae;'>String</span></i><span style='color:#644a9b;'>.</span>builder()
     <i><span style='color:#0057ae;'>Int</span></i> count &lt;- <span style='color:#b08000;'>0</span>
     <b>while</b> (!context<span style='color:#644a9b;'>.</span>atEof() &amp;&amp; (max == <span style='color:#b08000;'>0</span> || count &lt; max)) {
       <i><span style='color:#0057ae;'>Bool</span></i> found &lt;- <b>false</b>
@@ -267,27 +267,27 @@
 
 <b>define</b> <b><span style='color:#0057ae;'>Parse</span></b> {
   const (value) {
-    <b>return</b> <span style='color:#0057ae;'>ConstParser</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>$</span>create(value)
+    <b>return</b> <span style='color:#0057ae;'>ConstParser</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>.</span>create(value)
   }
 
   error (message) {
-    <b>return</b> <span style='color:#0057ae;'>ErrorParser</span><span style='color:#644a9b;'>$</span>create(message)
+    <b>return</b> <span style='color:#0057ae;'>ErrorParser</span><span style='color:#644a9b;'>.</span>create(message)
   }
 
   try (parser) {
-    <b>return</b> <span style='color:#0057ae;'>TryParser</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>$</span>create(parser)
+    <b>return</b> <span style='color:#0057ae;'>TryParser</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>.</span>create(parser)
   }
 
   or (parser1,parser2) {
-    <b>return</b> <span style='color:#0057ae;'>OrParser</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>$</span>create(parser1,parser2)
+    <b>return</b> <span style='color:#0057ae;'>OrParser</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>.</span>create(parser1,parser2)
   }
 
   left (parser1,parser2) {
-    <b>return</b> <span style='color:#0057ae;'>LeftParser</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>$</span>create(parser1,parser2)
+    <b>return</b> <span style='color:#0057ae;'>LeftParser</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>.</span>create(parser1,parser2)
   }
 
   right (parser1,parser2) {
-    <b>return</b> <span style='color:#0057ae;'>RightParser</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>$</span>create(parser1,parser2)
+    <b>return</b> <span style='color:#0057ae;'>RightParser</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>.</span>create(parser1,parser2)
   }
 }
 </pre>

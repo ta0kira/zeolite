@@ -17,7 +17,7 @@ limitations under the License.
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
 testcase "internal merge" {
-  success Test$run()
+  success Test.run()
 }
 
 @value interface Interface {
@@ -42,7 +42,7 @@ define Value {
 
 define Test {
   run () {
-    \ Value$create().call().call()
+    \ Value.create().call().call()
   }
 }
 
@@ -89,7 +89,7 @@ concrete Test {
 
 
 testcase "external merge" {
-  success Test$run()
+  success Test.run()
 }
 
 @value interface Interface {
@@ -114,7 +114,7 @@ define Value {
 
 define Test {
   run () {
-    \ Value$create().call().call()
+    \ Value.create().call().call()
   }
 }
 

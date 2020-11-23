@@ -17,14 +17,14 @@ limitations under the License.
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
 testcase "stdout writer" {
-  success Test$run()
+  success Test.run()
   require stdout "message"
   exclude stderr "message"
 }
 
 define Test {
   run () {
-    \ LazyStream<Formatted>$new().append("message").writeTo(SimpleOutput$stdout())
+    \ LazyStream<Formatted>.new().append("message").writeTo(SimpleOutput.stdout())
   }
 }
 
@@ -34,14 +34,14 @@ concrete Test {
 
 
 testcase "stderr writer" {
-  success Test$run()
+  success Test.run()
   require stderr "message"
   exclude stdout "message"
 }
 
 define Test {
   run () {
-    \ LazyStream<Formatted>$new().append("message").writeTo(SimpleOutput$stderr())
+    \ LazyStream<Formatted>.new().append("message").writeTo(SimpleOutput.stderr())
   }
 }
 
@@ -51,13 +51,13 @@ concrete Test {
 
 
 testcase "error writer" {
-  crash Test$run()
+  crash Test.run()
   require "message"
 }
 
 define Test {
   run () {
-    \ LazyStream<Formatted>$new().append("message").writeTo(SimpleOutput$error())
+    \ LazyStream<Formatted>.new().append("message").writeTo(SimpleOutput.error())
   }
 }
 
@@ -67,7 +67,7 @@ concrete Test {
 
 
 testcase "iterate String forward" {
-  success Test$run()
+  success Test.run()
 }
 
 define Test {
@@ -96,7 +96,7 @@ concrete Test {
 
 
 testcase "iterate String reverse" {
-  success Test$run()
+  success Test.run()
 }
 
 define Test {
@@ -125,21 +125,21 @@ concrete Test {
 
 
 testcase "Argv is set and available" {
-  success Test$run()
+  success Test.run()
   require stdout "/testcase$"
 }
 
 define Test {
   run () {
-    Int count <- Argv$global().readSize()
+    Int count <- Argv.global().readSize()
     if (count != 1) {
       fail(count)
     }
-    String name <- Argv$global().readPosition(0)
-    \ LazyStream<Formatted>$new()
+    String name <- Argv.global().readPosition(0)
+    \ LazyStream<Formatted>.new()
         .append(name)
         .append("\n")
-        .writeTo(SimpleOutput$stdout())
+        .writeTo(SimpleOutput.stdout())
   }
 }
 
@@ -149,22 +149,22 @@ concrete Test {
 
 
 testcase "Argv subSequence" {
-  success Test$run()
+  success Test.run()
   require stdout "/testcase$"
 }
 
 define Test {
   run () {
-    ReadPosition<String> argv <- Argv$global().subSequence(0,1)
+    ReadPosition<String> argv <- Argv.global().subSequence(0,1)
     Int count <- argv.readSize()
     if (count != 1) {
       fail(count)
     }
     String name <- argv.readPosition(0)
-    \ LazyStream<Formatted>$new()
+    \ LazyStream<Formatted>.new()
         .append(name)
         .append("\n")
-        .writeTo(SimpleOutput$stdout())
+        .writeTo(SimpleOutput.stdout())
   }
 }
 
@@ -174,13 +174,13 @@ concrete Test {
 
 
 testcase "Argv subSequence out of bounds" {
-  crash Test$run()
+  crash Test.run()
   require "position 5"
 }
 
 define Test {
   run () {
-    ReadPosition<String> argv <- Argv$global().subSequence(5,1)
+    ReadPosition<String> argv <- Argv.global().subSequence(5,1)
   }
 }
 
@@ -190,7 +190,7 @@ concrete Test {
 
 
 testcase "TextReader splits lines correctly" {
-  success Test$run()
+  success Test.run()
 }
 
 concrete FakeFile {
@@ -229,7 +229,7 @@ define FakeFile {
 
 define Test {
   run () {
-    TextReader reader <- TextReader$fromBlockReader(FakeFile$create())
+    TextReader reader <- TextReader.fromBlockReader(FakeFile.create())
     \ checkNext(reader,"this is a partial line")
     \ checkNext(reader,"with some more data")
     \ checkNext(reader,"and")
@@ -261,7 +261,7 @@ concrete Test {
 
 
 testcase "TextReader readAll" {
-  success Test$run()
+  success Test.run()
 }
 
 concrete FakeFile {
@@ -300,8 +300,8 @@ define FakeFile {
 
 define Test {
   run () {
-    String allContents <- TextReader$readAll(FakeFile$create())
-    \ Testing$check<?>(allContents,"this is a partial line\nwith some more data\nand\nmore lines\nunfinished")
+    String allContents <- TextReader.readAll(FakeFile.create())
+    \ Testing.check<?>(allContents,"this is a partial line\nwith some more data\nand\nmore lines\nunfinished")
   }
 }
 
@@ -311,7 +311,7 @@ concrete Test {
 
 
 testcase "ErrorOr value" {
-  success Test$run()
+  success Test.run()
 }
 
 define Test {
@@ -320,7 +320,7 @@ define Test {
     if (value.isError()) {
       fail("Failed")
     }
-    \ Testing$check<?>(value.getValue(),10)
+    \ Testing.check<?>(value.getValue(),10)
   }
 }
 
@@ -330,7 +330,7 @@ concrete Test {
 
 
 testcase "ErrorOr getError() crashes with value" {
-  crash Test$run()
+  crash Test.run()
   require "empty"
 }
 
@@ -347,7 +347,7 @@ concrete Test {
 
 
 testcase "ErrorOr error" {
-  success Test$run()
+  success Test.run()
 }
 
 define Test {
@@ -356,7 +356,7 @@ define Test {
     if (!value.isError()) {
       fail("Failed")
     }
-    \ Testing$check<?>(value.getError().formatted(),"error message")
+    \ Testing.check<?>(value.getError().formatted(),"error message")
   }
 }
 
@@ -366,7 +366,7 @@ concrete Test {
 
 
 testcase "ErrorOr getValue() crashes with error" {
-  crash Test$run()
+  crash Test.run()
   require "error message"
 }
 
@@ -383,7 +383,7 @@ concrete Test {
 
 
 testcase "ErrorOr convert error" {
-  success Test$run()
+  success Test.run()
 }
 
 define Test {
@@ -391,7 +391,7 @@ define Test {
     scoped {
       ErrorOr<String> error <- ErrorOr:error("error message")
     } in ErrorOr<Int> value <- error.convertError()
-    \ Testing$check<?>(value.getError().formatted(),"error message")
+    \ Testing.check<?>(value.getError().formatted(),"error message")
   }
 }
 

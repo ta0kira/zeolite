@@ -4,12 +4,12 @@ concrete TreeDemo {
 
 define TreeDemo {
   run () {
-    TypeTree tree <- TypeTree$new()
+    TypeTree tree <- TypeTree.new()
 
-    TypeKey<Int>    keyInt    <- TypeKey<Int>$new()
-    TypeKey<String> keyString <- TypeKey<String>$new()
-    TypeKey<Float>  keyFloat  <- TypeKey<Float>$new()
-    TypeKey<Value>  keyValue  <- TypeKey<Value>$new()
+    TypeKey<Int>    keyInt    <- TypeKey<Int>.new()
+    TypeKey<String> keyString <- TypeKey<String>.new()
+    TypeKey<Float>  keyFloat  <- TypeKey<Float>.new()
+    TypeKey<Value>  keyValue  <- TypeKey<Value>.new()
 
     \ tree.set<?>(keyInt,1)
     \ tree.set<?>(keyString,"a")
@@ -18,7 +18,7 @@ define TreeDemo {
     \ check<?>(tree,keyString)
     \ check<?>(tree,keyFloat)  // Not found, since we never added a value.
 
-    \ tree.set<?>(keyValue,Value$new())
+    \ tree.set<?>(keyValue,Value.new())
     \ check<?>(tree,keyValue)
   }
 
@@ -29,16 +29,16 @@ define TreeDemo {
     scoped {
       optional #x value <- tree.get<#x>(key)
     } in if (present(value)) {
-      \ LazyStream<Formatted>$new()
+      \ LazyStream<Formatted>.new()
           .append("Found '")
           .append(require(value))
           .append("'\n")
-          .writeTo(SimpleOutput$stderr())
+          .writeTo(SimpleOutput.stderr())
     } else {
-      \ LazyStream<Formatted>$new()
+      \ LazyStream<Formatted>.new()
           .append(typename<TypeKey<#x>>())
           .append(" Not Found\n")
-          .writeTo(SimpleOutput$stderr())
+          .writeTo(SimpleOutput.stderr())
     }
   }
 }

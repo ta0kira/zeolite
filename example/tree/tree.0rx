@@ -6,17 +6,17 @@ define Tree {
   }
 
   set (k,v) {
-    root <- Node<#k,#v>$insert(root,k,v)
+    root <- Node<#k,#v>.insert(root,k,v)
     return self
   }
 
   remove (k) {
-    root <- Node<#k,#v>$delete(root,k)
+    root <- Node<#k,#v>.delete(root,k)
     return self
   }
 
   get (k) {
-    return Node<#k,#v>$find(root,k)
+    return Node<#k,#v>.find(root,k)
   }
 }
 
@@ -52,10 +52,10 @@ define Node {
       return Node<#k,#v>{ 1, k, v, empty, empty }
     }
     Node<#k,#v> node2 <- require(node)
-    if (k `#k$lessThan` node2.getKey()) {
+    if (k `#k.lessThan` node2.getKey()) {
       \ node2.setLower(insert(node2.getLower(),k,v))
       return rebalance(node2)
-    } elif (node2.getKey() `#k$lessThan` k) {
+    } elif (node2.getKey() `#k.lessThan` k) {
       \ node2.setHigher(insert(node2.getHigher(),k,v))
       return rebalance(node2)
     } else {
@@ -69,10 +69,10 @@ define Node {
       return empty
     }
     Node<#k,#v> node2 <- require(node)
-    if (k `#k$lessThan` node2.getKey()) {
+    if (k `#k.lessThan` node2.getKey()) {
       \ node2.setLower(delete(node2.getLower(),k))
       return rebalance(node2)
-    } elif (node2.getKey() `#k$lessThan` k) {
+    } elif (node2.getKey() `#k.lessThan` k) {
       \ node2.setHigher(delete(node2.getHigher(),k))
       return rebalance(node2)
     } else {
@@ -84,9 +84,9 @@ define Node {
     if (present(node)) {
       scoped {
         Node<#k,#v> node2 <- require(node)
-      } in if (k `#k$lessThan` node2.getKey()) {
+      } in if (k `#k.lessThan` node2.getKey()) {
         return find(node2.getLower(),k)
-      } elif (node2.getKey() `#k$lessThan` k) {
+      } elif (node2.getKey() `#k.lessThan` k) {
         return find(node2.getHigher(),k)
       } else {
         return node2.getValue()

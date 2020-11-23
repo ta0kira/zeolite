@@ -47,7 +47,7 @@ define SequenceOfParser {
                       min.formatted() + "," + max.formatted() + "} at " +
                       contextOld.getPosition()
     ParseContext<any> context <- contextOld
-    Builder<String> builder <- String$builder()
+    Builder<String> builder <- String.builder()
     Int count <- 0
     while (!context.atEof() && (max == 0 || count < max)) {
       Bool found <- false
@@ -256,26 +256,26 @@ define RightParser {
 
 define Parse {
   const (value) {
-    return ConstParser<#x>$create(value)
+    return ConstParser<#x>.create(value)
   }
 
   error (message) {
-    return ErrorParser$create(message)
+    return ErrorParser.create(message)
   }
 
   try (parser) {
-    return TryParser<#x>$create(parser)
+    return TryParser<#x>.create(parser)
   }
 
   or (parser1,parser2) {
-    return OrParser<#x>$create(parser1,parser2)
+    return OrParser<#x>.create(parser1,parser2)
   }
 
   left (parser1,parser2) {
-    return LeftParser<#x>$create(parser1,parser2)
+    return LeftParser<#x>.create(parser1,parser2)
   }
 
   right (parser1,parser2) {
-    return RightParser<#x>$create(parser1,parser2)
+    return RightParser<#x>.create(parser1,parser2)
   }
 }

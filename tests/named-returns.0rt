@@ -36,7 +36,7 @@ concrete Test {
 
 
 testcase "assign before logical" {
-  success Test$run()
+  success Test.run()
 }
 
 define Test {
@@ -73,7 +73,7 @@ concrete Test {
 
 
 testcase "assign before arithmetic" {
-  success Test$run()
+  success Test.run()
 }
 
 define Test {
@@ -91,7 +91,7 @@ concrete Test {
 
 
 testcase "assign after arithmetic" {
-  success Test$run()
+  success Test.run()
 }
 
 define Test {
@@ -128,7 +128,7 @@ concrete Test {
 
 
 testcase "return used after assigned" {
-  success Test$run()
+  success Test.run()
 }
 
 define Test {
@@ -171,7 +171,7 @@ concrete Test {
 
 
 testcase "returns in correct order" {
-  success Test$run()
+  success Test.run()
 }
 
 define Test {
@@ -197,7 +197,7 @@ concrete Test {
 
 
 testcase "assigns in correct order" {
-  success Test$run()
+  success Test.run()
 }
 
 concrete Value {
@@ -214,7 +214,7 @@ define Test {
   @type get () -> (Value,Int,Int)
   get () (v,x,y) {
     // This makes sure that x and y (primitive) are offset.
-    v <- Value$create()
+    v <- Value.create()
     x <- 1
     y <- 2
   }
@@ -236,7 +236,7 @@ concrete Test {
 
 
 testcase "assigns in correct order with explicit return" {
-  success Test$run()
+  success Test.run()
 }
 
 define Test {
@@ -264,7 +264,7 @@ concrete Test {
 
 
 testcase "positional return sets named return" {
-  crash Test$run()
+  crash Test.run()
   require "message"
 }
 

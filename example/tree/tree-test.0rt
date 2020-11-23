@@ -1,11 +1,11 @@
 // Each testcase is essentially followed by its own private .0rx that is
 // separate from all other testcases. In this case, the testcase expects that
-// the source will compile and Test$execute() will succeed, but testcases can
+// the source will compile and Test.execute() will succeed, but testcases can
 // also expect a compiler error ("error") or a runtime crash ("crash"). Note
 // that you *cannot* expect parse-time errors.
 
 testcase "integration test" {
-  success Test$execute()
+  success Test.execute()
 }
 
 // Everything past the testcase (up until the next testcase, if there is one) is
@@ -19,7 +19,7 @@ concrete Test {
 define Test {
   execute () {
     // Just select the required usage patterns with an intersection.
-    [KVWriter<Int,Int>&KVReader<Int,Int>] tree <- Tree<Int,Int>$new()
+    [KVWriter<Int,Int>&KVReader<Int,Int>] tree <- Tree<Int,Int>.new()
     Int count <- 30
 
     // Insert values.
@@ -40,21 +40,21 @@ define Test {
       scoped {
         optional Int value <- tree.get(new)
       } in if (!present(value)) {
-        \ LazyStream<Formatted>$new()
+        \ LazyStream<Formatted>.new()
             .append("Not found ")
             .append(new)
             .append(" but should have been ")
             .append(i)
-            .writeTo(SimpleOutput$error())
+            .writeTo(SimpleOutput.error())
       } elif (require(value) != i) {
-        \ LazyStream<Formatted>$new()
+        \ LazyStream<Formatted>.new()
             .append("Element ")
             .append(new)
             .append(" should have been ")
             .append(i)
             .append(" but was ")
             .append(require(value))
-            .writeTo(SimpleOutput$error())
+            .writeTo(SimpleOutput.error())
       }
       \ tree.remove(new)
     } update {

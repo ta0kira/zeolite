@@ -211,10 +211,10 @@ concrete $category {
 
 define $category {
   run () {
-    \ LazyStream<Formatted>\$new()
+    \ LazyStream<Formatted>.new()
         .append(\$ExprLookup[MODULE_PATH]\$ + "\n")
         .append("Hello World\n")
-        .writeTo(SimpleOutput\$stdout())
+        .writeTo(SimpleOutput.stdout())
   }
 }
 END

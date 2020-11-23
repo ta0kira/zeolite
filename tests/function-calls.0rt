@@ -17,7 +17,7 @@ limitations under the License.
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
 testcase "converted call" {
-  success Test$run()
+  success Test.run()
 }
 
 @value interface Base {
@@ -40,8 +40,8 @@ define Value {
 
 define Test {
   run () {
-    Value value <- Value$create()
-    \ value.Base$call()
+    Value value <- Value.create()
+    \ value.Base.call()
   }
 }
 
@@ -74,8 +74,8 @@ define Value {
 
 define Test {
   run () {
-    Value value <- Value$create()
-    \ value.Base$call()
+    Value value <- Value.create()
+    \ value.Base.call()
   }
 }
 
@@ -109,7 +109,7 @@ define Value {
 
 define Test {
   run () {
-    [Base|Value] value <- Value$create()
+    [Base|Value] value <- Value.create()
     \ value.call()
   }
 }
@@ -120,7 +120,7 @@ concrete Test {
 
 
 testcase "call from union with conversion" {
-  success Test$run()
+  success Test.run()
 }
 
 @value interface Base {
@@ -143,8 +143,8 @@ define Value {
 
 define Test {
   run () {
-    [Base|Value] value <- Value$create()
-    \ value.Base$call()
+    [Base|Value] value <- Value.create()
+    \ value.Base.call()
   }
 }
 
@@ -154,7 +154,7 @@ concrete Test {
 
 
 testcase "call from intersect" {
-  success Test$run()
+  success Test.run()
 }
 
 @value interface Base1 {
@@ -180,7 +180,7 @@ define Value {
 
 define Test {
   run () {
-    [Base1&Base2] value <- Value$create()
+    [Base1&Base2] value <- Value.create()
     \ value.call()
   }
 }
@@ -191,7 +191,7 @@ concrete Test {
 
 
 testcase "call from intersect with conversion" {
-  success Test$run()
+  success Test.run()
 }
 
 @value interface Base1 {
@@ -217,8 +217,8 @@ define Value {
 
 define Test {
   run () {
-    [Base1&Base2] value <- Value$create()
-    \ value.Base1$call()
+    [Base1&Base2] value <- Value.create()
+    \ value.Base1.call()
   }
 }
 
@@ -228,7 +228,7 @@ concrete Test {
 
 
 testcase "call from intersect with conversion" {
-  success Test$run()
+  success Test.run()
 }
 
 @value interface Base1 {
@@ -254,8 +254,8 @@ define Value {
 
 define Test {
   run () {
-    [Base1&Base2] value <- Value$create()
-    \ value.Base1$call()
+    [Base1&Base2] value <- Value.create()
+    \ value.Base1.call()
   }
 }
 
@@ -265,7 +265,7 @@ concrete Test {
 
 
 testcase "call from param type" {
-  success Test$run()
+  success Test.run()
 }
 
 @type interface Base {
@@ -285,7 +285,7 @@ define Test {
     #x defines Base
   () -> ()
   check () {
-    \ #x$call()
+    \ #x.call()
   }
 
   run () {
@@ -311,7 +311,7 @@ define Test {
   @type check<#x>
   () -> ()
   check () {
-    \ #x$call()
+    \ #x.call()
   }
 
   run () {}
@@ -323,7 +323,7 @@ concrete Test {
 
 
 testcase "call from param value" {
-  success Test$run()
+  success Test.run()
 }
 
 @value interface Base {
@@ -353,7 +353,7 @@ define Test {
   }
 
   run () {
-    Value value <- Value$create()
+    Value value <- Value.create()
     \ check<Value>(value)
   }
 }
@@ -388,7 +388,7 @@ concrete Test {
 
 
 testcase "convert arg" {
-  success Test$run()
+  success Test.run()
 }
 
 @value interface Base {
@@ -416,7 +416,7 @@ define Test {
   }
 
   run () {
-   \ convert(Value$create()).call()
+   \ convert(Value.create()).call()
   }
 }
 
@@ -471,7 +471,7 @@ define Call {
 
 define Test {
   run () {
-    \ Call$call<Value<Test>>()
+    \ Call.call<Value<Test>>()
   }
 }
 

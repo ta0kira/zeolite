@@ -17,17 +17,17 @@
   }
 
   set (k,v) {
-    root &lt;- <span style='color:#0057ae;'>Node</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#k</span></i>,<i><span style='color:#0057ae;'>#v</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>$</span>insert(root,k,v)
+    root &lt;- <span style='color:#0057ae;'>Node</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#k</span></i>,<i><span style='color:#0057ae;'>#v</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>.</span>insert(root,k,v)
     <b>return</b> <b>self</b>
   }
 
   remove (k) {
-    root &lt;- <span style='color:#0057ae;'>Node</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#k</span></i>,<i><span style='color:#0057ae;'>#v</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>$</span>delete(root,k)
+    root &lt;- <span style='color:#0057ae;'>Node</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#k</span></i>,<i><span style='color:#0057ae;'>#v</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>.</span>delete(root,k)
     <b>return</b> <b>self</b>
   }
 
   get (k) {
-    <b>return</b> <span style='color:#0057ae;'>Node</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#k</span></i>,<i><span style='color:#0057ae;'>#v</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>$</span>find(root,k)
+    <b>return</b> <span style='color:#0057ae;'>Node</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#k</span></i>,<i><span style='color:#0057ae;'>#v</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>.</span>find(root,k)
   }
 }
 
@@ -63,14 +63,14 @@
       <b>return</b> <span style='color:#0057ae;'>Node</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#k</span></i>,<i><span style='color:#0057ae;'>#v</span></i><span style='color:#c02040;'>&gt;</span>{ <span style='color:#b08000;'>1</span>, k, v, <b>empty</b>, <b>empty</b> }
     }
     <span style='color:#0057ae;'>Node</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#k</span></i>,<i><span style='color:#0057ae;'>#v</span></i><span style='color:#c02040;'>&gt;</span> node2 &lt;- <b>require</b>(node)
-    <b>if</b> (k <b><span style='color:#c02040;'>`</span></b><i><span style='color:#0057ae;'>#k</span></i><span style='color:#644a9b;'>$</span>lessThan<b><span style='color:#c02040;'>`</span></b> node2.getKey()) {
-      <span style='color:#006e28;'>\</span> node2.setLower(insert(node2.getLower(),k,v))
+    <b>if</b> (k <b><span style='color:#c02040;'>`</span></b><i><span style='color:#0057ae;'>#k</span></i><span style='color:#644a9b;'>.</span>lessThan<b><span style='color:#c02040;'>`</span></b> node2<span style='color:#644a9b;'>.</span>getKey()) {
+      <span style='color:#006e28;'>\</span> node2<span style='color:#644a9b;'>.</span>setLower(insert(node2<span style='color:#644a9b;'>.</span>getLower(),k,v))
       <b>return</b> rebalance(node2)
-    } <b>elif</b> (node2.getKey() <b><span style='color:#c02040;'>`</span></b><i><span style='color:#0057ae;'>#k</span></i><span style='color:#644a9b;'>$</span>lessThan<b><span style='color:#c02040;'>`</span></b> k) {
-      <span style='color:#006e28;'>\</span> node2.setHigher(insert(node2.getHigher(),k,v))
+    } <b>elif</b> (node2<span style='color:#644a9b;'>.</span>getKey() <b><span style='color:#c02040;'>`</span></b><i><span style='color:#0057ae;'>#k</span></i><span style='color:#644a9b;'>.</span>lessThan<b><span style='color:#c02040;'>`</span></b> k) {
+      <span style='color:#006e28;'>\</span> node2<span style='color:#644a9b;'>.</span>setHigher(insert(node2<span style='color:#644a9b;'>.</span>getHigher(),k,v))
       <b>return</b> rebalance(node2)
     } <b>else</b> {
-      <span style='color:#006e28;'>\</span> node2.setValue(v)
+      <span style='color:#006e28;'>\</span> node2<span style='color:#644a9b;'>.</span>setValue(v)
       <b>return</b> node2
     }
   }
@@ -80,11 +80,11 @@
       <b>return</b> <b>empty</b>
     }
     <span style='color:#0057ae;'>Node</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#k</span></i>,<i><span style='color:#0057ae;'>#v</span></i><span style='color:#c02040;'>&gt;</span> node2 &lt;- <b>require</b>(node)
-    <b>if</b> (k <b><span style='color:#c02040;'>`</span></b><i><span style='color:#0057ae;'>#k</span></i><span style='color:#644a9b;'>$</span>lessThan<b><span style='color:#c02040;'>`</span></b> node2.getKey()) {
-      <span style='color:#006e28;'>\</span> node2.setLower(delete(node2.getLower(),k))
+    <b>if</b> (k <b><span style='color:#c02040;'>`</span></b><i><span style='color:#0057ae;'>#k</span></i><span style='color:#644a9b;'>.</span>lessThan<b><span style='color:#c02040;'>`</span></b> node2<span style='color:#644a9b;'>.</span>getKey()) {
+      <span style='color:#006e28;'>\</span> node2<span style='color:#644a9b;'>.</span>setLower(delete(node2<span style='color:#644a9b;'>.</span>getLower(),k))
       <b>return</b> rebalance(node2)
-    } <b>elif</b> (node2.getKey() <b><span style='color:#c02040;'>`</span></b><i><span style='color:#0057ae;'>#k</span></i><span style='color:#644a9b;'>$</span>lessThan<b><span style='color:#c02040;'>`</span></b> k) {
-      <span style='color:#006e28;'>\</span> node2.setHigher(delete(node2.getHigher(),k))
+    } <b>elif</b> (node2<span style='color:#644a9b;'>.</span>getKey() <b><span style='color:#c02040;'>`</span></b><i><span style='color:#0057ae;'>#k</span></i><span style='color:#644a9b;'>.</span>lessThan<b><span style='color:#c02040;'>`</span></b> k) {
+      <span style='color:#006e28;'>\</span> node2<span style='color:#644a9b;'>.</span>setHigher(delete(node2<span style='color:#644a9b;'>.</span>getHigher(),k))
       <b>return</b> rebalance(node2)
     } <b>else</b> {
       <b>return</b> rebalance(removeNode(node2))
@@ -95,12 +95,12 @@
     <b>if</b> (<b>present</b>(node)) {
       <b>scoped</b> {
         <span style='color:#0057ae;'>Node</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#k</span></i>,<i><span style='color:#0057ae;'>#v</span></i><span style='color:#c02040;'>&gt;</span> node2 &lt;- <b>require</b>(node)
-      } <b>in</b> <b>if</b> (k <b><span style='color:#c02040;'>`</span></b><i><span style='color:#0057ae;'>#k</span></i><span style='color:#644a9b;'>$</span>lessThan<b><span style='color:#c02040;'>`</span></b> node2.getKey()) {
-        <b>return</b> find(node2.getLower(),k)
-      } <b>elif</b> (node2.getKey() <b><span style='color:#c02040;'>`</span></b><i><span style='color:#0057ae;'>#k</span></i><span style='color:#644a9b;'>$</span>lessThan<b><span style='color:#c02040;'>`</span></b> k) {
-        <b>return</b> find(node2.getHigher(),k)
+      } <b>in</b> <b>if</b> (k <b><span style='color:#c02040;'>`</span></b><i><span style='color:#0057ae;'>#k</span></i><span style='color:#644a9b;'>.</span>lessThan<b><span style='color:#c02040;'>`</span></b> node2<span style='color:#644a9b;'>.</span>getKey()) {
+        <b>return</b> find(node2<span style='color:#644a9b;'>.</span>getLower(),k)
+      } <b>elif</b> (node2<span style='color:#644a9b;'>.</span>getKey() <b><span style='color:#c02040;'>`</span></b><i><span style='color:#0057ae;'>#k</span></i><span style='color:#644a9b;'>.</span>lessThan<b><span style='color:#c02040;'>`</span></b> k) {
+        <b>return</b> find(node2<span style='color:#644a9b;'>.</span>getHigher(),k)
       } <b>else</b> {
-        <b>return</b> node2.getValue()
+        <b>return</b> node2<span style='color:#644a9b;'>.</span>getValue()
       }
     } <b>else</b> {
       <b>return</b> <b>empty</b>
@@ -113,10 +113,10 @@
       <i><span style='color:#0057ae;'>Int</span></i> l &lt;- <span style='color:#b08000;'>0</span>
       <i><span style='color:#0057ae;'>Int</span></i> h &lt;- <span style='color:#b08000;'>0</span>
       <b>if</b> (<b>present</b>(lower)) {
-        l &lt;- <b>require</b>(lower).getHeight()
+        l &lt;- <b>require</b>(lower)<span style='color:#644a9b;'>.</span>getHeight()
       }
       <b>if</b> (<b>present</b>(higher)) {
-        h &lt;- <b>require</b>(higher).getHeight()
+        h &lt;- <b>require</b>(higher)<span style='color:#644a9b;'>.</span>getHeight()
       }
     } <b>in</b> <b>if</b> (l &gt; h) {
       height &lt;- l + <span style='color:#b08000;'>1</span>
@@ -131,10 +131,10 @@
       <i><span style='color:#0057ae;'>Int</span></i> l &lt;- <span style='color:#b08000;'>0</span>
       <i><span style='color:#0057ae;'>Int</span></i> h &lt;- <span style='color:#b08000;'>0</span>
       <b>if</b> (<b>present</b>(lower)) {
-        l &lt;- <b>require</b>(lower).getHeight()
+        l &lt;- <b>require</b>(lower)<span style='color:#644a9b;'>.</span>getHeight()
       }
       <b>if</b> (<b>present</b>(higher)) {
-        h &lt;- <b>require</b>(higher).getHeight()
+        h &lt;- <b>require</b>(higher)<span style='color:#644a9b;'>.</span>getHeight()
       }
     } <b>in</b> <b>return</b> h - l
   }
@@ -145,9 +145,9 @@
       <b>return</b> <b>empty</b>
     }
     <span style='color:#0057ae;'>Node</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#k</span></i>,<i><span style='color:#0057ae;'>#v</span></i><span style='color:#c02040;'>&gt;</span> node2 &lt;- <b>require</b>(node)
-    <span style='color:#006e28;'>\</span> node2.updateHeight()
+    <span style='color:#006e28;'>\</span> node2<span style='color:#644a9b;'>.</span>updateHeight()
     <b>scoped</b> {
-      <i><span style='color:#0057ae;'>Int</span></i> balance &lt;- node2.getBalance()
+      <i><span style='color:#0057ae;'>Int</span></i> balance &lt;- node2<span style='color:#644a9b;'>.</span>getBalance()
     } <b>in</b> <b>if</b> (balance &gt; <span style='color:#b08000;'>1</span>) {
       <b>return</b> pivotLower(node2)
     } <b>elif</b> (balance &lt; -<span style='color:#b08000;'>1</span>) {
@@ -159,40 +159,40 @@
 
   <span style='color:#644a9b;'>@type</span> pivotHigher (<span style='color:#0057ae;'>Node</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#k</span></i>,<i><span style='color:#0057ae;'>#v</span></i><span style='color:#c02040;'>&gt;</span>) -&gt; (<span style='color:#0057ae;'>Node</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#k</span></i>,<i><span style='color:#0057ae;'>#v</span></i><span style='color:#c02040;'>&gt;</span>)
   pivotHigher (node) (newNode) {
-    <b>if</b> (<b>require</b>(node.getLower()).getBalance() &gt; <span style='color:#b08000;'>0</span>) {
-      <span style='color:#006e28;'>\</span> node.setLower(pivotLower(<b>require</b>(node.getLower())))
+    <b>if</b> (<b>require</b>(node<span style='color:#644a9b;'>.</span>getLower())<span style='color:#644a9b;'>.</span>getBalance() &gt; <span style='color:#b08000;'>0</span>) {
+      <span style='color:#006e28;'>\</span> node<span style='color:#644a9b;'>.</span>setLower(pivotLower(<b>require</b>(node<span style='color:#644a9b;'>.</span>getLower())))
     }
-    newNode &lt;- <b>require</b>(node.getLower())
-    <span style='color:#006e28;'>\</span> node.setLower(newNode.getHigher())
-    <span style='color:#006e28;'>\</span> node.updateHeight()
-    <span style='color:#006e28;'>\</span> newNode.setHigher(node)
-    <span style='color:#006e28;'>\</span> newNode.updateHeight()
+    newNode &lt;- <b>require</b>(node<span style='color:#644a9b;'>.</span>getLower())
+    <span style='color:#006e28;'>\</span> node<span style='color:#644a9b;'>.</span>setLower(newNode<span style='color:#644a9b;'>.</span>getHigher())
+    <span style='color:#006e28;'>\</span> node<span style='color:#644a9b;'>.</span>updateHeight()
+    <span style='color:#006e28;'>\</span> newNode<span style='color:#644a9b;'>.</span>setHigher(node)
+    <span style='color:#006e28;'>\</span> newNode<span style='color:#644a9b;'>.</span>updateHeight()
   }
 
   <span style='color:#644a9b;'>@type</span> pivotLower (<span style='color:#0057ae;'>Node</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#k</span></i>,<i><span style='color:#0057ae;'>#v</span></i><span style='color:#c02040;'>&gt;</span>) -&gt; (<span style='color:#0057ae;'>Node</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#k</span></i>,<i><span style='color:#0057ae;'>#v</span></i><span style='color:#c02040;'>&gt;</span>)
   pivotLower (node) (newNode) {
-    <b>if</b> (<b>require</b>(node.getHigher()).getBalance() &lt; <span style='color:#b08000;'>0</span>) {
-      <span style='color:#006e28;'>\</span> node.setHigher(pivotHigher(<b>require</b>(node.getHigher())))
+    <b>if</b> (<b>require</b>(node<span style='color:#644a9b;'>.</span>getHigher())<span style='color:#644a9b;'>.</span>getBalance() &lt; <span style='color:#b08000;'>0</span>) {
+      <span style='color:#006e28;'>\</span> node<span style='color:#644a9b;'>.</span>setHigher(pivotHigher(<b>require</b>(node<span style='color:#644a9b;'>.</span>getHigher())))
     }
-    newNode &lt;- <b>require</b>(node.getHigher())
-    <span style='color:#006e28;'>\</span> node.setHigher(newNode.getLower())
-    <span style='color:#006e28;'>\</span> node.updateHeight()
-    <span style='color:#006e28;'>\</span> newNode.setLower(node)
-    <span style='color:#006e28;'>\</span> newNode.updateHeight()
+    newNode &lt;- <b>require</b>(node<span style='color:#644a9b;'>.</span>getHigher())
+    <span style='color:#006e28;'>\</span> node<span style='color:#644a9b;'>.</span>setHigher(newNode<span style='color:#644a9b;'>.</span>getLower())
+    <span style='color:#006e28;'>\</span> node<span style='color:#644a9b;'>.</span>updateHeight()
+    <span style='color:#006e28;'>\</span> newNode<span style='color:#644a9b;'>.</span>setLower(node)
+    <span style='color:#006e28;'>\</span> newNode<span style='color:#644a9b;'>.</span>updateHeight()
   }
 
   <span style='color:#644a9b;'>@type</span> removeNode (<span style='color:#0057ae;'>Node</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#k</span></i>,<i><span style='color:#0057ae;'>#v</span></i><span style='color:#c02040;'>&gt;</span>) -&gt; (<b>optional</b> <span style='color:#0057ae;'>Node</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#k</span></i>,<i><span style='color:#0057ae;'>#v</span></i><span style='color:#c02040;'>&gt;</span>)
   removeNode (node) (newNode) {
-    <b>if</b> (node.getBalance() &lt; <span style='color:#b08000;'>0</span>) {
-      <b>optional</b> <span style='color:#0057ae;'>Node</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#k</span></i>,<i><span style='color:#0057ae;'>#v</span></i><span style='color:#c02040;'>&gt;</span> temp, newNode &lt;- removeHighest(node.getLower())
-      <span style='color:#006e28;'>\</span> node.setLower(temp)
+    <b>if</b> (node<span style='color:#644a9b;'>.</span>getBalance() &lt; <span style='color:#b08000;'>0</span>) {
+      <b>optional</b> <span style='color:#0057ae;'>Node</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#k</span></i>,<i><span style='color:#0057ae;'>#v</span></i><span style='color:#c02040;'>&gt;</span> temp, newNode &lt;- removeHighest(node<span style='color:#644a9b;'>.</span>getLower())
+      <span style='color:#006e28;'>\</span> node<span style='color:#644a9b;'>.</span>setLower(temp)
     } <b>else</b> {
-      <b>optional</b> <span style='color:#0057ae;'>Node</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#k</span></i>,<i><span style='color:#0057ae;'>#v</span></i><span style='color:#c02040;'>&gt;</span> temp, newNode &lt;- removeLowest(node.getHigher())
-      <span style='color:#006e28;'>\</span> node.setHigher(temp)
+      <b>optional</b> <span style='color:#0057ae;'>Node</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#k</span></i>,<i><span style='color:#0057ae;'>#v</span></i><span style='color:#c02040;'>&gt;</span> temp, newNode &lt;- removeLowest(node<span style='color:#644a9b;'>.</span>getHigher())
+      <span style='color:#006e28;'>\</span> node<span style='color:#644a9b;'>.</span>setHigher(temp)
     }
     <b>if</b> (<b>present</b>(newNode)) {
       <span style='color:#006e28;'>\</span> swapChildren(node,<b>require</b>(newNode))
-      <span style='color:#006e28;'>\</span> <b>require</b>(newNode).updateHeight()
+      <span style='color:#006e28;'>\</span> <b>require</b>(newNode)<span style='color:#644a9b;'>.</span>updateHeight()
     }
   }
 
@@ -202,13 +202,13 @@
       <b>return</b> <b>empty</b>, <b>empty</b>
     }
     <span style='color:#0057ae;'>Node</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#k</span></i>,<i><span style='color:#0057ae;'>#v</span></i><span style='color:#c02040;'>&gt;</span> node2 &lt;- <b>require</b>(node)
-    <b>if</b> (<b>present</b>(node2.getHigher())) {
-      <b>optional</b> <span style='color:#0057ae;'>Node</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#k</span></i>,<i><span style='color:#0057ae;'>#v</span></i><span style='color:#c02040;'>&gt;</span> temp, removed &lt;- removeHighest(node2.getHigher())
-      <span style='color:#006e28;'>\</span> node2.setHigher(temp)
+    <b>if</b> (<b>present</b>(node2<span style='color:#644a9b;'>.</span>getHigher())) {
+      <b>optional</b> <span style='color:#0057ae;'>Node</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#k</span></i>,<i><span style='color:#0057ae;'>#v</span></i><span style='color:#c02040;'>&gt;</span> temp, removed &lt;- removeHighest(node2<span style='color:#644a9b;'>.</span>getHigher())
+      <span style='color:#006e28;'>\</span> node2<span style='color:#644a9b;'>.</span>setHigher(temp)
       newNode &lt;- rebalance(node2)
     } <b>else</b> {
-      newNode &lt;- node2.getLower()
-      <span style='color:#006e28;'>\</span> node2.setLower(<b>empty</b>)
+      newNode &lt;- node2<span style='color:#644a9b;'>.</span>getLower()
+      <span style='color:#006e28;'>\</span> node2<span style='color:#644a9b;'>.</span>setLower(<b>empty</b>)
       removed &lt;- node
     }
   }
@@ -219,13 +219,13 @@
       <b>return</b> <b>empty</b>, <b>empty</b>
     }
     <span style='color:#0057ae;'>Node</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#k</span></i>,<i><span style='color:#0057ae;'>#v</span></i><span style='color:#c02040;'>&gt;</span> node2 &lt;- <b>require</b>(node)
-    <b>if</b> (<b>present</b>(node2.getLower())) {
-      <b>optional</b> <span style='color:#0057ae;'>Node</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#k</span></i>,<i><span style='color:#0057ae;'>#v</span></i><span style='color:#c02040;'>&gt;</span> temp, removed &lt;- removeLowest(node2.getLower())
-      <span style='color:#006e28;'>\</span> node2.setLower(temp)
+    <b>if</b> (<b>present</b>(node2<span style='color:#644a9b;'>.</span>getLower())) {
+      <b>optional</b> <span style='color:#0057ae;'>Node</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#k</span></i>,<i><span style='color:#0057ae;'>#v</span></i><span style='color:#c02040;'>&gt;</span> temp, removed &lt;- removeLowest(node2<span style='color:#644a9b;'>.</span>getLower())
+      <span style='color:#006e28;'>\</span> node2<span style='color:#644a9b;'>.</span>setLower(temp)
       newNode &lt;- rebalance(node2)
     } <b>else</b> {
-      newNode &lt;- node2.getHigher()
-      <span style='color:#006e28;'>\</span> node2.setHigher(<b>empty</b>)
+      newNode &lt;- node2<span style='color:#644a9b;'>.</span>getHigher()
+      <span style='color:#006e28;'>\</span> node2<span style='color:#644a9b;'>.</span>setHigher(<b>empty</b>)
       removed &lt;- node
     }
   }
@@ -233,13 +233,13 @@
   <span style='color:#644a9b;'>@type</span> swapChildren (<span style='color:#0057ae;'>Node</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#k</span></i>,<i><span style='color:#0057ae;'>#v</span></i><span style='color:#c02040;'>&gt;</span>,<span style='color:#0057ae;'>Node</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#k</span></i>,<i><span style='color:#0057ae;'>#v</span></i><span style='color:#c02040;'>&gt;</span>) -&gt; ()
   swapChildren (l,r) {
     <b>scoped</b> {
-      <b>optional</b> <span style='color:#0057ae;'>Node</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#k</span></i>,<i><span style='color:#0057ae;'>#v</span></i><span style='color:#c02040;'>&gt;</span> temp &lt;- l.getLower()
-      <span style='color:#006e28;'>\</span> l.setLower(r.getLower())
-    } <b>in</b> <span style='color:#006e28;'>\</span> r.setLower(temp)
+      <b>optional</b> <span style='color:#0057ae;'>Node</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#k</span></i>,<i><span style='color:#0057ae;'>#v</span></i><span style='color:#c02040;'>&gt;</span> temp &lt;- l<span style='color:#644a9b;'>.</span>getLower()
+      <span style='color:#006e28;'>\</span> l<span style='color:#644a9b;'>.</span>setLower(r<span style='color:#644a9b;'>.</span>getLower())
+    } <b>in</b> <span style='color:#006e28;'>\</span> r<span style='color:#644a9b;'>.</span>setLower(temp)
     <b>scoped</b> {
-      <b>optional</b> <span style='color:#0057ae;'>Node</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#k</span></i>,<i><span style='color:#0057ae;'>#v</span></i><span style='color:#c02040;'>&gt;</span> temp &lt;- l.getHigher()
-      <span style='color:#006e28;'>\</span> l.setHigher(r.getHigher())
-    } <b>in</b> <span style='color:#006e28;'>\</span> r.setHigher(temp)
+      <b>optional</b> <span style='color:#0057ae;'>Node</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#k</span></i>,<i><span style='color:#0057ae;'>#v</span></i><span style='color:#c02040;'>&gt;</span> temp &lt;- l<span style='color:#644a9b;'>.</span>getHigher()
+      <span style='color:#006e28;'>\</span> l<span style='color:#644a9b;'>.</span>setHigher(r<span style='color:#644a9b;'>.</span>getHigher())
+    } <b>in</b> <span style='color:#006e28;'>\</span> r<span style='color:#644a9b;'>.</span>setHigher(temp)
   }
 
   <span style='color:#644a9b;'>@value</span> getHeight () -&gt; (<i><span style='color:#0057ae;'>Int</span></i>)

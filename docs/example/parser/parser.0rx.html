@@ -68,7 +68,7 @@
   }
 
   getPosition () {
-    <b>return</b> <i><span style='color:#0057ae;'>String</span></i><span style='color:#644a9b;'>$</span>builder()
+    <b>return</b> <i><span style='color:#0057ae;'>String</span></i><span style='color:#644a9b;'>.</span>builder()
         <span style='color:#644a9b;'>.</span>append(<span style='color:#bf0303;'>&quot;[line: &quot;</span>)
         <span style='color:#644a9b;'>.</span>append(line<span style='color:#644a9b;'>.</span>formatted())
         <span style='color:#644a9b;'>.</span>append(<span style='color:#bf0303;'>&quot;, char: &quot;</span>)
@@ -105,7 +105,7 @@
 
   <span style='color:#644a9b;'>@category</span> new (<i><span style='color:#0057ae;'>String</span></i>) -&gt; (<span style='color:#0057ae;'>ParseState</span><span style='color:#c02040;'>&lt;</span><b>any</b><span style='color:#c02040;'>&gt;</span>)
   new (data) {
-    <b>return</b> <span style='color:#0057ae;'>ParseState</span><span style='color:#c02040;'>&lt;</span><b>any</b><span style='color:#c02040;'>&gt;</span>{ data, <span style='color:#b08000;'>0</span>, <span style='color:#b08000;'>1</span>, <span style='color:#b08000;'>1</span>, <span style='color:#0057ae;'>ErrorOr</span><span style='color:#644a9b;'>:</span>value&lt;<b>?</b>&gt;(<span style='color:#0057ae;'>Void</span><span style='color:#644a9b;'>$</span>void()), <b>empty</b> }
+    <b>return</b> <span style='color:#0057ae;'>ParseState</span><span style='color:#c02040;'>&lt;</span><b>any</b><span style='color:#c02040;'>&gt;</span>{ data, <span style='color:#b08000;'>0</span>, <span style='color:#b08000;'>1</span>, <span style='color:#b08000;'>1</span>, <span style='color:#0057ae;'>ErrorOr</span><span style='color:#644a9b;'>:</span>value&lt;<b>?</b>&gt;(<span style='color:#0057ae;'>Void</span><span style='color:#644a9b;'>.</span>void()), <b>empty</b> }
   }
 
   <span style='color:#644a9b;'>@value</span> getError () -&gt; (<i><span style='color:#0057ae;'>Formatted</span></i>)
@@ -120,18 +120,18 @@
   <span style='color:#644a9b;'>@value</span> sanityCheck () -&gt; ()
   sanityCheck () {
     <b>if</b> (hasBrokenInput()) {
-      <span style='color:#006e28;'>\</span> <span style='color:#0057ae;'>LazyStream</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Formatted</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>$</span>new()
+      <span style='color:#006e28;'>\</span> <span style='color:#0057ae;'>LazyStream</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Formatted</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>.</span>new()
           <span style='color:#644a9b;'>.</span>append(<span style='color:#bf0303;'>&quot;Error at &quot;</span>)
           <span style='color:#644a9b;'>.</span>append(getPosition())
           <span style='color:#644a9b;'>.</span>append(<span style='color:#bf0303;'>&quot;: &quot;</span>)
           <span style='color:#644a9b;'>.</span>append(getError())
-          <span style='color:#644a9b;'>.</span>writeTo(<span style='color:#0057ae;'>SimpleOutput</span><span style='color:#644a9b;'>$</span>error())
+          <span style='color:#644a9b;'>.</span>writeTo(<span style='color:#0057ae;'>SimpleOutput</span><span style='color:#644a9b;'>.</span>error())
     }
     <b>if</b> (atEof()) {
-      <span style='color:#006e28;'>\</span> <span style='color:#0057ae;'>LazyStream</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Formatted</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>$</span>new()
+      <span style='color:#006e28;'>\</span> <span style='color:#0057ae;'>LazyStream</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Formatted</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>.</span>new()
           <span style='color:#644a9b;'>.</span>append(<span style='color:#bf0303;'>&quot;Reached end of input at &quot;</span>)
           <span style='color:#644a9b;'>.</span>append(getPosition())
-          <span style='color:#644a9b;'>.</span>writeTo(<span style='color:#0057ae;'>SimpleOutput</span><span style='color:#644a9b;'>$</span>error())
+          <span style='color:#644a9b;'>.</span>writeTo(<span style='color:#0057ae;'>SimpleOutput</span><span style='color:#644a9b;'>.</span>error())
     }
   }
 }

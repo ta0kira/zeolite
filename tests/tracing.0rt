@@ -17,7 +17,7 @@ limitations under the License.
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
 testcase "NoTrace skips tracing" {
-  crash Test$run()
+  crash Test.run()
   require "message"
   require "Test\.run"
   require "Test\.error"
@@ -46,7 +46,7 @@ concrete Test {
 
 
 testcase "TraceCreation captures trace" {
-  crash Test$run()
+  crash Test.run()
   require "message"
   require "Type.+created at"
 }
@@ -68,7 +68,7 @@ define Type {
 
 define Test {
   run () {
-    Type value <- Type$create()
+    Type value <- Type.create()
     \ value.call()
   }
 }
@@ -79,7 +79,7 @@ concrete Test {
 
 
 testcase "TraceCreation ignored in @type" {
-  success Test$run()
+  success Test.run()
   require compiler "tracing ignored"
 }
 
@@ -93,7 +93,7 @@ concrete Test {
 
 
 testcase "TraceCreation still works with NoTrace" {
-  crash Test$run()
+  crash Test.run()
   require "message"
   require "Type.+created at"
   exclude "Type\.call"
@@ -116,7 +116,7 @@ define Type {
 
 define Test {
   run () {
-    Type value <- Type$create()
+    Type value <- Type.create()
     \ value.call()
   }
 }
@@ -127,7 +127,7 @@ concrete Test {
 
 
 testcase "TraceCreation only uses the latest" {
-  crash Test$run()
+  crash Test.run()
   require "message"
   require "Type1.+created at"
   exclude "Type2.+created at"
@@ -157,7 +157,7 @@ define Type2 {
   @value Type1 value
 
   create () {
-    return Type2{ Type1$create() }
+    return Type2{ Type1.create() }
   }
 
   call ()  { $TraceCreation$
@@ -167,7 +167,7 @@ define Type2 {
 
 define Test {
   run () {
-    Type2 value <- Type2$create()
+    Type2 value <- Type2.create()
     \ value.call()
   }
 }

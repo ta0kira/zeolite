@@ -25,27 +25,35 @@
 
 ### Language
 
+* **[breaking]** Syntax changes:
+
+  * **[breaking]** Changes the syntax for calling `@category` functions from
+    `$$` to `:`, e.g., `Foo:create()` instead of `Foo$$create()`. A new error
+    message (to be removed later) will remind the user to stop using `$$`.
+
+  * **[breaking]** Changes the syntax for calling `@type` functions from `$`
+    to `.`, e.g., `Foo.create()` instead of `Foo$create()`. A new error message
+    (to be removed later) will remind the user to stop using `$`.
+
+* **[breaking]** Changes to param usage:
+
+  * **[breaking]** Updates param inference to be more accurate. The new
+    algorithm will infer a param type iff the best choice is unambiguous given
+    the expected and actual function arguments.
+
+  * **[breaking]** Disallows bounding a single param both above and below, e.g.,
+    having both `#x requires Foo` and `#x allows Bar`. This is primarily to
+    prevent cycles and contradictions in the type system.
+
+    Previously, the *best case* for such restrictions was that there are
+    extremely few choices for `#x`, and the *worst case* was that it implies
+    `Bar` converts to `Foo` when it isn't true, thus making `#x` unusable.
+    Having either of those requirements likely indicates a design flaw.
+
 * **[breaking]** Prohibits having a `$TestsOnly$` definition for a
   non-`$TestsOnly$` category. Previously, a `concrete` category declared in a
   non-`$TestsOnly$` `.0rp` could be `define`d in a `$TestsOnly$` `.0rx`, which
   creates a loophole that allows binaries to utilize `$TestsOnly$` code.
-
-* **[breaking]** Changes the syntax for calling `@category` functions from `$$`
-  to `:`, e.g., `Foo:create()` instead of `Foo$$create()`. A new error message
-  (to be removed later) will remind the user to stop using `$$`.
-
-* **[breaking]** Updates param inference to be more accurate. The new algorithm
-  will infer a param type iff the best choice is unambiguous given the expected
-  and actual function arguments.
-
-* **[breaking]** Disallows bounding a single param both above and below, e.g.,
-  having both `#x requires Foo` and `#x allows Bar`. This is primarily to
-  prevent cycles and contradictions in the type system.
-
-  Previously, the *best case* for such restrictions was that there are extremely
-  few choices for `#x`, and the *worst case* was that it implies `Bar` converts
-  to `Foo` when it isn't true, thus making `#x` unusable. Having either of
-  those requirements likely indicates a design flaw.
 
 * **[fix]** Fixes a latent type-checking bug that could occur when attempting to
   assign a value with an intersection type to a variable with a union type, if

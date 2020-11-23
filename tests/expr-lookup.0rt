@@ -33,7 +33,7 @@ concrete Test {
 
 
 testcase "MODULE_PATH is absolute" {
-  crash Test$run()
+  crash Test.run()
   require "Failed condition: /.+/tests"
 }
 
@@ -49,13 +49,13 @@ concrete Test {
 
 
 testcase "MODULE_PATH from regular source" {
-  crash Test$run()
+  crash Test.run()
   require "Failed condition: /.+/tests"
 }
 
 define Test {
   run () {
-    fail(ExprLookup$modulePath())
+    fail(ExprLookup.modulePath())
   }
 }
 
@@ -81,7 +81,7 @@ concrete Test {
 
 
 testcase "macro used inline in expressions" {
-  crash Test$run()
+  crash Test.run()
   require "Failed condition: /.+/tests is the path"
 }
 
@@ -97,12 +97,12 @@ concrete Test {
 
 
 testcase "constant defined in .zeolite-module" {
-  success Test$run()
+  success Test.run()
 }
 
 define Test {
   run () {
-    \ Testing$check<?>($ExprLookup[INT_EXPR]$,4)
+    \ Testing.check<?>($ExprLookup[INT_EXPR]$,4)
   }
 }
 
@@ -112,12 +112,12 @@ concrete Test {
 
 
 testcase "constant defined in .zeolite-module from regular source" {
-  success Test$run()
+  success Test.run()
 }
 
 define Test {
   run () {
-    \ Testing$check<?>(ExprLookup$intExpr(),4)
+    \ Testing.check<?>(ExprLookup.intExpr(),4)
   }
 }
 
@@ -127,14 +127,14 @@ concrete Test {
 
 
 testcase "in context defined in .zeolite-module" {
-  success Test$run()
+  success Test.run()
 }
 
 define Test {
   @category String macroLocalVar <- "hello"
 
   run () {
-    \ Testing$check<?>($ExprLookup[LOCAL_VAR]$,"hello")
+    \ Testing.check<?>($ExprLookup[LOCAL_VAR]$,"hello")
   }
 }
 
@@ -161,12 +161,12 @@ concrete Test {
 
 
 testcase "in context defined in .zeolite-module from regular source" {
-  success Test$run()
+  success Test.run()
 }
 
 define Test {
   run () {
-    \ Testing$check<?>(ExprLookup$localVar(),99)
+    \ Testing.check<?>(ExprLookup.localVar(),99)
   }
 }
 
@@ -176,12 +176,12 @@ concrete Test {
 
 
 testcase "nested expression defined in .zeolite-module" {
-  success Test$run()
+  success Test.run()
 }
 
 define Test {
   run () {
-    \ Testing$check<?>($ExprLookup[META_VAR]$,20)
+    \ Testing.check<?>($ExprLookup[META_VAR]$,20)
   }
 }
 
@@ -191,12 +191,12 @@ concrete Test {
 
 
 testcase "function called on expression" {
-  success Test$run()
+  success Test.run()
 }
 
 define Test {
   run () {
-    \ Testing$check<?>($ExprLookup[INT_EXPR]$.formatted(),"4")
+    \ Testing.check<?>($ExprLookup[INT_EXPR]$.formatted(),"4")
   }
 }
 
@@ -206,7 +206,7 @@ concrete Test {
 
 
 testcase "source context" {
-  crash Test$run()
+  crash Test.run()
   require "tests/expr-lookup\.0rt"
 }
 

@@ -10,7 +10,7 @@
 <body>
 <pre style='color:#1f1c1b;background-color:#ffffff;'>
 <b><span style='color:#bf0303;background:#f7e6e6;'>testcase</span></b> <span style='color:#bf0303;'>&quot;parse data from a file&quot;</span> {
-  <span style='color:#04e040;'>success</span> <span style='color:#0057ae;'>Test</span><span style='color:#644a9b;'>$</span>execute()
+  <span style='color:#04e040;'>success</span> <span style='color:#0057ae;'>Test</span><span style='color:#644a9b;'>.</span>execute()
 }
 
 <b>concrete</b> <b><span style='color:#0057ae;'>Test</span></b> {
@@ -19,28 +19,28 @@
 
 <b>define</b> <b><span style='color:#0057ae;'>Test</span></b> {
   execute () {
-    <span style='color:#0057ae;'>TestData</span> data &lt;- <span style='color:#0057ae;'>TestData</span><span style='color:#644a9b;'>$</span>parseFrom(loadTestData()).getValue()
+    <span style='color:#0057ae;'>TestData</span> data &lt;- <span style='color:#0057ae;'>TestData</span><span style='color:#644a9b;'>.</span>parseFrom(loadTestData())<span style='color:#644a9b;'>.</span>getValue()
 
-    <b>if</b> (data.getName() != <span style='color:#bf0303;'>&quot;example data&quot;</span>) {
-      <b>fail</b>(data.getName())
+    <b>if</b> (data<span style='color:#644a9b;'>.</span>getName() != <span style='color:#bf0303;'>&quot;example data&quot;</span>) {
+      <b>fail</b>(data<span style='color:#644a9b;'>.</span>getName())
     }
 
-    <b>if</b> (data.getDescription() != <span style='color:#bf0303;'>&quot;THIS_IS_A_TOKEN&quot;</span>) {
-      <b>fail</b>(data.getDescription())
+    <b>if</b> (data<span style='color:#644a9b;'>.</span>getDescription() != <span style='color:#bf0303;'>&quot;THIS_IS_A_TOKEN&quot;</span>) {
+      <b>fail</b>(data<span style='color:#644a9b;'>.</span>getDescription())
     }
 
-    <b>if</b> (data.getBoolean() != <b>false</b>) {
-      <b>fail</b>(data.getBoolean())
+    <b>if</b> (data<span style='color:#644a9b;'>.</span>getBoolean() != <b>false</b>) {
+      <b>fail</b>(data<span style='color:#644a9b;'>.</span>getBoolean())
     }
   }
 
   <span style='color:#644a9b;'>@type</span> loadTestData () -&gt; (<i><span style='color:#0057ae;'>String</span></i>)
   loadTestData () {
     <b>scoped</b> {
-      <span style='color:#0057ae;'>RawFileReader</span> reader &lt;- <span style='color:#0057ae;'>RawFileReader</span><span style='color:#644a9b;'>$</span>open(<b><i><span style='color:#8060c0;'>$ExprLookup[</span></i></b><i><span style='color:#8060c0;'>MODULE_PATH</span></i><b><i><span style='color:#8060c0;'>]$</span></i></b> + <span style='color:#bf0303;'>&quot;/test-data.txt&quot;</span>)
+      <span style='color:#0057ae;'>RawFileReader</span> reader &lt;- <span style='color:#0057ae;'>RawFileReader</span><span style='color:#644a9b;'>.</span>open(<b><i><span style='color:#8060c0;'>$ExprLookup[</span></i></b><i><span style='color:#8060c0;'>MODULE_PATH</span></i><b><i><span style='color:#8060c0;'>]$</span></i></b> + <span style='color:#bf0303;'>&quot;/test-data.txt&quot;</span>)
     } <b>cleanup</b> {
-      <span style='color:#006e28;'>\</span> reader.freeResource()
-    } <b>in</b> <b>return</b> <span style='color:#0057ae;'>TextReader</span><span style='color:#644a9b;'>$</span>readAll(reader)
+      <span style='color:#006e28;'>\</span> reader<span style='color:#644a9b;'>.</span>freeResource()
+    } <b>in</b> <b>return</b> <span style='color:#0057ae;'>TextReader</span><span style='color:#644a9b;'>.</span>readAll(reader)
   }
 }
 </pre>

@@ -17,7 +17,7 @@ limitations under the License.
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
 testcase "fail builtin" {
-  crash Test$run()
+  crash Test.run()
   require stderr "Failed"
 }
 
@@ -56,7 +56,7 @@ define Value {
 
 define Test {
   run () {
-    fail(Value$create())
+    fail(Value.create())
   }
 }
 
@@ -66,7 +66,7 @@ concrete Test {
 
 
 testcase "require empty" {
-  crash Test$run()
+  crash Test.run()
   require stderr "require.+empty"
 }
 

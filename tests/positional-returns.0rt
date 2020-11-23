@@ -36,7 +36,7 @@ concrete Test {
 
 
 testcase "positional return with no names assigned" {
-  success Test$run()
+  success Test.run()
 }
 
 define Test {
@@ -67,7 +67,7 @@ concrete Test {
 
 
 testcase "positional return instead of names" {
-  success Test$run()
+  success Test.run()
 }
 
 define Test {
@@ -93,7 +93,7 @@ concrete Test {
 
 
 testcase "positional return with some names assigned" {
-  success Test$run()
+  success Test.run()
 }
 
 define Test {

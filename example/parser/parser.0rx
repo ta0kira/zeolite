@@ -57,7 +57,7 @@ define ParseState {
   }
 
   getPosition () {
-    return String$builder()
+    return String.builder()
         .append("[line: ")
         .append(line.formatted())
         .append(", char: ")
@@ -94,7 +94,7 @@ define ParseState {
 
   @category new (String) -> (ParseState<any>)
   new (data) {
-    return ParseState<any>{ data, 0, 1, 1, ErrorOr:value<?>(Void$void()), empty }
+    return ParseState<any>{ data, 0, 1, 1, ErrorOr:value<?>(Void.void()), empty }
   }
 
   @value getError () -> (Formatted)
@@ -109,18 +109,18 @@ define ParseState {
   @value sanityCheck () -> ()
   sanityCheck () {
     if (hasBrokenInput()) {
-      \ LazyStream<Formatted>$new()
+      \ LazyStream<Formatted>.new()
           .append("Error at ")
           .append(getPosition())
           .append(": ")
           .append(getError())
-          .writeTo(SimpleOutput$error())
+          .writeTo(SimpleOutput.error())
     }
     if (atEof()) {
-      \ LazyStream<Formatted>$new()
+      \ LazyStream<Formatted>.new()
           .append("Reached end of input at ")
           .append(getPosition())
-          .writeTo(SimpleOutput$error())
+          .writeTo(SimpleOutput.error())
     }
   }
 }

@@ -15,12 +15,12 @@
 
 <b>define</b> <b><span style='color:#0057ae;'>TreeDemo</span></b> {
   run () {
-    <span style='color:#0057ae;'>TypeTree</span> tree &lt;- <span style='color:#0057ae;'>TypeTree</span><span style='color:#644a9b;'>$</span>new()
+    <span style='color:#0057ae;'>TypeTree</span> tree &lt;- <span style='color:#0057ae;'>TypeTree</span><span style='color:#644a9b;'>.</span>new()
 
-    <span style='color:#0057ae;'>TypeKey</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Int</span></i><span style='color:#c02040;'>&gt;</span>    keyInt    &lt;- <span style='color:#0057ae;'>TypeKey</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Int</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>$</span>new()
-    <span style='color:#0057ae;'>TypeKey</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>String</span></i><span style='color:#c02040;'>&gt;</span> keyString &lt;- <span style='color:#0057ae;'>TypeKey</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>String</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>$</span>new()
-    <span style='color:#0057ae;'>TypeKey</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Float</span></i><span style='color:#c02040;'>&gt;</span>  keyFloat  &lt;- <span style='color:#0057ae;'>TypeKey</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Float</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>$</span>new()
-    <span style='color:#0057ae;'>TypeKey</span><span style='color:#c02040;'>&lt;</span><span style='color:#0057ae;'>Value</span><span style='color:#c02040;'>&gt;</span>  keyValue  &lt;- <span style='color:#0057ae;'>TypeKey</span><span style='color:#c02040;'>&lt;</span><span style='color:#0057ae;'>Value</span><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>$</span>new()
+    <span style='color:#0057ae;'>TypeKey</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Int</span></i><span style='color:#c02040;'>&gt;</span>    keyInt    &lt;- <span style='color:#0057ae;'>TypeKey</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Int</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>.</span>new()
+    <span style='color:#0057ae;'>TypeKey</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>String</span></i><span style='color:#c02040;'>&gt;</span> keyString &lt;- <span style='color:#0057ae;'>TypeKey</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>String</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>.</span>new()
+    <span style='color:#0057ae;'>TypeKey</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Float</span></i><span style='color:#c02040;'>&gt;</span>  keyFloat  &lt;- <span style='color:#0057ae;'>TypeKey</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Float</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>.</span>new()
+    <span style='color:#0057ae;'>TypeKey</span><span style='color:#c02040;'>&lt;</span><span style='color:#0057ae;'>Value</span><span style='color:#c02040;'>&gt;</span>  keyValue  &lt;- <span style='color:#0057ae;'>TypeKey</span><span style='color:#c02040;'>&lt;</span><span style='color:#0057ae;'>Value</span><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>.</span>new()
 
     <span style='color:#006e28;'>\</span> tree<span style='color:#644a9b;'>.</span>set&lt;<b>?</b>&gt;(keyInt,<span style='color:#b08000;'>1</span>)
     <span style='color:#006e28;'>\</span> tree<span style='color:#644a9b;'>.</span>set&lt;<b>?</b>&gt;(keyString,<span style='color:#bf0303;'>&quot;a&quot;</span>)
@@ -29,7 +29,7 @@
     <span style='color:#006e28;'>\</span> check&lt;<b>?</b>&gt;(tree,keyString)
     <span style='color:#006e28;'>\</span> check&lt;<b>?</b>&gt;(tree,keyFloat)  <span style='color:#898887;'>// Not found, since we never added a value.</span>
 
-    <span style='color:#006e28;'>\</span> tree<span style='color:#644a9b;'>.</span>set&lt;<b>?</b>&gt;(keyValue,<span style='color:#0057ae;'>Value</span><span style='color:#644a9b;'>$</span>new())
+    <span style='color:#006e28;'>\</span> tree<span style='color:#644a9b;'>.</span>set&lt;<b>?</b>&gt;(keyValue,<span style='color:#0057ae;'>Value</span><span style='color:#644a9b;'>.</span>new())
     <span style='color:#006e28;'>\</span> check&lt;<b>?</b>&gt;(tree,keyValue)
   }
 
@@ -40,16 +40,16 @@
     <b>scoped</b> {
       <b>optional</b> <i><span style='color:#0057ae;'>#x</span></i> value &lt;- tree<span style='color:#644a9b;'>.</span>get&lt;<i><span style='color:#0057ae;'>#x</span></i>&gt;(key)
     } <b>in</b> <b>if</b> (<b>present</b>(value)) {
-      <span style='color:#006e28;'>\</span> <span style='color:#0057ae;'>LazyStream</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Formatted</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>$</span>new()
+      <span style='color:#006e28;'>\</span> <span style='color:#0057ae;'>LazyStream</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Formatted</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>.</span>new()
           <span style='color:#644a9b;'>.</span>append(<span style='color:#bf0303;'>&quot;Found '&quot;</span>)
           <span style='color:#644a9b;'>.</span>append(<b>require</b>(value))
           <span style='color:#644a9b;'>.</span>append(<span style='color:#bf0303;'>&quot;'</span><span style='color:#924c9d;'>\n</span><span style='color:#bf0303;'>&quot;</span>)
-          <span style='color:#644a9b;'>.</span>writeTo(<span style='color:#0057ae;'>SimpleOutput</span><span style='color:#644a9b;'>$</span>stderr())
+          <span style='color:#644a9b;'>.</span>writeTo(<span style='color:#0057ae;'>SimpleOutput</span><span style='color:#644a9b;'>.</span>stderr())
     } <b>else</b> {
-      <span style='color:#006e28;'>\</span> <span style='color:#0057ae;'>LazyStream</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Formatted</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>$</span>new()
+      <span style='color:#006e28;'>\</span> <span style='color:#0057ae;'>LazyStream</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Formatted</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>.</span>new()
           <span style='color:#644a9b;'>.</span>append(<b>typename</b>&lt;<span style='color:#0057ae;'>TypeKey</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>&gt;())
           <span style='color:#644a9b;'>.</span>append(<span style='color:#bf0303;'>&quot; Not Found</span><span style='color:#924c9d;'>\n</span><span style='color:#bf0303;'>&quot;</span>)
-          <span style='color:#644a9b;'>.</span>writeTo(<span style='color:#0057ae;'>SimpleOutput</span><span style='color:#644a9b;'>$</span>stderr())
+          <span style='color:#644a9b;'>.</span>writeTo(<span style='color:#0057ae;'>SimpleOutput</span><span style='color:#644a9b;'>.</span>stderr())
     }
   }
 }

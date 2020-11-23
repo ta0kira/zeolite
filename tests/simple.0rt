@@ -36,7 +36,7 @@ define Test {
 
 
 testcase "basic crash test" {
-  crash Test$execute()
+  crash Test.execute()
   require stderr "/testcase:"
   require stderr "failure message!!!"
   exclude stdout "failure message!!!"
@@ -56,7 +56,7 @@ define Test {
 
 
 testcase "basic success test" {
-  success Test$execute()
+  success Test.execute()
 }
 
 concrete Test {
@@ -85,7 +85,7 @@ define String {}
 
 
 testcase "no deadlock with recursive type" {
-  success Test$execute()
+  success Test.execute()
 }
 
 concrete Test {
@@ -102,13 +102,13 @@ define Type {
 
 define Test {
   execute () {
-    \ Type<Type<Type<Int>>>$call()
+    \ Type<Type<Type<Int>>>.call()
   }
 }
 
 
 testcase "ModuleOnly is visible to tests" {
-  success Test$execute()
+  success Test.execute()
 }
 
 concrete Test {

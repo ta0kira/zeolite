@@ -6,7 +6,7 @@ expression_map: [
   }
   expression_macro {
     name: MY_OTHER_MACRO
-    expression: Type<Int>$execute("this is a string\012")
+    expression: Type<Int>.execute("this is a string\012")
   }
 ]
 mode: incremental {}
