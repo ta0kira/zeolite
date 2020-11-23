@@ -2,7 +2,7 @@
 
 Compiling this module should **always fail**. It tests a compiler check that
 ensures that `concrete` categories have exactly one definition or are declared
-in the `external:` section of `.zeolite-module`.
+in a `category_source` in the `extra_files:` section of `.zeolite-module`.
 
 To compile:
 
