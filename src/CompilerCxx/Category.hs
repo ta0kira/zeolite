@@ -341,7 +341,7 @@ compileConcreteDefinition testing ta em ns rs dd@(DefinedCategory c n pi _ _ fi 
   let (cm,tm,vm) = partitionByScope dmScope ms
   let filters = getCategoryFilters t
   let filters2 = fi
-  let allFilters = getFilterMap (getCategoryParams t ++ pi) $ filters ++ filters2
+  allFilters <- getFilterMap (getCategoryParams t ++ pi) $ filters ++ filters2
   -- Functions explicitly declared externally.
   let externalFuncs = Set.fromList $ map sfName $ filter ((== n) . sfType) $ getCategoryFunctions t
   -- Functions explicitly declared internally.

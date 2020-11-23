@@ -46,6 +46,7 @@ module Types.TypeInstance (
   checkValueTypeMatch,
   filterLookup,
   fixTypeParams,
+  flipFilter,
   getValueForParam,
   hasInferredParams,
   isDefinesFilter,
@@ -212,6 +213,10 @@ data FilterDirection =
   FilterRequires |
   FilterAllows
   deriving (Eq,Ord)
+
+flipFilter :: FilterDirection -> FilterDirection
+flipFilter FilterRequires = FilterAllows
+flipFilter FilterAllows   = FilterRequires
 
 data TypeFilter =
   TypeFilter {

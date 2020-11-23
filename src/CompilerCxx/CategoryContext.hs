@@ -54,6 +54,7 @@ getContextForInit tm em t d s = do
   let sa = Map.fromList $ zip (map vpParam $ getCategoryParams t) (repeat TypeScope)
   let r = CategoryResolver tm
   fa <- setInternalFunctions r t (dcFunctions d)
+  fm <- getFilterMap (pValues ps) pa
   let typeInstance = TypeInstance (getCategoryName t) $ fmap (singleType . JustParamName False . vpParam) ps
   let builtin = Map.filter ((== LocalScope) . vvScope) $ builtinVariables typeInstance
   members <- mapMembers $ filter ((<= s) . dmScope) (dcMembers d)
@@ -64,7 +65,7 @@ getContextForInit tm em t d s = do
       pcIntParams = Positional [],
       pcMembers = ms,
       pcCategories = tm,
-      pcAllFilters = getFilterMap (pValues ps) pa,
+      pcAllFilters = fm,
       pcExtFilters = pa,
       pcIntFilters = [],
       pcParamScopes = sa,
@@ -105,9 +106,9 @@ getProcedureContext (ScopeContext tm t ps pi ms pa fi fa va em)
                 TypeScope -> Map.union typeScopes localScopes
                 ValueScope -> Map.unions [localScopes,typeScopes,valueScopes]
                 _ -> undefined
-  let localFilters = getFunctionFilterMap ff
-  let typeFilters = getFilterMap (pValues ps) pa
-  let valueFilters = getFilterMap (pValues pi) fi
+  localFilters <- getFunctionFilterMap ff
+  typeFilters <- getFilterMap (pValues ps) pa
+  valueFilters <- getFilterMap (pValues pi) fi
   let allFilters = case s of
                    CategoryScope -> localFilters
                    TypeScope -> Map.union localFilters typeFilters

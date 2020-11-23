@@ -75,7 +75,8 @@ getProcedureScopes ta em (DefinedCategory c n pi _ _ fi ms ps fs) = do
   let filters2 = fi
   let r = CategoryResolver ta
   fa <- setInternalFunctions r t fs
-  checkInternalParams pi fi (getCategoryParams t) (Map.elems fa) r (getCategoryFilterMap t)
+  fm <- getCategoryFilterMap t
+  checkInternalParams pi fi (getCategoryParams t) (Map.elems fa) r fm
   pa <- pairProceduresToFunctions fa ps
   let (cp,tp,vp) = partitionByScope (sfScope . fst) pa
   let (cm,tm,vm) = partitionByScope dmScope ms
@@ -98,7 +99,7 @@ getProcedureScopes ta em (DefinedCategory c n pi _ _ fi ms ps fs) = do
       let pm = Map.fromList $ map (\p -> (vpParam p,vpContext p)) pi2
       mapErrorsM_ (checkFunction pm) fs2
       mapErrorsM_ (checkParam pm) pe
-      let fa' = Map.union fa $ getFilterMap pi2 fi2
+      fa' <- fmap (Map.union fa) $ getFilterMap pi2 fi2
       mapErrorsM_ (checkFilter r fa') fi2
     checkFilter r fa (ParamFilter c2 n2 f) =
       validateTypeFilter r fa f <?? ("In " ++ show n2 ++ " " ++ show f ++ formatFullContextBrace c2)

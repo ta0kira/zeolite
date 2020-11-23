@@ -80,11 +80,12 @@ data VariableValue c =
 setInternalFunctions :: (Show c, CompileErrorM m, TypeResolver r) =>
   r -> AnyCategory c -> [ScopedFunction c] ->
   m (Map.Map FunctionName (ScopedFunction c))
-setInternalFunctions r t fs = foldr update (return start) fs where
+setInternalFunctions r t fs = do
+  fm <- getCategoryFilterMap t
+  foldr (update fm) (return start) fs where
   start = Map.fromList $ map (\f -> (sfName f,f)) $ getCategoryFunctions t
-  fm = getCategoryFilterMap t
   pm = getCategoryParamMap t
-  update f@(ScopedFunction c n t2 s as rs ps fs2 ms) fa = do
+  update fm f@(ScopedFunction c n t2 s as rs ps fs2 ms) fa = do
     validateCategoryFunction r t f
     fa' <- fa
     case n `Map.lookup` fa' of
@@ -169,7 +170,7 @@ mergeInternalInheritance tm d = do
   let c2 = ValueConcrete c ns n ps (rs++rs2) (ds++ds2) vs fs
   let tm' = Map.insert (dcName d) c2 tm
   let r = CategoryResolver tm'
-  let fm = getCategoryFilterMap t
+  fm <- getCategoryFilterMap t
   let pm = getCategoryParamMap t
   rs' <- mergeRefines r fm (rs++rs2)
   noDuplicateRefines [] n rs'

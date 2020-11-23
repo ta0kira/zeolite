@@ -887,11 +887,11 @@ guessParamsFromArgs :: (Show c, CompileErrorM m, TypeResolver r) =>
   r -> ParamFilters -> ScopedFunction c -> Positional (InstanceOrInferred c) ->
   Positional ValueType -> m (Positional GeneralInstance)
 guessParamsFromArgs r fa f ps ts = do
-  let ff = getFunctionFilterMap f
+  fm <- getFunctionFilterMap f
   args <- processPairs (\t1 t2 -> return $ PatternMatch Covariant t1 t2) ts (fmap pvType $ sfArgs f)
   pa <- fmap Map.fromList $ processPairs toInstance (fmap vpParam $ sfParams f) ps
   gs <- inferParamTypes r fa pa args
-  gs' <- mergeInferredTypes r fa ff pa gs
+  gs' <- mergeInferredTypes r fa fm pa gs
   let pa3 = guessesAsParams gs' `Map.union` pa
   fmap Positional $ mapErrorsM (subPosition pa3) (pValues $ sfParams f) where
     subPosition pa2 p =

@@ -470,22 +470,33 @@ declareAllTypes tm0 = foldr (\t tm -> tm >>= update t) (return tm0) where
                                      formatFullContextBrace (getCategoryContext t2)
         _ -> return $ Map.insert (getCategoryName t) t tm
 
-getFilterMap :: [ValueParam c] -> [ParamFilter c] -> ParamFilters
-getFilterMap ps fs = getFilters $ zip (Set.toList pa) (repeat []) where
-  pa = Set.fromList $ map vpParam ps
-  getFilters pa0 = let fs' = map (\f -> (pfParam f,pfFilter f)) fs in
-                       Map.fromListWith (++) $ map (second (:[])) fs' ++ pa0
+getFilterMap :: CompileErrorM m => [ValueParam c] -> [ParamFilter c] -> m ParamFilters
+getFilterMap ps fs = do
+  mirrored <- fmap concat $ mapErrorsM maybeMirror fs
+  return $ getFilters mirrored $ zip (Set.toList pa) (repeat []) where
+    pa = Set.fromList $ map vpParam ps
+    maybeMirror fa@(ParamFilter c p1 (TypeFilter d p2)) = do
+      p <- collectFirstM [fmap Just $ matchOnlyLeaf p2,return Nothing]
+      case p of
+          Just (JustParamName _ p') ->
+            if p' `Set.member` pa
+               then return [fa,(ParamFilter c p' (TypeFilter (flipFilter d) (singleType (JustParamName False p1))))]
+               else return [fa]
+          _ -> return [fa]
+    maybeMirror fa = return [fa]
+    getFilters fs2 pa0 = let fs' = map (\f -> (pfParam f,pfFilter f)) fs2 in
+                             Map.fromListWith (++) $ map (second (:[])) fs' ++ pa0
 
-getCategoryFilterMap :: AnyCategory c -> ParamFilters
+getCategoryFilterMap :: CompileErrorM m => AnyCategory c -> m ParamFilters
 getCategoryFilterMap t = getFilterMap (getCategoryParams t) (getCategoryFilters t)
+
+-- TODO: Use this where it's needed in this file.
+getFunctionFilterMap :: CompileErrorM m => ScopedFunction c -> m ParamFilters
+getFunctionFilterMap f = getFilterMap (pValues $ sfParams f) (sfFilters f)
 
 getCategoryParamMap :: AnyCategory c -> ParamValues
 getCategoryParamMap t = let ps = map vpParam $ getCategoryParams t in
                           Map.fromList $ zip ps (map (singleType . JustParamName False) ps)
-
--- TODO: Use this where it's needed in this file.
-getFunctionFilterMap :: ScopedFunction c -> ParamFilters
-getFunctionFilterMap f = getFilterMap (pValues $ sfParams f) (sfFilters f)
 
 checkConnectedTypes :: (Show c, CompileErrorM m) =>
   CategoryMap c -> [AnyCategory c] -> m ()
@@ -635,7 +646,7 @@ checkCategoryInstances tm0 ts = do
   where
     checkSingle r t = do
       let pa = Set.fromList $ map vpParam $ getCategoryParams t
-      let fm = getCategoryFilterMap t
+      fm <- getCategoryFilterMap t
       mapErrorsM_ (checkFilterParam pa) (getCategoryFilters t)
       mapErrorsM_ (checkRefine r fm) (getCategoryRefines t)
       mapErrorsM_ (checkDefine r fm) (getCategoryDefines t)
@@ -657,7 +668,7 @@ checkCategoryInstances tm0 ts = do
 validateCategoryFunction :: (Show c, CompileErrorM m, TypeResolver r) =>
   r -> AnyCategory c -> ScopedFunction c -> m ()
 validateCategoryFunction r t f = do
-  let fm = getCategoryFilterMap t
+  fm <- getCategoryFilterMap t
   let vm = Map.fromList $ map (\p -> (vpParam p,vpVariance p)) $ getCategoryParams t
   message ??> do
     funcType <- parsedToFunctionType f
@@ -767,7 +778,7 @@ flattenAllConnections tm0 ts = do
                formatFullContextBrace (getCategoryContext t))
       return (ts2 ++ [t'],Map.insert (getCategoryName t') t' tm)
     updateSingle r tm t@(ValueInterface c ns n ps rs vs fs) = do
-      let fm = getCategoryFilterMap t
+      fm <- getCategoryFilterMap t
       let pm = getCategoryParamMap t
       rs' <- fmap concat $ mapErrorsM (getRefines tm) rs
       rs'' <- mergeRefines r fm rs'
@@ -778,7 +789,7 @@ flattenAllConnections tm0 ts = do
       return $ ValueInterface c ns n ps rs'' vs fs'
     -- TODO: Remove duplication below and/or have separate tests.
     updateSingle r tm t@(ValueConcrete c ns n ps rs ds vs fs) = do
-      let fm = getCategoryFilterMap t
+      fm <- getCategoryFilterMap t
       let pm = getCategoryParamMap t
       rs' <- fmap concat $ mapErrorsM (getRefines tm) rs
       rs'' <- mergeRefines r fm rs'
