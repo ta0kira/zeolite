@@ -36,7 +36,7 @@ description:
     .
     @
     ZEOLITE_PATH=$(zeolite --get-path)
-    zeolite -p "$ZEOLITE_PATH" -f -i lib\/util -m HelloDemo example\/hello
+    zeolite -p "$ZEOLITE_PATH" -f -I lib\/util -m HelloDemo example\/hello
     $ZEOLITE_PATH\/example\/hello\/HelloDemo
     @
   .
