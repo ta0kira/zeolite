@@ -83,8 +83,8 @@ designed with practical applications in mind.
 
 Requirements:
 
-- A Unix-like operating system. Zeolite has been tested on Linux, but in theory
-  it should also work on FreeBSD, OS X, etc.
+- A Unix-like operating system. Zeolite has been tested on Linux and FreeBSD,
+  but in theory it should also work on OpenBSD, NetBSD, OS X, etc.
 - A Haskell compiler such as [`ghc`][ghc] that can install packages using
   [`cabal`][cabal], as well as the [`cabal`][cabal] installer.
 - A C++ compiler such as [`clang++`][clang] or [`g++`][gcc] and the standard
