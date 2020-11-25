@@ -355,7 +355,9 @@ checkValueTypeMatch r f v ts1@(ValueType r1 t1) ts2@(ValueType r2 t2) = result <
 checkGeneralMatch :: (CompileErrorM m, TypeResolver r) =>
   r -> ParamFilters -> Variance ->
   GeneralInstance -> GeneralInstance -> m (MergeTree InferredTypeGuess)
-checkGeneralMatch r f v t1 t2 = collectFirstM [matchInferredRight,bothSingle,matchNormal v] where
+checkGeneralMatch r f v t1 t2 = do
+  ss <- collectFirstM [fmap Just bothSingle,return Nothing]
+  collectFirstM [matchInferredRight,getMatcher ss] where
   matchNormal Invariant =
     mergeAllM [matchNormal Contravariant,matchNormal Covariant]
   matchNormal Contravariant =
@@ -368,7 +370,11 @@ checkGeneralMatch r f v t1 t2 = collectFirstM [matchInferredRight,bothSingle,mat
   bothSingle = do
     t1' <- matchOnlyLeaf t1
     t2' <- matchOnlyLeaf t2
-    checkSingleMatch r f v t1' t2'
+    return (t1',t2')
+  getMatcher ss =
+    case ss of
+         Just (t1',t2') -> checkSingleMatch r f v t1' t2'
+         Nothing        -> matchNormal v
 
 checkSingleMatch :: (CompileErrorM m, TypeResolver r) =>
   r -> ParamFilters -> Variance ->
@@ -399,7 +405,7 @@ checkInstanceToInstance r f v t1@(TypeInstance n1 ps1) t2@(TypeInstance n2 ps2)
   | v == Contravariant = do
     ps2' <- trRefines r t2 n1
     checkInstanceToInstance r f Contravariant t1 (TypeInstance n1 ps2')
-  | otherwise = compileErrorM $ "Category " ++ show n2 ++ " is required but got " ++ show n2
+  | otherwise = compileErrorM $ "Category " ++ show n2 ++ " is required but got " ++ show n1
 
 checkParamToInstance :: (CompileErrorM m, TypeResolver r) =>
   r -> ParamFilters -> Variance -> ParamName -> TypeInstance -> m (MergeTree InferredTypeGuess)
