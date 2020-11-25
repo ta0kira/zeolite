@@ -1040,8 +1040,12 @@ data GuessRange a =
   }
   deriving (Eq,Ord)
 
-instance Show a => Show (GuessRange a) where
-  show (GuessRange lo hi) = "Something between " ++ show lo ++ " and " ++ show hi
+instance (Bounded a, Eq a, Show a) => Show (GuessRange a) where
+  show (GuessRange lo hi)
+    | lo == minBound && hi == maxBound = "Literally anything is possible"
+    | lo == minBound = "Something at or below " ++ show hi
+    | hi == maxBound = "Something at or above " ++ show lo
+    | otherwise = "Something between " ++ show lo ++ " and " ++ show hi
 
 data GuessUnion a =
   GuessUnion {
