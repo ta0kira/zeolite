@@ -44,22 +44,31 @@ concrete Test {
 testcase "category param bounded on both sides" {
   error
   require compiler "#x.+bound"
+  require compiler "[Uu]pper.+ \[Type1&Type2\]"
+  require compiler "[Ll]ower.+ \[Type3\|Type4\]"
 }
 
 @value interface Type1 {}
 
 @value interface Type2 {}
 
+@value interface Type3 {}
+
+@value interface Type4 {}
+
 @value interface Value<#x> {
   #x requires Type1
-  #x allows   Type2
+  #x requires Type2
+  #x allows   Type3
+  #x allows   Type4
 }
 
 
 testcase "implicit bound from reversing another filter" {
   error
   require compiler "#x.+bound"
-  require compiler "#x allows #y"
+  require compiler "[Uu]pper.+ Type"
+  require compiler "[Ll]ower.+ #y"
 }
 
 @value interface Type {}

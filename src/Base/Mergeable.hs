@@ -23,6 +23,8 @@ limitations under the License.
 module Base.Mergeable (
   Mergeable(..),
   PreserveMerge(..),
+  (<||>),
+  (<&&>),
 ) where
 
 import Data.Map as Map hiding (foldr)
@@ -36,10 +38,16 @@ class (Bounded a, Mergeable a) => PreserveMerge a where
   type T a :: *
   convertMerge :: Mergeable b => (T a -> b) -> a -> b
 
+(<||>) :: Mergeable a => a -> a -> a
+(<||>) x y = mergeAny [x,y]
+
+(<&&>) :: Mergeable a => a -> a -> a
+(<&&>) x y = mergeAll [x,y]
+
 instance Mergeable Bool where
   mergeAny = foldr (||) False
   mergeAll = foldr (&&) True
 
 instance (Ord k, Mergeable a) => Mergeable (Map k a) where
-  mergeAny = Map.fromListWith (\x y -> mergeAny [x,y]) . foldr ((++) . Map.toList) []
-  mergeAll = Map.fromListWith (\x y -> mergeAll [x,y]) . foldr ((++) . Map.toList) []
+  mergeAny = Map.fromListWith (<||>) . foldr ((++) . Map.toList) []
+  mergeAll = Map.fromListWith (<&&>) . foldr ((++) . Map.toList) []

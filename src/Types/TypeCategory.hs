@@ -501,20 +501,17 @@ getCategoryParamMap t = let ps = map vpParam $ getCategoryParams t in
 disallowBoundedParams :: CompileErrorM m => ParamFilters -> m ()
 disallowBoundedParams = mapErrorsM_ checkBounds . Map.toList where
   checkBounds (p,fs) = do
-    let bs = splitBounds fs
-    case bs of
-         ([],_) -> return ()
-         (_,[]) -> return ()
-         (ls,hs) -> ("Param " ++ show p ++ " cannot have both lower and upper bounds") !!>
-           collectAllM_ [
-               mapErrorsM_ (filterAsError p) ls <!! "Lower bound:",
-               mapErrorsM_ (filterAsError p) hs <!! "Upper bound:"
-             ]
-  splitBounds (f@(TypeFilter FilterRequires _):fs) = let (ls,hs) = splitBounds fs in (ls,f:hs)
-  splitBounds (f@(TypeFilter FilterAllows   _):fs) = let (ls,hs) = splitBounds fs in (f:ls,hs)
+    let (lb,ub) = splitBounds fs
+    when (lb /= minBound && ub /= maxBound) $
+      ("Param " ++ show p ++ " cannot have both lower and upper bounds") !!>
+        collectAllM_ [
+            compileErrorM $ "Lower bound: " ++ show lb,
+            compileErrorM $ "Upper bound: " ++ show ub
+          ]
+  splitBounds ((TypeFilter FilterRequires t):fs) = let (lb,ub) = splitBounds fs in (lb,ub<&&>t)
+  splitBounds ((TypeFilter FilterAllows   t):fs) = let (lb,ub) = splitBounds fs in (lb<||>t,ub)
   splitBounds (_:fs) = splitBounds fs
-  splitBounds _ = ([],[])
-  filterAsError p f = compileErrorM $ show p ++ " " ++ show f
+  splitBounds _ = (minBound,maxBound)
 
 checkConnectedTypes :: (Show c, CompileErrorM m) =>
   CategoryMap c -> [AnyCategory c] -> m ()
