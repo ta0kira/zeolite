@@ -50,6 +50,17 @@ instance ParseFromSource (ExecutableProcedure SourcePos) where
     sepAfter (string_ "}")
     return $ ExecutableProcedure [c] pragmas [c2] n as rs pp
 
+instance ParseFromSource (TestProcedure SourcePos) where
+  sourceParser = labeled "test procedure" $ do
+    c <- getPosition
+    kwUnittest
+    n <- try sourceParser
+    sepAfter (string_ "{")
+    pp <- sourceParser
+    c2 <- getPosition
+    sepAfter (string_ "}")
+    return $ TestProcedure [c] [c2] n pp
+
 instance ParseFromSource (ArgValues SourcePos) where
   sourceParser = labeled "procedure arguments" $ do
     c <- getPosition

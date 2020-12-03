@@ -36,6 +36,7 @@ module Types.Procedure (
   ReturnValues(..),
   ScopedBlock(..),
   Statement(..),
+  TestProcedure(..),
   ValueLiteral(..),
   ValueOperation(..),
   VariableName(..),
@@ -139,6 +140,14 @@ data OutputValue c =
 instance Show c => Show (OutputValue c) where
   show (OutputValue c v) = show v ++ " /*" ++ formatFullContext c ++ "*/"
 
+data TestProcedure c =
+  TestProcedure {
+    tpContext :: [c],
+    tpEnd :: [c],
+    tpName :: FunctionName,
+    tpProcedure :: Procedure c
+  }
+  deriving (Show)
 
 data Procedure c =
   Procedure [c] [Statement c]

@@ -20,7 +20,6 @@ limitations under the License.
 {-# LANGUAGE Safe #-}
 
 module Parser.DefinedCategory (
-  parseAnySource,
 ) where
 
 import Control.Monad (when)
@@ -113,16 +112,3 @@ parseMemberProcedureFunction n = parsed >>= return . foldr merge empty where
   catchUnscopedType = do
     _ <- try sourceParser :: Parser ValueType
     fail $ "members must have an explicit @value or @category scope"
-
-parseAnySource :: Parser ([AnyCategory SourcePos],[DefinedCategory SourcePos])
-parseAnySource = parsed >>= return . foldr merge empty where
-  empty = ([],[])
-  merge (cs1,ds1) (cs2,ds2) = (cs1++cs2,ds1++ds2)
-  parsed = sepBy anyType optionalSpace
-  anyType = singleCategory <|> singleDefine2
-  singleCategory = do
-    c <- sourceParser
-    return ([c],[])
-  singleDefine2 = do
-    d <- sourceParser
-    return ([],[d])

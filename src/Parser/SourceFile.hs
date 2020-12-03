@@ -29,7 +29,7 @@ import Text.Parsec.String
 
 import Base.CompileError
 import Parser.Common
-import Parser.DefinedCategory
+import Parser.DefinedCategory ()
 import Parser.IntegrationTest ()
 import Parser.Pragma
 import Parser.TypeCategory ()
@@ -48,7 +48,7 @@ parseInternalSource (f,s) = unwrap parsed where
   withPragmas = do
     pragmas <- parsePragmas internalSourcePragmas
     optionalSpace
-    (cs,ds) <- parseAnySource
+    (cs,ds) <- sourceParser
     return (pragmas,cs,ds)
 
 parsePublicSource :: CompileErrorM m => (FilePath,String) -> m ([Pragma SourcePos],[AnyCategory SourcePos])

@@ -6,7 +6,7 @@
 <language
     name="Zeolite"
     section="Sources"
-    version="3.6"
+    version="3.7"
     kateversion="2.4"
     indenter="cstyle"
     style="Zeolite"
@@ -62,6 +62,10 @@
 
     <list name="testHeader">
       <item> testcase </item>
+    </list>
+
+    <list name="singleTest">
+      <item> unittest </item>
     </list>
 
     <list name="internalTypes">
@@ -124,15 +128,17 @@
         <keyword attribute="Testcase Keyword" context="Test Name" String="testHeader" />
         <keyword attribute="Keyword" context="Declare Type" String="typeDeclare" />
         <keyword attribute="Keyword" context="Define Type" String="typeDefine" />
+        <keyword attribute="Keyword" context="Define Test" String="singleTest" />
       </context>
 
       <context name="Keywords Disallowed" attribute="Normal Text" lineEndContext="#stay" >
         <keyword attribute="Error" context="#stay" String="keywords" />
         <keyword attribute="Error" context="#stay" String="scope" />
         <keyword attribute="Error" context="#stay" String="storage" />
-        <keyword attribute="Error" context="Test Name" String="testHeader" />
-        <keyword attribute="Error" context="Declare Type" String="typeDeclare" />
-        <keyword attribute="Error" context="Define Type" String="typeDefine" />
+        <keyword attribute="Error" context="#stay" String="testHeader" />
+        <keyword attribute="Error" context="#stay" String="typeDeclare" />
+        <keyword attribute="Error" context="#stay" String="typeDefine" />
+        <keyword attribute="Error" context="#stay" String="singleTest" />
       </context>
 
       <context name="Braces" attribute="Normal Text" lineEndContext="#stay" >
@@ -147,7 +153,7 @@
 
       <context name="Declare Type" attribute="Normal Text" lineEndContext="#stay" >
         <DetectSpaces />
-        <RegExpr attribute="Define Category Name" context="#stay" String="\b[A-Z][a-zA-Z0-9]*\b" />
+        <RegExpr attribute="Define Name" context="#stay" String="\b[A-Z][a-zA-Z0-9]*\b" />
         <DetectChar attribute="Params Brace" context="Type Params" char="&lt;" />
         <IncludeRules context="Any Comment" />
         <AnyChar attribute="Error" context="#stay" String="#$}.*@!=%+-/\&amp;|&gt;()[]" />
@@ -156,11 +162,20 @@
 
       <context name="Define Type" attribute="Normal Text" lineEndContext="#stay" >
         <DetectSpaces />
-        <RegExpr attribute="Define Category Name" context="#stay" String="\b[A-Z][a-zA-Z0-9]*\b" />
+        <RegExpr attribute="Define Name" context="#stay" String="\b[A-Z][a-zA-Z0-9]*\b" />
         <DetectChar context="#pop" char="{" lookAhead="true" />
         <IncludeRules context="Any Comment" />
         <AnyChar attribute="Error" context="#stay" String="#$}.*@!=%+-/\&lt;&gt;()[]?" />
         <RegExpr attribute="Error" context="#stay" String="[a-z0-9][a-zA-Z0-9]*\b" />
+      </context>
+
+      <context name="Define Test" attribute="Normal Text" lineEndContext="#stay" >
+        <DetectSpaces />
+        <RegExpr attribute="Define Name" context="#stay" String="\b[a-z][a-zA-Z0-9]*\b" />
+        <DetectChar context="#pop" char="{" lookAhead="true" />
+        <IncludeRules context="Any Comment" />
+        <AnyChar attribute="Error" context="#stay" String="#$}.*@!=%+-/\&lt;&gt;()[]?" />
+        <RegExpr attribute="Error" context="#stay" String="[A-Z0-9][a-zA-Z0-9]*\b" />
       </context>
 
       <context name="Pragma" attribute="Pragma Tail" lineEndContext="#stay" >
@@ -368,7 +383,7 @@
       <itemData name="Storage Qualifier" defStyleNum="dsKeyword" spellChecking="false" />
       <itemData name="Builtin Category Name" defStyleNum="dsDataType" italic="true" spellChecking="false" />
       <itemData name="Category Name" defStyleNum="dsDataType" spellChecking="false" />
-      <itemData name="Define Category Name" defStyleNum="dsDataType" bold="true" spellChecking="false" />
+      <itemData name="Define Name" defStyleNum="dsDataType" bold="true" spellChecking="false" />
       <itemData name="Pragma Head" defStyleNum="dsOthers" bold="true" italic="true" color="#8060c0" spellChecking="false" />
       <itemData name="Pragma Tail" defStyleNum="dsOthers" bold="false" italic="true" color="#8060c0" spellChecking="false" />
       <itemData name="Param Name" defStyleNum="dsDataType" italic="true" spellChecking="false" />

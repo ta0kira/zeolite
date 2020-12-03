@@ -33,7 +33,7 @@ module Types.IntegrationTest (
 
 import Types.TypeCategory
 import Types.DefinedCategory
-import Types.Procedure (Expression)
+import Types.Procedure
 
 
 data IntegrationTestHeader c =
@@ -47,7 +47,8 @@ data IntegrationTest c =
   IntegrationTest {
     itHeader :: IntegrationTestHeader c,
     itCategory :: [AnyCategory c],
-    itDefinition :: [DefinedCategory c]
+    itDefinition :: [DefinedCategory c],
+    itTests :: [TestProcedure c]
   }
 
 data ExpectedResult c =

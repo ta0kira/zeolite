@@ -25,7 +25,7 @@ module Parser.IntegrationTest (
 import Text.Parsec
 
 import Parser.Common
-import Parser.DefinedCategory
+import Parser.DefinedCategory ()
 import Parser.Procedure ()
 import Parser.TypeCategory ()
 import Types.IntegrationTest
@@ -91,5 +91,5 @@ instance ParseFromSource (IntegrationTestHeader SourcePos) where
 instance ParseFromSource (IntegrationTest SourcePos) where
   sourceParser = labeled "integration test" $ do
     h <- sourceParser
-    (cs,ds) <- parseAnySource
-    return $ IntegrationTest h cs ds
+    (cs,ds,ts) <- sourceParser
+    return $ IntegrationTest h cs ds ts

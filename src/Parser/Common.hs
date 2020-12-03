@@ -16,6 +16,7 @@ limitations under the License.
 
 -- Author: Kevin P. Barry [ta0kira@gmail.com]
 
+{-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE Safe #-}
 
 module Parser.Common (
@@ -66,6 +67,7 @@ module Parser.Common (
   kwType,
   kwTypename,
   kwTypes,
+  kwUnittest,
   kwUpdate,
   kwValue,
   kwWeak,
@@ -269,6 +271,9 @@ kwTypename = keyword "typename"
 kwTypes :: Parser ()
 kwTypes = keyword "types"
 
+kwUnittest :: Parser ()
+kwUnittest = keyword "unittest"
+
 kwUpdate :: Parser ()
 kwUpdate = keyword "update"
 
@@ -320,6 +325,7 @@ isKeyword = foldr (<|>) nullParse $ map try [
     kwType,
     kwTypename,
     kwTypes,
+    kwUnittest,
     kwUpdate,
     kwValue,
     kwWeak,
@@ -492,3 +498,34 @@ put33 = fmap put where put x = ([],[],[x])
 merge3 :: (Foldable f, Monoid a, Monoid b, Monoid c) => f (a,b,c) -> (a,b,c)
 merge3 = foldr merge (mempty,mempty,mempty) where
   merge (xs1,ys1,zs1) (xs2,ys2,zs2) = (xs1<>xs2,ys1<>ys2,zs1<>zs2)
+
+instance (ParseFromSource a, ParseFromSource b) => ParseFromSource ([a],[b]) where
+  sourceParser = parsed >>= return . foldr merge empty where
+    empty = ([],[])
+    merge (xs1,ys1) (xs2,ys2) = (xs1++xs2,ys1++ys2)
+    parsed = sepBy anyType optionalSpace
+    anyType = p1 <|> p2
+    p1 = do
+      x <- sourceParser
+      return ([x],[])
+    p2 = do
+      x <- sourceParser
+      return ([],[x])
+
+instance (ParseFromSource a, ParseFromSource b, ParseFromSource c) => ParseFromSource ([a],[b],[c]) where
+  sourceParser = parsed >>= return . foldr merge empty where
+    -- NOTE: Using ([([a],[b])],[c]) would cause ambiguous parsing since [] will
+    -- have infinite matches.
+    empty = ([],[],[])
+    merge (xs1,ys1,zs1) (xs2,ys2,zs2) = (xs1++xs2,ys1++ys2,zs1++zs2)
+    parsed = sepBy anyType optionalSpace
+    anyType = p1 <|> p2 <|> p3
+    p1 = do
+      x <- sourceParser
+      return ([x],[],[])
+    p2 = do
+      y <- sourceParser
+      return ([],[y],[])
+    p3 = do
+      z <- sourceParser
+      return ([],[],[z])
