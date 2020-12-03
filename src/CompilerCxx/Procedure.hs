@@ -117,7 +117,7 @@ compileExecutableProcedure ctx ff@(ScopedFunction _ _ _ s as1 rs1 ps1 _ _)
     returnType = "ReturnTuple"
     setProcedureTrace
       | any isNoTrace pragmas = return []
-      | otherwise             = return [startFunctionTracing $ show t ++ "." ++ show n]
+      | otherwise             = return [startFunctionTracing t n]
     setCreationTrace
       | not $ any isTraceCreation pragmas = return []
       | s /= ValueScope =

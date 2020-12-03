@@ -413,7 +413,7 @@ compileConcreteDefinition testing ta em ns rs dd@(DefinedCategory c n pi _ _ fi 
       concatM [
           return $ onlyCode $ categoryName n ++ "()" ++ initColon ++ initMembersStr ++ " {",
           return $ indentCompiled $ onlyCodes $ getCycleCheck (categoryName n),
-          return $ indentCompiled $ onlyCode $ startFunctionTracing $ show n ++ " (init @category)",
+          return $ indentCompiled $ onlyCode $ startInitTracing n CategoryScope,
           return $ onlyCode "}",
           return $ clearCompiled initMembers -- Inherit required types.
         ]
@@ -430,7 +430,7 @@ compileConcreteDefinition testing ta em ns rs dd@(DefinedCategory c n pi _ _ fi 
       concatM [
           return $ onlyCode $ typeName n ++ "(" ++ allArgs ++ ") : " ++ allInit ++ " {",
           return $ indentCompiled $ onlyCodes $ getCycleCheck (typeName n),
-          return $ indentCompiled $ onlyCode $ startFunctionTracing $ show n ++ " (init @type)",
+          return $ indentCompiled $ onlyCode $ startInitTracing n TypeScope,
           return $ indentCompiled $ initMembers,
           return $ onlyCode "}"
         ]
@@ -804,7 +804,7 @@ createMainCommon n (CompiledData req out) =
       "int main(int argc, const char** argv) {",
       "  SetSignalHandler();",
       "  ProgramArgv program_argv(argc, argv);",
-      "  " ++ startFunctionTracing n
+      "  " ++ startFunctionTracing CategoryNone (FunctionName n)
     ] ++ out ++ ["}"] where
       depIncludes req2 = map (\i -> "#include \"" ++ headerFilename i ++ "\"") $
                            Set.toList req2

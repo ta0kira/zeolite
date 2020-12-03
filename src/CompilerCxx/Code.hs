@@ -41,6 +41,7 @@ module CompilerCxx.Code (
   showCreationTrace,
   startCleanupTracing,
   startFunctionTracing,
+  startInitTracing,
   testsOnlyCategoryGuard,
   testsOnlySourceGuard,
   typeBase,
@@ -85,8 +86,12 @@ indentCompiled (CompiledData r o) = CompiledData r $ map ("  " ++) o
 clearCompiled :: CompiledData [String] -> CompiledData [String]
 clearCompiled (CompiledData r _) = CompiledData r []
 
-startFunctionTracing :: String -> String
-startFunctionTracing f = "TRACE_FUNCTION(" ++ show f ++ ")"
+startFunctionTracing :: CategoryName -> FunctionName -> String
+startFunctionTracing CategoryNone f = "TRACE_FUNCTION(" ++ show (show f) ++ ")"
+startFunctionTracing t            f = "TRACE_FUNCTION(" ++ show (show t ++ "." ++ show f) ++ ")"
+
+startInitTracing :: CategoryName -> SymbolScope -> String
+startInitTracing t s = "TRACE_FUNCTION(" ++ show (show t ++ " " ++ show s ++ " init") ++ ")"
 
 startCleanupTracing :: String
 startCleanupTracing = "TRACE_CLEANUP"
