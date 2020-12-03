@@ -1,5 +1,9 @@
 testcase "test" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 concrete Test {

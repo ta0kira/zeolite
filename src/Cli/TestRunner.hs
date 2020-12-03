@@ -22,6 +22,7 @@ module Cli.TestRunner (
 
 import Control.Arrow (second)
 import Control.Monad (when)
+import Control.Monad.IO.Class
 import Data.List (isSuffixOf,nub)
 import System.Directory
 import System.IO
@@ -56,32 +57,35 @@ runSingleTest b cm p paths deps (f,s) = do
         return ((0,1),ts >> return ())
       | otherwise = do
           let (_,ts') = getCompileSuccess ts
-          allResults <- sequence $ map runSingle ts'
-          let passed = length $ filter (not . isCompileError) allResults
-          let failed = length $ filter isCompileError allResults
-          return ((passed,failed),collectAllM_ allResults)
+          allResults <- mapErrorsM runSingle ts'
+          let passed = sum $ map (fst . fst) allResults
+          let failed = sum $ map (snd . fst) allResults
+          let result = collectAllM_ $ map snd allResults
+          return ((passed,failed),result)
     runSingle t = do
       let name = "\"" ++ ithTestName (itHeader t) ++ "\" (from " ++ f ++ ")"
       let context = formatFullContextBrace (ithContext $ itHeader t)
-      errorFromIO $ hPutStrLn stderr $ "\n*** Executing test " ++ name ++ " ***"
-      outcome <- fmap (("\nIn test \"" ++ ithTestName (itHeader t) ++ "\"" ++ context) ??>) $
-                   run (ithResult $ itHeader t) (itCategory t) (itDefinition t)
-      if isCompileError outcome
-         then errorFromIO $ hPutStrLn stderr $ "*** Test " ++ name ++ " failed ***"
-         else errorFromIO $ hPutStrLn stderr $ "*** Test " ++ name ++ " passed ***"
-      return outcome
+      errorFromIO $ hPutStrLn stderr $ "\n*** Executing testcase " ++ name ++ " ***"
+      allResults <- run (ithResult $ itHeader t) (itCategory t) (itDefinition t) (itTests t)
+      let passed = length $ filter (not . isCompileError) allResults
+      let failed = length $ filter isCompileError allResults
+      let result = ("\nIn testcase \"" ++ ithTestName (itHeader t) ++ "\"" ++ context) ??> collectAllM_ allResults
+      if failed > 0
+         then errorFromIO $ hPutStrLn stderr $ "*** Some tests in testcase " ++ name ++ " failed ***"
+         else errorFromIO $ hPutStrLn stderr $ "*** All tests in testcase " ++ name ++ " passed ***"
+      return ((passed,failed),result)
 
-    run (ExpectCompileError _ rs es) cs ds = do
-      let result = compileAll Nothing cs ds
+    run (ExpectCompileError _ rs es) cs ds ts = fmap (:[]) $ do
+      let result = compileAll cs ds ts
       if not $ isCompileError result
-         then undefined  -- Should be caught in compileAll.
+         then compileErrorM "Expected compilation failure"
          else return $ do
            let warnings = show $ getCompileWarnings result
            let errors   = show $ getCompileError result
            checkContent rs es (lines warnings ++ lines errors) [] []
 
-    run (ExpectRuntimeError   _ e rs es) cs ds = execute False e rs es cs ds
-    run (ExpectRuntimeSuccess _ e rs es) cs ds = execute True  e rs es cs ds
+    run (ExpectRuntimeError   _ rs es) cs ds ts = execute False rs es cs ds ts
+    run (ExpectRuntimeSuccess _ rs es) cs ds ts = execute True  rs es cs ds ts
 
     checkContent rs es comp err out = do
       let cr = checkRequired rs comp err out
@@ -99,42 +103,31 @@ runSingleTest b cm p paths deps (f,s) = do
          then collectAllM_ [cr,ce,compError,errError,outError]
          else collectAllM_ [cr,ce]
 
-    execute s2 e rs es cs ds = toCompileInfo $ do
-      let result = compileAll (Just e) cs ds
+    execute s2 rs es cs ds ts = do
+      let result = compileAll cs ds ts
       if isCompileError result
-         then fromCompileInfo result >> return ()
+         then return [result >> return ()]
          else do
-           let warnings = getCompileWarnings result
-           let (xx,main) = getCompileSuccess result
+           let (xx,main,fs) = getCompileSuccess result
            (dir,binaryName) <- createBinary main xx
-           let command = TestCommand binaryName (takeDirectory binaryName)
-           (TestCommandResult s2' out err) <- runTestCommand b command
-           case (s2,s2') of
-                (True,False) -> collectAllM_ $ (asCompileError result):(map compileErrorM $ err ++ out)
-                (False,True) ->
-                  if isEmptyCompileMessage warnings
-                     then compileErrorM "Expected runtime failure"
-                     else collectAllM_ [compileErrorM "Expected runtime failure",
-                                        asCompileError result <?? "\nOutput from compiler:"]
-                _ -> do
-                  let result2 = checkContent rs es (lines $ show warnings) err out
-                  when (not $ isCompileError result2) $ errorFromIO $ removeDirectoryRecursive dir
-                  fromCompileInfo result2
+           results <- liftIO $ sequence $ map (toCompileInfo . executeTest binaryName rs es result s2) fs
+           when (not $ any isCompileError results) $ errorFromIO $ removeDirectoryRecursive dir
+           return results
 
-    compileAll e cs ds = do
+    executeTest binary rs es res s2 f2 = ("In unittest " ++ show f2) ??> do
+      errorFromIO $ hPutStrLn stderr $ "\n--- Executing unittest " ++ show f2 ++ " ---"
+      let command = TestCommand binary (takeDirectory binary) [show f2]
+      (TestCommandResult s2' out err) <- runTestCommand b command
+      case (s2,s2') of
+           (True,False) -> collectAllM_ $ (asCompileError res):(map compileErrorM $ err ++ out)
+           (False,True) -> collectAllM_ [compileErrorM "Expected runtime failure",
+                                         asCompileError res <?? "\nOutput from compiler:"]
+           _ -> fromCompileInfo $ checkContent rs es (lines $ show $ getCompileWarnings res) err out
+
+    compileAll cs ds ts = do
       let ns1 = StaticNamespace $ privateNamespace s
       let cs' = map (setCategoryNamespace ns1) cs
-      let xs = PrivateSource {
-          psNamespace = ns1,
-          psTesting = True,
-          psCategory = cs',
-          psDefine = ds
-        }
-      xx <- compileLanguageModule cm [xs]
-      main <- case e of
-                   Just e2 -> compileTestMain cm xs e2
-                   Nothing -> compileErrorM ""
-      return (xx,main)
+      compileTestsModule cm ns1 cs' ds ts
 
     checkRequired rs comp err out = mapErrorsM_ (checkSubsetForRegex True  comp err out) rs
     checkExcluded es comp err out = mapErrorsM_ (checkSubsetForRegex False comp err out) es

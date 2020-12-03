@@ -31,10 +31,7 @@ import Parser.IntegrationTest ()
 import Test.Common
 import Types.DefinedCategory
 import Types.IntegrationTest
-import Types.Positional
-import Types.Procedure
 import Types.TypeCategory
-import Types.TypeInstance
 
 
 tests :: [IO (CompileInfo ())]
@@ -63,13 +60,6 @@ tests = [
         let h = itHeader t
         when (not $ isExpectRuntimeError $ ithResult h) $ compileErrorM "Expected ExpectRuntimeError"
         checkEquals (ithTestName h) "basic crash test"
-        let match = case ereExpression $ ithResult h of
-                         (Expression _
-                           (TypeCall _
-                             (JustTypeInstance (TypeInstance (CategoryName "Test") (Positional [])))
-                             (FunctionCall _ (FunctionName "execute") (Positional []) (Positional []))) []) -> True
-                         _ -> False
-        when (not match) $ compileErrorM "Expected test expression \"Test$execute()\""
         containsExactly (getRequirePattern $ ithResult h) [
             OutputPattern OutputAny "pattern in output 1",
             OutputPattern OutputAny "pattern in output 2"
@@ -88,13 +78,6 @@ tests = [
         let h = itHeader t
         when (not $ isExpectRuntimeSuccess $ ithResult h) $ compileErrorM "Expected ExpectRuntimeSuccess"
         checkEquals (ithTestName h) "basic success test"
-        let match = case ersExpression $ ithResult h of
-                         (Expression _
-                           (TypeCall _
-                             (JustTypeInstance (TypeInstance (CategoryName "Test") (Positional [])))
-                             (FunctionCall _ (FunctionName "execute") (Positional []) (Positional []))) []) -> True
-                         _ -> False
-        when (not match) $ compileErrorM "Expected test expression \"Test$execute()\""
         containsExactly (getRequirePattern $ ithResult h) [
             OutputPattern OutputAny "pattern in output 1",
             OutputPattern OutputAny "pattern in output 2"

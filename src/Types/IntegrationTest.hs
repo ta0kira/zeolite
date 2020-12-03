@@ -59,13 +59,11 @@ data ExpectedResult c =
   } |
   ExpectRuntimeError {
     ereContext :: [c],
-    ereExpression :: Expression c,
     ereRequirePattern :: [OutputPattern],
     ereExcludePattern :: [OutputPattern]
   } |
   ExpectRuntimeSuccess {
     ersContext :: [c],
-    ersExpression :: Expression c,
     ersRequirePattern :: [OutputPattern],
     ersExcludePattern :: [OutputPattern]
   }
@@ -84,19 +82,19 @@ isExpectCompileError (ExpectCompileError _ _ _) = True
 isExpectCompileError _                          = False
 
 isExpectRuntimeError :: ExpectedResult c -> Bool
-isExpectRuntimeError (ExpectRuntimeError _ _ _ _) = True
-isExpectRuntimeError _                            = False
+isExpectRuntimeError (ExpectRuntimeError _ _ _) = True
+isExpectRuntimeError _                          = False
 
 isExpectRuntimeSuccess :: ExpectedResult c -> Bool
-isExpectRuntimeSuccess (ExpectRuntimeSuccess _ _ _ _) = True
-isExpectRuntimeSuccess _                              = False
+isExpectRuntimeSuccess (ExpectRuntimeSuccess _ _ _) = True
+isExpectRuntimeSuccess _                            = False
 
 getRequirePattern :: ExpectedResult c -> [OutputPattern]
-getRequirePattern (ExpectCompileError _ rs _)     = rs
-getRequirePattern (ExpectRuntimeError _ _ rs _)   = rs
-getRequirePattern (ExpectRuntimeSuccess _ _ rs _) = rs
+getRequirePattern (ExpectCompileError _ rs _)   = rs
+getRequirePattern (ExpectRuntimeError _ rs _)   = rs
+getRequirePattern (ExpectRuntimeSuccess _ rs _) = rs
 
 getExcludePattern :: ExpectedResult c -> [OutputPattern]
-getExcludePattern (ExpectCompileError _ _ es)     = es
-getExcludePattern (ExpectRuntimeError _ _ _ es)   = es
-getExcludePattern (ExpectRuntimeSuccess _ _ _ es) = es
+getExcludePattern (ExpectCompileError _ _ es)   = es
+getExcludePattern (ExpectRuntimeError _ _ es)   = es
+getExcludePattern (ExpectRuntimeSuccess _ _ es) = es

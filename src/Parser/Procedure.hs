@@ -57,9 +57,8 @@ instance ParseFromSource (TestProcedure SourcePos) where
     n <- try sourceParser
     sepAfter (string_ "{")
     pp <- sourceParser
-    c2 <- getPosition
     sepAfter (string_ "}")
-    return $ TestProcedure [c] [c2] n pp
+    return $ TestProcedure [c] n pp
 
 instance ParseFromSource (ArgValues SourcePos) where
   sourceParser = labeled "procedure arguments" $ do

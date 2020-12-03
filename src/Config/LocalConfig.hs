@@ -97,7 +97,7 @@ instance CompilerBackend Backend where
     executeProcess cb (co ++ otherOptions ++ m:otherFiles ++ arFiles ++ ["-o", o]) <?? ("In linking of " ++ o)
     return o where
       otherOptions = lf ++ map ("-I" ++) (map normalise ps)
-  runTestCommand _ (TestCommand b p) = errorFromIO $ do
+  runTestCommand _ (TestCommand b p as) = errorFromIO $ do
     (outF,outH) <- mkstemps "/tmp/ztest_" ".txt"
     (errF,errH) <- mkstemps "/tmp/ztest_" ".txt"
     pid <- forkProcess (execWithCapture outH errH)
@@ -116,7 +116,7 @@ instance CompilerBackend Backend where
         when (not $ null p) $ setCurrentDirectory p
         hDuplicateTo h1 stdout
         hDuplicateTo h2 stderr
-        executeFile b True [] Nothing
+        executeFile b True as Nothing
   getCompilerHash b = VersionHash $ flip showHex "" $ abs $ hash $ minorVersion ++ show b where
     minorVersion = show $ take 3 $ versionBranch version
 

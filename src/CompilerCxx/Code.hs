@@ -42,6 +42,7 @@ module CompilerCxx.Code (
   startCleanupTracing,
   startFunctionTracing,
   startInitTracing,
+  startTestTracing,
   testsOnlyCategoryGuard,
   testsOnlySourceGuard,
   typeBase,
@@ -92,6 +93,9 @@ startFunctionTracing t            f = "TRACE_FUNCTION(" ++ show (show t ++ "." +
 
 startInitTracing :: CategoryName -> SymbolScope -> String
 startInitTracing t s = "TRACE_FUNCTION(" ++ show (show t ++ " " ++ show s ++ " init") ++ ")"
+
+startTestTracing :: FunctionName -> String
+startTestTracing f = "TRACE_FUNCTION(" ++ show ("unittest " ++ show f) ++ ")"
 
 startCleanupTracing :: String
 startCleanupTracing = "TRACE_CLEANUP"

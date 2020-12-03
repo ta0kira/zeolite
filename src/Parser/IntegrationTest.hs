@@ -50,15 +50,13 @@ instance ParseFromSource (IntegrationTestHeader SourcePos) where
       resultCrash = labeled "crash expectation" $ do
         c <- getPosition
         sepAfter (keyword "crash")
-        e <- labeled "test expression" sourceParser
         (req,exc) <- requireOrExclude
-        return $ ExpectRuntimeError [c] e req exc
+        return $ ExpectRuntimeError [c] req exc
       resultSuccess = labeled "success expectation" $ do
         c <- getPosition
         sepAfter (keyword "success")
-        e <- labeled "test expression" sourceParser
         (req,exc) <- requireOrExclude
-        return $ ExpectRuntimeSuccess [c] e req exc
+        return $ ExpectRuntimeSuccess [c] req exc
       requireOrExclude = parsed >>= return . foldr merge empty where
         empty = ([],[])
         merge (cs1,ds1) (cs2,ds2) = (cs1++cs2,ds1++ds2)

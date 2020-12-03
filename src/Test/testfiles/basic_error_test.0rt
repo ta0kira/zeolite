@@ -15,5 +15,5 @@ define Test {
 }
 
 unittest test {
-  \ empty
+  \ Test.execute()
 }

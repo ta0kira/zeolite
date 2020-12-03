@@ -29,6 +29,8 @@ module CompilerCxx.Procedure (
   compileMainProcedure,
   compileLazyInit,
   compileRegularInit,
+  compileTestProcedure,
+  selectTestFromArgv1,
 ) where
 
 import Control.Applicative ((<|>))
@@ -911,6 +913,49 @@ compileMainProcedure tm em e = do
     compiler = do
       ctx0 <- getCleanContext
       compileProcedure ctx0 procedure >>= put
+
+compileTestProcedure :: (Show c, CompileErrorM m) =>
+  CategoryMap c -> ExprMap c -> TestProcedure c -> m (CompiledData [String])
+compileTestProcedure tm em (TestProcedure c n p) = do
+  ctx <- getMainContext tm em
+  p' <- ("In unittest " ++ show n ++ formatFullContextBrace c) ??> runDataCompiler compiler ctx
+  return $ mconcat [
+      onlyCode $ "ReturnTuple " ++ testFunctionName n ++ "() {",
+      indentCompiled $ onlyCode $ startTestTracing n,
+      indentCompiled p',
+      indentCompiled $ onlyCode $ "return ReturnTuple();",
+      onlyCode "}"
+    ] where
+    compiler = do
+      ctx0 <- getCleanContext
+      compileProcedure ctx0 p >>= put
+
+selectTestFromArgv1 :: CompileErrorM m => [FunctionName] -> m ([String],CompiledData [String])
+selectTestFromArgv1 fs = return (includes,allCode) where
+  allCode = mconcat [
+      initMap,
+      selectFromMap
+    ]
+  initMap = onlyCodes $ [
+      "std::unordered_map<std::string,ReturnTuple(*)()> tests{"
+    ] ++ map ((++ "  ") . testEntry) fs ++ [
+      "};"
+    ]
+  selectFromMap = onlyCodes [
+      "if (argc < 2) FAIL() << argv[0] << \"[unittest name]\";",
+      "const auto name = argv[1];",
+      "const auto test = tests.find(name);",
+      "if (test != tests.end()) {",
+      "  (void) (*test->second)();",
+      " } else {",
+      "  FAIL() << argv[0] << \": unittest \" << name << \" does not exist\";",
+      "}"
+    ]
+  testEntry f = "{ \"" ++ show f ++ "\", &" ++ testFunctionName f ++ " },"
+  includes = [
+      "#include <string>",
+      "#include <unordered_map>"
+    ]
 
 autoScope :: CompilerContext c m s a =>
   SymbolScope -> CompilerState a m String

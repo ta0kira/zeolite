@@ -143,7 +143,6 @@ instance Show c => Show (OutputValue c) where
 data TestProcedure c =
   TestProcedure {
     tpContext :: [c],
-    tpEnd :: [c],
     tpName :: FunctionName,
     tpProcedure :: Procedure c
   }

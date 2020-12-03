@@ -29,7 +29,7 @@ module CompilerCxx.Category (
   compileConcreteTemplate,
   compileInterfaceDefinition,
   compileModuleMain,
-  compileTestMain,
+  compileTestsModule,
 ) where
 
 import Control.Monad (foldM,when)
@@ -199,12 +199,26 @@ compileLanguageModule (LanguageModule ns0 ns1 ns2 cs0 ps0 ts0 cs1 ps1 ts1 ex ss 
     streamlinedError n =
       compileErrorM $ "Category " ++ show n ++ " cannot be streamlined because it was not declared external"
 
+compileTestsModule :: (Show c, CompileErrorM m) =>
+  LanguageModule c -> Namespace -> [AnyCategory c] -> [DefinedCategory c] ->
+  [TestProcedure c] -> m ([CxxOutput],CxxOutput,[FunctionName])
+compileTestsModule cm ns cs ds ts = do
+  let xs = PrivateSource {
+      psNamespace = ns,
+      psTesting = True,
+      psCategory = cs,
+      psDefine = ds
+    }
+  xx <- compileLanguageModule cm [xs]
+  (main,fs) <- compileTestMain cm xs ts
+  return (xx,main,fs)
+
 compileTestMain :: (Show c, CompileErrorM m) =>
-  LanguageModule c -> PrivateSource c -> Expression c -> m CxxOutput
-compileTestMain (LanguageModule ns0 ns1 ns2 cs0 ps0 ts0 cs1 ps1 ts1 _ _ em) ts2 e = do
+  LanguageModule c -> PrivateSource c -> [TestProcedure c] -> m (CxxOutput,[FunctionName])
+compileTestMain (LanguageModule ns0 ns1 ns2 cs0 ps0 ts0 cs1 ps1 ts1 _ _ em) ts2 tests = do
   tm' <- tm
-  (req,main) <- createTestFile tm' em e
-  return $ CxxOutput Nothing testFilename NoNamespace ([psNamespace ts2]++ns0++ns1++ns2) req main where
+  (req,main) <- createTestFile tm' em tests
+  return (CxxOutput Nothing testFilename NoNamespace ([psNamespace ts2]++ns0++ns1++ns2) req main,map tpName tests) where
   tm = foldM includeNewTypes defaultCategories [cs0,cs1,ps0,ps1,ts0,ts1,psCategory ts2]
 
 compileModuleMain :: (Show c, CompileErrorM m) =>
@@ -798,34 +812,37 @@ defineInternalValue t _ _ =
       "}"
     ]
 
-createMainCommon :: String -> CompiledData [String] -> [String]
-createMainCommon n (CompiledData req out) =
-  baseSourceIncludes ++ mainSourceIncludes ++ depIncludes req ++ [
+createMainCommon :: String -> CompiledData [String] -> CompiledData [String] -> [String]
+createMainCommon n (CompiledData req0 out0) (CompiledData req1 out1) =
+  baseSourceIncludes ++ mainSourceIncludes ++ depIncludes (req0 `Set.union` req1) ++ out0 ++ [
       "int main(int argc, const char** argv) {",
       "  SetSignalHandler();",
-      "  ProgramArgv program_argv(argc, argv);",
       "  " ++ startFunctionTracing CategoryNone (FunctionName n)
-    ] ++ out ++ ["}"] where
+    ] ++ map (++ "  ") out1 ++ ["}"] where
       depIncludes req2 = map (\i -> "#include \"" ++ headerFilename i ++ "\"") $
                            Set.toList req2
 
 createMainFile :: (Show c, CompileErrorM m) =>
   CategoryMap c -> ExprMap c -> CategoryName -> FunctionName -> m (Namespace,[String])
 createMainFile tm em n f = ("In the creation of the main binary procedure") ??> do
-  ca <- fmap indentCompiled (compileMainProcedure tm em expr)
-  let file = noTestsOnlySourceGuard ++ createMainCommon "main" ca
+  ca <- compileMainProcedure tm em expr
+  let file = noTestsOnlySourceGuard ++ createMainCommon "main" emptyCode (argv <> ca)
   (_,t) <- getConcreteCategory tm ([],n)
   return (getCategoryNamespace t,file) where
     funcCall = FunctionCall [] f (Positional []) (Positional [])
     mainType = JustTypeInstance $ TypeInstance n (Positional [])
     expr = Expression [] (TypeCall [] mainType funcCall) []
+    argv = onlyCode "ProgramArgv program_argv(argc, argv);"
 
 createTestFile :: (Show c, CompileErrorM m) =>
-  CategoryMap c -> ExprMap c  -> Expression c -> m ([CategoryName],[String])
-createTestFile tm em e = ("In the creation of the test binary procedure") ??> do
-  ca@(CompiledData req _) <- fmap indentCompiled (compileMainProcedure tm em e)
-  let file = testsOnlySourceGuard ++ createMainCommon "test" ca
-  return (Set.toList req,file)
+  CategoryMap c -> ExprMap c  -> [TestProcedure c] -> m ([CategoryName],[String])
+createTestFile tm em ts = ("In the creation of the test binary procedure") ??> do
+  ts' <- fmap mconcat $ mapErrorsM (compileTestProcedure tm em) ts
+  (include,sel) <- selectTestFromArgv1 $ map tpName ts
+  let (CompiledData req _) = ts' <> sel
+  let file = testsOnlySourceGuard ++ createMainCommon "test" (onlyCodes include <> ts') (argv <> sel)
+  return (Set.toList req,file) where
+    argv = onlyCode "ProgramArgv program_argv(argc, argv);"
 
 getCategoryMentions :: AnyCategory c -> [CategoryName]
 getCategoryMentions t = fromRefines (getCategoryRefines t) ++

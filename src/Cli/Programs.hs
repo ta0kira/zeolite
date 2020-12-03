@@ -61,7 +61,8 @@ data CxxCommand =
 data TestCommand =
   TestCommand {
     tcBinary :: String,
-    tcPath :: String
+    tcPath :: String,
+    tcArgs :: [String]
   }
   deriving (Show)
 

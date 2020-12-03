@@ -45,6 +45,7 @@ module CompilerCxx.Naming (
   sourceStreamlined,
   tableName,
   testFilename,
+  testFunctionName,
   typeCreator,
   typeGetter,
   typeName,
@@ -133,6 +134,9 @@ functionName f = "Function_" ++ show (sfType f) ++ "_" ++ show (sfName f)
 
 collectionName :: CategoryName -> String
 collectionName n = "Functions_" ++ show n
+
+testFunctionName :: FunctionName -> String
+testFunctionName f = "Test_" ++ show f
 
 tableName :: CategoryName -> String
 tableName n = "Table_" ++ show n
