@@ -764,13 +764,13 @@ define Test {
           }
         }
       }
-      \ Testing.check<?>(x,0)
-      \ Testing.check<?>(y,2)
-      \ Testing.check<?>(z,3)
+      \ Testing.checkEquals<?>(x,0)
+      \ Testing.checkEquals<?>(y,2)
+      \ Testing.checkEquals<?>(z,3)
     }
-    \ Testing.check<?>(x,1)
-    \ Testing.check<?>(y,2)
-    \ Testing.check<?>(z,3)
+    \ Testing.checkEquals<?>(x,1)
+    \ Testing.checkEquals<?>(y,2)
+    \ Testing.checkEquals<?>(z,3)
   }
 }
 
@@ -830,16 +830,16 @@ define Test {
     scoped {
       Int x, Int y, Int z <- value.call()
     } in {
-      \ Testing.check<?>(x,0)
-      \ Testing.check<?>(y,0)
-      \ Testing.check<?>(z,0)
+      \ Testing.checkEquals<?>(x,0)
+      \ Testing.checkEquals<?>(y,0)
+      \ Testing.checkEquals<?>(z,0)
     }
     scoped {
       Int x, Int y, Int z <- value.get()
     } in {
-      \ Testing.check<?>(x,1)
-      \ Testing.check<?>(y,2)
-      \ Testing.check<?>(z,3)
+      \ Testing.checkEquals<?>(x,1)
+      \ Testing.checkEquals<?>(y,2)
+      \ Testing.checkEquals<?>(z,3)
     }
   }
 }

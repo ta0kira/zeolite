@@ -273,9 +273,9 @@ unittest stringEquals {
 
 unittest stringBuilder {
   Builder<String> builder <- String.builder()
-  \ Testing.check<?>(builder.build(),"")
-  \ Testing.check<?>(builder.append("xyz").build(),"xyz")
-  \ Testing.check<?>(builder.append("123").build(),"xyz123")
+  \ Testing.checkEquals<?>(builder.build(),"")
+  \ Testing.checkEquals<?>(builder.append("xyz").build(),"xyz")
+  \ Testing.checkEquals<?>(builder.append("123").build(),"xyz123")
 }
 
 unittest charLessThan {

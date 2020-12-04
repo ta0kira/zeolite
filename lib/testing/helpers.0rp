@@ -19,7 +19,7 @@ limitations under the License.
 $TestsOnly$
 
 concrete Testing {
-  @type check<#x>
+  @type checkEquals<#x>
     #x requires Formatted
     #x defines Equals<#x>
   (#x /*actual*/, #x /*expected*/) -> ()

@@ -99,9 +99,9 @@ unittest test {
   if (count != 3) {
     fail(count)
   }
-  \ Testing.check<?>(Argv.global().readPosition(0),"testcase")
-  \ Testing.check<?>(Argv.global().readPosition(1),"arg1")
-  \ Testing.check<?>(Argv.global().readPosition(2),"arg2")
+  \ Testing.checkEquals<?>(Argv.global().readPosition(0),"testcase")
+  \ Testing.checkEquals<?>(Argv.global().readPosition(1),"arg1")
+  \ Testing.checkEquals<?>(Argv.global().readPosition(2),"arg2")
 }
 
 
@@ -116,8 +116,8 @@ unittest test {
   if (count != 2) {
     fail(count)
   }
-  \ Testing.check<?>(argv.readPosition(0),"arg1")
-  \ Testing.check<?>(argv.readPosition(1),"arg2")
+  \ Testing.checkEquals<?>(argv.readPosition(0),"arg1")
+  \ Testing.checkEquals<?>(argv.readPosition(1),"arg2")
 }
 
 
@@ -212,7 +212,7 @@ testcase "TextReader readAll" {
 
 unittest test {
   String allContents <- TextReader.readAll(FakeFile.create())
-  \ Testing.check<?>(allContents,"this is a partial line\nwith some more data\nand\nmore lines\nunfinished")
+  \ Testing.checkEquals<?>(allContents,"this is a partial line\nwith some more data\nand\nmore lines\nunfinished")
 }
 
 concrete FakeFile {
@@ -259,7 +259,7 @@ unittest test {
   if (value.isError()) {
     fail("Failed")
   }
-  \ Testing.check<?>(value.getValue(),10)
+  \ Testing.checkEquals<?>(value.getValue(),10)
 }
 
 
@@ -283,7 +283,7 @@ unittest test {
   if (!value.isError()) {
     fail("Failed")
   }
-  \ Testing.check<?>(value.getError().formatted(),"error message")
+  \ Testing.checkEquals<?>(value.getError().formatted(),"error message")
 }
 
 
@@ -306,5 +306,5 @@ unittest test {
   scoped {
     ErrorOr<String> error <- ErrorOr:error("error message")
   } in ErrorOr<Int> value <- error.convertError()
-  \ Testing.check<?>(value.getError().formatted(),"error message")
+  \ Testing.checkEquals<?>(value.getError().formatted(),"error message")
 }

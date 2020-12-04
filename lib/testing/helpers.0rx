@@ -19,7 +19,7 @@ limitations under the License.
 $TestsOnly$
 
 define Testing {
-  check (x,y) {
+  checkEquals (x,y) {
     if (!#x.equals(x,y)) {
       fail(String.builder()
         .append(x.formatted())

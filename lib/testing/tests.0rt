@@ -16,23 +16,23 @@ limitations under the License.
 
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
-testcase "check success" {
+testcase "checkEquals success" {
   success
 }
 
 unittest test {
-  \ Testing.check<?>(13,13)
+  \ Testing.checkEquals<?>(13,13)
 }
 
 
-testcase "check fail" {
+testcase "checkEquals fail" {
   crash
   require stderr "13"
   require stderr "15"
 }
 
 unittest test {
-  \ Testing.check<?>(13,15)
+  \ Testing.checkEquals<?>(13,15)
 }
 
 
