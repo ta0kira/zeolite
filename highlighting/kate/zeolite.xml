@@ -132,6 +132,7 @@
       </context>
 
       <context name="Keywords Disallowed" attribute="Normal Text" lineEndContext="#stay" >
+        <keyword attribute="Error" context="#stay" String="internalTypes" />
         <keyword attribute="Error" context="#stay" String="keywords" />
         <keyword attribute="Error" context="#stay" String="scope" />
         <keyword attribute="Error" context="#stay" String="storage" />
@@ -139,6 +140,16 @@
         <keyword attribute="Error" context="#stay" String="typeDeclare" />
         <keyword attribute="Error" context="#stay" String="typeDefine" />
         <keyword attribute="Error" context="#stay" String="singleTest" />
+      </context>
+
+      <context name="Expressions Disallowed" attribute="Normal Text" lineEndContext="#stay" >
+        <keyword attribute="Error" context="#stay" String="builtins" />
+        <keyword attribute="Error" context="#stay" String="constants" />
+      </context>
+
+      <context name="Types Disallowed" attribute="Normal Text" lineEndContext="#stay" >
+        <keyword attribute="Error" context="#stay" String="builtinCategory" />
+        <keyword attribute="Error" context="#stay" String="keywordCategory" />
       </context>
 
       <context name="Braces" attribute="Normal Text" lineEndContext="#stay" >
@@ -153,27 +164,32 @@
 
       <context name="Declare Type" attribute="Normal Text" lineEndContext="#stay" >
         <DetectSpaces />
+        <IncludeRules context="Any Comment" />
+        <IncludeRules context="Types Disallowed" />
         <RegExpr attribute="Define Name" context="#stay" String="\b[A-Z][a-zA-Z0-9]*\b" />
         <DetectChar attribute="Params Brace" context="Type Params" char="&lt;" />
-        <IncludeRules context="Any Comment" />
         <AnyChar attribute="Error" context="#stay" String="#$}.*@!=%+-/\&amp;|&gt;()[]" />
         <RegExpr context="#pop" String=".*" lookAhead="true" />
       </context>
 
       <context name="Define Type" attribute="Normal Text" lineEndContext="#stay" >
         <DetectSpaces />
-        <RegExpr attribute="Define Name" context="#stay" String="\b[A-Z][a-zA-Z0-9]*\b" />
-        <DetectChar context="#pop" char="{" lookAhead="true" />
         <IncludeRules context="Any Comment" />
+        <IncludeRules context="Types Disallowed" />
+        <DetectChar context="#pop" char="{" lookAhead="true" />
+        <RegExpr attribute="Define Name" context="#stay" String="\b[A-Z][a-zA-Z0-9]*\b" />
         <AnyChar attribute="Error" context="#stay" String="#$}.*@!=%+-/\&lt;&gt;()[]?" />
         <RegExpr attribute="Error" context="#stay" String="[a-z0-9][a-zA-Z0-9]*\b" />
       </context>
 
       <context name="Define Test" attribute="Normal Text" lineEndContext="#stay" >
         <DetectSpaces />
-        <RegExpr attribute="Define Name" context="#stay" String="\b[a-z][a-zA-Z0-9]*\b" />
-        <DetectChar context="#pop" char="{" lookAhead="true" />
         <IncludeRules context="Any Comment" />
+        <DetectChar context="#pop" char="{" lookAhead="true" />
+        <IncludeRules context="Keywords Disallowed" />
+        <IncludeRules context="Types Disallowed" />
+        <IncludeRules context="Expressions Disallowed" />
+        <RegExpr attribute="Define Name" context="#stay" String="\b[a-z][a-zA-Z0-9]*\b" />
         <AnyChar attribute="Error" context="#stay" String="#$}.*@!=%+-/\&lt;&gt;()[]?" />
         <RegExpr attribute="Error" context="#stay" String="[A-Z0-9][a-zA-Z0-9]*\b" />
       </context>
