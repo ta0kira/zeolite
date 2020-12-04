@@ -6,7 +6,7 @@
 <language
     name="Zeolite"
     section="Sources"
-    version="3.7"
+    version="3.8"
     kateversion="2.4"
     indenter="cstyle"
     style="Zeolite"
@@ -227,9 +227,24 @@
         <WordDetect attribute="Test Keyword" context="#stay" String="success" />
         <WordDetect attribute="Test Keyword" context="Test Output" String="require" />
         <WordDetect attribute="Test Keyword" context="Test Output" String="exclude" />
+        <WordDetect attribute="Test Keyword" context="Test Args" String="args" />
         <WordDetect attribute="Keyword" context="#stay" String="empty" />
         <IncludeRules context="Any Expression" />
         <keyword attribute="Error" context="#stay" String="keywords" />
+      </context>
+
+      <context name="Test Args" attribute="Normal Text" lineEndContext="#stay" >
+        <DetectSpaces />
+        <IncludeRules context="Any Comment" />
+        <DetectChar attribute="String" context="String" char="&quot;" />
+        <WordDetect attribute="Error" context="#stay" String="error" />
+        <WordDetect attribute="Error" context="#stay" String="crash" />
+        <WordDetect attribute="Error" context="#stay" String="success" />
+        <WordDetect attribute="Error" context="Test Output" String="require" />
+        <WordDetect attribute="Error" context="Test Output" String="exclude" />
+        <WordDetect attribute="Error" context="Test Args" String="args" />
+        <DetectChar context="#pop" char="}" lookAhead="true" />
+        <RegExpr attribute="Error" String="." />
       </context>
 
       <context name="Test Output" attribute="Normal Text" lineEndContext="#stay" >

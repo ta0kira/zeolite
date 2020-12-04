@@ -6,13 +6,48 @@
 
 * **[breaking]** Major changes to `.0rt` syntax:
 
-  * **[new]** Adds `unittest` keyword to allow the user to define multiple
-    tests within a single `success` `testcase`. This allows multiple tests to
-    use the same setup, while still being able to track multiple test failures.
-    `error` and `crash` `testcase` types are still available.
-
   * **[breaking]** Removes the expression argument from `success` and `crash`
-    `testcase` types. Use one or more `unittest` instead.
+    `testcase` types. Use one or more `unittest` (see next point) instead.
+
+  * **[new]** Adds `unittest` keyword to allow the user to define multiple
+    tests within a single `success` `testcase`.
+
+    ```text
+    testcase "simple tests" {
+      success
+    }
+
+    unittest checkInvariant1 {
+      // this is a regular procedure with no return
+    }
+
+    unittest checkInvariant2 {
+      // this is a regular procedure with no return
+    }
+    ```
+
+    This allows multiple tests to use the same setup, while still being able to
+    track multiple test failures. `error` and `crash` `testcase` types are still
+    available.
+
+  * **[breaking]** Allows `testcase` to statically set `Argv` (see `lib/util`)
+    using the `args` keyword. By default, only the program name is set.
+    Previously, `Argv` used whatever was passed to the test binary.
+
+    ```text
+    testcase "with static Argv" {
+      success
+      args "arg1" "arg2"
+    }
+
+    unittest test {
+      // something that requires Argv.global()
+    }
+    ```
+
+    Note that this *isn't* a
+    library change; this also affects C++ extensions that use `Argv` from
+    `base/logging.hpp`.
 
 ### Libraries
 

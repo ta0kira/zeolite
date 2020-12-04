@@ -70,7 +70,7 @@ runSingleTest b cm p paths deps (f,s) = do
       let context = formatFullContextBrace (ithContext $ itHeader t)
       let scope = "\nIn testcase \"" ++ ithTestName (itHeader t) ++ "\"" ++ context
       errorFromIO $ hPutStrLn stderr $ "\n*** Executing testcase " ++ name ++ " ***"
-      result <- toCompileInfo $ run (ithResult $ itHeader t) (itCategory t) (itDefinition t) (itTests t)
+      result <- toCompileInfo $ run (ithResult $ itHeader t) (ithArgs $ itHeader t) (itCategory t) (itDefinition t) (itTests t)
       if isCompileError result
          then return ((0,1),scope ??> result >> return ())
          else do
@@ -83,8 +83,8 @@ runSingleTest b cm p paths deps (f,s) = do
              else errorFromIO $ hPutStrLn stderr $ "*** All tests in testcase " ++ name ++ " passed ***"
            return ((passed,failed),combined)
 
-    run (ExpectCompileError _ rs es) cs ds ts = fmap (:[]) $ do
-      let result = compileAll cs ds ts
+    run (ExpectCompileError _ rs es) args cs ds ts = fmap (:[]) $ do
+      let result = compileAll args cs ds ts
       if not $ isCompileError result
          then compileErrorM "Expected compilation failure"
          else return $ do
@@ -92,15 +92,15 @@ runSingleTest b cm p paths deps (f,s) = do
            let errors   = show $ getCompileError result
            checkContent rs es (lines warnings ++ lines errors) [] []
 
-    run (ExpectRuntimeError _ rs es) cs ds ts = do
+    run (ExpectRuntimeError _ rs es) args cs ds ts = do
       when (length ts /= 1) $ compileErrorM "Exactly one unittest is required when crash is expected"
       uniqueTestNames ts
-      execute False rs es cs ds ts
+      execute False rs es args cs ds ts
 
-    run (ExpectRuntimeSuccess _ rs es) cs ds ts = do
+    run (ExpectRuntimeSuccess _ rs es) args cs ds ts = do
       when (null ts) $ compileErrorM "At least one unittest is required when success is expected"
       uniqueTestNames ts
-      execute True rs es cs ds ts
+      execute True rs es args cs ds ts
 
     checkContent rs es comp err out = do
       let cr = checkRequired rs comp err out
@@ -125,8 +125,8 @@ runSingleTest b cm p paths deps (f,s) = do
     testClash (n,ts) = ("unittest " ++ show n ++ " is defined multiple times") !!>
       (mapErrorsM_ (compileErrorM . ("Defined at " ++) . formatFullContext) $ sort $ map tpContext ts)
 
-    execute s2 rs es cs ds ts = do
-      let result = compileAll cs ds ts
+    execute s2 rs es args cs ds ts = do
+      let result = compileAll args cs ds ts
       if isCompileError result
          then return [result >> return ()]
          else do
@@ -152,10 +152,10 @@ runSingleTest b cm p paths deps (f,s) = do
              else errorFromIO $ hPutStrLn stderr $ "--- unittest " ++ show f2 ++ " passed ---"
           outcome
 
-    compileAll cs ds ts = do
+    compileAll args cs ds ts = do
       let ns1 = StaticNamespace $ privateNamespace s
       let cs' = map (setCategoryNamespace ns1) cs
-      compileTestsModule cm ns1 cs' ds ts
+      compileTestsModule cm ns1 args cs' ds ts
 
     checkRequired rs comp err out = mapErrorsM_ (checkSubsetForRegex True  comp err out) rs
     checkExcluded es comp err out = mapErrorsM_ (checkSubsetForRegex False comp err out) es

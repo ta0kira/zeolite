@@ -515,8 +515,7 @@ instance ParseFromSource (ValueLiteral SourcePos) where
                  emptyLiteral where
     stringLiteral = do
       c <- getPosition
-      string_ "\""
-      ss <- manyTill stringChar (string_ "\"")
+      ss <- quotedString
       optionalSpace
       return $ StringLiteral [c] ss
     charLiteral = do

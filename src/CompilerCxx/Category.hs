@@ -200,9 +200,9 @@ compileLanguageModule (LanguageModule ns0 ns1 ns2 cs0 ps0 ts0 cs1 ps1 ts1 ex ss 
       compileErrorM $ "Category " ++ show n ++ " cannot be streamlined because it was not declared external"
 
 compileTestsModule :: (Show c, CompileErrorM m) =>
-  LanguageModule c -> Namespace -> [AnyCategory c] -> [DefinedCategory c] ->
+  LanguageModule c -> Namespace -> [String] -> [AnyCategory c] -> [DefinedCategory c] ->
   [TestProcedure c] -> m ([CxxOutput],CxxOutput,[(FunctionName,[c])])
-compileTestsModule cm ns cs ds ts = do
+compileTestsModule cm ns args cs ds ts = do
   let xs = PrivateSource {
       psNamespace = ns,
       psTesting = True,
@@ -210,14 +210,15 @@ compileTestsModule cm ns cs ds ts = do
       psDefine = ds
     }
   xx <- compileLanguageModule cm [xs]
-  (main,fs) <- compileTestMain cm xs ts
+  (main,fs) <- compileTestMain cm args xs ts
   return (xx,main,fs)
 
 compileTestMain :: (Show c, CompileErrorM m) =>
-  LanguageModule c -> PrivateSource c -> [TestProcedure c] -> m (CxxOutput,[(FunctionName,[c])])
-compileTestMain (LanguageModule ns0 ns1 ns2 cs0 ps0 ts0 cs1 ps1 ts1 _ _ em) ts2 tests = do
+  LanguageModule c -> [String] -> PrivateSource c -> [TestProcedure c] ->
+  m (CxxOutput,[(FunctionName,[c])])
+compileTestMain (LanguageModule ns0 ns1 ns2 cs0 ps0 ts0 cs1 ps1 ts1 _ _ em) args ts2 tests = do
   tm' <- tm
-  (CompiledData req main) <- createTestFile tm' em tests
+  (CompiledData req main) <- createTestFile tm' em args tests
   let output = CxxOutput Nothing testFilename NoNamespace (psNamespace ts2 `Set.insert` Set.unions [ns0,ns1,ns2]) req main
   let tests' = map (\t -> (tpName t,tpContext t)) tests
   return (output,tests') where
@@ -837,15 +838,16 @@ createMainFile tm em n f = ("In the creation of the main binary procedure") ??> 
     argv = onlyCode "ProgramArgv program_argv(argc, argv);"
 
 createTestFile :: (Show c, CompileErrorM m) =>
-  CategoryMap c -> ExprMap c  -> [TestProcedure c] -> m (CompiledData [String])
-createTestFile tm em ts = ("In the creation of the test binary procedure") ??> do
+  CategoryMap c -> ExprMap c  -> [String] -> [TestProcedure c] -> m (CompiledData [String])
+createTestFile tm em args ts = ("In the creation of the test binary procedure") ??> do
   ts' <- fmap mconcat $ mapErrorsM (compileTestProcedure tm em) ts
   (include,sel) <- selectTestFromArgv1 $ map tpName ts
   let (CompiledData req _) = ts' <> sel
   let file = testsOnlySourceGuard ++ createMainCommon "testcase" (onlyCodes include <> ts') (argv <> sel)
   return $ CompiledData req file where
+    args' = map escapeChars args
     argv = onlyCodes [
-        "const char* argv2[] = { \"testcase\" };",
+        "const char* argv2[] = { \"testcase\" " ++ concat (map (", " ++) args') ++ " };",
         "ProgramArgv program_argv(sizeof argv2 / sizeof(char*), argv2);"
       ]
 

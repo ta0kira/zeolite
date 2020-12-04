@@ -40,8 +40,9 @@ instance ParseFromSource (IntegrationTestHeader SourcePos) where
     optionalSpace
     sepAfter (string_ "{")
     result <- resultError <|> resultCrash <|> resultSuccess
+    args <- parseArgs <|> return []
     sepAfter (string_ "}")
-    return $ IntegrationTestHeader [c] name result where
+    return $ IntegrationTestHeader [c] name args result where
       resultError = labeled "error expectation" $ do
         c <- getPosition
         sepAfter (keyword "error")
@@ -57,6 +58,9 @@ instance ParseFromSource (IntegrationTestHeader SourcePos) where
         sepAfter (keyword "success")
         (req,exc) <- requireOrExclude
         return $ ExpectRuntimeSuccess [c] req exc
+      parseArgs = labeled "testcase args" $ do
+        sepAfter (keyword "args")
+        many (sepAfter quotedString)
       requireOrExclude = parsed >>= return . foldr merge empty where
         empty = ([],[])
         merge (cs1,ds1) (cs2,ds2) = (cs1++cs2,ds1++ds2)

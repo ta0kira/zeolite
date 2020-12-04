@@ -96,6 +96,7 @@ module Parser.Common (
   put22,
   put23,
   put33,
+  quotedString,
   regexChar,
   requiredSpace,
   sepAfter,
@@ -438,6 +439,11 @@ stringChar = escaped <|> notEscaped where
         h2 <- hexDigit >>= return . digitVal
         return $ chr $ 16*h1 + h2
   notEscaped = noneOf "\""
+
+quotedString :: Parser String
+quotedString = do
+  string_ "\""
+  manyTill stringChar (string_ "\"")
 
 digitVal :: Char -> Int
 digitVal c

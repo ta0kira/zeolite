@@ -91,35 +91,33 @@ unittest reverse {
 
 testcase "Argv is set and available" {
   success
-  require stdout "^testcase$"
+  args "arg1" "arg2"
 }
 
 unittest test {
   Int count <- Argv.global().readSize()
-  String name <- Argv.global().readPosition(0)
-  \ LazyStream<Formatted>.new()
-      .append(name)
-      .append("\n")
-      .writeTo(SimpleOutput.stdout())
+  if (count != 3) {
+    fail(count)
+  }
+  \ Testing.check<?>(Argv.global().readPosition(0),"testcase")
+  \ Testing.check<?>(Argv.global().readPosition(1),"arg1")
+  \ Testing.check<?>(Argv.global().readPosition(2),"arg2")
 }
 
 
 testcase "Argv subSequence" {
   success
-  require stdout "^testcase$"
+  args "arg1" "arg2" "arg3"
 }
 
 unittest test {
-  ReadPosition<String> argv <- Argv.global().subSequence(0,1)
+  ReadPosition<String> argv <- Argv.global().subSequence(1,2)
   Int count <- argv.readSize()
-  if (count != 1) {
+  if (count != 2) {
     fail(count)
   }
-  String name <- argv.readPosition(0)
-  \ LazyStream<Formatted>.new()
-      .append(name)
-      .append("\n")
-      .writeTo(SimpleOutput.stdout())
+  \ Testing.check<?>(argv.readPosition(0),"arg1")
+  \ Testing.check<?>(argv.readPosition(1),"arg2")
 }
 
 
