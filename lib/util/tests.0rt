@@ -89,107 +89,63 @@ unittest reverse {
 }
 
 
-testcase "Argv is set and available" {
+testcase "Argv checks" {
   success
-  args "arg1" "arg2"
+  args "arg1" "arg2" "arg3" "arg4"
 }
 
-unittest test {
+unittest global {
   Int count <- Argv.global().readSize()
-  if (count != 3) {
+  if (count != 5) {
     fail(count)
   }
   \ Testing.checkEquals<?>(Argv.global().readPosition(0),"testcase")
   \ Testing.checkEquals<?>(Argv.global().readPosition(1),"arg1")
   \ Testing.checkEquals<?>(Argv.global().readPosition(2),"arg2")
+  \ Testing.checkEquals<?>(Argv.global().readPosition(3),"arg3")
+  \ Testing.checkEquals<?>(Argv.global().readPosition(4),"arg4")
 }
 
-
-testcase "Argv subSequence" {
-  success
-  args "arg1" "arg2" "arg3"
-}
-
-unittest test {
-  ReadPosition<String> argv <- Argv.global().subSequence(1,2)
+unittest subSequence {
+  ReadPosition<String> argv <- Argv.global().subSequence(2,2)
   Int count <- argv.readSize()
   if (count != 2) {
     fail(count)
   }
-  \ Testing.checkEquals<?>(argv.readPosition(0),"arg1")
-  \ Testing.checkEquals<?>(argv.readPosition(1),"arg2")
+  \ Testing.checkEquals<?>(argv.readPosition(0),"arg2")
+  \ Testing.checkEquals<?>(argv.readPosition(1),"arg3")
+}
+
+
+testcase "Argv readPosition out of bounds" {
+  crash
+  require "index 5"
+}
+
+unittest test {
+  \ Argv.global().readPosition(5)
 }
 
 
 testcase "Argv subSequence out of bounds" {
   crash
-  require "position 5"
+  require "index 5"
 }
 
 unittest test {
-  ReadPosition<String> argv <- Argv.global().subSequence(5,1)
+  \ Argv.global().subSequence(5,1)
 }
 
 
-testcase "TextReader splits lines correctly" {
+testcase "TextReader checks" {
   success
 }
 
-unittest test {
-  \ Test.run()
-}
-
-concrete FakeFile {
-  refines BlockReader<String>
-
-  @type create () -> (FakeFile)
-}
-
-define FakeFile {
-  @value Int counter
-
-  create () {
-    return FakeFile{ 0 }
-  }
-
-  readBlock (_) {
-    cleanup {
-      counter <- counter+1
-    } in if (counter == 0) {
-      return "this is a "
-    } elif (counter == 1) {
-      return "partial line\nwith "
-    } elif (counter == 2) {
-      return "some more data\nand\nmore lines"
-    } elif (counter == 3) {
-      return "\nunfinished"
-    } else {
-      fail("too many reads")
-    }
-  }
-
-  pastEnd () {
-    return counter > 3
-  }
-}
-
-define Test {
-  run () {
-    TextReader reader <- TextReader.fromBlockReader(FakeFile.create())
-    \ checkNext(reader,"this is a partial line")
-    \ checkNext(reader,"with some more data")
-    \ checkNext(reader,"and")
-    \ checkNext(reader,"more lines")
-    \ checkNext(reader,"unfinished")
-    if (!reader.pastEnd()) {
-      fail("not past end")
-    }
-    if (reader.readNextLine() != "") {
-      fail("reused data")
-    }
-  }
-
+concrete Helper {
   @type checkNext (TextReader,String) -> ()
+}
+
+define Helper {
   checkNext (reader,line) {
     if (reader.pastEnd()) {
       fail("past end")
@@ -201,20 +157,6 @@ define Test {
   }
 }
 
-concrete Test {
-  @type run () -> ()
-}
-
-
-testcase "TextReader readAll" {
-  success
-}
-
-unittest test {
-  String allContents <- TextReader.readAll(FakeFile.create())
-  \ Testing.checkEquals<?>(allContents,"this is a partial line\nwith some more data\nand\nmore lines\nunfinished")
-}
-
 concrete FakeFile {
   refines BlockReader<String>
 
@@ -249,17 +191,52 @@ define FakeFile {
   }
 }
 
+unittest correctSplit {
+    TextReader reader <- TextReader.fromBlockReader(FakeFile.create())
+    \ Helper.checkNext(reader,"this is a partial line")
+    \ Helper.checkNext(reader,"with some more data")
+    \ Helper.checkNext(reader,"and")
+    \ Helper.checkNext(reader,"more lines")
+    \ Helper.checkNext(reader,"unfinished")
+    if (!reader.pastEnd()) {
+      fail("not past end")
+    }
+    if (reader.readNextLine() != "") {
+      fail("reused data")
+    }
+}
 
-testcase "ErrorOr value" {
+unittest readAll {
+  String allContents <- TextReader.readAll(FakeFile.create())
+  \ Testing.checkEquals<?>(allContents,"this is a partial line\nwith some more data\nand\nmore lines\nunfinished")
+}
+
+
+testcase "ErrorOr checks" {
   success
 }
 
-unittest test {
+unittest withValue {
   ErrorOr<Int> value <- ErrorOr:value<Int>(10)
   if (value.isError()) {
     fail("Failed")
   }
   \ Testing.checkEquals<?>(value.getValue(),10)
+}
+
+unittest withError {
+  ErrorOr<String> value <- ErrorOr:error("error message")
+  if (!value.isError()) {
+    fail("Failed")
+  }
+  \ Testing.checkEquals<?>(value.getError().formatted(),"error message")
+}
+
+unittest convertError {
+  scoped {
+    ErrorOr<String> error <- ErrorOr:error("error message")
+  } in ErrorOr<Int> value <- error.convertError()
+  \ Testing.checkEquals<?>(value.getError().formatted(),"error message")
 }
 
 
@@ -274,19 +251,6 @@ unittest test {
 }
 
 
-testcase "ErrorOr error" {
-  success
-}
-
-unittest test {
-  ErrorOr<String> value <- ErrorOr:error("error message")
-  if (!value.isError()) {
-    fail("Failed")
-  }
-  \ Testing.checkEquals<?>(value.getError().formatted(),"error message")
-}
-
-
 testcase "ErrorOr getValue() crashes with error" {
   crash
   require "error message"
@@ -295,16 +259,4 @@ testcase "ErrorOr getValue() crashes with error" {
 unittest test {
   ErrorOr<String> value <- ErrorOr:error("error message")
   \ value.getValue()
-}
-
-
-testcase "ErrorOr convert error" {
-  success
-}
-
-unittest test {
-  scoped {
-    ErrorOr<String> error <- ErrorOr:error("error message")
-  } in ErrorOr<Int> value <- error.convertError()
-  \ Testing.checkEquals<?>(value.getError().formatted(),"error message")
 }

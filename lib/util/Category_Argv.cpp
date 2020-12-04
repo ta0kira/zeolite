@@ -142,7 +142,7 @@ ReturnTuple Value_Argv::Call_subSequence(const S<TypeValue>& Var_self, const Par
   const PrimInt Var_arg1 = (args.At(0))->AsInt();
   const PrimInt Var_arg2 = (args.At(1))->AsInt();
   if (Var_arg1 < 0 || (Var_arg1 > 0 && Var_arg1 >= GetSize())) {
-    FAIL() << "Subsequence position " << Var_arg1 << " is out of bounds";
+    FAIL() << "Subsequence index " << Var_arg1 << " is out of bounds";
   }
   if (Var_arg2 < 0 || Var_arg1 + Var_arg2 > GetSize()) {
     FAIL() << "Subsequence size " << Var_arg2 << " is invalid";
