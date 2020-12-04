@@ -21,19 +21,9 @@ testcase "not true" {
 }
 
 unittest test {
-  \ Test.run()
-}
-
-define Test {
-  run () {
-    if (!true) {
-      fail("Failed")
-    }
+  if (!true) {
+    fail("Failed")
   }
-}
-
-concrete Test {
-  @type run () -> ()
 }
 
 
@@ -41,35 +31,40 @@ testcase "reduce Bool" {
   success
 }
 
-unittest test {
-  \ Test.run()
-}
-
-define Test {
-  run () {
-    if (!present(reduce<Bool,Bool>(true))) {
-      fail("Failed")
-    }
-    if (!present(reduce<Bool,AsBool>(true))) {
-      fail("Failed")
-    }
-    if (present(reduce<Bool,AsChar>(true))) {
-      fail("Failed")
-    }
-    if (!present(reduce<Bool,AsInt>(true))) {
-      fail("Failed")
-    }
-    if (!present(reduce<Bool,AsFloat>(true))) {
-      fail("Failed")
-    }
-    if (!present(reduce<Bool,Formatted>(true))) {
-      fail("Failed")
-    }
+unittest bool {
+  if (!present(reduce<Bool,Bool>(true))) {
+    fail("Failed")
   }
 }
 
-concrete Test {
-  @type run () -> ()
+unittest asBool {
+  if (!present(reduce<Bool,AsBool>(true))) {
+    fail("Failed")
+  }
+}
+
+unittest asChar {
+  if (present(reduce<Bool,AsChar>(true))) {
+    fail("Failed")
+  }
+}
+
+unittest asInt {
+  if (!present(reduce<Bool,AsInt>(true))) {
+    fail("Failed")
+  }
+}
+
+unittest asFloat {
+  if (!present(reduce<Bool,AsFloat>(true))) {
+    fail("Failed")
+  }
+}
+
+unittest formatted {
+  if (!present(reduce<Bool,Formatted>(true))) {
+    fail("Failed")
+  }
 }
 
 
@@ -77,35 +72,40 @@ testcase "reduce Char" {
   success
 }
 
-unittest test {
-  \ Test.run()
-}
-
-define Test {
-  run () {
-    if (!present(reduce<Char,Char>('a'))) {
-      fail("Failed")
-    }
-    if (!present(reduce<Char,AsBool>('a'))) {
-      fail("Failed")
-    }
-    if (!present(reduce<Char,AsChar>('a'))) {
-      fail("Failed")
-    }
-    if (!present(reduce<Char,AsInt>('a'))) {
-      fail("Failed")
-    }
-    if (!present(reduce<Char,AsFloat>('a'))) {
-      fail("Failed")
-    }
-    if (!present(reduce<Char,Formatted>('a'))) {
-      fail("Failed")
-    }
+unittest char {
+  if (!present(reduce<Char,Char>('a'))) {
+    fail("Failed")
   }
 }
 
-concrete Test {
-  @type run () -> ()
+unittest asBool {
+  if (!present(reduce<Char,AsBool>('a'))) {
+    fail("Failed")
+  }
+}
+
+unittest asChar {
+  if (!present(reduce<Char,AsChar>('a'))) {
+    fail("Failed")
+  }
+}
+
+unittest asInt {
+  if (!present(reduce<Char,AsInt>('a'))) {
+    fail("Failed")
+  }
+}
+
+unittest asFloat {
+  if (!present(reduce<Char,AsFloat>('a'))) {
+    fail("Failed")
+  }
+}
+
+unittest formatted {
+  if (!present(reduce<Char,Formatted>('a'))) {
+    fail("Failed")
+  }
 }
 
 
@@ -113,35 +113,40 @@ testcase "reduce Int" {
   success
 }
 
-unittest test {
-  \ Test.run()
-}
-
-define Test {
-  run () {
-    if (!present(reduce<Int,Int>(1))) {
-      fail("Failed")
-    }
-    if (!present(reduce<Int,AsBool>(1))) {
-      fail("Failed")
-    }
-    if (!present(reduce<Int,AsChar>(1))) {
-      fail("Failed")
-    }
-    if (!present(reduce<Int,AsInt>(1))) {
-      fail("Failed")
-    }
-    if (!present(reduce<Int,AsFloat>(1))) {
-      fail("Failed")
-    }
-    if (!present(reduce<Int,Formatted>(1))) {
-      fail("Failed")
-    }
+unittest int {
+  if (!present(reduce<Int,Int>(1))) {
+    fail("Failed")
   }
 }
 
-concrete Test {
-  @type run () -> ()
+unittest asBool {
+  if (!present(reduce<Int,AsBool>(1))) {
+    fail("Failed")
+  }
+}
+
+unittest asChar {
+  if (!present(reduce<Int,AsChar>(1))) {
+    fail("Failed")
+  }
+}
+
+unittest asInt {
+  if (!present(reduce<Int,AsInt>(1))) {
+    fail("Failed")
+  }
+}
+
+unittest asFloat {
+  if (!present(reduce<Int,AsFloat>(1))) {
+    fail("Failed")
+  }
+}
+
+unittest formatted {
+  if (!present(reduce<Int,Formatted>(1))) {
+    fail("Failed")
+  }
 }
 
 
@@ -149,35 +154,40 @@ testcase "reduce Float" {
   success
 }
 
-unittest test {
-  \ Test.run()
-}
-
-define Test {
-  run () {
-    if (!present(reduce<Float,Float>(1.0))) {
-      fail("Failed")
-    }
-    if (!present(reduce<Float,AsBool>(1.0))) {
-      fail("Failed")
-    }
-    if (present(reduce<Float,AsChar>(1.0))) {
-      fail("Failed")
-    }
-    if (!present(reduce<Float,AsInt>(1.0))) {
-      fail("Failed")
-    }
-    if (!present(reduce<Float,AsFloat>(1.0))) {
-      fail("Failed")
-    }
-    if (!present(reduce<Float,Formatted>(1.0))) {
-      fail("Failed")
-    }
+unittest float {
+  if (!present(reduce<Float,Float>(1.0))) {
+    fail("Failed")
   }
 }
 
-concrete Test {
-  @type run () -> ()
+unittest asBool {
+  if (!present(reduce<Float,AsBool>(1.0))) {
+    fail("Failed")
+  }
+}
+
+unittest asChar {
+  if (present(reduce<Float,AsChar>(1.0))) {
+    fail("Failed")
+  }
+}
+
+unittest asInt {
+  if (!present(reduce<Float,AsInt>(1.0))) {
+    fail("Failed")
+  }
+}
+
+unittest asFloat {
+  if (!present(reduce<Float,AsFloat>(1.0))) {
+    fail("Failed")
+  }
+}
+
+unittest formatted {
+  if (!present(reduce<Float,Formatted>(1.0))) {
+    fail("Failed")
+  }
 }
 
 
@@ -185,635 +195,280 @@ testcase "reduce String" {
   success
 }
 
-unittest test {
-  \ Test.run()
-}
-
-define Test {
-  run () {
-    if (!present(reduce<String,String>("a"))) {
-      fail("Failed")
-    }
-    if (!present(reduce<String,AsBool>("a"))) {
-      fail("Failed")
-    }
-    if (present(reduce<String,AsChar>("a"))) {
-      fail("Failed")
-    }
-    if (present(reduce<String,AsInt>("a"))) {
-      fail("Failed")
-    }
-    if (present(reduce<String,AsFloat>("a"))) {
-      fail("Failed")
-    }
-    if (!present(reduce<String,Formatted>("a"))) {
-      fail("Failed")
-    }
+unittest string {
+  if (!present(reduce<String,String>("a"))) {
+    fail("Failed")
   }
 }
 
-concrete Test {
-  @type run () -> ()
+unittest asBool {
+  if (!present(reduce<String,AsBool>("a"))) {
+    fail("Failed")
+  }
+}
+
+unittest asChar {
+  if (present(reduce<String,AsChar>("a"))) {
+    fail("Failed")
+  }
+}
+
+unittest asInt {
+  if (present(reduce<String,AsInt>("a"))) {
+    fail("Failed")
+  }
+}
+
+unittest asFloar {
+  if (present(reduce<String,AsFloat>("a"))) {
+    fail("Failed")
+  }
+}
+
+unittest formatted {
+  if (!present(reduce<String,Formatted>("a"))) {
+    fail("Failed")
+  }
 }
 
 
-testcase "reduce ReadPosition success" {
+testcase "reduce ReadPosition" {
   success
 }
 
-unittest test {
-  \ Test.run()
-}
-
-define Test {
-  run () {
-    if (!present(reduce<ReadPosition<Char>,ReadPosition<Formatted>>("x"))) {
-      fail("Failed")
-    }
+unittest success {
+  if (!present(reduce<ReadPosition<Char>,ReadPosition<Formatted>>("x"))) {
+    fail("Failed")
   }
 }
 
-concrete Test {
-  @type run () -> ()
+unittest failure {
+  if (present(reduce<ReadPosition<Formatted>,ReadPosition<Char>>("x"))) {
+    fail("Failed")
+  }
 }
 
 
-testcase "reduce ReadPosition fail" {
+testcase "interface implementations" {
   success
 }
 
-unittest test {
-  \ Test.run()
-}
-
-define Test {
-  run () {
-    if (present(reduce<ReadPosition<Formatted>,ReadPosition<Char>>("x"))) {
-      fail("Failed")
-    }
+unittest stringLessThan {
+  if (!("x" `String.lessThan` "y")) {
+    fail("Failed")
   }
 }
 
-concrete Test {
-  @type run () -> ()
+unittest boolEquals {
+  if (!(true `Bool.equals` true)) {
+    fail("Failed")
+  }
+}
+
+unittest stringEquals {
+  if (!("x" `String.equals` "x")) {
+    fail("Failed")
+  }
+}
+
+unittest stringBuilder {
+  Builder<String> builder <- String.builder()
+  \ Testing.check<?>(builder.build(),"")
+  \ Testing.check<?>(builder.append("xyz").build(),"xyz")
+  \ Testing.check<?>(builder.append("123").build(),"xyz123")
+}
+
+unittest charLessThan {
+  if (!('x' `Char.lessThan` 'y')) {
+    fail("Failed")
+  }
+}
+
+unittest charEquals {
+  if (!('x' `Char.equals` 'x')) {
+    fail("Failed")
+  }
+}
+
+unittest intLessThan {
+  if (!(1 `Int.lessThan` 2)) {
+    fail("Failed")
+  }
+}
+
+unittest intEquals {
+  if (!(1 `Int.equals` 1)) {
+    fail("Failed")
+  }
+}
+
+unittest floatLessThan {
+  if (!(1.0 `Float.lessThan` 2.0)) {
+    fail("Failed")
+  }
+}
+
+unittest floatEquals {
+  if (!(1.0 `Float.equals` 1.0)) {
+    fail("Failed")
+  }
+}
+
+unittest stringFormatted {
+  String s <- ("x").formatted()
+  if (s != "x") {
+    fail(s)
+  }
+}
+
+unittest charFormatted {
+  String s <- ('x').formatted()
+  if (s != "x") {
+    fail(s)
+  }
+}
+
+unittest charFormattedOct {
+  String s <- ('\170').formatted()
+  if (s != "x") {
+    fail(s)
+  }
+}
+
+unittest charFormattedHex {
+  String s <- ('\x78').formatted()
+  if (s != "x") {
+    fail(s)
+  }
+}
+
+unittest intFormatted {
+  String s <- (1).formatted()
+  if (s != "1") {
+    fail(s)
+  }
+}
+
+unittest intFormattedHex {
+  String s <- (\x0010).formatted()
+  if (s != "16") {
+    fail(s)
+  }
+}
+
+unittest floatFormatted {
+  String s <- (1.1).formatted()
+  if (s != "1.1") {  // precision might vary
+    fail(s)
+  }
+}
+
+unittest boolFormatted {
+  String s <- (false).formatted()
+  if (s != "false") {
+    fail(s)
+  }
 }
 
 
-testcase "String LessThan" {
+testcase "reference sharing" {
   success
 }
 
-unittest test {
-  \ Test.run()
-}
-
-define Test {
-  run () {
-    if (!("x" `String.lessThan` "y")) {
-      fail("Failed")
-    }
+unittest boolShared {
+  Bool value1 <- true
+  // Shared because true and false are boxed constants.
+  weak Bool value2 <- value1
+  if (!present(strong(value2))) {
+    fail("Failed")
   }
 }
 
-concrete Test {
-  @type run () -> ()
+unittest stringShared {
+  String value1 <- "x"
+  weak String value2 <- value1
+  if (!present(strong(value2))) {
+    fail("Failed")
+  }
+}
+
+unittest charNotShared {
+  Char value1 <- 'x'
+  weak Char value2 <- value1
+  if (present(strong(value2))) {
+    fail("Failed")
+  }
+}
+
+unittest intNotShared {
+  Int value1 <- 1
+  weak Int value2 <- value1
+  if (present(strong(value2))) {
+    fail("Failed")
+  }
+}
+
+unittest floatNotShared {
+  Float value1 <- 1.1
+  weak Float value2 <- value1
+  if (present(strong(value2))) {
+    fail("Failed")
+  }
 }
 
 
-testcase "Bool Equals" {
+testcase "String stuff" {
   success
 }
 
-unittest test {
-  \ Test.run()
-}
-
-define Test {
-  run () {
-    if (!(true `Bool.equals` true)) {
-      fail("Failed")
-    }
+unittest builderNotLazy {
+  optional String value1 <- "value"
+  weak String value2 <- value1
+  if (!present(strong(value2))) {
+    fail("Failed")
+  }
+  Builder<String> builder <- String.builder().append(require(value1))
+  value1 <- empty
+  if (present(strong(value2))) {
+    fail("Failed")
   }
 }
 
-concrete Test {
-  @type run () -> ()
-}
-
-
-testcase "String Equals" {
-  success
-}
-
-unittest test {
-  \ Test.run()
-}
-
-define Test {
-  run () {
-    if (!("x" `String.equals` "x")) {
-      fail("Failed")
-    }
+unittest simpleAccess {
+  String s <- "abcde"
+  Char c <- s.readPosition(3)
+  if (c != 'd') {
+    fail(c)
+  }
+  Int size <- s.readSize()
+  if (size != 5) {
+    fail(size)
   }
 }
 
-concrete Test {
-  @type run () -> ()
-}
-
-
-testcase "String Builder" {
-  success
-}
-
-unittest test {
-  \ Test.run()
-}
-
-define Test {
-  run () {
-    Builder<String> builder <- String.builder()
-    \ Testing.check<?>(builder.build(),"")
-    \ Testing.check<?>(builder.append("xyz").build(),"xyz")
-    \ Testing.check<?>(builder.append("123").build(),"xyz123")
+unittest subsequence {
+  String s <- "abcde"
+  String s2 <- s.subSequence(1,3)
+  if (s2 != "bcd") {
+    fail(s2)
   }
 }
 
-concrete Test {
-  @type run () -> ()
-}
-
-
-testcase "Char LessThan" {
-  success
-}
-
-unittest test {
-  \ Test.run()
-}
-
-define Test {
-  run () {
-    if (!('x' `Char.lessThan` 'y')) {
-      fail("Failed")
-    }
+unittest emptySubsequence {
+  String s <- ""
+  String s2 <- s.subSequence(0,0)
+  if (s2 != "") {
+    fail(s2)
   }
 }
 
-concrete Test {
-  @type run () -> ()
-}
-
-
-testcase "Char Equals" {
-  success
-}
-
-unittest test {
-  \ Test.run()
-}
-
-define Test {
-  run () {
-    if (!('x' `Char.equals` 'x')) {
-      fail("Failed")
-    }
+unittest nullChar {
+  if ("abc\x00def" == "abc") {
+    fail("Failed")
   }
-}
-
-concrete Test {
-  @type run () -> ()
-}
-
-
-testcase "Int LessThan" {
-  success
-}
-
-unittest test {
-  \ Test.run()
-}
-
-define Test {
-  run () {
-    if (!(1 `Int.lessThan` 2)) {
-      fail("Failed")
-    }
+  if (("abc\x00def").readPosition(4) != 'd') {
+    fail("Failed")
   }
-}
-
-concrete Test {
-  @type run () -> ()
-}
-
-
-testcase "Int Equals" {
-  success
-}
-
-unittest test {
-  \ Test.run()
-}
-
-define Test {
-  run () {
-    if (!(1 `Int.equals` 1)) {
-      fail("Failed")
-    }
-  }
-}
-
-concrete Test {
-  @type run () -> ()
-}
-
-
-testcase "Float LessThan" {
-  success
-}
-
-unittest test {
-  \ Test.run()
-}
-
-define Test {
-  run () {
-    if (!(1.0 `Float.lessThan` 2.0)) {
-      fail("Failed")
-    }
-  }
-}
-
-concrete Test {
-  @type run () -> ()
-}
-
-
-testcase "Float Equals" {
-  success
-}
-
-unittest test {
-  \ Test.run()
-}
-
-define Test {
-  run () {
-    if (!(1.0 `Float.equals` 1.0)) {
-      fail("Failed")
-    }
-  }
-}
-
-concrete Test {
-  @type run () -> ()
-}
-
-
-testcase "Bool is shared" {
-  success
-}
-
-unittest test {
-  \ Test.run()
-}
-
-define Test {
-  run () {
-    Bool value1 <- true
-    // Shared because true and false are boxed constants.
-    weak Bool value2 <- value1
-    if (!present(strong(value2))) {
-      fail("Failed")
-    }
-  }
-}
-
-concrete Test {
-  @type run () -> ()
-}
-
-
-testcase "String is shared" {
-  success
-}
-
-unittest test {
-  \ Test.run()
-}
-
-define Test {
-  run () {
-    String value1 <- "x"
-    weak String value2 <- value1
-    if (!present(strong(value2))) {
-      fail("Failed")
-    }
-  }
-}
-
-concrete Test {
-  @type run () -> ()
-}
-
-
-testcase "String Builder is not lazy" {
-  success
-}
-
-unittest test {
-  \ Test.run()
-}
-
-define Test {
-  run () {
-    optional String value1 <- "value"
-    weak String value2 <- value1
-    if (!present(strong(value2))) {
-      fail("Failed")
-    }
-    Builder<String> builder <- String.builder().append(require(value1))
-    value1 <- empty
-    if (present(strong(value2))) {
-      fail("Failed")
-    }
-  }
-}
-
-concrete Test {
-  @type run () -> ()
-}
-
-
-testcase "Char is not shared" {
-  success
-}
-
-unittest test {
-  \ Test.run()
-}
-
-define Test {
-  run () {
-    Char value1 <- 'x'
-    weak Char value2 <- value1
-    if (present(strong(value2))) {
-      fail("Failed")
-    }
-  }
-}
-
-concrete Test {
-  @type run () -> ()
-}
-
-
-testcase "Int is not shared" {
-  success
-}
-
-unittest test {
-  \ Test.run()
-}
-
-define Test {
-  run () {
-    Int value1 <- 1
-    weak Int value2 <- value1
-    if (present(strong(value2))) {
-      fail("Failed")
-    }
-  }
-}
-
-concrete Test {
-  @type run () -> ()
-}
-
-
-testcase "Float is not shared" {
-  success
-}
-
-unittest test {
-  \ Test.run()
-}
-
-define Test {
-  run () {
-    Float value1 <- 1.1
-    weak Float value2 <- value1
-    if (present(strong(value2))) {
-      fail("Failed")
-    }
-  }
-}
-
-concrete Test {
-  @type run () -> ()
-}
-
-
-testcase "String Formatted" {
-  success
-}
-
-unittest test {
-  \ Test.run()
-}
-
-define Test {
-  run () {
-    String s <- ("x").formatted()
-    if (s != "x") {
-      fail(s)
-    }
-  }
-}
-
-concrete Test {
-  @type run () -> ()
-}
-
-
-testcase "Char Formatted" {
-  success
-}
-
-unittest test {
-  \ Test.run()
-}
-
-define Test {
-  run () {
-    String s <- ('x').formatted()
-    if (s != "x") {
-      fail(s)
-    }
-  }
-}
-
-concrete Test {
-  @type run () -> ()
-}
-
-
-testcase "Char octal Formatted" {
-  success
-}
-
-unittest test {
-  \ Test.run()
-}
-
-define Test {
-  run () {
-    String s <- ('\170').formatted()
-    if (s != "x") {
-      fail(s)
-    }
-  }
-}
-
-concrete Test {
-  @type run () -> ()
-}
-
-
-testcase "Char hex Formatted" {
-  success
-}
-
-unittest test {
-  \ Test.run()
-}
-
-define Test {
-  run () {
-    String s <- ('\x78').formatted()
-    if (s != "x") {
-      fail(s)
-    }
-  }
-}
-
-concrete Test {
-  @type run () -> ()
-}
-
-
-testcase "Int Formatted" {
-  success
-}
-
-unittest test {
-  \ Test.run()
-}
-
-define Test {
-  run () {
-    String s <- (1).formatted()
-    if (s != "1") {
-      fail(s)
-    }
-  }
-}
-
-concrete Test {
-  @type run () -> ()
-}
-
-
-testcase "Int hex Formatted" {
-  success
-}
-
-unittest test {
-  \ Test.run()
-}
-
-define Test {
-  run () {
-    String s <- (\x0010).formatted()
-    if (s != "16") {
-      fail(s)
-    }
-  }
-}
-
-concrete Test {
-  @type run () -> ()
-}
-
-
-testcase "Float Formatted" {
-  success
-}
-
-unittest test {
-  \ Test.run()
-}
-
-define Test {
-  run () {
-    String s <- (1.1).formatted()
-    if (s != "1.1") {  // precision might vary
-      fail(s)
-    }
-  }
-}
-
-concrete Test {
-  @type run () -> ()
-}
-
-
-testcase "Bool Formatted" {
-  success
-}
-
-unittest test {
-  \ Test.run()
-}
-
-define Test {
-  run () {
-    String s <- (false).formatted()
-    if (s != "false") {
-      fail(s)
-    }
-  }
-}
-
-concrete Test {
-  @type run () -> ()
-}
-
-
-testcase "String access" {
-  success
-}
-
-unittest test {
-  \ Test.run()
-}
-
-define Test {
-  run () {
-    String s <- "abcde"
-    Char c <- s.readPosition(3)
-    if (c != 'd') {
-      fail(c)
-    }
-    Int size <- s.readSize()
-    if (size != 5) {
-      fail(size)
-    }
-  }
-}
-
-concrete Test {
-  @type run () -> ()
 }
 
 
@@ -859,52 +514,6 @@ concrete Test {
 }
 
 
-testcase "String subsequence" {
-  success
-}
-
-unittest test {
-  \ Test.run()
-}
-
-define Test {
-  run () {
-    String s <- "abcde"
-    String s2 <- s.subSequence(1,3)
-    if (s2 != "bcd") {
-      fail(s2)
-    }
-  }
-}
-
-concrete Test {
-  @type run () -> ()
-}
-
-
-testcase "String empty subsequence at end" {
-  success
-}
-
-unittest test {
-  \ Test.run()
-}
-
-define Test {
-  run () {
-    String s <- ""
-    String s2 <- s.subSequence(0,0)
-    if (s2 != "") {
-      fail(s2)
-    }
-  }
-}
-
-concrete Test {
-  @type run () -> ()
-}
-
-
 testcase "String subsequence past end" {
   crash
   require "100"
@@ -926,68 +535,28 @@ concrete Test {
 }
 
 
-testcase "Int max is accurate" {
+testcase "Int stuff" {
   success
 }
 
-unittest test {
-  \ Test.run()
-}
-
-define Test {
-  run () {
-    Int x <- 9223372036854775807 - 1
-    if (x != 9223372036854775806) {
-      fail(x)
-    }
+unittest accurateMax {
+  Int x <- 9223372036854775807 - 1
+  if (x != 9223372036854775806) {
+    fail(x)
   }
 }
 
-concrete Test {
-  @type run () -> ()
-}
-
-
-testcase "Int min is accurate" {
-  success
-}
-
-unittest test {
-  \ Test.run()
-}
-
-define Test {
-  run () {
-    Int x <- -9223372036854775806 + 1
-    if (x != -9223372036854775805) {
-      fail(x)
-    }
+unittest accurateMin {
+  Int x <- -9223372036854775806 + 1
+  if (x != -9223372036854775805) {
+    fail(x)
   }
 }
 
-concrete Test {
-  @type run () -> ()
-}
-
-
-testcase "Int unsigned works properly" {
-  success
-}
-
-unittest test {
-  \ Test.run()
-}
-
-define Test {
-  run () {
-    if (\xffffffffffffffff != -1) {
-      fail("Failed")
-    }
+unittest hexUnsigned {
+  if (\xffffffffffffffff != -1) {
+    fail("Failed")
   }
-}
-
-concrete Test {
-  @type run () -> ()
 }
 
 
@@ -1072,61 +641,36 @@ concrete Test {
 }
 
 
-testcase "String allows null" {
-  success
-}
-
-unittest test {
-  \ Test.run()
-}
-
-define Test {
-  run () {
-    if ("abc\x00def" == "abc") {
-      fail("Failed")
-    }
-    if (("abc\x00def").readPosition(4) != 'd') {
-      fail("Failed")
-    }
-  }
-}
-
-concrete Test {
-  @type run () -> ()
-}
-
-
 testcase "Bool conversions" {
   success
 }
 
-unittest test {
-  \ Test.run()
-}
-
-define Test {
-  run () {
-    Bool b1 <- (false).asBool()
-    if (b1 != false) {
-      fail(b1)
-    }
-    Bool b2 <- (true).asBool()
-    if (b2 != true) {
-      fail(b2)
-    }
-    Int i <- (true).asInt()
-    if (i != 1) {
-      fail(i)
-    }
-    Float f <- (true).asFloat()
-    if (f != 1.0) {
-      fail(f)
-    }
+unittest falseAsBool {
+  Bool b1 <- (false).asBool()
+  if (b1 != false) {
+    fail(b1)
   }
 }
 
-concrete Test {
-  @type run () -> ()
+unittest trueAsBool {
+  Bool b2 <- (true).asBool()
+  if (b2 != true) {
+    fail(b2)
+  }
+}
+
+unittest asInt {
+  Int i <- (true).asInt()
+  if (i != 1) {
+    fail(i)
+  }
+}
+
+unittest asFloat {
+  Float f <- (true).asFloat()
+  if (f != 1.0) {
+    fail(f)
+  }
 }
 
 
@@ -1134,37 +678,39 @@ testcase "Char conversions" {
   success
 }
 
-unittest test {
-  \ Test.run()
-}
-
-define Test {
-  run () {
-    Bool b1 <- ('\x00').asBool()
-    if (b1 != false) {
-      fail(b1)
-    }
-    Bool b2 <- ('\x10').asBool()
-    if (b2 != true) {
-      fail(b2)
-    }
-    Char c <- ('a').asChar()
-    if (c != 'a') {
-      fail(c)
-    }
-    Int i <- ('\x10').asInt()
-    if (i != 16) {
-      fail(i)
-    }
-    Float f <- ('\x10').asFloat()
-    if (f != 16.0) {
-      fail(f)
-    }
+unittest nullAsBool {
+  Bool b1 <- ('\x00').asBool()
+  if (b1 != false) {
+    fail(b1)
   }
 }
 
-concrete Test {
-  @type run () -> ()
+unittest nonNullAsBool {
+  Bool b2 <- ('\x10').asBool()
+  if (b2 != true) {
+    fail(b2)
+  }
+}
+
+unittest asChar {
+  Char c <- ('a').asChar()
+  if (c != 'a') {
+    fail(c)
+  }
+}
+
+unittest asInt {
+  Int i <- ('\x10').asInt()
+  if (i != 16) {
+    fail(i)
+  }
+}
+
+unittest asFloat {
+  Float f <- ('\x10').asFloat()
+  if (f != 16.0) {
+    fail(f)
+  }
 }
 
 
@@ -1172,37 +718,39 @@ testcase "Int conversions" {
   success
 }
 
-unittest test {
-  \ Test.run()
-}
-
-define Test {
-  run () {
-    Bool b1 <- (0).asBool()
-    if (b1 != false) {
-      fail(b1)
-    }
-    Bool b2 <- (16).asBool()
-    if (b2 != true) {
-      fail(b2)
-    }
-    Char c <- (97).asChar()
-    if (c != 'a') {
-      fail(c)
-    }
-    Int i <- (16).asInt()
-    if (i != 16) {
-      fail(i)
-    }
-    Float f <- (16).asFloat()
-    if (f != 16.0) {
-      fail(f)
-    }
+unittest zeroAsBool {
+  Bool b1 <- (0).asBool()
+  if (b1 != false) {
+    fail(b1)
   }
 }
 
-concrete Test {
-  @type run () -> ()
+unittest nonZeroAsBool {
+  Bool b2 <- (16).asBool()
+  if (b2 != true) {
+    fail(b2)
+  }
+}
+
+unittest asChar {
+  Char c <- (97).asChar()
+  if (c != 'a') {
+    fail(c)
+  }
+}
+
+unittest asInt {
+  Int i <- (16).asInt()
+  if (i != 16) {
+    fail(i)
+  }
+}
+
+unittest asFloat {
+  Float f <- (16).asFloat()
+  if (f != 16.0) {
+    fail(f)
+  }
 }
 
 
@@ -1210,33 +758,32 @@ testcase "Float conversions" {
   success
 }
 
-unittest test {
-  \ Test.run()
-}
-
-define Test {
-  run () {
-    Bool b1 <- (0.0).asBool()
-    if (b1 != false) {
-      fail(b1)
-    }
-    Bool b2 <- (16.0).asBool()
-    if (b2 != true) {
-      fail(b2)
-    }
-    Int i <- (16.0).asInt()
-    if (i != 16) {
-      fail(i)
-    }
-    Float f <- (16.0).asFloat()
-    if (f != 16.0) {
-      fail(f)
-    }
+unittest zeroAsBool {
+  Bool b1 <- (0.0).asBool()
+  if (b1 != false) {
+    fail(b1)
   }
 }
 
-concrete Test {
-  @type run () -> ()
+unittest nonZeroAsBool {
+  Bool b2 <- (16.0).asBool()
+  if (b2 != true) {
+    fail(b2)
+  }
+}
+
+unittest asInt {
+  Int i <- (16.0).asInt()
+  if (i != 16) {
+    fail(i)
+  }
+}
+
+unittest asFloat {
+  Float f <- (16.0).asFloat()
+  if (f != 16.0) {
+    fail(f)
+  }
 }
 
 
@@ -1244,23 +791,16 @@ testcase "String conversions" {
   success
 }
 
-unittest test {
-  \ Test.run()
-}
-
-define Test {
-  run () {
-    Bool b1 <- ("").asBool()
-    if (b1 != false) {
-      fail(b1)
-    }
-    Bool b2 <- ("\x00").asBool()
-    if (b2 != true) {
-      fail(b2)
-    }
+unittest emptyAsBool {
+  Bool b1 <- ("").asBool()
+  if (b1 != false) {
+    fail(b1)
   }
 }
 
-concrete Test {
-  @type run () -> ()
+unittest singleNullAsBool {
+  Bool b2 <- ("\x00").asBool()
+  if (b2 != true) {
+    fail(b2)
+  }
 }

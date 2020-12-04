@@ -16,106 +16,232 @@ limitations under the License.
 
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
-testcase "Int arithmetic with precedence" {
+testcase "Int operations" {
   success
 }
 
-unittest test {
-  \ Test.run()
+unittest plus {
+  \ Testing.check<?>(8 + 2,10)
 }
 
-define Test {
-  run () {
-    \ Testing.check<?>(\x10 + 1 * 2 - 8 / 2 - 3 % 2,13)
-  }
+unittest minus {
+  \ Testing.check<?>(8 - 2,6)
 }
 
-concrete Test {
-  @type run () -> ()
+unittest times {
+  \ Testing.check<?>(8 * 2,16)
+}
+
+unittest divide {
+  \ Testing.check<?>(8 / 2,4)
+}
+
+unittest modulo {
+  \ Testing.check<?>(8 % 2,0)
+}
+
+unittest left {
+  \ Testing.check<?>(1 << 2,4)
+}
+
+unittest right {
+  \ Testing.check<?>(7 >> 1,3)
+}
+
+unittest xor {
+  \ Testing.check<?>(7 ^ 2 ,5)
+}
+
+unittest and {
+  \ Testing.check<?>(7 & ~2,5)
+}
+
+unittest or {
+  \ Testing.check<?>(5 | 2 ,7)
+}
+
+unittest arithmetic {
+  \ Testing.check<?>(\x10 + 1 * 2 - 8 / 2 - 3 % 2,13)
+}
+
+unittest bitwise {
+  \ Testing.check<?>(1 << 4 | 7 >> 1 & ~2,17)
+}
+
+unittest sameOperator {
+  \ Testing.check<?>(2 - 1 - 1,0)
+}
+
+unittest lessThan {
+  if (!(1 <  2)) { fail("Failed") }
+}
+
+unittest lessEquals {
+  if (!(1 <= 2)) { fail("Failed") }
+}
+
+unittest equals {
+  if (!(1 == 1)) { fail("Failed") }
+}
+
+unittest notEquals {
+  if (!(1 != 2)) { fail("Failed") }
+}
+
+unittest greaterThan {
+  if (!(2 >  1)) { fail("Failed") }
+}
+
+unittest greaterEquals {
+  if (!(2 >= 1)) { fail("Failed") }
+}
+
+unittest arithmeticCompare {
+  if (!(2 + 1 < 2 + 3)) { fail("Failed") }
 }
 
 
-testcase "Int arithmetic" {
+testcase "Bool operations" {
   success
 }
 
-unittest test {
-  \ Test.run()
-}
-
-define Test {
-  run () {
-    \ Testing.check<?>(8 + 2,10)
-    \ Testing.check<?>(8 - 2,6)
-    \ Testing.check<?>(8 * 2,16)
-    \ Testing.check<?>(8 / 2,4)
-    \ Testing.check<?>(8 % 2,0)
+unittest precedence {
+  scoped {
+    Bool x <- false && false || true
+  } in if (!x) {
+    fail(x)
   }
 }
 
-concrete Test {
-  @type run () -> ()
+unittest trueEqualsTrue {
+  if (!(true  == true))  { fail("Failed") }
+}
+
+unittest falseEqualsFalse {
+  if (!(false == false)) { fail("Failed") }
+}
+
+unittest falseNotEqualsTrue {
+  if (!(false != true))  { fail("Failed") }
+}
+
+unittest compareWithLogic {
+  scoped {
+    Bool x <- 1 + 2 < 4 && 3 >= 1 * 2 + 1
+  } in if (!x) {
+    fail(x)
+  }
 }
 
 
-testcase "Int bitwise" {
+testcase "Float operations" {
   success
 }
 
-unittest test {
-  \ Test.run()
+unittest precedence {
+  \ Testing.check<?>(16.0 + 1.0 * 2.0 - 8.0 / 2.0 - 3.0 / 3.0,13.0)
 }
 
-define Test {
-  run () {
-    \ Testing.check<?>(1 << 2,4)
-    \ Testing.check<?>(7 >> 1,3)
-    \ Testing.check<?>(7 ^ 2 ,5)
-    \ Testing.check<?>(7 & ~2,5)
-    \ Testing.check<?>(5 | 2 ,7)
-  }
+unittest lessThan {
+  if (!(1.0 <  2.0)) { fail("Failed") }
 }
 
-concrete Test {
-  @type run () -> ()
+unittest lessEquals {
+  if (!(1.0 <= 2.0)) { fail("Failed") }
+}
+
+unittest equals {
+  if (!(1.0 == 1.0)) { fail("Failed") }
+}
+
+unittest notEquals {
+  if (!(1.0 != 2.0)) { fail("Failed") }
+}
+
+unittest greaterThan {
+  if (!(2.0 >  1.0)) { fail("Failed") }
+}
+
+unittest greaterEquals {
+  if (!(2.0 >= 1.0)) { fail("Failed") }
+}
+
+unittest arithmeticCompare {
+  if (!(2.0 + 1.0 < 2.0 + 3.0)) { fail("Failed") }
 }
 
 
-testcase "Int bitwise with precedence" {
+testcase "String operations" {
   success
 }
 
-unittest test {
-  \ Test.run()
+unittest add {
+  \ Testing.check<?>("x" + "y" + "z","xyz")
 }
 
-define Test {
-  run () {
-    \ Testing.check<?>(1 << 4 | 7 >> 1 & ~2,17)
-  }
+unittest lessThan {
+  if (!("x" <  "y")) { fail("Failed") }
 }
 
-concrete Test {
-  @type run () -> ()
+unittest lessEquals {
+  if (!("x" <= "y")) { fail("Failed") }
+}
+
+unittest equals {
+  if (!("x" == "x")) { fail("Failed") }
+}
+
+unittest notEquals {
+  if (!("x" != "y")) { fail("Failed") }
+}
+
+unittest greaterThan {
+  if (!("y" >  "x")) { fail("Failed") }
+}
+
+unittest greaterEquals {
+  if (!("y" >= "x")) { fail("Failed") }
+}
+
+unittest arithmeticCompare {
+  if (!("x" + "w" < "x" + "y")) { fail("Failed") }
 }
 
 
-testcase "same operators applied left to right" {
+testcase "Char operations" {
   success
 }
 
-unittest test {
-  \ Test.run()
+unittest minus {
+  \ Testing.check<?>('z' - 'a',25)
 }
 
-define Test {
-  run () {
-    \ Testing.check<?>(2 - 1 - 1,0)
-  }
+unittest lessThan {
+  if (!('x' <  'y')) { fail("Failed") }
 }
 
-concrete Test {
-  @type run () -> ()
+unittest lessEquals {
+  if (!('x' <= 'y')) { fail("Failed") }
+}
+
+unittest equals {
+  if (!('x' == 'x')) { fail("Failed") }
+}
+
+unittest notEquals {
+  if (!('x' != 'y')) { fail("Failed") }
+}
+
+unittest greaterThan {
+  if (!('y' >  'x')) { fail("Failed") }
+}
+
+unittest greaterEquals {
+  if (!('y' >= 'x')) { fail("Failed") }
+}
+
+unittest arithmeticCompare {
+  if (!('d' - 'a' == 3)) { fail("Failed") }
 }
 
 
@@ -143,203 +269,6 @@ testcase "Int + String" {
 define Test {
   run () {
     \ \x10 + ""
-  }
-}
-
-concrete Test {
-  @type run () -> ()
-}
-
-
-testcase "String arithmetic" {
-  success
-}
-
-unittest test {
-  \ Test.run()
-}
-
-define Test {
-  run () {
-    \ Testing.check<?>("x" + "y" + "z","xyz")
-  }
-}
-
-concrete Test {
-  @type run () -> ()
-}
-
-
-testcase "Float arithmetic with precedence" {
-  success
-}
-
-unittest test {
-  \ Test.run()
-}
-
-define Test {
-  run () {
-    \ Testing.check<?>(16.0 + 1.0 * 2.0 - 8.0 / 2.0 - 3.0 / 3.0,13.0)
-  }
-}
-
-concrete Test {
-  @type run () -> ()
-}
-
-
-testcase "Char minus" {
-  success
-}
-
-unittest test {
-  \ Test.run()
-}
-
-define Test {
-  run () {
-    \ Testing.check<?>('z' - 'a',25)
-  }
-}
-
-concrete Test {
-  @type run () -> ()
-}
-
-
-testcase "Bool comparison" {
-  success
-}
-
-unittest test {
-  \ Test.run()
-}
-
-define Test {
-  run () {
-    if (!(true  == true))  { fail("Failed") }
-    if (!(false == false)) { fail("Failed") }
-    if (!(false != true))  { fail("Failed") }
-  }
-}
-
-concrete Test {
-  @type run () -> ()
-}
-
-
-testcase "Int comparison" {
-  success
-}
-
-unittest test {
-  \ Test.run()
-}
-
-define Test {
-  run () {
-    if (!(1 <  2)) { fail("Failed") }
-    if (!(1 <= 2)) { fail("Failed") }
-    if (!(1 == 1)) { fail("Failed") }
-    if (!(1 != 2)) { fail("Failed") }
-    if (!(2 >  1)) { fail("Failed") }
-    if (!(2 >= 1)) { fail("Failed") }
-  }
-}
-
-concrete Test {
-  @type run () -> ()
-}
-
-
-testcase "Float comparison" {
-  success
-}
-
-unittest test {
-  \ Test.run()
-}
-
-define Test {
-  run () {
-    if (!(1.0 <  2.0)) { fail("Failed") }
-    if (!(1.0 <= 2.0)) { fail("Failed") }
-    if (!(1.0 == 1.0)) { fail("Failed") }
-    if (!(1.0 != 2.0)) { fail("Failed") }
-    if (!(2.0 >  1.0)) { fail("Failed") }
-    if (!(2.0 >= 1.0)) { fail("Failed") }
-  }
-}
-
-concrete Test {
-  @type run () -> ()
-}
-
-
-testcase "String comparison" {
-  success
-}
-
-unittest test {
-  \ Test.run()
-}
-
-define Test {
-  run () {
-    if (!("x" <  "y")) { fail("Failed") }
-    if (!("x" <= "y")) { fail("Failed") }
-    if (!("x" == "x")) { fail("Failed") }
-    if (!("x" != "y")) { fail("Failed") }
-    if (!("y" >  "x")) { fail("Failed") }
-    if (!("y" >= "x")) { fail("Failed") }
-  }
-}
-
-concrete Test {
-  @type run () -> ()
-}
-
-
-testcase "Char comparison" {
-  success
-}
-
-unittest test {
-  \ Test.run()
-}
-
-define Test {
-  run () {
-    if (!('x' <  'y')) { fail("Failed") }
-    if (!('x' <= 'y')) { fail("Failed") }
-    if (!('x' == 'x')) { fail("Failed") }
-    if (!('x' != 'y')) { fail("Failed") }
-    if (!('y' >  'x')) { fail("Failed") }
-    if (!('y' >= 'x')) { fail("Failed") }
-  }
-}
-
-concrete Test {
-  @type run () -> ()
-}
-
-
-testcase "Bool logic with precedence" {
-  success
-}
-
-unittest test {
-  \ Test.run()
-}
-
-define Test {
-  run () {
-    scoped {
-      Bool x <- false && false || true
-    } in if (!x) {
-      fail(x)
-    }
   }
 }
 
@@ -380,90 +309,6 @@ concrete Test {
 }
 
 
-testcase "String plus with comparison" {
-  success
-}
-
-unittest test {
-  \ Test.run()
-}
-
-define Test {
-  run () {
-    if (!("x" + "w" < "x" + "y")) {
-      fail("Failed")
-    }
-  }
-}
-
-concrete Test {
-  @type run () -> ()
-}
-
-
-testcase "Char minus with comparison" {
-  success
-}
-
-unittest test {
-  \ Test.run()
-}
-
-define Test {
-  run () {
-    if (!('d' - 'a' == 3)) {
-      fail("Failed")
-    }
-  }
-}
-
-concrete Test {
-  @type run () -> ()
-}
-
-
-testcase "Int arithmetic with comparison" {
-  success
-}
-
-unittest test {
-  \ Test.run()
-}
-
-define Test {
-  run () {
-    if (!(2 + 1 < 2 + 3)) {
-      fail("Failed")
-    }
-  }
-}
-
-concrete Test {
-  @type run () -> ()
-}
-
-
-testcase "Float arithmetic with comparison" {
-  success
-}
-
-unittest test {
-  \ Test.run()
-}
-
-define Test {
-  run () {
-    if (!(2.0 + 1.0 < 2.0 + 3.0)) {
-      fail("Failed")
-    }
-  }
-}
-
-concrete Test {
-  @type run () -> ()
-}
-
-
 testcase "Bool comparison" {
   error
   require "Bool.+Int"
@@ -472,29 +317,6 @@ testcase "Bool comparison" {
 define Test {
   run () {
     \ 1 < 2 < 3
-  }
-}
-
-concrete Test {
-  @type run () -> ()
-}
-
-
-testcase "arithmetic, comparison, logic" {
-  success
-}
-
-unittest test {
-  \ Test.run()
-}
-
-define Test {
-  run () {
-    scoped {
-      Bool x <- 1 + 2 < 4 && 3 >= 1 * 2 + 1
-    } in if (!x) {
-      fail(x)
-    }
   }
 }
 
