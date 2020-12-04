@@ -937,7 +937,7 @@ selectTestFromArgv1 fs = return (includes,allCode) where
       selectFromMap
     ]
   initMap = onlyCodes $ [
-      "std::unordered_map<std::string,ReturnTuple(*)()> tests{"
+      "const std::unordered_map<std::string, ReturnTuple(*)()> tests{"
     ] ++ map (("  " ++) . testEntry) fs ++ [
       "};"
     ]
