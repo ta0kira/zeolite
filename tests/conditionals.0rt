@@ -17,16 +17,10 @@ limitations under the License.
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
 testcase "assign if/elif/else" {
-  success
+  compiles
 }
 
-unittest test {
-  \ Test.run()
-}
-
-@value interface Value {}
-
-define Test {
+define Value {
   @value process () -> (optional Value)
   process () (value) {
     if (false) {
@@ -37,26 +31,16 @@ define Test {
       value <- empty
     }
   }
-
-  run () {}
 }
 
-concrete Test {
-  @type run () -> ()
-}
+concrete Value {}
 
 
 testcase "return if/elif/else" {
-  success
+  compiles
 }
 
-unittest test {
-  \ Test.run()
-}
-
-@value interface Value {}
-
-define Test {
+define Value {
   @value process () -> (optional Value)
   process () {
     if (false) {
@@ -67,13 +51,9 @@ define Test {
       return empty
     }
   }
-
-  run () {}
 }
 
-concrete Test {
-  @type run () -> ()
-}
+concrete Value {}
 
 
 testcase "assign if/elif condition" {
@@ -81,9 +61,7 @@ testcase "assign if/elif condition" {
   require "value.+before return"
 }
 
-@value interface Value {}
-
-define Test {
+define Value {
   @value process () -> (optional Value)
   process () (value) {
     if (present((value <- empty))) {
@@ -92,13 +70,9 @@ define Test {
       value <- empty
     }
   }
-
-  run () {}
 }
 
-concrete Test {
-  @type run () -> ()
-}
+concrete Value {}
 
 
 testcase "different in if and else" {
@@ -107,9 +81,7 @@ testcase "different in if and else" {
   require "value2.+before return"
 }
 
-@value interface Value {}
-
-define Test {
+define Value {
   @value process () -> (optional Value,optional Value)
   process () (value1,value2) {
     if (false) {
@@ -118,13 +90,9 @@ define Test {
       value2 <- empty
     }
   }
-
-  run () {}
 }
 
-concrete Test {
-  @type run () -> ()
-}
+concrete Value {}
 
 
 testcase "missing in if" {
@@ -132,9 +100,7 @@ testcase "missing in if" {
   require "value.+before return"
 }
 
-@value interface Value {}
-
-define Test {
+define Value {
   @value process () -> (optional Value)
   process () (value) {
     if (false) {
@@ -144,13 +110,9 @@ define Test {
       value <- empty
     }
   }
-
-  run () {}
 }
 
-concrete Test {
-  @type run () -> ()
-}
+concrete Value {}
 
 
 testcase "missing in elif" {
@@ -158,9 +120,7 @@ testcase "missing in elif" {
   require "value.+before return"
 }
 
-@value interface Value {}
-
-define Test {
+define Value {
   @value process () -> (optional Value)
   process () (value) {
     if (false) {
@@ -170,13 +130,9 @@ define Test {
       value <- empty
     }
   }
-
-  run () {}
 }
 
-concrete Test {
-  @type run () -> ()
-}
+concrete Value {}
 
 
 testcase "missing in else" {
@@ -184,9 +140,7 @@ testcase "missing in else" {
   require "value.+before return"
 }
 
-@value interface Value {}
-
-define Test {
+define Value {
   @value process () -> (optional Value)
   process () (value) {
     if (false) {
@@ -196,13 +150,10 @@ define Test {
     } else {
     }
   }
-
-  run () {}
 }
 
-concrete Test {
-  @type run () -> ()
-}
+
+concrete Value {}
 
 
 testcase "missing in implicit else" {
@@ -210,9 +161,7 @@ testcase "missing in implicit else" {
   require "value.+before return"
 }
 
-@value interface Value {}
-
-define Test {
+define Value {
   @value process () -> (optional Value)
   process () (value) {
     if (false) {
@@ -221,13 +170,9 @@ define Test {
       value <- empty
     }
   }
-
-  run () {}
 }
 
-concrete Test {
-  @type run () -> ()
-}
+concrete Value {}
 
 
 testcase "crash in if" {
@@ -236,20 +181,10 @@ testcase "crash in if" {
 }
 
 unittest test {
-  \ Test.run()
-}
-
-define Test {
-  run () {
-    optional Bool test <- empty
-    if (require(test)) {
-      // empty
-    }
+  optional Bool test <- empty
+  if (require(test)) {
+    // empty
   }
-}
-
-concrete Test {
-  @type run () -> ()
 }
 
 
@@ -259,35 +194,19 @@ testcase "crash in elif" {
 }
 
 unittest test {
-  \ Test.run()
-}
-
-define Test {
-  run () {
-    optional Bool test <- empty
-    if (false) {
-    } elif (require(test)) {
-      // empty
-    }
+  optional Bool test <- empty
+  if (false) {
+  } elif (require(test)) {
+    // empty
   }
-}
-
-concrete Test {
-  @type run () -> ()
 }
 
 
 testcase "multi assign if/elif/else" {
-  success
+  compiles
 }
 
-unittest test {
-  \ Test.run()
-}
-
-@value interface Value {}
-
-define Test {
+define Value {
   @value process () -> (optional Value,optional Value)
   process () (value1,value2) {
     if (false) {
@@ -301,13 +220,9 @@ define Test {
       value2 <- empty
     }
   }
-
-  run () {}
 }
 
-concrete Test {
-  @type run () -> ()
-}
+concrete Value {}
 
 
 testcase "multi missing in if" {
@@ -315,9 +230,7 @@ testcase "multi missing in if" {
   require "value2"
 }
 
-@value interface Value {}
-
-define Test {
+define Value {
   @value process () -> (optional Value,optional Value)
   process () (value1,value2) {
     if (false) {
@@ -330,13 +243,9 @@ define Test {
       value2 <- empty
     }
   }
-
-  run () {}
 }
 
-concrete Test {
-  @type run () -> ()
-}
+concrete Value {}
 
 
 testcase "multi missing in elif" {
@@ -344,9 +253,7 @@ testcase "multi missing in elif" {
   require "value2"
 }
 
-@value interface Value {}
-
-define Test {
+define Value {
   @value process () -> (optional Value,optional Value)
   process () (value1,value2) {
     if (false) {
@@ -359,13 +266,9 @@ define Test {
       value2 <- empty
     }
   }
-
-  run () {}
 }
 
-concrete Test {
-  @type run () -> ()
-}
+concrete Value {}
 
 
 testcase "multi missing in else" {
@@ -373,9 +276,7 @@ testcase "multi missing in else" {
   require "value2"
 }
 
-@value interface Value {}
-
-define Test {
+define Value {
   @value process () -> (optional Value,optional Value)
   process () (value1,value2) {
     if (false) {
@@ -388,13 +289,9 @@ define Test {
       value1 <- empty
     }
   }
-
-  run () {}
 }
 
-concrete Test {
-  @type run () -> ()
-}
+concrete Value {}
 
 
 testcase "cleanup before return in if" {
@@ -402,7 +299,15 @@ testcase "cleanup before return in if" {
 }
 
 unittest test {
-  \ Test.run()
+  Value value <- Value.create()
+  Int value1 <- value.call()
+  if (value1 != 2) {
+    fail(value1)
+  }
+  Int value2 <- value.get()
+  if (value2 != 3) {
+    fail(value2)
+  }
 }
 
 concrete Value {
@@ -433,22 +338,4 @@ define Value {
   get () {
     return value
   }
-}
-
-define Test {
-  run () {
-    Value value <- Value.create()
-    Int value1 <- value.call()
-    if (value1 != 2) {
-      fail(value1)
-    }
-    Int value2 <- value.get()
-    if (value2 != 3) {
-      fail(value2)
-    }
-  }
-}
-
-concrete Test {
-  @type run () -> ()
 }
