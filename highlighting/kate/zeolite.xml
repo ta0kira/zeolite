@@ -126,9 +126,9 @@
         <keyword attribute="Scope Qualifier" context="#stay" String="scope" />
         <keyword attribute="Storage Qualifier" context="#stay" String="storage" />
         <keyword attribute="Testcase Keyword" context="Test Name" String="testHeader" />
-        <keyword attribute="Keyword" context="Declare Type" String="typeDeclare" />
-        <keyword attribute="Keyword" context="Define Type" String="typeDefine" />
-        <keyword attribute="Keyword" context="Define Test" String="singleTest" />
+        <keyword attribute="Top Keyword" context="Declare Type" String="typeDeclare" />
+        <keyword attribute="Top Keyword" context="Define Type" String="typeDefine" />
+        <keyword attribute="Top Keyword" context="Define Test" String="singleTest" />
       </context>
 
       <context name="Keywords Disallowed" attribute="Normal Text" lineEndContext="#stay" >
@@ -379,6 +379,7 @@
     <itemDatas>
       <itemData name="Normal Text" defStyleNum="dsNormal" spellChecking="false" />
       <itemData name="Keyword" defStyleNum="dsKeyword" spellChecking="false" />
+      <itemData name="Top Keyword" defStyleNum="dsKeyword" underline="true" spellChecking="false" />
       <itemData name="Scope Qualifier" defStyleNum="dsFunction" spellChecking="false" />
       <itemData name="Storage Qualifier" defStyleNum="dsKeyword" spellChecking="false" />
       <itemData name="Builtin Category Name" defStyleNum="dsDataType" italic="true" spellChecking="false" />

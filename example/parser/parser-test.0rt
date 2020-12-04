@@ -1,29 +1,28 @@
 testcase "parse data from a file" {
-  success Test.execute()
+  success
 }
 
-concrete Test {
-  @type execute () -> ()
-}
+unittest test {
+  TestData data <- TestData.parseFrom(Helpers.loadTestData()).getValue()
 
-define Test {
-  execute () {
-    TestData data <- TestData.parseFrom(loadTestData()).getValue()
-
-    if (data.getName() != "example data") {
-      fail(data.getName())
-    }
-
-    if (data.getDescription() != "THIS_IS_A_TOKEN") {
-      fail(data.getDescription())
-    }
-
-    if (data.getBoolean() != false) {
-      fail(data.getBoolean())
-    }
+  if (data.getName() != "example data") {
+    fail(data.getName())
   }
 
+  if (data.getDescription() != "THIS_IS_A_TOKEN") {
+    fail(data.getDescription())
+  }
+
+  if (data.getBoolean() != false) {
+    fail(data.getBoolean())
+  }
+}
+
+concrete Helpers {
   @type loadTestData () -> (String)
+}
+
+define Helpers {
   loadTestData () {
     scoped {
       RawFileReader reader <- RawFileReader.open($ExprLookup[MODULE_PATH]$ + "/test-data.txt")

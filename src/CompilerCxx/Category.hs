@@ -201,7 +201,7 @@ compileLanguageModule (LanguageModule ns0 ns1 ns2 cs0 ps0 ts0 cs1 ps1 ts1 ex ss 
 
 compileTestsModule :: (Show c, CompileErrorM m) =>
   LanguageModule c -> Namespace -> [AnyCategory c] -> [DefinedCategory c] ->
-  [TestProcedure c] -> m ([CxxOutput],CxxOutput,[FunctionName])
+  [TestProcedure c] -> m ([CxxOutput],CxxOutput,[(FunctionName,[c])])
 compileTestsModule cm ns cs ds ts = do
   let xs = PrivateSource {
       psNamespace = ns,
@@ -214,11 +214,13 @@ compileTestsModule cm ns cs ds ts = do
   return (xx,main,fs)
 
 compileTestMain :: (Show c, CompileErrorM m) =>
-  LanguageModule c -> PrivateSource c -> [TestProcedure c] -> m (CxxOutput,[FunctionName])
+  LanguageModule c -> PrivateSource c -> [TestProcedure c] -> m (CxxOutput,[(FunctionName,[c])])
 compileTestMain (LanguageModule ns0 ns1 ns2 cs0 ps0 ts0 cs1 ps1 ts1 _ _ em) ts2 tests = do
   tm' <- tm
   (CompiledData req main) <- createTestFile tm' em tests
-  return (CxxOutput Nothing testFilename NoNamespace (psNamespace ts2 `Set.insert` Set.unions [ns0,ns1,ns2]) req main,map tpName tests) where
+  let output = CxxOutput Nothing testFilename NoNamespace (psNamespace ts2 `Set.insert` Set.unions [ns0,ns1,ns2]) req main
+  let tests' = map (\t -> (tpName t,tpContext t)) tests
+  return (output,tests') where
   tm = foldM includeNewTypes defaultCategories [cs0,cs1,ps0,ps1,ts0,ts1,psCategory ts2]
 
 compileModuleMain :: (Show c, CompileErrorM m) =>

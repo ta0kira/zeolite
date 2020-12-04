@@ -23,13 +23,14 @@ module Cli.TestRunner (
 import Control.Arrow (second)
 import Control.Monad (when)
 import Control.Monad.IO.Class
-import Data.List (isSuffixOf,nub)
+import Data.List (isSuffixOf,nub,sort)
 import System.Directory
 import System.IO
 import System.Posix.Temp (mkdtemp)
 import System.FilePath
 import Text.Parsec
 import Text.Regex.TDFA -- Not safe!
+import qualified Data.Map as Map
 
 import Base.CompileError
 import Base.CompileInfo
@@ -41,6 +42,7 @@ import Module.Paths
 import Module.ProcessMetadata
 import Parser.SourceFile
 import Types.IntegrationTest
+import Types.Procedure
 import Types.TypeCategory
 
 
@@ -62,18 +64,24 @@ runSingleTest b cm p paths deps (f,s) = do
           let failed = sum $ map (snd . fst) allResults
           let result = collectAllM_ $ map snd allResults
           return ((passed,failed),result)
+
     runSingle t = do
       let name = "\"" ++ ithTestName (itHeader t) ++ "\" (from " ++ f ++ ")"
       let context = formatFullContextBrace (ithContext $ itHeader t)
+      let scope = "\nIn testcase \"" ++ ithTestName (itHeader t) ++ "\"" ++ context
       errorFromIO $ hPutStrLn stderr $ "\n*** Executing testcase " ++ name ++ " ***"
-      allResults <- run (ithResult $ itHeader t) (itCategory t) (itDefinition t) (itTests t)
-      let passed = length $ filter (not . isCompileError) allResults
-      let failed = length $ filter isCompileError allResults
-      let result = ("\nIn testcase \"" ++ ithTestName (itHeader t) ++ "\"" ++ context) ??> collectAllM_ allResults
-      if failed > 0
-         then errorFromIO $ hPutStrLn stderr $ "*** Some tests in testcase " ++ name ++ " failed ***"
-         else errorFromIO $ hPutStrLn stderr $ "*** All tests in testcase " ++ name ++ " passed ***"
-      return ((passed,failed),result)
+      result <- toCompileInfo $ run (ithResult $ itHeader t) (itCategory t) (itDefinition t) (itTests t)
+      if isCompileError result
+         then return ((0,1),scope ??> result >> return ())
+         else do
+           let allResults = getCompileSuccess result
+           let passed = length $ filter (not . isCompileError) allResults
+           let failed = length $ filter isCompileError allResults
+           let combined = scope ??> collectAllM_ allResults
+           if failed > 0
+             then errorFromIO $ hPutStrLn stderr $ "*** Some tests in testcase " ++ name ++ " failed ***"
+             else errorFromIO $ hPutStrLn stderr $ "*** All tests in testcase " ++ name ++ " passed ***"
+           return ((passed,failed),combined)
 
     run (ExpectCompileError _ rs es) cs ds ts = fmap (:[]) $ do
       let result = compileAll cs ds ts
@@ -84,8 +92,15 @@ runSingleTest b cm p paths deps (f,s) = do
            let errors   = show $ getCompileError result
            checkContent rs es (lines warnings ++ lines errors) [] []
 
-    run (ExpectRuntimeError   _ rs es) cs ds ts = execute False rs es cs ds ts
-    run (ExpectRuntimeSuccess _ rs es) cs ds ts = execute True  rs es cs ds ts
+    run (ExpectRuntimeError _ rs es) cs ds ts = do
+      when (length ts /= 1) $ compileErrorM "Exactly one unittest is required when crash is expected"
+      uniqueTestNames ts
+      execute False rs es cs ds ts
+
+    run (ExpectRuntimeSuccess _ rs es) cs ds ts = do
+      when (null ts) $ compileErrorM "At least one unittest is required when success is expected"
+      uniqueTestNames ts
+      execute True rs es cs ds ts
 
     checkContent rs es comp err out = do
       let cr = checkRequired rs comp err out
@@ -103,21 +118,25 @@ runSingleTest b cm p paths deps (f,s) = do
          then collectAllM_ [cr,ce,compError,errError,outError]
          else collectAllM_ [cr,ce]
 
-    execute s2 rs es cs ds ts = do
-      if null ts
-         then return [compileErrorM "At least one unittest is required unless a compilation error is expected"]
-         else do
-           let result = compileAll cs ds ts
-           if isCompileError result
-             then return [result >> return ()]
-             else do
-               let (xx,main,fs) = getCompileSuccess result
-               (dir,binaryName) <- createBinary main xx
-               results <- liftIO $ sequence $ map (toCompileInfo . executeTest binaryName rs es result s2) fs
-               when (not $ any isCompileError results) $ errorFromIO $ removeDirectoryRecursive dir
-               return results
+    uniqueTestNames ts = do
+      let ts' = Map.fromListWith (++) $ map (\t -> (tpName t,[t])) ts
+      mapErrorsM_ testClash $ Map.toList ts'
+    testClash (_,[_]) = return ()
+    testClash (n,ts) = ("unittest " ++ show n ++ " is defined multiple times") !!>
+      (mapErrorsM_ (compileErrorM . ("Defined at " ++) . formatFullContext) $ sort $ map tpContext ts)
 
-    executeTest binary rs es res s2 f2 = printOutcome $ ("In unittest " ++ show f2) ??> do
+    execute s2 rs es cs ds ts = do
+      let result = compileAll cs ds ts
+      if isCompileError result
+         then return [result >> return ()]
+         else do
+           let (xx,main,fs) = getCompileSuccess result
+           (dir,binaryName) <- createBinary main xx
+           results <- liftIO $ sequence $ map (toCompileInfo . executeTest binaryName rs es result s2) fs
+           when (not $ any isCompileError results) $ errorFromIO $ removeDirectoryRecursive dir
+           return results
+
+    executeTest binary rs es res s2 (f2,c) = printOutcome $ ("\nIn unittest " ++ show f2 ++ formatFullContextBrace c) ??> do
       let command = TestCommand binary (takeDirectory binary) [show f2]
       (TestCommandResult s2' out err) <- runTestCommand b command
       case (s2,s2') of

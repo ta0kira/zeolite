@@ -1148,36 +1148,43 @@ follow, but for now:
 
 Unit testing is a built-in capability of Zeolite. Unit tests use `.0rt` source
 files, which are like `.0rx` source files with `testcase` metadata. The test
-files go in the same directory as the rest of your source files.
+files go in the same directory as the rest of your source files. (Elsewhere in
+this project these tests are referred to as "integration tests" because this
+testing mode is used to ensure that the `zeolite` compiler operates properly
+end-to-end.)
 
-(Elsewhere in this project these tests are referred to as "integration tests"
-because this testing mode is used to ensure that the `zeolite` compiler
-operates properly end-to-end.)
+**IMPORTANT:** Prior to compiler version `0.10.0.0`, the `testcase` syntax was
+slightly different, and `unittest` was not available.
 
 <pre style='color:#1f1c1b;background-color:#f6f8fa;'>
 <span style='color:#898887;'>// myprogram/tests.0rt</span>
 
-<span style='color:#898887;'>// Each testcase starts with a header specifying the test name. Nothing in the</span>
-<span style='color:#898887;'>// testcase is available outside of this specific test!</span>
-<b><span style='color:#bf0303;background:#f7e6e6;'>testcase</span></b> <span style='color:#bf0303;'>&quot;passing test&quot;</span> {
-  <span style='color:#898887;'>// The test is expected to execute without any issues.</span>
-  <span style='color:#04e040;'>success</span> <span style='color:#0057ae;'>Test</span><span style='color:#644a9b;'>.</span>run()
+<span style='color:#898887;'>// Each testcase starts with a header specifying a name for the group of tests.</span>
+<span style='color:#898887;'>// This provides common setup code for a group of unit tests.</span>
+
+<b><span style='color:#bf0303;background:#f7e6e6;'>testcase</span></b> <span style='color:#bf0303;'>&quot;passing tests&quot;</span> {
+  <span style='color:#898887;'>// All unittest are expected to execute without any issues.</span>
+  <span style='color:#04e040;'>success</span>
 }
 
-<span style='color:#898887;'>// Everything after the testcase is like a .0rx.</span>
+<span style='color:#898887;'>// Everything after the testcase (up until the next testcase) is like a .0rx.</span>
 
-<b>define</b> <b><span style='color:#0057ae;'>Test</span></b> {
-  run () {
-    <span style='color:#898887;'>// The test content goes here.</span>
-  }
+<span style='color:#898887;'>// At least one unittest must be defined when success is expected. Each unittest</span>
+<span style='color:#898887;'>// must have a distinct name within the testcase. Each unittest is run in a</span>
+<span style='color:#898887;'>// separate process, making it safe to alter global state.</span>
+
+<b>unittest</b> <b><span style='color:#0057ae;'>myTest1</span></b> {
+  <span style='color:#898887;'>// The test content goes here. It has access to anything within the testcase</span>
+  <span style='color:#898887;'>// besides other unittest.</span>
 }
 
-<b>concrete</b> <b><span style='color:#0057ae;'>Test</span></b> {
-  <span style='color:#644a9b;'>@type</span> run () -&gt; ()
+<b>unittest</b> <b><span style='color:#0057ae;'>myTest2</span></b> {
+  <span style='color:#006e28;'>\</span> <b>empty</b>
 }
 
 
 <span style='color:#898887;'>// A new testcase header indicates the end of the previous test.</span>
+
 <b><span style='color:#bf0303;background:#f7e6e6;'>testcase</span></b> <span style='color:#bf0303;'>&quot;missing function&quot;</span> {
   <span style='color:#898887;'>// The test is expected to have a compilation error. Note that this cannot be</span>
   <span style='color:#898887;'>// used to check for parser failures!</span>
@@ -1190,30 +1197,31 @@ operates properly end-to-end.)
   <span style='color:#04e040;'>exclude</span> <span style='color:#04e040;'>compiler</span> <span style='color:#bf0303;'>&quot;foo&quot;</span>  <span style='color:#898887;'>// The compiler error should not include &quot;foo&quot;.</span>
 }
 
-<b>define</b> <b><span style='color:#0057ae;'>Test</span></b> {
-  <span style='color:#898887;'>// Error! Test does not have a definition for run.</span>
+<span style='color:#898887;'>// You can include unittest when an error is expected; however, they will not be</span>
+<span style='color:#898887;'>// run even if compilation succeeds.</span>
+
+<b>define</b> <b><span style='color:#0057ae;'>MyType</span></b> {
+  <span style='color:#898887;'>// Error! MyType does not have a definition for run.</span>
 }
 
-<b>concrete</b> <b><span style='color:#0057ae;'>Test</span></b> {
+<b>concrete</b> <b><span style='color:#0057ae;'>MyType</span></b> {
   <span style='color:#644a9b;'>@type</span> run () -&gt; ()
 }
 
 
 <b><span style='color:#bf0303;background:#f7e6e6;'>testcase</span></b> <span style='color:#bf0303;'>&quot;intentional crash&quot;</span> {
   <span style='color:#898887;'>// The test is expected to crash.</span>
-  <span style='color:#04e040;'>crash</span> <span style='color:#0057ae;'>Test</span><span style='color:#644a9b;'>.</span>run()
+  <span style='color:#04e040;'>crash</span>
   <span style='color:#04e040;'>require</span> <span style='color:#04e040;'>stderr</span> <span style='color:#bf0303;'>&quot;message&quot;</span>  <span style='color:#898887;'>// stderr should include &quot;message&quot;.</span>
 }
 
-<b>define</b> <b><span style='color:#0057ae;'>Test</span></b> {
-  run () {
-    <b>fail</b>(<span style='color:#bf0303;'>&quot;message&quot;</span>)
-  }
-}
+<span style='color:#898887;'>// Exactly one unittest must be defined when a crash is expected.</span>
 
-<b>concrete</b> <b><span style='color:#0057ae;'>Test</span></b> {
-  <span style='color:#644a9b;'>@type</span> run () -&gt; ()
-}</pre>
+<b>unittest</b> <b><span style='color:#0057ae;'>myTest</span></b> {
+  <span style='color:#898887;'>// Use the fail built-in to cause a test failure.</span>
+  <b>fail</b>(<span style='color:#bf0303;'>&quot;message&quot;</span>)
+}
+</pre>
 
 Unit tests have access to all public symbols in the module. You can run all
 tests for module `myprogram` using `zeolite -t myprogram`.

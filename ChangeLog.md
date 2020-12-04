@@ -1,5 +1,19 @@
 # Revision history for zeolite-lang
 
+## 0.10.0.0  -- ????-??-??
+
+### Language
+
+* **[breaking]** Major changes to `.0rt` syntax:
+
+  * **[new]** Adds `unittest` keyword to allow the user to define multiple
+    tests within a single `success` `testcase`. This allows multiple tests to
+    use the same setup, while still being able to track multiple test failures.
+    `error` and `crash` `testcase` types are still available.
+
+  * **[breaking]** Removes the expression argument from `success` and `crash`
+    `testcase` types. Use one or more `unittest` instead.
+
 ## 0.9.0.0  -- 2020-11-23
 
 ### Compiler CLI

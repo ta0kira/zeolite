@@ -37,25 +37,15 @@ define Test {
 
 testcase "basic crash test" {
   crash
-  require stderr "/testcase:"
+  require stderr "testcase:"
   require stderr "failure message!!!"
   exclude stdout "failure message!!!"
 }
 
 unittest test {
-  \ Test.execute()
-}
-
-concrete Test {
-  @type execute () -> ()
-}
-
-define Test {
-  execute () {
-    // NOTE: "!!!" is important here because it also tests mixing of escaped and
-    // unescaped characters when handling string literals.
-    fail("failure message!!!")
-  }
+  // NOTE: "!!!" is important here because it also tests mixing of escaped and
+  // unescaped characters when handling string literals.
+  fail("failure message!!!")
 }
 
 
@@ -63,17 +53,7 @@ testcase "basic success test" {
   success
 }
 
-unittest test {
-  \ Test.execute()
-}
-
-concrete Test {
-  @type execute () -> ()
-}
-
-define Test {
-  execute () { }
-}
+unittest test { }
 
 
 testcase "minimal linking works properly" {
@@ -128,15 +108,5 @@ testcase "ModuleOnly is visible to tests" {
 }
 
 unittest test {
-  \ Test.execute()
-}
-
-concrete Test {
-  @type execute () -> ()
-}
-
-define Test {
-  execute () {
-    optional ModuleOnly value <- empty
-  }
+  optional ModuleOnly value <- empty
 }

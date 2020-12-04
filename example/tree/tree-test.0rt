@@ -1,64 +1,62 @@
 // Each testcase is essentially followed by its own private .0rx that is
-// separate from all other testcases. In this case, the testcase expects that
-// the source will compile and Test.execute() will succeed, but testcases can
-// also expect a compiler error ("error") or a runtime crash ("crash"). Note
-// that you *cannot* expect parse-time errors.
+// separate from all other testcases. In addition to category declarations and
+// definitions, each testcase can define one or more unittest procedures.
+//
+// In this example, "success" means that all unittest are expected to succeed.
+// The other options are "crash" for a runtime failure and "error" for a
+// compilation error.
 
 testcase "integration test" {
-  success Test.execute()
+  success
 }
 
-// Everything past the testcase (up until the next testcase, if there is one) is
-// treated as a self-contained .0rx. This is compiled into a binary that calls
-// the expression that follows "success" above.
+// Everything past here until the next testcase belongs to this testcase. This
+// allows you to perform additional setup.
 
-concrete Test {
-  @type execute () -> ()
-}
+// Each unittest is executed separately. If one unittest updates global state,
+// it won't affect any other unittest.
 
-define Test {
-  execute () {
-    // Just select the required usage patterns with an intersection.
-    [KVWriter<Int,Int>&KVReader<Int,Int>] tree <- Tree<Int,Int>.new()
-    Int count <- 30
+unittest test {
+  // Just select the required usage patterns with an intersection.
+  [KVWriter<Int,Int>&KVReader<Int,Int>] tree <- Tree<Int,Int>.new()
+  Int count <- 30
 
-    // Insert values.
+  // Insert values.
+  scoped {
+    Int i <- 0
+  } in while (i < count) {
+    Int new <- ((i + 13) * 3547) % count
+    \ tree.set(new,i)
+  } update {
+    i <- i+1
+  }
+
+  // Verify and remove values.
+  scoped {
+    Int i <- 0
+  } in while (i < count) {
+    Int new <- ((i + 13) * 3547) % count
     scoped {
-      Int i <- 0
-    } in while (i < count) {
-      Int new <- ((i + 13) * 3547) % count
-      \ tree.set(new,i)
-    } update {
-      i <- i+1
+      optional Int value <- tree.get(new)
+    } in if (!present(value)) {
+      \ LazyStream<Formatted>.new()
+          .append("Not found ")
+          .append(new)
+          .append(" but should have been ")
+          .append(i)
+          .writeTo(SimpleOutput.error())
+    } elif (require(value) != i) {
+      \ LazyStream<Formatted>.new()
+          .append("Element ")
+          .append(new)
+          .append(" should have been ")
+          .append(i)
+          .append(" but was ")
+          .append(require(value))
+          .writeTo(SimpleOutput.error())
     }
-
-    // Verify and remove values.
-    scoped {
-      Int i <- 0
-    } in while (i < count) {
-      Int new <- ((i + 13) * 3547) % count
-      scoped {
-        optional Int value <- tree.get(new)
-      } in if (!present(value)) {
-        \ LazyStream<Formatted>.new()
-            .append("Not found ")
-            .append(new)
-            .append(" but should have been ")
-            .append(i)
-            .writeTo(SimpleOutput.error())
-      } elif (require(value) != i) {
-        \ LazyStream<Formatted>.new()
-            .append("Element ")
-            .append(new)
-            .append(" should have been ")
-            .append(i)
-            .append(" but was ")
-            .append(require(value))
-            .writeTo(SimpleOutput.error())
-      }
-      \ tree.remove(new)
-    } update {
-      i <- i+1
-    }
+    \ tree.remove(new)
+  } update {
+    i <- i+1
   }
 }
