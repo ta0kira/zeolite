@@ -1,7 +1,7 @@
 root: "../.."
 path: "lib/math"
 private_deps: [
-  "../../tests"
+  "lib/testing"
 ]
 extra_files: [
   category_source {

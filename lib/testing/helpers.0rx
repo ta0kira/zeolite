@@ -1,0 +1,60 @@
+/* -----------------------------------------------------------------------------
+Copyright 2020 Kevin P. Barry
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+----------------------------------------------------------------------------- */
+
+// Author: Kevin P. Barry [ta0kira@gmail.com]
+
+$TestsOnly$
+
+define Testing {
+  check (x,y) {
+    if (!#x.equals(x,y)) {
+      fail(String.builder()
+        .append(x.formatted())
+        .append(" is not equal to ")
+        .append(y.formatted())
+        .build())
+    }
+  }
+
+  checkBetween (x,l,h) {
+    if (!lessEquals<?>(l,h)) {
+      fail(String.builder()
+        .append("Upper limit ")
+        .append(l.formatted())
+        .append(" is not at or above lower limit ")
+        .append(h.formatted())
+        .build())
+    }
+    if (!lessEquals<?>(l,x) || !lessEquals<?>(x,h)) {
+      fail(String.builder()
+        .append(x.formatted())
+        .append(" is not between ")
+        .append(l.formatted())
+        .append(" and ")
+        .append(h.formatted())
+        .build())
+    }
+  }
+
+  @type lessEquals<#x>
+    #x defines Equals<#x>
+    #x defines LessThan<#x>
+  (#x,#x) -> (Bool)
+  lessEquals (x,y) {
+    // Using !#x.lessThan(y,x) wouldn't account for NaNs.
+    return #x.lessThan(x,y) || #x.equals(x,y)
+  }
+}

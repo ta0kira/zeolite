@@ -159,7 +159,7 @@ script:
   - 'echo -e "$ZEOLITE_CONFIG" | $ZEOLITE_SETUP'
   - ZEOLITE_PATH=$($ZEOLITE --get-path | grep '^/')
   # Only run integration tests for a few GHC version, since they should all be the same if setup succeeds
-  - if [ $HCNUMVER -eq 80803 ] || [ $HCNUMVER -eq 81001 ]; then $ZEOLITE -p $ZEOLITE_PATH -t tests lib/file lib/math lib/util; fi
+  - if [ $HCNUMVER -eq 80803 ] || [ $HCNUMVER -eq 81001 ]; then $ZEOLITE -p $ZEOLITE_PATH -t lib/testing tests lib/file lib/math lib/util; fi
   # Run extra CLI tests
   - if [ $HCNUMVER -eq 80803 ] || [ $HCNUMVER -eq 81001 ]; then bash $ZEOLITE_PATH/tests/cli-tests.sh $ZEOLITE; fi
   # <<< MANUAL EDIT ***

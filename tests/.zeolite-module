@@ -16,6 +16,7 @@ expression_map: [
   }
 ]
 private_deps: [
+  "lib/testing"
   "visibility"
   "visibility2"
 ]

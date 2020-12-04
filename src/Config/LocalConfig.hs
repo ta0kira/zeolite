@@ -141,7 +141,8 @@ instance PathIOHandler Resolver where
        then return False
        else do
          ps2 <- errorFromIO $ potentialSystemPaths r m
-         errorFromIO (findModule ps2) >>= return . not . isJust
+         path <- errorFromIO (findModule ps2)
+         return $ isJust path
   resolveBaseModule _ = do
     let m = "base"
     m0 <- errorFromIO $ getDataFileName m

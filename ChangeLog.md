@@ -14,6 +14,10 @@
   * **[breaking]** Removes the expression argument from `success` and `crash`
     `testcase` types. Use one or more `unittest` instead.
 
+### Libraries
+
+* **[new]** Adds the `lib/testing` library with basic helpers for unit tests.
+
 ## 0.9.0.0  -- 2020-11-23
 
 ### Compiler CLI

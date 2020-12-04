@@ -22,9 +22,9 @@ import System.Environment
 import System.Exit
 import System.IO
 
+import Base.CompileInfo
 import Cli.CompileOptions
 import Cli.RunCompiler
-import Base.CompileInfo
 import Config.LoadConfig
 import Config.LocalConfig
 
@@ -55,10 +55,11 @@ arBinary    = "ar"
 libraries :: [String]
 libraries = [
     "base",
-    "tests",
+    "lib/testing",
     "lib/util",
     "lib/file",
-    "lib/math"
+    "lib/math",
+    "tests"
   ]
 
 includePaths :: [String]

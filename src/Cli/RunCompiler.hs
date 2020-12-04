@@ -107,20 +107,20 @@ runCompiler resolver backend (CompileOptions _ is is2 _ _ _ p (CompileFast c fn 
   errorFromIO $ removeDirectoryRecursive dir
 
 runCompiler resolver backend (CompileOptions h _ _ ds _ _ p CompileRecompileRecursive f) = do
-  foldM (recursive resolver) Set.empty ds >> return () where
-    recursive r da d0 = do
-      isSystem <- isSystemModule r p d0
+  foldM (recursive resolver) Set.empty (map ((,) p) ds) >> return () where
+    recursive r da (p2,d0) = do
+      isSystem <- isSystemModule r p2 d0
       if isSystem
          then do
-           compileWarningM $ "Skipping system module " ++ d0 ++ "."
+           compileWarningM $ "Skipping system dependency " ++ d0 ++ " for " ++ p2 ++ "."
            return da
          else do
-           d <- errorFromIO $ canonicalizePath (p </> d0)
+           d <- errorFromIO $ canonicalizePath (p2 </> d0)
            rm <- loadRecompile d
            if mcPath rm `Set.member` da
                then return da
                else do
-                 let ds3 = map (\d2 -> d </> d2) (mcPublicDeps rm ++ mcPrivateDeps rm)
+                 let ds3 = map ((,) d) (mcPublicDeps rm ++ mcPrivateDeps rm)
                  da' <- foldM (recursive r) (mcPath rm `Set.insert` da) ds3
                  runCompiler resolver backend (CompileOptions h [] [] [d] [] [] p CompileRecompile f)
                  return da'
