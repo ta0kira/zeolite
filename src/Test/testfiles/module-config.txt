@@ -1,12 +1,36 @@
-path: "testfiles"
-expression_map: [
-  expression_macro {
-    name: MY_MACRO
-    expression: require(empty)
-  }
-  expression_macro {
-    name: MY_OTHER_MACRO
-    expression: Type<Int>.execute("this is a string\012")
-  }
+public_deps: [
+  "/home/project/public-dep1"
+  "/home/project/public-dep2"
 ]
-mode: incremental {}
+root: "/home/projects"
+expression_map: [
+]
+mode: incremental {
+  link_flags: [
+    "-lm"
+    "-ldl"
+  ]
+}
+private_deps: [
+  "/home/project/private-dep1"
+  "/home/project/private-dep2"
+]
+include_paths: [
+  "extra1"
+  "extra2"
+]
+path: "special"
+extra_files: [
+  category_source {
+    requires: [
+      DepCategory1
+      DepCategory2
+    ]
+    source: "extra1.cpp"
+    categories: [
+      Category1
+      Category2
+    ]
+  }
+  "extra2.cpp"
+]

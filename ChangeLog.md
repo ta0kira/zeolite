@@ -57,6 +57,11 @@
 
 * **[new]** Adds the `lib/testing` library with basic helpers for unit tests.
 
+### Compiler CLI
+
+* **[new]** Updates parsing of `.zeolite-module` to allow any ordering of the
+  fields. Previously, the fields needed to be in a very specific order.
+
 ## 0.9.0.0  -- 2020-11-23
 
 ### Compiler CLI

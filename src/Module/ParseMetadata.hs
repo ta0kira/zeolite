@@ -24,6 +24,7 @@ module Module.ParseMetadata (
 
 import Control.Monad (when)
 import Text.Parsec
+import Text.Parsec.Perm
 import Text.Parsec.String
 
 import Base.CompileError
@@ -121,8 +122,8 @@ parseList p = labeled "list" $ do
   optionalSpace
   return xs
 
-parseOptional :: String -> a -> Parser a -> Parser a
-parseOptional l def p = parseRequired l p <|> return def
+parseOptional :: String -> a -> Parser a -> (a,Parser a)
+parseOptional l def p = (def,parseRequired l p)
 
 parseRequired :: String -> Parser a -> Parser a
 parseRequired l p = do
@@ -130,26 +131,25 @@ parseRequired l p = do
     p
 
 instance ConfigFormat CompileMetadata where
-  readConfig = do
-    h   <- parseRequired "version_hash:"       parseHash
-    p   <- parseRequired "path:"               parseQuoted
-    ns1 <- parseOptional "public_namespace:"   NoNamespace parseNamespace
-    ns2 <- parseOptional "private_namespace:"  NoNamespace parseNamespace
-    is  <- parseRequired "public_deps:"        (parseList parseQuoted)
-    is2 <- parseRequired "private_deps:"       (parseList parseQuoted)
-    cs1 <- parseRequired "public_categories:"  (parseList parseCategoryName)
-    cs2 <- parseRequired "private_categories:" (parseList parseCategoryName)
-    ds1 <- parseRequired "public_subdirs:"     (parseList parseQuoted)
-    ds2 <- parseRequired "private_subdirs:"    (parseList parseQuoted)
-    ps  <- parseRequired "public_files:"       (parseList parseQuoted)
-    xs  <- parseRequired "private_files:"      (parseList parseQuoted)
-    ts  <- parseRequired "test_files:"         (parseList parseQuoted)
-    hxx <- parseRequired "hxx_files:"          (parseList parseQuoted)
-    cxx <- parseRequired "cxx_files:"          (parseList parseQuoted)
-    bs  <- parseRequired "binaries:"           (parseList parseQuoted)
-    lf  <- parseRequired "link_flags:"         (parseList parseQuoted)
-    os  <- parseRequired "object_files:"       (parseList readConfig)
-    return (CompileMetadata h p ns1 ns2 is is2 cs1 cs2 ds1 ds2 ps xs ts hxx cxx bs lf os)
+  readConfig = permute $ CompileMetadata
+    <$$> parseRequired "version_hash:"       parseHash
+    <||> parseRequired "path:"               parseQuoted
+    <|?> parseOptional "public_namespace:"   NoNamespace parseNamespace
+    <|?> parseOptional "private_namespace:"  NoNamespace parseNamespace
+    <||> parseRequired "public_deps:"        (parseList parseQuoted)
+    <||> parseRequired "private_deps:"       (parseList parseQuoted)
+    <||> parseRequired "public_categories:"  (parseList parseCategoryName)
+    <||> parseRequired "private_categories:" (parseList parseCategoryName)
+    <||> parseRequired "public_subdirs:"     (parseList parseQuoted)
+    <||> parseRequired "private_subdirs:"    (parseList parseQuoted)
+    <||> parseRequired "public_files:"       (parseList parseQuoted)
+    <||> parseRequired "private_files:"      (parseList parseQuoted)
+    <||> parseRequired "test_files:"         (parseList parseQuoted)
+    <||> parseRequired "hxx_files:"          (parseList parseQuoted)
+    <||> parseRequired "cxx_files:"          (parseList parseQuoted)
+    <||> parseRequired "binaries:"           (parseList parseQuoted)
+    <||> parseRequired "link_flags:"         (parseList parseQuoted)
+    <||> parseRequired "object_files:"       (parseList readConfig)
   writeConfig (CompileMetadata h p ns1 ns2 is is2 cs1 cs2 ds1 ds2 ps xs ts hxx cxx bs lf os) = do
     validateHash h
     ns1' <- maybeShowNamespace "public_namespace:"  ns1
@@ -210,11 +210,12 @@ instance ConfigFormat ObjectFile where
     category = do
       sepAfter (string_ "category_object")
       structOpen
-      c <-  parseRequired "category:" readConfig
-      rs <- parseRequired "requires:" (parseList readConfig)
-      fs <- parseRequired "files:"    (parseList parseQuoted)
+      o <- permute $ CategoryObjectFile
+        <$$> parseRequired "category:" readConfig
+        <||> parseRequired "requires:" (parseList readConfig)
+        <||> parseRequired "files:"    (parseList parseQuoted)
       structClose
-      return (CategoryObjectFile c rs fs)
+      return o
     other = do
       sepAfter (string_ "other_object")
       structOpen
@@ -247,11 +248,12 @@ instance ConfigFormat CategoryIdentifier where
     category = do
       sepAfter (string_ "category")
       structOpen
-      c <-  parseRequired "name:"      parseCategoryName
-      ns <- parseOptional "namespace:" NoNamespace parseNamespace
-      p <-  parseRequired "path:"      parseQuoted
+      i <- permute $ CategoryIdentifier
+        <$$> parseRequired "path:"      parseQuoted
+        <||> parseRequired "name:"      parseCategoryName
+        <|?> parseOptional "namespace:" NoNamespace parseNamespace
       structClose
-      return (CategoryIdentifier p c ns)
+      return i
     unresolved = do
       sepAfter (string_ "unresolved")
       structOpen
@@ -273,16 +275,15 @@ instance ConfigFormat CategoryIdentifier where
     return $ ["unresolved { " ++ "name: " ++ show c ++ " " ++ "}"]
 
 instance ConfigFormat ModuleConfig where
-  readConfig = do
-      p   <- parseOptional "root:"           "" parseQuoted
-      d   <- parseRequired "path:"              parseQuoted
-      em  <- parseOptional "expression_map:" [] (parseList parseExprMacro)
-      is  <- parseOptional "public_deps:"    [] (parseList parseQuoted)
-      is2 <- parseOptional "private_deps:"   [] (parseList parseQuoted)
-      es  <- parseOptional "extra_files:"    [] (parseList readConfig)
-      ep  <- parseOptional "include_paths:"  [] (parseList parseQuoted)
-      m   <- parseRequired "mode:"              readConfig
-      return (ModuleConfig p d em is is2 es ep m)
+  readConfig = permute $ ModuleConfig
+    <$?> parseOptional "root:"           "" parseQuoted
+    <||> parseRequired "path:"              parseQuoted
+    <|?> parseOptional "expression_map:" [] (parseList parseExprMacro)
+    <|?> parseOptional "public_deps:"    [] (parseList parseQuoted)
+    <|?> parseOptional "private_deps:"   [] (parseList parseQuoted)
+    <|?> parseOptional "extra_files:"    [] (parseList readConfig)
+    <|?> parseOptional "include_paths:"  [] (parseList parseQuoted)
+    <||> parseRequired "mode:"              readConfig
   writeConfig (ModuleConfig p d em is is2 es ep m) = do
     es' <- fmap concat $ mapErrorsM writeConfig es
     m' <- writeConfig m
@@ -313,11 +314,12 @@ instance ConfigFormat ExtraSource where
     category = do
       sepAfter (string_ "category_source")
       structOpen
-      f <-  parseRequired "source:"        parseQuoted
-      cs <- parseOptional "categories:" [] (parseList parseCategoryName)
-      ds <- parseOptional "requires:"   [] (parseList parseCategoryName)
+      s <- permute $ CategorySource
+        <$$> parseRequired "source:"        parseQuoted
+        <|?> parseOptional "categories:" [] (parseList parseCategoryName)
+        <|?> parseOptional "requires:"   [] (parseList parseCategoryName)
       structClose
-      return (CategorySource f cs ds)
+      return s
     other = do
       f <- parseQuoted
       return (OtherSource f)
@@ -342,16 +344,17 @@ instance ConfigFormat CompileMode where
     binary = do
       sepAfter (string_ "binary")
       structOpen
-      c <-  parseRequired "category:"      parseCategoryName
-      f <-  parseRequired "function:"      parseFunctionName
-      o <-  parseOptional "output:"     "" parseQuoted
-      lf <- parseOptional "link_flags:" [] (parseList parseQuoted)
+      b <- permute $ CompileBinary
+        <$$> parseRequired "category:"      parseCategoryName
+        <||> parseRequired "function:"      parseFunctionName
+        <|?> parseOptional "output:"     "" parseQuoted
+        <|?> parseOptional "link_flags:" [] (parseList parseQuoted)
       structClose
-      return (CompileBinary c f o lf)
+      return b
     incremental = do
       sepAfter (string_ "incremental")
       structOpen
-      lf <- parseOptional "link_flags:" [] (parseList parseQuoted)
+      lf <- parseRequired "link_flags:" (parseList parseQuoted) <|> return []
       structClose
       return (CompileIncremental lf)
   writeConfig (CompileBinary c f o lf) = do

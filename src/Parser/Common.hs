@@ -508,10 +508,7 @@ merge3 = foldr merge (mempty,mempty,mempty) where
   merge (xs1,ys1,zs1) (xs2,ys2,zs2) = (xs1<>xs2,ys1<>ys2,zs1<>zs2)
 
 parseAny2 :: Parser a -> Parser b -> Parser ([a],[b])
-parseAny2 p1 p2 = parsed >>= return . foldr merge empty where
-  empty = ([],[])
-  merge (xs1,ys1) (xs2,ys2) = (xs1++xs2,ys1++ys2)
-  parsed = sepBy anyType optionalSpace
+parseAny2 p1 p2 = sepBy anyType optionalSpace >>= return . merge2 where
   anyType = p1' <|> p2'
   p1' = do
     x <- p1
@@ -521,10 +518,7 @@ parseAny2 p1 p2 = parsed >>= return . foldr merge empty where
     return ([],[y])
 
 parseAny3 :: Parser a -> Parser b -> Parser c -> Parser ([a],[b],[c])
-parseAny3 p1 p2 p3 = parsed >>= return . foldr merge empty where
-  empty = ([],[],[])
-  merge (xs1,ys1,zs1) (xs2,ys2,zs2) = (xs1++xs2,ys1++ys2,zs1++zs2)
-  parsed = sepBy anyType optionalSpace
+parseAny3 p1 p2 p3 = sepBy anyType optionalSpace >>= return . merge3 where
   anyType = p1' <|> p2' <|> p3'
   p1' = do
     x <- p1

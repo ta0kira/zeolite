@@ -1,0 +1,76 @@
+public_categories: [
+  MyCategory
+  MyOtherCategory
+]
+private_categories: [
+  PrivateCategory
+  PrivateOtherCategory
+]
+public_subdirs: [
+  "/home/project/special/subdir1"
+  "/home/project/special/subdir2"
+]
+private_subdirs: [
+  "/home/project/special/subdir1"
+  "/home/project/special/subdir2"
+]
+version_hash: 0123456789ABCDEFabcdef
+path: "/home/project/special"
+public_namespace: public_ABCDEF
+hxx_files: [
+  "/home/project/special/category1.hpp"
+  "/home/project/special/category2.hpp"
+]
+private_namespace: private_ABCDEF
+public_deps: [
+  "/home/project/public-dep1"
+  "/home/project/public-dep2"
+]
+private_deps: [
+  "/home/project/private-dep1"
+  "/home/project/private-dep2"
+]
+private_files: [
+  "/home/project/special/category1.0rx"
+  "/home/project/special/category2.0rx"
+]
+test_files: [
+  "/home/project/special/category1.0rt"
+  "/home/project/special/category2.0rt"
+]
+public_files: [
+  "/home/project/special/category1.0rp"
+  "/home/project/special/category2.0rp"
+]
+cxx_files: [
+  "/home/project/special/category1.cpp"
+  "/home/project/special/category2.cpp"
+]
+object_files: [
+  category_object {
+    category: category {
+      path: "/home/project/special"
+      namespace: public_ABCDEF
+      name: SpecialCategory
+    }
+    requires: [
+      category {
+        path: "/home/project/private-dep1"
+        name: PrivateCategory
+      }
+      unresolved { name: UnresolvedCategory }
+    ]
+    files: [
+      "/home/project/special/object1.o"
+      "/home/project/special/object1.o"
+    ]
+  }
+]
+binaries: [
+  "/home/project/special/binary1"
+  "/home/project/special/binary2"
+]
+link_flags: [
+  "-lm"
+  "-ldl"
+]

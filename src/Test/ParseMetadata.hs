@@ -34,89 +34,134 @@ import Types.Procedure
 import Types.TypeCategory (FunctionName(..),Namespace(..))
 import Types.TypeInstance (CategoryName(..))
 
-tests :: [IO (CompileInfo ())]
-tests = [
-    checkWriteThenRead $ CompileMetadata {
-      cmVersionHash = VersionHash "0123456789ABCDEFabcdef",
-      cmPath = "/home/project/special",
-      cmPublicNamespace = StaticNamespace "public_ABCDEF",
-      cmPrivateNamespace = StaticNamespace "private_ABCDEF",
-      cmPublicDeps = [
-        "/home/project/public-dep1",
-        "/home/project/public-dep2"
-      ],
-      cmPrivateDeps = [
-        "/home/project/private-dep1",
-        "/home/project/private-dep2"
-      ],
-      cmPublicCategories = [
-        CategoryName "MyCategory",
-        CategoryName "MyOtherCategory"
-      ],
-      cmPrivateCategories = [
-        CategoryName "PrivateCategory",
-        CategoryName "PrivateOtherCategory"
-      ],
-      cmPublicSubdirs = [
-        "/home/project/special/subdir1",
-        "/home/project/special/subdir2"
-      ],
-      cmPrivateSubdirs = [
-        "/home/project/special/subdir1",
-        "/home/project/special/subdir2"
-      ],
-      cmPublicFiles = [
-        "/home/project/special/category1.0rp",
-        "/home/project/special/category2.0rp"
-      ],
-      cmPrivateFiles = [
-        "/home/project/special/category1.0rx",
-        "/home/project/special/category2.0rx"
-      ],
-      cmTestFiles = [
-        "/home/project/special/category1.0rt",
-        "/home/project/special/category2.0rt"
-      ],
-      cmHxxFiles = [
-        "/home/project/special/category1.hpp",
-        "/home/project/special/category2.hpp"
-      ],
-      cmCxxFiles = [
-        "/home/project/special/category1.cpp",
-        "/home/project/special/category2.cpp"
-      ],
-      cmBinaries = [
-        "/home/project/special/binary1",
-        "/home/project/special/binary2"
-      ],
-      cmLinkFlags = [
+
+hugeCompileMetadata :: CompileMetadata  -- testfiles/module-cache.txt
+hugeCompileMetadata = CompileMetadata {
+    cmVersionHash = VersionHash "0123456789ABCDEFabcdef",
+    cmPath = "/home/project/special",
+    cmPublicNamespace = StaticNamespace "public_ABCDEF",
+    cmPrivateNamespace = StaticNamespace "private_ABCDEF",
+    cmPublicDeps = [
+      "/home/project/public-dep1",
+      "/home/project/public-dep2"
+    ],
+    cmPrivateDeps = [
+      "/home/project/private-dep1",
+      "/home/project/private-dep2"
+    ],
+    cmPublicCategories = [
+      CategoryName "MyCategory",
+      CategoryName "MyOtherCategory"
+    ],
+    cmPrivateCategories = [
+      CategoryName "PrivateCategory",
+      CategoryName "PrivateOtherCategory"
+    ],
+    cmPublicSubdirs = [
+      "/home/project/special/subdir1",
+      "/home/project/special/subdir2"
+    ],
+    cmPrivateSubdirs = [
+      "/home/project/special/subdir1",
+      "/home/project/special/subdir2"
+    ],
+    cmPublicFiles = [
+      "/home/project/special/category1.0rp",
+      "/home/project/special/category2.0rp"
+    ],
+    cmPrivateFiles = [
+      "/home/project/special/category1.0rx",
+      "/home/project/special/category2.0rx"
+    ],
+    cmTestFiles = [
+      "/home/project/special/category1.0rt",
+      "/home/project/special/category2.0rt"
+    ],
+    cmHxxFiles = [
+      "/home/project/special/category1.hpp",
+      "/home/project/special/category2.hpp"
+    ],
+    cmCxxFiles = [
+      "/home/project/special/category1.cpp",
+      "/home/project/special/category2.cpp"
+    ],
+    cmBinaries = [
+      "/home/project/special/binary1",
+      "/home/project/special/binary2"
+    ],
+    cmLinkFlags = [
+      "-lm",
+      "-ldl"
+    ],
+    cmObjectFiles = [
+      CategoryObjectFile {
+        cofCategory = CategoryIdentifier {
+          ciPath = "/home/project/special",
+          ciCategory = CategoryName "SpecialCategory",
+          ciNamespace = StaticNamespace "public_ABCDEF"
+        },
+        cofRequires = [
+          CategoryIdentifier {
+            ciPath = "/home/project/private-dep1",
+            ciCategory = CategoryName "PrivateCategory",
+            ciNamespace = NoNamespace
+          },
+          UnresolvedCategory {
+            ucCategory = CategoryName "UnresolvedCategory"
+          }
+        ],
+        cofFiles = [
+          "/home/project/special/object1.o",
+          "/home/project/special/object1.o"
+        ]
+      }
+    ]
+  }
+
+hugeModuleConfig :: ModuleConfig  -- testfiles/module-config.txt
+hugeModuleConfig = ModuleConfig {
+    mcRoot = "/home/projects",
+    mcPath = "special",
+    mcExprMap = [],
+    mcPublicDeps = [
+      "/home/project/public-dep1",
+      "/home/project/public-dep2"
+    ],
+    mcPrivateDeps = [
+      "/home/project/private-dep1",
+      "/home/project/private-dep2"
+    ],
+    mcExtraFiles = [
+      CategorySource {
+        csSource = "extra1.cpp",
+        csCategories = [
+          CategoryName "Category1",
+          CategoryName "Category2"
+        ],
+        csRequires = [
+          CategoryName "DepCategory1",
+          CategoryName "DepCategory2"
+        ]
+      },
+      OtherSource {
+        osSource = "extra2.cpp"
+      }
+    ],
+    mcExtraPaths = [
+      "extra1",
+      "extra2"
+    ],
+    mcMode = CompileIncremental {
+      ciLinkFlags = [
         "-lm",
         "-ldl"
-      ],
-      cmObjectFiles = [
-        CategoryObjectFile {
-          cofCategory = CategoryIdentifier {
-            ciPath = "/home/project/special",
-            ciCategory = CategoryName "SpecialCategory",
-            ciNamespace = StaticNamespace "public_ABCDEF"
-          },
-          cofRequires = [
-            CategoryIdentifier {
-              ciPath = "/home/project/private-dep1",
-              ciCategory = CategoryName "PrivateCategory",
-              ciNamespace = NoNamespace
-            },
-            UnresolvedCategory {
-              ucCategory = CategoryName "UnresolvedCategory"
-            }
-          ],
-          cofFiles = [
-            "/home/project/special/object1.o",
-            "/home/project/special/object1.o"
-          ]
-        }
       ]
-    },
+    }
+  }
+
+tests :: [IO (CompileInfo ())]
+tests = [
+    checkWriteThenRead hugeCompileMetadata,
 
     checkWriteFail "bad hash" $ CompileMetadata {
       cmVersionHash = VersionHash "bad hash",
@@ -227,45 +272,7 @@ tests = [
       cmObjectFiles = []
     },
 
-    checkWriteThenRead $ ModuleConfig {
-      mcRoot = "/home/projects",
-      mcPath = "special",
-      mcExprMap = [],
-      mcPublicDeps = [
-        "/home/project/public-dep1",
-        "/home/project/public-dep2"
-      ],
-      mcPrivateDeps = [
-        "/home/project/private-dep1",
-        "/home/project/private-dep2"
-      ],
-      mcExtraFiles = [
-        CategorySource {
-          csSource = "extra1.cpp",
-          csCategories = [
-            CategoryName "Category1",
-            CategoryName "Category2"
-          ],
-          csRequires = [
-            CategoryName "DepCategory1",
-            CategoryName "DepCategory2"
-          ]
-        },
-        OtherSource {
-          osSource = "extra2.cpp"
-        }
-      ],
-      mcExtraPaths = [
-        "extra1",
-        "extra2"
-      ],
-      mcMode = CompileIncremental {
-        ciLinkFlags = [
-          "-lm",
-          "-ldl"
-        ]
-      }
-    },
+    checkWriteThenRead hugeModuleConfig,
 
     checkWriteFail "empty.+map" $ ModuleConfig {
       mcRoot = "/home/projects",
@@ -351,7 +358,7 @@ tests = [
     checkWriteFail "compile mode" $ CompileRecompileRecursive,
     checkWriteFail "compile mode" $ CreateTemplates,
 
-    checkParsesAs ("testfiles" </> "module-config.txt")
+    checkParsesAs ("testfiles" </> "macro-config.txt")
       (\m -> case mcExprMap m of
                   [("MY_MACRO",
                     Expression _ (BuiltinCall _
@@ -363,7 +370,11 @@ tests = [
                         (FunctionCall _ (FunctionName "execute") (Positional [])
                           (Positional [Literal (StringLiteral _ "this is a string\n")]))) [])
                     ] -> True
-                  _ -> False)
+                  _ -> False),
+
+    checkParsesAs ("testfiles" </> "module-config.txt") (== hugeModuleConfig),
+
+    checkParsesAs ("testfiles" </> "module-cache.txt") (== hugeCompileMetadata)
   ]
 
 checkWriteThenRead :: (Eq a, Show a, ConfigFormat a) => a -> IO (CompileInfo ())
