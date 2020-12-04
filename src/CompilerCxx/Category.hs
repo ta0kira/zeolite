@@ -842,7 +842,7 @@ createTestFile tm em ts = ("In the creation of the test binary procedure") ??> d
   ts' <- fmap mconcat $ mapErrorsM (compileTestProcedure tm em) ts
   (include,sel) <- selectTestFromArgv1 $ map tpName ts
   let (CompiledData req _) = ts' <> sel
-  let file = testsOnlySourceGuard ++ createMainCommon "test" (onlyCodes include <> ts') (argv <> sel)
+  let file = testsOnlySourceGuard ++ createMainCommon "testcase" (onlyCodes include <> ts') (argv <> sel)
   return $ CompiledData req file where
     argv = onlyCodes [
         "const char* argv2[] = { \"testcase\" };",

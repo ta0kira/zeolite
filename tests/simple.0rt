@@ -53,7 +53,9 @@ testcase "basic success test" {
   success
 }
 
-unittest test { }
+unittest test {
+  return _
+}
 
 
 testcase "minimal linking works properly" {
