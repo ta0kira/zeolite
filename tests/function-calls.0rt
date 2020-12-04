@@ -305,7 +305,7 @@ define Value {
 }
 
 define Test {
-  @type checkEquals<#x>
+  @type check<#x>
     #x defines Base
   () -> ()
   check () {
@@ -313,7 +313,7 @@ define Test {
   }
 
   run () {
-    \ checkEquals<Value>()
+    \ check<Value>()
   }
 }
 
@@ -332,7 +332,7 @@ testcase "call from bad param type" {
 }
 
 define Test {
-  @type checkEquals<#x>
+  @type check<#x>
   () -> ()
   check () {
     \ #x.call()
@@ -373,7 +373,7 @@ define Value {
 }
 
 define Test {
-  @type checkEquals<#x>
+  @type check<#x>
     #x requires Base
   (#x) -> ()
   check (value) {
@@ -382,7 +382,7 @@ define Test {
 
   run () {
     Value value <- Value.create()
-    \ checkEquals<Value>(value)
+    \ check<Value>(value)
   }
 }
 
@@ -401,7 +401,7 @@ testcase "call from bad param value" {
 }
 
 define Test {
-  @type checkEquals<#x>
+  @type check<#x>
   (#x) -> ()
   check (value) {
     \ value.call()

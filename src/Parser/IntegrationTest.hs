@@ -98,5 +98,5 @@ instance ParseFromSource (IntegrationTestHeader SourcePos) where
 instance ParseFromSource (IntegrationTest SourcePos) where
   sourceParser = labeled "integration test" $ do
     h <- sourceParser
-    (cs,ds,ts) <- sourceParser
+    (cs,ds,ts) <- parseAny3 sourceParser sourceParser sourceParser
     return $ IntegrationTest h cs ds ts

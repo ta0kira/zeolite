@@ -82,6 +82,8 @@ module Parser.Common (
   nullParse,
   operator,
   optionalSpace,
+  parseAny2,
+  parseAny3,
   parseBin,
   parseDec,
   parseHex,
@@ -505,33 +507,31 @@ merge3 :: (Foldable f, Monoid a, Monoid b, Monoid c) => f (a,b,c) -> (a,b,c)
 merge3 = foldr merge (mempty,mempty,mempty) where
   merge (xs1,ys1,zs1) (xs2,ys2,zs2) = (xs1<>xs2,ys1<>ys2,zs1<>zs2)
 
-instance (ParseFromSource a, ParseFromSource b) => ParseFromSource ([a],[b]) where
-  sourceParser = parsed >>= return . foldr merge empty where
-    empty = ([],[])
-    merge (xs1,ys1) (xs2,ys2) = (xs1++xs2,ys1++ys2)
-    parsed = sepBy anyType optionalSpace
-    anyType = p1 <|> p2
-    p1 = do
-      x <- sourceParser
-      return ([x],[])
-    p2 = do
-      x <- sourceParser
-      return ([],[x])
+parseAny2 :: Parser a -> Parser b -> Parser ([a],[b])
+parseAny2 p1 p2 = parsed >>= return . foldr merge empty where
+  empty = ([],[])
+  merge (xs1,ys1) (xs2,ys2) = (xs1++xs2,ys1++ys2)
+  parsed = sepBy anyType optionalSpace
+  anyType = p1' <|> p2'
+  p1' = do
+    x <- p1
+    return ([x],[])
+  p2' = do
+    y <- p2
+    return ([],[y])
 
-instance (ParseFromSource a, ParseFromSource b, ParseFromSource c) => ParseFromSource ([a],[b],[c]) where
-  sourceParser = parsed >>= return . foldr merge empty where
-    -- NOTE: Using ([([a],[b])],[c]) would cause ambiguous parsing since [] will
-    -- have infinite matches.
-    empty = ([],[],[])
-    merge (xs1,ys1,zs1) (xs2,ys2,zs2) = (xs1++xs2,ys1++ys2,zs1++zs2)
-    parsed = sepBy anyType optionalSpace
-    anyType = p1 <|> p2 <|> p3
-    p1 = do
-      x <- sourceParser
-      return ([x],[],[])
-    p2 = do
-      y <- sourceParser
-      return ([],[y],[])
-    p3 = do
-      z <- sourceParser
-      return ([],[],[z])
+parseAny3 :: Parser a -> Parser b -> Parser c -> Parser ([a],[b],[c])
+parseAny3 p1 p2 p3 = parsed >>= return . foldr merge empty where
+  empty = ([],[],[])
+  merge (xs1,ys1,zs1) (xs2,ys2,zs2) = (xs1++xs2,ys1++ys2,zs1++zs2)
+  parsed = sepBy anyType optionalSpace
+  anyType = p1' <|> p2' <|> p3'
+  p1' = do
+    x <- p1
+    return ([x],[],[])
+  p2' = do
+    y <- p2
+    return ([],[y],[])
+  p3' = do
+    z <- p3
+    return ([],[],[z])

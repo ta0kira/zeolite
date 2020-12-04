@@ -165,9 +165,7 @@ parseScopedFunction :: Parser SymbolScope -> Parser CategoryName ->
                        Parser (ScopedFunction SourcePos)
 parseScopedFunction sp tp = labeled "function" $ do
   c <- getPosition
-  s <- try sp -- Could be a constant, i.e., nothing consumed.
-  t <- try tp -- Same here.
-  n <- try sourceParser
+  (s,t,n) <- try parseName
   ps <- fmap Positional $ noParams <|> someParams
   fa <- parseFilters
   as <- fmap Positional $ typeList "argument type"
@@ -175,6 +173,11 @@ parseScopedFunction sp tp = labeled "function" $ do
   rs <- fmap Positional $ typeList "return type"
   return $ ScopedFunction [c] n t s as rs ps fa []
   where
+    parseName = do
+      s <- sp -- Could be a constant, i.e., nothing consumed.
+      t <- tp -- Same here.
+      n <- sourceParser
+      return (s,t,n)
     noParams = notFollowedBy (string "<") >> return []
     someParams = between (sepAfter $ string_ "<")
                          (sepAfter $ string_ ">")

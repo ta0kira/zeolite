@@ -364,7 +364,7 @@ testcase "internal param clash with function" {
 }
 
 concrete Value {
-  @value checkEquals<#x> () -> ()
+  @value check<#x> () -> ()
 }
 
 define Value {
@@ -390,7 +390,7 @@ concrete Value {}
 define Value {
   types<#x> {}
 
-  @value checkEquals<#x> () -> ()
+  @value check<#x> () -> ()
   check () {}
 }
 
@@ -442,7 +442,7 @@ unittest test {
 
 concrete Value {
   @type create<#x> () -> (Value)
-  @value checkEquals<#y> (#y) -> (Bool)
+  @value check<#y> (#y) -> (Bool)
 }
 
 define Value {
@@ -460,7 +460,7 @@ define Value {
 define Test {
   run () {
     Value value <- Value.create<Formatted>()
-    if (!value.checkEquals<String>("")) {
+    if (!value.check<String>("")) {
       fail("Failed")
     }
   }
@@ -481,7 +481,7 @@ unittest test {
 
 concrete Value {
   @type create<#x> () -> (Value)
-  @value checkEquals<#y> (#y) -> (Bool)
+  @value check<#y> (#y) -> (Bool)
 }
 
 define Value {
@@ -499,7 +499,7 @@ define Value {
 define Test {
   run () {
     Value value <- Value.create<Formatted>()
-    if (value.checkEquals<Value>(value)) {
+    if (value.check<Value>(value)) {
       fail("Failed")
     }
   }

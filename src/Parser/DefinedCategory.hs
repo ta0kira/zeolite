@@ -91,24 +91,18 @@ instance ParseFromSource (DefinedMember SourcePos) where
 parseMemberProcedureFunction ::
   CategoryName ->
   Parser ([DefinedMember SourcePos],[ExecutableProcedure SourcePos],[ScopedFunction SourcePos])
-parseMemberProcedureFunction n = parsed >>= return . foldr merge empty where
-  empty = ([],[],[])
-  merge (ms1,ps1,fs1) (ms2,ps2,fs2) = (ms1++ms2,ps1++ps2,fs1++fs2)
-  parsed = sepBy anyType optionalSpace
-  anyType = labeled "" $ catchUnscopedType <|> singleMember <|> singleProcedure <|> singleFunction
-  singleMember = labeled "member" $ do
-    m <- sourceParser
-    return ([m],[],[])
-  singleProcedure = labeled "procedure" $ do
-    p <- sourceParser
-    return ([],[p],[])
-  singleFunction = labeled "function" $ do
-    f <- try $ parseScopedFunction parseScope (return n)
-    p <- labeled ("definition of function " ++ show (sfName f)) $ sourceParser
-    when (sfName f /= epName p) $
-      fail $ "expecting definition of function " ++ show (sfName f) ++
-             " but got definition of " ++ show (epName p)
-    return ([],[p],[f])
-  catchUnscopedType = do
-    _ <- try sourceParser :: Parser ValueType
-    fail $ "members must have an explicit @value or @category scope"
+parseMemberProcedureFunction n = do
+  (ms,ps,fs) <- parseAny3 (catchUnscopedType <|> sourceParser) sourceParser singleFunction
+  let ps2 = ps ++ map snd fs
+  let fs2 = map fst fs
+  return (ms,ps2,fs2) where
+    singleFunction = labeled "function" $ do
+      f <- parseScopedFunction parseScope (return n)
+      p <- labeled ("definition of function " ++ show (sfName f)) $ sourceParser
+      when (sfName f /= epName p) $
+        fail $ "expecting definition of function " ++ show (sfName f) ++
+              " but got definition of " ++ show (epName p)
+      return (f,p)
+    catchUnscopedType = labeled "" $ do
+      _ <- try sourceParser :: Parser ValueType
+      fail $ "members must have an explicit @value or @category scope"

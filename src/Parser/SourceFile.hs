@@ -48,7 +48,7 @@ parseInternalSource (f,s) = unwrap parsed where
   withPragmas = do
     pragmas <- parsePragmas internalSourcePragmas
     optionalSpace
-    (cs,ds) <- sourceParser
+    (cs,ds) <- parseAny2 sourceParser sourceParser
     return (pragmas,cs,ds)
 
 parsePublicSource :: CompileErrorM m => (FilePath,String) -> m ([Pragma SourcePos],[AnyCategory SourcePos])
