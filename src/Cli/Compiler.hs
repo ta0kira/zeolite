@@ -210,8 +210,8 @@ compileModule resolver backend (ModuleSpec p d em is is2 ps xs ts es ep m f) = d
             coNamespace = case c `Map.lookup` ca of
                                Just ns2 -> ns2
                                Nothing  -> NoNamespace,
-            coUsesNamespace = [ns0,ns1],
-            coUsesCategory = ds2,
+            coUsesNamespace = Set.fromList [ns0,ns1],
+            coUsesCategory = Set.fromList ds2,
             coOutput = []
           }
     compileExtraSource _ _ paths (OtherSource f2) = do
@@ -314,9 +314,9 @@ createLanguageModule :: [CategoryName] -> [CategoryName] -> ExprMap c ->
   [WithVisibility (AnyCategory c)] -> LanguageModule c
 createLanguageModule ex ss em cs = lm where
   lm = LanguageModule {
-      lmPublicNamespaces  = map wvData $ apply ns [with    FromDependency,without ModuleOnly,without TestsOnly],
-      lmPrivateNamespaces = map wvData $ apply ns [with    FromDependency,with    ModuleOnly,without TestsOnly],
-      lmLocalNamespaces   = map wvData $ apply ns [without FromDependency],
+      lmPublicNamespaces  = Set.fromList $ map wvData $ apply ns [with    FromDependency,without ModuleOnly],
+      lmPrivateNamespaces = Set.fromList $ map wvData $ apply ns [with    FromDependency,with    ModuleOnly],
+      lmLocalNamespaces   = Set.fromList $ map wvData $ apply ns [without FromDependency],
       lmPublicDeps        = map wvData $ apply cs [with    FromDependency,without ModuleOnly,without TestsOnly],
       lmPrivateDeps       = map wvData $ apply cs [with    FromDependency,with    ModuleOnly,without TestsOnly],
       lmTestingDeps       = map wvData $ apply cs [with    FromDependency,with TestsOnly],

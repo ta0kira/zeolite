@@ -938,11 +938,11 @@ selectTestFromArgv1 fs = return (includes,allCode) where
     ]
   initMap = onlyCodes $ [
       "std::unordered_map<std::string,ReturnTuple(*)()> tests{"
-    ] ++ map ((++ "  ") . testEntry) fs ++ [
+    ] ++ map (("  " ++) . testEntry) fs ++ [
       "};"
     ]
   selectFromMap = onlyCodes [
-      "if (argc < 2) FAIL() << argv[0] << \"[unittest name]\";",
+      "if (argc < 2) FAIL() << argv[0] << \" [unittest name]\";",
       "const auto name = argv[1];",
       "const auto test = tests.find(name);",
       "if (test != tests.end()) {",

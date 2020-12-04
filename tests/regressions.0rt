@@ -17,7 +17,11 @@ limitations under the License.
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
 testcase "Issue #73 is fixed" {
-  success empty
+  success
+}
+
+unittest test {
+  \ empty
 }
 
 concrete Type1<#x> {

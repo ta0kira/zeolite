@@ -104,18 +104,20 @@ runSingleTest b cm p paths deps (f,s) = do
          else collectAllM_ [cr,ce]
 
     execute s2 rs es cs ds ts = do
-      let result = compileAll cs ds ts
-      if isCompileError result
-         then return [result >> return ()]
+      if null ts
+         then return [compileErrorM "At least one unittest is required unless a compilation error is expected"]
          else do
-           let (xx,main,fs) = getCompileSuccess result
-           (dir,binaryName) <- createBinary main xx
-           results <- liftIO $ sequence $ map (toCompileInfo . executeTest binaryName rs es result s2) fs
-           when (not $ any isCompileError results) $ errorFromIO $ removeDirectoryRecursive dir
-           return results
+           let result = compileAll cs ds ts
+           if isCompileError result
+             then return [result >> return ()]
+             else do
+               let (xx,main,fs) = getCompileSuccess result
+               (dir,binaryName) <- createBinary main xx
+               results <- liftIO $ sequence $ map (toCompileInfo . executeTest binaryName rs es result s2) fs
+               when (not $ any isCompileError results) $ errorFromIO $ removeDirectoryRecursive dir
+               return results
 
-    executeTest binary rs es res s2 f2 = ("In unittest " ++ show f2) ??> do
-      errorFromIO $ hPutStrLn stderr $ "\n--- Executing unittest " ++ show f2 ++ " ---"
+    executeTest binary rs es res s2 f2 = printOutcome $ ("In unittest " ++ show f2) ??> do
       let command = TestCommand binary (takeDirectory binary) [show f2]
       (TestCommandResult s2' out err) <- runTestCommand b command
       case (s2,s2') of
@@ -123,6 +125,13 @@ runSingleTest b cm p paths deps (f,s) = do
            (False,True) -> collectAllM_ [compileErrorM "Expected runtime failure",
                                          asCompileError res <?? "\nOutput from compiler:"]
            _ -> fromCompileInfo $ checkContent rs es (lines $ show $ getCompileWarnings res) err out
+      where
+        printOutcome outcome = do
+          failed <- isCompileErrorM outcome
+          if failed
+             then errorFromIO $ hPutStrLn stderr $ "--- unittest " ++ show f2 ++ " failed ---"
+             else errorFromIO $ hPutStrLn stderr $ "--- unittest " ++ show f2 ++ " passed ---"
+          outcome
 
     compileAll cs ds ts = do
       let ns1 = StaticNamespace $ privateNamespace s

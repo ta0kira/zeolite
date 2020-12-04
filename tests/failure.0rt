@@ -17,8 +17,12 @@ limitations under the License.
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
 testcase "fail builtin" {
-  crash Test.run()
+  crash
   require stderr "Failed"
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -66,8 +70,12 @@ concrete Test {
 
 
 testcase "require empty" {
-  crash Test.run()
+  crash
   require stderr "require.+empty"
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {

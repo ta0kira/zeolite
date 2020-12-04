@@ -17,7 +17,11 @@ limitations under the License.
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
 testcase "reduce to self" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 concrete Value {
@@ -47,7 +51,11 @@ concrete Test {
 
 
 testcase "reduce to unrelated" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 concrete Value {
@@ -131,7 +139,11 @@ concrete Test {
 
 
 testcase "reduce success with param" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 concrete Value<|#x> {
@@ -174,7 +186,11 @@ concrete Test {
 
 
 testcase "reduce fail with param" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 concrete Value<|#x> {
@@ -217,7 +233,11 @@ concrete Test {
 
 
 testcase "reduce success with contra param" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 concrete Value<#x|> {
@@ -260,7 +280,11 @@ concrete Test {
 
 
 testcase "reduce fail with contra param" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 concrete Value<#x|> {
@@ -303,7 +327,11 @@ concrete Test {
 
 
 testcase "reduce success from union" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 @value interface Base {}
@@ -341,7 +369,11 @@ concrete Test {
 
 
 testcase "reduce fail from union" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 @value interface Base {}
@@ -379,7 +411,11 @@ concrete Test {
 
 
 testcase "reduce success to intersect" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 @value interface Base1 {}
@@ -416,7 +452,11 @@ concrete Test {
 
 
 testcase "reduce fail to intersect" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 @value interface Base1 {}
@@ -452,7 +492,11 @@ concrete Test {
 
 
 testcase "reduce success union to intersect" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 @value interface Base1 {}
@@ -494,7 +538,11 @@ concrete Test {
 
 
 testcase "reduce fail union to intersect" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 @value interface Base1 {}
@@ -535,7 +583,11 @@ concrete Test {
 
 
 testcase "reduce success intersect to union" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 @value interface Base1 {}
@@ -578,7 +630,11 @@ concrete Test {
 
 
 testcase "reduce fail intersect to union" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 @value interface Base1 {}
@@ -619,7 +675,11 @@ concrete Test {
 
 
 testcase "reduce succeeds to covariant any" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 concrete Value<|#x> {
@@ -649,7 +709,11 @@ concrete Test {
 
 
 testcase "reduce succeeds to contravariant all" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 concrete Value<#x|> {
@@ -679,7 +743,11 @@ concrete Test {
 
 
 testcase "reduce fails to invariant any" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 concrete Value<#x> {
@@ -709,7 +777,11 @@ concrete Test {
 
 
 testcase "reduce succeeds from covariant all" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 concrete Value<|#x> {
@@ -739,7 +811,11 @@ concrete Test {
 
 
 testcase "reduce succeeds from contravariant any" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 concrete Value<#x|> {
@@ -769,7 +845,11 @@ concrete Test {
 
 
 testcase "reduce fails from invariant all" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 concrete Value<#x> {
@@ -829,7 +909,11 @@ concrete Test {
 
 
 testcase "reduce from interface" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 @value interface Base0 {
@@ -864,7 +948,11 @@ concrete Test {
 
 
 testcase "reduce with internal override" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 @value interface Base0 {}

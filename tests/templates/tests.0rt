@@ -17,8 +17,12 @@ limitations under the License.
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
 testcase "template compiles to binary" {
-  crash Test.run()
+  crash
   require "Templated\.create is not implemented"
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {

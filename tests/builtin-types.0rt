@@ -17,7 +17,11 @@ limitations under the License.
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
 testcase "not true" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -34,7 +38,11 @@ concrete Test {
 
 
 testcase "reduce Bool" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -66,7 +74,11 @@ concrete Test {
 
 
 testcase "reduce Char" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -98,7 +110,11 @@ concrete Test {
 
 
 testcase "reduce Int" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -130,7 +146,11 @@ concrete Test {
 
 
 testcase "reduce Float" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -162,7 +182,11 @@ concrete Test {
 
 
 testcase "reduce String" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -194,7 +218,11 @@ concrete Test {
 
 
 testcase "reduce ReadPosition success" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -211,7 +239,11 @@ concrete Test {
 
 
 testcase "reduce ReadPosition fail" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -228,7 +260,11 @@ concrete Test {
 
 
 testcase "String LessThan" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -245,7 +281,11 @@ concrete Test {
 
 
 testcase "Bool Equals" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -262,7 +302,11 @@ concrete Test {
 
 
 testcase "String Equals" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -279,7 +323,11 @@ concrete Test {
 
 
 testcase "String Builder" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -297,7 +345,11 @@ concrete Test {
 
 
 testcase "Char LessThan" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -314,7 +366,11 @@ concrete Test {
 
 
 testcase "Char Equals" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -331,7 +387,11 @@ concrete Test {
 
 
 testcase "Int LessThan" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -348,7 +408,11 @@ concrete Test {
 
 
 testcase "Int Equals" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -365,7 +429,11 @@ concrete Test {
 
 
 testcase "Float LessThan" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -382,7 +450,11 @@ concrete Test {
 
 
 testcase "Float Equals" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -399,7 +471,11 @@ concrete Test {
 
 
 testcase "Bool is shared" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -419,7 +495,11 @@ concrete Test {
 
 
 testcase "String is shared" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -438,7 +518,11 @@ concrete Test {
 
 
 testcase "String Builder is not lazy" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -462,7 +546,11 @@ concrete Test {
 
 
 testcase "Char is not shared" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -481,7 +569,11 @@ concrete Test {
 
 
 testcase "Int is not shared" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -500,7 +592,11 @@ concrete Test {
 
 
 testcase "Float is not shared" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -519,7 +615,11 @@ concrete Test {
 
 
 testcase "String Formatted" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -537,7 +637,11 @@ concrete Test {
 
 
 testcase "Char Formatted" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -555,7 +659,11 @@ concrete Test {
 
 
 testcase "Char octal Formatted" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -573,7 +681,11 @@ concrete Test {
 
 
 testcase "Char hex Formatted" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -591,7 +703,11 @@ concrete Test {
 
 
 testcase "Int Formatted" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -609,7 +725,11 @@ concrete Test {
 
 
 testcase "Int hex Formatted" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -627,7 +747,11 @@ concrete Test {
 
 
 testcase "Float Formatted" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -645,7 +769,11 @@ concrete Test {
 
 
 testcase "Bool Formatted" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -663,7 +791,11 @@ concrete Test {
 
 
 testcase "String access" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -686,9 +818,13 @@ concrete Test {
 
 
 testcase "String access negative" {
-  crash Test.run()
+  crash
   require "-10"
   require "bounds"
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -703,9 +839,13 @@ concrete Test {
 
 
 testcase "String access past end" {
-  crash Test.run()
+  crash
   require "100"
   require "bounds"
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -720,7 +860,11 @@ concrete Test {
 
 
 testcase "String subsequence" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -739,7 +883,11 @@ concrete Test {
 
 
 testcase "String empty subsequence at end" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -758,9 +906,13 @@ concrete Test {
 
 
 testcase "String subsequence past end" {
-  crash Test.run()
+  crash
   require "100"
   require "size"
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -775,7 +927,11 @@ concrete Test {
 
 
 testcase "Int max is accurate" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -793,7 +949,11 @@ concrete Test {
 
 
 testcase "Int min is accurate" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -811,7 +971,11 @@ concrete Test {
 
 
 testcase "Int unsigned works properly" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -879,7 +1043,11 @@ concrete Test {
 
 
 testcase "Float exponent does not cross whitespace" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 concrete E10 {
@@ -905,7 +1073,11 @@ concrete Test {
 
 
 testcase "String allows null" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -925,7 +1097,11 @@ concrete Test {
 
 
 testcase "Bool conversions" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -955,7 +1131,11 @@ concrete Test {
 
 
 testcase "Char conversions" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -989,7 +1169,11 @@ concrete Test {
 
 
 testcase "Int conversions" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -1023,7 +1207,11 @@ concrete Test {
 
 
 testcase "Float conversions" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -1053,7 +1241,11 @@ concrete Test {
 
 
 testcase "String conversions" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {

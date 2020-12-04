@@ -117,7 +117,11 @@ concrete Test {
 
 
 testcase "while with break" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -143,7 +147,11 @@ concrete Test {
 
 
 testcase "while with update" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -169,7 +177,11 @@ concrete Test {
 
 
 testcase "break in update" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -195,7 +207,11 @@ concrete Test {
 
 
 testcase "return in update" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -225,7 +241,11 @@ concrete Test {
 
 
 testcase "break and continue in if/else" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -253,7 +273,11 @@ concrete Test {
 
 
 testcase "update clashes with while" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -272,7 +296,11 @@ concrete Test {
 
 
 testcase "while without update" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -297,7 +325,11 @@ concrete Test {
 
 
 testcase "while with continue and update" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -325,7 +357,11 @@ concrete Test {
 
 
 testcase "while with continue and without update" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -352,8 +388,12 @@ concrete Test {
 
 
 testcase "crash in while" {
-  crash Test.run()
+  crash
   require "empty"
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -371,7 +411,11 @@ concrete Test {
 
 
 testcase "cleanup after break" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -397,7 +441,11 @@ concrete Test {
 
 
 testcase "cleanup before return in while" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 concrete Value {

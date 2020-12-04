@@ -17,7 +17,11 @@ limitations under the License.
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
 testcase "scoped unconditional" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 @value interface Value {}
@@ -60,7 +64,11 @@ concrete Test {
 
 
 testcase "return inside scope" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 
@@ -83,7 +91,11 @@ concrete Test {
 
 
 testcase "return from scoped" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 @value interface Value {}
@@ -125,7 +137,11 @@ concrete Test {
 
 
 testcase "assign inside scope" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 @value interface Value {}
@@ -147,7 +163,11 @@ concrete Test {
 
 
 testcase "assign from scoped" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 @value interface Value {}
@@ -168,7 +188,11 @@ concrete Test {
 
 
 testcase "simple cleanup" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -211,7 +235,11 @@ concrete Test {
 
 
 testcase "cleanup before return" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 concrete Value {
@@ -261,9 +289,13 @@ concrete Test {
 
 
 testcase "positional return sets named returns for cleanup" {
-  crash Test.run()
+  crash
   require "message"
   exclude "failed"
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -313,7 +345,11 @@ concrete Test {
 
 
 testcase "cleanup skipped in scoped return" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -342,7 +378,11 @@ concrete Test {
 
 
 testcase "multiple cleanup" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -377,7 +417,11 @@ concrete Test {
 
 
 testcase "multiple cleanup with return" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 concrete Value {
@@ -488,7 +532,11 @@ concrete Test {
 
 
 testcase "no name clash in nested scope with return" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -509,8 +557,12 @@ concrete Test {
 
 
 testcase "cleanup skipped for fail" {
-  crash Test.run()
+  crash
   require "scoped"
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -529,7 +581,11 @@ concrete Test {
 
 
 testcase "cleanup not applied to returns outside of scope" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -553,7 +609,11 @@ concrete Test {
 
 
 testcase "cleanup unconditional" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 @value interface Value {}
@@ -574,7 +634,11 @@ concrete Test {
 
 
 testcase "scoped empty blocks" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 @value interface Value {}
@@ -597,7 +661,11 @@ concrete Test {
 
 
 testcase "just cleanup" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 concrete Value {
@@ -644,12 +712,16 @@ concrete Test {
 
 
 testcase "separate trace context for cleanup" {
-  crash Test.run()
+  crash
   require "Failed"
   require "cleanup block"
   require "Test\.run"
   exclude "Failed.+Test\.run"
   exclude "Test\.run.+Failed"
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -666,7 +738,11 @@ concrete Test {
 
 
 testcase "partial cleanup with while and break" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -704,7 +780,11 @@ concrete Test {
 
 
 testcase "full cleanup with while and return" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 concrete Value {

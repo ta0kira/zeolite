@@ -36,10 +36,14 @@ define Test {
 
 
 testcase "basic crash test" {
-  crash Test.execute()
+  crash
   require stderr "/testcase:"
   require stderr "failure message!!!"
   exclude stdout "failure message!!!"
+}
+
+unittest test {
+  \ Test.execute()
 }
 
 concrete Test {
@@ -56,7 +60,11 @@ define Test {
 
 
 testcase "basic success test" {
-  success Test.execute()
+  success
+}
+
+unittest test {
+  \ Test.execute()
 }
 
 concrete Test {
@@ -69,7 +77,11 @@ define Test {
 
 
 testcase "minimal linking works properly" {
-  success empty
+  success
+}
+
+unittest test {
+  \ empty
 }
 
 
@@ -85,7 +97,11 @@ define String {}
 
 
 testcase "no deadlock with recursive type" {
-  success Test.execute()
+  success
+}
+
+unittest test {
+  \ Test.execute()
 }
 
 concrete Test {
@@ -108,7 +124,11 @@ define Test {
 
 
 testcase "ModuleOnly is visible to tests" {
-  success Test.execute()
+  success
+}
+
+unittest test {
+  \ Test.execute()
 }
 
 concrete Test {

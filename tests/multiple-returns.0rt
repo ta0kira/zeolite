@@ -65,7 +65,11 @@ concrete Test {
 
 
 testcase "multi return assign" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -92,7 +96,11 @@ concrete Test {
 
 
 testcase "multi return as args" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {

@@ -17,7 +17,11 @@ limitations under the License.
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
 testcase "ModuleOnly using ModuleOnly" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -36,7 +40,11 @@ concrete Test {
 
 
 testcase "non-ModuleOnly using ModuleOnly" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {

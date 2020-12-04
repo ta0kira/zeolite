@@ -17,7 +17,11 @@ limitations under the License.
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
 testcase "internal merge" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 @value interface Interface {
@@ -89,7 +93,11 @@ concrete Test {
 
 
 testcase "external merge" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 @value interface Interface {

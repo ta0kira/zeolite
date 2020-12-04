@@ -17,180 +17,128 @@ limitations under the License.
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
 testcase "stdout writer" {
-  success Test.run()
+  success
   require stdout "message"
   exclude stderr "message"
 }
 
-define Test {
-  run () {
-    \ LazyStream<Formatted>.new().append("message").writeTo(SimpleOutput.stdout())
-  }
-}
-
-concrete Test {
-  @type run () -> ()
+unittest test {
+  \ LazyStream<Formatted>.new().append("message").writeTo(SimpleOutput.stdout())
 }
 
 
 testcase "stderr writer" {
-  success Test.run()
+  success
   require stderr "message"
   exclude stdout "message"
 }
 
-define Test {
-  run () {
-    \ LazyStream<Formatted>.new().append("message").writeTo(SimpleOutput.stderr())
-  }
-}
-
-concrete Test {
-  @type run () -> ()
+unittest test {
+  \ LazyStream<Formatted>.new().append("message").writeTo(SimpleOutput.stderr())
 }
 
 
 testcase "error writer" {
-  crash Test.run()
+  crash
   require "message"
 }
 
-define Test {
-  run () {
-    \ LazyStream<Formatted>.new().append("message").writeTo(SimpleOutput.error())
+unittest test {
+  \ LazyStream<Formatted>.new().append("message").writeTo(SimpleOutput.error())
+}
+
+
+testcase "iterate ReadIterator" {
+  success
+}
+
+unittest forward {
+  String s <- "abcde"
+  Int count <- 0
+  scoped {
+    ReadIterator<Char> iter <- ReadIterator:fromReadPosition<Char>(s)
+  } in while (!iter.pastForwardEnd()) {
+    if (iter.readCurrent() != s.readPosition(count)) {
+      fail(iter.readCurrent())
+    }
+  } update {
+    count <- count+1
+    iter <- iter.forward()
+  }
+  if (count != s.readSize()) {
+    fail(count)
   }
 }
 
-concrete Test {
-  @type run () -> ()
-}
-
-
-testcase "iterate String forward" {
-  success Test.run()
-}
-
-define Test {
-  run () {
-    String s <- "abcde"
-    Int count <- 0
-    scoped {
-      ReadIterator<Char> iter <- ReadIterator:fromReadPosition<Char>(s)
-    } in while (!iter.pastForwardEnd()) {
-      if (iter.readCurrent() != s.readPosition(count)) {
-        fail(iter.readCurrent())
-      }
-    } update {
-      count <- count+1
-      iter <- iter.forward()
+unittest reverse {
+  String s <- "abcde"
+  Int count <- s.readSize()-1
+  scoped {
+    ReadIterator<Char> iter <- ReadIterator:fromReadPositionAt<Char>(s,count)
+  } in while (!iter.pastReverseEnd()) {
+    if (iter.readCurrent() != s.readPosition(count)) {
+      fail(iter.readCurrent())
     }
-    if (count != s.readSize()) {
-     fail(count)
-    }
+  } update {
+    count <- count-1
+    iter <- iter.reverse()
   }
-}
-
-concrete Test {
-  @type run () -> ()
-}
-
-
-testcase "iterate String reverse" {
-  success Test.run()
-}
-
-define Test {
-  run () {
-    String s <- "abcde"
-    Int count <- s.readSize()-1
-    scoped {
-      ReadIterator<Char> iter <- ReadIterator:fromReadPositionAt<Char>(s,count)
-    } in while (!iter.pastReverseEnd()) {
-      if (iter.readCurrent() != s.readPosition(count)) {
-        fail(iter.readCurrent())
-      }
-    } update {
-      count <- count-1
-      iter <- iter.reverse()
-    }
-    if (count != -1) {
-     fail(count)
-    }
+  if (count != -1) {
+    fail(count)
   }
-}
-
-concrete Test {
-  @type run () -> ()
 }
 
 
 testcase "Argv is set and available" {
-  success Test.run()
-  require stdout "/testcase$"
+  success
+  require stdout "^testcase$"
 }
 
-define Test {
-  run () {
-    Int count <- Argv.global().readSize()
-    if (count != 1) {
-      fail(count)
-    }
-    String name <- Argv.global().readPosition(0)
-    \ LazyStream<Formatted>.new()
-        .append(name)
-        .append("\n")
-        .writeTo(SimpleOutput.stdout())
-  }
-}
-
-concrete Test {
-  @type run () -> ()
+unittest test {
+  Int count <- Argv.global().readSize()
+  String name <- Argv.global().readPosition(0)
+  \ LazyStream<Formatted>.new()
+      .append(name)
+      .append("\n")
+      .writeTo(SimpleOutput.stdout())
 }
 
 
 testcase "Argv subSequence" {
-  success Test.run()
-  require stdout "/testcase$"
+  success
+  require stdout "^testcase$"
 }
 
-define Test {
-  run () {
-    ReadPosition<String> argv <- Argv.global().subSequence(0,1)
-    Int count <- argv.readSize()
-    if (count != 1) {
-      fail(count)
-    }
-    String name <- argv.readPosition(0)
-    \ LazyStream<Formatted>.new()
-        .append(name)
-        .append("\n")
-        .writeTo(SimpleOutput.stdout())
+unittest test {
+  ReadPosition<String> argv <- Argv.global().subSequence(0,1)
+  Int count <- argv.readSize()
+  if (count != 1) {
+    fail(count)
   }
-}
-
-concrete Test {
-  @type run () -> ()
+  String name <- argv.readPosition(0)
+  \ LazyStream<Formatted>.new()
+      .append(name)
+      .append("\n")
+      .writeTo(SimpleOutput.stdout())
 }
 
 
 testcase "Argv subSequence out of bounds" {
-  crash Test.run()
+  crash
   require "position 5"
 }
 
-define Test {
-  run () {
-    ReadPosition<String> argv <- Argv.global().subSequence(5,1)
-  }
-}
-
-concrete Test {
-  @type run () -> ()
+unittest test {
+  ReadPosition<String> argv <- Argv.global().subSequence(5,1)
 }
 
 
 testcase "TextReader splits lines correctly" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 concrete FakeFile {
@@ -261,7 +209,12 @@ concrete Test {
 
 
 testcase "TextReader readAll" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  String allContents <- TextReader.readAll(FakeFile.create())
+  \ Testing.check<?>(allContents,"this is a partial line\nwith some more data\nand\nmore lines\nunfinished")
 }
 
 concrete FakeFile {
@@ -298,103 +251,62 @@ define FakeFile {
   }
 }
 
-define Test {
-  run () {
-    String allContents <- TextReader.readAll(FakeFile.create())
-    \ Testing.check<?>(allContents,"this is a partial line\nwith some more data\nand\nmore lines\nunfinished")
-  }
-}
-
-concrete Test {
-  @type run () -> ()
-}
-
 
 testcase "ErrorOr value" {
-  success Test.run()
+  success
 }
 
-define Test {
-  run () {
-    ErrorOr<Int> value <- ErrorOr:value<Int>(10)
-    if (value.isError()) {
-      fail("Failed")
-    }
-    \ Testing.check<?>(value.getValue(),10)
+unittest test {
+  ErrorOr<Int> value <- ErrorOr:value<Int>(10)
+  if (value.isError()) {
+    fail("Failed")
   }
-}
-
-concrete Test {
-  @type run () -> ()
+  \ Testing.check<?>(value.getValue(),10)
 }
 
 
 testcase "ErrorOr getError() crashes with value" {
-  crash Test.run()
+  crash
   require "empty"
 }
 
-define Test {
-  run () {
-    ErrorOr<Int> value <- ErrorOr:value<Int>(10)
-    \ value.getError()
-  }
-}
-
-concrete Test {
-  @type run () -> ()
+unittest test {
+  ErrorOr<Int> value <- ErrorOr:value<Int>(10)
+  \ value.getError()
 }
 
 
 testcase "ErrorOr error" {
-  success Test.run()
+  success
 }
 
-define Test {
-  run () {
-    ErrorOr<String> value <- ErrorOr:error("error message")
-    if (!value.isError()) {
-      fail("Failed")
-    }
-    \ Testing.check<?>(value.getError().formatted(),"error message")
+unittest test {
+  ErrorOr<String> value <- ErrorOr:error("error message")
+  if (!value.isError()) {
+    fail("Failed")
   }
-}
-
-concrete Test {
-  @type run () -> ()
+  \ Testing.check<?>(value.getError().formatted(),"error message")
 }
 
 
 testcase "ErrorOr getValue() crashes with error" {
-  crash Test.run()
+  crash
   require "error message"
 }
 
-define Test {
-  run () {
-    ErrorOr<String> value <- ErrorOr:error("error message")
-    \ value.getValue()
-  }
-}
-
-concrete Test {
-  @type run () -> ()
+unittest test {
+  ErrorOr<String> value <- ErrorOr:error("error message")
+  \ value.getValue()
 }
 
 
 testcase "ErrorOr convert error" {
-  success Test.run()
+  success
 }
 
-define Test {
-  run () {
-    scoped {
-      ErrorOr<String> error <- ErrorOr:error("error message")
-    } in ErrorOr<Int> value <- error.convertError()
-    \ Testing.check<?>(value.getError().formatted(),"error message")
-  }
-}
-
-concrete Test {
-  @type run () -> ()
+unittest test {
+  scoped {
+    ErrorOr<String> error <- ErrorOr:error("error message")
+  } in ErrorOr<Int> value <- error.convertError()
+  \ Testing.check<?>(value.getError().formatted(),"error message")
 }

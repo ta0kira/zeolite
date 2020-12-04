@@ -325,7 +325,7 @@ checkModuleFreshness h ca p m@(CompileMetadata _ p2 _ _ is is2 _ _ _ _ ps xs ts 
         then return True
         else errorFromIO $ doesDirectoryExist f2
 
-getObjectFileResolver :: [ObjectFile] -> [Namespace] -> [CategoryName] -> [FilePath]
+getObjectFileResolver :: [ObjectFile] -> Set.Set Namespace -> Set.Set CategoryName -> [FilePath]
 getObjectFileResolver os ns ds = resolved ++ nonCategories where
   categories    = filter isCategoryObjectFile os
   nonCategories = map oofFile $ filter (not . isCategoryObjectFile) os
@@ -333,10 +333,10 @@ getObjectFileResolver os ns ds = resolved ++ nonCategories where
   keyByCategory2 o = ((ciCategory $ cofCategory o,ciNamespace $ cofCategory o),o)
   objectMap = Map.fromList $ map keyBySpec categories
   keyBySpec o = (cofCategory o,o)
-  directDeps = concat $ map resolveDep2 ds
+  directDeps = concat $ map resolveDep2 $ Set.toList ds
   directResolved = map cofCategory directDeps
   resolveDep2 d = unwrap $ foldl (<|>) Nothing allChecks <|> Just [] where
-    allChecks = map (\n -> (d,n) `Map.lookup` categoryMap >>= return . (:[])) (ns ++ [NoNamespace])
+    allChecks = map (\n -> (d,n) `Map.lookup` categoryMap >>= return . (:[])) (Set.toList ns ++ [NoNamespace])
     unwrap (Just xs) = xs
     unwrap _         = []
   (_,_,resolved) = collectAll Set.empty Set.empty directResolved
@@ -369,7 +369,7 @@ resolveObjectDeps deps p d os = resolvedCategories ++ nonCategories where
   cxxToId _                               = undefined
   resolveCategory (fs,ca@(CxxOutput _ _ _ ns2 ds _)) =
     (cxxToId ca,CategoryObjectFile (cxxToId ca) (filter (/= cxxToId ca) rs) fs) where
-      rs = concat $ map (resolveDep categoryMap (ns2 ++ publicNamespaces)) ds
+      rs = concat $ map (resolveDep categoryMap (Set.toList ns2 ++ publicNamespaces)) $ Set.toList ds
 
 resolveCategoryDeps :: [CategoryName] -> [CompileMetadata] -> [CategoryIdentifier]
 resolveCategoryDeps cs deps = resolvedCategories where

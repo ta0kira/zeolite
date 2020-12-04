@@ -17,8 +17,12 @@ limitations under the License.
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
 testcase "warning statement after fail" {
-  success Test.run()
+  success
   require compiler "unreachable"
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -36,7 +40,11 @@ concrete Test {
 }
 
 testcase "unreachable not compiled" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -55,8 +63,12 @@ concrete Test {
 
 
 testcase "warning statement after return" {
-  success Test.run()
+  success
   require compiler "unreachable"
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -75,8 +87,12 @@ concrete Test {
 
 
 testcase "warning statement after conditional return" {
-  success Test.run()
+  success
   require compiler "unreachable"
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -99,8 +115,12 @@ concrete Test {
 
 
 testcase "warning statement after scoped return" {
-  success Test.run()
+  success
   require compiler "unreachable"
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -120,9 +140,13 @@ concrete Test {
 
 
 testcase "warning statement after cleanup fail" {
-  crash Test.run()
+  crash
   require compiler "unreachable"
   require "message"
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -146,9 +170,13 @@ concrete Test {
 
 
 testcase "warning statement in cleanup after scoped fail" {
-  crash Test.run()
+  crash
   require compiler "unreachable"
   require "message"
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -172,9 +200,13 @@ concrete Test {
 
 
 testcase "warning statement in cleanup after in fail" {
-  crash Test.run()
+  crash
   require compiler "unreachable"
   require "message"
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -196,8 +228,12 @@ concrete Test {
 
 
 testcase "warning statement after break" {
-  success Test.run()
+  success
   require compiler "unreachable"
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -215,8 +251,12 @@ concrete Test {
 
 
 testcase "warning statement after continue" {
-  success Test.run()
+  success
   require compiler "unreachable"
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {

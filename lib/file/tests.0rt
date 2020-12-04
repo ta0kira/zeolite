@@ -17,151 +17,100 @@ limitations under the License.
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
 testcase "read and write" {
-  success Test.run()
+  success
 }
 
-define Test {
-  run () {
-    RawFileWriter writer <- RawFileWriter.open("testfile")
-    if (present(writer.getFileError())) {
-      fail(require(writer.getFileError()))
-    }
-    RawFileReader reader <- RawFileReader.open("testfile")
-    if (present(reader.getFileError())) {
-      fail(require(reader.getFileError()))
-    }
+unittest readWrite {
+  RawFileWriter writer <- RawFileWriter.open("testfile")
+  if (present(writer.getFileError())) {
+    fail(require(writer.getFileError()))
+  }
+  RawFileReader reader <- RawFileReader.open("testfile")
+  if (present(reader.getFileError())) {
+    fail(require(reader.getFileError()))
+  }
 
-    String data <- "this is some\x00data"
+  String data <- "this is some\x00data"
 
-    Int writeSize <- writer.writeBlock(data)
-    if (writeSize != data.readSize()) {
-      fail(writeSize)
-    }
-    if (present(writer.getFileError())) {
-      fail(require(writer.getFileError()))
-    }
+  Int writeSize <- writer.writeBlock(data)
+  if (writeSize != data.readSize()) {
+    fail(writeSize)
+  }
+  if (present(writer.getFileError())) {
+    fail(require(writer.getFileError()))
+  }
 
-    scoped {
-      String data2 <- reader.readBlock(8)
-    } in if (data2 != "this is ") {
-      fail("\"" + data2 + "\"")
-    }
-    scoped {
-      String data2 <- reader.readBlock(20)
-    } in if (data2 != "some\x00data") {
-      fail("\"" + data2 + "\"")
-    }
-    if (present(reader.getFileError())) {
-      fail(require(reader.getFileError()))
-    }
+  scoped {
+    String data2 <- reader.readBlock(8)
+  } in if (data2 != "this is ") {
+    fail("\"" + data2 + "\"")
+  }
+  scoped {
+    String data2 <- reader.readBlock(20)
+  } in if (data2 != "some\x00data") {
+    fail("\"" + data2 + "\"")
+  }
+  if (present(reader.getFileError())) {
+    fail(require(reader.getFileError()))
+  }
 
-    if (!reader.pastEnd()) {
-      fail("more data in file")
-    }
+  if (!reader.pastEnd()) {
+    fail("more data in file")
   }
 }
 
-concrete Test {
-  @type run () -> ()
-}
+unittest readEmpty {
+  \ RawFileWriter.open("testfile").freeResource()
+  RawFileReader reader <- RawFileReader.open("testfile")
 
-
-testcase "read empty file" {
-  success Test.run()
-}
-
-define Test {
-  run () {
-    \ RawFileWriter.open("testfile").freeResource()
-    RawFileReader reader <- RawFileReader.open("testfile")
-
-    String data <- reader.readBlock(10)
-    if (data != "") {
-      fail("\"" + data + "\"")
-    }
-    if (present(reader.getFileError())) {
-      fail(require(reader.getFileError()))
-    }
-    if (!reader.pastEnd()) {
-      fail("more data in file")
-    }
+  String data <- reader.readBlock(10)
+  if (data != "") {
+    fail("\"" + data + "\"")
+  }
+  if (present(reader.getFileError())) {
+    fail(require(reader.getFileError()))
+  }
+  if (!reader.pastEnd()) {
+    fail("more data in file")
   }
 }
 
-concrete Test {
-  @type run () -> ()
-}
-
-
-testcase "read missing file" {
-  success Test.run()
-}
-
-define Test {
-  run () {
-    RawFileReader reader <- RawFileReader.open("do-not-create-this-file")
-    if (!present(reader.getFileError())) {
-      fail("expected file error")
-    }
+unittest readMissing {
+  RawFileReader reader <- RawFileReader.open("do-not-create-this-file")
+  if (!present(reader.getFileError())) {
+    fail("expected file error")
   }
 }
 
-concrete Test {
-  @type run () -> ()
+unittest unwritable {
+  RawFileWriter writer <- RawFileWriter.open("testfile")
+  \ writer.freeResource()
+  if (!present(writer.getFileError())) {
+    fail("expected file error")
+  }
 }
 
 
 testcase "read missing file crash" {
-  crash Test.run()
+  crash
   require "do-not-create-this-file"
   require "RawFileReader .*originally created"
 }
 
-define Test {
-  run () {
-    RawFileReader reader <- RawFileReader.open("do-not-create-this-file")
-    \ reader.readBlock(0)
-  }
-}
-
-concrete Test {
-  @type run () -> ()
-}
-
-
-testcase "unwritable file" {
-  success Test.run()
-}
-
-define Test {
-  run () {
-    RawFileWriter writer <- RawFileWriter.open("testfile")
-    \ writer.freeResource()
-    if (!present(writer.getFileError())) {
-      fail("expected file error")
-    }
-  }
-}
-
-concrete Test {
-  @type run () -> ()
+unittest test {
+  RawFileReader reader <- RawFileReader.open("do-not-create-this-file")
+  \ reader.readBlock(0)
 }
 
 
 testcase "unwritable file crash" {
-  crash Test.run()
+  crash
   require "testfile"
   require "RawFileWriter .*originally created"
 }
 
-define Test {
-  run () {
-    RawFileWriter writer <- RawFileWriter.open("testfile")
-    \ writer.freeResource()
-    \ writer.writeBlock("")
-  }
-}
-
-concrete Test {
-  @type run () -> ()
+unittest test {
+  RawFileWriter writer <- RawFileWriter.open("testfile")
+  \ writer.freeResource()
+  \ writer.writeBlock("")
 }

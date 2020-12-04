@@ -33,7 +33,11 @@ concrete Test {
 
 
 testcase "@category member from @type" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -53,7 +57,11 @@ concrete Test {
 
 
 testcase "@category member from @value" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -94,7 +102,11 @@ concrete Test {
 
 
 testcase "@category member refers to @category member" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -117,7 +129,11 @@ concrete Test {
 
 
 testcase "@category member is lazy" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 concrete Util {
@@ -142,8 +158,12 @@ concrete Test {
 
 
 testcase "@category member init when read" {
-  crash Test.run()
+  crash
   require "do not use"
+}
+
+unittest test {
+  \ Test.run()
 }
 
 concrete Util {
@@ -170,8 +190,12 @@ concrete Test {
 
 
 testcase "@category member init when assigned" {
-  crash Test.run()
+  crash
   require "do not use"
+}
+
+unittest test {
+  \ Test.run()
 }
 
 concrete Util {
@@ -198,8 +222,12 @@ concrete Test {
 
 
 testcase "@category member init when ignored" {
-  crash Test.run()
+  crash
   require "do not use"
+}
+
+unittest test {
+  \ Test.run()
 }
 
 concrete Util {
@@ -226,7 +254,11 @@ concrete Test {
 
 
 testcase "@category member inline assignment" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -250,8 +282,12 @@ concrete Test {
 
 
 testcase "@category init cycle" {
-  crash Test.run()
+  crash
   require "Value1|Value2"
+}
+
+unittest test {
+  \ Test.run()
 }
 
 concrete Value1 {

@@ -32,7 +32,11 @@ define Value {
 
 
 testcase "internal refine is private" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 concrete Value {
@@ -105,7 +109,11 @@ concrete Test {
 
 
 testcase "internal define is private" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 concrete Compare<#x> {

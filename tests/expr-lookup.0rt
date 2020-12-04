@@ -33,8 +33,12 @@ concrete Test {
 
 
 testcase "MODULE_PATH is absolute" {
-  crash Test.run()
+  crash
   require "Failed condition: /.+/tests"
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -49,8 +53,12 @@ concrete Test {
 
 
 testcase "MODULE_PATH from regular source" {
-  crash Test.run()
+  crash
   require "Failed condition: /.+/tests"
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -81,8 +89,12 @@ concrete Test {
 
 
 testcase "macro used inline in expressions" {
-  crash Test.run()
+  crash
   require "Failed condition: /.+/tests is the path"
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -97,7 +109,11 @@ concrete Test {
 
 
 testcase "constant defined in .zeolite-module" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -112,7 +128,11 @@ concrete Test {
 
 
 testcase "constant defined in .zeolite-module from regular source" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -127,7 +147,11 @@ concrete Test {
 
 
 testcase "in context defined in .zeolite-module" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -161,7 +185,11 @@ concrete Test {
 
 
 testcase "in context defined in .zeolite-module from regular source" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -176,7 +204,11 @@ concrete Test {
 
 
 testcase "nested expression defined in .zeolite-module" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -191,7 +223,11 @@ concrete Test {
 
 
 testcase "function called on expression" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -206,8 +242,12 @@ concrete Test {
 
 
 testcase "source context" {
-  crash Test.run()
+  crash
   require "tests/expr-lookup\.0rt"
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {

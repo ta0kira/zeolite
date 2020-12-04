@@ -17,7 +17,11 @@ limitations under the License.
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
 testcase "Int arithmetic with precedence" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -32,7 +36,11 @@ concrete Test {
 
 
 testcase "Int arithmetic" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -51,7 +59,11 @@ concrete Test {
 
 
 testcase "Int bitwise" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -70,7 +82,11 @@ concrete Test {
 
 
 testcase "Int bitwise with precedence" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -85,7 +101,11 @@ concrete Test {
 
 
 testcase "same operators applied left to right" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -132,7 +152,11 @@ concrete Test {
 
 
 testcase "String arithmetic" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -147,7 +171,11 @@ concrete Test {
 
 
 testcase "Float arithmetic with precedence" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -162,7 +190,11 @@ concrete Test {
 
 
 testcase "Char minus" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -177,7 +209,11 @@ concrete Test {
 
 
 testcase "Bool comparison" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -194,7 +230,11 @@ concrete Test {
 
 
 testcase "Int comparison" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -214,7 +254,11 @@ concrete Test {
 
 
 testcase "Float comparison" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -234,7 +278,11 @@ concrete Test {
 
 
 testcase "String comparison" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -254,7 +302,11 @@ concrete Test {
 
 
 testcase "Char comparison" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -274,7 +326,11 @@ concrete Test {
 
 
 testcase "Bool logic with precedence" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -325,7 +381,11 @@ concrete Test {
 
 
 testcase "String plus with comparison" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -342,7 +402,11 @@ concrete Test {
 
 
 testcase "Char minus with comparison" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -359,7 +423,11 @@ concrete Test {
 
 
 testcase "Int arithmetic with comparison" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -376,7 +444,11 @@ concrete Test {
 
 
 testcase "Float arithmetic with comparison" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -409,7 +481,11 @@ concrete Test {
 
 
 testcase "arithmetic, comparison, logic" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {

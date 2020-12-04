@@ -17,7 +17,11 @@ limitations under the License.
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
 testcase "String typename" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -35,7 +39,11 @@ concrete Test {
 
 
 testcase "Int typename" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -53,7 +61,11 @@ concrete Test {
 
 
 testcase "Char typename" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -71,7 +83,11 @@ concrete Test {
 
 
 testcase "Float typename" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -89,7 +105,11 @@ concrete Test {
 
 
 testcase "Bool typename" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -107,7 +127,11 @@ concrete Test {
 
 
 testcase "Formatted typename" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -125,7 +149,11 @@ concrete Test {
 
 
 testcase "ReadPosition typename" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -143,7 +171,11 @@ concrete Test {
 
 
 testcase "any typename" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -161,7 +193,11 @@ concrete Test {
 
 
 testcase "all typename" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -179,7 +215,11 @@ concrete Test {
 
 
 testcase "intersect typename" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -197,7 +237,11 @@ concrete Test {
 
 
 testcase "union typename" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -215,7 +259,11 @@ concrete Test {
 
 
 testcase "param typename" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 @value interface Value<#x> {}

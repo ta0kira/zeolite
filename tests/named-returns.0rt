@@ -36,7 +36,11 @@ concrete Test {
 
 
 testcase "assign before logical" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -73,7 +77,11 @@ concrete Test {
 
 
 testcase "assign before arithmetic" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -91,7 +99,11 @@ concrete Test {
 
 
 testcase "assign after arithmetic" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -128,7 +140,11 @@ concrete Test {
 
 
 testcase "return used after assigned" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -171,7 +187,11 @@ concrete Test {
 
 
 testcase "returns in correct order" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -197,7 +217,11 @@ concrete Test {
 
 
 testcase "assigns in correct order" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 concrete Value {
@@ -236,7 +260,11 @@ concrete Test {
 
 
 testcase "assigns in correct order with explicit return" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -264,8 +292,12 @@ concrete Test {
 
 
 testcase "positional return sets named return" {
-  crash Test.run()
+  crash
   require "message"
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {

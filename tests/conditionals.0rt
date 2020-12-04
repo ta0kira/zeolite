@@ -17,7 +17,11 @@ limitations under the License.
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
 testcase "assign if/elif/else" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 @value interface Value {}
@@ -43,7 +47,11 @@ concrete Test {
 
 
 testcase "return if/elif/else" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 @value interface Value {}
@@ -223,8 +231,12 @@ concrete Test {
 
 
 testcase "crash in if" {
-  crash Test.run()
+  crash
   require "empty"
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -242,8 +254,12 @@ concrete Test {
 
 
 testcase "crash in elif" {
-  crash Test.run()
+  crash
   require "empty"
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -262,7 +278,11 @@ concrete Test {
 
 
 testcase "multi assign if/elif/else" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 @value interface Value {}
@@ -378,7 +398,11 @@ concrete Test {
 
 
 testcase "cleanup before return in if" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 concrete Value {

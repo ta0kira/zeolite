@@ -17,7 +17,11 @@ limitations under the License.
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
 testcase "optional persists" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -53,7 +57,11 @@ concrete Test {
 
 
 testcase "weak is weak" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -93,7 +101,11 @@ concrete Test {
 
 
 testcase "present weak" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -122,7 +134,11 @@ concrete Test {
 
 
 testcase "weak variable to weak variable" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -140,7 +156,11 @@ concrete Test {
 
 
 testcase "optional variable to weak variable" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -158,7 +178,11 @@ concrete Test {
 
 
 testcase "weak in multi assign" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 concrete Value {
@@ -193,7 +217,11 @@ concrete Test {
 
 
 testcase "weak in inline assign" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 concrete Value {
@@ -222,7 +250,11 @@ concrete Test {
 
 
 testcase "present required" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -245,7 +277,11 @@ concrete Test {
 
 
 testcase "require required" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {

@@ -42,7 +42,11 @@ concrete Test {
 
 
 testcase "internal filter not applied in @type" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 concrete Value {
@@ -69,7 +73,11 @@ concrete Test {
 
 
 testcase "internal filter not applied in @category" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 concrete Value {
@@ -96,7 +104,11 @@ concrete Test {
 
 
 testcase "internal params" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 concrete Value {
@@ -127,7 +139,11 @@ concrete Test {
 
 
 testcase "internal params with filters" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 @value interface Get<|#x> {
@@ -204,7 +220,11 @@ concrete Test {
 
 
 testcase "internal params with values" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 concrete Value {
@@ -232,7 +252,11 @@ concrete Test {
 
 
 testcase "value depends on internal param" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 concrete Type<#y> {
@@ -380,7 +404,11 @@ concrete Test {
 
 
 testcase "internal param no clash with category" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 concrete Value {
@@ -405,7 +433,11 @@ concrete Test {
 
 
 testcase "reduce internal param success" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 concrete Value {
@@ -440,7 +472,11 @@ concrete Test {
 
 
 testcase "reduce internal param fail" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 concrete Value {

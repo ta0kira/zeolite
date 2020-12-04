@@ -17,7 +17,11 @@ limitations under the License.
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
 testcase "converted call" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 @value interface Base {
@@ -120,7 +124,11 @@ concrete Test {
 
 
 testcase "call from union with conversion" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 @value interface Base {
@@ -154,7 +162,11 @@ concrete Test {
 
 
 testcase "call from intersect" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 @value interface Base1 {
@@ -191,7 +203,11 @@ concrete Test {
 
 
 testcase "call from intersect with conversion" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 @value interface Base1 {
@@ -228,7 +244,11 @@ concrete Test {
 
 
 testcase "call from intersect with conversion" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 @value interface Base1 {
@@ -265,7 +285,11 @@ concrete Test {
 
 
 testcase "call from param type" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 @type interface Base {
@@ -323,7 +347,11 @@ concrete Test {
 
 
 testcase "call from param value" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 @value interface Base {
@@ -388,7 +416,11 @@ concrete Test {
 
 
 testcase "convert arg" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 @value interface Base {

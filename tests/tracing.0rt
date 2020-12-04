@@ -17,11 +17,15 @@ limitations under the License.
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
 testcase "NoTrace skips tracing" {
-  crash Test.run()
+  crash
   require "message"
   require "Test\.run"
   require "Test\.error"
   exclude "Test\.noTrace"
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -46,9 +50,13 @@ concrete Test {
 
 
 testcase "TraceCreation captures trace" {
-  crash Test.run()
+  crash
   require "message"
   require "Type.+created at"
+}
+
+unittest test {
+  \ Test.run()
 }
 
 concrete Type {
@@ -79,8 +87,12 @@ concrete Test {
 
 
 testcase "TraceCreation ignored in @type" {
-  success Test.run()
+  success
   require compiler "tracing ignored"
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -93,10 +105,14 @@ concrete Test {
 
 
 testcase "TraceCreation still works with NoTrace" {
-  crash Test.run()
+  crash
   require "message"
   require "Type.+created at"
   exclude "Type\.call"
+}
+
+unittest test {
+  \ Test.run()
 }
 
 concrete Type {
@@ -127,10 +143,14 @@ concrete Test {
 
 
 testcase "TraceCreation only uses the latest" {
-  crash Test.run()
+  crash
   require "message"
   require "Type1.+created at"
   exclude "Type2.+created at"
+}
+
+unittest test {
+  \ Test.run()
 }
 
 concrete Type1 {

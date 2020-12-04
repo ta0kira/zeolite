@@ -17,7 +17,11 @@ limitations under the License.
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
 testcase "public types in private deps stay hidden" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 // Internal is defined in visibility/internal and visibility2/internal. The

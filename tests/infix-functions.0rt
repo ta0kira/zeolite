@@ -17,7 +17,11 @@ limitations under the License.
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
 testcase "category infix" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -40,7 +44,11 @@ concrete Test {
 
 
 testcase "type infix" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -63,7 +71,11 @@ concrete Test {
 
 
 testcase "value infix" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 concrete Arithmetic {
@@ -96,7 +108,11 @@ concrete Test {
 
 
 testcase "unqualified infix" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -119,7 +135,11 @@ concrete Test {
 
 
 testcase "infix function comes after arithmetic" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -142,7 +162,11 @@ concrete Test {
 
 
 testcase "infix function comes before comparison" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {

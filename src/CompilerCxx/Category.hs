@@ -63,17 +63,17 @@ data CxxOutput =
     coCategory :: Maybe CategoryName,
     coFilename :: String,
     coNamespace :: Namespace,
-    coUsesNamespace :: [Namespace],
-    coUsesCategory :: [CategoryName],
+    coUsesNamespace :: Set.Set Namespace,
+    coUsesCategory :: Set.Set CategoryName,
     coOutput :: [String]
   }
   deriving (Show)
 
 data LanguageModule c =
   LanguageModule {
-    lmPublicNamespaces :: [Namespace],
-    lmPrivateNamespaces :: [Namespace],
-    lmLocalNamespaces :: [Namespace],
+    lmPublicNamespaces :: Set.Set Namespace,
+    lmPrivateNamespaces :: Set.Set Namespace,
+    lmLocalNamespaces :: Set.Set Namespace,
     lmPublicDeps :: [AnyCategory c],
     lmPrivateDeps :: [AnyCategory c],
     lmTestingDeps :: [AnyCategory c],
@@ -115,8 +115,8 @@ compileLanguageModule (LanguageModule ns0 ns1 ns2 cs0 ps0 ts0 cs1 ps1 ts1 ex ss 
     tmPublic  = foldM includeNewTypes defaultCategories [cs0,cs1]
     tmPrivate = tmPublic  >>= \tm -> foldM includeNewTypes tm [ps0,ps1]
     tmTesting = tmPrivate >>= \tm -> foldM includeNewTypes tm [ts0,ts1]
-    nsPublic = ns0 ++ ns2
-    nsPrivate = nsPublic ++ ns1
+    nsPublic = ns0 `Set.union` ns2
+    nsPrivate = ns1 `Set.union` nsPublic
     nsTesting = nsPrivate
     compileSourceP testing tm ns c = do
       tm' <- tm
@@ -147,7 +147,7 @@ compileLanguageModule (LanguageModule ns0 ns1 ns2 cs0 ps0 ts0 cs1 ps1 ts1 ex ss 
       hxx <- mapErrorsM (compileCategoryDeclaration testing tm' ns4) cs2
       let interfaces = filter (not . isValueConcrete) cs2
       cxx1 <- mapErrorsM (compileInterfaceDefinition testing) interfaces
-      cxx2 <- mapErrorsM (compileDefinition testing tm' (ns:ns4)) ds
+      cxx2 <- mapErrorsM (compileDefinition testing tm' (ns `Set.insert` ns4)) ds
       return (ds,hxx ++ cxx1 ++ cxx2)
     mergeGeneratedX ((ds,xx):xs2) = let (ds2,xx2) = mergeGeneratedX xs2 in (ds++ds2,xx++xx2)
     mergeGeneratedX _             = ([],[])
@@ -217,8 +217,8 @@ compileTestMain :: (Show c, CompileErrorM m) =>
   LanguageModule c -> PrivateSource c -> [TestProcedure c] -> m (CxxOutput,[FunctionName])
 compileTestMain (LanguageModule ns0 ns1 ns2 cs0 ps0 ts0 cs1 ps1 ts1 _ _ em) ts2 tests = do
   tm' <- tm
-  (req,main) <- createTestFile tm' em tests
-  return (CxxOutput Nothing testFilename NoNamespace ([psNamespace ts2]++ns0++ns1++ns2) req main,map tpName tests) where
+  (CompiledData req main) <- createTestFile tm' em tests
+  return (CxxOutput Nothing testFilename NoNamespace (psNamespace ts2 `Set.insert` Set.unions [ns0,ns1,ns2]) req main,map tpName tests) where
   tm = foldM includeNewTypes defaultCategories [cs0,cs1,ps0,ps1,ts0,ts1,psCategory ts2]
 
 compileModuleMain :: (Show c, CompileErrorM m) =>
@@ -230,7 +230,7 @@ compileModuleMain (LanguageModule ns0 ns1 ns2 cs0 ps0 _ cs1 ps1 _ _ _ em) xa n f
   let cs = filter (\c -> getCategoryName c == n) $ concat $ map psCategory xa
   tm'' <- includeNewTypes tm' cs
   (ns,main) <- createMainFile tm'' em n f
-  return $ CxxOutput Nothing mainFilename NoNamespace ([ns]++ns0++ns1++ns2) [n] main where
+  return $ CxxOutput Nothing mainFilename NoNamespace (ns `Set.insert` Set.unions [ns0,ns1,ns2]) (Set.fromList [n]) main where
     tm = foldM includeNewTypes defaultCategories [cs0,cs1,ps0,ps1]
     reconcile [_] = return ()
     reconcile []  = compileErrorM $ "No matches for main category " ++ show n ++ " ($TestsOnly$ sources excluded)"
@@ -239,13 +239,13 @@ compileModuleMain (LanguageModule ns0 ns1 ns2 cs0 ps0 _ cs1 ps1 _ _ _ em) xa n f
         mapErrorsM_ (\d -> compileErrorM $ "Defined at " ++ formatFullContext (dcContext d)) ds
 
 compileCategoryDeclaration :: (Show c, CompileErrorM m) =>
-  Bool -> CategoryMap c -> [Namespace] -> AnyCategory c -> m CxxOutput
+  Bool -> CategoryMap c -> Set.Set Namespace -> AnyCategory c -> m CxxOutput
 compileCategoryDeclaration testing _ ns t =
   return $ CxxOutput (Just $ getCategoryName t)
                      (headerFilename name)
                      (getCategoryNamespace t)
-                     (ns ++ [getCategoryNamespace t])
-                     (Set.toList $ cdRequired file)
+                     (getCategoryNamespace t `Set.insert` ns)
+                     (cdRequired file)
                      (cdOutput file) where
     file = mconcat $ [
         CompiledData depends [],
@@ -279,7 +279,7 @@ compileCategoryDeclaration testing _ ns t =
 compileInterfaceDefinition :: CompileErrorM m => Bool -> AnyCategory c -> m CxxOutput
 compileInterfaceDefinition testing t = do
   te <- typeConstructor
-  commonDefineAll testing t [] Nothing emptyCode emptyCode emptyCode te []
+  commonDefineAll testing t Set.empty Nothing emptyCode emptyCode emptyCode te []
   where
     typeConstructor = do
       let ps = map vpParam $ getCategoryParams t
@@ -295,7 +295,7 @@ compileConcreteTemplate :: (Show c, CompileErrorM m) =>
   Bool -> CategoryMap c -> CategoryName -> m CxxOutput
 compileConcreteTemplate testing ta n = do
   (_,t) <- getConcreteCategory ta ([],n)
-  compileConcreteDefinition testing ta Map.empty [] Nothing (defined t) <?? ("In generated template for " ++ show n) where
+  compileConcreteDefinition testing ta Map.empty Set.empty Nothing (defined t) <?? ("In generated template for " ++ show n) where
     defined t = DefinedCategory {
         dcContext = [],
         dcName = getCategoryName t,
@@ -334,19 +334,19 @@ compileConcreteStreamlined testing ta n =  ("In streamlined compilation of " ++ 
   let hxx = CxxOutput (Just $ getCategoryName t)
                       (headerStreamlined $ getCategoryName t)
                       (getCategoryNamespace t)
-                      [getCategoryNamespace t]
-                      (getCategoryMentions t)
+                      (Set.fromList [getCategoryNamespace t])
+                      (Set.fromList $ getCategoryMentions t)
                       guard
   let cxx = CxxOutput (Just $ getCategoryName t)
                       (sourceStreamlined $ getCategoryName t)
                       (getCategoryNamespace t)
-                      [getCategoryNamespace t]
-                      (getCategoryMentions t)
+                      (Set.fromList [getCategoryNamespace t])
+                      (Set.fromList $ getCategoryMentions t)
                       []
   return [hxx,cxx]
 
 compileConcreteDefinition :: (Show c, CompileErrorM m) =>
-  Bool -> CategoryMap c -> ExprMap c -> [Namespace] -> Maybe [ValueRefine c] ->
+  Bool -> CategoryMap c -> ExprMap c -> Set.Set Namespace -> Maybe [ValueRefine c] ->
   DefinedCategory c -> m CxxOutput
 compileConcreteDefinition testing ta em ns rs dd@(DefinedCategory c n pi _ _ fi ms _ fs) = do
   (_,t) <- getConcreteCategory ta (c,n)
@@ -495,7 +495,7 @@ compileConcreteDefinition testing ta em ns rs dd@(DefinedCategory c n pi _ _ fi 
       | otherwise = []
 
 commonDefineAll :: CompileErrorM m =>
-  Bool -> AnyCategory c -> [Namespace] -> Maybe [ValueRefine c] ->
+  Bool -> AnyCategory c -> Set.Set Namespace -> Maybe [ValueRefine c] ->
   CompiledData [String] -> CompiledData [String] -> CompiledData [String] ->
   CompiledData [String] -> [ScopedFunction c] -> m CxxOutput
 commonDefineAll testing t ns rs top bottom ce te fe = do
@@ -517,8 +517,8 @@ commonDefineAll testing t ns rs top bottom ce te fe = do
   return $ CxxOutput (Just $ getCategoryName t)
                      filename
                      (getCategoryNamespace t)
-                     ((getCategoryNamespace t):ns)
-                     (Set.toList req)
+                     (getCategoryNamespace t `Set.insert` ns)
+                     req
                      (guard ++ baseSourceIncludes ++ includes ++ out)
   where
     conditionalContent
@@ -818,7 +818,7 @@ createMainCommon n (CompiledData req0 out0) (CompiledData req1 out1) =
       "int main(int argc, const char** argv) {",
       "  SetSignalHandler();",
       "  " ++ startFunctionTracing CategoryNone (FunctionName n)
-    ] ++ map (++ "  ") out1 ++ ["}"] where
+    ] ++ map ("  " ++) out1 ++ ["}"] where
       depIncludes req2 = map (\i -> "#include \"" ++ headerFilename i ++ "\"") $
                            Set.toList req2
 
@@ -835,14 +835,17 @@ createMainFile tm em n f = ("In the creation of the main binary procedure") ??> 
     argv = onlyCode "ProgramArgv program_argv(argc, argv);"
 
 createTestFile :: (Show c, CompileErrorM m) =>
-  CategoryMap c -> ExprMap c  -> [TestProcedure c] -> m ([CategoryName],[String])
+  CategoryMap c -> ExprMap c  -> [TestProcedure c] -> m (CompiledData [String])
 createTestFile tm em ts = ("In the creation of the test binary procedure") ??> do
   ts' <- fmap mconcat $ mapErrorsM (compileTestProcedure tm em) ts
   (include,sel) <- selectTestFromArgv1 $ map tpName ts
   let (CompiledData req _) = ts' <> sel
   let file = testsOnlySourceGuard ++ createMainCommon "test" (onlyCodes include <> ts') (argv <> sel)
-  return (Set.toList req,file) where
-    argv = onlyCode "ProgramArgv program_argv(argc, argv);"
+  return $ CompiledData req file where
+    argv = onlyCodes [
+        "const char* argv2[] = { \"testcase\" };",
+        "ProgramArgv program_argv(sizeof argv2 / sizeof(char*), argv2);"
+      ]
 
 getCategoryMentions :: AnyCategory c -> [CategoryName]
 getCategoryMentions t = fromRefines (getCategoryRefines t) ++

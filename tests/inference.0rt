@@ -17,7 +17,11 @@ limitations under the License.
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
 testcase "simple inference" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -60,7 +64,11 @@ concrete Test {
 
 
 testcase "nested inference" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 concrete Type<#x> {
@@ -90,7 +98,11 @@ concrete Test {
 
 
 testcase "simple inference with qualification" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
@@ -133,7 +145,11 @@ concrete Test {
 
 
 testcase "nested inference with qualification" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 concrete Type<#x> {
@@ -281,7 +297,11 @@ concrete Test {
 
 
 testcase "clashing param filter in the same scope" {
-  success Test.run()
+  success
+}
+
+unittest test {
+  \ Test.run()
 }
 
 define Test {
