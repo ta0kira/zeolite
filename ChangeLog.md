@@ -49,6 +49,10 @@
     library change; this also affects C++ extensions that use `Argv` from
     `base/logging.hpp`.
 
+  * **[new]** Adds `compiles` mode for `testcase`. This is like `success` except
+    nothing is executed. (`success` requires at least one `unittest`, whereas
+    `compiles` will not execute anything even if `unittest` are present.)
+
 ### Libraries
 
 * **[new]** Adds the `lib/testing` library with basic helpers for unit tests.

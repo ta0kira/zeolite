@@ -83,14 +83,22 @@ runSingleTest b cm p paths deps (f,s) = do
              else errorFromIO $ hPutStrLn stderr $ "*** All tests in testcase " ++ name ++ " passed ***"
            return ((passed,failed),combined)
 
-    run (ExpectCompileError _ rs es) args cs ds ts = fmap (:[]) $ do
+    run (ExpectCompileError _ rs es) args cs ds ts = do
       let result = compileAll args cs ds ts
       if not $ isCompileError result
          then compileErrorM "Expected compilation failure"
-         else return $ do
+         else fmap (:[]) $ return $ do
            let warnings = show $ getCompileWarnings result
            let errors   = show $ getCompileError result
            checkContent rs es (lines warnings ++ lines errors) [] []
+
+    run (ExpectCompiles _ rs es) args cs ds ts = do
+      let result = compileAll args cs ds ts
+      if isCompileError result
+         then fromCompileInfo result >> return []
+         else fmap (:[]) $ return $ do
+           let warnings = show $ getCompileWarnings result
+           checkContent rs es (lines warnings) [] []
 
     run (ExpectRuntimeError _ rs es) args cs ds ts = do
       when (length ts /= 1) $ compileErrorM "Exactly one unittest is required when crash is expected"

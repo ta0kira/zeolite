@@ -16,6 +16,17 @@ limitations under the License.
 
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
+testcase "basic compiles test" {
+  compiles
+  require compiler "unreachable"
+}
+
+unittest test {
+  return _
+  \ empty
+}
+
+
 testcase "basic error test" {
   error
   require compiler "category.+undefined"

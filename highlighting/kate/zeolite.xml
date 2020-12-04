@@ -222,6 +222,7 @@
         <WordDetect attribute="Error" context="#stay" String="optional" />
         <WordDetect attribute="Error" context="#stay" String="weak" />
         <WordDetect attribute="Error" context="#stay" String="testcase" />
+        <WordDetect attribute="Test Keyword" context="#stay" String="compiles" />
         <WordDetect attribute="Test Keyword" context="#stay" String="error" />
         <WordDetect attribute="Test Keyword" context="#stay" String="crash" />
         <WordDetect attribute="Test Keyword" context="#stay" String="success" />

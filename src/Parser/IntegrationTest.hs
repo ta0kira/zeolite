@@ -39,10 +39,15 @@ instance ParseFromSource (IntegrationTestHeader SourcePos) where
     name <- manyTill stringChar (string_ "\"")
     optionalSpace
     sepAfter (string_ "{")
-    result <- resultError <|> resultCrash <|> resultSuccess
+    result <- resultCompiles <|> resultError <|> resultCrash <|> resultSuccess
     args <- parseArgs <|> return []
     sepAfter (string_ "}")
     return $ IntegrationTestHeader [c] name args result where
+      resultCompiles = labeled "compiles expectation" $ do
+        c <- getPosition
+        try $ sepAfter (keyword "compiles")
+        (req,exc) <- requireOrExclude
+        return $ ExpectCompiles [c] req exc
       resultError = labeled "error expectation" $ do
         c <- getPosition
         sepAfter (keyword "error")
@@ -50,7 +55,7 @@ instance ParseFromSource (IntegrationTestHeader SourcePos) where
         return $ ExpectCompileError [c] req exc
       resultCrash = labeled "crash expectation" $ do
         c <- getPosition
-        sepAfter (keyword "crash")
+        try $ sepAfter (keyword "crash")
         (req,exc) <- requireOrExclude
         return $ ExpectRuntimeError [c] req exc
       resultSuccess = labeled "success expectation" $ do

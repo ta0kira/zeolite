@@ -1,0 +1,19 @@
+testcase "basic compiles test" {
+  compiles
+  require compiler "pattern in output 1"
+  exclude stderr   "pattern not in output 1"
+  require any      "pattern in output 2"
+  exclude stdout   "pattern not in output 2"
+}
+
+concrete Test {
+  @type execute () -> ()
+}
+
+define Test {
+  execute () { }
+}
+
+unittest test {
+  \ Test.execute()
+}

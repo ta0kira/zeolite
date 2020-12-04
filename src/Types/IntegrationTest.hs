@@ -27,6 +27,7 @@ module Types.IntegrationTest (
   getExcludePattern,
   getRequirePattern,
   isExpectCompileError,
+  isExpectCompiles,
   isExpectRuntimeError,
   isExpectRuntimeSuccess,
 ) where
@@ -58,6 +59,11 @@ data ExpectedResult c =
     eceRequirePattern :: [OutputPattern],
     eceExcludePattern :: [OutputPattern]
   } |
+  ExpectCompiles {
+    eceContext :: [c],
+    eceRequirePattern :: [OutputPattern],
+    eceExcludePattern :: [OutputPattern]
+  } |
   ExpectRuntimeError {
     ereContext :: [c],
     ereRequirePattern :: [OutputPattern],
@@ -78,6 +84,10 @@ data OutputPattern =
 
 data OutputScope = OutputAny | OutputCompiler | OutputStderr | OutputStdout deriving (Eq,Ord,Show)
 
+isExpectCompiles :: ExpectedResult c -> Bool
+isExpectCompiles (ExpectCompiles _ _ _) = True
+isExpectCompiles _                      = False
+
 isExpectCompileError :: ExpectedResult c -> Bool
 isExpectCompileError (ExpectCompileError _ _ _) = True
 isExpectCompileError _                          = False
@@ -91,11 +101,13 @@ isExpectRuntimeSuccess (ExpectRuntimeSuccess _ _ _) = True
 isExpectRuntimeSuccess _                            = False
 
 getRequirePattern :: ExpectedResult c -> [OutputPattern]
+getRequirePattern (ExpectCompiles _ rs _)       = rs
 getRequirePattern (ExpectCompileError _ rs _)   = rs
 getRequirePattern (ExpectRuntimeError _ rs _)   = rs
 getRequirePattern (ExpectRuntimeSuccess _ rs _) = rs
 
 getExcludePattern :: ExpectedResult c -> [OutputPattern]
+getExcludePattern (ExpectCompiles _ _ es)       = es
 getExcludePattern (ExpectCompileError _ _ es)   = es
 getExcludePattern (ExpectRuntimeError _ _ es)   = es
 getExcludePattern (ExpectRuntimeSuccess _ _ es) = es

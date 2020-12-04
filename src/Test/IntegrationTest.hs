@@ -37,6 +37,24 @@ import Types.TypeCategory
 tests :: [IO (CompileInfo ())]
 tests = [
     checkFileContents
+      ("testfiles" </> "basic_compiles_test.0rt")
+      (\t -> return $ do
+        let h = itHeader t
+        when (not $ isExpectCompiles $ ithResult h) $ compileErrorM "Expected ExpectCompiles"
+        checkEquals (ithTestName h) "basic compiles test"
+        containsExactly (getRequirePattern $ ithResult h) [
+            OutputPattern OutputCompiler "pattern in output 1",
+            OutputPattern OutputAny      "pattern in output 2"
+          ]
+        containsExactly (getExcludePattern $ ithResult h) [
+            OutputPattern OutputStderr "pattern not in output 1",
+            OutputPattern OutputStdout "pattern not in output 2"
+          ]
+        containsExactly (extractCategoryNames t) ["Test"]
+        containsExactly (extractDefinitionNames t) ["Test"]
+        ),
+
+    checkFileContents
       ("testfiles" </> "basic_error_test.0rt")
       (\t -> return $ do
         let h = itHeader t
