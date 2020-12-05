@@ -24,6 +24,10 @@ unittest test {
   \ Test.run()
 }
 
+concrete Test {
+  @type run () -> ()
+}
+
 define Test {
   @value Int value
   @category Test singleton <- Test{ 3 }
@@ -34,14 +38,7 @@ define Test {
   }
 
   run () {
-    if (singleton.get() != 3) {
-      fail(singleton.get())
-    }
   }
-}
-
-concrete Test {
-  @type run () -> ()
 }
 
 
@@ -50,7 +47,10 @@ testcase "init value same type from @type" {
 }
 
 unittest test {
-  \ Test.run()
+  Value<Int> value <- Value<Int>.create(1)
+  if (value.get() != 1) {
+    fail("Failed")
+  }
 }
 
 concrete Value<#x> {
@@ -70,26 +70,16 @@ define Value {
   }
 }
 
-define Test {
-  run () {
-    Value<Int> value <- Value<Int>.create(1)
-    if (value.get() != 1) {
-      fail("Failed")
-    }
-  }
-}
-
-concrete Test {
-  @type run () -> ()
-}
-
 
 testcase "init value different type from @type" {
   success
 }
 
 unittest test {
-  \ Test.run()
+  Value<Int> value <- Value<String>.create<Int>(1)
+  if (value.get() != 1) {
+    fail("Failed")
+  }
 }
 
 concrete Value<#x> {
@@ -109,26 +99,16 @@ define Value {
   }
 }
 
-define Test {
-  run () {
-    Value<Int> value <- Value<String>.create<Int>(1)
-    if (value.get() != 1) {
-      fail("Failed")
-    }
-  }
-}
-
-concrete Test {
-  @type run () -> ()
-}
-
 
 testcase "init value same type from @value" {
   success
 }
 
 unittest test {
-  \ Test.run()
+  Value<Int> value <- Value<Int>.create(2).create2(1)
+  if (value.get() != 1) {
+    fail("Failed")
+  }
 }
 
 concrete Value<#x> {
@@ -153,26 +133,16 @@ define Value {
   }
 }
 
-define Test {
-  run () {
-    Value<Int> value <- Value<Int>.create(2).create2(1)
-    if (value.get() != 1) {
-      fail("Failed")
-    }
-  }
-}
-
-concrete Test {
-  @type run () -> ()
-}
-
 
 testcase "init value different type from @value" {
   success
 }
 
 unittest test {
-  \ Test.run()
+  Value<Int> value <- Value<String>.create("x").create2<Int>(1)
+  if (value.get() != 1) {
+    fail("Failed")
+  }
 }
 
 concrete Value<#x> {
@@ -195,17 +165,4 @@ define Value {
   get () {
     return value
   }
-}
-
-define Test {
-  run () {
-    Value<Int> value <- Value<String>.create("x").create2<Int>(1)
-    if (value.get() != 1) {
-      fail("Failed")
-    }
-  }
-}
-
-concrete Test {
-  @type run () -> ()
 }

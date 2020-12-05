@@ -19,25 +19,21 @@ limitations under the License.
 testcase "fail builtin" {
   crash
   require stderr "Failed"
+  require stderr "failedReturn"
 }
 
 unittest test {
-  \ Test.run()
-}
-
-define Test {
-  @category failedReturn () -> (Int)
-  failedReturn () {
-    fail("Failed")
-  }
-
-  run () {
-    Int value <- failedReturn()
-  }
+  Int value <- Test:failedReturn()
 }
 
 concrete Test {
-  @type run () -> ()
+  @category failedReturn () -> (Int)
+}
+
+define Test {
+  failedReturn () {
+    fail("Failed")
+  }
 }
 
 
@@ -46,6 +42,10 @@ testcase "wrong type for fail" {
   error
   require "fail"
   require "Formatted"
+}
+
+unittest test {
+  fail(Value.create())
 }
 
 concrete Value {
@@ -58,16 +58,6 @@ define Value {
   }
 }
 
-define Test {
-  run () {
-    fail(Value.create())
-  }
-}
-
-concrete Test {
-  @type run () -> ()
-}
-
 
 testcase "require empty" {
   crash
@@ -75,15 +65,5 @@ testcase "require empty" {
 }
 
 unittest test {
-  \ Test.run()
-}
-
-define Test {
-  run () {
-    \ require(empty)
-  }
-}
-
-concrete Test {
-  @type run () -> ()
+  \ require(empty)
 }

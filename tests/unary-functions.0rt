@@ -21,25 +21,20 @@ testcase "category unary" {
 }
 
 unittest test {
-  \ Test.run()
-}
-
-define Test {
-  @category neg (Int) -> (Int)
-  neg (x) {
-    return -x
-  }
-
-  run () {
-    Int value <- `Test:neg` 2
-    if (value != -2) {
-      fail(value)
-    }
+  Int value <- `Test:neg` 2
+  if (value != -2) {
+    fail(value)
   }
 }
 
 concrete Test {
-  @type run () -> ()
+  @category neg (Int) -> (Int)
+}
+
+define Test {
+  neg (x) {
+    return -x
+  }
 }
 
 
@@ -48,25 +43,20 @@ testcase "type unary" {
 }
 
 unittest test {
-  \ Test.run()
-}
-
-define Test {
-  @type neg (Int) -> (Int)
-  neg (x) {
-    return -x
-  }
-
-  run () {
-    Int value <- `Test.neg` 2
-    if (value != -2) {
-      fail(value)
-    }
+  Int value <- `Test.neg` 2
+  if (value != -2) {
+    fail(value)
   }
 }
 
 concrete Test {
-  @type run () -> ()
+  @type neg (Int) -> (Int)
+}
+
+define Test {
+  neg (x) {
+    return -x
+  }
 }
 
 
@@ -75,7 +65,10 @@ testcase "value unary" {
 }
 
 unittest test {
-  \ Test.run()
+  Int value <- `Arithmetic.create().neg` 2
+  if (value != -2) {
+    fail(value)
+  }
 }
 
 concrete Arithmetic {
@@ -91,19 +84,6 @@ define Arithmetic {
   neg (x) {
     return -x
   }
-}
-
-define Test {
-  run () {
-    Int value <- `Arithmetic.create().neg` 2
-    if (value != -2) {
-      fail(value)
-    }
-  }
-}
-
-concrete Test {
-  @type run () -> ()
 }
 
 
@@ -139,28 +119,23 @@ testcase "unary function with infix function" {
 }
 
 unittest test {
-  \ Test.run()
-}
-
-define Test {
-  @category add (Int,Int) -> (Int)
-  add (x,y) {
-    return x + y
-  }
-
-  @type neg (Int) -> (Int)
-  neg (x) {
-    return -x
-  }
-
-  run () {
-    Int value <- 1 `add` `neg` 2
-    if (value != -1) {
-      fail(value)
-    }
+  Int value <- 1 `Test:add` `Test:neg` 2
+  if (value != -1) {
+    fail(value)
   }
 }
 
 concrete Test {
-  @type run () -> ()
+  @category add (Int,Int) -> (Int)
+  @category neg (Int) -> (Int)
+}
+
+define Test {
+  add (x,y) {
+    return x + y
+  }
+
+  neg (x) {
+    return -x
+  }
 }

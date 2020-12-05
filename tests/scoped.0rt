@@ -21,23 +21,11 @@ testcase "scoped unconditional" {
 }
 
 unittest test {
-  \ Test.run()
-}
-
-@value interface Value {}
-
-define Test {
-  run () {
-    scoped {
-      Int x <- 1
-    } in {
-      x <- 2
-    }
+  scoped {
+    Int x <- 1
+  } in {
+    x <- 2
   }
-}
-
-concrete Test {
-  @type run () -> ()
 }
 
 
@@ -46,72 +34,43 @@ testcase "unconditional has scoping" {
   require "x"
 }
 
-@value interface Value {}
-
-define Test {
-  run () {
-    scoped {
-    } in {
-      Int x <- 1
-    }
-    x <- 2
+unittest test {
+  scoped {
+  } in {
+    Int x <- 1
   }
-}
-
-concrete Test {
-  @type run () -> ()
+  x <- 2
 }
 
 
 testcase "return inside scope" {
-  success
+  compiles
 }
 
-unittest test {
-  \ Test.run()
-}
+concrete Value {}
 
-
-@value interface Value {}
-
-define Test {
+define Value {
   @value process () -> (optional Value)
   process () {
     scoped {
       return empty
     } in \ empty
   }
-
-  run () {}
-}
-
-concrete Test {
-  @type run () -> ()
 }
 
 
 testcase "return from scoped" {
-  success
+  compiles
 }
 
-unittest test {
-  \ Test.run()
-}
+concrete Value {}
 
-@value interface Value {}
-
-define Test {
+define Value {
   @value process () -> (optional Value)
   process () {
     scoped {
     } in return empty
   }
-
-  run () {}
-}
-
-concrete Test {
-  @type run () -> ()
 }
 
 
@@ -120,70 +79,44 @@ testcase "update clashes with scoped" {
   require "x"
 }
 
-define Test {
-  run () {
-    scoped {
-      Int x <- 2
-    } in while (false) {
-    } update {
-      Int x <- 1
-    }
+unittest test {
+  scoped {
+    Int x <- 2
+  } in while (false) {
+  } update {
+    Int x <- 1
   }
-}
-
-concrete Test {
-  @type run () -> ()
 }
 
 
 testcase "assign inside scope" {
-  success
+  compiles
 }
 
-unittest test {
-  \ Test.run()
-}
+concrete Value {}
 
-@value interface Value {}
-
-define Test {
+define Value {
   @value process () -> (optional Value)
   process () (value) {
     scoped {
       value <- empty
     } in \ empty
   }
-
-  run () {}
-}
-
-concrete Test {
-  @type run () -> ()
 }
 
 
 testcase "assign from scoped" {
-  success
+  compiles
 }
 
-unittest test {
-  \ Test.run()
-}
+concrete Value {}
 
-@value interface Value {}
-
-define Test {
+define Value {
   @value process () -> (optional Value)
   process () (value) {
     scoped {
     } in value <- empty
   }
-
-  run () {}
-}
-
-concrete Test {
-  @type run () -> ()
 }
 
 
@@ -192,25 +125,15 @@ testcase "simple cleanup" {
 }
 
 unittest test {
-  \ Test.run()
-}
-
-define Test {
-  run () {
-    Int value <- 0
-    scoped {
-      value <- 1
-    } cleanup {
-      value <- 2
-    } in value <- 3
-    if (value != 2) {
-      fail(value)
-    }
+  Int value <- 0
+  scoped {
+    value <- 1
+  } cleanup {
+    value <- 2
+  } in value <- 3
+  if (value != 2) {
+    fail(value)
   }
-}
-
-concrete Test {
-  @type run () -> ()
 }
 
 
@@ -219,18 +142,12 @@ testcase "name clash in cleanup" {
   require "value.+already defined"
 }
 
-define Test {
-  run () {
-    scoped {
-      Int value <- 1
-    } cleanup {
-      Int value <- 2
-    } in \ empty
-  }
-}
-
-concrete Test {
-  @type run () -> ()
+unittest test {
+  scoped {
+    Int value <- 1
+  } cleanup {
+    Int value <- 2
+  } in \ empty
 }
 
 
@@ -239,7 +156,15 @@ testcase "cleanup before return" {
 }
 
 unittest test {
-  \ Test.run()
+  Value value <- Value.create()
+  Int value1 <- value.call()
+  if (value1 != 2) {
+    fail(value1)
+  }
+  Int value2 <- value.get()
+  if (value2 != 3) {
+    fail(value2)
+  }
 }
 
 concrete Value {
@@ -269,24 +194,6 @@ define Value {
   }
 }
 
-define Test {
-  run () {
-    Value value <- Value.create()
-    Int value1 <- value.call()
-    if (value1 != 2) {
-      fail(value1)
-    }
-    Int value2 <- value.get()
-    if (value2 != 3) {
-      fail(value2)
-    }
-  }
-}
-
-concrete Test {
-  @type run () -> ()
-}
-
 
 testcase "positional return sets named returns for cleanup" {
   crash
@@ -295,28 +202,23 @@ testcase "positional return sets named returns for cleanup" {
 }
 
 unittest test {
-  \ Test.run()
+  String value, _ <- Test.get()
+  fail(value)
 }
 
-define Test {
+concrete Test {
   // Using a second return ensures that assignment works properly when the
   // ReturnTuple is constructed during assignment.
   @type get () -> (String,Int)
+}
+
+define Test {
   get () (value,value2) {
     value <- "failed"
     cleanup {
       fail(value)
     } in return "message", 1
   }
-
-  run () {
-    String value, _ <- get()
-    fail(value)
-  }
-}
-
-concrete Test {
-  @type run () -> ()
 }
 
 
@@ -324,6 +226,8 @@ testcase "cannot refer to cleanup variables" {
   error
   require "value.+not defined"
 }
+
+concrete Test {}
 
 define Test {
   @type get () -> (Int)
@@ -333,14 +237,6 @@ define Test {
       Int value2 <- 1
     } in return value2
   }
-
-  run () {
-    \ get()
-  }
-}
-
-concrete Test {
-  @type run () -> ()
 }
 
 
@@ -349,11 +245,17 @@ testcase "cleanup skipped in scoped return" {
 }
 
 unittest test {
-  \ Test.run()
+    Int value <- Test.get()
+    if (value != 1) {
+      fail(value)
+    }
+}
+
+concrete Test {
+  @type get () -> (Int)
 }
 
 define Test {
-  @type get () -> (Int)
   get () {
     Int value <- 0
     scoped {
@@ -363,17 +265,6 @@ define Test {
       value <- 2
     } in return 3
   }
-
-  run () {
-    Int value <- get()
-    if (value != 1) {
-      fail(value)
-    }
-  }
-}
-
-concrete Test {
-  @type run () -> ()
 }
 
 
@@ -382,37 +273,27 @@ testcase "multiple cleanup" {
 }
 
 unittest test {
-  \ Test.run()
-}
-
-define Test {
-  run () {
-    Int value1 <- 0
-    Int value2 <- 0
-    Int value3 <- 0
-    scoped {
-    } cleanup {
-      value1 <- 1
-      value2 <- 1
-    } in scoped {
-    } cleanup {
-      value2 <- 2
-      value3 <- 2
-    } in \ empty
-    if (value1 != 1) {
-      fail(value1)
-    }
-    if (value2 != 1) {
-      fail(value2)
-    }
-    if (value3 != 2) {
-      fail(value3)
-    }
+  Int value1 <- 0
+  Int value2 <- 0
+  Int value3 <- 0
+  scoped {
+  } cleanup {
+    value1 <- 1
+    value2 <- 1
+  } in scoped {
+  } cleanup {
+    value2 <- 2
+    value3 <- 2
+  } in \ empty
+  if (value1 != 1) {
+    fail(value1)
   }
-}
-
-concrete Test {
-  @type run () -> ()
+  if (value2 != 1) {
+    fail(value2)
+  }
+  if (value3 != 2) {
+    fail(value3)
+  }
 }
 
 
@@ -421,7 +302,27 @@ testcase "multiple cleanup with return" {
 }
 
 unittest test {
-  \ Test.run()
+  Value value <- Value.create()
+  Int value1, Int value2, Int value3 <- value.call()
+  if (value1 != 1) {
+    fail(value1)
+  }
+  if (value2 != 1) {
+    fail(value2)
+  }
+  if (value3 != 1) {
+    fail(value3)
+  }
+  value1, value2, value3 <- value.get()
+  if (value1 != 2) {
+    fail(value1)
+  }
+  if (value2 != 2) {
+    fail(value2)
+  }
+  if (value3 != 3) {
+    fail(value3)
+  }
 }
 
 concrete Value {
@@ -459,53 +360,17 @@ define Value {
   }
 }
 
-define Test {
-  run () {
-    Value value <- Value.create()
-    Int value1, Int value2, Int value3 <- value.call()
-    if (value1 != 1) {
-      fail(value1)
-    }
-    if (value2 != 1) {
-      fail(value2)
-    }
-    if (value3 != 1) {
-      fail(value3)
-    }
-    value1, value2, value3 <- value.get()
-    if (value1 != 2) {
-      fail(value1)
-    }
-    if (value2 != 2) {
-      fail(value2)
-    }
-    if (value3 != 3) {
-      fail(value3)
-    }
-  }
-}
-
-concrete Test {
-  @type run () -> ()
-}
-
 
 testcase "cleanup cannot refer to later variables" {
   error
   require "value.+not defined"
 }
 
-define Test {
-  run () {
-    scoped {
-    } cleanup {
-      value <- 1
-    } in Int value <- 2
-  }
-}
-
-concrete Test {
-  @type run () -> ()
+unittest test {
+  scoped {
+  } cleanup {
+    value <- 1
+  } in Int value <- 2
 }
 
 
@@ -514,20 +379,14 @@ testcase "cleanup not merged" {
   require "value.+not defined"
 }
 
-define Test {
-  run () {
-    scoped {
-    } cleanup {
-      Int value <- 0
-    } in scoped {
-    } cleanup {
-      value <- 1
-    } in \ empty
-  }
-}
-
-concrete Test {
-  @type run () -> ()
+unittest test {
+  scoped {
+  } cleanup {
+    Int value <- 0
+  } in scoped {
+  } cleanup {
+    value <- 1
+  } in \ empty
 }
 
 
@@ -536,23 +395,13 @@ testcase "no name clash in nested scope with return" {
 }
 
 unittest test {
-  \ Test.run()
-}
-
-define Test {
-  run () {
-    scoped {
-    } cleanup {
-      Int value <- 0
-    } in scoped {
-    } cleanup {
-      Int value <- 1
-    } in return _
-  }
-}
-
-concrete Test {
-  @type run () -> ()
+  scoped {
+  } cleanup {
+    Int value <- 0
+  } in scoped {
+  } cleanup {
+    Int value <- 1
+  } in return _
 }
 
 
@@ -562,21 +411,11 @@ testcase "cleanup skipped for fail" {
 }
 
 unittest test {
-  \ Test.run()
-}
-
-define Test {
-  run () {
-    scoped {
-      String message <- "scoped"
-    } cleanup {
-      message <- "cleanup"
-    } in fail(message)
-  }
-}
-
-concrete Test {
-  @type run () -> ()
+  scoped {
+    String message <- "scoped"
+  } cleanup {
+    message <- "cleanup"
+  } in fail(message)
 }
 
 
@@ -585,26 +424,16 @@ testcase "cleanup not applied to returns outside of scope" {
 }
 
 unittest test {
-  \ Test.run()
-}
+  Int value <- 0
+  scoped {
+  } cleanup {
+    if (value != 0) {
+      fail(value)
+    }
+  } in \ empty
 
-define Test {
-  run () {
-    Int value <- 0
-    scoped {
-    } cleanup {
-      if (value != 0) {
-        fail(value)
-      }
-    } in \ empty
-
-    value <- 1
-    return _
-  }
-}
-
-concrete Test {
-  @type run () -> ()
+  value <- 1
+  return _
 }
 
 
@@ -613,23 +442,11 @@ testcase "cleanup unconditional" {
 }
 
 unittest test {
-  \ Test.run()
-}
-
-@value interface Value {}
-
-define Test {
-  run () {
-    scoped {
-      Int x <- 1
-    } in {
-      \ x
-    }
+  scoped {
+    Int x <- 1
+  } in {
+    \ x
   }
-}
-
-concrete Test {
-  @type run () -> ()
 }
 
 
@@ -638,25 +455,13 @@ testcase "scoped empty blocks" {
 }
 
 unittest test {
-  \ Test.run()
-}
-
-@value interface Value {}
-
-define Test {
-  run () {
-    scoped {
-      // empty
-    } cleanup {
-      // empty
-    } in {
-      // empty
-    }
+  scoped {
+    // empty
+  } cleanup {
+    // empty
+  } in {
+    // empty
   }
-}
-
-concrete Test {
-  @type run () -> ()
 }
 
 
@@ -665,7 +470,15 @@ testcase "just cleanup" {
 }
 
 unittest test {
-  \ Test.run()
+  Value value <- Value.create()
+  Int value1 <- value.postIncrement()
+  if (value1 != 0) {
+    fail(value1)
+  }
+  Int value2 <- value.get()
+  if (value2 != 1) {
+    fail(value2)
+  }
 }
 
 concrete Value {
@@ -690,24 +503,6 @@ define Value {
   get () {
     return value
   }
-}
-
-define Test {
-  run () {
-    Value value <- Value.create()
-    Int value1 <- value.postIncrement()
-    if (value1 != 0) {
-      fail(value1)
-    }
-    Int value2 <- value.get()
-    if (value2 != 1) {
-      fail(value2)
-    }
-  }
-}
-
-concrete Test {
-  @type run () -> ()
 }
 
 
@@ -742,40 +537,30 @@ testcase "partial cleanup with while and break" {
 }
 
 unittest test {
-  \ Test.run()
-}
-
-define Test {
-  run () {
-    Int x <- 0
-    Int y <- 0
-    Int z <- 0
-    cleanup {
-      x <- 1
-    } in {
-      while (true) {
+  Int x <- 0
+  Int y <- 0
+  Int z <- 0
+  cleanup {
+    x <- 1
+  } in {
+    while (true) {
+      cleanup {
+        y <- 2
+      } in if (true) {
         cleanup {
-          y <- 2
+          z <- 3
         } in if (true) {
-          cleanup {
-            z <- 3
-          } in if (true) {
-            break
-          }
+          break
         }
       }
-      \ Testing.checkEquals<?>(x,0)
-      \ Testing.checkEquals<?>(y,2)
-      \ Testing.checkEquals<?>(z,3)
     }
-    \ Testing.checkEquals<?>(x,1)
+    \ Testing.checkEquals<?>(x,0)
     \ Testing.checkEquals<?>(y,2)
     \ Testing.checkEquals<?>(z,3)
   }
-}
-
-concrete Test {
-  @type run () -> ()
+  \ Testing.checkEquals<?>(x,1)
+  \ Testing.checkEquals<?>(y,2)
+  \ Testing.checkEquals<?>(z,3)
 }
 
 
@@ -784,7 +569,21 @@ testcase "full cleanup with while and return" {
 }
 
 unittest test {
-  \ Test.run()
+  Value value <- Value.create()
+  scoped {
+    Int x, Int y, Int z <- value.call()
+  } in {
+    \ Testing.checkEquals<?>(x,0)
+    \ Testing.checkEquals<?>(y,0)
+    \ Testing.checkEquals<?>(z,0)
+  }
+  scoped {
+    Int x, Int y, Int z <- value.get()
+  } in {
+    \ Testing.checkEquals<?>(x,1)
+    \ Testing.checkEquals<?>(y,2)
+    \ Testing.checkEquals<?>(z,3)
+  }
 }
 
 concrete Value {
@@ -824,35 +623,13 @@ define Value {
   }
 }
 
-define Test {
-  run () {
-    Value value <- Value.create()
-    scoped {
-      Int x, Int y, Int z <- value.call()
-    } in {
-      \ Testing.checkEquals<?>(x,0)
-      \ Testing.checkEquals<?>(y,0)
-      \ Testing.checkEquals<?>(z,0)
-    }
-    scoped {
-      Int x, Int y, Int z <- value.get()
-    } in {
-      \ Testing.checkEquals<?>(x,1)
-      \ Testing.checkEquals<?>(y,2)
-      \ Testing.checkEquals<?>(z,3)
-    }
-  }
-}
-
-concrete Test {
-  @type run () -> ()
-}
-
 
 testcase "named return cannot be modified in cleanup" {
   error
   require compiler "assign.+value"
 }
+
+concrete Test {}
 
 define Test {
   @type get () -> (String)
@@ -861,12 +638,6 @@ define Test {
       value <- "error"
     } in return "message"
   }
-
-  run () {}
-}
-
-concrete Test {
-  @type run () -> ()
 }
 
 
@@ -875,6 +646,8 @@ testcase "positional return not allowed in cleanup" {
   require compiler "return.+cleanup"
 }
 
+concrete Test {}
+
 define Test {
   @type get () -> (Int)
   get () (value) {
@@ -882,12 +655,6 @@ define Test {
       return 0
     } in \ empty
   }
-
-  run () {}
-}
-
-concrete Test {
-  @type run () -> ()
 }
 
 
@@ -896,14 +663,8 @@ testcase "default return not allowed in cleanup" {
   require compiler "return.+cleanup"
 }
 
-define Test {
-  run () {
-    cleanup {
-      return _
-    } in \ empty
-  }
-}
-
-concrete Test {
-  @type run () -> ()
+unittest test {
+  cleanup {
+    return _
+  } in \ empty
 }

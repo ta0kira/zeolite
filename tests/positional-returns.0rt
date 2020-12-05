@@ -23,15 +23,11 @@ testcase "missing return" {
 
 @value interface Value {}
 
+concrete Test {}
+
 define Test {
   @value process () -> (Value)
   process () {}
-
-  run () {}
-}
-
-concrete Test {
-  @type run () -> ()
 }
 
 
@@ -40,11 +36,20 @@ testcase "positional return with no names assigned" {
 }
 
 unittest test {
-  \ Test.run()
+  scoped {
+    Int x, Int y <- Test.get()
+  } in if (x != 3) {
+    fail("Failed")
+  } elif (y != 4) {
+    fail("Failed")
+  }
+}
+
+concrete Test {
+  @type get () -> (Int,Int)
 }
 
 define Test {
-  @type get () -> (Int,Int)
   get () (x,y) {
     if (false) {
       x <- 1
@@ -53,20 +58,6 @@ define Test {
     }
     y <- 2
   }
-
-  run () {
-    scoped {
-      Int x, Int y <- get()
-    } in if (x != 3) {
-      fail("Failed")
-    } elif (y != 4) {
-      fail("Failed")
-    }
-  }
-}
-
-concrete Test {
-  @type run () -> ()
 }
 
 
@@ -75,28 +66,23 @@ testcase "positional return instead of names" {
 }
 
 unittest test {
-  \ Test.run()
-}
-
-define Test {
-  @type get () -> (Int,Int)
-  get () (x,y) {
-    return 1, 2
-  }
-
-  run () {
-    scoped {
-      Int x, Int y <- get()
-    } in if (x != 1) {
-      fail("Failed")
-    } elif (y != 2) {
-      fail("Failed")
-    }
+  scoped {
+    Int x, Int y <- Test.get()
+  } in if (x != 1) {
+    fail("Failed")
+  } elif (y != 2) {
+    fail("Failed")
   }
 }
 
 concrete Test {
-  @type run () -> ()
+  @type get () -> (Int,Int)
+}
+
+define Test {
+  get () (x,y) {
+    return 1, 2
+  }
 }
 
 
@@ -105,11 +91,20 @@ testcase "positional return with some names assigned" {
 }
 
 unittest test {
-  \ Test.run()
+  scoped {
+    Int x, Int y <- Test.get()
+  } in if (x != 3) {
+    fail("Failed")
+  } elif (y != 4) {
+    fail("Failed")
+  }
+}
+
+concrete Test {
+  @type get () -> (Int,Int)
 }
 
 define Test {
-  @type get () -> (Int,Int)
   get () (x,y) {
     y <- 2
     if (false) {
@@ -118,18 +113,4 @@ define Test {
       return 3, 4
     }
   }
-
-  run () {
-    scoped {
-      Int x, Int y <- get()
-    } in if (x != 3) {
-      fail("Failed")
-    } elif (y != 4) {
-      fail("Failed")
-    }
-  }
-}
-
-concrete Test {
-  @type run () -> ()
 }

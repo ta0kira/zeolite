@@ -23,13 +23,9 @@ testcase "@type member not allowed" {
 
 define Test {
   @type Bool value <- false
-
-  run () {}
 }
 
-concrete Test {
-  @type run () -> ()
-}
+concrete Test {}
 
 
 testcase "@category member from @type" {
@@ -37,8 +33,10 @@ testcase "@category member from @type" {
 }
 
 unittest test {
-  \ Test.run()
+  // NOTE: Executing the test ensures that C++ compilation works.
 }
+
+concrete Test {}
 
 define Test {
   @category Bool value <- true
@@ -47,12 +45,6 @@ define Test {
   call () {
     \ value
   }
-
-  run () {}
-}
-
-concrete Test {
-  @type run () -> ()
 }
 
 
@@ -61,8 +53,10 @@ testcase "@category member from @value" {
 }
 
 unittest test {
-  \ Test.run()
+  // NOTE: Executing the test ensures that C++ compilation works.
 }
+
+concrete Test {}
 
 define Test {
   @category Bool value <- true
@@ -71,12 +65,6 @@ define Test {
   call () {
     \ value
   }
-
-  run () {}
-}
-
-concrete Test {
-  @type run () -> ()
 }
 
 
@@ -85,6 +73,8 @@ testcase "@category to @category" {
   require "get"
 }
 
+concrete Test {}
+
 define Test {
   @category Bool value <- get()
 
@@ -92,12 +82,6 @@ define Test {
   get () {
     return true
   }
-
-  run () {}
-}
-
-concrete Test {
-  @type run () -> ()
 }
 
 
@@ -106,25 +90,20 @@ testcase "@category member refers to @category member" {
 }
 
 unittest test {
-  \ Test.run()
+  \ Testing.checkEquals<?>(Test:get(),2)
+}
+
+concrete Test {
+  @category get () -> (Int)
 }
 
 define Test {
   @category Int value1 <- 1
   @category Int value2 <- value1+1
 
-  @category get () -> (Int)
   get () {
     return value2
   }
-
-  run () {
-    \ Testing.checkEquals<?>(get(),2)
-  }
-}
-
-concrete Test {
-  @type run () -> ()
 }
 
 
@@ -133,7 +112,8 @@ testcase "@category member is lazy" {
 }
 
 unittest test {
-  \ Test.run()
+  // Constructing Test ensures that the instance is actually created.
+  \ typename<Test>()
 }
 
 concrete Util {
@@ -146,14 +126,10 @@ define Util {
   }
 }
 
+concrete Test {}
+
 define Test {
   @category Bool value <- Util.doNotUse()
-
-  run () {}
-}
-
-concrete Test {
-  @type run () -> ()
 }
 
 
@@ -176,16 +152,16 @@ define Util {
   }
 }
 
+concrete Test {
+  @type run () -> ()
+}
+
 define Test {
   @category Bool value <- Util.doNotUse()
 
   run () {
     Bool value2 <- value
   }
-}
-
-concrete Test {
-  @type run () -> ()
 }
 
 
@@ -208,16 +184,16 @@ define Util {
   }
 }
 
+concrete Test {
+  @type run () -> ()
+}
+
 define Test {
   @category Bool value <- Util.doNotUse()
 
   run () {
     value <- false
   }
-}
-
-concrete Test {
-  @type run () -> ()
 }
 
 
@@ -240,16 +216,16 @@ define Util {
   }
 }
 
+concrete Test {
+  @type run () -> ()
+}
+
 define Test {
   @category Bool value <- Util.doNotUse()
 
   run () {
     \ value
   }
-}
-
-concrete Test {
-  @type run () -> ()
 }
 
 
@@ -261,6 +237,10 @@ unittest test {
   \ Test.run()
 }
 
+concrete Test {
+  @type run () -> ()
+}
+
 define Test {
   @category Bool value <- true
 
@@ -270,14 +250,10 @@ define Test {
   }
 
   run () {
-    if (call() || value) {
+    if (Test.call() || value) {
       fail("Failed")
     }
   }
-}
-
-concrete Test {
-  @type run () -> ()
 }
 
 
@@ -287,7 +263,7 @@ testcase "@category init cycle" {
 }
 
 unittest test {
-  \ Test.run()
+  \ Value1.get()
 }
 
 concrete Value1 {
@@ -314,30 +290,16 @@ define Value2 {
   }
 }
 
-define Test {
-  run () {
-    \ Value1.get()
-  }
-}
-
-concrete Test {
-  @type run () -> ()
-}
-
 
 testcase "self in @category init" {
   error
   require "self"
 }
 
+concrete Test {}
+
 define Test {
   @category Test value <- self
-
-  run () {}
-}
-
-concrete Test {
-  @type run () -> ()
 }
 
 
@@ -346,6 +308,8 @@ testcase "cycle in @category init" {
   require "disallowed"
 }
 
+concrete Test {}
+
 define Test {
   @category Bool value <- get()
 
@@ -353,10 +317,4 @@ define Test {
   get () {
     return value
   }
-
-  run () {}
-}
-
-concrete Test {
-  @type run () -> ()
 }

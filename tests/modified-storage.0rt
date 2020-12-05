@@ -21,38 +21,33 @@ testcase "optional persists" {
 }
 
 unittest test {
-  \ Test.run()
+  Test value <- Test.create()
+  \ value.set()
+  \ value.check()
+}
+
+concrete Test {
+  @type create () -> (Test)
+  @value set () -> ()
+  @value check () -> ()
 }
 
 define Test {
   @value optional Test self2
 
-  @type create () -> (Test)
   create () {
     return Test{ empty }
   }
 
-  @value set () -> ()
   set () {
     scoped {
       Test value <- create()
     } in self2 <- value
   }
 
-  @value check () -> ()
   check () {
     \ require(self2)
   }
-
-  run () {
-    Test value <- create()
-    \ value.set()
-    \ value.check()
-  }
-}
-
-concrete Test {
-  @type run () -> ()
 }
 
 
@@ -61,25 +56,30 @@ testcase "weak is weak" {
 }
 
 unittest test {
-  \ Test.run()
+  Test value <- Test.create()
+  \ value.set()
+  \ value.check()
+}
+
+concrete Test {
+  @type create () -> (Test)
+  @value set () -> ()
+  @value check () -> ()
 }
 
 define Test {
   @value weak Test self2
 
-  @type create () -> (Test)
   create () {
     return Test{ empty }
   }
 
-  @value set () -> ()
   set () {
     scoped {
       Test value <- create()
     } in self2 <- value
   }
 
-  @value check () -> ()
   check () {
     scoped {
       optional Test self3 <- strong(self2)
@@ -87,16 +87,6 @@ define Test {
       fail("Failed")
     }
   }
-
-  run () {
-    Test value <- create()
-    \ value.set()
-    \ value.check()
-  }
-}
-
-concrete Test {
-  @type run () -> ()
 }
 
 
@@ -105,31 +95,26 @@ testcase "present weak" {
 }
 
 unittest test {
-  \ Test.run()
+  Test value <- Test.create()
+  \ value.check()
+}
+
+concrete Test {
+  @type create () -> (Test)
+  @value check () -> ()
 }
 
 define Test {
-  @type create () -> (Test)
   create () {
-    return Test{}
+    return Test{ }
   }
 
-  @value check () -> ()
   check () {
     weak Test value <- create()
     if (present(strong(value))) {  // value should be nullptr here
       fail("Failed")
     }
   }
-
-  run () {
-    Test value <- create()
-    \ value.check()
-  }
-}
-
-concrete Test {
-  @type run () -> ()
 }
 
 
@@ -182,7 +167,11 @@ testcase "weak in multi assign" {
 }
 
 unittest test {
-  \ Test.run()
+  // value1 ensures value2 is present.
+  Value value1, weak Value value2 <- Test.get()
+  if (!present(strong(value2))) {
+    fail("Failed")
+  }
 }
 
 concrete Value {
@@ -191,28 +180,19 @@ concrete Value {
 
 define Value {
   create () {
-    return Value{}
-  }
-}
-
-define Test {
-  @type get () -> (Value,Value)
-  get () {
-    Value value <- Value.create()
-    return value, value
-  }
-
-  run () {
-    // value1 ensures value2 is present.
-    Value value1, weak Value value2 <- get()
-    if (!present(strong(value2))) {
-      fail("Failed")
-    }
+    return Value{ }
   }
 }
 
 concrete Test {
-  @type run () -> ()
+  @type get () -> (Value,Value)
+}
+
+define Test {
+  get () {
+    Value value <- Value.create()
+    return value, value
+  }
 }
 
 
@@ -221,7 +201,11 @@ testcase "weak in inline assign" {
 }
 
 unittest test {
-  \ Test.run()
+  Value value1 <- Value.create()
+  weak Value value2 <- empty
+  if (!present(strong((value2 <- value1)))) {
+    fail("Failed")
+  }
 }
 
 concrete Value {
@@ -230,22 +214,8 @@ concrete Value {
 
 define Value {
   create () {
-    return Value{}
+    return Value{ }
   }
-}
-
-define Test {
-  run () {
-    Value value1 <- Value.create()
-    weak Value value2 <- empty
-    if (!present(strong((value2 <- value1)))) {
-      fail("Failed")
-    }
-  }
-}
-
-concrete Test {
-  @type run () -> ()
 }
 
 
@@ -254,25 +224,20 @@ testcase "present required" {
 }
 
 unittest test {
-  \ Test.run()
-}
-
-define Test {
-  @type create () -> (Test)
-  create () {
-    return Test{}
-  }
-
-  run () {
-    Test value <- create()
-    if (!present(value)) {
-      fail("Failed")
-    }
+  Test value <- Test.create()
+  if (!present(value)) {
+    fail("Failed")
   }
 }
 
 concrete Test {
-  @type run () -> ()
+  @type create () -> (Test)
+}
+
+define Test {
+  create () {
+    return Test{ }
+  }
 }
 
 
@@ -281,24 +246,19 @@ testcase "require required" {
 }
 
 unittest test {
-  \ Test.run()
-}
-
-define Test {
-  @type create () -> (Test)
-  create () {
-    return Test{}
-  }
-
-  @value call () -> ()
-  call () {}
-
-  run () {
-    Test value <- create()
-    \ require(value).call()
-  }
+  Test value <- Test.create()
+  \ require(value).call()
 }
 
 concrete Test {
-  @type run () -> ()
+  @type create () -> (Test)
+  @value call () -> ()
+}
+
+define Test {
+  create () {
+    return Test{ }
+  }
+
+  call () {}
 }

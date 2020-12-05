@@ -17,13 +17,11 @@ limitations under the License.
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
 testcase "warning statement after fail" {
-  success
+  compiles
   require compiler "unreachable"
 }
 
-unittest test {
-  \ Test.run()
-}
+concrete Test {}
 
 define Test {
   @category failedReturn () -> (Int)
@@ -31,21 +29,13 @@ define Test {
     fail("Failed")
     return 1
   }
-
-  run () {}
-}
-
-concrete Test {
-  @type run () -> ()
 }
 
 testcase "unreachable not compiled" {
-  success
+  compiles
 }
 
-unittest test {
-  \ Test.run()
-}
+concrete Test {}
 
 define Test {
   @category failedReturn () -> (Int)
@@ -53,23 +43,15 @@ define Test {
     fail("Failed")
     \ foo()
   }
-
-  run () {}
-}
-
-concrete Test {
-  @type run () -> ()
 }
 
 
 testcase "warning statement after return" {
-  success
+  compiles
   require compiler "unreachable"
 }
 
-unittest test {
-  \ Test.run()
-}
+concrete Test {}
 
 define Test {
   @category failedReturn () -> (Int)
@@ -77,23 +59,15 @@ define Test {
     return 0
     return 1
   }
-
-  run () {}
-}
-
-concrete Test {
-  @type run () -> ()
 }
 
 
 testcase "warning statement after conditional return" {
-  success
+  compiles
   require compiler "unreachable"
 }
 
-unittest test {
-  \ Test.run()
-}
+concrete Test {}
 
 define Test {
   @category failedReturn () -> (Int)
@@ -105,23 +79,15 @@ define Test {
     }
     return 3
   }
-
-  run () {}
-}
-
-concrete Test {
-  @type run () -> ()
 }
 
 
 testcase "warning statement after scoped return" {
-  success
+  compiles
   require compiler "unreachable"
 }
 
-unittest test {
-  \ Test.run()
-}
+concrete Test {}
 
 define Test {
   @category failedReturn () -> (Int)
@@ -130,12 +96,6 @@ define Test {
       return 1
     } in return 2
   }
-
-  run () {}
-}
-
-concrete Test {
-  @type run () -> ()
 }
 
 
@@ -146,11 +106,14 @@ testcase "warning statement after cleanup fail" {
 }
 
 unittest test {
-  \ Test.run()
+  \ Test:failedReturn()
+}
+
+concrete Test {
+  @category failedReturn () -> (Int)
 }
 
 define Test {
-  @category failedReturn () -> (Int)
   failedReturn () {
     scoped {
     } cleanup {
@@ -158,14 +121,6 @@ define Test {
     } in \ empty
     return 2
   }
-
-  run () {
-    \ failedReturn()
-  }
-}
-
-concrete Test {
-  @type run () -> ()
 }
 
 
@@ -176,11 +131,14 @@ testcase "warning statement in cleanup after scoped fail" {
 }
 
 unittest test {
-  \ Test.run()
+  \ Test:failedReturn()
+}
+
+concrete Test {
+  @category failedReturn () -> ()
 }
 
 define Test {
-  @category failedReturn () -> ()
   failedReturn () {
     scoped {
       fail("message")
@@ -188,14 +146,6 @@ define Test {
       \ empty
     } in {}
   }
-
-  run () {
-    \ failedReturn()
-  }
-}
-
-concrete Test {
-  @type run () -> ()
 }
 
 
@@ -206,68 +156,43 @@ testcase "warning statement in cleanup after in fail" {
 }
 
 unittest test {
-  \ Test.run()
+  \ Test:failedReturn()
+}
+
+concrete Test {
+  @category failedReturn () -> ()
 }
 
 define Test {
-  @category failedReturn () -> ()
   failedReturn () {
     cleanup {
       \ empty
     } in fail("message")
   }
-
-  run () {
-    \ failedReturn()
-  }
-}
-
-concrete Test {
-  @type run () -> ()
 }
 
 
 testcase "warning statement after break" {
-  success
+  compiles
   require compiler "unreachable"
 }
 
 unittest test {
-  \ Test.run()
-}
-
-define Test {
-  run () {
-    while (false) {
-      break
-      fail("Failed")
-    }
+  while (false) {
+    break
+    fail("Failed")
   }
-}
-
-concrete Test {
-  @type run () -> ()
 }
 
 
 testcase "warning statement after continue" {
-  success
+  compiles
   require compiler "unreachable"
 }
 
 unittest test {
-  \ Test.run()
-}
-
-define Test {
-  run () {
-    while (false) {
-      continue
-      fail("Failed")
-    }
+  while (false) {
+    continue
+    fail("Failed")
   }
-}
-
-concrete Test {
-  @type run () -> ()
 }

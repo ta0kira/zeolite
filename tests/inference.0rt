@@ -21,22 +21,17 @@ testcase "simple inference" {
 }
 
 unittest test {
-  \ Test.run()
-}
-
-define Test {
-  run () {
-    Int value <- get<?>(10)
-  }
-
-  @type get<#x> (#x) -> (#x)
-  get (x) {
-    return x
-  }
+  Int value <- Test.get<?>(10)
 }
 
 concrete Test {
-  @type run () -> ()
+  @type get<#x> (#x) -> (#x)
+}
+
+define Test {
+  get (x) {
+    return x
+  }
 }
 
 
@@ -47,19 +42,18 @@ testcase "inference mismatch" {
   require "Int"
 }
 
-define Test {
-  run () {
-    String value <- get<?>(10)
-  }
-
-  @type get<#x> (#x) -> (#x)
-  get (x) {
-    return x
-  }
+unittest test {
+  String value <- Test.get<?>(10)
 }
 
 concrete Test {
-  @type run () -> ()
+  @type get<#x> (#x) -> (#x)
+}
+
+define Test {
+  get (x) {
+    return x
+  }
 }
 
 
@@ -68,7 +62,7 @@ testcase "nested inference" {
 }
 
 unittest test {
-  \ Test.run()
+  Type<Int> value <- Test.get<?>(Type<Int>.create())
 }
 
 concrete Type<#x> {
@@ -81,19 +75,14 @@ define Type {
   }
 }
 
-define Test {
-  run () {
-    Type<Int> value <- get<?>(Type<Int>.create())
-  }
-
+concrete Test {
   @type get<#x> (Type<#x>) -> (Type<#x>)
+}
+
+define Test {
   get (x) {
     return x
   }
-}
-
-concrete Test {
-  @type run () -> ()
 }
 
 
@@ -102,22 +91,17 @@ testcase "simple inference with qualification" {
 }
 
 unittest test {
-  \ Test.run()
-}
-
-define Test {
-  run () {
-    Int value <- Test.get<?>(10)
-  }
-
-  @type get<#x> (#x) -> (#x)
-  get (x) {
-    return x
-  }
+  Int value <- Test.get<?>(10)
 }
 
 concrete Test {
-  @type run () -> ()
+  @type get<#x> (#x) -> (#x)
+}
+
+define Test {
+  get (x) {
+    return x
+  }
 }
 
 
@@ -128,19 +112,18 @@ testcase "inference mismatch with qualification" {
   require "Int"
 }
 
-define Test {
-  run () {
-    String value <- Test.get<?>(10)
-  }
-
-  @type get<#x> (#x) -> (#x)
-  get (x) {
-    return x
-  }
+unittest test {
+  String value <- Test.get<?>(10)
 }
 
 concrete Test {
-  @type run () -> ()
+  @type get<#x> (#x) -> (#x)
+}
+
+define Test {
+  get (x) {
+    return x
+  }
 }
 
 
@@ -149,7 +132,7 @@ testcase "nested inference with qualification" {
 }
 
 unittest test {
-  \ Test.run()
+  Type<Int> value <- Test.get<?>(Type<Int>.create())
 }
 
 concrete Type<#x> {
@@ -162,19 +145,14 @@ define Type {
   }
 }
 
-define Test {
-  run () {
-    Type<Int> value <- Test.get<?>(Type<Int>.create())
-  }
-
+concrete Test {
   @type get<#x> (Type<#x>) -> (Type<#x>)
+}
+
+define Test {
   get (x) {
     return x
   }
-}
-
-concrete Test {
-  @type run () -> ()
 }
 
 
@@ -184,6 +162,10 @@ testcase "inference conflict" {
   require "#x"
 }
 
+unittest test {
+  Type<Int> value <- Test.get<?>(Type<Int>.create(),"bad")
+}
+
 concrete Type<#x> {
   @type create () -> (Type<#x>)
 }
@@ -194,19 +176,14 @@ define Type {
   }
 }
 
-define Test {
-  run () {
-    Type<Int> value <- get<?>(Type<Int>.create(),"bad")
-  }
-
+concrete Test {
   @type get<#x> (Type<#x>,#x) -> (Type<#x>)
+}
+
+define Test {
   get (x,_) {
     return x
   }
-}
-
-concrete Test {
-  @type run () -> ()
 }
 
 
@@ -217,21 +194,20 @@ testcase "elimination by filter" {
   require "Formatted.+String"
 }
 
-define Test {
-  run () {
-    \ get<?>("value")
-  }
-
-  @type get<#x>
-    #x allows Formatted
-  (#x) -> (#x)
-  get (x) {
-    return x
-  }
+unittest test {
+  \ Test.get<?>("value")
 }
 
 concrete Test {
-  @type run () -> ()
+  @type get<#x>
+    #x allows Formatted
+  (#x) -> (#x)
+}
+
+define Test {
+  get (x) {
+    return x
+  }
 }
 
 
@@ -242,21 +218,20 @@ testcase "elimination by filter without param" {
   require "Formatted.+String"
 }
 
-define Test {
-  run () {
-    \ get<Formatted,?>("value")
-  }
-
-  @type get<#y,#x>
-    #x allows #y
-  (#x) -> (#x)
-  get (x) {
-    return x
-  }
+unittest test {
+  \ Test.get<Formatted,?>("value")
 }
 
 concrete Test {
-  @type run () -> ()
+  @type get<#y,#x>
+    #x allows #y
+  (#x) -> (#x)
+}
+
+define Test {
+  get (x) {
+    return x
+  }
 }
 
 
@@ -268,6 +243,10 @@ testcase "elimination by filter including param" {
   require "Type.+String"
 }
 
+unittest test {
+  \ Test.get<?>(Type<String>.create())
+}
+
 concrete Type<#x> {
   @type create () -> (Type<#x>)
 }
@@ -278,21 +257,16 @@ define Type {
   }
 }
 
-define Test {
-  run () {
-    \ get<?>(Type<String>.create())
-  }
-
+concrete Test {
   @type get<#x>
     #x allows Type<#x>
   (#x) -> (#x)
+}
+
+define Test {
   get (x) {
     return x
   }
-}
-
-concrete Test {
-  @type run () -> ()
 }
 
 
@@ -301,17 +275,16 @@ testcase "clashing param filter in the same scope" {
 }
 
 unittest test {
-  \ Test.run()
+  \ Test.get1<Int>()
 }
 
-define Test {
-  run () {
-    \ get1<Int>()
-  }
-
+concrete Test {
   @type get1<#x>
     #x requires Int
   () -> ()
+}
+
+define Test {
   get1 () {
     String value <- get2<?>("message")
   }
@@ -322,16 +295,18 @@ define Test {
   }
 }
 
-concrete Test {
-  @type run () -> ()
-}
-
 
 testcase "mutually dependent inferences" {
   error
   require "get"
   require "#x.+Int"
   require "#y.+String"
+}
+
+unittest test {
+    Type<String> x <- Type<String>.create()
+    Type<Int>    y <- Type<Int>.create()
+    \ Test.get<?,?>(x,y)
 }
 
 concrete Type<#x> {
@@ -344,20 +319,13 @@ define Type {
   }
 }
 
-define Test {
-  run () {
-    Type<String> x <- Type<String>.create()
-    Type<Int>    y <- Type<Int>.create()
-    \ get<?,?>(x,y)
-  }
-
+concrete Test {
   @type get<#x,#y>
     #x requires Type<#y>
     #y requires Type<#x>
   (#x,#y) -> ()
-  get (_,_) {}
 }
 
-concrete Test {
-  @type run () -> ()
+define Test {
+  get (_,_) {}
 }

@@ -23,37 +23,25 @@ testcase "missing assign" {
 
 @value interface Value {}
 
+concrete Test {}
+
 define Test {
   @value process () -> (Value)
   process () (value) {}
-
-  run () {}
-}
-
-concrete Test {
-  @type run () -> ()
 }
 
 
 testcase "assign before logical" {
-  success
+  compiles
 }
 
-unittest test {
-  \ Test.run()
-}
+concrete Test {}
 
 define Test {
   @value process () -> (Bool)
   process () (value) {
     \ (value <- true) || false
   }
-
-  run () {}
-}
-
-concrete Test {
-  @type run () -> ()
 }
 
 
@@ -62,61 +50,41 @@ testcase "assign after logical" {
   require "value"
 }
 
+concrete Test {}
+
 define Test {
   @value process () -> (Bool)
   process () (value) {
     \ false || (value <- true)
   }
-
-  run () {}
-}
-
-concrete Test {
-  @type run () -> ()
 }
 
 
 testcase "assign before arithmetic" {
-  success
+  compiles
 }
 
-unittest test {
-  \ Test.run()
-}
+concrete Test {}
 
 define Test {
   @value process () -> (Int)
   process () (value) {
     \ (value <- 1) + 2
   }
-
-  run () {}
-}
-
-concrete Test {
-  @type run () -> ()
 }
 
 
 testcase "assign after arithmetic" {
-  success
+  compiles
 }
 
-unittest test {
-  \ Test.run()
-}
+concrete Test {}
 
 define Test {
   @value process () -> (Int)
   process () (value) {
     \ 2 + (value <- 1)
   }
-
-  run () {}
-}
-
-concrete Test {
-  @type run () -> ()
 }
 
 
@@ -125,17 +93,13 @@ testcase "return used before assigned" {
   require "value.+initialized"
 }
 
+concrete Test {}
+
 define Test {
   @category process () -> (Int)
   process () (value) {
     value <- value+1
   }
-
-  run () {}
-}
-
-concrete Test {
-  @type run () -> ()
 }
 
 
@@ -144,26 +108,21 @@ testcase "return used after assigned" {
 }
 
 unittest test {
-  \ Test.run()
-}
-
-define Test {
-  @category process () -> (Int)
-  process () (value) {
-    value <- 1
-    value <- value+1
-  }
-
-  run () {
-    Int value <- process()
-    if (value != 2) {
-      fail("Failed")
-    }
+  Int value <- Test:process()
+  if (value != 2) {
+    fail("Failed")
   }
 }
 
 concrete Test {
-  @type run () -> ()
+  @category process () -> (Int)
+}
+
+define Test {
+  process () (value) {
+    value <- 1
+    value <- value+1
+  }
 }
 
 
@@ -172,17 +131,13 @@ testcase "return used as return before assigned" {
   require "value.+initialized"
 }
 
+concrete Test {}
+
 define Test {
   @category process () -> (Int)
   process () (value) {
     return value
   }
-
-  run () {}
-}
-
-concrete Test {
-  @type run () -> ()
 }
 
 
@@ -191,28 +146,23 @@ testcase "returns in correct order" {
 }
 
 unittest test {
-  \ Test.run()
-}
-
-define Test {
-  @type get () -> (Int,Int)
-  get () {
-    return 1, 2
-  }
-
-  run () {
-    scoped {
-      Int x, Int y <- get()
-    } in if (x != 1) {
-      fail("Failed")
-    } elif (y != 2) {
-      fail("Failed")
-    }
+  scoped {
+    Int x, Int y <- Test.get()
+  } in if (x != 1) {
+    fail("Failed")
+  } elif (y != 2) {
+    fail("Failed")
   }
 }
 
 concrete Test {
-  @type run () -> ()
+  @type get () -> (Int,Int)
+}
+
+define Test {
+  get () {
+    return 1, 2
+  }
 }
 
 
@@ -221,7 +171,13 @@ testcase "assigns in correct order" {
 }
 
 unittest test {
-  \ Test.run()
+  scoped {
+    _, Int x, Int y <- Test.get()
+  } in if (x != 1) {
+    fail("Failed")
+  } elif (y != 2) {
+    fail("Failed")
+  }
 }
 
 concrete Value {
@@ -230,32 +186,21 @@ concrete Value {
 
 define Value {
   create () {
-    return Value{}
+    return Value{ }
   }
 }
 
-define Test {
+concrete Test {
   @type get () -> (Value,Int,Int)
+}
+
+define Test {
   get () (v,x,y) {
     // This makes sure that x and y (primitive) are offset.
     v <- Value.create()
     x <- 1
     y <- 2
   }
-
-  run () {
-    scoped {
-      _, Int x, Int y <- get()
-    } in if (x != 1) {
-      fail("Failed")
-    } elif (y != 2) {
-      fail("Failed")
-    }
-  }
-}
-
-concrete Test {
-  @type run () -> ()
 }
 
 
@@ -264,30 +209,25 @@ testcase "assigns in correct order with explicit return" {
 }
 
 unittest test {
-  \ Test.run()
+  scoped {
+    Int x, Int y <- Test.get()
+  } in if (x != 1) {
+    fail("Failed")
+  } elif (y != 2) {
+    fail("Failed")
+  }
+}
+
+concrete Test {
+  @type get () -> (Int,Int)
 }
 
 define Test {
-  @type get () -> (Int,Int)
   get () (x,y) {
     x <- 1
     y <- 2
     return _
   }
-
-  run () {
-    scoped {
-      Int x, Int y <- get()
-    } in if (x != 1) {
-      fail("Failed")
-    } elif (y != 2) {
-      fail("Failed")
-    }
-  }
-}
-
-concrete Test {
-  @type run () -> ()
 }
 
 
@@ -297,22 +237,17 @@ testcase "positional return sets named return" {
 }
 
 unittest test {
-  \ Test.run()
+  \ Test.get()
+}
+
+concrete Test {
+  @type get () -> (String)
 }
 
 define Test {
-  @type get () -> (String)
   get () (value) {
     cleanup {
       fail(value)
     } in return "message"
   }
-
-  run () {
-    \ get()
-  }
-}
-
-concrete Test {
-  @type run () -> ()
 }

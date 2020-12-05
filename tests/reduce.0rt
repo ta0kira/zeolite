@@ -21,7 +21,12 @@ testcase "reduce to self" {
 }
 
 unittest test {
-  \ Test.run()
+  Value value <- Value.create()
+  scoped {
+    optional Value value2 <- reduce<Value,Value>(value)
+  } in if (!present(value2)) {
+    fail("Failed")
+  }
 }
 
 concrete Value {
@@ -32,21 +37,6 @@ define Value {
   create () {
     return Value{}
   }
-}
-
-define Test {
-  run () {
-    Value value <- Value.create()
-    scoped {
-      optional Value value2 <- reduce<Value,Value>(value)
-    } in if (!present(value2)) {
-      fail("Failed")
-    }
-  }
-}
-
-concrete Test {
-  @type run () -> ()
 }
 
 
@@ -55,7 +45,12 @@ testcase "reduce to unrelated" {
 }
 
 unittest test {
-  \ Test.run()
+  Value value <- Value.create()
+  scoped {
+    optional String value2 <- reduce<Value,String>(value)
+  } in if (present(value2)) {
+    fail("Failed")
+  }
 }
 
 concrete Value {
@@ -66,27 +61,19 @@ define Value {
   create () {
     return Value{}
   }
-}
-
-define Test {
-  run () {
-    Value value <- Value.create()
-    scoped {
-      optional Test value2 <- reduce<Value,Test>(value)
-    } in if (present(value2)) {
-      fail("Failed")
-    }
-  }
-}
-
-concrete Test {
-  @type run () -> ()
 }
 
 
 testcase "reduce wrong arg type" {
   error
-  require "argument"
+  require "String"
+  require "Value"
+  exclude "value2"
+}
+
+unittest test {
+  Value value <- Value.create()
+  optional Value value2 <- reduce<String,Value>(value)
 }
 
 concrete Value {
@@ -97,23 +84,19 @@ define Value {
   create () {
     return Value{}
   }
-}
-
-define Test {
-  run () {
-    Value value <- Value.create()
-    optional Value value2 <- reduce<Test,Value>(value)
-  }
-}
-
-concrete Test {
-  @type run () -> ()
 }
 
 
 testcase "reduce wrong return type" {
   error
-  require "assignment"
+  require "String"
+  require "Value"
+  require "value2"
+}
+
+unittest test {
+  Value value <- Value.create()
+  optional Value value2 <- reduce<Value,String>(value)
 }
 
 concrete Value {
@@ -124,17 +107,6 @@ define Value {
   create () {
     return Value{}
   }
-}
-
-define Test {
-  run () {
-    Value value <- Value.create()
-    optional Value value2 <- reduce<Value,Test>(value)
-  }
-}
-
-concrete Test {
-  @type run () -> ()
 }
 
 
@@ -143,7 +115,12 @@ testcase "reduce success with param" {
 }
 
 unittest test {
-  \ Test.run()
+  Value<Type2> value <- Value<Type2>.create()
+  scoped {
+    optional Value<Type1> value2 <- value.attempt<Type1>()
+  } in if (!present(value2)) {
+    fail("Failed")
+  }
 }
 
 concrete Value<|#x> {
@@ -167,21 +144,6 @@ define Value {
 
 @value interface Type2 {
   refines Type1
-}
-
-define Test {
-  run () {
-    Value<Type2> value <- Value<Type2>.create()
-    scoped {
-      optional Value<Type1> value2 <- value.attempt<Type1>()
-    } in if (!present(value2)) {
-      fail("Failed")
-    }
-  }
-}
-
-concrete Test {
-  @type run () -> ()
 }
 
 
@@ -190,7 +152,12 @@ testcase "reduce fail with param" {
 }
 
 unittest test {
-  \ Test.run()
+  Value<Type1> value <- Value<Type1>.create()
+  scoped {
+    optional Value<Type2> value2 <- value.attempt<Type2>()
+  } in if (present(value2)) {
+    fail("Failed")
+  }
 }
 
 concrete Value<|#x> {
@@ -216,28 +183,18 @@ define Value {
   refines Type1
 }
 
-define Test {
-  run () {
-    Value<Type1> value <- Value<Type1>.create()
-    scoped {
-      optional Value<Type2> value2 <- value.attempt<Type2>()
-    } in if (present(value2)) {
-      fail("Failed")
-    }
-  }
-}
-
-concrete Test {
-  @type run () -> ()
-}
-
 
 testcase "reduce success with contra param" {
   success
 }
 
 unittest test {
-  \ Test.run()
+  Value<Value<Type2>> value <- Value<Value<Type2>>.create()
+  scoped {
+    optional Value<Value<Type1>> value2 <- value.attempt<Value<Type1>>()
+  } in if (!present(value2)) {
+    fail("Failed")
+  }
 }
 
 concrete Value<#x|> {
@@ -261,21 +218,6 @@ define Value {
 
 @value interface Type2 {
   refines Type1
-}
-
-define Test {
-  run () {
-    Value<Value<Type2>> value <- Value<Value<Type2>>.create()
-    scoped {
-      optional Value<Value<Type1>> value2 <- value.attempt<Value<Type1>>()
-    } in if (!present(value2)) {
-      fail("Failed")
-    }
-  }
-}
-
-concrete Test {
-  @type run () -> ()
 }
 
 
@@ -284,7 +226,12 @@ testcase "reduce fail with contra param" {
 }
 
 unittest test {
-  \ Test.run()
+  Value<Value<Type1>> value <- Value<Value<Type1>>.create()
+  scoped {
+    optional Value<Value<Type2>> value2 <- value.attempt<Value<Type2>>()
+  } in if (present(value2)) {
+    fail("Failed")
+  }
 }
 
 concrete Value<#x|> {
@@ -310,28 +257,18 @@ define Value {
   refines Type1
 }
 
-define Test {
-  run () {
-    Value<Value<Type1>> value <- Value<Value<Type1>>.create()
-    scoped {
-      optional Value<Value<Type2>> value2 <- value.attempt<Value<Type2>>()
-    } in if (present(value2)) {
-      fail("Failed")
-    }
-  }
-}
-
-concrete Test {
-  @type run () -> ()
-}
-
 
 testcase "reduce success from union" {
   success
 }
 
 unittest test {
-  \ Test.run()
+  [Value1|Value2] value <- Value1.create()
+  scoped {
+    optional Base value2 <- reduce<[Value1|Value2],Base>(value)
+  } in if (!present(value2)) {
+    fail("Failed")
+  }
 }
 
 @value interface Base {}
@@ -350,21 +287,6 @@ define Value1 {
 
 @value interface Value2 {
   refines Base
-}
-
-define Test {
-  run () {
-    [Value1|Value2] value <- Value1.create()
-    scoped {
-      optional Base value2 <- reduce<[Value1|Value2],Base>(value)
-    } in if (!present(value2)) {
-      fail("Failed")
-    }
-  }
-}
-
-concrete Test {
-  @type run () -> ()
 }
 
 
@@ -373,7 +295,12 @@ testcase "reduce fail from union" {
 }
 
 unittest test {
-  \ Test.run()
+  [Value1|Value2] value <- Value1.create()
+  scoped {
+    optional Value2 value2 <- reduce<[Value1|Value2],Value2>(value)
+  } in if (present(value2)) {
+    fail("Failed")
+  }
 }
 
 @value interface Base {}
@@ -394,28 +321,18 @@ define Value1 {
   refines Base
 }
 
-define Test {
-  run () {
-    [Value1|Value2] value <- Value1.create()
-    scoped {
-      optional Value2 value2 <- reduce<[Value1|Value2],Value2>(value)
-    } in if (present(value2)) {
-      fail("Failed")
-    }
-  }
-}
-
-concrete Test {
-  @type run () -> ()
-}
-
 
 testcase "reduce success to intersect" {
   success
 }
 
 unittest test {
-  \ Test.run()
+  Value value <- Value.create()
+  scoped {
+    optional [Base1&Base2] value2 <- reduce<Value,[Base1&Base2]>(value)
+  } in if (!present(value2)) {
+    fail("Failed")
+  }
 }
 
 @value interface Base1 {}
@@ -433,21 +350,6 @@ define Value {
   create () {
     return Value{}
   }
-}
-
-define Test {
-  run () {
-    Value value <- Value.create()
-    scoped {
-      optional [Base1&Base2] value2 <- reduce<Value,[Base1&Base2]>(value)
-    } in if (!present(value2)) {
-      fail("Failed")
-    }
-  }
-}
-
-concrete Test {
-  @type run () -> ()
 }
 
 
@@ -456,7 +358,12 @@ testcase "reduce fail to intersect" {
 }
 
 unittest test {
-  \ Test.run()
+  Value value <- Value.create()
+  scoped {
+    optional [Base1&Base2] value2 <- reduce<Value,[Base1&Base2]>(value)
+  } in if (present(value2)) {
+    fail("Failed")
+  }
 }
 
 @value interface Base1 {}
@@ -475,28 +382,18 @@ define Value {
   }
 }
 
-define Test {
-  run () {
-    Value value <- Value.create()
-    scoped {
-      optional [Base1&Base2] value2 <- reduce<Value,[Base1&Base2]>(value)
-    } in if (present(value2)) {
-      fail("Failed")
-    }
-  }
-}
-
-concrete Test {
-  @type run () -> ()
-}
-
 
 testcase "reduce success union to intersect" {
   success
 }
 
 unittest test {
-  \ Test.run()
+  [Value1|Value2] value <- Value2.create()
+  scoped {
+    optional [Base1&Base2] value2 <- reduce<[Value1|Value2],[Base1&Base2]>(value)
+  } in if (!present(value2)) {
+    fail("Failed")
+  }
 }
 
 @value interface Base1 {}
@@ -519,21 +416,6 @@ define Value2 {
   create () {
     return Value2{}
   }
-}
-
-define Test {
-  run () {
-    [Value1|Value2] value <- Value2.create()
-    scoped {
-      optional [Base1&Base2] value2 <- reduce<[Value1|Value2],[Base1&Base2]>(value)
-    } in if (!present(value2)) {
-      fail("Failed")
-    }
-  }
-}
-
-concrete Test {
-  @type run () -> ()
 }
 
 
@@ -542,7 +424,12 @@ testcase "reduce fail union to intersect" {
 }
 
 unittest test {
-  \ Test.run()
+  [Value1|Value2] value <- Value2.create()
+  scoped {
+    optional [Base1&Base2] value2 <- reduce<[Value1|Value2],[Base1&Base2]>(value)
+  } in if (present(value2)) {
+    fail("Failed")
+  }
 }
 
 @value interface Base1 {}
@@ -566,28 +453,18 @@ define Value2 {
   }
 }
 
-define Test {
-  run () {
-    [Value1|Value2] value <- Value2.create()
-    scoped {
-      optional [Base1&Base2] value2 <- reduce<[Value1|Value2],[Base1&Base2]>(value)
-    } in if (present(value2)) {
-      fail("Failed")
-    }
-  }
-}
-
-concrete Test {
-  @type run () -> ()
-}
-
 
 testcase "reduce success intersect to union" {
   success
 }
 
 unittest test {
-  \ Test.run()
+  [Value1&Value2] value <- Data.create()
+  scoped {
+    optional [Base1|Base2] value2 <- reduce<[Value1&Value2],[Base1|Base2]>(value)
+  } in if (!present(value2)) {
+    fail("Failed")
+  }
 }
 
 @value interface Base1 {}
@@ -613,28 +490,18 @@ define Data {
   }
 }
 
-define Test {
-  run () {
-    [Value1&Value2] value <- Data.create()
-    scoped {
-      optional [Base1|Base2] value2 <- reduce<[Value1&Value2],[Base1|Base2]>(value)
-    } in if (!present(value2)) {
-      fail("Failed")
-    }
-  }
-}
-
-concrete Test {
-  @type run () -> ()
-}
-
 
 testcase "reduce fail intersect to union" {
   success
 }
 
 unittest test {
-  \ Test.run()
+  [Value1&Value2] value <- Data.create()
+  scoped {
+    optional [Base1|Base2] value2 <- reduce<[Value1&Value2],[Base1|Base2]>(value)
+  } in if (present(value2)) {
+    fail("Failed")
+  }
 }
 
 @value interface Base1 {}
@@ -658,28 +525,18 @@ define Data {
   }
 }
 
-define Test {
-  run () {
-    [Value1&Value2] value <- Data.create()
-    scoped {
-      optional [Base1|Base2] value2 <- reduce<[Value1&Value2],[Base1|Base2]>(value)
-    } in if (present(value2)) {
-      fail("Failed")
-    }
-  }
-}
-
-concrete Test {
-  @type run () -> ()
-}
-
 
 testcase "reduce succeeds to covariant any" {
   success
 }
 
 unittest test {
-  \ Test.run()
+  Value<String> value <- Value<String>.create()
+  scoped {
+    optional Value<any> value2 <- reduce<Value<String>,Value<any>>(value)
+  } in if (!present(value2)) {
+    fail("Failed")
+  }
 }
 
 concrete Value<|#x> {
@@ -690,21 +547,6 @@ define Value {
   create () {
     return Value<#x>{}
   }
-}
-
-define Test {
-  run () {
-    Value<Test> value <- Value<Test>.create()
-    scoped {
-      optional Value<any> value2 <- reduce<Value<Test>,Value<any>>(value)
-    } in if (!present(value2)) {
-      fail("Failed")
-    }
-  }
-}
-
-concrete Test {
-  @type run () -> ()
 }
 
 
@@ -713,7 +555,12 @@ testcase "reduce succeeds to contravariant all" {
 }
 
 unittest test {
-  \ Test.run()
+  Value<String> value <- Value<String>.create()
+  scoped {
+    optional Value<all> value2 <- reduce<Value<String>,Value<all>>(value)
+  } in if (!present(value2)) {
+    fail("Failed")
+  }
 }
 
 concrete Value<#x|> {
@@ -726,28 +573,18 @@ define Value {
   }
 }
 
-define Test {
-  run () {
-    Value<Test> value <- Value<Test>.create()
-    scoped {
-      optional Value<all> value2 <- reduce<Value<Test>,Value<all>>(value)
-    } in if (!present(value2)) {
-      fail("Failed")
-    }
-  }
-}
-
-concrete Test {
-  @type run () -> ()
-}
-
 
 testcase "reduce fails to invariant any" {
   success
 }
 
 unittest test {
-  \ Test.run()
+  Value<String> value <- Value<String>.create()
+  scoped {
+    optional Value<any> value2 <- reduce<Value<String>,Value<any>>(value)
+  } in if (present(value2)) {
+    fail("Failed")
+  }
 }
 
 concrete Value<#x> {
@@ -760,28 +597,18 @@ define Value {
   }
 }
 
-define Test {
-  run () {
-    Value<Test> value <- Value<Test>.create()
-    scoped {
-      optional Value<any> value2 <- reduce<Value<Test>,Value<any>>(value)
-    } in if (present(value2)) {
-      fail("Failed")
-    }
-  }
-}
-
-concrete Test {
-  @type run () -> ()
-}
-
 
 testcase "reduce succeeds from covariant all" {
   success
 }
 
 unittest test {
-  \ Test.run()
+  Value<all> value <- Value<all>.create()
+  scoped {
+    optional Value<String> value2 <- reduce<Value<all>,Value<String>>(value)
+  } in if (!present(value2)) {
+    fail("Failed")
+  }
 }
 
 concrete Value<|#x> {
@@ -794,28 +621,18 @@ define Value {
   }
 }
 
-define Test {
-  run () {
-    Value<all> value <- Value<all>.create()
-    scoped {
-      optional Value<Test> value2 <- reduce<Value<all>,Value<Test>>(value)
-    } in if (!present(value2)) {
-      fail("Failed")
-    }
-  }
-}
-
-concrete Test {
-  @type run () -> ()
-}
-
 
 testcase "reduce succeeds from contravariant any" {
   success
 }
 
 unittest test {
-  \ Test.run()
+  Value<any> value <- Value<any>.create()
+  scoped {
+    optional Value<String> value2 <- reduce<Value<any>,Value<String>>(value)
+  } in if (!present(value2)) {
+    fail("Failed")
+  }
 }
 
 concrete Value<#x|> {
@@ -828,28 +645,18 @@ define Value {
   }
 }
 
-define Test {
-  run () {
-    Value<any> value <- Value<any>.create()
-    scoped {
-      optional Value<Test> value2 <- reduce<Value<any>,Value<Test>>(value)
-    } in if (!present(value2)) {
-      fail("Failed")
-    }
-  }
-}
-
-concrete Test {
-  @type run () -> ()
-}
-
 
 testcase "reduce fails from invariant all" {
   success
 }
 
 unittest test {
-  \ Test.run()
+  Value<all> value <- Value<all>.create()
+  scoped {
+    optional Value<String> value2 <- reduce<Value<all>,Value<String>>(value)
+  } in if (present(value2)) {
+    fail("Failed")
+  }
 }
 
 concrete Value<#x> {
@@ -862,27 +669,16 @@ define Value {
   }
 }
 
-define Test {
-  run () {
-    Value<all> value <- Value<all>.create()
-    scoped {
-      optional Value<Test> value2 <- reduce<Value<all>,Value<Test>>(value)
-    } in if (present(value2)) {
-      fail("Failed")
-    }
-  }
-}
-
-concrete Test {
-  @type run () -> ()
-}
-
 
 testcase "bad instance in reduce param" {
   error
   require "Test"
   require "define"
   require "Equals"
+}
+
+unittest test {
+  \ reduce<Value<Test>,Formatted>(empty)
 }
 
 @value interface Value<#x> {
@@ -897,23 +693,15 @@ define Call {
   call () {}
 }
 
-define Test {
-  run () {
-    \ reduce<Value<Test>,Formatted>(empty)
-  }
-}
-
-concrete Test {
-  @type run () -> ()
-}
-
 
 testcase "reduce from interface" {
   success
 }
 
 unittest test {
-  \ Test.run()
+  if (!present(reduce<Base1,Base0>(Value.create()))) {
+    fail("Failed")
+  }
 }
 
 @value interface Base0 {
@@ -934,25 +722,18 @@ define Value {
   }
 }
 
-define Test {
-  run () {
-    if (!present(reduce<Base1,Base0>(Value.create()))) {
-      fail("Failed")
-    }
-  }
-}
-
-concrete Test {
-  @type run () -> ()
-}
-
 
 testcase "reduce with internal override" {
   success
 }
 
 unittest test {
-  \ Test.run()
+  if (!present(reduce<Value,Base2<Base0>>(Value.create()))) {
+    fail("Failed")
+  }
+  if (present(reduce<Value,Base2<Base1>>(Value.create()))) {
+    fail("Failed")
+  }
 }
 
 @value interface Base0 {}
@@ -974,19 +755,4 @@ define Value {
   create () {
     return Value{ }
   }
-}
-
-define Test {
-  run () {
-    if (!present(reduce<Value,Base2<Base0>>(Value.create()))) {
-      fail("Failed")
-    }
-    if (present(reduce<Value,Base2<Base1>>(Value.create()))) {
-      fail("Failed")
-    }
-  }
-}
-
-concrete Test {
-  @type run () -> ()
 }

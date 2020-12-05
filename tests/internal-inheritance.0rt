@@ -36,7 +36,10 @@ testcase "internal refine is private" {
 }
 
 unittest test {
-  \ Test.run()
+  String value <- Value.create().get().formatted()
+  if (value != "Value") {
+    fail(value)
+  }
 }
 
 concrete Value {
@@ -60,25 +63,16 @@ define Value {
   }
 }
 
-define Test {
-  run () {
-    String value <- Value.create().get().formatted()
-    if (value != "Value") {
-      fail(value)
-    }
-  }
-}
-
-concrete Test {
-  @type run () -> ()
-}
-
 
 testcase "internal refine is not public" {
   error
   require "refine"
   require "Formatted"
   require "Value"
+}
+
+unittest test {
+  Formatted value <- Value.create()
 }
 
 concrete Value {
@@ -97,23 +91,17 @@ define Value {
   }
 }
 
-define Test {
-  run () {
-    Formatted value <- Value.create()
-  }
-}
-
-concrete Test {
-  @type run () -> ()
-}
-
 
 testcase "internal define is private" {
   success
 }
 
 unittest test {
-  \ Test.run()
+  Value value1 <- Value.create(1)
+  Value value2 <- Value.create(2)
+  if (Value.compare(value1,value2)) {
+    fail("Failed")
+  }
 }
 
 concrete Compare<#x> {
@@ -156,26 +144,18 @@ define Value {
   }
 }
 
-define Test {
-  run () {
-    Value value1 <- Value.create(1)
-    Value value2 <- Value.create(2)
-    if (Value.compare(value1,value2)) {
-      fail("Failed")
-    }
-  }
-}
-
-concrete Test {
-  @type run () -> ()
-}
-
 
 testcase "internal define is not public" {
   error
   require "define"
   require "Equals"
   require "Value"
+}
+
+unittest test {
+  Value value1 <- Value.create(1)
+  Value value2 <- Value.create(2)
+  \ Compare<Value>.compare(value1,value2)
 }
 
 concrete Compare<#x> {
@@ -211,18 +191,4 @@ define Value {
   get () {
     return value
   }
-}
-
-define Test {
-  run () {
-    Value value1 <- Value.create(1)
-    Value value2 <- Value.create(2)
-    if (Compare<Value>.compare(value1,value2)) {
-      fail("Failed")
-    }
-  }
-}
-
-concrete Test {
-  @type run () -> ()
 }

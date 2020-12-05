@@ -19,21 +19,19 @@ limitations under the License.
 testcase "NoTrace skips tracing" {
   crash
   require "message"
-  require "Test\.run"
   require "Test\.error"
   exclude "Test\.noTrace"
 }
 
 unittest test {
-  \ Test.run()
+  \ Test.noTrace()
+}
+
+concrete Test {
+  @type noTrace () -> ()
 }
 
 define Test {
-  run () {
-    \ noTrace()
-  }
-
-  @type noTrace () -> ()
   noTrace () { $NoTrace$
     \ error()
   }
@@ -44,10 +42,6 @@ define Test {
   }
 }
 
-concrete Test {
-  @type run () -> ()
-}
-
 
 testcase "TraceCreation captures trace" {
   crash
@@ -56,7 +50,8 @@ testcase "TraceCreation captures trace" {
 }
 
 unittest test {
-  \ Test.run()
+  Type value <- Type.create()
+  \ value.call()
 }
 
 concrete Type {
@@ -74,33 +69,17 @@ define Type {
   }
 }
 
-define Test {
-  run () {
-    Type value <- Type.create()
-    \ value.call()
-  }
-}
-
-concrete Test {
-  @type run () -> ()
-}
-
 
 testcase "TraceCreation ignored in @type" {
-  success
+  compiles
   require compiler "tracing ignored"
 }
 
-unittest test {
-  \ Test.run()
-}
+concrete Test {}
 
 define Test {
-  run () { $TraceCreation$ }
-}
-
-concrete Test {
   @type run () -> ()
+  run () { $TraceCreation$ }
 }
 
 
@@ -112,7 +91,8 @@ testcase "TraceCreation still works with NoTrace" {
 }
 
 unittest test {
-  \ Test.run()
+  Type value <- Type.create()
+  \ value.call()
 }
 
 concrete Type {
@@ -125,20 +105,9 @@ define Type {
     return Type{ }
   }
 
-  call ()  { $NoTrace$ $TraceCreation$
+  call () { $NoTrace$ $TraceCreation$
     fail("message")
   }
-}
-
-define Test {
-  run () {
-    Type value <- Type.create()
-    \ value.call()
-  }
-}
-
-concrete Test {
-  @type run () -> ()
 }
 
 
@@ -150,7 +119,8 @@ testcase "TraceCreation only uses the latest" {
 }
 
 unittest test {
-  \ Test.run()
+  Type2 value <- Type2.create()
+  \ value.call()
 }
 
 concrete Type1 {
@@ -183,15 +153,4 @@ define Type2 {
   call ()  { $TraceCreation$
     \ value.call()
   }
-}
-
-define Test {
-  run () {
-    Type2 value <- Type2.create()
-    \ value.call()
-  }
-}
-
-concrete Test {
-  @type run () -> ()
 }

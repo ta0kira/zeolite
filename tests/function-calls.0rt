@@ -21,7 +21,8 @@ testcase "converted call" {
 }
 
 unittest test {
-  \ Test.run()
+  Value value <- Value.create()
+  \ value.Base.call()
 }
 
 @value interface Base {
@@ -42,21 +43,15 @@ define Value {
   }
 }
 
-define Test {
-  run () {
-    Value value <- Value.create()
-    \ value.Base.call()
-  }
-}
-
-concrete Test {
-  @type run () -> ()
-}
-
 
 testcase "converted call bad type" {
   error
   require "Base"
+}
+
+unittest test {
+  Value value <- Value.create()
+  \ value.Base.call()
 }
 
 @value interface Base {
@@ -76,21 +71,15 @@ define Value {
   }
 }
 
-define Test {
-  run () {
-    Value value <- Value.create()
-    \ value.Base.call()
-  }
-}
-
-concrete Test {
-  @type run () -> ()
-}
-
 
 testcase "call from union" {
   error
   require "\[Base\|Value\]"
+}
+
+unittest test {
+  [Base|Value] value <- Value.create()
+  \ value.call()
 }
 
 @value interface Base {
@@ -109,17 +98,6 @@ define Value {
   create () {
     return Value{}
   }
-}
-
-define Test {
-  run () {
-    [Base|Value] value <- Value.create()
-    \ value.call()
-  }
-}
-
-concrete Test {
-  @type run () -> ()
 }
 
 
@@ -128,7 +106,8 @@ testcase "call from union with conversion" {
 }
 
 unittest test {
-  \ Test.run()
+  [Base|Value] value <- Value.create()
+  \ value.Base.call()
 }
 
 @value interface Base {
@@ -149,24 +128,14 @@ define Value {
   }
 }
 
-define Test {
-  run () {
-    [Base|Value] value <- Value.create()
-    \ value.Base.call()
-  }
-}
-
-concrete Test {
-  @type run () -> ()
-}
-
 
 testcase "call from intersect" {
   success
 }
 
 unittest test {
-  \ Test.run()
+  [Base1&Base2] value <- Value.create()
+  \ value.call()
 }
 
 @value interface Base1 {
@@ -188,17 +157,6 @@ define Value {
   create () {
     return Value{}
   }
-}
-
-define Test {
-  run () {
-    [Base1&Base2] value <- Value.create()
-    \ value.call()
-  }
-}
-
-concrete Test {
-  @type run () -> ()
 }
 
 
@@ -207,7 +165,8 @@ testcase "call from intersect with conversion" {
 }
 
 unittest test {
-  \ Test.run()
+  [Base1&Base2] value <- Value.create()
+  \ value.Base1.call()
 }
 
 @value interface Base1 {
@@ -229,17 +188,6 @@ define Value {
   create () {
     return Value{}
   }
-}
-
-define Test {
-  run () {
-    [Base1&Base2] value <- Value.create()
-    \ value.Base1.call()
-  }
-}
-
-concrete Test {
-  @type run () -> ()
 }
 
 
@@ -248,7 +196,8 @@ testcase "call from intersect with conversion" {
 }
 
 unittest test {
-  \ Test.run()
+  [Base1&Base2] value <- Value.create()
+  \ value.Base1.call()
 }
 
 @value interface Base1 {
@@ -270,17 +219,6 @@ define Value {
   create () {
     return Value{}
   }
-}
-
-define Test {
-  run () {
-    [Base1&Base2] value <- Value.create()
-    \ value.Base1.call()
-  }
-}
-
-concrete Test {
-  @type run () -> ()
 }
 
 
@@ -289,7 +227,7 @@ testcase "call from param type" {
 }
 
 unittest test {
-  \ Test.run()
+  \ Test.check<Value>()
 }
 
 @type interface Base {
@@ -304,21 +242,16 @@ define Value {
   call () {}
 }
 
-define Test {
+concrete Test {
   @type check<#x>
     #x defines Base
   () -> ()
+}
+
+define Test {
   check () {
     \ #x.call()
   }
-
-  run () {
-    \ check<Value>()
-  }
-}
-
-concrete Test {
-  @type run () -> ()
 }
 
 
@@ -337,13 +270,9 @@ define Test {
   check () {
     \ #x.call()
   }
-
-  run () {}
 }
 
-concrete Test {
-  @type run () -> ()
-}
+concrete Test {}
 
 
 testcase "call from param value" {
@@ -351,7 +280,8 @@ testcase "call from param value" {
 }
 
 unittest test {
-  \ Test.run()
+  Value value <- Value.create()
+  \ Test.check<Value>(value)
 }
 
 @value interface Base {
@@ -372,22 +302,16 @@ define Value {
   }
 }
 
-define Test {
+concrete Test {
   @type check<#x>
     #x requires Base
   (#x) -> ()
+}
+
+define Test {
   check (value) {
     \ value.call()
   }
-
-  run () {
-    Value value <- Value.create()
-    \ check<Value>(value)
-  }
-}
-
-concrete Test {
-  @type run () -> ()
 }
 
 
@@ -406,13 +330,9 @@ define Test {
   check (value) {
     \ value.call()
   }
-
-  run () {}
 }
 
-concrete Test {
-  @type run () -> ()
-}
+concrete Test {}
 
 
 testcase "convert arg" {
@@ -420,7 +340,7 @@ testcase "convert arg" {
 }
 
 unittest test {
-  \ Test.run()
+  \ Test.convert(Value.create()).call()
 }
 
 @value interface Base {
@@ -441,19 +361,14 @@ define Value {
   }
 }
 
-define Test {
+concrete Test {
   @type convert (Value) -> (Base)
+}
+
+define Test {
   convert (value) {
     return value
   }
-
-  run () {
-   \ convert(Value.create()).call()
-  }
-}
-
-concrete Test {
-  @type run () -> ()
 }
 
 
@@ -473,13 +388,9 @@ define Test {
   convert (value) {
     return value
   }
-
-  run () {}
 }
 
-concrete Test {
-  @type run () -> ()
-}
+concrete Test {}
 
 
 testcase "bad instance in param" {
@@ -487,6 +398,10 @@ testcase "bad instance in param" {
   require "Test"
   require "define"
   require "Equals"
+}
+
+unittest test {
+  \ Call.call<Value<Test>>()
 }
 
 @value interface Value<#x> {
@@ -501,16 +416,6 @@ define Call {
   call () {}
 }
 
-define Test {
-  run () {
-    \ Call.call<Value<Test>>()
-  }
-}
-
-concrete Test {
-  @type run () -> ()
-}
-
 
 testcase "overwrite arg" {
   error
@@ -522,13 +427,9 @@ define Test {
   call (arg) {
     arg <- 2
   }
-
-  run () {}
 }
 
-concrete Test {
-  @type run () -> ()
-}
+concrete Test {}
 
 
 testcase "self in @category function" {
@@ -541,10 +442,6 @@ define Test {
   call () {
     Test value <- self
   }
-
-  run () {}
 }
 
-concrete Test {
-  @type run () -> ()
-}
+concrete Test {}

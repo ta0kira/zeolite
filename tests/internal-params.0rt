@@ -32,21 +32,13 @@ define Value {
   }
 }
 
-define Test {
-  run () {}
-}
-
-concrete Test {
-  @type run () -> ()
-}
-
 
 testcase "internal filter not applied in @type" {
-  success
+  compiles
 }
 
 unittest test {
-  \ Test.run()
+  \ Value.something<Bool>()
 }
 
 concrete Value {
@@ -61,23 +53,13 @@ define Value {
   something () {}
 }
 
-define Test {
-  run () {
-    \ Value.something<Bool>()
-  }
-}
-
-concrete Test {
-  @type run () -> ()
-}
-
 
 testcase "internal filter not applied in @category" {
-  success
+  compiles
 }
 
 unittest test {
-  \ Test.run()
+  \ Value:something<Bool>()
 }
 
 concrete Value {
@@ -92,23 +74,13 @@ define Value {
   something () {}
 }
 
-define Test {
-  run () {
-    \ Value:something<Bool>()
-  }
-}
-
-concrete Test {
-  @type run () -> ()
-}
-
 
 testcase "internal params" {
   success
 }
 
 unittest test {
-  \ Test.run()
+  \ Value.create<Type1,Type2>()
 }
 
 concrete Value {
@@ -127,23 +99,9 @@ define Value {
 @value interface Type1 {}
 @value interface Type2 {}
 
-define Test {
-  run () {
-    \ Value.create<Type1,Type2>()
-  }
-}
-
-concrete Test {
-  @type run () -> ()
-}
-
 
 testcase "internal params with filters" {
-  success
-}
-
-unittest test {
-  \ Test.run()
+  compiles
 }
 
 @value interface Get<|#x> {
@@ -170,14 +128,6 @@ define Value {
   create () {
     return Value{ types<#x,#y> }
   }
-}
-
-define Test {
-  run () {}
-}
-
-concrete Test {
-  @type run () -> ()
 }
 
 
@@ -210,21 +160,9 @@ define Value {
   }
 }
 
-define Test {
-  run () {}
-}
-
-concrete Test {
-  @type run () -> ()
-}
-
 
 testcase "internal params with values" {
-  success
-}
-
-unittest test {
-  \ Test.run()
+  compiles
 }
 
 concrete Value {
@@ -242,21 +180,13 @@ define Value {
   }
 }
 
-define Test {
-  run () {}
-}
-
-concrete Test {
-  @type run () -> ()
-}
-
 
 testcase "value depends on internal param" {
   success
 }
 
 unittest test {
-  \ Test.run()
+  \ Value.create<Bool>(Type<Bool>.create())
 }
 
 concrete Type<#y> {
@@ -265,7 +195,7 @@ concrete Type<#y> {
 
 define Type {
   create () {
-    return Type<#y>{}
+    return Type<#y>{ }
   }
 }
 
@@ -282,16 +212,6 @@ define Value {
   create (value) {
     return Value{ types<#x>, value }
   }
-}
-
-define Test {
-  run () {
-    \ Value.create<Bool>(Type<Bool>.create())
-  }
-}
-
-concrete Test {
-  @type run () -> ()
 }
 
 
@@ -302,13 +222,17 @@ testcase "value mismatch with internal param" {
   require "String"
 }
 
+unittest test {
+  \ Value.create<String>(Type<Bool>.create())
+}
+
 concrete Type<#y> {
   @type create () -> (Type<#y>)
 }
 
 define Type {
   create () {
-    return Type<#y>{}
+    return Type<#y>{ }
   }
 }
 
@@ -325,16 +249,6 @@ define Value {
   create (value) {
     return Value{ types<#x>, value }
   }
-}
-
-define Test {
-  run () {
-    \ Value.create<String>(Type<Bool>.create())
-  }
-}
-
-concrete Test {
-  @type run () -> ()
 }
 
 
@@ -349,14 +263,6 @@ define Value {
   types<#x> {}
 }
 
-define Test {
-  run () {}
-}
-
-concrete Test {
-  @type run () -> ()
-}
-
 
 testcase "internal param clash with function" {
   error
@@ -369,14 +275,6 @@ concrete Value {
 
 define Value {
   types<#x> {}
-}
-
-define Test {
-  run () {}
-}
-
-concrete Test {
-  @type run () -> ()
 }
 
 
@@ -394,21 +292,9 @@ define Value {
   check () {}
 }
 
-define Test {
-  run () {}
-}
-
-concrete Test {
-  @type run () -> ()
-}
-
 
 testcase "internal param no clash with category" {
-  success
-}
-
-unittest test {
-  \ Test.run()
+  compiles
 }
 
 concrete Value {
@@ -423,21 +309,16 @@ define Value {
   }
 }
 
-define Test {
-  run () {}
-}
-
-concrete Test {
-  @type run () -> ()
-}
-
 
 testcase "reduce internal param success" {
   success
 }
 
 unittest test {
-  \ Test.run()
+  Value value <- Value.create<Formatted>()
+  if (!value.check<String>("")) {
+    fail("Failed")
+  }
 }
 
 concrete Value {
@@ -455,19 +336,6 @@ define Value {
   check (y) {
     return present(reduce<#y,#x>(y))
   }
-}
-
-define Test {
-  run () {
-    Value value <- Value.create<Formatted>()
-    if (!value.check<String>("")) {
-      fail("Failed")
-    }
-  }
-}
-
-concrete Test {
-  @type run () -> ()
 }
 
 
@@ -476,7 +344,10 @@ testcase "reduce internal param fail" {
 }
 
 unittest test {
-  \ Test.run()
+  Value value <- Value.create<Formatted>()
+  if (value.check<Value>(value)) {
+    fail("Failed")
+  }
 }
 
 concrete Value {
@@ -494,17 +365,4 @@ define Value {
   check (y) {
     return present(reduce<#y,#x>(y))
   }
-}
-
-define Test {
-  run () {
-    Value value <- Value.create<Formatted>()
-    if (value.check<Value>(value)) {
-      fail("Failed")
-    }
-  }
-}
-
-concrete Test {
-  @type run () -> ()
 }

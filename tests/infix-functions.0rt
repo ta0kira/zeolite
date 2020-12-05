@@ -21,25 +21,20 @@ testcase "category infix" {
 }
 
 unittest test {
-  \ Test.run()
-}
-
-define Test {
-  @category add (Int,Int) -> (Int)
-  add (x,y) {
-    return x + y
-  }
-
-  run () {
-    Int value <- 1 `Test:add` 2
-    if (value != 3) {
-      fail(value)
-    }
+  Int value <- 1 `Test:add` 2
+  if (value != 3) {
+    fail(value)
   }
 }
 
 concrete Test {
-  @type run () -> ()
+  @category add (Int,Int) -> (Int)
+}
+
+define Test {
+  add (x,y) {
+    return x + y
+  }
 }
 
 
@@ -48,25 +43,20 @@ testcase "type infix" {
 }
 
 unittest test {
-  \ Test.run()
-}
-
-define Test {
-  @type add (Int,Int) -> (Int)
-  add (x,y) {
-    return x + y
-  }
-
-  run () {
-    Int value <- 1 `Test.add` 2
-    if (value != 3) {
-      fail(value)
-    }
+  Int value <- 1 `Test.add` 2
+  if (value != 3) {
+    fail(value)
   }
 }
 
 concrete Test {
-  @type run () -> ()
+  @type add (Int,Int) -> (Int)
+}
+
+define Test {
+  add (x,y) {
+    return x + y
+  }
 }
 
 
@@ -75,7 +65,10 @@ testcase "value infix" {
 }
 
 unittest test {
-  \ Test.run()
+  Int value <- 1 `Arithmetic.create().add` 2
+  if (value != 3) {
+    fail(value)
+  }
 }
 
 concrete Arithmetic {
@@ -91,19 +84,6 @@ define Arithmetic {
   add (x,y) {
     return x + y
   }
-}
-
-define Test {
-  run () {
-    Int value <- 1 `Arithmetic.create().add` 2
-    if (value != 3) {
-      fail(value)
-    }
-  }
-}
-
-concrete Test {
-  @type run () -> ()
 }
 
 
@@ -139,25 +119,20 @@ testcase "infix function comes after arithmetic" {
 }
 
 unittest test {
-  \ Test.run()
-}
-
-define Test {
-  @category add (Int,Int) -> (Int)
-  add (x,y) {
-    return x + y
-  }
-
-  run () {
-    Int value <- 1 `add` 2 * 3
-    if (value != 7) {
-      fail(value)
-    }
+  Int value <- 1 `Test:add` 2 * 3
+  if (value != 7) {
+    fail(value)
   }
 }
 
 concrete Test {
-  @type run () -> ()
+  @category add (Int,Int) -> (Int)
+}
+
+define Test {
+  add (x,y) {
+    return x + y
+  }
 }
 
 
@@ -166,23 +141,18 @@ testcase "infix function comes before comparison" {
 }
 
 unittest test {
-  \ Test.run()
-}
-
-define Test {
-  @category add (Int,Int) -> (Int)
-  add (x,y) {
-    return x + y
-  }
-
-  run () {
-    Bool value <- 1 `add` 2 < 4
-    if (value != true) {
-      fail(value)
-    }
+  Bool value <- 1 `Test:add` 2 < 4
+  if (value != true) {
+    fail(value)
   }
 }
 
 concrete Test {
-  @type run () -> ()
+  @category add (Int,Int) -> (Int)
+}
+
+define Test {
+  add (x,y) {
+    return x + y
+  }
 }

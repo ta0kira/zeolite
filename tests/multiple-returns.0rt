@@ -31,13 +31,9 @@ define Test {
   process (value) {
     \ value.get().call()
   }
-
-  run () {}
 }
 
-concrete Test {
-  @type run () -> ()
-}
+concrete Test {}
 
 
 testcase "zero return to call" {
@@ -55,13 +51,9 @@ define Test {
   process (value) {
     \ value.get().call()
   }
-
-  run () {}
 }
 
-concrete Test {
-  @type run () -> ()
-}
+concrete Test {}
 
 
 testcase "multi return assign" {
@@ -69,29 +61,24 @@ testcase "multi return assign" {
 }
 
 unittest test {
-  \ Test.run()
+  Test value <- Test.create()
+  _, Test value2 <- value.double()
+  value, _ <- value2.double()
+}
+
+concrete Test {
+  @type create () -> (Test)
+  @value double () -> (Test,Test)
 }
 
 define Test {
-  @type create () -> (Test)
   create () {
     return Test{}
   }
 
-  @value double () -> (Test,Test)
   double () {
     return self, self
   }
-
-  run () {
-    Test value <- create()
-    _, Test value2 <- value.double()
-    value, _ <- value2.double()
-  }
-}
-
-concrete Test {
-  @type run () -> ()
 }
 
 
@@ -100,16 +87,14 @@ testcase "multi return as args" {
 }
 
 unittest test {
-  \ Test.run()
+    \ Test.call(Test.get())
 }
 
 define Test {
-  @type get () -> (Int,Int)
   get () {
     return 1, 2
   }
 
-  @type call (Int,Int) -> ()
   call (x,y) {
     if (x != 1) {
       fail("Failed")
@@ -118,12 +103,9 @@ define Test {
       fail("Failed")
     }
   }
-
-  run () {
-    \ call(get())
-  }
 }
 
 concrete Test {
-  @type run () -> ()
+  @type get () -> (Int,Int)
+  @type call (Int,Int) -> ()
 }

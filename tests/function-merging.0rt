@@ -21,7 +21,7 @@ testcase "internal merge" {
 }
 
 unittest test {
-  \ Test.run()
+  \ Value.create().call().call()
 }
 
 @value interface Interface {
@@ -42,16 +42,6 @@ define Value {
   call () {
     return self
   }
-}
-
-define Test {
-  run () {
-    \ Value.create().call().call()
-  }
-}
-
-concrete Test {
-  @type run () -> ()
 }
 
 
@@ -83,21 +73,13 @@ define Value {
   }
 }
 
-define Test {
-  run () {}
-}
-
-concrete Test {
-  @type run () -> ()
-}
-
 
 testcase "external merge" {
   success
 }
 
 unittest test {
-  \ Test.run()
+  \ Value.create().call().call()
 }
 
 @value interface Interface {
@@ -118,16 +100,6 @@ define Value {
   call () {
     return self
   }
-}
-
-define Test {
-  run () {
-    \ Value.create().call().call()
-  }
-}
-
-concrete Test {
-  @type run () -> ()
 }
 
 
@@ -157,12 +129,4 @@ define Value {
   call () {
     return self
   }
-}
-
-define Test {
-  run () {}
-}
-
-concrete Test {
-  @type run () -> ()
 }

@@ -21,7 +21,7 @@ testcase "external filter not applied in @category" {
 }
 
 unittest test {
-  \ Test.run()
+  \ Value:something<Bool>()
 }
 
 concrete Value<#x> {
@@ -32,16 +32,6 @@ concrete Value<#x> {
 
 define Value {
   something () {}
-}
-
-define Test {
-  run () {
-    \ Value:something<Bool>()
-  }
-}
-
-concrete Test {
-  @type run () -> ()
 }
 
 
@@ -84,11 +74,7 @@ testcase "implicit bound from reversing another filter" {
 
 
 testcase "defines filter is not an upper bound" {
-  success
-}
-
-unittest test {
-  \ empty
+  compiles
 }
 
 @type interface Type1 {}
@@ -102,11 +88,7 @@ unittest test {
 
 
 testcase "defines filter is not a lower bound" {
-  success
-}
-
-unittest test {
-  \ empty
+  compiles
 }
 
 @type interface Type1 {}

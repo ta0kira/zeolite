@@ -23,6 +23,8 @@ testcase "assign while" {
 
 @value interface Value {}
 
+concrete Test {}
+
 define Test {
   @value process () -> (optional Value)
   process () (value) {
@@ -30,12 +32,6 @@ define Test {
       value <- empty
     }
   }
-
-  run () {}
-}
-
-concrete Test {
-  @type run () -> ()
 }
 
 
@@ -46,17 +42,13 @@ testcase "assign while condition" {
 
 @value interface Value {}
 
+concrete Test {}
+
 define Test {
   @value process () -> (optional Value)
   process () (value) {
     while (present((value <- empty))) {}
   }
-
-  run () {}
-}
-
-concrete Test {
-  @type run () -> ()
 }
 
 testcase "return while" {
@@ -66,6 +58,8 @@ testcase "return while" {
 
 @value interface Value {}
 
+concrete Test {}
+
 define Test {
   @value process () -> (optional Value)
   process () {
@@ -73,12 +67,6 @@ define Test {
       return empty
     }
   }
-
-  run () {}
-}
-
-concrete Test {
-  @type run () -> ()
 }
 
 
@@ -88,14 +76,8 @@ testcase "break outside of while" {
   require "break"
 }
 
-define Test {
-  run () {
-    break
-  }
-}
-
-concrete Test {
-  @type run () -> ()
+unittest test {
+  break
 }
 
 
@@ -105,117 +87,65 @@ testcase "continue outside of while" {
   require "continue"
 }
 
-define Test {
-  run () {
-    continue
-  }
-}
-
-concrete Test {
-  @type run () -> ()
+unittest test {
+  continue
 }
 
 
-testcase "while with break" {
+testcase "successful while loops" {
   success
 }
 
-unittest test {
-  \ Test.run()
+unittest withBreak {
+  Int output <- -1
+  scoped {
+    Int i <- 0
+    Int limit <- 5
+  } in while (i < limit) {
+    output <- i
+    break
+    fail("Failed")
+  }
+  if (output != 0) {
+    fail("Failed")
+  }
 }
 
-define Test {
-  run () {
-    Int output <- -1
-    scoped {
-      Int i <- 0
-      Int limit <- 5
-    } in while (i < limit) {
-      output <- i
+unittest withUpdate {
+  Int output <- -1
+  scoped {
+    Int i <- 0
+    Int limit <- 5
+  } in while (i < limit) {
+    output <- i
+  } update {
+    i <- i+1
+  }
+  if (output != 4) {
+    fail("Failed")
+  }
+}
+
+unittest breakInUpdate {
+  Int output <- 0
+  while (true) {
+  } update {
+    if (output > 5) {
       break
       fail("Failed")
     }
-    if (output != 0) {
-      fail("Failed")
-    }
+    output <- output+1
+  }
+  if (output != 6) {
+    fail("Failed")
   }
 }
 
-concrete Test {
-  @type run () -> ()
-}
-
-
-testcase "while with update" {
-  success
-}
-
-unittest test {
-  \ Test.run()
-}
-
-define Test {
-  run () {
-    Int output <- -1
-    scoped {
-      Int i <- 0
-      Int limit <- 5
-    } in while (i < limit) {
-      output <- i
-    } update {
-      i <- i+1
-    }
-    if (output != 4) {
-      fail("Failed")
-    }
-  }
-}
-
-concrete Test {
-  @type run () -> ()
-}
-
-
-testcase "break in update" {
-  success
-}
-
-unittest test {
-  \ Test.run()
-}
-
-define Test {
-  run () {
-    Int output <- 0
-    while (true) {
-    } update {
-      if (output > 5) {
-        break
-        fail("Failed")
-      }
-      output <- output+1
-    }
-    if (output != 6) {
-      fail("Failed")
-    }
-  }
-}
-
-concrete Test {
-  @type run () -> ()
-}
-
-
-testcase "return in update" {
-  success
-}
-
-unittest test {
-  \ Test.run()
-}
-
-define Test {
+concrete ReturnInUpdate {
   @type test () -> (Int)
+}
+
+define ReturnInUpdate {
   test () {
     Int output <- 0
     while ((output <- output+1) > 0) {
@@ -227,238 +157,112 @@ define Test {
     }
     return -1
   }
+}
 
-  run () {
-    if (test() != 6) {
-      fail("Failed")
-    }
+unittest returnInUpdate {
+  if (ReturnInUpdate.test() != 6) {
+    fail("Failed")
   }
 }
 
-concrete Test {
-  @type run () -> ()
-}
-
-
-testcase "break and continue in if/else" {
-  success
-}
-
-unittest test {
-  \ Test.run()
-}
-
-define Test {
-  run () {
-    Int i <- 0
-    while (true) {
-      if (i > 5) {
-        break
-      } else {
-        continue
-      }
-      fail("Failed")
-    } update {
-      i <- i+1
-    }
-    if (i != 6) {
-      fail("Failed")
-    }
-  }
-}
-
-concrete Test {
-  @type run () -> ()
-}
-
-
-testcase "update clashes with while" {
-  success
-}
-
-unittest test {
-  \ Test.run()
-}
-
-define Test {
-  run () {
-    while (false) {
-      Int x <- 2
-    } update {
-      Int x <- 1
-    }
-  }
-}
-
-concrete Test {
-  @type run () -> ()
-}
-
-
-testcase "while without update" {
-  success
-}
-
-unittest test {
-  \ Test.run()
-}
-
-define Test {
-  run () {
-    Int output <- -1
-    scoped {
-      Int i <- 0
-      Int limit <- 5
-    } in while (i < limit) {
-      output <- i
-      i <- i+1
-    }
-    if (output != 4) {
-      fail("Failed")
-    }
-  }
-}
-
-concrete Test {
-  @type run () -> ()
-}
-
-
-testcase "while with continue and update" {
-  success
-}
-
-unittest test {
-  \ Test.run()
-}
-
-define Test {
-  run () {
-    Int output <- -1
-    scoped {
-      Int i <- 0
-      Int limit <- 5
-    } in while (i < limit) {
-      output <- i
-      continue
-      fail("Failed")
-    } update {
-      i <- i+1
-    }
-    if (output != 4) {
-      fail("Failed")
-    }
-  }
-}
-
-concrete Test {
-  @type run () -> ()
-}
-
-
-testcase "while with continue and without update" {
-  success
-}
-
-unittest test {
-  \ Test.run()
-}
-
-define Test {
-  run () {
-    Int output <- -1
-    scoped {
-      Int i <- 0
-      Int limit <- 5
-    } in while (i < limit) {
-      output <- i
-      i <- i+1
-      continue
-      fail("Failed")
-    }
-    if (output != 4) {
-      fail("Failed")
-    }
-  }
-}
-
-concrete Test {
-  @type run () -> ()
-}
-
-
-testcase "crash in while" {
-  crash
-  require "empty"
-}
-
-unittest test {
-  \ Test.run()
-}
-
-define Test {
-  run () {
-    optional Bool test <- empty
-    while (require(test)) {
-      // empty
-    }
-  }
-}
-
-concrete Test {
-  @type run () -> ()
-}
-
-
-testcase "cleanup after break" {
-  success
-}
-
-unittest test {
-  \ Test.run()
-}
-
-define Test {
-  run () {
-    Int value <- 0
-    scoped {
-      value <- 1
-    } cleanup {
-      value <- 2
-    } in while (true) {
-      value <- 3
+unittest breakContinueInIfElse {
+  Int i <- 0
+  while (true) {
+    if (i > 5) {
       break
+    } else {
+      continue
     }
-    if (value != 2) {
-      fail(value)
-    }
+    fail("Failed")
+  } update {
+    i <- i+1
+  }
+  if (i != 6) {
+    fail("Failed")
   }
 }
 
-concrete Test {
-  @type run () -> ()
+unittest updateHasSeparateScope {
+  while (false) {
+    Int x <- 2
+  } update {
+    Int x <- 1
+  }
 }
 
-
-testcase "cleanup before return in while" {
-  success
+unittest noUpdate {
+    Int output <- -1
+    scoped {
+      Int i <- 0
+      Int limit <- 5
+    } in while (i < limit) {
+      output <- i
+      i <- i+1
+    }
+    if (output != 4) {
+      fail("Failed")
+    }
 }
 
-unittest test {
-  \ Test.run()
+unittest continueWithUpdate {
+  Int output <- -1
+  scoped {
+    Int i <- 0
+    Int limit <- 5
+  } in while (i < limit) {
+    output <- i
+    continue
+    fail("Failed")
+  } update {
+    i <- i+1
+  }
+  if (output != 4) {
+    fail("Failed")
+  }
 }
 
-concrete Value {
-  @type create () -> (Value)
+unittest continueWithoutUpdate {
+  Int output <- -1
+  scoped {
+    Int i <- 0
+    Int limit <- 5
+  } in while (i < limit) {
+    output <- i
+    i <- i+1
+    continue
+    fail("Failed")
+  }
+  if (output != 4) {
+    fail("Failed")
+  }
+}
+
+unittest cleanupAfterBreak {
+  Int value <- 0
+  scoped {
+    value <- 1
+  } cleanup {
+    value <- 2
+  } in while (true) {
+    value <- 3
+    break
+  }
+  if (value != 2) {
+    fail(value)
+  }
+}
+
+concrete CleanupBeforeReturn {
+  @type create () -> (CleanupBeforeReturn)
   @value call () -> (Int)
   @value get () -> (Int)
 }
 
-define Value {
+define CleanupBeforeReturn {
   @value Int value
 
   create () {
-    return Value{ 0 }
+    return CleanupBeforeReturn{ 0 }
   }
 
   call () {
@@ -478,16 +282,33 @@ define Value {
   }
 }
 
+unittest cleanupBeforeReturn {
+  CleanupBeforeReturn value <- CleanupBeforeReturn.create()
+  Int value1 <- value.call()
+  if (value1 != 2) {
+    fail(value1)
+  }
+  Int value2 <- value.get()
+  if (value2 != 3) {
+    fail(value2)
+  }
+}
+
+
+testcase "crash in while" {
+  crash
+  require "empty"
+}
+
+unittest test {
+  \ Test.run()
+}
+
 define Test {
   run () {
-    Value value <- Value.create()
-    Int value1 <- value.call()
-    if (value1 != 2) {
-      fail(value1)
-    }
-    Int value2 <- value.get()
-    if (value2 != 3) {
-      fail(value2)
+    optional Bool test <- empty
+    while (require(test)) {
+      // empty
     }
   }
 }
