@@ -510,3 +510,41 @@ define Test {
 concrete Test {
   @type run () -> ()
 }
+
+
+testcase "overwrite arg" {
+  error
+  require "arg"
+}
+
+define Test {
+  @type call (Int) -> ()
+  call (arg) {
+    arg <- 2
+  }
+
+  run () {}
+}
+
+concrete Test {
+  @type run () -> ()
+}
+
+
+testcase "self in @category function" {
+  error
+  require "self"
+}
+
+define Test {
+  @category call () -> ()
+  call () {
+    Test value <- self
+  }
+
+  run () {}
+}
+
+concrete Test {
+  @type run () -> ()
+}
