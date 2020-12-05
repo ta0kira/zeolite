@@ -20,6 +20,7 @@ limitations under the License.
 
 module Types.Pragma (
   CodeVisibility(..),
+  MacroName(..),
   Pragma(..),
   TraceType(..),
   WithVisibility(..),
@@ -59,6 +60,15 @@ updateCodeVisibility f (WithVisibility v x) = WithVisibility (f v) x
 
 data TraceType = NoTrace | TraceCreation deriving (Show)
 
+newtype MacroName =
+  MacroName {
+    mnName :: String
+  }
+  deriving (Eq,Ord)
+
+instance Show MacroName where
+  show = mnName
+
 data Pragma c =
   PragmaVisibility {
     pvContext :: [c],
@@ -66,7 +76,7 @@ data Pragma c =
   } |
   PragmaExprLookup {
     pelContext :: [c],
-    pelName :: String
+    pelName :: MacroName
   } |
   PragmaSourceContext {
     pscContext :: c

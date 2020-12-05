@@ -82,6 +82,7 @@ getContextForInit tm em t d s = do
       pcCleanupSetup = [],
       pcInCleanup = False,
       pcExprMap = em,
+      pcReservedMacros = [],
       pcNoTrace = False
     }
 
@@ -143,6 +144,7 @@ getProcedureContext (ScopeContext tm t ps pi ms pa fi fa va em)
       pcCleanupSetup = [],
       pcInCleanup = False,
       pcExprMap = em,
+      pcReservedMacros = [],
       pcNoTrace = False
     }
   where
@@ -173,5 +175,6 @@ getMainContext tm em = return $ ProcedureContext {
     pcCleanupSetup = [],
     pcInCleanup = False,
     pcExprMap = em,
+    pcReservedMacros = [],
     pcNoTrace = False
   }

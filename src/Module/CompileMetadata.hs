@@ -32,6 +32,7 @@ import Text.Parsec (SourcePos)
 
 import Cli.CompileOptions
 import Cli.Programs (VersionHash)
+import Types.Pragma (MacroName)
 import Types.Procedure (Expression)
 import Types.TypeCategory (Namespace)
 import Types.TypeInstance (CategoryName)
@@ -95,7 +96,7 @@ data ModuleConfig =
   ModuleConfig {
     mcRoot :: FilePath,
     mcPath :: FilePath,
-    mcExprMap :: [(String,Expression SourcePos)],
+    mcExprMap :: [(MacroName,Expression SourcePos)],
     mcPublicDeps :: [FilePath],
     mcPrivateDeps :: [FilePath],
     mcExtraFiles :: [ExtraSource],

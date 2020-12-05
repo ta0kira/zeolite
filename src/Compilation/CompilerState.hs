@@ -58,6 +58,8 @@ module Compilation.CompilerState (
   csPrimNamedReturns,
   csPushCleanup,
   csRegisterReturn,
+  csReleaseExprMacro,
+  csReserveExprMacro,
   csRequiresTypes,
   csResolver,
   csSameType,
@@ -87,6 +89,7 @@ import Data.Semigroup
 import Base.CompileError
 import Types.DefinedCategory
 import Types.Positional
+import Types.Pragma (MacroName)
 import Types.Procedure
 import Types.TypeCategory
 import Types.TypeInstance
@@ -123,7 +126,9 @@ class (Functor m, Monad m) => CompilerContext c m s a | a -> c s where
   ccStartCleanup :: a -> m a
   ccPushCleanup :: a -> CleanupSetup a s -> m a
   ccGetCleanup :: a -> JumpType -> m (CleanupSetup a s)
-  ccExprLookup :: a -> [c] -> String -> m (Expression c)
+  ccExprLookup :: a -> [c] -> MacroName -> m (Expression c)
+  ccReserveExprMacro :: a -> [c] -> MacroName -> m a
+  ccReleaseExprMacro :: a -> [c] -> MacroName -> m a
   ccSetNoTrace :: a -> Bool -> m a
   ccGetNoTrace :: a -> m Bool
 
@@ -280,8 +285,14 @@ csPushCleanup l = fmap (\x -> ccPushCleanup x l) get >>= lift >>= put
 csGetCleanup :: CompilerContext c m s a => JumpType -> CompilerState a m (CleanupSetup a s)
 csGetCleanup j = fmap (\x -> ccGetCleanup x j) get >>= lift
 
-csExprLookup :: CompilerContext c m s a => [c] -> String -> CompilerState a m (Expression c)
+csExprLookup :: CompilerContext c m s a => [c] -> MacroName -> CompilerState a m (Expression c)
 csExprLookup c n = fmap (\x -> ccExprLookup x c n) get >>= lift
+
+csReserveExprMacro :: CompilerContext c m s a => [c] -> MacroName -> CompilerState a m ()
+csReserveExprMacro c n = fmap (\x -> ccReserveExprMacro x c n) get >>= lift >>= put
+
+csReleaseExprMacro :: CompilerContext c m s a => [c] -> MacroName -> CompilerState a m ()
+csReleaseExprMacro c n = fmap (\x -> ccReleaseExprMacro x c n) get >>= lift >>= put
 
 csSetNoTrace :: CompilerContext c m s a => Bool -> CompilerState a m ()
 csSetNoTrace t = fmap (\x -> ccSetNoTrace x t) get >>= lift >>= put

@@ -30,6 +30,7 @@ import Module.ParseMetadata
 import System.FilePath
 import Test.Common
 import Types.Positional
+import Types.Pragma
 import Types.Procedure
 import Types.TypeCategory (FunctionName(..),Namespace(..))
 import Types.TypeInstance (CategoryName(..))
@@ -277,7 +278,7 @@ tests = [
     checkWriteFail "empty.+map" $ ModuleConfig {
       mcRoot = "/home/projects",
       mcPath = "special",
-      mcExprMap = [("MACRO",Literal (StringLiteral [] "something"))],
+      mcExprMap = [(MacroName "MACRO",Literal (StringLiteral [] "something"))],
       mcPublicDeps = [],
       mcPrivateDeps = [],
       mcExtraFiles = [],
@@ -360,11 +361,11 @@ tests = [
 
     checkParsesAs ("testfiles" </> "macro-config.txt")
       (\m -> case mcExprMap m of
-                  [("MY_MACRO",
+                  [(MacroName "MY_MACRO",
                     Expression _ (BuiltinCall _
                       (FunctionCall _ BuiltinRequire (Positional [])
                         (Positional [Literal (EmptyLiteral _)]))) []),
-                   ("MY_OTHER_MACRO",
+                   (MacroName "MY_OTHER_MACRO",
                     Expression _
                       (TypeCall _ _
                         (FunctionCall _ (FunctionName "execute") (Positional [])

@@ -14,6 +14,22 @@ expression_map: [
     name: META_VAR
     expression: $ExprLookup[INT_EXPR]$*5
   }
+  expression_macro {
+    name: USES_RECURSIVE
+    expression: 7 * $ExprLookup[RECURSIVE_MACRO1]$
+  }
+  expression_macro {
+    name: RECURSIVE_MACRO1
+    expression: 100 + $ExprLookup[RECURSIVE_MACRO2]$
+  }
+  expression_macro {
+    name: RECURSIVE_MACRO2
+    expression: $ExprLookup[RECURSIVE_MACRO3]$ - 200
+  }
+  expression_macro {
+    name: RECURSIVE_MACRO3
+    expression: $ExprLookup[RECURSIVE_MACRO1]$
+  }
 ]
 private_deps: [
   "lib/testing"

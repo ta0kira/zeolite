@@ -696,7 +696,11 @@ compileExpressionStart (NamedVariable (OutputValue c n)) = do
   return (Positional [t],readStoredVariable lazy t (scoped ++ variableName n))
 compileExpressionStart (NamedMacro c n) = do
   e <- csExprLookup c n
-  compileExpression e <??? ("In env lookup at " ++ formatFullContext c)
+  csReserveExprMacro c n
+  e' <- compileExpression e <??? ("In expansion of " ++ show n ++ " at " ++ formatFullContext c)
+  -- NOTE: This will be skipped if expression compilation fails.
+  csReleaseExprMacro c n
+  return e'
 compileExpressionStart (CategoryCall c t f@(FunctionCall _ n _ _)) = do
   f' <- csGetCategoryFunction c (Just t) n
   csRequiresTypes $ Set.fromList [t,sfType f']

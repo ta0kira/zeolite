@@ -21,14 +21,8 @@ testcase "bad macro name" {
   require "UNKNOWN_STRING .+not defined"
 }
 
-define Test {
-  run () {
-    String value <- $ExprLookup[UNKNOWN_STRING]$
-  }
-}
-
-concrete Test {
-  @type run () -> ()
+unittest test {
+  String value <- $ExprLookup[UNKNOWN_STRING]$
 }
 
 
@@ -38,17 +32,7 @@ testcase "MODULE_PATH is absolute" {
 }
 
 unittest test {
-  \ Test.run()
-}
-
-define Test {
-  run () {
-    fail($ExprLookup[MODULE_PATH]$)
-  }
-}
-
-concrete Test {
-  @type run () -> ()
+  fail($ExprLookup[MODULE_PATH]$)
 }
 
 
@@ -58,17 +42,7 @@ testcase "MODULE_PATH from regular source" {
 }
 
 unittest test {
-  \ Test.run()
-}
-
-define Test {
-  run () {
-    fail(ExprLookup.modulePath())
-  }
-}
-
-concrete Test {
-  @type run () -> ()
+  fail(ExprLookup.modulePath())
 }
 
 
@@ -77,14 +51,8 @@ testcase "mismatched macro type" {
   require "String.+Int"
 }
 
-define Test {
-  run () {
-    Int value <- $ExprLookup[MODULE_PATH]$
-  }
-}
-
-concrete Test {
-  @type run () -> ()
+unittest test {
+  Int value <- $ExprLookup[MODULE_PATH]$
 }
 
 
@@ -94,17 +62,7 @@ testcase "macro used inline in expressions" {
 }
 
 unittest test {
-  \ Test.run()
-}
-
-define Test {
-  run () {
-    fail($ExprLookup[MODULE_PATH]$ + " is the path")
-  }
-}
-
-concrete Test {
-  @type run () -> ()
+  fail($ExprLookup[MODULE_PATH]$ + " is the path")
 }
 
 
@@ -113,17 +71,10 @@ testcase "constant defined in .zeolite-module" {
 }
 
 unittest test {
-  \ Test.run()
-}
-
-define Test {
-  run () {
-    \ Testing.checkEquals<?>($ExprLookup[INT_EXPR]$,4)
-  }
-}
-
-concrete Test {
-  @type run () -> ()
+  \ Testing.checkEquals<?>($ExprLookup[INT_EXPR]$,4)
+  // Use it a second time to ensure that reserving the macro name doesn't
+  // carry over to the next statement.
+  \ $ExprLookup[INT_EXPR]$
 }
 
 
@@ -132,17 +83,7 @@ testcase "constant defined in .zeolite-module from regular source" {
 }
 
 unittest test {
-  \ Test.run()
-}
-
-define Test {
-  run () {
-    \ Testing.checkEquals<?>(ExprLookup.intExpr(),4)
-  }
-}
-
-concrete Test {
-  @type run () -> ()
+  \ Testing.checkEquals<?>(ExprLookup.intExpr(),4)
 }
 
 
@@ -173,14 +114,8 @@ testcase "undefined in context defined in .zeolite-module" {
   require "macroLocalVar"
 }
 
-define Test {
-  run () {
-    String value <- $ExprLookup[LOCAL_VAR]$
-  }
-}
-
-concrete Test {
-  @type run () -> ()
+unittest test {
+  String value <- $ExprLookup[LOCAL_VAR]$
 }
 
 
@@ -189,17 +124,7 @@ testcase "in context defined in .zeolite-module from regular source" {
 }
 
 unittest test {
-  \ Test.run()
-}
-
-define Test {
-  run () {
-    \ Testing.checkEquals<?>(ExprLookup.localVar(),99)
-  }
-}
-
-concrete Test {
-  @type run () -> ()
+  \ Testing.checkEquals<?>(ExprLookup.localVar(),99)
 }
 
 
@@ -208,17 +133,7 @@ testcase "nested expression defined in .zeolite-module" {
 }
 
 unittest test {
-  \ Test.run()
-}
-
-define Test {
-  run () {
-    \ Testing.checkEquals<?>($ExprLookup[META_VAR]$,20)
-  }
-}
-
-concrete Test {
-  @type run () -> ()
+  \ Testing.checkEquals<?>($ExprLookup[META_VAR]$,20)
 }
 
 
@@ -227,17 +142,7 @@ testcase "function called on expression" {
 }
 
 unittest test {
-  \ Test.run()
-}
-
-define Test {
-  run () {
-    \ Testing.checkEquals<?>($ExprLookup[INT_EXPR]$.formatted(),"4")
-  }
-}
-
-concrete Test {
-  @type run () -> ()
+  \ Testing.checkEquals<?>($ExprLookup[INT_EXPR]$.formatted(),"4")
 }
 
 
@@ -247,15 +152,19 @@ testcase "source context" {
 }
 
 unittest test {
-  \ Test.run()
+  fail($SourceContext$)
 }
 
-define Test {
-  run () {
-    fail($SourceContext$)
-  }
+
+testcase "recursive expression" {
+  error
+  exclude compiler "USES_RECURSIVE expanded at"
+  require compiler "USES_RECURSIVE"
+  require compiler "RECURSIVE_MACRO1 expanded at"
+  require compiler "RECURSIVE_MACRO2 expanded at"
+  require compiler "RECURSIVE_MACRO3 expanded at"
 }
 
-concrete Test {
-  @type run () -> ()
+unittest test {
+  String value <- $ExprLookup[USES_RECURSIVE]$
 }

@@ -33,10 +33,10 @@ import Cli.Programs (VersionHash(..))
 import Module.CompileMetadata
 import Parser.Common
 import Parser.Procedure ()
-import Parser.Pragma (parseMacroName)
 import Parser.TypeCategory ()
 import Parser.TypeInstance ()
 import Text.Regex.TDFA -- Not safe!
+import Types.Pragma (MacroName)
 import Types.Procedure (Expression)
 import Types.TypeCategory (FunctionName(..),Namespace(..))
 import Types.TypeInstance (CategoryName(..))
@@ -76,16 +76,10 @@ validateCategoryName c =
     when (not $ show c =~ "^[A-Z][A-Za-z0-9]*$") $
       compileErrorM $ "Invalid category name: \"" ++ show c ++ "\""
 
-parseCategoryName :: Parser CategoryName
-parseCategoryName = sourceParser :: Parser CategoryName
-
 validateFunctionName :: CompileErrorM m => FunctionName -> m ()
 validateFunctionName f =
     when (not $ show f =~ "^[a-z][A-Za-z0-9]*$") $
       compileErrorM $ "Invalid function name: \"" ++ show f ++ "\""
-
-parseFunctionName :: Parser FunctionName
-parseFunctionName = sourceParser :: Parser FunctionName
 
 validateHash :: CompileErrorM m => VersionHash -> m ()
 validateHash h =
@@ -138,8 +132,8 @@ instance ConfigFormat CompileMetadata where
     <|?> parseOptional "private_namespace:"  NoNamespace parseNamespace
     <||> parseRequired "public_deps:"        (parseList parseQuoted)
     <||> parseRequired "private_deps:"       (parseList parseQuoted)
-    <||> parseRequired "public_categories:"  (parseList parseCategoryName)
-    <||> parseRequired "private_categories:" (parseList parseCategoryName)
+    <||> parseRequired "public_categories:"  (parseList sourceParser)
+    <||> parseRequired "private_categories:" (parseList sourceParser)
     <||> parseRequired "public_subdirs:"     (parseList parseQuoted)
     <||> parseRequired "private_subdirs:"    (parseList parseQuoted)
     <||> parseRequired "public_files:"       (parseList parseQuoted)
@@ -250,14 +244,14 @@ instance ConfigFormat CategoryIdentifier where
       structOpen
       i <- permute $ CategoryIdentifier
         <$$> parseRequired "path:"      parseQuoted
-        <||> parseRequired "name:"      parseCategoryName
+        <||> parseRequired "name:"      sourceParser
         <|?> parseOptional "namespace:" NoNamespace parseNamespace
       structClose
       return i
     unresolved = do
       sepAfter (string_ "unresolved")
       structOpen
-      c <- parseRequired "name:" parseCategoryName
+      c <- parseRequired "name:" sourceParser
       structClose
       return (UnresolvedCategory c)
   writeConfig (CategoryIdentifier p c ns) = do
@@ -316,8 +310,8 @@ instance ConfigFormat ExtraSource where
       structOpen
       s <- permute $ CategorySource
         <$$> parseRequired "source:"        parseQuoted
-        <|?> parseOptional "categories:" [] (parseList parseCategoryName)
-        <|?> parseOptional "requires:"   [] (parseList parseCategoryName)
+        <|?> parseOptional "categories:" [] (parseList sourceParser)
+        <|?> parseOptional "requires:"   [] (parseList sourceParser)
       structClose
       return s
     other = do
@@ -345,8 +339,8 @@ instance ConfigFormat CompileMode where
       sepAfter (string_ "binary")
       structOpen
       b <- permute $ CompileBinary
-        <$$> parseRequired "category:"      parseCategoryName
-        <||> parseRequired "function:"      parseFunctionName
+        <$$> parseRequired "category:"      sourceParser
+        <||> parseRequired "function:"      sourceParser
         <|?> parseOptional "output:"     "" parseQuoted
         <|?> parseOptional "link_flags:" [] (parseList parseQuoted)
       structClose
@@ -381,11 +375,11 @@ instance ConfigFormat CompileMode where
   writeConfig CompileUnspecified = writeConfig (CompileIncremental [])
   writeConfig _ = compileErrorM "Invalid compile mode"
 
-parseExprMacro :: Parser (String,Expression SourcePos)
+parseExprMacro :: Parser (MacroName,Expression SourcePos)
 parseExprMacro = do
   sepAfter (string_ "expression_macro")
   structOpen
-  n <- parseRequired "name:"       parseMacroName
+  n <- parseRequired "name:"       sourceParser
   e <- parseRequired "expression:" sourceParser
   structClose
   return (n,e)

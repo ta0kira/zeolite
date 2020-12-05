@@ -64,7 +64,7 @@ tests = [
 
     checkParsesAs "$ExprLookup[ \nMODULE_PATH /*comment*/\n ]$" (fmap (:[]) pragmaExprLookup)
       (\e -> case e of
-                  [PragmaExprLookup _ "MODULE_PATH"] -> True
+                  [PragmaExprLookup _ (MacroName "MODULE_PATH")] -> True
                   _ -> False),
 
     checkParsesAs "/*only comments*/" (parsePragmas [pragmaModuleOnly,pragmaTestsOnly])

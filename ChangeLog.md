@@ -62,6 +62,10 @@
 * **[new]** Updates parsing of `.zeolite-module` to allow any ordering of the
   fields. Previously, the fields needed to be in a very specific order.
 
+* **[fix]** Adds compile-time protection against self-referential expression
+  macros defined in `expression_map:` in `.zeolite-module`. Previously, the
+  result was infinite recursion that could exhaust system resources.
+
 ## 0.9.0.0  -- 2020-11-23
 
 ### Compiler CLI
