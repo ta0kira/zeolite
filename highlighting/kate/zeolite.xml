@@ -6,7 +6,7 @@
 <language
     name="Zeolite"
     section="Sources"
-    version="3.8"
+    version="3.9"
     kateversion="2.4"
     indenter="cstyle"
     style="Zeolite"
@@ -103,6 +103,29 @@
       <item> Formatted </item>
       <item> ReadPosition </item>
       <item> Builder </item>
+    </list>
+
+    <list name="testcaseOutput">
+      <item> any </item>
+      <item> compiler </item>
+      <item> stderr </item>
+      <item> stdout </item>
+    </list>
+
+    <list name="testcasePattern">
+      <item> exclude </item>
+      <item> require </item>
+    </list>
+
+    <list name="testcaseArgs">
+      <item> args </item>
+    </list>
+
+    <list name="testcaseStatus">
+      <item> compiles </item>
+      <item> crash </item>
+      <item> error </item>
+      <item> success </item>
     </list>
 
     <contexts>
@@ -222,13 +245,9 @@
         <WordDetect attribute="Error" context="#stay" String="optional" />
         <WordDetect attribute="Error" context="#stay" String="weak" />
         <WordDetect attribute="Error" context="#stay" String="testcase" />
-        <WordDetect attribute="Test Keyword" context="#stay" String="compiles" />
-        <WordDetect attribute="Test Keyword" context="#stay" String="error" />
-        <WordDetect attribute="Test Keyword" context="#stay" String="crash" />
-        <WordDetect attribute="Test Keyword" context="#stay" String="success" />
-        <WordDetect attribute="Test Keyword" context="Test Output" String="require" />
-        <WordDetect attribute="Test Keyword" context="Test Output" String="exclude" />
-        <WordDetect attribute="Test Keyword" context="Test Args" String="args" />
+        <keyword attribute="Test Keyword" context="#stay" String="testcaseStatus" />
+        <keyword attribute="Test Keyword" context="Test Output" String="testcasePattern" />
+        <keyword attribute="Test Keyword" context="Test Args" String="testcaseArgs" />
         <WordDetect attribute="Keyword" context="#stay" String="empty" />
         <IncludeRules context="Any Expression" />
         <keyword attribute="Error" context="#stay" String="keywords" />
@@ -241,8 +260,8 @@
         <WordDetect attribute="Error" context="#stay" String="error" />
         <WordDetect attribute="Error" context="#stay" String="crash" />
         <WordDetect attribute="Error" context="#stay" String="success" />
-        <WordDetect attribute="Error" context="Test Output" String="require" />
-        <WordDetect attribute="Error" context="Test Output" String="exclude" />
+        <WordDetect attribute="Error" context="#stay" String="require" />
+        <WordDetect attribute="Error" context="#stay" String="exclude" />
         <WordDetect attribute="Error" context="Test Args" String="args" />
         <DetectChar context="#pop" char="}" lookAhead="true" />
         <RegExpr attribute="Error" String="." />
@@ -251,10 +270,7 @@
       <context name="Test Output" attribute="Normal Text" lineEndContext="#stay" >
         <DetectSpaces />
         <IncludeRules context="Any Comment" />
-        <WordDetect attribute="Test Keyword" context="#stay" String="any" />
-        <WordDetect attribute="Test Keyword" context="#stay" String="compiler" />
-        <WordDetect attribute="Test Keyword" context="#stay" String="stderr" />
-        <WordDetect attribute="Test Keyword" context="#stay" String="stdout" />
+        <keyword attribute="Test Keyword" context="#stay" String="testcaseOutput" />
         <RegExpr context="#pop" String="&quot;" lookAhead="true" />
         <RegExpr attribute="Error" context="#stay" String="[^ \n\t\r]" />
       </context>
