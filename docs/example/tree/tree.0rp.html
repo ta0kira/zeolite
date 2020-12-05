@@ -12,14 +12,14 @@
 <span style='color:#898887;'>/*</span><span style='color:#898887;'> An interface for updating a key-value index.</span>
 <span style='color:#898887;'> </span><span style='color:#898887;'>*/</span>
 <span style='color:#644a9b;'>@value</span> <b>interface</b> <b><span style='color:#0057ae;'>KVWriter</span></b><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#k</span></i>,<i><span style='color:#0057ae;'>#v</span></i><span style='color:#c04040;'>|</span><span style='color:#c02040;'>&gt;</span> {
-  set (<i><span style='color:#0057ae;'>#k</span></i>,<i><span style='color:#0057ae;'>#v</span></i>) <b><span style='color:#006e28;'>-&gt;</span></b> (<span style='color:#0057ae;'>KVWriter</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#k</span></i>,<i><span style='color:#0057ae;'>#v</span></i><span style='color:#c02040;'>&gt;</span>)
-  remove (<i><span style='color:#0057ae;'>#k</span></i>) <b><span style='color:#006e28;'>-&gt;</span></b> (<span style='color:#0057ae;'>KVWriter</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#k</span></i>,<i><span style='color:#0057ae;'>#v</span></i><span style='color:#c02040;'>&gt;</span>)
+  set (<i><span style='color:#0057ae;'>#k</span></i>,<i><span style='color:#0057ae;'>#v</span></i>) -&gt; (<span style='color:#0057ae;'>KVWriter</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#k</span></i>,<i><span style='color:#0057ae;'>#v</span></i><span style='color:#c02040;'>&gt;</span>)
+  remove (<i><span style='color:#0057ae;'>#k</span></i>) -&gt; (<span style='color:#0057ae;'>KVWriter</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#k</span></i>,<i><span style='color:#0057ae;'>#v</span></i><span style='color:#c02040;'>&gt;</span>)
 }
 
 <span style='color:#898887;'>/*</span><span style='color:#898887;'> An interface for looking up values from a key-value index.</span>
 <span style='color:#898887;'> </span><span style='color:#898887;'>*/</span>
 <span style='color:#644a9b;'>@value</span> <b>interface</b> <b><span style='color:#0057ae;'>KVReader</span></b><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#k</span></i><span style='color:#c04040;'>|</span><i><span style='color:#0057ae;'>#v</span></i><span style='color:#c02040;'>&gt;</span> {
-  get (<i><span style='color:#0057ae;'>#k</span></i>) <b><span style='color:#006e28;'>-&gt;</span></b> (<b>optional</b> <i><span style='color:#0057ae;'>#v</span></i>)
+  get (<i><span style='color:#0057ae;'>#k</span></i>) -&gt; (<b>optional</b> <i><span style='color:#0057ae;'>#v</span></i>)
 }
 
 <span style='color:#898887;'>/*</span><span style='color:#898887;'> An AVL implementation of KVWriter and KVReader.</span>
@@ -29,15 +29,15 @@
   <b>refines</b> <span style='color:#0057ae;'>KVReader</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#k</span></i>,<i><span style='color:#0057ae;'>#v</span></i><span style='color:#c02040;'>&gt;</span>
   <i><span style='color:#0057ae;'>#k</span></i> <b>defines</b> <i><span style='color:#0057ae;'>LessThan</span></i><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#k</span></i><span style='color:#c02040;'>&gt;</span>
 
-  <span style='color:#898887;'>// Creates a new Tree, e.g., Tree$new().</span>
-  <span style='color:#644a9b;'>@type</span> new () <b><span style='color:#006e28;'>-&gt;</span></b> (<span style='color:#0057ae;'>Tree</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#k</span></i>,<i><span style='color:#0057ae;'>#v</span></i><span style='color:#c02040;'>&gt;</span>)
+  <span style='color:#898887;'>// Creates a new Tree, e.g., Tree.new().</span>
+  <span style='color:#644a9b;'>@type</span> new () -&gt; (<span style='color:#0057ae;'>Tree</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#k</span></i>,<i><span style='color:#0057ae;'>#v</span></i><span style='color:#c02040;'>&gt;</span>)
 
   <span style='color:#898887;'>// Normally you do not need to redeclare functions inherited from interfaces.</span>
   <span style='color:#898887;'>// The two redeclarations below are used to refine the return type from</span>
   <span style='color:#898887;'>// KVWriter to Tree.</span>
 
-  <span style='color:#644a9b;'>@value</span> set (<i><span style='color:#0057ae;'>#k</span></i>,<i><span style='color:#0057ae;'>#v</span></i>) <b><span style='color:#006e28;'>-&gt;</span></b> (<span style='color:#0057ae;'>Tree</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#k</span></i>,<i><span style='color:#0057ae;'>#v</span></i><span style='color:#c02040;'>&gt;</span>)
-  <span style='color:#644a9b;'>@value</span> remove (<i><span style='color:#0057ae;'>#k</span></i>) <b><span style='color:#006e28;'>-&gt;</span></b> (<span style='color:#0057ae;'>Tree</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#k</span></i>,<i><span style='color:#0057ae;'>#v</span></i><span style='color:#c02040;'>&gt;</span>)
+  <span style='color:#644a9b;'>@value</span> set (<i><span style='color:#0057ae;'>#k</span></i>,<i><span style='color:#0057ae;'>#v</span></i>) -&gt; (<span style='color:#0057ae;'>Tree</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#k</span></i>,<i><span style='color:#0057ae;'>#v</span></i><span style='color:#c02040;'>&gt;</span>)
+  <span style='color:#644a9b;'>@value</span> remove (<i><span style='color:#0057ae;'>#k</span></i>) -&gt; (<span style='color:#0057ae;'>Tree</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#k</span></i>,<i><span style='color:#0057ae;'>#v</span></i><span style='color:#c02040;'>&gt;</span>)
 }
 </pre>
 </body>

@@ -15,20 +15,20 @@
 <span style='color:#898887;'> * matches the type of the value.</span>
 <span style='color:#898887;'> </span><span style='color:#898887;'>*/</span>
 <b>concrete</b> <b><span style='color:#0057ae;'>TypeTree</span></b> {
-  <span style='color:#898887;'>// Creates a new TypeTree, e.g., TypeTree$new().</span>
-  <span style='color:#644a9b;'>@type</span> new () <b><span style='color:#006e28;'>-&gt;</span></b> (<span style='color:#0057ae;'>TypeTree</span>)
+  <span style='color:#898887;'>// Creates a new TypeTree, e.g., TypeTree.new().</span>
+  <span style='color:#644a9b;'>@type</span> new () -&gt; (<span style='color:#0057ae;'>TypeTree</span>)
 
   <span style='color:#898887;'>// Sets the value for the given key, inserting if necessary.</span>
-  <span style='color:#644a9b;'>@value</span> set&lt;<i><span style='color:#0057ae;'>#x</span></i>&gt; (<span style='color:#0057ae;'>TypeKey</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>,<i><span style='color:#0057ae;'>#x</span></i>) <b><span style='color:#006e28;'>-&gt;</span></b> (<span style='color:#0057ae;'>TypeTree</span>)
+  <span style='color:#644a9b;'>@value</span> set&lt;<i><span style='color:#0057ae;'>#x</span></i>&gt; (<span style='color:#0057ae;'>TypeKey</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>,<i><span style='color:#0057ae;'>#x</span></i>) -&gt; (<span style='color:#0057ae;'>TypeTree</span>)
 
   <span style='color:#898887;'>// Removes the value for the given key.</span>
-  <span style='color:#644a9b;'>@value</span> remove (<span style='color:#0057ae;'>TypeKey</span><span style='color:#c02040;'>&lt;</span><b>any</b><span style='color:#c02040;'>&gt;</span>) <b><span style='color:#006e28;'>-&gt;</span></b> (<span style='color:#0057ae;'>TypeTree</span>)
+  <span style='color:#644a9b;'>@value</span> remove (<span style='color:#0057ae;'>TypeKey</span><span style='color:#c02040;'>&lt;</span><b>any</b><span style='color:#c02040;'>&gt;</span>) -&gt; (<span style='color:#0057ae;'>TypeTree</span>)
 
   <span style='color:#898887;'>// Returns the value for the given key, or empty if:</span>
   <span style='color:#898887;'>// - There is no entry for the key.</span>
   <span style='color:#898887;'>// - The value for the key is not of type #x, e.g., was originally added to</span>
   <span style='color:#898887;'>//   the tree as a parent of type #x.</span>
-  <span style='color:#644a9b;'>@value</span> get&lt;<i><span style='color:#0057ae;'>#x</span></i>&gt; (<span style='color:#0057ae;'>TypeKey</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>) <b><span style='color:#006e28;'>-&gt;</span></b> (<b>optional</b> <i><span style='color:#0057ae;'>#x</span></i>)
+  <span style='color:#644a9b;'>@value</span> get&lt;<i><span style='color:#0057ae;'>#x</span></i>&gt; (<span style='color:#0057ae;'>TypeKey</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>) -&gt; (<b>optional</b> <i><span style='color:#0057ae;'>#x</span></i>)
 }
 
 <span style='color:#898887;'>/*</span><span style='color:#898887;'> A typed key for indexing values in TypeTree.</span>
@@ -56,8 +56,8 @@
   <b>defines</b> <i><span style='color:#0057ae;'>LessThan</span></i><span style='color:#c02040;'>&lt;</span><span style='color:#0057ae;'>TypeKey</span><span style='color:#c02040;'>&lt;</span><b>any</b><span style='color:#c02040;'>&gt;&gt;</span>
   <b>defines</b> <i><span style='color:#0057ae;'>Equals</span></i><span style='color:#c02040;'>&lt;</span><span style='color:#0057ae;'>TypeKey</span><span style='color:#c02040;'>&lt;</span><b>any</b><span style='color:#c02040;'>&gt;&gt;</span>
 
-  <span style='color:#898887;'>// Creates a new TypeKey, e.g., TypeTree&lt;#x&gt;$new().</span>
-  <span style='color:#644a9b;'>@type</span> new () <b><span style='color:#006e28;'>-&gt;</span></b> (<span style='color:#0057ae;'>TypeKey</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>)
+  <span style='color:#898887;'>// Creates a new TypeKey, e.g., TypeTree&lt;#x&gt;.new().</span>
+  <span style='color:#644a9b;'>@type</span> new () -&gt; (<span style='color:#0057ae;'>TypeKey</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>)
 }
 </pre>
 </body>

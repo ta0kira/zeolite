@@ -4,7 +4,7 @@
  * matches the type of the value.
  */
 concrete TypeTree {
-  // Creates a new TypeTree, e.g., TypeTree$new().
+  // Creates a new TypeTree, e.g., TypeTree.new().
   @type new () -> (TypeTree)
 
   // Sets the value for the given key, inserting if necessary.
@@ -45,6 +45,6 @@ concrete TypeKey<|#x> {
   defines LessThan<TypeKey<any>>
   defines Equals<TypeKey<any>>
 
-  // Creates a new TypeKey, e.g., TypeTree<#x>$new().
+  // Creates a new TypeKey, e.g., TypeTree<#x>.new().
   @type new () -> (TypeKey<#x>)
 }

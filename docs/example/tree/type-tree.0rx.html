@@ -92,10 +92,10 @@
       <span style='color:#898887;'>// The runtime type of value does not matter here; it just needs to be of</span>
       <span style='color:#898887;'>// type optional #x at compile time.</span>
       <span style='color:#898887;'>//</span>
-      <span style='color:#898887;'>// This is more like template meta-programming in C++ than it is like a</span>
-      <span style='color:#898887;'>// runtime type cast in Java. The reduce call could in theory be replaced</span>
-      <span style='color:#898887;'>// at compile time with either value or empty if parameter substitution</span>
-      <span style='color:#898887;'>// happened at compile time. (Like C++ does with templates.)</span>
+      <span style='color:#898887;'>// This is more like template meta-programming in C++ than it is like</span>
+      <span style='color:#898887;'>// instanceof or reflection in Java. The reduce call could in theory be</span>
+      <span style='color:#898887;'>// replaced at compile time with either value or empty if parameter</span>
+      <span style='color:#898887;'>// substitution happened at compile time. (Like C++ does with templates.)</span>
       <b>return</b> <b>reduce</b>&lt;<i><span style='color:#0057ae;'>#x</span></i>,<i><span style='color:#0057ae;'>#y</span></i>&gt;(value)
     } <b>else</b> {
       <b>return</b> <b>empty</b>

@@ -81,10 +81,10 @@ define LockedType {
       // The runtime type of value does not matter here; it just needs to be of
       // type optional #x at compile time.
       //
-      // This is more like template meta-programming in C++ than it is like a
-      // runtime type cast in Java. The reduce call could in theory be replaced
-      // at compile time with either value or empty if parameter substitution
-      // happened at compile time. (Like C++ does with templates.)
+      // This is more like template meta-programming in C++ than it is like
+      // instanceof or reflection in Java. The reduce call could in theory be
+      // replaced at compile time with either value or empty if parameter
+      // substitution happened at compile time. (Like C++ does with templates.)
       return reduce<#x,#y>(value)
     } else {
       return empty
