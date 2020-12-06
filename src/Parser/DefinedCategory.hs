@@ -25,8 +25,8 @@ module Parser.DefinedCategory (
 import Control.Monad (when)
 import Prelude hiding (pi)
 import Text.Parsec
-import Text.Parsec.String
 
+import Base.CompileError
 import Parser.Common
 import Parser.Procedure ()
 import Parser.TypeCategory
@@ -88,9 +88,10 @@ instance ParseFromSource (DefinedMember SourcePos) where
         t <- sourceParser
         return (s,t)
 
-parseMemberProcedureFunction ::
-  CategoryName ->
-  Parser ([DefinedMember SourcePos],[ExecutableProcedure SourcePos],[ScopedFunction SourcePos])
+parseMemberProcedureFunction :: CompileErrorM m =>
+  CategoryName -> ParserE m ([DefinedMember SourcePos],
+                             [ExecutableProcedure SourcePos],
+                             [ScopedFunction SourcePos])
 parseMemberProcedureFunction n = do
   (ms,ps,fs) <- parseAny3 (catchUnscopedType <|> sourceParser) sourceParser singleFunction
   let ps2 = ps ++ map snd fs
@@ -104,5 +105,5 @@ parseMemberProcedureFunction n = do
               " but got definition of " ++ show (epName p)
       return (f,p)
     catchUnscopedType = labeled "" $ do
-      _ <- try sourceParser :: Parser ValueType
+      _ <- try sourceParser :: CompileErrorM m => ParserE m ValueType
       fail $ "members must have an explicit @value or @category scope"

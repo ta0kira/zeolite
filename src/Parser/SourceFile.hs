@@ -25,7 +25,6 @@ module Parser.SourceFile (
 ) where
 
 import Text.Parsec
-import Text.Parsec.String
 
 import Base.CompileError
 import Parser.Common
@@ -41,10 +40,7 @@ import Types.TypeCategory
 
 parseInternalSource :: CompileErrorM m =>
   (FilePath,String) -> m ([Pragma SourcePos],[AnyCategory SourcePos],[DefinedCategory SourcePos])
-parseInternalSource (f,s) = unwrap parsed where
-  parsed = parse (between optionalSpace endOfDoc withPragmas) f s
-  unwrap (Left e)  = compileErrorM (show e)
-  unwrap (Right t) = return t
+parseInternalSource (f,s) = runParserE (between optionalSpace endOfDoc withPragmas) f s where
   withPragmas = do
     pragmas <- parsePragmas internalSourcePragmas
     optionalSpace
@@ -52,10 +48,7 @@ parseInternalSource (f,s) = unwrap parsed where
     return (pragmas,cs,ds)
 
 parsePublicSource :: CompileErrorM m => (FilePath,String) -> m ([Pragma SourcePos],[AnyCategory SourcePos])
-parsePublicSource (f,s) = unwrap parsed where
-  parsed = parse (between optionalSpace endOfDoc withPragmas) f s
-  unwrap (Left e)  = compileErrorM (show e)
-  unwrap (Right t) = return t
+parsePublicSource (f,s) = runParserE (between optionalSpace endOfDoc withPragmas) f s where
   withPragmas = do
     pragmas <- parsePragmas publicSourcePragmas
     optionalSpace
@@ -63,21 +56,18 @@ parsePublicSource (f,s) = unwrap parsed where
     return (pragmas,cs)
 
 parseTestSource :: CompileErrorM m => (FilePath,String) -> m ([Pragma SourcePos],[IntegrationTest SourcePos])
-parseTestSource (f,s) = unwrap parsed where
-  parsed = parse (between optionalSpace endOfDoc withPragmas) f s
-  unwrap (Left e)  = compileErrorM (show e)
-  unwrap (Right t) = return t
+parseTestSource (f,s) = runParserE (between optionalSpace endOfDoc withPragmas) f s where
   withPragmas = do
     pragmas <- parsePragmas testSourcePragmas
     optionalSpace
     ts <- sepBy sourceParser optionalSpace
     return (pragmas,ts)
 
-publicSourcePragmas :: [Parser (Pragma SourcePos)]
+publicSourcePragmas :: Monad m => [ParserE m (Pragma SourcePos)]
 publicSourcePragmas = [pragmaModuleOnly,pragmaTestsOnly]
 
-internalSourcePragmas :: [Parser (Pragma SourcePos)]
+internalSourcePragmas :: Monad m => [ParserE m (Pragma SourcePos)]
 internalSourcePragmas = [pragmaTestsOnly]
 
-testSourcePragmas :: [Parser (Pragma SourcePos)]
+testSourcePragmas :: Monad m => [ParserE m (Pragma SourcePos)]
 testSourcePragmas = []

@@ -253,6 +253,7 @@ library zeolite-internal
                        hashable >= 1.0 && < 1.4,
                        mtl >= 1.0 && < 2.3,
                        parsec >= 3.0 && < 3.2,
+                       parser-combinators >= 0.2 && < 2.0,
                        regex-tdfa >= 1.0 && < 1.4,
                        time >= 1.0 && < 1.11,
                        transformers >= 0.1 && < 0.6,

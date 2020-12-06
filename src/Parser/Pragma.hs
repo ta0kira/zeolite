@@ -31,16 +31,16 @@ module Parser.Pragma (
 
 import Control.Monad (when)
 import Text.Parsec
-import Text.Parsec.String
 
+import Base.CompileError
 import Parser.Common
 import Types.Pragma
 
 
-parsePragmas :: [Parser a] -> Parser [a]
+parsePragmas :: Monad m => [ParserE m a] -> ParserE m [a]
 parsePragmas = many . foldr ((<|>)) unknownPragma
 
-pragmaModuleOnly :: Parser (Pragma SourcePos)
+pragmaModuleOnly :: Monad m => ParserE m (Pragma SourcePos)
 pragmaModuleOnly = autoPragma "ModuleOnly" $ Left parseAt where
   parseAt c = PragmaVisibility [c] ModuleOnly
 
@@ -51,29 +51,29 @@ instance ParseFromSource MacroName where
     optionalSpace
     return $ MacroName (h:t)
 
-pragmaExprLookup :: Parser (Pragma SourcePos)
+pragmaExprLookup :: CompileErrorM m => ParserE m (Pragma SourcePos)
 pragmaExprLookup = autoPragma "ExprLookup" $ Right parseAt where
   parseAt c = do
     name <- sourceParser
     return $ PragmaExprLookup [c] name
 
-pragmaSourceContext :: Parser (Pragma SourcePos)
+pragmaSourceContext :: Monad m => ParserE m (Pragma SourcePos)
 pragmaSourceContext = autoPragma "SourceContext" $ Left parseAt where
   parseAt c = PragmaSourceContext c
 
-pragmaNoTrace :: Parser (Pragma SourcePos)
+pragmaNoTrace :: Monad m => ParserE m (Pragma SourcePos)
 pragmaNoTrace = autoPragma "NoTrace" $ Left parseAt where
   parseAt c = PragmaTracing [c] NoTrace
 
-pragmaTraceCreation :: Parser (Pragma SourcePos)
+pragmaTraceCreation :: Monad m => ParserE m (Pragma SourcePos)
 pragmaTraceCreation = autoPragma "TraceCreation" $ Left parseAt where
   parseAt c = PragmaTracing [c] TraceCreation
 
-pragmaTestsOnly :: Parser (Pragma SourcePos)
+pragmaTestsOnly :: Monad m => ParserE m (Pragma SourcePos)
 pragmaTestsOnly = autoPragma "TestsOnly" $ Left parseAt where
   parseAt c = PragmaVisibility [c] TestsOnly
 
-pragmaComment :: Parser (Pragma SourcePos)
+pragmaComment :: Monad m => ParserE m (Pragma SourcePos)
 pragmaComment = autoPragma "Comment" $ Right parseAt where
   parseAt c = do
     string_ "\""
@@ -81,13 +81,13 @@ pragmaComment = autoPragma "Comment" $ Right parseAt where
     optionalSpace
     return $ PragmaComment [c] ss
 
-unknownPragma :: Parser a
+unknownPragma :: Monad m => ParserE m a
 unknownPragma = do
   try pragmaStart
   p <- many1 alphaNum
   fail $ "Pragma " ++ p ++ " is not supported in this context"
 
-autoPragma :: String -> Either (SourcePos -> a) (SourcePos -> Parser a) -> Parser a
+autoPragma :: Monad m => String -> Either (SourcePos -> a) (SourcePos -> ParserE m a) -> ParserE m a
 autoPragma p f = do
   c <- getPosition
   try $ pragmaStart >> string_ p >> notFollowedBy alphaNum

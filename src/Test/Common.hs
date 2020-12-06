@@ -46,7 +46,6 @@ import System.Exit
 import System.FilePath
 import System.IO
 import Text.Parsec
-import Text.Parsec.String
 import qualified Data.Map as Map
 import qualified Data.Set as Set
 
@@ -72,26 +71,16 @@ numberError n c
   | otherwise        = Right (getCompileSuccess c)
 
 forceParse :: ParseFromSource a => String -> a
-forceParse s = force $ parse sourceParser "(string)" s where
-  force (Right x) = x
-  force _         = undefined
+forceParse s = getCompileSuccess $ runParserE sourceParser "(string)" s
 
 readSingle :: ParseFromSource a => String -> String -> CompileInfo a
-readSingle = readSingleWith (optionalSpace >> sourceParser)
+readSingle  = readSingleWith sourceParser
 
-readSingleWith :: Parser a -> String -> String -> CompileInfo a
-readSingleWith p f s =
-  unwrap $ parse (between nullParse endOfDoc p) f s
-  where
-    unwrap (Left e)  = compileErrorM (show e)
-    unwrap (Right t) = return t
+readSingleWith :: ParserE CompileInfo a -> String -> String -> CompileInfo a
+readSingleWith p = runParserE (between nullParse endOfDoc p)
 
 readMulti :: ParseFromSource a => String -> String -> CompileInfo [a]
-readMulti f s =
-  unwrap $ parse (between optionalSpace endOfDoc (sepBy sourceParser optionalSpace)) f s
-  where
-    unwrap (Left e)  = compileErrorM (show e)
-    unwrap (Right t) = return t
+readMulti f s = runParserE (between optionalSpace endOfDoc (sepBy sourceParser optionalSpace)) f s
 
 parseFilterMap :: [(String,[String])] -> CompileInfo ParamFilters
 parseFilterMap pa = do

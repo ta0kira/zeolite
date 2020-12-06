@@ -24,9 +24,9 @@ module Parser.Procedure (
 ) where
 
 import Text.Parsec
-import Text.Parsec.String
 import qualified Data.Set as Set
 
+import Base.CompileError
 import Parser.Common
 import Parser.Pragma
 import Parser.TypeCategory ()
@@ -149,12 +149,12 @@ instance ParseFromSource (Statement SourcePos) where
       c <- getPosition
       try kwReturn
       emptyReturn c <|> multiReturn c
-    multiReturn :: SourcePos -> Parser (Statement SourcePos)
+    multiReturn :: CompileErrorM m => SourcePos -> ParserE m (Statement SourcePos)
     multiReturn c = do
       rs <- sepBy sourceParser (sepAfter $ string_ ",")
       statementEnd
       return $ ExplicitReturn [c] (Positional rs)
-    emptyReturn :: SourcePos -> Parser (Statement SourcePos)
+    emptyReturn :: CompileErrorM m => SourcePos -> ParserE m (Statement SourcePos)
     emptyReturn c = do
       kwIgnore
       statementEnd
@@ -250,7 +250,7 @@ instance ParseFromSource (ScopedBlock SourcePos) where
       p <- between (sepAfter $ string_ "{") (sepAfter $ string_ "}") sourceParser
       return $ NoValueExpression [c] (Unconditional p)
 
-unaryOperator :: Parser (Operator c)
+unaryOperator :: Monad m => ParserE m (Operator c)
 unaryOperator = op >>= return . NamedOperator where
   op = labeled "unary operator" $ foldr (<|>) (fail "empty") $ map (try . operator) ops
   ops = logicalUnary ++ arithUnary ++ bitwiseUnary
@@ -264,7 +264,7 @@ arithUnary = ["-"]
 bitwiseUnary :: [String]
 bitwiseUnary = ["~"]
 
-infixOperator :: Parser (Operator c)
+infixOperator :: Monad m => ParserE m (Operator c)
 infixOperator = op >>= return . NamedOperator where
   op = labeled "binary operator" $ foldr (<|>) (fail "empty") $ map (try . operator) ops
   ops = compareInfix ++ logicalInfix ++ addInfix ++ subInfix ++ multInfix ++ bitwiseInfix ++ bitshiftInfix
@@ -300,7 +300,7 @@ infixBefore o1 o2 = (infixOrder o1 :: Int) <= (infixOrder o2 :: Int) where
     | o `Set.member` Set.fromList logicalInfix = 5
   infixOrder _ = 3
 
-functionOperator :: Parser (Operator SourcePos)
+functionOperator :: CompileErrorM m => ParserE m (Operator SourcePos)
 functionOperator = do
   c <- getPosition
   infixFuncStart
@@ -413,7 +413,7 @@ instance ParseFromSource (InstanceOrInferred SourcePos) where
       sepAfter_ inferredParam
       return $ InferredInstance [c]
 
-parseFunctionCall :: SourcePos -> FunctionName -> Parser (FunctionCall SourcePos)
+parseFunctionCall :: CompileErrorM m => SourcePos -> FunctionName -> ParserE m (FunctionCall SourcePos)
 parseFunctionCall c n = do
   -- NOTE: try is needed here so that < operators work when the left side is
   -- just a variable name, e.g., x < y.
@@ -425,7 +425,7 @@ parseFunctionCall c n = do
                 (sepBy sourceParser (sepAfter $ string_ ","))
   return $ FunctionCall [c] n (Positional ps) (Positional es)
 
-builtinFunction :: Parser FunctionName
+builtinFunction :: Monad m => ParserE m FunctionName
 builtinFunction = foldr (<|>) (fail "empty") $ map try [
     kwPresent >> return BuiltinPresent,
     kwReduce >> return BuiltinReduce,
@@ -450,13 +450,13 @@ instance ParseFromSource (ExpressionStart SourcePos) where
       e <- try (assign c) <|> expr c
       sepAfter (string_ ")")
       return e
-    assign :: SourcePos -> Parser (ExpressionStart SourcePos)
+    assign :: CompileErrorM m => SourcePos -> ParserE m (ExpressionStart SourcePos)
     assign c = do
       n <- sourceParser
       assignOperator
       e <- sourceParser
       return $ InlineAssignment [c] n e
-    expr :: SourcePos -> Parser (ExpressionStart SourcePos)
+    expr :: CompileErrorM m => SourcePos -> ParserE m (ExpressionStart SourcePos)
     expr c = do
       e <- sourceParser
       return $ ParensExpression [c] e
@@ -481,7 +481,7 @@ instance ParseFromSource (ExpressionStart SourcePos) where
            _ -> undefined  -- Should be caught above.
     variableOrUnqualified = do
       c <- getPosition
-      n <- sourceParser :: Parser VariableName
+      n <- sourceParser :: CompileErrorM m => ParserE m VariableName
       asUnqualifiedCall c n <|> asVariable c n
     asVariable c n = do
       return $ NamedVariable (OutputValue [c] n)

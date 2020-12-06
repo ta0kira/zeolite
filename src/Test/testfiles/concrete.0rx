@@ -1,4 +1,3 @@
-// A concrete type with contrived comments.
 concrete/*!!!*/Type<#a,#b // <- contravariant params
              |#c,#d // <- invariant params
              |#e,#f /* <- covariant params*/> {

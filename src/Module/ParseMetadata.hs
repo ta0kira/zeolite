@@ -22,10 +22,9 @@ module Module.ParseMetadata (
   autoWriteConfig,
 ) where
 
+import Control.Applicative.Permutations
 import Control.Monad (when)
 import Text.Parsec
-import Text.Parsec.Perm
-import Text.Parsec.String
 
 import Base.CompileError
 import Cli.CompileOptions
@@ -43,22 +42,19 @@ import Types.TypeInstance (CategoryName(..))
 
 
 class ConfigFormat a where
-  readConfig :: Parser a
+  readConfig :: CompileErrorM m => ParserE m a
   writeConfig :: CompileErrorM m => a -> m [String]
 
 autoReadConfig :: (ConfigFormat a, CompileErrorM m) => String -> String -> m a
-autoReadConfig f s  = unwrap parsed where
-  parsed = parse (between optionalSpace endOfDoc readConfig) f s
-  unwrap (Left e)  = compileErrorM (show e)
-  unwrap (Right t) = return t
+autoReadConfig f s = runParserE (between optionalSpace endOfDoc readConfig) f s
 
 autoWriteConfig ::  (ConfigFormat a, CompileErrorM m) => a -> m String
 autoWriteConfig = fmap unlines . writeConfig
 
-structOpen :: Parser ()
+structOpen :: Monad m => ParserE m ()
 structOpen = sepAfter (string_ "{")
 
-structClose :: Parser ()
+structClose :: Monad m => ParserE m ()
 structClose = sepAfter (string_ "}")
 
 indents :: [String] -> [String]
@@ -86,7 +82,7 @@ validateHash h =
     when (not $ show h =~ "^[A-Za-z0-9]+$") $
       compileErrorM $ "Version hash must be a hex string: \"" ++ show h ++ "\""
 
-parseHash :: Parser VersionHash
+parseHash :: Monad m => ParserE m VersionHash
 parseHash = labeled "version hash" $ sepAfter (fmap VersionHash $ many1 hexDigit)
 
 maybeShowNamespace :: CompileErrorM m => String -> Namespace -> m [String]
@@ -96,54 +92,56 @@ maybeShowNamespace l (StaticNamespace ns) = do
   return [l ++ " " ++ ns]
 maybeShowNamespace _ _ = return []
 
-parseNamespace :: Parser Namespace
+parseNamespace :: Monad m => ParserE m Namespace
 parseNamespace = labeled "namespace" $ do
   b <- lower
   e <- sepAfter $ many (alphaNum <|> char '_')
   return $ StaticNamespace (b:e)
 
-parseQuoted :: Parser String
+parseQuoted :: Monad m => ParserE m String
 parseQuoted = labeled "quoted string" $ do
   string_ "\""
   ss <- manyTill stringChar (string_ "\"")
   optionalSpace
   return ss
 
-parseList :: Parser a -> Parser [a]
+parseList :: Monad m => ParserE m a -> ParserE m [a]
 parseList p = labeled "list" $ do
   sepAfter (string_ "[")
   xs <- manyTill (sepAfter p) (string_ "]")
   optionalSpace
   return xs
 
-parseOptional :: String -> a -> Parser a -> (a,Parser a)
-parseOptional l def p = (def,parseRequired l p)
+parseOptional :: Monad m => String -> a -> ParserE m a -> Permutation (ParserE m) a
+parseOptional l def p = toPermutationWithDefault def $ do
+    try $ sepAfter (string_ l)
+    p
 
-parseRequired :: String -> Parser a -> Parser a
-parseRequired l p = do
+parseRequired :: Monad m => String -> ParserE m a -> Permutation (ParserE m) a
+parseRequired l p = toPermutation $ do
     try $ sepAfter (string_ l)
     p
 
 instance ConfigFormat CompileMetadata where
-  readConfig = permute $ CompileMetadata
-    <$$> parseRequired "version_hash:"       parseHash
-    <||> parseRequired "path:"               parseQuoted
-    <|?> parseOptional "public_namespace:"   NoNamespace parseNamespace
-    <|?> parseOptional "private_namespace:"  NoNamespace parseNamespace
-    <||> parseRequired "public_deps:"        (parseList parseQuoted)
-    <||> parseRequired "private_deps:"       (parseList parseQuoted)
-    <||> parseRequired "public_categories:"  (parseList sourceParser)
-    <||> parseRequired "private_categories:" (parseList sourceParser)
-    <||> parseRequired "public_subdirs:"     (parseList parseQuoted)
-    <||> parseRequired "private_subdirs:"    (parseList parseQuoted)
-    <||> parseRequired "public_files:"       (parseList parseQuoted)
-    <||> parseRequired "private_files:"      (parseList parseQuoted)
-    <||> parseRequired "test_files:"         (parseList parseQuoted)
-    <||> parseRequired "hxx_files:"          (parseList parseQuoted)
-    <||> parseRequired "cxx_files:"          (parseList parseQuoted)
-    <||> parseRequired "binaries:"           (parseList parseQuoted)
-    <||> parseRequired "link_flags:"         (parseList parseQuoted)
-    <||> parseRequired "object_files:"       (parseList readConfig)
+  readConfig = runPermutation $ CompileMetadata
+    <$> parseRequired "version_hash:"       parseHash
+    <*> parseRequired "path:"               parseQuoted
+    <*> parseOptional "public_namespace:"   NoNamespace parseNamespace
+    <*> parseOptional "private_namespace:"  NoNamespace parseNamespace
+    <*> parseRequired "public_deps:"        (parseList parseQuoted)
+    <*> parseRequired "private_deps:"       (parseList parseQuoted)
+    <*> parseRequired "public_categories:"  (parseList sourceParser)
+    <*> parseRequired "private_categories:" (parseList sourceParser)
+    <*> parseRequired "public_subdirs:"     (parseList parseQuoted)
+    <*> parseRequired "private_subdirs:"    (parseList parseQuoted)
+    <*> parseRequired "public_files:"       (parseList parseQuoted)
+    <*> parseRequired "private_files:"      (parseList parseQuoted)
+    <*> parseRequired "test_files:"         (parseList parseQuoted)
+    <*> parseRequired "hxx_files:"          (parseList parseQuoted)
+    <*> parseRequired "cxx_files:"          (parseList parseQuoted)
+    <*> parseRequired "binaries:"           (parseList parseQuoted)
+    <*> parseRequired "link_flags:"         (parseList parseQuoted)
+    <*> parseRequired "object_files:"       (parseList readConfig)
   writeConfig (CompileMetadata h p ns1 ns2 is is2 cs1 cs2 ds1 ds2 ps xs ts hxx cxx bs lf os) = do
     validateHash h
     ns1' <- maybeShowNamespace "public_namespace:"  ns1
@@ -204,18 +202,19 @@ instance ConfigFormat ObjectFile where
     category = do
       sepAfter (string_ "category_object")
       structOpen
-      o <- permute $ CategoryObjectFile
-        <$$> parseRequired "category:" readConfig
-        <||> parseRequired "requires:" (parseList readConfig)
-        <||> parseRequired "files:"    (parseList parseQuoted)
+      o <- runPermutation $ CategoryObjectFile
+        <$> parseRequired "category:" readConfig
+        <*> parseRequired "requires:" (parseList readConfig)
+        <*> parseRequired "files:"    (parseList parseQuoted)
       structClose
       return o
     other = do
       sepAfter (string_ "other_object")
       structOpen
-      f <- parseRequired "file:" parseQuoted
+      f <- runPermutation $ OtherObjectFile
+        <$> parseRequired "file:" parseQuoted
       structClose
-      return (OtherObjectFile f)
+      return f
   writeConfig (CategoryObjectFile c rs fs) = do
     category <- writeConfig c
     requires <- fmap concat $ mapErrorsM writeConfig rs
@@ -242,18 +241,19 @@ instance ConfigFormat CategoryIdentifier where
     category = do
       sepAfter (string_ "category")
       structOpen
-      i <- permute $ CategoryIdentifier
-        <$$> parseRequired "path:"      parseQuoted
-        <||> parseRequired "name:"      sourceParser
-        <|?> parseOptional "namespace:" NoNamespace parseNamespace
+      i <- runPermutation $ CategoryIdentifier
+        <$> parseRequired "path:"      parseQuoted
+        <*> parseRequired "name:"      sourceParser
+        <*> parseOptional "namespace:" NoNamespace parseNamespace
       structClose
       return i
     unresolved = do
       sepAfter (string_ "unresolved")
       structOpen
-      c <- parseRequired "name:" sourceParser
+      c <- runPermutation $ UnresolvedCategory
+        <$> parseRequired "name:" sourceParser
       structClose
-      return (UnresolvedCategory c)
+      return c
   writeConfig (CategoryIdentifier p c ns) = do
     validateCategoryName c
     namespace <- maybeShowNamespace "namespace:" ns
@@ -269,15 +269,15 @@ instance ConfigFormat CategoryIdentifier where
     return $ ["unresolved { " ++ "name: " ++ show c ++ " " ++ "}"]
 
 instance ConfigFormat ModuleConfig where
-  readConfig = permute $ ModuleConfig
-    <$?> parseOptional "root:"           "" parseQuoted
-    <||> parseRequired "path:"              parseQuoted
-    <|?> parseOptional "expression_map:" [] (parseList parseExprMacro)
-    <|?> parseOptional "public_deps:"    [] (parseList parseQuoted)
-    <|?> parseOptional "private_deps:"   [] (parseList parseQuoted)
-    <|?> parseOptional "extra_files:"    [] (parseList readConfig)
-    <|?> parseOptional "include_paths:"  [] (parseList parseQuoted)
-    <||> parseRequired "mode:"              readConfig
+  readConfig = runPermutation $ ModuleConfig
+    <$> parseOptional "root:"           "" parseQuoted
+    <*> parseRequired "path:"              parseQuoted
+    <*> parseOptional "expression_map:" [] (parseList parseExprMacro)
+    <*> parseOptional "public_deps:"    [] (parseList parseQuoted)
+    <*> parseOptional "private_deps:"   [] (parseList parseQuoted)
+    <*> parseOptional "extra_files:"    [] (parseList readConfig)
+    <*> parseOptional "include_paths:"  [] (parseList parseQuoted)
+    <*> parseRequired "mode:"              readConfig
   writeConfig (ModuleConfig p d em is is2 es ep m) = do
     es' <- fmap concat $ mapErrorsM writeConfig es
     m' <- writeConfig m
@@ -308,10 +308,10 @@ instance ConfigFormat ExtraSource where
     category = do
       sepAfter (string_ "category_source")
       structOpen
-      s <- permute $ CategorySource
-        <$$> parseRequired "source:"        parseQuoted
-        <|?> parseOptional "categories:" [] (parseList sourceParser)
-        <|?> parseOptional "requires:"   [] (parseList sourceParser)
+      s <- runPermutation $ CategorySource
+        <$> parseRequired "source:"        parseQuoted
+        <*> parseOptional "categories:" [] (parseList sourceParser)
+        <*> parseOptional "requires:"   [] (parseList sourceParser)
       structClose
       return s
     other = do
@@ -338,19 +338,20 @@ instance ConfigFormat CompileMode where
     binary = do
       sepAfter (string_ "binary")
       structOpen
-      b <- permute $ CompileBinary
-        <$$> parseRequired "category:"      sourceParser
-        <||> parseRequired "function:"      sourceParser
-        <|?> parseOptional "output:"     "" parseQuoted
-        <|?> parseOptional "link_flags:" [] (parseList parseQuoted)
+      b <- runPermutation $ CompileBinary
+        <$> parseRequired "category:"      sourceParser
+        <*> parseRequired "function:"      sourceParser
+        <*> parseOptional "output:"     "" parseQuoted
+        <*> parseOptional "link_flags:" [] (parseList parseQuoted)
       structClose
       return b
     incremental = do
       sepAfter (string_ "incremental")
       structOpen
-      lf <- parseRequired "link_flags:" (parseList parseQuoted) <|> return []
+      lf <- runPermutation $ CompileIncremental
+        <$> parseOptional "link_flags:" [] (parseList parseQuoted)
       structClose
-      return (CompileIncremental lf)
+      return lf
   writeConfig (CompileBinary c f o lf) = do
     validateCategoryName c
     validateFunctionName f
@@ -375,11 +376,12 @@ instance ConfigFormat CompileMode where
   writeConfig CompileUnspecified = writeConfig (CompileIncremental [])
   writeConfig _ = compileErrorM "Invalid compile mode"
 
-parseExprMacro :: Parser (MacroName,Expression SourcePos)
+parseExprMacro :: CompileErrorM m => ParserE m (MacroName,Expression SourcePos)
 parseExprMacro = do
   sepAfter (string_ "expression_macro")
   structOpen
-  n <- parseRequired "name:"       sourceParser
-  e <- parseRequired "expression:" sourceParser
+  e <- runPermutation $ (,)
+    <$> parseRequired "name:"       sourceParser
+    <*> parseRequired "expression:" sourceParser
   structClose
-  return (n,e)
+  return e

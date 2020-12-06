@@ -57,7 +57,7 @@ tests = [
     checkParseFail regexChar "\""
   ]
 
-checkParsesAs :: (Eq a, Show a) => Parser a -> [Char] -> a -> IO (CompileInfo ())
+checkParsesAs :: (Eq a, Show a) => ParserE CompileInfo a -> [Char] -> a -> IO (CompileInfo ())
 checkParsesAs p s m = return $ do
   let parsed = readSingleWith p "(string)" s
   check parsed
@@ -69,7 +69,7 @@ checkParsesAs p s m = return $ do
       | isCompileError c = compileErrorM $ "Parse '" ++ s ++ "':\n" ++ show (getCompileError c)
       | otherwise = return ()
 
-checkParseFail :: Show a => Parser a -> [Char] -> IO (CompileInfo ())
+checkParseFail :: Show a => ParserE CompileInfo a -> [Char] -> IO (CompileInfo ())
 checkParseFail p s = do
   let parsed = readSingleWith p "(string)" s
   return $ check parsed

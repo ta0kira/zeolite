@@ -60,9 +60,9 @@ import Control.Monad.Fail
 import Base.CompileError
 
 
-type CompileInfo a = CompileInfoT Identity a
+type CompileInfo = CompileInfoT Identity
 
-type CompileInfoIO a = CompileInfoT IO a
+type CompileInfoIO = CompileInfoT IO
 
 data CompileInfoT m a =
   CompileInfoT {

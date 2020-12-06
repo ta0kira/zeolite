@@ -38,7 +38,7 @@ tests :: [IO (CompileInfo ())]
 tests = [
     checkFileContents
       ("testfiles" </> "basic_compiles_test.0rt")
-      (\t -> return $ do
+      (\t -> do
         let h = itHeader t
         when (not $ isExpectCompiles $ ithResult h) $ compileErrorM "Expected ExpectCompiles"
         checkEquals (ithTestName h) "basic compiles test"
@@ -56,7 +56,7 @@ tests = [
 
     checkFileContents
       ("testfiles" </> "basic_error_test.0rt")
-      (\t -> return $ do
+      (\t -> do
         let h = itHeader t
         when (not $ isExpectCompileError $ ithResult h) $ compileErrorM "Expected ExpectCompileError"
         checkEquals (ithTestName h) "basic error test"
@@ -74,7 +74,7 @@ tests = [
 
     checkFileContents
       ("testfiles" </> "basic_crash_test.0rt")
-      (\t -> return $ do
+      (\t -> do
         let h = itHeader t
         when (not $ isExpectRuntimeError $ ithResult h) $ compileErrorM "Expected ExpectRuntimeError"
         checkEquals (ithTestName h) "basic crash test"
@@ -92,7 +92,7 @@ tests = [
 
     checkFileContents
       ("testfiles" </> "basic_success_test.0rt")
-      (\t -> return $ do
+      (\t -> do
         let h = itHeader t
         when (not $ isExpectRuntimeSuccess $ ithResult h) $ compileErrorM "Expected ExpectRuntimeSuccess"
         checkEquals (ithTestName h) "basic success test"
@@ -110,13 +110,11 @@ tests = [
   ]
 
 checkFileContents ::
-  String -> (IntegrationTest SourcePos -> IO (CompileInfo ())) -> IO (CompileInfo ())
-checkFileContents f o = do
-  s <- loadFile f
-  unwrap $ parse (between optionalSpace endOfDoc sourceParser) f s
-  where
-    unwrap (Left e)  = return $ compileErrorM (show e)
-    unwrap (Right t) = fmap (("Check " ++ f ++ ":") ??>) $ o t
+  String -> (IntegrationTest SourcePos -> CompileInfo ()) -> IO (CompileInfo ())
+checkFileContents f o = toCompileInfo $ do
+  s <- errorFromIO $ loadFile f
+  t <- runParserE (between optionalSpace endOfDoc sourceParser) f s
+  fromCompileInfo $ ("Check " ++ f ++ ":") ??> o t
 
 extractCategoryNames :: IntegrationTest c -> [String]
 extractCategoryNames = map (show . getCategoryName) . itCategory

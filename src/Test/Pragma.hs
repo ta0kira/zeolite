@@ -20,11 +20,11 @@ module Test.Pragma (tests) where
 
 import Control.Monad (when)
 import Text.Parsec
-import Text.Parsec.String
 import Text.Regex.TDFA -- Not safe!
 
 import Base.CompileError
 import Base.CompileInfo
+import Parser.Common
 import Parser.Pragma
 import Test.Common
 import Types.Pragma
@@ -98,7 +98,7 @@ tests = [
     checkParseError "$ExprLookup[ \"bad stuff\" ]$" "macro name" pragmaExprLookup
   ]
 
-checkParsesAs :: String -> Parser [Pragma SourcePos] -> ([Pragma SourcePos] -> Bool) -> IO (CompileInfo ())
+checkParsesAs :: String -> ParserE CompileInfo [Pragma SourcePos] -> ([Pragma SourcePos] -> Bool) -> IO (CompileInfo ())
 checkParsesAs s p m = return $ do
   let parsed = readSingleWith p "(string)" s
   check parsed
@@ -110,7 +110,7 @@ checkParsesAs s p m = return $ do
       | isCompileError c = compileErrorM $ "Parse '" ++ s ++ "':\n" ++ show (getCompileError c)
       | otherwise = return ()
 
-checkParseError :: String -> String -> Parser (Pragma SourcePos) -> IO (CompileInfo ())
+checkParseError :: String -> String -> ParserE CompileInfo (Pragma SourcePos) -> IO (CompileInfo ())
 checkParseError s m p = return $ do
   let parsed = readSingleWith p "(string)" s
   check parsed
