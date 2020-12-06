@@ -48,4 +48,4 @@ main = runAllTests $ concat [
   ]
 
 labelWith :: String -> [IO (CompileInfo ())] -> [IO (CompileInfo ())]
-labelWith s ts = map (\(n,t) -> fmap (<?? ("In " ++ s ++ " (#" ++ show n ++ "):")) t) (zip ([1..] :: [Int]) ts)
+labelWith s ts = map (\(n,t) -> fmap (<?? "In " ++ s ++ " (#" ++ show n ++ "):") t) (zip ([1..] :: [Int]) ts)

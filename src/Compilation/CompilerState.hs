@@ -181,15 +181,19 @@ instance Show c => Show (VariableValue c) where
 
 (<???) :: CompileErrorM m => CompilerState a m b -> String -> CompilerState a m b
 (<???) x s = mapStateT (<?? s) x
+infixl 1 <???
 
 (???>) :: CompileErrorM m => String -> CompilerState a m b -> CompilerState a m b
 (???>) s x = mapStateT (s ??>) x
+infixr 1 ???>
 
 (<!!!) :: CompileErrorM m => CompilerState a m b -> String -> CompilerState a m b
 (<!!!) x s = mapStateT (<!! s) x
+infixl 1 <!!!
 
 (!!!>) :: CompileErrorM m => String -> CompilerState a m b -> CompilerState a m b
 (!!!>) s x = mapStateT (s !!>) x
+infixr 1 !!!>
 
 resetBackgroundStateT :: CompileErrorM m => CompilerState a m b -> CompilerState a m b
 resetBackgroundStateT x = mapStateT resetBackgroundM x

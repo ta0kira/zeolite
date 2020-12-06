@@ -196,7 +196,7 @@ compileLanguageModule (LanguageModule ns0 ns1 ns2 cs0 ps0 ts0 cs1 ps1 ts1 ex ss 
              ("Category " ++ show (getCategoryName t) ++
               formatFullContextBrace (getCategoryContext t) ++
               " is defined " ++ show (length ds) ++ " times") !!>
-               (mapErrorsM_ (\d -> compileErrorM $ "Defined at " ++ formatFullContext (dcContext d)) ds)
+                mapErrorsM_ (\d -> compileErrorM $ "Defined at " ++ formatFullContext (dcContext d)) ds
     checkSupefluous es2
       | null es2 = return ()
       | otherwise = compileErrorM $ "External categories either not concrete or not present: " ++
@@ -244,7 +244,7 @@ compileModuleMain (LanguageModule ns0 ns1 ns2 cs0 ps0 _ cs1 ps1 _ _ _ em) xa n f
     reconcile [_] = return ()
     reconcile []  = compileErrorM $ "No matches for main category " ++ show n ++ " ($TestsOnly$ sources excluded)"
     reconcile ds  =
-      ("Multiple matches for main category " ++ show n) !!>
+      "Multiple matches for main category " ++ show n !!>
         mapErrorsM_ (\d -> compileErrorM $ "Defined at " ++ formatFullContext (dcContext d)) ds
 
 compileCategoryDeclaration :: (Show c, CompileErrorM m) =>
@@ -304,7 +304,7 @@ compileConcreteTemplate :: (Show c, CompileErrorM m) =>
   Bool -> CategoryMap c -> CategoryName -> m CxxOutput
 compileConcreteTemplate testing ta n = do
   (_,t) <- getConcreteCategory ta ([],n)
-  compileConcreteDefinition testing ta Map.empty Set.empty Nothing (defined t) <?? ("In generated template for " ++ show n) where
+  compileConcreteDefinition testing ta Map.empty Set.empty Nothing (defined t) <?? "In generated template for " ++ show n where
     defined t = DefinedCategory {
         dcContext = [],
         dcName = getCategoryName t,
@@ -334,7 +334,7 @@ compileConcreteTemplate testing ta n = do
 
 compileConcreteStreamlined :: (Show c, CompileErrorM m) =>
   Bool -> CategoryMap c -> CategoryName -> m [CxxOutput]
-compileConcreteStreamlined testing ta n =  ("In streamlined compilation of " ++ show n) ??> do
+compileConcreteStreamlined testing ta n =  "In streamlined compilation of " ++ show n ??> do
   (_,t) <- getConcreteCategory ta ([],n)
   let guard = if testing
                  then testsOnlySourceGuard
@@ -470,11 +470,11 @@ compileConcreteDefinition testing ta em ns rs dd@(DefinedCategory c n pi _ _ fi 
     unwrappedArg i m = writeStoredVariable (dmType m) (UnwrappedSingle $ "args.At(" ++ show i ++ ")")
     createMember r filters m = do
       validateGeneralInstance r filters (vtType $ dmType m) <??
-        ("In creation of " ++ show (dmName m) ++ " at " ++ formatFullContext (dmContext m))
+        "In creation of " ++ show (dmName m) ++ " at " ++ formatFullContext (dmContext m)
       return $ onlyCode $ variableStoredType (dmType m) ++ " " ++ variableName (dmName m) ++ ";"
     createMemberLazy r filters m = do
       validateGeneralInstance r filters (vtType $ dmType m) <??
-        ("In creation of " ++ show (dmName m) ++ " at " ++ formatFullContext (dmContext m))
+        "In creation of " ++ show (dmName m) ++ " at " ++ formatFullContext (dmContext m)
       return $ onlyCode $ variableLazyType (dmType m) ++ " " ++ variableName (dmName m) ++ ";"
     categoryDispatch fs2 =
       return $ onlyCodes $ [
@@ -833,7 +833,7 @@ createMainCommon n (CompiledData req0 out0) (CompiledData req1 out1) =
 
 createMainFile :: (Show c, CompileErrorM m) =>
   CategoryMap c -> ExprMap c -> CategoryName -> FunctionName -> m (Namespace,[String])
-createMainFile tm em n f = ("In the creation of the main binary procedure") ??> do
+createMainFile tm em n f = "In the creation of the main binary procedure" ??> do
   ca <- compileMainProcedure tm em expr
   let file = noTestsOnlySourceGuard ++ createMainCommon "main" emptyCode (argv <> ca)
   (_,t) <- getConcreteCategory tm ([],n)
@@ -845,7 +845,7 @@ createMainFile tm em n f = ("In the creation of the main binary procedure") ??> 
 
 createTestFile :: (Show c, CompileErrorM m) =>
   CategoryMap c -> ExprMap c  -> [String] -> [TestProcedure c] -> m (CompiledData [String])
-createTestFile tm em args ts = ("In the creation of the test binary procedure") ??> do
+createTestFile tm em args ts = "In the creation of the test binary procedure" ??> do
   ts' <- fmap mconcat $ mapErrorsM (compileTestProcedure tm em) ts
   (include,sel) <- selectTestFromArgv1 $ map tpName ts
   let (CompiledData req _) = ts' <> sel

@@ -100,7 +100,7 @@ loadRecompile p = do
   when (not filePresent) $ compileErrorM $ "Module \"" ++ p ++ "\" has not been configured yet"
   c <- errorFromIO $ readFile f
   (autoReadConfig f c) <!!
-    ("Could not parse metadata from \"" ++ p ++ "\"; please reconfigure")
+    "Could not parse metadata from \"" ++ p ++ "\"; please reconfigure"
 
 isPathUpToDate :: VersionHash -> ForceMode -> FilePath -> CompileInfoIO Bool
 isPathUpToDate h f p = do
@@ -116,7 +116,7 @@ writeMetadata :: FilePath -> CompileMetadata -> CompileInfoIO ()
 writeMetadata p m = do
   p' <- errorFromIO $ canonicalizePath p
   errorFromIO $ hPutStrLn stderr $ "Writing metadata for \"" ++ p' ++ "\"."
-  m' <- autoWriteConfig m <?? ("In data for " ++ p)
+  m' <- autoWriteConfig m <?? "In data for " ++ p
   writeCachedFile p' "" metadataFilename m'
 
 writeRecompile :: FilePath -> ModuleConfig -> CompileInfoIO ()
@@ -124,7 +124,7 @@ writeRecompile p m = do
   p' <- errorFromIO $ canonicalizePath p
   let f = p </> moduleFilename
   errorFromIO $ hPutStrLn stderr $ "Updating config for \"" ++ p' ++ "\"."
-  m' <- autoWriteConfig m <?? ("In data for " ++ p)
+  m' <- autoWriteConfig m <?? "In data for " ++ p
   errorFromIO $ writeFile f m'
 
 eraseCachedData :: FilePath -> CompileInfoIO ()
@@ -236,7 +236,7 @@ loadDepsCommon f h ca pa0 getDeps ps = do
           when (cmPath m /= p') $
             compileErrorM $ "Module \"" ++ p ++ "\" has an invalid cache path and must be recompiled"
           fresh <- errorFromIO $ toCompileInfo $ checkModuleFreshness h cm p m <!!
-            ("Module \"" ++ p ++ "\" is out of date and should be recompiled")
+            "Module \"" ++ p ++ "\" is out of date and should be recompiled"
           if enforce
              then fromCompileInfo   fresh
              else asCompileWarnings fresh
@@ -257,7 +257,7 @@ loadMetadata ca p = do
          when (not filePresent) $ compileErrorM $ "Module \"" ++ p ++ "\" has not been compiled yet"
          c <- errorFromIO $ readFile f
          (autoReadConfig f c) <!!
-            ("Could not parse metadata from \"" ++ p ++ "\"; please recompile")
+            "Could not parse metadata from \"" ++ p ++ "\"; please recompile"
 
 sortCompiledFiles :: [FilePath] -> ([FilePath],[FilePath],[FilePath])
 sortCompiledFiles = foldl split ([],[],[]) where

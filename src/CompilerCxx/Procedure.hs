@@ -79,7 +79,7 @@ compileExecutableProcedure ctx ff@(ScopedFunction _ _ _ s as1 rs1 ps1 _ _)
       unreachable <- csIsUnreachable
       when (not unreachable) $
         doImplicitReturn [] <???
-          ("In implicit return from " ++ show n ++ formatFullContextBrace c)
+          "In implicit return from " ++ show n ++ formatFullContextBrace c
     wrapProcedure output pt ct =
       mconcat [
           onlyCode header2,
@@ -154,7 +154,7 @@ compileCondition ctx c e = do
      then return e'
      else return $ predTraceContext c ++ e'
   where
-    compile = ("In condition at " ++ formatFullContext c) ???> do
+    compile = "In condition at " ++ formatFullContext c ???> do
       (ts,e') <- compileExpression e
       lift $ checkCondition ts
       return $ useAsUnboxed PrimBool e'
@@ -205,7 +205,7 @@ compileStatement (ExplicitReturn c es) = do
       autoPositionalCleanup e
     -- Multi-expression => must all be singles.
     getReturn rs = do
-      (lift $ mapErrorsM_ checkArity $ zip ([0..] :: [Int]) $ map (fst . snd) rs) <???
+      lift (mapErrorsM_ checkArity $ zip ([0..] :: [Int]) $ map (fst . snd) rs) <???
         ("In return at " ++ formatFullContext c)
       csRegisterReturn c $ Just $ Positional $ map (head . pValues . fst . snd) rs
       let e = OpaqueMulti $ "ReturnTuple(" ++ intercalate "," (map (useAsUnwrapped . snd . snd) rs) ++ ")"
@@ -245,7 +245,7 @@ compileStatement (FailCall c e) = do
   r <- csResolver
   fa <- csAllFilters
   lift $ (checkValueAssignment r fa t0 formattedRequiredValue) <??
-    ("In fail call at " ++ formatFullContext c)
+    "In fail call at " ++ formatFullContext c
   csSetJumpType JumpFailCall
   maybeSetTrace c
   csWrite ["BUILTIN_FAIL(" ++ useAsUnwrapped e0 ++ ")"]
@@ -276,14 +276,14 @@ compileStatement (Assignment c as e) = message ???> do
       return t
     getVariableType (ExistingVariable (DiscardInput _)) t = return t
     createVariable r fa (CreateVariable c2 t1 n) t2 =
-      ("In creation of " ++ show n ++ " at " ++ formatFullContext c2) ???> do
+      "In creation of " ++ show n ++ " at " ++ formatFullContext c2 ???> do
         -- TODO: Call csRequiresTypes for t1. (Maybe needs a helper function.)
         lift $ collectAllM_ [validateGeneralInstance r fa (vtType t1),
                              checkValueAssignment r fa t2 t1]
         csAddVariable c2 n (VariableValue c2 LocalScope t1 True)
         csWrite [variableStoredType t1 ++ " " ++ variableName n ++ ";"]
     createVariable r fa (ExistingVariable (InputValue c2 n)) t2 =
-      ("In assignment to " ++ show n ++ " at " ++ formatFullContext c2) ???> do
+      "In assignment to " ++ show n ++ " at " ++ formatFullContext c2 ???> do
         (VariableValue _ _ t1 w) <- csGetVariable c2 n
         when (not w) $ lift $ compileErrorM $ "Cannot assign to read-only variable " ++
                                               show n ++ formatFullContextBrace c2
@@ -330,7 +330,7 @@ compileLazyInit (DefinedMember c _ t1 n (Just e)) = resetBackgroundStateT $ do
   fa <- csAllFilters
   let Positional [t2] = ts
   lift $ (checkValueAssignment r fa t2 t1) <??
-    ("In initialization of " ++ show n ++ " at " ++ formatFullContext c)
+    "In initialization of " ++ show n ++ " at " ++ formatFullContext c
   csWrite [variableName n ++ "([this]() { return " ++ writeStoredVariable t1 e' ++ "; })"]
 
 compileVoidExpression :: (Show c, CompileErrorM m,
@@ -428,7 +428,7 @@ compileScopedBlock s = do
     case cl of
          Just p2@(Procedure c _) -> do
            ctxCl0' <- lift $ ccStartCleanup ctxCl0
-           ctxCl <- compileProcedure ctxCl0' p2 <??? ("In cleanup starting at " ++ formatFullContext c)
+           ctxCl <- compileProcedure ctxCl0' p2 <??? "In cleanup starting at " ++ formatFullContext c
            p2' <- lift $ ccGetOutput ctxCl
            noTrace <- csGetNoTrace
            let p2'' = if noTrace
@@ -455,7 +455,7 @@ compileScopedBlock s = do
   where
     createVariable r fa (c,t,n) = do
       lift $ validateGeneralInstance r fa (vtType t) <??
-        ("In creation of " ++ show n ++ " at " ++ formatFullContext c)
+        "In creation of " ++ show n ++ " at " ++ formatFullContext c
       csWrite [variableStoredType t ++ " " ++ variableName n ++ ";"]
     showVariable (c,t,n) = do
       -- TODO: Call csRequiresTypes for t. (Maybe needs a helper function.)
@@ -578,7 +578,7 @@ compileExpression = compile where
       -- Multi-expression => must all be singles.
       getValues rs = do
         (mapErrorsM_ checkArity $ zip ([0..] :: [Int]) $ map fst rs) <??
-          ("In return at " ++ formatFullContext c)
+          "In return at " ++ formatFullContext c
         return (map (head . pValues . fst) rs,
                 "ArgTuple(" ++ intercalate ", " (map (useAsUnwrapped . snd) rs) ++ ")")
       checkArity (_,Positional [_]) = return ()
@@ -660,7 +660,7 @@ compileExpression = compile where
     fa <- csAllFilters
     let vt = ValueType RequiredValue $ singleType $ JustTypeInstance t
     (lift $ checkValueAssignment r fa t' vt) <???
-      ("In converted call at " ++ formatFullContext c)
+      "In converted call at " ++ formatFullContext c
     f' <- lookupValueFunction vt f
     compileFunctionCall (Just $ useAsUnwrapped e') f' f
   transform e (ValueCall c f) = do
@@ -697,7 +697,7 @@ compileExpressionStart (NamedVariable (OutputValue c n)) = do
 compileExpressionStart (NamedMacro c n) = do
   e <- csExprLookup c n
   csReserveExprMacro c n
-  e' <- compileExpression e <??? ("In expansion of " ++ show n ++ " at " ++ formatFullContext c)
+  e' <- compileExpression e <??? "In expansion of " ++ show n ++ " at " ++ formatFullContext c
   -- NOTE: This will be skipped if expression compilation fails.
   csReleaseExprMacro c n
   return e'
@@ -709,7 +709,7 @@ compileExpressionStart (CategoryCall c t f@(FunctionCall _ n _ _)) = do
 compileExpressionStart (TypeCall c t f@(FunctionCall _ n _ _)) = do
   r <- csResolver
   fa <- csAllFilters
-  lift $ validateGeneralInstance r fa (singleType t) <?? ("In function call at " ++ formatFullContext c)
+  lift $ validateGeneralInstance r fa (singleType t) <?? "In function call at " ++ formatFullContext c
   f' <- csGetTypeFunction c (Just $ singleType t) n
   when (sfScope f' /= TypeScope) $ lift $ compileErrorM $ "Function " ++ show n ++
                                           " cannot be used as a type function" ++
@@ -761,7 +761,7 @@ compileExpressionStart (BuiltinCall c (FunctionCall _ BuiltinReduce ps es)) = do
   lift $ validateGeneralInstance r fa t1
   lift $ validateGeneralInstance r fa t2
   lift $ (checkValueAssignment r fa t0 (ValueType OptionalValue t1)) <??
-    ("In argument to reduce call at " ++ formatFullContext c)
+    "In argument to reduce call at " ++ formatFullContext c
   -- TODO: If t1 -> t2 then just return e without a Reduce call.
   t1' <- expandGeneralInstance t1
   t2' <- expandGeneralInstance t2
@@ -819,7 +819,7 @@ compileExpressionStart (InlineAssignment c n e) = do
   r <- csResolver
   fa <- csAllFilters
   lift $ (checkValueAssignment r fa t t0) <??
-    ("In assignment at " ++ formatFullContext c)
+    "In assignment at " ++ formatFullContext c
   csUpdateAssigned n
   scoped <- autoScope s
   let lazy = s == CategoryScope
@@ -881,13 +881,13 @@ compileFunctionCall e f (FunctionCall c _ ps es) = message ???> do
     -- Multi-expression => must all be singles.
     getValues rs = do
       (mapErrorsM_ checkArity $ zip ([0..] :: [Int]) $ map fst rs) <??
-        ("In return at " ++ formatFullContext c)
+        "In return at " ++ formatFullContext c
       return (map (head . pValues . fst) rs, "ArgTuple(" ++ intercalate ", " (map (useAsUnwrapped . snd) rs) ++ ")")
     checkArity (_,Positional [_]) = return ()
     checkArity (i,Positional ts)  =
       compileErrorM $ "Return position " ++ show i ++ " has " ++ show (length ts) ++ " values but should have 1"
     checkArg r fa t0 (i,t1) = do
-      checkValueAssignment r fa t1 t0 <?? ("In argument " ++ show i ++ " to " ++ show (sfName f))
+      checkValueAssignment r fa t1 t0 <?? "In argument " ++ show i ++ " to " ++ show (sfName f)
 
 guessParamsFromArgs :: (Show c, CompileErrorM m, TypeResolver r) =>
   r -> ParamFilters -> ScopedFunction c -> Positional (InstanceOrInferred c) ->
@@ -922,7 +922,8 @@ compileTestProcedure :: (Show c, CompileErrorM m) =>
   CategoryMap c -> ExprMap c -> TestProcedure c -> m (CompiledData [String])
 compileTestProcedure tm em (TestProcedure c n p) = do
   ctx <- getMainContext tm em
-  p' <- ("In unittest " ++ show n ++ formatFullContextBrace c) ??> runDataCompiler compiler ctx
+  p' <- runDataCompiler compiler ctx <??
+    "In unittest " ++ show n ++ formatFullContextBrace c
   return $ mconcat [
       onlyCode $ "ReturnTuple " ++ testFunctionName n ++ "() {",
       indentCompiled $ onlyCode $ startTestTracing n,

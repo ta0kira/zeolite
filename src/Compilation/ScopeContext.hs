@@ -102,7 +102,7 @@ getProcedureScopes ta em (DefinedCategory c n pi _ _ fi ms ps fs) = do
       fa' <- fmap (Map.union fa) $ getFilterMap pi2 fi2
       mapErrorsM_ (checkFilter r fa') fi2
     checkFilter r fa (ParamFilter c2 n2 f) =
-      validateTypeFilter r fa f <?? ("In " ++ show n2 ++ " " ++ show f ++ formatFullContextBrace c2)
+      validateTypeFilter r fa f <?? "In " ++ show n2 ++ " " ++ show f ++ formatFullContextBrace c2
     checkFunction pm f =
       when (sfScope f == ValueScope) $
         mapErrorsM_ (checkParam pm) $ pValues $ sfParams f

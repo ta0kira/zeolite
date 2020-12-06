@@ -155,7 +155,7 @@ instance (Show c, CompileErrorM m) =>
       compileErrorM $ "Use explicit type conversion to call " ++ show n ++ " from " ++ show t
     getFromAll ts = do
       collectFirstM ts <!!
-        ("Function " ++ show n ++ " not available for type " ++ show t ++ formatFullContextBrace c)
+        "Function " ++ show n ++ " not available for type " ++ show t ++ formatFullContextBrace c
     getFromSingle (JustParamName _ p) = do
       fa <- ccAllFilters ctx
       fs <- case p `Map.lookup` fa of
@@ -164,7 +164,7 @@ instance (Show c, CompileErrorM m) =>
       let ts = map tfType $ filter isRequiresFilter fs
       let ds = map dfType $ filter isDefinesFilter  fs
       collectFirstM (map (getFunction . Just) ts ++ map checkDefine ds) <!!
-        ("Function " ++ show n ++ " not available for param " ++ show p ++ formatFullContextBrace c)
+        "Function " ++ show n ++ " not available for param " ++ show p ++ formatFullContextBrace c
     getFromSingle (JustTypeInstance t2)
       -- Same category as the procedure itself.
       | tiName t2 == pcType ctx =
@@ -189,7 +189,7 @@ instance (Show c, CompileErrorM m) =>
         compileErrorM $ "Function " ++ show n ++ " in " ++ show t2 ++
                        " is a category function" ++ formatFullContextBrace c
       paired <- processPairs alwaysPair ps1 ps2 <??
-        ("In external function call at " ++ formatFullContext c)
+        "In external function call at " ++ formatFullContext c
       let assigned = Map.fromList paired
       uncheckedSubFunction assigned f
     subAndCheckFunction t2 _ _ _ =
@@ -200,7 +200,7 @@ instance (Show c, CompileErrorM m) =>
     | t /= pcType ctx =
       compileErrorM $ "Category " ++ show (pcType ctx) ++ " cannot initialize values from " ++
                      show t ++ formatFullContextBrace c
-    | otherwise = ("In initialization at " ++ formatFullContext c) ??> do
+    | otherwise = "In initialization at " ++ formatFullContext c ??> do
       let t' = TypeInstance (pcType ctx) as
       r <- ccResolver ctx
       allFilters <- ccAllFilters ctx
@@ -227,7 +227,7 @@ instance (Show c, CompileErrorM m) =>
           mapErrorsM (uncheckedSubFilter $ getValueForParam fm) fs
         checkInit r fa (MemberValue c2 n t0) (i,t1) = do
           checkValueAssignment r fa t1 t0 <??
-            ("In initializer " ++ show i ++ " for " ++ show n ++ formatFullContextBrace c2)
+            "In initializer " ++ show i ++ " for " ++ show n ++ formatFullContextBrace c2
         subSingle pa (DefinedMember c2 _ t2 n _) = do
           t2' <- uncheckedSubValueType (getValueForParam pa) t2
           return $ MemberValue c2 n t2'
@@ -435,17 +435,17 @@ instance (Show c, CompileErrorM m) =>
                        Just vs2 -> vs2
         -- Check for a count match first, to avoid the default error message.
         processPairs_ alwaysPair (fmap pvType rs) vs' <??
-          ("In procedure return at " ++ formatFullContext c)
+          "In procedure return at " ++ formatFullContext c
         processPairs_ checkReturnType rs (Positional $ zip ([0..] :: [Int]) $ pValues vs') <??
-          ("In procedure return at " ++ formatFullContext c)
+          "In procedure return at " ++ formatFullContext c
         return (ValidatePositions rs)
         where
           checkReturnType ta0@(PassedValue _ t0) (n,t) = do
             r <- ccResolver ctx
             pa <- ccAllFilters ctx
             checkValueAssignment r pa t t0 <!!
-              ("Cannot convert " ++ show t ++ " to " ++ show ta0 ++ " in return " ++
-               show n ++ " at " ++ formatFullContext c)
+              "Cannot convert " ++ show t ++ " to " ++ show ta0 ++ " in return " ++
+               show n ++ " at " ++ formatFullContext c
       check (ValidateNames ns ts ra) = do
         case vs of
              Just _  -> check (ValidatePositions ts) >> return ()
@@ -597,7 +597,7 @@ instance (Show c, CompileErrorM m) =>
       checkReserved (m@(n2,_):ms) rs
         | n2 /= n = checkReserved ms (m:rs)
         | otherwise = (mapErrorsM_ singleError (m:rs)) <!!
-            ("Expression macro " ++ show n ++ " references itself")
+            "Expression macro " ++ show n ++ " references itself"
       singleError (n2,c2) = compileErrorM $ show n2 ++ " expanded at " ++ formatFullContext c2
   ccReserveExprMacro ctx c n =
     return $ ProcedureContext {

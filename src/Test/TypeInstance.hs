@@ -957,8 +957,8 @@ getParams :: CompileErrorM m =>
   Map.Map CategoryName (Map.Map CategoryName (InstanceParams -> InstanceParams))
   -> TypeInstance -> CategoryName -> m InstanceParams
 getParams ma (TypeInstance n1 ps1) n2 = do
-  ra <- mapLookup ma n1 <?? ("In lookup of category " ++ show n1)
-  f <- mapLookup ra n2 <?? ("In lookup of parent " ++ show n2 ++ " of " ++ show n1)
+  ra <- mapLookup ma n1 <?? "In lookup of category " ++ show n1
+  f <- mapLookup ra n2 <?? "In lookup of parent " ++ show n2 ++ " of " ++ show n1
   return $ f ps1
 
 getTypeFilters :: CompileErrorM m => TypeInstance -> m InstanceFilters

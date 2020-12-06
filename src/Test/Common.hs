@@ -107,7 +107,7 @@ checkTypeSuccess r pa x = do
   check $ validateGeneralInstance r pa2 t
   where
     prefix = x ++ " " ++ showParams pa
-    check x2 = x2 <!! (prefix ++ ":")
+    check x2 = x2 <!! prefix ++ ":"
 
 checkTypeFail :: TypeResolver r => r -> [(String,[String])] -> String -> CompileInfo ()
 checkTypeFail r pa x = do
@@ -126,7 +126,7 @@ checkDefinesSuccess r pa x = do
   check $ validateDefinesInstance r pa2 t
   where
     prefix = x ++ " " ++ showParams pa
-    check x2 = x2 <!! (prefix ++ ":")
+    check x2 = x2 <!! prefix ++ ":"
 
 checkDefinesFail :: TypeResolver r => r -> [(String,[String])] -> String -> CompileInfo ()
 checkDefinesFail r pa x = do
@@ -147,7 +147,7 @@ containsExactly actual expected = do
 
 containsNoDuplicates :: (Ord a, Show a) => [a] -> CompileInfo ()
 containsNoDuplicates expected =
-  (mapErrorsM_ checkSingle $ group $ sort expected) <!! (show expected)
+  (mapErrorsM_ checkSingle $ group $ sort expected) <!! show expected
   where
     checkSingle xa@(x:_:_) =
       compileErrorM $ "Item " ++ show x ++ " occurs " ++ show (length xa) ++ " times"
@@ -156,7 +156,7 @@ containsNoDuplicates expected =
 containsAtLeast :: (Ord a, Show a) => [a] -> [a] -> CompileInfo ()
 containsAtLeast actual expected =
   (mapErrorsM_ (checkInActual $ Set.fromList actual) expected) <!!
-        (show actual ++ " (actual) vs. " ++ show expected ++ " (expected)")
+        show actual ++ " (actual) vs. " ++ show expected ++ " (expected)"
   where
     checkInActual va v =
       if v `Set.member` va
@@ -166,7 +166,7 @@ containsAtLeast actual expected =
 containsAtMost :: (Ord a, Show a) => [a] -> [a] -> CompileInfo ()
 containsAtMost actual expected =
   (mapErrorsM_ (checkInExpected $ Set.fromList expected) actual) <!!
-        (show actual ++ " (actual) vs. " ++ show expected ++ " (expected)")
+        show actual ++ " (actual) vs. " ++ show expected ++ " (expected)"
   where
     checkInExpected va v =
       if v `Set.member` va

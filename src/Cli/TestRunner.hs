@@ -72,7 +72,7 @@ runSingleTest b cm p paths deps (f,s) = do
       errorFromIO $ hPutStrLn stderr $ "\n*** Executing testcase " ++ name ++ " ***"
       result <- toCompileInfo $ run (ithResult $ itHeader t) (ithArgs $ itHeader t) (itCategory t) (itDefinition t) (itTests t)
       if isCompileError result
-         then return ((0,1),scope ??> result >> return ())
+         then return ((0,1),scope ??> (result >> return ()))
          else do
            let allResults = getCompileSuccess result
            let passed = length $ filter (not . isCompileError) allResults
@@ -130,7 +130,7 @@ runSingleTest b cm p paths deps (f,s) = do
       let ts' = Map.fromListWith (++) $ map (\t -> (tpName t,[t])) ts
       mapErrorsM_ testClash $ Map.toList ts'
     testClash (_,[_]) = return ()
-    testClash (n,ts) = ("unittest " ++ show n ++ " is defined multiple times") !!>
+    testClash (n,ts) = "unittest " ++ show n ++ " is defined multiple times" !!>
       (mapErrorsM_ (compileErrorM . ("Defined at " ++) . formatFullContext) $ sort $ map tpContext ts)
 
     execute s2 rs es args cs ds ts = do
@@ -144,7 +144,7 @@ runSingleTest b cm p paths deps (f,s) = do
            when (not $ any isCompileError results) $ errorFromIO $ removeDirectoryRecursive dir
            return results
 
-    executeTest binary rs es res s2 (f2,c) = printOutcome $ ("\nIn unittest " ++ show f2 ++ formatFullContextBrace c) ??> do
+    executeTest binary rs es res s2 (f2,c) = printOutcome $ "\nIn unittest " ++ show f2 ++ formatFullContextBrace c ??> do
       let command = TestCommand binary (takeDirectory binary) [show f2]
       (TestCommandResult s2' out err) <- runTestCommand b command
       case (s2,s2') of

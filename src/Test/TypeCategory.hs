@@ -1194,7 +1194,7 @@ checkPaired f actual expected
     compileErrorM $ "Different item counts: " ++ show actual ++ " (actual) vs. " ++
                    show expected ++ " (expected)"
   | otherwise = mapErrorsM_ check (zip3 actual expected ([1..] :: [Int])) where
-    check (a,e,n) = f a e <!! ("Item " ++ show n ++ " mismatch")
+    check (a,e,n) = f a e <!! "Item " ++ show n ++ " mismatch"
 
 containsPaired :: (Eq a, Show a) => [a] -> [a] -> CompileInfo ()
 containsPaired = checkPaired checkSingle where
@@ -1208,7 +1208,7 @@ checkOperationSuccess f o = do
   let parsed = readMulti f contents :: CompileInfo [AnyCategory SourcePos]
   return $ check (parsed >>= o >> return ())
   where
-    check x = x <!! ("Check " ++ f ++ ":")
+    check x = x <!! "Check " ++ f ++ ":"
 
 checkOperationFail :: String -> ([AnyCategory SourcePos] -> CompileInfo a) -> IO (CompileInfo ())
 checkOperationFail f o = do

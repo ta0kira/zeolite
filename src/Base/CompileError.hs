@@ -68,15 +68,19 @@ class Monad m => CompileErrorM m where
 
 (<??) :: CompileErrorM m => m a -> String -> m a
 (<??) = withContextM
+infixl 1 <??
 
 (??>) :: CompileErrorM m => String -> m a -> m a
 (??>) = flip withContextM
+infixr 1 ??>
 
 (<!!) :: CompileErrorM m => m a -> String -> m a
 (<!!) = summarizeErrorsM
+infixl 1 <!!
 
 (!!>) :: CompileErrorM m => String -> m a -> m a
 (!!>) = flip summarizeErrorsM
+infixr 1 !!>
 
 collectAllM_ :: (Foldable f, CompileErrorM m) => f (m a) -> m ()
 collectAllM_ = fmap (const ()) . collectAllM

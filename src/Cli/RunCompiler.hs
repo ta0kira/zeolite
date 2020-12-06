@@ -70,7 +70,7 @@ runCompiler resolver backend (CompileOptions _ _ _ ds _ _ p (ExecuteTests tp) f)
     processResults passed failed rs
       | isCompileError rs =
         (fromCompileInfo rs) <!!
-          ("\nPassed: " ++ show passed ++ " test(s), Failed: " ++ show failed ++ " test(s)")
+          "\nPassed: " ++ show passed ++ " test(s), Failed: " ++ show failed ++ " test(s)"
       | otherwise =
         errorFromIO $ hPutStrLn stderr $ "\nPassed: " ++ show passed ++ " test(s), Failed: " ++ show failed ++ " test(s)"
 
@@ -103,7 +103,7 @@ runCompiler resolver backend (CompileOptions _ is is2 _ _ _ p (CompileFast c fn 
     msMode = (CompileBinary c fn (absolute </> show c) []),
     msForce = f
   }
-  compileModule resolver backend spec <?? ("In compilation of \"" ++ f2' ++ "\"")
+  compileModule resolver backend spec <?? "In compilation of \"" ++ f2' ++ "\""
   errorFromIO $ removeDirectoryRecursive dir
 
 runCompiler resolver backend (CompileOptions h _ _ ds _ _ p CompileRecompileRecursive f) = do
@@ -155,7 +155,7 @@ runCompiler resolver backend (CompileOptions _ _ _ ds _ _ p CompileRecompile f) 
              msMode = m,
              msForce = f
            }
-           compileModule resolver backend spec <?? ("In compilation of module \"" ++ d ++ "\"")
+           compileModule resolver backend spec <?? "In compilation of module \"" ++ d ++ "\""
 
 runCompiler resolver backend (CompileOptions _ is is2 ds _ _ p CreateTemplates f) = mapM_ compileSingle ds where
   compilerHash = getCompilerHash backend
@@ -167,7 +167,7 @@ runCompiler resolver backend (CompileOptions _ is is2 ds _ _ p CreateTemplates f
     deps1 <- loadPublicDeps compilerHash f Map.empty (base:as)
     deps2 <- loadPublicDeps compilerHash f (mapMetadata deps1) as2
     path <- errorFromIO $ canonicalizePath p
-    createModuleTemplates resolver path d deps1 deps2 <?? ("In module \"" ++ d' ++ "\"")
+    createModuleTemplates resolver path d deps1 deps2 <?? "In module \"" ++ d' ++ "\""
 
 runCompiler resolver backend (CompileOptions h is is2 ds es ep p m f) = mapM_ compileSingle ds where
   compileSingle d = do

@@ -381,7 +381,7 @@ tests = [
 checkWriteThenRead :: (Eq a, Show a, ConfigFormat a) => a -> IO (CompileInfo ())
 checkWriteThenRead m = return $ do
   text <- fmap spamComments $ autoWriteConfig m
-  m' <- autoReadConfig "(string)" text <!! ("Serialized >>>\n\n" ++ text ++ "\n<<< Serialized\n\n")
+  m' <- autoReadConfig "(string)" text <!! "Serialized >>>\n\n" ++ text ++ "\n<<< Serialized\n\n"
   when (m' /= m) $
     compileErrorM $ "Failed to match after write/read\n" ++
                    "Before:\n" ++ show m ++ "\n" ++
@@ -409,7 +409,7 @@ checkParsesAs f m = do
   return $ check parsed contents
   where
     check x contents = do
-      x' <- x <!! ("While parsing " ++ f)
+      x' <- x <!! "While parsing " ++ f
       when (not $ m x') $
         compileErrorM $ "Failed to match after write/read\n" ++
                        "Unparsed:\n" ++ contents ++ "\n" ++

@@ -40,9 +40,11 @@ class (Bounded a, Mergeable a) => PreserveMerge a where
 
 (<||>) :: Mergeable a => a -> a -> a
 (<||>) x y = mergeAny [x,y]
+infixl 2 <||>
 
 (<&&>) :: Mergeable a => a -> a -> a
 (<&&>) x y = mergeAll [x,y]
+infixl 2 <&&>
 
 instance Mergeable Bool where
   mergeAny = foldr (||) False

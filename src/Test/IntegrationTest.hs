@@ -114,7 +114,7 @@ checkFileContents ::
 checkFileContents f o = toCompileInfo $ do
   s <- errorFromIO $ loadFile f
   t <- runParserE (between optionalSpace endOfDoc sourceParser) f s
-  fromCompileInfo $ ("Check " ++ f ++ ":") ??> o t
+  fromCompileInfo $ o t <!! "Check " ++ f ++ ":"
 
 extractCategoryNames :: IntegrationTest c -> [String]
 extractCategoryNames = map (show . getCategoryName) . itCategory
