@@ -26,15 +26,16 @@ of this document.
 ## Table of Contents
 
 - [Project Status](#project-status)
+- [Language Overview](#language-overview)
+  - [Programming Paradigms](#programming-paradigms)
+  - [Parameter Variance](#parameter-variance)
+  - [Parameters as Variables](#parameters-as-variables)
+  - [Integrated Test Runner](#integrated-test-runner)
+  - [Integrated Build System](#integrated-build-system)
+  - [Data Encapsulation](#data-encapsulation)
 - [Quick Start](#quick-start)
   - [Installation](#installation)
   - [Hello World](#hello-world)
-- [Language Overview](#language-overview)
-  - [Data Encapsulation](#data-encapsulation)
-  - [Parameter Variance](#parameter-variance)
-  - [Parameters as Variables](#parameters-as-variables)
-  - [Compilation Testing](#compilation-testing)
-  - [Integrated Build System](#integrated-build-system)
 - [Writing Programs](#writing-programs)
   - [Basic Ideas](#basic-ideas)
   - [Declaring Functions](#declaring-functions)
@@ -68,14 +69,131 @@ of this document.
   - [Source File Pragmas](#source-file-pragmas)
   - [Procedure Pragmas](#procedure-pragmas)
   - [Expression Macros](#expression-macros)
-- [Conclusion](#conclusion)
 
 ## Project Status
 
-Zeolite is currently very experimental, and still lacks a lot of standard
-library functionality. It is currently best suited for those who have an
-interest in programming languages and compilers, although the language was
-designed with practical applications in mind.
+Zeolite is still evolving in all areas (syntax, build system, etc.), and it
+still lacks a lot of standard library functionality. That said, it was designed
+with practical applications in mind. It *does not* prioritize having
+impressive toy examples (e.g., merge-sort or "Hello World" in one line); the
+real value is seen in programs with higher relational complexity.
+
+## Language Overview
+
+This section discusses some of the features that make Zeolite unique. It does
+not go into detail about all of the language's features; see
+[Writing Programs](#writing-programs) and the [full examples][examples] for more
+specific language information.
+
+### Programming Paradigms
+
+Zeolite currently uses both [procedural][procedural] and [object-oriented][oop]
+programming paradigms. It shares many features with Java, but it also has
+additional features and restrictions meant to simplify code maintenance.
+
+### Parameter Variance
+
+The initial motivation for Zeolite was a type system that allows implicit
+conversions between different parameterizations of parameterized types. A
+parameterized type is a type with type "place-holders", e.g., `template`s in C++
+and generics in Java.
+
+Java and C++ *do not* allow you to safely convert between different
+parameterizations. For example, you cannot safely convert a `List<String>` into
+a `List<Object>` in Java. This is primarily because `List` uses its type
+parameter for both input and output.
+
+Zeolite, on the other hand, uses [declaration-site variance][variance] for each
+parameter. (C# also does this to a lesser extent.) This allows the language to
+support very powerful recursive type conversions for parameterized types.
+Zeolite *also* allows [use-site variance][variance] variance declarations, like
+Java uses.
+
+### Parameters as Variables
+
+Zeolite treats type parameters both as type place-holders (like in C++ and
+Java) and as *type variables* that you can call functions on. This further
+allows Zeolite to have interfaces that declare functions that operate on *types*
+in addition to interfaces that declare functions that operate on *values*. (This
+would be like having `abstract static` methods in Java.)
+
+This helps solve a few separate problems:
+
+- Operations like `equals` comparisons in Java are always dispatched to the
+  *left* object, which could lead to inconsistent results if the objects are
+  swapped: `foo.equals(bar);` is not the same as `bar.equals(foo);`. Such
+  problems can be mitigated by making `equals` a *type* function in an interface
+  rather than a *value* function.
+
+- Factory patterns can be abstracted out into interfaces, allowing the concept
+  of default construction (used by Java, C++, and others) to be eliminated. One
+  common issue in C++ is forgetting to *disallow* direct construction or copying
+  of objects of your `class`.
+
+### Integrated Test Runner
+
+The major advantage of statically-typed programming languages is their
+compile-time detection of code that *should not* be allowed. On the other hand,
+there is a major testability gap when it comes to ensuring that your
+statically-typed code *disallows* what you expect it to.
+
+Zeolite has a special source-file extension for unit tests, and a built-in
+compiler mode to run them. These tests can check for success, compilation
+failures, and even crashes. Normally you would need a third-party test runner to
+check for required compilation failures and crashes.
+
+Nearly all of the integration testing of the Zeolite language itself is done
+using this feature, but it is also supported for general use with Zeolite
+projects.
+
+### Integrated Build System
+
+The Zeolite compiler supports a module system that can incrementally compile
+projects without the user needing to create build scripts or `Makefile`s.
+
+- Modules are configured via a simple config file.
+- File-level and symbol-level imports and includes *are not* necessary, allowing
+  module authors to freely rearrange file structure.
+- Type dependencies are automatically resolved during linking so that output
+  binaries contain only the code that is relevant.
+- Module authors can back Zeolite code with C++.
+- The module system is integrated with the compiler's built-in testing mode.
+
+This means that the programmer can focus on code rather than on build rules, and
+module authors can avoid writing verbose build instructions for the users of
+their modules.
+
+### Data Encapsulation
+
+The overall design of Zeolite revolves around data encapsulation:
+
+- **No default construction or copying.** This means that objects can only be
+  created by explicit factory functions. (A very common mistake in C++ code is
+  forgetting to *disallow or override* default construction or copying.)
+
+- **Only abstract interfaces can be inherited.** Types that define procedures or
+  contain data members *cannot* be further extended. This encourages the
+  programmer to think more about usage patterns and less about data
+  representation when designing interactions between types.
+
+- **No "privileged" data-member access.** No object has *direct* access to the
+  data members of any other object; not even other objects of the same type.
+  This forces the programmer to also think about usage patterns when dealing
+  with other objects of the same type.
+
+- **Implementation details are kept separate.** In Zeolite, only *public
+  inheritance* and *public functions* show up where an object type is declared,
+  to discourage relying on implementation details of the type.
+
+  C++ and Java allow (and in some cases *require*) implementation details (data
+  members, function definitions, etc.) to show up in the same place as the
+  user-accessible parts of a `class`. The result is that the user of the `class`
+  will often rely on knowledge of how it works internally.
+
+Although all of these limitations preclude a lot of design decisions allowed in
+languages like Java, C++, and Python, they also drastically reduce the possible
+complexity of inter-object interactions. Additionally, they generally *do not*
+require ugly work-arounds; see the [full examples][examples].
 
 ## Quick Start
 
@@ -129,115 +247,6 @@ zeolite -I lib/util --fast HelloWorld hello-world.0rx
 ```
 
 Also see some [full examples][examples] for more complete feature usage.
-
-## Language Overview
-
-This section discusses some of the features that make Zeolite unique. It does
-not go into detail about all of the language's features.
-
-### Data Encapsulation
-
-The design of Zeolite revolves around data encapsulation:
-
-- There is no "default construction", unlike in C++ and Java. This means that
-  objects can only be created by explicit factory functions, further implying
-  that the programmer needs to explicitly decide what types can be instantiated.
-
-- There is no procedure or data-member inheritance; only abstract interfaces can
-  be inherited. This encourages the programmer to think more about usage
-  patterns and less about data representation when designing interactions
-  between types. This means that the Zeolite inheritance graph has
-  implementations strictly at the bottom, with everything above that being
-  relationships between capabilities that implementations can express.
-
-- There is no data-member visibility other than "internal". No object has direct
-  access to the data members of any other object; not even other objects of the
-  same type. (Private getters and setters are allowed, however.) This forces the
-  programmer to also think about usage patterns when dealing with other objects
-  of the same type.
-
-- Data members, private functions, and function definitions *never* show up in
-  the public declaration of a type. This means that the public declaration only
-  shows the readers what they can use. For comparison, Java does not allow
-  separation of declarations from definitions (except with superfluous
-  interfaces), C++ requires data members and `private` and `protected`
-  functions to show up in the `class` body, and Haskell requires function
-  definitions to immediately follow their type signatures.
-
-Although all of these limitations preclude a lot of design decisions allowed in
-languages like Java, C++, and Python, they also drastically reduce the possible
-complexity of inter-object interactions. Additionally, they generally *do not*
-require ugly work-arounds; see the [full examples][examples].
-
-### Parameter Variance
-
-The initial motivation for Zeolite was a type system that allows implicit
-conversions between different parameterizations of parameterized types. A
-parameterized type is a type with type "place-holders", e.g., `template`s in C++
-and generics in Java.
-
-Java and C++ *do not* allow you to safely convert between different
-parameterizations. For example, you cannot safely convert a `List<String>` into
-a `List<Object>` in Java. This is primarily because `List` uses its type
-parameter for both input and output.
-
-Zeolite, on the other hand, allows the programmer to assign a
-[variance][variance] to each parameter. (C# also does this to a lesser extent.)
-This allows the language to support very powerful recursive type conversions for
-parameterized types.
-
-### Parameters as Variables
-
-Zeolite treats type parameters both as type place-holders (like in C++ and
-Java) and as *type variables* that you can call functions on. This further
-allows Zeolite to have interfaces that declare functions that operate on *types*
-in addition to interfaces that declare functions that operate on *values*. (This
-would be like having `abstract static` methods in Java.)
-
-This helps solve a few separate problems:
-
-- Operations like `equals` comparisons in Java are always dispatched to the
-  *left* object, which could lead to inconsistent results if the objects are
-  swapped: `foo.equals(bar);` is not the same as `bar.equals(foo);`. Such
-  problems can be mitigated by making `equals` a *type* function in an interface
-  rather than a *value* function.
-
-- Factory patterns can be abstracted out into interfaces, allowing the concept
-  of default construction (used by Java, C++, and others) to be eliminated. One
-  common issue in C++ is forgetting to *disallow* direct construction or copying
-  of objects of your `class`.
-
-### Compilation Testing
-
-The major advantage of statically-typed programming languages is their
-compile-time detection of code that *should not* be allowed. On the other hand,
-there is a major testability gap when it comes to ensuring that your
-statically-typed code *disallows* what you expect it to.
-
-Zeolite has a special source-file extension for unit tests, and a built-in
-compiler mode to run them. These tests can check for success, compilation
-failures, and even crashes. Normally you would need a third-party test runner to
-check for required compilation failures and crashes.
-
-All of the integration testing of the Zeolite language itself is done using
-this feature, but it is also supported for general use with Zeolite projects.
-
-### Integrated Build System
-
-The Zeolite compiler supports a module system that can incrementally compile
-projects without the user needing to create build scripts or `Makefile`s.
-
-- Modules are configured via a simple config file.
-- File-level and symbol-level imports and includes *are not* necessary, allowing
-  module authors to freely rearrange file structure.
-- Type dependencies are automatically resolved during linking so that output
-  binaries contain only the code that is relevant.
-- Module authors can back Zeolite code with C++.
-- The module system is integrated with the compiler's built-in testing mode.
-
-This means that the programmer can focus on code rather than on build rules, and
-module authors can avoid writing verbose build instructions for the users of
-their modules.
 
 ## Writing Programs
 
@@ -1331,11 +1340,6 @@ These can be used in place of language expressions.
     as a valid expression, and it can only be used where expressions are
     otherwise allowed.
 
-## Conclusion
-
-Please experiment with Zeolite and share your thoughts. Please also contact me
-if you are interested in helping with development.
-
 [cabal]: https://www.haskell.org/cabal/#install-upgrade
 [category]: https://en.wikipedia.org/wiki/Category_theory
 [clang]: https://clang.llvm.org/cxx_status.html
@@ -1349,6 +1353,8 @@ if you are interested in helping with development.
 [kate]: https://kate-editor.org/
 [lib]: https://github.com/ta0kira/zeolite/tree/master/lib
 [lib/file]: https://github.com/ta0kira/zeolite/tree/master/lib/file
+[procedural]: https://en.wikipedia.org/wiki/Procedural_programming
+[oop]: https://en.wikipedia.org/wiki/Object-oriented_programming
 [travis-status]: https://travis-ci.org/ta0kira/zeolite.svg?branch=master
 [travis-zeolite]: https://travis-ci.org/ta0kira/zeolite
 [variance]: https://en.wikipedia.org/wiki/Covariance_and_contravariance_%28computer_science%29
