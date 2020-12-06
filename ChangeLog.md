@@ -66,6 +66,10 @@
   macros defined in `expression_map:` in `.zeolite-module`. Previously, the
   result was infinite recursion that could exhaust system resources.
 
+* **[breaking]** Adds an error when `root`/`path` in `.zeolite-module` differs
+  from the location of the respective `.zeolite-module`. This is to catch both
+  typos (e.g., copy-and-paste errors) and ambiguities.
+
 ## 0.9.0.0  -- 2020-11-23
 
 ### Compiler CLI

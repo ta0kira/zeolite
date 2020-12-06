@@ -99,8 +99,17 @@ loadRecompile p = do
   filePresent <- errorFromIO $ doesFileExist f
   when (not filePresent) $ compileErrorM $ "Module \"" ++ p ++ "\" has not been configured yet"
   c <- errorFromIO $ readFile f
-  (autoReadConfig f c) <!!
+  m <- autoReadConfig f c <!!
     "Could not parse metadata from \"" ++ p ++ "\"; please reconfigure"
+  p0 <- errorFromIO $ canonicalizePath p
+  let p1 = mcRoot m </> mcPath m
+  p2 <- errorFromIO $ canonicalizePath $ p0 </> p1
+  when (p2 /= p0) $ compileErrorM $ "Expected module path from " ++ f ++
+                                    " to match " ++ moduleFilename ++
+                                    " location but got " ++ p2 ++
+                                    " (resolved from root: \"" ++ mcRoot m ++
+                                    "\" and path: \"" ++ mcPath m ++ "\")"
+  return m
 
 isPathUpToDate :: VersionHash -> ForceMode -> FilePath -> CompileInfoIO Bool
 isPathUpToDate h f p = do

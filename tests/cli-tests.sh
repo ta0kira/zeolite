@@ -48,6 +48,16 @@ create_file() {
 }
 
 
+test_bad_path() {
+  local output=$(do_zeolite -p "$ZEOLITE_PATH" -r tests/bad-path -f || true)
+  if ! echo "$output" | egrep -q 'bad-path/\.zeolite-module .+ /dev/null'; then
+    show_message 'Expected path error from tests/bad-path:'
+    echo "$output" 1>&2
+    return 1
+  fi
+}
+
+
 test_check_defs() {
   local output=$(do_zeolite -p "$ZEOLITE_PATH" -r tests/check-defs -f || true)
   if ! echo "$output" | egrep -q 'Type .+ is defined 2 times'; then
@@ -319,6 +329,7 @@ run_all() {
 }
 
 ALL_TESTS=(
+  test_bad_path
   test_check_defs
   test_tests_only
   test_tests_only2
