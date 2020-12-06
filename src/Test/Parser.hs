@@ -26,7 +26,6 @@ import Base.CompileError
 import Base.CompileInfo
 import Parser.Common
 import Test.Common
-import Text.Parsec.String
 
 
 tests :: [IO (CompileInfo ())]

@@ -99,11 +99,13 @@ parseMemberProcedureFunction n = do
   return (ms,ps2,fs2) where
     singleFunction = labeled "function" $ do
       f <- parseScopedFunction parseScope (return n)
+      c <- getPosition
       p <- labeled ("definition of function " ++ show (sfName f)) $ sourceParser
       when (sfName f /= epName p) $
-        fail $ "expecting definition of function " ++ show (sfName f) ++
-              " but got definition of " ++ show (epName p)
+        parseErrorM c $ "expecting definition of function " ++ show (sfName f) ++
+                        " but got definition of " ++ show (epName p)
       return (f,p)
     catchUnscopedType = labeled "" $ do
+      c <- getPosition
       _ <- try sourceParser :: CompileErrorM m => ParserE m ValueType
-      fail $ "members must have an explicit @value or @category scope"
+      parseErrorM c "members must have an explicit @value or @category scope"

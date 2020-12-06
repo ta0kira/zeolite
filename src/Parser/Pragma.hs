@@ -37,10 +37,10 @@ import Parser.Common
 import Types.Pragma
 
 
-parsePragmas :: Monad m => [ParserE m a] -> ParserE m [a]
+parsePragmas :: CompileErrorM m => [ParserE m a] -> ParserE m [a]
 parsePragmas = many . foldr ((<|>)) unknownPragma
 
-pragmaModuleOnly :: Monad m => ParserE m (Pragma SourcePos)
+pragmaModuleOnly :: CompileErrorM m => ParserE m (Pragma SourcePos)
 pragmaModuleOnly = autoPragma "ModuleOnly" $ Left parseAt where
   parseAt c = PragmaVisibility [c] ModuleOnly
 
@@ -57,23 +57,23 @@ pragmaExprLookup = autoPragma "ExprLookup" $ Right parseAt where
     name <- sourceParser
     return $ PragmaExprLookup [c] name
 
-pragmaSourceContext :: Monad m => ParserE m (Pragma SourcePos)
+pragmaSourceContext :: CompileErrorM m => ParserE m (Pragma SourcePos)
 pragmaSourceContext = autoPragma "SourceContext" $ Left parseAt where
   parseAt c = PragmaSourceContext c
 
-pragmaNoTrace :: Monad m => ParserE m (Pragma SourcePos)
+pragmaNoTrace :: CompileErrorM m => ParserE m (Pragma SourcePos)
 pragmaNoTrace = autoPragma "NoTrace" $ Left parseAt where
   parseAt c = PragmaTracing [c] NoTrace
 
-pragmaTraceCreation :: Monad m => ParserE m (Pragma SourcePos)
+pragmaTraceCreation :: CompileErrorM m => ParserE m (Pragma SourcePos)
 pragmaTraceCreation = autoPragma "TraceCreation" $ Left parseAt where
   parseAt c = PragmaTracing [c] TraceCreation
 
-pragmaTestsOnly :: Monad m => ParserE m (Pragma SourcePos)
+pragmaTestsOnly :: CompileErrorM m => ParserE m (Pragma SourcePos)
 pragmaTestsOnly = autoPragma "TestsOnly" $ Left parseAt where
   parseAt c = PragmaVisibility [c] TestsOnly
 
-pragmaComment :: Monad m => ParserE m (Pragma SourcePos)
+pragmaComment :: CompileErrorM m => ParserE m (Pragma SourcePos)
 pragmaComment = autoPragma "Comment" $ Right parseAt where
   parseAt c = do
     string_ "\""
@@ -81,13 +81,14 @@ pragmaComment = autoPragma "Comment" $ Right parseAt where
     optionalSpace
     return $ PragmaComment [c] ss
 
-unknownPragma :: Monad m => ParserE m a
+unknownPragma :: CompileErrorM m => ParserE m a
 unknownPragma = do
+  c <- getPosition
   try pragmaStart
   p <- many1 alphaNum
-  fail $ "Pragma " ++ p ++ " is not supported in this context"
+  parseErrorM c $ "pragma " ++ p ++ " is not supported in this context"
 
-autoPragma :: Monad m => String -> Either (SourcePos -> a) (SourcePos -> ParserE m a) -> ParserE m a
+autoPragma :: CompileErrorM m => String -> Either (SourcePos -> a) (SourcePos -> ParserE m a) -> ParserE m a
 autoPragma p f = do
   c <- getPosition
   try $ pragmaStart >> string_ p >> notFollowedBy alphaNum
@@ -96,11 +97,11 @@ autoPragma p f = do
   if hasArgs
      then do
        extra <- manyTill anyChar (string_ "]$")
-       when (not $ null extra) $ fail $ "Content unused by pragma " ++ p ++ ": " ++ extra
+       when (not $ null extra) $ parseErrorM c $ "content unused by pragma " ++ p ++ ": " ++ extra
        optionalSpace
      else sepAfter pragmaEnd
   return x where
     delegate False (Left f2)  c = return $ f2 c
     delegate True  (Right f2) c = f2 c
-    delegate _     (Left _)   _ = fail $ "Pragma " ++ p ++ " does not allow arguments using []"
-    delegate _     (Right _)  _ = fail $ "Pragma " ++ p ++ " requires arguments using []"
+    delegate _     (Left _)   c = parseErrorM c $ "pragma " ++ p ++ " does not allow arguments using []"
+    delegate _     (Right _)  c = parseErrorM c $ "pragma " ++ p ++ " requires arguments using []"

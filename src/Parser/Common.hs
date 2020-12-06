@@ -90,6 +90,7 @@ module Parser.Common (
   parseHex,
   parseOct,
   parseSubOne,
+  parseErrorM,
   pragmaArgsEnd,
   pragmaArgsStart,
   pragmaEnd,
@@ -114,6 +115,8 @@ module Parser.Common (
   valueSymbolGet,
 ) where
 
+import Control.Applicative (empty)
+import Control.Monad.Trans (lift)
 import Data.Char
 import Data.Foldable
 import Data.Functor
@@ -138,6 +141,9 @@ runParserE p n s = do
        Left e  -> compileErrorM (show e)
        Right t -> return t
 
+parseErrorM :: CompileErrorM m => SourcePos -> String -> ParserE m a
+parseErrorM c e = lift $ compileErrorM $ "At " ++ show c ++ ": " ++ e
+
 labeled :: Monad m => String -> ParserE m a -> ParserE m a
 labeled = flip label
 
@@ -153,21 +159,23 @@ statementEnd = sepAfter (string_ "")
 valueSymbolGet :: Monad m => ParserE m ()
 valueSymbolGet = sepAfter (string_ ".")
 
-categorySymbolGet :: Monad m => ParserE m ()
+categorySymbolGet :: CompileErrorM m => ParserE m ()
 categorySymbolGet = labeled ":" $ useNewOperators <|> sepAfter (string_ ":")
 
-typeSymbolGet :: Monad m => ParserE m ()
+typeSymbolGet :: CompileErrorM m => ParserE m ()
 typeSymbolGet = labeled "." $ useNewOperators <|> sepAfter (string_ ".")
 
 -- TODO: Remove this after a reasonable amount of time.
-useNewOperators :: Monad m => ParserE m ()
+useNewOperators :: CompileErrorM m => ParserE m ()
 useNewOperators = newCategory <|> newType where
   newCategory = do
+    c <- getPosition
     try $ string_ "$$"
-    fail "use \":\" instead of \"$$\" to call @category functions"
+    parseErrorM c "use \":\" instead of \"$$\" to call @category functions"
   newType = do
+    c <- getPosition
     try $ string_ "$"
-    fail "use \".\" instead of \"$\" to call @type functions"
+    parseErrorM c "use \".\" instead of \"$\" to call @type functions"
 
 assignOperator :: Monad m => ParserE m ()
 assignOperator = operator "<-" >> return ()
@@ -180,7 +188,7 @@ infixFuncEnd = sepAfter (string_ "`")
 
 -- TODO: Maybe this should not use strings.
 builtinValues :: Monad m => ParserE m String
-builtinValues = foldr (<|>) (fail "empty") $ map try [
+builtinValues = foldr (<|>) empty $ map try [
     kwSelf >> return "self"
   ]
 

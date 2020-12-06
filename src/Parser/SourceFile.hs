@@ -63,11 +63,11 @@ parseTestSource (f,s) = runParserE (between optionalSpace endOfDoc withPragmas) 
     ts <- sepBy sourceParser optionalSpace
     return (pragmas,ts)
 
-publicSourcePragmas :: Monad m => [ParserE m (Pragma SourcePos)]
+publicSourcePragmas :: CompileErrorM m => [ParserE m (Pragma SourcePos)]
 publicSourcePragmas = [pragmaModuleOnly,pragmaTestsOnly]
 
-internalSourcePragmas :: Monad m => [ParserE m (Pragma SourcePos)]
+internalSourcePragmas :: CompileErrorM m => [ParserE m (Pragma SourcePos)]
 internalSourcePragmas = [pragmaTestsOnly]
 
-testSourcePragmas :: Monad m => [ParserE m (Pragma SourcePos)]
+testSourcePragmas :: CompileErrorM m => [ParserE m (Pragma SourcePos)]
 testSourcePragmas = []

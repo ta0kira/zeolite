@@ -23,6 +23,7 @@ limitations under the License.
 module Parser.Procedure (
 ) where
 
+import Control.Applicative (empty)
 import Text.Parsec
 import qualified Data.Set as Set
 
@@ -177,8 +178,9 @@ instance ParseFromSource (Assignable SourcePos) where
       strayFuncCall <|> return ()
       return $ ExistingVariable n
     strayFuncCall = do
+      c <- getPosition
       valueSymbolGet <|> typeSymbolGet <|> categorySymbolGet
-      fail "function returns must be explicitly handled"
+      parseErrorM c "function returns must be explicitly handled"
 
 instance ParseFromSource (VoidExpression SourcePos) where
   sourceParser = conditional <|> loop <|> scoped where
@@ -252,7 +254,7 @@ instance ParseFromSource (ScopedBlock SourcePos) where
 
 unaryOperator :: Monad m => ParserE m (Operator c)
 unaryOperator = op >>= return . NamedOperator where
-  op = labeled "unary operator" $ foldr (<|>) (fail "empty") $ map (try . operator) ops
+  op = labeled "unary operator" $ foldr (<|>) empty $ map (try . operator) ops
   ops = logicalUnary ++ arithUnary ++ bitwiseUnary
 
 logicalUnary :: [String]
@@ -266,7 +268,7 @@ bitwiseUnary = ["~"]
 
 infixOperator :: Monad m => ParserE m (Operator c)
 infixOperator = op >>= return . NamedOperator where
-  op = labeled "binary operator" $ foldr (<|>) (fail "empty") $ map (try . operator) ops
+  op = labeled "binary operator" $ foldr (<|>) empty $ map (try . operator) ops
   ops = compareInfix ++ logicalInfix ++ addInfix ++ subInfix ++ multInfix ++ bitwiseInfix ++ bitshiftInfix
 
 compareInfix :: [String]
@@ -426,7 +428,7 @@ parseFunctionCall c n = do
   return $ FunctionCall [c] n (Positional ps) (Positional es)
 
 builtinFunction :: Monad m => ParserE m FunctionName
-builtinFunction = foldr (<|>) (fail "empty") $ map try [
+builtinFunction = foldr (<|>) empty $ map try [
     kwPresent >> return BuiltinPresent,
     kwReduce >> return BuiltinReduce,
     kwRequire >> return BuiltinRequire,
