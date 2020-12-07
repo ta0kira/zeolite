@@ -23,7 +23,7 @@ limitations under the License.
 module Base.TrackedErrors (
   TrackedErrors,
   TrackedErrorsIO,
-  CompileMessage,
+  CompilerMessage,
   asCompilerError,
   asCompilerWarnings,
   fromTrackedErrors,
@@ -33,7 +33,7 @@ module Base.TrackedErrors (
   getCompilerSuccessT,
   getCompilerWarnings,
   getCompilerWarningsT,
-  isEmptyCompileMessage,
+  isEmptyCompilerMessage,
   toTrackedErrors,
   tryTrackedErrorsIO,
 ) where
@@ -67,27 +67,27 @@ data TrackedErrorsT m a =
     citState :: m (TrackedErrorsState a)
   }
 
-getCompilerError :: TrackedErrors a -> CompileMessage
+getCompilerError :: TrackedErrors a -> CompilerMessage
 getCompilerError = runIdentity . getCompilerErrorT
 
 getCompilerSuccess :: TrackedErrors a -> a
 getCompilerSuccess = runIdentity . getCompilerSuccessT
 
-getCompilerWarnings :: TrackedErrors a -> CompileMessage
+getCompilerWarnings :: TrackedErrors a -> CompilerMessage
 getCompilerWarnings = runIdentity . getCompilerWarningsT
 
-getCompilerErrorT :: Monad m => TrackedErrorsT m a -> m CompileMessage
+getCompilerErrorT :: Monad m => TrackedErrorsT m a -> m CompilerMessage
 getCompilerErrorT = fmap cfErrors . citState
 
 getCompilerSuccessT :: Monad m => TrackedErrorsT m a -> m a
 getCompilerSuccessT = fmap csData . citState
 
-getCompilerWarningsT :: Monad m => TrackedErrorsT m a -> m CompileMessage
+getCompilerWarningsT :: Monad m => TrackedErrorsT m a -> m CompilerMessage
 getCompilerWarningsT = fmap getWarnings . citState
 
-isEmptyCompileMessage :: CompileMessage -> Bool
-isEmptyCompileMessage (CompileMessage "" ws) = all isEmptyCompileMessage ws
-isEmptyCompileMessage _                      = False
+isEmptyCompilerMessage :: CompilerMessage -> Bool
+isEmptyCompilerMessage (CompilerMessage "" ws) = all isEmptyCompilerMessage ws
+isEmptyCompilerMessage _                       = False
 
 fromTrackedErrors :: Monad m => TrackedErrors a -> TrackedErrorsT m a
 fromTrackedErrors x = runIdentity $ do
@@ -99,7 +99,7 @@ asCompilerWarnings x = runIdentity $ do
   x' <- citState x
   return $ TrackedErrorsT $ return $
     case x' of
-         (CompileFail ws es)      -> CompilerSuccess (ws `mergeMessages` es) [] ()
+         (CompilerFail ws es)      -> CompilerSuccess (ws `mergeMessages` es) [] ()
          (CompilerSuccess ws bs _) -> CompilerSuccess ws bs ()
 
 asCompilerError :: Monad m => TrackedErrors a -> TrackedErrorsT m ()
@@ -107,8 +107,8 @@ asCompilerError x = runIdentity $ do
   x' <- citState x
   return $ TrackedErrorsT $ return $
     case x' of
-         (CompilerSuccess ws bs _) -> includeBackground bs $ CompileFail emptyMessage ws
-         (CompileFail ws es)      -> CompileFail ws es
+         (CompilerSuccess ws bs _) -> includeBackground bs $ CompilerFail emptyMessage ws
+         (CompilerFail ws es)      -> CompilerFail ws es
 
 toTrackedErrors :: Monad m => TrackedErrorsT m a -> m (TrackedErrors a)
 toTrackedErrors x = do
@@ -129,34 +129,34 @@ tryTrackedErrorsIO warn err x = do
        hPutStr stderr $ show w
        return $ getCompilerSuccess x'
 
-data CompileMessage =
-  CompileMessage {
+data CompilerMessage =
+  CompilerMessage {
     cmMessage :: String,
-    cmNested :: [CompileMessage]
+    cmNested :: [CompilerMessage]
   }
 
-instance Show CompileMessage where
+instance Show CompilerMessage where
   show = format "" where
-    format indent (CompileMessage [] ms) =
+    format indent (CompilerMessage [] ms) =
       concat (map (format indent) ms)
-    format indent (CompileMessage m ms) =
+    format indent (CompilerMessage m ms) =
       (doIndent indent m) ++ "\n" ++ concat (map (format $ indent ++ "  ") ms)
     doIndent indent s = intercalate "\n" $ map (indent ++) $ lines s
 
 data TrackedErrorsState a =
-  CompileFail {
-    cfWarnings :: CompileMessage,
-    cfErrors :: CompileMessage
+  CompilerFail {
+    cfWarnings :: CompilerMessage,
+    cfErrors :: CompilerMessage
   } |
   CompilerSuccess {
-    csWarnings :: CompileMessage,
+    csWarnings :: CompilerMessage,
     csBackground :: [String],
     csData :: a
   }
 
 instance Show a => Show (TrackedErrorsState a) where
   show = format where
-    format (CompileFail w e) = intercalate "\n" $ errors ++ warnings where
+    format (CompilerFail w e) = intercalate "\n" $ errors ++ warnings where
       errors   = showAs "Errors:"   $ lines $ show e
       warnings = showAs "Warnings:" $ lines $ show w
     format (CompilerSuccess w b x) = intercalate "\n" $ content ++ warnings ++ background where
@@ -172,7 +172,7 @@ instance (Functor m, Monad m) => Functor (TrackedErrorsT m) where
   fmap f x = TrackedErrorsT $ do
     x' <- citState x
     case x' of
-         CompileFail w e      -> return $ CompileFail w e -- Not the same a.
+         CompilerFail w e      -> return $ CompilerFail w e -- Not the same a.
          CompilerSuccess w b d -> return $ CompilerSuccess w b (f d)
 
 instance (Applicative m, Monad m) => Applicative (TrackedErrorsT m) where
@@ -181,10 +181,10 @@ instance (Applicative m, Monad m) => Applicative (TrackedErrorsT m) where
     f' <- citState f
     x' <- citState x
     case (f',x') of
-         (CompileFail w e,_) ->
-           return $ CompileFail w e -- Not the same a.
-         (i,CompileFail w e) ->
-           return $ CompileFail (getWarnings i `mergeMessages` w) (addBackground (getBackground i) e)
+         (CompilerFail w e,_) ->
+           return $ CompilerFail w e -- Not the same a.
+         (i,CompilerFail w e) ->
+           return $ CompilerFail (getWarnings i `mergeMessages` w) (addBackground (getBackground i) e)
          (CompilerSuccess w1 b1 f2,CompilerSuccess w2 b2 d) ->
            return $ CompilerSuccess (w1 `mergeMessages` w2) (b1 ++ b2) (f2 d)
 
@@ -192,7 +192,7 @@ instance Monad m => Monad (TrackedErrorsT m) where
   x >>= f = TrackedErrorsT $ do
     x' <- citState x
     case x' of
-         CompileFail w e -> return $ CompileFail w e -- Not the same a.
+         CompilerFail w e -> return $ CompilerFail w e -- Not the same a.
          CompilerSuccess w b d -> do
            d2 <- citState $ f d
            return $ includeBackground b $ includeWarnings w d2
@@ -210,18 +210,18 @@ instance MonadIO m => MonadIO (TrackedErrorsT m) where
   liftIO = lift . liftIO
 
 instance Monad m => ErrorContextM (TrackedErrorsT m) where
-  compilerErrorM e = TrackedErrorsT $ return $ CompileFail emptyMessage $ CompileMessage e []
+  compilerErrorM e = TrackedErrorsT $ return $ CompilerFail emptyMessage $ CompilerMessage e []
   withContextM x c = TrackedErrorsT $ do
     x' <- citState x
     case x' of
-         CompileFail w e        -> return $ CompileFail (pushWarningScope c w) (pushErrorScope c e)
+         CompilerFail w e        -> return $ CompilerFail (pushWarningScope c w) (pushErrorScope c e)
          CompilerSuccess w bs x2 -> return $ CompilerSuccess (pushWarningScope c w) bs x2
   summarizeErrorsM x e2 = TrackedErrorsT $ do
     x' <- citState x
     case x' of
-         CompileFail w e -> return $ CompileFail w (pushErrorScope e2 e)
+         CompilerFail w e -> return $ CompilerFail w (pushErrorScope e2 e)
          x2 -> return x2
-  compilerWarningM w = TrackedErrorsT (return $ CompilerSuccess (CompileMessage w []) [] ())
+  compilerWarningM w = TrackedErrorsT (return $ CompilerSuccess (CompilerMessage w []) [] ())
   compilerBackgroundM b = TrackedErrorsT (return $ CompilerSuccess emptyMessage [b] ())
   resetBackgroundM x = TrackedErrorsT $ do
     x' <- citState x
@@ -231,67 +231,67 @@ instance Monad m => ErrorContextM (TrackedErrorsT m) where
 
 instance Monad m => CollectErrorsM (TrackedErrorsT m) where
   collectAllM = combineResults (select . splitErrorsAndData) where
-    select ([],xs2,bs,ws) = CompilerSuccess (CompileMessage "" ws) bs xs2
-    select (es,_,bs,ws)   = CompileFail (CompileMessage "" ws) $ addBackground bs $ CompileMessage "" es
+    select ([],xs2,bs,ws) = CompilerSuccess (CompilerMessage "" ws) bs xs2
+    select (es,_,bs,ws)   = CompilerFail (CompilerMessage "" ws) $ addBackground bs $ CompilerMessage "" es
   collectAnyM = combineResults (select . splitErrorsAndData) where
-    select (_,xs2,bs,ws) = CompilerSuccess (CompileMessage "" ws) bs xs2
+    select (_,xs2,bs,ws) = CompilerSuccess (CompilerMessage "" ws) bs xs2
   collectFirstM = combineResults (select . splitErrorsAndData) where
-    select (_,x:_,bs,ws) = CompilerSuccess (CompileMessage "" ws) bs x
-    select (es,_,bs,ws)  = CompileFail (CompileMessage "" ws) $ addBackground bs $ CompileMessage "" es
+    select (_,x:_,bs,ws) = CompilerSuccess (CompilerMessage "" ws) bs x
+    select (es,_,bs,ws)  = CompilerFail (CompilerMessage "" ws) $ addBackground bs $ CompilerMessage "" es
 
 instance ErrorContextT TrackedErrorsT where
   isCompilerErrorT x = do
     x' <- citState x
     case x' of
-         CompileFail _ _ -> return True
+         CompilerFail _ _ -> return True
          _               -> return False
 
 combineResults :: (Monad m, Foldable f) =>
   ([TrackedErrorsState a] -> TrackedErrorsState b) -> f (TrackedErrorsT m a) -> TrackedErrorsT m b
 combineResults f = TrackedErrorsT . fmap f . sequence . map citState . foldr (:) []
 
-emptyMessage :: CompileMessage
-emptyMessage = CompileMessage "" []
+emptyMessage :: CompilerMessage
+emptyMessage = CompilerMessage "" []
 
-pushErrorScope :: String -> CompileMessage -> CompileMessage
-pushErrorScope e2 ea@(CompileMessage e ms)
-  | null e            = CompileMessage e2 ms
-  | otherwise         = CompileMessage e2 [ea]
+pushErrorScope :: String -> CompilerMessage -> CompilerMessage
+pushErrorScope e2 ea@(CompilerMessage e ms)
+  | null e    = CompilerMessage e2 ms
+  | otherwise = CompilerMessage e2 [ea]
 
-pushWarningScope :: String -> CompileMessage -> CompileMessage
+pushWarningScope :: String -> CompilerMessage -> CompilerMessage
 pushWarningScope e2 ea
-  | isEmptyCompileMessage ea = emptyMessage  -- Skip the scope if there isn't already a warning.
+  | isEmptyCompilerMessage ea = emptyMessage  -- Skip the scope if there isn't already a warning.
   | otherwise                = pushErrorScope e2 ea
 
-mergeMessages :: CompileMessage -> CompileMessage -> CompileMessage
-mergeMessages (CompileMessage "" []) e2                       = e2
-mergeMessages e1                     (CompileMessage "" [])   = e1
-mergeMessages (CompileMessage "" es1) (CompileMessage "" es2) = CompileMessage "" (es1 ++ es2)
-mergeMessages e1                      (CompileMessage "" es2) = CompileMessage "" ([e1] ++ es2)
-mergeMessages (CompileMessage "" es1) e2                      = CompileMessage "" (es1 ++ [e2])
-mergeMessages e1                      e2                      = CompileMessage "" [e1,e2]
+mergeMessages :: CompilerMessage -> CompilerMessage -> CompilerMessage
+mergeMessages (CompilerMessage "" [])  e2                       = e2
+mergeMessages e1                       (CompilerMessage "" [])  = e1
+mergeMessages (CompilerMessage "" es1) (CompilerMessage "" es2) = CompilerMessage "" (es1 ++ es2)
+mergeMessages e1                       (CompilerMessage "" es2) = CompilerMessage "" ([e1] ++ es2)
+mergeMessages (CompilerMessage "" es1) e2                       = CompilerMessage "" (es1 ++ [e2])
+mergeMessages e1                       e2                       = CompilerMessage "" [e1,e2]
 
-addBackground :: [String] -> CompileMessage -> CompileMessage
-addBackground b (CompileMessage e es) = CompileMessage e (es ++ map (flip CompileMessage []) b)
+addBackground :: [String] -> CompilerMessage -> CompilerMessage
+addBackground b (CompilerMessage e es) = CompilerMessage e (es ++ map (flip CompilerMessage []) b)
 
-getWarnings :: TrackedErrorsState a -> CompileMessage
-getWarnings (CompileFail w _)      = w
+getWarnings :: TrackedErrorsState a -> CompilerMessage
+getWarnings (CompilerFail w _)      = w
 getWarnings (CompilerSuccess w _ _) = w
 
-includeWarnings :: CompileMessage -> TrackedErrorsState a -> TrackedErrorsState a
+includeWarnings :: CompilerMessage -> TrackedErrorsState a -> TrackedErrorsState a
 includeWarnings = update where
   update w (CompilerSuccess w2 b d) = CompilerSuccess (w `mergeMessages` w2) b d
-  update w (CompileFail w2 e)      = CompileFail (w `mergeMessages` w2) e
+  update w (CompilerFail w2 e)      = CompilerFail (w `mergeMessages` w2) e
 
 getBackground :: TrackedErrorsState a -> [String]
 getBackground (CompilerSuccess _ b _) = b
 getBackground _                      = []
 
 includeBackground :: [String] -> TrackedErrorsState a -> TrackedErrorsState a
-includeBackground b  (CompileFail w e)       = CompileFail w (addBackground b e)
+includeBackground b  (CompilerFail w e)       = CompilerFail w (addBackground b e)
 includeBackground b1 (CompilerSuccess w b2 d) = CompilerSuccess w (b1 ++ b2) d
 
-splitErrorsAndData :: Foldable f => f (TrackedErrorsState a) -> ([CompileMessage],[a],[String],[CompileMessage])
+splitErrorsAndData :: Foldable f => f (TrackedErrorsState a) -> ([CompilerMessage],[a],[String],[CompilerMessage])
 splitErrorsAndData = foldr partition ([],[],[],[]) where
-  partition (CompileFail w e)      (es,ds,bs,ws) = (e:es,ds,bs,w:ws)
+  partition (CompilerFail w e)      (es,ds,bs,ws) = (e:es,ds,bs,w:ws)
   partition (CompilerSuccess w b d) (es,ds,bs,ws) = (es,d:ds,b++bs,w:ws)

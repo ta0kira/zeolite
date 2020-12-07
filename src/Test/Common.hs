@@ -65,7 +65,7 @@ runAllTests ts = do
                    show (length es) ++ " tests failed\n"
   when (not $ null es) exitFailure
 
-numberError :: a -> TrackedErrors b -> Either (a,CompileMessage) b
+numberError :: a -> TrackedErrors b -> Either (a,CompilerMessage) b
 numberError n c
   | isCompilerError c = Left (n,getCompilerError c)
   | otherwise        = Right (getCompilerSuccess c)
