@@ -88,7 +88,7 @@ instance ParseFromSource (DefinedMember SourcePos) where
         t <- sourceParser
         return (s,t)
 
-parseMemberProcedureFunction :: CompileErrorM m =>
+parseMemberProcedureFunction :: ErrorContextM m =>
   CategoryName -> ParserE m ([DefinedMember SourcePos],
                              [ExecutableProcedure SourcePos],
                              [ScopedFunction SourcePos])
@@ -107,5 +107,5 @@ parseMemberProcedureFunction n = do
       return (f,p)
     catchUnscopedType = labeled "" $ do
       c <- getPosition
-      _ <- try sourceParser :: CompileErrorM m => ParserE m ValueType
+      _ <- try sourceParser :: ErrorContextM m => ParserE m ValueType
       parseErrorM c "members must have an explicit @value or @category scope"

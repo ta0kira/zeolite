@@ -22,6 +22,7 @@ limitations under the License.
 
 module Base.CompileError (
   CompileErrorM(..),
+  ErrorContextM(..),
   (<??),
   (??>),
   (<!!),
@@ -36,6 +37,8 @@ module Base.CompileError (
 ) where
 
 import Control.Monad.IO.Class
+import Control.Monad.Trans (lift)
+import Control.Monad.Trans.State (StateT,mapStateT)
 import System.IO.Error (catchIOError)
 
 #if MIN_VERSION_base(4,13,0)
@@ -47,14 +50,13 @@ import Control.Monad.Fail
 
 -- For some GHC versions, pattern-matching failures require MonadFail.
 #if MIN_VERSION_base(4,9,0)
-class (Monad m, MonadFail m) => CompileErrorM m where
-#else
-class Monad m => CompileErrorM m where
-#endif
+class (Monad m, MonadFail m) => ErrorContextM m where
   compileErrorM :: String -> m a
-  collectAllM :: Foldable f => f (m a) -> m [a]
-  collectAnyM :: Foldable f => f (m a) -> m [a]
-  collectFirstM :: Foldable f => f (m a) -> m a
+  compileErrorM = fail
+#else
+class Monad m => ErrorContextM m where
+  compileErrorM :: String -> m a
+#endif
   withContextM :: m a -> String -> m a
   withContextM c _ = c
   summarizeErrorsM :: m a -> String -> m a
@@ -66,19 +68,24 @@ class Monad m => CompileErrorM m where
   resetBackgroundM :: m a -> m a
   resetBackgroundM = id
 
-(<??) :: CompileErrorM m => m a -> String -> m a
+class ErrorContextM m => CompileErrorM m where
+  collectAllM :: Foldable f => f (m a) -> m [a]
+  collectAnyM :: Foldable f => f (m a) -> m [a]
+  collectFirstM :: Foldable f => f (m a) -> m a
+
+(<??) :: ErrorContextM m => m a -> String -> m a
 (<??) = withContextM
 infixl 1 <??
 
-(??>) :: CompileErrorM m => String -> m a -> m a
+(??>) :: ErrorContextM m => String -> m a -> m a
 (??>) = flip withContextM
 infixr 1 ??>
 
-(<!!) :: CompileErrorM m => m a -> String -> m a
+(<!!) :: ErrorContextM m => m a -> String -> m a
 (<!!) = summarizeErrorsM
 infixl 1 <!!
 
-(!!>) :: CompileErrorM m => String -> m a -> m a
+(!!>) :: ErrorContextM m => String -> m a -> m a
 (!!>) = flip summarizeErrorsM
 infixr 1 !!>
 
@@ -100,9 +107,17 @@ isCompileErrorM x = collectFirstM [x >> return False,return True]
 isCompileSuccessM :: CompileErrorM m => m a -> m Bool
 isCompileSuccessM x = collectFirstM [x >> return True,return False]
 
-errorFromIO :: (MonadIO m, CompileErrorM m) => IO a -> m a
+errorFromIO :: (MonadIO m, ErrorContextM m) => IO a -> m a
 errorFromIO x = do
   x' <- liftIO $ fmap Right x `catchIOError` (return . Left . show)
   case x' of
        (Right x2) -> return x2
        (Left e)   -> compileErrorM e
+
+instance ErrorContextM m => ErrorContextM (StateT a m) where
+  compileErrorM        = lift . compileErrorM
+  withContextM x e     = mapStateT (<?? e) x
+  summarizeErrorsM x e = mapStateT (<!! e) x
+  compileWarningM      = lift . compileWarningM
+  compileBackgroundM   = lift . compileBackgroundM
+  resetBackgroundM     = mapStateT resetBackgroundM

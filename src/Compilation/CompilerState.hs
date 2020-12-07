@@ -32,10 +32,6 @@ module Compilation.CompilerState (
   JumpType(..),
   MemberValue(..),
   ReturnVariable(..),
-  (<???),
-  (???>),
-  (<!!!),
-  (!!!>),
   concatM,
   csAddVariable,
   csAllFilters,
@@ -71,12 +67,11 @@ module Compilation.CompilerState (
   csWrite,
   getCleanContext,
   isLoopBoundary,
-  resetBackgroundStateT,
   runDataCompiler,
 ) where
 
 import Control.Monad.Trans (lift)
-import Control.Monad.Trans.State (StateT(..),execStateT,get,mapStateT,put)
+import Control.Monad.Trans.State (StateT(..),execStateT,get,put)
 import Data.Functor
 import Prelude hiding (foldr)
 import qualified Data.Set as Set
@@ -178,25 +173,6 @@ data JumpType =
 
 instance Show c => Show (VariableValue c) where
   show (VariableValue c _ t _) = show t ++ formatFullContextBrace c
-
-(<???) :: CompileErrorM m => CompilerState a m b -> String -> CompilerState a m b
-(<???) x s = mapStateT (<?? s) x
-infixl 1 <???
-
-(???>) :: CompileErrorM m => String -> CompilerState a m b -> CompilerState a m b
-(???>) s x = mapStateT (s ??>) x
-infixr 1 ???>
-
-(<!!!) :: CompileErrorM m => CompilerState a m b -> String -> CompilerState a m b
-(<!!!) x s = mapStateT (<!! s) x
-infixl 1 <!!!
-
-(!!!>) :: CompileErrorM m => String -> CompilerState a m b -> CompilerState a m b
-(!!!>) s x = mapStateT (s !!>) x
-infixr 1 !!!>
-
-resetBackgroundStateT :: CompileErrorM m => CompilerState a m b -> CompilerState a m b
-resetBackgroundStateT x = mapStateT resetBackgroundM x
 
 csCurrentScope :: CompilerContext c m s a => CompilerState a m SymbolScope
 csCurrentScope = fmap ccCurrentScope get >>= lift

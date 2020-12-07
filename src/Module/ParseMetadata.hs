@@ -67,17 +67,17 @@ prependFirst :: String -> [String] -> [String]
 prependFirst s0 (s:ss) = (s0 ++ s):ss
 prependFirst s0 _      = [s0]
 
-validateCategoryName :: CompileErrorM m => CategoryName -> m ()
+validateCategoryName :: ErrorContextM m => CategoryName -> m ()
 validateCategoryName c =
     when (not $ show c =~ "^[A-Z][A-Za-z0-9]*$") $
       compileErrorM $ "Invalid category name: \"" ++ show c ++ "\""
 
-validateFunctionName :: CompileErrorM m => FunctionName -> m ()
+validateFunctionName :: ErrorContextM m => FunctionName -> m ()
 validateFunctionName f =
     when (not $ show f =~ "^[a-z][A-Za-z0-9]*$") $
       compileErrorM $ "Invalid function name: \"" ++ show f ++ "\""
 
-validateHash :: CompileErrorM m => VersionHash -> m ()
+validateHash :: ErrorContextM m => VersionHash -> m ()
 validateHash h =
     when (not $ show h =~ "^[A-Za-z0-9]+$") $
       compileErrorM $ "Version hash must be a hex string: \"" ++ show h ++ "\""
@@ -85,7 +85,7 @@ validateHash h =
 parseHash :: Monad m => ParserE m VersionHash
 parseHash = labeled "version hash" $ sepAfter (fmap VersionHash $ many1 hexDigit)
 
-maybeShowNamespace :: CompileErrorM m => String -> Namespace -> m [String]
+maybeShowNamespace :: ErrorContextM m => String -> Namespace -> m [String]
 maybeShowNamespace l (StaticNamespace ns) = do
   when (not $ ns =~ "^[A-Za-z][A-Za-z0-9_]*$") $
     compileErrorM $ "Invalid category namespace: \"" ++ ns ++ "\""
@@ -376,7 +376,7 @@ instance ConfigFormat CompileMode where
   writeConfig CompileUnspecified = writeConfig (CompileIncremental [])
   writeConfig _ = compileErrorM "Invalid compile mode"
 
-parseExprMacro :: CompileErrorM m => ParserE m (MacroName,Expression SourcePos)
+parseExprMacro :: ErrorContextM m => ParserE m (MacroName,Expression SourcePos)
 parseExprMacro = do
   sepAfter (string_ "expression_macro")
   structOpen

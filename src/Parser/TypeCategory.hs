@@ -74,7 +74,7 @@ instance ParseFromSource (AnyCategory SourcePos) where
       close
       return $ ValueConcrete [c] NoNamespace n ps rs ds vs fs
 
-parseCategoryParams :: CompileErrorM m => ParserE m [ValueParam SourcePos]
+parseCategoryParams :: ErrorContextM m => ParserE m [ValueParam SourcePos]
 parseCategoryParams = do
   (con,inv,cov) <- none <|> try fixedOnly <|> try noFixed <|> try explicitFixed
   return $ map (apply Contravariant) con ++
@@ -114,39 +114,39 @@ parseCategoryParams = do
       return (c,n)
     apply v (c,n) = ValueParam [c] n v
 
-singleRefine :: CompileErrorM m => ParserE m (ValueRefine SourcePos)
+singleRefine :: ErrorContextM m => ParserE m (ValueRefine SourcePos)
 singleRefine = do
   c <- getPosition
   try kwRefines
   t <- sourceParser
   return $ ValueRefine [c] t
 
-singleDefine :: CompileErrorM m => ParserE m (ValueDefine SourcePos)
+singleDefine :: ErrorContextM m => ParserE m (ValueDefine SourcePos)
 singleDefine = do
   c <- getPosition
   try kwDefines
   t <- sourceParser
   return $ ValueDefine [c] t
 
-singleFilter :: CompileErrorM m => ParserE m (ParamFilter SourcePos)
+singleFilter :: ErrorContextM m => ParserE m (ParamFilter SourcePos)
 singleFilter = try $ do
   c <- getPosition
   n <- sourceParser
   f <- sourceParser
   return $ ParamFilter [c] n f
 
-parseCategoryRefines :: CompileErrorM m => ParserE m [ValueRefine SourcePos]
+parseCategoryRefines :: ErrorContextM m => ParserE m [ValueRefine SourcePos]
 parseCategoryRefines = sepAfter $ sepBy singleRefine optionalSpace
 
-parseFilters :: CompileErrorM m => ParserE m [ParamFilter SourcePos]
+parseFilters :: ErrorContextM m => ParserE m [ParamFilter SourcePos]
 parseFilters = sepBy singleFilter optionalSpace
 
-parseRefinesFilters :: CompileErrorM m => ParserE m ([ValueRefine SourcePos],[ParamFilter SourcePos])
+parseRefinesFilters :: ErrorContextM m => ParserE m ([ValueRefine SourcePos],[ParamFilter SourcePos])
 parseRefinesFilters = parsed >>= return . merge2 where
   parsed = sepBy anyType optionalSpace
   anyType = labeled "refine or param filter" $ put12 singleRefine <|> put22 singleFilter
 
-parseRefinesDefinesFilters :: CompileErrorM m =>
+parseRefinesDefinesFilters :: ErrorContextM m =>
   ParserE m ([ValueRefine SourcePos],[ValueDefine SourcePos],[ParamFilter SourcePos])
 parseRefinesDefinesFilters = parsed >>= return . merge3 where
   parsed = sepBy anyType optionalSpace
@@ -160,7 +160,7 @@ instance ParseFromSource FunctionName where
     e <- sepAfter $ many alphaNum
     return $ FunctionName (b:e)
 
-parseScopedFunction :: CompileErrorM m =>
+parseScopedFunction :: ErrorContextM m =>
   ParserE m SymbolScope -> ParserE m CategoryName -> ParserE m (ScopedFunction SourcePos)
 parseScopedFunction sp tp = labeled "function" $ do
   c <- getPosition

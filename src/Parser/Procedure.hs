@@ -150,12 +150,12 @@ instance ParseFromSource (Statement SourcePos) where
       c <- getPosition
       try kwReturn
       emptyReturn c <|> multiReturn c
-    multiReturn :: CompileErrorM m => SourcePos -> ParserE m (Statement SourcePos)
+    multiReturn :: ErrorContextM m => SourcePos -> ParserE m (Statement SourcePos)
     multiReturn c = do
       rs <- sepBy sourceParser (sepAfter $ string_ ",")
       statementEnd
       return $ ExplicitReturn [c] (Positional rs)
-    emptyReturn :: CompileErrorM m => SourcePos -> ParserE m (Statement SourcePos)
+    emptyReturn :: ErrorContextM m => SourcePos -> ParserE m (Statement SourcePos)
     emptyReturn c = do
       kwIgnore
       statementEnd
@@ -302,7 +302,7 @@ infixBefore o1 o2 = (infixOrder o1 :: Int) <= (infixOrder o2 :: Int) where
     | o `Set.member` Set.fromList logicalInfix = 5
   infixOrder _ = 3
 
-functionOperator :: CompileErrorM m => ParserE m (Operator SourcePos)
+functionOperator :: ErrorContextM m => ParserE m (Operator SourcePos)
 functionOperator = do
   c <- getPosition
   infixFuncStart
@@ -415,7 +415,7 @@ instance ParseFromSource (InstanceOrInferred SourcePos) where
       sepAfter_ inferredParam
       return $ InferredInstance [c]
 
-parseFunctionCall :: CompileErrorM m => SourcePos -> FunctionName -> ParserE m (FunctionCall SourcePos)
+parseFunctionCall :: ErrorContextM m => SourcePos -> FunctionName -> ParserE m (FunctionCall SourcePos)
 parseFunctionCall c n = do
   -- NOTE: try is needed here so that < operators work when the left side is
   -- just a variable name, e.g., x < y.
@@ -452,13 +452,13 @@ instance ParseFromSource (ExpressionStart SourcePos) where
       e <- try (assign c) <|> expr c
       sepAfter (string_ ")")
       return e
-    assign :: CompileErrorM m => SourcePos -> ParserE m (ExpressionStart SourcePos)
+    assign :: ErrorContextM m => SourcePos -> ParserE m (ExpressionStart SourcePos)
     assign c = do
       n <- sourceParser
       assignOperator
       e <- sourceParser
       return $ InlineAssignment [c] n e
-    expr :: CompileErrorM m => SourcePos -> ParserE m (ExpressionStart SourcePos)
+    expr :: ErrorContextM m => SourcePos -> ParserE m (ExpressionStart SourcePos)
     expr c = do
       e <- sourceParser
       return $ ParensExpression [c] e
@@ -483,7 +483,7 @@ instance ParseFromSource (ExpressionStart SourcePos) where
            _ -> undefined  -- Should be caught above.
     variableOrUnqualified = do
       c <- getPosition
-      n <- sourceParser :: CompileErrorM m => ParserE m VariableName
+      n <- sourceParser :: ErrorContextM m => ParserE m VariableName
       asUnqualifiedCall c n <|> asVariable c n
     asVariable c n = do
       return $ NamedVariable (OutputValue [c] n)

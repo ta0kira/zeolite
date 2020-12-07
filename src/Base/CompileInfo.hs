@@ -221,16 +221,8 @@ instance MonadTrans CompileInfoT where
 instance MonadIO m => MonadIO (CompileInfoT m) where
   liftIO = lift . liftIO
 
-instance Monad m => CompileErrorM (CompileInfoT m) where
+instance Monad m => ErrorContextM (CompileInfoT m) where
   compileErrorM e = CompileInfoT $ return $ CompileFail emptyMessage $ CompileMessage e []
-  collectAllM = combineResults (select . splitErrorsAndData) where
-    select ([],xs2,bs,ws) = CompileSuccess (CompileMessage "" ws) bs xs2
-    select (es,_,bs,ws)   = CompileFail (CompileMessage "" ws) $ addBackground bs $ CompileMessage "" es
-  collectAnyM = combineResults (select . splitErrorsAndData) where
-    select (_,xs2,bs,ws) = CompileSuccess (CompileMessage "" ws) bs xs2
-  collectFirstM = combineResults (select . splitErrorsAndData) where
-    select (_,x:_,bs,ws) = CompileSuccess (CompileMessage "" ws) bs x
-    select (es,_,bs,ws)  = CompileFail (CompileMessage "" ws) $ addBackground bs $ CompileMessage "" es
   withContextM x c = CompileInfoT $ do
     x' <- citState x
     case x' of
@@ -248,6 +240,16 @@ instance Monad m => CompileErrorM (CompileInfoT m) where
     case x' of
          CompileSuccess w _ d -> return $ CompileSuccess w [] d
          x2                   -> return x2
+
+instance Monad m => CompileErrorM (CompileInfoT m) where
+  collectAllM = combineResults (select . splitErrorsAndData) where
+    select ([],xs2,bs,ws) = CompileSuccess (CompileMessage "" ws) bs xs2
+    select (es,_,bs,ws)   = CompileFail (CompileMessage "" ws) $ addBackground bs $ CompileMessage "" es
+  collectAnyM = combineResults (select . splitErrorsAndData) where
+    select (_,xs2,bs,ws) = CompileSuccess (CompileMessage "" ws) bs xs2
+  collectFirstM = combineResults (select . splitErrorsAndData) where
+    select (_,x:_,bs,ws) = CompileSuccess (CompileMessage "" ws) bs x
+    select (es,_,bs,ws)  = CompileFail (CompileMessage "" ws) $ addBackground bs $ CompileMessage "" es
 
 combineResults :: (Monad m, Foldable f) =>
   ([CompileInfoState a] -> CompileInfoState b) -> f (CompileInfoT m a) -> CompileInfoT m b

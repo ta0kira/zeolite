@@ -294,13 +294,13 @@ instance TypeResolver AnyTypeResolver where
   trDefinesFilters (AnyTypeResolver r) = trDefinesFilters r
   trConcrete (AnyTypeResolver r) = trConcrete r
 
-filterLookup :: CompileErrorM m =>
+filterLookup :: ErrorContextM m =>
   ParamFilters -> ParamName -> m [TypeFilter]
 filterLookup ps n = resolve $ n `Map.lookup` ps where
   resolve (Just x) = return x
   resolve _        = compileErrorM $ "Param " ++ show n ++ " not found"
 
-getValueForParam :: CompileErrorM m =>
+getValueForParam :: ErrorContextM m =>
   ParamValues -> ParamName -> m GeneralInstance
 getValueForParam pa n =
   case n `Map.lookup` pa of

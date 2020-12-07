@@ -58,13 +58,13 @@ processPairs_ :: (Show a, Show b, CompileErrorM m) =>
   (a -> b -> m c) -> Positional a -> Positional b -> m ()
 processPairs_ f xs ys = processPairs f xs ys >> return ()
 
-processPairsT :: (MonadTrans t, Monad (t m), Show a, Show b, CompileErrorM m) =>
+processPairsT :: (MonadTrans t, Monad (t m), Show a, Show b, ErrorContextM m) =>
   (a -> b -> t m c) -> Positional a -> Positional b -> t m [c]
 processPairsT f (Positional ps1) (Positional ps2)
   | length ps1 == length ps2 =
     sequence $ map (uncurry f) (zip ps1 ps2)
   | otherwise = lift $ mismatchError ps1 ps2
 
-mismatchError :: (Show a, Show b, CompileErrorM m) => [a] -> [b] -> m c
+mismatchError :: (Show a, Show b, ErrorContextM m) => [a] -> [b] -> m c
 mismatchError ps1 ps2 = compileErrorM $ "Count mismatch: " ++ show ps1 ++
-                                       " (expected) vs. " ++ show ps2 ++ " (actual)"
+                                        " (expected) vs. " ++ show ps2 ++ " (actual)"

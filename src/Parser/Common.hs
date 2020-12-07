@@ -132,16 +132,16 @@ type ParserE = ParsecT String ()
 
 class ParseFromSource a where
   -- Must never prune whitespace/comments from front, but always from back.
-  sourceParser :: CompileErrorM m => ParserE m a
+  sourceParser :: ErrorContextM m => ParserE m a
 
-runParserE :: CompileErrorM m => ParserE m a -> String -> String -> m a
+runParserE :: ErrorContextM m => ParserE m a -> String -> String -> m a
 runParserE p n s = do
   result <- runPT p () n s
   case result of
        Left e  -> compileErrorM (show e)
        Right t -> return t
 
-parseErrorM :: CompileErrorM m => SourcePos -> String -> ParserE m a
+parseErrorM :: ErrorContextM m => SourcePos -> String -> ParserE m a
 parseErrorM c e = lift $ compileErrorM $ "At " ++ show c ++ ": " ++ e
 
 labeled :: Monad m => String -> ParserE m a -> ParserE m a
@@ -159,14 +159,14 @@ statementEnd = sepAfter (string_ "")
 valueSymbolGet :: Monad m => ParserE m ()
 valueSymbolGet = sepAfter (string_ ".")
 
-categorySymbolGet :: CompileErrorM m => ParserE m ()
+categorySymbolGet :: ErrorContextM m => ParserE m ()
 categorySymbolGet = labeled ":" $ useNewOperators <|> sepAfter (string_ ":")
 
-typeSymbolGet :: CompileErrorM m => ParserE m ()
+typeSymbolGet :: ErrorContextM m => ParserE m ()
 typeSymbolGet = labeled "." $ useNewOperators <|> sepAfter (string_ ".")
 
 -- TODO: Remove this after a reasonable amount of time.
-useNewOperators :: CompileErrorM m => ParserE m ()
+useNewOperators :: ErrorContextM m => ParserE m ()
 useNewOperators = newCategory <|> newType where
   newCategory = do
     c <- getPosition

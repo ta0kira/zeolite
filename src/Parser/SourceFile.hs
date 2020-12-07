@@ -38,7 +38,7 @@ import Types.Pragma
 import Types.TypeCategory
 
 
-parseInternalSource :: CompileErrorM m =>
+parseInternalSource :: ErrorContextM m =>
   (FilePath,String) -> m ([Pragma SourcePos],[AnyCategory SourcePos],[DefinedCategory SourcePos])
 parseInternalSource (f,s) = runParserE (between optionalSpace endOfDoc withPragmas) f s where
   withPragmas = do
@@ -47,7 +47,7 @@ parseInternalSource (f,s) = runParserE (between optionalSpace endOfDoc withPragm
     (cs,ds) <- parseAny2 sourceParser sourceParser
     return (pragmas,cs,ds)
 
-parsePublicSource :: CompileErrorM m => (FilePath,String) -> m ([Pragma SourcePos],[AnyCategory SourcePos])
+parsePublicSource :: ErrorContextM m => (FilePath,String) -> m ([Pragma SourcePos],[AnyCategory SourcePos])
 parsePublicSource (f,s) = runParserE (between optionalSpace endOfDoc withPragmas) f s where
   withPragmas = do
     pragmas <- parsePragmas publicSourcePragmas
@@ -55,7 +55,7 @@ parsePublicSource (f,s) = runParserE (between optionalSpace endOfDoc withPragmas
     cs <- sepBy sourceParser optionalSpace
     return (pragmas,cs)
 
-parseTestSource :: CompileErrorM m => (FilePath,String) -> m ([Pragma SourcePos],[IntegrationTest SourcePos])
+parseTestSource :: ErrorContextM m => (FilePath,String) -> m ([Pragma SourcePos],[IntegrationTest SourcePos])
 parseTestSource (f,s) = runParserE (between optionalSpace endOfDoc withPragmas) f s where
   withPragmas = do
     pragmas <- parsePragmas testSourcePragmas
@@ -63,11 +63,11 @@ parseTestSource (f,s) = runParserE (between optionalSpace endOfDoc withPragmas) 
     ts <- sepBy sourceParser optionalSpace
     return (pragmas,ts)
 
-publicSourcePragmas :: CompileErrorM m => [ParserE m (Pragma SourcePos)]
+publicSourcePragmas :: ErrorContextM m => [ParserE m (Pragma SourcePos)]
 publicSourcePragmas = [pragmaModuleOnly,pragmaTestsOnly]
 
-internalSourcePragmas :: CompileErrorM m => [ParserE m (Pragma SourcePos)]
+internalSourcePragmas :: ErrorContextM m => [ParserE m (Pragma SourcePos)]
 internalSourcePragmas = [pragmaTestsOnly]
 
-testSourcePragmas :: CompileErrorM m => [ParserE m (Pragma SourcePos)]
+testSourcePragmas :: ErrorContextM m => [ParserE m (Pragma SourcePos)]
 testSourcePragmas = []
