@@ -18,102 +18,102 @@ limitations under the License.
 
 {-# LANGUAGE Safe #-}
 
-module Test.CompileInfo (tests) where
+module Test.TrackedErrors (tests) where
 
 import Base.CompilerError
-import Base.CompileInfo
+import Base.TrackedErrors
 
 
-tests :: [IO (CompileInfo ())]
+tests :: [IO (TrackedErrors ())]
 tests = [
     checkSuccess 'a' (return 'a'),
-    checkError "error\n" (compilerErrorM "error" :: CompileInfoIO Char),
-    checkError "" (compilerErrorM "" :: CompileInfoIO Char),
+    checkError "error\n" (compilerErrorM "error" :: TrackedErrorsIO Char),
+    checkError "" (compilerErrorM "" :: TrackedErrorsIO Char),
 
     checkSuccess ['a','b']          (collectAllM [return 'a',return 'b']),
-    checkSuccess []                 (collectAllM [] :: CompileInfoIO [Char]),
+    checkSuccess []                 (collectAllM [] :: TrackedErrorsIO [Char]),
     checkError   "error1\nerror2\n" (collectAllM [compilerErrorM "error1",return 'b',compilerErrorM "error2"]),
 
     checkSuccess "ab" (collectAnyM [return 'a',return 'b']),
-    checkSuccess ""   (collectAnyM [] :: CompileInfoIO [Char]),
+    checkSuccess ""   (collectAnyM [] :: TrackedErrorsIO [Char]),
     checkSuccess "b"  (collectAnyM [compilerErrorM "error1",return 'b',compilerErrorM "error2"]),
 
     checkSuccess 'a' (collectFirstM [return 'a',return 'b']),
-    checkError   ""  (collectFirstM [] :: CompileInfoIO Char),
+    checkError   ""  (collectFirstM [] :: TrackedErrorsIO Char),
     checkSuccess 'b' (collectFirstM [compilerErrorM "error1",return 'b',compilerErrorM "error2"]),
 
     checkSuccessAndWarnings "warning1\nwarning2\n" ()
       (compilerWarningM "warning1" >> return () >> compilerWarningM "warning2"),
     checkErrorAndWarnings "warning1\n" "error\n"
-      (compilerWarningM "warning1" >> compilerErrorM "error" >> compilerWarningM "warning2" :: CompileInfoIO ()),
+      (compilerWarningM "warning1" >> compilerErrorM "error" >> compilerWarningM "warning2" :: TrackedErrorsIO ()),
 
     checkSuccess ['a','b']  (sequence [return 'a',return 'b']),
-    checkSuccess []         (sequence [] :: CompileInfoIO [Char]),
+    checkSuccess []         (sequence [] :: TrackedErrorsIO [Char]),
     checkError   "error1\n" (sequence [compilerErrorM "error1",return 'b',compilerErrorM "error2"]),
 
     checkSuccess 'a' (return 'a' `withContextM` "message"),
-    checkError "message\n  error\n" (compilerErrorM "error" `withContextM` "message" :: CompileInfoIO ()),
+    checkError "message\n  error\n" (compilerErrorM "error" `withContextM` "message" :: TrackedErrorsIO ()),
     checkSuccessAndWarnings "message\n  warning\n" ()
-      (compilerWarningM "warning" `withContextM` "message" :: CompileInfoIO ()),
+      (compilerWarningM "warning" `withContextM` "message" :: TrackedErrorsIO ()),
     checkErrorAndWarnings "message\n  warning\n" "message\n  error\n"
-      ((compilerWarningM "warning" >> compilerErrorM "error") `withContextM` "message" :: CompileInfoIO ()),
+      ((compilerWarningM "warning" >> compilerErrorM "error") `withContextM` "message" :: TrackedErrorsIO ()),
     checkSuccessAndWarnings "" () (return () `withContextM` "message"),
-    checkErrorAndWarnings "" "message\n" (compilerErrorM "" `withContextM` "message" :: CompileInfoIO ()),
+    checkErrorAndWarnings "" "message\n" (compilerErrorM "" `withContextM` "message" :: TrackedErrorsIO ()),
 
     checkSuccess 'a' (return 'a' `summarizeErrorsM` "message"),
-    checkError "message\n  error\n" (compilerErrorM "error" `summarizeErrorsM` "message" :: CompileInfoIO ()),
+    checkError "message\n  error\n" (compilerErrorM "error" `summarizeErrorsM` "message" :: TrackedErrorsIO ()),
     checkSuccessAndWarnings "warning\n" ()
-      (compilerWarningM "warning" `summarizeErrorsM` "message" :: CompileInfoIO ()),
+      (compilerWarningM "warning" `summarizeErrorsM` "message" :: TrackedErrorsIO ()),
     checkErrorAndWarnings "warning\n" "message\n  error\n"
-      ((compilerWarningM "warning" >> compilerErrorM "error") `summarizeErrorsM` "message" :: CompileInfoIO ()),
+      ((compilerWarningM "warning" >> compilerErrorM "error") `summarizeErrorsM` "message" :: TrackedErrorsIO ()),
     checkSuccessAndWarnings "" () (return () `summarizeErrorsM` "message"),
-    checkErrorAndWarnings "" "message\n" (compilerErrorM "" `summarizeErrorsM` "message" :: CompileInfoIO ()),
+    checkErrorAndWarnings "" "message\n" (compilerErrorM "" `summarizeErrorsM` "message" :: TrackedErrorsIO ()),
 
     checkSuccessAndWarnings "error\n" ()
-      (asCompileWarnings $ compilerErrorM "error" :: CompileInfoIO ()),
+      (asCompileWarnings $ compilerErrorM "error" :: TrackedErrorsIO ()),
     checkErrorAndWarnings "" "warning\n"
-      (asCompilerError $ compilerWarningM "warning" :: CompileInfoIO ()),
+      (asCompilerError $ compilerWarningM "warning" :: TrackedErrorsIO ()),
 
     checkSuccess 'a' (compilerBackgroundM "background" >> return 'a'),
     checkError "error\n  background\n"
-      (compilerBackgroundM "background" >> compilerErrorM "error" :: CompileInfoIO ()),
+      (compilerBackgroundM "background" >> compilerErrorM "error" :: TrackedErrorsIO ()),
     checkError "error\n  background\n"
-      (collectAllM [compilerBackgroundM "background"] >> compilerErrorM "error" :: CompileInfoIO [()]),
+      (collectAllM [compilerBackgroundM "background"] >> compilerErrorM "error" :: TrackedErrorsIO [()]),
     checkError "error\n  background\n"
-      (collectFirstM [compilerBackgroundM "background"] >> compilerErrorM "error" :: CompileInfoIO ()),
+      (collectFirstM [compilerBackgroundM "background"] >> compilerErrorM "error" :: TrackedErrorsIO ()),
 
     checkSuccess 'a' ((resetBackgroundM $ compilerBackgroundM "background") >> return 'a'),
     checkError "error\n"
-      ((resetBackgroundM $ compilerBackgroundM "background") >> compilerErrorM "error" :: CompileInfoIO ())
+      ((resetBackgroundM $ compilerBackgroundM "background") >> compilerErrorM "error" :: TrackedErrorsIO ())
   ]
 
-checkSuccess :: (Eq a, Show a) => a -> CompileInfoIO a -> IO (CompileInfo ())
+checkSuccess :: (Eq a, Show a) => a -> TrackedErrorsIO a -> IO (TrackedErrors ())
 checkSuccess x y = do
-  y' <- toCompileInfo y
+  y' <- toTrackedErrors y
   if isCompilerError y' || getCompilerSuccess y' == x
      then return $ y' >> return ()
      else return $ compilerErrorM $ "Expected value " ++ show x ++ " but got value " ++ show (getCompilerSuccess y')
 
-checkError :: (Eq a, Show a) => String -> CompileInfoIO a -> IO (CompileInfo ())
+checkError :: (Eq a, Show a) => String -> TrackedErrorsIO a -> IO (TrackedErrors ())
 checkError e y = do
-  y' <- toCompileInfo y
+  y' <- toTrackedErrors y
   if not (isCompilerError y')
      then return $ compilerErrorM $ "Expected error \"" ++ e ++ "\" but got value " ++ show (getCompilerSuccess y')
      else if show (getCompilerError y') == e
           then return $ return ()
           else return $ compilerErrorM $ "Expected error \"" ++ e ++ "\" but got error \"" ++ show (getCompilerError y') ++ "\""
 
-checkSuccessAndWarnings :: (Eq a, Show a) => String -> a -> CompileInfoIO a -> IO (CompileInfo ())
+checkSuccessAndWarnings :: (Eq a, Show a) => String -> a -> TrackedErrorsIO a -> IO (TrackedErrors ())
 checkSuccessAndWarnings w x y = do
-  y' <- toCompileInfo y
+  y' <- toTrackedErrors y
   outcome <- checkSuccess x y
   if show (getCompileWarnings y') == w
      then return $ outcome >> return ()
      else return $ compilerErrorM $ "Expected warnings " ++ show w ++ " but got warnings \"" ++ show (getCompileWarnings y') ++ "\""
 
-checkErrorAndWarnings :: (Eq a, Show a) => String -> String -> CompileInfoIO a -> IO (CompileInfo ())
+checkErrorAndWarnings :: (Eq a, Show a) => String -> String -> TrackedErrorsIO a -> IO (TrackedErrors ())
 checkErrorAndWarnings w e y = do
-  y' <- toCompileInfo y
+  y' <- toTrackedErrors y
   outcome <- checkError e y
   if show (getCompileWarnings y') == w
      then return $ outcome >> return ()

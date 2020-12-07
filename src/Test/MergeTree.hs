@@ -24,12 +24,12 @@ import Control.Monad (when)
 import Data.Char (toUpper)
 
 import Base.CompilerError
-import Base.CompileInfo
+import Base.TrackedErrors
 import Base.MergeTree
 import Base.Mergeable
 
 
-tests :: [IO (CompileInfo ())]
+tests :: [IO (TrackedErrors ())]
 tests = [
    checkMatch (mergeAny $ fmap mergeLeaf [2,4,6]) (fmap (*2))
               (mergeAny $ map mergeLeaf [1..3] :: MergeTree Int),
@@ -158,32 +158,32 @@ tests = [
                 mergeAll [mergeLeaf 'a',mergeLeaf 'b'])
  ]
 
-oddError :: Int -> CompileInfo Int
+oddError :: Int -> TrackedErrors Int
 oddError x = do
   when (odd x) $ compilerErrorM $ show x ++ " is odd"
   return x
 
-oddError2 :: Int -> CompileInfo [Int]
+oddError2 :: Int -> TrackedErrors [Int]
 oddError2 = fmap (:[]) . oddError
 
-checkMatch :: (Eq b, Show b) => b -> (a -> b) -> a -> IO (CompileInfo ())
+checkMatch :: (Eq b, Show b) => b -> (a -> b) -> a -> IO (TrackedErrors ())
 checkMatch x f y = let y' = f y in
   return $ if x /= y'
               then compilerErrorM $ "Expected " ++ show x ++ " but got " ++ show y'
               else return ()
 
-checkMatch2 :: (Eq a, Show a) => a -> a -> a -> IO (CompileInfo ())
+checkMatch2 :: (Eq a, Show a) => a -> a -> a -> IO (TrackedErrors ())
 checkMatch2 x y z = return $ do
   when (x /= z) $ compilerErrorM $ "Expected " ++ show x ++ " but got " ++ show z
   when (y == z) $ compilerErrorM $ "Expected something besides " ++ show y
 
-checkSuccess :: (Eq b, Show b) => b -> (a -> CompileInfo b) -> a -> IO (CompileInfo ())
+checkSuccess :: (Eq b, Show b) => b -> (a -> TrackedErrors b) -> a -> IO (TrackedErrors ())
 checkSuccess x f y = let y' = f y in
   return $ if isCompilerError y' || getCompilerSuccess y' == x
               then y' >> return ()
               else compilerErrorM $ "Expected value " ++ show x ++ " but got value " ++ show (getCompilerSuccess y')
 
-checkError :: Show b => String -> (a -> CompileInfo b) -> a -> IO (CompileInfo ())
+checkError :: Show b => String -> (a -> TrackedErrors b) -> a -> IO (TrackedErrors ())
 checkError e f y = let y' = f y in
   return $ if not (isCompilerError y')
               then compilerErrorM $ "Expected error \"" ++ e ++ "\" but got value " ++ show (getCompilerSuccess y')

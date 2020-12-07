@@ -16,10 +16,10 @@ limitations under the License.
 
 -- Author: Kevin P. Barry [ta0kira@gmail.com]
 
+import Base.TrackedErrors
 import Base.CompilerError
-import Base.CompileInfo
 import Test.Common
-import qualified Test.CompileInfo     as TestCompileInfo
+import qualified Test.TrackedErrors   as TestTrackedErrors
 import qualified Test.DefinedCategory as TestDefinedCategory
 import qualified Test.IntegrationTest as TestIntegrationTest
 import qualified Test.MergeTree       as TestMergeTree
@@ -34,7 +34,7 @@ import qualified Test.TypeInstance    as TestTypeInstance
 
 main :: IO ()
 main = runAllTests $ concat [
-    labelWith "CompileInfo"     TestCompileInfo.tests,
+    labelWith "TrackedErrors"   TestTrackedErrors.tests,
     labelWith "DefinedCategory" TestDefinedCategory.tests,
     labelWith "IntegrationTest" TestIntegrationTest.tests,
     labelWith "MergeTree"       TestMergeTree.tests,
@@ -47,5 +47,5 @@ main = runAllTests $ concat [
     labelWith "TypeInstance"    TestTypeInstance.tests
   ]
 
-labelWith :: String -> [IO (CompileInfo ())] -> [IO (CompileInfo ())]
+labelWith :: String -> [IO (TrackedErrors ())] -> [IO (TrackedErrors ())]
 labelWith s ts = map (\(n,t) -> fmap (<?? "In " ++ s ++ " (#" ++ show n ++ "):") t) (zip ([1..] :: [Int]) ts)

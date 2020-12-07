@@ -24,7 +24,7 @@ import Control.Monad (when)
 import qualified Data.Map as Map
 
 import Base.CompilerError
-import Base.CompileInfo
+import Base.TrackedErrors
 import Base.MergeTree
 import Base.Mergeable
 import Parser.TypeInstance ()
@@ -35,7 +35,7 @@ import Types.TypeInstance
 import Types.Variance
 
 
-tests :: [IO (CompileInfo ())]
+tests :: [IO (TrackedErrors ())]
 tests = [
     checkParseSuccess
       "Type0"
@@ -857,25 +857,25 @@ definesFilters = Map.fromList $ [
            ])
   ]
 
-checkParseSuccess :: String -> GeneralInstance -> IO (CompileInfo ())
+checkParseSuccess :: String -> GeneralInstance -> IO (TrackedErrors ())
 checkParseSuccess x y = return $ do
   t <- readSingle "(string)" x <!! ("When parsing " ++ show x)
   when (t /= y) $ compilerErrorM $ "Expected " ++ show x ++ " to parse as " ++ show y
 
-checkParseFail :: String -> IO (CompileInfo ())
+checkParseFail :: String -> IO (TrackedErrors ())
 checkParseFail x = return $ do
-  let t = readSingle "(string)" x :: CompileInfo GeneralInstance
+  let t = readSingle "(string)" x :: TrackedErrors GeneralInstance
   when (not $ isCompilerError t) $
     compilerErrorM $ "Expected failure to parse " ++ show x ++
                     " but got " ++ show (getCompilerSuccess t)
 
-checkSimpleConvertSuccess :: String -> String -> IO (CompileInfo ())
+checkSimpleConvertSuccess :: String -> String -> IO (TrackedErrors ())
 checkSimpleConvertSuccess = checkConvertSuccess []
 
-checkSimpleConvertFail :: String -> String -> IO (CompileInfo ())
+checkSimpleConvertFail :: String -> String -> IO (TrackedErrors ())
 checkSimpleConvertFail = checkConvertFail []
 
-checkConvertSuccess :: [(String, [String])] -> String -> String -> IO (CompileInfo ())
+checkConvertSuccess :: [(String, [String])] -> String -> String -> IO (TrackedErrors ())
 checkConvertSuccess pa x y = return checked where
   prefix = x ++ " -> " ++ y ++ " " ++ showParams pa
   checked = do
@@ -886,7 +886,7 @@ checkConvertSuccess pa x y = return checked where
     | otherwise = return ()
 
 checkInferenceSuccess :: [(String, [String])] -> [String] -> String ->
-  String -> MergeTree (String,String,Variance) -> IO (CompileInfo ())
+  String -> MergeTree (String,String,Variance) -> IO (TrackedErrors ())
 checkInferenceSuccess pa is x y gs = checkInferenceCommon check pa is x y gs where
   prefix = x ++ " -> " ++ y ++ " " ++ showParams pa
   check gs2 c
@@ -894,7 +894,7 @@ checkInferenceSuccess pa is x y gs = checkInferenceCommon check pa is x y gs whe
     | otherwise        = getCompilerSuccess c `checkEquals` gs2
 
 checkInferenceFail :: [(String, [String])] -> [String] -> String ->
-  String -> IO (CompileInfo ())
+  String -> IO (TrackedErrors ())
 checkInferenceFail pa is x y = checkInferenceCommon check pa is x y (mergeAll []) where
   prefix = x ++ " -> " ++ y ++ " " ++ showParams pa
   check _ c
@@ -902,9 +902,9 @@ checkInferenceFail pa is x y = checkInferenceCommon check pa is x y (mergeAll []
     | otherwise = compilerErrorM $ prefix ++ ": Expected failure\n"
 
 checkInferenceCommon ::
-  (MergeTree InferredTypeGuess -> CompileInfo (MergeTree InferredTypeGuess) -> CompileInfo ()) ->
+  (MergeTree InferredTypeGuess -> TrackedErrors (MergeTree InferredTypeGuess) -> TrackedErrors ()) ->
   [(String, [String])] -> [String] -> String -> String ->
-  MergeTree (String,String,Variance) -> IO (CompileInfo ())
+  MergeTree (String,String,Variance) -> IO (TrackedErrors ())
 checkInferenceCommon check pa is x y gs = return $ checked <!! context where
   context = "With params = " ++ show pa ++ ", pair = (" ++ show x ++ "," ++ show y ++ ")"
   checked = do
@@ -931,13 +931,13 @@ checkInferenceCommon check pa is x y gs = return $ checked <!! context where
     fs' <- mapErrorsM (uncheckedSubFilter (weakLookup im)) fs
     return (k,fs')
 
-checkConvertFail :: [(String, [String])] -> String -> String -> IO (CompileInfo ())
+checkConvertFail :: [(String, [String])] -> String -> String -> IO (TrackedErrors ())
 checkConvertFail pa x y = return checked where
   prefix = x ++ " /> " ++ y ++ " " ++ showParams pa
   checked = do
     ([t1,t2],pa2) <- parseTheTest pa [x,y]
     check $ checkValueAssignment Resolver pa2 t1 t2
-  check :: CompileInfo a -> CompileInfo ()
+  check :: TrackedErrors a -> TrackedErrors ()
   check c
     | isCompilerError c = return ()
     | otherwise = compilerErrorM $ prefix ++ ": Expected failure\n"

@@ -24,7 +24,7 @@ import System.IO
 import qualified Data.Map as Map
 
 import Base.CompilerError
-import Base.CompileInfo
+import Base.TrackedErrors
 import Cli.CompileOptions
 import Cli.ParseCompileOptions -- Not safe, due to Text.Regex.TDFA.
 import Cli.Programs
@@ -91,5 +91,5 @@ tryFastModes ("--show-deps":ps) = do
     showDep _ = return ()
 tryFastModes _ = return ()
 
-tryZeoliteIO :: CompileInfoIO a -> IO a
-tryZeoliteIO = tryCompileInfoIO "Warnings (ignored):" "Zeolite execution failed:"
+tryZeoliteIO :: TrackedErrorsIO a -> IO a
+tryZeoliteIO = tryTrackedErrorsIO "Warnings (ignored):" "Zeolite execution failed:"

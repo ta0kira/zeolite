@@ -23,12 +23,12 @@ module Test.Parser (tests) where
 import Control.Monad (when)
 
 import Base.CompilerError
-import Base.CompileInfo
+import Base.TrackedErrors
 import Parser.Common
 import Test.Common
 
 
-tests :: [IO (CompileInfo ())]
+tests :: [IO (TrackedErrors ())]
 tests = [
     checkParsesAs stringChar "\\'" '\'',
     checkParsesAs stringChar "\\\"" '"',
@@ -56,7 +56,7 @@ tests = [
     checkParseFail regexChar "\""
   ]
 
-checkParsesAs :: (Eq a, Show a) => ParserE CompileInfo a -> [Char] -> a -> IO (CompileInfo ())
+checkParsesAs :: (Eq a, Show a) => ParserE TrackedErrors a -> [Char] -> a -> IO (TrackedErrors ())
 checkParsesAs p s m = return $ do
   let parsed = readSingleWith p "(string)" s
   check parsed
@@ -68,7 +68,7 @@ checkParsesAs p s m = return $ do
       | isCompilerError c = compilerErrorM $ "Parse '" ++ s ++ "':\n" ++ show (getCompilerError c)
       | otherwise = return ()
 
-checkParseFail :: Show a => ParserE CompileInfo a -> [Char] -> IO (CompileInfo ())
+checkParseFail :: Show a => ParserE TrackedErrors a -> [Char] -> IO (TrackedErrors ())
 checkParseFail p s = do
   let parsed = readSingleWith p "(string)" s
   return $ check parsed

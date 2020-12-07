@@ -25,7 +25,7 @@ import System.FilePath
 import Text.Parsec
 
 import Base.CompilerError
-import Base.CompileInfo
+import Base.TrackedErrors
 import Parser.Common
 import Parser.IntegrationTest ()
 import Test.Common
@@ -34,7 +34,7 @@ import Types.IntegrationTest
 import Types.TypeCategory
 
 
-tests :: [IO (CompileInfo ())]
+tests :: [IO (TrackedErrors ())]
 tests = [
     checkFileContents
       ("testfiles" </> "basic_compiles_test.0rt")
@@ -110,11 +110,11 @@ tests = [
   ]
 
 checkFileContents ::
-  String -> (IntegrationTest SourcePos -> CompileInfo ()) -> IO (CompileInfo ())
-checkFileContents f o = toCompileInfo $ do
+  String -> (IntegrationTest SourcePos -> TrackedErrors ()) -> IO (TrackedErrors ())
+checkFileContents f o = toTrackedErrors $ do
   s <- errorFromIO $ loadFile f
   t <- runParserE (between optionalSpace endOfDoc sourceParser) f s
-  fromCompileInfo $ o t <!! "Check " ++ f ++ ":"
+  fromTrackedErrors $ o t <!! "Check " ++ f ++ ":"
 
 extractCategoryNames :: IntegrationTest c -> [String]
 extractCategoryNames = map (show . getCategoryName) . itCategory

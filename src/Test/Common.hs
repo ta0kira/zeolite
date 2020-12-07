@@ -50,13 +50,13 @@ import qualified Data.Map as Map
 import qualified Data.Set as Set
 
 import Base.CompilerError
-import Base.CompileInfo
+import Base.TrackedErrors
 import Parser.Common
 import Parser.TypeInstance ()
 import Types.TypeInstance
 
 
-runAllTests :: [IO (CompileInfo ())] -> IO ()
+runAllTests :: [IO (TrackedErrors ())] -> IO ()
 runAllTests ts = do
   results <- sequence ts
   let (es,ps) = partitionEithers $ zipWith numberError ([1..] :: [Int]) results
@@ -65,7 +65,7 @@ runAllTests ts = do
                    show (length es) ++ " tests failed\n"
   when (not $ null es) exitFailure
 
-numberError :: a -> CompileInfo b -> Either (a,CompileMessage) b
+numberError :: a -> TrackedErrors b -> Either (a,CompileMessage) b
 numberError n c
   | isCompilerError c = Left (n,getCompilerError c)
   | otherwise        = Right (getCompilerSuccess c)
@@ -73,16 +73,16 @@ numberError n c
 forceParse :: ParseFromSource a => String -> a
 forceParse s = getCompilerSuccess $ runParserE sourceParser "(string)" s
 
-readSingle :: ParseFromSource a => String -> String -> CompileInfo a
+readSingle :: ParseFromSource a => String -> String -> TrackedErrors a
 readSingle  = readSingleWith sourceParser
 
-readSingleWith :: ParserE CompileInfo a -> String -> String -> CompileInfo a
+readSingleWith :: ParserE TrackedErrors a -> String -> String -> TrackedErrors a
 readSingleWith p = runParserE (between nullParse endOfDoc p)
 
-readMulti :: ParseFromSource a => String -> String -> CompileInfo [a]
+readMulti :: ParseFromSource a => String -> String -> TrackedErrors [a]
 readMulti f s = runParserE (between optionalSpace endOfDoc (sepBy sourceParser optionalSpace)) f s
 
-parseFilterMap :: [(String,[String])] -> CompileInfo ParamFilters
+parseFilterMap :: [(String,[String])] -> TrackedErrors ParamFilters
 parseFilterMap pa = do
   pa2 <- mapErrorsM parseFilters pa
   return $ Map.fromList pa2
@@ -91,7 +91,7 @@ parseFilterMap pa = do
       fs2 <- mapErrorsM (readSingle "(string)") fs
       return (ParamName n,fs2)
 
-parseTheTest :: ParseFromSource a => [(String,[String])] -> [String] -> CompileInfo ([a],ParamFilters)
+parseTheTest :: ParseFromSource a => [(String,[String])] -> [String] -> TrackedErrors ([a],ParamFilters)
 parseTheTest pa xs = do
   ts <- mapErrorsM (readSingle "(string)") xs
   pa2 <- parseFilterMap pa
@@ -101,7 +101,7 @@ showParams :: [(String,[String])] -> String
 showParams pa = "[" ++ intercalate "," (concat $ map expand pa) ++ "]" where
   expand (n,ps) = map (\p -> n ++ " " ++ p) ps
 
-checkTypeSuccess :: TypeResolver r => r -> [(String,[String])] -> String -> CompileInfo ()
+checkTypeSuccess :: TypeResolver r => r -> [(String,[String])] -> String -> TrackedErrors ()
 checkTypeSuccess r pa x = do
   ([t],pa2) <- parseTheTest pa [x]
   check $ validateGeneralInstance r pa2 t
@@ -109,18 +109,18 @@ checkTypeSuccess r pa x = do
     prefix = x ++ " " ++ showParams pa
     check x2 = x2 <!! prefix ++ ":"
 
-checkTypeFail :: TypeResolver r => r -> [(String,[String])] -> String -> CompileInfo ()
+checkTypeFail :: TypeResolver r => r -> [(String,[String])] -> String -> TrackedErrors ()
 checkTypeFail r pa x = do
   ([t],pa2) <- parseTheTest pa [x]
   check $ validateGeneralInstance r pa2 t
   where
     prefix = x ++ " " ++ showParams pa
-    check :: CompileInfo a -> CompileInfo ()
+    check :: TrackedErrors a -> TrackedErrors ()
     check c
       | isCompilerError c = return ()
       | otherwise = compilerErrorM $ prefix ++ ": Expected failure\n"
 
-checkDefinesSuccess :: TypeResolver r => r -> [(String,[String])] -> String -> CompileInfo ()
+checkDefinesSuccess :: TypeResolver r => r -> [(String,[String])] -> String -> TrackedErrors ()
 checkDefinesSuccess r pa x = do
   ([t],pa2) <- parseTheTest pa [x]
   check $ validateDefinesInstance r pa2 t
@@ -128,24 +128,24 @@ checkDefinesSuccess r pa x = do
     prefix = x ++ " " ++ showParams pa
     check x2 = x2 <!! prefix ++ ":"
 
-checkDefinesFail :: TypeResolver r => r -> [(String,[String])] -> String -> CompileInfo ()
+checkDefinesFail :: TypeResolver r => r -> [(String,[String])] -> String -> TrackedErrors ()
 checkDefinesFail r pa x = do
   ([t],pa2) <- parseTheTest pa [x]
   check $ validateDefinesInstance r pa2 t
   where
     prefix = x ++ " " ++ showParams pa
-    check :: CompileInfo a -> CompileInfo ()
+    check :: TrackedErrors a -> TrackedErrors ()
     check c
       | isCompilerError c = return ()
       | otherwise = compilerErrorM $ prefix ++ ": Expected failure\n"
 
-containsExactly :: (Ord a, Show a) => [a] -> [a] -> CompileInfo ()
+containsExactly :: (Ord a, Show a) => [a] -> [a] -> TrackedErrors ()
 containsExactly actual expected = do
   containsNoDuplicates actual
   containsAtLeast actual expected
   containsAtMost actual expected
 
-containsNoDuplicates :: (Ord a, Show a) => [a] -> CompileInfo ()
+containsNoDuplicates :: (Ord a, Show a) => [a] -> TrackedErrors ()
 containsNoDuplicates expected =
   (mapErrorsM_ checkSingle $ group $ sort expected) <!! show expected
   where
@@ -153,7 +153,7 @@ containsNoDuplicates expected =
       compilerErrorM $ "Item " ++ show x ++ " occurs " ++ show (length xa) ++ " times"
     checkSingle _ = return ()
 
-containsAtLeast :: (Ord a, Show a) => [a] -> [a] -> CompileInfo ()
+containsAtLeast :: (Ord a, Show a) => [a] -> [a] -> TrackedErrors ()
 containsAtLeast actual expected =
   (mapErrorsM_ (checkInActual $ Set.fromList actual) expected) <!!
         show actual ++ " (actual) vs. " ++ show expected ++ " (expected)"
@@ -163,7 +163,7 @@ containsAtLeast actual expected =
          then return ()
          else compilerErrorM $ "Item " ++ show v ++ " was expected but not present"
 
-containsAtMost :: (Ord a, Show a) => [a] -> [a] -> CompileInfo ()
+containsAtMost :: (Ord a, Show a) => [a] -> [a] -> TrackedErrors ()
 containsAtMost actual expected =
   (mapErrorsM_ (checkInExpected $ Set.fromList expected) actual) <!!
         show actual ++ " (actual) vs. " ++ show expected ++ " (expected)"
@@ -173,7 +173,7 @@ containsAtMost actual expected =
          then return ()
          else compilerErrorM $ "Item " ++ show v ++ " is unexpected"
 
-checkEquals :: (Eq a, Show a) => a -> a -> CompileInfo ()
+checkEquals :: (Eq a, Show a) => a -> a -> TrackedErrors ()
 checkEquals actual expected
   | actual == expected = return ()
   | otherwise = compilerErrorM $ "Expected " ++ show expected ++ " but got " ++ show actual

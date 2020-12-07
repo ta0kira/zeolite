@@ -179,9 +179,9 @@ library zeolite-internal
   import:              defaults
 
   exposed-modules:     Base.CompilerError,
-                       Base.CompileInfo,
                        Base.MergeTree,
                        Base.Mergeable,
+                       Base.TrackedErrors,
                        Cli.CompileOptions,
                        Cli.Compiler,
                        Cli.ParseCompileOptions,
@@ -211,7 +211,6 @@ library zeolite-internal
                        Parser.TypeCategory,
                        Parser.TypeInstance,
                        Test.Common,
-                       Test.CompileInfo,
                        Test.DefinedCategory,
                        Test.IntegrationTest,
                        Test.MergeTree,
@@ -220,6 +219,7 @@ library zeolite-internal
                        Test.Pragma,
                        Test.Procedure,
                        Test.SourceFile,
+                       Test.TrackedErrors,
                        Test.TypeCategory,
                        Test.TypeInstance,
                        Types.Builtin,

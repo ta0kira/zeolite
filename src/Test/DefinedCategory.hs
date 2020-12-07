@@ -24,13 +24,13 @@ import System.FilePath
 import Text.Parsec
 
 import Base.CompilerError
-import Base.CompileInfo
+import Base.TrackedErrors
 import Parser.DefinedCategory ()
 import Test.Common
 import Types.DefinedCategory
 
 
-tests :: [IO (CompileInfo ())]
+tests :: [IO (TrackedErrors ())]
 tests = [
     checkParseSuccess ("testfiles" </> "definitions.0rx"),
     checkParseSuccess ("testfiles" </> "internal_inheritance.0rx"),
@@ -38,20 +38,20 @@ tests = [
     checkParseSuccess ("testfiles" </> "internal_filters.0rx")
   ]
 
-checkParseSuccess :: String -> IO (CompileInfo ())
+checkParseSuccess :: String -> IO (TrackedErrors ())
 checkParseSuccess f = do
   contents <- loadFile f
-  let parsed = readMulti f contents :: CompileInfo [DefinedCategory SourcePos]
+  let parsed = readMulti f contents :: TrackedErrors [DefinedCategory SourcePos]
   return $ check parsed
   where
   check c
     | isCompilerError c = compilerErrorM $ "Parse " ++ f ++ ":\n" ++ show (getCompilerError c)
     | otherwise = return ()
 
-checkParseFail :: String -> IO (CompileInfo ())
+checkParseFail :: String -> IO (TrackedErrors ())
 checkParseFail f = do
   contents <- loadFile f
-  let parsed = readMulti f contents :: CompileInfo [DefinedCategory SourcePos]
+  let parsed = readMulti f contents :: TrackedErrors [DefinedCategory SourcePos]
   return $ check parsed
   where
   check c

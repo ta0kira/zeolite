@@ -33,7 +33,7 @@ import Text.Regex.TDFA -- Not safe!
 import qualified Data.Map as Map
 
 import Base.CompilerError
-import Base.CompileInfo
+import Base.TrackedErrors
 import Cli.Programs
 import CompilerCxx.Category
 import CompilerCxx.Naming
@@ -48,7 +48,7 @@ import Types.TypeCategory
 
 runSingleTest :: CompilerBackend b => b -> LanguageModule SourcePos ->
   FilePath -> [FilePath] -> [CompileMetadata] -> (String,String) ->
-  CompileInfoIO ((Int,Int),CompileInfo ())
+  TrackedErrorsIO ((Int,Int),TrackedErrors ())
 runSingleTest b cm p paths deps (f,s) = do
   errorFromIO $ hPutStrLn stderr $ "\nExecuting tests from " ++ f
   allResults <- checkAndRun (parseTestSource (f,s))
@@ -70,7 +70,7 @@ runSingleTest b cm p paths deps (f,s) = do
       let context = formatFullContextBrace (ithContext $ itHeader t)
       let scope = "\nIn testcase \"" ++ ithTestName (itHeader t) ++ "\"" ++ context
       errorFromIO $ hPutStrLn stderr $ "\n*** Executing testcase " ++ name ++ " ***"
-      result <- toCompileInfo $ run (ithResult $ itHeader t) (ithArgs $ itHeader t) (itCategory t) (itDefinition t) (itTests t)
+      result <- toTrackedErrors $ run (ithResult $ itHeader t) (ithArgs $ itHeader t) (itCategory t) (itDefinition t) (itTests t)
       if isCompilerError result
          then return ((0,1),scope ??> (result >> return ()))
          else do
@@ -95,7 +95,7 @@ runSingleTest b cm p paths deps (f,s) = do
     run (ExpectCompiles _ rs es) args cs ds ts = do
       let result = compileAll args cs ds ts
       if isCompilerError result
-         then fromCompileInfo result >> return []
+         then fromTrackedErrors result >> return []
          else fmap (:[]) $ return $ do
            let warnings = show $ getCompileWarnings result
            checkContent rs es (lines warnings) [] []
@@ -140,7 +140,7 @@ runSingleTest b cm p paths deps (f,s) = do
          else do
            let (xx,main,fs) = getCompilerSuccess result
            (dir,binaryName) <- createBinary main xx
-           results <- liftIO $ sequence $ map (toCompileInfo . executeTest binaryName rs es result s2) fs
+           results <- liftIO $ sequence $ map (toTrackedErrors . executeTest binaryName rs es result s2) fs
            when (not $ any isCompilerError results) $ errorFromIO $ removeDirectoryRecursive dir
            return results
 
@@ -151,7 +151,7 @@ runSingleTest b cm p paths deps (f,s) = do
            (True,False) -> collectAllM_ $ (asCompilerError res):(map compilerErrorM $ err ++ out)
            (False,True) -> collectAllM_ [compilerErrorM "Expected runtime failure",
                                          asCompilerError res <?? "\nOutput from compiler:"]
-           _ -> fromCompileInfo $ checkContent rs es (lines $ show $ getCompileWarnings res) err out
+           _ -> fromTrackedErrors $ checkContent rs es (lines $ show $ getCompileWarnings res) err out
       where
         printOutcome outcome = do
           failed <- isCompilerErrorM outcome
@@ -175,7 +175,7 @@ runSingleTest b cm p paths deps (f,s) = do
       checkForRegex expected err r "test stderr"
     checkSubsetForRegex expected _ _ out (OutputPattern OutputStdout r) =
       checkForRegex expected out r "test stdout"
-    checkForRegex :: Bool -> [String] -> String -> String -> CompileInfo ()
+    checkForRegex :: Bool -> [String] -> String -> String -> TrackedErrors ()
     checkForRegex expected ms r n = do
       let found = any (=~ r) ms
       when (found && not expected) $ compilerErrorM $ "Pattern \"" ++ r ++ "\" present in " ++ n

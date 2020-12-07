@@ -25,7 +25,7 @@ import System.FilePath
 import Text.Parsec
 
 import Base.CompilerError
-import Base.CompileInfo
+import Base.TrackedErrors
 import Parser.Procedure ()
 import Test.Common
 import Types.Positional
@@ -34,7 +34,7 @@ import Types.TypeCategory
 import Types.TypeInstance
 
 
-tests :: [IO (CompileInfo ())]
+tests :: [IO (TrackedErrors ())]
 tests = [
     checkParseSuccess ("testfiles" </> "procedures.0rx"),
 
@@ -404,20 +404,20 @@ tests = [
                                           _ -> False)
   ]
 
-checkParseSuccess :: String -> IO (CompileInfo ())
+checkParseSuccess :: String -> IO (TrackedErrors ())
 checkParseSuccess f = do
   contents <- loadFile f
-  let parsed = readMulti f contents :: CompileInfo [ExecutableProcedure SourcePos]
+  let parsed = readMulti f contents :: TrackedErrors [ExecutableProcedure SourcePos]
   return $ check parsed
   where
     check c
       | isCompilerError c = compilerErrorM $ "Parse " ++ f ++ ":\n" ++ show (getCompilerError c)
       | otherwise = return ()
 
-checkParseFail :: String -> IO (CompileInfo ())
+checkParseFail :: String -> IO (TrackedErrors ())
 checkParseFail f = do
   contents <- loadFile f
-  let parsed = readMulti f contents :: CompileInfo [ExecutableProcedure SourcePos]
+  let parsed = readMulti f contents :: TrackedErrors [ExecutableProcedure SourcePos]
   return $ check parsed
   where
     check c
@@ -425,18 +425,18 @@ checkParseFail f = do
       | otherwise = compilerErrorM $ "Parse " ++ f ++ ": Expected failure but got\n" ++
                                    show (getCompilerSuccess c) ++ "\n"
 
-checkShortParseSuccess :: String -> IO (CompileInfo ())
+checkShortParseSuccess :: String -> IO (TrackedErrors ())
 checkShortParseSuccess s = do
-  let parsed = readSingle "(string)" s :: CompileInfo (Statement SourcePos)
+  let parsed = readSingle "(string)" s :: TrackedErrors (Statement SourcePos)
   return $ check parsed
   where
     check c
       | isCompilerError c = compilerErrorM $ "Parse '" ++ s ++ "':\n" ++ show (getCompilerError c)
       | otherwise = return ()
 
-checkShortParseFail :: String -> IO (CompileInfo ())
+checkShortParseFail :: String -> IO (TrackedErrors ())
 checkShortParseFail s = do
-  let parsed = readSingle "(string)" s :: CompileInfo (Statement SourcePos)
+  let parsed = readSingle "(string)" s :: TrackedErrors (Statement SourcePos)
   return $ check parsed
   where
     check c
@@ -444,9 +444,9 @@ checkShortParseFail s = do
       | otherwise = compilerErrorM $ "Parse '" ++ s ++ "': Expected failure but got\n" ++
                                    show (getCompilerSuccess c) ++ "\n"
 
-checkParsesAs :: String -> (Expression SourcePos -> Bool) -> IO (CompileInfo ())
+checkParsesAs :: String -> (Expression SourcePos -> Bool) -> IO (TrackedErrors ())
 checkParsesAs s m = return $ do
-  let parsed = readSingle "(string)" s :: CompileInfo (Expression SourcePos)
+  let parsed = readSingle "(string)" s :: TrackedErrors (Expression SourcePos)
   check parsed
   e <- parsed
   when (not $ m e) $

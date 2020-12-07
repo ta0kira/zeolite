@@ -23,14 +23,14 @@ import Text.Parsec
 import Text.Regex.TDFA -- Not safe!
 
 import Base.CompilerError
-import Base.CompileInfo
+import Base.TrackedErrors
 import Parser.Common
 import Parser.Pragma
 import Test.Common
 import Types.Pragma
 
 
-tests :: [IO (CompileInfo ())]
+tests :: [IO (TrackedErrors ())]
 tests = [
     checkParsesAs "$ModuleOnly$" (fmap (:[]) pragmaModuleOnly)
       (\e -> case e of
@@ -98,7 +98,7 @@ tests = [
     checkParseError "$ExprLookup[ \"bad stuff\" ]$" "macro name" pragmaExprLookup
   ]
 
-checkParsesAs :: String -> ParserE CompileInfo [Pragma SourcePos] -> ([Pragma SourcePos] -> Bool) -> IO (CompileInfo ())
+checkParsesAs :: String -> ParserE TrackedErrors [Pragma SourcePos] -> ([Pragma SourcePos] -> Bool) -> IO (TrackedErrors ())
 checkParsesAs s p m = return $ do
   let parsed = readSingleWith p "(string)" s
   check parsed
@@ -110,7 +110,7 @@ checkParsesAs s p m = return $ do
       | isCompilerError c = compilerErrorM $ "Parse '" ++ s ++ "':\n" ++ show (getCompilerError c)
       | otherwise = return ()
 
-checkParseError :: String -> String -> ParserE CompileInfo (Pragma SourcePos) -> IO (CompileInfo ())
+checkParseError :: String -> String -> ParserE TrackedErrors (Pragma SourcePos) -> IO (TrackedErrors ())
 checkParseError s m p = return $ do
   let parsed = readSingleWith p "(string)" s
   check parsed

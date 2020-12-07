@@ -37,7 +37,7 @@ import qualified Data.Map as Map
 import qualified Data.Set as Set
 
 import Base.CompilerError
-import Base.CompileInfo
+import Base.TrackedErrors
 import Cli.CompileOptions
 import Cli.Programs
 import Cli.TestRunner -- Not safe, due to Text.Regex.TDFA.
@@ -84,7 +84,7 @@ data LoadedTests =
   }
   deriving (Show)
 
-compileModule :: (PathIOHandler r, CompilerBackend b) => r -> b -> ModuleSpec -> CompileInfoIO ()
+compileModule :: (PathIOHandler r, CompilerBackend b) => r -> b -> ModuleSpec -> TrackedErrorsIO ()
 compileModule resolver backend (ModuleSpec p d em is is2 ps xs ts es ep m f) = do
   as  <- fmap fixPaths $ mapErrorsM (resolveModule resolver (p </> d)) is
   as2 <- fmap fixPaths $ mapErrorsM (resolveModule resolver (p </> d)) is2
@@ -262,7 +262,7 @@ compileModule resolver backend (ModuleSpec p d em is is2 ps xs ts es ep m f) = d
     maybeCreateMain _ _ _ = return []
 
 createModuleTemplates :: PathIOHandler r => r -> FilePath -> FilePath ->
-  [CompileMetadata] -> [CompileMetadata] -> CompileInfoIO ()
+  [CompileMetadata] -> [CompileMetadata] -> TrackedErrorsIO ()
 createModuleTemplates resolver p d deps1 deps2 = do
   (ps,xs,_) <- findSourceFiles p d
   (LanguageModule _ _ _ cs0 ps0 ts0 cs1 ps1 ts1 _ _ _) <-
@@ -287,7 +287,7 @@ createModuleTemplates resolver p d deps1 deps2 = do
           errorFromIO $ writeFile n' $ concat $ map (++ "\n") content
 
 runModuleTests :: (PathIOHandler r, CompilerBackend b) => r -> b -> FilePath ->
-  [FilePath] -> LoadedTests -> CompileInfoIO [((Int,Int),CompileInfo ())]
+  [FilePath] -> LoadedTests -> TrackedErrorsIO [((Int,Int),TrackedErrors ())]
 runModuleTests resolver backend base tp (LoadedTests p d m em deps1 deps2) = do
   let paths = base:(cmPublicSubdirs m ++ cmPrivateSubdirs m ++ getIncludePathsForDeps deps1)
   mapErrorsM_ showSkipped $ filter (not . isTestAllowed) $ cmTestFiles m
@@ -299,7 +299,7 @@ runModuleTests resolver backend base tp (LoadedTests p d m em deps1 deps2) = do
     isTestAllowed t = if null allowTests then True else t `Set.member` allowTests
     showSkipped f = compilerWarningM $ "Skipping tests in " ++ f ++ " due to explicit test filter."
 
-loadPrivateSource :: PathIOHandler r => r -> VersionHash -> FilePath -> FilePath -> CompileInfoIO (PrivateSource SourcePos)
+loadPrivateSource :: PathIOHandler r => r -> VersionHash -> FilePath -> FilePath -> TrackedErrorsIO (PrivateSource SourcePos)
 loadPrivateSource resolver h p f = do
   [f'] <- zipWithContents resolver p [f]
   time <- errorFromIO getZonedTime
@@ -333,7 +333,7 @@ createLanguageModule ex ss em cs = lm where
   apply = foldr filter
 
 warnPublic :: PathIOHandler r => r -> FilePath -> [CategoryName] ->
-  [CategoryName] -> [ObjectFile] -> [FilePath] -> CompileInfoIO ()
+  [CategoryName] -> [ObjectFile] -> [FilePath] -> TrackedErrorsIO ()
 warnPublic resolver p pc dc os = mapErrorsM_ checkPublic where
   checkPublic d = do
     d2 <- resolveModule resolver p d

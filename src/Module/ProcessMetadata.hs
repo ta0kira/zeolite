@@ -60,7 +60,7 @@ import qualified Data.Map as Map
 import qualified Data.Set as Set
 
 import Base.CompilerError
-import Base.CompileInfo
+import Base.TrackedErrors
 import Cli.CompileOptions
 import Cli.Programs (VersionHash(..))
 import Compilation.ProcedureContext (ExprMap)
@@ -89,7 +89,7 @@ type MetadataMap = Map.Map FilePath CompileMetadata
 mapMetadata :: [CompileMetadata] -> MetadataMap
 mapMetadata cs = Map.fromList $ zip (map cmPath cs) cs
 
-loadRecompile :: FilePath -> CompileInfoIO ModuleConfig
+loadRecompile :: FilePath -> TrackedErrorsIO ModuleConfig
 loadRecompile p = do
   let f = p </> moduleFilename
   isFile <- errorFromIO $ doesFileExist p
@@ -111,24 +111,24 @@ loadRecompile p = do
                                     "\" and path: \"" ++ mcPath m ++ "\")"
   return m
 
-isPathUpToDate :: VersionHash -> ForceMode -> FilePath -> CompileInfoIO Bool
+isPathUpToDate :: VersionHash -> ForceMode -> FilePath -> TrackedErrorsIO Bool
 isPathUpToDate h f p = do
-  m <- errorFromIO $ toCompileInfo $ loadDepsCommon f h Map.empty Set.empty (\m2 -> cmPublicDeps m2 ++ cmPrivateDeps m2) [p]
+  m <- errorFromIO $ toTrackedErrors $ loadDepsCommon f h Map.empty Set.empty (\m2 -> cmPublicDeps m2 ++ cmPrivateDeps m2) [p]
   return $ not $ isCompilerError m
 
-isPathConfigured :: FilePath -> FilePath -> CompileInfoIO Bool
+isPathConfigured :: FilePath -> FilePath -> TrackedErrorsIO Bool
 isPathConfigured p d = do
-  m <- errorFromIO $ toCompileInfo $ loadRecompile (p </> d)
+  m <- errorFromIO $ toTrackedErrors $ loadRecompile (p </> d)
   return $ not $ isCompilerError m
 
-writeMetadata :: FilePath -> CompileMetadata -> CompileInfoIO ()
+writeMetadata :: FilePath -> CompileMetadata -> TrackedErrorsIO ()
 writeMetadata p m = do
   p' <- errorFromIO $ canonicalizePath p
   errorFromIO $ hPutStrLn stderr $ "Writing metadata for \"" ++ p' ++ "\"."
   m' <- autoWriteConfig m <?? "In data for " ++ p
   writeCachedFile p' "" metadataFilename m'
 
-writeRecompile :: FilePath -> ModuleConfig -> CompileInfoIO ()
+writeRecompile :: FilePath -> ModuleConfig -> TrackedErrorsIO ()
 writeRecompile p m = do
   p' <- errorFromIO $ canonicalizePath p
   let f = p </> moduleFilename
@@ -136,19 +136,19 @@ writeRecompile p m = do
   m' <- autoWriteConfig m <?? "In data for " ++ p
   errorFromIO $ writeFile f m'
 
-eraseCachedData :: FilePath -> CompileInfoIO ()
+eraseCachedData :: FilePath -> TrackedErrorsIO ()
 eraseCachedData p = do
   let d  = p </> cachedDataPath
   dirExists <- errorFromIO $ doesDirectoryExist d
   when dirExists $ errorFromIO $ removeDirectoryRecursive d
 
-createCachePath :: FilePath -> CompileInfoIO ()
+createCachePath :: FilePath -> TrackedErrorsIO ()
 createCachePath p = do
   let f = p </> cachedDataPath
   exists <- errorFromIO $ doesDirectoryExist f
   when (not exists) $ errorFromIO $ createDirectoryIfMissing False f
 
-writeCachedFile :: FilePath -> String -> FilePath -> String -> CompileInfoIO ()
+writeCachedFile :: FilePath -> String -> FilePath -> String -> TrackedErrorsIO ()
 writeCachedFile p ns f c = do
   createCachePath p
   errorFromIO $ createDirectoryIfMissing False $ p </> cachedDataPath </> ns
@@ -160,7 +160,7 @@ getCachedPath p ns f = fixPath $ p </> cachedDataPath </> ns </> f
 getCacheRelativePath :: FilePath -> FilePath
 getCacheRelativePath f = ".." </> f
 
-findSourceFiles :: FilePath -> FilePath -> CompileInfoIO ([FilePath],[FilePath],[FilePath])
+findSourceFiles :: FilePath -> FilePath -> TrackedErrorsIO ([FilePath],[FilePath],[FilePath])
 findSourceFiles p0 p = do
   let absolute = p0 </> p
   isFile <- errorFromIO $ doesFileExist absolute
@@ -173,7 +173,7 @@ findSourceFiles p0 p = do
   let ts = filter (isSuffixOf ".0rt") ds
   return (ps,xs,ts)
 
-getExprMap :: FilePath -> ModuleConfig -> CompileInfoIO (ExprMap SourcePos)
+getExprMap :: FilePath -> ModuleConfig -> TrackedErrorsIO (ExprMap SourcePos)
 getExprMap p m = do
   path <- errorFromIO $ canonicalizePath (p </> mcRoot m </> mcPath m)
   let defaults = [(MacroName "MODULE_PATH",Literal (StringLiteral [] path))]
@@ -199,19 +199,19 @@ getObjectFilesForDeps :: [CompileMetadata] -> [ObjectFile]
 getObjectFilesForDeps = concat . map cmObjectFiles
 
 loadModuleMetadata :: VersionHash -> ForceMode -> MetadataMap -> FilePath ->
-  CompileInfoIO CompileMetadata
+  TrackedErrorsIO CompileMetadata
 loadModuleMetadata h f ca = fmap head . loadDepsCommon f h ca Set.empty (const []) . (:[])
 
 loadPublicDeps :: VersionHash -> ForceMode -> MetadataMap -> [FilePath] ->
-  CompileInfoIO [CompileMetadata]
+  TrackedErrorsIO [CompileMetadata]
 loadPublicDeps h f ca = loadDepsCommon f h ca Set.empty cmPublicDeps
 
 loadTestingDeps :: VersionHash -> ForceMode -> MetadataMap -> CompileMetadata ->
-  CompileInfoIO [CompileMetadata]
+  TrackedErrorsIO [CompileMetadata]
 loadTestingDeps h f ca m = loadDepsCommon f h ca (Set.fromList [cmPath m]) cmPublicDeps (cmPublicDeps m ++ cmPrivateDeps m)
 
 loadPrivateDeps :: VersionHash -> ForceMode -> MetadataMap -> [CompileMetadata] ->
-  CompileInfoIO [CompileMetadata]
+  TrackedErrorsIO [CompileMetadata]
 loadPrivateDeps h f ca ms = do
   new <- loadDepsCommon f h ca pa (\m -> cmPublicDeps m ++ cmPrivateDeps m) paths
   return $ ms ++ new where
@@ -219,7 +219,7 @@ loadPrivateDeps h f ca ms = do
     pa = Set.fromList $ map cmPath ms
 
 loadDepsCommon :: ForceMode -> VersionHash -> MetadataMap -> Set.Set FilePath ->
-  (CompileMetadata -> [FilePath]) -> [FilePath] -> CompileInfoIO [CompileMetadata]
+  (CompileMetadata -> [FilePath]) -> [FilePath] -> TrackedErrorsIO [CompileMetadata]
 loadDepsCommon f h ca pa0 getDeps ps = do
   (_,processed) <- fixedPaths >>= collect (pa0,[])
   let cached = Map.union ca (Map.fromList processed)
@@ -244,14 +244,14 @@ loadDepsCommon f h ca pa0 getDeps ps = do
           p' <- errorFromIO $ canonicalizePath p
           when (cmPath m /= p') $
             compilerErrorM $ "Module \"" ++ p ++ "\" has an invalid cache path and must be recompiled"
-          fresh <- errorFromIO $ toCompileInfo $ checkModuleFreshness h cm p m <!!
+          fresh <- errorFromIO $ toTrackedErrors $ checkModuleFreshness h cm p m <!!
             "Module \"" ++ p ++ "\" is out of date and should be recompiled"
           if enforce
-             then fromCompileInfo   fresh
+             then fromTrackedErrors   fresh
              else asCompileWarnings fresh
           return m
 
-loadMetadata :: MetadataMap -> FilePath -> CompileInfoIO CompileMetadata
+loadMetadata :: MetadataMap -> FilePath -> TrackedErrorsIO CompileMetadata
 loadMetadata ca p = do
   path <- errorFromIO $ canonicalizePath p
   case path `Map.lookup` ca of
@@ -282,7 +282,7 @@ sortCompiledFiles = foldl split ([],[],[]) where
 checkModuleVersionHash :: VersionHash -> CompileMetadata -> Bool
 checkModuleVersionHash h m = cmVersionHash m == h
 
-checkModuleFreshness :: VersionHash -> MetadataMap -> FilePath -> CompileMetadata -> CompileInfoIO ()
+checkModuleFreshness :: VersionHash -> MetadataMap -> FilePath -> CompileMetadata -> TrackedErrorsIO ()
 checkModuleFreshness h ca p m@(CompileMetadata _ p2 _ _ is is2 _ _ _ _ ps xs ts hxx cxx bs _ os) = do
   time <- errorFromIO $ getModificationTime $ getCachedPath p "" metadataFilename
   (ps2,xs2,ts2) <- findSourceFiles p ""
@@ -400,7 +400,7 @@ resolveDep _ _ d = [UnresolvedCategory d]
 
 loadModuleGlobals :: PathIOHandler r => r -> FilePath -> (Namespace,Namespace) -> [FilePath] ->
   Maybe CompileMetadata -> [CompileMetadata] -> [CompileMetadata] ->
-  CompileInfoIO ([WithVisibility (AnyCategory SourcePos)])
+  TrackedErrorsIO ([WithVisibility (AnyCategory SourcePos)])
 loadModuleGlobals r p (ns0,ns1) fs m deps1 deps2 = do
   let public = Set.fromList $ map cmPath deps1
   let deps2' = filter (\cm -> not $ cmPath cm `Set.member` public) deps2

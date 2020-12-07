@@ -22,7 +22,7 @@ import Control.Monad (when)
 import Text.Regex.TDFA -- Not safe!
 
 import Base.CompilerError
-import Base.CompileInfo
+import Base.TrackedErrors
 import Cli.CompileOptions
 import Cli.Programs (VersionHash(..))
 import Module.CompileMetadata
@@ -160,7 +160,7 @@ hugeModuleConfig = ModuleConfig {
     }
   }
 
-tests :: [IO (CompileInfo ())]
+tests :: [IO (TrackedErrors ())]
 tests = [
     checkWriteThenRead hugeCompileMetadata,
 
@@ -378,7 +378,7 @@ tests = [
     checkParsesAs ("testfiles" </> "module-cache.txt") (== hugeCompileMetadata)
   ]
 
-checkWriteThenRead :: (Eq a, Show a, ConfigFormat a) => a -> IO (CompileInfo ())
+checkWriteThenRead :: (Eq a, Show a, ConfigFormat a) => a -> IO (TrackedErrors ())
 checkWriteThenRead m = return $ do
   text <- fmap spamComments $ autoWriteConfig m
   m' <- autoReadConfig "(string)" text <!! "Serialized >>>\n\n" ++ text ++ "\n<<< Serialized\n\n"
@@ -389,7 +389,7 @@ checkWriteThenRead m = return $ do
                    "Intermediate:\n" ++ text where
    spamComments = unlines . map (++ " // spam") . lines
 
-checkWriteFail :: ConfigFormat a => String -> a -> IO (CompileInfo ())
+checkWriteFail :: ConfigFormat a => String -> a -> IO (TrackedErrors ())
 checkWriteFail p m = return $ do
   let m' = autoWriteConfig m
   check m'
@@ -402,7 +402,7 @@ checkWriteFail p m = return $ do
       | otherwise =
           compilerErrorM $ "Expected write failure but got\n" ++ getCompilerSuccess c
 
-checkParsesAs :: (Show a, ConfigFormat a) => String -> (a -> Bool) -> IO (CompileInfo ())
+checkParsesAs :: (Show a, ConfigFormat a) => String -> (a -> Bool) -> IO (TrackedErrors ())
 checkParsesAs f m = do
   contents <- loadFile f
   let parsed = autoReadConfig f contents

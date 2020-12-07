@@ -27,7 +27,7 @@ import qualified Data.Map as Map
 import qualified Data.Set as Set
 
 import Base.CompilerError
-import Base.CompileInfo
+import Base.TrackedErrors
 import Parser.TypeCategory ()
 import Test.Common
 import Types.Builtin
@@ -38,7 +38,7 @@ import Types.TypeInstance
 import Types.Variance
 
 
-tests :: [IO (CompileInfo ())]
+tests :: [IO (TrackedErrors ())]
 tests = [
     checkSingleParseSuccess ("testfiles" </> "value_interface.0rx"),
     checkSingleParseSuccess ("testfiles" </> "type_interface.0rx"),
@@ -1126,19 +1126,19 @@ tests = [
           [("[Type1|Type4]","#x")])
   ]
 
-getRefines :: Map.Map CategoryName (AnyCategory c) -> String -> CompileInfo [String]
+getRefines :: Map.Map CategoryName (AnyCategory c) -> String -> TrackedErrors [String]
 getRefines tm n =
   case (CategoryName n) `Map.lookup` tm of
        (Just t) -> return $ map (show . vrType) (getCategoryRefines t)
        _ -> compilerErrorM $ "Type " ++ n ++ " not found"
 
-getDefines ::  Map.Map CategoryName (AnyCategory c) -> String -> CompileInfo [String]
+getDefines ::  Map.Map CategoryName (AnyCategory c) -> String -> TrackedErrors [String]
 getDefines tm n =
   case (CategoryName n) `Map.lookup` tm of
        (Just t) -> return $ map (show . vdType) (getCategoryDefines t)
        _ -> compilerErrorM $ "Type " ++ n ++ " not found"
 
-getTypeRefines :: Show c => [AnyCategory c] -> String -> String -> CompileInfo [String]
+getTypeRefines :: Show c => [AnyCategory c] -> String -> String -> TrackedErrors [String]
 getTypeRefines ts s n = do
   ta <- declareAllTypes defaultCategories ts
   let r = CategoryResolver ta
@@ -1146,7 +1146,7 @@ getTypeRefines ts s n = do
   Positional rs <- trRefines r t (CategoryName n)
   return $ map show rs
 
-getTypeDefines :: Show c => [AnyCategory c] -> String -> String -> CompileInfo [String]
+getTypeDefines :: Show c => [AnyCategory c] -> String -> String -> TrackedErrors [String]
 getTypeDefines ts s n = do
   ta <- declareAllTypes defaultCategories ts
   let r = CategoryResolver ta
@@ -1154,14 +1154,14 @@ getTypeDefines ts s n = do
   Positional ds <- trDefines r t (CategoryName n)
   return $ map show ds
 
-getTypeVariance :: Show c => [AnyCategory c] -> String -> CompileInfo [Variance]
+getTypeVariance :: Show c => [AnyCategory c] -> String -> TrackedErrors [Variance]
 getTypeVariance ts n = do
   ta <- declareAllTypes defaultCategories ts
   let r = CategoryResolver ta
   (Positional vs) <- trVariance r (CategoryName n)
   return vs
 
-getTypeFilters :: Show c => [AnyCategory c] -> String -> CompileInfo [[String]]
+getTypeFilters :: Show c => [AnyCategory c] -> String -> TrackedErrors [[String]]
 getTypeFilters ts s = do
   ta <- declareAllTypes defaultCategories ts
   let r = CategoryResolver ta
@@ -1169,7 +1169,7 @@ getTypeFilters ts s = do
   Positional vs <- trTypeFilters r t
   return $ map (map show) vs
 
-getTypeDefinesFilters :: Show c => [AnyCategory c] -> String -> CompileInfo [[String]]
+getTypeDefinesFilters :: Show c => [AnyCategory c] -> String -> TrackedErrors [[String]]
 getTypeDefinesFilters ts s = do
   ta <- declareAllTypes defaultCategories ts
   let r = CategoryResolver ta
@@ -1188,7 +1188,7 @@ scrapeAllDefines = map (show *** show) . concat . map scrapeSingle where
   scrapeSingle (ValueConcrete _ _ n _ _ ds _ _) = map ((,) n . vdType) ds
   scrapeSingle _ = []
 
-checkPaired :: Show a => (a -> a -> CompileInfo ()) -> [a] -> [a] -> CompileInfo ()
+checkPaired :: Show a => (a -> a -> TrackedErrors ()) -> [a] -> [a] -> TrackedErrors ()
 checkPaired f actual expected
   | length actual /= length expected =
     compilerErrorM $ "Different item counts: " ++ show actual ++ " (actual) vs. " ++
@@ -1196,24 +1196,24 @@ checkPaired f actual expected
   | otherwise = mapErrorsM_ check (zip3 actual expected ([1..] :: [Int])) where
     check (a,e,n) = f a e <!! "Item " ++ show n ++ " mismatch"
 
-containsPaired :: (Eq a, Show a) => [a] -> [a] -> CompileInfo ()
+containsPaired :: (Eq a, Show a) => [a] -> [a] -> TrackedErrors ()
 containsPaired = checkPaired checkSingle where
   checkSingle a e
     | a == e = return ()
     | otherwise = compilerErrorM $ show a ++ " (actual) vs. " ++ show e ++ " (expected)"
 
-checkOperationSuccess :: String -> ([AnyCategory SourcePos] -> CompileInfo a) -> IO (CompileInfo ())
+checkOperationSuccess :: String -> ([AnyCategory SourcePos] -> TrackedErrors a) -> IO (TrackedErrors ())
 checkOperationSuccess f o = do
   contents <- loadFile f
-  let parsed = readMulti f contents :: CompileInfo [AnyCategory SourcePos]
+  let parsed = readMulti f contents :: TrackedErrors [AnyCategory SourcePos]
   return $ check (parsed >>= o >> return ())
   where
     check x = x <!! "Check " ++ f ++ ":"
 
-checkOperationFail :: String -> ([AnyCategory SourcePos] -> CompileInfo a) -> IO (CompileInfo ())
+checkOperationFail :: String -> ([AnyCategory SourcePos] -> TrackedErrors a) -> IO (TrackedErrors ())
 checkOperationFail f o = do
   contents <- loadFile f
-  let parsed = readMulti f contents :: CompileInfo [AnyCategory SourcePos]
+  let parsed = readMulti f contents :: TrackedErrors [AnyCategory SourcePos]
   return $ check (parsed >>= o >> return ())
   where
     check c
@@ -1221,20 +1221,20 @@ checkOperationFail f o = do
       | otherwise = compilerErrorM $ "Check " ++ f ++ ": Expected failure but got\n" ++
                                    show (getCompilerSuccess c) ++ "\n"
 
-checkSingleParseSuccess :: String -> IO (CompileInfo ())
+checkSingleParseSuccess :: String -> IO (TrackedErrors ())
 checkSingleParseSuccess f = do
   contents <- loadFile f
-  let parsed = readSingle f contents :: CompileInfo (AnyCategory SourcePos)
+  let parsed = readSingle f contents :: TrackedErrors (AnyCategory SourcePos)
   return $ check parsed
   where
     check c
       | isCompilerError c = compilerErrorM $ "Parse " ++ f ++ ":\n" ++ show (getCompilerError c)
       | otherwise = return ()
 
-checkSingleParseFail :: String -> IO (CompileInfo ())
+checkSingleParseFail :: String -> IO (TrackedErrors ())
 checkSingleParseFail f = do
   contents <- loadFile f
-  let parsed = readSingle f contents :: CompileInfo (AnyCategory SourcePos)
+  let parsed = readSingle f contents :: TrackedErrors (AnyCategory SourcePos)
   return $ check parsed
   where
     check c
@@ -1242,18 +1242,18 @@ checkSingleParseFail f = do
       | otherwise = compilerErrorM $ "Parse " ++ f ++ ": Expected failure but got\n" ++
                                    show (getCompilerSuccess c) ++ "\n"
 
-checkShortParseSuccess :: String -> IO (CompileInfo ())
+checkShortParseSuccess :: String -> IO (TrackedErrors ())
 checkShortParseSuccess s = do
-  let parsed = readSingle "(string)" s :: CompileInfo (AnyCategory SourcePos)
+  let parsed = readSingle "(string)" s :: TrackedErrors (AnyCategory SourcePos)
   return $ check parsed
   where
     check c
       | isCompilerError c = compilerErrorM $ "Parse '" ++ s ++ "':\n" ++ show (getCompilerError c)
       | otherwise = return ()
 
-checkShortParseFail :: String -> IO (CompileInfo ())
+checkShortParseFail :: String -> IO (TrackedErrors ())
 checkShortParseFail s = do
-  let parsed = readSingle "(string)" s :: CompileInfo (AnyCategory SourcePos)
+  let parsed = readSingle "(string)" s :: TrackedErrors (AnyCategory SourcePos)
   return $ check parsed
   where
     check c
@@ -1262,7 +1262,7 @@ checkShortParseFail s = do
                                    show (getCompilerSuccess c) ++ "\n"
 
 checkInferenceSuccess :: CategoryMap SourcePos -> [(String, [String])] ->
-  [String] -> [(String,String)] -> [(String,String)] -> CompileInfo ()
+  [String] -> [(String,String)] -> [(String,String)] -> TrackedErrors ()
 checkInferenceSuccess tm pa is ts gs = checkInferenceCommon check tm pa is ts gs where
   prefix = show ts ++ " " ++ showParams pa
   check gs2 c
@@ -1270,16 +1270,16 @@ checkInferenceSuccess tm pa is ts gs = checkInferenceCommon check tm pa is ts gs
     | otherwise        = getCompilerSuccess c `containsExactly` gs2
 
 checkInferenceFail :: CategoryMap SourcePos -> [(String, [String])] ->
-  [String] -> [(String,String)] -> CompileInfo ()
+  [String] -> [(String,String)] -> TrackedErrors ()
 checkInferenceFail tm pa is ts = checkInferenceCommon check tm pa is ts [] where
   prefix = show ts ++ " " ++ showParams pa
   check _ c
     | isCompilerError c = return ()
     | otherwise = compilerErrorM $ prefix ++ ": Expected failure\n"
 
-checkInferenceCommon :: ([InferredTypeGuess] -> CompileInfo [InferredTypeGuess] -> CompileInfo ()) ->
+checkInferenceCommon :: ([InferredTypeGuess] -> TrackedErrors [InferredTypeGuess] -> TrackedErrors ()) ->
   CategoryMap SourcePos -> [(String,[String])] -> [String] ->
-  [(String,String)] -> [(String,String)] -> CompileInfo ()
+  [(String,String)] -> [(String,String)] -> TrackedErrors ()
 checkInferenceCommon check tm pa is ts gs = checked <!! context where
   context = "With params = " ++ show pa ++ ", pairs = " ++ show ts
   checked = do

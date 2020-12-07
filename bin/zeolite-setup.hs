@@ -22,7 +22,7 @@ import System.Environment
 import System.Exit
 import System.IO
 
-import Base.CompileInfo
+import Base.TrackedErrors
 import Cli.CompileOptions
 import Cli.RunCompiler
 import Config.LoadConfig
@@ -137,4 +137,4 @@ initLibraries (LocalConfig backend resolver) = do
       coMode = CompileRecompileRecursive,
       coForce = ForceAll
     }
-  tryCompileInfoIO "Warnings:" "Zeolite setup failed:" $ runCompiler resolver backend options
+  tryTrackedErrorsIO "Warnings:" "Zeolite setup failed:" $ runCompiler resolver backend options

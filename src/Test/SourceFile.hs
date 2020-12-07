@@ -23,19 +23,19 @@ module Test.SourceFile (tests) where
 import System.FilePath
 
 import Base.CompilerError
-import Base.CompileInfo
+import Base.TrackedErrors
 import Parser.SourceFile
 import Test.Common
 
 
-tests :: [IO (CompileInfo ())]
+tests :: [IO (TrackedErrors ())]
 tests = [
     checkParseSuccess ("testfiles" </> "public.0rp")   parsePublicSource,
     checkParseSuccess ("testfiles" </> "internal.0rx") parseInternalSource,
     checkParseSuccess ("testfiles" </> "test.0rt")     parseTestSource
   ]
 
-checkParseSuccess :: String -> ((FilePath,String) -> CompileInfo a) -> IO (CompileInfo ())
+checkParseSuccess :: String -> ((FilePath,String) -> TrackedErrors a) -> IO (TrackedErrors ())
 checkParseSuccess f p = do
   contents <- loadFile f
   let parsed = p (f,contents)

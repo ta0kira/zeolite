@@ -30,7 +30,7 @@ import qualified Data.Map as Map
 import qualified Data.Set as Set
 
 import Base.CompilerError
-import Base.CompileInfo
+import Base.TrackedErrors
 import Cli.CompileOptions
 import Cli.Compiler
 import Cli.Programs
@@ -39,7 +39,7 @@ import Module.Paths
 import Module.ProcessMetadata
 
 
-runCompiler :: (PathIOHandler r, CompilerBackend b) => r -> b -> CompileOptions -> CompileInfoIO ()
+runCompiler :: (PathIOHandler r, CompilerBackend b) => r -> b -> CompileOptions -> TrackedErrorsIO ()
 runCompiler resolver backend (CompileOptions _ _ _ ds _ _ p (ExecuteTests tp) f) = do
   base <- resolveBaseModule resolver
   ts <- fmap snd $ foldM (preloadTests base) (Map.empty,[]) ds
@@ -69,7 +69,7 @@ runCompiler resolver backend (CompileOptions _ _ _ ds _ _ p (ExecuteTests tp) f)
                                 intercalate ", " (map show fs) ++ "\n"
     processResults passed failed rs
       | isCompilerError rs =
-        (fromCompileInfo rs) <!!
+        (fromTrackedErrors rs) <!!
           "\nPassed: " ++ show passed ++ " test(s), Failed: " ++ show failed ++ " test(s)"
       | otherwise =
         errorFromIO $ hPutStrLn stderr $ "\nPassed: " ++ show passed ++ " test(s), Failed: " ++ show failed ++ " test(s)"
