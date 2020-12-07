@@ -27,7 +27,7 @@ import Control.Applicative (empty)
 import Text.Parsec
 import qualified Data.Set as Set
 
-import Base.CompileError
+import Base.CompilerError
 import Parser.Common
 import Parser.Pragma
 import Parser.TypeCategory ()

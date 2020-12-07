@@ -41,7 +41,7 @@ import System.IO
 import System.Posix.Process (ProcessStatus(..),executeFile,forkProcess,getProcessStatus)
 import System.Posix.Temp (mkstemps)
 
-import Base.CompileError
+import Base.CompilerError
 import Cli.Programs
 import Module.Paths
 
@@ -129,7 +129,7 @@ executeProcess c os = do
        Just (Exited ExitSuccess) -> return ()
        _ -> do
          errorFromIO $ hPutStrLn stderr $ "Execution of " ++ c ++ " failed"
-         compileErrorM $ "Execution of " ++ c ++ " failed"
+         compilerErrorM $ "Execution of " ++ c ++ " failed"
 
 instance PathIOHandler Resolver where
   resolveModule r p m = do
@@ -169,7 +169,7 @@ firstExisting :: (MonadIO m, CollectErrorsM m) => FilePath -> [FilePath] -> m Fi
 firstExisting m ps = do
   p <- errorFromIO $ findModule ps
   case p of
-       Nothing -> compileErrorM $ "Could not find path " ++ m
+       Nothing -> compilerErrorM $ "Could not find path " ++ m
        Just p2 -> return p2
 
 findModule :: [FilePath] -> IO (Maybe FilePath)

@@ -21,7 +21,7 @@ module Test.ParseMetadata (tests) where
 import Control.Monad (when)
 import Text.Regex.TDFA -- Not safe!
 
-import Base.CompileError
+import Base.CompilerError
 import Base.CompileInfo
 import Cli.CompileOptions
 import Cli.Programs (VersionHash(..))
@@ -383,7 +383,7 @@ checkWriteThenRead m = return $ do
   text <- fmap spamComments $ autoWriteConfig m
   m' <- autoReadConfig "(string)" text <!! "Serialized >>>\n\n" ++ text ++ "\n<<< Serialized\n\n"
   when (m' /= m) $
-    compileErrorM $ "Failed to match after write/read\n" ++
+    compilerErrorM $ "Failed to match after write/read\n" ++
                    "Before:\n" ++ show m ++ "\n" ++
                    "After:\n" ++ show m' ++ "\n" ++
                    "Intermediate:\n" ++ text where
@@ -395,12 +395,12 @@ checkWriteFail p m = return $ do
   check m'
   where
     check c
-      | isCompileError c = do
-          let text = show (getCompileError c)
+      | isCompilerError c = do
+          let text = show (getCompilerError c)
           when (not $ text =~ p) $
-            compileErrorM $ "Expected pattern " ++ show p ++ " in error output but got\n" ++ text
+            compilerErrorM $ "Expected pattern " ++ show p ++ " in error output but got\n" ++ text
       | otherwise =
-          compileErrorM $ "Expected write failure but got\n" ++ getCompileSuccess c
+          compilerErrorM $ "Expected write failure but got\n" ++ getCompilerSuccess c
 
 checkParsesAs :: (Show a, ConfigFormat a) => String -> (a -> Bool) -> IO (CompileInfo ())
 checkParsesAs f m = do
@@ -411,6 +411,6 @@ checkParsesAs f m = do
     check x contents = do
       x' <- x <!! "While parsing " ++ f
       when (not $ m x') $
-        compileErrorM $ "Failed to match after write/read\n" ++
+        compilerErrorM $ "Failed to match after write/read\n" ++
                        "Unparsed:\n" ++ contents ++ "\n" ++
                        "Parsed:\n" ++ show x' ++ "\n"

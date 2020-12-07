@@ -23,7 +23,7 @@ import System.Exit
 import System.IO
 import qualified Data.Map as Map
 
-import Base.CompileError
+import Base.CompilerError
 import Base.CompileInfo
 import Cli.CompileOptions
 import Cli.ParseCompileOptions -- Not safe, due to Text.Regex.TDFA.
@@ -43,12 +43,12 @@ main = do
   compile options
   hPutStrLn stderr "Zeolite execution succeeded." where
     compile co
-      | isCompileError co = do
-          hPutStr stderr $ show $ getCompileError co
+      | isCompilerError co = do
+          hPutStr stderr $ show $ getCompilerError co
           hPutStrLn stderr "Use the -h option to show help."
           exitFailure
       | otherwise = tryZeoliteIO $ do
-          let co' = getCompileSuccess co
+          let co' = getCompilerSuccess co
           (resolver,backend) <- loadConfig
           when (HelpNotNeeded /= (coHelp co')) $ errorFromIO $ showHelp >> exitFailure
           runCompiler resolver backend co'

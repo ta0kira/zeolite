@@ -22,7 +22,7 @@ module Test.Parser (tests) where
 
 import Control.Monad (when)
 
-import Base.CompileError
+import Base.CompilerError
 import Base.CompileInfo
 import Parser.Common
 import Test.Common
@@ -62,10 +62,10 @@ checkParsesAs p s m = return $ do
   check parsed
   e <- parsed
   when (e /= m) $
-    compileErrorM $ show s ++ " does not parse as " ++ show m ++ ":\n" ++ show e
+    compilerErrorM $ show s ++ " does not parse as " ++ show m ++ ":\n" ++ show e
   where
     check c
-      | isCompileError c = compileErrorM $ "Parse '" ++ s ++ "':\n" ++ show (getCompileError c)
+      | isCompilerError c = compilerErrorM $ "Parse '" ++ s ++ "':\n" ++ show (getCompilerError c)
       | otherwise = return ()
 
 checkParseFail :: Show a => ParserE CompileInfo a -> [Char] -> IO (CompileInfo ())
@@ -74,6 +74,6 @@ checkParseFail p s = do
   return $ check parsed
   where
     check c
-      | isCompileError c = return ()
-      | otherwise = compileErrorM $ "Parse '" ++ s ++ "': Expected failure but got\n" ++
-                                   show (getCompileSuccess c) ++ "\n"
+      | isCompilerError c = return ()
+      | otherwise = compilerErrorM $ "Parse '" ++ s ++ "': Expected failure but got\n" ++
+                                   show (getCompilerSuccess c) ++ "\n"

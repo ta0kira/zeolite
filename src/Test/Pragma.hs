@@ -22,7 +22,7 @@ import Control.Monad (when)
 import Text.Parsec
 import Text.Regex.TDFA -- Not safe!
 
-import Base.CompileError
+import Base.CompilerError
 import Base.CompileInfo
 import Parser.Common
 import Parser.Pragma
@@ -104,10 +104,10 @@ checkParsesAs s p m = return $ do
   check parsed
   e <- parsed
   when (not $ m e) $
-    compileErrorM $ "No match in '" ++ s ++ "':\n" ++ show e
+    compilerErrorM $ "No match in '" ++ s ++ "':\n" ++ show e
   where
     check c
-      | isCompileError c = compileErrorM $ "Parse '" ++ s ++ "':\n" ++ show (getCompileError c)
+      | isCompilerError c = compilerErrorM $ "Parse '" ++ s ++ "':\n" ++ show (getCompilerError c)
       | otherwise = return ()
 
 checkParseError :: String -> String -> ParserE CompileInfo (Pragma SourcePos) -> IO (CompileInfo ())
@@ -116,9 +116,9 @@ checkParseError s m p = return $ do
   check parsed
   where
     check c
-      | isCompileError c = do
-          let text = show (getCompileError c)
+      | isCompilerError c = do
+          let text = show (getCompilerError c)
           when (not $ text =~ m) $
-            compileErrorM $ "Expected pattern " ++ show m ++ " in error output but got\n" ++ text
+            compilerErrorM $ "Expected pattern " ++ show m ++ " in error output but got\n" ++ text
       | otherwise =
-          compileErrorM $ "Expected write failure but got\n" ++ show (getCompileSuccess c)
+          compilerErrorM $ "Expected write failure but got\n" ++ show (getCompilerSuccess c)

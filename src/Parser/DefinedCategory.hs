@@ -26,7 +26,7 @@ import Control.Monad (when)
 import Prelude hiding (pi)
 import Text.Parsec
 
-import Base.CompileError
+import Base.CompilerError
 import Parser.Common
 import Parser.Procedure ()
 import Parser.TypeCategory

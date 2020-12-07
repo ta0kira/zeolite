@@ -29,7 +29,7 @@ import Data.List (group,intercalate,sort)
 import Control.Monad (when)
 import qualified Data.Map as Map
 
-import Base.CompileError
+import Base.CompilerError
 import Types.GeneralType
 import Types.Positional
 import Types.TypeInstance
@@ -69,11 +69,11 @@ validatateFunctionType r fm vm (FunctionType as rs ps fa) = do
   where
     allVariances = Map.union vm (Map.fromList $ zip (pValues ps) (repeat Invariant))
     checkCount xa@(x:_:_) =
-      compileErrorM $ "Function parameter " ++ show x ++ " occurs " ++ show (length xa) ++ " times"
+      compilerErrorM $ "Function parameter " ++ show x ++ " occurs " ++ show (length xa) ++ " times"
     checkCount _ = return ()
     checkHides n =
       when (n `Map.member` fm) $
-        compileErrorM $ "Function parameter " ++ show n ++ " hides a category-level parameter"
+        compilerErrorM $ "Function parameter " ++ show n ++ " hides a category-level parameter"
     checkFilterType fa2 (n,f) =
       validateTypeFilter r fa2 f <?? ("In filter " ++ show n ++ " " ++ show f)
     checkFilterVariance (n,f@(TypeFilter FilterRequires t)) =
@@ -86,11 +86,11 @@ validatateFunctionType r fm vm (FunctionType as rs ps fa) = do
       validateDefinesVariance r allVariances Contravariant t <??
         ("In filter " ++ show n ++ " " ++ show f)
     checkArg fa2 ta@(ValueType _ t) = ("In argument " ++ show ta) ??> do
-      when (isWeakValue ta) $ compileErrorM "Weak values not allowed as argument types"
+      when (isWeakValue ta) $ compilerErrorM "Weak values not allowed as argument types"
       validateGeneralInstance r fa2 t
       validateInstanceVariance r allVariances Contravariant t
     checkReturn fa2 ta@(ValueType _ t) = ("In return " ++ show ta) ??> do
-      when (isWeakValue ta) $ compileErrorM "Weak values not allowed as return types"
+      when (isWeakValue ta) $ compilerErrorM "Weak values not allowed as return types"
       validateGeneralInstance r fa2 t
       validateInstanceVariance r allVariances Covariant t
 

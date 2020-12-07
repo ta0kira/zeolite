@@ -30,7 +30,7 @@ module Parser.TypeCategory (
 
 import Text.Parsec
 
-import Base.CompileError
+import Base.CompilerError
 import Parser.Common
 import Parser.TypeInstance ()
 import Types.Positional

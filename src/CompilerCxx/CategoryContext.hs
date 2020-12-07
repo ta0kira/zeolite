@@ -28,7 +28,7 @@ import Prelude hiding (pi)
 import qualified Data.Map as Map
 import qualified Data.Set as Set
 
-import Base.CompileError
+import Base.CompilerError
 import Compilation.CompilerState
 import Compilation.ProcedureContext
 import Compilation.ScopeContext

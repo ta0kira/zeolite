@@ -49,7 +49,7 @@ import Text.Parsec
 import qualified Data.Map as Map
 import qualified Data.Set as Set
 
-import Base.CompileError
+import Base.CompilerError
 import Base.CompileInfo
 import Parser.Common
 import Parser.TypeInstance ()
@@ -67,11 +67,11 @@ runAllTests ts = do
 
 numberError :: a -> CompileInfo b -> Either (a,CompileMessage) b
 numberError n c
-  | isCompileError c = Left (n,getCompileError c)
-  | otherwise        = Right (getCompileSuccess c)
+  | isCompilerError c = Left (n,getCompilerError c)
+  | otherwise        = Right (getCompilerSuccess c)
 
 forceParse :: ParseFromSource a => String -> a
-forceParse s = getCompileSuccess $ runParserE sourceParser "(string)" s
+forceParse s = getCompilerSuccess $ runParserE sourceParser "(string)" s
 
 readSingle :: ParseFromSource a => String -> String -> CompileInfo a
 readSingle  = readSingleWith sourceParser
@@ -117,8 +117,8 @@ checkTypeFail r pa x = do
     prefix = x ++ " " ++ showParams pa
     check :: CompileInfo a -> CompileInfo ()
     check c
-      | isCompileError c = return ()
-      | otherwise = compileErrorM $ prefix ++ ": Expected failure\n"
+      | isCompilerError c = return ()
+      | otherwise = compilerErrorM $ prefix ++ ": Expected failure\n"
 
 checkDefinesSuccess :: TypeResolver r => r -> [(String,[String])] -> String -> CompileInfo ()
 checkDefinesSuccess r pa x = do
@@ -136,8 +136,8 @@ checkDefinesFail r pa x = do
     prefix = x ++ " " ++ showParams pa
     check :: CompileInfo a -> CompileInfo ()
     check c
-      | isCompileError c = return ()
-      | otherwise = compileErrorM $ prefix ++ ": Expected failure\n"
+      | isCompilerError c = return ()
+      | otherwise = compilerErrorM $ prefix ++ ": Expected failure\n"
 
 containsExactly :: (Ord a, Show a) => [a] -> [a] -> CompileInfo ()
 containsExactly actual expected = do
@@ -150,7 +150,7 @@ containsNoDuplicates expected =
   (mapErrorsM_ checkSingle $ group $ sort expected) <!! show expected
   where
     checkSingle xa@(x:_:_) =
-      compileErrorM $ "Item " ++ show x ++ " occurs " ++ show (length xa) ++ " times"
+      compilerErrorM $ "Item " ++ show x ++ " occurs " ++ show (length xa) ++ " times"
     checkSingle _ = return ()
 
 containsAtLeast :: (Ord a, Show a) => [a] -> [a] -> CompileInfo ()
@@ -161,7 +161,7 @@ containsAtLeast actual expected =
     checkInActual va v =
       if v `Set.member` va
          then return ()
-         else compileErrorM $ "Item " ++ show v ++ " was expected but not present"
+         else compilerErrorM $ "Item " ++ show v ++ " was expected but not present"
 
 containsAtMost :: (Ord a, Show a) => [a] -> [a] -> CompileInfo ()
 containsAtMost actual expected =
@@ -171,12 +171,12 @@ containsAtMost actual expected =
     checkInExpected va v =
       if v `Set.member` va
          then return ()
-         else compileErrorM $ "Item " ++ show v ++ " is unexpected"
+         else compilerErrorM $ "Item " ++ show v ++ " is unexpected"
 
 checkEquals :: (Eq a, Show a) => a -> a -> CompileInfo ()
 checkEquals actual expected
   | actual == expected = return ()
-  | otherwise = compileErrorM $ "Expected " ++ show expected ++ " but got " ++ show actual
+  | otherwise = compilerErrorM $ "Expected " ++ show expected ++ " but got " ++ show actual
 
 loadFile :: String -> IO String
 loadFile f = readFile ("src" </> "Test" </> f)

@@ -81,7 +81,7 @@ import qualified Data.Set as Set
 import Data.Semigroup
 #endif
 
-import Base.CompileError
+import Base.CompilerError
 import Types.DefinedCategory
 import Types.Positional
 import Types.Pragma (MacroName)

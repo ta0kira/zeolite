@@ -32,7 +32,7 @@ module Parser.Pragma (
 import Control.Monad (when)
 import Text.Parsec
 
-import Base.CompileError
+import Base.CompilerError
 import Parser.Common
 import Types.Pragma
 

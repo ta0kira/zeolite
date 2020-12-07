@@ -26,7 +26,7 @@ import Control.Applicative.Permutations
 import Control.Monad (when)
 import Text.Parsec
 
-import Base.CompileError
+import Base.CompilerError
 import Cli.CompileOptions
 import Cli.Programs (VersionHash(..))
 import Module.CompileMetadata
@@ -70,17 +70,17 @@ prependFirst s0 _      = [s0]
 validateCategoryName :: ErrorContextM m => CategoryName -> m ()
 validateCategoryName c =
     when (not $ show c =~ "^[A-Z][A-Za-z0-9]*$") $
-      compileErrorM $ "Invalid category name: \"" ++ show c ++ "\""
+      compilerErrorM $ "Invalid category name: \"" ++ show c ++ "\""
 
 validateFunctionName :: ErrorContextM m => FunctionName -> m ()
 validateFunctionName f =
     when (not $ show f =~ "^[a-z][A-Za-z0-9]*$") $
-      compileErrorM $ "Invalid function name: \"" ++ show f ++ "\""
+      compilerErrorM $ "Invalid function name: \"" ++ show f ++ "\""
 
 validateHash :: ErrorContextM m => VersionHash -> m ()
 validateHash h =
     when (not $ show h =~ "^[A-Za-z0-9]+$") $
-      compileErrorM $ "Version hash must be a hex string: \"" ++ show h ++ "\""
+      compilerErrorM $ "Version hash must be a hex string: \"" ++ show h ++ "\""
 
 parseHash :: Monad m => ParserE m VersionHash
 parseHash = labeled "version hash" $ sepAfter (fmap VersionHash $ many1 hexDigit)
@@ -88,7 +88,7 @@ parseHash = labeled "version hash" $ sepAfter (fmap VersionHash $ many1 hexDigit
 maybeShowNamespace :: ErrorContextM m => String -> Namespace -> m [String]
 maybeShowNamespace l (StaticNamespace ns) = do
   when (not $ ns =~ "^[A-Za-z][A-Za-z0-9_]*$") $
-    compileErrorM $ "Invalid category namespace: \"" ++ ns ++ "\""
+    compilerErrorM $ "Invalid category namespace: \"" ++ ns ++ "\""
   return [l ++ " " ++ ns]
 maybeShowNamespace _ _ = return []
 
@@ -281,7 +281,7 @@ instance ConfigFormat ModuleConfig where
   writeConfig (ModuleConfig p d em is is2 es ep m) = do
     es' <- fmap concat $ mapErrorsM writeConfig es
     m' <- writeConfig m
-    when (not $ null em) $ compileErrorM "Only empty expression maps are allowed when writing"
+    when (not $ null em) $ compilerErrorM "Only empty expression maps are allowed when writing"
     return $ [
         "root: " ++ show p,
         "path: " ++ show d,
@@ -374,7 +374,7 @@ instance ConfigFormat CompileMode where
         "}"
       ]
   writeConfig CompileUnspecified = writeConfig (CompileIncremental [])
-  writeConfig _ = compileErrorM "Invalid compile mode"
+  writeConfig _ = compilerErrorM "Invalid compile mode"
 
 parseExprMacro :: ErrorContextM m => ParserE m (MacroName,Expression SourcePos)
 parseExprMacro = do

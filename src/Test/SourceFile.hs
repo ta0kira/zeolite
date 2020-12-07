@@ -22,7 +22,7 @@ module Test.SourceFile (tests) where
 
 import System.FilePath
 
-import Base.CompileError
+import Base.CompilerError
 import Base.CompileInfo
 import Parser.SourceFile
 import Test.Common
@@ -42,5 +42,5 @@ checkParseSuccess f p = do
   return $ check parsed
   where
     check c
-      | isCompileError c = compileErrorM $ "Parse " ++ f ++ ":\n" ++ show (getCompileError c)
+      | isCompilerError c = compilerErrorM $ "Parse " ++ f ++ ":\n" ++ show (getCompilerError c)
       | otherwise = return ()

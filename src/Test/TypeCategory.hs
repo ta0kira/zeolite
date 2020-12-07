@@ -26,7 +26,7 @@ import Text.Parsec
 import qualified Data.Map as Map
 import qualified Data.Set as Set
 
-import Base.CompileError
+import Base.CompilerError
 import Base.CompileInfo
 import Parser.TypeCategory ()
 import Test.Common
@@ -1130,13 +1130,13 @@ getRefines :: Map.Map CategoryName (AnyCategory c) -> String -> CompileInfo [Str
 getRefines tm n =
   case (CategoryName n) `Map.lookup` tm of
        (Just t) -> return $ map (show . vrType) (getCategoryRefines t)
-       _ -> compileErrorM $ "Type " ++ n ++ " not found"
+       _ -> compilerErrorM $ "Type " ++ n ++ " not found"
 
 getDefines ::  Map.Map CategoryName (AnyCategory c) -> String -> CompileInfo [String]
 getDefines tm n =
   case (CategoryName n) `Map.lookup` tm of
        (Just t) -> return $ map (show . vdType) (getCategoryDefines t)
-       _ -> compileErrorM $ "Type " ++ n ++ " not found"
+       _ -> compilerErrorM $ "Type " ++ n ++ " not found"
 
 getTypeRefines :: Show c => [AnyCategory c] -> String -> String -> CompileInfo [String]
 getTypeRefines ts s n = do
@@ -1191,7 +1191,7 @@ scrapeAllDefines = map (show *** show) . concat . map scrapeSingle where
 checkPaired :: Show a => (a -> a -> CompileInfo ()) -> [a] -> [a] -> CompileInfo ()
 checkPaired f actual expected
   | length actual /= length expected =
-    compileErrorM $ "Different item counts: " ++ show actual ++ " (actual) vs. " ++
+    compilerErrorM $ "Different item counts: " ++ show actual ++ " (actual) vs. " ++
                    show expected ++ " (expected)"
   | otherwise = mapErrorsM_ check (zip3 actual expected ([1..] :: [Int])) where
     check (a,e,n) = f a e <!! "Item " ++ show n ++ " mismatch"
@@ -1200,7 +1200,7 @@ containsPaired :: (Eq a, Show a) => [a] -> [a] -> CompileInfo ()
 containsPaired = checkPaired checkSingle where
   checkSingle a e
     | a == e = return ()
-    | otherwise = compileErrorM $ show a ++ " (actual) vs. " ++ show e ++ " (expected)"
+    | otherwise = compilerErrorM $ show a ++ " (actual) vs. " ++ show e ++ " (expected)"
 
 checkOperationSuccess :: String -> ([AnyCategory SourcePos] -> CompileInfo a) -> IO (CompileInfo ())
 checkOperationSuccess f o = do
@@ -1217,9 +1217,9 @@ checkOperationFail f o = do
   return $ check (parsed >>= o >> return ())
   where
     check c
-      | isCompileError c = return ()
-      | otherwise = compileErrorM $ "Check " ++ f ++ ": Expected failure but got\n" ++
-                                   show (getCompileSuccess c) ++ "\n"
+      | isCompilerError c = return ()
+      | otherwise = compilerErrorM $ "Check " ++ f ++ ": Expected failure but got\n" ++
+                                   show (getCompilerSuccess c) ++ "\n"
 
 checkSingleParseSuccess :: String -> IO (CompileInfo ())
 checkSingleParseSuccess f = do
@@ -1228,7 +1228,7 @@ checkSingleParseSuccess f = do
   return $ check parsed
   where
     check c
-      | isCompileError c = compileErrorM $ "Parse " ++ f ++ ":\n" ++ show (getCompileError c)
+      | isCompilerError c = compilerErrorM $ "Parse " ++ f ++ ":\n" ++ show (getCompilerError c)
       | otherwise = return ()
 
 checkSingleParseFail :: String -> IO (CompileInfo ())
@@ -1238,9 +1238,9 @@ checkSingleParseFail f = do
   return $ check parsed
   where
     check c
-      | isCompileError c = return ()
-      | otherwise = compileErrorM $ "Parse " ++ f ++ ": Expected failure but got\n" ++
-                                   show (getCompileSuccess c) ++ "\n"
+      | isCompilerError c = return ()
+      | otherwise = compilerErrorM $ "Parse " ++ f ++ ": Expected failure but got\n" ++
+                                   show (getCompilerSuccess c) ++ "\n"
 
 checkShortParseSuccess :: String -> IO (CompileInfo ())
 checkShortParseSuccess s = do
@@ -1248,7 +1248,7 @@ checkShortParseSuccess s = do
   return $ check parsed
   where
     check c
-      | isCompileError c = compileErrorM $ "Parse '" ++ s ++ "':\n" ++ show (getCompileError c)
+      | isCompilerError c = compilerErrorM $ "Parse '" ++ s ++ "':\n" ++ show (getCompilerError c)
       | otherwise = return ()
 
 checkShortParseFail :: String -> IO (CompileInfo ())
@@ -1257,25 +1257,25 @@ checkShortParseFail s = do
   return $ check parsed
   where
     check c
-      | isCompileError c = return ()
-      | otherwise = compileErrorM $ "Parse '" ++ s ++ "': Expected failure but got\n" ++
-                                   show (getCompileSuccess c) ++ "\n"
+      | isCompilerError c = return ()
+      | otherwise = compilerErrorM $ "Parse '" ++ s ++ "': Expected failure but got\n" ++
+                                   show (getCompilerSuccess c) ++ "\n"
 
 checkInferenceSuccess :: CategoryMap SourcePos -> [(String, [String])] ->
   [String] -> [(String,String)] -> [(String,String)] -> CompileInfo ()
 checkInferenceSuccess tm pa is ts gs = checkInferenceCommon check tm pa is ts gs where
   prefix = show ts ++ " " ++ showParams pa
   check gs2 c
-    | isCompileError c = compileErrorM $ prefix ++ ":\n" ++ show (getCompileWarnings c) ++ show (getCompileError c)
-    | otherwise        = getCompileSuccess c `containsExactly` gs2
+    | isCompilerError c = compilerErrorM $ prefix ++ ":\n" ++ show (getCompileWarnings c) ++ show (getCompilerError c)
+    | otherwise        = getCompilerSuccess c `containsExactly` gs2
 
 checkInferenceFail :: CategoryMap SourcePos -> [(String, [String])] ->
   [String] -> [(String,String)] -> CompileInfo ()
 checkInferenceFail tm pa is ts = checkInferenceCommon check tm pa is ts [] where
   prefix = show ts ++ " " ++ showParams pa
   check _ c
-    | isCompileError c = return ()
-    | otherwise = compileErrorM $ prefix ++ ": Expected failure\n"
+    | isCompilerError c = return ()
+    | otherwise = compilerErrorM $ prefix ++ ": Expected failure\n"
 
 checkInferenceCommon :: ([InferredTypeGuess] -> CompileInfo [InferredTypeGuess] -> CompileInfo ()) ->
   CategoryMap SourcePos -> [(String,[String])] -> [String] ->

@@ -52,7 +52,7 @@ instance ParseFromSource (IntegrationTestHeader SourcePos) where
         c <- getPosition
         sepAfter (keyword "error")
         (req,exc) <- requireOrExclude
-        return $ ExpectCompileError [c] req exc
+        return $ ExpectCompilerError [c] req exc
       resultCrash = labeled "crash expectation" $ do
         c <- getPosition
         try $ sepAfter (keyword "crash")

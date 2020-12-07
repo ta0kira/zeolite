@@ -16,7 +16,7 @@ limitations under the License.
 
 -- Author: Kevin P. Barry [ta0kira@gmail.com]
 
-import Base.CompileError
+import Base.CompilerError
 import Base.CompileInfo
 import Test.Common
 import qualified Test.CompileInfo     as TestCompileInfo

@@ -20,7 +20,7 @@ limitations under the License.
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE Safe #-}
 
-module Base.CompileError (
+module Base.CompilerError (
   CollectErrorsM(..),
   ErrorContextM(..),
   (<??),
@@ -30,8 +30,8 @@ module Base.CompileError (
   collectAllM_,
   collectFirstM_,
   errorFromIO,
-  isCompileErrorM,
-  isCompileSuccessM,
+  isCompilerErrorM,
+  isCompilerSuccessM,
   mapErrorsM,
   mapErrorsM_,
 ) where
@@ -51,20 +51,20 @@ import Control.Monad.Fail
 -- For some GHC versions, pattern-matching failures require MonadFail.
 #if MIN_VERSION_base(4,9,0)
 class (Monad m, MonadFail m) => ErrorContextM m where
-  compileErrorM :: String -> m a
-  compileErrorM = fail
+  compilerErrorM :: String -> m a
+  compilerErrorM = fail
 #else
 class Monad m => ErrorContextM m where
-  compileErrorM :: String -> m a
+  compilerErrorM :: String -> m a
 #endif
   withContextM :: m a -> String -> m a
   withContextM c _ = c
   summarizeErrorsM :: m a -> String -> m a
   summarizeErrorsM e _ = e
-  compileWarningM :: String -> m ()
-  compileWarningM _ = return ()
-  compileBackgroundM :: String -> m ()
-  compileBackgroundM _ = return ()
+  compilerWarningM :: String -> m ()
+  compilerWarningM _ = return ()
+  compilerBackgroundM :: String -> m ()
+  compilerBackgroundM _ = return ()
   resetBackgroundM :: m a -> m a
   resetBackgroundM = id
 
@@ -101,23 +101,23 @@ mapErrorsM f = collectAllM . map f
 mapErrorsM_ :: CollectErrorsM m => (a -> m b) -> [a] -> m ()
 mapErrorsM_ f = collectAllM_ . map f
 
-isCompileErrorM :: CollectErrorsM m => m a -> m Bool
-isCompileErrorM x = collectFirstM [x >> return False,return True]
+isCompilerErrorM :: CollectErrorsM m => m a -> m Bool
+isCompilerErrorM x = collectFirstM [x >> return False,return True]
 
-isCompileSuccessM :: CollectErrorsM m => m a -> m Bool
-isCompileSuccessM x = collectFirstM [x >> return True,return False]
+isCompilerSuccessM :: CollectErrorsM m => m a -> m Bool
+isCompilerSuccessM x = collectFirstM [x >> return True,return False]
 
 errorFromIO :: (MonadIO m, ErrorContextM m) => IO a -> m a
 errorFromIO x = do
   x' <- liftIO $ fmap Right x `catchIOError` (return . Left . show)
   case x' of
        (Right x2) -> return x2
-       (Left e)   -> compileErrorM e
+       (Left e)   -> compilerErrorM e
 
 instance ErrorContextM m => ErrorContextM (StateT a m) where
-  compileErrorM        = lift . compileErrorM
-  withContextM x e     = mapStateT (<?? e) x
-  summarizeErrorsM x e = mapStateT (<!! e) x
-  compileWarningM      = lift . compileWarningM
-  compileBackgroundM   = lift . compileBackgroundM
-  resetBackgroundM     = mapStateT resetBackgroundM
+  compilerErrorM        = lift . compilerErrorM
+  withContextM x e      = mapStateT (<?? e) x
+  summarizeErrorsM x e  = mapStateT (<!! e) x
+  compilerWarningM      = lift . compilerWarningM
+  compilerBackgroundM   = lift . compilerBackgroundM
+  resetBackgroundM      = mapStateT resetBackgroundM

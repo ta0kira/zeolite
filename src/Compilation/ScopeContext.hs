@@ -30,7 +30,7 @@ import Control.Monad (when)
 import Prelude hiding (pi)
 import qualified Data.Map as Map
 
-import Base.CompileError
+import Base.CompilerError
 import Compilation.ProcedureContext
 import Types.DefinedCategory
 import Types.GeneralType
@@ -109,7 +109,7 @@ getProcedureScopes ta em (DefinedCategory c n pi _ _ fi ms ps fs) = do
     checkParam pm p =
       case vpParam p `Map.lookup` pm of
            Nothing -> return ()
-           (Just c2) -> compileErrorM $ "Internal param " ++ show (vpParam p) ++
+           (Just c2) -> compilerErrorM $ "Internal param " ++ show (vpParam p) ++
                                         formatFullContextBrace (vpContext p) ++
                                         " is already defined at " ++
                                         formatFullContext c2

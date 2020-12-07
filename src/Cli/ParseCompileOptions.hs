@@ -26,7 +26,7 @@ import Control.Monad (when)
 import Data.List (isSuffixOf)
 import Text.Regex.TDFA -- Not safe!
 
-import Base.CompileError
+import Base.CompilerError
 import Cli.CompileOptions
 import Types.TypeCategory (FunctionName(..))
 import Types.TypeInstance (CategoryName(..))
@@ -83,7 +83,7 @@ parseCompileOptions = parseAll emptyCompileOptions . zip ([1..] :: [Int]) where
   parseAll co os = do
     (os',co') <- parseSingle co os
     parseAll co' os'
-  argError n o m = compileErrorM $ "Argument " ++ show n ++ " (\"" ++ o ++ "\"): " ++ m
+  argError n o m = compilerErrorM $ "Argument " ++ show n ++ " (\"" ++ o ++ "\"): " ++ m
   checkPathName n f o
     | f =~ "^(/[^/]+|[^-/][^/]*)(/[^/]+)*$" = return ()
     | null o    = argError n f "Invalid file path."
@@ -209,16 +209,16 @@ validateCompileOptions co@(CompileOptions h is is2 ds _ _ _ m _)
   | h /= HelpNotNeeded = return co
 
   | (not $ null $ is ++ is2) && (isExecuteTests m) =
-    compileErrorM "Include paths (-i/-I) are not allowed in test mode (-t)."
+    compilerErrorM "Include paths (-i/-I) are not allowed in test mode (-t)."
 
   | (not $ null $ is ++ is2) && (isCompileRecompile m) =
-    compileErrorM "Include paths (-i/-I) are not allowed in recompile mode (-r/-R)."
+    compilerErrorM "Include paths (-i/-I) are not allowed in recompile mode (-r/-R)."
 
   | (length ds /= 0) && (isCompileFast m) =
-    compileErrorM "Input path is not allowed with fast mode (--fast)."
+    compilerErrorM "Input path is not allowed with fast mode (--fast)."
   | null ds && (not $ isCompileFast m) =
-    compileErrorM "Please specify at least one input path."
+    compilerErrorM "Please specify at least one input path."
   | (length ds > 1) && (not $ isCompileRecompile m) && (not $ isExecuteTests m) =
-    compileErrorM "Multiple input paths are only allowed with recompile mode (-r/-R) and test mode (-t)."
+    compilerErrorM "Multiple input paths are only allowed with recompile mode (-r/-R) and test mode (-t)."
 
   | otherwise = return co

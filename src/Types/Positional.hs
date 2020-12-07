@@ -27,7 +27,7 @@ module Types.Positional (
 
 import Control.Monad.Trans (MonadTrans(..))
 
-import Base.CompileError
+import Base.CompilerError
 import Base.Mergeable
 
 
@@ -66,5 +66,5 @@ processPairsT f (Positional ps1) (Positional ps2)
   | otherwise = lift $ mismatchError ps1 ps2
 
 mismatchError :: (Show a, Show b, ErrorContextM m) => [a] -> [b] -> m c
-mismatchError ps1 ps2 = compileErrorM $ "Count mismatch: " ++ show ps1 ++
+mismatchError ps1 ps2 = compilerErrorM $ "Count mismatch: " ++ show ps1 ++
                                         " (expected) vs. " ++ show ps2 ++ " (actual)"

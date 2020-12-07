@@ -24,17 +24,17 @@ module Base.CompileInfo (
   CompileInfo,
   CompileInfoIO,
   CompileMessage,
-  asCompileError,
+  asCompilerError,
   asCompileWarnings,
   fromCompileInfo,
-  getCompileError,
-  getCompileErrorT,
-  getCompileSuccess,
-  getCompileSuccessT,
+  getCompilerError,
+  getCompilerErrorT,
+  getCompilerSuccess,
+  getCompilerSuccessT,
   getCompileWarnings,
   getCompileWarningsT,
-  isCompileError,
-  isCompileErrorT,
+  isCompilerError,
+  isCompilerErrorT,
   isEmptyCompileMessage,
   toCompileInfo,
   tryCompileInfoIO,
@@ -57,7 +57,7 @@ import Control.Monad.Fail ()
 import Control.Monad.Fail
 #endif
 
-import Base.CompileError
+import Base.CompilerError
 
 
 type CompileInfo = CompileInfoT Identity
@@ -69,29 +69,29 @@ data CompileInfoT m a =
     citState :: m (CompileInfoState a)
   }
 
-getCompileError :: CompileInfo a -> CompileMessage
-getCompileError = runIdentity . getCompileErrorT
+getCompilerError :: CompileInfo a -> CompileMessage
+getCompilerError = runIdentity . getCompilerErrorT
 
-getCompileSuccess :: CompileInfo a -> a
-getCompileSuccess = runIdentity . getCompileSuccessT
+getCompilerSuccess :: CompileInfo a -> a
+getCompilerSuccess = runIdentity . getCompilerSuccessT
 
 getCompileWarnings :: CompileInfo a -> CompileMessage
 getCompileWarnings = runIdentity . getCompileWarningsT
 
-isCompileError :: CompileInfo a -> Bool
-isCompileError = runIdentity . isCompileErrorT
+isCompilerError :: CompileInfo a -> Bool
+isCompilerError = runIdentity . isCompilerErrorT
 
-getCompileErrorT :: Monad m => CompileInfoT m a -> m CompileMessage
-getCompileErrorT = fmap cfErrors . citState
+getCompilerErrorT :: Monad m => CompileInfoT m a -> m CompileMessage
+getCompilerErrorT = fmap cfErrors . citState
 
-getCompileSuccessT :: Monad m => CompileInfoT m a -> m a
-getCompileSuccessT = fmap csData . citState
+getCompilerSuccessT :: Monad m => CompileInfoT m a -> m a
+getCompilerSuccessT = fmap csData . citState
 
 getCompileWarningsT :: Monad m => CompileInfoT m a -> m CompileMessage
 getCompileWarningsT = fmap getWarnings . citState
 
-isCompileErrorT :: Monad m => CompileInfoT m a -> m Bool
-isCompileErrorT x = do
+isCompilerErrorT :: Monad m => CompileInfoT m a -> m Bool
+isCompilerErrorT x = do
   x' <- citState x
   case x' of
        CompileFail _ _ -> return True
@@ -111,15 +111,15 @@ asCompileWarnings x = runIdentity $ do
   x' <- citState x
   return $ CompileInfoT $ return $
     case x' of
-         (CompileFail ws es)      -> CompileSuccess (ws `mergeMessages` es) [] ()
-         (CompileSuccess ws bs _) -> CompileSuccess ws bs ()
+         (CompileFail ws es)      -> CompilerSuccess (ws `mergeMessages` es) [] ()
+         (CompilerSuccess ws bs _) -> CompilerSuccess ws bs ()
 
-asCompileError :: Monad m => CompileInfo a -> CompileInfoT m ()
-asCompileError x = runIdentity $ do
+asCompilerError :: Monad m => CompileInfo a -> CompileInfoT m ()
+asCompilerError x = runIdentity $ do
   x' <- citState x
   return $ CompileInfoT $ return $
     case x' of
-         (CompileSuccess ws bs _) -> includeBackground bs $ CompileFail emptyMessage ws
+         (CompilerSuccess ws bs _) -> includeBackground bs $ CompileFail emptyMessage ws
          (CompileFail ws es)      -> CompileFail ws es
 
 toCompileInfo :: Monad m => CompileInfoT m a -> m (CompileInfo a)
@@ -131,15 +131,15 @@ tryCompileInfoIO :: String -> String -> CompileInfoIO a -> IO a
 tryCompileInfoIO warn err x = do
   x' <- toCompileInfo x
   let w = getCompileWarnings $ x' <?? warn
-  let e = getCompileError    $ x' <?? err
-  if isCompileError x'
+  let e = getCompilerError    $ x' <?? err
+  if isCompilerError x'
      then do
        hPutStr stderr $ show w
        hPutStr stderr $ show e
        exitFailure
      else do
        hPutStr stderr $ show w
-       return $ getCompileSuccess x'
+       return $ getCompilerSuccess x'
 
 data CompileMessage =
   CompileMessage {
@@ -160,7 +160,7 @@ data CompileInfoState a =
     cfWarnings :: CompileMessage,
     cfErrors :: CompileMessage
   } |
-  CompileSuccess {
+  CompilerSuccess {
     csWarnings :: CompileMessage,
     csBackground :: [String],
     csData :: a
@@ -171,7 +171,7 @@ instance Show a => Show (CompileInfoState a) where
     format (CompileFail w e) = intercalate "\n" $ errors ++ warnings where
       errors   = showAs "Errors:"   $ lines $ show e
       warnings = showAs "Warnings:" $ lines $ show w
-    format (CompileSuccess w b x) = intercalate "\n" $ content ++ warnings ++ background where
+    format (CompilerSuccess w b x) = intercalate "\n" $ content ++ warnings ++ background where
       content    = [show x]
       warnings   = showAs "Warnings:" $ lines $ show w
       background = showAs "Background:" b
@@ -185,10 +185,10 @@ instance (Functor m, Monad m) => Functor (CompileInfoT m) where
     x' <- citState x
     case x' of
          CompileFail w e      -> return $ CompileFail w e -- Not the same a.
-         CompileSuccess w b d -> return $ CompileSuccess w b (f d)
+         CompilerSuccess w b d -> return $ CompilerSuccess w b (f d)
 
 instance (Applicative m, Monad m) => Applicative (CompileInfoT m) where
-  pure = CompileInfoT .return . CompileSuccess emptyMessage []
+  pure = CompileInfoT .return . CompilerSuccess emptyMessage []
   f <*> x = CompileInfoT $ do
     f' <- citState f
     x' <- citState x
@@ -197,58 +197,58 @@ instance (Applicative m, Monad m) => Applicative (CompileInfoT m) where
            return $ CompileFail w e -- Not the same a.
          (i,CompileFail w e) ->
            return $ CompileFail (getWarnings i `mergeMessages` w) (addBackground (getBackground i) e)
-         (CompileSuccess w1 b1 f2,CompileSuccess w2 b2 d) ->
-           return $ CompileSuccess (w1 `mergeMessages` w2) (b1 ++ b2) (f2 d)
+         (CompilerSuccess w1 b1 f2,CompilerSuccess w2 b2 d) ->
+           return $ CompilerSuccess (w1 `mergeMessages` w2) (b1 ++ b2) (f2 d)
 
 instance Monad m => Monad (CompileInfoT m) where
   x >>= f = CompileInfoT $ do
     x' <- citState x
     case x' of
          CompileFail w e -> return $ CompileFail w e -- Not the same a.
-         CompileSuccess w b d -> do
+         CompilerSuccess w b d -> do
            d2 <- citState $ f d
            return $ includeBackground b $ includeWarnings w d2
   return = pure
 
 #if MIN_VERSION_base(4,9,0)
 instance Monad m => MonadFail (CompileInfoT m) where
-  fail = compileErrorM
+  fail = compilerErrorM
 #endif
 
 instance MonadTrans CompileInfoT where
-  lift = CompileInfoT . fmap (CompileSuccess emptyMessage [])
+  lift = CompileInfoT . fmap (CompilerSuccess emptyMessage [])
 
 instance MonadIO m => MonadIO (CompileInfoT m) where
   liftIO = lift . liftIO
 
 instance Monad m => ErrorContextM (CompileInfoT m) where
-  compileErrorM e = CompileInfoT $ return $ CompileFail emptyMessage $ CompileMessage e []
+  compilerErrorM e = CompileInfoT $ return $ CompileFail emptyMessage $ CompileMessage e []
   withContextM x c = CompileInfoT $ do
     x' <- citState x
     case x' of
          CompileFail w e        -> return $ CompileFail (pushWarningScope c w) (pushErrorScope c e)
-         CompileSuccess w bs x2 -> return $ CompileSuccess (pushWarningScope c w) bs x2
+         CompilerSuccess w bs x2 -> return $ CompilerSuccess (pushWarningScope c w) bs x2
   summarizeErrorsM x e2 = CompileInfoT $ do
     x' <- citState x
     case x' of
          CompileFail w e -> return $ CompileFail w (pushErrorScope e2 e)
          x2 -> return x2
-  compileWarningM w = CompileInfoT (return $ CompileSuccess (CompileMessage w []) [] ())
-  compileBackgroundM b = CompileInfoT (return $ CompileSuccess emptyMessage [b] ())
+  compilerWarningM w = CompileInfoT (return $ CompilerSuccess (CompileMessage w []) [] ())
+  compilerBackgroundM b = CompileInfoT (return $ CompilerSuccess emptyMessage [b] ())
   resetBackgroundM x = CompileInfoT $ do
     x' <- citState x
     case x' of
-         CompileSuccess w _ d -> return $ CompileSuccess w [] d
+         CompilerSuccess w _ d -> return $ CompilerSuccess w [] d
          x2                   -> return x2
 
 instance Monad m => CollectErrorsM (CompileInfoT m) where
   collectAllM = combineResults (select . splitErrorsAndData) where
-    select ([],xs2,bs,ws) = CompileSuccess (CompileMessage "" ws) bs xs2
+    select ([],xs2,bs,ws) = CompilerSuccess (CompileMessage "" ws) bs xs2
     select (es,_,bs,ws)   = CompileFail (CompileMessage "" ws) $ addBackground bs $ CompileMessage "" es
   collectAnyM = combineResults (select . splitErrorsAndData) where
-    select (_,xs2,bs,ws) = CompileSuccess (CompileMessage "" ws) bs xs2
+    select (_,xs2,bs,ws) = CompilerSuccess (CompileMessage "" ws) bs xs2
   collectFirstM = combineResults (select . splitErrorsAndData) where
-    select (_,x:_,bs,ws) = CompileSuccess (CompileMessage "" ws) bs x
+    select (_,x:_,bs,ws) = CompilerSuccess (CompileMessage "" ws) bs x
     select (es,_,bs,ws)  = CompileFail (CompileMessage "" ws) $ addBackground bs $ CompileMessage "" es
 
 combineResults :: (Monad m, Foldable f) =>
@@ -281,22 +281,22 @@ addBackground b (CompileMessage e es) = CompileMessage e (es ++ map (flip Compil
 
 getWarnings :: CompileInfoState a -> CompileMessage
 getWarnings (CompileFail w _)      = w
-getWarnings (CompileSuccess w _ _) = w
+getWarnings (CompilerSuccess w _ _) = w
 
 includeWarnings :: CompileMessage -> CompileInfoState a -> CompileInfoState a
 includeWarnings = update where
-  update w (CompileSuccess w2 b d) = CompileSuccess (w `mergeMessages` w2) b d
+  update w (CompilerSuccess w2 b d) = CompilerSuccess (w `mergeMessages` w2) b d
   update w (CompileFail w2 e)      = CompileFail (w `mergeMessages` w2) e
 
 getBackground :: CompileInfoState a -> [String]
-getBackground (CompileSuccess _ b _) = b
+getBackground (CompilerSuccess _ b _) = b
 getBackground _                      = []
 
 includeBackground :: [String] -> CompileInfoState a -> CompileInfoState a
 includeBackground b  (CompileFail w e)       = CompileFail w (addBackground b e)
-includeBackground b1 (CompileSuccess w b2 d) = CompileSuccess w (b1 ++ b2) d
+includeBackground b1 (CompilerSuccess w b2 d) = CompilerSuccess w (b1 ++ b2) d
 
 splitErrorsAndData :: Foldable f => f (CompileInfoState a) -> ([CompileMessage],[a],[String],[CompileMessage])
 splitErrorsAndData = foldr partition ([],[],[],[]) where
   partition (CompileFail w e)      (es,ds,bs,ws) = (e:es,ds,bs,w:ws)
-  partition (CompileSuccess w b d) (es,ds,bs,ws) = (es,d:ds,b++bs,w:ws)
+  partition (CompilerSuccess w b d) (es,ds,bs,ws) = (es,d:ds,b++bs,w:ws)

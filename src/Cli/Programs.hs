@@ -28,7 +28,7 @@ module Cli.Programs (
 
 import Control.Monad.IO.Class
 
-import Base.CompileError
+import Base.CompilerError
 
 
 class CompilerBackend b where

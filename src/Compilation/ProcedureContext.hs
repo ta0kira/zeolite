@@ -32,7 +32,7 @@ import Control.Monad (when)
 import qualified Data.Map as Map
 import qualified Data.Set as Set
 
-import Base.CompileError
+import Base.CompilerError
 import Base.MergeTree
 import Compilation.CompilerState
 import Types.DefinedCategory
@@ -95,7 +95,7 @@ instance (Show c, CollectErrorsM m) =>
   ccGetParamScope ctx p = do
     case p `Map.lookup` pcParamScopes ctx of
             (Just s) -> return s
-            _ -> compileErrorM $ "Param " ++ show p ++ " does not exist"
+            _ -> compilerErrorM $ "Param " ++ show p ++ " does not exist"
   ccRequiresTypes ctx ts = return $
     ProcedureContext {
       pcScope = pcScope ctx,
@@ -137,13 +137,13 @@ instance (Show c, CollectErrorsM m) =>
         checkFunction $ n `Map.lookup` fa
     checkFunction (Just f) = do
       when (pcDisallowInit ctx && t == pcType ctx && pcScope ctx == CategoryScope) $
-        compileErrorM $ "Function " ++ show n ++
+        compilerErrorM $ "Function " ++ show n ++
                        " disallowed during initialization" ++ formatFullContextBrace c
       when (sfScope f /= CategoryScope) $
-        compileErrorM $ "Function " ++ show n ++ " in " ++ show t ++ " cannot be used as a category function"
+        compilerErrorM $ "Function " ++ show n ++ " in " ++ show t ++ " cannot be used as a category function"
       return f
     checkFunction _ =
-      compileErrorM $ "Category " ++ show t ++
+      compilerErrorM $ "Category " ++ show t ++
                      " does not have a category function named " ++ show n ++
                      formatFullContextBrace c
   ccGetTypeFunction ctx c t n = getFunction t where
@@ -152,7 +152,7 @@ instance (Show c, CollectErrorsM m) =>
       let ps = fmap (singleType . JustParamName False . vpParam) $ pcExtParams ctx
       getFunction (Just $ singleType $ JustTypeInstance $ TypeInstance (pcType ctx) ps)
     getFromAny _ =
-      compileErrorM $ "Use explicit type conversion to call " ++ show n ++ " from " ++ show t
+      compilerErrorM $ "Use explicit type conversion to call " ++ show n ++ " from " ++ show t
     getFromAll ts = do
       collectFirstM ts <!!
         "Function " ++ show n ++ " not available for type " ++ show t ++ formatFullContextBrace c
@@ -160,7 +160,7 @@ instance (Show c, CollectErrorsM m) =>
       fa <- ccAllFilters ctx
       fs <- case p `Map.lookup` fa of
                 (Just fs) -> return fs
-                _ -> compileErrorM $ "Param " ++ show p ++ " does not exist"
+                _ -> compilerErrorM $ "Param " ++ show p ++ " does not exist"
       let ts = map tfType $ filter isRequiresFilter fs
       let ds = map dfType $ filter isDefinesFilter  fs
       collectFirstM (map (getFunction . Just) ts ++ map checkDefine ds) <!!
@@ -175,7 +175,7 @@ instance (Show c, CollectErrorsM m) =>
         let params = Positional $ map vpParam $ getCategoryParams ca
         let fa = Map.fromList $ map (\f -> (sfName f,f)) $ getCategoryFunctions ca
         subAndCheckFunction (tiName t2) params (tiParams t2) $ n `Map.lookup` fa
-    getFromSingle _ = compileErrorM $ "Type " ++ show t ++ " contains unresolved types"
+    getFromSingle _ = compilerErrorM $ "Type " ++ show t ++ " contains unresolved types"
     checkDefine t2 = do
       (_,ca) <- getCategory (pcCategories ctx) (c,diName t2)
       let params = Positional $ map vpParam $ getCategoryParams ca
@@ -183,22 +183,22 @@ instance (Show c, CollectErrorsM m) =>
       subAndCheckFunction (diName t2) params (diParams t2) $ n `Map.lookup` fa
     subAndCheckFunction t2 ps1 ps2 (Just f) = do
       when (pcDisallowInit ctx && t2 == pcType ctx) $
-        compileErrorM $ "Function " ++ show n ++
+        compilerErrorM $ "Function " ++ show n ++
                        " disallowed during initialization" ++ formatFullContextBrace c
       when (sfScope f == CategoryScope) $
-        compileErrorM $ "Function " ++ show n ++ " in " ++ show t2 ++
+        compilerErrorM $ "Function " ++ show n ++ " in " ++ show t2 ++
                        " is a category function" ++ formatFullContextBrace c
       paired <- processPairs alwaysPair ps1 ps2 <??
         "In external function call at " ++ formatFullContext c
       let assigned = Map.fromList paired
       uncheckedSubFunction assigned f
     subAndCheckFunction t2 _ _ _ =
-      compileErrorM $ "Category " ++ show t2 ++
+      compilerErrorM $ "Category " ++ show t2 ++
                      " does not have a type or value function named " ++ show n ++
                      formatFullContextBrace c
   ccCheckValueInit ctx c (TypeInstance t as) ts ps
     | t /= pcType ctx =
-      compileErrorM $ "Category " ++ show (pcType ctx) ++ " cannot initialize values from " ++
+      compilerErrorM $ "Category " ++ show (pcType ctx) ++ " cannot initialize values from " ++
                      show t ++ formatFullContextBrace c
     | otherwise = "In initialization at " ++ formatFullContext c ??> do
       let t' = TypeInstance (pcType ctx) as
@@ -234,12 +234,12 @@ instance (Show c, CollectErrorsM m) =>
   ccGetVariable ctx c n =
     case n `Map.lookup` pcVariables ctx of
           (Just v) -> return v
-          _ -> compileErrorM $ "Variable " ++ show n ++ " is not defined" ++
+          _ -> compilerErrorM $ "Variable " ++ show n ++ " is not defined" ++
                                formatFullContextBrace c
   ccAddVariable ctx c n t = do
     case n `Map.lookup` pcVariables ctx of
           Nothing -> return ()
-          (Just v) -> compileErrorM $ "Variable " ++ show n ++
+          (Just v) -> compilerErrorM $ "Variable " ++ show n ++
                                       formatFullContextBrace c ++
                                       " is already defined: " ++ show v
     return $ ProcedureContext {
@@ -272,7 +272,7 @@ instance (Show c, CollectErrorsM m) =>
   ccCheckVariableInit ctx c n =
     case pcReturns ctx of
          ValidateNames _ _ na -> when (n `Map.member` na) $
-           compileErrorM $ "Named return " ++ show n ++ " might not be initialized" ++ formatFullContextBrace c
+           compilerErrorM $ "Named return " ++ show n ++ " might not be initialized" ++ formatFullContextBrace c
          _ -> return ()
   ccWrite ctx ss = return $
     ProcedureContext {
@@ -399,7 +399,7 @@ instance (Show c, CollectErrorsM m) =>
       combineParallel (r@(ValidatePositions _),j1) (_,j2) = (r,min j1 j2)
       combineParallel (_,j1) (r@(ValidatePositions _),j2) = (r,min j1 j2)
   ccRegisterReturn ctx c vs = do
-    when (pcInCleanup ctx) $ compileErrorM $ "Explicit return at " ++ formatFullContext c ++ " not allowed in cleanup"
+    when (pcInCleanup ctx) $ compilerErrorM $ "Explicit return at " ++ formatFullContext c ++ " not allowed in cleanup"
     returns <- check (pcReturns ctx)
     return $ ProcedureContext {
         pcScope = pcScope ctx,
@@ -451,7 +451,7 @@ instance (Show c, CollectErrorsM m) =>
              Just _  -> check (ValidatePositions ts) >> return ()
              Nothing -> mapErrorsM_ alwaysError $ Map.toList ra
         return (ValidateNames ns ts Map.empty)
-      alwaysError (n,t) = compileErrorM $ "Named return " ++ show n ++ " (" ++ show t ++
+      alwaysError (n,t) = compilerErrorM $ "Named return " ++ show n ++ " (" ++ show t ++
                                           ") might not have been set before return at " ++
                                           formatFullContext c
   ccPrimNamedReturns = return . pcPrimNamed
@@ -588,7 +588,7 @@ instance (Show c, CollectErrorsM m) =>
     combine cs = CleanupSetup (concat $ map csReturnContext cs) (concat $ map csCleanup cs)
   ccExprLookup ctx c n =
     case n `Map.lookup` pcExprMap ctx of
-         Nothing -> compileErrorM $ "Env expression " ++ show n ++ " is not defined" ++ formatFullContextBrace c
+         Nothing -> compilerErrorM $ "Env expression " ++ show n ++ " is not defined" ++ formatFullContextBrace c
          Just e -> do
            checkReserved (pcReservedMacros ctx) [(n,c)]
            return e
@@ -598,7 +598,7 @@ instance (Show c, CollectErrorsM m) =>
         | n2 /= n = checkReserved ms (m:rs)
         | otherwise = (mapErrorsM_ singleError (m:rs)) <!!
             "Expression macro " ++ show n ++ " references itself"
-      singleError (n2,c2) = compileErrorM $ show n2 ++ " expanded at " ++ formatFullContext c2
+      singleError (n2,c2) = compilerErrorM $ show n2 ++ " expanded at " ++ formatFullContext c2
   ccReserveExprMacro ctx c n =
     return $ ProcedureContext {
         pcScope = pcScope ctx,
@@ -699,7 +699,7 @@ updateReturnVariables ma rs1 rs2 = updated where
           va' <- va
           case ovName r `Map.lookup` va' of
                Nothing -> return $ Map.insert (ovName r) (VariableValue c LocalScope t True) va'
-               (Just v) -> compileErrorM $ "Variable " ++ show (ovName r) ++
+               (Just v) -> compilerErrorM $ "Variable " ++ show (ovName r) ++
                                           formatFullContextBrace (ovContext r) ++
                                           " is already defined" ++
                                           formatFullContextBrace (vvContext v)
@@ -716,7 +716,7 @@ updateArgVariables ma as1 as2 = do
       va' <- va
       case ivName a `Map.lookup` va' of
             Nothing -> return $ Map.insert (ivName a) (VariableValue c LocalScope t False) va'
-            (Just v) -> compileErrorM $ "Variable " ++ show (ivName a) ++
+            (Just v) -> compilerErrorM $ "Variable " ++ show (ivName a) ++
                                        formatFullContextBrace (ivContext a) ++
                                        " is already defined" ++
                                        formatFullContextBrace (vvContext v)

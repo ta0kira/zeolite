@@ -178,7 +178,7 @@ common defaults
 library zeolite-internal
   import:              defaults
 
-  exposed-modules:     Base.CompileError,
+  exposed-modules:     Base.CompilerError,
                        Base.CompileInfo,
                        Base.MergeTree,
                        Base.Mergeable,

@@ -44,7 +44,7 @@ import qualified Data.Set as Set
 import Data.Semigroup
 #endif
 
-import Base.CompileError
+import Base.CompilerError
 import Base.MergeTree
 import Compilation.CompilerState
 import Compilation.ProcedureContext (ExprMap)
@@ -166,7 +166,7 @@ compileLanguageModule (LanguageModule ns0 ns1 ns2 cs0 ps0 ts0 cs1 ps1 ts1 ex ss 
     checkLocals ds cs2 = mapErrorsM_ (checkLocal $ Set.fromList cs2) ds
     checkLocal cs2 d =
       when (not $ dcName d `Set.member` cs2) $
-        compileErrorM ("Definition for " ++ show (dcName d) ++
+        compilerErrorM ("Definition for " ++ show (dcName d) ++
                        formatFullContextBrace (dcContext d) ++
                        " does not correspond to a visible category in this module")
     checkTests ds ps = do
@@ -176,7 +176,7 @@ compileLanguageModule (LanguageModule ns0 ns1 ns2 cs0 ps0 ts0 cs1 ps1 ts1 ex ss 
       case dcName d `Map.lookup` pa of
            Nothing -> return ()
            Just c  ->
-             compileErrorM ("Category " ++ show (dcName d) ++
+             compilerErrorM ("Category " ++ show (dcName d) ++
                             formatFullContextBrace (dcContext d) ++
                             " was not declared as $TestsOnly$" ++ formatFullContextBrace c)
     checkDefined dm ex2 = mapErrorsM_ (checkSingle dm (Set.fromList ex2))
@@ -185,25 +185,25 @@ compileLanguageModule (LanguageModule ns0 ns1 ns2 cs0 ps0 ts0 cs1 ps1 ts1 ex ss 
            (False,Just [_]) -> return ()
            (True,Nothing)   -> return ()
            (True,Just [d]) ->
-             compileErrorM ("Category " ++ show (getCategoryName t) ++
+             compilerErrorM ("Category " ++ show (getCategoryName t) ++
                            formatFullContextBrace (getCategoryContext t) ++
                            " was declared external but is also defined at " ++ formatFullContext (dcContext d))
            (False,Nothing) ->
-             compileErrorM ("Category " ++ show (getCategoryName t) ++
+             compilerErrorM ("Category " ++ show (getCategoryName t) ++
                            formatFullContextBrace (getCategoryContext t) ++
                            " has not been defined or declared external")
            (_,Just ds) ->
              ("Category " ++ show (getCategoryName t) ++
               formatFullContextBrace (getCategoryContext t) ++
               " is defined " ++ show (length ds) ++ " times") !!>
-                mapErrorsM_ (\d -> compileErrorM $ "Defined at " ++ formatFullContext (dcContext d)) ds
+                mapErrorsM_ (\d -> compilerErrorM $ "Defined at " ++ formatFullContext (dcContext d)) ds
     checkSupefluous es2
       | null es2 = return ()
-      | otherwise = compileErrorM $ "External categories either not concrete or not present: " ++
+      | otherwise = compilerErrorM $ "External categories either not concrete or not present: " ++
                                     intercalate ", " (map show es2)
     checkStreamlined =  mapErrorsM_  streamlinedError $ Set.toList $ Set.difference (Set.fromList ss) (Set.fromList ex)
     streamlinedError n =
-      compileErrorM $ "Category " ++ show n ++ " cannot be streamlined because it was not declared external"
+      compilerErrorM $ "Category " ++ show n ++ " cannot be streamlined because it was not declared external"
 
 compileTestsModule :: (Show c, CollectErrorsM m) =>
   LanguageModule c -> Namespace -> [String] -> [AnyCategory c] -> [DefinedCategory c] ->
@@ -242,10 +242,10 @@ compileModuleMain (LanguageModule ns0 ns1 ns2 cs0 ps0 _ cs1 ps1 _ _ _ em) xa n f
   return $ CxxOutput Nothing mainFilename NoNamespace (ns `Set.insert` Set.unions [ns0,ns1,ns2]) (Set.fromList [n]) main where
     tm = foldM includeNewTypes defaultCategories [cs0,cs1,ps0,ps1]
     reconcile [_] = return ()
-    reconcile []  = compileErrorM $ "No matches for main category " ++ show n ++ " ($TestsOnly$ sources excluded)"
+    reconcile []  = compilerErrorM $ "No matches for main category " ++ show n ++ " ($TestsOnly$ sources excluded)"
     reconcile ds  =
       "Multiple matches for main category " ++ show n !!>
-        mapErrorsM_ (\d -> compileErrorM $ "Defined at " ++ formatFullContext (dcContext d)) ds
+        mapErrorsM_ (\d -> compilerErrorM $ "Defined at " ++ formatFullContext (dcContext d)) ds
 
 compileCategoryDeclaration :: (Show c, CollectErrorsM m) =>
   Bool -> CategoryMap c -> Set.Set Namespace -> AnyCategory c -> m CxxOutput
@@ -417,7 +417,7 @@ compileConcreteDefinition testing ta em ns rs dd@(DefinedCategory c n pi _ _ fi 
       [DefinedMember c] -> m ()
     disallowTypeMembers tm =
       collectAllM_ $ flip map tm
-        (\m -> compileErrorM $ "Member " ++ show (dmName m) ++
+        (\m -> compilerErrorM $ "Member " ++ show (dmName m) ++
                                " is not allowed to be @type-scoped" ++
                                formatFullContextBrace (dmContext m))
     createParams = concatM $ map createParam pi

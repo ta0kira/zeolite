@@ -31,7 +31,7 @@ module Base.MergeTree (
 
 import Data.List (intercalate)
 
-import Base.CompileError
+import Base.CompilerError
 import Base.Mergeable
 
 
@@ -140,4 +140,4 @@ mergeAllM :: (PreserveMerge a, CollectErrorsM m) => [m a] -> m a
 mergeAllM = fmap mergeAll . collectAllM
 
 matchOnlyLeaf :: (PreserveMerge a, CollectErrorsM m) => a -> m (T a)
-matchOnlyLeaf = reduceMergeTree (const $ compileErrorM "") (const $ compileErrorM "") return
+matchOnlyLeaf = reduceMergeTree (const $ compilerErrorM "") (const $ compilerErrorM "") return

@@ -59,7 +59,7 @@ import Text.Parsec (SourcePos)
 import qualified Data.Map as Map
 import qualified Data.Set as Set
 
-import Base.CompileError
+import Base.CompilerError
 import Base.CompileInfo
 import Cli.CompileOptions
 import Cli.Programs (VersionHash(..))
@@ -93,18 +93,18 @@ loadRecompile :: FilePath -> CompileInfoIO ModuleConfig
 loadRecompile p = do
   let f = p </> moduleFilename
   isFile <- errorFromIO $ doesFileExist p
-  when isFile $ compileErrorM $ "Path \"" ++ p ++ "\" is not a directory"
+  when isFile $ compilerErrorM $ "Path \"" ++ p ++ "\" is not a directory"
   isDir <- errorFromIO $ doesDirectoryExist p
-  when (not isDir) $ compileErrorM $ "Path \"" ++ p ++ "\" does not exist"
+  when (not isDir) $ compilerErrorM $ "Path \"" ++ p ++ "\" does not exist"
   filePresent <- errorFromIO $ doesFileExist f
-  when (not filePresent) $ compileErrorM $ "Module \"" ++ p ++ "\" has not been configured yet"
+  when (not filePresent) $ compilerErrorM $ "Module \"" ++ p ++ "\" has not been configured yet"
   c <- errorFromIO $ readFile f
   m <- autoReadConfig f c <!!
     "Could not parse metadata from \"" ++ p ++ "\"; please reconfigure"
   p0 <- errorFromIO $ canonicalizePath p
   let p1 = mcRoot m </> mcPath m
   p2 <- errorFromIO $ canonicalizePath $ p0 </> p1
-  when (p2 /= p0) $ compileErrorM $ "Expected module path from " ++ f ++
+  when (p2 /= p0) $ compilerErrorM $ "Expected module path from " ++ f ++
                                     " to match " ++ moduleFilename ++
                                     " location but got " ++ p2 ++
                                     " (resolved from root: \"" ++ mcRoot m ++
@@ -114,12 +114,12 @@ loadRecompile p = do
 isPathUpToDate :: VersionHash -> ForceMode -> FilePath -> CompileInfoIO Bool
 isPathUpToDate h f p = do
   m <- errorFromIO $ toCompileInfo $ loadDepsCommon f h Map.empty Set.empty (\m2 -> cmPublicDeps m2 ++ cmPrivateDeps m2) [p]
-  return $ not $ isCompileError m
+  return $ not $ isCompilerError m
 
 isPathConfigured :: FilePath -> FilePath -> CompileInfoIO Bool
 isPathConfigured p d = do
   m <- errorFromIO $ toCompileInfo $ loadRecompile (p </> d)
-  return $ not $ isCompileError m
+  return $ not $ isCompilerError m
 
 writeMetadata :: FilePath -> CompileMetadata -> CompileInfoIO ()
 writeMetadata p m = do
@@ -164,9 +164,9 @@ findSourceFiles :: FilePath -> FilePath -> CompileInfoIO ([FilePath],[FilePath],
 findSourceFiles p0 p = do
   let absolute = p0 </> p
   isFile <- errorFromIO $ doesFileExist absolute
-  when isFile $ compileErrorM $ "Path \"" ++ absolute ++ "\" is not a directory"
+  when isFile $ compilerErrorM $ "Path \"" ++ absolute ++ "\" is not a directory"
   isDir <- errorFromIO $ doesDirectoryExist absolute
-  when (not isDir) $ compileErrorM $ "Path \"" ++ absolute ++ "\" does not exist"
+  when (not isDir) $ compilerErrorM $ "Path \"" ++ absolute ++ "\" does not exist"
   ds <- errorFromIO $ getDirectoryContents absolute >>= return . map (p </>)
   let ps = filter (isSuffixOf ".0rp") ds
   let xs = filter (isSuffixOf ".0rx") ds
@@ -243,7 +243,7 @@ loadDepsCommon f h ca pa0 getDeps ps = do
       | otherwise = do
           p' <- errorFromIO $ canonicalizePath p
           when (cmPath m /= p') $
-            compileErrorM $ "Module \"" ++ p ++ "\" has an invalid cache path and must be recompiled"
+            compilerErrorM $ "Module \"" ++ p ++ "\" has an invalid cache path and must be recompiled"
           fresh <- errorFromIO $ toCompileInfo $ checkModuleFreshness h cm p m <!!
             "Module \"" ++ p ++ "\" is out of date and should be recompiled"
           if enforce
@@ -259,11 +259,11 @@ loadMetadata ca p = do
        Nothing -> do
          let f = p </> cachedDataPath </> metadataFilename
          isFile <- errorFromIO $ doesFileExist p
-         when isFile $ compileErrorM $ "Path \"" ++ p ++ "\" is not a directory"
+         when isFile $ compilerErrorM $ "Path \"" ++ p ++ "\" is not a directory"
          isDir <- errorFromIO $ doesDirectoryExist p
-         when (not isDir) $ compileErrorM $ "Path \"" ++ p ++ "\" does not exist"
+         when (not isDir) $ compilerErrorM $ "Path \"" ++ p ++ "\" does not exist"
          filePresent <- errorFromIO $ doesFileExist f
-         when (not filePresent) $ compileErrorM $ "Module \"" ++ p ++ "\" has not been compiled yet"
+         when (not filePresent) $ compilerErrorM $ "Module \"" ++ p ++ "\" has not been compiled yet"
          c <- errorFromIO $ readFile f
          (autoReadConfig f c) <!!
             "Could not parse metadata from \"" ++ p ++ "\"; please recompile"
@@ -303,15 +303,15 @@ checkModuleFreshness h ca p m@(CompileMetadata _ p2 _ _ is is2 _ _ _ _ ps xs ts 
   where
     checkHash =
       when (not $ checkModuleVersionHash h m) $
-        compileErrorM $ "Module \"" ++ p ++ "\" was compiled with a different compiler setup"
+        compilerErrorM $ "Module \"" ++ p ++ "\" was compiled with a different compiler setup"
     checkInput time f = do
       exists <- doesFileOrDirExist f
-      when (not exists) $ compileErrorM $ "Required path \"" ++ f ++ "\" is missing"
+      when (not exists) $ compilerErrorM $ "Required path \"" ++ f ++ "\" is missing"
       time2 <- errorFromIO $ getModificationTime f
-      when (time2 > time) $ compileErrorM $ "Required path \"" ++ f ++ "\" is newer than cached data"
+      when (time2 > time) $ compilerErrorM $ "Required path \"" ++ f ++ "\" is newer than cached data"
     checkOutput f = do
       exists <- errorFromIO $ doesFileExist f
-      when (not exists) $ compileErrorM $ "Output file \"" ++ f ++ "\" is missing"
+      when (not exists) $ compilerErrorM $ "Output file \"" ++ f ++ "\" is missing"
     checkDep time dep = do
       cm <- loadMetadata ca dep
       mapErrorsM_ (checkInput time . (cmPath cm </>)) $ cmPublicFiles cm
@@ -322,12 +322,12 @@ checkModuleFreshness h ca p m@(CompileMetadata _ p2 _ _ is is2 _ _ _ _ ps xs ts 
     checkRequire (CategoryIdentifier d c ns) = do
       cm <- loadMetadata ca d
       when (cmPath cm /= p2 && ns /= cmPublicNamespace cm) $
-        compileErrorM $ "Required category " ++ show c ++ " is newer than cached data"
+        compilerErrorM $ "Required category " ++ show c ++ " is newer than cached data"
     checkRequire (UnresolvedCategory c) =
-      compileErrorM $ "Required category " ++ show c ++ " is unresolved"
+      compilerErrorM $ "Required category " ++ show c ++ " is unresolved"
     checkMissing s0 s1 = do
       let missing = Set.toList $ Set.fromList s1 `Set.difference` Set.fromList s0
-      mapErrorsM_ (\f -> compileErrorM $ "Required path \"" ++ f ++ "\" has not been compiled") missing
+      mapErrorsM_ (\f -> compilerErrorM $ "Required path \"" ++ f ++ "\" has not been compiled") missing
     doesFileOrDirExist f2 = do
       existF <- errorFromIO $ doesFileExist f2
       if existF

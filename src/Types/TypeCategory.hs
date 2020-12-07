@@ -88,7 +88,7 @@ import Data.List (group,groupBy,intercalate,nub,sort,sortBy)
 import qualified Data.Map as Map
 import qualified Data.Set as Set
 
-import Base.CompileError
+import Base.CompilerError
 import Base.MergeTree
 import Base.Mergeable
 import Types.Function
@@ -335,7 +335,7 @@ instance Show c => TypeResolver (CategoryResolver c) where
         let pa = Map.fromList $ map (\r -> (tiName r,tiParams r)) $ map vrType $ getCategoryRefines t
         ps2 <- case n2 `Map.lookup` pa of
                     (Just x) -> return x
-                    _ -> compileErrorM $ "Category " ++ show n1 ++ " does not refine " ++ show n2
+                    _ -> compilerErrorM $ "Category " ++ show n1 ++ " does not refine " ++ show n2
         fmap Positional $ mapErrorsM (subAllParams assigned) $ pValues ps2
     trDefines (CategoryResolver tm) (TypeInstance n1 ps1) n2 = do
       (_,t) <- getValueCategory tm ([],n1)
@@ -344,7 +344,7 @@ instance Show c => TypeResolver (CategoryResolver c) where
       let pa = Map.fromList $ map (\r -> (diName r,diParams r)) $ map vdType $ getCategoryDefines t
       ps2 <- case n2 `Map.lookup` pa of
                   (Just x) -> return x
-                  _ -> compileErrorM $ "Category " ++ show n1 ++ " does not define " ++ show n2
+                  _ -> compilerErrorM $ "Category " ++ show n1 ++ " does not define " ++ show n2
       fmap Positional $ mapErrorsM (subAllParams assigned) $ pValues ps2
     trVariance (CategoryResolver tm) n = do
       (_,t) <- getCategory tm ([],n)
@@ -412,7 +412,7 @@ getCategory :: (Show c, CollectErrorsM m) =>
 getCategory tm (c,n) =
   case n `Map.lookup` tm of
        (Just t) -> return (c,t)
-       _ -> compileErrorM $ "Type " ++ show n ++ context ++ " not found"
+       _ -> compilerErrorM $ "Type " ++ show n ++ context ++ " not found"
   where
     context
       | null c = ""
@@ -424,7 +424,7 @@ getValueCategory tm (c,n) = do
   (c2,t) <- getCategory tm (c,n)
   if isValueInterface t || isValueConcrete t
      then return (c2,t)
-     else compileErrorM $ "Category " ++ show n ++
+     else compilerErrorM $ "Category " ++ show n ++
                          " cannot be used as a value" ++
                          formatFullContextBrace c
 
@@ -434,7 +434,7 @@ getInstanceCategory tm (c,n) = do
   (c2,t) <- getCategory tm (c,n)
   if isInstanceInterface t
      then return (c2,t)
-     else compileErrorM $ "Category " ++ show n ++
+     else compilerErrorM $ "Category " ++ show n ++
                          " cannot be used as a type interface" ++
                          formatFullContextBrace c
 
@@ -444,7 +444,7 @@ getConcreteCategory tm (c,n) = do
   (c2,t) <- getCategory tm (c,n)
   if isValueConcrete t
      then return (c2,t)
-     else compileErrorM $ "Category " ++ show n ++
+     else compilerErrorM $ "Category " ++ show n ++
                          " cannot be used as concrete" ++
                          formatFullContextBrace c
 
@@ -464,7 +464,7 @@ declareAllTypes :: (Show c, CollectErrorsM m) =>
 declareAllTypes tm0 = foldr (\t tm -> tm >>= update t) (return tm0) where
   update t tm =
     case getCategoryName t `Map.lookup` tm of
-        (Just t2) -> compileErrorM $ "Type " ++ show (getCategoryName t) ++
+        (Just t2) -> compilerErrorM $ "Type " ++ show (getCategoryName t) ++
                                      formatFullContextBrace (getCategoryContext t) ++
                                      " has already been declared" ++
                                      formatFullContextBrace (getCategoryContext t2)
@@ -505,8 +505,8 @@ disallowBoundedParams = mapErrorsM_ checkBounds . Map.toList where
     when (lb /= minBound && ub /= maxBound) $
       ("Param " ++ show p ++ " cannot have both lower and upper bounds") !!>
         collectAllM_ [
-            compileErrorM $ "Lower bound: " ++ show lb,
-            compileErrorM $ "Upper bound: " ++ show ub
+            compilerErrorM $ "Lower bound: " ++ show lb,
+            compilerErrorM $ "Upper bound: " ++ show ub
           ]
   splitBounds (TypeFilter FilterRequires t) (lb,ub) = (lb,t<&&>ub)
   splitBounds (TypeFilter FilterAllows   t) (lb,ub) = (t<||>lb,ub)
@@ -535,39 +535,39 @@ checkConnectedTypes tm0 ts = do
     checkSingle _ _ = return ()
     valueRefinesInstanceError c n (c2,t)
       | isInstanceInterface t =
-        compileErrorM $ "Value interface " ++ show n ++ formatFullContextBrace c ++
+        compilerErrorM $ "Value interface " ++ show n ++ formatFullContextBrace c ++
                         " cannot refine type interface " ++
                         show (iiName t) ++ formatFullContextBrace c2
       | otherwise = return ()
     valueRefinesConcreteError c n (c2,t)
       | isValueConcrete t =
-        compileErrorM $ "Value interface " ++ show n ++ formatFullContextBrace c ++
+        compilerErrorM $ "Value interface " ++ show n ++ formatFullContextBrace c ++
                         " cannot refine concrete type " ++
                         show (getCategoryName t) ++ formatFullContextBrace c2
       | otherwise = return ()
     concreteRefinesInstanceError c n (c2,t)
       | isInstanceInterface t =
-        compileErrorM $ "Concrete type " ++ show n ++ formatFullContextBrace c ++
+        compilerErrorM $ "Concrete type " ++ show n ++ formatFullContextBrace c ++
                         " cannot refine instance interface " ++
                         show (getCategoryName t) ++ formatFullContextBrace c2 ++
                         " => use defines instead"
       | otherwise = return ()
     concreteDefinesValueError c n (c2,t)
       | isValueInterface t =
-        compileErrorM $ "Concrete type " ++ show n ++ formatFullContextBrace c ++
+        compilerErrorM $ "Concrete type " ++ show n ++ formatFullContextBrace c ++
                       " cannot define value interface " ++
                       show (getCategoryName t) ++ formatFullContextBrace c2 ++
                       " => use refines instead"
       | otherwise = return ()
     concreteRefinesConcreteError c n (c2,t)
       | isValueConcrete t =
-        compileErrorM $ "Concrete type " ++ show n ++ formatFullContextBrace c ++
+        compilerErrorM $ "Concrete type " ++ show n ++ formatFullContextBrace c ++
                       " cannot refine concrete type " ++
                       show (getCategoryName t) ++ formatFullContextBrace c2
       | otherwise = return ()
     concreteDefinesConcreteError c n (c2,t)
       | isValueConcrete t =
-        compileErrorM $ "Concrete type " ++ show n ++ formatFullContextBrace c ++
+        compilerErrorM $ "Concrete type " ++ show n ++ formatFullContextBrace c ++
                       " cannot define concrete type " ++
                       show (getCategoryName t) ++ formatFullContextBrace c2
       | otherwise = return ()
@@ -589,7 +589,7 @@ checkConnectionCycles tm0 ts = collectAllM_ (map (checker []) ts) where
   checker _ _ = return ()
   failIfCycle n c us =
     when (n `Set.member` (Set.fromList us)) $
-      compileErrorM $ "Category " ++ show n ++ formatFullContextBrace c ++
+      compilerErrorM $ "Category " ++ show n ++ formatFullContextBrace c ++
                      " refers back to itself: " ++
                      intercalate " -> " (map show (us ++ [n]))
 
@@ -621,7 +621,7 @@ checkParamVariances tm0 ts = do
       mapErrorsM_ (checkFilterVariance r vm) fa
     noDuplicates c n ps = collectAllM_ (map checkCount $ group $ sort $ map vpParam ps) where
       checkCount xa@(x:_:_) =
-        compileErrorM $ "Param " ++ show x ++ " occurs " ++ show (length xa) ++
+        compilerErrorM $ "Param " ++ show x ++ " occurs " ++ show (length xa) ++
                       " times in " ++ show n ++ formatFullContextBrace c
       checkCount _ = return ()
     checkRefine r vm (ValueRefine c t) =
@@ -633,25 +633,25 @@ checkParamVariances tm0 ts = do
     checkFilterVariance r vs (ParamFilter c n f@(TypeFilter FilterRequires t)) =
       ("In filter " ++ show n ++ " " ++ show f ++ formatFullContextBrace c) ??> do
         case n `Map.lookup` vs of
-             Just Contravariant -> compileErrorM $ "Contravariant param " ++ show n ++
+             Just Contravariant -> compilerErrorM $ "Contravariant param " ++ show n ++
                                                   " cannot have a requires filter"
-             Nothing -> compileErrorM $ "Param " ++ show n ++ " is undefined"
+             Nothing -> compilerErrorM $ "Param " ++ show n ++ " is undefined"
              _ -> return ()
         validateInstanceVariance r vs Contravariant t
     checkFilterVariance r vs (ParamFilter c n f@(TypeFilter FilterAllows t)) =
       ("In filter " ++ show n ++ " " ++ show f ++ formatFullContextBrace c) ??> do
         case n `Map.lookup` vs of
-             Just Covariant -> compileErrorM $ "Covariant param " ++ show n ++
+             Just Covariant -> compilerErrorM $ "Covariant param " ++ show n ++
                                               " cannot have an allows filter"
-             Nothing -> compileErrorM $ "Param " ++ show n ++ " is undefined"
+             Nothing -> compilerErrorM $ "Param " ++ show n ++ " is undefined"
              _ -> return ()
         validateInstanceVariance r vs Covariant t
     checkFilterVariance r vs (ParamFilter c n f@(DefinesFilter t)) =
       ("In filter " ++ show n ++ " " ++ show f ++ formatFullContextBrace c) ??> do
         case n `Map.lookup` vs of
-             Just Contravariant -> compileErrorM $ "Contravariant param " ++ show n ++
+             Just Contravariant -> compilerErrorM $ "Contravariant param " ++ show n ++
                                                   " cannot have a defines filter"
-             Nothing -> compileErrorM $ "Param " ++ show n ++ " is undefined"
+             Nothing -> compilerErrorM $ "Param " ++ show n ++ " is undefined"
              _ -> return ()
         validateDefinesVariance r vs Contravariant t
 
@@ -672,7 +672,7 @@ checkCategoryInstances tm0 ts = do
       mapErrorsM_ (validateCategoryFunction r t) (getCategoryFunctions t)
     checkFilterParam pa (ParamFilter c n _) =
       when (not $ n `Set.member` pa) $
-        compileErrorM $ "Param " ++ show n ++ formatFullContextBrace c ++ " does not exist"
+        compilerErrorM $ "Param " ++ show n ++ formatFullContextBrace c ++ " does not exist"
     checkRefine r fm (ValueRefine c t) =
       validateTypeInstance r fm t <??
         ("In " ++ show t ++ formatFullContextBrace c)
@@ -731,7 +731,7 @@ mergeRefines :: (CollectErrorsM m, TypeResolver r) =>
   r -> ParamFilters -> [ValueRefine c] -> m [ValueRefine c]
 mergeRefines r f = mergeObjects check where
   check (ValueRefine _ t1@(TypeInstance n1 _)) (ValueRefine _ t2@(TypeInstance n2 _))
-    | n1 /= n2 = compileErrorM $ show t1 ++ " and " ++ show t2 ++ " are incompatible"
+    | n1 /= n2 = compilerErrorM $ show t1 ++ " and " ++ show t2 ++ " are incompatible"
     | otherwise =
       noInferredTypes $ checkGeneralMatch r f Covariant
                         (singleType $ JustTypeInstance $ t1)
@@ -741,7 +741,7 @@ mergeDefines :: (CollectErrorsM m, TypeResolver r) =>
   r -> ParamFilters -> [ValueDefine c] -> m [ValueDefine c]
 mergeDefines r f = mergeObjects check where
   check (ValueDefine _ t1@(DefinesInstance n1 _)) (ValueDefine _ t2@(DefinesInstance n2 _))
-    | n1 /= n2 = compileErrorM $ show t1 ++ " and " ++ show t2 ++ " are incompatible"
+    | n1 /= n2 = compilerErrorM $ show t1 ++ " and " ++ show t2 ++ " are incompatible"
     | otherwise = do
       checkDefinesMatch r f t1 t2
       return ()
@@ -764,7 +764,7 @@ noDuplicateCategories c n ns =
   mapErrorsM_ checkCount $ groupBy (\x y -> fst x == fst y) $
                                sortBy (\x y -> fst x `compare` fst y) ns where
     checkCount xa@(x:_:_) =
-      compileErrorM $ "Category " ++ show (fst x) ++ " occurs " ++ show (length xa) ++
+      compilerErrorM $ "Category " ++ show (fst x) ++ " occurs " ++ show (length xa) ++
                       " times in " ++ show n ++ formatFullContextBrace c ++ " :\n---\n" ++
                       intercalate "\n---\n" (map (show . snd) xa)
     checkCount _ = return ()
@@ -872,14 +872,14 @@ mergeFunctions r tm pm fm rs ds fs = do
     -- Inherited without an override.
     tryMerge _ _ n (Just is) Nothing
       | length is == 1 = return $ head is
-      | otherwise = compileErrorM $ "Function " ++ show n ++ " is inherited " ++
+      | otherwise = compilerErrorM $ "Function " ++ show n ++ " is inherited " ++
                                    show (length is) ++ " times:\n---\n" ++
                                    intercalate "\n---\n" (map show is)
     -- Not inherited.
     tryMerge r2 fm2 n Nothing es = tryMerge r2 fm2 n (Just []) es
     -- Explicit override, possibly inherited.
     tryMerge r2 fm2 n (Just is) (Just es)
-      | length es /= 1 = compileErrorM $ "Function " ++ show n ++ " is declared " ++
+      | length es /= 1 = compilerErrorM $ "Function " ++ show n ++ " is declared " ++
                                         show (length es) ++ " times:\n---\n" ++
                                         intercalate "\n---\n" (map show es)
       | otherwise = do
@@ -889,7 +889,7 @@ mergeFunctions r tm pm fm rs ds fs = do
         where
           checkMerge r3 fm3 f1 f2
             | sfScope f1 /= sfScope f2 =
-              compileErrorM $ "Cannot merge " ++ show (sfScope f2) ++ " with " ++
+              compilerErrorM $ "Cannot merge " ++ show (sfScope f2) ++ " with " ++
                              show (sfScope f1) ++ " in function merge:\n---\n" ++
                              show f2 ++ "\n  ->\n" ++ show f1
             | otherwise =
@@ -976,7 +976,7 @@ parsedToFunctionType (ScopedFunction c n _ _ as rs ps fa _) = do
     pa = Set.fromList $ map vpParam $ pValues ps
     checkFilter f =
       when (not $ (pfParam f) `Set.member` pa) $
-      compileErrorM $ "Filtered param " ++ show (pfParam f) ++
+      compilerErrorM $ "Filtered param " ++ show (pfParam f) ++
                      " is not defined for function " ++ show n ++
                      formatFullContextBrace c
     getFilters fm2 n2 =
@@ -1085,7 +1085,7 @@ mergeInferredTypes r f ff ps gs0 = do
            hiZ <- tryMerge Contravariant hiX hiY
            return [GuessRange loZ hiZ]
          else return []
-    convertsTo t1 t2 = isCompileSuccessM $ checkGeneralMatch r f Covariant t1 t2
+    convertsTo t1 t2 = isCompilerSuccessM $ checkGeneralMatch r f Covariant t1 t2
     tryMerge v t1 t2 = collectFirstM [
         checkGeneralMatch r f v t1 t2 >> return t2,
         checkGeneralMatch r f v t2 t1 >> return t1,
@@ -1128,8 +1128,8 @@ mergeInferredTypes r f ff ps gs0 = do
            (True,_,_)     -> return lo
            (_,True,False) -> return lo
            (_,False,True) -> return hi
-           _ -> compileErrorM (show g) <!! ("Type for param " ++ show i ++ " is ambiguous")
-    takeBest i gs = (collectFirstM $ map (compileErrorM . show) gs) <!!
+           _ -> compilerErrorM (show g) <!! ("Type for param " ++ show i ++ " is ambiguous")
+    takeBest i gs = (collectFirstM $ map (compilerErrorM . show) gs) <!!
       ("Type for param " ++ show i ++ " is ambiguous")
     filterGuesses i (GuessUnion gs) = do
       let ga = map (filterGuess i) gs
@@ -1141,10 +1141,10 @@ mergeInferredTypes r f ff ps gs0 = do
            (False,False) -> do
              let checkLo = checkSubFilters i lo
              let checkHi = checkSubFilters i hi
-             pLo <- isCompileErrorM checkLo
-             pHi <- isCompileErrorM checkHi
+             pLo <- isCompilerErrorM checkLo
+             pHi <- isCompilerErrorM checkHi
              case (pLo,pHi) of
-                  (True,True) -> collectAllM_ [checkLo,checkHi] >> compileErrorM ""
+                  (True,True) -> collectAllM_ [checkLo,checkHi] >> compilerErrorM ""
                   (True,_) -> return $ GuessRange hi hi
                   (_,True) -> return $ GuessRange lo lo
                   _        -> return $ GuessRange lo hi

@@ -26,7 +26,7 @@ module Parser.SourceFile (
 
 import Text.Parsec
 
-import Base.CompileError
+import Base.CompilerError
 import Parser.Common
 import Parser.DefinedCategory ()
 import Parser.IntegrationTest ()

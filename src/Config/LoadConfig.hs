@@ -27,7 +27,7 @@ import Control.Monad (when)
 import Control.Monad.IO.Class
 import System.Directory
 
-import Base.CompileError
+import Base.CompilerError
 import Config.LocalConfig
 
 import Paths_zeolite_lang (getDataFileName)
@@ -37,7 +37,7 @@ loadConfig :: (MonadIO m, CollectErrorsM m) => m (Resolver,Backend)
 loadConfig = do
   configFile <- liftIO localConfigPath
   isFile <- liftIO $ doesFileExist configFile
-  when (not isFile) $ compileErrorM "Zeolite has not been configured. Please run zeolite-setup."
+  when (not isFile) $ compilerErrorM "Zeolite has not been configured. Please run zeolite-setup."
   configString <- liftIO $ readFile configFile
   lc <- check $ (reads configString :: [(LocalConfig,String)])
   pathsFile   <- liftIO $ globalPathsPath
@@ -48,7 +48,7 @@ loadConfig = do
   return (addPaths (lcResolver lc) paths,lcBackend lc) where
     check [(cm,"")]   = return cm
     check [(cm,"\n")] = return cm
-    check _ = compileErrorM "Zeolite configuration is corrupt. Please rerun zeolite-setup."
+    check _ = compilerErrorM "Zeolite configuration is corrupt. Please rerun zeolite-setup."
 
 localConfigPath :: IO FilePath
 localConfigPath = getDataFileName localConfigFilename >>= canonicalizePath

@@ -36,7 +36,7 @@ import Text.Parsec (SourcePos)
 import qualified Data.Map as Map
 import qualified Data.Set as Set
 
-import Base.CompileError
+import Base.CompilerError
 import Base.CompileInfo
 import Cli.CompileOptions
 import Cli.Programs
@@ -221,7 +221,7 @@ compileModule resolver backend (ModuleSpec p d em is is2 ps xs ts es ep m f) = d
            Nothing -> return []
     checkOwnedFile f2 = do
       exists <- errorFromIO $ doesFileExist f2
-      when (not exists) $ compileErrorM $ "Owned file " ++ f2 ++ " does not exist."
+      when (not exists) $ compilerErrorM $ "Owned file " ++ f2 ++ " does not exist."
       errorFromIO $ canonicalizePath f2
     compileExtraFile e (ns0,ns1) paths f2
       | isSuffixOf ".cpp" f2 || isSuffixOf ".cc" f2 = do
@@ -233,8 +233,8 @@ compileModule resolver backend (ModuleSpec p d em is is2 ps xs ts es ep m f) = d
       | isSuffixOf ".a" f2 || isSuffixOf ".o" f2 = return (Just f2)
       | otherwise = return Nothing
     createBinary paths deps (CompileBinary n _ o lf) ms
-      | length ms >  1 = compileErrorM $ "Multiple matches for main category " ++ show n ++ "."
-      | length ms == 0 = compileErrorM $ "Main category " ++ show n ++ " not found."
+      | length ms >  1 = compilerErrorM $ "Multiple matches for main category " ++ show n ++ "."
+      | length ms == 0 = compilerErrorM $ "Main category " ++ show n ++ " not found."
       | otherwise = do
           f0 <- if null o
                    then errorFromIO $ canonicalizePath $ p </> d </> show n
@@ -281,7 +281,7 @@ createModuleTemplates resolver p d deps1 deps2 = do
     let n' = p </> d </> n
     exists <- errorFromIO $ doesFileExist n'
     if exists
-        then compileWarningM $ "Skipping existing file " ++ n
+        then compilerWarningM $ "Skipping existing file " ++ n
         else do
           errorFromIO $ hPutStrLn stderr $ "Writing file " ++ n
           errorFromIO $ writeFile n' $ concat $ map (++ "\n") content
@@ -297,7 +297,7 @@ runModuleTests resolver backend base tp (LoadedTests p d m em deps1 deps2) = do
   mapErrorsM (runSingleTest backend cm path paths (m:deps2)) ts' where
     allowTests = Set.fromList tp
     isTestAllowed t = if null allowTests then True else t `Set.member` allowTests
-    showSkipped f = compileWarningM $ "Skipping tests in " ++ f ++ " due to explicit test filter."
+    showSkipped f = compilerWarningM $ "Skipping tests in " ++ f ++ " due to explicit test filter."
 
 loadPrivateSource :: PathIOHandler r => r -> VersionHash -> FilePath -> FilePath -> CompileInfoIO (PrivateSource SourcePos)
 loadPrivateSource resolver h p f = do
@@ -337,7 +337,7 @@ warnPublic :: PathIOHandler r => r -> FilePath -> [CategoryName] ->
 warnPublic resolver p pc dc os = mapErrorsM_ checkPublic where
   checkPublic d = do
     d2 <- resolveModule resolver p d
-    when (not $ d2 `Set.member` neededPublic) $ compileWarningM $ "Dependency \"" ++ d ++ "\" does not need to be public"
+    when (not $ d2 `Set.member` neededPublic) $ compilerWarningM $ "Dependency \"" ++ d ++ "\" does not need to be public"
   pc' = Set.fromList pc
   dc' = Set.fromList dc
   neededPublic = Set.fromList $ concat $ map checkDep os

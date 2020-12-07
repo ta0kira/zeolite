@@ -24,7 +24,7 @@ import Control.Monad
 import System.FilePath
 import Text.Parsec
 
-import Base.CompileError
+import Base.CompilerError
 import Base.CompileInfo
 import Parser.Procedure ()
 import Test.Common
@@ -411,7 +411,7 @@ checkParseSuccess f = do
   return $ check parsed
   where
     check c
-      | isCompileError c = compileErrorM $ "Parse " ++ f ++ ":\n" ++ show (getCompileError c)
+      | isCompilerError c = compilerErrorM $ "Parse " ++ f ++ ":\n" ++ show (getCompilerError c)
       | otherwise = return ()
 
 checkParseFail :: String -> IO (CompileInfo ())
@@ -421,9 +421,9 @@ checkParseFail f = do
   return $ check parsed
   where
     check c
-      | isCompileError c = return ()
-      | otherwise = compileErrorM $ "Parse " ++ f ++ ": Expected failure but got\n" ++
-                                   show (getCompileSuccess c) ++ "\n"
+      | isCompilerError c = return ()
+      | otherwise = compilerErrorM $ "Parse " ++ f ++ ": Expected failure but got\n" ++
+                                   show (getCompilerSuccess c) ++ "\n"
 
 checkShortParseSuccess :: String -> IO (CompileInfo ())
 checkShortParseSuccess s = do
@@ -431,7 +431,7 @@ checkShortParseSuccess s = do
   return $ check parsed
   where
     check c
-      | isCompileError c = compileErrorM $ "Parse '" ++ s ++ "':\n" ++ show (getCompileError c)
+      | isCompilerError c = compilerErrorM $ "Parse '" ++ s ++ "':\n" ++ show (getCompilerError c)
       | otherwise = return ()
 
 checkShortParseFail :: String -> IO (CompileInfo ())
@@ -440,9 +440,9 @@ checkShortParseFail s = do
   return $ check parsed
   where
     check c
-      | isCompileError c = return ()
-      | otherwise = compileErrorM $ "Parse '" ++ s ++ "': Expected failure but got\n" ++
-                                   show (getCompileSuccess c) ++ "\n"
+      | isCompilerError c = return ()
+      | otherwise = compilerErrorM $ "Parse '" ++ s ++ "': Expected failure but got\n" ++
+                                   show (getCompilerSuccess c) ++ "\n"
 
 checkParsesAs :: String -> (Expression SourcePos -> Bool) -> IO (CompileInfo ())
 checkParsesAs s m = return $ do
@@ -450,8 +450,8 @@ checkParsesAs s m = return $ do
   check parsed
   e <- parsed
   when (not $ m e) $
-    compileErrorM $ "No match in '" ++ s ++ "':\n" ++ show e
+    compilerErrorM $ "No match in '" ++ s ++ "':\n" ++ show e
   where
     check c
-      | isCompileError c = compileErrorM $ "Parse '" ++ s ++ "':\n" ++ show (getCompileError c)
+      | isCompilerError c = compilerErrorM $ "Parse '" ++ s ++ "':\n" ++ show (getCompilerError c)
       | otherwise = return ()

@@ -23,7 +23,7 @@ module Test.MergeTree (tests) where
 import Control.Monad (when)
 import Data.Char (toUpper)
 
-import Base.CompileError
+import Base.CompilerError
 import Base.CompileInfo
 import Base.MergeTree
 import Base.Mergeable
@@ -160,7 +160,7 @@ tests = [
 
 oddError :: Int -> CompileInfo Int
 oddError x = do
-  when (odd x) $ compileErrorM $ show x ++ " is odd"
+  when (odd x) $ compilerErrorM $ show x ++ " is odd"
   return x
 
 oddError2 :: Int -> CompileInfo [Int]
@@ -169,24 +169,24 @@ oddError2 = fmap (:[]) . oddError
 checkMatch :: (Eq b, Show b) => b -> (a -> b) -> a -> IO (CompileInfo ())
 checkMatch x f y = let y' = f y in
   return $ if x /= y'
-              then compileErrorM $ "Expected " ++ show x ++ " but got " ++ show y'
+              then compilerErrorM $ "Expected " ++ show x ++ " but got " ++ show y'
               else return ()
 
 checkMatch2 :: (Eq a, Show a) => a -> a -> a -> IO (CompileInfo ())
 checkMatch2 x y z = return $ do
-  when (x /= z) $ compileErrorM $ "Expected " ++ show x ++ " but got " ++ show z
-  when (y == z) $ compileErrorM $ "Expected something besides " ++ show y
+  when (x /= z) $ compilerErrorM $ "Expected " ++ show x ++ " but got " ++ show z
+  when (y == z) $ compilerErrorM $ "Expected something besides " ++ show y
 
 checkSuccess :: (Eq b, Show b) => b -> (a -> CompileInfo b) -> a -> IO (CompileInfo ())
 checkSuccess x f y = let y' = f y in
-  return $ if isCompileError y' || getCompileSuccess y' == x
+  return $ if isCompilerError y' || getCompilerSuccess y' == x
               then y' >> return ()
-              else compileErrorM $ "Expected value " ++ show x ++ " but got value " ++ show (getCompileSuccess y')
+              else compilerErrorM $ "Expected value " ++ show x ++ " but got value " ++ show (getCompilerSuccess y')
 
 checkError :: Show b => String -> (a -> CompileInfo b) -> a -> IO (CompileInfo ())
 checkError e f y = let y' = f y in
-  return $ if not (isCompileError y')
-              then compileErrorM $ "Expected error \"" ++ e ++ "\" but got value " ++ show (getCompileSuccess y')
-              else if show (getCompileError y') == e
+  return $ if not (isCompilerError y')
+              then compilerErrorM $ "Expected error \"" ++ e ++ "\" but got value " ++ show (getCompilerSuccess y')
+              else if show (getCompilerError y') == e
                       then return ()
-                      else compileErrorM $ "Expected error \"" ++ e ++ "\" but got error \"" ++ show (getCompileError y') ++ "\""
+                      else compilerErrorM $ "Expected error \"" ++ e ++ "\" but got error \"" ++ show (getCompilerError y') ++ "\""

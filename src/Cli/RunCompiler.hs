@@ -29,7 +29,7 @@ import System.Posix.Temp (mkdtemp)
 import qualified Data.Map as Map
 import qualified Data.Set as Set
 
-import Base.CompileError
+import Base.CompilerError
 import Base.CompileInfo
 import Cli.CompileOptions
 import Cli.Compiler
@@ -65,10 +65,10 @@ runCompiler resolver backend (CompileOptions _ _ _ ds _ _ p (ExecuteTests tp) f)
       let possibleTests = Set.fromList $ concat $ map (cmTestFiles . ltMetadata) ts
       case Set.toList $ (Set.fromList tp) `Set.difference` possibleTests of
           [] -> return ()
-          fs -> compileErrorM $ "Some test files do not occur in the selected modules: " ++
+          fs -> compilerErrorM $ "Some test files do not occur in the selected modules: " ++
                                 intercalate ", " (map show fs) ++ "\n"
     processResults passed failed rs
-      | isCompileError rs =
+      | isCompilerError rs =
         (fromCompileInfo rs) <!!
           "\nPassed: " ++ show passed ++ " test(s), Failed: " ++ show failed ++ " test(s)"
       | otherwise =
@@ -112,7 +112,7 @@ runCompiler resolver backend (CompileOptions h _ _ ds _ _ p CompileRecompileRecu
       isSystem <- isSystemModule r p2 d0
       if isSystem
          then do
-           compileWarningM $ "Skipping system dependency " ++ d0 ++ " for " ++ p2 ++ "."
+           compilerWarningM $ "Skipping system dependency " ++ d0 ++ " for " ++ p2 ++ "."
            return da
          else do
            d <- errorFromIO $ canonicalizePath (p2 </> d0)
@@ -132,7 +132,7 @@ runCompiler resolver backend (CompileOptions _ _ _ ds _ _ p CompileRecompile f) 
       d <- errorFromIO $ canonicalizePath (p </> d0)
       upToDate <- isPathUpToDate compilerHash f d
       if f < ForceAll && upToDate
-         then compileWarningM $ "Path " ++ d0 ++ " is up to date"
+         then compilerWarningM $ "Path " ++ d0 ++ " is up to date"
          else do
            rm@(ModuleConfig p2 d2 _ is is2 es ep m) <- loadRecompile d
            -- In case the module is manually configured with a p such as "..",
@@ -175,7 +175,7 @@ runCompiler resolver backend (CompileOptions h is is2 ds es ep p m f) = mapM_ co
     as2 <- fmap fixPaths $ mapErrorsM (resolveModule resolver (p </> d)) is2
     isConfigured <- isPathConfigured p d
     when (isConfigured && f == DoNotForce) $ do
-      compileErrorM $ "Module " ++ d ++ " has an existing configuration. " ++
+      compilerErrorM $ "Module " ++ d ++ " has an existing configuration. " ++
                       "Recompile with -r or use -f to overwrite the config."
     absolute <- errorFromIO $ canonicalizePath p
     let rm = ModuleConfig {

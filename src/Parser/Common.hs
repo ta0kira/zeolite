@@ -125,7 +125,7 @@ import Prelude hiding (foldl,foldr)
 import Text.Parsec
 import qualified Data.Set as Set
 
-import Base.CompileError
+import Base.CompilerError
 
 
 type ParserE = ParsecT String ()
@@ -138,11 +138,11 @@ runParserE :: ErrorContextM m => ParserE m a -> String -> String -> m a
 runParserE p n s = do
   result <- runPT p () n s
   case result of
-       Left e  -> compileErrorM (show e)
+       Left e  -> compilerErrorM (show e)
        Right t -> return t
 
 parseErrorM :: ErrorContextM m => SourcePos -> String -> ParserE m a
-parseErrorM c e = lift $ compileErrorM $ "At " ++ show c ++ ": " ++ e
+parseErrorM c e = lift $ compilerErrorM $ "At " ++ show c ++ ": " ++ e
 
 labeled :: Monad m => String -> ParserE m a -> ParserE m a
 labeled = flip label

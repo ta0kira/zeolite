@@ -23,7 +23,7 @@ module Test.TypeInstance (tests) where
 import Control.Monad (when)
 import qualified Data.Map as Map
 
-import Base.CompileError
+import Base.CompilerError
 import Base.CompileInfo
 import Base.MergeTree
 import Base.Mergeable
@@ -860,14 +860,14 @@ definesFilters = Map.fromList $ [
 checkParseSuccess :: String -> GeneralInstance -> IO (CompileInfo ())
 checkParseSuccess x y = return $ do
   t <- readSingle "(string)" x <!! ("When parsing " ++ show x)
-  when (t /= y) $ compileErrorM $ "Expected " ++ show x ++ " to parse as " ++ show y
+  when (t /= y) $ compilerErrorM $ "Expected " ++ show x ++ " to parse as " ++ show y
 
 checkParseFail :: String -> IO (CompileInfo ())
 checkParseFail x = return $ do
   let t = readSingle "(string)" x :: CompileInfo GeneralInstance
-  when (not $ isCompileError t) $
-    compileErrorM $ "Expected failure to parse " ++ show x ++
-                    " but got " ++ show (getCompileSuccess t)
+  when (not $ isCompilerError t) $
+    compilerErrorM $ "Expected failure to parse " ++ show x ++
+                    " but got " ++ show (getCompilerSuccess t)
 
 checkSimpleConvertSuccess :: String -> String -> IO (CompileInfo ())
 checkSimpleConvertSuccess = checkConvertSuccess []
@@ -882,7 +882,7 @@ checkConvertSuccess pa x y = return checked where
     ([t1,t2],pa2) <- parseTheTest pa [x,y]
     check $ checkValueAssignment Resolver pa2 t1 t2
   check c
-    | isCompileError c = compileErrorM $ prefix ++ ":\n" ++ show (getCompileError c)
+    | isCompilerError c = compilerErrorM $ prefix ++ ":\n" ++ show (getCompilerError c)
     | otherwise = return ()
 
 checkInferenceSuccess :: [(String, [String])] -> [String] -> String ->
@@ -890,16 +890,16 @@ checkInferenceSuccess :: [(String, [String])] -> [String] -> String ->
 checkInferenceSuccess pa is x y gs = checkInferenceCommon check pa is x y gs where
   prefix = x ++ " -> " ++ y ++ " " ++ showParams pa
   check gs2 c
-    | isCompileError c = compileErrorM $ prefix ++ ":\n" ++ show (getCompileError c)
-    | otherwise        = getCompileSuccess c `checkEquals` gs2
+    | isCompilerError c = compilerErrorM $ prefix ++ ":\n" ++ show (getCompilerError c)
+    | otherwise        = getCompilerSuccess c `checkEquals` gs2
 
 checkInferenceFail :: [(String, [String])] -> [String] -> String ->
   String -> IO (CompileInfo ())
 checkInferenceFail pa is x y = checkInferenceCommon check pa is x y (mergeAll []) where
   prefix = x ++ " -> " ++ y ++ " " ++ showParams pa
   check _ c
-    | isCompileError c = return ()
-    | otherwise = compileErrorM $ prefix ++ ": Expected failure\n"
+    | isCompilerError c = return ()
+    | otherwise = compilerErrorM $ prefix ++ ": Expected failure\n"
 
 checkInferenceCommon ::
   (MergeTree InferredTypeGuess -> CompileInfo (MergeTree InferredTypeGuess) -> CompileInfo ()) ->
@@ -939,8 +939,8 @@ checkConvertFail pa x y = return checked where
     check $ checkValueAssignment Resolver pa2 t1 t2
   check :: CompileInfo a -> CompileInfo ()
   check c
-    | isCompileError c = return ()
-    | otherwise = compileErrorM $ prefix ++ ": Expected failure\n"
+    | isCompilerError c = return ()
+    | otherwise = compilerErrorM $ prefix ++ ": Expected failure\n"
 
 data Resolver = Resolver
 
@@ -974,4 +974,4 @@ getDefinesFilters (DefinesInstance n ps) = "In defines filters lookup" ??> do
 mapLookup :: (Ord n, Show n, CollectErrorsM m) => Map.Map n a -> n -> m a
 mapLookup ma n = resolve $ n `Map.lookup` ma where
   resolve (Just x) = return x
-  resolve _        = compileErrorM $ "Map key " ++ show n ++ " not found"
+  resolve _        = compilerErrorM $ "Map key " ++ show n ++ " not found"

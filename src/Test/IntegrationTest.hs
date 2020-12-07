@@ -24,7 +24,7 @@ import Control.Monad (when)
 import System.FilePath
 import Text.Parsec
 
-import Base.CompileError
+import Base.CompilerError
 import Base.CompileInfo
 import Parser.Common
 import Parser.IntegrationTest ()
@@ -40,7 +40,7 @@ tests = [
       ("testfiles" </> "basic_compiles_test.0rt")
       (\t -> do
         let h = itHeader t
-        when (not $ isExpectCompiles $ ithResult h) $ compileErrorM "Expected ExpectCompiles"
+        when (not $ isExpectCompiles $ ithResult h) $ compilerErrorM "Expected ExpectCompiles"
         checkEquals (ithTestName h) "basic compiles test"
         containsExactly (getRequirePattern $ ithResult h) [
             OutputPattern OutputCompiler "pattern in output 1",
@@ -58,7 +58,7 @@ tests = [
       ("testfiles" </> "basic_error_test.0rt")
       (\t -> do
         let h = itHeader t
-        when (not $ isExpectCompileError $ ithResult h) $ compileErrorM "Expected ExpectCompileError"
+        when (not $ isExpectCompilerError $ ithResult h) $ compilerErrorM "Expected ExpectCompilerError"
         checkEquals (ithTestName h) "basic error test"
         containsExactly (getRequirePattern $ ithResult h) [
             OutputPattern OutputCompiler "pattern in output 1",
@@ -76,7 +76,7 @@ tests = [
       ("testfiles" </> "basic_crash_test.0rt")
       (\t -> do
         let h = itHeader t
-        when (not $ isExpectRuntimeError $ ithResult h) $ compileErrorM "Expected ExpectRuntimeError"
+        when (not $ isExpectRuntimeError $ ithResult h) $ compilerErrorM "Expected ExpectRuntimeError"
         checkEquals (ithTestName h) "basic crash test"
         containsExactly (getRequirePattern $ ithResult h) [
             OutputPattern OutputAny "pattern in output 1",
@@ -94,7 +94,7 @@ tests = [
       ("testfiles" </> "basic_success_test.0rt")
       (\t -> do
         let h = itHeader t
-        when (not $ isExpectRuntimeSuccess $ ithResult h) $ compileErrorM "Expected ExpectRuntimeSuccess"
+        when (not $ isExpectRuntimeSuccess $ ithResult h) $ compilerErrorM "Expected ExpectRuntimeSuccess"
         checkEquals (ithTestName h) "basic success test"
         containsExactly (getRequirePattern $ ithResult h) [
             OutputPattern OutputAny "pattern in output 1",

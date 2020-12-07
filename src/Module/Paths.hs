@@ -28,7 +28,7 @@ import Control.Monad.IO.Class
 import Data.List (nub,isSuffixOf)
 import System.FilePath
 
-import Base.CompileError
+import Base.CompilerError
 
 
 class PathIOHandler r where

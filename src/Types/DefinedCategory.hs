@@ -32,7 +32,7 @@ module Types.DefinedCategory (
 import qualified Data.Map as Map
 import qualified Data.Set as Set
 
-import Base.CompileError
+import Base.CompilerError
 import Types.Function
 import Types.Positional
 import Types.Procedure
@@ -111,7 +111,7 @@ pairProceduresToFunctions fa ps = do
       case epName p `Map.lookup` pa' of
            Nothing -> return ()
            -- TODO: The error might show things in the wrong order.
-           (Just p0) -> compileErrorM $ "Procedure " ++ show (epName p) ++
+           (Just p0) -> compilerErrorM $ "Procedure " ++ show (epName p) ++
                                        formatFullContextBrace (epContext p) ++
                                        " is already defined" ++
                                        formatFullContextBrace (epContext p0)
@@ -121,11 +121,11 @@ pairProceduresToFunctions fa ps = do
       p <- getPair (n `Map.lookup` fa2) (n `Map.lookup` pa)
       return (p:ps2')
     getPair (Just f) Nothing =
-      compileErrorM $ "Function " ++ show (sfName f) ++
+      compilerErrorM $ "Function " ++ show (sfName f) ++
                      formatFullContextBrace (sfContext f) ++
                      " has no procedure definition"
     getPair Nothing (Just p) =
-      compileErrorM $ "Procedure " ++ show (epName p) ++
+      compilerErrorM $ "Procedure " ++ show (epName p) ++
                      formatFullContextBrace (epContext p) ++
                      " does not correspond to a function"
     getPair (Just f) (Just p) = do
@@ -154,7 +154,7 @@ mapMembers ms = foldr update (return Map.empty) ms where
     case dmName m `Map.lookup` ma' of
          Nothing ->  return ()
          -- TODO: The error might show things in the wrong order.
-         (Just m0) -> compileErrorM $ "Member " ++ show (dmName m) ++
+         (Just m0) -> compilerErrorM $ "Member " ++ show (dmName m) ++
                                      formatFullContextBrace (dmContext m) ++
                                      " is already defined" ++
                                      formatFullContextBrace (vvContext m0)

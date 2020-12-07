@@ -75,7 +75,7 @@ import Control.Monad (when)
 import Data.List (intercalate)
 import qualified Data.Map as Map
 
-import Base.CompileError
+import Base.CompilerError
 import Base.MergeTree
 import Base.Mergeable
 import Types.GeneralType
@@ -298,14 +298,14 @@ filterLookup :: ErrorContextM m =>
   ParamFilters -> ParamName -> m [TypeFilter]
 filterLookup ps n = resolve $ n `Map.lookup` ps where
   resolve (Just x) = return x
-  resolve _        = compileErrorM $ "Param " ++ show n ++ " not found"
+  resolve _        = compilerErrorM $ "Param " ++ show n ++ " not found"
 
 getValueForParam :: ErrorContextM m =>
   ParamValues -> ParamName -> m GeneralInstance
 getValueForParam pa n =
   case n `Map.lookup` pa of
        (Just x) -> return x
-       _ -> compileErrorM $ "Param " ++ show n ++ " does not exist"
+       _ -> compilerErrorM $ "Param " ++ show n ++ " does not exist"
 
 fixTypeParams :: GeneralInstance -> GeneralInstance
 fixTypeParams = setParamsFixed True
@@ -329,7 +329,7 @@ noInferredTypes g = do
   g' <- g
   let gm = mapTypeGuesses g'
   "Type inference is not allowed here" !!> (mapErrorsM_ format $ Map.elems gm) where
-    format = compileErrorM . reduceMergeTree showAny showAll show
+    format = compilerErrorM . reduceMergeTree showAny showAll show
     showAny gs = "Any of [ " ++ intercalate ", " gs ++ " ]"
     showAll gs = "All of [ " ++ intercalate ", " gs ++ " ]"
 
@@ -349,7 +349,7 @@ checkValueTypeMatch r f v ts1@(ValueType r1 t1) ts2@(ValueType r2 t2) = result <
     | r1 < r2   = Contravariant
     | otherwise = Invariant
   result = do
-    when (not $ storageDir `allowsVariance` v) $ compileErrorM "Incompatible storage modifiers"
+    when (not $ storageDir `allowsVariance` v) $ compilerErrorM "Incompatible storage modifiers"
     checkGeneralMatch r f v t1 t2
 
 checkGeneralMatch :: (CollectErrorsM m, TypeResolver r) =>
@@ -366,7 +366,7 @@ checkGeneralMatch r f v t1 t2 = do
     pairMergeTree mergeAnyM mergeAllM (checkSingleMatch r f Covariant) t1 t2
   matchInferredRight = matchOnlyLeaf t2 >>= inferFrom
   inferFrom (JustInferredType p) = return $ mergeLeaf $ InferredTypeGuess p t1 v
-  inferFrom _ = compileErrorM ""
+  inferFrom _ = compilerErrorM ""
   bothSingle = do
     t1' <- matchOnlyLeaf t1
     t2' <- matchOnlyLeaf t2
@@ -380,7 +380,7 @@ checkSingleMatch :: (CollectErrorsM m, TypeResolver r) =>
   r -> ParamFilters -> Variance ->
   TypeInstanceOrParam -> TypeInstanceOrParam -> m (MergeTree InferredTypeGuess)
 checkSingleMatch _ _ _ (JustInferredType p1) _ =
-  compileErrorM $ "Inferred parameter " ++ show p1 ++ " is not allowed on the left"
+  compilerErrorM $ "Inferred parameter " ++ show p1 ++ " is not allowed on the left"
 checkSingleMatch _ _ v t1 (JustInferredType p2) =
   return $ mergeLeaf $ InferredTypeGuess p2 (singleType t1) v
 checkSingleMatch r f v (JustTypeInstance t1) (JustTypeInstance t2) =
@@ -405,7 +405,7 @@ checkInstanceToInstance r f v t1@(TypeInstance n1 ps1) t2@(TypeInstance n2 ps2)
   | v == Contravariant = do
     ps2' <- trRefines r t2 n1
     checkInstanceToInstance r f Contravariant t1 (TypeInstance n1 ps2')
-  | otherwise = compileErrorM $ "Category " ++ show n2 ++ " is required but got " ++ show n1
+  | otherwise = compilerErrorM $ "Category " ++ show n2 ++ " is required but got " ++ show n1
 
 checkParamToInstance :: (CollectErrorsM m, TypeResolver r) =>
   r -> ParamFilters -> Variance -> ParamName -> TypeInstance -> m (MergeTree InferredTypeGuess)
@@ -425,7 +425,7 @@ checkParamToInstance r f v@Contravariant n1 t2@(TypeInstance _ _) = do
       checkGeneralMatch r f v t (singleType $ JustTypeInstance t2)
     checkConstraintToInstance f2 =
       -- x -> F cannot imply T -> x
-      compileErrorM $ "Constraint " ++ viewTypeFilter n1 f2 ++
+      compilerErrorM $ "Constraint " ++ viewTypeFilter n1 f2 ++
                       " does not imply " ++ show t2 ++ " <- " ++ show n1
 checkParamToInstance r f v@Covariant n1 t2@(TypeInstance _ _) = do
   cs1 <- fmap (filter isTypeFilter) $ f `filterLookup` n1
@@ -438,7 +438,7 @@ checkParamToInstance r f v@Covariant n1 t2@(TypeInstance _ _) = do
     checkConstraintToInstance f2 =
       -- F -> x cannot imply x -> T
       -- DefinesInstance cannot be converted to TypeInstance
-      compileErrorM $ "Constraint " ++ viewTypeFilter n1 f2 ++
+      compilerErrorM $ "Constraint " ++ viewTypeFilter n1 f2 ++
                       " does not imply " ++ show n1 ++ " -> " ++ show t2
 
 checkInstanceToParam :: (CollectErrorsM m, TypeResolver r) =>
@@ -460,7 +460,7 @@ checkInstanceToParam r f v@Contravariant t1@(TypeInstance _ _) n2 = do
     checkInstanceToConstraint f2 =
       -- F -> x cannot imply x -> T
       -- DefinesInstance cannot be converted to TypeInstance
-      compileErrorM $ "Constraint " ++ viewTypeFilter n2 f2 ++
+      compilerErrorM $ "Constraint " ++ viewTypeFilter n2 f2 ++
                       " does not imply " ++ show n2 ++ " <- " ++ show t1
 checkInstanceToParam r f v@Covariant t1@(TypeInstance _ _) n2 = do
   cs2 <- fmap (filter isTypeFilter) $ f `filterLookup` n2
@@ -472,7 +472,7 @@ checkInstanceToParam r f v@Covariant t1@(TypeInstance _ _) n2 = do
       checkGeneralMatch r f v (singleType $ JustTypeInstance t1) t
     checkInstanceToConstraint f2 =
       -- x -> F cannot imply T -> x
-      compileErrorM $ "Constraint " ++ viewTypeFilter n2 f2 ++
+      compilerErrorM $ "Constraint " ++ viewTypeFilter n2 f2 ++
                       " does not imply " ++ show t1 ++ " -> " ++ show n2
 
 checkParamToParam :: (CollectErrorsM m, TypeResolver r) =>
@@ -506,26 +506,26 @@ checkParamToParam r f v n1 n2
         | otherwise      = TypeFilter FilterRequires selfParam2
       checkConstraintToConstraint Covariant (TypeFilter FilterRequires t1) (TypeFilter FilterAllows t2)
         | t1 == selfParam1 && t2 == selfParam2 =
-          compileErrorM $ "Infinite recursion in " ++ show n1 ++ " -> " ++ show n2
+          compilerErrorM $ "Infinite recursion in " ++ show n1 ++ " -> " ++ show n2
         -- x -> F1, F2 -> y implies x -> y only if F1 -> F2
         | otherwise = checkGeneralMatch r f Covariant t1 t2
       checkConstraintToConstraint Covariant f1 f2 =
         -- x -> F1, y -> F2 cannot imply x -> y
         -- F1 -> x, F1 -> y cannot imply x -> y
         -- F1 -> x, y -> F2 cannot imply x -> y
-        compileErrorM $ "Constraints " ++ viewTypeFilter n1 f1 ++ " and " ++
+        compilerErrorM $ "Constraints " ++ viewTypeFilter n1 f1 ++ " and " ++
                         viewTypeFilter n2 f2 ++ " do not imply " ++
                         show n1 ++ " -> " ++ show n2
       checkConstraintToConstraint Contravariant (TypeFilter FilterAllows t1) (TypeFilter FilterRequires t2)
         | t1 == selfParam1 && t2 == selfParam2 =
-          compileErrorM $ "Infinite recursion in " ++ show n1 ++ " <- " ++ show n2
+          compilerErrorM $ "Infinite recursion in " ++ show n1 ++ " <- " ++ show n2
         -- x <- F1, F2 <- y implies x <- y only if F1 <- F2
         | otherwise = checkGeneralMatch r f Contravariant t1 t2
       checkConstraintToConstraint Contravariant f1 f2 =
         -- x <- F1, y <- F2 cannot imply x <- y
         -- F1 <- x, F1 <- y cannot imply x <- y
         -- F1 <- x, y <- F2 cannot imply x <- y
-        compileErrorM $ "Constraints " ++ viewTypeFilter n1 f1 ++ " and " ++
+        compilerErrorM $ "Constraints " ++ viewTypeFilter n1 f1 ++ " and " ++
                         viewTypeFilter n2 f2 ++ " do not imply " ++
                         show n1 ++ " <- " ++ show n2
       checkConstraintToConstraint _ _ _ = undefined
@@ -535,8 +535,8 @@ validateGeneralInstance :: (CollectErrorsM m, TypeResolver r) =>
 validateGeneralInstance r f = reduceMergeTree collectAllM_ collectAllM_ validateSingle where
   validateSingle (JustTypeInstance t) = validateTypeInstance r f t
   validateSingle (JustParamName _ n) = when (not $ n `Map.member` f) $
-      compileErrorM $ "Param " ++ show n ++ " does not exist"
-  validateSingle (JustInferredType n) = compileErrorM $ "Inferred param " ++ show n ++ " is not allowed here"
+      compilerErrorM $ "Param " ++ show n ++ " does not exist"
+  validateSingle (JustInferredType n) = compilerErrorM $ "Inferred param " ++ show n ++ " is not allowed here"
 
 validateTypeInstance :: (CollectErrorsM m, TypeResolver r) =>
   r -> ParamFilters -> TypeInstance -> m ()
@@ -576,7 +576,7 @@ validateAssignment r f t fs = mapErrorsM_ checkWithMessage fs where
       (collectFirstM_ $ map (checkDefinesMatch r f f2) fs1) <!!
         ("No filters imply " ++ show n1 ++ " defines " ++ show f2)
   checkDefinesFilter _ (JustInferredType n) =
-    compileErrorM $ "Inferred param " ++ show n ++ " is not allowed here"
+    compilerErrorM $ "Inferred param " ++ show n ++ " is not allowed here"
 
 checkDefinesMatch :: (CollectErrorsM m, TypeResolver r) =>
   r -> ParamFilters -> DefinesInstance -> DefinesInstance -> m ()
@@ -585,7 +585,7 @@ checkDefinesMatch r f f2@(DefinesInstance n2 ps2) f1@(DefinesInstance n1 ps1)
     paired <- processPairs alwaysPair ps1 ps2
     variance <- trVariance r n2
     processPairs_ (\v2 (p1,p2) -> checkGeneralMatch r f v2 p1 p2) variance (Positional paired)
-  | otherwise = compileErrorM $ "Constraint " ++ show f1 ++ " does not imply " ++ show f2
+  | otherwise = compilerErrorM $ "Constraint " ++ show f1 ++ " does not imply " ++ show f2
 
 validateInstanceVariance :: (CollectErrorsM m, TypeResolver r) =>
   r -> ParamVariances -> Variance -> GeneralInstance -> m ()
@@ -596,11 +596,11 @@ validateInstanceVariance r vm v = reduceMergeTree collectAllM_ collectAllM_ vali
     mapErrorsM_ (\(v2,p) -> validateInstanceVariance r vm (v `composeVariance` v2) p) paired
   validateSingle (JustParamName _ n) =
     case n `Map.lookup` vm of
-        Nothing -> compileErrorM $ "Param " ++ show n ++ " is undefined"
+        Nothing -> compilerErrorM $ "Param " ++ show n ++ " is undefined"
         (Just v0) -> when (not $ v0 `allowsVariance` v) $
-                          compileErrorM $ "Param " ++ show n ++ " cannot be " ++ show v
+                          compilerErrorM $ "Param " ++ show n ++ " cannot be " ++ show v
   validateSingle (JustInferredType n) =
-    compileErrorM $ "Inferred param " ++ show n ++ " is not allowed here"
+    compilerErrorM $ "Inferred param " ++ show n ++ " is not allowed here"
 
 validateDefinesVariance :: (CollectErrorsM m, TypeResolver r) =>
   r -> ParamVariances -> Variance -> DefinesInstance -> m ()
