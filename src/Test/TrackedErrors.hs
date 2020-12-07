@@ -70,7 +70,7 @@ tests = [
     checkErrorAndWarnings "" "message\n" (compilerErrorM "" `summarizeErrorsM` "message" :: TrackedErrorsIO ()),
 
     checkSuccessAndWarnings "error\n" ()
-      (asCompileWarnings $ compilerErrorM "error" :: TrackedErrorsIO ()),
+      (asCompilerWarnings $ compilerErrorM "error" :: TrackedErrorsIO ()),
     checkErrorAndWarnings "" "warning\n"
       (asCompilerError $ compilerWarningM "warning" :: TrackedErrorsIO ()),
 
@@ -107,14 +107,14 @@ checkSuccessAndWarnings :: (Eq a, Show a) => String -> a -> TrackedErrorsIO a ->
 checkSuccessAndWarnings w x y = do
   y' <- toTrackedErrors y
   outcome <- checkSuccess x y
-  if show (getCompileWarnings y') == w
+  if show (getCompilerWarnings y') == w
      then return $ outcome >> return ()
-     else return $ compilerErrorM $ "Expected warnings " ++ show w ++ " but got warnings \"" ++ show (getCompileWarnings y') ++ "\""
+     else return $ compilerErrorM $ "Expected warnings " ++ show w ++ " but got warnings \"" ++ show (getCompilerWarnings y') ++ "\""
 
 checkErrorAndWarnings :: (Eq a, Show a) => String -> String -> TrackedErrorsIO a -> IO (TrackedErrors ())
 checkErrorAndWarnings w e y = do
   y' <- toTrackedErrors y
   outcome <- checkError e y
-  if show (getCompileWarnings y') == w
+  if show (getCompilerWarnings y') == w
      then return $ outcome >> return ()
-     else return $ compilerErrorM $ "Expected warnings " ++ show w ++ " but got warnings \"" ++ show (getCompileWarnings y') ++ "\""
+     else return $ compilerErrorM $ "Expected warnings " ++ show w ++ " but got warnings \"" ++ show (getCompilerWarnings y') ++ "\""

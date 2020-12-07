@@ -88,7 +88,7 @@ runSingleTest b cm p paths deps (f,s) = do
       if not $ isCompilerError result
          then compilerErrorM "Expected compilation failure"
          else fmap (:[]) $ return $ do
-           let warnings = show $ getCompileWarnings result
+           let warnings = show $ getCompilerWarnings result
            let errors   = show $ getCompilerError result
            checkContent rs es (lines warnings ++ lines errors) [] []
 
@@ -97,7 +97,7 @@ runSingleTest b cm p paths deps (f,s) = do
       if isCompilerError result
          then fromTrackedErrors result >> return []
          else fmap (:[]) $ return $ do
-           let warnings = show $ getCompileWarnings result
+           let warnings = show $ getCompilerWarnings result
            checkContent rs es (lines warnings) [] []
 
     run (ExpectRuntimeError _ rs es) args cs ds ts = do
@@ -151,7 +151,7 @@ runSingleTest b cm p paths deps (f,s) = do
            (True,False) -> collectAllM_ $ (asCompilerError res):(map compilerErrorM $ err ++ out)
            (False,True) -> collectAllM_ [compilerErrorM "Expected runtime failure",
                                          asCompilerError res <?? "\nOutput from compiler:"]
-           _ -> fromTrackedErrors $ checkContent rs es (lines $ show $ getCompileWarnings res) err out
+           _ -> fromTrackedErrors $ checkContent rs es (lines $ show $ getCompilerWarnings res) err out
       where
         printOutcome outcome = do
           failed <- isCompilerErrorM outcome

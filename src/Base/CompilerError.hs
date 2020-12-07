@@ -23,6 +23,7 @@ limitations under the License.
 module Base.CompilerError (
   CollectErrorsM(..),
   ErrorContextM(..),
+  ErrorContextT(..),
   (<??),
   (??>),
   (<!!),
@@ -30,15 +31,18 @@ module Base.CompilerError (
   collectAllM_,
   collectFirstM_,
   errorFromIO,
+  isCompilerError,
   isCompilerErrorM,
+  isCompilerSuccess,
   isCompilerSuccessM,
   mapErrorsM,
   mapErrorsM_,
 ) where
 
 import Control.Monad.IO.Class
-import Control.Monad.Trans (lift)
+import Control.Monad.Trans
 import Control.Monad.Trans.State (StateT,mapStateT)
+import Data.Functor.Identity
 import System.IO.Error (catchIOError)
 
 #if MIN_VERSION_base(4,13,0)
@@ -73,6 +77,11 @@ class ErrorContextM m => CollectErrorsM m where
   collectAnyM :: Foldable f => f (m a) -> m [a]
   collectFirstM :: Foldable f => f (m a) -> m a
 
+class MonadTrans t => ErrorContextT t where
+  isCompilerErrorT :: (Monad m, ErrorContextM (t m)) => t m a -> m Bool
+  isCompilerSuccessT :: (Monad m, ErrorContextM (t m)) => t m a -> m Bool
+  isCompilerSuccessT = fmap not . isCompilerErrorT
+
 (<??) :: ErrorContextM m => m a -> String -> m a
 (<??) = withContextM
 infixl 1 <??
@@ -100,6 +109,12 @@ mapErrorsM f = collectAllM . map f
 
 mapErrorsM_ :: CollectErrorsM m => (a -> m b) -> [a] -> m ()
 mapErrorsM_ f = collectAllM_ . map f
+
+isCompilerError :: (ErrorContextT t, ErrorContextM (t Identity)) => t Identity a -> Bool
+isCompilerError = runIdentity . isCompilerErrorT
+
+isCompilerSuccess :: (ErrorContextT t, ErrorContextM (t Identity)) => t Identity a -> Bool
+isCompilerSuccess = runIdentity . isCompilerSuccessT
 
 isCompilerErrorM :: CollectErrorsM m => m a -> m Bool
 isCompilerErrorM x = collectFirstM [x >> return False,return True]

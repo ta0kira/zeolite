@@ -25,16 +25,14 @@ module Base.TrackedErrors (
   TrackedErrorsIO,
   CompileMessage,
   asCompilerError,
-  asCompileWarnings,
+  asCompilerWarnings,
   fromTrackedErrors,
   getCompilerError,
   getCompilerErrorT,
   getCompilerSuccess,
   getCompilerSuccessT,
-  getCompileWarnings,
-  getCompileWarningsT,
-  isCompilerError,
-  isCompilerErrorT,
+  getCompilerWarnings,
+  getCompilerWarningsT,
   isEmptyCompileMessage,
   toTrackedErrors,
   tryTrackedErrorsIO,
@@ -75,11 +73,8 @@ getCompilerError = runIdentity . getCompilerErrorT
 getCompilerSuccess :: TrackedErrors a -> a
 getCompilerSuccess = runIdentity . getCompilerSuccessT
 
-getCompileWarnings :: TrackedErrors a -> CompileMessage
-getCompileWarnings = runIdentity . getCompileWarningsT
-
-isCompilerError :: TrackedErrors a -> Bool
-isCompilerError = runIdentity . isCompilerErrorT
+getCompilerWarnings :: TrackedErrors a -> CompileMessage
+getCompilerWarnings = runIdentity . getCompilerWarningsT
 
 getCompilerErrorT :: Monad m => TrackedErrorsT m a -> m CompileMessage
 getCompilerErrorT = fmap cfErrors . citState
@@ -87,15 +82,8 @@ getCompilerErrorT = fmap cfErrors . citState
 getCompilerSuccessT :: Monad m => TrackedErrorsT m a -> m a
 getCompilerSuccessT = fmap csData . citState
 
-getCompileWarningsT :: Monad m => TrackedErrorsT m a -> m CompileMessage
-getCompileWarningsT = fmap getWarnings . citState
-
-isCompilerErrorT :: Monad m => TrackedErrorsT m a -> m Bool
-isCompilerErrorT x = do
-  x' <- citState x
-  case x' of
-       CompileFail _ _ -> return True
-       _               -> return False
+getCompilerWarningsT :: Monad m => TrackedErrorsT m a -> m CompileMessage
+getCompilerWarningsT = fmap getWarnings . citState
 
 isEmptyCompileMessage :: CompileMessage -> Bool
 isEmptyCompileMessage (CompileMessage "" ws) = all isEmptyCompileMessage ws
@@ -106,8 +94,8 @@ fromTrackedErrors x = runIdentity $ do
   x' <- citState x
   return $ TrackedErrorsT $ return x'
 
-asCompileWarnings :: Monad m => TrackedErrors a -> TrackedErrorsT m ()
-asCompileWarnings x = runIdentity $ do
+asCompilerWarnings :: Monad m => TrackedErrors a -> TrackedErrorsT m ()
+asCompilerWarnings x = runIdentity $ do
   x' <- citState x
   return $ TrackedErrorsT $ return $
     case x' of
@@ -130,7 +118,7 @@ toTrackedErrors x = do
 tryTrackedErrorsIO :: String -> String -> TrackedErrorsIO a -> IO a
 tryTrackedErrorsIO warn err x = do
   x' <- toTrackedErrors x
-  let w = getCompileWarnings $ x' <?? warn
+  let w = getCompilerWarnings $ x' <?? warn
   let e = getCompilerError    $ x' <?? err
   if isCompilerError x'
      then do
@@ -250,6 +238,13 @@ instance Monad m => CollectErrorsM (TrackedErrorsT m) where
   collectFirstM = combineResults (select . splitErrorsAndData) where
     select (_,x:_,bs,ws) = CompilerSuccess (CompileMessage "" ws) bs x
     select (es,_,bs,ws)  = CompileFail (CompileMessage "" ws) $ addBackground bs $ CompileMessage "" es
+
+instance ErrorContextT TrackedErrorsT where
+  isCompilerErrorT x = do
+    x' <- citState x
+    case x' of
+         CompileFail _ _ -> return True
+         _               -> return False
 
 combineResults :: (Monad m, Foldable f) =>
   ([TrackedErrorsState a] -> TrackedErrorsState b) -> f (TrackedErrorsT m a) -> TrackedErrorsT m b

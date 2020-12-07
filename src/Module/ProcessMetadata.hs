@@ -248,7 +248,7 @@ loadDepsCommon f h ca pa0 getDeps ps = do
             "Module \"" ++ p ++ "\" is out of date and should be recompiled"
           if enforce
              then fromTrackedErrors   fresh
-             else asCompileWarnings fresh
+             else asCompilerWarnings fresh
           return m
 
 loadMetadata :: MetadataMap -> FilePath -> TrackedErrorsIO CompileMetadata

@@ -1266,7 +1266,7 @@ checkInferenceSuccess :: CategoryMap SourcePos -> [(String, [String])] ->
 checkInferenceSuccess tm pa is ts gs = checkInferenceCommon check tm pa is ts gs where
   prefix = show ts ++ " " ++ showParams pa
   check gs2 c
-    | isCompilerError c = compilerErrorM $ prefix ++ ":\n" ++ show (getCompileWarnings c) ++ show (getCompilerError c)
+    | isCompilerError c = compilerErrorM $ prefix ++ ":\n" ++ show (getCompilerWarnings c) ++ show (getCompilerError c)
     | otherwise        = getCompilerSuccess c `containsExactly` gs2
 
 checkInferenceFail :: CategoryMap SourcePos -> [(String, [String])] ->
