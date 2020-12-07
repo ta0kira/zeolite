@@ -50,6 +50,7 @@ import qualified Data.Map as Map
 import qualified Data.Set as Set
 
 import Base.CompilerError
+import Base.CompilerMessage
 import Base.TrackedErrors
 import Parser.Common
 import Parser.TypeInstance ()

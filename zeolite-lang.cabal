@@ -1,7 +1,7 @@
 cabal-version:       2.2
 
 name:                zeolite-lang
-version:             0.10.0.1
+version:             0.11.0.0
 synopsis:            Zeolite is a statically-typed, general-purpose programming language.
 
 description:
@@ -179,6 +179,7 @@ library zeolite-internal
   import:              defaults
 
   exposed-modules:     Base.CompilerError,
+                       Base.CompilerMessage,
                        Base.GeneralType,
                        Base.MergeTree,
                        Base.Mergeable,
@@ -210,6 +211,7 @@ library zeolite-internal
                        Parser.Pragma,
                        Parser.Procedure,
                        Parser.SourceFile,
+                       Parser.TextParser,
                        Parser.TypeCategory,
                        Parser.TypeInstance,
                        Test.Common,
@@ -253,6 +255,7 @@ library zeolite-internal
                        directory >= 1.2.3 && < 1.4,
                        filepath >= 1.0 && < 1.5,
                        hashable >= 1.0 && < 1.4,
+                       megaparsec >= 7.0 && < 9.1,
                        mtl >= 1.0 && < 2.3,
                        parsec >= 3.0 && < 3.2,
                        parser-combinators >= 0.2 && < 2.0,
