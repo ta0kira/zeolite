@@ -55,12 +55,10 @@ import Control.Monad.Fail
 -- For some GHC versions, pattern-matching failures require MonadFail.
 #if MIN_VERSION_base(4,9,0)
 class (Monad m, MonadFail m) => ErrorContextM m where
-  compilerErrorM :: String -> m a
-  compilerErrorM = fail
 #else
 class Monad m => ErrorContextM m where
-  compilerErrorM :: String -> m a
 #endif
+  compilerErrorM :: String -> m a
   withContextM :: m a -> String -> m a
   withContextM c _ = c
   summarizeErrorsM :: m a -> String -> m a
