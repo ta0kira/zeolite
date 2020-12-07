@@ -64,7 +64,7 @@ applyProcedureScope ::
   (ScopeContext c -> ScopedFunction c -> ExecutableProcedure c -> a) -> ProcedureScope c -> [a]
 applyProcedureScope f (ProcedureScope ctx fs) = map (uncurry (f ctx)) fs
 
-getProcedureScopes :: (Show c, CompileErrorM m) =>
+getProcedureScopes :: (Show c, CollectErrorsM m) =>
   CategoryMap c -> ExprMap c -> DefinedCategory c -> m [ProcedureScope c]
 getProcedureScopes ta em (DefinedCategory c n pi _ _ fi ms ps fs) = do
   (_,t) <- getConcreteCategory ta (c,n)

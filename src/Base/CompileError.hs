@@ -21,7 +21,7 @@ limitations under the License.
 {-# LANGUAGE Safe #-}
 
 module Base.CompileError (
-  CompileErrorM(..),
+  CollectErrorsM(..),
   ErrorContextM(..),
   (<??),
   (??>),
@@ -68,7 +68,7 @@ class Monad m => ErrorContextM m where
   resetBackgroundM :: m a -> m a
   resetBackgroundM = id
 
-class ErrorContextM m => CompileErrorM m where
+class ErrorContextM m => CollectErrorsM m where
   collectAllM :: Foldable f => f (m a) -> m [a]
   collectAnyM :: Foldable f => f (m a) -> m [a]
   collectFirstM :: Foldable f => f (m a) -> m a
@@ -89,22 +89,22 @@ infixl 1 <!!
 (!!>) = flip summarizeErrorsM
 infixr 1 !!>
 
-collectAllM_ :: (Foldable f, CompileErrorM m) => f (m a) -> m ()
+collectAllM_ :: (Foldable f, CollectErrorsM m) => f (m a) -> m ()
 collectAllM_ = fmap (const ()) . collectAllM
 
-collectFirstM_ :: (Foldable f, CompileErrorM m) => f (m a) -> m ()
+collectFirstM_ :: (Foldable f, CollectErrorsM m) => f (m a) -> m ()
 collectFirstM_ = fmap (const ()) . collectFirstM
 
-mapErrorsM :: CompileErrorM m => (a -> m b) -> [a] -> m [b]
+mapErrorsM :: CollectErrorsM m => (a -> m b) -> [a] -> m [b]
 mapErrorsM f = collectAllM . map f
 
-mapErrorsM_ :: CompileErrorM m => (a -> m b) -> [a] -> m ()
+mapErrorsM_ :: CollectErrorsM m => (a -> m b) -> [a] -> m ()
 mapErrorsM_ f = collectAllM_ . map f
 
-isCompileErrorM :: CompileErrorM m => m a -> m Bool
+isCompileErrorM :: CollectErrorsM m => m a -> m Bool
 isCompileErrorM x = collectFirstM [x >> return False,return True]
 
-isCompileSuccessM :: CompileErrorM m => m a -> m Bool
+isCompileSuccessM :: CollectErrorsM m => m a -> m Bool
 isCompileSuccessM x = collectFirstM [x >> return True,return False]
 
 errorFromIO :: (MonadIO m, ErrorContextM m) => IO a -> m a

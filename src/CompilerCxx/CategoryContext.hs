@@ -41,7 +41,7 @@ import Types.TypeCategory
 import Types.TypeInstance
 
 
-getContextForInit :: (Show c, CompileErrorM m) =>
+getContextForInit :: (Show c, CollectErrorsM m) =>
   CategoryMap c -> ExprMap c -> AnyCategory c -> DefinedCategory c ->
   SymbolScope -> m (ProcedureContext c)
 getContextForInit tm em t d s = do
@@ -86,7 +86,7 @@ getContextForInit tm em t d s = do
       pcNoTrace = False
     }
 
-getProcedureContext :: (Show c, CompileErrorM m) =>
+getProcedureContext :: (Show c, CollectErrorsM m) =>
   ScopeContext c -> ScopedFunction c -> ExecutableProcedure c -> m (ProcedureContext c)
 getProcedureContext (ScopeContext tm t ps pi ms pa fi fa va em)
                     ff@(ScopedFunction _ _ _ s as1 rs1 ps1 fs _)
@@ -150,7 +150,7 @@ getProcedureContext (ScopeContext tm t ps pi ms pa fi fa va em)
   where
     pairOutput (PassedValue c1 t2) (OutputValue c2 n2) = return $ (n2,PassedValue (c2++c1) t2)
 
-getMainContext :: CompileErrorM m => CategoryMap c -> ExprMap c -> m (ProcedureContext c)
+getMainContext :: CollectErrorsM m => CategoryMap c -> ExprMap c -> m (ProcedureContext c)
 getMainContext tm em = return $ ProcedureContext {
     pcScope = LocalScope,
     pcType = CategoryNone,

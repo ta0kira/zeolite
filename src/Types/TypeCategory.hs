@@ -381,7 +381,7 @@ partitionByScope f = foldr bin empty where
     | f x == ValueScope    = (cs,ts,x:vs)
     | otherwise = (cs,ts,vs)
 
-checkFilters :: CompileErrorM m =>
+checkFilters :: CollectErrorsM m =>
   AnyCategory c -> Positional GeneralInstance -> m (Positional [TypeFilter])
 checkFilters t ps = do
   let params = map vpParam $ getCategoryParams t
@@ -401,13 +401,13 @@ checkFilters t ps = do
             (Just x) -> return x
             _ -> return []
 
-subAllParams :: CompileErrorM m =>
+subAllParams :: CollectErrorsM m =>
   ParamValues -> GeneralInstance -> m GeneralInstance
 subAllParams pa = uncheckedSubInstance (getValueForParam pa)
 
 type CategoryMap c = Map.Map CategoryName (AnyCategory c)
 
-getCategory :: (Show c, CompileErrorM m) =>
+getCategory :: (Show c, CollectErrorsM m) =>
   CategoryMap c -> ([c],CategoryName) -> m ([c],AnyCategory c)
 getCategory tm (c,n) =
   case n `Map.lookup` tm of
@@ -418,7 +418,7 @@ getCategory tm (c,n) =
       | null c = ""
       | otherwise = formatFullContextBrace c
 
-getValueCategory :: (Show c, CompileErrorM m) =>
+getValueCategory :: (Show c, CollectErrorsM m) =>
   CategoryMap c -> ([c],CategoryName) -> m ([c],AnyCategory c)
 getValueCategory tm (c,n) = do
   (c2,t) <- getCategory tm (c,n)
@@ -428,7 +428,7 @@ getValueCategory tm (c,n) = do
                          " cannot be used as a value" ++
                          formatFullContextBrace c
 
-getInstanceCategory :: (Show c, CompileErrorM m) =>
+getInstanceCategory :: (Show c, CollectErrorsM m) =>
   CategoryMap c -> ([c],CategoryName) -> m ([c],AnyCategory c)
 getInstanceCategory tm (c,n) = do
   (c2,t) <- getCategory tm (c,n)
@@ -438,7 +438,7 @@ getInstanceCategory tm (c,n) = do
                          " cannot be used as a type interface" ++
                          formatFullContextBrace c
 
-getConcreteCategory :: (Show c, CompileErrorM m) =>
+getConcreteCategory :: (Show c, CollectErrorsM m) =>
   CategoryMap c -> ([c],CategoryName) -> m ([c],AnyCategory c)
 getConcreteCategory tm (c,n) = do
   (c2,t) <- getCategory tm (c,n)
@@ -448,7 +448,7 @@ getConcreteCategory tm (c,n) = do
                          " cannot be used as concrete" ++
                          formatFullContextBrace c
 
-includeNewTypes :: (Show c, CompileErrorM m) =>
+includeNewTypes :: (Show c, CollectErrorsM m) =>
   CategoryMap c -> [AnyCategory c] -> m (CategoryMap c)
 includeNewTypes tm0 ts = do
   checkConnectionCycles tm0 ts
@@ -459,7 +459,7 @@ includeNewTypes tm0 ts = do
   checkCategoryInstances tm0 ts3
   declareAllTypes tm0 ts3
 
-declareAllTypes :: (Show c, CompileErrorM m) =>
+declareAllTypes :: (Show c, CollectErrorsM m) =>
   CategoryMap c -> [AnyCategory c] -> m (CategoryMap c)
 declareAllTypes tm0 = foldr (\t tm -> tm >>= update t) (return tm0) where
   update t tm =
@@ -470,7 +470,7 @@ declareAllTypes tm0 = foldr (\t tm -> tm >>= update t) (return tm0) where
                                      formatFullContextBrace (getCategoryContext t2)
         _ -> return $ Map.insert (getCategoryName t) t tm
 
-getFilterMap :: CompileErrorM m => [ValueParam c] -> [ParamFilter c] -> m ParamFilters
+getFilterMap :: CollectErrorsM m => [ValueParam c] -> [ParamFilter c] -> m ParamFilters
 getFilterMap ps fs = do
   mirrored <- fmap concat $ mapErrorsM maybeMirror fs
   return $ getFilters mirrored $ zip (Set.toList pa) (repeat []) where
@@ -487,18 +487,18 @@ getFilterMap ps fs = do
     getFilters fs2 pa0 = let fs' = map (\f -> (pfParam f,pfFilter f)) fs2 in
                              Map.fromListWith (++) $ map (second (:[])) fs' ++ pa0
 
-getCategoryFilterMap :: CompileErrorM m => AnyCategory c -> m ParamFilters
+getCategoryFilterMap :: CollectErrorsM m => AnyCategory c -> m ParamFilters
 getCategoryFilterMap t = getFilterMap (getCategoryParams t) (getCategoryFilters t)
 
 -- TODO: Use this where it's needed in this file.
-getFunctionFilterMap :: CompileErrorM m => ScopedFunction c -> m ParamFilters
+getFunctionFilterMap :: CollectErrorsM m => ScopedFunction c -> m ParamFilters
 getFunctionFilterMap f = getFilterMap (pValues $ sfParams f) (sfFilters f)
 
 getCategoryParamMap :: AnyCategory c -> ParamValues
 getCategoryParamMap t = let ps = map vpParam $ getCategoryParams t in
                           Map.fromList $ zip ps (map (singleType . JustParamName False) ps)
 
-disallowBoundedParams :: CompileErrorM m => ParamFilters -> m ()
+disallowBoundedParams :: CollectErrorsM m => ParamFilters -> m ()
 disallowBoundedParams = mapErrorsM_ checkBounds . Map.toList where
   checkBounds (p,fs) = do
     let (lb,ub) = foldr splitBounds (minBound,maxBound) fs
@@ -512,7 +512,7 @@ disallowBoundedParams = mapErrorsM_ checkBounds . Map.toList where
   splitBounds (TypeFilter FilterAllows   t) (lb,ub) = (t<||>lb,ub)
   splitBounds _ bs = bs
 
-checkConnectedTypes :: (Show c, CompileErrorM m) =>
+checkConnectedTypes :: (Show c, CollectErrorsM m) =>
   CategoryMap c -> [AnyCategory c] -> m ()
 checkConnectedTypes tm0 ts = do
   tm <- declareAllTypes tm0 ts
@@ -572,7 +572,7 @@ checkConnectedTypes tm0 ts = do
                       show (getCategoryName t) ++ formatFullContextBrace c2
       | otherwise = return ()
 
-checkConnectionCycles :: (Show c, CompileErrorM m) =>
+checkConnectionCycles :: (Show c, CollectErrorsM m) =>
   CategoryMap c -> [AnyCategory c] -> m ()
 checkConnectionCycles tm0 ts = collectAllM_ (map (checker []) ts) where
   tm = Map.union tm0 $ Map.fromList $ zip (map getCategoryName ts) ts
@@ -593,7 +593,7 @@ checkConnectionCycles tm0 ts = collectAllM_ (map (checker []) ts) where
                      " refers back to itself: " ++
                      intercalate " -> " (map show (us ++ [n]))
 
-checkParamVariances :: (Show c, CompileErrorM m) =>
+checkParamVariances :: (Show c, CollectErrorsM m) =>
   CategoryMap c -> [AnyCategory c] -> m ()
 checkParamVariances tm0 ts = do
   tm <- declareAllTypes tm0 ts
@@ -655,7 +655,7 @@ checkParamVariances tm0 ts = do
              _ -> return ()
         validateDefinesVariance r vs Contravariant t
 
-checkCategoryInstances :: (Show c, CompileErrorM m) =>
+checkCategoryInstances :: (Show c, CollectErrorsM m) =>
   CategoryMap c -> [AnyCategory c] -> m ()
 checkCategoryInstances tm0 ts = do
   tm <- declareAllTypes tm0 ts
@@ -683,7 +683,7 @@ checkCategoryInstances tm0 ts = do
       validateTypeFilter r fm f <??
         ("In " ++ show n ++ " " ++ show f ++ formatFullContextBrace c)
 
-validateCategoryFunction :: (Show c, CompileErrorM m, TypeResolver r) =>
+validateCategoryFunction :: (Show c, CollectErrorsM m, TypeResolver r) =>
   r -> AnyCategory c -> ScopedFunction c -> m ()
 validateCategoryFunction r t f = do
   fm <- getCategoryFilterMap t
@@ -701,7 +701,7 @@ validateCategoryFunction r t f = do
         | otherwise = "In function inherited from " ++ show (sfType f) ++
                       formatFullContextBrace (getCategoryContext t) ++ ":\n---\n" ++ show f ++ "\n---\n"
 
-topoSortCategories :: (Show c, CompileErrorM m) =>
+topoSortCategories :: (Show c, CollectErrorsM m) =>
   CategoryMap c -> [AnyCategory c] -> m [AnyCategory c]
 topoSortCategories tm0 ts = do
   tm <- declareAllTypes tm0 ts
@@ -719,7 +719,7 @@ topoSortCategories tm0 ts = do
     update _ ta _ = return ([],ta)
 
 -- For fixed x, if f y x succeeds for some y then x is removed.
-mergeObjects :: CompileErrorM m => (a -> a -> m b) -> [a] -> m [a]
+mergeObjects :: CollectErrorsM m => (a -> a -> m b) -> [a] -> m [a]
 mergeObjects f = merge [] where
   merge cs [] = return cs
   merge cs (x:xs) = do
@@ -727,7 +727,7 @@ mergeObjects f = merge [] where
     merge (cs ++ ys) xs where
       check x2 = x2 `f` x >> return []
 
-mergeRefines :: (CompileErrorM m, TypeResolver r) =>
+mergeRefines :: (CollectErrorsM m, TypeResolver r) =>
   r -> ParamFilters -> [ValueRefine c] -> m [ValueRefine c]
 mergeRefines r f = mergeObjects check where
   check (ValueRefine _ t1@(TypeInstance n1 _)) (ValueRefine _ t2@(TypeInstance n2 _))
@@ -737,7 +737,7 @@ mergeRefines r f = mergeObjects check where
                         (singleType $ JustTypeInstance $ t1)
                         (singleType $ JustTypeInstance $ t2)
 
-mergeDefines :: (CompileErrorM m, TypeResolver r) =>
+mergeDefines :: (CollectErrorsM m, TypeResolver r) =>
   r -> ParamFilters -> [ValueDefine c] -> m [ValueDefine c]
 mergeDefines r f = mergeObjects check where
   check (ValueDefine _ t1@(DefinesInstance n1 _)) (ValueDefine _ t2@(DefinesInstance n2 _))
@@ -746,19 +746,19 @@ mergeDefines r f = mergeObjects check where
       checkDefinesMatch r f t1 t2
       return ()
 
-noDuplicateRefines :: (Show c, CompileErrorM m) =>
+noDuplicateRefines :: (Show c, CollectErrorsM m) =>
   [c] -> CategoryName -> [ValueRefine c] -> m ()
 noDuplicateRefines c n rs = do
   let names = map (\r -> (tiName $ vrType r,r)) rs
   noDuplicateCategories c n names
 
-noDuplicateDefines :: (Show c, CompileErrorM m) =>
+noDuplicateDefines :: (Show c, CollectErrorsM m) =>
   [c] -> CategoryName -> [ValueDefine c] -> m ()
 noDuplicateDefines c n ds = do
   let names = map (\d -> (diName $ vdType d,d)) ds
   noDuplicateCategories c n names
 
-noDuplicateCategories :: (Show c, Show a, CompileErrorM m) =>
+noDuplicateCategories :: (Show c, Show a, CollectErrorsM m) =>
   [c] -> CategoryName -> [(CategoryName,a)] -> m ()
 noDuplicateCategories c n ns =
   mapErrorsM_ checkCount $ groupBy (\x y -> fst x == fst y) $
@@ -769,7 +769,7 @@ noDuplicateCategories c n ns =
                       intercalate "\n---\n" (map (show . snd) xa)
     checkCount _ = return ()
 
-flattenAllConnections :: (Show c, CompileErrorM m) =>
+flattenAllConnections :: (Show c, CollectErrorsM m) =>
   CategoryMap c -> [AnyCategory c] -> m [AnyCategory c]
 flattenAllConnections tm0 ts = do
   -- We need to process all refines before type-checking can be done.
@@ -843,7 +843,7 @@ flattenAllConnections tm0 ts = do
       return ()
     checkConvert _ _ _ _ = return ()
 
-mergeFunctions :: (Show c, CompileErrorM m, TypeResolver r) =>
+mergeFunctions :: (Show c, CollectErrorsM m, TypeResolver r) =>
   r -> CategoryMap c -> ParamValues -> ParamFilters -> [ValueRefine c] ->
   [ValueDefine c] -> [ScopedFunction c] -> m [ScopedFunction c]
 mergeFunctions r tm pm fm rs ds fs = do
@@ -962,7 +962,7 @@ data PassedValue c =
 instance Show c => Show (PassedValue c) where
   show (PassedValue c t) = show t ++ formatFullContextBrace c
 
-parsedToFunctionType :: (Show c, CompileErrorM m) =>
+parsedToFunctionType :: (Show c, CollectErrorsM m) =>
   ScopedFunction c -> m FunctionType
 parsedToFunctionType (ScopedFunction c n _ _ as rs ps fa _) = do
   let as' = Positional $ map pvType $ pValues as
@@ -984,11 +984,11 @@ parsedToFunctionType (ScopedFunction c n _ _ as rs ps fa _) = do
            (Just fs) -> fs
            _ -> []
 
-uncheckedSubFunction :: (Show c, CompileErrorM m) =>
+uncheckedSubFunction :: (Show c, CollectErrorsM m) =>
   ParamValues -> ScopedFunction c -> m (ScopedFunction c)
 uncheckedSubFunction = unfixedSubFunction . fmap fixTypeParams
 
-unfixedSubFunction :: (Show c, CompileErrorM m) =>
+unfixedSubFunction :: (Show c, CollectErrorsM m) =>
   ParamValues -> ScopedFunction c -> m (ScopedFunction c)
 unfixedSubFunction pa ff@(ScopedFunction c n t s as rs ps fa ms) =
   ("In function:\n---\n" ++ show ff ++ "\n---\n") ??> do
@@ -1019,7 +1019,7 @@ instance Show a => Show (PatternMatch a) where
   show (PatternMatch Contravariant l r) = show l ++ " <- "  ++ show r
   show (PatternMatch Invariant     l r) = show l ++ " <-> " ++ show r
 
-inferParamTypes :: (CompileErrorM m, TypeResolver r) =>
+inferParamTypes :: (CollectErrorsM m, TypeResolver r) =>
   r -> ParamFilters -> ParamValues -> [PatternMatch ValueType] ->
   m (MergeTree InferredTypeGuess)
 inferParamTypes r f ps ts = do
@@ -1052,7 +1052,7 @@ data GuessUnion a =
     guGuesses :: [GuessRange a]
   }
 
-mergeInferredTypes :: (CompileErrorM m, TypeResolver r) =>
+mergeInferredTypes :: (CollectErrorsM m, TypeResolver r) =>
   r -> ParamFilters -> ParamFilters -> ParamValues -> MergeTree InferredTypeGuess ->
   m [InferredTypeGuess]
 mergeInferredTypes r f ff ps gs0 = do

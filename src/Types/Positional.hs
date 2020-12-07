@@ -43,18 +43,18 @@ instance Functor Positional where
 alwaysPair :: Monad m => a -> b -> m (a,b)
 alwaysPair x y = return (x,y)
 
-processPairs :: (Show a, Show b, CompileErrorM m) =>
+processPairs :: (Show a, Show b, CollectErrorsM m) =>
   (a -> b -> m c) -> Positional a -> Positional b -> m [c]
 processPairs f (Positional ps1) (Positional ps2)
   | length ps1 == length ps2 =
     mapErrorsM (uncurry f) (zip ps1 ps2)
   | otherwise = mismatchError ps1 ps2
 
-processPairsM :: (Show a, Show b, Mergeable c, CompileErrorM m) =>
+processPairsM :: (Show a, Show b, Mergeable c, CollectErrorsM m) =>
   (a -> b -> m c) -> Positional a -> Positional b -> m c
 processPairsM f x y = fmap mergeAll $ processPairs f x y
 
-processPairs_ :: (Show a, Show b, CompileErrorM m) =>
+processPairs_ :: (Show a, Show b, CollectErrorsM m) =>
   (a -> b -> m c) -> Positional a -> Positional b -> m ()
 processPairs_ f xs ys = processPairs f xs ys >> return ()
 

@@ -32,11 +32,11 @@ import Base.CompileError
 
 
 class PathIOHandler r where
-  resolveModule     :: (MonadIO m, CompileErrorM m) => r -> FilePath -> FilePath -> m FilePath
-  isSystemModule    :: (MonadIO m, CompileErrorM m) => r -> FilePath -> FilePath -> m Bool
-  resolveBaseModule :: (MonadIO m, CompileErrorM m) => r -> m FilePath
-  isBaseModule      :: (MonadIO m, CompileErrorM m) => r -> FilePath -> m Bool
-  zipWithContents   :: (MonadIO m, CompileErrorM m) => r -> FilePath -> [FilePath] -> m [(FilePath,String)]
+  resolveModule     :: (MonadIO m, CollectErrorsM m) => r -> FilePath -> FilePath -> m FilePath
+  isSystemModule    :: (MonadIO m, CollectErrorsM m) => r -> FilePath -> FilePath -> m Bool
+  resolveBaseModule :: (MonadIO m, CollectErrorsM m) => r -> m FilePath
+  isBaseModule      :: (MonadIO m, CollectErrorsM m) => r -> FilePath -> m Bool
+  zipWithContents   :: (MonadIO m, CollectErrorsM m) => r -> FilePath -> [FilePath] -> m [(FilePath,String)]
 
 fixPath :: FilePath -> FilePath
 fixPath = foldl (</>) "" . process [] . map dropSlash . splitPath where

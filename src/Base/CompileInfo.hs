@@ -241,7 +241,7 @@ instance Monad m => ErrorContextM (CompileInfoT m) where
          CompileSuccess w _ d -> return $ CompileSuccess w [] d
          x2                   -> return x2
 
-instance Monad m => CompileErrorM (CompileInfoT m) where
+instance Monad m => CollectErrorsM (CompileInfoT m) where
   collectAllM = combineResults (select . splitErrorsAndData) where
     select ([],xs2,bs,ws) = CompileSuccess (CompileMessage "" ws) bs xs2
     select (es,_,bs,ws)   = CompileFail (CompileMessage "" ws) $ addBackground bs $ CompileMessage "" es

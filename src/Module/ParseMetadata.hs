@@ -42,13 +42,13 @@ import Types.TypeInstance (CategoryName(..))
 
 
 class ConfigFormat a where
-  readConfig :: CompileErrorM m => ParserE m a
-  writeConfig :: CompileErrorM m => a -> m [String]
+  readConfig :: CollectErrorsM m => ParserE m a
+  writeConfig :: CollectErrorsM m => a -> m [String]
 
-autoReadConfig :: (ConfigFormat a, CompileErrorM m) => String -> String -> m a
+autoReadConfig :: (ConfigFormat a, CollectErrorsM m) => String -> String -> m a
 autoReadConfig f s = runParserE (between optionalSpace endOfDoc readConfig) f s
 
-autoWriteConfig ::  (ConfigFormat a, CompileErrorM m) => a -> m String
+autoWriteConfig ::  (ConfigFormat a, CollectErrorsM m) => a -> m String
 autoWriteConfig = fmap unlines . writeConfig
 
 structOpen :: Monad m => ParserE m ()

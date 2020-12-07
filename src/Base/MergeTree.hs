@@ -131,13 +131,13 @@ instance Bounded (MergeTree a) where
   minBound = mergeAny Nothing
   maxBound = mergeAll Nothing
 
-mergeAnyM :: (PreserveMerge a, CompileErrorM m) => [m a] -> m a
+mergeAnyM :: (PreserveMerge a, CollectErrorsM m) => [m a] -> m a
 mergeAnyM xs = do
   collectFirstM_ xs
   fmap mergeAny $ collectAnyM xs
 
-mergeAllM :: (PreserveMerge a, CompileErrorM m) => [m a] -> m a
+mergeAllM :: (PreserveMerge a, CollectErrorsM m) => [m a] -> m a
 mergeAllM = fmap mergeAll . collectAllM
 
-matchOnlyLeaf :: (PreserveMerge a, CompileErrorM m) => a -> m (T a)
+matchOnlyLeaf :: (PreserveMerge a, CollectErrorsM m) => a -> m (T a)
 matchOnlyLeaf = reduceMergeTree (const $ compileErrorM "") (const $ compileErrorM "") return

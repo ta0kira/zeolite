@@ -85,7 +85,7 @@ data ReturnValidation c =
     vnRemaining :: Map.Map VariableName (PassedValue c)
   }
 
-instance (Show c, CompileErrorM m) =>
+instance (Show c, CollectErrorsM m) =>
   CompilerContext c m [String] (ProcedureContext c) where
   ccCurrentScope = return . pcScope
   ccResolver = return . AnyTypeResolver . CategoryResolver . pcCategories
@@ -685,7 +685,7 @@ instance (Show c, CompileErrorM m) =>
       }
   ccGetNoTrace = return . pcNoTrace
 
-updateReturnVariables :: (Show c, CompileErrorM m) =>
+updateReturnVariables :: (Show c, CollectErrorsM m) =>
   (Map.Map VariableName (VariableValue c)) ->
   Positional (PassedValue c) -> ReturnValues c ->
   m (Map.Map VariableName (VariableValue c))
@@ -704,7 +704,7 @@ updateReturnVariables ma rs1 rs2 = updated where
                                           " is already defined" ++
                                           formatFullContextBrace (vvContext v)
 
-updateArgVariables :: (Show c, CompileErrorM m) =>
+updateArgVariables :: (Show c, CollectErrorsM m) =>
   (Map.Map VariableName (VariableValue c)) ->
   Positional (PassedValue c) -> ArgValues c ->
   m (Map.Map VariableName (VariableValue c))

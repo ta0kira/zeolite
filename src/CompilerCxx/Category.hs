@@ -99,7 +99,7 @@ data PrivateSource c =
     psDefine :: [DefinedCategory c]
   }
 
-compileLanguageModule :: (Show c, CompileErrorM m) =>
+compileLanguageModule :: (Show c, CollectErrorsM m) =>
   LanguageModule c -> [PrivateSource c] -> m [CxxOutput]
 compileLanguageModule (LanguageModule ns0 ns1 ns2 cs0 ps0 ts0 cs1 ps1 ts1 ex ss em) xa = do
   checkSupefluous $ Set.toList $ (Set.fromList ex) `Set.difference` ca
@@ -205,7 +205,7 @@ compileLanguageModule (LanguageModule ns0 ns1 ns2 cs0 ps0 ts0 cs1 ps1 ts1 ex ss 
     streamlinedError n =
       compileErrorM $ "Category " ++ show n ++ " cannot be streamlined because it was not declared external"
 
-compileTestsModule :: (Show c, CompileErrorM m) =>
+compileTestsModule :: (Show c, CollectErrorsM m) =>
   LanguageModule c -> Namespace -> [String] -> [AnyCategory c] -> [DefinedCategory c] ->
   [TestProcedure c] -> m ([CxxOutput],CxxOutput,[(FunctionName,[c])])
 compileTestsModule cm ns args cs ds ts = do
@@ -219,7 +219,7 @@ compileTestsModule cm ns args cs ds ts = do
   (main,fs) <- compileTestMain cm args xs ts
   return (xx,main,fs)
 
-compileTestMain :: (Show c, CompileErrorM m) =>
+compileTestMain :: (Show c, CollectErrorsM m) =>
   LanguageModule c -> [String] -> PrivateSource c -> [TestProcedure c] ->
   m (CxxOutput,[(FunctionName,[c])])
 compileTestMain (LanguageModule ns0 ns1 ns2 cs0 ps0 ts0 cs1 ps1 ts1 _ _ em) args ts2 tests = do
@@ -230,7 +230,7 @@ compileTestMain (LanguageModule ns0 ns1 ns2 cs0 ps0 ts0 cs1 ps1 ts1 _ _ em) args
   return (output,tests') where
   tm = foldM includeNewTypes defaultCategories [cs0,cs1,ps0,ps1,ts0,ts1,psCategory ts2]
 
-compileModuleMain :: (Show c, CompileErrorM m) =>
+compileModuleMain :: (Show c, CollectErrorsM m) =>
   LanguageModule c -> [PrivateSource c] -> CategoryName -> FunctionName -> m CxxOutput
 compileModuleMain (LanguageModule ns0 ns1 ns2 cs0 ps0 _ cs1 ps1 _ _ _ em) xa n f = do
   let resolved = filter (\d -> dcName d == n) $ concat $ map psDefine $ filter (not . psTesting) xa
@@ -247,7 +247,7 @@ compileModuleMain (LanguageModule ns0 ns1 ns2 cs0 ps0 _ cs1 ps1 _ _ _ em) xa n f
       "Multiple matches for main category " ++ show n !!>
         mapErrorsM_ (\d -> compileErrorM $ "Defined at " ++ formatFullContext (dcContext d)) ds
 
-compileCategoryDeclaration :: (Show c, CompileErrorM m) =>
+compileCategoryDeclaration :: (Show c, CollectErrorsM m) =>
   Bool -> CategoryMap c -> Set.Set Namespace -> AnyCategory c -> m CxxOutput
 compileCategoryDeclaration testing _ ns t =
   return $ CxxOutput (Just $ getCategoryName t)
@@ -285,7 +285,7 @@ compileCategoryDeclaration testing _ ns t =
       | isInstanceInterface t = []
       | otherwise             = declareGetType t
 
-compileInterfaceDefinition :: CompileErrorM m => Bool -> AnyCategory c -> m CxxOutput
+compileInterfaceDefinition :: CollectErrorsM m => Bool -> AnyCategory c -> m CxxOutput
 compileInterfaceDefinition testing t = do
   te <- typeConstructor
   commonDefineAll testing t Set.empty Nothing emptyCode emptyCode emptyCode te []
@@ -300,7 +300,7 @@ compileInterfaceDefinition testing t = do
       let allInit = intercalate ", " $ initParent:initPassed
       return $ onlyCode $ typeName (getCategoryName t) ++ "(" ++ allArgs ++ ") : " ++ allInit ++ " {}"
 
-compileConcreteTemplate :: (Show c, CompileErrorM m) =>
+compileConcreteTemplate :: (Show c, CollectErrorsM m) =>
   Bool -> CategoryMap c -> CategoryName -> m CxxOutput
 compileConcreteTemplate testing ta n = do
   (_,t) <- getConcreteCategory ta ([],n)
@@ -332,7 +332,7 @@ compileConcreteTemplate testing ta n = do
       ]
     funcName f = show (sfType f) ++ "." ++ show (sfName f)
 
-compileConcreteStreamlined :: (Show c, CompileErrorM m) =>
+compileConcreteStreamlined :: (Show c, CollectErrorsM m) =>
   Bool -> CategoryMap c -> CategoryName -> m [CxxOutput]
 compileConcreteStreamlined testing ta n =  "In streamlined compilation of " ++ show n ??> do
   (_,t) <- getConcreteCategory ta ([],n)
@@ -354,7 +354,7 @@ compileConcreteStreamlined testing ta n =  "In streamlined compilation of " ++ s
                       []
   return [hxx,cxx]
 
-compileConcreteDefinition :: (Show c, CompileErrorM m) =>
+compileConcreteDefinition :: (Show c, CollectErrorsM m) =>
   Bool -> CategoryMap c -> ExprMap c -> Set.Set Namespace -> Maybe [ValueRefine c] ->
   DefinedCategory c -> m CxxOutput
 compileConcreteDefinition testing ta em ns rs dd@(DefinedCategory c n pi _ _ fi ms _ fs) = do
@@ -413,7 +413,7 @@ compileConcreteDefinition testing ta em ns rs dd@(DefinedCategory c n pi _ _ fi 
     ] ++ map (return . snd) (cf ++ tf ++ vf)
   commonDefineAll testing t ns rs top bottom ce te fe
   where
-    disallowTypeMembers :: (Show c, CompileErrorM m) =>
+    disallowTypeMembers :: (Show c, CollectErrorsM m) =>
       [DefinedMember c] -> m ()
     disallowTypeMembers tm =
       collectAllM_ $ flip map tm
@@ -503,7 +503,7 @@ compileConcreteDefinition testing ta em ns rs dd@(DefinedCategory c n pi _ _ fi 
       | any isTraceCreation $ concat $ map (epPragmas . snd) vp = [captureCreationTrace]
       | otherwise = []
 
-commonDefineAll :: CompileErrorM m =>
+commonDefineAll :: CollectErrorsM m =>
   Bool -> AnyCategory c -> Set.Set Namespace -> Maybe [ValueRefine c] ->
   CompiledData [String] -> CompiledData [String] -> CompiledData [String] ->
   CompiledData [String] -> [ScopedFunction c] -> m CxxOutput
@@ -641,7 +641,7 @@ createFunctionDispatch n s fs = [typedef] ++ concat (map table $ byCategory) ++
     | s == ValueScope    = "  return TypeValue::Dispatch(self, label, params, args);"
     | otherwise = undefined
 
-commonDefineCategory :: CompileErrorM m =>
+commonDefineCategory :: CollectErrorsM m =>
   AnyCategory c -> CompiledData [String] -> m (CompiledData [String])
 commonDefineCategory t extra = do
   concatM $ [
@@ -653,7 +653,7 @@ commonDefineCategory t extra = do
   where
     name = getCategoryName t
 
-commonDefineType :: CompileErrorM m =>
+commonDefineType :: CollectErrorsM m =>
   AnyCategory c -> Maybe [ValueRefine c] -> CompiledData [String] -> m (CompiledData [String])
 commonDefineType t rs extra = do
   let rs' = case rs of
@@ -831,7 +831,7 @@ createMainCommon n (CompiledData req0 out0) (CompiledData req1 out1) =
       depIncludes req2 = map (\i -> "#include \"" ++ headerFilename i ++ "\"") $
                            Set.toList req2
 
-createMainFile :: (Show c, CompileErrorM m) =>
+createMainFile :: (Show c, CollectErrorsM m) =>
   CategoryMap c -> ExprMap c -> CategoryName -> FunctionName -> m (Namespace,[String])
 createMainFile tm em n f = "In the creation of the main binary procedure" ??> do
   ca <- compileMainProcedure tm em expr
@@ -843,7 +843,7 @@ createMainFile tm em n f = "In the creation of the main binary procedure" ??> do
     expr = Expression [] (TypeCall [] mainType funcCall) []
     argv = onlyCode "ProgramArgv program_argv(argc, argv);"
 
-createTestFile :: (Show c, CompileErrorM m) =>
+createTestFile :: (Show c, CollectErrorsM m) =>
   CategoryMap c -> ExprMap c  -> [String] -> [TestProcedure c] -> m (CompiledData [String])
 createTestFile tm em args ts = "In the creation of the test binary procedure" ??> do
   ts' <- fmap mconcat $ mapErrorsM (compileTestProcedure tm em) ts

@@ -953,7 +953,7 @@ instance TypeResolver Resolver where
   -- Type5 is concrete, somewhat arbitrarily.
   trConcrete _ = \t -> return (t == type5)
 
-getParams :: CompileErrorM m =>
+getParams :: CollectErrorsM m =>
   Map.Map CategoryName (Map.Map CategoryName (InstanceParams -> InstanceParams))
   -> TypeInstance -> CategoryName -> m InstanceParams
 getParams ma (TypeInstance n1 ps1) n2 = do
@@ -961,17 +961,17 @@ getParams ma (TypeInstance n1 ps1) n2 = do
   f <- mapLookup ra n2 <?? "In lookup of parent " ++ show n2 ++ " of " ++ show n1
   return $ f ps1
 
-getTypeFilters :: CompileErrorM m => TypeInstance -> m InstanceFilters
+getTypeFilters :: CollectErrorsM m => TypeInstance -> m InstanceFilters
 getTypeFilters (TypeInstance n ps) = "In type filters lookup" ??> do
   f <- mapLookup typeFilters n
   return $ f ps
 
-getDefinesFilters :: CompileErrorM m => DefinesInstance -> m InstanceFilters
+getDefinesFilters :: CollectErrorsM m => DefinesInstance -> m InstanceFilters
 getDefinesFilters (DefinesInstance n ps) = "In defines filters lookup" ??> do
   f <- mapLookup definesFilters n
   return $ f ps
 
-mapLookup :: (Ord n, Show n, CompileErrorM m) => Map.Map n a -> n -> m a
+mapLookup :: (Ord n, Show n, CollectErrorsM m) => Map.Map n a -> n -> m a
 mapLookup ma n = resolve $ n `Map.lookup` ma where
   resolve (Just x) = return x
   resolve _        = compileErrorM $ "Map key " ++ show n ++ " not found"

@@ -54,7 +54,7 @@ instance Show FunctionType where
     where
       showFilters (n,fs) = map (\f -> show n ++ " " ++ show f ++ " ") fs
 
-validatateFunctionType :: (CompileErrorM m, TypeResolver r) =>
+validatateFunctionType :: (CollectErrorsM m, TypeResolver r) =>
   r -> ParamFilters -> ParamVariances -> FunctionType -> m ()
 validatateFunctionType r fm vm (FunctionType as rs ps fa) = do
   mapErrorsM_ checkCount $ group $ sort $ pValues ps
@@ -94,7 +94,7 @@ validatateFunctionType r fm vm (FunctionType as rs ps fa) = do
       validateGeneralInstance r fa2 t
       validateInstanceVariance r allVariances Covariant t
 
-assignFunctionParams :: (CompileErrorM m, TypeResolver r) =>
+assignFunctionParams :: (CollectErrorsM m, TypeResolver r) =>
   r -> ParamFilters -> ParamValues -> Positional GeneralInstance ->
   FunctionType -> m FunctionType
 assignFunctionParams r fm pm ts (FunctionType as rs ps fa) = do
@@ -111,7 +111,7 @@ assignFunctionParams r fm pm ts (FunctionType as rs ps fa) = do
   where
     assignFilters fm2 fs = mapErrorsM (uncheckedSubFilter $ getValueForParam fm2) fs
 
-checkFunctionConvert :: (CompileErrorM m, TypeResolver r) =>
+checkFunctionConvert :: (CollectErrorsM m, TypeResolver r) =>
   r -> ParamFilters -> ParamValues -> FunctionType -> FunctionType -> m ()
 checkFunctionConvert r fm pm (FunctionType as1 rs1 ps1 fa1) ff2 = do
   mapped <- fmap Map.fromList $ processPairs alwaysPair ps1 fa1
