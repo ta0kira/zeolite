@@ -115,9 +115,9 @@ errorFromIO x = do
        (Left e)   -> compilerErrorM e
 
 instance ErrorContextM m => ErrorContextM (StateT a m) where
-  compilerErrorM        = lift . compilerErrorM
-  withContextM x e      = mapStateT (<?? e) x
-  summarizeErrorsM x e  = mapStateT (<!! e) x
-  compilerWarningM      = lift . compilerWarningM
-  compilerBackgroundM   = lift . compilerBackgroundM
-  resetBackgroundM      = mapStateT resetBackgroundM
+  compilerErrorM      = lift . compilerErrorM
+  withContextM        = flip $ mapStateT . (??>)
+  summarizeErrorsM    = flip $ mapStateT . (!!>)
+  compilerWarningM    = lift . compilerWarningM
+  compilerBackgroundM = lift . compilerBackgroundM
+  resetBackgroundM    = mapStateT resetBackgroundM
