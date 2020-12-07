@@ -31,9 +31,9 @@ module Parser.TypeCategory (
 import Text.Parsec
 
 import Base.CompilerError
+import Base.Positional
 import Parser.Common
 import Parser.TypeInstance ()
-import Types.Positional
 import Types.TypeCategory
 import Types.TypeInstance
 import Types.Variance

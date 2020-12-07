@@ -42,7 +42,9 @@ import qualified Data.Map as Map
 import qualified Data.Set as Set
 
 import Base.CompilerError
+import Base.GeneralType
 import Base.MergeTree
+import Base.Positional
 import Compilation.CompilerState
 import Compilation.ProcedureContext (ExprMap)
 import Compilation.ScopeContext
@@ -52,8 +54,6 @@ import CompilerCxx.Naming
 import Types.Builtin
 import Types.DefinedCategory
 import Types.Function
-import Types.GeneralType
-import Types.Positional
 import Types.Pragma
 import Types.Procedure
 import Types.TypeCategory

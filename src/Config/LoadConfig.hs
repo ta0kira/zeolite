@@ -33,7 +33,7 @@ import Config.LocalConfig
 import Paths_zeolite_lang (getDataFileName)
 
 
-loadConfig :: (MonadIO m, CollectErrorsM m) => m (Resolver,Backend)
+loadConfig :: (MonadIO m, ErrorContextM m) => m (Resolver,Backend)
 loadConfig = do
   configFile <- liftIO localConfigPath
   isFile <- liftIO $ doesFileExist configFile

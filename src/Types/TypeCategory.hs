@@ -89,11 +89,11 @@ import qualified Data.Map as Map
 import qualified Data.Set as Set
 
 import Base.CompilerError
+import Base.GeneralType
 import Base.MergeTree
 import Base.Mergeable
+import Base.Positional
 import Types.Function
-import Types.GeneralType
-import Types.Positional
 import Types.TypeInstance
 import Types.Variance
 

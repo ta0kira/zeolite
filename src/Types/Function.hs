@@ -30,8 +30,8 @@ import Control.Monad (when)
 import qualified Data.Map as Map
 
 import Base.CompilerError
-import Types.GeneralType
-import Types.Positional
+import Base.GeneralType
+import Base.Positional
 import Types.TypeInstance
 import Types.Variance
 

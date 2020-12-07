@@ -19,7 +19,7 @@ limitations under the License.
 {-# LANGUAGE Safe #-}
 {-# LANGUAGE TypeFamilies #-}
 
-module Types.GeneralType (
+module Base.GeneralType (
   GeneralType,
   dualGeneralType,
   mapGeneralType,

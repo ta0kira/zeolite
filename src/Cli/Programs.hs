@@ -32,8 +32,8 @@ import Base.CompilerError
 
 
 class CompilerBackend b where
-  runCxxCommand   :: (MonadIO m, CollectErrorsM m) => b -> CxxCommand -> m String
-  runTestCommand  :: (MonadIO m, CollectErrorsM m) => b -> TestCommand -> m TestCommandResult
+  runCxxCommand   :: (MonadIO m, ErrorContextM m) => b -> CxxCommand -> m String
+  runTestCommand  :: (MonadIO m, ErrorContextM m) => b -> TestCommand -> m TestCommandResult
   getCompilerHash :: b -> VersionHash
 
 newtype VersionHash = VersionHash String deriving (Eq)

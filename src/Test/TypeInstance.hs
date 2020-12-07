@@ -24,13 +24,13 @@ import Control.Monad (when)
 import qualified Data.Map as Map
 
 import Base.CompilerError
+import Base.GeneralType
+import Base.Positional
 import Base.TrackedErrors
 import Base.MergeTree
 import Base.Mergeable
 import Parser.TypeInstance ()
 import Test.Common
-import Types.GeneralType
-import Types.Positional
 import Types.TypeInstance
 import Types.Variance
 

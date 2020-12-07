@@ -45,7 +45,9 @@ import Data.Semigroup
 #endif
 
 import Base.CompilerError
+import Base.GeneralType
 import Base.MergeTree
+import Base.Positional
 import Compilation.CompilerState
 import Compilation.ProcedureContext (ExprMap)
 import Compilation.ScopeContext
@@ -55,8 +57,6 @@ import CompilerCxx.Naming
 import CompilerCxx.Procedure
 import Types.Builtin
 import Types.DefinedCategory
-import Types.GeneralType
-import Types.Positional
 import Types.Pragma
 import Types.Procedure
 import Types.TypeCategory

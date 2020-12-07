@@ -82,8 +82,8 @@ import Data.Semigroup
 #endif
 
 import Base.CompilerError
+import Base.Positional
 import Types.DefinedCategory
-import Types.Positional
 import Types.Pragma (MacroName)
 import Types.Procedure
 import Types.TypeCategory

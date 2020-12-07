@@ -31,10 +31,10 @@ import Prelude hiding (pi)
 import qualified Data.Map as Map
 
 import Base.CompilerError
+import Base.GeneralType
+import Base.Positional
 import Compilation.ProcedureContext
 import Types.DefinedCategory
-import Types.GeneralType
-import Types.Positional
 import Types.Procedure
 import Types.TypeCategory
 import Types.TypeInstance

@@ -25,10 +25,10 @@ import System.FilePath
 import Text.Parsec
 
 import Base.CompilerError
+import Base.Positional
 import Base.TrackedErrors
 import Parser.Procedure ()
 import Test.Common
-import Types.Positional
 import Types.Procedure
 import Types.TypeCategory
 import Types.TypeInstance

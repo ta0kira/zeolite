@@ -27,12 +27,12 @@ import qualified Data.Map as Map
 import qualified Data.Set as Set
 
 import Base.CompilerError
+import Base.GeneralType
+import Base.Positional
 import Base.TrackedErrors
 import Parser.TypeCategory ()
 import Test.Common
 import Types.Builtin
-import Types.GeneralType
-import Types.Positional
 import Types.TypeCategory
 import Types.TypeInstance
 import Types.Variance

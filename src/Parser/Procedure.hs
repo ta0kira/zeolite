@@ -28,11 +28,11 @@ import Text.Parsec
 import qualified Data.Set as Set
 
 import Base.CompilerError
+import Base.Positional
 import Parser.Common
 import Parser.Pragma
 import Parser.TypeCategory ()
 import Parser.TypeInstance ()
-import Types.Positional
 import Types.Pragma
 import Types.Procedure
 import Types.TypeCategory

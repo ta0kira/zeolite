@@ -64,10 +64,10 @@ import Data.Char
 import Data.List (intercalate)
 import qualified Data.Set as Set
 
+import Base.Positional
 import Compilation.CompilerState
 import CompilerCxx.Naming
 import Types.Builtin
-import Types.Positional
 import Types.TypeCategory
 import Types.TypeInstance
 

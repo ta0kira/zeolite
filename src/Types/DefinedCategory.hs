@@ -33,8 +33,8 @@ import qualified Data.Map as Map
 import qualified Data.Set as Set
 
 import Base.CompilerError
+import Base.Positional
 import Types.Function
-import Types.Positional
 import Types.Procedure
 import Types.TypeCategory
 import Types.TypeInstance

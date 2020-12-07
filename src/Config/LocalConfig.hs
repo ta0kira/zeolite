@@ -120,7 +120,7 @@ instance CompilerBackend Backend where
   getCompilerHash b = VersionHash $ flip showHex "" $ abs $ hash $ minorVersion ++ show b where
     minorVersion = show $ take 3 $ versionBranch version
 
-executeProcess :: (MonadIO m, CollectErrorsM m) => String -> [String] -> m ()
+executeProcess :: (MonadIO m, ErrorContextM m) => String -> [String] -> m ()
 executeProcess c os = do
   errorFromIO $ hPutStrLn stderr $ "Executing: " ++ intercalate " " (c:os)
   pid    <- errorFromIO $ forkProcess $ executeFile c True os Nothing
@@ -165,7 +165,7 @@ potentialSystemPaths (SimpleResolver ls ps) m = do
     components = map stripSlash $ splitPath m
     stripSlash = reverse . dropWhile (== '/') . reverse
 
-firstExisting :: (MonadIO m, CollectErrorsM m) => FilePath -> [FilePath] -> m FilePath
+firstExisting :: (MonadIO m, ErrorContextM m) => FilePath -> [FilePath] -> m FilePath
 firstExisting m ps = do
   p <- errorFromIO $ findModule ps
   case p of

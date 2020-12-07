@@ -33,11 +33,11 @@ import qualified Data.Map as Map
 import qualified Data.Set as Set
 
 import Base.CompilerError
+import Base.GeneralType
 import Base.MergeTree
+import Base.Positional
 import Compilation.CompilerState
 import Types.DefinedCategory
-import Types.GeneralType
-import Types.Positional
 import Types.Pragma (MacroName)
 import Types.Procedure
 import Types.TypeCategory

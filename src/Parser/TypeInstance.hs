@@ -25,10 +25,10 @@ module Parser.TypeInstance (
 import Control.Applicative ((<|>))
 import Text.Parsec hiding ((<|>))
 
+import Base.GeneralType
 import Base.Mergeable (mergeAll,mergeAny)
+import Base.Positional
 import Parser.Common
-import Types.GeneralType
-import Types.Positional
 import Types.TypeInstance
 
 

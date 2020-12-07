@@ -22,6 +22,7 @@ import Control.Monad (when)
 import Text.Regex.TDFA -- Not safe!
 
 import Base.CompilerError
+import Base.Positional
 import Base.TrackedErrors
 import Cli.CompileOptions
 import Cli.Programs (VersionHash(..))
@@ -29,7 +30,6 @@ import Module.CompileMetadata
 import Module.ParseMetadata
 import System.FilePath
 import Test.Common
-import Types.Positional
 import Types.Pragma
 import Types.Procedure
 import Types.TypeCategory (FunctionName(..),Namespace(..))

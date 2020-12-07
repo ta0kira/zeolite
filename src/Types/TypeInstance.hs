@@ -76,10 +76,10 @@ import Data.List (intercalate)
 import qualified Data.Map as Map
 
 import Base.CompilerError
+import Base.GeneralType
 import Base.MergeTree
 import Base.Mergeable
-import Types.GeneralType
-import Types.Positional
+import Base.Positional
 import Types.Variance
 
 

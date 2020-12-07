@@ -16,7 +16,7 @@ limitations under the License.
 
 -- Author: Kevin P. Barry [ta0kira@gmail.com]
 
-module Types.Positional (
+module Base.Positional (
   Positional(..),
   alwaysPair,
   processPairs,

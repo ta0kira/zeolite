@@ -52,8 +52,8 @@ module Types.Procedure (
 
 import Data.List (intercalate)
 
+import Base.Positional
 import Types.Pragma
-import Types.Positional
 import Types.TypeCategory
 import Types.TypeInstance
 

@@ -29,13 +29,13 @@ import qualified Data.Map as Map
 import qualified Data.Set as Set
 
 import Base.CompilerError
+import Base.GeneralType
+import Base.Positional
 import Compilation.CompilerState
 import Compilation.ProcedureContext
 import Compilation.ScopeContext
 import CompilerCxx.Code
 import Types.DefinedCategory
-import Types.GeneralType
-import Types.Positional
 import Types.Procedure
 import Types.TypeCategory
 import Types.TypeInstance
