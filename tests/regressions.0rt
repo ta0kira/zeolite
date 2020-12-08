@@ -83,3 +83,25 @@ define Child {
   call1 (_) {}
   call2 (_) {}
 }
+
+
+testcase "Issue #121 is fixed" {
+  success
+}
+
+unittest test {
+  Int count <- 0
+
+  scoped {
+    count <- count+1
+  } cleanup {
+    // Previously, the scoped block was prepended to the cleanup block, due to
+    // a change that precompiled scoped+in to allow use of named returns.
+    count <- count+1
+  } in {
+    count <- count+1
+  }
+
+  // The count here would be 4 if scoped was prepended to cleanup.
+  \ Testing.checkEquals<?>(count,3)
+}

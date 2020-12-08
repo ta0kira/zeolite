@@ -427,7 +427,7 @@ compileScopedBlock s = do
   (ctxP,cl',ctxCl) <-
     case cl of
          Just p2@(Procedure c _) -> do
-           ctxCl0' <- lift $ ccStartCleanup ctxCl0
+           ctxCl0' <- lift $ ccClearOutput ctxCl0 >>= ccStartCleanup
            ctxCl <- compileProcedure ctxCl0' p2 <?? "In cleanup starting at " ++ formatFullContext c
            p2' <- lift $ ccGetOutput ctxCl
            noTrace <- csGetNoTrace
