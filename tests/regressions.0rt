@@ -17,6 +17,7 @@ limitations under the License.
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
 testcase "Issue #73 is fixed" {
+  // https://github.com/ta0kira/zeolite/issues/73
   success
 }
 
@@ -57,6 +58,7 @@ define Value {
 
 
 testcase "Issue #73 (2) is fixed" {
+  // https://github.com/ta0kira/zeolite/issues/73
   error
   require "from Base"
   require "#x hides"
@@ -86,6 +88,7 @@ define Child {
 
 
 testcase "Issue #121 is fixed" {
+  // https://github.com/ta0kira/zeolite/issues/121
   success
 }
 
@@ -104,4 +107,40 @@ unittest test {
 
   // The count here would be 4 if scoped was prepended to cleanup.
   \ Testing.checkEquals<?>(count,3)
+}
+
+
+testcase "Issue #122 is still open" {
+  // https://github.com/ta0kira/zeolite/issues/122
+  // This should be compilation error at the break statement once fixed.
+  crash
+  require "null value"
+  exclude "message"
+}
+
+unittest test {
+  \ Type.call()
+}
+
+concrete Type {
+  @type call () -> (String)
+}
+
+define Type {
+  call () (message) {
+    while (true) {
+      cleanup {
+        // There should be an error here because message might not be set.
+        fail(message)
+      } in {
+        if (true) {
+          // Cleanup is inline here.
+          break
+        }
+        message <- "message"
+        // Cleanup is inline here.
+      }
+    }
+    return "return"
+  }
 }

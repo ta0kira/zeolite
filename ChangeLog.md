@@ -9,6 +9,11 @@
   not affect syntax acceptance, but it has additional transitive dependencies
   that might prevent installation of `zeolite`.
 
+### Language
+
+* **[fix]** Fixes a bug in `cleanup` that caused the `scoped` block to be
+  prepended to it when it was inlined in the `in` block.
+
 ## 0.10.0.0  -- 2020-12-05
 
 ### Language
