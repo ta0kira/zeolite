@@ -7,17 +7,9 @@ unittest test {
   ErrorOr<TestData> errorOrData <- TestDataParser.create() `ParseState:consumeAll<?>` raw
   TestData data <- errorOrData.getValue()
 
-  if (data.getName() != "example data") {
-    fail(data.getName())
-  }
-
-  if (data.getDescription() != "THIS_IS_A_TOKEN") {
-    fail(data.getDescription())
-  }
-
-  if (data.getBoolean() != false) {
-    fail(data.getBoolean())
-  }
+  \ Testing.checkEquals<?>(data.getName(),"example data")
+  \ Testing.checkEquals<?>(data.getDescription(),"THIS_IS_A_TOKEN")
+  \ Testing.checkEquals<?>(data.getBoolean(),false)
 }
 
 concrete Helpers {
