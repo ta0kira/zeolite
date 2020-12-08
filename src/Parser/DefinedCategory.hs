@@ -23,7 +23,6 @@ module Parser.DefinedCategory (
 
 import Control.Monad (when)
 import Prelude hiding (pi)
-import Text.Megaparsec
 
 import Base.CompilerError
 import Parser.Common
@@ -38,9 +37,9 @@ import Types.TypeInstance
 import Types.Variance
 
 
-instance ParseFromSource (DefinedCategory SourcePos) where
+instance ParseFromSource (DefinedCategory SourceContext) where
   sourceParser = labeled "defined concrete category" $ do
-    c <- getSourcePos
+    c <- getSourceContext
     kwDefine
     n <- sourceParser
     sepAfter (string_ "{")
@@ -65,13 +64,13 @@ instance ParseFromSource (DefinedCategory SourcePos) where
         sepAfter (string_ "}")
         return fi
       singleParam = labeled "param declaration" $ do
-        c <- getSourcePos
+        c <- getSourceContext
         n <- sourceParser
         return $ ValueParam [c] n Invariant
 
-instance ParseFromSource (DefinedMember SourcePos) where
+instance ParseFromSource (DefinedMember SourceContext) where
   sourceParser = labeled "defined member" $ do
-    c <- getSourcePos
+    c <- getSourceContext
     (s,t) <- try parseType
     n <- sourceParser
     e <- if s == ValueScope
@@ -89,9 +88,9 @@ instance ParseFromSource (DefinedMember SourcePos) where
         return (s,t)
 
 parseMemberProcedureFunction ::
-  CategoryName -> TextParser ([DefinedMember SourcePos],
-                             [ExecutableProcedure SourcePos],
-                             [ScopedFunction SourcePos])
+  CategoryName -> TextParser ([DefinedMember SourceContext],
+                             [ExecutableProcedure SourceContext],
+                             [ScopedFunction SourceContext])
 parseMemberProcedureFunction n = do
   (ms,ps,fs) <- parseAny3 (catchUnscopedType <|> sourceParser) sourceParser singleFunction
   let ps2 = ps ++ map snd fs

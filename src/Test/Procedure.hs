@@ -20,12 +20,12 @@ module Test.Procedure (tests) where
 
 import Control.Monad
 import System.FilePath
-import Text.Megaparsec
 
 import Base.CompilerError
 import Base.Positional
 import Base.TrackedErrors
 import Parser.Procedure ()
+import Parser.TextParser (SourceContext)
 import Test.Common
 import Types.Procedure
 import Types.TypeCategory
@@ -405,7 +405,7 @@ tests = [
 checkParseSuccess :: String -> IO (TrackedErrors ())
 checkParseSuccess f = do
   contents <- loadFile f
-  let parsed = readMulti f contents :: TrackedErrors [ExecutableProcedure SourcePos]
+  let parsed = readMulti f contents :: TrackedErrors [ExecutableProcedure SourceContext]
   return $ check parsed
   where
     check c
@@ -415,7 +415,7 @@ checkParseSuccess f = do
 checkParseFail :: String -> IO (TrackedErrors ())
 checkParseFail f = do
   contents <- loadFile f
-  let parsed = readMulti f contents :: TrackedErrors [ExecutableProcedure SourcePos]
+  let parsed = readMulti f contents :: TrackedErrors [ExecutableProcedure SourceContext]
   return $ check parsed
   where
     check c
@@ -425,7 +425,7 @@ checkParseFail f = do
 
 checkShortParseSuccess :: String -> IO (TrackedErrors ())
 checkShortParseSuccess s = do
-  let parsed = readSingle "(string)" s :: TrackedErrors (Statement SourcePos)
+  let parsed = readSingle "(string)" s :: TrackedErrors (Statement SourceContext)
   return $ check parsed
   where
     check c
@@ -434,7 +434,7 @@ checkShortParseSuccess s = do
 
 checkShortParseFail :: String -> IO (TrackedErrors ())
 checkShortParseFail s = do
-  let parsed = readSingle "(string)" s :: TrackedErrors (Statement SourcePos)
+  let parsed = readSingle "(string)" s :: TrackedErrors (Statement SourceContext)
   return $ check parsed
   where
     check c
@@ -442,9 +442,9 @@ checkShortParseFail s = do
       | otherwise = compilerErrorM $ "Parse '" ++ s ++ "': Expected failure but got\n" ++
                                    show (getCompilerSuccess c) ++ "\n"
 
-checkParsesAs :: String -> (Expression SourcePos -> Bool) -> IO (TrackedErrors ())
+checkParsesAs :: String -> (Expression SourceContext -> Bool) -> IO (TrackedErrors ())
 checkParsesAs s m = return $ do
-  let parsed = readSingle "(string)" s :: TrackedErrors (Expression SourcePos)
+  let parsed = readSingle "(string)" s :: TrackedErrors (Expression SourceContext)
   check parsed
   e <- parsed
   when (not $ m e) $

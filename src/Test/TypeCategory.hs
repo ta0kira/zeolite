@@ -21,7 +21,6 @@ module Test.TypeCategory (tests) where
 
 import Control.Arrow
 import System.FilePath
-import Text.Megaparsec
 import qualified Data.Map as Map
 import qualified Data.Set as Set
 
@@ -29,6 +28,7 @@ import Base.CompilerError
 import Base.GeneralType
 import Base.Positional
 import Base.TrackedErrors
+import Parser.TextParser (SourceContext)
 import Parser.TypeCategory ()
 import Test.Common
 import Types.Builtin
@@ -1201,18 +1201,18 @@ containsPaired = checkPaired checkSingle where
     | a == e = return ()
     | otherwise = compilerErrorM $ show a ++ " (actual) vs. " ++ show e ++ " (expected)"
 
-checkOperationSuccess :: String -> ([AnyCategory SourcePos] -> TrackedErrors a) -> IO (TrackedErrors ())
+checkOperationSuccess :: String -> ([AnyCategory SourceContext] -> TrackedErrors a) -> IO (TrackedErrors ())
 checkOperationSuccess f o = do
   contents <- loadFile f
-  let parsed = readMulti f contents :: TrackedErrors [AnyCategory SourcePos]
+  let parsed = readMulti f contents :: TrackedErrors [AnyCategory SourceContext]
   return $ check (parsed >>= o >> return ())
   where
     check x = x <!! "Check " ++ f ++ ":"
 
-checkOperationFail :: String -> ([AnyCategory SourcePos] -> TrackedErrors a) -> IO (TrackedErrors ())
+checkOperationFail :: String -> ([AnyCategory SourceContext] -> TrackedErrors a) -> IO (TrackedErrors ())
 checkOperationFail f o = do
   contents <- loadFile f
-  let parsed = readMulti f contents :: TrackedErrors [AnyCategory SourcePos]
+  let parsed = readMulti f contents :: TrackedErrors [AnyCategory SourceContext]
   return $ check (parsed >>= o >> return ())
   where
     check c
@@ -1223,7 +1223,7 @@ checkOperationFail f o = do
 checkSingleParseSuccess :: String -> IO (TrackedErrors ())
 checkSingleParseSuccess f = do
   contents <- loadFile f
-  let parsed = readSingle f contents :: TrackedErrors (AnyCategory SourcePos)
+  let parsed = readSingle f contents :: TrackedErrors (AnyCategory SourceContext)
   return $ check parsed
   where
     check c
@@ -1233,7 +1233,7 @@ checkSingleParseSuccess f = do
 checkSingleParseFail :: String -> IO (TrackedErrors ())
 checkSingleParseFail f = do
   contents <- loadFile f
-  let parsed = readSingle f contents :: TrackedErrors (AnyCategory SourcePos)
+  let parsed = readSingle f contents :: TrackedErrors (AnyCategory SourceContext)
   return $ check parsed
   where
     check c
@@ -1243,7 +1243,7 @@ checkSingleParseFail f = do
 
 checkShortParseSuccess :: String -> IO (TrackedErrors ())
 checkShortParseSuccess s = do
-  let parsed = readSingle "(string)" s :: TrackedErrors (AnyCategory SourcePos)
+  let parsed = readSingle "(string)" s :: TrackedErrors (AnyCategory SourceContext)
   return $ check parsed
   where
     check c
@@ -1252,7 +1252,7 @@ checkShortParseSuccess s = do
 
 checkShortParseFail :: String -> IO (TrackedErrors ())
 checkShortParseFail s = do
-  let parsed = readSingle "(string)" s :: TrackedErrors (AnyCategory SourcePos)
+  let parsed = readSingle "(string)" s :: TrackedErrors (AnyCategory SourceContext)
   return $ check parsed
   where
     check c
@@ -1260,7 +1260,7 @@ checkShortParseFail s = do
       | otherwise = compilerErrorM $ "Parse '" ++ s ++ "': Expected failure but got\n" ++
                                    show (getCompilerSuccess c) ++ "\n"
 
-checkInferenceSuccess :: CategoryMap SourcePos -> [(String, [String])] ->
+checkInferenceSuccess :: CategoryMap SourceContext -> [(String, [String])] ->
   [String] -> [(String,String)] -> [(String,String)] -> TrackedErrors ()
 checkInferenceSuccess tm pa is ts gs = checkInferenceCommon check tm pa is ts gs where
   prefix = show ts ++ " " ++ showParams pa
@@ -1268,7 +1268,7 @@ checkInferenceSuccess tm pa is ts gs = checkInferenceCommon check tm pa is ts gs
     | isCompilerError c = compilerErrorM $ prefix ++ ":\n" ++ show (getCompilerWarnings c) ++ show (getCompilerError c)
     | otherwise        = getCompilerSuccess c `containsExactly` gs2
 
-checkInferenceFail :: CategoryMap SourcePos -> [(String, [String])] ->
+checkInferenceFail :: CategoryMap SourceContext -> [(String, [String])] ->
   [String] -> [(String,String)] -> TrackedErrors ()
 checkInferenceFail tm pa is ts = checkInferenceCommon check tm pa is ts [] where
   prefix = show ts ++ " " ++ showParams pa
@@ -1277,7 +1277,7 @@ checkInferenceFail tm pa is ts = checkInferenceCommon check tm pa is ts [] where
     | otherwise = compilerErrorM $ prefix ++ ": Expected failure\n"
 
 checkInferenceCommon :: ([InferredTypeGuess] -> TrackedErrors [InferredTypeGuess] -> TrackedErrors ()) ->
-  CategoryMap SourcePos -> [(String,[String])] -> [String] ->
+  CategoryMap SourceContext -> [(String,[String])] -> [String] ->
   [(String,String)] -> [(String,String)] -> TrackedErrors ()
 checkInferenceCommon check tm pa is ts gs = checked <!! context where
   context = "With params = " ++ show pa ++ ", pairs = " ++ show ts

@@ -43,7 +43,6 @@ import Data.List
 import System.Exit
 import System.FilePath
 import System.IO
-import Text.Megaparsec
 import qualified Data.Map as Map
 import qualified Data.Set as Set
 

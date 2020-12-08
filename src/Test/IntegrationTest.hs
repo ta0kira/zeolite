@@ -20,7 +20,6 @@ module Test.IntegrationTest (tests) where
 
 import Control.Monad (when)
 import System.FilePath
-import Text.Megaparsec
 
 import Base.CompilerError
 import Base.TrackedErrors
@@ -109,7 +108,7 @@ tests = [
   ]
 
 checkFileContents ::
-  String -> (IntegrationTest SourcePos -> TrackedErrors ()) -> IO (TrackedErrors ())
+  String -> (IntegrationTest SourceContext -> TrackedErrors ()) -> IO (TrackedErrors ())
 checkFileContents f o = toTrackedErrors $ do
   s <- errorFromIO $ loadFile f
   t <- runTextParser (between optionalSpace endOfDoc sourceParser) f s

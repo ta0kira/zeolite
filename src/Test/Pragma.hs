@@ -19,7 +19,6 @@ limitations under the License.
 module Test.Pragma (tests) where
 
 import Control.Monad (when)
-import Text.Megaparsec
 import Text.Regex.TDFA
 
 import Base.CompilerError
@@ -98,7 +97,7 @@ tests = [
     checkParseError "$ExprLookup[ \"bad stuff\" ]$" "macro name" pragmaExprLookup
   ]
 
-checkParsesAs :: String -> TextParser [Pragma SourcePos] -> ([Pragma SourcePos] -> Bool) -> IO (TrackedErrors ())
+checkParsesAs :: String -> TextParser [Pragma SourceContext] -> ([Pragma SourceContext] -> Bool) -> IO (TrackedErrors ())
 checkParsesAs s p m = return $ do
   let parsed = readSingleWith p "(string)" s
   check parsed
@@ -110,7 +109,7 @@ checkParsesAs s p m = return $ do
       | isCompilerError c = compilerErrorM $ "Parse '" ++ s ++ "':\n" ++ show (getCompilerError c)
       | otherwise = return ()
 
-checkParseError :: String -> String -> TextParser (Pragma SourcePos) -> IO (TrackedErrors ())
+checkParseError :: String -> String -> TextParser (Pragma SourceContext) -> IO (TrackedErrors ())
 checkParseError s m p = return $ do
   let parsed = readSingleWith p "(string)" s
   check parsed

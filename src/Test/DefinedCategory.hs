@@ -19,11 +19,11 @@ limitations under the License.
 module Test.DefinedCategory (tests) where
 
 import System.FilePath
-import Text.Megaparsec
 
 import Base.CompilerError
 import Base.TrackedErrors
 import Parser.DefinedCategory ()
+import Parser.TextParser (SourceContext)
 import Test.Common
 import Types.DefinedCategory
 
@@ -39,7 +39,7 @@ tests = [
 checkParseSuccess :: String -> IO (TrackedErrors ())
 checkParseSuccess f = do
   contents <- loadFile f
-  let parsed = readMulti f contents :: TrackedErrors [DefinedCategory SourcePos]
+  let parsed = readMulti f contents :: TrackedErrors [DefinedCategory SourceContext]
   return $ check parsed
   where
   check c
@@ -49,7 +49,7 @@ checkParseSuccess f = do
 checkParseFail :: String -> IO (TrackedErrors ())
 checkParseFail f = do
   contents <- loadFile f
-  let parsed = readMulti f contents :: TrackedErrors [DefinedCategory SourcePos]
+  let parsed = readMulti f contents :: TrackedErrors [DefinedCategory SourceContext]
   return $ check parsed
   where
   check c

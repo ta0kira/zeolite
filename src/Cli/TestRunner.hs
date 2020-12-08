@@ -28,7 +28,6 @@ import System.Directory
 import System.IO
 import System.Posix.Temp (mkdtemp)
 import System.FilePath
-import Text.Megaparsec
 import Text.Regex.TDFA
 import qualified Data.Map as Map
 
@@ -41,12 +40,13 @@ import Module.CompileMetadata
 import Module.Paths
 import Module.ProcessMetadata
 import Parser.SourceFile
+import Parser.TextParser (SourceContext)
 import Types.IntegrationTest
 import Types.Procedure
 import Types.TypeCategory
 
 
-runSingleTest :: CompilerBackend b => b -> LanguageModule SourcePos ->
+runSingleTest :: CompilerBackend b => b -> LanguageModule SourceContext ->
   FilePath -> [FilePath] -> [CompileMetadata] -> (String,String) ->
   TrackedErrorsIO ((Int,Int),TrackedErrors ())
 runSingleTest b cm p paths deps (f,s) = do

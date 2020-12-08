@@ -55,7 +55,6 @@ import Data.Maybe (isJust)
 import System.Directory
 import System.FilePath
 import System.IO
-import Text.Megaparsec (SourcePos)
 import qualified Data.Map as Map
 import qualified Data.Set as Set
 
@@ -69,6 +68,7 @@ import Module.CompileMetadata
 import Module.ParseMetadata
 import Module.Paths
 import Parser.SourceFile
+import Parser.TextParser (SourceContext)
 import Types.Pragma
 import Types.Procedure (Expression(Literal),ValueLiteral(..))
 import Types.TypeCategory
@@ -173,7 +173,7 @@ findSourceFiles p0 p = do
   let ts = filter (isSuffixOf ".0rt") ds
   return (ps,xs,ts)
 
-getExprMap :: FilePath -> ModuleConfig -> TrackedErrorsIO (ExprMap SourcePos)
+getExprMap :: FilePath -> ModuleConfig -> TrackedErrorsIO (ExprMap SourceContext)
 getExprMap p m = do
   path <- errorFromIO $ canonicalizePath (p </> mcRoot m </> mcPath m)
   let defaults = [(MacroName "MODULE_PATH",Literal (StringLiteral [] path))]
@@ -400,7 +400,7 @@ resolveDep _ _ d = [UnresolvedCategory d]
 
 loadModuleGlobals :: PathIOHandler r => r -> FilePath -> (Namespace,Namespace) -> [FilePath] ->
   Maybe CompileMetadata -> [CompileMetadata] -> [CompileMetadata] ->
-  TrackedErrorsIO ([WithVisibility (AnyCategory SourcePos)])
+  TrackedErrorsIO ([WithVisibility (AnyCategory SourceContext)])
 loadModuleGlobals r p (ns0,ns1) fs m deps1 deps2 = do
   let public = Set.fromList $ map cmPath deps1
   let deps2' = filter (\cm -> not $ cmPath cm `Set.member` public) deps2

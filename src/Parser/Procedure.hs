@@ -22,8 +22,6 @@ limitations under the License.
 module Parser.Procedure (
 ) where
 
-import Text.Megaparsec
-import Text.Megaparsec.Char
 import qualified Data.Set as Set
 
 import Base.CompilerError
@@ -38,22 +36,22 @@ import Types.Procedure
 import Types.TypeCategory
 
 
-instance ParseFromSource (ExecutableProcedure SourcePos) where
+instance ParseFromSource (ExecutableProcedure SourceContext) where
   sourceParser = labeled "executable procedure" $ do
-    c <- getSourcePos
+    c <- getSourceContext
     n <- try sourceParser
     as <- sourceParser
     rs <- sourceParser
     sepAfter (string_ "{")
     pragmas <- parsePragmas [pragmaNoTrace,pragmaTraceCreation]
     pp <- sourceParser
-    c2 <- getSourcePos
+    c2 <- getSourceContext
     sepAfter (string_ "}")
     return $ ExecutableProcedure [c] pragmas [c2] n as rs pp
 
-instance ParseFromSource (TestProcedure SourcePos) where
+instance ParseFromSource (TestProcedure SourceContext) where
   sourceParser = labeled "test procedure" $ do
-    c <- getSourcePos
+    c <- getSourceContext
     kwUnittest
     n <- try sourceParser
     sepAfter (string_ "{")
@@ -61,24 +59,24 @@ instance ParseFromSource (TestProcedure SourcePos) where
     sepAfter (string_ "}")
     return $ TestProcedure [c] n pp
 
-instance ParseFromSource (ArgValues SourcePos) where
+instance ParseFromSource (ArgValues SourceContext) where
   sourceParser = labeled "procedure arguments" $ do
-    c <- getSourcePos
+    c <- getSourceContext
     as <- between (sepAfter $ string_ "(")
                   (sepAfter $ string_ ")")
                   (sepBy sourceParser (sepAfter $ string_ ","))
     return $ ArgValues [c] (Positional as)
 
-instance ParseFromSource (ReturnValues SourcePos) where
+instance ParseFromSource (ReturnValues SourceContext) where
   sourceParser = labeled "procedure returns" $ namedReturns <|> unnamedReturns where
     namedReturns = do
-      c <- getSourcePos
+      c <- getSourceContext
       rs <- between (sepAfter $ string_ "(")
                     (sepAfter $ string_ ")")
                     (sepBy sourceParser (sepAfter $ string_ ","))
       return $ NamedReturns [c] (Positional rs)
     unnamedReturns = do
-      c <- getSourcePos
+      c <- getSourceContext
       notFollowedBy (string_ "(")
       return $ UnnamedReturns [c]
 
@@ -89,30 +87,30 @@ instance ParseFromSource VariableName where
     e <- sepAfter $ many alphaNumChar
     return $ VariableName (b:e)
 
-instance ParseFromSource (InputValue SourcePos) where
+instance ParseFromSource (InputValue SourceContext) where
   sourceParser = labeled "input variable" $ variable <|> discard where
     variable = do
-      c <- getSourcePos
+      c <- getSourceContext
       v <- sourceParser
       return $ InputValue [c] v
     discard = do
-      c <- getSourcePos
+      c <- getSourceContext
       sepAfter (string_ "_")
       return $ DiscardInput [c]
 
-instance ParseFromSource (OutputValue SourcePos) where
+instance ParseFromSource (OutputValue SourceContext) where
   sourceParser = labeled "output variable" $ do
-    c <- getSourcePos
+    c <- getSourceContext
     v <- sourceParser
     return $ OutputValue [c] v
 
-instance ParseFromSource (Procedure SourcePos) where
+instance ParseFromSource (Procedure SourceContext) where
   sourceParser = labeled "procedure" $ do
-    c <- getSourcePos
+    c <- getSourceContext
     rs <- sepBy sourceParser optionalSpace
     return $ Procedure [c] rs
 
-instance ParseFromSource (Statement SourcePos) where
+instance ParseFromSource (Statement SourceContext) where
   sourceParser = parseReturn <|>
                  parseBreak <|>
                  parseContinue <|>
@@ -121,56 +119,56 @@ instance ParseFromSource (Statement SourcePos) where
                  parseAssign <|>
                  parseIgnore where
     parseAssign = labeled "statement" $ do
-      c <- getSourcePos
+      c <- getSourceContext
       as <- sepBy sourceParser (sepAfter $ string_ ",")
       assignOperator
       e <- sourceParser
       statementEnd
       return $ Assignment [c] (Positional as) e
     parseBreak = labeled "break" $ do
-      c <- getSourcePos
+      c <- getSourceContext
       kwBreak
       return $ LoopBreak [c]
     parseContinue = labeled "continue" $ do
-      c <- getSourcePos
+      c <- getSourceContext
       kwContinue
       return $ LoopContinue [c]
     parseFailCall = do
-      c <- getSourcePos
+      c <- getSourceContext
       kwFail
       e <- between (sepAfter $ string_ "(") (sepAfter $ string_ ")") sourceParser
       return $ FailCall [c] e
     parseIgnore = do
-      c <- getSourcePos
+      c <- getSourceContext
       statementStart
       e <- sourceParser
       statementEnd
       return $ IgnoreValues [c] e
     parseReturn = labeled "return" $ do
-      c <- getSourcePos
+      c <- getSourceContext
       kwReturn
       emptyReturn c <|> multiReturn c
-    multiReturn :: SourcePos -> TextParser (Statement SourcePos)
+    multiReturn :: SourceContext -> TextParser (Statement SourceContext)
     multiReturn c = do
       rs <- sepBy sourceParser (sepAfter $ string_ ",")
       statementEnd
       return $ ExplicitReturn [c] (Positional rs)
-    emptyReturn :: SourcePos -> TextParser (Statement SourcePos)
+    emptyReturn :: SourceContext -> TextParser (Statement SourceContext)
     emptyReturn c = do
       kwIgnore
       statementEnd
       return $ EmptyReturn [c]
     parseVoid = do
-      c <- getSourcePos
+      c <- getSourceContext
       e <- sourceParser
       return $ NoValueExpression [c] e
 
-instance ParseFromSource (Assignable SourcePos) where
+instance ParseFromSource (Assignable SourceContext) where
   sourceParser = existing <|> create where
     create = labeled "variable creation" $ do
       t <- sourceParser
       strayFuncCall <|> return ()
-      c <- getSourcePos
+      c <- getSourceContext
       n <- sourceParser
       return $ CreateVariable [c] t n
     existing = labeled "variable name" $ do
@@ -181,7 +179,7 @@ instance ParseFromSource (Assignable SourcePos) where
       valueSymbolGet <|> typeSymbolGet <|> categorySymbolGet
       compilerErrorM "function returns must be explicitly handled"
 
-instance ParseFromSource (VoidExpression SourcePos) where
+instance ParseFromSource (VoidExpression SourceContext) where
   sourceParser = conditional <|> loop <|> scoped where
     conditional = do
       e <- sourceParser
@@ -193,9 +191,9 @@ instance ParseFromSource (VoidExpression SourcePos) where
       e <- sourceParser
       return $ WithScope e
 
-instance ParseFromSource (IfElifElse SourcePos) where
+instance ParseFromSource (IfElifElse SourceContext) where
   sourceParser = labeled "if-elif-else" $ do
-    c <- getSourcePos
+    c <- getSourceContext
     kwIf >> parseIf c
     where
       parseIf c = do
@@ -204,17 +202,17 @@ instance ParseFromSource (IfElifElse SourcePos) where
         next <- parseElif <|> parseElse <|> return TerminateConditional
         return $ IfStatement [c] i p next
       parseElif = do
-        c <- getSourcePos
+        c <- getSourceContext
         kwElif >> parseIf c
       parseElse = do
-        c <- getSourcePos
+        c <- getSourceContext
         kwElse
         p <- between (sepAfter $ string_ "{") (sepAfter $ string_ "}") sourceParser
         return $ ElseStatement [c] p
 
-instance ParseFromSource (WhileLoop SourcePos) where
+instance ParseFromSource (WhileLoop SourceContext) where
   sourceParser = labeled "while" $ do
-    c <- getSourcePos
+    c <- getSourceContext
     kwWhile
     i <- between (sepAfter $ string_ "(") (sepAfter $ string_ ")") sourceParser
     p <- between (sepAfter $ string_ "{") (sepAfter $ string_ "}") sourceParser
@@ -225,10 +223,10 @@ instance ParseFromSource (WhileLoop SourcePos) where
         kwUpdate
         between (sepAfter $ string_ "{") (sepAfter $ string_ "}") sourceParser
 
-instance ParseFromSource (ScopedBlock SourcePos) where
+instance ParseFromSource (ScopedBlock SourceContext) where
   sourceParser = scoped <|> justCleanup where
     scoped = labeled "scoped" $ do
-      c <- getSourcePos
+      c <- getSourceContext
       kwScoped
       p <- between (sepAfter $ string_ "{") (sepAfter $ string_ "}") sourceParser
       cl <- fmap Just parseCleanup <|> return Nothing
@@ -238,7 +236,7 @@ instance ParseFromSource (ScopedBlock SourcePos) where
       s <- unconditional <|> sourceParser
       return $ ScopedBlock [c] p cl s
     justCleanup = do
-      c <- getSourcePos
+      c <- getSourceContext
       cl <- parseCleanup
       kwIn
       s <- sourceParser <|> unconditional
@@ -247,7 +245,7 @@ instance ParseFromSource (ScopedBlock SourcePos) where
       kwCleanup
       between (sepAfter $ string_ "{") (sepAfter $ string_ "}") sourceParser
     unconditional = do
-      c <- getSourcePos
+      c <- getSourceContext
       p <- between (sepAfter $ string_ "{") (sepAfter $ string_ "}") sourceParser
       return $ NoValueExpression [c] (Unconditional p)
 
@@ -301,22 +299,22 @@ infixBefore o1 o2 = (infixOrder o1 :: Int) <= (infixOrder o2 :: Int) where
     | o `Set.member` Set.fromList logicalInfix = 5
   infixOrder _ = 3
 
-functionOperator :: TextParser (Operator SourcePos)
+functionOperator :: TextParser (Operator SourceContext)
 functionOperator = do
-  c <- getSourcePos
+  c <- getSourceContext
   infixFuncStart
   q <- sourceParser
   infixFuncEnd
   return $ FunctionOperator [c] q
 
-instance ParseFromSource (Expression SourcePos) where
+instance ParseFromSource (Expression SourceContext) where
   sourceParser = do
     e <- notInfix
     asInfix [e] [] <|> return e
     where
       notInfix = literal <|> unary <|> initalize <|> expression
       asInfix es os = do
-        c <- getSourcePos
+        c <- getSourceContext
         o <- infixOperator <|> functionOperator
         e2 <- notInfix
         let es' = es ++ [e2]
@@ -335,17 +333,17 @@ instance ParseFromSource (Expression SourcePos) where
         l <- sourceParser
         return $ Literal l
       unary = do
-        c <- getSourcePos
+        c <- getSourceContext
         o <- unaryOperator <|> functionOperator
         e <- notInfix
         return $ UnaryExpression [c] o e
       expression = labeled "expression" $ do
-        c <- getSourcePos
+        c <- getSourceContext
         s <- sourceParser
         vs <- many sourceParser
         return $ Expression [c] s vs
       initalize = do
-        c <- getSourcePos
+        c <- getSourceContext
         t <- try $ do  -- Avoids consuming the type name if { isn't present.
           t2 <- sourceParser
           sepAfter (labeled "@value initializer" $ string_ "{")
@@ -364,31 +362,31 @@ instance ParseFromSource (Expression SourcePos) where
         sepAfter (string_ "}")
         return $ InitializeValue [c] t (Positional []) (Positional as)
 
-instance ParseFromSource (FunctionQualifier SourcePos) where
+instance ParseFromSource (FunctionQualifier SourceContext) where
   -- TODO: This is probably better done iteratively.
   sourceParser = valueFunc <|> categoryFunc <|> typeFunc where
     valueFunc = do
-      c <- getSourcePos
+      c <- getSourceContext
       q <- try sourceParser
       valueSymbolGet
       return $ ValueFunction [c] q
     categoryFunc = do
-      c <- getSourcePos
+      c <- getSourceContext
       q <- try $ do  -- Avoids consuming the type name if : isn't present.
         q2 <- sourceParser
         categorySymbolGet
         return q2
       return $ CategoryFunction [c] q
     typeFunc = do
-      c <- getSourcePos
+      c <- getSourceContext
       q <- try sourceParser
       typeSymbolGet
       return $ TypeFunction [c] q
 
-instance ParseFromSource (FunctionSpec SourcePos) where
+instance ParseFromSource (FunctionSpec SourceContext) where
   sourceParser = try qualified <|> unqualified where
     qualified = do
-      c <- getSourcePos
+      c <- getSourceContext
       q <- sourceParser
       n <- sourceParser
       ps <- try $ between (sepAfter $ string_ "<")
@@ -396,25 +394,25 @@ instance ParseFromSource (FunctionSpec SourcePos) where
                           (sepBy sourceParser (sepAfter $ string_ ",")) <|> return []
       return $ FunctionSpec [c] q n (Positional ps)
     unqualified = do
-      c <- getSourcePos
+      c <- getSourceContext
       n <- sourceParser
       ps <- try $ between (sepAfter $ string_ "<")
                           (sepAfter $ string_ ">")
                           (sepBy sourceParser (sepAfter $ string_ ",")) <|> return []
       return $ FunctionSpec [c] UnqualifiedFunction n (Positional ps)
 
-instance ParseFromSource (InstanceOrInferred SourcePos) where
+instance ParseFromSource (InstanceOrInferred SourceContext) where
   sourceParser = assigned <|> inferred where
     assigned = do
-      c <- getSourcePos
+      c <- getSourceContext
       t <- sourceParser
       return $ AssignedInstance [c] t
     inferred = do
-      c <- getSourcePos
+      c <- getSourceContext
       sepAfter_ inferredParam
       return $ InferredInstance [c]
 
-parseFunctionCall :: SourcePos -> FunctionName -> TextParser (FunctionCall SourcePos)
+parseFunctionCall :: SourceContext -> FunctionName -> TextParser (FunctionCall SourceContext)
 parseFunctionCall c n = do
   -- NOTE: try is needed here so that < operators work when the left side is
   -- just a variable name, e.g., x < y.
@@ -435,7 +433,7 @@ builtinFunction = foldr (<|>) empty $ map try [
     kwTypename >> return BuiltinTypename
   ]
 
-instance ParseFromSource (ExpressionStart SourcePos) where
+instance ParseFromSource (ExpressionStart SourceContext) where
   sourceParser = labeled "expression start" $
                  parens <|>
                  variableOrUnqualified <|>
@@ -446,28 +444,28 @@ instance ParseFromSource (ExpressionStart SourcePos) where
                  categoryCall <|>
                  typeCall where
     parens = do
-      c <- getSourcePos
+      c <- getSourceContext
       sepAfter (string_ "(")
       e <- try (assign c) <|> expr c
       sepAfter (string_ ")")
       return e
-    assign :: SourcePos -> TextParser (ExpressionStart SourcePos)
+    assign :: SourceContext -> TextParser (ExpressionStart SourceContext)
     assign c = do
       n <- sourceParser
       assignOperator
       e <- sourceParser
       return $ InlineAssignment [c] n e
-    expr :: SourcePos -> TextParser (ExpressionStart SourcePos)
+    expr :: SourceContext -> TextParser (ExpressionStart SourceContext)
     expr c = do
       e <- sourceParser
       return $ ParensExpression [c] e
     builtinCall = do
-      c <- getSourcePos
+      c <- getSourceContext
       n <- builtinFunction
       f <- parseFunctionCall c n
       return $ BuiltinCall [c] f
     builtinValue = do
-      c <- getSourcePos
+      c <- getSourceContext
       n <- builtinValues
       return $ NamedVariable (OutputValue [c] (VariableName n))
     sourceContext = do
@@ -481,7 +479,7 @@ instance ParseFromSource (ExpressionStart SourcePos) where
            (PragmaExprLookup c name) -> return $ NamedMacro c name
            _ -> undefined  -- Should be caught above.
     variableOrUnqualified = do
-      c <- getSourcePos
+      c <- getSourceContext
       n <- sourceParser :: TextParser VariableName
       asUnqualifiedCall c n <|> asVariable c n
     asVariable c n = do
@@ -490,7 +488,7 @@ instance ParseFromSource (ExpressionStart SourcePos) where
       f <- parseFunctionCall c (FunctionName (vnName n))
       return $ UnqualifiedCall [c] f
     categoryCall = do
-      c <- getSourcePos
+      c <- getSourceContext
       t <- try $ do  -- Avoids consuming the type name if : isn't present.
         t2 <- sourceParser
         categorySymbolGet
@@ -499,14 +497,14 @@ instance ParseFromSource (ExpressionStart SourcePos) where
       f <- parseFunctionCall c n
       return $ CategoryCall [c] t f
     typeCall = do
-      c <- getSourcePos
+      c <- getSourceContext
       t <- try sourceParser
       typeSymbolGet
       n <- sourceParser
       f <- parseFunctionCall c n
       return $ TypeCall [c] t f
 
-instance ParseFromSource (ValueLiteral SourcePos) where
+instance ParseFromSource (ValueLiteral SourceContext) where
   sourceParser = labeled "literal" $
                  stringLiteral <|>
                  charLiteral <|>
@@ -515,19 +513,19 @@ instance ParseFromSource (ValueLiteral SourcePos) where
                  boolLiteral <|>
                  emptyLiteral where
     stringLiteral = do
-      c <- getSourcePos
+      c <- getSourceContext
       ss <- quotedString
       optionalSpace
       return $ StringLiteral [c] ss
     charLiteral = do
-      c <- getSourcePos
+      c <- getSourceContext
       string_ "'"
       ch <- stringChar <|> char '"'
       string_ "'"
       optionalSpace
       return $ CharLiteral [c] ch
     escapedInteger = do
-      c <- getSourcePos
+      c <- getSourceContext
       escapeStart
       b <- oneOf "bBoOdDxX"
       d <- case b of
@@ -543,7 +541,7 @@ instance ParseFromSource (ValueLiteral SourcePos) where
       optionalSpace
       return $ IntegerLiteral [c] True d
     integerOrDecimal = do
-      c <- getSourcePos
+      c <- getSourceContext
       d <- parseDec
       decimal c d <|> integer c d
     decimal c d = do
@@ -561,24 +559,24 @@ instance ParseFromSource (ValueLiteral SourcePos) where
       optionalSpace
       return $ IntegerLiteral [c] False d
     boolLiteral = do
-      c <- getSourcePos
+      c <- getSourceContext
       b <- try $ (kwTrue >> return True) <|> (kwFalse >> return False)
       return $ BoolLiteral [c] b
     emptyLiteral = do
-      c <- getSourcePos
+      c <- getSourceContext
       kwEmpty
       return $ EmptyLiteral [c]
 
-instance ParseFromSource (ValueOperation SourcePos) where
+instance ParseFromSource (ValueOperation SourceContext) where
   sourceParser = try valueCall <|> try conversion where
     valueCall = labeled "function call" $ do
-      c <- getSourcePos
+      c <- getSourceContext
       valueSymbolGet
       n <- sourceParser
       f <- parseFunctionCall c n
       return $ ValueCall [c] f
     conversion = labeled "type conversion" $ do
-      c <- getSourcePos
+      c <- getSourceContext
       valueSymbolGet
       t <- sourceParser -- NOTE: Should not need try here.
       typeSymbolGet

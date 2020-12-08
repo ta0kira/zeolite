@@ -21,18 +21,17 @@ limitations under the License.
 module Parser.IntegrationTest (
 ) where
 
-import Text.Megaparsec
-
 import Parser.Common
 import Parser.DefinedCategory ()
 import Parser.Procedure ()
+import Parser.TextParser
 import Parser.TypeCategory ()
 import Types.IntegrationTest
 
 
-instance ParseFromSource (IntegrationTestHeader SourcePos) where
+instance ParseFromSource (IntegrationTestHeader SourceContext) where
   sourceParser = labeled "testcase" $ do
-    c <- getSourcePos
+    c <- getSourceContext
     sepAfter kwTestcase
     string_ "\""
     name <- manyTill stringChar (string_ "\"")
@@ -43,22 +42,22 @@ instance ParseFromSource (IntegrationTestHeader SourcePos) where
     sepAfter (string_ "}")
     return $ IntegrationTestHeader [c] name args result where
       resultCompiles = labeled "compiles expectation" $ do
-        c <- getSourcePos
+        c <- getSourceContext
         keyword "compiles"
         (req,exc) <- requireOrExclude
         return $ ExpectCompiles [c] req exc
       resultError = labeled "error expectation" $ do
-        c <- getSourcePos
+        c <- getSourceContext
         keyword "error"
         (req,exc) <- requireOrExclude
         return $ ExpectCompilerError [c] req exc
       resultCrash = labeled "crash expectation" $ do
-        c <- getSourcePos
+        c <- getSourceContext
         keyword "crash"
         (req,exc) <- requireOrExclude
         return $ ExpectRuntimeError [c] req exc
       resultSuccess = labeled "success expectation" $ do
-        c <- getSourcePos
+        c <- getSourceContext
         keyword "success"
         (req,exc) <- requireOrExclude
         return $ ExpectRuntimeSuccess [c] req exc
@@ -90,7 +89,7 @@ instance ParseFromSource (IntegrationTestHeader SourcePos) where
       stderrScope   = keyword "stderr"   >> return OutputStderr
       stdoutScope   = keyword "stdout"   >> return OutputStdout
 
-instance ParseFromSource (IntegrationTest SourcePos) where
+instance ParseFromSource (IntegrationTest SourceContext) where
   sourceParser = labeled "integration test" $ do
     h <- sourceParser
     (cs,ds,ts) <- parseAny3 sourceParser sourceParser sourceParser

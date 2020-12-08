@@ -23,13 +23,18 @@ limitations under the License.
 {-# LANGUAGE Unsafe #-}
 
 module Parser.TextParser (
+  module Text.Megaparsec,
+  module Text.Megaparsec.Char,
+  SourceContext,
   TextParser,
+  getSourceContext,
   runTextParser,
 ) where
 
 import Data.Char (isSpace)
 import Data.List (dropWhileEnd)
 import Text.Megaparsec
+import Text.Megaparsec.Char
 import qualified Data.Set as Set
 
 import Base.CompilerError
@@ -50,6 +55,15 @@ runTextParser :: ErrorContextM m => TextParser a -> String -> String -> m a
 runTextParser p n s = case parse p n s of
                            Left e  -> compilerErrorM $ dropWhileEnd isSpace $ errorBundlePretty e
                            Right x -> return x
+
+newtype SourceContext = SourceContext SourcePos deriving (Eq,Ord)
+
+instance Show SourceContext where
+  show (SourceContext (SourcePos f l c)) =
+    "line " ++ show (unPos l) ++ " column " ++ show (unPos c) ++ " of " ++ "\"" ++ f ++ "\""
+
+getSourceContext :: TextParser SourceContext
+getSourceContext = fmap SourceContext getSourcePos
 
 promoteError :: ParseError String CompilerMessage -> ParseError String CompilerMessage
 promoteError e@(TrivialError i _ _) = FancyError i $ Set.fromList [ErrorCustom $ compilerMessage $ parseErrorTextPretty e]

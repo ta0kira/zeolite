@@ -19,8 +19,6 @@ limitations under the License.
 module Test.Parser (tests) where
 
 import Control.Monad (when)
-import Text.Megaparsec
-import Text.Megaparsec.Char
 
 import Base.CompilerError
 import Base.TrackedErrors

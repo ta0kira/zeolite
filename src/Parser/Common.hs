@@ -114,8 +114,6 @@ import Data.Foldable
 import Data.Functor
 import Data.Monoid
 import Prelude hiding (foldl,foldr)
-import Text.Megaparsec
-import Text.Megaparsec.Char
 import qualified Data.Set as Set
 
 import Base.CompilerError

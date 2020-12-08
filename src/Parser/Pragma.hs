@@ -28,8 +28,6 @@ module Parser.Pragma (
 ) where
 
 import Control.Monad (when)
-import Text.Megaparsec
-import Text.Megaparsec.Char
 
 import Base.CompilerError
 import Parser.Common
@@ -40,7 +38,7 @@ import Types.Pragma
 parsePragmas :: [TextParser a] -> TextParser [a]
 parsePragmas = many . foldr ((<|>)) unknownPragma
 
-pragmaModuleOnly :: TextParser (Pragma SourcePos)
+pragmaModuleOnly :: TextParser (Pragma SourceContext)
 pragmaModuleOnly = autoPragma "ModuleOnly" $ Left parseAt where
   parseAt c = PragmaVisibility [c] ModuleOnly
 
@@ -51,29 +49,29 @@ instance ParseFromSource MacroName where
     optionalSpace
     return $ MacroName (h:t)
 
-pragmaExprLookup :: TextParser (Pragma SourcePos)
+pragmaExprLookup :: TextParser (Pragma SourceContext)
 pragmaExprLookup = autoPragma "ExprLookup" $ Right parseAt where
   parseAt c = do
     name <- sourceParser
     return $ PragmaExprLookup [c] name
 
-pragmaSourceContext :: TextParser (Pragma SourcePos)
+pragmaSourceContext :: TextParser (Pragma SourceContext)
 pragmaSourceContext = autoPragma "SourceContext" $ Left parseAt where
   parseAt c = PragmaSourceContext c
 
-pragmaNoTrace :: TextParser (Pragma SourcePos)
+pragmaNoTrace :: TextParser (Pragma SourceContext)
 pragmaNoTrace = autoPragma "NoTrace" $ Left parseAt where
   parseAt c = PragmaTracing [c] NoTrace
 
-pragmaTraceCreation :: TextParser (Pragma SourcePos)
+pragmaTraceCreation :: TextParser (Pragma SourceContext)
 pragmaTraceCreation = autoPragma "TraceCreation" $ Left parseAt where
   parseAt c = PragmaTracing [c] TraceCreation
 
-pragmaTestsOnly :: TextParser (Pragma SourcePos)
+pragmaTestsOnly :: TextParser (Pragma SourceContext)
 pragmaTestsOnly = autoPragma "TestsOnly" $ Left parseAt where
   parseAt c = PragmaVisibility [c] TestsOnly
 
-pragmaComment :: TextParser (Pragma SourcePos)
+pragmaComment :: TextParser (Pragma SourceContext)
 pragmaComment = autoPragma "Comment" $ Right parseAt where
   parseAt c = do
     string_ "\""
@@ -87,9 +85,9 @@ unknownPragma = do
   p <- some alphaNumChar
   compilerErrorM $ "pragma " ++ p ++ " is not supported in this context"
 
-autoPragma :: String -> Either (SourcePos -> a) (SourcePos -> TextParser a) -> TextParser a
+autoPragma :: String -> Either (SourceContext -> a) (SourceContext -> TextParser a) -> TextParser a
 autoPragma p f = do
-  c <- getSourcePos
+  c <- getSourceContext
   try $ pragmaStart >> string_ p >> notFollowedBy alphaNumChar
   hasArgs <- (pragmaArgsStart >> optionalSpace >> return True) <|> return False
   x <- delegate hasArgs f c

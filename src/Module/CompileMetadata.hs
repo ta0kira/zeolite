@@ -16,8 +16,6 @@ limitations under the License.
 
 -- Author: Kevin P. Barry [ta0kira@gmail.com]
 
-{-# LANGUAGE Safe #-}
-
 module Module.CompileMetadata (
   CategoryIdentifier(..),
   CompileMetadata(..),
@@ -28,10 +26,10 @@ module Module.CompileMetadata (
 ) where
 
 import Data.List (nub)
-import Text.Megaparsec (SourcePos)
 
 import Cli.CompileOptions
 import Cli.Programs (VersionHash)
+import Parser.TextParser (SourceContext)
 import Types.Pragma (MacroName)
 import Types.Procedure (Expression)
 import Types.TypeCategory (Namespace)
@@ -96,7 +94,7 @@ data ModuleConfig =
   ModuleConfig {
     mcRoot :: FilePath,
     mcPath :: FilePath,
-    mcExprMap :: [(MacroName,Expression SourcePos)],
+    mcExprMap :: [(MacroName,Expression SourceContext)],
     mcPublicDeps :: [FilePath],
     mcPrivateDeps :: [FilePath],
     mcExtraFiles :: [ExtraSource],

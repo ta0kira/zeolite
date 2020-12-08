@@ -22,13 +22,12 @@ module Parser.TypeInstance (
 ) where
 
 import Control.Applicative ((<|>))
-import Text.Megaparsec hiding ((<|>),single)
-import Text.Megaparsec.Char
 
 import Base.GeneralType
 import Base.Mergeable (mergeAll,mergeAny)
 import Base.Positional
 import Parser.Common
+import Parser.TextParser hiding ((<|>),single)
 import Types.TypeInstance
 
 

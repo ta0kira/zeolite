@@ -22,8 +22,6 @@ module Parser.SourceFile (
   parseTestSource,
 ) where
 
-import Text.Megaparsec
-
 import Base.CompilerError
 import Parser.Common
 import Parser.DefinedCategory ()
@@ -38,7 +36,7 @@ import Types.TypeCategory
 
 
 parseInternalSource :: ErrorContextM m =>
-  (FilePath,String) -> m ([Pragma SourcePos],[AnyCategory SourcePos],[DefinedCategory SourcePos])
+  (FilePath,String) -> m ([Pragma SourceContext],[AnyCategory SourceContext],[DefinedCategory SourceContext])
 parseInternalSource (f,s) = runTextParser (between optionalSpace endOfDoc withPragmas) f s where
   withPragmas = do
     pragmas <- parsePragmas internalSourcePragmas
@@ -46,7 +44,7 @@ parseInternalSource (f,s) = runTextParser (between optionalSpace endOfDoc withPr
     (cs,ds) <- parseAny2 sourceParser sourceParser
     return (pragmas,cs,ds)
 
-parsePublicSource :: ErrorContextM m => (FilePath,String) -> m ([Pragma SourcePos],[AnyCategory SourcePos])
+parsePublicSource :: ErrorContextM m => (FilePath,String) -> m ([Pragma SourceContext],[AnyCategory SourceContext])
 parsePublicSource (f,s) = runTextParser (between optionalSpace endOfDoc withPragmas) f s where
   withPragmas = do
     pragmas <- parsePragmas publicSourcePragmas
@@ -54,7 +52,7 @@ parsePublicSource (f,s) = runTextParser (between optionalSpace endOfDoc withPrag
     cs <- sepBy sourceParser optionalSpace
     return (pragmas,cs)
 
-parseTestSource :: ErrorContextM m => (FilePath,String) -> m ([Pragma SourcePos],[IntegrationTest SourcePos])
+parseTestSource :: ErrorContextM m => (FilePath,String) -> m ([Pragma SourceContext],[IntegrationTest SourceContext])
 parseTestSource (f,s) = runTextParser (between optionalSpace endOfDoc withPragmas) f s where
   withPragmas = do
     pragmas <- parsePragmas testSourcePragmas
@@ -62,11 +60,11 @@ parseTestSource (f,s) = runTextParser (between optionalSpace endOfDoc withPragma
     ts <- sepBy sourceParser optionalSpace
     return (pragmas,ts)
 
-publicSourcePragmas :: [TextParser (Pragma SourcePos)]
+publicSourcePragmas :: [TextParser (Pragma SourceContext)]
 publicSourcePragmas = [pragmaModuleOnly,pragmaTestsOnly]
 
-internalSourcePragmas :: [TextParser (Pragma SourcePos)]
+internalSourcePragmas :: [TextParser (Pragma SourceContext)]
 internalSourcePragmas = [pragmaTestsOnly]
 
-testSourcePragmas :: [TextParser (Pragma SourcePos)]
+testSourcePragmas :: [TextParser (Pragma SourceContext)]
 testSourcePragmas = []

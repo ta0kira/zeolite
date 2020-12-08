@@ -24,8 +24,6 @@ module Module.ParseMetadata (
 
 import Control.Applicative.Permutations
 import Control.Monad (when)
-import Text.Megaparsec
-import Text.Megaparsec.Char
 
 import Base.CompilerError
 import Cli.CompileOptions
@@ -378,7 +376,7 @@ instance ConfigFormat CompileMode where
   writeConfig CompileUnspecified = writeConfig (CompileIncremental [])
   writeConfig _ = compilerErrorM "Invalid compile mode"
 
-parseExprMacro :: TextParser (MacroName,Expression SourcePos)
+parseExprMacro :: TextParser (MacroName,Expression SourceContext)
 parseExprMacro = do
   sepAfter (string_ "expression_macro")
   structOpen

@@ -32,7 +32,6 @@ import System.Directory
 import System.FilePath
 import System.Posix.Temp (mkstemps)
 import System.IO
-import Text.Megaparsec (SourcePos)
 import qualified Data.Map as Map
 import qualified Data.Set as Set
 
@@ -48,6 +47,7 @@ import Module.CompileMetadata
 import Module.Paths
 import Module.ProcessMetadata
 import Parser.SourceFile
+import Parser.TextParser (SourceContext)
 import Types.Builtin
 import Types.DefinedCategory
 import Types.Pragma
@@ -60,7 +60,7 @@ data ModuleSpec =
   ModuleSpec {
     msRoot :: FilePath,
     msPath :: FilePath,
-    msExprMap :: ExprMap SourcePos,
+    msExprMap :: ExprMap SourceContext,
     msPublicDeps :: [FilePath],
     msPrivateDeps :: [FilePath],
     msPublicFiles :: [FilePath],
@@ -78,7 +78,7 @@ data LoadedTests =
     ltRoot :: FilePath,
     ltPath :: FilePath,
     ltMetadata :: CompileMetadata,
-    ltExprMap :: ExprMap SourcePos,
+    ltExprMap :: ExprMap SourceContext,
     ltPublicDeps :: [CompileMetadata],
     ltPrivateDeps :: [CompileMetadata]
   }
@@ -299,7 +299,7 @@ runModuleTests resolver backend base tp (LoadedTests p d m em deps1 deps2) = do
     isTestAllowed t = if null allowTests then True else t `Set.member` allowTests
     showSkipped f = compilerWarningM $ "Skipping tests in " ++ f ++ " due to explicit test filter."
 
-loadPrivateSource :: PathIOHandler r => r -> VersionHash -> FilePath -> FilePath -> TrackedErrorsIO (PrivateSource SourcePos)
+loadPrivateSource :: PathIOHandler r => r -> VersionHash -> FilePath -> FilePath -> TrackedErrorsIO (PrivateSource SourceContext)
 loadPrivateSource resolver h p f = do
   [f'] <- zipWithContents resolver p [f]
   time <- errorFromIO getZonedTime
