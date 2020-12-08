@@ -20,7 +20,7 @@ module Test.Pragma (tests) where
 
 import Control.Monad (when)
 import Text.Megaparsec
-import Text.Regex.TDFA -- Not safe!
+import Text.Regex.TDFA
 
 import Base.CompilerError
 import Base.TrackedErrors

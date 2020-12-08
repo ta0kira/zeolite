@@ -29,7 +29,7 @@ import System.IO
 import System.Posix.Temp (mkdtemp)
 import System.FilePath
 import Text.Megaparsec
-import Text.Regex.TDFA -- Not safe!
+import Text.Regex.TDFA
 import qualified Data.Map as Map
 
 import Base.CompilerError

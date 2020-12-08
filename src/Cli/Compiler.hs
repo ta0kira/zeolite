@@ -40,7 +40,7 @@ import Base.CompilerError
 import Base.TrackedErrors
 import Cli.CompileOptions
 import Cli.Programs
-import Cli.TestRunner -- Not safe, due to Text.Regex.TDFA.
+import Cli.TestRunner
 import Compilation.ProcedureContext (ExprMap)
 import CompilerCxx.Category
 import CompilerCxx.Naming

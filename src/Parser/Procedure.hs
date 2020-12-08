@@ -18,7 +18,6 @@ limitations under the License.
 
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE Safe #-}
 
 module Parser.Procedure (
 ) where

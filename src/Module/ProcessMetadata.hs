@@ -66,7 +66,7 @@ import Cli.Programs (VersionHash(..))
 import Compilation.ProcedureContext (ExprMap)
 import CompilerCxx.Category (CxxOutput(..))
 import Module.CompileMetadata
-import Module.ParseMetadata -- Not safe, due to Text.Regex.TDFA.
+import Module.ParseMetadata
 import Module.Paths
 import Parser.SourceFile
 import Types.Pragma

@@ -17,7 +17,6 @@ limitations under the License.
 -- Author: Kevin P. Barry [ta0kira@gmail.com]
 
 {-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE Safe #-}
 
 module Parser.DefinedCategory (
 ) where

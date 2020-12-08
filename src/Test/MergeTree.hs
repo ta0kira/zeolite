@@ -16,8 +16,6 @@ limitations under the License.
 
 -- Author: Kevin P. Barry [ta0kira@gmail.com]
 
-{-# LANGUAGE Safe #-}
-
 module Test.MergeTree (tests) where
 
 import Control.Monad (when)

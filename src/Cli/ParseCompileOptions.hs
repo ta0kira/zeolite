@@ -24,7 +24,7 @@ module Cli.ParseCompileOptions (
 
 import Control.Monad (when)
 import Data.List (isSuffixOf)
-import Text.Regex.TDFA -- Not safe!
+import Text.Regex.TDFA
 
 import Base.CompilerError
 import Cli.CompileOptions

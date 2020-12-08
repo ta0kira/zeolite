@@ -248,7 +248,9 @@ library zeolite-internal
                        MultiParamTypeClasses,
                        Safe,
                        ScopedTypeVariables,
-                       TypeFamilies
+                       TypeFamilies,
+                       TypeSynonymInstances,
+                       Unsafe
 
   build-depends:       base >= 4.9 && < 4.15,
                        containers >= 0.3 && < 0.7,

@@ -19,7 +19,7 @@ limitations under the License.
 module Test.ParseMetadata (tests) where
 
 import Control.Monad (when)
-import Text.Regex.TDFA -- Not safe!
+import Text.Regex.TDFA
 
 import Base.CompilerError
 import Base.Positional

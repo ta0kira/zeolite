@@ -17,8 +17,10 @@ limitations under the License.
 -- Author: Kevin P. Barry [ta0kira@gmail.com]
 
 {-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE Safe #-}
 {-# LANGUAGE TypeSynonymInstances #-}
+-- Older versions of Text.Megaparsec are Unsafe. This makes sure that the
+-- compiler catches imports into Safe sources when a newer version is used.
+{-# LANGUAGE Unsafe #-}
 
 module Parser.TextParser (
   TextParser,

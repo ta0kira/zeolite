@@ -26,7 +26,7 @@ import qualified Data.Map as Map
 import Base.CompilerError
 import Base.TrackedErrors
 import Cli.CompileOptions
-import Cli.ParseCompileOptions -- Not safe, due to Text.Regex.TDFA.
+import Cli.ParseCompileOptions
 import Cli.Programs
 import Cli.RunCompiler
 import Module.CompileMetadata

@@ -16,8 +16,6 @@ limitations under the License.
 
 -- Author: Kevin P. Barry [ta0kira@gmail.com]
 
-{-# LANGUAGE Safe #-}
-
 module Test.TypeInstance (tests) where
 
 import Control.Monad (when)

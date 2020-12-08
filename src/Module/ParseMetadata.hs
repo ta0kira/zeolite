@@ -36,7 +36,7 @@ import Parser.Procedure ()
 import Parser.TextParser
 import Parser.TypeCategory ()
 import Parser.TypeInstance ()
-import Text.Regex.TDFA -- Not safe!
+import Text.Regex.TDFA
 import Types.Pragma (MacroName)
 import Types.Procedure (Expression)
 import Types.TypeCategory (FunctionName(..),Namespace(..))
