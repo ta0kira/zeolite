@@ -3,25 +3,11 @@ testcase "parse data from a file" {
 }
 
 unittest test {
-  String raw <- Helpers.loadTestData()
+  String raw <- FileTesting.forceReadFile($ExprLookup[MODULE_PATH]$ + "/test-data.txt")
   ErrorOr<TestData> errorOrData <- TestDataParser.create() `ParseState:consumeAll<?>` raw
   TestData data <- errorOrData.getValue()
 
   \ Testing.checkEquals<?>(data.getName(),"example data")
   \ Testing.checkEquals<?>(data.getDescription(),"THIS_IS_A_TOKEN")
   \ Testing.checkEquals<?>(data.getBoolean(),false)
-}
-
-concrete Helpers {
-  @type loadTestData () -> (String)
-}
-
-define Helpers {
-  loadTestData () {
-    scoped {
-      RawFileReader reader <- RawFileReader.open($ExprLookup[MODULE_PATH]$ + "/test-data.txt")
-    } cleanup {
-      \ reader.freeResource()
-    } in return TextReader.readAll(reader)
-  }
 }

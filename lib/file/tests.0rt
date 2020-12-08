@@ -21,42 +21,64 @@ testcase "read and write" {
 }
 
 unittest readWrite {
-  RawFileWriter writer <- RawFileWriter.open("testfile")
-  if (present(writer.getFileError())) {
-    fail(require(writer.getFileError()))
-  }
-  RawFileReader reader <- RawFileReader.open("testfile")
-  if (present(reader.getFileError())) {
-    fail(require(reader.getFileError()))
-  }
-
   String data <- "this is some\x00data"
 
-  Int writeSize <- writer.writeBlock(data)
-  if (writeSize != data.readSize()) {
-    fail(writeSize)
-  }
-  if (present(writer.getFileError())) {
-    fail(require(writer.getFileError()))
+  scoped {
+    RawFileWriter writer <- RawFileWriter.open("testfile")
+  } cleanup {
+    \ writer.freeResource()
+  } in {
+    if (present(writer.getFileError())) {
+      fail(require(writer.getFileError()))
+    }
+    Int writeSize <- writer.writeBlock(data)
+    if (writeSize != data.readSize()) {
+      fail(writeSize)
+    }
+    if (present(writer.getFileError())) {
+      fail(require(writer.getFileError()))
+    }
   }
 
   scoped {
-    String data2 <- reader.readBlock(8)
-  } in if (data2 != "this is ") {
-    fail("\"" + data2 + "\"")
-  }
-  scoped {
-    String data2 <- reader.readBlock(20)
-  } in if (data2 != "some\x00data") {
-    fail("\"" + data2 + "\"")
-  }
-  if (present(reader.getFileError())) {
-    fail(require(reader.getFileError()))
-  }
+    RawFileReader reader <- RawFileReader.open("testfile")
+  } cleanup {
+    \ reader.freeResource()
+  } in {
+    if (present(reader.getFileError())) {
+      fail(require(reader.getFileError()))
+    }
 
-  if (!reader.pastEnd()) {
-    fail("more data in file")
+    scoped {
+      String data2 <- reader.readBlock(8)
+    } in if (data2 != "this is ") {
+      fail("\"" + data2 + "\"")
+    }
+    scoped {
+      String data2 <- reader.readBlock(20)
+    } in if (data2 != "some\x00data") {
+      fail("\"" + data2 + "\"")
+    }
+    if (present(reader.getFileError())) {
+      fail(require(reader.getFileError()))
+    }
+
+    if (!reader.pastEnd()) {
+      fail("more data in file")
+    }
   }
+}
+
+unittest forceRead {
+  String data <- "test data"
+
+  scoped {
+    RawFileWriter writer <- RawFileWriter.open("testfile")
+  } cleanup {
+    \ writer.freeResource()
+  } in \ writer.writeBlock(data)
+
+  \ Testing.checkEquals<?>(FileTesting.forceReadFile("testfile"),data)
 }
 
 unittest readEmpty {

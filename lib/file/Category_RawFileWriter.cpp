@@ -192,7 +192,6 @@ ReturnTuple Value_RawFileWriter::Call_writeBlock(const S<TypeValue>& Var_self, c
   int write_size = 0;
   if (file) {
     file->write(&Var_arg1[0], Var_arg1.size());
-    file->flush();
     write_size = file->fail()? 0 : Var_arg1.size();
   }
   return ReturnTuple(Box_Int(write_size));

@@ -3,6 +3,9 @@ path: "file"
 public_deps: [
   "lib/util"
 ]
+private_deps: [
+  "lib/testing"
+]
 extra_files: [
   category_source {
     source: "file/Category_RawFileReader.cpp"
