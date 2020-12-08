@@ -21,6 +21,8 @@ limitations under the License.
 module Test.Parser (tests) where
 
 import Control.Monad (when)
+import Text.Megaparsec
+import Text.Megaparsec.Char
 
 import Base.CompilerError
 import Base.TrackedErrors
@@ -54,7 +56,18 @@ tests = [
     checkParsesAs regexChar "\\n" "\\n",
     checkParsesAs regexChar "\n" "\n",
     checkParsesAs regexChar "\\\"" "\"",
-    checkParseFail regexChar "\""
+    checkParseFail regexChar "\"",
+
+    checkParsesAs (keyword "keyword" >> some asciiChar) "keyword   string" "string",
+    checkParseFail (keyword "keyword" >> some asciiChar) "keywordstring",
+    checkParseFail (keyword "keyword" >> some asciiChar) "keyword_string",
+    checkParsesAs
+      ((fmap Left $ keyword "keyword" >> some asciiChar) <|> (fmap Right $ some asciiChar))
+      "keywordstring"
+      (Right "keywordstring"),
+
+    checkParsesAs (operator ">>??!" >> many asciiChar) ">>??!   !!" "!!",
+    checkParseFail (operator ">>??!" >> many asciiChar) ">>??!!!"
   ]
 
 checkParsesAs :: (Eq a, Show a) => TextParser a -> [Char] -> a -> IO (TrackedErrors ())
