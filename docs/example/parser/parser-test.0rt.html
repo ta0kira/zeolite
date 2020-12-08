@@ -14,7 +14,9 @@
 }
 
 <b>unittest</b> <b><span style='color:#0057ae;'>test</span></b> {
-  <span style='color:#0057ae;'>TestData</span> data &lt;- <span style='color:#0057ae;'>TestData</span><span style='color:#644a9b;'>.</span>parseFrom(<span style='color:#0057ae;'>Helpers</span><span style='color:#644a9b;'>.</span>loadTestData())<span style='color:#644a9b;'>.</span>getValue()
+  <i><span style='color:#0057ae;'>String</span></i> raw &lt;- <span style='color:#0057ae;'>Helpers</span><span style='color:#644a9b;'>.</span>loadTestData()
+  <span style='color:#0057ae;'>ErrorOr</span><span style='color:#c02040;'>&lt;</span><span style='color:#0057ae;'>TestData</span><span style='color:#c02040;'>&gt;</span> errorOrData &lt;- <span style='color:#0057ae;'>TestDataParser</span><span style='color:#644a9b;'>.</span>create() <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>ParseState</span><span style='color:#644a9b;'>:</span>consumeAll&lt;<b>?</b>&gt;<b><span style='color:#c02040;'>`</span></b> raw
+  <span style='color:#0057ae;'>TestData</span> data &lt;- errorOrData<span style='color:#644a9b;'>.</span>getValue()
 
   <b>if</b> (data<span style='color:#644a9b;'>.</span>getName() != <span style='color:#bf0303;'>&quot;example data&quot;</span>) {
     <b>fail</b>(data<span style='color:#644a9b;'>.</span>getName())

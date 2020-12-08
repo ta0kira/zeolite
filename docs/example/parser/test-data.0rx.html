@@ -16,10 +16,6 @@
   <span style='color:#644a9b;'>@value</span> <i><span style='color:#0057ae;'>String</span></i> description
   <span style='color:#644a9b;'>@value</span> <i><span style='color:#0057ae;'>Bool</span></i>   boolean
 
-  parseFrom (data) {
-    <b>return</b> <span style='color:#0057ae;'>TestDataParser</span><span style='color:#644a9b;'>.</span>create() <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>ParseState</span><span style='color:#644a9b;'>:</span>consumeAll&lt;<b>?</b>&gt;<b><span style='color:#c02040;'>`</span></b> data
-  }
-
   create (name,description,boolean) {
     <b>return</b> <span style='color:#0057ae;'>TestData</span>{ name, description, boolean }
   }
@@ -35,10 +31,6 @@
   getBoolean () {
     <b>return</b> boolean
   }
-}
-
-<b>concrete</b> <b><span style='color:#0057ae;'>TestDataParser</span></b> {
-  <span style='color:#644a9b;'>@type</span> create () -&gt; (<span style='color:#0057ae;'>Parser</span><span style='color:#c02040;'>&lt;</span><span style='color:#0057ae;'>TestData</span><span style='color:#c02040;'>&gt;</span>)
 }
 
 <b>define</b> <b><span style='color:#0057ae;'>TestDataParser</span></b> {

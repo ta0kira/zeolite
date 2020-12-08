@@ -14,13 +14,18 @@
 <span style='color:#898887;'>/*</span><span style='color:#898887;'> A contrived object for test data.</span>
 <span style='color:#898887;'> </span><span style='color:#898887;'>*/</span>
 <b>concrete</b> <b><span style='color:#0057ae;'>TestData</span></b> {
-  <span style='color:#898887;'>// Parses the test-data.txt file using a one-off format.</span>
-  <span style='color:#644a9b;'>@type</span> parseFrom (<i><span style='color:#0057ae;'>String</span></i>)             -&gt; (<span style='color:#0057ae;'>ErrorOr</span><span style='color:#c02040;'>&lt;</span><span style='color:#0057ae;'>TestData</span><span style='color:#c02040;'>&gt;</span>)
-  <span style='color:#644a9b;'>@type</span> create    (<i><span style='color:#0057ae;'>String</span></i>,<i><span style='color:#0057ae;'>String</span></i>,<i><span style='color:#0057ae;'>Bool</span></i>) -&gt; (<span style='color:#0057ae;'>TestData</span>)
+  <span style='color:#644a9b;'>@type</span> create (<i><span style='color:#0057ae;'>String</span></i>,<i><span style='color:#0057ae;'>String</span></i>,<i><span style='color:#0057ae;'>Bool</span></i>) -&gt; (<span style='color:#0057ae;'>TestData</span>)
 
   <span style='color:#644a9b;'>@value</span> getName        () -&gt; (<i><span style='color:#0057ae;'>String</span></i>)
   <span style='color:#644a9b;'>@value</span> getDescription () -&gt; (<i><span style='color:#0057ae;'>String</span></i>)
   <span style='color:#644a9b;'>@value</span> getBoolean     () -&gt; (<i><span style='color:#0057ae;'>Bool</span></i>)
+}
+
+
+<span style='color:#898887;'>/*</span><span style='color:#898887;'> Parses the test-data.txt file using a one-off format.</span>
+<span style='color:#898887;'> </span><span style='color:#898887;'>*/</span>
+<b>concrete</b> <b><span style='color:#0057ae;'>TestDataParser</span></b> {
+  <span style='color:#644a9b;'>@type</span> create () -&gt; (<span style='color:#0057ae;'>Parser</span><span style='color:#c02040;'>&lt;</span><span style='color:#0057ae;'>TestData</span><span style='color:#c02040;'>&gt;</span>)
 }
 </pre>
 </body>

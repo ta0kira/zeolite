@@ -3,7 +3,9 @@ testcase "parse data from a file" {
 }
 
 unittest test {
-  TestData data <- TestData.parseFrom(Helpers.loadTestData()).getValue()
+  String raw <- Helpers.loadTestData()
+  ErrorOr<TestData> errorOrData <- TestDataParser.create() `ParseState:consumeAll<?>` raw
+  TestData data <- errorOrData.getValue()
 
   if (data.getName() != "example data") {
     fail(data.getName())
