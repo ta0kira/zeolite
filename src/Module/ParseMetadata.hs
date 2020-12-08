@@ -24,7 +24,8 @@ module Module.ParseMetadata (
 
 import Control.Applicative.Permutations
 import Control.Monad (when)
-import Text.Parsec
+import Text.Megaparsec
+import Text.Megaparsec.Char
 
 import Base.CompilerError
 import Cli.CompileOptions
@@ -32,6 +33,7 @@ import Cli.Programs (VersionHash(..))
 import Module.CompileMetadata
 import Parser.Common
 import Parser.Procedure ()
+import Parser.TextParser
 import Parser.TypeCategory ()
 import Parser.TypeInstance ()
 import Text.Regex.TDFA -- Not safe!
@@ -42,19 +44,19 @@ import Types.TypeInstance (CategoryName(..))
 
 
 class ConfigFormat a where
-  readConfig :: CollectErrorsM m => ParserE m a
+  readConfig :: TextParser a
   writeConfig :: CollectErrorsM m => a -> m [String]
 
-autoReadConfig :: (ConfigFormat a, CollectErrorsM m) => String -> String -> m a
-autoReadConfig f s = runParserE (between optionalSpace endOfDoc readConfig) f s
+autoReadConfig :: (ConfigFormat a, ErrorContextM m) => String -> String -> m a
+autoReadConfig f s = runTextParser (between optionalSpace endOfDoc readConfig) f s
 
 autoWriteConfig ::  (ConfigFormat a, CollectErrorsM m) => a -> m String
 autoWriteConfig = fmap unlines . writeConfig
 
-structOpen :: Monad m => ParserE m ()
+structOpen :: TextParser ()
 structOpen = sepAfter (string_ "{")
 
-structClose :: Monad m => ParserE m ()
+structClose :: TextParser ()
 structClose = sepAfter (string_ "}")
 
 indents :: [String] -> [String]
@@ -82,8 +84,8 @@ validateHash h =
     when (not $ show h =~ "^[A-Za-z0-9]+$") $
       compilerErrorM $ "Version hash must be a hex string: \"" ++ show h ++ "\""
 
-parseHash :: Monad m => ParserE m VersionHash
-parseHash = labeled "version hash" $ sepAfter (fmap VersionHash $ many1 hexDigit)
+parseHash :: TextParser VersionHash
+parseHash = labeled "version hash" $ sepAfter (fmap VersionHash $ some hexDigitChar)
 
 maybeShowNamespace :: ErrorContextM m => String -> Namespace -> m [String]
 maybeShowNamespace l (StaticNamespace ns) = do
@@ -92,32 +94,32 @@ maybeShowNamespace l (StaticNamespace ns) = do
   return [l ++ " " ++ ns]
 maybeShowNamespace _ _ = return []
 
-parseNamespace :: Monad m => ParserE m Namespace
+parseNamespace :: TextParser Namespace
 parseNamespace = labeled "namespace" $ do
-  b <- lower
-  e <- sepAfter $ many (alphaNum <|> char '_')
+  b <- lowerChar
+  e <- sepAfter $ many (alphaNumChar <|> char '_')
   return $ StaticNamespace (b:e)
 
-parseQuoted :: Monad m => ParserE m String
+parseQuoted :: TextParser String
 parseQuoted = labeled "quoted string" $ do
   string_ "\""
   ss <- manyTill stringChar (string_ "\"")
   optionalSpace
   return ss
 
-parseList :: Monad m => ParserE m a -> ParserE m [a]
+parseList :: TextParser a -> TextParser [a]
 parseList p = labeled "list" $ do
   sepAfter (string_ "[")
   xs <- manyTill (sepAfter p) (string_ "]")
   optionalSpace
   return xs
 
-parseOptional :: Monad m => String -> a -> ParserE m a -> Permutation (ParserE m) a
+parseOptional :: String -> a -> TextParser a -> Permutation (TextParser) a
 parseOptional l def p = toPermutationWithDefault def $ do
     try $ sepAfter (string_ l)
     p
 
-parseRequired :: Monad m => String -> ParserE m a -> Permutation (ParserE m) a
+parseRequired :: String -> TextParser a -> Permutation (TextParser) a
 parseRequired l p = toPermutation $ do
     try $ sepAfter (string_ l)
     p
@@ -376,7 +378,7 @@ instance ConfigFormat CompileMode where
   writeConfig CompileUnspecified = writeConfig (CompileIncremental [])
   writeConfig _ = compilerErrorM "Invalid compile mode"
 
-parseExprMacro :: ErrorContextM m => ParserE m (MacroName,Expression SourcePos)
+parseExprMacro :: TextParser (MacroName,Expression SourcePos)
 parseExprMacro = do
   sepAfter (string_ "expression_macro")
   structOpen

@@ -28,7 +28,7 @@ module Module.CompileMetadata (
 ) where
 
 import Data.List (nub)
-import Text.Parsec (SourcePos)
+import Text.Megaparsec (SourcePos)
 
 import Cli.CompileOptions
 import Cli.Programs (VersionHash)

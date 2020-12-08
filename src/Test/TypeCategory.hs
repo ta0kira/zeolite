@@ -22,7 +22,7 @@ module Test.TypeCategory (tests) where
 
 import Control.Arrow
 import System.FilePath
-import Text.Parsec
+import Text.Megaparsec
 import qualified Data.Map as Map
 import qualified Data.Set as Set
 

@@ -23,7 +23,8 @@ module Parser.TypeInstance (
 ) where
 
 import Control.Applicative ((<|>))
-import Text.Parsec hiding ((<|>))
+import Text.Megaparsec hiding ((<|>),single)
+import Text.Megaparsec.Char
 
 import Base.GeneralType
 import Base.Mergeable (mergeAll,mergeAny)
@@ -33,7 +34,7 @@ import Types.TypeInstance
 
 
 instance ParseFromSource GeneralInstance where
-  sourceParser = try allT <|> try anyT <|> intersectOrUnion <|> single where
+  sourceParser = single <|> try allT <|> anyT <|> intersectOrUnion where
     allT = labeled "all" $ do
       kwAll
       return minBound
@@ -42,19 +43,17 @@ instance ParseFromSource GeneralInstance where
       return maxBound
     intersectOrUnion = labeled "union or intersection" $ do
       sepAfter $ string_ "["
-      t1 <- labeled "type" $ sepAfter sourceParser
+      t1 <- labeled "type" $ sourceParser
       t <- intersect t1 <|> union t1
       sepAfter $ string_ "]"
       return t
     intersect t1 = do
-      ts <- many1 (sepAfter (string_ "&") >> labeled "type" sourceParser)
+      ts <- some (sepAfter (string_ "&") >> labeled "type" sourceParser)
       return $ mergeAll (t1:ts)
     union t1 = do
-      ts <- many1 (sepAfter (string_ "|") >> labeled "type" sourceParser)
+      ts <- some (sepAfter (string_ "|") >> labeled "type" sourceParser)
       return $ mergeAny (t1:ts)
-    single = do
-      t <- sourceParser
-      return $ singleType t
+    single = fmap singleType sourceParser
 
 instance ParseFromSource ValueType where
   sourceParser = do
@@ -73,31 +72,31 @@ instance ParseFromSource ValueType where
 instance ParseFromSource CategoryName where
   sourceParser = labeled "type name" $ do
     noKeywords
-    b <- upper
-    e <- sepAfter $ many alphaNum
+    b <- upperChar
+    e <- sepAfter $ many alphaNumChar
     return $ box (b:e)
     where
       box n
-        | n == "Bool"         = BuiltinBool
-        | n == "Char"         = BuiltinChar
-        | n == "Int"          = BuiltinInt
-        | n == "Float"        = BuiltinFloat
-        | n == "String"       = BuiltinString
-        | n == "Formatted"    = BuiltinFormatted
+        | n == "Bool"      = BuiltinBool
+        | n == "Char"      = BuiltinChar
+        | n == "Int"       = BuiltinInt
+        | n == "Float"     = BuiltinFloat
+        | n == "String"    = BuiltinString
+        | n == "Formatted" = BuiltinFormatted
         | otherwise = CategoryName n
 
 instance ParseFromSource ParamName where
   sourceParser = labeled "param name" $ do
     noKeywords
     char_ '#'
-    b <- lower
-    e <- sepAfter $ many alphaNum
+    b <- lowerChar
+    e <- sepAfter $ many alphaNumChar
     return $ ParamName ('#':b:e)
 
 instance ParseFromSource TypeInstance where
-  sourceParser = labeled "type" $ do
+  sourceParser = labeled "type instance" $ do
     n <- sourceParser
-    as <- labeled "type args" $ try args <|> return []
+    as <- labeled "type args" $ args <|> return []
     return $ TypeInstance n (Positional as)
     where
       args = between (sepAfter $ string "<")
@@ -105,9 +104,9 @@ instance ParseFromSource TypeInstance where
                      (sepBy sourceParser (sepAfter $ string ","))
 
 instance ParseFromSource DefinesInstance where
-  sourceParser = labeled "type" $ do
+  sourceParser = labeled "type instance" $ do
     n <- sourceParser
-    as <- labeled "type args" $ try args <|> return []
+    as <- labeled "type args" $ args <|> return []
     return $ DefinesInstance n (Positional as)
     where
       args = between (sepAfter $ string "<")
@@ -115,13 +114,9 @@ instance ParseFromSource DefinesInstance where
                      (sepBy sourceParser (sepAfter $ string ","))
 
 instance ParseFromSource TypeInstanceOrParam where
-  sourceParser = try param <|> inst where
-    param = labeled "param" $ do
-      n <- sourceParser
-      return $ JustParamName False n
-    inst = labeled "type" $ do
-      t <- sourceParser
-      return $ JustTypeInstance t
+  sourceParser = inst <|> param where
+    param = labeled "param" $ fmap (JustParamName False) sourceParser
+    inst = labeled "type instance" $ fmap JustTypeInstance sourceParser
 
 instance ParseFromSource TypeFilter where
   sourceParser = requires <|> allows <|> defines where

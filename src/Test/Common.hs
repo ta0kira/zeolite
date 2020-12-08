@@ -45,7 +45,7 @@ import Data.List
 import System.Exit
 import System.FilePath
 import System.IO
-import Text.Parsec
+import Text.Megaparsec
 import qualified Data.Map as Map
 import qualified Data.Set as Set
 
@@ -53,6 +53,7 @@ import Base.CompilerError
 import Base.CompilerMessage
 import Base.TrackedErrors
 import Parser.Common
+import Parser.TextParser
 import Parser.TypeInstance ()
 import Types.TypeInstance
 
@@ -72,16 +73,16 @@ numberError n c
   | otherwise        = Right (getCompilerSuccess c)
 
 forceParse :: ParseFromSource a => String -> a
-forceParse s = getCompilerSuccess $ runParserE sourceParser "(string)" s
+forceParse s = getCompilerSuccess $ runTextParser sourceParser "(string)" s
 
 readSingle :: ParseFromSource a => String -> String -> TrackedErrors a
 readSingle  = readSingleWith sourceParser
 
-readSingleWith :: ParserE TrackedErrors a -> String -> String -> TrackedErrors a
-readSingleWith p = runParserE (between nullParse endOfDoc p)
+readSingleWith :: TextParser a -> String -> String -> TrackedErrors a
+readSingleWith p = runTextParser (between nullParse endOfDoc p)
 
 readMulti :: ParseFromSource a => String -> String -> TrackedErrors [a]
-readMulti f s = runParserE (between optionalSpace endOfDoc (sepBy sourceParser optionalSpace)) f s
+readMulti f s = runTextParser (between optionalSpace endOfDoc (sepBy sourceParser optionalSpace)) f s
 
 parseFilterMap :: [(String,[String])] -> TrackedErrors ParamFilters
 parseFilterMap pa = do

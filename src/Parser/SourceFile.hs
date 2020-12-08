@@ -24,13 +24,14 @@ module Parser.SourceFile (
   parseTestSource,
 ) where
 
-import Text.Parsec
+import Text.Megaparsec
 
 import Base.CompilerError
 import Parser.Common
 import Parser.DefinedCategory ()
 import Parser.IntegrationTest ()
 import Parser.Pragma
+import Parser.TextParser
 import Parser.TypeCategory ()
 import Types.DefinedCategory
 import Types.IntegrationTest
@@ -40,7 +41,7 @@ import Types.TypeCategory
 
 parseInternalSource :: ErrorContextM m =>
   (FilePath,String) -> m ([Pragma SourcePos],[AnyCategory SourcePos],[DefinedCategory SourcePos])
-parseInternalSource (f,s) = runParserE (between optionalSpace endOfDoc withPragmas) f s where
+parseInternalSource (f,s) = runTextParser (between optionalSpace endOfDoc withPragmas) f s where
   withPragmas = do
     pragmas <- parsePragmas internalSourcePragmas
     optionalSpace
@@ -48,7 +49,7 @@ parseInternalSource (f,s) = runParserE (between optionalSpace endOfDoc withPragm
     return (pragmas,cs,ds)
 
 parsePublicSource :: ErrorContextM m => (FilePath,String) -> m ([Pragma SourcePos],[AnyCategory SourcePos])
-parsePublicSource (f,s) = runParserE (between optionalSpace endOfDoc withPragmas) f s where
+parsePublicSource (f,s) = runTextParser (between optionalSpace endOfDoc withPragmas) f s where
   withPragmas = do
     pragmas <- parsePragmas publicSourcePragmas
     optionalSpace
@@ -56,18 +57,18 @@ parsePublicSource (f,s) = runParserE (between optionalSpace endOfDoc withPragmas
     return (pragmas,cs)
 
 parseTestSource :: ErrorContextM m => (FilePath,String) -> m ([Pragma SourcePos],[IntegrationTest SourcePos])
-parseTestSource (f,s) = runParserE (between optionalSpace endOfDoc withPragmas) f s where
+parseTestSource (f,s) = runTextParser (between optionalSpace endOfDoc withPragmas) f s where
   withPragmas = do
     pragmas <- parsePragmas testSourcePragmas
     optionalSpace
     ts <- sepBy sourceParser optionalSpace
     return (pragmas,ts)
 
-publicSourcePragmas :: ErrorContextM m => [ParserE m (Pragma SourcePos)]
+publicSourcePragmas :: [TextParser (Pragma SourcePos)]
 publicSourcePragmas = [pragmaModuleOnly,pragmaTestsOnly]
 
-internalSourcePragmas :: ErrorContextM m => [ParserE m (Pragma SourcePos)]
+internalSourcePragmas :: [TextParser (Pragma SourcePos)]
 internalSourcePragmas = [pragmaTestsOnly]
 
-testSourcePragmas :: ErrorContextM m => [ParserE m (Pragma SourcePos)]
+testSourcePragmas :: [TextParser (Pragma SourcePos)]
 testSourcePragmas = []

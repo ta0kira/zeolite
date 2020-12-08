@@ -22,12 +22,13 @@ module Test.IntegrationTest (tests) where
 
 import Control.Monad (when)
 import System.FilePath
-import Text.Parsec
+import Text.Megaparsec
 
 import Base.CompilerError
 import Base.TrackedErrors
 import Parser.Common
 import Parser.IntegrationTest ()
+import Parser.TextParser
 import Test.Common
 import Types.DefinedCategory
 import Types.IntegrationTest
@@ -113,7 +114,7 @@ checkFileContents ::
   String -> (IntegrationTest SourcePos -> TrackedErrors ()) -> IO (TrackedErrors ())
 checkFileContents f o = toTrackedErrors $ do
   s <- errorFromIO $ loadFile f
-  t <- runParserE (between optionalSpace endOfDoc sourceParser) f s
+  t <- runTextParser (between optionalSpace endOfDoc sourceParser) f s
   fromTrackedErrors $ o t <!! "Check " ++ f ++ ":"
 
 extractCategoryNames :: IntegrationTest c -> [String]

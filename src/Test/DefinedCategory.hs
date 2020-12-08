@@ -21,7 +21,7 @@ limitations under the License.
 module Test.DefinedCategory (tests) where
 
 import System.FilePath
-import Text.Parsec
+import Text.Megaparsec
 
 import Base.CompilerError
 import Base.TrackedErrors

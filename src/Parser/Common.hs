@@ -21,7 +21,6 @@ limitations under the License.
 
 module Parser.Common (
   ParseFromSource(..),
-  ParserE,
   anyComment,
   assignOperator,
   blockComment,
@@ -90,7 +89,6 @@ module Parser.Common (
   parseHex,
   parseOct,
   parseSubOne,
-  parseErrorM,
   pragmaArgsEnd,
   pragmaArgsStart,
   pragmaEnd,
@@ -102,10 +100,7 @@ module Parser.Common (
   put33,
   quotedString,
   regexChar,
-  requiredSpace,
-  runParserE,
   sepAfter,
-  sepAfter1,
   sepAfter_,
   statementEnd,
   statementStart,
@@ -115,205 +110,191 @@ module Parser.Common (
   valueSymbolGet,
 ) where
 
-import Control.Applicative (empty)
-import Control.Monad.Trans (lift)
 import Data.Char
 import Data.Foldable
 import Data.Functor
 import Data.Monoid
 import Prelude hiding (foldl,foldr)
-import Text.Parsec
+import Text.Megaparsec
+import Text.Megaparsec.Char
 import qualified Data.Set as Set
 
 import Base.CompilerError
+import Parser.TextParser
 
-
-type ParserE = ParsecT String ()
 
 class ParseFromSource a where
-  -- Must never prune whitespace/comments from front, but always from back.
-  sourceParser :: ErrorContextM m => ParserE m a
+  -- Always prune whitespace and comments from back, but never from front!
+  sourceParser :: TextParser a
 
-runParserE :: ErrorContextM m => ParserE m a -> String -> String -> m a
-runParserE p n s = do
-  result <- runPT p () n s
-  case result of
-       Left e  -> compilerErrorM (show e)
-       Right t -> return t
+labeled :: String -> TextParser a -> TextParser a
+labeled = label
 
-parseErrorM :: ErrorContextM m => SourcePos -> String -> ParserE m a
-parseErrorM c e = lift $ compilerErrorM $ "At " ++ show c ++ ": " ++ e
-
-labeled :: Monad m => String -> ParserE m a -> ParserE m a
-labeled = flip label
-
-escapeStart :: Monad m => ParserE m ()
+escapeStart :: TextParser ()
 escapeStart = sepAfter (string_ "\\")
 
-statementStart :: Monad m => ParserE m ()
+statementStart :: TextParser ()
 statementStart = sepAfter (string_ "\\")
 
-statementEnd :: Monad m => ParserE m ()
+statementEnd :: TextParser ()
 statementEnd = sepAfter (string_ "")
 
-valueSymbolGet :: Monad m => ParserE m ()
+valueSymbolGet :: TextParser ()
 valueSymbolGet = sepAfter (string_ ".")
 
-categorySymbolGet :: ErrorContextM m => ParserE m ()
+categorySymbolGet :: TextParser ()
 categorySymbolGet = labeled ":" $ useNewOperators <|> sepAfter (string_ ":")
 
-typeSymbolGet :: ErrorContextM m => ParserE m ()
+typeSymbolGet :: TextParser ()
 typeSymbolGet = labeled "." $ useNewOperators <|> sepAfter (string_ ".")
 
 -- TODO: Remove this after a reasonable amount of time.
-useNewOperators :: ErrorContextM m => ParserE m ()
+useNewOperators :: TextParser ()
 useNewOperators = newCategory <|> newType where
   newCategory = do
-    c <- getPosition
     try $ string_ "$$"
-    parseErrorM c "use \":\" instead of \"$$\" to call @category functions"
+    compilerErrorM "use \":\" instead of \"$$\" to call @category functions"
   newType = do
-    c <- getPosition
     try $ string_ "$"
-    parseErrorM c "use \".\" instead of \"$\" to call @type functions"
+    compilerErrorM "use \".\" instead of \"$\" to call @type functions"
 
-assignOperator :: Monad m => ParserE m ()
+assignOperator :: TextParser ()
 assignOperator = operator "<-" >> return ()
 
-infixFuncStart :: Monad m => ParserE m ()
+infixFuncStart :: TextParser ()
 infixFuncStart = sepAfter (string_ "`")
 
-infixFuncEnd :: Monad m => ParserE m ()
+infixFuncEnd :: TextParser ()
 infixFuncEnd = sepAfter (string_ "`")
 
 -- TODO: Maybe this should not use strings.
-builtinValues :: Monad m => ParserE m String
+builtinValues :: TextParser String
 builtinValues = foldr (<|>) empty $ map try [
     kwSelf >> return "self"
   ]
 
-kwAll :: Monad m => ParserE m ()
+kwAll :: TextParser ()
 kwAll = keyword "all"
 
-kwAllows :: Monad m => ParserE m ()
+kwAllows :: TextParser ()
 kwAllows = keyword "allows"
 
-kwAny :: Monad m => ParserE m ()
+kwAny :: TextParser ()
 kwAny = keyword "any"
 
-kwBreak :: Monad m => ParserE m ()
+kwBreak :: TextParser ()
 kwBreak = keyword "break"
 
-kwCategory :: Monad m => ParserE m ()
+kwCategory :: TextParser ()
 kwCategory = keyword "@category"
 
-kwCleanup :: Monad m => ParserE m ()
+kwCleanup :: TextParser ()
 kwCleanup = keyword "cleanup"
 
-kwConcrete :: Monad m => ParserE m ()
+kwConcrete :: TextParser ()
 kwConcrete = keyword "concrete"
 
-kwContinue :: Monad m => ParserE m ()
+kwContinue :: TextParser ()
 kwContinue = keyword "continue"
 
-kwDefine :: Monad m => ParserE m ()
+kwDefine :: TextParser ()
 kwDefine = keyword "define"
 
-kwDefines :: Monad m => ParserE m ()
+kwDefines :: TextParser ()
 kwDefines = keyword "defines"
 
-kwElif :: Monad m => ParserE m ()
+kwElif :: TextParser ()
 kwElif = keyword "elif"
 
-kwElse :: Monad m => ParserE m ()
+kwElse :: TextParser ()
 kwElse = keyword "else"
 
-kwEmpty :: Monad m => ParserE m ()
+kwEmpty :: TextParser ()
 kwEmpty = keyword "empty"
 
-kwFail :: Monad m => ParserE m ()
+kwFail :: TextParser ()
 kwFail = keyword "fail"
 
-kwFalse :: Monad m => ParserE m ()
+kwFalse :: TextParser ()
 kwFalse = keyword "false"
 
-kwIf :: Monad m => ParserE m ()
+kwIf :: TextParser ()
 kwIf = keyword "if"
 
-kwIn :: Monad m => ParserE m ()
+kwIn :: TextParser ()
 kwIn = keyword "in"
 
-kwIgnore :: Monad m => ParserE m ()
+kwIgnore :: TextParser ()
 kwIgnore = keyword "_"
 
-kwInterface :: Monad m => ParserE m ()
+kwInterface :: TextParser ()
 kwInterface = keyword "interface"
 
-kwOptional :: Monad m => ParserE m ()
+kwOptional :: TextParser ()
 kwOptional = keyword "optional"
 
-kwPresent :: Monad m => ParserE m ()
+kwPresent :: TextParser ()
 kwPresent = keyword "present"
 
-kwReduce :: Monad m => ParserE m ()
+kwReduce :: TextParser ()
 kwReduce = keyword "reduce"
 
-kwRefines :: Monad m => ParserE m ()
+kwRefines :: TextParser ()
 kwRefines = keyword "refines"
 
-kwRequire :: Monad m => ParserE m ()
+kwRequire :: TextParser ()
 kwRequire = keyword "require"
 
-kwRequires :: Monad m => ParserE m ()
+kwRequires :: TextParser ()
 kwRequires = keyword "requires"
 
-kwReturn :: Monad m => ParserE m ()
+kwReturn :: TextParser ()
 kwReturn = keyword "return"
 
-kwSelf :: Monad m => ParserE m ()
+kwSelf :: TextParser ()
 kwSelf = keyword "self"
 
-kwScoped :: Monad m => ParserE m ()
+kwScoped :: TextParser ()
 kwScoped = keyword "scoped"
 
-kwStrong :: Monad m => ParserE m ()
+kwStrong :: TextParser ()
 kwStrong = keyword "strong"
 
-kwTestcase :: Monad m => ParserE m ()
+kwTestcase :: TextParser ()
 kwTestcase = keyword "testcase"
 
-kwTrue :: Monad m => ParserE m ()
+kwTrue :: TextParser ()
 kwTrue = keyword "true"
 
-kwType :: Monad m => ParserE m ()
+kwType :: TextParser ()
 kwType = keyword "@type"
 
-kwTypename :: Monad m => ParserE m ()
+kwTypename :: TextParser ()
 kwTypename = keyword "typename"
 
-kwTypes :: Monad m => ParserE m ()
+kwTypes :: TextParser ()
 kwTypes = keyword "types"
 
-kwUnittest :: Monad m => ParserE m ()
+kwUnittest :: TextParser ()
 kwUnittest = keyword "unittest"
 
-kwUpdate :: Monad m => ParserE m ()
+kwUpdate :: TextParser ()
 kwUpdate = keyword "update"
 
-kwValue :: Monad m => ParserE m ()
+kwValue :: TextParser ()
 kwValue = keyword "@value"
 
-kwWeak :: Monad m => ParserE m ()
+kwWeak :: TextParser ()
 kwWeak = keyword "weak"
 
-kwWhile :: Monad m => ParserE m ()
+kwWhile :: TextParser ()
 kwWhile = keyword "while"
 
-operatorSymbol :: Monad m => ParserE m Char
+operatorSymbol :: TextParser Char
 operatorSymbol = labeled "operator symbol" $ satisfy (`Set.member` Set.fromList "+-*/%=!<>&|")
 
-isKeyword :: Monad m => ParserE m ()
-isKeyword = foldr (<|>) nullParse $ map try [
+isKeyword :: TextParser ()
+isKeyword = foldr (<|>) empty $ map try [
     kwAll,
     kwAllows,
     kwAny,
@@ -355,88 +336,87 @@ isKeyword = foldr (<|>) nullParse $ map try [
     kwWhile
   ]
 
-nullParse :: Monad m => ParserE m ()
+nullParse :: TextParser ()
 nullParse = return ()
 
-char_ :: Monad m => Char -> ParserE m ()
+char_ :: Char -> TextParser ()
 char_ = (>> return ()) . char
 
-string_ :: Monad m => String -> ParserE m ()
+string_ :: String -> TextParser ()
 string_ = (>> return ()) . string
 
-lineEnd :: Monad m => ParserE m ()
-lineEnd = (endOfLine >> return ()) <|> endOfDoc
+lineEnd :: TextParser ()
+lineEnd = (eol >> return ()) <|> eof
 
-lineComment :: Monad m => ParserE m String
-lineComment = between (string_ "//")
-                      lineEnd
-                      (many $ satisfy (/= '\n'))
+lineComment :: TextParser String
+lineComment = labeled "line comment" $
+  between (string_ "//")
+          lineEnd
+          (many $ satisfy (/= '\n'))
 
-blockComment :: Monad m => ParserE m String
-blockComment = between (string_ "/*")
-                       (string_ "*/")
-                       (many $ notFollowedBy (string_ "*/") >> anyChar)
+blockComment :: TextParser String
+blockComment = labeled "block comment" $
+  between (string_ "/*")
+          (string_ "*/")
+          (many $ notFollowedBy (string_ "*/") >> asciiChar)
 
-anyComment :: Monad m => ParserE m String
-anyComment = try blockComment <|> try lineComment
+anyComment :: TextParser ()
+anyComment = labeled "comment" $ (blockComment <|> lineComment) $> ()
 
-optionalSpace :: Monad m => ParserE m ()
-optionalSpace = labeled "" $ many (anyComment <|> many1 space) >> nullParse
+optionalSpace :: TextParser ()
+optionalSpace = hidden $ many (anyComment <|> space1) $> ()
 
-requiredSpace :: Monad m => ParserE m ()
-requiredSpace = labeled "break" $ eof <|> (many1 (anyComment <|> many1 space) >> nullParse)
-
-sepAfter :: Monad m => ParserE m a -> ParserE m a
+sepAfter :: TextParser a -> TextParser a
 sepAfter = between nullParse optionalSpace
 
-sepAfter_ :: Monad m => ParserE m a -> ParserE m ()
+sepAfter_ :: TextParser a -> TextParser ()
 sepAfter_ = (>> return ()) . between nullParse optionalSpace
 
-sepAfter1 :: Monad m => ParserE m a -> ParserE m a
-sepAfter1 = between nullParse requiredSpace
+keyword :: String -> TextParser ()
+keyword s = labeled s $ try $ do
+  string_ s
+  notFollowedBy (alphaNumChar <|> char '_')
+  optionalSpace
 
-keyword :: Monad m => String -> ParserE m ()
-keyword s = labeled s $ sepAfter $ string s >> (labeled "" $ notFollowedBy (many alphaNum))
-
-noKeywords :: Monad m => ParserE m ()
+noKeywords :: TextParser ()
 noKeywords = notFollowedBy isKeyword
 
-endOfDoc :: Monad m => ParserE m ()
-endOfDoc = labeled "" $ optionalSpace >> eof
+endOfDoc :: TextParser ()
+endOfDoc = labeled "end of input" $ optionalSpace >> eof
 
-notAllowed :: ParserE m a -> String -> ParserE m ()
+notAllowed :: TextParser a -> String -> TextParser ()
 -- Based on implementation of notFollowedBy.
 notAllowed p s = (try p >> fail s) <|> return ()
 
-pragmaStart :: Monad m => ParserE m ()
+pragmaStart :: TextParser ()
 pragmaStart = string_ "$"
 
-pragmaEnd :: Monad m => ParserE m ()
+pragmaEnd :: TextParser ()
 pragmaEnd = string_ "$"
 
-pragmaArgsStart :: Monad m => ParserE m ()
+pragmaArgsStart :: TextParser ()
 pragmaArgsStart = string_ "["
 
-pragmaArgsEnd :: Monad m => ParserE m ()
+pragmaArgsEnd :: TextParser ()
 pragmaArgsEnd = string_ "]"
 
-inferredParam :: Monad m => ParserE m ()
+inferredParam :: TextParser ()
 inferredParam = string_ "?"
 
-operator :: Monad m => String -> ParserE m String
+operator :: String -> TextParser String
 operator o = labeled o $ do
   string_ o
   notFollowedBy operatorSymbol
   optionalSpace
   return o
 
-stringChar :: Monad m => ParserE m Char
+stringChar :: TextParser Char
 stringChar = escaped <|> notEscaped where
   escaped = labeled "escaped char sequence" $ do
     char_ '\\'
     octChar <|> otherEscape where
       otherEscape = do
-        v <- anyChar
+        v <- asciiChar
         case v of
             '\'' -> return '\''
             '"' -> return '"'
@@ -452,53 +432,53 @@ stringChar = escaped <|> notEscaped where
             'x' -> hexChar
             _ -> fail (show v)
       octChar = labeled "3 octal chars" $ do
-        o1 <- octDigit >>= return . digitVal
-        o2 <- octDigit >>= return . digitVal
-        o3 <- octDigit >>= return . digitVal
+        o1 <- octDigitChar >>= return . digitCharVal
+        o2 <- octDigitChar >>= return . digitCharVal
+        o3 <- octDigitChar >>= return . digitCharVal
         return $ chr $ 8*8*o1 + 8*o2 + o3
       hexChar = labeled "2 hex chars" $ do
-        h1 <- hexDigit >>= return . digitVal
-        h2 <- hexDigit >>= return . digitVal
+        h1 <- hexDigitChar >>= return . digitCharVal
+        h2 <- hexDigitChar >>= return . digitCharVal
         return $ chr $ 16*h1 + h2
   notEscaped = noneOf "\""
 
-quotedString :: Monad m => ParserE m String
+quotedString :: TextParser String
 quotedString = do
   string_ "\""
   manyTill stringChar (string_ "\"")
 
-digitVal :: Char -> Int
-digitVal c
+digitCharVal :: Char -> Int
+digitCharVal c
   | c >= '0' && c <= '9' = ord(c) - ord('0')
   | c >= 'A' && c <= 'F' = 10 + ord(c) - ord('A')
   | c >= 'a' && c <= 'f' = 10 + ord(c) - ord('a')
   | otherwise = undefined
 
-parseDec :: Monad m => ParserE m Integer
-parseDec = fmap snd $ parseIntCommon 10 digit
+parseDec :: TextParser Integer
+parseDec = fmap snd $ parseIntCommon 10 digitChar
 
-parseHex :: Monad m => ParserE m Integer
-parseHex = fmap snd $ parseIntCommon 16 hexDigit
+parseHex :: TextParser Integer
+parseHex = fmap snd $ parseIntCommon 16 hexDigitChar
 
-parseOct :: Monad m => ParserE m Integer
-parseOct = fmap snd $ parseIntCommon 8 octDigit
+parseOct :: TextParser Integer
+parseOct = fmap snd $ parseIntCommon 8 octDigitChar
 
-parseBin :: Monad m => ParserE m Integer
+parseBin :: TextParser Integer
 parseBin = fmap snd $ parseIntCommon 2 (oneOf "01")
 
-parseSubOne :: Monad m => ParserE m (Integer,Integer)
-parseSubOne = parseIntCommon 10 digit
+parseSubOne :: TextParser (Integer,Integer)
+parseSubOne = parseIntCommon 10 digitChar
 
-parseIntCommon :: Monad m => Integer -> ParserE m Char -> ParserE m (Integer,Integer)
+parseIntCommon :: Integer -> TextParser Char -> TextParser (Integer,Integer)
 parseIntCommon b p = do
-  ds <- many1 p
-  return $ foldl (\(n,x) y -> (n+1,b*x + (fromIntegral $ digitVal y :: Integer))) (0,0) ds
+  ds <- some p
+  return $ foldl (\(n,x) y -> (n+1,b*x + (fromIntegral $ digitCharVal y :: Integer))) (0,0) ds
 
-regexChar :: Monad m => ParserE m String
+regexChar :: TextParser String
 regexChar = escaped <|> notEscaped where
   escaped = do
     char_ '\\'
-    v <- anyChar
+    v <- asciiChar
     case v of
          '"' -> return "\""
          _ -> return ['\\',v]
@@ -527,7 +507,7 @@ merge3 :: (Foldable f, Monoid a, Monoid b, Monoid c) => f (a,b,c) -> (a,b,c)
 merge3 = foldr merge (mempty,mempty,mempty) where
   merge (xs1,ys1,zs1) (xs2,ys2,zs2) = (xs1<>xs2,ys1<>ys2,zs1<>zs2)
 
-parseAny2 :: Monad m => ParserE m a -> ParserE m b -> ParserE m ([a],[b])
+parseAny2 :: TextParser a -> TextParser b -> TextParser ([a],[b])
 parseAny2 p1 p2 = sepBy anyType optionalSpace >>= return . merge2 where
   anyType = p1' <|> p2'
   p1' = do
@@ -537,7 +517,7 @@ parseAny2 p1 p2 = sepBy anyType optionalSpace >>= return . merge2 where
     y <- p2
     return ([],[y])
 
-parseAny3 :: Monad m => ParserE m a -> ParserE m b -> ParserE m c -> ParserE m ([a],[b],[c])
+parseAny3 :: TextParser a -> TextParser b -> TextParser c -> TextParser ([a],[b],[c])
 parseAny3 p1 p2 p3 = sepBy anyType optionalSpace >>= return . merge3 where
   anyType = p1' <|> p2' <|> p3'
   p1' = do

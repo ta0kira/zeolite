@@ -2,9 +2,12 @@
 
 ## 0.11.0.0  -- ????-??-??
 
-* **[dependency]** Switches from `parsec` to `megaparsec` for parsing, to allow
-  for better structuring of error messages. This might prevent installation when
-  it previously would have been possible.
+### Compiler CLI
+
+* **[breaking]** Switches from [`parsec`][parsec] to [`megaparsec`][megaparsec]
+  for parsing, to allow for better structuring of error messages. This should
+  not affect syntax acceptance, but it has additional transitive dependencies
+  that might prevent installation of `zeolite`.
 
 ## 0.10.0.0  -- 2020-12-05
 
@@ -385,3 +388,6 @@
 ## 0.1.0.0  -- 2020-04-27
 
 * First version. Released on an unsuspecting world.
+
+[megaparsec]: https://hackage.haskell.org/package/megaparsec
+[parsec]: https://hackage.haskell.org/package/parsec

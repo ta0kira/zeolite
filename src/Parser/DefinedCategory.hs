@@ -24,11 +24,12 @@ module Parser.DefinedCategory (
 
 import Control.Monad (when)
 import Prelude hiding (pi)
-import Text.Parsec
+import Text.Megaparsec
 
 import Base.CompilerError
 import Parser.Common
 import Parser.Procedure ()
+import Parser.TextParser
 import Parser.TypeCategory
 import Parser.TypeInstance ()
 import Types.DefinedCategory
@@ -40,7 +41,7 @@ import Types.Variance
 
 instance ParseFromSource (DefinedCategory SourcePos) where
   sourceParser = labeled "defined concrete category" $ do
-    c <- getPosition
+    c <- getSourcePos
     kwDefine
     n <- sourceParser
     sepAfter (string_ "{")
@@ -65,13 +66,13 @@ instance ParseFromSource (DefinedCategory SourcePos) where
         sepAfter (string_ "}")
         return fi
       singleParam = labeled "param declaration" $ do
-        c <- getPosition
+        c <- getSourcePos
         n <- sourceParser
         return $ ValueParam [c] n Invariant
 
 instance ParseFromSource (DefinedMember SourcePos) where
   sourceParser = labeled "defined member" $ do
-    c <- getPosition
+    c <- getSourcePos
     (s,t) <- try parseType
     n <- sourceParser
     e <- if s == ValueScope
@@ -88,8 +89,8 @@ instance ParseFromSource (DefinedMember SourcePos) where
         t <- sourceParser
         return (s,t)
 
-parseMemberProcedureFunction :: ErrorContextM m =>
-  CategoryName -> ParserE m ([DefinedMember SourcePos],
+parseMemberProcedureFunction ::
+  CategoryName -> TextParser ([DefinedMember SourcePos],
                              [ExecutableProcedure SourcePos],
                              [ScopedFunction SourcePos])
 parseMemberProcedureFunction n = do
@@ -99,13 +100,11 @@ parseMemberProcedureFunction n = do
   return (ms,ps2,fs2) where
     singleFunction = labeled "function" $ do
       f <- parseScopedFunction parseScope (return n)
-      c <- getPosition
       p <- labeled ("definition of function " ++ show (sfName f)) $ sourceParser
       when (sfName f /= epName p) $
-        parseErrorM c $ "expecting definition of function " ++ show (sfName f) ++
-                        " but got definition of " ++ show (epName p)
+        compilerErrorM $ "expecting definition of function " ++ show (sfName f) ++
+                         " but got definition of " ++ show (epName p)
       return (f,p)
     catchUnscopedType = labeled "" $ do
-      c <- getPosition
-      _ <- try sourceParser :: ErrorContextM m => ParserE m ValueType
-      parseErrorM c "members must have an explicit @value or @category scope"
+      _ <- try sourceParser :: TextParser ValueType
+      compilerErrorM "members must have an explicit @value or @category scope"

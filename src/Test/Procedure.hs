@@ -22,7 +22,7 @@ module Test.Procedure (tests) where
 
 import Control.Monad
 import System.FilePath
-import Text.Parsec
+import Text.Megaparsec
 
 import Base.CompilerError
 import Base.Positional

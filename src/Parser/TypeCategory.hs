@@ -28,11 +28,12 @@ module Parser.TypeCategory (
   singleRefine,
 ) where
 
-import Text.Parsec
+import Text.Megaparsec
+import Text.Megaparsec.Char
 
-import Base.CompilerError
 import Base.Positional
 import Parser.Common
+import Parser.TextParser
 import Parser.TypeInstance ()
 import Types.TypeCategory
 import Types.TypeInstance
@@ -44,7 +45,7 @@ instance ParseFromSource (AnyCategory SourcePos) where
     open = sepAfter (string_ "{")
     close = sepAfter (string_ "}")
     parseValue = labeled "value interface" $ do
-      c <- getPosition
+      c <- getSourcePos
       try $ kwValue >> kwInterface
       n <- sourceParser
       ps <- parseCategoryParams
@@ -54,7 +55,7 @@ instance ParseFromSource (AnyCategory SourcePos) where
       close
       return $ ValueInterface [c] NoNamespace n ps rs vs fs
     parseInstance = labeled "type interface" $ do
-      c <- getPosition
+      c <- getSourcePos
       try $ kwType >> kwInterface
       n <- sourceParser
       ps <- parseCategoryParams
@@ -64,7 +65,7 @@ instance ParseFromSource (AnyCategory SourcePos) where
       close
       return $ InstanceInterface [c] NoNamespace n ps vs fs
     parseConcrete = labeled "concrete type" $ do
-      c <- getPosition
+      c <- getSourcePos
       try kwConcrete
       n <- sourceParser
       ps <- parseCategoryParams
@@ -74,7 +75,7 @@ instance ParseFromSource (AnyCategory SourcePos) where
       close
       return $ ValueConcrete [c] NoNamespace n ps rs ds vs fs
 
-parseCategoryParams :: ErrorContextM m => ParserE m [ValueParam SourcePos]
+parseCategoryParams :: TextParser [ValueParam SourcePos]
 parseCategoryParams = do
   (con,inv,cov) <- none <|> try fixedOnly <|> try noFixed <|> try explicitFixed
   return $ map (apply Contravariant) con ++
@@ -109,45 +110,45 @@ parseCategoryParams = do
                      (sepBy singleParam (sepAfter $ string_ ","))
       return (con,inv,cov)
     singleParam = labeled "param declaration" $ do
-      c <- getPosition
+      c <- getSourcePos
       n <- sourceParser
       return (c,n)
     apply v (c,n) = ValueParam [c] n v
 
-singleRefine :: ErrorContextM m => ParserE m (ValueRefine SourcePos)
+singleRefine :: TextParser (ValueRefine SourcePos)
 singleRefine = do
-  c <- getPosition
+  c <- getSourcePos
   try kwRefines
   t <- sourceParser
   return $ ValueRefine [c] t
 
-singleDefine :: ErrorContextM m => ParserE m (ValueDefine SourcePos)
+singleDefine :: TextParser (ValueDefine SourcePos)
 singleDefine = do
-  c <- getPosition
+  c <- getSourcePos
   try kwDefines
   t <- sourceParser
   return $ ValueDefine [c] t
 
-singleFilter :: ErrorContextM m => ParserE m (ParamFilter SourcePos)
+singleFilter :: TextParser (ParamFilter SourcePos)
 singleFilter = try $ do
-  c <- getPosition
+  c <- getSourcePos
   n <- sourceParser
   f <- sourceParser
   return $ ParamFilter [c] n f
 
-parseCategoryRefines :: ErrorContextM m => ParserE m [ValueRefine SourcePos]
+parseCategoryRefines :: TextParser [ValueRefine SourcePos]
 parseCategoryRefines = sepAfter $ sepBy singleRefine optionalSpace
 
-parseFilters :: ErrorContextM m => ParserE m [ParamFilter SourcePos]
+parseFilters :: TextParser [ParamFilter SourcePos]
 parseFilters = sepBy singleFilter optionalSpace
 
-parseRefinesFilters :: ErrorContextM m => ParserE m ([ValueRefine SourcePos],[ParamFilter SourcePos])
+parseRefinesFilters :: TextParser ([ValueRefine SourcePos],[ParamFilter SourcePos])
 parseRefinesFilters = parsed >>= return . merge2 where
   parsed = sepBy anyType optionalSpace
   anyType = labeled "refine or param filter" $ put12 singleRefine <|> put22 singleFilter
 
-parseRefinesDefinesFilters :: ErrorContextM m =>
-  ParserE m ([ValueRefine SourcePos],[ValueDefine SourcePos],[ParamFilter SourcePos])
+parseRefinesDefinesFilters ::
+  TextParser ([ValueRefine SourcePos],[ValueDefine SourcePos],[ParamFilter SourcePos])
 parseRefinesDefinesFilters = parsed >>= return . merge3 where
   parsed = sepBy anyType optionalSpace
   anyType =
@@ -156,14 +157,14 @@ parseRefinesDefinesFilters = parsed >>= return . merge3 where
 instance ParseFromSource FunctionName where
   sourceParser = labeled "function name" $ do
     noKeywords
-    b <- lower
-    e <- sepAfter $ many alphaNum
+    b <- lowerChar
+    e <- sepAfter $ many alphaNumChar
     return $ FunctionName (b:e)
 
-parseScopedFunction :: ErrorContextM m =>
-  ParserE m SymbolScope -> ParserE m CategoryName -> ParserE m (ScopedFunction SourcePos)
+parseScopedFunction ::
+  TextParser SymbolScope -> TextParser CategoryName -> TextParser (ScopedFunction SourcePos)
 parseScopedFunction sp tp = labeled "function" $ do
-  c <- getPosition
+  c <- getSourcePos
   (s,t,n) <- try parseName
   ps <- fmap Positional $ noParams <|> someParams
   fa <- parseFilters
@@ -182,25 +183,25 @@ parseScopedFunction sp tp = labeled "function" $ do
                          (sepAfter $ string_ ">")
                          (sepBy singleParam (sepAfter $ string ","))
     singleParam = labeled "param declaration" $ do
-      c <- getPosition
+      c <- getSourcePos
       n <- sourceParser
       return $ ValueParam [c] n Invariant
     typeList l = between (sepAfter $ string_ "(")
                          (sepAfter $ string_ ")")
                          (sepBy (labeled l $ singleType) (sepAfter $ string ","))
     singleType = do
-      c <- getPosition
+      c <- getSourcePos
       t <- sourceParser
       return $ PassedValue [c] t
 
-parseScope :: Monad m => ParserE m SymbolScope
+parseScope :: TextParser SymbolScope
 parseScope = try categoryScope <|> try typeScope <|> valueScope
 
-categoryScope :: Monad m => ParserE m SymbolScope
+categoryScope :: TextParser SymbolScope
 categoryScope = kwCategory >> return CategoryScope
 
-typeScope :: Monad m => ParserE m SymbolScope
+typeScope :: TextParser SymbolScope
 typeScope = kwType >> return TypeScope
 
-valueScope :: Monad m => ParserE m SymbolScope
+valueScope :: TextParser SymbolScope
 valueScope = kwValue >> return ValueScope

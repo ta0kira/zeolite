@@ -25,6 +25,7 @@ import Control.Monad (when)
 import Base.CompilerError
 import Base.TrackedErrors
 import Parser.Common
+import Parser.TextParser
 import Test.Common
 
 
@@ -56,7 +57,7 @@ tests = [
     checkParseFail regexChar "\""
   ]
 
-checkParsesAs :: (Eq a, Show a) => ParserE TrackedErrors a -> [Char] -> a -> IO (TrackedErrors ())
+checkParsesAs :: (Eq a, Show a) => TextParser a -> [Char] -> a -> IO (TrackedErrors ())
 checkParsesAs p s m = return $ do
   let parsed = readSingleWith p "(string)" s
   check parsed
@@ -68,7 +69,7 @@ checkParsesAs p s m = return $ do
       | isCompilerError c = compilerErrorM $ "Parse '" ++ s ++ "':\n" ++ show (getCompilerError c)
       | otherwise = return ()
 
-checkParseFail :: Show a => ParserE TrackedErrors a -> [Char] -> IO (TrackedErrors ())
+checkParseFail :: Show a => TextParser a -> [Char] -> IO (TrackedErrors ())
 checkParseFail p s = do
   let parsed = readSingleWith p "(string)" s
   return $ check parsed
@@ -76,4 +77,4 @@ checkParseFail p s = do
     check c
       | isCompilerError c = return ()
       | otherwise = compilerErrorM $ "Parse '" ++ s ++ "': Expected failure but got\n" ++
-                                   show (getCompilerSuccess c) ++ "\n"
+                                     show (getCompilerSuccess c) ++ "\n"

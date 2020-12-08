@@ -22,7 +22,7 @@ limitations under the License.
 module Parser.IntegrationTest (
 ) where
 
-import Text.Parsec
+import Text.Megaparsec
 
 import Parser.Common
 import Parser.DefinedCategory ()
@@ -33,7 +33,7 @@ import Types.IntegrationTest
 
 instance ParseFromSource (IntegrationTestHeader SourcePos) where
   sourceParser = labeled "testcase" $ do
-    c <- getPosition
+    c <- getSourcePos
     sepAfter kwTestcase
     string_ "\""
     name <- manyTill stringChar (string_ "\"")
@@ -44,47 +44,43 @@ instance ParseFromSource (IntegrationTestHeader SourcePos) where
     sepAfter (string_ "}")
     return $ IntegrationTestHeader [c] name args result where
       resultCompiles = labeled "compiles expectation" $ do
-        c <- getPosition
+        c <- getSourcePos
         try $ sepAfter (keyword "compiles")
         (req,exc) <- requireOrExclude
         return $ ExpectCompiles [c] req exc
       resultError = labeled "error expectation" $ do
-        c <- getPosition
+        c <- getSourcePos
         sepAfter (keyword "error")
         (req,exc) <- requireOrExclude
         return $ ExpectCompilerError [c] req exc
       resultCrash = labeled "crash expectation" $ do
-        c <- getPosition
+        c <- getSourcePos
         try $ sepAfter (keyword "crash")
         (req,exc) <- requireOrExclude
         return $ ExpectRuntimeError [c] req exc
       resultSuccess = labeled "success expectation" $ do
-        c <- getPosition
+        c <- getSourcePos
         sepAfter (keyword "success")
         (req,exc) <- requireOrExclude
         return $ ExpectRuntimeSuccess [c] req exc
       parseArgs = labeled "testcase args" $ do
         sepAfter (keyword "args")
         many (sepAfter quotedString)
-      requireOrExclude = parsed >>= return . foldr merge empty where
-        empty = ([],[])
-        merge (cs1,ds1) (cs2,ds2) = (cs1++cs2,ds1++ds2)
-        parsed = sepBy anyType optionalSpace
-        anyType = require <|> exclude where
-          require = do
-            sepAfter (keyword "require")
-            s <- outputScope
-            string_ "\""
-            r <- fmap concat $ manyTill regexChar (string_ "\"")
-            optionalSpace
-            return ([OutputPattern s r],[])
-          exclude = do
-            sepAfter (keyword "exclude")
-            s <- outputScope
-            string_ "\""
-            e <- fmap concat $ manyTill regexChar (string_ "\"")
-            optionalSpace
-            return ([],[OutputPattern s e])
+      requireOrExclude = parseAny2 require exclude where
+        require = do
+          sepAfter (keyword "require")
+          s <- outputScope
+          string_ "\""
+          r <- fmap concat $ manyTill regexChar (string_ "\"")
+          optionalSpace
+          return $ OutputPattern s r
+        exclude = do
+          sepAfter (keyword "exclude")
+          s <- outputScope
+          string_ "\""
+          e <- fmap concat $ manyTill regexChar (string_ "\"")
+          optionalSpace
+          return $ OutputPattern s e
       outputScope = try anyScope <|>
                     try compilerScope <|>
                     try stderrScope <|>

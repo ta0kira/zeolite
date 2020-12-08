@@ -28,7 +28,7 @@ import System.Directory
 import System.IO
 import System.Posix.Temp (mkdtemp)
 import System.FilePath
-import Text.Parsec
+import Text.Megaparsec
 import Text.Regex.TDFA -- Not safe!
 import qualified Data.Map as Map
 

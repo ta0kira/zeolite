@@ -5,7 +5,7 @@
 
 This example demonstrates parsing text using a parser-combinator approach
 inspired by [`parsec`][parsec]. (The Haskell library that the `zeolite` compiler
-uses to parse source and config files.)
+originally used to parse source and config files.)
 
 ## Notes
 

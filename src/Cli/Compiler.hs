@@ -32,7 +32,7 @@ import System.Directory
 import System.FilePath
 import System.Posix.Temp (mkstemps)
 import System.IO
-import Text.Parsec (SourcePos)
+import Text.Megaparsec (SourcePos)
 import qualified Data.Map as Map
 import qualified Data.Set as Set
 
