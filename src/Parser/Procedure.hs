@@ -130,15 +130,15 @@ instance ParseFromSource (Statement SourcePos) where
       return $ Assignment [c] (Positional as) e
     parseBreak = labeled "break" $ do
       c <- getSourcePos
-      try kwBreak
+      kwBreak
       return $ LoopBreak [c]
     parseContinue = labeled "continue" $ do
       c <- getSourcePos
-      try kwContinue
+      kwContinue
       return $ LoopContinue [c]
     parseFailCall = do
       c <- getSourcePos
-      try kwFail
+      kwFail
       e <- between (sepAfter $ string_ "(") (sepAfter $ string_ ")") sourceParser
       return $ FailCall [c] e
     parseIgnore = do
@@ -149,7 +149,7 @@ instance ParseFromSource (Statement SourcePos) where
       return $ IgnoreValues [c] e
     parseReturn = labeled "return" $ do
       c <- getSourcePos
-      try kwReturn
+      kwReturn
       emptyReturn c <|> multiReturn c
     multiReturn :: SourcePos -> TextParser (Statement SourcePos)
     multiReturn c = do
@@ -197,7 +197,7 @@ instance ParseFromSource (VoidExpression SourcePos) where
 instance ParseFromSource (IfElifElse SourcePos) where
   sourceParser = labeled "if-elif-else" $ do
     c <- getSourcePos
-    try kwIf >> parseIf c
+    kwIf >> parseIf c
     where
       parseIf c = do
         i <- between (sepAfter $ string_ "(") (sepAfter $ string_ ")") sourceParser
@@ -206,31 +206,31 @@ instance ParseFromSource (IfElifElse SourcePos) where
         return $ IfStatement [c] i p next
       parseElif = do
         c <- getSourcePos
-        try kwElif >> parseIf c
+        kwElif >> parseIf c
       parseElse = do
         c <- getSourcePos
-        try kwElse
+        kwElse
         p <- between (sepAfter $ string_ "{") (sepAfter $ string_ "}") sourceParser
         return $ ElseStatement [c] p
 
 instance ParseFromSource (WhileLoop SourcePos) where
   sourceParser = labeled "while" $ do
     c <- getSourcePos
-    try kwWhile
+    kwWhile
     i <- between (sepAfter $ string_ "(") (sepAfter $ string_ ")") sourceParser
     p <- between (sepAfter $ string_ "{") (sepAfter $ string_ "}") sourceParser
     u <- fmap Just parseUpdate <|> return Nothing
     return $ WhileLoop [c] i p u
     where
       parseUpdate = do
-        try kwUpdate
+        kwUpdate
         between (sepAfter $ string_ "{") (sepAfter $ string_ "}") sourceParser
 
 instance ParseFromSource (ScopedBlock SourcePos) where
   sourceParser = scoped <|> justCleanup where
     scoped = labeled "scoped" $ do
       c <- getSourcePos
-      try kwScoped
+      kwScoped
       p <- between (sepAfter $ string_ "{") (sepAfter $ string_ "}") sourceParser
       cl <- fmap Just parseCleanup <|> return Nothing
       kwIn
@@ -245,7 +245,7 @@ instance ParseFromSource (ScopedBlock SourcePos) where
       s <- sourceParser <|> unconditional
       return $ ScopedBlock [c] (Procedure [] []) (Just cl) s
     parseCleanup = do
-      try kwCleanup
+      kwCleanup
       between (sepAfter $ string_ "{") (sepAfter $ string_ "}") sourceParser
     unconditional = do
       c <- getSourcePos
@@ -353,7 +353,7 @@ instance ParseFromSource (Expression SourcePos) where
           return t2
         withParams c t <|> withoutParams c t
       withParams c t = do
-        try kwTypes
+        kwTypes
         ps <- between (sepAfter $ string_ "<")
                       (sepAfter $ string_ ">")
                       (sepBy sourceParser (sepAfter $ string_ ","))
@@ -567,7 +567,7 @@ instance ParseFromSource (ValueLiteral SourcePos) where
       return $ BoolLiteral [c] b
     emptyLiteral = do
       c <- getSourcePos
-      try kwEmpty
+      kwEmpty
       return $ EmptyLiteral [c]
 
 instance ParseFromSource (ValueOperation SourcePos) where

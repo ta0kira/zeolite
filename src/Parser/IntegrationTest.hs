@@ -45,37 +45,37 @@ instance ParseFromSource (IntegrationTestHeader SourcePos) where
     return $ IntegrationTestHeader [c] name args result where
       resultCompiles = labeled "compiles expectation" $ do
         c <- getSourcePos
-        try $ sepAfter (keyword "compiles")
+        keyword "compiles"
         (req,exc) <- requireOrExclude
         return $ ExpectCompiles [c] req exc
       resultError = labeled "error expectation" $ do
         c <- getSourcePos
-        sepAfter (keyword "error")
+        keyword "error"
         (req,exc) <- requireOrExclude
         return $ ExpectCompilerError [c] req exc
       resultCrash = labeled "crash expectation" $ do
         c <- getSourcePos
-        try $ sepAfter (keyword "crash")
+        keyword "crash"
         (req,exc) <- requireOrExclude
         return $ ExpectRuntimeError [c] req exc
       resultSuccess = labeled "success expectation" $ do
         c <- getSourcePos
-        sepAfter (keyword "success")
+        keyword "success"
         (req,exc) <- requireOrExclude
         return $ ExpectRuntimeSuccess [c] req exc
       parseArgs = labeled "testcase args" $ do
-        sepAfter (keyword "args")
+        keyword "args"
         many (sepAfter quotedString)
       requireOrExclude = parseAny2 require exclude where
         require = do
-          sepAfter (keyword "require")
+          keyword "require"
           s <- outputScope
           string_ "\""
           r <- fmap concat $ manyTill regexChar (string_ "\"")
           optionalSpace
           return $ OutputPattern s r
         exclude = do
-          sepAfter (keyword "exclude")
+          keyword "exclude"
           s <- outputScope
           string_ "\""
           e <- fmap concat $ manyTill regexChar (string_ "\"")
@@ -86,10 +86,10 @@ instance ParseFromSource (IntegrationTestHeader SourcePos) where
                     try stderrScope <|>
                     try stdoutScope <|>
                     return OutputAny
-      anyScope      = sepAfter (keyword "any")      >> return OutputAny
-      compilerScope = sepAfter (keyword "compiler") >> return OutputCompiler
-      stderrScope   = sepAfter (keyword "stderr")   >> return OutputStderr
-      stdoutScope   = sepAfter (keyword "stdout")   >> return OutputStdout
+      anyScope      = keyword "any"      >> return OutputAny
+      compilerScope = keyword "compiler" >> return OutputCompiler
+      stderrScope   = keyword "stderr"   >> return OutputStderr
+      stdoutScope   = keyword "stdout"   >> return OutputStdout
 
 instance ParseFromSource (IntegrationTest SourcePos) where
   sourceParser = labeled "integration test" $ do

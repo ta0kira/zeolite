@@ -152,10 +152,10 @@ typeSymbolGet = labeled "." $ useNewOperators <|> sepAfter (string_ ".")
 useNewOperators :: TextParser ()
 useNewOperators = newCategory <|> newType where
   newCategory = do
-    try $ string_ "$$"
+    string_ "$$"
     compilerErrorM "use \":\" instead of \"$$\" to call @category functions"
   newType = do
-    try $ string_ "$"
+    string_ "$"
     compilerErrorM "use \".\" instead of \"$\" to call @type functions"
 
 assignOperator :: TextParser ()

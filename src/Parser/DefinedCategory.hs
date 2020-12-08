@@ -54,7 +54,7 @@ instance ParseFromSource (DefinedCategory SourcePos) where
       parseRefinesDefines = fmap merge2 $ sepBy refineOrDefine optionalSpace
       refineOrDefine = labeled "refine or define" $ put12 singleRefine <|> put22 singleDefine
       parseInternalParams = labeled "internal params" $ do
-        try kwTypes
+        kwTypes
         pi <- between (sepAfter $ string_ "<")
                       (sepAfter $ string_ ">")
                       (sepBy singleParam (sepAfter $ string_ ","))

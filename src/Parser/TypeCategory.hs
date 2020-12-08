@@ -66,7 +66,7 @@ instance ParseFromSource (AnyCategory SourcePos) where
       return $ InstanceInterface [c] NoNamespace n ps vs fs
     parseConcrete = labeled "concrete type" $ do
       c <- getSourcePos
-      try kwConcrete
+      kwConcrete
       n <- sourceParser
       ps <- parseCategoryParams
       open
@@ -118,14 +118,14 @@ parseCategoryParams = do
 singleRefine :: TextParser (ValueRefine SourcePos)
 singleRefine = do
   c <- getSourcePos
-  try kwRefines
+  kwRefines
   t <- sourceParser
   return $ ValueRefine [c] t
 
 singleDefine :: TextParser (ValueDefine SourcePos)
 singleDefine = do
   c <- getSourcePos
-  try kwDefines
+  kwDefines
   t <- sourceParser
   return $ ValueDefine [c] t
 

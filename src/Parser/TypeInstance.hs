@@ -34,7 +34,7 @@ import Types.TypeInstance
 
 
 instance ParseFromSource GeneralInstance where
-  sourceParser = single <|> try allT <|> anyT <|> intersectOrUnion where
+  sourceParser = single <|> allT <|> anyT <|> intersectOrUnion where
     allT = labeled "all" $ do
       kwAll
       return minBound
@@ -62,10 +62,10 @@ instance ParseFromSource ValueType where
     return $ ValueType r t
     where
       getWeak = labeled "weak" $ do
-        try kwWeak
+        kwWeak
         return WeakValue
       getOptional = labeled "optional" $ do
-        try kwOptional
+        kwOptional
         return OptionalValue
       getRequired = return RequiredValue
 
@@ -121,14 +121,14 @@ instance ParseFromSource TypeInstanceOrParam where
 instance ParseFromSource TypeFilter where
   sourceParser = requires <|> allows <|> defines where
     requires = labeled "requires filter" $ do
-      try kwRequires
+      kwRequires
       t <- sourceParser
       return $ TypeFilter FilterRequires $ singleType t
     allows = labeled "allows filter" $ do
-      try kwAllows
+      kwAllows
       t <- sourceParser
       return $ TypeFilter FilterAllows $ singleType t
     defines = labeled "defines filter" $ do
-      try kwDefines
+      kwDefines
       t <- sourceParser
       return $ DefinesFilter t
