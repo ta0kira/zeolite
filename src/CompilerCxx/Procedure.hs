@@ -65,7 +65,7 @@ compileExecutableProcedure :: (Show c, CollectErrorsM m) =>
   ScopeContext c -> ScopedFunction c -> ExecutableProcedure c ->
   m (CompiledData [String],CompiledData [String])
 compileExecutableProcedure ctx ff@(ScopedFunction _ _ _ s as1 rs1 ps1 _ _)
-                               pp@(ExecutableProcedure c0 pragmas c n as2 rs2 p) = do
+                               pp@(ExecutableProcedure c pragmas c2 n as2 rs2 p) = do
   ctx' <- getProcedureContext ctx ff pp
   output <- runDataCompiler compileWithReturn ctx'
   procedureTrace <- setProcedureTrace
@@ -78,7 +78,7 @@ compileExecutableProcedure ctx ff@(ScopedFunction _ _ _ s as1 rs1 ps1 _ _)
       compileProcedure ctx0 p >>= put
       unreachable <- csIsUnreachable
       when (not unreachable) $
-        doImplicitReturn [] <??
+        doImplicitReturn c2 <??
           "In implicit return from " ++ show n ++ formatFullContextBrace c
     wrapProcedure output pt ct =
       mconcat [
@@ -124,7 +124,7 @@ compileExecutableProcedure ctx ff@(ScopedFunction _ _ _ s as1 rs1 ps1 _ _)
       | not $ any isTraceCreation pragmas = return []
       | s /= ValueScope =
           (compilerWarningM $ "Creation tracing ignored for " ++ show s ++
-             " functions" ++ formatFullContextBrace c0) >> return []
+            " functions" ++ formatFullContextBrace c) >> return []
       | otherwise = return [showCreationTrace]
     defineReturns
       | isUnnamedReturns rs2 = []
@@ -148,7 +148,7 @@ compileCondition :: (Show c, CollectErrorsM m,
   a -> [c] -> Expression c -> CompilerState a m String
 compileCondition ctx c e = do
   (e',ctx') <- resetBackgroundM $ lift $ runStateT compile ctx
-  lift (ccGetRequired ctx') >>= csRequiresTypes
+  lift (ccGetRequired ctx') >>= csAddRequired
   noTrace <- csGetNoTrace
   if noTrace
      then return e'
@@ -162,7 +162,7 @@ compileCondition ctx c e = do
         checkCondition (Positional [t]) | t == boolRequiredValue = return ()
         checkCondition (Positional ts) =
           compilerErrorM $ "Conditionals must have exactly one Bool return but found {" ++
-                          intercalate "," (map show ts) ++ "}"
+                           intercalate "," (map show ts) ++ "}"
 
 -- Returns the state so that returns can be properly checked for if/elif/else.
 compileProcedure :: (Show c, CollectErrorsM m,
@@ -173,10 +173,10 @@ compileProcedure ctx (Procedure _ ss) = do
   return ctx' where
     compile s = do
       unreachable <- csIsUnreachable
-      if unreachable
+      if unreachable && not (isRawCodeLine s)
          then compilerWarningM $ "Statement at " ++
-                                       formatFullContext (getStatementContext s) ++
-                                       " is unreachable (skipping compilation)"
+                                 formatFullContext (getStatementContext s) ++
+                                 " is unreachable (skipping compilation)"
          else do
            s' <- resetBackgroundM $ compileStatement s
            return s'
@@ -220,10 +220,7 @@ compileStatement (LoopBreak c) = do
        NotInLoop ->
          compilerErrorM $ "Using break outside of while is no allowed" ++ formatFullContextBrace c
        _ -> return ()
-  (CleanupSetup cs ss) <- csGetCleanup JumpBreak
-  sequence_ $ map (csInheritReturns . (:[])) cs
-  csWrite ss
-  csSetJumpType JumpBreak
+  get >>= autoInsertCleanup c JumpBreak
   csWrite ["break;"]
 compileStatement (LoopContinue c) = do
   loop <- csGetLoop
@@ -231,13 +228,10 @@ compileStatement (LoopContinue c) = do
        NotInLoop ->
          compilerErrorM $ "Using continue outside of while is no allowed" ++ formatFullContextBrace c
        _ -> return ()
-  (CleanupSetup cs ss) <- csGetCleanup JumpContinue
-  sequence_ $ map (csInheritReturns . (:[])) cs
-  csWrite ss
-  csSetJumpType JumpContinue
+  get >>= autoInsertCleanup c JumpContinue
   csWrite $ ["{"] ++ lsUpdate loop ++ ["}","continue;"]
 compileStatement (FailCall c e) = do
-  csRequiresTypes (Set.fromList [BuiltinFormatted,BuiltinString])
+  csAddRequired (Set.fromList [BuiltinFormatted,BuiltinString])
   e' <- compileExpression e
   when (length (pValues $ fst e') /= 1) $
     compilerErrorM $ "Expected single return in argument" ++ formatFullContextBrace c
@@ -272,21 +266,21 @@ compileStatement (Assignment c as e) = message ??> do
       csWrite ["}"]
     getVariableType (CreateVariable _ t _) _ = return t
     getVariableType (ExistingVariable (InputValue c2 n)) _ = do
-      (VariableValue _ _ t _) <- csGetVariable c2 n
+      (VariableValue _ _ t _) <- csGetVariable (UsedVariable c2 n)
       return t
     getVariableType (ExistingVariable (DiscardInput _)) t = return t
     createVariable r fa (CreateVariable c2 t1 n) t2 =
       "In creation of " ++ show n ++ " at " ++ formatFullContext c2 ??> do
-        -- TODO: Call csRequiresTypes for t1. (Maybe needs a helper function.)
+        -- TODO: Call csAddRequired for t1. (Maybe needs a helper function.)
         lift $ collectAllM_ [validateGeneralInstance r fa (vtType t1),
                              checkValueAssignment r fa t2 t1]
-        csAddVariable c2 n (VariableValue c2 LocalScope t1 True)
+        csAddVariable (UsedVariable c2 n) (VariableValue c2 LocalScope t1 True)
         csWrite [variableStoredType t1 ++ " " ++ variableName n ++ ";"]
     createVariable r fa (ExistingVariable (InputValue c2 n)) t2 =
       "In assignment to " ++ show n ++ " at " ++ formatFullContext c2 ??> do
-        (VariableValue _ _ t1 w) <- csGetVariable c2 n
+        (VariableValue _ _ t1 w) <- csGetVariable (UsedVariable c2 n)
         when (not w) $ compilerErrorM $ "Cannot assign to read-only variable " ++
-                                              show n ++ formatFullContextBrace c2
+                                        show n ++ formatFullContextBrace c2
         -- TODO: Also show original context.
         lift $ (checkValueAssignment r fa t2 t1)
         csUpdateAssigned n
@@ -294,7 +288,7 @@ compileStatement (Assignment c as e) = message ??> do
     assignSingle (_,t,CreateVariable _ _ n) e2 =
       csWrite [variableName n ++ " = " ++ writeStoredVariable t e2 ++ ";"]
     assignSingle (_,t,ExistingVariable (InputValue c2 n)) e2 = do
-      (VariableValue _ s _ _) <- csGetVariable c2 n
+      (VariableValue _ s _ _) <- csGetVariable (UsedVariable c2 n)
       scoped <- autoScope s
       csWrite [scoped ++ variableName n ++ " = " ++ writeStoredVariable t e2 ++ ";"]
     assignSingle _ _ = return ()
@@ -302,19 +296,20 @@ compileStatement (Assignment c as e) = message ??> do
       csWrite [variableName n ++ " = " ++
                writeStoredVariable t (UnwrappedSingle $ "r.At(" ++ show i ++ ")") ++ ";"]
     assignMulti (i,t,ExistingVariable (InputValue _ n)) = do
-      (VariableValue _ s _ _) <- csGetVariable c n
+      (VariableValue _ s _ _) <- csGetVariable (UsedVariable c n)
       scoped <- autoScope s
       csWrite [scoped ++ variableName n ++ " = " ++
                writeStoredVariable t (UnwrappedSingle $ "r.At(" ++ show i ++ ")") ++ ";"]
     assignMulti _ = return ()
 compileStatement (NoValueExpression _ v) = compileVoidExpression v
+compileStatement (RawCodeLine s) = csWrite [s]
 
 compileRegularInit :: (Show c, CollectErrorsM m,
                        CompilerContext c m [String] a) =>
   DefinedMember c -> CompilerState a m ()
 compileRegularInit (DefinedMember _ _ _ _ Nothing) = return ()
 compileRegularInit (DefinedMember c2 s t n2 (Just e)) = resetBackgroundM $ do
-  csAddVariable c2 n2 (VariableValue c2 s t True)
+  csAddVariable (UsedVariable c2 n2) (VariableValue c2 s t True)
   let assign = Assignment c2 (Positional [ExistingVariable (InputValue c2 n2)]) e
   compileStatement assign
 
@@ -343,11 +338,9 @@ compileVoidExpression (LineComment s) = csWrite $ map ("// " ++) $ lines s
 compileVoidExpression (Unconditional p) = do
   ctx0 <- getCleanContext
   ctx <- compileProcedure ctx0 p
-  (lift $ ccGetRequired ctx) >>= csRequiresTypes
   csWrite ["{"]
-  (lift $ ccGetOutput ctx) >>= csWrite
+  autoInlineOutput ctx
   csWrite ["}"]
-  csInheritReturns [ctx]
 
 compileIfElifElse :: (Show c, CollectErrorsM m,
                       CompilerContext c m [String] a) =>
@@ -356,9 +349,9 @@ compileIfElifElse (IfStatement c e p es) = do
   ctx0 <- getCleanContext
   e' <- compileCondition ctx0 c e
   ctx <- compileProcedure ctx0 p
-  (lift $ ccGetRequired ctx) >>= csRequiresTypes
+  (lift $ ccGetRequired ctx) >>= csAddRequired
   csWrite ["if (" ++ e' ++ ") {"]
-  (lift $ ccGetOutput ctx) >>= csWrite
+  getAndIndentOutput ctx >>= csWrite
   csWrite ["}"]
   cs <- unwind es
   csInheritReturns (ctx:cs)
@@ -367,18 +360,18 @@ compileIfElifElse (IfStatement c e p es) = do
       ctx0 <- getCleanContext
       e2' <- compileCondition ctx0 c2 e2
       ctx <- compileProcedure ctx0 p2
-      (lift $ ccGetRequired ctx) >>= csRequiresTypes
+      (lift $ ccGetRequired ctx) >>= csAddRequired
       csWrite ["else if (" ++ e2' ++ ") {"]
-      (lift $ ccGetOutput ctx) >>= csWrite
+      getAndIndentOutput ctx >>= csWrite
       csWrite ["}"]
       cs <- unwind es2
       return $ ctx:cs
     unwind (ElseStatement _ p2) = do
       ctx0 <- getCleanContext
       ctx <- compileProcedure ctx0 p2
-      (lift $ ccGetRequired ctx) >>= csRequiresTypes
+      (lift $ ccGetRequired ctx) >>= csAddRequired
       csWrite ["else {"]
-      (lift $ ccGetOutput ctx) >>= csWrite
+      getAndIndentOutput ctx >>= csWrite
       csWrite ["}"]
       return [ctx]
     unwind TerminateConditional = fmap (:[]) get
@@ -394,62 +387,52 @@ compileWhileLoop (WhileLoop c e p u) = do
                 Just p2 -> do
                   ctx1 <- lift $ ccStartLoop ctx0 (LoopSetup [])
                   ctx2 <- compileProcedure ctx1 p2
-                  (lift $ ccGetRequired ctx2) >>= csRequiresTypes
-                  p2' <- lift $ ccGetOutput ctx2
+                  (lift $ ccGetRequired ctx2) >>= csAddRequired
+                  p2' <- getAndIndentOutput ctx2
                   lift $ ccStartLoop ctx0 (LoopSetup p2')
                 _ -> lift $ ccStartLoop ctx0 (LoopSetup [])
   (LoopSetup u') <- lift $ ccGetLoop ctx0'
   ctx <- compileProcedure ctx0' p
-  (lift $ ccGetRequired ctx) >>= csRequiresTypes
+  (lift $ ccGetRequired ctx) >>= csAddRequired
   csWrite ["while (" ++ e' ++ ") {"]
-  (lift $ ccGetOutput ctx) >>= csWrite
+  getAndIndentOutput ctx >>= csWrite
   csWrite $ ["{"] ++ u' ++ ["}"]
   csWrite ["}"]
 
 compileScopedBlock :: (Show c, CollectErrorsM m,
                        CompilerContext c m [String] a) =>
   ScopedBlock c -> CompilerState a m ()
-compileScopedBlock s = do
+compileScopedBlock s@(ScopedBlock _ _ _ c2 _) = do
   let (vs,p,cl,st) = rewriteScoped s
+  -- Capture context so we can discard scoped variable names.
+  ctx0 <- getCleanContext
   r <- csResolver
   fa <- csAllFilters
   sequence_ $ map (createVariable r fa) vs
-  -- Compile the scoped block for the base context of the statement and the
-  -- cleanup block.
-  ctxP0 <- getCleanContext >>= flip compileProcedure p
-  -- Precompile the statement to get static analysis of returns, for use when
-  -- compiling the cleanup block. The output will be discarded; the statement is
-  -- compiled with cleanup below.
-  ctxCl0 <- do
-    ctxS0 <- lift $ execStateT (sequence $ map showVariable vs) ctxP0
-    ctxS0' <- compileProcedure ctxS0 (Procedure [] [st])
-    lift $ ccInheritReturns ctxP0 [ctxS0']
-  (ctxP,cl',ctxCl) <-
-    case cl of
-         Just p2@(Procedure c _) -> do
-           ctxCl0' <- lift $ ccClearOutput ctxCl0 >>= ccStartCleanup
-           ctxCl <- compileProcedure ctxCl0' p2 <?? "In cleanup starting at " ++ formatFullContext c
-           p2' <- lift $ ccGetOutput ctxCl
-           noTrace <- csGetNoTrace
-           let p2'' = if noTrace
-                         then []
-                         else ["{",startCleanupTracing] ++ p2' ++ ["}"]
-           ctxP <- lift $ ccPushCleanup ctxP0 (CleanupSetup [ctxCl] p2'')
-           return (ctxP,p2'',ctxCl)
-         Nothing -> return (ctxP0,[],ctxP0)
+  ctxP0 <- compileProcedure ctx0 p
   -- Make variables to be created visible *after* p has been compiled so that p
   -- can't refer to them.
-  ctxP' <- lift $ execStateT (sequence $ map showVariable vs) ctxP
+  ctxP <- lift $ execStateT (sequence $ map showVariable vs) ctxP0
+  ctxCl0 <- lift $ ccClearOutput ctxP >>= ccStartCleanup
+  ctxP' <-
+    case cl of
+         -- Insert cleanup into the context for the in block.
+         Just (Procedure c ss) -> do
+           noTrace <- csGetNoTrace
+           let trace = if noTrace then [] else [RawCodeLine startCleanupTracing]
+           let p2' = Procedure c $ [RawCodeLine "{"] ++ trace ++ ss ++ [RawCodeLine "}"]
+           ctxCl <- compileProcedure ctxCl0 p2' <?? "In cleanup starting at " ++ formatFullContext c
+           ctxP' <- lift $ ccPushCleanup ctxP ctxCl
+           return ctxP'
+         -- Insert an empty cleanup so that it can be used below.
+         Nothing -> lift $ ccPushCleanup ctxP ctxCl0
   ctxS <- compileProcedure ctxP' (Procedure [] [st])
-  (lift $ ccGetRequired ctxS)  >>= csRequiresTypes
-  (lift $ ccGetRequired ctxCl) >>= csRequiresTypes
-  csInheritReturns [ctxS]
-  csInheritReturns [ctxCl]
   csWrite ["{"]
-  (lift $ ccGetOutput ctxS) >>= csWrite
-  -- Skip fallthrough cleanup if the emitted output will be unreachable.
-  unreachable <- lift $ ccIsUnreachable ctxCl0
-  when (not unreachable) $ csWrite cl'
+  autoInlineOutput ctxS
+  -- NOTE: Keep this after inlining the in block in case the in block contains a
+  -- jump. (If it does, the cleanup will already be inlined.)
+  unreachable <- csIsUnreachable
+  when (not unreachable) $ autoInsertCleanup c2 NextStatement ctxP'
   csWrite ["}"]
   sequence_ $ map showVariable vs
   where
@@ -458,27 +441,27 @@ compileScopedBlock s = do
         "In creation of " ++ show n ++ " at " ++ formatFullContext c
       csWrite [variableStoredType t ++ " " ++ variableName n ++ ";"]
     showVariable (c,t,n) = do
-      -- TODO: Call csRequiresTypes for t. (Maybe needs a helper function.)
-      csAddVariable c n (VariableValue c LocalScope t True)
+      -- TODO: Call csAddRequired for t. (Maybe needs a helper function.)
+      csAddVariable (UsedVariable c n) (VariableValue c LocalScope t True)
     -- Don't merge if the second scope has cleanup, so that the latter can't
     -- refer to variables defined in the first scope.
-    rewriteScoped (ScopedBlock _ p cl@(Just _)
+    rewriteScoped (ScopedBlock _ p cl@(Just _) _
                                s2@(NoValueExpression _ (WithScope
-                                   (ScopedBlock _ _ (Just _) _)))) =
+                                   (ScopedBlock _ _ (Just _) _ _)))) =
       ([],p,cl,s2)
     -- Merge chained scoped sections into a single section.
-    rewriteScoped (ScopedBlock c (Procedure c2 ss1) cl1
+    rewriteScoped (ScopedBlock c (Procedure c3 ss1) cl1 c4
                                (NoValueExpression _ (WithScope
-                                (ScopedBlock _ (Procedure _ ss2) cl2 s2)))) =
-      rewriteScoped $ ScopedBlock c (Procedure c2 $ ss1 ++ ss2) (cl1 <|> cl2) s2
+                                (ScopedBlock _ (Procedure _ ss2) cl2 _ s2)))) =
+      rewriteScoped $ ScopedBlock c (Procedure c3 $ ss1 ++ ss2) (cl1 <|> cl2) c4 s2
     -- Gather to-be-created variables.
-    rewriteScoped (ScopedBlock _ p cl (Assignment c2 vs e)) =
-      (created,p,cl,Assignment c2 (Positional existing) e) where
+    rewriteScoped (ScopedBlock _ p cl _ (Assignment c3 vs e)) =
+      (created,p,cl,Assignment c3 (Positional existing) e) where
         (created,existing) = foldr update ([],[]) (pValues vs)
         update (CreateVariable c t n) (cs,es) = ((c,t,n):cs,(ExistingVariable $ InputValue c n):es)
         update e2 (cs,es) = (cs,e2:es)
     -- Merge the statement into the scoped block.
-    rewriteScoped (ScopedBlock _ p cl s2) =
+    rewriteScoped (ScopedBlock _ p cl _ s2) =
       ([],p,cl,s2)
 
 compileExpression :: (Show c, CollectErrorsM m,
@@ -486,33 +469,33 @@ compileExpression :: (Show c, CollectErrorsM m,
   Expression c -> CompilerState a m (ExpressionType,ExprValue)
 compileExpression = compile where
   compile (Literal (StringLiteral _ l)) = do
-    csRequiresTypes (Set.fromList [BuiltinString])
+    csAddRequired (Set.fromList [BuiltinString])
     return (Positional [stringRequiredValue],UnboxedPrimitive PrimString $ "PrimString_FromLiteral(" ++ escapeChars l ++ ")")
   compile (Literal (CharLiteral _ l)) = do
-    csRequiresTypes (Set.fromList [BuiltinChar])
+    csAddRequired (Set.fromList [BuiltinChar])
     return (Positional [charRequiredValue],UnboxedPrimitive PrimChar $ "PrimChar('" ++ escapeChar l ++ "')")
   compile (Literal (IntegerLiteral c True l)) = do
-    csRequiresTypes (Set.fromList [BuiltinInt])
+    csAddRequired (Set.fromList [BuiltinInt])
     when (l > 2^(64 :: Integer) - 1) $ compilerErrorM $
       "Literal " ++ show l ++ formatFullContextBrace c ++ " is greater than the max value for 64-bit unsigned"
     let l' = if l > 2^(63 :: Integer) - 1 then l - 2^(64 :: Integer) else l
     return (Positional [intRequiredValue],UnboxedPrimitive PrimInt $ "PrimInt(" ++ show l' ++ ")")
   compile (Literal (IntegerLiteral c False l)) = do
-    csRequiresTypes (Set.fromList [BuiltinInt])
+    csAddRequired (Set.fromList [BuiltinInt])
     when (l > 2^(63 :: Integer) - 1) $ compilerErrorM $
       "Literal " ++ show l ++ formatFullContextBrace c ++ " is greater than the max value for 64-bit signed"
     when ((-l) > (2^(63 :: Integer) - 2)) $ compilerErrorM $
       "Literal " ++ show l ++ formatFullContextBrace c ++ " is less than the min value for 64-bit signed"
     return (Positional [intRequiredValue],UnboxedPrimitive PrimInt $ "PrimInt(" ++ show l ++ ")")
   compile (Literal (DecimalLiteral _ l e)) = do
-    csRequiresTypes (Set.fromList [BuiltinFloat])
+    csAddRequired (Set.fromList [BuiltinFloat])
     -- TODO: Check bounds.
     return (Positional [floatRequiredValue],UnboxedPrimitive PrimFloat $ "PrimFloat(" ++ show l ++ "E" ++ show e ++ ")")
   compile (Literal (BoolLiteral _ True)) = do
-    csRequiresTypes (Set.fromList [BuiltinBool])
+    csAddRequired (Set.fromList [BuiltinBool])
     return (Positional [boolRequiredValue],UnboxedPrimitive PrimBool "true")
   compile (Literal (BoolLiteral _ False)) = do
-    csRequiresTypes (Set.fromList [BuiltinBool])
+    csAddRequired (Set.fromList [BuiltinBool])
     return (Positional [boolRequiredValue],UnboxedPrimitive PrimBool "false")
   compile (Literal (EmptyLiteral _)) = do
     return (Positional [emptyValue],UnwrappedSingle "Var_empty")
@@ -601,7 +584,7 @@ compileExpression = compile where
   isolateExpression e = do
     ctx <- getCleanContext
     (e',ctx') <- lift $ runStateT (compileExpression e) ctx
-    (lift $ ccGetRequired ctx') >>= csRequiresTypes
+    (lift $ ccGetRequired ctx') >>= csAddRequired
     return e'
   arithmetic1 = Set.fromList ["*","/"]
   arithmetic2 = Set.fromList ["%"]
@@ -689,8 +672,10 @@ compileExpressionStart :: (Show c, CollectErrorsM m,
                            CompilerContext c m [String] a) =>
   ExpressionStart c -> CompilerState a m (ExpressionType,ExprValue)
 compileExpressionStart (NamedVariable (OutputValue c n)) = do
-  (VariableValue _ s t _) <- csGetVariable c n
-  csCheckVariableInit c n
+  let var = UsedVariable c n
+  (VariableValue _ s t _) <- csGetVariable var
+  csCheckVariableInit [var]
+  csAddUsed var
   scoped <- autoScope s
   let lazy = s == CategoryScope
   return (Positional [t],readStoredVariable lazy t (scoped ++ variableName n))
@@ -703,7 +688,7 @@ compileExpressionStart (NamedMacro c n) = do
   return e'
 compileExpressionStart (CategoryCall c t f@(FunctionCall _ n _ _)) = do
   f' <- csGetCategoryFunction c (Just t) n
-  csRequiresTypes $ Set.fromList [t,sfType f']
+  csAddRequired $ Set.fromList [t,sfType f']
   t' <- expandCategory t
   compileFunctionCall (Just t') f' f
 compileExpressionStart (TypeCall c t f@(FunctionCall _ n _ _)) = do
@@ -714,14 +699,14 @@ compileExpressionStart (TypeCall c t f@(FunctionCall _ n _ _)) = do
   when (sfScope f' /= TypeScope) $ compilerErrorM $ "Function " ++ show n ++
                                           " cannot be used as a type function" ++
                                           formatFullContextBrace c
-  csRequiresTypes $ Set.unions $ map categoriesFromTypes [singleType t]
-  csRequiresTypes $ Set.fromList [sfType f']
+  csAddRequired $ Set.unions $ map categoriesFromTypes [singleType t]
+  csAddRequired $ Set.fromList [sfType f']
   t' <- expandGeneralInstance $ singleType t
   compileFunctionCall (Just t') f' f
 compileExpressionStart (UnqualifiedCall c f@(FunctionCall _ n _ _)) = do
   ctx <- get
   f' <- lift $ collectFirstM [tryCategory ctx,tryNonCategory ctx]
-  csRequiresTypes $ Set.fromList [sfType f']
+  csAddRequired $ Set.fromList [sfType f']
   compileFunctionCall Nothing f' f
   where
     tryCategory ctx = ccGetCategoryFunction ctx c Nothing n
@@ -733,7 +718,7 @@ compileExpressionStart (UnqualifiedCall c f@(FunctionCall _ n _ _)) = do
       return f'
 -- TODO: Compile BuiltinCall like regular functions, for consistent validation.
 compileExpressionStart (BuiltinCall c (FunctionCall _ BuiltinPresent ps es)) = do
-  csRequiresTypes (Set.fromList [BuiltinBool])
+  csAddRequired (Set.fromList [BuiltinBool])
   when (length (pValues ps) /= 0) $
     compilerErrorM $ "Expected 0 type parameters" ++ formatFullContextBrace c
   when (length (pValues es) /= 1) $
@@ -765,8 +750,8 @@ compileExpressionStart (BuiltinCall c (FunctionCall _ BuiltinReduce ps es)) = do
   -- TODO: If t1 -> t2 then just return e without a Reduce call.
   t1' <- expandGeneralInstance t1
   t2' <- expandGeneralInstance t2
-  csRequiresTypes $ categoriesFromTypes t1
-  csRequiresTypes $ categoriesFromTypes t2
+  csAddRequired $ categoriesFromTypes t1
+  csAddRequired $ categoriesFromTypes t2
   return $ (Positional [ValueType OptionalValue t2],
             UnwrappedSingle $ typeBase ++ "::Reduce(" ++ t1' ++ ", " ++ t2' ++ ", " ++ useAsUnwrapped e ++ ")")
 compileExpressionStart (BuiltinCall c (FunctionCall _ BuiltinRequire ps es)) = do
@@ -806,13 +791,13 @@ compileExpressionStart (BuiltinCall c (FunctionCall _ BuiltinTypename ps es)) = 
   fa <- csAllFilters
   lift $ validateGeneralInstance r fa t
   t' <- expandGeneralInstance t
-  csRequiresTypes $ Set.unions $ map categoriesFromTypes [t]
+  csAddRequired $ Set.unions $ map categoriesFromTypes [t]
   return $ (Positional [formattedRequiredValue],
             valueAsWrapped $ UnboxedPrimitive PrimString $ typeBase ++ "::TypeName(" ++ t' ++ ")")
 compileExpressionStart (BuiltinCall _ _) = undefined
 compileExpressionStart (ParensExpression _ e) = compileExpression e
 compileExpressionStart (InlineAssignment c n e) = do
-  (VariableValue _ s t0 w) <- csGetVariable c n
+  (VariableValue _ s t0 w) <- csGetVariable (UsedVariable c n)
   when (not w) $ compilerErrorM $ "Cannot assign to read-only variable " ++
                                         show n ++ formatFullContextBrace c
   (Positional [t],e') <- compileExpression e -- TODO: Get rid of the Positional matching here.
@@ -848,8 +833,8 @@ compileFunctionCall e f (FunctionCall c _ ps es) = message ??> do
   -- Called an extra time so arg count mismatches have reasonable errors.
   lift $ processPairs_ (\_ _ -> return ()) (ftArgs f'') (Positional ts)
   lift $ processPairs_ (checkArg r fa) (ftArgs f'') (Positional $ zip ([0..] :: [Int]) ts)
-  csRequiresTypes $ Set.unions $ map categoriesFromTypes $ pValues ps2
-  csRequiresTypes (Set.fromList [sfType f])
+  csAddRequired $ Set.unions $ map categoriesFromTypes $ pValues ps2
+  csAddRequired (Set.fromList [sfType f])
   params <- expandParams2 ps2
   scope <- csCurrentScope
   scoped <- autoScope (sfScope f)
@@ -1026,11 +1011,11 @@ doImplicitReturn :: (CollectErrorsM m, Show c, CompilerContext c m [String] a) =
   [c] -> CompilerState a m ()
 doImplicitReturn c = do
   named <- csIsNamedReturns
-  (CleanupSetup cs ss) <- csGetCleanup JumpReturn
-  when (not $ null ss) $ do
-    sequence_ $ map (csInheritReturns . (:[])) cs
-    csWrite ss
   csRegisterReturn c Nothing
+  (CleanupBlock ss _ _ req) <- csGetCleanup JumpReturn
+  csAddRequired req
+  csSetJumpType JumpReturn
+  csWrite ss
   if not named
      then csWrite ["return ReturnTuple(0);"]
      else do
@@ -1044,12 +1029,13 @@ doImplicitReturn c = do
 autoPositionalCleanup :: (CollectErrorsM m, CompilerContext c m [String] a) =>
   ExprValue -> CompilerState a m ()
 autoPositionalCleanup e = do
-  (CleanupSetup cs ss) <- csGetCleanup JumpReturn
+  (CleanupBlock ss _ _ req) <- csGetCleanup JumpReturn
+  csAddRequired req
+  csSetJumpType JumpReturn
   if null ss
      then csWrite ["return " ++ useAsReturns e ++ ";"]
      else do
        named <- csIsNamedReturns
-       sequence_ $ map (csInheritReturns . (:[])) cs
        if named
           then do
             csWrite ["returns = " ++ useAsReturns e ++ ";"]
@@ -1059,3 +1045,30 @@ autoPositionalCleanup e = do
             csWrite ["{","ReturnTuple returns = " ++ useAsReturns e ++ ";"]
             csWrite ss
             csWrite ["return returns;","}"]
+
+autoInsertCleanup :: (Show c, CollectErrorsM m, CompilerContext c m [String] a) =>
+  [c] -> JumpType -> a -> CompilerState a m ()
+autoInsertCleanup c j ctx = do
+  (CleanupBlock ss vs jump req) <- lift $ ccGetCleanup ctx j
+  lift (ccCheckVariableInit ctx vs) <?? "In inlining of cleanup block after statement at " ++ formatFullContext c
+  -- This is needed in case a cleanup is inlined within another cleanup, e.g.,
+  -- e.g., if the latter has a break statement.
+  let vs2 = map (UsedVariable c . uvName) vs
+  sequence_ $ map csAddUsed $ vs2 ++ vs
+  csWrite ss
+  csAddRequired req
+  csSetJumpType (max j jump)
+
+autoInlineOutput :: (Show c, CollectErrorsM m, CompilerContext c m [String] a) =>
+  a -> CompilerState a m ()
+autoInlineOutput ctx = do
+  (lift $ ccGetRequired ctx) >>= csAddRequired
+  getAndIndentOutput ctx >>= csWrite
+  csInheritReturns [ctx]
+
+getAndIndentOutput :: (Show c, CollectErrorsM m, CompilerContext c m [String] a) =>
+  a -> CompilerState a m [String]
+getAndIndentOutput ctx = fmap indentCode (lift $ ccGetOutput ctx)
+
+indentCode :: [String] -> [String]
+indentCode = map ("  " ++)

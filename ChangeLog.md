@@ -11,8 +11,29 @@
 
 ### Language
 
-* **[fix]** Fixes a bug in `cleanup` that caused the `scoped` block to be
-  prepended to it when it was inlined in the `in` block.
+* **[fix]** Several `cleanup` fixes:
+
+  * **[fix]** Fixes a bug in `cleanup` that caused the `scoped` block to be
+    prepended to it when it was inlined in the `in` block.
+
+  * **[fix]** Fixes a bug where `cleanup` might use an uninitialized named
+    return when inlined at a `break` or `continue` statement in a `while` loop.
+    Such situations will now cause a compilation error. Previously, this could
+    have allowed an uninitialized value to be passed around, which would only be
+    noticed with a `Function called on null value` failure at some point.
+
+  * **[fix]** Fixes inlining of `cleanup` blocks when `continue` is used inside
+    of the `in` block. Previously, `cleanup` was skipped when `continue` was
+    used inside of the respective `in` block.
+
+  * **[new]** Allows `cleanup` to refer to variables created at the top level of
+    the `in` block.
+
+    ```text
+    cleanup {
+      \ foo(bar)                    // bar is created below
+    } in Type bar <- Type.create()  // cleanup is inlined after this
+    ```
 
 ## 0.10.0.0  -- 2020-12-05
 

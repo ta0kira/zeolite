@@ -47,7 +47,7 @@ define Test {
 
 testcase "assign after logical" {
   error
-  require "value"
+  require "value.+initialized"
 }
 
 concrete Test {}
@@ -137,6 +137,35 @@ define Test {
   @category process () -> (Int)
   process () (value) {
     return value
+  }
+}
+
+
+testcase "explicit return with named" {
+  compiles
+}
+
+concrete Test {}
+
+define Test {
+  @category process () -> (Int)
+  process () (value) {
+    return 1
+  }
+}
+
+
+testcase "empty return with named" {
+  error
+  require "value.+initialized"
+}
+
+concrete Test {}
+
+define Test {
+  @category process () -> (Int)
+  process () (value) {
+    return _
   }
 }
 

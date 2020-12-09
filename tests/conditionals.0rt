@@ -58,7 +58,7 @@ concrete Value {}
 
 testcase "assign if/elif condition" {
   error
-  require "value.+before return"
+  require "value.+initialized"
 }
 
 define Value {
@@ -77,8 +77,8 @@ concrete Value {}
 
 testcase "different in if and else" {
   error
-  require "value1.+before return"
-  require "value2.+before return"
+  require "value1.+initialized"
+  require "value2.+initialized"
 }
 
 define Value {
@@ -97,7 +97,7 @@ concrete Value {}
 
 testcase "missing in if" {
   error
-  require "value.+before return"
+  require "value.+initialized"
 }
 
 define Value {
@@ -117,7 +117,7 @@ concrete Value {}
 
 testcase "missing in elif" {
   error
-  require "value.+before return"
+  require "value.+initialized"
 }
 
 define Value {
@@ -137,7 +137,7 @@ concrete Value {}
 
 testcase "missing in else" {
   error
-  require "value.+before return"
+  require "value.+initialized"
 }
 
 define Value {
@@ -158,7 +158,7 @@ concrete Value {}
 
 testcase "missing in implicit else" {
   error
-  require "value.+before return"
+  require "value.+initialized"
 }
 
 define Value {
@@ -173,6 +173,29 @@ define Value {
 }
 
 concrete Value {}
+
+
+testcase "branch jump skips validation of named return" {
+  compiles
+}
+
+concrete Test {}
+
+define Test {
+  @value process () -> (Bool)
+  process () (value) {
+    while (true) {
+      if (true) {
+        // This skips past fail(value) below.
+        break
+      } else {
+        value <- true
+      }
+      fail(value)
+    }
+    return false
+  }
+}
 
 
 testcase "crash in if" {

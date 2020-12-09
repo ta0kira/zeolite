@@ -23,7 +23,7 @@ limitations under the License.
 {-# LANGUAGE ScopedTypeVariables #-}
 
 module Compilation.CompilerState (
-  CleanupSetup(..),
+  CleanupBlock(..),
   CompilerContext(..),
   CompiledData(..),
   CompilerState,
@@ -32,7 +32,10 @@ module Compilation.CompilerState (
   JumpType(..),
   MemberValue(..),
   ReturnVariable(..),
+  UsedVariable(..),
   concatM,
+  csAddRequired,
+  csAddUsed,
   csAddVariable,
   csAllFilters,
   csCheckValueInit,
@@ -56,7 +59,6 @@ module Compilation.CompilerState (
   csRegisterReturn,
   csReleaseExprMacro,
   csReserveExprMacro,
-  csRequiresTypes,
   csResolver,
   csSameType,
   csSetJumpType,
@@ -65,8 +67,8 @@ module Compilation.CompilerState (
   csStartLoop,
   csUpdateAssigned,
   csWrite,
+  emptyCleanupBlock,
   getCleanContext,
-  isLoopBoundary,
   runDataCompiler,
 ) where
 
@@ -98,18 +100,19 @@ class (Functor m, Monad m) => CompilerContext c m s a | a -> c s where
   ccSameType :: a -> TypeInstance -> m Bool
   ccAllFilters :: a -> m ParamFilters
   ccGetParamScope :: a -> ParamName -> m SymbolScope
-  ccRequiresTypes :: a -> Set.Set CategoryName -> m a
+  ccAddRequired :: a -> Set.Set CategoryName -> m a
   ccGetRequired :: a -> m (Set.Set CategoryName)
   ccGetCategoryFunction :: a -> [c] -> Maybe CategoryName -> FunctionName -> m (ScopedFunction c)
   ccGetTypeFunction :: a -> [c] -> Maybe GeneralInstance -> FunctionName -> m (ScopedFunction c)
   ccCheckValueInit :: a -> [c] -> TypeInstance -> ExpressionType -> Positional GeneralInstance -> m ()
-  ccGetVariable :: a -> [c] -> VariableName -> m (VariableValue c)
-  ccAddVariable :: a -> [c] -> VariableName -> VariableValue c -> m a
-  ccCheckVariableInit :: a -> [c] -> VariableName -> m ()
+  ccGetVariable :: a -> UsedVariable c -> m (VariableValue c)
+  ccAddVariable :: a -> UsedVariable c -> VariableValue c -> m a
+  ccCheckVariableInit :: a -> [UsedVariable c] -> m ()
   ccWrite :: a -> s -> m a
   ccGetOutput :: a -> m s
   ccClearOutput :: a -> m a
   ccUpdateAssigned :: a -> VariableName -> m a
+  ccAddUsed :: a -> UsedVariable c -> m a
   ccInheritReturns :: a -> [a] -> m a
   ccRegisterReturn :: a -> [c] -> Maybe ExpressionType -> m a
   ccPrimNamedReturns :: a -> m [ReturnVariable]
@@ -119,8 +122,8 @@ class (Functor m, Monad m) => CompilerContext c m s a | a -> c s where
   ccStartLoop :: a -> LoopSetup s -> m a
   ccGetLoop :: a -> m (LoopSetup s)
   ccStartCleanup :: a -> m a
-  ccPushCleanup :: a -> CleanupSetup a s -> m a
-  ccGetCleanup :: a -> JumpType -> m (CleanupSetup a s)
+  ccPushCleanup :: a -> a -> m a
+  ccGetCleanup :: a -> JumpType -> m (CleanupBlock c s)
   ccExprLookup :: a -> [c] -> MacroName -> m (Expression c)
   ccReserveExprMacro :: a -> [c] -> MacroName -> m a
   ccReleaseExprMacro :: a -> [c] -> MacroName -> m a
@@ -151,16 +154,24 @@ data LoopSetup s =
   } |
   NotInLoop
 
-data CleanupSetup a s =
-  CleanupSetup {
-    csReturnContext :: [a],
-    csCleanup :: s
-  } |
-  LoopBoundary
+data UsedVariable c =
+  UsedVariable {
+    uvContext :: [c],
+    uvName :: VariableName
+  }
+  deriving (Show)
 
-isLoopBoundary :: CleanupSetup a s -> Bool
-isLoopBoundary LoopBoundary = True
-isLoopBoundary _            = False
+data CleanupBlock c s =
+  CleanupBlock {
+    csCleanup :: s,
+    csUsesVars :: [UsedVariable c],
+    csJumpType :: JumpType,
+    csRequires :: Set.Set CategoryName
+  }
+  deriving (Show)
+
+emptyCleanupBlock :: Monoid s => CleanupBlock c s
+emptyCleanupBlock = CleanupBlock mempty [] NextStatement Set.empty
 
 data JumpType =
   NextStatement |
@@ -189,8 +200,8 @@ csAllFilters = fmap ccAllFilters get >>= lift
 csGetParamScope :: CompilerContext c m s a => ParamName -> CompilerState a m SymbolScope
 csGetParamScope n = fmap (\x -> ccGetParamScope x n) get >>= lift
 
-csRequiresTypes :: CompilerContext c m s a => Set.Set CategoryName -> CompilerState a m ()
-csRequiresTypes ns = fmap (\x -> ccRequiresTypes x ns) get >>= lift >>= put
+csAddRequired :: CompilerContext c m s a => Set.Set CategoryName -> CompilerState a m ()
+csAddRequired ns = fmap (\x -> ccAddRequired x ns) get >>= lift >>= put
 
 csGetRequired :: CompilerContext c m s a => CompilerState a m (Set.Set CategoryName)
 csGetRequired = fmap ccGetRequired get >>= lift
@@ -208,16 +219,16 @@ csCheckValueInit :: CompilerContext c m s a =>
 csCheckValueInit c t as ps = fmap (\x -> ccCheckValueInit x c t as ps) get >>= lift
 
 csGetVariable :: CompilerContext c m s a =>
-  [c] -> VariableName -> CompilerState a m (VariableValue c)
-csGetVariable c n = fmap (\x -> ccGetVariable x c n) get >>= lift
+  UsedVariable c -> CompilerState a m (VariableValue c)
+csGetVariable v = fmap (\x -> ccGetVariable x v) get >>= lift
 
 csAddVariable :: CompilerContext c m s a =>
-  [c] -> VariableName -> VariableValue c -> CompilerState a m ()
-csAddVariable c n t = fmap (\x -> ccAddVariable x c n t) get >>= lift >>= put
+  UsedVariable c -> VariableValue c -> CompilerState a m ()
+csAddVariable v t = fmap (\x -> ccAddVariable x v t) get >>= lift >>= put
 
 csCheckVariableInit :: CompilerContext c m s a =>
-  [c] -> VariableName -> CompilerState a m ()
-csCheckVariableInit c n = fmap (\x -> ccCheckVariableInit x c n) get >>= lift
+  [UsedVariable c] -> CompilerState a m ()
+csCheckVariableInit vs = fmap (\x -> ccCheckVariableInit x vs) get >>= lift
 
 csWrite :: CompilerContext c m s a => s -> CompilerState a m ()
 csWrite o = fmap (\x -> ccWrite x o) get >>= lift >>= put
@@ -230,6 +241,9 @@ csGetOutput = fmap ccGetOutput get >>= lift
 
 csUpdateAssigned :: CompilerContext c m s a => VariableName -> CompilerState a m ()
 csUpdateAssigned n = fmap (\x -> ccUpdateAssigned x n) get >>= lift >>= put
+
+csAddUsed :: CompilerContext c m s a => UsedVariable c -> CompilerState a m ()
+csAddUsed n = fmap (\x -> ccAddUsed x n) get >>= lift >>= put
 
 csInheritReturns :: CompilerContext c m s a => [a] -> CompilerState a m ()
 csInheritReturns xs = fmap (\x -> ccInheritReturns x xs) get >>= lift >>= put
@@ -259,10 +273,10 @@ csStartCleanup = fmap (\x -> ccStartCleanup x) get >>= lift >>= put
 csGetLoop :: CompilerContext c m s a => CompilerState a m (LoopSetup s)
 csGetLoop = fmap ccGetLoop get >>= lift
 
-csPushCleanup :: CompilerContext c m s a => CleanupSetup a s -> CompilerState a m ()
+csPushCleanup :: CompilerContext c m s a => a -> CompilerState a m ()
 csPushCleanup l = fmap (\x -> ccPushCleanup x l) get >>= lift >>= put
 
-csGetCleanup :: CompilerContext c m s a => JumpType -> CompilerState a m (CleanupSetup a s)
+csGetCleanup :: CompilerContext c m s a => JumpType -> CompilerState a m (CleanupBlock c s)
 csGetCleanup j = fmap (\x -> ccGetCleanup x j) get >>= lift
 
 csExprLookup :: CompilerContext c m s a => [c] -> MacroName -> CompilerState a m (Expression c)

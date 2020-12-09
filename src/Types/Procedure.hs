@@ -47,6 +47,7 @@ module Types.Procedure (
   getStatementContext,
   isDiscardedInput,
   isLiteralCategory,
+  isRawCodeLine,
   isUnnamedReturns,
 ) where
 
@@ -160,8 +161,13 @@ data Statement c =
   FailCall [c] (Expression c) |
   IgnoreValues [c] (Expression c) |
   Assignment [c] (Positional (Assignable c)) (Expression c) |
-  NoValueExpression [c] (VoidExpression c)
+  NoValueExpression [c] (VoidExpression c) |
+  RawCodeLine String
   deriving (Show)
+
+isRawCodeLine :: Statement c -> Bool
+isRawCodeLine (RawCodeLine _) = True
+isRawCodeLine _               = False
 
 getStatementContext :: Statement c -> [c]
 getStatementContext (EmptyReturn c)         = c
@@ -172,6 +178,7 @@ getStatementContext (FailCall c _)          = c
 getStatementContext (IgnoreValues c _)      = c
 getStatementContext (Assignment c _ _)      = c
 getStatementContext (NoValueExpression c _) = c
+getStatementContext (RawCodeLine _)         = []
 
 data Assignable c =
   CreateVariable [c] ValueType VariableName |
@@ -202,7 +209,7 @@ data WhileLoop c =
   deriving (Show)
 
 data ScopedBlock c =
-  ScopedBlock [c] (Procedure c) (Maybe (Procedure c)) (Statement c)
+  ScopedBlock [c] (Procedure c) (Maybe (Procedure c)) [c] (Statement c)
   deriving (Show)
 
 data Expression c =

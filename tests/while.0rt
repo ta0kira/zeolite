@@ -18,7 +18,7 @@ limitations under the License.
 
 testcase "assign while" {
   error
-  require "value.+before return"
+  require "value.+initialized"
 }
 
 @value interface Value {}
@@ -37,7 +37,7 @@ define Test {
 
 testcase "assign while condition" {
   error
-  require "value.+before return"
+  require "value.+initialized"
 }
 
 @value interface Value {}
@@ -252,6 +252,21 @@ unittest cleanupAfterBreak {
   }
 }
 
+unittest cleanupAfterContinue {
+  Int value <- 0
+  scoped {
+    value <- 1
+  } cleanup {
+    value <- 2
+  } in while (value < 3) {
+    value <- 3
+    continue
+  }
+  if (value != 2) {
+    fail(value)
+  }
+}
+
 concrete CleanupBeforeReturn {
   @type create () -> (CleanupBeforeReturn)
   @value call () -> (Int)
@@ -315,4 +330,185 @@ define Test {
 
 concrete Test {
   @type run () -> ()
+}
+
+
+testcase "cleanup cannot use unititialzed named return" {
+  error
+  require "cleanup"
+  require "message.+initialized"
+}
+
+unittest test {
+  \ Type.call()
+}
+
+concrete Type {
+  @type call () -> (String)
+}
+
+define Type {
+  call () (message) {
+    while (true) {
+      cleanup {
+        // There should be an error here because message might not be set.
+        fail(message)
+      } in {
+        if (true) {
+          // Cleanup is inline here.
+          break
+        }
+        message <- "message"
+        // Cleanup is inline here.
+      }
+    }
+    return "return"
+  }
+}
+
+
+testcase "cleanup cannot use unititialzed named return" {
+  error
+  require "cleanup"
+  require "message.+initialized"
+}
+
+unittest test {
+  \ Type.call()
+}
+
+concrete Type {
+  @type call () -> (String)
+}
+
+define Type {
+  call () (message) {
+    while (true) {
+      cleanup {
+        fail(message)
+      } in {
+        // Cleanup is inline here.
+      }
+    }
+    return "return"
+  }
+}
+
+
+testcase "cleanup cannot use unititialzed named return" {
+  error
+  require "cleanup"
+  require "message.+initialized"
+}
+
+unittest test {
+  \ Type.call()
+}
+
+concrete Type {
+  @type call () -> (String)
+}
+
+define Type {
+  call () (message) {
+    while (true) {
+      cleanup {
+        fail(message)
+      } in {
+        // Cleanup is inline here.
+      }
+    }
+    return "return"
+  }
+}
+
+
+testcase "nested cleanup cannot use unititialzed named return" {
+  error
+  require "cleanup"
+  require "message.+initialized"
+}
+
+unittest test {
+  \ Type.call()
+}
+
+concrete Type {
+  @type call () -> (String)
+}
+
+define Type {
+  call () (message) {
+    while (true) {
+      cleanup {
+        fail(message)
+      } in {
+        cleanup {
+          // Outer cleanup is inlined here.
+          break
+        } in {
+        }
+        message <- "message"
+      }
+    }
+    return "return"
+  }
+}
+
+
+testcase "procedure nesting preserves required named returns" {
+  error
+  require "cleanup"
+  require "message.+initialized"
+}
+
+unittest test {
+  \ Type.call()
+}
+
+concrete Type {
+  @type call () -> (String)
+}
+
+define Type {
+  call () (message) {
+    while (true) {
+      cleanup {
+        if (true) {
+          fail(message)
+        } else {
+        }
+      } in {
+      }
+    }
+    return "return"
+  }
+}
+
+
+testcase "no error for cleanup without named returns" {
+  compiles
+}
+
+unittest test {
+  \ Type.call()
+}
+
+concrete Type {
+  @type call () -> (String)
+}
+
+define Type {
+  call () (message) {
+    while (true) {
+      cleanup {
+      } in {
+        if (true) {
+          break
+        }
+        message <- "message"
+      }
+    }
+    return "return"
+  }
 }

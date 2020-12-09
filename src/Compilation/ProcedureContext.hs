@@ -29,6 +29,7 @@ module Compilation.ProcedureContext (
 ) where
 
 import Control.Monad (when)
+import Data.Maybe (fromJust,isJust)
 import qualified Data.Map as Map
 import qualified Data.Set as Set
 
@@ -66,8 +67,9 @@ data ProcedureContext c =
     pcOutput :: [String],
     pcDisallowInit :: Bool,
     pcLoopSetup :: LoopSetup [String],
-    pcCleanupSetup :: [CleanupSetup (ProcedureContext c) [String]],
+    pcCleanupBlocks :: [Maybe (CleanupBlock c [String])],
     pcInCleanup :: Bool,
+    pcUsedVars :: [UsedVariable c],
     pcExprMap :: ExprMap c,
     pcReservedMacros :: [(MacroName,[c])],
     pcNoTrace :: Bool
@@ -84,6 +86,7 @@ data ReturnValidation c =
     vnTypes :: Positional (PassedValue c),
     vnRemaining :: Map.Map VariableName (PassedValue c)
   }
+  deriving (Show)
 
 instance (Show c, CollectErrorsM m) =>
   CompilerContext c m [String] (ProcedureContext c) where
@@ -96,7 +99,7 @@ instance (Show c, CollectErrorsM m) =>
     case p `Map.lookup` pcParamScopes ctx of
             (Just s) -> return s
             _ -> compilerErrorM $ "Param " ++ show p ++ " does not exist"
-  ccRequiresTypes ctx ts = return $
+  ccAddRequired ctx ts = return $
     ProcedureContext {
       pcScope = pcScope ctx,
       pcType = pcType ctx,
@@ -118,8 +121,9 @@ instance (Show c, CollectErrorsM m) =>
       pcOutput = pcOutput ctx,
       pcDisallowInit = pcDisallowInit ctx,
       pcLoopSetup = pcLoopSetup ctx,
-      pcCleanupSetup = pcCleanupSetup ctx,
+      pcCleanupBlocks = pcCleanupBlocks ctx,
       pcInCleanup = pcInCleanup ctx,
+      pcUsedVars = pcUsedVars ctx,
       pcExprMap = pcExprMap ctx,
       pcReservedMacros = pcReservedMacros ctx,
       pcNoTrace = pcNoTrace ctx
@@ -231,17 +235,17 @@ instance (Show c, CollectErrorsM m) =>
         subSingle pa (DefinedMember c2 _ t2 n _) = do
           t2' <- uncheckedSubValueType (getValueForParam pa) t2
           return $ MemberValue c2 n t2'
-  ccGetVariable ctx c n =
+  ccGetVariable ctx (UsedVariable c n) =
     case n `Map.lookup` pcVariables ctx of
           (Just v) -> return v
           _ -> compilerErrorM $ "Variable " ++ show n ++ " is not defined" ++
-                               formatFullContextBrace c
-  ccAddVariable ctx c n t = do
+                                formatFullContextBrace c
+  ccAddVariable ctx (UsedVariable c n) t = do
     case n `Map.lookup` pcVariables ctx of
           Nothing -> return ()
           (Just v) -> compilerErrorM $ "Variable " ++ show n ++
-                                      formatFullContextBrace c ++
-                                      " is already defined: " ++ show v
+                                       formatFullContextBrace c ++
+                                       " is already defined: " ++ show v
     return $ ProcedureContext {
         pcScope = pcScope ctx,
         pcType = pcType ctx,
@@ -263,17 +267,25 @@ instance (Show c, CollectErrorsM m) =>
         pcOutput = pcOutput ctx,
         pcDisallowInit = pcDisallowInit ctx,
         pcLoopSetup = pcLoopSetup ctx,
-        pcCleanupSetup = pcCleanupSetup ctx,
+        pcCleanupBlocks = pcCleanupBlocks ctx,
         pcInCleanup = pcInCleanup ctx,
+        pcUsedVars = pcUsedVars ctx,
         pcExprMap = pcExprMap ctx,
         pcReservedMacros = pcReservedMacros ctx,
         pcNoTrace = pcNoTrace ctx
       }
-  ccCheckVariableInit ctx c n =
-    case pcReturns ctx of
-         ValidateNames _ _ na -> when (n `Map.member` na) $
-           compilerErrorM $ "Named return " ++ show n ++ " might not be initialized" ++ formatFullContextBrace c
-         _ -> return ()
+  ccCheckVariableInit ctx vs
+    -- Returns are checked during cleanup inlining.
+    | pcInCleanup ctx = return ()
+    | otherwise =
+        case pcReturns ctx of
+             ValidateNames _ _ na -> mapErrorsM_ (checkSingle na) vs
+             _ -> return ()
+        where
+          checkSingle na (UsedVariable c n) =
+             when (n `Map.member` na) $
+               compilerErrorM $ "Named return " ++ show n ++
+                                " might not be initialized" ++ formatFullContextBrace c
   ccWrite ctx ss = return $
     ProcedureContext {
       pcScope = pcScope ctx,
@@ -296,8 +308,9 @@ instance (Show c, CollectErrorsM m) =>
       pcOutput = pcOutput ctx ++ ss,
       pcDisallowInit = pcDisallowInit ctx,
       pcLoopSetup = pcLoopSetup ctx,
-      pcCleanupSetup = pcCleanupSetup ctx,
+      pcCleanupBlocks = pcCleanupBlocks ctx,
       pcInCleanup = pcInCleanup ctx,
+      pcUsedVars = pcUsedVars ctx,
       pcExprMap = pcExprMap ctx,
       pcReservedMacros = pcReservedMacros ctx,
       pcNoTrace = pcNoTrace ctx
@@ -324,8 +337,9 @@ instance (Show c, CollectErrorsM m) =>
         pcOutput = [],
         pcDisallowInit = pcDisallowInit ctx,
         pcLoopSetup = pcLoopSetup ctx,
-        pcCleanupSetup = pcCleanupSetup ctx,
+        pcCleanupBlocks = pcCleanupBlocks ctx,
         pcInCleanup = pcInCleanup ctx,
+        pcUsedVars = pcUsedVars ctx,
         pcExprMap = pcExprMap ctx,
         pcReservedMacros = pcReservedMacros ctx,
         pcNoTrace = pcNoTrace ctx
@@ -352,13 +366,44 @@ instance (Show c, CollectErrorsM m) =>
         pcOutput = pcOutput ctx,
         pcDisallowInit = pcDisallowInit ctx,
         pcLoopSetup = pcLoopSetup ctx,
-        pcCleanupSetup = pcCleanupSetup ctx,
+        pcCleanupBlocks = pcCleanupBlocks ctx,
         pcInCleanup = pcInCleanup ctx,
+        pcUsedVars = pcUsedVars ctx,
         pcExprMap = pcExprMap ctx,
         pcReservedMacros = pcReservedMacros ctx,
         pcNoTrace = pcNoTrace ctx
       }
     update _ = return ctx
+  ccAddUsed ctx v
+    | pcInCleanup ctx = return $ ProcedureContext {
+          pcScope = pcScope ctx,
+          pcType = pcType ctx,
+          pcExtParams = pcExtParams ctx,
+          pcIntParams = pcIntParams ctx,
+          pcMembers = pcMembers ctx,
+          pcCategories = pcCategories ctx,
+          pcAllFilters = pcAllFilters ctx,
+          pcExtFilters = pcExtFilters ctx,
+          pcIntFilters = pcIntFilters ctx,
+          pcParamScopes = pcParamScopes ctx,
+          pcFunctions = pcFunctions ctx,
+          pcVariables = pcVariables ctx,
+          pcReturns = pcReturns ctx,
+          pcJumpType = pcJumpType ctx,
+          pcIsNamed = pcIsNamed ctx,
+          pcPrimNamed = pcPrimNamed ctx,
+          pcRequiredTypes = pcRequiredTypes ctx,
+          pcOutput = pcOutput ctx,
+          pcDisallowInit = pcDisallowInit ctx,
+          pcLoopSetup = pcLoopSetup ctx,
+          pcCleanupBlocks = pcCleanupBlocks ctx,
+          pcInCleanup = pcInCleanup ctx,
+          pcUsedVars = v:(pcUsedVars ctx),
+          pcExprMap = pcExprMap ctx,
+          pcReservedMacros = pcReservedMacros ctx,
+          pcNoTrace = pcNoTrace ctx
+        }
+    | otherwise = return ctx
   ccInheritReturns ctx cs = return $ ProcedureContext {
       pcScope = pcScope ctx,
       pcType = pcType ctx,
@@ -380,21 +425,22 @@ instance (Show c, CollectErrorsM m) =>
       pcOutput = pcOutput ctx,
       pcDisallowInit = pcDisallowInit ctx,
       pcLoopSetup = pcLoopSetup ctx,
-      pcCleanupSetup = pcCleanupSetup ctx,
+      pcCleanupBlocks = pcCleanupBlocks ctx,
       pcInCleanup = pcInCleanup ctx,
+      pcUsedVars = used,
       pcExprMap = pcExprMap ctx,
       pcReservedMacros = pcReservedMacros ctx,
       pcNoTrace = pcNoTrace ctx
     }
     where
+      used = pcUsedVars ctx ++ (concat $ map pcUsedVars cs)
       (returns,jump) = combineSeries (pcReturns ctx,pcJumpType ctx) inherited
       combineSeries (r@(ValidatePositions _),j1) (_,j2) = (r,max j1 j2)
       combineSeries (_,j1) (r@(ValidatePositions _),j2) = (r,max j1 j2)
       combineSeries (ValidateNames ns ts ra1,j1) (ValidateNames _ _ ra2,j2) = (ValidateNames ns ts $ Map.intersection ra1 ra2,max j1 j2)
       inherited = foldr combineParallel (ValidateNames (Positional []) (Positional []) Map.empty,JumpMax) $ zip (map pcReturns cs) (map pcJumpType cs)
-      combineParallel (_,j1) (r,j2)
-        -- Ignore a branch if it jumps to a higher scope.
-        | (if pcInCleanup ctx then j1 > JumpReturn else j1 > NextStatement) = (r,min j1 j2)
+      -- Ignore a branch if it jumps to a higher scope.
+      combineParallel (_,j1) (r,j2) | j1 > NextStatement = (r,min j1 j2)
       combineParallel (ValidateNames ns ts ra1,j1) (ValidateNames _ _ ra2,j2) = (ValidateNames ns ts $ Map.union ra1 ra2,min j1 j2)
       combineParallel (r@(ValidatePositions _),j1) (_,j2) = (r,min j1 j2)
       combineParallel (_,j1) (r@(ValidatePositions _),j2) = (r,min j1 j2)
@@ -422,8 +468,9 @@ instance (Show c, CollectErrorsM m) =>
         pcOutput = pcOutput ctx,
         pcDisallowInit = pcDisallowInit ctx,
         pcLoopSetup = pcLoopSetup ctx,
-        pcCleanupSetup = pcCleanupSetup ctx,
+        pcCleanupBlocks = pcCleanupBlocks ctx,
         pcInCleanup = pcInCleanup ctx,
+        pcUsedVars = pcUsedVars ctx,
         pcExprMap = pcExprMap ctx,
         pcReservedMacros = pcReservedMacros ctx,
         pcNoTrace = pcNoTrace ctx
@@ -451,9 +498,9 @@ instance (Show c, CollectErrorsM m) =>
              Just _  -> check (ValidatePositions ts) >> return ()
              Nothing -> mapErrorsM_ alwaysError $ Map.toList ra
         return (ValidateNames ns ts Map.empty)
-      alwaysError (n,t) = compilerErrorM $ "Named return " ++ show n ++ " (" ++ show t ++
-                                          ") might not have been set before return at " ++
-                                          formatFullContext c
+      alwaysError (n,_) = compilerErrorM $ "Named return " ++ show n ++
+                                           " might not be initialized" ++
+                                           formatFullContextBrace c
   ccPrimNamedReturns = return . pcPrimNamed
   ccIsUnreachable ctx
     | pcInCleanup ctx = return $ pcJumpType ctx > JumpReturn
@@ -474,15 +521,16 @@ instance (Show c, CollectErrorsM m) =>
         pcFunctions = pcFunctions ctx,
         pcVariables = pcVariables ctx,
         pcReturns = pcReturns ctx,
-        pcJumpType = j,
+        pcJumpType = max j (pcJumpType ctx),
         pcIsNamed = pcIsNamed ctx,
         pcPrimNamed = pcPrimNamed ctx,
         pcRequiredTypes = pcRequiredTypes ctx,
         pcOutput = pcOutput ctx,
         pcDisallowInit = pcDisallowInit ctx,
         pcLoopSetup = pcLoopSetup ctx,
-        pcCleanupSetup = pcCleanupSetup ctx,
+        pcCleanupBlocks = pcCleanupBlocks ctx,
         pcInCleanup = pcInCleanup ctx,
+        pcUsedVars = pcUsedVars ctx,
         pcExprMap = pcExprMap ctx,
         pcReservedMacros = pcReservedMacros ctx,
         pcNoTrace = pcNoTrace ctx
@@ -509,8 +557,9 @@ instance (Show c, CollectErrorsM m) =>
         pcOutput = pcOutput ctx,
         pcDisallowInit = pcDisallowInit ctx,
         pcLoopSetup = l,
-        pcCleanupSetup = LoopBoundary:(pcCleanupSetup ctx),
+        pcCleanupBlocks = Nothing:(pcCleanupBlocks ctx),
         pcInCleanup = pcInCleanup ctx,
+        pcUsedVars = pcUsedVars ctx,
         pcExprMap = pcExprMap ctx,
         pcReservedMacros = pcReservedMacros ctx,
         pcNoTrace = pcNoTrace ctx
@@ -539,8 +588,9 @@ instance (Show c, CollectErrorsM m) =>
         pcOutput = pcOutput ctx,
         pcDisallowInit = pcDisallowInit ctx,
         pcLoopSetup = pcLoopSetup ctx,
-        pcCleanupSetup = pcCleanupSetup ctx,
+        pcCleanupBlocks = pcCleanupBlocks ctx,
         pcInCleanup = True,
+        pcUsedVars = pcUsedVars ctx,
         pcExprMap = pcExprMap ctx,
         pcReservedMacros = pcReservedMacros ctx,
         pcNoTrace = pcNoTrace ctx
@@ -552,7 +602,7 @@ instance (Show c, CollectErrorsM m) =>
         case n `Map.lookup` vs of
              Just (VariableValue c s@LocalScope t _) -> Map.insert n (VariableValue c s t False) vs
              _ -> vs
-  ccPushCleanup ctx cs =
+  ccPushCleanup ctx ctx2 =
     return $ ProcedureContext {
         pcScope = pcScope ctx,
         pcType = pcType ctx,
@@ -574,18 +624,27 @@ instance (Show c, CollectErrorsM m) =>
         pcOutput = pcOutput ctx,
         pcDisallowInit = pcDisallowInit ctx,
         pcLoopSetup = pcLoopSetup ctx,
-        pcCleanupSetup = cs:(pcCleanupSetup ctx),
+        pcCleanupBlocks = (Just cleanup):(pcCleanupBlocks ctx),
         pcInCleanup = pcInCleanup ctx,
+        pcUsedVars = pcUsedVars ctx,
         pcExprMap = pcExprMap ctx,
         pcReservedMacros = pcReservedMacros ctx,
         pcNoTrace = pcNoTrace ctx
-      }
+      } where
+        cleanup = CleanupBlock (pcOutput ctx2) (pcUsedVars ctx2) (pcJumpType ctx2) (pcRequiredTypes ctx2)
   ccGetCleanup ctx j = return combined where
     combined
-      | j == JumpReturn                   = combine $ filter    (not . isLoopBoundary) $ pcCleanupSetup ctx
-      | j == JumpBreak || j == JumpReturn = combine $ takeWhile (not . isLoopBoundary) $ pcCleanupSetup ctx
-      | otherwise = CleanupSetup [] []
-    combine cs = CleanupSetup (concat $ map csReturnContext cs) (concat $ map csCleanup cs)
+      | j == NextStatement =
+          case pcCleanupBlocks ctx of
+               ((Just b):_) -> b
+               _            -> emptyCleanupBlock
+      | j == JumpReturn                     = combine $ map fromJust $ filter    isJust $ pcCleanupBlocks ctx
+      | j == JumpBreak || j == JumpContinue = combine $ map fromJust $ takeWhile isJust $ pcCleanupBlocks ctx
+      | otherwise = emptyCleanupBlock
+    combine cs = CleanupBlock (concat $ map csCleanup cs)
+                              (concat $ map csUsesVars cs)
+                              (foldr max NextStatement (map csJumpType cs))
+                              (Set.unions $ map csRequires cs)
   ccExprLookup ctx c n =
     case n `Map.lookup` pcExprMap ctx of
          Nothing -> compilerErrorM $ "Env expression " ++ show n ++ " is not defined" ++ formatFullContextBrace c
@@ -621,8 +680,9 @@ instance (Show c, CollectErrorsM m) =>
         pcOutput = pcOutput ctx,
         pcDisallowInit = pcDisallowInit ctx,
         pcLoopSetup = pcLoopSetup ctx,
-        pcCleanupSetup = pcCleanupSetup ctx,
+        pcCleanupBlocks = pcCleanupBlocks ctx,
         pcInCleanup = pcInCleanup ctx,
+        pcUsedVars = pcUsedVars ctx,
         pcExprMap = pcExprMap ctx,
         pcReservedMacros = ((n,c):pcReservedMacros ctx),
         pcNoTrace = pcNoTrace ctx
@@ -649,8 +709,9 @@ instance (Show c, CollectErrorsM m) =>
         pcOutput = pcOutput ctx,
         pcDisallowInit = pcDisallowInit ctx,
         pcLoopSetup = pcLoopSetup ctx,
-        pcCleanupSetup = pcCleanupSetup ctx,
+        pcCleanupBlocks = pcCleanupBlocks ctx,
         pcInCleanup = pcInCleanup ctx,
+        pcUsedVars = pcUsedVars ctx,
         pcExprMap = pcExprMap ctx,
         pcReservedMacros = filter ((/= n) . fst) $ pcReservedMacros ctx,
         pcNoTrace = pcNoTrace ctx
@@ -677,8 +738,9 @@ instance (Show c, CollectErrorsM m) =>
         pcOutput = pcOutput ctx,
         pcDisallowInit = pcDisallowInit ctx,
         pcLoopSetup = pcLoopSetup ctx,
-        pcCleanupSetup = pcCleanupSetup ctx,
+        pcCleanupBlocks = pcCleanupBlocks ctx,
         pcInCleanup = pcInCleanup ctx,
+        pcUsedVars = pcUsedVars ctx,
         pcExprMap = pcExprMap ctx,
         pcReservedMacros = pcReservedMacros ctx,
         pcNoTrace = t

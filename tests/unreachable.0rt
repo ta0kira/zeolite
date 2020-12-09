@@ -21,28 +21,20 @@ testcase "warning statement after fail" {
   require compiler "unreachable"
 }
 
-concrete Test {}
-
-define Test {
-  @category failedReturn () -> (Int)
-  failedReturn () {
-    fail("Failed")
-    return 1
-  }
+unittest test {
+  fail("Failed")
+  \ empty
 }
+
 
 testcase "unreachable not compiled" {
   compiles
+  require compiler "unreachable"
 }
 
-concrete Test {}
-
-define Test {
-  @category failedReturn () -> (Int)
-  failedReturn () {
-    fail("Failed")
-    \ foo()
-  }
+unittest test {
+  fail("Failed")
+  \ foo()
 }
 
 
@@ -99,76 +91,56 @@ define Test {
 }
 
 
-testcase "warning statement after cleanup fail" {
-  crash
-  require compiler "unreachable"
-  require "message"
+testcase "unreachable in cleanup does not affect in block" {
+  error
+  require compiler "foo"
 }
 
 unittest test {
-  \ Test:failedReturn()
+  scoped {
+  } cleanup {
+    fail("message")
+  } in \ foo()
 }
 
-concrete Test {
-  @category failedReturn () -> (Int)
+
+testcase "warning statement after cleanup fail" {
+  compiles
+  require compiler "unreachable"
 }
 
-define Test {
-  failedReturn () {
-    scoped {
-    } cleanup {
-      fail("message")
-    } in \ empty
-    return 2
-  }
+unittest test {
+  scoped {
+  } cleanup {
+    fail("message")
+  } in \ empty
+  \ foo()
 }
 
 
 testcase "warning statement in cleanup after scoped fail" {
-  crash
+  compiles
   require compiler "unreachable"
-  require "message"
 }
 
 unittest test {
-  \ Test:failedReturn()
-}
-
-concrete Test {
-  @category failedReturn () -> ()
-}
-
-define Test {
-  failedReturn () {
-    scoped {
-      fail("message")
-    } cleanup {
-      \ empty
-    } in {}
-  }
+  scoped {
+    fail("message")
+  } cleanup {
+    \ empty
+  } in {}
 }
 
 
-testcase "warning statement in cleanup after in fail" {
-  crash
-  require compiler "unreachable"
-  require "message"
+testcase "no warning statement in cleanup after in fail" {
+  compiles
+  exclude compiler "unreachable"
 }
 
 unittest test {
-  \ Test:failedReturn()
-}
-
-concrete Test {
-  @category failedReturn () -> ()
-}
-
-define Test {
-  failedReturn () {
-    cleanup {
-      \ empty
-    } in fail("message")
-  }
+  cleanup {
+    \ empty
+  } in fail("message")
 }
 
 

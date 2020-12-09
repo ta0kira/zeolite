@@ -110,12 +110,11 @@ unittest test {
 }
 
 
-testcase "Issue #122 is still open" {
+testcase "Issue #122 is fixed: break" {
   // https://github.com/ta0kira/zeolite/issues/122
-  // This should be compilation error at the break statement once fixed.
-  crash
-  require "null value"
-  exclude "message"
+  error
+  require "cleanup"
+  require "message.+initialized"
 }
 
 unittest test {
@@ -130,12 +129,47 @@ define Type {
   call () (message) {
     while (true) {
       cleanup {
-        // There should be an error here because message might not be set.
         fail(message)
       } in {
         if (true) {
-          // Cleanup is inline here.
+        // There should be an error here (referring back to fail(message) above)
+        // because message might not be set.
           break
+        }
+        message <- "message"
+        // Cleanup is inline here.
+      }
+    }
+    return "return"
+  }
+}
+
+
+testcase "Issue #122 is fixed: continue" {
+  // https://github.com/ta0kira/zeolite/issues/122
+  error
+  require "cleanup"
+  require "message.+initialized"
+}
+
+unittest test {
+  \ Type.call()
+}
+
+concrete Type {
+  @type call () -> (String)
+}
+
+define Type {
+  call () (message) {
+    while (true) {
+      cleanup {
+        fail(message)
+      } in {
+        if (true) {
+        // There should be an error here (referring back to fail(message) above)
+        // because message might not be set.
+          continue
         }
         message <- "message"
         // Cleanup is inline here.

@@ -231,16 +231,18 @@ instance ParseFromSource (ScopedBlock SourceContext) where
       p <- between (sepAfter $ string_ "{") (sepAfter $ string_ "}") sourceParser
       cl <- fmap Just parseCleanup <|> return Nothing
       kwIn
+      c2 <- getSourceContext
       -- TODO: If there's a parse error in an otherwise-valid {} then the actual
       -- error might look like a multi-assignment issue.
       s <- unconditional <|> sourceParser
-      return $ ScopedBlock [c] p cl s
+      return $ ScopedBlock [c] p cl [c2] s
     justCleanup = do
       c <- getSourceContext
       cl <- parseCleanup
       kwIn
+      c2 <- getSourceContext
       s <- sourceParser <|> unconditional
-      return $ ScopedBlock [c] (Procedure [] []) (Just cl) s
+      return $ ScopedBlock [c] (Procedure [] []) (Just cl) [c2] s
     parseCleanup = do
       kwCleanup
       between (sepAfter $ string_ "{") (sepAfter $ string_ "}") sourceParser

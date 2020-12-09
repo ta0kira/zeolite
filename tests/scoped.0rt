@@ -203,7 +203,6 @@ testcase "positional return sets named returns for cleanup" {
 
 unittest test {
   String value, _ <- Test.get()
-  fail(value)
 }
 
 concrete Test {
@@ -217,7 +216,33 @@ define Test {
     value <- "failed"
     cleanup {
       fail(value)
-    } in return "message", 1
+    } in {
+      return "message", 1
+    }
+  }
+}
+
+
+testcase "top-level assignment sets named return for cleanup" {
+  crash
+  require "message"
+  exclude "failed"
+}
+
+unittest test {
+  String value <- Test.get()
+}
+
+concrete Test {
+  @type get () -> (String)
+}
+
+define Test {
+  get () (value) {
+    value <- "failed"
+    cleanup {
+      fail(value)
+    } in value <- "message"
   }
 }
 
@@ -361,6 +386,20 @@ define Value {
 }
 
 
+testcase "cleanup can refer to top-level in variables" {
+  success
+}
+
+unittest test {
+  scoped {
+  } cleanup {
+    value <- 1
+  } in Int value <- 2
+
+  \ Testing.checkEquals<?>(value,1)
+}
+
+
 testcase "cleanup cannot refer to later variables" {
   error
   require "value.+not defined"
@@ -370,7 +409,24 @@ unittest test {
   scoped {
   } cleanup {
     value <- 1
-  } in Int value <- 2
+  } in {}
+
+  Int value <- 2
+}
+
+
+testcase "cleanup cannot refer to nested in variables" {
+  error
+  require "value.+not defined"
+}
+
+unittest test {
+  scoped {
+  } cleanup {
+    value <- 1
+  } in {
+    Int value <- 2
+  }
 }
 
 
@@ -564,6 +620,44 @@ unittest test {
 }
 
 
+testcase "partial cleanup with while and continue" {
+  success
+}
+
+unittest test {
+  Int called <- 0
+  Int x <- 0
+  Int y <- 0
+  Int z <- 0
+  cleanup {
+    x <- 1
+  } in {
+    while ((called <- called+1) < 3) {
+      if (called > 1) {
+        \ Testing.checkEquals<?>(y,2)
+        \ Testing.checkEquals<?>(z,3)
+      }
+      cleanup {
+        y <- 2
+      } in if (true) {
+        cleanup {
+          z <- 3
+        } in if (true) {
+          continue
+        }
+      }
+    }
+    \ Testing.checkEquals<?>(called,3)
+    \ Testing.checkEquals<?>(x,0)
+    \ Testing.checkEquals<?>(y,2)
+    \ Testing.checkEquals<?>(z,3)
+  }
+  \ Testing.checkEquals<?>(x,1)
+  \ Testing.checkEquals<?>(y,2)
+  \ Testing.checkEquals<?>(z,3)
+}
+
+
 testcase "full cleanup with while and return" {
   success
 }
@@ -637,6 +731,22 @@ define Test {
     cleanup {
       value <- "error"
     } in return "message"
+  }
+}
+
+
+testcase "named return check in cleanup skipped if unreachable" {
+  compiles
+}
+
+concrete Test {}
+
+define Test {
+  @type get () -> (String)
+  get () (value) {
+    cleanup {
+      fail(value)
+    } in fail("message")
   }
 }
 

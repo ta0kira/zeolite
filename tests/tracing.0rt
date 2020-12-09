@@ -42,6 +42,34 @@ define Test {
   }
 }
 
+testcase "NoTrace works in cleanup" {
+  crash
+  require "message"
+  require "Test\.error"
+  exclude "Test\.noTrace"
+}
+
+unittest test {
+  \ Test.noTrace()
+}
+
+concrete Test {
+  @type noTrace () -> ()
+}
+
+define Test {
+  noTrace () { $NoTrace$
+    \ error()
+  }
+
+  @type error () -> ()
+  error () {
+    cleanup {
+      fail("message")
+    } in {}
+  }
+}
+
 
 testcase "TraceCreation captures trace" {
   crash
