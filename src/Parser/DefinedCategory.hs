@@ -21,7 +21,6 @@ limitations under the License.
 module Parser.DefinedCategory (
 ) where
 
-import Control.Monad (when)
 import Prelude hiding (pi)
 
 import Base.CompilerError
@@ -98,10 +97,9 @@ parseMemberProcedureFunction n = do
   return (ms,ps2,fs2) where
     singleFunction = labeled "function" $ do
       f <- parseScopedFunction parseScope (return n)
+      lookAhead (sepAfter $ string_ $ show (sfName f)) <|>
+        (compilerErrorM $ "expected definition of function " ++ show (sfName f))
       p <- labeled ("definition of function " ++ show (sfName f)) $ sourceParser
-      when (sfName f /= epName p) $
-        compilerErrorM $ "expecting definition of function " ++ show (sfName f) ++
-                         " but got definition of " ++ show (epName p)
       return (f,p)
     catchUnscopedType = labeled "" $ do
       _ <- try sourceParser :: TextParser ValueType

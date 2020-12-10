@@ -1,6 +1,6 @@
 # Revision history for zeolite-lang
 
-## 0.11.1.0  -- ????-??-??
+## 0.12.0.0  -- ????-??-??
 
 ### Language
 
@@ -31,6 +31,24 @@
 
     This *did not* affect non-primitive types such as `String` and user-defined
     `concrete` and `interface` categories.
+
+* **[breaking]** Updates associativity of infix operators:
+
+  * **[breaking]** Makes infix `Bool` operators `&&` and `||`
+    *right-associative*. For example, `x && y && z` used to be parsed as
+    `(x && y) && z`, whereas now it is parsed as `x && (y && z)`. This better
+    reflects the intuition of side-effects happening in order, with respect to
+    short-circuiting. (No other operators currently short-circuit.)
+
+  * **[breaking]** Makes comparison operators (e.g., `<=`) *non-associative*.
+    This means that expressions such as `x < y == true` will no longer compile.
+    This is because an equivalent-looking expression `true == x < y` might have
+    a different interpretation. (Note that order operators such as `<` *are not*
+    defined for `Bool`, so something like `x < y < z` would have already failed
+    previously.)
+
+  All other infix operators (including infix function calls such as
+  ``x `Math.pow` y ``) remain *left-associative*.
 
 ### Libraries
 

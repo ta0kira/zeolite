@@ -156,3 +156,36 @@ define Test {
     return x + y
   }
 }
+
+
+testcase "infix function associativity" {
+  success
+}
+
+unittest test {
+  \ Test.check()
+}
+
+concrete Test {
+  @type check () -> ()
+}
+
+define Test {
+  check () {
+    \ Testing.checkEquals<?>(1 `one` 2 `two` 4,5)
+  }
+
+  @type one (Int,Int) -> (Int)
+  one (x,y) {
+    \ Testing.checkEquals<?>(x,1)
+    \ Testing.checkEquals<?>(y,2)
+    return 3
+  }
+
+  @type two (Int,Int) -> (Int)
+  two (x,y) {
+    \ Testing.checkEquals<?>(x,3)
+    \ Testing.checkEquals<?>(y,4)
+    return 5
+  }
+}

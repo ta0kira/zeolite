@@ -504,11 +504,11 @@ compileExpression = compile where
     compile (Expression c (ParensExpression c2 e0) [ValueCall c (FunctionCall c fn ps (Positional [e]))])
   compile (UnaryExpression c (FunctionOperator _ (FunctionSpec c2 UnqualifiedFunction fn ps)) e) =
     compile (Expression c (UnqualifiedCall c2 (FunctionCall c fn ps (Positional [e]))) [])
-  compile (UnaryExpression c (NamedOperator "-") (Literal (IntegerLiteral _ _ l))) =
+  compile (UnaryExpression _ (NamedOperator c "-") (Literal (IntegerLiteral _ _ l))) =
     compile (Literal (IntegerLiteral c False (-l)))
-  compile (UnaryExpression c (NamedOperator "-") (Literal (DecimalLiteral _ l e))) =
+  compile (UnaryExpression _ (NamedOperator c "-") (Literal (DecimalLiteral _ l e))) =
     compile (Literal (DecimalLiteral c (-l) e))
-  compile (UnaryExpression c (NamedOperator o) e) = do
+  compile (UnaryExpression _ (NamedOperator c o) e) = do
     (Positional ts,e') <- compileExpression e
     t' <- requireSingle c ts
     doUnary t' e'
@@ -570,7 +570,7 @@ compileExpression = compile where
     compile (Expression c (ParensExpression c2 e0) [ValueCall c (FunctionCall c fn ps (Positional [e1,e2]))])
   compile (InfixExpression c e1 (FunctionOperator _ (FunctionSpec c2 UnqualifiedFunction fn ps)) e2) =
     compile (Expression c (UnqualifiedCall c2 (FunctionCall c fn ps (Positional [e1,e2]))) [])
-  compile (InfixExpression c e1 (NamedOperator o) e2) = do
+  compile (InfixExpression _ e1 (NamedOperator c o) e2) = do
     e1' <- compileExpression e1
     e2' <- if o `Set.member` logical
               then isolateExpression e2 -- Ignore named-return assignments.

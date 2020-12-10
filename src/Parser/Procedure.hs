@@ -22,6 +22,7 @@ limitations under the License.
 module Parser.Procedure (
 ) where
 
+import Control.Monad (when)
 import qualified Data.Set as Set
 
 import Base.CompilerError
@@ -251,10 +252,13 @@ instance ParseFromSource (ScopedBlock SourceContext) where
       p <- between (sepAfter $ string_ "{") (sepAfter $ string_ "}") sourceParser
       return $ NoValueExpression [c] (Unconditional p)
 
-unaryOperator :: TextParser (Operator c)
-unaryOperator = op >>= return . NamedOperator where
-  op = labeled "unary operator" $ foldr (<|>) empty $ map (try . operator) ops
-  ops = logicalUnary ++ arithUnary ++ bitwiseUnary
+unaryOperator :: TextParser (Operator SourceContext)
+unaryOperator = do
+  c <- getSourceContext
+  o <- op
+  return $ NamedOperator [c] o where
+    op = labeled "unary operator" $ foldr (<|>) empty $ map (try . operator) ops
+    ops = logicalUnary ++ arithUnary ++ bitwiseUnary
 
 logicalUnary :: [String]
 logicalUnary = ["!"]
@@ -265,10 +269,13 @@ arithUnary = ["-"]
 bitwiseUnary :: [String]
 bitwiseUnary = ["~"]
 
-infixOperator :: TextParser (Operator c)
-infixOperator = op >>= return . NamedOperator where
-  op = labeled "binary operator" $ foldr (<|>) empty $ map (try . operator) ops
-  ops = compareInfix ++ logicalInfix ++ addInfix ++ subInfix ++ multInfix ++ bitwiseInfix ++ bitshiftInfix
+infixOperator :: TextParser (Operator SourceContext)
+infixOperator =  do
+  c <- getSourceContext
+  o <- op
+  return $ NamedOperator [c] o where
+    op = labeled "binary operator" $ foldr (<|>) empty $ map (try . operator) ops
+    ops = compareInfix ++ logicalInfix ++ addInfix ++ subInfix ++ multInfix ++ divInfix ++ bitwiseInfix ++ bitshiftInfix
 
 compareInfix :: [String]
 compareInfix = ["==","!=","<","<=",">",">="]
@@ -283,7 +290,10 @@ subInfix :: [String]
 subInfix = ["-"]
 
 multInfix :: [String]
-multInfix = ["*","/","%"]
+multInfix = ["*"]
+
+divInfix :: [String]
+divInfix = ["/","%"]
 
 bitwiseInfix :: [String]
 bitwiseInfix = ["&","|","^"]
@@ -291,15 +301,14 @@ bitwiseInfix = ["&","|","^"]
 bitshiftInfix :: [String]
 bitshiftInfix = [">>","<<"]
 
-infixBefore :: Operator c -> Operator c -> Bool
-infixBefore o1 o2 = (infixOrder o1 :: Int) <= (infixOrder o2 :: Int) where
-  infixOrder (NamedOperator o)
-    -- TODO: Don't hard-code this.
-    | o `Set.member` Set.fromList (multInfix ++ bitshiftInfix) = 1
-    | o `Set.member` Set.fromList (addInfix ++ subInfix ++ bitwiseInfix) = 2
-    | o `Set.member` Set.fromList compareInfix = 4
-    | o `Set.member` Set.fromList logicalInfix = 5
-  infixOrder _ = 3
+leftAssocInfix :: [String]
+leftAssocInfix = addInfix ++ subInfix ++ multInfix ++ divInfix ++ bitwiseInfix ++ bitshiftInfix
+
+rightAssocInfix :: [String]
+rightAssocInfix = logicalInfix
+
+nonAssocInfix :: [String]
+nonAssocInfix = compareInfix
 
 functionOperator :: TextParser (Operator SourceContext)
 functionOperator = do
@@ -308,6 +317,48 @@ functionOperator = do
   q <- sourceParser
   infixFuncEnd
   return $ FunctionOperator [c] q
+
+inOperatorSet :: Operator c -> [String] -> Bool
+inOperatorSet (NamedOperator _ o) ss = o `Set.member` Set.fromList ss
+inOperatorSet _                   _  = False
+
+bothInOperatorSet :: Operator c -> Operator c -> [String] -> Bool
+bothInOperatorSet o1 o2 ss = o1 `inOperatorSet` ss && o2 `inOperatorSet` ss
+
+infixPrecedence :: Operator c -> Int
+infixPrecedence o
+  -- TODO: Don't hard-code this.
+  | o `inOperatorSet` (multInfix ++ divInfix ++ bitshiftInfix) = 1
+  | o `inOperatorSet` (addInfix ++ subInfix ++ bitwiseInfix) = 2
+  | o `inOperatorSet` compareInfix = 4
+  | o `inOperatorSet` logicalInfix = 5
+infixPrecedence _ = 3
+
+infixBefore :: (Show c, ErrorContextM m) => Operator c -> Operator c -> m Bool
+infixBefore o1 o2 = do
+  let prec1 = infixPrecedence o1
+  let prec2 = infixPrecedence o2
+  if prec1 /= prec2
+     then return $ prec1 < prec2
+     -- NOTE: Ambiguity is checked separately so that the error occurs where the
+     -- second operator is parsed, rather than at the end of the expression.
+     else if bothInOperatorSet o1 o2 rightAssocInfix
+             then return False  -- Logical operators are right-associative.
+             else return True   -- Default is left-associative.
+  where
+
+checkAmbiguous :: (Show c, ErrorContextM m) => Operator c -> Operator c -> m ()
+checkAmbiguous o1 o2 = checked where
+  formatOperator o = show (getOperatorName o) ++
+                     " (" ++ formatFullContext (getOperatorContext o) ++ ")"
+  checked
+    | infixPrecedence o1 /= infixPrecedence o2 = return ()
+    | bothInOperatorSet o1 o2 leftAssocInfix  = return ()
+    | bothInOperatorSet o1 o2 rightAssocInfix = return ()
+    | isFunctionOperator o1 && isFunctionOperator o2 = return ()
+    | otherwise =
+        compilerErrorM $ "the order of operators " ++ formatOperator o1 ++
+                         " and " ++ formatOperator o2 ++ " is ambiguous"
 
 instance ParseFromSource (Expression SourceContext) where
   sourceParser = do
@@ -318,18 +369,21 @@ instance ParseFromSource (Expression SourceContext) where
       asInfix es os = do
         c <- getSourceContext
         o <- infixOperator <|> functionOperator
+        when (not $ null os) $ checkAmbiguous (snd $ last os) o
         e2 <- notInfix
         let es' = es ++ [e2]
         let os' = os ++ [([c],o)]
-        asInfix es' os' <|> return (infixToTree [] es' os')
-      infixToTree [(e1,c1,o1)] [e2] [] = InfixExpression c1 e1 o1 e2
+        asInfix es' os' <|> (infixToTree [] es' os')
+      infixToTree [(e1,c1,o1)] [e2] [] = return $ InfixExpression c1 e1 o1 e2
       infixToTree [] (e1:es) ((c1,o1):os) = infixToTree [(e1,c1,o1)] es os
       infixToTree ((e1,c1,o1):ss) [e2] [] = let e2' = InfixExpression c1 e1 o1 e2 in
                                                 infixToTree ss [e2'] []
-      infixToTree ((e1,c1,o1):ss) (e2:es) ((c2,o2):os)
-        | o1 `infixBefore` o2 = let e1' = InfixExpression c1 e1 o1 e2 in
-                                    infixToTree ss (e1':es) ((c2,o2):os)
-        | otherwise = infixToTree ((e2,c2,o2):(e1,c1,o1):ss) es os
+      infixToTree ((e1,c1,o1):ss) (e2:es) ((c2,o2):os) = do
+        before <- o1 `infixBefore` o2
+        if before
+           then let e1' = InfixExpression c1 e1 o1 e2 in
+                          infixToTree ss (e1':es) ((c2,o2):os)
+           else infixToTree ((e2,c2,o2):(e1,c1,o1):ss) es os
       infixToTree _ _ _ = undefined
       literal = do
         l <- sourceParser

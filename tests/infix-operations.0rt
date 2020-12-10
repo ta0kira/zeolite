@@ -107,7 +107,7 @@ testcase "Bool operations" {
 
 unittest precedence {
   scoped {
-    Bool x <- false && false || true
+    Bool x <- 1 < 2 && 3 <= 4
   } in if (!x) {
     fail(x)
   }
@@ -131,6 +131,20 @@ unittest compareWithLogic {
   } in if (!x) {
     fail(x)
   }
+}
+
+unittest rightAssociative {
+  Int x <- 2
+  Bool y <- true && (x <- 3) == 2 || x == 3
+  \ Testing.checkEquals<?>(x,3)
+  \ Testing.checkEquals<?>(y,true)
+}
+
+unittest shortCircuit {
+  Int x <- 2
+  Bool y <- true || (x <- 3) == 2 || x == 3
+  \ Testing.checkEquals<?>(x,2)
+  \ Testing.checkEquals<?>(y,true)
 }
 
 
@@ -316,7 +330,7 @@ testcase "Bool comparison" {
 
 define Test {
   run () {
-    \ 1 < 2 < 3
+    \ (1 < 2) < 3
   }
 }
 

@@ -44,8 +44,11 @@ module Types.Procedure (
   WhileLoop(..),
   assignableName,
   getExpressionContext,
+  getOperatorContext,
+  getOperatorName,
   getStatementContext,
   isDiscardedInput,
+  isFunctionOperator,
   isLiteralCategory,
   isRawCodeLine,
   isUnnamedReturns,
@@ -238,9 +241,21 @@ data FunctionSpec c =
   deriving (Show)
 
 data Operator c =
-  NamedOperator String |
+  NamedOperator [c] String |
   FunctionOperator [c] (FunctionSpec c)
   deriving (Show)
+
+getOperatorContext :: Operator c -> [c]
+getOperatorContext (NamedOperator c _)    = c
+getOperatorContext (FunctionOperator c _) = c
+
+isFunctionOperator :: Operator c -> Bool
+isFunctionOperator (FunctionOperator _ _) = True
+isFunctionOperator _                      = False
+
+getOperatorName :: Operator c -> FunctionName
+getOperatorName (NamedOperator _ n)                         = FunctionName n
+getOperatorName (FunctionOperator _ (FunctionSpec _ _ n _)) = n
 
 getExpressionContext :: Expression c -> [c]
 getExpressionContext (Expression c _ _)        = c

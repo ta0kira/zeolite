@@ -208,6 +208,13 @@ tests = [
     checkShortParseFail "x <- 'xx'",
     checkShortParseSuccess "x <- \"'xx\"",
 
+    checkShortParseFail "_ <- 1 < 2 < 3",
+    checkShortParseSuccess "_ <- 1 << 2 >> 3",
+    checkShortParseSuccess "_ <- 1 - 2 - 3",
+    checkShortParseSuccess "_ <- 1 - 2 / 3",
+    checkShortParseSuccess "_ <- 1 / 2 - 3",
+    checkShortParseSuccess "_ <- x < y || z > w",
+
     checkParsesAs "'\"'"
                   (\e -> case e of
                               (Literal (CharLiteral _ '"')) -> True
@@ -218,18 +225,18 @@ tests = [
                               (InfixExpression _
                                 (InfixExpression _
                                   (InfixExpression _
-                                    (InfixExpression _
-                                      (Literal (IntegerLiteral _ False 1)) (NamedOperator "+")
-                                      (Literal (IntegerLiteral _ False 2))) (NamedOperator "<")
-                                    (Literal (IntegerLiteral _ False 4))) (NamedOperator "&&")
+                                    (Literal (IntegerLiteral _ False 1)) (NamedOperator _ "+")
+                                    (Literal (IntegerLiteral _ False 2))) (NamedOperator _ "<")
+                                  (Literal (IntegerLiteral _ False 4))) (NamedOperator _ "&&")
+                                (InfixExpression _
                                   (InfixExpression _
-                                    (Literal (IntegerLiteral _ False 3)) (NamedOperator ">=")
+                                    (Literal (IntegerLiteral _ False 3)) (NamedOperator _ ">=")
                                     (InfixExpression _
                                       (InfixExpression _
-                                        (Literal (IntegerLiteral _ False 1)) (NamedOperator "*")
-                                        (Literal (IntegerLiteral _ False 2))) (NamedOperator "+")
-                                      (Literal (IntegerLiteral _ False 1))))) (NamedOperator "||")
-                                (Literal (BoolLiteral _ True))) -> True
+                                        (Literal (IntegerLiteral _ False 1)) (NamedOperator _ "*")
+                                        (Literal (IntegerLiteral _ False 2))) (NamedOperator _ "+")
+                                      (Literal (IntegerLiteral _ False 1)))) (NamedOperator _ "||")
+                                  (Literal (BoolLiteral _ True)))) -> True
                               _ -> False),
 
     -- This expression isn't really valid, but it ensures that the first ! is
@@ -238,11 +245,11 @@ tests = [
                   (\e -> case e of
                               (InfixExpression _
                                 (InfixExpression _
-                                  (UnaryExpression _ (NamedOperator "!")
-                                    (Expression _ (NamedVariable (OutputValue _ (VariableName "x"))) [])) (NamedOperator "*")
-                                  (UnaryExpression _ (NamedOperator "!")
-                                    (Expression _ (NamedVariable (OutputValue _ (VariableName "y"))) []))) (NamedOperator "+")
-                                (UnaryExpression _ (NamedOperator "!")
+                                  (UnaryExpression _ (NamedOperator _ "!")
+                                    (Expression _ (NamedVariable (OutputValue _ (VariableName "x"))) [])) (NamedOperator _ "*")
+                                  (UnaryExpression _ (NamedOperator _ "!")
+                                    (Expression _ (NamedVariable (OutputValue _ (VariableName "y"))) []))) (NamedOperator _ "+")
+                                (UnaryExpression _ (NamedOperator _ "!")
                                   (Expression _ (NamedVariable (OutputValue _ (VariableName "z"))) []))) -> True
                               _ -> False),
 
