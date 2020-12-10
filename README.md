@@ -590,10 +590,16 @@ for every `return` statement.
   i &lt;- i+<span style='color:#b08000;'>1</span>  <span style='color:#898887;'>// Post-increment behavior.</span>
 } <b>in</b> <b>return</b> i</pre>
 
-A `cleanup` block is executed at every `return`, `break`, and `continue` in the
-`in` statement, and right after the `in` statement. For this reason, you
+The `cleanup` block is executed at every `return`, `break`, and `continue` in
+the respective `in` block, and right after the `in` block. For this reason, you
 *cannot* use `return`, `break`, or `continue` within a `cleanup` block.
-(Additionally, you cannot overwrite named returns.)
+Additionally, you cannot overwrite named returns. You *can* use `fail`, however,
+since that just ends program execution.
+
+When `cleanup` is executed at a `return` statement in the `in` block, the
+returns from the `return` statement are "locked in", then `cleanup` is executed,
+*then* those locked-in return values are returned. (This is what allows the
+post-increment example above to work.)
 
 #### Loops
 
