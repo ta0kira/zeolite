@@ -11,7 +11,7 @@
 
 ### Language
 
-* **[fix]** Several `cleanup` fixes:
+* **[breaking]** Several `cleanup` fixes:
 
   * **[fix]** Fixes a bug in `cleanup` that caused the `scoped` block to be
     prepended to it when it was inlined in the `in` block.
@@ -25,6 +25,10 @@
   * **[fix]** Fixes inlining of `cleanup` blocks when `continue` is used inside
     of the `in` block. Previously, `cleanup` was skipped when `continue` was
     used inside of the respective `in` block.
+
+  * **[breaking]** Disallows explicit `break` and `continue` inside of `cleanup`
+    blocks. Previously this was allowed (but `return` wasn't), which led to
+    ambiguity when the `in` block contained a `return`.
 
   * **[new]** Allows `cleanup` to refer to variables created at the top level of
     the `in` block.

@@ -202,7 +202,7 @@ compileStatement (ExplicitReturn c es) = do
     getReturn [(_,(Positional ts,e))] = do
       csRegisterReturn c $ Just (Positional ts)
       maybeSetTrace c
-      autoPositionalCleanup e
+      autoPositionalCleanup c e
     -- Multi-expression => must all be singles.
     getReturn rs = do
       lift (mapErrorsM_ checkArity $ zip ([0..] :: [Int]) $ map (fst . snd) rs) <??
@@ -210,7 +210,7 @@ compileStatement (ExplicitReturn c es) = do
       csRegisterReturn c $ Just $ Positional $ map (head . pValues . fst . snd) rs
       let e = OpaqueMulti $ "ReturnTuple(" ++ intercalate "," (map (useAsUnwrapped . snd . snd) rs) ++ ")"
       maybeSetTrace c
-      autoPositionalCleanup e
+      autoPositionalCleanup c e
     checkArity (_,Positional [_]) = return ()
     checkArity (i,Positional ts)  =
       compilerErrorM $ "Return position " ++ show i ++ " has " ++ show (length ts) ++ " values but should have 1"
@@ -220,6 +220,7 @@ compileStatement (LoopBreak c) = do
        NotInLoop ->
          compilerErrorM $ "Using break outside of while is no allowed" ++ formatFullContextBrace c
        _ -> return ()
+  csSetJumpType c JumpBreak
   get >>= autoInsertCleanup c JumpBreak
   csWrite ["break;"]
 compileStatement (LoopContinue c) = do
@@ -228,6 +229,7 @@ compileStatement (LoopContinue c) = do
        NotInLoop ->
          compilerErrorM $ "Using continue outside of while is no allowed" ++ formatFullContextBrace c
        _ -> return ()
+  csSetJumpType c JumpContinue
   get >>= autoInsertCleanup c JumpContinue
   csWrite $ ["{"] ++ lsUpdate loop ++ ["}","continue;"]
 compileStatement (FailCall c e) = do
@@ -240,7 +242,7 @@ compileStatement (FailCall c e) = do
   fa <- csAllFilters
   lift $ (checkValueAssignment r fa t0 formattedRequiredValue) <??
     "In fail call at " ++ formatFullContext c
-  csSetJumpType JumpFailCall
+  csSetJumpType c JumpFailCall
   maybeSetTrace c
   csWrite ["BUILTIN_FAIL(" ++ useAsUnwrapped e0 ++ ")"]
 compileStatement (IgnoreValues c e) = do
@@ -1014,7 +1016,7 @@ doImplicitReturn c = do
   csRegisterReturn c Nothing
   (CleanupBlock ss _ _ req) <- csGetCleanup JumpReturn
   csAddRequired req
-  csSetJumpType JumpReturn
+  csSetJumpType c JumpReturn
   csWrite ss
   if not named
      then csWrite ["return ReturnTuple(0);"]
@@ -1027,11 +1029,11 @@ doImplicitReturn c = do
       "returns.At(" ++ show i ++ ") = " ++ useAsUnwrapped (readStoredVariable False t $ variableName n) ++ ";"
 
 autoPositionalCleanup :: (CollectErrorsM m, CompilerContext c m [String] a) =>
-  ExprValue -> CompilerState a m ()
-autoPositionalCleanup e = do
+  [c] -> ExprValue -> CompilerState a m ()
+autoPositionalCleanup c e = do
   (CleanupBlock ss _ _ req) <- csGetCleanup JumpReturn
   csAddRequired req
-  csSetJumpType JumpReturn
+  csSetJumpType c JumpReturn
   if null ss
      then csWrite ["return " ++ useAsReturns e ++ ";"]
      else do
@@ -1057,7 +1059,7 @@ autoInsertCleanup c j ctx = do
   sequence_ $ map csAddUsed $ vs2
   csWrite ss
   csAddRequired req
-  csSetJumpType (max j jump)
+  csSetJumpType c jump
 
 autoInlineOutput :: (Show c, CollectErrorsM m, CompilerContext c m [String] a) =>
   a -> CompilerState a m ()

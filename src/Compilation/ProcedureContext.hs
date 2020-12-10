@@ -445,7 +445,6 @@ instance (Show c, CollectErrorsM m) =>
       combineParallel (r@(ValidatePositions _),j1) (_,j2) = (r,min j1 j2)
       combineParallel (_,j1) (r@(ValidatePositions _),j2) = (r,min j1 j2)
   ccRegisterReturn ctx c vs = do
-    when (pcInCleanup ctx) $ compilerErrorM $ "Explicit return at " ++ formatFullContext c ++ " not allowed in cleanup"
     returns <- check (pcReturns ctx)
     return $ ProcedureContext {
         pcScope = pcScope ctx,
@@ -506,35 +505,42 @@ instance (Show c, CollectErrorsM m) =>
     | pcInCleanup ctx = return $ pcJumpType ctx > JumpReturn
     | otherwise       = return $ pcJumpType ctx > NextStatement
   ccIsNamedReturns = return . pcIsNamed
-  ccSetJumpType ctx j =
-    return $ ProcedureContext {
-        pcScope = pcScope ctx,
-        pcType = pcType ctx,
-        pcExtParams = pcExtParams ctx,
-        pcIntParams = pcIntParams ctx,
-        pcMembers = pcMembers ctx,
-        pcCategories = pcCategories ctx,
-        pcAllFilters = pcAllFilters ctx,
-        pcExtFilters = pcExtFilters ctx,
-        pcIntFilters = pcIntFilters ctx,
-        pcParamScopes = pcParamScopes ctx,
-        pcFunctions = pcFunctions ctx,
-        pcVariables = pcVariables ctx,
-        pcReturns = pcReturns ctx,
-        pcJumpType = max j (pcJumpType ctx),
-        pcIsNamed = pcIsNamed ctx,
-        pcPrimNamed = pcPrimNamed ctx,
-        pcRequiredTypes = pcRequiredTypes ctx,
-        pcOutput = pcOutput ctx,
-        pcDisallowInit = pcDisallowInit ctx,
-        pcLoopSetup = pcLoopSetup ctx,
-        pcCleanupBlocks = pcCleanupBlocks ctx,
-        pcInCleanup = pcInCleanup ctx,
-        pcUsedVars = pcUsedVars ctx,
-        pcExprMap = pcExprMap ctx,
-        pcReservedMacros = pcReservedMacros ctx,
-        pcNoTrace = pcNoTrace ctx
-      }
+  ccSetJumpType ctx c j
+    | pcInCleanup ctx && j == JumpBreak =
+        compilerErrorM $ "Explicit break at " ++ formatFullContext c ++ " not allowed in cleanup"
+    | pcInCleanup ctx && j == JumpContinue =
+        compilerErrorM $ "Explicit continue at " ++ formatFullContext c ++ " not allowed in cleanup"
+    | pcInCleanup ctx && j == JumpReturn =
+        compilerErrorM $ "Explicit return at " ++ formatFullContext c ++ " not allowed in cleanup"
+    | otherwise =
+      return $ ProcedureContext {
+          pcScope = pcScope ctx,
+          pcType = pcType ctx,
+          pcExtParams = pcExtParams ctx,
+          pcIntParams = pcIntParams ctx,
+          pcMembers = pcMembers ctx,
+          pcCategories = pcCategories ctx,
+          pcAllFilters = pcAllFilters ctx,
+          pcExtFilters = pcExtFilters ctx,
+          pcIntFilters = pcIntFilters ctx,
+          pcParamScopes = pcParamScopes ctx,
+          pcFunctions = pcFunctions ctx,
+          pcVariables = pcVariables ctx,
+          pcReturns = pcReturns ctx,
+          pcJumpType = max j (pcJumpType ctx),
+          pcIsNamed = pcIsNamed ctx,
+          pcPrimNamed = pcPrimNamed ctx,
+          pcRequiredTypes = pcRequiredTypes ctx,
+          pcOutput = pcOutput ctx,
+          pcDisallowInit = pcDisallowInit ctx,
+          pcLoopSetup = pcLoopSetup ctx,
+          pcCleanupBlocks = pcCleanupBlocks ctx,
+          pcInCleanup = pcInCleanup ctx,
+          pcUsedVars = pcUsedVars ctx,
+          pcExprMap = pcExprMap ctx,
+          pcReservedMacros = pcReservedMacros ctx,
+          pcNoTrace = pcNoTrace ctx
+        }
   ccStartLoop ctx l =
     return $ ProcedureContext {
         pcScope = pcScope ctx,

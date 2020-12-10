@@ -118,7 +118,7 @@ class (Functor m, Monad m) => CompilerContext c m s a | a -> c s where
   ccPrimNamedReturns :: a -> m [ReturnVariable]
   ccIsUnreachable :: a -> m Bool
   ccIsNamedReturns :: a -> m Bool
-  ccSetJumpType :: a -> JumpType -> m a
+  ccSetJumpType :: a -> [c] -> JumpType -> m a
   ccStartLoop :: a -> LoopSetup s -> m a
   ccGetLoop :: a -> m (LoopSetup s)
   ccStartCleanup :: a -> m a
@@ -261,8 +261,8 @@ csIsUnreachable = fmap ccIsUnreachable get >>= lift
 csIsNamedReturns :: CompilerContext c m s a => CompilerState a m Bool
 csIsNamedReturns = fmap ccIsNamedReturns get >>= lift
 
-csSetJumpType :: CompilerContext c m s a => JumpType -> CompilerState a m ()
-csSetJumpType j = fmap (\x -> ccSetJumpType x j) get >>= lift >>= put
+csSetJumpType :: CompilerContext c m s a => [c] -> JumpType -> CompilerState a m ()
+csSetJumpType c j = fmap (\x -> ccSetJumpType x c j) get >>= lift >>= put
 
 csStartLoop :: CompilerContext c m s a => LoopSetup s -> CompilerState a m ()
 csStartLoop l = fmap (\x -> ccStartLoop x l) get >>= lift >>= put

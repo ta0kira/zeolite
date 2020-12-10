@@ -355,12 +355,9 @@ define Type {
         fail(message)
       } in {
         if (true) {
-          // Cleanup is inline here.
           break
         }
-        message <- "message"
-        // Cleanup is inline here.
-      }
+        message <- "message"}
     }
     return "return"
   }
@@ -386,9 +383,7 @@ define Type {
     while (true) {
       cleanup {
         fail(message)
-      } in {
-        // Cleanup is inline here.
-      }
+      } in {}
     }
     return "return"
   }
@@ -414,44 +409,39 @@ define Type {
     while (true) {
       cleanup {
         fail(message)
-      } in {
-        // Cleanup is inline here.
-      }
+      } in {}
     }
     return "return"
   }
 }
 
 
-testcase "nested cleanup cannot use unititialzed named return" {
+testcase "break not allowed in cleanup" {
   error
   require "cleanup"
-  require "message.+initialized"
+  require "break"
 }
 
 unittest test {
-  \ Type.call()
+  while(true) {
+    cleanup {
+      break
+    } in {}
+  }
 }
 
-concrete Type {
-  @type call () -> (String)
+
+testcase "continue not allowed in cleanup" {
+  error
+  require "cleanup"
+  require "continue"
 }
 
-define Type {
-  call () (message) {
-    while (true) {
-      cleanup {
-        fail(message)
-      } in {
-        cleanup {
-          // Outer cleanup is inlined here.
-          break
-        } in {
-        }
-        message <- "message"
-      }
-    }
-    return "return"
+unittest test {
+  while(true) {
+    cleanup {
+      continue
+    } in {}
   }
 }
 

@@ -590,12 +590,10 @@ for every `return` statement.
   i &lt;- i+<span style='color:#b08000;'>1</span>  <span style='color:#898887;'>// Post-increment behavior.</span>
 } <b>in</b> <b>return</b> i</pre>
 
-**IMPORTANT**: Explicit `return` statements and modification of *named* return
-values are *disallowed* inside of a `cleanup` block. This is because if an `in`
-statement also contains a `return`, the behavior of the `cleanup` would be
-ambiguous. Although using `return` within `cleanup` would be safe in some
-situations, making that determination would be nuanced and complex, for both the
-user and the compiler.
+A `cleanup` block is executed at every `return`, `break`, and `continue` in the
+`in` statement, and right after the `in` statement. For this reason, you
+*cannot* use `return`, `break`, or `continue` within a `cleanup` block.
+(Additionally, you cannot overwrite named returns.)
 
 #### Loops
 
