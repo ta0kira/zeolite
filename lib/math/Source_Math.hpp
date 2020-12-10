@@ -81,6 +81,7 @@ class Type_Math : public TypeInstance {
   virtual ReturnTuple Call_tan(const S<TypeInstance>& self, const ParamTuple& params, const ValueTuple& args) = 0;
   virtual ReturnTuple Call_tanh(const S<TypeInstance>& self, const ParamTuple& params, const ValueTuple& args) = 0;
   virtual ReturnTuple Call_trunc(const S<TypeInstance>& self, const ParamTuple& params, const ValueTuple& args) = 0;
+  virtual ReturnTuple Call_abs(const S<TypeInstance>& self, const ParamTuple& params, const ValueTuple& args) = 0;
 
   Category_Math& parent;
 };

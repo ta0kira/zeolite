@@ -47,4 +47,6 @@ concrete Math {
 
   @type isinf (Float) -> (Bool)
   @type isnan (Float) -> (Bool)
+
+  @type abs (Int) -> (Int)
 }

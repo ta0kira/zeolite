@@ -55,6 +55,7 @@ const TypeFunction& Function_Math_sqrt = (*new TypeFunction{ 0, 1, 1, "Math", "s
 const TypeFunction& Function_Math_tan = (*new TypeFunction{ 0, 1, 1, "Math", "tan", Functions_Math, 23 });
 const TypeFunction& Function_Math_tanh = (*new TypeFunction{ 0, 1, 1, "Math", "tanh", Functions_Math, 24 });
 const TypeFunction& Function_Math_trunc = (*new TypeFunction{ 0, 1, 1, "Math", "trunc", Functions_Math, 25 });
+const TypeFunction& Function_Math_abs = (*new TypeFunction{ 0, 1, 1, "Math", "abs", Functions_Math, 26 });
 
 std::string Category_Math::CategoryName() const { return "Math"; }
 
@@ -128,9 +129,10 @@ ReturnTuple Type_Math::Dispatch(const S<TypeInstance>& self, const TypeFunction&
     &Type_Math::Call_tan,
     &Type_Math::Call_tanh,
     &Type_Math::Call_trunc,
+    &Type_Math::Call_abs,
   };
   if (label.collection == Functions_Math) {
-    if (label.function_num < 0 || label.function_num >= 26) {
+    if (label.function_num < 0 || label.function_num >= sizeof Table_Math / sizeof(CallType)) {
       FAIL() << "Bad function call " << label;
     }
     return (this->*Table_Math[label.function_num])(self, params, args);

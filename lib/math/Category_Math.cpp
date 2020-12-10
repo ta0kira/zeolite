@@ -191,6 +191,12 @@ struct Impl_Type_Math : public Type_Math {
     const PrimFloat Var_arg1 = (args.At(0))->AsFloat();
     return ReturnTuple(Box_Float(std::trunc(Var_arg1)));
   }
+
+  ReturnTuple Call_abs(const S<TypeInstance>& self, const ParamTuple& params, const ValueTuple& args) final {
+    TRACE_FUNCTION("Math.abs")
+    const PrimInt Var_arg1 = (args.At(0))->AsInt();
+    return ReturnTuple(Box_Int(std::abs(Var_arg1)));
+  }
 };
 
 struct Impl_Value_Math : public Value_Math {

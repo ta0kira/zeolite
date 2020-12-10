@@ -1,5 +1,11 @@
 # Revision history for zeolite-lang
 
+## 0.11.1.0  -- ????-??-??
+
+### Libraries
+
+  * **[new]** Adds `Math.abs` for `Int` absolute value to `lib/math`.
+
 ## 0.11.0.0  -- 2020-12-09
 
 ### Compiler CLI

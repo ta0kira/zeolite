@@ -127,3 +127,9 @@ unittest isnan {
     fail("Failed")
   }
 }
+
+unittest abs {
+  \ Testing.checkEquals<?>(Math.abs(-10),10)
+  \ Testing.checkEquals<?>(Math.abs(10),10)
+  \ Testing.checkEquals<?>(Math.abs(0),0)
+}
