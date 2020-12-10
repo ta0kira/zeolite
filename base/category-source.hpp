@@ -57,7 +57,7 @@ class TypeCategory {
  public:
   inline ReturnTuple Call(const CategoryFunction& label,
                           const ParamTuple& params, const ValueTuple& args) {
-    return FAIL_WHEN_NULL(Dispatch(label, params, args));
+    return FAIL_WHEN_NULL(Dispatch(label, params, FAIL_WHEN_NULL(args)));
   }
 
   virtual std::string CategoryName() const = 0;
@@ -80,7 +80,7 @@ class TypeInstance {
     if (target == nullptr) {
       FAIL() << "Function called on null value";
     }
-    return FAIL_WHEN_NULL(target->Dispatch(target, label, params, args));
+    return FAIL_WHEN_NULL(target->Dispatch(target, label, params, FAIL_WHEN_NULL(args)));
   }
 
   virtual std::string CategoryName() const = 0;
@@ -159,7 +159,7 @@ class TypeValue {
     if (target == nullptr) {
       FAIL() << "Function called on null value";
     }
-    return FAIL_WHEN_NULL(target->Dispatch(target, label, params, args));
+    return FAIL_WHEN_NULL(target->Dispatch(target, label, params, FAIL_WHEN_NULL(args)));
   }
 
   static bool Present(S<TypeValue> target);
