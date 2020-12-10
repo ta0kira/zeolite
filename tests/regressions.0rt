@@ -132,12 +132,11 @@ define Type {
         fail(message)
       } in {
         if (true) {
-        // There should be an error here (referring back to fail(message) above)
-        // because message might not be set.
+          // There should be an error here (referring back to fail(message)
+          // above) because message might not be set.
           break
         }
         message <- "message"
-        // Cleanup is inline here.
       }
     }
     return "return"
@@ -167,12 +166,11 @@ define Type {
         fail(message)
       } in {
         if (true) {
-        // There should be an error here (referring back to fail(message) above)
-        // because message might not be set.
+          // There should be an error here (referring back to fail(message)
+          // above) because message might not be set.
           continue
         }
         message <- "message"
-        // Cleanup is inline here.
       }
     }
     return "return"

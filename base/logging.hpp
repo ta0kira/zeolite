@@ -84,6 +84,9 @@ class LogThenCrash {
   #define TRACE_CREATION \
     TraceCreation trace_creation(TypeInstance::TypeName(parent), creation_context_);
 
+  #define FAIL_WHEN_NULL(value) \
+    FailWhenNull(value)
+
 #else
 
   #define TRACE_FUNCTION(name)
@@ -97,6 +100,8 @@ class LogThenCrash {
   #define CAPTURE_CREATION
 
   #define TRACE_CREATION
+
+  #define FAIL_WHEN_NULL(value) value
 
 #endif
 

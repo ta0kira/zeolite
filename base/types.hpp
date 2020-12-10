@@ -158,6 +158,16 @@ typename ParamsKey<N>::Type GetKeyFromParams(const typename Params<N>::Type& fro
   return KeyFromParams<N, 0>::Get(from);
 }
 
+template <class Values>
+inline Values FailWhenNull(Values values) {
+  for (int i = 0; i < values.Size(); ++i) {
+    if (values.At(i) == nullptr) {
+      FAIL() << "Value at tuple position " << i << " is null";
+    }
+  }
+  return values;
+}
+
 class ValueTuple {
  public:
   virtual int Size() const = 0;
