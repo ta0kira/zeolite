@@ -1,13 +1,13 @@
 # Revision history for zeolite-lang
 
-## 0.11.0.0  -- ????-??-??
+## 0.11.0.0  -- 2020-12-09
 
 ### Compiler CLI
 
 * **[breaking]** Switches from [`parsec`][parsec] to [`megaparsec`][megaparsec]
-  for parsing, to allow for better structuring of error messages. This should
-  not affect syntax acceptance, but it has additional transitive dependencies
-  that might prevent installation of `zeolite`.
+  for parsing, to allow for better structuring of compile-time error messages.
+  This should not affect syntax acceptance, but it has additional transitive
+  dependencies that might prevent installation of `zeolite`.
 
 ### Language
 
