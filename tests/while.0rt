@@ -35,22 +35,6 @@ define Test {
 }
 
 
-testcase "assign while condition" {
-  error
-  require "value.+initialized"
-}
-
-@value interface Value {}
-
-concrete Test {}
-
-define Test {
-  @value process () -> (optional Value)
-  process () (value) {
-    while (present((value <- empty))) {}
-  }
-}
-
 testcase "return while" {
   error
   require "return"
@@ -443,5 +427,27 @@ define Type {
       }
     }
     return "return"
+  }
+}
+
+
+testcase "return set in predicate" {
+  crash
+  require "message"
+}
+
+unittest test {
+  \ Value.process()
+}
+
+concrete Value {
+  @type process () -> (String)
+}
+
+define Value {
+  process () (message) {
+    while ((message <- "message") != "") {
+      fail(message)
+    }
   }
 }

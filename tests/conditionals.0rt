@@ -57,8 +57,7 @@ concrete Value {}
 
 
 testcase "assign if/elif condition" {
-  error
-  require "value.+initialized"
+  compiles
 }
 
 define Value {
@@ -168,6 +167,47 @@ define Value {
       value <- empty
     } elif (false) {
       value <- empty
+    }
+  }
+}
+
+concrete Value {}
+
+
+testcase "return set in predicate for subsequent blocks" {
+  compiles
+}
+
+define Value {
+  @value process () -> (Int)
+  process () (x) {
+    if (false) {
+      x <- 1
+    } elif ((x <- 1) > 0) {
+      fail(x)
+    } else {
+    }
+  }
+}
+
+concrete Value {}
+
+
+
+testcase "return in set in predicates is conditional" {
+  error
+  require "implicit return"
+  require "x.+initialized"
+}
+
+define Value {
+  @value process () -> (Int)
+  process () (x) {
+    if (false) {
+    } elif ((x <- 1) > 0) {
+      fail(x)
+    } else {
+      fail(x)
     }
   }
 }

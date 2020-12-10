@@ -52,6 +52,7 @@ module Compilation.CompilerState (
   csGetTypeFunction,
   csGetVariable,
   csInheritReturns,
+  csInheritUsed,
   csIsNamedReturns,
   csIsUnreachable,
   csPrimNamedReturns,
@@ -113,6 +114,7 @@ class (Functor m, Monad m) => CompilerContext c m s a | a -> c s where
   ccClearOutput :: a -> m a
   ccUpdateAssigned :: a -> VariableName -> m a
   ccAddUsed :: a -> UsedVariable c -> m a
+  ccInheritUsed :: a -> a -> m a
   ccInheritReturns :: a -> [a] -> m a
   ccRegisterReturn :: a -> [c] -> Maybe ExpressionType -> m a
   ccPrimNamedReturns :: a -> m [ReturnVariable]
@@ -159,7 +161,7 @@ data UsedVariable c =
     uvContext :: [c],
     uvName :: VariableName
   }
-  deriving (Show)
+  deriving (Eq,Ord,Show)
 
 data CleanupBlock c s =
   CleanupBlock {
@@ -244,6 +246,9 @@ csUpdateAssigned n = fmap (\x -> ccUpdateAssigned x n) get >>= lift >>= put
 
 csAddUsed :: CompilerContext c m s a => UsedVariable c -> CompilerState a m ()
 csAddUsed n = fmap (\x -> ccAddUsed x n) get >>= lift >>= put
+
+csInheritUsed :: CompilerContext c m s a => a -> CompilerState a m ()
+csInheritUsed c = fmap (\x -> ccInheritUsed x c) get >>= lift >>= put
 
 csInheritReturns :: CompilerContext c m s a => [a] -> CompilerState a m ()
 csInheritReturns xs = fmap (\x -> ccInheritReturns x xs) get >>= lift >>= put

@@ -195,7 +195,67 @@ concrete Type {
 define Type {
   call () (x,y,z) {
     cleanup {
+      // Primitive variables y and z need to be explicitly set separately from
+      // the return tuple, since the former are stored separately.
       fail(x + "," + y.formatted() + "," + z.formatted())
     } in return "message", 12345, false
+  }
+}
+
+
+testcase "Issue #127 is fixed: if" {
+  // https://github.com/ta0kira/zeolite/issues/127
+  error
+  require "cleanup"
+  require "message.+initialized"
+}
+
+unittest test {
+  \ Type.call()
+}
+
+concrete Type {
+  @type call () -> (String)
+}
+
+define Type {
+  call () (message) {
+    cleanup {
+      // Using message on the right side of && makes sure that message is still
+      // counted as being required, despite possible short-circuiting.
+      if (true && message != "message") {
+        fail("failed")
+      }
+    } in {}
+    return "return"
+  }
+}
+
+
+testcase "Issue #127 is fixed: while" {
+  // https://github.com/ta0kira/zeolite/issues/127
+  error
+  require "cleanup"
+  require "message.+initialized"
+}
+
+unittest test {
+  \ Type.call()
+}
+
+concrete Type {
+  @type call () -> (String)
+}
+
+define Type {
+  call () (message) {
+    cleanup {
+      // Using message on the right side of && makes sure that message is still
+      // counted as being required, despite possible short-circuiting.
+      while (true && message != "message") {
+        fail("failed")
+      }
+    } in {}
+    return "return"
   }
 }

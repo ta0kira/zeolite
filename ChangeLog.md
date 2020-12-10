@@ -4,6 +4,17 @@
 
 ### Language
 
+* **[fix]** Several more fixes for named returns:
+
+  * **[new]** Allows *initialization* of named returns in `if`/`elif`/`while`
+    predicates. Although *setting* a named return in a predicate has always been
+    allowed, it previously did not count as an initialization for the purposes
+    of checking usage in subsequent statements.
+
+  * **[fix]** Fixes a bug where named returns used in `if`/`elif`/`while`
+    predicates inside of `cleanup` blocks were not getting checked for
+    initialization.
+
   * **[fix]** Fixes a bug where a named return with a primitive type was not
     getting set in an explicit `return` statement. This only affected code that
     used primitive named returns inside of a `cleanup` block where the
