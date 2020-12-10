@@ -94,7 +94,7 @@ struct Type_RawFileWriter : public TypeInstance {
       &Type_RawFileWriter::Call_open,
     };
     if (label.collection == Functions_RawFileWriter) {
-      if (label.function_num < 0 || label.function_num >= 1) {
+      if (label.function_num < 0 || label.function_num >= sizeof Table_RawFileWriter / sizeof(CallType)) {
         FAIL() << "Bad function call " << label;
       }
       return (this->*Table_RawFileWriter[label.function_num])(self, params, args);
@@ -123,19 +123,19 @@ struct Value_RawFileWriter : public TypeValue {
       &Value_RawFileWriter::Call_getFileError,
     };
     if (label.collection == Functions_BlockWriter) {
-      if (label.function_num < 0 || label.function_num >= 1) {
+      if (label.function_num < 0 || label.function_num >= sizeof Table_BlockWriter / sizeof(CallType)) {
         FAIL() << "Bad function call " << label;
       }
       return (this->*Table_BlockWriter[label.function_num])(self, params, args);
     }
     if (label.collection == Functions_PersistentResource) {
-      if (label.function_num < 0 || label.function_num >= 1) {
+      if (label.function_num < 0 || label.function_num >= sizeof Table_PersistentResource / sizeof(CallType)) {
         FAIL() << "Bad function call " << label;
       }
       return (this->*Table_PersistentResource[label.function_num])(self, params, args);
     }
     if (label.collection == Functions_RawFileWriter) {
-      if (label.function_num < 0 || label.function_num >= 1) {
+      if (label.function_num < 0 || label.function_num >= sizeof Table_RawFileWriter / sizeof(CallType)) {
         FAIL() << "Bad function call " << label;
       }
       return (this->*Table_RawFileWriter[label.function_num])(self, params, args);

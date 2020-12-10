@@ -90,7 +90,7 @@ struct Type_SimpleInput : public TypeInstance {
       &Type_SimpleInput::Call_stdin,
     };
     if (label.collection == Functions_SimpleInput) {
-      if (label.function_num < 0 || label.function_num >= 1) {
+      if (label.function_num < 0 || label.function_num >= sizeof Table_SimpleInput / sizeof(CallType)) {
         FAIL() << "Bad function call " << label;
       }
       return (this->*Table_SimpleInput[label.function_num])(self, params, args);
@@ -112,7 +112,7 @@ struct Value_SimpleInput : public TypeValue {
       &Value_SimpleInput::Call_readBlock,
     };
     if (label.collection == Functions_BlockReader) {
-      if (label.function_num < 0 || label.function_num >= 2) {
+      if (label.function_num < 0 || label.function_num >= sizeof Table_BlockReader / sizeof(CallType)) {
         FAIL() << "Bad function call " << label;
       }
       return (this->*Table_BlockReader[label.function_num])(self, params, args);

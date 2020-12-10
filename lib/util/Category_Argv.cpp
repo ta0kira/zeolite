@@ -86,7 +86,7 @@ struct Type_Argv : public TypeInstance {
       &Type_Argv::Call_global,
     };
     if (label.collection == Functions_Argv) {
-      if (label.function_num < 0 || label.function_num >= 1) {
+      if (label.function_num < 0 || label.function_num >= sizeof Table_Argv / sizeof(CallType)) {
         FAIL() << "Bad function call " << label;
       }
       return (this->*Table_Argv[label.function_num])(self, params, args);
@@ -109,7 +109,7 @@ struct Value_Argv : public TypeValue {
       &Value_Argv::Call_subSequence,
     };
     if (label.collection == Functions_ReadPosition) {
-      if (label.function_num < 0 || label.function_num >= 3) {
+      if (label.function_num < 0 || label.function_num >= sizeof Table_ReadPosition / sizeof(CallType)) {
         FAIL() << "Bad function call " << label;
       }
       return (this->*Table_ReadPosition[label.function_num])(self, params, args);

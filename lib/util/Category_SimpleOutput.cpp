@@ -100,7 +100,7 @@ struct Type_SimpleOutput : public TypeInstance {
       &Type_SimpleOutput::Call_stdout,
     };
     if (label.collection == Functions_SimpleOutput) {
-      if (label.function_num < 0 || label.function_num >= 3) {
+      if (label.function_num < 0 || label.function_num >= sizeof Table_SimpleOutput / sizeof(CallType)) {
         FAIL() << "Bad function call " << label;
       }
       return (this->*Table_SimpleOutput[label.function_num])(self, params, args);
@@ -131,13 +131,13 @@ struct Value_SimpleOutput : public TypeValue {
       &Value_SimpleOutput::Call_write,
     };
     if (label.collection == Functions_BufferedWriter) {
-      if (label.function_num < 0 || label.function_num >= 1) {
+      if (label.function_num < 0 || label.function_num >= sizeof Table_BufferedWriter / sizeof(CallType)) {
         FAIL() << "Bad function call " << label;
       }
       return (this->*Table_BufferedWriter[label.function_num])(self, params, args);
     }
     if (label.collection == Functions_Writer) {
-      if (label.function_num < 0 || label.function_num >= 1) {
+      if (label.function_num < 0 || label.function_num >= sizeof Table_Writer / sizeof(CallType)) {
         FAIL() << "Bad function call " << label;
       }
       return (this->*Table_Writer[label.function_num])(self, params, args);

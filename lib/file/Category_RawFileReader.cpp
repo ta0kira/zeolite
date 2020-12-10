@@ -94,7 +94,7 @@ struct Type_RawFileReader : public TypeInstance {
       &Type_RawFileReader::Call_open,
     };
     if (label.collection == Functions_RawFileReader) {
-      if (label.function_num < 0 || label.function_num >= 1) {
+      if (label.function_num < 0 || label.function_num >= sizeof Table_RawFileReader / sizeof(CallType)) {
         FAIL() << "Bad function call " << label;
       }
       return (this->*Table_RawFileReader[label.function_num])(self, params, args);
@@ -124,19 +124,19 @@ struct Value_RawFileReader : public TypeValue {
       &Value_RawFileReader::Call_getFileError,
     };
     if (label.collection == Functions_BlockReader) {
-      if (label.function_num < 0 || label.function_num >= 2) {
+      if (label.function_num < 0 || label.function_num >= sizeof Table_BlockReader / sizeof(CallType)) {
         FAIL() << "Bad function call " << label;
       }
       return (this->*Table_BlockReader[label.function_num])(self, params, args);
     }
     if (label.collection == Functions_PersistentResource) {
-      if (label.function_num < 0 || label.function_num >= 1) {
+      if (label.function_num < 0 || label.function_num >= sizeof Table_PersistentResource / sizeof(CallType)) {
         FAIL() << "Bad function call " << label;
       }
       return (this->*Table_PersistentResource[label.function_num])(self, params, args);
     }
     if (label.collection == Functions_RawFileReader) {
-      if (label.function_num < 0 || label.function_num >= 1) {
+      if (label.function_num < 0 || label.function_num >= sizeof Table_RawFileReader / sizeof(CallType)) {
         FAIL() << "Bad function call " << label;
       }
       return (this->*Table_RawFileReader[label.function_num])(self, params, args);

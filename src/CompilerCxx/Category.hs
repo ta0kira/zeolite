@@ -622,9 +622,9 @@ createFunctionDispatch n s fs = [typedef] ++ concat (map table $ byCategory) ++
     ["  static const CallType " ++ tableName n2 ++ "[] = {"] ++
     map (\f -> "    &" ++ name f ++ ",") (Set.toList $ Set.fromList $ map sfName fs2) ++
     ["  };"]
-  dispatch (n2,fs2) = [
+  dispatch (n2,_) = [
       "  if (label.collection == " ++ collectionName n2 ++ ") {",
-      "    if (label.function_num < 0 || label.function_num >= " ++ show (length fs2) ++ ") {",
+      "    if (label.function_num < 0 || label.function_num >= sizeof " ++ tableName n2 ++ " / sizeof(CallType)) {",
       "      FAIL() << \"Bad function call \" << label;",
       "    }",
       "    return (this->*" ++ tableName n2 ++ "[label.function_num])(" ++ args ++ ");",
