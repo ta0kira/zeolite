@@ -1051,10 +1051,10 @@ autoInsertCleanup :: (Show c, CollectErrorsM m, CompilerContext c m [String] a) 
 autoInsertCleanup c j ctx = do
   (CleanupBlock ss vs jump req) <- lift $ ccGetCleanup ctx j
   lift (ccCheckVariableInit ctx vs) <?? "In inlining of cleanup block after statement at " ++ formatFullContext c
+  let vs2 = map (\(UsedVariable c0 v) -> UsedVariable (c ++ c0) v) vs
   -- This is needed in case a cleanup is inlined within another cleanup, e.g.,
   -- e.g., if the latter has a break statement.
-  let vs2 = map (UsedVariable c . uvName) vs
-  sequence_ $ map csAddUsed $ vs2 ++ vs
+  sequence_ $ map csAddUsed $ vs2
   csWrite ss
   csAddRequired req
   csSetJumpType (max j jump)
