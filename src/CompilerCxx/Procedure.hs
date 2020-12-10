@@ -1021,32 +1021,47 @@ doImplicitReturn c = do
   if not named
      then csWrite ["return ReturnTuple(0);"]
      else do
-       vars <- csPrimNamedReturns
-       sequence_ $ map (csWrite . (:[]) . assign) vars
+       getPrimNamedReturns
        csWrite ["return returns;"]
   where
-    assign (ReturnVariable i n t) =
-      "returns.At(" ++ show i ++ ") = " ++ useAsUnwrapped (readStoredVariable False t $ variableName n) ++ ";"
 
 autoPositionalCleanup :: (CollectErrorsM m, CompilerContext c m [String] a) =>
   [c] -> ExprValue -> CompilerState a m ()
 autoPositionalCleanup c e = do
+  named <- csIsNamedReturns
   (CleanupBlock ss _ _ req) <- csGetCleanup JumpReturn
   csAddRequired req
   csSetJumpType c JumpReturn
   if null ss
      then csWrite ["return " ++ useAsReturns e ++ ";"]
      else do
-       named <- csIsNamedReturns
        if named
           then do
             csWrite ["returns = " ++ useAsReturns e ++ ";"]
+            setPrimNamedReturns
             csWrite ss
             csWrite ["return returns;"]
           else do
             csWrite ["{","ReturnTuple returns = " ++ useAsReturns e ++ ";"]
             csWrite ss
             csWrite ["return returns;","}"]
+
+setPrimNamedReturns ::  (CollectErrorsM m, CompilerContext c m [String] a) =>
+  CompilerState a m ()
+setPrimNamedReturns = do
+  vars <- csPrimNamedReturns
+  sequence_ $ map (csWrite . (:[]) . assign) vars where
+    assign (ReturnVariable i n t) =
+      variableName n ++ " = " ++ writeStoredVariable t (position i) ++ ";"
+    position i = WrappedSingle $ "returns.At(" ++ show i ++ ")"
+
+getPrimNamedReturns ::  (CollectErrorsM m, CompilerContext c m [String] a) =>
+  CompilerState a m ()
+getPrimNamedReturns = do
+  vars <- csPrimNamedReturns
+  sequence_ $ map (csWrite . (:[]) . assign) vars where
+    assign (ReturnVariable i n t) =
+      "returns.At(" ++ show i ++ ") = " ++ useAsUnwrapped (readStoredVariable False t $ variableName n) ++ ";"
 
 autoInsertCleanup :: (Show c, CollectErrorsM m, CompilerContext c m [String] a) =>
   [c] -> JumpType -> a -> CompilerState a m ()

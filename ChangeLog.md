@@ -2,6 +2,25 @@
 
 ## 0.11.1.0  -- ????-??-??
 
+### Language
+
+  * **[fix]** Fixes a bug where a named return with a primitive type was not
+    getting set in an explicit `return` statement. This only affected code that
+    used primitive named returns inside of a `cleanup` block where the
+    corresponding `in` block used an explicit `return` statement.
+
+    ```text
+    @type call () -> (Int)
+    call () (x) {
+      cleanup {
+        \ foo(x)     // x was not getting set for this call
+      } in return 1  // 1 was still returned from the function as expected
+    }
+    ```
+
+    This *did not* affect non-primitive types such as `String` and user-defined
+    `concrete` and `interface` categories.
+
 ### Libraries
 
   * **[new]** Adds `Math.abs` for `Int` absolute value to `lib/math`.

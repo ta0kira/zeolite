@@ -176,3 +176,26 @@ define Type {
     return "return"
   }
 }
+
+
+testcase "Issue #126 is fixed" {
+  // https://github.com/ta0kira/zeolite/issues/126
+  crash
+  require "message,12345,false"
+}
+
+unittest test {
+  \ Type.call()
+}
+
+concrete Type {
+  @type call () -> (String,Int,Bool)
+}
+
+define Type {
+  call () (x,y,z) {
+    cleanup {
+      fail(x + "," + y.formatted() + "," + z.formatted())
+    } in return "message", 12345, false
+  }
+}
