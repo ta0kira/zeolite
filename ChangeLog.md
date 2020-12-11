@@ -48,7 +48,7 @@
     previously.)
 
   All other infix operators (including infix function calls such as
-  ``x `Math.pow` y ``) remain *left-associative*.
+  ``x `Math.pow` y``) remain *left-associative*.
 
 ### Libraries
 

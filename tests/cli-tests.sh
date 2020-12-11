@@ -279,8 +279,16 @@ test_global_include() {
 
 
 test_example_hello() {
+  local binary="$ZEOLITE_PATH/example/hello/HelloDemo"
+  local name='Cli Tests'
+  rm -f "$binary"
   do_zeolite -p "$ZEOLITE_PATH" -I lib/util -m HelloDemo example/hello -f
-  do_zeolite -p "$ZEOLITE_PATH" -t example/hello
+  local output=$(echo "$name" | "$binary" 2>&1)
+  if ! echo "$output" | egrep -q "\"$name\""; then
+    show_message "Expected \"$name\" in output:"
+    echo "$output" 1>&2
+    return 1
+  fi
 }
 
 
