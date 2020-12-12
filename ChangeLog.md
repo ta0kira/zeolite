@@ -1,19 +1,20 @@
 # Revision history for zeolite-lang
 
-## 0.12.0.0  -- ????-??-??
+## 0.12.0.0  -- 2020-12-11
 
 ### Language
 
-* **[fix]** Several more fixes for named returns:
+* **[breaking]** Several more fixes for named returns:
 
   * **[new]** Allows *initialization* of named returns in `if`/`elif`/`while`
     predicates. Although *setting* a named return in a predicate has always been
     allowed, it previously did not count as an initialization for the purposes
     of checking usage in subsequent statements.
 
-  * **[fix]** Fixes a bug where named returns used in `if`/`elif`/`while`
+  * **[breaking]** Fixes a bug where named returns used in `if`/`elif`/`while`
     predicates inside of `cleanup` blocks were not getting checked for
-    initialization.
+    initialization. This turns a potential runtime error into a compile-time
+    error, which could break buggy code that was never going to be executed.
 
   * **[fix]** Fixes a bug where a named return with a primitive type was not
     getting set in an explicit `return` statement. This only affected code that
