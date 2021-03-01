@@ -1317,6 +1317,25 @@ These pragmas alter how variables are dealt with locally:
   inaccessible for reading. Note that this *does not* allow you to reuse a
   variable name; the variable name remains reserved.
 
+Zeolite uses pragmas instead of something like `final` in Java for a few
+reasons:
+
+1. In practice, a large percentage of variables to be treated as read-only
+   require some sort of iterative or conditional setup. Marking the variable as
+   `final` at declaration time would require creating a helper to initialize it.
+
+   <pre style='color:#1f1c1b;background-color:#f6f8fa;'>
+   <i><span style='color:#0057ae;'>Int</span></i> nextPow2 &lt;- <span style='color:#b08000;'>1</span>
+   <b>while</b> (nextPow2 &lt; n) {
+     nextPow2 &lt;- <span style='color:#b08000;'>2</span>*nextPow2
+   }
+   <b><i><span style='color:#8060c0;'>$ReadOnly[</span></i></b><i><span style='color:#8060c0;'>nextPow2</span></i><b><i><span style='color:#8060c0;'>]$</span></i></b></pre>
+
+2. A frequent source of errors in any language is multiple variables of the same
+   type in the same scope. Marking some of them as read-only (or as hidden)
+   within a certain context helps prevent errors caused by inadvertently using
+   the wrong variable.
+
 ### Expression Macros
 
 These can be used in place of language expressions.
