@@ -1,5 +1,5 @@
 {- -----------------------------------------------------------------------------
-Copyright 2019-2020 Kevin P. Barry
+Copyright 2019-2021 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -62,8 +62,10 @@ module Compilation.CompilerState (
   csReserveExprMacro,
   csResolver,
   csSameType,
+  csSetHidden,
   csSetJumpType,
   csSetNoTrace,
+  csSetReadOnly,
   csStartCleanup,
   csStartLoop,
   csUpdateAssigned,
@@ -87,7 +89,6 @@ import Data.Semigroup
 import Base.CompilerError
 import Base.Positional
 import Types.DefinedCategory
-import Types.Pragma (MacroName)
 import Types.Procedure
 import Types.TypeCategory
 import Types.TypeInstance
@@ -108,6 +109,8 @@ class (Functor m, Monad m) => CompilerContext c m s a | a -> c s where
   ccCheckValueInit :: a -> [c] -> TypeInstance -> ExpressionType -> Positional GeneralInstance -> m ()
   ccGetVariable :: a -> UsedVariable c -> m (VariableValue c)
   ccAddVariable :: a -> UsedVariable c -> VariableValue c -> m a
+  ccSetReadOnly :: a -> UsedVariable c -> m a
+  ccSetHidden :: a -> UsedVariable c -> m a
   ccCheckVariableInit :: a -> [UsedVariable c] -> m ()
   ccWrite :: a -> s -> m a
   ccGetOutput :: a -> m s
@@ -123,7 +126,7 @@ class (Functor m, Monad m) => CompilerContext c m s a | a -> c s where
   ccSetJumpType :: a -> [c] -> JumpType -> m a
   ccStartLoop :: a -> LoopSetup s -> m a
   ccGetLoop :: a -> m (LoopSetup s)
-  ccStartCleanup :: a -> m a
+  ccStartCleanup :: a -> [c] -> m a
   ccPushCleanup :: a -> a -> m a
   ccGetCleanup :: a -> JumpType -> m (CleanupBlock c s)
   ccExprLookup :: a -> [c] -> MacroName -> m (Expression c)
@@ -184,9 +187,6 @@ data JumpType =
   JumpMax  -- Max value for use as initial state in folds.
   deriving (Eq,Ord,Show)
 
-instance Show c => Show (VariableValue c) where
-  show (VariableValue c _ t _) = show t ++ formatFullContextBrace c
-
 csCurrentScope :: CompilerContext c m s a => CompilerState a m SymbolScope
 csCurrentScope = fmap ccCurrentScope get >>= lift
 
@@ -227,6 +227,14 @@ csGetVariable v = fmap (\x -> ccGetVariable x v) get >>= lift
 csAddVariable :: CompilerContext c m s a =>
   UsedVariable c -> VariableValue c -> CompilerState a m ()
 csAddVariable v t = fmap (\x -> ccAddVariable x v t) get >>= lift >>= put
+
+csSetReadOnly :: CompilerContext c m s a =>
+  UsedVariable c -> CompilerState a m ()
+csSetReadOnly v = fmap (\x -> ccSetReadOnly x v) get >>= lift >>= put
+
+csSetHidden :: CompilerContext c m s a =>
+  UsedVariable c -> CompilerState a m ()
+csSetHidden v = fmap (\x -> ccSetHidden x v) get >>= lift >>= put
 
 csCheckVariableInit :: CompilerContext c m s a =>
   [UsedVariable c] -> CompilerState a m ()
@@ -272,8 +280,8 @@ csSetJumpType c j = fmap (\x -> ccSetJumpType x c j) get >>= lift >>= put
 csStartLoop :: CompilerContext c m s a => LoopSetup s -> CompilerState a m ()
 csStartLoop l = fmap (\x -> ccStartLoop x l) get >>= lift >>= put
 
-csStartCleanup :: CompilerContext c m s a => CompilerState a m ()
-csStartCleanup = fmap (\x -> ccStartCleanup x) get >>= lift >>= put
+csStartCleanup :: CompilerContext c m s a => [c] -> CompilerState a m ()
+csStartCleanup c = fmap (\x -> ccStartCleanup x c) get >>= lift >>= put
 
 csGetLoop :: CompilerContext c m s a => CompilerState a m (LoopSetup s)
 csGetLoop = fmap ccGetLoop get >>= lift

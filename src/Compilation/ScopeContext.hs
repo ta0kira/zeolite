@@ -1,5 +1,5 @@
 {- -----------------------------------------------------------------------------
-Copyright 2020 Kevin P. Barry
+Copyright 2020-2021 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -117,5 +117,5 @@ getProcedureScopes ta em (DefinedCategory c n pi _ _ fi ms ps fs) = do
 -- TODO: This is probably in the wrong module.
 builtinVariables :: TypeInstance -> Map.Map VariableName (VariableValue c)
 builtinVariables t = Map.fromList [
-    (VariableName "self",VariableValue [] ValueScope (ValueType RequiredValue $ singleType $ JustTypeInstance t) False)
+    (VariableName "self",VariableValue [] ValueScope (ValueType RequiredValue $ singleType $ JustTypeInstance t) (VariableReadOnly []))
   ]

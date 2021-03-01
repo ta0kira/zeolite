@@ -231,7 +231,6 @@ library zeolite-internal
                        Types.DefinedCategory,
                        Types.Function,
                        Types.IntegrationTest,
-                       Types.Pragma,
                        Types.Procedure,
                        Types.TypeCategory,
                        Types.TypeInstance,

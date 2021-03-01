@@ -1,5 +1,5 @@
 {- -----------------------------------------------------------------------------
-Copyright 2020 Kevin P. Barry
+Copyright 2020-2021 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -22,12 +22,48 @@ import System.FilePath
 
 import Base.CompilerError
 import Base.TrackedErrors
+import Parser.Pragma (parsePragmas)
 import Parser.SourceFile
 import Test.Common
 
 
 tests :: [IO (TrackedErrors ())]
 tests = [
+    checkParseMatch "$ModuleOnly$" (fmap (:[]) pragmaModuleOnly)
+      (\e -> case e of
+                  [PragmaVisibility _ ModuleOnly] -> True
+                  _ -> False),
+
+    checkParseMatch "$TestsOnly$" (fmap (:[]) pragmaTestsOnly)
+      (\e -> case e of
+                  [PragmaVisibility _ TestsOnly] -> True
+                  _ -> False),
+
+    checkParseMatch "/*only comments*/" (parsePragmas [pragmaModuleOnly,pragmaTestsOnly])
+      (\e -> case e of
+                  [] -> True
+                  _ -> False),
+
+    checkParseMatch "$ModuleOnly$  // comment" (parsePragmas [pragmaTestsOnly,pragmaModuleOnly])
+      (\e -> case e of
+                  [PragmaVisibility _ ModuleOnly] -> True
+                  _ -> False),
+
+    checkParseMatch "$TestsOnly$  /*comment*/" (parsePragmas [pragmaModuleOnly,pragmaTestsOnly])
+      (\e -> case e of
+                  [PragmaVisibility _ TestsOnly] -> True
+                  _ -> False),
+
+    checkParseMatch "$TestsOnly$\n$TestsOnly$\n$ModuleOnly$" (parsePragmas [pragmaModuleOnly,pragmaTestsOnly])
+      (\e -> case e of
+                  [PragmaVisibility _ TestsOnly,
+                   PragmaVisibility _ TestsOnly,
+                   PragmaVisibility _ ModuleOnly] -> True
+                  _ -> False),
+
+    checkParseError "$ModuleOnly[ extra ]$" "does not allow arguments" pragmaModuleOnly,
+    checkParseError "$TestsOnly[ extra ]$" "does not allow arguments" pragmaTestsOnly,
+
     checkParseSuccess ("testfiles" </> "public.0rp")   parsePublicSource,
     checkParseSuccess ("testfiles" </> "internal.0rx") parseInternalSource,
     checkParseSuccess ("testfiles" </> "test.0rt")     parseTestSource

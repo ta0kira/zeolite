@@ -1,5 +1,5 @@
 {- -----------------------------------------------------------------------------
-Copyright 2019-2020 Kevin P. Barry
+Copyright 2019-2021 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -30,13 +30,16 @@ module Types.Procedure (
   IfElifElse(..),
   InputValue(..),
   InstanceOrInferred(..),
+  MacroName(..),
   Operator(..),
   OutputValue(..),
+  PragmaProcedure(..),
   Procedure(..),
   ReturnValues(..),
   ScopedBlock(..),
   Statement(..),
   TestProcedure(..),
+  TraceType(..),
   ValueLiteral(..),
   ValueOperation(..),
   VariableName(..),
@@ -50,6 +53,8 @@ module Types.Procedure (
   isDiscardedInput,
   isFunctionOperator,
   isLiteralCategory,
+  isNoTrace,
+  isTraceCreation,
   isRawCodeLine,
   isUnnamedReturns,
 ) where
@@ -57,7 +62,6 @@ module Types.Procedure (
 import Data.List (intercalate)
 
 import Base.Positional
-import Types.Pragma
 import Types.TypeCategory
 import Types.TypeInstance
 
@@ -67,7 +71,7 @@ import Types.TypeInstance
 data ExecutableProcedure c =
   ExecutableProcedure {
     epContext :: [c],
-    epPragmas :: [Pragma c],
+    epPragmas :: [PragmaProcedure c],
     epEnd :: [c],
     epName :: FunctionName,
     epArgs :: ArgValues c,
@@ -165,6 +169,8 @@ data Statement c =
   IgnoreValues [c] (Expression c) |
   Assignment [c] (Positional (Assignable c)) (Expression c) |
   NoValueExpression [c] (VoidExpression c) |
+  MarkReadOnly [c] [VariableName] |
+  MarkHidden [c] [VariableName] |
   RawCodeLine String
   deriving (Show)
 
@@ -181,6 +187,8 @@ getStatementContext (FailCall c _)          = c
 getStatementContext (IgnoreValues c _)      = c
 getStatementContext (Assignment c _ _)      = c
 getStatementContext (NoValueExpression c _) = c
+getStatementContext (MarkReadOnly c _)      = c
+getStatementContext (MarkHidden c _)        = c
 getStatementContext (RawCodeLine _)         = []
 
 data Assignable c =
@@ -308,3 +316,29 @@ data ValueOperation c =
   ConvertedCall [c] TypeInstance (FunctionCall c) |
   ValueCall [c] (FunctionCall c)
   deriving (Show)
+
+newtype MacroName =
+  MacroName {
+    mnName :: String
+  }
+  deriving (Eq,Ord)
+
+instance Show MacroName where
+  show = mnName
+
+data TraceType = NoTrace | TraceCreation deriving (Show)
+
+data PragmaProcedure c =
+  PragmaTracing {
+    ptContext :: [c],
+    ptType :: TraceType
+  }
+  deriving (Show)
+
+isNoTrace :: PragmaProcedure c -> Bool
+isNoTrace (PragmaTracing _ NoTrace) = True
+isNoTrace _                         = False
+
+isTraceCreation :: PragmaProcedure c -> Bool
+isTraceCreation (PragmaTracing _ TraceCreation) = True
+isTraceCreation _                               = False

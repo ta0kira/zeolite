@@ -1,5 +1,5 @@
 {- -----------------------------------------------------------------------------
-Copyright 2019-2020 Kevin P. Barry
+Copyright 2019-2021 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ import System.FilePath
 import Base.CompilerError
 import Base.Positional
 import Base.TrackedErrors
-import Parser.Procedure ()
+import Parser.Procedure
 import Parser.TextParser (SourceContext)
 import Test.Common
 import Types.Procedure
@@ -406,7 +406,41 @@ tests = [
 
     checkParsesAs "1.2345E-4" (\e -> case e of
                                           (Literal (DecimalLiteral _ 12345 (-8))) -> True
-                                          _ -> False)
+                                          _ -> False),
+
+    checkParseMatch "$NoTrace$" pragmaNoTrace
+      (\e -> case e of
+                  PragmaTracing _ NoTrace -> True
+                  _ -> False),
+
+    checkParseMatch "$TraceCreation$" pragmaTraceCreation
+      (\e -> case e of
+                  PragmaTracing _ TraceCreation -> True
+                  _ -> False),
+
+    checkParseMatch "$ReadOnly[foo,bar]$" pragmaReadOnly
+      (\e -> case e of
+                  PragmaMarkVars _ ReadOnly [VariableName "foo", VariableName "bar"] -> True
+                  _ -> False),
+
+    checkParseMatch "$Hidden[foo,bar]$" pragmaHidden
+      (\e -> case e of
+                  PragmaMarkVars _ Hidden [VariableName "foo", VariableName "bar"] -> True
+                  _ -> False),
+
+    checkParseMatch "$SourceContext$" pragmaSourceContext
+      (\e -> case e of
+                  PragmaSourceContext _ -> True
+                  _ -> False),
+
+    checkParseMatch "$ExprLookup[ \nMODULE_PATH /*comment*/\n ]$" pragmaExprLookup
+      (\e -> case e of
+                  PragmaExprLookup _ (MacroName "MODULE_PATH") -> True
+                  _ -> False),
+
+    checkParseError "$ExprLookup[ \"bad stuff\" ]$" "macro name" pragmaExprLookup,
+    checkParseError "$ReadOnly$" "requires arguments" pragmaReadOnly,
+    checkParseError "$Hidden$" "requires arguments" pragmaHidden
   ]
 
 checkParseSuccess :: String -> IO (TrackedErrors ())

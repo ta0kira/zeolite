@@ -1,5 +1,5 @@
 {- -----------------------------------------------------------------------------
-Copyright 2020 Kevin P. Barry
+Copyright 2020-2021 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -17,10 +17,22 @@ limitations under the License.
 -- Author: Kevin P. Barry [ta0kira@gmail.com]
 
 module Parser.SourceFile (
+  CodeVisibility(..),
+  PragmaSource(..),
+  WithVisibility(..),
+  hasCodeVisibility,
+  isModuleOnly,
+  isTestsOnly,
+  mapCodeVisibility,
   parseInternalSource,
   parsePublicSource,
   parseTestSource,
+  pragmaModuleOnly,
+  pragmaTestsOnly,
+  updateCodeVisibility,
 ) where
+
+import qualified Data.Set as Set
 
 import Base.CompilerError
 import Parser.Common
@@ -31,12 +43,11 @@ import Parser.TextParser
 import Parser.TypeCategory ()
 import Types.DefinedCategory
 import Types.IntegrationTest
-import Types.Pragma
 import Types.TypeCategory
 
 
 parseInternalSource :: ErrorContextM m =>
-  (FilePath,String) -> m ([Pragma SourceContext],[AnyCategory SourceContext],[DefinedCategory SourceContext])
+  (FilePath,String) -> m ([PragmaSource SourceContext],[AnyCategory SourceContext],[DefinedCategory SourceContext])
 parseInternalSource (f,s) = runTextParser (between optionalSpace endOfDoc withPragmas) f s where
   withPragmas = do
     pragmas <- parsePragmas internalSourcePragmas
@@ -44,7 +55,7 @@ parseInternalSource (f,s) = runTextParser (between optionalSpace endOfDoc withPr
     (cs,ds) <- parseAny2 sourceParser sourceParser
     return (pragmas,cs,ds)
 
-parsePublicSource :: ErrorContextM m => (FilePath,String) -> m ([Pragma SourceContext],[AnyCategory SourceContext])
+parsePublicSource :: ErrorContextM m => (FilePath,String) -> m ([PragmaSource SourceContext],[AnyCategory SourceContext])
 parsePublicSource (f,s) = runTextParser (between optionalSpace endOfDoc withPragmas) f s where
   withPragmas = do
     pragmas <- parsePragmas publicSourcePragmas
@@ -52,7 +63,7 @@ parsePublicSource (f,s) = runTextParser (between optionalSpace endOfDoc withPrag
     cs <- sepBy sourceParser optionalSpace
     return (pragmas,cs)
 
-parseTestSource :: ErrorContextM m => (FilePath,String) -> m ([Pragma SourceContext],[IntegrationTest SourceContext])
+parseTestSource :: ErrorContextM m => (FilePath,String) -> m ([PragmaSource SourceContext],[IntegrationTest SourceContext])
 parseTestSource (f,s) = runTextParser (between optionalSpace endOfDoc withPragmas) f s where
   withPragmas = do
     pragmas <- parsePragmas testSourcePragmas
@@ -60,11 +71,53 @@ parseTestSource (f,s) = runTextParser (between optionalSpace endOfDoc withPragma
     ts <- sepBy sourceParser optionalSpace
     return (pragmas,ts)
 
-publicSourcePragmas :: [TextParser (Pragma SourceContext)]
+publicSourcePragmas :: [TextParser (PragmaSource SourceContext)]
 publicSourcePragmas = [pragmaModuleOnly,pragmaTestsOnly]
 
-internalSourcePragmas :: [TextParser (Pragma SourceContext)]
+internalSourcePragmas :: [TextParser (PragmaSource SourceContext)]
 internalSourcePragmas = [pragmaTestsOnly]
 
-testSourcePragmas :: [TextParser (Pragma SourceContext)]
+testSourcePragmas :: [TextParser (PragmaSource SourceContext)]
 testSourcePragmas = []
+
+pragmaModuleOnly :: TextParser (PragmaSource SourceContext)
+pragmaModuleOnly = autoPragma "ModuleOnly" $ Left parseAt where
+  parseAt c = PragmaVisibility [c] ModuleOnly
+
+pragmaTestsOnly :: TextParser (PragmaSource SourceContext)
+pragmaTestsOnly = autoPragma "TestsOnly" $ Left parseAt where
+  parseAt c = PragmaVisibility [c] TestsOnly
+
+data CodeVisibility = ModuleOnly | TestsOnly | FromDependency deriving (Eq,Ord,Show)
+
+data WithVisibility a =
+  WithVisibility {
+    wvVisibility :: Set.Set CodeVisibility,
+    wvData :: a
+  }
+  deriving (Show)
+
+hasCodeVisibility :: CodeVisibility -> WithVisibility a -> Bool
+hasCodeVisibility v = Set.member v . wvVisibility
+
+mapCodeVisibility :: (a -> b) -> WithVisibility a -> WithVisibility b
+mapCodeVisibility f (WithVisibility v x) = WithVisibility v (f x)
+
+updateCodeVisibility :: (Set.Set CodeVisibility -> Set.Set CodeVisibility) ->
+  WithVisibility a -> WithVisibility a
+updateCodeVisibility f (WithVisibility v x) = WithVisibility (f v) x
+
+data PragmaSource c =
+  PragmaVisibility {
+    pvContext :: [c],
+    pvScopes :: CodeVisibility
+  }
+  deriving (Show)
+
+isModuleOnly :: PragmaSource c -> Bool
+isModuleOnly (PragmaVisibility _ ModuleOnly) = True
+isModuleOnly _                               = False
+
+isTestsOnly :: PragmaSource c -> Bool
+isTestsOnly (PragmaVisibility _ TestsOnly) = True
+isTestsOnly _                              = False

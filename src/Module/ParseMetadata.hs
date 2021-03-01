@@ -1,5 +1,5 @@
 {- -----------------------------------------------------------------------------
-Copyright 2020 Kevin P. Barry
+Copyright 2020-2021 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -35,8 +35,7 @@ import Parser.TextParser
 import Parser.TypeCategory ()
 import Parser.TypeInstance ()
 import Text.Regex.TDFA
-import Types.Pragma (MacroName)
-import Types.Procedure (Expression)
+import Types.Procedure (Expression,MacroName)
 import Types.TypeCategory (FunctionName(..),Namespace(..))
 import Types.TypeInstance (CategoryName(..))
 

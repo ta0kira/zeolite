@@ -1,5 +1,5 @@
 {- -----------------------------------------------------------------------------
-Copyright 2020 Kevin P. Barry
+Copyright 2020-2021 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -69,8 +69,7 @@ import Module.ParseMetadata
 import Module.Paths
 import Parser.SourceFile
 import Parser.TextParser (SourceContext)
-import Types.Pragma
-import Types.Procedure (Expression(Literal),ValueLiteral(..))
+import Types.Procedure
 import Types.TypeCategory
 import Types.TypeInstance
 

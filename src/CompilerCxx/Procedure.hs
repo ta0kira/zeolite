@@ -1,5 +1,5 @@
 {- -----------------------------------------------------------------------------
-Copyright 2019-2020 Kevin P. Barry
+Copyright 2019-2021 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -54,7 +54,6 @@ import CompilerCxx.Naming
 import Types.Builtin
 import Types.DefinedCategory
 import Types.Function
-import Types.Pragma
 import Types.Procedure
 import Types.TypeCategory
 import Types.TypeInstance
@@ -275,13 +274,11 @@ compileStatement (Assignment c as e) = message ??> do
         -- TODO: Call csAddRequired for t1. (Maybe needs a helper function.)
         lift $ collectAllM_ [validateGeneralInstance r fa (vtType t1),
                              checkValueAssignment r fa t2 t1]
-        csAddVariable (UsedVariable c2 n) (VariableValue c2 LocalScope t1 True)
+        csAddVariable (UsedVariable c2 n) (VariableValue c2 LocalScope t1 VariableDefault)
         csWrite [variableStoredType t1 ++ " " ++ variableName n ++ ";"]
     createVariable r fa (ExistingVariable (InputValue c2 n)) t2 =
       "In assignment to " ++ show n ++ " at " ++ formatFullContext c2 ??> do
-        (VariableValue _ _ t1 w) <- csGetVariable (UsedVariable c2 n)
-        when (not w) $ compilerErrorM $ "Cannot assign to read-only variable " ++
-                                        show n ++ formatFullContextBrace c2
+        (VariableValue _ _ t1 _) <- getWritableVariable c2 n
         -- TODO: Also show original context.
         lift $ (checkValueAssignment r fa t2 t1)
         csUpdateAssigned n
@@ -303,6 +300,8 @@ compileStatement (Assignment c as e) = message ??> do
                writeStoredVariable t (UnwrappedSingle $ "r.At(" ++ show i ++ ")") ++ ";"]
     assignMulti _ = return ()
 compileStatement (NoValueExpression _ v) = compileVoidExpression v
+compileStatement (MarkReadOnly c vs) = mapM_ (\v -> csSetReadOnly (UsedVariable c v)) vs
+compileStatement (MarkHidden   c vs) = mapM_ (\v -> csSetHidden   (UsedVariable c v)) vs
 compileStatement (RawCodeLine s) = csWrite [s]
 
 compileRegularInit :: (Ord c, Show c, CollectErrorsM m,
@@ -310,9 +309,20 @@ compileRegularInit :: (Ord c, Show c, CollectErrorsM m,
   DefinedMember c -> CompilerState a m ()
 compileRegularInit (DefinedMember _ _ _ _ Nothing) = return ()
 compileRegularInit (DefinedMember c2 s t n2 (Just e)) = resetBackgroundM $ do
-  csAddVariable (UsedVariable c2 n2) (VariableValue c2 s t True)
+  csAddVariable (UsedVariable c2 n2) (VariableValue c2 s t VariableDefault)
   let assign = Assignment c2 (Positional [ExistingVariable (InputValue c2 n2)]) e
   compileStatement assign
+
+getWritableVariable :: (Show c, CollectErrorsM m, CompilerContext c m [String] a) =>
+  [c] -> VariableName -> CompilerState a m (VariableValue c)
+getWritableVariable c n = do
+  v@(VariableValue _ _ _ ro) <- csGetVariable (UsedVariable c n)
+  case ro of
+       VariableReadOnly [] -> compilerErrorM $ "Variable " ++ show n ++
+                              formatFullContextBrace c ++ " is read-only"
+       VariableReadOnly c2 -> compilerErrorM $ "Variable " ++ show n ++
+                              formatFullContextBrace c ++ " is marked read-only at " ++ formatFullContext c2
+       _ -> return v
 
 compileLazyInit :: (Ord c, Show c, CollectErrorsM m,
                    CompilerContext c m [String] a) =>
@@ -408,7 +418,7 @@ compileScopedBlock s@(ScopedBlock _ _ _ c2 _) = do
   -- Make variables to be created visible *after* p has been compiled so that p
   -- can't refer to them.
   ctxP <- lift $ execStateT (sequence $ map showVariable vs) ctxP0
-  ctxCl0 <- lift $ ccClearOutput ctxP >>= ccStartCleanup
+  ctxCl0 <- lift $ ccClearOutput ctxP >>= flip ccStartCleanup c2
   ctxP' <-
     case cl of
          -- Insert cleanup into the context for the in block.
@@ -437,7 +447,7 @@ compileScopedBlock s@(ScopedBlock _ _ _ c2 _) = do
       csWrite [variableStoredType t ++ " " ++ variableName n ++ ";"]
     showVariable (c,t,n) = do
       -- TODO: Call csAddRequired for t. (Maybe needs a helper function.)
-      csAddVariable (UsedVariable c n) (VariableValue c LocalScope t True)
+      csAddVariable (UsedVariable c n) (VariableValue c LocalScope t VariableDefault)
     -- Don't merge if the second scope has cleanup, so that the latter can't
     -- refer to variables defined in the first scope.
     rewriteScoped (ScopedBlock _ p cl@(Just _) _
@@ -793,9 +803,7 @@ compileExpressionStart (BuiltinCall c (FunctionCall _ BuiltinTypename ps es)) = 
 compileExpressionStart (BuiltinCall _ _) = undefined
 compileExpressionStart (ParensExpression _ e) = compileExpression e
 compileExpressionStart (InlineAssignment c n e) = do
-  (VariableValue _ s t0 w) <- csGetVariable (UsedVariable c n)
-  when (not w) $ compilerErrorM $ "Cannot assign to read-only variable " ++
-                                        show n ++ formatFullContextBrace c
+  (VariableValue _ s t0 _) <- getWritableVariable c n
   (Positional [t],e') <- compileExpression e -- TODO: Get rid of the Positional matching here.
   r <- csResolver
   fa <- csAllFilters

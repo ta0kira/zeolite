@@ -89,11 +89,9 @@ pairMergeTree anyOp allOp leafOp x y = pair (toMergeTree x) (toMergeTree y) wher
   pair x2 (MergeAll ys) = allOp $ map (x2 `pair`) ys
   pair (MergeAll xs) y2 = anyOp $ map (`pair` y2) xs
   pair x2 (MergeAny ys) = anyOp $ map (x2 `pair`) ys
-
-separateLeaves :: [MergeTree a] -> ([MergeTree a],[a])
-separateLeaves = foldr split ([],[]) where
-  split (MergeLeaf x) (ms,ls) = (ms,x:ls)
-  split x             (ms,ls) = (x:ms,ls)
+  separateLeaves = foldr split ([],[]) where
+    split (MergeLeaf x2) (ms,ls) = (ms,x2:ls)
+    split x2             (ms,ls) = (x2:ms,ls)
 
 instance Functor MergeTree where
   fmap f = reduceMergeCommon mergeAny mergeAll (mergeLeaf . f)

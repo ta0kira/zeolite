@@ -1,0 +1,229 @@
+/* -----------------------------------------------------------------------------
+Copyright 2021 Kevin P. Barry
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+----------------------------------------------------------------------------- */
+
+// Author: Kevin P. Barry [ta0kira@gmail.com]
+
+testcase "ReadOnly causes error" {
+  error
+  require "foo.+read-only"
+}
+
+unittest test {
+  Int foo <- 1
+  scoped {
+  } in {
+    $ReadOnly[foo]$
+    foo <- 2
+  }
+}
+
+testcase "ReadOnly with bad variable name" {
+  error
+  require "foo.+not defined"
+}
+
+unittest test {
+  $ReadOnly[foo]$
+}
+
+
+testcase "ReadOnly is scoped" {
+  success
+}
+
+unittest test {
+  Int foo <- 1
+  scoped {
+  } in {
+    $ReadOnly[foo]$
+  }
+  foo <- 2
+  \ Testing.checkEquals<?>(foo,2)
+}
+
+
+testcase "ReadOnly is idempotent" {
+  success
+}
+
+unittest test {
+  Int foo <- 1
+  scoped {
+  } in {
+    $ReadOnly[foo]$
+    $ReadOnly[foo]$
+  }
+  foo <- 2
+  \ Testing.checkEquals<?>(foo,2)
+}
+
+
+testcase "ReadOnly respects order" {
+  success
+}
+
+unittest test {
+  Int foo <- 1
+  scoped {
+  } in {
+    foo <- 2
+    $ReadOnly[foo]$
+  }
+  \ Testing.checkEquals<?>(foo,2)
+  foo <- 3
+  \ Testing.checkEquals<?>(foo,3)
+}
+
+
+testcase "ReadOnly with member" {
+  error
+  require "foo.+read-only"
+}
+
+unittest test {
+  \ Value.test()
+}
+
+concrete Value {
+  @type test () -> ()
+}
+
+define Value {
+  @category Int foo <- 1
+
+  test () {
+    $ReadOnly[foo]$
+    foo <- 2
+  }
+}
+
+
+testcase "ReadOnly in while does not affect update" {
+  success
+}
+
+unittest test {
+  scoped {
+    Int foo <- 0
+  } in while (foo < 10) {
+    $ReadOnly[foo]$
+    continue
+  } update {
+    foo <- foo+1
+  }
+}
+
+
+testcase "ReadOnly in scoped does not affect cleanup" {
+  success
+}
+
+unittest test {
+  Int foo <- 1
+  cleanup {
+    foo <- 2
+  } in $ReadOnly[foo]$
+  \ Testing.checkEquals<?>(foo,2)
+}
+
+
+testcase "Hidden causes error" {
+  error
+  require "foo.+hidden"
+}
+
+unittest test {
+  Int foo <- 1
+  scoped {
+  } in {
+    $Hidden[foo]$
+    \ foo
+  }
+}
+
+
+testcase "Hidden is scoped" {
+  success
+}
+
+unittest test {
+  Int foo <- 1
+  scoped {
+  } in {
+    $Hidden[foo]$
+  }
+  foo <- 2
+  \ Testing.checkEquals<?>(foo,2)
+}
+
+
+testcase "Hidden is not idempotent" {
+  error
+  require "foo.+hidden"
+}
+
+unittest test {
+  Int foo <- 1
+  scoped {
+  } in {
+    $Hidden[foo]$
+    $Hidden[foo]$
+  }
+}
+
+
+testcase "ReadOnly cannot be applied to Hidden" {
+  error
+  require "foo.+hidden"
+}
+
+unittest test {
+  Int foo <- 1
+  scoped {
+  } in {
+    $Hidden[foo]$
+    $ReadOnly[foo]$
+  }
+}
+
+
+testcase "Hidden respects order" {
+  success
+}
+
+unittest test {
+  Int foo <- 1
+  scoped {
+  } in {
+    foo <- 2
+    $Hidden[foo]$
+  }
+  \ Testing.checkEquals<?>(foo,2)
+  foo <- 3
+  \ Testing.checkEquals<?>(foo,3)
+}
+
+
+testcase "Hidden does not allow reusing a variable name" {
+  error
+  require "foo.+already defined"
+}
+
+unittest test {
+  Int foo <- 1
+  $Hidden[foo]$
+  Int foo <- 1
+}

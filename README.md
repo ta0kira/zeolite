@@ -68,6 +68,7 @@ of this document.
 - [Compiler Pragmas and Macros](#compiler-pragmas-and-macros)
   - [Source File Pragmas](#source-file-pragmas)
   - [Procedure Pragmas](#procedure-pragmas)
+  - [Local Variable Rules](#local-variable-rules)
   - [Expression Macros](#expression-macros)
 
 ## Project Status
@@ -1285,6 +1286,34 @@ These must occur at the very top of a function definition.
   relevant when debugging crashes. The added execution cost for the function is
   trivial; however, it increases the memory size of the value by a few bytes per
   call currently on the stack at the time it gets created.
+
+### Local Variable Rules
+
+These pragmas alter how variables are dealt with locally:
+
+- **`$ReadOnly[`**_`var1,var2,...`_**`]$`**. Marks `var1`, `var2`, etc. as
+  read-only for the remainder of the statements in this context. Note that this
+  only prevents *assignment* to the variable; it does not prevent making calls
+  to functions that change the state of the underlying value.
+
+  <pre style='color:#1f1c1b;background-color:#f6f8fa;'>
+  <b>scoped</b> {
+    <i><span style='color:#0057ae;'>Int</span></i> i &lt;- <span style='color:#b08000;'>0</span>
+  } <b>in</b> <b>while</b> (i &lt; <span style='color:#b08000;'>100</span>) {
+    <span style='color:#898887;'>// i can still be overwritten here</span>
+    <b><i><span style='color:#8060c0;'>$ReadOnly[</span></i></b><i><span style='color:#8060c0;'>i</span></i><b><i><span style='color:#8060c0;'>]$</span></i></b>
+    <span style='color:#898887;'>// i can not be overwritten below here within the while block</span>
+  } <b>update</b> {
+    <span style='color:#898887;'>// this is fine because it's in a different scope</span>
+    i &lt;- i+<span style='color:#b08000;'>1</span>
+  }</pre>
+
+  This can be used for any variable name visible in the current scope, including
+  `@value` and `@category` members and argument and return variables.
+
+- **`$Hidden[`**_`var1,var2,...`_**`]$`**. This works the same way as `ReadOnly`
+  except that it also makes the variables inaccessible for reading. Note that
+  this *does not* allow you to reuse a variable name.
 
 ### Expression Macros
 

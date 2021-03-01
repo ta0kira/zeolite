@@ -1,5 +1,5 @@
 {- -----------------------------------------------------------------------------
-Copyright 2020 Kevin P. Barry
+Copyright 2020-2021 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -30,8 +30,7 @@ import Data.List (nub)
 import Cli.CompileOptions
 import Cli.Programs (VersionHash)
 import Parser.TextParser (SourceContext)
-import Types.Pragma (MacroName)
-import Types.Procedure (Expression)
+import Types.Procedure (Expression,MacroName)
 import Types.TypeCategory (Namespace)
 import Types.TypeInstance (CategoryName)
 

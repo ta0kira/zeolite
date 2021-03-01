@@ -1,5 +1,5 @@
 {- -----------------------------------------------------------------------------
-Copyright 2019-2020 Kevin P. Barry
+Copyright 2019-2021 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,6 +20,8 @@ module Test.Common (
   checkDefinesFail,
   checkDefinesSuccess,
   checkEquals,
+  checkParseError,
+  checkParseMatch,
   checkTypeFail,
   checkTypeSuccess,
   containsAtLeast,
@@ -43,6 +45,7 @@ import Data.List
 import System.Exit
 import System.FilePath
 import System.IO
+import Text.Regex.TDFA
 import qualified Data.Map as Map
 import qualified Data.Set as Set
 
@@ -179,3 +182,28 @@ checkEquals actual expected
 
 loadFile :: String -> IO String
 loadFile f = readFile ("src" </> "Test" </> f)
+
+checkParseMatch :: Show a => String -> TextParser a -> (a -> Bool) -> IO (TrackedErrors ())
+checkParseMatch s p m = return $ do
+  let parsed = readSingleWith p "(string)" s
+  check parsed
+  e <- parsed
+  when (not $ m e) $
+    compilerErrorM $ "No match in '" ++ s ++ "':\n" ++ show e
+  where
+    check c
+      | isCompilerError c = compilerErrorM $ "Parse '" ++ s ++ "':\n" ++ show (getCompilerError c)
+      | otherwise = return ()
+
+checkParseError :: Show a => String -> String -> TextParser a -> IO (TrackedErrors ())
+checkParseError s m p = return $ do
+  let parsed = readSingleWith p "(string)" s
+  check parsed
+  where
+    check c
+      | isCompilerError c = do
+          let text = show (getCompilerError c)
+          when (not $ text =~ m) $
+            compilerErrorM $ "Expected pattern " ++ show m ++ " in error output but got\n" ++ text
+      | otherwise =
+          compilerErrorM $ "Expected write failure but got\n" ++ show (getCompilerSuccess c)

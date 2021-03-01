@@ -1,5 +1,5 @@
 {- -----------------------------------------------------------------------------
-Copyright 2019 Kevin P. Barry
+Copyright 2019-2021 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ limitations under the License.
 module Types.DefinedCategory (
   DefinedCategory(..),
   DefinedMember(..),
+  VariableRule(..),
   VariableValue(..),
   isInitialized,
   mapMembers,
@@ -69,13 +70,28 @@ isInitialized = check . dmInit where
   check Nothing = False
   check _       = True
 
+data VariableRule c =
+  VariableDefault |
+  VariableReadOnly {
+    vroContext :: [c]
+  } |
+  VariableHidden {
+    vhContext :: [c]
+  }
+
 data VariableValue c =
   VariableValue {
     vvContext :: [c],
     vvScope :: SymbolScope,
     vvType :: ValueType,
-    vvWritable :: Bool
+    vvReadOnlyAt :: VariableRule c
   }
+
+instance Show c => Show (VariableValue c) where
+  show (VariableValue c _ t ro) = show t ++ formatFullContextBrace c ++ format ro where
+    format (VariableReadOnly c2) = " (read-only at " ++ formatFullContext c2 ++ ")"
+    format (VariableHidden c2)   = " (hidden at " ++ formatFullContext c2 ++ ")"
+    format _ = ""
 
 setInternalFunctions :: (Show c, CollectErrorsM m, TypeResolver r) =>
   r -> AnyCategory c -> [ScopedFunction c] ->
@@ -158,7 +174,7 @@ mapMembers ms = foldr update (return Map.empty) ms where
                                      formatFullContextBrace (dmContext m) ++
                                      " is already defined" ++
                                      formatFullContextBrace (vvContext m0)
-    return $ Map.insert (dmName m) (VariableValue (dmContext m) (dmScope m) (dmType m) True) ma'
+    return $ Map.insert (dmName m) (VariableValue (dmContext m) (dmScope m) (dmType m) VariableDefault) ma'
 
 -- TODO: Most of this duplicates parts of flattenAllConnections.
 mergeInternalInheritance :: (Show c, CollectErrorsM m) =>

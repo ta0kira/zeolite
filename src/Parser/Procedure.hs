@@ -1,5 +1,5 @@
 {- -----------------------------------------------------------------------------
-Copyright 2019-2020 Kevin P. Barry
+Copyright 2019-2021 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,6 +20,15 @@ limitations under the License.
 {-# LANGUAGE FlexibleInstances #-}
 
 module Parser.Procedure (
+  MarkType(..),
+  PragmaExpr(..),
+  PragmaStatement(..),
+  pragmaExprLookup,
+  pragmaHidden,
+  pragmaNoTrace,
+  pragmaReadOnly,
+  pragmaSourceContext,
+  pragmaTraceCreation,
 ) where
 
 import Control.Monad (when)
@@ -32,7 +41,6 @@ import Parser.Pragma
 import Parser.TextParser
 import Parser.TypeCategory ()
 import Parser.TypeInstance ()
-import Types.Pragma
 import Types.Procedure
 import Types.TypeCategory
 
@@ -118,6 +126,7 @@ instance ParseFromSource (Statement SourceContext) where
                  parseFailCall <|>
                  parseVoid <|>
                  parseAssign <|>
+                 parsePragma <|>
                  parseIgnore where
     parseAssign = labeled "statement" $ do
       c <- getSourceContext
@@ -163,6 +172,11 @@ instance ParseFromSource (Statement SourceContext) where
       c <- getSourceContext
       e <- sourceParser
       return $ NoValueExpression [c] e
+    parsePragma = do
+      p <- pragmaReadOnly <|> pragmaHidden <|> unknownPragma
+      case p of
+           PragmaMarkVars c ReadOnly vs -> return $ MarkReadOnly c vs
+           PragmaMarkVars c Hidden   vs -> return $ MarkHidden   c vs
 
 instance ParseFromSource (Assignable SourceContext) where
   sourceParser = existing <|> create where
@@ -345,7 +359,6 @@ infixBefore o1 o2 = do
      else if bothInOperatorSet o1 o2 rightAssocInfix
              then return False  -- Logical operators are right-associative.
              else return True   -- Default is left-associative.
-  where
 
 checkAmbiguous :: (Show c, ErrorContextM m) => Operator c -> Operator c -> m ()
 checkAmbiguous o1 o2 = checked where
@@ -639,3 +652,60 @@ instance ParseFromSource (ValueOperation SourceContext) where
       n <- sourceParser
       f <- parseFunctionCall c n
       return $ ConvertedCall [c] t f
+
+instance ParseFromSource MacroName where
+  sourceParser = labeled "macro name" $ do
+    h <- upperChar <|> char '_'
+    t <- many (upperChar <|> digitChar <|> char '_')
+    optionalSpace
+    return $ MacroName (h:t)
+
+pragmaNoTrace :: TextParser (PragmaProcedure SourceContext)
+pragmaNoTrace = autoPragma "NoTrace" $ Left parseAt where
+  parseAt c = PragmaTracing [c] NoTrace
+
+pragmaTraceCreation :: TextParser (PragmaProcedure SourceContext)
+pragmaTraceCreation = autoPragma "TraceCreation" $ Left parseAt where
+  parseAt c = PragmaTracing [c] TraceCreation
+
+data PragmaExpr c =
+  PragmaExprLookup {
+    pelContext :: [c],
+    pelName :: MacroName
+  } |
+  PragmaSourceContext {
+    pscContext :: c
+  }
+  deriving (Show)
+
+pragmaExprLookup :: TextParser (PragmaExpr SourceContext)
+pragmaExprLookup = autoPragma "ExprLookup" $ Right parseAt where
+  parseAt c = do
+    name <- sourceParser
+    return $ PragmaExprLookup [c] name
+
+pragmaSourceContext :: TextParser (PragmaExpr SourceContext)
+pragmaSourceContext = autoPragma "SourceContext" $ Left parseAt where
+  parseAt c = PragmaSourceContext c
+
+data MarkType = ReadOnly | Hidden deriving (Show)
+
+data PragmaStatement c =
+  PragmaMarkVars {
+    pmvContext :: [c],
+    pmvType :: MarkType,
+    pmvVars :: [VariableName]
+  }
+  deriving (Show)
+
+pragmaReadOnly :: TextParser (PragmaStatement SourceContext)
+pragmaReadOnly = autoPragma "ReadOnly" $ Right parseAt where
+  parseAt c = do
+    vs <- labeled "variable names" $ sepBy sourceParser (sepAfter $ string ",")
+    return $ PragmaMarkVars [c] ReadOnly vs
+
+pragmaHidden :: TextParser (PragmaStatement SourceContext)
+pragmaHidden = autoPragma "Hidden" $ Right parseAt where
+  parseAt c = do
+    vs <- labeled "variable names" $ sepBy sourceParser (sepAfter $ string ",")
+    return $ PragmaMarkVars [c] Hidden vs

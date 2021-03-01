@@ -1,5 +1,5 @@
 {- -----------------------------------------------------------------------------
-Copyright 2020 Kevin P. Barry
+Copyright 2020-2021 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -17,14 +17,9 @@ limitations under the License.
 -- Author: Kevin P. Barry [ta0kira@gmail.com]
 
 module Parser.Pragma (
+  autoPragma,
   parsePragmas,
-  pragmaComment,
-  pragmaExprLookup,
-  pragmaNoTrace,
-  pragmaModuleOnly,
-  pragmaSourceContext,
-  pragmaTestsOnly,
-  pragmaTraceCreation,
+  unknownPragma,
 ) where
 
 import Control.Monad (when)
@@ -32,52 +27,10 @@ import Control.Monad (when)
 import Base.CompilerError
 import Parser.Common
 import Parser.TextParser
-import Types.Pragma
 
 
 parsePragmas :: [TextParser a] -> TextParser [a]
-parsePragmas = many . foldr ((<|>)) unknownPragma
-
-pragmaModuleOnly :: TextParser (Pragma SourceContext)
-pragmaModuleOnly = autoPragma "ModuleOnly" $ Left parseAt where
-  parseAt c = PragmaVisibility [c] ModuleOnly
-
-instance ParseFromSource MacroName where
-  sourceParser = labeled "macro name" $ do
-    h <- upperChar <|> char '_'
-    t <- many (upperChar <|> digitChar <|> char '_')
-    optionalSpace
-    return $ MacroName (h:t)
-
-pragmaExprLookup :: TextParser (Pragma SourceContext)
-pragmaExprLookup = autoPragma "ExprLookup" $ Right parseAt where
-  parseAt c = do
-    name <- sourceParser
-    return $ PragmaExprLookup [c] name
-
-pragmaSourceContext :: TextParser (Pragma SourceContext)
-pragmaSourceContext = autoPragma "SourceContext" $ Left parseAt where
-  parseAt c = PragmaSourceContext c
-
-pragmaNoTrace :: TextParser (Pragma SourceContext)
-pragmaNoTrace = autoPragma "NoTrace" $ Left parseAt where
-  parseAt c = PragmaTracing [c] NoTrace
-
-pragmaTraceCreation :: TextParser (Pragma SourceContext)
-pragmaTraceCreation = autoPragma "TraceCreation" $ Left parseAt where
-  parseAt c = PragmaTracing [c] TraceCreation
-
-pragmaTestsOnly :: TextParser (Pragma SourceContext)
-pragmaTestsOnly = autoPragma "TestsOnly" $ Left parseAt where
-  parseAt c = PragmaVisibility [c] TestsOnly
-
-pragmaComment :: TextParser (Pragma SourceContext)
-pragmaComment = autoPragma "Comment" $ Right parseAt where
-  parseAt c = do
-    string_ "\""
-    ss <- manyTill stringChar (string_ "\"")
-    optionalSpace
-    return $ PragmaComment [c] ss
+parsePragmas = many . foldr ((<|>)) (try unknownPragma)
 
 unknownPragma :: TextParser a
 unknownPragma = do

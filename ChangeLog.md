@@ -1,5 +1,17 @@
 # Revision history for zeolite-lang
 
+## 0.12.0.1  -- ????-??-??
+
+### Language
+
+* **[new]** Adds pragmas for local variable rules:
+
+  * **[new]** `$ReadOnly[foo]$` marks `foo` as read-only in the current context
+    following the line with the pragma.
+
+  * **[new]** `$Hidden[foo]$` hides `foo` in the current context following the
+    line with the pragma.
+
 ## 0.12.0.0  -- 2020-12-11
 
 ### Language

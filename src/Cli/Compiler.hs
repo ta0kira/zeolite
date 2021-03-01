@@ -1,5 +1,5 @@
 {- -----------------------------------------------------------------------------
-Copyright 2020 Kevin P. Barry
+Copyright 2020-2021 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -50,7 +50,6 @@ import Parser.SourceFile
 import Parser.TextParser (SourceContext)
 import Types.Builtin
 import Types.DefinedCategory
-import Types.Pragma
 import Types.Procedure (isLiteralCategory)
 import Types.TypeCategory
 import Types.TypeInstance

@@ -1,5 +1,5 @@
 {- -----------------------------------------------------------------------------
-Copyright 2019-2020 Kevin P. Barry
+Copyright 2019-2021 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -39,7 +39,6 @@ import Base.MergeTree
 import Base.Positional
 import Compilation.CompilerState
 import Types.DefinedCategory
-import Types.Pragma (MacroName)
 import Types.Procedure
 import Types.TypeCategory
 import Types.TypeInstance
@@ -237,9 +236,11 @@ instance (Show c, CollectErrorsM m) =>
           return $ MemberValue c2 n t2'
   ccGetVariable ctx (UsedVariable c n) =
     case n `Map.lookup` pcVariables ctx of
-          (Just v) -> return v
-          _ -> compilerErrorM $ "Variable " ++ show n ++ " is not defined" ++
-                                formatFullContextBrace c
+           (Just (VariableValue _ _ _ (VariableHidden c2))) ->
+             compilerErrorM $ "Variable " ++ show n ++ formatFullContextBrace c ++
+                              " was explicitly hidden at " ++ formatFullContext c2
+           (Just v) -> return v
+           _ -> compilerErrorM $ "Variable " ++ show n ++ formatFullContextBrace c ++ " is not defined"
   ccAddVariable ctx (UsedVariable c n) t = do
     case n `Map.lookup` pcVariables ctx of
           Nothing -> return ()
@@ -259,6 +260,66 @@ instance (Show c, CollectErrorsM m) =>
         pcParamScopes = pcParamScopes ctx,
         pcFunctions = pcFunctions ctx,
         pcVariables = Map.insert n t (pcVariables ctx),
+        pcReturns = pcReturns ctx,
+        pcJumpType = pcJumpType ctx,
+        pcIsNamed = pcIsNamed ctx,
+        pcPrimNamed = pcPrimNamed ctx,
+        pcRequiredTypes = pcRequiredTypes ctx,
+        pcOutput = pcOutput ctx,
+        pcDisallowInit = pcDisallowInit ctx,
+        pcLoopSetup = pcLoopSetup ctx,
+        pcCleanupBlocks = pcCleanupBlocks ctx,
+        pcInCleanup = pcInCleanup ctx,
+        pcUsedVars = pcUsedVars ctx,
+        pcExprMap = pcExprMap ctx,
+        pcReservedMacros = pcReservedMacros ctx,
+        pcNoTrace = pcNoTrace ctx
+      }
+  ccSetReadOnly ctx v@(UsedVariable c n) = do
+    (VariableValue c2 s t _) <- ccGetVariable ctx v
+    return $ ProcedureContext {
+        pcScope = pcScope ctx,
+        pcType = pcType ctx,
+        pcExtParams = pcExtParams ctx,
+        pcIntParams = pcIntParams ctx,
+        pcMembers = pcMembers ctx,
+        pcCategories = pcCategories ctx,
+        pcAllFilters = pcAllFilters ctx,
+        pcExtFilters = pcExtFilters ctx,
+        pcIntFilters = pcIntFilters ctx,
+        pcParamScopes = pcParamScopes ctx,
+        pcFunctions = pcFunctions ctx,
+        pcVariables = Map.insert n (VariableValue c2 s t (VariableReadOnly c)) (pcVariables ctx),
+        pcReturns = pcReturns ctx,
+        pcJumpType = pcJumpType ctx,
+        pcIsNamed = pcIsNamed ctx,
+        pcPrimNamed = pcPrimNamed ctx,
+        pcRequiredTypes = pcRequiredTypes ctx,
+        pcOutput = pcOutput ctx,
+        pcDisallowInit = pcDisallowInit ctx,
+        pcLoopSetup = pcLoopSetup ctx,
+        pcCleanupBlocks = pcCleanupBlocks ctx,
+        pcInCleanup = pcInCleanup ctx,
+        pcUsedVars = pcUsedVars ctx,
+        pcExprMap = pcExprMap ctx,
+        pcReservedMacros = pcReservedMacros ctx,
+        pcNoTrace = pcNoTrace ctx
+      }
+  ccSetHidden ctx v@(UsedVariable c n) = do
+    (VariableValue c2 s t _) <- ccGetVariable ctx v
+    return $ ProcedureContext {
+        pcScope = pcScope ctx,
+        pcType = pcType ctx,
+        pcExtParams = pcExtParams ctx,
+        pcIntParams = pcIntParams ctx,
+        pcMembers = pcMembers ctx,
+        pcCategories = pcCategories ctx,
+        pcAllFilters = pcAllFilters ctx,
+        pcExtFilters = pcExtFilters ctx,
+        pcIntFilters = pcIntFilters ctx,
+        pcParamScopes = pcParamScopes ctx,
+        pcFunctions = pcFunctions ctx,
+        pcVariables = Map.insert n (VariableValue c2 s t (VariableHidden c)) (pcVariables ctx),
         pcReturns = pcReturns ctx,
         pcJumpType = pcJumpType ctx,
         pcIsNamed = pcIsNamed ctx,
@@ -599,7 +660,7 @@ instance (Show c, CollectErrorsM m) =>
         pcNoTrace = pcNoTrace ctx
       }
   ccGetLoop = return . pcLoopSetup
-  ccStartCleanup ctx = do
+  ccStartCleanup ctx c = do
     let vars = protectReturns (pcReturns ctx) (pcVariables ctx)
     return $ ProcedureContext {
         pcScope = pcScope ctx,
@@ -634,7 +695,7 @@ instance (Show c, CollectErrorsM m) =>
       protectReturns _                      vs = vs
       protect n vs =
         case n `Map.lookup` vs of
-             Just (VariableValue c s@LocalScope t _) -> Map.insert n (VariableValue c s t False) vs
+             Just (VariableValue c2 s@LocalScope t _) -> Map.insert n (VariableValue c2 s t (VariableReadOnly c)) vs
              _ -> vs
   ccPushCleanup ctx ctx2 =
     return $ ProcedureContext {
@@ -794,7 +855,7 @@ updateReturnVariables ma rs1 rs2 = updated where
         update (PassedValue c t,r) va = do
           va' <- va
           case ovName r `Map.lookup` va' of
-               Nothing -> return $ Map.insert (ovName r) (VariableValue c LocalScope t True) va'
+               Nothing -> return $ Map.insert (ovName r) (VariableValue c LocalScope t VariableDefault) va'
                (Just v) -> compilerErrorM $ "Variable " ++ show (ovName r) ++
                                           formatFullContextBrace (ovContext r) ++
                                           " is already defined" ++
@@ -811,7 +872,7 @@ updateArgVariables ma as1 as2 = do
     update (PassedValue c t,a) va = do
       va' <- va
       case ivName a `Map.lookup` va' of
-            Nothing -> return $ Map.insert (ivName a) (VariableValue c LocalScope t False) va'
+            Nothing -> return $ Map.insert (ivName a) (VariableValue c LocalScope t (VariableReadOnly c)) va'
             (Just v) -> compilerErrorM $ "Variable " ++ show (ivName a) ++
                                        formatFullContextBrace (ivContext a) ++
                                        " is already defined" ++

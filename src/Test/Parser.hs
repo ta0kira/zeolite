@@ -1,5 +1,5 @@
 {- -----------------------------------------------------------------------------
-Copyright 2020 Kevin P. Barry
+Copyright 2020-2021 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -66,7 +66,7 @@ tests = [
     checkParseFail (operator ">>??!" >> many asciiChar) ">>??!!!"
   ]
 
-checkParsesAs :: (Eq a, Show a) => TextParser a -> [Char] -> a -> IO (TrackedErrors ())
+checkParsesAs :: (Eq a, Show a) => TextParser a -> String -> a -> IO (TrackedErrors ())
 checkParsesAs p s m = return $ do
   let parsed = readSingleWith p "(string)" s
   check parsed
@@ -78,7 +78,7 @@ checkParsesAs p s m = return $ do
       | isCompilerError c = compilerErrorM $ "Parse '" ++ s ++ "':\n" ++ show (getCompilerError c)
       | otherwise = return ()
 
-checkParseFail :: Show a => TextParser a -> [Char] -> IO (TrackedErrors ())
+checkParseFail :: Show a => TextParser a -> String -> IO (TrackedErrors ())
 checkParseFail p s = do
   let parsed = readSingleWith p "(string)" s
   return $ check parsed
