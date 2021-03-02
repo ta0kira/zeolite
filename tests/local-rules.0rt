@@ -55,6 +55,20 @@ unittest test {
 }
 
 
+testcase "ReadOnly is passed to nested scope" {
+  error
+  require "foo.+read-only"
+}
+
+unittest test {
+  Int foo <- 1
+  $ReadOnly[foo]$
+  if (true) {
+    foo <- 2
+  }
+}
+
+
 testcase "ReadOnly is idempotent" {
   success
 }
@@ -167,6 +181,20 @@ unittest test {
   }
   foo <- 2
   \ Testing.checkEquals<?>(foo,2)
+}
+
+
+testcase "Hidden is passed to nested scope" {
+  error
+  require "foo.+hidden"
+}
+
+unittest test {
+  Int foo <- 1
+  $Hidden[foo]$
+  if (true) {
+    foo <- 2
+  }
 }
 
 

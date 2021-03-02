@@ -1295,7 +1295,8 @@ These pragmas alter how variables are dealt with locally:
   `0.12.1.0`.) Marks `var1`, `var2`, etc. as read-only for the remainder of the
   statements in this context. Note that this only prevents *assignment* to the
   variable; it does not prevent making calls to functions that change the state
-  of the underlying value.
+  of the underlying value. It also does not prevent calls to other functions
+  modifying the variable.
 
   <pre style='color:#1f1c1b;background-color:#f6f8fa;'>
   <b>scoped</b> {
