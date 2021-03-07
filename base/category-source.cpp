@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-Copyright 2019-2020 Kevin P. Barry
+Copyright 2019-2021 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -158,9 +158,34 @@ ReturnTuple TypeValue::Dispatch(const S<TypeValue>& self, const ValueFunction& l
 
 bool TypeInstance::CanConvert(const S<const TypeInstance>& x,
                               const S<const TypeInstance>& y) {
-  // See checkGeneralType for the ordering here.
+  // See pairMergeTree for the ordering here.
+  // TODO: Consider using a cache here, since the check could be expensive.
   if (x.get() == y.get()) {
     return true;
+  } else if (x->InstanceMergeType() == MergeType::INTERSECT &&
+             y->InstanceMergeType() == MergeType::UNION) {
+    for (const auto& left : x->MergedTypes()) {
+      if (left->InstanceMergeType() == MergeType::SINGLE) {
+        for (const auto& right : y->MergedTypes()) {
+          if (right->InstanceMergeType() == MergeType::SINGLE) {
+            if (TypeInstance::CanConvert(left, right)) {
+              return true;
+            }
+          }
+        }
+      }
+    }
+    for (const auto& left : x->MergedTypes()) {
+      if (TypeInstance::CanConvert(left, y)) {
+        return true;
+      }
+    }
+    for (const auto right : y->MergedTypes()) {
+      if (TypeInstance::CanConvert(x, right)) {
+        return true;
+      }
+    }
+    return false;
   } else if (y->InstanceMergeType() == MergeType::INTERSECT) {
     for (const auto& right : y->MergedTypes()) {
       if (!TypeInstance::CanConvert(x, right)) {

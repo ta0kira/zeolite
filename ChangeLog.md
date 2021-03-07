@@ -12,6 +12,11 @@
   * **[new]** `$Hidden[foo]$` hides `foo` in the current context following the
     line with the pragma.
 
+* **[fix]** Fixes a latent issue with the `reduce` built-in when converting an
+  intersection type to a union type, when one or both sides contains another
+  nested union or intersection. This was previously fixed for compile-time
+  checks, but `reduce` was missed.
+
 ## 0.12.0.0  -- 2020-12-11
 
 ### Language

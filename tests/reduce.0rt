@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-Copyright 2020 Kevin P. Barry
+Copyright 2020-2021 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -755,4 +755,53 @@ define Value {
   create () {
     return Value{ }
   }
+}
+
+
+testcase "partial matches in nested types" {
+  success
+}
+
+@value interface A {}
+@value interface B {}
+@value interface C {}
+
+concrete AB {
+  refines A
+  refines B
+  @type create () -> (AB)
+}
+
+define AB {
+  create () { return AB{ } }
+}
+
+concrete AC {
+  refines A
+  refines C
+  @type create () -> (AC)
+}
+
+define AC {
+  create () { return AC{ } }
+}
+
+unittest leftNestedInRight {
+  \ Testing.checkEquals<?>(present(reduce<[A&B],[[A&B]|C]>(AB.create())),true)
+}
+
+unittest rightNestedInLeft {
+  \ Testing.checkEquals<?>(present(reduce<[[A|B]&C],[A|B]>(AC.create())),true)
+}
+
+unittest unionToUnion {
+  \ Testing.checkEquals<?>(present(reduce<[[A&B]|C],[[A&B]|C]>(AB.create())),true)
+}
+
+unittest intersectToIntersect {
+  \ Testing.checkEquals<?>(present(reduce<[[A|B]&C],[[A|B]&C]>(AC.create())),true)
+}
+
+unittest unionToIntersect {
+  \ Testing.checkEquals<?>(present(reduce<[A|B],[A&B]>(AB.create())),false)
 }
