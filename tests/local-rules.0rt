@@ -30,6 +30,7 @@ unittest test {
   }
 }
 
+
 testcase "ReadOnly with bad variable name" {
   error
   require "foo.+not defined"

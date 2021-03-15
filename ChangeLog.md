@@ -1,6 +1,12 @@
 # Revision history for zeolite-lang
 
-## 0.12.1.0  -- ????-??-??
+## 0.13.0.0  -- ????-??-??
+
+### Compiler CLI
+
+* **[breaking]** Adds [`microlens`][microlens] and
+  [`microlens-th`][microlens-th] as dependencies, to help clean up the compiler
+  code. This should not change the compiler's behavior.
 
 ### Language
 
@@ -492,4 +498,6 @@
 * First version. Released on an unsuspecting world.
 
 [megaparsec]: https://hackage.haskell.org/package/megaparsec
+[microlens]: https://hackage.haskell.org/package/microlens
+[microlens-th]: https://hackage.haskell.org/package/microlens-th
 [parsec]: https://hackage.haskell.org/package/parsec

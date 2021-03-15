@@ -1292,7 +1292,7 @@ These must occur at the very top of a function definition.
 These pragmas alter how variables are dealt with locally:
 
 - **`$ReadOnly[`**_`var1,var2,...`_**`]$`**. (As of compiler version
-  `0.12.1.0`.) Marks `var1`, `var2`, etc. as read-only for the remainder of the
+  `0.13.0.0`.) Marks `var1`, `var2`, etc. as read-only for the remainder of the
   statements in this context. Note that this only prevents *assignment* to the
   variable; it does not prevent making calls to functions that change the state
   of the underlying value. It also does not prevent calls to other functions
@@ -1313,7 +1313,7 @@ These pragmas alter how variables are dealt with locally:
   This can be used for any variable name visible in the current scope, including
   `@value` and `@category` members and argument and return variables.
 
-- **`$Hidden[`**_`var1,var2,...`_**`]$`**. (As of compiler version `0.12.1.0`.)
+- **`$Hidden[`**_`var1,var2,...`_**`]$`**. (As of compiler version `0.13.0.0`.)
   This works the same way as `ReadOnly` except that it also makes the variables
   inaccessible for reading. Note that this *does not* allow you to reuse a
   variable name; the variable name remains reserved.
