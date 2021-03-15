@@ -63,7 +63,7 @@ import Base.TrackedErrors
 import Cli.CompileOptions
 import Cli.Programs (VersionHash(..))
 import Compilation.ProcedureContext (ExprMap)
-import CompilerCxx.Category (CxxOutput(..))
+import CompilerCxx.CxxFiles (CxxOutput(..))
 import Module.CompileMetadata
 import Module.ParseMetadata
 import Module.Paths

@@ -41,7 +41,8 @@ import Cli.CompileOptions
 import Cli.Programs
 import Cli.TestRunner
 import Compilation.ProcedureContext (ExprMap)
-import CompilerCxx.Category
+import CompilerCxx.CxxFiles
+import CompilerCxx.LanguageModule
 import CompilerCxx.Naming
 import Module.CompileMetadata
 import Module.Paths

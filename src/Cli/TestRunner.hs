@@ -34,7 +34,8 @@ import qualified Data.Map as Map
 import Base.CompilerError
 import Base.TrackedErrors
 import Cli.Programs
-import CompilerCxx.Category
+import CompilerCxx.CxxFiles
+import CompilerCxx.LanguageModule
 import CompilerCxx.Naming
 import Module.CompileMetadata
 import Module.Paths

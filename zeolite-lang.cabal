@@ -198,6 +198,8 @@ library zeolite-internal
                        CompilerCxx.Category,
                        CompilerCxx.CategoryContext,
                        CompilerCxx.Code,
+                       CompilerCxx.CxxFiles,
+                       CompilerCxx.LanguageModule,
                        CompilerCxx.Naming,
                        CompilerCxx.Procedure,
                        Config.LoadConfig,
