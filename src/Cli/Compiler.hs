@@ -108,8 +108,9 @@ compileModule resolver backend (ModuleSpec p d em is is2 ps xs ts es ep m f) = d
   -- skip checking all inputs/outputs for each dependency.
   let ns0 = StaticNamespace $ publicNamespace  $ show compilerHash ++ path
   let ns1 = StaticNamespace . privateNamespace $ show time ++ show compilerHash ++ path
-  let ex = concat $ map getSourceCategories es
-  let ss = filter (not . isLiteralCategory) ex
+  let extensions = concat $ map getSourceCategories es
+  let ss = filter (not . isLiteralCategory) extensions
+  let ex = filter isLiteralCategory extensions
   cs <- loadModuleGlobals resolver p (ns0,ns1) ps Nothing deps1' deps2
   let cm = createLanguageModule ex ss em cs
   let cs2 = filter (not . hasCodeVisibility FromDependency) cs
@@ -275,7 +276,7 @@ createModuleTemplates resolver p d deps1 deps2 = do
   let ca = Set.fromList $ map getCategoryName $ filter isValueConcrete cs
   let ca' = foldr Set.delete ca $ map dcName ds2
   let testingCats = Set.fromList $ map getCategoryName ts1
-  ts <- mapErrorsM (\n -> compileConcreteTemplate (n `Set.member` testingCats) tm n) $ Set.toList ca'
+  ts <- mapErrorsM (\n -> generateExtensionTemplate (n `Set.member` testingCats) tm n) $ Set.toList ca'
   mapErrorsM_ writeTemplate ts where
   writeTemplate (CxxOutput _ n _ _ _ content) = do
     let n' = p </> d </> n

@@ -89,6 +89,17 @@ testcase "attempt to define outside of this module" {
 define String {}
 
 
+testcase "attempt to define interface" {
+  error
+  require "Type"
+  require "concrete"
+}
+
+@value interface Type {}
+
+define Type {}
+
+
 testcase "no deadlock with recursive type" {
   success
 }

@@ -26,8 +26,8 @@ module CompilerCxx.LanguageModule (
   compileTestsModule,
 ) where
 
-import Control.Monad (foldM,when)
-import Data.List (intercalate)
+import Control.Monad (foldM,foldM_,when)
+import Data.List (intercalate,nub)
 import qualified Data.Map as Map
 import qualified Data.Set as Set
 
@@ -70,68 +70,70 @@ data PrivateSource c =
 compileLanguageModule :: (Ord c, Show c, CollectErrorsM m) =>
   LanguageModule c -> [PrivateSource c] -> m [CxxOutput]
 compileLanguageModule (LanguageModule ns0 ns1 ns2 cs0 ps0 ts0 cs1 ps1 ts1 ex ss em) xa = do
-  checkSupefluous $ Set.toList $ (Set.fromList ex) `Set.difference` ca
-  -- Check public sources up front so that error messages aren't duplicated for
-  -- every source file.
-  ta <- tmTesting
-  xx1 <- fmap concat $ mapErrorsM (compileSourceP False tmPublic  nsPublic)  cs1
-  xx2 <- fmap concat $ mapErrorsM (compileSourceP False tmPrivate nsPrivate) ps1
-  xx3 <- fmap concat $ mapErrorsM (compileSourceP True  tmTesting nsTesting) ts1
-  (ds,xx4) <- fmap mergeGeneratedX $ mapErrorsM compileSourceX xa
-  xx5 <- fmap concat $ mapErrorsM (\s -> compileConcreteStreamlined (s `Set.member` testingCats) ta s) ss
-  -- TODO: This should account for a name clash between a category declared in a
-  -- TestsOnly .0rp and one declared in a non-TestOnly .0rx.
-  let dm = mapByName ds
-  checkDefined dm ex $ filter isValueConcrete (cs1 ++ ps1 ++ ts1)
-  checkStreamlined
-  return $ xx1 ++ xx2 ++ xx3 ++ xx4 ++ xx5 where
+  let dm = mapDefByName $ concat $ map psDefine xa
+  checkDefined dm extensions $ filter isValueConcrete (cs1 ++ ps1 ++ ts1)
+  checkSupefluous $ Set.toList $ extensions `Set.difference` ca
+  tmPublic  <- foldM includeNewTypes defaultCategories [cs0,cs1]
+  tmPrivate <- foldM includeNewTypes tmPublic          [ps0,ps1]
+  tmTesting <- foldM includeNewTypes tmPrivate         [ts0,ts1]
+  let nsPublic  = ns0 `Set.union` ns2
+  let nsPrivate = ns1 `Set.union` nsPublic
+  let nsTesting = nsPrivate
+  let ctxPublic  = FileContext False tmPublic  nsPublic  em
+  let ctxPrivate = FileContext False tmPrivate nsPrivate em
+  let ctxTesting = FileContext True  tmTesting nsTesting em
+  xxInterfaces <- fmap concat $ collectAllM $
+    map (generateNativeInterface ctxPublic)  (onlyNativeInterfaces cs1) ++
+    map (generateNativeInterface ctxPrivate) (onlyNativeInterfaces ps1) ++
+    map (generateNativeInterface ctxTesting) (onlyNativeInterfaces ts1)
+  xxPrivate <- fmap concat $ mapErrorsM (compilePrivate (tmPrivate,nsPrivate) (tmTesting,nsTesting)) xa
+  xxStreamlined <- fmap concat $ mapErrorsM streamlined $ nub ss
+  xxVerbose <- fmap concat $ mapErrorsM verbose $ nub ex
+  let allFiles = xxInterfaces ++ xxPrivate ++ xxStreamlined ++ xxVerbose
+  noDuplicateFiles $ map (\f -> (coFilename f,coNamespace f)) allFiles
+  return allFiles where
+    extensions = Set.fromList $ ex ++ ss
     testingCats = Set.fromList $ map getCategoryName ts1
-    tmPublic  = foldM includeNewTypes defaultCategories [cs0,cs1]
-    tmPrivate = tmPublic  >>= \tm -> foldM includeNewTypes tm [ps0,ps1]
-    tmTesting = tmPrivate >>= \tm -> foldM includeNewTypes tm [ts0,ts1]
-    nsPublic = ns0 `Set.union` ns2
-    nsPrivate = ns1 `Set.union` nsPublic
-    nsTesting = nsPrivate
-    compileSourceP testing tm ns c = do
-      tm' <- tm
-      hxx <- compileCategoryDeclaration testing tm' ns c
-      cxx <- if isValueConcrete c
-                then return []
-                else compileInterfaceDefinition testing c >>= return . (:[])
-      return (hxx:cxx)
-    compileSourceX (PrivateSource ns testing cs2 ds) = do
-      tm <- if testing
-               then tmTesting
-               else tmPrivate
-      let ns4 = if testing
-                then nsTesting
-                else nsPrivate
-      let cs = if testing
-                  then cs1 ++ ps1 ++ ts1
-                  else cs1 ++ ps1
-      checkLocals ds (ex ++ map getCategoryName (cs2 ++ cs))
-      when testing $ checkTests ds (cs1 ++ ps1)
-      let dm = mapByName ds
-      checkDefined dm [] $ filter isValueConcrete cs2
+    onlyNativeInterfaces = filter (not . (`Set.member` extensions) . getCategoryName) . filter (not . isValueConcrete)
+    streamlined n = do
+      let tm = mapCatByName $ cs1 ++ ps1 ++ ts1
+      (_,t) <- getConcreteCategory tm ([],n)
+      generateStreamlinedExtension (n `Set.member` testingCats) t
+    verbose n = do
+      let tm = mapCatByName $ cs1 ++ ps1 ++ ts1
+      (_,t) <- getConcreteCategory tm ([],n)
+      generateVerboseExtension (n `Set.member` testingCats) t
+    compilePrivate (tmPrivate,nsPrivate) (tmTesting,nsTesting) (PrivateSource ns3 testing cs2 ds) = do
+      let (tm,ns) = if testing
+                       then (tmTesting,nsTesting)
+                       else (tmPrivate,nsPrivate)
+      let tm2 = mapCatByName $ if testing
+                               then cs2 ++ cs1 ++ ps1 ++ ts1
+                               else cs2 ++ cs1 ++ ps1
       tm' <- includeNewTypes tm cs2
-      -- Ensures that there isn't an inavertent collision when resolving
-      -- dependencies for the module later on.
-      tmTesting' <- tmTesting
-      _ <- (includeNewTypes tmTesting' cs2)
-      hxx <- mapErrorsM (compileCategoryDeclaration testing tm' ns4) cs2
-      let interfaces = filter (not . isValueConcrete) cs2
-      cxx1 <- mapErrorsM (compileInterfaceDefinition testing) interfaces
-      cxx2 <- mapErrorsM (compileDefinition testing tm' (ns `Set.insert` ns4)) ds
-      return (ds,hxx ++ cxx1 ++ cxx2)
-    mergeGeneratedX ((ds,xx):xs2) = let (ds2,xx2) = mergeGeneratedX xs2 in (ds++ds2,xx++xx2)
-    mergeGeneratedX _             = ([],[])
-    compileDefinition testing tm ns4 d = do
+      let ctx = FileContext testing tm' (ns3 `Set.insert` ns) em
+      checkLocals ds $ Map.keysSet tm'
+      when testing $ checkTests ds (cs1 ++ ps1)
+      let dm = mapDefByName ds
+      checkDefined dm Set.empty $ filter isValueConcrete cs2
+      xxInterfaces <- fmap concat $ mapErrorsM (generateNativeInterface ctx) (filter (not . isValueConcrete) cs2)
+      xxConcrete   <- fmap concat $ mapErrorsM (generateConcrete tm2 ctx) ds
+      return $ xxInterfaces ++ xxConcrete
+    generateConcrete tm2 (FileContext testing tm ns em2) d = do
       tm' <- mergeInternalInheritance tm d
-      let refines = dcName d `Map.lookup` tm >>= return . getCategoryRefines
-      compileConcreteDefinition testing tm' em ns4 refines d
-    mapByName = Map.fromListWith (++) . map (\d -> (dcName d,[d]))
+      t <- getCategoryDecl tm2 d
+      let ctx = FileContext testing tm' ns em2
+      generateNativeConcrete ctx (t,d)
+    getCategoryDecl tm d =
+      case dcName d `Map.lookup` tm of
+           Nothing -> compilerErrorM $ "Category " ++ show (dcName d) ++
+                                       formatFullContextBrace (dcContext d) ++
+                                       " was not declared in this module"
+           Just t -> return t
+    mapDefByName = Map.fromListWith (++) . map (\d -> (dcName d,[d]))
+    mapCatByName = Map.fromList . map (\t -> (getCategoryName t,t))
     ca = Set.fromList $ map getCategoryName $ filter isValueConcrete (cs1 ++ ps1 ++ ts1)
-    checkLocals ds cs2 = mapErrorsM_ (checkLocal $ Set.fromList cs2) ds
+    checkLocals ds tm = mapErrorsM_ (checkLocal tm) ds
     checkLocal cs2 d =
       when (not $ dcName d `Set.member` cs2) $
         compilerErrorM ("Definition for " ++ show (dcName d) ++
@@ -147,9 +149,9 @@ compileLanguageModule (LanguageModule ns0 ns1 ns2 cs0 ps0 ts0 cs1 ps1 ts1 ex ss 
              compilerErrorM ("Category " ++ show (dcName d) ++
                             formatFullContextBrace (dcContext d) ++
                             " was not declared as $TestsOnly$" ++ formatFullContextBrace c)
-    checkDefined dm ex2 = mapErrorsM_ (checkSingle dm (Set.fromList ex2))
-    checkSingle dm es t =
-      case (getCategoryName t `Set.member` es, getCategoryName t `Map.lookup` dm) of
+    checkDefined dm ext = mapErrorsM_ (checkSingle dm ext)
+    checkSingle dm ext t =
+      case (getCategoryName t `Set.member` ext,getCategoryName t `Map.lookup` dm) of
            (False,Just [_]) -> return ()
            (True,Nothing)   -> return ()
            (True,Just [d]) ->
@@ -168,10 +170,13 @@ compileLanguageModule (LanguageModule ns0 ns1 ns2 cs0 ps0 ts0 cs1 ps1 ts1 ex ss 
     checkSupefluous es2
       | null es2 = return ()
       | otherwise = compilerErrorM $ "External categories either not concrete or not present: " ++
-                                    intercalate ", " (map show es2)
-    checkStreamlined =  mapErrorsM_  streamlinedError $ Set.toList $ Set.difference (Set.fromList ss) (Set.fromList ex)
-    streamlinedError n =
-      compilerErrorM $ "Category " ++ show n ++ " cannot be streamlined because it was not declared external"
+                                     intercalate ", " (map show es2)
+    noDuplicateFiles = foldM_ checkFileUsed Set.empty
+    checkFileUsed used (f,ns3) = do
+      when ((f,ns3) `Set.member` used) $
+        compilerErrorM $ "Filename " ++ f ++ " in namespace " ++ show ns3 ++
+                         " was already generated (internal compiler error)"
+      return $ (f,ns3) `Set.insert` used
 
 compileTestsModule :: (Ord c, Show c, CollectErrorsM m) =>
   LanguageModule c -> Namespace -> [String] -> [AnyCategory c] -> [DefinedCategory c] ->
@@ -192,7 +197,7 @@ compileTestMain :: (Ord c, Show c, CollectErrorsM m) =>
   m (CxxOutput,[(FunctionName,[c])])
 compileTestMain (LanguageModule ns0 ns1 ns2 cs0 ps0 ts0 cs1 ps1 ts1 _ _ em) args ts2 tests = do
   tm' <- tm
-  (CompiledData req main) <- createTestFile tm' em args tests
+  (CompiledData req main) <- generateTestFile tm' em args tests
   let output = CxxOutput Nothing testFilename NoNamespace (psNamespace ts2 `Set.insert` Set.unions [ns0,ns1,ns2]) req main
   let tests' = map (\t -> (tpName t,tpContext t)) tests
   return (output,tests') where
@@ -206,7 +211,7 @@ compileModuleMain (LanguageModule ns0 ns1 ns2 cs0 ps0 _ cs1 ps1 _ _ _ em) xa n f
   tm' <- tm
   let cs = filter (\c -> getCategoryName c == n) $ concat $ map psCategory xa
   tm'' <- includeNewTypes tm' cs
-  (ns,main) <- createMainFile tm'' em n f
+  (ns,main) <- generateMainFile tm'' em n f
   return $ CxxOutput Nothing mainFilename NoNamespace (ns `Set.insert` Set.unions [ns0,ns1,ns2]) (Set.fromList [n]) main where
     tm = foldM includeNewTypes defaultCategories [cs0,cs1,ps0,ps1]
     reconcile [_] = return ()

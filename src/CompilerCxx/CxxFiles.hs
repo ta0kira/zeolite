@@ -20,13 +20,14 @@ limitations under the License.
 
 module CompilerCxx.CxxFiles (
   CxxOutput(..),
-  compileCategoryDeclaration,
-  compileConcreteDefinition,
-  compileConcreteStreamlined,
-  compileConcreteTemplate,
-  compileInterfaceDefinition,
-  createMainFile,
-  createTestFile,
+  FileContext(..),
+  generateExtensionTemplate,
+  generateMainFile,
+  generateNativeConcrete,
+  generateNativeInterface,
+  generateStreamlinedExtension,
+  generateTestFile,
+  generateVerboseExtension,
 ) where
 
 import Data.List (intercalate,sortBy)
@@ -61,9 +62,48 @@ data CxxOutput =
   }
   deriving (Show)
 
+data FileContext c =
+  FileContext {
+    fcTesting :: Bool,
+    fcCategories :: CategoryMap c,
+    fcNamespaces :: Set.Set Namespace,
+    fcExprMap :: ExprMap c
+  }
+
+generateNativeInterface :: (Ord c, Show c, CollectErrorsM m) =>
+  FileContext c -> AnyCategory c -> m [CxxOutput]
+generateNativeInterface (FileContext testing _ ns _) t =
+  collectAllM [
+      compileCategoryDeclaration testing ns t,
+      compileInterfaceDefinition testing t
+    ]
+
+generateNativeConcrete :: (Ord c, Show c, CollectErrorsM m) =>
+  FileContext c -> (AnyCategory c,DefinedCategory c) -> m [CxxOutput]
+generateNativeConcrete (FileContext testing tm ns em) (t,d) = do
+  tm' <- mergeInternalInheritance tm d
+  collectAllM [
+      compileCategoryDeclaration testing ns t,
+      compileConcreteDefinition testing tm' em ns (Just $ getCategoryRefines t) d
+    ]
+
+generateStreamlinedExtension :: (Ord c, Show c, CollectErrorsM m) =>
+  Bool -> AnyCategory c -> m [CxxOutput]
+generateStreamlinedExtension testing t = do
+  dec <- compileCategoryDeclaration testing Set.empty t
+  def <- compileConcreteStreamlined testing t
+  return $ dec:def
+
+generateVerboseExtension :: (Ord c, Show c, CollectErrorsM m) =>
+  Bool -> AnyCategory c -> m [CxxOutput]
+generateVerboseExtension testing t =
+  collectAllM [
+      compileCategoryDeclaration testing Set.empty t
+    ]
+
 compileCategoryDeclaration :: (Ord c, Show c, CollectErrorsM m) =>
-  Bool -> CategoryMap c -> Set.Set Namespace -> AnyCategory c -> m CxxOutput
-compileCategoryDeclaration testing _ ns t =
+  Bool -> Set.Set Namespace -> AnyCategory c -> m CxxOutput
+compileCategoryDeclaration testing ns t =
   return $ CxxOutput (Just $ getCategoryName t)
                      (headerFilename name)
                      (getCategoryNamespace t)
@@ -114,9 +154,9 @@ compileInterfaceDefinition testing t = do
       let allInit = intercalate ", " $ initParent:initPassed
       return $ onlyCode $ typeName (getCategoryName t) ++ "(" ++ allArgs ++ ") : " ++ allInit ++ " {}"
 
-compileConcreteTemplate :: (Ord c, Show c, CollectErrorsM m) =>
+generateExtensionTemplate :: (Ord c, Show c, CollectErrorsM m) =>
   Bool -> CategoryMap c -> CategoryName -> m CxxOutput
-compileConcreteTemplate testing ta n = do
+generateExtensionTemplate testing ta n = do
   (_,t) <- getConcreteCategory ta ([],n)
   compileConcreteDefinition testing ta Map.empty Set.empty Nothing (defined t) <?? "In generated template for " ++ show n where
     defined t = DefinedCategory {
@@ -147,9 +187,8 @@ compileConcreteTemplate testing ta n = do
     funcName f = show (sfType f) ++ "." ++ show (sfName f)
 
 compileConcreteStreamlined :: (Ord c, Show c, CollectErrorsM m) =>
-  Bool -> CategoryMap c -> CategoryName -> m [CxxOutput]
-compileConcreteStreamlined testing ta n =  "In streamlined compilation of " ++ show n ??> do
-  (_,t) <- getConcreteCategory ta ([],n)
+  Bool -> AnyCategory c -> m [CxxOutput]
+compileConcreteStreamlined testing t =  "In streamlined compilation of " ++ show (getCategoryName t) ??> do
   let guard = if testing
                  then testsOnlySourceGuard
                  else noTestsOnlySourceGuard
@@ -388,9 +427,9 @@ createMainCommon n (CompiledData req0 out0) (CompiledData req1 out1) =
       depIncludes req2 = map (\i -> "#include \"" ++ headerFilename i ++ "\"") $
                            Set.toList req2
 
-createMainFile :: (Ord c, Show c, CollectErrorsM m) =>
+generateMainFile :: (Ord c, Show c, CollectErrorsM m) =>
   CategoryMap c -> ExprMap c -> CategoryName -> FunctionName -> m (Namespace,[String])
-createMainFile tm em n f = "In the creation of the main binary procedure" ??> do
+generateMainFile tm em n f = "In the creation of the main binary procedure" ??> do
   ca <- compileMainProcedure tm em expr
   let file = noTestsOnlySourceGuard ++ createMainCommon "main" emptyCode (argv <> ca)
   (_,t) <- getConcreteCategory tm ([],n)
@@ -400,9 +439,9 @@ createMainFile tm em n f = "In the creation of the main binary procedure" ??> do
     expr = Expression [] (TypeCall [] mainType funcCall) []
     argv = onlyCode "ProgramArgv program_argv(argc, argv);"
 
-createTestFile :: (Ord c, Show c, CollectErrorsM m) =>
+generateTestFile :: (Ord c, Show c, CollectErrorsM m) =>
   CategoryMap c -> ExprMap c  -> [String] -> [TestProcedure c] -> m (CompiledData [String])
-createTestFile tm em args ts = "In the creation of the test binary procedure" ??> do
+generateTestFile tm em args ts = "In the creation of the test binary procedure" ??> do
   ts' <- fmap mconcat $ mapErrorsM (compileTestProcedure tm em) ts
   (include,sel) <- selectTestFromArgv1 $ map tpName ts
   let (CompiledData req _) = ts' <> sel
