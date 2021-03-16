@@ -79,13 +79,10 @@ compileLanguageModule (LanguageModule ns0 ns1 ns2 cs0 ps0 ts0 cs1 ps1 ts1 ex ss 
   let nsPublic  = ns0 `Set.union` ns2
   let nsPrivate = ns1 `Set.union` nsPublic
   let nsTesting = nsPrivate
-  let ctxPublic  = FileContext False tmPublic  nsPublic  em
-  let ctxPrivate = FileContext False tmPrivate nsPrivate em
-  let ctxTesting = FileContext True  tmTesting nsTesting em
   xxInterfaces <- fmap concat $ collectAllM $
-    map (generateNativeInterface ctxPublic)  (onlyNativeInterfaces cs1) ++
-    map (generateNativeInterface ctxPrivate) (onlyNativeInterfaces ps1) ++
-    map (generateNativeInterface ctxTesting) (onlyNativeInterfaces ts1)
+    map (generateNativeInterface False) (onlyNativeInterfaces cs1) ++
+    map (generateNativeInterface False) (onlyNativeInterfaces ps1) ++
+    map (generateNativeInterface True)  (onlyNativeInterfaces ts1)
   xxPrivate <- fmap concat $ mapErrorsM (compilePrivate (tmPrivate,nsPrivate) (tmTesting,nsTesting)) xa
   xxStreamlined <- fmap concat $ mapErrorsM streamlined $ nub ss
   xxVerbose <- fmap concat $ mapErrorsM verbose $ nub ex
@@ -116,7 +113,7 @@ compileLanguageModule (LanguageModule ns0 ns1 ns2 cs0 ps0 ts0 cs1 ps1 ts1 ex ss 
       when testing $ checkTests ds (cs1 ++ ps1)
       let dm = mapDefByName ds
       checkDefined dm Set.empty $ filter isValueConcrete cs2
-      xxInterfaces <- fmap concat $ mapErrorsM (generateNativeInterface ctx) (filter (not . isValueConcrete) cs2)
+      xxInterfaces <- fmap concat $ mapErrorsM (generateNativeInterface testing) (filter (not . isValueConcrete) cs2)
       xxConcrete   <- fmap concat $ mapErrorsM (generateConcrete tm2 ctx) ds
       return $ xxInterfaces ++ xxConcrete
     generateConcrete tm2 (FileContext testing tm ns em2) d = do

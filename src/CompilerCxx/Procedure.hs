@@ -30,6 +30,7 @@ module CompilerCxx.Procedure (
   compileLazyInit,
   compileRegularInit,
   compileTestProcedure,
+  procedureDeclaration,
   selectTestFromArgv1,
 ) where
 
@@ -60,16 +61,33 @@ import Types.TypeInstance
 import Types.Variance
 
 
+procedureDeclaration :: Monad m => Bool -> ScopedFunction c -> m (CompiledData [String])
+procedureDeclaration abstract f = return $ onlyCode func where
+  func
+    | abstract = "virtual " ++ proto ++ " = 0;"
+    | otherwise = proto ++ ";"
+  name = callName (sfName f)
+  proto
+    | sfScope f == CategoryScope =
+      "ReturnTuple " ++ name ++ "(const ParamTuple& params, const ValueTuple& args);"
+    | sfScope f == TypeScope =
+      "ReturnTuple " ++ name ++
+      -- NOTE: Don't use Var_self, since self isn't accessible to @type functions.
+      "(const S<TypeInstance>& self, const ParamTuple& params, const ValueTuple& args);"
+    | sfScope f == ValueScope =
+      "ReturnTuple " ++ name ++
+      "(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args);"
+    | otherwise = undefined
+
 compileExecutableProcedure :: (Ord c, Show c, CollectErrorsM m) =>
-  ScopeContext c -> ScopedFunction c -> ExecutableProcedure c ->
-  m (CompiledData [String],CompiledData [String])
+  ScopeContext c -> ScopedFunction c -> ExecutableProcedure c -> m (CompiledData [String])
 compileExecutableProcedure ctx ff@(ScopedFunction _ _ _ s as1 rs1 ps1 _ _)
                                pp@(ExecutableProcedure c pragmas c2 n as2 rs2 p) = do
   ctx' <- getProcedureContext ctx ff pp
   output <- runDataCompiler compileWithReturn ctx'
   procedureTrace <- setProcedureTrace
   creationTrace  <- setCreationTrace
-  return (onlyCode header,wrapProcedure output procedureTrace creationTrace)
+  return $ wrapProcedure output procedureTrace creationTrace
   where
     t = scName ctx
     compileWithReturn = do
@@ -81,7 +99,7 @@ compileExecutableProcedure ctx ff@(ScopedFunction _ _ _ s as1 rs1 ps1 _ _)
           "In implicit return from " ++ show n ++ formatFullContextBrace c
     wrapProcedure output pt ct =
       mconcat [
-          onlyCode header2,
+          onlyCode proto,
           indentCompiled $ onlyCodes pt,
           indentCompiled $ onlyCodes ct,
           indentCompiled $ onlyCodes defineReturns,
@@ -93,18 +111,7 @@ compileExecutableProcedure ctx ff@(ScopedFunction _ _ _ s as1 rs1 ps1 _ _)
         ]
     close = "}"
     name = callName n
-    header
-      | s == CategoryScope =
-        returnType ++ " " ++ name ++ "(const ParamTuple& params, const ValueTuple& args);"
-      | s == TypeScope =
-        returnType ++ " " ++ name ++
-        -- NOTE: Don't use Var_self, since self isn't accessible to @type functions.
-        "(const S<TypeInstance>& self, const ParamTuple& params, const ValueTuple& args);"
-      | s == ValueScope =
-        returnType ++ " " ++ name ++
-        "(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args);"
-      | otherwise = undefined
-    header2
+    proto
       | s == CategoryScope =
         returnType ++ " " ++ categoryName t ++ "::" ++ name ++ "(const ParamTuple& params, const ValueTuple& args) {"
       | s == TypeScope =

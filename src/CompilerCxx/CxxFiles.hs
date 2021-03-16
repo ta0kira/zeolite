@@ -70,36 +70,59 @@ data FileContext c =
     fcExprMap :: ExprMap c
   }
 
-generateNativeInterface :: (Ord c, Show c, CollectErrorsM m) =>
-  FileContext c -> AnyCategory c -> m [CxxOutput]
-generateNativeInterface (FileContext testing _ ns _) t =
-  collectAllM [
-      compileCategoryDeclaration testing ns t,
-      compileInterfaceDefinition testing t
-    ]
-
 generateNativeConcrete :: (Ord c, Show c, CollectErrorsM m) =>
   FileContext c -> (AnyCategory c,DefinedCategory c) -> m [CxxOutput]
 generateNativeConcrete (FileContext testing tm ns em) (t,d) = do
-  tm' <- mergeInternalInheritance tm d
-  collectAllM [
-      compileCategoryDeclaration testing ns t,
-      compileConcreteDefinition testing tm' em ns (Just $ getCategoryRefines t) d
-    ]
+  dec <- compileCategoryDeclaration testing ns t
+  def <- generateCategoryDefinition testing (NativeConcrete t d tm ns em)
+  return (dec:def)
+
+generateNativeInterface :: (Ord c, Show c, CollectErrorsM m) =>
+  Bool -> AnyCategory c -> m [CxxOutput]
+generateNativeInterface testing t = do
+  dec <- compileCategoryDeclaration testing Set.empty t
+  def <- generateCategoryDefinition testing (NativeInterface t)
+  return (dec:def)
 
 generateStreamlinedExtension :: (Ord c, Show c, CollectErrorsM m) =>
   Bool -> AnyCategory c -> m [CxxOutput]
 generateStreamlinedExtension testing t = do
   dec <- compileCategoryDeclaration testing Set.empty t
-  def <- compileConcreteStreamlined testing t
-  return $ dec:def
+  def <- generateCategoryDefinition testing (StreamlinedExtension t)
+  return (dec:def)
 
 generateVerboseExtension :: (Ord c, Show c, CollectErrorsM m) =>
   Bool -> AnyCategory c -> m [CxxOutput]
 generateVerboseExtension testing t =
-  collectAllM [
-      compileCategoryDeclaration testing Set.empty t
-    ]
+  fmap (:[]) $ compileCategoryDeclaration testing Set.empty t
+
+data CategoryDefinition c =
+  NativeInterface {
+    niCategory :: AnyCategory c
+  } |
+  NativeConcrete {
+    ncCategory :: AnyCategory c,
+    ncDefined :: DefinedCategory c,
+    ncCategories :: CategoryMap c,
+    ncNamespaces :: Set.Set Namespace,
+    ncExprMap :: ExprMap c
+  } |
+  StreamlinedExtension {
+    seCategory :: AnyCategory c
+  } |
+  StreamlinedTemplate {
+    stCategory :: AnyCategory c
+  }
+
+generateCategoryDefinition :: (Ord c, Show c, CollectErrorsM m) =>
+  Bool -> CategoryDefinition c -> m [CxxOutput]
+generateCategoryDefinition testing = common where
+  common (NativeInterface t) = fmap (:[]) $ compileInterfaceDefinition testing t
+  common (StreamlinedTemplate _) = undefined
+  common (NativeConcrete t d tm ns em) = do
+    tm' <- mergeInternalInheritance tm d
+    fmap (:[]) $ compileConcreteDefinition testing tm' em ns (Just $ getCategoryRefines t) d
+  common (StreamlinedExtension t) = compileConcreteStreamlined testing t
 
 compileCategoryDeclaration :: (Ord c, Show c, CollectErrorsM m) =>
   Bool -> Set.Set Namespace -> AnyCategory c -> m CxxOutput
@@ -226,22 +249,19 @@ compileConcreteDefinition testing ta em ns rs dd@(DefinedCategory c n pi _ _ fi 
   let internalFuncs = Map.filter (not . (`Set.member` externalFuncs) . sfName) overrideFuncs
   let fe = Map.elems internalFuncs
   let allFuncs = getCategoryFunctions t ++ fe
-  cf <- collectAllM $ applyProcedureScope compileExecutableProcedure cp
   ce <- concatM [
       categoryConstructor t cm,
       categoryDispatch allFuncs,
-      return $ mconcat $ map fst cf,
+      fmap indentCompiled $ concatM $ map (procedureDeclaration False . fst) (psProcedures cp),
       concatM $ map (createMemberLazy r allFilters) cm
     ]
-  tf <- collectAllM $ applyProcedureScope compileExecutableProcedure tp
   disallowTypeMembers tm
   te <- concatM [
       typeConstructor t tm,
       typeDispatch allFuncs,
-      return $ mconcat $ map fst tf,
+      fmap indentCompiled $ concatM $ map (procedureDeclaration False . fst) (psProcedures tp),
       concatM $ map (createMember r allFilters) tm
     ]
-  vf <- collectAllM $ applyProcedureScope compileExecutableProcedure vp
   let internalCount = length pi
   let memberCount = length vm
   top <- concatM [
@@ -253,7 +273,7 @@ compileConcreteDefinition testing ta em ns rs dd@(DefinedCategory c n pi _ _ fi 
       fmap indentCompiled $ valueConstructor vm,
       fmap indentCompiled $ valueDispatch allFuncs,
       return $ indentCompiled $ defineCategoryName ValueScope n,
-      return $ indentCompiled $ mconcat $ map fst vf,
+      fmap indentCompiled $ concatM $ map (procedureDeclaration False . fst) (psProcedures vp),
       fmap indentCompiled $ concatM $ map (createMember r allFilters) vm,
       fmap indentCompiled $ createParams,
       return $ indentCompiled $ onlyCode $ "const S<" ++ typeName n ++ "> parent;",
@@ -263,7 +283,10 @@ compileConcreteDefinition testing ta em ns rs dd@(DefinedCategory c n pi _ _ fi 
   bottom <- concatM $ [
       return $ defineValue,
       defineInternalValue n internalCount memberCount
-    ] ++ map (return . snd) (cf ++ tf ++ vf)
+    ] ++
+      applyProcedureScope compileExecutableProcedure cp ++
+      applyProcedureScope compileExecutableProcedure tp ++
+      applyProcedureScope compileExecutableProcedure vp
   commonDefineAll testing t ns rs top bottom ce te fe
   where
     disallowTypeMembers :: (Ord c, Show c, CollectErrorsM m) =>
