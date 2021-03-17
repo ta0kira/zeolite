@@ -5,13 +5,8 @@ private_deps: [
 ]
 extra_files: [
   category_source {
-    source: "lib/math/Category_Math.cpp"
+    source: "lib/math/Extension_Math.cpp"
     categories: [Math]
   }
-  category_source {
-    source: "lib/math/Source_Math.cpp"
-    categories: [Math]
-  }
-  "lib/math/Source_Math.hpp"
 ]
 mode: incremental {}

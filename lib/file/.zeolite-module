@@ -8,11 +8,11 @@ private_deps: [
 ]
 extra_files: [
   category_source {
-    source: "file/Category_RawFileReader.cpp"
+    source: "file/Extension_RawFileReader.cpp"
     categories: [RawFileReader]
   }
   category_source {
-    source: "file/Category_RawFileWriter.cpp"
+    source: "file/Extension_RawFileWriter.cpp"
     categories: [RawFileWriter]
   }
 ]

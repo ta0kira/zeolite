@@ -174,8 +174,9 @@ generateCategoryDefinition testing = common where
   common (NativeInterface t) = fmap (:[]) singleSource where
     singleSource = do
       let filename = sourceFilename (getCategoryName t)
+      let (cf,tf,vf) = partitionByScope sfScope $ getCategoryFunctions t
       (CompiledData req out) <- fmap (addNamespace t) $ concatM [
-          defineFunctions t [],
+          defineFunctions t cf tf vf,
           declareInternalGetters t,
           defineInterfaceCategory t,
           defineInterfaceType     t,
@@ -195,10 +196,10 @@ generateCategoryDefinition testing = common where
     streamlinedHeader = do
       let filename = headerStreamlined (getCategoryName t)
       (CompiledData req out) <- fmap (addNamespace t) $ concatM [
-          defineAbstractCategory t defined,
-          defineAbstractType     t defined,
+          defineAbstractCategory t,
+          defineAbstractType     t,
           defineAbstractValue    t defined,
-          declareInternalGetters t
+          declareAbstractGetters t
         ]
       return $ CxxOutput (Just $ getCategoryName t)
                          filename
@@ -219,8 +220,9 @@ generateCategoryDefinition testing = common where
       }
     streamlinedSource = do
       let filename = sourceStreamlined (getCategoryName t)
+      let (cf,tf,vf) = partitionByScope sfScope $ getCategoryFunctions t
       (CompiledData req out) <- fmap (addNamespace t) $ concatM [
-          defineFunctions t [],
+          defineFunctions t cf tf vf,
           defineCategoryOverrides t (getCategoryFunctions t),
           defineTypeOverrides     t (getCategoryFunctions t),
           defineValueOverrides    t (getCategoryFunctions t),
@@ -238,10 +240,12 @@ generateCategoryDefinition testing = common where
       let filename = templateStreamlined (getCategoryName t)
       [cp,tp,vp] <- getProcedureScopes tm Map.empty defined
       (CompiledData req out) <- fmap (addNamespace t) $ concatM [
+          declareCustomValueGetter t,
           defineCustomCategory t cp,
           defineCustomType     t tp,
           defineCustomValue    t vp,
-          defineCustomGetters t
+          defineCustomGetters t,
+          defineCustomValueGetter t
         ]
       return $ CxxOutput (Just $ getCategoryName t)
                          filename
@@ -275,35 +279,29 @@ generateCategoryDefinition testing = common where
         FailCall [] (Literal (StringLiteral [] $ funcName f ++ " is not implemented"))
       ]
     funcName f = show (sfType f) ++ "." ++ show (sfName f)
-  common (NativeConcrete t d@(DefinedCategory c n pi _ _ fi ms _ fs) ta ns em) = fmap (:[]) singleSource where
+  common (NativeConcrete t d@(DefinedCategory _ _ pi _ _ fi ms _ _) ta ns em) = fmap (:[]) singleSource where
     singleSource = do
       let filename = sourceFilename (getCategoryName t)
       ta' <- mergeInternalInheritance ta d
-      let rs = getCategoryRefines t
       let r = CategoryResolver ta'
       [cp,tp,vp] <- getProcedureScopes ta' em d
-      let (cm,tm,vm) = partitionByScope dmScope ms
+      let (_,tm,_) = partitionByScope dmScope ms
+      disallowTypeMembers tm
       let filters = getCategoryFilters t
       let filters2 = fi
       allFilters <- getFilterMap (getCategoryParams t ++ pi) $ filters ++ filters2
-      -- Functions explicitly declared externally.
-      let externalFuncs = Set.fromList $ map sfName $ filter ((== n) . sfType) $ getCategoryFunctions t
-      -- Functions explicitly declared internally.
-      let overrideFuncs = Map.fromList $ map (\f -> (sfName f,f)) fs
-      -- Functions only declared internally.
-      let internalFuncs = Map.filter (not . (`Set.member` externalFuncs) . sfName) overrideFuncs
-      let fe = Map.elems internalFuncs
-      let allFuncs = getCategoryFunctions t ++ fe
-      disallowTypeMembers tm
+      let cf = map fst $ psProcedures cp
+      let tf = map fst $ psProcedures tp
+      let vf = map fst $ psProcedures vp
       (CompiledData req out) <- fmap (addNamespace t) $ concatM [
-          defineFunctions t fe,
+          defineFunctions t cf tf vf,
           declareInternalGetters t,
-          defineConcreteCategory r allFilters allFuncs ta' em t d,
-          defineConcreteType     r allFilters allFuncs t d,
-          defineConcreteValue    r allFilters allFuncs t d,
-          defineCategoryOverrides t allFuncs,
-          defineTypeOverrides     t allFuncs,
-          defineValueOverrides    t allFuncs,
+          defineConcreteCategory r allFilters cf ta' em t d,
+          defineConcreteType tf t,
+          defineConcreteValue r allFilters vf t d,
+          defineCategoryOverrides t cf,
+          defineTypeOverrides     t tf,
+          defineValueOverrides    t vf,
           defineCategoryFunctions t cp,
           defineTypeFunctions     t tp,
           defineValueFunctions    t vp,
@@ -318,7 +316,7 @@ generateCategoryDefinition testing = common where
                          req'
                          (allowTestsOnly $ addSourceIncludes $ addCategoryHeader t $ addIncludes req' out)
 
-  defineFunctions t fe = concatM [createCollection,createAllLabels] where
+  defineFunctions t cf tf vf = concatM [createCollection,createAllLabels] where
     name = getCategoryName t
     createCollection = return $ onlyCodes [
         "namespace {",
@@ -326,22 +324,21 @@ generateCategoryDefinition testing = common where
         "}  // namespace",
         "const void* const " ++ collectionName name ++ " = &" ++ collectionValName ++ ";"
       ]
-    createAllLabels = return $ onlyCodes $ concat $ map createLabels [fc,ft,fv]
+    createAllLabels = return $ onlyCodes $ concat $ map createLabels [cf,tf,vf]
     collectionValName = "collection_" ++ show name
-    (fc,ft,fv) = partitionByScope sfScope $ getCategoryFunctions t ++ fe
     createLabels = map (uncurry createLabelForFunction) . zip [0..] . sortBy compareName . filter ((== name) . sfType)
     compareName x y = sfName x `compare` sfName y
 
   declareInternalGetters t = concatM [
-      return $ onlyCode $ "class " ++ categoryName (getCategoryName t) ++ ";",
+      return $ onlyCode $ "struct " ++ categoryName (getCategoryName t) ++ ";",
       return $ declareInternalCategory t,
-      return $ onlyCode $ "class " ++ typeName (getCategoryName t) ++ ";",
+      return $ onlyCode $ "struct " ++ typeName (getCategoryName t) ++ ";",
       return $ declareInternalType t (length $ getCategoryParams t),
       return $ valueGetter
     ] where
       valueGetter
         | isValueConcrete t = mconcat [
-            onlyCode $ "class " ++ valueName (getCategoryName t) ++ ";",
+            onlyCode $ "struct " ++ valueName (getCategoryName t) ++ ";",
             declareInternalValue t
           ]
         | otherwise = emptyCode
@@ -354,14 +351,27 @@ generateCategoryDefinition testing = common where
         | isValueConcrete t = defineInternalValue t
         | otherwise = emptyCode
 
+  declareCustomValueGetter t = concatM [
+      return $ declareInternalValue t
+    ]
+  defineCustomValueGetter t = concatM [
+      return $ defineInternalValue2 (valueCustom $ getCategoryName t) t
+    ]
+
+  declareAbstractGetters t = concatM [
+      return $ onlyCode $ "struct " ++ categoryName (getCategoryName t) ++ ";",
+      return $ declareInternalCategory t,
+      return $ onlyCode $ "struct " ++ typeName (getCategoryName t) ++ ";",
+      return $ declareInternalType t (length $ getCategoryParams t)
+    ]
+
   defineExternalGetters t = concatM [
       return $ defineGetCatetory t,
       return $ defineGetType     t
     ]
   defineCustomGetters t = concatM [
       return $ defineInternalCategory2 (categoryCustom (getCategoryName t)) t,
-      return $ defineInternalType2     (typeCustom     (getCategoryName t)) t (length $ getCategoryParams t),
-      return $ defineInternalValue2    (valueCustom    (getCategoryName t)) t
+      return $ defineInternalType2     (typeCustom     (getCategoryName t)) t (length $ getCategoryParams t)
     ]
 
   defineInterfaceCategory t = concatM [
@@ -378,48 +388,49 @@ generateCategoryDefinition testing = common where
       return $ onlyCode "};"
     ]
 
-  defineConcreteCategory r allFilters allFuncs tm em t d = concatM [
+  defineConcreteCategory r allFilters fs tm em t d = concatM [
       return $ onlyCode $ "struct " ++ categoryName (getCategoryName t) ++ " : public " ++ categoryBase ++ " {",
       fmap indentCompiled $ inlineCategoryConstructor t d tm em,
       return declareCategoryOverrides,
-      fmap indentCompiled $ concatM $ map (procedureDeclaration False) functions,
+      fmap indentCompiled $ concatM $ map (procedureDeclaration False) fs,
       fmap indentCompiled $ concatM $ map (createMemberLazy r allFilters) members,
       return $ onlyCode "};"
     ] where
-      functions = filter ((== CategoryScope). sfScope) allFuncs
       members = filter ((== CategoryScope). dmScope) $ dcMembers d
-  defineConcreteType r allFilters allFuncs t d = concatM [
+  defineConcreteType fs t = concatM [
       return $ onlyCode $ "struct " ++ typeName (getCategoryName t) ++ " : public " ++ typeBase ++ " {",
       fmap indentCompiled $ inlineTypeConstructor t,
       return declareTypeOverrides,
-      fmap indentCompiled $ concatM $ map (procedureDeclaration False) functions,
+      fmap indentCompiled $ concatM $ map (procedureDeclaration False) fs,
       return $ indentCompiled $ createParams $ getCategoryParams t,
       return $ onlyCode $ "  " ++ categoryName (getCategoryName t) ++ "& parent;",
       return $ onlyCode "};"
-    ] where
-      functions = filter ((== TypeScope). sfScope) allFuncs
-      members = filter ((== TypeScope). dmScope) $ dcMembers d
-  defineConcreteValue r allFilters allFuncs t d = concatM [
+    ]
+  defineConcreteValue r allFilters fs t d = concatM [
       return $ onlyCode $ "struct " ++ valueName (getCategoryName t) ++ " : public " ++ valueBase ++ " {",
       fmap indentCompiled $ inlineValueConstructor t d,
       return declareValueOverrides,
-      fmap indentCompiled $ concatM $ map (procedureDeclaration False) functions,
+      fmap indentCompiled $ concatM $ map (procedureDeclaration False) fs,
       fmap indentCompiled $ concatM $ map (createMember r allFilters) members,
       return $ indentCompiled $ createParams $ dcParams d,
       return $ onlyCode $ "  const S<" ++ typeName (getCategoryName t) ++ "> parent;",
+      return $ onlyCodes traceCreation,
       return $ onlyCode "};"
     ] where
-      functions = filter ((== ValueScope). sfScope) allFuncs
       members = filter ((== ValueScope). dmScope) $ dcMembers d
+      procedures = dcProcedures d
+      traceCreation
+        | any isTraceCreation $ concat $ map epPragmas procedures = [captureCreationTrace]
+        | otherwise = []
 
-  defineAbstractCategory t d = concatM [
+  defineAbstractCategory t = concatM [
       return $ onlyCode $ "struct " ++ categoryName (getCategoryName t) ++ " : public " ++ categoryBase ++ " {",
       return declareCategoryOverrides,
       fmap indentCompiled $ concatM $ map (procedureDeclaration True) $ filter ((== CategoryScope). sfScope) $ getCategoryFunctions t,
       return $ onlyCode $ "  virtual inline ~" ++ categoryName (getCategoryName t) ++ "() {}",
       return $ onlyCode "};"
     ]
-  defineAbstractType t d = concatM [
+  defineAbstractType t = concatM [
       return $ onlyCode $ "struct " ++ typeName (getCategoryName t) ++ " : public " ++ typeBase ++ " {",
       fmap indentCompiled $ inlineTypeConstructor t,
       return declareTypeOverrides,
@@ -565,7 +576,7 @@ generateCategoryDefinition testing = common where
     let allInit = intercalate ", " $ initParent:(initParams ++ initArgs)
     return $ onlyCode $ "inline " ++ valueName (getCategoryName t) ++ "(" ++ allArgs ++ ") : " ++ allInit ++ " {}" where
       unwrappedArg i m = writeStoredVariable (dmType m) (UnwrappedSingle $ "args.At(" ++ show i ++ ")")
-      members = filter ((== TypeScope). dmScope) $ dcMembers d
+      members = filter ((== ValueScope). dmScope) $ dcMembers d
 
   abstractValueConstructor t d = do
     let argParent = "S<" ++ typeName (getCategoryName t) ++ "> p"

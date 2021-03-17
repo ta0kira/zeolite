@@ -11,15 +11,15 @@ private_deps: [
 ]
 extra_files: [
   category_source {
-    source: "util/Category_Argv.cpp"
+    source: "util/Extension_Argv.cpp"
     categories: [Argv]
   }
   category_source {
-    source: "util/Category_SimpleInput.cpp"
+    source: "util/Extension_SimpleInput.cpp"
     categories: [SimpleInput]
   }
   category_source {
-    source: "util/Category_SimpleOutput.cpp"
+    source: "util/Extension_SimpleOutput.cpp"
     categories: [SimpleOutput]
   }
 ]

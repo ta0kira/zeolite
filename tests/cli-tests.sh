@@ -75,7 +75,7 @@ test_check_defs() {
 
 test_tests_only() {
   local output=$(do_zeolite -p "$ZEOLITE_PATH" -r tests/tests-only -f || true)
-  if ! echo "$output" | egrep -q 'Definition for Type1 .+ visible category'; then
+  if ! echo "$output" | egrep -q 'Type1 .+ visible category'; then
     show_message 'Expected Type1 definition error from tests/tests-only:'
     echo "$output" 1>&2
     return 1

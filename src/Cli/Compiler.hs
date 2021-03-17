@@ -205,6 +205,7 @@ compileModule resolver backend (ModuleSpec p d em is is2 ps xs ts es ep m f) = d
            Nothing -> return []
            Just o  -> return $ map (\c -> Left $ ([o],fakeCxx c)) cs
       where
+        allDeps = Set.fromList (cs ++ ds2)
         fakeCxx c = CxxOutput {
             coCategory = Just c,
             coFilename = "",
@@ -212,7 +213,7 @@ compileModule resolver backend (ModuleSpec p d em is is2 ps xs ts es ep m f) = d
                                Just ns2 -> ns2
                                Nothing  -> NoNamespace,
             coUsesNamespace = Set.fromList [ns0,ns1],
-            coUsesCategory = Set.fromList ds2,
+            coUsesCategory = c `Set.delete` allDeps,
             coOutput = []
           }
     compileExtraSource _ _ paths (OtherSource f2) = do

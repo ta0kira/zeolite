@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-Copyright 2020 Kevin P. Barry
+Copyright 2020-2021 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -18,21 +18,20 @@ limitations under the License.
 
 #include <cmath>
 
-#include "Source_Math.hpp"
-#include "Category_Float.hpp"
+#include "category-source.hpp"
+#include "Streamlined_Math.hpp"
+#include "Category_Formatted.hpp"
 #include "Category_String.hpp"
-
 
 #ifdef ZEOLITE_PUBLIC_NAMESPACE
 namespace ZEOLITE_PUBLIC_NAMESPACE {
 #endif  // ZEOLITE_PUBLIC_NAMESPACE
 
-namespace {
+struct ExtCategory_Math : public Category_Math {
+};
 
-struct Impl_Category_Math : public Category_Math {};
-
-struct Impl_Type_Math : public Type_Math {
-  Impl_Type_Math(Category_Math& p, Params<0>::Type params) : Type_Math(p, std::move(params)) {}
+struct ExtType_Math : public Type_Math {
+  inline ExtType_Math(Category_Math& p, Params<0>::Type params) : Type_Math(p, params) {}
 
   ReturnTuple Call_acos(const S<TypeInstance>& self, const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("Math.acos")
@@ -199,24 +198,17 @@ struct Impl_Type_Math : public Type_Math {
   }
 };
 
-struct Impl_Value_Math : public Value_Math {
-  Impl_Value_Math(S<Type_Math> p, const ParamTuple& params, const ValueTuple& args) : Value_Math(p) {}
+struct ExtValue_Math : public Value_Math {
+  inline ExtValue_Math(S<Type_Math> p, const ParamTuple& params, const ValueTuple& args) : Value_Math(p, params) {}
 };
 
-}  // namespace
-
 Category_Math& CreateCategory_Math() {
-  static auto& category = *new Impl_Category_Math();
+  static auto& category = *new ExtCategory_Math();
   return category;
 }
-
 S<Type_Math> CreateType_Math(Params<0>::Type params) {
-  static const auto cached = S_get(new Impl_Type_Math(CreateCategory_Math(), Params<0>::Type()));
+  static const auto cached = S_get(new ExtType_Math(CreateCategory_Math(), Params<0>::Type()));
   return cached;
-}
-
-S<TypeValue> CreateValue_Math(S<Type_Math> parent, const ParamTuple& params, const ValueTuple& args) {
-  return S_get(new Impl_Value_Math(parent, params, args));
 }
 
 #ifdef ZEOLITE_PUBLIC_NAMESPACE

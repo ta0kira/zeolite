@@ -2,13 +2,13 @@
 
 ## 0.13.0.0  -- ????-??-??
 
-### Compiler CLI
-
-* **[breaking]** Adds [`microlens`][microlens] and
-  [`microlens-th`][microlens-th] as dependencies, to help clean up the compiler
-  code. This should not change the compiler's behavior.
-
 ### Language
+
+* **[breaking]** Streamlines C++ extensions to cut down on boilerplate code.
+  This is a massive change that breaks *all* existing C++ extensions; however,
+  hand-written procedure definitions can be copied-and-pasted into a new
+  extension template. Use `zeolite --templates` to regenerate new templates for
+  C++ extensions.
 
 * **[new]** Adds pragmas for local variable rules:
 
@@ -22,6 +22,12 @@
   intersection type to a union type, when one or both sides contains another
   nested union or intersection. This was previously fixed for compile-time
   checks, but `reduce` was missed.
+
+### Compiler CLI
+
+* **[breaking]** Adds [`microlens`][microlens] and
+  [`microlens-th`][microlens-th] as dependencies, to help clean up the compiler
+  code. This should not change the compiler's behavior.
 
 ## 0.12.0.0  -- 2020-12-11
 
