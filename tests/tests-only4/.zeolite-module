@@ -1,0 +1,13 @@
+root: "../.."
+path: "tests/tests-only4"
+extra_files: [
+  category_source {
+    source: "tests/tests-only4/source1.cpp"
+    categories: [Type1]
+  }
+  category_source {
+    source: "tests/tests-only4/source2.cpp"
+    categories: [Type3]
+  }
+]
+mode: incremental {}

@@ -108,6 +108,26 @@ test_tests_only3() {
 }
 
 
+test_tests_only4() {
+  local output=$(do_zeolite -p "$ZEOLITE_PATH" -r tests/tests-only4 -f || true)
+  if ! echo "$output" | egrep -q 'Type2 .+ \$TestsOnly\$'; then
+    show_message 'Expected Type2 import error from tests/tests-only4:'
+    echo "$output" 1>&2
+    return 1
+  fi
+  if ! echo "$output" | egrep -q 'In compilation of .+/source2\.cpp'; then
+    show_message 'Expected source2.cpp import error from tests/tests-only4:'
+    echo "$output" 1>&2
+    return 1
+  fi
+  if echo "$output" | egrep -q 'In compilation of .+/source1\.cpp'; then
+    show_message 'Unexpected source1.cpp import error from tests/tests-only4:'
+    echo "$output" 1>&2
+    return 1
+  fi
+}
+
+
 test_module_only() {
   local output=$(do_zeolite -p "$ZEOLITE_PATH" -R tests/module-only -f || true)
   if ! echo "$output" | egrep -q 'Type1 not found'; then
@@ -342,6 +362,7 @@ ALL_TESTS=(
   test_tests_only
   test_tests_only2
   test_tests_only3
+  test_tests_only4
   test_module_only
   test_module_only2
   test_module_only3

@@ -18,7 +18,6 @@ tests/module-only3/source1.cpp:19:10: fatal error: 'Category_Type1.hpp' file not
          ^~~~~~~~~~~~~~~~~~~~
 1 error generated.
 Execution of /usr/bin/clang++ failed
-
 ```
 
 Importantly, there *should not* be any errors related to `Type2`; only `Type1`.
