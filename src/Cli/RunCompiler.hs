@@ -21,7 +21,7 @@ module Cli.RunCompiler (
 ) where
 
 import Control.Monad (foldM,when)
-import Data.List (intercalate)
+import Data.List (intercalate,nub)
 import System.Directory
 import System.FilePath
 import System.IO
@@ -161,13 +161,22 @@ runCompiler resolver backend (CompileOptions _ is is2 ds _ _ p CreateTemplates f
   compilerHash = getCompilerHash backend
   compileSingle d = do
     d' <- errorFromIO $ canonicalizePath (p </> d)
+    (is',is2') <- maybeUseConfig d'
     base <- resolveBaseModule resolver
-    as  <- fmap fixPaths $ mapErrorsM (resolveModule resolver d') is
-    as2 <- fmap fixPaths $ mapErrorsM (resolveModule resolver d') is2
+    as  <- fmap fixPaths $ mapErrorsM (resolveModule resolver d') is'
+    as2 <- fmap fixPaths $ mapErrorsM (resolveModule resolver d') is2'
     deps1 <- loadPublicDeps compilerHash f Map.empty (base:as)
     deps2 <- loadPublicDeps compilerHash f (mapMetadata deps1) as2
     path <- errorFromIO $ canonicalizePath p
     createModuleTemplates resolver path d deps1 deps2 <?? "In module \"" ++ d' ++ "\""
+  maybeUseConfig d2 = do
+    let rm = loadRecompile d2
+    isError <- isCompilerErrorM rm
+    if isError
+       then return (is,is2)
+       else do
+         (ModuleConfig _ _ _ is3 is4 _ _ _) <- rm
+         return (nub $ is ++ is3,nub $ is2 ++ is4)
 
 runCompiler resolver backend (CompileOptions h is is2 ds es ep p m f) = mapM_ compileSingle ds where
   compileSingle d = do

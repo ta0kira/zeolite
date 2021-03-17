@@ -69,20 +69,22 @@ procedureDeclaration abstract f = return $ onlyCode func where
   name = callName (sfName f)
   proto
     | sfScope f == CategoryScope =
-      "ReturnTuple " ++ name ++ "(const ParamTuple& params, const ValueTuple& args);"
+      "ReturnTuple " ++ name ++ "(const ParamTuple& params, const ValueTuple& args)"
     | sfScope f == TypeScope =
       "ReturnTuple " ++ name ++
       -- NOTE: Don't use Var_self, since self isn't accessible to @type functions.
-      "(const S<TypeInstance>& self, const ParamTuple& params, const ValueTuple& args);"
+      "(const S<TypeInstance>& self, const ParamTuple& params, const ValueTuple& args)"
     | sfScope f == ValueScope =
       "ReturnTuple " ++ name ++
-      "(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args);"
+      "(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args)"
     | otherwise = undefined
 
 compileExecutableProcedure :: (Ord c, Show c, CollectErrorsM m) =>
-  ScopeContext c -> ScopedFunction c -> ExecutableProcedure c -> m (CompiledData [String])
-compileExecutableProcedure ctx ff@(ScopedFunction _ _ _ s as1 rs1 ps1 _ _)
-                               pp@(ExecutableProcedure c pragmas c2 n as2 rs2 p) = do
+  Maybe String -> ScopeContext c -> ScopedFunction c ->
+  ExecutableProcedure c -> m (CompiledData [String])
+compileExecutableProcedure className ctx
+  ff@(ScopedFunction _ _ _ s as1 rs1 ps1 _ _)
+  pp@(ExecutableProcedure c pragmas c2 n as2 rs2 p) = do
   ctx' <- getProcedureContext ctx ff pp
   output <- runDataCompiler compileWithReturn ctx'
   procedureTrace <- setProcedureTrace
@@ -111,15 +113,18 @@ compileExecutableProcedure ctx ff@(ScopedFunction _ _ _ s as1 rs1 ps1 _ _)
         ]
     close = "}"
     name = callName n
+    prefix = case className of
+                  Nothing -> ""
+                  Just cn -> cn ++ "::"
     proto
       | s == CategoryScope =
-        returnType ++ " " ++ categoryName t ++ "::" ++ name ++ "(const ParamTuple& params, const ValueTuple& args) {"
+        returnType ++ " " ++ prefix ++ name ++ "(const ParamTuple& params, const ValueTuple& args) {"
       | s == TypeScope =
-        returnType ++ " " ++ typeName t ++ "::" ++ name ++
+        returnType ++ " " ++ prefix ++ name ++
         -- NOTE: Don't use Var_self, since self isn't accessible to @type functions.
         "(const S<TypeInstance>& self, const ParamTuple& params, const ValueTuple& args) {"
       | s == ValueScope =
-        returnType ++ " " ++ valueName t ++ "::" ++ name ++
+        returnType ++ " " ++ prefix ++ name ++
         "(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) {"
       | otherwise = undefined
     returnType = "ReturnTuple"

@@ -185,7 +185,7 @@ test_warn_public() {
 
 
 test_templates() {
-  execute rm -f $ZEOLITE_PATH/tests/templates/Category_Templated.cpp
+  execute rm -f $ZEOLITE_PATH/tests/templates/Extension_Templated.cpp
   do_zeolite -p "$ZEOLITE_PATH" --templates tests/templates
   do_zeolite -p "$ZEOLITE_PATH" -r tests/templates
   do_zeolite -p "$ZEOLITE_PATH" -t tests/templates

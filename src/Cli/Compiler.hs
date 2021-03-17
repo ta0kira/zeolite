@@ -276,16 +276,20 @@ createModuleTemplates resolver p d deps1 deps2 = do
   let ca = Set.fromList $ map getCategoryName $ filter isValueConcrete cs
   let ca' = foldr Set.delete ca $ map dcName ds2
   let testingCats = Set.fromList $ map getCategoryName ts1
-  ts <- mapErrorsM (\n -> generateExtensionTemplate (n `Set.member` testingCats) tm n) $ Set.toList ca'
+  ts <- fmap concat $ mapErrorsM (\n -> generate (n `Set.member` testingCats) tm n) $ Set.toList ca'
   mapErrorsM_ writeTemplate ts where
-  writeTemplate (CxxOutput _ n _ _ _ content) = do
-    let n' = p </> d </> n
-    exists <- errorFromIO $ doesFileExist n'
-    if exists
-        then compilerWarningM $ "Skipping existing file " ++ n
-        else do
-          errorFromIO $ hPutStrLn stderr $ "Writing file " ++ n
-          errorFromIO $ writeFile n' $ concat $ map (++ "\n") content
+    generate testing tm n = do
+      (_,t) <- getConcreteCategory tm ([],n)
+      let ctx = FileContext testing tm Set.empty Map.empty
+      generateStreamlinedTemplate ctx t
+    writeTemplate (CxxOutput _ n _ _ _ content) = do
+      let n' = p </> d </> n
+      exists <- errorFromIO $ doesFileExist n'
+      if exists
+         then compilerWarningM $ "Skipping existing file " ++ n
+         else do
+           errorFromIO $ hPutStrLn stderr $ "Writing file " ++ n
+           errorFromIO $ writeFile n' $ concat $ map (++ "\n") content
 
 runModuleTests :: (PathIOHandler r, CompilerBackend b) => r -> b -> FilePath ->
   [FilePath] -> LoadedTests -> TrackedErrorsIO [((Int,Int),TrackedErrors ())]

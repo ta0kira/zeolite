@@ -25,6 +25,7 @@ module CompilerCxx.Naming (
   baseSourceIncludes,
   callName,
   categoryCreator,
+  categoryCustom,
   categoryGetter,
   categoryName,
   collectionName,
@@ -44,13 +45,16 @@ module CompilerCxx.Naming (
   sourceFilename,
   sourceStreamlined,
   tableName,
+  templateStreamlined,
   testFilename,
   testFunctionName,
   typeCreator,
+  typeCustom,
   typeGetter,
   typeName,
   unionGetter,
   valueCreator,
+  valueCustom,
   valueName,
   variableName,
 ) where
@@ -74,6 +78,9 @@ headerStreamlined n = "Streamlined_" ++ show n ++ ".hpp"
 
 sourceStreamlined :: CategoryName -> String
 sourceStreamlined n = "Streamlined_" ++ show n ++ ".cpp"
+
+templateStreamlined :: CategoryName -> String
+templateStreamlined n = "Extension_" ++ show n ++ ".cpp"
 
 mainFilename :: String
 mainFilename = "main.cpp"
@@ -125,6 +132,15 @@ anyGetter = "GetMerged_Any"
 
 valueName :: CategoryName -> String
 valueName n = "Value_" ++ show n
+
+categoryCustom :: CategoryName -> String
+categoryCustom n = "ExtCategory_" ++ show n
+
+typeCustom :: CategoryName -> String
+typeCustom n = "ExtType_" ++ show n
+
+valueCustom :: CategoryName -> String
+valueCustom n = "ExtValue_" ++ show n
 
 callName :: FunctionName -> String
 callName f = "Call_" ++ show f

@@ -84,29 +84,30 @@ compileLanguageModule (LanguageModule ns0 ns1 ns2 cs0 ps0 ts0 cs1 ps1 ts1 ex ss 
     map (generateNativeInterface False) (onlyNativeInterfaces ps1) ++
     map (generateNativeInterface True)  (onlyNativeInterfaces ts1)
   xxPrivate <- fmap concat $ mapErrorsM (compilePrivate (tmPrivate,nsPrivate) (tmTesting,nsTesting)) xa
-  xxStreamlined <- fmap concat $ mapErrorsM streamlined $ nub ss
-  xxVerbose <- fmap concat $ mapErrorsM verbose $ nub ex
+  xxStreamlined <- fmap concat $ mapErrorsM (streamlined tmTesting) $ nub ss
+  xxVerbose <- fmap concat $ mapErrorsM (verbose tmTesting) $ nub ex
   let allFiles = xxInterfaces ++ xxPrivate ++ xxStreamlined ++ xxVerbose
   noDuplicateFiles $ map (\f -> (coFilename f,coNamespace f)) allFiles
   return allFiles where
     extensions = Set.fromList $ ex ++ ss
     testingCats = Set.fromList $ map getCategoryName ts1
     onlyNativeInterfaces = filter (not . (`Set.member` extensions) . getCategoryName) . filter (not . isValueConcrete)
-    streamlined n = do
-      let tm = mapCatByName $ cs1 ++ ps1 ++ ts1
+    localCats = Set.fromList $ map getCategoryName $ cs1 ++ ps1 ++ ts1
+    streamlined tm n = do
+      checkLocal localCats ([] :: [String]) n
       (_,t) <- getConcreteCategory tm ([],n)
       generateStreamlinedExtension (n `Set.member` testingCats) t
-    verbose n = do
-      let tm = mapCatByName $ cs1 ++ ps1 ++ ts1
+    verbose tm n = do
+      checkLocal localCats ([] :: [String]) n
       (_,t) <- getConcreteCategory tm ([],n)
       generateVerboseExtension (n `Set.member` testingCats) t
     compilePrivate (tmPrivate,nsPrivate) (tmTesting,nsTesting) (PrivateSource ns3 testing cs2 ds) = do
       let (tm,ns) = if testing
                        then (tmTesting,nsTesting)
                        else (tmPrivate,nsPrivate)
-      let tm2 = mapCatByName $ if testing
-                               then cs2 ++ cs1 ++ ps1 ++ ts1
-                               else cs2 ++ cs1 ++ ps1
+      let cs = Set.fromList $ map getCategoryName $ if testing
+                                                       then cs2 ++ cs1 ++ ps1 ++ ts1
+                                                       else cs2 ++ cs1 ++ ps1
       tm' <- includeNewTypes tm cs2
       let ctx = FileContext testing tm' (ns3 `Set.insert` ns) em
       checkLocals ds $ Map.keysSet tm'
@@ -114,28 +115,24 @@ compileLanguageModule (LanguageModule ns0 ns1 ns2 cs0 ps0 ts0 cs1 ps1 ts1 ex ss 
       let dm = mapDefByName ds
       checkDefined dm Set.empty $ filter isValueConcrete cs2
       xxInterfaces <- fmap concat $ mapErrorsM (generateNativeInterface testing) (filter (not . isValueConcrete) cs2)
-      xxConcrete   <- fmap concat $ mapErrorsM (generateConcrete tm2 ctx) ds
+      xxConcrete   <- fmap concat $ mapErrorsM (generateConcrete cs ctx) ds
       return $ xxInterfaces ++ xxConcrete
-    generateConcrete tm2 (FileContext testing tm ns em2) d = do
+    generateConcrete cs (FileContext testing tm ns em2) d = do
       tm' <- mergeInternalInheritance tm d
-      t <- getCategoryDecl tm2 d
+      t <- getCategoryDecl cs tm d
       let ctx = FileContext testing tm' ns em2
       generateNativeConcrete ctx (t,d)
-    getCategoryDecl tm d =
-      case dcName d `Map.lookup` tm of
-           Nothing -> compilerErrorM $ "Category " ++ show (dcName d) ++
-                                       formatFullContextBrace (dcContext d) ++
-                                       " was not declared in this module"
-           Just t -> return t
+    getCategoryDecl cs tm d = do
+      checkLocal cs (dcContext d) (dcName d)
+      fmap snd $ getConcreteCategory tm (dcContext d,dcName d)
     mapDefByName = Map.fromListWith (++) . map (\d -> (dcName d,[d]))
-    mapCatByName = Map.fromList . map (\t -> (getCategoryName t,t))
     ca = Set.fromList $ map getCategoryName $ filter isValueConcrete (cs1 ++ ps1 ++ ts1)
-    checkLocals ds tm = mapErrorsM_ (checkLocal tm) ds
-    checkLocal cs2 d =
-      when (not $ dcName d `Set.member` cs2) $
-        compilerErrorM ("Definition for " ++ show (dcName d) ++
-                       formatFullContextBrace (dcContext d) ++
-                       " does not correspond to a visible category in this module")
+    checkLocals ds tm = mapErrorsM_ (\d -> checkLocal tm (dcContext d) (dcName d)) ds
+    checkLocal cs2 c n =
+      when (not $ n `Set.member` cs2) $
+        compilerErrorM ("Category " ++ show n ++
+                        formatFullContextBrace c ++
+                        " does not correspond to a visible category in this module")
     checkTests ds ps = do
       let pa = Map.fromList $ map (\c -> (getCategoryName c,getCategoryContext c)) $ filter isValueConcrete ps
       mapErrorsM_ (checkTest pa) ds

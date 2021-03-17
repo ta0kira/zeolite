@@ -195,7 +195,6 @@ library zeolite-internal
                        Compilation.CompilerState,
                        Compilation.ProcedureContext,
                        Compilation.ScopeContext,
-                       CompilerCxx.Category,
                        CompilerCxx.CategoryContext,
                        CompilerCxx.Code,
                        CompilerCxx.CxxFiles,
