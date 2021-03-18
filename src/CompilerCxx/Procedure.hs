@@ -99,8 +99,10 @@ compileExecutableProcedure className ctx
       when (not unreachable) $
         doImplicitReturn c2 <??
           "In implicit return from " ++ show n ++ formatFullContextBrace c
+    funcMergeDeps f = mconcat $ (CompiledData (Set.fromList [sfType f]) []):(map funcMergeDeps $ sfMerges f)
     wrapProcedure output pt ct =
       mconcat [
+          funcMergeDeps ff,
           onlyCode proto,
           indentCompiled $ onlyCodes pt,
           indentCompiled $ onlyCodes ct,

@@ -92,7 +92,29 @@ define Value {
 }
 
 
-testcase "internal define is private" {
+testcase "internal define links properly for dispatching" {
+  success
+}
+
+unittest test {}
+
+concrete Value {}
+
+define Value {
+  refines Formatted
+  defines Equals<Value>
+
+  formatted () {
+    return "Value"
+  }
+
+  equals (_,_) {
+    return true
+  }
+}
+
+
+testcase "internal define is visible privately" {
   success
 }
 
