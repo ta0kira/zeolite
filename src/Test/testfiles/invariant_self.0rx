@@ -1,0 +1,6 @@
+@value interface Base<#x> {}
+
+@value interface Value<#x|#y|#z> {
+  refines Base<#self>
+  call () -> (#self)
+}

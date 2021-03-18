@@ -77,10 +77,12 @@ module Parser.Common (
   merge2,
   merge3,
   noKeywords,
+  noParamSelf,
   notAllowed,
   nullParse,
   operator,
   optionalSpace,
+  paramSelf,
   parseAny2,
   parseAny3,
   parseBin,
@@ -118,6 +120,7 @@ import qualified Data.Set as Set
 
 import Base.CompilerError
 import Parser.TextParser
+import Types.TypeInstance (ParamName(ParamSelf))
 
 
 class ParseFromSource a where
@@ -286,6 +289,14 @@ kwWeak = keyword "weak"
 
 kwWhile :: TextParser ()
 kwWhile = keyword "while"
+
+paramSelf :: TextParser ()
+paramSelf = keyword (show ParamSelf)
+
+noParamSelf :: TextParser ()
+noParamSelf = (<|> return ()) $ do
+    try paramSelf
+    compilerErrorM "#self is not allowed here"
 
 operatorSymbol :: TextParser Char
 operatorSymbol = labeled "operator symbol" $ satisfy (`Set.member` Set.fromList "+-*/%=!<>&|?")

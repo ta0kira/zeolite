@@ -1,0 +1,14 @@
+@value interface Foo {}
+
+@type interface Bar {}
+
+@value interface Base<|#x> {
+  #x requires Foo
+  #x defines Bar
+}
+
+concrete Value<#y|> {
+  refines Base<#self>
+  refines Foo
+  defines Bar
+}

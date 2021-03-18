@@ -1,0 +1,16 @@
+@value interface Base<|#x> {}
+
+@value interface Value<#x|#y|#z> {
+  refines Base<#self>
+  call () -> (#self)
+}
+
+concrete Child1 {
+  refines Value<all,all,all>
+  @value call () -> (#self)
+}
+
+concrete Child2 {
+  refines Value<all,all,all>
+  @value call () -> (all)
+}

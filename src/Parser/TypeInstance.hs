@@ -84,12 +84,16 @@ instance ParseFromSource CategoryName where
         | otherwise = CategoryName n
 
 instance ParseFromSource ParamName where
-  sourceParser = labeled "param name" $ do
-    noKeywords
-    char_ '#'
-    b <- lowerChar
-    e <- sepAfter $ many alphaNumChar
-    return $ ParamName ('#':b:e)
+  sourceParser = labeled "param name" $ self <|> custom where
+    self = do
+      paramSelf
+      return ParamSelf
+    custom = do
+      noKeywords
+      char_ '#'
+      b <- lowerChar
+      e <- sepAfter $ many alphaNumChar
+      return $ ParamName ('#':b:e)
 
 instance ParseFromSource TypeInstance where
   sourceParser = labeled "type instance" $ do

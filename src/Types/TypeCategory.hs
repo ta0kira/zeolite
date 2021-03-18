@@ -1,5 +1,5 @@
 {- -----------------------------------------------------------------------------
-Copyright 2019-2020 Kevin P. Barry
+Copyright 2019-2021 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -384,12 +384,12 @@ partitionByScope f = foldr bin empty where
 checkFilters :: CollectErrorsM m =>
   AnyCategory c -> Positional GeneralInstance -> m (Positional [TypeFilter])
 checkFilters t ps = do
-  let params = map vpParam $ getCategoryParams t
-  assigned <- fmap Map.fromList $ processPairs alwaysPair (Positional params) ps
-  fs <- mapErrorsM (subSingleFilter assigned . \f -> (pfParam f,pfFilter f))
-                                  (getCategoryFilters t)
+  assigned <- fmap (Map.insert ParamSelf selfType . Map.fromList) $ processPairs alwaysPair (Positional params) ps
+  fs <- mapErrorsM (subSingleFilter assigned . \f -> (pfParam f,pfFilter f)) allFilters
   let fa = Map.fromListWith (++) $ map (second (:[])) fs
   fmap Positional $ mapErrorsM (assignFilter fa) params where
+    params = map vpParam $ getCategoryParams t
+    allFilters = getCategoryFilters t ++ map (ParamFilter (getCategoryContext t) ParamSelf) (getSelfFilters t)
     subSingleFilter pa (n,(TypeFilter v t2)) = do
       t3<- uncheckedSubInstance (getValueForParam pa) t2
       return (n,(TypeFilter v t3))
@@ -400,6 +400,20 @@ checkFilters t ps = do
       case n `Map.lookup` fa of
             (Just x) -> return x
             _ -> return []
+
+getSelfFilters :: AnyCategory c -> [TypeFilter]
+getSelfFilters t = selfFilters where
+  params = map vpParam $ getCategoryParams t
+  selfParams = Positional $ map (singleType . JustParamName False) params
+  selfFilters
+    | isInstanceInterface t = [
+        DefinesFilter $ DefinesInstance (getCategoryName t) selfParams
+      ] ++ inheritedFilters
+    | otherwise = [
+        TypeFilter FilterRequires $ singleType $ JustTypeInstance $ TypeInstance (getCategoryName t) selfParams
+      ] ++ inheritedFilters
+  inheritedFilters = map (DefinesFilter . vdType) (getCategoryDefines t) ++
+                     map (TypeFilter FilterRequires . singleType . JustTypeInstance . vrType) (getCategoryRefines t)
 
 subAllParams :: CollectErrorsM m =>
   ParamValues -> GeneralInstance -> m GeneralInstance
@@ -465,9 +479,9 @@ declareAllTypes tm0 = foldr (\t tm -> tm >>= update t) (return tm0) where
   update t tm =
     case getCategoryName t `Map.lookup` tm of
         (Just t2) -> compilerErrorM $ "Type " ++ show (getCategoryName t) ++
-                                     formatFullContextBrace (getCategoryContext t) ++
-                                     " has already been declared" ++
-                                     formatFullContextBrace (getCategoryContext t2)
+                                      formatFullContextBrace (getCategoryContext t) ++
+                                      " has already been declared" ++
+                                      formatFullContextBrace (getCategoryContext t2)
         _ -> return $ Map.insert (getCategoryName t) t tm
 
 getFilterMap :: CollectErrorsM m => [ValueParam c] -> [ParamFilter c] -> m ParamFilters
@@ -488,7 +502,9 @@ getFilterMap ps fs = do
                              Map.fromListWith (++) $ map (second (:[])) fs' ++ pa0
 
 getCategoryFilterMap :: CollectErrorsM m => AnyCategory c -> m ParamFilters
-getCategoryFilterMap t = getFilterMap (getCategoryParams t) (getCategoryFilters t)
+getCategoryFilterMap t = do
+  defaultMap <- getFilterMap (getCategoryParams t) (getCategoryFilters t)
+  return $ Map.insert ParamSelf (getSelfFilters t) defaultMap
 
 -- TODO: Use this where it's needed in this file.
 getFunctionFilterMap :: CollectErrorsM m => ScopedFunction c -> m ParamFilters
@@ -496,7 +512,7 @@ getFunctionFilterMap f = getFilterMap (pValues $ sfParams f) (sfFilters f)
 
 getCategoryParamMap :: AnyCategory c -> ParamValues
 getCategoryParamMap t = let ps = map vpParam $ getCategoryParams t in
-                          Map.fromList $ zip ps (map (singleType . JustParamName False) ps)
+  Map.fromList $ zip ps (map (singleType . JustParamName False) ps) ++ [(ParamSelf,selfType)]
 
 disallowBoundedParams :: CollectErrorsM m => ParamFilters -> m ()
 disallowBoundedParams = mapErrorsM_ checkBounds . Map.toList where
@@ -831,7 +847,7 @@ flattenAllConnections tm0 ts = do
       (_,v) <- getValueCategory tm (c,n)
       let ns = map vpParam $ getCategoryParams v
       paired <- processPairs alwaysPair (Positional ns) ps
-      return $ Map.fromList paired
+      return $ Map.insert ParamSelf selfType $ Map.fromList paired
     checkMerged r fm rs rs2 = do
       let rm = Map.fromList $ map (\t -> (tiName $ vrType t,t)) rs
       mapErrorsM_ (\t -> checkConvert r fm (tiName (vrType t) `Map.lookup` rm) t) rs2
@@ -858,14 +874,14 @@ mergeFunctions r tm pm fm rs ds fs = do
       let ps = map vpParam $ getCategoryParams t
       let fs2 = getCategoryFunctions t
       paired <- processPairs alwaysPair (Positional ps) ts2
-      let assigned = Map.fromList paired
+      let assigned = Map.fromList $ (ParamSelf,selfType):paired
       mapErrorsM (unfixedSubFunction assigned) fs2
     getDefinesFuncs tm2 (ValueDefine c (DefinesInstance n ts2)) = do
       (_,t) <- getInstanceCategory tm2 (c,n)
       let ps = map vpParam $ getCategoryParams t
       let fs2 = getCategoryFunctions t
       paired <- processPairs alwaysPair (Positional ps) ts2
-      let assigned = Map.fromList paired
+      let assigned = Map.fromList $ (ParamSelf,selfType):paired
       mapErrorsM (unfixedSubFunction assigned) fs2
     mergeByName r2 fm2 im em n =
       tryMerge r2 fm2 n (n `Map.lookup` im) (n `Map.lookup` em)
@@ -873,15 +889,15 @@ mergeFunctions r tm pm fm rs ds fs = do
     tryMerge _ _ n (Just is) Nothing
       | length is == 1 = return $ head is
       | otherwise = compilerErrorM $ "Function " ++ show n ++ " is inherited " ++
-                                   show (length is) ++ " times:\n---\n" ++
-                                   intercalate "\n---\n" (map show is)
+                                     show (length is) ++ " times:\n---\n" ++
+                                     intercalate "\n---\n" (map show is)
     -- Not inherited.
     tryMerge r2 fm2 n Nothing es = tryMerge r2 fm2 n (Just []) es
     -- Explicit override, possibly inherited.
     tryMerge r2 fm2 n (Just is) (Just es)
       | length es /= 1 = compilerErrorM $ "Function " ++ show n ++ " is declared " ++
-                                        show (length es) ++ " times:\n---\n" ++
-                                        intercalate "\n---\n" (map show es)
+                                          show (length es) ++ " times:\n---\n" ++
+                                          intercalate "\n---\n" (map show es)
       | otherwise = do
         let ff@(ScopedFunction c n2 t s as rs2 ps fa ms) = head es
         mapErrorsM_ (checkMerge r2 fm2 ff) is
@@ -890,8 +906,8 @@ mergeFunctions r tm pm fm rs ds fs = do
           checkMerge r3 fm3 f1 f2
             | sfScope f1 /= sfScope f2 =
               compilerErrorM $ "Cannot merge " ++ show (sfScope f2) ++ " with " ++
-                             show (sfScope f1) ++ " in function merge:\n---\n" ++
-                             show f2 ++ "\n  ->\n" ++ show f1
+                               show (sfScope f1) ++ " in function merge:\n---\n" ++
+                               show f2 ++ "\n  ->\n" ++ show f1
             | otherwise =
               ("In function merge:\n---\n" ++ show f2 ++
                "\n  ->\n" ++ show f1 ++ "\n---\n") ??> do

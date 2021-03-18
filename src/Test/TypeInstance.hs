@@ -47,6 +47,14 @@ tests = [
     checkParseSuccess
       "#x"
       (singleType $ JustParamName False $ ParamName "#x"),
+    checkParseSuccess
+      "#self"
+      (singleType $ JustParamName False $ ParamSelf),
+    checkParseSuccess
+      "Type0<#self>"
+      (singleType $ JustTypeInstance $ TypeInstance (CategoryName "Type0") (Positional [
+          singleType $ JustParamName False $ ParamSelf
+        ])),
     checkParseFail "x",
     checkParseFail "",
 

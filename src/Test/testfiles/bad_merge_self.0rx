@@ -1,0 +1,8 @@
+@value interface Value {
+  call () -> (#self)
+}
+
+concrete Child {
+  refines Value
+  @value call () -> (Child)
+}

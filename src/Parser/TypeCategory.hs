@@ -106,6 +106,7 @@ parseCategoryParams = do
                      (sepBy singleParam (sepAfter $ string_ ","))
       return (con,inv,cov)
     singleParam = labeled "param declaration" $ do
+      noParamSelf
       c <- getSourceContext
       n <- sourceParser
       return (c,n)
@@ -128,6 +129,7 @@ singleDefine = do
 singleFilter :: TextParser (ParamFilter SourceContext)
 singleFilter = try $ do
   c <- getSourceContext
+  noParamSelf
   n <- sourceParser
   f <- sourceParser
   return $ ParamFilter [c] n f
@@ -179,6 +181,7 @@ parseScopedFunction sp tp = labeled "function" $ do
                          (sepAfter $ string_ ">")
                          (sepBy singleParam (sepAfter $ string ","))
     singleParam = labeled "param declaration" $ do
+      noParamSelf
       c <- getSourceContext
       n <- sourceParser
       return $ ValueParam [c] n Invariant

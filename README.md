@@ -51,6 +51,7 @@ of this document.
     - [Optional and Weak Values](#optional-and-weak-values)
   - [Using Parameters](#using-parameters)
   - [Using Interfaces](#using-interfaces)
+  - [The `#self` Parameter](#the-self-parameter)
   - [Type Inference](#type-inference)
   - [Other Features](#other-features)
     - [Meta Types](#meta-types)
@@ -920,6 +921,60 @@ has `@type interface`s that declare `@type` functions that must be defined.
       <b>return</b> <span style='color:#bf0303;'>&quot;MyValue&quot;</span>
     }
   }</pre>
+
+### The `#self` Parameter
+
+Every category has an implicit *covariant* parameter **`#self`**. (As of
+compiler version `0.14.0.0`.) It *always* means the type of the current
+category, even when inherited. (`#self` is covariant because it needs to be
+convertible to a parent of the current category.)
+
+For example:
+
+<pre style='color:#1f1c1b;background-color:#f6f8fa;'>
+<span style='color:#644a9b;'>@value</span> <b>interface</b> <b><span style='color:#0057ae;'>Iterator</span></b><span style='color:#c02040;'>&lt;</span><span style='color:#c04040;'>|</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span> {
+  next () -&gt; (<b>#self</b>)
+  get () -&gt; (<i><span style='color:#0057ae;'>#x</span></i>)
+}
+
+<b>concrete</b> <b><span style='color:#0057ae;'>CharIterator</span></b> {
+  <b>refines</b> <span style='color:#0057ae;'>Iterator</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;</span>
+  <span style='color:#898887;'>// next must return CharIterator because #self = CharIterator here.</span>
+}</pre>
+
+The primary purpose of this is to support combining multiple interfaces with
+iterator or builder semantics into composite types *without* getting backed into
+a corner when calling functions from a single interface.
+
+<pre style='color:#1f1c1b;background-color:#f6f8fa;'>
+<span style='color:#644a9b;'>@value</span> <b>interface</b> <b><span style='color:#0057ae;'>ForwardIterator</span></b><span style='color:#c02040;'>&lt;</span><span style='color:#c04040;'>|</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span> {
+  next () -&gt; (<b>#self</b>)
+  get () -&gt; (<i><span style='color:#0057ae;'>#x</span></i>)
+}
+
+<span style='color:#644a9b;'>@value</span> <b>interface</b> <b><span style='color:#0057ae;'>ReverseIterator</span></b><span style='color:#c02040;'>&lt;</span><span style='color:#c04040;'>|</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span> {
+  prev () -&gt; (<b>#self</b>)
+  get () -&gt; (<i><span style='color:#0057ae;'>#x</span></i>)
+}
+
+<b>concrete</b> <b><span style='color:#0057ae;'>CharIterator</span></b> {
+  <b>refines</b> <span style='color:#0057ae;'>ForwardIterator</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;</span>
+  <b>refines</b> <span style='color:#0057ae;'>ReverseIterator</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;</span>
+  get () -&gt; (<i><span style='color:#0057ae;'>Char</span></i>)  <span style='color:#898887;'>// (Remember that merging needs to be done explicitly.)</span>
+}
+
+<b>concrete</b> <b><span style='color:#0057ae;'>Parser</span></b> {
+  <span style='color:#898887;'>// trimWhitespace can call next and still return the original type.</span>
+  <span style='color:#898887;'>// For example, if foo is a CharIterator, Parser.trimWhitespace&lt;?&gt;(foo) is</span>
+  <span style='color:#898887;'>// also a CharIterator.</span>
+  <span style='color:#644a9b;'>@type</span> trimWhitespace&lt;<i><span style='color:#0057ae;'>#i</span></i>&gt;
+    <i><span style='color:#0057ae;'>#i</span></i> <b>requires</b> <span style='color:#0057ae;'>ForwardIterator</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;</span>
+  (<i><span style='color:#0057ae;'>#i</span></i>) -&gt; (<i><span style='color:#0057ae;'>#i</span></i>)
+}</pre>
+
+`#self` is nothing magical; this could all be done by explicitly adding a
+covariant `#self` parameter to *every* type, with the appropriate `requires` and
+`defines` filters.
 
 ### Type Inference
 

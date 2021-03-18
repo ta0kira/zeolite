@@ -20,6 +20,7 @@ limitations under the License.
 module Test.TypeCategory (tests) where
 
 import Control.Arrow
+import Control.Monad ((>=>))
 import System.FilePath
 import qualified Data.Map as Map
 import qualified Data.Set as Set
@@ -71,6 +72,11 @@ tests = [
     checkShortParseSuccess "@value interface Type { refines T }",
     checkShortParseFail "@value interface Type { defines T }",
     checkShortParseSuccess "@value interface Type<#x> { #x allows T }",
+
+    checkShortParseSuccess "@value interface Type { call () -> (#self) }",
+    checkShortParseFail "@value interface Type<#self> {}",
+    checkShortParseFail "@value interface Type { #self refines Foo }",
+    checkShortParseFail "@value interface Type { call<#self> () -> () }",
 
     checkOperationSuccess ("testfiles" </> "value_refines_value.0rx") (checkConnectedTypes defaultCategories),
     checkOperationFail ("testfiles" </> "value_refines_instance.0rx") (checkConnectedTypes defaultCategories),
@@ -792,6 +798,22 @@ tests = [
       (\ts -> do
         ts2 <- topoSortCategories defaultCategories ts
         flattenAllConnections defaultCategories ts2 >> return ()),
+
+    checkOperationSuccess
+      ("testfiles" </> "valid_self.0rx")
+      (includeNewTypes defaultCategories >=> const (return ())),
+    checkOperationSuccess
+      ("testfiles" </> "filtered_self.0rx")
+      (includeNewTypes defaultCategories >=> const (return ())),
+    checkOperationFail
+      ("testfiles" </> "bad_merge_self.0rx")
+      (includeNewTypes defaultCategories >=> const (return ())),
+    checkOperationFail
+      ("testfiles" </> "contravariant_self.0rx")
+      (includeNewTypes defaultCategories >=> const (return ())),
+    checkOperationFail
+      ("testfiles" </> "invariant_self.0rx")
+      (includeNewTypes defaultCategories >=> const (return ())),
 
     checkOperationSuccess
       ("testfiles" </> "inference.0rx")

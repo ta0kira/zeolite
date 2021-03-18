@@ -1,5 +1,5 @@
 {- -----------------------------------------------------------------------------
-Copyright 2019-2020 Kevin P. Barry
+Copyright 2019-2021 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -56,6 +56,7 @@ module Types.TypeInstance (
   noInferredTypes,
   requiredParam,
   requiredSingleton,
+  selfType,
   uncheckedSubFilter,
   uncheckedSubFilters,
   uncheckedSubInstance,
@@ -147,14 +148,19 @@ instance Eq CategoryName where
 instance Ord CategoryName where
   c1 <= c2 = show c1 <= show c2
 
-newtype ParamName =
+data ParamName =
   ParamName {
     pnName :: String
-  }
+  } |
+  ParamSelf
   deriving (Eq,Ord)
 
 instance Show ParamName where
   show (ParamName n) = n
+  show ParamSelf     = "#self"
+
+selfType :: GeneralInstance
+selfType = singleType $ JustParamName True ParamSelf
 
 data TypeInstance =
   TypeInstance {
@@ -271,7 +277,7 @@ class TypeResolver r where
   -- Performs parameter substitution for defines.
   trDefines :: CollectErrorsM m =>
     r -> TypeInstance -> CategoryName -> m InstanceParams
-  -- Get the parameter variances for the category.
+  -- Gets the parameter variances for the category.
   trVariance :: CollectErrorsM m =>
     r -> CategoryName -> m InstanceVariances
   -- Gets filters for the assigned parameters.
@@ -590,12 +596,13 @@ checkDefinesMatch r f f2@(DefinesInstance n2 ps2) f1@(DefinesInstance n1 ps1)
 validateInstanceVariance :: (CollectErrorsM m, TypeResolver r) =>
   r -> ParamVariances -> Variance -> GeneralInstance -> m ()
 validateInstanceVariance r vm v = reduceMergeTree collectAllM_ collectAllM_ validateSingle where
+  vm' = Map.insert ParamSelf Covariant vm
   validateSingle (JustTypeInstance (TypeInstance n ps)) = do
     vs <- trVariance r n
     paired <- processPairs alwaysPair vs ps
-    mapErrorsM_ (\(v2,p) -> validateInstanceVariance r vm (v `composeVariance` v2) p) paired
+    mapErrorsM_ (\(v2,p) -> validateInstanceVariance r vm' (v `composeVariance` v2) p) paired
   validateSingle (JustParamName _ n) =
-    case n `Map.lookup` vm of
+    case n `Map.lookup` vm' of
         Nothing -> compilerErrorM $ "Param " ++ show n ++ " is undefined"
         (Just v0) -> when (not $ v0 `allowsVariance` v) $
                           compilerErrorM $ "Param " ++ show n ++ " cannot be " ++ show v
@@ -607,7 +614,8 @@ validateDefinesVariance :: (CollectErrorsM m, TypeResolver r) =>
 validateDefinesVariance r vm v (DefinesInstance n ps) = do
   vs <- trVariance r n
   paired <- processPairs alwaysPair vs ps
-  mapErrorsM_ (\(v2,p) -> validateInstanceVariance r vm (v `composeVariance` v2) p) paired
+  mapErrorsM_ (\(v2,p) -> validateInstanceVariance r vm' (v `composeVariance` v2) p) paired where
+    vm' = Map.insert ParamSelf Covariant vm
 
 uncheckedSubValueType :: CollectErrorsM m =>
   (ParamName -> m GeneralInstance) -> ValueType -> m ValueType
