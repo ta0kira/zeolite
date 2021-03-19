@@ -633,10 +633,11 @@ uncheckedSubInstance replace = reduceMergeTree subAny subAll subSingle where
   -- NOTE: Don't use mergeAnyM because it will fail if the union is empty.
   subAny = fmap mergeAny . sequence
   subAll = fmap mergeAll . sequence
-  subSingle p@(JustParamName True _) = return $ singleType p
-  subSingle (JustParamName _ n)      = replace n
-  subSingle (JustInferredType n)     = replace n
-  subSingle (JustTypeInstance t)     = fmap (singleType . JustTypeInstance) $ uncheckedSubSingle replace t
+  subSingle p@(JustParamName _ ParamSelf) = return $ singleType p
+  subSingle p@(JustParamName True _)      = return $ singleType p
+  subSingle (JustParamName _ n)           = replace n
+  subSingle (JustInferredType n)          = replace n
+  subSingle (JustTypeInstance t)          = fmap (singleType . JustTypeInstance) $ uncheckedSubSingle replace t
 
 uncheckedSubSingle :: CollectErrorsM m => (ParamName -> m GeneralInstance) ->
   TypeInstance -> m TypeInstance
@@ -676,9 +677,8 @@ replaceSelfInstance self = reduceMergeTree subAny subAll subSingle where
   subAny = fmap mergeAny . sequence
   subAll = fmap mergeAll . sequence
   subSingle (JustParamName _ ParamSelf) = return self
-  subSingle p@(JustParamName _ _)       = return $ singleType p
-  subSingle p@(JustInferredType _)      = return $ singleType p
   subSingle (JustTypeInstance t)        = fmap (singleType . JustTypeInstance) $ replaceSelfSingle self t
+  subSingle p                           = return $ singleType p
 
 replaceSelfSingle :: CollectErrorsM m =>
   GeneralInstance -> TypeInstance -> m TypeInstance

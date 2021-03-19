@@ -372,3 +372,107 @@ define Type {
     return #self{ }
   }
 }
+
+
+testcase "preserves type in implementations" {
+  success
+}
+
+unittest test {
+  Type value <- Type.create()
+  \ Testing.checkEquals<?>(value.next().prev().prev().next().next().get(),1)
+}
+
+@value interface Forward {
+  next () -> (#self)
+}
+
+@value interface Reverse {
+  prev () -> (#self)
+}
+
+concrete Type {
+  refines Forward
+  refines Reverse
+
+  @type create () -> (Type)
+  @value get () -> (Int)
+}
+
+define Type {
+  @value Int num
+
+  create () {
+    return Type{ 0 }
+  }
+
+  get () {
+    return num
+  }
+
+  next () {
+    num <- num+1
+    return self
+  }
+
+  prev () {
+    num <- num-1
+    return self
+  }
+}
+
+
+testcase "preserves type in function param filter" {
+  success
+}
+
+unittest test {
+  Type value <- Type.create()
+  \ Testing.checkEquals<?>((value `Advance.by<?>` 3).get(),3)
+}
+
+@value interface Forward {
+  next () -> (#self)
+}
+
+concrete Advance {
+  @type by<#x>
+    #x requires Forward
+  (#x,Int) -> (#x)
+}
+
+define Advance {
+  by (x,i) (x2) {
+    x2 <- x
+    scoped {
+      Int count <- 0
+    } in while (count < i) {
+      x2 <- x2.next()
+    } update {
+      count <- count+1
+    }
+  }
+}
+
+concrete Type {
+  refines Forward
+
+  @type create () -> (Type)
+  @value get () -> (Int)
+}
+
+define Type {
+  @value Int num
+
+  create () {
+    return Type{ 0 }
+  }
+
+  get () {
+    return num
+  }
+
+  next () {
+    return Type{ num+1 }
+  }
+}

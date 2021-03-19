@@ -185,8 +185,7 @@ instance (Show c, CollectErrorsM m) =>
         paired <- processPairs alwaysPair ps1 ps2 <??
           "In external function call at " ++ formatFullContext c
         let assigned = Map.fromList paired
-        f' <- replaceSelfFunction t0 f
-        uncheckedSubFunction assigned f'
+        uncheckedSubFunction assigned f >>= replaceSelfFunction (fixTypeParams t0)
       subAndCheckFunction _ t2 _ _ _ =
         compilerErrorM $ "Category " ++ show t2 ++
                          " does not have a type or value function named " ++ show n ++
