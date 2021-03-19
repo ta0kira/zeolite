@@ -111,6 +111,13 @@ support very powerful recursive type conversions for parameterized types.
 Zeolite *also* allows [use-site variance][variance] variance declarations, like
 Java uses.
 
+Building variance into the core of the type system also allows Zeolite to have a
+[special meta-type](#the-self-parameter) that interfaces can use to require that
+implementations return a value of *their own type* rather than *the type of the
+interface*. This is particularly useful for defining interfaces for iterators
+and builders, whose methods often perform an update and return a value of the
+same type.
+
 ### Parameters as Variables
 
 Zeolite treats type parameters both as type place-holders (like in C++ and
