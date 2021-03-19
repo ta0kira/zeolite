@@ -1,13 +1,14 @@
 # Revision history for zeolite-lang
 
-## 0.14.0.0  -- ????-??-??
+## 0.14.0.0  -- 2021-03-19
 
 ### Language
 
 * **[breaking]** Adds the `#self` meta-type. This is an implicit type param that
-  is *always* the most-derived type. For example, if a `@value interface` has a
-  return type of `#self` then any implementation must return *its own type* from
-  that function. (This is a breaking change because it reserves the param name
+  is dynamically replaced with the type of the object a function is called on.
+  For example, if a `@value interface` function has a return type of `#self`
+  then any implementation must return an object of *its own type* from that
+  function. (This is a breaking change because it reserves the param name
   `#self`.)
 
 ### Libraries
