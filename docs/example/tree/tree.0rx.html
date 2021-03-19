@@ -13,7 +13,7 @@
   <span style='color:#644a9b;'>@value</span> <b>optional</b> <span style='color:#0057ae;'>Node</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#k</span></i>,<i><span style='color:#0057ae;'>#v</span></i><span style='color:#c02040;'>&gt;</span> root
 
   new () {
-    <b>return</b> <span style='color:#0057ae;'>Tree</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#k</span></i>,<i><span style='color:#0057ae;'>#v</span></i><span style='color:#c02040;'>&gt;</span>{ <b>empty</b> }
+    <b>return</b> <b>#self</b>{ <b>empty</b> }
   }
 
   set (k,v) {
@@ -60,7 +60,7 @@
 
   insert (node,k,v) {
     <b>if</b> (!<b>present</b>(node)) {
-      <b>return</b> <span style='color:#0057ae;'>Node</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#k</span></i>,<i><span style='color:#0057ae;'>#v</span></i><span style='color:#c02040;'>&gt;</span>{ <span style='color:#b08000;'>1</span>, k, v, <b>empty</b>, <b>empty</b> }
+      <b>return</b> <b>#self</b>{ <span style='color:#b08000;'>1</span>, k, v, <b>empty</b>, <b>empty</b> }
     }
     <span style='color:#0057ae;'>Node</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#k</span></i>,<i><span style='color:#0057ae;'>#v</span></i><span style='color:#c02040;'>&gt;</span> node2 &lt;- <b>require</b>(node)
     <b>if</b> (k <b><span style='color:#c02040;'>`</span></b><i><span style='color:#0057ae;'>#k</span></i><span style='color:#644a9b;'>.</span>lessThan<b><span style='color:#c02040;'>`</span></b> node2<span style='color:#644a9b;'>.</span>getKey()) {

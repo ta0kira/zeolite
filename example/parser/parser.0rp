@@ -44,5 +44,5 @@ concrete ParseState<|#x> {
 
   // Reading data.
   current () -> (Char)
-  advance () -> (ParseContext<#x>)
+  advance () -> (#self)
 }

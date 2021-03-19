@@ -123,7 +123,7 @@ define ConstParser {
   }
 
   create (value) {
-    return ConstParser<#x>{ value }
+    return #self{ value }
   }
 }
 
@@ -167,7 +167,7 @@ define TryParser {
   }
 
   create (parser) {
-    return TryParser<#x>{ parser }
+    return #self{ parser }
   }
 }
 
@@ -194,7 +194,7 @@ define OrParser {
   }
 
   create (parser1,parser2) {
-    return OrParser<#x>{ parser1, parser2 }
+    return #self{ parser1, parser2 }
   }
 }
 
@@ -226,7 +226,7 @@ define LeftParser {
   }
 
   create (parser1,parser2) {
-    return LeftParser<#x>{ parser1, parser2 }
+    return #self{ parser1, parser2 }
   }
 }
 
@@ -253,7 +253,7 @@ define RightParser {
   }
 
   create (parser1,parser2) {
-    return RightParser<#x>{ parser1, parser2 }
+    return #self{ parser1, parser2 }
   }
 }
 

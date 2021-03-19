@@ -57,6 +57,13 @@ This example highlights several distinguishing features of the
   This is useful when the parameter value can be easily guessed by the reader of
   the code from its context.
 
+- **The `#self` Param.** Using `#self` as a return type in an `interface` allows
+  it to require that an implementation returns *its own type*, rather than
+  *the type of the `interface`*. `ParseContext.advance` uses this to allow
+  callers of `advance` to get an instance of the derived type rather than an
+  instance of `ParseContext`. This is useful because `ParseContext` lacks other
+  functions that the derived type defines.
+
 ## Running
 
 (Included with compiler package starting with version `0.6.0.0`.)

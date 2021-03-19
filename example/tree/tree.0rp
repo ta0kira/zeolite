@@ -1,8 +1,12 @@
 /* An interface for updating a key-value index.
  */
 @value interface KVWriter<#k,#v|> {
-  set (#k,#v) -> (KVWriter<#k,#v>)
-  remove (#k) -> (KVWriter<#k,#v>)
+  // #self below always means the type of value that the function is being
+  // called from. For example, the type of foo.remove(key) is the same type as
+  // foo is.
+
+  set (#k,#v) -> (#self)
+  remove (#k) -> (#self)
 }
 
 /* An interface for looking up values from a key-value index.
@@ -21,10 +25,6 @@ concrete Tree<#k,#v> {
   // Creates a new Tree, e.g., Tree.new().
   @type new () -> (Tree<#k,#v>)
 
-  // Normally you do not need to redeclare functions inherited from interfaces.
-  // The two redeclarations below are used to refine the return type from
-  // KVWriter to Tree.
-
-  @value set (#k,#v) -> (Tree<#k,#v>)
-  @value remove (#k) -> (Tree<#k,#v>)
+  // Since set and remove return #self, their implementations in Tree must
+  // return Tree<#k,#v>.
 }

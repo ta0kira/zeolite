@@ -2,7 +2,7 @@ define Tree {
   @value optional Node<#k,#v> root
 
   new () {
-    return Tree<#k,#v>{ empty }
+    return #self{ empty }
   }
 
   set (k,v) {
@@ -49,7 +49,7 @@ define Node {
 
   insert (node,k,v) {
     if (!present(node)) {
-      return Node<#k,#v>{ 1, k, v, empty, empty }
+      return #self{ 1, k, v, empty, empty }
     }
     Node<#k,#v> node2 <- require(node)
     if (k `#k.lessThan` node2.getKey()) {

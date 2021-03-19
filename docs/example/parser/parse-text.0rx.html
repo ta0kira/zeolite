@@ -134,7 +134,7 @@
   }
 
   create (value) {
-    <b>return</b> <span style='color:#0057ae;'>ConstParser</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>{ value }
+    <b>return</b> <b>#self</b>{ value }
   }
 }
 
@@ -178,7 +178,7 @@
   }
 
   create (parser) {
-    <b>return</b> <span style='color:#0057ae;'>TryParser</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>{ parser }
+    <b>return</b> <b>#self</b>{ parser }
   }
 }
 
@@ -205,7 +205,7 @@
   }
 
   create (parser1,parser2) {
-    <b>return</b> <span style='color:#0057ae;'>OrParser</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>{ parser1, parser2 }
+    <b>return</b> <b>#self</b>{ parser1, parser2 }
   }
 }
 
@@ -237,7 +237,7 @@
   }
 
   create (parser1,parser2) {
-    <b>return</b> <span style='color:#0057ae;'>LeftParser</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>{ parser1, parser2 }
+    <b>return</b> <b>#self</b>{ parser1, parser2 }
   }
 }
 
@@ -264,7 +264,7 @@
   }
 
   create (parser1,parser2) {
-    <b>return</b> <span style='color:#0057ae;'>RightParser</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>{ parser1, parser2 }
+    <b>return</b> <b>#self</b>{ parser1, parser2 }
   }
 }
 
