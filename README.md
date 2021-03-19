@@ -988,12 +988,49 @@ a corner when calling functions from a single interface.
 }
 
 <b>concrete</b> <b><span style='color:#0057ae;'>Parser</span></b> {
-  <span style='color:#898887;'>// trimWhitespace can call next and still return the original type.</span>
-  <span style='color:#898887;'>// For example, if foo is a CharIterator, Parser.trimWhitespace&lt;?&gt;(foo) is</span>
-  <span style='color:#898887;'>// also a CharIterator.</span>
+  <span style='color:#898887;'>// trimWhitespace can call next and still return the original type. In</span>
+  <span style='color:#898887;'>// contrast, if next returned ForwardIterator&lt;#x&gt; then trimWhitespace would</span>
+  <span style='color:#898887;'>// need to return ForwardIterator&lt;Char&gt; to the caller instead of #i.</span>
   <span style='color:#644a9b;'>@type</span> trimWhitespace&lt;<i><span style='color:#0057ae;'>#i</span></i>&gt;
     <i><span style='color:#0057ae;'>#i</span></i> <b>requires</b> <span style='color:#0057ae;'>ForwardIterator</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Char</span></i><span style='color:#c02040;'>&gt;</span>
   (<i><span style='color:#0057ae;'>#i</span></i>) -&gt; (<i><span style='color:#0057ae;'>#i</span></i>)
+}</pre>
+
+`#self` can also be used to generalize a factory pattern:
+
+<pre style='color:#1f1c1b;background-color:#f6f8fa;'>
+<span style='color:#644a9b;'>@type</span> <b>interface</b> <b><span style='color:#0057ae;'>ParseFactory</span></b> {
+  fromString (<i><span style='color:#0057ae;'>String</span></i>) -&gt; (<b>#self</b>)
+}
+
+<b>concrete</b> <b><span style='color:#0057ae;'>FileParser</span></b> {
+  <span style='color:#644a9b;'>@type</span> parseFromFile&lt;<i><span style='color:#0057ae;'>#x</span></i>&gt;
+    <i><span style='color:#0057ae;'>#x</span></i> <b>defines</b> <span style='color:#0057ae;'>ParseFactory</span>
+  (<i><span style='color:#0057ae;'>String</span></i>) -&gt; (<i><span style='color:#0057ae;'>#x</span></i>)
+}
+
+<b>define</b> <b><span style='color:#0057ae;'>FileParser</span></b> {
+  parseFromFile (filename) {
+    <i><span style='color:#0057ae;'>String</span></i> content &lt;- <span style='color:#0057ae;'>FileHelper</span><span style='color:#644a9b;'>.</span>readAll(filename)
+    <span style='color:#898887;'>// Notice that ParseFactory doesn't need a type parameter to indicate what</span>
+    <span style='color:#898887;'>// type is going to be parsed in fromString; it's sufficient to know that #x</span>
+    <span style='color:#898887;'>// implements ParseFactory and that fromString returns #self.</span>
+    <b>return</b> <i><span style='color:#0057ae;'>#x</span></i><span style='color:#644a9b;'>.</span>fromString(content)
+  }
+}
+
+<b>concrete</b> <b><span style='color:#0057ae;'>Value</span></b> {
+  <b>defines</b> <span style='color:#0057ae;'>ParseFactory</span>
+}
+
+<b>define</b> <b><span style='color:#0057ae;'>Value</span></b> {
+  fromString (string) {
+    <b>if</b> (string == <span style='color:#bf0303;'>&quot;Value&quot;</span>) {
+      <b>return</b> <span style='color:#0057ae;'>Value</span>{ }
+    } <b>else</b> {
+      <b>fail</b>(<span style='color:#bf0303;'>&quot;could not parse input&quot;</span>)
+    }
+  }
 }</pre>
 
 `#self` is nothing magical; this could all be done by explicitly adding a
