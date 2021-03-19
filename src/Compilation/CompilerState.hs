@@ -33,6 +33,7 @@ module Compilation.CompilerState (
   MemberValue(..),
   ReturnVariable(..),
   UsedVariable(..),
+  autoSelfType,
   concatM,
   csAddRequired,
   csAddUsed,
@@ -88,6 +89,7 @@ import Data.Semigroup
 #endif
 
 import Base.CompilerError
+import Base.GeneralType
 import Base.Positional
 import Types.DefinedCategory
 import Types.Procedure
@@ -342,3 +344,10 @@ concatM = fmap mconcat . collectAllM
 
 getCleanContext :: CompilerContext c m s a => CompilerState a m a
 getCleanContext = get >>= lift . ccClearOutput
+
+autoSelfType :: CompilerContext c m s a => CompilerState a m GeneralInstance
+autoSelfType = do
+  scope <- csCurrentScope
+  case scope of
+       CategoryScope -> return selfType
+       _ -> fmap (singleType . JustTypeInstance) csSelfType

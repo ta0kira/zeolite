@@ -285,7 +285,7 @@ compileStatement (Assignment c as e) = message ??> do
     getVariableType (ExistingVariable (DiscardInput _)) t = return t
     createVariable r fa (CreateVariable c2 t1 n) t2 =
       "In creation of " ++ show n ++ " at " ++ formatFullContext c2 ??> do
-        self <- fmap (singleType . JustTypeInstance) csSelfType
+        self <- autoSelfType
         t1' <- lift $ replaceSelfValueType self t1
         -- TODO: Call csAddRequired for t1'. (Maybe needs a helper function.)
         lift $ collectAllM_ [validateGeneralInstance r fa (vtType t1'),
@@ -425,7 +425,7 @@ compileScopedBlock :: (Ord c, Show c, CollectErrorsM m,
   ScopedBlock c -> CompilerState a m ()
 compileScopedBlock s@(ScopedBlock _ _ _ c2 _) = do
   let (vs,p,cl,st) = rewriteScoped s
-  self <- fmap (singleType . JustTypeInstance) csSelfType
+  self <- autoSelfType
   vs' <- lift $ mapErrorsM (replaceSelfVariable self) vs
   -- Capture context so we can discard scoped variable names.
   ctx0 <- getCleanContext
@@ -568,10 +568,16 @@ compileExpression = compile where
         | otherwise = compilerErrorM $ "Cannot use " ++ show t ++ " with unary ~ operator" ++
                                              formatFullContextBrace c
   compile (InitializeValue c t ps es) = do
-    self <- csSelfType
-    t' <- case t of
-               Just t0 -> lift $ replaceSelfSingle (singleType $ JustTypeInstance self) t0
-               Nothing -> return self
+    scope <- csCurrentScope
+    t' <- case scope of
+               CategoryScope -> case t of
+                                     Nothing -> compilerErrorM $ "Param " ++ show ParamSelf ++ " not found"
+                                     Just t0 -> return t0
+               _ -> do
+                 self <- csSelfType
+                 case t of
+                      Just t0 -> lift $ replaceSelfSingle (singleType $ JustTypeInstance self) t0
+                      Nothing -> return self
     es' <- sequence $ map compileExpression $ pValues es
     (ts,es'') <- lift $ getValues es'
     csCheckValueInit c t' (Positional ts) ps
@@ -723,7 +729,7 @@ compileExpressionStart (CategoryCall c t f@(FunctionCall _ n _ _)) = do
   t' <- expandCategory t
   compileFunctionCall (Just t') f' f
 compileExpressionStart (TypeCall c t f@(FunctionCall _ n _ _)) = do
-  self <- fmap (singleType . JustTypeInstance) csSelfType
+  self <- autoSelfType
   t' <- lift $ replaceSelfInstance self (singleType t)
   r <- csResolver
   fa <- csAllFilters
@@ -773,7 +779,7 @@ compileExpressionStart (BuiltinCall c (FunctionCall _ BuiltinReduce ps es)) = do
   when (length (pValues $ fst $ head es') /= 1) $
     compilerErrorM $ "Expected single return in argument" ++ formatFullContextBrace c
   let (Positional [t0],e) = head es'
-  self <- fmap (singleType . JustTypeInstance) csSelfType
+  self <- autoSelfType
   ps' <- lift $ disallowInferred ps
   [t1,t2] <- lift $ mapErrorsM (replaceSelfInstance self) ps'
   r <- csResolver
@@ -821,7 +827,7 @@ compileExpressionStart (BuiltinCall c (FunctionCall _ BuiltinTypename ps es)) = 
     compilerErrorM $ "Expected 1 type parameter" ++ formatFullContextBrace c
   when (length (pValues es) /= 0) $
     compilerErrorM $ "Expected 0 arguments" ++ formatFullContextBrace c
-  self <- fmap (singleType . JustTypeInstance) csSelfType
+  self <- autoSelfType
   ps' <- lift $ disallowInferred ps
   [t] <- lift $ mapErrorsM (replaceSelfInstance self) ps'
   r <- csResolver
@@ -861,7 +867,7 @@ compileFunctionCall e f (FunctionCall c _ ps es) = message ??> do
   fa <- csAllFilters
   es' <- sequence $ map compileExpression $ pValues es
   (ts,es'') <- lift $ getValues es'
-  self <- fmap (singleType . JustTypeInstance) csSelfType
+  self <- autoSelfType
   ps' <- lift $ fmap Positional $ mapErrorsM (replaceSelfParam self) $ pValues ps
   ps2 <- lift $ guessParamsFromArgs r fa f ps' (Positional ts)
   lift $ mapErrorsM_ backgroundMessage $ zip3 (map vpParam $ pValues $ sfParams f) (pValues ps') (pValues ps2)

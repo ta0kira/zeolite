@@ -96,7 +96,9 @@ instance (Show c, CollectErrorsM m) =>
   CompilerContext c m [String] (ProcedureContext c) where
   ccCurrentScope = return . (^. pcScope)
   ccResolver = return . AnyTypeResolver . CategoryResolver . (^. pcCategories)
-  ccSameType ctx t = ccSelfType ctx >>= return . (== t)
+  ccSameType ctx t
+    | ctx ^. pcScope == CategoryScope = return False
+    | otherwise = ccSelfType ctx >>= return . (== t)
   ccSelfType ctx
     | ctx ^. pcScope == CategoryScope = compilerErrorM $ "Param " ++ show ParamSelf ++ " not found"
     | otherwise = return $ TypeInstance (ctx ^. pcType)
@@ -127,13 +129,20 @@ instance (Show c, CollectErrorsM m) =>
       return f
     checkFunction _ =
       compilerErrorM $ "Category " ++ show t ++
-                     " does not have a category function named " ++ show n ++
-                     formatFullContextBrace c
+                       " does not have a category function named " ++ show n ++
+                       formatFullContextBrace c
   ccGetTypeFunction ctx c t n = do
-    self <- fmap (singleType . JustTypeInstance) $ ccSelfType ctx
-    t' <- case t of
-               Just t0 -> replaceSelfInstance self t0
-               Nothing -> return self
+    t' <- case ctx ^. pcScope of
+               CategoryScope -> case t of
+                                     Nothing -> compilerErrorM $ "Category " ++ show t ++
+                                                                  " does not have a category function named " ++ show n ++
+                                                                  formatFullContextBrace c
+                                     Just t0 -> return t0
+               _ -> do
+                 self <- fmap (singleType . JustTypeInstance) $ ccSelfType ctx
+                 case t of
+                      Just t0 -> replaceSelfInstance self t0
+                      Nothing -> return self
     getFunction t' t' where
       getFunction t0 t2 = reduceMergeTree getFromAny getFromAll (getFromSingle t0) t2
       getFromAny _ =

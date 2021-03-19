@@ -65,7 +65,6 @@ concrete String {
   defines Equals<String>
   defines LessThan<String>
 
-  @value subSequence (Int,Int) -> (String)
   @type builder () -> (Builder<String>)
 }
 
@@ -92,11 +91,11 @@ concrete String {
 @value interface ReadPosition<|#x> {
   readPosition (Int) -> (#x)
   readSize () -> (Int)
-  subSequence (Int,Int) -> (ReadPosition<#x>)
+  subSequence (Int,Int) -> (#self)
 }
 
 @value interface Builder<#x> {
-  append (#x) -> (Builder<#x>)
+  append (#x) -> (#self)
   build () -> (#x)
 }
 

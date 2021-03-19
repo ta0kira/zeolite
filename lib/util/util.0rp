@@ -31,20 +31,20 @@ concrete Void {
   readCurrent () -> (#x)
 }
 
-@value interface IterateForward<|#x> {
-  forward () -> (#x)
+@value interface IterateForward {
+  forward () -> (#self)
   pastForwardEnd () -> (Bool)
 }
 
-@value interface IterateReverse<|#x> {
-  reverse () -> (#x)
+@value interface IterateReverse {
+  reverse () -> (#self)
   pastReverseEnd () -> (Bool)
 }
 
 concrete ReadIterator<|#x> {
   refines ReadCurrent<#x>
-  refines IterateForward<ReadIterator<#x>>
-  refines IterateReverse<ReadIterator<#x>>
+  refines IterateForward
+  refines IterateReverse
 
   @category fromReadPosition<#y> (ReadPosition<#y>) -> (ReadIterator<#y>)
   @category fromReadPositionAt<#y> (ReadPosition<#y>,Int) -> (ReadIterator<#y>)
