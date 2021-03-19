@@ -10,6 +10,12 @@
   that function. (This is a breaking change because it reserves the param name
   `#self`.)
 
+### Libraries
+
+* **[breaking]** Removes the type parameters from `IterateForward` and
+  `IterateReverse` in `lib/util`. This was made possible by the addition of the
+  `#self` meta-type.
+
 ## 0.13.0.0  -- 2021-03-17
 
 ### Language
