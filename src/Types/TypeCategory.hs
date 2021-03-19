@@ -61,6 +61,7 @@ module Types.TypeCategory (
   guessesAsParams,
   includeNewTypes,
   inferParamTypes,
+  instanceFromCategory,
   isInstanceInterface,
   isNoNamespace,
   isPrivateNamespace,
@@ -76,6 +77,7 @@ module Types.TypeCategory (
   noDuplicateRefines,
   parsedToFunctionType,
   partitionByScope,
+  replaceSelfFunction,
   setCategoryNamespace,
   topoSortCategories,
   uncheckedSubFunction,
@@ -219,6 +221,11 @@ getCategoryFunctions :: AnyCategory c -> [ScopedFunction c]
 getCategoryFunctions (ValueInterface _ _ _ _ _ _ fs)  = fs
 getCategoryFunctions (InstanceInterface _ _ _ _ _ fs) = fs
 getCategoryFunctions (ValueConcrete _ _ _ _ _ _ _ fs) = fs
+
+instanceFromCategory :: AnyCategory c -> GeneralInstance
+instanceFromCategory t = singleType $ JustTypeInstance $ TypeInstance n (Positional ps) where
+  n = getCategoryName t
+  ps = map (singleType . JustParamName True . vpParam) $ getCategoryParams t
 
 getCategoryDeps :: AnyCategory c -> Set.Set CategoryName
 getCategoryDeps t = Set.fromList $ filter (/= getCategoryName t) $ refines ++ defines ++ filters ++ functions where
@@ -688,7 +695,7 @@ checkCategoryInstances tm0 ts = do
       mapErrorsM_ (validateCategoryFunction r t) (getCategoryFunctions t)
     checkFilterParam pa (ParamFilter c n _) =
       when (not $ n `Set.member` pa) $
-        compilerErrorM $ "Param " ++ show n ++ formatFullContextBrace c ++ " does not exist"
+        compilerErrorM $ "Param " ++ show n ++ formatFullContextBrace c ++ " not found"
     checkRefine r fm (ValueRefine c t) =
       validateTypeInstance r fm t <??
         ("In " ++ show t ++ formatFullContextBrace c)
@@ -1021,6 +1028,23 @@ unfixedSubFunction pa ff@(ScopedFunction c n t s as rs ps fa ms) =
         return $ PassedValue c2 t'
       subFilter pa2 (ParamFilter c2 n2 f) = do
         f' <- uncheckedSubFilter (getValueForParam pa2) f
+        return $ ParamFilter c2 n2 f'
+
+replaceSelfFunction :: (Show c, CollectErrorsM m) =>
+  GeneralInstance -> ScopedFunction c -> m (ScopedFunction c)
+replaceSelfFunction self ff@(ScopedFunction c n t s as rs ps fa ms) =
+  ("In function:\n---\n" ++ show ff ++ "\n---\n") ??> do
+    as' <- fmap Positional $ mapErrorsM subPassed $ pValues as
+    rs' <- fmap Positional $ mapErrorsM subPassed $ pValues rs
+    fa' <- mapErrorsM subFilter fa
+    ms' <- mapErrorsM (replaceSelfFunction self) ms
+    return $ (ScopedFunction c n t s as' rs' ps fa' ms')
+    where
+      subPassed (PassedValue c2 t2) = do
+        t' <- replaceSelfValueType self t2
+        return $ PassedValue c2 t'
+      subFilter (ParamFilter c2 n2 f) = do
+        f' <- replaceSelfFilter self f
         return $ ParamFilter c2 n2 f'
 
 data PatternMatch a =

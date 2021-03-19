@@ -46,7 +46,7 @@ data ScopeContext c =
     scName :: CategoryName,
     scExternalParams :: Positional (ValueParam c),
     scInternalparams :: Positional (ValueParam c),
-    scMembers :: [DefinedMember c],
+    scValueMembers :: [DefinedMember c],
     scExternalFilters :: [ParamFilter c],
     scInternalFilters :: [ParamFilter c],
     scFunctions :: Map.Map FunctionName (ScopedFunction c),
@@ -79,21 +79,28 @@ getProcedureScopes ta em (DefinedCategory c n pi _ _ fi ms ps fs) = do
   checkInternalParams pi fi (getCategoryParams t) (Map.elems fa) r fm
   pa <- pairProceduresToFunctions fa ps
   let (cp,tp,vp) = partitionByScope (sfScope . fst) pa
+  tp' <- mapErrorsM (firstM $ replaceSelfFunction (instanceFromCategory t)) tp
+  vp' <- mapErrorsM (firstM $ replaceSelfFunction (instanceFromCategory t)) vp
   let (cm,tm,vm) = partitionByScope dmScope ms
+  tm' <- mapErrorsM (replaceSelfMember (instanceFromCategory t)) tm
+  vm' <- mapErrorsM (replaceSelfMember (instanceFromCategory t)) vm
   let cm0 = builtins typeInstance CategoryScope
   let tm0 = builtins typeInstance TypeScope
   let vm0 = builtins typeInstance ValueScope
-  cm' <- mapMembers cm
-  tm' <- mapMembers $ cm ++ tm
-  vm' <- mapMembers $ cm ++ tm ++ vm
-  let cv = Map.union cm0 cm'
-  let tv = Map.union tm0 tm'
-  let vv = Map.union vm0 vm'
-  let ctxC = ScopeContext ta n params params2 vm filters filters2 fa cv em
-  let ctxT = ScopeContext ta n params params2 vm filters filters2 fa tv em
-  let ctxV = ScopeContext ta n params params2 vm filters filters2 fa vv em
-  return [ProcedureScope ctxC cp,ProcedureScope ctxT tp,ProcedureScope ctxV vp]
+  cm2 <- mapMembers cm
+  tm2 <- mapMembers $ cm ++ tm'
+  vm2 <- mapMembers $ cm ++ tm' ++ vm'
+  let cv = Map.union cm0 cm2
+  let tv = Map.union tm0 tm2
+  let vv = Map.union vm0 vm2
+  let ctxC = ScopeContext ta n params params2 vm' filters filters2 fa cv em
+  let ctxT = ScopeContext ta n params params2 vm' filters filters2 fa tv em
+  let ctxV = ScopeContext ta n params params2 vm' filters filters2 fa vv em
+  return [ProcedureScope ctxC cp,ProcedureScope ctxT tp',ProcedureScope ctxV vp']
   where
+    firstM f (x,y) = do
+      x' <- f x
+      return (x',y)
     builtins t s0 = Map.filter ((<= s0) . vvScope) $ builtinVariables t
     checkInternalParams pi2 fi2 pe fs2 r fa = do
       let pm = Map.fromList $ map (\p -> (vpParam p,vpContext p)) pi2

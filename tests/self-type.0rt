@@ -1,0 +1,374 @@
+/* -----------------------------------------------------------------------------
+Copyright 2021 Kevin P. Barry
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+----------------------------------------------------------------------------- */
+
+// Author: Kevin P. Barry [ta0kira@gmail.com]
+
+testcase "disallowed in @category functions" {
+  error
+  require "#self not found"
+}
+
+concrete Type {
+  @category call () -> (#self)
+}
+
+define Type {
+  call () {
+    fail("")
+  }
+}
+
+
+testcase "disallowed in @category members" {
+  error
+  require "#self not found"
+}
+
+concrete Type {
+  @type create () -> (#self)
+}
+
+define Type {
+  @category #self value <- Type.create()
+
+  create () {
+    return Type{ }
+  }
+}
+
+
+testcase "disallowed in @category procedures" {
+  error
+  require "#self not found"
+}
+
+concrete Type {
+  @category call () -> ()
+}
+
+define Type {
+  call () {
+    optional #self value <- empty
+  }
+}
+
+
+testcase "in @type functions" {
+  success
+}
+
+unittest test {
+  Type value <- Type.create()
+}
+
+concrete Type {
+  @type create () -> (#self)
+}
+
+define Type {
+  create () {
+    return Type{ }
+  }
+}
+
+
+testcase "as base for @type call" {
+  success
+}
+
+unittest test {
+  Type value <- Type.create()
+}
+
+concrete Type {
+  @type create () -> (Type)
+}
+
+define Type {
+  create () {
+    return #self.new()
+  }
+
+  @type new () -> (Type)
+  new () {
+    return Type{ }
+  }
+}
+
+
+testcase "in @value functions" {
+  success
+}
+
+unittest test {
+  Type value <- Type.create().call()
+}
+
+concrete Type {
+  @type create () -> (Type)
+  @value call () -> (#self)
+}
+
+define Type {
+  create () {
+    return Type{ }
+  }
+
+  call () {
+    return self
+  }
+}
+
+
+testcase "in @value members" {
+  success
+}
+
+unittest test {
+  Type value <- Type.create(Type.create(empty))
+}
+
+concrete Type {
+  @type create (optional Type) -> (Type)
+}
+
+define Type {
+  @value optional #self parent
+
+  create (p) {
+    return Type{ p }
+  }
+}
+
+
+testcase "in local variables in @type procedures" {
+  success
+}
+
+unittest test {
+  Type value <- Type.create()
+}
+
+concrete Type {
+  @type create () -> (Type)
+}
+
+define Type {
+  create () {
+    #self new <- Type{ }
+    return new
+  }
+}
+
+
+testcase "in local variables in @value procedures" {
+  success
+}
+
+unittest test {
+  Type value <- Type.create()
+}
+
+concrete Type {
+  @type create () -> (Type)
+  @value get () -> (Type)
+}
+
+define Type {
+  create () {
+    return Type{ }
+  }
+
+  get () {
+    #self me <- self
+    return me
+  }
+}
+
+
+testcase "in local variables in scoped" {
+  success
+}
+
+unittest test {
+  Type value <- Type.create()
+}
+
+concrete Type {
+  @type create () -> (Type)
+}
+
+define Type {
+  create () {
+    scoped {
+    } in #self new <- Type{ }
+    return new
+  }
+}
+
+
+testcase "in reduce" {
+  success
+}
+
+unittest test {
+  Type<String>    value1 <- Type<String>.create()
+  Type<Formatted> value2 <- Type<Formatted>.create()
+  \ Testing.checkEquals<?>(value1.checkFrom<Type<Formatted>>(),true)
+  \ Testing.checkEquals<?>(value2.checkFrom<Type<String>>(),false)
+  \ Testing.checkEquals<?>(value1.checkTo<?>(value2),false)
+  \ Testing.checkEquals<?>(value2.checkTo<?>(value1),true)
+}
+
+concrete Type<|#x> {
+  @type create () -> (Type<#x>)
+  @value checkFrom<#y> () -> (Bool)
+  @value checkTo<#y> (#y) -> (Bool)
+}
+
+define Type {
+  create () {
+    return Type<#x>{ }
+  }
+
+  checkFrom () {
+    return present(reduce<#self,#y>(self))
+  }
+
+  checkTo (from) {
+    return present(reduce<#y,#self>(from))
+  }
+}
+
+
+testcase "in typename" {
+  success
+}
+
+unittest test {
+  \ Testing.checkEquals<?>(Type<Bool>.get(),"Type<Type<Bool>>")
+}
+
+concrete Type<#x> {
+  @type get () -> (String)
+}
+
+define Type {
+  get () {
+    return typename<Type<#self>>().formatted()
+  }
+}
+
+
+testcase "with type inference" {
+  success
+}
+
+unittest test {
+  \ Type.create().call<?>("message")
+}
+
+concrete Type {
+  @type create () -> (Type)
+  @value call<#x> (#x) -> (#self)
+}
+
+define Type {
+  create () {
+    return Type{ }
+  }
+
+  call (_) {
+    return self
+  }
+}
+
+
+testcase "as an explicit function param" {
+  success
+}
+
+unittest test {
+  \ Type.create().call()
+}
+
+concrete Test {
+  @type identity<#x> (#x) -> (#x)
+}
+
+define Test {
+  identity (x) {
+    return x
+  }
+}
+
+concrete Type {
+  @type create () -> (Type)
+  @value call () -> ()
+}
+
+define Type {
+  create () {
+    return Type{ }
+  }
+
+  call () {
+    Type me <- Test.identity<#self>(self)
+  }
+}
+
+
+testcase "nested in initializer type" {
+  success
+}
+
+unittest test {
+  Type<Type<String>> value <- Type<String>.create().nest()
+}
+
+concrete Type<|#x> {
+  @type create () -> (#self)
+  @value nest () -> (Type<#self>)
+}
+
+define Type {
+  create () {
+    return Type<#x>{ }
+  }
+
+  nest () {
+    return Type<#self>{ }
+  }
+}
+
+
+testcase "top level initializer type" {
+  success
+}
+
+unittest test {
+  Type<String> value <- Type<String>.create()
+}
+
+concrete Type<|#x> {
+  @type create () -> (#self)
+}
+
+define Type {
+  create () {
+    return #self{ }
+  }
+}

@@ -539,6 +539,23 @@ rather than just `private` like in Java and C++. As long as parameter variance
 is respected, you can provide access to an individual member with getters and
 setters.
 
+As of compiler version `0.14.0.0`, you can use [`#self`](#the-self-parameter) in
+place of the full type when you are creating a value of the same type from a
+`@type` or `@value` function.
+
+<pre style='color:#1f1c1b;background-color:#f6f8fa;'>
+<b>concrete</b> <b><span style='color:#0057ae;'>MyCategory</span></b> {
+  <span style='color:#644a9b;'>@type</span> create () -&gt; (<span style='color:#0057ae;'>MyCategory</span>)
+}
+
+<b>define</b> <b><span style='color:#0057ae;'>MyCategory</span></b> {
+  <span style='color:#644a9b;'>@value</span> <i><span style='color:#0057ae;'>Int</span></i> value
+
+  create () {
+    <b>return</b> <b>#self</b>{ <span style='color:#b08000;'>0</span> }
+  }
+}</pre>
+
 #### Conditionals
 
 Zeolite uses the `if`/`elif`/`else` conditional construct. The `elif` and `else`

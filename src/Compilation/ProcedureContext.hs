@@ -96,13 +96,16 @@ instance (Show c, CollectErrorsM m) =>
   CompilerContext c m [String] (ProcedureContext c) where
   ccCurrentScope = return . (^. pcScope)
   ccResolver = return . AnyTypeResolver . CategoryResolver . (^. pcCategories)
-  ccSameType ctx = return . (== same) where
-    same = TypeInstance (ctx ^. pcType) (fmap (singleType . JustParamName False . vpParam) $ ctx ^. pcExtParams)
+  ccSameType ctx t = ccSelfType ctx >>= return . (== t)
+  ccSelfType ctx
+    | ctx ^. pcScope == CategoryScope = compilerErrorM $ "Param " ++ show ParamSelf ++ " not found"
+    | otherwise = return $ TypeInstance (ctx ^. pcType)
+                                        (fmap (singleType . JustParamName False . vpParam) $ ctx ^. pcExtParams)
   ccAllFilters = return . (^. pcAllFilters)
   ccGetParamScope ctx p = do
     case p `Map.lookup` (ctx ^. pcParamScopes) of
             (Just s) -> return s
-            _ -> compilerErrorM $ "Param " ++ show p ++ " does not exist"
+            _ -> compilerErrorM $ "Param " ++ show p ++ " not found"
   ccAddRequired ctx ts = return $ ctx & pcRequiredTypes <>~ ts
   ccGetRequired = return . (^. pcRequiredTypes)
   ccGetCategoryFunction ctx c Nothing n = ccGetCategoryFunction ctx c (Just $ ctx ^. pcType) n
@@ -126,56 +129,59 @@ instance (Show c, CollectErrorsM m) =>
       compilerErrorM $ "Category " ++ show t ++
                      " does not have a category function named " ++ show n ++
                      formatFullContextBrace c
-  ccGetTypeFunction ctx c t n = getFunction t where
-    getFunction (Just t2) = reduceMergeTree getFromAny getFromAll getFromSingle t2
-    getFunction Nothing = do
-      let ps = fmap (singleType . JustParamName False . vpParam) $ ctx ^. pcExtParams
-      getFunction (Just $ singleType $ JustTypeInstance $ TypeInstance (ctx ^. pcType) ps)
-    getFromAny _ =
-      compilerErrorM $ "Use explicit type conversion to call " ++ show n ++ " from " ++ show t
-    getFromAll ts = do
-      collectFirstM ts <!!
-        "Function " ++ show n ++ " not available for type " ++ show t ++ formatFullContextBrace c
-    getFromSingle (JustParamName _ p) = do
-      fa <- ccAllFilters ctx
-      fs <- case p `Map.lookup` fa of
-                (Just fs) -> return fs
-                _ -> compilerErrorM $ "Param " ++ show p ++ " does not exist"
-      let ts = map tfType $ filter isRequiresFilter fs
-      let ds = map dfType $ filter isDefinesFilter  fs
-      collectFirstM (map (getFunction . Just) ts ++ map checkDefine ds) <!!
-        "Function " ++ show n ++ " not available for param " ++ show p ++ formatFullContextBrace c
-    getFromSingle (JustTypeInstance t2)
-      -- Same category as the procedure itself.
-      | tiName t2 == ctx ^. pcType =
-        subAndCheckFunction (tiName t2) (fmap vpParam $ ctx ^. pcExtParams) (tiParams t2) $ n `Map.lookup` (ctx ^. pcFunctions)
-      -- A different category than the procedure.
-      | otherwise = do
-        (_,ca) <- getCategory (ctx ^. pcCategories) (c,tiName t2)
+  ccGetTypeFunction ctx c t n = do
+    self <- fmap (singleType . JustTypeInstance) $ ccSelfType ctx
+    t' <- case t of
+               Just t0 -> replaceSelfInstance self t0
+               Nothing -> return self
+    getFunction t' t' where
+      getFunction t0 t2 = reduceMergeTree getFromAny getFromAll (getFromSingle t0) t2
+      getFromAny _ =
+        compilerErrorM $ "Use explicit type conversion to call " ++ show n ++ " from " ++ show t
+      getFromAll ts = do
+        collectFirstM ts <!!
+          "Function " ++ show n ++ " not available for type " ++ show t ++ formatFullContextBrace c
+      getFromSingle t0 (JustParamName _ p) = do
+        fa <- ccAllFilters ctx
+        fs <- case p `Map.lookup` fa of
+                   (Just fs) -> return fs
+                   _ -> compilerErrorM $ "Param " ++ show p ++ " not found"
+        let ts = map tfType $ filter isRequiresFilter fs
+        let ds = map dfType $ filter isDefinesFilter  fs
+        collectFirstM (map (getFunction t0) ts ++ map (checkDefine t0) ds) <!!
+          "Function " ++ show n ++ " not available for param " ++ show p ++ formatFullContextBrace c
+      getFromSingle t0 (JustTypeInstance t2)
+        -- Same category as the procedure itself.
+        | tiName t2 == ctx ^. pcType =
+          subAndCheckFunction t0 (tiName t2) (fmap vpParam $ ctx ^. pcExtParams) (tiParams t2) $ n `Map.lookup` (ctx ^. pcFunctions)
+        -- A different category than the procedure.
+        | otherwise = do
+          (_,ca) <- getCategory (ctx ^. pcCategories) (c,tiName t2)
+          let params = Positional $ map vpParam $ getCategoryParams ca
+          let fa = Map.fromList $ map (\f -> (sfName f,f)) $ getCategoryFunctions ca
+          subAndCheckFunction t0 (tiName t2) params (tiParams t2) $ n `Map.lookup` fa
+      getFromSingle _ _ = compilerErrorM $ "Type " ++ show t ++ " contains unresolved types"
+      checkDefine t0 t2 = do
+        (_,ca) <- getCategory (ctx ^. pcCategories) (c,diName t2)
         let params = Positional $ map vpParam $ getCategoryParams ca
         let fa = Map.fromList $ map (\f -> (sfName f,f)) $ getCategoryFunctions ca
-        subAndCheckFunction (tiName t2) params (tiParams t2) $ n `Map.lookup` fa
-    getFromSingle _ = compilerErrorM $ "Type " ++ show t ++ " contains unresolved types"
-    checkDefine t2 = do
-      (_,ca) <- getCategory (ctx ^. pcCategories) (c,diName t2)
-      let params = Positional $ map vpParam $ getCategoryParams ca
-      let fa = Map.fromList $ map (\f -> (sfName f,f)) $ getCategoryFunctions ca
-      subAndCheckFunction (diName t2) params (diParams t2) $ n `Map.lookup` fa
-    subAndCheckFunction t2 ps1 ps2 (Just f) = do
-      when (ctx ^. pcDisallowInit && t2 == ctx ^. pcType) $
-        compilerErrorM $ "Function " ++ show n ++
-                       " disallowed during initialization" ++ formatFullContextBrace c
-      when (sfScope f == CategoryScope) $
-        compilerErrorM $ "Function " ++ show n ++ " in " ++ show t2 ++
-                       " is a category function" ++ formatFullContextBrace c
-      paired <- processPairs alwaysPair ps1 ps2 <??
-        "In external function call at " ++ formatFullContext c
-      let assigned = Map.fromList paired
-      uncheckedSubFunction assigned f
-    subAndCheckFunction t2 _ _ _ =
-      compilerErrorM $ "Category " ++ show t2 ++
-                     " does not have a type or value function named " ++ show n ++
-                     formatFullContextBrace c
+        subAndCheckFunction t0 (diName t2) params (diParams t2) $ n `Map.lookup` fa
+      subAndCheckFunction t0 t2 ps1 ps2 (Just f) = do
+        when (ctx ^. pcDisallowInit && t2 == ctx ^. pcType) $
+          compilerErrorM $ "Function " ++ show n ++
+                           " disallowed during initialization" ++ formatFullContextBrace c
+        when (sfScope f == CategoryScope) $
+          compilerErrorM $ "Function " ++ show n ++ " in " ++ show t2 ++
+                           " is a category function" ++ formatFullContextBrace c
+        paired <- processPairs alwaysPair ps1 ps2 <??
+          "In external function call at " ++ formatFullContext c
+        let assigned = Map.fromList paired
+        f' <- replaceSelfFunction t0 f
+        uncheckedSubFunction assigned f'
+      subAndCheckFunction _ t2 _ _ _ =
+        compilerErrorM $ "Category " ++ show t2 ++
+                         " does not have a type or value function named " ++ show n ++
+                         formatFullContextBrace c
   ccCheckValueInit ctx c (TypeInstance t as) ts ps
     | t /= ctx ^. pcType =
       compilerErrorM $ "Category " ++ show (ctx ^. pcType) ++ " cannot initialize values from " ++

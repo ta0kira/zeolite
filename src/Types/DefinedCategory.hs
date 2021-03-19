@@ -27,6 +27,7 @@ module Types.DefinedCategory (
   mapMembers,
   mergeInternalInheritance,
   pairProceduresToFunctions,
+  replaceSelfMember,
   setInternalFunctions,
 ) where
 
@@ -197,3 +198,9 @@ mergeInternalInheritance tm d = do
   let tm0 = (dcName d) `Map.delete` tm
   checkCategoryInstances tm0 [c2']
   return $ Map.insert (dcName d) c2' tm
+
+replaceSelfMember :: (Show c, CollectErrorsM m) =>
+  GeneralInstance -> DefinedMember c -> m (DefinedMember c)
+replaceSelfMember self (DefinedMember c s t n i) = do
+  t' <- replaceSelfValueType self t
+  return $ DefinedMember c s t' n i

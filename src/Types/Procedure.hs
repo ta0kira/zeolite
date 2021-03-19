@@ -228,7 +228,7 @@ data Expression c =
   Literal (ValueLiteral c) |
   UnaryExpression [c] (Operator c) (Expression c) |
   InfixExpression [c] (Expression c) (Operator c) (Expression c) |
-  InitializeValue [c] TypeInstance (Positional GeneralInstance) (Positional (Expression c))
+  InitializeValue [c] (Maybe TypeInstance) (Positional GeneralInstance) (Positional (Expression c))
   deriving (Show)
 
 data FunctionQualifier c =

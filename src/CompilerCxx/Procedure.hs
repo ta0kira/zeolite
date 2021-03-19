@@ -285,11 +285,13 @@ compileStatement (Assignment c as e) = message ??> do
     getVariableType (ExistingVariable (DiscardInput _)) t = return t
     createVariable r fa (CreateVariable c2 t1 n) t2 =
       "In creation of " ++ show n ++ " at " ++ formatFullContext c2 ??> do
-        -- TODO: Call csAddRequired for t1. (Maybe needs a helper function.)
-        lift $ collectAllM_ [validateGeneralInstance r fa (vtType t1),
-                             checkValueAssignment r fa t2 t1]
-        csAddVariable (UsedVariable c2 n) (VariableValue c2 LocalScope t1 VariableDefault)
-        csWrite [variableStoredType t1 ++ " " ++ variableName n ++ ";"]
+        self <- fmap (singleType . JustTypeInstance) csSelfType
+        t1' <- lift $ replaceSelfValueType self t1
+        -- TODO: Call csAddRequired for t1'. (Maybe needs a helper function.)
+        lift $ collectAllM_ [validateGeneralInstance r fa (vtType t1'),
+                             checkValueAssignment r fa t2 t1']
+        csAddVariable (UsedVariable c2 n) (VariableValue c2 LocalScope t1' VariableDefault)
+        csWrite [variableStoredType t1' ++ " " ++ variableName n ++ ";"]
     createVariable r fa (ExistingVariable (InputValue c2 n)) t2 =
       "In assignment to " ++ show n ++ " at " ++ formatFullContext c2 ??> do
         (VariableValue _ _ t1 _) <- getWritableVariable c2 n
@@ -423,15 +425,17 @@ compileScopedBlock :: (Ord c, Show c, CollectErrorsM m,
   ScopedBlock c -> CompilerState a m ()
 compileScopedBlock s@(ScopedBlock _ _ _ c2 _) = do
   let (vs,p,cl,st) = rewriteScoped s
+  self <- fmap (singleType . JustTypeInstance) csSelfType
+  vs' <- lift $ mapErrorsM (replaceSelfVariable self) vs
   -- Capture context so we can discard scoped variable names.
   ctx0 <- getCleanContext
   r <- csResolver
   fa <- csAllFilters
-  sequence_ $ map (createVariable r fa) vs
+  sequence_ $ map (createVariable r fa) vs'
   ctxP0 <- compileProcedure ctx0 p
   -- Make variables to be created visible *after* p has been compiled so that p
   -- can't refer to them.
-  ctxP <- lift $ execStateT (sequence $ map showVariable vs) ctxP0
+  ctxP <- lift $ execStateT (sequence $ map showVariable vs') ctxP0
   ctxCl0 <- lift $ ccClearOutput ctxP >>= flip ccStartCleanup c2
   ctxP' <-
     case cl of
@@ -453,8 +457,11 @@ compileScopedBlock s@(ScopedBlock _ _ _ c2 _) = do
   unreachable <- csIsUnreachable
   when (not unreachable) $ autoInsertCleanup c2 NextStatement ctxP'
   csWrite ["}"]
-  sequence_ $ map showVariable vs
+  sequence_ $ map showVariable vs'
   where
+    replaceSelfVariable self (c,t,n) = do
+      t' <- replaceSelfValueType self t
+      return (c,t',n)
     createVariable r fa (c,t,n) = do
       lift $ validateGeneralInstance r fa (vtType t) <??
         "In creation of " ++ show n ++ " at " ++ formatFullContext c
@@ -561,20 +568,24 @@ compileExpression = compile where
         | otherwise = compilerErrorM $ "Cannot use " ++ show t ++ " with unary ~ operator" ++
                                              formatFullContextBrace c
   compile (InitializeValue c t ps es) = do
+    self <- csSelfType
+    t' <- case t of
+               Just t0 -> lift $ replaceSelfSingle (singleType $ JustTypeInstance self) t0
+               Nothing -> return self
     es' <- sequence $ map compileExpression $ pValues es
     (ts,es'') <- lift $ getValues es'
-    csCheckValueInit c t (Positional ts) ps
-    params <- expandParams $ tiParams t
+    csCheckValueInit c t' (Positional ts) ps
+    params <- expandParams $ tiParams t'
     params2 <- expandParams2 $ ps
-    sameType <- csSameType t
+    sameType <- csSameType t'
     s <- csCurrentScope
-    let typeInstance = getType sameType s params
+    let typeInstance = getType t' sameType s params
     -- TODO: This is unsafe if used in a type or category constructor.
-    return (Positional [ValueType RequiredValue $ singleType $ JustTypeInstance t],
-            UnwrappedSingle $ valueCreator (tiName t) ++ "(" ++ typeInstance ++ ", " ++ params2 ++ ", " ++ es'' ++ ")")
+    return (Positional [ValueType RequiredValue $ singleType $ JustTypeInstance t'],
+            UnwrappedSingle $ valueCreator (tiName t') ++ "(" ++ typeInstance ++ ", " ++ params2 ++ ", " ++ es'' ++ ")")
     where
-      getType True ValueScope _      = "parent"
-      getType _    _          params = typeCreator (tiName t) ++ "(" ++ params ++ ")"
+      getType _  True ValueScope _      = "parent"
+      getType t2 _    _          params = typeCreator (tiName t2) ++ "(" ++ params ++ ")"
       -- Single expression, but possibly multi-return.
       getValues [(Positional ts,e)] = return (ts,useAsArgs e)
       -- Multi-expression => must all be singles.
@@ -712,17 +723,19 @@ compileExpressionStart (CategoryCall c t f@(FunctionCall _ n _ _)) = do
   t' <- expandCategory t
   compileFunctionCall (Just t') f' f
 compileExpressionStart (TypeCall c t f@(FunctionCall _ n _ _)) = do
+  self <- fmap (singleType . JustTypeInstance) csSelfType
+  t' <- lift $ replaceSelfInstance self (singleType t)
   r <- csResolver
   fa <- csAllFilters
-  lift $ validateGeneralInstance r fa (singleType t) <?? "In function call at " ++ formatFullContext c
-  f' <- csGetTypeFunction c (Just $ singleType t) n
+  lift $ validateGeneralInstance r fa t' <?? "In function call at " ++ formatFullContext c
+  f' <- csGetTypeFunction c (Just t') n
   when (sfScope f' /= TypeScope) $ compilerErrorM $ "Function " ++ show n ++
-                                          " cannot be used as a type function" ++
-                                          formatFullContextBrace c
-  csAddRequired $ Set.unions $ map categoriesFromTypes [singleType t]
+                                                    " cannot be used as a type function" ++
+                                                    formatFullContextBrace c
+  csAddRequired $ Set.unions $ map categoriesFromTypes [t']
   csAddRequired $ Set.fromList [sfType f']
-  t' <- expandGeneralInstance $ singleType t
-  compileFunctionCall (Just t') f' f
+  t2 <- expandGeneralInstance t'
+  compileFunctionCall (Just t2) f' f
 compileExpressionStart (UnqualifiedCall c f@(FunctionCall _ n _ _)) = do
   ctx <- get
   f' <- lift $ collectFirstM [tryCategory ctx,tryNonCategory ctx]
@@ -760,7 +773,9 @@ compileExpressionStart (BuiltinCall c (FunctionCall _ BuiltinReduce ps es)) = do
   when (length (pValues $ fst $ head es') /= 1) $
     compilerErrorM $ "Expected single return in argument" ++ formatFullContextBrace c
   let (Positional [t0],e) = head es'
-  [t1,t2] <- lift $ disallowInferred ps
+  self <- fmap (singleType . JustTypeInstance) csSelfType
+  ps' <- lift $ disallowInferred ps
+  [t1,t2] <- lift $ mapErrorsM (replaceSelfInstance self) ps'
   r <- csResolver
   fa <- csAllFilters
   lift $ validateGeneralInstance r fa t1
@@ -806,7 +821,9 @@ compileExpressionStart (BuiltinCall c (FunctionCall _ BuiltinTypename ps es)) = 
     compilerErrorM $ "Expected 1 type parameter" ++ formatFullContextBrace c
   when (length (pValues es) /= 0) $
     compilerErrorM $ "Expected 0 arguments" ++ formatFullContextBrace c
-  [t] <- lift $ disallowInferred ps
+  self <- fmap (singleType . JustTypeInstance) csSelfType
+  ps' <- lift $ disallowInferred ps
+  [t] <- lift $ mapErrorsM (replaceSelfInstance self) ps'
   r <- csResolver
   fa <- csAllFilters
   lift $ validateGeneralInstance r fa t
@@ -844,8 +861,10 @@ compileFunctionCall e f (FunctionCall c _ ps es) = message ??> do
   fa <- csAllFilters
   es' <- sequence $ map compileExpression $ pValues es
   (ts,es'') <- lift $ getValues es'
-  ps2 <- lift $ guessParamsFromArgs r fa f ps (Positional ts)
-  lift $ mapErrorsM_ backgroundMessage $ zip3 (map vpParam $ pValues $ sfParams f) (pValues ps) (pValues ps2)
+  self <- fmap (singleType . JustTypeInstance) csSelfType
+  ps' <- lift $ fmap Positional $ mapErrorsM (replaceSelfParam self) $ pValues ps
+  ps2 <- lift $ guessParamsFromArgs r fa f ps' (Positional ts)
+  lift $ mapErrorsM_ backgroundMessage $ zip3 (map vpParam $ pValues $ sfParams f) (pValues ps') (pValues ps2)
   f' <- lift $ parsedToFunctionType f
   f'' <- lift $ assignFunctionParams r fa Map.empty ps2 f'
   -- Called an extra time so arg count mismatches have reasonable errors.
@@ -859,6 +878,10 @@ compileFunctionCall e f (FunctionCall c _ ps es) = message ??> do
   call <- assemble e scoped scope (sfScope f) params es''
   return $ (ftReturns f'',OpaqueMulti call)
   where
+    replaceSelfParam self (AssignedInstance c2 t) = do
+      t' <- replaceSelfInstance self t
+      return $ AssignedInstance c2 t'
+    replaceSelfParam _ t = return t
     message = "In call to " ++ show (sfName f) ++ " at " ++ formatFullContext c
     backgroundMessage (n,(InferredInstance c2),t) =
       compilerBackgroundM $ "Parameter " ++ show n ++ " (from " ++ show (sfType f) ++ "." ++

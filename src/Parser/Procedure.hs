@@ -414,7 +414,7 @@ instance ParseFromSource (Expression SourceContext) where
       initalize = do
         c <- getSourceContext
         t <- try $ do  -- Avoids consuming the type name if { isn't present.
-          t2 <- sourceParser
+          t2 <- (paramSelf >> return Nothing) <|> fmap Just sourceParser
           sepAfter (labeled "@value initializer" $ string_ "{")
           return t2
         withParams c t <|> withoutParams c t

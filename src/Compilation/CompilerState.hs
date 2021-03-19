@@ -62,6 +62,7 @@ module Compilation.CompilerState (
   csReserveExprMacro,
   csResolver,
   csSameType,
+  csSelfType,
   csSetHidden,
   csSetJumpType,
   csSetNoTrace,
@@ -100,6 +101,7 @@ class (Functor m, Monad m) => CompilerContext c m s a | a -> c s where
   ccCurrentScope :: a -> m SymbolScope
   ccResolver :: a -> m AnyTypeResolver
   ccSameType :: a -> TypeInstance -> m Bool
+  ccSelfType :: a -> m TypeInstance
   ccAllFilters :: a -> m ParamFilters
   ccGetParamScope :: a -> ParamName -> m SymbolScope
   ccAddRequired :: a -> Set.Set CategoryName -> m a
@@ -195,6 +197,9 @@ csResolver = fmap ccResolver get >>= lift
 
 csSameType :: CompilerContext c m s a => TypeInstance -> CompilerState a m Bool
 csSameType t = fmap (\x -> ccSameType x t) get >>= lift
+
+csSelfType :: CompilerContext c m s a => CompilerState a m TypeInstance
+csSelfType = fmap ccSelfType get >>= lift
 
 csAllFilters :: CompilerContext c m s a => CompilerState a m ParamFilters
 csAllFilters = fmap ccAllFilters get >>= lift

@@ -411,7 +411,7 @@ generateCategoryDefinition testing = common where
       fmap indentCompiled $ inlineValueConstructor t d,
       return declareValueOverrides,
       fmap indentCompiled $ concatM $ map (procedureDeclaration False) fs,
-      fmap indentCompiled $ concatM $ map (createMember r allFilters) members,
+      fmap indentCompiled $ concatM $ map (createMember r allFilters t) members,
       return $ indentCompiled $ createParams $ dcParams d,
       return $ onlyCode $ "  const S<" ++ typeName (getCategoryName t) ++ "> parent;",
       return $ onlyCodes traceCreation,
@@ -526,10 +526,11 @@ generateCategoryDefinition testing = common where
     ] where
       className = valueName (getCategoryName t)
 
-  createMember r filters m = do
-    validateGeneralInstance r filters (vtType $ dmType m) <??
-      "In creation of " ++ show (dmName m) ++ " at " ++ formatFullContext (dmContext m)
-    return $ onlyCode $ variableStoredType (dmType m) ++ " " ++ variableName (dmName m) ++ ";"
+  createMember r filters t m = do
+    m' <- replaceSelfMember (instanceFromCategory t) m
+    validateGeneralInstance r filters (vtType $ dmType m') <??
+      "In creation of " ++ show (dmName m') ++ " at " ++ formatFullContext (dmContext m')
+    return $ onlyCode $ variableStoredType (dmType m') ++ " " ++ variableName (dmName m') ++ ";"
   createMemberLazy r filters m = do
     validateGeneralInstance r filters (vtType $ dmType m) <??
       "In creation of " ++ show (dmName m) ++ " at " ++ formatFullContext (dmContext m)

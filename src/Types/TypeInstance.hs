@@ -54,6 +54,10 @@ module Types.TypeInstance (
   isWeakValue,
   mapTypeGuesses,
   noInferredTypes,
+  replaceSelfFilter,
+  replaceSelfInstance,
+  replaceSelfSingle,
+  replaceSelfValueType,
   requiredParam,
   requiredSingleton,
   selfType,
@@ -311,7 +315,7 @@ getValueForParam :: ErrorContextM m =>
 getValueForParam pa n =
   case n `Map.lookup` pa of
        (Just x) -> return x
-       _ -> compilerErrorM $ "Param " ++ show n ++ " does not exist"
+       _ -> compilerErrorM $ "Param " ++ show n ++ " not found"
 
 fixTypeParams :: GeneralInstance -> GeneralInstance
 fixTypeParams = setParamsFixed True
@@ -541,7 +545,7 @@ validateGeneralInstance :: (CollectErrorsM m, TypeResolver r) =>
 validateGeneralInstance r f = reduceMergeTree collectAllM_ collectAllM_ validateSingle where
   validateSingle (JustTypeInstance t) = validateTypeInstance r f t
   validateSingle (JustParamName _ n) = when (not $ n `Map.member` f) $
-      compilerErrorM $ "Param " ++ show n ++ " does not exist"
+      compilerErrorM $ "Param " ++ show n ++ " not found"
   validateSingle (JustInferredType n) = compilerErrorM $ "Inferred param " ++ show n ++ " is not allowed here"
 
 validateTypeInstance :: (CollectErrorsM m, TypeResolver r) =>
@@ -658,3 +662,35 @@ uncheckedSubFilters replace fa = do
     subParam (n,fs) = do
       fs' <- mapErrorsM (uncheckedSubFilter replace) fs
       return (n,fs')
+
+replaceSelfValueType :: CollectErrorsM m =>
+  GeneralInstance -> ValueType -> m ValueType
+replaceSelfValueType self (ValueType s t) = do
+  t' <- replaceSelfInstance self t
+  return $ ValueType s t'
+
+replaceSelfInstance :: CollectErrorsM m =>
+  GeneralInstance -> GeneralInstance -> m GeneralInstance
+replaceSelfInstance self = reduceMergeTree subAny subAll subSingle where
+  -- NOTE: Don't use mergeAnyM because it will fail if the union is empty.
+  subAny = fmap mergeAny . sequence
+  subAll = fmap mergeAll . sequence
+  subSingle (JustParamName _ ParamSelf) = return self
+  subSingle p@(JustParamName _ _)       = return $ singleType p
+  subSingle p@(JustInferredType _)      = return $ singleType p
+  subSingle (JustTypeInstance t)        = fmap (singleType . JustTypeInstance) $ replaceSelfSingle self t
+
+replaceSelfSingle :: CollectErrorsM m =>
+  GeneralInstance -> TypeInstance -> m TypeInstance
+replaceSelfSingle self (TypeInstance n (Positional ts)) = do
+  ts' <- mapErrorsM (replaceSelfInstance self) ts
+  return $ TypeInstance n (Positional ts')
+
+replaceSelfFilter :: CollectErrorsM m =>
+  GeneralInstance -> TypeFilter -> m TypeFilter
+replaceSelfFilter self (TypeFilter d t) = do
+  t' <- replaceSelfInstance self t
+  return (TypeFilter d t')
+replaceSelfFilter self (DefinesFilter (DefinesInstance n ts)) = do
+  ts' <- mapErrorsM (replaceSelfInstance self) (pValues ts)
+  return (DefinesFilter (DefinesInstance n (Positional ts')))
