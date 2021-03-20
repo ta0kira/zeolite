@@ -378,9 +378,18 @@ testcase "preserves type in implementations" {
   success
 }
 
-unittest test {
+unittest withConcrete {
   Type value <- Type.create()
   \ Testing.checkEquals<?>(value.next().prev().prev().next().next().get(),1)
+}
+
+unittest withIntersect {
+  [Container<Int>&Forward&Reverse] value <- Type.create()
+  \ Testing.checkEquals<?>(value.next().prev().prev().next().next().get(),1)
+}
+
+@value interface Container<|#x> {
+  get () -> (#x)
 }
 
 @value interface Forward {
@@ -392,11 +401,11 @@ unittest test {
 }
 
 concrete Type {
+  refines Container<Int>
   refines Forward
   refines Reverse
 
   @type create () -> (Type)
-  @value get () -> (Int)
 }
 
 define Type {
@@ -422,17 +431,33 @@ define Type {
 }
 
 
-testcase "preserves type in function param filter" {
+testcase "preserves type in function param filters" {
   success
 }
 
 unittest test {
-  Type value <- Type.create()
+  Type value <- Helper.new<Type>()
   \ Testing.checkEquals<?>((value `Advance.by<?>` 3).get(),3)
+}
+
+@type interface Default {
+  create () -> (#self)
 }
 
 @value interface Forward {
   next () -> (#self)
+}
+
+concrete Helper {
+  @type new<#x>
+    #x defines Default
+  () -> (#x)
+}
+
+define Helper {
+  new () {
+    return #x.create()
+  }
 }
 
 concrete Advance {
@@ -456,8 +481,8 @@ define Advance {
 
 concrete Type {
   refines Forward
+  defines Default
 
-  @type create () -> (Type)
   @value get () -> (Int)
 }
 
