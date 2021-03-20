@@ -22,7 +22,7 @@ testcase "Issue #73 is fixed" {
 }
 
 unittest test {
-  \ empty
+  \ Type2<Char>.call()
 }
 
 concrete Type1<#x> {
@@ -84,6 +84,38 @@ concrete Child<#x> {
 define Child {
   call1 (_) {}
   call2 (_) {}
+}
+
+testcase "Issue #73 is not re-broken by #self" {
+  // https://github.com/ta0kira/zeolite/issues/73
+  success
+}
+
+unittest test {
+  \ Type2<Char>.call()
+}
+
+concrete Type1<|#x> {
+  @type create<#y> () -> (#self)
+}
+
+define Type1 {
+  create () {
+    return #self{ }
+  }
+}
+
+concrete Type2<#y> {
+  @type call () -> ()
+}
+
+define Type2 {
+  call () {
+    // Type1<#y> is substituted in for #self, putting #y in the return type.
+    // This is a different #y than create's own #y, and so it should not be
+    // substituted with Int.
+    Type1<#y> value <- Type1<#y>.create<Int>()
+  }
 }
 
 
