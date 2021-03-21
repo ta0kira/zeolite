@@ -108,8 +108,8 @@ parameter for both input and output.
 Zeolite, on the other hand, uses [declaration-site variance][variance] for each
 parameter. (C# also does this to a lesser extent.) This allows the language to
 support very powerful recursive type conversions for parameterized types.
-Zeolite *also* allows [use-site variance][variance] variance declarations, like
-Java uses.
+Zeolite *also* allows [use-site variance][variance] declarations, like Java
+uses.
 
 Building variance into the core of the type system also allows Zeolite to have a
 [special meta-type](#the-self-parameter) that interfaces can use to require that
@@ -468,20 +468,22 @@ merged, however. This can be useful if you want interfaces to have overlapping
 functionality without having an explicit parent for the overlap.
 
 <pre style='color:#1f1c1b;background-color:#f6f8fa;'>
-<span style='color:#644a9b;'>@value</span> <b>interface</b> <b><span style='color:#0057ae;'>Container</span></b><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span> {
-  set (<i><span style='color:#0057ae;'>#x</span></i>) -&gt; ()
+<span style='color:#644a9b;'>@value</span> <b>interface</b> <b><span style='color:#0057ae;'>ForwardIterator</span></b><span style='color:#c02040;'>&lt;</span><span style='color:#c04040;'>|</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span> {
+  next () -&gt; (<b>optional</b> <b>#self</b>)
+  get () -&gt; (<i><span style='color:#0057ae;'>#x</span></i>)
 }
 
-<span style='color:#644a9b;'>@value</span> <b>interface</b> <b><span style='color:#0057ae;'>Policy</span></b><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span> {
-  set (<i><span style='color:#0057ae;'>#x</span></i>) -&gt; ()
+<span style='color:#644a9b;'>@value</span> <b>interface</b> <b><span style='color:#0057ae;'>ReverseIterator</span></b><span style='color:#c02040;'>&lt;</span><span style='color:#c04040;'>|</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span> {
+  prev () -&gt; (<b>optional</b> <b>#self</b>)
+  get () -&gt; (<i><span style='color:#0057ae;'>#x</span></i>)
 }
 
-<b>concrete</b> <b><span style='color:#0057ae;'>MyValue</span></b> {
-  <b>refines</b> <span style='color:#0057ae;'>Container</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Int</span></i><span style='color:#c02040;'>&gt;</span>
-  <b>refines</b> <span style='color:#0057ae;'>Policy</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Int</span></i><span style='color:#c02040;'>&gt;</span>
+<b>concrete</b> <b><span style='color:#0057ae;'>Iterator</span></b><span style='color:#c02040;'>&lt;</span><span style='color:#c04040;'>|</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span> {
+  <b>refines</b> <span style='color:#0057ae;'>ForwardIterator</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>
+  <b>refines</b> <span style='color:#0057ae;'>ReverseIterator</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>
 
-  <span style='color:#898887;'>// An explicit override is required in order to merge set from both parents.</span>
-  <span style='color:#644a9b;'>@value</span> set (<i><span style='color:#0057ae;'>Int</span></i>) -&gt; ()
+  <span style='color:#898887;'>// An explicit override is required in order to merge get from both parents.</span>
+  get () -&gt; (<i><span style='color:#0057ae;'>#x</span></i>)
 }</pre>
 
 #### Functions As Operators
