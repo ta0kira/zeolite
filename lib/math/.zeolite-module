@@ -5,7 +5,7 @@ private_deps: [
 ]
 extra_files: [
   category_source {
-    source: "lib/math/Extension_Math.cpp"
+    source: "lib/math/src/Extension_Math.cpp"
     categories: [Math]
   }
 ]

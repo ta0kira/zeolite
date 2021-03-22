@@ -1,0 +1,91 @@
+/* -----------------------------------------------------------------------------
+Copyright 2019-2021 Kevin P. Barry
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+----------------------------------------------------------------------------- */
+
+// Author: Kevin P. Barry [ta0kira@gmail.com]
+
+testcase "TextReader checks" {
+  success
+}
+
+concrete Helper {
+  @type checkNext (TextReader,String) -> ()
+}
+
+define Helper {
+  checkNext (reader,line) {
+    if (reader.pastEnd()) {
+      fail("past end")
+    }
+    String value <- reader.readNextLine()
+    if (value != line) {
+      fail(value)
+    }
+  }
+}
+
+concrete FakeFile {
+  refines BlockReader<String>
+
+  @type create () -> (FakeFile)
+}
+
+define FakeFile {
+  @value Int counter
+
+  create () {
+    return FakeFile{ 0 }
+  }
+
+  readBlock (_) {
+    cleanup {
+      counter <- counter+1
+    } in if (counter == 0) {
+      return "this is a "
+    } elif (counter == 1) {
+      return "partial line\nwith "
+    } elif (counter == 2) {
+      return "some more data\nand\nmore lines"
+    } elif (counter == 3) {
+      return "\nunfinished"
+    } else {
+      fail("too many reads")
+    }
+  }
+
+  pastEnd () {
+    return counter > 3
+  }
+}
+
+unittest correctSplit {
+    TextReader reader <- TextReader.fromBlockReader(FakeFile.create())
+    \ Helper.checkNext(reader,"this is a partial line")
+    \ Helper.checkNext(reader,"with some more data")
+    \ Helper.checkNext(reader,"and")
+    \ Helper.checkNext(reader,"more lines")
+    \ Helper.checkNext(reader,"unfinished")
+    if (!reader.pastEnd()) {
+      fail("not past end")
+    }
+    if (reader.readNextLine() != "") {
+      fail("reused data")
+    }
+}
+
+unittest readAll {
+  String allContents <- TextReader.readAll(FakeFile.create())
+  \ Testing.checkEquals<?>(allContents,"this is a partial line\nwith some more data\nand\nmore lines\nunfinished")
+}

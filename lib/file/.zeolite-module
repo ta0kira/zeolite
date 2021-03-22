@@ -1,5 +1,5 @@
-root: ".."
-path: "file"
+root: "../.."
+path: "lib/file"
 public_deps: [
   "lib/util"
 ]
@@ -8,11 +8,11 @@ private_deps: [
 ]
 extra_files: [
   category_source {
-    source: "file/Extension_RawFileReader.cpp"
+    source: "lib/file/src/Extension_RawFileReader.cpp"
     categories: [RawFileReader]
   }
   category_source {
-    source: "file/Extension_RawFileWriter.cpp"
+    source: "lib/file/src/Extension_RawFileWriter.cpp"
     categories: [RawFileWriter]
   }
 ]

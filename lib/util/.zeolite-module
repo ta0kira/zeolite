@@ -1,5 +1,5 @@
-root: ".."
-path: "util"
+root: "../.."
+path: "lib/util"
 expression_map: [
   expression_macro {
     name: BLOCK_READ_SIZE
@@ -11,15 +11,15 @@ private_deps: [
 ]
 extra_files: [
   category_source {
-    source: "util/Extension_Argv.cpp"
+    source: "lib/util/src/Extension_Argv.cpp"
     categories: [Argv]
   }
   category_source {
-    source: "util/Extension_SimpleInput.cpp"
+    source: "lib/util/src/Extension_SimpleInput.cpp"
     categories: [SimpleInput]
   }
   category_source {
-    source: "util/Extension_SimpleOutput.cpp"
+    source: "lib/util/src/Extension_SimpleOutput.cpp"
     categories: [SimpleOutput]
   }
 ]
