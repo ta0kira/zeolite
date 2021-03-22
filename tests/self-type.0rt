@@ -384,11 +384,11 @@ unittest withConcrete {
 }
 
 unittest withIntersect {
-  [Container<Int>&Forward&Reverse] value <- Type.create()
+  [Cell<Int>&Forward&Reverse] value <- Type.create()
   \ Testing.checkEquals<?>(value.next().prev().prev().next().next().get(),1)
 }
 
-@value interface Container<|#x> {
+@value interface Cell<|#x> {
   get () -> (#x)
 }
 
@@ -401,7 +401,7 @@ unittest withIntersect {
 }
 
 concrete Type {
-  refines Container<Int>
+  refines Cell<Int>
   refines Forward
   refines Reverse
 
@@ -440,10 +440,6 @@ unittest test {
   \ Testing.checkEquals<?>((value `Advance.by<?>` 3).get(),3)
 }
 
-@type interface Default {
-  create () -> (#self)
-}
-
 @value interface Forward {
   next () -> (#self)
 }
@@ -456,7 +452,7 @@ concrete Helper {
 
 define Helper {
   new () {
-    return #x.create()
+    return #x.default()
   }
 }
 
@@ -489,7 +485,7 @@ concrete Type {
 define Type {
   @value Int num
 
-  create () {
+  default () {
     return Type{ 0 }
   }
 

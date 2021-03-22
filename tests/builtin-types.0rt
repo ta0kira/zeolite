@@ -241,7 +241,7 @@ unittest boolDefault {
 }
 
 unittest charDefault {
-  \ Testing.checkEquals<?>(Char.default(),'\0')
+  \ Testing.checkEquals<?>(Char.default(),'\000')
 }
 
 unittest floatDefault {
@@ -275,7 +275,7 @@ unittest stringEquals {
 }
 
 unittest stringBuilder {
-  Builder<String> builder <- String.builder()
+  [Append<String>&Build<String>] builder <- String.builder()
   \ Testing.checkEquals<?>(builder.build(),"")
   \ Testing.checkEquals<?>(builder.append("xyz").build(),"xyz")
   \ Testing.checkEquals<?>(builder.append("123").build(),"xyz123")
@@ -430,7 +430,7 @@ unittest builderNotLazy {
   if (!present(strong(value2))) {
     fail("Failed")
   }
-  Builder<String> builder <- String.builder().append(require(value1))
+  [Append<String>&Build<String>] builder <- String.builder().append(require(value1))
   value1 <- empty
   if (present(strong(value2))) {
     fail("Failed")
@@ -439,7 +439,7 @@ unittest builderNotLazy {
 
 unittest simpleAccess {
   String s <- "abcde"
-  Char c <- s.readPosition(3)
+  Char c <- s.readAt(3)
   if (c != 'd') {
     fail(c)
   }
@@ -469,7 +469,7 @@ unittest nullChar {
   if ("abc\x00def" == "abc") {
     fail("Failed")
   }
-  if (("abc\x00def").readPosition(4) != 'd') {
+  if (("abc\x00def").readAt(4) != 'd') {
     fail("Failed")
   }
 }
@@ -487,7 +487,7 @@ unittest test {
 
 define Test {
   run () {
-    \ ("abc").readPosition(-10)
+    \ ("abc").readAt(-10)
   }
 }
 
@@ -508,7 +508,7 @@ unittest test {
 
 define Test {
   run () {
-    \ ("abc").readPosition(100)
+    \ ("abc").readAt(100)
   }
 }
 
