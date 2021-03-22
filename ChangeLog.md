@@ -12,10 +12,13 @@
 
 ### Libraries
 
-* **[breaking]** Renames `fromReadPosition` to `fromReadAt` in `ReadIterator`.
+* **[breaking]** Renames `fromReadPosition` to `fromReadAt` in `ReadIterator` in
+  `lib/util`.
 
 * **[breaking]** Renames `fromReadPositionAt` to `fromReadAtOffset` in
-  `ReadIterator`.
+  `ReadIterator` in `lib/util`.
+
+* **[new]** Adds `WriteAt` and `WriteCurrent` interfaces to `lib/util`.
 
 ## 0.14.0.0  -- 2021-03-19
 

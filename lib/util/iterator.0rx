@@ -62,3 +62,51 @@ define ReadIterator {
     return position < 0 || reader.readSize() == 0
   }
 }
+
+define WriteIterator {
+  @value WriteAt<#x> writer
+  @value Int position
+
+  fromWriteAt (writer) {
+    return fromWriteAtOffset<#y>(writer,0)
+  }
+
+  fromWriteAtOffset (writer,position) {
+    Int position2 <- position
+    if (position < 0) {
+      position2 <- -1
+    }
+    if (position >= writer.writeSize() || writer.writeSize() == 0) {
+      position2 <- writer.writeSize()
+    }
+    return WriteIterator<#y>{ writer, position }
+  }
+
+  writeCurrent (x) {
+    if (pastForwardEnd() || pastReverseEnd()) {
+      \ LazyStream<Formatted>.new()
+          .append("Position ")
+          .append(position)
+          .append(" is out of bounds")
+          .writeTo(SimpleOutput.error())
+    }
+    \ writer.writeAt(position,x)
+    return self
+  }
+
+  forward () {
+    return fromWriteAtOffset<#x>(writer,position+1)
+  }
+
+  pastForwardEnd () {
+    return position >= writer.writeSize()
+  }
+
+  reverse () {
+    return fromWriteAtOffset<#x>(writer,position-1)
+  }
+
+  pastReverseEnd () {
+    return position < 0 || writer.writeSize() == 0
+  }
+}

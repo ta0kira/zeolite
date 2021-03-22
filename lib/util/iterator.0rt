@@ -20,7 +20,7 @@ testcase "iterate ReadIterator" {
   success
 }
 
-unittest forward {
+unittest forwardRead {
   String s <- "abcde"
   Int count <- 0
   scoped {
@@ -38,7 +38,7 @@ unittest forward {
   }
 }
 
-unittest reverse {
+unittest reverseRead {
   String s <- "abcde"
   Int count <- s.readSize()-1
   scoped {
@@ -53,5 +53,67 @@ unittest reverse {
   }
   if (count != -1) {
     fail(count)
+  }
+}
+
+
+testcase "iterate ReadIterator" {
+  success
+}
+
+unittest forwardWrite {
+  String s <- "abcde"
+  Int count <- 0
+  scoped {
+    WriteChecker checker <- WriteChecker.create(s)
+    WriteIterator<Char> iter <- WriteIterator:fromWriteAt<?>(checker)
+  } in while (!iter.pastForwardEnd()) {
+    \ iter.writeCurrent(s.readAt(count))
+  } update {
+    count <- count+1
+    iter <- iter.forward()
+  }
+  if (count != s.readSize()) {
+    fail(count)
+  }
+}
+
+unittest reverseWrite {
+  String s <- "abcde"
+  Int count <- s.readSize()-1
+  scoped {
+    WriteChecker checker <- WriteChecker.create(s)
+    WriteIterator<Char> iter <- WriteIterator:fromWriteAtOffset<?>(checker,count)
+  } in while (!iter.pastReverseEnd()) {
+    \ iter.writeCurrent(s.readAt(count))
+  } update {
+    count <- count-1
+    iter <- iter.reverse()
+  }
+  if (count != -1) {
+    fail(count)
+  }
+}
+
+concrete WriteChecker {
+  refines WriteAt<Char>
+
+  @type create (String) -> (WriteChecker)
+}
+
+define WriteChecker {
+  @value String content
+
+  create (string) {
+    return WriteChecker{ string }
+  }
+
+  writeAt (c,index) {
+    \ Testing.checkEquals<?>(c,content.readAt(index))
+    return self
+  }
+
+  writeSize () {
+    return content.readSize()
   }
 }

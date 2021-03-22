@@ -16,8 +16,17 @@ limitations under the License.
 
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
+@value interface WriteAt<#x|> {
+  writeAt (Int,#x) -> (#self)
+  writeSize () -> (Int)
+}
+
 @value interface ReadCurrent<|#x> {
   readCurrent () -> (#x)
+}
+
+@value interface WriteCurrent<#x|> {
+  writeCurrent (#x) -> (#self)
 }
 
 @value interface IterateForward {
@@ -37,4 +46,13 @@ concrete ReadIterator<|#x> {
 
   @category fromReadAt<#y> (ReadAt<#y>) -> (ReadIterator<#y>)
   @category fromReadAtOffset<#y> (ReadAt<#y>,Int) -> (ReadIterator<#y>)
+}
+
+concrete WriteIterator<#x|> {
+  refines WriteCurrent<#x>
+  refines IterateForward
+  refines IterateReverse
+
+  @category fromWriteAt<#y> (WriteAt<#y>) -> (WriteIterator<#y>)
+  @category fromWriteAtOffset<#y> (WriteAt<#y>,Int) -> (WriteIterator<#y>)
 }
