@@ -90,7 +90,9 @@
     </list>
 
     <list name="builtinCategory">
+      <item> Append </item>
       <item> Bool </item>
+      <item> Build </item>
       <item> Char </item>
       <item> Int </item>
       <item> Float </item>
@@ -103,7 +105,6 @@
       <item> Equals </item>
       <item> Formatted </item>
       <item> ReadPosition </item>
-      <item> Builder </item>
     </list>
 
     <list name="testcaseOutput">

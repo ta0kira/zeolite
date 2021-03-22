@@ -1,5 +1,12 @@
 # Revision history for zeolite-lang
 
+## 0.15.0.0  -- ????-??-??
+
+### Language
+
+* **[breaking]** Splits `Builder<#x>` built-in to `Append<#x|>` and `Build<|#x>`
+  to more accurately reflect its semantics.
+
 ## 0.14.0.0  -- 2021-03-19
 
 ### Language

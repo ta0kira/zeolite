@@ -28,7 +28,8 @@ limitations under the License.
 #include "Category_Char.hpp"
 #include "Category_Equals.hpp"
 #include "Category_LessThan.hpp"
-#include "Category_Builder.hpp"
+#include "Category_Append.hpp"
+#include "Category_Build.hpp"
 
 
 #ifdef ZEOLITE_PUBLIC_NAMESPACE
@@ -207,14 +208,14 @@ class Value_StringBuilder : public TypeValue {
     if (params.Size() != label.param_count){
       FAIL() << "Wrong number of params";
     }
-    if (&label == &Function_Builder_append) {
+    if (&label == &Function_Append_append) {
       TRACE_FUNCTION("StringBuilder.append")
       std::lock_guard<std::mutex> lock(mutex);
       output_ << args.At(0)->AsString();
       return ReturnTuple(self);
     }
-    if (&label == &Function_Builder_build) {
-      TRACE_FUNCTION("SimpleOutput.build")
+    if (&label == &Function_Build_build) {
+      TRACE_FUNCTION("StringBuilder.build")
       std::lock_guard<std::mutex> lock(mutex);
       return ReturnTuple(Box_String(output_.str()));
     }

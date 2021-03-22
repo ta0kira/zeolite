@@ -65,7 +65,7 @@ concrete String {
   defines Equals<String>
   defines LessThan<String>
 
-  @type builder () -> (Builder<String>)
+  @type builder () -> ([Append<String>&Build<String>])
 }
 
 @value interface AsBool {
@@ -94,8 +94,11 @@ concrete String {
   subSequence (Int,Int) -> (#self)
 }
 
-@value interface Builder<#x> {
+@value interface Append<#x|> {
   append (#x) -> (#self)
+}
+
+@value interface Build<|#x> {
   build () -> (#x)
 }
 

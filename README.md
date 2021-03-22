@@ -1187,7 +1187,8 @@ Builtin `concrete` types:
 - **`Int`**: Use decimal (e.g., `1234`), hex (e.g., `\xABCD`), octal (e.g.,
   `\o0123`), or binary (e.g., `\b0100`).
 - **`String`**: Use double quotes to sequence `Char` literals, e.g.,
-  `"hello\012"`. You can build a string efficiently using `String.builder()`.
+  `"hello\012"`. You can build a string efficiently using `String.builder()`,
+  e.g., `String foo <- String.builder().append("bar").append("baz").build()`.
 
 Builtin `@value interface`s:
 
@@ -1195,7 +1196,7 @@ Builtin `@value interface`s:
 - **`AsChar`**: Convert a value to `Char` using `asChar()`.
 - **`AsFloat`**: Convert a value to `Float` using `asFloat()`.
 - **`AsInt`**: Convert a value to `Int` using `asInt()`.
-- **`Builder<#x>`**: Build a `#x` using concatenation.
+- **`AppendBuilder<#x|#y>`**: Build a `#y` by concatenating `#x`s.
 - **`Formatted`**: Format a value as a `String` using `formatted()`.
 - **`ReadPosition<#x>`**: Random access reads from a container with values of
   type `#x`.
