@@ -1211,8 +1211,10 @@ Builtin `@type interface`s:
 - **`Equals<#x>`**: Compare values using `equals(x,y)`.
 - **`LessThan<#x>`**: Compare values using `lessThan(x,y)`.
 
-Builtin meta types:
+Builtin meta-types:
 
+- **`#self`**: The type of the category where it is used. See
+  [`#self`](#the-self-parameter).
 - **`any`**: Value type that can be assigned a value of any type. (This is the
   [terminal object][initial-terminal] in the [category][category] of Zeolite
   types.)
