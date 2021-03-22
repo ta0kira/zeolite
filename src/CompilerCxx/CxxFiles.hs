@@ -247,12 +247,13 @@ generateCategoryDefinition testing = common where
           defineCustomGetters t,
           defineCustomValueGetter t
         ]
+      let req' = Set.unions [req,getCategoryMentions t]
       return $ CxxOutput (Just $ getCategoryName t)
                          filename
                          (getCategoryNamespace t)
                          (Set.fromList [getCategoryNamespace t])
-                         req
-                         (addSourceIncludes $ addStreamlinedHeader t $ addIncludes req out)
+                         req'
+                         (addSourceIncludes $ addStreamlinedHeader t $ addIncludes req' out)
     defined = DefinedCategory {
         dcContext = [],
         dcName = getCategoryName t,
