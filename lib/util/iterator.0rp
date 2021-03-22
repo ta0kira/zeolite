@@ -40,20 +40,30 @@ limitations under the License.
   pastReverseEnd () -> (Bool)
 }
 
-concrete ReadIterator<|#x> {
+@value interface ReadIterator<|#x> {
   refines ReadCurrent<#x>
   refines IterateForward
   refines IterateReverse
-
-  @category fromReadAt<#y> (ReadAt<#y>) -> (ReadIterator<#y>)
-  @category fromReadAtOffset<#y> (ReadAt<#y>,Int) -> (ReadIterator<#y>)
 }
 
-concrete WriteIterator<#x|> {
+@value interface WriteIterator<#x|> {
   refines WriteCurrent<#x>
   refines IterateForward
   refines IterateReverse
+}
 
-  @category fromWriteAt<#y> (WriteAt<#y>) -> (WriteIterator<#y>)
-  @category fromWriteAtOffset<#y> (WriteAt<#y>,Int) -> (WriteIterator<#y>)
+@value interface Iterator<#x> {
+  refines ReadIterator<#x>
+  refines WriteIterator<#x>
+}
+
+concrete AutoIterator {
+  @type fromRead<#x> (ReadAt<#x>) -> (ReadIterator<#x>)
+  @type fromReadOffset<#x> (ReadAt<#x>,Int) -> (ReadIterator<#x>)
+
+  @type fromWrite<#x> (WriteAt<#x>) -> (WriteIterator<#x>)
+  @type fromWriteOffset<#x> (WriteAt<#x>,Int) -> (WriteIterator<#x>)
+
+  @type fromReadWrite<#x> ([ReadAt<#x>&WriteAt<#x>]) -> (Iterator<#x>)
+  @type fromReadWriteOffset<#x> ([ReadAt<#x>&WriteAt<#x>],Int) -> (Iterator<#x>)
 }

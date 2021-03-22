@@ -16,23 +16,56 @@ limitations under the License.
 
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
-define ReadIterator {
-  @value ReadAt<#x> reader
-  @value Int position
-
-  fromReadAt (reader) {
-    return fromReadAtOffset<#y>(reader,0)
+define AutoIterator {
+  fromRead (container) {
+    return AutoReadIterator:fromRead<?>(container)
   }
 
-  fromReadAtOffset (reader,position) {
+  fromReadOffset (container,offset) {
+    return AutoReadIterator:fromReadOffset<?>(container,offset)
+  }
+
+  fromWrite (container) {
+    return AutoWriteIterator:fromWrite<?>(container)
+  }
+
+  fromWriteOffset (container,offset) {
+    return AutoWriteIterator:fromWriteOffset<?>(container,offset)
+  }
+
+  fromReadWrite (container) {
+    return AutoReadWriteIterator:fromReadWrite<?>(container)
+  }
+
+  fromReadWriteOffset (container,offset) {
+    return AutoReadWriteIterator:fromReadWriteOffset<?>(container,offset)
+  }
+}
+
+concrete AutoReadIterator<#x> {
+  refines ReadIterator<#x>
+
+  @category fromRead<#y> (ReadAt<#y>) -> (AutoReadIterator<#y>)
+  @category fromReadOffset<#y> (ReadAt<#y>,Int) -> (AutoReadIterator<#y>)
+}
+
+define AutoReadIterator {
+  @value ReadAt<#x> container
+  @value Int position
+
+  fromRead (container) {
+    return fromReadOffset<#y>(container,0)
+  }
+
+  fromReadOffset (container,position) {
     Int position2 <- position
     if (position < 0) {
       position2 <- -1
     }
-    if (position >= reader.size() || reader.size() == 0) {
-      position2 <- reader.size()
+    if (position >= container.size() || container.size() == 0) {
+      position2 <- container.size()
     }
-    return ReadIterator<#y>{ reader, position }
+    return AutoReadIterator<#y>{ container, position }
   }
 
   readCurrent () {
@@ -43,43 +76,50 @@ define ReadIterator {
           .append(" is out of bounds")
           .writeTo(SimpleOutput.error())
     }
-    return reader.readAt(position)
+    return container.readAt(position)
   }
 
   forward () {
-    return fromReadAtOffset<#x>(reader,position+1)
+    return fromReadOffset<#x>(container,position+1)
   }
 
   pastForwardEnd () {
-    return position >= reader.size()
+    return position >= container.size()
   }
 
   reverse () {
-    return fromReadAtOffset<#x>(reader,position-1)
+    return fromReadOffset<#x>(container,position-1)
   }
 
   pastReverseEnd () {
-    return position < 0 || reader.size() == 0
+    return position < 0 || container.size() == 0
   }
 }
 
-define WriteIterator {
-  @value WriteAt<#x> writer
+concrete AutoWriteIterator<#x> {
+  refines WriteIterator<#x>
+
+  @category fromWrite<#y> (WriteAt<#y>) -> (AutoWriteIterator<#y>)
+  @category fromWriteOffset<#y> (WriteAt<#y>,Int) -> (AutoWriteIterator<#y>)
+}
+
+define AutoWriteIterator {
+  @value WriteAt<#x> container
   @value Int position
 
-  fromWriteAt (writer) {
-    return fromWriteAtOffset<#y>(writer,0)
+  fromWrite (container) {
+    return fromWriteOffset<#y>(container,0)
   }
 
-  fromWriteAtOffset (writer,position) {
+  fromWriteOffset (container,position) {
     Int position2 <- position
     if (position < 0) {
       position2 <- -1
     }
-    if (position >= writer.size() || writer.size() == 0) {
-      position2 <- writer.size()
+    if (position >= container.size() || container.size() == 0) {
+      position2 <- container.size()
     }
-    return WriteIterator<#y>{ writer, position }
+    return AutoWriteIterator<#y>{ container, position }
   }
 
   writeCurrent (x) {
@@ -90,23 +130,89 @@ define WriteIterator {
           .append(" is out of bounds")
           .writeTo(SimpleOutput.error())
     }
-    \ writer.writeAt(position,x)
+    \ container.writeAt(position,x)
     return self
   }
 
   forward () {
-    return fromWriteAtOffset<#x>(writer,position+1)
+    return fromWriteOffset<#x>(container,position+1)
   }
 
   pastForwardEnd () {
-    return position >= writer.size()
+    return position >= container.size()
   }
 
   reverse () {
-    return fromWriteAtOffset<#x>(writer,position-1)
+    return fromWriteOffset<#x>(container,position-1)
   }
 
   pastReverseEnd () {
-    return position < 0 || writer.size() == 0
+    return position < 0 || container.size() == 0
+  }
+}
+
+concrete AutoReadWriteIterator<#x> {
+  refines Iterator<#x>
+
+  @category fromReadWrite<#y> ([ReadAt<#y>&WriteAt<#y>]) -> (AutoReadWriteIterator<#y>)
+  @category fromReadWriteOffset<#y> ([ReadAt<#y>&WriteAt<#y>],Int) -> (AutoReadWriteIterator<#y>)
+}
+
+define AutoReadWriteIterator {
+  @value [ReadAt<#x>&WriteAt<#x>] container
+  @value Int position
+
+  fromReadWrite (container) {
+    return fromReadWriteOffset<#y>(container,0)
+  }
+
+  fromReadWriteOffset (container,position) {
+    Int position2 <- position
+    if (position < 0) {
+      position2 <- -1
+    }
+    if (position >= container.size() || container.size() == 0) {
+      position2 <- container.size()
+    }
+    return AutoReadWriteIterator<#y>{ container, position }
+  }
+
+  readCurrent () {
+    if (pastForwardEnd() || pastReverseEnd()) {
+      \ LazyStream<Formatted>.new()
+          .append("Position ")
+          .append(position)
+          .append(" is out of bounds")
+          .writeTo(SimpleOutput.error())
+    }
+    return container.readAt(position)
+  }
+
+  writeCurrent (x) {
+    if (pastForwardEnd() || pastReverseEnd()) {
+      \ LazyStream<Formatted>.new()
+          .append("Position ")
+          .append(position)
+          .append(" is out of bounds")
+          .writeTo(SimpleOutput.error())
+    }
+    \ container.writeAt(position,x)
+    return self
+  }
+
+  forward () {
+    return fromReadWriteOffset<#x>(container,position+1)
+  }
+
+  pastForwardEnd () {
+    return position >= container.size()
+  }
+
+  reverse () {
+    return fromReadWriteOffset<#x>(container,position-1)
+  }
+
+  pastReverseEnd () {
+    return position < 0 || container.size() == 0
   }
 }

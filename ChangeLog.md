@@ -20,15 +20,15 @@
 
 ### Libraries
 
-* **[breaking]** Renames `fromReadPosition` to `fromReadAt` in `ReadIterator` in
-  `lib/util`.
+* **[breaking]** Refactors iterators in `lib/util`:
 
-* **[breaking]** Renames `fromReadPositionAt` to `fromReadAtOffset` in
-  `ReadIterator` in `lib/util`.
+  * **[breaking]** Makes `ReadIterator` a `@value interface`.
 
-* **[new]** Adds `WriteAt` and `WriteCurrent` interfaces to `lib/util`.
+  * **[breaking]** Adds `AutoIterator` helper category to create iterators from
+    `ReadAt` and `WriteAt` values. Use this instead of `ReadIterator`.
 
-* **[new]** Adds `WriteIterator` to `lib/util`.
+  * **[new]** Adds `WriteAt`, `WriteCurrent`, `WriteIterator`, and `Iterator`
+    `@value interface`s.
 
 ## 0.14.0.0  -- 2021-03-19
 
