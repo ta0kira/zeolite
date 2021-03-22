@@ -7,8 +7,16 @@
 * **[breaking]** Splits `Builder<#x>` built-in to `Append<#x|>` and `Build<|#x>`
   to more accurately reflect its semantics.
 
-* **[breaking]** Splits `ReadPosition<#x>` built-in to `ReadAt<|#x>` and
-  `SubSequence` to be more concise, and to split up reading from subsequencing.
+* **[breaking]** Splits `ReadPosition<#x>` built-in to `ReadAt<|#x>`,
+  `SubSequence`, and `Container` to be more concise, and to split up reading
+  from subsequencing. This also includes renaming `readSize()` to just `size()`.
+
+* **[new]** Adds the `Default` `@type interface`, to specify a default `@value`
+  for the type.
+
+* **[fix]** Fixes merging of duplicate inherited categories. Previously, if a
+  category `Foo` was indirectly inherited multiple times then the compiler
+  would complain about having multiple functions with the same name.
 
 ### Libraries
 
@@ -19,6 +27,8 @@
   `ReadIterator` in `lib/util`.
 
 * **[new]** Adds `WriteAt` and `WriteCurrent` interfaces to `lib/util`.
+
+* **[new]** Adds `WriteIterator` to `lib/util`.
 
 ## 0.14.0.0  -- 2021-03-19
 

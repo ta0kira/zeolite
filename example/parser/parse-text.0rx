@@ -11,7 +11,7 @@ define StringParser {
     ParseContext<any> context <- contextOld
     scoped {
       Int index <- 0
-    } in while (index < match.readSize()) {
+    } in while (index < match.size()) {
       $ReadOnly[context,index]$
       if (context.atEof() || context.current() != match.readAt(index)) {
         if (index > 0) {
@@ -55,7 +55,7 @@ define SequenceOfParser {
       Bool found <- false
       scoped {
         Int index <- 0
-      } in while (index < matches.readSize()) {
+      } in while (index < matches.size()) {
         $ReadOnly[index]$
         if (context.current() == matches.readAt(index)) {
           \ builder.append(matches.readAt(index).formatted())

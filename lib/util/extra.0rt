@@ -22,7 +22,7 @@ testcase "Argv checks" {
 }
 
 unittest global {
-  Int count <- Argv.global().readSize()
+  Int count <- Argv.global().size()
   if (count != 5) {
     fail(count)
   }
@@ -35,7 +35,7 @@ unittest global {
 
 unittest subSequence {
   ReadAt<String> argv <- Argv.global().subSequence(2,2)
-  Int count <- argv.readSize()
+  Int count <- argv.size()
   if (count != 2) {
     fail(count)
   }

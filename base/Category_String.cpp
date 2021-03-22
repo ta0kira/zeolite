@@ -24,13 +24,15 @@ limitations under the License.
 #include "category-source.hpp"
 #include "Category_AsBool.hpp"
 #include "Category_Formatted.hpp"
+#include "Category_Char.hpp"
+#include "Category_Container.hpp"
 #include "Category_ReadAt.hpp"
 #include "Category_SubSequence.hpp"
-#include "Category_Char.hpp"
-#include "Category_Equals.hpp"
-#include "Category_LessThan.hpp"
 #include "Category_Append.hpp"
 #include "Category_Build.hpp"
+#include "Category_Default.hpp"
+#include "Category_Equals.hpp"
+#include "Category_LessThan.hpp"
 
 
 #ifdef ZEOLITE_PUBLIC_NAMESPACE
@@ -104,6 +106,9 @@ struct Type_String : public TypeInstance {
   ReturnTuple Dispatch(const S<TypeInstance>& self, const TypeFunction& label,
                        const ParamTuple& params, const ValueTuple& args) final {
     using CallType = ReturnTuple(Type_String::*)(const ParamTuple&, const ValueTuple&);
+    static const CallType Table_Default[] = {
+      &Type_String::Call_default,
+    };
     static const CallType Table_Equals[] = {
       &Type_String::Call_equals,
     };
@@ -113,6 +118,12 @@ struct Type_String : public TypeInstance {
     static const CallType Table_String[] = {
       &Type_String::Call_builder,
     };
+    if (label.collection == Functions_Default) {
+      if (label.function_num < 0 || label.function_num >= 1) {
+        FAIL() << "Bad function call " << label;
+      }
+      return (this->*Table_Default[label.function_num])(params, args);
+    }
     if (label.collection == Functions_Equals) {
       if (label.function_num < 0 || label.function_num >= 1) {
         FAIL() << "Bad function call " << label;
@@ -133,6 +144,7 @@ struct Type_String : public TypeInstance {
     }
     return TypeInstance::Dispatch(self, label, params, args);
   }
+  ReturnTuple Call_default(const ParamTuple& params, const ValueTuple& args);
   ReturnTuple Call_builder(const ParamTuple& params, const ValueTuple& args);
   ReturnTuple Call_equals(const ParamTuple& params, const ValueTuple& args);
   ReturnTuple Call_lessThan(const ParamTuple& params, const ValueTuple& args);
@@ -153,7 +165,9 @@ struct Value_String : public TypeValue {
     };
     static const CallType Table_ReadAt[] = {
       &Value_String::Call_readAt,
-      &Value_String::Call_readSize,
+    };
+    static const CallType Table_Container[] = {
+      &Value_String::Call_size,
     };
     static const CallType Table_String[] = {
       &Value_String::Call_subSequence,
@@ -179,6 +193,12 @@ struct Value_String : public TypeValue {
       }
       return (this->*Table_ReadAt[label.function_num])(self, params, args);
     }
+    if (label.collection == Functions_Container) {
+      if (label.function_num < 0 || label.function_num >= 2) {
+        FAIL() << "Bad function call " << label;
+      }
+      return (this->*Table_Container[label.function_num])(self, params, args);
+    }
     if (label.collection == Functions_String) {
       if (label.function_num < 0 || label.function_num >= 1) {
         FAIL() << "Bad function call " << label;
@@ -198,7 +218,7 @@ struct Value_String : public TypeValue {
   ReturnTuple Call_asBool(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args);
   ReturnTuple Call_formatted(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args);
   ReturnTuple Call_readAt(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args);
-  ReturnTuple Call_readSize(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args);
+  ReturnTuple Call_size(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args);
   ReturnTuple Call_subSequence(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args);
   const S<Type_String> parent;
   const PrimString value_;
@@ -236,6 +256,10 @@ class Value_StringBuilder : public TypeValue {
   std::ostringstream output_;
 };
 
+ReturnTuple Type_String::Call_default(const ParamTuple& params, const ValueTuple& args) {
+  TRACE_FUNCTION("String.default")
+  return ReturnTuple(Box_String(""));
+}
 ReturnTuple Type_String::Call_builder(const ParamTuple& params, const ValueTuple& args) {
   TRACE_FUNCTION("String.builder")
   return ReturnTuple(S<TypeValue>(new Value_StringBuilder));
@@ -268,8 +292,8 @@ ReturnTuple Value_String::Call_readAt(const S<TypeValue>& Var_self, const ParamT
   }
   return ReturnTuple(Box_Char(value_[Var_arg1]));
 }
-ReturnTuple Value_String::Call_readSize(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) {
-  TRACE_FUNCTION("String.readSize")
+ReturnTuple Value_String::Call_size(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) {
+  TRACE_FUNCTION("String.size")
   return ReturnTuple(Box_Int(value_.size()));
 }
 ReturnTuple Value_String::Call_subSequence(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) {

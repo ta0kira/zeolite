@@ -27,6 +27,7 @@ limitations under the License.
 #include "Category_AsInt.hpp"
 #include "Category_AsFloat.hpp"
 #include "Category_Formatted.hpp"
+#include "Category_Default.hpp"
 #include "Category_Equals.hpp"
 #include "Category_LessThan.hpp"
 
@@ -108,12 +109,21 @@ struct Type_Int : public TypeInstance {
   ReturnTuple Dispatch(const S<TypeInstance>& self, const TypeFunction& label,
                        const ParamTuple& params, const ValueTuple& args) final {
     using CallType = ReturnTuple(Type_Int::*)(const ParamTuple&, const ValueTuple&);
+    static const CallType Table_Default[] = {
+      &Type_Int::Call_default,
+    };
     static const CallType Table_Equals[] = {
       &Type_Int::Call_equals,
     };
     static const CallType Table_LessThan[] = {
       &Type_Int::Call_lessThan,
     };
+    if (label.collection == Functions_Default) {
+      if (label.function_num < 0 || label.function_num >= 1) {
+        FAIL() << "Bad function call " << label;
+      }
+      return (this->*Table_Default[label.function_num])(params, args);
+    }
     if (label.collection == Functions_Equals) {
       if (label.function_num < 0 || label.function_num >= 1) {
         FAIL() << "Bad function call " << label;
@@ -128,6 +138,7 @@ struct Type_Int : public TypeInstance {
     }
     return TypeInstance::Dispatch(self, label, params, args);
   }
+  ReturnTuple Call_default(const ParamTuple& params, const ValueTuple& args);
   ReturnTuple Call_equals(const ParamTuple& params, const ValueTuple& args);
   ReturnTuple Call_lessThan(const ParamTuple& params, const ValueTuple& args);
 };
@@ -196,6 +207,11 @@ struct Value_Int : public TypeValue {
   const S<Type_Int> parent;
   const PrimInt value_;
 };
+
+ReturnTuple Type_Int::Call_default(const ParamTuple& params, const ValueTuple& args) {
+  TRACE_FUNCTION("Int.default")
+  return ReturnTuple(Box_Int(0));
+}
 ReturnTuple Type_Int::Call_equals(const ParamTuple& params, const ValueTuple& args) {
   TRACE_FUNCTION("Int.equals")
   const PrimInt Var_arg1 = (args.At(0))->AsInt();

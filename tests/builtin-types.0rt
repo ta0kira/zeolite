@@ -232,25 +232,28 @@ unittest formatted {
 }
 
 
-testcase "reduce ReadPosition" {
-  success
-}
-
-unittest success {
-  if (!present(reduce<ReadPosition<Char>,ReadPosition<Formatted>>("x"))) {
-    fail("Failed")
-  }
-}
-
-unittest failure {
-  if (present(reduce<ReadPosition<Formatted>,ReadPosition<Char>>("x"))) {
-    fail("Failed")
-  }
-}
-
-
 testcase "interface implementations" {
   success
+}
+
+unittest boolDefault {
+  \ Testing.checkEquals<?>(Bool.default(),false)
+}
+
+unittest charDefault {
+  \ Testing.checkEquals<?>(Char.default(),'\0')
+}
+
+unittest floatDefault {
+  \ Testing.checkEquals<?>(Float.default(),0.0)
+}
+
+unittest intDefault {
+  \ Testing.checkEquals<?>(Int.default(),0)
+}
+
+unittest stringDefault {
+  \ Testing.checkEquals<?>(String.default(),"")
 }
 
 unittest stringLessThan {
@@ -440,7 +443,7 @@ unittest simpleAccess {
   if (c != 'd') {
     fail(c)
   }
-  Int size <- s.readSize()
+  Int size <- s.size()
   if (size != 5) {
     fail(size)
   }

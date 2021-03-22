@@ -15,7 +15,7 @@ define HelloDemo {
           .append("What is your name? ")
           .writeTo(SimpleOutput.stderr())
       String name <- reader.readNextLine()
-      if (name.readSize() == 0) {
+      if (name.size() == 0) {
         break
       }
       \ LazyStream<Formatted>.new()

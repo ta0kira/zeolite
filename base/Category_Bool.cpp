@@ -26,6 +26,7 @@ limitations under the License.
 #include "Category_AsInt.hpp"
 #include "Category_AsFloat.hpp"
 #include "Category_Formatted.hpp"
+#include "Category_Default.hpp"
 #include "Category_Equals.hpp"
 
 
@@ -102,9 +103,18 @@ struct Type_Bool : public TypeInstance {
   ReturnTuple Dispatch(const S<TypeInstance>& self, const TypeFunction& label,
                        const ParamTuple& params, const ValueTuple& args) final {
     using CallType = ReturnTuple(Type_Bool::*)(const ParamTuple&, const ValueTuple&);
+    static const CallType Table_Default[] = {
+      &Type_Bool::Call_default,
+    };
     static const CallType Table_Equals[] = {
       &Type_Bool::Call_equals,
     };
+    if (label.collection == Functions_Default) {
+      if (label.function_num < 0 || label.function_num >= 1) {
+        FAIL() << "Bad function call " << label;
+      }
+      return (this->*Table_Default[label.function_num])(params, args);
+    }
     if (label.collection == Functions_Equals) {
       if (label.function_num < 0 || label.function_num >= 1) {
         FAIL() << "Bad function call " << label;
@@ -113,6 +123,7 @@ struct Type_Bool : public TypeInstance {
     }
     return TypeInstance::Dispatch(self, label, params, args);
   }
+  ReturnTuple Call_default(const ParamTuple& params, const ValueTuple& args);
   ReturnTuple Call_equals(const ParamTuple& params, const ValueTuple& args);
 };
 S<Type_Bool> CreateType_Bool(Params<0>::Type params) {
@@ -170,6 +181,11 @@ struct Value_Bool : public TypeValue {
   const S<Type_Bool> parent;
   const bool value_;
 };
+
+ReturnTuple Type_Bool::Call_default(const ParamTuple& params, const ValueTuple& args) {
+  TRACE_FUNCTION("Bool.default")
+  return ReturnTuple(Box_Bool(false));
+}
 ReturnTuple Type_Bool::Call_equals(const ParamTuple& params, const ValueTuple& args) {
   TRACE_FUNCTION("Bool.equals")
   const bool Var_arg1 = (args.At(0))->AsBool();

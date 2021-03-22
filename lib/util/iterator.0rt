@@ -33,14 +33,14 @@ unittest forwardRead {
     count <- count+1
     iter <- iter.forward()
   }
-  if (count != s.readSize()) {
+  if (count != s.size()) {
     fail(count)
   }
 }
 
 unittest reverseRead {
   String s <- "abcde"
-  Int count <- s.readSize()-1
+  Int count <- s.size()-1
   scoped {
     ReadIterator<Char> iter <- ReadIterator:fromReadAtOffset<?>(s,count)
   } in while (!iter.pastReverseEnd()) {
@@ -73,14 +73,14 @@ unittest forwardWrite {
     count <- count+1
     iter <- iter.forward()
   }
-  if (count != s.readSize()) {
+  if (count != s.size()) {
     fail(count)
   }
 }
 
 unittest reverseWrite {
   String s <- "abcde"
-  Int count <- s.readSize()-1
+  Int count <- s.size()-1
   scoped {
     WriteChecker checker <- WriteChecker.create(s)
     WriteIterator<Char> iter <- WriteIterator:fromWriteAtOffset<?>(checker,count)
@@ -108,12 +108,12 @@ define WriteChecker {
     return WriteChecker{ string }
   }
 
-  writeAt (c,index) {
+  writeAt (index,c) {
     \ Testing.checkEquals<?>(c,content.readAt(index))
     return self
   }
 
-  writeSize () {
-    return content.readSize()
+  size () {
+    return content.size()
   }
 }

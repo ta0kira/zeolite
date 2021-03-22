@@ -51,14 +51,14 @@ define TextReader {
   }
 
   pastEnd () {
-    return buffer.readSize() == 0 && reader.pastEnd()
+    return buffer.size() == 0 && reader.pastEnd()
   }
 
   @value findNewline () -> (Int)
   findNewline () {
     scoped {
       Int position <- 0
-    } in while (position < buffer.readSize()) {
+    } in while (position < buffer.size()) {
       Char c <- buffer.readAt(position)
       // TODO: Maybe the line separator should be a factory argument.
       if (c == '\n' || c == '\r') {
@@ -73,7 +73,7 @@ define TextReader {
   @value takeLine (Int) -> (String)
   takeLine (position) {
     String data <- buffer.subSequence(0,position)
-    buffer <- buffer.subSequence(position+1,buffer.readSize()-position-1)
+    buffer <- buffer.subSequence(position+1,buffer.size()-position-1)
     return data
   }
 }

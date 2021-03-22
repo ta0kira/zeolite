@@ -1196,13 +1196,17 @@ Builtin `@value interface`s:
 - **`AsChar`**: Convert a value to `Char` using `asChar()`.
 - **`AsFloat`**: Convert a value to `Float` using `asFloat()`.
 - **`AsInt`**: Convert a value to `Int` using `asInt()`.
-- **`AppendBuilder<#x|#y>`**: Build a `#y` by concatenating `#x`s.
+- **`Append<#x>`**: Supports appending `#x`.
+- **`Build<#x>`**: Build a `#x` from the current state.
+- **`Container`**: Contains multiple values.
 - **`Formatted`**: Format a value as a `String` using `formatted()`.
-- **`ReadPosition<#x>`**: Random access reads from a container with values of
-  type `#x`.
+- **`ReadAt<#x>`**: Random access reads from a container with values of type
+  `#x`.
+- **`SubSequence`**: Extract a subsequence from the object.
 
 Builtin `@type interface`s:
 
+- **`Default`**: Get the default `@value` with `default()`.
 - **`Equals<#x>`**: Compare values using `equals(x,y)`.
 - **`LessThan<#x>`**: Compare values using `lessThan(x,y)`.
 

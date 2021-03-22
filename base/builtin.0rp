@@ -22,6 +22,7 @@ concrete Bool {
   refines AsFloat
   refines Formatted
 
+  defines Default
   defines Equals<Bool>
 }
 
@@ -32,6 +33,7 @@ concrete Char {
   refines AsFloat
   refines Formatted
 
+  defines Default
   defines Equals<Char>
   defines LessThan<Char>
 }
@@ -42,6 +44,7 @@ concrete Float {
   refines AsFloat
   refines Formatted
 
+  defines Default
   defines Equals<Float>
   defines LessThan<Float>
 }
@@ -53,6 +56,7 @@ concrete Int {
   refines AsFloat
   refines Formatted
 
+  defines Default
   defines Equals<Int>
   defines LessThan<Int>
 }
@@ -63,6 +67,7 @@ concrete String {
   refines ReadAt<Char>
   refines SubSequence
 
+  defines Default
   defines Equals<String>
   defines LessThan<String>
 
@@ -97,13 +102,24 @@ concrete String {
   build () -> (#x)
 }
 
+@value interface Container {
+  size () -> (Int)
+}
+
 @value interface ReadAt<|#x> {
+  refines Container
+
   readAt (Int) -> (#x)
-  readSize () -> (Int)
 }
 
 @value interface SubSequence {
+  refines Container
+
   subSequence (Int,Int) -> (#self)
+}
+
+@type interface Default {
+  default () -> (#self)
 }
 
 @type interface Equals<#x|> {

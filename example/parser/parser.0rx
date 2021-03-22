@@ -67,7 +67,7 @@ define ParseState {
   }
 
   atEof () {
-    return index >= data.readSize()
+    return index >= data.size()
   }
 
   hasAnyError () {

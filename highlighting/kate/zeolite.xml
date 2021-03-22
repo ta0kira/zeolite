@@ -6,7 +6,7 @@
 <language
     name="Zeolite"
     section="Sources"
-    version="3.10"
+    version="3.11"
     kateversion="2.4"
     indenter="cstyle"
     style="Zeolite"
@@ -94,6 +94,8 @@
       <item> Bool </item>
       <item> Build </item>
       <item> Char </item>
+      <item> Container </item>
+      <item> Default </item>
       <item> Int </item>
       <item> Float </item>
       <item> String </item>

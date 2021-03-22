@@ -17,8 +17,9 @@ limitations under the License.
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
 @value interface WriteAt<#x|> {
+  refines Container
+
   writeAt (Int,#x) -> (#self)
-  writeSize () -> (Int)
 }
 
 @value interface ReadCurrent<|#x> {

@@ -26,7 +26,7 @@
           <span style='color:#644a9b;'>.</span>append(<span style='color:#bf0303;'>&quot;What is your name? &quot;</span>)
           <span style='color:#644a9b;'>.</span>writeTo(<span style='color:#0057ae;'>SimpleOutput</span><span style='color:#644a9b;'>.</span>stderr())
       <i><span style='color:#0057ae;'>String</span></i> name &lt;- reader<span style='color:#644a9b;'>.</span>readNextLine()
-      <b>if</b> (name<span style='color:#644a9b;'>.</span>readSize() == <span style='color:#b08000;'>0</span>) {
+      <b>if</b> (name<span style='color:#644a9b;'>.</span>size() == <span style='color:#b08000;'>0</span>) {
         <b>break</b>
       }
       <span style='color:#006e28;'>\</span> <span style='color:#0057ae;'>LazyStream</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Formatted</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>.</span>new()

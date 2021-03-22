@@ -50,8 +50,8 @@ struct ExtValue_Argv : public Value_Argv {
     return ReturnTuple(Box_String(Argv::GetArgAt(start + Var_arg1)));
   }
 
-  ReturnTuple Call_readSize(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) {
-    TRACE_FUNCTION("Argv.readSize")
+  ReturnTuple Call_size(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) {
+    TRACE_FUNCTION("Argv.size")
     return ReturnTuple(Box_Int(GetSize()));
   }
 

@@ -62,13 +62,6 @@ unittest formatted {
   }
 }
 
-unittest readPosition {
-  Formatted name <- typename<ReadPosition<Char>>()
-  if (name.formatted() != "ReadPosition<Char>") {
-    fail(name)
-  }
-}
-
 unittest anyType {
   Formatted name <- typename<any>()
   if (name.formatted() != "any") {

@@ -32,7 +32,7 @@ unittest readWrite {
       fail(require(writer.getFileError()))
     }
     Int writeSize <- writer.writeBlock(data)
-    if (writeSize != data.readSize()) {
+    if (writeSize != data.size()) {
       fail(writeSize)
     }
     if (present(writer.getFileError())) {

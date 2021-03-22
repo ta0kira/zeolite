@@ -29,8 +29,8 @@ define ReadIterator {
     if (position < 0) {
       position2 <- -1
     }
-    if (position >= reader.readSize() || reader.readSize() == 0) {
-      position2 <- reader.readSize()
+    if (position >= reader.size() || reader.size() == 0) {
+      position2 <- reader.size()
     }
     return ReadIterator<#y>{ reader, position }
   }
@@ -51,7 +51,7 @@ define ReadIterator {
   }
 
   pastForwardEnd () {
-    return position >= reader.readSize()
+    return position >= reader.size()
   }
 
   reverse () {
@@ -59,7 +59,7 @@ define ReadIterator {
   }
 
   pastReverseEnd () {
-    return position < 0 || reader.readSize() == 0
+    return position < 0 || reader.size() == 0
   }
 }
 
@@ -76,8 +76,8 @@ define WriteIterator {
     if (position < 0) {
       position2 <- -1
     }
-    if (position >= writer.writeSize() || writer.writeSize() == 0) {
-      position2 <- writer.writeSize()
+    if (position >= writer.size() || writer.size() == 0) {
+      position2 <- writer.size()
     }
     return WriteIterator<#y>{ writer, position }
   }
@@ -99,7 +99,7 @@ define WriteIterator {
   }
 
   pastForwardEnd () {
-    return position >= writer.writeSize()
+    return position >= writer.size()
   }
 
   reverse () {
@@ -107,6 +107,6 @@ define WriteIterator {
   }
 
   pastReverseEnd () {
-    return position < 0 || writer.writeSize() == 0
+    return position < 0 || writer.size() == 0
   }
 }

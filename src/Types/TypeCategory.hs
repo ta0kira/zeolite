@@ -86,7 +86,7 @@ module Types.TypeCategory (
 
 import Control.Arrow (second)
 import Control.Monad ((>=>),when)
-import Data.List (group,groupBy,intercalate,nub,sort,sortBy)
+import Data.List (group,groupBy,intercalate,nub,nubBy,sort,sortBy)
 import qualified Data.Map as Map
 import qualified Data.Set as Set
 
@@ -872,7 +872,7 @@ mergeFunctions :: (Show c, CollectErrorsM m, TypeResolver r) =>
 mergeFunctions r tm pm fm rs ds fs = do
   inheritValue <- fmap concat $ mapErrorsM (getRefinesFuncs tm) rs
   inheritType  <- fmap concat $ mapErrorsM (getDefinesFuncs tm) ds
-  let inheritByName  = Map.fromListWith (++) $ map (\f -> (sfName f,[f])) $ inheritValue ++ inheritType
+  let inheritByName  = fmap (nubBy sameFunction) $ Map.fromListWith (++) $ map (\f -> (sfName f,[f])) $ inheritValue ++ inheritType
   let explicitByName = Map.fromListWith (++) $ map (\f -> (sfName f,[f])) fs
   let allNames = Set.toList $ Set.union (Map.keysSet inheritByName) (Map.keysSet explicitByName)
   mapErrorsM (mergeByName r fm inheritByName explicitByName) allNames where
@@ -956,6 +956,10 @@ data ScopedFunction c =
 
 instance Show c => Show (ScopedFunction c) where
   show f = showFunctionInContext (show (sfScope f) ++ " ") "" f
+
+sameFunction :: ScopedFunction c -> ScopedFunction c -> Bool
+sameFunction (ScopedFunction _ n1 t1 s1 _ _ _ _ _) (ScopedFunction _ n2 t2 s2 _ _ _ _ _) =
+  all id [n1 == n2, t1 == t2, s1 == s2]
 
 showFunctionInContext :: Show c => String -> String -> ScopedFunction c -> String
 showFunctionInContext s indent (ScopedFunction cs n t _ as rs ps fa ms) =

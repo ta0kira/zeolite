@@ -22,7 +22,7 @@
     <span style='color:#0057ae;'>ParseContext</span><span style='color:#c02040;'>&lt;</span><b>any</b><span style='color:#c02040;'>&gt;</span> context &lt;- contextOld
     <b>scoped</b> {
       <i><span style='color:#0057ae;'>Int</span></i> index &lt;- <span style='color:#b08000;'>0</span>
-    } <b>in</b> <b>while</b> (index &lt; match<span style='color:#644a9b;'>.</span>readSize()) {
+    } <b>in</b> <b>while</b> (index &lt; match<span style='color:#644a9b;'>.</span>size()) {
       <b><i><span style='color:#8060c0;'>$ReadOnly[</span></i></b><i><span style='color:#8060c0;'>context,index</span></i><b><i><span style='color:#8060c0;'>]$</span></i></b>
       <b>if</b> (context<span style='color:#644a9b;'>.</span>atEof() || context<span style='color:#644a9b;'>.</span>current() != match<span style='color:#644a9b;'>.</span>readAt(index)) {
         <b>if</b> (index &gt; <span style='color:#b08000;'>0</span>) {
@@ -66,7 +66,7 @@
       <i><span style='color:#0057ae;'>Bool</span></i> found &lt;- <b>false</b>
       <b>scoped</b> {
         <i><span style='color:#0057ae;'>Int</span></i> index &lt;- <span style='color:#b08000;'>0</span>
-      } <b>in</b> <b>while</b> (index &lt; matches<span style='color:#644a9b;'>.</span>readSize()) {
+      } <b>in</b> <b>while</b> (index &lt; matches<span style='color:#644a9b;'>.</span>size()) {
         <b><i><span style='color:#8060c0;'>$ReadOnly[</span></i></b><i><span style='color:#8060c0;'>index</span></i><b><i><span style='color:#8060c0;'>]$</span></i></b>
         <b>if</b> (context<span style='color:#644a9b;'>.</span>current() == matches<span style='color:#644a9b;'>.</span>readAt(index)) {
           <span style='color:#006e28;'>\</span> builder<span style='color:#644a9b;'>.</span>append(matches<span style='color:#644a9b;'>.</span>readAt(index)<span style='color:#644a9b;'>.</span>formatted())
