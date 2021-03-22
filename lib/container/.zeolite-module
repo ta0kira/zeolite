@@ -1,0 +1,15 @@
+root: "../.."
+path: "lib/container"
+public_deps: [
+  "lib/util"
+]
+private_deps: [
+  "lib/testing"
+]
+extra_files: [
+  category_source {
+    source: "lib/container/src/Extension_Vector.cpp"
+    categories: [Vector]
+  }
+]
+mode: incremental {}

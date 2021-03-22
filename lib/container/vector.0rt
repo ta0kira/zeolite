@@ -1,0 +1,134 @@
+/* -----------------------------------------------------------------------------
+Copyright 2021 Kevin P. Barry
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+----------------------------------------------------------------------------- */
+
+// Author: Kevin P. Barry [ta0kira@gmail.com]
+
+testcase "Vector tests" {
+  success
+}
+
+unittest createSize {
+  Vector<Int> values <- Vector:createSize<Int>(10)
+  \ Testing.checkEquals<?>(values.size(),10)
+
+  scoped {
+    Int i <- 0
+  } in while (i < values.size()) {
+    \ Testing.checkEquals<?>(values.readAt(i),Int.default())
+  } update {
+    i <- i+1
+  }
+}
+
+unittest copyFrom {
+  String original <- "abcde"
+  Vector<Char> values <- Vector:copyFrom<?>(original)
+  \ Testing.checkEquals<?>(values.size(),original.size())
+
+  scoped {
+    Int i <- 0
+  } in while (i < original.size()) {
+    \ Testing.checkEquals<?>(values.readAt(i),original.readAt(i))
+  } update {
+    i <- i+1
+  }
+}
+
+unittest append {
+  Vector<Int> values <- Vector:create<Int>()
+
+  scoped {
+    Int i <- 0
+  } in while (i < 10) {
+    \ values.append(i)
+    \ Testing.checkEquals<?>(values.size(),i+1)
+  } update {
+    i <- i+1
+  }
+  \ Testing.checkEquals<?>(values.size(),10)
+
+  scoped {
+    Int i <- 0
+  } in while (i < values.size()) {
+    \ Testing.checkEquals<?>(values.readAt(i),i)
+  } update {
+    i <- i+1
+  }
+}
+
+unittest pushAndPop {
+  Vector<Int> values <- Vector:create<Int>()
+
+  scoped {
+    Int i <- 0
+  } in while (i < 10) {
+    \ values.push(i)
+    \ Testing.checkEquals<?>(values.size(),i+1)
+  } update {
+    i <- i+1
+  }
+  \ Testing.checkEquals<?>(values.size(),10)
+
+  scoped {
+    Int i <- 0
+  } in while (i < 10) {
+    \ Testing.checkEquals<?>(values.pop(),10-i-1)
+    \ Testing.checkEquals<?>(values.size(),10-i-1)
+  } update {
+    i <- i+1
+  }
+  \ Testing.checkEquals<?>(values.size(),0)
+}
+
+unittest writeAt {
+  Vector<Int> values <- Vector:createSize<Int>(10)
+
+  scoped {
+    Int i <- 0
+  } in while (i < values.size()) {
+    \ values.writeAt(i,2*i)
+  } update {
+    i <- i+1
+  }
+
+  scoped {
+    Int i <- 0
+  } in while (i < values.size()) {
+    \ Testing.checkEquals<?>(values.readAt(i),2*i)
+  } update {
+    i <- i+1
+  }
+}
+
+
+testcase "negative Vector index" {
+  crash
+}
+
+unittest test {
+  Vector<Int> values <- Vector:create<Int>()
+  \ values.readAt(-1)
+}
+
+
+testcase "Vector index out of bounds" {
+  crash
+}
+
+unittest test {
+  Vector<Int> values <- Vector:create<Int>()
+  \ values.readAt(1)
+}

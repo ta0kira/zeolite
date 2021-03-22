@@ -57,6 +57,7 @@ libraries = [
     "base",
     "lib/testing",
     "lib/util",
+    "lib/container",
     "lib/file",
     "lib/math",
     "tests"

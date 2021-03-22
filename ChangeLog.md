@@ -30,6 +30,8 @@
   * **[new]** Adds `WriteAt`, `WriteCurrent`, `WriteIterator`, and `Iterator`
     `@value interface`s.
 
+* **[new]** Adds `lib/container` with a `Vector` random-access container.
+
 ## 0.14.0.0  -- 2021-03-19
 
 ### Language

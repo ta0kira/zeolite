@@ -60,10 +60,10 @@ struct ExtValue_Argv : public Value_Argv {
     const PrimInt Var_arg1 = (args.At(0))->AsInt();
     const PrimInt Var_arg2 = (args.At(1))->AsInt();
     if (Var_arg1 < 0 || (Var_arg1 > 0 && Var_arg1 >= GetSize())) {
-      FAIL() << "Subsequence index " << Var_arg1 << " is out of bounds";
+      FAIL() << "index " << Var_arg1 << " is out of bounds";
     }
     if (Var_arg2 < 0 || Var_arg1 + Var_arg2 > GetSize()) {
-      FAIL() << "Subsequence size " << Var_arg2 << " is invalid";
+      FAIL() << "size " << Var_arg2 << " is invalid";
     }
     return ReturnTuple(S<TypeValue>(new ExtValue_Argv(parent, ParamTuple(), start + Var_arg1, Var_arg2)));
   }
