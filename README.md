@@ -1173,7 +1173,8 @@ Some other time. (Or just see
 
 See
 [`builtin.0rp`](https://github.com/ta0kira/zeolite/blob/master/base/builtin.0rp)
-for more details about builtin types.
+for more details about builtin types. (For your locally-installed version, which
+might differ, see `$(zeolite --get-path)/base/builtin.0rp`.)
 
 Builtin `concrete` types:
 
