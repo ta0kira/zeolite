@@ -35,6 +35,6 @@ concrete ReadIterator<|#x> {
   refines IterateForward
   refines IterateReverse
 
-  @category fromReadPosition<#y> (ReadPosition<#y>) -> (ReadIterator<#y>)
-  @category fromReadPositionAt<#y> (ReadPosition<#y>,Int) -> (ReadIterator<#y>)
+  @category fromReadAt<#y> (ReadAt<#y>) -> (ReadIterator<#y>)
+  @category fromReadAtOffset<#y> (ReadAt<#y>,Int) -> (ReadIterator<#y>)
 }

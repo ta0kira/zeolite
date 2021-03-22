@@ -26,31 +26,31 @@ unittest global {
   if (count != 5) {
     fail(count)
   }
-  \ Testing.checkEquals<?>(Argv.global().readPosition(0),"testcase")
-  \ Testing.checkEquals<?>(Argv.global().readPosition(1),"arg1")
-  \ Testing.checkEquals<?>(Argv.global().readPosition(2),"arg2")
-  \ Testing.checkEquals<?>(Argv.global().readPosition(3),"arg3")
-  \ Testing.checkEquals<?>(Argv.global().readPosition(4),"arg4")
+  \ Testing.checkEquals<?>(Argv.global().readAt(0),"testcase")
+  \ Testing.checkEquals<?>(Argv.global().readAt(1),"arg1")
+  \ Testing.checkEquals<?>(Argv.global().readAt(2),"arg2")
+  \ Testing.checkEquals<?>(Argv.global().readAt(3),"arg3")
+  \ Testing.checkEquals<?>(Argv.global().readAt(4),"arg4")
 }
 
 unittest subSequence {
-  ReadPosition<String> argv <- Argv.global().subSequence(2,2)
+  ReadAt<String> argv <- Argv.global().subSequence(2,2)
   Int count <- argv.readSize()
   if (count != 2) {
     fail(count)
   }
-  \ Testing.checkEquals<?>(argv.readPosition(0),"arg2")
-  \ Testing.checkEquals<?>(argv.readPosition(1),"arg3")
+  \ Testing.checkEquals<?>(argv.readAt(0),"arg2")
+  \ Testing.checkEquals<?>(argv.readAt(1),"arg3")
 }
 
 
-testcase "Argv readPosition out of bounds" {
+testcase "Argv readAt out of bounds" {
   crash
   require "index 5"
 }
 
 unittest test {
-  \ Argv.global().readPosition(5)
+  \ Argv.global().readAt(5)
 }
 
 

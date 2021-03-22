@@ -60,7 +60,8 @@ concrete Int {
 concrete String {
   refines AsBool
   refines Formatted
-  refines ReadPosition<Char>
+  refines ReadAt<Char>
+  refines SubSequence
 
   defines Equals<String>
   defines LessThan<String>
@@ -88,18 +89,21 @@ concrete String {
   formatted () -> (String)
 }
 
-@value interface ReadPosition<|#x> {
-  readPosition (Int) -> (#x)
-  readSize () -> (Int)
-  subSequence (Int,Int) -> (#self)
-}
-
 @value interface Append<#x|> {
   append (#x) -> (#self)
 }
 
 @value interface Build<|#x> {
   build () -> (#x)
+}
+
+@value interface ReadAt<|#x> {
+  readAt (Int) -> (#x)
+  readSize () -> (Int)
+}
+
+@value interface SubSequence {
+  subSequence (Int,Int) -> (#self)
 }
 
 @type interface Equals<#x|> {

@@ -24,9 +24,9 @@ unittest forward {
   String s <- "abcde"
   Int count <- 0
   scoped {
-    ReadIterator<Char> iter <- ReadIterator:fromReadPosition<Char>(s)
+    ReadIterator<Char> iter <- ReadIterator:fromReadAt<?>(s)
   } in while (!iter.pastForwardEnd()) {
-    if (iter.readCurrent() != s.readPosition(count)) {
+    if (iter.readCurrent() != s.readAt(count)) {
       fail(iter.readCurrent())
     }
   } update {
@@ -42,9 +42,9 @@ unittest reverse {
   String s <- "abcde"
   Int count <- s.readSize()-1
   scoped {
-    ReadIterator<Char> iter <- ReadIterator:fromReadPositionAt<Char>(s,count)
+    ReadIterator<Char> iter <- ReadIterator:fromReadAtOffset<?>(s,count)
   } in while (!iter.pastReverseEnd()) {
-    if (iter.readCurrent() != s.readPosition(count)) {
+    if (iter.readCurrent() != s.readAt(count)) {
       fail(iter.readCurrent())
     }
   } update {

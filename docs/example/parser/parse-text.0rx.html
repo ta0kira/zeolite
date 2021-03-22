@@ -24,7 +24,7 @@
       <i><span style='color:#0057ae;'>Int</span></i> index &lt;- <span style='color:#b08000;'>0</span>
     } <b>in</b> <b>while</b> (index &lt; match<span style='color:#644a9b;'>.</span>readSize()) {
       <b><i><span style='color:#8060c0;'>$ReadOnly[</span></i></b><i><span style='color:#8060c0;'>context,index</span></i><b><i><span style='color:#8060c0;'>]$</span></i></b>
-      <b>if</b> (context<span style='color:#644a9b;'>.</span>atEof() || context<span style='color:#644a9b;'>.</span>current() != match<span style='color:#644a9b;'>.</span>readPosition(index)) {
+      <b>if</b> (context<span style='color:#644a9b;'>.</span>atEof() || context<span style='color:#644a9b;'>.</span>current() != match<span style='color:#644a9b;'>.</span>readAt(index)) {
         <b>if</b> (index &gt; <span style='color:#b08000;'>0</span>) {
           <span style='color:#898887;'>// Partial match =&gt; set error context.</span>
           <b>return</b> context<span style='color:#644a9b;'>.</span>setBrokenInput(message)
@@ -59,7 +59,7 @@
                       min<span style='color:#644a9b;'>.</span>formatted() + <span style='color:#bf0303;'>&quot;,&quot;</span> + max<span style='color:#644a9b;'>.</span>formatted() + <span style='color:#bf0303;'>&quot;} at &quot;</span> +
                       contextOld<span style='color:#644a9b;'>.</span>getPosition()
     <span style='color:#0057ae;'>ParseContext</span><span style='color:#c02040;'>&lt;</span><b>any</b><span style='color:#c02040;'>&gt;</span> context &lt;- contextOld
-    <i><span style='color:#0057ae;'>Builder</span></i><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>String</span></i><span style='color:#c02040;'>&gt;</span> builder &lt;- <i><span style='color:#0057ae;'>String</span></i><span style='color:#644a9b;'>.</span>builder()
+    <b><span style='color:#006e28;'>[</span></b><i><span style='color:#0057ae;'>Append</span></i><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>String</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#006e28;'>&amp;</span><i><span style='color:#0057ae;'>Build</span></i><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>String</span></i><span style='color:#c02040;'>&gt;</span><b><span style='color:#006e28;'>]</span></b> builder &lt;- <i><span style='color:#0057ae;'>String</span></i><span style='color:#644a9b;'>.</span>builder()
     <i><span style='color:#0057ae;'>Int</span></i> count &lt;- <span style='color:#b08000;'>0</span>
     <b>while</b> (!context<span style='color:#644a9b;'>.</span>atEof() &amp;&amp; (max == <span style='color:#b08000;'>0</span> || count &lt; max)) {
       <b><i><span style='color:#8060c0;'>$ReadOnly[</span></i></b><i><span style='color:#8060c0;'>context,count</span></i><b><i><span style='color:#8060c0;'>]$</span></i></b>
@@ -68,8 +68,8 @@
         <i><span style='color:#0057ae;'>Int</span></i> index &lt;- <span style='color:#b08000;'>0</span>
       } <b>in</b> <b>while</b> (index &lt; matches<span style='color:#644a9b;'>.</span>readSize()) {
         <b><i><span style='color:#8060c0;'>$ReadOnly[</span></i></b><i><span style='color:#8060c0;'>index</span></i><b><i><span style='color:#8060c0;'>]$</span></i></b>
-        <b>if</b> (context<span style='color:#644a9b;'>.</span>current() == matches<span style='color:#644a9b;'>.</span>readPosition(index)) {
-          <span style='color:#006e28;'>\</span> builder<span style='color:#644a9b;'>.</span>append(matches<span style='color:#644a9b;'>.</span>readPosition(index)<span style='color:#644a9b;'>.</span>formatted())
+        <b>if</b> (context<span style='color:#644a9b;'>.</span>current() == matches<span style='color:#644a9b;'>.</span>readAt(index)) {
+          <span style='color:#006e28;'>\</span> builder<span style='color:#644a9b;'>.</span>append(matches<span style='color:#644a9b;'>.</span>readAt(index)<span style='color:#644a9b;'>.</span>formatted())
           found &lt;- <b>true</b>
           <b>break</b>
         }

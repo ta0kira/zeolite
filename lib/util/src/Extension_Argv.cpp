@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-Copyright 2020 Kevin P. Barry
+Copyright 2020-2021 Kevin P. Barry
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
@@ -44,8 +44,8 @@ struct ExtValue_Argv : public Value_Argv {
   inline ExtValue_Argv(S<Type_Argv> p, const ParamTuple& params, int st, int sz)
     : Value_Argv(p, params), start(st), size(sz) {}
 
-  ReturnTuple Call_readPosition(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) {
-    TRACE_FUNCTION("Argv.readPosition")
+  ReturnTuple Call_readAt(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) {
+    TRACE_FUNCTION("Argv.readAt")
     const PrimInt Var_arg1 = (args.At(0))->AsInt();
     return ReturnTuple(Box_String(Argv::GetArgAt(start + Var_arg1)));
   }

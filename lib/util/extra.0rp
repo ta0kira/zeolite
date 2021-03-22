@@ -37,9 +37,10 @@ concrete ErrorOr<|#x> {
 }
 
 concrete Argv {
-  refines ReadPosition<String>
+  refines ReadAt<String>
+  refines SubSequence
 
-  @type global () -> (ReadPosition<String>)
+  @type global () -> ([ReadAt<String>&SubSequence])
 }
 
 @value interface PersistentResource {

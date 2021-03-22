@@ -13,7 +13,7 @@ define StringParser {
       Int index <- 0
     } in while (index < match.readSize()) {
       $ReadOnly[context,index]$
-      if (context.atEof() || context.current() != match.readPosition(index)) {
+      if (context.atEof() || context.current() != match.readAt(index)) {
         if (index > 0) {
           // Partial match => set error context.
           return context.setBrokenInput(message)
@@ -48,7 +48,7 @@ define SequenceOfParser {
                       min.formatted() + "," + max.formatted() + "} at " +
                       contextOld.getPosition()
     ParseContext<any> context <- contextOld
-    Builder<String> builder <- String.builder()
+    [Append<String>&Build<String>] builder <- String.builder()
     Int count <- 0
     while (!context.atEof() && (max == 0 || count < max)) {
       $ReadOnly[context,count]$
@@ -57,8 +57,8 @@ define SequenceOfParser {
         Int index <- 0
       } in while (index < matches.readSize()) {
         $ReadOnly[index]$
-        if (context.current() == matches.readPosition(index)) {
-          \ builder.append(matches.readPosition(index).formatted())
+        if (context.current() == matches.readAt(index)) {
+          \ builder.append(matches.readAt(index).formatted())
           found <- true
           break
         }

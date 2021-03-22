@@ -7,6 +7,16 @@
 * **[breaking]** Splits `Builder<#x>` built-in to `Append<#x|>` and `Build<|#x>`
   to more accurately reflect its semantics.
 
+* **[breaking]** Splits `ReadPosition<#x>` built-in to `ReadAt<|#x>` and
+  `SubSequence` to be more concise, and to split up reading from subsequencing.
+
+### Libraries
+
+* **[breaking]** Renames `fromReadPosition` to `fromReadAt` in `ReadIterator`.
+
+* **[breaking]** Renames `fromReadPositionAt` to `fromReadAtOffset` in
+  `ReadIterator`.
+
 ## 0.14.0.0  -- 2021-03-19
 
 ### Language

@@ -17,14 +17,14 @@ limitations under the License.
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
 define ReadIterator {
-  @value ReadPosition<#x> reader
+  @value ReadAt<#x> reader
   @value Int position
 
-  fromReadPosition (reader) {
-    return fromReadPositionAt<#y>(reader,0)
+  fromReadAt (reader) {
+    return fromReadAtOffset<#y>(reader,0)
   }
 
-  fromReadPositionAt (reader,position) {
+  fromReadAtOffset (reader,position) {
     Int position2 <- position
     if (position < 0) {
       position2 <- -1
@@ -43,11 +43,11 @@ define ReadIterator {
           .append(" is out of bounds")
           .writeTo(SimpleOutput.error())
     }
-    return reader.readPosition(position)
+    return reader.readAt(position)
   }
 
   forward () {
-    return fromReadPositionAt<#x>(reader,position+1)
+    return fromReadAtOffset<#x>(reader,position+1)
   }
 
   pastForwardEnd () {
@@ -55,7 +55,7 @@ define ReadIterator {
   }
 
   reverse () {
-    return fromReadPositionAt<#x>(reader,position-1)
+    return fromReadAtOffset<#x>(reader,position-1)
   }
 
   pastReverseEnd () {

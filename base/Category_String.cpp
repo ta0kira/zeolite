@@ -24,7 +24,8 @@ limitations under the License.
 #include "category-source.hpp"
 #include "Category_AsBool.hpp"
 #include "Category_Formatted.hpp"
-#include "Category_ReadPosition.hpp"
+#include "Category_ReadAt.hpp"
+#include "Category_SubSequence.hpp"
 #include "Category_Char.hpp"
 #include "Category_Equals.hpp"
 #include "Category_LessThan.hpp"
@@ -89,7 +90,7 @@ struct Type_String : public TypeInstance {
       args = std::vector<S<const TypeInstance>>{};
       return true;
     }
-    if (&category == &GetCategory_ReadPosition()) {
+    if (&category == &GetCategory_ReadAt()) {
       args = std::vector<S<const TypeInstance>>{GetType_Char(T_get())};
       return true;
     }
@@ -150,12 +151,14 @@ struct Value_String : public TypeValue {
     static const CallType Table_Formatted[] = {
       &Value_String::Call_formatted,
     };
-    static const CallType Table_ReadPosition[] = {
-      &Value_String::Call_readPosition,
+    static const CallType Table_ReadAt[] = {
+      &Value_String::Call_readAt,
       &Value_String::Call_readSize,
-      &Value_String::Call_subSequence,
     };
     static const CallType Table_String[] = {
+      &Value_String::Call_subSequence,
+    };
+    static const CallType Table_SubSequence[] = {
       &Value_String::Call_subSequence,
     };
     if (label.collection == Functions_AsBool) {
@@ -170,11 +173,11 @@ struct Value_String : public TypeValue {
       }
       return (this->*Table_Formatted[label.function_num])(self, params, args);
     }
-    if (label.collection == Functions_ReadPosition) {
-      if (label.function_num < 0 || label.function_num >= 3) {
+    if (label.collection == Functions_ReadAt) {
+      if (label.function_num < 0 || label.function_num >= 2) {
         FAIL() << "Bad function call " << label;
       }
-      return (this->*Table_ReadPosition[label.function_num])(self, params, args);
+      return (this->*Table_ReadAt[label.function_num])(self, params, args);
     }
     if (label.collection == Functions_String) {
       if (label.function_num < 0 || label.function_num >= 1) {
@@ -182,13 +185,19 @@ struct Value_String : public TypeValue {
       }
       return (this->*Table_String[label.function_num])(self, params, args);
     }
+    if (label.collection == Functions_SubSequence) {
+      if (label.function_num < 0 || label.function_num >= 1) {
+        FAIL() << "Bad function call " << label;
+      }
+      return (this->*Table_SubSequence[label.function_num])(self, params, args);
+    }
     return TypeValue::Dispatch(self, label, params, args);
   }
   std::string CategoryName() const final { return parent->CategoryName(); }
   const PrimString& AsString() const final { return value_; }
   ReturnTuple Call_asBool(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args);
   ReturnTuple Call_formatted(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args);
-  ReturnTuple Call_readPosition(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args);
+  ReturnTuple Call_readAt(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args);
   ReturnTuple Call_readSize(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args);
   ReturnTuple Call_subSequence(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args);
   const S<Type_String> parent;
@@ -251,8 +260,8 @@ ReturnTuple Value_String::Call_formatted(const S<TypeValue>& Var_self, const Par
   TRACE_FUNCTION("String.formatted")
   return ReturnTuple(Var_self);
 }
-ReturnTuple Value_String::Call_readPosition(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) {
-  TRACE_FUNCTION("String.readPosition")
+ReturnTuple Value_String::Call_readAt(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) {
+  TRACE_FUNCTION("String.readAt")
   const PrimInt Var_arg1 = (args.At(0))->AsInt();
   if (Var_arg1 < 0 || Var_arg1 >= value_.size()) {
     FAIL() << "Read position " << Var_arg1 << " is out of bounds";

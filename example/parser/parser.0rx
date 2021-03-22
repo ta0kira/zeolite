@@ -80,12 +80,12 @@ define ParseState {
 
   current () {
     \ sanityCheck()
-    return data.readPosition(index)
+    return data.readAt(index)
   }
 
   advance () {
     \ sanityCheck()
-    if (data.readPosition(index) == '\n') {
+    if (data.readAt(index) == '\n') {
       return #self{ data, index+1, line+1, 1, value, error }
     } else {
       return #self{ data, index+1, line, char+1, value, error }

@@ -104,7 +104,8 @@
       <item> LessThan </item>
       <item> Equals </item>
       <item> Formatted </item>
-      <item> ReadPosition </item>
+      <item> ReadAt </item>
+      <item> SubSequence </item>
     </list>
 
     <list name="testcaseOutput">

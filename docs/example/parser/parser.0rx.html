@@ -91,12 +91,12 @@
 
   current () {
     <span style='color:#006e28;'>\</span> sanityCheck()
-    <b>return</b> data<span style='color:#644a9b;'>.</span>readPosition(index)
+    <b>return</b> data<span style='color:#644a9b;'>.</span>readAt(index)
   }
 
   advance () {
     <span style='color:#006e28;'>\</span> sanityCheck()
-    <b>if</b> (data<span style='color:#644a9b;'>.</span>readPosition(index) == <span style='color:#924c9d;'>'\n'</span>) {
+    <b>if</b> (data<span style='color:#644a9b;'>.</span>readAt(index) == <span style='color:#924c9d;'>'\n'</span>) {
       <b>return</b> <b>#self</b>{ data, index+<span style='color:#b08000;'>1</span>, line+<span style='color:#b08000;'>1</span>, <span style='color:#b08000;'>1</span>, value, error }
     } <b>else</b> {
       <b>return</b> <b>#self</b>{ data, index+<span style='color:#b08000;'>1</span>, line, char+<span style='color:#b08000;'>1</span>, value, error }
