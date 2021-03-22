@@ -127,7 +127,7 @@ singleDefine = do
   return $ ValueDefine [c] t
 
 singleFilter :: TextParser (ParamFilter SourceContext)
-singleFilter = try $ do
+singleFilter = do
   c <- getSourceContext
   noParamSelf
   n <- sourceParser

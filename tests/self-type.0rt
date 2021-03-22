@@ -16,7 +16,7 @@ limitations under the License.
 
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
-testcase "disallowed in @category functions" {
+testcase "#self disallowed in @category functions" {
   error
   require "#self not found"
 }
@@ -32,7 +32,7 @@ define Type {
 }
 
 
-testcase "disallowed in @category members" {
+testcase "#self disallowed in @category members" {
   error
   require "#self not found"
 }
@@ -50,7 +50,7 @@ define Type {
 }
 
 
-testcase "disallowed in @category procedures" {
+testcase "#self disallowed in @category procedures" {
   error
   require "#self not found"
 }
@@ -66,7 +66,7 @@ define Type {
 }
 
 
-testcase "in @type functions" {
+testcase "#self in @type functions" {
   success
 }
 
@@ -85,7 +85,7 @@ define Type {
 }
 
 
-testcase "as base for @type call" {
+testcase "#self as base for @type call" {
   success
 }
 
@@ -109,7 +109,7 @@ define Type {
 }
 
 
-testcase "in @value functions" {
+testcase "#self in @value functions" {
   success
 }
 
@@ -133,7 +133,7 @@ define Type {
 }
 
 
-testcase "in @value members" {
+testcase "#self in @value members" {
   success
 }
 
@@ -154,7 +154,7 @@ define Type {
 }
 
 
-testcase "in local variables in @type procedures" {
+testcase "#self in local variables in @type procedures" {
   success
 }
 
@@ -174,7 +174,7 @@ define Type {
 }
 
 
-testcase "in local variables in @value procedures" {
+testcase "#self in local variables in @value procedures" {
   success
 }
 
@@ -199,7 +199,7 @@ define Type {
 }
 
 
-testcase "in local variables in scoped" {
+testcase "#self in local variables in scoped" {
   success
 }
 
@@ -220,7 +220,7 @@ define Type {
 }
 
 
-testcase "in reduce" {
+testcase "#self in reduce" {
   success
 }
 
@@ -254,7 +254,7 @@ define Type {
 }
 
 
-testcase "in typename" {
+testcase "#self in typename" {
   success
 }
 
@@ -273,7 +273,7 @@ define Type {
 }
 
 
-testcase "with type inference" {
+testcase "#self with type inference" {
   success
 }
 
@@ -297,7 +297,7 @@ define Type {
 }
 
 
-testcase "as an explicit function param" {
+testcase "#self as an explicit function param" {
   success
 }
 
@@ -331,7 +331,7 @@ define Type {
 }
 
 
-testcase "nested in initializer type" {
+testcase "#self nested in initializer type" {
   success
 }
 
@@ -355,7 +355,7 @@ define Type {
 }
 
 
-testcase "top level initializer type" {
+testcase "#self as top-level initializer type" {
   success
 }
 
@@ -374,7 +374,7 @@ define Type {
 }
 
 
-testcase "preserves type in implementations" {
+testcase "#self preserves type in implementations" {
   success
 }
 
@@ -431,7 +431,7 @@ define Type {
 }
 
 
-testcase "preserves type in function param filters" {
+testcase "#self preserves type in function param filters" {
   success
 }
 
@@ -496,4 +496,63 @@ define Type {
   next () {
     return Type{ num+1 }
   }
+}
+
+
+
+testcase "#self nested in param filter" {
+  compiles
+}
+
+@value interface Base<#x> {
+  #x requires Writer<#self>
+  #x defines Equals<#self>
+}
+
+@value interface Writer<#x|> {
+  write (#x) -> (#self)
+}
+
+concrete Type {
+  refines Base<Type>
+  refines Writer<Type>
+  defines Equals<Type>
+}
+
+define Type {
+  write (_) {
+    return self
+  }
+
+  equals (_,_) {
+    return true
+  }
+}
+
+
+testcase "#self nested in inheritance" {
+  compiles
+}
+
+concrete Type<#x> {
+  refines Gettable<#self>
+  defines Creator<#self>
+}
+
+define Type {
+  get () {
+    return self
+  }
+
+  create () {
+    return #self{ }
+  }
+}
+
+@value interface Gettable<|#x> {
+  get () -> (#x)
+}
+
+@type interface Creator<|#x> {
+  create () -> (#x)
 }

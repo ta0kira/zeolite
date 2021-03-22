@@ -295,8 +295,12 @@ paramSelf = keyword (show ParamSelf)
 
 noParamSelf :: TextParser ()
 noParamSelf = (<|> return ()) $ do
-    try paramSelf
-    compilerErrorM "#self is not allowed here"
+  -- NOTE: This preserves the trailing whitespace so that the error context
+  -- doesn't skip over whitespace or comments.
+  try $ do
+    string_ (show ParamSelf)
+    notFollowedBy (alphaNumChar <|> char '_')
+  compilerErrorM "#self is not allowed here"
 
 operatorSymbol :: TextParser Char
 operatorSymbol = labeled "operator symbol" $ satisfy (`Set.member` Set.fromList "+-*/%=!<>&|?")

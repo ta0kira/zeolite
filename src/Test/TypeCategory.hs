@@ -75,7 +75,13 @@ tests = [
 
     checkShortParseSuccess "@value interface Type { call () -> (#self) }",
     checkShortParseFail "@value interface Type<#self> {}",
-    checkShortParseFail "@value interface Type { #self refines Foo }",
+    checkShortParseFail "@value interface Type { refines #self }",
+    checkShortParseFail "@value interface Type { #self allows Foo }",
+    checkShortParseFail "@value interface Type { #self requires Foo }",
+    checkShortParseFail "@value interface Type { #self defines Foo }",
+    checkShortParseFail "concrete Type<#x> { #x allows #self }",
+    checkShortParseFail "concrete Type<#x> { #x requires #self }",
+    checkShortParseFail "concrete Type<#x> { #x defines #self }",
     checkShortParseFail "@value interface Type { call<#self> () -> () }",
 
     checkOperationSuccess ("testfiles" </> "value_refines_value.0rx") (checkConnectedTypes defaultCategories),

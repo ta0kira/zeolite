@@ -4,10 +4,15 @@
 
 ### Language
 
-* **[breaking]** Splits `Builder<#x>` built-in to `Append<#x|>` and `Build<|#x>`
-  to more accurately reflect its semantics.
+* **[breaking]** Splits `Builder<#x>` built-in into `Append<#x|>` and
+  `Build<|#x>` to more accurately reflect its semantics.
 
-* **[breaking]** Splits `ReadPosition<#x>` built-in to `ReadAt<|#x>`,
+* **[breaking]** Disallows `#self` at the top level of a parameter filter.
+  Previously, this would have only been allowed in something like
+  `#x allows #self`, due to covariance. That effectively means `refines #x`,
+  which is not otherwise allowed.
+
+* **[breaking]** Splits `ReadPosition<#x>` built-in into `ReadAt<|#x>`,
   `SubSequence`, and `Container` to be more concise, and to split up reading
   from subsequencing. This also includes renaming `readSize()` to just `size()`.
 

@@ -148,8 +148,8 @@ statically-typed code *disallows* what you expect it to.
 
 Zeolite has a special source-file extension for unit tests, and a built-in
 compiler mode to run them. These tests can check for success, compilation
-failures, and even crashes. Normally you would need a third-party test runner to
-check for required compilation failures and crashes.
+success, compilation failure, and even crashes. Normally you would need a
+third-party test runner to check for required compilation failures and crashes.
 
 Nearly all of the integration testing of the Zeolite language itself is done
 using this feature, but it is also supported for general use with Zeolite
