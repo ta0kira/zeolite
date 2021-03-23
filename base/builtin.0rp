@@ -16,6 +16,9 @@ limitations under the License.
 
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
+// Built-in boolean type.
+//
+// Literals are true and false.
 concrete Bool {
   refines AsBool
   refines AsInt
@@ -26,6 +29,13 @@ concrete Bool {
   defines Equals<Bool>
 }
 
+// Built-in character type. (ASCII only.)
+//
+// Literals:
+// - Printable: 'a', '0', etc.
+// - Escapes:   '\n', '\r', etc. ('\0' must be '\000', however)
+// - Hex:       '\xAB' (always 2 digits)
+// - Oct:       '\012' (always 3 digits)
 concrete Char {
   refines AsBool
   refines AsChar
@@ -38,6 +48,11 @@ concrete Char {
   defines LessThan<Char>
 }
 
+// Built-in double-precision floating point.
+//
+// Literals:
+// - . required, with at least one digit on either side, e.g., 0.1
+// - Scientific notation: 0.1E-10, etc.
 concrete Float {
   refines AsBool
   refines AsInt
@@ -49,6 +64,18 @@ concrete Float {
   defines LessThan<Float>
 }
 
+// Built-in 64-bit signed integer.
+//
+// Literals:
+// - Decimal: 1234, -1234, etc.
+// - Hex:    \xABCD, etc.
+// - Octal:  \o7772, etc.
+// - Binary: \b0110, etc.
+//
+// Notes:
+// - Overflow will cause a compilation error.
+// - Hex, oct, and binary escapes can go up to 2^64-1 to allow use of all 64
+//   bits, but they will still be used as signed values.
 concrete Int {
   refines AsBool
   refines AsChar
@@ -61,6 +88,9 @@ concrete Int {
   defines LessThan<Int>
 }
 
+// Built-in string of characters. (ASCII only.)
+//
+// Literals: Quote Char sequence with ".
 concrete String {
   refines AsBool
   refines Formatted
@@ -71,61 +101,107 @@ concrete String {
   defines Equals<String>
   defines LessThan<String>
 
+  // Get a builder to create a string using concatenation.
+  //
+  // Example:
+  //
+  //   String.builder().append("foo").append("bar").build()
   @type builder () -> ([Append<String>&Build<String>])
 }
 
+// Convertible to Bool.
 @value interface AsBool {
+  // Convert the value to Bool.
   asBool () -> (Bool)
 }
 
+// Convertible to Char.
 @value interface AsChar {
+  // Convert the value to Char.
   asChar () -> (Char)
 }
 
+// Convertible to Float.
 @value interface AsFloat {
+  // Convert the value to Float.
   asFloat () -> (Float)
 }
 
+// Convertible to Int.
 @value interface AsInt {
+  // Convert the value to Int.
   asInt () -> (Int)
 }
 
+// Formattable as a String.
 @value interface Formatted {
+  // Format the value as a String. (Does not need to be reversible.)
   formatted () -> (String)
 }
 
+// Supports appending.
+//
+// Params:
+// - #x: The value type to append.
 @value interface Append<#x|> {
+  // Append a value and return self.
   append (#x) -> (#self)
 }
 
+// Supports building a value from the current state.
+//
+// Params:
+// - #x: The value type to build.
 @value interface Build<|#x> {
+  // Build and return a value from the current state.
   build () -> (#x)
 }
 
+// Contains a flexible number of values of some type.
 @value interface Container {
+  // Return the number of values.
   size () -> (Int)
 }
 
+// Random-access reading from a container.
+//
+// Params:
+// - #x: The value type contained.
 @value interface ReadAt<|#x> {
   refines Container
 
+  // Return the value at the given index.
   readAt (Int) -> (#x)
 }
 
+// Sequence that can be subsequenced.
 @value interface SubSequence {
   refines Container
 
+  // Return a copy of a subsequence.
   subSequence (Int,Int) -> (#self)
 }
 
+// The type has a default value.
 @type interface Default {
+  // Return a new copy of the default value.
   default () -> (#self)
 }
 
+// The type can compare values for equality.
+//
+// Params:
+// - #x: The value type to be compared.
 @type interface Equals<#x|> {
+  // Returns true iff the two values are equal. Must be symmetric.
   equals (#x,#x) -> (Bool)
 }
 
+// The type can compare values for less-than.
+//
+// Params:
+// - #x: The value type to be compared.
 @type interface LessThan<#x|> {
+  // Returns true iff the first value is less than the second.
   lessThan (#x,#x) -> (Bool)
 }
