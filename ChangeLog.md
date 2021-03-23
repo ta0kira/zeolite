@@ -32,6 +32,22 @@
 
 * **[new]** Adds `lib/container` with a `Vector` random-access container.
 
+### Compiler CLI
+
+* **[breaking]** Removes implicit dependence of C++ extensions on built-in
+  categories `Bool`, `Float`, `Char`, `Int`, `String`, and `Formatted`.
+  Extensions that use these categories *without* using them in the corresponding
+  `concrete` declaration will need to add them to the `requires:` field of the
+  `category_source` in `.zeolite-module`.
+
+  ```text
+  category_source {
+    source: "Extension_MyType.cpp"
+    categories: [MyType]
+    requires: [String,Formatted]
+  }
+  ```
+
 ## 0.14.0.0  -- 2021-03-19
 
 ### Language
@@ -53,12 +69,6 @@
 
 ### Language
 
-* **[breaking]** Streamlines C++ extensions to cut down on boilerplate code.
-  This is a massive change that breaks *all* existing C++ extensions; however,
-  hand-written procedure definitions can be copied-and-pasted into a new
-  extension template. Use `zeolite --templates` to regenerate new templates for
-  C++ extensions.
-
 * **[new]** Adds pragmas for local variable rules:
 
   * **[new]** `$ReadOnly[foo]$` marks `foo` as read-only in the current context
@@ -73,6 +83,12 @@
   checks, but `reduce` was missed.
 
 ### Compiler CLI
+
+* **[breaking]** Streamlines C++ extensions to cut down on boilerplate code.
+  This is a massive change that breaks *all* existing C++ extensions; however,
+  hand-written procedure definitions can be copied-and-pasted into a new
+  extension template. Use `zeolite --templates` to regenerate new templates for
+  C++ extensions.
 
 * **[breaking]** Adds [`microlens`][microlens] and
   [`microlens-th`][microlens-th] as dependencies, to help clean up the compiler
