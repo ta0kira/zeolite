@@ -24,8 +24,9 @@
 
   * **[breaking]** Makes `ReadIterator` a `@value interface`.
 
-  * **[breaking]** Adds `AutoIterator` helper category to create iterators from
-    `ReadAt` and `WriteAt` values. Use this instead of `ReadIterator`.
+  * **[breaking]** Adds `AutoReadIterator` `AutoWriteIterator`, and
+    `AutoReadWriteIterator` helpers to create iterators from `ReadAt` and
+    `WriteAt`. (`AutoReadIterator` replaces the previous `ReadIterator`.)
 
   * **[new]** Adds `WriteAt`, `WriteCurrent`, `WriteIterator`, and `Iterator`
     `@value interface`s.
@@ -37,6 +38,8 @@
   * **[new]** `SearchTree`, a binary search tree.
 
   * **[new]** `TypeMap`, a heterogeneous key-value map of different value types.
+
+  * **[new]** Various `@value interface`s with container usage patterns.
 
 ### Compiler CLI
 
