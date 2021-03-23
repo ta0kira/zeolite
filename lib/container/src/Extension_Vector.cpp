@@ -142,13 +142,10 @@ Category_Vector& CreateCategory_Vector() {
   return category;
 }
 S<Type_Vector> CreateType_Vector(Params<1>::Type params) {
-  static auto& cache = *new WeakInstanceMap<1, Type_Vector>();
-  static auto& cache_mutex = *new std::mutex;
-  std::lock_guard<std::mutex> lock(cache_mutex);
-  auto& cached = cache[GetKeyFromParams<1>(params)];
-  S<Type_Vector> type = cached;
-  if (!type) { cached = type = S_get(new ExtType_Vector(CreateCategory_Vector(), params)); }
-  return type;
+  static auto& cache = *new InstanceCache<1, Type_Vector>([](Params<1>::Type params) {
+      return S_get(new ExtType_Vector(CreateCategory_Vector(), params));
+    });
+  return cache.GetOrCreate(params);
 }
 S<TypeValue> CreateValue_Vector(S<Type_Vector> parent, const ParamTuple& params, VectorType values) {
   return S_get(new ExtValue_Vector(parent, params, values));

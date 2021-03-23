@@ -869,13 +869,10 @@ defineInternalType2 className t n
   | otherwise =
       onlyCodes [
         "S<" ++ typeName (getCategoryName t) ++ "> " ++ typeCreator (getCategoryName t) ++ "(Params<" ++ show n ++ ">::Type params) {",
-        "  static auto& cache = *new WeakInstanceMap<" ++ show n ++ ", " ++ typeName (getCategoryName t) ++ ">();",
-        "  static auto& cache_mutex = *new std::mutex;",
-        "  std::lock_guard<std::mutex> lock(cache_mutex);",
-        "  auto& cached = cache[GetKeyFromParams<" ++ show n ++ ">(params)];",
-        "  S<" ++ typeName (getCategoryName t) ++ "> type = cached;",
-        "  if (!type) { cached = type = S_get(new " ++ className ++ "(" ++ categoryCreator (getCategoryName t) ++ "(), params)); }",
-        "  return type;",
+        "  static auto& cache = *new InstanceCache<" ++ show n ++ ", " ++ typeName (getCategoryName t) ++ ">([](Params<" ++ show n ++ ">::Type params) {",
+        "      return S_get(new " ++ className ++ "(" ++ categoryCreator (getCategoryName t) ++ "(), params));",
+        "    });",
+        "  return cache.GetOrCreate(params);",
         "}"
       ]
 

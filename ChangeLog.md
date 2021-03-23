@@ -48,6 +48,10 @@
   }
   ```
 
+* **[breaking]** Cleans up `TypeInstance` caching for C++ extensions with
+  parameters. See `lib/container/src/Extension_Vector.cpp` for an example of the
+  new semantics, or use `--templates` to create a new template.
+
 ## 0.14.0.0  -- 2021-03-19
 
 ### Language

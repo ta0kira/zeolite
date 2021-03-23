@@ -192,7 +192,27 @@ class TypeValue {
                                const ParamTuple& params, const ValueTuple& args);
 };
 
-template<int P, class T>
-using WeakInstanceMap = std::map<typename ParamsKey<P>::Type, S<T>>;
+template <int P, class T>
+class InstanceCache {
+ public:
+  using Creator = std::function<S<T>(typename Params<P>::Type)>;
+
+  InstanceCache(const Creator& create) : create_(create) {}
+
+  S<T> GetOrCreate(typename Params<P>::Type params) {
+    std::lock_guard<std::mutex> lock(mutex_);
+    auto& cached = cache_[GetKeyFromParams<P>(params)];
+    S<T> type = cached;
+    if (!type) {
+      cached = type = create_(params);
+    }
+    return type;
+  }
+
+ private:
+  const Creator create_;
+  std::mutex mutex_;
+  std::map<typename ParamsKey<P>::Type, S<T>> cache_;
+};
 
 #endif  // CATEGORY_SOURCE_HPP_
