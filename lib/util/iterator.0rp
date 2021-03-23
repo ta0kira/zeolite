@@ -16,54 +16,112 @@ limitations under the License.
 
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
+// Random-access writes. (Like the ReadAt built-in type.)
+//
+// Params:
+// - #x: The value type to be written.
 @value interface WriteAt<#x|> {
   refines Container
 
+  // Write the value at the given index and return self.
   writeAt (Int,#x) -> (#self)
 }
 
+// Read at the current position.
+//
+// Params:
+// - #x: The value type to be read.
 @value interface ReadCurrent<|#x> {
+  // Return the value at the current position.
   readCurrent () -> (#x)
 }
 
+// Write at the current position.
+//
+// Params:
+// - #x: The value type to be written.
 @value interface WriteCurrent<#x|> {
+  // Write the value at the current position and return self.
   writeCurrent (#x) -> (#self)
 }
 
+// Forward iteration.
 @value interface IterateForward {
+  // Return a copy that has been moved forward once. (Do not mutate self.)
+  //
+  // Notes:
+  // - This should crash if pastForwardEnd() is true.
   forward () -> (#self)
+  // Returns true iff no more forward movement is possible.
   pastForwardEnd () -> (Bool)
 }
 
+// Reverse iteration.
 @value interface IterateReverse {
+  // Return a copy that has been moved in reverse once. (Do not mutate self.)
+  //
+  // Notes:
+  // - This should crash if pastReverseEnd() is true.
   reverse () -> (#self)
+  // Returns true iff no more reverse movement is possible.
   pastReverseEnd () -> (Bool)
 }
 
+// Iterator for forward/reverse reading.
 @value interface ReadIterator<|#x> {
   refines ReadCurrent<#x>
   refines IterateForward
   refines IterateReverse
 }
 
+// Iterator for forward/reverse writing.
 @value interface WriteIterator<#x|> {
   refines WriteCurrent<#x>
   refines IterateForward
   refines IterateReverse
 }
 
+// Iterator for forward/reverse reading and writing.
 @value interface Iterator<#x> {
   refines ReadIterator<#x>
   refines WriteIterator<#x>
 }
 
-concrete AutoIterator {
-  @type fromRead<#x> (ReadAt<#x>) -> (ReadIterator<#x>)
-  @type fromReadOffset<#x> (ReadAt<#x>,Int) -> (ReadIterator<#x>)
+// Automatic read iteration from ReadAt.
+//
+// Params:
+// - #x: The value type to be read.
+concrete AutoReadIterator<#x> {
+  refines ReadIterator<#x>
 
-  @type fromWrite<#x> (WriteAt<#x>) -> (WriteIterator<#x>)
-  @type fromWriteOffset<#x> (WriteAt<#x>,Int) -> (WriteIterator<#x>)
+  // Create an iterator from a ReadAt.
+  @category from<#y> (ReadAt<#y>) -> (AutoReadIterator<#y>)
+  // Create an iterator from a ReadAt starting at an offset.
+  @category fromOffset<#y> (ReadAt<#y>,Int) -> (AutoReadIterator<#y>)
+}
 
-  @type fromReadWrite<#x> ([ReadAt<#x>&WriteAt<#x>]) -> (Iterator<#x>)
-  @type fromReadWriteOffset<#x> ([ReadAt<#x>&WriteAt<#x>],Int) -> (Iterator<#x>)
+// Automatic write iteration from WriteAt.
+//
+// Params:
+// - #x: The value type to be written.
+concrete AutoWriteIterator<#x> {
+  refines WriteIterator<#x>
+
+  // Create an iterator from a WriteAt.
+  @category from<#y> (WriteAt<#y>) -> (AutoWriteIterator<#y>)
+  // Create an iterator from a WriteAt starting at an offset.
+  @category fromOffset<#y> (WriteAt<#y>,Int) -> (AutoWriteIterator<#y>)
+}
+
+// Automatic read/write iteration from ReadAt&WriteAt.
+//
+// Params:
+// - #x: The value type to be read/written.
+concrete AutoReadWriteIterator<#x> {
+  refines Iterator<#x>
+
+  // Create an iterator from a ReadAt&WriteAt.
+  @category from<#y> ([ReadAt<#y>&WriteAt<#y>]) -> (AutoReadWriteIterator<#y>)
+  // Create an iterator from a ReadAt&WriteAt starting at an offset.
+  @category fromOffset<#y> ([ReadAt<#y>&WriteAt<#y>],Int) -> (AutoReadWriteIterator<#y>)
 }

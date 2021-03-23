@@ -16,33 +16,58 @@ limitations under the License.
 
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
+// A type with only one value.
+//
+// Notes:
+// - The built-in type with no values is the meta-type all. Void should be used
+//   when an actual value is required but no other type makes sense.
 concrete Void {
   refines Formatted
 
   defines Equals<Void>
   defines LessThan<Void>
 
+  // Return the only value of type Void.
   @type void () -> (Void)
 }
 
+// Contains either a value or an error message.
+//
+// Params:
+// - #x: The value type to be contained.
 concrete ErrorOr<|#x> {
+  // Create a new instance containing a value.
   @category value<#x> (#x)        -> (ErrorOr<#x>)
+  // Create a new instance containing an error message.
   @category error     (Formatted) -> (ErrorOr<all>)
 
+  // Return true iff there is an error message.
   @value isError () -> (Bool)
 
+  // Get the contained value. Crashes if there is no value.
   @value getValue () -> (#x)
+  // Get the error message. Crashes if there is no error.
   @value getError () -> (Formatted)
+  // Convert the error to any other ErrorOr type. Crashes if there is no error.
   @value convertError () -> (ErrorOr<all>)
 }
 
+// Command-line program arguments.
 concrete Argv {
   refines ReadAt<String>
   refines SubSequence
 
+  // Return the global set of arguments for the program.
+  //
+  // Notes:
+  // - This be empty outside of the main program thread.
+  // - When used in unit tests, arg 0 is "testcase" and the remaining args are
+  //   set from args in the testcase. (See extra.0rt.)
   @type global () -> ([ReadAt<String>&SubSequence])
 }
 
+// A resource that requires explicit cleanup.
 @value interface PersistentResource {
+  // Clean up the resource, subsequently making it unavailable.
   freeResource () -> ()
 }

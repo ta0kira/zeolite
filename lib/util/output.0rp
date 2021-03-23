@@ -16,31 +16,54 @@ limitations under the License.
 
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
+// A sink for writing data.
+//
+// Params:
+// - #x: The value type to be written.
 @value interface Writer<#x|> {
   write (#x) -> ()
 }
 
+// A sink that can be flushed.
+//
+// Params:
+// - #x: The value type to be written.
 @value interface BufferedWriter<#x|> {
   refines Writer<#x>
 
   flush () -> ()
 }
 
+// A sink that might perform a partial write.
+//
+// Params:
+// - #x: The value type to be written.
 @value interface BlockWriter<#x|> {
+  // Write the data and return the size of what was written.
   writeBlock (#x) -> (Int)
 }
 
+// A lazy output stream that delays writing.
+//
+// Params:
+// - #x: The value type to be written.
 concrete LazyStream<#x> {
   refines Append<#x>
 
+  // Create a new stream.
   @type new () -> (LazyStream<#x>)
+  // Write the data to the BufferedWriter. (Do not mutate the stream.)
   @value writeTo (BufferedWriter<#x>) -> ()
 }
 
+// Simple output destinations.
 concrete SimpleOutput {
   refines BufferedWriter<Formatted>
 
+  // Returns a BufferedWriter for standard output.
   @type stdout () -> (BufferedWriter<Formatted>)
+  // Returns a BufferedWriter for standard error.
   @type stderr () -> (BufferedWriter<Formatted>)
+  // Returns a BufferedWriter that crashes with the output as the error message.
   @type error () -> (BufferedWriter<Formatted>)
 }

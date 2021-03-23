@@ -16,20 +16,48 @@ limitations under the License.
 
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
+// Reader of discrete blocks of data.
+//
+// Params:
+// - #x: The value type to be read.
 @value interface BlockReader<|#x> {
+  // Read a block of the given size.
+  //
+  // Notes:
+  // - Negative values can have any behavior.
+  // - This should gracefully handle block sizes that exceed available input.
   readBlock (Int) -> (#x)
+
+  // Returns true iff nothing further can be read.
   pastEnd () -> (Bool)
 }
 
+// Line-based text reader.
 concrete TextReader {
+  // Create from a BlockReader.
   @type fromBlockReader (BlockReader<String>) -> (TextReader)
+
+  // Create and read all data from a block reader.
+  //
+  // Notes:
+  // - If the BlockReader is also a PersistentResource, make sure to separately
+  //   clean it up afterward.
   @type readAll (BlockReader<String>) -> (String)
+
+  // Return the next line of data, up to '\n' or '\r'.
+  //
+  // Notes:
+  // - This does not automatically handle varying newline types.
   @value readNextLine () -> (String)
+
+  // Returns true iff nothing further can be read.
   @value pastEnd () -> (Bool)
 }
 
+// Simple input sources.
 concrete SimpleInput {
   refines BlockReader<String>
 
+  // Returns a BlockReader for standard input.
   @type stdin () -> (BlockReader<String>)
 }

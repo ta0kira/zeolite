@@ -24,7 +24,7 @@ unittest forwardRead {
   String s <- "abcde"
   Int count <- 0
   scoped {
-    ReadIterator<Char> iter <- AutoIterator.fromRead<?>(s)
+    ReadIterator<Char> iter <- AutoReadIterator:from<?>(s)
   } in while (!iter.pastForwardEnd()) {
     $ReadOnly[count,iter]$
     if (iter.readCurrent() != s.readAt(count)) {
@@ -43,7 +43,7 @@ unittest reverseRead {
   String s <- "abcde"
   Int count <- s.size()-1
   scoped {
-    ReadIterator<Char> iter <- AutoIterator.fromReadOffset<?>(s,count)
+    ReadIterator<Char> iter <- AutoReadIterator:fromOffset<?>(s,count)
   } in while (!iter.pastReverseEnd()) {
     $ReadOnly[count,iter]$
     \ Testing.checkEquals<?>(iter.readCurrent(),s.readAt(count))
@@ -66,7 +66,7 @@ unittest forwardWrite {
   Int count <- 0
   scoped {
     WriteChecker checker <- WriteChecker.create(s)
-    WriteIterator<Char> iter <- AutoIterator.fromWrite<?>(checker)
+    WriteIterator<Char> iter <- AutoWriteIterator:from<?>(checker)
   } in while (!iter.pastForwardEnd()) {
     $ReadOnly[count,iter]$
     \ iter.writeCurrent(s.readAt(count))
@@ -84,7 +84,7 @@ unittest reverseWrite {
   Int count <- s.size()-1
   scoped {
     WriteChecker checker <- WriteChecker.create(s)
-    WriteIterator<Char> iter <- AutoIterator.fromWriteOffset<?>(checker,count)
+    WriteIterator<Char> iter <- AutoWriteIterator:fromOffset<?>(checker,count)
   } in while (!iter.pastReverseEnd()) {
     $ReadOnly[count,iter]$
     \ iter.writeCurrent(s.readAt(count))
@@ -130,7 +130,7 @@ unittest forwardReadWrite {
   Int count <- 0
   scoped {
     ReadWriteChecker checker <- ReadWriteChecker.create(s)
-    Iterator<Char> iter <- AutoIterator.fromReadWrite<?>(checker)
+    Iterator<Char> iter <- AutoReadWriteIterator:from<?>(checker)
   } in while (!iter.pastForwardEnd()) {
     $ReadOnly[count,iter]$
     \ Testing.checkEquals<?>(iter.readCurrent(),s.readAt(count))
@@ -149,7 +149,7 @@ unittest reverseReadWrite {
   Int count <- s.size()-1
   scoped {
     ReadWriteChecker checker <- ReadWriteChecker.create(s)
-    Iterator<Char> iter <- AutoIterator.fromReadWriteOffset<?>(checker,count)
+    Iterator<Char> iter <- AutoReadWriteIterator:fromOffset<?>(checker,count)
   } in while (!iter.pastReverseEnd()) {
     $ReadOnly[count,iter]$
     \ Testing.checkEquals<?>(iter.readCurrent(),s.readAt(count))

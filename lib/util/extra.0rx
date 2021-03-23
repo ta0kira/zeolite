@@ -65,6 +65,10 @@ define ErrorOr {
   }
 
   convertError () {
-    return ErrorOr<all>{ empty, maybeError }
+    if (!present(maybeError)) {
+      fail("no error present to convert")
+    } else {
+      return ErrorOr<all>{ empty, maybeError }
+    }
   }
 }

@@ -113,3 +113,14 @@ unittest test {
   \ value.getValue()
 }
 
+
+testcase "ErrorOr convertError() crashes with no error" {
+  crash
+  require "no error"
+}
+
+unittest test {
+  ErrorOr<Int> value <- ErrorOr:value<Int>(10)
+  \ value.convertError()
+}
+

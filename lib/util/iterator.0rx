@@ -16,48 +16,15 @@ limitations under the License.
 
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
-define AutoIterator {
-  fromRead (container) {
-    return AutoReadIterator:fromRead<?>(container)
-  }
-
-  fromReadOffset (container,offset) {
-    return AutoReadIterator:fromReadOffset<?>(container,offset)
-  }
-
-  fromWrite (container) {
-    return AutoWriteIterator:fromWrite<?>(container)
-  }
-
-  fromWriteOffset (container,offset) {
-    return AutoWriteIterator:fromWriteOffset<?>(container,offset)
-  }
-
-  fromReadWrite (container) {
-    return AutoReadWriteIterator:fromReadWrite<?>(container)
-  }
-
-  fromReadWriteOffset (container,offset) {
-    return AutoReadWriteIterator:fromReadWriteOffset<?>(container,offset)
-  }
-}
-
-concrete AutoReadIterator<#x> {
-  refines ReadIterator<#x>
-
-  @category fromRead<#y> (ReadAt<#y>) -> (AutoReadIterator<#y>)
-  @category fromReadOffset<#y> (ReadAt<#y>,Int) -> (AutoReadIterator<#y>)
-}
-
 define AutoReadIterator {
   @value ReadAt<#x> container
   @value Int position
 
-  fromRead (container) {
-    return fromReadOffset<#y>(container,0)
+  from (container) {
+    return fromOffset<#y>(container,0)
   }
 
-  fromReadOffset (container,position) {
+  fromOffset (container,position) {
     Int position2 <- position
     if (position < 0) {
       position2 <- -1
@@ -80,7 +47,7 @@ define AutoReadIterator {
   }
 
   forward () {
-    return fromReadOffset<#x>(container,position+1)
+    return fromOffset<#x>(container,position+1)
   }
 
   pastForwardEnd () {
@@ -88,7 +55,7 @@ define AutoReadIterator {
   }
 
   reverse () {
-    return fromReadOffset<#x>(container,position-1)
+    return fromOffset<#x>(container,position-1)
   }
 
   pastReverseEnd () {
@@ -96,22 +63,15 @@ define AutoReadIterator {
   }
 }
 
-concrete AutoWriteIterator<#x> {
-  refines WriteIterator<#x>
-
-  @category fromWrite<#y> (WriteAt<#y>) -> (AutoWriteIterator<#y>)
-  @category fromWriteOffset<#y> (WriteAt<#y>,Int) -> (AutoWriteIterator<#y>)
-}
-
 define AutoWriteIterator {
   @value WriteAt<#x> container
   @value Int position
 
-  fromWrite (container) {
-    return fromWriteOffset<#y>(container,0)
+  from (container) {
+    return fromOffset<#y>(container,0)
   }
 
-  fromWriteOffset (container,position) {
+  fromOffset (container,position) {
     Int position2 <- position
     if (position < 0) {
       position2 <- -1
@@ -135,7 +95,7 @@ define AutoWriteIterator {
   }
 
   forward () {
-    return fromWriteOffset<#x>(container,position+1)
+    return fromOffset<#x>(container,position+1)
   }
 
   pastForwardEnd () {
@@ -143,7 +103,7 @@ define AutoWriteIterator {
   }
 
   reverse () {
-    return fromWriteOffset<#x>(container,position-1)
+    return fromOffset<#x>(container,position-1)
   }
 
   pastReverseEnd () {
@@ -151,22 +111,15 @@ define AutoWriteIterator {
   }
 }
 
-concrete AutoReadWriteIterator<#x> {
-  refines Iterator<#x>
-
-  @category fromReadWrite<#y> ([ReadAt<#y>&WriteAt<#y>]) -> (AutoReadWriteIterator<#y>)
-  @category fromReadWriteOffset<#y> ([ReadAt<#y>&WriteAt<#y>],Int) -> (AutoReadWriteIterator<#y>)
-}
-
 define AutoReadWriteIterator {
   @value [ReadAt<#x>&WriteAt<#x>] container
   @value Int position
 
-  fromReadWrite (container) {
-    return fromReadWriteOffset<#y>(container,0)
+  from (container) {
+    return fromOffset<#y>(container,0)
   }
 
-  fromReadWriteOffset (container,position) {
+  fromOffset (container,position) {
     Int position2 <- position
     if (position < 0) {
       position2 <- -1
@@ -201,7 +154,7 @@ define AutoReadWriteIterator {
   }
 
   forward () {
-    return fromReadWriteOffset<#x>(container,position+1)
+    return fromOffset<#x>(container,position+1)
   }
 
   pastForwardEnd () {
@@ -209,7 +162,7 @@ define AutoReadWriteIterator {
   }
 
   reverse () {
-    return fromReadWriteOffset<#x>(container,position-1)
+    return fromOffset<#x>(container,position-1)
   }
 
   pastReverseEnd () {
