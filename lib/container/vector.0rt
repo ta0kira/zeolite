@@ -113,6 +113,65 @@ unittest writeAt {
   }
 }
 
+testcase "distinct default values in pre-sized Vector" {
+  success
+}
+
+unittest test {
+  Vector<Type> values <- Vector:createSize<Type>(10)
+  \ values.readAt(3).set(7)
+
+  \ Testing.checkEquals<?>(values.readAt(3),Type.create(7))
+
+  scoped {
+    Int i <- 0
+  } in while (i < values.size()) {
+    if (i != 3) {
+      \ Testing.checkEquals<?>(values.readAt(i),Type.create(0))
+    }
+  } update {
+    i <- i+1
+  }
+}
+
+concrete Type {
+  refines Formatted
+  defines Default
+  defines Equals<Type>
+
+  @type create (Int) -> (Type)
+  @value set (Int) -> ()
+}
+
+define Type {
+  @value Int value
+
+  default () {
+    return create(0)
+  }
+
+  create (v) {
+    return Type{ v }
+  }
+
+  formatted () {
+    return value.formatted()
+  }
+
+  equals (x,y) {
+    return x.get() == y.get()
+  }
+
+  set (v) {
+    value <- v
+  }
+
+  @value get () -> (Int)
+  get () {
+    return value
+  }
+}
+
 
 testcase "negative Vector index" {
   crash
