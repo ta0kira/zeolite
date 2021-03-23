@@ -237,7 +237,6 @@ generateCategoryDefinition testing = common where
                          (addSourceIncludes $ addStreamlinedHeader t $ addIncludes req' out)
   common (StreamlinedTemplate t tm) = fmap (:[]) streamlinedTemplate where
     streamlinedTemplate = do
-      let filename = templateStreamlined (getCategoryName t)
       [cp,tp,vp] <- getProcedureScopes tm Map.empty defined
       (CompiledData req out) <- fmap (addNamespace t) $ concatM [
           declareCustomValueGetter t,
@@ -254,6 +253,7 @@ generateCategoryDefinition testing = common where
                          (Set.fromList [getCategoryNamespace t])
                          req'
                          (addSourceIncludes $ addStreamlinedHeader t $ addIncludes req' out)
+    filename = templateStreamlined (getCategoryName t)
     defined = DefinedCategory {
         dcContext = [],
         dcName = getCategoryName t,
@@ -275,10 +275,12 @@ generateCategoryDefinition testing = common where
         epProcedure = failProcedure f
       }
     createArg = InputValue [] . VariableName . ("arg" ++) . show
-    failProcedure f = Procedure [] [
-        NoValueExpression [] $ LineComment $ "TODO: Implement " ++ functionDebugName f ++ ".",
-        RawFailCall (functionDebugName f ++ " is not implemented")
+    failProcedure f = Procedure [] $ [
+        asLineComment $ "TODO: Implement " ++ functionDebugName f ++ "."
+      ] ++ map asLineComment (formatFunctionTypes f) ++ [
+        RawFailCall (functionDebugName f ++ " is not implemented (see " ++ filename ++ ")")
       ]
+    asLineComment = NoValueExpression [] . LineComment
   common (NativeConcrete t d@(DefinedCategory _ _ pi _ _ fi ms _ _) ta ns em) = fmap (:[]) singleSource where
     singleSource = do
       let filename = sourceFilename (getCategoryName t)
@@ -624,6 +626,15 @@ generateCategoryDefinition testing = common where
       "CycleCheck<" ++ n2 ++ ">::Check();",
       "CycleCheck<" ++ n2 ++ "> marker(*this);"
     ]
+
+formatFunctionTypes :: Show c => ScopedFunction c -> [String]
+formatFunctionTypes (ScopedFunction c _ _ s as rs ps fa _) = [location,args,returns,params] ++ filters where
+  location = show s ++ " function declared at " ++ formatFullContext c
+  args    = "Arg Types:    (" ++ intercalate ", " (map (show . pvType) $ pValues as)  ++ ")"
+  returns = "Return Types: (" ++ intercalate ", " (map (show . pvType) $ pValues rs)  ++ ")"
+  params  = "Type Params:  <" ++ intercalate ", " (map (show . vpParam) $ pValues ps) ++ ">"
+  filters = map singleFilter fa
+  singleFilter (ParamFilter _ n2 f) = "  " ++ show n2 ++ " " ++ show f
 
 createMainCommon :: String -> CompiledData [String] -> CompiledData [String] -> [String]
 createMainCommon n (CompiledData req0 out0) (CompiledData req1 out1) =
