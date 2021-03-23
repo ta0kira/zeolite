@@ -312,12 +312,6 @@ test_example_hello() {
 }
 
 
-test_example_tree() {
-  do_zeolite -p "$ZEOLITE_PATH" -I lib/util -m TreeDemo example/tree -f
-  do_zeolite -p "$ZEOLITE_PATH" -t example/tree
-}
-
-
 test_example_parser() {
   do_zeolite -p "$ZEOLITE_PATH" -r example/parser -f
   do_zeolite -p "$ZEOLITE_PATH" -t example/parser
@@ -374,7 +368,6 @@ ALL_TESTS=(
   test_bad_system_include
   test_global_include
   test_example_hello
-  test_example_tree
   test_example_parser
 )
 

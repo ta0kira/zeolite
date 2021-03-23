@@ -58,6 +58,11 @@
   parameters. See `lib/container/src/Extension_Vector.cpp` for an example of the
   new semantics, or use `--templates` to create a new template.
 
+### Examples
+
+* Removes `example/tree`. All of the corresponding code has been moved into
+  `lib/container`.
+
 ## 0.14.0.0  -- 2021-03-19
 
 ### Language
