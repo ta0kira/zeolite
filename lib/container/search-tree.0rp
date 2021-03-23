@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-Copyright 2021 Kevin P. Barry
+Copyright 2019-2021 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -16,37 +16,35 @@ limitations under the License.
 
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
-// Container with stack semantics.
-//
-// Params:
-// - #x: The value type to stack.
-@value interface Stack<#x> {
-  refines Container
-
-  // Pushes a new value and returns self.
-  push (#x) -> (#self)
-  // Pops the top value. Crashes if empty. (Check size() before calling.)
-  pop () -> (#x)
-}
-
-// Writing to key-value storage.
+// A binary search tree for key-value storage.
 //
 // Params:
 // - #k: The key type.
 // - #v: The value type.
-@value interface KVWriter<#k,#v|> {
-  // Sets or replaces the value associated with the key and returns self.
-  set (#k,#v) -> (#self)
-  // Removes the value associated with the key if present and returns self.
-  remove (#k) -> (#self)
+concrete SearchTree<#k,#v> {
+  refines KVWriter<#k,#v>
+  refines KVReader<#k,#v>
+  #k defines LessThan<#k>
+
+  // Create an empty tree.
+  @type new () -> (#self)
 }
 
-// Reading from key-value storage.
+// A validated binary search tree for key-value storage.
 //
 // Params:
 // - #k: The key type.
 // - #v: The value type.
-@value interface KVReader<#k|#v> {
-  // Returns the value associated with the key if present.
-  get (#k) -> (optional #v)
+//
+// Notes:
+// - This is the same as SearchTree, but it validates the tree structure every
+//   time there is a modification, which is extremely inefficient. This should
+//   therefore only be used in tests.
+concrete ValidatedTree<#k,#v> {
+  refines KVWriter<#k,#v>
+  refines KVReader<#k,#v>
+  #k defines LessThan<#k>
+
+  // Create an empty tree.
+  @type new () -> (#self)
 }

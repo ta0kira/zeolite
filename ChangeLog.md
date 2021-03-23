@@ -30,7 +30,13 @@
   * **[new]** Adds `WriteAt`, `WriteCurrent`, `WriteIterator`, and `Iterator`
     `@value interface`s.
 
-* **[new]** Adds `lib/container` with a `Vector` random-access container.
+* **[new]** Adds `lib/container`:
+
+  * **[new]** `Vector`, a random-access container.
+
+  * **[new]** `SearchTree`, a binary search tree.
+
+  * **[new]** `TypeMap`, a heterogeneous key-value map of different value types.
 
 ### Compiler CLI
 

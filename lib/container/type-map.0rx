@@ -1,0 +1,98 @@
+/* -----------------------------------------------------------------------------
+Copyright 2019-2021 Kevin P. Barry
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+----------------------------------------------------------------------------- */
+
+// Author: Kevin P. Barry [ta0kira@gmail.com]
+
+define TypeMap {
+  @value SearchTree<TypeKey<any>,LockedType<any>> tree
+
+  new () {
+    return TypeMap{ SearchTree<TypeKey<any>,LockedType<any>>.new() }
+  }
+
+  set (k,v) {
+    \ tree.set(k,LockedType:create<?>(k,v))
+    return self
+  }
+
+  remove (k) {
+    \ tree.remove(k)
+    return self
+  }
+
+  get (k) {
+    scoped {
+      optional LockedType<any> value <- tree.get(k)
+    } in if (present(value)) {
+      return require(value).check<?>(k)
+    } else {
+      return empty
+    }
+  }
+}
+
+define TypeKey {
+  @category Int counter <- 0
+  @value Int index
+
+  new () {
+    return TypeKey<#x>{ (counter <- counter+1) }
+  }
+
+  formatted () {
+    return String.builder()
+        .append(typename<#self>().formatted())
+        .append("{")
+        .append(index.formatted())
+        .append("}")
+        .build()
+  }
+
+  lessThan (l,r) {
+    return l.get() < r.get()
+  }
+
+  equals (l,r) {
+    return l.get() == r.get()
+  }
+
+  @value get () -> (Int)
+  get () {
+    return index
+  }
+}
+
+concrete LockedType<|#x> {
+  @category create<#x> (TypeKey<#x>,#x) -> (LockedType<#x>)
+  @value check<#y> (TypeKey<#y>) -> (optional #y)
+}
+
+define LockedType {
+  @value TypeKey<#x> key
+  @value #x value
+
+  create (k,v) {
+    return LockedType<#x>{ k, v }
+  }
+
+  check (k) {
+    if (key `TypeKey<any>.equals` k) {
+      return reduce<#x,#y>(value)
+    } else {
+      return empty
+    }
+  }
+}

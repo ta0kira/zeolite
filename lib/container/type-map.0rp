@@ -1,0 +1,55 @@
+/* -----------------------------------------------------------------------------
+Copyright 2019-2021 Kevin P. Barry
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+----------------------------------------------------------------------------- */
+
+// Author: Kevin P. Barry [ta0kira@gmail.com]
+
+// A map that stores values of arbitrary types.
+concrete TypeMap {
+  // Create a new map.
+  @type new () -> (TypeMap)
+
+  // Set or replace the value associated with the key.
+  //
+  // Params:
+  // - #x: The value type being stored.
+  @value set<#x> (TypeKey<#x>,#x) -> (TypeMap)
+
+  // Remove the value associated with the key if present and return self.
+  @value remove (TypeKey<any>) -> (TypeMap)
+
+  // Return the value associated with the key if present.
+  //
+  // Params:
+  // - #x: The value type being returned.
+  //
+  // Notes:
+  // - #x does not need to be the same type as the original value, since TypeKey
+  //   has a covariant parameter.
+  // - The value will only be returned if it can be converted to #x. For
+  //   example, if the value is actually a String but it was added as Formatted
+  //   (a parent of String), then the value cannot be retrieved as a String.
+  @value get<#x> (TypeKey<#x>) -> (optional #x)
+}
+
+// A typed key for use with TypeMap.
+concrete TypeKey<|#x> {
+  refines Formatted
+  defines LessThan<TypeKey<any>>
+  defines Equals<TypeKey<any>>
+
+  // Create a new key.
+  @type new () -> (TypeKey<#x>)
+}
