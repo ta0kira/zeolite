@@ -91,7 +91,6 @@ compileExecutableProcedure className ctx
   creationTrace  <- setCreationTrace
   return $ wrapProcedure output procedureTrace creationTrace
   where
-    t = scName ctx
     compileWithReturn = do
       ctx0 <- getCleanContext >>= lift . flip ccSetNoTrace (any isNoTrace pragmas)
       compileProcedure ctx0 p >>= put
@@ -132,7 +131,7 @@ compileExecutableProcedure className ctx
     returnType = "ReturnTuple"
     setProcedureTrace
       | any isNoTrace pragmas = return []
-      | otherwise             = return [startFunctionTracing t n]
+      | otherwise             = return [startFunctionTracing ff]
     setCreationTrace
       | not $ any isTraceCreation pragmas = return []
       | s /= ValueScope =
@@ -257,6 +256,9 @@ compileStatement (FailCall c e) = do
   csSetJumpType c JumpFailCall
   maybeSetTrace c
   csWrite ["BUILTIN_FAIL(" ++ useAsUnwrapped e0 ++ ")"]
+compileStatement (RawFailCall s) = do
+  csSetJumpType [] JumpFailCall
+  csWrite ["RAW_FAIL(" ++ show s ++ ")"]
 compileStatement (IgnoreValues c e) = do
   (_,e') <- compileExpression e
   maybeSetTrace c

@@ -41,7 +41,7 @@ S<TypeValue> CreateValue_Vector(S<Type_Vector> parent, const ParamTuple& params,
 
 struct ExtCategory_Vector : public Category_Vector {
   ReturnTuple Call_copyFrom(const ParamTuple& params, const ValueTuple& args) {
-    TRACE_FUNCTION("Vector.copyFrom")
+    TRACE_FUNCTION("Vector:copyFrom")
     const S<TypeInstance> Param_y = params.At(0);
     const S<TypeValue>& Var_arg1 = (args.At(0));
     VectorType values;
@@ -53,13 +53,13 @@ struct ExtCategory_Vector : public Category_Vector {
   }
 
   ReturnTuple Call_create(const ParamTuple& params, const ValueTuple& args) {
-    TRACE_FUNCTION("Vector.create")
+    TRACE_FUNCTION("Vector:create")
     const S<TypeInstance> Param_y = params.At(0);
     return ReturnTuple(CreateValue_Vector(CreateType_Vector(Params<1>::Type(Param_y)), ParamTuple(), VectorType()));
   }
 
   ReturnTuple Call_createSize(const ParamTuple& params, const ValueTuple& args) {
-    TRACE_FUNCTION("Vector.createSize")
+    TRACE_FUNCTION("Vector:createSize")
     const S<TypeInstance> Param_y = params.At(0);
     const PrimInt Var_arg1 = (args.At(0))->AsInt();
     VectorType values;

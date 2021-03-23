@@ -17,6 +17,6 @@ limitations under the License.
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
 concrete Templated<#x> {
-  @type create () -> (Templated<#x>)
+  @category create<#y> () -> (Templated<#y>)
   @value get () -> (#x)
 }

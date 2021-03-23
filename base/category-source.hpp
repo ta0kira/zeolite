@@ -36,6 +36,11 @@ limitations under the License.
   __builtin_unreachable(); \
   }
 
+#define RAW_FAIL(e) { \
+  FAIL() << e; \
+  __builtin_unreachable(); \
+  }
+
 extern const S<TypeValue>& Var_empty;
 
 S<TypeValue> Box_Bool(bool value);

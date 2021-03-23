@@ -29,6 +29,7 @@ module CompilerCxx.Naming (
   categoryGetter,
   categoryName,
   collectionName,
+  functionDebugName,
   functionName,
   headerFilename,
   headerStreamlined,
@@ -144,6 +145,11 @@ valueCustom n = "ExtValue_" ++ show n
 
 callName :: FunctionName -> String
 callName f = "Call_" ++ show f
+
+functionDebugName :: ScopedFunction c -> String
+functionDebugName f
+  | sfScope f == CategoryScope = show (sfType f) ++ ":" ++ show (sfName f)
+  | otherwise                  = show (sfType f) ++ "." ++ show (sfName f)
 
 functionName :: ScopedFunction c -> String
 functionName f = "Function_" ++ show (sfType f) ++ "_" ++ show (sfName f)

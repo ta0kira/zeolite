@@ -18,7 +18,7 @@ limitations under the License.
 
 testcase "template compiles to binary" {
   crash
-  require "Templated\.create is not implemented"
+  require "Templated:create is not implemented"
 }
 
 unittest test {
@@ -27,7 +27,7 @@ unittest test {
 
 define Test {
   run () {
-    \ Templated<Int>.create()
+    \ Templated:create<Int>()
   }
 }
 

@@ -166,6 +166,7 @@ data Statement c =
   LoopBreak [c] |
   LoopContinue [c] |
   FailCall [c] (Expression c) |
+  RawFailCall String |
   IgnoreValues [c] (Expression c) |
   Assignment [c] (Positional (Assignable c)) (Expression c) |
   NoValueExpression [c] (VoidExpression c) |
@@ -184,6 +185,7 @@ getStatementContext (ExplicitReturn c _)    = c
 getStatementContext (LoopBreak c)           = c
 getStatementContext (LoopContinue c)        = c
 getStatementContext (FailCall c _)          = c
+getStatementContext (RawFailCall _)         = []
 getStatementContext (IgnoreValues c _)      = c
 getStatementContext (Assignment c _ _)      = c
 getStatementContext (NoValueExpression c _) = c

@@ -276,10 +276,9 @@ generateCategoryDefinition testing = common where
       }
     createArg = InputValue [] . VariableName . ("arg" ++) . show
     failProcedure f = Procedure [] [
-        NoValueExpression [] $ LineComment $ "TODO: Implement " ++ funcName f ++ ".",
-        FailCall [] (Literal (StringLiteral [] $ funcName f ++ " is not implemented"))
+        NoValueExpression [] $ LineComment $ "TODO: Implement " ++ functionDebugName f ++ ".",
+        RawFailCall (functionDebugName f ++ " is not implemented")
       ]
-    funcName f = show (sfType f) ++ "." ++ show (sfName f)
   common (NativeConcrete t d@(DefinedCategory _ _ pi _ _ fi ms _ _) ta ns em) = fmap (:[]) singleSource where
     singleSource = do
       let filename = sourceFilename (getCategoryName t)
@@ -631,7 +630,7 @@ createMainCommon n (CompiledData req0 out0) (CompiledData req1 out1) =
   baseSourceIncludes ++ mainSourceIncludes ++ depIncludes (req0 `Set.union` req1) ++ out0 ++ [
       "int main(int argc, const char** argv) {",
       "  SetSignalHandler();",
-      "  " ++ startFunctionTracing CategoryNone (FunctionName n)
+      "  " ++ startMainTracing n
     ] ++ map ("  " ++) out1 ++ ["}"] where
       depIncludes req2 = map (\i -> "#include \"" ++ headerFilename i ++ "\"") $
                            Set.toList req2
