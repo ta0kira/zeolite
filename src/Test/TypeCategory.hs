@@ -79,8 +79,8 @@ tests = [
     checkShortParseFail "@value interface Type { #self allows Foo }",
     checkShortParseFail "@value interface Type { #self requires Foo }",
     checkShortParseFail "@value interface Type { #self defines Foo }",
-    checkShortParseFail "concrete Type<#x> { #x allows #self }",
-    checkShortParseFail "concrete Type<#x> { #x requires #self }",
+    checkShortParseSuccess "concrete Type<#x> { #x allows #self }",
+    checkShortParseSuccess "concrete Type<#x> { #x requires #self }",
     checkShortParseFail "concrete Type<#x> { #x defines #self }",
     checkShortParseFail "@value interface Type { call<#self> () -> () }",
 

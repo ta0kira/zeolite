@@ -499,6 +499,27 @@ define Type {
 }
 
 
+testcase "#self at top level of param filter" {
+  compiles
+}
+
+@value interface Base<#x> {
+  refines Formatted
+  #x allows #self
+}
+
+@value interface Type1 {
+  refines Base<Type1>
+}
+
+@value interface Type2 {
+  refines Base<Formatted>
+}
+
+@value interface Type3 {
+  refines Type2
+}
+
 
 testcase "#self nested in param filter" {
   compiles
