@@ -455,30 +455,30 @@ generateCategoryDefinition testing = common where
   defineCustomCategory :: (Ord c, Show c, CollectErrorsM m) => AnyCategory c -> ProcedureScope c -> m (CompiledData [String])
   defineCustomCategory t ps = concatM [
       return $ onlyCode $ "struct " ++ categoryCustom (getCategoryName t) ++ " : public " ++ categoryName (getCategoryName t) ++ " {",
-      fmap indentCompiled $ concatM $ applyProcedureScope (compileExecutableProcedure Nothing) ps,
+      fmap indentCompiled $ concatM $ applyProcedureScope (compileExecutableProcedure FinalInlineFunction) ps,
       return $ onlyCode "};"
     ]
   defineCustomType :: (Ord c, Show c, CollectErrorsM m) => AnyCategory c -> ProcedureScope c -> m (CompiledData [String])
   defineCustomType t ps = concatM [
       return $ onlyCode $ "struct " ++ typeCustom (getCategoryName t) ++ " : public " ++ typeName (getCategoryName t) ++ " {",
       fmap indentCompiled $ customTypeConstructor t,
-      fmap indentCompiled $ concatM $ applyProcedureScope (compileExecutableProcedure Nothing) ps,
+      fmap indentCompiled $ concatM $ applyProcedureScope (compileExecutableProcedure FinalInlineFunction) ps,
       return $ onlyCode "};"
     ]
   defineCustomValue :: (Ord c, Show c, CollectErrorsM m) => AnyCategory c -> ProcedureScope c -> m (CompiledData [String])
   defineCustomValue t ps = concatM [
       return $ onlyCode $ "struct " ++ valueCustom (getCategoryName t) ++ " : public " ++ valueName (getCategoryName t) ++ " {",
       fmap indentCompiled $ customValueConstructor t,
-      fmap indentCompiled $ concatM $ applyProcedureScope (compileExecutableProcedure Nothing) ps,
+      fmap indentCompiled $ concatM $ applyProcedureScope (compileExecutableProcedure FinalInlineFunction) ps,
       return $ onlyCode "};"
     ]
 
   defineCategoryFunctions :: (Ord c, Show c, CollectErrorsM m) => AnyCategory c -> ProcedureScope c -> m (CompiledData [String])
-  defineCategoryFunctions t = concatM . applyProcedureScope (compileExecutableProcedure $ Just $ categoryName $ getCategoryName t)
+  defineCategoryFunctions t = concatM . applyProcedureScope (compileExecutableProcedure $ OutOfLineFunction $ categoryName $ getCategoryName t)
   defineTypeFunctions :: (Ord c, Show c, CollectErrorsM m) => AnyCategory c -> ProcedureScope c -> m (CompiledData [String])
-  defineTypeFunctions t = concatM . applyProcedureScope (compileExecutableProcedure $ Just $ typeName $ getCategoryName t)
+  defineTypeFunctions t = concatM . applyProcedureScope (compileExecutableProcedure $ OutOfLineFunction $ typeName $ getCategoryName t)
   defineValueFunctions :: (Ord c, Show c, CollectErrorsM m) => AnyCategory c -> ProcedureScope c -> m (CompiledData [String])
-  defineValueFunctions t = concatM . applyProcedureScope (compileExecutableProcedure $ Just $ valueName $ getCategoryName t)
+  defineValueFunctions t = concatM . applyProcedureScope (compileExecutableProcedure $ OutOfLineFunction $ valueName $ getCategoryName t)
 
   declareCategoryOverrides = onlyCodes [
       "  std::string CategoryName() const final;",

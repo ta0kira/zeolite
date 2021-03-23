@@ -22,6 +22,7 @@ limitations under the License.
 {-# LANGUAGE Safe #-}
 
 module CompilerCxx.Procedure (
+  CxxFunctionType(..),
   categoriesFromTypes,
   categoriesFromDefine,
   categoriesFromRefine,
@@ -79,10 +80,16 @@ procedureDeclaration abstract f = return $ onlyCode func where
       "(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args)"
     | otherwise = undefined
 
+data CxxFunctionType =
+  InlineFunction |
+  OutOfLineFunction String |
+  FinalInlineFunction
+  deriving Show
+
 compileExecutableProcedure :: (Ord c, Show c, CollectErrorsM m) =>
-  Maybe String -> ScopeContext c -> ScopedFunction c ->
+  CxxFunctionType -> ScopeContext c -> ScopedFunction c ->
   ExecutableProcedure c -> m (CompiledData [String])
-compileExecutableProcedure className ctx
+compileExecutableProcedure cxxType ctx
   ff@(ScopedFunction _ _ _ s as1 rs1 ps1 _ _)
   pp@(ExecutableProcedure c pragmas c2 n as2 rs2 p) = do
   ctx' <- getProcedureContext ctx ff pp
@@ -114,19 +121,22 @@ compileExecutableProcedure className ctx
         ]
     close = "}"
     name = callName n
-    prefix = case className of
-                  Nothing -> ""
-                  Just cn -> cn ++ "::"
+    prefix = case cxxType of
+                  OutOfLineFunction cn -> cn ++ "::"
+                  _ -> ""
+    final = case cxxType of
+                FinalInlineFunction -> " final"
+                _ -> ""
     proto
       | s == CategoryScope =
-        returnType ++ " " ++ prefix ++ name ++ "(const ParamTuple& params, const ValueTuple& args) {"
+        returnType ++ " " ++ prefix ++ name ++ "(const ParamTuple& params, const ValueTuple& args)" ++ final ++ " {"
       | s == TypeScope =
         returnType ++ " " ++ prefix ++ name ++
         -- NOTE: Don't use Var_self, since self isn't accessible to @type functions.
-        "(const S<TypeInstance>& self, const ParamTuple& params, const ValueTuple& args) {"
+        "(const S<TypeInstance>& self, const ParamTuple& params, const ValueTuple& args)" ++ final ++ " {"
       | s == ValueScope =
         returnType ++ " " ++ prefix ++ name ++
-        "(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) {"
+        "(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args)" ++ final ++ " {"
       | otherwise = undefined
     returnType = "ReturnTuple"
     setProcedureTrace

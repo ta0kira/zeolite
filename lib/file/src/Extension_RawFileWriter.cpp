@@ -33,7 +33,7 @@ struct ExtCategory_RawFileWriter : public Category_RawFileWriter {
 struct ExtType_RawFileWriter : public Type_RawFileWriter {
   inline ExtType_RawFileWriter(Category_RawFileWriter& p, Params<0>::Type params) : Type_RawFileWriter(p, params) {}
 
-  ReturnTuple Call_open(const S<TypeInstance>& self, const ParamTuple& params, const ValueTuple& args) {
+  ReturnTuple Call_open(const S<TypeInstance>& self, const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("RawFileWriter.open")
     return ReturnTuple(CreateValue_RawFileWriter(CreateType_RawFileWriter(Params<0>::Type()), ParamTuple(), args));
   }
@@ -45,7 +45,7 @@ struct ExtValue_RawFileWriter : public Value_RawFileWriter {
       filename(args.At(0)->AsString()),
       file(new std::ofstream(filename, std::ios::out | std::ios::binary | std::ios::trunc | std::ios::ate)) {}
 
-  ReturnTuple Call_freeResource(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) {
+  ReturnTuple Call_freeResource(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("RawFileWriter.freeResource")
     std::lock_guard<std::mutex> lock(mutex);
     if (file) {
@@ -54,7 +54,7 @@ struct ExtValue_RawFileWriter : public Value_RawFileWriter {
     return ReturnTuple();
   }
 
-  ReturnTuple Call_getFileError(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) {
+  ReturnTuple Call_getFileError(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("RawFileWriter.getFileError")
     std::lock_guard<std::mutex> lock(mutex);
     if (!file) {
@@ -69,7 +69,7 @@ struct ExtValue_RawFileWriter : public Value_RawFileWriter {
     return ReturnTuple(Var_empty);
   }
 
-  ReturnTuple Call_writeBlock(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) {
+  ReturnTuple Call_writeBlock(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("RawFileWriter.writeBlock")
     TRACE_CREATION
     std::lock_guard<std::mutex> lock(mutex);

@@ -38,17 +38,17 @@ struct ExtCategory_SimpleOutput : public Category_SimpleOutput {
 struct ExtType_SimpleOutput : public Type_SimpleOutput {
   inline ExtType_SimpleOutput(Category_SimpleOutput& p, Params<0>::Type params) : Type_SimpleOutput(p, params) {}
 
-  ReturnTuple Call_error(const S<TypeInstance>& self, const ParamTuple& params, const ValueTuple& args) {
+  ReturnTuple Call_error(const S<TypeInstance>& self, const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("SimpleOutput.error")
     return ReturnTuple(Var_error);
   }
 
-  ReturnTuple Call_stderr(const S<TypeInstance>& self, const ParamTuple& params, const ValueTuple& args) {
+  ReturnTuple Call_stderr(const S<TypeInstance>& self, const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("SimpleOutput.stderr")
     return ReturnTuple(Var_stderr);
   }
 
-  ReturnTuple Call_stdout(const S<TypeInstance>& self, const ParamTuple& params, const ValueTuple& args) {
+  ReturnTuple Call_stdout(const S<TypeInstance>& self, const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("SimpleOutput.stdout")
     return ReturnTuple(Var_stdout);
   }
@@ -66,14 +66,14 @@ struct ExtValue_SimpleOutput : public Value_SimpleOutput {
   inline ExtValue_SimpleOutput(S<Type_SimpleOutput> p, const ParamTuple& params, S<Writer> w)
     : Value_SimpleOutput(p, params), writer(w) {}
 
-  ReturnTuple Call_flush(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) {
+  ReturnTuple Call_flush(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("SimpleOutput.flush")
     std::lock_guard<std::mutex> lock(mutex);
     writer->Flush();
     return ReturnTuple();
   }
 
-  ReturnTuple Call_write(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) {
+  ReturnTuple Call_write(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("SimpleOutput.write")
     const S<TypeValue>& Var_arg1 = (args.At(0));
     std::lock_guard<std::mutex> lock(mutex);

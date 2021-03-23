@@ -40,7 +40,7 @@ using VectorType = std::vector<S<TypeValue>>;
 S<TypeValue> CreateValue_Vector(S<Type_Vector> parent, const ParamTuple& params, VectorType values);
 
 struct ExtCategory_Vector : public Category_Vector {
-  ReturnTuple Call_copyFrom(const ParamTuple& params, const ValueTuple& args) {
+  ReturnTuple Call_copyFrom(const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("Vector:copyFrom")
     const S<TypeInstance> Param_y = params.At(0);
     const S<TypeValue>& Var_arg1 = (args.At(0));
@@ -52,13 +52,13 @@ struct ExtCategory_Vector : public Category_Vector {
     return ReturnTuple(CreateValue_Vector(CreateType_Vector(Params<1>::Type(Param_y)), ParamTuple(), values));
   }
 
-  ReturnTuple Call_create(const ParamTuple& params, const ValueTuple& args) {
+  ReturnTuple Call_create(const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("Vector:create")
     const S<TypeInstance> Param_y = params.At(0);
     return ReturnTuple(CreateValue_Vector(CreateType_Vector(Params<1>::Type(Param_y)), ParamTuple(), VectorType()));
   }
 
-  ReturnTuple Call_createSize(const ParamTuple& params, const ValueTuple& args) {
+  ReturnTuple Call_createSize(const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("Vector:createSize")
     const S<TypeInstance> Param_y = params.At(0);
     const PrimInt Var_arg1 = (args.At(0))->AsInt();
@@ -78,7 +78,7 @@ struct ExtValue_Vector : public Value_Vector {
   inline ExtValue_Vector(S<Type_Vector> p, const ParamTuple& params, VectorType v)
     : Value_Vector(p, params), values(std::move(v)) {}
 
-  ReturnTuple Call_append(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) {
+  ReturnTuple Call_append(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("Vector.append")
     std::lock_guard<std::mutex> lock(mutex);
     const S<TypeValue>& Var_arg1 = (args.At(0));
@@ -86,7 +86,7 @@ struct ExtValue_Vector : public Value_Vector {
     return ReturnTuple(Var_self);
   }
 
-  ReturnTuple Call_pop(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) {
+  ReturnTuple Call_pop(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("Vector.pop")
     std::lock_guard<std::mutex> lock(mutex);
     if (values.empty()) {
@@ -97,7 +97,7 @@ struct ExtValue_Vector : public Value_Vector {
     return ReturnTuple(value);
   }
 
-  ReturnTuple Call_push(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) {
+  ReturnTuple Call_push(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("Vector.push")
     std::lock_guard<std::mutex> lock(mutex);
     const S<TypeValue>& Var_arg1 = (args.At(0));
@@ -105,7 +105,7 @@ struct ExtValue_Vector : public Value_Vector {
     return ReturnTuple(Var_self);
   }
 
-  ReturnTuple Call_readAt(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) {
+  ReturnTuple Call_readAt(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("Vector.readAt")
     std::lock_guard<std::mutex> lock(mutex);
     const PrimInt Var_arg1 = (args.At(0))->AsInt();
@@ -115,13 +115,13 @@ struct ExtValue_Vector : public Value_Vector {
     return ReturnTuple(values[Var_arg1]);
   }
 
-  ReturnTuple Call_size(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) {
+  ReturnTuple Call_size(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("Vector.size")
     std::lock_guard<std::mutex> lock(mutex);
     return ReturnTuple(Box_Int(values.size()));
   }
 
-  ReturnTuple Call_writeAt(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) {
+  ReturnTuple Call_writeAt(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("Vector.writeAt")
     std::lock_guard<std::mutex> lock(mutex);
     const PrimInt Var_arg1 = (args.At(0))->AsInt();

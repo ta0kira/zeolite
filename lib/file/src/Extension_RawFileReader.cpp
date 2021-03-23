@@ -33,7 +33,7 @@ struct ExtCategory_RawFileReader : public Category_RawFileReader {
 struct ExtType_RawFileReader : public Type_RawFileReader {
   inline ExtType_RawFileReader(Category_RawFileReader& p, Params<0>::Type params) : Type_RawFileReader(p, params) {}
 
-  ReturnTuple Call_open(const S<TypeInstance>& self, const ParamTuple& params, const ValueTuple& args) {
+  ReturnTuple Call_open(const S<TypeInstance>& self, const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("RawFileReader.open")
     return ReturnTuple(CreateValue_RawFileReader(CreateType_RawFileReader(Params<0>::Type()), ParamTuple(), args));
   }
@@ -45,7 +45,7 @@ struct ExtValue_RawFileReader : public Value_RawFileReader {
       filename(args.At(0)->AsString()),
       file(new std::ifstream(filename, std::ios::in | std::ios::binary)) {}
 
-  ReturnTuple Call_freeResource(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) {
+  ReturnTuple Call_freeResource(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("RawFileReader.freeResource")
     std::lock_guard<std::mutex> lock(mutex);
     if (file) {
@@ -54,7 +54,7 @@ struct ExtValue_RawFileReader : public Value_RawFileReader {
     return ReturnTuple();
   }
 
-  ReturnTuple Call_getFileError(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) {
+  ReturnTuple Call_getFileError(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("RawFileReader.getFileError")
     std::lock_guard<std::mutex> lock(mutex);
     if (!file) {
@@ -69,13 +69,13 @@ struct ExtValue_RawFileReader : public Value_RawFileReader {
     return ReturnTuple(Var_empty);
   }
 
-  ReturnTuple Call_pastEnd(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) {
+  ReturnTuple Call_pastEnd(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("RawFileReader.pastEnd")
     std::lock_guard<std::mutex> lock(mutex);
     return ReturnTuple(Box_Bool(!file || file->fail() || file->eof()));
   }
 
-  ReturnTuple Call_readBlock(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) {
+  ReturnTuple Call_readBlock(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("RawFileReader.readBlock")
     TRACE_CREATION
     std::lock_guard<std::mutex> lock(mutex);
