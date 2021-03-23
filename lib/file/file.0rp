@@ -16,18 +16,24 @@ limitations under the License.
 
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
+// Raw character reading from a file.
 concrete RawFileReader {
   refines PersistentResource
   refines BlockReader<String>
 
+  // Open the file. Check getFileError() to see if there is an error.
   @type open (String) -> (RawFileReader)
+  // Return an error opening or reading the file, if any.
   @value getFileError () -> (optional String)
 }
 
+// Raw character writing to a file.
 concrete RawFileWriter {
   refines PersistentResource
   refines BlockWriter<String>
 
+  // Open the file. Check getFileError() to see if there is an error.
   @type open (String) -> (RawFileWriter)
+  // Return an error opening or writing the file, if any.
   @value getFileError () -> (optional String)
 }

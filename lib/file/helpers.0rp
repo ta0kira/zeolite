@@ -18,6 +18,8 @@ limitations under the License.
 
 $TestsOnly$
 
+// File helpers for use in unit tests.
 concrete FileTesting {
+  // Read the entire file. Crashes if there is an error.
   @type forceReadFile (String) -> (String)
 }
