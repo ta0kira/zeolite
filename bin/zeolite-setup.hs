@@ -22,6 +22,7 @@ import System.Environment
 import System.Exit
 import System.IO
 
+import Base.CompilerError
 import Base.TrackedErrors
 import Cli.CompileOptions
 import Cli.RunCompiler
@@ -61,6 +62,11 @@ libraries = [
     "lib/file",
     "lib/math",
     "tests"
+  ]
+
+optionalLibraries :: [String]
+optionalLibraries = [
+    "lib/thread"
   ]
 
 includePaths :: [String]
@@ -138,4 +144,7 @@ initLibraries (LocalConfig backend resolver) = do
       coMode = CompileRecompileRecursive,
       coForce = ForceAll
     }
-  tryTrackedErrorsIO "Warnings:" "Zeolite setup failed:" $ runCompiler resolver backend options
+  tryTrackedErrorsIO "Warnings:" "Zeolite setup failed:" $ do
+    runCompiler resolver backend options
+    mapM_ optionalWarning optionalLibraries where
+    optionalWarning library = compilerWarningM $ "Optional library " ++ library ++ " must be built manually if needed"

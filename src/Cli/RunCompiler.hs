@@ -111,9 +111,7 @@ runCompiler resolver backend (CompileOptions h _ _ ds _ _ p CompileRecompileRecu
     recursive r da (p2,d0) = do
       isSystem <- isSystemModule r p2 d0
       if isSystem
-         then do
-           compilerWarningM $ "Skipping system dependency " ++ d0 ++ " for " ++ p2 ++ "."
-           return da
+         then return da
          else do
            d <- errorFromIO $ canonicalizePath (p2 </> d0)
            rm <- loadRecompile d
@@ -185,7 +183,7 @@ runCompiler resolver backend (CompileOptions h is is2 ds es ep p m f) = mapM_ co
     isConfigured <- isPathConfigured p d
     when (isConfigured && f == DoNotForce) $ do
       compilerErrorM $ "Module " ++ d ++ " has an existing configuration. " ++
-                      "Recompile with -r or use -f to overwrite the config."
+                       "Recompile with -r or use -f to overwrite the config."
     absolute <- errorFromIO $ canonicalizePath p
     let rm = ModuleConfig {
       mcRoot = absolute,
