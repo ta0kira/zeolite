@@ -27,8 +27,8 @@
   * **[breaking]** Makes `ReadIterator` a `@value interface`.
 
   * **[breaking]** Adds `AutoReadIterator`, `AutoWriteIterator`, and
-    `AutoReadWriteIterator` helpers to create iterators from `ReadAt` and
-    `WriteAt`. (`AutoReadIterator` replaces the previous `ReadIterator`.)
+    `AutoIterator` helpers to create iterators from `ReadAt` and `WriteAt`.
+    (`AutoReadIterator` replaces the previous `ReadIterator`.)
 
   * **[new]** Adds `WriteAt`, `WriteCurrent`, `WriteIterator`, and `Iterator`
     `@value interface`s.

@@ -111,7 +111,7 @@ define AutoWriteIterator {
   }
 }
 
-define AutoReadWriteIterator {
+define AutoIterator {
   @value [ReadAt<#x>&WriteAt<#x>] container
   @value Int position
 
@@ -127,7 +127,7 @@ define AutoReadWriteIterator {
     if (position >= container.size() || container.size() == 0) {
       position2 <- container.size()
     }
-    return AutoReadWriteIterator<#y>{ container, position }
+    return AutoIterator<#y>{ container, position }
   }
 
   readCurrent () {
