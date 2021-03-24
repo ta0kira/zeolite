@@ -51,6 +51,11 @@ limitations under the License.
 }
 
 // A traditional thread.
+//
+// Notes:
+// - If join() or detach() are never explicitly called, the thread will detach
+//   on its own once there are no more references to it. This prevents the
+//   thread holding the last reference from blocking.
 concrete ProcessThread {
   refines Process
   refines Thread
@@ -59,5 +64,28 @@ concrete ProcessThread {
   //
   // Notes:
   // - The thread does not automatically start; call start() when ready.
+  // - If Routine is self and self holds the Thread as a @value member, it
+  //   should be stored as weak Thread to avoid an ownership cycle. The thread
+  //   will automatically become empty once the routine exits.
+  //
+  // Example:
+  //
+  //   concrete MyRoutine {
+  //     @type createAndRun () -> ()
+  //   }
+  //
+  //   define MyRoutine {
+  //     refines Routine
+  //
+  //     @value weak Thread thread
+  //
+  //     createAndRun () {
+  //       return MyRoutine{ ProcessThread.from(self).start() }
+  //     }
+  //
+  //     run () {
+  //       // routine
+  //     }
+  //   }
   @type from (Routine) -> (ProcessThread)
 }
