@@ -1,12 +1,23 @@
 root: "../.."
 path: "lib/thread"
+public_deps: [
+  "lib/util"
+]
 private_deps: [
   "lib/testing"
 ]
 extra_files: [
   category_source {
+    source: "lib/thread/src/Extension_MutexLock.cpp"
+    categories: [MutexLock]
+  }
+  category_source {
     source: "lib/thread/src/Extension_ProcessThread.cpp"
     categories: [ProcessThread]
+  }
+  category_source {
+    source: "lib/thread/src/Extension_SimpleMutex.cpp"
+    categories: [SimpleMutex]
   }
 ]
 mode: incremental {
