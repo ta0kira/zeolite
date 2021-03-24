@@ -33,7 +33,7 @@ struct ExtCategory_RawFileReader : public Category_RawFileReader {
 struct ExtType_RawFileReader : public Type_RawFileReader {
   inline ExtType_RawFileReader(Category_RawFileReader& p, Params<0>::Type params) : Type_RawFileReader(p, params) {}
 
-  ReturnTuple Call_open(const S<TypeInstance>& self, const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_open(const S<TypeInstance>& Param_self, const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("RawFileReader.open")
     return ReturnTuple(CreateValue_RawFileReader(CreateType_RawFileReader(Params<0>::Type()), ParamTuple(), args));
   }

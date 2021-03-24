@@ -73,8 +73,7 @@ procedureDeclaration abstract f = return $ onlyCode func where
       "ReturnTuple " ++ name ++ "(const ParamTuple& params, const ValueTuple& args)"
     | sfScope f == TypeScope =
       "ReturnTuple " ++ name ++
-      -- NOTE: Don't use Var_self, since self isn't accessible to @type functions.
-      "(const S<TypeInstance>& self, const ParamTuple& params, const ValueTuple& args)"
+      "(const S<TypeInstance>& Param_self, const ParamTuple& params, const ValueTuple& args)"
     | sfScope f == ValueScope =
       "ReturnTuple " ++ name ++
       "(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args)"
@@ -132,8 +131,7 @@ compileExecutableProcedure cxxType ctx
         returnType ++ " " ++ prefix ++ name ++ "(const ParamTuple& params, const ValueTuple& args)" ++ final ++ " {"
       | s == TypeScope =
         returnType ++ " " ++ prefix ++ name ++
-        -- NOTE: Don't use Var_self, since self isn't accessible to @type functions.
-        "(const S<TypeInstance>& self, const ParamTuple& params, const ValueTuple& args)" ++ final ++ " {"
+        "(const S<TypeInstance>& Param_self, const ParamTuple& params, const ValueTuple& args)" ++ final ++ " {"
       | s == ValueScope =
         returnType ++ " " ++ prefix ++ name ++
         "(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args)" ++ final ++ " {"
@@ -908,7 +906,7 @@ compileFunctionCall e f (FunctionCall c _ ps es) = message ??> do
     assemble Nothing _ ValueScope ValueScope ps2 es2 =
       return $ callName (sfName f) ++ "(Var_self, " ++ ps2 ++ ", " ++ es2 ++ ")"
     assemble Nothing _ TypeScope TypeScope ps2 es2 =
-      return $ callName (sfName f) ++ "(self, " ++ ps2 ++ ", " ++ es2 ++ ")"
+      return $ callName (sfName f) ++ "(Param_self, " ++ ps2 ++ ", " ++ es2 ++ ")"
     assemble Nothing _ ValueScope TypeScope ps2 es2 =
       return $ typeBase ++ "::Call(parent, " ++ functionName f ++ ", " ++ ps2 ++ ", " ++ es2 ++ ")"
     assemble Nothing scoped _ _ ps2 es2 =
