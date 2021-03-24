@@ -1,6 +1,6 @@
 # Revision history for zeolite-lang
 
-## 0.15.0.0  -- ????-??-??
+## 0.15.0.0  -- 2021-03-24
 
 ### Language
 
@@ -43,7 +43,7 @@
 
   * **[new]** Various `@value interface`s with container usage patterns.
 
-* **[new]** Adds `lib/thread`:
+* **[new]** Adds `lib/thread` (must be built manually):
 
   * **[new]** `ProcessThread`, a basic thread runner.
 
