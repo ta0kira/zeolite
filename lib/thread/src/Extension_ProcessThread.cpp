@@ -83,13 +83,13 @@ struct ExtValue_ProcessThread : public Value_ProcessThread {
     if (isJoinable(thread.get())) {
       FAIL() << "thread is already running";
     } else {
-      const S<TypeValue> routine2 = routine;
       // NOTE: Capture Var_self so that the thread retains a reference while
       // it's still running. This allows the caller to hold a weak reference to
       // the thread.
       thread.reset(new std::thread(
-        [routine2,Var_self] {
-          TypeValue::Call(routine2, Function_Routine_run, ParamTuple(), ArgTuple());
+        [this,Var_self] {
+          TRACE_CREATION
+          TypeValue::Call(routine, Function_Routine_run, ParamTuple(), ArgTuple());
         }));
     }
     return ReturnTuple(Var_self);
@@ -109,6 +109,7 @@ struct ExtValue_ProcessThread : public Value_ProcessThread {
 
   const S<TypeValue> routine;
   S<std::thread> thread;
+  CAPTURE_CREATION
 };
 
 Category_ProcessThread& CreateCategory_ProcessThread() {
