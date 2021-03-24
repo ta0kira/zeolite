@@ -60,7 +60,6 @@ libraries = [
     "lib/container",
     "lib/file",
     "lib/math",
-    "lib/thread",
     "tests"
   ]
 
