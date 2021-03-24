@@ -71,7 +71,7 @@ concrete ProcessThread {
   // Example:
   //
   //   concrete MyRoutine {
-  //     @type createAndRun () -> ()
+  //     @type createAndRun () -> (MyRoutine)
   //   }
   //
   //   define MyRoutine {
@@ -80,11 +80,17 @@ concrete ProcessThread {
   //     @value weak Thread thread
   //
   //     createAndRun () {
-  //       return MyRoutine{ ProcessThread.from(self).start() }
+  //       return (MyRoutine{ empty }).start()
   //     }
   //
   //     run () {
   //       // routine
+  //     }
+  //
+  //     @value start () -> (#self)
+  //     start () {
+  //       thread <- ProcessThread.from(self).start()
+  //       return self
   //     }
   //   }
   @type from (Routine) -> (ProcessThread)
