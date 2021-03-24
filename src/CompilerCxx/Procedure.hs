@@ -674,6 +674,8 @@ compileExpression = compile where
           return (Positional [stringRequiredValue],glueInfix PrimString PrimString e1 o e2)
         | o `Set.member` logical && t1 == boolRequiredValue = do
           return (Positional [boolRequiredValue],glueInfix PrimBool PrimBool e1 o e2)
+        | o == "^" && t1 == boolRequiredValue = do
+          return (Positional [boolRequiredValue],glueInfix PrimBool PrimBool e1 o e2)
         | o == "-" && t1 == charRequiredValue = do
           return (Positional [intRequiredValue],glueInfix PrimChar PrimInt e1 o e2)
         | o `Set.member` equals && t1 == boolRequiredValue = do

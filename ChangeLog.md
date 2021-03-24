@@ -18,6 +18,8 @@
   category `Foo` was indirectly inherited multiple times then the compiler
   would complain about having multiple functions with the same name.
 
+* **[fix]** Adds support for `^` with the `Bool` built-in type.
+
 ### Libraries
 
 * **[breaking]** Refactors iterators in `lib/util`:
@@ -44,6 +46,8 @@
 * **[new]** Adds `lib/thread`:
 
   * **[new]** `ProcessThread`, a basic thread runner.
+
+  * **[new]** `SimpleMutex` and `MutexLock`, for basic mutex logic.
 
   * **[new]** Various `@value interface`s with thread usage patterns.
 
