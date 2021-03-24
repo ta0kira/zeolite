@@ -29,7 +29,7 @@ module Config.LocalConfig (
 import Control.Monad (when)
 import Control.Monad.IO.Class
 import Data.Hashable (hash)
-import Data.List (intercalate,isPrefixOf,isSuffixOf)
+import Data.List (intercalate,isPrefixOf,isSuffixOf,nub)
 import Data.Maybe (isJust)
 import Data.Version (showVersion,versionBranch)
 import GHC.IO.Handle
@@ -92,11 +92,13 @@ instance CompilerBackend Backend where
       macro (n,Just v)  = "-D" ++ n ++ "=" ++ v
       macro (n,Nothing) = "-D" ++ n
   runCxxCommand (UnixBackend cb co _) (CompileToBinary m ss o ps lf) = do
-    let arFiles    = filter (isSuffixOf ".a")       ss
-    let otherFiles = filter (not . isSuffixOf ".a") ss
-    executeProcess cb (co ++ otherOptions ++ m:otherFiles ++ arFiles ++ ["-o", o]) <?? "In linking of " ++ o
-    return o where
-      otherOptions = lf ++ map ("-I" ++) (map normalise ps)
+    let arFiles      = filter (isSuffixOf ".a")       ss
+    let otherFiles   = filter (not . isSuffixOf ".a") ss
+    let otherOptions = map ("-I" ++) (map normalise ps)
+    let flags = nub lf
+    let args = co ++ otherOptions ++ m:otherFiles ++ arFiles ++ ["-o", o] ++ flags
+    executeProcess cb args <?? "In linking of " ++ o
+    return o
   runTestCommand _ (TestCommand b p as) = errorFromIO $ do
     (outF,outH) <- mkstemps "/tmp/ztest_" ".txt"
     (errF,errH) <- mkstemps "/tmp/ztest_" ".txt"
