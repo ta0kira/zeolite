@@ -55,11 +55,9 @@ define Counter {
   }
 
   run () {
-    $ReadOnly[count]$
     scoped {
       Int i <- 0
     } in while (i < count) {
-      $ReadOnly[i]$
       current <- current+1
     } update {
       i <- i+1
