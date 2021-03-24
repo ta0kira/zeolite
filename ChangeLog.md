@@ -41,6 +41,12 @@
 
   * **[new]** Various `@value interface`s with container usage patterns.
 
+* **[new]** Adds `lib/thread`:
+
+  * **[new]** `ProcessThread`, a basic thread runner.
+
+  * **[new]** Various `@value interface`s with thread usage patterns.
+
 ### Compiler CLI
 
 * **[breaking]** Removes implicit dependence of C++ extensions on built-in

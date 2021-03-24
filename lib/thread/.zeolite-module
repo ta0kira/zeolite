@@ -1,0 +1,14 @@
+root: "../.."
+path: "lib/thread"
+private_deps: [
+  "lib/testing"
+]
+extra_files: [
+  category_source {
+    source: "lib/thread/src/Extension_ProcessThread.cpp"
+    categories: [ProcessThread]
+  }
+]
+mode: incremental {
+  link_flags: ["-lpthread"]
+}

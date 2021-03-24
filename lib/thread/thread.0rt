@@ -1,0 +1,139 @@
+/* -----------------------------------------------------------------------------
+Copyright 2021 Kevin P. Barry
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+----------------------------------------------------------------------------- */
+
+// Author: Kevin P. Barry [ta0kira@gmail.com]
+
+testcase "simple Thread test" {
+  success
+}
+
+unittest test {
+  Counter counter <- Counter.create(10000)
+  \ Testing.checkEquals<?>(counter.get(),0)
+  \ counter.start()
+  \ Testing.checkEquals<?>(counter.get(),10000)
+  \ counter.start()
+  \ Testing.checkEquals<?>(counter.get(),20000)
+}
+
+concrete Counter {
+  refines Process
+
+  @type create (Int) -> (Counter)
+  @value get () -> (Int)
+}
+
+define Counter {
+  refines Routine
+
+  @value Int current
+  @value Int count
+  @value weak Thread thread
+
+  create (c) {
+    return Counter{ 0, c, empty }
+  }
+
+  start ()  {
+    // Starting it right away causes the thread function to take a reference to
+    // thread. This means that once it exits, thread will become empty.
+    thread <- ProcessThread.from(self).start()
+    return self
+  }
+
+  run () {
+    $ReadOnly[count]$
+    scoped {
+      Int i <- 0
+    } in while (i < count) {
+      $ReadOnly[i]$
+      current <- current+1
+    } update {
+      i <- i+1
+    }
+  }
+
+  get () {
+    optional Thread thread2 <- strong(thread)
+    if (present(thread2)) {
+      if (!require(thread2).isRunning()) {
+        fail("thread has not been started yet")
+      } else {
+        \ require(thread2).join()
+      }
+    }
+    return current
+  }
+}
+
+
+testcase "join() crashes if Thread not started yet" {
+  crash
+  require "thread.*started"
+}
+
+unittest test {
+  \ ProcessThread.from(NoOpRoutine.create()).join()
+}
+
+
+testcase "join() twice crashes" {
+  crash
+  require "thread.*started"
+}
+
+unittest test {
+  \ ProcessThread.from(NoOpRoutine.create()).join().join()
+}
+
+
+testcase "detach() crashes if Thread not started yet" {
+  crash
+  require "thread.*started"
+}
+
+unittest test {
+  \ ProcessThread.from(NoOpRoutine.create()).detach()
+}
+
+
+testcase "detach() twice crashes" {
+  crash
+  require "thread.*started"
+}
+
+unittest test {
+  \ ProcessThread.from(NoOpRoutine.create()).detach().detach()
+}
+
+
+testcase "weak Thread frees on exit" {
+  success
+}
+
+unittest startAndJoin {
+  weak Thread thread <- ProcessThread.from(NoOpRoutine.create()).start().join()
+  if (present(strong(thread))) {
+    fail("thread is still present")
+  }
+}
+
+unittest notStarted {
+  weak Thread thread <- ProcessThread.from(NoOpRoutine.create())
+  if (present(strong(thread))) {
+    fail("thread is still present")
+  }
+}

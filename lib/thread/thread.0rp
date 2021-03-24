@@ -1,0 +1,63 @@
+/* -----------------------------------------------------------------------------
+Copyright 2021 Kevin P. Barry
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+----------------------------------------------------------------------------- */
+
+// Author: Kevin P. Barry [ta0kira@gmail.com]
+
+// Handle for a separate thread.
+@value interface Thread {
+  // Returns true iff the thread can be detached or joined.
+  //
+  // Notes:
+  // - If isRunning() returns true, a subsequent call to join() or detach()
+  //   should succeed even if the actual thread process exits before then.
+  isRunning () -> (Bool)
+
+  // Blocks the current thread until the Thread exits.
+  //
+  // Notes:
+  // - Check isRunning() before calling. There might be a crash otherwise.
+  join () -> (#self)
+
+  // Disassociates the running thread from this handle.
+  //
+  // Notes:
+  // - Check isRunning() before calling. There might be a crash otherwise.
+  detach () -> (#self)
+}
+
+// An arbitrary routine that need not terminate.
+@value interface Routine {
+  // Run the routine.
+  run () -> ()
+}
+
+// An arbitrary process.
+@value interface Process {
+  // Start the process.
+  start () -> (#self)
+}
+
+// A traditional thread.
+concrete ProcessThread {
+  refines Process
+  refines Thread
+
+  // Create a new thread that runs the routine.
+  //
+  // Notes:
+  // - The thread does not automatically start; call start() when ready.
+  @type from (Routine) -> (ProcessThread)
+}
