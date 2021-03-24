@@ -45,6 +45,7 @@ define TypeMap {
 }
 
 define TypeKey {
+  // TODO: Protect the counter with a mutex.
   @category Int counter <- 0
   @value Int index
 

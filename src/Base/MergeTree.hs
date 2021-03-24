@@ -1,5 +1,5 @@
 {- -----------------------------------------------------------------------------
-Copyright 2020 Kevin P. Barry
+Copyright 2020-2021 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -138,4 +138,4 @@ mergeAllM :: (PreserveMerge a, CollectErrorsM m) => [m a] -> m a
 mergeAllM = fmap mergeAll . collectAllM
 
 matchOnlyLeaf :: (PreserveMerge a, CollectErrorsM m) => a -> m (T a)
-matchOnlyLeaf = reduceMergeTree (const $ compilerErrorM "") (const $ compilerErrorM "") return
+matchOnlyLeaf = reduceMergeTree (const emptyErrorM) (const emptyErrorM) return

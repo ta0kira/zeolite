@@ -57,15 +57,15 @@ instance Show FunctionType where
 validatateFunctionType :: (CollectErrorsM m, TypeResolver r) =>
   r -> ParamFilters -> ParamVariances -> FunctionType -> m ()
 validatateFunctionType r fm vm (FunctionType as rs ps fa) = do
-  mapErrorsM_ checkCount $ group $ sort $ pValues ps
-  mapErrorsM_ checkHides $ pValues ps
+  mapCompilerM_ checkCount $ group $ sort $ pValues ps
+  mapCompilerM_ checkHides $ pValues ps
   paired <- processPairs alwaysPair ps fa
   let allFilters = Map.union fm (Map.fromList paired)
   expanded <- fmap concat $ processPairs (\n fs -> return $ zip (repeat n) fs) ps fa
-  mapErrorsM_ (checkFilterType allFilters) expanded
-  mapErrorsM_ checkFilterVariance expanded
-  mapErrorsM_ (checkArg allFilters) $ pValues as
-  mapErrorsM_ (checkReturn allFilters) $ pValues rs
+  mapCompilerM_ (checkFilterType allFilters) expanded
+  mapCompilerM_ checkFilterVariance expanded
+  mapCompilerM_ (checkArg allFilters) $ pValues as
+  mapCompilerM_ (checkReturn allFilters) $ pValues rs
   where
     allVariances = Map.union vm (Map.fromList $ zip (pValues ps) (repeat Invariant))
     checkCount xa@(x:_:_) =
@@ -98,18 +98,18 @@ assignFunctionParams :: (CollectErrorsM m, TypeResolver r) =>
   r -> ParamFilters -> ParamValues -> Positional GeneralInstance ->
   FunctionType -> m FunctionType
 assignFunctionParams r fm pm ts (FunctionType as rs ps fa) = do
-  mapErrorsM_ (validateGeneralInstance r fm) $ pValues ts
+  mapCompilerM_ (validateGeneralInstance r fm) $ pValues ts
   assigned <- fmap Map.fromList $ processPairs alwaysPair ps ts
   let pa = pm `Map.union` assigned
-  fa' <- fmap Positional $ mapErrorsM (assignFilters pa) (pValues fa)
+  fa' <- fmap Positional $ mapCompilerM (assignFilters pa) (pValues fa)
   processPairs_ (validateAssignment r fm) ts fa'
   as' <- fmap Positional $
-         mapErrorsM (uncheckedSubValueType $ getValueForParam pa) (pValues as)
+         mapCompilerM (uncheckedSubValueType $ getValueForParam pa) (pValues as)
   rs' <- fmap Positional $
-         mapErrorsM (uncheckedSubValueType $ getValueForParam pa) (pValues rs)
+         mapCompilerM (uncheckedSubValueType $ getValueForParam pa) (pValues rs)
   return $ FunctionType as' rs' (Positional []) (Positional [])
   where
-    assignFilters fm2 fs = mapErrorsM (uncheckedSubFilter $ getValueForParam fm2) fs
+    assignFilters fm2 fs = mapCompilerM (uncheckedSubFilter $ getValueForParam fm2) fs
 
 checkFunctionConvert :: (CollectErrorsM m, TypeResolver r) =>
   r -> ParamFilters -> ParamValues -> FunctionType -> FunctionType -> m ()

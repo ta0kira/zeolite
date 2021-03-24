@@ -60,7 +60,7 @@ runSingleTest b cm p paths deps (f,s) = do
         return ((0,1),ts >> return ())
       | otherwise = do
           let (_,ts') = getCompilerSuccess ts
-          allResults <- mapErrorsM runSingle ts'
+          allResults <- mapCompilerM runSingle ts'
           let passed = sum $ map (fst . fst) allResults
           let failed = sum $ map (snd . fst) allResults
           let result = collectAllM_ $ map snd allResults
@@ -116,23 +116,23 @@ runSingleTest b cm p paths deps (f,s) = do
       let ce = checkExcluded es comp err out
       let compError = if null comp
                          then return ()
-                         else (mapErrorsM_ compilerErrorM comp) <?? "\nOutput from compiler:"
+                         else (mapCompilerM_ compilerErrorM comp) <?? "\nOutput from compiler:"
       let errError = if null err
                         then return ()
-                        else (mapErrorsM_ compilerErrorM err) <?? "\nOutput to stderr from test:"
+                        else (mapCompilerM_ compilerErrorM err) <?? "\nOutput to stderr from test:"
       let outError = if null out
                         then return ()
-                        else (mapErrorsM_ compilerErrorM out) <?? "\nOutput to stdout from test:"
+                        else (mapCompilerM_ compilerErrorM out) <?? "\nOutput to stdout from test:"
       if isCompilerError cr || isCompilerError ce
          then collectAllM_ [cr,ce,compError,errError,outError]
          else collectAllM_ [cr,ce]
 
     uniqueTestNames ts = do
       let ts' = Map.fromListWith (++) $ map (\t -> (tpName t,[t])) ts
-      mapErrorsM_ testClash $ Map.toList ts'
+      mapCompilerM_ testClash $ Map.toList ts'
     testClash (_,[_]) = return ()
     testClash (n,ts) = "unittest " ++ show n ++ " is defined multiple times" !!>
-      (mapErrorsM_ (compilerErrorM . ("Defined at " ++) . formatFullContext) $ sort $ map tpContext ts)
+      (mapCompilerM_ (compilerErrorM . ("Defined at " ++) . formatFullContext) $ sort $ map tpContext ts)
 
     execute s2 rs es args cs ds ts = do
       let result = compileAll args cs ds ts
@@ -166,8 +166,8 @@ runSingleTest b cm p paths deps (f,s) = do
       let cs' = map (setCategoryNamespace ns1) cs
       compileTestsModule cm ns1 args cs' ds ts
 
-    checkRequired rs comp err out = mapErrorsM_ (checkSubsetForRegex True  comp err out) rs
-    checkExcluded es comp err out = mapErrorsM_ (checkSubsetForRegex False comp err out) es
+    checkRequired rs comp err out = mapCompilerM_ (checkSubsetForRegex True  comp err out) rs
+    checkExcluded es comp err out = mapCompilerM_ (checkSubsetForRegex False comp err out) es
     checkSubsetForRegex expected comp err out (OutputPattern OutputAny r) =
       checkForRegex expected (comp ++ err ++ out) r "compiler output or test output"
     checkSubsetForRegex expected comp _ _ (OutputPattern OutputCompiler r) =
@@ -184,7 +184,7 @@ runSingleTest b cm p paths deps (f,s) = do
     createBinary (CxxOutput _ f2 _ ns req content) xx = do
       dir <- errorFromIO $ mkdtemp "/tmp/ztest_"
       errorFromIO $ hPutStrLn stderr $ "Writing temporary files to " ++ dir
-      sources <- mapErrorsM (writeSingleFile dir) xx
+      sources <- mapCompilerM (writeSingleFile dir) xx
       -- TODO: Cache CompileMetadata here for debugging failures.
       let sources' = resolveObjectDeps deps p dir sources
       let main   = dir </> f2

@@ -79,11 +79,11 @@ getProcedureScopes ta em (DefinedCategory c n pi _ _ fi ms ps fs) = do
   checkInternalParams pi fi (getCategoryParams t) (Map.elems fa) r fm
   pa <- pairProceduresToFunctions fa ps
   let (cp,tp,vp) = partitionByScope (sfScope . fst) pa
-  tp' <- mapErrorsM (firstM $ replaceSelfFunction (instanceFromCategory t)) tp
-  vp' <- mapErrorsM (firstM $ replaceSelfFunction (instanceFromCategory t)) vp
+  tp' <- mapCompilerM (firstM $ replaceSelfFunction (instanceFromCategory t)) tp
+  vp' <- mapCompilerM (firstM $ replaceSelfFunction (instanceFromCategory t)) vp
   let (cm,tm,vm) = partitionByScope dmScope ms
-  tm' <- mapErrorsM (replaceSelfMember (instanceFromCategory t)) tm
-  vm' <- mapErrorsM (replaceSelfMember (instanceFromCategory t)) vm
+  tm' <- mapCompilerM (replaceSelfMember (instanceFromCategory t)) tm
+  vm' <- mapCompilerM (replaceSelfMember (instanceFromCategory t)) vm
   let cm0 = builtins typeInstance CategoryScope
   let tm0 = builtins typeInstance TypeScope
   let vm0 = builtins typeInstance ValueScope
@@ -104,15 +104,15 @@ getProcedureScopes ta em (DefinedCategory c n pi _ _ fi ms ps fs) = do
     builtins t s0 = Map.filter ((<= s0) . vvScope) $ builtinVariables t
     checkInternalParams pi2 fi2 pe fs2 r fa = do
       let pm = Map.fromList $ map (\p -> (vpParam p,vpContext p)) pi2
-      mapErrorsM_ (checkFunction pm) fs2
-      mapErrorsM_ (checkParam pm) pe
+      mapCompilerM_ (checkFunction pm) fs2
+      mapCompilerM_ (checkParam pm) pe
       fa' <- fmap (Map.union fa) $ getFilterMap pi2 fi2
-      mapErrorsM_ (checkFilter r fa') fi2
+      mapCompilerM_ (checkFilter r fa') fi2
     checkFilter r fa (ParamFilter c2 n2 f) =
       validateTypeFilter r fa f <?? "In " ++ show n2 ++ " " ++ show f ++ formatFullContextBrace c2
     checkFunction pm f =
       when (sfScope f == ValueScope) $
-        mapErrorsM_ (checkParam pm) $ pValues $ sfParams f
+        mapCompilerM_ (checkParam pm) $ pValues $ sfParams f
     checkParam pm p =
       case vpParam p `Map.lookup` pm of
            Nothing -> return ()

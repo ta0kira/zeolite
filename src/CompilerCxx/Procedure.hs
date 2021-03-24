@@ -226,7 +226,7 @@ compileStatement (ExplicitReturn c es) = do
       autoPositionalCleanup c e
     -- Multi-expression => must all be singles.
     getReturn rs = do
-      lift (mapErrorsM_ checkArity $ zip ([0..] :: [Int]) $ map (fst . snd) rs) <??
+      lift (mapCompilerM_ checkArity $ zip ([0..] :: [Int]) $ map (fst . snd) rs) <??
         ("In return at " ++ formatFullContext c)
       csRegisterReturn c $ Just $ Positional $ map (head . pValues . fst . snd) rs
       let e = OpaqueMulti $ "ReturnTuple(" ++ intercalate "," (map (useAsUnwrapped . snd . snd) rs) ++ ")"
@@ -438,7 +438,7 @@ compileScopedBlock :: (Ord c, Show c, CollectErrorsM m,
 compileScopedBlock s@(ScopedBlock _ _ _ c2 _) = do
   let (vs,p,cl,st) = rewriteScoped s
   self <- autoSelfType
-  vs' <- lift $ mapErrorsM (replaceSelfVariable self) vs
+  vs' <- lift $ mapCompilerM (replaceSelfVariable self) vs
   -- Capture context so we can discard scoped variable names.
   ctx0 <- getCleanContext
   r <- csResolver
@@ -608,7 +608,7 @@ compileExpression = compile where
       getValues [(Positional ts,e)] = return (ts,useAsArgs e)
       -- Multi-expression => must all be singles.
       getValues rs = do
-        (mapErrorsM_ checkArity $ zip ([0..] :: [Int]) $ map fst rs) <??
+        (mapCompilerM_ checkArity $ zip ([0..] :: [Int]) $ map fst rs) <??
           "In return at " ++ formatFullContext c
         return (map (head . pValues . fst) rs,
                 "ArgTuple(" ++ intercalate ", " (map (useAsUnwrapped . snd) rs) ++ ")")
@@ -793,7 +793,7 @@ compileExpressionStart (BuiltinCall c (FunctionCall _ BuiltinReduce ps es)) = do
   let (Positional [t0],e) = head es'
   self <- autoSelfType
   ps' <- lift $ disallowInferred ps
-  [t1,t2] <- lift $ mapErrorsM (replaceSelfInstance self) ps'
+  [t1,t2] <- lift $ mapCompilerM (replaceSelfInstance self) ps'
   r <- csResolver
   fa <- csAllFilters
   lift $ validateGeneralInstance r fa t1
@@ -841,7 +841,7 @@ compileExpressionStart (BuiltinCall c (FunctionCall _ BuiltinTypename ps es)) = 
     compilerErrorM $ "Expected 0 arguments" ++ formatFullContextBrace c
   self <- autoSelfType
   ps' <- lift $ disallowInferred ps
-  [t] <- lift $ mapErrorsM (replaceSelfInstance self) ps'
+  [t] <- lift $ mapCompilerM (replaceSelfInstance self) ps'
   r <- csResolver
   fa <- csAllFilters
   lift $ validateGeneralInstance r fa t
@@ -865,7 +865,7 @@ compileExpressionStart (InlineAssignment c n e) = do
                                                      " = " ++ writeStoredVariable t0 e' ++ ")")
 
 disallowInferred :: (Ord c, Show c, CollectErrorsM m) => Positional (InstanceOrInferred c) -> m [GeneralInstance]
-disallowInferred = mapErrorsM disallow . pValues where
+disallowInferred = mapCompilerM disallow . pValues where
   disallow (AssignedInstance _ t) = return t
   disallow (InferredInstance c) =
     compilerErrorM $ "Type inference is not allowed in reduce calls" ++ formatFullContextBrace c
@@ -880,9 +880,9 @@ compileFunctionCall e f (FunctionCall c _ ps es) = message ??> do
   es' <- sequence $ map compileExpression $ pValues es
   (ts,es'') <- lift $ getValues es'
   self <- autoSelfType
-  ps' <- lift $ fmap Positional $ mapErrorsM (replaceSelfParam self) $ pValues ps
+  ps' <- lift $ fmap Positional $ mapCompilerM (replaceSelfParam self) $ pValues ps
   ps2 <- lift $ guessParamsFromArgs r fa f ps' (Positional ts)
-  lift $ mapErrorsM_ backgroundMessage $ zip3 (map vpParam $ pValues $ sfParams f) (pValues ps') (pValues ps2)
+  lift $ mapCompilerM_ backgroundMessage $ zip3 (map vpParam $ pValues $ sfParams f) (pValues ps') (pValues ps2)
   f' <- lift $ parsedToFunctionType f
   f'' <- lift $ assignFunctionParams r fa Map.empty ps2 f'
   -- Called an extra time so arg count mismatches have reasonable errors.
@@ -924,7 +924,7 @@ compileFunctionCall e f (FunctionCall c _ ps es) = message ??> do
     getValues [(Positional ts,e2)] = return (ts,useAsArgs e2)
     -- Multi-expression => must all be singles.
     getValues rs = do
-      (mapErrorsM_ checkArity $ zip ([0..] :: [Int]) $ map fst rs) <??
+      (mapCompilerM_ checkArity $ zip ([0..] :: [Int]) $ map fst rs) <??
         "In return at " ++ formatFullContext c
       return (map (head . pValues . fst) rs, "ArgTuple(" ++ intercalate ", " (map (useAsUnwrapped . snd) rs) ++ ")")
     checkArity (_,Positional [_]) = return ()
@@ -943,7 +943,7 @@ guessParamsFromArgs r fa f ps ts = do
   gs <- inferParamTypes r fa pa args
   gs' <- mergeInferredTypes r fa fm pa gs
   let pa3 = guessesAsParams gs' `Map.union` pa
-  fmap Positional $ mapErrorsM (subPosition pa3) (pValues $ sfParams f) where
+  fmap Positional $ mapCompilerM (subPosition pa3) (pValues $ sfParams f) where
     subPosition pa2 p =
       case (vpParam p) `Map.lookup` pa2 of
            Just t  -> return t

@@ -86,8 +86,8 @@ data LoadedTests =
 
 compileModule :: (PathIOHandler r, CompilerBackend b) => r -> b -> ModuleSpec -> TrackedErrorsIO ()
 compileModule resolver backend (ModuleSpec p d em is is2 ps xs ts es ep m f) = do
-  as  <- fmap fixPaths $ mapErrorsM (resolveModule resolver (p </> d)) is
-  as2 <- fmap fixPaths $ mapErrorsM (resolveModule resolver (p </> d)) is2
+  as  <- fmap fixPaths $ mapCompilerM (resolveModule resolver (p </> d)) is
+  as2 <- fmap fixPaths $ mapCompilerM (resolveModule resolver (p </> d)) is2
   let ca0 = Map.empty
   deps1 <- loadPublicDeps compilerHash f ca0 as
   let ca1 = ca0 `Map.union` mapMetadata deps1
@@ -117,7 +117,7 @@ compileModule resolver backend (ModuleSpec p d em is is2 ps xs ts es ep m f) = d
   let pc = map (getCategoryName . wvData) $ filter (not . hasCodeVisibility ModuleOnly) cs2
   let tc = map (getCategoryName . wvData) $ filter (hasCodeVisibility ModuleOnly)       cs2
   let dc = map (getCategoryName . wvData) $ filter (hasCodeVisibility FromDependency) $ filter (not . hasCodeVisibility ModuleOnly) cs
-  xa <- mapErrorsM (loadPrivateSource resolver compilerHash p) xs
+  xa <- mapCompilerM (loadPrivateSource resolver compilerHash p) xs
   fs <- compileLanguageModule cm xa
   mf <- maybeCreateMain cm xa m
   eraseCachedData (p </> d)
@@ -131,12 +131,12 @@ compileModule resolver backend (ModuleSpec p d em is is2 ps xs ts es ep m f) = d
   let paths2 = base:s0:s1:(getIncludePathsForDeps (deps1' ++ deps2)) ++ ep' ++ paths'
   let hxx   = filter (isSuffixOf ".hpp" . coFilename)       fs
   let other = filter (not . isSuffixOf ".hpp" . coFilename) fs
-  os1 <- mapErrorsM (writeOutputFile paths2) $ hxx ++ other
+  os1 <- mapCompilerM (writeOutputFile paths2) $ hxx ++ other
   let files = map (\f2 -> getCachedPath (p </> d) (show $ coNamespace f2) (coFilename f2)) fs ++
               map (\f2 -> p </> getSourceFile f2) es
-  files' <- mapErrorsM checkOwnedFile files
+  files' <- mapCompilerM checkOwnedFile files
   let ca = Map.fromList $ map (\c -> (getCategoryName c,getCategoryNamespace c)) $ map wvData cs2
-  os2 <- fmap concat $ mapErrorsM (compileExtraSource (ns0,ns1) ca paths2) es
+  os2 <- fmap concat $ mapCompilerM (compileExtraSource (ns0,ns1) ca paths2) es
   let (hxx',cxx,os') = sortCompiledFiles files'
   let (osCat,osOther) = partitionEithers os2
   let os1' = resolveObjectDeps (deps1' ++ deps2) path path (os1 ++ osCat)
@@ -270,15 +270,15 @@ createModuleTemplates resolver p d deps1 deps2 = do
   (LanguageModule _ _ _ cs0 ps0 ts0 cs1 ps1 ts1 _ _ _) <-
     fmap (createLanguageModule [] [] Map.empty) $ loadModuleGlobals resolver p (PublicNamespace,PrivateNamespace) ps Nothing deps1 deps2
   xs' <- zipWithContents resolver p xs
-  ds <- mapErrorsM parseInternalSource xs'
+  ds <- mapCompilerM parseInternalSource xs'
   let ds2 = concat $ map (\(_,_,d2) -> d2) ds
   tm <- foldM includeNewTypes defaultCategories [cs0,cs1,ps0,ps1,ts0,ts1]
   let cs = filter isValueConcrete $ cs1++ps1++ts1
   let ca = Set.fromList $ map getCategoryName $ filter isValueConcrete cs
   let ca' = foldr Set.delete ca $ map dcName ds2
   let testingCats = Set.fromList $ map getCategoryName ts1
-  ts <- fmap concat $ mapErrorsM (\n -> generate (n `Set.member` testingCats) tm n) $ Set.toList ca'
-  mapErrorsM_ writeTemplate ts where
+  ts <- fmap concat $ mapCompilerM (\n -> generate (n `Set.member` testingCats) tm n) $ Set.toList ca'
+  mapCompilerM_ writeTemplate ts where
     generate testing tm n = do
       (_,t) <- getConcreteCategory tm ([],n)
       let ctx = FileContext testing tm Set.empty Map.empty
@@ -296,11 +296,11 @@ runModuleTests :: (PathIOHandler r, CompilerBackend b) => r -> b -> FilePath ->
   [FilePath] -> LoadedTests -> TrackedErrorsIO [((Int,Int),TrackedErrors ())]
 runModuleTests resolver backend base tp (LoadedTests p d m em deps1 deps2) = do
   let paths = base:(cmPublicSubdirs m ++ cmPrivateSubdirs m ++ getIncludePathsForDeps deps1)
-  mapErrorsM_ showSkipped $ filter (not . isTestAllowed) $ cmTestFiles m
+  mapCompilerM_ showSkipped $ filter (not . isTestAllowed) $ cmTestFiles m
   ts' <- zipWithContents resolver p $ map (d </>) $ filter isTestAllowed $ cmTestFiles m
   path <- errorFromIO $ canonicalizePath (p </> d)
   cm <- fmap (createLanguageModule [] [] em) $ loadModuleGlobals resolver path (NoNamespace,NoNamespace) [] (Just m) deps1 []
-  mapErrorsM (runSingleTest backend cm path paths (m:deps2)) ts' where
+  mapCompilerM (runSingleTest backend cm path paths (m:deps2)) ts' where
     allowTests = Set.fromList tp
     isTestAllowed t = if null allowTests then True else t `Set.member` allowTests
     showSkipped f = compilerWarningM $ "Skipping tests in " ++ f ++ " due to explicit test filter."
@@ -340,7 +340,7 @@ createLanguageModule ex ss em cs = lm where
 
 warnPublic :: PathIOHandler r => r -> FilePath -> [CategoryName] ->
   [CategoryName] -> [ObjectFile] -> [FilePath] -> TrackedErrorsIO ()
-warnPublic resolver p pc dc os = mapErrorsM_ checkPublic where
+warnPublic resolver p pc dc os = mapCompilerM_ checkPublic where
   checkPublic d = do
     d2 <- resolveModule resolver p d
     when (not $ d2 `Set.member` neededPublic) $ compilerWarningM $ "Dependency \"" ++ d ++ "\" does not need to be public"

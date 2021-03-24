@@ -86,16 +86,16 @@ readMulti f s = runTextParser (between optionalSpace endOfDoc (sepBy sourceParse
 
 parseFilterMap :: [(String,[String])] -> TrackedErrors ParamFilters
 parseFilterMap pa = do
-  pa2 <- mapErrorsM parseFilters pa
+  pa2 <- mapCompilerM parseFilters pa
   return $ Map.fromList pa2
   where
     parseFilters (n,fs) = do
-      fs2 <- mapErrorsM (readSingle "(string)") fs
+      fs2 <- mapCompilerM (readSingle "(string)") fs
       return (ParamName n,fs2)
 
 parseTheTest :: ParseFromSource a => [(String,[String])] -> [String] -> TrackedErrors ([a],ParamFilters)
 parseTheTest pa xs = do
-  ts <- mapErrorsM (readSingle "(string)") xs
+  ts <- mapCompilerM (readSingle "(string)") xs
   pa2 <- parseFilterMap pa
   return (ts,pa2)
 
@@ -149,7 +149,7 @@ containsExactly actual expected = do
 
 containsNoDuplicates :: (Ord a, Show a) => [a] -> TrackedErrors ()
 containsNoDuplicates expected =
-  (mapErrorsM_ checkSingle $ group $ sort expected) <!! show expected
+  (mapCompilerM_ checkSingle $ group $ sort expected) <!! show expected
   where
     checkSingle xa@(x:_:_) =
       compilerErrorM $ "Item " ++ show x ++ " occurs " ++ show (length xa) ++ " times"
@@ -157,7 +157,7 @@ containsNoDuplicates expected =
 
 containsAtLeast :: (Ord a, Show a) => [a] -> [a] -> TrackedErrors ()
 containsAtLeast actual expected =
-  (mapErrorsM_ (checkInActual $ Set.fromList actual) expected) <!!
+  (mapCompilerM_ (checkInActual $ Set.fromList actual) expected) <!!
         show actual ++ " (actual) vs. " ++ show expected ++ " (expected)"
   where
     checkInActual va v =
@@ -167,7 +167,7 @@ containsAtLeast actual expected =
 
 containsAtMost :: (Ord a, Show a) => [a] -> [a] -> TrackedErrors ()
 containsAtMost actual expected =
-  (mapErrorsM_ (checkInExpected $ Set.fromList expected) actual) <!!
+  (mapCompilerM_ (checkInExpected $ Set.fromList expected) actual) <!!
         show actual ++ " (actual) vs. " ++ show expected ++ " (expected)"
   where
     checkInExpected va v =

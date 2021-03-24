@@ -83,9 +83,9 @@ compileLanguageModule (LanguageModule ns0 ns1 ns2 cs0 ps0 ts0 cs1 ps1 ts1 ex ss 
     map (generateNativeInterface False) (onlyNativeInterfaces cs1) ++
     map (generateNativeInterface False) (onlyNativeInterfaces ps1) ++
     map (generateNativeInterface True)  (onlyNativeInterfaces ts1)
-  xxPrivate <- fmap concat $ mapErrorsM (compilePrivate (tmPrivate,nsPrivate) (tmTesting,nsTesting)) xa
-  xxStreamlined <- fmap concat $ mapErrorsM (streamlined tmTesting) $ nub ss
-  xxVerbose <- fmap concat $ mapErrorsM (verbose tmTesting) $ nub ex
+  xxPrivate <- fmap concat $ mapCompilerM (compilePrivate (tmPrivate,nsPrivate) (tmTesting,nsTesting)) xa
+  xxStreamlined <- fmap concat $ mapCompilerM (streamlined tmTesting) $ nub ss
+  xxVerbose <- fmap concat $ mapCompilerM (verbose tmTesting) $ nub ex
   let allFiles = xxInterfaces ++ xxPrivate ++ xxStreamlined ++ xxVerbose
   noDuplicateFiles $ map (\f -> (coFilename f,coNamespace f)) allFiles
   return allFiles where
@@ -114,8 +114,8 @@ compileLanguageModule (LanguageModule ns0 ns1 ns2 cs0 ps0 ts0 cs1 ps1 ts1 ex ss 
       when testing $ checkTests ds (cs1 ++ ps1)
       let dm = mapDefByName ds
       checkDefined dm Set.empty $ filter isValueConcrete cs2
-      xxInterfaces <- fmap concat $ mapErrorsM (generateNativeInterface testing) (filter (not . isValueConcrete) cs2)
-      xxConcrete   <- fmap concat $ mapErrorsM (generateConcrete cs ctx) ds
+      xxInterfaces <- fmap concat $ mapCompilerM (generateNativeInterface testing) (filter (not . isValueConcrete) cs2)
+      xxConcrete   <- fmap concat $ mapCompilerM (generateConcrete cs ctx) ds
       return $ xxInterfaces ++ xxConcrete
     generateConcrete cs (FileContext testing tm ns em2) d = do
       tm' <- mergeInternalInheritance tm d
@@ -127,7 +127,7 @@ compileLanguageModule (LanguageModule ns0 ns1 ns2 cs0 ps0 ts0 cs1 ps1 ts1 ex ss 
       fmap snd $ getConcreteCategory tm (dcContext d,dcName d)
     mapDefByName = Map.fromListWith (++) . map (\d -> (dcName d,[d]))
     ca = Set.fromList $ map getCategoryName $ filter isValueConcrete (cs1 ++ ps1 ++ ts1)
-    checkLocals ds tm = mapErrorsM_ (\d -> checkLocal tm (dcContext d) (dcName d)) ds
+    checkLocals ds tm = mapCompilerM_ (\d -> checkLocal tm (dcContext d) (dcName d)) ds
     checkLocal cs2 c n =
       when (not $ n `Set.member` cs2) $
         compilerErrorM ("Category " ++ show n ++
@@ -135,7 +135,7 @@ compileLanguageModule (LanguageModule ns0 ns1 ns2 cs0 ps0 ts0 cs1 ps1 ts1 ex ss 
                         " does not correspond to a visible category in this module")
     checkTests ds ps = do
       let pa = Map.fromList $ map (\c -> (getCategoryName c,getCategoryContext c)) $ filter isValueConcrete ps
-      mapErrorsM_ (checkTest pa) ds
+      mapCompilerM_ (checkTest pa) ds
     checkTest pa d =
       case dcName d `Map.lookup` pa of
            Nothing -> return ()
@@ -143,7 +143,7 @@ compileLanguageModule (LanguageModule ns0 ns1 ns2 cs0 ps0 ts0 cs1 ps1 ts1 ex ss 
              compilerErrorM ("Category " ++ show (dcName d) ++
                             formatFullContextBrace (dcContext d) ++
                             " was not declared as $TestsOnly$" ++ formatFullContextBrace c)
-    checkDefined dm ext = mapErrorsM_ (checkSingle dm ext)
+    checkDefined dm ext = mapCompilerM_ (checkSingle dm ext)
     checkSingle dm ext t =
       case (getCategoryName t `Set.member` ext,getCategoryName t `Map.lookup` dm) of
            (False,Just [_]) -> return ()
@@ -160,7 +160,7 @@ compileLanguageModule (LanguageModule ns0 ns1 ns2 cs0 ps0 ts0 cs1 ps1 ts1 ex ss 
              ("Category " ++ show (getCategoryName t) ++
               formatFullContextBrace (getCategoryContext t) ++
               " is defined " ++ show (length ds) ++ " times") !!>
-                mapErrorsM_ (\d -> compilerErrorM $ "Defined at " ++ formatFullContext (dcContext d)) ds
+                mapCompilerM_ (\d -> compilerErrorM $ "Defined at " ++ formatFullContext (dcContext d)) ds
     checkSupefluous es2
       | null es2 = return ()
       | otherwise = compilerErrorM $ "External categories either not concrete or not present: " ++
@@ -212,4 +212,4 @@ compileModuleMain (LanguageModule ns0 ns1 ns2 cs0 ps0 _ cs1 ps1 _ _ _ em) xa n f
     reconcile []  = compilerErrorM $ "No matches for main category " ++ show n ++ " ($TestsOnly$ sources excluded)"
     reconcile ds  =
       "Multiple matches for main category " ++ show n !!>
-        mapErrorsM_ (\d -> compilerErrorM $ "Defined at " ++ formatFullContext (dcContext d)) ds
+        mapCompilerM_ (\d -> compilerErrorM $ "Defined at " ++ formatFullContext (dcContext d)) ds

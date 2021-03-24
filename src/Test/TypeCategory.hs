@@ -1220,7 +1220,7 @@ checkPaired f actual expected
   | length actual /= length expected =
     compilerErrorM $ "Different item counts: " ++ show actual ++ " (actual) vs. " ++
                    show expected ++ " (expected)"
-  | otherwise = mapErrorsM_ check (zip3 actual expected ([1..] :: [Int])) where
+  | otherwise = mapCompilerM_ check (zip3 actual expected ([1..] :: [Int])) where
     check (a,e,n) = f a e <!! "Item " ++ show n ++ " mismatch"
 
 containsPaired :: (Eq a, Show a) => [a] -> [a] -> TrackedErrors ()
@@ -1312,10 +1312,10 @@ checkInferenceCommon check tm pa is ts gs = checked <!! context where
   checked = do
     let r = CategoryResolver tm
     pa2 <- parseFilterMap pa
-    ia2 <- fmap Map.fromList $ mapErrorsM readInferred is
-    ts2 <- mapErrorsM (parsePair ia2 Covariant) ts
+    ia2 <- fmap Map.fromList $ mapCompilerM readInferred is
+    ts2 <- mapCompilerM (parsePair ia2 Covariant) ts
     let ka = Map.keysSet ia2
-    gs' <- mapErrorsM parseGuess gs
+    gs' <- mapCompilerM parseGuess gs
     let f  = Map.filterWithKey (\k _ -> not $ k `Set.member` ka) pa2
     let ff = Map.filterWithKey (\k _ -> k `Set.member` ka) pa2
     gs2 <- inferParamTypes r f ia2 ts2

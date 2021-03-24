@@ -44,10 +44,10 @@ runCompiler resolver backend (CompileOptions _ _ _ ds _ _ p (ExecuteTests tp) f)
   base <- resolveBaseModule resolver
   ts <- fmap snd $ foldM (preloadTests base) (Map.empty,[]) ds
   checkTestFilters ts
-  allResults <- fmap concat $ mapErrorsM (runModuleTests resolver backend base tp) ts
+  allResults <- fmap concat $ mapCompilerM (runModuleTests resolver backend base tp) ts
   let passed = sum $ map (fst . fst) allResults
   let failed = sum $ map (snd . fst) allResults
-  processResults passed failed (mapErrorsM_ snd allResults) where
+  processResults passed failed (mapCompilerM_ snd allResults) where
     compilerHash = getCompilerHash backend
     preloadTests base (ca,ms) d = do
       m <- loadModuleMetadata compilerHash f ca (p </> d)
@@ -126,7 +126,7 @@ runCompiler resolver backend (CompileOptions h _ _ ds _ _ p CompileRecompileRecu
                  return da'
 
 runCompiler resolver backend (CompileOptions _ _ _ ds _ _ p CompileRecompile f) = do
-  mapErrorsM_ recompileSingle ds where
+  mapCompilerM_ recompileSingle ds where
     compilerHash = getCompilerHash backend
     recompileSingle d0 = do
       d <- errorFromIO $ canonicalizePath (p </> d0)
@@ -163,8 +163,8 @@ runCompiler resolver backend (CompileOptions _ is is2 ds _ _ p CreateTemplates f
     d' <- errorFromIO $ canonicalizePath (p </> d)
     (is',is2') <- maybeUseConfig d'
     base <- resolveBaseModule resolver
-    as  <- fmap fixPaths $ mapErrorsM (resolveModule resolver d') is'
-    as2 <- fmap fixPaths $ mapErrorsM (resolveModule resolver d') is2'
+    as  <- fmap fixPaths $ mapCompilerM (resolveModule resolver d') is'
+    as2 <- fmap fixPaths $ mapCompilerM (resolveModule resolver d') is2'
     deps1 <- loadPublicDeps compilerHash f Map.empty (base:as)
     deps2 <- loadPublicDeps compilerHash f (mapMetadata deps1) as2
     path <- errorFromIO $ canonicalizePath p
@@ -180,8 +180,8 @@ runCompiler resolver backend (CompileOptions _ is is2 ds _ _ p CreateTemplates f
 
 runCompiler resolver backend (CompileOptions h is is2 ds es ep p m f) = mapM_ compileSingle ds where
   compileSingle d = do
-    as  <- fmap fixPaths $ mapErrorsM (resolveModule resolver (p </> d)) is
-    as2 <- fmap fixPaths $ mapErrorsM (resolveModule resolver (p </> d)) is2
+    as  <- fmap fixPaths $ mapCompilerM (resolveModule resolver (p </> d)) is
+    as2 <- fmap fixPaths $ mapCompilerM (resolveModule resolver (p </> d)) is2
     isConfigured <- isPathConfigured p d
     when (isConfigured && f == DoNotForce) $ do
       compilerErrorM $ "Module " ++ d ++ " has an existing configuration. " ++

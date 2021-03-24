@@ -1,5 +1,5 @@
 {- -----------------------------------------------------------------------------
-Copyright 2019-2020 Kevin P. Barry
+Copyright 2019-2021 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -30,13 +30,15 @@ module Base.CompilerError (
   (!!>),
   collectAllM_,
   collectFirstM_,
+  emptyErrorM,
   errorFromIO,
   isCompilerError,
   isCompilerErrorM,
   isCompilerSuccess,
   isCompilerSuccessM,
+  mapCompilerM,
+  mapCompilerM_,
   mapErrorsM,
-  mapErrorsM_,
 ) where
 
 import Control.Monad.IO.Class
@@ -102,11 +104,11 @@ collectAllM_ = fmap (const ()) . collectAllM
 collectFirstM_ :: (Foldable f, CollectErrorsM m) => f (m a) -> m ()
 collectFirstM_ = fmap (const ()) . collectFirstM
 
-mapErrorsM :: CollectErrorsM m => (a -> m b) -> [a] -> m [b]
-mapErrorsM f = collectAllM . map f
+mapCompilerM :: CollectErrorsM m => (a -> m b) -> [a] -> m [b]
+mapCompilerM f = collectAllM . map f
 
-mapErrorsM_ :: CollectErrorsM m => (a -> m b) -> [a] -> m ()
-mapErrorsM_ f = collectAllM_ . map f
+mapCompilerM_ :: CollectErrorsM m => (a -> m b) -> [a] -> m ()
+mapCompilerM_ f = collectAllM_ . map f
 
 isCompilerError :: (ErrorContextT t, ErrorContextM (t Identity)) => t Identity a -> Bool
 isCompilerError = runIdentity . isCompilerErrorT
@@ -119,6 +121,12 @@ isCompilerErrorM x = collectFirstM [x >> return False,return True]
 
 isCompilerSuccessM :: CollectErrorsM m => m a -> m Bool
 isCompilerSuccessM x = collectFirstM [x >> return True,return False]
+
+mapErrorsM :: CollectErrorsM m => [String] -> m a
+mapErrorsM es = mapCompilerM_ compilerErrorM es >> emptyErrorM
+
+emptyErrorM :: CollectErrorsM m => m a
+emptyErrorM = compilerErrorM ""
 
 errorFromIO :: (MonadIO m, ErrorContextM m) => IO a -> m a
 errorFromIO x = do

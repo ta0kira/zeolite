@@ -915,11 +915,11 @@ checkInferenceCommon check pa is x y gs = return $ checked <!! context where
   context = "With params = " ++ show pa ++ ", pair = (" ++ show x ++ "," ++ show y ++ ")"
   checked = do
     ([t1,t2],pa2) <- parseTheTest pa [x,y]
-    ia2 <- mapErrorsM readInferred is
+    ia2 <- mapCompilerM readInferred is
     gs' <- sequence $ fmap parseGuess gs
     let iaMap = Map.fromList ia2
     -- TODO: Merge duplication with Test.TypeCategory.
-    pa3 <- fmap Map.fromList $ mapErrorsM (filterSub iaMap) $ Map.toList pa2
+    pa3 <- fmap Map.fromList $ mapCompilerM (filterSub iaMap) $ Map.toList pa2
     t2' <- uncheckedSubInstance (weakLookup iaMap) t2
     check gs' $ checkGeneralMatch Resolver pa3 Covariant t1 t2'
   readInferred p = do
@@ -934,7 +934,7 @@ checkInferenceCommon check pa is x y gs = return $ checked <!! context where
          Just t  -> return t
          Nothing -> return $ singleType $ JustParamName True n
   filterSub im (k,fs) = do
-    fs' <- mapErrorsM (uncheckedSubFilter (weakLookup im)) fs
+    fs' <- mapCompilerM (uncheckedSubFilter (weakLookup im)) fs
     return (k,fs')
 
 checkConvertFail :: [(String, [String])] -> String -> String -> IO (TrackedErrors ())

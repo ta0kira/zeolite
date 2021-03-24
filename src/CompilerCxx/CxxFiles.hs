@@ -661,7 +661,7 @@ generateMainFile tm em n f = "In the creation of the main binary procedure" ??> 
 generateTestFile :: (Ord c, Show c, CollectErrorsM m) =>
   CategoryMap c -> ExprMap c  -> [String] -> [TestProcedure c] -> m (CompiledData [String])
 generateTestFile tm em args ts = "In the creation of the test binary procedure" ??> do
-  ts' <- fmap mconcat $ mapErrorsM (compileTestProcedure tm em) ts
+  ts' <- fmap mconcat $ mapCompilerM (compileTestProcedure tm em) ts
   (include,sel) <- selectTestFromArgv1 $ map tpName ts
   let (CompiledData req _) = ts' <> sel
   let file = testsOnlySourceGuard ++ createMainCommon "testcase" (onlyCodes include <> ts') (argv <> sel)

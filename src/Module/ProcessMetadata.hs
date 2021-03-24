@@ -222,7 +222,7 @@ loadDepsCommon :: ForceMode -> VersionHash -> MetadataMap -> Set.Set FilePath ->
 loadDepsCommon f h ca pa0 getDeps ps = do
   (_,processed) <- fixedPaths >>= collect (pa0,[])
   let cached = Map.union ca (Map.fromList processed)
-  mapErrorsM (check cached) processed where
+  mapCompilerM (check cached) processed where
     enforce = f /= ForceAll
     fixedPaths = mapM (errorFromIO . canonicalizePath) ps
     collect xa@(pa,xs) (p:ps2)
@@ -313,8 +313,8 @@ checkModuleFreshness h ca p m@(CompileMetadata _ p2 _ _ is is2 _ _ _ _ ps xs ts 
       when (not exists) $ compilerErrorM $ "Output file \"" ++ f ++ "\" is missing"
     checkDep time dep = do
       cm <- loadMetadata ca dep
-      mapErrorsM_ (checkInput time . (cmPath cm </>)) $ cmPublicFiles cm
-    checkObject (CategoryObjectFile _ _ fs) = mapErrorsM_ checkOutput fs
+      mapCompilerM_ (checkInput time . (cmPath cm </>)) $ cmPublicFiles cm
+    checkObject (CategoryObjectFile _ _ fs) = mapCompilerM_ checkOutput fs
     checkObject (OtherObjectFile f)         = checkOutput f
     getRequires (CategoryObjectFile _ rs _) = rs
     getRequires _                           = []
@@ -326,7 +326,7 @@ checkModuleFreshness h ca p m@(CompileMetadata _ p2 _ _ is is2 _ _ _ _ ps xs ts 
       compilerErrorM $ "Required category " ++ show c ++ " is unresolved"
     checkMissing s0 s1 = do
       let missing = Set.toList $ Set.fromList s1 `Set.difference` Set.fromList s0
-      mapErrorsM_ (\f -> compilerErrorM $ "Required path \"" ++ f ++ "\" has not been compiled") missing
+      mapCompilerM_ (\f -> compilerErrorM $ "Required path \"" ++ f ++ "\" has not been compiled") missing
     doesFileOrDirExist f2 = do
       existF <- errorFromIO $ doesFileExist f2
       if existF
@@ -403,8 +403,8 @@ loadModuleGlobals :: PathIOHandler r => r -> FilePath -> (Namespace,Namespace) -
 loadModuleGlobals r p (ns0,ns1) fs m deps1 deps2 = do
   let public = Set.fromList $ map cmPath deps1
   let deps2' = filter (\cm -> not $ cmPath cm `Set.member` public) deps2
-  cs0 <- fmap concat $ mapErrorsM (processDeps False [FromDependency])            deps1
-  cs1 <- fmap concat $ mapErrorsM (processDeps False [FromDependency,ModuleOnly]) deps2'
+  cs0 <- fmap concat $ mapCompilerM (processDeps False [FromDependency])            deps1
+  cs1 <- fmap concat $ mapCompilerM (processDeps False [FromDependency,ModuleOnly]) deps2'
   cs2 <- loadAllPublic (ns0,ns1) fs
   cs3 <- case m of
               Just m2 -> processDeps True [FromDependency] m2
@@ -421,7 +421,7 @@ loadModuleGlobals r p (ns0,ns1) fs m deps1 deps2 = do
       return $ map (updateCodeVisibility (Set.union (Set.fromList ss))) cs'
     loadAllPublic (ns2,ns3) fs2 = do
       fs2' <- zipWithContents r p fs2
-      fmap concat $ mapErrorsM loadPublic fs2'
+      fmap concat $ mapCompilerM loadPublic fs2'
       where
         loadPublic p3 = do
           (pragmas,cs) <- parsePublicSource p3

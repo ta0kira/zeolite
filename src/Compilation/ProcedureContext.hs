@@ -206,10 +206,10 @@ instance (Show c, CollectErrorsM m) =>
       let mapped = Map.fromListWith (++) $ map (\f -> (pfParam f,[pfFilter f])) (ctx ^. pcIntFilters)
       let positional = map (getFilters mapped) (map vpParam $ pValues $ ctx ^. pcIntParams)
       assigned <- fmap Map.fromList $ processPairs alwaysPair (fmap vpParam $ ctx ^. pcIntParams) ps
-      subbed <- fmap Positional $ mapErrorsM (assignFilters assigned) positional
+      subbed <- fmap Positional $ mapCompilerM (assignFilters assigned) positional
       processPairs_ (validateAssignment r allFilters) ps subbed
       -- Check initializer types.
-      ms <- fmap Positional $ mapErrorsM (subSingle pa') (ctx ^. pcMembers)
+      ms <- fmap Positional $ mapCompilerM (subSingle pa') (ctx ^. pcMembers)
       processPairs_ (checkInit r allFilters) ms (Positional $ zip ([1..] :: [Int]) $ pValues ts)
       return ()
       where
@@ -218,7 +218,7 @@ instance (Show c, CollectErrorsM m) =>
               (Just fs) -> fs
               _ -> []
         assignFilters fm fs = do
-          mapErrorsM (uncheckedSubFilter $ getValueForParam fm) fs
+          mapCompilerM (uncheckedSubFilter $ getValueForParam fm) fs
         checkInit r fa (MemberValue c2 n t0) (i,t1) = do
           checkValueAssignment r fa t1 t0 <??
             "In initializer " ++ show i ++ " for " ++ show n ++ formatFullContextBrace c2
@@ -250,7 +250,7 @@ instance (Show c, CollectErrorsM m) =>
     | ctx ^. pcInCleanup = return ()
     | otherwise =
         case ctx ^. pcReturns of
-             ValidateNames _ _ na -> mapErrorsM_ (checkSingle na) vs
+             ValidateNames _ _ na -> mapCompilerM_ (checkSingle na) vs
              _ -> return ()
         where
           checkSingle na (UsedVariable c n) =
@@ -303,7 +303,7 @@ instance (Show c, CollectErrorsM m) =>
       check (ValidateNames ns ts ra) = do
         case vs of
              Just _  -> check (ValidatePositions ts) >> return ()
-             Nothing -> mapErrorsM_ alwaysError $ Map.toList ra
+             Nothing -> mapCompilerM_ alwaysError $ Map.toList ra
         return (ValidateNames ns ts Map.empty)
       alwaysError (n,_) = compilerErrorM $ "Named return " ++ show n ++
                                            " might not be initialized" ++
@@ -357,7 +357,7 @@ instance (Show c, CollectErrorsM m) =>
       checkReserved [] _ = return ()
       checkReserved (m@(n2,_):ms) rs
         | n2 /= n = checkReserved ms (m:rs)
-        | otherwise = (mapErrorsM_ singleError (m:rs)) <!!
+        | otherwise = (mapCompilerM_ singleError (m:rs)) <!!
             "Expression macro " ++ show n ++ " references itself"
       singleError (n2,c2) = compilerErrorM $ show n2 ++ " expanded at " ++ formatFullContext c2
   ccReserveExprMacro ctx c n = return $ ctx & pcReservedMacros %~ ((n,c):)

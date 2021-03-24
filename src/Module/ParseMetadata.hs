@@ -145,9 +145,9 @@ instance ConfigFormat CompileMetadata where
     validateHash h
     ns1' <- maybeShowNamespace "public_namespace:"  ns1
     ns2' <- maybeShowNamespace "private_namespace:" ns2
-    mapErrorsM_ validateCategoryName cs1
-    mapErrorsM_ validateCategoryName cs2
-    os' <- fmap concat $ mapErrorsM writeConfig os
+    mapCompilerM_ validateCategoryName cs1
+    mapCompilerM_ validateCategoryName cs2
+    os' <- fmap concat $ mapCompilerM writeConfig os
     return $ [
         "version_hash: " ++ show h,
         "path: " ++ show p
@@ -216,7 +216,7 @@ instance ConfigFormat ObjectFile where
       return f
   writeConfig (CategoryObjectFile c rs fs) = do
     category <- writeConfig c
-    requires <- fmap concat $ mapErrorsM writeConfig rs
+    requires <- fmap concat $ mapCompilerM writeConfig rs
     return $ [
         "category_object {"
       ] ++ indents ("category: " `prependFirst` category) ++ [
@@ -278,7 +278,7 @@ instance ConfigFormat ModuleConfig where
     <*> parseOptional "include_paths:"  [] (parseList parseQuoted)
     <*> parseRequired "mode:"              readConfig
   writeConfig (ModuleConfig p d em is is2 es ep m) = do
-    es' <- fmap concat $ mapErrorsM writeConfig es
+    es' <- fmap concat $ mapCompilerM writeConfig es
     m' <- writeConfig m
     when (not $ null em) $ compilerErrorM "Only empty expression maps are allowed when writing"
     return $ [
@@ -317,8 +317,8 @@ instance ConfigFormat ExtraSource where
       f <- parseQuoted
       return (OtherSource f)
   writeConfig (CategorySource f cs ds) = do
-    mapErrorsM_ validateCategoryName cs
-    mapErrorsM_ validateCategoryName ds
+    mapCompilerM_ validateCategoryName cs
+    mapCompilerM_ validateCategoryName ds
     return $ [
         "category_source {",
         indent ("source: " ++ show f),

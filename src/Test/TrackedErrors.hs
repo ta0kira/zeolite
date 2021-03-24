@@ -1,5 +1,5 @@
 {- -----------------------------------------------------------------------------
-Copyright 2020 Kevin P. Barry
+Copyright 2020-2021 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ tests :: [IO (TrackedErrors ())]
 tests = [
     checkSuccess 'a' (return 'a'),
     checkError "error\n" (compilerErrorM "error" :: TrackedErrorsIO Char),
-    checkError "" (compilerErrorM "" :: TrackedErrorsIO Char),
+    checkError "" (emptyErrorM :: TrackedErrorsIO Char),
 
     checkSuccess ['a','b']          (collectAllM [return 'a',return 'b']),
     checkSuccess []                 (collectAllM [] :: TrackedErrorsIO [Char]),
@@ -58,7 +58,7 @@ tests = [
     checkErrorAndWarnings "message\n  warning\n" "message\n  error\n"
       ((compilerWarningM "warning" >> compilerErrorM "error") `withContextM` "message" :: TrackedErrorsIO ()),
     checkSuccessAndWarnings "" () (return () `withContextM` "message"),
-    checkErrorAndWarnings "" "message\n" (compilerErrorM "" `withContextM` "message" :: TrackedErrorsIO ()),
+    checkErrorAndWarnings "" "message\n" (emptyErrorM `withContextM` "message" :: TrackedErrorsIO ()),
 
     checkSuccess 'a' (return 'a' `summarizeErrorsM` "message"),
     checkError "message\n  error\n" (compilerErrorM "error" `summarizeErrorsM` "message" :: TrackedErrorsIO ()),
@@ -67,7 +67,7 @@ tests = [
     checkErrorAndWarnings "warning\n" "message\n  error\n"
       ((compilerWarningM "warning" >> compilerErrorM "error") `summarizeErrorsM` "message" :: TrackedErrorsIO ()),
     checkSuccessAndWarnings "" () (return () `summarizeErrorsM` "message"),
-    checkErrorAndWarnings "" "message\n" (compilerErrorM "" `summarizeErrorsM` "message" :: TrackedErrorsIO ()),
+    checkErrorAndWarnings "" "message\n" (emptyErrorM `summarizeErrorsM` "message" :: TrackedErrorsIO ()),
 
     checkSuccessAndWarnings "error\n" ()
       (asCompilerWarnings $ compilerErrorM "error" :: TrackedErrorsIO ()),
