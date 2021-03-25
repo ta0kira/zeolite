@@ -47,10 +47,10 @@ import Types.Procedure
 import Types.TypeCategory
 
 
-runSingleTest :: CompilerBackend b => b -> LanguageModule SourceContext ->
-  FilePath -> [FilePath] -> [CompileMetadata] -> (String,String) ->
-  TrackedErrorsIO ((Int,Int),TrackedErrors ())
-runSingleTest b cm p paths deps (f,s) = do
+runSingleTest :: CompilerBackend b => b -> FilePath ->
+  LanguageModule SourceContext -> FilePath -> [FilePath] -> [CompileMetadata] ->
+  (String,String) -> TrackedErrorsIO ((Int,Int),TrackedErrors ())
+runSingleTest b cl cm p paths deps (f,s) = do
   errorFromIO $ hPutStrLn stderr $ "\nExecuting tests from " ++ f
   allResults <- checkAndRun (parseTestSource (f,s))
   return $ second (("\nIn test file " ++ f) ??>) allResults where
@@ -146,7 +146,7 @@ runSingleTest b cm p paths deps (f,s) = do
            return results
 
     executeTest binary rs es res s2 (f2,c) = printOutcome $ "\nIn unittest " ++ show f2 ++ formatFullContextBrace c ??> do
-      let command = TestCommand binary (takeDirectory binary) [show f2]
+      let command = TestCommand binary (takeDirectory binary) [show f2,cl]
       (TestCommandResult s2' out err) <- runTestCommand b command
       case (s2,s2') of
            (True,False) -> collectAllM_ $ (asCompilerError res):(map compilerErrorM $ err ++ out)

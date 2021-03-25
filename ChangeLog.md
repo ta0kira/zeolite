@@ -1,5 +1,19 @@
 # Revision history for zeolite-lang
 
+## 0.15.1.0  -- ????-??-??
+
+### Compiler CLI
+
+* **[new]** Adds the `--log-traces` option for testing mode (`zeolite -t`) to
+  capture a record of every line of Zeolite code executed when running tests.
+
+### Language
+
+* **[fix]** Fixes regression with function names used in stack traces.
+  Previously, if a function was inherited and the types were not overridden,
+  the category name in the trace would be that of the parent, rather than that
+  of the one defining the procedure.
+
 ## 0.15.0.0  -- 2021-03-24
 
 ### Language

@@ -88,8 +88,8 @@ indentCompiled (CompiledData r o) = CompiledData r $ map ("  " ++) o
 clearCompiled :: CompiledData [String] -> CompiledData [String]
 clearCompiled (CompiledData r _) = CompiledData r []
 
-startFunctionTracing :: ScopedFunction c -> String
-startFunctionTracing f = "TRACE_FUNCTION(" ++ show (functionDebugName f) ++ ")"
+startFunctionTracing :: CategoryName -> ScopedFunction c -> String
+startFunctionTracing t f = "TRACE_FUNCTION(" ++ show (functionDebugName t f) ++ ")"
 
 startMainTracing :: String -> String
 startMainTracing n = "TRACE_FUNCTION(" ++ show n ++ ")"

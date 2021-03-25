@@ -19,7 +19,9 @@ limitations under the License.
 #include "logging.hpp"
 
 #include <cassert>
+#include <chrono>
 #include <csignal>
+#include <iomanip>
 #include <iostream>
 
 
@@ -116,6 +118,7 @@ TraceList TraceContext::GetTrace() {
 
 void SourceContext::SetLocal(const char* at) {
   at_ = at;
+  LogCalls::MaybeLogCall(name_, at_);
 }
 
 void SourceContext::AppendTrace(TraceList& trace) const {
@@ -177,4 +180,55 @@ const std::string& Argv::GetArgAt(int pos) {
 
 const std::vector<std::string>& ProgramArgv::GetArgs() const {
   return argv_;
+}
+
+std::string FixCsvString(const char* string) {
+  std::string fixed;
+  while (*string) {
+    switch (*string) {
+      case '\\':
+        break;
+      case '"':
+        fixed.push_back('\'');
+        break;
+      default:
+        fixed.push_back(*string);
+        break;
+    }
+    ++string;
+  }
+  return fixed;
+}
+
+unsigned int UniqueId() {
+  const auto time = std::chrono::steady_clock::now().time_since_epoch();
+  return (1000000009 * std::chrono::duration_cast<std::chrono::microseconds>(time).count());
+}
+
+LogCallsToFile::LogCallsToFile(std::string filename)
+  : unique_id_(UniqueId()),
+    filename_(std::move(filename)),
+    log_file_(filename_.empty()?
+                nullptr :
+                new std::fstream(filename_, std::ios::in |
+                                            std::ios::out |
+                                            std::ios::ate |
+                                            std::ios::app)),
+    cross_and_capture_to_(this) {
+  if (log_file_) {
+    if (!*log_file_) {
+      FAIL() << "Failed to open call log " << filename_ << " for writing";
+    }
+  }
+}
+
+void LogCallsToFile::LogCall(const char* name, const char* at) {
+  if (log_file_) {
+    std::lock_guard<std::mutex> lock(mutex_);
+    const auto time = std::chrono::steady_clock::now().time_since_epoch();
+    *log_file_ << std::chrono::duration_cast<std::chrono::microseconds>(time).count() << ","
+               << unique_id_ << ","
+               << "\"" << FixCsvString(name) << "\"" << ","
+               << "\"" << FixCsvString(at) << "\"" << std::endl;
+  }
 }

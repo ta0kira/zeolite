@@ -182,3 +182,29 @@ define Type2 {
     \ value.call()
   }
 }
+
+
+testcase "correct function name used for non-merged function" {
+  crash
+  require "message"
+  require "Type\.call"
+  exclude "Base"
+}
+
+unittest test {
+  \ Type.call()
+}
+
+@value interface Base {
+  call () -> ()
+}
+
+concrete Type {
+  refines Base
+}
+
+define Type {
+  call () {
+    fail("message")
+  }
+}

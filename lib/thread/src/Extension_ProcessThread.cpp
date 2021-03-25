@@ -87,10 +87,10 @@ struct ExtValue_ProcessThread : public Value_ProcessThread {
       // it's still running. This allows the caller to hold a weak reference to
       // the thread.
       thread.reset(new std::thread(
-        [this,Var_self] {
+        capture_thread::ThreadCrosser::WrapCall([this,Var_self] {
           TRACE_CREATION
           TypeValue::Call(routine, Function_Routine_run, ParamTuple(), ArgTuple());
-        }));
+        })));
     }
     return ReturnTuple(Var_self);
   }

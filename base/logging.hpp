@@ -20,7 +20,10 @@ limitations under the License.
 #define LOGGING_HPP_
 
 #include <functional>
+#include <fstream>
 #include <list>
+#include <memory>
+#include <mutex>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -218,6 +221,35 @@ class TraceCreation : public capture_thread::ThreadCapture<TraceCreation> {
   const std::string type_;
   const CreationTrace& trace_;
   const ScopedCapture capture_to_;
+};
+
+class LogCalls : public capture_thread::ThreadCapture<LogCalls> {
+ public:
+  static inline void MaybeLogCall(const char* name, const char* at) {
+    if (GetCurrent()) {
+      GetCurrent()->LogCall(name, at);
+    }
+  }
+
+ protected:
+  virtual ~LogCalls() = default;
+
+ private:
+  virtual void LogCall(const char* name, const char* at) = 0;
+};
+
+class LogCallsToFile : public LogCalls {
+ public:
+  LogCallsToFile(std::string filename);
+
+ private:
+  void LogCall(const char* name, const char* at) final;
+
+  std::mutex mutex_;
+  const unsigned int unique_id_;
+  const std::string& filename_;
+  const std::unique_ptr<std::fstream> log_file_;
+  const AutoThreadCrosser cross_and_capture_to_;
 };
 
 #endif  // LOGGING_HPP_

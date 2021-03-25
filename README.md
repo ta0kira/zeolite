@@ -66,6 +66,8 @@ of this document.
   - [Standard Library](#standard-library)
   - [Modules](#modules)
 - [Unit Testing](#unit-testing)
+  - [Writing Tests](#writing-tests)
+  - [Code Coverage](#code-coverage)
 - [Compiler Pragmas and Macros](#compiler-pragmas-and-macros)
   - [Source File Pragmas](#source-file-pragmas)
   - [Procedure Pragmas](#procedure-pragmas)
@@ -147,9 +149,14 @@ there is a major testability gap when it comes to ensuring that your
 statically-typed code *disallows* what you expect it to.
 
 Zeolite has a special source-file extension for unit tests, and a built-in
-compiler mode to run them. These tests can check for success, compilation
-success, compilation failure, and even crashes. Normally you would need a
-third-party test runner to check for required compilation failures and crashes.
+compiler mode to run them.
+
+- Tests can check for runtime success, compilation success, compilation failure,
+  and even crashes. Normally you would need a third-party test runner to check
+  for required compilation failures and crashes.
+
+- The test mode includes a command-line option to collect code-coverage data,
+  which can be critical for determining test efficacy.
 
 Nearly all of the integration testing of the Zeolite language itself is done
 using this feature, but it is also supported for general use with Zeolite
@@ -1293,6 +1300,8 @@ this project these tests are referred to as "integration tests" because this
 testing mode is used to ensure that the `zeolite` compiler operates properly
 end-to-end.)
 
+### Writing Tests
+
 **IMPORTANT:** Prior to compiler version `0.10.0.0`, the `testcase` syntax was
 slightly different, and `unittest` was not available.
 
@@ -1365,6 +1374,47 @@ slightly different, and `unittest` was not available.
 
 Unit tests have access to all public symbols in the module. You can run all
 tests for module `myprogram` using `zeolite -t myprogram`.
+
+### Code Coverage
+
+As of compiler version `0.15.1.0`, you can get a log of all lines of Zeolite
+code (from `.0rx` or `.0rt` sources) with the `--log-traces`*`[filename]`*
+option when running tests with `zeolite -t`.
+
+- If *`[filename]`* is not an absolute path, it will be created relative to the
+  path specified with `-p` if used. *The file will be overwritten*, and will
+  contain all traces from a single call to `zeolite -t`.
+
+- The current format is `.csv` with the following columns (includes a header):
+
+  - `"microseconds"`: The call time from a monotonic microseconds timer, with an
+    unspecified starting point.
+  - `"pid"`: A unique ID for the current process. This *is not* the real process
+    ID from the system, since that will often not be unique.
+  - `"function"`: The name of the function where the line was executed.
+  - `"context"`: The source-code context (e.g., file, line) of the call. The
+    context has (roughly) the same format as stack traces for crashes.
+
+- If a procedure uses the [`$NoTrace$` pragma](#procedure-pragmas), there will
+  be no trace information in the log for that procedure. This is because the
+  logging uses the same tooling that is used for stack traces.
+
+- Nothing will be logged for `testcase` that use `compiles` or `error`, since
+  those modes do not actually execute any compiled code.
+
+- Keep in mind that the simple act of processing text for logging can obscure
+  race conditions in a program; therefore, `--log-traces` should be skipped when
+  troubleshooting race conditions.
+
+- Check the size of the log file before attempting to open it in a desktop
+  application. In many cases, it will be too large to display.
+
+  If you just want code coverage, you can try something like this, to get just
+  the unique lines executed from `.0rx` sources:
+
+  ```shell
+  sed 1d trace-log.csv | cut -d, -f3,4 | grep -v 0rt | sort -u
+  ```
 
 ## Compiler Pragmas and Macros
 

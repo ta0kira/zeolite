@@ -139,7 +139,7 @@ compileExecutableProcedure cxxType ctx
     returnType = "ReturnTuple"
     setProcedureTrace
       | any isNoTrace pragmas = return []
-      | otherwise             = return [startFunctionTracing ff]
+      | otherwise             = return [startFunctionTracing (scName ctx) ff]
     setCreationTrace
       | not $ any isTraceCreation pragmas = return []
       | s /= ValueScope =

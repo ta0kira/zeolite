@@ -40,7 +40,7 @@ optionHelpText = [
     "zeolite [options...] -c [path]",
     "zeolite [options...] -r [paths...]",
     "zeolite [options...] -R [paths...]",
-    "zeolite [options...] -t [paths...]",
+    "zeolite [options...] -t [paths...] (--log-traces [filename])",
     "",
     "zeolite [options...] --templates [paths...]",
     "zeolite --get-path",
@@ -67,6 +67,7 @@ optionHelpText = [
     "  -I [path]: A single source path to include as a *private* dependency.",
     "  -o [binary]: The name of the binary file to create with -m.",
     "  -p [path]: Set a path prefix for finding the specified source files.",
+    "  --log-traces [filename]: Log call traces to a file when running tests.",
     "",
     "[category]: The name of a concrete category with no params.",
     "[function]: The name of a @type function (defaults to \"run\") with no args or params.",
@@ -117,7 +118,7 @@ parseCompileOptions = parseAll emptyCompileOptions . zip ([1..] :: [Int]) where
 
   parseSingle (CompileOptions h is is2 ds es ep p m f) ((n,"-t"):os)
     | m /= CompileUnspecified = argError n "-t" "Compiler mode already set."
-    | otherwise = return (os,CompileOptions (maybeDisableHelp h) is is2 ds es ep p (ExecuteTests []) f)
+    | otherwise = return (os,CompileOptions (maybeDisableHelp h) is is2 ds es ep p (ExecuteTests [] Nothing) f)
 
   parseSingle (CompileOptions h is is2 ds es ep p m f) ((n,"--templates"):os)
     | m /= CompileUnspecified = argError n "-t" "Compiler mode already set."
@@ -152,6 +153,13 @@ parseCompileOptions = parseAll emptyCompileOptions . zip ([1..] :: [Int]) where
           check _          = argError n2 c $ "Invalid entry point."
       update _ = argError n "--fast" "Requires a category name and a .0rx file."
 
+  parseSingle (CompileOptions h is is2 ds es ep p (ExecuteTests tp cl) f) ((n,"--log-traces"):os) = update os where
+    update ((_,cl2):os2)
+      | cl /= Nothing = argError n "--log-traces" "Trace-log filename already set."
+      | otherwise = return (os2,CompileOptions (maybeDisableHelp h) is is2 ds es ep p (ExecuteTests tp (Just cl2)) f)
+    update _ = argError n "--log-traces" "Requires an output filename."
+  parseSingle _ ((n,"--log-traces"):_) = argError n "--log-traces" "Set mode to test (-t) first."
+
   parseSingle (CompileOptions h is is2 ds es ep p (CompileBinary t fn o lf) f) ((n,"-o"):os)
     | not $ null o = argError n "-o" "Output name already set."
     | otherwise = update os where
@@ -159,7 +167,7 @@ parseCompileOptions = parseAll emptyCompileOptions . zip ([1..] :: [Int]) where
         checkPathName n2 o2 "-o"
         return (os2,CompileOptions (maybeDisableHelp h) is is2 ds es ep p (CompileBinary t fn o2 lf) f)
       update _ = argError n "-o" "Requires an output name."
-  parseSingle _ ((n,"-o"):_) = argError n "-o" "Set mode to binary (-m) first"
+  parseSingle _ ((n,"-o"):_) = argError n "-o" "Set mode to binary (-m) first."
 
   parseSingle (CompileOptions h is is2 ds es ep p m f) ((n,"-i"):os) = update os where
     update ((n2,d):os2)
@@ -198,8 +206,8 @@ parseCompileOptions = parseAll emptyCompileOptions . zip ([1..] :: [Int]) where
         when (not $ isExecuteTests m) $
           argError n d "Test mode (-t) must be enabled before listing any .0rt test files."
         checkPathName n d ""
-        let (ExecuteTests tp) = m
-        return (os,CompileOptions (maybeDisableHelp h) is is2 ds es ep p (ExecuteTests $ tp ++ [d]) f)
+        let (ExecuteTests tp cl) = m
+        return (os,CompileOptions (maybeDisableHelp h) is is2 ds es ep p (ExecuteTests (tp ++ [d]) cl) f)
       | otherwise = do
         checkPathName n d ""
         return (os,CompileOptions (maybeDisableHelp h) is is2 (ds ++ [d]) es ep p m f)

@@ -110,7 +110,8 @@ data CompileMode =
     cfSource :: FilePath
   } |
   ExecuteTests {
-    etInclude :: [FilePath]
+    etInclude :: [FilePath],
+    etCallLog :: Maybe FilePath
   } |
   CompileIncremental {
     ciLinkFlags :: [String]
@@ -139,8 +140,8 @@ isCompileRecompile CompileRecompileRecursive = True
 isCompileRecompile _                         = False
 
 isExecuteTests :: CompileMode -> Bool
-isExecuteTests (ExecuteTests _) = True
-isExecuteTests _                = False
+isExecuteTests (ExecuteTests _ _) = True
+isExecuteTests _                  = False
 
 isCreateTemplates :: CompileMode -> Bool
 isCreateTemplates CreateTemplates = True

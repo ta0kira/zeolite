@@ -292,15 +292,16 @@ createModuleTemplates resolver p d deps1 deps2 = do
            errorFromIO $ hPutStrLn stderr $ "Writing file " ++ n
            errorFromIO $ writeFile n' $ concat $ map (++ "\n") content
 
-runModuleTests :: (PathIOHandler r, CompilerBackend b) => r -> b -> FilePath ->
-  [FilePath] -> LoadedTests -> TrackedErrorsIO [((Int,Int),TrackedErrors ())]
-runModuleTests resolver backend base tp (LoadedTests p d m em deps1 deps2) = do
+runModuleTests :: (PathIOHandler r, CompilerBackend b) =>
+  r -> b -> FilePath -> FilePath -> [FilePath] -> LoadedTests ->
+  TrackedErrorsIO [((Int,Int),TrackedErrors ())]
+runModuleTests resolver backend cl base tp (LoadedTests p d m em deps1 deps2) = do
   let paths = base:(cmPublicSubdirs m ++ cmPrivateSubdirs m ++ getIncludePathsForDeps deps1)
   mapCompilerM_ showSkipped $ filter (not . isTestAllowed) $ cmTestFiles m
   ts' <- zipWithContents resolver p $ map (d </>) $ filter isTestAllowed $ cmTestFiles m
   path <- errorFromIO $ canonicalizePath (p </> d)
   cm <- fmap (createLanguageModule [] [] em) $ loadModuleGlobals resolver path (NoNamespace,NoNamespace) [] (Just m) deps1 []
-  mapCompilerM (runSingleTest backend cm path paths (m:deps2)) ts' where
+  mapCompilerM (runSingleTest backend cl cm path paths (m:deps2)) ts' where
     allowTests = Set.fromList tp
     isTestAllowed t = if null allowTests then True else t `Set.member` allowTests
     showSkipped f = compilerWarningM $ "Skipping tests in " ++ f ++ " due to explicit test filter."

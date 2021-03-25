@@ -40,14 +40,22 @@ import Module.ProcessMetadata
 
 
 runCompiler :: (PathIOHandler r, CompilerBackend b) => r -> b -> CompileOptions -> TrackedErrorsIO ()
-runCompiler resolver backend (CompileOptions _ _ _ ds _ _ p (ExecuteTests tp) f) = do
+runCompiler resolver backend (CompileOptions _ _ _ ds _ _ p (ExecuteTests tp cl) f) = do
   base <- resolveBaseModule resolver
   ts <- fmap snd $ foldM (preloadTests base) (Map.empty,[]) ds
   checkTestFilters ts
-  allResults <- fmap concat $ mapCompilerM (runModuleTests resolver backend base tp) ts
+  cl2 <- prepareCallLog cl
+  allResults <- fmap concat $ mapCompilerM (runModuleTests resolver backend cl2 base tp) ts
   let passed = sum $ map (fst . fst) allResults
   let failed = sum $ map (snd . fst) allResults
   processResults passed failed (mapCompilerM_ snd allResults) where
+    prepareCallLog (Just cl2) = do
+      clFull <- errorFromIO $ canonicalizePath (p </> cl2)
+      compilerWarningM $ "Logging calls to " ++ clFull
+      errorFromIO $ writeFile clFull (intercalate "," (map show logHeader) ++ "\n")
+      return clFull
+    prepareCallLog _ = return ""
+    logHeader = ["microseconds","pid","function","context"]
     compilerHash = getCompilerHash backend
     preloadTests base (ca,ms) d = do
       m <- loadModuleMetadata compilerHash f ca (p </> d)

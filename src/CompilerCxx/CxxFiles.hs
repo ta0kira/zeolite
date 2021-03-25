@@ -276,9 +276,9 @@ generateCategoryDefinition testing = common where
       }
     createArg = InputValue [] . VariableName . ("arg" ++) . show
     failProcedure f = Procedure [] $ [
-        asLineComment $ "TODO: Implement " ++ functionDebugName f ++ "."
+        asLineComment $ "TODO: Implement " ++ functionDebugName (getCategoryName t) f ++ "."
       ] ++ map asLineComment (formatFunctionTypes f) ++ [
-        RawFailCall (functionDebugName f ++ " is not implemented (see " ++ filename ++ ")")
+        RawFailCall (functionDebugName (getCategoryName t) f ++ " is not implemented (see " ++ filename ++ ")")
       ]
     asLineComment = NoValueExpression [] . LineComment
   common (NativeConcrete t d@(DefinedCategory _ _ pi _ _ fi ms _ _) ta ns em) = fmap (:[]) singleSource where
@@ -664,13 +664,14 @@ generateTestFile tm em args ts = "In the creation of the test binary procedure" 
   ts' <- fmap mconcat $ mapCompilerM (compileTestProcedure tm em) ts
   (include,sel) <- selectTestFromArgv1 $ map tpName ts
   let (CompiledData req _) = ts' <> sel
-  let file = testsOnlySourceGuard ++ createMainCommon "testcase" (onlyCodes include <> ts') (argv <> sel)
+  let file = testsOnlySourceGuard ++ createMainCommon "testcase" (onlyCodes include <> ts') (argv <> callLog <> sel)
   return $ CompiledData req file where
     args' = map escapeChars args
     argv = onlyCodes [
         "const char* argv2[] = { \"testcase\" " ++ concat (map (", " ++) args') ++ " };",
         "ProgramArgv program_argv(sizeof argv2 / sizeof(char*), argv2);"
       ]
+    callLog = onlyCode "LogCallsToFile call_logger_((argc < 3)? \"\" : argv[2]);"
 
 addNamespace :: AnyCategory c -> CompiledData [String] -> CompiledData [String]
 addNamespace t cs

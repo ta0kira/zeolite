@@ -353,7 +353,7 @@ tests = [
       ]
     },
 
-    checkWriteFail "compile mode" $ ExecuteTests { etInclude = [] },
+    checkWriteFail "compile mode" $ ExecuteTests { etInclude = [], etCallLog = Nothing },
     checkWriteFail "compile mode" $ CompileRecompile,
     checkWriteFail "compile mode" $ CompileRecompileRecursive,
     checkWriteFail "compile mode" $ CreateTemplates,
