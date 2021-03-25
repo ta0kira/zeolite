@@ -195,12 +195,12 @@ unittest test {
   \ Type.call()
 }
 
-@value interface Base {
+@type interface Base {
   call () -> ()
 }
 
 concrete Type {
-  refines Base
+  defines Base
 }
 
 define Type {
