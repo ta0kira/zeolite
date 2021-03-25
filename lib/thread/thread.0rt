@@ -88,13 +88,22 @@ unittest test {
 }
 
 
+testcase "join() once" {
+  success
+}
+
+unittest test {
+  \ ProcessThread.from(NoOpRoutine.create()).start().join()
+}
+
+
 testcase "join() twice crashes" {
   crash
   require "thread.*started"
 }
 
 unittest test {
-  \ ProcessThread.from(NoOpRoutine.create()).join().join()
+  \ ProcessThread.from(NoOpRoutine.create()).start().join().join()
 }
 
 
@@ -104,7 +113,16 @@ testcase "detach() crashes if Thread not started yet" {
 }
 
 unittest test {
-  \ ProcessThread.from(NoOpRoutine.create()).detach()
+  \ ProcessThread.from(InfiniteRoutine.create()).detach()
+}
+
+
+testcase "detach() once" {
+  success
+}
+
+unittest test {
+  \ ProcessThread.from(InfiniteRoutine.create()).start().detach()
 }
 
 
@@ -114,7 +132,7 @@ testcase "detach() twice crashes" {
 }
 
 unittest test {
-  \ ProcessThread.from(NoOpRoutine.create()).detach().detach()
+  \ ProcessThread.from(InfiniteRoutine.create()).start().detach().detach()
 }
 
 

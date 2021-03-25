@@ -24,3 +24,9 @@ concrete NoOpRoutine {
 
   @type create () -> (NoOpRoutine)
 }
+
+concrete InfiniteRoutine {
+  refines Routine
+
+  @type create () -> (InfiniteRoutine)
+}

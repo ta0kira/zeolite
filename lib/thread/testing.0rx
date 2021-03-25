@@ -25,3 +25,13 @@ define NoOpRoutine {
 
   run () {}
 }
+
+define InfiniteRoutine {
+  create () {
+    return InfiniteRoutine{ }
+  }
+
+  run () {
+    while (true) {}
+  }
+}
