@@ -5,5 +5,9 @@ extra_files: [
     source: "tests/templates/Extension_Templated.cpp"
     categories: [Templated]
   }
+  category_source {
+    source: "tests/templates/Extension_Templated2.cpp"
+    categories: [Templated2]
+  }
 ]
 mode: incremental {}
