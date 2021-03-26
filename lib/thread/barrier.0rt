@@ -1,0 +1,101 @@
+/* -----------------------------------------------------------------------------
+Copyright 2021 Kevin P. Barry
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+----------------------------------------------------------------------------- */
+
+// Author: Kevin P. Barry [ta0kira@gmail.com]
+
+testcase "EnumeratedBarrier tests" {
+  success
+}
+
+unittest correctCount {
+  ReadAt<BarrierWait> barriers <- EnumeratedBarrier.new(13)
+  \ Testing.checkEquals<?>(barriers.size(),13)
+}
+
+unittest waitForOneThread {
+  ReadAt<BarrierWait> barriers <- EnumeratedBarrier.new(1)
+  \ barriers.readAt(0).wait()
+}
+
+unittest zeroAllowed {
+  ReadAt<BarrierWait> barriers <- EnumeratedBarrier.new(0)
+  \ Testing.checkEquals<?>(barriers.size(),0)
+}
+
+unittest waitForMultipleThreads {
+  Value value <- Value.create()
+  Mutex mutex <- SimpleMutex.new()
+  ReadAt<BarrierWait> barriers <- EnumeratedBarrier.new(3)
+
+  Thread thread1 <- ProcessThread.from(WaitAndIncrement.create(2,value,mutex,barriers.readAt(1))).start()
+  Thread thread2 <- ProcessThread.from(WaitAndIncrement.create(2,value,mutex,barriers.readAt(2))).start()
+
+  \ barriers.readAt(0).wait()
+  \ Testing.checkEquals<?>(value.get(),2)
+
+  \ barriers.readAt(0).wait()
+  \ Testing.checkEquals<?>(value.get(),4)
+
+  \ thread1.join()
+  \ thread2.join()
+}
+
+concrete WaitAndIncrement {
+  refines Routine
+
+  @type create (Int,Value,Mutex,BarrierWait) -> (WaitAndIncrement)
+}
+
+define WaitAndIncrement {
+  @value Int count
+  @value Value value
+  @value Mutex mutex
+  @value BarrierWait barrier
+
+  create (count,value,mutex,barrier) {
+    return WaitAndIncrement{ count, value, mutex, barrier }
+  }
+
+  run () {
+    scoped {
+      Int i <- 0
+    } in while (i < count) {
+      $Hidden[i,count]$
+      scoped {
+        MutexLock lock <- MutexLock.lock(mutex)
+      } cleanup {
+        \ lock.freeResource()
+      } in {
+        \ value.increment()
+      }
+      \ barrier.wait()
+      // Gives the main thread time to read the value.
+      \ Realtime.sleepSeconds(0.01)
+    } update {
+      i <- i+1
+    }
+  }
+}
+
+
+testcase "EnumeratedBarrier crashes with negative count" {
+  crash
+  require "-4"
+}
+
+unittest correctCount {
+  ReadAt<BarrierWait> barriers <- EnumeratedBarrier.new(-4)
+}

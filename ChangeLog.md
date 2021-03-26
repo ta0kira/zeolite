@@ -20,6 +20,10 @@
   for an arbitrary condition signaled by another thread. (Similar to
   `pthread_cond_t` in POSIX.)
 
+* **[new]** Adds `EnumeratedBarrier` to `lib/thread`, which can be use to
+  synchronize a fixed number of threads. (Similar to `pthread_barrier_t` in
+  POSIX.)
+
 ### Compiler CLI
 
 * **[fix]** Fixes dependency resolution for C++ extensions that define

@@ -4,6 +4,7 @@ public_deps: [
   "lib/util"
 ]
 private_deps: [
+  "lib/container"
   "lib/testing"
 ]
 extra_files: [
@@ -26,6 +27,11 @@ extra_files: [
   category_source {
     source: "lib/thread/src/Extension_ThreadCondition.cpp"
     categories: [ThreadCondition]
+  }
+  category_source {
+    source: "lib/thread/src/Extension_Enumerated.cpp"
+    categories: [EnumeratedBarrier EnumeratedWait]
+    requires: [Stack Vector]
   }
 ]
 mode: incremental {
