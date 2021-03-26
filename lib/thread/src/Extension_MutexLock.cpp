@@ -49,7 +49,7 @@ struct ExtValue_MutexLock : public Value_MutexLock {
   }
 
   ReturnTuple Call_freeResource(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) final {
-    TRACE_FUNCTION("PersistentResource.freeResource")
+    TRACE_FUNCTION("MutexLock.freeResource")
     TRACE_CREATION
     if (!mutex) {
       FAIL() << "MutexLock freed multiple times";

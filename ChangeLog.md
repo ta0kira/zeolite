@@ -14,6 +14,12 @@
   the category name in the trace would be that of the parent, rather than that
   of the one defining the procedure.
 
+### Libraries
+
+* **[new]** Adds `ThreadCondition` to `lib/thread`, which allows threads to wait
+  for an arbitrary condition signaled by another thread. (Similar to
+  `pthread_cond_t` in POSIX.)
+
 ## 0.15.0.0  -- 2021-03-24
 
 ### Language

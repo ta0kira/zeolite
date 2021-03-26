@@ -1,0 +1,179 @@
+/* -----------------------------------------------------------------------------
+Copyright 2021 Kevin P. Barry
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+----------------------------------------------------------------------------- */
+
+// Author: Kevin P. Barry [ta0kira@gmail.com]
+
+testcase "ThreadCondition tests" {
+  success
+}
+
+unittest resumeAll {
+  Value value <- Value.create()
+  ThreadCondition cond <- ThreadCondition.new()
+
+  Thread thread1 <- ProcessThread.from(WaitAndUpdate.create(value,cond)).start()
+  Thread thread2 <- ProcessThread.from(WaitAndUpdate.create(value,cond)).start()
+
+  // Wait for both threads to increment Value once, to indicate readiness.
+  while (true) {
+    scoped {
+      MutexLock lock <- MutexLock.lock(cond)
+    } cleanup {
+      \ lock.freeResource()
+    } in if (value.get() >= 2) {
+      break
+    }
+  }
+
+  \ cond.resumeAll()
+  \ thread1.join()
+  \ thread2.join()
+
+  \ Testing.checkEquals<?>(value.get(),4)
+}
+
+unittest resumeOne {
+  Value value <- Value.create()
+  ThreadCondition cond <- ThreadCondition.new()
+
+  Thread thread1 <- ProcessThread.from(WaitAndUpdate.create(value,cond)).start()
+  Thread thread2 <- ProcessThread.from(WaitAndUpdate.create(value,cond)).start()
+
+  \ Realtime.sleepSeconds(0.01)
+
+  // Wait for both threads to increment Value once, to indicate readiness.
+  while (true) {
+    scoped {
+      MutexLock lock <- MutexLock.lock(cond)
+    } cleanup {
+      \ lock.freeResource()
+    } in if (value.get() >= 2) {
+      break
+    }
+  }
+
+  \ cond.resumeOne()
+  \ thread1.join()
+  \ thread2.join()
+
+  \ Testing.checkEquals<?>(value.get(),3)
+}
+
+unittest forceWaitTimeout {
+  Value value <- Value.create()
+  ThreadCondition cond <- ThreadCondition.new()
+
+  Thread thread <- ProcessThread.from(WaitAndUpdate.create(value,cond)).start()
+
+  \ Realtime.sleepSeconds(0.2)
+  \ cond.resumeOne()
+  \ thread.join()
+
+  \ Testing.checkEquals<?>(value.get(),1)
+}
+
+unittest waitNoTimeout {
+  ThreadCondition cond <- ThreadCondition.new()
+
+  Thread thread <- ProcessThread.from(JustWait.create(cond)).start()
+
+  \ Realtime.sleepSeconds(0.1)
+  \ cond.resumeOne()
+  \ thread.join()
+  \ cond.lock().unlock()
+}
+
+concrete JustWait {
+  refines Routine
+
+  @type create (ThreadWait) -> (JustWait)
+}
+
+define JustWait {
+  @value ThreadWait cond
+
+  create (cond) {
+    return JustWait{ cond }
+  }
+
+  run () {
+    scoped {
+      MutexLock lock <- MutexLock.lock(cond)
+    } cleanup {
+      \ lock.freeResource()
+    } in \ cond.wait()
+  }
+}
+
+concrete WaitAndUpdate {
+  refines Routine
+
+  @type create (Value,ThreadWait) -> (WaitAndUpdate)
+}
+
+define WaitAndUpdate {
+  @value Value value
+  @value ThreadWait cond
+
+  create (value,cond) {
+    return WaitAndUpdate{ value, cond }
+  }
+
+  run () {
+    scoped {
+      MutexLock lock <- MutexLock.lock(cond)
+      // Increment once, to indicate readiness.
+      \ value.increment()
+    } cleanup {
+      \ lock.freeResource()
+    } in {
+      // Mutex isn't unlocked until blocked here.
+      if (cond.timedWait(0.1)) {
+        \ value.increment()
+      }
+    }
+  }
+}
+
+
+testcase "wait() crashes if not locked first" {
+  crash
+  require "waiting for condition"
+}
+
+unittest test {
+  \ ThreadCondition.new().wait()
+}
+
+
+testcase "timedWait() crashes if not locked first" {
+  crash
+  require "waiting for condition"
+}
+
+unittest test {
+  \ ThreadCondition.new().timedWait(0.1)
+}
+
+
+testcase "timedWait() crashes with negative wait" {
+  crash
+  require "-0\.1"
+}
+
+unittest test {
+  \ ThreadCondition.new().lock().timedWait(-0.1)
+}

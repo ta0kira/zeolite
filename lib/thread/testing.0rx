@@ -35,3 +35,28 @@ define InfiniteRoutine {
     while (true) {}
   }
 }
+
+define Value {
+  @value Int value
+  @value Bool inUse
+
+  create () {
+    return Value{ 0, false }
+  }
+
+  get () {
+    return value
+  }
+
+  increment () {
+    value <- value+1
+  }
+
+  setInUse (i) {
+    inUse <- i
+  }
+
+  getInUse () {
+    return inUse
+  }
+}

@@ -16,27 +16,8 @@ limitations under the License.
 
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
-$ModuleOnly$
-$TestsOnly$
-
-concrete NoOpRoutine {
-  refines Routine
-
-  @type create () -> (NoOpRoutine)
-}
-
-concrete InfiniteRoutine {
-  refines Routine
-
-  @type create () -> (InfiniteRoutine)
-}
-
-concrete Value {
-  @type create () -> (Value)
-
-  @value get () -> (Int)
-  @value increment () -> ()
-
-  @value setInUse (Bool) -> ()
-  @value getInUse () -> (Bool)
+// Functions for realtime computation.
+concrete Realtime {
+  // Sleep for the given number of seconds.
+  @type sleepSeconds (Float) -> ()
 }

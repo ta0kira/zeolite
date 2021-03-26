@@ -50,7 +50,7 @@ struct ExtValue_ProcessThread : public Value_ProcessThread {
     : Value_ProcessThread(p, params), routine(args.Only()) {}
 
   ReturnTuple Call_detach(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) final {
-    TRACE_FUNCTION("Thread.detach")
+    TRACE_FUNCTION("ProcessThread.detach")
     S<std::thread> temp = thread;
     thread = nullptr;
     if (!isJoinable(temp.get())) {
@@ -62,12 +62,12 @@ struct ExtValue_ProcessThread : public Value_ProcessThread {
   }
 
   ReturnTuple Call_isRunning(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) final {
-    TRACE_FUNCTION("Thread.isRunning")
+    TRACE_FUNCTION("ProcessThread.isRunning")
     return ReturnTuple(Box_Bool(isJoinable(thread.get())));
   }
 
   ReturnTuple Call_join(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) final {
-    TRACE_FUNCTION("Thread.join")
+    TRACE_FUNCTION("ProcessThread.join")
     S<std::thread> temp = thread;
     thread = nullptr;
     if (!isJoinable(temp.get())) {
@@ -79,7 +79,7 @@ struct ExtValue_ProcessThread : public Value_ProcessThread {
   }
 
   ReturnTuple Call_start(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) final {
-    TRACE_FUNCTION("Process.start")
+    TRACE_FUNCTION("ProcessThread.start")
     if (isJoinable(thread.get())) {
       FAIL() << "thread is already running";
     } else {

@@ -101,38 +101,3 @@ define EvenOrOdd {
     }
   }
 }
-
-concrete Value {
-  @type create () -> (Value)
-
-  @value get () -> (Int)
-  @value increment () -> ()
-
-  @value setInUse (Bool) -> ()
-  @value getInUse () -> (Bool)
-}
-
-define Value {
-  @value Int value
-  @value Bool inUse
-
-  create () {
-    return Value{ 0, false }
-  }
-
-  get () {
-    return value
-  }
-
-  increment () {
-    value <- value+1
-  }
-
-  setInUse (i) {
-    inUse <- i
-  }
-
-  getInUse () {
-    return inUse
-  }
-}

@@ -16,27 +16,20 @@ limitations under the License.
 
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
-$ModuleOnly$
-$TestsOnly$
-
-concrete NoOpRoutine {
-  refines Routine
-
-  @type create () -> (NoOpRoutine)
+testcase "negative sleepSeconds() crashes" {
+  crash
+  require "-0\.1"
 }
 
-concrete InfiniteRoutine {
-  refines Routine
-
-  @type create () -> (InfiniteRoutine)
+unittest test {
+  \ Realtime.sleepSeconds(-0.1)
 }
 
-concrete Value {
-  @type create () -> (Value)
 
-  @value get () -> (Int)
-  @value increment () -> ()
+testcase "zero sleepSeconds() is allowed" {
+  success
+}
 
-  @value setInUse (Bool) -> ()
-  @value getInUse () -> (Bool)
+unittest test {
+  \ Realtime.sleepSeconds(0.0)
 }
