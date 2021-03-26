@@ -20,6 +20,11 @@
   for an arbitrary condition signaled by another thread. (Similar to
   `pthread_cond_t` in POSIX.)
 
+### Compiler CLI
+
+* **[fix]** Fixes dependency resolution for C++ extensions that define
+  `$ModuleOnly$` categories.
+
 ## 0.15.0.0  -- 2021-03-24
 
 ### Language

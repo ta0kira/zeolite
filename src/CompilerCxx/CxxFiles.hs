@@ -94,10 +94,10 @@ generateNativeInterface testing t = do
   return (dec:def)
 
 generateStreamlinedExtension :: (Ord c, Show c, CollectErrorsM m) =>
-  Bool -> AnyCategory c -> m [CxxOutput]
-generateStreamlinedExtension testing t = do
+  Bool -> Set.Set Namespace -> AnyCategory c -> m [CxxOutput]
+generateStreamlinedExtension testing ns t = do
   dec <- compileCategoryDeclaration testing Set.empty t
-  def <- generateCategoryDefinition testing (StreamlinedExtension t)
+  def <- generateCategoryDefinition testing (StreamlinedExtension t ns)
   return (dec:def)
 
 generateVerboseExtension :: (Ord c, Show c, CollectErrorsM m) =>
@@ -106,8 +106,8 @@ generateVerboseExtension testing t =
   fmap (:[]) $ compileCategoryDeclaration testing Set.empty t
 
 generateStreamlinedTemplate :: (Ord c, Show c, CollectErrorsM m) =>
-  FileContext c -> AnyCategory c -> m [CxxOutput]
-generateStreamlinedTemplate (FileContext testing tm _ _) t =
+  Bool -> CategoryMap c -> AnyCategory c -> m [CxxOutput]
+generateStreamlinedTemplate testing tm t =
   generateCategoryDefinition testing (StreamlinedTemplate t tm)
 
 compileCategoryDeclaration :: (Ord c, Show c, CollectErrorsM m) =>
@@ -160,7 +160,8 @@ data CategoryDefinition c =
     ncExprMap :: ExprMap c
   } |
   StreamlinedExtension {
-    seCategory :: AnyCategory c
+    seCategory :: AnyCategory c,
+    ncNamespaces :: Set.Set Namespace
   } |
   StreamlinedTemplate {
     stCategory :: AnyCategory c,
@@ -192,32 +193,21 @@ generateCategoryDefinition testing = common where
                          (Set.fromList [getCategoryNamespace t])
                          req'
                          (allowTestsOnly $ addSourceIncludes $ addCategoryHeader t $ addIncludes req' out)
-  common (StreamlinedExtension t) = sequence [streamlinedHeader,streamlinedSource] where
+  common (StreamlinedExtension t ns) = sequence [streamlinedHeader,streamlinedSource] where
     streamlinedHeader = do
       let filename = headerStreamlined (getCategoryName t)
       (CompiledData req out) <- fmap (addNamespace t) $ concatM [
           defineAbstractCategory t,
           defineAbstractType     t,
-          defineAbstractValue    t defined,
+          defineAbstractValue    t,
           declareAbstractGetters t
         ]
       return $ CxxOutput (Just $ getCategoryName t)
                          filename
                          (getCategoryNamespace t)
-                         (Set.fromList [getCategoryNamespace t])
+                         (getCategoryNamespace t `Set.insert` ns)
                          req
                          (headerGuard (getCategoryName t) $ allowTestsOnly $ addSourceIncludes $ addCategoryHeader t $ addIncludes req out)
-    defined = DefinedCategory {
-        dcContext = [],
-        dcName = getCategoryName t,
-        dcParams = [],
-        dcRefines = [],
-        dcDefines = [],
-        dcParamFilter = [],
-        dcMembers = [],
-        dcProcedures = [],
-        dcFunctions = []
-      }
     streamlinedSource = do
       let filename = sourceStreamlined (getCategoryName t)
       let (cf,tf,vf) = partitionByScope sfScope $ getCategoryFunctions t
@@ -232,7 +222,7 @@ generateCategoryDefinition testing = common where
       return $ CxxOutput (Just $ getCategoryName t)
                          filename
                          (getCategoryNamespace t)
-                         (Set.fromList [getCategoryNamespace t])
+                         (getCategoryNamespace t `Set.insert` ns)
                          req'
                          (addSourceIncludes $ addStreamlinedHeader t $ addIncludes req' out)
   common (StreamlinedTemplate t tm) = fmap (:[]) streamlinedTemplate where
@@ -442,9 +432,9 @@ generateCategoryDefinition testing = common where
       return $ onlyCode $ "  " ++ categoryName (getCategoryName t) ++ "& parent;",
       return $ onlyCode "};"
     ]
-  defineAbstractValue t d = concatM [
+  defineAbstractValue t = concatM [
       return $ onlyCode $ "struct " ++ valueName (getCategoryName t) ++ " : public " ++ valueBase ++ " {",
-      fmap indentCompiled $ abstractValueConstructor t d,
+      fmap indentCompiled $ abstractValueConstructor t,
       return declareValueOverrides,
       fmap indentCompiled $ concatM $ map (procedureDeclaration True) $ filter ((== ValueScope). sfScope) $ getCategoryFunctions t,
       return $ onlyCode $ "  virtual inline ~" ++ valueName (getCategoryName t) ++ "() {}",
@@ -581,13 +571,12 @@ generateCategoryDefinition testing = common where
       unwrappedArg i m = writeStoredVariable (dmType m) (UnwrappedSingle $ "args.At(" ++ show i ++ ")")
       members = filter ((== ValueScope). dmScope) $ dcMembers d
 
-  abstractValueConstructor t d = do
+  abstractValueConstructor t = do
     let argParent = "S<" ++ typeName (getCategoryName t) ++ "> p"
     let paramsPassed = "const ParamTuple& params"
     let allArgs = intercalate ", " [argParent,paramsPassed]
     let initParent = "parent(p)"
-    let initParams = map (\(i,p) -> paramName (vpParam p) ++ "(params.At(" ++ show i ++ "))") $ zip ([0..] :: [Int]) $ dcParams d
-    let allInit = intercalate ", " $ initParent:initParams
+    let allInit = initParent
     return $ onlyCode $ "inline " ++ valueName (getCategoryName t) ++ "(" ++ allArgs ++ ") : " ++ allInit ++ " {}"
 
   customTypeConstructor t = do

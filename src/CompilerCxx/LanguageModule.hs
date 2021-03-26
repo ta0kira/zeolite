@@ -76,19 +76,18 @@ compileLanguageModule (LanguageModule ns0 ns1 ns2 cs0 ps0 ts0 cs1 ps1 ts1 ex ss 
   tmPublic  <- foldM includeNewTypes defaultCategories [cs0,cs1]
   tmPrivate <- foldM includeNewTypes tmPublic          [ps0,ps1]
   tmTesting <- foldM includeNewTypes tmPrivate         [ts0,ts1]
-  let nsPublic  = ns0 `Set.union` ns2
-  let nsPrivate = ns1 `Set.union` nsPublic
-  let nsTesting = nsPrivate
   xxInterfaces <- fmap concat $ collectAllM $
     map (generateNativeInterface False) (onlyNativeInterfaces cs1) ++
     map (generateNativeInterface False) (onlyNativeInterfaces ps1) ++
     map (generateNativeInterface True)  (onlyNativeInterfaces ts1)
-  xxPrivate <- fmap concat $ mapCompilerM (compilePrivate (tmPrivate,nsPrivate) (tmTesting,nsTesting)) xa
+  xxPrivate <- fmap concat $ mapCompilerM (compilePrivate tmPrivate tmTesting) xa
   xxStreamlined <- fmap concat $ mapCompilerM (streamlined tmTesting) $ nub ss
   xxVerbose <- fmap concat $ mapCompilerM (verbose tmTesting) $ nub ex
   let allFiles = xxInterfaces ++ xxPrivate ++ xxStreamlined ++ xxVerbose
   noDuplicateFiles $ map (\f -> (coFilename f,coNamespace f)) allFiles
   return allFiles where
+    nsPublic  = ns0 `Set.union` ns2
+    nsPrivate = ns1 `Set.union` nsPublic
     extensions = Set.fromList $ ex ++ ss
     testingCats = Set.fromList $ map getCategoryName ts1
     onlyNativeInterfaces = filter (not . (`Set.member` extensions) . getCategoryName) . filter (not . isValueConcrete)
@@ -96,20 +95,20 @@ compileLanguageModule (LanguageModule ns0 ns1 ns2 cs0 ps0 ts0 cs1 ps1 ts1 ex ss 
     streamlined tm n = do
       checkLocal localCats ([] :: [String]) n
       (_,t) <- getConcreteCategory tm ([],n)
-      generateStreamlinedExtension (n `Set.member` testingCats) t
+      generateStreamlinedExtension (n `Set.member` testingCats) nsPrivate t
     verbose tm n = do
       checkLocal localCats ([] :: [String]) n
       (_,t) <- getConcreteCategory tm ([],n)
       generateVerboseExtension (n `Set.member` testingCats) t
-    compilePrivate (tmPrivate,nsPrivate) (tmTesting,nsTesting) (PrivateSource ns3 testing cs2 ds) = do
-      let (tm,ns) = if testing
-                       then (tmTesting,nsTesting)
-                       else (tmPrivate,nsPrivate)
+    compilePrivate tmPrivate tmTesting (PrivateSource ns3 testing cs2 ds) = do
+      let tm = if testing
+                  then tmTesting
+                  else tmPrivate
       let cs = Set.fromList $ map getCategoryName $ if testing
                                                        then cs2 ++ cs1 ++ ps1 ++ ts1
                                                        else cs2 ++ cs1 ++ ps1
       tm' <- includeNewTypes tm cs2
-      let ctx = FileContext testing tm' (ns3 `Set.insert` ns) em
+      let ctx = FileContext testing tm' (ns3 `Set.insert` nsPrivate) em
       checkLocals ds $ Map.keysSet tm'
       when testing $ checkTests ds (cs1 ++ ps1)
       let dm = mapDefByName ds
