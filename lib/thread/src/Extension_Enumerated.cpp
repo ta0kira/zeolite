@@ -79,7 +79,7 @@ struct ExtValue_EnumeratedWait : public Value_EnumeratedWait {
   ReturnTuple Call_wait(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("EnumeratedWait.wait")
     barrier->Wait();
-    return ReturnTuple();
+    return ReturnTuple(Var_self);
   }
 
   const S<Barrier> barrier;
@@ -119,15 +119,16 @@ struct ExtType_EnumeratedBarrier : public Type_EnumeratedBarrier {
     if (Var_arg1 < 0) {
       FAIL() << "Invalid barrier thread count " << Var_arg1;
     }
-    const S<Barrier> barrier(Var_arg1? new Barrier(Var_arg1) : nullptr);
     S<TypeValue> vector = GetCategory_Vector().Call(
       Function_Vector_create,
       ParamTuple(GetType_EnumeratedWait(Params<0>::Type())),
       ArgTuple()).Only();
-    for (int i = 0; i < Var_arg1; ++i) {
+    if (Var_arg1 > 0) {
       S<TypeValue> wait = CreateValue_EnumeratedWait(
-        CreateType_EnumeratedWait(Params<0>::Type()), ParamTuple(), barrier);
-      TypeValue::Call(vector, Function_Stack_push, ParamTuple(), ArgTuple(wait));
+        CreateType_EnumeratedWait(Params<0>::Type()), ParamTuple(), S_get(new Barrier(Var_arg1)));
+      for (int i = 0; i < Var_arg1; ++i) {
+        TypeValue::Call(vector, Function_Stack_push, ParamTuple(), ArgTuple(wait));
+      }
     }
     return ReturnTuple(vector);
   }
