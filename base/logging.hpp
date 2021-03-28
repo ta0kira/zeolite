@@ -185,8 +185,9 @@ class ProgramArgv : public Argv {
 
 class CreationTrace {
  public:
-  template<int S>
-  inline CreationTrace(const char(&type)[S])
+  // NOTE: Using a template with [] here breaks inline member initialization
+  // when using CAPTURE_CREATION in g++.
+  inline CreationTrace(const char* type)
     : type_(type), trace_(TraceContext::GetTrace()) {}
 
   inline std::string GetType() const {
