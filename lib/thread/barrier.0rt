@@ -96,6 +96,49 @@ testcase "EnumeratedBarrier crashes with negative count" {
   require "-4"
 }
 
-unittest correctCount {
+unittest test {
   ReadAt<BarrierWait> barriers <- EnumeratedBarrier.new(-4)
+}
+
+
+testcase "wait() crashes when references are lost" {
+  crash
+  require "EnumeratedWait.*destroyed"
+}
+
+unittest test {
+  scoped {
+    ReadAt<BarrierWait> barriers <- EnumeratedBarrier.new(2)
+  } in BarrierWait barrier <- barriers.readAt(0)
+  \ barrier.wait()
+}
+
+
+testcase "wait() crashes when two threads use same BarrierWait" {
+  crash
+  require "EnumeratedWait.*in use"
+}
+
+unittest test {
+  ReadAt<BarrierWait> barriers <- EnumeratedBarrier.new(2)
+  Thread thread <- ProcessThread.from(WaitAndExit.create(barriers.readAt(0))).start()
+  \ barriers.readAt(0).wait()
+}
+
+concrete WaitAndExit {
+  refines Routine
+
+  @type create (BarrierWait) -> (WaitAndExit)
+}
+
+define WaitAndExit {
+  @value BarrierWait barrier
+
+  create (barrier) {
+    return WaitAndExit{ barrier }
+  }
+
+  run () {
+    \ barrier.wait()
+  }
 }
