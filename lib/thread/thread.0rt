@@ -78,6 +78,32 @@ define Counter {
 }
 
 
+testcase "Argv available in Thread" {
+  success
+  args "arg1"
+}
+
+unittest test {
+  \ ProcessThread.from(CheckArgv.create()).start().join()
+}
+
+concrete CheckArgv {
+  refines Routine
+
+  @type create () -> (CheckArgv)
+}
+
+define CheckArgv {
+  create () {
+    return CheckArgv{ }
+  }
+
+  run () {
+    \ Testing.checkEquals<?>(Argv.global().readAt(1),"arg1")
+  }
+}
+
+
 testcase "join() crashes if Thread not started yet" {
   crash
   require "thread.*started"

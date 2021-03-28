@@ -174,13 +174,13 @@ class Argv : public capture_thread::ThreadCapture<Argv> {
 class ProgramArgv : public Argv {
  public:
   inline ProgramArgv(int argc, const char** argv)
-    : argv_(argv, argv + argc), capture_to_(this) {}
+    : argv_(argv, argv + argc), cross_and_capture_to_(this) {}
 
  private:
   const std::vector<std::string>& GetArgs() const final;
 
   const std::vector<std::string> argv_;
-  const ScopedCapture capture_to_;
+  const AutoThreadCrosser cross_and_capture_to_;
 };
 
 class CreationTrace {

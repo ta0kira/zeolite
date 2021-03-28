@@ -30,6 +30,9 @@
   synchronize a fixed number of threads. (Similar to `pthread_barrier_t` in
   POSIX, but with strict validation to help prevent deadlocks.)
 
+* **[new]** Makes `Argv.global()` available to all threads. Previously, it was
+  only available to the main thread.
+
 ## 0.15.0.0  -- 2021-03-24
 
 ### Language

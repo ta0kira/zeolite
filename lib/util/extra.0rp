@@ -60,7 +60,6 @@ concrete Argv {
   // Return the global set of arguments for the program.
   //
   // Notes:
-  // - This is empty outside of the main program thread.
   // - When used in unit tests, arg 0 is "testcase" and the remaining args are
   //   set from args in the testcase. (See extra.0rt.)
   @type global () -> ([ReadAt<String>&SubSequence])
