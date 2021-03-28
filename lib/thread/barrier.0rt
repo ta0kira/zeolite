@@ -103,7 +103,7 @@ unittest test {
 
 testcase "wait() crashes when references are lost" {
   crash
-  require "EnumeratedWait.*destroyed"
+  require "BarrierWait.*destroyed"
 }
 
 unittest test {
@@ -114,9 +114,43 @@ unittest test {
 }
 
 
+testcase "references lost during wait() causes crash" {
+  crash
+  require "BarrierWait.*waiting"
+}
+
+unittest test {
+  scoped {
+    ReadAt<BarrierWait> barriers <- EnumeratedBarrier.new(2)
+  } in {
+    Thread thread <- ProcessThread.from(WaitAndExit.create(barriers.readAt(0))).start()
+    // Give the thread time to start.
+    \ Realtime.sleepSeconds(0.1)
+  }
+}
+
+concrete WaitAndExit {
+  refines Routine
+
+  @type create (BarrierWait) -> (WaitAndExit)
+}
+
+define WaitAndExit {
+  @value BarrierWait barrier
+
+  create (barrier) {
+    return WaitAndExit{ barrier }
+  }
+
+  run () {
+    \ barrier.wait()
+  }
+}
+
+
 testcase "wait() crashes when two threads use same BarrierWait" {
   crash
-  require "EnumeratedWait.*in use"
+  require "BarrierWait.*in use"
 }
 
 unittest test {

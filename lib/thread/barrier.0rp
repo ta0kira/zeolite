@@ -22,7 +22,7 @@ limitations under the License.
   wait () -> (#self)
 }
 
-// Thread barrier validated using thread enumeration.
+// A thread barrier validated using thread enumeration.
 concrete EnumeratedBarrier {
   // Create a new barrier for a fixed number of threads.
   //
@@ -31,13 +31,16 @@ concrete EnumeratedBarrier {
   //
   // Returns:
   // - ReadAt<BarrierWait>: A list of the requested number of BarrierWait. These
-  //   Should be passed out to the respective threads.
+  //   should be passed out to the respective threads.
   //
   // Notes:
   // - Each thread must use its own BarrierWait; otherwise, there will be an
-  //   error-checking crash.
+  //   error-checking crash. For example, passing readAt(0) to all threads is
+  //   not allowed.
   // - If a BarrierWait no longer has any references (and thus cannot be used),
   //   the barrier will be disabled. This will cause a crash if any thread is
-  //   waiting for (or subsequently waits for) the barrier.
+  //   waiting for (or subsequently waits for) the barrier. This does not mean
+  //   that you need to keep the ReadAt<BarrierWait> itself; one thread holding
+  //   a reference to each individual BarrierWait is sufficient.
   @type new (Int) -> (ReadAt<BarrierWait>)
 }

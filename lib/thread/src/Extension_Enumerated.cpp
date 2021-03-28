@@ -59,7 +59,7 @@ class Barrier {
   void Kill(int index) {
     TRACE_CREATION
     if (alive.exchange(false) && wait_count.load() > 0) {
-      FAIL() << "EnumeratedWait at index " << index << " destroyed while one or more threads are waiting";
+      FAIL() << "BarrierWait at index " << index << " destroyed while one or more threads were waiting";
     }
   }
 
@@ -77,11 +77,11 @@ private:
     ++wait_count;
     if (!alive.load()) {
       --wait_count;
-      FAIL() << "One or more EnumeratedWait have been destroyed";
+      FAIL() << "One or more BarrierWait have been destroyed";
     }
     if (++index_usage[index] > 1) {
       Exit(index);
-      FAIL() << "EnumeratedWait at index " << index << " is already in use";
+      FAIL() << "BarrierWait at index " << index << " is already in use";
     }
   }
 
