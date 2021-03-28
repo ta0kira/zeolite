@@ -412,7 +412,7 @@ generateCategoryDefinition testing = common where
       members = filter ((== ValueScope). dmScope) $ dcMembers d
       procedures = dcProcedures d
       traceCreation
-        | any isTraceCreation $ concat $ map epPragmas procedures = [captureCreationTrace]
+        | any isTraceCreation $ concat $ map epPragmas procedures = [captureCreationTrace $ getCategoryName t]
         | otherwise = []
 
   defineAbstractCategory t = concatM [

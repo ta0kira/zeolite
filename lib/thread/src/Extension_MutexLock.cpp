@@ -70,7 +70,7 @@ struct ExtValue_MutexLock : public Value_MutexLock {
   }
 
   S<TypeValue> mutex;
-  CAPTURE_CREATION
+  CAPTURE_CREATION("MutexLock")
 };
 
 Category_MutexLock& CreateCategory_MutexLock() {

@@ -138,7 +138,7 @@ struct ExtValue_ThreadCondition : public Value_ThreadCondition {
   // NOTE: Error checking is required to catch attempted waits without first
   // locking the mutex.
   pthread_mutex_t mutex = PTHREAD_ERRORCHECK_MUTEX_INITIALIZER_NP;
-  CAPTURE_CREATION
+  CAPTURE_CREATION("ThreadCondition")
 };
 
 Category_ThreadCondition& CreateCategory_ThreadCondition() {

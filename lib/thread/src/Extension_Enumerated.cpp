@@ -32,29 +32,7 @@ limitations under the License.
 
 namespace {
 
-#define TRACE_BARRIER TRACE_CREATION_NAME("EnumeratedBarrier")
-
 class Barrier {
- private:
-  void Enter(int index) {
-    ++wait_count;
-    if (!alive.load()) {
-      --wait_count;
-      TRACE_BARRIER
-      FAIL() << "One or more EnumeratedWait have been destroyed";
-    }
-    if (++index_usage[index] > 1) {
-      Exit(index);
-      TRACE_BARRIER
-      FAIL() << "EnumeratedWait at index " << index << " is already in use";
-    }
-  }
-
-  void Exit(int index) {
-    --wait_count;
-    --index_usage[index];
-  }
-
  public:
   Barrier(int count) : index_usage(new std::atomic_int[count]) {
     alive.store(true);
@@ -69,37 +47,54 @@ class Barrier {
   }
 
   void Wait(int index) {
+    TRACE_CREATION
     Enter(index);
     int error = pthread_barrier_wait(&barrier);
     if (error != 0 && error != PTHREAD_BARRIER_SERIAL_THREAD) {
-      TRACE_BARRIER
       FAIL() << "Error waiting for barrier: " << strerror(error) << " (error " << error << ")";
     }
     Exit(index);
   }
 
   void Kill(int index) {
+    TRACE_CREATION
     if (alive.exchange(false) && wait_count.load() > 0) {
-      TRACE_BARRIER
       FAIL() << "EnumeratedWait at index " << index << " destroyed while one or more threads are waiting";
     }
   }
 
   ~Barrier() {
+    TRACE_CREATION
     delete[] index_usage;
     int error = pthread_barrier_destroy(&barrier);
     if (error != 0) {
-      TRACE_BARRIER
       FAIL() << "Error cleaning up barrier: " << strerror(error) << " (error " << error << ")";
     }
   }
 
 private:
+  void Enter(int index) {
+    ++wait_count;
+    if (!alive.load()) {
+      --wait_count;
+      FAIL() << "One or more EnumeratedWait have been destroyed";
+    }
+    if (++index_usage[index] > 1) {
+      Exit(index);
+      FAIL() << "EnumeratedWait at index " << index << " is already in use";
+    }
+  }
+
+  void Exit(int index) {
+    --wait_count;
+    --index_usage[index];
+  }
+
   std::atomic_bool alive;
   std::atomic_int wait_count;
   std::atomic_int* const index_usage;
   pthread_barrier_t barrier;
-  CAPTURE_CREATION
+  CAPTURE_CREATION("EnumeratedBarrier")
 };
 
 }  // namespace

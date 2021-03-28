@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-Copyright 2019-2020 Kevin P. Barry
+Copyright 2019-2021 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -81,14 +81,11 @@ class LogThenCrash {
   #define PRED_CONTEXT_POINT(point) \
     TraceContext::SetContext(point),
 
-  #define CAPTURE_CREATION \
-    CreationTrace creation_context_;
+  #define CAPTURE_CREATION(name) \
+    CreationTrace creation_context_ = name;
 
   #define TRACE_CREATION \
-    TRACE_CREATION_NAME(TypeInstance::TypeName(parent))
-
-  #define TRACE_CREATION_NAME(name) \
-    TraceCreation trace_creation(name, creation_context_);
+    TraceCreation trace_creation(creation_context_);
 
   #define FAIL_WHEN_NULL(value) \
     FailWhenNull(value)
@@ -106,8 +103,6 @@ class LogThenCrash {
   #define CAPTURE_CREATION
 
   #define TRACE_CREATION
-
-  #define TRACE_CREATION_NAME(name)
 
   #define FAIL_WHEN_NULL(value) value
 
@@ -190,24 +185,31 @@ class ProgramArgv : public Argv {
 
 class CreationTrace {
  public:
-  inline CreationTrace() : trace_(TraceContext::GetTrace()) {}
+  template<int S>
+  inline CreationTrace(const char(&type)[S])
+    : type_(type), trace_(TraceContext::GetTrace()) {}
+
+  inline std::string GetType() const {
+    return type_;
+  }
 
   inline const TraceList& GetTrace() const {
     return trace_;
   }
 
  private:
+  const char* const type_;
   const TraceList trace_;
 };
 
 class TraceCreation : public capture_thread::ThreadCapture<TraceCreation> {
  public:
-  inline TraceCreation(std::string type, const CreationTrace& trace)
-    : type_(type), trace_(trace), capture_to_(this) {}
+  inline TraceCreation(const CreationTrace& trace)
+    : trace_(trace), capture_to_(this) {}
 
   static inline std::string GetType() {
     if (GetCurrent()) {
-      return GetCurrent()->type_;
+      return GetCurrent()->trace_.GetType();
     } else {
       return std::string();
     }
@@ -222,8 +224,6 @@ class TraceCreation : public capture_thread::ThreadCapture<TraceCreation> {
   }
 
  private:
-
-  const std::string type_;
   const CreationTrace& trace_;
   const ScopedCapture capture_to_;
 };

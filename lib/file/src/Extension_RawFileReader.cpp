@@ -107,7 +107,7 @@ struct ExtValue_RawFileReader : public Value_RawFileReader {
   std::mutex mutex;
   const std::string filename;
   R<std::istream> file;
-  CAPTURE_CREATION
+  CAPTURE_CREATION("RawFileReader")
 };
 
 Category_RawFileReader& CreateCategory_RawFileReader() {

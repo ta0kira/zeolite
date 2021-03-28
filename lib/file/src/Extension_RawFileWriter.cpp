@@ -89,7 +89,7 @@ struct ExtValue_RawFileWriter : public Value_RawFileWriter {
   std::mutex mutex;
   const std::string filename;
   R<std::ostream> file;
-  CAPTURE_CREATION
+  CAPTURE_CREATION("RawFileWriter")
 };
 
 Category_RawFileWriter& CreateCategory_RawFileWriter() {

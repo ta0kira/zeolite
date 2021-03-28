@@ -1377,7 +1377,7 @@ tests for module `myprogram` using `zeolite -t myprogram`.
 
 ### Code Coverage
 
-As of compiler version `0.15.1.0`, you can get a log of all lines of Zeolite
+As of compiler version `0.16.0.0`, you can get a log of all lines of Zeolite
 code (from `.0rx` or `.0rt` sources) with the `--log-traces`*`[filename]`*
 option when running tests with `zeolite -t`.
 

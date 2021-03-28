@@ -113,8 +113,8 @@ predTraceContext c
   | null c = ""
   | otherwise = "PRED_CONTEXT_POINT(" ++ escapeChars (formatFullContext c) ++ ")"
 
-captureCreationTrace :: String
-captureCreationTrace = "CAPTURE_CREATION"
+captureCreationTrace :: CategoryName -> String
+captureCreationTrace n = "CAPTURE_CREATION(" ++ show (show n) ++ ")"
 
 showCreationTrace :: String
 showCreationTrace = "TRACE_CREATION"

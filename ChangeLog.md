@@ -1,11 +1,17 @@
 # Revision history for zeolite-lang
 
-## 0.15.1.0  -- ????-??-??
+## 0.16.0.0  -- ????-??-??
 
 ### Compiler CLI
 
+* **[breaking]** Updates how `$TraceCreation$` is implemented in C++. This only
+  breaks hand-written C++ extensions that use the `CAPTURE_CREATION` macro.
+
 * **[new]** Adds the `--log-traces` option for testing mode (`zeolite -t`) to
   capture a record of every line of Zeolite code executed when running tests.
+
+* **[fix]** Fixes dependency resolution for C++ extensions that define
+  `$ModuleOnly$` categories.
 
 ### Language
 
@@ -22,12 +28,7 @@
 
 * **[new]** Adds `EnumeratedBarrier` to `lib/thread`, which can be use to
   synchronize a fixed number of threads. (Similar to `pthread_barrier_t` in
-  POSIX.)
-
-### Compiler CLI
-
-* **[fix]** Fixes dependency resolution for C++ extensions that define
-  `$ModuleOnly$` categories.
+  POSIX, but with strict validation to help prevent deadlocks.)
 
 ## 0.15.0.0  -- 2021-03-24
 

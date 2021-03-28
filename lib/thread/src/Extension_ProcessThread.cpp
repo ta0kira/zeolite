@@ -109,7 +109,7 @@ struct ExtValue_ProcessThread : public Value_ProcessThread {
 
   const S<TypeValue> routine;
   S<std::thread> thread;
-  CAPTURE_CREATION
+  CAPTURE_CREATION("ProcessThread")
 };
 
 Category_ProcessThread& CreateCategory_ProcessThread() {
