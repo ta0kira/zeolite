@@ -25,8 +25,8 @@ limitations under the License.
 #include "category-source.hpp"
 #include "Streamlined_ThreadCondition.hpp"
 #include "Category_ThreadCondition.hpp"
-#include "Category_ThreadResume.hpp"
-#include "Category_ThreadWait.hpp"
+#include "Category_ConditionResume.hpp"
+#include "Category_ConditionWait.hpp"
 
 #ifdef ZEOLITE_PUBLIC_NAMESPACE
 namespace ZEOLITE_PUBLIC_NAMESPACE {

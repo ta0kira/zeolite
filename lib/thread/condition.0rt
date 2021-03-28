@@ -99,11 +99,11 @@ unittest waitNoTimeout {
 concrete JustWait {
   refines Routine
 
-  @type create (ThreadWait) -> (JustWait)
+  @type create (ConditionWait) -> (JustWait)
 }
 
 define JustWait {
-  @value ThreadWait cond
+  @value ConditionWait cond
 
   create (cond) {
     return JustWait{ cond }
@@ -121,12 +121,12 @@ define JustWait {
 concrete WaitAndUpdate {
   refines Routine
 
-  @type create (Value,ThreadWait) -> (WaitAndUpdate)
+  @type create (Value,ConditionWait) -> (WaitAndUpdate)
 }
 
 define WaitAndUpdate {
   @value Value value
-  @value ThreadWait cond
+  @value ConditionWait cond
 
   create (value,cond) {
     return WaitAndUpdate{ value, cond }

@@ -22,7 +22,7 @@ limitations under the License.
 // - Mutex logic is exposed so that it can be used to avoid race conditions with
 //   the thread signalling continuation. (For example, if blocking behavior is
 //   conditioned on the availability of input from another thread.)
-@value interface ThreadWait {
+@value interface ConditionWait {
   refines Mutex
 
   // Block the current thread.
@@ -74,7 +74,7 @@ limitations under the License.
 //
 // Example:
 //
-//   ThreadWait cond <- // created elsewhere
+//   ConditionWait cond <- // created elsewhere
 //
 //   scoped {
 //     MutexLock lock <- MutexLock.lock(cond)
@@ -86,7 +86,7 @@ limitations under the License.
 //
 //   // signal threads to continue
 //   \ cond.resumeAll()
-@value interface ThreadResume {
+@value interface ConditionResume {
   refines Mutex
 
   // Resume all of the threads waiting for the associated condition.
@@ -98,8 +98,8 @@ limitations under the License.
 
 // Provides a single resume mechanism for multiple waiting threads.
 concrete ThreadCondition {
-  refines ThreadWait
-  refines ThreadResume
+  refines ConditionWait
+  refines ConditionResume
 
   // Create a new condition.
   @type new () -> (ThreadCondition)
