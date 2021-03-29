@@ -1,0 +1,11 @@
+root: "../.."
+path: "example/primes"
+private_deps: [
+  "lib/container"
+  "lib/thread"
+  "lib/util"
+]
+mode: binary {
+  category: PrimesDemo
+  function: run
+}
