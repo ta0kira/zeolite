@@ -34,6 +34,25 @@
 }
 
 <b>define</b> <b><span style='color:#0057ae;'>TestDataParser</span></b> {
+  <span style='color:#898887;'>// Mark @category members as read-only, to avoid accidental assignment.</span>
+  <b><i><span style='color:#8060c0;'>$ReadOnly[</span></i></b><i><span style='color:#8060c0;'>sentenceOrToken,</span></i>
+<i><span style='color:#8060c0;'>            acronymOrAardvark,</span></i>
+<i><span style='color:#8060c0;'>            fileStart,</span></i>
+<i><span style='color:#8060c0;'>            fileEnd,</span></i>
+<i><span style='color:#8060c0;'>            nameTag,</span></i>
+<i><span style='color:#8060c0;'>            descriptionTag,</span></i>
+<i><span style='color:#8060c0;'>            aWordTag</span></i><b><i><span style='color:#8060c0;'>]$</span></i></b>
+
+  <span style='color:#898887;'>// Mark @category members as hidden, since they should not be used directly.</span>
+  <b><i><span style='color:#8060c0;'>$Hidden[</span></i></b><i><span style='color:#8060c0;'>whitespace,</span></i>
+<i><span style='color:#8060c0;'>          sentenceChars,</span></i>
+<i><span style='color:#8060c0;'>          sentence,</span></i>
+<i><span style='color:#8060c0;'>          quote,</span></i>
+<i><span style='color:#8060c0;'>          quotedSentence,</span></i>
+<i><span style='color:#8060c0;'>          token,</span></i>
+<i><span style='color:#8060c0;'>          acronym,</span></i>
+<i><span style='color:#8060c0;'>          aardvark</span></i><b><i><span style='color:#8060c0;'>]$</span></i></b>
+
   <b>refines</b> <span style='color:#0057ae;'>Parser</span><span style='color:#c02040;'>&lt;</span><span style='color:#0057ae;'>TestData</span><span style='color:#c02040;'>&gt;</span>
 
   <span style='color:#644a9b;'>@category</span> <span style='color:#0057ae;'>Parser</span><span style='color:#c02040;'>&lt;</span><b>any</b><span style='color:#c02040;'>&gt;</span> whitespace &lt;- <span style='color:#0057ae;'>SequenceOfParser</span><span style='color:#644a9b;'>.</span>create(<span style='color:#bf0303;'>&quot; </span><span style='color:#924c9d;'>\n\t</span><span style='color:#bf0303;'>&quot;</span>,<span style='color:#b08000;'>1</span>,<span style='color:#b08000;'>0</span>) <b><span style='color:#c02040;'>`</span></b><span style='color:#0057ae;'>Parse</span><span style='color:#644a9b;'>.</span>or&lt;<b>?</b>&gt;<b><span style='color:#c02040;'>`</span></b> <span style='color:#0057ae;'>Parse</span><span style='color:#644a9b;'>.</span>error(<span style='color:#bf0303;'>&quot;Expected whitespace&quot;</span>)

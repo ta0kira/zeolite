@@ -23,6 +23,25 @@ define TestData {
 }
 
 define TestDataParser {
+  // Mark @category members as read-only, to avoid accidental assignment.
+  $ReadOnly[sentenceOrToken,
+            acronymOrAardvark,
+            fileStart,
+            fileEnd,
+            nameTag,
+            descriptionTag,
+            aWordTag]$
+
+  // Mark @category members as hidden, since they should not be used directly.
+  $Hidden[whitespace,
+          sentenceChars,
+          sentence,
+          quote,
+          quotedSentence,
+          token,
+          acronym,
+          aardvark]$
+
   refines Parser<TestData>
 
   @category Parser<any> whitespace <- SequenceOfParser.create(" \n\t",1,0) `Parse.or<?>` Parse.error("Expected whitespace")
