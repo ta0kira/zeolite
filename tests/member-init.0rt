@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-Copyright 2020 Kevin P. Barry
+Copyright 2020-2021 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -317,4 +317,17 @@ define Test {
   get () {
     return value
   }
+}
+
+
+testcase "@category members read-only during others' init" {
+  error
+  require "value1.+read-only"
+}
+
+concrete Test {}
+
+define Test {
+  @category Int value1 <- 1
+  @category Int value2 <- (value1 <- 2)
 }

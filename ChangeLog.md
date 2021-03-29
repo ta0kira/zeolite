@@ -15,10 +15,22 @@
 
 ### Language
 
+* **[breaking]** Marks `@category` member variables as read-only when
+  initializing other member variables. Essentially, this just means that you can
+  no longer do something like this:
+
+  ```text
+  @category Int foo <- 1
+  @category Int bar <- (foo <- 2)
+  ```
+
 * **[fix]** Fixes regression with function names used in stack traces.
   Previously, if a function was inherited and the types were not overridden,
   the category name in the trace would be that of the parent, rather than that
   of the one defining the procedure.
+
+* **[new]** Allows `$ReadOnly[...]$` and `$Hidden[...]$` for member variables in
+  definitions of `concrete` categories.
 
 ### Libraries
 

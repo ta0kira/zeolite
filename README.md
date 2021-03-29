@@ -1494,6 +1494,20 @@ These pragmas alter how variables are dealt with locally:
   inaccessible for reading. Note that this *does not* allow you to reuse a
   variable name; the variable name remains reserved.
 
+- As of compiler version `0.16.0.0` both `$ReadOnly[...]$` and `$Hidden[...]$`
+  can be used at the top of a `define` for a `concrete` category to protect
+  member variables.
+
+  <pre style='color:#1f1c1b;background-color:#f6f8fa;'>
+  <b>define</b> <b><span style='color:#0057ae;'>Type</span></b> {
+    <b><i><span style='color:#8060c0;'>$Hidden[</span></i></b><i><span style='color:#8060c0;'>foo</span></i><b><i><span style='color:#8060c0;'>]$</span></i></b>
+    <b><i><span style='color:#8060c0;'>$ReadOnly[</span></i></b><i><span style='color:#8060c0;'>bar</span></i><b><i><span style='color:#8060c0;'>]$</span></i></b>
+
+    <span style='color:#644a9b;'>@category</span> <i><span style='color:#0057ae;'>Int</span></i> foo &lt;- <span style='color:#b08000;'>1</span>
+    <span style='color:#898887;'>// foo can still be read here for the purposes of initialization.</span>
+    <span style='color:#644a9b;'>@category</span> <i><span style='color:#0057ae;'>Int</span></i> bar &lt;- foo
+  }</pre>
+
 Zeolite uses pragmas instead of something like `final` in Java for a few
 reasons:
 

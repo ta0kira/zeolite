@@ -29,6 +29,7 @@ module Compilation.ScopeContext (
 import Control.Monad (when)
 import Prelude hiding (pi)
 import qualified Data.Map as Map
+import qualified Data.Set as Set
 
 import Base.CompilerError
 import Base.GeneralType
@@ -66,7 +67,7 @@ applyProcedureScope f (ProcedureScope ctx fs) = map (uncurry (f ctx)) fs
 
 getProcedureScopes :: (Show c, CollectErrorsM m) =>
   CategoryMap c -> ExprMap c -> DefinedCategory c -> m [ProcedureScope c]
-getProcedureScopes ta em (DefinedCategory c n pi _ _ fi ms ps fs) = do
+getProcedureScopes ta em (DefinedCategory c n pragmas pi _ _ fi ms ps fs) = do
   (_,t) <- getConcreteCategory ta (c,n)
   let params = Positional $ getCategoryParams t
   let params2 = Positional pi
@@ -87,9 +88,10 @@ getProcedureScopes ta em (DefinedCategory c n pi _ _ fi ms ps fs) = do
   let cm0 = builtins typeInstance CategoryScope
   let tm0 = builtins typeInstance TypeScope
   let vm0 = builtins typeInstance ValueScope
-  cm2 <- mapMembers cm
-  tm2 <- mapMembers $ cm ++ tm'
-  vm2 <- mapMembers $ cm ++ tm' ++ vm'
+  cm2 <- mapMembers readOnly hidden cm
+  tm2 <- mapMembers readOnly hidden $ cm ++ tm'
+  vm2 <- mapMembers readOnly hidden $ cm ++ tm' ++ vm'
+  mapCompilerM_ checkPragma pragmas
   let cv = Map.union cm0 cm2
   let tv = Map.union tm0 tm2
   let vv = Map.union vm0 vm2
@@ -98,6 +100,19 @@ getProcedureScopes ta em (DefinedCategory c n pi _ _ fi ms ps fs) = do
   let ctxV = ScopeContext ta n params params2 vm' filters filters2 fa vv em
   return [ProcedureScope ctxC cp,ProcedureScope ctxT tp',ProcedureScope ctxV vp']
   where
+    checkPragma (MembersReadOnly c2 vs) = do
+      let missing = Set.toList $ Set.fromList vs `Set.difference` allMembers
+      mapCompilerM_ (\v -> compilerErrorM $ "Member " ++ show v ++
+                                            " does not exist (marked ReadOnly at " ++
+                                            formatFullContext c2 ++ ")") missing
+    checkPragma (MembersHidden c2 vs) = do
+      let missing = Set.toList $ Set.fromList vs `Set.difference` allMembers
+      mapCompilerM_ (\v -> compilerErrorM $ "Member " ++ show v ++
+                                            " does not exist (marked Hidden at " ++
+                                            formatFullContext c2 ++ ")") missing
+    allMembers = Set.fromList $ map dmName ms
+    readOnly = Map.fromListWith (++) $ concat $ map (\m -> zip (mroMembers m) (repeat $ mroContext m)) $ filter isMembersReadOnly pragmas
+    hidden   = Map.fromListWith (++) $ concat $ map (\m -> zip (mhMembers m)  (repeat $ mhContext m))  $ filter isMembersHidden   pragmas
     firstM f (x,y) = do
       x' <- f x
       return (x',y)

@@ -227,6 +227,9 @@ instance (Show c, CollectErrorsM m) =>
           return $ MemberValue c2 n t2'
   ccGetVariable ctx (UsedVariable c n) =
     case n `Map.lookup` (ctx ^. pcVariables) of
+           (Just (VariableValue _ _ _ (VariableHidden []))) ->
+             compilerErrorM $ "Variable " ++ show n ++ formatFullContextBrace c ++
+                              " is hidden"
            (Just (VariableValue _ _ _ (VariableHidden c2))) ->
              compilerErrorM $ "Variable " ++ show n ++ formatFullContextBrace c ++
                               " was explicitly hidden at " ++ formatFullContext c2

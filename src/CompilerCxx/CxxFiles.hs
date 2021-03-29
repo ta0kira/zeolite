@@ -246,6 +246,7 @@ generateCategoryDefinition testing = common where
     filename = templateStreamlined (getCategoryName t)
     defined = DefinedCategory {
         dcContext = [],
+        dcPragmas = [],
         dcName = getCategoryName t,
         dcParams = [],
         dcRefines = [],
@@ -271,7 +272,7 @@ generateCategoryDefinition testing = common where
         RawFailCall (functionDebugName (getCategoryName t) f ++ " is not implemented (see " ++ filename ++ ")")
       ]
     asLineComment = NoValueExpression [] . LineComment
-  common (NativeConcrete t d@(DefinedCategory _ _ pi _ _ fi ms _ _) ta ns em) = fmap (:[]) singleSource where
+  common (NativeConcrete t d@(DefinedCategory _ _ _ pi _ _ fi ms _ _) ta ns em) = fmap (:[]) singleSource where
     singleSource = do
       let filename = sourceFilename (getCategoryName t)
       ta' <- mergeInternalInheritance ta d

@@ -25,8 +25,9 @@ import Prelude hiding (pi)
 
 import Base.CompilerError
 import Parser.Common
+import Parser.Pragma (autoPragma)
 import Parser.Procedure ()
-import Parser.TextParser
+import Parser.TextParser hiding (hidden)
 import Parser.TypeCategory
 import Parser.TypeInstance ()
 import Types.DefinedCategory
@@ -42,13 +43,23 @@ instance ParseFromSource (DefinedCategory SourceContext) where
     kwDefine
     n <- sourceParser
     sepAfter (string_ "{")
+    pragmas <- sepBy singlePragma optionalSpace
     (ds,rs) <- parseRefinesDefines
     (pi,fi) <- parseInternalParams <|> return ([],[])
     (ms,ps,fs) <- parseMemberProcedureFunction n
     sepAfter (string_ "}")
-    return $ DefinedCategory [c] n pi ds rs fi ms ps fs
+    return $ DefinedCategory [c] n pragmas pi ds rs fi ms ps fs
     where
       parseRefinesDefines = fmap merge2 $ sepBy refineOrDefine optionalSpace
+      singlePragma = readOnly <|> hidden
+      readOnly = autoPragma "ReadOnly" $ Right parseAt where
+        parseAt c = do
+          vs <- labeled "variable names" $ sepBy sourceParser (sepAfter $ string ",")
+          return $ MembersReadOnly [c] vs
+      hidden = autoPragma "Hidden" $ Right parseAt where
+        parseAt c = do
+          vs <- labeled "variable names" $ sepBy sourceParser (sepAfter $ string ",")
+          return $ MembersHidden [c] vs
       refineOrDefine = labeled "refine or define" $ put12 singleRefine <|> put22 singleDefine
       parseInternalParams = labeled "internal params" $ do
         kwTypes

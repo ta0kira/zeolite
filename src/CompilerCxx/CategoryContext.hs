@@ -57,7 +57,8 @@ getContextForInit tm em t d s = do
   fm <- getFilterMap (pValues ps) pa
   let typeInstance = TypeInstance (getCategoryName t) $ fmap (singleType . JustParamName False . vpParam) ps
   let builtin = Map.filter ((== LocalScope) . vvScope) $ builtinVariables typeInstance
-  members <- mapMembers $ filter ((<= s) . dmScope) (dcMembers d)
+  let readOnly = Map.fromListWith (++) $ map (\m -> (dmName m,[])) $ dcMembers d
+  members <- mapMembers readOnly Map.empty $ filter ((<= s) . dmScope) (dcMembers d)
   return $ ProcedureContext {
       _pcScope = s,
       _pcType = getCategoryName t,

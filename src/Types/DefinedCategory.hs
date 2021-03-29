@@ -21,9 +21,12 @@ limitations under the License.
 module Types.DefinedCategory (
   DefinedCategory(..),
   DefinedMember(..),
+  PragmaDefined(..),
   VariableRule(..),
   VariableValue(..),
   isInitialized,
+  isMembersHidden,
+  isMembersReadOnly,
   mapMembers,
   mergeInternalInheritance,
   pairProceduresToFunctions,
@@ -46,6 +49,7 @@ data DefinedCategory c =
   DefinedCategory {
     dcContext :: [c],
     dcName :: CategoryName,
+    dcPragmas :: [PragmaDefined c],
     dcParams :: [ValueParam c],
     dcRefines :: [ValueRefine c],
     dcDefines :: [ValueDefine c],
@@ -70,6 +74,25 @@ isInitialized :: DefinedMember c -> Bool
 isInitialized = check . dmInit where
   check Nothing = False
   check _       = True
+
+data PragmaDefined c =
+  MembersReadOnly {
+    mroContext :: [c],
+    mroMembers :: [VariableName]
+  } |
+  MembersHidden {
+    mhContext :: [c],
+    mhMembers :: [VariableName]
+  }
+  deriving (Show)
+
+isMembersReadOnly :: PragmaDefined c -> Bool
+isMembersReadOnly (MembersReadOnly _ _) = True
+isMembersReadOnly _                     = False
+
+isMembersHidden :: PragmaDefined c -> Bool
+isMembersHidden (MembersHidden _ _) = True
+isMembersHidden _                   = False
 
 data VariableRule c =
   VariableDefault |
@@ -164,8 +187,9 @@ pairProceduresToFunctions fa ps = do
     getPair _ _ = undefined
 
 mapMembers :: (Show c, CollectErrorsM m) =>
-  [DefinedMember c] -> m (Map.Map VariableName (VariableValue c))
-mapMembers ms = foldr update (return Map.empty) ms where
+  Map.Map VariableName [c] -> Map.Map VariableName [c] -> [DefinedMember c] ->
+  m (Map.Map VariableName (VariableValue c))
+mapMembers readOnly hidden ms = foldr update (return Map.empty) ms where
   update m ma = do
     ma' <- ma
     case dmName m `Map.lookup` ma' of
@@ -175,7 +199,12 @@ mapMembers ms = foldr update (return Map.empty) ms where
                                      formatFullContextBrace (dmContext m) ++
                                      " is already defined" ++
                                      formatFullContextBrace (vvContext m0)
-    return $ Map.insert (dmName m) (VariableValue (dmContext m) (dmScope m) (dmType m) VariableDefault) ma'
+    return $ Map.insert (dmName m) (VariableValue (dmContext m) (dmScope m) (dmType m) (memberRule m)) ma'
+  memberRule m =
+    case (dmName m `Map.lookup` hidden,dmName m `Map.lookup` readOnly) of
+         (Just c,_) -> VariableHidden   c
+         (_,Just c) -> VariableReadOnly c
+         _ -> VariableDefault
 
 -- TODO: Most of this duplicates parts of flattenAllConnections.
 mergeInternalInheritance :: (Show c, CollectErrorsM m) =>

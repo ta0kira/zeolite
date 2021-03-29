@@ -256,3 +256,173 @@ unittest test {
   $Hidden[foo]$
   Int foo <- 1
 }
+
+
+testcase "ReadOnly @category member" {
+  error
+  require "foo.+read-only"
+  exclude "bar"
+}
+
+concrete Type {}
+
+define Type {
+  $ReadOnly[foo]$
+
+  @category Int foo <- 1
+  @category Int bar <- 1
+
+  @value call () -> ()
+  call () {
+    bar <- 2
+    foo <- 2
+  }
+}
+
+
+testcase "Hidden @category member" {
+  error
+  require "foo.+hidden"
+  exclude "bar"
+}
+
+concrete Type {}
+
+define Type {
+  $Hidden[foo]$
+
+  @category Int foo <- 1
+  @category Int bar <- 1
+
+  @value call () -> ()
+  call () {
+    bar <- 2
+    foo <- 2
+  }
+}
+
+
+testcase "Bad name for Hidden @category member" {
+  error
+  require "foo.+does not exist"
+}
+
+concrete Type {}
+
+define Type {
+  $Hidden[foo]$
+
+  @category Int bar <- 1
+}
+
+
+testcase "Hidden @category member is visible during init" {
+  success
+}
+
+unittest test {
+  \ Testing.checkEquals<?>(Type:get(),2)
+}
+
+concrete Type {
+  @category get () -> (Int)
+}
+
+define Type {
+  $Hidden[foo]$
+  $ReadOnly[bar]$
+
+  @category Int foo <- 1
+  @category Int bar <- foo+1
+
+  get () {
+    return bar
+  }
+}
+
+
+testcase "ReadOnly @value member" {
+  error
+  require "foo.+read-only"
+  exclude "bar"
+}
+
+concrete Type {}
+
+define Type {
+  $ReadOnly[foo]$
+
+  @value Int foo
+  @value Int bar
+
+  @value call () -> ()
+  call () {
+    bar <- 2
+    foo <- 2
+  }
+}
+
+
+testcase "Hidden @value member" {
+  error
+  require "foo.+hidden"
+  exclude "bar"
+}
+
+concrete Type {}
+
+define Type {
+  $Hidden[foo]$
+
+  @value Int foo
+  @value Int bar
+
+  @value call () -> ()
+  call () {
+    bar <- 2
+    foo <- 2
+  }
+}
+
+
+testcase "Bad name for Hidden @value member" {
+  error
+  require "foo.+does not exist"
+}
+
+concrete Type {}
+
+define Type {
+  $Hidden[foo]$
+
+  @value Int bar
+}
+
+
+testcase "ReadOnly @value member can be initialized" {
+  success
+}
+
+unittest test {
+  \ Testing.checkEquals<?>(Type.create().get(),1)
+}
+
+concrete Type {
+  @type create () -> (Type)
+  @value get () -> (Int)
+
+}
+
+define Type {
+  $ReadOnly[foo]$
+
+  @value Int foo
+
+  create () {
+    return Type{ 1 }
+  }
+
+  get () {
+    return foo
+  }
+}
