@@ -1,0 +1,8 @@
+$ModuleOnly$
+
+// Incrementally tracks primes.
+concrete PrimeTracker {
+  @type create () -> (PrimeTracker)
+  @value checkNextPossible (ThreadContinue) -> (#self)
+  @value getResults () -> (ReadIterator<Int>)
+}

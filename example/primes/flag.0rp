@@ -1,0 +1,32 @@
+$ModuleOnly$
+
+// A gate for starting, stopping, and canceling thread processes.
+@value interface ThreadGate {
+  // Start the thread(s).
+  start () -> (#self)
+
+  // Stop the thread(s).
+  stop () -> (#self)
+
+  // Returns true iff the thread(s) should be running.
+  getEnabled () -> (Bool)
+
+  // Permanently cancel the thread(s).
+  cancel () -> (#self)
+}
+
+
+// Determine if a thread should continue or exit.
+@value interface ThreadContinue {
+  // Blocks until a start or cancel signal is received. If false is returned,
+  // the thread should clean up and exit.
+  shouldContinue () -> (Bool)
+}
+
+// Implementation of thread gating with a flag.
+concrete ThreadFlag {
+  refines ThreadGate
+  refines ThreadContinue
+
+  @type new () -> (ThreadFlag)
+}

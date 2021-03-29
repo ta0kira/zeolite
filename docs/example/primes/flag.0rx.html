@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="Generator" content="Kate, the KDE Advanced Text Editor" />
+<title>flag.0rx</title>
+</head>
+<!-- Highlighting: "Zeolite" -->
+<body>
+<pre style='color:#1f1c1b;background-color:#ffffff;'>
+<b>define</b> <b><span style='color:#0057ae;'>ThreadFlag</span></b> {
+  <span style='color:#644a9b;'>@value</span> <b><span style='color:#006e28;'>[</span></b><span style='color:#0057ae;'>ConditionWait</span><span style='color:#006e28;'>&amp;</span><span style='color:#0057ae;'>ConditionResume</span><b><span style='color:#006e28;'>]</span></b> cond
+  <span style='color:#644a9b;'>@value</span> <i><span style='color:#0057ae;'>Bool</span></i> enabled
+  <span style='color:#644a9b;'>@value</span> <i><span style='color:#0057ae;'>Bool</span></i> canceled
+
+  new () {
+    <b>return</b> <span style='color:#0057ae;'>ThreadFlag</span>{ <span style='color:#0057ae;'>ThreadCondition</span><span style='color:#644a9b;'>.</span>new(), <b>false</b>, <b>false</b> }
+  }
+
+  start () {
+    <b>scoped</b> {
+      <span style='color:#0057ae;'>MutexLock</span> lock &lt;- <span style='color:#0057ae;'>MutexLock</span><span style='color:#644a9b;'>.</span>lock(cond)
+    } <b>cleanup</b> {
+      <span style='color:#006e28;'>\</span> lock<span style='color:#644a9b;'>.</span>freeResource()
+    } <b>in</b> enabled &lt;- <b>true</b>
+    <span style='color:#006e28;'>\</span> cond<span style='color:#644a9b;'>.</span>resumeAll()
+    <b>return</b> <b>self</b>
+  }
+
+  stop () {
+    <b>scoped</b> {
+      <span style='color:#0057ae;'>MutexLock</span> lock &lt;- <span style='color:#0057ae;'>MutexLock</span><span style='color:#644a9b;'>.</span>lock(cond)
+    } <b>cleanup</b> {
+      <span style='color:#006e28;'>\</span> lock<span style='color:#644a9b;'>.</span>freeResource()
+    } <b>in</b> enabled &lt;- <b>false</b>
+    <b>return</b> <b>self</b>
+  }
+
+  getEnabled () {
+    <b>return</b> enabled &amp;&amp; !canceled
+  }
+
+  cancel () {
+    <b>scoped</b> {
+      <span style='color:#0057ae;'>MutexLock</span> lock &lt;- <span style='color:#0057ae;'>MutexLock</span><span style='color:#644a9b;'>.</span>lock(cond)
+    } <b>cleanup</b> {
+      <span style='color:#006e28;'>\</span> lock<span style='color:#644a9b;'>.</span>freeResource()
+    } <b>in</b> canceled &lt;- <b>true</b>
+    <span style='color:#006e28;'>\</span> cond<span style='color:#644a9b;'>.</span>resumeAll()
+    <b>return</b> <b>self</b>
+  }
+
+  shouldContinue () {
+    <b>scoped</b> {
+      <span style='color:#0057ae;'>MutexLock</span> lock &lt;- <span style='color:#0057ae;'>MutexLock</span><span style='color:#644a9b;'>.</span>lock(cond)
+    } <b>cleanup</b> {
+      <span style='color:#006e28;'>\</span> lock<span style='color:#644a9b;'>.</span>freeResource()
+    } <b>in</b> <b>while</b> (<b>true</b>) {
+      <b>if</b> (canceled) {
+        <b>return</b> <b>false</b>
+      } <b>elif</b> (enabled) {
+        <b>break</b>
+      } <b>else</b> {
+        <span style='color:#898887;'>// The Mutex associated with cond is unlocked during wait().</span>
+        <span style='color:#006e28;'>\</span> cond<span style='color:#644a9b;'>.</span>wait()
+      }
+    }
+    <b>return</b> <b>true</b>
+  }
+}
+</pre>
+</body>
+</html>

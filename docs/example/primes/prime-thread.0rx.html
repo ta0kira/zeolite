@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="Generator" content="Kate, the KDE Advanced Text Editor" />
+<title>prime-thread.0rx</title>
+</head>
+<!-- Highlighting: "Zeolite" -->
+<body>
+<pre style='color:#1f1c1b;background-color:#ffffff;'>
+<b>define</b> <b><span style='color:#0057ae;'>PrimeThread</span></b> {
+  <span style='color:#644a9b;'>@value</span> <span style='color:#0057ae;'>ThreadContinue</span> flag
+  <span style='color:#644a9b;'>@value</span> <span style='color:#0057ae;'>PrimeTracker</span>   tracker
+
+  create (flag,tracker) {
+    <b>return</b> <span style='color:#0057ae;'>PrimeThread</span>{ flag, tracker }
+  }
+
+  run () {
+    <b>while</b> (flag<span style='color:#644a9b;'>.</span>shouldContinue()) {
+      <span style='color:#006e28;'>\</span> tracker<span style='color:#644a9b;'>.</span>checkNextPossible(flag)
+    }
+  }
+}
+</pre>
+</body>
+</html>

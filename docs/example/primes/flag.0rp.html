@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="Generator" content="Kate, the KDE Advanced Text Editor" />
+<title>flag.0rp</title>
+</head>
+<!-- Highlighting: "Zeolite" -->
+<body>
+<pre style='color:#1f1c1b;background-color:#ffffff;'>
+<b><i><span style='color:#8060c0;'>$ModuleOnly$</span></i></b>
+
+<span style='color:#898887;'>// A gate for starting, stopping, and canceling thread processes.</span>
+<span style='color:#644a9b;'>@value</span> <b>interface</b> <b><span style='color:#0057ae;'>ThreadGate</span></b> {
+  <span style='color:#898887;'>// Start the thread(s).</span>
+  start () -&gt; (<b>#self</b>)
+
+  <span style='color:#898887;'>// Stop the thread(s).</span>
+  stop () -&gt; (<b>#self</b>)
+
+  <span style='color:#898887;'>// Returns true iff the thread(s) should be running.</span>
+  getEnabled () -&gt; (<i><span style='color:#0057ae;'>Bool</span></i>)
+
+  <span style='color:#898887;'>// Permanently cancel the thread(s).</span>
+  cancel () -&gt; (<b>#self</b>)
+}
+
+
+<span style='color:#898887;'>// Determine if a thread should continue or exit.</span>
+<span style='color:#644a9b;'>@value</span> <b>interface</b> <b><span style='color:#0057ae;'>ThreadContinue</span></b> {
+  <span style='color:#898887;'>// Blocks until a start or cancel signal is received. If false is returned,</span>
+  <span style='color:#898887;'>// the thread should clean up and exit.</span>
+  shouldContinue () -&gt; (<i><span style='color:#0057ae;'>Bool</span></i>)
+}
+
+<span style='color:#898887;'>// Implementation of thread gating with a flag.</span>
+<b>concrete</b> <b><span style='color:#0057ae;'>ThreadFlag</span></b> {
+  <b>refines</b> <span style='color:#0057ae;'>ThreadGate</span>
+  <b>refines</b> <span style='color:#0057ae;'>ThreadContinue</span>
+
+  <span style='color:#644a9b;'>@type</span> new () -&gt; (<span style='color:#0057ae;'>ThreadFlag</span>)
+}
+</pre>
+</body>
+</html>

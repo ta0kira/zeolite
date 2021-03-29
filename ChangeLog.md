@@ -33,6 +33,10 @@
 * **[new]** Makes `Argv.global()` available to all threads. Previously, it was
   only available to the main thread.
 
+### Examples
+
+* Adds `example/primes`, as a demonstration of multithreading.
+
 ## 0.15.0.0  -- 2021-03-24
 
 ### Language

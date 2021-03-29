@@ -1,0 +1,60 @@
+define ThreadFlag {
+  @value [ConditionWait&ConditionResume] cond
+  @value Bool enabled
+  @value Bool canceled
+
+  new () {
+    return ThreadFlag{ ThreadCondition.new(), false, false }
+  }
+
+  start () {
+    scoped {
+      MutexLock lock <- MutexLock.lock(cond)
+    } cleanup {
+      \ lock.freeResource()
+    } in enabled <- true
+    \ cond.resumeAll()
+    return self
+  }
+
+  stop () {
+    scoped {
+      MutexLock lock <- MutexLock.lock(cond)
+    } cleanup {
+      \ lock.freeResource()
+    } in enabled <- false
+    return self
+  }
+
+  getEnabled () {
+    return enabled && !canceled
+  }
+
+  cancel () {
+    scoped {
+      MutexLock lock <- MutexLock.lock(cond)
+    } cleanup {
+      \ lock.freeResource()
+    } in canceled <- true
+    \ cond.resumeAll()
+    return self
+  }
+
+  shouldContinue () {
+    scoped {
+      MutexLock lock <- MutexLock.lock(cond)
+    } cleanup {
+      \ lock.freeResource()
+    } in while (true) {
+      if (canceled) {
+        return false
+      } elif (enabled) {
+        break
+      } else {
+        // The Mutex associated with cond is unlocked during wait().
+        \ cond.wait()
+      }
+    }
+    return true
+  }
+}

@@ -1,0 +1,46 @@
+define PrimeTracker {
+  @value Vector<Int> primes
+  @value Int nextPossible
+
+  create () {
+    return PrimeTracker{ Vector:create<Int>(), 2 }
+  }
+
+  checkNextPossible (flag) {
+    Int toCheck <- nextPossible
+    nextPossible <- nextPossible+1
+    $ReadOnly[toCheck]$
+    $Hidden[nextPossible]$
+
+    Bool isPrime <- true
+    Bool running <- true
+
+    scoped {
+      ReadIterator<Int> primeIter <- getResults()
+    } in while ((running <- flag.shouldContinue()) && !primeIter.pastForwardEnd()) {
+      $ReadOnly[primeIter]$
+      if (toCheck%primeIter.readCurrent() == 0) {
+        isPrime <- false
+        break
+      }
+      if (primeIter.readCurrent()*primeIter.readCurrent() >= toCheck) {
+        break
+      }
+    } update {
+      primeIter <- primeIter.forward()
+    }
+
+    if (running && isPrime) {
+      \ LazyStream<Formatted>.new()
+          .append("               \r")
+          .append(toCheck)
+          .writeTo(SimpleOutput.stderr())
+      \ primes.push(toCheck)
+    }
+    return self
+  }
+
+  getResults () {
+    return AutoReadIterator:from<?>(primes)
+  }
+}

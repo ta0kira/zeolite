@@ -1,0 +1,14 @@
+define PrimeThread {
+  @value ThreadContinue flag
+  @value PrimeTracker   tracker
+
+  create (flag,tracker) {
+    return PrimeThread{ flag, tracker }
+  }
+
+  run () {
+    while (flag.shouldContinue()) {
+      \ tracker.checkNextPossible(flag)
+    }
+  }
+}

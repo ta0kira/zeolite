@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="Generator" content="Kate, the KDE Advanced Text Editor" />
+<title>prime-tracker.0rx</title>
+</head>
+<!-- Highlighting: "Zeolite" -->
+<body>
+<pre style='color:#1f1c1b;background-color:#ffffff;'>
+<b>define</b> <b><span style='color:#0057ae;'>PrimeTracker</span></b> {
+  <span style='color:#644a9b;'>@value</span> <span style='color:#0057ae;'>Vector</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Int</span></i><span style='color:#c02040;'>&gt;</span> primes
+  <span style='color:#644a9b;'>@value</span> <i><span style='color:#0057ae;'>Int</span></i> nextPossible
+
+  create () {
+    <b>return</b> <span style='color:#0057ae;'>PrimeTracker</span>{ <span style='color:#0057ae;'>Vector</span><span style='color:#644a9b;'>:</span>create&lt;<i><span style='color:#0057ae;'>Int</span></i>&gt;(), <span style='color:#b08000;'>2</span> }
+  }
+
+  checkNextPossible (flag) {
+    <i><span style='color:#0057ae;'>Int</span></i> toCheck &lt;- nextPossible
+    nextPossible &lt;- nextPossible+<span style='color:#b08000;'>1</span>
+    <b><i><span style='color:#8060c0;'>$ReadOnly[</span></i></b><i><span style='color:#8060c0;'>toCheck</span></i><b><i><span style='color:#8060c0;'>]$</span></i></b>
+    <b><i><span style='color:#8060c0;'>$Hidden[</span></i></b><i><span style='color:#8060c0;'>nextPossible</span></i><b><i><span style='color:#8060c0;'>]$</span></i></b>
+
+    <i><span style='color:#0057ae;'>Bool</span></i> isPrime &lt;- <b>true</b>
+    <i><span style='color:#0057ae;'>Bool</span></i> running &lt;- <b>true</b>
+
+    <b>scoped</b> {
+      <span style='color:#0057ae;'>ReadIterator</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Int</span></i><span style='color:#c02040;'>&gt;</span> primeIter &lt;- getResults()
+    } <b>in</b> <b>while</b> ((running &lt;- flag<span style='color:#644a9b;'>.</span>shouldContinue()) &amp;&amp; !primeIter<span style='color:#644a9b;'>.</span>pastForwardEnd()) {
+      <b><i><span style='color:#8060c0;'>$ReadOnly[</span></i></b><i><span style='color:#8060c0;'>primeIter</span></i><b><i><span style='color:#8060c0;'>]$</span></i></b>
+      <b>if</b> (toCheck%primeIter<span style='color:#644a9b;'>.</span>readCurrent() == <span style='color:#b08000;'>0</span>) {
+        isPrime &lt;- <b>false</b>
+        <b>break</b>
+      }
+      <b>if</b> (primeIter<span style='color:#644a9b;'>.</span>readCurrent()*primeIter<span style='color:#644a9b;'>.</span>readCurrent() &gt;= toCheck) {
+        <b>break</b>
+      }
+    } <b>update</b> {
+      primeIter &lt;- primeIter<span style='color:#644a9b;'>.</span>forward()
+    }
+
+    <b>if</b> (running &amp;&amp; isPrime) {
+      <span style='color:#006e28;'>\</span> <span style='color:#0057ae;'>LazyStream</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Formatted</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>.</span>new()
+          <span style='color:#644a9b;'>.</span>append(<span style='color:#bf0303;'>&quot;               </span><span style='color:#924c9d;'>\r</span><span style='color:#bf0303;'>&quot;</span>)
+          <span style='color:#644a9b;'>.</span>append(toCheck)
+          <span style='color:#644a9b;'>.</span>writeTo(<span style='color:#0057ae;'>SimpleOutput</span><span style='color:#644a9b;'>.</span>stderr())
+      <span style='color:#006e28;'>\</span> primes<span style='color:#644a9b;'>.</span>push(toCheck)
+    }
+    <b>return</b> <b>self</b>
+  }
+
+  getResults () {
+    <b>return</b> <span style='color:#0057ae;'>AutoReadIterator</span><span style='color:#644a9b;'>:</span>from&lt;<b>?</b>&gt;(primes)
+  }
+}
+</pre>
+</body>
+</html>

@@ -1,0 +1,66 @@
+concrete PrimesDemo {
+  @type run () -> ()
+}
+
+define PrimesDemo {
+  run () {
+    PrimeTracker tracker <- PrimeTracker.create()
+    ThreadFlag flag <- ThreadFlag.new()
+    Thread thread <- ProcessThread.from(PrimeThread.create(flag,tracker)).start()
+
+    // Interactive input loop.
+
+    scoped {
+      TextReader reader <- TextReader.fromBlockReader(SimpleInput.stdin())
+    } in while (!reader.pastEnd()) {
+      $Hidden[tracker,thread]$
+
+      \ LazyStream<Formatted>.new()
+          .append("Press [Enter] to toggle start/stop computation thread. Type \"exit\" to exit.\n")
+          .writeTo(SimpleOutput.stderr())
+      String input <- reader.readNextLine()
+      if (reader.pastEnd()) {
+        break
+      }
+
+      if (input == "") {
+        if (flag.getEnabled()) {
+          \ flag.stop()
+          \ LazyStream<Formatted>.new()
+              .append("Stopped.\n")
+              .writeTo(SimpleOutput.stderr())
+        } else {
+          \ flag.start()
+          \ LazyStream<Formatted>.new()
+              .append("Started.\n")
+              .writeTo(SimpleOutput.stderr())
+        }
+      } elif (input == "exit") {
+        break
+      } else {
+        \ LazyStream<Formatted>.new()
+            .append("Please try again!\n")
+            .writeTo(SimpleOutput.stderr())
+      }
+    }
+
+    // Wait for the thread to exit, then print the results.
+
+    \ flag.cancel()
+    \ LazyStream<Formatted>.new()
+        .append("Exiting.\n")
+        .writeTo(SimpleOutput.stderr())
+    \ thread.join()
+
+    scoped {
+      ReadIterator<Int> primeIter <- tracker.getResults()
+    } in while (!primeIter.pastForwardEnd()) {
+      \ LazyStream<Formatted>.new()
+          .append(primeIter.readCurrent())
+          .append("\n")
+          .writeTo(SimpleOutput.stdout())
+    } update {
+      primeIter <- primeIter.forward()
+    }
+  }
+}

@@ -1,0 +1,8 @@
+$ModuleOnly$
+
+// Repeatedly checks the next possible prime until canceled.
+concrete PrimeThread {
+  refines Routine
+
+  @type create (ThreadContinue,PrimeTracker) -> (PrimeThread)
+}

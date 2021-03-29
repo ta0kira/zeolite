@@ -38,6 +38,11 @@ execute() {
   "$@" 2>&1
 }
 
+execute_noredir() {
+  show_message "Executing:" $(printf ' %q' "$@")
+  "$@"
+}
+
 do_zeolite() {
   execute "${ZEOLITE[@]}" "$@"
 }
@@ -303,9 +308,9 @@ test_example_hello() {
   local name='Cli Tests'
   rm -f "$binary"
   do_zeolite -p "$ZEOLITE_PATH" -I lib/util -m HelloDemo example/hello -f
-  local output=$(echo "$name" | "$binary" 2>&1)
+  local output=$(echo "$name" | execute_noredir "$binary" 2>&1)
   if ! echo "$output" | egrep -q "\"$name\""; then
-    show_message "Expected \"$name\" in output:"
+    show_message "Expected \"$name\" in HelloDemo output:"
     echo "$output" 1>&2
     return 1
   fi
@@ -315,6 +320,28 @@ test_example_hello() {
 test_example_parser() {
   do_zeolite -p "$ZEOLITE_PATH" -r example/parser -f
   do_zeolite -p "$ZEOLITE_PATH" -t example/parser
+}
+
+
+test_example_primes() {
+  local binary="$ZEOLITE_PATH/example/primes/PrimesDemo"
+  local expected='2,3,5,7,11,13,17,19,23,29,31,37,41,43,47,53,59,61,67,71,73,79,83,89,97,101,103,107,109,113,127,131,137,139,149,151,157,163,167,173,179,181,191,193,197,199,211,223,227,229,233,239,241,251,257,263,269,271,277,281,283,293,307,311,313,317,331,337,347,349,353,359,367,373,379,383,389,397,401,409,419,421,431,433,439,443,449,457,461,463,467,479,487,491,499,503,509,521,523,541,'
+  rm -f "$binary"
+  local temp=$(execute mktemp)
+  do_zeolite -p "$ZEOLITE_PATH" -r example/primes -f
+  {
+    echo;
+    sleep 0.01;
+    echo;
+    echo "exit";
+  } | execute_noredir "$binary" 2> /dev/null | head -n100 | tr $'\n' ',' > "$temp"
+  local output=$(cat "$temp")
+  rm -f "$temp"
+  if [[ "$output" != "$expected" ]]; then
+    show_message "Unexpected PrimesDemo output:"
+    echo "$output" 1>&2
+    return 1
+  fi
 }
 
 
@@ -369,6 +396,7 @@ ALL_TESTS=(
   test_global_include
   test_example_hello
   test_example_parser
+  test_example_primes
 )
 
 run_all "${ALL_TESTS[@]}" 1>&2
