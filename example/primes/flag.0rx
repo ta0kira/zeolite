@@ -27,7 +27,11 @@ define ThreadFlag {
   }
 
   getEnabled () {
-    return enabled && !canceled
+    scoped {
+      MutexLock lock <- MutexLock.lock(cond)
+    } cleanup {
+      \ lock.freeResource()
+    } in return enabled && !canceled
   }
 
   cancel () {

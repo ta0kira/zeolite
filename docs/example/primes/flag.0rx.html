@@ -38,7 +38,11 @@
   }
 
   getEnabled () {
-    <b>return</b> enabled &amp;&amp; !canceled
+    <b>scoped</b> {
+      <span style='color:#0057ae;'>MutexLock</span> lock &lt;- <span style='color:#0057ae;'>MutexLock</span><span style='color:#644a9b;'>.</span>lock(cond)
+    } <b>cleanup</b> {
+      <span style='color:#006e28;'>\</span> lock<span style='color:#644a9b;'>.</span>freeResource()
+    } <b>in</b> <b>return</b> enabled &amp;&amp; !canceled
   }
 
   cancel () {
