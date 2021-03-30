@@ -26,7 +26,6 @@ module Module.CompileMetadata (
 ) where
 
 import Data.List (nub)
-import qualified Data.Map as Map
 
 import Cli.CompileOptions
 import Cli.Programs (VersionHash)
@@ -87,14 +86,8 @@ getIdentifierCategory (UnresolvedCategory n)     = n
 
 mergeObjectFiles :: ObjectFile -> ObjectFile -> ObjectFile
 mergeObjectFiles (CategoryObjectFile c rs1 fs1) (CategoryObjectFile _ rs2 fs2) =
-  CategoryObjectFile c (uniqueCategoryIdentifiers $ rs1 ++ rs2) (nub $ fs1 ++ fs2)
+  CategoryObjectFile c (nub $ rs1 ++ rs2) (nub $ fs1 ++ fs2)
 mergeObjectFiles o _ = o
-
-uniqueCategoryIdentifiers :: [CategoryIdentifier] -> [CategoryIdentifier]
-uniqueCategoryIdentifiers = concat . Map.elems . Map.fromListWith tryMerge . map (\i -> (getIdentifierCategory i,[i])) where
-  tryMerge [(UnresolvedCategory _)] is = is
-  tryMerge is [(UnresolvedCategory _)] = is
-  tryMerge is1 is2 = nub (is1 ++ is2)
 
 isCategoryObjectFile :: ObjectFile -> Bool
 isCategoryObjectFile (CategoryObjectFile _ _ _) = True

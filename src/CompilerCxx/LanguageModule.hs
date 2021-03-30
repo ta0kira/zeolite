@@ -77,9 +77,9 @@ compileLanguageModule (LanguageModule ns0 ns1 ns2 cs0 ps0 ts0 cs1 ps1 ts1 ex ss 
   tmPrivate <- foldM includeNewTypes tmPublic          [ps0,ps1]
   tmTesting <- foldM includeNewTypes tmPrivate         [ts0,ts1]
   xxInterfaces <- fmap concat $ collectAllM $
-    map (generateNativeInterface False) (onlyNativeInterfaces cs1) ++
-    map (generateNativeInterface False) (onlyNativeInterfaces ps1) ++
-    map (generateNativeInterface True)  (onlyNativeInterfaces ts1)
+    map (generateNativeInterface False nsPublic)  (onlyNativeInterfaces cs1) ++
+    map (generateNativeInterface False nsPrivate) (onlyNativeInterfaces ps1) ++
+    map (generateNativeInterface True  nsPrivate) (onlyNativeInterfaces ts1)
   xxPrivate <- fmap concat $ mapCompilerM (compilePrivate tmPrivate tmTesting) xa
   xxStreamlined <- fmap concat $ mapCompilerM (streamlined tmTesting) $ nub ss
   xxVerbose <- fmap concat $ mapCompilerM (verbose tmTesting) $ nub ex
@@ -113,7 +113,7 @@ compileLanguageModule (LanguageModule ns0 ns1 ns2 cs0 ps0 ts0 cs1 ps1 ts1 ex ss 
       when testing $ checkTests ds (cs1 ++ ps1)
       let dm = mapDefByName ds
       checkDefined dm Set.empty $ filter isValueConcrete cs2
-      xxInterfaces <- fmap concat $ mapCompilerM (generateNativeInterface testing) (filter (not . isValueConcrete) cs2)
+      xxInterfaces <- fmap concat $ mapCompilerM (generateNativeInterface testing nsPrivate) (filter (not . isValueConcrete) cs2)
       xxConcrete   <- fmap concat $ mapCompilerM (generateConcrete cs ctx) ds
       return $ xxInterfaces ++ xxConcrete
     generateConcrete cs (FileContext testing tm ns em2) d = do

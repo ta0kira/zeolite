@@ -87,16 +87,16 @@ generateNativeConcrete (FileContext testing tm ns em) (t,d) = do
   return (dec:def)
 
 generateNativeInterface :: (Ord c, Show c, CollectErrorsM m) =>
-  Bool -> AnyCategory c -> m [CxxOutput]
-generateNativeInterface testing t = do
-  dec <- compileCategoryDeclaration testing Set.empty t
+  Bool -> Set.Set Namespace -> AnyCategory c -> m [CxxOutput]
+generateNativeInterface testing ns t = do
+  dec <- compileCategoryDeclaration testing ns t
   def <- generateCategoryDefinition testing (NativeInterface t)
   return (dec:def)
 
 generateStreamlinedExtension :: (Ord c, Show c, CollectErrorsM m) =>
   Bool -> Set.Set Namespace -> AnyCategory c -> m [CxxOutput]
 generateStreamlinedExtension testing ns t = do
-  dec <- compileCategoryDeclaration testing Set.empty t
+  dec <- compileCategoryDeclaration testing ns t
   def <- generateCategoryDefinition testing (StreamlinedExtension t ns)
   return (dec:def)
 
