@@ -60,6 +60,9 @@
 * **[new]** Makes `Argv.global()` available to all threads. Previously, it was
   only available to the main thread.
 
+* **[new]** Adds `Counter` and `Repeat` to `lib/util`, to help create sequences
+  for use with the new `traverse` built-in.
+
 ### Examples
 
 * Adds `example/primes`, as a demonstration of multithreading.
