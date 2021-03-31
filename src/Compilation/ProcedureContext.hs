@@ -29,7 +29,7 @@ module Compilation.ProcedureContext (
   updateReturnVariables,
 ) where
 
-import Control.Monad (when)
+import Control.Monad (foldM,when)
 import Lens.Micro hiding (mapped)
 import Lens.Micro.TH
 import Data.Maybe (fromJust,isJust)
@@ -394,12 +394,12 @@ updateArgVariables :: (Show c, CollectErrorsM m) =>
 updateArgVariables ma as1 as2 = do
   as <- processPairs alwaysPair as1 (avNames as2)
   let as' = filter (not . isDiscardedInput . snd) as
-  foldr update (return ma) as' where
-    update (PassedValue c t,a) va = do
-      va' <- va
-      case ivName a `Map.lookup` va' of
-            Nothing -> return $ Map.insert (ivName a) (VariableValue c LocalScope t (VariableReadOnly c)) va'
+  foldM update ma as' where
+    update va (PassedValue _ t,a) = do
+      let c = ivContext a
+      case ivName a `Map.lookup` va of
+            Nothing -> return $ Map.insert (ivName a) (VariableValue c LocalScope t (VariableReadOnly c)) va
             (Just v) -> compilerErrorM $ "Variable " ++ show (ivName a) ++
-                                       formatFullContextBrace (ivContext a) ++
-                                       " is already defined" ++
-                                       formatFullContextBrace (vvContext v)
+                                         formatFullContextBrace c ++
+                                         " is already defined" ++
+                                         formatFullContextBrace (vvContext v)
