@@ -1,0 +1,300 @@
+/* -----------------------------------------------------------------------------
+Copyright 2021 Kevin P. Barry
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+----------------------------------------------------------------------------- */
+
+// Author: Kevin P. Barry [ta0kira@gmail.com]
+
+testcase "simple traverse tests" {
+  success
+}
+
+unittest simpleSum {
+  Int total <- 0
+  traverse (Counter.zeroIndexed(5) -> Int i) {
+    total <- total+i
+  }
+  \ Testing.checkEquals<?>(total,10)
+}
+
+unittest ignoreValue {
+  Int total <- 0
+  traverse (Counter.zeroIndexed(5) -> _) {
+    total <- total+1
+  }
+  \ Testing.checkEquals<?>(total,5)
+}
+
+unittest existingVariable {
+  Int total <- 0
+  Int i <- 0
+  traverse (Counter.zeroIndexed(5) -> i) {
+    total <- total+i
+  }
+  \ Testing.checkEquals<?>(total,10)
+  \ Testing.checkEquals<?>(i,4)
+}
+
+unittest breakAtLimit {
+  Int total <- 0
+  traverse (Counter.zeroIndexed(10) -> Int i) {
+    if (i >= 5) {
+      break
+    }
+    total <- total+i
+  }
+  \ Testing.checkEquals<?>(total,10)
+}
+
+unittest continueOnOdd {
+  Int total <- 0
+  traverse (Counter.zeroIndexed(10) -> Int i) {
+    if (i%2 == 1) {
+      continue
+    }
+    total <- total+i
+  }
+  \ Testing.checkEquals<?>(total,20)
+}
+
+concrete Counter {
+  refines Order<Int>
+
+  @type zeroIndexed (Int) -> (optional Counter)
+}
+
+define Counter {
+  @value Int current
+  @value Int max
+
+  zeroIndexed (max) {
+    if (max < 1) {
+      return empty
+    } else {
+      return Counter{ 0, max }
+    }
+  }
+
+  next () {
+    if (current+1 < max) {
+      current <- current+1
+      return self
+    } else {
+      return empty
+    }
+  }
+
+  get () {
+    return current
+  }
+}
+
+
+testcase "bad traverse container" {
+  error
+  require "Int.+Order"
+}
+
+unittest test {
+  traverse (0 -> _) {}
+}
+
+
+testcase "bad traverse variable" {
+  error
+  require "String.+Int"
+}
+
+concrete Empty<|#x> {
+  refines Order<#x>
+
+  @category new<#x> () -> (optional Empty<#x>)
+}
+
+define Empty {
+  new () {
+    return empty
+  }
+
+  next () {
+    fail("next() not implemented")
+  }
+
+  get () {
+    fail("get() not implemented")
+  }
+}
+
+unittest test {
+  traverse (Empty:new<String>() -> Int i) {}
+}
+
+
+// #auto is used internally when compiling traverse.
+testcase "no clash when #auto is in category" {
+  success
+}
+
+unittest test {
+  \ Test<String>.run()
+}
+
+concrete Test<#auto> {
+  @type run () -> ()
+}
+
+define Test {
+  run () {
+    Int total <- 0
+    traverse (Counter.new() -> Int i) {
+      total <- total+i
+    }
+    \ Testing.checkEquals<?>(total,10)
+  }
+}
+
+concrete Counter {
+  refines Order<Int>
+
+  @type new () -> (Counter)
+}
+
+define Counter {
+  @value Int current
+
+  new () {
+    return Counter{ 0 }
+  }
+
+  next () {
+    if (current+1 < 5) {
+      current <- current+1
+      return self
+    } else {
+      return empty
+    }
+  }
+
+  get () {
+    return current
+  }
+}
+
+
+// #auto is used internally when compiling traverse.
+testcase "no clash when #auto is in function call" {
+  success
+}
+
+unittest test {
+  \ Test.run<String>()
+}
+
+concrete Test {
+  @type run<#auto> () -> ()
+}
+
+define Test {
+  run () {
+    Int total <- 0
+    traverse (Counter.new() -> Int i) {
+      total <- total+i
+    }
+    \ Testing.checkEquals<?>(total,10)
+  }
+}
+
+concrete Counter {
+  refines Order<Int>
+
+  @type new () -> (Counter)
+}
+
+define Counter {
+  @value Int current
+
+  new () {
+    return Counter{ 0 }
+  }
+
+  next () {
+    if (current+1 < 5) {
+      current <- current+1
+      return self
+    } else {
+      return empty
+    }
+  }
+
+  get () {
+    return current
+  }
+}
+
+
+// #auto is used internally when compiling traverse.
+testcase "no clash when #auto also the inferred type" {
+  success
+}
+
+unittest test {
+  \ Testing.checkEquals<?>(Test.run<?>("message"),"message")
+}
+
+concrete Test {
+  @type run<#auto> (#auto) -> (#auto)
+}
+
+define Test {
+  run (x) (i) {
+    i <- x
+    Int total <- 0
+    traverse (Repeat:times<?>(x,10) -> i) {
+      total <- total+1
+    }
+    \ Testing.checkEquals<?>(total,10)
+  }
+}
+
+concrete Repeat<|#x> {
+  refines Order<#x>
+
+  @category times<#y> (#y,Int) -> (optional Repeat<#y>)
+}
+
+define Repeat {
+  @value #x value
+  @value Int count
+
+  times (value,count) {
+    if (count < 1) {
+      return empty
+    } else {
+      return Repeat<#y>{ value, count }
+    }
+  }
+
+  next () {
+    if (count > 1) {
+      count <- count-1
+      return self
+    } else {
+      return empty
+    }
+  }
+
+  get () {
+    return value
+  }
+}

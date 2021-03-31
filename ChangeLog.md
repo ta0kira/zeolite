@@ -15,6 +15,16 @@
 
 ### Language
 
+* **[breaking]** Adds `traverse` built-in syntax, which automatically iterates
+  over a container that exposes the (new) `Order<|#x>` `@value interface`. (This
+  is breaking because `traverse` and `Order` are now reserved.)
+
+  ```text
+  traverse (container -> Foo value) {
+    // executed once per Foo in the container
+  }
+  ```
+
 * **[breaking]** Marks `@category` member variables as read-only when
   initializing other member variables. Essentially, this just means that you can
   no longer do something like this:

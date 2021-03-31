@@ -34,7 +34,7 @@ import Base.Positional
 import Compilation.CompilerState
 import Compilation.ProcedureContext
 import Compilation.ScopeContext
-import CompilerCxx.Code
+import Types.Builtin
 import Types.DefinedCategory
 import Types.Procedure
 import Types.TypeCategory
@@ -120,7 +120,7 @@ getProcedureContext (ScopeContext tm t ps pi ms pa fi fa va em)
   let ns0 = if isUnnamedReturns rs2
                then []
                else zipWith3 ReturnVariable [0..] (map ovName $ pValues $ nrNames rs2) (map pvType $ pValues rs1)
-  let ns = filter (isPrimType . rvType) ns0
+  let ns = filter (isPrimitiveType . rvType) ns0
   return $ ProcedureContext {
       _pcScope = s,
       _pcType = t,

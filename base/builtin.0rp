@@ -157,6 +157,26 @@ concrete String {
   build () -> (#x)
 }
 
+// Ordered data, primarily used for the traverse built-in.
+//
+// Example:
+//
+//   traverse (someIntOrder -> Int i) {
+//     // code that uses index i
+//   }
+@value interface Order<|#x> {
+  // Returns an updated instance, or empty if the end was reached.
+  //
+  // Notes:
+  // - This can return either a mutated self or a new copy. The caller should
+  //   assume that next() will mutate the instance.
+  // - This should not generally be used directly; use the traverse built-in.
+  next () -> (optional #self)
+
+  // Returns the value at the current position.
+  get () -> (#x)
+}
+
 // Contains a flexible number of values of some type.
 @value interface Container {
   // Return the number of values.

@@ -134,6 +134,7 @@ data CategoryName =
   BuiltinFloat |
   BuiltinString |
   BuiltinFormatted |
+  BuiltinOrder |
   CategoryNone
 
 instance Show CategoryName where
@@ -144,6 +145,7 @@ instance Show CategoryName where
   show BuiltinFloat        = "Float"
   show BuiltinString       = "String"
   show BuiltinFormatted    = "Formatted"
+  show BuiltinOrder        = "Order"
   show CategoryNone        = "(none)"
 
 instance Eq CategoryName where

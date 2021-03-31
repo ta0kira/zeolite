@@ -62,6 +62,7 @@ module Parser.Common (
   kwSelf,
   kwStrong,
   kwTestcase,
+  kwTraverse,
   kwTrue,
   kwType,
   kwTypename,
@@ -263,6 +264,9 @@ kwStrong = keyword "strong"
 kwTestcase :: TextParser ()
 kwTestcase = keyword "testcase"
 
+kwTraverse :: TextParser ()
+kwTraverse = keyword "traverse"
+
 kwTrue :: TextParser ()
 kwTrue = keyword "true"
 
@@ -337,6 +341,7 @@ isKeyword = foldr (<|>) empty $ map try [
     kwScoped,
     kwStrong,
     kwTestcase,
+    kwTraverse,
     kwTrue,
     kwType,
     kwTypename,

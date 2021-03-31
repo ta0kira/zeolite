@@ -24,12 +24,14 @@ module Types.Procedure (
   ExecutableProcedure(..),
   Expression(..),
   ExpressionStart(..),
+  ExpressionType,
   FunctionCall(..),
   FunctionQualifier(..),
   FunctionSpec(..),
   IfElifElse(..),
   InputValue(..),
   InstanceOrInferred(..),
+  IteratedLoop(..),
   MacroName(..),
   Operator(..),
   OutputValue(..),
@@ -44,7 +46,6 @@ module Types.Procedure (
   ValueOperation(..),
   VariableName(..),
   VoidExpression(..),
-  WhileLoop(..),
   assignableName,
   getExpressionContext,
   getOperatorContext,
@@ -62,6 +63,7 @@ module Types.Procedure (
 import Data.List (intercalate)
 
 import Base.Positional
+import Types.Builtin
 import Types.TypeCategory
 import Types.TypeInstance
 
@@ -205,7 +207,7 @@ assignableName _                                   = discardInputName
 
 data VoidExpression c =
   Conditional (IfElifElse c) |
-  Loop (WhileLoop c) |
+  Loop (IteratedLoop c) |
   WithScope (ScopedBlock c) |
   Unconditional (Procedure c) |
   LineComment String
@@ -217,8 +219,9 @@ data IfElifElse c =
   TerminateConditional
   deriving (Show)
 
-data WhileLoop c =
-  WhileLoop [c] (Expression c) (Procedure c) (Maybe (Procedure c))
+data IteratedLoop c =
+  WhileLoop [c] (Expression c) (Procedure c) (Maybe (Procedure c)) |
+  TraverseLoop [c] (Expression c) [c] (Assignable c) (Procedure c)
   deriving (Show)
 
 data ScopedBlock c =
@@ -230,8 +233,11 @@ data Expression c =
   Literal (ValueLiteral c) |
   UnaryExpression [c] (Operator c) (Expression c) |
   InfixExpression [c] (Expression c) (Operator c) (Expression c) |
-  InitializeValue [c] (Maybe TypeInstance) (Positional GeneralInstance) (Positional (Expression c))
+  InitializeValue [c] (Maybe TypeInstance) (Positional GeneralInstance) (Positional (Expression c)) |
+  RawExpression ExpressionType ExpressionValue
   deriving (Show)
+
+type ExpressionType = Positional ValueType
 
 data FunctionQualifier c =
   CategoryFunction [c] CategoryName |
@@ -273,6 +279,7 @@ getExpressionContext (Literal l)               = getValueLiteralContext l
 getExpressionContext (UnaryExpression c _ _)   = c
 getExpressionContext (InfixExpression c _ _ _) = c
 getExpressionContext (InitializeValue c _ _ _) = c
+getExpressionContext (RawExpression _ _)       = []
 
 data FunctionCall c =
   FunctionCall [c] FunctionName (Positional (InstanceOrInferred c)) (Positional (Expression c))

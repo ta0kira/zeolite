@@ -33,6 +33,7 @@ module CompilerCxx.Naming (
   functionName,
   headerFilename,
   headerStreamlined,
+  hiddenVariableName,
   initializerName,
   intersectGetter,
   mainFilename,
@@ -103,6 +104,9 @@ paramName p = "Param_" ++ tail (show p) -- Remove leading '#'.
 
 variableName :: VariableName -> String
 variableName v = "Var_" ++ show v
+
+hiddenVariableName :: VariableName -> String
+hiddenVariableName v = "Internal_" ++ show v
 
 initializerName :: VariableName -> String
 initializerName v = "Init_" ++ show v

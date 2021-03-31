@@ -32,6 +32,7 @@
       <item> requires </item>
       <item> return </item>
       <item> scoped </item>
+      <item> traverse </item>
       <item> update </item>
       <item> while </item>
     </list>
@@ -91,22 +92,24 @@
 
     <list name="builtinCategory">
       <item> Append </item>
+      <item> AsBool </item>
+      <item> AsChar </item>
+      <item> AsFloat </item>
+      <item> AsInt </item>
       <item> Bool </item>
       <item> Build </item>
       <item> Char </item>
       <item> Container </item>
       <item> Default </item>
-      <item> Int </item>
-      <item> Float </item>
-      <item> String </item>
-      <item> AsBool </item>
-      <item> AsChar </item>
-      <item> AsInt </item>
-      <item> AsFloat </item>
-      <item> LessThan </item>
+      <item> DefaultOrder </item>
       <item> Equals </item>
+      <item> Float </item>
       <item> Formatted </item>
+      <item> Int </item>
+      <item> LessThan </item>
+      <item> Order </item>
       <item> ReadAt </item>
+      <item> String </item>
       <item> SubSequence </item>
     </list>
 

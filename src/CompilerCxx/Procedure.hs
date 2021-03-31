@@ -158,7 +158,7 @@ compileExecutableProcedure cxxType ctx
       | isUnnamedReturns rs2 = []
       | otherwise = map (\(i,(t2,n2)) -> nameReturn i (pvType t2) n2) (zip ([0..] :: [Int]) $ zip (pValues rs1) (pValues $ nrNames rs2))
     nameReturn i t2 n2
-      | isPrimType t2 = variableProxyType t2 ++ " " ++ variableName (ovName n2) ++ ";"
+      | isPrimitiveType t2 = variableProxyType t2 ++ " " ++ variableName (ovName n2) ++ ";"
       | otherwise =
         variableProxyType t2 ++ " " ++ variableName (ovName n2) ++
         " = " ++ writeStoredVariable t2 (UnwrappedSingle $ "returns.At(" ++ show i ++ ")") ++ ";"
@@ -369,7 +369,7 @@ compileVoidExpression :: (Ord c, Show c, CollectErrorsM m,
                          CompilerContext c m [String] a) =>
   VoidExpression c -> CompilerState a m ()
 compileVoidExpression (Conditional ie) = compileIfElifElse ie
-compileVoidExpression (Loop l) = compileWhileLoop l
+compileVoidExpression (Loop l) = compileIteratedLoop l
 compileVoidExpression (WithScope s) = compileScopedBlock s
 compileVoidExpression (LineComment s) = csWrite $ map ("// " ++) $ lines s
 compileVoidExpression (Unconditional p) = do
@@ -407,10 +407,9 @@ compileIfElifElse (IfStatement c e p es) = do
       return $ ctx:cs
 compileIfElifElse _ = undefined
 
-compileWhileLoop :: (Ord c, Show c, CollectErrorsM m,
-                     CompilerContext c m [String] a) =>
-  WhileLoop c -> CompilerState a m ()
-compileWhileLoop (WhileLoop c e p u) = do
+compileIteratedLoop :: (Ord c, Show c, CollectErrorsM m, CompilerContext c m [String] a) =>
+  IteratedLoop c -> CompilerState a m ()
+compileIteratedLoop (WhileLoop c e p u) = do
   ctx0 <- getCleanContext
   (e',ctx1) <- compileCondition ctx0 c e
   csInheritReturns [ctx1]
@@ -429,6 +428,38 @@ compileWhileLoop (WhileLoop c e p u) = do
   getAndIndentOutput ctx >>= csWrite
   csWrite $ ["{"] ++ u' ++ ["}"]
   csWrite ["}"]
+compileIteratedLoop (TraverseLoop c1 e c2 a (Procedure c3 ss)) = "In compilation of traverse at " ++ formatFullContext c1 ??> do
+  (Positional ts,e') <- compileExpression e
+  checkContainer ts
+  r <- csResolver
+  fa <- csAllFilters
+  let [t] = ts
+  let autoParam = ParamName "#auto"
+  let autoType  = singleType $ JustParamName False autoParam
+  (Positional [t2]) <- lift $ guessParams r fa (Positional [orderOptionalValue autoType])
+                                               (Positional [autoParam])
+                                               (Positional [InferredInstance c1])
+                                               (Positional [t])
+  let currVar = hiddenVariableName $ VariableName "traverse"
+  let currType = orderOptionalValue $ fixTypeParams t2
+  let currExpr    = BuiltinCall [] $ FunctionCall [] BuiltinRequire (Positional []) (Positional [RawExpression (Positional [currType]) (UnwrappedSingle currVar)])
+  let currPresent = BuiltinCall [] $ FunctionCall [] BuiltinPresent (Positional []) (Positional [RawExpression (Positional [currType]) (UnwrappedSingle currVar)])
+  let callNext = Expression c1 currExpr [ValueCall c1 $ FunctionCall c1 (FunctionName "next") (Positional []) (Positional [])]
+  let callGet  = Expression c2 currExpr [ValueCall c2 $ FunctionCall c2 (FunctionName "get")  (Positional []) (Positional [])]
+  (Positional [typeGet],exprNext) <- compileExpression callNext
+  when (typeGet /= currType) $ compilerErrorM $ "Unexpected return type from next(): " ++ show typeGet ++ " (expected) " ++ show currType ++ " (actual)"
+  let assnGet = Assignment c2 (Positional [a]) callGet
+  csAddRequired $ categoriesFromTypes $ vtType currType
+  compileStatement $ NoValueExpression [] $ WithScope $ ScopedBlock []
+    (Procedure [] [RawCodeLine $ variableStoredType currType ++ " " ++ currVar ++ " = " ++ writeStoredVariable currType e' ++ ";"]) Nothing []
+    (NoValueExpression [] $ Loop $ WhileLoop [] (Expression [] currPresent [])
+      (Procedure c3 (assnGet:ss))
+      (Just $ Procedure [] [RawCodeLine $ currVar ++ " = " ++ writeStoredVariable currType exprNext ++ ";"]))
+    where
+      checkContainer [_] = return ()
+      checkContainer ts =
+        compilerErrorM $ "Expected exactly one Order<?> value but got " ++
+                         intercalate ", " (map show ts)
 
 compileScopedBlock :: (Ord c, Show c, CollectErrorsM m,
                        CompilerContext c m [String] a) =>
@@ -502,7 +533,7 @@ compileScopedBlock s@(ScopedBlock _ _ _ c2 _) = do
 
 compileExpression :: (Ord c, Show c, CollectErrorsM m,
                       CompilerContext c m [String] a) =>
-  Expression c -> CompilerState a m (ExpressionType,ExprValue)
+  Expression c -> CompilerState a m (ExpressionType,ExpressionValue)
 compileExpression = compile where
   compile (Literal (StringLiteral _ l)) = do
     csAddRequired (Set.fromList [BuiltinString])
@@ -534,7 +565,7 @@ compileExpression = compile where
     csAddRequired (Set.fromList [BuiltinBool])
     return (Positional [boolRequiredValue],UnboxedPrimitive PrimBool "false")
   compile (Literal (EmptyLiteral _)) = do
-    return (Positional [emptyValue],UnwrappedSingle "Var_empty")
+    return (Positional [emptyType],UnwrappedSingle "Var_empty")
   compile (Expression _ s os) = do
     foldl transform (compileExpressionStart s) os
   compile (UnaryExpression c (FunctionOperator _ (FunctionSpec _ (CategoryFunction c2 cn) fn ps)) e) =
@@ -627,6 +658,7 @@ compileExpression = compile where
               then isolateExpression e2 -- Ignore named-return assignments.
               else compileExpression e2
     bindInfix c e1' o e2'
+  compile (RawExpression ts e) = return (ts,e)
   isolateExpression e = do
     ctx <- getCleanContext
     (e',ctx') <- lift $ runStateT (compileExpression e) ctx
@@ -719,7 +751,7 @@ lookupValueFunction (ValueType RequiredValue t) (FunctionCall c n _ _) =
 
 compileExpressionStart :: (Ord c, Show c, CollectErrorsM m,
                            CompilerContext c m [String] a) =>
-  ExpressionStart c -> CompilerState a m (ExpressionType,ExprValue)
+  ExpressionStart c -> CompilerState a m (ExpressionType,ExpressionValue)
 compileExpressionStart (NamedVariable (OutputValue c n)) = do
   let var = UsedVariable c n
   (VariableValue _ s t _) <- csGetVariable var
@@ -873,7 +905,7 @@ disallowInferred = mapCompilerM disallow . pValues where
 compileFunctionCall :: (Ord c, Show c, CollectErrorsM m,
                         CompilerContext c m [String] a) =>
   Maybe String -> ScopedFunction c -> FunctionCall c ->
-  CompilerState a m (ExpressionType,ExprValue)
+  CompilerState a m (ExpressionType,ExpressionValue)
 compileFunctionCall e f (FunctionCall c _ ps es) = message ??> do
   r <- csResolver
   fa <- csAllFilters
@@ -949,6 +981,23 @@ guessParamsFromArgs r fa f ps ts = do
            Just t  -> return t
            Nothing -> compilerErrorM $ "Something went wrong inferring " ++
                       show (vpParam p) ++ formatFullContextBrace (vpContext p)
+    toInstance p1 (AssignedInstance _ t) = return (p1,t)
+    toInstance p1 (InferredInstance _)   = return (p1,singleType $ JustInferredType p1)
+
+guessParams :: (Ord c, Show c, CollectErrorsM m, TypeResolver r) =>
+  r -> ParamFilters -> Positional ValueType -> Positional ParamName ->
+  Positional (InstanceOrInferred c) -> Positional ValueType -> m (Positional GeneralInstance)
+guessParams r fa args params ps ts = do
+  args' <- processPairs (\t1 t2 -> return $ PatternMatch Covariant t1 t2) ts args
+  pa <- fmap Map.fromList $ processPairs toInstance params ps
+  gs <- inferParamTypes r fa pa args'
+  gs' <- mergeInferredTypes r fa (Map.fromList $ zip (pValues params) (repeat [])) pa gs
+  let pa3 = guessesAsParams gs' `Map.union` pa
+  fmap Positional $ mapCompilerM (subPosition pa3) (pValues params) where
+    subPosition pa2 p =
+      case p `Map.lookup` pa2 of
+           Just t  -> return t
+           Nothing -> compilerErrorM $ "Something went wrong inferring " ++ show p
     toInstance p1 (AssignedInstance _ t) = return (p1,t)
     toInstance p1 (InferredInstance _)   = return (p1,singleType $ JustInferredType p1)
 
@@ -1083,7 +1132,7 @@ doImplicitReturn c = do
   where
 
 autoPositionalCleanup :: (CollectErrorsM m, CompilerContext c m [String] a) =>
-  [c] -> ExprValue -> CompilerState a m ()
+  [c] -> ExpressionValue -> CompilerState a m ()
 autoPositionalCleanup c e = do
   named <- csIsNamedReturns
   (CleanupBlock ss _ _ req) <- csGetCleanup JumpReturn

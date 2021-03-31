@@ -1,5 +1,5 @@
 {- -----------------------------------------------------------------------------
-Copyright 2019-2020 Kevin P. Barry
+Copyright 2019-2021 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -19,20 +19,26 @@ limitations under the License.
 {-# LANGUAGE Safe #-}
 
 module Types.Builtin (
+  ExpressionValue(..),
+  PrimitiveType(..),
   boolRequiredValue,
   charRequiredValue,
   defaultCategories,
   defaultCategoryDeps,
-  emptyValue,
+  emptyType,
   floatRequiredValue,
   formattedRequiredValue,
   intRequiredValue,
+  isPrimitiveType,
+  orderOptionalValue,
   stringRequiredValue,
 ) where
 
 import qualified Data.Map as Map
 import qualified Data.Set as Set
 
+import Base.GeneralType
+import Base.Positional
 import Types.TypeCategory
 import Types.TypeInstance
 
@@ -55,5 +61,33 @@ floatRequiredValue :: ValueType
 floatRequiredValue = requiredSingleton BuiltinFloat
 formattedRequiredValue :: ValueType
 formattedRequiredValue = requiredSingleton BuiltinFormatted
-emptyValue :: ValueType
-emptyValue = ValueType OptionalValue minBound
+orderOptionalValue :: GeneralInstance -> ValueType
+orderOptionalValue t = ValueType OptionalValue $ singleType $ JustTypeInstance $ TypeInstance BuiltinOrder (Positional [t])
+
+emptyType :: ValueType
+emptyType = ValueType OptionalValue minBound
+
+data PrimitiveType =
+  PrimBool |
+  PrimString |
+  PrimChar |
+  PrimInt |
+  PrimFloat
+  deriving (Eq,Show)
+
+isPrimitiveType :: ValueType -> Bool
+isPrimitiveType t
+  | t == boolRequiredValue  = True
+  | t == intRequiredValue   = True
+  | t == floatRequiredValue = True
+  | t == charRequiredValue  = True
+  | otherwise               = False
+
+data ExpressionValue =
+  OpaqueMulti String |
+  WrappedSingle String |
+  UnwrappedSingle String |
+  BoxedPrimitive PrimitiveType String |
+  UnboxedPrimitive PrimitiveType String |
+  LazySingle ExpressionValue
+  deriving (Show)

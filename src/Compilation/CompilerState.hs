@@ -27,7 +27,6 @@ module Compilation.CompilerState (
   CompilerContext(..),
   CompiledData(..),
   CompilerState,
-  ExpressionType,
   LoopSetup(..),
   JumpType(..),
   MemberValue(..),
@@ -138,8 +137,6 @@ class (Functor m, Monad m) => CompilerContext c m s a | a -> c s where
   ccReleaseExprMacro :: a -> [c] -> MacroName -> m a
   ccSetNoTrace :: a -> Bool -> m a
   ccGetNoTrace :: a -> m Bool
-
-type ExpressionType = Positional ValueType
 
 data MemberValue c =
   MemberValue {

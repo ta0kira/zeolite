@@ -638,28 +638,45 @@ post-increment example above to work.)
 
 #### Loops
 
-Zeolite supports `while` loops. It does not explicitly support `for` loops,
-since such loops are idiosyncratic and do not scale well. Instead, they can be
-constructed using a combination of `while` and `scoped`.
+Zeolite supports two loop types:
+
+1. **`while`** loops, which are the traditional repetition of a procedure while
+   a predicate holds.
+
+   <pre style='color:#1f1c1b;background-color:#f6f8fa;'>
+   <span style='color:#898887;'>// With break and continue.</span>
+   <b>while</b> (<b>true</b>) {
+     <b>if</b> (<b>true</b>) {
+       <b>break</b>
+     } <b>else</b> {
+       <b>continue</b>
+     }
+   }
+
+   <span style='color:#898887;'>// With an update after each iteration.</span>
+   <b>while</b> (<b>true</b>) {
+     <span style='color:#898887;'>// ...</span>
+   } <b>update</b> {
+     <span style='color:#898887;'>// ...</span>
+   }</pre>
+
+2. **`traverse`** loops (as of compiler version `0.16.0.0`), which automatically
+   iterate over the `#x` values in an `Order<#x>`. This is similar to
+   `for (int i : container) { ... }` in C++ and `for i in container: ...` in
+   Python.
+
+   <pre style='color:#1f1c1b;background-color:#f6f8fa;'>
+   <b>traverse</b> (stringList -&gt; <i><span style='color:#0057ae;'>String</span></i> s) {
+     <span style='color:#898887;'>// repeated for each String s in stringList</span>
+     <span style='color:#898887;'>// you can also use break and continue</span>
+   }</pre>
+
+`for` loops (e.g., `for (int i = 0; i < foo; ++i) { ... }` in C++) *are not*
+supported, since such syntax is too restrictive to scale, and they can be
+replaced with `traverse` or `scoped`+`while` in nearly all situations.
 
 <pre style='color:#1f1c1b;background-color:#f6f8fa;'>
-<span style='color:#898887;'>// With break and continue.</span>
-<b>while</b> (<b>true</b>) {
-  <b>if</b> (<b>true</b>) {
-    <b>break</b>
-  } <b>else</b> {
-    <b>continue</b>
-  }
-}
-
-<span style='color:#898887;'>// With an update after each iteration.</span>
-<b>while</b> (<b>true</b>) {
-  <span style='color:#898887;'>// ...</span>
-} <b>update</b> {
-  <span style='color:#898887;'>// ...</span>
-}
-
-<span style='color:#898887;'>// Combined with scoped to create a for loop.</span>
+<span style='color:#898887;'>// Combine while with scoped to create a for loop.</span>
 <b>scoped</b> {
   <i><span style='color:#0057ae;'>Int</span></i> i &lt;- <span style='color:#b08000;'>0</span>
   <i><span style='color:#0057ae;'>Int</span></i> limit &lt;- <span style='color:#b08000;'>10</span>

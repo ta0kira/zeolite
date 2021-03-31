@@ -19,8 +19,6 @@ limitations under the License.
 {-# LANGUAGE Safe #-}
 
 module CompilerCxx.Code (
-  ExprValue(..),
-  PrimitiveType(..),
   categoryBase,
   captureCreationTrace,
   clearCompiled,
@@ -29,7 +27,6 @@ module CompilerCxx.Code (
   escapeChars,
   functionLabelType,
   indentCompiled,
-  isPrimType,
   newFunctionLabel,
   noTestsOnlySourceGuard,
   onlyCode,
@@ -119,32 +116,7 @@ captureCreationTrace n = "CAPTURE_CREATION(" ++ show (show n) ++ ")"
 showCreationTrace :: String
 showCreationTrace = "TRACE_CREATION"
 
-data PrimitiveType =
-  PrimBool |
-  PrimString |
-  PrimChar |
-  PrimInt |
-  PrimFloat
-  deriving (Eq,Show)
-
-isPrimType :: ValueType -> Bool
-isPrimType t
-  | t == boolRequiredValue  = True
-  | t == intRequiredValue   = True
-  | t == floatRequiredValue = True
-  | t == charRequiredValue  = True
-  | otherwise               = False
-
-data ExprValue =
-  OpaqueMulti String |
-  WrappedSingle String |
-  UnwrappedSingle String |
-  BoxedPrimitive PrimitiveType String |
-  UnboxedPrimitive PrimitiveType String |
-  LazySingle ExprValue
-  deriving (Show)
-
-getFromLazy :: ExprValue -> ExprValue
+getFromLazy :: ExpressionValue -> ExpressionValue
 getFromLazy (OpaqueMulti e)        = OpaqueMulti $ e ++ ".Get()"
 getFromLazy (WrappedSingle e)      = WrappedSingle $ e ++ ".Get()"
 getFromLazy (UnwrappedSingle e)    = UnwrappedSingle $ e ++ ".Get()"
@@ -152,7 +124,7 @@ getFromLazy (BoxedPrimitive t e)   = BoxedPrimitive t $ e ++ ".Get()"
 getFromLazy (UnboxedPrimitive t e) = UnboxedPrimitive t  $ e ++ ".Get()"
 getFromLazy (LazySingle e)         = LazySingle $ getFromLazy e
 
-useAsWhatever :: ExprValue -> String
+useAsWhatever :: ExpressionValue -> String
 useAsWhatever (OpaqueMulti e)        = e
 useAsWhatever (WrappedSingle e)      = e
 useAsWhatever (UnwrappedSingle e)    = e
@@ -160,7 +132,7 @@ useAsWhatever (BoxedPrimitive _ e)   = e
 useAsWhatever (UnboxedPrimitive _ e) = e
 useAsWhatever (LazySingle e)         = useAsWhatever $ getFromLazy e
 
-useAsReturns :: ExprValue -> String
+useAsReturns :: ExpressionValue -> String
 useAsReturns (OpaqueMulti e)                 = "(" ++ e ++ ")"
 useAsReturns (WrappedSingle e)               = "ReturnTuple(" ++ e ++ ")"
 useAsReturns (UnwrappedSingle e)             = "ReturnTuple(" ++ e ++ ")"
@@ -176,7 +148,7 @@ useAsReturns (UnboxedPrimitive PrimInt e)    = "ReturnTuple(Box_Int(" ++ e ++ ")
 useAsReturns (UnboxedPrimitive PrimFloat e)  = "ReturnTuple(Box_Float(" ++ e ++ "))"
 useAsReturns (LazySingle e)                  = useAsReturns $ getFromLazy e
 
-useAsArgs :: ExprValue -> String
+useAsArgs :: ExpressionValue -> String
 useAsArgs (OpaqueMulti e)                 = "(" ++ e ++ ")"
 useAsArgs (WrappedSingle e)               = "ArgTuple(" ++ e ++ ")"
 useAsArgs (UnwrappedSingle e)             = "ArgTuple(" ++ e ++ ")"
@@ -192,7 +164,7 @@ useAsArgs (UnboxedPrimitive PrimInt e)    = "ArgTuple(Box_Int(" ++ e ++ "))"
 useAsArgs (UnboxedPrimitive PrimFloat e)  = "ArgTuple(Box_Float(" ++ e ++ "))"
 useAsArgs (LazySingle e)                  = useAsArgs $ getFromLazy e
 
-useAsUnwrapped :: ExprValue -> String
+useAsUnwrapped :: ExpressionValue -> String
 useAsUnwrapped (OpaqueMulti e)                 = "(" ++ e ++ ").Only()"
 useAsUnwrapped (WrappedSingle e)               = "(" ++ e ++ ")"
 useAsUnwrapped (UnwrappedSingle e)             = "(" ++ e ++ ")"
@@ -208,7 +180,7 @@ useAsUnwrapped (UnboxedPrimitive PrimInt e)    = "Box_Int(" ++ e ++ ")"
 useAsUnwrapped (UnboxedPrimitive PrimFloat e)  = "Box_Float(" ++ e ++ ")"
 useAsUnwrapped (LazySingle e)                  = useAsUnwrapped $ getFromLazy e
 
-useAsUnboxed :: PrimitiveType -> ExprValue -> String
+useAsUnboxed :: PrimitiveType -> ExpressionValue -> String
 useAsUnboxed PrimBool   (OpaqueMulti e) = "(" ++ e ++ ").Only()->AsBool()"
 useAsUnboxed PrimString (OpaqueMulti e) = "(" ++ e ++ ").Only()->AsString()"
 useAsUnboxed PrimChar   (OpaqueMulti e) = "(" ++ e ++ ").Only()->AsChar()"
@@ -228,7 +200,7 @@ useAsUnboxed _ (BoxedPrimitive _ e)   = "(" ++ e ++ ")"
 useAsUnboxed _ (UnboxedPrimitive _ e) = "(" ++ e ++ ")"
 useAsUnboxed t (LazySingle e) = useAsUnboxed t $ getFromLazy e
 
-valueAsWrapped :: ExprValue -> ExprValue
+valueAsWrapped :: ExpressionValue -> ExpressionValue
 valueAsWrapped (UnwrappedSingle e)             = WrappedSingle e
 valueAsWrapped (BoxedPrimitive _ e)            = WrappedSingle e
 valueAsWrapped (UnboxedPrimitive PrimBool e)   = WrappedSingle $ "Box_Bool(" ++ e ++ ")"
@@ -239,7 +211,7 @@ valueAsWrapped (UnboxedPrimitive PrimFloat e)  = WrappedSingle $ "Box_Float(" ++
 valueAsWrapped (LazySingle e)                  = valueAsWrapped $ getFromLazy e
 valueAsWrapped v                               = v
 
-valueAsUnwrapped :: ExprValue -> ExprValue
+valueAsUnwrapped :: ExpressionValue -> ExpressionValue
 valueAsUnwrapped (OpaqueMulti e)                 = UnwrappedSingle $ "(" ++ e ++ ").Only()"
 valueAsUnwrapped (WrappedSingle e)               = UnwrappedSingle e
 valueAsUnwrapped (UnboxedPrimitive PrimBool e)   = UnwrappedSingle $ "Box_Bool(" ++ e ++ ")"
@@ -271,7 +243,7 @@ variableProxyType t
   | isWeakValue t            = "W<TypeValue>&"
   | otherwise                = "S<TypeValue>&"
 
-readStoredVariable :: Bool -> ValueType -> String -> ExprValue
+readStoredVariable :: Bool -> ValueType -> String -> ExpressionValue
 readStoredVariable True t s = LazySingle $ readStoredVariable False t s
 readStoredVariable False t s
   | t == boolRequiredValue   = UnboxedPrimitive PrimBool s
@@ -280,7 +252,7 @@ readStoredVariable False t s
   | t == charRequiredValue   = UnboxedPrimitive PrimChar s
   | otherwise                = UnwrappedSingle s
 
-writeStoredVariable :: ValueType -> ExprValue -> String
+writeStoredVariable :: ValueType -> ExpressionValue -> String
 writeStoredVariable t e
   | t == boolRequiredValue   = useAsUnboxed PrimBool e
   | t == intRequiredValue    = useAsUnboxed PrimInt e
