@@ -9,20 +9,16 @@ define StringParser {
     }
     String message <- "Failed to match \"" + match + "\" at " + contextOld.getPosition()
     ParseContext<any> context <- contextOld
-    scoped {
-      Int index <- 0
-    } in while (index < match.size()) {
-      $ReadOnly[context,index]$
+    traverse (Counter.zeroIndexed(match.size()) -> Int index) {
+      $ReadOnly[index]$
       if (context.atEof() || context.current() != match.readAt(index)) {
         if (index > 0) {
           // Partial match => set error context.
           return context.setBrokenInput(message)
         } else {
-          return context.setValue<all>(ErrorOr:error(message))
+          return context.setValue<?>(ErrorOr:error(message))
         }
       }
-    } update {
-      index <- index+1
       context <- context.advance()
     }
     return context.setValue<?>(ErrorOr:value<?>(match))
@@ -49,27 +45,32 @@ define SequenceOfParser {
                       contextOld.getPosition()
     ParseContext<any> context <- contextOld
     [Append<String>&Build<String>] builder <- String.builder()
+
+    optional Order<Int> counter <- empty
+    if (max == 0) {
+      counter <- Counter.unlimited()
+    } else {
+      counter <- Counter.zeroIndexed(max)
+    }
+
     Int count <- 0
-    while (!context.atEof() && (max == 0 || count < max)) {
-      $ReadOnly[context,count]$
+    traverse (counter -> count) {
+      $Hidden[count,counter]$
+      if (context.atEof()) {
+        break
+      }
       Bool found <- false
-      scoped {
-        Int index <- 0
-      } in while (index < matches.size()) {
-        $ReadOnly[index]$
+      traverse (Counter.zeroIndexed(matches.size()) -> Int index) {
+        $ReadOnly[context,index]$
         if (context.current() == matches.readAt(index)) {
           \ builder.append(matches.readAt(index).formatted())
           found <- true
           break
         }
-      } update {
-        index <- index+1
       }
       if (!found) {
         break
       }
-    } update {
-      count <- count+1
       context <- context.advance()
     }
     if (count >= min) {
@@ -78,7 +79,7 @@ define SequenceOfParser {
       // Partial match => set error context.
       return context.setBrokenInput(message)
     } else {
-      return context.setValue<all>(ErrorOr:error(message))
+      return context.setValue<?>(ErrorOr:error(message))
     }
   }
 
@@ -98,7 +99,7 @@ define CharParser {
     }
     if (contextOld.atEof() || contextOld.current() != match) {
       String message <- "Failed to match '" + match.formatted() + "' at " + contextOld.getPosition()
-      return contextOld.setValue<all>(ErrorOr:error(message))
+      return contextOld.setValue<?>(ErrorOr:error(message))
     } else {
       return contextOld.advance().setValue<?>(ErrorOr:value<?>(match))
     }
@@ -137,7 +138,7 @@ define ErrorParser {
   @value Formatted message
 
   run (contextOld) {
-    return contextOld.setValue<all>(ErrorOr:error(message))
+    return contextOld.setValue<?>(ErrorOr:error(message))
   }
 
   create (message) {
@@ -160,7 +161,7 @@ define TryParser {
     }
     ParseContext<#x> context <- contextOld.run<#x>(parser)
     if (context.hasAnyError()) {
-      return contextOld.setValue<all>(context.getValue().convertError())
+      return contextOld.setValue<?>(context.getValue().convertError())
     } else {
       return context.toState()
     }
@@ -216,7 +217,7 @@ define LeftParser {
     if (context.hasAnyError()) {
       return context.toState()
     } else {
-      ParseContext<any> context2 <- context.run<any>(parser2)
+      ParseContext<any> context2 <- context.run<?>(parser2)
       if (context2.hasAnyError()) {
         return context2.convertError()
       } else {
@@ -244,7 +245,7 @@ define RightParser {
     if (contextOld.hasAnyError()) {
       return contextOld.convertError()
     }
-    ParseContext<any> context <- contextOld.run<any>(parser1)
+    ParseContext<any> context <- contextOld.run<?>(parser1)
     if (context.hasAnyError()) {
       return context.convertError()
     } else {
