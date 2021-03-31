@@ -17,7 +17,7 @@
 
 * **[breaking]** Adds `traverse` built-in syntax, which automatically iterates
   over a container that exposes the (new) `Order<|#x>` `@value interface`. (This
-  is breaking because `traverse` and `Order` are now reserved.)
+  is breaking because `traverse`, `Order`, and `DefaultOrder` are now reserved.)
 
   ```text
   traverse (container -> Foo value) {

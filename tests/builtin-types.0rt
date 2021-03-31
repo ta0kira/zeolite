@@ -219,7 +219,7 @@ unittest asInt {
   }
 }
 
-unittest asFloar {
+unittest asFloat {
   if (present(reduce<String,AsFloat>("a"))) {
     fail("Failed")
   }
@@ -227,6 +227,18 @@ unittest asFloar {
 
 unittest formatted {
   if (!present(reduce<String,Formatted>("a"))) {
+    fail("Failed")
+  }
+}
+
+unittest defaultOrder {
+  if (!present(reduce<String,DefaultOrder<Char>>("a"))) {
+    fail("Failed")
+  }
+}
+
+unittest subSequence {
+  if (!present(reduce<String,SubSequence>("a"))) {
     fail("Failed")
   }
 }
@@ -472,6 +484,18 @@ unittest nullChar {
   if (("abc\x00def").readAt(4) != 'd') {
     fail("Failed")
   }
+}
+
+unittest traverseString {
+  Int index <- 0
+  String value <- "abcdefg"
+
+  traverse (value.defaultOrder() -> Char c) {
+    \ Testing.checkEquals<?>(c,value.readAt(index))
+    index <- index+1
+  }
+
+  \ Testing.checkEquals<?>(index,7)
 }
 
 

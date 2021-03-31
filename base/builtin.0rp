@@ -93,6 +93,7 @@ concrete Int {
 // Literals: Quote Char sequence with ".
 concrete String {
   refines AsBool
+  refines DefaultOrder<Char>
   refines Formatted
   refines ReadAt<Char>
   refines SubSequence
@@ -175,6 +176,16 @@ concrete String {
 
   // Returns the value at the current position.
   get () -> (#x)
+}
+
+// Provides a default Order for a container.
+//
+// Notes:
+// - The return value is primarily intended for use with the traverse built-in.
+// - Also see the documentation for Order and traverse.
+@value interface DefaultOrder<|#x> {
+  // Returns the default Order for the container.
+  defaultOrder () -> (optional Order<#x>)
 }
 
 // Contains a flexible number of values of some type.

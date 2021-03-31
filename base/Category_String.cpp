@@ -31,6 +31,8 @@ limitations under the License.
 #include "Category_Append.hpp"
 #include "Category_Build.hpp"
 #include "Category_Default.hpp"
+#include "Category_DefaultOrder.hpp"
+#include "Category_Order.hpp"
 #include "Category_Equals.hpp"
 #include "Category_LessThan.hpp"
 
@@ -93,6 +95,14 @@ struct Type_String : public TypeInstance {
       return true;
     }
     if (&category == &GetCategory_ReadAt()) {
+      args = std::vector<S<const TypeInstance>>{GetType_Char(T_get())};
+      return true;
+    }
+    if (&category == &GetCategory_SubSequence()) {
+      args = std::vector<S<const TypeInstance>>{};
+      return true;
+    }
+    if (&category == &GetCategory_DefaultOrder()) {
       args = std::vector<S<const TypeInstance>>{GetType_Char(T_get())};
       return true;
     }
@@ -160,6 +170,9 @@ struct Value_String : public TypeValue {
     static const CallType Table_AsBool[] = {
       &Value_String::Call_asBool,
     };
+    static const CallType Table_DefaultOrder[] = {
+      &Value_String::Call_defaultOrder,
+    };
     static const CallType Table_Formatted[] = {
       &Value_String::Call_formatted,
     };
@@ -180,6 +193,12 @@ struct Value_String : public TypeValue {
         FAIL() << "Bad function call " << label;
       }
       return (this->*Table_AsBool[label.function_num])(self, params, args);
+    }
+    if (label.collection == Functions_DefaultOrder) {
+      if (label.function_num < 0 || label.function_num >= 1) {
+        FAIL() << "Bad function call " << label;
+      }
+      return (this->*Table_DefaultOrder[label.function_num])(self, params, args);
     }
     if (label.collection == Functions_Formatted) {
       if (label.function_num < 0 || label.function_num >= 1) {
@@ -217,6 +236,7 @@ struct Value_String : public TypeValue {
   const PrimString& AsString() const final { return value_; }
   ReturnTuple Call_asBool(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args);
   ReturnTuple Call_formatted(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args);
+  ReturnTuple Call_defaultOrder(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args);
   ReturnTuple Call_readAt(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args);
   ReturnTuple Call_size(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args);
   ReturnTuple Call_subSequence(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args);
@@ -256,6 +276,28 @@ class Value_StringBuilder : public TypeValue {
   std::ostringstream output_;
 };
 
+struct StringOrder : public AnonymousOrder {
+  StringOrder(S<TypeValue> container, const std::string& s)
+    : AnonymousOrder(container, Function_Order_next, Function_Order_get), value(s) {}
+
+  S<TypeValue> Call_next(const S<TypeValue>& self) final {
+    if (index+1 >= value.size()) {
+      return Var_empty;
+    } else {
+      ++index;
+      return self;
+    }
+  }
+
+  S<TypeValue> Call_get(const S<TypeValue>& self) final {
+    if (index >= value.size()) FAIL() << "iterated past end of String";
+    return Box_Char(value[index]);
+  }
+
+  const std::string& value;
+  int index = 0;
+};
+
 ReturnTuple Type_String::Call_default(const ParamTuple& params, const ValueTuple& args) {
   TRACE_FUNCTION("String.default")
   return ReturnTuple(Box_String(""));
@@ -283,6 +325,14 @@ ReturnTuple Value_String::Call_asBool(const S<TypeValue>& Var_self, const ParamT
 ReturnTuple Value_String::Call_formatted(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) {
   TRACE_FUNCTION("String.formatted")
   return ReturnTuple(Var_self);
+}
+ReturnTuple Value_String::Call_defaultOrder(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) {
+  TRACE_FUNCTION("String.defaultOrder")
+  if (value_.empty()) {
+    return ReturnTuple(Var_empty);
+  } else {
+    return ReturnTuple(S_get(new StringOrder(Var_self, value_)));
+  }
 }
 ReturnTuple Value_String::Call_readAt(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) {
   TRACE_FUNCTION("String.readAt")

@@ -269,3 +269,24 @@ PrimFloat TypeValue::AsFloat() const {
 bool TypeValue::Present() const {
   return true;
 }
+
+AnonymousOrder::AnonymousOrder(const S<TypeValue> cont,
+                               const ValueFunction& func_next,
+                               const ValueFunction& func_get)
+  : container(cont), function_next(func_next), function_get(func_get) {}
+
+std::string AnonymousOrder::CategoryName() const { return "AnonymousOrder"; }
+
+ReturnTuple AnonymousOrder::Dispatch(
+  const S<TypeValue>& self, const ValueFunction& label,
+  const ParamTuple& params, const ValueTuple& args) {
+  if (&label == &function_next) {
+    TRACE_FUNCTION("AnonymousOrder.next")
+    return ReturnTuple(Call_next(self));
+  }
+  if (&label == &function_get) {
+    TRACE_FUNCTION("AnonymousOrder.get")
+    return ReturnTuple(Call_get(self));
+  }
+  return TypeValue::Dispatch(self, label, params, args);
+}

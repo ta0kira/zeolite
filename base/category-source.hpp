@@ -215,4 +215,29 @@ class InstanceCache {
   std::map<typename ParamsKey<P>::Type, S<T>> cache_;
 };
 
+class AnonymousOrder : public TypeValue {
+ protected:
+  // Passing in the function labels allows linking without depending on Order
+  // when this class isn't used anywhere.
+  AnonymousOrder(const S<TypeValue> cont,
+                 const ValueFunction& func_next,
+                 const ValueFunction& func_get);
+
+  std::string CategoryName() const final;
+  ReturnTuple Dispatch(const S<TypeValue>& self,
+                       const ValueFunction& label,
+                       const ParamTuple& params,
+                       const ValueTuple& args) final;
+
+  virtual ~AnonymousOrder() = default;
+
+ private:
+  virtual S<TypeValue> Call_next(const S<TypeValue>& self) = 0;
+  virtual S<TypeValue> Call_get(const S<TypeValue>& self) = 0;
+
+  const S<TypeValue> container;
+  const ValueFunction& function_next;
+  const ValueFunction& function_get;
+};
+
 #endif  // CATEGORY_SOURCE_HPP_

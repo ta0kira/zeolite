@@ -1229,6 +1229,8 @@ Builtin `@value interface`s:
 - **`Formatted`**: Format a value as a `String` using `formatted()`.
 - **`Order<#x>`**: An ordering of `#x` values, for use with the `traverse`
   built-in loop iteration.
+- **`DefaultOrder<#x>`**: The container provides a default `Order<#x>` for use
+  with `traverse`.
 - **`ReadAt<#x>`**: Random access reads from a container with values of type
   `#x`.
 - **`SubSequence`**: Extract a subsequence from the object.
