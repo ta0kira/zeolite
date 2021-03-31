@@ -30,7 +30,7 @@ concrete Testing {
     #x defines Equals<#x>
   (#x,#x) -> ()
 
-  // Check that the value is within a range. Crashes if they are not equal.
+  // Check that the value is within a range. Crashes if it is not in the range.
   //
   // Args:
   // - #x: Actual value.
