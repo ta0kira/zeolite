@@ -65,7 +65,6 @@ class Barrier {
 
   ~Barrier() {
     TRACE_CREATION
-    delete[] index_usage;
     int error = pthread_barrier_destroy(&barrier);
     if (error != 0) {
       FAIL() << "Error cleaning up barrier: " << strerror(error) << " (error " << error << ")";
@@ -92,7 +91,7 @@ private:
 
   std::atomic_bool alive;
   std::atomic_int wait_count;
-  std::atomic_int* const index_usage;
+  const R<std::atomic_int[]> index_usage;
   pthread_barrier_t barrier;
   CAPTURE_CREATION("EnumeratedBarrier")
 };
