@@ -21,7 +21,7 @@ testcase "simple Thread test" {
 }
 
 unittest test {
-  Counter counter <- Counter.create(10000)
+  CountLoop counter <- CountLoop.create(10000)
   \ Testing.checkEquals<?>(counter.get(),0)
   \ counter.start()
   \ Testing.checkEquals<?>(counter.get(),10000)
@@ -29,14 +29,14 @@ unittest test {
   \ Testing.checkEquals<?>(counter.get(),20000)
 }
 
-concrete Counter {
+concrete CountLoop {
   refines Process
 
-  @type create (Int) -> (Counter)
+  @type create (Int) -> (CountLoop)
   @value get () -> (Int)
 }
 
-define Counter {
+define CountLoop {
   refines Routine
 
   @value Int current
@@ -44,7 +44,7 @@ define Counter {
   @value weak Thread thread
 
   create (c) {
-    return Counter{ 0, c, empty }
+    return CountLoop{ 0, c, empty }
   }
 
   start ()  {
