@@ -2,17 +2,6 @@
 
 ## 0.16.0.0  -- ????-??-??
 
-### Compiler CLI
-
-* **[breaking]** Updates how `$TraceCreation$` is implemented in C++. This only
-  breaks hand-written C++ extensions that use the `CAPTURE_CREATION` macro.
-
-* **[new]** Adds the `--log-traces` option for testing mode (`zeolite -t`) to
-  capture a record of every line of Zeolite code executed when running tests.
-
-* **[fix]** Fixes dependency resolution for C++ extensions that define
-  `$ModuleOnly$` categories.
-
 ### Language
 
 * **[breaking]** Adds `traverse` built-in syntax, which automatically iterates
@@ -34,6 +23,24 @@
   @category Int bar <- (foo <- 2)
   ```
 
+* **[new]** Removes variance checks for category-level param filters. This was
+  originally not checked, but then the checks were added *prior to* version
+  `0.1.0.0` for obscure mathematical reasons that no longer make sense.
+
+  In particular, filters such as `#x defines Equals<#x>` *were not* previously
+  allowed except when `#x` was invariant, but now it is allowed for all
+  variances.
+
+  The revised perspective is that param filters form a meta-type for param
+  substitutions as inputs, with the constructed type as the output. Once the
+  output is received, the input constraints are no longer recoverable.
+
+  Note that category-level param variance is still checked when params are used
+  on the right side of filters for function params. This is because not doing so
+  could result in bad argument and return types when inheriting functions.
+
+  Params also still cannot have *both* upper and lower bounds at the same time.
+
 * **[new]** When inferring type parameters for function calls (e.g.,
   `call<?>(foo)`), allows `all` to be a valid lower bound and `any` to be a
   valid upper bound. Previously, an inferred type of `all` in covariant
@@ -46,6 +53,17 @@
   Previously, if a function was inherited and the types were not overridden,
   the category name in the trace would be that of the parent, rather than that
   of the one defining the procedure.
+
+### Compiler CLI
+
+* **[breaking]** Updates how `$TraceCreation$` is implemented in C++. This only
+  breaks hand-written C++ extensions that use the `CAPTURE_CREATION` macro.
+
+* **[new]** Adds the `--log-traces` option for testing mode (`zeolite -t`) to
+  capture a record of every line of Zeolite code executed when running tests.
+
+* **[fix]** Fixes dependency resolution for C++ extensions that define
+  `$ModuleOnly$` categories.
 
 ### Libraries
 

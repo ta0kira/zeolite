@@ -577,3 +577,39 @@ define Type {
 @type interface Creator<|#x> {
   create () -> (#x)
 }
+
+
+testcase "#self allowed in category param filters" {
+  compiles
+}
+
+@value interface Type1<#x> {
+  #x allows #self
+}
+
+@value interface Type2<#x> {
+  #x requires #self
+}
+
+
+testcase "#self allowed in covavariant position of function param filter" {
+  compiles
+}
+
+@value interface Type {
+  call<#x>
+    #x allows #self
+  () -> ()
+}
+
+
+testcase "#self disallowed in contravariant position of function param filter" {
+  error
+  require "#self.+contravariant"
+}
+
+@value interface Type {
+  call<#x>
+    #x requires #self
+  () -> ()
+}

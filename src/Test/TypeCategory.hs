@@ -724,23 +724,23 @@ tests = [
     checkOperationSuccess
       ("testfiles" </> "valid_filter_variance.0rx")
       (\ts -> checkParamVariances defaultCategories ts),
-    checkOperationFail
-      ("testfiles" </> "bad_allows_variance_right.0rx")
+    checkOperationSuccess
+      ("testfiles" </> "allows_variance_right.0rx")
       (\ts -> checkParamVariances defaultCategories ts),
-    checkOperationFail
-      ("testfiles" </> "bad_defines_variance_right.0rx")
+    checkOperationSuccess
+      ("testfiles" </> "defines_variance_right.0rx")
       (\ts -> checkParamVariances defaultCategories ts),
-    checkOperationFail
-      ("testfiles" </> "bad_requires_variance_right.0rx")
+    checkOperationSuccess
+      ("testfiles" </> "requires_variance_right.0rx")
       (\ts -> checkParamVariances defaultCategories ts),
-    checkOperationFail
-      ("testfiles" </> "bad_allows_variance_left.0rx")
+    checkOperationSuccess
+      ("testfiles" </> "allows_variance_left.0rx")
       (\ts -> checkParamVariances defaultCategories ts),
-    checkOperationFail
-      ("testfiles" </> "bad_defines_variance_left.0rx")
+    checkOperationSuccess
+      ("testfiles" </> "defines_variance_left.0rx")
       (\ts -> checkParamVariances defaultCategories ts),
-    checkOperationFail
-      ("testfiles" </> "bad_requires_variance_left.0rx")
+    checkOperationSuccess
+      ("testfiles" </> "requires_variance_left.0rx")
       (\ts -> checkParamVariances defaultCategories ts),
 
     checkOperationFail

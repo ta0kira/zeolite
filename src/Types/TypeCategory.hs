@@ -627,21 +627,17 @@ checkParamVariances tm0 ts = do
     categoryContext t =
       "In " ++ show (getCategoryName t) ++ formatFullContextBrace (getCategoryContext t)
     checkBounds t = categoryContext t ??> (getCategoryFilterMap t >>= disallowBoundedParams)
-    checkCategory r t@(ValueInterface c _ n ps rs fa _) = categoryContext t ??> do
+    checkCategory r t@(ValueInterface c _ n ps rs _ _) = categoryContext t ??> do
       noDuplicates c n ps
       let vm = Map.fromList $ map (\p -> (vpParam p,vpVariance p)) ps
       collectAllM_ (map (checkRefine r vm) rs)
-      mapCompilerM_ (checkFilterVariance r vm) fa
-    checkCategory r t@(ValueConcrete c _ n ps rs ds fa _) = categoryContext t ??> do
+    checkCategory r t@(ValueConcrete c _ n ps rs ds _ _) = categoryContext t ??> do
       noDuplicates c n ps
       let vm = Map.fromList $ map (\p -> (vpParam p,vpVariance p)) ps
       collectAllM_ (map (checkRefine r vm) rs)
       collectAllM_ (map (checkDefine r vm) ds)
-      mapCompilerM_ (checkFilterVariance r vm) fa
-    checkCategory r t@(InstanceInterface c _ n ps fa _) = categoryContext t ??> do
+    checkCategory _ t@(InstanceInterface c _ n ps _ _) = categoryContext t ??> do
       noDuplicates c n ps
-      let vm = Map.fromList $ map (\p -> (vpParam p,vpVariance p)) ps
-      mapCompilerM_ (checkFilterVariance r vm) fa
     noDuplicates c n ps = collectAllM_ (map checkCount $ group $ sort $ map vpParam ps) where
       checkCount xa@(x:_:_) =
         compilerErrorM $ "Param " ++ show x ++ " occurs " ++ show (length xa) ++
@@ -653,30 +649,6 @@ checkParamVariances tm0 ts = do
     checkDefine r vm (ValueDefine c t) =
       validateDefinesVariance r vm Covariant t <??
         "In " ++ show t ++ formatFullContextBrace c
-    checkFilterVariance r vs (ParamFilter c n f@(TypeFilter FilterRequires t)) =
-      "In filter " ++ show n ++ " " ++ show f ++ formatFullContextBrace c ??> do
-        case n `Map.lookup` vs of
-             Just Contravariant -> compilerErrorM $ "Contravariant param " ++ show n ++
-                                                    " cannot have a requires filter"
-             Nothing -> compilerErrorM $ "Param " ++ show n ++ " is undefined"
-             _ -> return ()
-        validateInstanceVariance r vs Contravariant t
-    checkFilterVariance r vs (ParamFilter c n f@(TypeFilter FilterAllows t)) =
-      "In filter " ++ show n ++ " " ++ show f ++ formatFullContextBrace c ??> do
-        case n `Map.lookup` vs of
-             Just Covariant -> compilerErrorM $ "Covariant param " ++ show n ++
-                                                " cannot have an allows filter"
-             Nothing -> compilerErrorM $ "Param " ++ show n ++ " is undefined"
-             _ -> return ()
-        validateInstanceVariance r vs Covariant t
-    checkFilterVariance r vs (ParamFilter c n f@(DefinesFilter t)) =
-      "In filter " ++ show n ++ " " ++ show f ++ formatFullContextBrace c ??> do
-        case n `Map.lookup` vs of
-             Just Contravariant -> compilerErrorM $ "Contravariant param " ++ show n ++
-                                                    " cannot have a defines filter"
-             Nothing -> compilerErrorM $ "Param " ++ show n ++ " is undefined"
-             _ -> return ()
-        validateDefinesVariance r vs Contravariant t
 
 checkCategoryInstances :: (Show c, CollectErrorsM m) =>
   CategoryMap c -> [AnyCategory c] -> m ()
