@@ -15,7 +15,8 @@
 <b>concrete</b> <b><span style='color:#0057ae;'>PrimeTracker</span></b> {
   <span style='color:#644a9b;'>@type</span> create () -&gt; (<span style='color:#0057ae;'>PrimeTracker</span>)
   <span style='color:#644a9b;'>@value</span> checkNextPossible (<span style='color:#0057ae;'>ThreadContinue</span>) -&gt; (<b>#self</b>)
-  <span style='color:#644a9b;'>@value</span> getResults () -&gt; (<span style='color:#0057ae;'>ReadIterator</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Int</span></i><span style='color:#c02040;'>&gt;</span>)
+  <span style='color:#898887;'>// optional Order&lt;Int&gt; can be used with the traverse built-in for iteration.</span>
+  <span style='color:#644a9b;'>@value</span> getResults () -&gt; (<b>optional</b> <i><span style='color:#0057ae;'>Order</span></i><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Int</span></i><span style='color:#c02040;'>&gt;</span>)
 }
 </pre>
 </body>

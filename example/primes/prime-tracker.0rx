@@ -8,31 +8,31 @@ define PrimeTracker {
 
   checkNextPossible (flag) {
     Int toCheck <- nextPossible
-    nextPossible <- nextPossible+1
     $ReadOnly[toCheck]$
-    $Hidden[nextPossible]$
 
     Bool isPrime <- true
-    Bool running <- true
 
-    scoped {
-      ReadIterator<Int> primeIter <- getResults()
-    } in while ((running <- flag.shouldContinue()) && !primeIter.pastForwardEnd()) {
-      $ReadOnly[primeIter]$
-      if (toCheck%primeIter.readCurrent() == 0) {
+    traverse (getResults() -> Int prime) {
+      $ReadOnly[prime]$
+      $Hidden[nextPossible]$
+      if (!flag.shouldContinue()) {
+        return self
+      }
+      if (toCheck%prime == 0) {
         isPrime <- false
         break
       }
-      if (primeIter.readCurrent()*primeIter.readCurrent() >= toCheck) {
+      if (prime*prime >= toCheck) {
         break
       }
-    } update {
-      primeIter <- primeIter.forward()
     }
+    // Postpone updating the next possible until we know that there wasn't an
+    // early return due to the flag.
+    nextPossible <- nextPossible+1
 
-    if (running && isPrime) {
+    if (isPrime) {
       \ LazyStream<Formatted>.new()
-          .append("               \r")
+          .append("\r")
           .append(toCheck)
           .writeTo(SimpleOutput.stderr())
       \ primes.push(toCheck)
@@ -41,6 +41,6 @@ define PrimeTracker {
   }
 
   getResults () {
-    return AutoReadIterator:from<?>(primes)
+    return primes.defaultOrder()
   }
 }

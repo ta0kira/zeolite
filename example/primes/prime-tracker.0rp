@@ -4,5 +4,6 @@ $ModuleOnly$
 concrete PrimeTracker {
   @type create () -> (PrimeTracker)
   @value checkNextPossible (ThreadContinue) -> (#self)
-  @value getResults () -> (ReadIterator<Int>)
+  // optional Order<Int> can be used with the traverse built-in for iteration.
+  @value getResults () -> (optional Order<Int>)
 }

@@ -52,15 +52,11 @@ define PrimesDemo {
         .writeTo(SimpleOutput.stderr())
     \ thread.join()
 
-    scoped {
-      ReadIterator<Int> primeIter <- tracker.getResults()
-    } in while (!primeIter.pastForwardEnd()) {
+    traverse (tracker.getResults() -> Int prime) {
       \ LazyStream<Formatted>.new()
-          .append(primeIter.readCurrent())
+          .append(prime)
           .append("\n")
           .writeTo(SimpleOutput.stdout())
-    } update {
-      primeIter <- primeIter.forward()
     }
   }
 }
