@@ -661,7 +661,7 @@ Zeolite supports two loop types:
    }</pre>
 
 2. **`traverse`** loops (as of compiler version `0.16.0.0`), which automatically
-   iterate over the `#x` values in an `Order<#x>`. This is similar to
+   iterate over the `#x` values in an `optional Order<#x>`. This is similar to
    `for (int i : container) { ... }` in C++ and `for i in container: ...` in
    Python.
 
@@ -670,6 +670,8 @@ Zeolite supports two loop types:
      <span style='color:#898887;'>// repeated for each String s in stringList</span>
      <span style='color:#898887;'>// you can also use break and continue</span>
    }</pre>
+
+   Since the `Order` is optional, `empty` can be used to iterate zero times.
 
 `for` loops (e.g., `for (int i = 0; i < foo; ++i) { ... }` in C++) *are not*
 supported, since such syntax is too restrictive to scale, and they can be
@@ -1225,6 +1227,8 @@ Builtin `@value interface`s:
 - **`Build<#x>`**: Build a `#x` from the current state.
 - **`Container`**: Contains multiple values.
 - **`Formatted`**: Format a value as a `String` using `formatted()`.
+- **`Order<#x>`**: An ordering of `#x` values, for use with the `traverse`
+  built-in loop iteration.
 - **`ReadAt<#x>`**: Random access reads from a container with values of type
   `#x`.
 - **`SubSequence`**: Extract a subsequence from the object.
