@@ -63,6 +63,9 @@
 * **[new]** Adds `Counter` and `Repeat` to `lib/util`, to help create sequences
   for use with the new `traverse` built-in.
 
+* **[new]** Implements forward and reverse iteration to `SearchTree` in
+  `lib/container`.
+
 ### Examples
 
 * Adds `example/primes`, as a demonstration of multithreading.

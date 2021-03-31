@@ -36,6 +36,14 @@ define SearchTree {
   get (k) {
     return Node<#k,#v>.find(root,k)
   }
+
+  defaultOrder () {
+    return ForwardTreeOrder:create<?,?>(root)
+  }
+
+  reverseOrder () {
+    return ReverseTreeOrder:create<?,?>(root)
+  }
 }
 
 define ValidatedTree {
@@ -69,6 +77,11 @@ concrete Node<#k,#v> {
   @type delete (optional Node<#k,#v>,#k) -> (optional Node<#k,#v>)
   @type find (optional Node<#k,#v>,#k) -> (optional #v)
   @type validate (optional Node<#k,#v>) -> ()
+
+  @value getLower () -> (optional Node<#k,#v>)
+  @value getHigher () -> (optional Node<#k,#v>)
+  @value getKey () -> (#k)
+  @value getValue () -> (#v)
 }
 
 define Node {
@@ -133,6 +146,14 @@ define Node {
       \ require(node).validateBalance()
     }
   }
+
+  getLower () { return lower }
+
+  getHigher () { return higher }
+
+  getKey () { return key }
+
+  getValue () { return value }
 
   @value validateOrder () -> ()
   validateOrder () {
@@ -303,29 +324,121 @@ define Node {
   @value getHeight () -> (Int)
   getHeight () { return height }
 
-  // It is unsafe to change the key after construction, so there is no setter.
-  //
-  // Unlike other languages, a member is only accessible by the value that owns
-  // it. More specifically, @type functions in Node can only access @value
-  // members via explicit @value getters and setters.
-  @value getKey () -> (#k)
-  getKey () { return key }
-
-  @value getValue () -> (#v)
-  getValue () { return value }
-
   @value setValue (#v) -> ()
   setValue (v) { value <- v }
-
-  @value getLower () -> (optional Node<#k,#v>)
-  getLower () { return lower }
 
   @value setLower (optional Node<#k,#v>) -> ()
   setLower (l) { lower <- l }
 
-  @value getHigher () -> (optional Node<#k,#v>)
-  getHigher () { return higher }
-
   @value setHigher (optional Node<#k,#v>) -> ()
   setHigher (h) { higher <- h }
+}
+
+concrete TreeKeyValue<#k,#v> {
+  refines KeyValue<#k,#v>
+
+  @category create<#k,#v> (#k,#v) -> (TreeKeyValue<#k,#v>)
+}
+
+define TreeKeyValue {
+  @value #k key
+  @value #v value
+
+  create (key,value) {
+    return TreeKeyValue<#k,#v>{ key, value }
+  }
+
+  getKey () {
+    return key
+  }
+
+  getValue () {
+    return value
+  }
+}
+
+concrete ForwardTreeOrder<#k,#v> {
+  refines Order<KeyValue<#k,#v>>
+  #k defines LessThan<#k>
+
+  @category create<#k,#v>
+    #k defines LessThan<#k>
+  (optional Node<#k,#v>) -> (optional ForwardTreeOrder<#k,#v>)
+}
+
+define ForwardTreeOrder {
+  $ReadOnly[node,prev]$
+
+  @value Node<#k,#v> node
+  @value optional ForwardTreeOrder<#k,#v> prev
+
+  create (node) {
+    optional Node<#k,#v> node2 <- node
+    optional ForwardTreeOrder<#k,#v> current <- empty
+    while (present(node2)) {
+      current <- ForwardTreeOrder<#k,#v>{ require(node2), current }
+      node2 <- require(node2).getLower()
+    }
+    return current
+  }
+
+  next () {
+    // Algorithm:
+    // 1. Pop self from the stack.
+    // 2. Traverse lower to the bottom starting from the higher child of self.
+    optional Node<#k,#v> node2 <- node.getHigher()
+    optional ForwardTreeOrder<#k,#v> current <- prev
+    while (present(node2)) {
+      current <- ForwardTreeOrder<#k,#v>{ require(node2), current }
+      node2 <- require(node2).getLower()
+    }
+    return current
+  }
+
+  get () {
+    return TreeKeyValue:create<?,?>(node.getKey(),node.getValue())
+  }
+}
+
+concrete ReverseTreeOrder<#k,#v> {
+  refines Order<KeyValue<#k,#v>>
+  #k defines LessThan<#k>
+
+  @category create<#k,#v>
+    #k defines LessThan<#k>
+  (optional Node<#k,#v>) -> (optional ReverseTreeOrder<#k,#v>)
+}
+
+define ReverseTreeOrder {
+  $ReadOnly[node,prev]$
+
+  @value Node<#k,#v> node
+  @value optional ReverseTreeOrder<#k,#v> prev
+
+  create (node) {
+    optional Node<#k,#v> node2 <- node
+    optional ReverseTreeOrder<#k,#v> current <- empty
+    while (present(node2)) {
+      current <- ReverseTreeOrder<#k,#v>{ require(node2), current }
+      node2 <- require(node2).getHigher()
+    }
+    return current
+  }
+
+  next () {
+    // Algorithm:
+    // 1. Pop self from the stack.
+    // 2. Traverse higher to the bottom starting from the lower child of self.
+    optional Node<#k,#v> node2 <- node.getLower()
+    optional ReverseTreeOrder<#k,#v> current <- prev
+    while (present(node2)) {
+      current <- ReverseTreeOrder<#k,#v>{ require(node2), current }
+      node2 <- require(node2).getHigher()
+    }
+    return current
+  }
+
+  get () {
+    return TreeKeyValue:create<?,?>(node.getKey(),node.getValue())
+  }
 }

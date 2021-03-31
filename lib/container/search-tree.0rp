@@ -22,12 +22,30 @@ limitations under the License.
 // - #k: The key type.
 // - #v: The value type.
 concrete SearchTree<#k,#v> {
+  refines DefaultOrder<KeyValue<#k,#v>>
   refines KVWriter<#k,#v>
   refines KVReader<#k,#v>
   #k defines LessThan<#k>
 
   // Create an empty tree.
   @type new () -> (#self)
+
+  // Traverse the tree in the reverse order of defaultOrder().
+  //
+  // Notes:
+  // - Traversal of the entire tree is amortized O(n); however, the cost of any
+  //   particular iteration could be up to O(log n).
+  // - The overall memory cost is O(log n).
+  @value reverseOrder () -> (optional Order<KeyValue<#k,#v>>)
+
+  // Traverse in the default order.
+  //
+  // Notes:
+  // - This is from DefaultOrder, but is made explicit for documentation.
+  // - Traversal of the entire tree is amortized O(n); however, the cost of any
+  //   particular iteration could be up to O(log n).
+  // - The overall memory cost is O(log n).
+  @value defaultOrder () -> (optional Order<KeyValue<#k,#v>>)
 }
 
 // A validated binary search tree for key-value storage.

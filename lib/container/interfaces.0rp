@@ -50,3 +50,16 @@ limitations under the License.
   // Returns the value associated with the key if present.
   get (#k) -> (optional #v)
 }
+
+// A single key-value pair from a KVReader.
+@value interface KeyValue<|#k,#v> {
+  // Get the key.
+  //
+  // Notes:
+  // - Calling mutating functions on the key could invalidate the structure of
+  //   the KVReader.
+  getKey () -> (#k)
+
+  // Get the value.
+  getValue () -> (#v)
+}
