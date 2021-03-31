@@ -666,12 +666,24 @@ Zeolite supports two loop types:
    Python.
 
    <pre style='color:#1f1c1b;background-color:#f6f8fa;'>
-   <b>traverse</b> (stringList -&gt; <i><span style='color:#0057ae;'>String</span></i> s) {
-     <span style='color:#898887;'>// repeated for each String s in stringList</span>
+   <b>traverse</b> (orderedStrings -&gt; <i><span style='color:#0057ae;'>String</span></i> s) {
+     <span style='color:#898887;'>// executed once per String s in orderedStrings</span>
      <span style='color:#898887;'>// you can also use break and continue</span>
    }</pre>
 
    Since the `Order` is optional, `empty` can be used to iterate zero times.
+
+   **IMPORTANT:** Most containers *are not* iterable by `traverse` as-is; you
+   will need to call a `@value` function to get the `Order`. Some categories
+   `refine DefaultOrder<#x>` (such as `String`, and `Vector` in
+   `lib/container`), which allows you to use its `defaultOrder()`. Other
+   categories provide multiple ways to `Order` the container, such as
+   `SearchTree` in `lib/container`.
+
+   <pre style='color:#1f1c1b;background-color:#f6f8fa;'>
+   <b>traverse</b> ((<span style='color:#bf0303;'>&quot;hello&quot;</span>)<span style='color:#644a9b;'>.</span>defaultOrder() -&gt; <i><span style='color:#0057ae;'>Char</span></i> c) {
+     <span style='color:#898887;'>// executed once per Char c in &quot;hello&quot;</span>
+   }</pre>
 
 `for` loops (e.g., `for (int i = 0; i < foo; ++i) { ... }` in C++) *are not*
 supported, since such syntax is too restrictive to scale, and they can be
