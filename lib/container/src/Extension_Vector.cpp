@@ -24,7 +24,9 @@ limitations under the License.
 #include "Category_Append.hpp"
 #include "Category_Container.hpp"
 #include "Category_Default.hpp"
+#include "Category_DefaultOrder.hpp"
 #include "Category_Formatted.hpp"
+#include "Category_Order.hpp"
 #include "Category_ReadAt.hpp"
 #include "Category_Stack.hpp"
 #include "Category_String.hpp"
@@ -74,6 +76,28 @@ struct ExtType_Vector : public Type_Vector {
   inline ExtType_Vector(Category_Vector& p, Params<1>::Type params) : Type_Vector(p, params) {}
 };
 
+struct VectorOrder : public AnonymousOrder {
+  VectorOrder(S<TypeValue> container, const VectorType& v)
+    : AnonymousOrder(container, Function_Order_next, Function_Order_get), values(v) {}
+
+  S<TypeValue> Call_next(const S<TypeValue>& self) final {
+    if (index+1 >= values.size()) {
+      return Var_empty;
+    } else {
+      ++index;
+      return self;
+    }
+  }
+
+  S<TypeValue> Call_get(const S<TypeValue>& self) final {
+    if (index >= values.size()) FAIL() << "iterated past end of Vector";
+    return values[index];
+  }
+
+  const VectorType& values;
+  int index = 0;
+};
+
 struct ExtValue_Vector : public Value_Vector {
   inline ExtValue_Vector(S<Type_Vector> p, const ParamTuple& params, VectorType v)
     : Value_Vector(p, params), values(std::move(v)) {}
@@ -84,6 +108,15 @@ struct ExtValue_Vector : public Value_Vector {
     const S<TypeValue>& Var_arg1 = (args.At(0));
     values.push_back(Var_arg1);
     return ReturnTuple(Var_self);
+  }
+
+  ReturnTuple Call_defaultOrder(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) final {
+    TRACE_FUNCTION("Vector.defaultOrder")
+    if (values.empty()) {
+      return ReturnTuple(Var_empty);
+    } else {
+      return ReturnTuple(S_get(new VectorOrder(Var_self, values)));
+    }
   }
 
   ReturnTuple Call_pop(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) final {

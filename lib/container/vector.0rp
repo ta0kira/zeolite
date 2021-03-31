@@ -21,10 +21,11 @@ limitations under the License.
 // Params:
 // - #x: The value type contained.
 concrete Vector<#x> {
+  refines Append<#x>
+  refines DefaultOrder<#x>
   refines Stack<#x>
   refines ReadAt<#x>
   refines WriteAt<#x>
-  refines Append<#x>
 
   // Create a copy from another random-access container.
   @category copyFrom<#y> (ReadAt<#y>) -> (Vector<#y>)

@@ -113,6 +113,25 @@ unittest writeAt {
   }
 }
 
+unittest traverseVector {
+  Int index <- 0
+  Vector<Int> vector <- Vector:create<Int>()
+  \ vector.push(2)
+  \ vector.push(6)
+  \ vector.push(3)
+  \ vector.push(5)
+  \ vector.push(4)
+  \ vector.push(1)
+
+  traverse (vector.defaultOrder() -> Int i) {
+    \ Testing.checkEquals<?>(i,vector.readAt(index))
+    index <- index+1
+  }
+
+  \ Testing.checkEquals<?>(index,6)
+}
+
+
 testcase "distinct default values in pre-sized Vector" {
   success
 }
