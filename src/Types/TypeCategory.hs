@@ -1078,21 +1078,20 @@ guessesAsParams gs = Map.fromList $ zip (map itgParam gs) (map itgGuess gs)
 
 data GuessRange a =
   GuessRange {
-    grLower :: a,
-    grUpper :: a
+    grLower :: Maybe a,
+    grUpper :: Maybe a
   }
   deriving (Eq,Ord)
 
-instance (Bounded a, Eq a, Show a) => Show (GuessRange a) where
-  show (GuessRange lo hi)
-    | lo == minBound && hi == maxBound = "Literally anything is possible"
-    | lo == minBound = "Something at or below " ++ show hi
-    | hi == maxBound = "Something at or above " ++ show lo
-    | otherwise = "Something between " ++ show lo ++ " and " ++ show hi
+instance Show a => Show (GuessRange a) where
+  show (GuessRange Nothing   Nothing)   = "Literally anything is possible"
+  show (GuessRange Nothing   (Just hi)) = "Something at or below " ++ show hi
+  show (GuessRange (Just lo) Nothing)   = "Something at or above " ++ show lo
+  show (GuessRange (Just lo) (Just hi)) = "Something between " ++ show lo ++ " and " ++ show hi
 
-data GuessUnion a =
+data GuessUnion =
   GuessUnion {
-    guGuesses :: [GuessRange a]
+    guGuesses :: [GuessRange GeneralInstance]
   }
 
 mergeInferredTypes :: (CollectErrorsM m, TypeResolver r) =>
@@ -1105,9 +1104,9 @@ mergeInferredTypes r f ff ps gs0 = do
       (GuessUnion gs) <- reduceMergeTree anyOp allOp leafOp is >>= filterGuesses i
       t <- takeBest i gs
       return (InferredTypeGuess i t Invariant)
-    leafOp (InferredTypeGuess _ t Covariant)     = return $ GuessUnion [GuessRange t maxBound]
-    leafOp (InferredTypeGuess _ t Contravariant) = return $ GuessUnion [GuessRange minBound t]
-    leafOp (InferredTypeGuess _ t _)             = return $ GuessUnion [GuessRange t t]
+    leafOp (InferredTypeGuess _ t Covariant)     = return $ GuessUnion [GuessRange (Just t) Nothing]
+    leafOp (InferredTypeGuess _ t Contravariant) = return $ GuessUnion [GuessRange Nothing  (Just t)]
+    leafOp (InferredTypeGuess _ t _)             = return $ GuessUnion [GuessRange (Just t) (Just t)]
     anyOp = fmap (GuessUnion . concat . map guGuesses) . collectAllM
     allOp = collectAllM >=> prodAll
     prodAll [] = return $ GuessUnion []
@@ -1128,13 +1127,17 @@ mergeInferredTypes r f ff ps gs0 = do
            hiZ <- tryMerge Contravariant hiX hiY
            return [GuessRange loZ hiZ]
          else return []
-    convertsTo t1 t2 = isCompilerSuccessM $ checkGeneralMatch r f Covariant t1 t2
-    tryMerge v t1 t2 = collectFirstM [
-        checkGeneralMatch r f v t1 t2 >> return t2,
-        checkGeneralMatch r f v t2 t1 >> return t1,
+    convertsTo Nothing _ = return True
+    convertsTo _ Nothing = return True
+    convertsTo (Just t1) (Just t2) = isCompilerSuccessM $ checkGeneralMatch r f Covariant t1 t2
+    tryMerge _ Nothing t2 = return t2
+    tryMerge _ t1 Nothing = return t1
+    tryMerge v (Just t1) (Just t2) = collectFirstM [
+        checkGeneralMatch r f v t1 t2 >> return (Just t2),
+        checkGeneralMatch r f v t2 t1 >> return (Just t1),
         return $ case v of
-                      Covariant     -> mergeAny [t1,t2]
-                      Contravariant -> mergeAll [t1,t2]
+                      Covariant     -> Just $ mergeAny [t1,t2]
+                      Contravariant -> Just $ mergeAll [t1,t2]
                       _ -> undefined
       ]
     simplifyUnion [] = return []
@@ -1163,37 +1166,31 @@ mergeInferredTypes r f ff ps gs0 = do
            (Just lo,Just hi) -> return $ Just $ ms ++ [GuessRange lo hi] ++ gs
            _                 -> tryRangeUnion (ms ++ [g2]) g1 gs
     tryRangeUnion _ _ _ = return Nothing
-    takeBest i [g@(GuessRange lo hi)] = do
-      same <- hi `convertsTo` lo
-      let openHi = hi == maxBound
-      let openLo = lo == minBound
-      case (same,openHi,openLo) of
-           (True,_,_)     -> return lo
-           (_,True,False) -> return lo
-           (_,False,True) -> return hi
-           _ -> compilerErrorM (show g) <!! "Type for param " ++ show i ++ " is ambiguous"
+    takeBest _ [(GuessRange (Just lo) Nothing)] = return lo
+    takeBest _ [(GuessRange Nothing (Just hi))] = return hi
+    takeBest i [g@(GuessRange (Just lo) (Just hi))] = do
+      same <- (Just hi) `convertsTo` (Just lo)
+      when (not same) $ compilerErrorM (show g) <!! "Type for param " ++ show i ++ " is ambiguous"
+      return lo
     takeBest i gs = mapErrorsM (map show gs) <!! "Type for param " ++ show i ++ " is ambiguous"
     filterGuesses i (GuessUnion gs) = do
       let ga = map (filterGuess i) gs
       collectFirstM_ ga <!! "No valid guesses for param " ++ show i
       gs' <- collectAnyM ga
       fmap GuessUnion (simplifyUnion gs')
-    filterGuess i g@(GuessRange lo hi) = do
-      case (lo == minBound,hi == maxBound) of
-           (False,False) -> do
-             let checkLo = checkSubFilters i lo
-             let checkHi = checkSubFilters i hi
-             pLo <- isCompilerErrorM checkLo
-             pHi <- isCompilerErrorM checkHi
-             case (pLo,pHi) of
-                  (True,True) -> collectAllM_ [checkLo,checkHi] >> emptyErrorM
-                  (True,_) -> return $ GuessRange hi hi
-                  (_,True) -> return $ GuessRange lo lo
-                  _        -> return $ GuessRange lo hi
-           (loP,hiP) -> do
-             when (not loP) $ checkSubFilters i lo
-             when (not hiP) $ checkSubFilters i hi
-             return g
+    filterGuess i g@(GuessRange (Just lo) Nothing) = checkSubFilters i lo >> return g
+    filterGuess i g@(GuessRange Nothing (Just hi)) = checkSubFilters i hi >> return g
+    filterGuess i g@(GuessRange (Just lo) (Just hi)) = do
+      let checkLo = checkSubFilters i lo
+      let checkHi = checkSubFilters i hi
+      pLo <- isCompilerErrorM checkLo
+      pHi <- isCompilerErrorM checkHi
+      case (pLo,pHi) of
+           (True,True) -> collectAllM_ [checkLo,checkHi] >> emptyErrorM
+           (True,_) -> return $ GuessRange Nothing   (Just hi)
+           (_,True) -> return $ GuessRange (Just lo) Nothing
+           _        -> return g
+    filterGuess _ _ = emptyErrorM
     checkSubFilters i t = "In guess " ++ show t ++ " for param " ++ show i ??> do
       let ps' = Map.insert i t ps
       fs <- ff `filterLookup` i

@@ -1008,6 +1008,23 @@ tests = [
           [("#x","all")]),
 
     checkOperationSuccess
+      ("testfiles" </> "inference.0rx")
+      (\ts -> do
+        tm <- includeNewTypes defaultCategories ts
+        checkInferenceSuccess tm
+          [("#x",[])] ["#x"]
+          [("Interface1<all>","Interface1<#x>")]
+          [("#x","all")]),
+    checkOperationSuccess
+      ("testfiles" </> "inference.0rx")
+      (\ts -> do
+        tm <- includeNewTypes defaultCategories ts
+        checkInferenceSuccess tm
+          [("#x",[])] ["#x"]
+          [("Interface2<any>","Interface2<#x>")]
+          [("#x","any")]),
+
+    checkOperationSuccess
       ("testfiles" </> "delayed_merging.0rx")
       (\ts -> do
         tm <- includeNewTypes defaultCategories ts

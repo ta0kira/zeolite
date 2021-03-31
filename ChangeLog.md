@@ -34,13 +34,18 @@
   @category Int bar <- (foo <- 2)
   ```
 
+* **[new]** When inferring type parameters for function calls (e.g.,
+  `call<?>(foo)`), allows `all` to be a valid lower bound and `any` to be a
+  valid upper bound. Previously, an inferred type of `all` in covariant
+   positions and`any` in contravariant positions would cause inference to fail.
+
+* **[new]** Allows `$ReadOnly[...]$` and `$Hidden[...]$` for member variables in
+  definitions of `concrete` categories.
+
 * **[fix]** Fixes regression with function names used in stack traces.
   Previously, if a function was inherited and the types were not overridden,
   the category name in the trace would be that of the parent, rather than that
   of the one defining the procedure.
-
-* **[new]** Allows `$ReadOnly[...]$` and `$Hidden[...]$` for member variables in
-  definitions of `concrete` categories.
 
 ### Libraries
 

@@ -329,3 +329,34 @@ concrete Test {
 define Test {
   get (_,_) {}
 }
+
+
+testcase "all/any as valid lower/upper bounds" {
+  compiles
+}
+
+concrete Test {
+  @type call<#x,#y> (Convert<#x,#y>) -> (#x,#y)
+}
+
+define Test {
+  call (_) {
+    fail("this allows faking the return")
+  }
+
+  @value run () -> ()
+  run () {
+    any x1, all y1 <- call<?,?>(Convert<any,all>.create())
+    all x2, any y2 <- call<?,?>(Convert<all,any>.create())
+  }
+}
+
+concrete Convert<#x|#y> {
+  @type create () -> (#self)
+}
+
+define Convert {
+  create () {
+    return #self{ }
+  }
+}
