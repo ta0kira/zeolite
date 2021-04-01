@@ -100,6 +100,11 @@
 * **[fix]** Fixes dependency resolution for C++ extensions that define
   `$ModuleOnly$` categories.
 
+* **[behavior]** Improves the efficiency of call dispatching and `reduce` calls
+  for categories that inherit a lot of `interface`s. (Unlikely to affect
+  performance when a category has less than 10 direct or indirect parent
+  `interface`s.)
+
 ### Libraries
 
 * **[new]** Adds `ThreadCondition` to `lib/thread`, which allows threads to wait

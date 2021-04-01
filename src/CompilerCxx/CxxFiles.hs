@@ -372,6 +372,7 @@ generateCategoryDefinition testing = common where
       return $ onlyCode $ "struct " ++ typeName (getCategoryName t) ++ " : public " ++ typeBase ++ " {",
       fmap indentCompiled $ inlineTypeConstructor t,
       return declareTypeOverrides,
+      return $ declareTypeArgGetters t,
       return $ indentCompiled $ createParams $ getCategoryParams t,
       return $ onlyCode $ "  " ++ categoryName (getCategoryName t) ++ "& parent;",
       return $ onlyCode "};"
@@ -390,6 +391,7 @@ generateCategoryDefinition testing = common where
       return $ onlyCode $ "struct " ++ typeName (getCategoryName t) ++ " : public " ++ typeBase ++ " {",
       fmap indentCompiled $ inlineTypeConstructor t,
       return declareTypeOverrides,
+      return $ declareTypeArgGetters t,
       fmap indentCompiled $ concatM $ map (procedureDeclaration False) fs,
       return $ indentCompiled $ createParams $ getCategoryParams t,
       return $ onlyCode $ "  " ++ categoryName (getCategoryName t) ++ "& parent;",
@@ -422,6 +424,7 @@ generateCategoryDefinition testing = common where
       return $ onlyCode $ "struct " ++ typeName (getCategoryName t) ++ " : public " ++ typeBase ++ " {",
       fmap indentCompiled $ inlineTypeConstructor t,
       return declareTypeOverrides,
+      return $ declareTypeArgGetters t,
       fmap indentCompiled $ concatM $ map (procedureDeclaration True) $ filter ((== TypeScope). sfScope) $ getCategoryFunctions t,
       return $ onlyCode $ "  virtual inline ~" ++ typeName (getCategoryName t) ++ "() {}",
       return $ indentCompiled $ createParams $ getCategoryParams t,
@@ -497,6 +500,7 @@ generateCategoryDefinition testing = common where
       onlyCode $ "bool " ++ className ++ "::TypeArgsForParent(const TypeCategory& category, std::vector<S<const TypeInstance>>& args) const {",
       createTypeArgsForParent t,
       onlyCode $ "}",
+      defineTypeArgGetters t,
       onlyCode $ "ReturnTuple " ++ className ++ "::Dispatch(const S<TypeInstance>& self, const TypeFunction& label, const ParamTuple& params, const ValueTuple& args) {",
       createFunctionDispatch (getCategoryName t) TypeScope fs,
       onlyCode $ "}",
@@ -757,22 +761,42 @@ createCanConvertFrom t
       checkCov i p = "  if (!TypeInstance::CanConvert(args[" ++ show i ++ "], " ++ paramName p ++ ")) return false;"
       checkCon i p = "  if (!TypeInstance::CanConvert(" ++ paramName p ++ ", args[" ++ show i ++ "])) return false;"
 
+declareTypeArgGetters :: AnyCategory c -> CompiledData [String]
+declareTypeArgGetters t = onlyCodes $ map paramGetter (getCategoryName t:refines) where
+  refines = map (tiName  . vrType) $ getCategoryRefines t
+  paramGetter r = "  void Params_" ++ show r ++ "(std::vector<S<const TypeInstance>>& args) const;"
+
+defineTypeArgGetters :: AnyCategory c -> CompiledData [String]
+defineTypeArgGetters t = onlyCodes $ concat $ map paramGetter (myType:refines) where
+  params = map (\p -> (vpParam p,vpVariance p)) $ getCategoryParams t
+  myType = (getCategoryName t,map (singleType . JustParamName False . fst) params)
+  refines = map (\r -> (tiName r,pValues $ tiParams r)) $ map vrType $ getCategoryRefines t
+  paramGetter (r,ps) = [
+      "void " ++ typeName (getCategoryName t) ++ "::Params_" ++ show r ++ "(std::vector<S<const TypeInstance>>& args) const {",
+      "  args = std::vector<S<const TypeInstance>>{" ++ intercalate ", " (map expandLocalType ps) ++ "};",
+      "}"
+    ]
+
 createTypeArgsForParent :: AnyCategory c -> CompiledData [String]
 createTypeArgsForParent t
-  | isInstanceInterface t = onlyCode $ "  return " ++ typeBase ++ "::TypeArgsForParent(category, args);"
-  | otherwise =  onlyCodes $ allCats ++ ["  return false;"] where
-    params = map (\p -> (vpParam p,vpVariance p)) $ getCategoryParams t
-    myType = (getCategoryName t,map (singleType . JustParamName False . fst) params)
-    refines = map (\r -> (tiName r,pValues $ tiParams r)) $ map vrType $ getCategoryRefines t
-    allCats = concat $ map singleCat (myType:refines)
-    singleCat (t2,ps) = [
-        "  if (&category == &" ++ categoryGetter t2 ++ "()) {",
-        "    args = std::vector<S<const TypeInstance>>{" ++ expanded ++ "};",
-        "    return true;",
-        "  }"
-      ]
-      where
-        expanded = intercalate ", " $ map expandLocalType ps
+  | isInstanceInterface t = onlyCode $ "  return false;"
+  | otherwise = onlyCodes $ [
+      "  using CallType = void(" ++ className ++ "::*)(std::vector<S<const TypeInstance>>&)const;",
+      "  static DispatchSingle<CallType> all_calls[] = {"
+    ] ++ map dispatchKeyValue ((getCategoryName t):refines) ++ [
+      "    DispatchSingle<CallType>(),",
+      "  };",
+      "  const DispatchSingle<CallType>* const call = DispatchSelect(&category, all_calls);",
+      "  if (call) {",
+      "    (this->*call->value)(args);",
+      "    return true;",
+      "  }",
+      "  return false;"
+    ] where
+      className = typeName $ getCategoryName t
+      refines = map (tiName . vrType) $ getCategoryRefines t
+      dispatchKeyValue n = "    DispatchSingle<CallType>(&" ++ categoryGetter n ++
+                           "(), &" ++ className ++ "::Params_" ++ show n ++ "),"
 
 -- Similar to Procedure.expandGeneralInstance but doesn't account for scope.
 expandLocalType :: GeneralInstance -> String
