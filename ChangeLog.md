@@ -23,6 +23,24 @@
   @category Int bar <- (foo <- 2)
   ```
 
+* **[new]** Removes the requirement that type instances (e.g., `Type<Int>`)
+  satisfy the requirements of the type's parameter filters when not being used
+  in a function call.
+
+  ```text
+  concrete Type<|#x> {
+    #x requires Foo
+  }
+  ```
+
+  In the example above, `Type<Bar>` was universally disallowed if `Bar` could
+  not be converted to `Foo`. The new behavior is to enforce that restriction
+  only when calling `@type` functions, initializing values (e.g.,
+  `Type<#x>{ }`), and using the type as a param in a function call.
+
+  Since `#x` is covariant in this example, you could convert a `Type<Foo>` to a
+  `Type<any>`, even though `any` is not a child of `Foo`.
+
 * **[new]** Removes variance checks for category-level param filters. This was
   originally not checked, but then the checks were added *prior to* version
   `0.1.0.0` for obscure mathematical reasons that no longer make sense.

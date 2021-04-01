@@ -414,19 +414,19 @@ tests = [
       []
       "Type4<Type0>",
     return $ checkTypeSuccess Resolver
-      [("#x",["allows Type0"])]
+      ["#x"]
       "Type4<[#x&Type0]>",
     return $ checkTypeSuccess Resolver
-      [("#x",["allows Type0"])]
+      ["#x"]
       "Type4<[#x|Type0]>",
     return $ checkTypeSuccess Resolver
-      [("#x",["allows Type0"])]
+      ["#x"]
       "Type4<[#x|Type3]>",
     return $ checkTypeFail Resolver
       []
       "Type5<#x>",
     return $ checkTypeSuccess Resolver
-      [("#x",[])]
+      ["#x"]
       "Type5<#x>",
 
     checkConvertSuccess
@@ -547,69 +547,41 @@ tests = [
       "optional Type3",
 
     return $ checkTypeSuccess Resolver
-      [("#x",[])]
+      ["#x"]
       "#x",
-    return $ checkTypeFail Resolver
-      [("#x",[])]
+    return $ checkTypeSuccess Resolver
+      ["#x"]
       "Type1<#x>",
-    return $ checkTypeFail Resolver
-      [("#x",["requires Type3"])]
-      "Type1<#x>",
-    return $ checkTypeFail Resolver
-      [("#x",["defines Instance0"])]
-      "Type1<#x>",
-    return $ checkTypeFail Resolver
+    return $ checkTypeSuccess Resolver
       []
       "Type1<all>",
     return $ checkTypeSuccess Resolver
-      [("#x",["requires Type3","defines Instance0"])]
+      ["#x"]
       "Type1<#x>",
     return $ checkTypeSuccess Resolver
       []
       "Type1<Type3>",
-    return $ checkTypeFail Resolver
+    return $ checkTypeSuccess Resolver
       []
       "Type1<Type1<Type3>>",
     return $ checkTypeSuccess Resolver
       []
       "Type2<Type0,Type0,Type0>",
-    return $ checkTypeFail Resolver
+    return $ checkTypeSuccess Resolver
       []
       "Type2<all,Type0,Type0>",
-    return $ checkTypeFail Resolver
+    return $ checkTypeSuccess Resolver
       []
       "Type2<any,Type0,Type0>",
     return $ checkTypeSuccess Resolver
       []
       "Type4<any>",
-    return $ checkTypeFail Resolver
+    return $ checkTypeSuccess Resolver
       []
       "Type4<all>",
 
     return $ checkTypeSuccess Resolver
-      [("#x",["defines Instance1<Type0>",
-             "defines Instance1<#x>",
-             "defines Instance1<Type3>"])]
-      "Type2<#x,#x,#x>",
-    return $ checkTypeFail Resolver
-      [("#x",["defines Instance1<#x>",
-             "defines Instance1<Type3>"])]
-      "Type2<#x,#x,#x>",
-    return $ checkTypeFail Resolver
-      [("#x",["defines Instance1<Type0>",
-             "defines Instance1<Type3>"])]
-      "Type2<#x,#x,#x>",
-    return $ checkTypeSuccess Resolver
-      [("#x",["defines Instance1<Type0>",
-             "defines Instance1<#x>"])]
-      "Type2<#x,#x,#x>",
-    return $ checkTypeSuccess Resolver
-      [("#x",["allows Type0", -- Type0 -> #x implies Type3 -> #x
-             "defines Instance1<#x>"])]
-      "Type2<#x,#x,#x>",
-    return $ checkTypeFail Resolver
-      [("#x",["allows Type3", -- Type3 -> #x doesn't imply Type0 -> #x
-             "defines Instance1<#x>"])]
+      ["#x"]
       "Type2<#x,#x,#x>",
 
     return $ checkTypeSuccess Resolver
@@ -619,7 +591,7 @@ tests = [
       []
       "Type5<#x>",
     return $ checkTypeSuccess Resolver
-      [("#x",[])]
+      ["#x"]
       "Type5<#x>",
 
     return $ checkTypeSuccess Resolver
@@ -629,22 +601,22 @@ tests = [
       []
       "[Type4<Type0>&Type1<Type3>]",
     return $ checkTypeSuccess Resolver
-      [("#x",[])]
+      ["#x"]
       "[Type5<#x>|Type1<Type3>]",
     return $ checkTypeSuccess Resolver
-      [("#x",[])]
+      ["#x"]
       "[Type5<#x>&Type1<Type3>]",
     return $ checkTypeSuccess Resolver
-      [("#x",[])]
+      ["#x"]
       "[#x|Type1<Type3>]",
     return $ checkTypeSuccess Resolver
-      [("#x",[])]
+      ["#x"]
       "[#x&Type1<Type3>]",
-    return $ checkTypeFail Resolver
-      [("#x",[])]
+    return $ checkTypeSuccess Resolver
+      ["#x"]
       "[Type4<Type0>|Instance0]",
-    return $ checkTypeFail Resolver
-      [("#x",[])]
+    return $ checkTypeSuccess Resolver
+      ["#x"]
       "[Type4<Type0>&Instance0]",
 
     return $ checkTypeSuccess Resolver
@@ -654,20 +626,17 @@ tests = [
       []
       "[[Type4<Type0>|Type1<Type3>]&Type1<Type3>]",
     return $ checkTypeSuccess Resolver
-      [("#x",[])]
+      ["#x"]
       "[[Type4<Type0>&#x]|Type1<Type3>]",
     return $ checkTypeSuccess Resolver
-      [("#x",[])]
+      ["#x"]
       "[[Type4<Type0>|#x]&Type1<Type3>]",
 
-    return $ checkDefinesFail Resolver
-      [("#x",[])]
-      "Instance1<#x>",
     return $ checkDefinesSuccess Resolver
-      [("#x",["requires Type3"])]
+      ["#x"]
       "Instance1<#x>",
     return $ checkDefinesFail Resolver
-      [("#x",["defines Instance1<#x>"])]
+      []
       "Instance1<#x>",
     return $ checkDefinesSuccess Resolver
       []
@@ -883,9 +852,9 @@ checkSimpleConvertFail = checkConvertFail []
 
 checkConvertSuccess :: [(String, [String])] -> String -> String -> IO (TrackedErrors ())
 checkConvertSuccess pa x y = return checked where
-  prefix = x ++ " -> " ++ y ++ " " ++ showParams pa
+  prefix = x ++ " -> " ++ y ++ " " ++ showFilters pa
   checked = do
-    ([t1,t2],pa2) <- parseTheTest pa [x,y]
+    ([t1,t2],pa2) <- parseTestWithFilters pa [x,y]
     check $ checkValueAssignment Resolver pa2 t1 t2
   check c
     | isCompilerError c = compilerErrorM $ prefix ++ ":\n" ++ show (getCompilerError c)
@@ -894,7 +863,7 @@ checkConvertSuccess pa x y = return checked where
 checkInferenceSuccess :: [(String, [String])] -> [String] -> String ->
   String -> MergeTree (String,String,Variance) -> IO (TrackedErrors ())
 checkInferenceSuccess pa is x y gs = checkInferenceCommon check pa is x y gs where
-  prefix = x ++ " -> " ++ y ++ " " ++ showParams pa
+  prefix = x ++ " -> " ++ y ++ " " ++ showFilters pa
   check gs2 c
     | isCompilerError c = compilerErrorM $ prefix ++ ":\n" ++ show (getCompilerError c)
     | otherwise        = getCompilerSuccess c `checkEquals` gs2
@@ -902,7 +871,7 @@ checkInferenceSuccess pa is x y gs = checkInferenceCommon check pa is x y gs whe
 checkInferenceFail :: [(String, [String])] -> [String] -> String ->
   String -> IO (TrackedErrors ())
 checkInferenceFail pa is x y = checkInferenceCommon check pa is x y (mergeAll []) where
-  prefix = x ++ " -> " ++ y ++ " " ++ showParams pa
+  prefix = x ++ " -> " ++ y ++ " " ++ showFilters pa
   check _ c
     | isCompilerError c = return ()
     | otherwise = compilerErrorM $ prefix ++ ": Expected failure\n"
@@ -914,7 +883,7 @@ checkInferenceCommon ::
 checkInferenceCommon check pa is x y gs = return $ checked <!! context where
   context = "With params = " ++ show pa ++ ", pair = (" ++ show x ++ "," ++ show y ++ ")"
   checked = do
-    ([t1,t2],pa2) <- parseTheTest pa [x,y]
+    ([t1,t2],pa2) <- parseTestWithFilters pa [x,y]
     ia2 <- mapCompilerM readInferred is
     gs' <- sequence $ fmap parseGuess gs
     let iaMap = Map.fromList ia2
@@ -939,9 +908,9 @@ checkInferenceCommon check pa is x y gs = return $ checked <!! context where
 
 checkConvertFail :: [(String, [String])] -> String -> String -> IO (TrackedErrors ())
 checkConvertFail pa x y = return checked where
-  prefix = x ++ " /> " ++ y ++ " " ++ showParams pa
+  prefix = x ++ " /> " ++ y ++ " " ++ showFilters pa
   checked = do
-    ([t1,t2],pa2) <- parseTheTest pa [x,y]
+    ([t1,t2],pa2) <- parseTestWithFilters pa [x,y]
     check $ checkValueAssignment Resolver pa2 t1 t2
   check :: TrackedErrors a -> TrackedErrors ()
   check c

@@ -110,23 +110,3 @@ unittest param {
     fail(name)
   }
 }
-
-
-testcase "bad instance in typename param" {
-  error
-  require "Test"
-  require "define"
-  require "Equals"
-}
-
-unittest test {
-  \ typename<Value<Test>>()
-}
-
-@value interface Value<#x> {
-  #x defines Equals<#x>
-}
-
-concrete Test {}
-
-define Test {}

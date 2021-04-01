@@ -1,13 +1,13 @@
 // Setup.
 
 @type interface Type<#x|> {
-  x requires Value0
+  #x requires Value0
 }
 
 @value interface Value0 {}
 
 @value interface Value1<|#y> {
-  y requires Value0
+  #y requires Value0
 }
 
 @value interface Value2 {

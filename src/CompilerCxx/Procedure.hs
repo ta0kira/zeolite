@@ -298,7 +298,7 @@ compileStatement (Assignment c as e) = message ??> do
         self <- autoSelfType
         t1' <- lift $ replaceSelfValueType self t1
         -- TODO: Call csAddRequired for t1'. (Maybe needs a helper function.)
-        lift $ collectAllM_ [validateGeneralInstance r fa (vtType t1'),
+        lift $ collectAllM_ [validateGeneralInstance r (Map.keysSet fa) (vtType t1'),
                              checkValueAssignment r fa t2 t1']
         csAddVariable (UsedVariable c2 n) (VariableValue c2 LocalScope t1' VariableDefault)
         csWrite [variableStoredType t1' ++ " " ++ variableName n ++ ";"]
@@ -504,7 +504,7 @@ compileScopedBlock s@(ScopedBlock _ _ _ c2 _) = do
       t' <- replaceSelfValueType self t
       return (c,t',n)
     createVariable r fa (c,t,n) = do
-      lift $ validateGeneralInstance r fa (vtType t) <??
+      lift $ validateGeneralInstance r (Map.keysSet fa) (vtType t) <??
         "In creation of " ++ show n ++ " at " ++ formatFullContext c
       csWrite [variableStoredType t ++ " " ++ variableName n ++ ";"]
     showVariable (c,t,n) = do
@@ -777,7 +777,7 @@ compileExpressionStart (TypeCall c t f@(FunctionCall _ n _ _)) = do
   t' <- lift $ replaceSelfInstance self (singleType t)
   r <- csResolver
   fa <- csAllFilters
-  lift $ validateGeneralInstance r fa t' <?? "In function call at " ++ formatFullContext c
+  lift $ validateGeneralInstanceForCall r fa t' <?? "In function call at " ++ formatFullContext c
   f' <- csGetTypeFunction c (Just t') n
   when (sfScope f' /= TypeScope) $ compilerErrorM $ "Function " ++ show n ++
                                                     " cannot be used as a type function" ++
@@ -828,8 +828,8 @@ compileExpressionStart (BuiltinCall c (FunctionCall _ BuiltinReduce ps es)) = do
   [t1,t2] <- lift $ mapCompilerM (replaceSelfInstance self) ps'
   r <- csResolver
   fa <- csAllFilters
-  lift $ validateGeneralInstance r fa t1
-  lift $ validateGeneralInstance r fa t2
+  lift $ validateGeneralInstance r (Map.keysSet fa) t1
+  lift $ validateGeneralInstance r (Map.keysSet fa) t2
   lift $ (checkValueAssignment r fa t0 (ValueType OptionalValue t1)) <??
     "In argument to reduce call at " ++ formatFullContext c
   -- TODO: If t1 -> t2 then just return e without a Reduce call.
@@ -876,7 +876,7 @@ compileExpressionStart (BuiltinCall c (FunctionCall _ BuiltinTypename ps es)) = 
   [t] <- lift $ mapCompilerM (replaceSelfInstance self) ps'
   r <- csResolver
   fa <- csAllFilters
-  lift $ validateGeneralInstance r fa t
+  lift $ validateGeneralInstance r (Map.keysSet fa) t
   t' <- expandGeneralInstance t
   csAddRequired $ Set.unions $ map categoriesFromTypes [t]
   return $ (Positional [formattedRequiredValue],

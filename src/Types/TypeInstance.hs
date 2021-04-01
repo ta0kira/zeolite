@@ -71,14 +71,17 @@ module Types.TypeInstance (
   validateDefinesInstance,
   validateDefinesVariance,
   validateGeneralInstance,
+  validateGeneralInstanceForCall,
   validateInstanceVariance,
-  validateTypeFilter,
   validateTypeInstance,
+  validateTypeInstanceForCall,
+  validateTypeFilter,
 ) where
 
 import Control.Monad (when)
 import Data.List (intercalate)
 import qualified Data.Map as Map
+import qualified Data.Set as Set
 
 import Base.CompilerError
 import Base.GeneralType
@@ -351,25 +354,26 @@ checkValueAssignment r f t1 t2 = noInferredTypes $ checkValueTypeMatch r f Covar
 
 checkValueTypeMatch :: (CollectErrorsM m, TypeResolver r) =>
   r -> ParamFilters -> Variance -> ValueType -> ValueType -> m (MergeTree InferredTypeGuess)
-checkValueTypeMatch r f v ts1@(ValueType r1 t1) ts2@(ValueType r2 t2) = result <!! message where
-  message
-    | v == Covariant     = "Cannot convert " ++ show ts1 ++ " -> "  ++ show ts2
-    | v == Contravariant = "Cannot convert " ++ show ts1 ++ " <- "  ++ show ts2
-    | otherwise          = "Cannot convert " ++ show ts1 ++ " <-> " ++ show ts2
+checkValueTypeMatch r f v (ValueType r1 t1) (ValueType r2 t2) = result where
+  result = do
+    when (not $ storageDir `allowsVariance` v) $ compilerErrorM "Incompatible storage modifiers"
+    checkGeneralMatch r f v t1 t2
   storageDir
     | r1 > r2   = Covariant
     | r1 < r2   = Contravariant
     | otherwise = Invariant
-  result = do
-    when (not $ storageDir `allowsVariance` v) $ compilerErrorM "Incompatible storage modifiers"
-    checkGeneralMatch r f v t1 t2
 
 checkGeneralMatch :: (CollectErrorsM m, TypeResolver r) =>
   r -> ParamFilters -> Variance ->
   GeneralInstance -> GeneralInstance -> m (MergeTree InferredTypeGuess)
-checkGeneralMatch r f v t1 t2 = do
-  ss <- collectFirstM [fmap Just bothSingle,return Nothing]
-  collectFirstM [matchInferredRight,getMatcher ss] where
+checkGeneralMatch r f v t1 t2 = message !!> result where
+  result = do
+    ss <- collectFirstM [fmap Just bothSingle,return Nothing]
+    collectFirstM [matchInferredRight,getMatcher ss]
+  message
+    | v == Covariant     = "Cannot convert " ++ show t1 ++ " -> "  ++ show t2
+    | v == Contravariant = "Cannot convert " ++ show t1 ++ " <- "  ++ show t2
+    | otherwise          = "Cannot convert " ++ show t1 ++ " <-> " ++ show t2
   matchNormal Invariant =
     mergeAllM [matchNormal Contravariant,matchNormal Covariant]
   matchNormal Contravariant =
@@ -542,32 +546,20 @@ checkParamToParam r f v n1 n2
                         show n1 ++ " <- " ++ show n2
       checkConstraintToConstraint _ _ _ = undefined
 
-validateGeneralInstance :: (CollectErrorsM m, TypeResolver r) =>
+validateGeneralInstanceForCall :: (CollectErrorsM m, TypeResolver r) =>
   r -> ParamFilters -> GeneralInstance -> m ()
-validateGeneralInstance r f = reduceMergeTree collectAllM_ collectAllM_ validateSingle where
-  validateSingle (JustTypeInstance t) = validateTypeInstance r f t
+validateGeneralInstanceForCall r f = reduceMergeTree collectAllM_ collectAllM_ validateSingle where
+  validateSingle (JustTypeInstance t) = validateTypeInstanceForCall r f t
   validateSingle (JustParamName _ n) = when (not $ n `Map.member` f) $
       compilerErrorM $ "Param " ++ show n ++ " not found"
   validateSingle (JustInferredType n) = compilerErrorM $ "Inferred param " ++ show n ++ " is not allowed here"
 
-validateTypeInstance :: (CollectErrorsM m, TypeResolver r) =>
+validateTypeInstanceForCall :: (CollectErrorsM m, TypeResolver r) =>
   r -> ParamFilters -> TypeInstance -> m ()
-validateTypeInstance r f t@(TypeInstance _ ps) = do
+validateTypeInstanceForCall r f t@(TypeInstance _ ps) = do
   fa <- trTypeFilters r t
   processPairs_ (validateAssignment r f) ps fa
-  mapCompilerM_ (validateGeneralInstance r f) (pValues ps) <?? "In " ++ show t
-
-validateDefinesInstance :: (CollectErrorsM m, TypeResolver r) =>
-  r -> ParamFilters -> DefinesInstance -> m ()
-validateDefinesInstance r f t@(DefinesInstance _ ps) = do
-  fa <- trDefinesFilters r t
-  processPairs_ (validateAssignment r f) ps fa
-  mapCompilerM_ (validateGeneralInstance r f) (pValues ps) <?? "In " ++ show t
-
-validateTypeFilter :: (CollectErrorsM m, TypeResolver r) =>
-  r -> ParamFilters -> TypeFilter -> m ()
-validateTypeFilter r f (TypeFilter _ t)  = validateGeneralInstance r f t
-validateTypeFilter r f (DefinesFilter t) = validateDefinesInstance r f t
+  mapCompilerM_ (validateGeneralInstanceForCall r f) (pValues ps) <?? "In " ++ show t
 
 validateAssignment :: (CollectErrorsM m, TypeResolver r) =>
   r -> ParamFilters -> GeneralInstance -> [TypeFilter] -> m ()
@@ -598,6 +590,29 @@ checkDefinesMatch r f f2@(DefinesInstance n2 ps2) f1@(DefinesInstance n1 ps1)
     variance <- trVariance r n2
     processPairs_ (\v2 (p1,p2) -> checkGeneralMatch r f v2 p1 p2) variance (Positional paired)
   | otherwise = compilerErrorM $ "Constraint " ++ show f1 ++ " does not imply " ++ show f2
+
+validateGeneralInstance :: (CollectErrorsM m, TypeResolver r) =>
+  r -> Set.Set ParamName -> GeneralInstance -> m ()
+validateGeneralInstance r params = reduceMergeTree collectAllM_ collectAllM_ validateSingle where
+  validateSingle (JustTypeInstance t) = validateTypeInstance r params t
+  validateSingle (JustParamName _ n) = when (not $ n `Set.member` params) $
+      compilerErrorM $ "Param " ++ show n ++ " not found"
+  validateSingle (JustInferredType n) = compilerErrorM $ "Inferred param " ++ show n ++ " is not allowed here"
+
+validateTypeInstance :: (CollectErrorsM m, TypeResolver r) =>
+  r -> Set.Set ParamName -> TypeInstance -> m ()
+validateTypeInstance r params t@(TypeInstance _ ps) = do
+  mapCompilerM_ (validateGeneralInstance r params) (pValues ps) <?? "In " ++ show t
+
+validateDefinesInstance :: (CollectErrorsM m, TypeResolver r) =>
+  r -> Set.Set ParamName -> DefinesInstance -> m ()
+validateDefinesInstance r params t@(DefinesInstance _ ps) = do
+  mapCompilerM_ (validateGeneralInstance r params) (pValues ps) <?? "In " ++ show t
+
+validateTypeFilter :: (CollectErrorsM m, TypeResolver r) =>
+  r -> Set.Set ParamName -> TypeFilter -> m ()
+validateTypeFilter r params (TypeFilter _ t)  = validateGeneralInstance r params t
+validateTypeFilter r params (DefinesFilter t) = validateDefinesInstance r params t
 
 validateInstanceVariance :: (CollectErrorsM m, TypeResolver r) =>
   r -> ParamVariances -> Variance -> GeneralInstance -> m ()

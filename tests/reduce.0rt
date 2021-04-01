@@ -670,30 +670,6 @@ define Value {
 }
 
 
-testcase "bad instance in reduce param" {
-  error
-  require "Test"
-  require "define"
-  require "Equals"
-}
-
-unittest test {
-  \ reduce<Value<Test>,Formatted>(empty)
-}
-
-@value interface Value<#x> {
-  #x defines Equals<#x>
-}
-
-concrete Call {
-  @type call<#x> () -> ()
-}
-
-define Call {
-  call () {}
-}
-
-
 testcase "reduce from interface" {
   success
 }

@@ -457,21 +457,21 @@ tests = [
         ts2 <- topoSortCategories defaultCategories ts
         ta <- flattenAllConnections defaultCategories ts2 >>= declareAllTypes defaultCategories
         let r = CategoryResolver ta
-        checkTypeFail r [] "Type<Child>"),
+        checkTypeSuccess r [] "Type<Child>"),
     checkOperationSuccess
       ("testfiles" </> "flatten.0rx")
       (\ts -> do
         ts2 <- topoSortCategories defaultCategories ts
         ta <- flattenAllConnections defaultCategories ts2 >>= declareAllTypes defaultCategories
         let r = CategoryResolver ta
-        checkTypeFail r [] "[Type<Child>|Type<Child>]"),
+        checkTypeSuccess r [] "[Type<Child>|Type<Child>]"),
     checkOperationSuccess
       ("testfiles" </> "flatten.0rx")
       (\ts -> do
         ts2 <- topoSortCategories defaultCategories ts
         ta <- flattenAllConnections defaultCategories ts2 >>= declareAllTypes defaultCategories
         let r = CategoryResolver ta
-        checkTypeFail r [] "[Type<Child>&Type<Child>]"),
+        checkTypeSuccess r [] "[Type<Child>&Type<Child>]"),
 
     -- TODO: Clean these tests up.
     checkOperationSuccess
@@ -481,7 +481,7 @@ tests = [
         ta <- flattenAllConnections Map.empty ts2 >>= declareAllTypes Map.empty
         let r = CategoryResolver ta
         checkTypeSuccess r [] "Value0<Value1,Value2>"),
-    checkOperationFail
+    checkOperationSuccess
       ("testfiles" </> "filters.0rx")
       (\ts -> do
         ts2 <- topoSortCategories Map.empty ts
@@ -495,14 +495,14 @@ tests = [
         ta <- flattenAllConnections Map.empty ts2 >>= declareAllTypes Map.empty
         let r = CategoryResolver ta
         checkTypeSuccess r [] "Value0<Value3,Value2>"),
-    checkOperationFail
+    checkOperationSuccess
       ("testfiles" </> "filters.0rx")
       (\ts -> do
         ts2 <- topoSortCategories Map.empty ts
         ta <- flattenAllConnections Map.empty ts2 >>= declareAllTypes Map.empty
         let r = CategoryResolver ta
         checkTypeSuccess r
-          [("#x",[]),("#y",[])]
+          ["#x","#y"]
           "Value0<#x,#y>"),
     checkOperationSuccess
       ("testfiles" </> "filters.0rx")
@@ -511,8 +511,7 @@ tests = [
         ta <- flattenAllConnections Map.empty ts2 >>= declareAllTypes Map.empty
         let r = CategoryResolver ta
         checkTypeSuccess r
-          [("#x",["allows #y","requires Function<#x,#y>"]),
-           ("#y",["requires #x","defines Equals<#y>"])]
+          ["#x","#y"]
           "Value0<#x,#y>"),
     checkOperationSuccess
       ("testfiles" </> "filters.0rx")
@@ -521,17 +520,16 @@ tests = [
         ta <- flattenAllConnections Map.empty ts2 >>= declareAllTypes Map.empty
         let r = CategoryResolver ta
         checkTypeSuccess r
-          [("#x",["allows Value2","requires Function<#x,Value2>"])]
+          ["#x","#y"]
           "Value0<#x,Value2>"),
-    checkOperationFail
+    checkOperationSuccess
       ("testfiles" </> "filters.0rx")
       (\ts -> do
         ts2 <- topoSortCategories Map.empty ts
         ta <- flattenAllConnections Map.empty ts2 >>= declareAllTypes Map.empty
         let r = CategoryResolver ta
         checkTypeSuccess r
-          [("#x",["allows Value2","requires Function<#x,Value2>"]),
-           ("#y",["requires #x","defines Equals<#y>"])]
+          ["#x","#y"]
           "Value0<#x,#y>"),
 
     checkOperationSuccess
@@ -540,13 +538,13 @@ tests = [
         ts2 <- topoSortCategories defaultCategories ts
         ts3 <- flattenAllConnections defaultCategories ts2
         checkCategoryInstances defaultCategories ts3),
-    checkOperationFail
+    checkOperationSuccess
       ("testfiles" </> "concrete_missing_define.0rx")
       (\ts -> do
         ts2 <- topoSortCategories defaultCategories ts
         ts3 <- flattenAllConnections defaultCategories ts2
         checkCategoryInstances defaultCategories ts3),
-    checkOperationFail
+    checkOperationSuccess
       ("testfiles" </> "concrete_missing_refine.0rx")
       (\ts -> do
         ts2 <- topoSortCategories defaultCategories ts
@@ -558,13 +556,13 @@ tests = [
         ts2 <- topoSortCategories defaultCategories ts
         ts3 <- flattenAllConnections defaultCategories ts2
         checkCategoryInstances defaultCategories ts3),
-    checkOperationFail
+    checkOperationSuccess
       ("testfiles" </> "value_missing_define.0rx")
       (\ts -> do
         ts2 <- topoSortCategories defaultCategories ts
         ts3 <- flattenAllConnections defaultCategories ts2
         checkCategoryInstances defaultCategories ts3),
-    checkOperationFail
+    checkOperationSuccess
       ("testfiles" </> "value_missing_refine.0rx")
       (\ts -> do
         ts2 <- topoSortCategories defaultCategories ts
@@ -576,13 +574,13 @@ tests = [
         ts2 <- topoSortCategories defaultCategories ts
         ts3 <- flattenAllConnections defaultCategories ts2
         checkCategoryInstances defaultCategories ts3),
-    checkOperationFail
+    checkOperationSuccess
       ("testfiles" </> "type_missing_define.0rx")
       (\ts -> do
         ts2 <- topoSortCategories defaultCategories ts
         ts3 <- flattenAllConnections defaultCategories ts2
         checkCategoryInstances defaultCategories ts3),
-    checkOperationFail
+    checkOperationSuccess
       ("testfiles" </> "type_missing_refine.0rx")
       (\ts -> do
         ts2 <- topoSortCategories defaultCategories ts
@@ -661,28 +659,28 @@ tests = [
     checkOperationFail
       ("testfiles" </> "function_bad_filter_param.0rx")
       (\ts -> checkCategoryInstances defaultCategories ts),
-    checkOperationFail
+    checkOperationSuccess
       ("testfiles" </> "function_bad_allows_type.0rx")
       (\ts -> checkCategoryInstances defaultCategories ts),
     checkOperationFail
       ("testfiles" </> "function_bad_allows_variance.0rx")
       (\ts -> checkCategoryInstances defaultCategories ts),
-    checkOperationFail
+    checkOperationSuccess
       ("testfiles" </> "function_bad_requires_type.0rx")
       (\ts -> checkCategoryInstances defaultCategories ts),
     checkOperationFail
       ("testfiles" </> "function_bad_requires_variance.0rx")
       (\ts -> checkCategoryInstances defaultCategories ts),
-    checkOperationFail
+    checkOperationSuccess
       ("testfiles" </> "function_bad_defines_type.0rx")
       (\ts -> checkCategoryInstances defaultCategories ts),
     checkOperationFail
       ("testfiles" </> "function_bad_defines_variance.0rx")
       (\ts -> checkCategoryInstances defaultCategories ts),
-    checkOperationFail
+    checkOperationSuccess
       ("testfiles" </> "function_bad_arg.0rx")
       (\ts -> checkCategoryInstances defaultCategories ts),
-    checkOperationFail
+    checkOperationSuccess
       ("testfiles" </> "function_bad_return.0rx")
       (\ts -> checkCategoryInstances defaultCategories ts),
     checkOperationFail
@@ -695,13 +693,13 @@ tests = [
     checkOperationSuccess
       ("testfiles" </> "function_filters_satisfied.0rx")
       (\ts -> checkCategoryInstances defaultCategories ts),
-    checkOperationFail
+    checkOperationSuccess
       ("testfiles" </> "function_requires_missed.0rx")
       (\ts -> checkCategoryInstances defaultCategories ts),
-    checkOperationFail
+    checkOperationSuccess
       ("testfiles" </> "function_allows_missed.0rx")
       (\ts -> checkCategoryInstances defaultCategories ts),
-    checkOperationFail
+    checkOperationSuccess
       ("testfiles" </> "function_defines_missed.0rx")
       (\ts -> checkCategoryInstances defaultCategories ts),
 
@@ -1308,7 +1306,7 @@ checkShortParseFail s = do
 checkInferenceSuccess :: CategoryMap SourceContext -> [(String, [String])] ->
   [String] -> [(String,String)] -> [(String,String)] -> TrackedErrors ()
 checkInferenceSuccess tm pa is ts gs = checkInferenceCommon check tm pa is ts gs where
-  prefix = show ts ++ " " ++ showParams pa
+  prefix = show ts ++ " " ++ showFilters pa
   check gs2 c
     | isCompilerError c = compilerErrorM $ prefix ++ ":\n" ++ show (getCompilerWarnings c) ++ show (getCompilerError c)
     | otherwise        = getCompilerSuccess c `containsExactly` gs2
@@ -1316,7 +1314,7 @@ checkInferenceSuccess tm pa is ts gs = checkInferenceCommon check tm pa is ts gs
 checkInferenceFail :: CategoryMap SourceContext -> [(String, [String])] ->
   [String] -> [(String,String)] -> TrackedErrors ()
 checkInferenceFail tm pa is ts = checkInferenceCommon check tm pa is ts [] where
-  prefix = show ts ++ " " ++ showParams pa
+  prefix = show ts ++ " " ++ showFilters pa
   check _ c
     | isCompilerError c = return ()
     | otherwise = compilerErrorM $ prefix ++ ": Expected failure\n"

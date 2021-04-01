@@ -31,11 +31,12 @@ module Test.Common (
   forceParse,
   loadFile,
   parseFilterMap,
-  parseTheTest,
+  parseTestWithFilters,
   readMulti,
   readSingle,
   readSingleWith,
   runAllTests,
+  showFilters,
   showParams,
 ) where
 
@@ -93,27 +94,35 @@ parseFilterMap pa = do
       fs2 <- mapCompilerM (readSingle "(string)") fs
       return (ParamName n,fs2)
 
-parseTheTest :: ParseFromSource a => [(String,[String])] -> [String] -> TrackedErrors ([a],ParamFilters)
-parseTheTest pa xs = do
+parseTestWithFilters :: ParseFromSource a => [(String,[String])] -> [String] -> TrackedErrors ([a],ParamFilters)
+parseTestWithFilters pa xs = do
   ts <- mapCompilerM (readSingle "(string)") xs
   pa2 <- parseFilterMap pa
   return (ts,pa2)
 
-showParams :: [(String,[String])] -> String
-showParams pa = "[" ++ intercalate "," (concat $ map expand pa) ++ "]" where
+parseTestWithParams :: ParseFromSource a => [String] -> [String] -> TrackedErrors ([a],Set.Set ParamName)
+parseTestWithParams ps xs = do
+  ts <- mapCompilerM (readSingle "(string)") xs
+  return (ts,Set.fromList $ map ParamName ps)
+
+showFilters :: [(String,[String])] -> String
+showFilters pa = "[" ++ intercalate "," (concat $ map expand pa) ++ "]" where
   expand (n,ps) = map (\p -> n ++ " " ++ p) ps
 
-checkTypeSuccess :: TypeResolver r => r -> [(String,[String])] -> String -> TrackedErrors ()
+showParams :: [String] -> String
+showParams ps = "[" ++ intercalate "," ps ++ "]"
+
+checkTypeSuccess :: TypeResolver r => r -> [String] -> String -> TrackedErrors ()
 checkTypeSuccess r pa x = do
-  ([t],pa2) <- parseTheTest pa [x]
+  ([t],pa2) <- parseTestWithParams pa [x]
   check $ validateGeneralInstance r pa2 t
   where
     prefix = x ++ " " ++ showParams pa
     check x2 = x2 <!! prefix ++ ":"
 
-checkTypeFail :: TypeResolver r => r -> [(String,[String])] -> String -> TrackedErrors ()
+checkTypeFail :: TypeResolver r => r -> [String] -> String -> TrackedErrors ()
 checkTypeFail r pa x = do
-  ([t],pa2) <- parseTheTest pa [x]
+  ([t],pa2) <- parseTestWithParams pa [x]
   check $ validateGeneralInstance r pa2 t
   where
     prefix = x ++ " " ++ showParams pa
@@ -122,17 +131,17 @@ checkTypeFail r pa x = do
       | isCompilerError c = return ()
       | otherwise = compilerErrorM $ prefix ++ ": Expected failure\n"
 
-checkDefinesSuccess :: TypeResolver r => r -> [(String,[String])] -> String -> TrackedErrors ()
+checkDefinesSuccess :: TypeResolver r => r -> [String] -> String -> TrackedErrors ()
 checkDefinesSuccess r pa x = do
-  ([t],pa2) <- parseTheTest pa [x]
+  ([t],pa2) <- parseTestWithParams pa [x]
   check $ validateDefinesInstance r pa2 t
   where
     prefix = x ++ " " ++ showParams pa
     check x2 = x2 <!! prefix ++ ":"
 
-checkDefinesFail :: TypeResolver r => r -> [(String,[String])] -> String -> TrackedErrors ()
+checkDefinesFail :: TypeResolver r => r -> [String] -> String -> TrackedErrors ()
 checkDefinesFail r pa x = do
-  ([t],pa2) <- parseTheTest pa [x]
+  ([t],pa2) <- parseTestWithParams pa [x]
   check $ validateDefinesInstance r pa2 t
   where
     prefix = x ++ " " ++ showParams pa

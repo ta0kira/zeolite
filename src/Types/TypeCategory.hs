@@ -51,6 +51,7 @@ module Types.TypeCategory (
   getCategoryName,
   getCategoryNamespace,
   getCategoryParamMap,
+  getCategoryParamSet,
   getCategoryParams,
   getCategoryRefines,
   getConcreteCategory,
@@ -513,6 +514,9 @@ getCategoryFilterMap t = do
   defaultMap <- getFilterMap (getCategoryParams t) (getCategoryFilters t)
   return $ Map.insert ParamSelf (getSelfFilters t) defaultMap
 
+getCategoryParamSet :: CollectErrorsM m => AnyCategory c -> m (Set.Set ParamName)
+getCategoryParamSet = return . Set.fromList . ([ParamSelf] ++) . map vpParam . getCategoryParams
+
 -- TODO: Use this where it's needed in this file.
 getFunctionFilterMap :: CollectErrorsM m => ScopedFunction c -> m ParamFilters
 getFunctionFilterMap f = getFilterMap (pValues $ sfParams f) (sfFilters f)
@@ -658,12 +662,11 @@ checkCategoryInstances tm0 ts = do
   mapCompilerM_ (checkSingle r) ts
   where
     checkSingle r t = do
-      let pa = Set.fromList $ map vpParam $ getCategoryParams t
-      fm <- getCategoryFilterMap t
+      pa <- getCategoryParamSet t
       mapCompilerM_ (checkFilterParam pa) (getCategoryFilters t)
-      mapCompilerM_ (checkRefine r fm) (getCategoryRefines t)
-      mapCompilerM_ (checkDefine r fm) (getCategoryDefines t)
-      mapCompilerM_ (checkFilter r fm) (getCategoryFilters t)
+      mapCompilerM_ (checkRefine r pa)    (getCategoryRefines t)
+      mapCompilerM_ (checkDefine r pa)    (getCategoryDefines t)
+      mapCompilerM_ (checkFilter r pa)    (getCategoryFilters t)
       mapCompilerM_ (validateCategoryFunction r t) (getCategoryFunctions t)
     checkFilterParam pa (ParamFilter c n _) =
       when (not $ n `Set.member` pa) $
@@ -681,14 +684,14 @@ checkCategoryInstances tm0 ts = do
 validateCategoryFunction :: (Show c, CollectErrorsM m, TypeResolver r) =>
   r -> AnyCategory c -> ScopedFunction c -> m ()
 validateCategoryFunction r t f = do
-  fm <- getCategoryFilterMap t
+  pa <- getCategoryParamSet t
   let vm = Map.fromList $ map (\p -> (vpParam p,vpVariance p)) $ getCategoryParams t
   message ??> do
     funcType <- parsedToFunctionType f
     case sfScope f of
-         CategoryScope -> validatateFunctionType r Map.empty Map.empty funcType
-         TypeScope     -> validatateFunctionType r fm vm funcType
-         ValueScope    -> validatateFunctionType r fm vm funcType
+         CategoryScope -> validatateFunctionType r Set.empty Map.empty funcType
+         TypeScope     -> validatateFunctionType r pa vm funcType
+         ValueScope    -> validatateFunctionType r pa vm funcType
          _             -> return ()
     getFunctionFilterMap f >>= disallowBoundedParams where
       message

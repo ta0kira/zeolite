@@ -872,6 +872,9 @@ so would just create more opportunity for unnecessary compile-time errors.)
     <i><span style='color:#0057ae;'>#v</span></i> <b>requires</b> <i><span style='color:#0057ae;'>Formatted</span></i>
   }</pre>
 
+  **IMPORTANT:** As of compiler version `0.16.0.0`, you can no longer use
+  parameter filters in `@value interface`s and `@type interface`s.
+
 - You can call `@type` functions on parameters as if they were regular types.
   You can only call functions that are implied by a `defines` filter.
 

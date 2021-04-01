@@ -4,6 +4,6 @@
   #x requires Type0
 }
 
-concrete Type<x> {
+concrete Type<#x> {
   @value something (Type1<#x>) -> ()
 }

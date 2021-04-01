@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-Copyright 2020 Kevin P. Barry
+Copyright 2020-2021 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -115,4 +115,215 @@ testcase "function param bounded on both sides" {
     #x requires Type1
     #x allows   Type2
   () -> ()
+}
+
+
+testcase "category-level requires not met in @type call" {
+  error
+  require "any.+Formatted"
+}
+
+concrete Type<#x> {
+  #x requires Formatted
+
+  @type call () -> ()
+}
+
+define Type {
+  call () {}
+
+  @category call2 () -> ()
+  call2 () {
+    \ Type<any>.call()
+  }
+}
+
+
+testcase "category-level defines not met in @type call" {
+  error
+  require "any.+Equals"
+}
+
+concrete Type<#x> {
+  #x defines Equals<#x>
+
+  @type call () -> ()
+}
+
+define Type {
+  call () {}
+
+  @category call2 () -> ()
+  call2 () {
+    \ Type<any>.call()
+  }
+}
+
+
+testcase "category-level allows not met in @type call" {
+  error
+  require "all.+Int"
+}
+
+concrete Type<#x> {
+  #x allows Int
+
+  @type call () -> ()
+}
+
+define Type {
+  call () {}
+
+  @category call2 () -> ()
+  call2 () {
+    \ Type<all>.call()
+  }
+}
+
+
+testcase "category-level requires not met in initialization" {
+  error
+  require "any.+Formatted"
+}
+
+concrete Type<#x> {
+  #x requires Formatted
+
+  @category call () -> ()
+}
+
+define Type {
+  call () {
+    \ Type<any>{ }
+  }
+}
+
+
+testcase "category-level defines not met in initialization" {
+  error
+  require "any.+Equals"
+}
+
+concrete Type<#x> {
+  #x defines Equals<#x>
+
+  @category call () -> ()
+}
+
+define Type {
+  call () {
+    \ Type<any>{ }
+  }
+}
+
+
+testcase "category-level allows not met in initialization" {
+  error
+  require "all.+Int"
+}
+
+concrete Type<#x> {
+  #x allows Int
+
+  @category call () -> ()
+}
+
+define Type {
+  call () {
+    \ Type<all>{ }
+  }
+}
+
+
+testcase "function-level requires not met in call" {
+  error
+  require "any.+Formatted"
+}
+
+concrete Type {
+  @type call<#x>
+    #x requires Formatted
+  () -> ()
+}
+
+define Type {
+  call () {}
+
+  @category call2 () -> ()
+  call2 () {
+    \ Type.call<any>()
+  }
+}
+
+
+testcase "function-level defines not met in call" {
+  error
+  require "any.+Equals"
+}
+
+concrete Type {
+  @type call<#x>
+    #x defines Equals<#x>
+  () -> ()
+}
+
+define Type {
+  call () {}
+
+  @category call2 () -> ()
+  call2 () {
+    \ Type.call<any>()
+  }
+}
+
+
+testcase "function-level allows not met in call" {
+  error
+  require "all.+Int"
+}
+
+concrete Type {
+  @type call<#x>
+    #x allows Int
+  () -> ()
+}
+
+define Type {
+  call () {}
+
+  @category call2 () -> ()
+  call2 () {
+    \ Type.call<all>()
+  }
+}
+
+
+testcase "category-level filters meet function-level filter requirements" {
+  compiles
+}
+
+concrete Type1 {
+  @type call<#i,#j,#k>
+    #i requires Formatted
+    #j defines Equals<#j>
+    #k allows Int
+  () -> ()
+}
+
+define Type1 {
+  call () {}
+}
+
+concrete Type2<#x,#y,#z> {
+  #x requires Formatted
+  #y defines Equals<#y>
+  #z allows Int
+
+  @type call () -> ()
+}
+
+define Type2 {
+  call () {
+    \ Type1.call<#x,#y,#z>()
+  }
 }

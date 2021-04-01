@@ -28,6 +28,7 @@ module Types.Function (
 import Data.List (group,intercalate,sort)
 import Control.Monad (when)
 import qualified Data.Map as Map
+import qualified Data.Set as Set
 
 import Base.CompilerError
 import Base.GeneralType
@@ -55,24 +56,23 @@ instance Show FunctionType where
       showFilters (n,fs) = map (\f -> show n ++ " " ++ show f ++ " ") fs
 
 validatateFunctionType :: (CollectErrorsM m, TypeResolver r) =>
-  r -> ParamFilters -> ParamVariances -> FunctionType -> m ()
-validatateFunctionType r fm vm (FunctionType as rs ps fa) = do
+  r -> Set.Set ParamName -> ParamVariances -> FunctionType -> m ()
+validatateFunctionType r params vm (FunctionType as rs ps fa) = do
   mapCompilerM_ checkCount $ group $ sort $ pValues ps
   mapCompilerM_ checkHides $ pValues ps
-  paired <- processPairs alwaysPair ps fa
-  let allFilters = Map.union fm (Map.fromList paired)
+  let allParams = Set.union params (Set.fromList $ pValues ps)
   expanded <- fmap concat $ processPairs (\n fs -> return $ zip (repeat n) fs) ps fa
-  mapCompilerM_ (checkFilterType allFilters) expanded
+  mapCompilerM_ (checkFilterType allParams) expanded
   mapCompilerM_ checkFilterVariance expanded
-  mapCompilerM_ (checkArg allFilters) $ pValues as
-  mapCompilerM_ (checkReturn allFilters) $ pValues rs
+  mapCompilerM_ (checkArg allParams) $ pValues as
+  mapCompilerM_ (checkReturn allParams) $ pValues rs
   where
     allVariances = Map.union vm (Map.fromList $ zip (pValues ps) (repeat Invariant))
     checkCount xa@(x:_:_) =
       compilerErrorM $ "Function parameter " ++ show x ++ " occurs " ++ show (length xa) ++ " times"
     checkCount _ = return ()
     checkHides n =
-      when (n `Map.member` fm) $
+      when (n `Set.member` params) $
         compilerErrorM $ "Function parameter " ++ show n ++ " hides a category-level parameter"
     checkFilterType fa2 (n,f) =
       validateTypeFilter r fa2 f <?? ("In filter " ++ show n ++ " " ++ show f)
@@ -98,7 +98,7 @@ assignFunctionParams :: (CollectErrorsM m, TypeResolver r) =>
   r -> ParamFilters -> ParamValues -> Positional GeneralInstance ->
   FunctionType -> m FunctionType
 assignFunctionParams r fm pm ts (FunctionType as rs ps fa) = do
-  mapCompilerM_ (validateGeneralInstance r fm) $ pValues ts
+  mapCompilerM_ (validateGeneralInstanceForCall r fm) $ pValues ts
   assigned <- fmap Map.fromList $ processPairs alwaysPair ps ts
   let pa = pm `Map.union` assigned
   fa' <- fmap Positional $ mapCompilerM (assignFilters pa) (pValues fa)

@@ -282,7 +282,7 @@ generateCategoryDefinition testing = common where
       disallowTypeMembers tm
       let filters = getCategoryFilters t
       let filters2 = fi
-      allFilters <- getFilterMap (getCategoryParams t ++ pi) $ filters ++ filters2
+      allFilters <- fmap Map.keysSet $ getFilterMap (getCategoryParams t ++ pi) $ filters ++ filters2
       let cf = map fst $ psProcedures cp
       let tf = map fst $ psProcedures tp
       let vf = map fst $ psProcedures vp
@@ -381,12 +381,12 @@ generateCategoryDefinition testing = common where
       return $ onlyCode "};"
     ]
 
-  defineConcreteCategory r allFilters fs tm em t d = concatM [
+  defineConcreteCategory r params fs tm em t d = concatM [
       return $ onlyCode $ "struct " ++ categoryName (getCategoryName t) ++ " : public " ++ categoryBase ++ " {",
       fmap indentCompiled $ inlineCategoryConstructor t d tm em,
       return declareCategoryOverrides,
       fmap indentCompiled $ concatM $ map (procedureDeclaration False) fs,
-      fmap indentCompiled $ concatM $ map (createMemberLazy r allFilters) members,
+      fmap indentCompiled $ concatM $ map (createMemberLazy r params) members,
       return $ onlyCode "};"
     ] where
       members = filter ((== CategoryScope). dmScope) $ dcMembers d
@@ -399,12 +399,12 @@ generateCategoryDefinition testing = common where
       return $ onlyCode $ "  " ++ categoryName (getCategoryName t) ++ "& parent;",
       return $ onlyCode "};"
     ]
-  defineConcreteValue r allFilters fs t d = concatM [
+  defineConcreteValue r params fs t d = concatM [
       return $ onlyCode $ "struct " ++ valueName (getCategoryName t) ++ " : public " ++ valueBase ++ " {",
       fmap indentCompiled $ inlineValueConstructor t d,
       return declareValueOverrides,
       fmap indentCompiled $ concatM $ map (procedureDeclaration False) fs,
-      fmap indentCompiled $ concatM $ map (createMember r allFilters t) members,
+      fmap indentCompiled $ concatM $ map (createMember r params t) members,
       return $ indentCompiled $ createParams $ dcParams d,
       return $ onlyCode $ "  const S<" ++ typeName (getCategoryName t) ++ "> parent;",
       return $ onlyCodes traceCreation,
@@ -519,13 +519,13 @@ generateCategoryDefinition testing = common where
     ] where
       className = valueName (getCategoryName t)
 
-  createMember r filters t m = do
+  createMember r params t m = do
     m' <- replaceSelfMember (instanceFromCategory t) m
-    validateGeneralInstance r filters (vtType $ dmType m') <??
+    validateGeneralInstance r params (vtType $ dmType m') <??
       "In creation of " ++ show (dmName m') ++ " at " ++ formatFullContext (dmContext m')
     return $ onlyCode $ variableStoredType (dmType m') ++ " " ++ variableName (dmName m') ++ ";"
-  createMemberLazy r filters m = do
-    validateGeneralInstance r filters (vtType $ dmType m) <??
+  createMemberLazy r params m = do
+    validateGeneralInstance r params (vtType $ dmType m) <??
       "In creation of " ++ show (dmName m) ++ " at " ++ formatFullContext (dmContext m)
     return $ onlyCode $ variableLazyType (dmType m) ++ " " ++ variableName (dmName m) ++ ";"
 

@@ -134,7 +134,7 @@ instance (Show c, CollectErrorsM m) =>
   ccGetTypeFunction ctx c t n = do
     t' <- case ctx ^. pcScope of
                CategoryScope -> case t of
-                                     Nothing -> compilerErrorM $ "Category " ++ show t ++
+                                     Nothing -> compilerErrorM $ "Category " ++ show (ctx ^. pcType) ++
                                                                   " does not have a category function named " ++ show n ++
                                                                   formatFullContextBrace c
                                      Just t0 -> return t0
@@ -201,7 +201,7 @@ instance (Show c, CollectErrorsM m) =>
       pa  <- fmap Map.fromList $ processPairs alwaysPair (fmap vpParam $ ctx ^. pcExtParams) as
       pa2 <- fmap Map.fromList $ processPairs alwaysPair (fmap vpParam $ ctx ^. pcIntParams) ps
       let pa' = Map.union pa pa2
-      validateTypeInstance r allFilters t'
+      validateTypeInstanceForCall r allFilters t'
       -- Check internal param substitution.
       let mapped = Map.fromListWith (++) $ map (\f -> (pfParam f,[pfFilter f])) (ctx ^. pcIntFilters)
       let positional = map (getFilters mapped) (map vpParam $ pValues $ ctx ^. pcIntParams)
