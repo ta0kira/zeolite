@@ -1,5 +1,5 @@
 {- -----------------------------------------------------------------------------
-Copyright 2019-2020 Kevin P. Barry
+Copyright 2019-2021 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -175,30 +175,30 @@ useAsUnwrapped (BoxedPrimitive PrimInt e)      = "Box_Int(" ++ e ++ ")"
 useAsUnwrapped (BoxedPrimitive PrimFloat e)    = "Box_Float(" ++ e ++ ")"
 useAsUnwrapped (UnboxedPrimitive PrimBool e)   = "Box_Bool(" ++ e ++ ")"
 useAsUnwrapped (UnboxedPrimitive PrimString e) = "Box_String(" ++ e ++ ")"
-useAsUnwrapped (UnboxedPrimitive PrimChar e) = "Box_Char(" ++ e ++ ")"
+useAsUnwrapped (UnboxedPrimitive PrimChar e)   = "Box_Char(" ++ e ++ ")"
 useAsUnwrapped (UnboxedPrimitive PrimInt e)    = "Box_Int(" ++ e ++ ")"
 useAsUnwrapped (UnboxedPrimitive PrimFloat e)  = "Box_Float(" ++ e ++ ")"
 useAsUnwrapped (LazySingle e)                  = useAsUnwrapped $ getFromLazy e
 
 useAsUnboxed :: PrimitiveType -> ExpressionValue -> String
-useAsUnboxed PrimBool   (OpaqueMulti e) = "(" ++ e ++ ").Only()->AsBool()"
-useAsUnboxed PrimString (OpaqueMulti e) = "(" ++ e ++ ").Only()->AsString()"
-useAsUnboxed PrimChar   (OpaqueMulti e) = "(" ++ e ++ ").Only()->AsChar()"
-useAsUnboxed PrimInt    (OpaqueMulti e) = "(" ++ e ++ ").Only()->AsInt()"
-useAsUnboxed PrimFloat  (OpaqueMulti e) = "(" ++ e ++ ").Only()->AsFloat()"
-useAsUnboxed PrimBool   (WrappedSingle e) = "(" ++ e ++ ")->AsBool()"
-useAsUnboxed PrimString (WrappedSingle e) = "(" ++ e ++ ")->AsString()"
-useAsUnboxed PrimChar   (WrappedSingle e) = "(" ++ e ++ ")->AsChar()"
-useAsUnboxed PrimInt    (WrappedSingle e) = "(" ++ e ++ ")->AsInt()"
-useAsUnboxed PrimFloat  (WrappedSingle e) = "(" ++ e ++ ")->AsFloat()"
+useAsUnboxed PrimBool   (OpaqueMulti e)     = "(" ++ e ++ ").Only()->AsBool()"
+useAsUnboxed PrimString (OpaqueMulti e)     = "(" ++ e ++ ").Only()->AsString()"
+useAsUnboxed PrimChar   (OpaqueMulti e)     = "(" ++ e ++ ").Only()->AsChar()"
+useAsUnboxed PrimInt    (OpaqueMulti e)     = "(" ++ e ++ ").Only()->AsInt()"
+useAsUnboxed PrimFloat  (OpaqueMulti e)     = "(" ++ e ++ ").Only()->AsFloat()"
+useAsUnboxed PrimBool   (WrappedSingle e)   = "(" ++ e ++ ")->AsBool()"
+useAsUnboxed PrimString (WrappedSingle e)   = "(" ++ e ++ ")->AsString()"
+useAsUnboxed PrimChar   (WrappedSingle e)   = "(" ++ e ++ ")->AsChar()"
+useAsUnboxed PrimInt    (WrappedSingle e)   = "(" ++ e ++ ")->AsInt()"
+useAsUnboxed PrimFloat  (WrappedSingle e)   = "(" ++ e ++ ")->AsFloat()"
 useAsUnboxed PrimBool   (UnwrappedSingle e) = "(" ++ e ++ ")->AsBool()"
 useAsUnboxed PrimString (UnwrappedSingle e) = "(" ++ e ++ ")->AsString()"
 useAsUnboxed PrimChar   (UnwrappedSingle e) = "(" ++ e ++ ")->AsChar()"
 useAsUnboxed PrimInt    (UnwrappedSingle e) = "(" ++ e ++ ")->AsInt()"
 useAsUnboxed PrimFloat  (UnwrappedSingle e) = "(" ++ e ++ ")->AsFloat()"
-useAsUnboxed _ (BoxedPrimitive _ e)   = "(" ++ e ++ ")"
-useAsUnboxed _ (UnboxedPrimitive _ e) = "(" ++ e ++ ")"
-useAsUnboxed t (LazySingle e) = useAsUnboxed t $ getFromLazy e
+useAsUnboxed _ (BoxedPrimitive _ e)         = "(" ++ e ++ ")"
+useAsUnboxed _ (UnboxedPrimitive _ e)       = "(" ++ e ++ ")"
+useAsUnboxed t (LazySingle e)               = useAsUnboxed t $ getFromLazy e
 
 valueAsWrapped :: ExpressionValue -> ExpressionValue
 valueAsWrapped (UnwrappedSingle e)             = WrappedSingle e
@@ -246,18 +246,18 @@ variableProxyType t
 readStoredVariable :: Bool -> ValueType -> String -> ExpressionValue
 readStoredVariable True t s = LazySingle $ readStoredVariable False t s
 readStoredVariable False t s
-  | t == boolRequiredValue   = UnboxedPrimitive PrimBool s
-  | t == intRequiredValue    = UnboxedPrimitive PrimInt s
+  | t == boolRequiredValue   = UnboxedPrimitive PrimBool  s
+  | t == intRequiredValue    = UnboxedPrimitive PrimInt   s
   | t == floatRequiredValue  = UnboxedPrimitive PrimFloat s
-  | t == charRequiredValue   = UnboxedPrimitive PrimChar s
+  | t == charRequiredValue   = UnboxedPrimitive PrimChar  s
   | otherwise                = UnwrappedSingle s
 
 writeStoredVariable :: ValueType -> ExpressionValue -> String
 writeStoredVariable t e
-  | t == boolRequiredValue   = useAsUnboxed PrimBool e
-  | t == intRequiredValue    = useAsUnboxed PrimInt e
+  | t == boolRequiredValue   = useAsUnboxed PrimBool  e
+  | t == intRequiredValue    = useAsUnboxed PrimInt   e
   | t == floatRequiredValue  = useAsUnboxed PrimFloat e
-  | t == charRequiredValue   = useAsUnboxed PrimChar e
+  | t == charRequiredValue   = useAsUnboxed PrimChar  e
   | otherwise                = useAsUnwrapped e
 
 functionLabelType :: ScopedFunction c -> String

@@ -372,7 +372,6 @@ instance ConfigFormat CompileMode where
         indent "]",
         "}"
       ]
-  writeConfig CompileUnspecified = writeConfig (CompileIncremental [])
   writeConfig _ = compilerErrorM "Invalid compile mode"
 
 parseExprMacro :: TextParser (MacroName,Expression SourceContext)

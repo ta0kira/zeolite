@@ -84,10 +84,16 @@ isPrimitiveType t
   | otherwise               = False
 
 data ExpressionValue =
+  -- Multi argument/return tuple.
   OpaqueMulti String |
+  -- Single value that needs to be wrapped. (Can convert to UnwrappedSingle.)
   WrappedSingle String |
+  -- Single value that will not be wrapped. (Can convert to WrappedSingle.)
   UnwrappedSingle String |
+  -- Primitive value that needs to be boxed. (Can convert to UnboxedPrimitive.)
   BoxedPrimitive PrimitiveType String |
+  -- Primitive value that will not be boxed. (Can convert to BoxedPrimitive.)
   UnboxedPrimitive PrimitiveType String |
+  -- Value with lazy initialization. Requires indirection to get/set.
   LazySingle ExpressionValue
   deriving (Show)
