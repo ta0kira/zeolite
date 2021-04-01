@@ -4,6 +4,12 @@
 
 ### Language
 
+* **[breaking]** Disallows param filters in `@value interface` and
+  `@type interface`. Param filters are only used to allow procedures to call
+  `@type` and `@value` functions. Previously, they were enforced in all
+  situations where param substitution occurred, but this is no longer the case.
+  (See further down in this list.)
+
 * **[breaking]** Adds `traverse` built-in syntax, which automatically iterates
   over a container that exposes the (new) `Order<|#x>` `@value interface`. (This
   is breaking because `traverse`, `Order`, and `DefaultOrder` are now reserved.)

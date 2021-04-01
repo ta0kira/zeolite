@@ -404,9 +404,11 @@ unittest test {
   \ Call.call<Value<Test>>()
 }
 
-@value interface Value<#x> {
+concrete Value<#x> {
   #x defines Equals<#x>
 }
+
+define Value {}
 
 concrete Call {
   @type call<#x> () -> ()

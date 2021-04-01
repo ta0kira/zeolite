@@ -46,20 +46,19 @@ instance ParseFromSource (AnyCategory SourceContext) where
       n <- sourceParser
       ps <- parseCategoryParams
       open
-      (rs,vs) <- parseRefinesFilters
+      rs <- parseCategoryRefines
       fs <- flip sepBy optionalSpace $ parseScopedFunction (return ValueScope) (return n)
       close
-      return $ ValueInterface [c] NoNamespace n ps rs vs fs
+      return $ ValueInterface [c] NoNamespace n ps rs fs
     parseInstance = labeled "type interface" $ do
       c <- getSourceContext
       try $ kwType >> kwInterface
       n <- sourceParser
       ps <- parseCategoryParams
       open
-      vs <- parseFilters
       fs <- flip sepBy optionalSpace $ parseScopedFunction (return TypeScope) (return n)
       close
-      return $ InstanceInterface [c] NoNamespace n ps vs fs
+      return $ InstanceInterface [c] NoNamespace n ps fs
     parseConcrete = labeled "concrete type" $ do
       c <- getSourceContext
       kwConcrete
@@ -139,11 +138,6 @@ parseCategoryRefines = sepAfter $ sepBy singleRefine optionalSpace
 
 parseFilters :: TextParser [ParamFilter SourceContext]
 parseFilters = sepBy singleFilter optionalSpace
-
-parseRefinesFilters :: TextParser ([ValueRefine SourceContext],[ParamFilter SourceContext])
-parseRefinesFilters = parsed >>= return . merge2 where
-  parsed = sepBy anyType optionalSpace
-  anyType = labeled "refine or param filter" $ put12 singleRefine <|> put22 singleFilter
 
 parseRefinesDefinesFilters ::
   TextParser ([ValueRefine SourceContext],[ValueDefine SourceContext],[ParamFilter SourceContext])

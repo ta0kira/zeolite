@@ -602,11 +602,13 @@ validateGeneralInstance r params = reduceMergeTree collectAllM_ collectAllM_ val
 validateTypeInstance :: (CollectErrorsM m, TypeResolver r) =>
   r -> Set.Set ParamName -> TypeInstance -> m ()
 validateTypeInstance r params t@(TypeInstance _ ps) = do
+  _ <- trTypeFilters r t  -- This just ensures that t exists.
   mapCompilerM_ (validateGeneralInstance r params) (pValues ps) <?? "In " ++ show t
 
 validateDefinesInstance :: (CollectErrorsM m, TypeResolver r) =>
   r -> Set.Set ParamName -> DefinesInstance -> m ()
 validateDefinesInstance r params t@(DefinesInstance _ ps) = do
+  _ <- trDefinesFilters r t  -- This just ensures that t exists.
   mapCompilerM_ (validateGeneralInstance r params) (pValues ps) <?? "In " ++ show t
 
 validateTypeFilter :: (CollectErrorsM m, TypeResolver r) =>

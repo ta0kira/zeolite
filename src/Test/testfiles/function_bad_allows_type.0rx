@@ -1,9 +1,0 @@
-@value interface Interface<#x> {
-  #x requires Formatted
-}
-
-concrete Type<#x> {
-  @type something<#y>
-    #y allows Interface<#x>
-  () -> ()
-}

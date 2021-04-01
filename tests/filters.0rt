@@ -50,12 +50,14 @@ testcase "category param bounded on both sides" {
 
 @value interface Type4 {}
 
-@value interface Value<#x> {
+concrete Value<#x> {
   #x requires Type1
   #x requires Type2
   #x allows   Type3
   #x allows   Type4
 }
+
+define Value {}
 
 
 testcase "implicit bound from reversing another filter" {
@@ -67,10 +69,12 @@ testcase "implicit bound from reversing another filter" {
 
 @value interface Type {}
 
-@value interface Value<#x,#y> {
+concrete Value<#x,#y> {
   #x requires Type
   #y requires #x
 }
+
+define Value {}
 
 
 testcase "defines filter is not an upper bound" {
@@ -81,10 +85,12 @@ testcase "defines filter is not an upper bound" {
 
 @value interface Type2 {}
 
-@value interface Value<#x> {
+concrete Value<#x> {
   #x defines Type1
   #x allows  Type2
 }
+
+define Value {}
 
 
 testcase "defines filter is not a lower bound" {
@@ -95,10 +101,12 @@ testcase "defines filter is not a lower bound" {
 
 @value interface Type2 {}
 
-@value interface Value<#x> {
+concrete Value<#x> {
   #x defines  Type1
   #x requires Type2
 }
+
+define Value {}
 
 
 testcase "function param bounded on both sides" {

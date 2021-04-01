@@ -331,3 +331,27 @@ define Test {
   @category Int value1 <- 1
   @category Int value2 <- (value1 <- 2)
 }
+
+
+testcase "bad type in @category member" {
+  error
+  require "Foo not found"
+}
+
+concrete Test {}
+
+define Test {
+  @category optional Foo value <- empty
+}
+
+
+testcase "bad type in @value member" {
+  error
+  require "Foo not found"
+}
+
+concrete Test {}
+
+define Test {
+  @value Foo value
+}

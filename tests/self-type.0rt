@@ -503,52 +503,23 @@ testcase "#self at top level of param filter" {
   compiles
 }
 
-@value interface Base<#x> {
-  refines Formatted
+concrete Type<#x> {
   #x allows #self
 }
 
-@value interface Type1 {
-  refines Base<Type1>
-}
-
-@value interface Type2 {
-  refines Base<Formatted>
-}
-
-@value interface Type3 {
-  refines Type2
-}
+define Type {}
 
 
 testcase "#self nested in param filter" {
   compiles
 }
 
-@value interface Base<#x> {
+concrete Type<#x> {
   #x requires Writer<#self>
   #x defines Equals<#self>
 }
 
-@value interface Writer<#x|> {
-  write (#x) -> (#self)
-}
-
-concrete Type {
-  refines Base<Type>
-  refines Writer<Type>
-  defines Equals<Type>
-}
-
-define Type {
-  write (_) {
-    return self
-  }
-
-  equals (_,_) {
-    return true
-  }
-}
+define Type {}
 
 
 testcase "#self nested in inheritance" {
@@ -583,13 +554,17 @@ testcase "#self allowed in category param filters" {
   compiles
 }
 
-@value interface Type1<#x> {
+concrete Type1<#x> {
   #x allows #self
 }
 
-@value interface Type2<#x> {
+define Type1 {}
+
+concrete Type2<#x> {
   #x requires #self
 }
+
+define Type2 {}
 
 
 testcase "#self allowed in covavariant position of function param filter" {
