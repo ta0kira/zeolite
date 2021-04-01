@@ -861,15 +861,22 @@ so would just create more opportunity for unnecessary compile-time errors.)
   <span style='color:#0057ae;'>List</span><span style='color:#c02040;'>&lt;</span><span style='color:#0057ae;'>MyBase</span><span style='color:#c02040;'>&gt;</span>  list2 &lt;- <span style='color:#898887;'>// ...</span></pre>
 
 - You can apply **filters** to type parameters to require that the parameters
-  meet certain requirements.
+  meet certain requirements. This allows you to call `interface` functions on
+  parameters and their values in procedure definitions.
 
   <pre style='color:#1f1c1b;background-color:#f6f8fa;'>
-  <b>concrete</b> <b><span style='color:#0057ae;'>ShowMap</span></b><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#k</span></i>,<i><span style='color:#0057ae;'>#v</span></i><span style='color:#c02040;'>&gt;</span> {
-    <span style='color:#898887;'>// #k must implement the LessThan builtin @type interface.</span>
-    <i><span style='color:#0057ae;'>#k</span></i> <b>defines</b> <i><span style='color:#0057ae;'>LessThan</span></i><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#k</span></i><span style='color:#c02040;'>&gt;</span>
+  <b>concrete</b> <b><span style='color:#0057ae;'>Box</span></b><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span> {
+    <span style='color:#898887;'>// #x must implement the Formatted builtin @value interface.</span>
+    <i><span style='color:#0057ae;'>#x</span></i> <b>requires</b> <i><span style='color:#0057ae;'>Formatted</span></i>
 
-    <span style='color:#898887;'>// #v must implement the Formatted builtin @value interface.</span>
-    <i><span style='color:#0057ae;'>#v</span></i> <b>requires</b> <i><span style='color:#0057ae;'>Formatted</span></i>
+    <span style='color:#644a9b;'>@type</span> asString (<i><span style='color:#0057ae;'>#x</span></i>) -&gt; (<i><span style='color:#0057ae;'>String</span></i>)
+  }
+
+  <b>define</b> <b><span style='color:#0057ae;'>Box</span></b> {
+    asString (x) {
+      <span style='color:#898887;'>// The &quot;requires&quot; filter allows you to call Formatted functions.</span>
+      <b>return</b> x<span style='color:#644a9b;'>.</span>formatted()
+    }
   }</pre>
 
   **IMPORTANT:** As of compiler version `0.16.0.0`, you can no longer use
