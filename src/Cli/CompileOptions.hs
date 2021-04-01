@@ -33,6 +33,7 @@ module Cli.CompileOptions (
   isCompileFast,
   isCompileIncremental,
   isCompileRecompile,
+  isCompileUnspecified,
   isCreateTemplates,
   isExecuteTests,
   maybeDisableHelp,
@@ -146,6 +147,10 @@ isExecuteTests _                  = False
 isCreateTemplates :: CompileMode -> Bool
 isCreateTemplates CreateTemplates = True
 isCreateTemplates _               = False
+
+isCompileUnspecified :: CompileMode -> Bool
+isCompileUnspecified CompileUnspecified = True
+isCompileUnspecified _                  = False
 
 maybeDisableHelp :: HelpMode -> HelpMode
 maybeDisableHelp HelpUnspecified = HelpNotNeeded

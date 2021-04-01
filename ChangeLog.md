@@ -85,6 +85,12 @@
 
 ### Compiler CLI
 
+* **[breaking]** Removes the default compiler mode when calling `zeolite`. The
+  previous default was `-c`, which creates a new `.zeolite-module` for
+  incremental library compilation. The default was removed because accidentally
+  typing `zeolite -f foo` instead of `zeolite -t foo` would erase the
+  `.zeolite-module` for `foo` rather than running its tests.
+
 * **[breaking]** Updates how `$TraceCreation$` is implemented in C++. This only
   breaks hand-written C++ extensions that use the `CAPTURE_CREATION` macro.
 

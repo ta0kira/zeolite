@@ -35,9 +35,9 @@ import Types.TypeInstance (CategoryName(..))
 optionHelpText :: [String]
 optionHelpText = [
     "",
-    "zeolite [options...] -m [category(.function)] -o [binary] [path]",
-    "zeolite [options...] --fast [category(.function)] [.0rx source]",
     "zeolite [options...] -c [path]",
+    "zeolite [options...] -m [category(.function)] (-o [binary]) [path]",
+    "zeolite [options...] --fast [category(.function)] [.0rx source]",
     "zeolite [options...] -r [paths...]",
     "zeolite [options...] -R [paths...]",
     "zeolite [options...] -t [paths...] (--log-traces [filename])",
@@ -48,8 +48,8 @@ optionHelpText = [
     "zeolite --version",
     "",
     "Normal Modes:",
-    "  -c: Only compile the individual files. (default)",
-    "  -m [category(.function)]: Create a binary that executes the function.",
+    "  -c: Initialize and compile a new library module.",
+    "  -m [category(.function)]: Initialize and compile a new binary module.",
     "  --fast [category(.function)] [.0rx source]: Create a binary without needing a module.",
     "  -r: Recompile using the previous compilation options.",
     "  -R: Recursively recompile using the previous compilation options.",
@@ -215,6 +215,9 @@ parseCompileOptions = parseAll emptyCompileOptions . zip ([1..] :: [Int]) where
 validateCompileOptions :: CollectErrorsM m => CompileOptions -> m CompileOptions
 validateCompileOptions co@(CompileOptions h is is2 ds _ _ _ m _)
   | h /= HelpNotNeeded = return co
+
+  | isCompileUnspecified m =
+    compilerErrorM "Compiler mode must be specified explicitly."
 
   | (not $ null $ is ++ is2) && (isExecuteTests m) =
     compilerErrorM "Include paths (-i/-I) are not allowed in test mode (-t)."
