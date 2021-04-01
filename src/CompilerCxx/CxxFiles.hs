@@ -691,8 +691,7 @@ createLabelForFunction i f = functionLabelType f ++ " " ++ functionName f ++
 createFunctionDispatch :: CategoryName -> SymbolScope -> [ScopedFunction c] -> CompiledData [String]
 createFunctionDispatch n s fs = onlyCodes $ [typedef] ++
                                             concat (map table $ byCategory) ++
-                                            concat (map dispatch $ byCategory) ++
-                                            [fallback] where
+                                            metaTable ++ select where
   filtered = filter ((== s) . sfScope) fs
   flatten f = f:(concat $ map flatten $ sfMerges f)
   flattened = concat $ map flatten filtered
@@ -714,13 +713,20 @@ createFunctionDispatch n s fs = onlyCodes $ [typedef] ++
     ["  static const CallType " ++ tableName n2 ++ "[] = {"] ++
     map (\f -> "    &" ++ name f ++ ",") (Set.toList $ Set.fromList $ map sfName fs2) ++
     ["  };"]
-  dispatch (n2,_) = [
-      "  if (label.collection == " ++ collectionName n2 ++ ") {",
-      "    if (label.function_num < 0 || label.function_num >= sizeof " ++ tableName n2 ++ " / sizeof(CallType)) {",
+  metaTable = ["  static DispatchTable<CallType> all_tables[] = {"] ++
+              map dispatchKeyValue byCategory ++
+              ["    DispatchTable<CallType>(),","  };"]
+  dispatchKeyValue (n2,_) = "    DispatchTable<CallType>(" ++ collectionName n2 ++ ", " ++ tableName n2 ++ "),"
+  select = [
+      "  const DispatchTable<CallType>* const table = DispatchSelect(label.collection, all_tables);",
+      "  if (table) {",
+      "    if (label.function_num < 0 || label.function_num >= table->size) {",
       "      FAIL() << \"Bad function call \" << label;",
+      "    } else {",
+      "      return (this->*table->table[label.function_num])(" ++ args ++ ");",
       "    }",
-      "    return (this->*" ++ tableName n2 ++ "[label.function_num])(" ++ args ++ ");",
-      "  }"
+      "  }",
+      fallback
     ]
   args
     | s == CategoryScope = "params, args"
