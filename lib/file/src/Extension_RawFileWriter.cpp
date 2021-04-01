@@ -25,7 +25,7 @@ limitations under the License.
 namespace ZEOLITE_PUBLIC_NAMESPACE {
 #endif  // ZEOLITE_PUBLIC_NAMESPACE
 
-S<TypeValue> CreateValue_RawFileWriter(S<Type_RawFileWriter> parent, const ParamTuple& params, const ValueTuple& args);
+S<TypeValue> CreateValue_RawFileWriter(S<Type_RawFileWriter> parent, const ValueTuple& args);
 
 struct ExtCategory_RawFileWriter : public Category_RawFileWriter {
 };
@@ -35,13 +35,13 @@ struct ExtType_RawFileWriter : public Type_RawFileWriter {
 
   ReturnTuple Call_open(const S<TypeInstance>& Param_self, const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("RawFileWriter.open")
-    return ReturnTuple(CreateValue_RawFileWriter(CreateType_RawFileWriter(Params<0>::Type()), ParamTuple(), args));
+    return ReturnTuple(CreateValue_RawFileWriter(CreateType_RawFileWriter(Params<0>::Type()), args));
   }
 };
 
 struct ExtValue_RawFileWriter : public Value_RawFileWriter {
-  inline ExtValue_RawFileWriter(S<Type_RawFileWriter> p, const ParamTuple& params, const ValueTuple& args)
-    : Value_RawFileWriter(p, params),
+  inline ExtValue_RawFileWriter(S<Type_RawFileWriter> p, const ValueTuple& args)
+    : Value_RawFileWriter(p),
       filename(args.At(0)->AsString()),
       file(new std::ofstream(filename, std::ios::out | std::ios::binary | std::ios::trunc | std::ios::ate)) {}
 
@@ -100,8 +100,8 @@ S<Type_RawFileWriter> CreateType_RawFileWriter(Params<0>::Type params) {
   static const auto cached = S_get(new ExtType_RawFileWriter(CreateCategory_RawFileWriter(), Params<0>::Type()));
   return cached;
 }
-S<TypeValue> CreateValue_RawFileWriter(S<Type_RawFileWriter> parent, const ParamTuple& params, const ValueTuple& args) {
-  return S_get(new ExtValue_RawFileWriter(parent, params, args));
+S<TypeValue> CreateValue_RawFileWriter(S<Type_RawFileWriter> parent, const ValueTuple& args) {
+  return S_get(new ExtValue_RawFileWriter(parent, args));
 }
 
 #ifdef ZEOLITE_PUBLIC_NAMESPACE

@@ -355,3 +355,15 @@ concrete Test {}
 define Test {
   @value Foo value
 }
+
+
+testcase "param disallowed in @category member" {
+  error
+  require "#x not found"
+}
+
+concrete Test<#x> {}
+
+define Test {
+  @category optional #x value <- empty
+}

@@ -28,7 +28,7 @@ limitations under the License.
 namespace ZEOLITE_PUBLIC_NAMESPACE {
 #endif  // ZEOLITE_PUBLIC_NAMESPACE
 
-S<TypeValue> CreateValue_MutexLock(S<Type_MutexLock> parent, const ParamTuple& params, const ValueTuple& args);
+S<TypeValue> CreateValue_MutexLock(S<Type_MutexLock> parent, const ValueTuple& args);
 
 struct ExtCategory_MutexLock : public Category_MutexLock {
 };
@@ -38,13 +38,13 @@ struct ExtType_MutexLock : public Type_MutexLock {
 
   ReturnTuple Call_lock(const S<TypeInstance>& Param_self, const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("MutexLock.lock")
-    return ReturnTuple(CreateValue_MutexLock(CreateType_MutexLock(Params<0>::Type()), ParamTuple(), args));
+    return ReturnTuple(CreateValue_MutexLock(CreateType_MutexLock(Params<0>::Type()), args));
   }
 };
 
 struct ExtValue_MutexLock : public Value_MutexLock {
-  inline ExtValue_MutexLock(S<Type_MutexLock> p, const ParamTuple& params, const ValueTuple& args)
-    : Value_MutexLock(p, params), mutex(args.Only()) {
+  inline ExtValue_MutexLock(S<Type_MutexLock> p, const ValueTuple& args)
+    : Value_MutexLock(p), mutex(args.Only()) {
     TypeValue::Call(mutex, Function_Mutex_lock, ParamTuple(), ArgTuple());
   }
 
@@ -81,8 +81,8 @@ S<Type_MutexLock> CreateType_MutexLock(Params<0>::Type params) {
   static const auto cached = S_get(new ExtType_MutexLock(CreateCategory_MutexLock(), Params<0>::Type()));
   return cached;
 }
-S<TypeValue> CreateValue_MutexLock(S<Type_MutexLock> parent, const ParamTuple& params, const ValueTuple& args) {
-  return S_get(new ExtValue_MutexLock(parent, params, args));
+S<TypeValue> CreateValue_MutexLock(S<Type_MutexLock> parent, const ValueTuple& args) {
+  return S_get(new ExtValue_MutexLock(parent, args));
 }
 
 #ifdef ZEOLITE_PUBLIC_NAMESPACE

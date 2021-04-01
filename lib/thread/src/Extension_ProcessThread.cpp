@@ -31,7 +31,7 @@ limitations under the License.
 namespace ZEOLITE_PUBLIC_NAMESPACE {
 #endif  // ZEOLITE_PUBLIC_NAMESPACE
 
-S<TypeValue> CreateValue_ProcessThread(S<Type_ProcessThread> parent, const ParamTuple& params, const ValueTuple& args);
+S<TypeValue> CreateValue_ProcessThread(S<Type_ProcessThread> parent, const ValueTuple& args);
 
 struct ExtCategory_ProcessThread : public Category_ProcessThread {
 };
@@ -41,13 +41,13 @@ struct ExtType_ProcessThread : public Type_ProcessThread {
 
   ReturnTuple Call_from(const S<TypeInstance>& Param_self, const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("ProcessThread.from")
-    return ReturnTuple(CreateValue_ProcessThread(CreateType_ProcessThread(Params<0>::Type()), params, args));
+    return ReturnTuple(CreateValue_ProcessThread(CreateType_ProcessThread(Params<0>::Type()), args));
   }
 };
 
 struct ExtValue_ProcessThread : public Value_ProcessThread {
-  inline ExtValue_ProcessThread(S<Type_ProcessThread> p, const ParamTuple& params, const ValueTuple& args)
-    : Value_ProcessThread(p, params), routine(args.Only()) {}
+  inline ExtValue_ProcessThread(S<Type_ProcessThread> p, const ValueTuple& args)
+    : Value_ProcessThread(p), routine(args.Only()) {}
 
   ReturnTuple Call_detach(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("ProcessThread.detach")
@@ -120,8 +120,8 @@ S<Type_ProcessThread> CreateType_ProcessThread(Params<0>::Type params) {
   static const auto cached = S_get(new ExtType_ProcessThread(CreateCategory_ProcessThread(), Params<0>::Type()));
   return cached;
 }
-S<TypeValue> CreateValue_ProcessThread(S<Type_ProcessThread> parent, const ParamTuple& params, const ValueTuple& args) {
-  return S_get(new ExtValue_ProcessThread(parent, params, args));
+S<TypeValue> CreateValue_ProcessThread(S<Type_ProcessThread> parent, const ValueTuple& args) {
+  return S_get(new ExtValue_ProcessThread(parent, args));
 }
 
 #ifdef ZEOLITE_PUBLIC_NAMESPACE

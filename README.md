@@ -1203,11 +1203,6 @@ types.
 Some other time. (Or just see
 [`reduce.0rt`](https://github.com/ta0kira/zeolite/blob/master/tests/reduce.0rt).)
 
-#### Internal Type Parameters
-
-Some other time. (Or just see
-[`internal-params.0rt`](https://github.com/ta0kira/zeolite/blob/master/tests/internal-params.0rt).)
-
 ### Builtins
 
 #### Builtin Types

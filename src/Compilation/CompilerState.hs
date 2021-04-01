@@ -89,7 +89,6 @@ import Data.Semigroup
 
 import Base.CompilerError
 import Base.GeneralType
-import Base.Positional
 import Types.DefinedCategory
 import Types.Procedure
 import Types.TypeCategory
@@ -109,7 +108,7 @@ class (Functor m, Monad m) => CompilerContext c m s a | a -> c s where
   ccGetRequired :: a -> m (Set.Set CategoryName)
   ccGetCategoryFunction :: a -> [c] -> Maybe CategoryName -> FunctionName -> m (ScopedFunction c)
   ccGetTypeFunction :: a -> [c] -> Maybe GeneralInstance -> FunctionName -> m (ScopedFunction c)
-  ccCheckValueInit :: a -> [c] -> TypeInstance -> ExpressionType -> Positional GeneralInstance -> m ()
+  ccCheckValueInit :: a -> [c] -> TypeInstance -> ExpressionType -> m ()
   ccGetVariable :: a -> UsedVariable c -> m (VariableValue c)
   ccAddVariable :: a -> UsedVariable c -> VariableValue c -> m a
   ccSetReadOnly :: a -> UsedVariable c -> m a
@@ -221,8 +220,8 @@ csGetTypeFunction :: CompilerContext c m s a =>
 csGetTypeFunction c t n = fmap (\x -> ccGetTypeFunction x c t n) get >>= lift
 
 csCheckValueInit :: CompilerContext c m s a =>
-  [c] -> TypeInstance -> ExpressionType -> Positional GeneralInstance -> CompilerState a m ()
-csCheckValueInit c t as ps = fmap (\x -> ccCheckValueInit x c t as ps) get >>= lift
+  [c] -> TypeInstance -> ExpressionType -> CompilerState a m ()
+csCheckValueInit c t as = fmap (\x -> ccCheckValueInit x c t as) get >>= lift
 
 csGetVariable :: CompilerContext c m s a =>
   UsedVariable c -> CompilerState a m (VariableValue c)

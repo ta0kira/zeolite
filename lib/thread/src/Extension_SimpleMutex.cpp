@@ -42,7 +42,7 @@ struct ExtType_SimpleMutex : public Type_SimpleMutex {
 };
 
 struct ExtValue_SimpleMutex : public Value_SimpleMutex {
-  inline ExtValue_SimpleMutex(S<Type_SimpleMutex> p, const ParamTuple& params) : Value_SimpleMutex(p, params) {}
+  inline ExtValue_SimpleMutex(S<Type_SimpleMutex> p) : Value_SimpleMutex(p) {}
 
   ReturnTuple Call_lock(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("SimpleMutex.lock")
@@ -68,7 +68,7 @@ S<Type_SimpleMutex> CreateType_SimpleMutex(Params<0>::Type params) {
   return cached;
 }
 S<TypeValue> CreateValue_SimpleMutex(S<Type_SimpleMutex> parent) {
-  return S_get(new ExtValue_SimpleMutex(parent, ParamTuple()));
+  return S_get(new ExtValue_SimpleMutex(parent));
 }
 
 #ifdef ZEOLITE_PUBLIC_NAMESPACE

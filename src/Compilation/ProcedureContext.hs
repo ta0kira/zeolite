@@ -65,12 +65,10 @@ data ProcedureContext c =
     _pcScope :: SymbolScope,
     _pcType :: CategoryName,
     _pcExtParams :: Positional (ValueParam c),
-    _pcIntParams :: Positional (ValueParam c),
     _pcMembers :: [DefinedMember c],
     _pcCategories :: CategoryMap c,
     _pcAllFilters :: ParamFilters,
     _pcExtFilters :: [ParamFilter c],
-    _pcIntFilters :: [ParamFilter c],
     _pcParamScopes :: Map.Map ParamName SymbolScope,
     _pcFunctions :: Map.Map FunctionName (ScopedFunction c),
     _pcVariables :: Map.Map VariableName (VariableValue c),
@@ -190,7 +188,7 @@ instance (Show c, CollectErrorsM m) =>
         compilerErrorM $ "Category " ++ show t2 ++
                          " does not have a type or value function named " ++ show n ++
                          formatFullContextBrace c
-  ccCheckValueInit ctx c (TypeInstance t as) ts ps
+  ccCheckValueInit ctx c (TypeInstance t as) ts
     | t /= ctx ^. pcType =
       compilerErrorM $ "Category " ++ show (ctx ^. pcType) ++ " cannot initialize values from " ++
                      show t ++ formatFullContextBrace c
@@ -199,26 +197,12 @@ instance (Show c, CollectErrorsM m) =>
       r <- ccResolver ctx
       allFilters <- ccAllFilters ctx
       pa  <- fmap Map.fromList $ processPairs alwaysPair (fmap vpParam $ ctx ^. pcExtParams) as
-      pa2 <- fmap Map.fromList $ processPairs alwaysPair (fmap vpParam $ ctx ^. pcIntParams) ps
-      let pa' = Map.union pa pa2
       validateTypeInstanceForCall r allFilters t'
-      -- Check internal param substitution.
-      let mapped = Map.fromListWith (++) $ map (\f -> (pfParam f,[pfFilter f])) (ctx ^. pcIntFilters)
-      let positional = map (getFilters mapped) (map vpParam $ pValues $ ctx ^. pcIntParams)
-      assigned <- fmap Map.fromList $ processPairs alwaysPair (fmap vpParam $ ctx ^. pcIntParams) ps
-      subbed <- fmap Positional $ mapCompilerM (assignFilters assigned) positional
-      processPairs_ (validateAssignment r allFilters) ps subbed
       -- Check initializer types.
-      ms <- fmap Positional $ mapCompilerM (subSingle pa') (ctx ^. pcMembers)
+      ms <- fmap Positional $ mapCompilerM (subSingle pa) (ctx ^. pcMembers)
       processPairs_ (checkInit r allFilters) ms (Positional $ zip ([1..] :: [Int]) $ pValues ts)
       return ()
       where
-        getFilters fm n =
-          case n `Map.lookup` fm of
-              (Just fs) -> fs
-              _ -> []
-        assignFilters fm fs = do
-          mapCompilerM (uncheckedSubFilter $ getValueForParam fm) fs
         checkInit r fa (MemberValue c2 n t0) (i,t1) = do
           checkValueAssignment r fa t1 t0 <??
             "In initializer " ++ show i ++ " for " ++ show n ++ formatFullContextBrace c2

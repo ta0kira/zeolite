@@ -429,19 +429,9 @@ instance ParseFromSource (Expression SourceContext) where
           t2 <- (paramSelf >> return Nothing) <|> fmap Just sourceParser
           sepAfter (labeled "@value initializer" $ string_ "{")
           return t2
-        withParams c t <|> withoutParams c t
-      withParams c t = do
-        kwTypes
-        ps <- between (sepAfter $ string_ "<")
-                      (sepAfter $ string_ ">")
-                      (sepBy sourceParser (sepAfter $ string_ ","))
-        as <- (sepAfter (string_ ",") >> sepBy sourceParser (sepAfter $ string_ ",")) <|> return []
-        sepAfter (string_ "}")
-        return $ InitializeValue [c] t (Positional ps) (Positional as)
-      withoutParams c t = do
         as <- sepBy sourceParser (sepAfter $ string_ ",")
         sepAfter (string_ "}")
-        return $ InitializeValue [c] t (Positional []) (Positional as)
+        return $ InitializeValue [c] t (Positional as)
 
 instance ParseFromSource (FunctionQualifier SourceContext) where
   -- TODO: This is probably better done iteratively.

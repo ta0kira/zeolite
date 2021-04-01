@@ -63,12 +63,10 @@ getContextForInit tm em t d s = do
       _pcScope = s,
       _pcType = getCategoryName t,
       _pcExtParams = ps,
-      _pcIntParams = Positional [],
       _pcMembers = ms,
       _pcCategories = tm,
       _pcAllFilters = fm,
       _pcExtFilters = pa,
-      _pcIntFilters = [],
       _pcParamScopes = sa,
       _pcFunctions = fa,
       _pcVariables = Map.union builtin members,
@@ -90,7 +88,7 @@ getContextForInit tm em t d s = do
 
 getProcedureContext :: (Show c, CollectErrorsM m) =>
   ScopeContext c -> ScopedFunction c -> ExecutableProcedure c -> m (ProcedureContext c)
-getProcedureContext (ScopeContext tm t ps pi ms pa fi fa va em)
+getProcedureContext (ScopeContext tm t ps ms pa fa va em)
                     ff@(ScopedFunction _ _ _ s as1 rs1 ps1 fs _)
                     (ExecutableProcedure _ _ _ _ as2 rs2 _) = do
   rs' <- if isUnnamedReturns rs2
@@ -103,19 +101,17 @@ getProcedureContext (ScopeContext tm t ps pi ms pa fi fa va em)
                else pa ++ fs
   let localScopes = Map.fromList $ zip (map vpParam $ pValues ps1) (repeat LocalScope)
   let typeScopes = Map.fromList $ zip (map vpParam $ pValues ps) (repeat TypeScope)
-  let valueScopes = Map.fromList $ zip (map vpParam $ pValues pi) (repeat ValueScope)
   let sa = case s of
                 CategoryScope -> localScopes
-                TypeScope -> Map.union typeScopes localScopes
-                ValueScope -> Map.unions [localScopes,typeScopes,valueScopes]
+                TypeScope     -> Map.union typeScopes localScopes
+                ValueScope    -> Map.union typeScopes localScopes
                 _ -> undefined
   localFilters <- getFunctionFilterMap ff
   typeFilters <- getFilterMap (pValues ps) pa
-  valueFilters <- getFilterMap (pValues pi) fi
   let allFilters = case s of
                    CategoryScope -> localFilters
-                   TypeScope -> Map.union localFilters typeFilters
-                   ValueScope -> Map.unions [localFilters,typeFilters,valueFilters]
+                   TypeScope     -> Map.union localFilters typeFilters
+                   ValueScope    -> Map.union localFilters typeFilters
                    _ -> undefined
   let ns0 = if isUnnamedReturns rs2
                then []
@@ -125,13 +121,10 @@ getProcedureContext (ScopeContext tm t ps pi ms pa fi fa va em)
       _pcScope = s,
       _pcType = t,
       _pcExtParams = ps,
-      _pcIntParams = pi,
       _pcMembers = ms,
       _pcCategories = tm,
       _pcAllFilters = allFilters,
       _pcExtFilters = pa',
-      -- fs is duplicated so value initialization checks work properly.
-      _pcIntFilters = fi ++ fs,
       _pcParamScopes = sa,
       _pcFunctions = fa,
       _pcVariables = va'',
@@ -158,12 +151,10 @@ getMainContext tm em = return $ ProcedureContext {
     _pcScope = LocalScope,
     _pcType = CategoryNone,
     _pcExtParams = Positional [],
-    _pcIntParams = Positional [],
     _pcMembers = [],
     _pcCategories = tm,
     _pcAllFilters = Map.empty,
     _pcExtFilters = [],
-    _pcIntFilters = [],
     _pcParamScopes = Map.empty,
     _pcFunctions = Map.empty,
     _pcVariables = Map.empty,

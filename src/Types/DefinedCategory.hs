@@ -50,10 +50,8 @@ data DefinedCategory c =
     dcContext :: [c],
     dcName :: CategoryName,
     dcPragmas :: [PragmaDefined c],
-    dcParams :: [ValueParam c],
     dcRefines :: [ValueRefine c],
     dcDefines :: [ValueDefine c],
-    dcParamFilter :: [ParamFilter c],
     dcMembers :: [DefinedMember c],
     dcProcedures :: [ExecutableProcedure c],
     dcFunctions :: [ScopedFunction c]

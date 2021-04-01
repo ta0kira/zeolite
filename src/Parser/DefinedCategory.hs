@@ -34,7 +34,6 @@ import Types.DefinedCategory
 import Types.Procedure
 import Types.TypeCategory
 import Types.TypeInstance
-import Types.Variance
 
 
 instance ParseFromSource (DefinedCategory SourceContext) where
@@ -45,10 +44,9 @@ instance ParseFromSource (DefinedCategory SourceContext) where
     sepAfter (string_ "{")
     pragmas <- sepBy singlePragma optionalSpace
     (ds,rs) <- parseRefinesDefines
-    (pi,fi) <- parseInternalParams <|> return ([],[])
     (ms,ps,fs) <- parseMemberProcedureFunction n
     sepAfter (string_ "}")
-    return $ DefinedCategory [c] n pragmas pi ds rs fi ms ps fs
+    return $ DefinedCategory [c] n pragmas ds rs ms ps fs
     where
       parseRefinesDefines = fmap merge2 $ sepBy refineOrDefine optionalSpace
       singlePragma = readOnly <|> hidden
@@ -61,22 +59,6 @@ instance ParseFromSource (DefinedCategory SourceContext) where
           vs <- labeled "variable names" $ sepBy sourceParser (sepAfter $ string ",")
           return $ MembersHidden [c] vs
       refineOrDefine = labeled "refine or define" $ put12 singleRefine <|> put22 singleDefine
-      parseInternalParams = labeled "internal params" $ do
-        kwTypes
-        pi <- between (sepAfter $ string_ "<")
-                      (sepAfter $ string_ ">")
-                      (sepBy singleParam (sepAfter $ string_ ","))
-        fi <- parseInternalFilters
-        return (pi,fi)
-      parseInternalFilters = do
-        try $ sepAfter (string_ "{")
-        fi <- parseFilters
-        sepAfter (string_ "}")
-        return fi
-      singleParam = labeled "param declaration" $ do
-        c <- getSourceContext
-        n <- sourceParser
-        return $ ValueParam [c] n Invariant
 
 instance ParseFromSource (DefinedMember SourceContext) where
   sourceParser = labeled "defined member" $ do

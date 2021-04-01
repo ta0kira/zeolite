@@ -31,9 +31,7 @@ import Types.DefinedCategory
 tests :: [IO (TrackedErrors ())]
 tests = [
     checkParseSuccess ("testfiles" </> "definitions.0rx"),
-    checkParseSuccess ("testfiles" </> "internal_inheritance.0rx"),
-    checkParseSuccess ("testfiles" </> "internal_params.0rx"),
-    checkParseSuccess ("testfiles" </> "internal_filters.0rx")
+    checkParseSuccess ("testfiles" </> "internal_inheritance.0rx")
   ]
 
 checkParseSuccess :: String -> IO (TrackedErrors ())
@@ -55,4 +53,4 @@ checkParseFail f = do
   check c
     | isCompilerError c = return ()
     | otherwise = compilerErrorM $ "Parse " ++ f ++ ": Expected failure but got\n" ++
-                                 show (getCompilerSuccess c) ++ "\n"
+                                   show (getCompilerSuccess c) ++ "\n"

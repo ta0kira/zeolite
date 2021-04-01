@@ -63,8 +63,8 @@ struct Writer {
 }  // namespace
 
 struct ExtValue_SimpleOutput : public Value_SimpleOutput {
-  inline ExtValue_SimpleOutput(S<Type_SimpleOutput> p, const ParamTuple& params, S<Writer> w)
-    : Value_SimpleOutput(p, params), writer(w) {}
+  inline ExtValue_SimpleOutput(S<Type_SimpleOutput> p, S<Writer> w)
+    : Value_SimpleOutput(p), writer(w) {}
 
   ReturnTuple Call_flush(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("SimpleOutput.flush")
@@ -115,9 +115,9 @@ class ErrorWriter : public Writer {
   std::ostringstream output;
 };
 
-const S<TypeValue>& Var_stdout = *new S<TypeValue>(new ExtValue_SimpleOutput(CreateType_SimpleOutput(Params<0>::Type()), ParamTuple(), S_get(new StreamWriter(std::cout))));
-const S<TypeValue>& Var_stderr = *new S<TypeValue>(new ExtValue_SimpleOutput(CreateType_SimpleOutput(Params<0>::Type()), ParamTuple(), S_get(new StreamWriter(std::cerr))));
-const S<TypeValue>& Var_error  = *new S<TypeValue>(new ExtValue_SimpleOutput(CreateType_SimpleOutput(Params<0>::Type()), ParamTuple(), S_get(new ErrorWriter())));
+const S<TypeValue>& Var_stdout = *new S<TypeValue>(new ExtValue_SimpleOutput(CreateType_SimpleOutput(Params<0>::Type()), S_get(new StreamWriter(std::cout))));
+const S<TypeValue>& Var_stderr = *new S<TypeValue>(new ExtValue_SimpleOutput(CreateType_SimpleOutput(Params<0>::Type()), S_get(new StreamWriter(std::cerr))));
+const S<TypeValue>& Var_error  = *new S<TypeValue>(new ExtValue_SimpleOutput(CreateType_SimpleOutput(Params<0>::Type()), S_get(new ErrorWriter())));
 
 }  // namespace
 

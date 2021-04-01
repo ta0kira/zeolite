@@ -39,7 +39,7 @@ namespace ZEOLITE_PUBLIC_NAMESPACE {
 
 using VectorType = std::vector<S<TypeValue>>;
 
-S<TypeValue> CreateValue_Vector(S<Type_Vector> parent, const ParamTuple& params, VectorType values);
+S<TypeValue> CreateValue_Vector(S<Type_Vector> parent, VectorType values);
 
 struct ExtCategory_Vector : public Category_Vector {
   ReturnTuple Call_copyFrom(const ParamTuple& params, const ValueTuple& args) final {
@@ -51,13 +51,13 @@ struct ExtCategory_Vector : public Category_Vector {
     for (int i = 0; i < size; ++i) {
       values.push_back(TypeValue::Call(Var_arg1, Function_ReadAt_readAt, ParamTuple(), ArgTuple(Box_Int(i))).Only());
     }
-    return ReturnTuple(CreateValue_Vector(CreateType_Vector(Params<1>::Type(Param_y)), ParamTuple(), values));
+    return ReturnTuple(CreateValue_Vector(CreateType_Vector(Params<1>::Type(Param_y)), values));
   }
 
   ReturnTuple Call_create(const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("Vector:create")
     const S<TypeInstance> Param_y = params.At(0);
-    return ReturnTuple(CreateValue_Vector(CreateType_Vector(Params<1>::Type(Param_y)), ParamTuple(), VectorType()));
+    return ReturnTuple(CreateValue_Vector(CreateType_Vector(Params<1>::Type(Param_y)), VectorType()));
   }
 
   ReturnTuple Call_createSize(const ParamTuple& params, const ValueTuple& args) final {
@@ -68,7 +68,7 @@ struct ExtCategory_Vector : public Category_Vector {
     for (int i = 0; i < Var_arg1; ++i) {
       values.push_back(TypeInstance::Call(Param_y, Function_Default_default, ParamTuple(), ArgTuple()).Only());
     }
-    return ReturnTuple(CreateValue_Vector(CreateType_Vector(Params<1>::Type(Param_y)), ParamTuple(), values));
+    return ReturnTuple(CreateValue_Vector(CreateType_Vector(Params<1>::Type(Param_y)), values));
   }
 };
 
@@ -99,8 +99,8 @@ struct VectorOrder : public AnonymousOrder {
 };
 
 struct ExtValue_Vector : public Value_Vector {
-  inline ExtValue_Vector(S<Type_Vector> p, const ParamTuple& params, VectorType v)
-    : Value_Vector(p, params), values(std::move(v)) {}
+  inline ExtValue_Vector(S<Type_Vector> p, VectorType v)
+    : Value_Vector(p), values(std::move(v)) {}
 
   ReturnTuple Call_append(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("Vector.append")
@@ -180,8 +180,8 @@ S<Type_Vector> CreateType_Vector(Params<1>::Type params) {
     });
   return cache.GetOrCreate(params);
 }
-S<TypeValue> CreateValue_Vector(S<Type_Vector> parent, const ParamTuple& params, VectorType values) {
-  return S_get(new ExtValue_Vector(parent, params, values));
+S<TypeValue> CreateValue_Vector(S<Type_Vector> parent, VectorType values) {
+  return S_get(new ExtValue_Vector(parent, values));
 }
 
 #ifdef ZEOLITE_PUBLIC_NAMESPACE

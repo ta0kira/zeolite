@@ -608,7 +608,7 @@ compileExpression = compile where
                                             UnboxedPrimitive PrimInt $ "~" ++ useAsUnboxed PrimInt e2)
         | otherwise = compilerErrorM $ "Cannot use " ++ show t ++ " with unary ~ operator" ++
                                              formatFullContextBrace c
-  compile (InitializeValue c t ps es) = do
+  compile (InitializeValue c t es) = do
     scope <- csCurrentScope
     t' <- case scope of
                CategoryScope -> case t of
@@ -621,15 +621,14 @@ compileExpression = compile where
                       Nothing -> return self
     es' <- sequence $ map compileExpression $ pValues es
     (ts,es'') <- lift $ getValues es'
-    csCheckValueInit c t' (Positional ts) ps
+    csCheckValueInit c t' (Positional ts)
     params <- expandParams $ tiParams t'
-    params2 <- expandParams2 $ ps
     sameType <- csSameType t'
     s <- csCurrentScope
     let typeInstance = getType t' sameType s params
     -- TODO: This is unsafe if used in a type or category constructor.
     return (Positional [ValueType RequiredValue $ singleType $ JustTypeInstance t'],
-            UnwrappedSingle $ valueCreator (tiName t') ++ "(" ++ typeInstance ++ ", " ++ params2 ++ ", " ++ es'' ++ ")")
+            UnwrappedSingle $ valueCreator (tiName t') ++ "(" ++ typeInstance ++ ", " ++ es'' ++ ")")
     where
       getType _  True ValueScope _      = "parent"
       getType t2 _    _          params = typeCreator (tiName t2) ++ "(" ++ params ++ ")"

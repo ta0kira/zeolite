@@ -248,10 +248,8 @@ generateCategoryDefinition testing = common where
         dcContext = [],
         dcPragmas = [],
         dcName = getCategoryName t,
-        dcParams = [],
         dcRefines = [],
         dcDefines = [],
-        dcParamFilter = [],
         dcMembers = [],
         dcProcedures = map defaultFail (getCategoryFunctions t),
         dcFunctions = []
@@ -272,7 +270,7 @@ generateCategoryDefinition testing = common where
         RawFailCall (functionDebugName (getCategoryName t) f ++ " is not implemented (see " ++ filename ++ ")")
       ]
     asLineComment = NoValueExpression [] . LineComment
-  common (NativeConcrete t d@(DefinedCategory _ _ _ pi _ _ fi ms _ _) ta ns em) = fmap (:[]) singleSource where
+  common (NativeConcrete t d@(DefinedCategory _ _ _ _ _ ms _ _) ta ns em) = fmap (:[]) singleSource where
     singleSource = do
       let filename = sourceFilename (getCategoryName t)
       ta' <- mergeInternalInheritance ta d
@@ -280,18 +278,16 @@ generateCategoryDefinition testing = common where
       [cp,tp,vp] <- getProcedureScopes ta' em d
       let (_,tm,_) = partitionByScope dmScope ms
       disallowTypeMembers tm
-      let filters = getCategoryFilters t
-      let filters2 = fi
-      allFilters <- fmap Map.keysSet $ getFilterMap (getCategoryParams t ++ pi) $ filters ++ filters2
+      params <- getCategoryParamSet t
       let cf = map fst $ psProcedures cp
       let tf = map fst $ psProcedures tp
       let vf = map fst $ psProcedures vp
       (CompiledData req out) <- fmap (addNamespace t) $ concatM [
           defineFunctions t cf tf vf,
           declareInternalGetters t,
-          defineConcreteCategory r allFilters cf ta' em t d,
+          defineConcreteCategory r cf ta' em t d,
           defineConcreteType tf t,
-          defineConcreteValue r allFilters vf t d,
+          defineConcreteValue r params vf t d,
           defineCategoryOverrides t cf,
           defineTypeOverrides     t tf,
           defineValueOverrides    t vf,
@@ -381,12 +377,12 @@ generateCategoryDefinition testing = common where
       return $ onlyCode "};"
     ]
 
-  defineConcreteCategory r params fs tm em t d = concatM [
+  defineConcreteCategory r fs tm em t d = concatM [
       return $ onlyCode $ "struct " ++ categoryName (getCategoryName t) ++ " : public " ++ categoryBase ++ " {",
       fmap indentCompiled $ inlineCategoryConstructor t d tm em,
       return declareCategoryOverrides,
       fmap indentCompiled $ concatM $ map (procedureDeclaration False) fs,
-      fmap indentCompiled $ concatM $ map (createMemberLazy r params) members,
+      fmap indentCompiled $ concatM $ map (createMemberLazy r) members,
       return $ onlyCode "};"
     ] where
       members = filter ((== CategoryScope). dmScope) $ dcMembers d
@@ -405,7 +401,6 @@ generateCategoryDefinition testing = common where
       return declareValueOverrides,
       fmap indentCompiled $ concatM $ map (procedureDeclaration False) fs,
       fmap indentCompiled $ concatM $ map (createMember r params t) members,
-      return $ indentCompiled $ createParams $ dcParams d,
       return $ onlyCode $ "  const S<" ++ typeName (getCategoryName t) ++ "> parent;",
       return $ onlyCodes traceCreation,
       return $ onlyCode "};"
@@ -524,8 +519,8 @@ generateCategoryDefinition testing = common where
     validateGeneralInstance r params (vtType $ dmType m') <??
       "In creation of " ++ show (dmName m') ++ " at " ++ formatFullContext (dmContext m')
     return $ onlyCode $ variableStoredType (dmType m') ++ " " ++ variableName (dmName m') ++ ";"
-  createMemberLazy r params m = do
-    validateGeneralInstance r params (vtType $ dmType m) <??
+  createMemberLazy r m = do
+    validateGeneralInstance r Set.empty (vtType $ dmType m) <??
       "In creation of " ++ show (dmName m) ++ " at " ++ formatFullContext (dmContext m)
     return $ onlyCode $ variableLazyType (dmType m) ++ " " ++ variableName (dmName m) ++ ";"
 
@@ -561,21 +556,18 @@ generateCategoryDefinition testing = common where
       ]
   inlineValueConstructor t d = do
     let argParent = "S<" ++ typeName (getCategoryName t) ++ "> p"
-    let paramsPassed = "const ParamTuple& params"
     let argsPassed = "const ValueTuple& args"
-    let allArgs = intercalate ", " [argParent,paramsPassed,argsPassed]
+    let allArgs = intercalate ", " [argParent,argsPassed]
     let initParent = "parent(p)"
-    let initParams = map (\(i,p) -> paramName (vpParam p) ++ "(params.At(" ++ show i ++ "))") $ zip ([0..] :: [Int]) $ dcParams d
     let initArgs = map (\(i,m) -> variableName (dmName m) ++ "(" ++ unwrappedArg i m ++ ")") $ zip ([0..] :: [Int]) members
-    let allInit = intercalate ", " $ initParent:(initParams ++ initArgs)
+    let allInit = intercalate ", " $ initParent:initArgs
     return $ onlyCode $ "inline " ++ valueName (getCategoryName t) ++ "(" ++ allArgs ++ ") : " ++ allInit ++ " {}" where
       unwrappedArg i m = writeStoredVariable (dmType m) (UnwrappedSingle $ "args.At(" ++ show i ++ ")")
       members = filter ((== ValueScope). dmScope) $ dcMembers d
 
   abstractValueConstructor t = do
     let argParent = "S<" ++ typeName (getCategoryName t) ++ "> p"
-    let paramsPassed = "const ParamTuple& params"
-    let allArgs = intercalate ", " [argParent,paramsPassed]
+    let allArgs = intercalate ", " [argParent]
     let initParent = "parent(p)"
     let allInit = initParent
     return $ onlyCode $ "inline " ++ valueName (getCategoryName t) ++ "(" ++ allArgs ++ ") : " ++ allInit ++ " {}"
@@ -589,10 +581,9 @@ generateCategoryDefinition testing = common where
     return $ onlyCode $ "inline " ++ typeCustom (getCategoryName t) ++ "(" ++ allArgs ++ ") : " ++ allInit ++ " {}"
   customValueConstructor t = do
     let argParent = "S<" ++ typeName (getCategoryName t) ++ "> p"
-    let paramsPassed = "const ParamTuple& params"
     let argsPassed = "const ValueTuple& args"
-    let allArgs = intercalate ", " [argParent,paramsPassed,argsPassed]
-    let allInit = valueName (getCategoryName t) ++ "(p, params)"
+    let allArgs = intercalate ", " [argParent,argsPassed]
+    let allInit = valueName (getCategoryName t) ++ "(p)"
     return $ onlyCode $ "inline " ++ valueCustom (getCategoryName t) ++ "(" ++ allArgs ++ ") : " ++ allInit ++ " {}"
 
   allowTestsOnly
@@ -872,7 +863,7 @@ declareInternalValue t =
   onlyCodes [
       "S<TypeValue> " ++ valueCreator (getCategoryName t) ++
       "(S<" ++ typeName (getCategoryName t) ++ "> parent, " ++
-      "const ParamTuple& params, const ValueTuple& args);"
+      "const ValueTuple& args);"
     ]
 
 defineInternalValue :: AnyCategory c -> CompiledData [String]
@@ -882,8 +873,8 @@ defineInternalValue2 :: String -> AnyCategory c -> CompiledData [String]
 defineInternalValue2 className t =
   onlyCodes [
       "S<TypeValue> " ++ valueCreator (getCategoryName t) ++ "(S<" ++ typeName (getCategoryName t) ++ "> parent, " ++
-      "const ParamTuple& params, const ValueTuple& args) {",
-      "  return S_get(new " ++ className ++ "(parent, params, args));",
+      "const ValueTuple& args) {",
+      "  return S_get(new " ++ className ++ "(parent, args));",
       "}"
     ]
 

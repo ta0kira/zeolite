@@ -10,6 +10,11 @@
   situations where param substitution occurred, but this is no longer the case.
   (See further down in this list.)
 
+* **[breaking]** Removes internal type params for values. This was an obscure
+  feature that was never documented and was only used in some integration tests.
+  This breaks most hand-written C++ extensions, but they can be fixed by
+  removing the `ParamTuple()` argument passed when constructing a new value.
+
 * **[breaking]** Adds `traverse` built-in syntax, which automatically iterates
   over a container that exposes the (new) `Order<|#x>` `@value interface`. (This
   is breaking because `traverse`, `Order`, and `DefaultOrder` are now reserved.)

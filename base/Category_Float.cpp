@@ -42,7 +42,6 @@ namespace {
 class Category_Float;
 class Type_Float;
 class Value_Float;
-S<TypeValue> CreateValue(Type_Float& parent, const ParamTuple& params, const ValueTuple& args);
 struct Category_Float : public TypeCategory {
   std::string CategoryName() const final { return "Float"; }
   Category_Float() {

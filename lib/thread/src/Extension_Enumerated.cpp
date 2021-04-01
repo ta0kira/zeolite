@@ -103,7 +103,7 @@ namespace ZEOLITE_PRIVATE_NAMESPACE {
 #endif  // ZEOLITE_PRIVATE_NAMESPACE
 
 S<TypeValue> CreateValue_EnumeratedWait(
-  S<Type_EnumeratedWait> parent, const ParamTuple& params, S<Barrier> b, int i);
+  S<Type_EnumeratedWait> parent, S<Barrier> b, int i);
 
 struct ExtCategory_EnumeratedWait : public Category_EnumeratedWait {
 };
@@ -113,8 +113,8 @@ struct ExtType_EnumeratedWait : public Type_EnumeratedWait {
 };
 
 struct ExtValue_EnumeratedWait : public Value_EnumeratedWait {
-  inline ExtValue_EnumeratedWait(S<Type_EnumeratedWait> p, const ParamTuple& params, S<Barrier> b, int i)
-    : Value_EnumeratedWait(p, params), barrier(b), index(i) {}
+  inline ExtValue_EnumeratedWait(S<Type_EnumeratedWait> p, S<Barrier> b, int i)
+    : Value_EnumeratedWait(p), barrier(b), index(i) {}
 
   ReturnTuple Call_wait(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("EnumeratedWait.wait")
@@ -139,8 +139,8 @@ S<Type_EnumeratedWait> CreateType_EnumeratedWait(Params<0>::Type params) {
   return cached;
 }
 S<TypeValue> CreateValue_EnumeratedWait(
-  S<Type_EnumeratedWait> parent, const ParamTuple& params, S<Barrier> b, int i) {
-  return S_get(new ExtValue_EnumeratedWait(parent, params, b, i));
+  S<Type_EnumeratedWait> parent, S<Barrier> b, int i) {
+  return S_get(new ExtValue_EnumeratedWait(parent, b, i));
 }
 
 #ifdef ZEOLITE_PRIVATE_NAMESPACE
@@ -172,7 +172,7 @@ struct ExtType_EnumeratedBarrier : public Type_EnumeratedBarrier {
     S<Barrier> barrier(Var_arg1? new Barrier(Var_arg1) : nullptr);
     for (int i = 0; i < Var_arg1; ++i) {
       S<TypeValue> wait = CreateValue_EnumeratedWait(
-        CreateType_EnumeratedWait(Params<0>::Type()), ParamTuple(), barrier, i);
+        CreateType_EnumeratedWait(Params<0>::Type()), barrier, i);
       TypeValue::Call(vector, Function_Stack_push, ParamTuple(), ArgTuple(wait));
     }
     return ReturnTuple(vector);

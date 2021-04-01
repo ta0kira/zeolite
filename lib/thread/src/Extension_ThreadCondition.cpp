@@ -47,7 +47,7 @@ struct ExtType_ThreadCondition : public Type_ThreadCondition {
 };
 
 struct ExtValue_ThreadCondition : public Value_ThreadCondition {
-  inline ExtValue_ThreadCondition(S<Type_ThreadCondition> p, const ParamTuple& params) : Value_ThreadCondition(p, params) {}
+  inline ExtValue_ThreadCondition(S<Type_ThreadCondition> p) : Value_ThreadCondition(p) {}
 
   ReturnTuple Call_lock(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("ThreadCondition.lock")
@@ -150,7 +150,7 @@ S<Type_ThreadCondition> CreateType_ThreadCondition(Params<0>::Type params) {
   return cached;
 }
 S<TypeValue> CreateValue_ThreadCondition(S<Type_ThreadCondition> parent) {
-  return S_get(new ExtValue_ThreadCondition(parent, ParamTuple()));
+  return S_get(new ExtValue_ThreadCondition(parent));
 }
 
 #ifdef ZEOLITE_PUBLIC_NAMESPACE

@@ -612,10 +612,10 @@ tests = [
     return $ checkTypeSuccess Resolver
       ["#x"]
       "[#x&Type1<Type3>]",
-    return $ checkTypeSuccess Resolver
+    return $ checkTypeFail Resolver
       ["#x"]
       "[Type4<Type0>|Instance0]",
-    return $ checkTypeSuccess Resolver
+    return $ checkTypeFail Resolver
       ["#x"]
       "[Type4<Type0>&Instance0]",
 

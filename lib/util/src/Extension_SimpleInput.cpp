@@ -42,7 +42,7 @@ struct ExtType_SimpleInput : public Type_SimpleInput {
 };
 
 struct ExtValue_SimpleInput : public Value_SimpleInput {
-  inline ExtValue_SimpleInput(S<Type_SimpleInput> p, const ParamTuple& params, const ValueTuple& args) : Value_SimpleInput(p, params) {}
+  inline ExtValue_SimpleInput(S<Type_SimpleInput> p, const ValueTuple& args) : Value_SimpleInput(p) {}
 
   ReturnTuple Call_pastEnd(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("SimpleInput.pastEnd")
@@ -72,7 +72,7 @@ struct ExtValue_SimpleInput : public Value_SimpleInput {
 };
 
 namespace {
-const S<TypeValue>& Var_stdin = *new S<TypeValue>(new ExtValue_SimpleInput(CreateType_SimpleInput(Params<0>::Type()), ParamTuple(), ArgTuple()));
+const S<TypeValue>& Var_stdin = *new S<TypeValue>(new ExtValue_SimpleInput(CreateType_SimpleInput(Params<0>::Type()), ArgTuple()));
 }  // namespace
 
 Category_SimpleInput& CreateCategory_SimpleInput() {

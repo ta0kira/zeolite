@@ -26,8 +26,6 @@ module Compilation.ScopeContext (
   getProcedureScopes,
 ) where
 
-import Control.Monad (when)
-import Prelude hiding (pi)
 import qualified Data.Map as Map
 import qualified Data.Set as Set
 
@@ -45,11 +43,9 @@ data ScopeContext c =
   ScopeContext {
     scCategories :: CategoryMap c,
     scName :: CategoryName,
-    scExternalParams :: Positional (ValueParam c),
-    scInternalparams :: Positional (ValueParam c),
+    scParams :: Positional (ValueParam c),
     scValueMembers :: [DefinedMember c],
-    scExternalFilters :: [ParamFilter c],
-    scInternalFilters :: [ParamFilter c],
+    scFilters :: [ParamFilter c],
     scFunctions :: Map.Map FunctionName (ScopedFunction c),
     scVariables :: Map.Map VariableName (VariableValue c),
     scExprMap :: ExprMap c
@@ -67,17 +63,13 @@ applyProcedureScope f (ProcedureScope ctx fs) = map (uncurry (f ctx)) fs
 
 getProcedureScopes :: (Show c, CollectErrorsM m) =>
   CategoryMap c -> ExprMap c -> DefinedCategory c -> m [ProcedureScope c]
-getProcedureScopes ta em (DefinedCategory c n pragmas pi _ _ fi ms ps fs) = do
+getProcedureScopes ta em (DefinedCategory c n pragmas _ _ ms ps fs) = do
   (_,t) <- getConcreteCategory ta (c,n)
   let params = Positional $ getCategoryParams t
-  let params2 = Positional pi
   let typeInstance = TypeInstance n $ fmap (singleType . JustParamName False . vpParam) params
   let filters = getCategoryFilters t
-  let filters2 = fi
   let r = CategoryResolver ta
   fa <- setInternalFunctions r t fs
-  paramSet <- getCategoryParamSet t
-  checkInternalParams pi fi (getCategoryParams t) (Map.elems fa) r paramSet
   pa <- pairProceduresToFunctions fa ps
   let (cp,tp,vp) = partitionByScope (sfScope . fst) pa
   tp' <- mapCompilerM (firstM $ replaceSelfFunction (instanceFromCategory t)) tp
@@ -95,9 +87,9 @@ getProcedureScopes ta em (DefinedCategory c n pragmas pi _ _ fi ms ps fs) = do
   let cv = Map.union cm0 cm2
   let tv = Map.union tm0 tm2
   let vv = Map.union vm0 vm2
-  let ctxC = ScopeContext ta n params params2 vm' filters filters2 fa cv em
-  let ctxT = ScopeContext ta n params params2 vm' filters filters2 fa tv em
-  let ctxV = ScopeContext ta n params params2 vm' filters filters2 fa vv em
+  let ctxC = ScopeContext ta n params vm' filters fa cv em
+  let ctxT = ScopeContext ta n params vm' filters fa tv em
+  let ctxV = ScopeContext ta n params vm' filters fa vv em
   return [ProcedureScope ctxC cp,ProcedureScope ctxT tp',ProcedureScope ctxV vp']
   where
     checkPragma (MembersReadOnly c2 vs) = do
@@ -117,24 +109,6 @@ getProcedureScopes ta em (DefinedCategory c n pragmas pi _ _ fi ms ps fs) = do
       x' <- f x
       return (x',y)
     builtins t s0 = Map.filter ((<= s0) . vvScope) $ builtinVariables t
-    checkInternalParams pi2 fi2 pe fs2 r params = do
-      let pm = Map.fromList $ map (\p -> (vpParam p,vpContext p)) pi2
-      mapCompilerM_ (checkFunction pm) fs2
-      mapCompilerM_ (checkParam pm) pe
-      let pa = params `Set.union` Set.fromList (map vpParam pi2)
-      mapCompilerM_ (checkFilter r pa) fi2
-    checkFilter r pa (ParamFilter c2 n2 f) =
-      validateTypeFilter r pa f <?? "In " ++ show n2 ++ " " ++ show f ++ formatFullContextBrace c2
-    checkFunction pm f =
-      when (sfScope f == ValueScope) $
-        mapCompilerM_ (checkParam pm) $ pValues $ sfParams f
-    checkParam pm p =
-      case vpParam p `Map.lookup` pm of
-           Nothing -> return ()
-           (Just c2) -> compilerErrorM $ "Internal param " ++ show (vpParam p) ++
-                                        formatFullContextBrace (vpContext p) ++
-                                        " is already defined at " ++
-                                        formatFullContext c2
 
 -- TODO: This is probably in the wrong module.
 builtinVariables :: TypeInstance -> Map.Map VariableName (VariableValue c)

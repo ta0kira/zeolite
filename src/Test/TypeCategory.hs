@@ -407,21 +407,21 @@ tests = [
         ts2 <- topoSortCategories defaultCategories ts
         ta <- flattenAllConnections defaultCategories ts2 >>= declareAllTypes defaultCategories
         let r = CategoryResolver ta
-        checkTypeSuccess r [] "Type<Child>"),
+        checkTypeFail r [] "Type<Child>"),
     checkOperationSuccess
       ("testfiles" </> "flatten.0rx")
       (\ts -> do
         ts2 <- topoSortCategories defaultCategories ts
         ta <- flattenAllConnections defaultCategories ts2 >>= declareAllTypes defaultCategories
         let r = CategoryResolver ta
-        checkTypeSuccess r [] "[Type<Child>|Type<Child>]"),
+        checkTypeFail r [] "[Type<Child>|Type<Child>]"),
     checkOperationSuccess
       ("testfiles" </> "flatten.0rx")
       (\ts -> do
         ts2 <- topoSortCategories defaultCategories ts
         ta <- flattenAllConnections defaultCategories ts2 >>= declareAllTypes defaultCategories
         let r = CategoryResolver ta
-        checkTypeSuccess r [] "[Type<Child>&Type<Child>]"),
+        checkTypeFail r [] "[Type<Child>&Type<Child>]"),
 
     -- TODO: Clean these tests up.
     checkOperationSuccess

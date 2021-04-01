@@ -198,10 +198,6 @@ struct ExtType_Math : public Type_Math {
   }
 };
 
-struct ExtValue_Math : public Value_Math {
-  inline ExtValue_Math(S<Type_Math> p, const ParamTuple& params, const ValueTuple& args) : Value_Math(p, params) {}
-};
-
 Category_Math& CreateCategory_Math() {
   static auto& category = *new ExtCategory_Math();
   return category;

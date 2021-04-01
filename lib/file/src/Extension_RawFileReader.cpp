@@ -25,7 +25,7 @@ limitations under the License.
 namespace ZEOLITE_PUBLIC_NAMESPACE {
 #endif  // ZEOLITE_PUBLIC_NAMESPACE
 
-S<TypeValue> CreateValue_RawFileReader(S<Type_RawFileReader> parent, const ParamTuple& params, const ValueTuple& args);
+S<TypeValue> CreateValue_RawFileReader(S<Type_RawFileReader> parent, const ValueTuple& args);
 
 struct ExtCategory_RawFileReader : public Category_RawFileReader {
 };
@@ -35,13 +35,13 @@ struct ExtType_RawFileReader : public Type_RawFileReader {
 
   ReturnTuple Call_open(const S<TypeInstance>& Param_self, const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("RawFileReader.open")
-    return ReturnTuple(CreateValue_RawFileReader(CreateType_RawFileReader(Params<0>::Type()), ParamTuple(), args));
+    return ReturnTuple(CreateValue_RawFileReader(CreateType_RawFileReader(Params<0>::Type()), args));
   }
 };
 
 struct ExtValue_RawFileReader : public Value_RawFileReader {
-  inline ExtValue_RawFileReader(S<Type_RawFileReader> p, const ParamTuple& params, const ValueTuple& args)
-    : Value_RawFileReader(p, params),
+  inline ExtValue_RawFileReader(S<Type_RawFileReader> p, const ValueTuple& args)
+    : Value_RawFileReader(p),
       filename(args.At(0)->AsString()),
       file(new std::ifstream(filename, std::ios::in | std::ios::binary)) {}
 
@@ -118,8 +118,8 @@ S<Type_RawFileReader> CreateType_RawFileReader(Params<0>::Type params) {
   static const auto cached = S_get(new ExtType_RawFileReader(CreateCategory_RawFileReader(), Params<0>::Type()));
   return cached;
 }
-S<TypeValue> CreateValue_RawFileReader(S<Type_RawFileReader> parent, const ParamTuple& params, const ValueTuple& args) {
-  return S_get(new ExtValue_RawFileReader(parent, params, args));
+S<TypeValue> CreateValue_RawFileReader(S<Type_RawFileReader> parent, const ValueTuple& args) {
+  return S_get(new ExtValue_RawFileReader(parent, args));
 }
 
 #ifdef ZEOLITE_PUBLIC_NAMESPACE

@@ -41,7 +41,6 @@ namespace {
 class Category_Bool;
 class Type_Bool;
 class Value_Bool;
-S<TypeValue> CreateValue(Type_Bool& parent, const ParamTuple& params, const ValueTuple& args);
 struct Category_Bool : public TypeCategory {
   std::string CategoryName() const final { return "Bool"; }
   Category_Bool() {

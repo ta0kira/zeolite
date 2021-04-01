@@ -50,7 +50,6 @@ namespace {
 class Category_String;
 class Type_String;
 class Value_String;
-S<TypeValue> CreateValue(Type_String& parent, const ParamTuple& params, const ValueTuple& args);
 struct Category_String : public TypeCategory {
   std::string CategoryName() const final { return "String"; }
   Category_String() {

@@ -37,16 +37,10 @@ testcase "#self disallowed in @category members" {
   require "#self not found"
 }
 
-concrete Type {
-  @type create () -> (#self)
-}
+concrete Type {}
 
 define Type {
-  @category #self value <- Type.create()
-
-  create () {
-    return Type{ }
-  }
+  @category optional #self value <- empty
 }
 
 
@@ -520,6 +514,8 @@ concrete Type<#x> {
 }
 
 define Type {}
+
+@value interface Writer<#x|> {}
 
 
 testcase "#self nested in inheritance" {
