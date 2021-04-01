@@ -197,6 +197,13 @@ The overall design of Zeolite revolves around data encapsulation:
   This forces the programmer to also think about usage patterns when dealing
   with other objects of the same type.
 
+- **No reflection or down-casting.** The only thing that has access to the
+  "real" type of a value is the value itself. This means that the reflection and
+  down-casting tricks available in Java to circumvent the compiler *are not*
+  available in Zeolite. (User-defined types can selectively allow "down-casting
+  like" semantics by reasoning about
+  [parameters as variables](#parameters-as-variables), however.)
+
 - **Implementation details are kept separate.** In Zeolite, only *public
   inheritance* and *public functions* show up where an object type is declared,
   to discourage relying on implementation details of the type.
