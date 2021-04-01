@@ -19,6 +19,7 @@ limitations under the License.
 #ifndef CATEGORY_SOURCE_HPP_
 #define CATEGORY_SOURCE_HPP_
 
+#include <algorithm>
 #include <iostream>  // For occasional debugging output in generated code.
 #include <map>
 #include <mutex>
@@ -239,5 +240,39 @@ class AnonymousOrder : public TypeValue {
   const ValueFunction& function_next;
   const ValueFunction& function_get;
 };
+
+template<class F>
+struct DispatchTable {
+  constexpr DispatchTable() : key(nullptr), table(nullptr), size(0) {}
+
+  template<int S>
+  DispatchTable(const void* k, const F(&t)[S]) : key(k), table(t), size(S) {}
+
+  bool operator < (const DispatchTable<F>& other) const { return key < other.key; }
+
+  const void* key;
+  const F* table;
+  int size;
+};
+
+template<class T, int S>
+const T* DispatchSelect(const void* key, T(&table)[S]) {
+  if (S < 1) return nullptr;
+  if (table[0].key != nullptr) {
+    std::sort(table, table+S);
+  }
+  int i = 1, j = S;
+  while (j-i > 1) {
+    const int k = (i+j)/2;
+    if (table[k].key < key) {
+      i = k;
+    } else if (table[k].key > key) {
+      j = k;
+    } else {
+      return &table[k];
+    }
+  }
+  return (table[i].key == key)? &table[i] : nullptr;
+}
 
 #endif  // CATEGORY_SOURCE_HPP_

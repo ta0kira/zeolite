@@ -108,17 +108,18 @@ struct Type_Bool : public TypeInstance {
     static const CallType Table_Equals[] = {
       &Type_Bool::Call_equals,
     };
-    if (label.collection == Functions_Default) {
-      if (label.function_num < 0 || label.function_num >= 1) {
+    static DispatchTable<CallType> all_tables[] = {
+      DispatchTable<CallType>(Functions_Default, Table_Default),
+      DispatchTable<CallType>(Functions_Equals,  Table_Equals),
+      DispatchTable<CallType>(),
+    };
+    const DispatchTable<CallType>* const table = DispatchSelect(label.collection, all_tables);
+    if (table) {
+      if (label.function_num < 0 || label.function_num >= table->size) {
         FAIL() << "Bad function call " << label;
+      } else {
+        return (this->*table->table[label.function_num])(params, args);
       }
-      return (this->*Table_Default[label.function_num])(params, args);
-    }
-    if (label.collection == Functions_Equals) {
-      if (label.function_num < 0 || label.function_num >= 1) {
-        FAIL() << "Bad function call " << label;
-      }
-      return (this->*Table_Equals[label.function_num])(params, args);
     }
     return TypeInstance::Dispatch(self, label, params, args);
   }
@@ -145,29 +146,20 @@ struct Value_Bool : public TypeValue {
     static const CallType Table_Formatted[] = {
       &Value_Bool::Call_formatted,
     };
-    if (label.collection == Functions_AsBool) {
-      if (label.function_num < 0 || label.function_num >= 1) {
+    static DispatchTable<CallType> all_tables[] = {
+      DispatchTable<CallType>(Functions_AsBool,    Table_AsBool),
+      DispatchTable<CallType>(Functions_AsFloat,   Table_AsFloat),
+      DispatchTable<CallType>(Functions_AsInt,     Table_AsInt),
+      DispatchTable<CallType>(Functions_Formatted, Table_Formatted),
+      DispatchTable<CallType>(),
+    };
+    const DispatchTable<CallType>* const table = DispatchSelect(label.collection, all_tables);
+    if (table) {
+      if (label.function_num < 0 || label.function_num >= table->size) {
         FAIL() << "Bad function call " << label;
+      } else {
+        return (this->*table->table[label.function_num])(self, params, args);
       }
-      return (this->*Table_AsBool[label.function_num])(self, params, args);
-    }
-    if (label.collection == Functions_AsFloat) {
-      if (label.function_num < 0 || label.function_num >= 1) {
-        FAIL() << "Bad function call " << label;
-      }
-      return (this->*Table_AsFloat[label.function_num])(self, params, args);
-    }
-    if (label.collection == Functions_AsInt) {
-      if (label.function_num < 0 || label.function_num >= 1) {
-        FAIL() << "Bad function call " << label;
-      }
-      return (this->*Table_AsInt[label.function_num])(self, params, args);
-    }
-    if (label.collection == Functions_Formatted) {
-      if (label.function_num < 0 || label.function_num >= 1) {
-        FAIL() << "Bad function call " << label;
-      }
-      return (this->*Table_Formatted[label.function_num])(self, params, args);
     }
     return TypeValue::Dispatch(self, label, params, args);
   }
