@@ -335,3 +335,32 @@ define Type2 {
     \ Type1.call<#x,#y,#z>()
   }
 }
+
+
+testcase "category-level filters are not checked during function-param substitution" {
+  error
+  require "Char.+Int"
+  exclude "String"
+}
+
+concrete Type<|#x> {
+  #x requires String
+}
+
+define Type {}
+
+concrete Test {
+  @type call<#x>
+    #x requires Int
+  (optional Type<#x>) -> ()
+}
+
+define Test {
+  call (_) {}
+
+  @type call2 () -> ()
+  call2 () {
+    \ call<Int>(empty)
+    \ call<Char>(empty)
+  }
+}
