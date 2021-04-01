@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-Copyright 2019-2020 Kevin P. Barry
+Copyright 2019-2021 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -72,25 +72,34 @@ struct Type_Float : public TypeInstance {
     }
     return true;
   }
+  void Params_Float(std::vector<S<const TypeInstance>>& args) const {
+    args = std::vector<S<const TypeInstance>>{};
+  }
+  void Params_AsBool(std::vector<S<const TypeInstance>>& args) const {
+    args = std::vector<S<const TypeInstance>>{};
+  }
+  void Params_AsInt(std::vector<S<const TypeInstance>>& args) const {
+    args = std::vector<S<const TypeInstance>>{};
+  }
+  void Params_AsFloat(std::vector<S<const TypeInstance>>& args) const {
+    args = std::vector<S<const TypeInstance>>{};
+  }
+  void Params_Formatted(std::vector<S<const TypeInstance>>& args) const {
+    args = std::vector<S<const TypeInstance>>{};
+  }
   bool TypeArgsForParent(const TypeCategory& category, std::vector<S<const TypeInstance>>& args) const final {
-    if (&category == &GetCategory_Float()) {
-      args = std::vector<S<const TypeInstance>>{};
-      return true;
-    }
-    if (&category == &GetCategory_AsBool()) {
-      args = std::vector<S<const TypeInstance>>{};
-      return true;
-    }
-    if (&category == &GetCategory_AsInt()) {
-      args = std::vector<S<const TypeInstance>>{};
-      return true;
-    }
-    if (&category == &GetCategory_AsFloat()) {
-      args = std::vector<S<const TypeInstance>>{};
-      return true;
-    }
-    if (&category == &GetCategory_Formatted()) {
-      args = std::vector<S<const TypeInstance>>{};
+    using CallType = void(Type_Float::*)(std::vector<S<const TypeInstance>>&)const;
+    static DispatchSingle<CallType> all_calls[] = {
+      DispatchSingle<CallType>(&GetCategory_AsBool(),    &Type_Float::Params_AsBool),
+      DispatchSingle<CallType>(&GetCategory_AsFloat(),   &Type_Float::Params_AsFloat),
+      DispatchSingle<CallType>(&GetCategory_AsInt(),     &Type_Float::Params_AsInt),
+      DispatchSingle<CallType>(&GetCategory_Float(),     &Type_Float::Params_Float),
+      DispatchSingle<CallType>(&GetCategory_Formatted(), &Type_Float::Params_Formatted),
+      DispatchSingle<CallType>(),
+    };
+    const DispatchSingle<CallType>* const call = DispatchSelect(&category, all_calls);
+    if (call) {
+      (this->*call->value)(args);
       return true;
     }
     return false;

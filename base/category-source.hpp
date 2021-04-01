@@ -255,6 +255,19 @@ struct DispatchTable {
   int size;
 };
 
+template<class F>
+struct DispatchSingle {
+  constexpr DispatchSingle() : key(nullptr), value() {}
+
+  DispatchSingle(const void* k, const F v) : key(k), value(v) {}
+
+  bool operator < (const DispatchSingle<F>& other) const { return key < other.key; }
+
+  const void* key;
+  F value;
+  int size;
+};
+
 template<class T, int S>
 const T* DispatchSelect(const void* key, T(&table)[S]) {
   if (S < 1) return nullptr;

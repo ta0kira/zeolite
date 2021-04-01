@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-Copyright 2019-2020 Kevin P. Barry
+Copyright 2019-2021 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -80,29 +80,38 @@ struct Type_String : public TypeInstance {
     }
     return true;
   }
+  void Params_String(std::vector<S<const TypeInstance>>& args) const {
+    args = std::vector<S<const TypeInstance>>{};
+  }
+  void Params_AsBool(std::vector<S<const TypeInstance>>& args) const {
+    args = std::vector<S<const TypeInstance>>{};
+  }
+  void Params_Formatted(std::vector<S<const TypeInstance>>& args) const {
+    args = std::vector<S<const TypeInstance>>{};
+  }
+  void Params_ReadAt(std::vector<S<const TypeInstance>>& args) const {
+    args = std::vector<S<const TypeInstance>>{GetType_Char(T_get())};
+  }
+  void Params_SubSequence(std::vector<S<const TypeInstance>>& args) const {
+    args = std::vector<S<const TypeInstance>>{};
+  }
+  void Params_DefaultOrder(std::vector<S<const TypeInstance>>& args) const {
+    args = std::vector<S<const TypeInstance>>{GetType_Char(T_get())};
+  }
   bool TypeArgsForParent(const TypeCategory& category, std::vector<S<const TypeInstance>>& args) const final {
-    if (&category == &GetCategory_String()) {
-      args = std::vector<S<const TypeInstance>>{};
-      return true;
-    }
-    if (&category == &GetCategory_AsBool()) {
-      args = std::vector<S<const TypeInstance>>{};
-      return true;
-    }
-    if (&category == &GetCategory_Formatted()) {
-      args = std::vector<S<const TypeInstance>>{};
-      return true;
-    }
-    if (&category == &GetCategory_ReadAt()) {
-      args = std::vector<S<const TypeInstance>>{GetType_Char(T_get())};
-      return true;
-    }
-    if (&category == &GetCategory_SubSequence()) {
-      args = std::vector<S<const TypeInstance>>{};
-      return true;
-    }
-    if (&category == &GetCategory_DefaultOrder()) {
-      args = std::vector<S<const TypeInstance>>{GetType_Char(T_get())};
+    using CallType = void(Type_String::*)(std::vector<S<const TypeInstance>>&)const;
+    static DispatchSingle<CallType> all_calls[] = {
+      DispatchSingle<CallType>(&GetCategory_String(),       &Type_String::Params_String),
+      DispatchSingle<CallType>(&GetCategory_AsBool(),       &Type_String::Params_AsBool),
+      DispatchSingle<CallType>(&GetCategory_Formatted(),    &Type_String::Params_Formatted),
+      DispatchSingle<CallType>(&GetCategory_ReadAt(),       &Type_String::Params_ReadAt),
+      DispatchSingle<CallType>(&GetCategory_SubSequence(),  &Type_String::Params_SubSequence),
+      DispatchSingle<CallType>(&GetCategory_DefaultOrder(), &Type_String::Params_DefaultOrder),
+      DispatchSingle<CallType>(),
+    };
+    const DispatchSingle<CallType>* const call = DispatchSelect(&category, all_calls);
+    if (call) {
+      (this->*call->value)(args);
       return true;
     }
     return false;
