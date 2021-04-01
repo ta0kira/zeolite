@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-Copyright 2019-2020 Kevin P. Barry
+Copyright 2019-2021 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -30,9 +30,5 @@ class TypeValue;
 class CategoryFunction;
 class TypeFunction;
 class ValueFunction;
-
-#if defined(ZEOLITE_PUBLIC_NAMESPACE) && !defined(ZEOLITE_DYNAMIC_NAMESPACE)
-#define ZEOLITE_DYNAMIC_NAMESPACE ZEOLITE_PUBLIC_NAMESPACE
-#endif
 
 #endif  // CATEGORY_HEADER_HPP_
