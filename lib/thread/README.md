@@ -13,9 +13,7 @@ This library *is not* automatically built by `zeolite-setup`; you need to build
 it manually. This is because there might be issues with thread-library
 dependencies between different systems.
 
-1. If you are running Linux, the config should work as-is. If you are running
-   FreeBSD, you might need to remove or change `"-lpthread"` at the bottom of
-   `.zeolite-module`.
+1. If you are running Linux or FreeBSD, the config should work as-is.
 
    To build the library:
 

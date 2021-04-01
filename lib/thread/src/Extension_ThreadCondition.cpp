@@ -47,7 +47,14 @@ struct ExtType_ThreadCondition : public Type_ThreadCondition {
 };
 
 struct ExtValue_ThreadCondition : public Value_ThreadCondition {
-  inline ExtValue_ThreadCondition(S<Type_ThreadCondition> p) : Value_ThreadCondition(p) {}
+  inline ExtValue_ThreadCondition(S<Type_ThreadCondition> p) : Value_ThreadCondition(p) {
+    pthread_mutexattr_t mutex_attr;
+    pthread_mutexattr_init(&mutex_attr);
+    // NOTE: Error checking is required to catch attempted waits without first
+    // locking the mutex.
+    pthread_mutexattr_settype(&mutex_attr, PTHREAD_MUTEX_ERRORCHECK);
+    pthread_mutex_init(&mutex, &mutex_attr);
+  }
 
   ReturnTuple Call_lock(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("ThreadCondition.lock")
@@ -135,9 +142,7 @@ struct ExtValue_ThreadCondition : public Value_ThreadCondition {
   }
 
   pthread_cond_t  cond  = PTHREAD_COND_INITIALIZER;
-  // NOTE: Error checking is required to catch attempted waits without first
-  // locking the mutex.
-  pthread_mutex_t mutex = PTHREAD_ERRORCHECK_MUTEX_INITIALIZER_NP;
+  pthread_mutex_t mutex;
   CAPTURE_CREATION("ThreadCondition")
 };
 
