@@ -27,16 +27,12 @@ unittest forwardRead {
     ReadIterator<Char> iter <- AutoReadIterator:from<?>(s)
   } in while (!iter.pastForwardEnd()) {
     $ReadOnly[count,iter]$
-    if (iter.readCurrent() != s.readAt(count)) {
-      fail(iter.readCurrent())
-    }
+    \ Testing.checkEquals<?>(iter.readCurrent(),s.readAt(count))
   } update {
     count <- count+1
     iter <- iter.forward()
   }
-  if (count != s.size()) {
-    fail(count)
-  }
+  \ Testing.checkEquals<?>(count,s.size())
 }
 
 unittest reverseRead {
@@ -51,9 +47,7 @@ unittest reverseRead {
     count <- count-1
     iter <- iter.reverse()
   }
-  if (count != -1) {
-    fail(count)
-  }
+  \ Testing.checkEquals<?>(count,-1)
 }
 
 
@@ -74,9 +68,7 @@ unittest forwardWrite {
     count <- count+1
     iter <- iter.forward()
   }
-  if (count != s.size()) {
-    fail(count)
-  }
+  \ Testing.checkEquals<?>(count,s.size())
 }
 
 unittest reverseWrite {
@@ -92,9 +84,7 @@ unittest reverseWrite {
     count <- count-1
     iter <- iter.reverse()
   }
-  if (count != -1) {
-    fail(count)
-  }
+  \ Testing.checkEquals<?>(count,-1)
 }
 
 concrete WriteChecker {
@@ -139,9 +129,7 @@ unittest forwardReadWrite {
     count <- count+1
     iter <- iter.forward()
   }
-  if (count != s.size()) {
-    fail(count)
-  }
+  \ Testing.checkEquals<?>(count,s.size())
 }
 
 unittest reverseReadWrite {
@@ -158,9 +146,7 @@ unittest reverseReadWrite {
     count <- count-1
     iter <- iter.reverse()
   }
-  if (count != -1) {
-    fail(count)
-  }
+  \ Testing.checkEquals<?>(count,-1)
 }
 
 concrete ReadWriteChecker {

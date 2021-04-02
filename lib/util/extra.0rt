@@ -23,9 +23,7 @@ testcase "Argv checks" {
 
 unittest global {
   Int count <- Argv.global().size()
-  if (count != 5) {
-    fail(count)
-  }
+  \ Testing.checkEquals<?>(count,5)
   \ Testing.checkEquals<?>(Argv.global().readAt(0),"testcase")
   \ Testing.checkEquals<?>(Argv.global().readAt(1),"arg1")
   \ Testing.checkEquals<?>(Argv.global().readAt(2),"arg2")
@@ -36,9 +34,7 @@ unittest global {
 unittest subSequence {
   ReadAt<String> argv <- Argv.global().subSequence(2,2)
   Int count <- argv.size()
-  if (count != 2) {
-    fail(count)
-  }
+  \ Testing.checkEquals<?>(count,2)
   \ Testing.checkEquals<?>(argv.readAt(0),"arg2")
   \ Testing.checkEquals<?>(argv.readAt(1),"arg3")
 }
@@ -70,17 +66,13 @@ testcase "ErrorOr checks" {
 
 unittest withValue {
   ErrorOr<Int> value <- ErrorOr:value<Int>(10)
-  if (value.isError()) {
-    fail("Failed")
-  }
+  \ Testing.checkEquals<?>(value.isError(),false)
   \ Testing.checkEquals<?>(value.getValue(),10)
 }
 
 unittest withError {
   ErrorOr<String> value <- ErrorOr:error("error message")
-  if (!value.isError()) {
-    fail("Failed")
-  }
+  \ Testing.checkEquals<?>(value.isError(),true)
   \ Testing.checkEquals<?>(value.getError().formatted(),"error message")
 }
 
