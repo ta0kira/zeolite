@@ -14,11 +14,13 @@
   an obscure feature that was never documented and was only used in some
   integration tests that had not been touched in over 2 years. This breaks most
   hand-written C++ extensions, but they can be fixed by removing the
-  `ParamTuple` argument passed to the base-class constructor.
+  `ParamTuple` argument passed to the base-class constructor in `ExtValue_Foo`
+  for C++ extension `Foo`.
 
-* **[breaking]** Adds `traverse` built-in syntax, which automatically iterates
-  over a container that exposes the (new) `Order<|#x>` `@value interface`. (This
-  is breaking because `traverse`, `Order`, and `DefaultOrder` are now reserved.)
+* **[breaking]** Adds the `traverse` built-in syntax, which automatically
+  iterates over a container that exposes the (new) `Order<|#x>`
+  `@value interface`. (This is breaking because `traverse`, `Order`, and
+  `DefaultOrder` are now reserved.)
 
   ```text
   traverse (container.defaultOrder() -> Foo value) {
@@ -50,11 +52,11 @@
   only when calling `@type` functions, initializing values (e.g.,
   `Type<#x>{ }`), and using the type as a param in a function call.
 
-  Since `#x` is covariant in this example, you could convert a `Type<Foo>` to a
+  Since `#x` is covariant in this example, you could convert a `Type<Bar>` to a
   `Type<any>`, even though `any` is not a child of `Foo`.
 
-* **[new]** Removes variance checks for category-level param filters. This was
-  originally not checked, but then the checks were added *prior to* version
+* **[new]** Removes variance checks for category-level param filters. Variance
+  was originally *not* checked, but then the checks were added prior to version
   `0.1.0.0` for obscure mathematical reasons that no longer make sense.
 
   In particular, filters such as `#x defines Equals<#x>` *were not* previously
@@ -74,10 +76,14 @@
 * **[new]** When inferring type parameters for function calls (e.g.,
   `call<?>(foo)`), allows `all` to be a valid lower bound and `any` to be a
   valid upper bound. Previously, an inferred type of `all` in covariant
-   positions and`any` in contravariant positions would cause inference to fail.
+   positions and `any` in contravariant positions would cause inference to fail.
 
 * **[new]** Allows `$ReadOnly[...]$` and `$Hidden[...]$` for member variables in
   definitions of `concrete` categories.
+
+* **[new]** Makes `Argv` available to all threads. Previously, it was only
+  available to the main thread. (Even though `Argv` is exposed via `lib/util`,
+  this change also affects C++ extensions that use `Argv` from `logging.hpp`.)
 
 * **[fix]** Fixes regression with function names used in stack traces.
   Previously, if a function was inherited and the types were not overridden,
@@ -89,11 +95,13 @@
 * **[breaking]** Removes the default compiler mode when calling `zeolite`. The
   previous default was `-c`, which creates a new `.zeolite-module` for
   incremental library compilation. The default was removed because accidentally
-  typing `zeolite -f foo` instead of `zeolite -t foo` would erase the
+  typing `zeolite -f foo` instead of `zeolite -t foo` would overwrite the
   `.zeolite-module` for `foo` rather than running its tests.
 
 * **[breaking]** Updates how `$TraceCreation$` is implemented in C++. This only
-  breaks hand-written C++ extensions that use the `CAPTURE_CREATION` macro.
+  breaks hand-written C++ extensions that use the `CAPTURE_CREATION` macro,
+  which now must pass a string-literal category name as a macro argument,
+  e.g., `CAPTURE_CREATION("Foo")`.
 
 * **[new]** Adds the `--log-traces` option for testing mode (`zeolite -t`) to
   capture a record of every line of Zeolite code executed when running tests.
@@ -102,9 +110,9 @@
   `$ModuleOnly$` categories.
 
 * **[behavior]** Improves the efficiency of call dispatching and `reduce` calls
-  for categories that inherit a lot of `interface`s. (Unlikely to affect
+  for categories that inherit a lot of `interface`s. This is unlikely to affect
   performance when a category has less than 10 direct or indirect parent
-  `interface`s.)
+  `interface`s.
 
 ### Libraries
 
@@ -116,11 +124,11 @@
   synchronize a fixed number of threads. (Similar to `pthread_barrier_t` in
   POSIX, but with strict validation to help prevent deadlocks.)
 
-* **[new]** Makes `Argv.global()` available to all threads. Previously, it was
-  only available to the main thread.
+* **[new]** Adds `Realtime` to `lib/thread`, to allow threads to sleep based on
+  wall time.
 
 * **[new]** Adds `Counter` and `Repeat` to `lib/util`, to help create sequences
-  for use with the new `traverse` built-in.
+  for use with the new `traverse` built-in syntax.
 
 * **[new]** Implements forward and reverse iteration to `SearchTree` in
   `lib/container`.
