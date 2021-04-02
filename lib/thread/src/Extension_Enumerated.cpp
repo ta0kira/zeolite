@@ -180,7 +180,7 @@ struct ExtType_EnumeratedBarrier : public Type_EnumeratedBarrier {
 
 struct ExtValue_EnumeratedBarrier : public Value_EnumeratedBarrier {
   inline ExtValue_EnumeratedBarrier(S<Type_EnumeratedBarrier> p, std::vector<S<TypeValue>> w)
-    : Value_EnumeratedBarrier(p), waits(w) {}
+    : Value_EnumeratedBarrier(p), waits(std::move(w)) {}
 
   ReturnTuple Call_readAt(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("EnumeratedBarrier.readAt")
@@ -209,7 +209,7 @@ S<Type_EnumeratedBarrier> CreateType_EnumeratedBarrier(Params<0>::Type params) {
 }
 S<TypeValue> CreateValue_EnumeratedBarrier(
   S<Type_EnumeratedBarrier> parent, std::vector<S<TypeValue>> w) {
-  return S_get(new ExtValue_EnumeratedBarrier(parent, w));
+  return S_get(new ExtValue_EnumeratedBarrier(parent, std::move(w)));
 }
 
 #ifdef ZEOLITE_PUBLIC_NAMESPACE
