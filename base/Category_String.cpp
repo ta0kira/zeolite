@@ -109,7 +109,8 @@ struct Type_String : public TypeInstance {
       DispatchSingle<CallType>(&GetCategory_DefaultOrder(), &Type_String::Params_DefaultOrder),
       DispatchSingle<CallType>(),
     };
-    const DispatchSingle<CallType>* const call = DispatchSelect(&category, all_calls);
+    std::atomic_bool table_lock{0};
+    const DispatchSingle<CallType>* const call = DispatchSelect(table_lock, &category, all_calls);
     if (call) {
       (this->*call->value)(args);
       return true;
@@ -143,7 +144,8 @@ struct Type_String : public TypeInstance {
       DispatchTable<CallType>(Functions_String,   Table_String),
       DispatchTable<CallType>(),
     };
-    const DispatchTable<CallType>* const table = DispatchSelect(label.collection, all_tables);
+    std::atomic_bool table_lock{0};
+    const DispatchTable<CallType>* const table = DispatchSelect(table_lock, label.collection, all_tables);
     if (table) {
       if (label.function_num < 0 || label.function_num >= table->size) {
         FAIL() << "Bad function call " << label;
@@ -197,7 +199,8 @@ struct Value_String : public TypeValue {
       DispatchTable<CallType>(Functions_SubSequence,  Table_SubSequence),
       DispatchTable<CallType>(),
     };
-    const DispatchTable<CallType>* const table = DispatchSelect(label.collection, all_tables);
+    std::atomic_bool table_lock{0};
+    const DispatchTable<CallType>* const table = DispatchSelect(table_lock, label.collection, all_tables);
     if (table) {
       if (label.function_num < 0 || label.function_num >= table->size) {
         FAIL() << "Bad function call " << label;

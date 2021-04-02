@@ -20,6 +20,7 @@ limitations under the License.
 #define CATEGORY_SOURCE_HPP_
 
 #include <algorithm>
+#include <atomic>
 #include <iostream>  // For occasional debugging output in generated code.
 #include <map>
 #include <mutex>
@@ -269,11 +270,13 @@ struct DispatchSingle {
 };
 
 template<class T, int S>
-const T* DispatchSelect(const void* key, T(&table)[S]) {
+const T* DispatchSelect(std::atomic_bool& lock, const void* key, T(&table)[S]) {
   if (S < 2) return nullptr;
+  while (lock.exchange(true));
   if (table[0].key != nullptr) {
     std::sort(table, table+S);
   }
+  lock.exchange(false);
   int i = 1, j = S;
   while (j-i > 1) {
     const int k = (i+j)/2;

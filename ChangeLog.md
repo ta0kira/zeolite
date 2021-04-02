@@ -21,6 +21,10 @@
 
 ### Language
 
+* **[fix]** Fixes a regression where a race condition in function dispatching
+  would cause an error saying that a category does not implement the function
+  that was being called.
+
 * **[behavior]** Optimizes calls to `@type` functions when made from `@value`
   functions of the same type.
 

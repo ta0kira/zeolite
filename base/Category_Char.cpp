@@ -102,7 +102,8 @@ struct Type_Char : public TypeInstance {
       DispatchSingle<CallType>(&GetCategory_Formatted(), &Type_Char::Params_Formatted),
       DispatchSingle<CallType>(),
     };
-    const DispatchSingle<CallType>* const call = DispatchSelect(&category, all_calls);
+    std::atomic_bool table_lock{0};
+    const DispatchSingle<CallType>* const call = DispatchSelect(table_lock, &category, all_calls);
     if (call) {
       (this->*call->value)(args);
       return true;
@@ -132,7 +133,8 @@ struct Type_Char : public TypeInstance {
       DispatchTable<CallType>(Functions_LessThan, Table_LessThan),
       DispatchTable<CallType>(),
     };
-    const DispatchTable<CallType>* const table = DispatchSelect(label.collection, all_tables);
+    std::atomic_bool table_lock{0};
+    const DispatchTable<CallType>* const table = DispatchSelect(table_lock, label.collection, all_tables);
     if (table) {
       if (label.function_num < 0 || label.function_num >= table->size) {
         FAIL() << "Bad function call " << label;
@@ -177,7 +179,8 @@ struct Value_Char : public TypeValue {
       DispatchTable<CallType>(Functions_Formatted, Table_Formatted),
       DispatchTable<CallType>(),
     };
-    const DispatchTable<CallType>* const table = DispatchSelect(label.collection, all_tables);
+    std::atomic_bool table_lock{0};
+    const DispatchTable<CallType>* const table = DispatchSelect(table_lock, label.collection, all_tables);
     if (table) {
       if (label.function_num < 0 || label.function_num >= table->size) {
         FAIL() << "Bad function call " << label;
