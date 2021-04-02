@@ -45,12 +45,18 @@ define TypeMap {
 }
 
 define TypeKey {
-  // TODO: Protect the counter with a mutex.
-  @category Int counter <- 0
+  $ReadOnly[counterMutex,index]$
+
+  @category Mutex counterMutex <- SimpleMutex.new()
+  @category Int   counter      <- 0
   @value Int index
 
   new () {
-    return TypeKey<#x>{ (counter <- counter+1) }
+    scoped {
+      MutexLock lock <- MutexLock.lock(counterMutex)
+    } cleanup {
+      \ lock.freeResource()
+    } in return TypeKey<#x>{ (counter <- counter+1) }
   }
 
   formatted () {

@@ -93,6 +93,8 @@ concrete Node<#k,#v> {
 }
 
 define Node {
+  $ReadOnly[key]$
+
   @value Int height
   @value #k key
   @value #v value
