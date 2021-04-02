@@ -27,21 +27,21 @@ unittest basicOperations {
   TypeKey<String> keyString <- TypeKey<String>.new()
   TypeKey<Value>  keyValue  <- TypeKey<Value>.new()
 
-  \ Helper.check<?>(tree,keyInt,empty)
-  \ Helper.check<?>(tree,keyString,empty)
-  \ Helper.check<?>(tree,keyValue,empty)
+  \ Testing.checkOptional<?>(tree.get<?>(keyInt),   empty)
+  \ Testing.checkOptional<?>(tree.get<?>(keyString),empty)
+  \ Testing.checkOptional<?>(tree.get<?>(keyValue), empty)
 
   \ tree.set<?>(keyInt,1)
   \ tree.set<?>(keyString,"a")
   \ tree.set<?>(keyValue,Value.new())
 
-  \ Helper.check<?>(tree,keyInt,1)
-  \ Helper.check<?>(tree,keyString,"a")
-  \ Helper.check<?>(tree,keyValue,Value.new())
+  \ Testing.checkOptional<?>(tree.get<?>(keyInt),   1)
+  \ Testing.checkOptional<?>(tree.get<?>(keyString),"a")
+  \ Testing.checkOptional<?>(tree.get<?>(keyValue), Value.new())
 
   \ tree.remove(keyString)
 
-  \ Helper.check<?>(tree,keyString,empty)
+  \ Testing.checkOptional<?>(tree.get<?>(keyString),empty)
 }
 
 unittest wrongReturnType {
@@ -51,10 +51,10 @@ unittest wrongReturnType {
 
   // Added as Formatted, which means it cannot be retrieved as String later.
   \ tree.set<Formatted>(keyString,"a")
-  \ Helper.check<String>(tree,keyString,empty)
+  \ Testing.checkOptional<?>(tree.get<String>(keyString),empty)
 
   \ tree.set<String>(keyString,"a")
-  \ Helper.check<String>(tree,keyString,"a")
+  \ Testing.checkOptional<?>(tree.get<String>(keyString),"a")
 }
 
 concrete Value {
@@ -75,26 +75,5 @@ define Value {
 
   equals (_,_) {
     return true
-  }
-}
-
-concrete Helper {
-  @type check<#x>
-    #x requires Formatted
-    #x defines Equals<#x>
-  (TypeMap,TypeKey<#x>,optional #x) -> ()
-}
-
-define Helper {
-  check (tree,key,expected) {
-    scoped {
-      optional #x value <- tree.get<#x>(key)
-    } in if (present(value) && present(expected)) {
-      \ Testing.checkEquals<?>(require(value),require(expected))
-    } elif (!present(value) && present(expected)) {
-      fail(key.formatted() + " was expected but not found")
-    } elif (present(value) && !present(expected)) {
-      fail(key.formatted() + " was found but not expected")
-    }
   }
 }

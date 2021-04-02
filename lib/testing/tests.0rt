@@ -75,6 +75,38 @@ unittest test {
 }
 
 
+testcase "checkOptional success" {
+  success
+}
+
+unittest test {
+  \ Testing.checkOptional<Int>(empty,empty)
+  \ Testing.checkOptional<?>(13,13)
+}
+
+
+testcase "checkOptional fail empty" {
+  crash
+  require stderr "13"
+  require stderr "empty"
+}
+
+unittest test {
+  \ Testing.checkOptional<?>(13,empty)
+}
+
+
+testcase "checkOptional fail present" {
+  crash
+  require stderr "13"
+  require stderr "empty"
+}
+
+unittest test {
+  \ Testing.checkOptional<?>(empty,13)
+}
+
+
 testcase "checkBetween success" {
   success
 }

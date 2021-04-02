@@ -46,6 +46,16 @@ define Testing {
     }
   }
 
+  checkOptional (x,y) {
+    if (present(x) && present(y)) {
+      \ checkEquals<?>(require(x),require(y))
+    } elif (!present(x) && present(y)) {
+      fail("empty is not equal to " + require(y).formatted())
+    } elif (present(x) && !present(y)) {
+      fail(require(x).formatted() + " is not equal to empty")
+    }
+  }
+
   checkBetween (x,l,h) {
     if (!lessEquals<?>(l,h)) {
       fail(String.builder()

@@ -16,6 +16,9 @@
 * **[new]** Adds `getForward` and `getReverse` to `SearchTree`, to allow the
   caller to iterate after looking up an entry.
 
+* **[new]** Adds `checkEmpty`, `checkPresent`, and `checkOptional` to `Testing`
+  in `lib/testing`.
+
 ### Language
 
 * **[behavior]** Optimizes calls to `@type` functions when made from `@value`
