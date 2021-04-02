@@ -374,27 +374,25 @@ define ForwardTreeOrder {
   @value Node<#k,#v> node
   @value optional ForwardTreeOrder<#k,#v> prev
 
-  create (node) {
+  create (node) (current) {
     optional Node<#k,#v> node2 <- node
-    optional ForwardTreeOrder<#k,#v> current <- empty
+    current <- empty
     while (present(node2)) {
       current <- ForwardTreeOrder<#k,#v>{ require(node2), current }
       node2 <- require(node2).getLower()
     }
-    return current
   }
 
-  next () {
+  next () (current) {
     // Algorithm:
     // 1. Pop self from the stack.
     // 2. Traverse lower to the bottom starting from the higher child of self.
     optional Node<#k,#v> node2 <- node.getHigher()
-    optional ForwardTreeOrder<#k,#v> current <- prev
+    current <- prev
     while (present(node2)) {
       current <- ForwardTreeOrder<#k,#v>{ require(node2), current }
       node2 <- require(node2).getLower()
     }
-    return current
   }
 
   get () {
@@ -417,27 +415,25 @@ define ReverseTreeOrder {
   @value Node<#k,#v> node
   @value optional ReverseTreeOrder<#k,#v> prev
 
-  create (node) {
+  create (node) (current) {
     optional Node<#k,#v> node2 <- node
-    optional ReverseTreeOrder<#k,#v> current <- empty
+    current <- empty
     while (present(node2)) {
       current <- ReverseTreeOrder<#k,#v>{ require(node2), current }
       node2 <- require(node2).getHigher()
     }
-    return current
   }
 
-  next () {
+  next () (current) {
     // Algorithm:
     // 1. Pop self from the stack.
     // 2. Traverse higher to the bottom starting from the lower child of self.
     optional Node<#k,#v> node2 <- node.getLower()
-    optional ReverseTreeOrder<#k,#v> current <- prev
+    current <- prev
     while (present(node2)) {
       current <- ReverseTreeOrder<#k,#v>{ require(node2), current }
       node2 <- require(node2).getHigher()
     }
-    return current
   }
 
   get () {
