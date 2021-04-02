@@ -56,16 +56,13 @@ define TextReader {
 
   @value findNewline () -> (Int)
   findNewline () {
-    scoped {
-      Int position <- 0
-    } in while (position < buffer.size()) {
+    traverse (Counter.zeroIndexed(buffer.size()) -> Int position) {
+      $ReadOnly[position]$
       Char c <- buffer.readAt(position)
       // TODO: Maybe the line separator should be a factory argument.
       if (c == '\n' || c == '\r') {
         return position
       }
-    } update {
-      position <- position+1
     }
     return -1
   }
