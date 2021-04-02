@@ -1,6 +1,18 @@
 # Revision history for zeolite-lang
 
-## 0.16.1.0  -- ????-??-??
+## 0.16.1.0  -- 2021-04-02
+
+### Language
+
+* **[fix]** Fixes a regression where a race condition in function dispatching
+  would cause an error saying that a category does not implement the function
+  that was being called.
+
+* **[behavior]** Optimizes calls to `@type` functions when made from `@value`
+  functions of the same type.
+
+* **[behavior]** Optimizes `@value` initialization (e.g., `Type{ }`) when done
+  from `@type` functions of the same type.
 
 ### Libraries
 
@@ -18,18 +30,6 @@
 
 * **[new]** Adds `checkEmpty`, `checkPresent`, and `checkOptional` to `Testing`
   in `lib/testing`.
-
-### Language
-
-* **[fix]** Fixes a regression where a race condition in function dispatching
-  would cause an error saying that a category does not implement the function
-  that was being called.
-
-* **[behavior]** Optimizes calls to `@type` functions when made from `@value`
-  functions of the same type.
-
-* **[behavior]** Optimizes `@value` initialization (e.g., `Type{ }`) when done
-  from `@type` functions of the same type.
 
 ## 0.16.0.0  -- 2021-04-01
 
