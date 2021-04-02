@@ -20,7 +20,7 @@
   is breaking because `traverse`, `Order`, and `DefaultOrder` are now reserved.)
 
   ```text
-  traverse (container -> Foo value) {
+  traverse (container.defaultOrder() -> Foo value) {
     // executed once per Foo in the container
   }
   ```
