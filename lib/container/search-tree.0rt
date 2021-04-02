@@ -106,3 +106,87 @@ unittest reverseOrder {
 
   \ Testing.checkEquals<?>(index,0)
 }
+
+unittest getForward {
+  SearchTree<Int,Int> tree <- SearchTree<Int,Int>.new()
+  Int hash <- 13
+  Int max  <- 20
+  $ReadOnly[hash,max]$
+
+  // Populate the tree in a pseudo-random order.
+  traverse (Counter.zeroIndexed(max) -> Int i) {
+    \ ((i*hash)%max) `tree.set` i
+  }
+
+  // Validate the traversal order from every starting point.
+  traverse (Counter.zeroIndexed(max) -> Int i) {
+    Int index <- i
+    traverse (tree.getForward(index) -> KeyValue<Int,Int> entry) {
+      \ Testing.checkEquals<?>(entry.getKey(),index)
+      \ Testing.checkEquals<?>((entry.getValue()*hash)%max,entry.getKey())
+      index <- index+1
+    }
+    \ Testing.checkEquals<?>(index,20)
+  }
+}
+
+unittest getForwardNotFound {
+  SearchTree<Int,Int> tree <- SearchTree<Int,Int>.new()
+  \ tree.set(1,1).set(3,3).set(5,5)
+
+  scoped {
+    optional Order<KeyValue<Int,Int>> start <- tree.getForward(4)
+  } in if (!present(start)) {
+    fail("Failed")
+  } else {
+    \ Testing.checkEquals<?>(require(start).get().getKey(),5)
+  }
+
+  scoped {
+    optional Order<KeyValue<Int,Int>> start <- tree.getForward(6)
+  } in if (present(start)) {
+    fail("Failed")
+  }
+}
+
+unittest getReverse {
+  SearchTree<Int,Int> tree <- SearchTree<Int,Int>.new()
+  Int hash <- 13
+  Int max  <- 20
+  $ReadOnly[hash,max]$
+
+  // Populate the tree in a pseudo-random order.
+  traverse (Counter.zeroIndexed(max) -> Int i) {
+    \ ((i*hash)%max) `tree.set` i
+  }
+
+  // Validate the traversal order from every starting point.
+  traverse (Counter.zeroIndexed(max) -> Int i) {
+    Int index <- i
+    traverse (tree.getReverse(index) -> KeyValue<Int,Int> entry) {
+      \ Testing.checkEquals<?>(entry.getKey(),index)
+      \ Testing.checkEquals<?>((entry.getValue()*hash)%max,entry.getKey())
+      index <- index-1
+    }
+    \ Testing.checkEquals<?>(index,-1)
+  }
+}
+
+unittest getReverseNotFound {
+  SearchTree<Int,Int> tree <- SearchTree<Int,Int>.new()
+  \ tree.set(1,1).set(3,3).set(5,5)
+
+  scoped {
+    optional Order<KeyValue<Int,Int>> start <- tree.getReverse(2)
+  } in if (!present(start)) {
+    fail("Failed")
+  } else {
+    \ Testing.checkEquals<?>(require(start).get().getKey(),1)
+  }
+
+  scoped {
+    optional Order<KeyValue<Int,Int>> start <- tree.getReverse(0)
+  } in if (present(start)) {
+    fail("Failed")
+  }
+}

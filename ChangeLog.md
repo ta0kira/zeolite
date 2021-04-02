@@ -1,5 +1,12 @@
 # Revision history for zeolite-lang
 
+## 0.16.1.0  -- ????-??-??
+
+### Libraries
+
+* **[new]** Adds `getForward` and `getReverse` to `SearchTree`, to allow the
+  caller to iterate after looking up an entry.
+
 ## 0.16.0.0  -- 2021-04-01
 
 ### Language

@@ -44,6 +44,14 @@ define SearchTree {
   reverseOrder () {
     return ReverseTreeOrder:create<?,?>(root)
   }
+
+  getForward (k) {
+    return ForwardTreeOrder:seek<?,?>(k,root)
+  }
+
+  getReverse (k) {
+    return ReverseTreeOrder:seek<?,?>(k,root)
+  }
 }
 
 define ValidatedTree {
@@ -361,11 +369,12 @@ define TreeKeyValue {
 
 concrete ForwardTreeOrder<|#k,#v> {
   refines Order<KeyValue<#k,#v>>
-  #k defines LessThan<#k>
 
-  @category create<#k,#v>
+  @category create<#k,#v> (optional Node<#k,#v>) -> (optional ForwardTreeOrder<#k,#v>)
+
+  @category seek<#k,#v>
     #k defines LessThan<#k>
-  (optional Node<#k,#v>) -> (optional ForwardTreeOrder<#k,#v>)
+  (#k,optional Node<#k,#v>) -> (optional ForwardTreeOrder<#k,#v>)
 }
 
 define ForwardTreeOrder {
@@ -380,6 +389,23 @@ define ForwardTreeOrder {
     while (present(node2)) {
       current <- ForwardTreeOrder<#k,#v>{ require(node2), current }
       node2 <- require(node2).getLower()
+    }
+  }
+
+  seek (key,node) (current) {
+    optional Node<#k,#v> node2 <- node
+    current <- empty
+    while (present(node2)) {
+      if (require(node2).getKey() `#k.lessThan` key) {
+        // Skip node2 in the traversal, since it's before key.
+        node2 <- require(node2).getHigher()
+      } elif (key `#k.lessThan` require(node2).getKey()) {
+        current <- ForwardTreeOrder<#k,#v>{ require(node2), current }
+        node2 <- require(node2).getLower()
+      } else {
+        current <- ForwardTreeOrder<#k,#v>{ require(node2), current }
+        break
+      }
     }
   }
 
@@ -402,11 +428,12 @@ define ForwardTreeOrder {
 
 concrete ReverseTreeOrder<|#k,#v> {
   refines Order<KeyValue<#k,#v>>
-  #k defines LessThan<#k>
 
-  @category create<#k,#v>
+  @category create<#k,#v> (optional Node<#k,#v>) -> (optional ReverseTreeOrder<#k,#v>)
+
+  @category seek<#k,#v>
     #k defines LessThan<#k>
-  (optional Node<#k,#v>) -> (optional ReverseTreeOrder<#k,#v>)
+  (#k,optional Node<#k,#v>) -> (optional ReverseTreeOrder<#k,#v>)
 }
 
 define ReverseTreeOrder {
@@ -421,6 +448,23 @@ define ReverseTreeOrder {
     while (present(node2)) {
       current <- ReverseTreeOrder<#k,#v>{ require(node2), current }
       node2 <- require(node2).getHigher()
+    }
+  }
+
+  seek (key,node) (current) {
+    optional Node<#k,#v> node2 <- node
+    current <- empty
+    while (present(node2)) {
+      if (require(node2).getKey() `#k.lessThan` key) {
+        current <- ReverseTreeOrder<#k,#v>{ require(node2), current }
+        node2 <- require(node2).getHigher()
+      } elif (key `#k.lessThan` require(node2).getKey()) {
+        // Skip node2 in the traversal, since it's after key.
+        node2 <- require(node2).getLower()
+      } else {
+        current <- ReverseTreeOrder<#k,#v>{ require(node2), current }
+        break
+      }
     }
   }
 
