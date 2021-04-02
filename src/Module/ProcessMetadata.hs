@@ -232,7 +232,7 @@ loadDepsCommon f h ca pa0 getDeps ps = do
           case p `Map.lookup` ca of
                Just m2 -> continue m2 []
                Nothing -> do
-                 errorFromIO $ hPutStrLn stderr $ "Loading metadata for dependency \"" ++ p ++ "\"."
+                 errorFromIO $ hPutStrLn stderr $ "Loading metadata for module \"" ++ p ++ "\"."
                  m2 <- loadMetadata ca p
                  let ds = getDeps m2
                  continue m2 ds
