@@ -23,20 +23,16 @@ testcase "SearchTree tests" {
 unittest integrationTest {
   [KVWriter<Int,Int>&KVReader<Int,Int>] tree <- ValidatedTree<Int,Int>.new()
   Int count <- 30
+  $ReadOnly[count]$
 
   // Insert values.
-  scoped {
-    Int i <- 0
-  } in while (i < count) {
+  traverse (Counter.zeroIndexed(count) -> Int i) {
     Int new <- ((i + 13) * 3547) % count
     \ tree.set(new,i)
-  } update {
-    i <- i+1
   }
 
-  scoped {
-    Int i <- 0
-  } in while (i < count) {
+  // Check and remove values.
+  traverse (Counter.zeroIndexed(count) -> Int i) {
     Int new <- ((i + 13) * 3547) % count
     scoped {
       optional Int value <- tree.get(new)
@@ -58,8 +54,6 @@ unittest integrationTest {
           .writeTo(SimpleOutput.error())
     }
     \ tree.remove(new)
-  } update {
-    i <- i+1
   }
 }
 
