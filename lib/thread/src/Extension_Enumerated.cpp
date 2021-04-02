@@ -17,6 +17,7 @@ limitations under the License.
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
 #include <atomic>
+#include <vector>
 
 #include <pthread.h>
 #include <string.h>
@@ -27,8 +28,6 @@ limitations under the License.
 #include "Category_BarrierWait.hpp"
 #include "Category_EnumeratedBarrier.hpp"
 #include "Category_Int.hpp"
-#include "Category_Stack.hpp"
-#include "Category_Vector.hpp"
 
 namespace {
 
@@ -153,6 +152,9 @@ using namespace ZEOLITE_PRIVATE_NAMESPACE;
 namespace ZEOLITE_PUBLIC_NAMESPACE {
 #endif  // ZEOLITE_PUBLIC_NAMESPACE
 
+S<TypeValue> CreateValue_EnumeratedBarrier(
+  S<Type_EnumeratedBarrier> parent, std::vector<S<TypeValue>> w);
+
 struct ExtCategory_EnumeratedBarrier : public Category_EnumeratedBarrier {
 };
 
@@ -165,18 +167,36 @@ struct ExtType_EnumeratedBarrier : public Type_EnumeratedBarrier {
     if (Var_arg1 < 0) {
       FAIL() << "Invalid barrier thread count " << Var_arg1;
     }
-    S<TypeValue> vector = GetCategory_Vector().Call(
-      Function_Vector_create,
-      ParamTuple(GetType_EnumeratedWait(Params<0>::Type())),
-      ArgTuple()).Only();
+    std::vector<S<TypeValue>> waits;
     S<Barrier> barrier(Var_arg1? new Barrier(Var_arg1) : nullptr);
     for (int i = 0; i < Var_arg1; ++i) {
       S<TypeValue> wait = CreateValue_EnumeratedWait(
         CreateType_EnumeratedWait(Params<0>::Type()), barrier, i);
-      TypeValue::Call(vector, Function_Stack_push, ParamTuple(), ArgTuple(wait));
+      waits.push_back(wait);
     }
-    return ReturnTuple(vector);
+    return ReturnTuple(CreateValue_EnumeratedBarrier(CreateType_EnumeratedBarrier(Params<0>::Type()), std::move(waits)));
   }
+};
+
+struct ExtValue_EnumeratedBarrier : public Value_EnumeratedBarrier {
+  inline ExtValue_EnumeratedBarrier(S<Type_EnumeratedBarrier> p, std::vector<S<TypeValue>> w)
+    : Value_EnumeratedBarrier(p), waits(w) {}
+
+  ReturnTuple Call_readAt(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) final {
+    TRACE_FUNCTION("EnumeratedBarrier.readAt")
+    const PrimInt Var_arg1 = (args.At(0))->AsInt();
+    if (Var_arg1 < 0 || Var_arg1 >= waits.size()) {
+      FAIL() << "index " << Var_arg1 << " is out of bounds";
+    }
+    return ReturnTuple(waits[Var_arg1]);
+  }
+
+  ReturnTuple Call_size(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) final {
+    TRACE_FUNCTION("EnumeratedBarrier.size")
+    return ReturnTuple(Box_Int(waits.size()));
+  }
+
+  const std::vector<S<TypeValue>> waits;
 };
 
 Category_EnumeratedBarrier& CreateCategory_EnumeratedBarrier() {
@@ -186,6 +206,10 @@ Category_EnumeratedBarrier& CreateCategory_EnumeratedBarrier() {
 S<Type_EnumeratedBarrier> CreateType_EnumeratedBarrier(Params<0>::Type params) {
   static const auto cached = S_get(new ExtType_EnumeratedBarrier(CreateCategory_EnumeratedBarrier(), Params<0>::Type()));
   return cached;
+}
+S<TypeValue> CreateValue_EnumeratedBarrier(
+  S<Type_EnumeratedBarrier> parent, std::vector<S<TypeValue>> w) {
+  return S_get(new ExtValue_EnumeratedBarrier(parent, w));
 }
 
 #ifdef ZEOLITE_PUBLIC_NAMESPACE

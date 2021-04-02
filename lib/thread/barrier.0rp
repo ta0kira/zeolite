@@ -24,6 +24,8 @@ limitations under the License.
 
 // A thread barrier validated using thread enumeration.
 concrete EnumeratedBarrier {
+  refines ReadAt<BarrierWait>
+
   // Create a new barrier for a fixed number of threads.
   //
   // Args:
