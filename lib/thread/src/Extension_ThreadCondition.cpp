@@ -42,7 +42,7 @@ struct ExtType_ThreadCondition : public Type_ThreadCondition {
 
   ReturnTuple Call_new(const S<TypeInstance>& Param_self, const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("ThreadCondition.new")
-    return ReturnTuple(CreateValue_ThreadCondition(CreateType_ThreadCondition(Params<0>::Type())));
+    return ReturnTuple(CreateValue_ThreadCondition(shared_from_this()));
   }
 };
 

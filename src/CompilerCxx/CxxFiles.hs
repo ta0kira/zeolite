@@ -388,7 +388,7 @@ generateCategoryDefinition testing = common where
     ] where
       members = filter ((== CategoryScope). dmScope) $ dcMembers d
   defineConcreteType fs t = concatM [
-      return $ onlyCode $ "struct " ++ typeName (getCategoryName t) ++ " : public " ++ typeBase ++ " {",
+      return $ onlyCode $ "struct " ++ className ++ " : public " ++ typeBase ++ ", std::enable_shared_from_this<" ++ className ++ "> {",
       fmap indentCompiled $ inlineTypeConstructor t,
       return declareTypeOverrides,
       return $ declareTypeArgGetters t,
@@ -396,7 +396,9 @@ generateCategoryDefinition testing = common where
       return $ indentCompiled $ createParams $ getCategoryParams t,
       return $ onlyCode $ "  " ++ categoryName (getCategoryName t) ++ "& parent;",
       return $ onlyCode "};"
-    ]
+    ] where
+      className = typeName (getCategoryName t)
+
   defineConcreteValue r params fs t d = concatM [
       return $ onlyCode $ "struct " ++ valueName (getCategoryName t) ++ " : public " ++ valueBase ++ " {",
       fmap indentCompiled $ inlineValueConstructor t d,
@@ -421,7 +423,7 @@ generateCategoryDefinition testing = common where
       return $ onlyCode "};"
     ]
   defineAbstractType t = concatM [
-      return $ onlyCode $ "struct " ++ typeName (getCategoryName t) ++ " : public " ++ typeBase ++ " {",
+      return $ onlyCode $ "struct " ++ className ++ " : public " ++ typeBase ++ ", std::enable_shared_from_this<" ++ className ++ "> {",
       fmap indentCompiled $ inlineTypeConstructor t,
       return declareTypeOverrides,
       return $ declareTypeArgGetters t,
@@ -430,7 +432,8 @@ generateCategoryDefinition testing = common where
       return $ indentCompiled $ createParams $ getCategoryParams t,
       return $ onlyCode $ "  " ++ categoryName (getCategoryName t) ++ "& parent;",
       return $ onlyCode "};"
-    ]
+    ] where
+      className = typeName (getCategoryName t)
   defineAbstractValue t = concatM [
       return $ onlyCode $ "struct " ++ valueName (getCategoryName t) ++ " : public " ++ valueBase ++ " {",
       fmap indentCompiled $ abstractValueConstructor t,

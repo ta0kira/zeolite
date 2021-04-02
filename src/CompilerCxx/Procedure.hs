@@ -631,6 +631,7 @@ compileExpression = compile where
             UnwrappedSingle $ valueCreator (tiName t') ++ "(" ++ typeInstance ++ ", " ++ es'' ++ ")")
     where
       getType _  True ValueScope _      = "parent"
+      getType _  True TypeScope  _      = "shared_from_this()"
       getType t2 _    _          params = typeCreator (tiName t2) ++ "(" ++ params ++ ")"
       -- Single expression, but possibly multi-return.
       getValues [(Positional ts,e)] = return (ts,useAsArgs e)
@@ -940,8 +941,8 @@ compileFunctionCall e f (FunctionCall c _ ps es) = message ??> do
       return $ callName (sfName f) ++ "(Var_self, " ++ ps2 ++ ", " ++ es2 ++ ")"
     assemble Nothing _ TypeScope TypeScope ps2 es2 =
       return $ callName (sfName f) ++ "(Param_self, " ++ ps2 ++ ", " ++ es2 ++ ")"
-    assemble Nothing _ ValueScope TypeScope ps2 es2 =
-      return $ typeBase ++ "::Call(parent, " ++ functionName f ++ ", " ++ ps2 ++ ", " ++ es2 ++ ")"
+    assemble Nothing scoped ValueScope TypeScope ps2 es2 =
+      return $ scoped ++ callName (sfName f) ++ "(parent, "++ ps2 ++ ", " ++ es2 ++ ")"
     assemble Nothing scoped _ _ ps2 es2 =
       return $ scoped ++ callName (sfName f) ++ "(" ++ ps2 ++ ", " ++ es2 ++ ")"
     assemble (Just e2) _ _ ValueScope ps2 es2 =

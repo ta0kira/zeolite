@@ -174,7 +174,7 @@ struct ExtType_EnumeratedBarrier : public Type_EnumeratedBarrier {
         CreateType_EnumeratedWait(Params<0>::Type()), barrier, i);
       waits.push_back(wait);
     }
-    return ReturnTuple(CreateValue_EnumeratedBarrier(CreateType_EnumeratedBarrier(Params<0>::Type()), std::move(waits)));
+    return ReturnTuple(CreateValue_EnumeratedBarrier(shared_from_this(), std::move(waits)));
   }
 };
 

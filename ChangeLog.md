@@ -16,6 +16,14 @@
 * **[new]** Adds `getForward` and `getReverse` to `SearchTree`, to allow the
   caller to iterate after looking up an entry.
 
+### Language
+
+* **[behavior]** Optimizes calls to `@type` functions when made from `@value`
+  functions of the same type.
+
+* **[behavior]** Optimizes `@value` initialization (e.g., `Type{ }`) when done
+  from `@type` functions of the same type.
+
 ## 0.16.0.0  -- 2021-04-01
 
 ### Language

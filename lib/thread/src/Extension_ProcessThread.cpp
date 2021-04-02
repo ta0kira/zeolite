@@ -41,7 +41,7 @@ struct ExtType_ProcessThread : public Type_ProcessThread {
 
   ReturnTuple Call_from(const S<TypeInstance>& Param_self, const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("ProcessThread.from")
-    return ReturnTuple(CreateValue_ProcessThread(CreateType_ProcessThread(Params<0>::Type()), args));
+    return ReturnTuple(CreateValue_ProcessThread(shared_from_this(), args));
   }
 };
 

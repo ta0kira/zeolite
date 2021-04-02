@@ -35,7 +35,7 @@ struct ExtType_RawFileReader : public Type_RawFileReader {
 
   ReturnTuple Call_open(const S<TypeInstance>& Param_self, const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("RawFileReader.open")
-    return ReturnTuple(CreateValue_RawFileReader(CreateType_RawFileReader(Params<0>::Type()), args));
+    return ReturnTuple(CreateValue_RawFileReader(shared_from_this(), args));
   }
 };
 
