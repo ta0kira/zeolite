@@ -35,6 +35,14 @@ A few specific points about the example:
 
 ## Running
 
+This example depends on the optional `lib/thread` library. That library is
+included in the base package, but you might need to build it first.
+
+```shell
+ZEOLITE_PATH=$(zeolite --get-path)
+zeolite -p "$ZEOLITE_PATH" -r lib/thread
+```
+
 To run the example:
 
 ```shell
