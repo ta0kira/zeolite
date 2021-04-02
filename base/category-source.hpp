@@ -270,7 +270,7 @@ struct DispatchSingle {
 
 template<class T, int S>
 const T* DispatchSelect(const void* key, T(&table)[S]) {
-  if (S < 1) return nullptr;
+  if (S < 2) return nullptr;
   if (table[0].key != nullptr) {
     std::sort(table, table+S);
   }
