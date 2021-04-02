@@ -334,13 +334,15 @@ define Node {
   setHigher (h) { higher <- h }
 }
 
-concrete TreeKeyValue<#k,#v> {
+concrete TreeKeyValue<|#k,#v> {
   refines KeyValue<#k,#v>
 
   @category create<#k,#v> (#k,#v) -> (TreeKeyValue<#k,#v>)
 }
 
 define TreeKeyValue {
+  $ReadOnly[key,value]$
+
   @value #k key
   @value #v value
 
@@ -357,7 +359,7 @@ define TreeKeyValue {
   }
 }
 
-concrete ForwardTreeOrder<#k,#v> {
+concrete ForwardTreeOrder<|#k,#v> {
   refines Order<KeyValue<#k,#v>>
   #k defines LessThan<#k>
 
@@ -400,7 +402,7 @@ define ForwardTreeOrder {
   }
 }
 
-concrete ReverseTreeOrder<#k,#v> {
+concrete ReverseTreeOrder<|#k,#v> {
   refines Order<KeyValue<#k,#v>>
   #k defines LessThan<#k>
 
