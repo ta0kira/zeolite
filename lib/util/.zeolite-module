@@ -15,8 +15,16 @@ extra_files: [
     categories: [Argv]
   }
   category_source {
+    source: "lib/util/src/Extension_MutexLock.cpp"
+    categories: [MutexLock]
+  }
+  category_source {
     source: "lib/util/src/Extension_SimpleInput.cpp"
     categories: [SimpleInput]
+  }
+  category_source {
+    source: "lib/util/src/Extension_SimpleMutex.cpp"
+    categories: [SimpleMutex]
   }
   category_source {
     source: "lib/util/src/Extension_SimpleOutput.cpp"

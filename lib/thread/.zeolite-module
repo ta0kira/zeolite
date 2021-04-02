@@ -8,20 +8,12 @@ private_deps: [
 ]
 extra_files: [
   category_source {
-    source: "lib/thread/src/Extension_MutexLock.cpp"
-    categories: [MutexLock]
-  }
-  category_source {
     source: "lib/thread/src/Extension_ProcessThread.cpp"
     categories: [ProcessThread]
   }
   category_source {
     source: "lib/thread/src/Extension_Realtime.cpp"
     categories: [Realtime]
-  }
-  category_source {
-    source: "lib/thread/src/Extension_SimpleMutex.cpp"
-    categories: [SimpleMutex]
   }
   category_source {
     source: "lib/thread/src/Extension_ThreadCondition.cpp"

@@ -1,8 +1,12 @@
 # Revision history for zeolite-lang
 
-## 0.16.1.0  -- ????-??-??
+## 0.17.0.0  -- ????-??-??
 
 ### Libraries
+
+* **[breaking]** Moves `Mutex`, `SimpleMutex`, and `MutexLock` from `lib/thread`
+  to `lib/util`. This is because they provide basic concurrency protection to
+  objects that should not need to depend on `-lpthread`.
 
 * **[new]** Adds `getForward` and `getReverse` to `SearchTree`, to allow the
   caller to iterate after looking up an entry.
