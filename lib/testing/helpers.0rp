@@ -30,6 +30,18 @@ concrete Testing {
     #x defines Equals<#x>
   (#x,#x) -> ()
 
+  // Check the values for empty. Crashes if present.
+  //
+  // Args:
+  // - optional Formatted: Actual value.
+  @type checkEmpty (optional Formatted) -> ()
+
+  // Check the values for present. Crashes if empty.
+  //
+  // Args:
+  // - optional any: Actual value.
+  @type checkPresent (optional any) -> ()
+
   // Check that the value is within a range. Crashes if it is not in the range.
   //
   // Args:

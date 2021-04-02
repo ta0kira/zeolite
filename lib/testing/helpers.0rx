@@ -22,30 +22,47 @@ define Testing {
   checkEquals (x,y) {
     if (!#x.equals(x,y)) {
       fail(String.builder()
-        .append(x.formatted())
-        .append(" is not equal to ")
-        .append(y.formatted())
-        .build())
+          .append(x.formatted())
+          .append(" is not equal to ")
+          .append(y.formatted())
+          .build())
+    }
+  }
+
+  checkEmpty (x) {
+    if (present(x)) {
+      fail(String.builder()
+          .append(require(x).formatted())
+          .append(" is not empty")
+          .build())
+    }
+  }
+
+  checkPresent (x) {
+    if (!present(x)) {
+      fail(String.builder()
+          .append("expected non-empty value")
+          .build())
     }
   }
 
   checkBetween (x,l,h) {
     if (!lessEquals<?>(l,h)) {
       fail(String.builder()
-        .append("Upper limit ")
-        .append(l.formatted())
-        .append(" is not at or above lower limit ")
-        .append(h.formatted())
-        .build())
+          .append("Upper limit ")
+          .append(l.formatted())
+          .append(" is not at or above lower limit ")
+          .append(h.formatted())
+          .build())
     }
     if (!lessEquals<?>(l,x) || !lessEquals<?>(x,h)) {
       fail(String.builder()
-        .append(x.formatted())
-        .append(" is not between ")
-        .append(l.formatted())
-        .append(" and ")
-        .append(h.formatted())
-        .build())
+          .append(x.formatted())
+          .append(" is not between ")
+          .append(l.formatted())
+          .append(" and ")
+          .append(h.formatted())
+          .build())
     }
   }
 

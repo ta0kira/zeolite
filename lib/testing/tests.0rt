@@ -36,6 +36,45 @@ unittest test {
 }
 
 
+testcase "checkEmpty success" {
+  success
+}
+
+unittest test {
+  \ Testing.checkEmpty(empty)
+}
+
+
+testcase "checkEmpty fail" {
+  crash
+  require stderr "13"
+  require stderr "empty"
+}
+
+unittest test {
+  \ Testing.checkEmpty(13)
+}
+
+
+testcase "checkPresent success" {
+  success
+}
+
+unittest test {
+  \ Testing.checkPresent(13)
+}
+
+
+testcase "checkPresent fail" {
+  crash
+  require stderr "empty"
+}
+
+unittest test {
+  \ Testing.checkPresent(empty)
+}
+
+
 testcase "checkBetween success" {
   success
 }
