@@ -1,0 +1,38 @@
+/* -----------------------------------------------------------------------------
+Copyright 2019-2021 Kevin P. Barry
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+----------------------------------------------------------------------------- */
+
+// Author: Kevin P. Barry [ta0kira@gmail.com]
+
+$ModuleOnly$
+
+// A validated binary search tree for key-value storage.
+//
+// Params:
+// - #k: The key type.
+// - #v: The value type.
+//
+// Notes:
+// - This is the same as SearchTree, but it validates the tree structure every
+//   time there is a modification, which is extremely inefficient. This should
+//   therefore only be used in tests.
+concrete ValidatedTree<#k|#v|> {
+  refines KVWriter<#k,#v>
+  refines KVReader<#k,#v>
+  #k defines LessThan<#k>
+
+  // Create an empty tree.
+  @type new () -> (#self)
+}
