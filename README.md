@@ -132,14 +132,16 @@ This helps solve a few separate problems:
 
 - Operations like `equals` comparisons in Java are always dispatched to the
   *left* object, which could lead to inconsistent results if the objects are
-  swapped: `foo.equals(bar);` is not the same as `bar.equals(foo);`. Such
-  problems can be mitigated by making `equals` a *type* function in an interface
-  rather than a *value* function.
+  swapped: `foo.equals(bar)` is not the same as `bar.equals(foo)`. This
+  dispatching asymmetry can be eliminated by making `equals` a type function
+  (e.g., `MyType.equals(foo,bar)`), and further creating an interface that
+  requires implementations to support such calls.
 
-- Factory patterns can be abstracted out into interfaces, allowing the concept
-  of default construction (used by Java, C++, and others) to be eliminated. One
-  common issue in C++ is forgetting to *disallow* direct construction or copying
-  of objects of your `class`.
+- Factory patterns can be abstracted out into interfaces. For example, you could
+  create a factory interface that requires an implementation to parse a new
+  object from a `String`, without needing to instantiate the factory object
+  itself. You could just implement the factory function directly in `MyType`,
+  without needing a separate `MyTypeFactory`.
 
 ### Integrated Test Runner
 
@@ -196,6 +198,17 @@ The overall design of Zeolite revolves around data encapsulation:
   data members of any other object; not even other objects of the same type.
   This forces the programmer to also think about usage patterns when dealing
   with other objects of the same type.
+
+- **No `null` values.** Every variable must be explicitly initialized. This
+  obviates questions of whether or not a variable actually contains a value.
+  When combined with the elimination of default construction, this means that a
+  variable can only hold values that a type author has specifically allowed.
+
+  Zeolite has an `optional` storage modifier for use in a variable's type, but
+  it creates a new and incompatible type, whose value cannot be used without
+  first extracting it. This is in contrast to Java allowing any variable to be
+  `null`. (It is more like `Optional` in Java 8, but as built-in syntax, and
+  with nesting disallowed.)
 
 - **No reflection or down-casting.** The only thing that has access to the
   "real" type of a value is the value itself. This means that the reflection and
