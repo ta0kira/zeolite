@@ -1,0 +1,102 @@
+/* -----------------------------------------------------------------------------
+Copyright 2021 Kevin P. Barry
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+----------------------------------------------------------------------------- */
+
+// Author: Kevin P. Barry [ta0kira@gmail.com]
+
+// Provides basic balanced BST functionality to custom containers.
+//
+// Params:
+// - #n: The type of node to be managed.
+// - #k: The key type used by #n.
+// - #v: The value type used by #n.
+// - #r: A read-only subset of the functionality of #n.
+//
+// Notes:
+// - This is not meant for direct use: It is only exposed in this library to
+//   allow other container authors to extend BST functionality by augmenting the
+//   data stored along with each node. This allows the augmented data to rely on
+//   where the node is within the tree.
+// - #r should not expose any functionality of #n that can alter the integrity
+//   of the tree. It is provided as a filter for the return of getRoot() so that
+//   a container can implement custom functionality using the tree's structure
+//   without risking modification of the tree.
+concrete AutoBinaryTree<|#n,#k,#v|#r> {
+  #n defines  KVFactory<#k,#v>
+  #n requires BalancedTreeNode<#n,#k,#v>
+  #k defines  LessThan<#k>
+  #r allows   #n
+
+  @type new () -> (#self)
+
+  @value getRoot ()      -> (optional #r)
+  @value get     (#k)    -> (optional #v)
+  @value set     (#k,#v) -> ()
+  @value remove  (#k)    -> ()
+}
+
+// An interface for reading the state of a BST node.
+//
+// Notes:
+// - This is intended for internal use in BST-based categories.
+@value interface BinaryTreeNode<|#k,#v> {
+  getLower   () -> (optional #self)
+  getHigher  () -> (optional #self)
+  getKey     () -> (#k)
+  getValue   () -> (#v)
+  getBalance () -> (Int)
+  getHeight  () -> (Int)
+}
+
+// An interface for managing the state of a BST node.
+//
+// Notes:
+// - This is intended for internal use in BST-based categories.
+@value interface BalancedTreeNode<#n|#k,#v|> {
+  refines BinaryTreeNode<#k,#v>
+
+  setLower  (optional #n) -> ()
+  setHigher (optional #n) -> ()
+  setValue     (#v) -> ()
+  updateHeight ()   -> ()
+}
+
+// Provides forward iteration of the nodes in a BST.
+//
+// Notes:
+// - This is intended for internal use in BST-based categories.
+concrete ForwardTreeOrder<|#k,#v> {
+  refines Order<KeyValue<#k,#v>>
+
+  @category create<#k,#v> (optional BinaryTreeNode<#k,#v>) -> (optional ForwardTreeOrder<#k,#v>)
+
+  @category seek<#k,#v>
+    #k defines LessThan<#k>
+  (#k,optional BinaryTreeNode<#k,#v>) -> (optional ForwardTreeOrder<#k,#v>)
+}
+
+// Provides reverse iteration of the nodes in a BST.
+//
+// Notes:
+// - This is intended for internal use in BST-based categories.
+concrete ReverseTreeOrder<|#k,#v> {
+  refines Order<KeyValue<#k,#v>>
+
+  @category create<#k,#v> (optional BinaryTreeNode<#k,#v>) -> (optional ReverseTreeOrder<#k,#v>)
+
+  @category seek<#k,#v>
+    #k defines LessThan<#k>
+  (#k,optional BinaryTreeNode<#k,#v>) -> (optional ReverseTreeOrder<#k,#v>)
+}

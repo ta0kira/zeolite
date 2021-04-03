@@ -1,5 +1,13 @@
 # Revision history for zeolite-lang
 
+## 0.16.2.0  -- ????-??-??
+
+### Libraries
+
+* **[new]** Adds `AutoBinaryTree` to `lib/container`, to provide binary search
+  tree (BST) functionality to custom containers that need to augment each node
+  with additional data.
+
 ## 0.16.1.0  -- 2021-04-02
 
 ### Language

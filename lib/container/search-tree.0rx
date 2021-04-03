@@ -17,186 +17,133 @@ limitations under the License.
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
 define SearchTree {
-  @value optional Node<#k,#v> root
+  @value AutoBinaryTree<SearchTreeNode<#k,#v>,#k,#v,BinaryTreeNode<#k,#v>> tree
 
   new () {
-    return #self{ empty }
+    return #self{ AutoBinaryTree<SearchTreeNode<#k,#v>,#k,#v,BinaryTreeNode<#k,#v>>.new() }
   }
 
   set (k,v) {
-    root <- Node<#k,#v>.insert(root,k,v)
+    \ tree.set(k,v)
     return self
   }
 
   remove (k) {
-    root <- Node<#k,#v>.delete(root,k)
+    \ tree.remove(k)
     return self
   }
 
   get (k) {
-    return Node<#k,#v>.find(root,k)
+    return tree.get(k)
   }
 
   defaultOrder () {
-    return ForwardTreeOrder:create<?,?>(root)
+    return ForwardTreeOrder:create<?,?>(tree.getRoot())
   }
 
   reverseOrder () {
-    return ReverseTreeOrder:create<?,?>(root)
+    return ReverseTreeOrder:create<?,?>(tree.getRoot())
   }
 
   getForward (k) {
-    return ForwardTreeOrder:seek<?,?>(k,root)
+    return ForwardTreeOrder:seek<?,?>(k,tree.getRoot())
   }
 
   getReverse (k) {
-    return ReverseTreeOrder:seek<?,?>(k,root)
+    return ReverseTreeOrder:seek<?,?>(k,tree.getRoot())
   }
 }
 
 define ValidatedTree {
-  @value optional Node<#k,#v> root
+  @value AutoBinaryTree<SearchTreeNode<#k,#v>,#k,#v,BinaryTreeNode<#k,#v>> tree
 
   new () {
-    return #self{ empty }
+    return #self{ AutoBinaryTree<SearchTreeNode<#k,#v>,#k,#v,BinaryTreeNode<#k,#v>>.new() }
   }
 
   set (k,v) {
-    root <- Node<#k,#v>.insert(root,k,v)
-    \ Node<#k,#v>.validate(root)
+    \ tree.set(k,v)
+    \ validate(tree.getRoot())
     return self
   }
 
   remove (k) {
-    root <- Node<#k,#v>.delete(root,k)
-    \ Node<#k,#v>.validate(root)
+    \ tree.remove(k)
+    \ validate(tree.getRoot())
     return self
   }
 
   get (k) {
-    return Node<#k,#v>.find(root,k)
+    return tree.get(k)
+  }
+
+  @type validate (optional BinaryTreeNode<#k,#v>) -> ()
+  validate (node) {
+    if (present(node)) {
+      \ validateOrder(require(node))
+      \ validateBalance(require(node))
+    }
+  }
+
+  @type validateOrder (BinaryTreeNode<#k,#v>) -> ()
+  validateOrder (node) {
+    if (present(node.getLower())) {
+      if (!(require(node.getLower()).getKey() `#k.lessThan` node.getKey())) {
+        fail("bad lower order")
+      }
+      \ validateOrder(require(node.getLower()))
+    }
+    if (present(node.getHigher())) {
+      if (!(node.getKey() `#k.lessThan` require(node.getHigher()).getKey())) {
+        fail("bad higher order")
+      }
+      \ validateOrder(require(node.getHigher()))
+    }
+  }
+
+  @type validateBalance (BinaryTreeNode<#k,#v>) -> ()
+  validateBalance (node) {
+    scoped {
+      Int balance <- node.getBalance()
+    } in if (balance > 1 || balance < -1) {
+      fail("out of balance: " + balance.formatted())
+    }
+    if (present(node.getLower())) {
+      \ validateBalance(require(node.getLower()))
+    }
+    if (present(node.getHigher())) {
+      \ validateBalance(require(node.getHigher()))
+    }
   }
 }
 
-concrete Node<#k,#v> {
-  #k defines LessThan<#k>
-
-  @type insert (optional Node<#k,#v>,#k,#v) -> (optional Node<#k,#v>)
-  @type delete (optional Node<#k,#v>,#k) -> (optional Node<#k,#v>)
-  @type find (optional Node<#k,#v>,#k) -> (optional #v)
-  @type validate (optional Node<#k,#v>) -> ()
-
-  @value getLower () -> (optional Node<#k,#v>)
-  @value getHigher () -> (optional Node<#k,#v>)
-  @value getKey () -> (#k)
-  @value getValue () -> (#v)
+concrete SearchTreeNode<#k,#v> {
+  defines KVFactory<#k,#v>
+  refines BalancedTreeNode<SearchTreeNode<#k,#v>,#k,#v>
 }
 
-define Node {
+define SearchTreeNode {
   $ReadOnly[key]$
 
   @value Int height
   @value #k key
   @value #v value
-  @value optional Node<#k,#v> lower
-  @value optional Node<#k,#v> higher
+  @value optional #self lower
+  @value optional #self higher
 
-  insert (node,k,v) {
-    if (!present(node)) {
-      return #self{ 1, k, v, empty, empty }
-    }
-    Node<#k,#v> node2 <- require(node)
-    if (k `#k.lessThan` node2.getKey()) {
-      \ node2.setLower(insert(node2.getLower(),k,v))
-      return rebalance(node2)
-    } elif (node2.getKey() `#k.lessThan` k) {
-      \ node2.setHigher(insert(node2.getHigher(),k,v))
-      return rebalance(node2)
-    } else {
-      \ node2.setValue(v)
-      return node2
-    }
+  newNode (k,v) {
+    return #self{ 1, k, v, empty, empty }
   }
 
-  delete (node,k) {
-    if (!present(node)) {
-      return empty
-    }
-    Node<#k,#v> node2 <- require(node)
-    if (k `#k.lessThan` node2.getKey()) {
-      \ node2.setLower(delete(node2.getLower(),k))
-      return rebalance(node2)
-    } elif (node2.getKey() `#k.lessThan` k) {
-      \ node2.setHigher(delete(node2.getHigher(),k))
-      return rebalance(node2)
-    } else {
-      return rebalance(removeNode(node2))
-    }
-  }
+  getLower ()   { return lower }
+  setLower (l)  { lower <- l }
+  getHigher ()  { return higher }
+  setHigher (h) { higher <- h }
+  getKey ()     { return key }
+  getValue ()   { return value }
+  setValue (v)  { value <- v }
+  getHeight ()  { return height }
 
-  find (node,k) {
-    if (present(node)) {
-      scoped {
-        Node<#k,#v> node2 <- require(node)
-      } in if (k `#k.lessThan` node2.getKey()) {
-        return find(node2.getLower(),k)
-      } elif (node2.getKey() `#k.lessThan` k) {
-        return find(node2.getHigher(),k)
-      } else {
-        return node2.getValue()
-      }
-    } else {
-      return empty
-    }
-  }
-
-  validate (node) {
-    if (present(node)) {
-      \ require(node).validateOrder()
-      \ require(node).validateBalance()
-    }
-  }
-
-  getLower () { return lower }
-
-  getHigher () { return higher }
-
-  getKey () { return key }
-
-  getValue () { return value }
-
-  @value validateOrder () -> ()
-  validateOrder () {
-    if (present(lower)) {
-      if (!(require(lower).getKey() `#k.lessThan` getKey())) {
-        fail("bad lower order")
-      }
-      \ require(lower).validateOrder()
-    }
-    if (present(higher)) {
-      if (!(getKey() `#k.lessThan` require(higher).getKey())) {
-        fail("bad higher order")
-      }
-      \ require(higher).validateOrder()
-    }
-  }
-
-  @value validateBalance () -> ()
-  validateBalance () {
-    scoped {
-      Int balance <- getBalance()
-    } in if (balance > 1 || balance < -1) {
-      fail("out of balance: " + balance.formatted())
-    }
-    if (present(lower)) {
-      \ require(lower).validateBalance()
-    }
-    if (present(higher)) {
-      \ require(higher).validateBalance()
-    }
-  }
-
-  @value updateHeight () -> ()
   updateHeight () {
     scoped {
       Int l <- 0
@@ -214,7 +161,6 @@ define Node {
     }
   }
 
-  @value getBalance () -> (Int)
   getBalance () {
     scoped {
       Int l <- 0
@@ -226,263 +172,5 @@ define Node {
         h <- require(higher).getHeight()
       }
     } in return h - l
-  }
-
-  @type rebalance (optional Node<#k,#v>) -> (optional Node<#k,#v>)
-  rebalance (node) {
-    if (!present(node)) {
-      return empty
-    }
-    Node<#k,#v> node2 <- require(node)
-    \ node2.updateHeight()
-    scoped {
-      Int balance <- node2.getBalance()
-    } in if (balance > 1) {
-      return pivotLower(node2)
-    } elif (balance < -1) {
-      return pivotHigher(node2)
-    } else {
-      return node2
-    }
-  }
-
-  @type pivotHigher (Node<#k,#v>) -> (Node<#k,#v>)
-  pivotHigher (node) (newNode) {
-    if (require(node.getLower()).getBalance() > 0) {
-      \ node.setLower(pivotLower(require(node.getLower())))
-    }
-    newNode <- require(node.getLower())
-    \ node.setLower(newNode.getHigher())
-    \ node.updateHeight()
-    \ newNode.setHigher(node)
-    \ newNode.updateHeight()
-  }
-
-  @type pivotLower (Node<#k,#v>) -> (Node<#k,#v>)
-  pivotLower (node) (newNode) {
-    if (require(node.getHigher()).getBalance() < 0) {
-      \ node.setHigher(pivotHigher(require(node.getHigher())))
-    }
-    newNode <- require(node.getHigher())
-    \ node.setHigher(newNode.getLower())
-    \ node.updateHeight()
-    \ newNode.setLower(node)
-    \ newNode.updateHeight()
-  }
-
-  @type removeNode (Node<#k,#v>) -> (optional Node<#k,#v>)
-  removeNode (node) (newNode) {
-    if (node.getBalance() < 0) {
-      optional Node<#k,#v> temp, newNode <- removeHighest(node.getLower())
-      \ node.setLower(temp)
-    } else {
-      optional Node<#k,#v> temp, newNode <- removeLowest(node.getHigher())
-      \ node.setHigher(temp)
-    }
-    if (present(newNode)) {
-      \ swapChildren(node,require(newNode))
-      \ require(newNode).updateHeight()
-    }
-  }
-
-  @type removeHighest (optional Node<#k,#v>) -> (optional Node<#k,#v>,optional Node<#k,#v>)
-  removeHighest (node) (newNode,removed) {
-    if (!present(node)) {
-      return empty, empty
-    }
-    Node<#k,#v> node2 <- require(node)
-    if (present(node2.getHigher())) {
-      optional Node<#k,#v> temp, removed <- removeHighest(node2.getHigher())
-      \ node2.setHigher(temp)
-      newNode <- rebalance(node2)
-    } else {
-      newNode <- node2.getLower()
-      \ node2.setLower(empty)
-      removed <- node
-    }
-  }
-
-  @type removeLowest (optional Node<#k,#v>) -> (optional Node<#k,#v>,optional Node<#k,#v>)
-  removeLowest (node) (newNode,removed) {
-    if (!present(node)) {
-      return empty, empty
-    }
-    Node<#k,#v> node2 <- require(node)
-    if (present(node2.getLower())) {
-      optional Node<#k,#v> temp, removed <- removeLowest(node2.getLower())
-      \ node2.setLower(temp)
-      newNode <- rebalance(node2)
-    } else {
-      newNode <- node2.getHigher()
-      \ node2.setHigher(empty)
-      removed <- node
-    }
-  }
-
-  @type swapChildren (Node<#k,#v>,Node<#k,#v>) -> ()
-  swapChildren (l,r) {
-    scoped {
-      optional Node<#k,#v> temp <- l.getLower()
-      \ l.setLower(r.getLower())
-    } in \ r.setLower(temp)
-    scoped {
-      optional Node<#k,#v> temp <- l.getHigher()
-      \ l.setHigher(r.getHigher())
-    } in \ r.setHigher(temp)
-  }
-
-  @value getHeight () -> (Int)
-  getHeight () { return height }
-
-  @value setValue (#v) -> ()
-  setValue (v) { value <- v }
-
-  @value setLower (optional Node<#k,#v>) -> ()
-  setLower (l) { lower <- l }
-
-  @value setHigher (optional Node<#k,#v>) -> ()
-  setHigher (h) { higher <- h }
-}
-
-concrete TreeKeyValue<|#k,#v> {
-  refines KeyValue<#k,#v>
-
-  @category create<#k,#v> (#k,#v) -> (TreeKeyValue<#k,#v>)
-}
-
-define TreeKeyValue {
-  $ReadOnly[key,value]$
-
-  @value #k key
-  @value #v value
-
-  create (key,value) {
-    return TreeKeyValue<#k,#v>{ key, value }
-  }
-
-  getKey () {
-    return key
-  }
-
-  getValue () {
-    return value
-  }
-}
-
-concrete ForwardTreeOrder<|#k,#v> {
-  refines Order<KeyValue<#k,#v>>
-
-  @category create<#k,#v> (optional Node<#k,#v>) -> (optional ForwardTreeOrder<#k,#v>)
-
-  @category seek<#k,#v>
-    #k defines LessThan<#k>
-  (#k,optional Node<#k,#v>) -> (optional ForwardTreeOrder<#k,#v>)
-}
-
-define ForwardTreeOrder {
-  $ReadOnly[node,prev]$
-
-  @value Node<#k,#v> node
-  @value optional ForwardTreeOrder<#k,#v> prev
-
-  create (node) (current) {
-    optional Node<#k,#v> node2 <- node
-    current <- empty
-    while (present(node2)) {
-      current <- ForwardTreeOrder<#k,#v>{ require(node2), current }
-      node2 <- require(node2).getLower()
-    }
-  }
-
-  seek (key,node) (current) {
-    optional Node<#k,#v> node2 <- node
-    current <- empty
-    while (present(node2)) {
-      if (require(node2).getKey() `#k.lessThan` key) {
-        // Skip node2 in the traversal, since it's before key.
-        node2 <- require(node2).getHigher()
-      } elif (key `#k.lessThan` require(node2).getKey()) {
-        current <- ForwardTreeOrder<#k,#v>{ require(node2), current }
-        node2 <- require(node2).getLower()
-      } else {
-        current <- ForwardTreeOrder<#k,#v>{ require(node2), current }
-        break
-      }
-    }
-  }
-
-  next () (current) {
-    // Algorithm:
-    // 1. Pop self from the stack.
-    // 2. Traverse lower to the bottom starting from the higher child of self.
-    optional Node<#k,#v> node2 <- node.getHigher()
-    current <- prev
-    while (present(node2)) {
-      current <- ForwardTreeOrder<#k,#v>{ require(node2), current }
-      node2 <- require(node2).getLower()
-    }
-  }
-
-  get () {
-    return TreeKeyValue:create<?,?>(node.getKey(),node.getValue())
-  }
-}
-
-concrete ReverseTreeOrder<|#k,#v> {
-  refines Order<KeyValue<#k,#v>>
-
-  @category create<#k,#v> (optional Node<#k,#v>) -> (optional ReverseTreeOrder<#k,#v>)
-
-  @category seek<#k,#v>
-    #k defines LessThan<#k>
-  (#k,optional Node<#k,#v>) -> (optional ReverseTreeOrder<#k,#v>)
-}
-
-define ReverseTreeOrder {
-  $ReadOnly[node,prev]$
-
-  @value Node<#k,#v> node
-  @value optional ReverseTreeOrder<#k,#v> prev
-
-  create (node) (current) {
-    optional Node<#k,#v> node2 <- node
-    current <- empty
-    while (present(node2)) {
-      current <- ReverseTreeOrder<#k,#v>{ require(node2), current }
-      node2 <- require(node2).getHigher()
-    }
-  }
-
-  seek (key,node) (current) {
-    optional Node<#k,#v> node2 <- node
-    current <- empty
-    while (present(node2)) {
-      if (require(node2).getKey() `#k.lessThan` key) {
-        current <- ReverseTreeOrder<#k,#v>{ require(node2), current }
-        node2 <- require(node2).getHigher()
-      } elif (key `#k.lessThan` require(node2).getKey()) {
-        // Skip node2 in the traversal, since it's after key.
-        node2 <- require(node2).getLower()
-      } else {
-        current <- ReverseTreeOrder<#k,#v>{ require(node2), current }
-        break
-      }
-    }
-  }
-
-  next () (current) {
-    // Algorithm:
-    // 1. Pop self from the stack.
-    // 2. Traverse higher to the bottom starting from the lower child of self.
-    optional Node<#k,#v> node2 <- node.getLower()
-    current <- prev
-    while (present(node2)) {
-      current <- ReverseTreeOrder<#k,#v>{ require(node2), current }
-      node2 <- require(node2).getHigher()
-    }
-  }
-
-  get () {
-    return TreeKeyValue:create<?,?>(node.getKey(),node.getValue())
   }
 }

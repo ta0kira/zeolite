@@ -1,0 +1,320 @@
+/* -----------------------------------------------------------------------------
+Copyright 2019-2021 Kevin P. Barry
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+----------------------------------------------------------------------------- */
+
+// Author: Kevin P. Barry [ta0kira@gmail.com]
+
+define AutoBinaryTree {
+  @value optional #n root
+
+  new () {
+    return #self{ empty }
+  }
+
+  getRoot () {
+    return root
+  }
+
+  get (k) {
+    return find(root,k)
+  }
+
+  set (k,v) {
+    root <- insert(root,k,v)
+  }
+
+  remove (k) {
+    root <- delete(root,k)
+  }
+
+
+  @type insert (optional #n,#k,#v) -> (optional #n)
+  insert (node,k,v) {
+    if (!present(node)) {
+      return #n.newNode(k,v)
+    }
+    #n node2 <- require(node)
+    if (k `#k.lessThan` node2.getKey()) {
+      \ node2.setLower(insert(node2.getLower(),k,v))
+      return rebalance(node2)
+    } elif (node2.getKey() `#k.lessThan` k) {
+      \ node2.setHigher(insert(node2.getHigher(),k,v))
+      return rebalance(node2)
+    } else {
+      \ node2.setValue(v)
+      return node2
+    }
+  }
+
+  @type delete (optional #n,#k) -> (optional #n)
+  delete (node,k) {
+    if (!present(node)) {
+      return empty
+    }
+    #n node2 <- require(node)
+    if (k `#k.lessThan` node2.getKey()) {
+      \ node2.setLower(delete(node2.getLower(),k))
+      return rebalance(node2)
+    } elif (node2.getKey() `#k.lessThan` k) {
+      \ node2.setHigher(delete(node2.getHigher(),k))
+      return rebalance(node2)
+    } else {
+      return rebalance(removeNode(node2))
+    }
+  }
+
+  @type find (optional #n,#k) -> (optional #v)
+  find (node,k) {
+    if (present(node)) {
+      scoped {
+        #n node2 <- require(node)
+      } in if (k `#k.lessThan` node2.getKey()) {
+        return find(node2.getLower(),k)
+      } elif (node2.getKey() `#k.lessThan` k) {
+        return find(node2.getHigher(),k)
+      } else {
+        return node2.getValue()
+      }
+    } else {
+      return empty
+    }
+  }
+
+  @type rebalance (optional #n) -> (optional #n)
+  rebalance (node) {
+    if (!present(node)) {
+      return empty
+    }
+    #n node2 <- require(node)
+    \ node2.updateHeight()
+    scoped {
+      Int balance <- node2.getBalance()
+    } in if (balance > 1) {
+      return pivotLower(node2)
+    } elif (balance < -1) {
+      return pivotHigher(node2)
+    } else {
+      return node2
+    }
+  }
+
+  @type pivotHigher (#n) -> (#n)
+  pivotHigher (node) (newNode) {
+    if (require(node.getLower()).getBalance() > 0) {
+      \ node.setLower(pivotLower(require(node.getLower())))
+    }
+    newNode <- require(node.getLower())
+    \ node.setLower(newNode.getHigher())
+    \ node.updateHeight()
+    \ newNode.setHigher(node)
+    \ newNode.updateHeight()
+  }
+
+  @type pivotLower (#n) -> (#n)
+  pivotLower (node) (newNode) {
+    if (require(node.getHigher()).getBalance() < 0) {
+      \ node.setHigher(pivotHigher(require(node.getHigher())))
+    }
+    newNode <- require(node.getHigher())
+    \ node.setHigher(newNode.getLower())
+    \ node.updateHeight()
+    \ newNode.setLower(node)
+    \ newNode.updateHeight()
+  }
+
+  @type removeNode (#n) -> (optional #n)
+  removeNode (node) (newNode) {
+    if (node.getBalance() < 0) {
+      optional #n temp, newNode <- removeHighest(node.getLower())
+      \ node.setLower(temp)
+    } else {
+      optional #n temp, newNode <- removeLowest(node.getHigher())
+      \ node.setHigher(temp)
+    }
+    if (present(newNode)) {
+      \ swapChildren(node,require(newNode))
+      \ require(newNode).updateHeight()
+    }
+  }
+
+  @type removeHighest (optional #n) -> (optional #n,optional #n)
+  removeHighest (node) (newNode,removed) {
+    if (!present(node)) {
+      return empty, empty
+    }
+    #n node2 <- require(node)
+    if (present(node2.getHigher())) {
+      optional #n temp, removed <- removeHighest(node2.getHigher())
+      \ node2.setHigher(temp)
+      newNode <- rebalance(node2)
+    } else {
+      newNode <- node2.getLower()
+      \ node2.setLower(empty)
+      removed <- node
+    }
+  }
+
+  @type removeLowest (optional #n) -> (optional #n,optional #n)
+  removeLowest (node) (newNode,removed) {
+    if (!present(node)) {
+      return empty, empty
+    }
+    #n node2 <- require(node)
+    if (present(node2.getLower())) {
+      optional #n temp, removed <- removeLowest(node2.getLower())
+      \ node2.setLower(temp)
+      newNode <- rebalance(node2)
+    } else {
+      newNode <- node2.getHigher()
+      \ node2.setHigher(empty)
+      removed <- node
+    }
+  }
+
+  @type swapChildren (#n,#n) -> ()
+  swapChildren (l,r) {
+    scoped {
+      optional #n temp <- l.getLower()
+      \ l.setLower(r.getLower())
+    } in \ r.setLower(temp)
+    scoped {
+      optional #n temp <- l.getHigher()
+      \ l.setHigher(r.getHigher())
+    } in \ r.setHigher(temp)
+  }
+}
+
+concrete TreeKeyValue<|#k,#v> {
+  refines KeyValue<#k,#v>
+
+  @category create<#k,#v> (#k,#v) -> (TreeKeyValue<#k,#v>)
+}
+
+define TreeKeyValue {
+  $ReadOnly[key,value]$
+
+  @value #k key
+  @value #v value
+
+  create (key,value) {
+    return TreeKeyValue<#k,#v>{ key, value }
+  }
+
+  getKey () {
+    return key
+  }
+
+  getValue () {
+    return value
+  }
+}
+
+define ForwardTreeOrder {
+  $ReadOnly[node,prev]$
+
+  @value BinaryTreeNode<#k,#v> node
+  @value optional ForwardTreeOrder<#k,#v> prev
+
+  create (node) (current) {
+    optional BinaryTreeNode<#k,#v> node2 <- node
+    current <- empty
+    while (present(node2)) {
+      current <- ForwardTreeOrder<#k,#v>{ require(node2), current }
+      node2 <- require(node2).getLower()
+    }
+  }
+
+  seek (key,node) (current) {
+    optional BinaryTreeNode<#k,#v> node2 <- node
+    current <- empty
+    while (present(node2)) {
+      if (require(node2).getKey() `#k.lessThan` key) {
+        // Skip node2 in the traversal, since it's before key.
+        node2 <- require(node2).getHigher()
+      } elif (key `#k.lessThan` require(node2).getKey()) {
+        current <- ForwardTreeOrder<#k,#v>{ require(node2), current }
+        node2 <- require(node2).getLower()
+      } else {
+        current <- ForwardTreeOrder<#k,#v>{ require(node2), current }
+        break
+      }
+    }
+  }
+
+  next () (current) {
+    // Algorithm:
+    // 1. Pop self from the stack.
+    // 2. Traverse lower to the bottom starting from the higher child of self.
+    optional BinaryTreeNode<#k,#v> node2 <- node.getHigher()
+    current <- prev
+    while (present(node2)) {
+      current <- ForwardTreeOrder<#k,#v>{ require(node2), current }
+      node2 <- require(node2).getLower()
+    }
+  }
+
+  get () {
+    return TreeKeyValue:create<?,?>(node.getKey(),node.getValue())
+  }
+}
+
+define ReverseTreeOrder {
+  $ReadOnly[node,prev]$
+
+  @value BinaryTreeNode<#k,#v> node
+  @value optional ReverseTreeOrder<#k,#v> prev
+
+  create (node) (current) {
+    optional BinaryTreeNode<#k,#v> node2 <- node
+    current <- empty
+    while (present(node2)) {
+      current <- ReverseTreeOrder<#k,#v>{ require(node2), current }
+      node2 <- require(node2).getHigher()
+    }
+  }
+
+  seek (key,node) (current) {
+    optional BinaryTreeNode<#k,#v> node2 <- node
+    current <- empty
+    while (present(node2)) {
+      if (require(node2).getKey() `#k.lessThan` key) {
+        current <- ReverseTreeOrder<#k,#v>{ require(node2), current }
+        node2 <- require(node2).getHigher()
+      } elif (key `#k.lessThan` require(node2).getKey()) {
+        // Skip node2 in the traversal, since it's after key.
+        node2 <- require(node2).getLower()
+      } else {
+        current <- ReverseTreeOrder<#k,#v>{ require(node2), current }
+        break
+      }
+    }
+  }
+
+  next () (current) {
+    // Algorithm:
+    // 1. Pop self from the stack.
+    // 2. Traverse higher to the bottom starting from the lower child of self.
+    optional BinaryTreeNode<#k,#v> node2 <- node.getLower()
+    current <- prev
+    while (present(node2)) {
+      current <- ReverseTreeOrder<#k,#v>{ require(node2), current }
+      node2 <- require(node2).getHigher()
+    }
+  }
+
+  get () {
+    return TreeKeyValue:create<?,?>(node.getKey(),node.getValue())
+  }
+}

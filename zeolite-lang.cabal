@@ -1,7 +1,7 @@
 cabal-version:       2.2
 
 name:                zeolite-lang
-version:             0.16.1.1
+version:             0.16.2.0
 synopsis:            Zeolite is a statically-typed, general-purpose programming language.
 
 description:
