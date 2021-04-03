@@ -1,23 +1,19 @@
-/* Parses a fixed string.
- */
+// Parses a fixed string.
 concrete StringParser {
   @type create (String) -> (Parser<String>)
 }
 
-/* Parses a string containing a limited set of characters.
- */
+// Parses a string containing a limited set of characters.
 concrete SequenceOfParser {
   @type create (String, Int /*min*/, Int /*max*/) -> (Parser<String>)
 }
 
-/* Parses a fixed character.
- */
+// Parses a fixed character.
 concrete CharParser {
   @type create (Char) -> (Parser<Char>)
 }
 
-/* Parser combinators.
- */
+// Parser combinators.
 concrete Parse {
   @type const<#x> (#x)                     -> (Parser<#x>)
   @type error     (Formatted)              -> (Parser<all>)

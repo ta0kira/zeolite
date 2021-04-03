@@ -28,13 +28,15 @@ limitations under the License.
   // Blocks the current thread until the Thread exits.
   //
   // Notes:
-  // - Check isRunning() before calling. There might be a crash otherwise.
+  // - There might be a crash if join() or detach() were already called, or if
+  //   the thread was never started in the first place.
   join () -> (#self)
 
   // Disassociates the running thread from this handle.
   //
   // Notes:
-  // - Check isRunning() before calling. There might be a crash otherwise.
+  // - There might be a crash if join() or detach() were already called, or if
+  //   the thread was never started in the first place.
   detach () -> (#self)
 }
 

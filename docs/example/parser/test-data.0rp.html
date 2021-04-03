@@ -11,8 +11,7 @@
 <pre style='color:#1f1c1b;background-color:#ffffff;'>
 <b><i><span style='color:#8060c0;'>$TestsOnly$</span></i></b>
 
-<span style='color:#898887;'>/*</span><span style='color:#898887;'> A contrived object for test data.</span>
-<span style='color:#898887;'> </span><span style='color:#898887;'>*/</span>
+<span style='color:#898887;'>// A contrived object for test data.</span>
 <b>concrete</b> <b><span style='color:#0057ae;'>TestData</span></b> {
   <span style='color:#644a9b;'>@type</span> create (<i><span style='color:#0057ae;'>String</span></i>,<i><span style='color:#0057ae;'>String</span></i>,<i><span style='color:#0057ae;'>Bool</span></i>) -&gt; (<span style='color:#0057ae;'>TestData</span>)
 
@@ -22,8 +21,7 @@
 }
 
 
-<span style='color:#898887;'>/*</span><span style='color:#898887;'> Parses the test-data.txt file using a one-off format.</span>
-<span style='color:#898887;'> </span><span style='color:#898887;'>*/</span>
+<span style='color:#898887;'>// Parses the test-data.txt file using a one-off format.</span>
 <b>concrete</b> <b><span style='color:#0057ae;'>TestDataParser</span></b> {
   <span style='color:#644a9b;'>@type</span> create () -&gt; (<span style='color:#0057ae;'>Parser</span><span style='color:#c02040;'>&lt;</span><span style='color:#0057ae;'>TestData</span><span style='color:#c02040;'>&gt;</span>)
 }

@@ -1,7 +1,6 @@
 $TestsOnly$
 
-/* A contrived object for test data.
- */
+// A contrived object for test data.
 concrete TestData {
   @type create (String,String,Bool) -> (TestData)
 
@@ -11,8 +10,7 @@ concrete TestData {
 }
 
 
-/* Parses the test-data.txt file using a one-off format.
- */
+// Parses the test-data.txt file using a one-off format.
 concrete TestDataParser {
   @type create () -> (Parser<TestData>)
 }

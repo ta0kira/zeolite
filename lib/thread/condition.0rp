@@ -74,10 +74,8 @@ limitations under the License.
 //
 // Example:
 //
-//   ConditionWait cond <- // created elsewhere
-//
 //   scoped {
-//     MutexLock lock <- MutexLock.lock(cond)
+//     MutexLock lock <- MutexLock.lock(conditionResume)
 //   } cleanup {
 //     \ lock.freeResource()
 //   } in {
@@ -85,7 +83,7 @@ limitations under the License.
 //   }
 //
 //   // signal threads to continue
-//   \ cond.resumeAll()
+//   \ conditionResume.resumeAll()
 @value interface ConditionResume {
   refines Mutex
 
