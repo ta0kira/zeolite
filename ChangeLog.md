@@ -8,6 +8,10 @@
   tree (BST) functionality to custom containers that need to augment each node
   with additional data.
 
+* **[new]** Adds `CategoricalTree<#c>` to `lib/math`, as a dynamic
+  representation of a [categorical distribution][categorical] over objects of
+  type `#c`.
+
 ## 0.16.1.0  -- 2021-04-02
 
 ### Language
@@ -772,6 +776,7 @@
 
 * First version. Released on an unsuspecting world.
 
+[categorical]: https://en.wikipedia.org/wiki/Categorical_distribution
 [megaparsec]: https://hackage.haskell.org/package/megaparsec
 [microlens]: https://hackage.haskell.org/package/microlens
 [microlens-th]: https://hackage.haskell.org/package/microlens-th

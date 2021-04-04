@@ -1,0 +1,159 @@
+/* -----------------------------------------------------------------------------
+Copyright 2021 Kevin P. Barry
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+----------------------------------------------------------------------------- */
+
+// Author: Kevin P. Barry [ta0kira@gmail.com]
+
+testcase "CategoricalTree tests" {
+  success
+}
+
+unittest simpleInsertion {
+  CategoricalTree<Int> tree <- CategoricalTree<Int>.new()
+      .setWeight(1,3)
+      .setWeight(6,2)
+      .setWeight(3,1)
+      .setWeight(5,4)
+      .setWeight(4,3)
+      .setWeight(2,7)
+
+  Vector<Int> expected <- Vector:create<Int>()
+      .push(1).push(1).push(1)
+      .push(2).push(2).push(2).push(2).push(2).push(2).push(2)
+      .push(3)
+      .push(4).push(4).push(4)
+      .push(5).push(5).push(5).push(5)
+      .push(6).push(6)
+
+  \ Testing.checkEquals<?>(tree.getTotal(),expected.size())
+  \ Testing.checkEquals<?>(tree.getWeight(1),3)
+  \ Testing.checkEquals<?>(tree.getWeight(2),7)
+  \ Testing.checkEquals<?>(tree.getWeight(3),1)
+  \ Testing.checkEquals<?>(tree.getWeight(4),3)
+  \ Testing.checkEquals<?>(tree.getWeight(5),4)
+  \ Testing.checkEquals<?>(tree.getWeight(6),2)
+
+  traverse (Counter.zeroIndexed(tree.getTotal()) -> Int pos) {
+    \ Testing.checkOptional<?>(tree.locate(pos),expected.readAt(pos))
+  }
+}
+
+unittest modifySizes {
+  CategoricalTree<Int> tree <- CategoricalTree<Int>.new()
+      .setWeight(1,3)
+      .setWeight(6,2)
+      .setWeight(3,1)
+      .setWeight(5,4)
+      .setWeight(4,3)
+      .setWeight(2,7)
+      .setWeight(7,3)
+      // modifications start here
+      .setWeight(5,1)
+      .setWeight(3,0)
+
+  Vector<Int> expected <- Vector:create<Int>()
+      .push(1).push(1).push(1)
+      .push(2).push(2).push(2).push(2).push(2).push(2).push(2)
+      .push(4).push(4).push(4)
+      .push(5)
+      .push(6).push(6)
+      .push(7).push(7).push(7)
+
+  \ Testing.checkEquals<?>(tree.getTotal(),expected.size())
+  \ Testing.checkEquals<?>(tree.getWeight(1),3)
+  \ Testing.checkEquals<?>(tree.getWeight(2),7)
+  \ Testing.checkEquals<?>(tree.getWeight(3),0)
+  \ Testing.checkEquals<?>(tree.getWeight(4),3)
+  \ Testing.checkEquals<?>(tree.getWeight(5),1)
+  \ Testing.checkEquals<?>(tree.getWeight(6),2)
+  \ Testing.checkEquals<?>(tree.getWeight(7),3)
+
+  traverse (Counter.zeroIndexed(tree.getTotal()) -> Int pos) {
+    \ Testing.checkOptional<?>(tree.locate(pos),expected.readAt(pos))
+  }
+}
+
+unittest integrationTest {
+  ValidatedTree<Int> tree      <- ValidatedTree<Int>.new()
+  SearchTree<Int,Int> expected <- SearchTree<Int,Int>.new()
+
+  Int count   <- 137
+  Int maxSize <- 15
+  Int hash1   <- 379
+  Int hash2   <- 457
+  $ReadOnly[count,maxSize,hash1,hash2]$
+
+  // Populate the tree with arbitrary data.
+  traverse (Counter.zeroIndexed(count) -> Int i) {
+    \ tree.setWeight((i*hash1)%count,(i*hash2)%maxSize)
+  }
+
+  // Overwrite the tree with real data.
+  traverse (Counter.zeroIndexed(count) -> Int i) {
+    Int key <- (i*hash2)%count
+    Int size <- (i*hash1)%maxSize
+    \ tree.setWeight(key,size)
+    \ expected.set(key,size)
+  }
+
+  optional Order<KeyValue<Int,Int>> node <- expected.defaultOrder()
+  Int key       <- 0
+  Int remaining <- 0
+  traverse (Counter.zeroIndexed(tree.getTotal()) -> Int pos) {
+    while (remaining < 1) {
+      key       <- require(node).get().getKey()
+      remaining <- require(node).get().getValue()
+      node <- require(node).next()
+    }
+    $ReadOnly[key]$
+    $Hidden[node]$
+    \ Testing.checkEquals<?>(tree.locate(pos),key)
+    remaining <- remaining-1
+  }
+
+  // NOTE: Order does not refine Formatted => can't use checkEmpty here.
+  \ Testing.checkEquals<?>(present(node),false)
+  \ Testing.checkEquals<?>(remaining,0)
+}
+
+
+testcase "negative size crashes" {
+  crash
+  require "size.+negative"
+}
+
+unittest test {
+  \ CategoricalTree<Int>.new().setWeight(0,-10)
+}
+
+
+testcase "negative position crashes" {
+  crash
+  require "position.+negative"
+}
+
+unittest test {
+  \ CategoricalTree<Int>.new().locate(-10)
+}
+
+
+testcase "position past end crashes" {
+  crash
+  require "position.+total"
+}
+
+unittest test {
+  \ CategoricalTree<Int>.new().setWeight(0,1).locate(1)
+}

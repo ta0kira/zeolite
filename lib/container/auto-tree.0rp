@@ -39,12 +39,28 @@ concrete AutoBinaryTree<|#n,#k,#v|#r> {
   #k defines  LessThan<#k>
   #r allows   #n
 
+  // Create a new tree.
   @type new () -> (#self)
 
-  @value getRoot ()      -> (optional #r)
-  @value get     (#k)    -> (optional #v)
-  @value set     (#k,#v) -> ()
-  @value remove  (#k)    -> ()
+  // Get the root of the tree.
+  @value getRoot () -> (optional #r)
+
+  // Get the value associated with the key.
+  @value get (#k) -> (optional #v)
+
+  // Set the value associated with the key.
+  //
+  // Notes:
+  // - updateNode() will be called on every affected node, starting with the
+  //   deepest node. It might be called an arbitrary number of times per node.
+  @value set (#k,#v) -> ()
+
+  // Remove the node associated with the key.
+  //
+  // Notes:
+  // - updateNode() will be called on every affected node, starting with the
+  //   deepest node. It might be called an arbitrary number of times per node.
+  @value remove (#k) -> ()
 }
 
 // An interface for reading the state of a BST node.
@@ -52,12 +68,11 @@ concrete AutoBinaryTree<|#n,#k,#v|#r> {
 // Notes:
 // - This is intended for internal use in BST-based categories.
 @value interface BinaryTreeNode<|#k,#v> {
-  getLower   () -> (optional #self)
-  getHigher  () -> (optional #self)
-  getKey     () -> (#k)
-  getValue   () -> (#v)
-  getBalance () -> (Int)
-  getHeight  () -> (Int)
+  getLower  () -> (optional #self)
+  getHigher () -> (optional #self)
+  getKey    () -> (#k)
+  getValue  () -> (#v)
+  getHeight () -> (Int)
 }
 
 // An interface for managing the state of a BST node.
@@ -67,10 +82,33 @@ concrete AutoBinaryTree<|#n,#k,#v|#r> {
 @value interface BalancedTreeNode<#n|#k,#v|> {
   refines BinaryTreeNode<#k,#v>
 
-  setLower  (optional #n) -> ()
+  // Set the lower child of the node.
+  //
+  // Notes:
+  // - The key for the child is strictly less-than this node's key.
+  // - updateNode() will be called separately to update the node's state.
+  setLower (optional #n) -> ()
+
+  // Set the higher child of the node.
+  //
+  // Notes:
+  // - The key for the child is strictly greater-than this node's key.
+  // - updateNode() will be called separately to update the node's state.
   setHigher (optional #n) -> ()
-  setValue     (#v) -> ()
-  updateHeight ()   -> ()
+
+  // Set the value associated with the node.
+  setValue (#v) -> ()
+
+  // Update the state of the node, given its position in the tree.
+  //
+  // Notes:
+  // - This should update the height of the subtree that starts with this node;
+  //   otherwise, the tree might not remain balanced.
+  // - Also update any other node state that depends on the node's position
+  //   within the tree.
+  // - This can be called an arbitrary number of times at any time; therefore,
+  //   it must always be idempotent.
+  updateNode () -> ()
 }
 
 // Provides forward iteration of the nodes in a BST.

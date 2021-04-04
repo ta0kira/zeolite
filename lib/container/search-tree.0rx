@@ -104,7 +104,14 @@ define ValidatedTree {
   @type validateBalance (BinaryTreeNode<#k,#v>) -> ()
   validateBalance (node) {
     scoped {
-      Int balance <- node.getBalance()
+      Int balance <- 0
+      if (present(node.getLower())) {
+        balance <- balance-require(node.getLower()).getHeight()
+      }
+      if (present(node.getHigher())) {
+        balance <- balance+require(node.getHigher()).getHeight()
+      }
+      $ReadOnly[balance]$
     } in if (balance > 1 || balance < -1) {
       fail("out of balance: " + balance.formatted())
     }
@@ -144,7 +151,7 @@ define SearchTreeNode {
   setValue (v)  { value <- v }
   getHeight ()  { return height }
 
-  updateHeight () {
+  updateNode () {
     scoped {
       Int l <- 0
       Int h <- 0
@@ -159,18 +166,5 @@ define SearchTreeNode {
     } else {
       height <- h + 1
     }
-  }
-
-  getBalance () {
-    scoped {
-      Int l <- 0
-      Int h <- 0
-      if (present(lower)) {
-        l <- require(lower).getHeight()
-      }
-      if (present(higher)) {
-        h <- require(higher).getHeight()
-      }
-    } in return h - l
   }
 }

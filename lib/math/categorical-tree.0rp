@@ -1,0 +1,65 @@
+/* -----------------------------------------------------------------------------
+Copyright 2021 Kevin P. Barry
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+----------------------------------------------------------------------------- */
+
+// Author: Kevin P. Barry [ta0kira@gmail.com]
+
+// A categorical distribution represented as a tree.
+//
+// Params:
+// #c: The type of category (i.e., object) used in the distribution.
+//
+// Notes:
+// - CategoricalTree is intended for use in random sampling of arbitrary objects
+//   based on relative weights that can be dynamically set.
+// - The distribution automatically updates every time a weight is changed. This
+//   can be used for updating Bayesian observations while simultaneously being
+//   able to sample values from the distribution.
+// - The complexity of most operations is O(log n) with n distinct #c values.
+// - The required storage space is independent of the weights; it only depends
+//   on the number of distinct #c values with non-zero weights.
+concrete CategoricalTree<#c> {
+  #c defines LessThan<#c>
+
+  // Create a new distribution.
+  @type new () -> (#self)
+
+  // Get the sum of all weights in the distribution.
+  @value getTotal () -> (Int)
+
+  // Set the relative weight of a category.
+  //
+  // Notes:
+  // - The weight must not be negative.
+  @value setWeight (#c,Int) -> (#self)
+
+  // Get the relative weight of a category.
+  //
+  // Notes:
+  // - If the category isn't in the tree, its weight is 0.
+  @value getWeight (#c) -> (Int)
+
+  // Return the category at the given offset.
+  //
+  // Notes:
+  // - The offset must be within [0,getTotal()). A uniform selection in that
+  //   range will provide samples that follow the categorical distribution
+  //   corresponding to the relative weights of the respective #c.
+  // - The return value is deterministic. If you were to iterate over
+  //   [0,getTotal()), you'd get an increasing sequence of all #c in the
+  //   CategoricalTree, each repeated the number of times indicated by its
+  //   respective weight.
+  @value locate (Int) -> (#c)
+}

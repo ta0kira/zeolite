@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-Copyright 2019-2021 Kevin P. Barry
+Copyright 2021 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -18,16 +18,19 @@ limitations under the License.
 
 $ModuleOnly$
 
-// A validated binary search tree for key-value storage.
+// A validated categorical tree.
 //
 // Notes:
-// - This is the same as SearchTree, but it validates the tree structure every
-//   time there is a modification, which is extremely inefficient. This should
-//   therefore only be used in tests.
-concrete ValidatedTree<#k|#v|> {
-  refines KVWriter<#k,#v>
-  refines KVReader<#k,#v>
-  #k defines LessThan<#k>
+// - This is the same as CategoricalTree, but it validates the tree structure
+//   every time there is a modification, which is extremely inefficient. This
+//   should therefore only be used in tests.
+concrete ValidatedTree<#c> {
+  #c defines LessThan<#c>
 
   @type new () -> (#self)
+
+  @value getTotal  ()       -> (Int)
+  @value setWeight (#c,Int) -> (#self)
+  @value getWeight (#c)     -> (Int)
+  @value locate    (Int)    -> (#c)
 }

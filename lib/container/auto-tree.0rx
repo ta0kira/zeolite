@@ -54,6 +54,7 @@ define AutoBinaryTree {
       return rebalance(node2)
     } else {
       \ node2.setValue(v)
+      \ node2.updateNode()
       return node2
     }
   }
@@ -92,15 +93,29 @@ define AutoBinaryTree {
     }
   }
 
+  @type getBalance (optional #n) -> (Int)
+  getBalance (node) (balance) {
+    balance <- 0
+    if (present(node)) {
+      #n node2 <- require(node)
+      if (present(node2.getLower())) {
+        balance <- balance-require(node2.getLower()).getHeight()
+      }
+      if (present(node2.getHigher())) {
+        balance <- balance+require(node2.getHigher()).getHeight()
+      }
+    }
+  }
+
   @type rebalance (optional #n) -> (optional #n)
   rebalance (node) {
     if (!present(node)) {
       return empty
     }
     #n node2 <- require(node)
-    \ node2.updateHeight()
+    \ node2.updateNode()
     scoped {
-      Int balance <- node2.getBalance()
+      Int balance <- getBalance(node2)
     } in if (balance > 1) {
       return pivotLower(node2)
     } elif (balance < -1) {
@@ -112,31 +127,31 @@ define AutoBinaryTree {
 
   @type pivotHigher (#n) -> (#n)
   pivotHigher (node) (newNode) {
-    if (require(node.getLower()).getBalance() > 0) {
+    if (getBalance(node.getLower()) > 0) {
       \ node.setLower(pivotLower(require(node.getLower())))
     }
     newNode <- require(node.getLower())
     \ node.setLower(newNode.getHigher())
-    \ node.updateHeight()
+    \ node.updateNode()
     \ newNode.setHigher(node)
-    \ newNode.updateHeight()
+    \ newNode.updateNode()
   }
 
   @type pivotLower (#n) -> (#n)
   pivotLower (node) (newNode) {
-    if (require(node.getHigher()).getBalance() < 0) {
+    if (getBalance(node.getHigher()) < 0) {
       \ node.setHigher(pivotHigher(require(node.getHigher())))
     }
     newNode <- require(node.getHigher())
     \ node.setHigher(newNode.getLower())
-    \ node.updateHeight()
+    \ node.updateNode()
     \ newNode.setLower(node)
-    \ newNode.updateHeight()
+    \ newNode.updateNode()
   }
 
   @type removeNode (#n) -> (optional #n)
   removeNode (node) (newNode) {
-    if (node.getBalance() < 0) {
+    if (getBalance(node) < 0) {
       optional #n temp, newNode <- removeHighest(node.getLower())
       \ node.setLower(temp)
     } else {
@@ -145,7 +160,7 @@ define AutoBinaryTree {
     }
     if (present(newNode)) {
       \ swapChildren(node,require(newNode))
-      \ require(newNode).updateHeight()
+      \ require(newNode).updateNode()
     }
   }
 
