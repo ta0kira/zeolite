@@ -8,6 +8,9 @@
 
   * **[new]** Adds `Ranges`, for simple min/max determinations.
 
+  * **[new]** Adds `revZeroIndexed` to `Counter`, to create a reversed sequence
+    of zero-indexed container indices.
+
   * **[new]** Adds `Reversed`, to allow reverse ordering of any `LessThan` type.
 
   * **[new]** Adds `BySize`, to allow ordering of a sequence of `Container`

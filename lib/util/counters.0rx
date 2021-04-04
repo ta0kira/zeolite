@@ -17,28 +17,39 @@ limitations under the License.
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
 define Counter {
-  $ReadOnly[max]$
+  $ReadOnly[limit,incr]$
 
   refines Order<Int>
 
   @value Int current
-  @value Int max
+  @value optional Int limit
+  @value Int incr
 
   zeroIndexed (max) {
     if (max <= 0) {
       return empty
     } else {
-      return Counter{ 0, max }
+      return Counter{ 0, max, 1 }
+    }
+  }
+
+  revZeroIndexed (max) {
+    if (max <= 0) {
+      return empty
+    } else {
+      return Counter{ max-1, -1, -1 }
     }
   }
 
   unlimited () {
-    return Counter{ 0, -1 }
+    return Counter{ 0, empty, 1 }
   }
 
   next () {
-    if (max < 0 || current+1 < max) {
-      current <- current+1
+    if (!present(limit) ||
+        (incr < 0 && current+incr > require(limit)) ||
+        (incr > 0 && current+incr < require(limit))) {
+      current <- current+incr
       return self
     } else {
       return empty
@@ -51,13 +62,13 @@ define Counter {
 }
 
 define Repeat {
-  $ReadOnly[max,value]$
+  $ReadOnly[limit,value]$
 
   refines Order<#x>
 
   @value #x value
   @value Int current
-  @value Int max
+  @value optional Int limit
 
   times (value,max) {
     if (max <= 0) {
@@ -68,11 +79,11 @@ define Repeat {
   }
 
   unlimited (value) {
-    return Repeat<#y>{ value, 0, -1 }
+    return Repeat<#y>{ value, 0, empty }
   }
 
   next () {
-    if (max < 0 || current+1 < max) {
+    if (!present(limit) || current+1 < require(limit)) {
       current <- current+1
       return self
     } else {

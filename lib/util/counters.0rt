@@ -31,6 +31,17 @@ unittest zeroIndexed {
   \ Testing.checkEquals<?>(index,10)
 }
 
+unittest revZeroIndexed {
+  Int index <- 10
+
+  traverse (Counter.revZeroIndexed(10) -> Int i) {
+    index <- index-1
+    \ Testing.checkEquals<?>(i,index)
+  }
+
+  \ Testing.checkEquals<?>(index,0)
+}
+
 unittest unlimitedCount {
   Int index <- 0
 

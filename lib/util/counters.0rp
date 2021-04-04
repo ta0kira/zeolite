@@ -20,8 +20,10 @@ limitations under the License.
 concrete Counter {
   // Create a sequence of indices for a Container of the given size.
   @type zeroIndexed (Int) -> (optional Order<Int>)
+  // Create a reversed sequence of indices for a Container of the given size.
+  @type revZeroIndexed (Int) -> (optional Order<Int>)
   // Create an unbounded Int sequence.
-  @type unlimited   ()    -> (optional Order<Int>)
+  @type unlimited () -> (optional Order<Int>)
 }
 
 // Creates an Order<#x> that repeats a single value, for use with traverse.
