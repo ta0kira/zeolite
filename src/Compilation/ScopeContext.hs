@@ -63,7 +63,7 @@ applyProcedureScope f (ProcedureScope ctx fs) = map (uncurry (f ctx)) fs
 
 getProcedureScopes :: (Show c, CollectErrorsM m) =>
   CategoryMap c -> ExprMap c -> DefinedCategory c -> m [ProcedureScope c]
-getProcedureScopes ta em (DefinedCategory c n pragmas _ _ ms ps fs) = do
+getProcedureScopes ta em (DefinedCategory c n pragmas _ _ ms ps fs) = message ??> do
   (_,t) <- getConcreteCategory ta (c,n)
   let params = Positional $ getCategoryParams t
   let typeInstance = TypeInstance n $ fmap (singleType . JustParamName False . vpParam) params
@@ -92,6 +92,7 @@ getProcedureScopes ta em (DefinedCategory c n pragmas _ _ ms ps fs) = do
   let ctxV = ScopeContext ta n params vm' filters fa vv em
   return [ProcedureScope ctxC cp,ProcedureScope ctxT tp',ProcedureScope ctxV vp']
   where
+    message = "In compilation of definition for " ++ show n ++ formatFullContextBrace c
     checkPragma (MembersReadOnly c2 vs) = do
       let missing = Set.toList $ Set.fromList vs `Set.difference` allMembers
       mapCompilerM_ (\v -> compilerErrorM $ "Member " ++ show v ++

@@ -23,6 +23,10 @@ define TreeSet {
     return #self{ SearchTree<#k,any>.new() }
   }
 
+  size () {
+    return tree.size()
+  }
+
   add (k) {
     \ tree.set(k,Void.void())
     return self

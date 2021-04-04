@@ -34,6 +34,7 @@ limitations under the License.
 //   a container can implement custom functionality using the tree's structure
 //   without risking modification of the tree.
 concrete AutoBinaryTree<|#n,#k,#v|#r> {
+  refines Container
   #n defines  KVFactory<#k,#v>
   #n requires BalancedTreeNode<#n,#k,#v>
   #k defines  LessThan<#k>

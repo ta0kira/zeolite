@@ -25,6 +25,7 @@ $ModuleOnly$
 //   time there is a modification, which is extremely inefficient. This should
 //   therefore only be used in tests.
 concrete ValidatedTree<#k|#v|> {
+  refines Container
   refines KVWriter<#k,#v>
   refines KVReader<#k,#v>
   #k defines LessThan<#k>

@@ -23,6 +23,10 @@ define SearchTree {
     return #self{ AutoBinaryTree<SearchTreeNode<#k,#v>,#k,#v,BinaryTreeNode<#k,#v>>.new() }
   }
 
+  size () {
+    return tree.size()
+  }
+
   set (k,v) {
     \ tree.set(k,v)
     return self
@@ -59,6 +63,10 @@ define ValidatedTree {
 
   new () {
     return #self{ AutoBinaryTree<SearchTreeNode<#k,#v>,#k,#v,BinaryTreeNode<#k,#v>>.new() }
+  }
+
+  size () {
+    return tree.size()
   }
 
   set (k,v) {

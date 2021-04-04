@@ -146,8 +146,11 @@ instance (Show c, CollectErrorsM m) =>
       getFromAny _ =
         compilerErrorM $ "Use explicit type conversion to call " ++ show n ++ " from " ++ show t
       getFromAll ts = do
+        t' <- case t of
+                   Just t2 -> return t2
+                   Nothing -> fmap (singleType . JustTypeInstance) $ ccSelfType ctx
         collectFirstM ts <!!
-          "Function " ++ show n ++ " not available for type " ++ show t ++ formatFullContextBrace c
+          "Function " ++ show n ++ " not available for type " ++ show t' ++ formatFullContextBrace c
       getFromSingle t0 (JustParamName _ p) = do
         fa <- ccAllFilters ctx
         fs <- case p `Map.lookup` fa of

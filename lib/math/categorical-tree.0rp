@@ -31,6 +31,7 @@ limitations under the License.
 // - The required storage space is independent of the weights; it only depends
 //   on the number of distinct #c values with non-zero weights.
 concrete CategoricalTree<#c> {
+  refines ReadAt<#c>
   #c defines LessThan<#c>
 
   // Create a new distribution.
@@ -62,4 +63,10 @@ concrete CategoricalTree<#c> {
   //   CategoricalTree, each repeated the number of times indicated by its
   //   respective weight.
   @value locate (Int) -> (#c)
+
+  // Identical to locate(). (From ReadAt.)
+  @value readAt (Int) -> (#c)
+
+  // Identical to getTotal(). (From ReadAt/Container.)
+  @value size () -> (Int)
 }

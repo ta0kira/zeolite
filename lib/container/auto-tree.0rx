@@ -17,10 +17,15 @@ limitations under the License.
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
 define AutoBinaryTree {
+  @value Int treeSize
   @value optional #n root
 
   new () {
-    return #self{ empty }
+    return #self{ 0, empty }
+  }
+
+  size () {
+    return treeSize
   }
 
   getRoot () {
@@ -32,47 +37,57 @@ define AutoBinaryTree {
   }
 
   set (k,v) {
-    root <- insert(root,k,v)
+    root, Bool added <- insert(root,k,v)
+    if (added) {
+      treeSize <- treeSize+1
+    }
   }
 
   remove (k) {
-    root <- delete(root,k)
+    root, Bool removed <- delete(root,k)
+    if (removed) {
+      treeSize <- treeSize-1
+    }
   }
 
 
-  @type insert (optional #n,#k,#v) -> (optional #n)
-  insert (node,k,v) {
+  @type insert (optional #n,#k,#v) -> (optional #n,Bool)
+  insert (node,k,v) (newRoot,added) {
     if (!present(node)) {
-      return #n.newNode(k,v)
+      return #n.newNode(k,v), true
     }
     #n node2 <- require(node)
     if (k `#k.lessThan` node2.getKey()) {
-      \ node2.setLower(insert(node2.getLower(),k,v))
-      return rebalance(node2)
+      newRoot, added <- insert(node2.getLower(),k,v)
+      \ node2.setLower(newRoot)
+      newRoot <- rebalance(node2)
     } elif (node2.getKey() `#k.lessThan` k) {
-      \ node2.setHigher(insert(node2.getHigher(),k,v))
-      return rebalance(node2)
+      newRoot, added <- insert(node2.getHigher(),k,v)
+      \ node2.setHigher(newRoot)
+      newRoot <- rebalance(node2)
     } else {
       \ node2.setValue(v)
       \ node2.updateNode()
-      return node2
+      return node2, false
     }
   }
 
-  @type delete (optional #n,#k) -> (optional #n)
-  delete (node,k) {
+  @type delete (optional #n,#k) -> (optional #n,Bool)
+  delete (node,k) (newRoot,removed) {
     if (!present(node)) {
-      return empty
+      return empty, false
     }
     #n node2 <- require(node)
     if (k `#k.lessThan` node2.getKey()) {
-      \ node2.setLower(delete(node2.getLower(),k))
-      return rebalance(node2)
+      newRoot, removed <- delete(node2.getLower(),k)
+      \ node2.setLower(newRoot)
+      newRoot <- rebalance(node2)
     } elif (node2.getKey() `#k.lessThan` k) {
-      \ node2.setHigher(delete(node2.getHigher(),k))
-      return rebalance(node2)
+      newRoot, removed <- delete(node2.getHigher(),k)
+      \ node2.setHigher(newRoot)
+      newRoot <- rebalance(node2)
     } else {
-      return rebalance(removeNode(node2))
+      return rebalance(removeNode(node2)), true
     }
   }
 

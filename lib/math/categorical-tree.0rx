@@ -57,6 +57,14 @@ define CategoricalTree {
       return require(CategoricalTreeNode<#c>.findPosition(pos,tree.getRoot()))
     }
   }
+
+  readAt (pos) {
+    return locate(pos)
+  }
+
+  size () {
+    return getTotal()
+  }
 }
 
 define ValidatedTree {

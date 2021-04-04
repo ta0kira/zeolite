@@ -29,13 +29,16 @@ unittest addAndRemove {
   // Populate the set in a pseudo-random order.
   traverse (Counter.zeroIndexed(max) -> Int i) {
     \ set.add((i*hash)%max)
+    \ Testing.checkEquals<?>(set.size(),i+1)
   }
 
   // Remove only the odd elements.
   traverse (Counter.zeroIndexed(max) -> Int i) {
     if (i%2 == 1) {
-      \ set.remove(i)
+      // Remove it twice to ensure idempotence.
+      \ set.remove(i).remove(i)
     }
+    \ Testing.checkEquals<?>(set.size(),max-(i+1)/2)
   }
 
   // Validate set membership.

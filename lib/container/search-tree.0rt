@@ -21,7 +21,7 @@ testcase "SearchTree tests" {
 }
 
 unittest integrationTest {
-  [KVWriter<Int,Int>&KVReader<Int,Int>] tree <- ValidatedTree<Int,Int>.new()
+  ValidatedTree<Int,Int> tree <- ValidatedTree<Int,Int>.new()
   Int count <- 30
   $ReadOnly[count]$
 
@@ -29,6 +29,7 @@ unittest integrationTest {
   traverse (Counter.zeroIndexed(count) -> Int i) {
     Int new <- ((i + 13) * 3547) % count
     \ tree.set(new,i)
+    \ Testing.checkEquals<?>(tree.size(),i+1)
   }
 
   // Check and remove values.
@@ -54,6 +55,7 @@ unittest integrationTest {
           .writeTo(SimpleOutput.error())
     }
     \ tree.remove(new)
+    \ Testing.checkEquals<?>(tree.size(),count-i-1)
   }
 }
 

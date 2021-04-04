@@ -11,9 +11,10 @@
   tree (BST) functionality to custom containers that need to augment each node
   with additional data.
 
-* **[new]** Adds `CategoricalTree<#c>` to `lib/math`, as a dynamic
-  representation of a [categorical distribution][categorical] over objects of
-  type `#c`.
+* **[new]** Implements `Container.size()` in `SearchTree`.
+
+* **[new]** Adds `CategoricalTree` to `lib/math`, as a dynamic representation of
+  a [categorical distribution][categorical] over objects of any sortable type.
 
 ## 0.16.1.0  -- 2021-04-02
 
