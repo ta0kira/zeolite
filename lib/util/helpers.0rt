@@ -65,7 +65,7 @@ unittest reversed {
 }
 
 unittest bySize {
-  \ Testing.checkEquals<?>(""   `BySize.lessThan` "",false)
+  \ Testing.checkEquals<?>(""   `BySize.lessThan` "",  false)
   \ Testing.checkEquals<?>("b"  `BySize.lessThan` "ac",true)
-  \ Testing.checkEquals<?>("ac" `BySize.lessThan` "b",false)
+  \ Testing.checkEquals<?>("ac" `BySize.lessThan` "b", false)
 }

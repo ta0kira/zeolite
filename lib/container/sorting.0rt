@@ -1,0 +1,115 @@
+/* -----------------------------------------------------------------------------
+Copyright 2019-2021 Kevin P. Barry
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+----------------------------------------------------------------------------- */
+
+// Author: Kevin P. Barry [ta0kira@gmail.com]
+
+testcase "Sorting tests" {
+  success
+}
+
+unittest sort {
+  TestSequence original <- TestSequence.create()
+  TestSequence expected <- TestSequence.create()
+  Int hash <- 269
+  Int size <- 137
+  $ReadOnly[hash,size]$
+
+  traverse (Counter.zeroIndexed(size) -> Int i) {
+    \ original.append((i*hash)%size/3)
+    \ expected.append(i/3)
+  }
+
+  \ Sorting:sort<?>(original)
+  \ Testing.checkEquals<?>(original,expected)
+}
+
+unittest sortWith {
+  TestSequence original <- TestSequence.create()
+  TestSequence expected <- TestSequence.create()
+  Int hash <- 313
+  Int size <- 197
+  $ReadOnly[hash,size]$
+
+  traverse (Counter.revZeroIndexed(size) -> Int i) {
+    \ original.append((i*hash)%size/3)
+    \ expected.append(i/3)
+  }
+
+  \ Sorting:sortWith<?,Reversed<Int>>(original)
+  \ Testing.checkEquals<?>(original,expected)
+}
+
+unittest sortEmpty {
+  TestSequence original <- TestSequence.create()
+  TestSequence expected <- TestSequence.create()
+
+  \ Sorting:sort<?>(original)
+  \ Testing.checkEquals<?>(original,expected)
+}
+
+concrete TestSequence {
+  refines Formatted
+  refines ReadAt<Int>
+  refines WriteAt<Int>
+  refines Append<Int>
+  defines Equals<TestSequence>
+
+  @type create () -> (TestSequence)
+}
+
+define TestSequence {
+  @value Vector<Int> seq
+
+  create () {
+    return TestSequence{ Vector:create<Int>() }
+  }
+
+  formatted () {
+    [Append<String>&Build<String>] builder <- String.builder()
+    \ builder.append("{")
+    traverse (seq.defaultOrder() -> Formatted x) {
+      \ builder.append(" ").append(x.formatted())
+    }
+    return builder.append(" }").build()
+  }
+
+  size () {
+    return seq.size()
+  }
+
+  readAt (i) {
+    return seq.readAt(i)
+  }
+
+  writeAt (i,x) {
+    \ seq.writeAt(i,x)
+    return self
+  }
+
+  append (x) {
+    \ seq.append(x)
+    return self
+  }
+
+  equals (x,y) {
+    return x.getSeq() `ReadAtH:equals<?>` y.getSeq()
+  }
+
+  @value getSeq () -> (ReadAt<Int>)
+  getSeq () {
+    return seq
+  }
+}

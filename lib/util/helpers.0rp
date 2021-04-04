@@ -67,7 +67,7 @@ concrete ReadAtH {
   // Extend equals, based on position-wise comparisons.
   //
   // Notes:
-  // - OrderH does not satisfy the requirements of defines Equals<#x>. Create
+  // - ReadAtH does not satisfy the requirements of defines Equals<#x>. Create
   //   a separate wrapper for your type if you need to satisfy a filter.
   //
   // Example:

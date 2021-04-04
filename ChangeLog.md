@@ -6,6 +6,8 @@
 
 * **[new]** Additions to `lib/util`:
 
+  * **[new]** Adds `Sorting`, to support sorting of random-access containers.
+
   * **[new]** Adds `Ranges`, for simple min/max determinations.
 
   * **[new]** Adds `revZeroIndexed` to `Counter`, to create a reversed sequence
