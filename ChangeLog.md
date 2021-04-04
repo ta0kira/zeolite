@@ -4,6 +4,11 @@
 
 ### Libraries
 
+* **[new]** Adds `Ranges` to `lib/util`, for simple min/max determinations.
+
+* **[new]** Adds `OrderH` and `ReadAtH` to `lib/util`, to extend `LessThan` and
+  `Equals` comparisons to simple containers.
+
 * **[new]** Adds `TreeSet` to `lib/container`, to manage set membership of any
   sortable type.
 

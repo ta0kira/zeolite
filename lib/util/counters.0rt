@@ -67,3 +67,39 @@ unittest unlimitedValue {
 
   \ Testing.checkEquals<?>(index,10)
 }
+
+unittest minMax {
+  scoped {
+    Int x, Int y <- Ranges:minMax<?>(10,3)
+  } in {
+    \ Testing.checkEquals<?>(x,3)
+    \ Testing.checkEquals<?>(y,10)
+  }
+
+  scoped {
+    Int x, Int y <- Ranges:minMax<?>(3,10)
+  } in {
+    \ Testing.checkEquals<?>(x,3)
+    \ Testing.checkEquals<?>(y,10)
+  }
+}
+
+unittest min {
+  scoped {
+    Int x <- Ranges:min<?>(10,3)
+  } in \ Testing.checkEquals<?>(x,3)
+
+  scoped {
+    Int x <- Ranges:min<?>(3,10)
+  } in \ Testing.checkEquals<?>(x,3)
+}
+
+unittest max {
+  scoped {
+    Int x <- Ranges:max<?>(10,3)
+  } in \ Testing.checkEquals<?>(x,10)
+
+  scoped {
+    Int x <- Ranges:max<?>(3,10)
+  } in \ Testing.checkEquals<?>(x,10)
+}

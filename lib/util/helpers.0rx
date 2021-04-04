@@ -1,0 +1,80 @@
+/* -----------------------------------------------------------------------------
+Copyright 2019-2021 Kevin P. Barry
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+----------------------------------------------------------------------------- */
+
+// Author: Kevin P. Barry [ta0kira@gmail.com]
+
+define OrderH {
+  lessThan (x,y) {
+    optional Order<#x> xx <- x
+    optional Order<#x> yy <- y
+    $Hidden[x,y]$
+    while (present(xx) && present(yy)) {
+      $ReadOnly[xx,yy]$
+      if (require(xx).get() `#x.lessThan` require(yy).get()) {
+        return true
+      } elif (require(yy).get() `#x.lessThan` require(xx).get()) {
+        return false
+      }
+    } update {
+      xx <- require(xx).next()
+      yy <- require(yy).next()
+    }
+    return present(yy)
+  }
+
+  equals (x,y) {
+    optional Order<#x> xx <- x
+    optional Order<#x> yy <- y
+    $Hidden[x,y]$
+    while (present(xx) && present(yy)) {
+      $ReadOnly[xx,yy]$
+      if (!(require(xx).get() `#x.equals` require(yy).get())) {
+        return false
+      }
+    } update {
+      xx <- require(xx).next()
+      yy <- require(yy).next()
+    }
+    return !present(xx) && !present(yy)
+  }
+}
+
+define ReadAtH {
+  lessThan (x,y) {
+    traverse (Counter.zeroIndexed(Ranges:min<?>(x.size(),y.size())) -> Int i) {
+      $ReadOnly[i]$
+      if (x.readAt(i) `#x.lessThan` y.readAt(i)) {
+        return true
+      } elif (y.readAt(i) `#x.lessThan` x.readAt(i)) {
+        return false
+      }
+    }
+    return x.size() < y.size()
+  }
+
+  equals (x,y) {
+    if (x.size() != y.size()) {
+      return false
+    }
+    traverse (Counter.zeroIndexed(x.size()) -> Int i) {
+      $ReadOnly[i]$
+      if (!(x.readAt(i) `#x.equals` y.readAt(i))) {
+        return false
+      }
+    }
+    return true
+  }
+}

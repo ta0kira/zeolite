@@ -31,3 +31,17 @@ concrete Repeat<#x> {
   // Repeat the value an unlimited number of times.
   @category unlimited<#y> (#y)     -> (optional Order<#y>)
 }
+
+concrete Ranges {
+  @category min<#x>
+    #x defines LessThan<#x>
+  (#x,#x) -> (#x)
+
+  @category max<#x>
+    #x defines LessThan<#x>
+  (#x,#x) -> (#x)
+
+  @category minMax<#x>
+    #x defines LessThan<#x>
+  (#x,#x) -> (#x,#x)
+}

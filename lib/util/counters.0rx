@@ -84,3 +84,21 @@ define Repeat {
     return value
   }
 }
+
+define Ranges {
+  min (x,y) (z) {
+    z, _ <- minMax<?>(x,y)
+  }
+
+  max (x,y) (z) {
+    _, z <- minMax<?>(x,y)
+  }
+
+  minMax (x,y) {
+    if (x `#x.lessThan` y) {
+      return x, y
+    } else {
+      return y, x
+    }
+  }
+}

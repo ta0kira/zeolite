@@ -1,0 +1,62 @@
+/* -----------------------------------------------------------------------------
+Copyright 2019-2021 Kevin P. Barry
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+----------------------------------------------------------------------------- */
+
+// Author: Kevin P. Barry [ta0kira@gmail.com]
+
+testcase "OrderH tests" {
+  success
+}
+
+unittest lessThan {
+  \ Testing.checkEquals<?>(OrderH:lessThan<?>(("").defaultOrder(),
+                                              ("").defaultOrder()),false)
+  \ Testing.checkEquals<?>(OrderH:lessThan<?>(("a").defaultOrder(),
+                                              ("abc").defaultOrder()),true)
+  \ Testing.checkEquals<?>(OrderH:lessThan<?>(("abc").defaultOrder(),
+                                              ("abc").defaultOrder()),false)
+  \ Testing.checkEquals<?>(OrderH:lessThan<?>(("abc").defaultOrder(),
+                                              ("a").defaultOrder()),false)
+}
+
+unittest equals {
+  \ Testing.checkEquals<?>(OrderH:equals<?>(("").defaultOrder(),
+                                            ("").defaultOrder()),true)
+  \ Testing.checkEquals<?>(OrderH:equals<?>(("a").defaultOrder(),
+                                            ("abc").defaultOrder()),false)
+  \ Testing.checkEquals<?>(OrderH:equals<?>(("abc").defaultOrder(),
+                                            ("abc").defaultOrder()),true)
+  \ Testing.checkEquals<?>(OrderH:equals<?>(("abc").defaultOrder(),
+                                            ("a").defaultOrder()),false)
+}
+
+
+testcase "ReadAtH tests" {
+  success
+}
+
+unittest lessThan {
+  \ Testing.checkEquals<?>(ReadAtH:lessThan<?>("",""),false)
+  \ Testing.checkEquals<?>(ReadAtH:lessThan<?>("a","abc"),true)
+  \ Testing.checkEquals<?>(ReadAtH:lessThan<?>("abc","abc"),false)
+  \ Testing.checkEquals<?>(ReadAtH:lessThan<?>("abc","a"),false)
+}
+
+unittest equals {
+  \ Testing.checkEquals<?>(ReadAtH:equals<?>("",""),true)
+  \ Testing.checkEquals<?>(ReadAtH:equals<?>("a","abc"),false)
+  \ Testing.checkEquals<?>(ReadAtH:equals<?>("abc","abc"),true)
+  \ Testing.checkEquals<?>(ReadAtH:equals<?>("abc","a"),false)
+}
