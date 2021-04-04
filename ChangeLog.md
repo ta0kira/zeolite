@@ -4,22 +4,27 @@
 
 ### Libraries
 
-* **[new]** Adds `Ranges` to `lib/util`, for simple min/max determinations.
+* **[new]** Additions to `lib/util`:
 
-* **[new]** Adds `OrderH` and `ReadAtH` to `lib/util`, to extend `LessThan` and
-  `Equals` comparisons to simple containers.
+  * **[new]** Adds `Ranges`, for simple min/max determinations.
 
-* **[new]** Adds `TreeSet` to `lib/container`, to manage set membership of any
-  sortable type.
+  * **[new]** Adds `Reversed`, to allow reverse ordering of any `LessThan` type.
 
-* **[new]** Adds `AutoBinaryTree` to `lib/container`, to provide binary search
-  tree (BST) functionality to custom containers that need to augment each node
-  with additional data.
+  * **[new]** Adds `OrderH` and `ReadAtH`, to extend `LessThan` and `Equals`
+    comparisons to simple containers.
 
-* **[new]** Implements `Container.size()` in `SearchTree`.
+* **[new]** Additions to `lib/container`:
 
-* **[new]** Adds `CategoricalTree` to `lib/math`, as a dynamic representation of
-  a [categorical distribution][categorical] over objects of any sortable type.
+  * **[new]** Adds `TreeSet`, to manage set membership of any sortable type.
+
+  * **[new]** Adds `AutoBinaryTree`, to provide binary search tree (BST)
+    functionality to custom containers that need to augment each node with
+    additional data.
+
+  * **[new]** Implements `Container.size()` in `SearchTree`.
+
+* **[new]** Adds `CategoricalTree` to `lib/math`, as a dynamic representation
+  of a [categorical distribution][categorical] over objects of any sortable type.
 
 ## 0.16.1.0  -- 2021-04-02
 

@@ -60,3 +60,14 @@ unittest equals {
   \ Testing.checkEquals<?>(ReadAtH:equals<?>("abc","abc"),true)
   \ Testing.checkEquals<?>(ReadAtH:equals<?>("abc","a"),false)
 }
+
+
+testcase "Reversed tests" {
+  success
+}
+
+unittest test {
+  \ Testing.checkEquals<?>(0 `Reversed<Int>.lessThan` 0,false)
+  \ Testing.checkEquals<?>(0 `Reversed<Int>.lessThan` 1,false)
+  \ Testing.checkEquals<?>(1 `Reversed<Int>.lessThan` 0,true)
+}

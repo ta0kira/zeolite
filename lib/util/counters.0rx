@@ -95,10 +95,11 @@ define Ranges {
   }
 
   minMax (x,y) {
-    if (x `#x.lessThan` y) {
-      return x, y
-    } else {
+    // NOTE: Using y < x makes the default x, y when they are equal.
+    if (y `#x.lessThan` x) {
       return y, x
+    } else {
+      return x, y
     }
   }
 }

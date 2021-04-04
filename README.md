@@ -187,7 +187,8 @@ The overall design of Zeolite revolves around data encapsulation:
 
 - **No default construction or copying.** This means that objects can only be
   created by explicit factory functions. (A very common mistake in C++ code is
-  forgetting to *disallow or override* default construction or copying.)
+  forgetting to *disallow or override* default construction or copying.) This
+  also means that accidental deep copying is not even possible in Zeolite.
 
 - **Only abstract interfaces can be inherited.** Types that define procedures or
   contain data members *cannot* be further extended. This encourages the
@@ -467,7 +468,7 @@ simplify parsing.)
 - Calling a function with `@value` scope requires a value of the correct type,
   and uses `.` notation, e.g., `foo.getValue()`.
 - Calling a function with `@type` scope requires the type with parameter
-  substutition (if applicable), and uses `.` notation, e.g.,
+  substitution (if applicable), and uses `.` notation, e.g.,
   `MyCategory<Int>.create()`. (Prior to compiler version `0.9.0.0`, `$` was used
   instead of `.`.)
 - Calling a function with `@category` scope requires the category itself, and

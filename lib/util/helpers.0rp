@@ -16,22 +16,70 @@ limitations under the License.
 
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
+// Helpers to extend functionality to the Order<#x> built-in.
 concrete OrderH {
+  // Extend lessThan, based on position-wise comparisons.
+  //
+  // Notes:
+  // - If one sequence is a strict prefix of the other, that sequence will
+  //   evaluate as less-than the other.
+  // - OrderH does not satisfy the requirements of defines LessThan<#x>. Create
+  //   a separate wrapper for your type if you need to satisfy a filter.
+  //
+  // Example:
+  //
+  //   Bool lt <- x.defaultOrder() `OrderH:lessThan<?>` y.defaultOrder()
   @category lessThan<#x>
     #x defines LessThan<#x>
   (optional Order<#x>,optional Order<#x>) -> (Bool)
 
+  // Extend equals, based on position-wise comparisons.
+  //
+  // Notes:
+  // - OrderH does not satisfy the requirements of defines Equals<#x>. Create
+  //   a separate wrapper for your type if you need to satisfy a filter.
+  //
+  // Example:
+  //
+  //   Bool eq <- x.defaultOrder() `OrderH:equals<?>` y.defaultOrder()
   @category equals<#x>
     #x defines Equals<#x>
   (optional Order<#x>,optional Order<#x>) -> (Bool)
 }
 
+// Helpers to extend functionality to the ReadAt<#x> built-in.
 concrete ReadAtH {
+  // Extend lessThan, based on position-wise comparisons.
+  //
+  // Notes:
+  // - If one sequence is a strict prefix of the other, that sequence will
+  //   evaluate as less-than the other.
+  // - ReadAtH does not satisfy the requirements of defines LessThan<#x>. Create
+  //   a separate wrapper for your type if you need to satisfy a filter.
+  //
+  // Example:
+  //
+  //   Bool lt <- x `ReadAtH:lessThan<?>` y
   @category lessThan<#x>
     #x defines LessThan<#x>
   (ReadAt<#x>,ReadAt<#x>) -> (Bool)
 
+  // Extend equals, based on position-wise comparisons.
+  //
+  // Notes:
+  // - OrderH does not satisfy the requirements of defines Equals<#x>. Create
+  //   a separate wrapper for your type if you need to satisfy a filter.
+  //
+  // Example:
+  //
+  //   Bool eq <- x `ReadAtH:equals<?>` y
   @category equals<#x>
     #x defines Equals<#x>
   (ReadAt<#x>,ReadAt<#x>) -> (Bool)
+}
+
+// Reverse an existing LessThan<#x> comparison.
+concrete Reversed<#x|> {
+  defines LessThan<#x>
+  #x defines LessThan<#x>
 }

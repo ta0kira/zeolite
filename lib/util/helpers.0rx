@@ -78,3 +78,9 @@ define ReadAtH {
     return true
   }
 }
+
+define Reversed {
+  lessThan (x,y) {
+    return y `#x.lessThan` x
+  }
+}
