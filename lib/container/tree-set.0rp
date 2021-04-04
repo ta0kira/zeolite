@@ -1,0 +1,58 @@
+/* -----------------------------------------------------------------------------
+Copyright 2021 Kevin P. Barry
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+----------------------------------------------------------------------------- */
+
+// Author: Kevin P. Barry [ta0kira@gmail.com]
+
+concrete TreeSet<#k> {
+  refines DefaultOrder<#k>
+  refines SetReader<#k>
+  refines SetWriter<#k>
+  #k defines LessThan<#k>
+
+  // Create a new set.
+  @type new () -> (#self)
+
+  // Traverse in the default order.
+  //
+  // Notes:
+  // - This is from DefaultOrder, but is made explicit for documentation.
+  // - Traversal of the entire set is amortized O(n); however, the cost of any
+  //   particular iteration could be up to O(log n).
+  // - The overall memory cost is O(log n).
+  @value defaultOrder () -> (optional Order<#k>)
+
+  // Traverse the set in the reverse order of defaultOrder().
+  //
+  // Notes:
+  // - Traversal of the entire set is amortized O(n); however, the cost of any
+  //   particular iteration could be up to O(log n).
+  // - The overall memory cost is O(log n).
+  @value reverseOrder () -> (optional Order<#k>)
+
+  // Start forward traversal (same as defaultOrder()) from the specified key.
+  //
+  // Notes:
+  // - If the key does not exist in the SearchTree, the position right after
+  //   where it would be (in the forward direction) is returned.
+  @value getForward (#k) -> (optional Order<#k>)
+
+  // Start reverse traversal (same as reverseOrder()) from the specified key.
+  //
+  // Notes:
+  // - If the key does not exist in the SearchTree, the position right after
+  //   where it would be (in the reverse direction) is returned.
+  @value getReverse (#k) -> (optional Order<#k>)
+}

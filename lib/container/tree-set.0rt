@@ -1,0 +1,169 @@
+/* -----------------------------------------------------------------------------
+Copyright 2021 Kevin P. Barry
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+----------------------------------------------------------------------------- */
+
+// Author: Kevin P. Barry [ta0kira@gmail.com]
+
+testcase "TreeSet tests" {
+  success
+}
+
+unittest addAndRemove {
+  TreeSet<Int> set <- TreeSet<Int>.new()
+  Int hash <- 13
+  Int max  <- 20
+  $ReadOnly[hash,max]$
+
+  // Populate the set in a pseudo-random order.
+  traverse (Counter.zeroIndexed(max) -> Int i) {
+    \ set.add((i*hash)%max)
+  }
+
+  // Remove only the odd elements.
+  traverse (Counter.zeroIndexed(max) -> Int i) {
+    if (i%2 == 1) {
+      \ set.remove(i)
+    }
+  }
+
+  // Validate set membership.
+  traverse (Counter.zeroIndexed(max) -> Int i) {
+    \ Testing.checkEquals<?>(set.member(i),i%2 == 0)
+  }
+}
+
+unittest defaultOrder {
+  TreeSet<Int> set <- TreeSet<Int>.new()
+  Int hash <- 13
+  Int max  <- 20
+  $ReadOnly[hash,max]$
+
+  // Populate the set in a pseudo-random order.
+  traverse (Counter.zeroIndexed(max) -> Int i) {
+    \ set.add((i*hash)%max)
+  }
+
+  // Validate the traversal order.
+  Int index <- 0
+  traverse (set.defaultOrder() -> Int entry) {
+    \ Testing.checkEquals<?>(entry,index)
+    index <- index+1
+  }
+
+  \ Testing.checkEquals<?>(index,max)
+}
+
+unittest reverseOrder {
+  TreeSet<Int> set <- TreeSet<Int>.new()
+  Int hash <- 13
+  Int max  <- 20
+  $ReadOnly[hash,max]$
+
+  // Populate the set in a pseudo-random order.
+  traverse (Counter.zeroIndexed(max) -> Int i) {
+    \ set.add((i*hash)%max)
+  }
+
+  // Validate the traversal order.
+  Int index <- max
+  traverse (set.reverseOrder() -> Int entry) {
+    index <- index-1
+    \ Testing.checkEquals<?>(entry,index)
+  }
+
+  \ Testing.checkEquals<?>(index,0)
+}
+
+unittest getForward {
+  TreeSet<Int> set <- TreeSet<Int>.new()
+  Int hash <- 13
+  Int max  <- 20
+  $ReadOnly[hash,max]$
+
+  // Populate the set in a pseudo-random order.
+  traverse (Counter.zeroIndexed(max) -> Int i) {
+    \ set.add((i*hash)%max)
+  }
+
+  // Validate the traversal order from every starting point.
+  traverse (Counter.zeroIndexed(max) -> Int i) {
+    Int index <- i
+    traverse (set.getForward(index) -> Int entry) {
+      \ Testing.checkEquals<?>(entry,index)
+      index <- index+1
+    }
+    \ Testing.checkEquals<?>(index,max)
+  }
+}
+
+unittest getForwardNotFound {
+  TreeSet<Int> set <- TreeSet<Int>.new()
+  \ set.add(1).add(3).add(5)
+
+  scoped {
+    optional Order<Int> start <- set.getForward(4)
+  } in if (!present(start)) {
+    fail("Failed")
+  } else {
+    \ Testing.checkEquals<?>(require(start).get(),5)
+  }
+
+  scoped {
+    optional Order<Int> start <- set.getForward(6)
+  } in if (present(start)) {
+    fail("Failed")
+  }
+}
+
+unittest getReverse {
+  TreeSet<Int> set <- TreeSet<Int>.new()
+  Int hash <- 13
+  Int max  <- 20
+  $ReadOnly[hash,max]$
+
+  // Populate the set in a pseudo-random order.
+  traverse (Counter.zeroIndexed(max) -> Int i) {
+    \ set.add((i*hash)%max)
+  }
+
+  // Validate the traversal order from every starting point.
+  traverse (Counter.zeroIndexed(max) -> Int i) {
+    Int index <- i
+    traverse (set.getReverse(index) -> Int entry) {
+      \ Testing.checkEquals<?>(entry,index)
+      index <- index-1
+    }
+    \ Testing.checkEquals<?>(index,-1)
+  }
+}
+
+unittest getReverseNotFound {
+  TreeSet<Int> set <- TreeSet<Int>.new()
+  \ set.add(1).add(3).add(5)
+
+  scoped {
+    optional Order<Int> start <- set.getReverse(2)
+  } in if (!present(start)) {
+    fail("Failed")
+  } else {
+    \ Testing.checkEquals<?>(require(start).get(),1)
+  }
+
+  scoped {
+    optional Order<Int> start <- set.getReverse(0)
+  } in if (present(start)) {
+    fail("Failed")
+  }
+}

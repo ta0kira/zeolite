@@ -1,0 +1,81 @@
+/* -----------------------------------------------------------------------------
+Copyright 2021 Kevin P. Barry
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+----------------------------------------------------------------------------- */
+
+// Author: Kevin P. Barry [ta0kira@gmail.com]
+
+define TreeSet {
+  @value SearchTree<#k,any> tree
+
+  new () {
+    return #self{ SearchTree<#k,any>.new() }
+  }
+
+  add (k) {
+    \ tree.set(k,Void.void())
+    return self
+  }
+
+  remove (k) {
+    \ tree.remove(k)
+    return self
+  }
+
+  member (k) {
+    return present(tree.get(k))
+  }
+
+  defaultOrder () {
+    return TreeSetOrder<#k>.wrap(tree.defaultOrder())
+  }
+
+  reverseOrder () {
+    return TreeSetOrder<#k>.wrap(tree.reverseOrder())
+  }
+
+  getForward (k) {
+    return TreeSetOrder<#k>.wrap(tree.getForward(k))
+  }
+
+  getReverse (k) {
+    return TreeSetOrder<#k>.wrap(tree.getReverse(k))
+  }
+}
+
+concrete TreeSetOrder<#k> {
+  refines Order<#k>
+
+  @type wrap (optional Order<KeyValue<#k,any>>) -> (optional TreeSetOrder<#k>)
+}
+
+define TreeSetOrder {
+  @value Order<KeyValue<#k,any>> order
+
+  wrap (order) {
+    if (!present(order)) {
+      return empty
+    } else {
+      return #self{ require(order) }
+    }
+  }
+
+  next () {
+    return wrap(order.next())
+  }
+
+  get () {
+    return order.get().getKey()
+  }
+}

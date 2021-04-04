@@ -51,6 +51,23 @@ limitations under the License.
   get (#k) -> (optional #v)
 }
 
+// Writing to a set of values.
+//
+// Params:
+// - #k: The type stored in the set.
+@value interface SetWriter<#k|> {
+  add (#k)    -> (#self)
+  remove (#k) -> (#self)
+}
+
+// Checking a set of values.
+//
+// Params:
+// - #k: The type stored in the set.
+@value interface SetReader<#k|> {
+  member (#k) -> (Bool)
+}
+
 // Factory for creating a new key-value pair.
 @type interface KVFactory<#k,#v|> {
   // Create a new pair from the provided key and value.

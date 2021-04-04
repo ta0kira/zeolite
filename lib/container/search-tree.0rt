@@ -76,7 +76,7 @@ unittest defaultOrder {
     index <- index+1
   }
 
-  \ Testing.checkEquals<?>(index,20)
+  \ Testing.checkEquals<?>(index,max)
 }
 
 unittest reverseOrder {
@@ -91,7 +91,7 @@ unittest reverseOrder {
   }
 
   // Validate the traversal order.
-  Int index <- 20
+  Int index <- max
   traverse (tree.reverseOrder() -> KeyValue<Int,Int> entry) {
     index <- index-1
     \ Testing.checkEquals<?>(entry.getKey(),index)
@@ -120,7 +120,7 @@ unittest getForward {
       \ Testing.checkEquals<?>((entry.getValue()*hash)%max,entry.getKey())
       index <- index+1
     }
-    \ Testing.checkEquals<?>(index,20)
+    \ Testing.checkEquals<?>(index,max)
   }
 }
 

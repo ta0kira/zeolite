@@ -4,6 +4,9 @@
 
 ### Libraries
 
+* **[new]** Adds `TreeSet` to `lib/container`, to manage set membership of any
+  sortable type.
+
 * **[new]** Adds `AutoBinaryTree` to `lib/container`, to provide binary search
   tree (BST) functionality to custom containers that need to augment each node
   with additional data.
