@@ -24,6 +24,15 @@ define Sorting {
   sortWith (seq) {
     \ HeapSort<#x,#y>.inPlace(seq)
   }
+
+  reverse (seq) {
+    traverse (Counter.zeroIndexed(seq.size()/2) -> Int i) {
+      Int j <- seq.size()-i-1
+      #x temp <- seq.readAt(i)
+      \ seq.writeAt(i,seq.readAt(j))
+      \ seq.writeAt(j,temp)
+    }
+  }
 }
 
 // Putting the params at the top level allows helpers to be called without

@@ -60,6 +60,50 @@ unittest sortEmpty {
   \ Testing.checkEquals<?>(original,expected)
 }
 
+unittest reverseEvenSize {
+  TestSequence original <- TestSequence.create()
+  TestSequence expected <- TestSequence.create()
+  Int size <- 100
+  $ReadOnly[size]$
+
+  traverse (Counter.zeroIndexed(size) -> Int i) {
+    \ expected.append(i)
+  }
+
+  traverse (Counter.revZeroIndexed(size) -> Int i) {
+    \ original.append(i)
+  }
+
+  \ Sorting:reverse<?>(original)
+  \ Testing.checkEquals<?>(original,expected)
+}
+
+unittest reverseOddSize {
+  TestSequence original <- TestSequence.create()
+  TestSequence expected <- TestSequence.create()
+  Int size <- 101
+  $ReadOnly[size]$
+
+  traverse (Counter.zeroIndexed(size) -> Int i) {
+    \ expected.append(i)
+  }
+
+  traverse (Counter.revZeroIndexed(size) -> Int i) {
+    \ original.append(i)
+  }
+
+  \ Sorting:reverse<?>(original)
+  \ Testing.checkEquals<?>(original,expected)
+}
+
+unittest reverseEmpty {
+  TestSequence original <- TestSequence.create()
+  TestSequence expected <- TestSequence.create()
+
+  \ Sorting:reverse<?>(original)
+  \ Testing.checkEquals<?>(original,expected)
+}
+
 concrete TestSequence {
   refines Formatted
   refines ReadAt<Int>

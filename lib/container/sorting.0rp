@@ -47,4 +47,7 @@ concrete Sorting {
   @category sortWith<#x,#y>
     #y defines LessThan<#x>
   ([ReadAt<#x>&WriteAt<#x>]) -> ()
+
+  // In-place order reversal of a random-access container.
+  @category reverse<#x> ([ReadAt<#x>&WriteAt<#x>]) -> ()
 }
