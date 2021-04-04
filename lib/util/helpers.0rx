@@ -84,3 +84,9 @@ define Reversed {
     return y `#x.lessThan` x
   }
 }
+
+define BySize {
+  lessThan (x,y) {
+    return x.size() < y.size()
+  }
+}

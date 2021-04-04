@@ -83,3 +83,8 @@ concrete Reversed<#x|> {
   defines LessThan<#x>
   #x defines LessThan<#x>
 }
+
+// Base ordering on container size alone.
+concrete BySize {
+  defines LessThan<Container>
+}

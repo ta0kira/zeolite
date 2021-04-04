@@ -21,25 +21,17 @@ testcase "OrderH tests" {
 }
 
 unittest lessThan {
-  \ Testing.checkEquals<?>(OrderH:lessThan<?>(("").defaultOrder(),
-                                              ("").defaultOrder()),false)
-  \ Testing.checkEquals<?>(OrderH:lessThan<?>(("a").defaultOrder(),
-                                              ("abc").defaultOrder()),true)
-  \ Testing.checkEquals<?>(OrderH:lessThan<?>(("abc").defaultOrder(),
-                                              ("abc").defaultOrder()),false)
-  \ Testing.checkEquals<?>(OrderH:lessThan<?>(("abc").defaultOrder(),
-                                              ("a").defaultOrder()),false)
+  \ Testing.checkEquals<?>(("").defaultOrder()    `OrderH:lessThan<?>` ("").defaultOrder(),   false)
+  \ Testing.checkEquals<?>(("a").defaultOrder()   `OrderH:lessThan<?>` ("abc").defaultOrder(),true)
+  \ Testing.checkEquals<?>(("abc").defaultOrder() `OrderH:lessThan<?>` ("abc").defaultOrder(),false)
+  \ Testing.checkEquals<?>(("abc").defaultOrder() `OrderH:lessThan<?>` ("a").defaultOrder(),  false)
 }
 
 unittest equals {
-  \ Testing.checkEquals<?>(OrderH:equals<?>(("").defaultOrder(),
-                                            ("").defaultOrder()),true)
-  \ Testing.checkEquals<?>(OrderH:equals<?>(("a").defaultOrder(),
-                                            ("abc").defaultOrder()),false)
-  \ Testing.checkEquals<?>(OrderH:equals<?>(("abc").defaultOrder(),
-                                            ("abc").defaultOrder()),true)
-  \ Testing.checkEquals<?>(OrderH:equals<?>(("abc").defaultOrder(),
-                                            ("a").defaultOrder()),false)
+  \ Testing.checkEquals<?>(("").defaultOrder()    `OrderH:equals<?>` ("").defaultOrder(),   true)
+  \ Testing.checkEquals<?>(("a").defaultOrder()   `OrderH:equals<?>` ("abc").defaultOrder(),false)
+  \ Testing.checkEquals<?>(("abc").defaultOrder() `OrderH:equals<?>` ("abc").defaultOrder(),true)
+  \ Testing.checkEquals<?>(("abc").defaultOrder() `OrderH:equals<?>` ("a").defaultOrder(),  false)
 }
 
 
@@ -48,26 +40,32 @@ testcase "ReadAtH tests" {
 }
 
 unittest lessThan {
-  \ Testing.checkEquals<?>(ReadAtH:lessThan<?>("",""),false)
-  \ Testing.checkEquals<?>(ReadAtH:lessThan<?>("a","abc"),true)
-  \ Testing.checkEquals<?>(ReadAtH:lessThan<?>("abc","abc"),false)
-  \ Testing.checkEquals<?>(ReadAtH:lessThan<?>("abc","a"),false)
+  \ Testing.checkEquals<?>(""    `ReadAtH:lessThan<?>` "",   false)
+  \ Testing.checkEquals<?>("a"   `ReadAtH:lessThan<?>` "abc",true)
+  \ Testing.checkEquals<?>("abc" `ReadAtH:lessThan<?>` "abc",false)
+  \ Testing.checkEquals<?>("abc" `ReadAtH:lessThan<?>` "a",  false)
 }
 
 unittest equals {
-  \ Testing.checkEquals<?>(ReadAtH:equals<?>("",""),true)
-  \ Testing.checkEquals<?>(ReadAtH:equals<?>("a","abc"),false)
-  \ Testing.checkEquals<?>(ReadAtH:equals<?>("abc","abc"),true)
-  \ Testing.checkEquals<?>(ReadAtH:equals<?>("abc","a"),false)
+  \ Testing.checkEquals<?>(""    `ReadAtH:equals<?>` "",   true)
+  \ Testing.checkEquals<?>("a"   `ReadAtH:equals<?>` "abc",false)
+  \ Testing.checkEquals<?>("abc" `ReadAtH:equals<?>` "abc",true)
+  \ Testing.checkEquals<?>("abc" `ReadAtH:equals<?>` "a",  false)
 }
 
 
-testcase "Reversed tests" {
+testcase "modified LessThan" {
   success
 }
 
-unittest test {
+unittest reversed {
   \ Testing.checkEquals<?>(0 `Reversed<Int>.lessThan` 0,false)
   \ Testing.checkEquals<?>(0 `Reversed<Int>.lessThan` 1,false)
   \ Testing.checkEquals<?>(1 `Reversed<Int>.lessThan` 0,true)
+}
+
+unittest bySize {
+  \ Testing.checkEquals<?>(""   `BySize.lessThan` "",false)
+  \ Testing.checkEquals<?>("b"  `BySize.lessThan` "ac",true)
+  \ Testing.checkEquals<?>("ac" `BySize.lessThan` "b",false)
 }

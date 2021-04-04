@@ -10,6 +10,9 @@
 
   * **[new]** Adds `Reversed`, to allow reverse ordering of any `LessThan` type.
 
+  * **[new]** Adds `BySize`, to allow ordering of a sequence of `Container`
+    based on the `size()` of the respective `Container`.
+
   * **[new]** Adds `OrderH` and `ReadAtH`, to extend `LessThan` and `Equals`
     comparisons to simple containers.
 
