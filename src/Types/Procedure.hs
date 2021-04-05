@@ -250,7 +250,10 @@ data FunctionQualifier c =
 data InstanceOrInferred c =
   AssignedInstance [c] GeneralInstance |
   InferredInstance [c]
-  deriving (Show)
+
+instance Show c => Show (InstanceOrInferred c) where
+  show (AssignedInstance _ t) = show t
+  show (InferredInstance _)   = "?"
 
 data FunctionSpec c =
   FunctionSpec [c] (FunctionQualifier c) FunctionName (Positional (InstanceOrInferred c))

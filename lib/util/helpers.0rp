@@ -23,8 +23,6 @@ concrete OrderH {
   // Notes:
   // - If one sequence is a strict prefix of the other, that sequence will
   //   evaluate as less-than the other.
-  // - OrderH does not satisfy the requirements of defines LessThan<#x>. Create
-  //   a separate wrapper for your type if you need to satisfy a filter.
   //
   // Example:
   //
@@ -48,10 +46,6 @@ concrete OrderH {
 
   // Extend equals, based on position-wise comparisons.
   //
-  // Notes:
-  // - OrderH does not satisfy the requirements of defines Equals<#x>. Create
-  //   a separate wrapper for your type if you need to satisfy a filter.
-  //
   // Example:
   //
   //   Bool eq <- x.defaultOrder() `OrderH:equals<?>` y.defaultOrder()
@@ -67,7 +61,7 @@ concrete OrderH {
   //
   // Example:
   //
-  //   Bool lt <- x.defaultOrder() `OrderH:equalsWith<?,BySize>` y.defaultOrder()
+  //   Bool eq <- x.defaultOrder() `OrderH:equalsWith<?,BySize>` y.defaultOrder()
   @category equalsWith<#x,#y>
     #y defines Equals<#x>
   (optional Order<#x>,optional Order<#x>) -> (Bool)
@@ -80,8 +74,6 @@ concrete ReadAtH {
   // Notes:
   // - If one sequence is a strict prefix of the other, that sequence will
   //   evaluate as less-than the other.
-  // - ReadAtH does not satisfy the requirements of defines LessThan<#x>. Create
-  //   a separate wrapper for your type if you need to satisfy a filter.
   //
   // Example:
   //
@@ -105,10 +97,6 @@ concrete ReadAtH {
 
   // Extend equals, based on position-wise comparisons.
   //
-  // Notes:
-  // - ReadAtH does not satisfy the requirements of defines Equals<#x>. Create
-  //   a separate wrapper for your type if you need to satisfy a filter.
-  //
   // Example:
   //
   //   Bool eq <- x `ReadAtH:equals<?>` y
@@ -124,7 +112,7 @@ concrete ReadAtH {
   //
   // Example:
   //
-  //   Bool lt <- x `ReadAtH:equalsWith<?,BySize>` y
+  //   Bool eq <- x `ReadAtH:equalsWith<?,BySize>` y
   @category equalsWith<#x,#y>
     #y defines Equals<#x>
   (ReadAt<#x>,ReadAt<#x>) -> (Bool)
