@@ -29,6 +29,9 @@
 
   * **[new]** Implements `Container.size()` in `SearchTree`.
 
+  * **[new]** Adds `KeyValueH`, to extend `LessThan` and `Equals` comparisons to
+    `KeyValue`.
+
 * **[new]** Adds `CategoricalTree` to `lib/math`, as a dynamic representation
   of a [categorical distribution][categorical] over objects of any sortable type.
 

@@ -1,0 +1,107 @@
+/* -----------------------------------------------------------------------------
+Copyright 2021 Kevin P. Barry
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+----------------------------------------------------------------------------- */
+
+// Author: Kevin P. Barry [ta0kira@gmail.com]
+
+testcase "comparator helper tests" {
+  success
+}
+
+unittest keyValueHLessThan {
+  \ Testing.checkEquals<?>(KV.new(1,"a") `KeyValueH:lessThan<?,?>` KV.new(1,"a"),false)
+  \ Testing.checkEquals<?>(KV.new(1,"a") `KeyValueH:lessThan<?,?>` KV.new(1,"b"),true)
+  \ Testing.checkEquals<?>(KV.new(2,"a") `KeyValueH:lessThan<?,?>` KV.new(1,"b"),false)
+  \ Testing.checkEquals<?>(KV.new(1,"b") `KeyValueH:lessThan<?,?>` KV.new(2,"a"),true)
+}
+
+unittest keyValueHLessThanWith {
+  \ Testing.checkEquals<?>(KV.new(1,"a") `KeyValueH:lessThanWith<?,?,Int,AlwaysEqual>` KV.new(1,"a"),false)
+  \ Testing.checkEquals<?>(KV.new(1,"a") `KeyValueH:lessThanWith<?,?,Int,AlwaysEqual>` KV.new(1,"b"),false)
+  \ Testing.checkEquals<?>(KV.new(2,"a") `KeyValueH:lessThanWith<?,?,Int,AlwaysEqual>` KV.new(1,"b"),false)
+  \ Testing.checkEquals<?>(KV.new(1,"b") `KeyValueH:lessThanWith<?,?,Int,AlwaysEqual>` KV.new(2,"a"),true)
+
+  \ Testing.checkEquals<?>(KV.new(1,"a") `KeyValueH:lessThanWith<?,?,AlwaysEqual,String>` KV.new(1,"a"),false)
+  \ Testing.checkEquals<?>(KV.new(1,"a") `KeyValueH:lessThanWith<?,?,AlwaysEqual,String>` KV.new(1,"b"),true)
+  \ Testing.checkEquals<?>(KV.new(2,"a") `KeyValueH:lessThanWith<?,?,AlwaysEqual,String>` KV.new(1,"b"),true)
+  \ Testing.checkEquals<?>(KV.new(1,"b") `KeyValueH:lessThanWith<?,?,AlwaysEqual,String>` KV.new(2,"a"),false)
+}
+
+unittest keyValueHEquals {
+  \ Testing.checkEquals<?>(KV.new(1,"a") `KeyValueH:equals<?,?>` KV.new(1,"a"),true)
+  \ Testing.checkEquals<?>(KV.new(1,"a") `KeyValueH:equals<?,?>` KV.new(1,"b"),false)
+  \ Testing.checkEquals<?>(KV.new(2,"a") `KeyValueH:equals<?,?>` KV.new(1,"b"),false)
+  \ Testing.checkEquals<?>(KV.new(1,"b") `KeyValueH:equals<?,?>` KV.new(2,"a"),false)
+}
+
+unittest keyValueHEqualsWith {
+  \ Testing.checkEquals<?>(KV.new(1,"a") `KeyValueH:equalsWith<?,?,Int,AlwaysEqual>` KV.new(1,"a"),true)
+  \ Testing.checkEquals<?>(KV.new(1,"a") `KeyValueH:equalsWith<?,?,Int,AlwaysEqual>` KV.new(1,"b"),true)
+  \ Testing.checkEquals<?>(KV.new(2,"a") `KeyValueH:equalsWith<?,?,Int,AlwaysEqual>` KV.new(1,"b"),false)
+  \ Testing.checkEquals<?>(KV.new(1,"b") `KeyValueH:equalsWith<?,?,Int,AlwaysEqual>` KV.new(2,"a"),false)
+
+  \ Testing.checkEquals<?>(KV.new(1,"a") `KeyValueH:equalsWith<?,?,AlwaysEqual,String>` KV.new(1,"a"),true)
+  \ Testing.checkEquals<?>(KV.new(1,"a") `KeyValueH:equalsWith<?,?,AlwaysEqual,String>` KV.new(1,"b"),false)
+  \ Testing.checkEquals<?>(KV.new(2,"a") `KeyValueH:equalsWith<?,?,AlwaysEqual,String>` KV.new(1,"b"),false)
+  \ Testing.checkEquals<?>(KV.new(1,"b") `KeyValueH:equalsWith<?,?,AlwaysEqual,String>` KV.new(2,"a"),false)
+}
+
+unittest integrationTest {
+  SearchTree<Int,String> tree1 <- SearchTree<Int,String>.new()
+      .set(1,"d").set(2,"c").set(3,"b").set(4,"a")
+  SearchTree<Int,String> tree2 <- SearchTree<Int,String>.new()
+      .set(1,"a").set(2,"b").set(3,"c").set(4,"d")
+
+  \ Testing.checkEquals<?>(tree1.defaultOrder() `OrderH:equalsWith<?,KVEquals<Int,AlwaysEqual>>`    tree2.defaultOrder(),true)
+  \ Testing.checkEquals<?>(tree1.defaultOrder() `OrderH:equalsWith<?,KVEquals<Int,String>>`         tree2.defaultOrder(),false)
+  \ Testing.checkEquals<?>(tree1.defaultOrder() `OrderH:equalsWith<?,KVEquals<AlwaysEqual,String>>` tree2.defaultOrder(),false)
+}
+
+concrete KVEquals<#k,#v> {
+  defines Equals<KeyValue<Int,String>>
+  #k defines Equals<Int>
+  #v defines Equals<String>
+}
+
+define KVEquals {
+  equals (x,y) {
+    return x `KeyValueH:equalsWith<?,?,#k,#v>` y
+  }
+}
+
+concrete KV {
+  refines KeyValue<Int,String>
+
+  @type new (Int,String) -> (KV)
+}
+
+define KV {
+  $ReadOnly[key,value]$
+
+  @value Int key
+  @value String value
+
+  new (k,v) {
+    return KV{ k, v }
+  }
+
+  getKey () {
+    return key
+  }
+
+  getValue () {
+    return value
+  }
+}

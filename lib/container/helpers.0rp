@@ -1,0 +1,88 @@
+/* -----------------------------------------------------------------------------
+Copyright 2021 Kevin P. Barry
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+----------------------------------------------------------------------------- */
+
+// Author: Kevin P. Barry [ta0kira@gmail.com]
+
+// Helpers to extend functionality on keys and values to KeyValue.
+concrete KeyValueH {
+  // Compare for lessThan.
+  //
+  // Params:
+  // - #k: Element type of the key.
+  // - #v: Element type of the value.
+  //
+  // Notes:
+  // - The key comparison takes precedence over the value comparison.
+  //
+  // Example:
+  //
+  //   Bool lt <- x `KeyValueH:lessThan<?,?>` y
+  @category lessThan<#k,#v>
+    #k defines LessThan<#k>
+    #v defines LessThan<#v>
+  (KeyValue<#k,#v>,KeyValue<#k,#v>) -> (Bool)
+
+  // The same as lessThan, but with custom comparators.
+  //
+  // Params:
+  // - #k: Element type of the key.
+  // - #v: Element type of the value.
+  // - #kk: Comparator type providing the LessThan<#k> comparison.
+  // - #vv: Comparator type providing the LessThan<#v> comparison.
+  //
+  // Notes:
+  // - The key comparison takes precedence over the value comparison.
+  //
+  // Example:
+  //
+  //   // Ignore the value and compare Int keys.
+  //   Bool lt <- x `KeyValueH:lessThanWith<?,?,Int,AlwaysEqual>` y
+  @category lessThanWith<#k,#v,#kk,#vv>
+    #kk defines LessThan<#k>
+    #vv defines LessThan<#v>
+  (KeyValue<#k,#v>,KeyValue<#k,#v>) -> (Bool)
+
+  // Compare for equals.
+  //
+  // Params:
+  // - #k: Element type of the key.
+  // - #v: Element type of the value.
+  //
+  // Example:
+  //
+  //   Bool eq <- x `KeyValueH:equals<?,?>` y
+  @category equals<#k,#v>
+    #k defines Equals<#k>
+    #v defines Equals<#v>
+  (KeyValue<#k,#v>,KeyValue<#k,#v>) -> (Bool)
+
+  // The same as equals, but with custom comparators.
+  //
+  // Params:
+  // - #k: Element type of the key.
+  // - #v: Element type of the value.
+  // - #kk: Comparator type providing the Equals<#k> comparison.
+  // - #vv: Comparator type providing the Equals<#v> comparison.
+  //
+  // Example:
+  //
+  //   // Ignore the key and compare Int values.
+  //   Bool eq <- x `KeyValueH:equalsWith<?,?,AlwaysEqual,Int>` y
+  @category equalsWith<#k,#v,#kk,#vv>
+    #kk defines Equals<#k>
+    #vv defines Equals<#v>
+  (KeyValue<#k,#v>,KeyValue<#k,#v>) -> (Bool)
+}
