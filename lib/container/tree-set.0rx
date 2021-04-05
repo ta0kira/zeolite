@@ -76,7 +76,14 @@ define TreeSetOrder {
   }
 
   next () {
-    return wrap(order.next())
+    scoped {
+      optional Order<KeyValue<#k,any>> order2 <- order.next()
+    } in if (present(order2)) {
+      order <- require(order2)
+      return self
+    } else {
+      return empty
+    }
   }
 
   get () {
