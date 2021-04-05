@@ -22,7 +22,7 @@ define Sorting {
   }
 
   sortWith (seq) {
-    \ HeapSort<#x,#y>.inPlace(seq)
+    \ HeapSort<#x,#xx>.inPlace(seq)
   }
 
   reverse (seq) {
@@ -37,8 +37,8 @@ define Sorting {
 
 // Putting the params at the top level allows helpers to be called without
 // needing to pass the params every time.
-concrete HeapSort<#x,#y> {
-  #y defines LessThan<#x>
+concrete HeapSort<#x,#xx> {
+  #xx defines LessThan<#x>
 
   @type inPlace ([ReadAt<#x>&WriteAt<#x>]) -> ()
 }
@@ -78,10 +78,10 @@ define HeapSort {
       Int left  <- 2*last+1
       Int right <- 2*last+2
       $ReadOnly[left,right]$
-      if (seq.readAt(indexLargest) `#y.lessThan` seq.readAt(left)) {
+      if (seq.readAt(indexLargest) `#xx.lessThan` seq.readAt(left)) {
         indexLargest <- left
       }
-      if (right < size && seq.readAt(indexLargest) `#y.lessThan` seq.readAt(right)) {
+      if (right < size && seq.readAt(indexLargest) `#xx.lessThan` seq.readAt(right)) {
         indexLargest <- right
       }
       if (indexLargest == last) {

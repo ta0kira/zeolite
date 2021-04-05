@@ -27,9 +27,9 @@ define OrderH {
     $Hidden[x,y]$
     while (present(xx) && present(yy)) {
       $ReadOnly[xx,yy]$
-      if (require(xx).get() `#y.lessThan` require(yy).get()) {
+      if (require(xx).get() `#xx.lessThan` require(yy).get()) {
         return true
-      } elif (require(yy).get() `#y.lessThan` require(xx).get()) {
+      } elif (require(yy).get() `#xx.lessThan` require(xx).get()) {
         return false
       }
     } update {
@@ -49,7 +49,7 @@ define OrderH {
     $Hidden[x,y]$
     while (present(xx) && present(yy)) {
       $ReadOnly[xx,yy]$
-      if (!(require(xx).get() `#y.equals` require(yy).get())) {
+      if (!(require(xx).get() `#xx.equals` require(yy).get())) {
         return false
       }
     } update {
@@ -68,9 +68,9 @@ define ReadAtH {
   lessThanWith (x,y) {
     traverse (Counter.zeroIndexed(Ranges:min<?>(x.size(),y.size())) -> Int i) {
       $ReadOnly[i]$
-      if (x.readAt(i) `#y.lessThan` y.readAt(i)) {
+      if (x.readAt(i) `#xx.lessThan` y.readAt(i)) {
         return true
-      } elif (y.readAt(i) `#y.lessThan` x.readAt(i)) {
+      } elif (y.readAt(i) `#xx.lessThan` x.readAt(i)) {
         return false
       }
     }
@@ -87,7 +87,7 @@ define ReadAtH {
     }
     traverse (Counter.zeroIndexed(x.size()) -> Int i) {
       $ReadOnly[i]$
-      if (!(x.readAt(i) `#y.equals` y.readAt(i))) {
+      if (!(x.readAt(i) `#xx.equals` y.readAt(i))) {
         return false
       }
     }

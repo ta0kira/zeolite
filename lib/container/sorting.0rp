@@ -34,7 +34,7 @@ concrete Sorting {
   //
   // Params:
   // - #x: Element type managed by the container.
-  // - #y: Comparator type providing the LessThan<#x> comparison.
+  // - #xx: Comparator type providing the LessThan<#x> comparison.
   //
   // Notes:
   // - Worst-case performance is O(n log n).
@@ -44,8 +44,8 @@ concrete Sorting {
   //
   //   // Sort myIntContainer in reverse order. (Reversed is from lib/util.)
   //   \ Sorting:sortWith<?,Reversed<Int>>(myIntContainer)
-  @category sortWith<#x,#y>
-    #y defines LessThan<#x>
+  @category sortWith<#x,#xx>
+    #xx defines LessThan<#x>
   ([ReadAt<#x>&WriteAt<#x>]) -> ()
 
   // In-place order reversal of a random-access container.

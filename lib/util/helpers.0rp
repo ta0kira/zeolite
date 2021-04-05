@@ -35,13 +35,13 @@ concrete OrderH {
   //
   // Params:
   // - #x: Element type managed by the container.
-  // - #y: Comparator type providing the LessThan<#x> comparison.
+  // - #xx: Comparator type providing the LessThan<#x> comparison.
   //
   // Example:
   //
   //   Bool lt <- x.defaultOrder() `OrderH:lessThanWith<?,Reversed<Int>>` y.defaultOrder()
-  @category lessThanWith<#x,#y>
-    #y defines LessThan<#x>
+  @category lessThanWith<#x,#xx>
+    #xx defines LessThan<#x>
   (optional Order<#x>,optional Order<#x>) -> (Bool)
 
   // Extend equals, based on position-wise comparisons.
@@ -57,13 +57,13 @@ concrete OrderH {
   //
   // Params:
   // - #x: Element type managed by the container.
-  // - #y: Comparator type providing the Equals<#x> comparison.
+  // - #xx: Comparator type providing the Equals<#x> comparison.
   //
   // Example:
   //
   //   Bool eq <- x.defaultOrder() `OrderH:equalsWith<?,BySize>` y.defaultOrder()
-  @category equalsWith<#x,#y>
-    #y defines Equals<#x>
+  @category equalsWith<#x,#xx>
+    #xx defines Equals<#x>
   (optional Order<#x>,optional Order<#x>) -> (Bool)
 }
 
@@ -86,13 +86,13 @@ concrete ReadAtH {
   //
   // Params:
   // - #x: Element type managed by the container.
-  // - #y: Comparator type providing the LessThan<#x> comparison.
+  // - #xx: Comparator type providing the LessThan<#x> comparison.
   //
   // Example:
   //
   //   Bool lt <- x `ReadAtH:lessThanWith<?,Reversed<Int>>` y
-  @category lessThanWith<#x,#y>
-    #y defines LessThan<#x>
+  @category lessThanWith<#x,#xx>
+    #xx defines LessThan<#x>
   (ReadAt<#x>,ReadAt<#x>) -> (Bool)
 
   // Extend equals, based on position-wise comparisons.
@@ -108,13 +108,13 @@ concrete ReadAtH {
   //
   // Params:
   // - #x: Element type managed by the container.
-  // - #y: Comparator type providing the Equals<#x> comparison.
+  // - #xx: Comparator type providing the Equals<#x> comparison.
   //
   // Example:
   //
   //   Bool eq <- x `ReadAtH:equalsWith<?,BySize>` y
-  @category equalsWith<#x,#y>
-    #y defines Equals<#x>
+  @category equalsWith<#x,#xx>
+    #xx defines Equals<#x>
   (ReadAt<#x>,ReadAt<#x>) -> (Bool)
 }
 
