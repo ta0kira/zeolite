@@ -2,40 +2,40 @@ root: ".."
 path: "base"
 extra_files: [
   category_source {
-    source: "base/Extension_Bool.cpp"
+    source: "base/src/Extension_Bool.cpp"
     categories: [Bool]
   }
   category_source {
-    source: "base/Extension_Char.cpp"
+    source: "base/src/Extension_Char.cpp"
     categories: [Char]
   }
   category_source {
-    source: "base/Extension_CharBuffer.cpp"
+    source: "base/src/Extension_CharBuffer.cpp"
     categories: [CharBuffer]
   }
   category_source {
-    source: "base/Extension_Float.cpp"
+    source: "base/src/Extension_Float.cpp"
     categories: [Float]
   }
   category_source {
-    source: "base/Extension_Int.cpp"
+    source: "base/src/Extension_Int.cpp"
     categories: [Int]
   }
   category_source {
-    source: "base/Extension_String.cpp"
+    source: "base/src/Extension_String.cpp"
     categories: [String]
   }
   "base/category-header.hpp"
-  "base/category-source.cpp"
   "base/category-source.hpp"
   "base/cycle-check.hpp"
   "base/function.hpp"
-  "base/logging.cpp"
   "base/logging.hpp"
-  "base/types.cpp"
-  "base/types.hpp"
   "base/thread-capture.h"
   "base/thread-crosser.h"
-  "base/thread-crosser.cc"
+  "base/types.hpp"
+  "base/src/category-source.cpp"
+  "base/src/logging.cpp"
+  "base/src/thread-crosser.cc"
+  "base/src/types.cpp"
 ]
 mode: incremental {}

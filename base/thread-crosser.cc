@@ -1,1 +1,0 @@
-../capture-thread/src/thread-crosser.cc
