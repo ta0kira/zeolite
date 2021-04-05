@@ -168,10 +168,14 @@ runCompiler resolver backend (CompileOptions _ is is2 ds _ _ p CreateTemplates f
   compileSingle d = do
     d' <- errorFromIO $ canonicalizePath (p </> d)
     (is',is2') <- maybeUseConfig d'
-    base <- resolveBaseModule resolver
     as  <- fmap fixPaths $ mapCompilerM (resolveModule resolver d') is'
     as2 <- fmap fixPaths $ mapCompilerM (resolveModule resolver d') is2'
-    deps1 <- loadPublicDeps compilerHash f Map.empty (base:as)
+    isBase <- isBaseModule resolver d'
+    deps1 <- if isBase
+                then loadPublicDeps compilerHash f Map.empty as
+                else do
+                  base <- resolveBaseModule resolver
+                  loadPublicDeps compilerHash f Map.empty (base:as)
     deps2 <- loadPublicDeps compilerHash f (mapMetadata deps1) as2
     path <- errorFromIO $ canonicalizePath p
     createModuleTemplates resolver path d deps1 deps2 <?? "In module \"" ++ d' ++ "\""

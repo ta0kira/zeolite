@@ -2,27 +2,27 @@ root: ".."
 path: "base"
 extra_files: [
   category_source {
-    source: "base/Category_Bool.cpp"
+    source: "base/Extension_Bool.cpp"
     categories: [Bool]
   }
   category_source {
-    source: "base/Category_Char.cpp"
+    source: "base/Extension_Char.cpp"
     categories: [Char]
   }
   category_source {
-    source: "base/Category_CharBuffer.cpp"
+    source: "base/Extension_CharBuffer.cpp"
     categories: [CharBuffer]
   }
   category_source {
-    source: "base/Category_Float.cpp"
+    source: "base/Extension_Float.cpp"
     categories: [Float]
   }
   category_source {
-    source: "base/Category_Int.cpp"
+    source: "base/Extension_Int.cpp"
     categories: [Int]
   }
   category_source {
-    source: "base/Category_String.cpp"
+    source: "base/Extension_String.cpp"
     categories: [String]
   }
   "base/category-header.hpp"

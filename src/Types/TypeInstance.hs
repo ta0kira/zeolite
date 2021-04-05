@@ -49,7 +49,6 @@ module Types.TypeInstance (
   flipFilter,
   getValueForParam,
   hasInferredParams,
-  isBuiltinConcrete,
   isDefinesFilter,
   isRequiresFilter,
   isWeakValue,
@@ -141,15 +140,6 @@ data CategoryName =
   BuiltinFormatted |
   BuiltinOrder |
   CategoryNone
-
-isBuiltinConcrete :: CategoryName -> Bool
-isBuiltinConcrete BuiltinBool       = True
-isBuiltinConcrete BuiltinChar       = True
-isBuiltinConcrete BuiltinCharBuffer = True
-isBuiltinConcrete BuiltinInt        = True
-isBuiltinConcrete BuiltinFloat      = True
-isBuiltinConcrete BuiltinString     = True
-isBuiltinConcrete _                 = False
 
 instance Show CategoryName where
   show (CategoryName n)    = n

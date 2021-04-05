@@ -54,7 +54,6 @@ data LanguageModule c =
     lmPublicLocal :: [AnyCategory c],
     lmPrivateLocal :: [AnyCategory c],
     lmTestingLocal :: [AnyCategory c],
-    lmExternal :: [CategoryName],
     lmStreamlined :: [CategoryName],
     lmExprMap :: ExprMap c
   }
@@ -69,7 +68,7 @@ data PrivateSource c =
 
 compileLanguageModule :: (Ord c, Show c, CollectErrorsM m) =>
   LanguageModule c -> [PrivateSource c] -> m [CxxOutput]
-compileLanguageModule (LanguageModule ns0 ns1 ns2 cs0 ps0 ts0 cs1 ps1 ts1 ex ss em) xa = do
+compileLanguageModule (LanguageModule ns0 ns1 ns2 cs0 ps0 ts0 cs1 ps1 ts1  ss em) xa = do
   let dm = mapDefByName $ concat $ map psDefine xa
   checkDefined dm extensions $ filter isValueConcrete (cs1 ++ ps1 ++ ts1)
   checkSupefluous $ Set.toList $ extensions `Set.difference` ca
@@ -82,13 +81,12 @@ compileLanguageModule (LanguageModule ns0 ns1 ns2 cs0 ps0 ts0 cs1 ps1 ts1 ex ss 
     map (generateNativeInterface True  nsPrivate) (onlyNativeInterfaces ts1)
   xxPrivate <- fmap concat $ mapCompilerM (compilePrivate tmPrivate tmTesting) xa
   xxStreamlined <- fmap concat $ mapCompilerM (streamlined tmTesting) $ nub ss
-  xxVerbose <- fmap concat $ mapCompilerM (verbose tmTesting) $ nub ex
-  let allFiles = xxInterfaces ++ xxPrivate ++ xxStreamlined ++ xxVerbose
+  let allFiles = xxInterfaces ++ xxPrivate ++ xxStreamlined
   noDuplicateFiles $ map (\f -> (coFilename f,coNamespace f)) allFiles
   return allFiles where
     nsPublic  = ns0 `Set.union` ns2
     nsPrivate = ns1 `Set.union` nsPublic
-    extensions = Set.fromList $ ex ++ ss
+    extensions = Set.fromList ss
     testingCats = Set.fromList $ map getCategoryName ts1
     onlyNativeInterfaces = filter (not . (`Set.member` extensions) . getCategoryName) . filter (not . isValueConcrete)
     localCats = Set.fromList $ map getCategoryName $ cs1 ++ ps1 ++ ts1
@@ -188,7 +186,7 @@ compileTestsModule cm ns args cs ds ts = do
 compileTestMain :: (Ord c, Show c, CollectErrorsM m) =>
   LanguageModule c -> [String] -> PrivateSource c -> [TestProcedure c] ->
   m (CxxOutput,[(FunctionName,[c])])
-compileTestMain (LanguageModule ns0 ns1 ns2 cs0 ps0 ts0 cs1 ps1 ts1 _ _ em) args ts2 tests = do
+compileTestMain (LanguageModule ns0 ns1 ns2 cs0 ps0 ts0 cs1 ps1 ts1 _ em) args ts2 tests = do
   tm' <- tm
   (CompiledData req main) <- generateTestFile tm' em args tests
   let output = CxxOutput Nothing testFilename NoNamespace (psNamespace ts2 `Set.insert` Set.unions [ns0,ns1,ns2]) req main
@@ -198,7 +196,7 @@ compileTestMain (LanguageModule ns0 ns1 ns2 cs0 ps0 ts0 cs1 ps1 ts1 _ _ em) args
 
 compileModuleMain :: (Ord c, Show c, CollectErrorsM m) =>
   LanguageModule c -> [PrivateSource c] -> CategoryName -> FunctionName -> m CxxOutput
-compileModuleMain (LanguageModule ns0 ns1 ns2 cs0 ps0 _ cs1 ps1 _ _ _ em) xa n f = do
+compileModuleMain (LanguageModule ns0 ns1 ns2 cs0 ps0 _ cs1 ps1 _ _ em) xa n f = do
   let resolved = filter (\d -> dcName d == n) $ concat $ map psDefine $ filter (not . psTesting) xa
   reconcile resolved
   tm' <- tm
