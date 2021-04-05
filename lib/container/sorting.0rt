@@ -149,11 +149,6 @@ define TestSequence {
   }
 
   equals (x,y) {
-    return x.getSeq() `ReadAtH:equals<?>` y.getSeq()
-  }
-
-  @value getSeq () -> (ReadAt<Int>)
-  getSeq () {
-    return seq
+    return x `ReadAtH:equals<?>` y
   }
 }
