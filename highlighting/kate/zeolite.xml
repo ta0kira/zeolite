@@ -111,6 +111,7 @@
       <item> ReadAt </item>
       <item> String </item>
       <item> SubSequence </item>
+      <item> WriteAt </item>
     </list>
 
     <list name="testcaseOutput">

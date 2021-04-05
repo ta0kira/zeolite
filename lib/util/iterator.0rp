@@ -16,17 +16,6 @@ limitations under the License.
 
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
-// Random-access writes. (Like the ReadAt built-in type.)
-//
-// Params:
-// - #x: The value type to be written.
-@value interface WriteAt<#x|> {
-  refines Container
-
-  // Write the value at the given index and return self.
-  writeAt (Int,#x) -> (#self)
-}
-
 // Read at the current position.
 //
 // Params:

@@ -205,6 +205,17 @@ concrete String {
   readAt (Int) -> (#x)
 }
 
+// Random-access writing to a container.
+//
+// Params:
+// - #x: The value type contained.
+@value interface WriteAt<#x|> {
+  refines Container
+
+  // Write the value at the given index and return self.
+  writeAt (Int,#x) -> (#self)
+}
+
 // Sequence that can be subsequenced.
 @value interface SubSequence {
   refines Container
