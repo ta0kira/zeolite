@@ -33,6 +33,19 @@ concrete OrderH {
     #x defines LessThan<#x>
   (optional Order<#x>,optional Order<#x>) -> (Bool)
 
+  // The same as lessThan, but with a custom comparator.
+  //
+  // Params:
+  // - #x: Element type managed by the container.
+  // - #y: Comparator type providing the LessThan<#x> comparison.
+  //
+  // Example:
+  //
+  //   Bool lt <- x.defaultOrder() `OrderH:lessThanWith<?,Reversed<Int>>` y.defaultOrder()
+  @category lessThanWith<#x,#y>
+    #y defines LessThan<#x>
+  (optional Order<#x>,optional Order<#x>) -> (Bool)
+
   // Extend equals, based on position-wise comparisons.
   //
   // Notes:
@@ -44,6 +57,19 @@ concrete OrderH {
   //   Bool eq <- x.defaultOrder() `OrderH:equals<?>` y.defaultOrder()
   @category equals<#x>
     #x defines Equals<#x>
+  (optional Order<#x>,optional Order<#x>) -> (Bool)
+
+  // The same as equals, but with a custom comparator.
+  //
+  // Params:
+  // - #x: Element type managed by the container.
+  // - #y: Comparator type providing the Equals<#x> comparison.
+  //
+  // Example:
+  //
+  //   Bool lt <- x.defaultOrder() `OrderH:equalsWith<?,BySize>` y.defaultOrder()
+  @category equalsWith<#x,#y>
+    #y defines Equals<#x>
   (optional Order<#x>,optional Order<#x>) -> (Bool)
 }
 
@@ -64,6 +90,19 @@ concrete ReadAtH {
     #x defines LessThan<#x>
   (ReadAt<#x>,ReadAt<#x>) -> (Bool)
 
+  // The same as lessThan, but with a custom comparator.
+  //
+  // Params:
+  // - #x: Element type managed by the container.
+  // - #y: Comparator type providing the LessThan<#x> comparison.
+  //
+  // Example:
+  //
+  //   Bool lt <- x `ReadAtH:lessThanWith<?,Reversed<Int>>` y
+  @category lessThanWith<#x,#y>
+    #y defines LessThan<#x>
+  (ReadAt<#x>,ReadAt<#x>) -> (Bool)
+
   // Extend equals, based on position-wise comparisons.
   //
   // Notes:
@@ -76,6 +115,19 @@ concrete ReadAtH {
   @category equals<#x>
     #x defines Equals<#x>
   (ReadAt<#x>,ReadAt<#x>) -> (Bool)
+
+  // The same as equals, but with a custom comparator.
+  //
+  // Params:
+  // - #x: Element type managed by the container.
+  // - #y: Comparator type providing the Equals<#x> comparison.
+  //
+  // Example:
+  //
+  //   Bool lt <- x `ReadAtH:equalsWith<?,BySize>` y
+  @category equalsWith<#x,#y>
+    #y defines Equals<#x>
+  (ReadAt<#x>,ReadAt<#x>) -> (Bool)
 }
 
 // Reverse an existing LessThan<#x> comparison.
@@ -86,5 +138,6 @@ concrete Reversed<#x|> {
 
 // Base ordering on container size alone.
 concrete BySize {
+  defines Equals<Container>
   defines LessThan<Container>
 }

@@ -18,14 +18,18 @@ limitations under the License.
 
 define OrderH {
   lessThan (x,y) {
+    return lessThanWith<#x,#x>(x,y)
+  }
+
+  lessThanWith (x,y) {
     optional Order<#x> xx <- x
     optional Order<#x> yy <- y
     $Hidden[x,y]$
     while (present(xx) && present(yy)) {
       $ReadOnly[xx,yy]$
-      if (require(xx).get() `#x.lessThan` require(yy).get()) {
+      if (require(xx).get() `#y.lessThan` require(yy).get()) {
         return true
-      } elif (require(yy).get() `#x.lessThan` require(xx).get()) {
+      } elif (require(yy).get() `#y.lessThan` require(xx).get()) {
         return false
       }
     } update {
@@ -36,12 +40,16 @@ define OrderH {
   }
 
   equals (x,y) {
+    return equalsWith<#x,#x>(x,y)
+  }
+
+  equalsWith (x,y) {
     optional Order<#x> xx <- x
     optional Order<#x> yy <- y
     $Hidden[x,y]$
     while (present(xx) && present(yy)) {
       $ReadOnly[xx,yy]$
-      if (!(require(xx).get() `#x.equals` require(yy).get())) {
+      if (!(require(xx).get() `#y.equals` require(yy).get())) {
         return false
       }
     } update {
@@ -54,11 +62,15 @@ define OrderH {
 
 define ReadAtH {
   lessThan (x,y) {
+    return lessThanWith<#x,#x>(x,y)
+  }
+
+  lessThanWith (x,y) {
     traverse (Counter.zeroIndexed(Ranges:min<?>(x.size(),y.size())) -> Int i) {
       $ReadOnly[i]$
-      if (x.readAt(i) `#x.lessThan` y.readAt(i)) {
+      if (x.readAt(i) `#y.lessThan` y.readAt(i)) {
         return true
-      } elif (y.readAt(i) `#x.lessThan` x.readAt(i)) {
+      } elif (y.readAt(i) `#y.lessThan` x.readAt(i)) {
         return false
       }
     }
@@ -66,12 +78,16 @@ define ReadAtH {
   }
 
   equals (x,y) {
+    return equalsWith<#x,#x>(x,y)
+  }
+
+  equalsWith (x,y) {
     if (x.size() != y.size()) {
       return false
     }
     traverse (Counter.zeroIndexed(x.size()) -> Int i) {
       $ReadOnly[i]$
-      if (!(x.readAt(i) `#x.equals` y.readAt(i))) {
+      if (!(x.readAt(i) `#y.equals` y.readAt(i))) {
         return false
       }
     }
@@ -86,6 +102,10 @@ define Reversed {
 }
 
 define BySize {
+  equals (x,y) {
+    return x.size() == y.size()
+  }
+
   lessThan (x,y) {
     return x.size() < y.size()
   }

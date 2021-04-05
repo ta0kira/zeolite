@@ -16,41 +16,93 @@ limitations under the License.
 
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
-testcase "OrderH tests" {
+testcase "comparator helpers" {
   success
 }
 
-unittest lessThan {
+unittest lessThanOrderH {
   \ Testing.checkEquals<?>(("").defaultOrder()    `OrderH:lessThan<?>` ("").defaultOrder(),   false)
   \ Testing.checkEquals<?>(("a").defaultOrder()   `OrderH:lessThan<?>` ("abc").defaultOrder(),true)
+  \ Testing.checkEquals<?>(("b").defaultOrder()   `OrderH:lessThan<?>` ("abc").defaultOrder(),false)
   \ Testing.checkEquals<?>(("abc").defaultOrder() `OrderH:lessThan<?>` ("abc").defaultOrder(),false)
   \ Testing.checkEquals<?>(("abc").defaultOrder() `OrderH:lessThan<?>` ("a").defaultOrder(),  false)
+  \ Testing.checkEquals<?>(("abc").defaultOrder() `OrderH:lessThan<?>` ("b").defaultOrder(),  true)
 }
 
-unittest equals {
+unittest lessThanWithOrderH {
+  \ Testing.checkEquals<?>(("").defaultOrder()    `OrderH:lessThanWith<?,Reversed<Char>>` ("").defaultOrder(),   false)
+  \ Testing.checkEquals<?>(("a").defaultOrder()   `OrderH:lessThanWith<?,Reversed<Char>>` ("abc").defaultOrder(),true)
+  \ Testing.checkEquals<?>(("b").defaultOrder()   `OrderH:lessThanWith<?,Reversed<Char>>` ("abc").defaultOrder(),true)
+  \ Testing.checkEquals<?>(("abc").defaultOrder() `OrderH:lessThanWith<?,Reversed<Char>>` ("abc").defaultOrder(),false)
+  \ Testing.checkEquals<?>(("abc").defaultOrder() `OrderH:lessThanWith<?,Reversed<Char>>` ("a").defaultOrder(),  false)
+  \ Testing.checkEquals<?>(("abc").defaultOrder() `OrderH:lessThanWith<?,Reversed<Char>>` ("b").defaultOrder(),  false)
+}
+
+unittest equalsOrderH {
   \ Testing.checkEquals<?>(("").defaultOrder()    `OrderH:equals<?>` ("").defaultOrder(),   true)
   \ Testing.checkEquals<?>(("a").defaultOrder()   `OrderH:equals<?>` ("abc").defaultOrder(),false)
   \ Testing.checkEquals<?>(("abc").defaultOrder() `OrderH:equals<?>` ("abc").defaultOrder(),true)
   \ Testing.checkEquals<?>(("abc").defaultOrder() `OrderH:equals<?>` ("a").defaultOrder(),  false)
 }
 
-
-testcase "ReadAtH tests" {
-  success
+unittest equalsWithOrderH {
+  \ Testing.checkEquals<?>(("").defaultOrder()    `OrderH:equalsWith<?,IgnoreCase>` ("").defaultOrder(),   true)
+  \ Testing.checkEquals<?>(("a").defaultOrder()   `OrderH:equalsWith<?,IgnoreCase>` ("ABC").defaultOrder(),false)
+  \ Testing.checkEquals<?>(("abc").defaultOrder() `OrderH:equalsWith<?,IgnoreCase>` ("ABC").defaultOrder(),true)
+  \ Testing.checkEquals<?>(("abc").defaultOrder() `OrderH:equalsWith<?,IgnoreCase>` ("DEF").defaultOrder(),false)
+  \ Testing.checkEquals<?>(("abc").defaultOrder() `OrderH:equalsWith<?,IgnoreCase>` ("A").defaultOrder(),  false)
 }
 
-unittest lessThan {
+unittest lessThanReadAtH {
   \ Testing.checkEquals<?>(""    `ReadAtH:lessThan<?>` "",   false)
   \ Testing.checkEquals<?>("a"   `ReadAtH:lessThan<?>` "abc",true)
+  \ Testing.checkEquals<?>("b"   `ReadAtH:lessThan<?>` "abc",false)
   \ Testing.checkEquals<?>("abc" `ReadAtH:lessThan<?>` "abc",false)
   \ Testing.checkEquals<?>("abc" `ReadAtH:lessThan<?>` "a",  false)
+  \ Testing.checkEquals<?>("abc" `ReadAtH:lessThan<?>` "b",  true)
 }
 
-unittest equals {
+unittest lessThanWithReadAtH {
+  \ Testing.checkEquals<?>(""    `ReadAtH:lessThanWith<?,Reversed<Char>>` "",   false)
+  \ Testing.checkEquals<?>("a"   `ReadAtH:lessThanWith<?,Reversed<Char>>` "abc",true)
+  \ Testing.checkEquals<?>("b"   `ReadAtH:lessThanWith<?,Reversed<Char>>` "abc",true)
+  \ Testing.checkEquals<?>("abc" `ReadAtH:lessThanWith<?,Reversed<Char>>` "abc",false)
+  \ Testing.checkEquals<?>("abc" `ReadAtH:lessThanWith<?,Reversed<Char>>` "a",  false)
+  \ Testing.checkEquals<?>("abc" `ReadAtH:lessThanWith<?,Reversed<Char>>` "b",  false)
+}
+
+unittest equalsReadAtH {
   \ Testing.checkEquals<?>(""    `ReadAtH:equals<?>` "",   true)
   \ Testing.checkEquals<?>("a"   `ReadAtH:equals<?>` "abc",false)
   \ Testing.checkEquals<?>("abc" `ReadAtH:equals<?>` "abc",true)
   \ Testing.checkEquals<?>("abc" `ReadAtH:equals<?>` "a",  false)
+}
+
+unittest equalsWithReadAtH {
+  \ Testing.checkEquals<?>(""    `ReadAtH:equalsWith<?,IgnoreCase>` "",   true)
+  \ Testing.checkEquals<?>("a"   `ReadAtH:equalsWith<?,IgnoreCase>` "ABC",false)
+  \ Testing.checkEquals<?>("abc" `ReadAtH:equalsWith<?,IgnoreCase>` "ABC",true)
+  \ Testing.checkEquals<?>("abc" `ReadAtH:equalsWith<?,IgnoreCase>` "DEF",false)
+  \ Testing.checkEquals<?>("abc" `ReadAtH:equalsWith<?,IgnoreCase>` "a",  false)
+}
+
+concrete IgnoreCase {
+  defines Equals<Char>
+}
+
+define IgnoreCase {
+  equals (x,y) {
+    return toLower(x) == toLower(y)
+  }
+
+  @type toLower (Char) -> (Char)
+  toLower (c) {
+    if (c >= 'A' && c <= 'Z') {
+      return (c.asInt() - ('A').asInt() + ('a').asInt()).asChar()
+    } else {
+      return c
+    }
+  }
 }
 
 
