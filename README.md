@@ -1247,6 +1247,8 @@ Builtin `concrete` types:
   escapes (e.g., `'\n'`), 2-digit hex (e.g., `\x0B`), or 3-digit octal (e.g.,
   `'\012'`). At the moment this only supports ASCII; see
   [Issue #22](https://github.com/ta0kira/zeolite/issues/22).
+- **`CharBuffer`**: Mutable, fixed-size buffer of `Char`. This type has no
+  literals.
 - **`Float`**: Use decimal notation, e.g., `0.0` or `1.0E1`. You *must* have
   digits on both sides of the `.`.
 - **`Int`**: Use decimal (e.g., `1234`), hex (e.g., `\xABCD`), octal (e.g.,
@@ -1257,21 +1259,23 @@ Builtin `concrete` types:
 
 Builtin `@value interface`s:
 
+  built-in loop iteration.
+- **`Append<#x>`**: Supports appending `#x`.
 - **`AsBool`**: Convert a value to `Bool` using `asBool()`.
 - **`AsChar`**: Convert a value to `Char` using `asChar()`.
 - **`AsFloat`**: Convert a value to `Float` using `asFloat()`.
 - **`AsInt`**: Convert a value to `Int` using `asInt()`.
-- **`Append<#x>`**: Supports appending `#x`.
 - **`Build<#x>`**: Build a `#x` from the current state.
 - **`Container`**: Contains multiple values.
-- **`Formatted`**: Format a value as a `String` using `formatted()`.
-- **`Order<#x>`**: An ordering of `#x` values, for use with the `traverse`
-  built-in loop iteration.
 - **`DefaultOrder<#x>`**: The container provides a default `Order<#x>` for use
   with `traverse`.
+- **`Formatted`**: Format a value as a `String` using `formatted()`.
+- **`Order<#x>`**: An ordering of `#x` values, for use with the `traverse`
 - **`ReadAt<#x>`**: Random access reads from a container with values of type
   `#x`.
 - **`SubSequence`**: Extract a subsequence from the object.
+- **`WriteAt<#x>`**: Random access writes to a container with values of type
+  `#x`.
 
 Builtin `@type interface`s:
 

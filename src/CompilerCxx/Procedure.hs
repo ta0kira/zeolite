@@ -158,7 +158,7 @@ compileExecutableProcedure cxxType ctx
       | isUnnamedReturns rs2 = []
       | otherwise = map (\(i,(t2,n2)) -> nameReturn i (pvType t2) n2) (zip ([0..] :: [Int]) $ zip (pValues rs1) (pValues $ nrNames rs2))
     nameReturn i t2 n2
-      | isPrimitiveType t2 = variableProxyType t2 ++ " " ++ variableName (ovName n2) ++ ";"
+      | isStoredUnboxed t2 = variableProxyType t2 ++ " " ++ variableName (ovName n2) ++ ";"
       | otherwise =
         variableProxyType t2 ++ " " ++ variableName (ovName n2) ++
         " = " ++ writeStoredVariable t2 (UnwrappedSingle $ "returns.At(" ++ show i ++ ")") ++ ";"
@@ -537,33 +537,33 @@ compileExpression :: (Ord c, Show c, CollectErrorsM m,
 compileExpression = compile where
   compile (Literal (StringLiteral _ l)) = do
     csAddRequired (Set.fromList [BuiltinString])
-    return (Positional [stringRequiredValue],UnboxedPrimitive PrimString $ "PrimString_FromLiteral(" ++ escapeChars l ++ ")")
+    return $ expressionFromLiteral PrimString (escapeChars l)
   compile (Literal (CharLiteral _ l)) = do
     csAddRequired (Set.fromList [BuiltinChar])
-    return (Positional [charRequiredValue],UnboxedPrimitive PrimChar $ "PrimChar('" ++ escapeChar l ++ "')")
+    return $ expressionFromLiteral PrimChar ("'" ++ escapeChar l ++ "'")
   compile (Literal (IntegerLiteral c True l)) = do
     csAddRequired (Set.fromList [BuiltinInt])
     when (l > 2^(64 :: Integer) - 1) $ compilerErrorM $
       "Literal " ++ show l ++ formatFullContextBrace c ++ " is greater than the max value for 64-bit unsigned"
     let l' = if l > 2^(63 :: Integer) - 1 then l - 2^(64 :: Integer) else l
-    return (Positional [intRequiredValue],UnboxedPrimitive PrimInt $ "PrimInt(" ++ show l' ++ ")")
+    return $ expressionFromLiteral PrimInt (show l')
   compile (Literal (IntegerLiteral c False l)) = do
     csAddRequired (Set.fromList [BuiltinInt])
     when (l > 2^(63 :: Integer) - 1) $ compilerErrorM $
       "Literal " ++ show l ++ formatFullContextBrace c ++ " is greater than the max value for 64-bit signed"
     when ((-l) > (2^(63 :: Integer) - 2)) $ compilerErrorM $
       "Literal " ++ show l ++ formatFullContextBrace c ++ " is less than the min value for 64-bit signed"
-    return (Positional [intRequiredValue],UnboxedPrimitive PrimInt $ "PrimInt(" ++ show l ++ ")")
+    return $ expressionFromLiteral PrimInt (show l)
   compile (Literal (DecimalLiteral _ l e)) = do
     csAddRequired (Set.fromList [BuiltinFloat])
     -- TODO: Check bounds.
-    return (Positional [floatRequiredValue],UnboxedPrimitive PrimFloat $ "PrimFloat(" ++ show l ++ "E" ++ show e ++ ")")
+    return $ expressionFromLiteral PrimFloat (show l ++ "E" ++ show e)
   compile (Literal (BoolLiteral _ True)) = do
     csAddRequired (Set.fromList [BuiltinBool])
-    return (Positional [boolRequiredValue],UnboxedPrimitive PrimBool "true")
+    return $ expressionFromLiteral PrimBool "true"
   compile (Literal (BoolLiteral _ False)) = do
     csAddRequired (Set.fromList [BuiltinBool])
-    return (Positional [boolRequiredValue],UnboxedPrimitive PrimBool "false")
+    return $ expressionFromLiteral PrimBool "false"
   compile (Literal (EmptyLiteral _)) = do
     return (Positional [emptyType],UnwrappedSingle "Var_empty")
   compile (Expression _ s os) = do

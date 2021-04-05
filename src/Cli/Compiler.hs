@@ -51,7 +51,6 @@ import Parser.SourceFile
 import Parser.TextParser (SourceContext)
 import Types.Builtin
 import Types.DefinedCategory
-import Types.Procedure (isLiteralCategory)
 import Types.TypeCategory
 import Types.TypeInstance
 
@@ -109,8 +108,8 @@ compileModule resolver backend (ModuleSpec p d em is is2 ps xs ts es ep m f) = d
   let ns0 = StaticNamespace $ publicNamespace  $ show compilerHash ++ path
   let ns1 = StaticNamespace . privateNamespace $ show time ++ show compilerHash ++ path
   let extensions = concat $ map getSourceCategories es
-  let ss = filter (not . isLiteralCategory) extensions
-  let ex = filter isLiteralCategory extensions
+  let ss = filter (not . isBuiltinConcrete) extensions
+  let ex = filter isBuiltinConcrete extensions
   cs <- loadModuleGlobals resolver p (ns0,ns1) ps Nothing deps1' deps2
   let cm = createLanguageModule ex ss em cs
   let cs2 = filter (not . hasCodeVisibility FromDependency) cs

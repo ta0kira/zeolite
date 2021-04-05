@@ -256,6 +256,11 @@ PrimChar TypeValue::AsChar() const {
   __builtin_unreachable();
 }
 
+PrimCharBuffer& TypeValue::AsCharBuffer() {
+  FAIL() << CategoryName() << " is not a CharBuffer value";
+  __builtin_unreachable();
+}
+
 PrimInt TypeValue::AsInt() const {
   FAIL() << CategoryName() << " is not an Int value";
   __builtin_unreachable();

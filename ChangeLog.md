@@ -2,6 +2,14 @@
 
 ## 0.17.0.0  -- ????-??-??
 
+### Language
+
+* **[breaking]** Adds `CharBuffer`, as a random-access, mutable `Char` buffer,
+  and makes `WriteAt` a built-in type. (This is breaking because `CharBuffer`
+  and `WriteAt` are now reserved.)
+
+* **[fix]** Fixes `reduce<String,Container>`, which previously failed.
+
 ### Libraries
 
 * **[new]** Additions to `lib/util`:

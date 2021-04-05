@@ -102,12 +102,42 @@ concrete String {
   defines Equals<String>
   defines LessThan<String>
 
+  // Create a new String as an immutable copy of a CharBuffer.
+  //
+  // Notes:
+  // - Changing the data in the CharBuffer after copying will not result in
+  //   modifications to the String returned here.
+  // - Data will be copied verbatim, even if some characters are null.
+  @type fromCharBuffer (CharBuffer) -> (String)
+
   // Get a builder to create a string using concatenation.
   //
   // Example:
   //
   //   String.builder().append("foo").append("bar").build()
   @type builder () -> ([Append<String>&Build<String>])
+}
+
+// Built-in string of byte data.
+//
+// Literals: None.
+concrete CharBuffer {
+  refines ReadAt<Char>
+  refines WriteAt<Char>
+
+  // Create a new buffer with a fixed size.
+  //
+  // Notes:
+  // - The implementation does not guarantee that the values will be zeroed.
+  @type new (Int) -> (CharBuffer)
+
+  // Resize the buffer to the specified size.
+  //
+  // Notes:
+  // - The implementation does not guarantee that the values will be zeroed.
+  //   Specifically, resizing down and then back up again could either preserve
+  //   or overwrite any of the data.
+  @value resize (Int) -> (CharBuffer)
 }
 
 // Convertible to Bool.

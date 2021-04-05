@@ -191,6 +191,41 @@ unittest formatted {
 }
 
 
+testcase "reduce CharBuffer" {
+  success
+}
+
+unittest charBuffer {
+  if (!present(reduce<CharBuffer,CharBuffer>(CharBuffer.new(0)))) {
+    fail("Failed")
+  }
+}
+
+unittest readAt {
+  if (!present(reduce<CharBuffer,ReadAt<Char>>(CharBuffer.new(0)))) {
+    fail("Failed")
+  }
+  if (present(reduce<CharBuffer,ReadAt<Int>>(CharBuffer.new(0)))) {
+    fail("Failed")
+  }
+}
+
+unittest writeAt {
+  if (!present(reduce<CharBuffer,WriteAt<Char>>(CharBuffer.new(0)))) {
+    fail("Failed")
+  }
+  if (present(reduce<CharBuffer,WriteAt<Int>>(CharBuffer.new(0)))) {
+    fail("Failed")
+  }
+}
+
+unittest container {
+  if (!present(reduce<CharBuffer,Container>(CharBuffer.new(0)))) {
+    fail("Failed")
+  }
+}
+
+
 testcase "reduce String" {
   success
 }
@@ -235,10 +270,28 @@ unittest defaultOrder {
   if (!present(reduce<String,DefaultOrder<Char>>("a"))) {
     fail("Failed")
   }
+  if (present(reduce<String,DefaultOrder<Int>>("a"))) {
+    fail("Failed")
+  }
 }
 
 unittest subSequence {
   if (!present(reduce<String,SubSequence>("a"))) {
+    fail("Failed")
+  }
+}
+
+unittest readAt {
+  if (!present(reduce<String,ReadAt<Char>>("a"))) {
+    fail("Failed")
+  }
+  if (present(reduce<String,ReadAt<Int>>("a"))) {
+    fail("Failed")
+  }
+}
+
+unittest container {
+  if (!present(reduce<String,Container>("a"))) {
     fail("Failed")
   }
 }
@@ -432,6 +485,108 @@ unittest floatNotShared {
 }
 
 
+testcase "CharBuffer stuff" {
+  success
+}
+
+unittest writeAndRead {
+  CharBuffer buffer <- CharBuffer.new(5)
+      .writeAt(0,'a')
+      .writeAt(1,'b')
+      .writeAt(2,'c')
+      .writeAt(3,'d')
+      .writeAt(4,'e')
+      // overwriting here
+      .writeAt(1,'B')
+      .writeAt(2,'C')
+
+  \ Testing.checkEquals<?>(buffer.size(),5)
+  \ Testing.checkEquals<?>(buffer.readAt(0),'a')
+  \ Testing.checkEquals<?>(buffer.readAt(1),'B')
+  \ Testing.checkEquals<?>(buffer.readAt(2),'C')
+  \ Testing.checkEquals<?>(buffer.readAt(3),'d')
+  \ Testing.checkEquals<?>(buffer.readAt(4),'e')
+}
+
+unittest resizeDown {
+  CharBuffer buffer <- CharBuffer.new(5).resize(3).writeAt(2,'a')
+  \ Testing.checkEquals<?>(buffer.size(),3)
+  \ Testing.checkEquals<?>(buffer.readAt(2),'a')
+}
+
+unittest resizeUp {
+  CharBuffer buffer <- CharBuffer.new(5).resize(7).writeAt(6,'a')
+  \ Testing.checkEquals<?>(buffer.size(),7)
+  \ Testing.checkEquals<?>(buffer.readAt(6),'a')
+}
+
+
+testcase "CharBuffer read negative" {
+  crash
+  require "-10"
+  require "bounds"
+}
+
+unittest test {
+  \ CharBuffer.new(3).readAt(-10)
+}
+
+
+testcase "CharBuffer read past end" {
+  crash
+  require "3"
+  require "bounds"
+}
+
+unittest test {
+  \ CharBuffer.new(3).readAt(3)
+}
+
+
+testcase "CharBuffer write negative" {
+  crash
+  require "-10"
+  require "bounds"
+}
+
+unittest test {
+  \ CharBuffer.new(3).writeAt(-10,'a')
+}
+
+
+testcase "CharBuffer write past end" {
+  crash
+  require "3"
+  require "bounds"
+}
+
+unittest test {
+  \ CharBuffer.new(3).writeAt(3,'a')
+}
+
+
+testcase "CharBuffer new negative" {
+  crash
+  require "-10"
+  require "size"
+}
+
+unittest test {
+  \ CharBuffer.new(-10)
+}
+
+
+testcase "CharBuffer resize negative" {
+  crash
+  require "-10"
+  require "size"
+}
+
+unittest test {
+  \ CharBuffer.new(0).resize(-10)
+}
+
+
 testcase "String stuff" {
   success
 }
@@ -498,6 +653,16 @@ unittest traverseString {
   \ Testing.checkEquals<?>(index,7)
 }
 
+unittest fromCharBuffer {
+  CharBuffer buffer <- CharBuffer.new(5)
+      .writeAt(0,'a')
+      .writeAt(1,'b')
+      .writeAt(2,'c')
+      .writeAt(3,'d')
+      .writeAt(4,'e')
+  \ Testing.checkEquals<?>(String.fromCharBuffer(buffer),"abcde")
+}
+
 
 testcase "String access negative" {
   crash
@@ -522,7 +687,7 @@ concrete Test {
 
 testcase "String access past end" {
   crash
-  require "100"
+  require "3"
   require "bounds"
 }
 
@@ -532,7 +697,7 @@ unittest test {
 
 define Test {
   run () {
-    \ ("abc").readAt(100)
+    \ ("abc").readAt(3)
   }
 }
 
@@ -543,7 +708,7 @@ concrete Test {
 
 testcase "String subsequence past end" {
   crash
-  require "100"
+  require "3"
   require "size"
 }
 
@@ -553,7 +718,7 @@ unittest test {
 
 define Test {
   run () {
-    \ ("abc").subSequence(1,100)
+    \ ("abc").subSequence(1,3)
   }
 }
 

@@ -29,7 +29,6 @@ module Types.Builtin (
   floatRequiredValue,
   formattedRequiredValue,
   intRequiredValue,
-  isPrimitiveType,
   orderOptionalValue,
   stringRequiredValue,
 ) where
@@ -69,19 +68,11 @@ emptyType = ValueType OptionalValue minBound
 
 data PrimitiveType =
   PrimBool |
-  PrimString |
   PrimChar |
   PrimInt |
-  PrimFloat
+  PrimFloat |
+  PrimString
   deriving (Eq,Show)
-
-isPrimitiveType :: ValueType -> Bool
-isPrimitiveType t
-  | t == boolRequiredValue  = True
-  | t == intRequiredValue   = True
-  | t == floatRequiredValue = True
-  | t == charRequiredValue  = True
-  | otherwise               = False
 
 data ExpressionValue =
   -- Multi argument/return tuple.

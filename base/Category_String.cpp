@@ -46,6 +46,7 @@ const int collection_String = 0;
 const void* const Functions_String = &collection_String;
 const ValueFunction& Function_String_subSequence = (*new ValueFunction{ 0, 2, 1, "String", "subSequence", Functions_String, 0 });
 const TypeFunction& Function_String_builder = (*new TypeFunction{ 0, 0, 1, "String", "builder", Functions_String, 0 });
+const TypeFunction& Function_String_fromCharBuffer = (*new TypeFunction{ 0, 1, 1, "String", "fromCharBuffer", Functions_String, 1 });
 namespace {
 class Category_String;
 class Type_String;
@@ -98,6 +99,9 @@ struct Type_String : public TypeInstance {
   void Params_DefaultOrder(std::vector<S<const TypeInstance>>& args) const {
     args = std::vector<S<const TypeInstance>>{GetType_Char(T_get())};
   }
+  void Params_Container(std::vector<S<const TypeInstance>>& args) const {
+    args = std::vector<S<const TypeInstance>>{};
+  }
   bool TypeArgsForParent(const TypeCategory& category, std::vector<S<const TypeInstance>>& args) const final {
     using CallType = void(Type_String::*)(std::vector<S<const TypeInstance>>&)const;
     static DispatchSingle<CallType> all_calls[] = {
@@ -107,6 +111,7 @@ struct Type_String : public TypeInstance {
       DispatchSingle<CallType>(&GetCategory_ReadAt(),       &Type_String::Params_ReadAt),
       DispatchSingle<CallType>(&GetCategory_SubSequence(),  &Type_String::Params_SubSequence),
       DispatchSingle<CallType>(&GetCategory_DefaultOrder(), &Type_String::Params_DefaultOrder),
+      DispatchSingle<CallType>(&GetCategory_Container(),    &Type_String::Params_Container),
       DispatchSingle<CallType>(),
     };
     std::atomic_bool table_lock{0};
@@ -136,6 +141,7 @@ struct Type_String : public TypeInstance {
     };
     static const CallType Table_String[] = {
       &Type_String::Call_builder,
+      &Type_String::Call_fromCharBuffer,
     };
     static DispatchTable<CallType> all_tables[] = {
       DispatchTable<CallType>(Functions_Default,  Table_Default),
@@ -157,6 +163,7 @@ struct Type_String : public TypeInstance {
   }
   ReturnTuple Call_default(const ParamTuple& params, const ValueTuple& args);
   ReturnTuple Call_builder(const ParamTuple& params, const ValueTuple& args);
+  ReturnTuple Call_fromCharBuffer(const ParamTuple& params, const ValueTuple& args);
   ReturnTuple Call_equals(const ParamTuple& params, const ValueTuple& args);
   ReturnTuple Call_lessThan(const ParamTuple& params, const ValueTuple& args);
 };
@@ -283,6 +290,11 @@ ReturnTuple Type_String::Call_default(const ParamTuple& params, const ValueTuple
 ReturnTuple Type_String::Call_builder(const ParamTuple& params, const ValueTuple& args) {
   TRACE_FUNCTION("String.builder")
   return ReturnTuple(S<TypeValue>(new Value_StringBuilder));
+}
+ReturnTuple Type_String::Call_fromCharBuffer(const ParamTuple& params, const ValueTuple& args) {
+  TRACE_FUNCTION("String.fromCharBuffer")
+  const S<TypeValue>& Var_arg1 = (args.At(0));
+  return ReturnTuple(Box_String(PrimString(Var_arg1->AsCharBuffer())));
 }
 ReturnTuple Type_String::Call_equals(const ParamTuple& params, const ValueTuple& args) {
   TRACE_FUNCTION("String.equals")

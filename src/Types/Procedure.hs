@@ -53,7 +53,6 @@ module Types.Procedure (
   getStatementContext,
   isDiscardedInput,
   isFunctionOperator,
-  isLiteralCategory,
   isNoTrace,
   isTraceCreation,
   isRawCodeLine,
@@ -315,14 +314,6 @@ getValueLiteralContext (IntegerLiteral c _ _) = c
 getValueLiteralContext (DecimalLiteral c _ _) = c
 getValueLiteralContext (BoolLiteral c _)      = c
 getValueLiteralContext (EmptyLiteral c)       = c
-
-isLiteralCategory :: CategoryName -> Bool
-isLiteralCategory BuiltinBool   = True
-isLiteralCategory BuiltinChar   = True
-isLiteralCategory BuiltinInt    = True
-isLiteralCategory BuiltinFloat  = True
-isLiteralCategory BuiltinString = True
-isLiteralCategory _             = False
 
 data ValueOperation c =
   ConvertedCall [c] TypeInstance (FunctionCall c) |

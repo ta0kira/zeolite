@@ -10,6 +10,10 @@ extra_files: [
     categories: [Char]
   }
   category_source {
+    source: "base/Category_CharBuffer.cpp"
+    categories: [CharBuffer]
+  }
+  category_source {
     source: "base/Category_Float.cpp"
     categories: [Float]
   }

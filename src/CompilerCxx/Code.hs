@@ -25,8 +25,10 @@ module CompilerCxx.Code (
   emptyCode,
   escapeChar,
   escapeChars,
+  expressionFromLiteral,
   functionLabelType,
   indentCompiled,
+  isStoredUnboxed,
   newFunctionLabel,
   noTestsOnlySourceGuard,
   onlyCode,
@@ -66,6 +68,7 @@ import Base.Positional
 import Compilation.CompilerState
 import CompilerCxx.Naming
 import Types.Builtin
+import Types.Procedure (ExpressionType)
 import Types.TypeCategory
 import Types.TypeInstance
 
@@ -115,6 +118,26 @@ captureCreationTrace n = "CAPTURE_CREATION(" ++ show (show n) ++ ")"
 
 showCreationTrace :: String
 showCreationTrace = "TRACE_CREATION"
+
+isStoredUnboxed :: ValueType -> Bool
+isStoredUnboxed t
+  | t == boolRequiredValue  = True
+  | t == intRequiredValue   = True
+  | t == floatRequiredValue = True
+  | t == charRequiredValue  = True
+  | otherwise               = False
+
+expressionFromLiteral :: PrimitiveType -> String -> (ExpressionType,ExpressionValue)
+expressionFromLiteral PrimString e =
+  (Positional [stringRequiredValue],UnboxedPrimitive PrimString $ "PrimString_FromLiteral(" ++ e ++ ")")
+expressionFromLiteral PrimChar e =
+  (Positional [charRequiredValue],UnboxedPrimitive PrimChar $ "PrimChar(" ++ e ++ ")")
+expressionFromLiteral PrimInt e =
+  (Positional [intRequiredValue],UnboxedPrimitive PrimInt $ "PrimInt(" ++ e ++ ")")
+expressionFromLiteral PrimFloat e =
+  (Positional [floatRequiredValue],UnboxedPrimitive PrimFloat $ "PrimFloat(" ++ e ++ ")")
+expressionFromLiteral PrimBool e =
+  (Positional [boolRequiredValue],UnboxedPrimitive PrimBool e)
 
 getFromLazy :: ExpressionValue -> ExpressionValue
 getFromLazy (OpaqueMulti e)        = OpaqueMulti $ e ++ ".Get()"

@@ -37,6 +37,7 @@ limitations under the License.
 using PrimInt = std::int64_t;
 using PrimString = std::string;
 using PrimChar = char;
+using PrimCharBuffer = std::string;
 using PrimFloat = double;
 
 template<int S>

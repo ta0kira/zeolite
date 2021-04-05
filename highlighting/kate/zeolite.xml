@@ -6,7 +6,7 @@
 <language
     name="Zeolite"
     section="Sources"
-    version="3.12"
+    version="3.13"
     kateversion="2.4"
     indenter="cstyle"
     style="Zeolite"
@@ -99,6 +99,7 @@
       <item> Bool </item>
       <item> Build </item>
       <item> Char </item>
+      <item> CharBuffer </item>
       <item> Container </item>
       <item> Default </item>
       <item> DefaultOrder </item>
