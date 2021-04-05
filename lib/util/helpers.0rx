@@ -110,3 +110,13 @@ define BySize {
     return x.size() < y.size()
   }
 }
+
+define AlwaysEqual {
+  equals (_,_) {
+    return true
+  }
+
+  lessThan (_,_) {
+    return false
+  }
+}

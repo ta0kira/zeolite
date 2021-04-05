@@ -141,3 +141,13 @@ concrete BySize {
   defines Equals<Container>
   defines LessThan<Container>
 }
+
+// Always evaluate objects as equal.
+//
+// Notes:
+// - This will allow comparing any two objects with each other (e.g., Int and
+//   ErrorOr<String>), regardless of if they are of compatible types.
+concrete AlwaysEqual {
+  defines Equals<any>
+  defines LessThan<any>
+}
