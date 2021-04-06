@@ -41,6 +41,17 @@ const S<TypeValue>& ArgTuple::Only() const {
   return *data_[0];
 }
 
+ReturnTuple& ReturnTuple::operator = (ReturnTuple&& other) {
+  if (Size() != other.Size()) {
+    FAIL() << "ReturnTuple size mismatch in assignment: " << Size()
+           << " (expected) " << other.Size() << " (actual)";
+  }
+  for (int i = 0; i < Size(); ++i) {
+    At(i) = std::move(other.At(i));
+  }
+  return *this;
+}
+
 int ReturnTuple::Size() const {
   return size_;
 }

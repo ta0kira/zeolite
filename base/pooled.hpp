@@ -63,6 +63,7 @@ class PoolArray {
   PoolArray& operator = (PoolArray&& other) {
     array_ = other.array_;
     other.array_ = nullptr;
+    return *this;
   }
 
   const T& operator [] (int i) const {

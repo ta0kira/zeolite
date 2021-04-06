@@ -197,7 +197,7 @@ class ReturnTuple : public ValueTuple {
   }
 
   ReturnTuple(ReturnTuple&&) = default;
-  ReturnTuple& operator =(ReturnTuple&&) = default;
+  ReturnTuple& operator = (ReturnTuple&&);
 
   int Size() const final;
   S<TypeValue>& At(int pos);
@@ -207,6 +207,7 @@ class ReturnTuple : public ValueTuple {
  private:
   ReturnTuple(const ReturnTuple&) = delete;
   ReturnTuple& operator =(const ReturnTuple&) = delete;
+  void* operator new(std::size_t size) = delete;
 
   int size_;
   PoolArray<S<TypeValue>> data_;
@@ -239,8 +240,9 @@ class ArgTuple : public ValueTuple {
  private:
   ArgTuple(const ArgTuple&) = delete;
   ArgTuple(ArgTuple&&) = delete;
-  ArgTuple& operator =(const ArgTuple&) = delete;
-  ArgTuple& operator =(ArgTuple&&) =  delete;
+  ArgTuple& operator = (const ArgTuple&) = delete;
+  ArgTuple& operator = (ArgTuple&&) =  delete;
+  void* operator new(std::size_t size) = delete;
 
   int size_;
   PoolArray<const S<TypeValue>*> data_;
@@ -273,7 +275,8 @@ class ParamTuple {
 
  private:
   ParamTuple(const ParamTuple&) = delete;
-  ParamTuple& operator =(const ParamTuple&) = delete;
+  ParamTuple& operator = (const ParamTuple&) = delete;
+  ParamTuple& operator = (ParamTuple&&) = delete;
   void* operator new(std::size_t size) = delete;
 
   int size_;
