@@ -23,7 +23,6 @@ limitations under the License.
 #include <atomic>
 #include <iostream>  // For occasional debugging output in generated code.
 #include <map>
-#include <mutex>
 #include <sstream>
 #include <vector>
 
@@ -203,18 +202,19 @@ class InstanceCache {
   InstanceCache(const Creator& create) : create_(create) {}
 
   S<T> GetOrCreate(typename Params<P>::Type params) {
-    std::lock_guard<std::mutex> lock(mutex_);
+    while (lock_.test_and_set(std::memory_order_acquire));
     auto& cached = cache_[GetKeyFromParams<P>(params)];
     S<T> type = cached;
     if (!type) {
       cached = type = create_(params);
     }
+    lock_.clear(std::memory_order_release);
     return type;
   }
 
  private:
   const Creator create_;
-  std::mutex mutex_;
+  std::atomic_flag lock_ = ATOMIC_FLAG_INIT;
   std::map<typename ParamsKey<P>::Type, S<T>> cache_;
 };
 
