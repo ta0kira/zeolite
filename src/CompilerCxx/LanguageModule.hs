@@ -94,10 +94,6 @@ compileLanguageModule (LanguageModule ns0 ns1 ns2 cs0 ps0 ts0 cs1 ps1 ts1  ss em
       checkLocal localCats ([] :: [String]) n
       (_,t) <- getConcreteCategory tm ([],n)
       generateStreamlinedExtension (n `Set.member` testingCats) nsPrivate t
-    verbose tm n = do
-      checkLocal localCats ([] :: [String]) n
-      (_,t) <- getConcreteCategory tm ([],n)
-      generateVerboseExtension (n `Set.member` testingCats) t
     compilePrivate tmPrivate tmTesting (PrivateSource ns3 testing cs2 ds) = do
       let tm = if testing
                   then tmTesting

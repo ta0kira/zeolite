@@ -138,7 +138,7 @@ void PoolManager<S<TypeValue>>::Return(PoolEntry* storage) {
       ++return_tuple_pool4_size_;
       storage->next = head;
       return_tuple_pool4_.exchange(storage);
-    return;
+      return;
     } else {
       return_tuple_pool4_.exchange(head);
     }
@@ -188,7 +188,7 @@ void PoolManager<const S<TypeValue>*>::Return(PoolEntry* storage) {
       ++arg_tuple_pool4_size_;
       storage->next = head;
       arg_tuple_pool4_.exchange(storage);
-    return;
+      return;
     } else {
       arg_tuple_pool4_.exchange(head);
     }
@@ -238,7 +238,7 @@ void PoolManager<S<TypeInstance>>::Return(PoolEntry* storage) {
       ++param_tuple_pool4_size_;
       storage->next = head;
       param_tuple_pool4_.exchange(storage);
-    return;
+      return;
     } else {
       param_tuple_pool4_.exchange(head);
     }

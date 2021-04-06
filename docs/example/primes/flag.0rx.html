@@ -23,8 +23,10 @@
       <span style='color:#0057ae;'>MutexLock</span> lock &lt;- <span style='color:#0057ae;'>MutexLock</span><span style='color:#644a9b;'>.</span>lock(cond)
     } <b>cleanup</b> {
       <span style='color:#006e28;'>\</span> lock<span style='color:#644a9b;'>.</span>freeResource()
-    } <b>in</b> enabled &lt;- <b>true</b>
-    <span style='color:#006e28;'>\</span> cond<span style='color:#644a9b;'>.</span>resumeAll()
+    } <b>in</b> {
+      enabled &lt;- <b>true</b>
+      <span style='color:#006e28;'>\</span> cond<span style='color:#644a9b;'>.</span>resumeAll()
+    }
     <b>return</b> <b>self</b>
   }
 
@@ -50,8 +52,10 @@
       <span style='color:#0057ae;'>MutexLock</span> lock &lt;- <span style='color:#0057ae;'>MutexLock</span><span style='color:#644a9b;'>.</span>lock(cond)
     } <b>cleanup</b> {
       <span style='color:#006e28;'>\</span> lock<span style='color:#644a9b;'>.</span>freeResource()
-    } <b>in</b> canceled &lt;- <b>true</b>
-    <span style='color:#006e28;'>\</span> cond<span style='color:#644a9b;'>.</span>resumeAll()
+    } <b>in</b> {
+      canceled &lt;- <b>true</b>
+      <span style='color:#006e28;'>\</span> cond<span style='color:#644a9b;'>.</span>resumeAll()
+    }
     <b>return</b> <b>self</b>
   }
 

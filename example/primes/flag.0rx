@@ -12,8 +12,10 @@ define ThreadFlag {
       MutexLock lock <- MutexLock.lock(cond)
     } cleanup {
       \ lock.freeResource()
-    } in enabled <- true
-    \ cond.resumeAll()
+    } in {
+      enabled <- true
+      \ cond.resumeAll()
+    }
     return self
   }
 
@@ -39,8 +41,10 @@ define ThreadFlag {
       MutexLock lock <- MutexLock.lock(cond)
     } cleanup {
       \ lock.freeResource()
-    } in canceled <- true
-    \ cond.resumeAll()
+    } in {
+      canceled <- true
+      \ cond.resumeAll()
+    }
     return self
   }
 
