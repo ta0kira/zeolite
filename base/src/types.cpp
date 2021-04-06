@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-Copyright 2019 Kevin P. Barry
+Copyright 2019,2021 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -22,66 +22,55 @@ limitations under the License.
 
 
 int ArgTuple::Size() const {
-  return args_.size();
+  return size_;
 }
 
 const S<TypeValue>& ArgTuple::At(int pos) const {
-  if (pos < 0 || pos >= args_.size()) {
+  if (pos < 0 || pos >= size_) {
     FAIL() << "Bad ArgTuple index";
   }
-  return *args_[pos];
+  return *data_[pos];
 }
 
 const S<TypeValue>& ArgTuple::Only() const {
-  if (args_.size() != 1) {
+  if (size_ != 1) {
     FAIL() << "Bad ArgTuple index";
   }
-  return *args_[0];
-}
-
-ReturnTuple& ReturnTuple::operator =(ReturnTuple &&other) {
-  if (Size() != other.Size()) {
-    FAIL() << "ReturnTuple size mismatch in assignment: " << Size()
-           << " (expected) " << other.Size() << " (actual)";
-  }
-  for (int i = 0; i < Size(); ++i) {
-    At(i) = std::move(other.At(i));
-  }
-  return *this;
+  return *data_[0];
 }
 
 int ReturnTuple::Size() const {
-  return returns_.size();
+  return size_;
 }
 
 S<TypeValue>& ReturnTuple::At(int pos) {
-  if (pos < 0 || pos >= returns_.size()) {
+  if (pos < 0 || pos >= size_) {
     FAIL() << "Bad ReturnTuple index";
   }
-  return returns_[pos];
+  return data_[pos];
 }
 
 const S<TypeValue>& ReturnTuple::At(int pos) const {
-  if (pos < 0 || pos >= returns_.size()) {
+  if (pos < 0 || pos >= size_) {
     FAIL() << "Bad ReturnTuple index";
   }
-  return returns_[pos];
+  return data_[pos];
 }
 
 const S<TypeValue>& ReturnTuple::Only() const {
-  if (returns_.size() != 1) {
+  if (size_ != 1) {
     FAIL() << "Bad ReturnTuple index";
   }
-  return returns_[0];
+  return data_[0];
 }
 
 int ParamTuple::Size() const {
-  return params_.size();
+  return size_;
 }
 
 const S<TypeInstance>& ParamTuple::At(int pos) const {
-  if (pos < 0 || pos >= params_.size()) {
+  if (pos < 0 || pos >= size_) {
     FAIL() << "Bad ParamTuple index";
   }
-  return params_[pos];
+  return data_[pos];
 }

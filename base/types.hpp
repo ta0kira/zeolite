@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-Copyright 2019-2020 Kevin P. Barry
+Copyright 2019-2021 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ limitations under the License.
 #include <vector>
 
 #include "logging.hpp"
+#include "pooled.hpp"
 
 
 #define ALWAYS_PERMANENT(type) \
@@ -175,13 +176,15 @@ class ValueTuple {
 
 class ReturnTuple : public ValueTuple {
  public:
-  ReturnTuple(int size) : returns_(size) {}
-
-  ReturnTuple(ReturnTuple&&) = default;
-  ReturnTuple& operator =(ReturnTuple&&);
+  ReturnTuple(int size) : size_(size), data_(size_) {}
 
   template<class...Ts>
-  explicit ReturnTuple(Ts... returns) : returns_{std::move(returns)...} {}
+  explicit ReturnTuple(Ts... returns) : size_(sizeof...(Ts)), data_(size_) {
+    data_.Init(std::move(returns)...);
+  }
+
+  ReturnTuple(ReturnTuple&&) = default;
+  ReturnTuple& operator =(ReturnTuple&&) = default;
 
   int Size() const final;
   S<TypeValue>& At(int pos);
@@ -192,13 +195,16 @@ class ReturnTuple : public ValueTuple {
   ReturnTuple(const ReturnTuple&) = delete;
   ReturnTuple& operator =(const ReturnTuple&) = delete;
 
-  std::vector<S<TypeValue>> returns_;
+  int size_;
+  PoolArray<S<TypeValue>> data_;
 };
 
 class ArgTuple : public ValueTuple {
  public:
   template<class...Ts>
-  explicit ArgTuple(const Ts&... args) : args_{&args...} {}
+  explicit ArgTuple(const Ts&... args) : size_(sizeof...(Ts)), data_(size_) {
+    data_.Init(&args...);
+  }
 
   int Size() const final;
   const S<TypeValue>& At(int pos) const final;
@@ -210,15 +216,18 @@ class ArgTuple : public ValueTuple {
   ArgTuple& operator =(const ArgTuple&) = delete;
   ArgTuple& operator =(ArgTuple&&) =  delete;
 
-  std::vector<const S<TypeValue>*> args_;
+  int size_;
+  PoolArray<const S<TypeValue>*> data_;
 };
 
 class ParamTuple {
  public:
-  ParamTuple(ParamTuple&& other) : params_(std::move(other.params_)) {}
-
   template<class...Ts>
-  explicit ParamTuple(const Ts&... args) : params_{args...} {}
+  explicit ParamTuple(const Ts&... params) : size_(sizeof...(Ts)), data_(size_) {
+    data_.Init(std::move(params)...);
+  }
+
+  ParamTuple(ParamTuple&& other) = default;
 
   int Size() const;
   const S<TypeInstance>& At(int pos) const;
@@ -228,7 +237,8 @@ class ParamTuple {
   ParamTuple& operator =(const ParamTuple&) = delete;
   void* operator new(std::size_t size) = delete;
 
-  std::vector<S<TypeInstance>> params_;
+  int size_;
+  PoolArray<S<TypeInstance>> data_;
 };
 
 inline ReturnTuple FailWhenNull(ReturnTuple values) {
