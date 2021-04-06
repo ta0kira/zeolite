@@ -10,6 +10,13 @@
 
 * **[fix]** Fixes `reduce<String,Container>`, which previously failed.
 
+* **[fix]** Fixes a race condition in function dispatching that was thought to
+  be fixed previously.
+
+* **[behavior]** Improves the memory efficiency of function calls that use 4 or
+  fewer arguments, returns, or function params by reusing memory previously
+  allocated for function calls.
+
 ### Libraries
 
 * **[new]** Additions to `lib/util`:
