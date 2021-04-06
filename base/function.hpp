@@ -22,13 +22,17 @@ limitations under the License.
 #include <ostream>
 
 
+#define COLLECTION_ID(vp) (int) 1000000009 * (long) (vp)
+
+using CollectionType = int;
+
 struct CategoryFunction {
   const int param_count;
   const int arg_count;
   const int return_count;
   const char* const category;
   const char* const function;
-  const void* const collection;
+  const CollectionType collection;
   const int function_num;
 };
 
@@ -38,7 +42,7 @@ struct TypeFunction {
   const int return_count;
   const char* const category;
   const char* const function;
-  const void* const collection;
+  const CollectionType collection;
   const int function_num;
 };
 
@@ -48,7 +52,7 @@ struct ValueFunction {
   const int return_count;
   const char* const category;
   const char* const function;
-  const void* const collection;
+  const CollectionType collection;
   const int function_num;
 };
 

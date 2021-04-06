@@ -140,7 +140,7 @@ compileCategoryDeclaration testing ns t =
     label f = "extern " ++ functionLabelType f ++ " " ++ functionName f ++ ";"
     collection
       | isValueConcrete t = emptyCode
-      | otherwise         = onlyCodes ["extern const void* const " ++ collectionName name ++ ";"]
+      | otherwise         = onlyCodes ["extern const CollectionType " ++ collectionName name ++ ";"]
     getCategory2
       | isInstanceInterface t = emptyCode
       | otherwise             = declareGetCategory t
@@ -311,7 +311,7 @@ generateCategoryDefinition testing = common where
         "namespace {",
         "const int " ++ collectionValName ++ " = 0;",
         "}  // namespace",
-        "const void* const " ++ collectionName name ++ " = &" ++ collectionValName ++ ";"
+        "const CollectionType " ++ collectionName name ++ " = COLLECTION_ID(&" ++ collectionValName ++ ");"
       ]
     createAllLabels = return $ onlyCodes $ concat $ map createLabels [cf,tf,vf]
     collectionValName = "collection_" ++ show name

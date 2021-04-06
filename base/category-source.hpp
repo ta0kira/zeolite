@@ -245,14 +245,14 @@ class AnonymousOrder : public TypeValue {
 
 template<class F>
 struct DispatchTable {
-  constexpr DispatchTable() : key(nullptr), table(nullptr), size(0) {}
+  constexpr DispatchTable() : key(), table(nullptr), size(0) {}
 
   template<int S>
-  DispatchTable(const void* k, const F(&t)[S]) : key(k), table(t), size(S) {}
+  DispatchTable(CollectionType k, const F(&t)[S]) : key(k), table(t), size(S) {}
 
-  bool operator < (const DispatchTable<F>& other) const { return key < other.key; }
+  inline bool operator < (const DispatchTable<F>& other) const { return key < other.key; }
 
-  const void* key;
+  CollectionType key;
   const F* table;
   int size;
 };
@@ -263,7 +263,7 @@ struct DispatchSingle {
 
   DispatchSingle(const void* k, const F v) : key(k), value(v) {}
 
-  bool operator < (const DispatchSingle<F>& other) const { return key < other.key; }
+  inline bool operator < (const DispatchSingle<F>& other) const { return key < other.key; }
 
   const void* key;
   F value;
@@ -276,29 +276,67 @@ struct StaticSort {
   }
 };
 
-template<class T, int S>
-const T* DispatchSelect(const void* key, T(&table)[S]) {
-  if (S < 8) {
-    // A serial search is faster for small tables.
-    for (int i = 0; i < S; ++i) {
-      if (table[i].key == key) {
-        return table+i;
-      }
-    }
+template<class T>
+struct LoopLimit {};
+
+template<class F>
+struct LoopLimit<DispatchTable<F>> {
+  // See function-calls.0rt for tests.
+  static constexpr int max = 15;
+};
+
+template<class F>
+struct LoopLimit<DispatchSingle<F>> {
+  // See function-calls.0rt for tests.
+  static constexpr int max = 15;
+};
+
+template<bool L, class T, int S>
+struct DispatchChoice {};
+
+template<class T>
+struct DispatchChoice<true, T, 0> {
+  template<class K>
+  static const T* Select(K key, T* table) {
     return nullptr;
   }
-  int i = 0, j = S;
-  while (j-i > 1) {
-    const int k = (i+j)/2;
-    if (table[k].key < key) {
-      i = k;
-    } else if (table[k].key > key) {
-      j = k;
-    } else {
+};
+template<class T, int S>
+struct DispatchChoice<true, T, S> {
+  template<class K>
+  static const T* Select(K key, T* table) {
+    if (table->key == key) {
+      return table;
+    }
+    return DispatchChoice<true, T, S-1>::Select(key, table+1);
+  }
+};
+
+template<class T, int S>
+struct DispatchChoice<false, T, S> {
+  template<class K>
+  static const T* Select(K key, T* table) {
+    int i = 0, j = S, k;
+    while ((k = (i+j)/2) > i) {
+      if (table[k].key < key) {
+        i = k;
+      } else if (table[k].key > key) {
+        j = k;
+      } else {
+        return &table[k];
+      }
+    }
+    if (table[k].key == key) {
       return &table[k];
+    } else {
+      return nullptr;
     }
   }
-  return (table[i].key == key)? &table[i] : nullptr;
+};
+
+template<class K, class T, int S>
+const T* DispatchSelect(K key, T(&table)[S]) {
+  return DispatchChoice<(S <= LoopLimit<T>::max), T, S>::Select(key, table);
 }
 
 #endif  // CATEGORY_SOURCE_HPP_

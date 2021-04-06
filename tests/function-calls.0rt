@@ -471,6 +471,8 @@ unittest callDispatch {
   \ Testing.checkEquals<?>(Type.new().get14(),14)
   \ Testing.checkEquals<?>(Type.new().get15(),15)
   \ Testing.checkEquals<?>(Type.new().get16(),16)
+  \ Testing.checkEquals<?>(Type.new().get17(),17)
+  \ Testing.checkEquals<?>(Type.new().get18(),18)
 }
 
 unittest reduceBuiltin {
@@ -491,6 +493,8 @@ unittest reduceBuiltin {
   \ Testing.checkPresent(reduce<Type,Base14>(Type.new()))
   \ Testing.checkPresent(reduce<Type,Base15>(Type.new()))
   \ Testing.checkPresent(reduce<Type,Base16>(Type.new()))
+  \ Testing.checkPresent(reduce<Type,Base17>(Type.new()))
+  \ Testing.checkPresent(reduce<Type,Base18>(Type.new()))
 }
 
 concrete Type {
@@ -510,6 +514,8 @@ concrete Type {
   refines Base14
   refines Base15
   refines Base16
+  refines Base17
+  refines Base18
 
   @type new () -> (Type)
   @value get () -> (Int)
@@ -534,6 +540,8 @@ define Type {
   get14 () { return 14 }
   get15 () { return 15 }
   get16 () { return 16 }
+  get17 () { return 17 }
+  get18 () { return 18 }
 }
 
 @value interface Base01 { get01 () -> (Int) }
@@ -552,3 +560,5 @@ define Type {
 @value interface Base14 { get14 () -> (Int) }
 @value interface Base15 { get15 () -> (Int) }
 @value interface Base16 { get16 () -> (Int) }
+@value interface Base17 { get17 () -> (Int) }
+@value interface Base18 { get18 () -> (Int) }
