@@ -19,8 +19,6 @@ limitations under the License.
 #ifndef POOLED_HPP_
 #define POOLED_HPP_
 
-#include <atomic>
-
 
 template<class T>
 class PoolStorage {
@@ -46,10 +44,7 @@ private:
 };
 
 template<class T>
-struct PoolManager {
-  static PoolStorage<T>* Take(int size);
-  static void Return(PoolStorage<T>* storage);
-};
+struct PoolManager {};
 
 template<class T>
 class PoolArray {
@@ -105,21 +100,9 @@ class PoolArray {
   }
 
   PoolArray(const PoolArray&) = delete;
-  PoolArray& operator =(const PoolArray&) = delete;
+  PoolArray& operator = (const PoolArray&) = delete;
 
   PoolStorage<T>* array_;
 };
-
-
-// static
-template<class T> PoolStorage<T>* PoolManager<T>::Take(int size) {
-  return new (new unsigned char[sizeof(PoolStorage<T>) + size*sizeof(T)]) PoolStorage<T>(size, nullptr);
-}
-
-// static
-template<class T> void PoolManager<T>::Return(PoolStorage<T>* storage) {
-  storage->~PoolStorage<T>();
-  delete[] (unsigned char*) storage;
-}
 
 #endif  // POOLED_HPP_
