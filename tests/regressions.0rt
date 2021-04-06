@@ -86,6 +86,7 @@ define Child {
   call2 (_) {}
 }
 
+
 testcase "Issue #73 is not re-broken by #self" {
   // https://github.com/ta0kira/zeolite/issues/73
   success

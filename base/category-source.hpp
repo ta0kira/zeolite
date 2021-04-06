@@ -269,15 +269,25 @@ struct DispatchSingle {
   F value;
 };
 
-template<class T, int S>
-const T* DispatchSelect(std::atomic_flag& lock, const void* key, T(&table)[S]) {
-  if (S < 2) return nullptr;
-  while (lock.test_and_set(std::memory_order_acquire));
-  if (table[0].key != nullptr) {
+struct StaticSort {
+  template<class T, int S>
+  StaticSort(T(&table)[S]) {
     std::sort(table, table+S);
   }
-  lock.clear(std::memory_order_release);
-  int i = 1, j = S;
+};
+
+template<class T, int S>
+const T* DispatchSelect(const void* key, T(&table)[S]) {
+  if (S < 8) {
+    // A serial search is faster for small tables.
+    for (int i = 0; i < S; ++i) {
+      if (table[i].key == key) {
+        return table+i;
+      }
+    }
+    return nullptr;
+  }
+  int i = 0, j = S;
   while (j-i > 1) {
     const int k = (i+j)/2;
     if (table[k].key < key) {

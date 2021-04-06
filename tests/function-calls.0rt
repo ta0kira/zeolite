@@ -447,3 +447,108 @@ define Test {
 }
 
 concrete Test {}
+
+
+testcase "large dispatch tables" {
+  success
+}
+
+unittest callDispatch {
+  \ Testing.checkEquals<?>(Type.new().get(),00)
+  \ Testing.checkEquals<?>(Type.new().get01(),01)
+  \ Testing.checkEquals<?>(Type.new().get02(),02)
+  \ Testing.checkEquals<?>(Type.new().get03(),03)
+  \ Testing.checkEquals<?>(Type.new().get04(),04)
+  \ Testing.checkEquals<?>(Type.new().get05(),05)
+  \ Testing.checkEquals<?>(Type.new().get06(),06)
+  \ Testing.checkEquals<?>(Type.new().get07(),07)
+  \ Testing.checkEquals<?>(Type.new().get08(),08)
+  \ Testing.checkEquals<?>(Type.new().get09(),09)
+  \ Testing.checkEquals<?>(Type.new().get10(),10)
+  \ Testing.checkEquals<?>(Type.new().get11(),11)
+  \ Testing.checkEquals<?>(Type.new().get12(),12)
+  \ Testing.checkEquals<?>(Type.new().get13(),13)
+  \ Testing.checkEquals<?>(Type.new().get14(),14)
+  \ Testing.checkEquals<?>(Type.new().get15(),15)
+  \ Testing.checkEquals<?>(Type.new().get16(),16)
+}
+
+unittest reduceBuiltin {
+  \ Testing.checkPresent(reduce<Type,Type>(Type.new()))
+  \ Testing.checkPresent(reduce<Type,Base01>(Type.new()))
+  \ Testing.checkPresent(reduce<Type,Base02>(Type.new()))
+  \ Testing.checkPresent(reduce<Type,Base03>(Type.new()))
+  \ Testing.checkPresent(reduce<Type,Base04>(Type.new()))
+  \ Testing.checkPresent(reduce<Type,Base05>(Type.new()))
+  \ Testing.checkPresent(reduce<Type,Base06>(Type.new()))
+  \ Testing.checkPresent(reduce<Type,Base07>(Type.new()))
+  \ Testing.checkPresent(reduce<Type,Base08>(Type.new()))
+  \ Testing.checkPresent(reduce<Type,Base09>(Type.new()))
+  \ Testing.checkPresent(reduce<Type,Base10>(Type.new()))
+  \ Testing.checkPresent(reduce<Type,Base11>(Type.new()))
+  \ Testing.checkPresent(reduce<Type,Base12>(Type.new()))
+  \ Testing.checkPresent(reduce<Type,Base13>(Type.new()))
+  \ Testing.checkPresent(reduce<Type,Base14>(Type.new()))
+  \ Testing.checkPresent(reduce<Type,Base15>(Type.new()))
+  \ Testing.checkPresent(reduce<Type,Base16>(Type.new()))
+}
+
+concrete Type {
+  refines Base01
+  refines Base02
+  refines Base03
+  refines Base04
+  refines Base05
+  refines Base06
+  refines Base07
+  refines Base08
+  refines Base09
+  refines Base10
+  refines Base11
+  refines Base12
+  refines Base13
+  refines Base14
+  refines Base15
+  refines Base16
+
+  @type new () -> (Type)
+  @value get () -> (Int)
+}
+
+define Type {
+  new () { return Type{ } }
+  get () { return 00 }
+  get01 () { return 01 }
+  get02 () { return 02 }
+  get03 () { return 03 }
+  get04 () { return 04 }
+  get05 () { return 05 }
+  get06 () { return 06 }
+  get07 () { return 07 }
+  get08 () { return 08 }
+  get09 () { return 09 }
+  get10 () { return 10 }
+  get11 () { return 11 }
+  get12 () { return 12 }
+  get13 () { return 13 }
+  get14 () { return 14 }
+  get15 () { return 15 }
+  get16 () { return 16 }
+}
+
+@value interface Base01 { get01 () -> (Int) }
+@value interface Base02 { get02 () -> (Int) }
+@value interface Base03 { get03 () -> (Int) }
+@value interface Base04 { get04 () -> (Int) }
+@value interface Base05 { get05 () -> (Int) }
+@value interface Base06 { get06 () -> (Int) }
+@value interface Base07 { get07 () -> (Int) }
+@value interface Base08 { get08 () -> (Int) }
+@value interface Base09 { get09 () -> (Int) }
+@value interface Base10 { get10 () -> (Int) }
+@value interface Base11 { get11 () -> (Int) }
+@value interface Base12 { get12 () -> (Int) }
+@value interface Base13 { get13 () -> (Int) }
+@value interface Base14 { get14 () -> (Int) }
+@value interface Base15 { get15 () -> (Int) }
+@value interface Base16 { get16 () -> (Int) }

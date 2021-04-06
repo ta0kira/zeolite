@@ -184,7 +184,7 @@ class PoolManager<S<TypeValue>> {
   static PoolEntry* Take(int size);
   static void Return(PoolEntry* storage);
 
-  static constexpr unsigned int pool_limit_ = 1024;
+  static constexpr unsigned int pool_limit_ = 256;
 };
 
 class ReturnTuple : public ValueTuple {
@@ -223,7 +223,7 @@ class PoolManager<const S<TypeValue>*> {
   static PoolEntry* Take(int size);
   static void Return(PoolEntry* storage);
 
-  static constexpr unsigned int pool_limit_ = 1024;
+  static constexpr unsigned int pool_limit_ = 256;
 };
 
 class ArgTuple : public ValueTuple {
@@ -258,7 +258,7 @@ class PoolManager<S<TypeInstance>> {
   static PoolEntry* Take(int size);
   static void Return(PoolEntry* storage);
 
-  static constexpr unsigned int pool_limit_ = 1024;
+  static constexpr unsigned int pool_limit_ = 256;
 };
 
 class ParamTuple {

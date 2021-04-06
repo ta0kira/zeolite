@@ -698,7 +698,7 @@ createLabelForFunction i f = functionLabelType f ++ " " ++ functionName f ++
 createFunctionDispatch :: CategoryName -> SymbolScope -> [ScopedFunction c] -> CompiledData [String]
 createFunctionDispatch n s fs = function where
   function
-    | null fs = onlyCode $ "{ " ++ fallback ++ " }"
+    | null filtered = onlyCode $ "{ " ++ fallback ++ " }"
     | otherwise = onlyCodes $ [typedef] ++ concat (map table $ byCategory) ++ metaTable ++ select
   filtered = filter ((== s) . sfScope) fs
   flatten f = f:(concat $ map flatten $ sfMerges f)
@@ -723,11 +723,11 @@ createFunctionDispatch n s fs = function where
     ["  };"]
   metaTable = ["  static DispatchTable<CallType> all_tables[] = {"] ++
               map dispatchKeyValue byCategory ++
-              ["    DispatchTable<CallType>(),","  };"]
+              ["  };"]
   dispatchKeyValue (n2,_) = "    DispatchTable<CallType>(" ++ collectionName n2 ++ ", " ++ tableName n2 ++ "),"
   select = [
-      "  static std::atomic_flag table_lock = ATOMIC_FLAG_INIT;",
-      "  const DispatchTable<CallType>* const table = DispatchSelect(table_lock, label.collection, all_tables);",
+      "  static const StaticSort force_sort = all_tables;",
+      "  const DispatchTable<CallType>* const table = DispatchSelect(label.collection, all_tables);",
       "  if (table) {",
       "    if (label.function_num < 0 || label.function_num >= table->size) {",
       "      FAIL() << \"Bad function call \" << label;",
@@ -789,10 +789,9 @@ createTypeArgsForParent t
       "  using CallType = void(" ++ className ++ "::*)(std::vector<S<const TypeInstance>>&)const;",
       "  static DispatchSingle<CallType> all_calls[] = {"
     ] ++ map dispatchKeyValue ((getCategoryName t):refines) ++ [
-      "    DispatchSingle<CallType>(),",
       "  };",
-      "  static std::atomic_flag table_lock = ATOMIC_FLAG_INIT;",
-      "  const DispatchSingle<CallType>* const call = DispatchSelect(table_lock, &category, all_calls);",
+      "  static const StaticSort force_sort = all_calls;",
+      "  const DispatchSingle<CallType>* const call = DispatchSelect(&category, all_calls);",
       "  if (call) {",
       "    (this->*call->value)(args);",
       "    return true;",
