@@ -19,60 +19,47 @@ limitations under the License.
 #ifndef POOLED_HPP_
 #define POOLED_HPP_
 
+#include <atomic>
 
-enum class PoolStorageType {
-  EMPTY,
-  DYNAMIC,
-  POOLED,
-};
 
 template<class T>
 class PoolStorage {
  public:
-  static PoolStorage* New(int size) {
-    if (size < 1) return nullptr;
-    PoolStorage* const storage = new (new unsigned char[sizeof(PoolStorage<T>) + size*sizeof(T)]) PoolStorage(size, PoolStorageType::DYNAMIC, nullptr);
-    new (storage->data()) T[size];
-    return storage;
-  }
-
-  static void Delete(PoolStorage* storage) {
-    if (storage) {
-      for (int i = 0; i < storage->size; ++i) {
-        storage->data()[i].~T();
-      }
-      switch (storage->type) {
-        case PoolStorageType::EMPTY:
-          break;
-        case PoolStorageType::DYNAMIC:
-          delete[] (unsigned char*) storage;
-          break;
-        case PoolStorageType::POOLED:
-          FAIL() << "pool-managed storage not implemented";
-          break;
-      }
-    }
-  }
-
-  T* data() const {
+  inline T* data() const {
     return (T*) (this + 1);
   }
 
-  constexpr PoolStorage() : size(0), type(PoolStorageType::EMPTY), next(nullptr) {}
-
-  PoolStorage(int s, PoolStorageType t, PoolStorage<T>* n) : size(s), type(t), next(n) {}
-
   const int size = 0;
-  const PoolStorageType type = PoolStorageType::EMPTY;
-  PoolStorage<T>* next = nullptr;
+  PoolStorage* next = nullptr;
+
+private:
+  template<class> friend class PoolManager;
+
+  inline PoolStorage(int s, PoolStorage* n) : size(s), next(n) {}
+
+  inline ~PoolStorage() {}
+
+  PoolStorage(const PoolStorage&) = delete;
+  PoolStorage& operator = (const PoolStorage&) = delete;
+  PoolStorage(PoolStorage&&) = delete;
+  PoolStorage& operator = (PoolStorage&&) = delete;
+};
+
+template<class T>
+struct PoolManager {
+  static PoolStorage<T>* Take(int size);
+  static void Return(PoolStorage<T>* storage);
 };
 
 template<class T>
 class PoolArray {
- public:
+  friend class ArgTuple;
+  friend class ReturnTuple;
+  friend class ParamTuple;
+
   constexpr PoolArray() : array_(nullptr) {}
 
-  PoolArray(int size) : array_(PoolStorage<T>::New(size)) {}
+  PoolArray(int size) : array_(PoolManager<T>::Take(size)) {}
 
   PoolArray(PoolArray&& other) : array_(other.array_) {
     other.array_ = nullptr;
@@ -98,22 +85,41 @@ class PoolArray {
   }
 
   template<class...Ts>
-  void Init(Ts... data) {
-    T copy[] = { std::move(data)... };
-    for (int i = 0; i < sizeof...(data); ++i) {
-      (*this)[i] = std::move(copy[i]);
+  inline void Init(Ts... data) {
+    if (sizeof...(Ts) > array_->size) {
+      FAIL() << "Too many init values " << sizeof...(Ts);
     }
+    InitRec(0, std::move(data)...);
   }
+
+  template<class...Ts>
+  inline void InitRec(int i, T arg, Ts... data) {
+    array_->data()[i] = std::move(arg);
+    InitRec(i+1, std::move(data)...);
+  }
+
+  inline void InitRec(int i) {}
 
   ~PoolArray() {
-    PoolStorage<T>::Delete(array_);
+    PoolManager<T>::Return(array_);
   }
 
- private:
   PoolArray(const PoolArray&) = delete;
   PoolArray& operator =(const PoolArray&) = delete;
 
   PoolStorage<T>* array_;
 };
+
+
+// static
+template<class T> PoolStorage<T>* PoolManager<T>::Take(int size) {
+  return new (new unsigned char[sizeof(PoolStorage<T>) + size*sizeof(T)]) PoolStorage<T>(size, nullptr);
+}
+
+// static
+template<class T> void PoolManager<T>::Return(PoolStorage<T>* storage) {
+  storage->~PoolStorage<T>();
+  delete[] (unsigned char*) storage;
+}
 
 #endif  // POOLED_HPP_

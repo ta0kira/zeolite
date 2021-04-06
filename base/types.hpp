@@ -174,6 +174,19 @@ class ValueTuple {
   void* operator new(std::size_t size) = delete;
 };
 
+template<>
+class PoolManager<S<TypeValue>> {
+  using Managed = S<TypeValue>;
+  using PoolEntry = PoolStorage<Managed>;
+
+  template<class> friend class PoolArray;
+
+  static PoolEntry* Take(int size);
+  static void Return(PoolEntry* storage);
+
+  static constexpr unsigned int pool_limit_ = 1024;
+};
+
 class ReturnTuple : public ValueTuple {
  public:
   ReturnTuple(int size) : size_(size), data_(size_) {}
@@ -199,6 +212,19 @@ class ReturnTuple : public ValueTuple {
   PoolArray<S<TypeValue>> data_;
 };
 
+template<>
+class PoolManager<const S<TypeValue>*> {
+  using Managed = const S<TypeValue>*;
+  using PoolEntry = PoolStorage<Managed>;
+
+  template<class> friend class PoolArray;
+
+  static PoolEntry* Take(int size);
+  static void Return(PoolEntry* storage);
+
+  static constexpr unsigned int pool_limit_ = 1024;
+};
+
 class ArgTuple : public ValueTuple {
  public:
   template<class...Ts>
@@ -218,6 +244,19 @@ class ArgTuple : public ValueTuple {
 
   int size_;
   PoolArray<const S<TypeValue>*> data_;
+};
+
+template<>
+class PoolManager<S<TypeInstance>> {
+  using Managed = S<TypeInstance>;
+  using PoolEntry = PoolStorage<Managed>;
+
+  template<class> friend class PoolArray;
+
+  static PoolEntry* Take(int size);
+  static void Return(PoolEntry* storage);
+
+  static constexpr unsigned int pool_limit_ = 1024;
 };
 
 class ParamTuple {
