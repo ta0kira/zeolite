@@ -16,7 +16,6 @@ limitations under the License.
 
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
-#include <mutex>
 #include <vector>
 
 #include "category-source.hpp"
@@ -104,7 +103,6 @@ struct ExtValue_Vector : public Value_Vector {
 
   ReturnTuple Call_append(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("Vector.append")
-    std::lock_guard<std::mutex> lock(mutex);
     const S<TypeValue>& Var_arg1 = (args.At(0));
     values.push_back(Var_arg1);
     return ReturnTuple(Var_self);
@@ -121,7 +119,6 @@ struct ExtValue_Vector : public Value_Vector {
 
   ReturnTuple Call_pop(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("Vector.pop")
-    std::lock_guard<std::mutex> lock(mutex);
     if (values.empty()) {
       BUILTIN_FAIL(Box_String(PrimString_FromLiteral("no elements left to pop")))
     }
@@ -132,7 +129,6 @@ struct ExtValue_Vector : public Value_Vector {
 
   ReturnTuple Call_push(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("Vector.push")
-    std::lock_guard<std::mutex> lock(mutex);
     const S<TypeValue>& Var_arg1 = (args.At(0));
     values.push_back(Var_arg1);
     return ReturnTuple(Var_self);
@@ -140,7 +136,6 @@ struct ExtValue_Vector : public Value_Vector {
 
   ReturnTuple Call_readAt(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("Vector.readAt")
-    std::lock_guard<std::mutex> lock(mutex);
     const PrimInt Var_arg1 = (args.At(0))->AsInt();
     if (Var_arg1 < 0 || Var_arg1 >= values.size()) {
       FAIL() << "index " << Var_arg1 << " is out of bounds";
@@ -150,13 +145,11 @@ struct ExtValue_Vector : public Value_Vector {
 
   ReturnTuple Call_size(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("Vector.size")
-    std::lock_guard<std::mutex> lock(mutex);
     return ReturnTuple(Box_Int(values.size()));
   }
 
   ReturnTuple Call_writeAt(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("Vector.writeAt")
-    std::lock_guard<std::mutex> lock(mutex);
     const PrimInt Var_arg1 = (args.At(0))->AsInt();
     const S<TypeValue>& Var_arg2 = (args.At(1));
     if (Var_arg1 < 0 || Var_arg1 >= values.size()) {
@@ -166,7 +159,6 @@ struct ExtValue_Vector : public Value_Vector {
     return ReturnTuple(Var_self);
   }
 
-  std::mutex mutex;
   VectorType values;
 };
 
