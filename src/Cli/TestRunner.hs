@@ -145,15 +145,18 @@ runSingleTest b cl cm p paths deps (f,s) = do
            when (not $ any isCompilerError results) $ errorFromIO $ removeDirectoryRecursive dir
            return results
 
-    executeTest binary rs es res s2 (f2,c) = printOutcome $ "\nIn unittest " ++ show f2 ++ formatFullContextBrace c ??> do
+    executeTest binary rs es res s2 (f2,c) = printOutcome $ context ??> do
       let command = TestCommand binary (takeDirectory binary) [show f2,cl]
-      (TestCommandResult s2' out err) <- runTestCommand b command
-      case (s2,s2') of
-           (True,False) -> collectAllM_ $ (asCompilerError res):(map compilerErrorM $ err ++ out)
-           (False,True) -> collectAllM_ [compilerErrorM "Expected runtime failure",
-                                         asCompilerError res <?? "\nOutput from compiler:"]
-           _ -> fromTrackedErrors $ checkContent rs es (lines $ show $ getCompilerWarnings res) err out
+      resetBackgroundM $ do
+        compilerBackgroundM $ "See output files for testcase in " ++ (takeDirectory binary)
+        (TestCommandResult s2' out err) <- runTestCommand b command
+        case (s2,s2') of
+             (True,False) -> collectAllM_ $ (asCompilerError res):(map compilerErrorM $ err ++ out)
+             (False,True) -> collectAllM_ [compilerErrorM "Expected runtime failure",
+                                          asCompilerError res <?? "\nOutput from compiler:"]
+             _ -> fromTrackedErrors $ checkContent rs es (lines $ show $ getCompilerWarnings res) err out
       where
+        context = "\nIn unittest " ++ show f2 ++ formatFullContextBrace c
         printOutcome outcome = do
           failed <- isCompilerErrorM outcome
           if failed
