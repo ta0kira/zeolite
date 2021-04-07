@@ -21,8 +21,6 @@
 
 * **[new]** Additions to `lib/util`:
 
-  * **[new]** Adds `Sorting`, to support sorting of random-access containers.
-
   * **[new]** Adds `Ranges`, for simple min/max determinations.
 
   * **[new]** Adds `revZeroIndexed` to `Counter`, to create a reversed sequence
@@ -35,6 +33,8 @@
     comparisons to simple containers.
 
 * **[new]** Additions to `lib/container`:
+
+  * **[new]** Adds `Sorting`, to support sorting of random-access containers.
 
   * **[new]** Adds `TreeSet`, to manage set membership of any sortable type.
 
