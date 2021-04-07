@@ -19,8 +19,6 @@ limitations under the License.
 #ifndef CATEGORY_SOURCE_HPP_
 #define CATEGORY_SOURCE_HPP_
 
-#include <algorithm>
-#include <atomic>
 #include <iostream>  // For occasional debugging output in generated code.
 #include <map>
 #include <sstream>
@@ -28,7 +26,6 @@ limitations under the License.
 
 #include "types.hpp"
 #include "function.hpp"
-#include "cycle-check.hpp"
 
 
 #define BUILTIN_FAIL(e) { \
@@ -194,30 +191,6 @@ class TypeValue {
                                const ParamTuple& params, const ValueTuple& args);
 };
 
-template <int P, class T>
-class InstanceCache {
- public:
-  using Creator = std::function<S<T>(typename Params<P>::Type)>;
-
-  InstanceCache(const Creator& create) : create_(create) {}
-
-  S<T> GetOrCreate(typename Params<P>::Type params) {
-    while (lock_.test_and_set(std::memory_order_acquire));
-    auto& cached = cache_[GetKeyFromParams<P>(params)];
-    S<T> type = cached;
-    if (!type) {
-      cached = type = create_(params);
-    }
-    lock_.clear(std::memory_order_release);
-    return type;
-  }
-
- private:
-  const Creator create_;
-  std::atomic_flag lock_ = ATOMIC_FLAG_INIT;
-  std::map<typename ParamsKey<P>::Type, S<T>> cache_;
-};
-
 class AnonymousOrder : public TypeValue {
  protected:
   // Passing in the function labels allows linking without depending on Order
@@ -242,101 +215,5 @@ class AnonymousOrder : public TypeValue {
   const ValueFunction& function_next;
   const ValueFunction& function_get;
 };
-
-template<class F>
-struct DispatchTable {
-  constexpr DispatchTable() : key(), table(nullptr), size(0) {}
-
-  template<int S>
-  DispatchTable(CollectionType k, const F(&t)[S]) : key(k), table(t), size(S) {}
-
-  inline bool operator < (const DispatchTable<F>& other) const { return key < other.key; }
-
-  CollectionType key;
-  const F* table;
-  int size;
-};
-
-template<class F>
-struct DispatchSingle {
-  constexpr DispatchSingle() : key(nullptr), value() {}
-
-  DispatchSingle(const void* k, const F v) : key(k), value(v) {}
-
-  inline bool operator < (const DispatchSingle<F>& other) const { return key < other.key; }
-
-  const void* key;
-  F value;
-};
-
-struct StaticSort {
-  template<class T, int S>
-  StaticSort(T(&table)[S]) {
-    std::sort(table, table+S);
-  }
-};
-
-template<class T>
-struct LoopLimit {};
-
-template<class F>
-struct LoopLimit<DispatchTable<F>> {
-  // See function-calls.0rt for tests.
-  static constexpr int max = 15;
-};
-
-template<class F>
-struct LoopLimit<DispatchSingle<F>> {
-  // See function-calls.0rt for tests.
-  static constexpr int max = 15;
-};
-
-template<bool L, class T, int S>
-struct DispatchChoice {};
-
-template<class T>
-struct DispatchChoice<true, T, 0> {
-  template<class K>
-  static const T* Select(K key, T* table) {
-    return nullptr;
-  }
-};
-template<class T, int S>
-struct DispatchChoice<true, T, S> {
-  template<class K>
-  static const T* Select(K key, T* table) {
-    if (table->key == key) {
-      return table;
-    }
-    return DispatchChoice<true, T, S-1>::Select(key, table+1);
-  }
-};
-
-template<class T, int S>
-struct DispatchChoice<false, T, S> {
-  template<class K>
-  static const T* Select(K key, T* table) {
-    int i = 0, j = S, k;
-    while ((k = (i+j)/2) > i) {
-      if (table[k].key < key) {
-        i = k;
-      } else if (table[k].key > key) {
-        j = k;
-      } else {
-        return &table[k];
-      }
-    }
-    if (table[k].key == key) {
-      return &table[k];
-    } else {
-      return nullptr;
-    }
-  }
-};
-
-template<class K, class T, int S>
-const T* DispatchSelect(K key, T(&table)[S]) {
-  return DispatchChoice<(S <= LoopLimit<T>::max), T, S>::Select(key, table);
-}
 
 #endif  // CATEGORY_SOURCE_HPP_

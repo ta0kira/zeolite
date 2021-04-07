@@ -35,6 +35,8 @@ limitations under the License.
   type& operator =(const type&) = delete; \
   type& operator =(type&&) = delete;
 
+using CollectionType = int;
+
 using PrimInt = std::int64_t;
 using PrimString = std::string;
 using PrimChar = char;

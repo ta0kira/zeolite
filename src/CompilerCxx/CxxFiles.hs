@@ -242,7 +242,7 @@ generateCategoryDefinition testing = common where
                          (getCategoryNamespace t)
                          (Set.fromList [getCategoryNamespace t])
                          req'
-                         (addSourceIncludes $ addStreamlinedHeader t $ addIncludes req' out)
+                         (addTemplateIncludes $ addStreamlinedHeader t $ addIncludes req' out)
     filename = templateStreamlined (getCategoryName t)
     defined = DefinedCategory {
         dcContext = [],
@@ -597,6 +597,7 @@ generateCategoryDefinition testing = common where
     | testing   = (testsOnlySourceGuard ++)
     | otherwise = (noTestsOnlySourceGuard ++)
   addSourceIncludes = (baseSourceIncludes ++)
+  addTemplateIncludes = (templateIncludes ++)
   addCategoryHeader t = (["#include \"" ++ headerFilename (getCategoryName t) ++ "\""] ++)
   addStreamlinedHeader t = (["#include \"" ++ headerStreamlined (getCategoryName t) ++ "\""] ++)
   addIncludes req = (map (\i -> "#include \"" ++ headerFilename i ++ "\"") (Set.toList req) ++)

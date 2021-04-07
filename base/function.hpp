@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-Copyright 2019-2020 Kevin P. Barry
+Copyright 2019-2021 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -21,10 +21,6 @@ limitations under the License.
 
 #include <ostream>
 
-
-#define COLLECTION_ID(vp) (int) 1000000009 * (long) (vp)
-
-using CollectionType = int;
 
 struct CategoryFunction {
   const int param_count;
@@ -57,7 +53,7 @@ struct ValueFunction {
 };
 
 inline std::ostream& operator << (std::ostream& output, const CategoryFunction& func) {
-  return output << func.category << "." << func.function;
+  return output << func.category << ":" << func.function;
 }
 
 inline std::ostream& operator << (std::ostream& output, const TypeFunction& func) {
