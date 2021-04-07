@@ -118,7 +118,7 @@ concrete String {
   @type builder () -> ([Append<String>&Build<String>])
 }
 
-// Built-in string of byte data.
+// Built-in fixed-size buffer of byte data.
 //
 // Literals: None.
 concrete CharBuffer {
