@@ -23,6 +23,8 @@ limitations under the License.
 template<class T>
 class PoolStorage {
  public:
+  using Managed = T;
+
   inline T* data() const {
     return (T*) (this + 1);
   }

@@ -19,6 +19,7 @@ limitations under the License.
 #ifndef TYPES_HPP_
 #define TYPES_HPP_
 
+#include <atomic>
 #include <cstdint>
 #include <functional>
 #include <memory>
@@ -178,8 +179,8 @@ class ValueTuple {
 
 template<>
 class PoolManager<S<TypeValue>> {
-  using Managed = S<TypeValue>;
-  using PoolEntry = PoolStorage<Managed>;
+  using PoolEntry = PoolStorage<S<TypeValue>>;
+  using Managed = PoolEntry::Managed;
 
   template<class> friend class PoolArray;
 
@@ -187,6 +188,8 @@ class PoolManager<S<TypeValue>> {
   static void Return(PoolEntry* storage);
 
   static constexpr unsigned int pool_limit_ = 256;
+  static unsigned int pool4_size_;
+  static std::atomic<PoolEntry*> pool4_;
 };
 
 class ReturnTuple : public ValueTuple {
@@ -217,8 +220,8 @@ class ReturnTuple : public ValueTuple {
 
 template<>
 class PoolManager<const S<TypeValue>*> {
-  using Managed = const S<TypeValue>*;
-  using PoolEntry = PoolStorage<Managed>;
+  using PoolEntry = PoolStorage<const S<TypeValue>*>;
+  using Managed = PoolEntry::Managed;
 
   template<class> friend class PoolArray;
 
@@ -226,6 +229,8 @@ class PoolManager<const S<TypeValue>*> {
   static void Return(PoolEntry* storage);
 
   static constexpr unsigned int pool_limit_ = 256;
+  static unsigned int pool4_size_;
+  static std::atomic<PoolEntry*> pool4_;
 };
 
 class ArgTuple : public ValueTuple {
@@ -252,8 +257,8 @@ class ArgTuple : public ValueTuple {
 
 template<>
 class PoolManager<S<TypeInstance>> {
-  using Managed = S<TypeInstance>;
-  using PoolEntry = PoolStorage<Managed>;
+  using PoolEntry = PoolStorage<S<TypeInstance>>;
+  using Managed = PoolEntry::Managed;
 
   template<class> friend class PoolArray;
 
@@ -261,6 +266,8 @@ class PoolManager<S<TypeInstance>> {
   static void Return(PoolEntry* storage);
 
   static constexpr unsigned int pool_limit_ = 256;
+  static unsigned int pool4_size_;
+  static std::atomic<PoolEntry*> pool4_;
 };
 
 class ParamTuple {
