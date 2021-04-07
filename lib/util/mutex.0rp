@@ -40,6 +40,17 @@ concrete SimpleMutex {
 // An automatic mutex lock.
 //
 // Notes:
+// - MutexLock is a bit slower than just calling lock() and unlock() directly,
+//   but it provides error checking, if you don't need optimal code:
+//   - Makes sure that lock() is called exactly once.
+//   - Makes sure that unlock() is called exactly once before the last reference
+//     to the MutexLock is released.
+//   - Provides a trace back to where the MutexLock was originally created, in
+//     addition to where you failed to call freeResource().
+//   - Allows you to mark the mutex as hidden (see example below) so that
+//     subsequent code can't mistakenly lock()/unlock() it.
+// - MutexLock should never be stored as a @value member or @category member; it
+//   should always be scoped to a specific set of operations in a function.
 // - freeResource() must be called; otherwise, there will be a crash. This is to
 //   catch code that could cause a deadlock.
 // - freeResource() must only be called once per MutexLock.
