@@ -207,7 +207,7 @@ generateCategoryDefinition testing = common where
                          (getCategoryNamespace t)
                          (getCategoryNamespace t `Set.insert` ns)
                          req
-                         (headerGuard (getCategoryName t) $ allowTestsOnly $ addSourceIncludes $ addCategoryHeader t $ addIncludes req out)
+                         (headerGuard (getCategoryName t) $ allowTestsOnly $ addTemplateIncludes $ addCategoryHeader t $ addIncludes req out)
     streamlinedSource = do
       let filename = sourceStreamlined (getCategoryName t)
       let (cf,tf,vf) = partitionByScope sfScope $ getCategoryFunctions t

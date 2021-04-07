@@ -24,6 +24,7 @@ limitations under the License.
 #include <sstream>
 #include <vector>
 
+#include "cycle-check.hpp"
 #include "types.hpp"
 #include "function.hpp"
 
@@ -214,6 +215,30 @@ class AnonymousOrder : public TypeValue {
   const S<TypeValue> container;
   const ValueFunction& function_next;
   const ValueFunction& function_get;
+};
+
+template <int P, class T>
+class InstanceCache {
+ public:
+  using Creator = std::function<S<T>(typename Params<P>::Type)>;
+
+  InstanceCache(const Creator& create) : create_(create) {}
+
+  S<T> GetOrCreate(typename Params<P>::Type params) {
+    while (lock_.test_and_set(std::memory_order_acquire));
+    auto& cached = cache_[GetKeyFromParams<P>(params)];
+    S<T> type = cached;
+    if (!type) {
+      cached = type = create_(params);
+    }
+    lock_.clear(std::memory_order_release);
+    return type;
+  }
+
+ private:
+  const Creator create_;
+  std::atomic_flag lock_ = ATOMIC_FLAG_INIT;
+  std::map<typename ParamsKey<P>::Type, S<T>> cache_;
 };
 
 #endif  // CATEGORY_SOURCE_HPP_
