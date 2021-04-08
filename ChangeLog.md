@@ -1,5 +1,15 @@
 # Revision history for zeolite-lang
 
+## 0.17.1.0  -- ????-??-??
+
+### Language
+
+* **[new]** Adds the `timeout` field to `testcase`, to specify the number of
+  seconds to allow each `unittest` to run. The default is `30`, which should be
+  more than enough for most individual tests. The primary purpose of setting a
+  default is to prevent a deadlock or infinite loop from blocking continuous
+  integration (CI) runners.
+
 ## 0.17.0.0  -- 2021-04-06
 
 ### Language

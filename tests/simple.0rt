@@ -124,3 +124,14 @@ testcase "ModuleOnly is visible to tests" {
 unittest test {
   optional ModuleOnly value <- empty
 }
+
+
+testcase "custom timeout works as expected" {
+  crash
+  require "signal 14"
+  timeout 1
+}
+
+unittest test {
+  while (true) {}
+}

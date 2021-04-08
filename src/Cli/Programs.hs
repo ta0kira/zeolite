@@ -52,6 +52,7 @@ data CxxCommand =
   CompileToBinary {
     ctbMain :: String,
     ctbSources :: [String],
+    ctbMacros :: [(String,Maybe String)],
     ctbOutput :: String,
     ctbPaths :: [String],
     ctbLinkFlags :: [String]

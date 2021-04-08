@@ -4,6 +4,7 @@ testcase "basic success test" {
   exclude "pattern not in output 1"
   require "pattern in output 2"
   exclude "pattern not in output 2"
+  timeout 0
 }
 
 concrete Test {

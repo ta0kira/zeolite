@@ -42,6 +42,7 @@ data IntegrationTestHeader c =
     ithContext :: [c],
     ithTestName :: String,
     ithArgs :: [String],
+    ithTimeout :: Maybe Integer,
     ithResult :: ExpectedResult c
   }
 

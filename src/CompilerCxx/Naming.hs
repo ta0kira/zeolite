@@ -51,6 +51,7 @@ module CompilerCxx.Naming (
   templateStreamlined,
   testFilename,
   testFunctionName,
+  testTimeoutMacro,
   typeCreator,
   typeCustom,
   typeGetter,
@@ -191,6 +192,9 @@ qualifiedTypeGetter t
   | isStaticNamespace $ getCategoryNamespace t =
     show (getCategoryNamespace t) ++ "::" ++ (typeGetter $ getCategoryName t)
   | otherwise = typeGetter $ getCategoryName t
+
+testTimeoutMacro :: String
+testTimeoutMacro = "ZEOLITE_TEST_TIMEOUT"
 
 publicNamespaceMacro :: String
 publicNamespaceMacro = "ZEOLITE_PUBLIC_NAMESPACE"

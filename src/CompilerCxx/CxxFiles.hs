@@ -653,7 +653,9 @@ generateTestFile tm em args ts = "In the creation of the test binary procedure" 
   ts' <- fmap mconcat $ mapCompilerM (compileTestProcedure tm em) ts
   (include,sel) <- selectTestFromArgv1 $ map tpName ts
   let (CompiledData req _) = ts' <> sel
-  let file = testsOnlySourceGuard ++ createMainCommon "testcase" (onlyCodes include <> ts') (argv <> callLog <> sel)
+  let contentTop = mconcat [timeoutInclude,onlyCodes include,ts']
+  let contentMain = mconcat [setTimeout,argv,callLog,sel]
+  let file = testsOnlySourceGuard ++ createMainCommon "testcase" contentTop contentMain
   return $ CompiledData req file where
     args' = map escapeChars args
     argv = onlyCodes [
@@ -661,6 +663,16 @@ generateTestFile tm em args ts = "In the creation of the test binary procedure" 
         "ProgramArgv program_argv(sizeof argv2 / sizeof(char*), argv2);"
       ]
     callLog = onlyCode "LogCallsToFile call_logger_((argc < 3)? \"\" : argv[2]);"
+    timeoutInclude = onlyCodes [
+        "#ifdef " ++ testTimeoutMacro,
+        "#include <unistd.h>",
+        "#endif  // " ++ testTimeoutMacro
+      ]
+    setTimeout = onlyCodes [
+        "#ifdef " ++ testTimeoutMacro,
+        "alarm(" ++ testTimeoutMacro ++ ");",
+        "#endif  // " ++ testTimeoutMacro
+      ]
 
 addNamespace :: AnyCategory c -> CompiledData [String] -> CompiledData [String]
 addNamespace t cs

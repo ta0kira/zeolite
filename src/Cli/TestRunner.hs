@@ -23,7 +23,7 @@ module Cli.TestRunner (
 import Control.Arrow (second)
 import Control.Monad (when)
 import Control.Monad.IO.Class
-import Data.List (isSuffixOf,nub,sort)
+import Data.List (intercalate,isSuffixOf,nub,sort)
 import System.Directory
 import System.IO
 import System.Posix.Temp (mkdtemp)
@@ -70,8 +70,12 @@ runSingleTest b cl cm p paths deps (f,s) = do
       let name = "\"" ++ ithTestName (itHeader t) ++ "\" (from " ++ f ++ ")"
       let context = formatFullContextBrace (ithContext $ itHeader t)
       let scope = "\nIn testcase \"" ++ ithTestName (itHeader t) ++ "\"" ++ context
+      warnUnused (itHeader t) <?? scope
       errorFromIO $ hPutStrLn stderr $ "\n*** Executing testcase " ++ name ++ " ***"
-      result <- toTrackedErrors $ run (ithResult $ itHeader t) (ithArgs $ itHeader t) (itCategory t) (itDefinition t) (itTests t)
+      result <- toTrackedErrors $ run (ithResult $ itHeader t)
+                                      (ithArgs $ itHeader t)
+                                      (ithTimeout $ itHeader t)
+                                      (itCategory t) (itDefinition t) (itTests t)
       if isCompilerError result
          then return ((0,1),scope ??> (result >> return ()))
          else do
@@ -84,8 +88,27 @@ runSingleTest b cl cm p paths deps (f,s) = do
              else errorFromIO $ hPutStrLn stderr $ "*** All tests in testcase " ++ name ++ " passed ***"
            return ((passed,failed),combined)
 
-    run (ExpectCompilerError _ rs es) args cs ds ts = do
-      let result = compileAll args cs ds ts
+    warnUnused (IntegrationTestHeader _ _ args timeout ex) = check where
+      check =
+        case ex of
+             (ExpectCompilerError _ _ _) -> do
+               warnArgs    "error"
+               warnTimeout "error"
+             (ExpectCompiles _ _ _) -> do
+               warnArgs    "compiles"
+               warnTimeout "compiles"
+             _ -> return ()
+      warnArgs ex2 =
+        case args of
+             [] -> return ()
+             _  -> compilerWarningM $ "Explicit args are ignored in " ++ ex2 ++ " tests: " ++ intercalate ", " (map show args)
+      warnTimeout ex2 =
+        case timeout of
+             Nothing -> return ()
+             Just  t -> compilerWarningM $ "Explicit timeouts are ignored in " ++ ex2 ++ " tests: " ++ show t
+
+    run (ExpectCompilerError _ rs es) _ _ cs ds ts = do
+      let result = compileAll [] cs ds ts
       if not $ isCompilerError result
          then compilerErrorM "Expected compilation failure"
          else fmap (:[]) $ return $ do
@@ -93,23 +116,23 @@ runSingleTest b cl cm p paths deps (f,s) = do
            let errors   = show $ getCompilerError result
            checkContent rs es (lines warnings ++ lines errors) [] []
 
-    run (ExpectCompiles _ rs es) args cs ds ts = do
-      let result = compileAll args cs ds ts
+    run (ExpectCompiles _ rs es) _ _ cs ds ts = do
+      let result = compileAll [] cs ds ts
       if isCompilerError result
          then fromTrackedErrors result >> return []
          else fmap (:[]) $ return $ do
            let warnings = show $ getCompilerWarnings result
            checkContent rs es (lines warnings) [] []
 
-    run (ExpectRuntimeError _ rs es) args cs ds ts = do
+    run (ExpectRuntimeError _ rs es) args timeout cs ds ts = do
       when (length ts /= 1) $ compilerErrorM "Exactly one unittest is required when crash is expected"
       uniqueTestNames ts
-      execute False rs es args cs ds ts
+      execute False rs es args timeout cs ds ts
 
-    run (ExpectRuntimeSuccess _ rs es) args cs ds ts = do
+    run (ExpectRuntimeSuccess _ rs es) args timeout cs ds ts = do
       when (null ts) $ compilerErrorM "At least one unittest is required when success is expected"
       uniqueTestNames ts
-      execute True rs es args cs ds ts
+      execute True rs es args timeout cs ds ts
 
     checkContent rs es comp err out = do
       let cr = checkRequired rs comp err out
@@ -134,13 +157,13 @@ runSingleTest b cl cm p paths deps (f,s) = do
     testClash (n,ts) = "unittest " ++ show n ++ " is defined multiple times" !!>
       (mapCompilerM_ (compilerErrorM . ("Defined at " ++) . formatFullContext) $ sort $ map tpContext ts)
 
-    execute s2 rs es args cs ds ts = do
+    execute s2 rs es args timeout cs ds ts = do
       let result = compileAll args cs ds ts
       if isCompilerError result
          then return [result >> return ()]
          else do
            let (xx,main,fs) = getCompilerSuccess result
-           (dir,binaryName) <- createBinary main xx
+           (dir,binaryName) <- createBinary main timeout xx
            results <- liftIO $ sequence $ map (toTrackedErrors . executeTest binaryName rs es result s2) fs
            when (not $ any isCompilerError results) $ errorFromIO $ removeDirectoryRecursive dir
            return results
@@ -184,7 +207,7 @@ runSingleTest b cl cm p paths deps (f,s) = do
       let found = any (=~ r) ms
       when (found && not expected) $ compilerErrorM $ "Pattern \"" ++ r ++ "\" present in " ++ n
       when (not found && expected) $ compilerErrorM $ "Pattern \"" ++ r ++ "\" missing from " ++ n
-    createBinary (CxxOutput _ f2 _ ns req content) xx = do
+    createBinary (CxxOutput _ f2 _ ns req content) timeout xx = do
       dir <- errorFromIO $ mkdtemp "/tmp/ztest_"
       errorFromIO $ hPutStrLn stderr $ "Writing temporary files to " ++ dir
       sources <- mapCompilerM (writeSingleFile dir) xx
@@ -198,9 +221,15 @@ runSingleTest b cl cm p paths deps (f,s) = do
       let os  = getObjectFilesForDeps deps
       let ofr = getObjectFileResolver (sources' ++ os)
       let os' = ofr ns req
-      let command = CompileToBinary main os' binary paths' flags
+      macro <- timeoutMacro timeout
+      let command = CompileToBinary main os' macro binary paths' flags
       file <- runCxxCommand b command
       return (dir,file)
+    timeoutMacro (Just 0) = return []  -- No timeout.
+    timeoutMacro Nothing  = return [(testTimeoutMacro,Just "30")]  -- Default timeout.
+    timeoutMacro (Just t)
+      | t < 0 || t > 65535 = compilerErrorM $ "Invalid testcase timeout " ++ show t ++ " => use timeout 0 for unlimited time"
+      | otherwise = return [(testTimeoutMacro,Just (show t))]  -- Custom timeout.
     writeSingleFile d ca@(CxxOutput _ f2 _ _ _ content) = do
       errorFromIO $ writeFile (d </> f2) $ concat $ map (++ "\n") content
       if isSuffixOf ".cpp" f2

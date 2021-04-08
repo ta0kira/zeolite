@@ -77,28 +77,29 @@ compilerVersion :: String
 compilerVersion = showVersion version
 
 instance CompilerBackend Backend where
-  runCxxCommand (UnixBackend cb co ab) (CompileToObject s p ms ps e) = do
-    objName <- errorFromIO $ canonicalizePath $ p </> (takeFileName $ dropExtension s ++ ".o")
-    executeProcess cb (co ++ otherOptions ++ ["-c", s, "-o", objName]) <?? "In compilation of " ++ s
-    if e
-      then do
-        -- Extra files are put into .a since they will be unconditionally
-        -- included. This prevents unwanted symbol dependencies.
-        arName  <- errorFromIO $ canonicalizePath $ p </> (takeFileName $ dropExtension s ++ ".a")
-        executeProcess ab ["-q",arName,objName] <?? "In packaging of " ++ objName
-        return arName
-      else return objName where
-      otherOptions = map (("-I" ++) . normalise) ps ++ map macro ms
-      macro (n,Just v)  = "-D" ++ n ++ "=" ++ v
-      macro (n,Nothing) = "-D" ++ n
-  runCxxCommand (UnixBackend cb co _) (CompileToBinary m ss o ps lf) = do
-    let arFiles      = filter (isSuffixOf ".a")       ss
-    let otherFiles   = filter (not . isSuffixOf ".a") ss
-    let otherOptions = map ("-I" ++) (map normalise ps)
-    let flags = nub lf
-    let args = co ++ otherOptions ++ m:otherFiles ++ arFiles ++ ["-o", o] ++ flags
-    executeProcess cb args <?? "In linking of " ++ o
-    return o
+  runCxxCommand = run where
+    run (UnixBackend cb co ab) (CompileToObject s p ms ps e) = do
+      objName <- errorFromIO $ canonicalizePath $ p </> (takeFileName $ dropExtension s ++ ".o")
+      let otherOptions = map (("-I" ++) . normalise) ps ++ map macro ms
+      executeProcess cb (co ++ otherOptions ++ ["-c", s, "-o", objName]) <?? "In compilation of " ++ s
+      if e
+         then do
+           -- Extra files are put into .a since they will be unconditionally
+           -- included. This prevents unwanted symbol dependencies.
+           arName  <- errorFromIO $ canonicalizePath $ p </> (takeFileName $ dropExtension s ++ ".a")
+           executeProcess ab ["-q",arName,objName] <?? "In packaging of " ++ objName
+           return arName
+         else return objName
+    run (UnixBackend cb co _) (CompileToBinary m ss ms o ps lf) = do
+      let arFiles      = filter (isSuffixOf ".a")       ss
+      let otherFiles   = filter (not . isSuffixOf ".a") ss
+      let otherOptions = map (("-I" ++) . normalise) ps ++ map macro ms
+      let flags = nub lf
+      let args = co ++ otherOptions ++ m:otherFiles ++ arFiles ++ ["-o", o] ++ flags
+      executeProcess cb args <?? "In linking of " ++ o
+      return o
+    macro (n,Just v)  = "-D" ++ n ++ "=" ++ v
+    macro (n,Nothing) = "-D" ++ n
   runTestCommand _ (TestCommand b p as) = errorFromIO $ do
     (outF,outH) <- mkstemps "/tmp/ztest_" ".txt"
     (errF,errH) <- mkstemps "/tmp/ztest_" ".txt"

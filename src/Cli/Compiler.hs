@@ -249,7 +249,7 @@ compileModule resolver backend (ModuleSpec p d em is is2 ps xs ts es ep m f) = d
           let os     = getObjectFilesForDeps deps2
           let ofr = getObjectFileResolver os
           let os' = ofr ns2 req
-          let command = CompileToBinary mainAbs os' f0 paths' lf'
+          let command = CompileToBinary mainAbs os' [] f0 paths' lf'
           errorFromIO $ hPutStrLn stderr $ "Creating binary " ++ f0
           f1 <- runCxxCommand backend command
           return [f1]

@@ -39,8 +39,9 @@ instance ParseFromSource (IntegrationTestHeader SourceContext) where
     sepAfter (string_ "{")
     result <- resultCompiles <|> resultError <|> resultCrash <|> resultSuccess
     args <- parseArgs <|> return []
+    timeout <- parseTimeout <|> return Nothing
     sepAfter (string_ "}")
-    return $ IntegrationTestHeader [c] name args result where
+    return $ IntegrationTestHeader [c] name args timeout result where
       resultCompiles = labeled "compiles expectation" $ do
         c <- getSourceContext
         keyword "compiles"
@@ -64,6 +65,9 @@ instance ParseFromSource (IntegrationTestHeader SourceContext) where
       parseArgs = labeled "testcase args" $ do
         keyword "args"
         many (sepAfter quotedString)
+      parseTimeout = labeled "testcase timeout" $ do
+        keyword "timeout"
+        fmap Just (sepAfter parseDec)
       requireOrExclude = parseAny2 require exclude where
         require = do
           keyword "require"

@@ -472,16 +472,16 @@ digitCharVal c
   | otherwise = undefined
 
 parseDec :: TextParser Integer
-parseDec = fmap snd $ parseIntCommon 10 digitChar
+parseDec = labeled "base-10" $ fmap snd $ parseIntCommon 10 digitChar
 
 parseHex :: TextParser Integer
-parseHex = fmap snd $ parseIntCommon 16 hexDigitChar
+parseHex = labeled "base-16" $ fmap snd $ parseIntCommon 16 hexDigitChar
 
 parseOct :: TextParser Integer
-parseOct = fmap snd $ parseIntCommon 8 octDigitChar
+parseOct = labeled "base-8" $ fmap snd $ parseIntCommon 8 octDigitChar
 
 parseBin :: TextParser Integer
-parseBin = fmap snd $ parseIntCommon 2 (oneOf "01")
+parseBin = labeled "base-2" $ fmap snd $ parseIntCommon 2 (oneOf "01")
 
 parseSubOne :: TextParser (Integer,Integer)
 parseSubOne = parseIntCommon 10 digitChar

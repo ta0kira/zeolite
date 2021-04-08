@@ -4,6 +4,8 @@ testcase "basic crash test" {
   exclude "pattern not in output 1"
   require "pattern in output 2"
   exclude "pattern not in output 2"
+  args "arg1" "arg2" "arg3"
+  timeout 10
 }
 
 concrete Test {

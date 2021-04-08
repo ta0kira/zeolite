@@ -40,6 +40,8 @@ tests = [
         let h = itHeader t
         when (not $ isExpectCompiles $ ithResult h) $ compilerErrorM "Expected ExpectCompiles"
         checkEquals (ithTestName h) "basic compiles test"
+        containsExactly (ithArgs h) []
+        checkEquals (ithTimeout h) Nothing
         containsExactly (getRequirePattern $ ithResult h) [
             OutputPattern OutputCompiler "pattern in output 1",
             OutputPattern OutputAny      "pattern in output 2"
@@ -58,6 +60,8 @@ tests = [
         let h = itHeader t
         when (not $ isExpectCompilerError $ ithResult h) $ compilerErrorM "Expected ExpectCompilerError"
         checkEquals (ithTestName h) "basic error test"
+        containsExactly (ithArgs h) []
+        checkEquals (ithTimeout h) Nothing
         containsExactly (getRequirePattern $ ithResult h) [
             OutputPattern OutputCompiler "pattern in output 1",
             OutputPattern OutputAny      "pattern in output 2"
@@ -75,7 +79,8 @@ tests = [
       (\t -> do
         let h = itHeader t
         when (not $ isExpectRuntimeError $ ithResult h) $ compilerErrorM "Expected ExpectRuntimeError"
-        checkEquals (ithTestName h) "basic crash test"
+        containsExactly (ithArgs h) ["arg1","arg2","arg3"]
+        checkEquals (ithTimeout h) (Just 10)
         containsExactly (getRequirePattern $ ithResult h) [
             OutputPattern OutputAny "pattern in output 1",
             OutputPattern OutputAny "pattern in output 2"
@@ -94,6 +99,8 @@ tests = [
         let h = itHeader t
         when (not $ isExpectRuntimeSuccess $ ithResult h) $ compilerErrorM "Expected ExpectRuntimeSuccess"
         checkEquals (ithTestName h) "basic success test"
+        containsExactly (ithArgs h) []
+        checkEquals (ithTimeout h) (Just 0)
         containsExactly (getRequirePattern $ ithResult h) [
             OutputPattern OutputAny "pattern in output 1",
             OutputPattern OutputAny "pattern in output 2"
