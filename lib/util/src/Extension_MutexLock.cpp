@@ -28,7 +28,7 @@ limitations under the License.
 namespace ZEOLITE_PUBLIC_NAMESPACE {
 #endif  // ZEOLITE_PUBLIC_NAMESPACE
 
-S<TypeValue> CreateValue_MutexLock(S<Type_MutexLock> parent, const ValueTuple& args);
+BoxedValue CreateValue_MutexLock(S<Type_MutexLock> parent, const ValueTuple& args);
 
 struct ExtCategory_MutexLock : public Category_MutexLock {
 };
@@ -45,31 +45,32 @@ struct ExtType_MutexLock : public Type_MutexLock {
 struct ExtValue_MutexLock : public Value_MutexLock {
   inline ExtValue_MutexLock(S<Type_MutexLock> p, const ValueTuple& args)
     : Value_MutexLock(p), mutex(args.Only()) {
-    TypeValue::Call(mutex, Function_Mutex_lock, ParamTuple(), ArgTuple());
+    TypeValue::Call(BoxedValue::Require(mutex), Function_Mutex_lock, ParamTuple(), ArgTuple());
   }
 
-  ReturnTuple Call_freeResource(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_freeResource(const BoxedValue& Var_self, const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("MutexLock.freeResource")
     TRACE_CREATION
-    if (!mutex) {
+    if (!BoxedValue::Present(mutex)) {
       FAIL() << "MutexLock freed multiple times";
     } else {
       TypeValue::Call(mutex, Function_Mutex_unlock, ParamTuple(), ArgTuple());
-      mutex = nullptr;
+      mutex = Var_empty;
     }
     return ReturnTuple();
   }
 
   ~ExtValue_MutexLock() {
-    if (mutex) {
+    if (BoxedValue::Present(mutex)) {
       TRACE_CREATION
-      TypeValue::Call(mutex, Function_Mutex_unlock, ParamTuple(), ArgTuple());
-      mutex = nullptr;
+      TypeValue::Call(BoxedValue::Require(mutex), Function_Mutex_unlock, ParamTuple(), ArgTuple());
+      mutex = Var_empty;
       FAIL() << "MutexLock not freed with freeResource()";
     }
   }
 
-  S<TypeValue> mutex;
+  // optional Mutex
+  BoxedValue mutex;
   CAPTURE_CREATION("MutexLock")
 };
 
@@ -81,8 +82,8 @@ S<Type_MutexLock> CreateType_MutexLock(Params<0>::Type params) {
   static const auto cached = S_get(new ExtType_MutexLock(CreateCategory_MutexLock(), Params<0>::Type()));
   return cached;
 }
-S<TypeValue> CreateValue_MutexLock(S<Type_MutexLock> parent, const ValueTuple& args) {
-  return S_get(new ExtValue_MutexLock(parent, args));
+BoxedValue CreateValue_MutexLock(S<Type_MutexLock> parent, const ValueTuple& args) {
+  return BoxedValue(new ExtValue_MutexLock(parent, args));
 }
 
 #ifdef ZEOLITE_PUBLIC_NAMESPACE

@@ -76,7 +76,7 @@ procedureDeclaration abstract f = return $ onlyCode func where
       "(const S<TypeInstance>& Param_self, const ParamTuple& params, const ValueTuple& args)"
     | sfScope f == ValueScope =
       "ReturnTuple " ++ name ++
-      "(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args)"
+      "(const BoxedValue& Var_self, const ParamTuple& params, const ValueTuple& args)"
     | otherwise = undefined
 
 data CxxFunctionType =
@@ -134,7 +134,7 @@ compileExecutableProcedure cxxType ctx
         "(const S<TypeInstance>& Param_self, const ParamTuple& params, const ValueTuple& args)" ++ final ++ " {"
       | s == ValueScope =
         returnType ++ " " ++ prefix ++ name ++
-        "(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args)" ++ final ++ " {"
+        "(const BoxedValue& Var_self, const ParamTuple& params, const ValueTuple& args)" ++ final ++ " {"
       | otherwise = undefined
     returnType = "ReturnTuple"
     setProcedureTrace
@@ -813,7 +813,7 @@ compileExpressionStart (BuiltinCall c (FunctionCall _ BuiltinPresent ps es)) = d
   when (isWeakValue t0) $
     compilerErrorM $ "Weak values not allowed here" ++ formatFullContextBrace c
   return $ (Positional [boolRequiredValue],
-            UnboxedPrimitive PrimBool $ valueBase ++ "::Present(" ++ useAsUnwrapped e ++ ")")
+            UnboxedPrimitive PrimBool $ "BoxedValue::Present(" ++ useAsUnwrapped e ++ ")")
 compileExpressionStart (BuiltinCall c (FunctionCall _ BuiltinReduce ps es)) = do
   when (length (pValues ps) /= 2) $
     compilerErrorM $ "Expected 2 type parameters" ++ formatFullContextBrace c
@@ -851,7 +851,7 @@ compileExpressionStart (BuiltinCall c (FunctionCall _ BuiltinRequire ps es)) = d
   when (isWeakValue t0) $
     compilerErrorM $ "Weak values not allowed here" ++ formatFullContextBrace c
   return $ (Positional [ValueType RequiredValue (vtType t0)],
-            UnwrappedSingle $ valueBase ++ "::Require(" ++ useAsUnwrapped e ++ ")")
+            UnwrappedSingle $ "BoxedValue::Require(" ++ useAsUnwrapped e ++ ")")
 compileExpressionStart (BuiltinCall c (FunctionCall _ BuiltinStrong ps es)) = do
   when (length (pValues ps) /= 0) $
     compilerErrorM $ "Expected 0 type parameters" ++ formatFullContextBrace c
@@ -864,7 +864,7 @@ compileExpressionStart (BuiltinCall c (FunctionCall _ BuiltinStrong ps es)) = do
   let t1 = Positional [ValueType OptionalValue (vtType t0)]
   if isWeakValue t0
      -- Weak values are already unboxed.
-     then return (t1,UnwrappedSingle $ valueBase ++ "::Strong(" ++ useAsUnwrapped e ++ ")")
+     then return (t1,UnwrappedSingle $ "BoxedValue::Strong(" ++ useAsUnwrapped e ++ ")")
      else return (t1,e)
 compileExpressionStart (BuiltinCall c (FunctionCall _ BuiltinTypename ps es)) = do
   when (length (pValues ps) /= 1) $

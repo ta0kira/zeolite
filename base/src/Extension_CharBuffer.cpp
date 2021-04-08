@@ -29,7 +29,7 @@ limitations under the License.
 namespace ZEOLITE_PUBLIC_NAMESPACE {
 #endif  // ZEOLITE_PUBLIC_NAMESPACE
 
-S<TypeValue> CreateValue_CharBuffer(S<Type_CharBuffer> parent, PrimCharBuffer buffer);
+BoxedValue CreateValue_CharBuffer(S<Type_CharBuffer> parent, PrimCharBuffer buffer);
 
 struct ExtCategory_CharBuffer : public Category_CharBuffer {
 };
@@ -39,7 +39,7 @@ struct ExtType_CharBuffer : public Type_CharBuffer {
 
   ReturnTuple Call_new(const S<TypeInstance>& Param_self, const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("CharBuffer.new")
-    const PrimInt Var_arg1 = (args.At(0))->AsInt();
+    const PrimInt Var_arg1 = (args.At(0)).AsInt();
     if (Var_arg1 < 0) {
       FAIL() << "Buffer size " << Var_arg1 << " is invalid";
     }
@@ -50,18 +50,18 @@ struct ExtType_CharBuffer : public Type_CharBuffer {
 struct ExtValue_CharBuffer : public Value_CharBuffer {
   inline ExtValue_CharBuffer(S<Type_CharBuffer> p, PrimCharBuffer value) : Value_CharBuffer(p), value_(std::move(value)) {}
 
-  ReturnTuple Call_readAt(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_readAt(const BoxedValue& Var_self, const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("CharBuffer.readAt")
-    const PrimInt Var_arg1 = (args.At(0))->AsInt();
+    const PrimInt Var_arg1 = (args.At(0)).AsInt();
     if (Var_arg1 < 0 || Var_arg1 >= AsCharBuffer().size()) {
       FAIL() << "Read position " << Var_arg1 << " is out of bounds";
     }
     return ReturnTuple(Box_Char(AsCharBuffer()[Var_arg1]));
   }
 
-  ReturnTuple Call_resize(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_resize(const BoxedValue& Var_self, const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("CharBuffer.resize")
-    const PrimInt Var_arg1 = (args.At(0))->AsInt();
+    const PrimInt Var_arg1 = (args.At(0)).AsInt();
     if (Var_arg1 < 0) {
       FAIL() << "Buffer size " << Var_arg1 << " is invalid";
     } else {
@@ -70,15 +70,15 @@ struct ExtValue_CharBuffer : public Value_CharBuffer {
     return ReturnTuple(Var_self);
   }
 
-  ReturnTuple Call_size(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_size(const BoxedValue& Var_self, const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("CharBuffer.size")
     return ReturnTuple(Box_Int(value_.size()));
   }
 
-  ReturnTuple Call_writeAt(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_writeAt(const BoxedValue& Var_self, const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("CharBuffer.writeAt")
-    const PrimInt Var_arg1 = (args.At(0))->AsInt();
-    const PrimChar Var_arg2 = (args.At(1))->AsChar();
+    const PrimInt Var_arg1 = (args.At(0)).AsInt();
+    const PrimChar Var_arg2 = (args.At(1)).AsChar();
     if (Var_arg1 < 0 || Var_arg1 >= value_.size()) {
       FAIL() << "Write position " << Var_arg1 << " is out of bounds";
     } else {
@@ -100,8 +100,8 @@ S<Type_CharBuffer> CreateType_CharBuffer(Params<0>::Type params) {
   static const auto cached = S_get(new ExtType_CharBuffer(CreateCategory_CharBuffer(), Params<0>::Type()));
   return cached;
 }
-S<TypeValue> CreateValue_CharBuffer(S<Type_CharBuffer> parent, PrimCharBuffer value) {
-  return S_get(new ExtValue_CharBuffer(parent, std::move(value)));
+BoxedValue CreateValue_CharBuffer(S<Type_CharBuffer> parent, PrimCharBuffer value) {
+  return BoxedValue(new ExtValue_CharBuffer(parent, std::move(value)));
 }
 
 #ifdef ZEOLITE_PUBLIC_NAMESPACE

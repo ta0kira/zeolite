@@ -196,10 +196,13 @@ generateCategoryDefinition testing = common where
   common (StreamlinedExtension t ns) = sequence [streamlinedHeader,streamlinedSource] where
     streamlinedHeader = do
       let filename = headerStreamlined (getCategoryName t)
-      (CompiledData req out) <- fmap (addNamespace t) $ concatM [
+      let maybeValue = if hasPrimitiveValue (getCategoryName t)
+                          then []
+                          else [defineAbstractValue t]
+      (CompiledData req out) <- fmap (addNamespace t) $ concatM $ [
           defineAbstractCategory t,
-          defineAbstractType     t,
-          defineAbstractValue    t,
+          defineAbstractType     t
+        ] ++ maybeValue ++ [
           declareAbstractGetters t
         ]
       return $ CxxOutput (Just $ getCategoryName t)
@@ -211,11 +214,14 @@ generateCategoryDefinition testing = common where
     streamlinedSource = do
       let filename = sourceStreamlined (getCategoryName t)
       let (cf,tf,vf) = partitionByScope sfScope $ getCategoryFunctions t
-      (CompiledData req out) <- fmap (addNamespace t) $ concatM [
+      let maybeValue = if hasPrimitiveValue (getCategoryName t)
+                          then []
+                          else [defineValueOverrides t (getCategoryFunctions t)]
+      (CompiledData req out) <- fmap (addNamespace t) $ concatM $ [
           defineFunctions t cf tf vf,
           defineCategoryOverrides t (getCategoryFunctions t),
-          defineTypeOverrides     t (getCategoryFunctions t),
-          defineValueOverrides    t (getCategoryFunctions t),
+          defineTypeOverrides     t (getCategoryFunctions t)
+        ] ++ maybeValue ++ [
           defineExternalGetters t
         ]
       let req' = Set.unions [req,getCategoryMentions t,defaultCategoryDeps]
@@ -228,14 +234,22 @@ generateCategoryDefinition testing = common where
   common (StreamlinedTemplate t tm) = fmap (:[]) streamlinedTemplate where
     streamlinedTemplate = do
       [cp,tp,vp] <- getProcedureScopes tm Map.empty defined
-      (CompiledData req out) <- fmap (addNamespace t) $ concatM [
-          declareCustomValueGetter t,
+      let maybeGetter = if hasPrimitiveValue (getCategoryName t)
+                           then []
+                           else [declareCustomValueGetter t]
+      let maybeGetter2 = if hasPrimitiveValue (getCategoryName t)
+                            then []
+                            else [defineCustomValueGetter t]
+      let maybeValue = if hasPrimitiveValue (getCategoryName t)
+                          then []
+                          else [defineCustomValue t vp]
+      (CompiledData req out) <- fmap (addNamespace t) $ concatM $
+        maybeGetter ++ [
           defineCustomCategory t cp,
-          defineCustomType     t tp,
-          defineCustomValue    t vp,
-          defineCustomGetters t,
-          defineCustomValueGetter t
-        ]
+          defineCustomType     t tp
+        ] ++ maybeValue ++ [
+          defineCustomGetters t
+        ] ++ maybeGetter2
       let req' = Set.unions [req,getCategoryMentions t]
       return $ CxxOutput (Just $ getCategoryName t)
                          filename
@@ -485,7 +499,7 @@ generateCategoryDefinition testing = common where
     ]
   declareValueOverrides = onlyCodes [
       "  std::string CategoryName() const final;",
-      "  ReturnTuple Dispatch(const S<TypeValue>& self, const ValueFunction& label, const ParamTuple& params, const ValueTuple& args) final;"
+      "  ReturnTuple Dispatch(const BoxedValue& self, const ValueFunction& label, const ParamTuple& params, const ValueTuple& args) final;"
     ]
 
   defineCategoryOverrides t fs = return $ mconcat [
@@ -515,7 +529,7 @@ generateCategoryDefinition testing = common where
       params = map vpParam $ getCategoryParams t
   defineValueOverrides t fs = return $ mconcat [
       onlyCode $ "std::string " ++ className ++ "::CategoryName() const { return parent->CategoryName(); }",
-      onlyCode $ "ReturnTuple " ++ className ++ "::Dispatch(const S<TypeValue>& self, const ValueFunction& label, const ParamTuple& params, const ValueTuple& args) {",
+      onlyCode $ "ReturnTuple " ++ className ++ "::Dispatch(const BoxedValue& self, const ValueFunction& label, const ParamTuple& params, const ValueTuple& args) {",
       createFunctionDispatch (getCategoryName t) ValueScope fs,
       onlyCode $ "}"
     ] where
@@ -723,7 +737,7 @@ createFunctionDispatch n s fs = function where
     | s == TypeScope     = "  using CallType = ReturnTuple(" ++ typeName n ++
                            "::*)(const S<TypeInstance>&, const ParamTuple&, const ValueTuple&);"
     | s == ValueScope    = "  using CallType = ReturnTuple(" ++ valueName n ++
-                           "::*)(const S<TypeValue>&, const ParamTuple&, const ValueTuple&);"
+                           "::*)(const BoxedValue&, const ParamTuple&, const ValueTuple&);"
     | otherwise = undefined
   name f
     | s == CategoryScope = categoryName n ++ "::" ++ callName f
@@ -909,7 +923,7 @@ defineInternalType2 className t n
 declareInternalValue :: AnyCategory c -> CompiledData [String]
 declareInternalValue t =
   onlyCodes [
-      "S<TypeValue> " ++ valueCreator (getCategoryName t) ++
+      "BoxedValue " ++ valueCreator (getCategoryName t) ++
       "(S<" ++ typeName (getCategoryName t) ++ "> parent, " ++
       "const ValueTuple& args);"
     ]
@@ -920,9 +934,9 @@ defineInternalValue t = defineInternalValue2 (valueName (getCategoryName t)) t
 defineInternalValue2 :: String -> AnyCategory c -> CompiledData [String]
 defineInternalValue2 className t =
   onlyCodes [
-      "S<TypeValue> " ++ valueCreator (getCategoryName t) ++ "(S<" ++ typeName (getCategoryName t) ++ "> parent, " ++
+      "BoxedValue " ++ valueCreator (getCategoryName t) ++ "(S<" ++ typeName (getCategoryName t) ++ "> parent, " ++
       "const ValueTuple& args) {",
-      "  return S_get(new " ++ className ++ "(parent, args));",
+      "  return BoxedValue(new " ++ className ++ "(parent, args));",
       "}"
     ]
 

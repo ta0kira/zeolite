@@ -25,7 +25,7 @@ limitations under the License.
 namespace ZEOLITE_PUBLIC_NAMESPACE {
 #endif  // ZEOLITE_PUBLIC_NAMESPACE
 
-S<TypeValue> CreateValue_RawFileReader(S<Type_RawFileReader> parent, const ValueTuple& args);
+BoxedValue CreateValue_RawFileReader(S<Type_RawFileReader> parent, const ValueTuple& args);
 
 struct ExtCategory_RawFileReader : public Category_RawFileReader {
 };
@@ -42,10 +42,10 @@ struct ExtType_RawFileReader : public Type_RawFileReader {
 struct ExtValue_RawFileReader : public Value_RawFileReader {
   inline ExtValue_RawFileReader(S<Type_RawFileReader> p, const ValueTuple& args)
     : Value_RawFileReader(p),
-      filename(args.At(0)->AsString()),
+      filename(args.At(0).AsString()),
       file(new std::ifstream(filename, std::ios::in | std::ios::binary)) {}
 
-  ReturnTuple Call_freeResource(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_freeResource(const BoxedValue& Var_self, const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("RawFileReader.freeResource")
     std::lock_guard<std::mutex> lock(mutex);
     if (file) {
@@ -54,7 +54,7 @@ struct ExtValue_RawFileReader : public Value_RawFileReader {
     return ReturnTuple();
   }
 
-  ReturnTuple Call_getFileError(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_getFileError(const BoxedValue& Var_self, const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("RawFileReader.getFileError")
     std::lock_guard<std::mutex> lock(mutex);
     if (!file) {
@@ -69,17 +69,17 @@ struct ExtValue_RawFileReader : public Value_RawFileReader {
     return ReturnTuple(Var_empty);
   }
 
-  ReturnTuple Call_pastEnd(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_pastEnd(const BoxedValue& Var_self, const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("RawFileReader.pastEnd")
     std::lock_guard<std::mutex> lock(mutex);
     return ReturnTuple(Box_Bool(!file || file->fail() || file->eof()));
   }
 
-  ReturnTuple Call_readBlock(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_readBlock(const BoxedValue& Var_self, const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("RawFileReader.readBlock")
     TRACE_CREATION
     std::lock_guard<std::mutex> lock(mutex);
-    const PrimInt Var_arg1 = (args.At(0))->AsInt();
+    const PrimInt Var_arg1 = (args.At(0)).AsInt();
     if (Var_arg1 < 0) {
       FAIL() << "Read size " << Var_arg1 << " is invalid";
     }
@@ -118,8 +118,8 @@ S<Type_RawFileReader> CreateType_RawFileReader(Params<0>::Type params) {
   static const auto cached = S_get(new ExtType_RawFileReader(CreateCategory_RawFileReader(), Params<0>::Type()));
   return cached;
 }
-S<TypeValue> CreateValue_RawFileReader(S<Type_RawFileReader> parent, const ValueTuple& args) {
-  return S_get(new ExtValue_RawFileReader(parent, args));
+BoxedValue CreateValue_RawFileReader(S<Type_RawFileReader> parent, const ValueTuple& args) {
+  return BoxedValue(new ExtValue_RawFileReader(parent, args));
 }
 
 #ifdef ZEOLITE_PUBLIC_NAMESPACE

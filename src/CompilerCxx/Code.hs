@@ -27,6 +27,7 @@ module CompilerCxx.Code (
   escapeChars,
   expressionFromLiteral,
   functionLabelType,
+  hasPrimitiveValue,
   indentCompiled,
   isStoredUnboxed,
   newFunctionLabel,
@@ -119,6 +120,13 @@ captureCreationTrace n = "CAPTURE_CREATION(" ++ show (show n) ++ ")"
 showCreationTrace :: String
 showCreationTrace = "TRACE_CREATION"
 
+hasPrimitiveValue :: CategoryName -> Bool
+hasPrimitiveValue BuiltinBool  = True
+hasPrimitiveValue BuiltinInt   = True
+hasPrimitiveValue BuiltinFloat = True
+hasPrimitiveValue BuiltinChar  = True
+hasPrimitiveValue _            = False
+
 isStoredUnboxed :: ValueType -> Bool
 isStoredUnboxed t
   | t == boolRequiredValue  = True
@@ -204,21 +212,21 @@ useAsUnwrapped (UnboxedPrimitive PrimFloat e)  = "Box_Float(" ++ e ++ ")"
 useAsUnwrapped (LazySingle e)                  = useAsUnwrapped $ getFromLazy e
 
 useAsUnboxed :: PrimitiveType -> ExpressionValue -> String
-useAsUnboxed PrimBool   (OpaqueMulti e)     = "(" ++ e ++ ").Only()->AsBool()"
-useAsUnboxed PrimString (OpaqueMulti e)     = "(" ++ e ++ ").Only()->AsString()"
-useAsUnboxed PrimChar   (OpaqueMulti e)     = "(" ++ e ++ ").Only()->AsChar()"
-useAsUnboxed PrimInt    (OpaqueMulti e)     = "(" ++ e ++ ").Only()->AsInt()"
-useAsUnboxed PrimFloat  (OpaqueMulti e)     = "(" ++ e ++ ").Only()->AsFloat()"
-useAsUnboxed PrimBool   (WrappedSingle e)   = "(" ++ e ++ ")->AsBool()"
-useAsUnboxed PrimString (WrappedSingle e)   = "(" ++ e ++ ")->AsString()"
-useAsUnboxed PrimChar   (WrappedSingle e)   = "(" ++ e ++ ")->AsChar()"
-useAsUnboxed PrimInt    (WrappedSingle e)   = "(" ++ e ++ ")->AsInt()"
-useAsUnboxed PrimFloat  (WrappedSingle e)   = "(" ++ e ++ ")->AsFloat()"
-useAsUnboxed PrimBool   (UnwrappedSingle e) = "(" ++ e ++ ")->AsBool()"
-useAsUnboxed PrimString (UnwrappedSingle e) = "(" ++ e ++ ")->AsString()"
-useAsUnboxed PrimChar   (UnwrappedSingle e) = "(" ++ e ++ ")->AsChar()"
-useAsUnboxed PrimInt    (UnwrappedSingle e) = "(" ++ e ++ ")->AsInt()"
-useAsUnboxed PrimFloat  (UnwrappedSingle e) = "(" ++ e ++ ")->AsFloat()"
+useAsUnboxed PrimBool   (OpaqueMulti e)     = "(" ++ e ++ ").Only().AsBool()"
+useAsUnboxed PrimString (OpaqueMulti e)     = "(" ++ e ++ ").Only().AsString()"
+useAsUnboxed PrimChar   (OpaqueMulti e)     = "(" ++ e ++ ").Only().AsChar()"
+useAsUnboxed PrimInt    (OpaqueMulti e)     = "(" ++ e ++ ").Only().AsInt()"
+useAsUnboxed PrimFloat  (OpaqueMulti e)     = "(" ++ e ++ ").Only().AsFloat()"
+useAsUnboxed PrimBool   (WrappedSingle e)   = "(" ++ e ++ ").AsBool()"
+useAsUnboxed PrimString (WrappedSingle e)   = "(" ++ e ++ ").AsString()"
+useAsUnboxed PrimChar   (WrappedSingle e)   = "(" ++ e ++ ").AsChar()"
+useAsUnboxed PrimInt    (WrappedSingle e)   = "(" ++ e ++ ").AsInt()"
+useAsUnboxed PrimFloat  (WrappedSingle e)   = "(" ++ e ++ ").AsFloat()"
+useAsUnboxed PrimBool   (UnwrappedSingle e) = "(" ++ e ++ ").AsBool()"
+useAsUnboxed PrimString (UnwrappedSingle e) = "(" ++ e ++ ").AsString()"
+useAsUnboxed PrimChar   (UnwrappedSingle e) = "(" ++ e ++ ").AsChar()"
+useAsUnboxed PrimInt    (UnwrappedSingle e) = "(" ++ e ++ ").AsInt()"
+useAsUnboxed PrimFloat  (UnwrappedSingle e) = "(" ++ e ++ ").AsFloat()"
 useAsUnboxed _ (BoxedPrimitive _ e)         = "(" ++ e ++ ")"
 useAsUnboxed _ (UnboxedPrimitive _ e)       = "(" ++ e ++ ")"
 useAsUnboxed t (LazySingle e)               = useAsUnboxed t $ getFromLazy e
@@ -251,8 +259,8 @@ variableStoredType t
   | t == intRequiredValue    = "PrimInt"
   | t == floatRequiredValue  = "PrimFloat"
   | t == charRequiredValue   = "PrimChar"
-  | isWeakValue t            = "W<TypeValue>"
-  | otherwise                = "S<TypeValue>"
+  | isWeakValue t            = "WeakValue"
+  | otherwise                = "BoxedValue"
 
 variableLazyType :: ValueType -> String
 variableLazyType t = "LazyInit<" ++ variableStoredType t ++ ">"
@@ -263,8 +271,8 @@ variableProxyType t
   | t == intRequiredValue    = "PrimInt"
   | t == floatRequiredValue  = "PrimFloat"
   | t == charRequiredValue   = "PrimChar"
-  | isWeakValue t            = "W<TypeValue>&"
-  | otherwise                = "S<TypeValue>&"
+  | isWeakValue t            = "WeakValue&"
+  | otherwise                = "BoxedValue&"
 
 readStoredVariable :: Bool -> ValueType -> String -> ExpressionValue
 readStoredVariable True t s = LazySingle $ readStoredVariable False t s

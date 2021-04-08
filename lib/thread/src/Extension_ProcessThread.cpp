@@ -31,7 +31,7 @@ limitations under the License.
 namespace ZEOLITE_PUBLIC_NAMESPACE {
 #endif  // ZEOLITE_PUBLIC_NAMESPACE
 
-S<TypeValue> CreateValue_ProcessThread(S<Type_ProcessThread> parent, const ValueTuple& args);
+BoxedValue CreateValue_ProcessThread(S<Type_ProcessThread> parent, const ValueTuple& args);
 
 struct ExtCategory_ProcessThread : public Category_ProcessThread {
 };
@@ -49,7 +49,7 @@ struct ExtValue_ProcessThread : public Value_ProcessThread {
   inline ExtValue_ProcessThread(S<Type_ProcessThread> p, const ValueTuple& args)
     : Value_ProcessThread(p), routine(args.Only()) {}
 
-  ReturnTuple Call_detach(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_detach(const BoxedValue& Var_self, const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("ProcessThread.detach")
     S<std::thread> temp = thread;
     thread = nullptr;
@@ -61,12 +61,12 @@ struct ExtValue_ProcessThread : public Value_ProcessThread {
     return ReturnTuple(Var_self);
   }
 
-  ReturnTuple Call_isRunning(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_isRunning(const BoxedValue& Var_self, const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("ProcessThread.isRunning")
     return ReturnTuple(Box_Bool(isJoinable(thread.get())));
   }
 
-  ReturnTuple Call_join(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_join(const BoxedValue& Var_self, const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("ProcessThread.join")
     S<std::thread> temp = thread;
     thread = nullptr;
@@ -78,7 +78,7 @@ struct ExtValue_ProcessThread : public Value_ProcessThread {
     return ReturnTuple(Var_self);
   }
 
-  ReturnTuple Call_start(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_start(const BoxedValue& Var_self, const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("ProcessThread.start")
     if (isJoinable(thread.get())) {
       FAIL() << "thread is already running";
@@ -107,7 +107,8 @@ struct ExtValue_ProcessThread : public Value_ProcessThread {
     }
   }
 
-  const S<TypeValue> routine;
+  // Routine
+  const BoxedValue routine;
   S<std::thread> thread;
   CAPTURE_CREATION("ProcessThread")
 };
@@ -120,8 +121,8 @@ S<Type_ProcessThread> CreateType_ProcessThread(Params<0>::Type params) {
   static const auto cached = S_get(new ExtType_ProcessThread(CreateCategory_ProcessThread(), Params<0>::Type()));
   return cached;
 }
-S<TypeValue> CreateValue_ProcessThread(S<Type_ProcessThread> parent, const ValueTuple& args) {
-  return S_get(new ExtValue_ProcessThread(parent, args));
+BoxedValue CreateValue_ProcessThread(S<Type_ProcessThread> parent, const ValueTuple& args) {
+  return BoxedValue(new ExtValue_ProcessThread(parent, args));
 }
 
 #ifdef ZEOLITE_PUBLIC_NAMESPACE

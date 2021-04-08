@@ -84,7 +84,7 @@ class PoolArray {
 
   template<class...Ts>
   inline void Init(Ts... data) {
-    if (sizeof...(Ts) > array_->size) {
+    if (sizeof...(Ts) > (array_? array_->size : 0)) {
       FAIL() << "Too many init values " << sizeof...(Ts);
     }
     InitRec(0, std::move(data)...);

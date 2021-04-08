@@ -49,51 +49,44 @@ struct ExtType_Char : public Type_Char {
 
   ReturnTuple Call_equals(const S<TypeInstance>& Param_self, const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("Char.equals")
-    const PrimChar Var_arg1 = (args.At(0))->AsChar();
-    const PrimChar Var_arg2 = (args.At(1))->AsChar();
+    const PrimChar Var_arg1 = (args.At(0)).AsChar();
+    const PrimChar Var_arg2 = (args.At(1)).AsChar();
     return ReturnTuple(Box_Bool(Var_arg1==Var_arg2));
   }
 
   ReturnTuple Call_lessThan(const S<TypeInstance>& Param_self, const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("Char.lessThan")
-    const PrimChar Var_arg1 = (args.At(0))->AsChar();
-    const PrimChar Var_arg2 = (args.At(1))->AsChar();
+    const PrimChar Var_arg1 = (args.At(0)).AsChar();
+    const PrimChar Var_arg2 = (args.At(1)).AsChar();
     return ReturnTuple(Box_Bool(Var_arg1<Var_arg2));
   }
 };
 
-struct ExtValue_Char : public Value_Char {
-  inline ExtValue_Char(S<Type_Char> p, PrimChar value) : Value_Char(p), value_(value) {}
-
-  ReturnTuple Call_asBool(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) final {
+ReturnTuple DispatchChar(PrimChar value, const BoxedValue& Var_self, const ValueFunction& label,
+                         const ParamTuple& params, const ValueTuple& args) {
+  if (&label == &Function_AsBool_asBool) {
     TRACE_FUNCTION("Char.asBool")
-    return ReturnTuple(Box_Bool(value_ != '\0'));
+    return ReturnTuple(Box_Bool(value != '\0'));
   }
-
-  ReturnTuple Call_asChar(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) final {
+  if (&label == &Function_AsChar_asChar) {
     TRACE_FUNCTION("Char.asChar")
     return ReturnTuple(Var_self);
   }
-
-  ReturnTuple Call_asFloat(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) final {
+  if (&label == &Function_AsFloat_asFloat) {
     TRACE_FUNCTION("Char.asFloat")
-    return ReturnTuple(Box_Float(value_));
+    return ReturnTuple(Box_Float(value));
   }
-
-  ReturnTuple Call_asInt(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) final {
+  if (&label == &Function_AsInt_asInt) {
     TRACE_FUNCTION("Char.asInt")
-    return ReturnTuple(Box_Int(value_));
+    return ReturnTuple(Box_Int(value));
   }
-
-  ReturnTuple Call_formatted(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) final {
+  if (&label == &Function_Formatted_formatted) {
     TRACE_FUNCTION("Char.formatted")
-    return ReturnTuple(Box_String(PrimString(1,value_)));
+    return ReturnTuple(Box_String(PrimString(1,value)));
   }
-
-  PrimChar AsChar() const final { return value_; }
-
-  const PrimChar value_;
-};
+  FAIL() << "Char does not implement " << label;
+  __builtin_unreachable();
+}
 
 Category_Char& CreateCategory_Char() {
   static auto& category = *new ExtCategory_Char();
@@ -109,6 +102,6 @@ S<Type_Char> CreateType_Char(Params<0>::Type params) {
 using namespace ZEOLITE_PUBLIC_NAMESPACE;
 #endif  // ZEOLITE_PUBLIC_NAMESPACE
 
-S<TypeValue> Box_Char(PrimChar value) {
-  return S_get(new ExtValue_Char(CreateType_Char(Params<0>::Type()), value));
+BoxedValue Box_Char(PrimChar value) {
+  return BoxedValue(value);
 }

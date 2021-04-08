@@ -49,48 +49,42 @@ struct ExtType_Float : public Type_Float {
 
   ReturnTuple Call_equals(const S<TypeInstance>& Param_self, const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("Float.equals")
-    const PrimFloat Var_arg1 = (args.At(0))->AsFloat();
-    const PrimFloat Var_arg2 = (args.At(1))->AsFloat();
+    const PrimFloat Var_arg1 = (args.At(0)).AsFloat();
+    const PrimFloat Var_arg2 = (args.At(1)).AsFloat();
     return ReturnTuple(Box_Bool(Var_arg1==Var_arg2));
   }
 
   ReturnTuple Call_lessThan(const S<TypeInstance>& Param_self, const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("Float.lessThan")
-    const PrimFloat Var_arg1 = (args.At(0))->AsFloat();
-    const PrimFloat Var_arg2 = (args.At(1))->AsFloat();
+    const PrimFloat Var_arg1 = (args.At(0)).AsFloat();
+    const PrimFloat Var_arg2 = (args.At(1)).AsFloat();
     return ReturnTuple(Box_Bool(Var_arg1<Var_arg2));
   }
 };
 
-struct ExtValue_Float : public Value_Float {
-  inline ExtValue_Float(S<Type_Float> p, PrimFloat value) : Value_Float(p), value_(value) {}
-
-  ReturnTuple Call_asBool(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) final {
+ReturnTuple DispatchFloat(PrimFloat value, const BoxedValue& Var_self, const ValueFunction& label,
+                          const ParamTuple& params, const ValueTuple& args) {
+  if (&label == &Function_AsBool_asBool) {
     TRACE_FUNCTION("Float.asBool")
-    return ReturnTuple(Box_Bool(value_ != 0.0));
+    return ReturnTuple(Box_Bool(value != 0.0));
   }
-
-  ReturnTuple Call_asFloat(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) final {
+  if (&label == &Function_AsFloat_asFloat) {
     TRACE_FUNCTION("Float.asFloat")
     return ReturnTuple(Var_self);
   }
-
-  ReturnTuple Call_asInt(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) final {
+  if (&label == &Function_AsInt_asInt) {
     TRACE_FUNCTION("Float.asInt")
-    return ReturnTuple(Box_Int(value_));
+    return ReturnTuple(Box_Int(value));
   }
-
-  ReturnTuple Call_formatted(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) final {
+  if (&label == &Function_Formatted_formatted) {
     TRACE_FUNCTION("Float.formatted")
     std::ostringstream output;
-    output << value_;
+    output << value;
     return ReturnTuple(Box_String(output.str()));
   }
-
-  PrimFloat AsFloat() const final { return value_; }
-
-  const PrimFloat value_;
-};
+  FAIL() << "Float does not implement " << label;
+  __builtin_unreachable();
+}
 
 Category_Float& CreateCategory_Float() {
   static auto& category = *new ExtCategory_Float();
@@ -106,6 +100,6 @@ S<Type_Float> CreateType_Float(Params<0>::Type params) {
 using namespace ZEOLITE_PUBLIC_NAMESPACE;
 #endif  // ZEOLITE_PUBLIC_NAMESPACE
 
-S<TypeValue> Box_Float(PrimFloat value) {
-  return S_get(new ExtValue_Float(CreateType_Float(Params<0>::Type()), value));
+BoxedValue Box_Float(PrimFloat value) {
+  return BoxedValue(value);
 }

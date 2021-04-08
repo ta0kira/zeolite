@@ -26,7 +26,6 @@ limitations under the License.
 
 class TypeCategory;
 class TypeInstance;
-class TypeValue;
 class CategoryFunction;
 class TypeFunction;
 class ValueFunction;

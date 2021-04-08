@@ -22,10 +22,10 @@ limitations under the License.
 namespace ZEOLITE_PUBLIC_NAMESPACE {
 #endif  // ZEOLITE_PUBLIC_NAMESPACE
 
-S<TypeValue> CreateValue_Argv(S<Type_Argv> parent, int st, int sz);
+BoxedValue CreateValue_Argv(S<Type_Argv> parent, int st, int sz);
 
 namespace {
-extern const S<TypeValue>& Var_global;
+extern const BoxedValue& Var_global;
 }  // namespace
 
 struct ExtCategory_Argv : public Category_Argv {
@@ -44,28 +44,28 @@ struct ExtValue_Argv : public Value_Argv {
   inline ExtValue_Argv(S<Type_Argv> p, int st, int sz)
     : Value_Argv(p), start(st), size(sz) {}
 
-  ReturnTuple Call_readAt(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_readAt(const BoxedValue& Var_self, const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("Argv.readAt")
-    const PrimInt Var_arg1 = (args.At(0))->AsInt();
+    const PrimInt Var_arg1 = (args.At(0)).AsInt();
     return ReturnTuple(Box_String(Argv::GetArgAt(start + Var_arg1)));
   }
 
-  ReturnTuple Call_size(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_size(const BoxedValue& Var_self, const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("Argv.size")
     return ReturnTuple(Box_Int(GetSize()));
   }
 
-  ReturnTuple Call_subSequence(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_subSequence(const BoxedValue& Var_self, const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("Argv.subSequence")
-    const PrimInt Var_arg1 = (args.At(0))->AsInt();
-    const PrimInt Var_arg2 = (args.At(1))->AsInt();
+    const PrimInt Var_arg1 = (args.At(0)).AsInt();
+    const PrimInt Var_arg2 = (args.At(1)).AsInt();
     if (Var_arg1 < 0 || (Var_arg1 > 0 && Var_arg1 >= GetSize())) {
       FAIL() << "index " << Var_arg1 << " is out of bounds";
     }
     if (Var_arg2 < 0 || Var_arg1 + Var_arg2 > GetSize()) {
       FAIL() << "size " << Var_arg2 << " is invalid";
     }
-    return ReturnTuple(S<TypeValue>(new ExtValue_Argv(parent, start + Var_arg1, Var_arg2)));
+    return ReturnTuple(BoxedValue(new ExtValue_Argv(parent, start + Var_arg1, Var_arg2)));
   }
 
   inline int GetSize() const { return size < 0 ? Argv::ArgCount() : size; }
@@ -75,7 +75,7 @@ struct ExtValue_Argv : public Value_Argv {
 };
 
 namespace {
-const S<TypeValue>& Var_global = *new S<TypeValue>(new ExtValue_Argv(CreateType_Argv(Params<0>::Type()), 0, -1));
+const BoxedValue& Var_global = *new BoxedValue(new ExtValue_Argv(CreateType_Argv(Params<0>::Type()), 0, -1));
 }  // namespace
 
 Category_Argv& CreateCategory_Argv() {
@@ -86,8 +86,8 @@ S<Type_Argv> CreateType_Argv(Params<0>::Type params) {
   static const auto cached = S_get(new ExtType_Argv(CreateCategory_Argv(), Params<0>::Type()));
   return cached;
 }
-S<TypeValue> CreateValue_Argv(S<Type_Argv> parent, int st, int sz) {
-  return S_get(new ExtValue_Argv(parent, st, sz));
+BoxedValue CreateValue_Argv(S<Type_Argv> parent, int st, int sz) {
+  return BoxedValue(new ExtValue_Argv(parent, st, sz));
 }
 
 #ifdef ZEOLITE_PUBLIC_NAMESPACE

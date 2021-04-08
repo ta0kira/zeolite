@@ -25,7 +25,7 @@ limitations under the License.
 namespace ZEOLITE_PUBLIC_NAMESPACE {
 #endif  // ZEOLITE_PUBLIC_NAMESPACE
 
-S<TypeValue> CreateValue_RawFileWriter(S<Type_RawFileWriter> parent, const ValueTuple& args);
+BoxedValue CreateValue_RawFileWriter(S<Type_RawFileWriter> parent, const ValueTuple& args);
 
 struct ExtCategory_RawFileWriter : public Category_RawFileWriter {
 };
@@ -42,10 +42,10 @@ struct ExtType_RawFileWriter : public Type_RawFileWriter {
 struct ExtValue_RawFileWriter : public Value_RawFileWriter {
   inline ExtValue_RawFileWriter(S<Type_RawFileWriter> p, const ValueTuple& args)
     : Value_RawFileWriter(p),
-      filename(args.At(0)->AsString()),
+      filename(args.At(0).AsString()),
       file(new std::ofstream(filename, std::ios::out | std::ios::binary | std::ios::trunc | std::ios::ate)) {}
 
-  ReturnTuple Call_freeResource(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_freeResource(const BoxedValue& Var_self, const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("RawFileWriter.freeResource")
     std::lock_guard<std::mutex> lock(mutex);
     if (file) {
@@ -54,7 +54,7 @@ struct ExtValue_RawFileWriter : public Value_RawFileWriter {
     return ReturnTuple();
   }
 
-  ReturnTuple Call_getFileError(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_getFileError(const BoxedValue& Var_self, const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("RawFileWriter.getFileError")
     std::lock_guard<std::mutex> lock(mutex);
     if (!file) {
@@ -69,11 +69,11 @@ struct ExtValue_RawFileWriter : public Value_RawFileWriter {
     return ReturnTuple(Var_empty);
   }
 
-  ReturnTuple Call_writeBlock(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_writeBlock(const BoxedValue& Var_self, const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("RawFileWriter.writeBlock")
     TRACE_CREATION
     std::lock_guard<std::mutex> lock(mutex);
-    const PrimString& Var_arg1 = args.At(0)->AsString();
+    const PrimString& Var_arg1 = args.At(0).AsString();
     if (!file || file->rdstate() != std::ios::goodbit) {
       FAIL() << "Error writing file \"" << filename << "\"";
     }
@@ -100,8 +100,8 @@ S<Type_RawFileWriter> CreateType_RawFileWriter(Params<0>::Type params) {
   static const auto cached = S_get(new ExtType_RawFileWriter(CreateCategory_RawFileWriter(), Params<0>::Type()));
   return cached;
 }
-S<TypeValue> CreateValue_RawFileWriter(S<Type_RawFileWriter> parent, const ValueTuple& args) {
-  return S_get(new ExtValue_RawFileWriter(parent, args));
+BoxedValue CreateValue_RawFileWriter(S<Type_RawFileWriter> parent, const ValueTuple& args) {
+  return BoxedValue(new ExtValue_RawFileWriter(parent, args));
 }
 
 #ifdef ZEOLITE_PUBLIC_NAMESPACE

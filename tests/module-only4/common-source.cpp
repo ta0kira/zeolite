@@ -29,7 +29,7 @@ limitations under the License.
 namespace ZEOLITE_PRIVATE_NAMESPACE {
 #endif  // ZEOLITE_PRIVATE_NAMESPACE
 
-S<TypeValue> CreateValue_Type1(S<Type_Type1> parent, const ValueTuple& args);
+BoxedValue CreateValue_Type1(S<Type_Type1> parent, const ValueTuple& args);
 
 struct ExtCategory_Type1 : public Category_Type1 {
 };
@@ -48,12 +48,12 @@ struct ExtValue_Type1 : public Value_Type1 {
   inline ExtValue_Type1(S<Type_Type1> p, const ValueTuple& args)
     : Value_Type1(p), value(args.At(0)) {}
 
-  ReturnTuple Call_get(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) {
+  ReturnTuple Call_get(const BoxedValue& Var_self, const ParamTuple& params, const ValueTuple& args) {
     TRACE_FUNCTION("Type1.get")
     return ReturnTuple(TypeValue::Call(value, Function_Type2_get, ParamTuple(), ArgTuple()));
   }
 
-  const S<TypeValue> value;
+  const BoxedValue value;
 };
 
 Category_Type1& CreateCategory_Type1() {
@@ -64,8 +64,8 @@ S<Type_Type1> CreateType_Type1(Params<0>::Type params) {
   static const auto cached = S_get(new ExtType_Type1(CreateCategory_Type1(), Params<0>::Type()));
   return cached;
 }
-S<TypeValue> CreateValue_Type1(S<Type_Type1> parent, const ValueTuple& args) {
-  return S_get(new ExtValue_Type1(parent, args));
+BoxedValue CreateValue_Type1(S<Type_Type1> parent, const ValueTuple& args) {
+  return BoxedValue(new ExtValue_Type1(parent, args));
 }
 
 #ifdef ZEOLITE_PRIVATE_NAMESPACE
@@ -78,7 +78,7 @@ using namespace ZEOLITE_PRIVATE_NAMESPACE;
 namespace ZEOLITE_PUBLIC_NAMESPACE {
 #endif  // ZEOLITE_PUBLIC_NAMESPACE
 
-S<TypeValue> CreateValue_Type3(S<Type_Type3> parent, const ValueTuple& args);
+BoxedValue CreateValue_Type3(S<Type_Type3> parent, const ValueTuple& args);
 
 struct ExtCategory_Type3 : public Category_Type3 {
 };
@@ -97,12 +97,12 @@ struct ExtValue_Type3 : public Value_Type3 {
   inline ExtValue_Type3(S<Type_Type3> p, const ValueTuple& args)
     : Value_Type3(p), value(args.At(0)) {}
 
-  ReturnTuple Call_get(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) {
+  ReturnTuple Call_get(const BoxedValue& Var_self, const ParamTuple& params, const ValueTuple& args) {
     TRACE_FUNCTION("Type3.get")
     return ReturnTuple(TypeValue::Call(value, Function_Type2_get, ParamTuple(), ArgTuple()));
   }
 
-  const S<TypeValue> value;
+  const BoxedValue value;
 };
 
 Category_Type3& CreateCategory_Type3() {
@@ -113,8 +113,8 @@ S<Type_Type3> CreateType_Type3(Params<0>::Type params) {
   static const auto cached = S_get(new ExtType_Type3(CreateCategory_Type3(), Params<0>::Type()));
   return cached;
 }
-S<TypeValue> CreateValue_Type3(S<Type_Type3> parent, const ValueTuple& args) {
-  return S_get(new ExtValue_Type3(parent, args));
+BoxedValue CreateValue_Type3(S<Type_Type3> parent, const ValueTuple& args) {
+  return BoxedValue(new ExtValue_Type3(parent, args));
 }
 
 #ifdef ZEOLITE_PUBLIC_NAMESPACE

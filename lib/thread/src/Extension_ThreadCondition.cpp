@@ -32,7 +32,7 @@ limitations under the License.
 namespace ZEOLITE_PUBLIC_NAMESPACE {
 #endif  // ZEOLITE_PUBLIC_NAMESPACE
 
-S<TypeValue> CreateValue_ThreadCondition(S<Type_ThreadCondition> parent);
+BoxedValue CreateValue_ThreadCondition(S<Type_ThreadCondition> parent);
 
 struct ExtCategory_ThreadCondition : public Category_ThreadCondition {
 };
@@ -56,7 +56,7 @@ struct ExtValue_ThreadCondition : public Value_ThreadCondition {
     pthread_mutex_init(&mutex, &mutex_attr);
   }
 
-  ReturnTuple Call_lock(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_lock(const BoxedValue& Var_self, const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("ThreadCondition.lock")
     int error = 0;
     if ((error = pthread_mutex_lock(&mutex)) != 0) {
@@ -65,7 +65,7 @@ struct ExtValue_ThreadCondition : public Value_ThreadCondition {
     return ReturnTuple(Var_self);
   }
 
-  ReturnTuple Call_resumeAll(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_resumeAll(const BoxedValue& Var_self, const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("ThreadCondition.resumeAll")
     int error = 0;
     if ((error = pthread_cond_broadcast(&cond)) != 0) {
@@ -74,7 +74,7 @@ struct ExtValue_ThreadCondition : public Value_ThreadCondition {
     return ReturnTuple(Var_self);
   }
 
-  ReturnTuple Call_resumeOne(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_resumeOne(const BoxedValue& Var_self, const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("ThreadCondition.resumeOne")
     int error = 0;
     if ((error = pthread_cond_signal(&cond)) != 0) {
@@ -83,10 +83,10 @@ struct ExtValue_ThreadCondition : public Value_ThreadCondition {
     return ReturnTuple(Var_self);
   }
 
-  ReturnTuple Call_timedWait(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_timedWait(const BoxedValue& Var_self, const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("ThreadCondition.timedWait")
     int error = 0;
-    const PrimFloat Var_arg1 = (args.At(0))->AsFloat();
+    const PrimFloat Var_arg1 = (args.At(0)).AsFloat();
     if (Var_arg1 < 0) {
       FAIL() << "Bad wait time " << Var_arg1;
     }
@@ -106,7 +106,7 @@ struct ExtValue_ThreadCondition : public Value_ThreadCondition {
     return ReturnTuple(Box_Bool(true));
   }
 
-  ReturnTuple Call_unlock(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_unlock(const BoxedValue& Var_self, const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("ThreadCondition.unlock")
     int error = 0;
     if ((error = pthread_mutex_unlock(&mutex)) != 0) {
@@ -115,7 +115,7 @@ struct ExtValue_ThreadCondition : public Value_ThreadCondition {
     return ReturnTuple(Var_self);
   }
 
-  ReturnTuple Call_wait(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_wait(const BoxedValue& Var_self, const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("ThreadCondition.wait")
     int error = 0;
     if ((error = pthread_cond_wait(&cond, &mutex)) != 0) {
@@ -154,8 +154,8 @@ S<Type_ThreadCondition> CreateType_ThreadCondition(Params<0>::Type params) {
   static const auto cached = S_get(new ExtType_ThreadCondition(CreateCategory_ThreadCondition(), Params<0>::Type()));
   return cached;
 }
-S<TypeValue> CreateValue_ThreadCondition(S<Type_ThreadCondition> parent) {
-  return S_get(new ExtValue_ThreadCondition(parent));
+BoxedValue CreateValue_ThreadCondition(S<Type_ThreadCondition> parent) {
+  return BoxedValue(new ExtValue_ThreadCondition(parent));
 }
 
 #ifdef ZEOLITE_PUBLIC_NAMESPACE

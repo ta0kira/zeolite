@@ -212,8 +212,8 @@ compileModule resolver backend (ModuleSpec p d em is is2 ps xs ts es ep m f) = d
             coUsesCategory = c `Set.delete` allDeps,
             coOutput = []
           }
-    compileExtraSource _ _ paths (OtherSource f2) = do
-      f2' <- compileExtraFile True (NoNamespace,NoNamespace) paths f2
+    compileExtraSource (ns0,ns1) _ paths (OtherSource f2) = do
+      f2' <- compileExtraFile True (ns0,ns1) paths f2
       case f2' of
            Just o  -> return [Right $ OtherObjectFile o]
            Nothing -> return []

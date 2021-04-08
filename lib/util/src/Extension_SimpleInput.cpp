@@ -26,7 +26,7 @@ namespace ZEOLITE_PUBLIC_NAMESPACE {
 #endif  // ZEOLITE_PUBLIC_NAMESPACE
 
 namespace {
-extern const S<TypeValue>& Var_stdin;
+extern const BoxedValue& Var_stdin;
 }  // namespace
 
 struct ExtCategory_SimpleInput : public Category_SimpleInput {
@@ -44,16 +44,16 @@ struct ExtType_SimpleInput : public Type_SimpleInput {
 struct ExtValue_SimpleInput : public Value_SimpleInput {
   inline ExtValue_SimpleInput(S<Type_SimpleInput> p, const ValueTuple& args) : Value_SimpleInput(p) {}
 
-  ReturnTuple Call_pastEnd(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_pastEnd(const BoxedValue& Var_self, const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("SimpleInput.pastEnd")
     std::lock_guard<std::mutex> lock(mutex);
     return ReturnTuple(Box_Bool(zero_read));
   }
 
-  ReturnTuple Call_readBlock(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_readBlock(const BoxedValue& Var_self, const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("SimpleInput.readBlock")
     std::lock_guard<std::mutex> lock(mutex);
-    const int size = args.At(0)->AsInt();
+    const int size = args.At(0).AsInt();
     if (size < 0) {
       FAIL() << "Read size " << size << " is invalid";
     }
@@ -72,7 +72,7 @@ struct ExtValue_SimpleInput : public Value_SimpleInput {
 };
 
 namespace {
-const S<TypeValue>& Var_stdin = *new S<TypeValue>(new ExtValue_SimpleInput(CreateType_SimpleInput(Params<0>::Type()), ArgTuple()));
+const BoxedValue& Var_stdin = *new BoxedValue(new ExtValue_SimpleInput(CreateType_SimpleInput(Params<0>::Type()), ArgTuple()));
 }  // namespace
 
 Category_SimpleInput& CreateCategory_SimpleInput() {

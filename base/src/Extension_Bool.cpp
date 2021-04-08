@@ -46,42 +46,33 @@ struct ExtType_Bool : public Type_Bool {
 
   ReturnTuple Call_equals(const S<TypeInstance>& Param_self, const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("Bool.equals")
-    const bool Var_arg1 = (args.At(0))->AsBool();
-    const bool Var_arg2 = (args.At(1))->AsBool();
+    const bool Var_arg1 = (args.At(0)).AsBool();
+    const bool Var_arg2 = (args.At(1)).AsBool();
     return ReturnTuple(Box_Bool(Var_arg1==Var_arg2));
   }
 };
 
-struct ExtValue_Bool : public Value_Bool {
-  inline ExtValue_Bool(S<Type_Bool> p, bool value) : Value_Bool(p), value_(value) {}
-
-  ReturnTuple Call_asBool(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) final {
+ReturnTuple DispatchBool(bool value, const BoxedValue& Var_self, const ValueFunction& label,
+                         const ParamTuple& params, const ValueTuple& args) {
+  if (&label == &Function_AsBool_asBool) {
     TRACE_FUNCTION("Bool.asBool")
     return ReturnTuple(Var_self);
   }
-
-  ReturnTuple Call_asFloat(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) final {
+  if (&label == &Function_AsFloat_asFloat) {
     TRACE_FUNCTION("Bool.asFloat")
-    return ReturnTuple(Box_Float(value_ ? 1.0 : 0.0));
+    return ReturnTuple(Box_Float(value ? 1.0 : 0.0));
   }
-
-  ReturnTuple Call_asInt(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) final {
+  if (&label == &Function_AsInt_asInt) {
     TRACE_FUNCTION("Bool.asInt")
-    return ReturnTuple(Box_Int(value_? 1 : 0));
+    return ReturnTuple(Box_Int(value? 1 : 0));
   }
-
-  ReturnTuple Call_formatted(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) final {
+  if (&label == &Function_Formatted_formatted) {
     TRACE_FUNCTION("Bool.formatted")
-    return ReturnTuple(Box_String(value_? "true" : "false"));
+    return ReturnTuple(Box_String(value? "true" : "false"));
   }
-
-  bool AsBool() const final { return value_; }
-
-  const bool value_;
-};
-
-const S<TypeValue>& Var_true = *new S<TypeValue>(new ExtValue_Bool(CreateType_Bool(Params<0>::Type()), true));
-const S<TypeValue>& Var_false = *new S<TypeValue>(new ExtValue_Bool(CreateType_Bool(Params<0>::Type()), false));
+  FAIL() << "Bool does not implement " << label;
+  __builtin_unreachable();
+}
 
 Category_Bool& CreateCategory_Bool() {
   static auto& category = *new ExtCategory_Bool();
@@ -97,6 +88,6 @@ S<Type_Bool> CreateType_Bool(Params<0>::Type params) {
 using namespace ZEOLITE_PUBLIC_NAMESPACE;
 #endif  // ZEOLITE_PUBLIC_NAMESPACE
 
-S<TypeValue> Box_Bool(bool value) {
-  return value? Var_true : Var_false;
+BoxedValue Box_Bool(bool value) {
+  return BoxedValue(value);
 }

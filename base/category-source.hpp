@@ -24,6 +24,7 @@ limitations under the License.
 #include <sstream>
 #include <vector>
 
+#include "boxed.hpp"
 #include "cycle-check.hpp"
 #include "types.hpp"
 #include "function.hpp"
@@ -31,7 +32,7 @@ limitations under the License.
 
 #define BUILTIN_FAIL(e) { \
   FAIL() << TypeValue::Call((e), Function_Formatted_formatted, \
-                            ParamTuple(), ArgTuple()).Only()->AsString(); \
+                            ParamTuple(), ArgTuple()).Only().AsString(); \
   __builtin_unreachable(); \
   }
 
@@ -40,13 +41,11 @@ limitations under the License.
   __builtin_unreachable(); \
   }
 
-extern const S<TypeValue>& Var_empty;
-
-S<TypeValue> Box_Bool(bool value);
-S<TypeValue> Box_String(const PrimString& value);
-S<TypeValue> Box_Char(PrimChar value);
-S<TypeValue> Box_Int(PrimInt value);
-S<TypeValue> Box_Float(PrimFloat value);
+BoxedValue Box_Bool(bool value);
+BoxedValue Box_String(const PrimString& value);
+BoxedValue Box_Char(PrimChar value);
+BoxedValue Box_Int(PrimInt value);
+BoxedValue Box_Float(PrimFloat value);
 
 S<TypeInstance> Merge_Intersect(L<S<const TypeInstance>> params);
 S<TypeInstance> Merge_Union(L<S<const TypeInstance>> params);
@@ -54,14 +53,14 @@ S<TypeInstance> Merge_Union(L<S<const TypeInstance>> params);
 const S<TypeInstance>& GetMerged_Any();
 const S<TypeInstance>& GetMerged_All();
 
-extern const S<TypeValue>& Var_empty;
+extern const BoxedValue Var_empty;
 
 
 class TypeCategory {
  public:
   inline ReturnTuple Call(const CategoryFunction& label,
                           const ParamTuple& params, const ValueTuple& args) {
-    return FAIL_WHEN_NULL(Dispatch(label, params, FAIL_WHEN_NULL(args)));
+    return Dispatch(label, params, args);
   }
 
   virtual std::string CategoryName() const = 0;
@@ -84,7 +83,7 @@ class TypeInstance {
     if (target == nullptr) {
       FAIL() << "Function called on null value";
     }
-    return FAIL_WHEN_NULL(target->Dispatch(target, label, params, FAIL_WHEN_NULL(args)));
+    return target->Dispatch(target, label, params, args);
   }
 
   virtual std::string CategoryName() const = 0;
@@ -98,8 +97,8 @@ class TypeInstance {
     return output.str();
   }
 
-  static S<TypeValue> Reduce(const S<const TypeInstance>& from,
-                             const S<const TypeInstance>& to, S<TypeValue> target) {
+  static BoxedValue Reduce(const S<const TypeInstance>& from,
+                             const S<const TypeInstance>& to, BoxedValue target) {
     TRACE_FUNCTION("reduce")
     return CanConvert(from, to)? target : Var_empty;
   }
@@ -157,38 +156,24 @@ class TypeInstance {
 
 class TypeValue {
  public:
-  inline static ReturnTuple Call(const S<TypeValue>& target,
-                                 const ValueFunction& label,
-                                 const ParamTuple& params, const ValueTuple& args) {
-    if (target == nullptr) {
-      FAIL() << "Function called on null value";
-    }
-    return FAIL_WHEN_NULL(target->Dispatch(target, label, params, FAIL_WHEN_NULL(args)));
-  }
+  static ReturnTuple Call(const BoxedValue& target, const ValueFunction& label,
+                          const ParamTuple& params, const ValueTuple& args);
 
-  static bool Present(S<TypeValue> target);
-  static S<TypeValue> Require(S<TypeValue> target);
-  static S<TypeValue> Strong(W<TypeValue> target);
-
-  virtual bool AsBool() const;
   virtual const PrimString& AsString() const;
-  virtual PrimChar AsChar() const;
   virtual PrimCharBuffer& AsCharBuffer();
-  virtual PrimInt AsInt() const;
-  virtual PrimFloat AsFloat() const;
 
   ALWAYS_PERMANENT(TypeValue)
   virtual ~TypeValue() = default;
 
  protected:
+  friend class BoxedValue;
+
   TypeValue() = default;
 
   // NOTE: For some reason, making this private causes a segfault.
   virtual std::string CategoryName() const = 0;
 
-  virtual bool Present() const;
-
-  virtual ReturnTuple Dispatch(const S<TypeValue>& self, const ValueFunction& label,
+  virtual ReturnTuple Dispatch(const BoxedValue& self, const ValueFunction& label,
                                const ParamTuple& params, const ValueTuple& args);
 };
 
@@ -196,12 +181,12 @@ class AnonymousOrder : public TypeValue {
  protected:
   // Passing in the function labels allows linking without depending on Order
   // when this class isn't used anywhere.
-  AnonymousOrder(const S<TypeValue> cont,
+  AnonymousOrder(const BoxedValue cont,
                  const ValueFunction& func_next,
                  const ValueFunction& func_get);
 
   std::string CategoryName() const final;
-  ReturnTuple Dispatch(const S<TypeValue>& self,
+  ReturnTuple Dispatch(const BoxedValue& self,
                        const ValueFunction& label,
                        const ParamTuple& params,
                        const ValueTuple& args) final;
@@ -209,10 +194,10 @@ class AnonymousOrder : public TypeValue {
   virtual ~AnonymousOrder() = default;
 
  private:
-  virtual S<TypeValue> Call_next(const S<TypeValue>& self) = 0;
-  virtual S<TypeValue> Call_get(const S<TypeValue>& self) = 0;
+  virtual BoxedValue Call_next(const BoxedValue& self) = 0;
+  virtual BoxedValue Call_get(const BoxedValue& self) = 0;
 
-  const S<TypeValue> container;
+  const BoxedValue container;
   const ValueFunction& function_next;
   const ValueFunction& function_get;
 };

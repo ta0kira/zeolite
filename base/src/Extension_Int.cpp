@@ -51,53 +51,46 @@ struct ExtType_Int : public Type_Int {
 
   ReturnTuple Call_equals(const S<TypeInstance>& Param_self, const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("Int.equals")
-    const PrimInt Var_arg1 = (args.At(0))->AsInt();
-    const PrimInt Var_arg2 = (args.At(1))->AsInt();
+    const PrimInt Var_arg1 = (args.At(0)).AsInt();
+    const PrimInt Var_arg2 = (args.At(1)).AsInt();
     return ReturnTuple(Box_Bool(Var_arg1==Var_arg2));
   }
 
   ReturnTuple Call_lessThan(const S<TypeInstance>& Param_self, const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("Int.lessThan")
-    const PrimInt Var_arg1 = (args.At(0))->AsInt();
-    const PrimInt Var_arg2 = (args.At(1))->AsInt();
+    const PrimInt Var_arg1 = (args.At(0)).AsInt();
+    const PrimInt Var_arg2 = (args.At(1)).AsInt();
     return ReturnTuple(Box_Bool(Var_arg1<Var_arg2));
   }
 };
 
-struct ExtValue_Int : public Value_Int {
-  inline ExtValue_Int(S<Type_Int> p, PrimInt value) : Value_Int(p), value_(value) {}
-
-  ReturnTuple Call_asBool(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) final {
+ReturnTuple DispatchInt(PrimInt value, const BoxedValue& Var_self, const ValueFunction& label,
+                        const ParamTuple& params, const ValueTuple& args) {
+  if (&label == &Function_AsBool_asBool) {
     TRACE_FUNCTION("Int.asBool")
-    return ReturnTuple(Box_Bool(value_ != 0));
+    return ReturnTuple(Box_Bool(value != 0));
   }
-
-  ReturnTuple Call_asChar(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) final {
+  if (&label == &Function_AsChar_asChar) {
     TRACE_FUNCTION("Int.asChar")
-    return ReturnTuple(Box_Char(value_ % 0xff));
+    return ReturnTuple(Box_Char(value % 0xff));
   }
-
-  ReturnTuple Call_asFloat(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) final {
+  if (&label == &Function_AsFloat_asFloat) {
     TRACE_FUNCTION("Int.asFloat")
-    return ReturnTuple(Box_Float(value_));
+    return ReturnTuple(Box_Float(value));
   }
-
-  ReturnTuple Call_asInt(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) final {
+  if (&label == &Function_AsInt_asInt) {
     TRACE_FUNCTION("Int.asInt")
     return ReturnTuple(Var_self);
   }
-
-  ReturnTuple Call_formatted(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) final {
+  if (&label == &Function_Formatted_formatted) {
     TRACE_FUNCTION("Int.formatted")
     std::ostringstream output;
-    output << value_;
+    output << value;
     return ReturnTuple(Box_String(output.str()));
   }
-
-  PrimInt AsInt() const final { return value_; }
-
-  const PrimInt value_;
-};
+  FAIL() << "Int does not implement " << label;
+  __builtin_unreachable();
+}
 
 Category_Int& CreateCategory_Int() {
   static auto& category = *new ExtCategory_Int();
@@ -113,6 +106,6 @@ S<Type_Int> CreateType_Int(Params<0>::Type params) {
 using namespace ZEOLITE_PUBLIC_NAMESPACE;
 #endif  // ZEOLITE_PUBLIC_NAMESPACE
 
-S<TypeValue> Box_Int(PrimInt value) {
-  return S_get(new ExtValue_Int(CreateType_Int(Params<0>::Type()), value));
+BoxedValue Box_Int(PrimInt value) {
+  return BoxedValue(value);
 }

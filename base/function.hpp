@@ -21,6 +21,8 @@ limitations under the License.
 
 #include <ostream>
 
+#include "types.hpp"
+
 
 struct CategoryFunction {
   const int param_count;

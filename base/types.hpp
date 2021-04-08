@@ -61,12 +61,6 @@ using S = std::shared_ptr<T>;
 template<class T>
 inline S<T> S_get(T* val) { return S<T>(val); }
 
-template<class T>
-using W = std::weak_ptr<T>;
-
-template<class T>
-inline W<T> W_get(T* val) { return W<T>(val); }
-
 template<class...Ts>
 using T = std::tuple<Ts...>;
 
@@ -123,6 +117,8 @@ class LazyInit {
 class TypeCategory;
 class TypeInstance;
 class TypeValue;
+class BoxedValue;
+class WeakValue;
 
 template<int N, class...Ts>
 struct Params {
@@ -166,8 +162,8 @@ typename ParamsKey<N>::Type GetKeyFromParams(const typename Params<N>::Type& fro
 class ValueTuple {
  public:
   virtual int Size() const = 0;
-  virtual const S<TypeValue>& At(int pos) const = 0;
-  virtual const S<TypeValue>& Only() const = 0;
+  virtual const BoxedValue& At(int pos) const = 0;
+  virtual const BoxedValue& Only() const = 0;
 
  protected:
   ValueTuple() = default;
@@ -178,8 +174,8 @@ class ValueTuple {
 };
 
 template<>
-class PoolManager<S<TypeValue>> {
-  using PoolEntry = PoolStorage<S<TypeValue>>;
+class PoolManager<BoxedValue> {
+  using PoolEntry = PoolStorage<BoxedValue>;
   using Managed = PoolEntry::Managed;
 
   template<class> friend class PoolArray;
@@ -205,9 +201,9 @@ class ReturnTuple : public ValueTuple {
   ReturnTuple& operator = (ReturnTuple&&);
 
   int Size() const final;
-  S<TypeValue>& At(int pos);
-  const S<TypeValue>& At(int pos) const final;
-  const S<TypeValue>& Only() const final;
+  BoxedValue& At(int pos);
+  const BoxedValue& At(int pos) const final;
+  const BoxedValue& Only() const final;
 
  private:
   ReturnTuple(const ReturnTuple&) = delete;
@@ -215,12 +211,12 @@ class ReturnTuple : public ValueTuple {
   void* operator new(std::size_t size) = delete;
 
   int size_;
-  PoolArray<S<TypeValue>> data_;
+  PoolArray<BoxedValue> data_;
 };
 
 template<>
-class PoolManager<const S<TypeValue>*> {
-  using PoolEntry = PoolStorage<const S<TypeValue>*>;
+class PoolManager<const BoxedValue*> {
+  using PoolEntry = PoolStorage<const BoxedValue*>;
   using Managed = PoolEntry::Managed;
 
   template<class> friend class PoolArray;
@@ -241,8 +237,8 @@ class ArgTuple : public ValueTuple {
   }
 
   int Size() const final;
-  const S<TypeValue>& At(int pos) const final;
-  const S<TypeValue>& Only() const final;
+  const BoxedValue& At(int pos) const final;
+  const BoxedValue& Only() const final;
 
  private:
   ArgTuple(const ArgTuple&) = delete;
@@ -252,7 +248,7 @@ class ArgTuple : public ValueTuple {
   void* operator new(std::size_t size) = delete;
 
   int size_;
-  PoolArray<const S<TypeValue>*> data_;
+  PoolArray<const BoxedValue*> data_;
 };
 
 template<>
@@ -291,23 +287,5 @@ class ParamTuple {
   int size_;
   PoolArray<S<TypeInstance>> data_;
 };
-
-inline ReturnTuple FailWhenNull(ReturnTuple values) {
-  for (int i = 0; i < values.Size(); ++i) {
-    if (values.At(i) == nullptr) {
-      FAIL() << "Value at return tuple position " << i << " is null";
-    }
-  }
-  return values;
-}
-
-inline const ValueTuple& FailWhenNull(const ValueTuple& values) {
-  for (int i = 0; i < values.Size(); ++i) {
-    if (values.At(i) == nullptr) {
-      FAIL() << "Value at arg tuple position " << i << " is null";
-    }
-  }
-  return values;
-}
 
 #endif  // TYPES_HPP_

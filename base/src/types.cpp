@@ -20,6 +20,7 @@ limitations under the License.
 
 #include <atomic>
 
+#include "boxed.hpp"
 #include "logging.hpp"
 
 
@@ -27,14 +28,14 @@ int ArgTuple::Size() const {
   return size_;
 }
 
-const S<TypeValue>& ArgTuple::At(int pos) const {
+const BoxedValue& ArgTuple::At(int pos) const {
   if (pos < 0 || pos >= size_) {
     FAIL() << "Bad ArgTuple index";
   }
   return *data_[pos];
 }
 
-const S<TypeValue>& ArgTuple::Only() const {
+const BoxedValue& ArgTuple::Only() const {
   if (size_ != 1) {
     FAIL() << "Bad ArgTuple index";
   }
@@ -56,21 +57,21 @@ int ReturnTuple::Size() const {
   return size_;
 }
 
-S<TypeValue>& ReturnTuple::At(int pos) {
+BoxedValue& ReturnTuple::At(int pos) {
   if (pos < 0 || pos >= size_) {
     FAIL() << "Bad ReturnTuple index";
   }
   return data_[pos];
 }
 
-const S<TypeValue>& ReturnTuple::At(int pos) const {
+const BoxedValue& ReturnTuple::At(int pos) const {
   if (pos < 0 || pos >= size_) {
     FAIL() << "Bad ReturnTuple index";
   }
   return data_[pos];
 }
 
-const S<TypeValue>& ReturnTuple::Only() const {
+const BoxedValue& ReturnTuple::Only() const {
   if (size_ != 1) {
     FAIL() << "Bad ReturnTuple index";
   }
@@ -127,11 +128,11 @@ static inline bool PoolReturnCommon(P* storage, std::atomic<P*>& pool, unsigned 
 }  // namespace
 
 
-unsigned int PoolManager<S<TypeValue>>::pool4_size_ = 0;
-std::atomic<typename PoolManager<S<TypeValue>>::PoolEntry*> PoolManager<S<TypeValue>>::pool4_{nullptr};
+unsigned int PoolManager<BoxedValue>::pool4_size_ = 0;
+std::atomic<typename PoolManager<BoxedValue>::PoolEntry*> PoolManager<BoxedValue>::pool4_{nullptr};
 
 // static
-typename PoolManager<S<TypeValue>>::PoolEntry* PoolManager<S<TypeValue>>::Take(int size) {
+typename PoolManager<BoxedValue>::PoolEntry* PoolManager<BoxedValue>::Take(int size) {
   if (size == 0) return nullptr;
   if (size < 4) {
     size = 4;
@@ -146,7 +147,7 @@ typename PoolManager<S<TypeValue>>::PoolEntry* PoolManager<S<TypeValue>>::Take(i
 }
 
 // static
-void PoolManager<S<TypeValue>>::Return(PoolEntry* storage) {
+void PoolManager<BoxedValue>::Return(PoolEntry* storage) {
   if (!storage) return;
   for (int i = 0; i < storage->size; ++i) {
     storage->data()[i].~Managed();
@@ -159,11 +160,11 @@ void PoolManager<S<TypeValue>>::Return(PoolEntry* storage) {
 }
 
 
-unsigned int PoolManager<const S<TypeValue>*>::pool4_size_ = 0;
-std::atomic<typename PoolManager<const S<TypeValue>*>::PoolEntry*> PoolManager<const S<TypeValue>*>::pool4_{nullptr};
+unsigned int PoolManager<const BoxedValue*>::pool4_size_ = 0;
+std::atomic<typename PoolManager<const BoxedValue*>::PoolEntry*> PoolManager<const BoxedValue*>::pool4_{nullptr};
 
 // static
-typename PoolManager<const S<TypeValue>*>::PoolEntry* PoolManager<const S<TypeValue>*>::Take(int size) {
+typename PoolManager<const BoxedValue*>::PoolEntry* PoolManager<const BoxedValue*>::Take(int size) {
   if (size == 0) return nullptr;
   if (size < 4) {
     size = 4;
@@ -178,7 +179,7 @@ typename PoolManager<const S<TypeValue>*>::PoolEntry* PoolManager<const S<TypeVa
 }
 
 // static
-void PoolManager<const S<TypeValue>*>::Return(PoolEntry* storage) {
+void PoolManager<const BoxedValue*>::Return(PoolEntry* storage) {
   if (!storage) return;
   for (int i = 0; i < storage->size; ++i) {
     storage->data()[i].~Managed();

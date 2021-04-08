@@ -27,9 +27,9 @@ namespace ZEOLITE_PUBLIC_NAMESPACE {
 #endif  // ZEOLITE_PUBLIC_NAMESPACE
 
 namespace {
-extern const S<TypeValue>& Var_stdout;
-extern const S<TypeValue>& Var_stderr;
-extern const S<TypeValue>& Var_error;
+extern const BoxedValue& Var_stdout;
+extern const BoxedValue& Var_stderr;
+extern const BoxedValue& Var_error;
 }  // namespace
 
 struct ExtCategory_SimpleOutput : public Category_SimpleOutput {
@@ -66,19 +66,19 @@ struct ExtValue_SimpleOutput : public Value_SimpleOutput {
   inline ExtValue_SimpleOutput(S<Type_SimpleOutput> p, S<Writer> w)
     : Value_SimpleOutput(p), writer(w) {}
 
-  ReturnTuple Call_flush(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_flush(const BoxedValue& Var_self, const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("SimpleOutput.flush")
     std::lock_guard<std::mutex> lock(mutex);
     writer->Flush();
     return ReturnTuple();
   }
 
-  ReturnTuple Call_write(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_write(const BoxedValue& Var_self, const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("SimpleOutput.write")
-    const S<TypeValue>& Var_arg1 = (args.At(0));
+    const BoxedValue& Var_arg1 = (args.At(0));
     std::lock_guard<std::mutex> lock(mutex);
     writer->Write(TypeValue::Call(args.At(0), Function_Formatted_formatted,
-                                  ParamTuple(), ArgTuple()).Only()->AsString());
+                                  ParamTuple(), ArgTuple()).Only().AsString());
     return ReturnTuple();
   }
 
@@ -115,9 +115,9 @@ class ErrorWriter : public Writer {
   std::ostringstream output;
 };
 
-const S<TypeValue>& Var_stdout = *new S<TypeValue>(new ExtValue_SimpleOutput(CreateType_SimpleOutput(Params<0>::Type()), S_get(new StreamWriter(std::cout))));
-const S<TypeValue>& Var_stderr = *new S<TypeValue>(new ExtValue_SimpleOutput(CreateType_SimpleOutput(Params<0>::Type()), S_get(new StreamWriter(std::cerr))));
-const S<TypeValue>& Var_error  = *new S<TypeValue>(new ExtValue_SimpleOutput(CreateType_SimpleOutput(Params<0>::Type()), S_get(new ErrorWriter())));
+const BoxedValue& Var_stdout = *new BoxedValue(new ExtValue_SimpleOutput(CreateType_SimpleOutput(Params<0>::Type()), S_get(new StreamWriter(std::cout))));
+const BoxedValue& Var_stderr = *new BoxedValue(new ExtValue_SimpleOutput(CreateType_SimpleOutput(Params<0>::Type()), S_get(new StreamWriter(std::cerr))));
+const BoxedValue& Var_error  = *new BoxedValue(new ExtValue_SimpleOutput(CreateType_SimpleOutput(Params<0>::Type()), S_get(new ErrorWriter())));
 
 }  // namespace
 

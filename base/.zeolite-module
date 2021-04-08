@@ -25,6 +25,7 @@ extra_files: [
     source: "base/src/Extension_String.cpp"
     categories: [String]
   }
+  "base/boxed.hpp"
   "base/category-header.hpp"
   "base/category-source.hpp"
   "base/cycle-check.hpp"
@@ -33,6 +34,7 @@ extra_files: [
   "base/thread-capture.h"
   "base/thread-crosser.h"
   "base/types.hpp"
+  "base/src/boxed.cpp"
   "base/src/category-source.cpp"
   "base/src/logging.cpp"
   "base/src/thread-crosser.cc"

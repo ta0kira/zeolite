@@ -25,19 +25,6 @@ limitations under the License.
 
 namespace {
 
-struct OptionalEmpty : public TypeValue {
-  ReturnTuple Dispatch(const S<TypeValue>& self,
-                       const ValueFunction& label,
-                       const ParamTuple& params, const ValueTuple& args) final {
-    FAIL() << "Function called on empty value";
-    __builtin_unreachable();
-  }
-
-  std::string CategoryName() const final { return "empty"; }
-
-  bool Present() const final { return false; }
-};
-
 struct Type_Intersect : public TypeInstance {
   Type_Intersect(L<S<const TypeInstance>> params) : params_(params.begin(), params.end()) {}
 
@@ -134,8 +121,7 @@ const S<TypeInstance>& GetMerged_All() {
   return instance;
 }
 
-
-const S<TypeValue>& Var_empty = *new S<TypeValue>(new OptionalEmpty());
+const BoxedValue Var_empty;
 
 
 ReturnTuple TypeCategory::Dispatch(const CategoryFunction& label,
@@ -150,7 +136,7 @@ ReturnTuple TypeInstance::Dispatch(const S<TypeInstance>& self, const TypeFuncti
   __builtin_unreachable();
 }
 
-ReturnTuple TypeValue::Dispatch(const S<TypeValue>& self, const ValueFunction& label,
+ReturnTuple TypeValue::Dispatch(const BoxedValue& self, const ValueFunction& label,
                                 const ParamTuple& params, const ValueTuple& args) {
   FAIL() << CategoryName() << " does not implement " << label;
   __builtin_unreachable();
@@ -219,40 +205,14 @@ bool TypeInstance::CanConvert(const S<const TypeInstance>& x,
   }
 }
 
-bool TypeValue::Present(S<TypeValue> target) {
-  if (target == nullptr) {
-    FAIL() << "Builtin called on null value";
-  }
-  return target->Present();
-}
-
-S<TypeValue> TypeValue::Require(S<TypeValue> target) {
-  if (target == nullptr) {
-    FAIL() << "Builtin called on null value";
-  }
-  if (!target->Present()) {
-    FAIL() << "Cannot require empty value";
-  }
-  return target;
-}
-
-S<TypeValue> TypeValue::Strong(W<TypeValue> target) {
-  const auto strong = target.lock();
-  return strong? strong : Var_empty;
-}
-
-bool TypeValue::AsBool() const {
-  FAIL() << CategoryName() << " is not a Bool value";
-  __builtin_unreachable();
+// static
+ReturnTuple TypeValue::Call(const BoxedValue& target, const ValueFunction& label,
+                            const ParamTuple& params, const ValueTuple& args) {
+  return target.Dispatch(target, label, params, args);
 }
 
 const PrimString& TypeValue::AsString() const {
   FAIL() << CategoryName() << " is not a String value";
-  __builtin_unreachable();
-}
-
-PrimChar TypeValue::AsChar() const {
-  FAIL() << CategoryName() << " is not a Char value";
   __builtin_unreachable();
 }
 
@@ -261,21 +221,7 @@ PrimCharBuffer& TypeValue::AsCharBuffer() {
   __builtin_unreachable();
 }
 
-PrimInt TypeValue::AsInt() const {
-  FAIL() << CategoryName() << " is not an Int value";
-  __builtin_unreachable();
-}
-
-PrimFloat TypeValue::AsFloat() const {
-  FAIL() << CategoryName() << " is not a Float value";
-  __builtin_unreachable();
-}
-
-bool TypeValue::Present() const {
-  return true;
-}
-
-AnonymousOrder::AnonymousOrder(const S<TypeValue> cont,
+AnonymousOrder::AnonymousOrder(const BoxedValue cont,
                                const ValueFunction& func_next,
                                const ValueFunction& func_get)
   : container(cont), function_next(func_next), function_get(func_get) {}
@@ -283,7 +229,7 @@ AnonymousOrder::AnonymousOrder(const S<TypeValue> cont,
 std::string AnonymousOrder::CategoryName() const { return "AnonymousOrder"; }
 
 ReturnTuple AnonymousOrder::Dispatch(
-  const S<TypeValue>& self, const ValueFunction& label,
+  const BoxedValue& self, const ValueFunction& label,
   const ParamTuple& params, const ValueTuple& args) {
   if (&label == &function_next) {
     TRACE_FUNCTION("AnonymousOrder.next")

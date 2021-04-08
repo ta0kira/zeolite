@@ -36,17 +36,17 @@ limitations under the License.
 namespace ZEOLITE_PUBLIC_NAMESPACE {
 #endif  // ZEOLITE_PUBLIC_NAMESPACE
 
-using VectorType = std::vector<S<TypeValue>>;
+using VectorType = std::vector<BoxedValue>;
 
-S<TypeValue> CreateValue_Vector(S<Type_Vector> parent, VectorType values);
+BoxedValue CreateValue_Vector(S<Type_Vector> parent, VectorType values);
 
 struct ExtCategory_Vector : public Category_Vector {
   ReturnTuple Call_copyFrom(const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("Vector:copyFrom")
     const S<TypeInstance> Param_y = params.At(0);
-    const S<TypeValue>& Var_arg1 = (args.At(0));
+    const BoxedValue& Var_arg1 = (args.At(0));
     VectorType values;
-    const PrimInt size = TypeValue::Call(Var_arg1, Function_Container_size, ParamTuple(), ArgTuple()).Only()->AsInt();
+    const PrimInt size = TypeValue::Call(Var_arg1, Function_Container_size, ParamTuple(), ArgTuple()).Only().AsInt();
     for (int i = 0; i < size; ++i) {
       values.push_back(TypeValue::Call(Var_arg1, Function_ReadAt_readAt, ParamTuple(), ArgTuple(Box_Int(i))).Only());
     }
@@ -62,7 +62,7 @@ struct ExtCategory_Vector : public Category_Vector {
   ReturnTuple Call_createSize(const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("Vector:createSize")
     const S<TypeInstance> Param_y = params.At(0);
-    const PrimInt Var_arg1 = (args.At(0))->AsInt();
+    const PrimInt Var_arg1 = (args.At(0)).AsInt();
     VectorType values;
     for (int i = 0; i < Var_arg1; ++i) {
       values.push_back(TypeInstance::Call(Param_y, Function_Default_default, ParamTuple(), ArgTuple()).Only());
@@ -76,10 +76,10 @@ struct ExtType_Vector : public Type_Vector {
 };
 
 struct VectorOrder : public AnonymousOrder {
-  VectorOrder(S<TypeValue> container, const VectorType& v)
+  VectorOrder(BoxedValue container, const VectorType& v)
     : AnonymousOrder(container, Function_Order_next, Function_Order_get), values(v) {}
 
-  S<TypeValue> Call_next(const S<TypeValue>& self) final {
+  BoxedValue Call_next(const BoxedValue& self) final {
     if (index+1 >= values.size()) {
       return Var_empty;
     } else {
@@ -88,7 +88,7 @@ struct VectorOrder : public AnonymousOrder {
     }
   }
 
-  S<TypeValue> Call_get(const S<TypeValue>& self) final {
+  BoxedValue Call_get(const BoxedValue& self) final {
     if (index >= values.size()) FAIL() << "iterated past end of Vector";
     return values[index];
   }
@@ -101,57 +101,57 @@ struct ExtValue_Vector : public Value_Vector {
   inline ExtValue_Vector(S<Type_Vector> p, VectorType v)
     : Value_Vector(p), values(std::move(v)) {}
 
-  ReturnTuple Call_append(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_append(const BoxedValue& Var_self, const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("Vector.append")
-    const S<TypeValue>& Var_arg1 = (args.At(0));
+    const BoxedValue& Var_arg1 = (args.At(0));
     values.push_back(Var_arg1);
     return ReturnTuple(Var_self);
   }
 
-  ReturnTuple Call_defaultOrder(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_defaultOrder(const BoxedValue& Var_self, const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("Vector.defaultOrder")
     if (values.empty()) {
       return ReturnTuple(Var_empty);
     } else {
-      return ReturnTuple(S_get(new VectorOrder(Var_self, values)));
+      return ReturnTuple(BoxedValue(new VectorOrder(Var_self, values)));
     }
   }
 
-  ReturnTuple Call_pop(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_pop(const BoxedValue& Var_self, const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("Vector.pop")
     if (values.empty()) {
       BUILTIN_FAIL(Box_String(PrimString_FromLiteral("no elements left to pop")))
     }
-    S<TypeValue> value = values.back();
+    BoxedValue value = values.back();
     values.pop_back();
     return ReturnTuple(value);
   }
 
-  ReturnTuple Call_push(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_push(const BoxedValue& Var_self, const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("Vector.push")
-    const S<TypeValue>& Var_arg1 = (args.At(0));
+    const BoxedValue& Var_arg1 = (args.At(0));
     values.push_back(Var_arg1);
     return ReturnTuple(Var_self);
   }
 
-  ReturnTuple Call_readAt(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_readAt(const BoxedValue& Var_self, const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("Vector.readAt")
-    const PrimInt Var_arg1 = (args.At(0))->AsInt();
+    const PrimInt Var_arg1 = (args.At(0)).AsInt();
     if (Var_arg1 < 0 || Var_arg1 >= values.size()) {
       FAIL() << "index " << Var_arg1 << " is out of bounds";
     }
     return ReturnTuple(values[Var_arg1]);
   }
 
-  ReturnTuple Call_size(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_size(const BoxedValue& Var_self, const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("Vector.size")
     return ReturnTuple(Box_Int(values.size()));
   }
 
-  ReturnTuple Call_writeAt(const S<TypeValue>& Var_self, const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_writeAt(const BoxedValue& Var_self, const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("Vector.writeAt")
-    const PrimInt Var_arg1 = (args.At(0))->AsInt();
-    const S<TypeValue>& Var_arg2 = (args.At(1));
+    const PrimInt Var_arg1 = (args.At(0)).AsInt();
+    const BoxedValue& Var_arg2 = (args.At(1));
     if (Var_arg1 < 0 || Var_arg1 >= values.size()) {
       FAIL() << "index " << Var_arg1 << " is out of bounds";
     }
@@ -159,6 +159,7 @@ struct ExtValue_Vector : public Value_Vector {
     return ReturnTuple(Var_self);
   }
 
+  // vector<#x>
   VectorType values;
 };
 
@@ -172,8 +173,8 @@ S<Type_Vector> CreateType_Vector(Params<1>::Type params) {
     });
   return cache.GetOrCreate(params);
 }
-S<TypeValue> CreateValue_Vector(S<Type_Vector> parent, VectorType values) {
-  return S_get(new ExtValue_Vector(parent, values));
+BoxedValue CreateValue_Vector(S<Type_Vector> parent, VectorType values) {
+  return BoxedValue(new ExtValue_Vector(parent, values));
 }
 
 #ifdef ZEOLITE_PUBLIC_NAMESPACE
