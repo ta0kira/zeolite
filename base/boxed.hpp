@@ -1,3 +1,21 @@
+/* -----------------------------------------------------------------------------
+Copyright 2021 Kevin P. Barry
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+----------------------------------------------------------------------------- */
+
+// Author: Kevin P. Barry [ta0kira@gmail.com]
+
 #ifndef BOXED_HPP_
 #define BOXED_HPP_
 
@@ -5,6 +23,43 @@
 
 #include "function.hpp"
 #include "types.hpp"
+
+
+namespace zeolite_internal {
+
+struct UnionValue {
+  // NOTE: Using enum class would break the switch/case logic.
+  // NOTE: The enum values assume that dynamic allocation will never be aligned
+  // to an odd address; especially within a few bytes of ULONG_MAX.
+  enum Type : unsigned long {
+    EMPTY = ~0x00ULL,
+    BOOL  = ~0x02ULL,
+    CHAR  = ~0x04ULL,
+    INT   = ~0x06ULL,
+    FLOAT = ~0x08ULL,
+  };
+
+  struct Counters {
+    std::atomic_ullong strong_;
+    std::atomic_int weak_;
+  };
+
+  union {
+    Counters* counters_;
+    Type value_type_;
+  } type_;
+
+  union {
+    TypeValue* as_pointer_;
+    bool       as_bool_;
+    PrimChar   as_char_;
+    PrimInt    as_int_;
+    PrimFloat  as_float_;
+    bool       as_empty_;
+  } value_;
+};
+
+}  // namespace zeolite_internal
 
 
 class BoxedValue {
@@ -40,18 +95,7 @@ class BoxedValue {
   friend class TypeValue;
   friend class WeakValue;
 
-  explicit BoxedValue(const WeakValue&);
-
-  // NOTE: Using enum class would break the switch/case logic.
-  // NOTE: The enum values assume that dynamic allocation will never be aligned
-  // to an odd address; especially within a few bytes of ULONG_MAX.
-  enum TypeEnum : unsigned long {
-    EMPTY = ~0x00ULL,
-    BOOL  = ~0x02ULL,
-    CHAR  = ~0x04ULL,
-    INT   = ~0x06ULL,
-    FLOAT = ~0x08ULL,
-  };
+  explicit BoxedValue(const WeakValue& other);
 
   std::string CategoryName() const;
 
@@ -60,33 +104,30 @@ class BoxedValue {
 
   void Cleanup();
 
-  union {
-    std::atomic_int* counter_;
-    TypeEnum         value_type_;
-  } type_;
-
-  union {
-    TypeValue* as_pointer_;
-    bool       as_bool_;
-    PrimChar   as_char_;
-    PrimInt    as_int_;
-    PrimFloat  as_float_;
-    bool       as_empty_;
-  } value_;
+  zeolite_internal::UnionValue union_;
 };
 
 
-// TODO: This isn't actually a weak pointer.
 class WeakValue {
  public:
-  WeakValue() {}
-  explicit WeakValue(BoxedValue value);
+  WeakValue();
+
+  WeakValue(const WeakValue&);
+  WeakValue& operator = (const WeakValue&);
+  WeakValue(WeakValue&&);
+  WeakValue& operator = (WeakValue&&);
+
+  explicit WeakValue(const BoxedValue& other);
+  WeakValue& operator = (const BoxedValue& other);
+
   ~WeakValue();
 
  private:
   friend class BoxedValue;
 
-  BoxedValue value_;
+  void Cleanup();
+
+  zeolite_internal::UnionValue union_;
 };
 
 #endif  // BOXED_HPP_

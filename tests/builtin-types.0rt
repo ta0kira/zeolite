@@ -443,45 +443,33 @@ testcase "reference sharing" {
   success
 }
 
-unittest boolShared {
-  Bool value1 <- true
-  // Shared because true and false are boxed constants.
-  weak Bool value2 <- value1
-  if (!present(strong(value2))) {
-    fail("Failed")
-  }
+unittest boolNotReferenceCounted {
+  weak Bool value <- true
+  \ Testing.checkPresent(strong(value))
 }
 
-unittest stringShared {
-  String value1 <- "x"
-  weak String value2 <- value1
-  if (!present(strong(value2))) {
-    fail("Failed")
-  }
+unittest charNotReferenceCounted {
+  weak Char value <- 'x'
+  \ Testing.checkPresent(strong(value))
 }
 
-unittest charNotShared {
-  Char value1 <- 'x'
-  weak Char value2 <- value1
-  if (present(strong(value2))) {
-    fail("Failed")
-  }
+unittest intNotReferenceCounted {
+  weak Int value <- 1
+  \ Testing.checkPresent(strong(value))
 }
 
-unittest intNotShared {
-  Int value1 <- 1
-  weak Int value2 <- value1
-  if (present(strong(value2))) {
-    fail("Failed")
-  }
+unittest floatNotReferenceCounted {
+  weak Float value <- 1.0
+  \ Testing.checkPresent(strong(value))
 }
 
-unittest floatNotShared {
-  Float value1 <- 1.1
-  weak Float value2 <- value1
-  if (present(strong(value2))) {
-    fail("Failed")
-  }
+unittest stringReferenceCounted {
+  weak String value2 <- empty
+  scoped {
+    String value1 <- "x"
+    value2 <- value1
+  } in \ Testing.checkPresent(strong(value2))
+  \ Testing.checkEmpty(strong(value2))
 }
 
 

@@ -128,6 +128,8 @@ static inline bool PoolReturnCommon(P* storage, std::atomic<P*>& pool, unsigned 
 }  // namespace
 
 
+namespace zeolite_internal {
+
 unsigned int PoolManager<BoxedValue>::pool4_size_ = 0;
 std::atomic<typename PoolManager<BoxedValue>::PoolEntry*> PoolManager<BoxedValue>::pool4_{nullptr};
 
@@ -222,3 +224,5 @@ void PoolManager<S<TypeInstance>>::Return(PoolEntry* storage) {
   storage->~PoolEntry();
   delete[] (unsigned char*) storage;
 }
+
+}  // namespace zeolite_internal

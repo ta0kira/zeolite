@@ -173,6 +173,9 @@ class ValueTuple {
   void* operator new(std::size_t size) = delete;
 };
 
+
+namespace zeolite_internal {
+
 template<>
 class PoolManager<BoxedValue> {
   using PoolEntry = PoolStorage<BoxedValue>;
@@ -187,6 +190,39 @@ class PoolManager<BoxedValue> {
   static unsigned int pool4_size_;
   static std::atomic<PoolEntry*> pool4_;
 };
+
+template<>
+class PoolManager<const BoxedValue*> {
+  using PoolEntry = PoolStorage<const BoxedValue*>;
+  using Managed = PoolEntry::Managed;
+
+  template<class> friend class PoolArray;
+
+  static PoolEntry* Take(int size);
+  static void Return(PoolEntry* storage);
+
+  static constexpr unsigned int pool_limit_ = 256;
+  static unsigned int pool4_size_;
+  static std::atomic<PoolEntry*> pool4_;
+};
+
+template<>
+class PoolManager<S<TypeInstance>> {
+  using PoolEntry = PoolStorage<S<TypeInstance>>;
+  using Managed = PoolEntry::Managed;
+
+  template<class> friend class PoolArray;
+
+  static PoolEntry* Take(int size);
+  static void Return(PoolEntry* storage);
+
+  static constexpr unsigned int pool_limit_ = 256;
+  static unsigned int pool4_size_;
+  static std::atomic<PoolEntry*> pool4_;
+};
+
+}  // namespace zeolite_internal
+
 
 class ReturnTuple : public ValueTuple {
  public:
@@ -211,22 +247,7 @@ class ReturnTuple : public ValueTuple {
   void* operator new(std::size_t size) = delete;
 
   int size_;
-  PoolArray<BoxedValue> data_;
-};
-
-template<>
-class PoolManager<const BoxedValue*> {
-  using PoolEntry = PoolStorage<const BoxedValue*>;
-  using Managed = PoolEntry::Managed;
-
-  template<class> friend class PoolArray;
-
-  static PoolEntry* Take(int size);
-  static void Return(PoolEntry* storage);
-
-  static constexpr unsigned int pool_limit_ = 256;
-  static unsigned int pool4_size_;
-  static std::atomic<PoolEntry*> pool4_;
+  zeolite_internal::PoolArray<BoxedValue> data_;
 };
 
 class ArgTuple : public ValueTuple {
@@ -248,22 +269,7 @@ class ArgTuple : public ValueTuple {
   void* operator new(std::size_t size) = delete;
 
   int size_;
-  PoolArray<const BoxedValue*> data_;
-};
-
-template<>
-class PoolManager<S<TypeInstance>> {
-  using PoolEntry = PoolStorage<S<TypeInstance>>;
-  using Managed = PoolEntry::Managed;
-
-  template<class> friend class PoolArray;
-
-  static PoolEntry* Take(int size);
-  static void Return(PoolEntry* storage);
-
-  static constexpr unsigned int pool_limit_ = 256;
-  static unsigned int pool4_size_;
-  static std::atomic<PoolEntry*> pool4_;
+  zeolite_internal::PoolArray<const BoxedValue*> data_;
 };
 
 class ParamTuple {
@@ -285,7 +291,7 @@ class ParamTuple {
   void* operator new(std::size_t size) = delete;
 
   int size_;
-  PoolArray<S<TypeInstance>> data_;
+  zeolite_internal::PoolArray<S<TypeInstance>> data_;
 };
 
 #endif  // TYPES_HPP_
