@@ -21,6 +21,8 @@ limitations under the License.
 module Parser.IntegrationTest (
 ) where
 
+import Control.Applicative.Permutations
+
 import Parser.Common
 import Parser.DefinedCategory ()
 import Parser.Procedure ()
@@ -38,30 +40,30 @@ instance ParseFromSource (IntegrationTestHeader SourceContext) where
     optionalSpace
     sepAfter (string_ "{")
     result <- resultCompiles <|> resultError <|> resultCrash <|> resultSuccess
-    args <- parseArgs <|> return []
-    timeout <- parseTimeout <|> return Nothing
+    header <- runPermutation $ build c name result
+      <$> toPermutationWithDefault [] parseArgs
+      <*> toPermutationWithDefault Nothing parseTimeout
+      <*> toPermutation requireOrExclude
     sepAfter (string_ "}")
-    return $ IntegrationTestHeader [c] name args timeout result where
+    return header where
+      build c name result args timeout (req,exc) =
+        IntegrationTestHeader [c] name args timeout (result req exc)
       resultCompiles = labeled "compiles expectation" $ do
         c <- getSourceContext
         keyword "compiles"
-        (req,exc) <- requireOrExclude
-        return $ ExpectCompiles [c] req exc
+        return $ ExpectCompiles [c]
       resultError = labeled "error expectation" $ do
         c <- getSourceContext
         keyword "error"
-        (req,exc) <- requireOrExclude
-        return $ ExpectCompilerError [c] req exc
+        return $ ExpectCompilerError [c]
       resultCrash = labeled "crash expectation" $ do
         c <- getSourceContext
         keyword "crash"
-        (req,exc) <- requireOrExclude
-        return $ ExpectRuntimeError [c] req exc
+        return $ ExpectRuntimeError [c]
       resultSuccess = labeled "success expectation" $ do
         c <- getSourceContext
         keyword "success"
-        (req,exc) <- requireOrExclude
-        return $ ExpectRuntimeSuccess [c] req exc
+        return $ ExpectRuntimeSuccess [c]
       parseArgs = labeled "testcase args" $ do
         keyword "args"
         many (sepAfter quotedString)

@@ -1440,6 +1440,20 @@ slightly different, and `unittest` was not available.
 Unit tests have access to all public symbols in the module. You can run all
 tests for module `myprogram` using `zeolite -t myprogram`.
 
+Specific things to keep in mind with `testcase`:
+
+- All individual `unittest` have a default timeout of 30 seconds. This is to
+  prevent automated test runners from hanging indefinitely if there is a
+  deadlock or an infinite loop. This can be changed with `timeout t`, where `t`
+  is specified in seconds. Specifing `timeout 0` disables the time limit.
+- To simplify parsing, there are a few limitations with how you order the fields
+  in a `testcase`:
+  - The expected outcome (`success`, `crash`, `error`, `compiles`) must be at
+    the top.
+  - All `require` and `exclude` patterns must be grouped together. (Put another
+    way, if a field other than `require` or `exclude` follows one of those two,
+    the parser will move on.)
+
 ### Code Coverage
 
 As of compiler version `0.16.0.0`, you can get a log of all lines of Zeolite

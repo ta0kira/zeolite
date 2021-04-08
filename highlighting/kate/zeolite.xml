@@ -244,49 +244,44 @@
 
       <context name="Test Name" attribute="Normal Text" lineEndContext="#stay" >
         <DetectSpaces />
-        <DetectChar context="Test Header" char="{" />
+        <DetectChar context="Test Status" char="{" />
         <DetectChar context="#pop" char="}" lookAhead="true" />
         <IncludeRules context="Any Comment" />
         <DetectChar attribute="String" context="String" char="&quot;" />
         <RegExpr attribute="Error" context="#stay" String="[^ \n\t\r]" />
       </context>
 
+      <context name="Test Status" attribute="Normal Text" lineEndContext="#stay" >
+        <DetectSpaces />
+        <IncludeRules context="Any Comment" />
+        <keyword attribute="Test Keyword" context="Test Header" String="testcaseStatus" />
+        <RegExpr attribute="Error" context="#stay" String="[^ \n\t\r]" />
+      </context>
+
       <context name="Test Header" attribute="Normal Text" lineEndContext="#stay" >
         <DetectSpaces />
-        <DetectChar context="#pop" char="}" lookAhead="true" />
-        <Detect2Chars attribute="Error" context="#stay" char="&lt;" char1="-" />
-        <Detect2Chars attribute="Error" context="#stay" char="-" char1="&gt;" />
-        <WordDetect attribute="Error" context="#stay" String="optional" />
-        <WordDetect attribute="Error" context="#stay" String="weak" />
-        <WordDetect attribute="Error" context="#stay" String="testcase" />
-        <keyword attribute="Test Keyword" context="#stay" String="testcaseStatus" />
+        <IncludeRules context="Any Comment" />
+        <DetectChar context="#pop#pop" char="}" lookAhead="true" />
         <keyword attribute="Test Keyword" context="Test Output" String="testcasePattern" />
         <keyword attribute="Test Keyword" context="Test Args" String="testcaseArgs" />
         <keyword attribute="Test Keyword" context="Test Timeout" String="testcaseTimeout" />
-        <WordDetect attribute="Keyword" context="#stay" String="empty" />
-        <IncludeRules context="Any Expression" />
-        <keyword attribute="Error" context="#stay" String="keywords" />
+        <RegExpr attribute="Error" context="#stay" String="[^ \n\t\r]" />
       </context>
 
       <context name="Test Args" attribute="Normal Text" lineEndContext="#stay" >
         <DetectSpaces />
         <IncludeRules context="Any Comment" />
         <DetectChar attribute="String" context="String" char="&quot;" />
-        <WordDetect attribute="Error" context="#stay" String="error" />
-        <WordDetect attribute="Error" context="#stay" String="crash" />
-        <WordDetect attribute="Error" context="#stay" String="success" />
-        <WordDetect attribute="Error" context="#stay" String="require" />
-        <WordDetect attribute="Error" context="#stay" String="exclude" />
-        <WordDetect attribute="Error" context="Test Args" String="args" />
         <DetectChar context="#pop" char="}" lookAhead="true" />
+        <keyword context="#pop" String="testcasePattern" lookAhead="true" />
         <keyword context="#pop" String="testcaseTimeout" lookAhead="true" />
-        <RegExpr attribute="Error" String="." />
+        <RegExpr attribute="Error" context="#stay" String="[^ \n\t\r]" />
       </context>
 
       <context name="Test Timeout" attribute="Normal Text" lineEndContext="#stay" >
         <DetectSpaces />
         <IncludeRules context="Any Comment" />
-        <RegExpr context="#pop" String="[0-9]+" lookAhead="true" />
+        <RegExpr attribute="Number" context="#pop" String="[0-9]+" />
         <RegExpr attribute="Error" context="#stay" String="[^ \n\t\r]" />
       </context>
 
@@ -294,7 +289,7 @@
         <DetectSpaces />
         <IncludeRules context="Any Comment" />
         <keyword attribute="Test Keyword" context="#stay" String="testcaseOutput" />
-        <RegExpr context="#pop" String="&quot;" lookAhead="true" />
+        <DetectChar attribute="String" context="String2" char="&quot;" />
         <RegExpr attribute="Error" context="#stay" String="[^ \n\t\r]" />
       </context>
 
@@ -372,6 +367,11 @@
       <context name="String" attribute="String" lineEndContext="#stay" >
         <HlCStringChar attribute="Escaped Char" context="#stay" />
         <DetectChar attribute="String" context="#pop" char="&quot;" />
+      </context>
+
+      <context name="String2" attribute="String" lineEndContext="#stay" >
+        <HlCStringChar attribute="Escaped Char" context="#stay" />
+        <DetectChar attribute="String" context="#pop#pop" char="&quot;" />
       </context>
 
       <context name="Char" attribute="Char" lineEndContext="#stay" >
