@@ -30,7 +30,6 @@ import Data.List (isSuffixOf,nub,sort)
 import Data.Time.LocalTime (getZonedTime)
 import System.Directory
 import System.FilePath
-import System.Posix.Temp (mkstemps)
 import System.IO
 import qualified Data.Map as Map
 import qualified Data.Set as Set
@@ -239,10 +238,10 @@ compileModule resolver backend (ModuleSpec p d em is is2 ps xs ts es ep m f) = d
                    then errorFromIO $ canonicalizePath $ p </> d </> show n
                    else errorFromIO $ canonicalizePath $ p </> d </> o
           let (CxxOutput _ _ _ ns2 req content) = head ms
-          -- TODO: Create a helper or a constant or something.
-          (o',h) <- errorFromIO $ mkstemps "/tmp/zmain_" ".cpp"
-          errorFromIO $ hPutStr h $ concat $ map (++ "\n") content
-          errorFromIO $ hClose h
+          let main = takeFileName f0 ++ ".cpp"
+          errorFromIO $ hPutStrLn stderr $ "Writing file " ++ main
+          let mainAbs = getCachedPath (p </> d) "main" main
+          writeCachedFile (p </> d) "main" main $ concat $ map (++ "\n") content
           base <- resolveBaseModule resolver
           deps2  <- loadPrivateDeps compilerHash f (mapMetadata deps) deps
           let lf' = lf ++ getLinkFlagsForDeps deps2
@@ -250,10 +249,9 @@ compileModule resolver backend (ModuleSpec p d em is is2 ps xs ts es ep m f) = d
           let os     = getObjectFilesForDeps deps2
           let ofr = getObjectFileResolver os
           let os' = ofr ns2 req
-          let command = CompileToBinary o' os' f0 paths' lf'
+          let command = CompileToBinary mainAbs os' f0 paths' lf'
           errorFromIO $ hPutStrLn stderr $ "Creating binary " ++ f0
           f1 <- runCxxCommand backend command
-          errorFromIO $ removeFile o'
           return [f1]
     createBinary _ _ _ _ = return []
     maybeCreateMain cm2 xs2 (CompileBinary n f2 _ _) =
