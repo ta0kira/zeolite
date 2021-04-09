@@ -117,7 +117,7 @@ class WeakValue {
   WeakValue(WeakValue&&);
   WeakValue& operator = (WeakValue&&);
 
-  explicit WeakValue(const BoxedValue& other);
+  WeakValue(const BoxedValue& other);
   WeakValue& operator = (const BoxedValue& other);
 
   ~WeakValue();
