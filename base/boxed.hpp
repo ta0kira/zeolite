@@ -29,9 +29,9 @@ namespace zeolite_internal {
 
 struct UnionValue {
   // NOTE: Using enum class would break the switch/case logic.
-  // NOTE: The enum values assume that dynamic allocation will never be aligned
-  // to an odd address; especially within a few bytes of ULONG_MAX.
-  enum Type : unsigned long {
+  // NOTE: These enum values assume that dynamic allocation will never be
+  // aligned to an odd address within a few bytes of ULLONG_MAX.
+  enum Type : unsigned long long {
     EMPTY = ~0x00ULL,
     BOOL  = ~0x02ULL,
     CHAR  = ~0x04ULL,

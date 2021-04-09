@@ -30,10 +30,12 @@ import System.Posix.Temp (mkdtemp)
 import System.FilePath
 import Text.Regex.TDFA
 import qualified Data.Map as Map
+import qualified Data.Set as Set
 
 import Base.CompilerError
 import Base.TrackedErrors
 import Cli.Programs
+import CompilerCxx.Code (integratedCategoryDeps)
 import CompilerCxx.CxxFiles
 import CompilerCxx.LanguageModule
 import CompilerCxx.Naming
@@ -220,7 +222,7 @@ runSingleTest b cl cm p paths deps (f,s) = do
       let paths' = nub $ map fixPath (dir:paths)
       let os  = getObjectFilesForDeps deps
       let ofr = getObjectFileResolver (sources' ++ os)
-      let os' = ofr ns req
+      let os' = ofr ns (req `Set.union` integratedCategoryDeps)
       macro <- timeoutMacro timeout
       let command = CompileToBinary main os' macro binary paths' flags
       file <- runCxxCommand b command

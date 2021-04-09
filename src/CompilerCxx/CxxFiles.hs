@@ -224,7 +224,7 @@ generateCategoryDefinition testing = common where
         ] ++ maybeValue ++ [
           defineExternalGetters t
         ]
-      let req' = Set.unions [req,getCategoryMentions t,defaultCategoryDeps]
+      let req' = Set.unions [req,getCategoryMentions t,integratedCategoryDeps]
       return $ CxxOutput (Just $ getCategoryName t)
                          filename
                          (getCategoryNamespace t)
@@ -311,7 +311,7 @@ generateCategoryDefinition testing = common where
           defineInternalGetters t,
           defineExternalGetters t
         ]
-      let req' = req `Set.union` getCategoryMentions t
+      let req' = Set.unions [req,getCategoryMentions t,integratedCategoryDeps]
       return $ CxxOutput (Just $ getCategoryName t)
                          filename
                          (getCategoryNamespace t)

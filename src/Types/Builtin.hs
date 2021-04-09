@@ -24,7 +24,6 @@ module Types.Builtin (
   boolRequiredValue,
   charRequiredValue,
   defaultCategories,
-  defaultCategoryDeps,
   emptyType,
   floatRequiredValue,
   formattedRequiredValue,
@@ -34,7 +33,6 @@ module Types.Builtin (
 ) where
 
 import qualified Data.Map as Map
-import qualified Data.Set as Set
 
 import Base.GeneralType
 import Base.Positional
@@ -44,9 +42,6 @@ import Types.TypeInstance
 
 defaultCategories :: CategoryMap c
 defaultCategories = Map.empty
-
-defaultCategoryDeps :: Set.Set CategoryName
-defaultCategoryDeps = Set.fromList []
 
 boolRequiredValue :: ValueType
 boolRequiredValue = requiredSingleton BuiltinBool
