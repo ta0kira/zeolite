@@ -119,6 +119,7 @@ BoxedValue::BoxedValue(const WeakValue& other)
       // given time.
       static constexpr unsigned long long strong_lock = 0x1ULL << 40;
       if (union_.type_.counters_->strong_.fetch_add(strong_lock) % strong_lock == 0) {
+        union_.type_.counters_->strong_.fetch_sub(strong_lock);
         union_.type_.value_type_  = UnionValue::Type::EMPTY;
         union_.value_.as_pointer_ = nullptr;
       } else {
