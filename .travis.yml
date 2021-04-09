@@ -158,8 +158,6 @@ script:
   - "if [ $HCNUMVER -eq 81001 ]; then ZEOLITE_CONFIG='2\\n\\n'; fi"
   - 'echo -e "$ZEOLITE_CONFIG" | $ZEOLITE_SETUP'
   - ZEOLITE_PATH=$($ZEOLITE --get-path | grep '^/')
-  # Explicitly build libraries that aren't built by zeolite-setup.
-  - $ZEOLITE -p $ZEOLITE_PATH -r lib/thread
   # Only run integration tests for a few GHC version, since they should all be the same if setup succeeds
   - if [ $HCNUMVER -eq 80803 ] || [ $HCNUMVER -eq 81001 ]; then $ZEOLITE -p $ZEOLITE_PATH -t lib/testing tests lib/container lib/file lib/math lib/util lib/thread; fi
   # Run extra CLI tests

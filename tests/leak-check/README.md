@@ -4,13 +4,6 @@ The program in this module is meant to overload the reference-counting system
 by forcing memory leaks and race conditions. Ideally, those things *will not*
 happen.
 
-This test depends on the `lib/thread` library, which needs to be built manually:
-
-```shell
-ZEOLITE_PATH=$(zeolite --get-path)
-zeolite -p "$ZEOLITE_PATH" -r lib/thread
-```
-
 To compile the test program:
 
 ```shell

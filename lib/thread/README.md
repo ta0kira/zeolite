@@ -9,25 +9,13 @@
 
 ## Configuring and Building
 
-This library *is not* automatically built by `zeolite-setup`; you need to build
-it manually. This is because there might be issues with thread-library
-dependencies between different systems.
+This library is automatically built by `zeolite-setup`.
 
-1. If you are running Linux or FreeBSD, the config should work as-is.
+If you run into linker errors when building binaries or running tests, you might
+need to update `link_flags` in `lib/thread/.zeolite-module` to either change or
+remove dependence on `-lpthread`, then manually build the module again.
 
-   To build the library:
-
-   ```shell
-   ZEOLITE_PATH=$(zeolite --get-path)
-   zeolite -p "$ZEOLITE_PATH" -r lib/thread
-   ```
-
-2. Even if the library builds without errors, you should still run the tests to
-   ensure that the linker flags are correct.
-
-   ```shell
-   zeolite -p "$ZEOLITE_PATH" -t lib/thread
-   ```
-
-   If you run into linker errors, you might need to go to step 1 and update the
-   `link_flags` in `.zeolite-module`.
+```shell
+ZEOLITE_PATH=$(zeolite --get-path)
+zeolite -p "$ZEOLITE_PATH" -r lib/thread
+```

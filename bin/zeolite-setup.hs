@@ -61,12 +61,12 @@ libraries = [
     "lib/container",
     "lib/file",
     "lib/math",
+    "lib/thread",
     "tests"
   ]
 
 optionalLibraries :: [String]
 optionalLibraries = [
-    "lib/thread"
   ]
 
 includePaths :: [String]
