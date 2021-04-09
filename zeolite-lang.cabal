@@ -1,7 +1,7 @@
 cabal-version:       2.2
 
 name:                zeolite-lang
-version:             0.17.0.1
+version:             0.18.0.0
 synopsis:            Zeolite is a statically-typed, general-purpose programming language.
 
 description:
@@ -130,6 +130,9 @@ data-files:          base/.zeolite-module,
                      tests/check-defs/.zeolite-module,
                      tests/check-defs/*.0rp,
                      tests/check-defs/*.0rx,
+                     tests/leak-check/README.md,
+                     tests/leak-check/.zeolite-module,
+                     tests/leak-check/*.0rx,
                      tests/module-only/README.md,
                      tests/module-only/.zeolite-module,
                      tests/module-only/*.0rx,

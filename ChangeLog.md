@@ -1,6 +1,31 @@
 # Revision history for zeolite-lang
 
-## 0.17.1.0  -- ????-??-??
+## 0.18.0.0  -- ????-??-??
+
+### Compiler CLI
+
+* **[breaking]** Eliminates dynamic memory allocation for `Bool`, `Char`,
+  `Float`, and `Int`, including `optional` and `weak` variants. This improves
+  the efficiency of code that makes a lot of function calls using those types.
+
+  Note that when used as variable types, those types *already* avoided dynamic
+  allocation. This therefore only applies to passing them in function calls, and
+  using them with `optional` and `weak`.
+
+  This breaks *all* existing C++ extensions:
+
+  - `S<TypeValue>` must be replaced with `BoxedValue`.
+  - Calls to `S_get` (only for `ValueType`) must be replaced with calls to the
+    `BoxedValue` constructor.
+  - `W<TypeValue>` must be replaced with `WeakValue`.
+  - Calls to `W_get` must be replaced with calls to the `WeakValue` constructor.
+  - Calls to `->AsBool()`, `->AsChar()`, `->AsFloat()`, `->AsInt()`,
+    `->AsCharBuffer()`, and `->AsString()` must now use `.` instead of `->`.
+  - `Present`, `Require`, and `Strong` are now in `BoxedValue::` instead of in
+    `TypeValue::`.
+
+  (Running `zeolite --templates` again will provide the correct type
+  signatures and local argument aliasing.)
 
 ### Language
 

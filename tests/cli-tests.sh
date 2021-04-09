@@ -78,6 +78,35 @@ test_check_defs() {
 }
 
 
+test_leak_check() {
+  local binary="$ZEOLITE_PATH/tests/leak-check/LeakTest"
+  rm -f "$binary"
+  do_zeolite -p "$ZEOLITE_PATH" -r tests/leak-check -f
+  # race-condition check
+  # NOTE: If this fails, the valgrind check will be skipped.
+  local output=$(execute "$binary" 'race' || true)
+  if ! echo "$output" | egrep -q 'no race conditions this time'; then
+    show_message 'Unexpected race-condition results from tests/leak-check:'
+    echo "$output" 1>&2
+    return 1
+  fi
+  # valgrind check
+  if [[ -x "$(which valgrind)" ]]; then
+    local output=$(execute valgrind --leak-check=yes "$binary" 'leak' || true)
+    if ! echo "$output" | egrep -q 'lost: 0 bytes in 0 blocks'; then
+      show_message 'Unexpected valgrind results from tests/leak-check:'
+      echo "$output" 1>&2
+      return 1
+    fi
+    if echo "$output" | egrep -q 'lost: [1-9][0-9]* bytes'; then
+      show_message 'Unexpected valgrind results from tests/leak-check:'
+      echo "$output" 1>&2
+      return 1
+    fi
+  fi
+}
+
+
 test_tests_only() {
   local output=$(do_zeolite -p "$ZEOLITE_PATH" -r tests/tests-only -f || true)
   if ! echo "$output" | egrep -q 'Type1 .+ visible category'; then
@@ -380,6 +409,7 @@ run_all() {
 ALL_TESTS=(
   test_bad_path
   test_check_defs
+  test_leak_check
   test_tests_only
   test_tests_only2
   test_tests_only3

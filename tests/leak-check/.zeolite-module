@@ -1,0 +1,11 @@
+root: "../.."
+path: "tests/leak-check"
+private_deps: [
+  "lib/container"
+  "lib/thread"
+  "lib/util"
+]
+mode: binary {
+  category: LeakTest
+  function: run
+}

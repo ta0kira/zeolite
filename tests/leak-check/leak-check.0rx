@@ -1,0 +1,80 @@
+concrete LeakTest {
+  @type run () -> ()
+}
+
+define LeakTest {
+  run () {
+    if (Argv.global().size() != 2) {
+      \ message()
+    } elif (Argv.global().readAt(1) == "race") {
+      \ runWith(1000,25)
+      \ LazyStream<Formatted>.new()
+          .append("no race conditions this time")
+          .writeTo(SimpleOutput.stderr())
+    } elif (Argv.global().readAt(1) == "leak") {
+      \ runWith(10,15)
+    } else {
+      \ message()
+    }
+  }
+
+  @type message () -> ()
+  message () {
+    fail(Argv.global().readAt(0) + " [race|leak]")
+  }
+
+  @type runWith (Int,Int) -> ()
+  runWith (iterations,count) {
+    ReadAt<BarrierWait> barriers <- EnumeratedBarrier.new(count+1)
+    $ReadOnly[barriers]$
+
+    traverse (Counter.zeroIndexed(iterations) -> _) {
+      optional LeakTest original <- LeakTest{ }
+
+      Vector<Thread> threads <- Vector:create<Thread>()
+
+      traverse (Counter.zeroIndexed(count) -> Int i) {
+        \ threads.push(ProcessThread.from(Tester.create(original,barriers.readAt(i+1))).start())
+      }
+
+      \ barriers.readAt(0).wait()
+      original <- empty
+
+      traverse (threads.defaultOrder() -> Thread thread) {
+        \ thread.join()
+      }
+    }
+  }
+}
+
+concrete Tester {
+  @type create (optional LeakTest,BarrierWait) -> (Routine)
+}
+
+define Tester {
+  refines Routine
+
+  @value weak LeakTest copy
+  @value BarrierWait barrier
+
+  create (copy,barrier) {
+    return Tester{ copy, barrier }
+  }
+
+  run ()  {
+    weak LeakTest copy1 <- empty
+    weak LeakTest copy2 <- empty
+    weak LeakTest copy3 <- empty
+    weak LeakTest copy4 <- empty
+    weak LeakTest copy5 <- empty
+    \ barrier.wait()
+    copy1 <- copy
+    copy2 <- copy1
+    copy3 <- copy1
+    copy <- empty
+    copy4 <- strong(copy2)
+    copy1 <- strong(copy3)
+    copy2 <- empty
+    copy3 <- empty
+  }
+}
