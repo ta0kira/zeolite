@@ -188,7 +188,8 @@ class PoolManager<BoxedValue> {
 
   static constexpr unsigned int pool_limit_ = 256;
   static unsigned int pool4_size_;
-  static std::atomic<PoolEntry*> pool4_;
+  static PoolEntry* pool4_;
+  static std::atomic_flag pool4_flag_;
 };
 
 template<>
@@ -203,7 +204,8 @@ class PoolManager<const BoxedValue*> {
 
   static constexpr unsigned int pool_limit_ = 256;
   static unsigned int pool4_size_;
-  static std::atomic<PoolEntry*> pool4_;
+  static PoolEntry* pool4_;
+  static std::atomic_flag pool4_flag_;
 };
 
 template<>
@@ -218,7 +220,8 @@ class PoolManager<S<TypeInstance>> {
 
   static constexpr unsigned int pool_limit_ = 256;
   static unsigned int pool4_size_;
-  static std::atomic<PoolEntry*> pool4_;
+  static PoolEntry* pool4_;
+  static std::atomic_flag pool4_flag_;
 };
 
 }  // namespace zeolite_internal

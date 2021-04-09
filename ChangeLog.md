@@ -27,6 +27,9 @@
   (Running `zeolite --templates` again will provide the correct type
   signatures and local argument aliasing.)
 
+* **[behavior]** Even more optimization for function calls using 4 or fewer
+  arguments, returns, or function params.
+
 ### Language
 
 * **[new]** Adds the `timeout` field to `testcase`, to specify the number of

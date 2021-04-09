@@ -9,7 +9,7 @@ define LeakTest {
     } elif (Argv.global().readAt(1) == "race") {
       \ runWith(1000,25)
       \ LazyStream<Formatted>.new()
-          .append("no race conditions this time")
+          .append("no race conditions this time\n")
           .writeTo(SimpleOutput.stderr())
     } elif (Argv.global().readAt(1) == "leak") {
       \ runWith(10,15)
