@@ -22,8 +22,8 @@ zeolite -p $ZEOLITE_PATH -r tests/leak-check
 
 To check for leaks (requires [`valgrind`](https://valgrind.org/)):
 
-```
-// The "leak" argument is important.
+```shell
+# The "leak" argument is important.
 valgrind --leak-check=yes $ZEOLITE_PATH/tests/leak-check/LeakTest leak
 ```
 
@@ -63,8 +63,8 @@ a lot of leaked memory, which is also normal.)
 
 To check for race conditions:
 
-```
-// The "race" argument is important.
+```shell
+# The "race" argument is important.
 valgrind --leak-check=yes $ZEOLITE_PATH/tests/leak-check/LeakTest race
 ```
 
