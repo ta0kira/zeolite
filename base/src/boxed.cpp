@@ -112,13 +112,28 @@ BoxedValue::BoxedValue(const WeakValue& other)
     case UnionValue::Type::FLOAT:
       break;
     default:
-      // Using the top 24 bits here allows blocking deletion of the pointer
-      // without risking other weak references being locked in. This assumes
-      // that each object will have fewer than 2^40 references, and that fewer
-      // than 2^24 threads will be in this procedure for a single object at any
-      // given time.
+      // Using the top 24 bits here allows blocking the deletion of the pointer
+      // without risking other threads using a bad pointer. This assumes that
+      // each object will have fewer than 2^40 references, and that fewer than
+      // 2^24 threads will be attempting to lock a weak reference for a given
+      // object at any one time.
       static constexpr unsigned long long strong_lock = 0x1ULL << 40;
       if (union_.type_.counters_->strong_.fetch_add(strong_lock) % strong_lock == 0) {
+        // NOTE: Subtraction of strong_lock *cannot* be optimized out!
+        //
+        // Unsigned overflow would still leave strong_%strong_lock == 0, but
+        // there could be a race-condition between three threads:
+        //
+        // Thread 1: Enters *this* constructor while the pointer is still valid.
+        // Thread 2: Enters BoxedValue::Cleanup and removes the last reference.
+        // Thread 3: Enters *this* constructor before Thread 1 subtracts
+        //           strong_lock-1, meaning strong_%strong_lock == 0.
+        // Thread 1: Subtracts strong_lock-1 (+1 overall) to revive the pointer.
+        //
+        // This still leaves all three threads in a valid state, but with thread
+        // 3 getting empty instead of a still-valid pointer. In other words,
+        // strong_%strong_lock == 0 *doesn't* guarantee that the pointer is no
+        // longer valid.
         union_.type_.counters_->strong_.fetch_sub(strong_lock);
         union_.type_.value_type_  = UnionValue::Type::EMPTY;
         union_.value_.as_pointer_ = nullptr;
