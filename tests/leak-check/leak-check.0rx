@@ -12,7 +12,7 @@ define LeakTest {
           .append("no race conditions this time\n")
           .writeTo(SimpleOutput.stderr())
     } elif (Argv.global().readAt(1) == "leak") {
-      \ runWith(10,15)
+      \ runWith(1000,4)
     } else {
       \ message()
     }
@@ -26,39 +26,80 @@ define LeakTest {
   @type runWith (Int,Int) -> ()
   runWith (iterations,count) {
     ReadAt<BarrierWait> barriers <- EnumeratedBarrier.new(count+1)
-    $ReadOnly[barriers]$
+    traverse (Counter.zeroIndexed(iterations) -> Int i) {
+      \ doIteration<LastReference>(i,barriers)
+      \ doIteration<Chaos>(i,barriers)
+    }
+  }
 
-    traverse (Counter.zeroIndexed(iterations) -> _) {
-      optional LeakTest original <- LeakTest{ }
+  @type doIteration<#f>
+    #f defines ThreadFactory
+  (Int,ReadAt<BarrierWait>) -> ()
+  doIteration (i,barriers) {
+    \ LazyStream<Formatted>.new()
+        .append(typename<#f>())
+        .append(": iteration ")
+        .append(i)
+        .append("\n")
+        .writeTo(SimpleOutput.stderr())
 
-      Vector<Thread> threads <- Vector:create<Thread>()
+    optional LeakTest original <- LeakTest{ }
 
-      traverse (Counter.zeroIndexed(count) -> Int i) {
-        \ threads.push(ProcessThread.from(Tester.create(original,barriers.readAt(i+1))).start())
-      }
+    Vector<Thread> threads <- Vector:create<Thread>()
 
-      \ barriers.readAt(0).wait()
-      original <- empty
+    traverse (Counter.zeroIndexed(barriers.size()-1) -> Int j) {
+      \ threads.push(ProcessThread.from(#f.create(original,barriers.readAt(j+1))).start())
+    }
 
-      traverse (threads.defaultOrder() -> Thread thread) {
-        \ thread.join()
-      }
+    \ barriers.readAt(0).wait()
+    original <- empty
+
+    traverse (threads.defaultOrder() -> Thread thread) {
+      \ thread.join()
     }
   }
 }
 
-concrete Tester {
-  @type create (optional LeakTest,BarrierWait) -> (Routine)
+@type interface ThreadFactory {
+  create (optional LeakTest,BarrierWait) -> (Routine)
 }
 
-define Tester {
+concrete LastReference {
+  defines ThreadFactory
+}
+
+define LastReference {
+  $ReadOnly[copy,barrier]$
+
   refines Routine
 
   @value weak LeakTest copy
   @value BarrierWait barrier
 
   create (copy,barrier) {
-    return Tester{ copy, barrier }
+    return LastReference{ copy, barrier }
+  }
+
+  run ()  {
+    \ barrier.wait()
+    \ strong(copy)
+  }
+}
+
+concrete Chaos {
+  defines ThreadFactory
+}
+
+define Chaos {
+  $ReadOnly[barrier]$
+
+  refines Routine
+
+  @value weak LeakTest copy
+  @value BarrierWait barrier
+
+  create (copy,barrier) {
+    return Chaos{ copy, barrier }
   }
 
   run ()  {
