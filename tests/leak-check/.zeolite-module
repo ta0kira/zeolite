@@ -1,5 +1,11 @@
 root: "../.."
 path: "tests/leak-check"
+expression_map: [
+  expression_macro {
+    name: CPU_CORE_COUNT
+    expression: 8
+  }
+]
 private_deps: [
   "lib/container"
   "lib/thread"

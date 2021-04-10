@@ -3,16 +3,20 @@ concrete LeakTest {
 }
 
 define LeakTest {
+  @value Vector<Int> memory
+
   run () {
     if (Argv.global().size() != 2) {
       \ message()
     } elif (Argv.global().readAt(1) == "race") {
-      \ runWith(1000,25)
+      \ runWith(1000,0)
       \ LazyStream<Formatted>.new()
           .append("no race conditions this time\n")
           .writeTo(SimpleOutput.stderr())
     } elif (Argv.global().readAt(1) == "leak") {
-      \ runWith(1000,4)
+      \ runWith(100,0)
+    } elif (Argv.global().readAt(1) == "forever") {
+      \ runWith(10000000,1024*1024)
     } else {
       \ message()
     }
@@ -20,22 +24,22 @@ define LeakTest {
 
   @type message () -> ()
   message () {
-    fail(Argv.global().readAt(0) + " [race|leak]")
+    fail(Argv.global().readAt(0) + " [race|leak|forever]")
   }
 
   @type runWith (Int,Int) -> ()
-  runWith (iterations,count) {
-    ReadAt<BarrierWait> barriers <- EnumeratedBarrier.new(count+1)
+  runWith (iterations,size) {
+    ReadAt<BarrierWait> barriers <- EnumeratedBarrier.new($ExprLookup[CPU_CORE_COUNT]$-1)
     traverse (Counter.zeroIndexed(iterations) -> Int i) {
-      \ doIteration<LastReference>(i,barriers)
-      \ doIteration<Chaos>(i,barriers)
+      \ doIteration<LastReference>(i,size,barriers)
+      \ doIteration<Chaos>(i,size,barriers)
     }
   }
 
   @type doIteration<#f>
     #f defines ThreadFactory
-  (Int,ReadAt<BarrierWait>) -> ()
-  doIteration (i,barriers) {
+  (Int,Int,ReadAt<BarrierWait>) -> ()
+  doIteration (i,size,barriers) {
     \ LazyStream<Formatted>.new()
         .append(typename<#f>())
         .append(": iteration ")
@@ -43,7 +47,7 @@ define LeakTest {
         .append("\n")
         .writeTo(SimpleOutput.stderr())
 
-    optional LeakTest original <- LeakTest{ }
+    optional LeakTest original <- LeakTest{ Vector:createSize<Int>(size) }
 
     Vector<Thread> threads <- Vector:create<Thread>()
 
