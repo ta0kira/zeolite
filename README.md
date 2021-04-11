@@ -829,7 +829,7 @@ references between objects.
       <span style='color:#898887;'>// value is guaranteed to remain valid while using thread2.</span>
       <b>optional</b> <span style='color:#0057ae;'>Thread</span> thread2 &lt;- <b>strong</b>(thread)
     } <b>in</b> <b>if</b> (<b>present</b>(thread2)) {
-      <span style='color:#006e28;'>\</span> thread2<span style='color:#644a9b;'>.</span>join()
+      <span style='color:#006e28;'>\</span> <b>require</b>(thread2)<span style='color:#644a9b;'>.</span>join()
     }
   }
 
