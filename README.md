@@ -797,30 +797,57 @@ value &lt;- <span style='color:#b08000;'>1</span>
   <span style='color:#006e28;'>\</span> foo(<b>require</b>(value))
 }</pre>
 
-**`weak`** values are similar, but require an additional step to convert them to
-`optional` first. (`weak` values are a pragmatic solution to potential memory
-leaks that can arise with cyclic references.)
+**`weak`** values allow your program to access a value *if it is available*,
+without holding up that value's cleanup if nothing else needs it. This can be
+used to let threads clean themselves up (example below) or to handle cycles in
+references between objects.
 
 <pre style='color:#1f1c1b;background-color:#f6f8fa;'>
-<b>concrete</b> <b><span style='color:#0057ae;'>MyNode</span></b> {
-  <span style='color:#644a9b;'>@type</span> create (<b>optional</b> <span style='color:#0057ae;'>MyNode</span>) -&gt; (<span style='color:#0057ae;'>MyNode</span>)
-  <span style='color:#644a9b;'>@value</span> getNext () -&gt; (<b>optional</b> <span style='color:#0057ae;'>MyNode</span>)
+<b>concrete</b> <b><span style='color:#0057ae;'>MyRoutine</span></b> {
+  <span style='color:#644a9b;'>@type</span> createAndRun () -&gt; (<span style='color:#0057ae;'>MyRoutine</span>)
+  <span style='color:#644a9b;'>@value</span> waitCompletion () -&gt; ()
 }
 
-<b>define</b> <b><span style='color:#0057ae;'>MyNode</span></b> {
-  <span style='color:#898887;'>// Weak can only be used for data members and local variables.</span>
-  <span style='color:#644a9b;'>@value</span> <b>weak</b> <span style='color:#0057ae;'>MyNode</span> next
+<b>define</b> <b><span style='color:#0057ae;'>MyRoutine</span></b> {
+  <b>refines</b> <span style='color:#0057ae;'>Routine</span>
 
-  create (next) {
-    <span style='color:#898887;'>// optional automatically converts to weak.</span>
-    <b>return</b> <span style='color:#0057ae;'>MyNode</span>{ next }
+  <span style='color:#898887;'>// (See lib/thread.)</span>
+  <span style='color:#644a9b;'>@value</span> <b>weak</b> <span style='color:#0057ae;'>Thread</span> thread
+
+  createAndRun () {
+    <span style='color:#898887;'>// Create a new MyRoutine and then start the thread.</span>
+    <b>return</b> (<span style='color:#0057ae;'>MyRoutine</span>{ <b>empty</b> })<span style='color:#644a9b;'>.</span>start()
   }
 
-  getNext () {
-    <span style='color:#898887;'>// The only operation you can perform on weak values is strong.</span>
-    <b>return</b> <b>strong</b>(next)
+  run () {
+    <span style='color:#898887;'>// routine</span>
+  }
+
+  waitCompletion () {
+    <b>scoped</b> {
+      <span style='color:#898887;'>// Use strong to turn weak into optional. If the return is non-empty, the</span>
+      <span style='color:#898887;'>// value is guaranteed to remain valid while using thread2.</span>
+      <b>optional</b> <span style='color:#0057ae;'>Thread</span> thread2 &lt;- <b>strong</b>(thread)
+    } <b>in</b> <b>if</b> (<b>present</b>(thread2)) {
+      <span style='color:#006e28;'>\</span> thread2<span style='color:#644a9b;'>.</span>join()
+    }
+  }
+
+  <span style='color:#644a9b;'>@value</span> start () -&gt; (<b>#self</b>)
+  start () {
+    <span style='color:#898887;'>// ProcessThread holds a reference to itself only while the Routine is</span>
+    <span style='color:#898887;'>// running. Making thread weak means that the ProcessThread can clean itself</span>
+    <span style='color:#898887;'>// up once the Routine terminates.</span>
+    thread &lt;- <span style='color:#0057ae;'>ProcessThread</span><span style='color:#644a9b;'>.</span>from(<b>self</b>)<span style='color:#644a9b;'>.</span>start()
+    <b>return</b> <b>self</b>
   }
 }</pre>
+
+**IMPORTANT:** An `empty` return from `strong` *should not* be treated as a
+reliable indicator that the referenced object no longer exists. Instead, `weak`
+should indicate that a part of your program will use an object if it is
+available, but that the requirement is not strong enough to prevent the object
+from being cleaned up.
 
 ### Using Parameters
 
