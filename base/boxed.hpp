@@ -55,7 +55,6 @@ struct UnionValue {
     PrimChar   as_char_;
     PrimInt    as_int_;
     PrimFloat  as_float_;
-    bool       as_empty_;
   } value_;
 };
 
@@ -94,6 +93,8 @@ class BoxedValue {
  private:
   friend class TypeValue;
   friend class WeakValue;
+
+  inline explicit BoxedValue(std::nullptr_t) : BoxedValue() {}
 
   explicit BoxedValue(const WeakValue& other);
 

@@ -130,7 +130,7 @@ BoxedValue::BoxedValue(const WeakValue& other)
         //           strong_lock-1, meaning strong_%strong_lock == 0.
         // Thread 1: Subtracts strong_lock-1 (+1 overall) to revive the pointer.
         //
-        // This still leaves all three threads in a valid state, but with thread
+        // This still leaves all three threads in a valid state, but with Thread
         // 3 getting empty instead of a still-valid pointer. In other words,
         // strong_%strong_lock == 0 *doesn't* guarantee that the pointer is no
         // longer valid.
@@ -205,7 +205,12 @@ const PrimString& BoxedValue::AsString() const {
     case UnionValue::Type::FLOAT:
       FAIL() << CategoryName() << " is not a String value";
       __builtin_unreachable();
-    default: return union_.value_.as_pointer_->AsString();
+      break;
+    default:
+      if (!union_.value_.as_pointer_) {
+        FAIL() << "Function called on null pointer";
+      }
+      return union_.value_.as_pointer_->AsString();
   }
 }
 
@@ -218,7 +223,12 @@ PrimCharBuffer& BoxedValue::AsCharBuffer() const {
     case UnionValue::Type::FLOAT:
       FAIL() << CategoryName() << " is not a CharBuffer value";
       __builtin_unreachable();
-    default: return union_.value_.as_pointer_->AsCharBuffer();
+      break;
+    default:
+      if (!union_.value_.as_pointer_) {
+        FAIL() << "Function called on null pointer";
+      }
+      return union_.value_.as_pointer_->AsCharBuffer();
   }
 }
 
@@ -247,7 +257,11 @@ std::string BoxedValue::CategoryName() const {
     case UnionValue::Type::CHAR:  return "Char";
     case UnionValue::Type::INT:   return "Int";
     case UnionValue::Type::FLOAT: return "Float";
-    default: return union_.value_.as_pointer_->CategoryName();
+    default:
+      if (!union_.value_.as_pointer_) {
+        FAIL() << "Function called on null pointer";
+      }
+      return union_.value_.as_pointer_->CategoryName();
   }
 }
 
@@ -258,6 +272,7 @@ ReturnTuple BoxedValue::Dispatch(
     case UnionValue::Type::EMPTY:
       FAIL() << "Function called on empty value";
       __builtin_unreachable();
+      break;
     case UnionValue::Type::BOOL:
       return DispatchBool(union_.value_.as_bool_, self, label, params, args);
     case UnionValue::Type::CHAR:
@@ -267,6 +282,9 @@ ReturnTuple BoxedValue::Dispatch(
     case UnionValue::Type::FLOAT:
       return DispatchFloat(union_.value_.as_float_, self, label, params, args);
     default:
+      if (!union_.value_.as_pointer_) {
+        FAIL() << "Function called on null pointer";
+      }
       return union_.value_.as_pointer_->Dispatch(self, label, params, args);
   }
 }
