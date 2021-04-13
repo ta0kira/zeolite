@@ -305,6 +305,7 @@ executable zeolite
                        containers,
                        directory,
                        filepath,
+                       mtl,
                        unix,
                        zeolite-internal
 

@@ -87,3 +87,13 @@ unittest readAll {
   String allContents <- TextReader.readAll(FakeFile.create())
   \ Testing.checkEquals<?>(allContents,"this is a partial line\nwith some more data\nand\nmore lines\nunfinished")
 }
+
+
+testcase "stdin is empty in tests" {
+  success
+  timeout 1
+}
+
+unittest test {
+  \ Testing.checkEquals<?>(TextReader.readAll(SimpleInput.stdin()),"")
+}

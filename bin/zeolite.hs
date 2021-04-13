@@ -17,6 +17,8 @@ limitations under the License.
 -- Author: Kevin P. Barry [ta0kira@gmail.com]
 
 import Control.Monad (when)
+import Control.Monad.Trans
+import GHC.IO.Handle
 import System.Directory
 import System.Environment
 import System.Exit
@@ -51,7 +53,16 @@ main = do
           let co' = getCompilerSuccess co
           (resolver,backend) <- loadConfig
           when (HelpNotNeeded /= (coHelp co')) $ errorFromIO $ showHelp >> exitFailure
+          tryCloseStdin
           runCompiler resolver backend co'
+
+tryCloseStdin :: TrackedErrorsIO ()
+tryCloseStdin = do
+  let result = errorFromIO $ withFile "/dev/null" ReadMode (flip hDuplicateTo stdin)
+  -- NOTE: Processing result more than once (e.g., error check followed by
+  -- conversion to warnings) could cause the operation to be executed again.
+  "In zeolite's attempt to block compiler and test input on stdin" ??>
+    (lift (toTrackedErrors result) >>= asCompilerWarnings)
 
 showHelp :: IO ()
 showHelp = do
