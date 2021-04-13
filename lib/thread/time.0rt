@@ -33,3 +33,14 @@ testcase "zero sleepSeconds() is allowed" {
 unittest test {
   \ Realtime.sleepSeconds(0.0)
 }
+
+
+testcase "sleepSeconds() does not interfere with test timeout" {
+  crash
+  require "signal 14"
+  timeout 1
+}
+
+unittest test {
+  \ Realtime.sleepSeconds(5.0)
+}
