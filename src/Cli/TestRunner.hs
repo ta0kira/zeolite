@@ -213,18 +213,14 @@ runSingleTest b cl cm p paths deps (f,s) = do
       dir <- errorFromIO $ mkdtemp "/tmp/ztest_"
       errorFromIO $ hPutStrLn stderr $ "Writing temporary files to " ++ dir
       sources <- mapCompilerM (writeSingleFile dir) xx
-      -- TODO: Cache CompileMetadata here for debugging failures.
-      let sources' = resolveObjectDeps deps p dir sources
       let main   = dir </> f2
       let binary = dir </> "testcase"
       errorFromIO $ writeFile main $ concat $ map (++ "\n") content
       let flags = getLinkFlagsForDeps deps
       let paths' = nub $ map fixPath (dir:paths)
-      let os  = getObjectFilesForDeps deps
-      let ofr = getObjectFileResolver (sources' ++ os)
-      let os' = ofr ns (req `Set.union` integratedCategoryDeps)
+      let libraries = getLibrariesForDeps deps
       macro <- timeoutMacro timeout
-      let command = CompileToBinary main os' macro binary paths' flags
+      let command = CompileToBinary main (concat (map fst sources) ++ libraries) macro binary paths' flags
       file <- runCxxCommand b command
       return (dir,file)
     timeoutMacro (Just 0) = return []  -- No timeout.
