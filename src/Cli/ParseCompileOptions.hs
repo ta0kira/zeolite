@@ -131,7 +131,7 @@ parseCompileOptions = parseAll emptyCompileOptions . zip ([1..] :: [Int]) where
         (t,fn) <- check $ break (== '.') c
         checkCategoryName n2 t  "-m"
         checkFunctionName n2 fn "-m"
-        let m2 = CompileBinary (CategoryName t) (FunctionName fn) "" []
+        let m2 = CompileBinary (CategoryName t) (FunctionName fn) LinkDynamic "" []
         return (os2,CompileOptions (maybeDisableHelp h) is is2 ds es ep p m2 f) where
           check (t,"")     = return (t,defaultMainFunc)
           check (t,'.':fn) = return (t,fn)
@@ -160,12 +160,12 @@ parseCompileOptions = parseAll emptyCompileOptions . zip ([1..] :: [Int]) where
     update _ = argError n "--log-traces" "Requires an output filename."
   parseSingle _ ((n,"--log-traces"):_) = argError n "--log-traces" "Set mode to test (-t) first."
 
-  parseSingle (CompileOptions h is is2 ds es ep p (CompileBinary t fn o lf) f) ((n,"-o"):os)
+  parseSingle (CompileOptions h is is2 ds es ep p (CompileBinary t fn lm o lf) f) ((n,"-o"):os)
     | not $ null o = argError n "-o" "Output name already set."
     | otherwise = update os where
       update ((n2,o2):os2) = do
         checkPathName n2 o2 "-o"
-        return (os2,CompileOptions (maybeDisableHelp h) is is2 ds es ep p (CompileBinary t fn o2 lf) f)
+        return (os2,CompileOptions (maybeDisableHelp h) is is2 ds es ep p (CompileBinary t fn lm o2 lf) f)
       update _ = argError n "-o" "Requires an output name."
   parseSingle _ ((n,"-o"):_) = argError n "-o" "Set mode to binary (-m) first."
 

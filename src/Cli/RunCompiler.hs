@@ -108,7 +108,7 @@ runCompiler resolver backend (CompileOptions _ is is2 _ _ _ p (CompileFast c fn 
     msTestFiles = [],
     msExtraFiles = [],
     msExtraPaths = [],
-    msMode = (CompileBinary c fn (absolute </> show c) []),
+    msMode = (CompileBinary c fn LinkStatic (absolute </> show c) []),
     msForce = f
   }
   compileModule resolver backend spec <?? "In compilation of \"" ++ f2' ++ "\""

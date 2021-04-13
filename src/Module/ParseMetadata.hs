@@ -342,10 +342,11 @@ instance ConfigFormat CompileMode where
       sepAfter (string_ "binary")
       structOpen
       b <- runPermutation $ CompileBinary
-        <$> parseRequired "category:"      sourceParser
-        <*> parseRequired "function:"      sourceParser
-        <*> parseOptional "output:"     "" parseQuoted
-        <*> parseOptional "link_flags:" [] (parseList parseQuoted)
+        <$> parseRequired "category:"               sourceParser
+        <*> parseRequired "function:"               sourceParser
+        <*> parseOptional "link_mode:"  LinkDynamic parseLinkerMode
+        <*> parseOptional "output:"     ""          parseQuoted
+        <*> parseOptional "link_flags:" []          (parseList parseQuoted)
       structClose
       return b
     incremental = do
@@ -355,13 +356,15 @@ instance ConfigFormat CompileMode where
         <$> parseOptional "link_flags:" [] (parseList parseQuoted)
       structClose
       return lf
-  writeConfig (CompileBinary c f o lf) = do
+  writeConfig (CompileBinary c f lm o lf) = do
     validateCategoryName c
     validateFunctionName f
+    lm' <- showLinkerMode lm
     return $ [
         "binary {",
         indent ("category: " ++ show c),
         indent ("function: " ++ show f),
+        indent ("link_mode: " ++ lm'),
         indent ("output: " ++ show o),
         indent ("link_flags: [")
       ] ++ (indents . indents) (map show lf) ++ [
@@ -377,6 +380,15 @@ instance ConfigFormat CompileMode where
         "}"
       ]
   writeConfig _ = compilerErrorM "Invalid compile mode"
+
+parseLinkerMode :: TextParser LinkerMode
+parseLinkerMode = labeled "linker mode" $ static <|> dynamic where
+  static  = sepAfter (string_ "static")  >> return LinkStatic
+  dynamic = sepAfter (string_ "dynamic") >> return LinkDynamic
+
+showLinkerMode :: ErrorContextM m => LinkerMode -> m String
+showLinkerMode LinkStatic  = return "static"
+showLinkerMode LinkDynamic = return "dynamic"
 
 parseExprMacro :: TextParser (MacroName,Expression SourceContext)
 parseExprMacro = do

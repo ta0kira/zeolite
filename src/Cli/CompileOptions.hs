@@ -24,6 +24,7 @@ module Cli.CompileOptions (
   ExtraSource(..),
   ForceMode(..),
   HelpMode(..),
+  LinkerMode(..),
   emptyCompileOptions,
   getLinkFlags,
   getSourceCategories,
@@ -102,6 +103,7 @@ data CompileMode =
   CompileBinary {
     cbCategory :: CategoryName,
     cbFunction :: FunctionName,
+    cbLinker :: LinkerMode,
     cbOutputName :: FilePath,
     cbLinkFlags :: [String]
   } |
@@ -123,9 +125,11 @@ data CompileMode =
   CompileUnspecified
   deriving (Eq,Show)
 
+data LinkerMode = LinkStatic | LinkDynamic deriving (Eq,Show)
+
 isCompileBinary :: CompileMode -> Bool
-isCompileBinary (CompileBinary _ _ _ _) = True
-isCompileBinary _                       = False
+isCompileBinary (CompileBinary _ _ _ _ _) = True
+isCompileBinary _                         = False
 
 isCompileFast :: CompileMode -> Bool
 isCompileFast (CompileFast _ _ _) = True
@@ -157,6 +161,6 @@ maybeDisableHelp HelpUnspecified = HelpNotNeeded
 maybeDisableHelp h               = h
 
 getLinkFlags :: CompileMode -> [String]
-getLinkFlags (CompileBinary _ _ _ lf) = lf
-getLinkFlags (CompileIncremental lf)  = lf
-getLinkFlags _                        = []
+getLinkFlags (CompileBinary _ _ _ _ lf) = lf
+getLinkFlags (CompileIncremental lf)    = lf
+getLinkFlags _                          = []

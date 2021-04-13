@@ -331,6 +331,15 @@ tests = [
     checkWriteThenRead $ CompileBinary {
       cbCategory = CategoryName "SpecialCategory",
       cbFunction = FunctionName "specialFunction",
+      cbLinker = LinkStatic,
+      cbOutputName = "binary",
+      cbLinkFlags = []
+    },
+
+    checkWriteThenRead $ CompileBinary {
+      cbCategory = CategoryName "SpecialCategory",
+      cbFunction = FunctionName "specialFunction",
+      cbLinker = LinkDynamic,
       cbOutputName = "binary",
       cbLinkFlags = []
     },
@@ -338,6 +347,7 @@ tests = [
     checkWriteFail "bad category" $ CompileBinary {
       cbCategory = CategoryName "bad category",
       cbFunction = FunctionName "specialFunction",
+      cbLinker = LinkDynamic,
       cbOutputName = "binary",
       cbLinkFlags = []
     },
@@ -345,6 +355,7 @@ tests = [
     checkWriteFail "bad function" $ CompileBinary {
       cbCategory = CategoryName "SpecialCategory",
       cbFunction = FunctionName "bad function",
+      cbLinker = LinkDynamic,
       cbOutputName = "binary",
       cbLinkFlags = []
     },

@@ -235,29 +235,34 @@ compileModule resolver backend (ModuleSpec p d em is is2 ps xs ts es ep m f) = d
           fmap Just $ runCxxCommand backend command
       | isSuffixOf ".a" f2 || isSuffixOf ".o" f2 = return (Just f2)
       | otherwise = return Nothing
-    createBinary paths deps (CompileBinary n _ o lf) ms
-      | length ms >  1 = compilerErrorM $ "Multiple matches for main category " ++ show n ++ "."
-      | length ms == 0 = compilerErrorM $ "Main category " ++ show n ++ " not found."
-      | otherwise = do
-          f0 <- if null o
-                   then errorFromIO $ canonicalizePath $ p </> d </> show n
-                   else errorFromIO $ canonicalizePath $ p </> d </> o
-          let (CxxOutput _ _ _ ns2 req content) = head ms
-          let main = takeFileName f0 ++ ".cpp"
-          errorFromIO $ hPutStrLn stderr $ "Writing file " ++ main
-          let mainAbs = getCachedPath (p </> d) "main" main
-          writeCachedFile (p </> d) "main" main $ concat $ map (++ "\n") content
-          base <- resolveBaseModule resolver
-          deps2  <- loadPrivateDeps compilerHash f (mapMetadata deps) deps
+    createBinary paths deps (CompileBinary n _ lm o lf) [CxxOutput _ _ _ ns2 req content] = do
+      f0 <- if null o
+                then errorFromIO $ canonicalizePath $ p </> d </> show n
+                else errorFromIO $ canonicalizePath $ p </> d </> o
+      let main = takeFileName f0 ++ ".cpp"
+      errorFromIO $ hPutStrLn stderr $ "Writing file " ++ main
+      let mainAbs = getCachedPath (p </> d) "main" main
+      writeCachedFile (p </> d) "main" main $ concat $ map (++ "\n") content
+      base <- resolveBaseModule resolver
+      deps2  <- loadPrivateDeps compilerHash f (mapMetadata deps) deps
+      let paths' = fixPaths $ paths ++ base:(getIncludePathsForDeps deps)
+      command <- getCommand lm mainAbs f0 deps2 paths'
+      errorFromIO $ hPutStrLn stderr $ "Creating binary " ++ f0
+      f1 <- runCxxCommand backend command
+      return [f1] where
+        getCommand LinkStatic mainAbs f0 deps2 paths2 = do
           let lf' = lf ++ getLinkFlagsForDeps deps2
-          let paths' = fixPaths $ paths ++ base:(getIncludePathsForDeps deps)
           let os     = getObjectFilesForDeps deps2
           let ofr = getObjectFileResolver os
-          let os' = ofr ns2 req
-          let command = CompileToBinary mainAbs os' [] f0 paths' lf'
-          errorFromIO $ hPutStrLn stderr $ "Creating binary " ++ f0
-          f1 <- runCxxCommand backend command
-          return [f1]
+          let objects = ofr ns2 req
+          return $ CompileToBinary mainAbs objects [] f0 paths2 lf'
+        getCommand LinkDynamic mainAbs f0 deps2 paths2 = do
+          let objects = getLibrariesForDeps deps2
+          return $ CompileToBinary mainAbs objects [] f0 paths2 []
+    createBinary _ _ (CompileBinary n _ _ _ _) [] =
+      compilerErrorM $ "Main category " ++ show n ++ " not found."
+    createBinary _ _ (CompileBinary n _ _ _ _) _ =
+      compilerErrorM $ "Multiple matches for main category " ++ show n ++ "."
     createBinary _ _ _ _ = return []
     createLibrary _ _ [] [] = return []
     createLibrary name lf deps os = do
@@ -267,7 +272,7 @@ compileModule resolver backend (ModuleSpec p d em is is2 ps xs ts es ep m f) = d
       let objects = (nub $ concat $ map getObjectFiles os) ++ getLibrariesForDeps deps
       let command = CompileToShared objects name flags
       fmap (:[]) $ runCxxCommand backend command
-    maybeCreateMain cm2 xs2 (CompileBinary n f2 _ _) =
+    maybeCreateMain cm2 xs2 (CompileBinary n f2 _ _ _) =
       fmap (:[]) $ compileModuleMain cm2 xs2 n f2
     maybeCreateMain _ _ _ = return []
 
