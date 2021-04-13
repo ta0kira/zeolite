@@ -73,6 +73,9 @@ of this document.
   - [Procedure Pragmas](#procedure-pragmas)
   - [Local Variable Rules](#local-variable-rules)
   - [Expression Macros](#expression-macros)
+- [Known Language Limitations](#known-language-limitations)
+  - [Arbitrary Recursion in Types](#arbitrary-recursion-in-types)
+  - [`weak` References](#weak-references)
 
 ## Project Status
 
@@ -590,6 +593,26 @@ place of the full type when you are creating a value of the same type from a
 
   create () {
     <b>return</b> <b>#self</b>{ <span style='color:#b08000;'>0</span> }
+  }
+}</pre>
+
+A category can also have `@category` members, but *not*
+[`@type` members](#arbitrary-recursion-in-types).
+
+<pre style='color:#1f1c1b;background-color:#f6f8fa;'>
+<b>concrete</b> <b><span style='color:#0057ae;'>MyCategory</span></b> {
+  <span style='color:#644a9b;'>@type</span> global () -&gt; (<span style='color:#0057ae;'>MyCategory</span>)
+}
+
+<b>define</b> <b><span style='color:#0057ae;'>MyCategory</span></b> {
+  <span style='color:#644a9b;'>@value</span> <i><span style='color:#0057ae;'>Int</span></i> value
+
+  <span style='color:#898887;'>// @category members use inline initialization.</span>
+  <span style='color:#644a9b;'>@category</span> <span style='color:#0057ae;'>MyCategory</span> singleton &lt;- <span style='color:#0057ae;'>MyCategory</span>{ <span style='color:#b08000;'>0</span> }
+
+  global () {
+    <span style='color:#898887;'>// @category members are accessible from all functions in the category.</span>
+    <b>return</b> singleton
   }
 }</pre>
 
@@ -1696,6 +1719,74 @@ These can be used in place of language expressions.
     C++ macros, except that the substitution must be *independently* parsable
     as a valid expression, and it can only be used where expressions are
     otherwise allowed.
+
+## Known Language Limitations
+
+### Arbitrary Recursion in Types
+
+Because Zeolite supports calling functions on type parameters (e.g.,
+`#x.lessThan(x,y)`), the compiler is required to create a reference to a
+runtime representation of each type parameter. For example, when `Type<Foo>` is
+used at runtime, there is a runtime copy of `Type` with a reference to `Foo`
+stored as `Type`'s parameter. In addition, this representation is cached so that
+it can be shared everywhere `Type<Foo>` is used in the program.
+
+If you were to define a recursive function that also did a recursive param
+substitution when calling itself, you would create a new *static* object for
+each type substitution.
+
+<pre style='color:#1f1c1b;background-color:#f6f8fa;'>
+<span style='color:#644a9b;'>@type</span> badIdea&lt;<i><span style='color:#0057ae;'>#x</span></i>&gt; (<i><span style='color:#0057ae;'>Int</span></i>) -&gt; ()
+badIdea (limit) {
+  <b>if</b> (limit &gt; <span style='color:#b08000;'>0</span>) {
+    <span style='color:#006e28;'>\</span> badIdea&lt;<span style='color:#0057ae;'>Type</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>&gt;(limit<span style='color:#b08000;'>-1</span>)
+  }
+}</pre>
+
+In the example above, calling `badIdea<Int>(3)` will create `Type<Int>`,
+`Type<Type<Int>>`, and `Type<Type<Type<Int>>>` that will remain in memory until
+the program exits. The size of each `Type` is *very small*; they primarily
+consist of shared references to each of their paramters. (Procedure definitions
+are shared among all substitutions for a given type.)
+
+Since `@type` members *are not* allowed, the memory cost of this caching is
+likely to be fairly reasonable; especially since you will likely have a stack
+overflow before consuming much memory.
+
+At some point, the implementation *might* clear parts of the `@type` caches to
+avoid excessive memory consumption, which is another reason that `@type` members
+are disallowed.
+
+Note that C++ also allows this sort of recursion if it can be bounded at
+*compile time*. Even then, most compilers would generate a new copy of the
+function's code for each recursive call, which would likely bloat the resulting
+binary quite a bit more than the `@type`-caching done by Zeolite for the same
+depth of recursion.
+
+### `weak` References
+
+[`weak` references](#optional-and-weak-values) in Zeolite *do not* provide a
+guarantee that an `empty` reference means that the referenced object is no
+longer valid. (There *is* a guarantee that a non-`empty` reference means that
+the referenced object *is* still valid.)
+
+Specifically, there are two scenarios where `present(strong(value)) == false`
+can occur when `value` still exists:
+
+1. The last reference to `value` has been removed, but the underlying object is
+   still in the process of being cleaned up. Although the object is not safe to
+   use in this state, its resources (e.g., a thread) could still be in use.
+2. If one thread is in the process of dropping the last reference while *two or
+   more* other threads are *concurrently* attempting to lock in a `weak`
+   reference to the same object (using `strong`), one thread could get `empty`
+   back while another gets non-`empty`. This is *completely safe* from the
+   perspective of validity of the program's state; however, it means that the
+   return from `strong` *should not* be used as a "flag" indicating the
+   existence of an object.
+
+The latter limitation is an accepted compromise in the implementation of `weak`
+references that allows non-`weak` reference sharing (including `optional`) to
+have substantially faster operations.
 
 [cabal]: https://www.haskell.org/cabal/#install-upgrade
 [category]: https://en.wikipedia.org/wiki/Category_theory
