@@ -89,6 +89,10 @@ hugeCompileMetadata = CompileMetadata {
       "/home/project/special/binary1",
       "/home/project/special/binary2"
     ],
+    cmLibraries = [
+      "/home/project/special/library1",
+      "/home/project/special/library2"
+    ],
     cmLinkFlags = [
       "-lm",
       "-ldl"
@@ -180,6 +184,7 @@ tests = [
       cmHxxFiles = [],
       cmCxxFiles = [],
       cmBinaries = [],
+      cmLibraries = [],
       cmLinkFlags = [],
       cmObjectFiles = []
     },
@@ -201,6 +206,7 @@ tests = [
       cmHxxFiles = [],
       cmCxxFiles = [],
       cmBinaries = [],
+      cmLibraries = [],
       cmLinkFlags = [],
       cmObjectFiles = []
     },
@@ -222,6 +228,7 @@ tests = [
       cmHxxFiles = [],
       cmCxxFiles = [],
       cmBinaries = [],
+      cmLibraries = [],
       cmLinkFlags = [],
       cmObjectFiles = []
     },
@@ -245,6 +252,7 @@ tests = [
       cmHxxFiles = [],
       cmCxxFiles = [],
       cmBinaries = [],
+      cmLibraries = [],
       cmLinkFlags = [],
       cmObjectFiles = []
     },
@@ -268,6 +276,7 @@ tests = [
       cmHxxFiles = [],
       cmCxxFiles = [],
       cmBinaries = [],
+      cmLibraries = [],
       cmLinkFlags = [],
       cmObjectFiles = []
     },

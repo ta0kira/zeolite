@@ -137,6 +137,9 @@ compileModule resolver backend (ModuleSpec p d em is is2 ps xs ts es ep m f) = d
   let (osCat,osOther) = partitionEithers os2
   let os1' = resolveObjectDeps (deps1' ++ deps2) path path (os1 ++ osCat)
   warnPublic resolver (p </> d) pc dc os1' is
+  let allObjects = os1' ++ osOther ++ map OtherObjectFile os'
+  let libraryName = getCachedPath (p </> d) "" (show ns0 ++ ".so")
+  ls <- createLibrary libraryName (getLinkFlags m) (deps1' ++ deps2) allObjects
   let cm2 = CompileMetadata {
       cmVersionHash = compilerHash,
       cmPath = path,
@@ -153,6 +156,7 @@ compileModule resolver backend (ModuleSpec p d em is is2 ps xs ts es ep m f) = d
       cmTestFiles = sort ts2,
       cmHxxFiles = sort hxx',
       cmCxxFiles = sort cxx,
+      cmLibraries = ls,
       cmBinaries = [],
       cmLinkFlags = getLinkFlags m,
       cmObjectFiles = os1' ++ osOther ++ map OtherObjectFile os'
@@ -175,6 +179,7 @@ compileModule resolver backend (ModuleSpec p d em is is2 ps xs ts es ep m f) = d
       cmHxxFiles = cmHxxFiles cm2,
       cmCxxFiles = cmCxxFiles cm2,
       cmBinaries = bs,
+      cmLibraries = cmLibraries cm2,
       cmLinkFlags = cmLinkFlags cm2,
       cmObjectFiles = cmObjectFiles cm2
     }
@@ -254,6 +259,14 @@ compileModule resolver backend (ModuleSpec p d em is is2 ps xs ts es ep m f) = d
           f1 <- runCxxCommand backend command
           return [f1]
     createBinary _ _ _ _ = return []
+    createLibrary _ _ [] [] = return []
+    createLibrary name lf deps os = do
+      let flags = lf ++ getLinkFlagsForDeps deps
+      -- NOTE: nub is needed because an extension that defines multiple
+      -- categories will show up more than once in getObjectFiles.
+      let objects = (nub $ concat $ map getObjectFiles os) ++ getLibrariesForDeps deps
+      let command = CompileToShared objects name flags
+      fmap (:[]) $ runCxxCommand backend command
     maybeCreateMain cm2 xs2 (CompileBinary n f2 _ _) =
       fmap (:[]) $ compileModuleMain cm2 xs2 n f2
     maybeCreateMain _ _ _ = return []

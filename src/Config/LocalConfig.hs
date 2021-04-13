@@ -51,7 +51,9 @@ import Paths_zeolite_lang (getDataFileName,version)
 data Backend =
   UnixBackend {
     ucCxxBinary :: FilePath,
-    ucCxxOptions :: [String],
+    ucCompileFlags :: [String],
+    ucLibraryFlags :: [String],
+    ucBinaryFlags :: [String],
     ucArBinary :: FilePath
   }
   deriving (Read,Show)
@@ -78,10 +80,10 @@ compilerVersion = showVersion version
 
 instance CompilerBackend Backend where
   runCxxCommand = run where
-    run (UnixBackend cb co ab) (CompileToObject s p ms ps e) = do
+    run (UnixBackend cb ff _ _ ab) (CompileToObject s p ms ps e) = do
       objName <- errorFromIO $ canonicalizePath $ p </> (takeFileName $ dropExtension s ++ ".o")
       let otherOptions = map (("-I" ++) . normalise) ps ++ map macro ms
-      executeProcess cb (co ++ otherOptions ++ ["-c", s, "-o", objName]) <?? "In compilation of " ++ s
+      executeProcess cb (ff ++ otherOptions ++ ["-c", s, "-o", objName]) <?? "In compilation of " ++ s
       if e
          then do
            -- Extra files are put into .a since they will be unconditionally
@@ -90,12 +92,19 @@ instance CompilerBackend Backend where
            executeProcess ab ["-q",arName,objName] <?? "In packaging of " ++ objName
            return arName
          else return objName
-    run (UnixBackend cb co _) (CompileToBinary m ss ms o ps lf) = do
+    run (UnixBackend cb _ ff _ _) (CompileToShared ss o lf) = do
+      let arFiles      = filter (isSuffixOf ".a")       ss
+      let otherFiles   = filter (not . isSuffixOf ".a") ss
+      let flags = nub lf
+      let args = ff ++ otherFiles ++ arFiles ++ ["-o", o] ++ flags
+      executeProcess cb args <?? "In linking of " ++ o
+      return o
+    run (UnixBackend cb _ _ ff _) (CompileToBinary m ss ms o ps lf) = do
       let arFiles      = filter (isSuffixOf ".a")       ss
       let otherFiles   = filter (not . isSuffixOf ".a") ss
       let otherOptions = map (("-I" ++) . normalise) ps ++ map macro ms
       let flags = nub lf
-      let args = co ++ otherOptions ++ m:otherFiles ++ arFiles ++ ["-o", o] ++ flags
+      let args = ff ++ otherOptions ++ m:otherFiles ++ arFiles ++ ["-o", o] ++ flags
       executeProcess cb args <?? "In linking of " ++ o
       return o
     macro (n,Just v)  = "-D" ++ n ++ "=" ++ v

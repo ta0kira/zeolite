@@ -32,7 +32,7 @@ import Base.CompilerError
 
 
 class CompilerBackend b where
-  runCxxCommand   :: (MonadIO m, ErrorContextM m) => b -> CxxCommand -> m String
+  runCxxCommand   :: (MonadIO m, ErrorContextM m) => b -> CxxCommand -> m FilePath
   runTestCommand  :: (MonadIO m, ErrorContextM m) => b -> TestCommand -> m TestCommandResult
   getCompilerHash :: b -> VersionHash
 
@@ -43,26 +43,31 @@ instance Show VersionHash where
 
 data CxxCommand =
   CompileToObject {
-    ctoSource :: String,
-    ctoPath :: String,
+    ctoSource :: FilePath,
+    ctoPath :: FilePath,
     ctoMacros :: [(String,Maybe String)],
-    ctoPaths :: [String],
+    ctoPaths :: [FilePath],
     ctoExtra :: Bool
   } |
+  CompileToShared {
+    ctsSources :: [FilePath],
+    ctsOutput :: FilePath,
+    ctsLinkFlags :: [String]
+  } |
   CompileToBinary {
-    ctbMain :: String,
-    ctbSources :: [String],
+    ctbMain :: FilePath,
+    ctbSources :: [FilePath],
     ctbMacros :: [(String,Maybe String)],
-    ctbOutput :: String,
-    ctbPaths :: [String],
+    ctbOutput :: FilePath,
+    ctbPaths :: [FilePath],
     ctbLinkFlags :: [String]
   }
   deriving (Show)
 
 data TestCommand =
   TestCommand {
-    tcBinary :: String,
-    tcPath :: String,
+    tcBinary :: FilePath,
+    tcPath :: FilePath,
     tcArgs :: [String]
   }
   deriving (Show)

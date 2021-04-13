@@ -25,6 +25,7 @@ module Module.ProcessMetadata (
   getCacheRelativePath,
   getExprMap,
   getIncludePathsForDeps,
+  getLibrariesForDeps,
   getLinkFlagsForDeps,
   getNamespacesForDeps,
   getObjectFilesForDeps,
@@ -194,6 +195,9 @@ getIncludePathsForDeps = concat . map cmPublicSubdirs
 getLinkFlagsForDeps :: [CompileMetadata] -> [String]
 getLinkFlagsForDeps = concat . map cmLinkFlags
 
+getLibrariesForDeps :: [CompileMetadata] -> [FilePath]
+getLibrariesForDeps = concat . map cmLibraries
+
 getObjectFilesForDeps :: [CompileMetadata] -> [ObjectFile]
 getObjectFilesForDeps = concat . map cmObjectFiles
 
@@ -282,7 +286,7 @@ checkModuleVersionHash :: VersionHash -> CompileMetadata -> Bool
 checkModuleVersionHash h m = cmVersionHash m == h
 
 checkModuleFreshness :: VersionHash -> MetadataMap -> FilePath -> CompileMetadata -> TrackedErrorsIO ()
-checkModuleFreshness h ca p m@(CompileMetadata _ p2 _ _ is is2 _ _ _ _ ps xs ts hxx cxx bs _ os) = do
+checkModuleFreshness h ca p m@(CompileMetadata _ p2 _ _ is is2 _ _ _ _ ps xs ts hxx cxx bs ls _ os) = do
   time <- errorFromIO $ getModificationTime $ getCachedPath p "" metadataFilename
   (ps2,xs2,ts2) <- findSourceFiles p ""
   let rs = Set.toList $ Set.fromList $ concat $ map getRequires os
@@ -297,6 +301,7 @@ checkModuleFreshness h ca p m@(CompileMetadata _ p2 _ _ is is2 _ _ _ _ ps xs ts 
     (map (checkInput time . (p2 </>)) $ ps ++ xs) ++
     (map (checkInput time . getCachedPath p2 "") $ hxx ++ cxx) ++
     (map checkOutput bs) ++
+    (map checkOutput ls) ++
     (map checkObject os) ++
     (map checkRequire rs)
   where

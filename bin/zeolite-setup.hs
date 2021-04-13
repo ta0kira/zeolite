@@ -72,8 +72,14 @@ optionalLibraries = [
 includePaths :: [String]
 includePaths = ["lib"]
 
-cxxFlags :: [String]
-cxxFlags = ["-O2", "-std=c++11"]
+compileFlags :: [String]
+compileFlags = ["-O2", "-std=c++11", "-fPIC"]
+
+libraryFlags :: [String]
+libraryFlags = ["-shared", "-fpic"]
+
+binaryFlags :: [String]
+binaryFlags = ["-O2", "-std=c++11"]
 
 createConfig :: IO LocalConfig
 createConfig = do
@@ -82,13 +88,13 @@ createConfig = do
   ar    <- findExecutables arBinary
   compiler <- promptChoice "Which clang-compatible C++ compiler should be used?" (clang ++ gcc)
   archiver <- promptChoice "Which ar-compatible archiver should be used?" ar
-  -- Cannot be overridden at this point.
-  let options = cxxFlags
   let config = LocalConfig {
       lcBackend = UnixBackend {
-        ucCxxBinary = compiler,
-        ucCxxOptions = options,
-        ucArBinary = archiver
+        ucCxxBinary    = compiler,
+        ucCompileFlags = compileFlags,
+        ucLibraryFlags = libraryFlags,
+        ucBinaryFlags  = binaryFlags,
+        ucArBinary     = archiver
       },
       lcResolver = SimpleResolver {
         srVisibleSystem = includePaths,

@@ -139,9 +139,10 @@ instance ConfigFormat CompileMetadata where
     <*> parseRequired "hxx_files:"          (parseList parseQuoted)
     <*> parseRequired "cxx_files:"          (parseList parseQuoted)
     <*> parseRequired "binaries:"           (parseList parseQuoted)
+    <*> parseRequired "libraries:"          (parseList parseQuoted)
     <*> parseRequired "link_flags:"         (parseList parseQuoted)
     <*> parseRequired "object_files:"       (parseList readConfig)
-  writeConfig (CompileMetadata h p ns1 ns2 is is2 cs1 cs2 ds1 ds2 ps xs ts hxx cxx bs lf os) = do
+  writeConfig (CompileMetadata h p ns1 ns2 is is2 cs1 cs2 ds1 ds2 ps xs ts hxx cxx bs ls lf os) = do
     validateHash h
     ns1' <- maybeShowNamespace "public_namespace:"  ns1
     ns2' <- maybeShowNamespace "private_namespace:" ns2
@@ -187,6 +188,9 @@ instance ConfigFormat CompileMetadata where
         "]",
         "binaries: ["
       ] ++ indents (map show bs) ++ [
+        "]",
+        "libraries: ["
+      ] ++ indents (map show ls) ++ [
         "]",
         "link_flags: ["
       ] ++ indents (map show lf) ++ [

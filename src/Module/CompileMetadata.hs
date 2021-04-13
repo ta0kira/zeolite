@@ -22,6 +22,7 @@ module Module.CompileMetadata (
   ModuleConfig(..),
   ObjectFile(..),
   isCategoryObjectFile,
+  getObjectFiles,
   mergeObjectFiles,
 ) where
 
@@ -53,6 +54,7 @@ data CompileMetadata =
     cmHxxFiles :: [FilePath],
     cmCxxFiles :: [FilePath],
     cmBinaries :: [FilePath],
+    cmLibraries :: [FilePath],
     cmLinkFlags :: [FilePath],
     cmObjectFiles :: [ObjectFile]
   }
@@ -92,6 +94,10 @@ mergeObjectFiles o _ = o
 isCategoryObjectFile :: ObjectFile -> Bool
 isCategoryObjectFile (CategoryObjectFile _ _ _) = True
 isCategoryObjectFile (OtherObjectFile _)        = False
+
+getObjectFiles :: ObjectFile -> [FilePath]
+getObjectFiles (CategoryObjectFile _ _ os) = os
+getObjectFiles (OtherObjectFile o)         = [o]
 
 data ModuleConfig =
   ModuleConfig {

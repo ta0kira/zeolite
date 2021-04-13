@@ -70,6 +70,10 @@ binaries: [
   "/home/project/special/binary1"
   "/home/project/special/binary2"
 ]
+libraries: [
+  "/home/project/special/library1"
+  "/home/project/special/library2"
+]
 link_flags: [
   "-lm"
   "-ldl"
