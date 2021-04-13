@@ -6,7 +6,7 @@
 <language
     name="Zeolite Module"
     section="Configuration"
-    version="1.3"
+    version="1.4"
     kateversion="2.4"
     indenter="cstyle"
     style="Zeolite Module"
@@ -43,6 +43,7 @@
         <StringDetect attribute="Keyword" context="#stay" String="include_paths:" />
         <StringDetect attribute="Keyword" context="#stay" String="link_flags:" />
         <StringDetect attribute="Keyword" context="#stay" String="mode:" />
+        <StringDetect attribute="Keyword" context="Link Mode" String="link_mode:" />
         <StringDetect attribute="Keyword" context="Macro Name" String="name:" />
         <StringDetect attribute="Keyword" context="#stay" String="output:" />
         <StringDetect attribute="Keyword" context="#stay" String="path:" />
@@ -76,6 +77,14 @@
         <IncludeRules context="Any Comment" />
         <RegExpr attribute="Category Name" context="#pop" String="\b[A-Z][a-zA-Z0-9]*\b" />
         <RegExpr attribute="Error" context="#pop" String="[^ \]]+" />
+      </context>
+
+      <context name="Link Mode" attribute="Normal Text" lineEndContext="#stay" >
+        <DetectSpaces />
+        <IncludeRules context="Any Comment" />
+        <RegExpr attribute="Category Name" context="#pop" String="\bstatic\b" />
+        <RegExpr attribute="Category Name" context="#pop" String="\bdynamic\b" />
+        <RegExpr attribute="Error" context="#pop" String="[^ \t\r\n]+" />
       </context>
 
       <context name="Function" attribute="Normal Text" lineEndContext="#stay" >

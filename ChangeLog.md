@@ -4,6 +4,24 @@
 
 ### Compiler CLI
 
+* **[breaking]** Creates a single shared library per Zeolite module, and uses
+  dynamic linking as the default for binaries and `testcase`s. `--fast` mode
+  still uses static linking, and static linking can be enabled for a binary
+  using the `link_mode:` field in `.zeolite-module`:
+
+  ```text
+  root: "../.."
+  path: "your/module"
+  private_deps: [
+    "lib/util"
+  ]
+  mode: binary {
+    category: YourProgram
+    function: run
+    link_mode: static
+  }
+  ```
+
 * **[breaking]** Eliminates dynamic memory allocation for `Bool`, `Char`,
   `Float`, and `Int`, including `optional` and `weak` variants. This improves
   the efficiency of code that makes a lot of function calls using those types.
