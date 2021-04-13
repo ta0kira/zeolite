@@ -314,7 +314,7 @@ runModuleTests resolver backend cl base tp (LoadedTests p d m em deps1 deps2) = 
   ts' <- zipWithContents resolver p $ map (d </>) $ filter isTestAllowed $ cmTestFiles m
   path <- errorFromIO $ canonicalizePath (p </> d)
   cm <- fmap (createLanguageModule [] em) $ loadModuleGlobals resolver path (NoNamespace,NoNamespace) [] (Just m) deps1 []
-  mapCompilerM (runSingleTest backend cl cm path paths (m:deps2)) ts' where
+  mapCompilerM (runSingleTest backend cl cm paths (m:deps2)) ts' where
     allowTests = Set.fromList tp
     isTestAllowed t = if null allowTests then True else t `Set.member` allowTests
     showSkipped f = compilerWarningM $ "Skipping tests in " ++ f ++ " due to explicit test filter."

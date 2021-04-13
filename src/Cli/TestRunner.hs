@@ -30,12 +30,10 @@ import System.Posix.Temp (mkdtemp)
 import System.FilePath
 import Text.Regex.TDFA
 import qualified Data.Map as Map
-import qualified Data.Set as Set
 
 import Base.CompilerError
 import Base.TrackedErrors
 import Cli.Programs
-import CompilerCxx.Code (integratedCategoryDeps)
 import CompilerCxx.CxxFiles
 import CompilerCxx.LanguageModule
 import CompilerCxx.Naming
@@ -50,9 +48,9 @@ import Types.TypeCategory
 
 
 runSingleTest :: CompilerBackend b => b -> FilePath ->
-  LanguageModule SourceContext -> FilePath -> [FilePath] -> [CompileMetadata] ->
+  LanguageModule SourceContext -> [FilePath] -> [CompileMetadata] ->
   (String,String) -> TrackedErrorsIO ((Int,Int),TrackedErrors ())
-runSingleTest b cl cm p paths deps (f,s) = do
+runSingleTest b cl cm paths deps (f,s) = do
   errorFromIO $ hPutStrLn stderr $ "\nExecuting tests from " ++ f
   allResults <- checkAndRun (parseTestSource (f,s))
   return $ second (("\nIn test file " ++ f) ??>) allResults where
@@ -209,7 +207,7 @@ runSingleTest b cl cm p paths deps (f,s) = do
       let found = any (=~ r) ms
       when (found && not expected) $ compilerErrorM $ "Pattern \"" ++ r ++ "\" present in " ++ n
       when (not found && expected) $ compilerErrorM $ "Pattern \"" ++ r ++ "\" missing from " ++ n
-    createBinary (CxxOutput _ f2 _ ns req content) timeout xx = do
+    createBinary (CxxOutput _ f2 _ _ _ content) timeout xx = do
       dir <- errorFromIO $ mkdtemp "/tmp/ztest_"
       errorFromIO $ hPutStrLn stderr $ "Writing temporary files to " ++ dir
       sources <- mapCompilerM (writeSingleFile dir) xx
