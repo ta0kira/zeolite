@@ -1,0 +1,12 @@
+concrete Program {
+  @type run () -> ()
+}
+
+define Program {
+  run () {
+    \ LazyStream<Formatted>.new()
+        .append($ExprLookup[MODULE_PATH]$ + "\n")
+        .append("Static linking works!\n")
+        .writeTo(SimpleOutput.stdout())
+  }
+}

@@ -262,39 +262,14 @@ test_show_deps() {
 }
 
 
-test_fast() {
-  local temp=$(execute mktemp -d)
-  local category='HelloWorld'
-  local file="$temp/hello-world.0rx"
-  create_file "$file" <<END
-// $file
-
-concrete $category {
-  @type run () -> ()
-}
-
-define $category {
-  run () {
-    \ LazyStream<Formatted>.new()
-        .append(\$ExprLookup[MODULE_PATH]\$ + "\n")
-        .append("Hello World\n")
-        .writeTo(SimpleOutput.stdout())
-  }
-}
-END
-  do_zeolite -I lib/util --fast $category "$file"
-  local output=$(execute "$PWD/$category")
-  if ! echo "$output" | fgrep -xq 'Hello World'; then
-    show_message 'Expected "Hello World" in program output:'
+test_fast_static() {
+  do_zeolite -p "$ZEOLITE_PATH/tests/fast-static" -I lib/util --fast Program program.0rx
+  local output=$(execute "$ZEOLITE_PATH/tests/fast-static/Program")
+  if ! echo "$output" | fgrep -xq 'Static linking works!'; then
+    show_message 'Expected "Static linking works!" in program output:'
     echo "$output" 1>&2
     return 1
   fi
-  if ! echo "$output" | fgrep -xq "$PWD"; then
-    show_message 'Expected $PWD in program output:'
-    echo "$output" 1>&2
-    return 1
-  fi
-  execute rm -r "$temp" "$PWD/$category" || true
 }
 
 
@@ -360,7 +335,7 @@ test_example_primes() {
   do_zeolite -p "$ZEOLITE_PATH" -r example/primes -f
   {
     echo;
-    sleep 0.01;
+    sleep 0.1;
     echo;
     echo "exit";
   } | execute_noredir "$binary" 2> /dev/null | head -n100 | tr $'\n' ',' > "$temp"
@@ -421,7 +396,7 @@ ALL_TESTS=(
   test_warn_public
   test_templates
   test_show_deps
-  test_fast
+  test_fast_static
   test_bad_system_include
   test_global_include
   test_example_hello

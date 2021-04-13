@@ -138,6 +138,7 @@ compileModule resolver backend (ModuleSpec p d em is is2 ps xs ts es ep m f) = d
   let os1' = resolveObjectDeps (deps1' ++ deps2) path path (os1 ++ osCat)
   warnPublic resolver (p </> d) pc dc os1' is
   let allObjects = os1' ++ osOther ++ map OtherObjectFile os'
+  createCachePath (p </> d)
   let libraryName = getCachedPath (p </> d) "" (show ns0 ++ ".so")
   ls <- createLibrary libraryName (getLinkFlags m) (deps1' ++ deps2) allObjects
   let cm2 = CompileMetadata {
