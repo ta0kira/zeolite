@@ -23,6 +23,7 @@ limitations under the License.
 module Base.TrackedErrors (
   TrackedErrors,
   TrackedErrorsIO,
+  TrackedErrorsT,
   asCompilerError,
   asCompilerWarnings,
   fromTrackedErrors,
@@ -68,7 +69,7 @@ type TrackedErrorsIO = TrackedErrorsT IO
 
 data TrackedErrorsT m a =
   TrackedErrorsT {
-    citState :: m (TrackedErrorsState a)
+    tetState :: m (TrackedErrorsState a)
   }
 
 getCompilerError :: TrackedErrors a -> CompilerMessage
@@ -81,22 +82,22 @@ getCompilerWarnings :: TrackedErrors a -> CompilerMessage
 getCompilerWarnings = runIdentity . getCompilerWarningsT
 
 getCompilerErrorT :: Monad m => TrackedErrorsT m a -> m CompilerMessage
-getCompilerErrorT = fmap cfErrors . citState
+getCompilerErrorT = fmap cfErrors . tetState
 
 getCompilerSuccessT :: Monad m => TrackedErrorsT m a -> m a
-getCompilerSuccessT = fmap csData . citState
+getCompilerSuccessT = fmap csData . tetState
 
 getCompilerWarningsT :: Monad m => TrackedErrorsT m a -> m CompilerMessage
-getCompilerWarningsT = fmap getWarnings . citState
+getCompilerWarningsT = fmap getWarnings . tetState
 
 fromTrackedErrors :: Monad m => TrackedErrors a -> TrackedErrorsT m a
 fromTrackedErrors x = runIdentity $ do
-  x' <- citState x
+  x' <- tetState x
   return $ TrackedErrorsT $ return x'
 
 asCompilerWarnings :: Monad m => TrackedErrors a -> TrackedErrorsT m ()
 asCompilerWarnings x = runIdentity $ do
-  x' <- citState x
+  x' <- tetState x
   return $ TrackedErrorsT $ return $
     case x' of
          (CompilerFail ws es)      -> CompilerSuccess (ws <> es) [] ()
@@ -104,7 +105,7 @@ asCompilerWarnings x = runIdentity $ do
 
 asCompilerError :: Monad m => TrackedErrors a -> TrackedErrorsT m ()
 asCompilerError x = runIdentity $ do
-  x' <- citState x
+  x' <- tetState x
   return $ TrackedErrorsT $ return $
     case x' of
          (CompilerSuccess ws bs _) -> includeBackground bs $ CompilerFail mempty ws
@@ -112,7 +113,7 @@ asCompilerError x = runIdentity $ do
 
 toTrackedErrors :: Monad m => TrackedErrorsT m a -> m (TrackedErrors a)
 toTrackedErrors x = do
-  x' <- citState x
+  x' <- tetState x
   return $ TrackedErrorsT $ return x'
 
 tryTrackedErrorsIO :: String -> String -> TrackedErrorsIO a -> IO a
@@ -152,11 +153,11 @@ instance Show a => Show (TrackedErrorsState a) where
     showAs m = (m:) . map ("  " ++)
 
 instance Show a => Show (TrackedErrors a) where
-  show = show . runIdentity . citState
+  show = show . runIdentity . tetState
 
 instance (Functor m, Monad m) => Functor (TrackedErrorsT m) where
   fmap f x = TrackedErrorsT $ do
-    x' <- citState x
+    x' <- tetState x
     case x' of
          CompilerFail w e      -> return $ CompilerFail w e -- Not the same a.
          CompilerSuccess w b d -> return $ CompilerSuccess w b (f d)
@@ -164,8 +165,8 @@ instance (Functor m, Monad m) => Functor (TrackedErrorsT m) where
 instance (Applicative m, Monad m) => Applicative (TrackedErrorsT m) where
   pure = TrackedErrorsT .return . CompilerSuccess mempty []
   f <*> x = TrackedErrorsT $ do
-    f' <- citState f
-    x' <- citState x
+    f' <- tetState f
+    x' <- tetState x
     case (f',x') of
          (CompilerFail w e,_) ->
            return $ CompilerFail w e -- Not the same a.
@@ -176,11 +177,11 @@ instance (Applicative m, Monad m) => Applicative (TrackedErrorsT m) where
 
 instance Monad m => Monad (TrackedErrorsT m) where
   x >>= f = TrackedErrorsT $ do
-    x' <- citState x
+    x' <- tetState x
     case x' of
          CompilerFail w e -> return $ CompilerFail w e -- Not the same a.
          CompilerSuccess w b d -> do
-           d2 <- citState $ f d
+           d2 <- tetState $ f d
            return $ includeBackground b $ includeWarnings w d2
   return = pure
 
@@ -198,19 +199,19 @@ instance MonadIO m => MonadIO (TrackedErrorsT m) where
 instance Monad m => ErrorContextM (TrackedErrorsT m) where
   compilerErrorM e = TrackedErrorsT $ return $ CompilerFail mempty $ compilerMessage e
   withContextM x c = TrackedErrorsT $ do
-    x' <- citState x
+    x' <- tetState x
     case x' of
          CompilerFail w e        -> return $ CompilerFail (pushWarningScope c w) (pushErrorScope c e)
          CompilerSuccess w bs x2 -> return $ CompilerSuccess (pushWarningScope c w) bs x2
   summarizeErrorsM x e2 = TrackedErrorsT $ do
-    x' <- citState x
+    x' <- tetState x
     case x' of
          CompilerFail w e -> return $ CompilerFail w (pushErrorScope e2 e)
          x2 -> return x2
   compilerWarningM w = TrackedErrorsT (return $ CompilerSuccess (compilerMessage w) [] ())
   compilerBackgroundM b = TrackedErrorsT (return $ CompilerSuccess mempty [b] ())
   resetBackgroundM x = TrackedErrorsT $ do
-    x' <- citState x
+    x' <- tetState x
     case x' of
          CompilerSuccess w _ d -> return $ CompilerSuccess w [] d
          x2                   -> return x2
@@ -227,20 +228,20 @@ instance Monad m => CollectErrorsM (TrackedErrorsT m) where
 
 instance ErrorContextT TrackedErrorsT where
   isCompilerErrorT x = do
-    x' <- citState x
+    x' <- tetState x
     case x' of
          CompilerFail _ _ -> return True
-         _               -> return False
+         _                -> return False
   ifElseSuccessT x success failure = TrackedErrorsT $ do
-    x' <- citState x
+    x' <- tetState x
     case x' of
-         (CompilerSuccess _ _ _) -> success
-         (CompilerFail _ _)      -> failure
-    return $ x'
+         CompilerSuccess _ _ _ -> success
+         _                     -> failure
+    return x'
 
 combineResults :: (Monad m, Foldable f) =>
   ([TrackedErrorsState a] -> TrackedErrorsState b) -> f (TrackedErrorsT m a) -> TrackedErrorsT m b
-combineResults f = TrackedErrorsT . fmap f . sequence . map citState . foldr (:) []
+combineResults f = TrackedErrorsT . fmap f . sequence . map tetState . foldr (:) []
 
 getWarnings :: TrackedErrorsState a -> CompilerMessage
 getWarnings (CompilerFail w _)      = w

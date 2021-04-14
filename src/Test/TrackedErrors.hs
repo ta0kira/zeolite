@@ -20,6 +20,9 @@ limitations under the License.
 
 module Test.TrackedErrors (tests) where
 
+import Control.Arrow (first)
+import Control.Monad.Writer
+
 import Base.CompilerError
 import Base.TrackedErrors
 
@@ -84,8 +87,35 @@ tests = [
 
     checkSuccess 'a' ((resetBackgroundM $ compilerBackgroundM "background") >> return 'a'),
     checkError "error\n"
-      ((resetBackgroundM $ compilerBackgroundM "background") >> compilerErrorM "error" :: TrackedErrorsIO ())
+      ((resetBackgroundM $ compilerBackgroundM "background") >> compilerErrorM "error" :: TrackedErrorsIO ()),
+
+    checkWriterSuccess ('x',"ab") (ifElseSuccessT (lift (tell "a") >> return 'x') (tell "b") (tell "c")),
+    checkWriterFail ("failed\n","ac") (ifElseSuccessT (lift (tell "a") >> compilerErrorM "failed") (tell "b") (tell "c") :: TrackedErrorsT (Writer String) ())
   ]
+
+checkWriterSuccess :: (Eq a, Show a) => (a,String) -> TrackedErrorsT (Writer String) a -> IO (TrackedErrors ())
+checkWriterSuccess x y = do
+  let (failed,_) = runWriter $ isCompilerErrorT y
+  if failed
+     then return $ fst $ runWriter $ toTrackedErrors $ y >> return ()
+     else do
+       let y' = runWriter $ getCompilerSuccessT y
+       if y' == x
+          then return $ return ()
+          else return $ compilerErrorM $ "Expected value " ++ show x ++ " but got value " ++ show y'
+
+checkWriterFail :: (Eq a, Show a) => (String,String) -> TrackedErrorsT (Writer String) a -> IO (TrackedErrors ())
+checkWriterFail x y = do
+  let (failed,_) = runWriter $ isCompilerErrorT y
+  if failed
+     then do
+       let y' = first show $ runWriter $ getCompilerErrorT y
+       if y' == x
+          then return $ return ()
+          else return $ compilerErrorM $ "Expected error " ++ show x ++ " but got error " ++ show y'
+     else do
+       let y' = runWriter $ getCompilerSuccessT y
+       return $ compilerErrorM $ "Expected failure but got value " ++ show y'
 
 checkSuccess :: (Eq a, Show a) => a -> TrackedErrorsIO a -> IO (TrackedErrors ())
 checkSuccess x y = do
