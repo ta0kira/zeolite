@@ -56,6 +56,11 @@
   default is to prevent a deadlock or infinite loop from blocking continuous
   integration (CI) runners.
 
+### Libraries
+
+* **[new]** Adds `ParseChars` helper to `lib/util`, to parse `Float` and `Int`
+  from `String`s.
+
 ## 0.17.0.0  -- 2021-04-06
 
 ### Language
