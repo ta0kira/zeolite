@@ -81,6 +81,7 @@ class MonadTrans t => ErrorContextT t where
   isCompilerErrorT :: (Monad m, ErrorContextM (t m)) => t m a -> m Bool
   isCompilerSuccessT :: (Monad m, ErrorContextM (t m)) => t m a -> m Bool
   isCompilerSuccessT = fmap not . isCompilerErrorT
+  ifElseSuccessT :: (Monad m, ErrorContextM (t m)) => t m a -> m () -> m () -> t m a
 
 (<??) :: ErrorContextM m => m a -> String -> m a
 (<??) = withContextM

@@ -180,12 +180,10 @@ runSingleTest b cl cm paths deps (f,s) = do
              _ -> fromTrackedErrors $ checkContent rs es (lines $ show $ getCompilerWarnings res) err out
       where
         context = "\nIn unittest " ++ show f2 ++ formatFullContextBrace c
-        printOutcome outcome = do
-          failed <- isCompilerErrorM outcome
-          if failed
-             then errorFromIO $ hPutStrLn stderr $ "--- unittest " ++ show f2 ++ " failed ---"
-             else errorFromIO $ hPutStrLn stderr $ "--- unittest " ++ show f2 ++ " passed ---"
-          outcome
+        printOutcome outcome =
+          ifElseSuccessT outcome
+            (hPutStrLn stderr $ "--- unittest " ++ show f2 ++ " passed ---")
+            (hPutStrLn stderr $ "--- unittest " ++ show f2 ++ " failed ---")
 
     compileAll args cs ds ts = do
       let ns1 = StaticNamespace $ privateNamespace s

@@ -231,6 +231,12 @@ instance ErrorContextT TrackedErrorsT where
     case x' of
          CompilerFail _ _ -> return True
          _               -> return False
+  ifElseSuccessT x success failure = TrackedErrorsT $ do
+    x' <- citState x
+    case x' of
+         (CompilerSuccess _ _ _) -> success
+         (CompilerFail _ _)      -> failure
+    return $ x'
 
 combineResults :: (Monad m, Foldable f) =>
   ([TrackedErrorsState a] -> TrackedErrorsState b) -> f (TrackedErrorsT m a) -> TrackedErrorsT m b
