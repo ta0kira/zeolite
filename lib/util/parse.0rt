@@ -1,0 +1,77 @@
+/* -----------------------------------------------------------------------------
+Copyright 2021 Kevin P. Barry
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+----------------------------------------------------------------------------- */
+
+// Author: Kevin P. Barry [ta0kira@gmail.com]
+
+testcase "FullParse tests" {
+  success
+}
+
+unittest floatNoDecimal {
+  \ UtilTesting.checkSuccessBetween<?>(FullParse.float("123"),122.9,123.1)
+}
+
+unittest floatDecimalLeft {
+  \ UtilTesting.checkSuccessBetween<?>(FullParse.float(".123"),0.1229,0.1231)
+}
+
+unittest floatDecimalRight {
+  \ UtilTesting.checkSuccessBetween<?>(FullParse.float("123."),122.9,123.1)
+}
+
+unittest floatDecimalMiddle {
+  \ UtilTesting.checkSuccessBetween<?>(FullParse.float("123.456"),123.4559,123.4561)
+}
+
+unittest floatNegative {
+  \ UtilTesting.checkSuccessBetween<?>(FullParse.float("-123.456"),-123.4561,-123.4559)
+}
+
+unittest floatNegativeDecimalLeft {
+  \ UtilTesting.checkSuccessBetween<?>(FullParse.float("-.456"),-0.4561,-0.4559)
+}
+
+unittest floatExponentNoDecimal {
+  \ UtilTesting.checkSuccessBetween<?>(FullParse.float("123E5"),122.9E5,123.1E5)
+}
+
+unittest floatNegativeExponentNoDecimal {
+  \ UtilTesting.checkSuccessBetween<?>(FullParse.float("123E-5"),122.9E-5,123.1E-5)
+}
+
+unittest floatExponentDecimalRight {
+  \ UtilTesting.checkSuccessBetween<?>(FullParse.float("123.E5"),122.9E5,123.1E5)
+}
+
+unittest floatExponentDecimalMiddle {
+  \ UtilTesting.checkSuccessBetween<?>(FullParse.float("123.456E5"),123.4559E5,123.4561E5)
+}
+
+unittest floatEmpty {
+  \ UtilTesting.checkError(FullParse.float(""))
+}
+
+unittest floatNoDigits {
+  \ UtilTesting.checkError(FullParse.float("."))
+}
+
+unittest floatTwoDecimals {
+  \ UtilTesting.checkError(FullParse.float("1.1."))
+}
+
+unittest floatDecimalAfterExponent {
+  \ UtilTesting.checkError(FullParse.float("1E.5"))
+}
