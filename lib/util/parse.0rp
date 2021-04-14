@@ -17,7 +17,7 @@ limitations under the License.
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
 // Helpers to parse a full sequence of Char.
-concrete FullParse {
+concrete ParseChars {
   // Parses a Float.
   //
   // Args:
@@ -29,12 +29,13 @@ concrete FullParse {
   // Notes:
   // - At least one digit is required.
   // - Leading +/- signs may be used.
+  // - A successful parse must consume the entire sequence.
   // - Scientific notation is allowed, e.g., "10E-5".
   // - This function does not check for overflow/underflow.
   //
   // Example:
   //
-  //   ErrorOr<Float> value <- FullParse.float("123.456E5")
+  //   ErrorOr<Float> value <- ParseChars.float("123.456E5")
   //   if (value.isError()) {
   //     fail(value.getError())
   //   }
@@ -51,11 +52,12 @@ concrete FullParse {
   // Notes:
   // - At least one digit is required.
   // - Leading +/- signs may be used.
+  // - A successful parse must consume the entire sequence.
   // - This function does not check for overflow/underflow.
   //
   // Example:
   //
-  //   ErrorOr<Int> value <- FullParse.int("123")
+  //   ErrorOr<Int> value <- ParseChars.int("123")
   //   if (value.isError()) {
   //     fail(value.getError())
   //   }
@@ -72,11 +74,12 @@ concrete FullParse {
   // Notes:
   // - At least one digit is required.
   // - Leading +/- signs may be used.
+  // - A successful parse must consume the entire sequence.
   // - This function does not check for overflow/underflow.
   //
   // Example:
   //
-  //   ErrorOr<Int> value <- FullParse.hexInt("123ABC")
+  //   ErrorOr<Int> value <- ParseChars.hexInt("123ABC")
   //   if (value.isError()) {
   //     fail(value.getError())
   //   }
@@ -93,11 +96,12 @@ concrete FullParse {
   // Notes:
   // - At least one digit is required.
   // - Leading +/- signs may be used.
+  // - A successful parse must consume the entire sequence.
   // - This function does not check for overflow/underflow.
   //
   // Example:
   //
-  //   ErrorOr<Int> value <- FullParse.octInt("755")
+  //   ErrorOr<Int> value <- ParseChars.octInt("755")
   //   if (value.isError()) {
   //     fail(value.getError())
   //   }
@@ -114,11 +118,12 @@ concrete FullParse {
   // Notes:
   // - At least one digit is required.
   // - Leading +/- signs may be used.
+  // - A successful parse must consume the entire sequence.
   // - This function does not check for overflow/underflow.
   //
   // Example:
   //
-  //   ErrorOr<Int> value <- FullParse.binInt("10010")
+  //   ErrorOr<Int> value <- ParseChars.binInt("10010")
   //   if (value.isError()) {
   //     fail(value.getError())
   //   }

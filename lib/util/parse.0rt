@@ -16,170 +16,170 @@ limitations under the License.
 
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
-testcase "FullParse tests" {
+testcase "ParseChars tests" {
   success
 }
 
 unittest floatNoDecimal {
-  \ UtilTesting.checkSuccessBetween<?>(FullParse.float("123"),122.9,123.1)
+  \ UtilTesting.checkSuccessBetween<?>(ParseChars.float("123"),122.9,123.1)
 }
 
 unittest floatDecimalLeft {
-  \ UtilTesting.checkSuccessBetween<?>(FullParse.float(".123"),0.1229,0.1231)
+  \ UtilTesting.checkSuccessBetween<?>(ParseChars.float(".123"),0.1229,0.1231)
 }
 
 unittest floatDecimalRight {
-  \ UtilTesting.checkSuccessBetween<?>(FullParse.float("123."),122.9,123.1)
+  \ UtilTesting.checkSuccessBetween<?>(ParseChars.float("123."),122.9,123.1)
 }
 
 unittest floatDecimalMiddle {
-  \ UtilTesting.checkSuccessBetween<?>(FullParse.float("123.456"),123.4559,123.4561)
+  \ UtilTesting.checkSuccessBetween<?>(ParseChars.float("123.456"),123.4559,123.4561)
 }
 
 unittest floatLeadingTrailingZeros {
-  \ UtilTesting.checkSuccessBetween<?>(FullParse.float("000123.456000"),123.4559,123.4561)
+  \ UtilTesting.checkSuccessBetween<?>(ParseChars.float("000123.456000"),123.4559,123.4561)
 }
 
 unittest floatNegative {
-  \ UtilTesting.checkSuccessBetween<?>(FullParse.float("-123.456"),-123.4561,-123.4559)
+  \ UtilTesting.checkSuccessBetween<?>(ParseChars.float("-123.456"),-123.4561,-123.4559)
 }
 
 unittest floatPositive {
-  \ UtilTesting.checkSuccessBetween<?>(FullParse.float("+123.456"),123.4559,123.4561)
+  \ UtilTesting.checkSuccessBetween<?>(ParseChars.float("+123.456"),123.4559,123.4561)
 }
 
 unittest floatNegativeDecimalLeft {
-  \ UtilTesting.checkSuccessBetween<?>(FullParse.float("-.456"),-0.4561,-0.4559)
+  \ UtilTesting.checkSuccessBetween<?>(ParseChars.float("-.456"),-0.4561,-0.4559)
 }
 
 unittest floatExponentNoDecimal {
-  \ UtilTesting.checkSuccessBetween<?>(FullParse.float("123E5"),122.9E5,123.1E5)
+  \ UtilTesting.checkSuccessBetween<?>(ParseChars.float("123E5"),122.9E5,123.1E5)
 }
 
 unittest floatNegativeExponent {
-  \ UtilTesting.checkSuccessBetween<?>(FullParse.float("123E-5"),122.9E-5,123.1E-5)
+  \ UtilTesting.checkSuccessBetween<?>(ParseChars.float("123E-5"),122.9E-5,123.1E-5)
 }
 
 unittest floatPositiveExponent {
-  \ UtilTesting.checkSuccessBetween<?>(FullParse.float("123E+5"),122.9E5,123.1E5)
+  \ UtilTesting.checkSuccessBetween<?>(ParseChars.float("123E+5"),122.9E5,123.1E5)
 }
 
 unittest floatExponentDecimalRight {
-  \ UtilTesting.checkSuccessBetween<?>(FullParse.float("123.E5"),122.9E5,123.1E5)
+  \ UtilTesting.checkSuccessBetween<?>(ParseChars.float("123.E5"),122.9E5,123.1E5)
 }
 
 unittest floatExponentDecimalMiddle {
-  \ UtilTesting.checkSuccessBetween<?>(FullParse.float("123.456E5"),123.4559E5,123.4561E5)
+  \ UtilTesting.checkSuccessBetween<?>(ParseChars.float("123.456E5"),123.4559E5,123.4561E5)
 }
 
 unittest floatEmpty {
-  \ UtilTesting.checkError(FullParse.float(""))
+  \ UtilTesting.checkError(ParseChars.float(""))
 }
 
 unittest floatNoDigits {
-  \ UtilTesting.checkError(FullParse.float("."))
+  \ UtilTesting.checkError(ParseChars.float("."))
 }
 
 unittest floatTwoDecimals {
-  \ UtilTesting.checkError(FullParse.float("1.1."))
+  \ UtilTesting.checkError(ParseChars.float("1.1."))
 }
 
 unittest floatDecimalAfterExponent {
-  \ UtilTesting.checkError(FullParse.float("1E.5"))
+  \ UtilTesting.checkError(ParseChars.float("1E.5"))
 }
 
 unittest int {
-  \ UtilTesting.checkSuccess<?>(FullParse.int("1234"),1234)
+  \ UtilTesting.checkSuccess<?>(ParseChars.int("1234"),1234)
 }
 
 unittest intNegative {
-  \ UtilTesting.checkSuccess<?>(FullParse.int("-1234"),-1234)
+  \ UtilTesting.checkSuccess<?>(ParseChars.int("-1234"),-1234)
 }
 
 unittest intPositive {
-  \ UtilTesting.checkSuccess<?>(FullParse.int("+1234"),1234)
+  \ UtilTesting.checkSuccess<?>(ParseChars.int("+1234"),1234)
 }
 
 unittest intLeadingZeros {
-  \ UtilTesting.checkSuccess<?>(FullParse.int("001234"),1234)
+  \ UtilTesting.checkSuccess<?>(ParseChars.int("001234"),1234)
 }
 
 unittest intEmpty {
-  \ UtilTesting.checkError(FullParse.int(""))
+  \ UtilTesting.checkError(ParseChars.int(""))
 }
 
 unittest intBadDigit {
-  \ UtilTesting.checkError(FullParse.int("12A"))
+  \ UtilTesting.checkError(ParseChars.int("12A"))
 }
 
 unittest hexInt {
-  \ UtilTesting.checkSuccess<?>(FullParse.hexInt("12AbCdEf"),\x12ABCDEF)
+  \ UtilTesting.checkSuccess<?>(ParseChars.hexInt("12AbCdEf"),\x12ABCDEF)
 }
 
 unittest hexIntNegative {
-  \ UtilTesting.checkSuccess<?>(FullParse.hexInt("-12AbCdEf"),-\x12ABCDEF)
+  \ UtilTesting.checkSuccess<?>(ParseChars.hexInt("-12AbCdEf"),-\x12ABCDEF)
 }
 
 unittest hexIntPositive {
-  \ UtilTesting.checkSuccess<?>(FullParse.hexInt("+12AbCdEf"),\x12ABCDEF)
+  \ UtilTesting.checkSuccess<?>(ParseChars.hexInt("+12AbCdEf"),\x12ABCDEF)
 }
 
 unittest hexIntLeadingZeros {
-  \ UtilTesting.checkSuccess<?>(FullParse.hexInt("0012AbCdEf"),\x12ABCDEF)
+  \ UtilTesting.checkSuccess<?>(ParseChars.hexInt("0012AbCdEf"),\x12ABCDEF)
 }
 
 unittest hexIntEmpty {
-  \ UtilTesting.checkError(FullParse.hexInt(""))
+  \ UtilTesting.checkError(ParseChars.hexInt(""))
 }
 
 unittest hexIntBadDigit {
-  \ UtilTesting.checkError(FullParse.hexInt("12Q"))
+  \ UtilTesting.checkError(ParseChars.hexInt("12Q"))
 }
 
 unittest octInt {
-  \ UtilTesting.checkSuccess<?>(FullParse.octInt("127"),\o127)
+  \ UtilTesting.checkSuccess<?>(ParseChars.octInt("127"),\o127)
 }
 
 unittest octIntNegative {
-  \ UtilTesting.checkSuccess<?>(FullParse.octInt("-127"),-\o127)
+  \ UtilTesting.checkSuccess<?>(ParseChars.octInt("-127"),-\o127)
 }
 
 unittest octIntPositive {
-  \ UtilTesting.checkSuccess<?>(FullParse.octInt("+127"),\o127)
+  \ UtilTesting.checkSuccess<?>(ParseChars.octInt("+127"),\o127)
 }
 
 unittest octIntLeadingZeros {
-  \ UtilTesting.checkSuccess<?>(FullParse.octInt("00127"),\o127)
+  \ UtilTesting.checkSuccess<?>(ParseChars.octInt("00127"),\o127)
 }
 
 unittest octIntEmpty {
-  \ UtilTesting.checkError(FullParse.octInt(""))
+  \ UtilTesting.checkError(ParseChars.octInt(""))
 }
 
 unittest octIntBadDigit {
-  \ UtilTesting.checkError(FullParse.octInt("19"))
+  \ UtilTesting.checkError(ParseChars.octInt("19"))
 }
 
 unittest binInt {
-  \ UtilTesting.checkSuccess<?>(FullParse.binInt("100101"),\b100101)
+  \ UtilTesting.checkSuccess<?>(ParseChars.binInt("100101"),\b100101)
 }
 
 unittest binIntNegative {
-  \ UtilTesting.checkSuccess<?>(FullParse.binInt("-100101"),-\b100101)
+  \ UtilTesting.checkSuccess<?>(ParseChars.binInt("-100101"),-\b100101)
 }
 
 unittest binIntPositive {
-  \ UtilTesting.checkSuccess<?>(FullParse.binInt("+100101"),\b100101)
+  \ UtilTesting.checkSuccess<?>(ParseChars.binInt("+100101"),\b100101)
 }
 
 unittest binIntLeadingZeros {
-  \ UtilTesting.checkSuccess<?>(FullParse.binInt("00100101"),\b100101)
+  \ UtilTesting.checkSuccess<?>(ParseChars.binInt("00100101"),\b100101)
 }
 
 unittest binIntEmpty {
-  \ UtilTesting.checkError(FullParse.binInt(""))
+  \ UtilTesting.checkError(ParseChars.binInt(""))
 }
 
 unittest binIntBadDigit {
-  \ UtilTesting.checkError(FullParse.binInt("12"))
+  \ UtilTesting.checkError(ParseChars.binInt("12"))
 }

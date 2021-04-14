@@ -16,7 +16,7 @@ limitations under the License.
 
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
-define FullParse {
+define ParseChars {
   float (data) {
     Float total <- 0.0
     Float sign <- 0.0
