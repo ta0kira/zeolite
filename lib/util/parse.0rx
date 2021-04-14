@@ -35,6 +35,9 @@ define FullParse {
         if (c == '-') {
           sign <- -1.0
           continue
+        } elif (c == '+') {
+          sign <- 1.0
+          continue
         } else {
           sign <- 1.0
         }
@@ -105,6 +108,9 @@ define FullParse {
           if (c == '-') {
             expSign <- -1
             continue
+          } elif (c == '+') {
+            expSign <- 1
+            continue
           } else {
             expSign <- 1
           }
@@ -136,6 +142,134 @@ define FullParse {
     }
 
     return ErrorOr:value<?>(total)
+  }
+
+  int (data) {
+    Int total <- 0
+    Int sign <- 0
+
+    traverse (data.defaultOrder() -> Char c) {
+      if (sign == 0) {
+        if (c == '-') {
+          sign <- -1
+          continue
+        } elif (c == '+') {
+          sign <- 1
+          continue
+        } else {
+          sign <- 1
+        }
+      }
+      if (c >= '0' && c <= '9') {
+        total <- 10*total+(c.asInt() - ('0').asInt())
+        continue
+      }
+      return autoFail<Int>(c)
+    }
+
+    if (sign == 0) {
+      return ErrorOr:error("missing digits in Int value")
+    }
+
+    return ErrorOr:value<?>(sign*total)
+  }
+
+  hexInt (data) {
+    Int total <- 0
+    Int sign <- 0
+
+    traverse (data.defaultOrder() -> Char c) {
+      if (sign == 0) {
+        if (c == '-') {
+          sign <- -1
+          continue
+        } elif (c == '+') {
+          sign <- 1
+          continue
+        } else {
+          sign <- 1
+        }
+      }
+      if (c >= '0' && c <= '9') {
+        total <- 16*total+(c.asInt() - ('0').asInt())
+        continue
+      }
+      if (c >= 'a' && c <= 'f') {
+        total <- 16*total+(c.asInt() - ('a').asInt() + 10)
+        continue
+      }
+      if (c >= 'A' && c <= 'F') {
+        total <- 16*total+(c.asInt() - ('A').asInt() + 10)
+        continue
+      }
+      return autoFail<Int>(c)
+    }
+
+    if (sign == 0) {
+      return ErrorOr:error("missing digits in Int value")
+    }
+
+    return ErrorOr:value<?>(sign*total)
+  }
+
+  octInt (data) {
+    Int total <- 0
+    Int sign <- 0
+
+    traverse (data.defaultOrder() -> Char c) {
+      if (sign == 0) {
+        if (c == '-') {
+          sign <- -1
+          continue
+        } elif (c == '+') {
+          sign <- 1
+          continue
+        } else {
+          sign <- 1
+        }
+      }
+      if (c >= '0' && c <= '7') {
+        total <- 8*total+(c.asInt() - ('0').asInt())
+        continue
+      }
+      return autoFail<Int>(c)
+    }
+
+    if (sign == 0) {
+      return ErrorOr:error("missing digits in Int value")
+    }
+
+    return ErrorOr:value<?>(sign*total)
+  }
+
+  binInt (data) {
+    Int total <- 0
+    Int sign <- 0
+
+    traverse (data.defaultOrder() -> Char c) {
+      if (sign == 0) {
+        if (c == '-') {
+          sign <- -1
+          continue
+        } elif (c == '+') {
+          sign <- 1
+          continue
+        } else {
+          sign <- 1
+        }
+      }
+      if (c >= '0' && c <= '1') {
+        total <- 2*total+(c.asInt() - ('0').asInt())
+        continue
+      }
+      return autoFail<Int>(c)
+    }
+
+    if (sign == 0) {
+      return ErrorOr:error("missing digits in Int value")
+    }
+
+    return ErrorOr:value<?>(sign*total)
   }
 
   @type autoFail<#x> (Char) -> (ErrorOr<all>)

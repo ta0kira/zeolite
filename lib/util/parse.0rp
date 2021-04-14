@@ -28,7 +28,99 @@ concrete FullParse {
   //
   // Notes:
   // - At least one digit is required.
+  // - Leading +/- signs may be used.
   // - Scientific notation is allowed, e.g., "10E-5".
   // - This function does not check for overflow/underflow.
+  //
+  // Example:
+  //
+  //   ErrorOr<Float> value <- FullParse.float("123.456E5")
+  //   if (value.isError()) {
+  //     fail(value.getError())
+  //   }
   @type float (DefaultOrder<Char>) -> (ErrorOr<Float>)
+
+  // Parses an Int.
+  //
+  // Args:
+  // - DefaultOrder<Char>: Decimal-format integer.
+  //
+  // Returns:
+  // - ErrorOr<Int>: The parsed value, or an error on parse failure.
+  //
+  // Notes:
+  // - At least one digit is required.
+  // - Leading +/- signs may be used.
+  // - This function does not check for overflow/underflow.
+  //
+  // Example:
+  //
+  //   ErrorOr<Int> value <- FullParse.int("123")
+  //   if (value.isError()) {
+  //     fail(value.getError())
+  //   }
+  @type int (DefaultOrder<Char>) -> (ErrorOr<Int>)
+
+  // Parses a hex-formatted Int.
+  //
+  // Args:
+  // - DefaultOrder<Char>: Hex-format integer.
+  //
+  // Returns:
+  // - ErrorOr<Int>: The parsed value, or an error on parse failure.
+  //
+  // Notes:
+  // - At least one digit is required.
+  // - Leading +/- signs may be used.
+  // - This function does not check for overflow/underflow.
+  //
+  // Example:
+  //
+  //   ErrorOr<Int> value <- FullParse.hexInt("123ABC")
+  //   if (value.isError()) {
+  //     fail(value.getError())
+  //   }
+  @type hexInt (DefaultOrder<Char>) -> (ErrorOr<Int>)
+
+  // Parses a octal-formatted Int.
+  //
+  // Args:
+  // - DefaultOrder<Char>: Octal-format integer.
+  //
+  // Returns:
+  // - ErrorOr<Int>: The parsed value, or an error on parse failure.
+  //
+  // Notes:
+  // - At least one digit is required.
+  // - Leading +/- signs may be used.
+  // - This function does not check for overflow/underflow.
+  //
+  // Example:
+  //
+  //   ErrorOr<Int> value <- FullParse.octInt("755")
+  //   if (value.isError()) {
+  //     fail(value.getError())
+  //   }
+  @type octInt (DefaultOrder<Char>) -> (ErrorOr<Int>)
+
+  // Parses a binary-formatted Int.
+  //
+  // Args:
+  // - DefaultOrder<Char>: Binary-format integer.
+  //
+  // Returns:
+  // - ErrorOr<Int>: The parsed value, or an error on parse failure.
+  //
+  // Notes:
+  // - At least one digit is required.
+  // - Leading +/- signs may be used.
+  // - This function does not check for overflow/underflow.
+  //
+  // Example:
+  //
+  //   ErrorOr<Int> value <- FullParse.binInt("10010")
+  //   if (value.isError()) {
+  //     fail(value.getError())
+  //   }
+  @type binInt (DefaultOrder<Char>) -> (ErrorOr<Int>)
 }
