@@ -31,8 +31,10 @@ define InfiniteRoutine {
     return InfiniteRoutine{ }
   }
 
-  run () {
-    while (true) {}
+  run () { $NoTrace$
+    while (true) {
+      \ Realtime.sleepSeconds(60.0)
+    }
   }
 }
 
