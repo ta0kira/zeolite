@@ -18,6 +18,7 @@ limitations under the License.
 
 $TestsOnly$
 
+// General lib/util helpers for use in unit tests.
 concrete UtilTesting {
   // Check the value for an ErrorOr error. Crashes if it is not an error.
   //
