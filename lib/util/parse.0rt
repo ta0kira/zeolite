@@ -108,6 +108,10 @@ unittest intEmpty {
   \ UtilTesting.checkError(ParseChars.int(""))
 }
 
+unittest intJustSign {
+  \ UtilTesting.checkError(ParseChars.int("-"))
+}
+
 unittest intBadDigit {
   \ UtilTesting.checkError(ParseChars.int("12A"))
 }
@@ -130,6 +134,10 @@ unittest hexIntLeadingZeros {
 
 unittest hexIntEmpty {
   \ UtilTesting.checkError(ParseChars.hexInt(""))
+}
+
+unittest hexIntJustSign {
+  \ UtilTesting.checkError(ParseChars.hexInt("-"))
 }
 
 unittest hexIntBadDigit {
@@ -156,6 +164,10 @@ unittest octIntEmpty {
   \ UtilTesting.checkError(ParseChars.octInt(""))
 }
 
+unittest octIntJustSign {
+  \ UtilTesting.checkError(ParseChars.octInt("-"))
+}
+
 unittest octIntBadDigit {
   \ UtilTesting.checkError(ParseChars.octInt("19"))
 }
@@ -178,6 +190,10 @@ unittest binIntLeadingZeros {
 
 unittest binIntEmpty {
   \ UtilTesting.checkError(ParseChars.binInt(""))
+}
+
+unittest binIntJustSign {
+  \ UtilTesting.checkError(ParseChars.binInt("-"))
 }
 
 unittest binIntBadDigit {

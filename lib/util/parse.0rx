@@ -147,6 +147,7 @@ define ParseChars {
   int (data) {
     Int total <- 0
     Int sign <- 0
+    Bool hasDigit <- false
 
     traverse (data.defaultOrder() -> Char c) {
       if (sign == 0) {
@@ -161,13 +162,14 @@ define ParseChars {
         }
       }
       if (c >= '0' && c <= '9') {
+        hasDigit <- true
         total <- 10*total+(c.asInt() - ('0').asInt())
         continue
       }
       return autoFail<Int>(c)
     }
 
-    if (sign == 0) {
+    if (!hasDigit) {
       return ErrorOr:error("missing digits in Int value")
     }
 
@@ -177,6 +179,7 @@ define ParseChars {
   hexInt (data) {
     Int total <- 0
     Int sign <- 0
+    Bool hasDigit <- false
 
     traverse (data.defaultOrder() -> Char c) {
       if (sign == 0) {
@@ -191,21 +194,24 @@ define ParseChars {
         }
       }
       if (c >= '0' && c <= '9') {
+        hasDigit <- true
         total <- 16*total+(c.asInt() - ('0').asInt())
         continue
       }
       if (c >= 'a' && c <= 'f') {
+        hasDigit <- true
         total <- 16*total+(c.asInt() - ('a').asInt() + 10)
         continue
       }
       if (c >= 'A' && c <= 'F') {
+        hasDigit <- true
         total <- 16*total+(c.asInt() - ('A').asInt() + 10)
         continue
       }
       return autoFail<Int>(c)
     }
 
-    if (sign == 0) {
+    if (!hasDigit) {
       return ErrorOr:error("missing digits in Int value")
     }
 
@@ -215,6 +221,7 @@ define ParseChars {
   octInt (data) {
     Int total <- 0
     Int sign <- 0
+    Bool hasDigit <- false
 
     traverse (data.defaultOrder() -> Char c) {
       if (sign == 0) {
@@ -229,13 +236,14 @@ define ParseChars {
         }
       }
       if (c >= '0' && c <= '7') {
+        hasDigit <- true
         total <- 8*total+(c.asInt() - ('0').asInt())
         continue
       }
       return autoFail<Int>(c)
     }
 
-    if (sign == 0) {
+    if (!hasDigit) {
       return ErrorOr:error("missing digits in Int value")
     }
 
@@ -245,6 +253,7 @@ define ParseChars {
   binInt (data) {
     Int total <- 0
     Int sign <- 0
+    Bool hasDigit <- false
 
     traverse (data.defaultOrder() -> Char c) {
       if (sign == 0) {
@@ -259,13 +268,14 @@ define ParseChars {
         }
       }
       if (c >= '0' && c <= '1') {
+        hasDigit <- true
         total <- 2*total+(c.asInt() - ('0').asInt())
         continue
       }
       return autoFail<Int>(c)
     }
 
-    if (sign == 0) {
+    if (!hasDigit) {
       return ErrorOr:error("missing digits in Int value")
     }
 
