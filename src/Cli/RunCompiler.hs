@@ -42,7 +42,7 @@ import Module.ProcessMetadata
 runCompiler :: (PathIOHandler r, CompilerBackend b) => r -> b -> CompileOptions -> TrackedErrorsIO ()
 runCompiler resolver backend (CompileOptions _ _ _ ds _ _ p (ExecuteTests tp cl) f) = do
   base <- resolveBaseModule resolver
-  ts <- fmap snd $ foldM (preloadTests base) (Map.empty,[]) ds
+  ts <- fmap snd $ foldM preloadTests (Map.empty,[]) ds
   checkTestFilters ts
   cl2 <- prepareCallLog cl
   allResults <- fmap concat $ mapCompilerM (runModuleTests resolver backend cl2 base tp) ts
@@ -57,18 +57,17 @@ runCompiler resolver backend (CompileOptions _ _ _ ds _ _ p (ExecuteTests tp cl)
     prepareCallLog _ = return ""
     logHeader = ["microseconds","pid","function","context"]
     compilerHash = getCompilerHash backend
-    preloadTests base (ca,ms) d = do
+    preloadTests (ca,ms) d = do
       m <- loadModuleMetadata compilerHash f ca (p </> d)
       let ca2 = ca `Map.union` mapMetadata [m]
       rm <- loadRecompile (p </> d)
-      deps0 <- loadPublicDeps compilerHash f ca2 [base]
-      let ca3 = ca2 `Map.union` mapMetadata deps0
+      let ca3 = ca2 `Map.union` mapMetadata []
       deps1 <- loadTestingDeps compilerHash f ca3 m
       let ca4 = ca3 `Map.union` mapMetadata deps1
-      deps2 <- loadPrivateDeps compilerHash f ca4 (deps0++[m]++deps1)
+      deps2 <- loadPrivateDeps compilerHash f ca4 ([m]++deps1)
       let ca5 = ca4 `Map.union` mapMetadata deps2
       em <- getExprMap (p </> d) rm
-      return (ca5,ms ++ [LoadedTests p d m em (deps0++deps1) deps2])
+      return (ca5,ms ++ [LoadedTests p d m em (deps1) deps2])
     checkTestFilters ts = do
       let possibleTests = Set.fromList $ concat $ map (cmTestFiles . ltMetadata) ts
       case Set.toList $ (Set.fromList tp) `Set.difference` possibleTests of
