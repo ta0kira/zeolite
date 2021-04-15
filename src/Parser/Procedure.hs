@@ -539,7 +539,7 @@ instance ParseFromSource (ExpressionStart SourceContext) where
     sourceContext = do
       pragma <- pragmaSourceContext
       case pragma of
-           (PragmaSourceContext c) -> return $ ParensExpression [c] $ Literal (StringLiteral [c] (show c))
+           (PragmaSourceContext c) -> return $ UnambiguousLiteral (StringLiteral [c] (show c))
            _ -> undefined  -- Should be caught above.
     exprLookup = do
       pragma <- pragmaExprLookup
