@@ -48,6 +48,10 @@
 * **[behavior]** Even more optimization for function calls using 4 or fewer
   arguments, returns, or function params.
 
+* **[behavior]** Updates the `fail` built-in to use `SIGTERM` instead of
+  `SIGABRT` to terminate the process, to prevent core dumps when `fail` is used
+  to signal an unhandled error.
+
 ### Language
 
 * **[new]** Adds the `timeout` field to `testcase`, to specify the number of
