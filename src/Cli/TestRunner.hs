@@ -108,7 +108,7 @@ runSingleTest b cl cm paths deps (f,s) = do
              Just  t -> compilerWarningM $ "Explicit timeouts are ignored in " ++ ex2 ++ " tests: " ++ show t
 
     run (ExpectCompilerError _ rs es) _ _ cs ds ts = do
-      let result = compileAll [] cs ds ts
+      result <- toTrackedErrors $ compileAll [] cs ds ts
       if not $ isCompilerError result
          then compilerErrorM "Expected compilation failure"
          else fmap (:[]) $ return $ do
@@ -117,7 +117,7 @@ runSingleTest b cl cm paths deps (f,s) = do
            checkContent rs es (lines warnings ++ lines errors) [] []
 
     run (ExpectCompiles _ rs es) _ _ cs ds ts = do
-      let result = compileAll [] cs ds ts
+      result <- toTrackedErrors $ compileAll [] cs ds ts
       if isCompilerError result
          then fromTrackedErrors result >> return []
          else fmap (:[]) $ return $ do
@@ -158,7 +158,7 @@ runSingleTest b cl cm paths deps (f,s) = do
       (mapCompilerM_ (compilerErrorM . ("Defined at " ++) . formatFullContext) $ sort $ map tpContext ts)
 
     execute s2 rs es args timeout cs ds ts = do
-      let result = compileAll args cs ds ts
+      result <- toTrackedErrors $ compileAll args cs ds ts
       if isCompilerError result
          then return [result >> return ()]
          else do
@@ -176,7 +176,7 @@ runSingleTest b cl cm paths deps (f,s) = do
         case (s2,s2') of
              (True,False) -> collectAllM_ $ (asCompilerError res):(map compilerErrorM $ err ++ out)
              (False,True) -> collectAllM_ [compilerErrorM "Expected runtime failure",
-                                          asCompilerError res <?? "\nOutput from compiler:"]
+                                           asCompilerError res <?? "\nOutput from compiler:"]
              _ -> fromTrackedErrors $ checkContent rs es (lines $ show $ getCompilerWarnings res) err out
       where
         context = "\nIn unittest " ++ show f2 ++ formatFullContextBrace c
@@ -188,7 +188,7 @@ runSingleTest b cl cm paths deps (f,s) = do
     compileAll args cs ds ts = do
       let ns1 = StaticNamespace $ privateNamespace s
       let cs' = map (setCategoryNamespace ns1) cs
-      compileTestsModule cm ns1 args cs' ds ts
+      fromTrackedErrors $ compileTestsModule cm ns1 args cs' ds ts
 
     checkRequired rs comp err out = mapCompilerM_ (checkSubsetForRegex True  comp err out) rs
     checkExcluded es comp err out = mapCompilerM_ (checkSubsetForRegex False comp err out) es
