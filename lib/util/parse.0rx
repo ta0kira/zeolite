@@ -51,8 +51,12 @@ define ParseChars {
         break
       }
       if (c == 'E' || c == 'e') {
-        needExpDigits <- true
-        break
+        if (!hasDigit) {
+          return autoFail<Float>(c)
+        } else {
+          needExpDigits <- true
+          break
+        }
       }
       return autoFail<Float>(c)
     }

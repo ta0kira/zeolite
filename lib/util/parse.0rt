@@ -68,6 +68,10 @@ unittest floatExponentDecimalRight {
   \ UtilTesting.checkSuccessBetween<?>(ParseChars.float("123.E5"),122.9E5,123.1E5)
 }
 
+unittest floatExponentDecimalLeft {
+  \ UtilTesting.checkSuccessBetween<?>(ParseChars.float(".123E5"),122.9E2,123.1E2)
+}
+
 unittest floatExponentDecimalMiddle {
   \ UtilTesting.checkSuccessBetween<?>(ParseChars.float("123.456E5"),123.4559E5,123.4561E5)
 }
@@ -84,8 +88,24 @@ unittest floatTwoDecimals {
   \ UtilTesting.checkError(ParseChars.float("1.1."))
 }
 
+unittest floatExponentNoDigitsNoDecimal {
+  \ UtilTesting.checkError(ParseChars.float("E5"))
+}
+
+unittest floatExponentNoDigitsDecimal {
+  \ UtilTesting.checkError(ParseChars.float(".E5"))
+}
+
+unittest floatExponentNoDigitsSign {
+  \ UtilTesting.checkError(ParseChars.float("-E5"))
+}
+
 unittest floatDecimalAfterExponent {
   \ UtilTesting.checkError(ParseChars.float("1E.5"))
+}
+
+unittest floatExponentExcessData {
+  \ UtilTesting.checkError(ParseChars.float("123E5Q"))
 }
 
 unittest int {
