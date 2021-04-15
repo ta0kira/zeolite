@@ -232,7 +232,6 @@ data Expression c =
   Literal (ValueLiteral c) |
   UnaryExpression [c] (Operator c) (Expression c) |
   InfixExpression [c] (Expression c) (Operator c) (Expression c) |
-  InitializeValue [c] (Maybe TypeInstance) (Positional (Expression c)) |
   RawExpression ExpressionType ExpressionValue
   deriving (Show)
 
@@ -280,7 +279,6 @@ getExpressionContext (Expression c _ _)        = c
 getExpressionContext (Literal l)               = getValueLiteralContext l
 getExpressionContext (UnaryExpression c _ _)   = c
 getExpressionContext (InfixExpression c _ _ _) = c
-getExpressionContext (InitializeValue c _ _)   = c
 getExpressionContext (RawExpression _ _)       = []
 
 data FunctionCall c =
@@ -295,7 +293,9 @@ data ExpressionStart c =
   UnqualifiedCall [c] (FunctionCall c) |
   BuiltinCall [c] (FunctionCall c) |
   ParensExpression [c] (Expression c) |
-  InlineAssignment [c] VariableName (Expression c)
+  InlineAssignment [c] VariableName (Expression c) |
+  InitializeValue [c] (Maybe TypeInstance) (Positional (Expression c)) |
+  UnambiguousLiteral (ValueLiteral c)
   deriving (Show)
 
 data ValueLiteral c =

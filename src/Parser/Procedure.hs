@@ -390,7 +390,8 @@ instance ParseFromSource (Expression SourceContext) where
     e <- notInfix
     asInfix [e] [] <|> return e
     where
-      notInfix = literal <|> unary <|> initalize <|> expression
+      -- NOTE: InitializeValue is parsed as ExpressionStart.
+      notInfix = literal <|> unary <|> expression
       asInfix es os = do
         c <- getSourceContext
         o <- infixOperator <|> functionOperator
@@ -423,15 +424,6 @@ instance ParseFromSource (Expression SourceContext) where
         s <- sourceParser
         vs <- many sourceParser
         return $ Expression [c] s vs
-      initalize = do
-        c <- getSourceContext
-        t <- try $ do  -- Avoids consuming the type name if { isn't present.
-          t2 <- (paramSelf >> return Nothing) <|> fmap Just sourceParser
-          sepAfter (labeled "@value initializer" $ string_ "{")
-          return t2
-        as <- sepBy sourceParser (sepAfter $ string_ ",")
-        sepAfter (string_ "}")
-        return $ InitializeValue [c] t (Positional as)
 
 instance ParseFromSource (FunctionQualifier SourceContext) where
   -- TODO: This is probably better done iteratively.
@@ -513,7 +505,12 @@ instance ParseFromSource (ExpressionStart SourceContext) where
                  sourceContext <|>
                  exprLookup <|>
                  categoryCall <|>
-                 typeCall where
+                 -- Keep this before typeCall, since it does a look-ahead for {.
+                 initalize <|>
+                 typeCall <|>
+                 stringLiteral <|>
+                 charLiteral <|>
+                 boolLiteral where
     parens = do
       c <- getSourceContext
       sepAfter (string_ "(")
@@ -574,27 +571,39 @@ instance ParseFromSource (ExpressionStart SourceContext) where
       n <- sourceParser
       f <- parseFunctionCall c n
       return $ TypeCall [c] t f
-
-instance ParseFromSource (ValueLiteral SourceContext) where
-  sourceParser = labeled "literal" $
-                 stringLiteral <|>
-                 charLiteral <|>
-                 escapedInteger <|>
-                 integerOrDecimal <|>
-                 boolLiteral <|>
-                 emptyLiteral where
+    initalize = do
+      c <- getSourceContext
+      t <- try $ do  -- Avoids consuming the type name if { isn't present.
+        t2 <- (paramSelf >> return Nothing) <|> fmap Just sourceParser
+        sepAfter (labeled "@value initializer" $ string_ "{")
+        return t2
+      as <- sepBy sourceParser (sepAfter $ string_ ",")
+      sepAfter (string_ "}")
+      return $ InitializeValue [c] t (Positional as)
     stringLiteral = do
       c <- getSourceContext
       ss <- quotedString
       optionalSpace
-      return $ StringLiteral [c] ss
+      return $ UnambiguousLiteral $ StringLiteral [c] ss
     charLiteral = do
       c <- getSourceContext
       string_ "'"
       ch <- stringChar <|> char '"'
       string_ "'"
       optionalSpace
-      return $ CharLiteral [c] ch
+      return $ UnambiguousLiteral $ CharLiteral [c] ch
+    boolLiteral = do
+      c <- getSourceContext
+      b <- try $ (kwTrue >> return True) <|> (kwFalse >> return False)
+      return $ UnambiguousLiteral $ BoolLiteral [c] b
+
+instance ParseFromSource (ValueLiteral SourceContext) where
+  sourceParser = labeled "literal" $
+                 -- NOTE: StringLiteral, CharLiteral, and BoolLiteral are parsed
+                 -- as ExpressionStart.
+                 escapedInteger <|>
+                 integerOrDecimal <|>
+                 emptyLiteral where
     escapedInteger = do
       c <- getSourceContext
       escapeStart
@@ -629,10 +638,6 @@ instance ParseFromSource (ValueLiteral SourceContext) where
     integer c d = do
       optionalSpace
       return $ IntegerLiteral [c] False d
-    boolLiteral = do
-      c <- getSourceContext
-      b <- try $ (kwTrue >> return True) <|> (kwFalse >> return False)
-      return $ BoolLiteral [c] b
     emptyLiteral = do
       c <- getSourceContext
       kwEmpty

@@ -49,7 +49,7 @@ define HeapSort {
   @value [ReadAt<#x>&WriteAt<#x>] seq
 
   inPlace (seq) {
-    \ (#self{ seq }).execute()
+    \ #self{ seq }.execute()
   }
 
   @value execute () -> ()

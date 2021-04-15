@@ -82,7 +82,7 @@ concrete ProcessThread {
   //     @value weak Thread thread
   //
   //     createAndRun () {
-  //       return (MyRoutine{ empty }).start()
+  //       return MyRoutine{ empty }.start()
   //     }
   //
   //     run () {

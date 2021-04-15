@@ -839,7 +839,7 @@ references between objects.
 
   createAndRun () {
     <span style='color:#898887;'>// Create a new MyRoutine and then start the thread.</span>
-    <b>return</b> (<span style='color:#0057ae;'>MyRoutine</span>{ <b>empty</b> })<span style='color:#644a9b;'>.</span>start()
+    <b>return</b> <span style='color:#0057ae;'>MyRoutine</span>{ <b>empty</b> }<span style='color:#644a9b;'>.</span>start()
   }
 
   run () {

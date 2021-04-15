@@ -69,9 +69,17 @@ tests = [
     checkShortParseFail "\\ T<#x> var",
     checkShortParseSuccess "\\ T<#x>{ val, var.T<#x>.func() }",
     checkShortParseFail "\\ T<#x>{ val var.T<#x>.func() }",
-    checkShortParseFail "\\ T<#x>{}.call()",
+    checkShortParseSuccess "\\ T<#x>{}.call()",
     checkShortParseFail "\\ T<#x>$call()",
     checkShortParseSuccess "\\ (T<#x>{}).call()",
+    checkShortParseSuccess "\\ (\"abc\").call()",
+    checkShortParseSuccess "\\ \"abc\".call()",
+    checkShortParseSuccess "\\ ('a').call()",
+    checkShortParseSuccess "\\ 'a'.call()",
+    checkShortParseSuccess "\\ (false).call()",
+    checkShortParseSuccess "\\ false.call()",
+    checkShortParseFail "\\ 1.call()",
+    checkShortParseFail "\\ empty.call()",
 
     checkShortParseSuccess "x <- var.func()",
     checkShortParseFail "x <- var.func() var.func()",
@@ -196,7 +204,7 @@ tests = [
     checkShortParseFail "x <- \"fsdfd",
     checkShortParseFail "x <- \"\"fsdfd",
     checkShortParseSuccess "x <- 123.0 + z.call()",
-    checkShortParseFail "x <- \"123\".call()",
+    checkShortParseSuccess "x <- \"123\".call()",
     checkShortParseFail "x <- 123.call()",
     checkShortParseSuccess "x <- 'x'",
     checkShortParseSuccess "x <- '\\xAA'",
@@ -217,7 +225,7 @@ tests = [
 
     checkParsesAs "'\"'"
                   (\e -> case e of
-                              (Literal (CharLiteral _ '"')) -> True
+                              (Expression _ (UnambiguousLiteral (CharLiteral _ '"')) []) -> True
                               _ -> False),
 
     checkParsesAs "1 + 2 < 4 && 3 >= 1 * 2 + 1 || true"
@@ -236,7 +244,7 @@ tests = [
                                         (Literal (IntegerLiteral _ False 1)) (NamedOperator _ "*")
                                         (Literal (IntegerLiteral _ False 2))) (NamedOperator _ "+")
                                       (Literal (IntegerLiteral _ False 1)))) (NamedOperator _ "||")
-                                  (Literal (BoolLiteral _ True)))) -> True
+                                  (Expression _ (UnambiguousLiteral (BoolLiteral _ True)) []))) -> True
                               _ -> False),
 
     -- This expression isn't really valid, but it ensures that the first ! is

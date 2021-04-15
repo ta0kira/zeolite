@@ -535,37 +535,7 @@ compileExpression :: (Ord c, Show c, CollectErrorsM m,
                       CompilerContext c m [String] a) =>
   Expression c -> CompilerState a m (ExpressionType,ExpressionValue)
 compileExpression = compile where
-  compile (Literal (StringLiteral _ l)) = do
-    csAddRequired (Set.fromList [BuiltinString])
-    return $ expressionFromLiteral PrimString (escapeChars l)
-  compile (Literal (CharLiteral _ l)) = do
-    csAddRequired (Set.fromList [BuiltinChar])
-    return $ expressionFromLiteral PrimChar ("'" ++ escapeChar l ++ "'")
-  compile (Literal (IntegerLiteral c True l)) = do
-    csAddRequired (Set.fromList [BuiltinInt])
-    when (l > 2^(64 :: Integer) - 1) $ compilerErrorM $
-      "Literal " ++ show l ++ formatFullContextBrace c ++ " is greater than the max value for 64-bit unsigned"
-    let l' = if l > 2^(63 :: Integer) - 1 then l - 2^(64 :: Integer) else l
-    return $ expressionFromLiteral PrimInt (show l')
-  compile (Literal (IntegerLiteral c False l)) = do
-    csAddRequired (Set.fromList [BuiltinInt])
-    when (l > 2^(63 :: Integer) - 1) $ compilerErrorM $
-      "Literal " ++ show l ++ formatFullContextBrace c ++ " is greater than the max value for 64-bit signed"
-    when ((-l) > (2^(63 :: Integer) - 2)) $ compilerErrorM $
-      "Literal " ++ show l ++ formatFullContextBrace c ++ " is less than the min value for 64-bit signed"
-    return $ expressionFromLiteral PrimInt (show l)
-  compile (Literal (DecimalLiteral _ l e)) = do
-    csAddRequired (Set.fromList [BuiltinFloat])
-    -- TODO: Check bounds.
-    return $ expressionFromLiteral PrimFloat (show l ++ "E" ++ show e)
-  compile (Literal (BoolLiteral _ True)) = do
-    csAddRequired (Set.fromList [BuiltinBool])
-    return $ expressionFromLiteral PrimBool "true"
-  compile (Literal (BoolLiteral _ False)) = do
-    csAddRequired (Set.fromList [BuiltinBool])
-    return $ expressionFromLiteral PrimBool "false"
-  compile (Literal (EmptyLiteral _)) = do
-    return (Positional [emptyType],UnwrappedSingle "Var_empty")
+  compile (Literal l) = compileValueLiteral l
   compile (Expression _ s os) = do
     foldl transform (compileExpressionStart s) os
   compile (UnaryExpression c (FunctionOperator _ (FunctionSpec _ (CategoryFunction c2 cn) fn ps)) e) =
@@ -608,42 +578,6 @@ compileExpression = compile where
                                             UnboxedPrimitive PrimInt $ "~" ++ useAsUnboxed PrimInt e2)
         | otherwise = compilerErrorM $ "Cannot use " ++ show t ++ " with unary ~ operator" ++
                                              formatFullContextBrace c
-  compile (InitializeValue c t es) = do
-    scope <- csCurrentScope
-    t' <- case scope of
-               CategoryScope -> case t of
-                                     Nothing -> compilerErrorM $ "Param " ++ show ParamSelf ++ " not found"
-                                     Just t0 -> return t0
-               _ -> do
-                 self <- csSelfType
-                 case t of
-                      Just t0 -> lift $ replaceSelfSingle (singleType $ JustTypeInstance self) t0
-                      Nothing -> return self
-    es' <- sequence $ map compileExpression $ pValues es
-    (ts,es'') <- lift $ getValues es'
-    csCheckValueInit c t' (Positional ts)
-    params <- expandParams $ tiParams t'
-    sameType <- csSameType t'
-    s <- csCurrentScope
-    let typeInstance = getType t' sameType s params
-    -- TODO: This is unsafe if used in a type or category constructor.
-    return (Positional [ValueType RequiredValue $ singleType $ JustTypeInstance t'],
-            UnwrappedSingle $ valueCreator (tiName t') ++ "(" ++ typeInstance ++ ", " ++ es'' ++ ")")
-    where
-      getType _  True ValueScope _      = "parent"
-      getType _  True TypeScope  _      = "shared_from_this()"
-      getType t2 _    _          params = typeCreator (tiName t2) ++ "(" ++ params ++ ")"
-      -- Single expression, but possibly multi-return.
-      getValues [(Positional ts,e)] = return (ts,useAsArgs e)
-      -- Multi-expression => must all be singles.
-      getValues rs = do
-        (mapCompilerM_ checkArity $ zip ([0..] :: [Int]) $ map fst rs) <??
-          "In return at " ++ formatFullContext c
-        return (map (head . pValues . fst) rs,
-                "ArgTuple(" ++ intercalate ", " (map (useAsUnwrapped . snd) rs) ++ ")")
-      checkArity (_,Positional [_]) = return ()
-      checkArity (i,Positional ts)  =
-        compilerErrorM $ "Initializer position " ++ show i ++ " has " ++ show (length ts) ++ " values but should have 1"
   compile (InfixExpression c e1 (FunctionOperator _ (FunctionSpec _ (CategoryFunction c2 cn) fn ps)) e2) =
     compile (Expression c (CategoryCall c2 cn (FunctionCall c fn ps (Positional [e1,e2]))) [])
   compile (InfixExpression c e1 (FunctionOperator _ (FunctionSpec _ (TypeFunction c2 tn) fn ps)) e2) =
@@ -895,6 +829,78 @@ compileExpressionStart (InlineAssignment c n e) = do
   let lazy = s == CategoryScope
   return (Positional [t0],readStoredVariable lazy t0 $ "(" ++ scoped ++ variableName n ++
                                                      " = " ++ writeStoredVariable t0 e' ++ ")")
+compileExpressionStart (InitializeValue c t es) = do
+  scope <- csCurrentScope
+  t' <- case scope of
+              CategoryScope -> case t of
+                                    Nothing -> compilerErrorM $ "Param " ++ show ParamSelf ++ " not found"
+                                    Just t0 -> return t0
+              _ -> do
+                self <- csSelfType
+                case t of
+                    Just t0 -> lift $ replaceSelfSingle (singleType $ JustTypeInstance self) t0
+                    Nothing -> return self
+  es' <- sequence $ map compileExpression $ pValues es
+  (ts,es'') <- lift $ getValues es'
+  csCheckValueInit c t' (Positional ts)
+  params <- expandParams $ tiParams t'
+  sameType <- csSameType t'
+  s <- csCurrentScope
+  let typeInstance = getType t' sameType s params
+  -- TODO: This is unsafe if used in a type or category constructor.
+  return (Positional [ValueType RequiredValue $ singleType $ JustTypeInstance t'],
+          UnwrappedSingle $ valueCreator (tiName t') ++ "(" ++ typeInstance ++ ", " ++ es'' ++ ")")
+  where
+    getType _  True ValueScope _      = "parent"
+    getType _  True TypeScope  _      = "shared_from_this()"
+    getType t2 _    _          params = typeCreator (tiName t2) ++ "(" ++ params ++ ")"
+    -- Single expression, but possibly multi-return.
+    getValues [(Positional ts,e)] = return (ts,useAsArgs e)
+    -- Multi-expression => must all be singles.
+    getValues rs = do
+      (mapCompilerM_ checkArity $ zip ([0..] :: [Int]) $ map fst rs) <??
+        "In return at " ++ formatFullContext c
+      return (map (head . pValues . fst) rs,
+              "ArgTuple(" ++ intercalate ", " (map (useAsUnwrapped . snd) rs) ++ ")")
+    checkArity (_,Positional [_]) = return ()
+    checkArity (i,Positional ts)  =
+      compilerErrorM $ "Initializer position " ++ show i ++ " has " ++ show (length ts) ++ " values but should have 1"
+compileExpressionStart (UnambiguousLiteral l) = compileValueLiteral l
+
+compileValueLiteral :: (Ord c, Show c, CollectErrorsM m,
+                           CompilerContext c m [String] a) =>
+  ValueLiteral c -> CompilerState a m (ExpressionType,ExpressionValue)
+compileValueLiteral (StringLiteral _ l) = do
+  csAddRequired (Set.fromList [BuiltinString])
+  return $ expressionFromLiteral PrimString (escapeChars l)
+compileValueLiteral (CharLiteral _ l) = do
+  csAddRequired (Set.fromList [BuiltinChar])
+  return $ expressionFromLiteral PrimChar ("'" ++ escapeChar l ++ "'")
+compileValueLiteral (IntegerLiteral c True l) = do
+  csAddRequired (Set.fromList [BuiltinInt])
+  when (l > 2^(64 :: Integer) - 1) $ compilerErrorM $
+    "Literal " ++ show l ++ formatFullContextBrace c ++ " is greater than the max value for 64-bit unsigned"
+  let l' = if l > 2^(63 :: Integer) - 1 then l - 2^(64 :: Integer) else l
+  return $ expressionFromLiteral PrimInt (show l')
+compileValueLiteral (IntegerLiteral c False l) = do
+  csAddRequired (Set.fromList [BuiltinInt])
+  when (l > 2^(63 :: Integer) - 1) $ compilerErrorM $
+    "Literal " ++ show l ++ formatFullContextBrace c ++ " is greater than the max value for 64-bit signed"
+  when ((-l) > (2^(63 :: Integer) - 2)) $ compilerErrorM $
+    "Literal " ++ show l ++ formatFullContextBrace c ++ " is less than the min value for 64-bit signed"
+  return $ expressionFromLiteral PrimInt (show l)
+compileValueLiteral (DecimalLiteral _ l e) = do
+  csAddRequired (Set.fromList [BuiltinFloat])
+  -- TODO: Check bounds.
+  return $ expressionFromLiteral PrimFloat (show l ++ "E" ++ show e)
+compileValueLiteral (BoolLiteral _ True) = do
+  csAddRequired (Set.fromList [BuiltinBool])
+  return $ expressionFromLiteral PrimBool "true"
+compileValueLiteral (BoolLiteral _ False) = do
+  csAddRequired (Set.fromList [BuiltinBool])
+  return $ expressionFromLiteral PrimBool "false"
+compileValueLiteral (EmptyLiteral _) = do
+  return (Positional [emptyType],UnwrappedSingle "Var_empty")
 
 disallowInferred :: (Ord c, Show c, CollectErrorsM m) => Positional (InstanceOrInferred c) -> m [GeneralInstance]
 disallowInferred = mapCompilerM disallow . pValues where

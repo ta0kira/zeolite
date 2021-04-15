@@ -388,7 +388,7 @@ tests = [
                     Expression _
                       (TypeCall _ _
                         (FunctionCall _ (FunctionName "execute") (Positional [])
-                          (Positional [Literal (StringLiteral _ "this is a string\n")]))) [])
+                        (Positional [Expression _ (UnambiguousLiteral (StringLiteral _ "this is a string\n")) []]))) [])
                     ] -> True
                   _ -> False),
 
