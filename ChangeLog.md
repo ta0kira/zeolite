@@ -56,6 +56,12 @@
   default is to prevent a deadlock or infinite loop from blocking continuous
   integration (CI) runners.
 
+* **[new]** Updates parsing to allow calling functions on value intializers, and
+  `Bool`, `Char`, and `String` literals without needing `()`. For example,
+  `Type{ foo }.bar()`, `true.asInt()`, `'0'.asInt()`, `"abc".defaultOrder()`.
+  `Int` and `Float` literals still require `()`; otherwise, the use of `.` would
+  be ambiguous.
+
 ### Libraries
 
 * **[new]** Adds `ParseChars` helper to `lib/util`, to parse `Float` and `Int`

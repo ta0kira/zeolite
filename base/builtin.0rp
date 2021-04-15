@@ -19,6 +19,10 @@ limitations under the License.
 // Built-in boolean type.
 //
 // Literals are true and false.
+//
+// Notes:
+// - You do not need () to make a function call on a literal; something like
+//   true.asInt() is totally fine.
 concrete Bool {
   refines AsBool
   refines AsInt
@@ -36,6 +40,10 @@ concrete Bool {
 // - Escapes:   '\n', '\r', etc. ('\0' must be '\000', however)
 // - Hex:       '\xAB' (always 2 digits)
 // - Oct:       '\012' (always 3 digits)
+//
+// Notes:
+// - You do not need () to make a function call on a literal; something like
+//   'a'.asInt() is totally fine.
 concrete Char {
   refines AsBool
   refines AsChar
@@ -53,6 +61,9 @@ concrete Char {
 // Literals:
 // - . required, with at least one digit on either side, e.g., 0.1
 // - Scientific notation: 0.1E-10, etc.
+//
+// Notes:
+// - You must use () to make a function call on a literal, e.g, (1.1).asInt().
 concrete Float {
   refines AsBool
   refines AsInt
@@ -76,6 +87,9 @@ concrete Float {
 // - Overflow will cause a compilation error.
 // - Hex, oct, and binary escapes can go up to 2^64-1 to allow use of all 64
 //   bits, but they will still be used as signed values.
+//
+// Notes:
+// - You must use () to make a function call on a literal, e.g, (100).asFloat().
 concrete Int {
   refines AsBool
   refines AsChar
@@ -91,6 +105,10 @@ concrete Int {
 // Built-in string of characters. (ASCII only.)
 //
 // Literals: Quote Char sequence with ".
+//
+// Notes:
+// - You do not need () to make a function call on a literal; something like
+//   "abc".defaultOrder() is totally fine.
 concrete String {
   refines AsBool
   refines DefaultOrder<Char>
