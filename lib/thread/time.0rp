@@ -20,4 +20,13 @@ limitations under the License.
 concrete Realtime {
   // Sleep for the given number of seconds.
   @type sleepSeconds (Float) -> ()
+
+  // Get a timestamp from a monotonic clock.
+  //
+  // Notes:
+  // - The absolute timestamp is fairly meaningless; use timestamp diffs
+  //   instead, e.g., to compute the wall time of an operation.
+  // - In theory, this is microsecond-precise; however, the effective resolution
+  //   could depend more on the kernel's latency.
+  @type monoSeconds () -> (Float)
 }

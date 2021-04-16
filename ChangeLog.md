@@ -71,6 +71,9 @@
 * **[new]** Adds `ParseChars` helper to `lib/util`, to parse `Float` and `Int`
   from `String`s.
 
+* **[new]** Adds `monoSeconds()` to `Realtime` in `lib/util`, to get a
+  monotonic wall time in seconds.
+
 ## 0.17.0.0  -- 2021-04-06
 
 ### Language

@@ -21,6 +21,9 @@ limitations under the License.
 #include <string.h>
 #include <time.h>
 
+#include <chrono>
+#include <iomanip>
+
 #include "category-source.hpp"
 #include "Streamlined_Realtime.hpp"
 #include "Category_Float.hpp"
@@ -35,6 +38,7 @@ struct ExtCategory_Realtime : public Category_Realtime {
 
 struct ExtType_Realtime : public Type_Realtime {
   inline ExtType_Realtime(Category_Realtime& p, Params<0>::Type params) : Type_Realtime(p, params) {}
+
   ReturnTuple Call_sleepSeconds(const S<TypeInstance>& Param_self, const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("Realtime.sleepSeconds")
     const PrimFloat Var_arg1 = (args.At(0)).AsFloat();
@@ -51,6 +55,15 @@ struct ExtType_Realtime : public Type_Realtime {
       }
     }
     return ReturnTuple();
+  }
+
+  ReturnTuple Call_monoSeconds(const S<TypeInstance>& Param_self, const ParamTuple& params, const ValueTuple& args) final {
+    TRACE_FUNCTION("Realtime.monoSeconds")
+    const auto time = std::chrono::steady_clock::now().time_since_epoch();
+    const PrimFloat seconds =
+      (PrimFloat) std::chrono::duration_cast<std::chrono::microseconds>(time).count() /
+      (PrimFloat) 1000000.0;
+    return ReturnTuple(Box_Float(seconds));
   }
 };
 

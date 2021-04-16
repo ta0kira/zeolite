@@ -44,3 +44,16 @@ testcase "sleepSeconds() does not interfere with test timeout" {
 unittest test {
   \ Realtime.sleepSeconds(5.0)
 }
+
+
+testcase "monoSeconds() diff is somewhat accurate" {
+  success
+  timeout 2
+}
+
+unittest test {
+  Float start <- Realtime.monoSeconds()
+  \ Realtime.sleepSeconds(0.5)
+  Float stop <- Realtime.monoSeconds()
+  \ Testing.checkBetween<?>(stop-start,0.5,0.75)
+}
