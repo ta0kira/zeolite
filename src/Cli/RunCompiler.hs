@@ -114,21 +114,19 @@ runCompiler resolver backend (CompileOptions _ is is2 _ _ _ p (CompileFast c fn 
   errorFromIO $ removeDirectoryRecursive dir
 
 runCompiler resolver backend (CompileOptions h _ _ ds _ _ p CompileRecompileRecursive f) = do
-  foldM (recursive resolver) Set.empty (map ((,) p) ds) >> return () where
-    recursive r da (p2,d0) = do
+  explicit <- fmap Set.fromList $ mapCompilerM (errorFromIO . canonicalizePath . (p </>)) ds
+  foldM (recursive resolver explicit) Set.empty (map ((,) p) ds) >> return () where
+    recursive r explicit da (p2,d0) = do
+      d <- resolveModule r p2 d0
       isSystem <- isSystemModule r p2 d0
-      if isSystem
+      if (isSystem && not (d `Set.member` explicit)) || d `Set.member` da
          then return da
          else do
-           d <- errorFromIO $ canonicalizePath (p2 </> d0)
            rm <- loadRecompile d
-           if mcPath rm `Set.member` da
-               then return da
-               else do
-                 let ds3 = map ((,) d) (mcPublicDeps rm ++ mcPrivateDeps rm)
-                 da' <- foldM (recursive r) (mcPath rm `Set.insert` da) ds3
-                 runCompiler resolver backend (CompileOptions h [] [] [d] [] [] p CompileRecompile f)
-                 return da'
+           let ds3 = map ((,) d) (mcPublicDeps rm ++ mcPrivateDeps rm)
+           da' <- foldM (recursive r explicit) (d `Set.insert` da) ds3
+           runCompiler resolver backend (CompileOptions h [] [] [d] [] [] p CompileRecompile f)
+           return da'
 
 runCompiler resolver backend (CompileOptions _ _ _ ds _ _ p CompileRecompile f) = do
   mapCompilerM_ recompileSingle ds where
