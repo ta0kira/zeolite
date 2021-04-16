@@ -318,7 +318,7 @@ checkModuleFreshness h ca p m@(CompileMetadata _ p2 _ _ is is2 _ _ _ _ ps xs ts 
       when (not exists) $ compilerErrorM $ "Output file \"" ++ f ++ "\" is missing"
     checkDep time dep = do
       cm <- loadMetadata ca dep
-      mapCompilerM_ (checkInput time . (cmPath cm </>)) (cmPublicFiles cm ++ cmHxxFiles cm)
+      mapCompilerM_ (checkInput time . (cmPath cm </>)) (cmPublicFiles cm)
     checkObject (CategoryObjectFile _ _ fs) = mapCompilerM_ checkOutput fs
     checkObject (OtherObjectFile f)         = checkOutput f
     getRequires (CategoryObjectFile _ rs _) = rs
