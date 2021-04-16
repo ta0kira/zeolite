@@ -53,7 +53,7 @@ define HeapSort {
   }
 
   @value execute () -> ()
-  execute () {
+  execute () { $NoTrace$
     // Convert the container to a heap.
     traverse (Counter.revZeroIndexed(seq.size()/2) -> Int i) {
       \ sift(i,seq.size())
@@ -68,7 +68,7 @@ define HeapSort {
   }
 
   @value sift (Int,Int) -> ()
-  sift (start,size) {
+  sift (start,size) { $NoTrace$
     scoped {
       Int last         <- start
       Int indexLargest <- last
@@ -94,7 +94,7 @@ define HeapSort {
   }
 
   @value swap (Int,Int) -> ()
-  swap (i,j) {
+  swap (i,j) { $NoTrace$
     if (i != j) {
       #x temp <- seq.readAt(i)
       \ seq.writeAt(i,seq.readAt(j))
