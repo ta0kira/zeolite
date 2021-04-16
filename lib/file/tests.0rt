@@ -102,7 +102,7 @@ unittest unwritable {
 testcase "read missing file crash" {
   crash
   require "do-not-create-this-file"
-  require "RawFileReader .*originally created"
+  require "RawFileReader .*creation"
 }
 
 unittest test {
@@ -114,7 +114,7 @@ unittest test {
 testcase "unwritable file crash" {
   crash
   require "testfile"
-  require "RawFileWriter .*originally created"
+  require "RawFileWriter .*creation"
 }
 
 unittest test {

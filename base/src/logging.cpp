@@ -44,7 +44,7 @@ LogThenCrash::~LogThenCrash() {
     PrintTrace(TraceContext::GetTrace());
     const TraceList creation_trace = TraceCreation::GetTrace();
     if (!creation_trace.empty()) {
-      std::cerr << TraceCreation::GetType() << " value originally created at:" << std::endl;
+      std::cerr << "Original " << TraceCreation::GetType() << " value creation:" << std::endl;
       PrintTrace(creation_trace);
     }
     std::raise(signal_);

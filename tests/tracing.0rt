@@ -74,7 +74,7 @@ define Test {
 testcase "TraceCreation captures trace" {
   crash
   require "message"
-  require "Type.+created at"
+  require "Type.+creation"
 }
 
 unittest test {
@@ -114,7 +114,7 @@ define Test {
 testcase "TraceCreation still works with NoTrace" {
   crash
   require "message"
-  require "Type.+created at"
+  require "Type.+creation"
   exclude "Type\.call"
 }
 
@@ -142,8 +142,8 @@ define Type {
 testcase "TraceCreation only uses the latest" {
   crash
   require "message"
-  require "Type1.+created at"
-  exclude "Type2.+created at"
+  require "Type1.+creation"
+  exclude "Type2.+creation"
 }
 
 unittest test {
