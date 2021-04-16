@@ -45,6 +45,15 @@
   (Running `zeolite --templates` again will provide the correct type
   signatures and local argument aliasing.)
 
+* **[new]** Updates recompile mode (`zeolite -r`) to reorder modules explicitly
+  specified in the command based on dependencies. For example, in the command
+  `zeolite -r foo bar`, if `foo` depends on `bar`, `bar` will be compiled first.
+  Previously, modules would be compiled in the order they were specified.
+
+  Note that this *will not* account for *indirect* dependencies unless recursive
+  mode (`-R`) is used. This is because dealing with the intermediate dependency
+  would be ambiguous when not recompiling recursively.
+
 * **[behavior]** Even more optimization for function calls using 4 or fewer
   arguments, returns, or function params.
 

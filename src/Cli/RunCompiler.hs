@@ -113,52 +113,11 @@ runCompiler resolver backend (CompileOptions _ is is2 _ _ _ p (CompileFast c fn 
   compileModule resolver backend spec <?? "In compilation of \"" ++ f2' ++ "\""
   errorFromIO $ removeDirectoryRecursive dir
 
-runCompiler resolver backend (CompileOptions h _ _ ds _ _ p CompileRecompileRecursive f) = do
-  explicit <- fmap Set.fromList $ mapCompilerM (errorFromIO . canonicalizePath . (p </>)) ds
-  foldM (recursive resolver explicit) Set.empty (map ((,) p) ds) >> return () where
-    recursive r explicit da (p2,d0) = do
-      d <- resolveModule r p2 d0
-      isSystem <- isSystemModule r p2 d0
-      if (isSystem && not (d `Set.member` explicit)) || d `Set.member` da
-         then return da
-         else do
-           rm <- loadRecompile d
-           let ds3 = map ((,) d) (mcPublicDeps rm ++ mcPrivateDeps rm)
-           da' <- foldM (recursive r explicit) (d `Set.insert` da) ds3
-           runCompiler resolver backend (CompileOptions h [] [] [d] [] [] p CompileRecompile f)
-           return da'
+runCompiler resolver backend (CompileOptions _ _ _ ds _ _ p CompileRecompileRecursive f) =
+  runRecompileCommon resolver backend f True p ds
 
-runCompiler resolver backend (CompileOptions _ _ _ ds _ _ p CompileRecompile f) = do
-  mapCompilerM_ recompileSingle ds where
-    compilerHash = getCompilerHash backend
-    recompileSingle d0 = do
-      d <- errorFromIO $ canonicalizePath (p </> d0)
-      upToDate <- isPathUpToDate compilerHash f d
-      if f < ForceAll && upToDate
-         then compilerWarningM $ "Path " ++ d0 ++ " is up to date"
-         else do
-           rm@(ModuleConfig p2 d2 _ is is2 es ep m) <- loadRecompile d
-           -- In case the module is manually configured with a p such as "..",
-           -- since the absolute path might not be known ahead of time.
-           absolute <- errorFromIO $ canonicalizePath (p </> d0)
-           let fixed = fixPath (absolute </> p2)
-           (ps,xs,ts) <- findSourceFiles fixed d2
-           em <- getExprMap (p </> d0) rm
-           let spec = ModuleSpec {
-             msRoot = fixed,
-             msPath = d2,
-             msExprMap = em,
-             msPublicDeps = is,
-             msPrivateDeps = is2,
-             msPublicFiles = ps,
-             msPrivateFiles = xs,
-             msTestFiles = ts,
-             msExtraFiles = es,
-             msExtraPaths = ep,
-             msMode = m,
-             msForce = f
-           }
-           compileModule resolver backend spec <?? "In compilation of module \"" ++ d ++ "\""
+runCompiler resolver backend (CompileOptions _ _ _ ds _ _ p CompileRecompile f) =
+  runRecompileCommon resolver backend f False p ds
 
 runCompiler resolver backend (CompileOptions _ is is2 ds _ _ p CreateTemplates f) = mapM_ compileSingle ds where
   compilerHash = getCompilerHash backend
@@ -206,3 +165,48 @@ runCompiler resolver backend (CompileOptions h is is2 ds es ep p m f) = mapM_ co
     }
     writeRecompile (p </> d) rm
     runCompiler resolver backend (CompileOptions h [] [] [d] [] [] p CompileRecompile DoNotForce)
+
+runRecompileCommon :: (PathIOHandler r, CompilerBackend b) => r -> b ->
+  ForceMode -> Bool -> FilePath -> [FilePath] -> TrackedErrorsIO ()
+runRecompileCommon resolver backend f rec p ds = do
+  explicit <- fmap Set.fromList $ mapCompilerM (errorFromIO . canonicalizePath . (p </>)) ds
+  foldM (recursive resolver explicit) Set.empty (map ((,) p) ds) >> return () where
+    compilerHash = getCompilerHash backend
+    recursive r explicit da (p2,d0) = do
+      d <- resolveModule r p2 d0
+      isSystem <- isSystemModule r p2 d0
+      let process = if rec
+                       then d `Set.member` explicit || not isSystem
+                       else d `Set.member` explicit
+      if not process || d `Set.member` da
+         then return da
+         else do
+           rm <- loadRecompile d
+           let ds3 = map ((,) d) (mcPublicDeps rm ++ mcPrivateDeps rm)
+           da' <- foldM (recursive r explicit) (d `Set.insert` da) ds3
+           recompile d
+           return da'
+    recompile d = do
+      upToDate <- isPathUpToDate compilerHash f d
+      if f < ForceAll && upToDate
+         then compilerWarningM $ "Path " ++ d ++ " is up to date"
+         else do
+           rm@(ModuleConfig p2 d2 _ is is2 es ep m) <- loadRecompile d
+           let fixed = fixPath (d </> p2)
+           (ps,xs,ts) <- findSourceFiles fixed d2
+           em <- getExprMap d rm
+           let spec = ModuleSpec {
+             msRoot = fixed,
+             msPath = d2,
+             msExprMap = em,
+             msPublicDeps = is,
+             msPrivateDeps = is2,
+             msPublicFiles = ps,
+             msPrivateFiles = xs,
+             msTestFiles = ts,
+             msExtraFiles = es,
+             msExtraPaths = ep,
+             msMode = m,
+             msForce = f
+           }
+           compileModule resolver backend spec <?? "In compilation of module \"" ++ d ++ "\""
