@@ -171,7 +171,7 @@ compileCondition ctx c e = do
   noTrace <- csGetNoTrace
   if noTrace
      then return (e',ctx')
-     else return (predTraceContext c ++ e',ctx')
+     else return (predTraceContext c ++ "(" ++ e' ++ ")",ctx')
   where
     compile = "In condition at " ++ formatFullContext c ??> do
       (ts,e') <- compileExpression e
@@ -560,24 +560,24 @@ compileExpression = compile where
         | o == "-" = doNeg t e2
         | o == "~" = doComp t e2
         | otherwise = compilerErrorM $ "Unknown unary operator \"" ++ o ++ "\" " ++
-                                             formatFullContextBrace c
+                                       formatFullContextBrace c
       doNot t e2 = do
         when (t /= boolRequiredValue) $
           compilerErrorM $ "Cannot use " ++ show t ++ " with unary ! operator" ++
-                                 formatFullContextBrace c
-        return $ (Positional [boolRequiredValue],UnboxedPrimitive PrimBool $ "!" ++ useAsUnboxed PrimBool e2)
+                            formatFullContextBrace c
+        return $ (Positional [boolRequiredValue],UnboxedPrimitive PrimBool $ "!(" ++ useAsUnboxed PrimBool e2 ++ ")")
       doNeg t e2
         | t == intRequiredValue = return $ (Positional [intRequiredValue],
                                             UnboxedPrimitive PrimInt $ "-" ++ useAsUnboxed PrimInt e2)
         | t == floatRequiredValue = return $ (Positional [floatRequiredValue],
-                                             UnboxedPrimitive PrimFloat $ "-" ++ useAsUnboxed PrimFloat e2)
+                                             UnboxedPrimitive PrimFloat $ "-(" ++ useAsUnboxed PrimFloat e2 ++ ")")
         | otherwise = compilerErrorM $ "Cannot use " ++ show t ++ " with unary - operator" ++
-                                             formatFullContextBrace c
+                                       formatFullContextBrace c
       doComp t e2
         | t == intRequiredValue = return $ (Positional [intRequiredValue],
-                                            UnboxedPrimitive PrimInt $ "~" ++ useAsUnboxed PrimInt e2)
+                                            UnboxedPrimitive PrimInt $ "~(" ++ useAsUnboxed PrimInt e2 ++ ")")
         | otherwise = compilerErrorM $ "Cannot use " ++ show t ++ " with unary ~ operator" ++
-                                             formatFullContextBrace c
+                                       formatFullContextBrace c
   compile (InfixExpression c e1 (FunctionOperator _ (FunctionSpec _ (CategoryFunction c2 cn) fn ps)) e2) =
     compile (Expression c (CategoryCall c2 cn (FunctionCall c fn ps (Positional [e1,e2]))) [])
   compile (InfixExpression c e1 (FunctionOperator _ (FunctionSpec _ (TypeFunction c2 tn) fn ps)) e2) =
@@ -650,7 +650,7 @@ compileExpression = compile where
           compilerErrorM $ "Cannot " ++ show o ++ " " ++ show t1 ++ " and " ++
                                  show t2 ++ formatFullContextBrace c
       glueInfix t1 t2 e3 o2 e4 =
-        UnboxedPrimitive t2 $ useAsUnboxed t1 e3 ++ o2 ++ useAsUnboxed t1 e4
+        UnboxedPrimitive t2 $ "(" ++ useAsUnboxed t1 e3 ++ ")" ++ o2 ++ "(" ++ useAsUnboxed t1 e4 ++ ")"
   transform e (ConvertedCall c t f) = do
     (Positional ts,e') <- e
     t' <- requireSingle c ts

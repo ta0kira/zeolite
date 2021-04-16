@@ -168,7 +168,7 @@ useAsWhatever (UnboxedPrimitive _ e) = e
 useAsWhatever (LazySingle e)         = useAsWhatever $ getFromLazy e
 
 useAsReturns :: ExpressionValue -> String
-useAsReturns (OpaqueMulti e)                 = "(" ++ e ++ ")"
+useAsReturns (OpaqueMulti e)                 = e
 useAsReturns (WrappedSingle e)               = "ReturnTuple(" ++ e ++ ")"
 useAsReturns (UnwrappedSingle e)             = "ReturnTuple(" ++ e ++ ")"
 useAsReturns (BoxedPrimitive PrimBool e)     = "ReturnTuple(Box_Bool(" ++ e ++ "))"
@@ -184,7 +184,7 @@ useAsReturns (UnboxedPrimitive PrimFloat e)  = "ReturnTuple(Box_Float(" ++ e ++ 
 useAsReturns (LazySingle e)                  = useAsReturns $ getFromLazy e
 
 useAsArgs :: ExpressionValue -> String
-useAsArgs (OpaqueMulti e)                 = "(" ++ e ++ ")"
+useAsArgs (OpaqueMulti e)                 = e
 useAsArgs (WrappedSingle e)               = "ArgTuple(" ++ e ++ ")"
 useAsArgs (UnwrappedSingle e)             = "ArgTuple(" ++ e ++ ")"
 useAsArgs (BoxedPrimitive PrimBool e)     = "ArgTuple(Box_Bool(" ++ e ++ "))"
@@ -201,8 +201,8 @@ useAsArgs (LazySingle e)                  = useAsArgs $ getFromLazy e
 
 useAsUnwrapped :: ExpressionValue -> String
 useAsUnwrapped (OpaqueMulti e)                 = "(" ++ e ++ ").Only()"
-useAsUnwrapped (WrappedSingle e)               = "(" ++ e ++ ")"
-useAsUnwrapped (UnwrappedSingle e)             = "(" ++ e ++ ")"
+useAsUnwrapped (WrappedSingle e)               = e
+useAsUnwrapped (UnwrappedSingle e)             = e
 useAsUnwrapped (BoxedPrimitive PrimBool e)     = "Box_Bool(" ++ e ++ ")"
 useAsUnwrapped (BoxedPrimitive PrimString e)   = "Box_String(" ++ e ++ ")"
 useAsUnwrapped (BoxedPrimitive PrimChar e)     = "Box_Char(" ++ e ++ ")"
@@ -231,8 +231,8 @@ useAsUnboxed PrimString (UnwrappedSingle e) = "(" ++ e ++ ").AsString()"
 useAsUnboxed PrimChar   (UnwrappedSingle e) = "(" ++ e ++ ").AsChar()"
 useAsUnboxed PrimInt    (UnwrappedSingle e) = "(" ++ e ++ ").AsInt()"
 useAsUnboxed PrimFloat  (UnwrappedSingle e) = "(" ++ e ++ ").AsFloat()"
-useAsUnboxed _ (BoxedPrimitive _ e)         = "(" ++ e ++ ")"
-useAsUnboxed _ (UnboxedPrimitive _ e)       = "(" ++ e ++ ")"
+useAsUnboxed _ (BoxedPrimitive _ e)         = e
+useAsUnboxed _ (UnboxedPrimitive _ e)       = e
 useAsUnboxed t (LazySingle e)               = useAsUnboxed t $ getFromLazy e
 
 valueAsWrapped :: ExpressionValue -> ExpressionValue
