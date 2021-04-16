@@ -45,6 +45,13 @@
   (Running `zeolite --templates` again will provide the correct type
   signatures and local argument aliasing.)
 
+* **[breaking]** Updates `zeolite -c` (library mode) and `zeolite -m` (binary
+  mode to generate a new `.zeolite-module` and exit. Previously, both modes
+  would create `.zeolite-module` and then attempt to compile it. The purpose of
+  this change is to make users more aware that `.zeolite-module` can/should be
+  edited, rather than attempting to generate a "correct" config entirely from
+  CLI flags.
+
 * **[new]** Updates recompile mode (`zeolite -r`) to reorder modules explicitly
   specified in the command based on dependencies. For example, in the command
   `zeolite -r foo bar`, if `foo` depends on `bar`, `bar` will be compiled first.

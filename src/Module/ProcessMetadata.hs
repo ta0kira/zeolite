@@ -31,6 +31,7 @@ module Module.ProcessMetadata (
   getObjectFilesForDeps,
   getObjectFileResolver,
   getRealPathsForDeps,
+  getRecompilePath,
   getSourceFilesForDeps,
   isPathConfigured,
   isPathUpToDate,
@@ -135,6 +136,11 @@ writeRecompile p m = do
   errorFromIO $ hPutStrLn stderr $ "Updating config for \"" ++ p' ++ "\"."
   m' <- autoWriteConfig m <?? "In data for " ++ p
   errorFromIO $ writeFile f m'
+
+getRecompilePath :: FilePath -> TrackedErrorsIO FilePath
+getRecompilePath p = do
+  p' <- errorFromIO $ canonicalizePath p
+  return $ p' </> moduleFilename
 
 eraseCachedData :: FilePath -> TrackedErrorsIO ()
 eraseCachedData p = do

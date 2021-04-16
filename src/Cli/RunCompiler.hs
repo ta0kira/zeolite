@@ -144,7 +144,7 @@ runCompiler resolver backend (CompileOptions _ is is2 ds _ _ p CreateTemplates f
          (ModuleConfig _ _ _ is3 is4 _ _ _) <- rm
          return (nub $ is ++ is3,nub $ is2 ++ is4)
 
-runCompiler resolver backend (CompileOptions h is is2 ds es ep p m f) = mapM_ compileSingle ds where
+runCompiler resolver _ (CompileOptions _ is is2 ds es ep p m f) = mapM_ compileSingle ds where
   compileSingle d = do
     as  <- fmap fixPaths $ mapCompilerM (resolveModule resolver (p </> d)) is
     as2 <- fmap fixPaths $ mapCompilerM (resolveModule resolver (p </> d)) is2
@@ -164,7 +164,8 @@ runCompiler resolver backend (CompileOptions h is is2 ds es ep p m f) = mapM_ co
       mcMode = m
     }
     writeRecompile (p </> d) rm
-    runCompiler resolver backend (CompileOptions h [] [] [d] [] [] p CompileRecompile DoNotForce)
+    config <- getRecompilePath (p </> d)
+    errorFromIO $ hPutStrLn stderr $ "*** Setup complete. Please edit " ++ config ++ " and recompile with zeolite -r. ***"
 
 runRecompileCommon :: (PathIOHandler r, CompilerBackend b) => r -> b ->
   ForceMode -> Bool -> FilePath -> [FilePath] -> TrackedErrorsIO ()

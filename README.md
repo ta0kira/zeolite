@@ -334,33 +334,22 @@ compilers, you *do not* specify all command-line options every time you
 recompile a binary or module.
 
 ```shell
-# Compile.
+# Create a new .zeolite-module config. (Only once!)
+zeolite -m MyProgram myprogram
+
+# Recompile the module and binary. (After any config or code updates.)
 # All sources in myprogram will be compiled. -m MyProgram selects the entry
 # point. The default output name for the binary here is myprogram/MyProgram.
-zeolite -m MyProgram myprogram
+zeolite -r myprogram
 
 # Execute.
 myprogram/MyProgram
 ```
 
-This is the smallest Zeolite program possible.
-
-After compiling the project the first time, you must either use `-r` or `-f`
-when recompiling.
-
 ```shell
-# Recompile.
-zeolite -r myprogram
-
-# Force compilation from scratch.
-zeolite -f -m MyProgram myprogram
+# An alternative, if you only have one .0rx and want to quickly iterate.
+zeolite --fast MyProgram myprogram/myprogram.0rx
 ```
-
-An alternative to this is the `--fast` mode (as of compiler version `0.4.1.0`),
-which allows you to create a binary from a single `.0rx` file. This mode does
-not require the source to be in a separate directory and does not preserve any
-info about the compiler setup. This is useful for simple testing and
-experimentation, and should generally not be used otherwise.
 
 ### Declaring Functions
 

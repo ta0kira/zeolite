@@ -10,7 +10,7 @@ To run the example:
 ZEOLITE_PATH=$(zeolite --get-path)
 
 # Compile the example.
-zeolite -p "$ZEOLITE_PATH" -I lib/util -m HelloDemo example/hello
+zeolite -p "$ZEOLITE_PATH/example/hello" -I lib/util --fast HelloDemo hello-demo.0rx
 
 # Execute the compiled binary.
 $ZEOLITE_PATH/example/hello/HelloDemo
