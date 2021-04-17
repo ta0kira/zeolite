@@ -74,6 +74,11 @@
   `minBound()` and `maxBound()` of a type, and implements it for `Int` and
   `Char`. (This is breaking because `Bounded` is now reserved.)
 
+* **[breaking]** Makes `Char` unsigned when converting to `Int` using `asInt()`.
+  Previously, the value was signed, i.e., between -128 and 127. This change
+  makes the `Int` values line up better with hex and oct `Char` escapes. The
+  conversion from `Int` to `Char` (with `asChar()`) *is not* affected.
+
 * **[new]** Adds the `timeout` field to `testcase`, to specify the number of
   seconds to allow each `unittest` to run. The default is `30`, which should be
   more than enough for most individual tests. The primary purpose of setting a

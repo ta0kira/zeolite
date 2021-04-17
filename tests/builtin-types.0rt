@@ -720,11 +720,19 @@ testcase "Char stuff" {
 }
 
 unittest accurateMax {
-  \ Testing.checkEquals<?>(Char.maxBound().asInt(),127)
+  \ Testing.checkEquals<?>(Char.maxBound().asInt(),255)
 }
 
 unittest accurateMin {
-  \ Testing.checkEquals<?>(Char.minBound().asInt(),-128)
+  \ Testing.checkEquals<?>(Char.minBound().asInt(),0)
+}
+
+unittest asIntIsUnsigned {
+  \ Testing.checkEquals<?>('\xff'.asInt(),255)
+}
+
+unittest asFloatIsUnsigned {
+  \ Testing.checkEquals<?>('\xff'.asFloat(),255.0)
 }
 
 

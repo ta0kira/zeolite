@@ -16,8 +16,6 @@ limitations under the License.
 
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
-#include <climits>
-
 #include "category-source.hpp"
 #include "Streamlined_Char.hpp"
 #include "Category_AsBool.hpp"
@@ -46,12 +44,12 @@ struct ExtType_Char : public Type_Char {
 
   ReturnTuple Call_maxBound(const S<TypeInstance>& Param_self, const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("Char.maxBound")
-    return ReturnTuple(Box_Char(CHAR_MAX));
+    return ReturnTuple(Box_Char('\xff'));
   }
 
   ReturnTuple Call_minBound(const S<TypeInstance>& Param_self, const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("Char.minBound")
-    return ReturnTuple(Box_Char(CHAR_MIN));
+    return ReturnTuple(Box_Char('\0'));
   }
 
   ReturnTuple Call_default(const S<TypeInstance>& Param_self, const ParamTuple& params, const ValueTuple& args) final {
@@ -86,11 +84,11 @@ ReturnTuple DispatchChar(PrimChar value, const BoxedValue& Var_self, const Value
   }
   if (&label == &Function_AsFloat_asFloat) {
     TRACE_FUNCTION("Char.asFloat")
-    return ReturnTuple(Box_Float((int) value - (int) CHAR_MIN - 128));
+    return ReturnTuple(Box_Float(((int) value + 256) % 256));
   }
   if (&label == &Function_AsInt_asInt) {
     TRACE_FUNCTION("Char.asInt")
-    return ReturnTuple(Box_Int((int) value - (int) CHAR_MIN - 128));
+    return ReturnTuple(Box_Int(((int) value + 256) % 256));
   }
   if (&label == &Function_Formatted_formatted) {
     TRACE_FUNCTION("Char.formatted")

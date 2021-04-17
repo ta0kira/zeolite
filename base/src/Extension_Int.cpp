@@ -83,8 +83,7 @@ ReturnTuple DispatchInt(PrimInt value, const BoxedValue& Var_self, const ValueFu
   }
   if (&label == &Function_AsChar_asChar) {
     TRACE_FUNCTION("Int.asChar")
-    const int modded = ((value % 256) + 256) % 256;
-    return ReturnTuple(Box_Char(modded + (int) CHAR_MIN + 128));
+    return ReturnTuple(Box_Char(PrimChar(((value % 256) + 256) % 256)));
   }
   if (&label == &Function_AsFloat_asFloat) {
     TRACE_FUNCTION("Int.asFloat")

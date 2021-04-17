@@ -33,19 +33,19 @@ concrete Bool {
   defines Equals<Bool>
 }
 
-// Built-in character type. (ASCII only.)
+// Built-in 8-bit character type.
 //
 // Literals:
 // - Printable: 'a', '0', etc.
-// - Escapes:   '\n', '\r', etc. ('\0' must be '\000', however)
+// - Escapes:   '\n', '\r', etc. ('\0' must be octal '\000', however)
 // - Hex:       '\xAB' (always 2 digits)
 // - Oct:       '\012' (always 3 digits)
 //
 // Notes:
 // - You do not need () to make a function call on a literal; something like
 //   'a'.asInt() is totally fine.
-// - When converting to Int with asInt(), the value will always be signed, i.e.,
-//   beween -128 and 127.
+// - When converting to Int with asInt(), the value will always be unsigned,
+//   i.e., beween 0-255. ASCII characters will be in the 0-127 range.
 concrete Char {
   refines AsBool
   refines AsChar
@@ -94,7 +94,7 @@ concrete Float {
 // Notes:
 // - You must use () to make a function call on a literal, e.g, (100).asFloat().
 // - When converting to Char with asChar(), the value will always be treated as
-//   signed, i.e., beween -128 and 127 mod 256.
+//   unsigned, i.e., beween 0-255 mod 256.
 concrete Int {
   refines AsBool
   refines AsChar
