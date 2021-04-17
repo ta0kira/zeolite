@@ -40,19 +40,20 @@ concrete CategoricalTree<#c> {
   // Get the sum of all weights in the distribution.
   @value getTotal () -> (Int)
 
-  // Set the relative weight of a category.
+  // Set the relative weight of a value.
   //
   // Notes:
   // - The weight must not be negative.
+  // - The sum of all weights (see getTotal()) must not exceed Int.maxBound().
   @value setWeight (#c,Int) -> (#self)
 
-  // Get the relative weight of a category.
+  // Get the relative weight of a value.
   //
   // Notes:
   // - If the category isn't in the tree, its weight is 0.
   @value getWeight (#c) -> (Int)
 
-  // Return the category at the given offset.
+  // Return the value at the given offset.
   //
   // Notes:
   // - The offset must be within [0,getTotal()). A uniform selection in that

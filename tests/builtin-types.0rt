@@ -715,28 +715,39 @@ concrete Test {
 }
 
 
+testcase "Char stuff" {
+  success
+}
+
+unittest accurateMax {
+  \ Testing.checkEquals<?>(Char.maxBound().asInt(),127)
+}
+
+unittest accurateMin {
+  \ Testing.checkEquals<?>(Char.minBound().asInt(),-128)
+}
+
+
 testcase "Int stuff" {
   success
 }
 
 unittest accurateMax {
-  Int x <- 9223372036854775807 - 1
-  if (x != 9223372036854775806) {
-    fail(x)
-  }
+  \ Testing.checkEquals<?>(Int.maxBound(),9223372036854775807)
 }
 
 unittest accurateMin {
-  Int x <- -9223372036854775806 + 1
-  if (x != -9223372036854775805) {
-    fail(x)
-  }
+  \ Testing.checkEquals<?>(Int.minBound(),-9223372036854775808)
+}
+
+unittest asCharIsPeriodic {
+  \ Testing.checkEquals<?>((65).asChar(),(65+256).asChar())
+  \ Testing.checkEquals<?>((65).asChar(),(65+1024).asChar())
+  \ Testing.checkEquals<?>((65).asChar(),(65-1024).asChar())
 }
 
 unittest hexUnsigned {
-  if (\xffffffffffffffff != -1) {
-    fail("Failed")
-  }
+  \ Testing.checkEquals<?>(\xffffffffffffffff,-1)
 }
 
 
@@ -776,13 +787,13 @@ concrete Test {
 
 testcase "Int literal too small" {
   error
-  require "-9223372036854775807"
+  require "-9223372036854775809"
   require "min"
 }
 
 define Test {
   run () {
-    \ -9223372036854775807
+    \ -9223372036854775809
   }
 }
 

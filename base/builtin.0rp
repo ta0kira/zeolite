@@ -44,6 +44,8 @@ concrete Bool {
 // Notes:
 // - You do not need () to make a function call on a literal; something like
 //   'a'.asInt() is totally fine.
+// - When converting to Int with asInt(), the value will always be signed, i.e.,
+//   beween -128 and 127.
 concrete Char {
   refines AsBool
   refines AsChar
@@ -51,6 +53,7 @@ concrete Char {
   refines AsFloat
   refines Formatted
 
+  defines Bounded
   defines Default
   defines Equals<Char>
   defines LessThan<Char>
@@ -90,6 +93,8 @@ concrete Float {
 //
 // Notes:
 // - You must use () to make a function call on a literal, e.g, (100).asFloat().
+// - When converting to Char with asChar(), the value will always be treated as
+//   signed, i.e., beween -128 and 127 mod 256.
 concrete Int {
   refines AsBool
   refines AsChar
@@ -97,6 +102,7 @@ concrete Int {
   refines AsFloat
   refines Formatted
 
+  defines Bounded
   defines Default
   defines Equals<Int>
   defines LessThan<Int>
@@ -276,6 +282,18 @@ concrete CharBuffer {
 @type interface Default {
   // Return a new copy of the default value.
   default () -> (#self)
+}
+
+// The type has both min and max bounds.
+//
+// Notes:
+// - The implementation should return either an immutable object or a new object
+//   for every call, so that mutations are localized.
+@type interface Bounded {
+  // The min bound of the type.
+  minBound () -> (#self)
+  // The max bound of the type.
+  maxBound () -> (#self)
 }
 
 // The type can compare values for equality.

@@ -16,6 +16,7 @@ limitations under the License.
 
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
+#include <climits>
 #include <sstream>
 
 #include "category-source.hpp"
@@ -43,6 +44,16 @@ struct ExtCategory_Int : public Category_Int {
 
 struct ExtType_Int : public Type_Int {
   inline ExtType_Int(Category_Int& p, Params<0>::Type params) : Type_Int(p, params) {}
+
+  ReturnTuple Call_maxBound(const S<TypeInstance>& Param_self, const ParamTuple& params, const ValueTuple& args) final {
+    TRACE_FUNCTION("Int.maxBound")
+    return ReturnTuple(Box_Int(9223372036854775807LL));
+  }
+
+  ReturnTuple Call_minBound(const S<TypeInstance>& Param_self, const ParamTuple& params, const ValueTuple& args) final {
+    TRACE_FUNCTION("Int.minBound")
+    return ReturnTuple(Box_Int(-9223372036854775807LL - 1LL));
+  }
 
   ReturnTuple Call_default(const S<TypeInstance>& Param_self, const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("Int.default")
@@ -72,7 +83,8 @@ ReturnTuple DispatchInt(PrimInt value, const BoxedValue& Var_self, const ValueFu
   }
   if (&label == &Function_AsChar_asChar) {
     TRACE_FUNCTION("Int.asChar")
-    return ReturnTuple(Box_Char(value % 0xff));
+    const int modded = ((value % 256) + 256) % 256;
+    return ReturnTuple(Box_Char(modded + (int) CHAR_MIN + 128));
   }
   if (&label == &Function_AsFloat_asFloat) {
     TRACE_FUNCTION("Int.asFloat")

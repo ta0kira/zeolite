@@ -96,6 +96,7 @@
       <item> AsChar </item>
       <item> AsFloat </item>
       <item> AsInt </item>
+      <item> Bounded </item>
       <item> Bool </item>
       <item> Build </item>
       <item> Char </item>

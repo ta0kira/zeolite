@@ -46,7 +46,7 @@
   signatures and local argument aliasing.)
 
 * **[breaking]** Updates `zeolite -c` (library mode) and `zeolite -m` (binary
-  mode to generate a new `.zeolite-module` and exit. Previously, both modes
+  mode) to generate a new `.zeolite-module` and exit. Previously, both modes
   would create `.zeolite-module` and then attempt to compile it. The purpose of
   this change is to make users more aware that `.zeolite-module` can/should be
   edited, rather than attempting to generate a "correct" config entirely from
@@ -69,6 +69,10 @@
   to signal an unhandled error.
 
 ### Language
+
+* **[breaking]** Adds the `Bounded` `@type interface` for getting the
+  `minBound()` and `maxBound()` of a type, and implements it for `Int` and
+  `Char`. (This is breaking because `Bounded` is now reserved.)
 
 * **[new]** Adds the `timeout` field to `testcase`, to specify the number of
   seconds to allow each `unittest` to run. The default is `30`, which should be

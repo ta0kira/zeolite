@@ -880,15 +880,17 @@ compileValueLiteral (IntegerLiteral c True l) = do
   csAddRequired (Set.fromList [BuiltinInt])
   when (l > 2^(64 :: Integer) - 1) $ compilerErrorM $
     "Literal " ++ show l ++ formatFullContextBrace c ++ " is greater than the max value for 64-bit unsigned"
-  let l' = if l > 2^(63 :: Integer) - 1 then l - 2^(64 :: Integer) else l
-  return $ expressionFromLiteral PrimInt (show l')
+  return $ expressionFromLiteral PrimInt (show l ++ "ULL")
 compileValueLiteral (IntegerLiteral c False l) = do
   csAddRequired (Set.fromList [BuiltinInt])
   when (l > 2^(63 :: Integer) - 1) $ compilerErrorM $
     "Literal " ++ show l ++ formatFullContextBrace c ++ " is greater than the max value for 64-bit signed"
-  when ((-l) > (2^(63 :: Integer) - 2)) $ compilerErrorM $
+  when ((-l) > 2^(63 :: Integer)) $ compilerErrorM $
     "Literal " ++ show l ++ formatFullContextBrace c ++ " is less than the min value for 64-bit signed"
-  return $ expressionFromLiteral PrimInt (show l)
+  -- NOTE: clang++ processes -abcLL as -(abcLL), which means that -(2^63)
+  -- written out as a literal looks like an unsigned overflow. Using ULL here
+  -- silences that warning.
+  return $ expressionFromLiteral PrimInt (show l ++ "ULL")
 compileValueLiteral (DecimalLiteral _ l e) = do
   csAddRequired (Set.fromList [BuiltinFloat])
   -- TODO: Check bounds.
