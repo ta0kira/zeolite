@@ -79,6 +79,11 @@
   makes the `Int` values line up better with hex and oct `Char` escapes. The
   conversion from `Int` to `Char` (with `asChar()`) *is not* affected.
 
+* **[new]** Updates param inference (e.g., `call<?>(foo)`) to handle param
+  filters containing multiple inferred params. Previously, if a function had a
+  filter such as `#x requires #y` and both `#x` and `#y` were inferred,
+  inference would fail because params were inferred one at a time.
+
 * **[new]** Adds the `timeout` field to `testcase`, to specify the number of
   seconds to allow each `unittest` to run. The default is `30`, which should be
   more than enough for most individual tests. The primary purpose of setting a

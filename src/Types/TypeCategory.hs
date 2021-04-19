@@ -59,7 +59,6 @@ module Types.TypeCategory (
   getFunctionFilterMap,
   getInstanceCategory,
   getValueCategory,
-  guessesAsParams,
   includeNewTypes,
   inferParamTypes,
   instanceFromCategory,
@@ -86,7 +85,7 @@ module Types.TypeCategory (
 ) where
 
 import Control.Arrow (second)
-import Control.Monad ((>=>),when)
+import Control.Monad ((>=>),foldM,when)
 import Data.List (group,groupBy,intercalate,nub,nubBy,sort,sortBy)
 import qualified Data.Map as Map
 import qualified Data.Set as Set
@@ -1044,9 +1043,6 @@ inferParamTypes r f ps ts = do
       return (PatternMatch v t1 t2')
     matchPattern (PatternMatch v t1 t2) = checkValueTypeMatch r f v t1 t2
 
-guessesAsParams :: [InferredTypeGuess] -> ParamValues
-guessesAsParams gs = Map.fromList $ zip (map itgParam gs) (map itgGuess gs)
-
 data GuessRange a =
   GuessRange {
     grLower :: Maybe a,
@@ -1066,15 +1062,13 @@ data GuessUnion =
   }
 
 mergeInferredTypes :: (CollectErrorsM m, TypeResolver r) =>
-  r -> ParamFilters -> ParamFilters -> ParamValues -> MergeTree InferredTypeGuess ->
-  m [InferredTypeGuess]
+  r -> ParamFilters -> ParamFilters -> ParamValues -> MergeTree InferredTypeGuess -> m ParamValues
 mergeInferredTypes r f ff ps gs0 = do
   let gs0' = mapTypeGuesses gs0
-  mapCompilerM reduce $ Map.toList gs0' where
-    reduce (i,is) = do
-      (GuessUnion gs) <- reduceMergeTree anyOp allOp leafOp is >>= filterGuesses i
-      t <- takeBest i gs
-      return (InferredTypeGuess i t Invariant)
+  gs1 <- mapCompilerM (\(i,is) -> fmap ((,) i) $ (reduce >=> simplifyUnion) is) $ Map.toList gs0'
+  gs2 <- filterGuesses gs1
+  takeBest gs2 where
+    reduce is = fmap guGuesses $ reduceMergeTree anyOp allOp leafOp is
     leafOp (InferredTypeGuess _ t Covariant)     = return $ GuessUnion [GuessRange (Just t) Nothing]
     leafOp (InferredTypeGuess _ t Contravariant) = return $ GuessUnion [GuessRange Nothing  (Just t)]
     leafOp (InferredTypeGuess _ t _)             = return $ GuessUnion [GuessRange (Just t) (Just t)]
@@ -1137,33 +1131,37 @@ mergeInferredTypes r f ff ps gs0 = do
            (Just lo,Just hi) -> return $ Just $ ms ++ [GuessRange lo hi] ++ gs
            _                 -> tryRangeUnion (ms ++ [g2]) g1 gs
     tryRangeUnion _ _ _ = return Nothing
-    takeBest _ [(GuessRange (Just lo) Nothing)] = return lo
-    takeBest _ [(GuessRange Nothing (Just hi))] = return hi
-    takeBest i [g@(GuessRange (Just lo) (Just hi))] = do
-      same <- (Just hi) `convertsTo` (Just lo)
-      when (not same) $ compilerErrorM (show g) <!! "Type for param " ++ show i ++ " is ambiguous"
-      return lo
-    takeBest i gs = mapErrorsM (map show gs) <!! "Type for param " ++ show i ++ " is ambiguous"
-    filterGuesses i (GuessUnion gs) = do
-      let ga = map (filterGuess i) gs
-      collectFirstM_ ga <!! "No valid guesses for param " ++ show i
-      gs' <- collectAnyM ga
-      fmap GuessUnion (simplifyUnion gs')
-    filterGuess i g@(GuessRange (Just lo) Nothing) = checkSubFilters i lo >> return g
-    filterGuess i g@(GuessRange Nothing (Just hi)) = checkSubFilters i hi >> return g
-    filterGuess i g@(GuessRange (Just lo) (Just hi)) = do
-      let checkLo = checkSubFilters i lo
-      let checkHi = checkSubFilters i hi
-      pLo <- isCompilerErrorM checkLo
-      pHi <- isCompilerErrorM checkHi
-      case (pLo,pHi) of
-           (True,True) -> collectAllM_ [checkLo,checkHi] >> emptyErrorM
-           (True,_) -> return $ GuessRange Nothing   (Just hi)
-           (_,True) -> return $ GuessRange (Just lo) Nothing
-           _        -> return g
-    filterGuess _ _ = emptyErrorM
-    checkSubFilters i t = "In guess " ++ show t ++ " for param " ++ show i ??> do
-      let ps' = Map.insert i t ps
-      fs <- ff `filterLookup` i
-      fs' <- mapCompilerM (uncheckedSubFilter (getValueForParam ps')) fs
-      validateAssignment r f t fs'
+    takeBest [gs] = return $ Map.fromList gs
+    takeBest gs = "No feasible param guesses found" !!> do
+      mapCompilerM_ showAmbiguous (zip ([1..] :: [Int]) gs)
+      emptyErrorM
+    showAmbiguous (n,gs) = "Param guess set " ++ show n !!>
+      (mapErrorsM $ map (\(i,t) -> "Guess for param " ++ show i ++ ": " ++ show t) gs)
+    filterGuesses gs = do
+      gs' <- mapCompilerM extractGuesses gs
+      let mult = foldM (\xs ys -> [xs++[y] | y <- ys]) [] gs'
+      let gs2 = map filterGuess mult
+      collectFirstM_ gs2 <!! "No feasible param guesses found"
+      collectAnyM gs2
+    filterGuess gs = checkSubFilters gs >> return gs
+    extractGuesses (i,is) = do
+      let is2 = map (extractSingle i) is
+      collectFirstM_ is2 <!! "No feasible guesses for param " ++ show i
+      fmap nub $ collectAnyM is2
+    extractSingle i (GuessRange (Just lo) Nothing) = return (i,lo)
+    extractSingle i (GuessRange Nothing (Just hi)) = return (i,hi)
+    extractSingle i g@(GuessRange (Just lo) (Just hi)) = do
+      p <- (Just hi) `convertsTo` (Just lo)
+      if p
+         then return (i,lo)
+         else compilerErrorM $ "Ambiguous guess for param " ++ show i ++ ": " ++ show g
+    extractSingle i g@(GuessRange Nothing Nothing) =
+      compilerErrorM $ "Ambiguous guess for param " ++ show i ++ ": " ++ show g
+    checkSubFilters gs = "In validation of inference guess: " ++ describeGuess gs ??> do
+      let ps' = foldr (uncurry Map.insert) ps gs
+      ff' <- uncheckedSubFilters (getValueForParam ps') ff
+      mapCompilerM_ (validateSingleParam ff') gs
+    validateSingleParam ff2 (i,t) = do
+      fs <- ff2 `filterLookup` i
+      validateAssignment r f t fs
+    describeGuess = intercalate ", " . map (\(i,t) -> show i ++ " = " ++ show t)

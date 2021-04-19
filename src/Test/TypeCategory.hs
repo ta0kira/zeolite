@@ -1187,7 +1187,7 @@ checkInferenceSuccess tm pa is ts gs = checkInferenceCommon check tm pa is ts gs
   prefix = show ts ++ " " ++ showFilters pa
   check gs2 c
     | isCompilerError c = compilerErrorM $ prefix ++ ":\n" ++ show (getCompilerWarnings c) ++ show (getCompilerError c)
-    | otherwise        = getCompilerSuccess c `containsExactly` gs2
+    | otherwise         = (Map.toList $ getCompilerSuccess c) `containsExactly` Map.toList gs2
 
 checkInferenceFail :: CategoryMap SourceContext -> [(String, [String])] ->
   [String] -> [(String,String)] -> TrackedErrors ()
@@ -1195,9 +1195,9 @@ checkInferenceFail tm pa is ts = checkInferenceCommon check tm pa is ts [] where
   prefix = show ts ++ " " ++ showFilters pa
   check _ c
     | isCompilerError c = return ()
-    | otherwise = compilerErrorM $ prefix ++ ": Expected failure\n"
+    | otherwise         = compilerErrorM $ prefix ++ ": Expected failure\n"
 
-checkInferenceCommon :: ([InferredTypeGuess] -> TrackedErrors [InferredTypeGuess] -> TrackedErrors ()) ->
+checkInferenceCommon :: (ParamValues -> TrackedErrors ParamValues -> TrackedErrors ()) ->
   CategoryMap SourceContext -> [(String,[String])] -> [String] ->
   [(String,String)] -> [(String,String)] -> TrackedErrors ()
 checkInferenceCommon check tm pa is ts gs = checked <!! context where
@@ -1208,7 +1208,7 @@ checkInferenceCommon check tm pa is ts gs = checked <!! context where
     ia2 <- fmap Map.fromList $ mapCompilerM readInferred is
     ts2 <- mapCompilerM (parsePair ia2 Covariant) ts
     let ka = Map.keysSet ia2
-    gs' <- mapCompilerM parseGuess gs
+    gs' <- fmap Map.fromList $ mapCompilerM parseGuess gs
     let f  = Map.filterWithKey (\k _ -> not $ k `Set.member` ka) pa2
     let ff = Map.filterWithKey (\k _ -> k `Set.member` ka) pa2
     gs2 <- inferParamTypes r f ia2 ts2
@@ -1219,7 +1219,7 @@ checkInferenceCommon check tm pa is ts gs = checked <!! context where
   parseGuess (p,t) = do
     p' <- readSingle "(string)" p
     t' <- readSingle "(string)" t
-    return $ InferredTypeGuess p' t' Invariant
+    return (p',t')
   parsePair im v (t1,t2) = do
     t1' <- readSingle "(string)" t1
     t2' <- readSingle "(string)" t2 >>= uncheckedSubValueType (weakLookup im)

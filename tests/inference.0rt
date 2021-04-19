@@ -296,17 +296,14 @@ define Test {
 }
 
 
-testcase "mutually dependent inferences" {
-  error
-  require "get"
-  require "#x.+Int"
-  require "#y.+String"
+testcase "mutually dependent filters" {
+  success
 }
 
 unittest test {
-    Type<String> x <- Type<String>.create()
-    Type<Int>    y <- Type<Int>.create()
-    \ Test.get<?,?>(x,y)
+  Type<String> x <- Type<String>.create()
+  Type<String> y <- Type<String>.create()
+  \ Test.get<?,?>(x,y)
 }
 
 concrete Type<#x> {
@@ -321,13 +318,46 @@ define Type {
 
 concrete Test {
   @type get<#x,#y>
-    #x requires Type<#y>
-    #y requires Type<#x>
-  (#x,#y) -> ()
+    #x defines LessThan<#y>
+    #y defines LessThan<#x>
+  (Type<#x>,Type<#y>) -> ()
 }
 
 define Test {
   get (_,_) {}
+}
+
+
+testcase "two inferences in one filter" {
+  success
+}
+
+unittest test {
+  Type z <- Type.create()
+  \ Test.get<?,?,?>(z,1,"message")
+}
+
+@type interface Base<#x,#y> {}
+
+concrete Type {
+  defines Base<Int,String>
+  @type create () -> (Type)
+}
+
+define Type {
+  create () {
+    return Type{ }
+  }
+}
+
+concrete Test {
+  @type get<#z,#x,#y>
+    #z defines Base<#x,#y>
+  (#z,#x,#y) -> ()
+}
+
+define Test {
+  get (_,_,_) {}
 }
 
 

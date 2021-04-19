@@ -982,7 +982,7 @@ guessParamsFromArgs r fa f ps ts = do
   pa <- fmap Map.fromList $ processPairs toInstance (fmap vpParam $ sfParams f) ps
   gs <- inferParamTypes r fa pa args
   gs' <- mergeInferredTypes r fa fm pa gs
-  let pa3 = guessesAsParams gs' `Map.union` pa
+  let pa3 = gs' `Map.union` pa
   fmap Positional $ mapCompilerM (subPosition pa3) (pValues $ sfParams f) where
     subPosition pa2 p =
       case (vpParam p) `Map.lookup` pa2 of
@@ -1000,7 +1000,7 @@ guessParams r fa args params ps ts = do
   pa <- fmap Map.fromList $ processPairs toInstance params ps
   gs <- inferParamTypes r fa pa args'
   gs' <- mergeInferredTypes r fa (Map.fromList $ zip (pValues params) (repeat [])) pa gs
-  let pa3 = guessesAsParams gs' `Map.union` pa
+  let pa3 = gs' `Map.union` pa
   fmap Positional $ mapCompilerM (subPosition pa3) (pValues params) where
     subPosition pa2 p =
       case p `Map.lookup` pa2 of
