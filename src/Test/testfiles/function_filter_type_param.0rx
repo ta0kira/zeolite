@@ -1,0 +1,11 @@
+@value interface Base1 {}
+
+@type interface Base2 {}
+
+concrete Type<#x|#y|#z> {
+  @type call
+    #x allows Base1
+    #y requires Base1
+    #z defines Base2
+  (#x,#y) -> (#y,#z)
+}

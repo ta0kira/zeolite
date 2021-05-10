@@ -714,7 +714,7 @@ Zeolite supports two loop types:
    `SearchTree` in `lib/container`.
 
    <pre style='color:#1f1c1b;background-color:#f6f8fa;'>
-   <b>traverse</b> ((<span style='color:#bf0303;'>&quot;hello&quot;</span>)<span style='color:#644a9b;'>.</span>defaultOrder() -&gt; <i><span style='color:#0057ae;'>Char</span></i> c) {
+   <b>traverse</b> (<span style='color:#bf0303;'>&quot;hello&quot;</span><span style='color:#644a9b;'>.</span>defaultOrder() -&gt; <i><span style='color:#0057ae;'>Char</span></i> c) {
      <span style='color:#898887;'>// executed once per Char c in &quot;hello&quot;</span>
    }</pre>
 
