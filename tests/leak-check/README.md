@@ -58,8 +58,12 @@ To check for race conditions:
 
 ```shell
 # The "race" argument is important.
-valgrind --leak-check=yes $ZEOLITE_PATH/tests/leak-check/LeakTest race
+$ZEOLITE_PATH/tests/leak-check/LeakTest race
 ```
+
+*Do not use `valgrind` to run in `race` mode!* The latency introduced by
+tracking memory usage will eliminate the race conditions that this mode is
+intended to introduce, defeating the purpose of the test.
 
 You should see `no race conditions this time` upon success. Any sort of error
 message means a crash, and thus a test failure.
