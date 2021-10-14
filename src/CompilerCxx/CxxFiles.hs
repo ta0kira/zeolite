@@ -725,7 +725,7 @@ createLabelForFunction i f = functionLabelType f ++ " " ++ functionName f ++
 createFunctionDispatch :: CategoryName -> SymbolScope -> [ScopedFunction c] -> CompiledData [String]
 createFunctionDispatch n s fs = function where
   function
-    | null filtered = onlyCode $ "{ " ++ fallback ++ " }"
+    | null filtered = onlyCode fallback
     | otherwise = onlyCodes $ [typedef] ++ concat (map table $ byCategory) ++ metaTable ++ select
   filtered = filter ((== s) . sfScope) fs
   flatten f = f:(concat $ map flatten $ sfMerges f)
