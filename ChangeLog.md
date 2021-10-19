@@ -15,6 +15,9 @@
 * **[new]** Adds `Realtime.sleepSecondsPrecise` function to allow sleeps that
   are more precise than the kernel's latency.
 
+* **[new]** Adds `checkGreaterThan` and `checkLessThan` to `Testing` in
+  `lib/testing`.
+
 ## 0.18.0.0  -- 2021-08-01
 
 ### Compiler CLI

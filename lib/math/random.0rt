@@ -67,3 +67,59 @@ testcase "empty range in uniform" {
 unittest test {
   Generator<Float> random <- RandomUniform.new(0.0,-1.0)
 }
+
+
+testcase "distribution sanity checks" {
+  success
+}
+
+unittest exponential {
+  Int count <- 10000
+  Float lambda <- 10.0
+  $ReadOnly[count,lambda]$
+
+  Generator<Float> random <- RandomExponential.new(lambda)
+
+  Float sum <- 0.0
+  traverse (Counter.zeroIndexed(count) -> _) {
+    Float value <- random.generate()
+    \ Testing.checkGreaterThan<?>(value,0.0)
+    sum <- sum+value
+  }
+
+  \ Testing.checkBetween<?>(sum/count,0.9/lambda,1.1/lambda)
+}
+
+unittest gaussian {
+  Int count <- 10000
+  Float mean <- 100.0
+  Float sd <- 1.0
+  $ReadOnly[count,mean,sd]$
+
+  Generator<Float> random <- RandomGaussian.new(mean,sd)
+
+  Float sum <- 0.0
+  traverse (Counter.zeroIndexed(count) -> _) {
+    sum <- sum+random.generate()
+  }
+
+  \ Testing.checkBetween<?>(sum/count,mean-0.1*sd,mean+0.1*sd)
+}
+
+unittest uniform {
+  Int count <- 10000
+  Float min <- -11.0
+  Float max <- 5.0
+  $ReadOnly[count,min,max]$
+
+  Generator<Float> random <- RandomUniform.new(min,max)
+
+  Float sum <- 0.0
+  traverse (Counter.zeroIndexed(count) -> _) {
+    Float value <- random.generate()
+    \ Testing.checkBetween<?>(value,min,max)
+    sum <- sum+value
+  }
+
+  \ Testing.checkBetween<?>(sum/count,mean-0.1*sd,mean+0.1*sd)
+}

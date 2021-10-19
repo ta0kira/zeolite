@@ -68,4 +68,38 @@ concrete Testing {
     #x defines Equals<#x>
     #x defines LessThan<#x>
   (#x,#x,#x) -> ()
+
+  // Check that the value is above the limit. Crashes if it is not in the range.
+  //
+  // Args:
+  // - #x: Actual value.
+  // - #x: Lower bound.
+  //
+  // Notes:
+  // - This could be done without Equals, except that some types have
+  //   "undefined" values (e.g., NaN, for Float) that prevent inferring equality
+  //   from less-than comparisons.
+  // - This comparison doesn't allow the value to equal the bound.
+  @type checkGreaterThan<#x>
+    #x requires Formatted
+    #x defines Equals<#x>
+    #x defines LessThan<#x>
+  (#x,#x) -> ()
+
+  // Check that the value is below the limit. Crashes if it is not in the range.
+  //
+  // Args:
+  // - #x: Actual value.
+  // - #x: Upper bound.
+  //
+  // Notes:
+  // - This could be done without Equals, except that some types have
+  //   "undefined" values (e.g., NaN, for Float) that prevent inferring equality
+  //   from less-than comparisons.
+  // - This comparison doesn't allow the value to equal the bound.
+  @type checkLessThan<#x>
+    #x requires Formatted
+    #x defines Equals<#x>
+    #x defines LessThan<#x>
+  (#x,#x) -> ()
 }

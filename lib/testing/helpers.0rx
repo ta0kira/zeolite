@@ -76,6 +76,26 @@ define Testing {
     }
   }
 
+  checkGreaterThan (x,l) {
+    if (lessEquals<?>(x,l)) {
+      fail(String.builder()
+          .append(x.formatted())
+          .append(" is not greater than ")
+          .append(l.formatted())
+          .build())
+    }
+  }
+
+  checkLessThan (x,h) {
+    if (lessEquals<?>(h,x)) {
+      fail(String.builder()
+          .append(x.formatted())
+          .append(" is not less than ")
+          .append(h.formatted())
+          .build())
+    }
+  }
+
   @type lessEquals<#x>
     #x defines Equals<#x>
     #x defines LessThan<#x>

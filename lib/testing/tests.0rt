@@ -138,3 +138,43 @@ testcase "checkBetween bad range" {
 unittest test {
   \ Testing.checkBetween<?>(14,15,13)
 }
+
+
+testcase "checkGreaterThan success" {
+  success
+}
+
+unittest test {
+  \ Testing.checkGreaterThan<?>(13,11)
+}
+
+
+testcase "checkGreaterThan fail" {
+  crash
+  require stderr "13"
+  require stderr "14"
+}
+
+unittest test {
+  \ Testing.checkGreaterThan<?>(13,14)
+}
+
+
+testcase "checkLessThan success" {
+  success
+}
+
+unittest test {
+  \ Testing.checkLessThan<?>(13,14)
+}
+
+
+testcase "checkLessThan fail" {
+  crash
+  require stderr "13"
+  require stderr "11"
+}
+
+unittest test {
+  \ Testing.checkLessThan<?>(13,11)
+}
