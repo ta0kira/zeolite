@@ -104,7 +104,7 @@ instance ParseFromSource (InputValue SourceContext) where
       return $ InputValue [c] v
     discard = do
       c <- getSourceContext
-      sepAfter (string_ "_")
+      sepAfter_ kwIgnore
       return $ DiscardInput [c]
 
 instance ParseFromSource (OutputValue SourceContext) where

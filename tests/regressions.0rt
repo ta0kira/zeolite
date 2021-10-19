@@ -292,3 +292,24 @@ define Type {
     return "return"
   }
 }
+
+
+testcase "Issue #185 is fixed" {
+  // https://github.com/ta0kira/zeolite/issues/185
+  crash
+  require "message"
+}
+
+concrete Type {
+  @type sideEffects () -> (Bool)
+}
+
+define Type {
+  sideEffects () {
+    fail("message")
+  }
+}
+
+unittest test {
+  _ <- Type.sideEffects()
+}

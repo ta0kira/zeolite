@@ -1,5 +1,17 @@
 # Revision history for zeolite-lang
 
+## 0.18.1.0  -- ????-??-??
+
+### Language
+
+* **[fix]** Fixes issue with explicit return discards skipping generation of
+  function calls. Previously, `_ <- foo()` skipped generating the call to `foo`.
+
+### Libraries
+
+* **[new]** Adds `RandomExponential`, `RandomGaussian`, and `RandomUniform` to
+  `lib/math` for generating random `Float` values.
+
 ## 0.18.0.0  -- 2021-08-01
 
 ### Compiler CLI
