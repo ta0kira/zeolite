@@ -31,7 +31,7 @@ limitations under the License.
 #include "Category_Realtime.hpp"
 
 #ifndef SLEEP_SPINLOCK_LIMIT
-#define SLEEP_SPINLOCK_LIMIT 0.0001
+#define SLEEP_SPINLOCK_LIMIT 0.001
 #endif
 
 #ifdef ZEOLITE_PUBLIC_NAMESPACE
