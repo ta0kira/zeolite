@@ -1792,8 +1792,8 @@ have substantially faster operations.
 [lib/file]: https://github.com/ta0kira/zeolite/tree/master/lib/file
 [procedural]: https://en.wikipedia.org/wiki/Procedural_programming
 [oop]: https://en.wikipedia.org/wiki/Object-oriented_programming
-[travis-status]: https://travis-ci.org/ta0kira/zeolite.svg?branch=master
-[travis-zeolite]: https://travis-ci.org/ta0kira/zeolite
+[travis-status]: https://travis-ci.com/ta0kira/zeolite.svg?branch=master
+[travis-zeolite]: https://app.travis-ci.com/github/ta0kira/zeolite
 [variance]: https://en.wikipedia.org/wiki/Covariance_and_contravariance_%28computer_science%29
 [zeolite]: https://github.com/ta0kira/zeolite
 [zeolite-issues]: https://github.com/ta0kira/zeolite/issues
