@@ -23,11 +23,16 @@ limitations under the License.
 
 #include <chrono>
 #include <iomanip>
+#include <thread>
 
 #include "category-source.hpp"
 #include "Streamlined_Realtime.hpp"
 #include "Category_Float.hpp"
 #include "Category_Realtime.hpp"
+
+#ifndef SLEEP_SPINLOCK_LIMIT
+#define SLEEP_SPINLOCK_LIMIT 0.0001
+#endif
 
 #ifdef ZEOLITE_PUBLIC_NAMESPACE
 namespace ZEOLITE_PUBLIC_NAMESPACE {
@@ -42,18 +47,34 @@ struct ExtType_Realtime : public Type_Realtime {
   ReturnTuple Call_sleepSeconds(const S<TypeInstance>& Param_self, const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("Realtime.sleepSeconds")
     const PrimFloat Var_arg1 = (args.At(0)).AsFloat();
-    if (Var_arg1 < 0) {
-      FAIL() << "Bad wait time " << Var_arg1;
+    if (Var_arg1 > 0) {
+      std::this_thread::sleep_for(std::chrono::duration<double>(Var_arg1));
     }
-    struct timespec timeout{ (int) trunc(Var_arg1), (int) (1000000000.0 * (Var_arg1-trunc(Var_arg1))) };
-    struct timespec remainder;
-    while (nanosleep(&timeout, &remainder) != 0) {
-      if (errno == EINTR) {
-        timeout = remainder;
+    return ReturnTuple();
+  }
+
+  ReturnTuple Call_sleepSecondsPrecise(const S<TypeInstance>& Param_self, const ParamTuple& params, const ValueTuple& args) final {
+    TRACE_FUNCTION("Realtime.sleepSecondsPrecise")
+    const PrimFloat Var_arg1 = (args.At(0)).AsFloat();
+
+    const auto spinlock_limit = std::chrono::duration<double>(SLEEP_SPINLOCK_LIMIT);
+
+    const auto target_time =
+      std::chrono::high_resolution_clock::now().time_since_epoch() +
+      std::chrono::duration<double>(Var_arg1);
+
+    while (true) {
+      const auto now = std::chrono::high_resolution_clock::now().time_since_epoch();
+      if (now >= target_time) break;
+      const auto sleep_time = target_time - now;
+      if (sleep_time <= spinlock_limit) {
+        while (std::chrono::high_resolution_clock::now().time_since_epoch() < target_time);
+        break;
       } else {
-        FAIL() << "Error sleeping: " << strerror(errno) << " (error " << errno << ")";
+        std::this_thread::sleep_for(sleep_time - spinlock_limit);
       }
     }
+
     return ReturnTuple();
   }
 

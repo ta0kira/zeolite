@@ -16,22 +16,24 @@ limitations under the License.
 
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
-testcase "negative sleepSeconds() crashes" {
-  crash
-  require "-0\.1"
-}
-
-unittest test {
-  \ Realtime.sleepSeconds(-0.1)
-}
-
-
-testcase "zero sleepSeconds() is allowed" {
+testcase "zero sleep is allowed" {
   success
 }
 
-unittest test {
+unittest zeroSleep {
   \ Realtime.sleepSeconds(0.0)
+}
+
+unittest negativeSleep {
+  \ Realtime.sleepSeconds(-0.1)
+}
+
+unittest zeroPrecise {
+  \ Realtime.sleepSecondsPrecise(0.0)
+}
+
+unittest negativePrecise {
+  \ Realtime.sleepSecondsPrecise(-0.1)
 }
 
 
@@ -46,14 +48,32 @@ unittest test {
 }
 
 
+testcase "sleepSecondsPrecise() does not interfere with test timeout" {
+  crash
+  require "signal 14"
+  timeout 1
+}
+
+unittest test {
+  \ Realtime.sleepSecondsPrecise(5.0)
+}
+
+
 testcase "monoSeconds() diff is somewhat accurate" {
   success
   timeout 2
 }
 
-unittest test {
+unittest testSleep {
   Float start <- Realtime.monoSeconds()
   \ Realtime.sleepSeconds(0.5)
   Float stop <- Realtime.monoSeconds()
-  \ Testing.checkBetween<?>(stop-start,0.5,0.75)
+  \ Testing.checkBetween<?>(stop-start,0.5,0.6)
+}
+
+unittest testPrecise {
+  Float start <- Realtime.monoSeconds()
+  \ Realtime.sleepSecondsPrecise(0.5)
+  Float stop <- Realtime.monoSeconds()
+  \ Testing.checkBetween<?>(stop-start,0.5,0.51)
 }

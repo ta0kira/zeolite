@@ -21,6 +21,9 @@ concrete Realtime {
   // Sleep for the given number of seconds.
   @type sleepSeconds (Float) -> ()
 
+  // Sleep for the given number of seconds, with more precision.
+  @type sleepSecondsPrecise (Float) -> ()
+
   // Get a timestamp from a monotonic clock.
   //
   // Notes:
