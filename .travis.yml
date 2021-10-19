@@ -34,22 +34,22 @@ before_cache:
 jobs:
   include:
     - compiler: ghc-8.10.1
-      addons: {"apt":{"packages":["ghc-8.10.1","cabal-install-3.4","valgrind"],"sources":[{"key_url":"https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x063dab2bdc0b3f9fcebc378bff3aeacef6f88286","sourceline":"deb http://ppa.launchpad.net/hvr/ghc/ubuntu xenial main"}]}}
+      addons: {"apt":{"packages":["ghc-8.10.1","cabal-install-3.4","valgrind"],"sources":[hvr-ghc]}}
       os: linux
     - compiler: ghc-8.8.3
-      addons: {"apt":{"packages":["ghc-8.8.3","cabal-install-3.4","valgrind"],"sources":[{"key_url":"https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x063dab2bdc0b3f9fcebc378bff3aeacef6f88286","sourceline":"deb http://ppa.launchpad.net/hvr/ghc/ubuntu xenial main"}]}}
+      addons: {"apt":{"packages":["ghc-8.8.3","cabal-install-3.4","valgrind"],"sources":[hvr-ghc]}}
       os: linux
     - compiler: ghc-8.6.5
-      addons: {"apt":{"packages":["ghc-8.6.5","cabal-install-3.4"],"sources":[{"key_url":"https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x063dab2bdc0b3f9fcebc378bff3aeacef6f88286","sourceline":"deb http://ppa.launchpad.net/hvr/ghc/ubuntu xenial main"}]}}
+      addons: {"apt":{"packages":["ghc-8.6.5","cabal-install-3.4"],"sources":[hvr-ghc]}}
       os: linux
     - compiler: ghc-8.4.4
-      addons: {"apt":{"packages":["ghc-8.4.4","cabal-install-3.4"],"sources":[{"key_url":"https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x063dab2bdc0b3f9fcebc378bff3aeacef6f88286","sourceline":"deb http://ppa.launchpad.net/hvr/ghc/ubuntu xenial main"}]}}
+      addons: {"apt":{"packages":["ghc-8.4.4","cabal-install-3.4"],"sources":[hvr-ghc]}}
       os: linux
     - compiler: ghc-8.2.2
-      addons: {"apt":{"packages":["ghc-8.2.2","cabal-install-3.4"],"sources":[{"key_url":"https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x063dab2bdc0b3f9fcebc378bff3aeacef6f88286","sourceline":"deb http://ppa.launchpad.net/hvr/ghc/ubuntu xenial main"}]}}
+      addons: {"apt":{"packages":["ghc-8.2.2","cabal-install-3.4"],"sources":[hvr-ghc]}}
       os: linux
     - compiler: ghc-8.0.2
-      addons: {"apt":{"packages":["ghc-8.0.2","cabal-install-3.4"],"sources":[{"key_url":"https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x063dab2bdc0b3f9fcebc378bff3aeacef6f88286","sourceline":"deb http://ppa.launchpad.net/hvr/ghc/ubuntu xenial main"}]}}
+      addons: {"apt":{"packages":["ghc-8.0.2","cabal-install-3.4"],"sources":[hvr-ghc]}}
       os: linux
 before_install:
   - HC=$(echo "/opt/$CC/bin/ghc" | sed 's/-/\//')
