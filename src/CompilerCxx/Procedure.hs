@@ -271,62 +271,61 @@ compileStatement (IgnoreValues c e) = do
   (_,e') <- compileExpression e
   maybeSetTrace c
   csWrite ["(void) (" ++ useAsWhatever e' ++ ");"]
-compileStatement (Assignment c as e)
-  | all isAssignableDiscard (pValues as) = compileStatement (IgnoreValues c e)
-  | otherwise = message ??> do
-    (ts,e') <- compileExpression e
-    r <- csResolver
-    fa <- csAllFilters
-    -- Check for a count match first, to avoid the default error message.
-    _ <- processPairsT alwaysPair (fmap assignableName as) ts
-    _ <- processPairsT (createVariable r fa) as ts
-    maybeSetTrace c
-    variableTypes <- sequence $ map getVariableType (pValues as)
-    assignAll (zip3 ([0..] :: [Int]) variableTypes (pValues as)) e'
-    where
-      message = "In assignment at " ++ formatFullContext c
-      assignAll [v] e2 = assignSingle v e2
-      assignAll vs e2 = do
-        csWrite ["{","const auto r = " ++ useAsReturns e2 ++ ";"]
-        sequence_ $ map assignMulti vs
-        csWrite ["}"]
-      getVariableType (CreateVariable _ t _) = return t
-      getVariableType (ExistingVariable (InputValue c2 n)) = do
-        (VariableValue _ _ t _) <- csGetVariable (UsedVariable c2 n)
-        return t
-      getVariableType _ = return undefined
-      createVariable r fa (CreateVariable c2 t1 n) t2 =
-        "In creation of " ++ show n ++ " at " ++ formatFullContext c2 ??> do
-          self <- autoSelfType
-          t1' <- lift $ replaceSelfValueType self t1
-          -- TODO: Call csAddRequired for t1'. (Maybe needs a helper function.)
-          lift $ collectAllM_ [validateGeneralInstance r (Map.keysSet fa) (vtType t1'),
-                              checkValueAssignment r fa t2 t1']
-          csAddVariable (UsedVariable c2 n) (VariableValue c2 LocalScope t1' VariableDefault)
-          csWrite [variableStoredType t1' ++ " " ++ variableName n ++ ";"]
-      createVariable r fa (ExistingVariable (InputValue c2 n)) t2 =
-        "In assignment to " ++ show n ++ " at " ++ formatFullContext c2 ??> do
-          (VariableValue _ _ t1 _) <- getWritableVariable c2 n
-          -- TODO: Also show original context.
-          lift $ (checkValueAssignment r fa t2 t1)
-          csUpdateAssigned n
-      createVariable _ _ _ _ = return ()
-      assignSingle (_,t,CreateVariable _ _ n) e2 =
-        csWrite [variableName n ++ " = " ++ writeStoredVariable t e2 ++ ";"]
-      assignSingle (_,t,ExistingVariable (InputValue c2 n)) e2 = do
-        (VariableValue _ s _ _) <- csGetVariable (UsedVariable c2 n)
-        scoped <- autoScope s
-        csWrite [scoped ++ variableName n ++ " = " ++ writeStoredVariable t e2 ++ ";"]
-      assignSingle _ _ = undefined
-      assignMulti (i,t,CreateVariable _ _ n) =
-        csWrite [variableName n ++ " = " ++
-                writeStoredVariable t (UnwrappedSingle $ "r.At(" ++ show i ++ ")") ++ ";"]
-      assignMulti (i,t,ExistingVariable (InputValue _ n)) = do
-        (VariableValue _ s _ _) <- csGetVariable (UsedVariable c n)
-        scoped <- autoScope s
-        csWrite [scoped ++ variableName n ++ " = " ++
-                writeStoredVariable t (UnwrappedSingle $ "r.At(" ++ show i ++ ")") ++ ";"]
-      assignMulti _ = return ()
+compileStatement (Assignment c as e) = message ??> do
+  (ts,e') <- compileExpression e
+  r <- csResolver
+  fa <- csAllFilters
+  -- Check for a count match first, to avoid the default error message.
+  _ <- processPairsT alwaysPair (fmap assignableName as) ts
+  _ <- processPairsT (createVariable r fa) as ts
+  maybeSetTrace c
+  variableTypes <- sequence $ map getVariableType (pValues as)
+  assignAll (zip3 ([0..] :: [Int]) variableTypes (pValues as)) e'
+  where
+    message = "In assignment at " ++ formatFullContext c
+    assignAll [v] e2 = assignSingle v e2
+    assignAll vs e2 = do
+      csWrite ["{","const auto r = " ++ useAsReturns e2 ++ ";"]
+      sequence_ $ map assignMulti vs
+      csWrite ["}"]
+    getVariableType (CreateVariable _ t _) = return t
+    getVariableType (ExistingVariable (InputValue c2 n)) = do
+      (VariableValue _ _ t _) <- csGetVariable (UsedVariable c2 n)
+      return t
+    getVariableType _ = return undefined
+    createVariable r fa (CreateVariable c2 t1 n) t2 =
+      "In creation of " ++ show n ++ " at " ++ formatFullContext c2 ??> do
+        self <- autoSelfType
+        t1' <- lift $ replaceSelfValueType self t1
+        -- TODO: Call csAddRequired for t1'. (Maybe needs a helper function.)
+        lift $ collectAllM_ [validateGeneralInstance r (Map.keysSet fa) (vtType t1'),
+                             checkValueAssignment r fa t2 t1']
+        csAddVariable (UsedVariable c2 n) (VariableValue c2 LocalScope t1' VariableDefault)
+        csWrite [variableStoredType t1' ++ " " ++ variableName n ++ ";"]
+    createVariable r fa (ExistingVariable (InputValue c2 n)) t2 =
+      "In assignment to " ++ show n ++ " at " ++ formatFullContext c2 ??> do
+        (VariableValue _ _ t1 _) <- getWritableVariable c2 n
+        -- TODO: Also show original context.
+        lift $ (checkValueAssignment r fa t2 t1)
+        csUpdateAssigned n
+    createVariable _ _ _ _ = return ()
+    assignSingle (_,t,CreateVariable _ _ n) e2 =
+      csWrite [variableName n ++ " = " ++ writeStoredVariable t e2 ++ ";"]
+    assignSingle (_,t,ExistingVariable (InputValue c2 n)) e2 = do
+      (VariableValue _ s _ _) <- csGetVariable (UsedVariable c2 n)
+      scoped <- autoScope s
+      csWrite [scoped ++ variableName n ++ " = " ++ writeStoredVariable t e2 ++ ";"]
+    assignSingle (_,_,ExistingVariable (DiscardInput _)) e2 = do
+      csWrite ["(void)" ++ useAsWhatever e2 ++ ";"]
+    assignMulti (i,t,CreateVariable _ _ n) =
+      csWrite [variableName n ++ " = " ++
+               writeStoredVariable t (UnwrappedSingle $ "r.At(" ++ show i ++ ")") ++ ";"]
+    assignMulti (i,t,ExistingVariable (InputValue _ n)) = do
+      (VariableValue _ s _ _) <- csGetVariable (UsedVariable c n)
+      scoped <- autoScope s
+      csWrite [scoped ++ variableName n ++ " = " ++
+               writeStoredVariable t (UnwrappedSingle $ "r.At(" ++ show i ++ ")") ++ ";"]
+    assignMulti _ = return ()
 compileStatement (NoValueExpression _ v) = compileVoidExpression v
 compileStatement (MarkReadOnly c vs) = mapM_ (\v -> csSetReadOnly (UsedVariable c v)) vs
 compileStatement (MarkHidden   c vs) = mapM_ (\v -> csSetHidden   (UsedVariable c v)) vs
