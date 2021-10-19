@@ -10,5 +10,17 @@ extra_files: [
     source: "lib/math/src/Extension_Math.cpp"
     categories: [Math]
   }
+  category_source {
+    source: "lib/math/src/Extension_RandomExponential.cpp"
+    categories: [RandomExponential]
+  }
+  category_source {
+    source: "lib/math/src/Extension_RandomGaussian.cpp"
+    categories: [RandomGaussian]
+  }
+  category_source {
+    source: "lib/math/src/Extension_RandomUniform.cpp"
+    categories: [RandomUniform]
+  }
 ]
 mode: incremental {}
