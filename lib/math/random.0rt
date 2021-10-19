@@ -87,7 +87,7 @@ unittest exponential {
     sum <- sum+value
   }
 
-  \ Testing.checkBetween<?>(sum/count,0.9/lambda,1.1/lambda)
+  \ Testing.checkBetween<?>(sum/count.asFloat(),0.9/lambda,1.1/lambda)
 }
 
 unittest gaussian {
@@ -103,7 +103,7 @@ unittest gaussian {
     sum <- sum+random.generate()
   }
 
-  \ Testing.checkBetween<?>(sum/count,mean-0.1*sd,mean+0.1*sd)
+  \ Testing.checkBetween<?>(sum/count.asFloat(),mean-0.1*sd,mean+0.1*sd)
 }
 
 unittest uniform {
@@ -121,5 +121,5 @@ unittest uniform {
     sum <- sum+value
   }
 
-  \ Testing.checkBetween<?>(sum/count,mean-0.1*sd,mean+0.1*sd)
+  \ Testing.checkBetween<?>(sum/count.asFloat(),min-0.1*(max-min),max-0.1*(max-min))
 }
