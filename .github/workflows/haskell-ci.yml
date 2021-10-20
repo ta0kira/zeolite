@@ -176,7 +176,7 @@ jobs:
           $CABAL v2-build $ARG_COMPILER --disable-tests --disable-benchmarks all
       # *** MANUAL EDIT >>>
       - name: zeolite execution
-      - run: |
+        run: |
           # Change to a temp directory so that $ZEOLITE_PATH != $PWD
           TEMP="$(mktemp -d)"
           PROJECT="$PWD/cabal.project"
