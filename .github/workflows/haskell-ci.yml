@@ -177,20 +177,20 @@ jobs:
       # *** MANUAL EDIT >>>
       - name: zeolite execution
       - run: |
-        # Change to a temp directory so that $ZEOLITE_PATH != $PWD
-        TEMP=$(mktemp -d)
-        PROJECT="$PWD/cabal.project"
-        ZEOLITE="$CABAL v2-run --project-file=$PROJECT $ARG_COMPILER zeolite --"
-        ZEOLITE_SETUP="$CABAL v2-run --project-file=$PROJECT $ARG_COMPILER zeolite-setup --"
-        cd "$TEMP"
-        # Run zeolite-zetup
-        "ZEOLITE_CONFIG='\\n\\n'"
-        # Use g++ for one of the environments (g++ shows up as the second option)
-        "if [ $HCNUMVER -eq 81001 ]; then ZEOLITE_CONFIG='2\\n\\n'; fi"
-        'echo -e "$ZEOLITE_CONFIG" | $ZEOLITE_SETUP'
-        ZEOLITE_PATH=$($ZEOLITE --get-path | grep '^/')
-        # Only run integration tests for a few GHC version, since they should all be the same if setup succeeds
-        if [ $HCNUMVER -eq 80803 ] || [ $HCNUMVER -eq 81001 ]; then $ZEOLITE -p $ZEOLITE_PATH -t lib/testing tests lib/container lib/file lib/math lib/util lib/thread; fi
-        # Run extra CLI tests
-        if [ $HCNUMVER -eq 80803 ] || [ $HCNUMVER -eq 81001 ]; then bash $ZEOLITE_PATH/tests/cli-tests.sh $ZEOLITE; fi
+          # Change to a temp directory so that $ZEOLITE_PATH != $PWD
+          TEMP="$(mktemp -d)"
+          PROJECT="$PWD/cabal.project"
+          ZEOLITE="$CABAL v2-run --project-file=$PROJECT $ARG_COMPILER zeolite --"
+          ZEOLITE_SETUP="$CABAL v2-run --project-file=$PROJECT $ARG_COMPILER zeolite-setup --"
+          cd "$TEMP"
+          # Run zeolite-zetup
+          "ZEOLITE_CONFIG='\\n\\n'"
+          # Use g++ for one of the environments (g++ shows up as the second option)
+          "if [ $HCNUMVER -eq 81001 ]; then ZEOLITE_CONFIG='2\\n\\n'; fi"
+          'echo -e "$ZEOLITE_CONFIG" | $ZEOLITE_SETUP'
+          ZEOLITE_PATH=$($ZEOLITE --get-path | grep '^/')
+          # Only run integration tests for a few GHC version, since they should all be the same if setup succeeds
+          if [ $HCNUMVER -eq 80803 ] || [ $HCNUMVER -eq 81001 ]; then $ZEOLITE -p $ZEOLITE_PATH -t lib/testing tests lib/container lib/file lib/math lib/util lib/thread; fi
+          # Run extra CLI tests
+          if [ $HCNUMVER -eq 80803 ] || [ $HCNUMVER -eq 81001 ]; then bash $ZEOLITE_PATH/tests/cli-tests.sh $ZEOLITE; fi
       # <<< MANUAL EDIT ***
