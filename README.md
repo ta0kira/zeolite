@@ -1,6 +1,6 @@
 # [Zeolite Programming Language][zeolite]
 
-[![Travis CI Status][travis-status]][travis-zeolite]
+[![Haskell CI Status][action-status]][action-zeolite]
 [![Hackage Status][hackage-status]][hackage-zeolite-lang]
 
 Zeolite is a statically-typed, general-purpose programming language. The type
@@ -1777,6 +1777,8 @@ The latter limitation is an accepted compromise in the implementation of `weak`
 references that allows non-`weak` reference sharing (including `optional`) to
 have substantially faster operations.
 
+[action-status]: https://github.com/ta0kira/zeolite/actions/workflows/haskell-ci.yml/badge.svg
+[action-zeolite]: https://github.com/ta0kira/zeolite/actions/workflows/haskell-ci.yml
 [cabal]: https://www.haskell.org/cabal/#install-upgrade
 [category]: https://en.wikipedia.org/wiki/Category_theory
 [clang]: https://clang.llvm.org/cxx_status.html
@@ -1792,8 +1794,6 @@ have substantially faster operations.
 [lib/file]: https://github.com/ta0kira/zeolite/tree/master/lib/file
 [procedural]: https://en.wikipedia.org/wiki/Procedural_programming
 [oop]: https://en.wikipedia.org/wiki/Object-oriented_programming
-[travis-status]: https://travis-ci.com/ta0kira/zeolite.svg?branch=master
-[travis-zeolite]: https://app.travis-ci.com/github/ta0kira/zeolite
 [variance]: https://en.wikipedia.org/wiki/Covariance_and_contravariance_%28computer_science%29
 [zeolite]: https://github.com/ta0kira/zeolite
 [zeolite-issues]: https://github.com/ta0kira/zeolite/issues
