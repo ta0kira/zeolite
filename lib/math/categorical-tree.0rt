@@ -46,7 +46,7 @@ unittest simpleInsertion {
   \ Testing.checkEquals<?>(tree.getWeight(6),2)
 
   traverse (Counter.zeroIndexed(tree.getTotal()) -> Int pos) {
-    \ Testing.checkOptional<?>(tree.locate(pos),expected.readAt(pos))
+    \ Testing.checkEquals<?>(tree.locate(pos),expected.readAt(pos))
   }
 }
 
@@ -81,12 +81,12 @@ unittest modifySizes {
   \ Testing.checkEquals<?>(tree.getWeight(7),3)
 
   traverse (Counter.zeroIndexed(tree.getTotal()) -> Int pos) {
-    \ Testing.checkOptional<?>(tree.locate(pos),expected.readAt(pos))
+    \ Testing.checkEquals<?>(tree.locate(pos),expected.readAt(pos))
   }
 
   // Use ReadAt aliases for the same functionality.
   traverse (Counter.zeroIndexed(tree.size()) -> Int pos) {
-    \ Testing.checkOptional<?>(tree.readAt(pos),expected.readAt(pos))
+    \ Testing.checkEquals<?>(tree.readAt(pos),expected.readAt(pos))
   }
 }
 
