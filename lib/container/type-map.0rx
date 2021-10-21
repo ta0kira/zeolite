@@ -17,14 +17,14 @@ limitations under the License.
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
 define TypeMap {
-  @value SearchTree<TypeKey<any>,LockedType<any>> tree
+  @value SearchTree<TypeKey<any>,GenericValue<any>> tree
 
   new () {
-    return TypeMap{ SearchTree<TypeKey<any>,LockedType<any>>.new() }
+    return TypeMap{ SearchTree<TypeKey<any>,GenericValue<any>>.new() }
   }
 
   set (k,v) {
-    \ tree.set(k,LockedType:create<?>(k,v))
+    \ tree.set(k,GenericValue:create<?>(v))
     return self
   }
 
@@ -35,9 +35,9 @@ define TypeMap {
 
   get (k) {
     scoped {
-      optional LockedType<any> value <- tree.get(k)
+      optional GenericValue<any> value <- tree.get(k)
     } in if (present(value)) {
-      return require(value).check<?>(k)
+      return require(value).check<#x>()
     } else {
       return empty
     }
@@ -82,24 +82,21 @@ define TypeKey {
   }
 }
 
-concrete LockedType<|#x> {
-  @category create<#x> (TypeKey<#x>,#x) -> (LockedType<#x>)
-  @value check<#y> (TypeKey<#y>) -> (optional #y)
+concrete GenericValue<|#x> {
+  @category create<#x> (#x) -> (GenericValue<#x>)
+  @value check<#y> () -> (optional #y)
 }
 
-define LockedType {
-  @value TypeKey<#x> key
+define GenericValue {
+  $ReadOnly[value]$
+
   @value #x value
 
-  create (k,v) {
-    return LockedType<#x>{ k, v }
+  create (v) {
+    return GenericValue<#x>{ v }
   }
 
-  check (k) {
-    if (key `TypeKey<any>.equals` k) {
-      return reduce<#x,#y>(value)
-    } else {
-      return empty
-    }
+  check () {
+    return reduce<#x,#y>(value)
   }
 }
