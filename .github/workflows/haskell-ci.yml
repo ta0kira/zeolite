@@ -185,7 +185,7 @@ jobs:
           ZEOLITE_SETUP="$CABAL v2-run --project-file=$PROJECT $ARG_COMPILER zeolite-setup --"
           cd "$TEMP"
           # Run zeolite-zetup
-          ZEOLITE_CXX='/usr/bin/clang'
+          ZEOLITE_CXX='/usr/bin/clang++'
           ZEOLITE_AR='/usr/bin/ar'
           # Use g++ for one of the environments (g++ shows up as the second option)
           if [ $HCNUMVER -eq 81001 ]; then ZEOLITE_CXX='/usr/bin/g++'; fi
