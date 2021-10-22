@@ -25,7 +25,14 @@ description:
     automatically build the supporting libraries.
     .
     @
+    # By default, setup is interactive.
     zeolite-setup
+
+    # To choose the c++ and ar binaries non-interactively, include them as args.
+    zeolite-setup /usr/bin/clang /usr/bin/ar
+
+    # Or just choose the 1st match for each.
+    zeolite-setup 1 1
     @
     .
   * (Optional) As a sanity check, compile and run

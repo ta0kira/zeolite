@@ -32,13 +32,12 @@ import Config.LocalConfig
 
 main :: IO ()
 main = do
-  args <- getArgs
-  when (not $ null args) $ hPutStrLn stderr $ "Ignoring extra arguments: " ++ show args
+  (cxxSpec:arSpec:_) <- fmap ((++ repeat Nothing) . map Just) getArgs
   f <- localConfigPath
   isFile <- doesFileExist f
   when isFile $ do
     hPutStrLn stderr $ "*** WARNING: Local config " ++ f ++ " will be overwritten. ***"
-  config <- createConfig
+  config <- createConfig cxxSpec arSpec
   hPutStrLn stderr $ "Writing local config to " ++ f ++ "."
   writeFile f (show config ++ "\n")
   initLibraries config
@@ -81,13 +80,18 @@ libraryFlags = ["-shared", "-fpic"]
 binaryFlags :: [String]
 binaryFlags = ["-O2", "-std=c++11"]
 
-createConfig :: IO LocalConfig
-createConfig = do
+intOrString :: String -> Either Int String
+intOrString s = handle (reads s :: [(Int, String)]) where
+  handle [(n,"")] = Left n
+  handle _        = Right s
+
+createConfig :: Maybe String -> Maybe String -> IO LocalConfig
+createConfig cxxSpec arSpec = do
   clang <- findExecutables clangBinary
   gcc   <- findExecutables gccBinary
   ar    <- findExecutables arBinary
-  compiler <- promptChoice "Which clang-compatible C++ compiler should be used?" (clang ++ gcc)
-  archiver <- promptChoice "Which ar-compatible archiver should be used?" ar
+  compiler <- promptChoice "Which clang-compatible C++ compiler should be used?" cxxSpec (clang ++ gcc)
+  archiver <- promptChoice "Which ar-compatible archiver should be used?"        arSpec  ar
   let config = LocalConfig {
       lcBackend = UnixBackend {
         ucCxxBinary    = compiler,
@@ -103,8 +107,15 @@ createConfig = do
     }
   return config
 
-promptChoice :: String -> [String] -> IO String
-promptChoice p cs = do
+promptChoice :: String -> Maybe String -> [String] -> IO String
+promptChoice _ (Just spec) cs = handle $ intOrString spec where
+  handle (Right s) = return s
+  handle (Left n)
+    | n < 1 || n > length cs = do
+      hPutStrLn stderr $ "Index " ++ show n ++ " is out of bounds for " ++ show cs
+      exitFailure
+    | otherwise = return $ cs !! (n-1)
+promptChoice p _ cs = do
   n <- getChoice
   if n <= length cs
      then return $ cs !! (n-1)
