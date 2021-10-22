@@ -18,6 +18,7 @@ limitations under the License.
 
 #include "logging.hpp"
 
+#include <atomic>
 #include <chrono>
 #include <csignal>
 #include <iomanip>
@@ -31,8 +32,13 @@ LogThenCrash::LogThenCrash(bool fail, int signal)
     : fail_(fail), signal_(signal) {}
 
 LogThenCrash::~LogThenCrash() {
+  static std::atomic_int waiting_count{0};
+  static std::atomic_flag print_lock = ATOMIC_FLAG_INIT;
   if (fail_) {
     std::signal(signal_, SIG_DFL);
+    ++waiting_count;
+    while (print_lock.test_and_set(std::memory_order_acquire));
+    --waiting_count;
     if (Argv::ArgCount() > 0) {
       std::cerr << Argv::GetArgAt(0) << ": ";
     }
@@ -47,7 +53,10 @@ LogThenCrash::~LogThenCrash() {
       std::cerr << "Original " << TraceCreation::GetType() << " value creation:" << std::endl;
       PrintTrace(creation_trace);
     }
-    std::raise(signal_);
+    if (!waiting_count.load()) {
+      std::raise(signal_);
+    }
+    print_lock.clear(std::memory_order_release);
   }
 }
 
