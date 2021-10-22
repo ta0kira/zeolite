@@ -16,12 +16,17 @@ limitations under the License.
 
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
-testcase "SimpleMutex tests" {
+testcase "Mutex tests" {
   success
 }
 
-unittest lockUnlock {
+unittest simpleLockUnlock {
   Mutex mutex <- SimpleMutex.new()
+  \ mutex.lock().unlock().lock().unlock()
+}
+
+unittest spinlockLockUnlock {
+  Mutex mutex <- SpinlockMutex.new()
   \ mutex.lock().unlock().lock().unlock()
 }
 

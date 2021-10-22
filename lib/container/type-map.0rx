@@ -47,7 +47,7 @@ define TypeMap {
 define TypeKey {
   $ReadOnly[counterMutex,index]$
 
-  @category Mutex counterMutex <- SimpleMutex.new()
+  @category Mutex counterMutex <- SpinlockMutex.new()
   @category Int   counter      <- 0
   @value Int index
 

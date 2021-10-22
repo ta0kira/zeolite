@@ -1,5 +1,12 @@
 # Revision history for zeolite-lang
 
+## 0.18.2.0  -- ????-??-??
+
+### Libraries
+
+* **[new]** Adds `SpinlockMutex` to `lib/util`, for more efficient locking when
+  lockouts are rare or extremely short.
+
 ## 0.18.1.0  -- 2021-10-19
 
 ### Language

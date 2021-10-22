@@ -37,6 +37,14 @@ concrete SimpleMutex {
   @type new () -> (Mutex)
 }
 
+// A mutex with faster performance when lockouts are rare and/or very short.
+concrete SpinlockMutex {
+  refines Mutex
+
+  // Create a new mutex.
+  @type new () -> (Mutex)
+}
+
 // An automatic mutex lock.
 //
 // Notes:
