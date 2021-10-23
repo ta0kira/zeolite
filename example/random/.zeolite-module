@@ -1,0 +1,12 @@
+root: "../.."
+path: "example/random"
+private_deps: [
+  "lib/util"
+  "lib/math"
+  "lib/thread"
+]
+mode: binary {
+  category: RandomDemo
+  function: run
+  link_mode: static
+}

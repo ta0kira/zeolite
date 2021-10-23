@@ -1,0 +1,75 @@
+concrete RandomDemo {
+  @type run () -> ()
+}
+
+define RandomDemo {
+  run () {
+    Float timeLimit <- 0.0
+    Float startTime <- Realtime.monoSeconds()
+    if (Argv.global().size() > 1) {
+      timeLimit <- ParseChars.float(Argv.global().readAt(1)).getValue()
+    }
+
+    // Rough distribution of letter frequencies in the English language.
+    // Taken from https://en.wikipedia.org/wiki/Letter_frequency.
+    // NOTE: The overall scale here doesn't matter; it just matters what the
+    // relative weights are. CategoricalTree only supports positive Int weights.
+    CategoricalTree<Char> weights <- CategoricalTree<Char>.new()
+        .setWeight('a',8167)
+        .setWeight('b',1492)
+        .setWeight('c',2782)
+        .setWeight('d',4253)
+        .setWeight('e',12702)
+        .setWeight('f',2228)
+        .setWeight('g',2015)
+        .setWeight('h',6094)
+        .setWeight('i',6966)
+        .setWeight('j',153)
+        .setWeight('k',772)
+        .setWeight('l',4025)
+        .setWeight('m',2406)
+        .setWeight('n',6749)
+        .setWeight('o',7507)
+        .setWeight('p',1929)
+        .setWeight('q',95)
+        .setWeight('r',5987)
+        .setWeight('s',6327)
+        .setWeight('t',9056)
+        .setWeight('u',2758)
+        .setWeight('v',978)
+        .setWeight('w',2361)
+        .setWeight('x',150)
+        .setWeight('y',1974)
+        .setWeight('z',74)
+
+    // We could use weights.getTotal() as the upper limit here, but setting it
+    // to 1.0 allows us to account for changes to weights.
+    Generator<Float> letter <- RandomUniform.new(0.0,1.0)
+    Generator<Float> length <- RandomGaussian.new(5.0,3.0)
+    Generator<Float> timing <- RandomExponential.new(4.0)
+
+    while (timeLimit <= 0.0 || Realtime.monoSeconds() < startTime+timeLimit) {
+      // Generate a word with a random length.
+      Int wordLength <- length.generate().asInt()
+      if (wordLength < 1) {
+        continue
+      }
+      CharBuffer buffer <- CharBuffer.new(wordLength)
+
+      // Populate the letters using their relative frequencies.
+      traverse (Counter.zeroIndexed(buffer.size()) -> Int pos) {
+        Int offset <- (weights.getTotal().asFloat()*letter.generate()).asInt()
+        \ buffer.writeAt(pos,weights.locate(offset))
+      }
+
+      // Print the word.
+      \ LazyStream<Formatted>.new()
+          .append(String.fromCharBuffer(buffer))
+          .append("\n")
+          .writeTo(SimpleOutput.stdout())
+
+      // Wait a random amount of time.
+      \ Realtime.sleepSeconds(timing.generate())
+    }
+  }
+}

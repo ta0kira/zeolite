@@ -349,6 +349,22 @@ test_example_primes() {
 }
 
 
+test_example_random() {
+  local binary="$ZEOLITE_PATH/example/random/RandomDemo"
+  rm -f "$binary"
+  local temp=$(execute mktemp)
+  do_zeolite -p "$ZEOLITE_PATH" -r example/random -f
+  execute_noredir "$binary" 5 > "$temp"
+  local output=$(cat "$temp")
+  rm -f "$temp"
+  if [[ $(echo "$output" | wc -l) -lt 5 ]]; then
+    show_message "Expected more output from RandomDemo:"
+    echo "$output" 1>&2
+    return 1
+  fi
+}
+
+
 run_all() {
   ZEOLITE_PATH=$(do_zeolite --get-path | grep '^/')
   echo 1>&2
@@ -402,6 +418,7 @@ ALL_TESTS=(
   test_example_hello
   test_example_parser
   test_example_primes
+  test_example_random
 )
 
 run_all "${ALL_TESTS[@]}" 1>&2
