@@ -313,3 +313,16 @@ define Type {
 unittest test {
   _ <- Type.sideEffects()
 }
+
+
+testcase "Issue #185 fix doesn't break count matching" {
+  // https://github.com/ta0kira/zeolite/issues/185
+  error
+  require "mismatch"
+  require "Int"
+  require "_"
+}
+
+unittest test {
+  _, _ <- 1
+}
