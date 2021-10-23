@@ -229,6 +229,8 @@ class PoolManager<S<TypeInstance>> {
 
 class ReturnTuple : public ValueTuple {
  public:
+  constexpr ReturnTuple() : size_(0), data_() {}
+
   ReturnTuple(int size) : size_(size), data_(size_) {}
 
   template<class...Ts>
@@ -255,6 +257,8 @@ class ReturnTuple : public ValueTuple {
 
 class ArgTuple : public ValueTuple {
  public:
+  constexpr ArgTuple() : size_(0), data_() {}
+
   template<class...Ts>
   explicit ArgTuple(const Ts&... args) : size_(sizeof...(Ts)), data_(size_) {
     data_.Init(&args...);
@@ -277,6 +281,8 @@ class ArgTuple : public ValueTuple {
 
 class ParamTuple {
  public:
+  constexpr ParamTuple() : size_(0), data_() {}
+
   template<class...Ts>
   explicit ParamTuple(const Ts&... params) : size_(sizeof...(Ts)), data_(size_) {
     data_.Init(std::move(params)...);
