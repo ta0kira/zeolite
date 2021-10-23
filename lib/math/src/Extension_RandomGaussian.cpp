@@ -51,11 +51,19 @@ struct ExtType_RandomGaussian : public Type_RandomGaussian {
 struct ExtValue_RandomGaussian : public Value_RandomGaussian {
   inline ExtValue_RandomGaussian(S<Type_RandomGaussian> p, const ValueTuple& args)
     : Value_RandomGaussian(p),
+      generator_((int) (long) this),
       distribution_(args.At(0).AsFloat(), args.At(1).AsFloat()) {}
 
   ReturnTuple Call_generate(const BoxedValue& Var_self, const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("RandomGaussian.generate")
     return ReturnTuple(Box_Float(distribution_(generator_)));
+  }
+
+  ReturnTuple Call_setSeed(const BoxedValue& Var_self, const ParamTuple& params, const ValueTuple& args) final {
+    TRACE_FUNCTION("RandomGaussian.setSeed")
+    distribution_.reset();
+    generator_.seed(args.At(0).AsInt());
+    return ReturnTuple();
   }
 
   std::default_random_engine generator_;

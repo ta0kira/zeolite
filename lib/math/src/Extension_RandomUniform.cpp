@@ -50,11 +50,19 @@ struct ExtType_RandomUniform : public Type_RandomUniform {
 struct ExtValue_RandomUniform : public Value_RandomUniform {
   inline ExtValue_RandomUniform(S<Type_RandomUniform> p, const ValueTuple& args)
     : Value_RandomUniform(p),
+      generator_((int) (long) this),
       distribution_(args.At(0).AsFloat(), args.At(1).AsFloat()) {}
 
   ReturnTuple Call_generate(const BoxedValue& Var_self, const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("RandomUniform.generate")
     return ReturnTuple(Box_Float(distribution_(generator_)));
+  }
+
+  ReturnTuple Call_setSeed(const BoxedValue& Var_self, const ParamTuple& params, const ValueTuple& args) final {
+    TRACE_FUNCTION("RandomUniform.setSeed")
+    distribution_.reset();
+    generator_.seed(args.At(0).AsInt());
+    return ReturnTuple();
   }
 
   std::default_random_engine generator_;

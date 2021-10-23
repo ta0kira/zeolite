@@ -123,3 +123,70 @@ unittest uniform {
 
   \ Testing.checkBetween<?>(sum/count.asFloat(),min-0.1*(max-min),max-0.1*(max-min))
 }
+
+
+testcase "distribution seed checks" {
+  success
+}
+
+unittest exponential {
+  Int count <- 10000
+  Float lambda <- 10.0
+  $ReadOnly[count,lambda]$
+
+  RandomExponential random1 <- RandomExponential.new(lambda)
+  RandomExponential random2 <- RandomExponential.new(lambda)
+
+  Float v1 <- random1.generate()
+  Float v2 <- random2.generate()
+  \ random1.setSeed(123)
+  Float v3 <- random1.generate()
+  \ random2.setSeed(123)
+  Float v4 <- random2.generate()
+
+  \ Testing.checkEquals<?>(v1 == v2,false)
+  \ Testing.checkEquals<?>(v1 == v3,false)
+  \ Testing.checkEquals<?>(v3,v4)
+}
+
+unittest gaussian {
+  Int count <- 10000
+  Float mean <- 100.0
+  Float sd <- 1.0
+  $ReadOnly[count,mean,sd]$
+
+  RandomGaussian random1 <- RandomGaussian.new(mean,sd)
+  RandomGaussian random2 <- RandomGaussian.new(mean,sd)
+
+  Float v1 <- random1.generate()
+  Float v2 <- random2.generate()
+  \ random1.setSeed(123)
+  Float v3 <- random1.generate()
+  \ random2.setSeed(123)
+  Float v4 <- random2.generate()
+
+  \ Testing.checkEquals<?>(v1 == v2,false)
+  \ Testing.checkEquals<?>(v1 == v3,false)
+  \ Testing.checkEquals<?>(v3,v4)
+}
+
+unittest uniform {
+  Int count <- 10000
+  Float min <- -11.0
+  Float max <- 5.0
+  $ReadOnly[count,min,max]$
+
+  RandomUniform random1 <- RandomUniform.new(min,max)
+  RandomUniform random2 <- RandomUniform.new(min,max)
+
+  Float v1 <- random1.generate()
+  Float v2 <- random2.generate()
+  \ random1.setSeed(123)
+  Float v3 <- random1.generate()
+  \ random2.setSeed(123)
+  Float v4 <- random2.generate()
+
+  \ Testing.checkEquals<?>(v1 == v2,false)
+  \ Testing.checkEquals<?>(v1 == v3,false)
+  \ Testing.checkEquals<?>(v3,v4)
+}

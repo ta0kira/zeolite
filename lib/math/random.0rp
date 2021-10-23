@@ -26,7 +26,10 @@ concrete RandomExponential {
   refines Generator<Float>
 
   // Creates a new generator with the specified lambda value.
-  @type new (Float) -> (Generator<Float>)
+  @type new (Float) -> (#self)
+
+  // Resets the seed for RNG.
+  @value setSeed (Int) -> (#self)
 }
 
 // Generates Gaussian-distributed Float values.
@@ -34,7 +37,10 @@ concrete RandomGaussian {
   refines Generator<Float>
 
   // Creates a new generator with the specified mean and standard deviation.
-  @type new (Float,Float) -> (Generator<Float>)
+  @type new (Float,Float) -> (#self)
+
+  // Resets the seed for RNG.
+  @value setSeed (Int) -> (#self)
 }
 
 // Generates uniformly-distributed Float values.
@@ -42,5 +48,8 @@ concrete RandomUniform {
   refines Generator<Float>
 
   // Creates a new generator with the specified min and max values.
-  @type new (Float,Float) -> (Generator<Float>)
+  @type new (Float,Float) -> (#self)
+
+  // Resets the seed for RNG.
+  @value setSeed (Int) -> (#self)
 }
