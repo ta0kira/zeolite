@@ -108,9 +108,13 @@ struct ExtType_String : public Type_String {
   }
 };
 
-struct StringOrder : public AnonymousOrder {
+struct StringOrder final : public AnonymousOrder {
   StringOrder(BoxedValue container, const std::string& s)
     : AnonymousOrder(container, Function_Order_next, Function_Order_get), value(s) {}
+
+  BoxedValue Var_self() final {
+    return VAR_SELF;
+  }
 
   BoxedValue Call_next(const BoxedValue& self) final {
     if (index+1 >= value.size()) {

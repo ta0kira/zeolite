@@ -75,9 +75,13 @@ struct ExtType_Vector : public Type_Vector {
   inline ExtType_Vector(Category_Vector& p, Params<1>::Type params) : Type_Vector(p, params) {}
 };
 
-struct VectorOrder : public AnonymousOrder {
+struct VectorOrder final : public AnonymousOrder {
   VectorOrder(BoxedValue container, const VectorType& v)
     : AnonymousOrder(container, Function_Order_next, Function_Order_get), values(v) {}
+
+  BoxedValue Var_self() final {
+    return VAR_SELF;
+  }
 
   BoxedValue Call_next(const BoxedValue& self) final {
     if (index+1 >= values.size()) {

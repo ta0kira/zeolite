@@ -226,11 +226,11 @@ ReturnTuple AnonymousOrder::Dispatch(
   const ValueFunction& label, const ParamTuple& params, const ValueTuple& args) {
   if (&label == &function_next) {
     TRACE_FUNCTION("AnonymousOrder.next")
-    return ReturnTuple(Call_next(VAR_SELF));
+    return ReturnTuple(Call_next(Var_self()));
   }
   if (&label == &function_get) {
     TRACE_FUNCTION("AnonymousOrder.get")
-    return ReturnTuple(Call_get(VAR_SELF));
+    return ReturnTuple(Call_get(Var_self()));
   }
   return TypeValue::Dispatch(label, params, args);
 }
