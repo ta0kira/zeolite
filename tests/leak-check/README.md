@@ -67,3 +67,20 @@ intended to introduce, defeating the purpose of the test.
 
 You should see `no race conditions this time` upon success. Any sort of error
 message means a crash, and thus a test failure.
+
+---
+
+A more comprehensive test involves leaving `LeakTest` running for an hour or so.
+
+```shell
+$ZEOLITE_PATH/tests/leak-check/LeakTest forever
+```
+
+This will cause `LeakCheck` to run for a very long time, while attempting to
+leak a few MB of memory each iteration. Since this is a combination of the other
+two tests, there isn't any point running this if either of the other two fail.
+
+If the memory size of the running `LeakCheck` process increases over time and
+doesn't go back down, there is a memory leak induced by a race condition. The
+memory size will vary up and down for the first few minutes, but after 5-10
+minutes it should be obvious if the size is increasing.
