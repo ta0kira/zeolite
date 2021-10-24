@@ -50,14 +50,10 @@ namespace zeolite_internal {
 BoxedValue::BoxedValue(const BoxedValue& other)
   : union_(other.union_) {
   switch (union_.type_) {
-    case UnionValue::Type::EMPTY:
-    case UnionValue::Type::BOOL:
-    case UnionValue::Type::CHAR:
-    case UnionValue::Type::INT:
-    case UnionValue::Type::FLOAT:
-      break;
     case UnionValue::Type::BOXED:
       ++union_.value_.as_pointer_->strong_;
+      break;
+    default:
       break;
   }
 }
@@ -67,14 +63,10 @@ BoxedValue& BoxedValue::operator = (const BoxedValue& other) {
     Cleanup();
     union_ = other.union_;
     switch (union_.type_) {
-      case UnionValue::Type::EMPTY:
-      case UnionValue::Type::BOOL:
-      case UnionValue::Type::CHAR:
-      case UnionValue::Type::INT:
-      case UnionValue::Type::FLOAT:
-        break;
       case UnionValue::Type::BOXED:
         ++union_.value_.as_pointer_->strong_;
+        break;
+      default:
         break;
     }
   }
@@ -100,12 +92,6 @@ BoxedValue& BoxedValue::operator = (BoxedValue&& other) {
 BoxedValue::BoxedValue(const WeakValue& other)
   : union_(other.union_) {
   switch (union_.type_) {
-    case UnionValue::Type::EMPTY:
-    case UnionValue::Type::BOOL:
-    case UnionValue::Type::CHAR:
-    case UnionValue::Type::INT:
-    case UnionValue::Type::FLOAT:
-      break;
     case UnionValue::Type::BOXED:
       // Using the top 24 bits here allows blocking the deletion of the pointer
       // without risking other threads using a bad pointer. This assumes that
@@ -136,6 +122,8 @@ BoxedValue::BoxedValue(const WeakValue& other)
         union_.value_.as_pointer_->strong_.fetch_sub(strong_lock-1);
       }
       break;
+    default:
+      break;
   }
 }
 
@@ -156,66 +144,74 @@ BoxedValue::~BoxedValue() {
 }
 
 bool BoxedValue::AsBool() const {
-  if (union_.type_ != UnionValue::Type::BOOL) {
-    FAIL() << CategoryName() << " is not a Bool value";
+  switch (union_.type_) {
+    case UnionValue::Type::BOOL:
+      return union_.value_.as_bool_;
+    default:
+      FAIL() << CategoryName() << " is not a Bool value";
+      __builtin_unreachable();
+      break;
   }
-  return union_.value_.as_bool_;
 }
 
 PrimChar BoxedValue::AsChar() const {
-  if (union_.type_ != UnionValue::Type::CHAR) {
-    FAIL() << CategoryName() << " is not a Char value";
+  switch (union_.type_) {
+    case UnionValue::Type::CHAR:
+      return union_.value_.as_char_;
+    default:
+      FAIL() << CategoryName() << " is not a Char value";
+      __builtin_unreachable();
+      break;
   }
-  return union_.value_.as_char_;
 }
 
 PrimInt BoxedValue::AsInt() const {
-  if (union_.type_ != UnionValue::Type::INT) {
-    FAIL() << CategoryName() << " is not an Int value";
+  switch (union_.type_) {
+    case UnionValue::Type::INT:
+      return union_.value_.as_int_;
+    default:
+      FAIL() << CategoryName() << " is not an Int value";
+      __builtin_unreachable();
+      break;
   }
-  return union_.value_.as_int_;
 }
 
 PrimFloat BoxedValue::AsFloat() const {
-  if (union_.type_ != UnionValue::Type::FLOAT) {
-    FAIL() << CategoryName() << " is not a Float value";
+  switch (union_.type_) {
+    case UnionValue::Type::FLOAT:
+      return union_.value_.as_float_;
+    default:
+      FAIL() << CategoryName() << " is not a Float value";
+      __builtin_unreachable();
+      break;
   }
-  return union_.value_.as_float_;
 }
 
 const PrimString& BoxedValue::AsString() const {
   switch (union_.type_) {
-    case UnionValue::Type::EMPTY:
-    case UnionValue::Type::BOOL:
-    case UnionValue::Type::CHAR:
-    case UnionValue::Type::INT:
-    case UnionValue::Type::FLOAT:
-      FAIL() << CategoryName() << " is not a String value";
-      __builtin_unreachable();
-      break;
     case UnionValue::Type::BOXED:
       if (!union_.value_.as_pointer_ || !union_.value_.as_pointer_->object_) {
         FAIL() << "Function called on null pointer";
       }
       return union_.value_.as_pointer_->object_->AsString();
+    default:
+      FAIL() << CategoryName() << " is not a String value";
+      __builtin_unreachable();
+      break;
   }
 }
 
 PrimCharBuffer& BoxedValue::AsCharBuffer() const {
   switch (union_.type_) {
-    case UnionValue::Type::EMPTY:
-    case UnionValue::Type::BOOL:
-    case UnionValue::Type::CHAR:
-    case UnionValue::Type::INT:
-    case UnionValue::Type::FLOAT:
-      FAIL() << CategoryName() << " is not a CharBuffer value";
-      __builtin_unreachable();
-      break;
     case UnionValue::Type::BOXED:
       if (!union_.value_.as_pointer_ || !union_.value_.as_pointer_->object_) {
         FAIL() << "Function called on null pointer";
       }
       return union_.value_.as_pointer_->object_->AsCharBuffer();
+    default:
+      FAIL() << CategoryName() << " is not a CharBuffer value";
+      __builtin_unreachable();
+      break;
   }
 }
 
@@ -226,10 +222,14 @@ bool BoxedValue::Present(const BoxedValue& target) {
 
 // static
 BoxedValue BoxedValue::Require(const BoxedValue& target) {
-  if (target.union_.type_ == UnionValue::Type::EMPTY) {
-    FAIL() << "Cannot require empty value";
+  switch (target.union_.type_) {
+    case UnionValue::Type::EMPTY:
+      FAIL() << "Cannot require empty value";
+      __builtin_unreachable();
+      break;
+    default:
+      return target;
   }
-  return target;
 }
 
 // static
@@ -277,12 +277,6 @@ ReturnTuple BoxedValue::Dispatch(
 
 void BoxedValue::Cleanup() {
   switch (union_.type_) {
-    case UnionValue::Type::EMPTY:
-    case UnionValue::Type::BOOL:
-    case UnionValue::Type::CHAR:
-    case UnionValue::Type::INT:
-    case UnionValue::Type::FLOAT:
-      break;
     case UnionValue::Type::BOXED:
       if (--union_.value_.as_pointer_->strong_ == 0) {
         union_.value_.as_pointer_->object_->~TypeValue();
@@ -291,6 +285,8 @@ void BoxedValue::Cleanup() {
           delete union_.value_.as_bytes_;
         }
       }
+      break;
+    default:
       break;
   }
   union_.type_  = UnionValue::Type::EMPTY;
@@ -304,14 +300,10 @@ WeakValue::WeakValue()
 WeakValue::WeakValue(const WeakValue& other)
   : union_(other.union_) {
   switch (union_.type_) {
-    case UnionValue::Type::EMPTY:
-    case UnionValue::Type::BOOL:
-    case UnionValue::Type::CHAR:
-    case UnionValue::Type::INT:
-    case UnionValue::Type::FLOAT:
-      break;
     case UnionValue::Type::BOXED:
       ++union_.value_.as_pointer_->weak_;
+      break;
+    default:
       break;
   }
 }
@@ -321,14 +313,10 @@ WeakValue& WeakValue::operator = (const WeakValue& other) {
     Cleanup();
     union_ = other.union_;
     switch (union_.type_) {
-      case UnionValue::Type::EMPTY:
-      case UnionValue::Type::BOOL:
-      case UnionValue::Type::CHAR:
-      case UnionValue::Type::INT:
-      case UnionValue::Type::FLOAT:
-        break;
       case UnionValue::Type::BOXED:
         ++union_.value_.as_pointer_->weak_;
+        break;
+      default:
         break;
     }
   }
@@ -354,14 +342,10 @@ WeakValue& WeakValue::operator = (WeakValue&& other) {
 WeakValue::WeakValue(const BoxedValue& other)
   : union_(other.union_) {
   switch (union_.type_) {
-    case UnionValue::Type::EMPTY:
-    case UnionValue::Type::BOOL:
-    case UnionValue::Type::CHAR:
-    case UnionValue::Type::INT:
-    case UnionValue::Type::FLOAT:
-      break;
     case UnionValue::Type::BOXED:
       ++union_.value_.as_pointer_->weak_;
+      break;
+    default:
       break;
   }
 }
@@ -370,14 +354,10 @@ WeakValue& WeakValue::operator = (const BoxedValue& other) {
   Cleanup();
   union_ = other.union_;
   switch (union_.type_) {
-    case UnionValue::Type::EMPTY:
-    case UnionValue::Type::BOOL:
-    case UnionValue::Type::CHAR:
-    case UnionValue::Type::INT:
-    case UnionValue::Type::FLOAT:
-      break;
     case UnionValue::Type::BOXED:
       ++union_.value_.as_pointer_->weak_;
+      break;
+    default:
       break;
   }
   return *this;
@@ -389,16 +369,12 @@ WeakValue::~WeakValue() {
 
 void WeakValue::Cleanup() {
   switch (union_.type_) {
-    case UnionValue::Type::EMPTY:
-    case UnionValue::Type::BOOL:
-    case UnionValue::Type::CHAR:
-    case UnionValue::Type::INT:
-    case UnionValue::Type::FLOAT:
-      break;
     case UnionValue::Type::BOXED:
       if (--union_.value_.as_pointer_->weak_ == 0) {
         delete union_.value_.as_bytes_;
       }
+      break;
+    default:
       break;
   }
   union_.type_  = UnionValue::Type::EMPTY;
