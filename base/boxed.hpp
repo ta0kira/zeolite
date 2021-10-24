@@ -126,8 +126,8 @@ class BoxedValue {
 
   std::string CategoryName() const;
 
-  ReturnTuple Dispatch(const BoxedValue& self, const ValueFunction& label,
-                       const ParamTuple& params, const ValueTuple& args) const;
+  ReturnTuple Dispatch(
+    const ValueFunction& label, const ParamTuple& params, const ValueTuple& args) const;
 
   void Cleanup();
 

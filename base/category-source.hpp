@@ -160,7 +160,7 @@ class TypeValue {
  public:
   inline static ReturnTuple Call(const BoxedValue& target, const ValueFunction& label,
                                  const ParamTuple& params, const ValueTuple& args) {
-    return target.Dispatch(target, label, params, args);
+    return target.Dispatch(label, params, args);
   }
 
   virtual const PrimString& AsString() const;
@@ -182,8 +182,8 @@ class TypeValue {
   // NOTE: For some reason, making this private causes a segfault.
   virtual std::string CategoryName() const = 0;
 
-  virtual ReturnTuple Dispatch(const BoxedValue& self, const ValueFunction& label,
-                               const ParamTuple& params, const ValueTuple& args);
+  virtual ReturnTuple Dispatch(
+    const ValueFunction& label, const ParamTuple& params, const ValueTuple& args);
 
  private:
   // Creating a BoxedValue from a TypeValue won't have the correct offset.
@@ -201,8 +201,7 @@ class AnonymousOrder : public TypeValue {
                  const ValueFunction& func_get);
 
   std::string CategoryName() const final;
-  ReturnTuple Dispatch(const BoxedValue& self,
-                       const ValueFunction& label,
+  ReturnTuple Dispatch(const ValueFunction& label,
                        const ParamTuple& params,
                        const ValueTuple& args) final;
 

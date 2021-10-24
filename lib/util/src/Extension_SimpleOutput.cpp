@@ -69,14 +69,14 @@ struct ExtValue_SimpleOutput : public Value_SimpleOutput {
   inline ExtValue_SimpleOutput(S<Type_SimpleOutput> p, S<Writer> w)
     : Value_SimpleOutput(p), writer(w) {}
 
-  ReturnTuple Call_flush(const BoxedValue& Var_self, const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_flush(const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("SimpleOutput.flush")
     std::lock_guard<std::mutex> lock(mutex);
     writer->Flush();
     return ReturnTuple();
   }
 
-  ReturnTuple Call_write(const BoxedValue& Var_self, const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_write(const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("SimpleOutput.write")
     const BoxedValue& Var_arg1 = (args.At(0));
     std::lock_guard<std::mutex> lock(mutex);

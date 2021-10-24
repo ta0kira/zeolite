@@ -101,14 +101,14 @@ struct ExtValue_Vector : public Value_Vector {
   inline ExtValue_Vector(S<Type_Vector> p, VectorType v)
     : Value_Vector(p), values(std::move(v)) {}
 
-  ReturnTuple Call_append(const BoxedValue& Var_self, const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_append(const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("Vector.append")
     const BoxedValue& Var_arg1 = (args.At(0));
     values.push_back(Var_arg1);
     return ReturnTuple(VAR_SELF);
   }
 
-  ReturnTuple Call_defaultOrder(const BoxedValue& Var_self, const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_defaultOrder(const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("Vector.defaultOrder")
     if (values.empty()) {
       return ReturnTuple(Var_empty);
@@ -117,7 +117,7 @@ struct ExtValue_Vector : public Value_Vector {
     }
   }
 
-  ReturnTuple Call_pop(const BoxedValue& Var_self, const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_pop(const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("Vector.pop")
     if (values.empty()) {
       BUILTIN_FAIL(Box_String(PrimString_FromLiteral("no elements left to pop")))
@@ -127,14 +127,14 @@ struct ExtValue_Vector : public Value_Vector {
     return ReturnTuple(value);
   }
 
-  ReturnTuple Call_push(const BoxedValue& Var_self, const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_push(const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("Vector.push")
     const BoxedValue& Var_arg1 = (args.At(0));
     values.push_back(Var_arg1);
     return ReturnTuple(VAR_SELF);
   }
 
-  ReturnTuple Call_readAt(const BoxedValue& Var_self, const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_readAt(const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("Vector.readAt")
     const PrimInt Var_arg1 = (args.At(0)).AsInt();
     if (Var_arg1 < 0 || Var_arg1 >= values.size()) {
@@ -143,12 +143,12 @@ struct ExtValue_Vector : public Value_Vector {
     return ReturnTuple(values[Var_arg1]);
   }
 
-  ReturnTuple Call_size(const BoxedValue& Var_self, const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_size(const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("Vector.size")
     return ReturnTuple(Box_Int(values.size()));
   }
 
-  ReturnTuple Call_writeAt(const BoxedValue& Var_self, const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_writeAt(const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("Vector.writeAt")
     const PrimInt Var_arg1 = (args.At(0)).AsInt();
     const BoxedValue& Var_arg2 = (args.At(1));

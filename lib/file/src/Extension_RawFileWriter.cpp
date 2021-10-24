@@ -45,7 +45,7 @@ struct ExtValue_RawFileWriter : public Value_RawFileWriter {
       filename(args.At(0).AsString()),
       file(new std::ofstream(filename, std::ios::out | std::ios::binary | std::ios::trunc | std::ios::ate)) {}
 
-  ReturnTuple Call_freeResource(const BoxedValue& Var_self, const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_freeResource(const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("RawFileWriter.freeResource")
     std::lock_guard<std::mutex> lock(mutex);
     if (file) {
@@ -54,7 +54,7 @@ struct ExtValue_RawFileWriter : public Value_RawFileWriter {
     return ReturnTuple();
   }
 
-  ReturnTuple Call_getFileError(const BoxedValue& Var_self, const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_getFileError(const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("RawFileWriter.getFileError")
     std::lock_guard<std::mutex> lock(mutex);
     if (!file) {
@@ -69,7 +69,7 @@ struct ExtValue_RawFileWriter : public Value_RawFileWriter {
     return ReturnTuple(Var_empty);
   }
 
-  ReturnTuple Call_writeBlock(const BoxedValue& Var_self, const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_writeBlock(const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("RawFileWriter.writeBlock")
     TRACE_CREATION
     std::lock_guard<std::mutex> lock(mutex);

@@ -56,7 +56,7 @@ struct ExtValue_ThreadCondition : public Value_ThreadCondition {
     pthread_mutex_init(&mutex, &mutex_attr);
   }
 
-  ReturnTuple Call_lock(const BoxedValue& Var_self, const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_lock(const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("ThreadCondition.lock")
     int error = 0;
     if ((error = pthread_mutex_lock(&mutex)) != 0) {
@@ -65,7 +65,7 @@ struct ExtValue_ThreadCondition : public Value_ThreadCondition {
     return ReturnTuple(VAR_SELF);
   }
 
-  ReturnTuple Call_resumeAll(const BoxedValue& Var_self, const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_resumeAll(const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("ThreadCondition.resumeAll")
     int error = 0;
     if ((error = pthread_cond_broadcast(&cond)) != 0) {
@@ -74,7 +74,7 @@ struct ExtValue_ThreadCondition : public Value_ThreadCondition {
     return ReturnTuple(VAR_SELF);
   }
 
-  ReturnTuple Call_resumeOne(const BoxedValue& Var_self, const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_resumeOne(const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("ThreadCondition.resumeOne")
     int error = 0;
     if ((error = pthread_cond_signal(&cond)) != 0) {
@@ -83,7 +83,7 @@ struct ExtValue_ThreadCondition : public Value_ThreadCondition {
     return ReturnTuple(VAR_SELF);
   }
 
-  ReturnTuple Call_timedWait(const BoxedValue& Var_self, const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_timedWait(const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("ThreadCondition.timedWait")
     int error = 0;
     const PrimFloat Var_arg1 = (args.At(0)).AsFloat();
@@ -106,7 +106,7 @@ struct ExtValue_ThreadCondition : public Value_ThreadCondition {
     return ReturnTuple(Box_Bool(true));
   }
 
-  ReturnTuple Call_unlock(const BoxedValue& Var_self, const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_unlock(const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("ThreadCondition.unlock")
     int error = 0;
     if ((error = pthread_mutex_unlock(&mutex)) != 0) {
@@ -115,7 +115,7 @@ struct ExtValue_ThreadCondition : public Value_ThreadCondition {
     return ReturnTuple(VAR_SELF);
   }
 
-  ReturnTuple Call_wait(const BoxedValue& Var_self, const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_wait(const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("ThreadCondition.wait")
     int error = 0;
     if ((error = pthread_cond_wait(&cond, &mutex)) != 0) {

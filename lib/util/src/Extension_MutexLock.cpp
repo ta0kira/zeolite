@@ -48,7 +48,7 @@ struct ExtValue_MutexLock : public Value_MutexLock {
     TypeValue::Call(BoxedValue::Require(mutex), Function_Mutex_lock, ParamTuple(), ArgTuple());
   }
 
-  ReturnTuple Call_freeResource(const BoxedValue& Var_self, const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_freeResource(const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("MutexLock.freeResource")
     TRACE_CREATION
     if (!BoxedValue::Present(mutex)) {

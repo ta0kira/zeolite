@@ -499,7 +499,7 @@ generateCategoryDefinition testing = common where
     ]
   declareValueOverrides = onlyCodes [
       "  std::string CategoryName() const final;",
-      "  ReturnTuple Dispatch(const BoxedValue& self, const ValueFunction& label, const ParamTuple& params, const ValueTuple& args) final;"
+      "  ReturnTuple Dispatch(const ValueFunction& label, const ParamTuple& params, const ValueTuple& args) final;"
     ]
 
   defineCategoryOverrides t fs = return $ mconcat [
@@ -529,7 +529,7 @@ generateCategoryDefinition testing = common where
       params = map vpParam $ getCategoryParams t
   defineValueOverrides t fs = return $ mconcat [
       onlyCode $ "std::string " ++ className ++ "::CategoryName() const { return parent->CategoryName(); }",
-      onlyCode $ "ReturnTuple " ++ className ++ "::Dispatch(const BoxedValue& self, const ValueFunction& label, const ParamTuple& params, const ValueTuple& args) {",
+      onlyCode $ "ReturnTuple " ++ className ++ "::Dispatch(const ValueFunction& label, const ParamTuple& params, const ValueTuple& args) {",
       createFunctionDispatch (getCategoryName t) ValueScope fs,
       onlyCode $ "}"
     ] where
@@ -737,7 +737,7 @@ createFunctionDispatch n s fs = function where
     | s == TypeScope     = "  using CallType = ReturnTuple(" ++ typeName n ++
                            "::*)(const S<TypeInstance>&, const ParamTuple&, const ValueTuple&);"
     | s == ValueScope    = "  using CallType = ReturnTuple(" ++ valueName n ++
-                           "::*)(const BoxedValue&, const ParamTuple&, const ValueTuple&);"
+                           "::*)(const ParamTuple&, const ValueTuple&);"
     | otherwise = undefined
   name f
     | s == CategoryScope = categoryName n ++ "::" ++ callName f
@@ -767,12 +767,12 @@ createFunctionDispatch n s fs = function where
   args
     | s == CategoryScope = "params, args"
     | s == TypeScope     = "self, params, args"
-    | s == ValueScope    = "self, params, args"
+    | s == ValueScope    = "params, args"
     | otherwise = undefined
   fallback
     | s == CategoryScope = "  return TypeCategory::Dispatch(label, params, args);"
     | s == TypeScope     = "  return TypeInstance::Dispatch(self, label, params, args);"
-    | s == ValueScope    = "  return TypeValue::Dispatch(self, label, params, args);"
+    | s == ValueScope    = "  return TypeValue::Dispatch(label, params, args);"
     | otherwise = undefined
 
 createCanConvertFrom :: AnyCategory c -> CompiledData [String]

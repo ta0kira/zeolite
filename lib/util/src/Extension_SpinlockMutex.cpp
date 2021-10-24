@@ -44,13 +44,13 @@ struct ExtType_SpinlockMutex : public Type_SpinlockMutex {
 struct ExtValue_SpinlockMutex : public Value_SpinlockMutex {
   inline ExtValue_SpinlockMutex(S<Type_SpinlockMutex> p) : Value_SpinlockMutex(p) {}
 
-  ReturnTuple Call_lock(const BoxedValue& Var_self, const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_lock(const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("SpinlockMutex.lock")
     while (flag.test_and_set(std::memory_order_acquire));
     return ReturnTuple(VAR_SELF);
   }
 
-  ReturnTuple Call_unlock(const BoxedValue& Var_self, const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_unlock(const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("SpinlockMutex.unlock")
     flag.clear(std::memory_order_release);
     return ReturnTuple(VAR_SELF);

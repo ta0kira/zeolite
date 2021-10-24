@@ -254,8 +254,7 @@ std::string BoxedValue::CategoryName() const {
 }
 
 ReturnTuple BoxedValue::Dispatch(
-  const BoxedValue& self, const ValueFunction& label,
-  const ParamTuple& params, const ValueTuple& args) const {
+  const ValueFunction& label, const ParamTuple& params, const ValueTuple& args) const {
   switch (union_.type_) {
     case UnionValue::Type::EMPTY:
       FAIL() << "Function called on empty value";
@@ -273,7 +272,7 @@ ReturnTuple BoxedValue::Dispatch(
       if (!union_.value_.as_pointer_ || !union_.value_.as_pointer_->object_) {
         FAIL() << "Function called on null pointer";
       }
-      return union_.value_.as_pointer_->object_->Dispatch(self, label, params, args);
+      return union_.value_.as_pointer_->object_->Dispatch(label, params, args);
   }
 }
 

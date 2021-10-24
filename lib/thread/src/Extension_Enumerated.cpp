@@ -115,7 +115,7 @@ struct ExtValue_EnumeratedWait : public Value_EnumeratedWait {
   inline ExtValue_EnumeratedWait(S<Type_EnumeratedWait> p, S<Barrier> b, int i)
     : Value_EnumeratedWait(p), barrier(b), index(i) {}
 
-  ReturnTuple Call_wait(const BoxedValue& Var_self, const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_wait(const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("EnumeratedWait.wait")
     barrier->Wait(index);
     return ReturnTuple(VAR_SELF);
@@ -182,7 +182,7 @@ struct ExtValue_EnumeratedBarrier : public Value_EnumeratedBarrier {
   inline ExtValue_EnumeratedBarrier(S<Type_EnumeratedBarrier> p, std::vector<BoxedValue> w)
     : Value_EnumeratedBarrier(p), waits(std::move(w)) {}
 
-  ReturnTuple Call_readAt(const BoxedValue& Var_self, const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_readAt(const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("EnumeratedBarrier.readAt")
     const PrimInt Var_arg1 = (args.At(0)).AsInt();
     if (Var_arg1 < 0 || Var_arg1 >= waits.size()) {
@@ -191,7 +191,7 @@ struct ExtValue_EnumeratedBarrier : public Value_EnumeratedBarrier {
     return ReturnTuple(waits[Var_arg1]);
   }
 
-  ReturnTuple Call_size(const BoxedValue& Var_self, const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_size(const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("EnumeratedBarrier.size")
     return ReturnTuple(Box_Int(waits.size()));
   }

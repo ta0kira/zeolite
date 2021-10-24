@@ -47,8 +47,7 @@ class Value_StringBuilder : public TypeValue {
  public:
   std::string CategoryName() const final { return "StringBuilder"; }
 
-  ReturnTuple Dispatch(const BoxedValue& self,
-                       const ValueFunction& label,
+  ReturnTuple Dispatch(const ValueFunction& label,
                        const ParamTuple& params, const ValueTuple& args) final {
     if (args.Size() != label.arg_count) {
       FAIL() << "Wrong number of args";
@@ -60,14 +59,14 @@ class Value_StringBuilder : public TypeValue {
       TRACE_FUNCTION("StringBuilder.append")
       std::lock_guard<std::mutex> lock(mutex);
       output_ << args.At(0).AsString();
-      return ReturnTuple(self);
+      return ReturnTuple(VAR_SELF);
     }
     if (&label == &Function_Build_build) {
       TRACE_FUNCTION("StringBuilder.build")
       std::lock_guard<std::mutex> lock(mutex);
       return ReturnTuple(Box_String(output_.str()));
     }
-    return TypeValue::Dispatch(self, label, params, args);
+    return TypeValue::Dispatch(label, params, args);
   }
 
  private:
@@ -134,12 +133,12 @@ struct StringOrder : public AnonymousOrder {
 struct ExtValue_String : public Value_String {
   inline ExtValue_String(S<Type_String> p, const PrimString& value) : Value_String(p), value_(value) {}
 
-  ReturnTuple Call_asBool(const BoxedValue& Var_self, const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_asBool(const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("String.asBool")
     return ReturnTuple(Box_Bool(value_.size() != 0));
   }
 
-  ReturnTuple Call_defaultOrder(const BoxedValue& Var_self, const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_defaultOrder(const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("String.defaultOrder")
     if (value_.empty()) {
       return ReturnTuple(Var_empty);
@@ -148,12 +147,12 @@ struct ExtValue_String : public Value_String {
     }
   }
 
-  ReturnTuple Call_formatted(const BoxedValue& Var_self, const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_formatted(const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("String.formatted")
     return ReturnTuple(VAR_SELF);
   }
 
-  ReturnTuple Call_readAt(const BoxedValue& Var_self, const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_readAt(const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("String.readAt")
     const PrimInt Var_arg1 = (args.At(0)).AsInt();
     if (Var_arg1 < 0 || Var_arg1 >= value_.size()) {
@@ -162,12 +161,12 @@ struct ExtValue_String : public Value_String {
     return ReturnTuple(Box_Char(value_[Var_arg1]));
   }
 
-  ReturnTuple Call_size(const BoxedValue& Var_self, const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_size(const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("String.size")
     return ReturnTuple(Box_Int(value_.size()));
   }
 
-  ReturnTuple Call_subSequence(const BoxedValue& Var_self, const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_subSequence(const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("String.subSequence")
     const PrimInt Var_arg1 = (args.At(0)).AsInt();
     const PrimInt Var_arg2 = (args.At(1)).AsInt();

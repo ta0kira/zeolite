@@ -136,7 +136,7 @@ ReturnTuple TypeInstance::Dispatch(const S<TypeInstance>& self, const TypeFuncti
   __builtin_unreachable();
 }
 
-ReturnTuple TypeValue::Dispatch(const BoxedValue& self, const ValueFunction& label,
+ReturnTuple TypeValue::Dispatch(const ValueFunction& label,
                                 const ParamTuple& params, const ValueTuple& args) {
   FAIL() << CategoryName() << " does not implement " << label;
   __builtin_unreachable();
@@ -223,8 +223,7 @@ AnonymousOrder::AnonymousOrder(const BoxedValue cont,
 std::string AnonymousOrder::CategoryName() const { return "AnonymousOrder"; }
 
 ReturnTuple AnonymousOrder::Dispatch(
-  const BoxedValue& self, const ValueFunction& label,
-  const ParamTuple& params, const ValueTuple& args) {
+  const ValueFunction& label, const ParamTuple& params, const ValueTuple& args) {
   if (&label == &function_next) {
     TRACE_FUNCTION("AnonymousOrder.next")
     return ReturnTuple(Call_next(VAR_SELF));
@@ -233,5 +232,5 @@ ReturnTuple AnonymousOrder::Dispatch(
     TRACE_FUNCTION("AnonymousOrder.get")
     return ReturnTuple(Call_get(VAR_SELF));
   }
-  return TypeValue::Dispatch(VAR_SELF, label, params, args);
+  return TypeValue::Dispatch(label, params, args);
 }

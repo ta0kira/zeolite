@@ -47,13 +47,13 @@ struct ExtType_SimpleInput : public Type_SimpleInput {
 struct ExtValue_SimpleInput : public Value_SimpleInput {
   inline ExtValue_SimpleInput(S<Type_SimpleInput> p, const ValueTuple& args) : Value_SimpleInput(p) {}
 
-  ReturnTuple Call_pastEnd(const BoxedValue& Var_self, const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_pastEnd(const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("SimpleInput.pastEnd")
     std::lock_guard<std::mutex> lock(mutex);
     return ReturnTuple(Box_Bool(zero_read));
   }
 
-  ReturnTuple Call_readBlock(const BoxedValue& Var_self, const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_readBlock(const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("SimpleInput.readBlock")
     std::lock_guard<std::mutex> lock(mutex);
     const int size = args.At(0).AsInt();

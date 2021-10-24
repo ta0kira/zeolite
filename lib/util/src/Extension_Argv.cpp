@@ -45,18 +45,18 @@ struct ExtValue_Argv : public Value_Argv {
   inline ExtValue_Argv(S<Type_Argv> p, int st, int sz)
     : Value_Argv(p), start(st), size(sz) {}
 
-  ReturnTuple Call_readAt(const BoxedValue& Var_self, const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_readAt(const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("Argv.readAt")
     const PrimInt Var_arg1 = (args.At(0)).AsInt();
     return ReturnTuple(Box_String(Argv::GetArgAt(start + Var_arg1)));
   }
 
-  ReturnTuple Call_size(const BoxedValue& Var_self, const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_size(const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("Argv.size")
     return ReturnTuple(Box_Int(GetSize()));
   }
 
-  ReturnTuple Call_subSequence(const BoxedValue& Var_self, const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_subSequence(const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("Argv.subSequence")
     const PrimInt Var_arg1 = (args.At(0)).AsInt();
     const PrimInt Var_arg2 = (args.At(1)).AsInt();

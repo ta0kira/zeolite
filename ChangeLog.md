@@ -1,6 +1,18 @@
 # Revision history for zeolite-lang
 
-## 0.18.2.0  -- ????-??-??
+## 0.19.0.0  -- ????-??-??
+
+### Compiler CLI
+
+* **[breaking]** Changes how `BoxedValue` is created for new `TypeValue`
+  instances in C++ extensions. Rather than `BoxedValue(new Foo(...))`, you must
+  now use `BoxedValue::New<Foo>(...)`. This breaks all existing extensions that
+  instantiate new values.
+
+* **[breaking]** Removes all passing of `Var_self` in C++ extensions. Use
+  `VAR_SELF` where `Var_self` was previously used, and delete the `Var_self`
+  argument from function signatures. This breaks all existing extensions.
+
 
 ### Libraries
 

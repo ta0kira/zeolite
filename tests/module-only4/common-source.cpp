@@ -48,7 +48,7 @@ struct ExtValue_Type1 : public Value_Type1 {
   inline ExtValue_Type1(S<Type_Type1> p, const ValueTuple& args)
     : Value_Type1(p), value(args.At(0)) {}
 
-  ReturnTuple Call_get(const BoxedValue& Var_self, const ParamTuple& params, const ValueTuple& args) {
+  ReturnTuple Call_get(const ParamTuple& params, const ValueTuple& args) {
     TRACE_FUNCTION("Type1.get")
     return ReturnTuple(TypeValue::Call(value, Function_Type2_get, ParamTuple(), ArgTuple()));
   }
@@ -99,7 +99,7 @@ struct ExtValue_Type3 : public Value_Type3 {
   inline ExtValue_Type3(S<Type_Type3> p, const ValueTuple& args)
     : Value_Type3(p), value(args.At(0)) {}
 
-  ReturnTuple Call_get(const BoxedValue& Var_self, const ParamTuple& params, const ValueTuple& args) {
+  ReturnTuple Call_get(const ParamTuple& params, const ValueTuple& args) {
     TRACE_FUNCTION("Type3.get")
     return ReturnTuple(TypeValue::Call(value, Function_Type2_get, ParamTuple(), ArgTuple()));
   }

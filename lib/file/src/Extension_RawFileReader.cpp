@@ -45,7 +45,7 @@ struct ExtValue_RawFileReader : public Value_RawFileReader {
       filename(args.At(0).AsString()),
       file(new std::ifstream(filename, std::ios::in | std::ios::binary)) {}
 
-  ReturnTuple Call_freeResource(const BoxedValue& Var_self, const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_freeResource(const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("RawFileReader.freeResource")
     std::lock_guard<std::mutex> lock(mutex);
     if (file) {
@@ -54,7 +54,7 @@ struct ExtValue_RawFileReader : public Value_RawFileReader {
     return ReturnTuple();
   }
 
-  ReturnTuple Call_getFileError(const BoxedValue& Var_self, const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_getFileError(const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("RawFileReader.getFileError")
     std::lock_guard<std::mutex> lock(mutex);
     if (!file) {
@@ -69,13 +69,13 @@ struct ExtValue_RawFileReader : public Value_RawFileReader {
     return ReturnTuple(Var_empty);
   }
 
-  ReturnTuple Call_pastEnd(const BoxedValue& Var_self, const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_pastEnd(const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("RawFileReader.pastEnd")
     std::lock_guard<std::mutex> lock(mutex);
     return ReturnTuple(Box_Bool(!file || file->fail() || file->eof()));
   }
 
-  ReturnTuple Call_readBlock(const BoxedValue& Var_self, const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_readBlock(const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("RawFileReader.readBlock")
     TRACE_CREATION
     std::lock_guard<std::mutex> lock(mutex);

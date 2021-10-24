@@ -53,12 +53,12 @@ struct ExtValue_RandomExponential : public Value_RandomExponential {
       generator_((int) (long) this),
       distribution_(args.At(0).AsFloat()) {}
 
-  ReturnTuple Call_generate(const BoxedValue& Var_self, const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_generate(const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("RandomExponential.generate")
     return ReturnTuple(Box_Float(distribution_(generator_)));
   }
 
-  ReturnTuple Call_setSeed(const BoxedValue& Var_self, const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_setSeed(const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("RandomExponential.setSeed")
     distribution_.reset();
     generator_.seed(args.At(0).AsInt());

@@ -44,13 +44,13 @@ struct ExtType_SimpleMutex : public Type_SimpleMutex {
 struct ExtValue_SimpleMutex : public Value_SimpleMutex {
   inline ExtValue_SimpleMutex(S<Type_SimpleMutex> p) : Value_SimpleMutex(p) {}
 
-  ReturnTuple Call_lock(const BoxedValue& Var_self, const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_lock(const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("SimpleMutex.lock")
     mutex.lock();
     return ReturnTuple(VAR_SELF);
   }
 
-  ReturnTuple Call_unlock(const BoxedValue& Var_self, const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_unlock(const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("SimpleMutex.unlock")
     mutex.unlock();
     return ReturnTuple(VAR_SELF);

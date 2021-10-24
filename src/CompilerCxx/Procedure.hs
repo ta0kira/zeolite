@@ -76,7 +76,7 @@ procedureDeclaration abstract f = return $ onlyCode func where
       "(const S<TypeInstance>& Param_self, const ParamTuple& params, const ValueTuple& args)"
     | sfScope f == ValueScope =
       "ReturnTuple " ++ name ++
-      "(const BoxedValue& Var_self, const ParamTuple& params, const ValueTuple& args)"
+      "(const ParamTuple& params, const ValueTuple& args)"
     | otherwise = undefined
 
 data CxxFunctionType =
@@ -134,7 +134,7 @@ compileExecutableProcedure cxxType ctx
         "(const S<TypeInstance>& Param_self, const ParamTuple& params, const ValueTuple& args)" ++ final ++ " {"
       | s == ValueScope =
         returnType ++ " " ++ prefix ++ name ++
-        "(const BoxedValue& Var_self, const ParamTuple& params, const ValueTuple& args)" ++ final ++ " {"
+        "(const ParamTuple& params, const ValueTuple& args)" ++ final ++ " {"
       | otherwise = undefined
     returnType = "ReturnTuple"
     setProcedureTrace
@@ -947,7 +947,7 @@ compileFunctionCall e f (FunctionCall c _ ps es) = message ??> do
         show (sfName f) ++ ") inferred as " ++ show t ++ " at " ++ formatFullContext c2
     backgroundMessage _ = return ()
     assemble Nothing _ ValueScope ValueScope ps2 es2 =
-      return $ callName (sfName f) ++ "(VAR_SELF, " ++ ps2 ++ ", " ++ es2 ++ ")"
+      return $ callName (sfName f) ++ "(" ++ ps2 ++ ", " ++ es2 ++ ")"
     assemble Nothing _ TypeScope TypeScope ps2 es2 =
       return $ callName (sfName f) ++ "(Param_self, " ++ ps2 ++ ", " ++ es2 ++ ")"
     assemble Nothing scoped ValueScope TypeScope ps2 es2 =

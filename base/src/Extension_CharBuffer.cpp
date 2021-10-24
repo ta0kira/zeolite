@@ -50,7 +50,7 @@ struct ExtType_CharBuffer : public Type_CharBuffer {
 struct ExtValue_CharBuffer : public Value_CharBuffer {
   inline ExtValue_CharBuffer(S<Type_CharBuffer> p, PrimCharBuffer value) : Value_CharBuffer(p), value_(std::move(value)) {}
 
-  ReturnTuple Call_readAt(const BoxedValue& Var_self, const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_readAt(const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("CharBuffer.readAt")
     const PrimInt Var_arg1 = (args.At(0)).AsInt();
     if (Var_arg1 < 0 || Var_arg1 >= AsCharBuffer().size()) {
@@ -59,7 +59,7 @@ struct ExtValue_CharBuffer : public Value_CharBuffer {
     return ReturnTuple(Box_Char(AsCharBuffer()[Var_arg1]));
   }
 
-  ReturnTuple Call_resize(const BoxedValue& Var_self, const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_resize(const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("CharBuffer.resize")
     const PrimInt Var_arg1 = (args.At(0)).AsInt();
     if (Var_arg1 < 0) {
@@ -70,12 +70,12 @@ struct ExtValue_CharBuffer : public Value_CharBuffer {
     return ReturnTuple(VAR_SELF);
   }
 
-  ReturnTuple Call_size(const BoxedValue& Var_self, const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_size(const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("CharBuffer.size")
     return ReturnTuple(Box_Int(value_.size()));
   }
 
-  ReturnTuple Call_writeAt(const BoxedValue& Var_self, const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_writeAt(const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("CharBuffer.writeAt")
     const PrimInt Var_arg1 = (args.At(0)).AsInt();
     const PrimChar Var_arg2 = (args.At(1)).AsChar();
