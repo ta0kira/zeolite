@@ -140,16 +140,16 @@ BoxedValue::BoxedValue(const WeakValue& other)
 }
 
 BoxedValue::BoxedValue(bool value)
-  : union_{ .type_ = UnionValue::Type::BOOL, { .as_bool_ = value } } {}
+  : union_{ .type_ = UnionValue::Type::BOOL, .value_ = { .as_bool_ = value } } {}
 
 BoxedValue::BoxedValue(PrimChar value)
-  : union_{ .type_ = UnionValue::Type::CHAR, { .as_char_ = value } } {}
+  : union_{ .type_ = UnionValue::Type::CHAR, .value_ = { .as_char_ = value } } {}
 
 BoxedValue::BoxedValue(PrimInt value)
-  : union_{ .type_ = UnionValue::Type::INT, { .as_int_ = value } } {}
+  : union_{ .type_ = UnionValue::Type::INT, .value_ = { .as_int_ = value } } {}
 
 BoxedValue::BoxedValue(PrimFloat value)
-  : union_{ .type_ = UnionValue::Type::FLOAT, { .as_float_ = value } } {}
+  : union_{ .type_ = UnionValue::Type::FLOAT, .value_ = { .as_float_ = value } } {}
 
 BoxedValue::~BoxedValue() {
   Cleanup();
@@ -299,8 +299,7 @@ void BoxedValue::Cleanup() {
 
 
 WeakValue::WeakValue()
-  : union_{ .type_ = UnionValue::Type::EMPTY,
-            { .as_pointer_ = nullptr } } {}
+  : union_{ .type_ = UnionValue::Type::EMPTY, .value_ = { .as_pointer_ = nullptr } } {}
 
 WeakValue::WeakValue(const WeakValue& other)
   : union_(other.union_) {

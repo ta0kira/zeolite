@@ -61,7 +61,7 @@ struct UnionValue {
 class BoxedValue {
  public:
   constexpr BoxedValue()
-    : union_{ .type_ = UnionValue::Type::EMPTY, { .as_pointer_ = nullptr } } {}
+    : union_{ .type_ = UnionValue::Type::EMPTY, .value_ = { .as_pointer_ = nullptr } } {}
 
   BoxedValue(const BoxedValue&);
   BoxedValue& operator = (const BoxedValue&);
