@@ -282,7 +282,7 @@ void BoxedValue::Cleanup() {
         union_.value_.as_pointer_->object_->~TypeValue();
         union_.value_.as_pointer_->object_ = nullptr;
         if (--union_.value_.as_pointer_->weak_ == 0) {
-          delete union_.value_.as_bytes_;
+          free(union_.value_.as_bytes_);
         }
       }
       break;
@@ -371,7 +371,7 @@ void WeakValue::Cleanup() {
   switch (union_.type_) {
     case UnionValue::Type::BOXED:
       if (--union_.value_.as_pointer_->weak_ == 0) {
-        delete union_.value_.as_bytes_;
+        free(union_.value_.as_bytes_);
       }
       break;
     default:
