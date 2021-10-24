@@ -136,7 +136,12 @@ compileCategoryDeclaration testing ns t =
     guardNamespace
       | isStaticNamespace $ getCategoryNamespace t = show (getCategoryNamespace t) ++ "_"
       | otherwise = ""
-    labels = onlyCodes $ map label $ filter ((== name) . sfType) $ getCategoryFunctions t
+    functions = sortBy compareName $ filter ((== name) . sfType) $ getCategoryFunctions t
+    compareName x y = sfName x `compare` sfName y
+    categoryFunctions = filter ((== CategoryScope) . sfScope) functions
+    typeFunctions = filter ((== TypeScope) . sfScope) functions
+    valueFunctions = filter ((== ValueScope) . sfScope) functions
+    labels = onlyCodes $ map label $ categoryFunctions ++ typeFunctions ++ valueFunctions
     label f = "extern " ++ functionLabelType f ++ " " ++ functionName f ++ ";"
     collection
       | isValueConcrete t = emptyCode
