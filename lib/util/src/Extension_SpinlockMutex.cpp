@@ -47,13 +47,13 @@ struct ExtValue_SpinlockMutex : public Value_SpinlockMutex {
   ReturnTuple Call_lock(const BoxedValue& Var_self, const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("SpinlockMutex.lock")
     while (flag.test_and_set(std::memory_order_acquire));
-    return ReturnTuple(Var_self);
+    return ReturnTuple(VAR_SELF);
   }
 
   ReturnTuple Call_unlock(const BoxedValue& Var_self, const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("SpinlockMutex.unlock")
     flag.clear(std::memory_order_release);
-    return ReturnTuple(Var_self);
+    return ReturnTuple(VAR_SELF);
   }
 
   std::atomic_flag flag = ATOMIC_FLAG_INIT;

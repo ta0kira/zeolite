@@ -72,7 +72,7 @@ struct ExtType_Char : public Type_Char {
   }
 };
 
-ReturnTuple DispatchChar(PrimChar value, const BoxedValue& Var_self, const ValueFunction& label,
+ReturnTuple DispatchChar(PrimChar value, const ValueFunction& label,
                          const ParamTuple& params, const ValueTuple& args) {
   if (&label == &Function_AsBool_asBool) {
     TRACE_FUNCTION("Char.asBool")
@@ -80,7 +80,7 @@ ReturnTuple DispatchChar(PrimChar value, const BoxedValue& Var_self, const Value
   }
   if (&label == &Function_AsChar_asChar) {
     TRACE_FUNCTION("Char.asChar")
-    return ReturnTuple(Var_self);
+    return ReturnTuple(Box_Char(value));
   }
   if (&label == &Function_AsFloat_asFloat) {
     TRACE_FUNCTION("Char.asFloat")

@@ -75,7 +75,7 @@ struct ExtType_Int : public Type_Int {
   }
 };
 
-ReturnTuple DispatchInt(PrimInt value, const BoxedValue& Var_self, const ValueFunction& label,
+ReturnTuple DispatchInt(PrimInt value, const ValueFunction& label,
                         const ParamTuple& params, const ValueTuple& args) {
   if (&label == &Function_AsBool_asBool) {
     TRACE_FUNCTION("Int.asBool")
@@ -91,7 +91,7 @@ ReturnTuple DispatchInt(PrimInt value, const BoxedValue& Var_self, const ValueFu
   }
   if (&label == &Function_AsInt_asInt) {
     TRACE_FUNCTION("Int.asInt")
-    return ReturnTuple(Var_self);
+    return ReturnTuple(Box_Int(value));
   }
   if (&label == &Function_Formatted_formatted) {
     TRACE_FUNCTION("Int.formatted")

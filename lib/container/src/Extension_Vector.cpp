@@ -105,7 +105,7 @@ struct ExtValue_Vector : public Value_Vector {
     TRACE_FUNCTION("Vector.append")
     const BoxedValue& Var_arg1 = (args.At(0));
     values.push_back(Var_arg1);
-    return ReturnTuple(Var_self);
+    return ReturnTuple(VAR_SELF);
   }
 
   ReturnTuple Call_defaultOrder(const BoxedValue& Var_self, const ParamTuple& params, const ValueTuple& args) final {
@@ -113,7 +113,7 @@ struct ExtValue_Vector : public Value_Vector {
     if (values.empty()) {
       return ReturnTuple(Var_empty);
     } else {
-      return ReturnTuple(BoxedValue::New<VectorOrder>(Var_self, values));
+      return ReturnTuple(BoxedValue::New<VectorOrder>(VAR_SELF, values));
     }
   }
 
@@ -131,7 +131,7 @@ struct ExtValue_Vector : public Value_Vector {
     TRACE_FUNCTION("Vector.push")
     const BoxedValue& Var_arg1 = (args.At(0));
     values.push_back(Var_arg1);
-    return ReturnTuple(Var_self);
+    return ReturnTuple(VAR_SELF);
   }
 
   ReturnTuple Call_readAt(const BoxedValue& Var_self, const ParamTuple& params, const ValueTuple& args) final {
@@ -156,7 +156,7 @@ struct ExtValue_Vector : public Value_Vector {
       FAIL() << "index " << Var_arg1 << " is out of bounds";
     }
     values[Var_arg1] = Var_arg2;
-    return ReturnTuple(Var_self);
+    return ReturnTuple(VAR_SELF);
   }
 
   // vector<#x>

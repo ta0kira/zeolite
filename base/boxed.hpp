@@ -112,6 +112,18 @@ class BoxedValue {
 
   explicit BoxedValue(const WeakValue& other);
 
+  template<class T>
+  static inline BoxedValue FromPointer(T* pointer) {
+    BoxedValue value;
+    if (pointer) {
+      value.union_.type_ = zeolite_internal::UnionValue::Type::BOXED;
+      value.union_.value_.as_bytes_ =
+        reinterpret_cast<char*>(pointer)-sizeof(zeolite_internal::UnionValue::Pointer);
+      ++value.union_.value_.as_pointer_->strong_;
+    }
+    return value;
+  }
+
   std::string CategoryName() const;
 
   ReturnTuple Dispatch(const BoxedValue& self, const ValueFunction& label,

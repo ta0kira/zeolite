@@ -67,7 +67,7 @@ struct ExtValue_CharBuffer : public Value_CharBuffer {
     } else {
       value_.resize(Var_arg1);
     }
-    return ReturnTuple(Var_self);
+    return ReturnTuple(VAR_SELF);
   }
 
   ReturnTuple Call_size(const BoxedValue& Var_self, const ParamTuple& params, const ValueTuple& args) final {
@@ -84,7 +84,7 @@ struct ExtValue_CharBuffer : public Value_CharBuffer {
     } else {
       value_[Var_arg1] = Var_arg2;
     }
-    return ReturnTuple(Var_self);
+    return ReturnTuple(VAR_SELF);
   }
 
   PrimCharBuffer& AsCharBuffer() final { return value_; }

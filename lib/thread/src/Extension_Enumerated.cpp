@@ -118,7 +118,7 @@ struct ExtValue_EnumeratedWait : public Value_EnumeratedWait {
   ReturnTuple Call_wait(const BoxedValue& Var_self, const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("EnumeratedWait.wait")
     barrier->Wait(index);
-    return ReturnTuple(Var_self);
+    return ReturnTuple(VAR_SELF);
   }
 
   ~ExtValue_EnumeratedWait() {

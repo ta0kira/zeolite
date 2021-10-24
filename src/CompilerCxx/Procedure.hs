@@ -947,7 +947,7 @@ compileFunctionCall e f (FunctionCall c _ ps es) = message ??> do
         show (sfName f) ++ ") inferred as " ++ show t ++ " at " ++ formatFullContext c2
     backgroundMessage _ = return ()
     assemble Nothing _ ValueScope ValueScope ps2 es2 =
-      return $ callName (sfName f) ++ "(Var_self, " ++ ps2 ++ ", " ++ es2 ++ ")"
+      return $ callName (sfName f) ++ "(VAR_SELF, " ++ ps2 ++ ", " ++ es2 ++ ")"
     assemble Nothing _ TypeScope TypeScope ps2 es2 =
       return $ callName (sfName f) ++ "(Param_self, " ++ ps2 ++ ", " ++ es2 ++ ")"
     assemble Nothing scoped ValueScope TypeScope ps2 es2 =

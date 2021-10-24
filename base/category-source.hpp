@@ -154,10 +154,14 @@ class TypeInstance {
   }
 };
 
+#define VAR_SELF TypeValue::Var_self(this)
+
 class TypeValue {
  public:
-  static ReturnTuple Call(const BoxedValue& target, const ValueFunction& label,
-                          const ParamTuple& params, const ValueTuple& args);
+  inline static ReturnTuple Call(const BoxedValue& target, const ValueFunction& label,
+                                 const ParamTuple& params, const ValueTuple& args) {
+    return target.Dispatch(target, label, params, args);
+  }
 
   virtual const PrimString& AsString() const;
   virtual PrimCharBuffer& AsCharBuffer();
@@ -170,11 +174,22 @@ class TypeValue {
 
   TypeValue() = default;
 
+  template<class T>
+  inline static BoxedValue Var_self(T* must_be_this) {
+    return BoxedValue::FromPointer(must_be_this);
+  }
+
   // NOTE: For some reason, making this private causes a segfault.
   virtual std::string CategoryName() const = 0;
 
   virtual ReturnTuple Dispatch(const BoxedValue& self, const ValueFunction& label,
                                const ParamTuple& params, const ValueTuple& args);
+
+ private:
+  // Creating a BoxedValue from a TypeValue won't have the correct offset.
+  inline static BoxedValue Var_self(TypeValue* invalid) {
+    return BoxedValue();
+  }
 };
 
 class AnonymousOrder : public TypeValue {

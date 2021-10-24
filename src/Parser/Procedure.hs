@@ -94,7 +94,12 @@ instance ParseFromSource VariableName where
     noKeywords
     b <- lowerChar
     e <- sepAfter $ many alphaNumChar
-    return $ VariableName (b:e)
+    return $ boxVariableName (b:e)
+
+boxVariableName :: String -> VariableName
+boxVariableName n
+  | n == "self" = VariableSelf
+  | otherwise   = VariableName n
 
 instance ParseFromSource (InputValue SourceContext) where
   sourceParser = labeled "input variable" $ variable <|> discard where
@@ -535,7 +540,7 @@ instance ParseFromSource (ExpressionStart SourceContext) where
     builtinValue = do
       c <- getSourceContext
       n <- builtinValues
-      return $ NamedVariable (OutputValue [c] (VariableName n))
+      return $ NamedVariable (OutputValue [c] (boxVariableName n))
     sourceContext = do
       pragma <- pragmaSourceContext
       case pragma of

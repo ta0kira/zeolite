@@ -52,11 +52,11 @@ struct ExtType_Bool : public Type_Bool {
   }
 };
 
-ReturnTuple DispatchBool(bool value, const BoxedValue& Var_self, const ValueFunction& label,
+ReturnTuple DispatchBool(bool value, const ValueFunction& label,
                          const ParamTuple& params, const ValueTuple& args) {
   if (&label == &Function_AsBool_asBool) {
     TRACE_FUNCTION("Bool.asBool")
-    return ReturnTuple(Var_self);
+    return ReturnTuple(Box_Bool(value));
   }
   if (&label == &Function_AsFloat_asFloat) {
     TRACE_FUNCTION("Bool.asFloat")

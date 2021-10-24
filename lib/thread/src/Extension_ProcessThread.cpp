@@ -58,7 +58,7 @@ struct ExtValue_ProcessThread : public Value_ProcessThread {
     } else {
       temp->detach();
     }
-    return ReturnTuple(Var_self);
+    return ReturnTuple(VAR_SELF);
   }
 
   ReturnTuple Call_isRunning(const BoxedValue& Var_self, const ParamTuple& params, const ValueTuple& args) final {
@@ -75,7 +75,7 @@ struct ExtValue_ProcessThread : public Value_ProcessThread {
     } else {
       temp->join();
     }
-    return ReturnTuple(Var_self);
+    return ReturnTuple(VAR_SELF);
   }
 
   ReturnTuple Call_start(const BoxedValue& Var_self, const ParamTuple& params, const ValueTuple& args) final {
@@ -83,16 +83,17 @@ struct ExtValue_ProcessThread : public Value_ProcessThread {
     if (isJoinable(thread.get())) {
       FAIL() << "thread is already running";
     } else {
-      // NOTE: Capture Var_self so that the thread retains a reference while
+      // NOTE: Capture VAR_SELF so that the thread retains a reference while
       // it's still running. This allows the caller to hold a weak reference to
       // the thread.
+      const BoxedValue self = VAR_SELF;
       thread.reset(new std::thread(
-        capture_thread::ThreadCrosser::WrapCall([this,Var_self] {
+        capture_thread::ThreadCrosser::WrapCall([this,self] {
           TRACE_CREATION
           TypeValue::Call(routine, Function_Routine_run, ParamTuple(), ArgTuple());
         })));
     }
-    return ReturnTuple(Var_self);
+    return ReturnTuple(VAR_SELF);
   }
 
   inline static bool isJoinable(std::thread* thread) {

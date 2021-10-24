@@ -115,11 +115,13 @@ instance Show c => Show (ReturnValues c) where
 data VariableName =
   VariableName {
     vnName :: String
-  }
+  } |
+  VariableSelf
   deriving (Eq,Ord)
 
 instance Show VariableName where
   show (VariableName n) = n
+  show VariableSelf     = "self"
 
 data InputValue c =
   InputValue {

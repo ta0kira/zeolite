@@ -144,13 +144,13 @@ struct ExtValue_String : public Value_String {
     if (value_.empty()) {
       return ReturnTuple(Var_empty);
     } else {
-      return ReturnTuple(BoxedValue::New<StringOrder>(Var_self, value_));
+      return ReturnTuple(BoxedValue::New<StringOrder>(VAR_SELF, value_));
     }
   }
 
   ReturnTuple Call_formatted(const BoxedValue& Var_self, const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("String.formatted")
-    return ReturnTuple(Var_self);
+    return ReturnTuple(VAR_SELF);
   }
 
   ReturnTuple Call_readAt(const BoxedValue& Var_self, const ParamTuple& params, const ValueTuple& args) final {

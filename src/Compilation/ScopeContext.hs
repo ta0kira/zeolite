@@ -114,5 +114,5 @@ getProcedureScopes ta em (DefinedCategory c n pragmas _ _ ms ps fs) = message ??
 -- TODO: This is probably in the wrong module.
 builtinVariables :: TypeInstance -> Map.Map VariableName (VariableValue c)
 builtinVariables t = Map.fromList [
-    (VariableName "self",VariableValue [] ValueScope (ValueType RequiredValue $ singleType $ JustTypeInstance t) (VariableReadOnly []))
+    (VariableSelf,VariableValue [] ValueScope (ValueType RequiredValue $ singleType $ JustTypeInstance t) (VariableReadOnly []))
   ]

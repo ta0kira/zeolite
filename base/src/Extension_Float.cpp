@@ -62,7 +62,7 @@ struct ExtType_Float : public Type_Float {
   }
 };
 
-ReturnTuple DispatchFloat(PrimFloat value, const BoxedValue& Var_self, const ValueFunction& label,
+ReturnTuple DispatchFloat(PrimFloat value, const ValueFunction& label,
                           const ParamTuple& params, const ValueTuple& args) {
   if (&label == &Function_AsBool_asBool) {
     TRACE_FUNCTION("Float.asBool")
@@ -70,7 +70,7 @@ ReturnTuple DispatchFloat(PrimFloat value, const BoxedValue& Var_self, const Val
   }
   if (&label == &Function_AsFloat_asFloat) {
     TRACE_FUNCTION("Float.asFloat")
-    return ReturnTuple(Var_self);
+    return ReturnTuple(Box_Float(value));
   }
   if (&label == &Function_AsInt_asInt) {
     TRACE_FUNCTION("Float.asInt")

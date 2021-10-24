@@ -62,7 +62,7 @@ struct ExtValue_ThreadCondition : public Value_ThreadCondition {
     if ((error = pthread_mutex_lock(&mutex)) != 0) {
       FailError("Error locking mutex", error);
     }
-    return ReturnTuple(Var_self);
+    return ReturnTuple(VAR_SELF);
   }
 
   ReturnTuple Call_resumeAll(const BoxedValue& Var_self, const ParamTuple& params, const ValueTuple& args) final {
@@ -71,7 +71,7 @@ struct ExtValue_ThreadCondition : public Value_ThreadCondition {
     if ((error = pthread_cond_broadcast(&cond)) != 0) {
       FailError("Error resuming threads", error);
     }
-    return ReturnTuple(Var_self);
+    return ReturnTuple(VAR_SELF);
   }
 
   ReturnTuple Call_resumeOne(const BoxedValue& Var_self, const ParamTuple& params, const ValueTuple& args) final {
@@ -80,7 +80,7 @@ struct ExtValue_ThreadCondition : public Value_ThreadCondition {
     if ((error = pthread_cond_signal(&cond)) != 0) {
       FailError("Error resuming thread", error);
     }
-    return ReturnTuple(Var_self);
+    return ReturnTuple(VAR_SELF);
   }
 
   ReturnTuple Call_timedWait(const BoxedValue& Var_self, const ParamTuple& params, const ValueTuple& args) final {
@@ -112,7 +112,7 @@ struct ExtValue_ThreadCondition : public Value_ThreadCondition {
     if ((error = pthread_mutex_unlock(&mutex)) != 0) {
       FailError("Error unlocking mutex", error);
     }
-    return ReturnTuple(Var_self);
+    return ReturnTuple(VAR_SELF);
   }
 
   ReturnTuple Call_wait(const BoxedValue& Var_self, const ParamTuple& params, const ValueTuple& args) final {
@@ -121,7 +121,7 @@ struct ExtValue_ThreadCondition : public Value_ThreadCondition {
     if ((error = pthread_cond_wait(&cond, &mutex)) != 0) {
       FailError("Error waiting for condition", error);
     }
-    return ReturnTuple(Var_self);
+    return ReturnTuple(VAR_SELF);
   }
 
   void FailError(const std::string& context, int error) const {

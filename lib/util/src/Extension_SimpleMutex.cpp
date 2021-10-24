@@ -47,13 +47,13 @@ struct ExtValue_SimpleMutex : public Value_SimpleMutex {
   ReturnTuple Call_lock(const BoxedValue& Var_self, const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("SimpleMutex.lock")
     mutex.lock();
-    return ReturnTuple(Var_self);
+    return ReturnTuple(VAR_SELF);
   }
 
   ReturnTuple Call_unlock(const BoxedValue& Var_self, const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("SimpleMutex.unlock")
     mutex.unlock();
-    return ReturnTuple(Var_self);
+    return ReturnTuple(VAR_SELF);
   }
 
   std::mutex mutex;

@@ -27,16 +27,16 @@ limitations under the License.
 namespace ZEOLITE_PUBLIC_NAMESPACE {
 #endif  // ZEOLITE_PUBLIC_NAMESPACE
 
-ReturnTuple DispatchBool(bool value, const BoxedValue& self, const ValueFunction& label,
+ReturnTuple DispatchBool(bool value, const ValueFunction& label,
                          const ParamTuple& params, const ValueTuple& args);
 
-ReturnTuple DispatchChar(PrimChar value, const BoxedValue& self, const ValueFunction& label,
+ReturnTuple DispatchChar(PrimChar value, const ValueFunction& label,
                          const ParamTuple& params, const ValueTuple& args);
 
-ReturnTuple DispatchInt(PrimInt value, const BoxedValue& self, const ValueFunction& label,
+ReturnTuple DispatchInt(PrimInt value, const ValueFunction& label,
                         const ParamTuple& params, const ValueTuple& args);
 
-ReturnTuple DispatchFloat(PrimFloat value, const BoxedValue& self, const ValueFunction& label,
+ReturnTuple DispatchFloat(PrimFloat value, const ValueFunction& label,
                           const ParamTuple& params, const ValueTuple& args);
 
 #ifdef ZEOLITE_PUBLIC_NAMESPACE
@@ -262,13 +262,13 @@ ReturnTuple BoxedValue::Dispatch(
       __builtin_unreachable();
       break;
     case UnionValue::Type::BOOL:
-      return DispatchBool(union_.value_.as_bool_, self, label, params, args);
+      return DispatchBool(union_.value_.as_bool_, label, params, args);
     case UnionValue::Type::CHAR:
-      return DispatchChar(union_.value_.as_char_, self, label, params, args);
+      return DispatchChar(union_.value_.as_char_, label, params, args);
     case UnionValue::Type::INT:
-      return DispatchInt(union_.value_.as_int_, self, label, params, args);
+      return DispatchInt(union_.value_.as_int_, label, params, args);
     case UnionValue::Type::FLOAT:
-      return DispatchFloat(union_.value_.as_float_, self, label, params, args);
+      return DispatchFloat(union_.value_.as_float_, label, params, args);
     case UnionValue::Type::BOXED:
       if (!union_.value_.as_pointer_ || !union_.value_.as_pointer_->object_) {
         FAIL() << "Function called on null pointer";

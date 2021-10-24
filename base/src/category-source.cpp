@@ -205,12 +205,6 @@ bool TypeInstance::CanConvert(const S<const TypeInstance>& x,
   }
 }
 
-// static
-ReturnTuple TypeValue::Call(const BoxedValue& target, const ValueFunction& label,
-                            const ParamTuple& params, const ValueTuple& args) {
-  return target.Dispatch(target, label, params, args);
-}
-
 const PrimString& TypeValue::AsString() const {
   FAIL() << CategoryName() << " is not a String value";
   __builtin_unreachable();
@@ -233,11 +227,11 @@ ReturnTuple AnonymousOrder::Dispatch(
   const ParamTuple& params, const ValueTuple& args) {
   if (&label == &function_next) {
     TRACE_FUNCTION("AnonymousOrder.next")
-    return ReturnTuple(Call_next(self));
+    return ReturnTuple(Call_next(VAR_SELF));
   }
   if (&label == &function_get) {
     TRACE_FUNCTION("AnonymousOrder.get")
-    return ReturnTuple(Call_get(self));
+    return ReturnTuple(Call_get(VAR_SELF));
   }
-  return TypeValue::Dispatch(self, label, params, args);
+  return TypeValue::Dispatch(VAR_SELF, label, params, args);
 }
