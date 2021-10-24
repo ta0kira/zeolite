@@ -81,7 +81,7 @@ S<Type_RandomGaussian> CreateType_RandomGaussian(Params<0>::Type params) {
 }
 
 BoxedValue CreateValue_RandomGaussian(S<Type_RandomGaussian> parent, const ValueTuple& args) {
-  return BoxedValue(new ExtValue_RandomGaussian(parent, args));
+  return BoxedValue::New<ExtValue_RandomGaussian>(parent, args);
 }
 
 #ifdef ZEOLITE_PUBLIC_NAMESPACE

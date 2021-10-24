@@ -101,7 +101,7 @@ S<Type_RawFileWriter> CreateType_RawFileWriter(Params<0>::Type params) {
   return cached;
 }
 BoxedValue CreateValue_RawFileWriter(S<Type_RawFileWriter> parent, const ValueTuple& args) {
-  return BoxedValue(new ExtValue_RawFileWriter(parent, args));
+  return BoxedValue::New<ExtValue_RawFileWriter>(parent, args);
 }
 
 #ifdef ZEOLITE_PUBLIC_NAMESPACE

@@ -139,7 +139,7 @@ S<Type_EnumeratedWait> CreateType_EnumeratedWait(Params<0>::Type params) {
 }
 BoxedValue CreateValue_EnumeratedWait(
   S<Type_EnumeratedWait> parent, S<Barrier> b, int i) {
-  return BoxedValue(new ExtValue_EnumeratedWait(parent, b, i));
+  return BoxedValue::New<ExtValue_EnumeratedWait>(parent, b, i);
 }
 
 #ifdef ZEOLITE_PRIVATE_NAMESPACE
@@ -204,13 +204,15 @@ Category_EnumeratedBarrier& CreateCategory_EnumeratedBarrier() {
   static auto& category = *new ExtCategory_EnumeratedBarrier();
   return category;
 }
+
 S<Type_EnumeratedBarrier> CreateType_EnumeratedBarrier(Params<0>::Type params) {
   static const auto cached = S_get(new ExtType_EnumeratedBarrier(CreateCategory_EnumeratedBarrier(), Params<0>::Type()));
   return cached;
 }
+
 BoxedValue CreateValue_EnumeratedBarrier(
   S<Type_EnumeratedBarrier> parent, std::vector<BoxedValue> w) {
-  return BoxedValue(new ExtValue_EnumeratedBarrier(parent, std::move(w)));
+  return BoxedValue::New<ExtValue_EnumeratedBarrier>(parent, std::move(w));
 }
 
 #ifdef ZEOLITE_PUBLIC_NAMESPACE

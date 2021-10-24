@@ -114,12 +114,14 @@ Category_RawFileReader& CreateCategory_RawFileReader() {
   static auto& category = *new ExtCategory_RawFileReader();
   return category;
 }
+
 S<Type_RawFileReader> CreateType_RawFileReader(Params<0>::Type params) {
   static const auto cached = S_get(new ExtType_RawFileReader(CreateCategory_RawFileReader(), Params<0>::Type()));
   return cached;
 }
+
 BoxedValue CreateValue_RawFileReader(S<Type_RawFileReader> parent, const ValueTuple& args) {
-  return BoxedValue(new ExtValue_RawFileReader(parent, args));
+  return BoxedValue::New<ExtValue_RawFileReader>(parent, args);
 }
 
 #ifdef ZEOLITE_PUBLIC_NAMESPACE

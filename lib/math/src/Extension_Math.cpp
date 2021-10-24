@@ -202,6 +202,7 @@ Category_Math& CreateCategory_Math() {
   static auto& category = *new ExtCategory_Math();
   return category;
 }
+
 S<Type_Math> CreateType_Math(Params<0>::Type params) {
   static const auto cached = S_get(new ExtType_Math(CreateCategory_Math(), Params<0>::Type()));
   return cached;

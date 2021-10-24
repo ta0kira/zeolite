@@ -80,7 +80,7 @@ S<Type_RandomUniform> CreateType_RandomUniform(Params<0>::Type params) {
 }
 
 BoxedValue CreateValue_RandomUniform(S<Type_RandomUniform> parent, const ValueTuple& args) {
-  return BoxedValue(new ExtValue_RandomUniform(parent, args));
+  return BoxedValue::New<ExtValue_RandomUniform>(parent, args);
 }
 
 #ifdef ZEOLITE_PUBLIC_NAMESPACE

@@ -1,9 +1,12 @@
 /* -----------------------------------------------------------------------------
 Copyright 2020-2021 Kevin P. Barry
+
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
+
     http://www.apache.org/licenses/LICENSE-2.0
+
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,8 +24,6 @@ limitations under the License.
 #ifdef ZEOLITE_PUBLIC_NAMESPACE
 namespace ZEOLITE_PUBLIC_NAMESPACE {
 #endif  // ZEOLITE_PUBLIC_NAMESPACE
-
-BoxedValue CreateValue_Argv(S<Type_Argv> parent, int st, int sz);
 
 namespace {
 extern const BoxedValue& Var_global;
@@ -65,7 +66,7 @@ struct ExtValue_Argv : public Value_Argv {
     if (Var_arg2 < 0 || Var_arg1 + Var_arg2 > GetSize()) {
       FAIL() << "size " << Var_arg2 << " is invalid";
     }
-    return ReturnTuple(BoxedValue(new ExtValue_Argv(parent, start + Var_arg1, Var_arg2)));
+    return ReturnTuple(BoxedValue::New<ExtValue_Argv>(parent, start + Var_arg1, Var_arg2));
   }
 
   inline int GetSize() const { return size < 0 ? Argv::ArgCount() : size; }
@@ -75,19 +76,17 @@ struct ExtValue_Argv : public Value_Argv {
 };
 
 namespace {
-const BoxedValue& Var_global = *new BoxedValue(new ExtValue_Argv(CreateType_Argv(Params<0>::Type()), 0, -1));
+const BoxedValue& Var_global = *new BoxedValue(BoxedValue::New<ExtValue_Argv>(CreateType_Argv(Params<0>::Type()), 0, -1));
 }  // namespace
 
 Category_Argv& CreateCategory_Argv() {
   static auto& category = *new ExtCategory_Argv();
   return category;
 }
+
 S<Type_Argv> CreateType_Argv(Params<0>::Type params) {
   static const auto cached = S_get(new ExtType_Argv(CreateCategory_Argv(), Params<0>::Type()));
   return cached;
-}
-BoxedValue CreateValue_Argv(S<Type_Argv> parent, int st, int sz) {
-  return BoxedValue(new ExtValue_Argv(parent, st, sz));
 }
 
 #ifdef ZEOLITE_PUBLIC_NAMESPACE

@@ -150,12 +150,14 @@ Category_ThreadCondition& CreateCategory_ThreadCondition() {
   static auto& category = *new ExtCategory_ThreadCondition();
   return category;
 }
+
 S<Type_ThreadCondition> CreateType_ThreadCondition(Params<0>::Type params) {
   static const auto cached = S_get(new ExtType_ThreadCondition(CreateCategory_ThreadCondition(), Params<0>::Type()));
   return cached;
 }
+
 BoxedValue CreateValue_ThreadCondition(S<Type_ThreadCondition> parent) {
-  return BoxedValue(new ExtValue_ThreadCondition(parent));
+  return BoxedValue::New<ExtValue_ThreadCondition>(parent);
 }
 
 #ifdef ZEOLITE_PUBLIC_NAMESPACE

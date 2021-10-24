@@ -113,7 +113,7 @@ struct ExtValue_Vector : public Value_Vector {
     if (values.empty()) {
       return ReturnTuple(Var_empty);
     } else {
-      return ReturnTuple(BoxedValue(new VectorOrder(Var_self, values)));
+      return ReturnTuple(BoxedValue::New<VectorOrder>(Var_self, values));
     }
   }
 
@@ -167,14 +167,16 @@ Category_Vector& CreateCategory_Vector() {
   static auto& category = *new ExtCategory_Vector();
   return category;
 }
+
 S<Type_Vector> CreateType_Vector(Params<1>::Type params) {
   static auto& cache = *new InstanceCache<1, Type_Vector>([](Params<1>::Type params) {
       return S_get(new ExtType_Vector(CreateCategory_Vector(), params));
     });
   return cache.GetOrCreate(params);
 }
+
 BoxedValue CreateValue_Vector(S<Type_Vector> parent, VectorType values) {
-  return BoxedValue(new ExtValue_Vector(parent, values));
+  return BoxedValue::New<ExtValue_Vector>(parent, values);
 }
 
 #ifdef ZEOLITE_PUBLIC_NAMESPACE

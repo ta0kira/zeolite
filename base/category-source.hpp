@@ -98,7 +98,7 @@ class TypeInstance {
   }
 
   static BoxedValue Reduce(const S<const TypeInstance>& from,
-                             const S<const TypeInstance>& to, BoxedValue target) {
+                           const S<const TypeInstance>& to, BoxedValue target) {
     TRACE_FUNCTION("reduce")
     return CanConvert(from, to)? target : Var_empty;
   }

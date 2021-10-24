@@ -80,7 +80,7 @@ S<Type_RandomExponential> CreateType_RandomExponential(Params<0>::Type params) {
 }
 
 BoxedValue CreateValue_RandomExponential(S<Type_RandomExponential> parent, const ValueTuple& args) {
-  return BoxedValue(new ExtValue_RandomExponential(parent, args));
+  return BoxedValue::New<ExtValue_RandomExponential>(parent, args);
 }
 
 #ifdef ZEOLITE_PUBLIC_NAMESPACE

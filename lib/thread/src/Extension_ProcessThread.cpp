@@ -117,12 +117,14 @@ Category_ProcessThread& CreateCategory_ProcessThread() {
   static auto& category = *new ExtCategory_ProcessThread();
   return category;
 }
+
 S<Type_ProcessThread> CreateType_ProcessThread(Params<0>::Type params) {
   static const auto cached = S_get(new ExtType_ProcessThread(CreateCategory_ProcessThread(), Params<0>::Type()));
   return cached;
 }
+
 BoxedValue CreateValue_ProcessThread(S<Type_ProcessThread> parent, const ValueTuple& args) {
-  return BoxedValue(new ExtValue_ProcessThread(parent, args));
+  return BoxedValue::New<ExtValue_ProcessThread>(parent, args);
 }
 
 #ifdef ZEOLITE_PUBLIC_NAMESPACE

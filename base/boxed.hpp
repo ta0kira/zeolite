@@ -19,6 +19,8 @@ limitations under the License.
 #ifndef BOXED_HPP_
 #define BOXED_HPP_
 
+#include <cstddef>
+#include <cstdlib>
 #include <atomic>
 
 #include "function.hpp"
@@ -28,33 +30,30 @@ limitations under the License.
 namespace zeolite_internal {
 
 struct UnionValue {
-  // NOTE: Using enum class would break the switch/case logic.
-  // NOTE: These enum values assume that dynamic allocation will never be
-  // aligned to an odd address within a few bytes of ULLONG_MAX.
-  enum Type : unsigned long long {
-    EMPTY = ~0x00ULL,
-    BOOL  = ~0x02ULL,
-    CHAR  = ~0x04ULL,
-    INT   = ~0x06ULL,
-    FLOAT = ~0x08ULL,
+  enum class Type {
+    EMPTY,
+    BOOL,
+    CHAR,
+    INT,
+    FLOAT,
+    BOXED,
   };
 
-  struct Counters {
+  struct Pointer {
     std::atomic_ullong strong_;
     std::atomic_int weak_;
+    TypeValue* object_;
   };
 
-  union {
-    Counters* counters_;
-    Type value_type_;
-  } type_;
+  Type type_;
 
   union {
-    TypeValue* as_pointer_;
-    bool       as_bool_;
-    PrimChar   as_char_;
-    PrimInt    as_int_;
-    PrimFloat  as_float_;
+    char*     as_bytes_;
+    Pointer*  as_pointer_;
+    bool      as_bool_;
+    PrimChar  as_char_;
+    PrimInt   as_int_;
+    PrimFloat as_float_;
   } value_;
 };
 
@@ -63,7 +62,8 @@ struct UnionValue {
 
 class BoxedValue {
  public:
-  BoxedValue();
+  constexpr BoxedValue()
+    : union_{ .type_ = zeolite_internal::UnionValue::Type::EMPTY, { .as_pointer_ = nullptr } } {}
 
   BoxedValue(const BoxedValue&);
   BoxedValue& operator = (const BoxedValue&);
@@ -74,7 +74,18 @@ class BoxedValue {
   BoxedValue(PrimChar value);
   BoxedValue(PrimInt value);
   BoxedValue(PrimFloat value);
-  BoxedValue(TypeValue* value);
+
+  template<class T, class... As>
+  static inline BoxedValue New(const As&... args) {
+    using Pointer = zeolite_internal::UnionValue::Pointer;
+    BoxedValue new_value;
+    new_value.union_.type_ = zeolite_internal::UnionValue::Type::BOXED;
+    new_value.union_.value_.as_bytes_ = (char*) malloc(sizeof(Pointer) + sizeof(T));
+    new (new_value.union_.value_.as_bytes_)
+      Pointer{ {1}, {1},
+               new (new_value.union_.value_.as_bytes_ + sizeof(Pointer)) T(args...) };
+    return new_value;
+  }
 
   ~BoxedValue();
 
@@ -94,7 +105,10 @@ class BoxedValue {
   friend class TypeValue;
   friend class WeakValue;
 
-  inline explicit BoxedValue(std::nullptr_t) : BoxedValue() {}
+  // Intentionally break old calls that used new.
+  inline explicit constexpr BoxedValue(void*) : BoxedValue() {}
+
+  inline explicit constexpr BoxedValue(std::nullptr_t) : BoxedValue() {}
 
   explicit BoxedValue(const WeakValue& other);
 

@@ -78,12 +78,14 @@ Category_MutexLock& CreateCategory_MutexLock() {
   static auto& category = *new ExtCategory_MutexLock();
   return category;
 }
+
 S<Type_MutexLock> CreateType_MutexLock(Params<0>::Type params) {
   static const auto cached = S_get(new ExtType_MutexLock(CreateCategory_MutexLock(), Params<0>::Type()));
   return cached;
 }
+
 BoxedValue CreateValue_MutexLock(S<Type_MutexLock> parent, const ValueTuple& args) {
-  return BoxedValue(new ExtValue_MutexLock(parent, args));
+  return BoxedValue::New<ExtValue_MutexLock>(parent, args);
 }
 
 #ifdef ZEOLITE_PUBLIC_NAMESPACE

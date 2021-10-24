@@ -1,9 +1,12 @@
 /* -----------------------------------------------------------------------------
 Copyright 2019-2021 Kevin P. Barry
+
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
+
     http://www.apache.org/licenses/LICENSE-2.0
+
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -72,13 +75,14 @@ struct ExtValue_SimpleInput : public Value_SimpleInput {
 };
 
 namespace {
-const BoxedValue& Var_stdin = *new BoxedValue(new ExtValue_SimpleInput(CreateType_SimpleInput(Params<0>::Type()), ArgTuple()));
+const BoxedValue& Var_stdin = *new BoxedValue(BoxedValue::New<ExtValue_SimpleInput>(CreateType_SimpleInput(Params<0>::Type()), ArgTuple()));
 }  // namespace
 
 Category_SimpleInput& CreateCategory_SimpleInput() {
   static auto& category = *new ExtCategory_SimpleInput();
   return category;
 }
+
 S<Type_SimpleInput> CreateType_SimpleInput(Params<0>::Type params) {
   static const auto cached = S_get(new ExtType_SimpleInput(CreateCategory_SimpleInput(), Params<0>::Type()));
   return cached;

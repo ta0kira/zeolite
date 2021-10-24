@@ -80,7 +80,7 @@ struct ExtType_String : public Type_String {
 
   ReturnTuple Call_builder(const S<TypeInstance>& Param_self, const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("String.builder")
-    return ReturnTuple(BoxedValue(new Value_StringBuilder));
+    return ReturnTuple(BoxedValue::New<Value_StringBuilder>());
   }
 
   ReturnTuple Call_default(const S<TypeInstance>& Param_self, const ParamTuple& params, const ValueTuple& args) final {
@@ -144,7 +144,7 @@ struct ExtValue_String : public Value_String {
     if (value_.empty()) {
       return ReturnTuple(Var_empty);
     } else {
-      return ReturnTuple(BoxedValue(new StringOrder(Var_self, value_)));
+      return ReturnTuple(BoxedValue::New<StringOrder>(Var_self, value_));
     }
   }
 
@@ -200,5 +200,5 @@ using namespace ZEOLITE_PUBLIC_NAMESPACE;
 #endif  // ZEOLITE_PUBLIC_NAMESPACE
 
 BoxedValue Box_String(const PrimString& value) {
-  return BoxedValue(new ExtValue_String(CreateType_String(Params<0>::Type()), value));
+  return BoxedValue::New<ExtValue_String>(CreateType_String(Params<0>::Type()), value);
 }

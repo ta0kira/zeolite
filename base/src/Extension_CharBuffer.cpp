@@ -101,7 +101,7 @@ S<Type_CharBuffer> CreateType_CharBuffer(Params<0>::Type params) {
   return cached;
 }
 BoxedValue CreateValue_CharBuffer(S<Type_CharBuffer> parent, PrimCharBuffer value) {
-  return BoxedValue(new ExtValue_CharBuffer(parent, std::move(value)));
+  return BoxedValue::New<ExtValue_CharBuffer>(parent, std::move(value));
 }
 
 #ifdef ZEOLITE_PUBLIC_NAMESPACE

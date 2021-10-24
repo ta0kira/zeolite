@@ -1,9 +1,12 @@
 /* -----------------------------------------------------------------------------
 Copyright 2019-2021 Kevin P. Barry
+
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
+
     http://www.apache.org/licenses/LICENSE-2.0
+
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -115,9 +118,9 @@ class ErrorWriter : public Writer {
   std::ostringstream output;
 };
 
-const BoxedValue& Var_stdout = *new BoxedValue(new ExtValue_SimpleOutput(CreateType_SimpleOutput(Params<0>::Type()), S_get(new StreamWriter(std::cout))));
-const BoxedValue& Var_stderr = *new BoxedValue(new ExtValue_SimpleOutput(CreateType_SimpleOutput(Params<0>::Type()), S_get(new StreamWriter(std::cerr))));
-const BoxedValue& Var_error  = *new BoxedValue(new ExtValue_SimpleOutput(CreateType_SimpleOutput(Params<0>::Type()), S_get(new ErrorWriter())));
+const BoxedValue& Var_stdout = *new BoxedValue(BoxedValue::New<ExtValue_SimpleOutput>(CreateType_SimpleOutput(Params<0>::Type()), S_get(new StreamWriter(std::cout))));
+const BoxedValue& Var_stderr = *new BoxedValue(BoxedValue::New<ExtValue_SimpleOutput>(CreateType_SimpleOutput(Params<0>::Type()), S_get(new StreamWriter(std::cerr))));
+const BoxedValue& Var_error  = *new BoxedValue(BoxedValue::New<ExtValue_SimpleOutput>(CreateType_SimpleOutput(Params<0>::Type()), S_get(new ErrorWriter())));
 
 }  // namespace
 
@@ -125,6 +128,7 @@ Category_SimpleOutput& CreateCategory_SimpleOutput() {
   static auto& category = *new ExtCategory_SimpleOutput();
   return category;
 }
+
 S<Type_SimpleOutput> CreateType_SimpleOutput(Params<0>::Type params) {
   static const auto cached = S_get(new ExtType_SimpleOutput(CreateCategory_SimpleOutput(), Params<0>::Type()));
   return cached;

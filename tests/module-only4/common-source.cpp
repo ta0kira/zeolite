@@ -60,12 +60,14 @@ Category_Type1& CreateCategory_Type1() {
   static auto& category = *new ExtCategory_Type1();
   return category;
 }
+
 S<Type_Type1> CreateType_Type1(Params<0>::Type params) {
   static const auto cached = S_get(new ExtType_Type1(CreateCategory_Type1(), Params<0>::Type()));
   return cached;
 }
+
 BoxedValue CreateValue_Type1(S<Type_Type1> parent, const ValueTuple& args) {
-  return BoxedValue(new ExtValue_Type1(parent, args));
+  return BoxedValue::New<ExtValue_Type1>(parent, args);
 }
 
 #ifdef ZEOLITE_PRIVATE_NAMESPACE
@@ -109,12 +111,14 @@ Category_Type3& CreateCategory_Type3() {
   static auto& category = *new ExtCategory_Type3();
   return category;
 }
+
 S<Type_Type3> CreateType_Type3(Params<0>::Type params) {
   static const auto cached = S_get(new ExtType_Type3(CreateCategory_Type3(), Params<0>::Type()));
   return cached;
 }
+
 BoxedValue CreateValue_Type3(S<Type_Type3> parent, const ValueTuple& args) {
-  return BoxedValue(new ExtValue_Type3(parent, args));
+  return BoxedValue::New<ExtValue_Type3>(parent, args);
 }
 
 #ifdef ZEOLITE_PUBLIC_NAMESPACE

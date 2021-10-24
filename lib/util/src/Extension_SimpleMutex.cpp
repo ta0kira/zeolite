@@ -63,12 +63,14 @@ Category_SimpleMutex& CreateCategory_SimpleMutex() {
   static auto& category = *new ExtCategory_SimpleMutex();
   return category;
 }
+
 S<Type_SimpleMutex> CreateType_SimpleMutex(Params<0>::Type params) {
   static const auto cached = S_get(new ExtType_SimpleMutex(CreateCategory_SimpleMutex(), Params<0>::Type()));
   return cached;
 }
+
 BoxedValue CreateValue_SimpleMutex(S<Type_SimpleMutex> parent) {
-  return BoxedValue(new ExtValue_SimpleMutex(parent));
+  return BoxedValue::New<ExtValue_SimpleMutex>(parent);
 }
 
 #ifdef ZEOLITE_PUBLIC_NAMESPACE

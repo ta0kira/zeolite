@@ -92,6 +92,7 @@ Category_Realtime& CreateCategory_Realtime() {
   static auto& category = *new ExtCategory_Realtime();
   return category;
 }
+
 S<Type_Realtime> CreateType_Realtime(Params<0>::Type params) {
   static const auto cached = S_get(new ExtType_Realtime(CreateCategory_Realtime(), Params<0>::Type()));
   return cached;

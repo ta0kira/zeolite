@@ -63,12 +63,14 @@ Category_SpinlockMutex& CreateCategory_SpinlockMutex() {
   static auto& category = *new ExtCategory_SpinlockMutex();
   return category;
 }
+
 S<Type_SpinlockMutex> CreateType_SpinlockMutex(Params<0>::Type params) {
   static const auto cached = S_get(new ExtType_SpinlockMutex(CreateCategory_SpinlockMutex(), Params<0>::Type()));
   return cached;
 }
+
 BoxedValue CreateValue_SpinlockMutex(S<Type_SpinlockMutex> parent) {
-  return BoxedValue(new ExtValue_SpinlockMutex(parent));
+  return BoxedValue::New<ExtValue_SpinlockMutex>(parent);
 }
 
 #ifdef ZEOLITE_PUBLIC_NAMESPACE

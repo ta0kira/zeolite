@@ -936,7 +936,7 @@ defineInternalValue2 className t =
   onlyCodes [
       "BoxedValue " ++ valueCreator (getCategoryName t) ++ "(S<" ++ typeName (getCategoryName t) ++ "> parent, " ++
       "const ValueTuple& args) {",
-      "  return BoxedValue(new " ++ className ++ "(parent, args));",
+      "  return BoxedValue::New<" ++ className ++ ">(parent, args);",
       "}"
     ]
 
