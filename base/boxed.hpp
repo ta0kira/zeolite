@@ -57,13 +57,11 @@ struct UnionValue {
   } value_;
 };
 
-}  // namespace zeolite_internal
-
 
 class BoxedValue {
  public:
   constexpr BoxedValue()
-    : union_{ .type_ = zeolite_internal::UnionValue::Type::EMPTY, { .as_pointer_ = nullptr } } {}
+    : union_{ .type_ = UnionValue::Type::EMPTY, { .as_pointer_ = nullptr } } {}
 
   BoxedValue(const BoxedValue&);
   BoxedValue& operator = (const BoxedValue&);
@@ -77,9 +75,9 @@ class BoxedValue {
 
   template<class T, class... As>
   static inline BoxedValue New(const As&... args) {
-    using Pointer = zeolite_internal::UnionValue::Pointer;
+    using Pointer = UnionValue::Pointer;
     BoxedValue new_value;
-    new_value.union_.type_ = zeolite_internal::UnionValue::Type::BOXED;
+    new_value.union_.type_ = UnionValue::Type::BOXED;
     new_value.union_.value_.as_bytes_ = (char*) malloc(sizeof(Pointer) + sizeof(T));
     new (new_value.union_.value_.as_bytes_)
       Pointer{ {1}, {1},
@@ -102,7 +100,7 @@ class BoxedValue {
   static BoxedValue Strong(const WeakValue& target);
 
  private:
-  friend class TypeValue;
+  friend class ::TypeValue;
   friend class WeakValue;
 
   // Intentionally break old calls that used new.
@@ -116,9 +114,9 @@ class BoxedValue {
   static inline BoxedValue FromPointer(T* pointer) {
     BoxedValue value;
     if (pointer) {
-      value.union_.type_ = zeolite_internal::UnionValue::Type::BOXED;
+      value.union_.type_ = UnionValue::Type::BOXED;
       value.union_.value_.as_bytes_ =
-        reinterpret_cast<char*>(pointer)-sizeof(zeolite_internal::UnionValue::Pointer);
+        reinterpret_cast<char*>(pointer)-sizeof(UnionValue::Pointer);
       ++value.union_.value_.as_pointer_->strong_;
     }
     return value;
@@ -131,7 +129,7 @@ class BoxedValue {
 
   void Cleanup();
 
-  zeolite_internal::UnionValue union_;
+  UnionValue union_;
 };
 
 
@@ -154,7 +152,12 @@ class WeakValue {
 
   void Cleanup();
 
-  zeolite_internal::UnionValue union_;
+  UnionValue union_;
 };
+
+}  // namespace zeolite_internal
+
+using zeolite_internal::BoxedValue;
+using zeolite_internal::WeakValue;
 
 #endif  // BOXED_HPP_

@@ -45,8 +45,7 @@ using namespace ZEOLITE_PUBLIC_NAMESPACE;
 #endif  // ZEOLITE_PUBLIC_NAMESPACE
 
 
-using zeolite_internal::UnionValue;
-
+namespace zeolite_internal {
 
 BoxedValue::BoxedValue(const BoxedValue& other)
   : union_(other.union_) {
@@ -406,3 +405,5 @@ void WeakValue::Cleanup() {
   union_.type_  = UnionValue::Type::EMPTY;
   union_.value_.as_pointer_ = nullptr;
 }
+
+}  // namespace zeolite_internal

@@ -117,8 +117,14 @@ class LazyInit {
 class TypeCategory;
 class TypeInstance;
 class TypeValue;
+
+namespace zeolite_internal {
 class BoxedValue;
 class WeakValue;
+}  // namespace zeolite_internal
+
+using zeolite_internal::BoxedValue;
+using zeolite_internal::WeakValue;
 
 template<int N, class...Ts>
 struct Params {
