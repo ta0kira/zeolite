@@ -104,7 +104,7 @@ struct ExtValue_ProcessThread : public Value_ProcessThread {
     S<std::thread> temp = thread;
     thread = nullptr;
     if (isJoinable(temp.get())) {
-      thread->detach();
+      temp->detach();
     }
   }
 
