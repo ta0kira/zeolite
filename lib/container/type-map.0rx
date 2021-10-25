@@ -23,6 +23,10 @@ define TypeMap {
     return TypeMap{ SearchTree<TypeKey<any>,GenericValue<any>>.new() }
   }
 
+  duplicate () {
+    return #self{ tree.duplicate() }
+  }
+
   set (k,v) {
     \ tree.set(k,GenericValue:create<?>(v))
     return self
@@ -53,9 +57,9 @@ define TypeKey {
 
   new () {
     scoped {
-      MutexLock lock <- MutexLock.lock(counterMutex)
+      \ counterMutex.lock()
     } cleanup {
-      \ lock.freeResource()
+      \ counterMutex.unlock()
     } in return TypeKey<#x>{ (counter <- counter+1) }
   }
 

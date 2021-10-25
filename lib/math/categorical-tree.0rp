@@ -32,6 +32,7 @@ limitations under the License.
 //   on the number of distinct #c values with non-zero weights.
 concrete CategoricalTree<#c> {
   refines ReadAt<#c>
+  refines Duplicate
   #c defines LessThan<#c>
 
   // Create a new distribution.

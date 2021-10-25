@@ -131,6 +131,20 @@ unittest traverseVector {
   \ Testing.checkEquals<?>(index,6)
 }
 
+unittest duplicate {
+  Vector<Int> vector <- Vector:create<Int>().push(1).push(2)
+
+  Vector<Int> copy <- vector.duplicate()
+  \ Testing.checkEquals<?>(copy.size(),2)
+  \ Testing.checkEquals<?>(copy.readAt(0),1)
+  \ Testing.checkEquals<?>(copy.readAt(1),2)
+
+  \ copy.pop()
+  \ Testing.checkEquals<?>(copy.size(),1)
+  \ Testing.checkEquals<?>(copy.readAt(0),1)
+  \ Testing.checkEquals<?>(vector.readAt(1),2)
+}
+
 
 testcase "distinct default values in pre-sized Vector" {
   success

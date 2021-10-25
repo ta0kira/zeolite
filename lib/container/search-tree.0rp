@@ -24,6 +24,7 @@ limitations under the License.
 concrete SearchTree<#k,#v> {
   refines Container
   refines DefaultOrder<KeyValue<#k,#v>>
+  refines Duplicate
   refines KVWriter<#k,#v>
   refines KVReader<#k,#v>
   #k defines LessThan<#k>

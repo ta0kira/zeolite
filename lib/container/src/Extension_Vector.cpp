@@ -121,6 +121,11 @@ struct ExtValue_Vector : public Value_Vector {
     }
   }
 
+  ReturnTuple Call_duplicate(const ParamTuple& params, const ValueTuple& args) final {
+    TRACE_FUNCTION("Vector.duplicate")
+    return ReturnTuple(BoxedValue::New<ExtValue_Vector>(parent, values));
+  }
+
   ReturnTuple Call_pop(const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("Vector.pop")
     if (values.empty()) {

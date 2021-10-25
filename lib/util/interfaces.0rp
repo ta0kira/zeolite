@@ -16,30 +16,14 @@ limitations under the License.
 
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
-// Random-access vector of values.
-//
-// Params:
-// - #x: The value type contained.
-concrete Vector<#x> {
-  refines Append<#x>
-  refines DefaultOrder<#x>
-  refines Duplicate
-  refines Stack<#x>
-  refines ReadAt<#x>
-  refines WriteAt<#x>
-
-  // Create a copy from another random-access container.
-  @category copyFrom<#y> (ReadAt<#y>) -> (Vector<#y>)
-
-  // Create an empty Vector.
-  @category create<#y> () -> (Vector<#y>)
-
-  // Create a pre-sized vector of default values.
+// Can be duplicated.
+@value interface Duplicate {
+  // Creates a duplicate that can be mutated without changing the original.
   //
   // Notes:
-  // - #y.default() should return a distinct value each time if #y is mutable.
-  //   This means that modifying one element should not change others.
-  @category createSize<#y>
-    #y defines Default
-  (Int) -> (Vector<#y>)
+  // - This does not need to be a deep copy. The only requirement is that
+  //   mutating functions can be called on the copy without counterintuitive
+  //   results. For example, if the object is a container, the duplicate could
+  //   be a copy of the structure, while still referring to the same objects.
+  duplicate () -> (#self)
 }

@@ -27,6 +27,10 @@ define TreeSet {
     return tree.size()
   }
 
+  duplicate () {
+    return #self{ tree.duplicate() }
+  }
+
   add (k) {
     \ tree.set(k,Void.void())
     return self

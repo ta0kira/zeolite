@@ -28,6 +28,14 @@ define AutoBinaryTree {
     return treeSize
   }
 
+  duplicate () {
+    if (present(root)) {
+      return #self{ treeSize, require(root).duplicate() }
+    } else {
+      return #self{ 0, empty }
+    }
+  }
+
   getRoot () {
     return root
   }

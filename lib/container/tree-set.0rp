@@ -19,6 +19,7 @@ limitations under the License.
 concrete TreeSet<#k> {
   refines Container
   refines DefaultOrder<#k>
+  refines Duplicate
   refines SetReader<#k>
   refines SetWriter<#k>
   #k defines LessThan<#k>

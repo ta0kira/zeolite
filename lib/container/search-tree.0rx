@@ -27,6 +27,10 @@ define SearchTree {
     return tree.size()
   }
 
+  duplicate () {
+    return #self{ tree.duplicate() }
+  }
+
   set (k,v) {
     \ tree.set(k,v)
     return self
@@ -135,6 +139,7 @@ define ValidatedTree {
 concrete SearchTreeNode<#k,#v> {
   defines KVFactory<#k,#v>
   refines BalancedTreeNode<SearchTreeNode<#k,#v>,#k,#v>
+  refines Duplicate
 }
 
 define SearchTreeNode {
@@ -148,6 +153,18 @@ define SearchTreeNode {
 
   newNode (k,v) {
     return #self{ 1, k, v, empty, empty }
+  }
+
+  duplicate () {
+    optional #self lower2 <- empty
+    if (present(lower)) {
+      lower2 <- require(lower).duplicate()
+    }
+    optional #self higher2 <- empty
+    if (present(higher)) {
+      higher2 <- require(higher).duplicate()
+    }
+    return #self{ height, key, value, lower2, higher2 }
   }
 
   getLower ()   { return lower }

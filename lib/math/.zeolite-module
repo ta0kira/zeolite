@@ -1,9 +1,11 @@
 root: "../.."
 path: "lib/math"
+public_deps: [
+  "lib/util"
+]
 private_deps: [
   "lib/container"
   "lib/testing"
-  "lib/util"
 ]
 extra_files: [
   category_source {

@@ -170,3 +170,17 @@ unittest getReverseNotFound {
     fail("Failed")
   }
 }
+
+unittest duplicate {
+  TreeSet<Int> set <- TreeSet<Int>.new().add(1).add(2)
+
+  TreeSet<Int> copy <- set.duplicate()
+  \ Testing.checkEquals<?>(copy.size(),2)
+  \ Testing.checkEquals<?>(copy.member(1),true)
+  \ Testing.checkEquals<?>(copy.member(1),true)
+
+  \ copy.remove(2)
+  \ Testing.checkEquals<?>(copy.size(),1)
+  \ Testing.checkEquals<?>(copy.member(1),true)
+  \ Testing.checkEquals<?>(set.member(2),true)
+}

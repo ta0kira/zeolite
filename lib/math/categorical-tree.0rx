@@ -23,6 +23,10 @@ define CategoricalTree {
     return #self{ AutoBinaryTree<CategoricalTreeNode<#c>,#c,Int,CategoricalSearch<#c>>.new() }
   }
 
+  duplicate () {
+    return #self{ tree.duplicate() }
+  }
+
   getTotal () {
     return CategoricalTreeNode<#c>.tryTotal(tree.getRoot())
   }
@@ -155,6 +159,7 @@ concrete CategoricalTreeNode<#c> {
   defines KVFactory<#c,Int>
   refines CategoricalSearch<#c>
   refines BalancedTreeNode<CategoricalTreeNode<#c>,#c,Int>
+  refines Duplicate
 
   @type findPosition (Int,optional CategoricalSearch<#c>) -> (optional #c)
   @type tryTotal (optional CategoricalSearch<#c>) -> (Int)
@@ -171,6 +176,18 @@ define CategoricalTreeNode {
   @value Int total
   @value optional #self lower
   @value optional #self higher
+
+  duplicate () {
+    optional #self lower2 <- empty
+    if (present(lower)) {
+      lower2 <- require(lower).duplicate()
+    }
+    optional #self higher2 <- empty
+    if (present(higher)) {
+      higher2 <- require(higher).duplicate()
+    }
+    return #self{ height, key, size, total, lower2, higher2 }
+  }
 
   findPosition (pos,node) (cat) {
     cat <- empty

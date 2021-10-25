@@ -57,6 +57,22 @@ unittest wrongReturnType {
   \ Testing.checkOptional<?>(tree.get<String>(keyString),"a")
 }
 
+unittest duplicate {
+  TypeKey<Int>    keyInt    <- TypeKey<Int>.new()
+  TypeKey<String> keyString <- TypeKey<String>.new()
+
+  TypeMap tree <- TypeMap.new().set<?>(keyInt,1).set<?>(keyString,"a")
+
+  TypeMap copy <- tree.duplicate()
+  \ Testing.checkOptional<?>(copy.get<?>(keyInt),1)
+  \ Testing.checkOptional<?>(copy.get<?>(keyString),"a")
+
+  \ copy.remove(keyString)
+  \ Testing.checkOptional<?>(copy.get<?>(keyInt),1)
+  \ Testing.checkOptional<?>(copy.get<?>(keyString),empty)
+  \ Testing.checkOptional<?>(tree.get<?>(keyString),"a")
+}
+
 concrete Value {
   refines Formatted
   defines Equals<Value>

@@ -18,6 +18,8 @@ limitations under the License.
 
 // A map that stores values of arbitrary types.
 concrete TypeMap {
+  refines Duplicate
+
   // Create a new map.
   @type new () -> (TypeMap)
 

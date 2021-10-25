@@ -111,6 +111,20 @@ unittest decrement {
   \ Testing.checkEquals<?>(tree.getWeight(1),7)
 }
 
+unittest duplicate {
+  CategoricalTree<Int> tree <- CategoricalTree<Int>.new().setWeight(1,1).setWeight(2,2)
+
+  CategoricalTree<Int> copy <- tree.duplicate()
+  \ Testing.checkEquals<?>(copy.size(),3)
+  \ Testing.checkEquals<?>(copy.getWeight(1),1)
+  \ Testing.checkEquals<?>(copy.getWeight(2),2)
+
+  \ copy.setWeight(2,0)
+  \ Testing.checkEquals<?>(copy.size(),1)
+  \ Testing.checkEquals<?>(copy.getWeight(1),1)
+  \ Testing.checkEquals<?>(tree.getWeight(2),2)
+}
+
 unittest integrationTest {
   ValidatedTree<Int> tree      <- ValidatedTree<Int>.new()
   SearchTree<Int,Int> expected <- SearchTree<Int,Int>.new()
