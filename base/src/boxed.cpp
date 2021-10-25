@@ -51,7 +51,7 @@ namespace {
 
 static constexpr unsigned long long STRONG_LOCK = 0x1ULL << 40;
 
-void Validate(const UnionValue& the_union) {
+void Validate(const std::string& name, const UnionValue& the_union) {
   if (the_union.type_ == UnionValue::Type::BOXED) {
     const auto strong = the_union.value_.as_pointer_->strong_.load();
     const auto weak   = the_union.value_.as_pointer_->weak_.load();
@@ -59,13 +59,13 @@ void Validate(const UnionValue& the_union) {
 
     if ((strong % STRONG_LOCK == 0 && object) ||
         (weak == 0 && strong > 0)) {
-      FAIL() << "Leaked " << the_union.CategoryName() << " at "
+      FAIL() << "Leaked " << the_union.CategoryName() << " " << name << " at "
              << ((void*) the_union.value_.as_pointer_) << " (S: "
              << std::hex << strong << " W: " << weak << ")";
     }
 
     if ((strong % STRONG_LOCK != 0 && !object)) {
-      FAIL() << "Invalid counts for freed value at "
+      FAIL() << "Invalid counts for freed value " << name << " at "
              << ((void*) the_union.value_.as_pointer_) << " (S: "
              << std::hex << strong << " W: " << weak << ")";
     }
@@ -184,8 +184,8 @@ BoxedValue::~BoxedValue() {
   Cleanup();
 }
 
-void BoxedValue::Validate() const {
-  zeolite_internal::Validate(union_);
+void BoxedValue::Validate(const std::string& name) const {
+  zeolite_internal::Validate(name, union_);
 }
 
 bool BoxedValue::AsBool() const {
@@ -398,8 +398,8 @@ WeakValue::~WeakValue() {
   Cleanup();
 }
 
-void WeakValue::Validate() const {
-  zeolite_internal::Validate(union_);
+void WeakValue::Validate(const std::string& name) const {
+  zeolite_internal::Validate(name, union_);
 }
 
 void WeakValue::Cleanup() {
