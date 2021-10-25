@@ -107,6 +107,11 @@ test_leak_check() {
 }
 
 
+test_simulate_refs() {
+  do_zeolite -p "$ZEOLITE_PATH" -r tests/simulate-refs -f
+}
+
+
 test_tests_only() {
   local output=$(do_zeolite -p "$ZEOLITE_PATH" -r tests/tests-only -f || true)
   if ! echo "$output" | egrep -q 'Type1 .+ visible category'; then
@@ -401,6 +406,7 @@ ALL_TESTS=(
   test_bad_path
   test_check_defs
   test_leak_check
+  test_simulate_refs
   test_tests_only
   test_tests_only2
   test_tests_only3

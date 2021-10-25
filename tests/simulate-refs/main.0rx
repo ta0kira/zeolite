@@ -1,0 +1,84 @@
+/* -----------------------------------------------------------------------------
+Copyright 2021 Kevin P. Barry
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+----------------------------------------------------------------------------- */
+
+// Author: Kevin P. Barry [ta0kira@gmail.com]
+
+concrete SimulateRefs {
+  @type run () -> ()
+}
+
+define SimulateRefs {
+  @category Int errorLimit <- 10
+
+  run () {
+    traverse (Counter.unlimited() -> Int i) {
+      \ LazyStream<Formatted>.new()
+          .append("Iteration ")
+          .append(i)
+          .append("\n")
+          .writeTo(SimpleOutput.stderr())
+
+      if (!runOnce() && (errorLimit <- errorLimit-1) == 0) {
+        break
+      }
+    }
+  }
+
+  @type getRoutines (ReferenceState) -> (DefaultOrder<StateMachine>)
+  getRoutines (state) {
+    return Vector:create<StateMachine>()
+        .append(SharedRoutine.new("shared1",state))
+        .append(WeakRoutine.new("weak1",state))
+        .append(WeakRoutine.new("weak2",state))
+        .append(WeakRoutine.new("weak3",state))
+        .append(WeakRoutine.new("weak4",state))
+        .append(WeakRoutine.new("weak5",state))
+        .append(WeakRoutine.new("weak6",state))
+        .append(WeakRoutine.new("weak7",state))
+        .append(WeakRoutine.new("weak8",state))
+  }
+
+  @type runOnce () -> (Bool)
+  runOnce () {
+    ReferenceState state <- ReferenceState.new()
+    \ StateExecutor:multiplexStates(getRoutines(state),RandomUniform.new(0.0,1.0))
+
+    scoped {
+      optional String error <- state.getError()
+      if (!present(error) && state.hasStrong()) {
+        error <- "expected zero final references"
+      }
+    } in if (present(error)) {
+      \ LazyStream<Formatted>.new()
+          .append("Error in final state: ")
+          .append(require(error))
+          .append("\nFinal state: ")
+          .append(state)
+          .append("\n")
+          .writeTo(SimpleOutput.stdout())
+      traverse (state.getOperations() -> Formatted operation) {
+        \ LazyStream<Formatted>.new()
+            .append("  ")
+            .append(operation)
+            .append("\n")
+            .writeTo(SimpleOutput.stdout())
+      }
+      return false
+    } else {
+      return true
+    }
+  }
+}

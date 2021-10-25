@@ -1,0 +1,99 @@
+/* -----------------------------------------------------------------------------
+Copyright 2021 Kevin P. Barry
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+----------------------------------------------------------------------------- */
+
+// Author: Kevin P. Barry [ta0kira@gmail.com]
+
+define WeakRoutine {
+  new (name,state) {
+    \ state.addWeak()
+    return ToStrongEnter.new(name,state)
+  }
+}
+
+
+concrete ToStrongEnter {
+  @type new (String,ReferenceState) -> (StateMachine)
+}
+
+define ToStrongEnter {
+  $ReadOnly[name,state]$
+
+  refines StateMachine
+
+  @value String name
+  @value ReferenceState state
+
+  new (name,state) {
+    return ToStrongEnter{ name, state }
+  }
+
+  transition () {
+    \ state.addOperation<#self>(name)
+    if (state.addLock() % ReferenceState.lockMod() == 0) {
+      return ToStrongDead.new(name,state)
+    } else {
+      return ToStrongAlive.new(name,state)
+    }
+  }
+}
+
+
+concrete ToStrongAlive {
+  @type new (String,ReferenceState) -> (StateMachine)
+}
+
+define ToStrongAlive {
+  $ReadOnly[name,state]$
+
+  refines StateMachine
+
+  @value String name
+  @value ReferenceState state
+
+  new (name,state) {
+    return ToStrongAlive{ name, state }
+  }
+
+  transition () {
+    \ state.addOperation<#self>(name)
+    \ state.convertLock()
+    return SharedRoutine.alreadyStrong(name,state)
+  }
+}
+
+
+concrete ToStrongDead {
+  @type new (String,ReferenceState) -> (StateMachine)
+}
+
+define ToStrongDead {
+  $ReadOnly[name,state]$
+
+  refines StateMachine
+
+  @value String name
+  @value ReferenceState state
+
+  new (name,state) {
+    return ToStrongDead{ name, state }
+  }
+
+  transition () {
+    \ state.addOperation<#self>(name)
+    \ state.remLock()
+    return empty
+  }
+}

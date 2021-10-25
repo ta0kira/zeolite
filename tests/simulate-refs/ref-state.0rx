@@ -1,0 +1,120 @@
+/* -----------------------------------------------------------------------------
+Copyright 2021 Kevin P. Barry
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+----------------------------------------------------------------------------- */
+
+// Author: Kevin P. Barry [ta0kira@gmail.com]
+
+define ReferenceState {
+  $ReadOnly[lockMod]$
+
+  @category Int lockMod <- \x1000
+
+  @value Int strongCount
+  @value Int weakCount
+  @value Int aliveCleanup
+  @value Int weakCleanup
+  @value Vector<Formatted> operations
+
+  new () {
+    return ReferenceState{ 0, 0, 0, 0, Vector:create<Formatted>() }
+  }
+
+  addOperation (name) {
+    \ operations.append(String.builder()
+        .append(name)
+        .append("[")
+        .append(typename<#x>().formatted())
+        .append("]: ")
+        .append(formatted())
+        .build())
+  }
+
+  getOperations () {
+    return operations.defaultOrder()
+  }
+
+  addStrong () {
+    return (strongCount <- strongCount+1)
+  }
+
+  remStrong () {
+    return (strongCount <- strongCount-1)
+  }
+
+  hasStrong () {
+    return strongCount > 0
+  }
+
+  addWeak () {
+    return (weakCount <- weakCount+1)
+  }
+
+  remWeak () {
+    return (weakCount <- weakCount-1)
+  }
+
+  addLock () {
+    return (strongCount <- strongCount+lockMod)
+  }
+
+  remLock () {
+    strongCount <- strongCount-lockMod
+  }
+
+  convertLock () {
+    strongCount <- strongCount-(lockMod-1)
+  }
+
+  lockMod () {
+    return lockMod
+  }
+
+  kill () {
+    aliveCleanup <- aliveCleanup+1
+  }
+
+  cleanupWeak () {
+    weakCleanup <- weakCleanup+1
+  }
+
+  getError () {
+    if (aliveCleanup > 1) {
+      return "object freed multiple times"
+    }
+    if (weakCleanup > 1) {
+      return "counters freed multiple times"
+    }
+    if (aliveCleanup > 0 && strongCount > 0) {
+      return "object freed while still referenced"
+    }
+    if (aliveCleanup == 0 && strongCount == 0) {
+      return "object not cleaned up after last reference"
+    }
+    return empty
+  }
+
+  formatted () {
+    return String.builder()
+        .append("S: ")
+        .append(strongCount.formatted())
+        .append(" W: ")
+        .append(weakCount.formatted())
+        .append(" AC: ")
+        .append(aliveCleanup.formatted())
+        .append(" WC: ")
+        .append(weakCleanup.formatted())
+        .build()
+  }
+}

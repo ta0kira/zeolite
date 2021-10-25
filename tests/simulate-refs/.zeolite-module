@@ -1,0 +1,11 @@
+root: "../.."
+path: "tests/simulate-refs"
+private_deps: [
+  "lib/util"
+  "lib/math"
+  "lib/container"
+]
+mode: binary {
+  category: SimulateRefs
+  function: run
+}
