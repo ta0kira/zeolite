@@ -68,6 +68,18 @@ unittest continueOnOdd {
   \ Testing.checkEquals<?>(total,20)
 }
 
+unittest withUpdate {
+  Int total <- 0
+  traverse (Counter.zeroIndexed(10) -> Int i) {
+    if (i%2 == 1) {
+      continue
+    }
+  } update {
+    total <- total+i
+  }
+  \ Testing.checkEquals<?>(total,20)
+}
+
 concrete Counter {
   refines Order<Int>
 

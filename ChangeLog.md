@@ -13,6 +13,9 @@
   `VAR_SELF` where `Var_self` was previously used, and delete the `Var_self`
   argument from function signatures. This breaks all existing extensions.
 
+### Language
+
+* **[new]** Allows `update` blocks for `traverse` loops.
 
 ### Libraries
 

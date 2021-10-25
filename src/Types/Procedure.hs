@@ -229,7 +229,7 @@ data IfElifElse c =
 
 data IteratedLoop c =
   WhileLoop [c] (Expression c) (Procedure c) (Maybe (Procedure c)) |
-  TraverseLoop [c] (Expression c) [c] (Assignable c) (Procedure c)
+  TraverseLoop [c] (Expression c) [c] (Assignable c) (Procedure c) (Maybe (Procedure c))
   deriving (Show)
 
 data ScopedBlock c =

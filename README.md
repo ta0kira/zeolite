@@ -718,6 +718,9 @@ Zeolite supports two loop types:
      <span style='color:#898887;'>// executed once per Char c in &quot;hello&quot;</span>
    }</pre>
 
+   You can also use `update` for a `traverse` loop to handle updates after every
+   iteration.
+
 `for` loops (e.g., `for (int i = 0; i < foo; ++i) { ... }` in C++) *are not*
 supported, since such syntax is too restrictive to scale, and they can be
 replaced with `traverse` or `scoped`+`while` in nearly all situations.

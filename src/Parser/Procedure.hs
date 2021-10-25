@@ -240,10 +240,6 @@ instance ParseFromSource (IteratedLoop SourceContext) where
       p <- between (sepAfter $ string_ "{") (sepAfter $ string_ "}") sourceParser
       u <- fmap Just parseUpdate <|> return Nothing
       return $ WhileLoop [c] i p u
-      where
-        parseUpdate = do
-          kwUpdate
-          between (sepAfter $ string_ "{") (sepAfter $ string_ "}") sourceParser
     trav = labeled "traverse" $ do
       c1 <- getSourceContext
       kwTraverse
@@ -254,7 +250,11 @@ instance ParseFromSource (IteratedLoop SourceContext) where
       a <- sourceParser
       sepAfter_ $ string ")"
       p <- between (sepAfter $ string_ "{") (sepAfter $ string_ "}") sourceParser
-      return $ TraverseLoop [c1] e [c2] a p
+      u <- fmap Just parseUpdate <|> return Nothing
+      return $ TraverseLoop [c1] e [c2] a p u
+    parseUpdate = do
+      kwUpdate
+      between (sepAfter $ string_ "{") (sepAfter $ string_ "}") sourceParser
 
 instance ParseFromSource (ScopedBlock SourceContext) where
   sourceParser = scoped <|> justCleanup where

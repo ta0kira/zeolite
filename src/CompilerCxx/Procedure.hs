@@ -435,7 +435,7 @@ compileIteratedLoop (WhileLoop c e p u) = do
   getAndIndentOutput ctx >>= csWrite
   csWrite $ ["{"] ++ u' ++ ["}"]
   csWrite ["}"]
-compileIteratedLoop (TraverseLoop c1 e c2 a (Procedure c3 ss)) = "In compilation of traverse at " ++ formatFullContext c1 ??> do
+compileIteratedLoop (TraverseLoop c1 e c2 a (Procedure c3 ss) u) = "In compilation of traverse at " ++ formatFullContext c1 ??> do
   (Positional ts,e') <- compileExpression e
   checkContainer ts
   r <- csResolver
@@ -460,9 +460,12 @@ compileIteratedLoop (TraverseLoop c1 e c2 a (Procedure c3 ss)) = "In compilation
   compileStatement $ NoValueExpression [] $ WithScope $ ScopedBlock []
     (Procedure [] [RawCodeLine $ variableStoredType currType ++ " " ++ currVar ++ " = " ++ writeStoredVariable currType e' ++ ";"]) Nothing []
     (NoValueExpression [] $ Loop $ WhileLoop [] (Expression [] currPresent [])
-      (Procedure c3 (assnGet:ss))
+      (Procedure c3 (assnGet:(ss ++ update)))
       (Just $ Procedure [] [RawCodeLine $ currVar ++ " = " ++ writeStoredVariable currType exprNext ++ ";"]))
     where
+      update = case u of
+                    Just (Procedure _ ss2) -> ss2
+                    _                      -> []
       checkContainer [_] = return ()
       checkContainer ts =
         compilerErrorM $ "Expected exactly one Order<?> value but got " ++
