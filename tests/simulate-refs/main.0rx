@@ -44,12 +44,6 @@ define SimulateRefs {
         .append(SharedRoutine.new("shared1",state))
         .append(WeakRoutine.new("weak1",state))
         .append(WeakRoutine.new("weak2",state))
-        .append(WeakRoutine.new("weak3",state))
-        .append(WeakRoutine.new("weak4",state))
-        .append(WeakRoutine.new("weak5",state))
-        .append(WeakRoutine.new("weak6",state))
-        .append(WeakRoutine.new("weak7",state))
-        .append(WeakRoutine.new("weak8",state))
   }
 
   @type runOnce () -> (Bool)
