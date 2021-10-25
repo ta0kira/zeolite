@@ -139,9 +139,9 @@ unittest exponential {
 
   Float v1 <- random1.generate()
   Float v2 <- random2.generate()
-  \ random1.setSeed(123)
+  random1 <- random1.setSeed(123)
   Float v3 <- random1.generate()
-  \ random2.setSeed(123)
+  random2 <- random2.setSeed(123)
   Float v4 <- random2.generate()
 
   \ Testing.checkEquals<?>(v1 == v2,false)
@@ -160,9 +160,9 @@ unittest gaussian {
 
   Float v1 <- random1.generate()
   Float v2 <- random2.generate()
-  \ random1.setSeed(123)
+  random1 <- random1.setSeed(123)
   Float v3 <- random1.generate()
-  \ random2.setSeed(123)
+  random2 <- random2.setSeed(123)
   Float v4 <- random2.generate()
 
   \ Testing.checkEquals<?>(v1 == v2,false)
@@ -181,9 +181,9 @@ unittest uniform {
 
   Float v1 <- random1.generate()
   Float v2 <- random2.generate()
-  \ random1.setSeed(123)
+  random1 <- random1.setSeed(123)
   Float v3 <- random1.generate()
-  \ random2.setSeed(123)
+  random2 <- random2.setSeed(123)
   Float v4 <- random2.generate()
 
   \ Testing.checkEquals<?>(v1 == v2,false)

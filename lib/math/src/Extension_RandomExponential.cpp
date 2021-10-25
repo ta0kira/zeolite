@@ -62,7 +62,7 @@ struct ExtValue_RandomExponential : public Value_RandomExponential {
     TRACE_FUNCTION("RandomExponential.setSeed")
     distribution_.reset();
     generator_.seed(args.At(0).AsInt());
-    return ReturnTuple();
+    return ReturnTuple(VAR_SELF);
   }
 
   std::default_random_engine generator_;

@@ -63,7 +63,7 @@ struct ExtValue_RandomGaussian : public Value_RandomGaussian {
     TRACE_FUNCTION("RandomGaussian.setSeed")
     distribution_.reset();
     generator_.seed(args.At(0).AsInt());
-    return ReturnTuple();
+    return ReturnTuple(VAR_SELF);
   }
 
   std::default_random_engine generator_;
