@@ -146,8 +146,8 @@ runCompiler resolver backend (CompileOptions _ is is2 ds _ _ p CreateTemplates f
 
 runCompiler resolver _ (CompileOptions _ is is2 ds es ep p m f) = mapM_ compileSingle ds where
   compileSingle d = do
-    as  <- fmap fixPaths $ mapCompilerM (resolveModule resolver (p </> d)) is
-    as2 <- fmap fixPaths $ mapCompilerM (resolveModule resolver (p </> d)) is2
+    as  <- fmap fixPaths $ mapCompilerM (autoDep (p </> d)) is
+    as2 <- fmap fixPaths $ mapCompilerM (autoDep (p </> d)) is2
     isConfigured <- isPathConfigured p d
     when (isConfigured && f == DoNotForce) $ do
       compilerErrorM $ "Module " ++ d ++ " has an existing configuration. " ++
@@ -166,6 +166,11 @@ runCompiler resolver _ (CompileOptions _ is is2 ds es ep p m f) = mapM_ compileS
     writeRecompile (p </> d) rm
     config <- getRecompilePath (p </> d)
     errorFromIO $ hPutStrLn stderr $ "*** Setup complete. Please edit " ++ config ++ " and recompile with zeolite -r. ***"
+  autoDep p2 i = do
+    isSystem <- isSystemModule resolver p2 i
+    if isSystem
+       then return i
+       else resolveModule resolver p2 i
 
 runRecompileCommon :: (PathIOHandler r, CompilerBackend b) => r -> b ->
   ForceMode -> Bool -> FilePath -> [FilePath] -> TrackedErrorsIO ()
