@@ -49,6 +49,8 @@ define LeakTest {
         .writeTo(SimpleOutput.stderr())
 
     optional LeakTest original <- LeakTest{ Vector:createSize<Int>(size) }
+    weak LeakTest validated <- original
+    $ReadOnly[validated]$
 
     Vector<Thread> threads <- Vector:create<Thread>()
 
@@ -62,6 +64,8 @@ define LeakTest {
     traverse (threads.defaultOrder() -> Thread thread) {
       \ thread.join()
     }
+
+    $ValidateRefs[validated]$
   }
 }
 
