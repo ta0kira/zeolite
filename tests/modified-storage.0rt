@@ -262,3 +262,44 @@ define Test {
 
   call () {}
 }
+
+
+testcase "ValidateRefs succeeds" {
+  success
+}
+
+unittest boxed {
+  String value <- "message"
+  weak String value2 <- value
+  $ValidateRefs[value,value2]$
+}
+
+unittest int {
+  Int value <- 1
+  weak Int value2 <- value
+  $ValidateRefs[value,value2]$
+}
+
+unittest char {
+  Char value <- 'a'
+  weak Char value2 <- value
+  $ValidateRefs[value,value2]$
+}
+
+unittest bool {
+  Bool value <- false
+  weak Bool value2 <- value
+  $ValidateRefs[value,value2]$
+}
+
+unittest float {
+  Float value <- 1.0
+  weak Float value2 <- value
+  $ValidateRefs[value,value2]$
+}
+
+unittest emptyVal {
+  optional all value <- empty
+  weak all value2 <- value
+  $ValidateRefs[value,value2]$
+}

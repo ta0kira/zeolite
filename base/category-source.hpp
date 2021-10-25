@@ -171,6 +171,7 @@ class TypeValue {
 
  protected:
   friend class BoxedValue;
+  friend class zeolite_internal::UnionValue;
 
   TypeValue() = default;
 

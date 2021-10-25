@@ -329,6 +329,11 @@ compileStatement (Assignment c as e) = message ??> do
 compileStatement (NoValueExpression _ v) = compileVoidExpression v
 compileStatement (MarkReadOnly c vs) = mapM_ (\v -> csSetReadOnly (UsedVariable c v)) vs
 compileStatement (MarkHidden   c vs) = mapM_ (\v -> csSetHidden   (UsedVariable c v)) vs
+compileStatement (ValidateRefs c vs) = mapM_ validate vs where
+  validate n = do
+    (VariableValue _ _ t _) <- csGetVariable (UsedVariable c n)
+    let e = readStoredVariable False t (variableName n)
+    csWrite [useAsUnwrapped e ++ ".Validate();"]
 compileStatement (RawCodeLine s) = csWrite [s]
 
 compileRegularInit :: (Ord c, Show c, CollectErrorsM m,

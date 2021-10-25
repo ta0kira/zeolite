@@ -47,6 +47,48 @@ using namespace ZEOLITE_PUBLIC_NAMESPACE;
 
 namespace zeolite_internal {
 
+namespace {
+
+static constexpr unsigned long long STRONG_LOCK = 0x1ULL << 40;
+
+void Validate(const UnionValue& the_union) {
+  if (the_union.type_ == UnionValue::Type::BOXED) {
+    const auto strong = the_union.value_.as_pointer_->strong_.load();
+    const auto weak   = the_union.value_.as_pointer_->weak_.load();
+    const TypeValue* const object = the_union.value_.as_pointer_->object_;
+
+    if ((strong % STRONG_LOCK == 0 && object) ||
+        (weak == 0 && strong > 0)) {
+      FAIL() << "Leaked " << the_union.CategoryName() << " at "
+             << ((void*) the_union.value_.as_pointer_) << " (S: "
+             << std::hex << strong << " W: " << weak << ")";
+    }
+
+    if ((strong % STRONG_LOCK != 0 && !object)) {
+      FAIL() << "Invalid counts for freed value at "
+             << ((void*) the_union.value_.as_pointer_) << " (S: "
+             << std::hex << strong << " W: " << weak << ")";
+    }
+  }
+}
+
+}  // namespace
+
+std::string UnionValue::CategoryName() const {
+  switch (type_) {
+    case UnionValue::Type::EMPTY: return "empty";
+    case UnionValue::Type::BOOL:  return "Bool";
+    case UnionValue::Type::CHAR:  return "Char";
+    case UnionValue::Type::INT:   return "Int";
+    case UnionValue::Type::FLOAT: return "Float";
+    case UnionValue::Type::BOXED:
+      if (!value_.as_pointer_ || !value_.as_pointer_->object_) {
+        FAIL() << "Function called on null pointer";
+      }
+      return value_.as_pointer_->object_->CategoryName();
+  }
+}
+
 BoxedValue::BoxedValue(const BoxedValue& other)
   : union_(other.union_) {
   switch (union_.type_) {
@@ -98,28 +140,27 @@ BoxedValue::BoxedValue(const WeakValue& other)
       // each object will have fewer than 2^40 references, and that fewer than
       // 2^24 threads will be attempting to lock a weak reference for a given
       // object at any one time.
-      static constexpr unsigned long long strong_lock = 0x1ULL << 40;
-      if (union_.value_.as_pointer_->strong_.fetch_add(strong_lock) % strong_lock == 0) {
-        // NOTE: Subtraction of strong_lock *cannot* be optimized out!
+      if (union_.value_.as_pointer_->strong_.fetch_add(STRONG_LOCK) % STRONG_LOCK == 0ULL) {
+        // NOTE: Subtraction of STRONG_LOCK *cannot* be optimized out!
         //
-        // Unsigned overflow would still leave strong_%strong_lock == 0, but
+        // Unsigned overflow would still leave strong_%STRONG_LOCK == 0, but
         // there could be a race-condition between three threads:
         //
         // Thread 1: Enters *this* constructor while the pointer is still valid.
         // Thread 2: Enters BoxedValue::Cleanup and removes the last reference.
         // Thread 3: Enters *this* constructor before Thread 1 subtracts
-        //           strong_lock-1, meaning strong_%strong_lock == 0.
-        // Thread 1: Subtracts strong_lock-1 (+1 overall) to revive the pointer.
+        //           STRONG_LOCK-1, meaning strong_%STRONG_LOCK == 0.
+        // Thread 1: Subtracts STRONG_LOCK-1 (+1 overall) to revive the pointer.
         //
         // This still leaves all three threads in a valid state, but with Thread
         // 3 getting empty instead of a still-valid pointer. In other words,
-        // strong_%strong_lock == 0 *doesn't* guarantee that the pointer is no
+        // strong_%STRONG_LOCK == 0 *doesn't* guarantee that the pointer is no
         // longer valid.
-        union_.value_.as_pointer_->strong_.fetch_sub(strong_lock);
+        union_.value_.as_pointer_->strong_.fetch_sub(STRONG_LOCK);
         union_.type_  = UnionValue::Type::EMPTY;
         union_.value_.as_pointer_ = nullptr;
       } else {
-        union_.value_.as_pointer_->strong_.fetch_sub(strong_lock-1);
+        union_.value_.as_pointer_->strong_.fetch_sub(STRONG_LOCK-1ULL);
       }
       break;
     default:
@@ -143,12 +184,16 @@ BoxedValue::~BoxedValue() {
   Cleanup();
 }
 
+void BoxedValue::Validate() const {
+  zeolite_internal::Validate(union_);
+}
+
 bool BoxedValue::AsBool() const {
   switch (union_.type_) {
     case UnionValue::Type::BOOL:
       return union_.value_.as_bool_;
     default:
-      FAIL() << CategoryName() << " is not a Bool value";
+      FAIL() << union_.CategoryName() << " is not a Bool value";
       __builtin_unreachable();
       break;
   }
@@ -159,7 +204,7 @@ PrimChar BoxedValue::AsChar() const {
     case UnionValue::Type::CHAR:
       return union_.value_.as_char_;
     default:
-      FAIL() << CategoryName() << " is not a Char value";
+      FAIL() << union_.CategoryName() << " is not a Char value";
       __builtin_unreachable();
       break;
   }
@@ -170,7 +215,7 @@ PrimInt BoxedValue::AsInt() const {
     case UnionValue::Type::INT:
       return union_.value_.as_int_;
     default:
-      FAIL() << CategoryName() << " is not an Int value";
+      FAIL() << union_.CategoryName() << " is not an Int value";
       __builtin_unreachable();
       break;
   }
@@ -181,7 +226,7 @@ PrimFloat BoxedValue::AsFloat() const {
     case UnionValue::Type::FLOAT:
       return union_.value_.as_float_;
     default:
-      FAIL() << CategoryName() << " is not a Float value";
+      FAIL() << union_.CategoryName() << " is not a Float value";
       __builtin_unreachable();
       break;
   }
@@ -195,7 +240,7 @@ const PrimString& BoxedValue::AsString() const {
       }
       return union_.value_.as_pointer_->object_->AsString();
     default:
-      FAIL() << CategoryName() << " is not a String value";
+      FAIL() << union_.CategoryName() << " is not a String value";
       __builtin_unreachable();
       break;
   }
@@ -209,7 +254,7 @@ PrimCharBuffer& BoxedValue::AsCharBuffer() const {
       }
       return union_.value_.as_pointer_->object_->AsCharBuffer();
     default:
-      FAIL() << CategoryName() << " is not a CharBuffer value";
+      FAIL() << union_.CategoryName() << " is not a CharBuffer value";
       __builtin_unreachable();
       break;
   }
@@ -235,21 +280,6 @@ BoxedValue BoxedValue::Require(const BoxedValue& target) {
 // static
 BoxedValue BoxedValue::Strong(const WeakValue& target) {
   return BoxedValue(target);
-}
-
-std::string BoxedValue::CategoryName() const {
-  switch (union_.type_) {
-    case UnionValue::Type::EMPTY: return "empty";
-    case UnionValue::Type::BOOL:  return "Bool";
-    case UnionValue::Type::CHAR:  return "Char";
-    case UnionValue::Type::INT:   return "Int";
-    case UnionValue::Type::FLOAT: return "Float";
-    case UnionValue::Type::BOXED:
-      if (!union_.value_.as_pointer_ || !union_.value_.as_pointer_->object_) {
-        FAIL() << "Function called on null pointer";
-      }
-      return union_.value_.as_pointer_->object_->CategoryName();
-  }
 }
 
 ReturnTuple BoxedValue::Dispatch(
@@ -279,11 +309,12 @@ void BoxedValue::Cleanup() {
   switch (union_.type_) {
     case UnionValue::Type::BOXED:
       if (--union_.value_.as_pointer_->strong_ == 0) {
-        union_.value_.as_pointer_->object_->~TypeValue();
+        TypeValue* const object = union_.value_.as_pointer_->object_;
         union_.value_.as_pointer_->object_ = nullptr;
         if (--union_.value_.as_pointer_->weak_ == 0) {
           free(union_.value_.as_bytes_);
         }
+        object->~TypeValue();
       }
       break;
     default:
@@ -365,6 +396,10 @@ WeakValue& WeakValue::operator = (const BoxedValue& other) {
 
 WeakValue::~WeakValue() {
   Cleanup();
+}
+
+void WeakValue::Validate() const {
+  zeolite_internal::Validate(union_);
 }
 
 void WeakValue::Cleanup() {

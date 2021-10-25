@@ -177,8 +177,9 @@ instance ParseFromSource (Statement SourceContext) where
       c <- getSourceContext
       e <- sourceParser
       return $ NoValueExpression [c] e
-    parsePragma = do
-      p <- pragmaReadOnly <|> pragmaHidden <|> unknownPragma
+    parsePragma = ((pragmaReadOnly <|> pragmaHidden) >>= markPragma) <|>
+                  pragmaValidateRefs <|> unknownPragma
+    markPragma p =
       case p of
            PragmaMarkVars c ReadOnly vs -> return $ MarkReadOnly c vs
            PragmaMarkVars c Hidden   vs -> return $ MarkHidden   c vs
@@ -721,3 +722,9 @@ pragmaHidden = autoPragma "Hidden" $ Right parseAt where
   parseAt c = do
     vs <- labeled "variable names" $ sepBy sourceParser (sepAfter $ string ",")
     return $ PragmaMarkVars [c] Hidden vs
+
+pragmaValidateRefs :: TextParser (Statement SourceContext)
+pragmaValidateRefs = autoPragma "ValidateRefs" $ Right parseAt where
+  parseAt c = do
+    vs <- labeled "variable names" $ sepBy sourceParser (sepAfter $ string ",")
+    return $ ValidateRefs [c] vs

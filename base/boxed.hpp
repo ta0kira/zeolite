@@ -45,10 +45,12 @@ struct UnionValue {
     TypeValue* object_;
   };
 
+  std::string CategoryName() const;
+
   Type type_;
 
   union {
-    char*     as_bytes_;
+    unsigned char* as_bytes_;
     Pointer*  as_pointer_;
     bool      as_bool_;
     PrimChar  as_char_;
@@ -78,7 +80,7 @@ class BoxedValue {
     using Pointer = UnionValue::Pointer;
     BoxedValue new_value;
     new_value.union_.type_ = UnionValue::Type::BOXED;
-    new_value.union_.value_.as_bytes_ = (char*) malloc(sizeof(Pointer) + sizeof(T));
+    new_value.union_.value_.as_bytes_ = (unsigned char*) malloc(sizeof(Pointer) + sizeof(T));
     new (new_value.union_.value_.as_bytes_)
       Pointer{ {1}, {1},
                new (new_value.union_.value_.as_bytes_ + sizeof(Pointer)) T(args...) };
@@ -86,6 +88,8 @@ class BoxedValue {
   }
 
   ~BoxedValue();
+
+  void Validate() const;
 
   bool AsBool() const;
   PrimChar AsChar() const;
@@ -116,7 +120,7 @@ class BoxedValue {
     if (pointer) {
       value.union_.type_ = UnionValue::Type::BOXED;
       value.union_.value_.as_bytes_ =
-        reinterpret_cast<char*>(pointer)-sizeof(UnionValue::Pointer);
+        reinterpret_cast<unsigned char*>(pointer)-sizeof(UnionValue::Pointer);
       ++value.union_.value_.as_pointer_->strong_;
       if (value.union_.value_.as_pointer_->object_ != pointer) {
         FAIL() << "Bad VAR_SELF pointer";
@@ -124,8 +128,6 @@ class BoxedValue {
     }
     return value;
   }
-
-  std::string CategoryName() const;
 
   ReturnTuple Dispatch(
     const ValueFunction& label, const ParamTuple& params, const ValueTuple& args) const;
@@ -149,6 +151,8 @@ class WeakValue {
   WeakValue& operator = (const BoxedValue& other);
 
   ~WeakValue();
+
+  void Validate() const;
 
  private:
   friend class BoxedValue;
