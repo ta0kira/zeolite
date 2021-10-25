@@ -89,7 +89,7 @@ class BoxedValue {
 
   ~BoxedValue();
 
-  void Validate() const;
+  void Validate(const std::string& name) const;
 
   bool AsBool() const;
   PrimChar AsChar() const;
@@ -152,7 +152,7 @@ class WeakValue {
 
   ~WeakValue();
 
-  void Validate() const;
+  void Validate(const std::string& name) const;
 
  private:
   friend class BoxedValue;

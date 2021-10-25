@@ -90,6 +90,27 @@ unittest modifySizes {
   }
 }
 
+unittest increment {
+  CategoricalTree<Int> tree <- CategoricalTree<Int>.new()
+    .incrWeight(1)
+    .incrWeight(1)
+    .incrWeight(1)
+
+  \ Testing.checkEquals<?>(tree.getTotal(),3)
+  \ Testing.checkEquals<?>(tree.getWeight(1),3)
+}
+
+unittest decrement {
+  CategoricalTree<Int> tree <- CategoricalTree<Int>.new()
+    .setWeight(1,10)
+    .decrWeight(1)
+    .decrWeight(1)
+    .decrWeight(1)
+
+  \ Testing.checkEquals<?>(tree.getTotal(),7)
+  \ Testing.checkEquals<?>(tree.getWeight(1),7)
+}
+
 unittest integrationTest {
   ValidatedTree<Int> tree      <- ValidatedTree<Int>.new()
   SearchTree<Int,Int> expected <- SearchTree<Int,Int>.new()

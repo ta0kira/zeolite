@@ -333,7 +333,8 @@ compileStatement (ValidateRefs c vs) = mapM_ validate vs where
   validate n = do
     (VariableValue _ _ t _) <- csGetVariable (UsedVariable c n)
     let e = readStoredVariable False t (variableName n)
-    csWrite [useAsUnwrapped e ++ ".Validate();"]
+    maybeSetTrace c
+    csWrite [useAsUnwrapped e ++ ".Validate(\"" ++ show n ++ "\");"]
 compileStatement (RawCodeLine s) = csWrite [s]
 
 compileRegularInit :: (Ord c, Show c, CollectErrorsM m,

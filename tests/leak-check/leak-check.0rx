@@ -49,23 +49,26 @@ define LeakTest {
         .writeTo(SimpleOutput.stderr())
 
     optional LeakTest original <- LeakTest{ Vector:createSize<Int>(size) }
-    weak LeakTest validated <- original
-    $ReadOnly[validated]$
+    weak LeakTest checkedValue <- original
+    $ReadOnly[checkedValue]$
 
-    Vector<Thread> threads <- Vector:create<Thread>()
+    scoped {
+      Vector<Thread> threads <- Vector:create<Thread>()
+    } in {
+      traverse (Counter.zeroIndexed(barriers.size()-1) -> Int j) {
+        \ threads.push(ProcessThread.from(#f.create(original,barriers.readAt(j+1))).start())
+      }
 
-    traverse (Counter.zeroIndexed(barriers.size()-1) -> Int j) {
-      \ threads.push(ProcessThread.from(#f.create(original,barriers.readAt(j+1))).start())
+      \ barriers.readAt(0).wait()
+      original <- empty
+
+      traverse (threads.defaultOrder() -> Thread thread) {
+        \ thread.join()
+      }
     }
 
-    \ barriers.readAt(0).wait()
-    original <- empty
-
-    traverse (threads.defaultOrder() -> Thread thread) {
-      \ thread.join()
-    }
-
-    $ValidateRefs[validated]$
+    // Make sure that threads are out of scope before validating.
+    $ValidateRefs[checkedValue]$
   }
 }
 

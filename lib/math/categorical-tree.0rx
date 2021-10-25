@@ -48,6 +48,16 @@ define CategoricalTree {
     }
   }
 
+  incrWeight (cat) {
+    \ setWeight(cat,getWeight(cat)+1)
+    return self
+  }
+
+  decrWeight (cat) {
+    \ setWeight(cat,getWeight(cat)-1)
+    return self
+  }
+
   locate (pos) {
     if (pos < 0) {
       fail("position must not be negative")

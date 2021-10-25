@@ -53,6 +53,16 @@ concrete CategoricalTree<#c> {
   // - If the category isn't in the tree, its weight is 0.
   @value getWeight (#c) -> (Int)
 
+  // Increments the weight of the value by 1.
+  @value incrWeight (#c) -> (#self)
+
+  // Decrements the weight of the value by 1.
+  //
+  // Notes:
+  // - Do not call this for values that already have 0 weight. This is primarily
+  //   meant for use when locate is used to choose a value to decrement.
+  @value decrWeight (#c) -> (#self)
+
   // Return the value at the given offset.
   //
   // Notes:
