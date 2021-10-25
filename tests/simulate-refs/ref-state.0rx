@@ -65,16 +65,24 @@ define ReferenceState {
     return (weakCount <- weakCount-1)
   }
 
+  getWeak () {
+    return weakCount
+  }
+
+  hasWeak () {
+    return weakCount > 0
+  }
+
   addLock () {
     return (strongCount <- strongCount+lockMod)
   }
 
   remLock () {
-    strongCount <- strongCount-lockMod
+    return (strongCount <- strongCount-lockMod)
   }
 
   convertLock () {
-    strongCount <- strongCount-(lockMod-1)
+    return (strongCount <- strongCount-(lockMod-1))
   }
 
   lockMod () {
@@ -83,6 +91,10 @@ define ReferenceState {
 
   kill () {
     aliveCleanup <- aliveCleanup+1
+  }
+
+  isAlive () {
+    return aliveCleanup == 0
   }
 
   cleanupWeak () {

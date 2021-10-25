@@ -53,7 +53,7 @@ define SimulateRefs {
 
     scoped {
       optional String error <- state.getError()
-      if (!present(error) && state.hasStrong()) {
+      if (!present(error) && (state.hasStrong() || state.hasWeak())) {
         error <- "expected zero final references"
       }
     } in if (present(error)) {

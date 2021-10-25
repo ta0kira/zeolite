@@ -32,13 +32,16 @@ concrete ReferenceState {
 
   @value addWeak () -> (Int)
   @value remWeak () -> (Int)
+  @value getWeak () -> (Int)
+  @value hasWeak () -> (Bool)
 
   @value addLock () -> (Int)
-  @value remLock () -> ()
-  @value convertLock () -> ()
+  @value remLock () -> (Int)
+  @value convertLock () -> (Int)
   @type lockMod () -> (Int)
 
   @value kill () -> ()
+  @value isAlive () -> (Bool)
   @value cleanupWeak () -> ()
 
   @value getError () -> (optional String)

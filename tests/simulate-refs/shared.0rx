@@ -49,7 +49,7 @@ define DropSharedEnter {
   transition () {
     \ state.addOperation<#self>(name)
     if (state.remStrong() == 0) {
-      return DropSharedStartFree.new(name,state)
+      return DropSharedFreeObject.new(name,state)
     } else {
       return empty
     }
@@ -57,11 +57,11 @@ define DropSharedEnter {
 }
 
 
-concrete DropSharedStartFree {
+concrete DropSharedFreeObject {
   @type new (String,ReferenceState) -> (StateMachine)
 }
 
-define DropSharedStartFree {
+define DropSharedFreeObject {
   $ReadOnly[name,state]$
 
   refines StateMachine
@@ -70,7 +70,7 @@ define DropSharedStartFree {
   @value ReferenceState state
 
   new (name,state) {
-    return DropSharedStartFree{ name, state }
+    return DropSharedFreeObject{ name, state }
   }
 
   transition () {
@@ -100,7 +100,7 @@ define DropSharedCheckWeak {
   transition () {
     \ state.addOperation<#self>(name)
     if (state.remWeak() == 0) {
-      return DropSharedFinishFree.new(name,state)
+      return DropSharedFreeWeak.new(name,state)
     } else {
       return empty
     }
@@ -108,11 +108,11 @@ define DropSharedCheckWeak {
 }
 
 
-concrete DropSharedFinishFree {
+concrete DropSharedFreeWeak {
   @type new (String,ReferenceState) -> (StateMachine)
 }
 
-define DropSharedFinishFree {
+define DropSharedFreeWeak {
   $ReadOnly[name,state]$
 
   refines StateMachine
@@ -121,7 +121,7 @@ define DropSharedFinishFree {
   @value ReferenceState state
 
   new (name,state) {
-    return DropSharedFinishFree{ name, state }
+    return DropSharedFreeWeak{ name, state }
   }
 
   transition () {
