@@ -702,6 +702,13 @@ Zeolite supports two loop types:
    <b>traverse</b> (orderedStrings -&gt; <i><span style='color:#0057ae;'>String</span></i> s) {
      <span style='color:#898887;'>// executed once per String s in orderedStrings</span>
      <span style='color:#898887;'>// you can also use break and continue</span>
+   }
+
+   <span style='color:#898887;'>// With an update after each iteration.</span>
+   <b>traverse</b> (orderedStrings -&gt; <i><span style='color:#0057ae;'>String</span></i> s) {
+     <span style='color:#898887;'>// ...</span>
+   } <b>update</b> {
+     <span style='color:#898887;'>// ...</span>
    }</pre>
 
    Since the `Order` is optional, `empty` can be used to iterate zero times.
@@ -717,9 +724,6 @@ Zeolite supports two loop types:
    <b>traverse</b> (<span style='color:#bf0303;'>&quot;hello&quot;</span><span style='color:#644a9b;'>.</span>defaultOrder() -&gt; <i><span style='color:#0057ae;'>Char</span></i> c) {
      <span style='color:#898887;'>// executed once per Char c in &quot;hello&quot;</span>
    }</pre>
-
-   You can also use `update` for a `traverse` loop to handle updates after every
-   iteration.
 
 `for` loops (e.g., `for (int i = 0; i < foo; ++i) { ... }` in C++) *are not*
 supported, since such syntax is too restrictive to scale, and they can be
