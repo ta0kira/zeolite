@@ -176,7 +176,10 @@ class TypeValue {
   TypeValue() = default;
 
   template<class T>
-  inline static BoxedValue Var_self(T* must_be_this) {
+  inline BoxedValue Var_self(T* must_be_this) {
+    if (must_be_this != this) {
+      FAIL() << "Var_self called without passing this";
+    }
     return BoxedValue::FromPointer(must_be_this);
   }
 
