@@ -15,6 +15,10 @@
 
 ### Language
 
+* **[fix]** Fixes obscure memory leak in `weak` values, triggered by a very
+  specific sequence of events between three threads. This leak was unlikely to
+  affect any programs that did not specifically attempt to trigger it.
+
 * **[new]** Allows `update` blocks for `traverse` loops.
 
 ### Libraries

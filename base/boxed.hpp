@@ -40,7 +40,8 @@ struct UnionValue {
   };
 
   struct Pointer {
-    std::atomic_ullong strong_;
+    std::atomic_flag lock_;
+    std::atomic_int strong_;
     std::atomic_int weak_;
     TypeValue* object_;
   };
@@ -82,8 +83,8 @@ class BoxedValue {
     new_value.union_.type_ = UnionValue::Type::BOXED;
     new_value.union_.value_.as_bytes_ = (unsigned char*) malloc(sizeof(Pointer) + sizeof(T));
     new (new_value.union_.value_.as_bytes_)
-      Pointer{ {1}, {1},
-               new (new_value.union_.value_.as_bytes_ + sizeof(Pointer)) T(args...) };
+      Pointer{ ATOMIC_FLAG_INIT, {1}, {1},
+               {new (new_value.union_.value_.as_bytes_ + sizeof(Pointer)) T(args...)} };
     return new_value;
   }
 
@@ -121,10 +122,10 @@ class BoxedValue {
       value.union_.type_ = UnionValue::Type::BOXED;
       value.union_.value_.as_bytes_ =
         reinterpret_cast<unsigned char*>(pointer)-sizeof(UnionValue::Pointer);
-      ++value.union_.value_.as_pointer_->strong_;
       if (value.union_.value_.as_pointer_->object_ != pointer) {
         FAIL() << "Bad VAR_SELF pointer";
       }
+      ++value.union_.value_.as_pointer_->strong_;
     }
     return value;
   }

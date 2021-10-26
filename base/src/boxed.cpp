@@ -49,22 +49,19 @@ namespace zeolite_internal {
 
 namespace {
 
-static constexpr unsigned long long STRONG_LOCK = 0x1ULL << 40;
-
 void Validate(const std::string& name, const UnionValue& the_union) {
   if (the_union.type_ == UnionValue::Type::BOXED) {
     const auto strong = the_union.value_.as_pointer_->strong_.load();
     const auto weak   = the_union.value_.as_pointer_->weak_.load();
     const TypeValue* const object = the_union.value_.as_pointer_->object_;
 
-    if ((strong % STRONG_LOCK == 0 && object) ||
-        (weak == 0 && strong > 0)) {
+    if ((strong == 0 && object) || (weak == 0 && strong > 0)) {
       FAIL() << "Leaked " << the_union.CategoryName() << " " << name << " at "
              << ((void*) the_union.value_.as_pointer_) << " (S: "
              << std::hex << strong << " W: " << weak << ")";
     }
 
-    if ((strong % STRONG_LOCK != 0 && !object)) {
+    if ((strong != 0 && !object)) {
       FAIL() << "Invalid counts for freed value " << name << " at "
              << ((void*) the_union.value_.as_pointer_) << " (S: "
              << std::hex << strong << " W: " << weak << ")";
@@ -135,32 +132,14 @@ BoxedValue::BoxedValue(const WeakValue& other)
   : union_(other.union_) {
   switch (union_.type_) {
     case UnionValue::Type::BOXED:
-      // Using the top 24 bits here allows blocking the deletion of the pointer
-      // without risking other threads using a bad pointer. This assumes that
-      // each object will have fewer than 2^40 references, and that fewer than
-      // 2^24 threads will be attempting to lock a weak reference for a given
-      // object at any one time.
-      if (union_.value_.as_pointer_->strong_.fetch_add(STRONG_LOCK) % STRONG_LOCK == 0ULL) {
-        // NOTE: Subtraction of STRONG_LOCK *cannot* be optimized out!
-        //
-        // Unsigned overflow would still leave strong_%STRONG_LOCK == 0, but
-        // there could be a race-condition between three threads:
-        //
-        // Thread 1: Enters *this* constructor while the pointer is still valid.
-        // Thread 2: Enters BoxedValue::Cleanup and removes the last reference.
-        // Thread 3: Enters *this* constructor before Thread 1 subtracts
-        //           STRONG_LOCK-1, meaning strong_%STRONG_LOCK == 0.
-        // Thread 1: Subtracts STRONG_LOCK-1 (+1 overall) to revive the pointer.
-        //
-        // This still leaves all three threads in a valid state, but with Thread
-        // 3 getting empty instead of a still-valid pointer. In other words,
-        // strong_%STRONG_LOCK == 0 *doesn't* guarantee that the pointer is no
-        // longer valid.
-        union_.value_.as_pointer_->strong_.fetch_sub(STRONG_LOCK);
-        union_.type_  = UnionValue::Type::EMPTY;
+      while (union_.value_.as_pointer_->lock_.test_and_set(std::memory_order_acquire));
+      if (++union_.value_.as_pointer_->strong_ == 1) {
+        --union_.value_.as_pointer_->strong_;
+        union_.value_.as_pointer_->lock_.clear(std::memory_order_release);
+        union_.type_ = UnionValue::Type::EMPTY;
         union_.value_.as_pointer_ = nullptr;
       } else {
-        union_.value_.as_pointer_->strong_.fetch_sub(STRONG_LOCK-1ULL);
+        union_.value_.as_pointer_->lock_.clear(std::memory_order_release);
       }
       break;
     default:
@@ -308,13 +287,18 @@ ReturnTuple BoxedValue::Dispatch(
 void BoxedValue::Cleanup() {
   switch (union_.type_) {
     case UnionValue::Type::BOXED:
+      while (union_.value_.as_pointer_->lock_.test_and_set(std::memory_order_acquire));
       if (--union_.value_.as_pointer_->strong_ == 0) {
         TypeValue* const object = union_.value_.as_pointer_->object_;
         union_.value_.as_pointer_->object_ = nullptr;
+        union_.value_.as_pointer_->lock_.clear(std::memory_order_release);
+        object->~TypeValue();
         if (--union_.value_.as_pointer_->weak_ == 0) {
+          // NOTE: as_bytes_ contains object => ~TypeValue() must happen first.
           free(union_.value_.as_bytes_);
         }
-        object->~TypeValue();
+      } else {
+        union_.value_.as_pointer_->lock_.clear(std::memory_order_release);
       }
       break;
     default:

@@ -858,12 +858,6 @@ references between objects.
   }
 }</pre>
 
-**IMPORTANT:** An `empty` return from `strong` *should not* be treated as a
-reliable indicator that the referenced object no longer exists. Instead, `weak`
-should indicate that a part of your program will use an object if it is
-available, but that the requirement is not strong enough to prevent the object
-from being cleaned up.
-
 ### Using Parameters
 
 All `concrete` categories and all `interface`s can have type parameters. Each
@@ -1754,31 +1748,6 @@ Note that C++ also allows this sort of recursion if it can be bounded at
 function's code for each recursive call, which would likely bloat the resulting
 binary quite a bit more than the `@type`-caching done by Zeolite for the same
 depth of recursion.
-
-### `weak` References
-
-[`weak` references](#optional-and-weak-values) in Zeolite *do not* provide a
-guarantee that an `empty` reference means that the referenced object is no
-longer valid. (There *is* a guarantee that a non-`empty` reference means that
-the referenced object *is* still valid.)
-
-Specifically, there are two scenarios where `present(strong(value)) == false`
-can occur when `value` still exists:
-
-1. The last reference to `value` has been removed, but the underlying object is
-   still in the process of being cleaned up. Although the object is not safe to
-   use in this state, its resources (e.g., a thread) could still be in use.
-2. If one thread is in the process of dropping the last reference while *two or
-   more* other threads are *concurrently* attempting to lock in a `weak`
-   reference to the same object (using `strong`), one thread could get `empty`
-   back while another gets non-`empty`. This is *completely safe* from the
-   perspective of validity of the program's state; however, it means that the
-   return from `strong` *should not* be used as a "flag" indicating the
-   existence of an object.
-
-The latter limitation is an accepted compromise in the implementation of `weak`
-references that allows non-`weak` reference sharing (including `optional`) to
-have substantially faster operations.
 
 [action-status]: https://github.com/ta0kira/zeolite/actions/workflows/haskell-ci.yml/badge.svg
 [action-zeolite]: https://github.com/ta0kira/zeolite/actions/workflows/haskell-ci.yml
