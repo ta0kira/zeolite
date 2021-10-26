@@ -222,10 +222,10 @@ class BoxedValue {
       value.union_.type_ = UnionValue::Type::BOXED;
       value.union_.value_.as_bytes_ =
         reinterpret_cast<unsigned char*>(pointer)-sizeof(UnionValue::Pointer);
-      if (value.union_.value_.as_pointer_->object_ != pointer) {
-        FAIL() << "Bad VAR_SELF pointer";
+      if (value.union_.value_.as_pointer_->object_ != pointer ||
+          ++value.union_.value_.as_pointer_->strong_ == 1) {
+        FAIL() << "Bad VAR_SELF pointer " << pointer << " in " << pointer->CategoryName();
       }
-      ++value.union_.value_.as_pointer_->strong_;
     }
     return value;
   }

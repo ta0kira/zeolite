@@ -209,6 +209,9 @@ class AnonymousOrder : public TypeValue {
   virtual ~AnonymousOrder() = default;
 
  private:
+  // Allows VAR_SELF to access CategoryName() for error messages.
+  friend class BoxedValue;
+
   // This *must* return VAR_SELF in the most-derived class!
   virtual BoxedValue Var_self() = 0;
   virtual BoxedValue Call_next(const BoxedValue& self) = 0;
