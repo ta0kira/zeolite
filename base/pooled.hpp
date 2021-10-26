@@ -75,24 +75,15 @@ class PoolArray {
   }
 
   const T& operator [] (int i) const {
-    if (!array_ || i < 0 || i >= array_->size) {
-      FAIL() << "Bad array index " << i;
-    }
     return array_->data()[i];
   }
 
   T& operator [] (int i) {
-    if (!array_ || i < 0 || i >= array_->size) {
-      FAIL() << "Bad array index " << i;
-    }
     return array_->data()[i];
   }
 
   template<class...Ts>
   inline void Init(Ts... data) {
-    if (sizeof...(Ts) > (array_? array_->size : 0)) {
-      FAIL() << "Too many init values " << sizeof...(Ts);
-    }
     InitRec(0, std::move(data)...);
   }
 
