@@ -54,15 +54,22 @@ void Validate(const std::string& name, const UnionValue& the_union) {
     const auto strong = the_union.value_.as_pointer_->strong_.load();
     const auto weak   = the_union.value_.as_pointer_->weak_.load();
     const TypeValue* const object = the_union.value_.as_pointer_->object_;
+    const std::string type = object ? the_union.CategoryName() : "deleted value";
 
-    if ((strong == 0 && object) || (weak == 0 && strong > 0)) {
-      FAIL() << "Leaked " << the_union.CategoryName() << " " << name << " at "
+    if (strong == 0 && object) {
+      FAIL() << "Leaked " << type << " " << name << " at "
              << ((void*) the_union.value_.as_pointer_) << " (S: "
              << std::hex << strong << " W: " << weak << ")";
     }
 
-    if ((strong != 0 && !object)) {
-      FAIL() << "Invalid counts for freed value " << name << " at "
+    if (strong != 0 && !object) {
+      FAIL() << "Prematurely deleted value " << name << " at "
+             << ((void*) the_union.value_.as_pointer_) << " (S: "
+             << std::hex << strong << " W: " << weak << ")";
+    }
+
+    if (strong < 0 || weak < 0 || (weak == 0 && strong > 0)) {
+      FAIL() << "Invalid counts for " << type << " " << name << " at "
              << ((void*) the_union.value_.as_pointer_) << " (S: "
              << std::hex << strong << " W: " << weak << ")";
     }
