@@ -69,10 +69,31 @@ define ToStrongAlive {
 
   transition () {
     \ state.addOperation<#self>(name)
-    // This should really be done as a separate step, but we know that we're not
-    // going to need to call cleanupWeak() because we just created a reference.
-    \ state.remWeak()
     \ state.convertLock()
+    return ToStrongDiscardWeak.new(name,state)
+  }
+}
+
+
+concrete ToStrongDiscardWeak {
+  @type new (String,ReferenceState) -> (StateMachine)
+}
+
+define ToStrongDiscardWeak {
+  $ReadOnly[name,state]$
+
+  refines StateMachine
+
+  @value String name
+  @value ReferenceState state
+
+  new (name,state) {
+    return ToStrongDiscardWeak{ name, state }
+  }
+
+  transition () {
+    \ state.addOperation<#self>(name)
+    \ state.remWeak()
     return SharedRoutine.alreadyStrong(name,state)
   }
 }
