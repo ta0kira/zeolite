@@ -1,0 +1,12 @@
+root: "../.."
+path: "tests/self-offset"
+private_deps: [
+  "lib/testing"
+]
+extra_files: [
+  category_source {
+    source: "tests/self-offset/Extension_Offset.cpp"
+    categories: [Offset]
+  }
+]
+mode: incremental {}

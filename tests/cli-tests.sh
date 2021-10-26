@@ -243,6 +243,12 @@ test_warn_public() {
 }
 
 
+test_self_offset() {
+  do_zeolite -p "$ZEOLITE_PATH" -r tests/self-offset -f
+  do_zeolite -p "$ZEOLITE_PATH" -t tests/self-offset
+}
+
+
 test_templates() {
   execute rm -f $ZEOLITE_PATH/tests/templates/Extension_*.cpp
   do_zeolite -p "$ZEOLITE_PATH" --templates tests/templates
@@ -416,6 +422,7 @@ ALL_TESTS=(
   test_module_only3
   test_module_only4
   test_warn_public
+  test_self_offset
   test_templates
   test_show_deps
   test_fast_static
