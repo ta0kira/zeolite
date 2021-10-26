@@ -1,6 +1,6 @@
 # Revision history for zeolite-lang
 
-## 0.19.0.0  -- ????-??-??
+## 0.19.0.0  -- 2021-10-25
 
 ### Compiler CLI
 
