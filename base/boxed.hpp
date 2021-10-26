@@ -30,7 +30,7 @@ limitations under the License.
 namespace zeolite_internal {
 
 struct UnionValue {
-  enum class Type {
+  enum class Type : char {
     EMPTY,
     BOOL,
     CHAR,
@@ -57,8 +57,8 @@ struct UnionValue {
     PrimChar  as_char_;
     PrimInt   as_int_;
     PrimFloat as_float_;
-  } value_;
-};
+  } __attribute__((packed)) value_;
+} __attribute__((packed));
 
 
 class BoxedValue {
@@ -136,7 +136,7 @@ class BoxedValue {
   void Cleanup();
 
   UnionValue union_;
-};
+} __attribute__((packed));
 
 
 class WeakValue {
@@ -161,7 +161,7 @@ class WeakValue {
   void Cleanup();
 
   UnionValue union_;
-};
+} __attribute__((packed));
 
 }  // namespace zeolite_internal
 
