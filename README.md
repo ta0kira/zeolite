@@ -24,7 +24,6 @@ extension to view the
 of this document.
 
 ## Table of Contents
-
 - [Project Status](#project-status)
 - [Language Overview](#language-overview)
   - [Programming Paradigms](#programming-paradigms)
@@ -56,7 +55,6 @@ of this document.
   - [Other Features](#other-features)
     - [Meta Types](#meta-types)
     - [Runtime Type Reduction](#runtime-type-reduction)
-    - [Internal Type Parameters](#internal-type-parameters)
   - [Builtins](#builtins)
     - [Builtin Types](#builtin-types)
     - [Builtin Constants](#builtin-constants)
@@ -75,7 +73,6 @@ of this document.
   - [Expression Macros](#expression-macros)
 - [Known Language Limitations](#known-language-limitations)
   - [Arbitrary Recursion in Types](#arbitrary-recursion-in-types)
-  - [`weak` References](#weak-references)
 
 ## Project Status
 
