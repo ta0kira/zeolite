@@ -93,48 +93,6 @@ std::string UnionValue::CategoryName() const {
   }
 }
 
-BoxedValue::BoxedValue(const BoxedValue& other)
-  : union_(other.union_) {
-  switch (union_.type_) {
-    case UnionValue::Type::BOXED:
-      ++union_.value_.as_pointer_->strong_;
-      break;
-    default:
-      break;
-  }
-}
-
-BoxedValue& BoxedValue::operator = (const BoxedValue& other) {
-  if (&other != this) {
-    Cleanup();
-    union_ = other.union_;
-    switch (union_.type_) {
-      case UnionValue::Type::BOXED:
-        ++union_.value_.as_pointer_->strong_;
-        break;
-      default:
-        break;
-    }
-  }
-  return *this;
-}
-
-BoxedValue::BoxedValue(BoxedValue&& other)
-  : union_(other.union_) {
-  other.union_.type_  = UnionValue::Type::EMPTY;
-  other.union_.value_.as_pointer_ = nullptr;
-}
-
-BoxedValue& BoxedValue::operator = (BoxedValue&& other) {
-  if (&other != this) {
-    Cleanup();
-    union_ = other.union_;
-    other.union_.type_  = UnionValue::Type::EMPTY;
-    other.union_.value_.as_pointer_ = nullptr;
-  }
-  return *this;
-}
-
 BoxedValue::BoxedValue(const WeakValue& other)
   : union_(other.union_) {
   switch (union_.type_) {
@@ -154,68 +112,8 @@ BoxedValue::BoxedValue(const WeakValue& other)
   }
 }
 
-BoxedValue::BoxedValue(bool value)
-  : union_{ .type_ = UnionValue::Type::BOOL, .value_ = { .as_bool_ = value } } {}
-
-BoxedValue::BoxedValue(PrimChar value)
-  : union_{ .type_ = UnionValue::Type::CHAR, .value_ = { .as_char_ = value } } {}
-
-BoxedValue::BoxedValue(PrimInt value)
-  : union_{ .type_ = UnionValue::Type::INT, .value_ = { .as_int_ = value } } {}
-
-BoxedValue::BoxedValue(PrimFloat value)
-  : union_{ .type_ = UnionValue::Type::FLOAT, .value_ = { .as_float_ = value } } {}
-
-BoxedValue::~BoxedValue() {
-  Cleanup();
-}
-
 void BoxedValue::Validate(const std::string& name) const {
   zeolite_internal::Validate(name, union_);
-}
-
-bool BoxedValue::AsBool() const {
-  switch (union_.type_) {
-    case UnionValue::Type::BOOL:
-      return union_.value_.as_bool_;
-    default:
-      FAIL() << union_.CategoryName() << " is not a Bool value";
-      __builtin_unreachable();
-      break;
-  }
-}
-
-PrimChar BoxedValue::AsChar() const {
-  switch (union_.type_) {
-    case UnionValue::Type::CHAR:
-      return union_.value_.as_char_;
-    default:
-      FAIL() << union_.CategoryName() << " is not a Char value";
-      __builtin_unreachable();
-      break;
-  }
-}
-
-PrimInt BoxedValue::AsInt() const {
-  switch (union_.type_) {
-    case UnionValue::Type::INT:
-      return union_.value_.as_int_;
-    default:
-      FAIL() << union_.CategoryName() << " is not an Int value";
-      __builtin_unreachable();
-      break;
-  }
-}
-
-PrimFloat BoxedValue::AsFloat() const {
-  switch (union_.type_) {
-    case UnionValue::Type::FLOAT:
-      return union_.value_.as_float_;
-    default:
-      FAIL() << union_.CategoryName() << " is not a Float value";
-      __builtin_unreachable();
-      break;
-  }
 }
 
 const PrimString& BoxedValue::AsString() const {
@@ -244,28 +142,6 @@ PrimCharBuffer& BoxedValue::AsCharBuffer() const {
       __builtin_unreachable();
       break;
   }
-}
-
-// static
-bool BoxedValue::Present(const BoxedValue& target) {
-  return target.union_.type_ != UnionValue::Type::EMPTY;
-}
-
-// static
-BoxedValue BoxedValue::Require(const BoxedValue& target) {
-  switch (target.union_.type_) {
-    case UnionValue::Type::EMPTY:
-      FAIL() << "Cannot require empty value";
-      __builtin_unreachable();
-      break;
-    default:
-      return target;
-  }
-}
-
-// static
-BoxedValue BoxedValue::Strong(const WeakValue& target) {
-  return BoxedValue(target);
 }
 
 ReturnTuple BoxedValue::Dispatch(

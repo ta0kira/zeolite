@@ -66,15 +66,59 @@ class BoxedValue {
   constexpr BoxedValue()
     : union_{ .type_ = UnionValue::Type::EMPTY, .value_ = { .as_pointer_ = nullptr } } {}
 
-  BoxedValue(const BoxedValue&);
-  BoxedValue& operator = (const BoxedValue&);
-  BoxedValue(BoxedValue&&);
-  BoxedValue& operator = (BoxedValue&&);
+  inline BoxedValue(const BoxedValue& other)
+    : union_(other.union_) {
+    switch (union_.type_) {
+      case UnionValue::Type::BOXED:
+        ++union_.value_.as_pointer_->strong_;
+        break;
+      default:
+        break;
+    }
+  }
 
-  BoxedValue(bool value);
-  BoxedValue(PrimChar value);
-  BoxedValue(PrimInt value);
-  BoxedValue(PrimFloat value);
+  inline BoxedValue& operator = (const BoxedValue& other) {
+    if (&other != this) {
+      Cleanup();
+      union_ = other.union_;
+      switch (union_.type_) {
+        case UnionValue::Type::BOXED:
+          ++union_.value_.as_pointer_->strong_;
+          break;
+        default:
+          break;
+      }
+    }
+    return *this;
+  }
+
+  inline BoxedValue(BoxedValue&& other)
+    : union_(other.union_) {
+    other.union_.type_  = UnionValue::Type::EMPTY;
+    other.union_.value_.as_pointer_ = nullptr;
+  }
+
+  inline BoxedValue& operator = (BoxedValue&& other) {
+    if (&other != this) {
+      Cleanup();
+      union_ = other.union_;
+      other.union_.type_  = UnionValue::Type::EMPTY;
+      other.union_.value_.as_pointer_ = nullptr;
+    }
+    return *this;
+  }
+
+  inline BoxedValue(bool value)
+    : union_{ .type_ = UnionValue::Type::BOOL, .value_ = { .as_bool_ = value } } {}
+
+  inline BoxedValue(PrimChar value)
+    : union_{ .type_ = UnionValue::Type::CHAR, .value_ = { .as_char_ = value } } {}
+
+  inline BoxedValue(PrimInt value)
+    : union_{ .type_ = UnionValue::Type::INT, .value_ = { .as_int_ = value } } {}
+
+  inline BoxedValue(PrimFloat value)
+    : union_{ .type_ = UnionValue::Type::FLOAT, .value_ = { .as_float_ = value } } {}
 
   template<class T, class... As>
   static inline BoxedValue New(const As&... args) {
@@ -88,21 +132,77 @@ class BoxedValue {
     return new_value;
   }
 
-  ~BoxedValue();
+  inline ~BoxedValue() {
+    Cleanup();
+  }
+
+  inline bool AsBool() const {
+    switch (union_.type_) {
+      case UnionValue::Type::BOOL:
+        return union_.value_.as_bool_;
+      default:
+        FAIL() << union_.CategoryName() << " is not a Bool value";
+        __builtin_unreachable();
+        break;
+    }
+  }
+
+  inline PrimChar AsChar() const {
+    switch (union_.type_) {
+      case UnionValue::Type::CHAR:
+        return union_.value_.as_char_;
+      default:
+        FAIL() << union_.CategoryName() << " is not a Char value";
+        __builtin_unreachable();
+        break;
+    }
+  }
+
+  inline PrimInt AsInt() const {
+    switch (union_.type_) {
+      case UnionValue::Type::INT:
+        return union_.value_.as_int_;
+      default:
+        FAIL() << union_.CategoryName() << " is not an Int value";
+        __builtin_unreachable();
+        break;
+    }
+  }
+
+  inline PrimFloat AsFloat() const {
+    switch (union_.type_) {
+      case UnionValue::Type::FLOAT:
+        return union_.value_.as_float_;
+      default:
+        FAIL() << union_.CategoryName() << " is not a Float value";
+        __builtin_unreachable();
+        break;
+    }
+  }
+
+  inline static bool Present(const BoxedValue& target) {
+    return target.union_.type_ != UnionValue::Type::EMPTY;
+  }
+
+  inline static BoxedValue Require(const BoxedValue& target) {
+    switch (target.union_.type_) {
+      case UnionValue::Type::EMPTY:
+        FAIL() << "Cannot require empty value";
+        __builtin_unreachable();
+        break;
+      default:
+        return target;
+    }
+  }
+
+  inline static BoxedValue Strong(const WeakValue& target) {
+    return BoxedValue(target);
+  }
 
   void Validate(const std::string& name) const;
 
-  bool AsBool() const;
-  PrimChar AsChar() const;
-  PrimInt AsInt() const;
-  PrimFloat AsFloat() const;
-
   const PrimString& AsString() const;
   PrimCharBuffer& AsCharBuffer() const;
-
-  static bool Present(const BoxedValue& target);
-  static BoxedValue Require(const BoxedValue& target);
-  static BoxedValue Strong(const WeakValue& target);
 
  private:
   friend class ::TypeValue;
