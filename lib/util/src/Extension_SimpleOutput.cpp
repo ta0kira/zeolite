@@ -30,9 +30,9 @@ namespace ZEOLITE_PUBLIC_NAMESPACE {
 #endif  // ZEOLITE_PUBLIC_NAMESPACE
 
 namespace {
-extern const BoxedValue& Var_stdout;
-extern const BoxedValue& Var_stderr;
-extern const BoxedValue& Var_error;
+extern const BoxedValue Var_stdout;
+extern const BoxedValue Var_stderr;
+extern const BoxedValue Var_error;
 }  // namespace
 
 struct ExtCategory_SimpleOutput : public Category_SimpleOutput {
@@ -118,9 +118,9 @@ class ErrorWriter : public Writer {
   std::ostringstream output;
 };
 
-const BoxedValue& Var_stdout = *new BoxedValue(BoxedValue::New<ExtValue_SimpleOutput>(CreateType_SimpleOutput(Params<0>::Type()), S_get(new StreamWriter(std::cout))));
-const BoxedValue& Var_stderr = *new BoxedValue(BoxedValue::New<ExtValue_SimpleOutput>(CreateType_SimpleOutput(Params<0>::Type()), S_get(new StreamWriter(std::cerr))));
-const BoxedValue& Var_error  = *new BoxedValue(BoxedValue::New<ExtValue_SimpleOutput>(CreateType_SimpleOutput(Params<0>::Type()), S_get(new ErrorWriter())));
+const BoxedValue Var_stdout = BoxedValue::New<ExtValue_SimpleOutput>(CreateType_SimpleOutput(Params<0>::Type()), S_get(new StreamWriter(std::cout)));
+const BoxedValue Var_stderr = BoxedValue::New<ExtValue_SimpleOutput>(CreateType_SimpleOutput(Params<0>::Type()), S_get(new StreamWriter(std::cerr)));
+const BoxedValue Var_error  = BoxedValue::New<ExtValue_SimpleOutput>(CreateType_SimpleOutput(Params<0>::Type()), S_get(new ErrorWriter()));
 
 }  // namespace
 

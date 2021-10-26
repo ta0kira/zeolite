@@ -29,7 +29,7 @@ namespace ZEOLITE_PUBLIC_NAMESPACE {
 #endif  // ZEOLITE_PUBLIC_NAMESPACE
 
 namespace {
-extern const BoxedValue& Var_stdin;
+extern const BoxedValue Var_stdin;
 }  // namespace
 
 struct ExtCategory_SimpleInput : public Category_SimpleInput {
@@ -75,7 +75,7 @@ struct ExtValue_SimpleInput : public Value_SimpleInput {
 };
 
 namespace {
-const BoxedValue& Var_stdin = *new BoxedValue(BoxedValue::New<ExtValue_SimpleInput>(CreateType_SimpleInput(Params<0>::Type()), ArgTuple()));
+const BoxedValue Var_stdin = BoxedValue::New<ExtValue_SimpleInput>(CreateType_SimpleInput(Params<0>::Type()), ArgTuple());
 }  // namespace
 
 Category_SimpleInput& CreateCategory_SimpleInput() {

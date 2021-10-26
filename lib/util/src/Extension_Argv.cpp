@@ -26,7 +26,7 @@ namespace ZEOLITE_PUBLIC_NAMESPACE {
 #endif  // ZEOLITE_PUBLIC_NAMESPACE
 
 namespace {
-extern const BoxedValue& Var_global;
+extern const BoxedValue Var_global;
 }  // namespace
 
 struct ExtCategory_Argv : public Category_Argv {
@@ -76,7 +76,7 @@ struct ExtValue_Argv : public Value_Argv {
 };
 
 namespace {
-const BoxedValue& Var_global = *new BoxedValue(BoxedValue::New<ExtValue_Argv>(CreateType_Argv(Params<0>::Type()), 0, -1));
+const BoxedValue Var_global = BoxedValue::New<ExtValue_Argv>(CreateType_Argv(Params<0>::Type()), 0, -1);
 }  // namespace
 
 Category_Argv& CreateCategory_Argv() {
