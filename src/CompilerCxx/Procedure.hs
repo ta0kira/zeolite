@@ -128,15 +128,14 @@ compileExecutableProcedure cxxType ctx
                 _ -> ""
     proto
       | s == CategoryScope =
-        returnType ++ " " ++ prefix ++ name ++ "(const ParamTuple& params, const ValueTuple& args)" ++ final ++ " {"
+        "ReturnTuple " ++ prefix ++ name ++ "(const ParamTuple& params, const ValueTuple& args)" ++ final ++ " {"
       | s == TypeScope =
-        returnType ++ " " ++ prefix ++ name ++
+        "ReturnTuple " ++ prefix ++ name ++
         "(const S<TypeInstance>& Param_self, const ParamTuple& params, const ValueTuple& args)" ++ final ++ " {"
       | s == ValueScope =
-        returnType ++ " " ++ prefix ++ name ++
+        "ReturnTuple " ++ prefix ++ name ++
         "(const ParamTuple& params, const ValueTuple& args)" ++ final ++ " {"
       | otherwise = undefined
-    returnType = "ReturnTuple"
     setProcedureTrace
       | any isNoTrace pragmas = return []
       | otherwise             = return [startFunctionTracing (scName ctx) ff]
@@ -148,7 +147,7 @@ compileExecutableProcedure cxxType ctx
       | otherwise = return [showCreationTrace]
     defineReturns
       | isUnnamedReturns rs2 = []
-      | otherwise            = [returnType ++ " returns(" ++ show (length $ pValues rs1) ++ ");"]
+      | otherwise            = ["ReturnTuple returns(" ++ show (length $ pValues rs1) ++ ");"]
     nameParams = flip map (zip ([0..] :: [Int]) $ pValues ps1) $
       (\(i,p2) -> paramType ++ " " ++ paramName (vpParam p2) ++ " = params.At(" ++ show i ++ ");")
     nameArgs = flip map (zip ([0..] :: [Int]) $ filter (not . isDiscardedInput . snd) $ zip (pValues as1) (pValues $ avNames as2)) $
@@ -1143,7 +1142,7 @@ doImplicitReturn c = do
   csSetJumpType c JumpReturn
   csWrite ss
   if not named
-     then csWrite ["return ReturnTuple(0);"]
+     then csWrite ["return ReturnTuple();"]
      else do
        getPrimNamedReturns
        csWrite ["return returns;"]
