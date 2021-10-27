@@ -26,11 +26,16 @@ define Sorting {
   }
 
   reverse (seq) {
-    traverse (Counter.zeroIndexed(seq.size()/2) -> Int i) {
+    scoped {
+      Int i <- seq.size()/2-1
+    } in while (i >= 0) {
+      $ReadOnly[i]$
       Int j <- seq.size()-i-1
       #x temp <- seq.readAt(i)
       \ seq.writeAt(i,seq.readAt(j))
       \ seq.writeAt(j,temp)
+    } update {
+      i <- i-1
     }
   }
 }
@@ -55,15 +60,24 @@ define HeapSort {
   @value execute () -> ()
   execute () { $NoTrace$
     // Convert the container to a heap.
-    traverse (Counter.revZeroIndexed(seq.size()/2) -> Int i) {
+    scoped {
+      Int i <- seq.size()/2-1
+    } in while (i >= 0) {
+      $ReadOnly[i]$
       \ sift(i,seq.size())
+    } update {
+      i <- i-1
     }
 
     // Traverse the heap and populate the container in place.
-    traverse (Counter.revZeroIndexed(seq.size()) -> Int i) {
+    scoped {
+      Int i <- seq.size()-1
+    } in while (i >= 0) {
       $ReadOnly[i]$
       \ swap(0,i)
       \ sift(0,i)
+    } update {
+      i <- i-1
     }
   }
 
