@@ -245,7 +245,7 @@ class ReturnTuple : public ValueTuple {
   }
 
   ReturnTuple(ReturnTuple&&) = default;
-  ReturnTuple& operator = (ReturnTuple&&);
+  ReturnTuple& operator =(ReturnTuple&&) = default;
 
   int Size() const final;
   BoxedValue& At(int pos);

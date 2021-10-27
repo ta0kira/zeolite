@@ -71,6 +71,7 @@ class PoolArray {
 
   PoolArray& operator = (PoolArray&& other) {
     if (&other != this) {
+      PoolManager<T>::Return(array_, size_);
       size_  = other.size_;
       array_ = other.array_;
       other.size_  = 0;
