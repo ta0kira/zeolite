@@ -245,7 +245,8 @@ class ReturnTuple : public ValueTuple {
   }
 
   ReturnTuple(ReturnTuple&&) = default;
-  ReturnTuple& operator =(ReturnTuple&&) = default;
+
+  void TransposeFrom(ReturnTuple&& other);
 
   int Size() const final;
   BoxedValue& At(int pos);
@@ -254,6 +255,7 @@ class ReturnTuple : public ValueTuple {
 
  private:
   ReturnTuple(const ReturnTuple&) = delete;
+  ReturnTuple& operator =(ReturnTuple&&) = delete;
   ReturnTuple& operator =(const ReturnTuple&) = delete;
   void* operator new(std::size_t size) = delete;
 

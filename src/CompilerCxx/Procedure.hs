@@ -1160,7 +1160,7 @@ autoPositionalCleanup c e = do
      else do
        if named
           then do
-            csWrite ["returns = " ++ useAsReturns e ++ ";"]
+            csWrite ["returns.TransposeFrom(" ++ useAsReturns e ++ ");"]
             setPrimNamedReturns
             csWrite ss
             csWrite ["return returns;"]

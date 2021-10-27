@@ -42,6 +42,16 @@ const BoxedValue& ArgTuple::Only() const {
   return *data_[0];
 }
 
+void ReturnTuple::TransposeFrom(ReturnTuple&& other) {
+  if (Size() != other.Size()) {
+    FAIL() << "ReturnTuple size mismatch in assignment: " << Size()
+           << " (expected) " << other.Size() << " (actual)";
+  }
+  for (int i = 0; i < Size(); ++i) {
+    At(i) = std::move(other.At(i));
+  }
+}
+
 int ReturnTuple::Size() const {
   return data_.Size();
 }
