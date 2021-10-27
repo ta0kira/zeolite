@@ -80,6 +80,25 @@ unittest withUpdate {
   \ Testing.checkEquals<?>(total,20)
 }
 
+unittest overwriteVisibleValue {
+  Int i <- 10
+  traverse (Counter.zeroIndexed(5) -> i) {
+    // i shouldn't be overwritten after the last iteration.
+    i <- 0
+  }
+  \ Testing.checkEquals<?>(i,0)
+}
+
+unittest overwriteLocalValue {
+  traverse (Counter.zeroIndexed(5) -> Int i) {
+    // i should be visible within this scope.
+    i <- 0
+  } update {
+    // j should also be visible here.
+    \ Testing.checkEquals<?>(i,0)
+  }
+}
+
 concrete Counter {
   refines Order<Int>
 
