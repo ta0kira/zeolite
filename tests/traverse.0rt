@@ -94,7 +94,7 @@ unittest overwriteLocalValue {
     // i should be visible within this scope.
     i <- 0
   } update {
-    // j should also be visible here.
+    // i should also be visible here.
     \ Testing.checkEquals<?>(i,0)
   }
 }
