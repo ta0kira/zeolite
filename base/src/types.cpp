@@ -104,7 +104,6 @@ static inline P* PoolTakeCommon(std::atomic_flag& flag,
     pool = storage->next;
     flag.clear(std::memory_order_release);
     storage->next = nullptr;
-    new (storage->data()) typename P::Managed[storage->size];
     return storage;
   }
 }
@@ -145,9 +144,9 @@ typename PoolManager<BoxedValue>::PoolEntry* PoolManager<BoxedValue>::Take(int o
   }
   PoolEntry* storage = nullptr;
   if (size == 4 && (storage = PoolTakeCommon(pool4_flag_, pool4_, pool4_size_))) {
-    return storage;
+  } else {
+    storage = new (new unsigned char[sizeof(PoolEntry) + size*sizeof(Managed)]) PoolEntry(size, nullptr);
   }
-  storage = new (new unsigned char[sizeof(PoolEntry) + size*sizeof(Managed)]) PoolEntry(size, nullptr);
   new (storage->data()) Managed[orig_size];
   return storage;
 }
@@ -179,9 +178,9 @@ typename PoolManager<const BoxedValue*>::PoolEntry* PoolManager<const BoxedValue
   }
   PoolEntry* storage = nullptr;
   if (size == 4 && (storage = PoolTakeCommon(pool4_flag_, pool4_, pool4_size_))) {
-    return storage;
+  } else {
+    storage = new (new unsigned char[sizeof(PoolEntry) + size*sizeof(Managed)]) PoolEntry(size, nullptr);
   }
-  storage = new (new unsigned char[sizeof(PoolEntry) + size*sizeof(Managed)]) PoolEntry(size, nullptr);
   new (storage->data()) Managed[orig_size];
   return storage;
 }
@@ -213,9 +212,9 @@ typename PoolManager<S<TypeInstance>>::PoolEntry* PoolManager<S<TypeInstance>>::
   }
   PoolEntry* storage = nullptr;
   if (size == 4 && (storage = PoolTakeCommon(pool4_flag_, pool4_, pool4_size_))) {
-    return storage;
+  } else {
+    storage = new (new unsigned char[sizeof(PoolEntry) + size*sizeof(Managed)]) PoolEntry(size, nullptr);
   }
-  storage = new (new unsigned char[sizeof(PoolEntry) + size*sizeof(Managed)]) PoolEntry(size, nullptr);
   new (storage->data()) Managed[orig_size];
   return storage;
 }
