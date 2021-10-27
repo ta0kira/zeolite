@@ -7,6 +7,8 @@
 * **[behavior]** Reduces memory size of `Bool`, `Char`, `Float`, `Int`, and
   references to all other value objects.
 
+* **[behavior]** Efficiency improvements for passing values in function calls.
+
 ## 0.19.0.0  -- 2021-10-25
 
 ### Compiler CLI
