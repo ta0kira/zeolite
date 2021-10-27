@@ -181,16 +181,14 @@ typename PoolManager<const BoxedValue*>::PoolEntry* PoolManager<const BoxedValue
   } else {
     storage = new (new unsigned char[sizeof(PoolEntry) + size*sizeof(Managed)]) PoolEntry(size, nullptr);
   }
-  new (storage->data()) Managed[orig_size];
+  // NOTE: Skipping constructor calls since pointers are trivial.
   return storage;
 }
 
 // static
 void PoolManager<const BoxedValue*>::Return(PoolEntry* storage, int orig_size) {
   if (!storage) return;
-  for (int i = 0; i < orig_size; ++i) {
-    storage->data()[i].~Managed();
-  }
+  // NOTE: Skipping destructor calls since pointers are trivial.
   if (storage->size == 4 && PoolReturnCommon(storage, pool4_flag_, pool4_, pool4_size_, pool_limit_)) {
     return;
   }
