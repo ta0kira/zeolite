@@ -17,43 +17,100 @@ limitations under the License.
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
 define Counter {
-  $ReadOnly[limit,incr]$
+  zeroIndexed (max) {
+    return ForwardCounter.new(max)
+  }
+
+  revZeroIndexed (max) {
+    return ReverseCounter.new(max)
+  }
+
+  unlimited () {
+    return UnlimitedCounter.new()
+  }
+}
+
+concrete ForwardCounter {
+  @type new (Int) -> (optional Order<Int>)
+}
+
+define ForwardCounter {
+  $ReadOnly[limit]$
 
   refines Order<Int>
 
   @value Int current
-  @value optional Int limit
-  @value Int incr
+  @value Int limit
 
-  zeroIndexed (max) {
-    if (max <= 0) {
-      return empty
+  new (max) {
+    if (max > 0) {
+      return #self{ 0, max }
     } else {
-      return Counter{ 0, max, 1 }
-    }
-  }
-
-  revZeroIndexed (max) {
-    if (max <= 0) {
       return empty
-    } else {
-      return Counter{ max-1, -1, -1 }
     }
-  }
-
-  unlimited () {
-    return Counter{ 0, empty, 1 }
   }
 
   next () {
-    if (!present(limit) ||
-        (incr < 0 && current+incr > require(limit)) ||
-        (incr > 0 && current+incr < require(limit))) {
-      current <- current+incr
+    if (current < limit-1) {
+      current <- current+1
       return self
     } else {
       return empty
     }
+  }
+
+  get () {
+    return current
+  }
+}
+
+concrete ReverseCounter {
+  @type new (Int) -> (optional Order<Int>)
+}
+
+define ReverseCounter {
+  refines Order<Int>
+
+  @value Int current
+
+  new (max) {
+    if (max > 0) {
+      return #self{ max-1 }
+    } else {
+      return empty
+    }
+  }
+
+  next () {
+    if (current > 0) {
+      current <- current-1
+      return self
+    } else {
+      return empty
+    }
+  }
+
+  get () {
+    return current
+  }
+}
+
+concrete UnlimitedCounter {
+  @type new () -> (optional Order<Int>)
+}
+
+define UnlimitedCounter {
+  refines Order<Int>
+
+  @value Int current
+
+  new () {
+    return #self{ 0 }
+  }
+
+  next () {
+    current <- current+1
+    return self
   }
 
   get () {
