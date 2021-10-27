@@ -12,8 +12,8 @@
 * **[behavior]** Skips calling `get` in `traverse` if the value is discarded.
 
   ```text
-  // The _ suppresses the call to Order.get.
-  traverse (Order.zeroIndexed(100) -> _) {
+  // The _ suppresses the call to get() on the returned Order<Int> value.
+  traverse (Counter.zeroIndexed(100) -> _) {
     // ...
   }
   ```
