@@ -9,6 +9,15 @@
 
 * **[behavior]** Efficiency improvements for passing values in function calls.
 
+* **[behavior]** Skips calling `get` in `traverse` if the value is discarded.
+
+  ```text
+  // The _ suppresses the call to Order.get.
+  traverse (Order.zeroIndexed(100) -> _) {
+    // ...
+  }
+  ```
+
 ## 0.19.0.0  -- 2021-10-25
 
 ### Compiler CLI

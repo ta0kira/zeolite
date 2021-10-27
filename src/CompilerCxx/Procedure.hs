@@ -454,12 +454,12 @@ compileIteratedLoop (TraverseLoop c1 e c2 a (Procedure c3 ss) u) = "In compilati
   let callGet  = Expression c2 currExpr [ValueCall c2 $ FunctionCall c2 (FunctionName "get")  (Positional []) (Positional [])]
   (Positional [typeGet],exprNext) <- compileExpression callNext
   when (typeGet /= currType) $ compilerErrorM $ "Unexpected return type from next(): " ++ show typeGet ++ " (expected) " ++ show currType ++ " (actual)"
-  let assnGet = Assignment c2 (Positional [a]) callGet
+  let assnGet = if isAssignableDiscard a then [] else [Assignment c2 (Positional [a]) callGet]
   csAddRequired $ categoriesFromTypes $ vtType currType
   compileStatement $ NoValueExpression [] $ WithScope $ ScopedBlock []
     (Procedure [] [RawCodeLine $ variableStoredType currType ++ " " ++ currVar ++ " = " ++ writeStoredVariable currType e' ++ ";"]) Nothing []
     (NoValueExpression [] $ Loop $ WhileLoop [] (Expression [] currPresent [])
-      (Procedure c3 (assnGet:(ss ++ update)))
+      (Procedure c3 (assnGet ++ ss ++ update))
       (Just $ Procedure [] [RawCodeLine $ currVar ++ " = " ++ writeStoredVariable currType exprNext ++ ";"]))
     where
       update = case u of

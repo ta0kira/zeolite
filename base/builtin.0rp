@@ -216,8 +216,9 @@ concrete CharBuffer {
 //
 // Example:
 //
-//   traverse (someIntOrder -> Int i) {
-//     // code that uses index i
+//   // defaultOrder() returns optional Order<Char> for traverse to use.
+//   traverse ("letters".defaultOrder() -> Char c) {
+//     // code that uses Char c
 //   }
 @value interface Order<|#x> {
   // Returns an updated instance, or empty if the end was reached.
@@ -229,6 +230,11 @@ concrete CharBuffer {
   next () -> (optional #self)
 
   // Returns the value at the current position.
+  //
+  // Notes:
+  // - If the value is discarded in traverse with -> _ then the call to get will
+  //   be skipped; therefore, get should not have side-effects.
+  // - This should not generally be used directly; use the traverse built-in.
   get () -> (#x)
 }
 
