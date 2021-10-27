@@ -51,7 +51,6 @@ module Types.Procedure (
   getOperatorContext,
   getOperatorName,
   getStatementContext,
-  isAssignableDiscard,
   isDiscardedInput,
   isFunctionOperator,
   isNoTrace,
@@ -208,10 +207,6 @@ assignableName :: Assignable c -> VariableName
 assignableName (CreateVariable _ _ n)              = n
 assignableName (ExistingVariable (InputValue _ n)) = n
 assignableName _                                   = discardInputName
-
-isAssignableDiscard :: Assignable c -> Bool
-isAssignableDiscard (CreateVariable _ _ _) = False
-isAssignableDiscard (ExistingVariable v)   = isDiscardedInput v
 
 data VoidExpression c =
   Conditional (IfElifElse c) |

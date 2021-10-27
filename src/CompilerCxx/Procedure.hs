@@ -315,7 +315,7 @@ compileStatement (Assignment c as e) = message ??> do
       scoped <- autoScope s
       csWrite [scoped ++ variableName n ++ " = " ++ writeStoredVariable t e2 ++ ";"]
     assignSingle (_,_,ExistingVariable (DiscardInput _)) e2 = do
-      csWrite ["(void)" ++ useAsWhatever e2 ++ ";"]
+      csWrite ["(void) (" ++ useAsWhatever e2 ++ ");"]
     assignMulti (i,t,CreateVariable _ _ n) =
       csWrite [variableName n ++ " = " ++
                writeStoredVariable t (UnwrappedSingle $ "r.At(" ++ show i ++ ")") ++ ";"]
