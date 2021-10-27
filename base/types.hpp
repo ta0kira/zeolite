@@ -190,7 +190,7 @@ class PoolManager<BoxedValue> {
   template<class> friend class PoolArray;
 
   static PoolEntry* Take(int size);
-  static void Return(PoolEntry* storage);
+  static void Return(PoolEntry* storage, int size);
 
   static constexpr unsigned int pool_limit_ = 256;
   static unsigned int pool4_size_;
@@ -206,7 +206,7 @@ class PoolManager<const BoxedValue*> {
   template<class> friend class PoolArray;
 
   static PoolEntry* Take(int size);
-  static void Return(PoolEntry* storage);
+  static void Return(PoolEntry* storage, int size);
 
   static constexpr unsigned int pool_limit_ = 256;
   static unsigned int pool4_size_;
@@ -222,7 +222,7 @@ class PoolManager<S<TypeInstance>> {
   template<class> friend class PoolArray;
 
   static PoolEntry* Take(int size);
-  static void Return(PoolEntry* storage);
+  static void Return(PoolEntry* storage, int size);
 
   static constexpr unsigned int pool_limit_ = 256;
   static unsigned int pool4_size_;
@@ -235,12 +235,12 @@ class PoolManager<S<TypeInstance>> {
 
 class ReturnTuple : public ValueTuple {
  public:
-  constexpr ReturnTuple() : size_(0), data_() {}
+  constexpr ReturnTuple() : data_() {}
 
-  ReturnTuple(int size) : size_(size), data_(size_) {}
+  ReturnTuple(int size) : data_(size) {}
 
   template<class...Ts>
-  explicit ReturnTuple(Ts... returns) : size_(sizeof...(Ts)), data_(size_) {
+  explicit ReturnTuple(Ts... returns) : data_(sizeof...(Ts)) {
     data_.Init(std::move(returns)...);
   }
 
@@ -257,16 +257,15 @@ class ReturnTuple : public ValueTuple {
   ReturnTuple& operator =(const ReturnTuple&) = delete;
   void* operator new(std::size_t size) = delete;
 
-  int size_;
   zeolite_internal::PoolArray<BoxedValue> data_;
 };
 
 class ArgTuple : public ValueTuple {
  public:
-  constexpr ArgTuple() : size_(0), data_() {}
+  constexpr ArgTuple() : data_() {}
 
   template<class...Ts>
-  explicit ArgTuple(const Ts&... args) : size_(sizeof...(Ts)), data_(size_) {
+  explicit ArgTuple(const Ts&... args) : data_(sizeof...(Ts)) {
     data_.Init(&args...);
   }
 
@@ -281,16 +280,15 @@ class ArgTuple : public ValueTuple {
   ArgTuple& operator = (ArgTuple&&) =  delete;
   void* operator new(std::size_t size) = delete;
 
-  int size_;
   zeolite_internal::PoolArray<const BoxedValue*> data_;
 };
 
 class ParamTuple {
  public:
-  constexpr ParamTuple() : size_(0), data_() {}
+  constexpr ParamTuple() : data_() {}
 
   template<class...Ts>
-  explicit ParamTuple(const Ts&... params) : size_(sizeof...(Ts)), data_(size_) {
+  explicit ParamTuple(const Ts&... params) : data_(sizeof...(Ts)) {
     data_.Init(std::move(params)...);
   }
 
@@ -305,7 +303,6 @@ class ParamTuple {
   ParamTuple& operator = (ParamTuple&&) = delete;
   void* operator new(std::size_t size) = delete;
 
-  int size_;
   zeolite_internal::PoolArray<S<TypeInstance>> data_;
 };
 

@@ -60,18 +60,27 @@ class PoolArray {
   friend class ::ReturnTuple;
   friend class ::ParamTuple;
 
-  constexpr PoolArray() : array_(nullptr) {}
+  constexpr PoolArray() : size_(0), array_(nullptr) {}
 
-  PoolArray(int size) : array_(PoolManager<T>::Take(size)) {}
+  PoolArray(int size) : size_(size), array_(PoolManager<T>::Take(size_)) {}
 
-  PoolArray(PoolArray&& other) : array_(other.array_) {
+  PoolArray(PoolArray&& other) : size_(other.size_), array_(other.array_) {
+    other.size_  = 0;
     other.array_ = nullptr;
   }
 
   PoolArray& operator = (PoolArray&& other) {
-    array_ = other.array_;
-    other.array_ = nullptr;
+    if (&other != this) {
+      size_  = other.size_;
+      array_ = other.array_;
+      other.size_  = 0;
+      other.array_ = nullptr;
+    }
     return *this;
+  }
+
+  inline int Size() const {
+    return size_;
   }
 
   const T& operator [] (int i) const {
@@ -96,12 +105,13 @@ class PoolArray {
   inline void InitRec(int i) {}
 
   ~PoolArray() {
-    PoolManager<T>::Return(array_);
+    PoolManager<T>::Return(array_, size_);
   }
 
   PoolArray(const PoolArray&) = delete;
   PoolArray& operator = (const PoolArray&) = delete;
 
+  int size_;
   PoolStorage<T>* array_;
 };
 
