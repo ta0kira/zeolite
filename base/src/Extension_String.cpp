@@ -108,30 +108,39 @@ struct ExtType_String : public Type_String {
   }
 };
 
-struct StringOrder final : public AnonymousOrder {
+class StringOrder : public TypeValue {
+ public:
   StringOrder(BoxedValue container, const std::string& s)
-    : AnonymousOrder(container, Function_Order_next, Function_Order_get), value(s) {}
+    : container_(container), value_(s) {}
 
-  BoxedValue Var_self() final {
-    return VAR_SELF;
-  }
+  std::string CategoryName() const final { return "StringOrder"; }
 
-  BoxedValue Call_next(const BoxedValue& self) final {
-    if (index+1 >= value.size()) {
-      return Var_empty;
-    } else {
-      ++index;
-      return self;
+  ReturnTuple Dispatch(const ValueFunction& label,
+                       const ParamTuple& params,
+                       const ValueTuple& args) final {
+    if (&label == &Function_Order_next) {
+      TRACE_FUNCTION("StringOrder.next")
+      if (index_+1 >= value_.size()) {
+        return ReturnTuple(Var_empty);
+      } else {
+        ++index_;
+        return ReturnTuple(VAR_SELF);
+      }
     }
+    if (&label == &Function_Order_get) {
+      TRACE_FUNCTION("StringOrder.get")
+      if (index_ >= value_.size()) {
+        FAIL() << "Iterated past end of String";
+      }
+      return ReturnTuple(Box_Char(value_[index_]));
+    }
+    return TypeValue::Dispatch(label, params, args);
   }
 
-  BoxedValue Call_get(const BoxedValue& self) final {
-    if (index >= value.size()) FAIL() << "Iterated past end of String";
-    return Box_Char(value[index]);
-  }
-
-  const std::string& value;
-  int index = 0;
+ private:
+  const BoxedValue container_;
+  const std::string& value_;
+  int index_ = 0;
 };
 
 struct ExtValue_String : public Value_String {

@@ -75,30 +75,39 @@ struct ExtType_Vector : public Type_Vector {
   inline ExtType_Vector(Category_Vector& p, Params<1>::Type params) : Type_Vector(p, params) {}
 };
 
-struct VectorOrder final : public AnonymousOrder {
+class VectorOrder : public TypeValue {
+ public:
   VectorOrder(BoxedValue container, const VectorType& v)
-    : AnonymousOrder(container, Function_Order_next, Function_Order_get), values(v) {}
+    : container_(container), values_(v) {}
 
-  BoxedValue Var_self() final {
-    return VAR_SELF;
-  }
+  std::string CategoryName() const final { return "VectorOrder"; }
 
-  BoxedValue Call_next(const BoxedValue& self) final {
-    if (index+1 >= values.size()) {
-      return Var_empty;
-    } else {
-      ++index;
-      return self;
+  ReturnTuple Dispatch(const ValueFunction& label,
+                       const ParamTuple& params,
+                       const ValueTuple& args) final {
+    if (&label == &Function_Order_next) {
+      TRACE_FUNCTION("VectorOrder.next")
+      if (index_+1 >= values_.size()) {
+        return ReturnTuple(Var_empty);
+      } else {
+        ++index_;
+        return ReturnTuple(VAR_SELF);
+      }
     }
+    if (&label == &Function_Order_get) {
+      TRACE_FUNCTION("VectorOrder.get")
+      if (index_ >= values_.size()) {
+        FAIL() << "Iterated past end of Vector";
+      }
+      return ReturnTuple(values_[index_]);
+    }
+    return TypeValue::Dispatch(label, params, args);
   }
 
-  BoxedValue Call_get(const BoxedValue& self) final {
-    if (index >= values.size()) FAIL() << "iterated past end of Vector";
-    return values[index];
-  }
-
-  const VectorType& values;
-  int index = 0;
+ private:
+  const BoxedValue container_;
+  const VectorType& values_;
+  int index_ = 0;
 };
 
 struct ExtValue_Vector : public Value_Vector {
