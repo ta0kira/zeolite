@@ -35,7 +35,7 @@ struct ExtCategory_Argv : public Category_Argv {
 struct ExtType_Argv : public Type_Argv {
   inline ExtType_Argv(Category_Argv& p, Params<0>::Type params) : Type_Argv(p, params) {}
 
-  ReturnTuple Call_global(const S<TypeInstance>& Param_self, const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_global(const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("Argv.global")
     return ReturnTuple(Var_global);
   }

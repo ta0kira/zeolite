@@ -72,11 +72,9 @@ procedureDeclaration abstract f = return $ onlyCode func where
     | sfScope f == CategoryScope =
       "ReturnTuple " ++ name ++ "(const ParamTuple& params, const ValueTuple& args)"
     | sfScope f == TypeScope =
-      "ReturnTuple " ++ name ++
-      "(const S<TypeInstance>& Param_self, const ParamTuple& params, const ValueTuple& args)"
+      "ReturnTuple " ++ name ++ "(const ParamTuple& params, const ValueTuple& args)"
     | sfScope f == ValueScope =
-      "ReturnTuple " ++ name ++
-      "(const ParamTuple& params, const ValueTuple& args)"
+      "ReturnTuple " ++ name ++ "(const ParamTuple& params, const ValueTuple& args)"
     | otherwise = undefined
 
 data CxxFunctionType =
@@ -130,11 +128,9 @@ compileExecutableProcedure cxxType ctx
       | s == CategoryScope =
         "ReturnTuple " ++ prefix ++ name ++ "(const ParamTuple& params, const ValueTuple& args)" ++ final ++ " {"
       | s == TypeScope =
-        "ReturnTuple " ++ prefix ++ name ++
-        "(const S<TypeInstance>& Param_self, const ParamTuple& params, const ValueTuple& args)" ++ final ++ " {"
+        "ReturnTuple " ++ prefix ++ name ++ "(const ParamTuple& params, const ValueTuple& args)" ++ final ++ " {"
       | s == ValueScope =
-        "ReturnTuple " ++ prefix ++ name ++
-        "(const ParamTuple& params, const ValueTuple& args)" ++ final ++ " {"
+        "ReturnTuple " ++ prefix ++ name ++ "(const ParamTuple& params, const ValueTuple& args)" ++ final ++ " {"
       | otherwise = undefined
     setProcedureTrace
       | any isNoTrace pragmas = return []
@@ -861,7 +857,7 @@ compileExpressionStart (InitializeValue c t es) = do
           UnwrappedSingle $ valueCreator (tiName t') ++ "(" ++ typeInstance ++ ", " ++ es'' ++ ")")
   where
     getType _  True ValueScope _      = "parent"
-    getType _  True TypeScope  _      = "shared_from_this()"
+    getType _  True TypeScope  _      = "PARAM_SELF"
     getType t2 _    _          params = typeCreator (tiName t2) ++ "(" ++ params ++ ")"
     -- Single expression, but possibly multi-return.
     getValues [(Positional ts,e)] = return (ts,useAsArgs e)
@@ -957,9 +953,9 @@ compileFunctionCall e f (FunctionCall c _ ps es) = message ??> do
     assemble Nothing _ ValueScope ValueScope ps2 es2 =
       return $ callName (sfName f) ++ "(" ++ ps2 ++ ", " ++ es2 ++ ")"
     assemble Nothing _ TypeScope TypeScope ps2 es2 =
-      return $ callName (sfName f) ++ "(Param_self, " ++ ps2 ++ ", " ++ es2 ++ ")"
+      return $ callName (sfName f) ++ "(" ++ ps2 ++ ", " ++ es2 ++ ")"
     assemble Nothing scoped ValueScope TypeScope ps2 es2 =
-      return $ scoped ++ callName (sfName f) ++ "(parent, "++ ps2 ++ ", " ++ es2 ++ ")"
+      return $ scoped ++ callName (sfName f) ++ "(" ++ ps2 ++ ", " ++ es2 ++ ")"
     assemble Nothing scoped _ _ ps2 es2 =
       return $ scoped ++ callName (sfName f) ++ "(" ++ ps2 ++ ", " ++ es2 ++ ")"
     assemble (Just e2) _ _ ValueScope ps2 es2 =

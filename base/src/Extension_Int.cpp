@@ -45,29 +45,29 @@ struct ExtCategory_Int : public Category_Int {
 struct ExtType_Int : public Type_Int {
   inline ExtType_Int(Category_Int& p, Params<0>::Type params) : Type_Int(p, params) {}
 
-  ReturnTuple Call_maxBound(const S<TypeInstance>& Param_self, const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_maxBound(const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("Int.maxBound")
     return ReturnTuple(Box_Int(9223372036854775807LL));
   }
 
-  ReturnTuple Call_minBound(const S<TypeInstance>& Param_self, const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_minBound(const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("Int.minBound")
     return ReturnTuple(Box_Int(-9223372036854775807LL - 1LL));
   }
 
-  ReturnTuple Call_default(const S<TypeInstance>& Param_self, const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_default(const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("Int.default")
     return ReturnTuple(Box_Int(0));
   }
 
-  ReturnTuple Call_equals(const S<TypeInstance>& Param_self, const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_equals(const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("Int.equals")
     const PrimInt Var_arg1 = (args.At(0)).AsInt();
     const PrimInt Var_arg2 = (args.At(1)).AsInt();
     return ReturnTuple(Box_Bool(Var_arg1==Var_arg2));
   }
 
-  ReturnTuple Call_lessThan(const S<TypeInstance>& Param_self, const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_lessThan(const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("Int.lessThan")
     const PrimInt Var_arg1 = (args.At(0)).AsInt();
     const PrimInt Var_arg2 = (args.At(1)).AsInt();

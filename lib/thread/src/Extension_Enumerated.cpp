@@ -161,7 +161,7 @@ struct ExtCategory_EnumeratedBarrier : public Category_EnumeratedBarrier {
 struct ExtType_EnumeratedBarrier : public Type_EnumeratedBarrier {
   inline ExtType_EnumeratedBarrier(Category_EnumeratedBarrier& p, Params<0>::Type params) : Type_EnumeratedBarrier(p, params) {}
 
-  ReturnTuple Call_new(const S<TypeInstance>& Param_self, const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_new(const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("EnumeratedBarrier.new")
     const PrimInt Var_arg1 = (args.At(0)).AsInt();
     if (Var_arg1 < 0) {
@@ -174,7 +174,7 @@ struct ExtType_EnumeratedBarrier : public Type_EnumeratedBarrier {
         CreateType_EnumeratedWait(Params<0>::Type()), barrier, i);
       waits.push_back(wait);
     }
-    return ReturnTuple(CreateValue_EnumeratedBarrier(shared_from_this(), std::move(waits)));
+    return ReturnTuple(CreateValue_EnumeratedBarrier(PARAM_SELF, std::move(waits)));
   }
 };
 

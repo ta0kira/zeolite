@@ -33,9 +33,9 @@ struct ExtCategory_RawFileWriter : public Category_RawFileWriter {
 struct ExtType_RawFileWriter : public Type_RawFileWriter {
   inline ExtType_RawFileWriter(Category_RawFileWriter& p, Params<0>::Type params) : Type_RawFileWriter(p, params) {}
 
-  ReturnTuple Call_open(const S<TypeInstance>& Param_self, const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_open(const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("RawFileWriter.open")
-    return ReturnTuple(CreateValue_RawFileWriter(shared_from_this(), args));
+    return ReturnTuple(CreateValue_RawFileWriter(PARAM_SELF, args));
   }
 };
 

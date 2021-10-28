@@ -36,7 +36,7 @@ struct ExtCategory_MutexLock : public Category_MutexLock {
 struct ExtType_MutexLock : public Type_MutexLock {
   inline ExtType_MutexLock(Category_MutexLock& p, Params<0>::Type params) : Type_MutexLock(p, params) {}
 
-  ReturnTuple Call_lock(const S<TypeInstance>& Param_self, const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_lock(const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("MutexLock.lock")
     return ReturnTuple(CreateValue_MutexLock(CreateType_MutexLock(Params<0>::Type()), args));
   }

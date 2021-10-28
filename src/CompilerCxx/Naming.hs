@@ -105,7 +105,8 @@ mainSourceIncludes :: [String]
 mainSourceIncludes = ["#include \"logging.hpp\""]
 
 paramName :: ParamName -> String
-paramName p = "Param_" ++ tail (show p) -- Remove leading '#'.
+paramName ParamSelf = "PARAM_SELF"
+paramName p         = "Param_" ++ tail (show p) -- Remove leading '#'.
 
 variableName :: VariableName -> String
 variableName VariableSelf = "VAR_SELF"

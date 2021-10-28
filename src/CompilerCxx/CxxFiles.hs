@@ -494,7 +494,7 @@ generateCategoryDefinition testing = common where
       "  std::string CategoryName() const final;",
       "  void BuildTypeName(std::ostream& output) const final;",
       "  bool TypeArgsForParent(const TypeCategory& category, std::vector<S<const TypeInstance>>& args) const final;",
-      "  ReturnTuple Dispatch(const S<TypeInstance>& self, const TypeFunction& label, const ParamTuple& params, const ValueTuple& args) final;",
+      "  ReturnTuple Dispatch(const TypeFunction& label, const ParamTuple& params, const ValueTuple& args) final;",
       "  bool CanConvertFrom(const S<const TypeInstance>& from) const final;"
     ]
   declareValueOverrides = onlyCodes [
@@ -518,7 +518,7 @@ generateCategoryDefinition testing = common where
       createTypeArgsForParent t,
       onlyCode $ "}",
       defineTypeArgGetters t,
-      onlyCode $ "ReturnTuple " ++ className ++ "::Dispatch(const S<TypeInstance>& self, const TypeFunction& label, const ParamTuple& params, const ValueTuple& args) {",
+      onlyCode $ "ReturnTuple " ++ className ++ "::Dispatch(const TypeFunction& label, const ParamTuple& params, const ValueTuple& args) {",
       createFunctionDispatch (getCategoryName t) TypeScope fs,
       onlyCode $ "}",
       onlyCode $ "bool " ++ className ++ "::CanConvertFrom(const S<const TypeInstance>& from) const {",
@@ -735,7 +735,7 @@ createFunctionDispatch n s fs = function where
     | s == CategoryScope = "  using CallType = ReturnTuple(" ++ categoryName n ++
                            "::*)(const ParamTuple&, const ValueTuple&);"
     | s == TypeScope     = "  using CallType = ReturnTuple(" ++ typeName n ++
-                           "::*)(const S<TypeInstance>&, const ParamTuple&, const ValueTuple&);"
+                           "::*)(const ParamTuple&, const ValueTuple&);"
     | s == ValueScope    = "  using CallType = ReturnTuple(" ++ valueName n ++
                            "::*)(const ParamTuple&, const ValueTuple&);"
     | otherwise = undefined
@@ -767,12 +767,12 @@ createFunctionDispatch n s fs = function where
     ]
   args
     | s == CategoryScope = "params, args"
-    | s == TypeScope     = "self, params, args"
+    | s == TypeScope     = "params, args"
     | s == ValueScope    = "params, args"
     | otherwise = undefined
   fallback
     | s == CategoryScope = "  return TypeCategory::Dispatch(label, params, args);"
-    | s == TypeScope     = "  return TypeInstance::Dispatch(self, label, params, args);"
+    | s == TypeScope     = "  return TypeInstance::Dispatch(label, params, args);"
     | s == ValueScope    = "  return TypeValue::Dispatch(label, params, args);"
     | otherwise = undefined
 

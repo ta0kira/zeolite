@@ -40,9 +40,9 @@ struct ExtCategory_ThreadCondition : public Category_ThreadCondition {
 struct ExtType_ThreadCondition : public Type_ThreadCondition {
   inline ExtType_ThreadCondition(Category_ThreadCondition& p, Params<0>::Type params) : Type_ThreadCondition(p, params) {}
 
-  ReturnTuple Call_new(const S<TypeInstance>& Param_self, const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_new(const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("ThreadCondition.new")
-    return ReturnTuple(CreateValue_ThreadCondition(shared_from_this()));
+    return ReturnTuple(CreateValue_ThreadCondition(PARAM_SELF));
   }
 };
 

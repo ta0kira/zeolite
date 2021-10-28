@@ -37,7 +37,7 @@ struct ExtCategory_CharBuffer : public Category_CharBuffer {
 struct ExtType_CharBuffer : public Type_CharBuffer {
   inline ExtType_CharBuffer(Category_CharBuffer& p, Params<0>::Type params) : Type_CharBuffer(p, params) {}
 
-  ReturnTuple Call_new(const S<TypeInstance>& Param_self, const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_new(const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("CharBuffer.new")
     const PrimInt Var_arg1 = (args.At(0)).AsInt();
     if (Var_arg1 < 0) {

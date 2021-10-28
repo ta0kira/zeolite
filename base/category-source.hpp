@@ -41,6 +41,10 @@ limitations under the License.
   __builtin_unreachable(); \
   }
 
+#define VAR_SELF TypeValue::Var_self(this)
+
+#define PARAM_SELF shared_from_this()
+
 BoxedValue Box_Bool(bool value);
 BoxedValue Box_String(const PrimString& value);
 BoxedValue Box_Char(PrimChar value);
@@ -83,7 +87,7 @@ class TypeInstance {
     if (target == nullptr) {
       FAIL() << "Function called on null value";
     }
-    return target->Dispatch(target, label, params, args);
+    return target->Dispatch(label, params, args);
   }
 
   virtual std::string CategoryName() const = 0;
@@ -113,7 +117,7 @@ class TypeInstance {
  protected:
   TypeInstance() = default;
 
-  virtual ReturnTuple Dispatch(const S<TypeInstance>& self, const TypeFunction& label,
+  virtual ReturnTuple Dispatch(const TypeFunction& label,
                                const ParamTuple& params, const ValueTuple& args);
 
   virtual bool CanConvertFrom(const S<const TypeInstance>& from) const
@@ -154,8 +158,6 @@ class TypeInstance {
   }
 };
 
-#define VAR_SELF TypeValue::Var_self(this)
-
 class TypeValue {
  public:
   inline static ReturnTuple Call(const BoxedValue& target, const ValueFunction& label,
@@ -194,35 +196,6 @@ class TypeValue {
   inline static BoxedValue Var_self(TypeValue* invalid) {
     return BoxedValue();
   }
-};
-
-class AnonymousOrder : public TypeValue {
- protected:
-  // Passing in the function labels allows linking without depending on Order
-  // when this class isn't used anywhere.
-  AnonymousOrder(const BoxedValue cont,
-                 const ValueFunction& func_next,
-                 const ValueFunction& func_get);
-
-  std::string CategoryName() const final;
-  ReturnTuple Dispatch(const ValueFunction& label,
-                       const ParamTuple& params,
-                       const ValueTuple& args) final;
-
-  virtual ~AnonymousOrder() = default;
-
- private:
-  // Allows VAR_SELF to access CategoryName() for error messages.
-  friend class BoxedValue;
-
-  // This *must* return VAR_SELF in the most-derived class!
-  virtual BoxedValue Var_self() = 0;
-  virtual BoxedValue Call_next(const BoxedValue& self) = 0;
-  virtual BoxedValue Call_get(const BoxedValue& self) = 0;
-
-  const BoxedValue container;
-  const ValueFunction& function_next;
-  const ValueFunction& function_get;
 };
 
 template <int P, class T>

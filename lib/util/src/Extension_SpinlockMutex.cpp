@@ -35,7 +35,7 @@ struct ExtCategory_SpinlockMutex : public Category_SpinlockMutex {
 struct ExtType_SpinlockMutex : public Type_SpinlockMutex {
   inline ExtType_SpinlockMutex(Category_SpinlockMutex& p, Params<0>::Type params) : Type_SpinlockMutex(p, params) {}
 
-  ReturnTuple Call_new(const S<TypeInstance>& Param_self, const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_new(const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("SpinlockMutex.new")
     return ReturnTuple(CreateValue_SpinlockMutex(CreateType_SpinlockMutex(Params<0>::Type())));
   }

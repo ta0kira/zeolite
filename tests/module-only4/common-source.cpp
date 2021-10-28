@@ -37,7 +37,7 @@ struct ExtCategory_Type1 : public Category_Type1 {
 struct ExtType_Type1 : public Type_Type1 {
   inline ExtType_Type1(Category_Type1& p, Params<0>::Type params) : Type_Type1(p, params) {}
 
-  ReturnTuple Call_create(const S<TypeInstance>& self, const ParamTuple& params, const ValueTuple& args) {
+  ReturnTuple Call_create(const ParamTuple& params, const ValueTuple& args) {
     TRACE_FUNCTION("Type1.create")
     return ReturnTuple(CreateValue_Type1(CreateType_Type1(Params<0>::Type()),
       TypeInstance::Call(GetType_Type2(Params<0>::Type()), Function_Type2_create, ParamTuple(), ArgTuple())));
@@ -88,7 +88,7 @@ struct ExtCategory_Type3 : public Category_Type3 {
 struct ExtType_Type3 : public Type_Type3 {
   inline ExtType_Type3(Category_Type3& p, Params<0>::Type params) : Type_Type3(p, params) {}
 
-  ReturnTuple Call_create(const S<TypeInstance>& self, const ParamTuple& params, const ValueTuple& args) {
+  ReturnTuple Call_create(const ParamTuple& params, const ValueTuple& args) {
     TRACE_FUNCTION("Type3.create")
     return ReturnTuple(CreateValue_Type3(CreateType_Type3(Params<0>::Type()),
       TypeInstance::Call(GetType_Type2(Params<0>::Type()), Function_Type2_create, ParamTuple(), ArgTuple())));

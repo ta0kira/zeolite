@@ -36,14 +36,14 @@ struct ExtCategory_RandomUniform : public Category_RandomUniform {
 struct ExtType_RandomUniform : public Type_RandomUniform {
   inline ExtType_RandomUniform(Category_RandomUniform& p, Params<0>::Type params) : Type_RandomUniform(p, params) {}
 
-  ReturnTuple Call_new(const S<TypeInstance>& Param_self, const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_new(const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("RandomUniform.new")
     const PrimFloat Var_arg1 = (args.At(0)).AsFloat();
     const PrimFloat Var_arg2 = (args.At(1)).AsFloat();
     if (Var_arg2 <= Var_arg1) {
       FAIL() << "Invalid range (" << Var_arg1 << "," << Var_arg2 << ")";
     }
-    return ReturnTuple(CreateValue_RandomUniform(shared_from_this(), args));
+    return ReturnTuple(CreateValue_RandomUniform(PARAM_SELF, args));
   }
 };
 

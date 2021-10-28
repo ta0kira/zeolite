@@ -35,7 +35,7 @@ struct ExtCategory_SimpleMutex : public Category_SimpleMutex {
 struct ExtType_SimpleMutex : public Type_SimpleMutex {
   inline ExtType_SimpleMutex(Category_SimpleMutex& p, Params<0>::Type params) : Type_SimpleMutex(p, params) {}
 
-  ReturnTuple Call_new(const S<TypeInstance>& Param_self, const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_new(const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("SimpleMutex.new")
     return ReturnTuple(CreateValue_SimpleMutex(CreateType_SimpleMutex(Params<0>::Type())));
   }

@@ -130,7 +130,7 @@ ReturnTuple TypeCategory::Dispatch(const CategoryFunction& label,
   __builtin_unreachable();
 }
 
-ReturnTuple TypeInstance::Dispatch(const S<TypeInstance>& self, const TypeFunction& label,
+ReturnTuple TypeInstance::Dispatch(const TypeFunction& label,
                                    const ParamTuple& params, const ValueTuple& args) {
   FAIL() << CategoryName() << " does not implement " << label;
   __builtin_unreachable();
@@ -213,24 +213,4 @@ const PrimString& TypeValue::AsString() const {
 PrimCharBuffer& TypeValue::AsCharBuffer() {
   FAIL() << CategoryName() << " is not a CharBuffer value";
   __builtin_unreachable();
-}
-
-AnonymousOrder::AnonymousOrder(const BoxedValue cont,
-                               const ValueFunction& func_next,
-                               const ValueFunction& func_get)
-  : container(cont), function_next(func_next), function_get(func_get) {}
-
-std::string AnonymousOrder::CategoryName() const { return "AnonymousOrder"; }
-
-ReturnTuple AnonymousOrder::Dispatch(
-  const ValueFunction& label, const ParamTuple& params, const ValueTuple& args) {
-  if (&label == &function_next) {
-    TRACE_FUNCTION("AnonymousOrder.next")
-    return ReturnTuple(Call_next(Var_self()));
-  }
-  if (&label == &function_get) {
-    TRACE_FUNCTION("AnonymousOrder.get")
-    return ReturnTuple(Call_get(Var_self()));
-  }
-  return TypeValue::Dispatch(label, params, args);
 }

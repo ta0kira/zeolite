@@ -37,14 +37,14 @@ struct ExtCategory_RandomGaussian : public Category_RandomGaussian {
 struct ExtType_RandomGaussian : public Type_RandomGaussian {
   inline ExtType_RandomGaussian(Category_RandomGaussian& p, Params<0>::Type params) : Type_RandomGaussian(p, params) {}
 
-  ReturnTuple Call_new(const S<TypeInstance>& Param_self, const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_new(const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("RandomGaussian.new")
     const PrimFloat Var_arg1 = (args.At(0)).AsFloat();
     const PrimFloat Var_arg2 = (args.At(1)).AsFloat();
     if (Var_arg2 <= 0) {
       FAIL() << "Invalid standard deviation " << Var_arg2;
     }
-    return ReturnTuple(CreateValue_RandomGaussian(shared_from_this(), args));
+    return ReturnTuple(CreateValue_RandomGaussian(PARAM_SELF, args));
   }
 };
 

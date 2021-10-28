@@ -40,9 +40,9 @@ struct ExtCategory_Offset : public Category_Offset {
 struct ExtType_Offset : public Type_Offset {
   inline ExtType_Offset(Category_Offset& p, Params<0>::Type params) : Type_Offset(p, params) {}
 
-  ReturnTuple Call_new(const S<TypeInstance>& Param_self, const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_new(const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("Offset.new")
-    return ReturnTuple(CreateValue_Offset(shared_from_this(), ArgTuple()));
+    return ReturnTuple(CreateValue_Offset(PARAM_SELF, ArgTuple()));
   }
 };
 

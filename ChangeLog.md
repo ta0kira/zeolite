@@ -2,6 +2,16 @@
 
 ## 0.19.1.0  -- ????-??-??
 
+### Compiler CLI
+
+* **[breaking]** Removes all passing of `Param_self` in C++ extensions. Use
+  `PARAM_SELF` where `Param_self` was previously used, and delete the
+  `Param_self` argument from function signatures. This breaks all existing
+  extensions that have `@type` functions.
+
+* **[breaking]** Removes `AnonymousOrder` C++ class, previously used for
+  creating iterators for C++ extensions.
+
 ### Language
 
 * **[behavior]** Reduces memory size of `Bool`, `Char`, `Float`, `Int`, and

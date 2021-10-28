@@ -38,7 +38,7 @@ struct ExtCategory_SimpleInput : public Category_SimpleInput {
 struct ExtType_SimpleInput : public Type_SimpleInput {
   inline ExtType_SimpleInput(Category_SimpleInput& p, Params<0>::Type params) : Type_SimpleInput(p, params) {}
 
-  ReturnTuple Call_stdin(const S<TypeInstance>& Param_self, const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_stdin(const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("SimpleInput.stdin")
     return ReturnTuple(Var_stdin);
   }

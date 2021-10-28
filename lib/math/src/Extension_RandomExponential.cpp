@@ -37,13 +37,13 @@ struct ExtCategory_RandomExponential : public Category_RandomExponential {
 struct ExtType_RandomExponential : public Type_RandomExponential {
   inline ExtType_RandomExponential(Category_RandomExponential& p, Params<0>::Type params) : Type_RandomExponential(p, params) {}
 
-  ReturnTuple Call_new(const S<TypeInstance>& Param_self, const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_new(const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("RandomExponential.new")
     const PrimFloat Var_arg1 = (args.At(0)).AsFloat();
     if (Var_arg1 <= 0) {
       FAIL() << "Invalid lambda " << Var_arg1;
     }
-    return ReturnTuple(CreateValue_RandomExponential(shared_from_this(), args));
+    return ReturnTuple(CreateValue_RandomExponential(PARAM_SELF, args));
   }
 };
 

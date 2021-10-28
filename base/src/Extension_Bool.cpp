@@ -39,12 +39,12 @@ struct ExtCategory_Bool : public Category_Bool {
 struct ExtType_Bool : public Type_Bool {
   inline ExtType_Bool(Category_Bool& p, Params<0>::Type params) : Type_Bool(p, params) {}
 
-  ReturnTuple Call_default(const S<TypeInstance>& Param_self, const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_default(const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("Bool.default")
     return ReturnTuple(Box_Bool(false));
   }
 
-  ReturnTuple Call_equals(const S<TypeInstance>& Param_self, const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_equals(const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("Bool.equals")
     const bool Var_arg1 = (args.At(0)).AsBool();
     const bool Var_arg2 = (args.At(1)).AsBool();

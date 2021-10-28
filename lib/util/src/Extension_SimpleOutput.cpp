@@ -41,17 +41,17 @@ struct ExtCategory_SimpleOutput : public Category_SimpleOutput {
 struct ExtType_SimpleOutput : public Type_SimpleOutput {
   inline ExtType_SimpleOutput(Category_SimpleOutput& p, Params<0>::Type params) : Type_SimpleOutput(p, params) {}
 
-  ReturnTuple Call_error(const S<TypeInstance>& Param_self, const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_error(const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("SimpleOutput.error")
     return ReturnTuple(Var_error);
   }
 
-  ReturnTuple Call_stderr(const S<TypeInstance>& Param_self, const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_stderr(const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("SimpleOutput.stderr")
     return ReturnTuple(Var_stderr);
   }
 
-  ReturnTuple Call_stdout(const S<TypeInstance>& Param_self, const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_stdout(const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("SimpleOutput.stdout")
     return ReturnTuple(Var_stdout);
   }
