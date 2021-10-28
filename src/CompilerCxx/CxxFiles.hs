@@ -744,6 +744,7 @@ createFunctionDispatch n s fs = function where
     | s == TypeScope     = typeName n     ++ "::" ++ callName f
     | s == ValueScope    = valueName n    ++ "::" ++ callName f
     | otherwise = undefined
+  table (_,[_]) = []
   table (n2,fs2) =
     ["  static const CallType " ++ tableName n2 ++ "[] = {"] ++
     map (\f -> "    &" ++ name f ++ ",") (Set.toList $ Set.fromList $ map sfName fs2) ++
@@ -756,6 +757,10 @@ createFunctionDispatch n s fs = function where
       "  }"
     ]
   collectionCases = concat $ map singleCase byCategory
+  singleCase (n2,[f]) = [
+      "    case " ++ collectionName n2 ++ ":",
+      "      return " ++ callName (sfName f) ++ "(" ++ args ++ ");"
+    ]
   singleCase (n2,_) = [
       "    case " ++ collectionName n2 ++ ":",
       "      return (this->*" ++ tableName n2 ++ "[label.function_num])(" ++ args ++ ");"
