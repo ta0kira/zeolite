@@ -74,28 +74,21 @@ struct ExtType_Char : public Type_Char {
 
 ReturnTuple DispatchChar(PrimChar value, const ValueFunction& label,
                          const ParamTuple& params, const ValueTuple& args) {
-  if (&label == &Function_AsBool_asBool) {
-    TRACE_FUNCTION("Char.asBool")
-    return ReturnTuple(Box_Bool(value != '\0'));
+  switch (label.collection) {
+    case CategoryId_AsBool:
+      return ReturnTuple(Box_Bool(value != '\0'));
+    case CategoryId_AsChar:
+      return ReturnTuple(Box_Char(value));
+    case CategoryId_AsFloat:
+      return ReturnTuple(Box_Float(((int) value + 256) % 256));
+    case CategoryId_AsInt:
+      return ReturnTuple(Box_Int(((int) value + 256) % 256));
+    case CategoryId_Formatted:
+      return ReturnTuple(Box_String(PrimString(1, value)));
+    default:
+      FAIL() << "Char does not implement " << label;
+      __builtin_unreachable();
   }
-  if (&label == &Function_AsChar_asChar) {
-    TRACE_FUNCTION("Char.asChar")
-    return ReturnTuple(Box_Char(value));
-  }
-  if (&label == &Function_AsFloat_asFloat) {
-    TRACE_FUNCTION("Char.asFloat")
-    return ReturnTuple(Box_Float(((int) value + 256) % 256));
-  }
-  if (&label == &Function_AsInt_asInt) {
-    TRACE_FUNCTION("Char.asInt")
-    return ReturnTuple(Box_Int(((int) value + 256) % 256));
-  }
-  if (&label == &Function_Formatted_formatted) {
-    TRACE_FUNCTION("Char.formatted")
-    return ReturnTuple(Box_String(PrimString(1,value)));
-  }
-  FAIL() << "Char does not implement " << label;
-  __builtin_unreachable();
 }
 
 Category_Char& CreateCategory_Char() {

@@ -54,24 +54,19 @@ struct ExtType_Bool : public Type_Bool {
 
 ReturnTuple DispatchBool(bool value, const ValueFunction& label,
                          const ParamTuple& params, const ValueTuple& args) {
-  if (&label == &Function_AsBool_asBool) {
-    TRACE_FUNCTION("Bool.asBool")
-    return ReturnTuple(Box_Bool(value));
+  switch (label.collection) {
+    case CategoryId_AsBool:
+      return ReturnTuple(Box_Bool(value));
+    case CategoryId_AsFloat:
+      return ReturnTuple(Box_Float(value ? 1.0 : 0.0));
+    case CategoryId_AsInt:
+      return ReturnTuple(Box_Int(value? 1 : 0));
+    case CategoryId_Formatted:
+      return ReturnTuple(Box_String(value? "true" : "false"));
+    default:
+      FAIL() << "Bool does not implement " << label;
+      __builtin_unreachable();
   }
-  if (&label == &Function_AsFloat_asFloat) {
-    TRACE_FUNCTION("Bool.asFloat")
-    return ReturnTuple(Box_Float(value ? 1.0 : 0.0));
-  }
-  if (&label == &Function_AsInt_asInt) {
-    TRACE_FUNCTION("Bool.asInt")
-    return ReturnTuple(Box_Int(value? 1 : 0));
-  }
-  if (&label == &Function_Formatted_formatted) {
-    TRACE_FUNCTION("Bool.formatted")
-    return ReturnTuple(Box_String(value? "true" : "false"));
-  }
-  FAIL() << "Bool does not implement " << label;
-  __builtin_unreachable();
 }
 
 Category_Bool& CreateCategory_Bool() {

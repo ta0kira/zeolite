@@ -64,26 +64,23 @@ struct ExtType_Float : public Type_Float {
 
 ReturnTuple DispatchFloat(PrimFloat value, const ValueFunction& label,
                           const ParamTuple& params, const ValueTuple& args) {
-  if (&label == &Function_AsBool_asBool) {
-    TRACE_FUNCTION("Float.asBool")
-    return ReturnTuple(Box_Bool(value != 0.0));
+  switch (label.collection) {
+    case CategoryId_AsBool:
+      return ReturnTuple(Box_Bool(value != 0.0));
+    case CategoryId_AsFloat:
+      return ReturnTuple(Box_Float(value));
+    case CategoryId_AsInt:
+      return ReturnTuple(Box_Int(value));
+    case CategoryId_Formatted: {
+      // NOTE: std::to_string does weird things with significant digits.
+      std::ostringstream output;
+      output << value;
+      return ReturnTuple(Box_String(output.str()));
+    }
+    default:
+      FAIL() << "Float does not implement " << label;
+      __builtin_unreachable();
   }
-  if (&label == &Function_AsFloat_asFloat) {
-    TRACE_FUNCTION("Float.asFloat")
-    return ReturnTuple(Box_Float(value));
-  }
-  if (&label == &Function_AsInt_asInt) {
-    TRACE_FUNCTION("Float.asInt")
-    return ReturnTuple(Box_Int(value));
-  }
-  if (&label == &Function_Formatted_formatted) {
-    TRACE_FUNCTION("Float.formatted")
-    std::ostringstream output;
-    output << value;
-    return ReturnTuple(Box_String(output.str()));
-  }
-  FAIL() << "Float does not implement " << label;
-  __builtin_unreachable();
 }
 
 Category_Float& CreateCategory_Float() {

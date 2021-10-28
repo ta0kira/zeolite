@@ -17,7 +17,7 @@ limitations under the License.
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
 #include <climits>
-#include <sstream>
+#include <string>
 
 #include "category-source.hpp"
 #include "Streamlined_Int.hpp"
@@ -77,30 +77,21 @@ struct ExtType_Int : public Type_Int {
 
 ReturnTuple DispatchInt(PrimInt value, const ValueFunction& label,
                         const ParamTuple& params, const ValueTuple& args) {
-  if (&label == &Function_AsBool_asBool) {
-    TRACE_FUNCTION("Int.asBool")
-    return ReturnTuple(Box_Bool(value != 0));
+  switch (label.collection) {
+    case CategoryId_AsBool:
+      return ReturnTuple(Box_Bool(value != 0));
+    case CategoryId_AsChar:
+      return ReturnTuple(Box_Char(PrimChar(((value % 256) + 256) % 256)));
+    case CategoryId_AsFloat:
+      return ReturnTuple(Box_Float(value));
+    case CategoryId_AsInt:
+      return ReturnTuple(Box_Int(value));
+    case CategoryId_Formatted:
+      return ReturnTuple(Box_String(std::to_string(value)));
+    default:
+      FAIL() << "Int does not implement " << label;
+      __builtin_unreachable();
   }
-  if (&label == &Function_AsChar_asChar) {
-    TRACE_FUNCTION("Int.asChar")
-    return ReturnTuple(Box_Char(PrimChar(((value % 256) + 256) % 256)));
-  }
-  if (&label == &Function_AsFloat_asFloat) {
-    TRACE_FUNCTION("Int.asFloat")
-    return ReturnTuple(Box_Float(value));
-  }
-  if (&label == &Function_AsInt_asInt) {
-    TRACE_FUNCTION("Int.asInt")
-    return ReturnTuple(Box_Int(value));
-  }
-  if (&label == &Function_Formatted_formatted) {
-    TRACE_FUNCTION("Int.formatted")
-    std::ostringstream output;
-    output << value;
-    return ReturnTuple(Box_String(output.str()));
-  }
-  FAIL() << "Int does not implement " << label;
-  __builtin_unreachable();
 }
 
 Category_Int& CreateCategory_Int() {
