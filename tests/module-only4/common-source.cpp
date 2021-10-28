@@ -39,7 +39,7 @@ struct ExtType_Type1 : public Type_Type1 {
 
   ReturnTuple Call_create(const ParamTuple& params, const ValueTuple& args) {
     TRACE_FUNCTION("Type1.create")
-    return ReturnTuple(CreateValue_Type1(CreateType_Type1(Params<0>::Type()),
+    return ReturnTuple(CreateValue_Type1(PARAM_SELF,
       TypeInstance::Call(GetType_Type2(Params<0>::Type()), Function_Type2_create, ParamTuple(), ArgTuple())));
   }
 };
@@ -90,7 +90,7 @@ struct ExtType_Type3 : public Type_Type3 {
 
   ReturnTuple Call_create(const ParamTuple& params, const ValueTuple& args) {
     TRACE_FUNCTION("Type3.create")
-    return ReturnTuple(CreateValue_Type3(CreateType_Type3(Params<0>::Type()),
+    return ReturnTuple(CreateValue_Type3(PARAM_SELF,
       TypeInstance::Call(GetType_Type2(Params<0>::Type()), Function_Type2_create, ParamTuple(), ArgTuple())));
   }
 };
