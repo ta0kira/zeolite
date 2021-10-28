@@ -35,9 +35,9 @@ define ReferenceState {
     \ operations.append(String.builder()
         .append(name)
         .append("[")
-        .append(typename<#x>().formatted())
+        .append(typename<#x>())
         .append("]: ")
-        .append(formatted())
+        .append(self)
         .build())
   }
 
@@ -120,13 +120,13 @@ define ReferenceState {
   formatted () {
     return String.builder()
         .append("S: ")
-        .append(strongCount.formatted())
+        .append(strongCount)
         .append(" W: ")
-        .append(weakCount.formatted())
+        .append(weakCount)
         .append(" AC: ")
-        .append(aliveCleanup.formatted())
+        .append(aliveCleanup)
         .append(" WC: ")
-        .append(weakCleanup.formatted())
+        .append(weakCleanup)
         .build()
   }
 }

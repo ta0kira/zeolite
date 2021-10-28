@@ -14,6 +14,9 @@
 
 ### Language
 
+* **[new]** Updates `String.builder()` to accept `Formatted` values, rather than
+  just accepting `String`.
+
 * **[behavior]** Reduces memory size of `Bool`, `Char`, `Float`, `Int`, and
   references to all other value objects.
 

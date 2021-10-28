@@ -139,7 +139,7 @@ concrete String {
   // Example:
   //
   //   String.builder().append("foo").append("bar").build()
-  @type builder () -> ([Append<String>&Build<String>])
+  @type builder () -> ([Append<Formatted>&Build<String>])
 }
 
 // Built-in fixed-size buffer of byte data.

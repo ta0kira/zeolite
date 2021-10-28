@@ -340,10 +340,10 @@ unittest stringEquals {
 }
 
 unittest stringBuilder {
-  [Append<String>&Build<String>] builder <- String.builder()
+  [Append<Formatted>&Build<String>] builder <- String.builder()
   \ Testing.checkEquals<?>(builder.build(),"")
   \ Testing.checkEquals<?>(builder.append("xyz").build(),"xyz")
-  \ Testing.checkEquals<?>(builder.append("123").build(),"xyz123")
+  \ Testing.checkEquals<?>(builder.append(123).build(),"xyz123")
 }
 
 unittest charLessThan {
@@ -585,7 +585,7 @@ unittest builderNotLazy {
   if (!present(strong(value2))) {
     fail("Failed")
   }
-  [Append<String>&Build<String>] builder <- String.builder().append(require(value1))
+  [Append<Formatted>&Build<String>] builder <- String.builder().append(require(value1))
   value1 <- empty
   if (present(strong(value2))) {
     fail("Failed")

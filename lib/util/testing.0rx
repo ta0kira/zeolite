@@ -23,7 +23,7 @@ define UtilTesting {
     if (!x.isError()) {
       fail(String.builder()
           .append("expected an error but got value ")
-          .append(x.getValue().formatted())
+          .append(x.getValue())
           .build())
     }
   }
@@ -32,9 +32,9 @@ define UtilTesting {
     if (x.isError()) {
       fail(String.builder()
           .append("expected ")
-          .append(y.formatted())
+          .append(y)
           .append(" but got error ")
-          .append(x.getError().formatted())
+          .append(x.getError())
           .build())
     } else {
       \ Testing.checkEquals<?>(x.getValue(),y)
@@ -45,11 +45,11 @@ define UtilTesting {
     if (x.isError()) {
       fail(String.builder()
           .append("expected value between ")
-          .append(l.formatted())
+          .append(l)
           .append(" and ")
-          .append(h.formatted())
+          .append(h)
           .append(" but got error ")
-          .append(x.getError().formatted())
+          .append(x.getError())
           .build())
     } else {
       \ Testing.checkBetween<?>(x.getValue(),l,h)

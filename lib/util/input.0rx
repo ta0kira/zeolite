@@ -25,7 +25,7 @@ define TextReader {
   }
 
   readAll (reader) {
-    [Append<String>&Build<String>] builder <- String.builder()
+    [Append<Formatted>&Build<String>] builder <- String.builder()
     while (!reader.pastEnd()) {
       \ builder.append(reader.readBlock($ExprLookup[BLOCK_READ_SIZE]$))
     }

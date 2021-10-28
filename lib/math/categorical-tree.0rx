@@ -136,13 +136,13 @@ define ValidatedTree {
       if (node2.getTotal() != size+lower+higher) {
         fail(String.builder()
             .append("bad total: ")
-            .append(size.formatted())
+            .append(size)
             .append("+")
-            .append(lower.formatted())
+            .append(lower)
             .append("+")
-            .append(higher.formatted())
+            .append(higher)
             .append(" != ")
-            .append(node2.getTotal().formatted())
+            .append(node2.getTotal())
             .build())
       }
     }

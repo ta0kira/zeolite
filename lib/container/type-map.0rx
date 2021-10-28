@@ -65,9 +65,9 @@ define TypeKey {
 
   formatted () {
     return String.builder()
-        .append(typename<#self>().formatted())
+        .append(typename<#self>())
         .append("{")
-        .append(index.formatted())
+        .append(index)
         .append("}")
         .build()
   }

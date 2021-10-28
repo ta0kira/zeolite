@@ -58,7 +58,7 @@ class Value_StringBuilder : public TypeValue {
     if (&label == &Function_Append_append) {
       TRACE_FUNCTION("StringBuilder.append")
       std::lock_guard<std::mutex> lock(mutex);
-      output_ << args.At(0).AsString();
+      output_ << TypeValue::Call(args.At(0), Function_Formatted_formatted, ParamTuple(), ArgTuple()).Only().AsString();
       return ReturnTuple(VAR_SELF);
     }
     if (&label == &Function_Build_build) {

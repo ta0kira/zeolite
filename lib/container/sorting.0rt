@@ -122,10 +122,10 @@ define TestSequence {
   }
 
   formatted () {
-    [Append<String>&Build<String>] builder <- String.builder()
+    [Append<Formatted>&Build<String>] builder <- String.builder()
     \ builder.append("{")
     traverse (seq.defaultOrder() -> Formatted x) {
-      \ builder.append(" ").append(x.formatted())
+      \ builder.append(" ").append(x)
     }
     return builder.append(" }").build()
   }

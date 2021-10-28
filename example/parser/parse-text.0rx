@@ -44,7 +44,7 @@ define SequenceOfParser {
                       min.formatted() + "," + max.formatted() + "} at " +
                       contextOld.getPosition()
     ParseContext<any> context <- contextOld
-    [Append<String>&Build<String>] builder <- String.builder()
+    [Append<Formatted>&Build<String>] builder <- String.builder()
 
     optional Order<Int> counter <- empty
     if (max == 0) {
@@ -63,7 +63,7 @@ define SequenceOfParser {
       traverse (Counter.zeroIndexed(matches.size()) -> Int index) {
         $ReadOnly[context,index]$
         if (context.current() == matches.readAt(index)) {
-          \ builder.append(matches.readAt(index).formatted())
+          \ builder.append(matches.readAt(index))
           found <- true
           break
         }

@@ -59,9 +59,9 @@ define ParseState {
   getPosition () {
     return String.builder()
         .append("[line: ")
-        .append(line.formatted())
+        .append(line)
         .append(", char: ")
-        .append(char.formatted())
+        .append(char)
         .append("]")
         .build()
   }

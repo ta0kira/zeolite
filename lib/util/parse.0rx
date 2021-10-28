@@ -290,9 +290,9 @@ define ParseChars {
   autoFail (c) {
     return ErrorOr:error(String.builder()
         .append("failed to parse ")
-        .append(typename<#x>().formatted())
+        .append(typename<#x>())
         .append(" at '")
-        .append(c.formatted())
+        .append(c)
         .append("'")
         .build())
   }
