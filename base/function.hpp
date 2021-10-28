@@ -30,7 +30,7 @@ struct CategoryFunction {
   const int return_count;
   const char* const category;
   const char* const function;
-  const CollectionType collection;
+  const CategoryId collection;
   const int function_num;
 };
 
@@ -40,7 +40,7 @@ struct TypeFunction {
   const int return_count;
   const char* const category;
   const char* const function;
-  const CollectionType collection;
+  const CategoryId collection;
   const int function_num;
 };
 
@@ -50,7 +50,7 @@ struct ValueFunction {
   const int return_count;
   const char* const category;
   const char* const function;
-  const CollectionType collection;
+  const CategoryId collection;
   const int function_num;
 };
 

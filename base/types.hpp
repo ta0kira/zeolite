@@ -36,7 +36,7 @@ limitations under the License.
   type& operator =(const type&) = delete; \
   type& operator =(type&&) = delete;
 
-using CollectionType = std::int64_t;
+using CategoryId = std::int64_t;
 
 using PrimInt = std::int64_t;
 using PrimString = std::string;

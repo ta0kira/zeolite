@@ -129,7 +129,7 @@ compileCategoryDeclaration testing ns t =
         onlyCodes guardBottom
       ]
     depends = getCategoryDeps t
-    content = mconcat [collection,labels,getCategory2,getType]
+    content = mconcat [categoryId,labels,getCategory2,getType]
     name = getCategoryName t
     guardTop = ["#ifndef " ++ guardName,"#define " ++ guardName]
     guardBottom = ["#endif  // " ++ guardName]
@@ -144,10 +144,10 @@ compileCategoryDeclaration testing ns t =
     valueFunctions = filter ((== ValueScope) . sfScope) functions
     labels = onlyCodes $ map label $ categoryFunctions ++ typeFunctions ++ valueFunctions
     label f = "extern " ++ functionLabelType f ++ " " ++ functionName f ++ ";"
-    collection = onlyCodes [
-        "static constexpr CollectionType " ++ collectionName name ++ " = " ++ show collectionId ++ ";"
+    categoryId = onlyCodes [
+        "static constexpr CategoryId " ++ categoryIdName name ++ " = " ++ show actualId ++ ";"
       ]
-    collectionId = abs $ hash $ show (getCategoryContext t) ++ show (getCategoryNamespace t) ++ show (getCategoryName t)
+    actualId = abs $ hash $ show (getCategoryContext t) ++ show (getCategoryNamespace t) ++ show (getCategoryName t)
     getCategory2
       | isInstanceInterface t = emptyCode
       | otherwise             = declareGetCategory t
@@ -758,11 +758,11 @@ createFunctionDispatch n s fs = function where
     ]
   collectionCases = concat $ map singleCase byCategory
   singleCase (n2,[f]) = [
-      "    case " ++ collectionName n2 ++ ":",
+      "    case " ++ categoryIdName n2 ++ ":",
       "      return " ++ callName (sfName f) ++ "(" ++ args ++ ");"
     ]
   singleCase (n2,_) = [
-      "    case " ++ collectionName n2 ++ ":",
+      "    case " ++ categoryIdName n2 ++ ":",
       "      return (this->*" ++ tableName n2 ++ "[label.function_num])(" ++ args ++ ");"
     ]
   args

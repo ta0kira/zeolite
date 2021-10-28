@@ -28,7 +28,7 @@ module CompilerCxx.Naming (
   categoryCustom,
   categoryGetter,
   categoryName,
-  collectionName,
+  categoryIdName,
   functionDebugName,
   functionName,
   headerFilename,
@@ -165,8 +165,8 @@ functionDebugName t f
 functionName :: ScopedFunction c -> String
 functionName f = "Function_" ++ show (sfType f) ++ "_" ++ show (sfName f)
 
-collectionName :: CategoryName -> String
-collectionName n = "Functions_" ++ show n
+categoryIdName :: CategoryName -> String
+categoryIdName n = "CategoryId_" ++ show n
 
 testFunctionName :: FunctionName -> String
 testFunctionName f = "Test_" ++ show f
