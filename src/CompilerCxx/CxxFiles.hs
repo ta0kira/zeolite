@@ -32,6 +32,7 @@ module CompilerCxx.CxxFiles (
 ) where
 
 import Data.List (intercalate,sortBy)
+import Data.Hashable (hash)
 import Prelude hiding (pi)
 import qualified Data.Map as Map
 import qualified Data.Set as Set
@@ -143,9 +144,10 @@ compileCategoryDeclaration testing ns t =
     valueFunctions = filter ((== ValueScope) . sfScope) functions
     labels = onlyCodes $ map label $ categoryFunctions ++ typeFunctions ++ valueFunctions
     label f = "extern " ++ functionLabelType f ++ " " ++ functionName f ++ ";"
-    collection
-      | isValueConcrete t = emptyCode
-      | otherwise         = onlyCodes ["extern const CollectionType " ++ collectionName name ++ ";"]
+    collection = onlyCodes [
+        "static constexpr CollectionType " ++ collectionName name ++ " = " ++ show collectionId ++ ";"
+      ]
+    collectionId = abs $ hash $ show (getCategoryContext t) ++ show (getCategoryNamespace t) ++ show (getCategoryName t)
     getCategory2
       | isInstanceInterface t = emptyCode
       | otherwise             = declareGetCategory t
@@ -324,16 +326,9 @@ generateCategoryDefinition testing = common where
                          req'
                          (allowTestsOnly $ addSourceIncludes $ addCategoryHeader t $ addIncludes req' out)
 
-  defineFunctions t cf tf vf = concatM [createCollection,createAllLabels] where
+  defineFunctions t cf tf vf = createAllLabels where
     name = getCategoryName t
-    createCollection = return $ onlyCodes [
-        "namespace {",
-        "const int " ++ collectionValName ++ " = 0;",
-        "}  // namespace",
-        "const CollectionType " ++ collectionName name ++ " = COLLECTION_ID(&" ++ collectionValName ++ ");"
-      ]
     createAllLabels = return $ onlyCodes $ concat $ map createLabels [cf,tf,vf]
-    collectionValName = "collection_" ++ show name
     createLabels = map (uncurry createLabelForFunction) . zip [0..] . sortBy compareName . filter ((== name) . sfType)
     compareName x y = sfName x `compare` sfName y
 
