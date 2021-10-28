@@ -18,6 +18,8 @@
   }
   ```
 
+* **[behavior]** Makes dispatching of function calls quite a bit more efficient.
+
 ## 0.19.0.0  -- 2021-10-25
 
 ### Compiler CLI

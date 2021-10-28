@@ -25,22 +25,6 @@ limitations under the License.
 #include "category-source.hpp"
 
 
-#define COLLECTION_ID(vp) (int) 1000000009 * (long) (vp)
-
-template<class F>
-struct DispatchTable {
-  constexpr DispatchTable() : key(), table(nullptr), size(0) {}
-
-  template<int S>
-  DispatchTable(CollectionType k, const F(&t)[S]) : key(k), table(t), size(S) {}
-
-  inline bool operator < (const DispatchTable<F>& other) const { return key < other.key; }
-
-  CollectionType key;
-  const F* table;
-  int size;
-};
-
 template<class F>
 struct DispatchSingle {
   constexpr DispatchSingle() : key(nullptr), value() {}
@@ -62,12 +46,6 @@ struct StaticSort {
 
 template<class T>
 struct LoopLimit {};
-
-template<class F>
-struct LoopLimit<DispatchTable<F>> {
-  // See function-calls.0rt for tests.
-  static constexpr int max = 15;
-};
 
 template<class F>
 struct LoopLimit<DispatchSingle<F>> {

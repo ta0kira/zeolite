@@ -726,7 +726,7 @@ createFunctionDispatch :: CategoryName -> SymbolScope -> [ScopedFunction c] -> C
 createFunctionDispatch n s fs = function where
   function
     | null filtered = onlyCode fallback
-    | otherwise = onlyCodes $ [typedef] ++ concat (map table $ byCategory) ++ metaTable ++ select
+    | otherwise = onlyCodes $ [typedef] ++ concat (map table $ byCategory) ++ select
   filtered = filter ((== s) . sfScope) fs
   flatten f = f:(concat $ map flatten $ sfMerges f)
   flattened = concat $ map flatten filtered
@@ -748,21 +748,17 @@ createFunctionDispatch n s fs = function where
     ["  static const CallType " ++ tableName n2 ++ "[] = {"] ++
     map (\f -> "    &" ++ name f ++ ",") (Set.toList $ Set.fromList $ map sfName fs2) ++
     ["  };"]
-  metaTable = ["  static DispatchTable<CallType> all_tables[] = {"] ++
-              map dispatchKeyValue byCategory ++
-              ["  };"]
-  dispatchKeyValue (n2,_) = "    DispatchTable<CallType>(" ++ collectionName n2 ++ ", " ++ tableName n2 ++ "),"
   select = [
-      "  static const StaticSort force_sort = all_tables;",
-      "  const DispatchTable<CallType>* const table = DispatchSelect(label.collection, all_tables);",
-      "  if (table) {",
-      "    if (label.function_num < 0 || label.function_num >= table->size) {",
-      "      FAIL() << \"Bad function call \" << label;",
-      "    } else {",
-      "      return (this->*table->table[label.function_num])(" ++ args ++ ");",
-      "    }",
-      "  }",
-      fallback
+      "  switch (label.collection) {"
+    ] ++ collectionCases ++ [
+      "    default:",
+      "    " ++ fallback,
+      "  }"
+    ]
+  collectionCases = concat $ map singleCase byCategory
+  singleCase (n2,_) = [
+      "    case " ++ collectionName n2 ++ ":",
+      "      return (this->*" ++ tableName n2 ++ "[label.function_num])(" ++ args ++ ");"
     ]
   args
     | s == CategoryScope = "params, args"
