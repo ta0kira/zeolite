@@ -96,7 +96,7 @@ baseHeaderIncludes :: [String]
 baseHeaderIncludes = ["#include \"category-header.hpp\""]
 
 baseSourceIncludes :: [String]
-baseSourceIncludes = ["#include \"category-source.hpp\"","#include \"internal.hpp\""]
+baseSourceIncludes = ["#include \"category-source.hpp\""]
 
 templateIncludes :: [String]
 templateIncludes = ["#include \"category-source.hpp\""]

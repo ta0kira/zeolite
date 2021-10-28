@@ -108,7 +108,7 @@ class TypeInstance {
   }
 
   virtual bool TypeArgsForParent(
-    const TypeCategory& category, std::vector<S<const TypeInstance>>& args) const
+    const CategoryId& category, std::vector<S<const TypeInstance>>& args) const
   { return false; }
 
   ALWAYS_PERMANENT(TypeInstance)

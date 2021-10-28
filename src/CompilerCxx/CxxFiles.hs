@@ -386,7 +386,6 @@ generateCategoryDefinition testing = common where
       return $ onlyCode $ "struct " ++ typeName (getCategoryName t) ++ " : public " ++ typeBase ++ " {",
       fmap indentCompiled $ inlineTypeConstructor t,
       return declareTypeOverrides,
-      return $ declareTypeArgGetters t,
       return $ indentCompiled $ createParams $ getCategoryParams t,
       return $ onlyCode $ "  " ++ categoryName (getCategoryName t) ++ "& parent;",
       return $ onlyCode "};"
@@ -405,7 +404,6 @@ generateCategoryDefinition testing = common where
       return $ onlyCode $ "struct " ++ className ++ " : public " ++ typeBase ++ ", std::enable_shared_from_this<" ++ className ++ "> {",
       fmap indentCompiled $ inlineTypeConstructor t,
       return declareTypeOverrides,
-      return $ declareTypeArgGetters t,
       fmap indentCompiled $ concatM $ map (procedureDeclaration False) fs,
       return $ indentCompiled $ createParams $ getCategoryParams t,
       return $ onlyCode $ "  " ++ categoryName (getCategoryName t) ++ "& parent;",
@@ -440,7 +438,6 @@ generateCategoryDefinition testing = common where
       return $ onlyCode $ "struct " ++ className ++ " : public " ++ typeBase ++ ", std::enable_shared_from_this<" ++ className ++ "> {",
       fmap indentCompiled $ inlineTypeConstructor t,
       return declareTypeOverrides,
-      return $ declareTypeArgGetters t,
       fmap indentCompiled $ concatM $ map (procedureDeclaration True) $ filter ((== TypeScope). sfScope) $ getCategoryFunctions t,
       return $ onlyCode $ "  virtual inline ~" ++ typeName (getCategoryName t) ++ "() {}",
       return $ indentCompiled $ createParams $ getCategoryParams t,
@@ -493,7 +490,7 @@ generateCategoryDefinition testing = common where
   declareTypeOverrides = onlyCodes [
       "  std::string CategoryName() const final;",
       "  void BuildTypeName(std::ostream& output) const final;",
-      "  bool TypeArgsForParent(const TypeCategory& category, std::vector<S<const TypeInstance>>& args) const final;",
+      "  bool TypeArgsForParent(const CategoryId& category, std::vector<S<const TypeInstance>>& args) const final;",
       "  ReturnTuple Dispatch(const TypeFunction& label, const ParamTuple& params, const ValueTuple& args) final;",
       "  bool CanConvertFrom(const S<const TypeInstance>& from) const final;"
     ]
@@ -514,10 +511,9 @@ generateCategoryDefinition testing = common where
       onlyCode $ "void " ++ className ++ "::BuildTypeName(std::ostream& output) const {",
       defineTypeName params,
       onlyCode "}",
-      onlyCode $ "bool " ++ className ++ "::TypeArgsForParent(const TypeCategory& category, std::vector<S<const TypeInstance>>& args) const {",
+      onlyCode $ "bool " ++ className ++ "::TypeArgsForParent(const CategoryId& category, std::vector<S<const TypeInstance>>& args) const {",
       createTypeArgsForParent t,
       onlyCode $ "}",
-      defineTypeArgGetters t,
       onlyCode $ "ReturnTuple " ++ className ++ "::Dispatch(const TypeFunction& label, const ParamTuple& params, const ValueTuple& args) {",
       createFunctionDispatch (getCategoryName t) TypeScope fs,
       onlyCode $ "}",
@@ -751,12 +747,12 @@ createFunctionDispatch n s fs = function where
     ["  };"]
   select = [
       "  switch (label.collection) {"
-    ] ++ collectionCases ++ [
+    ] ++ categoryCases ++ [
       "    default:",
       "    " ++ fallback,
       "  }"
     ]
-  collectionCases = concat $ map singleCase byCategory
+  categoryCases = concat $ map singleCase byCategory
   singleCase (n2,[f]) = [
       "    case " ++ categoryIdName n2 ++ ":",
       "      return " ++ callName (sfName f) ++ "(" ++ args ++ ");"
@@ -781,7 +777,7 @@ createCanConvertFrom t
   | isInstanceInterface t = onlyCode $ "  return " ++ typeBase ++ "::CanConvertFrom(from);"
   | otherwise = onlyCodes $ [
       "  std::vector<S<const TypeInstance>> args;",
-      "  if (!from->TypeArgsForParent(parent, args)) return false;",
+      "  if (!from->TypeArgsForParent(" ++ categoryIdName (getCategoryName t) ++ ", args)) return false;",
       "  if(args.size() != " ++ show (length params) ++ ") {",
       "    FAIL() << \"Wrong number of args (\" << args.size() << \")  for \" << CategoryName();",
       "  }"
@@ -794,42 +790,23 @@ createCanConvertFrom t
       checkCov i p = "  if (!TypeInstance::CanConvert(args[" ++ show i ++ "], " ++ paramName p ++ ")) return false;"
       checkCon i p = "  if (!TypeInstance::CanConvert(" ++ paramName p ++ ", args[" ++ show i ++ "])) return false;"
 
-declareTypeArgGetters :: AnyCategory c -> CompiledData [String]
-declareTypeArgGetters t = onlyCodes $ map paramGetter (getCategoryName t:refines) where
-  refines = map (tiName  . vrType) $ getCategoryRefines t
-  paramGetter r = "  void Params_" ++ show r ++ "(std::vector<S<const TypeInstance>>& args) const;"
-
-defineTypeArgGetters :: AnyCategory c -> CompiledData [String]
-defineTypeArgGetters t = onlyCodes $ concat $ map paramGetter (myType:refines) where
-  params = map (\p -> (vpParam p,vpVariance p)) $ getCategoryParams t
-  myType = (getCategoryName t,map (singleType . JustParamName False . fst) params)
-  refines = map (\r -> (tiName r,pValues $ tiParams r)) $ map vrType $ getCategoryRefines t
-  paramGetter (r,ps) = [
-      "void " ++ typeName (getCategoryName t) ++ "::Params_" ++ show r ++ "(std::vector<S<const TypeInstance>>& args) const {",
-      "  args = std::vector<S<const TypeInstance>>{" ++ intercalate ", " (map expandLocalType ps) ++ "};",
-      "}"
-    ]
-
 createTypeArgsForParent :: AnyCategory c -> CompiledData [String]
-createTypeArgsForParent t
-  | isInstanceInterface t = onlyCode $ "  return false;"
-  | otherwise = onlyCodes $ [
-      "  using CallType = void(" ++ className ++ "::*)(std::vector<S<const TypeInstance>>&)const;",
-      "  static DispatchSingle<CallType> all_calls[] = {"
-    ] ++ map dispatchKeyValue ((getCategoryName t):refines) ++ [
-      "  };",
-      "  static const StaticSort force_sort = all_calls;",
-      "  const DispatchSingle<CallType>* const call = DispatchSelect(&category, all_calls);",
-      "  if (call) {",
-      "    (this->*call->value)(args);",
-      "    return true;",
-      "  }",
-      "  return false;"
-    ] where
-      className = typeName $ getCategoryName t
-      refines = map (tiName . vrType) $ getCategoryRefines t
-      dispatchKeyValue n = "    DispatchSingle<CallType>(&" ++ categoryGetter n ++
-                           "(), &" ++ className ++ "::Params_" ++ show n ++ "),"
+createTypeArgsForParent t = onlyCodes $ [
+    "  switch (category) {"
+  ] ++ categoryCases ++ [
+    "    default:",
+    "      return false;",
+    "  }"
+  ] where
+    categoryCases = concat $ map singleCase (myType:refines)
+    params = map (\p -> (vpParam p,vpVariance p)) $ getCategoryParams t
+    myType = (getCategoryName t,map (singleType . JustParamName False . fst) params)
+    refines = map (\r -> (tiName r,pValues $ tiParams r)) $ map vrType $ getCategoryRefines t
+    singleCase (n2,ps) = [
+        "    case " ++ categoryIdName n2 ++ ":",
+        "      args = std::vector<S<const TypeInstance>>{" ++ intercalate ", " (map expandLocalType ps) ++ "};",
+        "      return true;"
+      ]
 
 -- Similar to Procedure.expandGeneralInstance but doesn't account for scope.
 expandLocalType :: GeneralInstance -> String

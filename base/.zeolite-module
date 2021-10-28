@@ -30,7 +30,6 @@ extra_files: [
   "base/category-source.hpp"
   "base/cycle-check.hpp"
   "base/function.hpp"
-  "base/internal.hpp"
   "base/logging.hpp"
   "base/thread-capture.h"
   "base/thread-crosser.h"
