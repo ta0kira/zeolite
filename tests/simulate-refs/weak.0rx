@@ -17,7 +17,7 @@ limitations under the License.
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
 define WeakRoutine {
-  $ReadOnly[dropWeak,strongThenDrop,name,state]$
+  $ReadOnly[dropWeak,sharedThenDrop,name,state]$
 
   refines StateMachine
 
@@ -26,7 +26,7 @@ define WeakRoutine {
       /*if*/   FreeRef.new(),
       /*else*/ empty)
 
-  @category ReferenceMachine strongThenDrop <-
+  @category ReferenceMachine sharedThenDrop <-
       LockRef.new() `Run.then`
       IfElseIncrRefIsOne.new(
       /*if*/   DecrRef.new() `Run.then`
@@ -42,7 +42,7 @@ define WeakRoutine {
 
   new (name,state) {
     \ state.addWeak()
-    return #self{ name, state, strongThenDrop }
+    return #self{ name, state, sharedThenDrop }
   }
 
   transition () {
@@ -53,9 +53,5 @@ define WeakRoutine {
     } else {
       return empty
     }
-  }
-
-  dropWeak () {
-    return dropWeak
   }
 }
