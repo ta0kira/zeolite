@@ -20,4 +20,6 @@ $ModuleOnly$
 
 concrete WeakRoutine {
   defines ActionFactory
+
+  @type dropWeak () -> (ReferenceMachine)
 }

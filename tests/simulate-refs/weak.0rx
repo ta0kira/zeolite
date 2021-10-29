@@ -17,6 +17,8 @@ limitations under the License.
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
 define WeakRoutine {
+  $ReadOnly[name,state]$
+
   refines StateMachine
 
   @value String name
@@ -38,17 +40,21 @@ define WeakRoutine {
     }
   }
 
+  dropWeak () {
+    return IfElseDecrWeakIsZero.new(
+           /*if*/   FreeRef.new(),
+           /*else*/ empty)
+  }
+
   @type strongThenDrop () -> (ReferenceMachine)
   strongThenDrop () {
     return LockRef.new() `Run.then`
-    IfElseIncrRefIsOne.new(
-    /*if*/   DecrRef.new() `Run.then`
-             UnlockRef.new() `Run.then`
-             IfElseDecrWeakIsZero.new(
-             /*if*/   FreeRef.new(),
-             /*else*/ empty),
-    /*else*/ UnlockRef.new() `Run.then`
-             DecrWeak.new() `Run.then`
-             SharedRoutine.dropRef())
+           IfElseIncrRefIsOne.new(
+           /*if*/   DecrRef.new() `Run.then`
+                    UnlockRef.new() `Run.then`
+                    WeakRoutine.dropWeak(),
+           /*else*/ UnlockRef.new() `Run.then`
+                    WeakRoutine.dropWeak() `Run.then`
+                    SharedRoutine.dropShared())
   }
 }
