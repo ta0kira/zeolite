@@ -23,27 +23,56 @@ define SharedRoutine {
     }
     return DropSharedEnter.new(name,state)
   }
-
-  alreadyStrong (name,state) {
-    return DropSharedEnter.new(name,state)
-  }
 }
 
 
-concrete DropSharedEnter {
-  @type new (String,ReferenceState) -> (StateMachine)
-}
+// Algorithm:
+//
+//   while (DropSharedEnter)
+//   if (DropSharedCheckAlive) {
+//     DropSharedUnlock0
+//   } else {
+//     DropSharedFreeObject
+//     DropSharedUnlock1
+//     if (DropSharedWeakAlive) {
+//       DropSharedFreeWeak
+//     }
+//   }
+
 
 define DropSharedEnter {
-  $ReadOnly[name,state]$
-
   refines StateMachine
 
   @value String name
   @value ReferenceState state
 
   new (name,state) {
-    return DropSharedEnter{ name, state }
+    return #self{ name, state }
+  }
+
+  transition () {
+    \ state.addOperation<#self>(name)
+    if (state.tryLock()) {
+      return DropSharedCheckAlive.new(name,state)
+    } else {
+      return self
+    }
+  }
+}
+
+
+concrete DropSharedCheckAlive {
+  defines ActionFactory
+}
+
+define DropSharedCheckAlive {
+  refines StateMachine
+
+  @value String name
+  @value ReferenceState state
+
+  new (name,state) {
+    return #self{ name, state }
   }
 
   transition () {
@@ -51,50 +80,90 @@ define DropSharedEnter {
     if (state.remStrong() == 0) {
       return DropSharedFreeObject.new(name,state)
     } else {
-      return empty
+      return DropSharedUnlock0.new(name,state)
     }
   }
 }
 
 
-concrete DropSharedFreeObject {
-  @type new (String,ReferenceState) -> (StateMachine)
+concrete DropSharedUnlock0 {
+  defines ActionFactory
 }
 
-define DropSharedFreeObject {
-  $ReadOnly[name,state]$
-
+define DropSharedUnlock0 {
   refines StateMachine
 
   @value String name
   @value ReferenceState state
 
   new (name,state) {
-    return DropSharedFreeObject{ name, state }
+    return #self{ name, state }
+  }
+
+  transition () {
+    \ state.addOperation<#self>(name)
+    \ state.remLock()
+    return empty
+  }
+}
+
+
+concrete DropSharedFreeObject {
+  defines ActionFactory
+}
+
+define DropSharedFreeObject {
+  refines StateMachine
+
+  @value String name
+  @value ReferenceState state
+
+  new (name,state) {
+    return #self{ name, state }
   }
 
   transition () {
     \ state.addOperation<#self>(name)
     \ state.kill()
-    return DropSharedCheckWeak.new(name,state)
+    return DropSharedUnlock1.new(name,state)
   }
 }
 
 
-concrete DropSharedCheckWeak {
-  @type new (String,ReferenceState) -> (StateMachine)
+concrete DropSharedUnlock1 {
+  defines ActionFactory
 }
 
-define DropSharedCheckWeak {
-  $ReadOnly[name,state]$
-
+define DropSharedUnlock1 {
   refines StateMachine
 
   @value String name
   @value ReferenceState state
 
   new (name,state) {
-    return DropSharedCheckWeak{ name, state }
+    return #self{ name, state }
+  }
+
+  transition () {
+    \ state.addOperation<#self>(name)
+    \ state.remLock()
+    return DropSharedWeakAlive.new(name,state)
+  }
+}
+
+
+concrete DropSharedWeakAlive {
+  defines ActionFactory
+}
+
+define DropSharedWeakAlive {
+  refines StateMachine
+
+  @value String name
+  @value ReferenceState state
+
+  new (name,state) {
+    return #self{ name, state }
   }
 
   transition () {
@@ -109,19 +178,17 @@ define DropSharedCheckWeak {
 
 
 concrete DropSharedFreeWeak {
-  @type new (String,ReferenceState) -> (StateMachine)
+  defines ActionFactory
 }
 
 define DropSharedFreeWeak {
-  $ReadOnly[name,state]$
-
   refines StateMachine
 
   @value String name
   @value ReferenceState state
 
   new (name,state) {
-    return DropSharedFreeWeak{ name, state }
+    return #self{ name, state }
   }
 
   transition () {

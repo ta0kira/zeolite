@@ -19,130 +19,162 @@ limitations under the License.
 define WeakRoutine {
   new (name,state) {
     \ state.addWeak()
-    return ToStrongEnter.new(name,state)
+    return StrongEnter.new(name,state)
   }
 }
 
+// Algorithm:
+//
+//   while (StrongEnter)
+//   if (StrongCheckAlive) {
+//     StrongUnlock0
+//     DropSharedEnter (continue in shared.0rx)
+//   } else {
+//     StrongRemoveRef
+//     StrongUnlock1
+//     if (StrongWeakAlive) {
+//       StrongFreeWeak
+//     }
+//   }
 
-concrete ToStrongEnter {
-  @type new (String,ReferenceState) -> (StateMachine)
+
+concrete StrongEnter {
+  defines ActionFactory
 }
 
-define ToStrongEnter {
-  $ReadOnly[name,state]$
-
+define StrongEnter {
   refines StateMachine
 
   @value String name
   @value ReferenceState state
 
   new (name,state) {
-    return ToStrongEnter{ name, state }
+    return #self{ name, state }
   }
 
   transition () {
     \ state.addOperation<#self>(name)
-    if (state.addLock() % ReferenceState.lockMod() == 0) {
-      return ToStrongDead.new(name,state)
+    if (state.tryLock()) {
+      return StrongCheckAlive.new(name,state)
     } else {
-      return ToStrongAlive.new(name,state)
+      return self
     }
   }
 }
 
 
-concrete ToStrongAlive {
-  @type new (String,ReferenceState) -> (StateMachine)
+concrete StrongCheckAlive {
+  defines ActionFactory
 }
 
-define ToStrongAlive {
-  $ReadOnly[name,state]$
-
+define StrongCheckAlive {
   refines StateMachine
 
   @value String name
   @value ReferenceState state
 
   new (name,state) {
-    return ToStrongAlive{ name, state }
+    return #self{ name, state }
   }
 
   transition () {
     \ state.addOperation<#self>(name)
-    \ state.convertLock()
-    return ToStrongDiscardWeak.new(name,state)
+    if (state.addStrong() == 1) {
+      return StrongRemoveRef.new(name,state)
+    } else {
+      return StrongUnlock0.new(name,state)
+    }
   }
 }
 
 
-concrete ToStrongDiscardWeak {
-  @type new (String,ReferenceState) -> (StateMachine)
+concrete StrongUnlock0 {
+  defines ActionFactory
 }
 
-define ToStrongDiscardWeak {
-  $ReadOnly[name,state]$
-
+define StrongUnlock0 {
   refines StateMachine
 
   @value String name
   @value ReferenceState state
 
   new (name,state) {
-    return ToStrongDiscardWeak{ name, state }
-  }
-
-  transition () {
-    \ state.addOperation<#self>(name)
-    \ state.remWeak()
-    return SharedRoutine.alreadyStrong(name,state)
-  }
-}
-
-
-concrete ToStrongDead {
-  @type new (String,ReferenceState) -> (StateMachine)
-}
-
-define ToStrongDead {
-  $ReadOnly[name,state]$
-
-  refines StateMachine
-
-  @value String name
-  @value ReferenceState state
-
-  new (name,state) {
-    return ToStrongDead{ name, state }
+    return #self{ name, state }
   }
 
   transition () {
     \ state.addOperation<#self>(name)
     \ state.remLock()
-    return ToStrongCheckWeak.new(name,state)
+    // Should really be a separate step, but we'll just assume that since
+    // there's still a strong lock that the weak count won't reach 0 here.
+    \ state.remWeak()
+    return DropSharedEnter.new(name,state)
   }
 }
 
 
-concrete ToStrongCheckWeak {
-  @type new (String,ReferenceState) -> (StateMachine)
+concrete StrongRemoveRef {
+  defines ActionFactory
 }
 
-define ToStrongCheckWeak {
-  $ReadOnly[name,state]$
-
+define StrongRemoveRef {
   refines StateMachine
 
   @value String name
   @value ReferenceState state
 
   new (name,state) {
-    return ToStrongCheckWeak{ name, state }
+    return #self{ name, state }
+  }
+
+  transition () {
+    \ state.addOperation<#self>(name)
+    \ state.remStrong()
+    return StrongUnlock1.new(name,state)
+  }
+}
+
+
+concrete StrongUnlock1 {
+  defines ActionFactory
+}
+
+define StrongUnlock1 {
+  refines StateMachine
+
+  @value String name
+  @value ReferenceState state
+
+  new (name,state) {
+    return #self{ name, state }
+  }
+
+  transition () {
+    \ state.addOperation<#self>(name)
+    \ state.remLock()
+    return StrongWeakAlive.new(name,state)
+  }
+}
+
+
+concrete StrongWeakAlive {
+  defines ActionFactory
+}
+
+define StrongWeakAlive {
+  refines StateMachine
+
+  @value String name
+  @value ReferenceState state
+
+  new (name,state) {
+    return #self{ name, state }
   }
 
   transition () {
     \ state.addOperation<#self>(name)
     if (state.remWeak() == 0) {
-      return ToStrongFreeWeak.new(name,state)
+      return StrongFreeWeak.new(name,state)
     } else {
       return empty
     }
@@ -150,20 +182,18 @@ define ToStrongCheckWeak {
 }
 
 
-concrete ToStrongFreeWeak {
-  @type new (String,ReferenceState) -> (StateMachine)
+concrete StrongFreeWeak {
+  defines ActionFactory
 }
 
-define ToStrongFreeWeak {
-  $ReadOnly[name,state]$
-
+define StrongFreeWeak {
   refines StateMachine
 
   @value String name
   @value ReferenceState state
 
   new (name,state) {
-    return ToStrongFreeWeak{ name, state }
+    return #self{ name, state }
   }
 
   transition () {

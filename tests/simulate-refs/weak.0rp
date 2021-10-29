@@ -19,5 +19,5 @@ limitations under the License.
 $ModuleOnly$
 
 concrete WeakRoutine {
-  @type new (String,ReferenceState) -> (StateMachine)
+  defines ActionFactory
 }

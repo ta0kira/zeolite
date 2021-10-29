@@ -17,18 +17,15 @@ limitations under the License.
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
 define ReferenceState {
-  $ReadOnly[lockMod]$
-
-  @category Int lockMod <- \x1000
-
   @value Int strongCount
   @value Int weakCount
+  @value Bool locked
   @value Int aliveCleanup
   @value Int weakCleanup
   @value Vector<Formatted> operations
 
   new () {
-    return ReferenceState{ 0, 0, 0, 0, Vector:create<Formatted>() }
+    return ReferenceState{ 0, 0, false, 0, 0, Vector:create<Formatted>() }
   }
 
   addOperation (name) {
@@ -73,20 +70,21 @@ define ReferenceState {
     return weakCount > 0
   }
 
-  addLock () {
-    return (strongCount <- strongCount+lockMod)
+  tryLock () {
+    if (locked) {
+      return false
+    } else {
+      locked <- true
+      return true
+    }
   }
 
   remLock () {
-    return (strongCount <- strongCount-lockMod)
+    locked <- false
   }
 
-  convertLock () {
-    return (strongCount <- strongCount-(lockMod-1))
-  }
-
-  lockMod () {
-    return lockMod
+  hasLock () {
+    return locked
   }
 
   kill () {
@@ -119,7 +117,9 @@ define ReferenceState {
 
   formatted () {
     return String.builder()
-        .append("S: ")
+        .append("L: ")
+        .append(locked)
+        .append(" S: ")
         .append(strongCount)
         .append(" W: ")
         .append(weakCount)

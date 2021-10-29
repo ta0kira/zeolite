@@ -35,14 +35,17 @@ concrete ReferenceState {
   @value getWeak () -> (Int)
   @value hasWeak () -> (Bool)
 
-  @value addLock () -> (Int)
-  @value remLock () -> (Int)
-  @value convertLock () -> (Int)
-  @type lockMod () -> (Int)
+  @value tryLock () -> (Bool)
+  @value remLock () -> ()
+  @value hasLock () -> (Bool)
 
   @value kill () -> ()
   @value isAlive () -> (Bool)
   @value cleanupWeak () -> ()
 
   @value getError () -> (optional String)
+}
+
+@type interface ActionFactory {
+  new (String,ReferenceState) -> (StateMachine)
 }

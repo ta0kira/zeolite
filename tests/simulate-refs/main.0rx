@@ -56,6 +56,9 @@ define SimulateRefs {
       if (!present(error) && (state.hasStrong() || state.hasWeak())) {
         error <- "expected zero final references"
       }
+      if (!present(error) && state.hasLock()) {
+        error <- "expected unlocked final reference"
+      }
     } in if (present(error)) {
       \ LazyStream<Formatted>.new()
           .append("Error in final state: ")

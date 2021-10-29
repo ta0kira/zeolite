@@ -19,6 +19,9 @@ limitations under the License.
 $ModuleOnly$
 
 concrete SharedRoutine {
-  @type new (String,ReferenceState) -> (StateMachine)
-  @type alreadyStrong (String,ReferenceState) -> (StateMachine)
+  defines ActionFactory
+}
+
+concrete DropSharedEnter {
+  defines ActionFactory
 }
