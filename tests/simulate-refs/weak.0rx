@@ -17,9 +17,24 @@ limitations under the License.
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
 define WeakRoutine {
-  $ReadOnly[name,state]$
+  $ReadOnly[dropWeak,strongThenDrop,name,state]$
 
   refines StateMachine
+
+  @category ReferenceMachine dropWeak <-
+      IfElseDecrWeakIsZero.new(
+      /*if*/   FreeRef.new(),
+      /*else*/ empty)
+
+  @category ReferenceMachine strongThenDrop <-
+      LockRef.new() `Run.then`
+      IfElseIncrRefIsOne.new(
+      /*if*/   DecrRef.new() `Run.then`
+               UnlockRef.new() `Run.then`
+               dropWeak,
+      /*else*/ UnlockRef.new() `Run.then`
+               dropWeak `Run.then`
+               SharedRoutine.dropShared())
 
   @value String name
   @value ReferenceState state
@@ -27,7 +42,7 @@ define WeakRoutine {
 
   new (name,state) {
     \ state.addWeak()
-    return #self{ name, state, strongThenDrop() }
+    return #self{ name, state, strongThenDrop }
   }
 
   transition () {
@@ -41,20 +56,6 @@ define WeakRoutine {
   }
 
   dropWeak () {
-    return IfElseDecrWeakIsZero.new(
-           /*if*/   FreeRef.new(),
-           /*else*/ empty)
-  }
-
-  @type strongThenDrop () -> (ReferenceMachine)
-  strongThenDrop () {
-    return LockRef.new() `Run.then`
-           IfElseIncrRefIsOne.new(
-           /*if*/   DecrRef.new() `Run.then`
-                    UnlockRef.new() `Run.then`
-                    WeakRoutine.dropWeak(),
-           /*else*/ UnlockRef.new() `Run.then`
-                    WeakRoutine.dropWeak() `Run.then`
-                    SharedRoutine.dropShared())
+    return dropWeak
   }
 }

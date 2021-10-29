@@ -17,9 +17,17 @@ limitations under the License.
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
 define SharedRoutine {
-  $ReadOnly[name,state]$
+  $ReadOnly[dropShared,name,state]$
 
   refines StateMachine
+
+  @category ReferenceMachine dropShared <-
+      LockRef.new() `Run.then`
+      IfElseDecrRefIsZero.new(
+      /*if*/   FreeObject.new() `Run.then`
+                UnlockRef.new() `Run.then`
+                WeakRoutine.dropWeak(),
+      /*else*/ UnlockRef.new())
 
   @value String name
   @value ReferenceState state
@@ -29,7 +37,7 @@ define SharedRoutine {
     if (state.addStrong() == 1) {
       \ state.addWeak()
     }
-    return #self{ name, state, dropShared() }
+    return #self{ name, state, dropShared }
   }
 
   transition () {
@@ -43,11 +51,6 @@ define SharedRoutine {
   }
 
   dropShared () {
-    return LockRef.new() `Run.then`
-           IfElseDecrRefIsZero.new(
-           /*if*/   FreeObject.new() `Run.then`
-                    UnlockRef.new() `Run.then`
-                    WeakRoutine.dropWeak(),
-           /*else*/ UnlockRef.new())
+    return dropShared
   }
 }

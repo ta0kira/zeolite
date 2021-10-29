@@ -142,6 +142,8 @@ concrete RunThen {
 }
 
 define RunThen {
+  $ReadOnly[first,second]$
+
   refines ReferenceMachine
 
   @value ReferenceMachine first
@@ -155,8 +157,7 @@ define RunThen {
     scoped {
       optional ReferenceMachine next <- first.runWith(name,state)
     } in if (present(next)) {
-      first <- require(next)
-      return self
+      return RunThen{ require(next), second }
     } else {
       return second
     }
