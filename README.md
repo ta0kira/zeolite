@@ -24,6 +24,7 @@ extension to view the
 of this document.
 
 ## Table of Contents
+
 - [Project Status](#project-status)
 - [Language Overview](#language-overview)
   - [Programming Paradigms](#programming-paradigms)
@@ -68,6 +69,7 @@ of this document.
   - [Code Coverage](#code-coverage)
 - [Compiler Pragmas and Macros](#compiler-pragmas-and-macros)
   - [Source File Pragmas](#source-file-pragmas)
+  - [Category Pragmas](#category-pragmas)
   - [Procedure Pragmas](#procedure-pragmas)
   - [Local Variable Rules](#local-variable-rules)
   - [Expression Macros](#expression-macros)
@@ -1559,6 +1561,18 @@ categories or `testcase`s.
   sources. `.0rp` sources still remain public unless `$ModuleOnly$` is used.
   The transitive effect of `$TestsOnly$` is preventing the use of particular
   categories in output binaries.
+
+### Category Pragmas
+
+These must occur at the top of a category *declaration*, just after the opening
+`{`.
+
+- **`$Immutable$`**. (As of compiler version `0.20.0.0`.) Transitively requires
+  that all `concrete` implementations treat `@value` members as read-only. This
+  allows an `interface` to require that all of its implementations make their
+  values immutable. Note that (like `$ReadOnly[...]$`; see below) this *does
+  not* prevent the implementation from calling mutating functions on `@value`
+  members; this just prevents *overwriting* the variables themselves.
 
 ### Procedure Pragmas
 

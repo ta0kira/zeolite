@@ -1,0 +1,106 @@
+/* -----------------------------------------------------------------------------
+Copyright 2021 Kevin P. Barry
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+----------------------------------------------------------------------------- */
+
+// Author: Kevin P. Barry [ta0kira@gmail.com]
+
+testcase "immutable concrete protects @value members" {
+  error
+  require "value"
+  require "read-only"
+}
+
+concrete Test {
+  $Immutable$
+}
+
+define Test {
+  @value Int value
+
+  @value call () -> ()
+  call () {
+    value <- 2
+  }
+}
+
+
+testcase "immutable concrete skips @category members" {
+  compiles
+}
+
+concrete Test {
+  $Immutable$
+}
+
+define Test {
+  @category Int value <- 0
+
+  @value call () -> ()
+  call () {
+    value <- 2
+  }
+}
+
+
+testcase "immutable is transitively inherited from @value interface" {
+  error
+  require "value"
+  require "read-only"
+}
+
+@value interface Base0 {
+  $Immutable$
+}
+
+@value interface Base1 {
+  refines Base0
+}
+
+concrete Test {
+  refines Base1
+}
+
+define Test {
+  @value Int value
+
+  @value call () -> ()
+  call () {
+    value <- 2
+  }
+}
+
+
+testcase "immutable is inherited from @type interface" {
+  error
+  require "value"
+  require "read-only"
+}
+
+@type interface Base {
+  $Immutable$
+}
+
+concrete Test {
+  defines Base
+}
+
+define Test {
+  @value Int value
+
+  @value call () -> ()
+  call () {
+    value <- 2
+  }
+}

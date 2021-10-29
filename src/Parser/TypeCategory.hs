@@ -29,6 +29,7 @@ module Parser.TypeCategory (
 
 import Base.Positional
 import Parser.Common
+import Parser.Pragma (autoPragma)
 import Parser.TextParser
 import Parser.TypeInstance ()
 import Types.TypeCategory
@@ -40,35 +41,42 @@ instance ParseFromSource (AnyCategory SourceContext) where
   sourceParser = parseValue <|> parseInstance <|> parseConcrete where
     open = sepAfter (string_ "{")
     close = sepAfter (string_ "}")
+    pragmas = sepBy singlePragma optionalSpace
     parseValue = labeled "value interface" $ do
       c <- getSourceContext
       try $ kwValue >> kwInterface
       n <- sourceParser
       ps <- parseCategoryParams
       open
+      pg <- pragmas
       rs <- parseCategoryRefines
       fs <- flip sepBy optionalSpace $ parseScopedFunction (return ValueScope) (return n)
       close
-      return $ ValueInterface [c] NoNamespace n ps rs fs
+      return $ ValueInterface [c] NoNamespace n pg ps rs fs
     parseInstance = labeled "type interface" $ do
       c <- getSourceContext
       try $ kwType >> kwInterface
       n <- sourceParser
       ps <- parseCategoryParams
       open
+      pg <- pragmas
       fs <- flip sepBy optionalSpace $ parseScopedFunction (return TypeScope) (return n)
       close
-      return $ InstanceInterface [c] NoNamespace n ps fs
+      return $ InstanceInterface [c] NoNamespace n pg ps fs
     parseConcrete = labeled "concrete type" $ do
       c <- getSourceContext
       kwConcrete
       n <- sourceParser
       ps <- parseCategoryParams
       open
+      pg <- pragmas
       (rs,ds,vs) <- parseRefinesDefinesFilters
       fs <- flip sepBy optionalSpace $ parseScopedFunction parseScope (return n)
       close
-      return $ ValueConcrete [c] NoNamespace n ps rs ds vs fs
+      return $ ValueConcrete [c] NoNamespace n pg ps rs ds vs fs
+    singlePragma = immutable
+    immutable = autoPragma "Immutable" $ Left parseAt where
+      parseAt c = CategoryImmutable [c]
 
 parseCategoryParams :: TextParser [ValueParam SourceContext]
 parseCategoryParams = do

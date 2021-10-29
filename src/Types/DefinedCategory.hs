@@ -210,8 +210,8 @@ mergeInternalInheritance :: (Show c, CollectErrorsM m) =>
 mergeInternalInheritance tm d = do
   let rs2 = dcRefines d
   let ds2 = dcDefines d
-  (_,t@(ValueConcrete c ns n ps rs ds vs fs)) <- getConcreteCategory tm (dcContext d,dcName d)
-  let c2 = ValueConcrete c ns n ps (rs++rs2) (ds++ds2) vs fs
+  (_,t@(ValueConcrete c ns n pg ps rs ds vs fs)) <- getConcreteCategory tm (dcContext d,dcName d)
+  let c2 = ValueConcrete c ns n pg ps (rs++rs2) (ds++ds2) vs fs
   let tm' = Map.insert (dcName d) c2 tm
   let r = CategoryResolver tm'
   fm <- getCategoryFilterMap t
@@ -220,11 +220,16 @@ mergeInternalInheritance tm d = do
   noDuplicateRefines [] n rs'
   ds' <- mergeDefines r fm (ds++ds2)
   noDuplicateDefines [] n ds'
+  pg2 <- fmap concat $ mapCompilerM getPragmas $ map (tiName . vrType) rs2 ++ map (diName . vdType) ds2
   fs' <- mergeFunctions r tm' pm fm rs' ds' fs
-  let c2' = ValueConcrete c ns n ps rs' ds' vs fs'
+  let c2' = ValueConcrete c ns n (pg++pg2) ps rs' ds' vs fs'
   let tm0 = (dcName d) `Map.delete` tm
   checkCategoryInstances tm0 [c2']
   return $ Map.insert (dcName d) c2' tm
+  where
+    getPragmas n = do
+      (_,t) <- getCategory tm ([],n)
+      return $ getCategoryPragmas t
 
 replaceSelfMember :: (Show c, CollectErrorsM m) =>
   GeneralInstance -> DefinedMember c -> m (DefinedMember c)
