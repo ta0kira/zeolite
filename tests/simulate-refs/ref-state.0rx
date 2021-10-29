@@ -142,8 +142,6 @@ concrete RunThen {
 }
 
 define RunThen {
-  $ReadOnly[first,second]$
-
   refines ReferenceMachine
 
   @value ReferenceMachine first

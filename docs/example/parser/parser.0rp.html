@@ -25,6 +25,8 @@
 <span style='color:#898887;'>// Since #x is covariant, any Parser can convert to Parser&lt;any&gt;, and Parser&lt;all&gt;</span>
 <span style='color:#898887;'>// can convert to all other Parser.</span>
 <span style='color:#644a9b;'>@value</span> <b>interface</b> <b><span style='color:#0057ae;'>Parser</span></b><span style='color:#c02040;'>&lt;</span><span style='color:#c04040;'>|</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span> {
+  <b><i><span style='color:#8060c0;'>$Immutable$</span></i></b>
+
   run (<span style='color:#0057ae;'>ParseContext</span><span style='color:#c02040;'>&lt;</span><b>any</b><span style='color:#c02040;'>&gt;</span>) -&gt; (<span style='color:#0057ae;'>ParseState</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>)
 }
 

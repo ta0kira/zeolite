@@ -32,8 +32,6 @@ define LockRef {
 }
 
 define IfElseDecrRefIsZero {
-  $ReadOnly[doIf,doElse]$
-
   refines ReferenceMachine
 
   @value optional ReferenceMachine doIf
@@ -76,8 +74,6 @@ define FreeObject {
 }
 
 define IfElseDecrWeakIsZero {
-  $ReadOnly[doIf,doElse]$
-
   refines ReferenceMachine
 
   @value optional ReferenceMachine doIf
@@ -108,8 +104,6 @@ define FreeRef {
 }
 
 define IfElseIncrRefIsOne {
-  $ReadOnly[doIf,doElse]$
-
   refines ReferenceMachine
 
   @value optional ReferenceMachine doIf
