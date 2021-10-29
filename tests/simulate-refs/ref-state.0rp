@@ -18,6 +18,18 @@ limitations under the License.
 
 $ModuleOnly$
 
+@value interface ReferenceMachine {
+  runWith (String,ReferenceState) -> (optional ReferenceMachine)
+}
+
+concrete Run {
+  @type then (ReferenceMachine,ReferenceMachine) -> (ReferenceMachine)
+}
+
+@type interface ActionFactory {
+  new (String,ReferenceState) -> (StateMachine)
+}
+
 concrete ReferenceState {
   refines Formatted
 
@@ -41,11 +53,7 @@ concrete ReferenceState {
 
   @value kill () -> ()
   @value isAlive () -> (Bool)
-  @value cleanupWeak () -> ()
+  @value freeData () -> ()
 
   @value getError () -> (optional String)
-}
-
-@type interface ActionFactory {
-  new (String,ReferenceState) -> (StateMachine)
 }

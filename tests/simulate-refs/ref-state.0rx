@@ -21,7 +21,7 @@ define ReferenceState {
   @value Int weakCount
   @value Bool locked
   @value Int aliveCleanup
-  @value Int weakCleanup
+  @value Int dataCleanup
   @value Vector<Formatted> operations
 
   new () {
@@ -95,15 +95,15 @@ define ReferenceState {
     return aliveCleanup == 0
   }
 
-  cleanupWeak () {
-    weakCleanup <- weakCleanup+1
+  freeData () {
+    dataCleanup <- dataCleanup+1
   }
 
   getError () {
     if (aliveCleanup > 1) {
       return "object freed multiple times"
     }
-    if (weakCleanup > 1) {
+    if (dataCleanup > 1) {
       return "counters freed multiple times"
     }
     if (aliveCleanup > 0 && strongCount > 0) {
@@ -125,8 +125,40 @@ define ReferenceState {
         .append(weakCount)
         .append(" AC: ")
         .append(aliveCleanup)
-        .append(" WC: ")
-        .append(weakCleanup)
+        .append(" DC: ")
+        .append(dataCleanup)
         .build()
+  }
+}
+
+define Run {
+  then (first,second) {
+    return RunThen.new(first,second)
+  }
+}
+
+concrete RunThen {
+  @type new (ReferenceMachine,ReferenceMachine) -> (ReferenceMachine)
+}
+
+define RunThen {
+  refines ReferenceMachine
+
+  @value ReferenceMachine first
+  @value ReferenceMachine second
+
+  new (first,second) {
+    return RunThen{ first, second }
+  }
+
+  runWith (name,state) {
+    scoped {
+      optional ReferenceMachine next <- first.runWith(name,state)
+    } in if (present(next)) {
+      first <- require(next)
+      return self
+    } else {
+      return second
+    }
   }
 }

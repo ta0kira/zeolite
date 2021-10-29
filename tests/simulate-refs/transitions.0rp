@@ -18,8 +18,38 @@ limitations under the License.
 
 $ModuleOnly$
 
-concrete SharedRoutine {
-  defines ActionFactory
+concrete LockRef {
+  @type new () -> (ReferenceMachine)
+}
 
-  @type dropRef () -> (ReferenceMachine)
+concrete IfElseDecrRefIsZero {
+  @type new (optional ReferenceMachine,optional ReferenceMachine) -> (ReferenceMachine)
+}
+
+concrete UnlockRef {
+  @type new () -> (ReferenceMachine)
+}
+
+concrete FreeObject {
+  @type new () -> (ReferenceMachine)
+}
+
+concrete IfElseDecrWeakIsZero {
+  @type new (optional ReferenceMachine,optional ReferenceMachine) -> (ReferenceMachine)
+}
+
+concrete FreeRef {
+  @type new () -> (ReferenceMachine)
+}
+
+concrete IfElseIncrRefIsOne {
+  @type new (optional ReferenceMachine,optional ReferenceMachine) -> (ReferenceMachine)
+}
+
+concrete DecrRef {
+  @type new () -> (ReferenceMachine)
+}
+
+concrete DecrWeak {
+  @type new () -> (ReferenceMachine)
 }

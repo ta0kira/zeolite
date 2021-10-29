@@ -17,183 +17,37 @@ limitations under the License.
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
 define SharedRoutine {
+  refines StateMachine
+
+  @value String name
+  @value ReferenceState state
+  @value optional ReferenceMachine machine
+
   new (name,state) {
     if (state.addStrong() == 1) {
       \ state.addWeak()
     }
-    return DropSharedEnter.new(name,state)
-  }
-}
-
-
-// Algorithm:
-//
-//   while (DropSharedEnter)
-//   if (DropSharedCheckAlive) {
-//     DropSharedUnlock0
-//   } else {
-//     DropSharedFreeObject
-//     DropSharedUnlock1
-//     if (DropSharedWeakAlive) {
-//       DropSharedFreeWeak
-//     }
-//   }
-
-
-define DropSharedEnter {
-  refines StateMachine
-
-  @value String name
-  @value ReferenceState state
-
-  new (name,state) {
-    return #self{ name, state }
+    return #self{ name, state, dropRef() }
   }
 
   transition () {
-    \ state.addOperation<#self>(name)
-    if (state.tryLock()) {
-      return DropSharedCheckAlive.new(name,state)
-    } else {
+    if (!present(machine)) {
+      return empty
+    } elif (present((machine <- require(machine).runWith(name,state)))) {
       return self
-    }
-  }
-}
-
-
-concrete DropSharedCheckAlive {
-  defines ActionFactory
-}
-
-define DropSharedCheckAlive {
-  refines StateMachine
-
-  @value String name
-  @value ReferenceState state
-
-  new (name,state) {
-    return #self{ name, state }
-  }
-
-  transition () {
-    \ state.addOperation<#self>(name)
-    if (state.remStrong() == 0) {
-      return DropSharedFreeObject.new(name,state)
-    } else {
-      return DropSharedUnlock0.new(name,state)
-    }
-  }
-}
-
-
-concrete DropSharedUnlock0 {
-  defines ActionFactory
-}
-
-define DropSharedUnlock0 {
-  refines StateMachine
-
-  @value String name
-  @value ReferenceState state
-
-  new (name,state) {
-    return #self{ name, state }
-  }
-
-  transition () {
-    \ state.addOperation<#self>(name)
-    \ state.remLock()
-    return empty
-  }
-}
-
-
-concrete DropSharedFreeObject {
-  defines ActionFactory
-}
-
-define DropSharedFreeObject {
-  refines StateMachine
-
-  @value String name
-  @value ReferenceState state
-
-  new (name,state) {
-    return #self{ name, state }
-  }
-
-  transition () {
-    \ state.addOperation<#self>(name)
-    \ state.kill()
-    return DropSharedUnlock1.new(name,state)
-  }
-}
-
-
-concrete DropSharedUnlock1 {
-  defines ActionFactory
-}
-
-define DropSharedUnlock1 {
-  refines StateMachine
-
-  @value String name
-  @value ReferenceState state
-
-  new (name,state) {
-    return #self{ name, state }
-  }
-
-  transition () {
-    \ state.addOperation<#self>(name)
-    \ state.remLock()
-    return DropSharedWeakAlive.new(name,state)
-  }
-}
-
-
-concrete DropSharedWeakAlive {
-  defines ActionFactory
-}
-
-define DropSharedWeakAlive {
-  refines StateMachine
-
-  @value String name
-  @value ReferenceState state
-
-  new (name,state) {
-    return #self{ name, state }
-  }
-
-  transition () {
-    \ state.addOperation<#self>(name)
-    if (state.remWeak() == 0) {
-      return DropSharedFreeWeak.new(name,state)
     } else {
       return empty
     }
   }
-}
 
-
-concrete DropSharedFreeWeak {
-  defines ActionFactory
-}
-
-define DropSharedFreeWeak {
-  refines StateMachine
-
-  @value String name
-  @value ReferenceState state
-
-  new (name,state) {
-    return #self{ name, state }
-  }
-
-  transition () {
-    \ state.addOperation<#self>(name)
-    \ state.cleanupWeak()
-    return empty
+  dropRef () {
+    return LockRef.new() `Run.then`
+           IfElseDecrRefIsZero.new(
+           /*if*/   FreeObject.new() `Run.then`
+                    UnlockRef.new() `Run.then`
+                    IfElseDecrWeakIsZero.new(
+                    /*if*/   FreeRef.new(),
+                    /*else*/ empty),
+           /*else*/ UnlockRef.new())
   }
 }

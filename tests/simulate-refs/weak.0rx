@@ -17,188 +17,38 @@ limitations under the License.
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
 define WeakRoutine {
+  refines StateMachine
+
+  @value String name
+  @value ReferenceState state
+  @value optional ReferenceMachine machine
+
   new (name,state) {
     \ state.addWeak()
-    return StrongEnter.new(name,state)
-  }
-}
-
-// Algorithm:
-//
-//   while (StrongEnter)
-//   if (StrongCheckAlive) {
-//     StrongUnlock0
-//     DropSharedEnter (continue in shared.0rx)
-//   } else {
-//     StrongRemoveRef
-//     StrongUnlock1
-//     if (StrongWeakAlive) {
-//       StrongFreeWeak
-//     }
-//   }
-
-
-concrete StrongEnter {
-  defines ActionFactory
-}
-
-define StrongEnter {
-  refines StateMachine
-
-  @value String name
-  @value ReferenceState state
-
-  new (name,state) {
-    return #self{ name, state }
+    return #self{ name, state, strongThenDrop() }
   }
 
   transition () {
-    \ state.addOperation<#self>(name)
-    if (state.tryLock()) {
-      return StrongCheckAlive.new(name,state)
-    } else {
+    if (!present(machine)) {
+      return empty
+    } elif (present((machine <- require(machine).runWith(name,state)))) {
       return self
-    }
-  }
-}
-
-
-concrete StrongCheckAlive {
-  defines ActionFactory
-}
-
-define StrongCheckAlive {
-  refines StateMachine
-
-  @value String name
-  @value ReferenceState state
-
-  new (name,state) {
-    return #self{ name, state }
-  }
-
-  transition () {
-    \ state.addOperation<#self>(name)
-    if (state.addStrong() == 1) {
-      return StrongRemoveRef.new(name,state)
-    } else {
-      return StrongUnlock0.new(name,state)
-    }
-  }
-}
-
-
-concrete StrongUnlock0 {
-  defines ActionFactory
-}
-
-define StrongUnlock0 {
-  refines StateMachine
-
-  @value String name
-  @value ReferenceState state
-
-  new (name,state) {
-    return #self{ name, state }
-  }
-
-  transition () {
-    \ state.addOperation<#self>(name)
-    \ state.remLock()
-    // Should really be a separate step, but we'll just assume that since
-    // there's still a strong lock that the weak count won't reach 0 here.
-    \ state.remWeak()
-    return DropSharedEnter.new(name,state)
-  }
-}
-
-
-concrete StrongRemoveRef {
-  defines ActionFactory
-}
-
-define StrongRemoveRef {
-  refines StateMachine
-
-  @value String name
-  @value ReferenceState state
-
-  new (name,state) {
-    return #self{ name, state }
-  }
-
-  transition () {
-    \ state.addOperation<#self>(name)
-    \ state.remStrong()
-    return StrongUnlock1.new(name,state)
-  }
-}
-
-
-concrete StrongUnlock1 {
-  defines ActionFactory
-}
-
-define StrongUnlock1 {
-  refines StateMachine
-
-  @value String name
-  @value ReferenceState state
-
-  new (name,state) {
-    return #self{ name, state }
-  }
-
-  transition () {
-    \ state.addOperation<#self>(name)
-    \ state.remLock()
-    return StrongWeakAlive.new(name,state)
-  }
-}
-
-
-concrete StrongWeakAlive {
-  defines ActionFactory
-}
-
-define StrongWeakAlive {
-  refines StateMachine
-
-  @value String name
-  @value ReferenceState state
-
-  new (name,state) {
-    return #self{ name, state }
-  }
-
-  transition () {
-    \ state.addOperation<#self>(name)
-    if (state.remWeak() == 0) {
-      return StrongFreeWeak.new(name,state)
     } else {
       return empty
     }
   }
-}
 
-
-concrete StrongFreeWeak {
-  defines ActionFactory
-}
-
-define StrongFreeWeak {
-  refines StateMachine
-
-  @value String name
-  @value ReferenceState state
-
-  new (name,state) {
-    return #self{ name, state }
-  }
-
-  transition () {
-    \ state.addOperation<#self>(name)
-    \ state.cleanupWeak()
-    return empty
+  @type strongThenDrop () -> (ReferenceMachine)
+  strongThenDrop () {
+    return LockRef.new() `Run.then`
+    IfElseIncrRefIsOne.new(
+    /*if*/   DecrRef.new() `Run.then`
+             UnlockRef.new() `Run.then`
+             IfElseDecrWeakIsZero.new(
+             /*if*/   FreeRef.new(),
+             /*else*/ empty),
+    /*else*/ UnlockRef.new() `Run.then`
+             DecrWeak.new() `Run.then`
+             SharedRoutine.dropRef())
   }
 }
