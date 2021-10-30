@@ -12,6 +12,11 @@
 * **[breaking]** Removes `AnonymousOrder` C++ class, previously used for
   creating iterators for C++ extensions.
 
+### Libraries
+
+* **[breaking]** Removes iterators from `lib/util` (`iterator.0rp`) because they
+  were awkward, inefficient, and had no current intended use-cases.
+
 ### Language
 
 * **[new]** Adds the `$Immutable$` category pragma. This marks all `@value`
