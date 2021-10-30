@@ -1574,6 +1574,39 @@ These must occur at the top of a category *declaration*, just after the opening
   not* prevent the implementation from calling mutating functions on `@value`
   members; this just prevents *overwriting* the variables themselves.
 
+  Also note that`$Immutable$` applies to the *entire* implementation; not just
+  to the functions defined where `$Immutable$` is specified.
+
+  <pre style='color:#1f1c1b;background-color:#f6f8fa;'>
+  <span style='color:#644a9b;'>@value</span> <b>interface</b> <b><span style='color:#0057ae;'>Foo</span></b> {
+    <b><i><span style='color:#8060c0;'>$Immutable$</span></i></b>
+
+    call () -&gt; ()
+  }
+
+  <b>concrete</b> <b><span style='color:#0057ae;'>Bar</span></b> {
+    <b>refines</b> <span style='color:#0057ae;'>Foo</span>
+
+    <span style='color:#644a9b;'>@type</span> new () -&gt; (<span style='color:#0057ae;'>Bar</span>)
+    <span style='color:#644a9b;'>@value</span> mutate () -&gt; ()
+  }
+
+  <b>define</b> <b><span style='color:#0057ae;'>Bar</span></b> {
+    <span style='color:#644a9b;'>@value</span> <i><span style='color:#0057ae;'>Int</span></i> value
+
+    new () { <b>return</b> <span style='color:#0057ae;'>Bar</span>{ <span style='color:#b08000;'>0</span> } }
+
+    call () {
+      <span style='color:#898887;'>// call cannot overwrite value</span>
+      <span style='color:#898887;'>// value &lt;- 1</span>
+    }
+
+    mutate () {
+      <span style='color:#898887;'>// mutate also cannot overwrite value, even though mutate isn't in Foo</span>
+      <span style='color:#898887;'>// value &lt;- 1</span>
+    }
+  }</pre>
+
 ### Procedure Pragmas
 
 These must occur at the very top of a function definition.
