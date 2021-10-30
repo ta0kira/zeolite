@@ -133,3 +133,28 @@ define Test {
     value <- 2
   }
 }
+
+
+testcase "immutable is inherited from internal @type interface" {
+  error
+  require "value"
+  require "read-only"
+}
+
+@type interface Base {
+  $Immutable$
+}
+
+concrete Test {
+}
+
+define Test {
+  defines Base
+
+  @value Int value
+
+  @value call () -> ()
+  call () {
+    value <- 2
+  }
+}
