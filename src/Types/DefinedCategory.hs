@@ -220,7 +220,7 @@ mergeInternalInheritance tm d = do
   noDuplicateRefines [] n rs'
   ds' <- mergeDefines r fm (ds++ds2)
   noDuplicateDefines [] n ds'
-  pg2 <- fmap concat $ mapCompilerM getPragmas $ map (tiName . vrType) rs2 ++ map (diName . vdType) ds2
+  pg2 <- fmap concat $ mapCompilerM getPragmas $ map (tiName . vrType) rs ++ map (diName . vdType) ds
   fs' <- mergeFunctions r tm' pm fm rs' ds' fs
   let c2' = ValueConcrete c ns n (pg++pg2) ps rs' ds' vs fs'
   let tm0 = (dcName d) `Map.delete` tm

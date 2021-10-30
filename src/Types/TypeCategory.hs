@@ -820,7 +820,7 @@ flattenAllConnections tm0 ts = do
       rs'' <- mergeRefines r fm rs'
       noDuplicateRefines c n rs''
       checkMerged r fm rs rs''
-      pg2 <- fmap concat $ mapCompilerM (getPragmas tm) $ map (tiName . vrType) rs'
+      pg2 <- fmap concat $ mapCompilerM (getPragmas tm) $ map (tiName . vrType) rs
       -- Only merge from direct parents.
       fs' <- mergeFunctions r tm pm fm rs [] fs
       return $ ValueInterface c ns n (pg++pg2) ps rs'' fs'
@@ -834,7 +834,7 @@ flattenAllConnections tm0 ts = do
       checkMerged r fm rs rs''
       ds' <- mergeDefines r fm ds
       noDuplicateDefines c n ds'
-      pg2 <- fmap concat $ mapCompilerM (getPragmas tm) $ map (tiName . vrType) rs' ++ map (diName . vdType) ds
+      pg2 <- fmap concat $ mapCompilerM (getPragmas tm) $ map (tiName . vrType) rs ++ map (diName . vdType) ds
       -- Only merge from direct parents.
       fs' <- mergeFunctions r tm pm fm rs ds fs
       return $ ValueConcrete c ns n (pg++pg2) ps rs'' ds' vs fs'

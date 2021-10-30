@@ -82,6 +82,35 @@ define Test {
 }
 
 
+testcase "immutable is transitively inherited from internal @value interface" {
+  error
+  require "value"
+  require "read-only"
+}
+
+@value interface Base0 {
+  $Immutable$
+}
+
+@value interface Base1 {
+  refines Base0
+}
+
+concrete Test {
+}
+
+define Test {
+  refines Base1
+
+  @value Int value
+
+  @value call () -> ()
+  call () {
+    value <- 2
+  }
+}
+
+
 testcase "immutable is inherited from @type interface" {
   error
   require "value"
