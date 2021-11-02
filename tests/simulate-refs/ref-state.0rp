@@ -19,7 +19,7 @@ limitations under the License.
 $ModuleOnly$
 
 @value interface ReferenceMachine {
-  $Immutable$
+  immutable
 
   runWith (String,ReferenceState) -> (optional ReferenceMachine)
 }

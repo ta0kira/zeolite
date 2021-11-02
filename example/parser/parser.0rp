@@ -14,7 +14,7 @@ concrete ParseState<|#x> {
 // Since #x is covariant, any Parser can convert to Parser<any>, and Parser<all>
 // can convert to all other Parser.
 @value interface Parser<|#x> {
-  $Immutable$
+  immutable
 
   run (ParseContext<any>) -> (ParseState<#x>)
 }

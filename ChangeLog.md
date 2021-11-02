@@ -19,8 +19,9 @@
 
 ### Language
 
-* **[new]** Adds the `$Immutable$` category pragma. This marks all `@value`
-  members in the respective `concrete` implementations as read-only.
+* **[breaking]** Adds the `immutable` category property. This marks all `@value`
+  members in the respective `concrete` implementations as read-only. (This is
+  breaking because `immutable` is now reserved.)
 
 * **[new]** Updates `String.builder()` to accept `Formatted` values, rather than
   just accepting `String`.

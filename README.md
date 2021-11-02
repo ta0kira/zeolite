@@ -69,7 +69,6 @@ of this document.
   - [Code Coverage](#code-coverage)
 - [Compiler Pragmas and Macros](#compiler-pragmas-and-macros)
   - [Source File Pragmas](#source-file-pragmas)
-  - [Category Pragmas](#category-pragmas)
   - [Procedure Pragmas](#procedure-pragmas)
   - [Local Variable Rules](#local-variable-rules)
   - [Expression Macros](#expression-macros)
@@ -1056,6 +1055,10 @@ has `@type interface`s that declare `@type` functions that must be defined.
     }
   }</pre>
 
+You can modify interfaces with `immutable` at the very top of the declaration.
+This will require that all implementations of the interface treat all `@value`
+members as read-only.
+
 ### The `#self` Parameter
 
 Every category has an implicit *covariant* parameter **`#self`**. (As of
@@ -1561,51 +1564,6 @@ categories or `testcase`s.
   sources. `.0rp` sources still remain public unless `$ModuleOnly$` is used.
   The transitive effect of `$TestsOnly$` is preventing the use of particular
   categories in output binaries.
-
-### Category Pragmas
-
-These must occur at the top of a category *declaration*, just after the opening
-`{`.
-
-- **`$Immutable$`**. (As of compiler version `0.20.0.0`.) Transitively requires
-  that all `concrete` implementations treat `@value` members as read-only. This
-  allows an `interface` to require that all of its implementations make their
-  values immutable. Note that (like `$ReadOnly[...]$`; see below) this *does
-  not* prevent the implementation from calling mutating functions on `@value`
-  members; this just prevents *overwriting* the variables themselves.
-
-  Also note that`$Immutable$` applies to the *entire* implementation; not just
-  to the functions defined where `$Immutable$` is specified.
-
-  <pre style='color:#1f1c1b;background-color:#f6f8fa;'>
-  <span style='color:#644a9b;'>@value</span> <b>interface</b> <b><span style='color:#0057ae;'>Foo</span></b> {
-    <b><i><span style='color:#8060c0;'>$Immutable$</span></i></b>
-
-    call () -&gt; ()
-  }
-
-  <b>concrete</b> <b><span style='color:#0057ae;'>Bar</span></b> {
-    <b>refines</b> <span style='color:#0057ae;'>Foo</span>
-
-    <span style='color:#644a9b;'>@type</span> new () -&gt; (<span style='color:#0057ae;'>Bar</span>)
-    <span style='color:#644a9b;'>@value</span> mutate () -&gt; ()
-  }
-
-  <b>define</b> <b><span style='color:#0057ae;'>Bar</span></b> {
-    <span style='color:#644a9b;'>@value</span> <i><span style='color:#0057ae;'>Int</span></i> value
-
-    new () { <b>return</b> <span style='color:#0057ae;'>Bar</span>{ <span style='color:#b08000;'>0</span> } }
-
-    call () {
-      <span style='color:#898887;'>// call cannot overwrite value</span>
-      <span style='color:#898887;'>// value &lt;- 1</span>
-    }
-
-    mutate () {
-      <span style='color:#898887;'>// mutate also cannot overwrite value, even though mutate isn't in Foo</span>
-      <span style='color:#898887;'>// value &lt;- 1</span>
-    }
-  }</pre>
 
 ### Procedure Pragmas
 

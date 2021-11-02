@@ -23,7 +23,7 @@ testcase "immutable concrete protects @value members" {
 }
 
 concrete Test {
-  $Immutable$
+  immutable
 }
 
 define Test {
@@ -41,7 +41,7 @@ testcase "immutable concrete skips @category members" {
 }
 
 concrete Test {
-  $Immutable$
+  immutable
 }
 
 define Test {
@@ -61,7 +61,7 @@ testcase "immutable is transitively inherited from @value interface" {
 }
 
 @value interface Base0 {
-  $Immutable$
+  immutable
 }
 
 @value interface Base1 {
@@ -89,7 +89,7 @@ testcase "immutable is transitively inherited from internal @value interface" {
 }
 
 @value interface Base0 {
-  $Immutable$
+  immutable
 }
 
 @value interface Base1 {
@@ -118,7 +118,7 @@ testcase "immutable is inherited from @type interface" {
 }
 
 @type interface Base {
-  $Immutable$
+  immutable
 }
 
 concrete Test {
@@ -142,7 +142,7 @@ testcase "immutable is inherited from internal @type interface" {
 }
 
 @type interface Base {
-  $Immutable$
+  immutable
 }
 
 concrete Test {

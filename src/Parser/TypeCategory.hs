@@ -29,7 +29,6 @@ module Parser.TypeCategory (
 
 import Base.Positional
 import Parser.Common
-import Parser.Pragma (autoPragma)
 import Parser.TextParser
 import Parser.TypeInstance ()
 import Types.TypeCategory
@@ -41,7 +40,6 @@ instance ParseFromSource (AnyCategory SourceContext) where
   sourceParser = parseValue <|> parseInstance <|> parseConcrete where
     open = sepAfter (string_ "{")
     close = sepAfter (string_ "}")
-    pragmas = sepBy singlePragma optionalSpace
     parseValue = labeled "value interface" $ do
       c <- getSourceContext
       try $ kwValue >> kwInterface
@@ -74,9 +72,11 @@ instance ParseFromSource (AnyCategory SourceContext) where
       fs <- flip sepBy optionalSpace $ parseScopedFunction parseScope (return n)
       close
       return $ ValueConcrete [c] NoNamespace n pg ps rs ds vs fs
-    singlePragma = immutable
-    immutable = autoPragma "Immutable" $ Left parseAt where
-      parseAt c = CategoryImmutable [c]
+    pragmas = fmap (:[]) immutable <|> return []
+    immutable = do
+      c <- getSourceContext
+      kwImmutable
+      return $ CategoryImmutable [c]
 
 parseCategoryParams :: TextParser [ValueParam SourceContext]
 parseCategoryParams = do
