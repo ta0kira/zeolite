@@ -927,6 +927,7 @@ instance TypeResolver Resolver where
   trDefinesFilters _ = getDefinesFilters
   -- Type5 is concrete, somewhat arbitrarily.
   trConcrete _ = \t -> return (t == type5)
+  trImmutable _ _ = return False
 
 getParams :: CollectErrorsM m =>
   Map.Map CategoryName (Map.Map CategoryName (InstanceParams -> InstanceParams))

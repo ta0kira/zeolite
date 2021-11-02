@@ -158,3 +158,41 @@ define Test {
     value <- 2
   }
 }
+
+
+testcase "@value members must have immutable types" {
+  error
+  require "immutable"
+  require "value0"
+  require "value1"
+  require "value2"
+}
+
+@value interface Foo {}
+
+concrete Test {
+  immutable
+}
+
+define Test {
+  @value          Foo value0
+  @value optional Foo value1
+  @value weak     Foo value2
+}
+
+
+testcase "literal built-in types are immutable" {
+  compiles
+}
+
+concrete Test {
+  immutable
+}
+
+define Test {
+  @value Bool   bool
+  @value Char   char
+  @value Float  float
+  @value Int    int
+  @value String string
+}

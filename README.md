@@ -1055,9 +1055,42 @@ has `@type interface`s that declare `@type` functions that must be defined.
     }
   }</pre>
 
-You can modify interfaces with `immutable` at the very top of the declaration.
-This will require that all implementations of the interface treat all `@value`
-members as read-only.
+You can modify `interface`s with **`immutable`** at the very top of the
+declaration. This creates two requirements for `@value` members:
+
+1. They are marked as read-only, and cannot be overwritten with `<-`.
+2. They must have a type that is also `immutable`.
+
+Note that this applies to the *entire* implementation; not just to the
+implementations of functions required by the `interface`.
+
+<pre style='color:#1f1c1b;background-color:#f6f8fa;'>
+<span style='color:#644a9b;'>@value</span> <b>interface</b> <b><span style='color:#0057ae;'>Foo</span></b> {
+  <b>immutable</b>
+
+  call () -&gt; ()
+}
+
+<b>concrete</b> <b><span style='color:#0057ae;'>Bar</span></b> {
+  <b>refines</b> <span style='color:#0057ae;'>Foo</span>
+
+  <span style='color:#644a9b;'>@type</span> new () -&gt; (<span style='color:#0057ae;'>Bar</span>)
+  <span style='color:#644a9b;'>@value</span> mutate () -&gt; ()
+}
+
+<b>define</b> <b><span style='color:#0057ae;'>Bar</span></b> {
+  <span style='color:#644a9b;'>@value</span> <i><span style='color:#0057ae;'>Int</span></i> value
+
+  new () { <b>return</b> <span style='color:#0057ae;'>Bar</span>{ <span style='color:#b08000;'>0</span> } }
+
+  call () {
+    <span style='color:#898887;'>// call cannot overwrite value</span>
+  }
+
+  mutate () {
+    <span style='color:#898887;'>// mutate also cannot overwrite value, even though mutate isn't in Foo.</span>
+  }
+}</pre>
 
 ### The `#self` Parameter
 

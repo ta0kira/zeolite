@@ -386,6 +386,9 @@ instance Show c => TypeResolver (CategoryResolver c) where
     trConcrete (CategoryResolver tm) n = do
       (_,t) <- getCategory tm ([],n)
       return (isValueConcrete t)
+    trImmutable (CategoryResolver tm) n = do
+      (_,t) <- getCategory tm ([],n)
+      return $ any isCategoryImmutable (getCategoryPragmas t)
 
 data SymbolScope =
   LocalScope |

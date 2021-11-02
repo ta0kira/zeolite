@@ -43,6 +43,7 @@ module Types.TypeInstance (
   checkDefinesMatch,
   checkGeneralMatch,
   checkValueAssignment,
+  checkValueTypeImmutable,
   checkValueTypeMatch,
   filterLookup,
   fixTypeParams,
@@ -300,6 +301,9 @@ class TypeResolver r where
   -- Returns True if the type is concrete.
   trConcrete :: CollectErrorsM m =>
     r -> CategoryName -> m Bool
+  -- Returns True if the type is immutable.
+  trImmutable ::  CollectErrorsM m =>
+    r -> CategoryName -> m Bool
 
 data AnyTypeResolver = forall r. TypeResolver r => AnyTypeResolver r
 
@@ -310,6 +314,7 @@ instance TypeResolver AnyTypeResolver where
   trTypeFilters (AnyTypeResolver r) = trTypeFilters r
   trDefinesFilters (AnyTypeResolver r) = trDefinesFilters r
   trConcrete (AnyTypeResolver r) = trConcrete r
+  trImmutable (AnyTypeResolver r) = trImmutable r
 
 filterLookup :: ErrorContextM m =>
   ParamFilters -> ParamName -> m [TypeFilter]
@@ -353,6 +358,13 @@ noInferredTypes g = do
 checkValueAssignment :: (CollectErrorsM m, TypeResolver r) =>
   r -> ParamFilters -> ValueType -> ValueType -> m ()
 checkValueAssignment r f t1 t2 = noInferredTypes $ checkValueTypeMatch r f Covariant t1 t2
+
+checkValueTypeImmutable :: (CollectErrorsM m, TypeResolver r) => r -> ParamFilters -> ValueType -> m Bool
+checkValueTypeImmutable r _ (ValueType _ t) = reduceMergeTree anyOp allOp leafOp t where
+  anyOp = fmap (all id) . sequence
+  allOp = fmap (any id) . sequence
+  leafOp (JustTypeInstance (TypeInstance n _)) = trImmutable r n
+  leafOp _ = return False
 
 checkValueTypeMatch :: (CollectErrorsM m, TypeResolver r) =>
   r -> ParamFilters -> Variance -> ValueType -> ValueType -> m (MergeTree InferredTypeGuess)

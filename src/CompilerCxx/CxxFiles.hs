@@ -31,6 +31,7 @@ module CompilerCxx.CxxFiles (
   generateVerboseExtension,
 ) where
 
+import Control.Monad (when)
 import Data.List (intercalate,sortBy)
 import Data.Hashable (hash)
 import Prelude hiding (pi)
@@ -531,14 +532,16 @@ generateCategoryDefinition testing = common where
     ] where
       className = valueName (getCategoryName t)
 
-  createMember r params t m = do
+  createMember r params t m = "In creation of " ++ show (dmName m) ++ " at " ++ formatFullContext (dmContext m) ??> do
     m' <- replaceSelfMember (instanceFromCategory t) m
-    validateGeneralInstance r params (vtType $ dmType m') <??
-      "In creation of " ++ show (dmName m') ++ " at " ++ formatFullContext (dmContext m')
+    validateGeneralInstance r params (vtType $ dmType m')
+    when (dmScope m == ValueScope && any isCategoryImmutable (getCategoryPragmas t)) $ do
+      fs <- getCategoryFilterMap t
+      immutable <- checkValueTypeImmutable r fs (dmType m')
+      when (not immutable) $ compilerErrorM $ "@value member " ++ show (dmName m) ++ " must have an immutable type"
     return $ onlyCode $ variableStoredType (dmType m') ++ " " ++ variableName (dmName m') ++ ";"
-  createMemberLazy r m = do
-    validateGeneralInstance r Set.empty (vtType $ dmType m) <??
-      "In creation of " ++ show (dmName m) ++ " at " ++ formatFullContext (dmContext m)
+  createMemberLazy r m = "In creation of " ++ show (dmName m) ++ " at " ++ formatFullContext (dmContext m) ??> do
+    validateGeneralInstance r Set.empty (vtType $ dmType m)
     return $ onlyCode $ variableLazyType (dmType m) ++ " " ++ variableName (dmName m) ++ ";"
 
   createParams = mconcat . map createParam where
