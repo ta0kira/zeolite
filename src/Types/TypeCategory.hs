@@ -80,6 +80,7 @@ module Types.TypeCategory (
   noDuplicateRefines,
   parsedToFunctionType,
   partitionByScope,
+  prependCategoryPragmaContext,
   replaceSelfFunction,
   setCategoryNamespace,
   topoSortCategories,
@@ -143,6 +144,9 @@ instance Show c => Show (PragmaCategory c) where
 
 isCategoryImmutable :: PragmaCategory c -> Bool
 isCategoryImmutable (CategoryImmutable _) = True
+
+prependCategoryPragmaContext :: [c] -> PragmaCategory c -> PragmaCategory c
+prependCategoryPragmaContext c (CategoryImmutable c2) = CategoryImmutable (c++c2)
 
 formatFullContext :: Show a => [a] -> String
 formatFullContext cs = intercalate " -> " (map show cs)
@@ -825,7 +829,7 @@ flattenAllConnections tm0 ts = do
       rs'' <- mergeRefines r fm rs'
       noDuplicateRefines c n rs''
       checkMerged r fm rs rs''
-      pg2 <- fmap concat $ mapCompilerM (getPragmas tm) $ map (tiName . vrType) rs
+      pg2 <- fmap concat $ mapCompilerM (getRefinesPragmas tm) rs
       -- Only merge from direct parents.
       fs' <- mergeFunctions r tm pm fm rs [] fs
       return $ ValueInterface c ns n (pg++pg2) ps rs'' fs'
@@ -839,10 +843,11 @@ flattenAllConnections tm0 ts = do
       checkMerged r fm rs rs''
       ds' <- mergeDefines r fm ds
       noDuplicateDefines c n ds'
-      pg2 <- fmap concat $ mapCompilerM (getPragmas tm) $ map (tiName . vrType) rs ++ map (diName . vdType) ds
+      pg2 <- fmap concat $ mapCompilerM (getRefinesPragmas tm) rs
+      pg3 <- fmap concat $ mapCompilerM (getDefinesPragmas tm) ds
       -- Only merge from direct parents.
       fs' <- mergeFunctions r tm pm fm rs ds fs
-      return $ ValueConcrete c ns n (pg++pg2) ps rs'' ds' vs fs'
+      return $ ValueConcrete c ns n (pg++pg2++pg3) ps rs'' ds' vs fs'
     updateSingle _ _ t = return t
     getRefines tm ra@(ValueRefine c t@(TypeInstance n _)) = do
       (_,v) <- getValueCategory tm (c,n)
@@ -867,9 +872,12 @@ flattenAllConnections tm0 ts = do
                           "Cannot refine " ++ show ta1 ++ " from inherited " ++ show ta2
       return ()
     checkConvert _ _ _ _ = return ()
-    getPragmas tm n = do
-      (_,t) <- getCategory tm ([],n)
-      return $ getCategoryPragmas t
+    getRefinesPragmas tm rf = do
+      (_,t) <- getCategory tm (vrContext rf,tiName $ vrType rf)
+      return $ map (prependCategoryPragmaContext $ vrContext rf) $ getCategoryPragmas t
+    getDefinesPragmas tm df = do
+      (_,t) <- getCategory tm (vdContext df,diName $ vdType df)
+      return $ map (prependCategoryPragmaContext $ vdContext df) $ getCategoryPragmas t
 
 mergeFunctions :: (Show c, CollectErrorsM m, TypeResolver r) =>
   r -> CategoryMap c -> ParamValues -> ParamFilters -> [ValueRefine c] ->

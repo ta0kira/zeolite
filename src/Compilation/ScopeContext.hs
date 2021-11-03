@@ -83,7 +83,7 @@ getProcedureScopes ta em (DefinedCategory c n pragmas _ _ ms ps fs) = message ??
   let cm0 = builtins typeInstance CategoryScope
   let tm0 = builtins typeInstance TypeScope
   let vm0 = builtins typeInstance ValueScope
-  let immutable = nub $ immutableContext t
+  let immutable = immutableContext t
   when (not $ null immutable) $ mapCompilerM_ (checkImmutableMember r filters immutable) vm'
   let readOnly2 = if null immutable
                      then readOnly
@@ -113,7 +113,7 @@ getProcedureScopes ta em (DefinedCategory c n pragmas _ _ ms ps fs) = message ??
                                             formatFullContext c2 ++ ")") missing
     allMembers = Set.fromList $ map dmName ms
     valueMembers = map dmName $ filter ((== ValueScope) . dmScope) ms
-    immutableContext t = concat $ map ciContext $ filter isCategoryImmutable (getCategoryPragmas t)
+    immutableContext t = head $ (map ciContext $ filter isCategoryImmutable (getCategoryPragmas t)) ++ [[]]
     readOnly = Map.fromListWith (++) $ concat $ map (\m -> zip (mroMembers m) (repeat $ mroContext m)) $ filter isMembersReadOnly pragmas
     hidden   = Map.fromListWith (++) $ concat $ map (\m -> zip (mhMembers m)  (repeat $ mhContext m))  $ filter isMembersHidden   pragmas
     firstM f (x,y) = do

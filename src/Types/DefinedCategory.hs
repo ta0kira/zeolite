@@ -220,16 +220,20 @@ mergeInternalInheritance tm d = do
   noDuplicateRefines [] n rs'
   ds' <- mergeDefines r fm (ds++ds2)
   noDuplicateDefines [] n ds'
-  pg2 <- fmap concat $ mapCompilerM getPragmas $ map (tiName . vrType) rs ++ map (diName . vdType) ds
+  pg2 <- fmap concat $ mapCompilerM getRefinesPragmas rs
+  pg3 <- fmap concat $ mapCompilerM getDefinesPragmas ds
   fs' <- mergeFunctions r tm' pm fm rs' ds' fs
-  let c2' = ValueConcrete c ns n (pg++pg2) ps rs' ds' vs fs'
+  let c2' = ValueConcrete c ns n (pg++pg2++pg3) ps rs' ds' vs fs'
   let tm0 = (dcName d) `Map.delete` tm
   checkCategoryInstances tm0 [c2']
   return $ Map.insert (dcName d) c2' tm
   where
-    getPragmas n = do
-      (_,t) <- getCategory tm ([],n)
-      return $ getCategoryPragmas t
+    getRefinesPragmas rf = do
+      (_,t) <- getCategory tm (vrContext rf,tiName $ vrType rf)
+      return $ map (prependCategoryPragmaContext $ vrContext rf) $ getCategoryPragmas t
+    getDefinesPragmas df = do
+      (_,t) <- getCategory tm (vdContext df,diName $ vdType df)
+      return $ map (prependCategoryPragmaContext $ vdContext df) $ getCategoryPragmas t
 
 replaceSelfMember :: (Show c, CollectErrorsM m) =>
   GeneralInstance -> DefinedMember c -> m (DefinedMember c)

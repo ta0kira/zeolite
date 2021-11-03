@@ -463,10 +463,11 @@ define Test {
 }
 
 
-testcase "immutable type checked for internal inheritance" {
+testcase "immutable type checked for internal refines inheritance" {
   error
   require "immutable"
   require "value"
+  exclude "value2"
 }
 
 @value interface Base {
@@ -481,4 +482,28 @@ define Test {
   refines Base
 
   @value Foo value
+  @value Test value2
+}
+
+
+testcase "immutable type checked for internal defines inheritance" {
+  error
+  require "immutable"
+  require "value"
+  exclude "value2"
+}
+
+@type interface Base {
+  immutable
+}
+
+@value interface Foo {}
+
+concrete Test {}
+
+define Test {
+  defines Base
+
+  @value Foo value
+  @value Test value2
 }
