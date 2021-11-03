@@ -31,7 +31,6 @@ module CompilerCxx.CxxFiles (
   generateVerboseExtension,
 ) where
 
-import Control.Monad (when)
 import Data.List (intercalate,sortBy)
 import Data.Hashable (hash)
 import Prelude hiding (pi)
@@ -535,10 +534,6 @@ generateCategoryDefinition testing = common where
   createMember r params t m = "In creation of " ++ show (dmName m) ++ " at " ++ formatFullContext (dmContext m) ??> do
     m' <- replaceSelfMember (instanceFromCategory t) m
     validateGeneralInstance r params (vtType $ dmType m')
-    when (dmScope m == ValueScope && any isCategoryImmutable (getCategoryPragmas t)) $ do
-      fs <- getCategoryFilterMap t
-      immutable <- checkValueTypeImmutable r fs (dmType m')
-      when (not immutable) $ compilerErrorM $ "@value member " ++ show (dmName m) ++ " must have an immutable type"
     return $ onlyCode $ variableStoredType (dmType m') ++ " " ++ variableName (dmName m') ++ ";"
   createMemberLazy r m = "In creation of " ++ show (dmName m) ++ " at " ++ formatFullContext (dmContext m) ??> do
     validateGeneralInstance r Set.empty (vtType $ dmType m)

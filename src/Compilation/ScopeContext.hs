@@ -26,6 +26,7 @@ module Compilation.ScopeContext (
   getProcedureScopes,
 ) where
 
+import Control.Monad (when)
 import Data.List (nub)
 import qualified Data.Map as Map
 import qualified Data.Set as Set
@@ -68,7 +69,8 @@ getProcedureScopes ta em (DefinedCategory c n pragmas _ _ ms ps fs) = message ??
   (_,t) <- getConcreteCategory ta (c,n)
   let params = Positional $ getCategoryParams t
   let typeInstance = TypeInstance n $ fmap (singleType . JustParamName False . vpParam) params
-  let filters = getCategoryFilters t
+  let rawFilters = getCategoryFilters t
+  filters <- getCategoryFilterMap t
   let r = CategoryResolver ta
   fa <- setInternalFunctions r t fs
   pa <- pairProceduresToFunctions fa ps
@@ -82,6 +84,7 @@ getProcedureScopes ta em (DefinedCategory c n pragmas _ _ ms ps fs) = message ??
   let tm0 = builtins typeInstance TypeScope
   let vm0 = builtins typeInstance ValueScope
   let immutable = nub $ immutableContext t
+  when (not $ null immutable) $ mapCompilerM_ (checkImmutableMember r filters immutable) vm'
   let readOnly2 = if null immutable
                      then readOnly
                      else Map.fromListWith (++) $ Map.toList readOnly ++ zip valueMembers (repeat immutable)
@@ -92,9 +95,9 @@ getProcedureScopes ta em (DefinedCategory c n pragmas _ _ ms ps fs) = message ??
   let cv = Map.union cm0 cm2
   let tv = Map.union tm0 tm2
   let vv = Map.union vm0 vm2
-  let ctxC = ScopeContext ta n params vm' filters fa cv em
-  let ctxT = ScopeContext ta n params vm' filters fa tv em
-  let ctxV = ScopeContext ta n params vm' filters fa vv em
+  let ctxC = ScopeContext ta n params vm' rawFilters fa cv em
+  let ctxT = ScopeContext ta n params vm' rawFilters fa tv em
+  let ctxV = ScopeContext ta n params vm' rawFilters fa vv em
   return [ProcedureScope ctxC cp,ProcedureScope ctxT tp',ProcedureScope ctxV vp']
   where
     message = "In compilation of definition for " ++ show n ++ formatFullContextBrace c
@@ -117,6 +120,12 @@ getProcedureScopes ta em (DefinedCategory c n pragmas _ _ ms ps fs) = message ??
       x' <- f x
       return (x',y)
     builtins t s0 = Map.filter ((<= s0) . vvScope) $ builtinVariables t
+    checkImmutableMember r fs2 c2 m = do
+      immutable <- checkValueTypeImmutable r fs2 (dmType m)
+      when (not immutable) $
+        compilerErrorM $ "@value member " ++ show (dmName m) ++
+                         " at " ++ formatFullContext (dmContext m) ++
+                         " must have an immutable type" ++ formatFullContextBrace c2
 
 -- TODO: This is probably in the wrong module.
 builtinVariables :: TypeInstance -> Map.Map VariableName (VariableValue c)

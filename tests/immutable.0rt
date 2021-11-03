@@ -461,3 +461,24 @@ define Test {
     \ Test.call<Foo>()
   }
 }
+
+
+testcase "immutable type checked for internal inheritance" {
+  error
+  require "immutable"
+  require "value"
+}
+
+@value interface Base {
+  immutable
+}
+
+@value interface Foo {}
+
+concrete Test {}
+
+define Test {
+  refines Base
+
+  @value Foo value
+}
