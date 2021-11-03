@@ -216,11 +216,11 @@ class BoxedValue {
   explicit BoxedValue(const WeakValue& other);
 
   template<class T>
-  static inline BoxedValue FromPointer(T* pointer) {
+  static inline BoxedValue FromPointer(const T* pointer) {
     BoxedValue value;
     value.union_.type_ = UnionValue::Type::BOXED;
     value.union_.value_.as_bytes_ =
-      reinterpret_cast<unsigned char*>(pointer)-sizeof(UnionValue::Pointer);
+      reinterpret_cast<unsigned char*>(const_cast<T*>(pointer))-sizeof(UnionValue::Pointer);
     if (value.union_.value_.as_pointer_->object_ != pointer ||
         ++value.union_.value_.as_pointer_->strong_ == 1) {
       FAIL() << "Bad VAR_SELF pointer " << pointer << " in " << pointer->CategoryName();

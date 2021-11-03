@@ -395,7 +395,7 @@ generateCategoryDefinition testing = common where
       return $ onlyCode $ "struct " ++ categoryName (getCategoryName t) ++ " : public " ++ categoryBase ++ " {",
       fmap indentCompiled $ inlineCategoryConstructor t d tm em,
       return declareCategoryOverrides,
-      fmap indentCompiled $ concatM $ map (procedureDeclaration False) fs,
+      fmap indentCompiled $ concatM $ map (declareProcedure t False) fs,
       fmap indentCompiled $ concatM $ map (createMemberLazy r) members,
       return $ onlyCode "};"
     ] where
@@ -404,7 +404,7 @@ generateCategoryDefinition testing = common where
       return $ onlyCode $ "struct " ++ className ++ " : public " ++ typeBase ++ ", std::enable_shared_from_this<" ++ className ++ "> {",
       fmap indentCompiled $ inlineTypeConstructor t,
       return declareTypeOverrides,
-      fmap indentCompiled $ concatM $ map (procedureDeclaration False) fs,
+      fmap indentCompiled $ concatM $ map (declareProcedure t False) fs,
       return $ indentCompiled $ createParams $ getCategoryParams t,
       return $ onlyCode $ "  " ++ categoryName (getCategoryName t) ++ "& parent;",
       return $ onlyCode "};"
@@ -415,7 +415,7 @@ generateCategoryDefinition testing = common where
       return $ onlyCode $ "struct " ++ valueName (getCategoryName t) ++ " : public " ++ valueBase ++ " {",
       fmap indentCompiled $ inlineValueConstructor t d,
       return declareValueOverrides,
-      fmap indentCompiled $ concatM $ map (procedureDeclaration False) fs,
+      fmap indentCompiled $ concatM $ map (declareProcedure t False) fs,
       fmap indentCompiled $ concatM $ map (createMember r params t) members,
       return $ onlyCode $ "  const S<" ++ typeName (getCategoryName t) ++ "> parent;",
       return $ onlyCodes traceCreation,
@@ -430,7 +430,7 @@ generateCategoryDefinition testing = common where
   defineAbstractCategory t = concatM [
       return $ onlyCode $ "struct " ++ categoryName (getCategoryName t) ++ " : public " ++ categoryBase ++ " {",
       return declareCategoryOverrides,
-      fmap indentCompiled $ concatM $ map (procedureDeclaration True) $ filter ((== CategoryScope). sfScope) $ getCategoryFunctions t,
+      fmap indentCompiled $ concatM $ map (declareProcedure t True) $ filter ((== CategoryScope). sfScope) $ getCategoryFunctions t,
       return $ onlyCode $ "  virtual inline ~" ++ categoryName (getCategoryName t) ++ "() {}",
       return $ onlyCode "};"
     ]
@@ -438,7 +438,7 @@ generateCategoryDefinition testing = common where
       return $ onlyCode $ "struct " ++ className ++ " : public " ++ typeBase ++ ", std::enable_shared_from_this<" ++ className ++ "> {",
       fmap indentCompiled $ inlineTypeConstructor t,
       return declareTypeOverrides,
-      fmap indentCompiled $ concatM $ map (procedureDeclaration True) $ filter ((== TypeScope). sfScope) $ getCategoryFunctions t,
+      fmap indentCompiled $ concatM $ map (declareProcedure t True) $ filter ((== TypeScope). sfScope) $ getCategoryFunctions t,
       return $ onlyCode $ "  virtual inline ~" ++ typeName (getCategoryName t) ++ "() {}",
       return $ indentCompiled $ createParams $ getCategoryParams t,
       return $ onlyCode $ "  " ++ categoryName (getCategoryName t) ++ "& parent;",
@@ -449,7 +449,7 @@ generateCategoryDefinition testing = common where
       return $ onlyCode $ "struct " ++ valueName (getCategoryName t) ++ " : public " ++ valueBase ++ " {",
       fmap indentCompiled $ abstractValueConstructor t,
       return declareValueOverrides,
-      fmap indentCompiled $ concatM $ map (procedureDeclaration True) $ filter ((== ValueScope). sfScope) $ getCategoryFunctions t,
+      fmap indentCompiled $ concatM $ map (declareProcedure t True) $ filter ((== ValueScope). sfScope) $ getCategoryFunctions t,
       return $ onlyCode $ "  virtual inline ~" ++ valueName (getCategoryName t) ++ "() {}",
       return $ onlyCode $ "  const S<" ++ typeName (getCategoryName t) ++ "> parent;",
       return $ onlyCode "};"
@@ -458,30 +458,30 @@ generateCategoryDefinition testing = common where
   defineCustomCategory :: (Ord c, Show c, CollectErrorsM m) => AnyCategory c -> ProcedureScope c -> m (CompiledData [String])
   defineCustomCategory t ps = concatM [
       return $ onlyCode $ "struct " ++ categoryCustom (getCategoryName t) ++ " : public " ++ categoryName (getCategoryName t) ++ " {",
-      fmap indentCompiled $ concatM $ applyProcedureScope (compileExecutableProcedure FinalInlineFunction) ps,
+      fmap indentCompiled $ concatM $ applyProcedureScope (defineProcedure t FinalInlineFunction) ps,
       return $ onlyCode "};"
     ]
   defineCustomType :: (Ord c, Show c, CollectErrorsM m) => AnyCategory c -> ProcedureScope c -> m (CompiledData [String])
   defineCustomType t ps = concatM [
       return $ onlyCode $ "struct " ++ typeCustom (getCategoryName t) ++ " : public " ++ typeName (getCategoryName t) ++ " {",
       fmap indentCompiled $ customTypeConstructor t,
-      fmap indentCompiled $ concatM $ applyProcedureScope (compileExecutableProcedure FinalInlineFunction) ps,
+      fmap indentCompiled $ concatM $ applyProcedureScope (defineProcedure t FinalInlineFunction) ps,
       return $ onlyCode "};"
     ]
   defineCustomValue :: (Ord c, Show c, CollectErrorsM m) => AnyCategory c -> ProcedureScope c -> m (CompiledData [String])
   defineCustomValue t ps = concatM [
       return $ onlyCode $ "struct " ++ valueCustom (getCategoryName t) ++ " : public " ++ valueName (getCategoryName t) ++ " {",
       fmap indentCompiled $ customValueConstructor t,
-      fmap indentCompiled $ concatM $ applyProcedureScope (compileExecutableProcedure FinalInlineFunction) ps,
+      fmap indentCompiled $ concatM $ applyProcedureScope (defineProcedure t FinalInlineFunction) ps,
       return $ onlyCode "};"
     ]
 
   defineCategoryFunctions :: (Ord c, Show c, CollectErrorsM m) => AnyCategory c -> ProcedureScope c -> m (CompiledData [String])
-  defineCategoryFunctions t = concatM . applyProcedureScope (compileExecutableProcedure $ OutOfLineFunction $ categoryName $ getCategoryName t)
+  defineCategoryFunctions t = concatM . applyProcedureScope (defineProcedure t $ OutOfLineFunction $ categoryName $ getCategoryName t)
   defineTypeFunctions :: (Ord c, Show c, CollectErrorsM m) => AnyCategory c -> ProcedureScope c -> m (CompiledData [String])
-  defineTypeFunctions t = concatM . applyProcedureScope (compileExecutableProcedure $ OutOfLineFunction $ typeName $ getCategoryName t)
+  defineTypeFunctions t = concatM . applyProcedureScope (defineProcedure t $ OutOfLineFunction $ typeName $ getCategoryName t)
   defineValueFunctions :: (Ord c, Show c, CollectErrorsM m) => AnyCategory c -> ProcedureScope c -> m (CompiledData [String])
-  defineValueFunctions t = concatM . applyProcedureScope (compileExecutableProcedure $ OutOfLineFunction $ valueName $ getCategoryName t)
+  defineValueFunctions t = concatM . applyProcedureScope (defineProcedure t $ OutOfLineFunction $ valueName $ getCategoryName t)
 
   declareCategoryOverrides = onlyCodes [
       "  std::string CategoryName() const final;",
@@ -502,7 +502,7 @@ generateCategoryDefinition testing = common where
   defineCategoryOverrides t fs = return $ mconcat [
       onlyCode $ "std::string " ++ className ++ "::CategoryName() const { return \"" ++ show (getCategoryName t) ++ "\"; }",
       onlyCode $ "ReturnTuple " ++ className ++ "::Dispatch(const CategoryFunction& label, const ParamTuple& params, const ValueTuple& args) {",
-      createFunctionDispatch (getCategoryName t) CategoryScope fs,
+      createFunctionDispatch t CategoryScope fs,
       onlyCode "}"
     ] where
       className = categoryName (getCategoryName t)
@@ -515,7 +515,7 @@ generateCategoryDefinition testing = common where
       createTypeArgsForParent t,
       onlyCode $ "}",
       onlyCode $ "ReturnTuple " ++ className ++ "::Dispatch(const TypeFunction& label, const ParamTuple& params, const ValueTuple& args) {",
-      createFunctionDispatch (getCategoryName t) TypeScope fs,
+      createFunctionDispatch t TypeScope fs,
       onlyCode $ "}",
       onlyCode $ "bool " ++ className ++ "::CanConvertFrom(const S<const TypeInstance>& from) const {",
       createCanConvertFrom t,
@@ -526,7 +526,7 @@ generateCategoryDefinition testing = common where
   defineValueOverrides t fs = return $ mconcat [
       onlyCode $ "std::string " ++ className ++ "::CategoryName() const { return parent->CategoryName(); }",
       onlyCode $ "ReturnTuple " ++ className ++ "::Dispatch(const ValueFunction& label, const ParamTuple& params, const ValueTuple& args) {",
-      createFunctionDispatch (getCategoryName t) ValueScope fs,
+      createFunctionDispatch t ValueScope fs,
       onlyCode $ "}"
     ] where
       className = valueName (getCategoryName t)
@@ -624,6 +624,12 @@ generateCategoryDefinition testing = common where
       "CycleCheck<" ++ n2 ++ "> marker(*this);"
     ]
 
+  defineProcedure t = compileExecutableProcedure (isImmutable t)
+  declareProcedure t = procedureDeclaration (isImmutable t)
+
+isImmutable :: AnyCategory c -> Bool
+isImmutable = any isCategoryImmutable . getCategoryPragmas
+
 formatFunctionTypes :: Show c => ScopedFunction c -> [String]
 formatFunctionTypes (ScopedFunction c _ _ s as rs ps fa _) = [location,args,returns,params] ++ filters where
   location = show s ++ " function declared at " ++ formatFullContext c
@@ -716,8 +722,9 @@ createLabelForFunction :: Int -> ScopedFunction c -> String
 createLabelForFunction i f = functionLabelType f ++ " " ++ functionName f ++
                               " = " ++ newFunctionLabel i f ++ ";"
 
-createFunctionDispatch :: CategoryName -> SymbolScope -> [ScopedFunction c] -> CompiledData [String]
-createFunctionDispatch n s fs = function where
+createFunctionDispatch :: AnyCategory c -> SymbolScope -> [ScopedFunction c] -> CompiledData [String]
+createFunctionDispatch t s fs = function where
+  name = getCategoryName t
   function
     | null filtered = onlyCode fallback
     | otherwise = onlyCodes $ [typedef] ++ concat (map table $ byCategory) ++ select
@@ -726,22 +733,25 @@ createFunctionDispatch n s fs = function where
   flattened = concat $ map flatten filtered
   byCategory = Map.toList $ Map.fromListWith (++) $ map (\f -> (sfType f,[f])) flattened
   typedef
-    | s == CategoryScope = "  using CallType = ReturnTuple(" ++ categoryName n ++
+    | s == CategoryScope = "  using CallType = ReturnTuple(" ++ categoryName name ++
                            "::*)(const ParamTuple&, const ValueTuple&);"
-    | s == TypeScope     = "  using CallType = ReturnTuple(" ++ typeName n ++
+    | s == TypeScope     = "  using CallType = ReturnTuple(" ++ typeName name ++
                            "::*)(const ParamTuple&, const ValueTuple&);"
-    | s == ValueScope    = "  using CallType = ReturnTuple(" ++ valueName n ++
-                           "::*)(const ParamTuple&, const ValueTuple&);"
+    | s == ValueScope    = "  using CallType = ReturnTuple(" ++ valueName name ++
+                           "::*)(const ParamTuple&, const ValueTuple&)" ++ suffix ++ ";"
     | otherwise = undefined
-  name f
-    | s == CategoryScope = categoryName n ++ "::" ++ callName f
-    | s == TypeScope     = typeName n     ++ "::" ++ callName f
-    | s == ValueScope    = valueName n    ++ "::" ++ callName f
+  suffix
+    | isImmutable t = " const"
+    | otherwise     = ""
+  funcName f
+    | s == CategoryScope = categoryName name ++ "::" ++ callName f
+    | s == TypeScope     = typeName name     ++ "::" ++ callName f
+    | s == ValueScope    = valueName name    ++ "::" ++ callName f
     | otherwise = undefined
   table (_,[_]) = []
   table (n2,fs2) =
     ["  static const CallType " ++ tableName n2 ++ "[] = {"] ++
-    map (\f -> "    &" ++ name f ++ ",") (Set.toList $ Set.fromList $ map sfName fs2) ++
+    map (\f -> "    &" ++ funcName f ++ ",") (Set.toList $ Set.fromList $ map sfName fs2) ++
     ["  };"]
   select = [
       "  switch (label.collection) {"

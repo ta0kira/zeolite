@@ -1455,6 +1455,12 @@ follow, but for now:
 6. If you need to depend on external libraries, fill in the `include_paths` and
    `link_flags` sections of `.zeolite-module`.
 
+**IMPORTANT:** `@value` functions for `immutable` categories will be marked as
+`const` in C++ extensions. `immutable` also requires that `@value` members have
+`immutable` types, but there is no reasonable way to enforce this in C++. You
+will need to separately ensure that the implementation only stores other
+`immutable` types, just for consistency with categories implemented in Zeolite.
+
 ## Unit Testing
 
 Unit testing is a built-in capability of Zeolite. Unit tests use `.0rt` source

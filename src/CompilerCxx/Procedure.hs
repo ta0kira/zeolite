@@ -62,19 +62,22 @@ import Types.TypeInstance
 import Types.Variance
 
 
-procedureDeclaration :: Monad m => Bool -> ScopedFunction c -> m (CompiledData [String])
-procedureDeclaration abstract f = return $ onlyCode func where
+procedureDeclaration :: Monad m => Bool -> Bool -> ScopedFunction c -> m (CompiledData [String])
+procedureDeclaration immutable abstract f = return $ onlyCode func where
   func
     | abstract = "virtual " ++ proto ++ " = 0;"
     | otherwise = proto ++ ";"
   name = callName (sfName f)
+  suffix
+    | immutable = " const"
+    | otherwise = ""
   proto
     | sfScope f == CategoryScope =
       "ReturnTuple " ++ name ++ "(const ParamTuple& params, const ValueTuple& args)"
     | sfScope f == TypeScope =
       "ReturnTuple " ++ name ++ "(const ParamTuple& params, const ValueTuple& args)"
     | sfScope f == ValueScope =
-      "ReturnTuple " ++ name ++ "(const ParamTuple& params, const ValueTuple& args)"
+      "ReturnTuple " ++ name ++ "(const ParamTuple& params, const ValueTuple& args)" ++ suffix
     | otherwise = undefined
 
 data CxxFunctionType =
@@ -84,9 +87,9 @@ data CxxFunctionType =
   deriving Show
 
 compileExecutableProcedure :: (Ord c, Show c, CollectErrorsM m) =>
-  CxxFunctionType -> ScopeContext c -> ScopedFunction c ->
+  Bool -> CxxFunctionType -> ScopeContext c -> ScopedFunction c ->
   ExecutableProcedure c -> m (CompiledData [String])
-compileExecutableProcedure cxxType ctx
+compileExecutableProcedure immutable cxxType ctx
   ff@(ScopedFunction _ _ _ s as1 rs1 ps1 _ _)
   pp@(ExecutableProcedure c pragmas c2 n as2 rs2 p) = do
   ctx' <- getProcedureContext ctx ff pp
@@ -122,15 +125,18 @@ compileExecutableProcedure cxxType ctx
                   OutOfLineFunction cn -> cn ++ "::"
                   _ -> ""
     final = case cxxType of
-                FinalInlineFunction -> " final"
-                _ -> ""
+                 FinalInlineFunction -> " final"
+                 _ -> ""
+    suffix
+      | immutable = " const"
+      | otherwise = ""
     proto
       | s == CategoryScope =
         "ReturnTuple " ++ prefix ++ name ++ "(const ParamTuple& params, const ValueTuple& args)" ++ final ++ " {"
       | s == TypeScope =
         "ReturnTuple " ++ prefix ++ name ++ "(const ParamTuple& params, const ValueTuple& args)" ++ final ++ " {"
       | s == ValueScope =
-        "ReturnTuple " ++ prefix ++ name ++ "(const ParamTuple& params, const ValueTuple& args)" ++ final ++ " {"
+        "ReturnTuple " ++ prefix ++ name ++ "(const ParamTuple& params, const ValueTuple& args)" ++ suffix ++ final ++ " {"
       | otherwise = undefined
     setProcedureTrace
       | any isNoTrace pragmas = return []

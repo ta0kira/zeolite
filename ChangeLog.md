@@ -37,6 +37,9 @@
 * **[breaking]** Removes `AnonymousOrder` C++ class, previously used for
   creating iterators for C++ extensions.
 
+* **[new]** `@value` function implementations for `immutable` categories are
+  marked as `const` in C++ extensions.
+
 ### Libraries
 
 * **[breaking]** Removes iterators from `lib/util` (`iterator.0rp`) because they

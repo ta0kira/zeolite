@@ -146,12 +146,12 @@ class StringOrder : public TypeValue {
 struct ExtValue_String : public Value_String {
   inline ExtValue_String(S<Type_String> p, const PrimString& value) : Value_String(p), value_(value) {}
 
-  ReturnTuple Call_asBool(const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_asBool(const ParamTuple& params, const ValueTuple& args) const final {
     TRACE_FUNCTION("String.asBool")
     return ReturnTuple(Box_Bool(value_.size() != 0));
   }
 
-  ReturnTuple Call_defaultOrder(const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_defaultOrder(const ParamTuple& params, const ValueTuple& args) const final {
     TRACE_FUNCTION("String.defaultOrder")
     if (value_.empty()) {
       return ReturnTuple(Var_empty);
@@ -160,12 +160,12 @@ struct ExtValue_String : public Value_String {
     }
   }
 
-  ReturnTuple Call_formatted(const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_formatted(const ParamTuple& params, const ValueTuple& args) const final {
     TRACE_FUNCTION("String.formatted")
     return ReturnTuple(VAR_SELF);
   }
 
-  ReturnTuple Call_readAt(const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_readAt(const ParamTuple& params, const ValueTuple& args) const final {
     TRACE_FUNCTION("String.readAt")
     const PrimInt Var_arg1 = (args.At(0)).AsInt();
     if (Var_arg1 < 0 || Var_arg1 >= value_.size()) {
@@ -174,12 +174,12 @@ struct ExtValue_String : public Value_String {
     return ReturnTuple(Box_Char(value_[Var_arg1]));
   }
 
-  ReturnTuple Call_size(const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_size(const ParamTuple& params, const ValueTuple& args) const final {
     TRACE_FUNCTION("String.size")
     return ReturnTuple(Box_Int(value_.size()));
   }
 
-  ReturnTuple Call_subSequence(const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_subSequence(const ParamTuple& params, const ValueTuple& args) const final {
     TRACE_FUNCTION("String.subSequence")
     const PrimInt Var_arg1 = (args.At(0)).AsInt();
     const PrimInt Var_arg2 = (args.At(1)).AsInt();

@@ -19,5 +19,9 @@ limitations under the License.
 $ModuleOnly$
 
 concrete Templated2 {
+  immutable
+
   @type create () -> (Templated2)
+
+  @value get () -> (Int)
 }
