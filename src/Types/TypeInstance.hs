@@ -365,19 +365,22 @@ checkValueAssignment :: (CollectErrorsM m, TypeResolver r) =>
   r -> ParamFilters -> ValueType -> ValueType -> m ()
 checkValueAssignment r f t1 t2 = noInferredTypes $ checkValueTypeMatch r f Covariant t1 t2
 
-checkValueTypeImmutable :: (CollectErrorsM m, TypeResolver r) => r -> ParamFilters -> ValueType -> m Bool
-checkValueTypeImmutable r f (ValueType _ t) = reduceMergeTree anyOp allOp leafOp t where
-  anyOp = fmap (all id) . collectAllM
-  allOp = fmap (any id) . collectAllM
-  leafOp (JustTypeInstance (TypeInstance n _)) = trImmutable r n
+checkValueTypeImmutable :: (CollectErrorsM m, TypeResolver r) => r -> ParamFilters -> ValueType -> m ()
+checkValueTypeImmutable r f (ValueType _ t) = reduceMergeTree collectAllM_ collectFirstM leafOp t where
+  leafOp (JustTypeInstance (TypeInstance n _)) = do
+    immutable <- trImmutable r n
+    when (not immutable) $ compilerErrorM $ "Category " ++ show n ++ " is not immutable"
   leafOp (JustParamName _ n) = do
     fs <- f `filterLookup` n
-    fmap (any id) $ mapCompilerM checkFilter fs
-  leafOp _ = return False
-  checkFilter ImmutableFilter = return True
-  checkFilter (DefinesFilter (DefinesInstance n _)) = trImmutable r n
-  checkFilter (TypeFilter FilterRequires t2) = checkValueTypeImmutable r f (ValueType RequiredValue t2)
-  checkFilter _ = return False
+    collectFirstM (map (checkFilter n) fs) <!! "No filters imply that " ++ show n ++ " is immutable"
+  leafOp (JustInferredType n) = compilerErrorM $ "Inferred type " ++ show n ++ " is not allowed here"
+  checkFilter _ ImmutableFilter = return ()
+  checkFilter _ (DefinesFilter (DefinesInstance n2 _)) = do
+    immutable <- trImmutable r n2
+    when (not immutable) $ compilerErrorM $ "Category " ++ show n2 ++ " is not immutable"
+  checkFilter _ (TypeFilter FilterRequires t2) = checkValueTypeImmutable r f (ValueType RequiredValue t2)
+  checkFilter n ff =
+    compilerErrorM $ "Filter " ++ show n ++ " " ++ show ff ++ " does not imply that " ++ show n ++ " is immutable"
 
 checkValueTypeMatch :: (CollectErrorsM m, TypeResolver r) =>
   r -> ParamFilters -> Variance -> ValueType -> ValueType -> m (MergeTree InferredTypeGuess)
@@ -599,9 +602,7 @@ validateAssignment r f t fs = mapCompilerM_ checkWithMessage fs where
   checkFilter t1 (DefinesFilter t2) = do
     t1' <- matchOnlyLeaf t1 <!! "Merged type " ++ show t1 ++ " cannot satisfy defines constraint " ++ show t2
     checkDefinesFilter t2 t1'
-  checkFilter t1 ImmutableFilter = do
-    immutable <- checkValueTypeImmutable r f (ValueType RequiredValue t1)
-    when (not immutable) $ compilerErrorM $ "Type " ++ show t1 ++ " is not immutable"
+  checkFilter t1 ImmutableFilter = checkValueTypeImmutable r f (ValueType RequiredValue t1)
   checkDefinesFilter f2@(DefinesInstance n2 _) (JustTypeInstance t1) = do
     ps1' <- trDefines r t1 n2
     checkDefinesMatch r f f2 (DefinesInstance n2 ps1')

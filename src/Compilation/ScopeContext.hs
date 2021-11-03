@@ -120,12 +120,10 @@ getProcedureScopes ta em (DefinedCategory c n pragmas _ _ ms ps fs) = message ??
       x' <- f x
       return (x',y)
     builtins t s0 = Map.filter ((<= s0) . vvScope) $ builtinVariables t
-    checkImmutableMember r fs2 c2 m = do
-      immutable <- checkValueTypeImmutable r fs2 (dmType m)
-      when (not immutable) $
-        compilerErrorM $ "@value member " ++ show (dmName m) ++
-                         " at " ++ formatFullContext (dmContext m) ++
-                         " must have an immutable type" ++ formatFullContextBrace c2
+    checkImmutableMember r fs2 c2 m = checkValueTypeImmutable r fs2 (dmType m) <!!
+      "@value member " ++ show (dmName m) ++
+      " at " ++ formatFullContext (dmContext m) ++
+      " must have an immutable type" ++ formatFullContextBrace c2
 
 -- TODO: This is probably in the wrong module.
 builtinVariables :: TypeInstance -> Map.Map VariableName (VariableValue c)
