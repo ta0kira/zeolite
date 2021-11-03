@@ -18,8 +18,7 @@ limitations under the License.
 
 $ModuleOnly$
 
-concrete SharedRoutine {
-  defines ActionFactory
-
-  @type dropShared () -> (ReferenceMachine)
+concrete Routines {
+  @type newShared (String,ReferenceState) -> (StateMachine)
+  @type newWeak   (String,ReferenceState) -> (StateMachine)
 }

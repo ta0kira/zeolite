@@ -16,8 +16,8 @@ limitations under the License.
 
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
-define WeakRoutine {
-  $ReadOnly[dropWeak,sharedThenDrop,name,state]$
+define Routines {
+  $ReadOnly[dropShared,name,state]$
 
   refines StateMachine
 
@@ -34,13 +34,30 @@ define WeakRoutine {
                dropWeak,
       /*else*/ UnlockRef.new() `Run.then`
                dropWeak `Run.then`
-               SharedRoutine.dropShared())
+               dropShared)
+
+  @category ReferenceMachine dropShared <-
+      LockRef.new() `Run.then`
+      IfElseDecrRefIsZero.new(
+      /*if*/   FreeObject.new() `Run.then`
+               UnlockRef.new() `Run.then`
+               IfElseDecrWeakIsZero.new(
+               /*if*/   FreeRef.new(),
+               /*else*/ empty),
+      /*else*/ UnlockRef.new())
 
   @value String name
   @value ReferenceState state
   @value optional ReferenceMachine machine
 
-  new (name,state) {
+  newShared (name,state) {
+    if (state.addStrong() == 1) {
+      \ state.addWeak()
+    }
+    return #self{ name, state, dropShared }
+  }
+
+  newWeak (name,state) {
     \ state.addWeak()
     return #self{ name, state, sharedThenDrop }
   }

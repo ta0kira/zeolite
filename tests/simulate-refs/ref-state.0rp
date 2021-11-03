@@ -28,10 +28,6 @@ concrete Run {
   @type then (ReferenceMachine,ReferenceMachine) -> (ReferenceMachine)
 }
 
-@type interface ActionFactory {
-  new (String,ReferenceState) -> (StateMachine)
-}
-
 concrete ReferenceState {
   refines Formatted
 
