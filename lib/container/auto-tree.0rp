@@ -36,6 +36,7 @@ limitations under the License.
 concrete AutoBinaryTree<|#n,#k,#v|#r> {
   refines Container
   refines Duplicate
+  #k immutable
   #n defines  KVFactory<#k,#v>
   #n requires BalancedTreeNode<#n,#k,#v>
   #n requires Duplicate

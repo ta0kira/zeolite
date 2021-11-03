@@ -25,6 +25,7 @@ $ModuleOnly$
 //   every time there is a modification, which is extremely inefficient. This
 //   should therefore only be used in tests.
 concrete ValidatedTree<#c> {
+  #c immutable
   #c defines LessThan<#c>
 
   @type new () -> (#self)

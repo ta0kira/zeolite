@@ -2,21 +2,6 @@
 
 ## 0.20.0.0  -- ????-??-??
 
-### Compiler CLI
-
-* **[breaking]** Removes all passing of `Param_self` in C++ extensions. Use
-  `PARAM_SELF` where `Param_self` was previously used, and delete the
-  `Param_self` argument from function signatures. This breaks all existing
-  extensions that have `@type` functions.
-
-* **[breaking]** Removes `AnonymousOrder` C++ class, previously used for
-  creating iterators for C++ extensions.
-
-### Libraries
-
-* **[breaking]** Removes iterators from `lib/util` (`iterator.0rp`) because they
-  were awkward, inefficient, and had no current intended use-cases.
-
 ### Language
 
 * **[breaking]** Adds the `immutable` category property. This makes all `@value`
@@ -41,6 +26,30 @@
   ```
 
 * **[behavior]** Makes dispatching of function calls quite a bit more efficient.
+
+### Compiler CLI
+
+* **[breaking]** Removes all passing of `Param_self` in C++ extensions. Use
+  `PARAM_SELF` where `Param_self` was previously used, and delete the
+  `Param_self` argument from function signatures. This breaks all existing
+  extensions that have `@type` functions.
+
+* **[breaking]** Removes `AnonymousOrder` C++ class, previously used for
+  creating iterators for C++ extensions.
+
+### Libraries
+
+* **[breaking]** Removes iterators from `lib/util` (`iterator.0rp`) because they
+  were awkward, inefficient, and had no current intended use-cases.
+
+* **[breaking]** Requires the key param in `SearchTree` and `AutoBinaryTree` in
+  `lib/container` to be `immutable`.
+
+* **[breaking]** Requires the value param in `TreeSet` in `lib/container` to be
+  `immutable`.
+
+* **[breaking]** Requires the value param in `CategoricalTree` in `lib/math` to
+  be `immutable`.
 
 ## 0.19.0.0  -- 2021-10-25
 

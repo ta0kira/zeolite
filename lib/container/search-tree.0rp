@@ -27,6 +27,7 @@ concrete SearchTree<#k,#v> {
   refines Duplicate
   refines KVWriter<#k,#v>
   refines KVReader<#k,#v>
+  #k immutable
   #k defines LessThan<#k>
 
   // Create an empty tree.

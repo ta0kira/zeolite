@@ -22,6 +22,7 @@ concrete TreeSet<#k> {
   refines Duplicate
   refines SetReader<#k>
   refines SetWriter<#k>
+  #k immutable
   #k defines LessThan<#k>
 
   // Create a new set.

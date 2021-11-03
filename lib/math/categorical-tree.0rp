@@ -33,6 +33,7 @@ limitations under the License.
 concrete CategoricalTree<#c> {
   refines ReadAt<#c>
   refines Duplicate
+  #c immutable
   #c defines LessThan<#c>
 
   // Create a new distribution.

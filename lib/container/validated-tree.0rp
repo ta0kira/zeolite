@@ -28,6 +28,7 @@ concrete ValidatedTree<#k|#v|> {
   refines Container
   refines KVWriter<#k,#v>
   refines KVReader<#k,#v>
+  #k immutable
   #k defines LessThan<#k>
 
   @type new () -> (#self)

@@ -48,6 +48,8 @@ concrete TypeMap {
 
 // A typed key for use with TypeMap.
 concrete TypeKey<|#x> {
+  immutable
+
   refines Formatted
   defines LessThan<TypeKey<any>>
   defines Equals<TypeKey<any>>
