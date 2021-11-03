@@ -26,7 +26,10 @@
 
 <span style='color:#898887;'>// Parser combinators.</span>
 <b>concrete</b> <b><span style='color:#0057ae;'>Parse</span></b> {
-  <span style='color:#644a9b;'>@type</span> const&lt;<i><span style='color:#0057ae;'>#x</span></i>&gt; (<i><span style='color:#0057ae;'>#x</span></i>)                     -&gt; (<span style='color:#0057ae;'>Parser</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>)
+  <span style='color:#644a9b;'>@type</span> const&lt;<i><span style='color:#0057ae;'>#x</span></i>&gt;
+    <i><span style='color:#0057ae;'>#x</span></i> <b>immutable</b>
+  (<i><span style='color:#0057ae;'>#x</span></i>) -&gt; (<span style='color:#0057ae;'>Parser</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>)
+
   <span style='color:#644a9b;'>@type</span> error     (<i><span style='color:#0057ae;'>Formatted</span></i>)              -&gt; (<span style='color:#0057ae;'>Parser</span><span style='color:#c02040;'>&lt;</span><b>all</b><span style='color:#c02040;'>&gt;</span>)
   <span style='color:#644a9b;'>@type</span> try&lt;<i><span style='color:#0057ae;'>#x</span></i>&gt;   (<span style='color:#0057ae;'>Parser</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>)             -&gt; (<span style='color:#0057ae;'>Parser</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>)
   <span style='color:#644a9b;'>@type</span> or&lt;<i><span style='color:#0057ae;'>#x</span></i>&gt;    (<span style='color:#0057ae;'>Parser</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>,<span style='color:#0057ae;'>Parser</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>)  -&gt; (<span style='color:#0057ae;'>Parser</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>)

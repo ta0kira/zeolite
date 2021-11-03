@@ -122,6 +122,8 @@
 }
 
 <b>concrete</b> <b><span style='color:#0057ae;'>ConstParser</span></b><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span> {
+  <i><span style='color:#0057ae;'>#x</span></i> <b>immutable</b>
+
   <span style='color:#644a9b;'>@type</span> create (<i><span style='color:#0057ae;'>#x</span></i>) -&gt; (<span style='color:#0057ae;'>Parser</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>)
 }
 
@@ -146,14 +148,14 @@
 <b>define</b> <b><span style='color:#0057ae;'>ErrorParser</span></b> {
   <b>refines</b> <span style='color:#0057ae;'>Parser</span><span style='color:#c02040;'>&lt;</span><b>all</b><span style='color:#c02040;'>&gt;</span>
 
-  <span style='color:#644a9b;'>@value</span> <i><span style='color:#0057ae;'>Formatted</span></i> message
+  <span style='color:#644a9b;'>@value</span> <i><span style='color:#0057ae;'>String</span></i> message
 
   run (contextOld) {
     <b>return</b> contextOld<span style='color:#644a9b;'>.</span>setValue&lt;<b>?</b>&gt;(<span style='color:#0057ae;'>ErrorOr</span><span style='color:#644a9b;'>:</span>error(message))
   }
 
   create (message) {
-    <b>return</b> <span style='color:#0057ae;'>ErrorParser</span>{ message }
+    <b>return</b> <span style='color:#0057ae;'>ErrorParser</span>{ message<span style='color:#644a9b;'>.</span>formatted() }
   }
 }
 
@@ -211,6 +213,7 @@
 }
 
 <b>concrete</b> <b><span style='color:#0057ae;'>LeftParser</span></b><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span> {
+
   <span style='color:#644a9b;'>@type</span> create (<span style='color:#0057ae;'>Parser</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>,<span style='color:#0057ae;'>Parser</span><span style='color:#c02040;'>&lt;</span><b>any</b><span style='color:#c02040;'>&gt;</span>) -&gt; (<span style='color:#0057ae;'>Parser</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>)
 }
 
@@ -270,12 +273,12 @@
 }
 
 <b>define</b> <b><span style='color:#0057ae;'>Parse</span></b> {
-  const (value) {
-    <b>return</b> <span style='color:#0057ae;'>ConstParser</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>.</span>create(value)
-  }
-
   error (message) {
     <b>return</b> <span style='color:#0057ae;'>ErrorParser</span><span style='color:#644a9b;'>.</span>create(message)
+  }
+
+  const (value) {
+    <b>return</b> <span style='color:#0057ae;'>ConstParser</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#644a9b;'>.</span>create(value)
   }
 
   try (parser) {

@@ -15,7 +15,10 @@ concrete CharParser {
 
 // Parser combinators.
 concrete Parse {
-  @type const<#x> (#x)                     -> (Parser<#x>)
+  @type const<#x>
+    #x immutable
+  (#x) -> (Parser<#x>)
+
   @type error     (Formatted)              -> (Parser<all>)
   @type try<#x>   (Parser<#x>)             -> (Parser<#x>)
   @type or<#x>    (Parser<#x>,Parser<#x>)  -> (Parser<#x>)

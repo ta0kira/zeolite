@@ -111,6 +111,8 @@ define CharParser {
 }
 
 concrete ConstParser<#x> {
+  #x immutable
+
   @type create (#x) -> (Parser<#x>)
 }
 
@@ -135,14 +137,14 @@ concrete ErrorParser {
 define ErrorParser {
   refines Parser<all>
 
-  @value Formatted message
+  @value String message
 
   run (contextOld) {
     return contextOld.setValue<?>(ErrorOr:error(message))
   }
 
   create (message) {
-    return ErrorParser{ message }
+    return ErrorParser{ message.formatted() }
   }
 }
 
@@ -200,6 +202,7 @@ define OrParser {
 }
 
 concrete LeftParser<#x> {
+
   @type create (Parser<#x>,Parser<any>) -> (Parser<#x>)
 }
 
@@ -259,12 +262,12 @@ define RightParser {
 }
 
 define Parse {
-  const (value) {
-    return ConstParser<#x>.create(value)
-  }
-
   error (message) {
     return ErrorParser.create(message)
+  }
+
+  const (value) {
+    return ConstParser<#x>.create(value)
   }
 
   try (parser) {
