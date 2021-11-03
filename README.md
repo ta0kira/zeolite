@@ -1059,13 +1059,18 @@ has `@type interface`s that declare `@type` functions that must be defined.
 ### Immutable Types
 
 You can modify `interface` and `concrete` with **`immutable`** at the very top
-of the declaration. This creates two requirements for `@value` members:
+of the declaration. (As of compiler version `0.20.0.0`.) This creates two
+requirements for `@value` members:
 
 1. They are marked as read-only, and cannot be overwritten with `<-`.
 2. They must have a type that is also `immutable`.
 
+(`@category` members are not affected.)
+
 Note that this applies to the *entire* implementation; not just to the
-implementations of functions required by an `interface`.
+implementations of functions required by the `immutable` `interface`.
+`immutable` is therefore intended for objects that cannot be modified, rather
+than as a way to define a read-only view (e.g., `const` in C++) of an object.
 
 <pre style='color:#1f1c1b;background-color:#f6f8fa;'>
 <span style='color:#644a9b;'>@value</span> <b>interface</b> <b><span style='color:#0057ae;'>Foo</span></b> {
