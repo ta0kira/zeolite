@@ -260,6 +260,7 @@ getCategoryDeps t = Set.fromList $ filter (/= getCategoryName t) $ refines ++ de
   fromDefine (DefinesInstance n ps) = n:(concat $ map fromInstance $ pValues ps)
   fromFilter (TypeFilter _ t2)  = fromInstance t2
   fromFilter (DefinesFilter t2) = fromDefine t2
+  fromFilter ImmutableFilter = []
   fromType (ValueType _ t2) = fromInstance t2
   fromFunction f = args ++ returns ++ filters2 where
     args = concat $ map (fromType . pvType) $ pValues $ sfArgs f
@@ -427,6 +428,7 @@ checkFilters t ps = do
     subSingleFilter pa (n,(DefinesFilter (DefinesInstance n2 ps2))) = do
       ps3 <- mapCompilerM (uncheckedSubInstance $ getValueForParam pa) (pValues ps2)
       return (n,(DefinesFilter (DefinesInstance n2 (Positional ps3))))
+    subSingleFilter _ f@(_,ImmutableFilter) = return f
     assignFilter fa n =
       case n `Map.lookup` fa of
             (Just x) -> return x

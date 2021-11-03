@@ -51,6 +51,7 @@ of this document.
     - [Optional and Weak Values](#optional-and-weak-values)
   - [Using Parameters](#using-parameters)
   - [Using Interfaces](#using-interfaces)
+  - [Immutable Types](#immutable-types)
   - [The `#self` Parameter](#the-self-parameter)
   - [Type Inference](#type-inference)
   - [Other Features](#other-features)
@@ -1055,14 +1056,16 @@ has `@type interface`s that declare `@type` functions that must be defined.
     }
   }</pre>
 
-You can modify `interface`s with **`immutable`** at the very top of the
-declaration. This creates two requirements for `@value` members:
+### Immutable Types
+
+You can modify `interface` and `concrete` with **`immutable`** at the very top
+of the declaration. This creates two requirements for `@value` members:
 
 1. They are marked as read-only, and cannot be overwritten with `<-`.
 2. They must have a type that is also `immutable`.
 
 Note that this applies to the *entire* implementation; not just to the
-implementations of functions required by the `interface`.
+implementations of functions required by an `interface`.
 
 <pre style='color:#1f1c1b;background-color:#f6f8fa;'>
 <span style='color:#644a9b;'>@value</span> <b>interface</b> <b><span style='color:#0057ae;'>Foo</span></b> {
@@ -1090,6 +1093,22 @@ implementations of functions required by the `interface`.
   mutate () {
     <span style='color:#898887;'>// mutate also cannot overwrite value, even though mutate isn't in Foo.</span>
   }
+}</pre>
+
+For members that use a parameter as a type, you can use `immutable` as a filter
+if the other filters do not otherwise imply it. Note that this will prevent
+substituting in a non-`immutable` type when calling `@type` functions.
+
+<pre style='color:#1f1c1b;background-color:#f6f8fa;'>
+<b>concrete</b> <b><span style='color:#0057ae;'>Type</span></b><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span> {
+  <b>immutable</b>
+
+  <i><span style='color:#0057ae;'>#x</span></i> <b>immutable</b>
+}
+
+<b>define</b> <b><span style='color:#0057ae;'>Type</span></b> {
+  <span style='color:#898887;'>// #x is allowed as a member type because of the immutable filter.</span>
+  <span style='color:#644a9b;'>@value</span> <i><span style='color:#0057ae;'>#x</span></i> value
 }</pre>
 
 ### The `#self` Parameter

@@ -122,7 +122,7 @@ instance ParseFromSource TypeInstanceOrParam where
     inst = labeled "type instance" $ fmap JustTypeInstance sourceParser
 
 instance ParseFromSource TypeFilter where
-  sourceParser = requires <|> allows <|> defines where
+  sourceParser = requires <|> allows <|> defines <|> immutable where
     requires = labeled "requires filter" $ do
       kwRequires
       t <- sourceParser
@@ -135,3 +135,6 @@ instance ParseFromSource TypeFilter where
       kwDefines
       t <- sourceParser
       return $ DefinesFilter t
+    immutable = labeled "immutable filter" $ do
+      kwImmutable
+      return ImmutableFilter

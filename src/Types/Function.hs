@@ -85,6 +85,7 @@ validatateFunctionType r params vm (FunctionType as rs ps fa) = do
     checkFilterVariance (n,f@(DefinesFilter t)) =
       validateDefinesVariance r allVariances Contravariant t <??
         ("In filter " ++ show n ++ " " ++ show f)
+    checkFilterVariance (_,ImmutableFilter) = return ()
     checkArg fa2 ta@(ValueType _ t) = ("In argument " ++ show ta) ??> do
       when (isWeakValue ta) $ compilerErrorM "Weak values not allowed as argument types"
       validateGeneralInstance r fa2 t

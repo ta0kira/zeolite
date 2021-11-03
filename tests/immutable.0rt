@@ -196,3 +196,268 @@ define Test {
   @value Int    int
   @value String string
 }
+
+
+testcase "intersection requires at least one immutable type" {
+  error
+  require "immutable"
+  require "value"
+}
+
+@value interface Foo {}
+
+@value interface Bar {}
+
+concrete Test {
+  immutable
+}
+
+define Test {
+  @value [Foo&Bar] value
+}
+
+
+testcase "intersection only requires one immutable type" {
+  compiles
+}
+
+@value interface Foo {}
+
+@value interface Bar {
+  immutable
+}
+
+concrete Test {
+  immutable
+}
+
+define Test {
+  @value [Foo&Bar] value
+}
+
+
+testcase "union requires all immutable types" {
+  error
+  require "immutable"
+  require "value"
+}
+
+@value interface Foo {}
+
+@value interface Bar {
+  immutable
+}
+
+concrete Test {
+  immutable
+}
+
+define Test {
+  @value [Foo|Bar] value
+}
+
+
+testcase "intersection works with all immutable types" {
+  compiles
+}
+
+@value interface Foo {
+  immutable
+}
+
+@value interface Bar {
+  immutable
+}
+
+concrete Test {
+  immutable
+}
+
+define Test {
+  @value [Foo|Bar] value
+}
+
+
+testcase "param members must be immutable" {
+  error
+  require "immutable"
+  require "value"
+}
+
+concrete Test<#x> {
+  immutable
+}
+
+define Test {
+  @value #x value
+}
+
+
+testcase "explicit immutable filter is sufficient for param members" {
+  compiles
+}
+
+concrete Test<#x> {
+  immutable
+
+  #x immutable
+}
+
+define Test {
+  @value #x value
+}
+
+
+testcase "indirect immutable via requires filter is sufficient for param members" {
+  compiles
+}
+
+@value interface Foo {
+  immutable
+}
+
+concrete Test<#x> {
+  immutable
+
+  #x requires Foo
+}
+
+define Test {
+  @value #x value
+}
+
+
+testcase "indirect immutable via defines filter is sufficient for param members" {
+  compiles
+}
+
+@type interface Foo {
+  immutable
+}
+
+concrete Test<#x> {
+  immutable
+
+  #x defines Foo
+}
+
+define Test {
+  @value #x value
+}
+
+
+testcase "indirect immutable via allows filter is not sufficient for param members" {
+  error
+  require "immutable"
+  require "value"
+}
+
+@value interface Foo {
+  immutable
+}
+
+concrete Test<#x> {
+  immutable
+
+  #x allows Foo
+}
+
+define Test {
+  @value #x value
+}
+
+
+testcase "param substitution checked for @type calls" {
+  error
+  require "immutable"
+  require "Foo"
+}
+
+@value interface Foo {}
+
+concrete Test<#x> {
+  #x immutable
+
+  @type call () -> ()
+}
+
+define Test {
+  call () { }
+
+  @category run () -> ()
+  run () {
+    \ Test<Foo>.call()
+  }
+}
+
+
+testcase "immutable type allowed for @type calls" {
+  compiles
+}
+
+@value interface Foo {
+  immutable
+}
+
+concrete Test<#x> {
+  #x immutable
+
+  @type call () -> ()
+}
+
+define Test {
+  call () { }
+
+  @category run () -> ()
+  run () {
+    \ Test<Foo>.call()
+  }
+}
+
+
+testcase "param substitution checked for function params" {
+  error
+  require "immutable"
+  require "Foo"
+}
+
+@value interface Foo {}
+
+concrete Test {
+  @type call<#x>
+    #x immutable
+  () -> ()
+}
+
+define Test {
+  call () { }
+
+  @category run () -> ()
+  run () {
+    \ Test.call<Foo>()
+  }
+}
+
+
+testcase "immutable type allowed for function params" {
+  compiles
+}
+
+@value interface Foo {
+  immutable
+}
+
+concrete Test {
+  @type call<#x>
+    #x immutable
+  () -> ()
+}
+
+define Test {
+  call () { }
+
+  @category run () -> ()
+  run () {
+    \ Test.call<Foo>()
+  }
+}

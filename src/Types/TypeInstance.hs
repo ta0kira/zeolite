@@ -246,13 +246,15 @@ data TypeFilter =
   } |
   DefinesFilter {
     dfType :: DefinesInstance
-  }
+  } |
+  ImmutableFilter
   deriving (Eq,Ord)
 
 instance Show TypeFilter where
   show (TypeFilter FilterRequires t) = "requires " ++ show t
   show (TypeFilter FilterAllows t)   = "allows "   ++ show t
   show (DefinesFilter t)             = "defines "  ++ show t
+  show ImmutableFilter               = "immutable"
 
 isTypeFilter :: TypeFilter -> Bool
 isTypeFilter (TypeFilter _ _) = True
@@ -265,6 +267,10 @@ isRequiresFilter _                             = False
 isDefinesFilter :: TypeFilter -> Bool
 isDefinesFilter (DefinesFilter _) = True
 isDefinesFilter _                 = False
+
+isImmutableFilter :: TypeFilter -> Bool
+isImmutableFilter ImmutableFilter = True
+isImmutableFilter _               = False
 
 viewTypeFilter :: ParamName -> TypeFilter -> String
 viewTypeFilter n f = show n ++ " " ++ show f
@@ -360,11 +366,18 @@ checkValueAssignment :: (CollectErrorsM m, TypeResolver r) =>
 checkValueAssignment r f t1 t2 = noInferredTypes $ checkValueTypeMatch r f Covariant t1 t2
 
 checkValueTypeImmutable :: (CollectErrorsM m, TypeResolver r) => r -> ParamFilters -> ValueType -> m Bool
-checkValueTypeImmutable r _ (ValueType _ t) = reduceMergeTree anyOp allOp leafOp t where
-  anyOp = fmap (all id) . sequence
-  allOp = fmap (any id) . sequence
+checkValueTypeImmutable r f (ValueType _ t) = reduceMergeTree anyOp allOp leafOp t where
+  anyOp = fmap (all id) . collectAllM
+  allOp = fmap (any id) . collectAllM
   leafOp (JustTypeInstance (TypeInstance n _)) = trImmutable r n
+  leafOp (JustParamName _ n) = do
+    fs <- f `filterLookup` n
+    fmap (any id) $ mapCompilerM checkFilter fs
   leafOp _ = return False
+  checkFilter ImmutableFilter = return True
+  checkFilter (DefinesFilter (DefinesInstance n _)) = trImmutable r n
+  checkFilter (TypeFilter FilterRequires t2) = checkValueTypeImmutable r f (ValueType RequiredValue t2)
+  checkFilter _ = return False
 
 checkValueTypeMatch :: (CollectErrorsM m, TypeResolver r) =>
   r -> ParamFilters -> Variance -> ValueType -> ValueType -> m (MergeTree InferredTypeGuess)
@@ -586,6 +599,9 @@ validateAssignment r f t fs = mapCompilerM_ checkWithMessage fs where
   checkFilter t1 (DefinesFilter t2) = do
     t1' <- matchOnlyLeaf t1 <!! "Merged type " ++ show t1 ++ " cannot satisfy defines constraint " ++ show t2
     checkDefinesFilter t2 t1'
+  checkFilter t1 ImmutableFilter = do
+    immutable <- checkValueTypeImmutable r f (ValueType RequiredValue t1)
+    when (not immutable) $ compilerErrorM $ "Type " ++ show t1 ++ " is not immutable"
   checkDefinesFilter f2@(DefinesInstance n2 _) (JustTypeInstance t1) = do
     ps1' <- trDefines r t1 n2
     checkDefinesMatch r f f2 (DefinesInstance n2 ps1')
@@ -629,6 +645,7 @@ validateTypeFilter :: (CollectErrorsM m, TypeResolver r) =>
   r -> Set.Set ParamName -> TypeFilter -> m ()
 validateTypeFilter r params (TypeFilter _ t)  = validateGeneralInstance r params t
 validateTypeFilter r params (DefinesFilter t) = validateDefinesInstance r params t
+validateTypeFilter _ _      ImmutableFilter   = return ()
 
 validateInstanceVariance :: (CollectErrorsM m, TypeResolver r) =>
   r -> ParamVariances -> Variance -> GeneralInstance -> m ()
@@ -686,6 +703,7 @@ uncheckedSubFilter replace (TypeFilter d t) = do
 uncheckedSubFilter replace (DefinesFilter (DefinesInstance n ts)) = do
   ts' <- mapCompilerM (uncheckedSubInstance replace) (pValues ts)
   return (DefinesFilter (DefinesInstance n (Positional ts')))
+uncheckedSubFilter _ ImmutableFilter = return ImmutableFilter
 
 uncheckedSubFilters :: CollectErrorsM m =>
   (ParamName -> m GeneralInstance) -> ParamFilters -> m ParamFilters
@@ -727,3 +745,4 @@ replaceSelfFilter self (TypeFilter d t) = do
 replaceSelfFilter self (DefinesFilter (DefinesInstance n ts)) = do
   ts' <- mapCompilerM (replaceSelfInstance self) (pValues ts)
   return (DefinesFilter (DefinesInstance n (Positional ts')))
+replaceSelfFilter _ ImmutableFilter = return ImmutableFilter

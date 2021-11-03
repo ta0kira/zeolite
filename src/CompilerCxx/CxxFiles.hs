@@ -935,4 +935,5 @@ getCategoryMentions t = Set.fromList $ fromRefines (getCategoryRefines t) ++
   fromFilters fs = concat $ map (fromFilter . pfFilter) fs
   fromFilter (TypeFilter _ t2)  = Set.toList $ categoriesFromTypes t2
   fromFilter (DefinesFilter t2) = fromDefine t2
+  fromFilter ImmutableFilter = []
   fromGenerals = Set.toList . Set.unions . map categoriesFromTypes
