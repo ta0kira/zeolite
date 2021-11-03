@@ -16,6 +16,11 @@ limitations under the License.
 
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
+// Defined in Extension_Destructor.cpp.
+concrete Destructor {
+  @type new () -> (Destructor)
+}
+
 // Defined in Extension_Offset.cpp.
 concrete Offset {
   @type new () -> (Offset)

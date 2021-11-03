@@ -23,3 +23,14 @@ testcase "check VAR_SELF offset" {
 unittest test {
   \ Testing.checkEquals<?>(Offset.new().call().get(),"different")
 }
+
+
+testcase "VAR_SELF not allowed in destructor" {
+  crash
+  require "VAR_SELF"
+  require "Destructor"
+}
+
+unittest test {
+  \ Destructor.new()
+}

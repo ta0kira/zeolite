@@ -5,6 +5,10 @@ private_deps: [
 ]
 extra_files: [
   category_source {
+    source: "tests/self-offset/Extension_Destructor.cpp"
+    categories: [Destructor]
+  }
+  category_source {
     source: "tests/self-offset/Extension_Offset.cpp"
     categories: [Offset]
   }
