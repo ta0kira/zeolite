@@ -17,7 +17,7 @@ limitations under the License.
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
 define Routines {
-  $ReadOnly[dropShared,name,state]$
+  $ReadOnly[dropShared,dropSharedBroken,dropWeak,sharedThenDrop,sharedThenDropBroken,name,state]$
 
   refines StateMachine
 
