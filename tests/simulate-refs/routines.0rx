@@ -46,6 +46,22 @@ define Routines {
                /*else*/ empty),
       /*else*/ UnlockRef.new())
 
+  @category ReferenceMachine sharedThenDropBroken <-
+      IfElsePlusLockModLockZero.new(
+      /*if*/   MinusLock.new() `Run.then`
+               dropWeak,
+      /*else*/ MinusLockPlusOne.new() `Run.then`
+               dropWeak `Run.then`
+               dropSharedBroken)
+
+  @category ReferenceMachine dropSharedBroken <-
+      IfElseDecrRefIsZero.new(
+      /*if*/   FreeObject.new() `Run.then`
+               IfElseDecrWeakIsZero.new(
+               /*if*/   FreeRef.new(),
+               /*else*/ empty),
+      /*else*/ empty)
+
   @value String name
   @value ReferenceState state
   @value optional ReferenceMachine machine
@@ -60,6 +76,18 @@ define Routines {
   newWeak (name,state) {
     \ state.addWeak()
     return #self{ name, state, sharedThenDrop }
+  }
+
+  newSharedBroken (name,state) {
+    if (state.addStrong() == 1) {
+      \ state.addWeak()
+    }
+    return #self{ name, state, dropSharedBroken }
+  }
+
+  newWeakBroken (name,state) {
+    \ state.addWeak()
+    return #self{ name, state, sharedThenDropBroken }
   }
 
   transition () {

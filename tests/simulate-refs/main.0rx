@@ -25,6 +25,12 @@ define SimulateRefs {
   @category RandomUniform random <- RandomUniform.new(0.0,1.0).setSeed(Realtime.monoSeconds().asInt())
 
   run () {
+    Bool useBroken <- Argv.global().size() > 1 && Argv.global().readAt(1) == "broken"
+
+    if (Argv.global().size() > 1 && !useBroken) {
+      fail("Pass no args or \"broken\"")
+    }
+
     traverse (Counter.unlimited() -> Int i) {
       \ LazyStream<Formatted>.new()
           .append("Iteration ")
@@ -32,24 +38,31 @@ define SimulateRefs {
           .append("\n")
           .writeTo(SimpleOutput.stderr())
 
-      if (!runOnce() && (errorLimit <- errorLimit-1) == 0) {
+      if (!runOnce(useBroken) && (errorLimit <- errorLimit-1) == 0) {
         break
       }
     }
   }
 
-  @type getRoutines (ReferenceState) -> (DefaultOrder<StateMachine>)
-  getRoutines (state) {
-    return Vector:create<StateMachine>()
-        .append(Routines.newShared("shared1",state))
-        .append(Routines.newWeak("weak1",state))
-        .append(Routines.newWeak("weak2",state))
+  @type getRoutines (Bool,ReferenceState) -> (DefaultOrder<StateMachine>)
+  getRoutines (useBroken,state) {
+    if (useBroken) {
+      return Vector:create<StateMachine>()
+          .append(Routines.newSharedBroken("shared1",state))
+          .append(Routines.newWeakBroken("weak1",state))
+          .append(Routines.newWeakBroken("weak2",state))
+    } else {
+      return Vector:create<StateMachine>()
+          .append(Routines.newShared("shared1",state))
+          .append(Routines.newWeak("weak1",state))
+          .append(Routines.newWeak("weak2",state))
+    }
   }
 
-  @type runOnce () -> (Bool)
-  runOnce () {
+  @type runOnce (Bool) -> (Bool)
+  runOnce (useBroken) {
     ReferenceState state <- ReferenceState.new()
-    \ StateExecutor:multiplexStates(getRoutines(state),random)
+    \ StateExecutor:multiplexStates(getRoutines(useBroken,state),random)
 
     scoped {
       optional String error <- state.getError()

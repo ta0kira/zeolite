@@ -38,6 +38,8 @@ concrete ReferenceState {
 
   @value addStrong () -> (Int)
   @value remStrong () -> (Int)
+  @value plusStrong (Int) -> (Int)
+  @value minusStrong (Int) -> (Int)
   @value hasStrong () -> (Bool)
 
   @value addWeak () -> (Int)

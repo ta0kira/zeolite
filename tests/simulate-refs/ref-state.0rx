@@ -50,6 +50,14 @@ define ReferenceState {
     return (strongCount <- strongCount-1)
   }
 
+  plusStrong (n) {
+    return (strongCount <- strongCount+n)
+  }
+
+  minusStrong (n) {
+    return (strongCount <- strongCount-n)
+  }
+
   hasStrong () {
     return strongCount > 0
   }

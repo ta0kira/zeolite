@@ -53,3 +53,15 @@ concrete DecrRef {
 concrete DecrWeak {
   @type new () -> (ReferenceMachine)
 }
+
+concrete IfElsePlusLockModLockZero {
+  @type new (optional ReferenceMachine,optional ReferenceMachine) -> (ReferenceMachine)
+}
+
+concrete MinusLockPlusOne {
+  @type new () -> (ReferenceMachine)
+}
+
+concrete MinusLock {
+  @type new () -> (ReferenceMachine)
+}

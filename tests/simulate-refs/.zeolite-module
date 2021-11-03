@@ -1,5 +1,11 @@
 root: "../.."
 path: "tests/simulate-refs"
+expression_map: [
+  expression_macro {
+    name: LOCK_VAL
+    expression: 10000
+  }
+]
 private_deps: [
   "lib/container"
   "lib/math"

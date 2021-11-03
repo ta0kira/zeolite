@@ -144,3 +144,45 @@ define DecrWeak {
     return empty
   }
 }
+
+define IfElsePlusLockModLockZero {
+  refines ReferenceMachine
+
+  @value optional ReferenceMachine doIf
+  @value optional ReferenceMachine doElse
+
+  new (doIf,doElse) { return #self{ doIf, doElse } }
+
+  runWith (name,state) {
+    \ state.addOperation<#self>(name)
+    if (state.plusStrong($ExprLookup[LOCK_VAL]$) % $ExprLookup[LOCK_VAL]$ == 0) {
+      return doIf
+    } else {
+      return doElse
+    }
+  }
+}
+
+define MinusLockPlusOne {
+  refines ReferenceMachine
+
+  new () { return #self{ } }
+
+  runWith (name,state) {
+    \ state.addOperation<#self>(name)
+    \ state.minusStrong($ExprLookup[LOCK_VAL]$-1)
+    return empty
+  }
+}
+
+define MinusLock {
+  refines ReferenceMachine
+
+  new () { return #self{ } }
+
+  runWith (name,state) {
+    \ state.addOperation<#self>(name)
+    \ state.minusStrong($ExprLookup[LOCK_VAL]$)
+    return empty
+  }
+}
