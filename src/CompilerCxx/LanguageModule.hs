@@ -111,9 +111,8 @@ compileLanguageModule (LanguageModule ns0 ns1 ns2 cs0 ps0 ts0 cs1 ps1 ts1  ss em
       xxConcrete   <- fmap concat $ mapCompilerM (generateConcrete cs ctx) ds
       return $ xxInterfaces ++ xxConcrete
     generateConcrete cs (FileContext testing tm ns em2) d = do
-      tm' <- mergeInternalInheritance tm d
       t <- getCategoryDecl cs tm d
-      let ctx = FileContext testing tm' ns em2
+      let ctx = FileContext testing tm ns em2
       generateNativeConcrete ctx (t,d)
     getCategoryDecl cs tm d = do
       checkLocal cs (dcContext d) (dcName d)

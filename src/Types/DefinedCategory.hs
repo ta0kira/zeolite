@@ -220,8 +220,8 @@ mergeInternalInheritance tm d = do
   noDuplicateRefines [] n rs'
   ds' <- mergeDefines r fm (ds++ds2)
   noDuplicateDefines [] n ds'
-  pg2 <- fmap concat $ mapCompilerM getRefinesPragmas rs
-  pg3 <- fmap concat $ mapCompilerM getDefinesPragmas ds
+  pg2 <- fmap concat $ mapCompilerM getRefinesPragmas rs2
+  pg3 <- fmap concat $ mapCompilerM getDefinesPragmas ds2
   let fs2 = mergeInternalFunctions fs (dcFunctions d)
   fs' <- mergeFunctions r tm' pm fm rs' ds' fs2
   let c2' = ValueConcrete c ns n (pg++pg2++pg3) ps rs' ds' vs fs'
