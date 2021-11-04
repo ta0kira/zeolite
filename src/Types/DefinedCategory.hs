@@ -222,7 +222,8 @@ mergeInternalInheritance tm d = do
   noDuplicateDefines [] n ds'
   pg2 <- fmap concat $ mapCompilerM getRefinesPragmas rs
   pg3 <- fmap concat $ mapCompilerM getDefinesPragmas ds
-  fs' <- mergeFunctions r tm' pm fm rs' ds' fs
+  let fs2 = mergeInternalFunctions fs (dcFunctions d)
+  fs' <- mergeFunctions r tm' pm fm rs' ds' fs2
   let c2' = ValueConcrete c ns n (pg++pg2++pg3) ps rs' ds' vs fs'
   let tm0 = (dcName d) `Map.delete` tm
   checkCategoryInstances tm0 [c2']
@@ -234,6 +235,22 @@ mergeInternalInheritance tm d = do
     getDefinesPragmas df = do
       (_,t) <- getCategory tm (vdContext df,diName $ vdType df)
       return $ map (prependCategoryPragmaContext $ vdContext df) $ getCategoryPragmas t
+    mergeInternalFunctions fs1 = Map.elems . foldr single (funcMap fs1)
+    funcMap = Map.fromList . map (\f -> (sfName f,f))
+    single f fm =
+      case sfName f `Map.lookup` fm of
+           Nothing -> Map.insert (sfName f) f fm
+           Just f2 -> Map.insert (sfName f) (ScopedFunction {
+               sfContext = sfContext f,
+               sfName = sfName f,
+               sfType = sfType f,
+               sfScope = sfScope f,
+               sfArgs = sfArgs f,
+               sfReturns = sfReturns f,
+               sfParams = sfParams f,
+               sfFilters = sfFilters f,
+               sfMerges = sfMerges f ++ [f2]
+             }) fm
 
 replaceSelfMember :: (Show c, CollectErrorsM m) =>
   GeneralInstance -> DefinedMember c -> m (DefinedMember c)

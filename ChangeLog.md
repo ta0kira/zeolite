@@ -8,6 +8,30 @@
   members read-only, and requires their types to also be `immutable`. (This is
   breaking because `immutable` is now reserved.)
 
+* **[fix]** Fixes merging of multiple functions with the same name inherited
+  *internally* multiple times.
+
+  ```text
+  @value interface Base0 {
+    call (Int) -> ()
+  }
+
+  @value interface Base1 {
+    call (String) -> ()
+  }
+
+  concrete Type {}
+
+  define Type {
+    refines Base0
+    refines Base1
+
+    // This was previously missed when checking for an explicit merge of call.
+    @value call (Formatted) -> ()
+    call (_) {}
+  }
+  ```
+
 * **[new]** Updates `String.builder()` to accept `Formatted` values, rather than
   just accepting `String`.
 
