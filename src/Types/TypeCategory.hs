@@ -140,7 +140,7 @@ data PragmaCategory c =
   }
 
 instance Show c => Show (PragmaCategory c) where
-  show (CategoryImmutable c) = "$CategoryImmutable$ /*" ++ formatFullContext c ++ "*/"
+  show (CategoryImmutable c) = "immutable /*" ++ formatFullContext c ++ "*/"
 
 isCategoryImmutable :: PragmaCategory c -> Bool
 isCategoryImmutable (CategoryImmutable _) = True
