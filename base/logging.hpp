@@ -97,7 +97,7 @@ class LogThenCrash {
 
   #define PRED_CONTEXT_POINT(point)
 
-  #define CAPTURE_CREATION
+  #define CAPTURE_CREATION(name)
 
   #define TRACE_CREATION
 
