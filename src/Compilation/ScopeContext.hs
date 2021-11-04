@@ -27,7 +27,6 @@ module Compilation.ScopeContext (
 ) where
 
 import Control.Monad (when)
-import Data.List (nub)
 import qualified Data.Map as Map
 import qualified Data.Set as Set
 
