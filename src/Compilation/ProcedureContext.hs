@@ -141,25 +141,33 @@ instance (Show c, CollectErrorsM m) =>
                  case t of
                       Just t0 -> replaceSelfInstance self t0
                       Nothing -> return self
-    getFunction t' t' where
+    getFunction t' t' >>= onlyFunc t' where
+      onlyFunc _ [f] = return f
+      onlyFunc t2 fs = do
+        "Multiple matches for function " ++ show n ++ " called on " ++ show t2 ++ formatFullContextBrace c !!>
+          mapCompilerM_ (compilerErrorM . show) fs
+        emptyErrorM
       getFunction t0 t2 = reduceMergeTree getFromAny getFromAll (getFromSingle t0) t2
       getFromAny _ =
         compilerErrorM $ "Use explicit type conversion to call " ++ show n ++ " from " ++ show t
-      getFromAll ts = do
+      getFromAll fs = do
         t' <- case t of
                    Just t2 -> return t2
                    Nothing -> fmap (singleType . JustTypeInstance) $ ccSelfType ctx
-        collectFirstM ts <!!
+        collectFirstM_ fs <!!
           "Function " ++ show n ++ " not available for type " ++ show t' ++ formatFullContextBrace c
+        fmap concat $ collectAnyM fs
       getFromSingle t0 (JustParamName _ p) = do
         fa <- ccAllFilters ctx
-        fs <- case p `Map.lookup` fa of
+        ff <- case p `Map.lookup` fa of
                    (Just fs) -> return fs
                    _ -> compilerErrorM $ "Param " ++ show p ++ " not found"
-        let ts = map tfType $ filter isRequiresFilter fs
-        let ds = map dfType $ filter isDefinesFilter  fs
-        collectFirstM (map (getFunction t0) ts ++ map (checkDefine t0) ds) <!!
+        let ts = map tfType $ filter isRequiresFilter ff
+        let ds = map dfType $ filter isDefinesFilter  ff
+        let fs = map (getFunction t0) ts ++ map (checkDefine t0) ds
+        collectFirstM_ fs <!!
           "Function " ++ show n ++ " not available for param " ++ show p ++ formatFullContextBrace c
+        fmap concat $ collectAnyM fs
       getFromSingle t0 (JustTypeInstance t2)
         -- Same category as the procedure itself.
         | tiName t2 == ctx ^. pcType =
@@ -186,7 +194,7 @@ instance (Show c, CollectErrorsM m) =>
         paired <- processPairs alwaysPair ps1 ps2 <??
           "In external function call at " ++ formatFullContext c
         let assigned = Map.fromList paired
-        uncheckedSubFunction assigned f >>= replaceSelfFunction (fixTypeParams t0)
+        uncheckedSubFunction assigned f >>= replaceSelfFunction (fixTypeParams t0) >>= return . (:[])
       subAndCheckFunction _ t2 _ _ _ =
         compilerErrorM $ "Category " ++ show t2 ++
                          " does not have a type or value function named " ++ show n ++

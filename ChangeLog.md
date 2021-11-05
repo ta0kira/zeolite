@@ -8,6 +8,10 @@
   members read-only, and requires their types to also be `immutable`. (This is
   breaking because `immutable` is now reserved.)
 
+* **[breaking]** Adds compilation error if multiple functions match the name of
+  a function used in a call. This can happen when multiple `requires` or
+  `defines` types have a function with the same name.
+
 * **[fix]** Fixes merging of multiple functions with the same name inherited
   *internally* multiple times.
 
