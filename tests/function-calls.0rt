@@ -569,11 +569,11 @@ testcase "multiple mergeable @value functions match from filters" {
 }
 
 @value interface Type1 {
-  execute () -> ()
+  execute (Int) -> ()
 }
 
 @value interface Type2 {
-  execute () -> ()
+  execute (Formatted) -> ()
 }
 
 concrete Test {}
@@ -584,7 +584,7 @@ define Test {
     #x requires Type2
   (#x) -> ()
   test (x) {
-    \ x.execute()
+    \ x.execute("message")
   }
 }
 
@@ -594,11 +594,11 @@ testcase "multiple mergeable @value functions match from intersection" {
 }
 
 @value interface Type1 {
-  execute () -> ()
+  execute (Int) -> ()
 }
 
 @value interface Type2 {
-  execute () -> ()
+  execute (Formatted) -> ()
 }
 
 concrete Test {}
@@ -606,7 +606,7 @@ concrete Test {}
 define Test {
   @type test ([Type1&Type2]) -> ()
   test (x) {
-    \ x.execute()
+    \ x.execute("message")
   }
 }
 
@@ -616,11 +616,11 @@ testcase "multiple mergeable @type functions match from filters" {
 }
 
 @type interface Type1 {
-  execute () -> ()
+  execute (Int) -> ()
 }
 
 @type interface Type2 {
-  execute () -> ()
+  execute (Formatted) -> ()
 }
 
 concrete Test {}
@@ -631,7 +631,7 @@ define Test {
     #x defines Type2
   () -> ()
   test () {
-    \ #x.execute()
+    \ #x.execute("message")
   }
 }
 
