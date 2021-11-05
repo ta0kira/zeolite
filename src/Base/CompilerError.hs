@@ -39,6 +39,7 @@ module Base.CompilerError (
   mapCompilerM,
   mapCompilerM_,
   mapErrorsM,
+  silenceErrorsM,
 ) where
 
 import Control.Monad.IO.Class
@@ -128,6 +129,13 @@ mapErrorsM es = mapCompilerM_ compilerErrorM es >> emptyErrorM
 
 emptyErrorM :: CollectErrorsM m => m a
 emptyErrorM = compilerErrorM ""
+
+silenceErrorsM :: CollectErrorsM m => m a -> m a
+silenceErrorsM x = do
+  x' <- collectAnyM [x]
+  case x' of
+       [y] -> return y
+       _   -> emptyErrorM
 
 errorFromIO :: (MonadIO m, ErrorContextM m) => IO a -> m a
 errorFromIO x = do

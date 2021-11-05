@@ -42,6 +42,7 @@ import Base.MergeTree
 import Base.Positional
 import Compilation.CompilerState
 import Types.DefinedCategory
+import Types.Function
 import Types.Procedure
 import Types.TypeCategory
 import Types.TypeInstance
@@ -143,10 +144,19 @@ instance (Show c, CollectErrorsM m) =>
                       Nothing -> return self
     getFunction t' t' >>= onlyFunc t' where
       onlyFunc _ [f] = return f
-      onlyFunc t2 fs = do
+      onlyFunc t2 fs = collectFirstM $ map (tryMergeFrom fs) fs ++ [multipleMatchError t2 fs]
+      multipleMatchError t2 fs = do
         "Multiple matches for function " ++ show n ++ " called on " ++ show t2 ++ formatFullContextBrace c !!>
-          mapCompilerM_ (compilerErrorM . show) fs
-        emptyErrorM
+          mapErrorsM (map show fs)
+      tryMergeFrom fs f = do
+        mapCompilerM_ (tryMergeFunc f) fs
+        return f
+      tryMergeFunc f1 f2 = do
+        f1' <- parsedToFunctionType f1
+        f2' <- parsedToFunctionType f2
+        r <- ccResolver ctx
+        allFilters <- ccAllFilters ctx
+        silenceErrorsM $ checkFunctionConvert r allFilters Map.empty f2' f1'
       getFunction t0 t2 = reduceMergeTree getFromAny getFromAll (getFromSingle t0) t2
       getFromAny _ =
         compilerErrorM $ "Use explicit type conversion to call " ++ show n ++ " from " ++ show t
