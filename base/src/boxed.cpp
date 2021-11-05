@@ -27,7 +27,7 @@ limitations under the License.
 namespace ZEOLITE_PUBLIC_NAMESPACE {
 #endif  // ZEOLITE_PUBLIC_NAMESPACE
 
-ReturnTuple DispatchBool(bool value, const ValueFunction& label,
+ReturnTuple DispatchBool(PrimBool value, const ValueFunction& label,
                          const ParamTuple& params, const ValueTuple& args);
 
 ReturnTuple DispatchChar(PrimChar value, const ValueFunction& label,

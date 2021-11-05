@@ -46,13 +46,13 @@ struct ExtType_Bool : public Type_Bool {
 
   ReturnTuple Call_equals(const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("Bool.equals")
-    const bool Var_arg1 = (args.At(0)).AsBool();
-    const bool Var_arg2 = (args.At(1)).AsBool();
+    const PrimBool Var_arg1 = (args.At(0)).AsBool();
+    const PrimBool Var_arg2 = (args.At(1)).AsBool();
     return ReturnTuple(Box_Bool(Var_arg1==Var_arg2));
   }
 };
 
-ReturnTuple DispatchBool(bool value, const ValueFunction& label,
+ReturnTuple DispatchBool(PrimBool value, const ValueFunction& label,
                          const ParamTuple& params, const ValueTuple& args) {
   switch (label.collection) {
     case CategoryId_AsBool:
@@ -83,6 +83,6 @@ S<Type_Bool> CreateType_Bool(Params<0>::Type params) {
 using namespace ZEOLITE_PUBLIC_NAMESPACE;
 #endif  // ZEOLITE_PUBLIC_NAMESPACE
 
-BoxedValue Box_Bool(bool value) {
+BoxedValue Box_Bool(PrimBool value) {
   return BoxedValue(value);
 }

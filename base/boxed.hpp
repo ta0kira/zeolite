@@ -53,7 +53,7 @@ struct UnionValue {
   union {
     unsigned char* as_bytes_;
     Pointer*  as_pointer_;
-    bool      as_bool_;
+    PrimBool  as_bool_;
     PrimChar  as_char_;
     PrimInt   as_int_;
     PrimFloat as_float_;
@@ -108,7 +108,7 @@ class BoxedValue {
     return *this;
   }
 
-  inline BoxedValue(bool value)
+  inline BoxedValue(PrimBool value)
     : union_{ .type_ = UnionValue::Type::BOOL, .value_ = { .as_bool_ = value } } {}
 
   inline BoxedValue(PrimChar value)
@@ -136,7 +136,7 @@ class BoxedValue {
     Cleanup();
   }
 
-  inline bool AsBool() const {
+  inline PrimBool AsBool() const {
     switch (union_.type_) {
       case UnionValue::Type::BOOL:
         return union_.value_.as_bool_;

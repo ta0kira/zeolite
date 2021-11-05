@@ -45,7 +45,7 @@ limitations under the License.
 
 #define PARAM_SELF shared_from_this()
 
-BoxedValue Box_Bool(bool value);
+BoxedValue Box_Bool(PrimBool value);
 BoxedValue Box_String(const PrimString& value);
 BoxedValue Box_Char(PrimChar value);
 BoxedValue Box_Int(PrimInt value);

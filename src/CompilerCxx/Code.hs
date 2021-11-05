@@ -259,7 +259,7 @@ valueAsUnwrapped v                               = v
 
 variableStoredType :: ValueType -> String
 variableStoredType t
-  | t == boolRequiredValue   = "bool"
+  | t == boolRequiredValue   = "PrimBool"
   | t == intRequiredValue    = "PrimInt"
   | t == floatRequiredValue  = "PrimFloat"
   | t == charRequiredValue   = "PrimChar"
@@ -271,7 +271,7 @@ variableLazyType t = "LazyInit<" ++ variableStoredType t ++ ">"
 
 variableProxyType :: ValueType -> String
 variableProxyType t
-  | t == boolRequiredValue   = "bool"
+  | t == boolRequiredValue   = "PrimBool"
   | t == intRequiredValue    = "PrimInt"
   | t == floatRequiredValue  = "PrimFloat"
   | t == charRequiredValue   = "PrimChar"

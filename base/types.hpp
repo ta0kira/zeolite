@@ -38,6 +38,7 @@ limitations under the License.
 
 using CategoryId = std::int64_t;
 
+using PrimBool = bool;
 using PrimInt = std::int64_t;
 using PrimString = std::string;
 using PrimChar = char;
