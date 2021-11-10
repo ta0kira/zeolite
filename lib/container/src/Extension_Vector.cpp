@@ -186,7 +186,7 @@ Category_Vector& CreateCategory_Vector() {
   return category;
 }
 
-static auto& Vector_instance_cache = *new InstanceCache<1, Type_Vector>([](Params<1>::Type params) {
+static auto& Vector_instance_cache = *new InstanceCache<1, Type_Vector>([](const Params<1>::Type& params) {
     return S_get(new ExtType_Vector(CreateCategory_Vector(), params));
   });
 

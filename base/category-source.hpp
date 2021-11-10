@@ -201,7 +201,7 @@ class TypeValue {
 template <int P, class T>
 class InstanceCache {
  public:
-  using Creator = std::function<S<T>(typename Params<P>::Type)>;
+  using Creator = std::function<S<T>(const typename Params<P>::Type&)>;
 
   InstanceCache(const Creator& create) : create_(create) {}
 

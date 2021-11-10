@@ -74,7 +74,7 @@
   Example for `concrete Foo<#x>`:
 
   ```c++
-  static auto& Foo_instance_cache = *new InstanceCache<1, Type_Foo>([](Params<1>::Type params) {
+  static auto& Foo_instance_cache = *new InstanceCache<1, Type_Foo>([](const Params<1>::Type& params) {
       return S_get(new ExtType_Foo(CreateCategory_Foo(), params));
     });
 

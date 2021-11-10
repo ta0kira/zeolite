@@ -913,7 +913,7 @@ defineInternalType2 className t n
       ]
   | otherwise =
       onlyCodes [
-        "static auto& " ++ cacheName ++ " = *new InstanceCache<" ++ show n ++ ", " ++ typeName (getCategoryName t) ++ ">([](Params<" ++ show n ++ ">::Type params) {",
+        "static auto& " ++ cacheName ++ " = *new InstanceCache<" ++ show n ++ ", " ++ typeName (getCategoryName t) ++ ">([](const Params<" ++ show n ++ ">::Type& params) {",
         "    return S_get(new " ++ className ++ "(" ++ categoryCreator (getCategoryName t) ++ "(), params));",
         "  });",
         "S<const " ++ typeName (getCategoryName t) ++ "> " ++ typeCreator (getCategoryName t) ++ "(const Params<" ++ show n ++ ">::Type& params) {",
