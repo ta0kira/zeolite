@@ -51,11 +51,11 @@ BoxedValue Box_Char(PrimChar value);
 BoxedValue Box_Int(PrimInt value);
 BoxedValue Box_Float(PrimFloat value);
 
-S<TypeInstance> Merge_Intersect(L<S<const TypeInstance>> params);
-S<TypeInstance> Merge_Union(L<S<const TypeInstance>> params);
+S<const TypeInstance> Merge_Intersect(L<S<const TypeInstance>> params);
+S<const TypeInstance> Merge_Union(L<S<const TypeInstance>> params);
 
-const S<TypeInstance>& GetMerged_Any();
-const S<TypeInstance>& GetMerged_All();
+const S<const TypeInstance>& GetMerged_Any();
+const S<const TypeInstance>& GetMerged_All();
 
 extern const BoxedValue Var_empty;
 
@@ -81,9 +81,9 @@ class TypeCategory {
 
 class TypeInstance {
  public:
-  inline static ReturnTuple Call(const S<TypeInstance>& target,
+  inline static ReturnTuple Call(const S<const TypeInstance>& target,
                                  const TypeFunction& label,
-                                 ParamTuple params, const ValueTuple& args) {
+                                 const ParamTuple& params, const ValueTuple& args) {
     if (target == nullptr) {
       FAIL() << "Function called on null value";
     }
@@ -118,7 +118,7 @@ class TypeInstance {
   TypeInstance() = default;
 
   virtual ReturnTuple Dispatch(const TypeFunction& label,
-                               const ParamTuple& params, const ValueTuple& args);
+                               const ParamTuple& params, const ValueTuple& args) const;
 
   virtual bool CanConvertFrom(const S<const TypeInstance>& from) const
   { return false; }

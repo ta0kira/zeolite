@@ -75,7 +75,7 @@ procedureDeclaration immutable abstract f = return $ onlyCode func where
     | sfScope f == CategoryScope =
       "ReturnTuple " ++ name ++ "(const ParamTuple& params, const ValueTuple& args)"
     | sfScope f == TypeScope =
-      "ReturnTuple " ++ name ++ "(const ParamTuple& params, const ValueTuple& args)"
+      "ReturnTuple " ++ name ++ "(const ParamTuple& params, const ValueTuple& args) const"
     | sfScope f == ValueScope =
       "ReturnTuple " ++ name ++ "(const ParamTuple& params, const ValueTuple& args)" ++ suffix
     | otherwise = undefined
@@ -134,7 +134,7 @@ compileExecutableProcedure immutable cxxType ctx
       | s == CategoryScope =
         "ReturnTuple " ++ prefix ++ name ++ "(const ParamTuple& params, const ValueTuple& args)" ++ final ++ " {"
       | s == TypeScope =
-        "ReturnTuple " ++ prefix ++ name ++ "(const ParamTuple& params, const ValueTuple& args)" ++ final ++ " {"
+        "ReturnTuple " ++ prefix ++ name ++ "(const ParamTuple& params, const ValueTuple& args) const" ++ final ++ " {"
       | s == ValueScope =
         "ReturnTuple " ++ prefix ++ name ++ "(const ParamTuple& params, const ValueTuple& args)" ++ suffix ++ final ++ " {"
       | otherwise = undefined

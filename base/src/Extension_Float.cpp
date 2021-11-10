@@ -42,19 +42,19 @@ struct ExtCategory_Float : public Category_Float {
 struct ExtType_Float : public Type_Float {
   inline ExtType_Float(Category_Float& p, Params<0>::Type params) : Type_Float(p, params) {}
 
-  ReturnTuple Call_default(const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_default(const ParamTuple& params, const ValueTuple& args) const final {
     TRACE_FUNCTION("Float.default")
     return ReturnTuple(Box_Float(0.0));
   }
 
-  ReturnTuple Call_equals(const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_equals(const ParamTuple& params, const ValueTuple& args) const final {
     TRACE_FUNCTION("Float.equals")
     const PrimFloat Var_arg1 = (args.At(0)).AsFloat();
     const PrimFloat Var_arg2 = (args.At(1)).AsFloat();
     return ReturnTuple(Box_Bool(Var_arg1==Var_arg2));
   }
 
-  ReturnTuple Call_lessThan(const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_lessThan(const ParamTuple& params, const ValueTuple& args) const final {
     TRACE_FUNCTION("Float.lessThan")
     const PrimFloat Var_arg1 = (args.At(0)).AsFloat();
     const PrimFloat Var_arg2 = (args.At(1)).AsFloat();
@@ -87,7 +87,8 @@ Category_Float& CreateCategory_Float() {
   static auto& category = *new ExtCategory_Float();
   return category;
 }
-S<Type_Float> CreateType_Float(Params<0>::Type params) {
+
+S<const Type_Float> CreateType_Float(Params<0>::Type params) {
   static const auto cached = S_get(new ExtType_Float(CreateCategory_Float(), Params<0>::Type()));
   return cached;
 }

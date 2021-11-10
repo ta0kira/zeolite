@@ -35,28 +35,28 @@ struct ExtCategory_Argv : public Category_Argv {
 struct ExtType_Argv : public Type_Argv {
   inline ExtType_Argv(Category_Argv& p, Params<0>::Type params) : Type_Argv(p, params) {}
 
-  ReturnTuple Call_global(const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_global(const ParamTuple& params, const ValueTuple& args) const final {
     TRACE_FUNCTION("Argv.global")
     return ReturnTuple(Var_global);
   }
 };
 
 struct ExtValue_Argv : public Value_Argv {
-  inline ExtValue_Argv(S<Type_Argv> p, int st, int sz)
-    : Value_Argv(p), start(st), size(sz) {}
+  inline ExtValue_Argv(S<const Type_Argv> p, int st, int sz)
+    : Value_Argv(std::move(p)), start(st), size(sz) {}
 
-  ReturnTuple Call_readAt(const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_readAt(const ParamTuple& params, const ValueTuple& args) const final {
     TRACE_FUNCTION("Argv.readAt")
     const PrimInt Var_arg1 = (args.At(0)).AsInt();
     return ReturnTuple(Box_String(Argv::GetArgAt(start + Var_arg1)));
   }
 
-  ReturnTuple Call_size(const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_size(const ParamTuple& params, const ValueTuple& args) const final {
     TRACE_FUNCTION("Argv.size")
     return ReturnTuple(Box_Int(GetSize()));
   }
 
-  ReturnTuple Call_subSequence(const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_subSequence(const ParamTuple& params, const ValueTuple& args) const final {
     TRACE_FUNCTION("Argv.subSequence")
     const PrimInt Var_arg1 = (args.At(0)).AsInt();
     const PrimInt Var_arg2 = (args.At(1)).AsInt();
@@ -84,7 +84,7 @@ Category_Argv& CreateCategory_Argv() {
   return category;
 }
 
-S<Type_Argv> CreateType_Argv(Params<0>::Type params) {
+S<const Type_Argv> CreateType_Argv(Params<0>::Type params) {
   static const auto cached = S_get(new ExtType_Argv(CreateCategory_Argv(), Params<0>::Type()));
   return cached;
 }

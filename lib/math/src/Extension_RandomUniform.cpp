@@ -28,7 +28,7 @@ limitations under the License.
 namespace ZEOLITE_PUBLIC_NAMESPACE {
 #endif  // ZEOLITE_PUBLIC_NAMESPACE
 
-BoxedValue CreateValue_RandomUniform(S<Type_RandomUniform> parent, const ValueTuple& args);
+BoxedValue CreateValue_RandomUniform(S<const Type_RandomUniform> parent, const ValueTuple& args);
 
 struct ExtCategory_RandomUniform : public Category_RandomUniform {
 };
@@ -36,7 +36,7 @@ struct ExtCategory_RandomUniform : public Category_RandomUniform {
 struct ExtType_RandomUniform : public Type_RandomUniform {
   inline ExtType_RandomUniform(Category_RandomUniform& p, Params<0>::Type params) : Type_RandomUniform(p, params) {}
 
-  ReturnTuple Call_new(const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_new(const ParamTuple& params, const ValueTuple& args) const final {
     TRACE_FUNCTION("RandomUniform.new")
     const PrimFloat Var_arg1 = (args.At(0)).AsFloat();
     const PrimFloat Var_arg2 = (args.At(1)).AsFloat();
@@ -48,8 +48,8 @@ struct ExtType_RandomUniform : public Type_RandomUniform {
 };
 
 struct ExtValue_RandomUniform : public Value_RandomUniform {
-  inline ExtValue_RandomUniform(S<Type_RandomUniform> p, const ValueTuple& args)
-    : Value_RandomUniform(p),
+  inline ExtValue_RandomUniform(S<const Type_RandomUniform> p, const ValueTuple& args)
+    : Value_RandomUniform(std::move(p)),
       generator_((int) (long) this),
       distribution_(args.At(0).AsFloat(), args.At(1).AsFloat()) {}
 
@@ -74,13 +74,13 @@ Category_RandomUniform& CreateCategory_RandomUniform() {
   return category;
 }
 
-S<Type_RandomUniform> CreateType_RandomUniform(Params<0>::Type params) {
+S<const Type_RandomUniform> CreateType_RandomUniform(Params<0>::Type params) {
   static const auto cached = S_get(new ExtType_RandomUniform(CreateCategory_RandomUniform(), Params<0>::Type()));
   return cached;
 }
 
-BoxedValue CreateValue_RandomUniform(S<Type_RandomUniform> parent, const ValueTuple& args) {
-  return BoxedValue::New<ExtValue_RandomUniform>(parent, args);
+BoxedValue CreateValue_RandomUniform(S<const Type_RandomUniform> parent, const ValueTuple& args) {
+  return BoxedValue::New<ExtValue_RandomUniform>(std::move(parent), args);
 }
 
 #ifdef ZEOLITE_PUBLIC_NAMESPACE

@@ -38,14 +38,15 @@ struct ExtCategory_SimpleInput : public Category_SimpleInput {
 struct ExtType_SimpleInput : public Type_SimpleInput {
   inline ExtType_SimpleInput(Category_SimpleInput& p, Params<0>::Type params) : Type_SimpleInput(p, params) {}
 
-  ReturnTuple Call_stdin(const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_stdin(const ParamTuple& params, const ValueTuple& args) const final {
     TRACE_FUNCTION("SimpleInput.stdin")
     return ReturnTuple(Var_stdin);
   }
 };
 
 struct ExtValue_SimpleInput : public Value_SimpleInput {
-  inline ExtValue_SimpleInput(S<Type_SimpleInput> p, const ValueTuple& args) : Value_SimpleInput(p) {}
+  inline ExtValue_SimpleInput(S<const Type_SimpleInput> p, const ValueTuple& args)
+    : Value_SimpleInput(std::move(p)) {}
 
   ReturnTuple Call_pastEnd(const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("SimpleInput.pastEnd")
@@ -83,7 +84,7 @@ Category_SimpleInput& CreateCategory_SimpleInput() {
   return category;
 }
 
-S<Type_SimpleInput> CreateType_SimpleInput(Params<0>::Type params) {
+S<const Type_SimpleInput> CreateType_SimpleInput(Params<0>::Type params) {
   static const auto cached = S_get(new ExtType_SimpleInput(CreateCategory_SimpleInput(), Params<0>::Type()));
   return cached;
 }

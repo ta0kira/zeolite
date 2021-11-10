@@ -77,30 +77,30 @@ class Value_StringBuilder : public TypeValue {
 struct ExtType_String : public Type_String {
   inline ExtType_String(Category_String& p, Params<0>::Type params) : Type_String(p, params) {}
 
-  ReturnTuple Call_builder(const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_builder(const ParamTuple& params, const ValueTuple& args) const final {
     TRACE_FUNCTION("String.builder")
     return ReturnTuple(BoxedValue::New<Value_StringBuilder>());
   }
 
-  ReturnTuple Call_default(const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_default(const ParamTuple& params, const ValueTuple& args) const final {
     TRACE_FUNCTION("String.default")
     return ReturnTuple(Box_String(""));
   }
 
-  ReturnTuple Call_equals(const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_equals(const ParamTuple& params, const ValueTuple& args) const final {
     TRACE_FUNCTION("String.equals")
     const BoxedValue& Var_arg1 = (args.At(0));
     const BoxedValue& Var_arg2 = (args.At(1));
     return ReturnTuple(Box_Bool(Var_arg1.AsString()==Var_arg2.AsString()));
   }
 
-  ReturnTuple Call_fromCharBuffer(const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_fromCharBuffer(const ParamTuple& params, const ValueTuple& args) const final {
     TRACE_FUNCTION("String.fromCharBuffer")
     const BoxedValue& Var_arg1 = (args.At(0));
     return ReturnTuple(Box_String(PrimString(Var_arg1.AsCharBuffer())));
   }
 
-  ReturnTuple Call_lessThan(const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_lessThan(const ParamTuple& params, const ValueTuple& args) const final {
     TRACE_FUNCTION("String.lessThan")
     const BoxedValue& Var_arg1 = (args.At(0));
     const BoxedValue& Var_arg2 = (args.At(1));
@@ -144,7 +144,8 @@ class StringOrder : public TypeValue {
 };
 
 struct ExtValue_String : public Value_String {
-  inline ExtValue_String(S<Type_String> p, const PrimString& value) : Value_String(p), value_(value) {}
+  inline ExtValue_String(S<const Type_String> p, const PrimString& value)
+    : Value_String(std::move(p)), value_(value) {}
 
   ReturnTuple Call_asBool(const ParamTuple& params, const ValueTuple& args) const final {
     TRACE_FUNCTION("String.asBool")
@@ -201,7 +202,8 @@ Category_String& CreateCategory_String() {
   static auto& category = *new ExtCategory_String();
   return category;
 }
-S<Type_String> CreateType_String(Params<0>::Type params) {
+
+S<const Type_String> CreateType_String(Params<0>::Type params) {
   static const auto cached = S_get(new ExtType_String(CreateCategory_String(), Params<0>::Type()));
   return cached;
 }

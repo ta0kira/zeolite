@@ -417,7 +417,7 @@ generateCategoryDefinition testing = common where
       return declareValueOverrides,
       fmap indentCompiled $ concatM $ map (declareProcedure t False) fs,
       fmap indentCompiled $ concatM $ map (createMember r params t) members,
-      return $ onlyCode $ "  const S<" ++ typeName (getCategoryName t) ++ "> parent;",
+      return $ onlyCode $ "  const S<const " ++ typeName (getCategoryName t) ++ "> parent;",
       return $ onlyCodes traceCreation,
       return $ onlyCode "};"
     ] where
@@ -451,7 +451,7 @@ generateCategoryDefinition testing = common where
       return declareValueOverrides,
       fmap indentCompiled $ concatM $ map (declareProcedure t True) $ filter ((== ValueScope). sfScope) $ getCategoryFunctions t,
       return $ onlyCode $ "  virtual inline ~" ++ valueName (getCategoryName t) ++ "() {}",
-      return $ onlyCode $ "  const S<" ++ typeName (getCategoryName t) ++ "> parent;",
+      return $ onlyCode $ "  const S<const " ++ typeName (getCategoryName t) ++ "> parent;",
       return $ onlyCode "};"
     ]
 
@@ -491,7 +491,7 @@ generateCategoryDefinition testing = common where
       "  std::string CategoryName() const final;",
       "  void BuildTypeName(std::ostream& output) const final;",
       "  bool TypeArgsForParent(const CategoryId& category, std::vector<S<const TypeInstance>>& args) const final;",
-      "  ReturnTuple Dispatch(const TypeFunction& label, const ParamTuple& params, const ValueTuple& args) final;",
+      "  ReturnTuple Dispatch(const TypeFunction& label, const ParamTuple& params, const ValueTuple& args) const final;",
       "  bool CanConvertFrom(const S<const TypeInstance>& from) const final;"
     ]
   declareValueOverrides = onlyCodes [
@@ -514,7 +514,7 @@ generateCategoryDefinition testing = common where
       onlyCode $ "bool " ++ className ++ "::TypeArgsForParent(const CategoryId& category, std::vector<S<const TypeInstance>>& args) const {",
       createTypeArgsForParent t,
       onlyCode $ "}",
-      onlyCode $ "ReturnTuple " ++ className ++ "::Dispatch(const TypeFunction& label, const ParamTuple& params, const ValueTuple& args) {",
+      onlyCode $ "ReturnTuple " ++ className ++ "::Dispatch(const TypeFunction& label, const ParamTuple& params, const ValueTuple& args) const {",
       createFunctionDispatch t TypeScope fs,
       onlyCode $ "}",
       onlyCode $ "bool " ++ className ++ "::CanConvertFrom(const S<const TypeInstance>& from) const {",
@@ -570,7 +570,7 @@ generateCategoryDefinition testing = common where
         onlyCode "}"
       ]
   inlineValueConstructor t d = do
-    let argParent = "S<" ++ typeName (getCategoryName t) ++ "> p"
+    let argParent = "S<const " ++ typeName (getCategoryName t) ++ "> p"
     let argsPassed = "const ValueTuple& args"
     let allArgs = intercalate ", " [argParent,argsPassed]
     let initParent = "parent(p)"
@@ -581,7 +581,7 @@ generateCategoryDefinition testing = common where
       members = filter ((== ValueScope). dmScope) $ dcMembers d
 
   abstractValueConstructor t = do
-    let argParent = "S<" ++ typeName (getCategoryName t) ++ "> p"
+    let argParent = "S<const " ++ typeName (getCategoryName t) ++ "> p"
     let allArgs = intercalate ", " [argParent]
     let initParent = "parent(p)"
     let allInit = initParent
@@ -595,10 +595,10 @@ generateCategoryDefinition testing = common where
     let allInit = typeName (getCategoryName t) ++ "(p, params)"
     return $ onlyCode $ "inline " ++ typeCustom (getCategoryName t) ++ "(" ++ allArgs ++ ") : " ++ allInit ++ " {}"
   customValueConstructor t = do
-    let argParent = "S<" ++ typeName (getCategoryName t) ++ "> p"
+    let argParent = "S<const " ++ typeName (getCategoryName t) ++ "> p"
     let argsPassed = "const ValueTuple& args"
     let allArgs = intercalate ", " [argParent,argsPassed]
-    let allInit = valueName (getCategoryName t) ++ "(p)"
+    let allInit = valueName (getCategoryName t) ++ "(std::move(p))"
     return $ onlyCode $ "inline " ++ valueCustom (getCategoryName t) ++ "(" ++ allArgs ++ ") : " ++ allInit ++ " {}"
 
   allowTestsOnly
@@ -736,7 +736,7 @@ createFunctionDispatch t s fs = function where
     | s == CategoryScope = "  using CallType = ReturnTuple(" ++ categoryName name ++
                            "::*)(const ParamTuple&, const ValueTuple&);"
     | s == TypeScope     = "  using CallType = ReturnTuple(" ++ typeName name ++
-                           "::*)(const ParamTuple&, const ValueTuple&);"
+                           "::*)(const ParamTuple&, const ValueTuple&) const;"
     | s == ValueScope    = "  using CallType = ReturnTuple(" ++ valueName name ++
                            "::*)(const ParamTuple&, const ValueTuple&)" ++ suffix ++ ";"
     | otherwise = undefined
@@ -850,13 +850,13 @@ defineGetCatetory t = onlyCodes [
 
 declareGetType :: AnyCategory c -> CompiledData [String]
 declareGetType t = onlyCodes [
-    "S<" ++ typeBase ++ "> " ++ typeGetter (getCategoryName t) ++ "(Params<" ++
+    "S<const " ++ typeBase ++ "> " ++ typeGetter (getCategoryName t) ++ "(Params<" ++
             show (length $getCategoryParams t) ++ ">::Type params);"
   ]
 
 defineGetType :: AnyCategory c -> CompiledData [String]
 defineGetType t = onlyCodes [
-    "S<" ++ typeBase ++ "> " ++ typeGetter (getCategoryName t) ++ "(Params<" ++
+    "S<const " ++ typeBase ++ "> " ++ typeGetter (getCategoryName t) ++ "(Params<" ++
             show (length $ getCategoryParams t) ++ ">::Type params) {",
     "  return " ++ typeCreator (getCategoryName t) ++ "(params);",
     "}"
@@ -880,7 +880,7 @@ defineInternalCategory2 className t = onlyCodes [
 
 declareInternalType :: AnyCategory c -> Int -> CompiledData [String]
 declareInternalType t n = onlyCodes [
-    "S<" ++ typeName (getCategoryName t) ++ "> " ++ typeCreator (getCategoryName t) ++
+    "S<const " ++ typeName (getCategoryName t) ++ "> " ++ typeCreator (getCategoryName t) ++
             "(Params<" ++ show n ++ ">::Type params);"
   ]
 
@@ -891,14 +891,14 @@ defineInternalType2 :: String -> AnyCategory c -> Int -> CompiledData [String]
 defineInternalType2 className t n
   | n < 1 =
       onlyCodes [
-        "S<" ++ typeName (getCategoryName t) ++ "> " ++ typeCreator (getCategoryName t) ++ "(Params<" ++ show n ++ ">::Type params) {",
+        "S<const " ++ typeName (getCategoryName t) ++ "> " ++ typeCreator (getCategoryName t) ++ "(Params<" ++ show n ++ ">::Type params) {",
         "  static const auto cached = S_get(new " ++ className ++ "(" ++ categoryCreator (getCategoryName t) ++ "(), Params<" ++ show n ++ ">::Type()));",
         "  return cached;",
         "}"
       ]
   | otherwise =
       onlyCodes [
-        "S<" ++ typeName (getCategoryName t) ++ "> " ++ typeCreator (getCategoryName t) ++ "(Params<" ++ show n ++ ">::Type params) {",
+        "S<const " ++ typeName (getCategoryName t) ++ "> " ++ typeCreator (getCategoryName t) ++ "(Params<" ++ show n ++ ">::Type params) {",
         "  static auto& cache = *new InstanceCache<" ++ show n ++ ", " ++ typeName (getCategoryName t) ++ ">([](Params<" ++ show n ++ ">::Type params) {",
         "      return S_get(new " ++ className ++ "(" ++ categoryCreator (getCategoryName t) ++ "(), params));",
         "    });",
@@ -910,7 +910,7 @@ declareInternalValue :: AnyCategory c -> CompiledData [String]
 declareInternalValue t =
   onlyCodes [
       "BoxedValue " ++ valueCreator (getCategoryName t) ++
-      "(S<" ++ typeName (getCategoryName t) ++ "> parent, " ++
+      "(S<const " ++ typeName (getCategoryName t) ++ "> parent, " ++
       "const ValueTuple& args);"
     ]
 
@@ -920,9 +920,10 @@ defineInternalValue t = defineInternalValue2 (valueName (getCategoryName t)) t
 defineInternalValue2 :: String -> AnyCategory c -> CompiledData [String]
 defineInternalValue2 className t =
   onlyCodes [
-      "BoxedValue " ++ valueCreator (getCategoryName t) ++ "(S<" ++ typeName (getCategoryName t) ++ "> parent, " ++
+      "BoxedValue " ++ valueCreator (getCategoryName t) ++
+      "(S<const " ++ typeName (getCategoryName t) ++ "> parent, " ++
       "const ValueTuple& args) {",
-      "  return BoxedValue::New<" ++ className ++ ">(parent, args);",
+      "  return BoxedValue::New<" ++ className ++ ">(std::move(parent), args);",
       "}"
     ]
 

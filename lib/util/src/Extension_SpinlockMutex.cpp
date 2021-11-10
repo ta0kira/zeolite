@@ -27,7 +27,7 @@ limitations under the License.
 namespace ZEOLITE_PUBLIC_NAMESPACE {
 #endif  // ZEOLITE_PUBLIC_NAMESPACE
 
-BoxedValue CreateValue_SpinlockMutex(S<Type_SpinlockMutex> parent);
+BoxedValue CreateValue_SpinlockMutex(S<const Type_SpinlockMutex> parent);
 
 struct ExtCategory_SpinlockMutex : public Category_SpinlockMutex {
 };
@@ -35,14 +35,15 @@ struct ExtCategory_SpinlockMutex : public Category_SpinlockMutex {
 struct ExtType_SpinlockMutex : public Type_SpinlockMutex {
   inline ExtType_SpinlockMutex(Category_SpinlockMutex& p, Params<0>::Type params) : Type_SpinlockMutex(p, params) {}
 
-  ReturnTuple Call_new(const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_new(const ParamTuple& params, const ValueTuple& args) const final {
     TRACE_FUNCTION("SpinlockMutex.new")
     return ReturnTuple(CreateValue_SpinlockMutex(CreateType_SpinlockMutex(Params<0>::Type())));
   }
 };
 
 struct ExtValue_SpinlockMutex : public Value_SpinlockMutex {
-  inline ExtValue_SpinlockMutex(S<Type_SpinlockMutex> p) : Value_SpinlockMutex(p) {}
+  inline ExtValue_SpinlockMutex(S<const Type_SpinlockMutex> p)
+    : Value_SpinlockMutex(std::move(p)) {}
 
   ReturnTuple Call_lock(const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("SpinlockMutex.lock")
@@ -64,13 +65,13 @@ Category_SpinlockMutex& CreateCategory_SpinlockMutex() {
   return category;
 }
 
-S<Type_SpinlockMutex> CreateType_SpinlockMutex(Params<0>::Type params) {
+S<const Type_SpinlockMutex> CreateType_SpinlockMutex(Params<0>::Type params) {
   static const auto cached = S_get(new ExtType_SpinlockMutex(CreateCategory_SpinlockMutex(), Params<0>::Type()));
   return cached;
 }
 
-BoxedValue CreateValue_SpinlockMutex(S<Type_SpinlockMutex> parent) {
-  return BoxedValue::New<ExtValue_SpinlockMutex>(parent);
+BoxedValue CreateValue_SpinlockMutex(S<const Type_SpinlockMutex> parent) {
+  return BoxedValue::New<ExtValue_SpinlockMutex>(std::move(parent));
 }
 
 #ifdef ZEOLITE_PUBLIC_NAMESPACE

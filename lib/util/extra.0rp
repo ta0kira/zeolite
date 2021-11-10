@@ -22,6 +22,8 @@ limitations under the License.
 // - The built-in type with no values is the meta-type all. Void should be used
 //   when an actual value is required but no other type makes sense.
 concrete Void {
+  immutable
+
   refines Formatted
 
   defines Equals<Void>
@@ -54,6 +56,8 @@ concrete ErrorOr<|#x> {
 
 // Command-line program arguments.
 concrete Argv {
+  immutable
+
   refines ReadAt<String>
   refines SubSequence
 

@@ -27,7 +27,7 @@ limitations under the License.
 namespace ZEOLITE_PUBLIC_NAMESPACE {
 #endif  // ZEOLITE_PUBLIC_NAMESPACE
 
-BoxedValue CreateValue_SimpleMutex(S<Type_SimpleMutex> parent);
+BoxedValue CreateValue_SimpleMutex(S<const Type_SimpleMutex> parent);
 
 struct ExtCategory_SimpleMutex : public Category_SimpleMutex {
 };
@@ -35,14 +35,15 @@ struct ExtCategory_SimpleMutex : public Category_SimpleMutex {
 struct ExtType_SimpleMutex : public Type_SimpleMutex {
   inline ExtType_SimpleMutex(Category_SimpleMutex& p, Params<0>::Type params) : Type_SimpleMutex(p, params) {}
 
-  ReturnTuple Call_new(const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_new(const ParamTuple& params, const ValueTuple& args) const final {
     TRACE_FUNCTION("SimpleMutex.new")
     return ReturnTuple(CreateValue_SimpleMutex(CreateType_SimpleMutex(Params<0>::Type())));
   }
 };
 
 struct ExtValue_SimpleMutex : public Value_SimpleMutex {
-  inline ExtValue_SimpleMutex(S<Type_SimpleMutex> p) : Value_SimpleMutex(p) {}
+  inline ExtValue_SimpleMutex(S<const Type_SimpleMutex> p)
+    : Value_SimpleMutex(std::move(p)) {}
 
   ReturnTuple Call_lock(const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("SimpleMutex.lock")
@@ -64,13 +65,13 @@ Category_SimpleMutex& CreateCategory_SimpleMutex() {
   return category;
 }
 
-S<Type_SimpleMutex> CreateType_SimpleMutex(Params<0>::Type params) {
+S<const Type_SimpleMutex> CreateType_SimpleMutex(Params<0>::Type params) {
   static const auto cached = S_get(new ExtType_SimpleMutex(CreateCategory_SimpleMutex(), Params<0>::Type()));
   return cached;
 }
 
-BoxedValue CreateValue_SimpleMutex(S<Type_SimpleMutex> parent) {
-  return BoxedValue::New<ExtValue_SimpleMutex>(parent);
+BoxedValue CreateValue_SimpleMutex(S<const Type_SimpleMutex> parent) {
+  return BoxedValue::New<ExtValue_SimpleMutex>(std::move(parent));
 }
 
 #ifdef ZEOLITE_PUBLIC_NAMESPACE

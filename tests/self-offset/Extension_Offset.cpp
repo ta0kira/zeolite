@@ -32,7 +32,7 @@ struct Base {
 
 }  // namespace
 
-BoxedValue CreateValue_Offset(S<Type_Offset> parent, const ValueTuple& args);
+BoxedValue CreateValue_Offset(S<const Type_Offset> parent, const ValueTuple& args);
 
 struct ExtCategory_Offset : public Category_Offset {
 };
@@ -40,7 +40,7 @@ struct ExtCategory_Offset : public Category_Offset {
 struct ExtType_Offset : public Type_Offset {
   inline ExtType_Offset(Category_Offset& p, Params<0>::Type params) : Type_Offset(p, params) {}
 
-  ReturnTuple Call_new(const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_new(const ParamTuple& params, const ValueTuple& args) const final {
     TRACE_FUNCTION("Offset.new")
     return ReturnTuple(CreateValue_Offset(PARAM_SELF, ArgTuple()));
   }
@@ -48,7 +48,8 @@ struct ExtType_Offset : public Type_Offset {
 
 // Using virtual will (ideally) change the offset.
 struct ExtValue_Offset : public Base, virtual public Value_Offset {
-  inline ExtValue_Offset(S<Type_Offset> p, const ValueTuple& args) : Value_Offset(p) {}
+  inline ExtValue_Offset(S<const Type_Offset> p, const ValueTuple& args)
+    : Value_Offset(std::move(p)) {}
 
   ReturnTuple Call_call(const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("Offset.call")
@@ -71,13 +72,13 @@ Category_Offset& CreateCategory_Offset() {
   return category;
 }
 
-S<Type_Offset> CreateType_Offset(Params<0>::Type params) {
+S<const Type_Offset> CreateType_Offset(Params<0>::Type params) {
   static const auto cached = S_get(new ExtType_Offset(CreateCategory_Offset(), Params<0>::Type()));
   return cached;
 }
 
-BoxedValue CreateValue_Offset(S<Type_Offset> parent, const ValueTuple& args) {
-  return BoxedValue::New<ExtValue_Offset>(parent, args);
+BoxedValue CreateValue_Offset(S<const Type_Offset> parent, const ValueTuple& args) {
+  return BoxedValue::New<ExtValue_Offset>(std::move(parent), args);
 }
 
 #ifdef ZEOLITE_PUBLIC_NAMESPACE

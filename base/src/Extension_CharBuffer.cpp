@@ -29,7 +29,7 @@ limitations under the License.
 namespace ZEOLITE_PUBLIC_NAMESPACE {
 #endif  // ZEOLITE_PUBLIC_NAMESPACE
 
-BoxedValue CreateValue_CharBuffer(S<Type_CharBuffer> parent, PrimCharBuffer buffer);
+BoxedValue CreateValue_CharBuffer(S<const Type_CharBuffer> parent, PrimCharBuffer buffer);
 
 struct ExtCategory_CharBuffer : public Category_CharBuffer {
 };
@@ -37,7 +37,7 @@ struct ExtCategory_CharBuffer : public Category_CharBuffer {
 struct ExtType_CharBuffer : public Type_CharBuffer {
   inline ExtType_CharBuffer(Category_CharBuffer& p, Params<0>::Type params) : Type_CharBuffer(p, params) {}
 
-  ReturnTuple Call_new(const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_new(const ParamTuple& params, const ValueTuple& args) const final {
     TRACE_FUNCTION("CharBuffer.new")
     const PrimInt Var_arg1 = (args.At(0)).AsInt();
     if (Var_arg1 < 0) {
@@ -48,7 +48,8 @@ struct ExtType_CharBuffer : public Type_CharBuffer {
 };
 
 struct ExtValue_CharBuffer : public Value_CharBuffer {
-  inline ExtValue_CharBuffer(S<Type_CharBuffer> p, PrimCharBuffer value) : Value_CharBuffer(p), value_(std::move(value)) {}
+  inline ExtValue_CharBuffer(S<const Type_CharBuffer> p, PrimCharBuffer value)
+    : Value_CharBuffer(std::move(p)), value_(std::move(value)) {}
 
   ReturnTuple Call_readAt(const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("CharBuffer.readAt")
@@ -96,12 +97,14 @@ Category_CharBuffer& CreateCategory_CharBuffer() {
   static auto& category = *new ExtCategory_CharBuffer();
   return category;
 }
-S<Type_CharBuffer> CreateType_CharBuffer(Params<0>::Type params) {
+
+S<const Type_CharBuffer> CreateType_CharBuffer(Params<0>::Type params) {
   static const auto cached = S_get(new ExtType_CharBuffer(CreateCategory_CharBuffer(), Params<0>::Type()));
   return cached;
 }
-BoxedValue CreateValue_CharBuffer(S<Type_CharBuffer> parent, PrimCharBuffer value) {
-  return BoxedValue::New<ExtValue_CharBuffer>(parent, std::move(value));
+
+BoxedValue CreateValue_CharBuffer(S<const Type_CharBuffer> parent, PrimCharBuffer value) {
+  return BoxedValue::New<ExtValue_CharBuffer>(std::move(parent), std::move(value));
 }
 
 #ifdef ZEOLITE_PUBLIC_NAMESPACE

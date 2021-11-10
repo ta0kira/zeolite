@@ -32,7 +32,7 @@ limitations under the License.
 namespace ZEOLITE_PUBLIC_NAMESPACE {
 #endif  // ZEOLITE_PUBLIC_NAMESPACE
 
-BoxedValue CreateValue_ThreadCondition(S<Type_ThreadCondition> parent);
+BoxedValue CreateValue_ThreadCondition(S<const Type_ThreadCondition> parent);
 
 struct ExtCategory_ThreadCondition : public Category_ThreadCondition {
 };
@@ -40,14 +40,15 @@ struct ExtCategory_ThreadCondition : public Category_ThreadCondition {
 struct ExtType_ThreadCondition : public Type_ThreadCondition {
   inline ExtType_ThreadCondition(Category_ThreadCondition& p, Params<0>::Type params) : Type_ThreadCondition(p, params) {}
 
-  ReturnTuple Call_new(const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_new(const ParamTuple& params, const ValueTuple& args) const final {
     TRACE_FUNCTION("ThreadCondition.new")
     return ReturnTuple(CreateValue_ThreadCondition(PARAM_SELF));
   }
 };
 
 struct ExtValue_ThreadCondition : public Value_ThreadCondition {
-  inline ExtValue_ThreadCondition(S<Type_ThreadCondition> p) : Value_ThreadCondition(p) {
+  inline ExtValue_ThreadCondition(S<const Type_ThreadCondition> p)
+    : Value_ThreadCondition(std::move(p)) {
     pthread_mutexattr_t mutex_attr;
     pthread_mutexattr_init(&mutex_attr);
     // NOTE: Error checking is required to catch attempted waits without first
@@ -151,13 +152,13 @@ Category_ThreadCondition& CreateCategory_ThreadCondition() {
   return category;
 }
 
-S<Type_ThreadCondition> CreateType_ThreadCondition(Params<0>::Type params) {
+S<const Type_ThreadCondition> CreateType_ThreadCondition(Params<0>::Type params) {
   static const auto cached = S_get(new ExtType_ThreadCondition(CreateCategory_ThreadCondition(), Params<0>::Type()));
   return cached;
 }
 
-BoxedValue CreateValue_ThreadCondition(S<Type_ThreadCondition> parent) {
-  return BoxedValue::New<ExtValue_ThreadCondition>(parent);
+BoxedValue CreateValue_ThreadCondition(S<const Type_ThreadCondition> parent) {
+  return BoxedValue::New<ExtValue_ThreadCondition>(std::move(parent));
 }
 
 #ifdef ZEOLITE_PUBLIC_NAMESPACE

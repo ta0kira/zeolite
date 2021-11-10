@@ -25,7 +25,7 @@ limitations under the License.
 namespace ZEOLITE_PUBLIC_NAMESPACE {
 #endif  // ZEOLITE_PUBLIC_NAMESPACE
 
-BoxedValue CreateValue_RawFileReader(S<Type_RawFileReader> parent, const ValueTuple& args);
+BoxedValue CreateValue_RawFileReader(S<const Type_RawFileReader> parent, const ValueTuple& args);
 
 struct ExtCategory_RawFileReader : public Category_RawFileReader {
 };
@@ -33,15 +33,15 @@ struct ExtCategory_RawFileReader : public Category_RawFileReader {
 struct ExtType_RawFileReader : public Type_RawFileReader {
   inline ExtType_RawFileReader(Category_RawFileReader& p, Params<0>::Type params) : Type_RawFileReader(p, params) {}
 
-  ReturnTuple Call_open(const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_open(const ParamTuple& params, const ValueTuple& args) const final {
     TRACE_FUNCTION("RawFileReader.open")
     return ReturnTuple(CreateValue_RawFileReader(PARAM_SELF, args));
   }
 };
 
 struct ExtValue_RawFileReader : public Value_RawFileReader {
-  inline ExtValue_RawFileReader(S<Type_RawFileReader> p, const ValueTuple& args)
-    : Value_RawFileReader(p),
+  inline ExtValue_RawFileReader(S<const Type_RawFileReader> p, const ValueTuple& args)
+    : Value_RawFileReader(std::move(p)),
       filename(args.At(0).AsString()),
       file(new std::ifstream(filename, std::ios::in | std::ios::binary)) {}
 
@@ -115,13 +115,13 @@ Category_RawFileReader& CreateCategory_RawFileReader() {
   return category;
 }
 
-S<Type_RawFileReader> CreateType_RawFileReader(Params<0>::Type params) {
+S<const Type_RawFileReader> CreateType_RawFileReader(Params<0>::Type params) {
   static const auto cached = S_get(new ExtType_RawFileReader(CreateCategory_RawFileReader(), Params<0>::Type()));
   return cached;
 }
 
-BoxedValue CreateValue_RawFileReader(S<Type_RawFileReader> parent, const ValueTuple& args) {
-  return BoxedValue::New<ExtValue_RawFileReader>(parent, args);
+BoxedValue CreateValue_RawFileReader(S<const Type_RawFileReader> parent, const ValueTuple& args) {
+  return BoxedValue::New<ExtValue_RawFileReader>(std::move(parent), args);
 }
 
 #ifdef ZEOLITE_PUBLIC_NAMESPACE

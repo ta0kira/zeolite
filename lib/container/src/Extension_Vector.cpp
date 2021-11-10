@@ -38,36 +38,36 @@ namespace ZEOLITE_PUBLIC_NAMESPACE {
 
 using VectorType = std::vector<BoxedValue>;
 
-BoxedValue CreateValue_Vector(S<Type_Vector> parent, VectorType values);
+BoxedValue CreateValue_Vector(S<const Type_Vector> parent, VectorType values);
 
 struct ExtCategory_Vector : public Category_Vector {
   ReturnTuple Call_copyFrom(const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("Vector:copyFrom")
-    const S<TypeInstance> Param_y = params.At(0);
+    const S<const TypeInstance> Param_y = params.At(0);
     const BoxedValue& Var_arg1 = (args.At(0));
     VectorType values;
     const PrimInt size = TypeValue::Call(Var_arg1, Function_Container_size, ParamTuple(), ArgTuple()).Only().AsInt();
     for (int i = 0; i < size; ++i) {
       values.push_back(TypeValue::Call(Var_arg1, Function_ReadAt_readAt, ParamTuple(), ArgTuple(Box_Int(i))).Only());
     }
-    return ReturnTuple(CreateValue_Vector(CreateType_Vector(Params<1>::Type(Param_y)), values));
+    return ReturnTuple(CreateValue_Vector(CreateType_Vector(Params<1>::Type(Param_y)), std::move(values)));
   }
 
   ReturnTuple Call_create(const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("Vector:create")
-    const S<TypeInstance> Param_y = params.At(0);
+    const S<const TypeInstance> Param_y = params.At(0);
     return ReturnTuple(CreateValue_Vector(CreateType_Vector(Params<1>::Type(Param_y)), VectorType()));
   }
 
   ReturnTuple Call_createSize(const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("Vector:createSize")
-    const S<TypeInstance> Param_y = params.At(0);
+    const S<const TypeInstance> Param_y = params.At(0);
     const PrimInt Var_arg1 = (args.At(0)).AsInt();
     VectorType values;
     for (int i = 0; i < Var_arg1; ++i) {
       values.push_back(TypeInstance::Call(Param_y, Function_Default_default, ParamTuple(), ArgTuple()).Only());
     }
-    return ReturnTuple(CreateValue_Vector(CreateType_Vector(Params<1>::Type(Param_y)), values));
+    return ReturnTuple(CreateValue_Vector(CreateType_Vector(Params<1>::Type(Param_y)), std::move(values)));
   }
 };
 
@@ -111,8 +111,8 @@ class VectorOrder : public TypeValue {
 };
 
 struct ExtValue_Vector : public Value_Vector {
-  inline ExtValue_Vector(S<Type_Vector> p, VectorType v)
-    : Value_Vector(p), values(std::move(v)) {}
+  inline ExtValue_Vector(S<const Type_Vector> p, VectorType v)
+    : Value_Vector(std::move(p)), values(std::move(v)) {}
 
   ReturnTuple Call_append(const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("Vector.append")
@@ -186,15 +186,15 @@ Category_Vector& CreateCategory_Vector() {
   return category;
 }
 
-S<Type_Vector> CreateType_Vector(Params<1>::Type params) {
+S<const Type_Vector> CreateType_Vector(Params<1>::Type params) {
   static auto& cache = *new InstanceCache<1, Type_Vector>([](Params<1>::Type params) {
       return S_get(new ExtType_Vector(CreateCategory_Vector(), params));
     });
   return cache.GetOrCreate(params);
 }
 
-BoxedValue CreateValue_Vector(S<Type_Vector> parent, VectorType values) {
-  return BoxedValue::New<ExtValue_Vector>(parent, values);
+BoxedValue CreateValue_Vector(S<const Type_Vector> parent, VectorType values) {
+  return BoxedValue::New<ExtValue_Vector>(std::move(parent), std::move(values));
 }
 
 #ifdef ZEOLITE_PUBLIC_NAMESPACE

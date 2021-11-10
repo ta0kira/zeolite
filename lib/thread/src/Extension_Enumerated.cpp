@@ -102,7 +102,7 @@ namespace ZEOLITE_PRIVATE_NAMESPACE {
 #endif  // ZEOLITE_PRIVATE_NAMESPACE
 
 BoxedValue CreateValue_EnumeratedWait(
-  S<Type_EnumeratedWait> parent, S<Barrier> b, int i);
+  S<const Type_EnumeratedWait> parent, S<Barrier> b, int i);
 
 struct ExtCategory_EnumeratedWait : public Category_EnumeratedWait {
 };
@@ -112,8 +112,8 @@ struct ExtType_EnumeratedWait : public Type_EnumeratedWait {
 };
 
 struct ExtValue_EnumeratedWait : public Value_EnumeratedWait {
-  inline ExtValue_EnumeratedWait(S<Type_EnumeratedWait> p, S<Barrier> b, int i)
-    : Value_EnumeratedWait(p), barrier(b), index(i) {}
+  inline ExtValue_EnumeratedWait(S<const Type_EnumeratedWait> p, S<Barrier> b, int i)
+    : Value_EnumeratedWait(std::move(p)), barrier(b), index(i) {}
 
   ReturnTuple Call_wait(const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("EnumeratedWait.wait")
@@ -133,13 +133,15 @@ Category_EnumeratedWait& CreateCategory_EnumeratedWait() {
   static auto& category = *new ExtCategory_EnumeratedWait();
   return category;
 }
-S<Type_EnumeratedWait> CreateType_EnumeratedWait(Params<0>::Type params) {
+
+S<const Type_EnumeratedWait> CreateType_EnumeratedWait(Params<0>::Type params) {
   static const auto cached = S_get(new ExtType_EnumeratedWait(CreateCategory_EnumeratedWait(), Params<0>::Type()));
   return cached;
 }
+
 BoxedValue CreateValue_EnumeratedWait(
-  S<Type_EnumeratedWait> parent, S<Barrier> b, int i) {
-  return BoxedValue::New<ExtValue_EnumeratedWait>(parent, b, i);
+  S<const Type_EnumeratedWait> parent, S<Barrier> b, int i) {
+  return BoxedValue::New<ExtValue_EnumeratedWait>(std::move(parent), std::move(b), i);
 }
 
 #ifdef ZEOLITE_PRIVATE_NAMESPACE
@@ -153,7 +155,7 @@ namespace ZEOLITE_PUBLIC_NAMESPACE {
 #endif  // ZEOLITE_PUBLIC_NAMESPACE
 
 BoxedValue CreateValue_EnumeratedBarrier(
-  S<Type_EnumeratedBarrier> parent, std::vector<BoxedValue> w);
+  S<const Type_EnumeratedBarrier> parent, std::vector<BoxedValue> w);
 
 struct ExtCategory_EnumeratedBarrier : public Category_EnumeratedBarrier {
 };
@@ -161,7 +163,7 @@ struct ExtCategory_EnumeratedBarrier : public Category_EnumeratedBarrier {
 struct ExtType_EnumeratedBarrier : public Type_EnumeratedBarrier {
   inline ExtType_EnumeratedBarrier(Category_EnumeratedBarrier& p, Params<0>::Type params) : Type_EnumeratedBarrier(p, params) {}
 
-  ReturnTuple Call_new(const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_new(const ParamTuple& params, const ValueTuple& args) const final {
     TRACE_FUNCTION("EnumeratedBarrier.new")
     const PrimInt Var_arg1 = (args.At(0)).AsInt();
     if (Var_arg1 < 0) {
@@ -179,8 +181,8 @@ struct ExtType_EnumeratedBarrier : public Type_EnumeratedBarrier {
 };
 
 struct ExtValue_EnumeratedBarrier : public Value_EnumeratedBarrier {
-  inline ExtValue_EnumeratedBarrier(S<Type_EnumeratedBarrier> p, std::vector<BoxedValue> w)
-    : Value_EnumeratedBarrier(p), waits(std::move(w)) {}
+  inline ExtValue_EnumeratedBarrier(S<const Type_EnumeratedBarrier> p, std::vector<BoxedValue> w)
+    : Value_EnumeratedBarrier(std::move(p)), waits(std::move(w)) {}
 
   ReturnTuple Call_readAt(const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("EnumeratedBarrier.readAt")
@@ -205,14 +207,14 @@ Category_EnumeratedBarrier& CreateCategory_EnumeratedBarrier() {
   return category;
 }
 
-S<Type_EnumeratedBarrier> CreateType_EnumeratedBarrier(Params<0>::Type params) {
+S<const Type_EnumeratedBarrier> CreateType_EnumeratedBarrier(Params<0>::Type params) {
   static const auto cached = S_get(new ExtType_EnumeratedBarrier(CreateCategory_EnumeratedBarrier(), Params<0>::Type()));
   return cached;
 }
 
 BoxedValue CreateValue_EnumeratedBarrier(
-  S<Type_EnumeratedBarrier> parent, std::vector<BoxedValue> w) {
-  return BoxedValue::New<ExtValue_EnumeratedBarrier>(parent, std::move(w));
+  S<const Type_EnumeratedBarrier> parent, std::vector<BoxedValue> w) {
+  return BoxedValue::New<ExtValue_EnumeratedBarrier>(std::move(parent), std::move(w));
 }
 
 #ifdef ZEOLITE_PUBLIC_NAMESPACE

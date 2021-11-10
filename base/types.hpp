@@ -129,7 +129,7 @@ using zeolite_internal::WeakValue;
 
 template<int N, class...Ts>
 struct Params {
-  using Type = typename Params<N-1, const S<TypeInstance>&, Ts...>::Type;
+  using Type = typename Params<N-1, const S<const TypeInstance>&, Ts...>::Type;
 };
 
 template<class...Ts>
@@ -216,8 +216,8 @@ class PoolManager<const BoxedValue*> {
 };
 
 template<>
-class PoolManager<S<TypeInstance>> {
-  using PoolEntry = PoolStorage<S<TypeInstance>>;
+class PoolManager<S<const TypeInstance>> {
+  using PoolEntry = PoolStorage<S<const TypeInstance>>;
   using Managed = PoolEntry::Managed;
 
   template<class> friend class PoolArray;
@@ -298,7 +298,7 @@ class ParamTuple {
   ParamTuple(ParamTuple&& other) = default;
 
   int Size() const;
-  const S<TypeInstance>& At(int pos) const;
+  const S<const TypeInstance>& At(int pos) const;
 
  private:
   ParamTuple(const ParamTuple&) = delete;
@@ -306,7 +306,7 @@ class ParamTuple {
   ParamTuple& operator = (ParamTuple&&) = delete;
   void* operator new(std::size_t size) = delete;
 
-  zeolite_internal::PoolArray<S<TypeInstance>> data_;
+  zeolite_internal::PoolArray<S<const TypeInstance>> data_;
 };
 
 #endif  // TYPES_HPP_

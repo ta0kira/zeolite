@@ -95,7 +95,7 @@ L<const TypeInstance*> ParamsToKey(const L<S<const TypeInstance>>& params) {
 }  // namespace
 
 
-S<TypeInstance> Merge_Intersect(L<S<const TypeInstance>> params) {
+S<const TypeInstance> Merge_Intersect(L<S<const TypeInstance>> params) {
   static auto& cache = *new std::map<L<const TypeInstance*>,S<Type_Intersect>>();
   auto& cached = cache[ParamsToKey(params)];
   S<Type_Intersect> type = cached;
@@ -103,7 +103,7 @@ S<TypeInstance> Merge_Intersect(L<S<const TypeInstance>> params) {
   return type;
 }
 
-S<TypeInstance> Merge_Union(L<S<const TypeInstance>> params) {
+S<const TypeInstance> Merge_Union(L<S<const TypeInstance>> params) {
   static auto& cache = *new std::map<L<const TypeInstance*>,S<Type_Union>>();
   auto& cached = cache[ParamsToKey(params)];
   S<Type_Union> type = cached;
@@ -111,12 +111,12 @@ S<TypeInstance> Merge_Union(L<S<const TypeInstance>> params) {
   return type;
 }
 
-const S<TypeInstance>& GetMerged_Any() {
+const S<const TypeInstance>& GetMerged_Any() {
   static const auto instance = Merge_Intersect(L_get<S<const TypeInstance>>());
   return instance;
 }
 
-const S<TypeInstance>& GetMerged_All() {
+const S<const TypeInstance>& GetMerged_All() {
   static const auto instance = Merge_Union(L_get<S<const TypeInstance>>());
   return instance;
 }
@@ -131,7 +131,7 @@ ReturnTuple TypeCategory::Dispatch(const CategoryFunction& label,
 }
 
 ReturnTuple TypeInstance::Dispatch(const TypeFunction& label,
-                                   const ParamTuple& params, const ValueTuple& args) {
+                                   const ParamTuple& params, const ValueTuple& args) const {
   FAIL() << CategoryName() << " does not implement " << label;
   __builtin_unreachable();
 }
@@ -142,6 +142,7 @@ ReturnTuple TypeValue::Dispatch(const ValueFunction& label,
   __builtin_unreachable();
 }
 
+// static
 bool TypeInstance::CanConvert(const S<const TypeInstance>& x,
                               const S<const TypeInstance>& y) {
   // See pairMergeTree for the ordering here.

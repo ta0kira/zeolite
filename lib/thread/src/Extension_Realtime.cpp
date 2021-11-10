@@ -44,7 +44,7 @@ struct ExtCategory_Realtime : public Category_Realtime {
 struct ExtType_Realtime : public Type_Realtime {
   inline ExtType_Realtime(Category_Realtime& p, Params<0>::Type params) : Type_Realtime(p, params) {}
 
-  ReturnTuple Call_sleepSeconds(const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_sleepSeconds(const ParamTuple& params, const ValueTuple& args) const final {
     TRACE_FUNCTION("Realtime.sleepSeconds")
     const PrimFloat Var_arg1 = (args.At(0)).AsFloat();
     if (Var_arg1 > 0) {
@@ -53,7 +53,7 @@ struct ExtType_Realtime : public Type_Realtime {
     return ReturnTuple();
   }
 
-  ReturnTuple Call_sleepSecondsPrecise(const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_sleepSecondsPrecise(const ParamTuple& params, const ValueTuple& args) const final {
     TRACE_FUNCTION("Realtime.sleepSecondsPrecise")
     const PrimFloat Var_arg1 = (args.At(0)).AsFloat();
 
@@ -78,7 +78,7 @@ struct ExtType_Realtime : public Type_Realtime {
     return ReturnTuple();
   }
 
-  ReturnTuple Call_monoSeconds(const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_monoSeconds(const ParamTuple& params, const ValueTuple& args) const final {
     TRACE_FUNCTION("Realtime.monoSeconds")
     const auto time = std::chrono::steady_clock::now().time_since_epoch();
     const PrimFloat seconds =
@@ -93,7 +93,7 @@ Category_Realtime& CreateCategory_Realtime() {
   return category;
 }
 
-S<Type_Realtime> CreateType_Realtime(Params<0>::Type params) {
+S<const Type_Realtime> CreateType_Realtime(Params<0>::Type params) {
   static const auto cached = S_get(new ExtType_Realtime(CreateCategory_Realtime(), Params<0>::Type()));
   return cached;
 }

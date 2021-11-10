@@ -81,7 +81,7 @@ int ParamTuple::Size() const {
   return data_.Size();
 }
 
-const S<TypeInstance>& ParamTuple::At(int pos) const {
+const S<const TypeInstance>& ParamTuple::At(int pos) const {
   if (pos < 0 || pos >= data_.Size()) {
     FAIL() << "Bad ParamTuple index";
   }
@@ -197,12 +197,12 @@ void PoolManager<const BoxedValue*>::Return(PoolEntry* storage, int orig_size) {
 }
 
 
-unsigned int PoolManager<S<TypeInstance>>::pool4_size_ = 0;
-typename PoolManager<S<TypeInstance>>::PoolEntry* PoolManager<S<TypeInstance>>::pool4_{nullptr};
-std::atomic_flag PoolManager<S<TypeInstance>>::pool4_flag_ = ATOMIC_FLAG_INIT;
+unsigned int PoolManager<S<const TypeInstance>>::pool4_size_ = 0;
+typename PoolManager<S<const TypeInstance>>::PoolEntry* PoolManager<S<const TypeInstance>>::pool4_{nullptr};
+std::atomic_flag PoolManager<S<const TypeInstance>>::pool4_flag_ = ATOMIC_FLAG_INIT;
 
 // static
-typename PoolManager<S<TypeInstance>>::PoolEntry* PoolManager<S<TypeInstance>>::Take(int orig_size) {
+typename PoolManager<S<const TypeInstance>>::PoolEntry* PoolManager<S<const TypeInstance>>::Take(int orig_size) {
   int size = orig_size;
   if (size == 0) return nullptr;
   if (size < 4) {
@@ -218,7 +218,7 @@ typename PoolManager<S<TypeInstance>>::PoolEntry* PoolManager<S<TypeInstance>>::
 }
 
 // static
-void PoolManager<S<TypeInstance>>::Return(PoolEntry* storage, int orig_size) {
+void PoolManager<S<const TypeInstance>>::Return(PoolEntry* storage, int orig_size) {
   if (!storage) return;
   for (int i = 0; i < orig_size; ++i) {
     storage->data()[i].~Managed();

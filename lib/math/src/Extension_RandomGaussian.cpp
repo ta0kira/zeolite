@@ -29,7 +29,7 @@ limitations under the License.
 namespace ZEOLITE_PUBLIC_NAMESPACE {
 #endif  // ZEOLITE_PUBLIC_NAMESPACE
 
-BoxedValue CreateValue_RandomGaussian(S<Type_RandomGaussian> parent, const ValueTuple& args);
+BoxedValue CreateValue_RandomGaussian(S<const Type_RandomGaussian> parent, const ValueTuple& args);
 
 struct ExtCategory_RandomGaussian : public Category_RandomGaussian {
 };
@@ -37,7 +37,7 @@ struct ExtCategory_RandomGaussian : public Category_RandomGaussian {
 struct ExtType_RandomGaussian : public Type_RandomGaussian {
   inline ExtType_RandomGaussian(Category_RandomGaussian& p, Params<0>::Type params) : Type_RandomGaussian(p, params) {}
 
-  ReturnTuple Call_new(const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_new(const ParamTuple& params, const ValueTuple& args) const final {
     TRACE_FUNCTION("RandomGaussian.new")
     const PrimFloat Var_arg1 = (args.At(0)).AsFloat();
     const PrimFloat Var_arg2 = (args.At(1)).AsFloat();
@@ -49,8 +49,8 @@ struct ExtType_RandomGaussian : public Type_RandomGaussian {
 };
 
 struct ExtValue_RandomGaussian : public Value_RandomGaussian {
-  inline ExtValue_RandomGaussian(S<Type_RandomGaussian> p, const ValueTuple& args)
-    : Value_RandomGaussian(p),
+  inline ExtValue_RandomGaussian(S<const Type_RandomGaussian> p, const ValueTuple& args)
+    : Value_RandomGaussian(std::move(p)),
       generator_((int) (long) this),
       distribution_(args.At(0).AsFloat(), args.At(1).AsFloat()) {}
 
@@ -75,13 +75,13 @@ Category_RandomGaussian& CreateCategory_RandomGaussian() {
   return category;
 }
 
-S<Type_RandomGaussian> CreateType_RandomGaussian(Params<0>::Type params) {
+S<const Type_RandomGaussian> CreateType_RandomGaussian(Params<0>::Type params) {
   static const auto cached = S_get(new ExtType_RandomGaussian(CreateCategory_RandomGaussian(), Params<0>::Type()));
   return cached;
 }
 
-BoxedValue CreateValue_RandomGaussian(S<Type_RandomGaussian> parent, const ValueTuple& args) {
-  return BoxedValue::New<ExtValue_RandomGaussian>(parent, args);
+BoxedValue CreateValue_RandomGaussian(S<const Type_RandomGaussian> parent, const ValueTuple& args) {
+  return BoxedValue::New<ExtValue_RandomGaussian>(std::move(parent), args);
 }
 
 #ifdef ZEOLITE_PUBLIC_NAMESPACE

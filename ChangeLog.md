@@ -62,6 +62,19 @@
   `Param_self` argument from function signatures. This breaks all existing
   extensions that have `@type` functions.
 
+* **[breaking]** Makes all references to `TypeInstance` `const` in C++, since
+  Zeolite prohibits `@type` members in `concrete` categories.
+
+  All extensions with `@type` functions need to be updated:
+
+  - Make all `Call_foo` overrides `const` for `@type` functions.
+  - Update `@value` constructors to take `S<const Type_Foo>` instead of
+    `S<Type_Foo>`.
+  - Update local params (e.g., `Param_foo`) to have type
+    `S<const TypeInstance>`.
+  - Update `CreateType_Foo` to return `S<const Type_Foo>` instead of
+    `S<Type_Foo>`.
+
 * **[breaking]** Removes `AnonymousOrder` C++ class, previously used for
   creating iterators for C++ extensions.
 

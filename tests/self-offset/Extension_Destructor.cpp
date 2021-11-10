@@ -24,21 +24,22 @@ limitations under the License.
 namespace ZEOLITE_PUBLIC_NAMESPACE {
 #endif  // ZEOLITE_PUBLIC_NAMESPACE
 
-BoxedValue CreateValue_Destructor(S<Type_Destructor> parent, const ValueTuple& args);
+BoxedValue CreateValue_Destructor(S<const Type_Destructor> parent, const ValueTuple& args);
 
 struct ExtCategory_Destructor : public Category_Destructor {
 };
 
 struct ExtType_Destructor : public Type_Destructor {
   inline ExtType_Destructor(Category_Destructor& p, Params<0>::Type params) : Type_Destructor(p, params) {}
-  ReturnTuple Call_new(const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_new(const ParamTuple& params, const ValueTuple& args) const final {
     TRACE_FUNCTION("Destructor.new")
     return ReturnTuple(CreateValue_Destructor(PARAM_SELF, ArgTuple()));
   }
 };
 
 struct ExtValue_Destructor : public Value_Destructor {
-  inline ExtValue_Destructor(S<Type_Destructor> p, const ValueTuple& args) : Value_Destructor(p) {}
+  inline ExtValue_Destructor(S<const Type_Destructor> p, const ValueTuple& args)
+    : Value_Destructor(std::move(p)) {}
 
   ~ExtValue_Destructor() {
     (void) VAR_SELF;
@@ -50,13 +51,13 @@ Category_Destructor& CreateCategory_Destructor() {
   return category;
 }
 
-S<Type_Destructor> CreateType_Destructor(Params<0>::Type params) {
+S<const Type_Destructor> CreateType_Destructor(Params<0>::Type params) {
   static const auto cached = S_get(new ExtType_Destructor(CreateCategory_Destructor(), Params<0>::Type()));
   return cached;
 }
 
-BoxedValue CreateValue_Destructor(S<Type_Destructor> parent, const ValueTuple& args) {
-  return BoxedValue::New<ExtValue_Destructor>(parent, args);
+BoxedValue CreateValue_Destructor(S<const Type_Destructor> parent, const ValueTuple& args) {
+  return BoxedValue::New<ExtValue_Destructor>(std::move(parent), args);
 }
 
 #ifdef ZEOLITE_PUBLIC_NAMESPACE

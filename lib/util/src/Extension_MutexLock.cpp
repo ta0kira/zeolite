@@ -28,7 +28,7 @@ limitations under the License.
 namespace ZEOLITE_PUBLIC_NAMESPACE {
 #endif  // ZEOLITE_PUBLIC_NAMESPACE
 
-BoxedValue CreateValue_MutexLock(S<Type_MutexLock> parent, const ValueTuple& args);
+BoxedValue CreateValue_MutexLock(S<const Type_MutexLock> parent, const ValueTuple& args);
 
 struct ExtCategory_MutexLock : public Category_MutexLock {
 };
@@ -36,15 +36,15 @@ struct ExtCategory_MutexLock : public Category_MutexLock {
 struct ExtType_MutexLock : public Type_MutexLock {
   inline ExtType_MutexLock(Category_MutexLock& p, Params<0>::Type params) : Type_MutexLock(p, params) {}
 
-  ReturnTuple Call_lock(const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_lock(const ParamTuple& params, const ValueTuple& args) const final {
     TRACE_FUNCTION("MutexLock.lock")
     return ReturnTuple(CreateValue_MutexLock(CreateType_MutexLock(Params<0>::Type()), args));
   }
 };
 
 struct ExtValue_MutexLock : public Value_MutexLock {
-  inline ExtValue_MutexLock(S<Type_MutexLock> p, const ValueTuple& args)
-    : Value_MutexLock(p), mutex(args.Only()) {
+  inline ExtValue_MutexLock(S<const Type_MutexLock> p, const ValueTuple& args)
+    : Value_MutexLock(std::move(p)), mutex(args.Only()) {
     TypeValue::Call(BoxedValue::Require(mutex), Function_Mutex_lock, ParamTuple(), ArgTuple());
   }
 
@@ -79,13 +79,13 @@ Category_MutexLock& CreateCategory_MutexLock() {
   return category;
 }
 
-S<Type_MutexLock> CreateType_MutexLock(Params<0>::Type params) {
+S<const Type_MutexLock> CreateType_MutexLock(Params<0>::Type params) {
   static const auto cached = S_get(new ExtType_MutexLock(CreateCategory_MutexLock(), Params<0>::Type()));
   return cached;
 }
 
-BoxedValue CreateValue_MutexLock(S<Type_MutexLock> parent, const ValueTuple& args) {
-  return BoxedValue::New<ExtValue_MutexLock>(parent, args);
+BoxedValue CreateValue_MutexLock(S<const Type_MutexLock> parent, const ValueTuple& args) {
+  return BoxedValue::New<ExtValue_MutexLock>(std::move(parent), args);
 }
 
 #ifdef ZEOLITE_PUBLIC_NAMESPACE

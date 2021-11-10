@@ -29,7 +29,7 @@ limitations under the License.
 namespace ZEOLITE_PUBLIC_NAMESPACE {
 #endif  // ZEOLITE_PUBLIC_NAMESPACE
 
-BoxedValue CreateValue_RandomExponential(S<Type_RandomExponential> parent, const ValueTuple& args);
+BoxedValue CreateValue_RandomExponential(S<const Type_RandomExponential> parent, const ValueTuple& args);
 
 struct ExtCategory_RandomExponential : public Category_RandomExponential {
 };
@@ -37,7 +37,7 @@ struct ExtCategory_RandomExponential : public Category_RandomExponential {
 struct ExtType_RandomExponential : public Type_RandomExponential {
   inline ExtType_RandomExponential(Category_RandomExponential& p, Params<0>::Type params) : Type_RandomExponential(p, params) {}
 
-  ReturnTuple Call_new(const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_new(const ParamTuple& params, const ValueTuple& args) const final {
     TRACE_FUNCTION("RandomExponential.new")
     const PrimFloat Var_arg1 = (args.At(0)).AsFloat();
     if (Var_arg1 <= 0) {
@@ -48,8 +48,8 @@ struct ExtType_RandomExponential : public Type_RandomExponential {
 };
 
 struct ExtValue_RandomExponential : public Value_RandomExponential {
-  inline ExtValue_RandomExponential(S<Type_RandomExponential> p, const ValueTuple& args)
-    : Value_RandomExponential(p),
+  inline ExtValue_RandomExponential(S<const Type_RandomExponential> p, const ValueTuple& args)
+    : Value_RandomExponential(std::move(p)),
       generator_((int) (long) this),
       distribution_(args.At(0).AsFloat()) {}
 
@@ -74,13 +74,13 @@ Category_RandomExponential& CreateCategory_RandomExponential() {
   return category;
 }
 
-S<Type_RandomExponential> CreateType_RandomExponential(Params<0>::Type params) {
+S<const Type_RandomExponential> CreateType_RandomExponential(Params<0>::Type params) {
   static const auto cached = S_get(new ExtType_RandomExponential(CreateCategory_RandomExponential(), Params<0>::Type()));
   return cached;
 }
 
-BoxedValue CreateValue_RandomExponential(S<Type_RandomExponential> parent, const ValueTuple& args) {
-  return BoxedValue::New<ExtValue_RandomExponential>(parent, args);
+BoxedValue CreateValue_RandomExponential(S<const Type_RandomExponential> parent, const ValueTuple& args) {
+  return BoxedValue::New<ExtValue_RandomExponential>(std::move(parent), args);
 }
 
 #ifdef ZEOLITE_PUBLIC_NAMESPACE

@@ -25,7 +25,7 @@ limitations under the License.
 namespace ZEOLITE_PUBLIC_NAMESPACE {
 #endif  // ZEOLITE_PUBLIC_NAMESPACE
 
-BoxedValue CreateValue_RawFileWriter(S<Type_RawFileWriter> parent, const ValueTuple& args);
+BoxedValue CreateValue_RawFileWriter(S<const Type_RawFileWriter> parent, const ValueTuple& args);
 
 struct ExtCategory_RawFileWriter : public Category_RawFileWriter {
 };
@@ -33,15 +33,15 @@ struct ExtCategory_RawFileWriter : public Category_RawFileWriter {
 struct ExtType_RawFileWriter : public Type_RawFileWriter {
   inline ExtType_RawFileWriter(Category_RawFileWriter& p, Params<0>::Type params) : Type_RawFileWriter(p, params) {}
 
-  ReturnTuple Call_open(const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_open(const ParamTuple& params, const ValueTuple& args) const final {
     TRACE_FUNCTION("RawFileWriter.open")
     return ReturnTuple(CreateValue_RawFileWriter(PARAM_SELF, args));
   }
 };
 
 struct ExtValue_RawFileWriter : public Value_RawFileWriter {
-  inline ExtValue_RawFileWriter(S<Type_RawFileWriter> p, const ValueTuple& args)
-    : Value_RawFileWriter(p),
+  inline ExtValue_RawFileWriter(S<const Type_RawFileWriter> p, const ValueTuple& args)
+    : Value_RawFileWriter(std::move(p)),
       filename(args.At(0).AsString()),
       file(new std::ofstream(filename, std::ios::out | std::ios::binary | std::ios::trunc | std::ios::ate)) {}
 
@@ -96,12 +96,14 @@ Category_RawFileWriter& CreateCategory_RawFileWriter() {
   static auto& category = *new ExtCategory_RawFileWriter();
   return category;
 }
-S<Type_RawFileWriter> CreateType_RawFileWriter(Params<0>::Type params) {
+
+S<const Type_RawFileWriter> CreateType_RawFileWriter(Params<0>::Type params) {
   static const auto cached = S_get(new ExtType_RawFileWriter(CreateCategory_RawFileWriter(), Params<0>::Type()));
   return cached;
 }
-BoxedValue CreateValue_RawFileWriter(S<Type_RawFileWriter> parent, const ValueTuple& args) {
-  return BoxedValue::New<ExtValue_RawFileWriter>(parent, args);
+
+BoxedValue CreateValue_RawFileWriter(S<const Type_RawFileWriter> parent, const ValueTuple& args) {
+  return BoxedValue::New<ExtValue_RawFileWriter>(std::move(parent), args);
 }
 
 #ifdef ZEOLITE_PUBLIC_NAMESPACE

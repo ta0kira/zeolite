@@ -41,17 +41,17 @@ struct ExtCategory_SimpleOutput : public Category_SimpleOutput {
 struct ExtType_SimpleOutput : public Type_SimpleOutput {
   inline ExtType_SimpleOutput(Category_SimpleOutput& p, Params<0>::Type params) : Type_SimpleOutput(p, params) {}
 
-  ReturnTuple Call_error(const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_error(const ParamTuple& params, const ValueTuple& args) const final {
     TRACE_FUNCTION("SimpleOutput.error")
     return ReturnTuple(Var_error);
   }
 
-  ReturnTuple Call_stderr(const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_stderr(const ParamTuple& params, const ValueTuple& args) const final {
     TRACE_FUNCTION("SimpleOutput.stderr")
     return ReturnTuple(Var_stderr);
   }
 
-  ReturnTuple Call_stdout(const ParamTuple& params, const ValueTuple& args) final {
+  ReturnTuple Call_stdout(const ParamTuple& params, const ValueTuple& args) const final {
     TRACE_FUNCTION("SimpleOutput.stdout")
     return ReturnTuple(Var_stdout);
   }
@@ -66,8 +66,8 @@ struct Writer {
 }  // namespace
 
 struct ExtValue_SimpleOutput : public Value_SimpleOutput {
-  inline ExtValue_SimpleOutput(S<Type_SimpleOutput> p, S<Writer> w)
-    : Value_SimpleOutput(p), writer(w) {}
+  inline ExtValue_SimpleOutput(S<const Type_SimpleOutput> p, S<Writer> w)
+    : Value_SimpleOutput(std::move(p)), writer(w) {}
 
   ReturnTuple Call_flush(const ParamTuple& params, const ValueTuple& args) final {
     TRACE_FUNCTION("SimpleOutput.flush")
@@ -129,7 +129,7 @@ Category_SimpleOutput& CreateCategory_SimpleOutput() {
   return category;
 }
 
-S<Type_SimpleOutput> CreateType_SimpleOutput(Params<0>::Type params) {
+S<const Type_SimpleOutput> CreateType_SimpleOutput(Params<0>::Type params) {
   static const auto cached = S_get(new ExtType_SimpleOutput(CreateCategory_SimpleOutput(), Params<0>::Type()));
   return cached;
 }
