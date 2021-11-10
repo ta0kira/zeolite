@@ -90,23 +90,61 @@ unittest unionDedup {
   }
 }
 
+unittest param {
+  Formatted name <- Wrapped:getTypename<String,Value<Int>>()
+  if (name.formatted() != "Type<String,Value<Int>>") {
+    fail(name)
+  }
+}
+
+unittest intersectParam {
+  Formatted name <- Wrapped:getTypenameIntersect<Formatted,Int>()
+  if (name.formatted() != "[Formatted&Int]") {
+    fail(name)
+  }
+}
+
+unittest unionParam {
+  Formatted name <- Wrapped:getTypenameUnion<Formatted,Int>()
+  if (name.formatted() != "[Formatted|Int]") {
+    fail(name)
+  }
+}
+
+unittest intersectDedupParam {
+  Formatted name <- Wrapped:getTypenameIntersect<Int,Int>()
+  if (name.formatted() != "Int") {
+    fail(name)
+  }
+}
+
+unittest unionDedupParam {
+  Formatted name <- Wrapped:getTypenameUnion<Int,Int>()
+  if (name.formatted() != "Int") {
+    fail(name)
+  }
+}
+
 @value interface Value<#x> {}
 
 @value interface Type<#x,#y> {}
+
+concrete Wrapped {
+  @category getTypename<#x,#y> () -> (Formatted)
+  @category getTypenameIntersect<#x,#y> () -> (Formatted)
+  @category getTypenameUnion<#x,#y> () -> (Formatted)
+}
 
 define Wrapped {
   getTypename () {
     return typename<Type<#x,#y>>()
   }
-}
 
-concrete Wrapped {
-  @category getTypename<#x,#y> () -> (Formatted)
-}
+  getTypenameIntersect () {
+    return typename<[#x&#y]>()
+  }
 
-unittest param {
-  Formatted name <- Wrapped:getTypename<String,Value<Int>>()
-  if (name.formatted() != "Type<String,Value<Int>>") {
-    fail(name)
+  getTypenameUnion () {
+    return typename<[#x|#y]>()
   }
 }

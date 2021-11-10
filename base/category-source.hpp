@@ -51,8 +51,8 @@ BoxedValue Box_Char(PrimChar value);
 BoxedValue Box_Int(PrimInt value);
 BoxedValue Box_Float(PrimFloat value);
 
-S<const TypeInstance> Merge_Intersect(L<S<const TypeInstance>> params);
-S<const TypeInstance> Merge_Union(L<S<const TypeInstance>> params);
+S<const TypeInstance> Merge_Intersect(const L<S<const TypeInstance>>& params);
+S<const TypeInstance> Merge_Union(const L<S<const TypeInstance>>& params);
 
 const S<const TypeInstance>& GetMerged_Any();
 const S<const TypeInstance>& GetMerged_All();
@@ -152,7 +152,7 @@ class TypeInstance {
   virtual MergeType InstanceMergeType() const
   { return MergeType::SINGLE; }
 
-  virtual std::vector<S<const TypeInstance>> MergedTypes() const {
+  virtual const L<S<const TypeInstance>>& MergedTypes() const {
     FAIL() << "Category " << CategoryName() << " is not a merged type";
     __builtin_unreachable();
   }

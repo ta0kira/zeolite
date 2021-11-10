@@ -26,7 +26,7 @@ limitations under the License.
 namespace {
 
 struct Type_Intersect : public TypeInstance {
-  Type_Intersect(L<S<const TypeInstance>> params) : params_(params.begin(), params.end()) {}
+  Type_Intersect(L<S<const TypeInstance>> params) : params_(std::move(params)) {}
 
   std::string CategoryName() const final { return "(intersection)"; }
 
@@ -48,14 +48,14 @@ struct Type_Intersect : public TypeInstance {
   MergeType InstanceMergeType() const final
   { return MergeType::INTERSECT; }
 
-  std::vector<S<const TypeInstance>> MergedTypes() const final
+  const L<S<const TypeInstance>>& MergedTypes() const final
   { return params_; }
 
   const L<S<const TypeInstance>> params_;
 };
 
 struct Type_Union : public TypeInstance {
-  Type_Union(L<S<const TypeInstance>> params) : params_(params.begin(), params.end()) {}
+  Type_Union(L<S<const TypeInstance>> params) : params_(std::move(params)) {}
 
   std::string CategoryName() const final { return "(union)"; }
 
@@ -77,7 +77,7 @@ struct Type_Union : public TypeInstance {
   MergeType InstanceMergeType() const final
   { return MergeType::UNION; }
 
-  std::vector<S<const TypeInstance>> MergedTypes() const final
+  const L<S<const TypeInstance>>& MergedTypes() const final
   { return params_; }
 
   const L<S<const TypeInstance>> params_;
@@ -86,29 +86,42 @@ struct Type_Union : public TypeInstance {
 L<const TypeInstance*> ParamsToKey(const L<S<const TypeInstance>>& params) {
   L<const TypeInstance*> key;
   for (const auto& param : params) {
-    key.push_back(param.get());
+    key.insert(param.get());
   }
-  std::sort(key.begin(), key.end());
   return key;
 }
+
+template <class T>
+class MetaCache {
+ public:
+  S<const TypeInstance> GetOrCreate(const L<S<const TypeInstance>>& params) {
+    if (params.size() == 1) {
+      return *params.begin();
+    }
+    auto key = ParamsToKey(params);
+    while (lock_.test_and_set(std::memory_order_acquire));
+    auto& cached = cache_[std::move(key)];
+    if (!cached) { cached = S_get(new T(params)); }
+    lock_.clear(std::memory_order_release);
+    return cached;
+  }
+
+ private:
+  std::atomic_flag lock_ = ATOMIC_FLAG_INIT;
+  std::map<L<const TypeInstance*>, S<T>> cache_;
+};
 
 }  // namespace
 
 
-S<const TypeInstance> Merge_Intersect(L<S<const TypeInstance>> params) {
-  static auto& cache = *new std::map<L<const TypeInstance*>,S<Type_Intersect>>();
-  auto& cached = cache[ParamsToKey(params)];
-  S<Type_Intersect> type = cached;
-  if (!type) { cached = type = S_get(new Type_Intersect(params)); }
-  return type;
+S<const TypeInstance> Merge_Intersect(const L<S<const TypeInstance>>& params) {
+  static auto& cache = *new MetaCache<Type_Intersect>;
+  return cache.GetOrCreate(params);
 }
 
-S<const TypeInstance> Merge_Union(L<S<const TypeInstance>> params) {
-  static auto& cache = *new std::map<L<const TypeInstance*>,S<Type_Union>>();
-  auto& cached = cache[ParamsToKey(params)];
-  S<Type_Union> type = cached;
-  if (!type) { cached = type = S_get(new Type_Union(params)); }
-  return type;
+S<const TypeInstance> Merge_Union(const L<S<const TypeInstance>>& params) {
+  static auto& cache = *new MetaCache<Type_Union>;
+  return cache.GetOrCreate(params);
 }
 
 const S<const TypeInstance>& GetMerged_Any() {

@@ -23,8 +23,8 @@ limitations under the License.
 #include <cstdint>
 #include <functional>
 #include <memory>
+#include <set>
 #include <tuple>
-#include <vector>
 
 #include "logging.hpp"
 #include "pooled.hpp"
@@ -69,7 +69,7 @@ template<class...Ts>
 T<Ts...> T_get(Ts... ts) { return std::make_tuple(ts...); }
 
 template<class T>
-using L = std::vector<T>;
+using L = std::set<T>;
 
 template<class T, class...Ts>
 inline L<T> L_get(Ts... ts) { return L<T>{ts...}; }
