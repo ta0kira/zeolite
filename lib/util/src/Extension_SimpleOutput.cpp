@@ -129,10 +129,12 @@ Category_SimpleOutput& CreateCategory_SimpleOutput() {
   return category;
 }
 
-S<const Type_SimpleOutput> CreateType_SimpleOutput(Params<0>::Type params) {
+S<const Type_SimpleOutput> CreateType_SimpleOutput(const Params<0>::Type& params) {
   static const auto cached = S_get(new ExtType_SimpleOutput(CreateCategory_SimpleOutput(), Params<0>::Type()));
   return cached;
 }
+
+void RemoveType_SimpleOutput(const Params<0>::Type& params) {}
 
 #ifdef ZEOLITE_PUBLIC_NAMESPACE
 }  // namespace ZEOLITE_PUBLIC_NAMESPACE

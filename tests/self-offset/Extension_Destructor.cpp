@@ -51,10 +51,12 @@ Category_Destructor& CreateCategory_Destructor() {
   return category;
 }
 
-S<const Type_Destructor> CreateType_Destructor(Params<0>::Type params) {
+S<const Type_Destructor> CreateType_Destructor(const Params<0>::Type& params) {
   static const auto cached = S_get(new ExtType_Destructor(CreateCategory_Destructor(), Params<0>::Type()));
   return cached;
 }
+
+void RemoveType_Destructor(const Params<0>::Type& params) {}
 
 BoxedValue CreateValue_Destructor(S<const Type_Destructor> parent, const ValueTuple& args) {
   return BoxedValue::New<ExtValue_Destructor>(std::move(parent), args);

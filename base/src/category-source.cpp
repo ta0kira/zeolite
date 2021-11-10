@@ -25,8 +25,13 @@ limitations under the License.
 
 namespace {
 
+void Remove_Intersect(const L<S<const TypeInstance>>& params);
+void Remove_Union(const L<S<const TypeInstance>>& params);
+
 struct Type_Intersect : public TypeInstance {
-  Type_Intersect(L<S<const TypeInstance>> params) : params_(std::move(params)) {}
+  inline Type_Intersect(L<S<const TypeInstance>> params) : params_(std::move(params)) {}
+
+  inline ~Type_Intersect() { Remove_Intersect(params_); }
 
   std::string CategoryName() const final { return "(intersection)"; }
 
@@ -55,7 +60,9 @@ struct Type_Intersect : public TypeInstance {
 };
 
 struct Type_Union : public TypeInstance {
-  Type_Union(L<S<const TypeInstance>> params) : params_(std::move(params)) {}
+  inline Type_Union(L<S<const TypeInstance>> params) : params_(std::move(params)) {}
+
+  inline ~Type_Union() { Remove_Union(params_); }
 
   std::string CategoryName() const final { return "(union)"; }
 
@@ -101,27 +108,52 @@ class MetaCache {
     auto key = ParamsToKey(params);
     while (lock_.test_and_set(std::memory_order_acquire));
     auto& cached = cache_[std::move(key)];
-    if (!cached) { cached = S_get(new T(params)); }
+    S<T> type = cached.lock();
+    if (!type) {
+      cached = type = S_get(new T(params));
+    }
     lock_.clear(std::memory_order_release);
-    return cached;
+    return type;
+  }
+
+  void Remove(const L<S<const TypeInstance>>& params) {
+    auto key = ParamsToKey(params);
+    while (lock_.test_and_set(std::memory_order_acquire));
+    auto pos = cache_.find(key);
+    // Skip erasing if it's a valid pointer, since that could mean that another
+    // thread created a new instance while the one we're trying to remove was in
+    // the process of being destructed.
+    if (pos != cache_.end() && !pos->second.lock()) {
+      cache_.erase(pos);
+    }
+    lock_.clear(std::memory_order_release);
   }
 
  private:
   std::atomic_flag lock_ = ATOMIC_FLAG_INIT;
-  std::map<L<const TypeInstance*>, S<T>> cache_;
+  std::map<L<const TypeInstance*>, W<T>> cache_;
 };
+
+static auto& intersect_cache = *new MetaCache<Type_Intersect>;
+static auto& union_cache     = *new MetaCache<Type_Union>;
+
+void Remove_Intersect(const L<S<const TypeInstance>>& params) {
+  intersect_cache.Remove(params);
+}
+
+void Remove_Union(const L<S<const TypeInstance>>& params) {
+  union_cache.Remove(params);
+}
 
 }  // namespace
 
 
 S<const TypeInstance> Merge_Intersect(const L<S<const TypeInstance>>& params) {
-  static auto& cache = *new MetaCache<Type_Intersect>;
-  return cache.GetOrCreate(params);
+  return intersect_cache.GetOrCreate(params);
 }
 
 S<const TypeInstance> Merge_Union(const L<S<const TypeInstance>>& params) {
-  static auto& cache = *new MetaCache<Type_Union>;
-  return cache.GetOrCreate(params);
+  return union_cache.GetOrCreate(params);
 }
 
 const S<const TypeInstance>& GetMerged_Any() {

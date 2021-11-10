@@ -203,10 +203,12 @@ Category_Math& CreateCategory_Math() {
   return category;
 }
 
-S<const Type_Math> CreateType_Math(Params<0>::Type params) {
+S<const Type_Math> CreateType_Math(const Params<0>::Type& params) {
   static const auto cached = S_get(new ExtType_Math(CreateCategory_Math(), Params<0>::Type()));
   return cached;
 }
+
+void RemoveType_Math(const Params<0>::Type& params) {}
 
 #ifdef ZEOLITE_PUBLIC_NAMESPACE
 }  // namespace ZEOLITE_PUBLIC_NAMESPACE

@@ -186,11 +186,16 @@ Category_Vector& CreateCategory_Vector() {
   return category;
 }
 
-S<const Type_Vector> CreateType_Vector(Params<1>::Type params) {
-  static auto& cache = *new InstanceCache<1, Type_Vector>([](Params<1>::Type params) {
-      return S_get(new ExtType_Vector(CreateCategory_Vector(), params));
-    });
-  return cache.GetOrCreate(params);
+static auto& Vector_instance_cache = *new InstanceCache<1, Type_Vector>([](Params<1>::Type params) {
+    return S_get(new ExtType_Vector(CreateCategory_Vector(), params));
+  });
+
+S<const Type_Vector> CreateType_Vector(const Params<1>::Type& params) {
+  return Vector_instance_cache.GetOrCreate(params);
+}
+
+void RemoveType_Vector(const Params<1>::Type& params) {
+  Vector_instance_cache.Remove(params);
 }
 
 BoxedValue CreateValue_Vector(S<const Type_Vector> parent, VectorType values) {

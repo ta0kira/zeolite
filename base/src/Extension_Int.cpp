@@ -99,10 +99,12 @@ Category_Int& CreateCategory_Int() {
   return category;
 }
 
-S<const Type_Int> CreateType_Int(Params<0>::Type params) {
+S<const Type_Int> CreateType_Int(const Params<0>::Type& params) {
   static const auto cached = S_get(new ExtType_Int(CreateCategory_Int(), Params<0>::Type()));
   return cached;
 }
+
+void RemoveType_Int(const Params<0>::Type& params) {}
 
 #ifdef ZEOLITE_PUBLIC_NAMESPACE
 }  // namespace ZEOLITE_PUBLIC_NAMESPACE

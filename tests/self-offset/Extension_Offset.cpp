@@ -72,10 +72,12 @@ Category_Offset& CreateCategory_Offset() {
   return category;
 }
 
-S<const Type_Offset> CreateType_Offset(Params<0>::Type params) {
+S<const Type_Offset> CreateType_Offset(const Params<0>::Type& params) {
   static const auto cached = S_get(new ExtType_Offset(CreateCategory_Offset(), Params<0>::Type()));
   return cached;
 }
+
+void RemoveType_Offset(const Params<0>::Type& params) {}
 
 BoxedValue CreateValue_Offset(S<const Type_Offset> parent, const ValueTuple& args) {
   return BoxedValue::New<ExtValue_Offset>(std::move(parent), args);

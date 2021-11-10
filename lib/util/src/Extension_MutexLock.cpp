@@ -79,10 +79,12 @@ Category_MutexLock& CreateCategory_MutexLock() {
   return category;
 }
 
-S<const Type_MutexLock> CreateType_MutexLock(Params<0>::Type params) {
+S<const Type_MutexLock> CreateType_MutexLock(const Params<0>::Type& params) {
   static const auto cached = S_get(new ExtType_MutexLock(CreateCategory_MutexLock(), Params<0>::Type()));
   return cached;
 }
+
+void RemoveType_MutexLock(const Params<0>::Type& params) {}
 
 BoxedValue CreateValue_MutexLock(S<const Type_MutexLock> parent, const ValueTuple& args) {
   return BoxedValue::New<ExtValue_MutexLock>(std::move(parent), args);

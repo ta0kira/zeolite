@@ -152,10 +152,12 @@ Category_ThreadCondition& CreateCategory_ThreadCondition() {
   return category;
 }
 
-S<const Type_ThreadCondition> CreateType_ThreadCondition(Params<0>::Type params) {
+S<const Type_ThreadCondition> CreateType_ThreadCondition(const Params<0>::Type& params) {
   static const auto cached = S_get(new ExtType_ThreadCondition(CreateCategory_ThreadCondition(), Params<0>::Type()));
   return cached;
 }
+
+void RemoveType_ThreadCondition(const Params<0>::Type& params) {}
 
 BoxedValue CreateValue_ThreadCondition(S<const Type_ThreadCondition> parent) {
   return BoxedValue::New<ExtValue_ThreadCondition>(std::move(parent));

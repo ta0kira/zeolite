@@ -97,10 +97,12 @@ Category_RawFileWriter& CreateCategory_RawFileWriter() {
   return category;
 }
 
-S<const Type_RawFileWriter> CreateType_RawFileWriter(Params<0>::Type params) {
+S<const Type_RawFileWriter> CreateType_RawFileWriter(const Params<0>::Type& params) {
   static const auto cached = S_get(new ExtType_RawFileWriter(CreateCategory_RawFileWriter(), Params<0>::Type()));
   return cached;
 }
+
+void RemoveType_RawFileWriter(const Params<0>::Type& params) {}
 
 BoxedValue CreateValue_RawFileWriter(S<const Type_RawFileWriter> parent, const ValueTuple& args) {
   return BoxedValue::New<ExtValue_RawFileWriter>(std::move(parent), args);

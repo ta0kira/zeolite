@@ -134,10 +134,12 @@ Category_EnumeratedWait& CreateCategory_EnumeratedWait() {
   return category;
 }
 
-S<const Type_EnumeratedWait> CreateType_EnumeratedWait(Params<0>::Type params) {
+S<const Type_EnumeratedWait> CreateType_EnumeratedWait(const Params<0>::Type& params) {
   static const auto cached = S_get(new ExtType_EnumeratedWait(CreateCategory_EnumeratedWait(), Params<0>::Type()));
   return cached;
 }
+
+void RemoveType_EnumeratedWait(const Params<0>::Type& params) {}
 
 BoxedValue CreateValue_EnumeratedWait(
   S<const Type_EnumeratedWait> parent, S<Barrier> b, int i) {
@@ -207,10 +209,12 @@ Category_EnumeratedBarrier& CreateCategory_EnumeratedBarrier() {
   return category;
 }
 
-S<const Type_EnumeratedBarrier> CreateType_EnumeratedBarrier(Params<0>::Type params) {
+S<const Type_EnumeratedBarrier> CreateType_EnumeratedBarrier(const Params<0>::Type& params) {
   static const auto cached = S_get(new ExtType_EnumeratedBarrier(CreateCategory_EnumeratedBarrier(), Params<0>::Type()));
   return cached;
 }
+
+void RemoveType_EnumeratedBarrier(const Params<0>::Type& params) {}
 
 BoxedValue CreateValue_EnumeratedBarrier(
   S<const Type_EnumeratedBarrier> parent, std::vector<BoxedValue> w) {

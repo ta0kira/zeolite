@@ -65,10 +65,12 @@ Category_SimpleMutex& CreateCategory_SimpleMutex() {
   return category;
 }
 
-S<const Type_SimpleMutex> CreateType_SimpleMutex(Params<0>::Type params) {
+S<const Type_SimpleMutex> CreateType_SimpleMutex(const Params<0>::Type& params) {
   static const auto cached = S_get(new ExtType_SimpleMutex(CreateCategory_SimpleMutex(), Params<0>::Type()));
   return cached;
 }
+
+void RemoveType_SimpleMutex(const Params<0>::Type& params) {}
 
 BoxedValue CreateValue_SimpleMutex(S<const Type_SimpleMutex> parent) {
   return BoxedValue::New<ExtValue_SimpleMutex>(std::move(parent));

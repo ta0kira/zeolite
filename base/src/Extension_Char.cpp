@@ -96,10 +96,12 @@ Category_Char& CreateCategory_Char() {
   return category;
 }
 
-S<const Type_Char> CreateType_Char(Params<0>::Type params) {
+S<const Type_Char> CreateType_Char(const Params<0>::Type& params) {
   static const auto cached = S_get(new ExtType_Char(CreateCategory_Char(), Params<0>::Type()));
   return cached;
 }
+
+void RemoveType_Char(const Params<0>::Type& params) {}
 
 #ifdef ZEOLITE_PUBLIC_NAMESPACE
 }  // namespace ZEOLITE_PUBLIC_NAMESPACE

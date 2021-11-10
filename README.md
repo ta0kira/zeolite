@@ -74,7 +74,6 @@ of this document.
   - [Local Variable Rules](#local-variable-rules)
   - [Expression Macros](#expression-macros)
 - [Known Language Limitations](#known-language-limitations)
-  - [Arbitrary Recursion in Types](#arbitrary-recursion-in-types)
 
 ## Project Status
 
@@ -584,8 +583,9 @@ place of the full type when you are creating a value of the same type from a
   }
 }</pre>
 
-A category can also have `@category` members, but *not*
-[`@type` members](#arbitrary-recursion-in-types).
+A category can also have `@category` members, but *not* `@type` members. (The
+latter is so that the runtime implementation can clean up unused `@type`s
+without introducing ambiguitites regarding member lifespan.)
 
 <pre style='color:#1f1c1b;background-color:#f6f8fa;'>
 <b>concrete</b> <b><span style='color:#0057ae;'>MyCategory</span></b> {
@@ -1777,46 +1777,7 @@ These can be used in place of language expressions.
 
 ## Known Language Limitations
 
-### Arbitrary Recursion in Types
-
-Because Zeolite supports calling functions on type parameters (e.g.,
-`#x.lessThan(x,y)`), the compiler is required to create a reference to a
-runtime representation of each type parameter. For example, when `Type<Foo>` is
-used at runtime, there is a runtime copy of `Type` with a reference to `Foo`
-stored as `Type`'s parameter. In addition, this representation is cached so that
-it can be shared everywhere `Type<Foo>` is used in the program.
-
-If you were to define a recursive function that also did a recursive param
-substitution when calling itself, you would create a new *static* object for
-each type substitution.
-
-<pre style='color:#1f1c1b;background-color:#f6f8fa;'>
-<span style='color:#644a9b;'>@type</span> badIdea&lt;<i><span style='color:#0057ae;'>#x</span></i>&gt; (<i><span style='color:#0057ae;'>Int</span></i>) -&gt; ()
-badIdea (limit) {
-  <b>if</b> (limit &gt; <span style='color:#b08000;'>0</span>) {
-    <span style='color:#006e28;'>\</span> badIdea&lt;<span style='color:#0057ae;'>Type</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>&gt;(limit<span style='color:#b08000;'>-1</span>)
-  }
-}</pre>
-
-In the example above, calling `badIdea<Int>(3)` will create `Type<Int>`,
-`Type<Type<Int>>`, and `Type<Type<Type<Int>>>` that will remain in memory until
-the program exits. The size of each `Type` is *very small*; they primarily
-consist of shared references to each of their paramters. (Procedure definitions
-are shared among all substitutions for a given type.)
-
-Since `@type` members *are not* allowed, the memory cost of this caching is
-likely to be fairly reasonable; especially since you will likely have a stack
-overflow before consuming much memory.
-
-At some point, the implementation *might* clear parts of the `@type` caches to
-avoid excessive memory consumption, which is another reason that `@type` members
-are disallowed.
-
-Note that C++ also allows this sort of recursion if it can be bounded at
-*compile time*. Even then, most compilers would generate a new copy of the
-function's code for each recursive call, which would likely bloat the resulting
-binary quite a bit more than the `@type`-caching done by Zeolite for the same
-depth of recursion.
+(Previous limitations that were listed here have been solved.)
 
 [action-status]: https://github.com/ta0kira/zeolite/actions/workflows/haskell-ci.yml/badge.svg
 [action-zeolite]: https://github.com/ta0kira/zeolite/actions/workflows/haskell-ci.yml

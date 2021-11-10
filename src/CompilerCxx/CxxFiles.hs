@@ -208,7 +208,8 @@ generateCategoryDefinition testing = common where
                           else [defineAbstractValue t]
       (CompiledData req out) <- fmap (addNamespace t) $ concatM $ [
           defineAbstractCategory t,
-          defineAbstractType     t
+          return $ declareInternalType t (length $ getCategoryParams t),
+          defineAbstractType t
         ] ++ maybeValue ++ [
           declareAbstractGetters t
         ]
@@ -385,6 +386,7 @@ generateCategoryDefinition testing = common where
   defineInterfaceType t = concatM [
       return $ onlyCode $ "struct " ++ typeName (getCategoryName t) ++ " : public " ++ typeBase ++ " {",
       fmap indentCompiled $ inlineTypeConstructor t,
+      fmap indentCompiled $ inlineTypeDestructor False t,
       return declareTypeOverrides,
       return $ indentCompiled $ createParams $ getCategoryParams t,
       return $ onlyCode $ "  " ++ categoryName (getCategoryName t) ++ "& parent;",
@@ -403,6 +405,7 @@ generateCategoryDefinition testing = common where
   defineConcreteType fs t = concatM [
       return $ onlyCode $ "struct " ++ className ++ " : public " ++ typeBase ++ ", std::enable_shared_from_this<" ++ className ++ "> {",
       fmap indentCompiled $ inlineTypeConstructor t,
+      fmap indentCompiled $ inlineTypeDestructor False t,
       return declareTypeOverrides,
       fmap indentCompiled $ concatM $ map (declareProcedure t False) fs,
       return $ indentCompiled $ createParams $ getCategoryParams t,
@@ -437,9 +440,9 @@ generateCategoryDefinition testing = common where
   defineAbstractType t = concatM [
       return $ onlyCode $ "struct " ++ className ++ " : public " ++ typeBase ++ ", std::enable_shared_from_this<" ++ className ++ "> {",
       fmap indentCompiled $ inlineTypeConstructor t,
+      fmap indentCompiled $ inlineTypeDestructor True t,
       return declareTypeOverrides,
       fmap indentCompiled $ concatM $ map (declareProcedure t True) $ filter ((== TypeScope). sfScope) $ getCategoryFunctions t,
-      return $ onlyCode $ "  virtual inline ~" ++ typeName (getCategoryName t) ++ "() {}",
       return $ indentCompiled $ createParams $ getCategoryParams t,
       return $ onlyCode $ "  " ++ categoryName (getCategoryName t) ++ "& parent;",
       return $ onlyCode "};"
@@ -569,6 +572,14 @@ generateCategoryDefinition testing = common where
         indentCompiled $ onlyCode $ startInitTracing (getCategoryName t) TypeScope,
         onlyCode "}"
       ]
+  inlineTypeDestructor abstract t = do
+    let ps2 = map (paramName . vpParam) $ getCategoryParams t
+    let params = "Params<" ++ show (length ps2) ++ ">::Type(" ++ intercalate "," ps2 ++ ")"
+    let prefix = if abstract then "virtual " else "inline "
+    return $ onlyCodes [
+        prefix ++ "~" ++ typeName (getCategoryName t) ++ "() { " ++ typeRemover (getCategoryName t) ++ "(" ++ params ++ "); }"
+      ]
+
   inlineValueConstructor t d = do
     let argParent = "S<const " ++ typeName (getCategoryName t) ++ "> p"
     let argsPassed = "const ValueTuple& args"
@@ -880,8 +891,11 @@ defineInternalCategory2 className t = onlyCodes [
 
 declareInternalType :: AnyCategory c -> Int -> CompiledData [String]
 declareInternalType t n = onlyCodes [
+    "struct " ++ typeName (getCategoryName t) ++ ";",
     "S<const " ++ typeName (getCategoryName t) ++ "> " ++ typeCreator (getCategoryName t) ++
-            "(Params<" ++ show n ++ ">::Type params);"
+      "(const Params<" ++ show n ++ ">::Type& params);",
+    "void " ++ typeRemover (getCategoryName t) ++
+      "(const Params<" ++ show n ++ ">::Type& params);"
   ]
 
 defineInternalType :: AnyCategory c -> Int -> CompiledData [String]
@@ -891,20 +905,25 @@ defineInternalType2 :: String -> AnyCategory c -> Int -> CompiledData [String]
 defineInternalType2 className t n
   | n < 1 =
       onlyCodes [
-        "S<const " ++ typeName (getCategoryName t) ++ "> " ++ typeCreator (getCategoryName t) ++ "(Params<" ++ show n ++ ">::Type params) {",
+        "S<const " ++ typeName (getCategoryName t) ++ "> " ++ typeCreator (getCategoryName t) ++ "(const Params<" ++ show n ++ ">::Type& params) {",
         "  static const auto cached = S_get(new " ++ className ++ "(" ++ categoryCreator (getCategoryName t) ++ "(), Params<" ++ show n ++ ">::Type()));",
         "  return cached;",
-        "}"
+        "}",
+        "void " ++ typeRemover (getCategoryName t) ++ "(const Params<" ++ show n ++ ">::Type& params) {}"
       ]
   | otherwise =
       onlyCodes [
-        "S<const " ++ typeName (getCategoryName t) ++ "> " ++ typeCreator (getCategoryName t) ++ "(Params<" ++ show n ++ ">::Type params) {",
-        "  static auto& cache = *new InstanceCache<" ++ show n ++ ", " ++ typeName (getCategoryName t) ++ ">([](Params<" ++ show n ++ ">::Type params) {",
-        "      return S_get(new " ++ className ++ "(" ++ categoryCreator (getCategoryName t) ++ "(), params));",
-        "    });",
-        "  return cache.GetOrCreate(params);",
+        "static auto& " ++ cacheName ++ " = *new InstanceCache<" ++ show n ++ ", " ++ typeName (getCategoryName t) ++ ">([](Params<" ++ show n ++ ">::Type params) {",
+        "    return S_get(new " ++ className ++ "(" ++ categoryCreator (getCategoryName t) ++ "(), params));",
+        "  });",
+        "S<const " ++ typeName (getCategoryName t) ++ "> " ++ typeCreator (getCategoryName t) ++ "(const Params<" ++ show n ++ ">::Type& params) {",
+        "  return " ++ cacheName ++ ".GetOrCreate(params);",
+        "}",
+        "void " ++ typeRemover (getCategoryName t) ++ "(const Params<" ++ show n ++ ">::Type& params) {",
+        "  " ++ cacheName ++ ".Remove(params);",
         "}"
-      ]
+      ] where
+        cacheName = show (getCategoryName t) ++ "_instance_cache"
 
 declareInternalValue :: AnyCategory c -> CompiledData [String]
 declareInternalValue t =

@@ -115,10 +115,12 @@ Category_RawFileReader& CreateCategory_RawFileReader() {
   return category;
 }
 
-S<const Type_RawFileReader> CreateType_RawFileReader(Params<0>::Type params) {
+S<const Type_RawFileReader> CreateType_RawFileReader(const Params<0>::Type& params) {
   static const auto cached = S_get(new ExtType_RawFileReader(CreateCategory_RawFileReader(), Params<0>::Type()));
   return cached;
 }
+
+void RemoveType_RawFileReader(const Params<0>::Type& params) {}
 
 BoxedValue CreateValue_RawFileReader(S<const Type_RawFileReader> parent, const ValueTuple& args) {
   return BoxedValue::New<ExtValue_RawFileReader>(std::move(parent), args);

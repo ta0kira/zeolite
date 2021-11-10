@@ -98,10 +98,12 @@ Category_CharBuffer& CreateCategory_CharBuffer() {
   return category;
 }
 
-S<const Type_CharBuffer> CreateType_CharBuffer(Params<0>::Type params) {
+S<const Type_CharBuffer> CreateType_CharBuffer(const Params<0>::Type& params) {
   static const auto cached = S_get(new ExtType_CharBuffer(CreateCategory_CharBuffer(), Params<0>::Type()));
   return cached;
 }
+
+void RemoveType_CharBuffer(const Params<0>::Type& params) {}
 
 BoxedValue CreateValue_CharBuffer(S<const Type_CharBuffer> parent, PrimCharBuffer value) {
   return BoxedValue::New<ExtValue_CharBuffer>(std::move(parent), std::move(value));

@@ -62,6 +62,9 @@ using S = std::shared_ptr<T>;
 template<class T>
 inline S<T> S_get(T* val) { return S<T>(val); }
 
+template<class T>
+using W = std::weak_ptr<T>;
+
 template<class...Ts>
 using T = std::tuple<Ts...>;
 

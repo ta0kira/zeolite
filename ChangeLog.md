@@ -57,6 +57,36 @@
 
 ### Compiler CLI
 
+* **[breaking]** Updates caching of `TypeInstance` (i.e., `@type`)
+  implementations in C++.
+
+  - The argument type for `CreateType_Foo` for extension `Foo` must now be a
+    `const` `&`. For types with params, the `InstanceCache` should be made
+    global and `static`.
+  - A new function `void RemoveType_Foo` taking the same `params` argument as
+    the above must be added, which will be called when the `TypeInstance` is
+    destructed. For types with params, call `Remove` on the `InstanceCache`.
+    Otherwise, it can be a no-op `{}`.
+
+  (You can also just rerun in `--templates` mode and copy the updated `Create`
+  and `Remove` functions.)
+
+  Example for `concrete Foo<#x>`:
+
+  ```c++
+  static auto& Foo_instance_cache = *new InstanceCache<1, Type_Foo>([](Params<1>::Type params) {
+      return S_get(new ExtType_Foo(CreateCategory_Foo(), params));
+    });
+
+  S<const Type_Foo> CreateType_Foo(const Params<1>::Type& params) {
+    return Foo_instance_cache.GetOrCreate(params);
+  }
+
+  void RemoveType_Foo(const Params<1>::Type& params) {
+    Foo_instance_cache.Remove(params);
+  }
+  ```
+
 * **[breaking]** Removes all passing of `Param_self` in C++ extensions. Use
   `PARAM_SELF` where `Param_self` was previously used, and delete the
   `Param_self` argument from function signatures. This breaks all existing

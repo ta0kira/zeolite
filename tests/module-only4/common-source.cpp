@@ -61,10 +61,12 @@ Category_Type1& CreateCategory_Type1() {
   return category;
 }
 
-S<const Type_Type1> CreateType_Type1(Params<0>::Type params) {
+S<const Type_Type1> CreateType_Type1(const Params<0>::Type& params) {
   static const auto cached = S_get(new ExtType_Type1(CreateCategory_Type1(), Params<0>::Type()));
   return cached;
 }
+
+void RemoveType_Type1(const Params<0>::Type& params) {}
 
 BoxedValue CreateValue_Type1(S<const Type_Type1> parent, const ValueTuple& args) {
   return BoxedValue::New<ExtValue_Type1>(std::move(parent), args);
@@ -112,10 +114,12 @@ Category_Type3& CreateCategory_Type3() {
   return category;
 }
 
-S<const Type_Type3> CreateType_Type3(Params<0>::Type params) {
+S<const Type_Type3> CreateType_Type3(const Params<0>::Type& params) {
   static const auto cached = S_get(new ExtType_Type3(CreateCategory_Type3(), Params<0>::Type()));
   return cached;
 }
+
+void RemoveType_Type3(const Params<0>::Type& params) {}
 
 BoxedValue CreateValue_Type3(S<const Type_Type3> parent, const ValueTuple& args) {
   return BoxedValue::New<ExtValue_Type3>(std::move(parent), args);

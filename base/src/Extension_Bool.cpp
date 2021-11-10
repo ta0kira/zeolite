@@ -74,10 +74,12 @@ Category_Bool& CreateCategory_Bool() {
   return category;
 }
 
-S<const Type_Bool> CreateType_Bool(Params<0>::Type params) {
+S<const Type_Bool> CreateType_Bool(const Params<0>::Type& params) {
   static const auto cached = S_get(new ExtType_Bool(CreateCategory_Bool(), Params<0>::Type()));
   return cached;
 }
+
+void RemoveType_Bool(const Params<0>::Type& params) {}
 
 #ifdef ZEOLITE_PUBLIC_NAMESPACE
 }  // namespace ZEOLITE_PUBLIC_NAMESPACE

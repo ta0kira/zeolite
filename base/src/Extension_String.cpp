@@ -203,10 +203,12 @@ Category_String& CreateCategory_String() {
   return category;
 }
 
-S<const Type_String> CreateType_String(Params<0>::Type params) {
+S<const Type_String> CreateType_String(const Params<0>::Type& params) {
   static const auto cached = S_get(new ExtType_String(CreateCategory_String(), Params<0>::Type()));
   return cached;
 }
+
+void RemoveType_String(const Params<0>::Type& params) {}
 
 #ifdef ZEOLITE_PUBLIC_NAMESPACE
 }  // namespace ZEOLITE_PUBLIC_NAMESPACE

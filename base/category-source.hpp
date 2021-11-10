@@ -205,10 +205,10 @@ class InstanceCache {
 
   InstanceCache(const Creator& create) : create_(create) {}
 
-  S<T> GetOrCreate(typename Params<P>::Type params) {
+  S<T> GetOrCreate(const typename Params<P>::Type& params) {
     while (lock_.test_and_set(std::memory_order_acquire));
     auto& cached = cache_[GetKeyFromParams<P>(params)];
-    S<T> type = cached;
+    S<T> type = cached.lock();
     if (!type) {
       cached = type = create_(params);
     }
@@ -216,10 +216,22 @@ class InstanceCache {
     return type;
   }
 
+  void Remove(const typename Params<P>::Type& params) {
+    while (lock_.test_and_set(std::memory_order_acquire));
+    auto pos = cache_.find(GetKeyFromParams<P>(params));
+    // Skip erasing if it's a valid pointer, since that could mean that another
+    // thread created a new instance while the one we're trying to remove was in
+    // the process of being destructed.
+    if (pos != cache_.end() && !pos->second.lock()) {
+      cache_.erase(pos);
+    }
+    lock_.clear(std::memory_order_release);
+  }
+
  private:
   const Creator create_;
   std::atomic_flag lock_ = ATOMIC_FLAG_INIT;
-  std::map<typename ParamsKey<P>::Type, S<T>> cache_;
+  std::map<typename ParamsKey<P>::Type, W<T>> cache_;
 };
 
 #endif  // CATEGORY_SOURCE_HPP_

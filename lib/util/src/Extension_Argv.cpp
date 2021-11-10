@@ -84,10 +84,12 @@ Category_Argv& CreateCategory_Argv() {
   return category;
 }
 
-S<const Type_Argv> CreateType_Argv(Params<0>::Type params) {
+S<const Type_Argv> CreateType_Argv(const Params<0>::Type& params) {
   static const auto cached = S_get(new ExtType_Argv(CreateCategory_Argv(), Params<0>::Type()));
   return cached;
 }
+
+void RemoveType_Argv(const Params<0>::Type& params) {}
 
 #ifdef ZEOLITE_PUBLIC_NAMESPACE
 }  // namespace ZEOLITE_PUBLIC_NAMESPACE

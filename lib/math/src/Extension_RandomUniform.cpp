@@ -74,10 +74,12 @@ Category_RandomUniform& CreateCategory_RandomUniform() {
   return category;
 }
 
-S<const Type_RandomUniform> CreateType_RandomUniform(Params<0>::Type params) {
+S<const Type_RandomUniform> CreateType_RandomUniform(const Params<0>::Type& params) {
   static const auto cached = S_get(new ExtType_RandomUniform(CreateCategory_RandomUniform(), Params<0>::Type()));
   return cached;
 }
+
+void RemoveType_RandomUniform(const Params<0>::Type& params) {}
 
 BoxedValue CreateValue_RandomUniform(S<const Type_RandomUniform> parent, const ValueTuple& args) {
   return BoxedValue::New<ExtValue_RandomUniform>(std::move(parent), args);

@@ -74,10 +74,12 @@ Category_RandomExponential& CreateCategory_RandomExponential() {
   return category;
 }
 
-S<const Type_RandomExponential> CreateType_RandomExponential(Params<0>::Type params) {
+S<const Type_RandomExponential> CreateType_RandomExponential(const Params<0>::Type& params) {
   static const auto cached = S_get(new ExtType_RandomExponential(CreateCategory_RandomExponential(), Params<0>::Type()));
   return cached;
 }
+
+void RemoveType_RandomExponential(const Params<0>::Type& params) {}
 
 BoxedValue CreateValue_RandomExponential(S<const Type_RandomExponential> parent, const ValueTuple& args) {
   return BoxedValue::New<ExtValue_RandomExponential>(std::move(parent), args);

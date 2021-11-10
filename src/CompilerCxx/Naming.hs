@@ -56,6 +56,7 @@ module CompilerCxx.Naming (
   typeCustom,
   typeGetter,
   typeName,
+  typeRemover,
   unionGetter,
   valueCreator,
   valueCustom,
@@ -179,6 +180,9 @@ categoryCreator n = "CreateCategory_" ++ show n
 
 typeCreator :: CategoryName -> String
 typeCreator n = "CreateType_" ++ show n
+
+typeRemover :: CategoryName -> String
+typeRemover n = "RemoveType_" ++ show n
 
 valueCreator :: CategoryName -> String
 valueCreator n = "CreateValue_" ++ show n

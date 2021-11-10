@@ -65,10 +65,12 @@ Category_SpinlockMutex& CreateCategory_SpinlockMutex() {
   return category;
 }
 
-S<const Type_SpinlockMutex> CreateType_SpinlockMutex(Params<0>::Type params) {
+S<const Type_SpinlockMutex> CreateType_SpinlockMutex(const Params<0>::Type& params) {
   static const auto cached = S_get(new ExtType_SpinlockMutex(CreateCategory_SpinlockMutex(), Params<0>::Type()));
   return cached;
 }
+
+void RemoveType_SpinlockMutex(const Params<0>::Type& params) {}
 
 BoxedValue CreateValue_SpinlockMutex(S<const Type_SpinlockMutex> parent) {
   return BoxedValue::New<ExtValue_SpinlockMutex>(std::move(parent));

@@ -88,10 +88,12 @@ Category_Float& CreateCategory_Float() {
   return category;
 }
 
-S<const Type_Float> CreateType_Float(Params<0>::Type params) {
+S<const Type_Float> CreateType_Float(const Params<0>::Type& params) {
   static const auto cached = S_get(new ExtType_Float(CreateCategory_Float(), Params<0>::Type()));
   return cached;
 }
+
+void RemoveType_Float(const Params<0>::Type& params) {}
 
 #ifdef ZEOLITE_PUBLIC_NAMESPACE
 }  // namespace ZEOLITE_PUBLIC_NAMESPACE
