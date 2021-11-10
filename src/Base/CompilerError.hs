@@ -39,6 +39,7 @@ module Base.CompilerError (
   mapCompilerM,
   mapCompilerM_,
   mapErrorsM,
+  mergeObjectsM,
   silenceErrorsM,
 ) where
 
@@ -143,6 +144,15 @@ errorFromIO x = do
   case x' of
        (Right x2) -> return x2
        (Left e)   -> compilerErrorM e
+
+-- For fixed x, if f y x succeeds for some y then x is removed.
+mergeObjectsM :: CollectErrorsM m => (a -> a -> m b) -> [a] -> m [a]
+mergeObjectsM f = merge [] where
+  merge cs [] = return cs
+  merge cs (x:xs) = do
+    ys <- collectFirstM $ map check (cs ++ xs) ++ [return [x]]
+    merge (cs ++ ys) xs where
+      check x2 = x2 `f` x >> return []
 
 instance ErrorContextM m => ErrorContextM (StateT a m) where
   compilerErrorM      = lift . compilerErrorM

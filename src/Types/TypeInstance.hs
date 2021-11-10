@@ -45,6 +45,7 @@ module Types.TypeInstance (
   checkValueAssignment,
   checkValueTypeImmutable,
   checkValueTypeMatch,
+  dedupGeneralInstance,
   filterLookup,
   fixTypeParams,
   flipFilter,
@@ -79,7 +80,7 @@ module Types.TypeInstance (
   validateTypeFilter,
 ) where
 
-import Control.Monad (when)
+import Control.Monad (when,(>=>))
 import Data.List (intercalate)
 import qualified Data.Map as Map
 import qualified Data.Set as Set
@@ -381,6 +382,13 @@ checkValueTypeImmutable r f (ValueType _ t) = reduceMergeTree collectAllM_ colle
   checkFilter _ (TypeFilter FilterRequires t2) = checkValueTypeImmutable r f (ValueType RequiredValue t2)
   checkFilter n ff =
     compilerErrorM $ "Filter " ++ show n ++ " " ++ show ff ++ " does not imply that " ++ show n ++ " is immutable"
+
+dedupGeneralInstance :: (CollectErrorsM m, TypeResolver r) =>
+  r -> ParamFilters -> GeneralInstance -> m GeneralInstance
+dedupGeneralInstance r f = reduceMergeTree dedupAny dedupAll (return . singleType) where
+  dedupAny = fmap mergeAny . (collectAllM >=> mergeObjectsM (checkSingle Contravariant)) -- [A|B], A<-B => remove B
+  dedupAll = fmap mergeAll . (collectAllM >=> mergeObjectsM (checkSingle Covariant))     -- [A&B], A->B => remove B
+  checkSingle v = checkGeneralMatch r f v
 
 checkValueTypeMatch :: (CollectErrorsM m, TypeResolver r) =>
   r -> ParamFilters -> Variance -> ValueType -> ValueType -> m (MergeTree InferredTypeGuess)

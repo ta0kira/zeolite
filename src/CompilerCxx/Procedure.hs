@@ -1119,20 +1119,24 @@ expandGeneralInstance :: (CollectErrorsM m, CompilerContext c m s a) =>
 expandGeneralInstance t
   | t == minBound = return $ allGetter ++ "()"
   | t == maxBound = return $ anyGetter ++ "()"
-expandGeneralInstance t = reduceMergeTree getAny getAll getSingle t where
-  getAny ts = combine ts >>= return . (unionGetter ++)
-  getAll ts = combine ts >>= return . (intersectGetter ++)
-  getSingle (JustTypeInstance (TypeInstance t2 ps)) = do
-    ps' <- sequence $ map expandGeneralInstance $ pValues ps
-    return $ typeGetter t2 ++ "(T_get(" ++ intercalate "," ps' ++ "))"
-  getSingle (JustParamName _ p)  = do
-    s <- csGetParamScope p
-    scoped <- autoScope s
-    return $ scoped ++ paramName p
-  getSingle (JustInferredType p) = getSingle (JustParamName False p)
-  combine ps = do
-    ps' <- sequence ps
-    return $ "(L_get<S<const " ++ typeBase ++ ">>(" ++ intercalate "," ps' ++ "))"
+expandGeneralInstance t = do
+  r <- csResolver
+  f <- csAllFilters
+  t' <- lift $ dedupGeneralInstance r f t
+  reduceMergeTree getAny getAll getSingle t' where
+    getAny ts = combine ts >>= return . (unionGetter ++)
+    getAll ts = combine ts >>= return . (intersectGetter ++)
+    getSingle (JustTypeInstance (TypeInstance t2 ps)) = do
+      ps' <- sequence $ map expandGeneralInstance $ pValues ps
+      return $ typeGetter t2 ++ "(T_get(" ++ intercalate "," ps' ++ "))"
+    getSingle (JustParamName _ p)  = do
+      s <- csGetParamScope p
+      scoped <- autoScope s
+      return $ scoped ++ paramName p
+    getSingle (JustInferredType p) = getSingle (JustParamName False p)
+    combine ps = do
+      ps' <- sequence ps
+      return $ "(L_get<S<const " ++ typeBase ++ ">>(" ++ intercalate "," ps' ++ "))"
 
 doImplicitReturn :: (CollectErrorsM m, Ord c, Show c, CompilerContext c m [String] a) =>
   [c] -> CompilerState a m ()

@@ -76,16 +76,16 @@ unittest allType {
   }
 }
 
-unittest intersect {
-  Formatted name <- typename<[String&Int]>()
-  if (name.formatted() != "[Int&String]") {
+unittest intersectDedup {
+  Formatted name <- typename<[AsBool&Char&Formatted&Int]>()
+  if (name.formatted() != "[Char&Int]") {
     fail(name)
   }
 }
 
-unittest union {
-  Formatted name <- typename<[String|Int]>()
-  if (name.formatted() != "[Int|String]") {
+unittest unionDedup {
+  Formatted name <- typename<[AsBool|Char|Formatted|Int]>()
+  if (name.formatted() != "[AsBool|Formatted]") {
     fail(name)
   }
 }

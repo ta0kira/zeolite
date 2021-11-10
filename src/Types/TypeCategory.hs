@@ -745,18 +745,9 @@ topoSortCategories tm0 ts = do
            return (ts3 ++ [t] ++ ts4,ta3)
     update _ ta _ = return ([],ta)
 
--- For fixed x, if f y x succeeds for some y then x is removed.
-mergeObjects :: CollectErrorsM m => (a -> a -> m b) -> [a] -> m [a]
-mergeObjects f = merge [] where
-  merge cs [] = return cs
-  merge cs (x:xs) = do
-    ys <- collectFirstM $ map check (cs ++ xs) ++ [return [x]]
-    merge (cs ++ ys) xs where
-      check x2 = x2 `f` x >> return []
-
 mergeRefines :: (CollectErrorsM m, TypeResolver r) =>
   r -> ParamFilters -> [ValueRefine c] -> m [ValueRefine c]
-mergeRefines r f = mergeObjects check where
+mergeRefines r f = mergeObjectsM check where
   check (ValueRefine _ t1@(TypeInstance n1 _)) (ValueRefine _ t2@(TypeInstance n2 _))
     | n1 /= n2 = compilerErrorM $ show t1 ++ " and " ++ show t2 ++ " are incompatible"
     | otherwise =
@@ -766,7 +757,7 @@ mergeRefines r f = mergeObjects check where
 
 mergeDefines :: (CollectErrorsM m, TypeResolver r) =>
   r -> ParamFilters -> [ValueDefine c] -> m [ValueDefine c]
-mergeDefines r f = mergeObjects check where
+mergeDefines r f = mergeObjectsM check where
   check (ValueDefine _ t1@(DefinesInstance n1 _)) (ValueDefine _ t2@(DefinesInstance n2 _))
     | n1 /= n2 = compilerErrorM $ show t1 ++ " and " ++ show t2 ++ " are incompatible"
     | otherwise = do
