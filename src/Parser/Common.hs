@@ -40,6 +40,7 @@ module Parser.Common (
   kwCleanup,
   kwConcrete,
   kwContinue,
+  kwDefer,
   kwDefine,
   kwDefines,
   kwElif,
@@ -199,6 +200,9 @@ kwConcrete = keyword "concrete"
 kwContinue :: TextParser ()
 kwContinue = keyword "continue"
 
+kwDefer :: TextParser ()
+kwDefer = keyword "defer"
+
 kwDefine :: TextParser ()
 kwDefine = keyword "define"
 
@@ -323,6 +327,7 @@ isKeyword = foldr (<|>) empty $ map try [
     kwCleanup,
     kwConcrete,
     kwContinue,
+    kwDefer,
     kwDefine,
     kwDefines,
     kwElif,

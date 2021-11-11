@@ -49,6 +49,7 @@ of this document.
     - [Loops](#loops)
     - [Multiple Returns](#multiple-returns)
     - [Optional and Weak Values](#optional-and-weak-values)
+    - [Deferred Variable Initialization](#deferred-variable-initialization)
   - [Using Parameters](#using-parameters)
   - [Using Interfaces](#using-interfaces)
   - [Immutable Types](#immutable-types)
@@ -860,6 +861,35 @@ references between objects.
     <b>return</b> <b>self</b>
   }
 }</pre>
+
+#### Deferred Variable Initialization
+
+In some situations, a variable's value depends on conditional logic, and there
+is no low-cost default value. In such situations, you can use the **`defer`**
+keyword to allow a variable to be *temporarily* uninitialized. (As of compiler
+version `0.20.0.0`.)
+
+<pre style='color:#1f1c1b;background-color:#f6f8fa;'>
+<span style='color:#0057ae;'>LargeObject</span> object &lt;- <b>defer</b>
+
+<b>if</b> (debug) {
+  object &lt;- <span style='color:#0057ae;'>LargeObject</span><span style='color:#644a9b;'>.</span>newDebug()
+} <b>else</b> {
+  object &lt;- <span style='color:#0057ae;'>LargeObject</span><span style='color:#644a9b;'>.</span>new()
+}
+
+<span style='color:#006e28;'>\</span> object<span style='color:#644a9b;'>.</span>execute()</pre>
+
+In this example, `object` is declared without an initializer, and is then
+initialized in *both* the `if` and `else` clauses.
+
+- A variable initialized with `defer` *must* be initialized via *all possible*
+  control paths prior to its use. This is checked at compile time.
+- An *existing* variable can also be marked as `defer`red. This *will not*
+  change its value, but will instead require that it be assigned a new value
+  before it gets used again.
+- If you never *read* the variable in a particular control branch then you do
+  not need to initialize it; initialization is only checked where necessary.
 
 ### Using Parameters
 

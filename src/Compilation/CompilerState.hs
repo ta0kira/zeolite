@@ -27,12 +27,16 @@ module Compilation.CompilerState (
   CompilerContext(..),
   CompiledData(..),
   CompilerState,
+  DeferVariable(..),
   LoopSetup(..),
   JumpType(..),
   MemberValue(..),
   ReturnVariable(..),
   UsedVariable(..),
+  addDeferred,
   autoSelfType,
+  branchDeferred,
+  checkDeferred,
   concatM,
   csAddRequired,
   csAddUsed,
@@ -51,7 +55,8 @@ module Compilation.CompilerState (
   csGetParamScope,
   csGetTypeFunction,
   csGetVariable,
-  csInheritReturns,
+  csInheritDeferred,
+  csInheritStatic,
   csInheritUsed,
   csIsNamedReturns,
   csIsUnreachable,
@@ -63,6 +68,7 @@ module Compilation.CompilerState (
   csResolver,
   csSameType,
   csSelfType,
+  csSetDeferred,
   csSetHidden,
   csSetJumpType,
   csSetNoTrace,
@@ -72,7 +78,10 @@ module Compilation.CompilerState (
   csUpdateAssigned,
   csWrite,
   emptyCleanupBlock,
+  emptyDeferred,
+  followDeferred,
   getCleanContext,
+  removeDeferred,
   runDataCompiler,
 ) where
 
@@ -80,6 +89,7 @@ import Control.Monad.Trans (lift)
 import Control.Monad.Trans.State (StateT(..),execStateT,get,put)
 import Data.Functor
 import Prelude hiding (foldr)
+import qualified Data.Map as Map
 import qualified Data.Set as Set
 
 #if MIN_VERSION_base(4,11,0)
@@ -111,6 +121,7 @@ class (Functor m, Monad m) => CompilerContext c m s a | a -> c s where
   ccCheckValueInit :: a -> [c] -> TypeInstance -> ExpressionType -> m ()
   ccGetVariable :: a -> UsedVariable c -> m (VariableValue c)
   ccAddVariable :: a -> UsedVariable c -> VariableValue c -> m a
+  ccSetDeferred :: a -> UsedVariable c -> m a
   ccSetReadOnly :: a -> UsedVariable c -> m a
   ccSetHidden :: a -> UsedVariable c -> m a
   ccCheckVariableInit :: a -> [UsedVariable c] -> m ()
@@ -120,7 +131,8 @@ class (Functor m, Monad m) => CompilerContext c m s a | a -> c s where
   ccUpdateAssigned :: a -> VariableName -> m a
   ccAddUsed :: a -> UsedVariable c -> m a
   ccInheritUsed :: a -> a -> m a
-  ccInheritReturns :: a -> [a] -> m a
+  ccInheritStatic :: a -> [a] -> m a
+  ccInheritDeferred :: a -> DeferVariable c -> m a
   ccRegisterReturn :: a -> [c] -> Maybe ExpressionType -> m a
   ccPrimNamedReturns :: a -> m [ReturnVariable]
   ccIsUnreachable :: a -> m Bool
@@ -169,6 +181,7 @@ data UsedVariable c =
 data CleanupBlock c s =
   CleanupBlock {
     csCleanup :: s,
+    csDeferred :: DeferVariable c,
     csUsesVars :: [UsedVariable c],
     csJumpType :: JumpType,
     csRequires :: Set.Set CategoryName
@@ -176,7 +189,7 @@ data CleanupBlock c s =
   deriving (Show)
 
 emptyCleanupBlock :: Monoid s => CleanupBlock c s
-emptyCleanupBlock = CleanupBlock mempty [] NextStatement Set.empty
+emptyCleanupBlock = CleanupBlock mempty emptyDeferred [] NextStatement Set.empty
 
 data JumpType =
   NextStatement |
@@ -186,6 +199,30 @@ data JumpType =
   JumpFailCall |
   JumpMax  -- Max value for use as initial state in folds.
   deriving (Eq,Ord,Show)
+
+newtype DeferVariable c =
+  DeferVariable {
+    dvDeferred :: Map.Map VariableName (PassedValue c)
+  }
+  deriving (Show)
+
+branchDeferred :: [DeferVariable c] -> DeferVariable c
+branchDeferred = DeferVariable . Map.unions . map dvDeferred
+
+followDeferred :: DeferVariable c -> DeferVariable c -> DeferVariable c
+followDeferred (DeferVariable xa) (DeferVariable ya) = DeferVariable $ Map.intersection xa ya
+
+emptyDeferred :: DeferVariable c
+emptyDeferred = DeferVariable Map.empty
+
+checkDeferred :: VariableName -> DeferVariable c -> Bool
+checkDeferred n (DeferVariable va) = n `Map.member` va
+
+removeDeferred :: VariableName -> DeferVariable c -> DeferVariable c
+removeDeferred n (DeferVariable va) = DeferVariable (n `Map.delete` va)
+
+addDeferred :: VariableName -> PassedValue c -> DeferVariable c -> DeferVariable c
+addDeferred n v (DeferVariable va) = DeferVariable (Map.insert n v va)
 
 csCurrentScope :: CompilerContext c m s a => CompilerState a m SymbolScope
 csCurrentScope = fmap ccCurrentScope get >>= lift
@@ -231,6 +268,10 @@ csAddVariable :: CompilerContext c m s a =>
   UsedVariable c -> VariableValue c -> CompilerState a m ()
 csAddVariable v t = fmap (\x -> ccAddVariable x v t) get >>= lift >>= put
 
+csSetDeferred :: CompilerContext c m s a =>
+  UsedVariable c -> CompilerState a m ()
+csSetDeferred v = fmap (\x -> ccSetDeferred x v) get >>= lift >>= put
+
 csSetReadOnly :: CompilerContext c m s a =>
   UsedVariable c -> CompilerState a m ()
 csSetReadOnly v = fmap (\x -> ccSetReadOnly x v) get >>= lift >>= put
@@ -261,8 +302,11 @@ csAddUsed n = fmap (\x -> ccAddUsed x n) get >>= lift >>= put
 csInheritUsed :: CompilerContext c m s a => a -> CompilerState a m ()
 csInheritUsed c = fmap (\x -> ccInheritUsed x c) get >>= lift >>= put
 
-csInheritReturns :: CompilerContext c m s a => [a] -> CompilerState a m ()
-csInheritReturns xs = fmap (\x -> ccInheritReturns x xs) get >>= lift >>= put
+csInheritStatic :: CompilerContext c m s a => [a] -> CompilerState a m ()
+csInheritStatic xs = fmap (\x -> ccInheritStatic x xs) get >>= lift >>= put
+
+csInheritDeferred :: CompilerContext c m s a => DeferVariable c -> CompilerState a m ()
+csInheritDeferred xs = fmap (\x -> ccInheritDeferred x xs) get >>= lift >>= put
 
 csRegisterReturn :: CompilerContext c m s a =>
   [c] -> Maybe ExpressionType -> CompilerState a m ()

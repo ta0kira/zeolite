@@ -22,12 +22,9 @@ limitations under the License.
 {-# LANGUAGE Trustworthy #-}
 
 module Compilation.ProcedureContext (
-  DeferVariable,
   ExprMap,
   ProcedureContext(..),
   ReturnValidation(..),
-  addDeferred,
-  emptyDeferred,
   updateArgVariables,
   updateReturnVariables,
 ) where
@@ -41,7 +38,6 @@ import qualified Data.Set as Set
 
 import Base.CompilerError
 import Base.GeneralType
-import Base.Mergeable
 import Base.MergeTree
 import Base.Positional
 import Compilation.CompilerState
@@ -53,31 +49,6 @@ import Types.TypeInstance
 
 
 type ExprMap c = Map.Map MacroName (Expression c)
-
-newtype DeferVariable c =
-  DeferVariable {
-    dvDeferred :: Map.Map VariableName (PassedValue c)
-  }
-  deriving (Show)
-
-instance Mergeable (DeferVariable c) where
-  mergeAny = DeferVariable . Map.unions . map dvDeferred . foldr (:) []
-  mergeAll = DeferVariable . intersect . map dvDeferred . foldr (:) [] where
-    intersect []       = Map.empty
-    intersect [x]      = x
-    intersect (x:y:ys) = intersect (Map.intersection x y:ys)
-
-emptyDeferred :: DeferVariable c
-emptyDeferred = DeferVariable Map.empty
-
-checkDeferred :: VariableName -> DeferVariable c -> Bool
-checkDeferred n (DeferVariable va) = n `Map.member` va
-
-removeDeferred :: VariableName -> DeferVariable c -> DeferVariable c
-removeDeferred n (DeferVariable va) = DeferVariable (n `Map.delete` va)
-
-addDeferred :: VariableName -> PassedValue c -> DeferVariable c -> DeferVariable c
-addDeferred n v (DeferVariable va) = DeferVariable (Map.insert n v va)
 
 data ReturnValidation c =
   ValidatePositions {
@@ -103,6 +74,7 @@ data ProcedureContext c =
     _pcFunctions :: Map.Map FunctionName (ScopedFunction c),
     _pcVariables :: Map.Map VariableName (VariableValue c),
     _pcReturns :: ReturnValidation c,
+    _pcDeferred :: DeferVariable c,
     _pcJumpType :: JumpType,
     _pcIsNamed :: Bool,
     _pcPrimNamed :: [ReturnVariable],
@@ -279,42 +251,62 @@ instance (Show c, CollectErrorsM m) =>
   ccSetReadOnly ctx v@(UsedVariable c n) = do
     (VariableValue c2 s t _) <- ccGetVariable ctx v
     return $ ctx & pcVariables %~ Map.insert n (VariableValue c2 s t (VariableReadOnly c))
+  ccSetDeferred ctx v@(UsedVariable c n) = do
+    (VariableValue c2 s t r) <- ccGetVariable ctx v
+    when (s /= LocalScope) $
+      compilerErrorM $ "Variable " ++ show n ++ formatFullContextBrace c2 ++
+        " cannot be marked as deferred because it is not locally scoped" ++ formatFullContextBrace c
+    case r of
+         VariableReadOnly c3 -> compilerErrorM $ "Variable " ++ show n ++ formatFullContextBrace c2 ++
+                                  " cannot be marked as deferred " ++ formatFullContextBrace c ++
+                                  " because it is read-only" ++ formatFullContextBrace c3
+         VariableHidden c3 -> compilerErrorM $ "Variable " ++ show n ++ formatFullContextBrace c2 ++
+                                  " cannot be marked as deferred " ++ formatFullContextBrace c ++
+                                  " because it is hidden" ++ formatFullContextBrace c3
+         _ -> return ()
+    return $ ctx & pcDeferred %~ addDeferred n (PassedValue c t)
   ccSetHidden ctx v@(UsedVariable c n) = do
     (VariableValue c2 s t _) <- ccGetVariable ctx v
     return $ ctx & pcVariables %~ Map.insert n (VariableValue c2 s t (VariableHidden c))
   ccCheckVariableInit ctx vs
-    -- Returns are checked during cleanup inlining.
+    -- Deferred variables are checked during cleanup inlining.
     | ctx ^. pcInCleanup = return ()
-    | otherwise =
+    | otherwise = do
         case ctx ^. pcReturns of
-             ValidateNames _ _ na -> mapCompilerM_ (checkSingle na) vs
-             _ -> return ()
+              ValidateNames _ _ na -> mapCompilerM_ (checkSingle na) vs
+              _ -> return ()
+        mapCompilerM_ (checkSingle $ ctx ^. pcDeferred) vs
         where
           checkSingle na (UsedVariable c n) =
-             when (n `checkDeferred` na) $
-               compilerErrorM $ "Named return " ++ show n ++
-                                " might not be initialized" ++ formatFullContextBrace c
+            when (n `checkDeferred` na) $
+              compilerErrorM $ "Deferred variable " ++ show n ++
+                               " might not be initialized" ++ formatFullContextBrace c
   ccWrite ctx ss = return $ ctx & pcOutput <>~ ss
   ccGetOutput = return . (^. pcOutput)
   ccClearOutput ctx = return $ ctx & pcOutput .~ mempty
-  ccUpdateAssigned ctx n = return $ ctx & pcReturns %~ update where
-    update (ValidateNames ns ts ra) = ValidateNames ns ts $ n `removeDeferred` ra
-    update rs                       = rs
+  ccUpdateAssigned ctx n = return $ ctx & pcReturns %~ updateReturns & pcDeferred %~ updateDeferred where
+    updateReturns (ValidateNames ns ts ra) = ValidateNames ns ts $ n `removeDeferred` ra
+    updateReturns rs                       = rs
+    updateDeferred = (n `removeDeferred`)
   ccAddUsed ctx v
     | ctx ^. pcInCleanup = return $ ctx & pcUsedVars <>~ [v]
     | otherwise          = return ctx
-  ccInheritReturns ctx cs = return $ ctx & pcReturns .~ returns & pcJumpType .~ jump & pcUsedVars .~ used where
+  ccInheritStatic ctx [] = return ctx
+  ccInheritStatic ctx cs = return $ ctx & pcReturns .~ returns & pcJumpType .~ jump & pcUsedVars .~ used & pcDeferred .~ deferred where
+    deferred = (ctx ^. pcDeferred) `followDeferred` deferred2
     used = ctx ^. pcUsedVars ++ (concat $ map (^. pcUsedVars) cs)
-    (returns,jump) = combineSeries (ctx ^. pcReturns,ctx ^. pcJumpType) inherited
+    (returns,jump) = combineSeries (ctx ^. pcReturns,ctx ^. pcJumpType) (returns2,jump2)
     combineSeries (r@(ValidatePositions _),j1) (_,j2) = (r,max j1 j2)
     combineSeries (_,j1) (r@(ValidatePositions _),j2) = (r,max j1 j2)
-    combineSeries (ValidateNames ns ts ra1,j1) (ValidateNames _ _ ra2,j2) = (ValidateNames ns ts $ ra1 <&&> ra2,max j1 j2)
-    inherited = foldr combineParallel (ValidateNames (Positional []) (Positional []) emptyDeferred,JumpMax) $ zip (map (^. pcReturns) cs) (map (^. pcJumpType) cs)
+    combineSeries (ValidateNames ns ts ra1,j1) (ValidateNames _ _ ra2,j2) = (ValidateNames ns ts $ ra1 `followDeferred` ra2,max j1 j2)
+    (deferred2,returns2,jump2) = foldr combineParallel (emptyDeferred,ValidateNames (Positional []) (Positional []) emptyDeferred,JumpMax) $
+      zip3 (map (^. pcDeferred) cs) (map (^. pcReturns) cs) (map (^. pcJumpType) cs)
     -- Ignore a branch if it jumps to a higher scope.
-    combineParallel (_,j1) (r,j2) | j1 > NextStatement = (r,min j1 j2)
-    combineParallel (ValidateNames ns ts ra1,j1) (ValidateNames _ _ ra2,j2) = (ValidateNames ns ts $ ra1 <||> ra2,min j1 j2)
-    combineParallel (r@(ValidatePositions _),j1) (_,j2) = (r,min j1 j2)
-    combineParallel (_,j1) (r@(ValidatePositions _),j2) = (r,min j1 j2)
+    combineParallel (_,_,j1) (da2,r,j2) | j1 > NextStatement = (da2,r,min j1 j2)
+    combineParallel (da1,ValidateNames ns ts ra1,j1) (da2,ValidateNames _ _ ra2,j2) = (branchDeferred [da1,da2],ValidateNames ns ts $ branchDeferred [ra1,ra2],min j1 j2)
+    combineParallel (da1,r@(ValidatePositions _),j1) (da2,_,j2) = (branchDeferred [da1,da2],r,min j1 j2)
+    combineParallel (da1,_,j1) (da2,r@(ValidatePositions _),j2) = (branchDeferred [da1,da2],r,min j1 j2)
+  ccInheritDeferred ctx ds = return $ ctx & pcDeferred .~ ds
   ccInheritUsed ctx ctx2 = return $ ctx & pcUsedVars <>~ (ctx2 ^. pcUsedVars)
   ccRegisterReturn ctx c vs = do
     returns <- check (ctx ^. pcReturns)
@@ -370,7 +362,7 @@ instance (Show c, CollectErrorsM m) =>
            Just (VariableValue c2 s@LocalScope t _) -> Map.insert n (VariableValue c2 s t (VariableReadOnly c)) vs
            _ -> vs
   ccPushCleanup ctx ctx2 = return $ ctx & pcCleanupBlocks %~ (Just cleanup:) where
-      cleanup = CleanupBlock (ctx2 ^. pcOutput) (ctx2 ^. pcUsedVars) (ctx2 ^. pcJumpType) (ctx2 ^. pcRequiredTypes)
+      cleanup = CleanupBlock (ctx2 ^. pcOutput) (ctx2 ^. pcDeferred) (ctx2 ^. pcUsedVars) (ctx2 ^. pcJumpType) (ctx2 ^. pcRequiredTypes)
   ccGetCleanup ctx j = return combined where
     combined
       | j == NextStatement =
@@ -381,6 +373,7 @@ instance (Show c, CollectErrorsM m) =>
       | j == JumpBreak || j == JumpContinue = combine $ map fromJust $ takeWhile isJust $ ctx ^. pcCleanupBlocks
       | otherwise = emptyCleanupBlock
     combine cs = CleanupBlock (concat $ map csCleanup cs)
+                              (foldr followDeferred (ctx ^. pcDeferred) $ map csDeferred cs)
                               (concat $ map csUsesVars cs)
                               (foldr max NextStatement (map csJumpType cs))
                               (Set.unions $ map csRequires cs)

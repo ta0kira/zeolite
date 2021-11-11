@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-Copyright 2020 Kevin P. Barry
+Copyright 2020-2021 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -278,5 +278,59 @@ define Test {
     cleanup {
       fail(value)
     } in return "message"
+  }
+}
+
+
+testcase "top-level scoped/cleanup sets named return" {
+  success
+}
+
+unittest withScoped {
+  \ Testing.checkEquals<?>(Test.withScoped(),"message")
+}
+
+unittest withCleanup {
+  \ Testing.checkEquals<?>(Test.withCleanup(),"message")
+}
+
+concrete Test {
+  @type withScoped () -> (String)
+  @type withCleanup () -> (String)
+}
+
+define Test {
+  withScoped () (value) {
+    scoped {
+    } in value <- "message"
+  }
+
+  withCleanup () (value) {
+    cleanup {
+    } in value <- "message"
+  }
+}
+
+
+testcase "named return not checked in condition that jumps" {
+  crash
+  require "success"
+}
+
+unittest test {
+  \ Test.get()
+}
+
+concrete Test {
+  @type get () -> (String)
+}
+
+define Test {
+  get () (message) {
+    if (true) {
+      fail("success")
+    } else {
+      message <- "message"
+    }
   }
 }

@@ -272,6 +272,21 @@ compileStatement (IgnoreValues c e) = do
   (_,e') <- compileExpression e
   maybeSetTrace c
   csWrite ["(void) (" ++ useAsWhatever e' ++ ");"]
+compileStatement (DeferredVariables c as) = message ??> mapM_ createVariable as
+  where
+    message = "Deferred initialization at " ++ formatFullContext c
+    createVariable (CreateVariable c2 t1 n) =
+      "In creation of " ++ show n ++ " at " ++ formatFullContext c2 ??> do
+        self <- autoSelfType
+        t1' <- lift $ replaceSelfValueType self t1
+        csAddVariable (UsedVariable c2 n) (VariableValue c2 LocalScope t1' VariableDefault)
+        csWrite [variableStoredType t1' ++ " " ++ variableName n ++ ";"]
+        csSetDeferred (UsedVariable c2 n)
+    createVariable (ExistingVariable (InputValue c2 n)) =
+      "In deferring of " ++ show n ++ " at " ++ formatFullContext c2 ??>
+      csSetDeferred (UsedVariable c2 n)
+    createVariable (ExistingVariable (DiscardInput c2)) =
+      compilerErrorM $ "Cannot defer discarded value" ++ formatFullContextBrace c2
 compileStatement (Assignment c as e) = message ??> do
   (ts,e') <- compileExpression e
   r <- csResolver
@@ -393,7 +408,7 @@ compileIfElifElse :: (Ord c, Show c, CollectErrorsM m,
 compileIfElifElse (IfStatement c e p es) = do
   ctx0 <- getCleanContext
   cs <- commonIf ctx0 "if" c e p es
-  csInheritReturns cs
+  csInheritStatic cs
   where
     unwind ctx0 (IfStatement c2 e2 p2 es2) = commonIf ctx0 "else if" c2 e2 p2 es2
     unwind ctx0 (ElseStatement _ p2) = do
@@ -420,7 +435,7 @@ compileIteratedLoop :: (Ord c, Show c, CollectErrorsM m, CompilerContext c m [St
 compileIteratedLoop (WhileLoop c e p u) = do
   ctx0 <- getCleanContext
   (e',ctx1) <- compileCondition ctx0 c e
-  csInheritReturns [ctx1]
+  csInheritStatic [ctx1]
   ctx0' <- case u of
                 Just p2 -> do
                   ctx2 <- lift $ ccStartLoop ctx1 (LoopSetup [])
@@ -477,6 +492,10 @@ compileScopedBlock :: (Ord c, Show c, CollectErrorsM m,
   ScopedBlock c -> CompilerState a m ()
 compileScopedBlock s@(ScopedBlock _ _ _ c2 _) = do
   let (vs,p,cl,st) = rewriteScoped s
+  case st of
+       DeferredVariables c3 _ ->
+         compilerErrorM $ "Cannot defer variable initialization at the top level of scoped/cleanup in statements" ++ formatFullContextBrace c3
+       _ -> return ()
   self <- autoSelfType
   vs' <- lift $ mapCompilerM (replaceSelfVariable self) vs
   -- Capture context so we can discard scoped variable names.
@@ -502,6 +521,10 @@ compileScopedBlock s@(ScopedBlock _ _ _ c2 _) = do
          -- Insert an empty cleanup so that it can be used below.
          Nothing -> lift $ ccPushCleanup ctxP ctxCl0
   ctxS <- compileProcedure ctxP' (Procedure [] [st])
+  case st of
+       -- Make sure that top-level assignments removed deferred status.
+       Assignment _ (Positional existing) _ -> mapM_ setAssigned existing
+       _ -> return ()
   csWrite ["{"]
   autoInlineOutput ctxS
   -- NOTE: Keep this after inlining the in block in case the in block contains a
@@ -511,6 +534,8 @@ compileScopedBlock s@(ScopedBlock _ _ _ c2 _) = do
   csWrite ["}"]
   sequence_ $ map showVariable vs'
   where
+    setAssigned (ExistingVariable (InputValue _ n)) = csUpdateAssigned n
+    setAssigned _ = return ()
     replaceSelfVariable self (c,t,n) = do
       t' <- replaceSelfValueType self t
       return (c,t',n)
@@ -536,6 +561,11 @@ compileScopedBlock s@(ScopedBlock _ _ _ c2 _) = do
     rewriteScoped (ScopedBlock _ p cl _ (Assignment c3 vs e)) =
       (created,p,cl,Assignment c3 (Positional existing) e) where
         (created,existing) = foldr update ([],[]) (pValues vs)
+        update (CreateVariable c t n) (cs,es) = ((c,t,n):cs,(ExistingVariable $ InputValue c n):es)
+        update e2 (cs,es) = (cs,e2:es)
+    rewriteScoped (ScopedBlock _ p cl _ (DeferredVariables c3 vs)) =
+      (created,p,cl,DeferredVariables c3 existing) where
+        (created,existing) = foldr update ([],[]) vs
         update (CreateVariable c t n) (cs,es) = ((c,t,n):cs,(ExistingVariable $ InputValue c n):es)
         update e2 (cs,es) = (cs,e2:es)
     -- Merge the statement into the scoped block.
@@ -1143,10 +1173,7 @@ doImplicitReturn :: (CollectErrorsM m, Ord c, Show c, CompilerContext c m [Strin
 doImplicitReturn c = do
   named <- csIsNamedReturns
   csRegisterReturn c Nothing
-  (CleanupBlock ss _ _ req) <- csGetCleanup JumpReturn
-  csAddRequired req
-  csSetJumpType c JumpReturn
-  csWrite ss
+  get >>= autoInsertCleanup c JumpReturn
   if not named
      then csWrite ["return ReturnTuple();"]
      else do
@@ -1154,25 +1181,25 @@ doImplicitReturn c = do
        csWrite ["return returns;"]
   where
 
-autoPositionalCleanup :: (CollectErrorsM m, CompilerContext c m [String] a) =>
+autoPositionalCleanup :: (Ord c,Eq c,Show c,CollectErrorsM m, CompilerContext c m [String] a) =>
   [c] -> ExpressionValue -> CompilerState a m ()
 autoPositionalCleanup c e = do
   named <- csIsNamedReturns
-  (CleanupBlock ss _ _ req) <- csGetCleanup JumpReturn
-  csAddRequired req
-  csSetJumpType c JumpReturn
+  (CleanupBlock ss _ _ _ _) <- csGetCleanup JumpReturn
   if null ss
-     then csWrite ["return " ++ useAsReturns e ++ ";"]
+     then do
+       csSetJumpType c JumpReturn
+       csWrite ["return " ++ useAsReturns e ++ ";"]
      else do
        if named
           then do
             csWrite ["returns.TransposeFrom(" ++ useAsReturns e ++ ");"]
             setPrimNamedReturns
-            csWrite ss
+            get >>= autoInsertCleanup c JumpReturn
             csWrite ["return returns;"]
           else do
             csWrite ["{","ReturnTuple returns = " ++ useAsReturns e ++ ";"]
-            csWrite ss
+            get >>= autoInsertCleanup c JumpReturn
             csWrite ["return returns;","}"]
 
 setPrimNamedReturns ::  (CollectErrorsM m, CompilerContext c m [String] a) =>
@@ -1195,13 +1222,14 @@ getPrimNamedReturns = do
 autoInsertCleanup :: (Ord c, Show c, CollectErrorsM m, CompilerContext c m [String] a) =>
   [c] -> JumpType -> a -> CompilerState a m ()
 autoInsertCleanup c j ctx = do
-  (CleanupBlock ss vs jump req) <- lift $ ccGetCleanup ctx j
-  lift (ccCheckVariableInit ctx $ nub vs) <??
+  (CleanupBlock ss ds vs jump req) <- lift $ ccGetCleanup ctx j
+  csCheckVariableInit (nub vs) <??
     "In inlining of cleanup block after statement at " ++ formatFullContext c
   let vs2 = map (\(UsedVariable c0 v) -> UsedVariable (c ++ c0) v) vs
+  csInheritDeferred ds
   -- This is needed in case a cleanup is inlined within another cleanup, e.g.,
   -- e.g., if the latter has a break statement.
-  sequence_ $ map csAddUsed $ vs2
+  mapM_ csAddUsed vs2
   csWrite ss
   csAddRequired req
   csSetJumpType c jump
@@ -1215,7 +1243,7 @@ autoInlineOutput :: (Ord c, Show c, CollectErrorsM m, CompilerContext c m [Strin
 autoInlineOutput ctx = do
   inheritRequired ctx
   getAndIndentOutput ctx >>= csWrite
-  csInheritReturns [ctx]
+  csInheritStatic [ctx]
 
 getAndIndentOutput :: (Ord c, Show c, CollectErrorsM m, CompilerContext c m [String] a) =>
   a -> CompilerState a m [String]

@@ -133,13 +133,19 @@ instance ParseFromSource (Statement SourceContext) where
                  parseAssign <|>
                  parsePragma <|>
                  parseIgnore where
-    parseAssign = labeled "statement" $ do
+    parseAssign = labeled "assignment" $ do
       c <- getSourceContext
       as <- sepBy sourceParser (sepAfter $ string_ ",")
       assignOperator
+      assignExpr c as <|> assignDefer c as
+    assignExpr c as = do
       e <- sourceParser
       statementEnd
       return $ Assignment [c] (Positional as) e
+    assignDefer c as = do
+      kwDefer
+      statementEnd
+      return $ DeferredVariables [c] as
     parseBreak = labeled "break" $ do
       c <- getSourceContext
       kwBreak

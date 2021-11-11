@@ -173,6 +173,7 @@ data Statement c =
   RawFailCall String |
   IgnoreValues [c] (Expression c) |
   Assignment [c] (Positional (Assignable c)) (Expression c) |
+  DeferredVariables [c] [Assignable c] |
   NoValueExpression [c] (VoidExpression c) |
   MarkReadOnly [c] [VariableName] |
   MarkHidden [c] [VariableName] |
@@ -193,6 +194,7 @@ getStatementContext (FailCall c _)          = c
 getStatementContext (RawFailCall _)         = []
 getStatementContext (IgnoreValues c _)      = c
 getStatementContext (Assignment c _ _)      = c
+getStatementContext (DeferredVariables c _) = c
 getStatementContext (NoValueExpression c _) = c
 getStatementContext (MarkReadOnly c _)      = c
 getStatementContext (MarkHidden c _)        = c

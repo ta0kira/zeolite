@@ -768,9 +768,8 @@ define Test {
 }
 
 
-testcase "default return not allowed in cleanup" {
-  error
-  require compiler "return.+cleanup"
+testcase "default return allowed in cleanup" {
+  compiles
 }
 
 unittest test {
