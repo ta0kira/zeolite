@@ -93,7 +93,7 @@ getProcedureContext (ScopeContext tm t ps ms pa fa va em)
                     (ExecutableProcedure _ _ _ _ as2 rs2 _) = do
   rs' <- if isUnnamedReturns rs2
             then return $ ValidatePositions rs1
-            else fmap (ValidateNames (fmap ovName $ nrNames rs2) rs1 . Map.fromList) $ processPairs pairOutput rs1 (nrNames rs2)
+            else fmap (ValidateNames (fmap ovName $ nrNames rs2) rs1 . foldr (uncurry addDeferred) emptyDeferred) $ processPairs pairOutput rs1 (nrNames rs2)
   va' <- updateArgVariables va as1 as2
   va'' <- updateReturnVariables va' rs1 rs2
   let pa' = if s == CategoryScope

@@ -22,9 +22,12 @@ limitations under the License.
 {-# LANGUAGE Trustworthy #-}
 
 module Compilation.ProcedureContext (
+  DeferVariable,
   ExprMap,
   ProcedureContext(..),
   ReturnValidation(..),
+  addDeferred,
+  emptyDeferred,
   updateArgVariables,
   updateReturnVariables,
 ) where
@@ -38,6 +41,7 @@ import qualified Data.Set as Set
 
 import Base.CompilerError
 import Base.GeneralType
+import Base.Mergeable
 import Base.MergeTree
 import Base.Positional
 import Compilation.CompilerState
@@ -50,6 +54,31 @@ import Types.TypeInstance
 
 type ExprMap c = Map.Map MacroName (Expression c)
 
+newtype DeferVariable c =
+  DeferVariable {
+    dvDeferred :: Map.Map VariableName (PassedValue c)
+  }
+  deriving (Show)
+
+instance Mergeable (DeferVariable c) where
+  mergeAny = DeferVariable . Map.unions . map dvDeferred . foldr (:) []
+  mergeAll = DeferVariable . intersect . map dvDeferred . foldr (:) [] where
+    intersect []       = Map.empty
+    intersect [x]      = x
+    intersect (x:y:ys) = intersect (Map.intersection x y:ys)
+
+emptyDeferred :: DeferVariable c
+emptyDeferred = DeferVariable Map.empty
+
+checkDeferred :: VariableName -> DeferVariable c -> Bool
+checkDeferred n (DeferVariable va) = n `Map.member` va
+
+removeDeferred :: VariableName -> DeferVariable c -> DeferVariable c
+removeDeferred n (DeferVariable va) = DeferVariable (n `Map.delete` va)
+
+addDeferred :: VariableName -> PassedValue c -> DeferVariable c -> DeferVariable c
+addDeferred n v (DeferVariable va) = DeferVariable (Map.insert n v va)
+
 data ReturnValidation c =
   ValidatePositions {
     vpReturns :: Positional (PassedValue c)
@@ -57,7 +86,7 @@ data ReturnValidation c =
   ValidateNames {
     vnNames :: Positional VariableName,
     vnTypes :: Positional (PassedValue c),
-    vnRemaining :: Map.Map VariableName (PassedValue c)
+    vnRemaining :: DeferVariable c
   }
   deriving (Show)
 
@@ -262,14 +291,14 @@ instance (Show c, CollectErrorsM m) =>
              _ -> return ()
         where
           checkSingle na (UsedVariable c n) =
-             when (n `Map.member` na) $
+             when (n `checkDeferred` na) $
                compilerErrorM $ "Named return " ++ show n ++
                                 " might not be initialized" ++ formatFullContextBrace c
   ccWrite ctx ss = return $ ctx & pcOutput <>~ ss
   ccGetOutput = return . (^. pcOutput)
   ccClearOutput ctx = return $ ctx & pcOutput .~ mempty
   ccUpdateAssigned ctx n = return $ ctx & pcReturns %~ update where
-    update (ValidateNames ns ts ra) = ValidateNames ns ts $ Map.delete n ra
+    update (ValidateNames ns ts ra) = ValidateNames ns ts $ n `removeDeferred` ra
     update rs                       = rs
   ccAddUsed ctx v
     | ctx ^. pcInCleanup = return $ ctx & pcUsedVars <>~ [v]
@@ -279,11 +308,11 @@ instance (Show c, CollectErrorsM m) =>
     (returns,jump) = combineSeries (ctx ^. pcReturns,ctx ^. pcJumpType) inherited
     combineSeries (r@(ValidatePositions _),j1) (_,j2) = (r,max j1 j2)
     combineSeries (_,j1) (r@(ValidatePositions _),j2) = (r,max j1 j2)
-    combineSeries (ValidateNames ns ts ra1,j1) (ValidateNames _ _ ra2,j2) = (ValidateNames ns ts $ Map.intersection ra1 ra2,max j1 j2)
-    inherited = foldr combineParallel (ValidateNames (Positional []) (Positional []) Map.empty,JumpMax) $ zip (map (^. pcReturns) cs) (map (^. pcJumpType) cs)
+    combineSeries (ValidateNames ns ts ra1,j1) (ValidateNames _ _ ra2,j2) = (ValidateNames ns ts $ ra1 <&&> ra2,max j1 j2)
+    inherited = foldr combineParallel (ValidateNames (Positional []) (Positional []) emptyDeferred,JumpMax) $ zip (map (^. pcReturns) cs) (map (^. pcJumpType) cs)
     -- Ignore a branch if it jumps to a higher scope.
     combineParallel (_,j1) (r,j2) | j1 > NextStatement = (r,min j1 j2)
-    combineParallel (ValidateNames ns ts ra1,j1) (ValidateNames _ _ ra2,j2) = (ValidateNames ns ts $ Map.union ra1 ra2,min j1 j2)
+    combineParallel (ValidateNames ns ts ra1,j1) (ValidateNames _ _ ra2,j2) = (ValidateNames ns ts $ ra1 <||> ra2,min j1 j2)
     combineParallel (r@(ValidatePositions _),j1) (_,j2) = (r,min j1 j2)
     combineParallel (_,j1) (r@(ValidatePositions _),j2) = (r,min j1 j2)
   ccInheritUsed ctx ctx2 = return $ ctx & pcUsedVars <>~ (ctx2 ^. pcUsedVars)
@@ -311,8 +340,8 @@ instance (Show c, CollectErrorsM m) =>
       check (ValidateNames ns ts ra) = do
         case vs of
              Just _  -> check (ValidatePositions ts) >> return ()
-             Nothing -> mapCompilerM_ alwaysError $ Map.toList ra
-        return (ValidateNames ns ts Map.empty)
+             Nothing -> mapCompilerM_ alwaysError $ Map.toList $ dvDeferred ra
+        return (ValidateNames ns ts emptyDeferred)
       alwaysError (n,_) = compilerErrorM $ "Named return " ++ show n ++
                                            " might not be initialized" ++
                                            formatFullContextBrace c
