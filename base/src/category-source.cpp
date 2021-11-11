@@ -19,6 +19,7 @@ limitations under the License.
 #include "category-source.hpp"
 
 #include <algorithm>
+#include <sstream>
 
 #include "logging.hpp"
 
@@ -39,12 +40,18 @@ struct Type_Intersect : public TypeInstance {
     if (params_.empty()) {
       output << "any";
     } else {
+      std::set<std::string> types;
+      for (const S<const TypeInstance>& type : params_) {
+        std::ostringstream text;
+        type->BuildTypeName(text);
+        types.insert(text.str());
+      }
       output << "[";
       bool first = true;
-      for (const auto param : params_) {
+      for (const std::string& type : types) {
         if (!first) output << "&";
         first = false;
-        param->BuildTypeName(output);
+        output << type;
       }
       output << "]";
     }
@@ -70,12 +77,18 @@ struct Type_Union : public TypeInstance {
     if (params_.empty()) {
       output << "all";
     } else {
+      std::set<std::string> types;
+      for (const S<const TypeInstance>& type : params_) {
+        std::ostringstream text;
+        type->BuildTypeName(text);
+        types.insert(text.str());
+      }
       output << "[";
       bool first = true;
-      for (const auto param : params_) {
+      for (const std::string& type : types) {
         if (!first) output << "|";
         first = false;
-        param->BuildTypeName(output);
+        output << type;
       }
       output << "]";
     }

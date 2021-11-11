@@ -69,14 +69,14 @@ unittest param {
 
 unittest intersectParam {
   String text <- Wrapped:getTypenameIntersect<Formatted,Int>().formatted()
-  if (text != "[Formatted&Int]" && text != "[Int&Formatted]") {
+  if (text != "[Formatted&Int]") {
     fail(text)
   }
 }
 
 unittest unionParam {
   String text <- Wrapped:getTypenameUnion<Formatted,Int>().formatted()
-  if (text != "[Formatted|Int]" && text != "[Int|Formatted]") {
+  if (text != "[Formatted|Int]") {
     fail(text)
   }
 }
