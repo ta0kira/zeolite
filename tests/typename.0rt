@@ -21,108 +21,72 @@ testcase "builtin typenames" {
 }
 
 unittest string {
-  Formatted name <- typename<String>()
-  if (name.formatted() != "String") {
-    fail(name)
-  }
+  \ Testing.checkEquals<?>(typename<String>().formatted(),"String")
 }
 
 unittest int {
-  Formatted name <- typename<Int>()
-  if (name.formatted() != "Int") {
-    fail(name)
-  }
+  \ Testing.checkEquals<?>(typename<Int>().formatted(),"Int")
 }
 
 unittest char {
-  Formatted name <- typename<Char>()
-  if (name.formatted() != "Char") {
-    fail(name)
-  }
+  \ Testing.checkEquals<?>(typename<Char>().formatted(),"Char")
+}
+
+unittest charBuffer {
+  \ Testing.checkEquals<?>(typename<CharBuffer>().formatted(),"CharBuffer")
 }
 
 unittest float {
-  Formatted name <- typename<Float>()
-  if (name.formatted() != "Float") {
-    fail(name)
-  }
+  \ Testing.checkEquals<?>(typename<Float>().formatted(),"Float")
 }
 
 unittest bool {
-  Formatted name <- typename<Bool>()
-  if (name.formatted() != "Bool") {
-    fail(name)
-  }
-}
-
-unittest formatted {
-  Formatted name <- typename<Formatted>()
-  if (name.formatted() != "Formatted") {
-    fail(name)
-  }
+  \ Testing.checkEquals<?>(typename<Bool>().formatted(),"Bool")
 }
 
 unittest anyType {
-  Formatted name <- typename<any>()
-  if (name.formatted() != "any") {
-    fail(name)
-  }
+  \ Testing.checkEquals<?>(typename<any>().formatted(),"any")
 }
 
 unittest allType {
-  Formatted name <- typename<all>()
-  if (name.formatted() != "all") {
-    fail(name)
-  }
+  \ Testing.checkEquals<?>(typename<all>().formatted(),"all")
 }
 
 unittest intersectDedup {
-  Formatted name <- typename<[AsBool&Char&Formatted&Int]>()
-  if (name.formatted() != "[Char&Int]") {
-    fail(name)
-  }
+  \ Testing.checkEquals<?>(typename<[AsBool&Char&Formatted&Int]>().formatted(),
+                           typename<[Char&Int]>().formatted())
 }
 
 unittest unionDedup {
-  Formatted name <- typename<[AsBool|Char|Formatted|Int]>()
-  if (name.formatted() != "[AsBool|Formatted]") {
-    fail(name)
-  }
+  \ Testing.checkEquals<?>(typename<[AsBool|Char|Formatted|Int]>().formatted(),
+                           typename<[AsBool|Formatted]>().formatted())
 }
 
 unittest param {
-  Formatted name <- Wrapped:getTypename<String,Value<Int>>()
-  if (name.formatted() != "Type<String,Value<Int>>") {
-    fail(name)
-  }
+  \ Testing.checkEquals<?>(Wrapped:getTypename<String,Value<Int>>().formatted(),
+                           "Type<String,Value<Int>>")
 }
 
 unittest intersectParam {
-  Formatted name <- Wrapped:getTypenameIntersect<Formatted,Int>()
-  if (name.formatted() != "[Formatted&Int]") {
-    fail(name)
+  String text <- Wrapped:getTypenameIntersect<Formatted,Int>().formatted()
+  if (text != "[Formatted&Int]" && text != "[Int&Formatted]") {
+    fail(text)
   }
 }
 
 unittest unionParam {
-  Formatted name <- Wrapped:getTypenameUnion<Formatted,Int>()
-  if (name.formatted() != "[Formatted|Int]") {
-    fail(name)
+  String text <- Wrapped:getTypenameUnion<Formatted,Int>().formatted()
+  if (text != "[Formatted|Int]" && text != "[Int|Formatted]") {
+    fail(text)
   }
 }
 
 unittest intersectDedupParam {
-  Formatted name <- Wrapped:getTypenameIntersect<Int,Int>()
-  if (name.formatted() != "Int") {
-    fail(name)
-  }
+  \ Testing.checkEquals<?>(Wrapped:getTypenameIntersect<Int,Int>().formatted(),"Int")
 }
 
 unittest unionDedupParam {
-  Formatted name <- Wrapped:getTypenameUnion<Int,Int>()
-  if (name.formatted() != "Int") {
-    fail(name)
-  }
+  \ Testing.checkEquals<?>(Wrapped:getTypenameUnion<Int,Int>().formatted(),"Int")
 }
 
 @value interface Value<#x> {}
