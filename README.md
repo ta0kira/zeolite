@@ -1358,8 +1358,55 @@ types.
 
 #### Runtime Type Reduction
 
-Some other time. (Or just see
-[`reduce.0rt`](https://github.com/ta0kira/zeolite/blob/master/tests/reduce.0rt).)
+The **`reduce`** builtin function enables very limited runtime reasoning about
+type conversion.
+
+- The call `reduce<Foo,Bar>(value)` will return `value` with type `optional Bar`
+  iff `Foo` can be converted to `Bar`. Note that `value` must itself be
+  convertible to `optional Foo`.
+- When type params are used, the types that are assigned at the point of
+  execution are checked. For example, the result of `reduce<#x,#y>(value)` will
+  depend on the *specific* types assigned to `#x` and `#y` upon execution.
+
+<pre style='color:#1f1c1b;background-color:#f6f8fa;'>
+<span style='color:#644a9b;'>@value</span> <b>interface</b> <b><span style='color:#0057ae;'>AnyObject</span></b> {
+  getAs&lt;<i><span style='color:#0057ae;'>#y</span></i>&gt; () -&gt; (<b>optional</b> <i><span style='color:#0057ae;'>#y</span></i>)
+}
+
+<b>concrete</b> <b><span style='color:#0057ae;'>Object</span></b><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span> {
+  <span style='color:#644a9b;'>@category</span> create&lt;<i><span style='color:#0057ae;'>#x</span></i>&gt; (<i><span style='color:#0057ae;'>#x</span></i>) -&gt; (<span style='color:#0057ae;'>AnyObject</span>)
+}
+
+<b>define</b> <b><span style='color:#0057ae;'>Object</span></b> {
+  <b>refines</b> <span style='color:#0057ae;'>AnyObject</span>
+
+  <span style='color:#644a9b;'>@value</span> <i><span style='color:#0057ae;'>#x</span></i> value
+
+  create (value) { <b>return</b> <span style='color:#0057ae;'>Object</span><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>#x</span></i><span style='color:#c02040;'>&gt;</span>{ value } }
+  getAs  ()      { <b>return</b> <b>reduce</b>&lt;<i><span style='color:#0057ae;'>#x</span></i>,<i><span style='color:#0057ae;'>#y</span></i>&gt;(value) }
+}</pre>
+
+<pre style='color:#1f1c1b;background-color:#f6f8fa;'>
+<span style='color:#0057ae;'>AnyObject</span> value &lt;- <span style='color:#0057ae;'>Object</span><span style='color:#644a9b;'>:</span>create&lt;<b>?</b>&gt;(<span style='color:#bf0303;'>&quot;message&quot;</span>)
+
+<span style='color:#898887;'>// This will be empty because String does not convert to Int.</span>
+<b>optional</b> <i><span style='color:#0057ae;'>Int</span></i> value1 &lt;- value<span style='color:#644a9b;'>.</span>getAs&lt;<i><span style='color:#0057ae;'>Int</span></i>&gt;()
+
+<span style='color:#898887;'>// This will be &quot;message&quot; as Formatted because String converts to Formatted.</span>
+<b>optional</b> <i><span style='color:#0057ae;'>Formatted</span></i> value2 &lt;- value<span style='color:#644a9b;'>.</span>getAs&lt;<i><span style='color:#0057ae;'>Formatted</span></i>&gt;()</pre>
+
+`reduce` *cannot* be used to "downcast" a value (e.g., converting a `Formatted`
+to a `Float`) since the argument has the same type as the first parameter.
+
+For example, `reduce<#x,#y>(value)` checks `#x`&rarr;`#y`, and since `value`
+must be `optional #x`, `value` can only be converted upward. In other words, it
+only allows conversions that would otherwise be allowed, returning `empty` for
+all other conversions.
+
+The `AnyObject` example above works because `Object` stores the *original type*
+passed to `create` as `#x`, which it then has available for the `reduce` call.
+The type variables `#x` and `#y` are the primary inputs to `reduce`; there is
+absolutely no examination of the "real" type of `value` at runtime.
 
 ### Builtins
 
@@ -1471,15 +1518,17 @@ Builtin meta-types:
 
 #### Builtin Constants
 
-- **`empty`**: A missing `optional` value.
-- **`self`**: The value being operated on in `@value` functions.
+- **`empty`** (`optional all`): A missing `optional` value.
+- **`self`** (`#self`): The value being operated on in `@value` functions.
 
 #### Builtin Functions
 
 - **`present`**: Check `optional` for `empty`.
-- **`reduce<#x,#y>`**: (Undocumented for now.)
+- **`reduce<#x,#y>(value)`**: See
+  [Runtime Type Reduction](#runtime-type-reduction).
 - **`require`**: Convert `optional` to non-`optional`.
 - **`strong`**: Convert `weak` to `optional`.
+- **`typename<#x>()`**: Formats the *real* type of `#x` as a `Formatted` value.
 
 ## Layout and Dependencies
 
