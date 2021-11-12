@@ -42,8 +42,21 @@
 * **[fix]** Removes the `types` reserved word, which was previously used for
   internal types.
 
+* **[fix]** Fixes `update` calls in `traverse`. Previously, the `update` was not
+  called for `continue`.
+
 * **[new]** Updates `String.builder()` to accept `Formatted` values, rather than
   just accepting `String`.
+
+* **[new]** Updates param inference to infer a param that is only used in
+  filters for another param, if the latter occurs as a top-level argument.
+
+  ```text
+  // The caller can infer both #x and #y, even though there is no arg with #y.
+  @type call<#x,#y>
+    #x requires Foo<#y>
+  (#x) -> ()
+  ```
 
 * **[behavior]** Reduces memory size of `Bool`, `Char`, `Float`, `Int`, and
   references to all other value objects.

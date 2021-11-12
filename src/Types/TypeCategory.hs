@@ -61,6 +61,7 @@ module Types.TypeCategory (
   getFunctionFilterMap,
   getInstanceCategory,
   getValueCategory,
+  guessesFromFilters,
   includeNewTypes,
   inferParamTypes,
   instanceFromCategory,
@@ -1094,6 +1095,21 @@ data GuessUnion =
   GuessUnion {
     guGuesses :: [GuessRange GeneralInstance]
   }
+
+guessesFromFilters :: CollectErrorsM m =>
+  ParamFilters -> ValueType -> ValueType -> m [PatternMatch ValueType]
+guessesFromFilters fm (ValueType _ t1) (ValueType _ t2) = tryParam >>= fromFilters where
+  tryParam = collectFirstM [
+      matchOnlyLeaf t2 >>= return . Just,
+      return Nothing
+    ]
+  fromFilters (Just (JustParamName _ n)) =
+    case n `Map.lookup` fm of
+         Just fs -> return $ concat $ map toGuess fs
+         Nothing -> return []
+  fromFilters _ = return []
+  toGuess (TypeFilter FilterRequires t3) = [PatternMatch Covariant (ValueType RequiredValue t1) (ValueType RequiredValue t3)]
+  toGuess _ = []
 
 mergeInferredTypes :: (CollectErrorsM m, TypeResolver r) =>
   r -> ParamFilters -> ParamFilters -> ParamValues -> MergeTree InferredTypeGuess -> m ParamValues

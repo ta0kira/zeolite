@@ -178,6 +178,7 @@ data Statement c =
   MarkReadOnly [c] [VariableName] |
   MarkHidden [c] [VariableName] |
   ValidateRefs [c] [VariableName] |
+  ShowVariable [c] ValueType VariableName |
   RawCodeLine String
   deriving (Show)
 
@@ -199,6 +200,7 @@ getStatementContext (NoValueExpression c _) = c
 getStatementContext (MarkReadOnly c _)      = c
 getStatementContext (MarkHidden c _)        = c
 getStatementContext (ValidateRefs c _)      = c
+getStatementContext (ShowVariable _ _ _)    = []
 getStatementContext (RawCodeLine _)         = []
 
 data Assignable c =

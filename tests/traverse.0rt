@@ -77,7 +77,7 @@ unittest withUpdate {
   } update {
     total <- total+i
   }
-  \ Testing.checkEquals<?>(total,20)
+  \ Testing.checkEquals<?>(total,45)
 }
 
 unittest overwriteVisibleValue {

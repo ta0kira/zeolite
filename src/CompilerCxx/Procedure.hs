@@ -351,6 +351,7 @@ compileStatement (ValidateRefs c vs) = mapM_ validate vs where
     let e = readStoredVariable False t (variableName n)
     maybeSetTrace c
     csWrite [useAsUnwrapped e ++ ".Validate(\"" ++ show n ++ "\");"]
+compileStatement (ShowVariable c t n) = csAddVariable (UsedVariable c n) (VariableValue c LocalScope t VariableDefault)
 compileStatement (RawCodeLine s) = csWrite [s]
 
 compileRegularInit :: (Ord c, Show c, CollectErrorsM m,
@@ -472,12 +473,16 @@ compileIteratedLoop (TraverseLoop c1 e c2 a (Procedure c3 ss) u) = "In compilati
   (Positional [typeGet],exprNext) <- compileExpression callNext
   when (typeGet /= currType) $ compilerErrorM $ "Unexpected return type from next(): " ++ show typeGet ++ " (expected) " ++ show currType ++ " (actual)"
   let assnGet = if isAssignableDiscard a then [] else [Assignment c2 (Positional [a]) callGet]
+  let showVar = case a of
+                     CreateVariable c4 t3 n -> [ShowVariable c4 t3 n]
+                     _ -> []
+  let next = [RawCodeLine $ currVar ++ " = " ++ writeStoredVariable currType exprNext ++ ";"]
   csAddRequired $ categoriesFromTypes $ vtType currType
   compileStatement $ NoValueExpression [] $ WithScope $ ScopedBlock []
     (Procedure [] [RawCodeLine $ variableStoredType currType ++ " " ++ currVar ++ " = " ++ writeStoredVariable currType e' ++ ";"]) Nothing []
     (NoValueExpression [] $ Loop $ WhileLoop [] (Expression [] currPresent [])
-      (Procedure c3 (assnGet ++ ss ++ update))
-      (Just $ Procedure [] [RawCodeLine $ currVar ++ " = " ++ writeStoredVariable currType exprNext ++ ";"]))
+      (Procedure c3 (assnGet ++ ss))
+      (Just $ Procedure [] (next ++ showVar ++ update)))
     where
       update = case u of
                     Just (Procedure _ ss2) -> ss2
@@ -1020,8 +1025,9 @@ guessParamsFromArgs :: (Ord c, Show c, CollectErrorsM m, TypeResolver r) =>
 guessParamsFromArgs r fa f ps ts = do
   fm <- getFunctionFilterMap f
   args <- processPairs (\t1 t2 -> return $ PatternMatch Covariant t1 t2) ts (fmap pvType $ sfArgs f)
+  filts <- fmap concat $ processPairs (guessesFromFilters fm) ts (fmap pvType $ sfArgs f)
   pa <- fmap Map.fromList $ processPairs toInstance (fmap vpParam $ sfParams f) ps
-  gs <- inferParamTypes r fa pa args
+  gs <- inferParamTypes r fa pa (args ++ filts)
   gs' <- mergeInferredTypes r fa fm pa gs
   let pa3 = gs' `Map.union` pa
   fmap Positional $ mapCompilerM (subPosition pa3) (pValues $ sfParams f) where

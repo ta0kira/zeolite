@@ -390,3 +390,36 @@ define Convert {
     return #self{ }
   }
 }
+
+
+testcase "dependent implicit param inferred from requires" {
+  crash
+  require "m e s s a g e"
+}
+
+unittest test {
+  \ Type.run()
+}
+
+concrete Type {
+  @type run () -> ()
+}
+
+define Type {
+  run () {
+    \ call<?,?>("message")
+    \ call<String,?>("message")
+  }
+
+  @type call<#x,#c>
+    #c requires Formatted
+    #x requires DefaultOrder<#c>
+  (#x) -> ()
+  call (value) {
+    [Append<Formatted>&Build<String>] builder <- String.builder()
+    traverse (value.defaultOrder() -> #c char) {
+      \ builder.append(char).append(" ")
+    }
+    fail(builder.build())
+  }
+}
