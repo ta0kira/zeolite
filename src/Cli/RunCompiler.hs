@@ -21,7 +21,7 @@ module Cli.RunCompiler (
 ) where
 
 import Control.Monad (foldM,when)
-import Data.List (intercalate,nub)
+import Data.List (intercalate,isSuffixOf,nub)
 import System.Directory
 import System.FilePath
 import System.IO
@@ -69,8 +69,9 @@ runCompiler resolver backend (CompileOptions _ _ _ ds _ _ p (ExecuteTests tp cl)
       em <- getExprMap (p </> d) rm
       return (ca5,ms ++ [LoadedTests p d m em (deps1) deps2])
     checkTestFilters ts = do
-      let possibleTests = Set.fromList $ concat $ map (cmTestFiles . ltMetadata) ts
-      case Set.toList $ (Set.fromList tp) `Set.difference` possibleTests of
+      let possibleTests = concat $ map (cmTestFiles . ltMetadata) ts
+      let remaining = filter (not . flip any (map (flip isSuffixOf) possibleTests). flip ($)) tp
+      case remaining of
           [] -> return ()
           fs -> compilerErrorM $ "Some test files do not occur in the selected modules: " ++
                                 intercalate ", " (map show fs) ++ "\n"

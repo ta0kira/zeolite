@@ -320,7 +320,9 @@ runModuleTests resolver backend cl base tp (LoadedTests p d m em deps1 deps2) = 
   cm <- fmap (createLanguageModule [] em) $ loadModuleGlobals resolver path (NoNamespace,NoNamespace) [] (Just m) deps1 []
   mapCompilerM (runSingleTest backend cl cm paths (m:deps2)) ts' where
     allowTests = Set.fromList tp
-    isTestAllowed t = if null allowTests then True else t `Set.member` allowTests
+    isTestAllowed t
+      | null allowTests = True
+      | otherwise = any (`isSuffixOf` t) allowTests
     showSkipped f = compilerWarningM $ "Skipping tests in " ++ f ++ " due to explicit test filter."
 
 loadPrivateSource :: PathIOHandler r => r -> VersionHash -> FilePath -> FilePath -> TrackedErrorsIO (PrivateSource SourceContext)
