@@ -39,6 +39,9 @@
   }
   ```
 
+* **[fix]** Removes the `types` reserved word, which was previously used for
+  internal types.
+
 * **[new]** Updates `String.builder()` to accept `Formatted` values, rather than
   just accepting `String`.
 

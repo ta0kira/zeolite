@@ -68,7 +68,6 @@ module Parser.Common (
   kwTrue,
   kwType,
   kwTypename,
-  kwTypes,
   kwUnittest,
   kwUpdate,
   kwValue,
@@ -284,9 +283,6 @@ kwType = keyword "@type"
 kwTypename :: TextParser ()
 kwTypename = keyword "typename"
 
-kwTypes :: TextParser ()
-kwTypes = keyword "types"
-
 kwUnittest :: TextParser ()
 kwUnittest = keyword "unittest"
 
@@ -355,7 +351,6 @@ isKeyword = foldr (<|>) empty $ map try [
     kwTrue,
     kwType,
     kwTypename,
-    kwTypes,
     kwUnittest,
     kwUpdate,
     kwValue,
