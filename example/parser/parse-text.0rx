@@ -46,7 +46,7 @@ define SequenceOfParser {
     ParseContext<any> context <- contextOld
     [Append<Formatted>&Build<String>] builder <- String.builder()
 
-    optional Order<Int> counter <- empty
+    optional Order<Int> counter <- defer
     if (max == 0) {
       counter <- Counter.unlimited()
     } else {

@@ -57,7 +57,7 @@
     <span style='color:#0057ae;'>ParseContext</span><span style='color:#c02040;'>&lt;</span><b>any</b><span style='color:#c02040;'>&gt;</span> context &lt;- contextOld
     <b><span style='color:#006e28;'>[</span></b><i><span style='color:#0057ae;'>Append</span></i><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Formatted</span></i><span style='color:#c02040;'>&gt;</span><span style='color:#006e28;'>&amp;</span><i><span style='color:#0057ae;'>Build</span></i><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>String</span></i><span style='color:#c02040;'>&gt;</span><b><span style='color:#006e28;'>]</span></b> builder &lt;- <i><span style='color:#0057ae;'>String</span></i><span style='color:#644a9b;'>.</span>builder()
 
-    <b>optional</b> <i><span style='color:#0057ae;'>Order</span></i><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Int</span></i><span style='color:#c02040;'>&gt;</span> counter &lt;- <b>empty</b>
+    <b>optional</b> <i><span style='color:#0057ae;'>Order</span></i><span style='color:#c02040;'>&lt;</span><i><span style='color:#0057ae;'>Int</span></i><span style='color:#c02040;'>&gt;</span> counter &lt;- <b>defer</b>
     <b>if</b> (max == <span style='color:#b08000;'>0</span>) {
       counter &lt;- <span style='color:#0057ae;'>Counter</span><span style='color:#644a9b;'>.</span>unlimited()
     } <b>else</b> {
