@@ -58,6 +58,7 @@ data ModuleSpec =
   ModuleSpec {
     msRoot :: FilePath,
     msPath :: FilePath,
+    msExtra :: [FilePath],
     msExprMap :: ExprMap SourceContext,
     msPublicDeps :: [FilePath],
     msPrivateDeps :: [FilePath],
@@ -83,7 +84,7 @@ data LoadedTests =
   deriving (Show)
 
 compileModule :: (PathIOHandler r, CompilerBackend b) => r -> b -> ModuleSpec -> TrackedErrorsIO ()
-compileModule resolver backend (ModuleSpec p d em is is2 ps xs ts es ep m f) = do
+compileModule resolver backend (ModuleSpec p d ee em is is2 ps xs ts es ep m f) = do
   as  <- fmap fixPaths $ mapCompilerM (resolveModule resolver (p </> d)) is
   as2 <- fmap fixPaths $ mapCompilerM (resolveModule resolver (p </> d)) is2
   let ca0 = Map.empty
@@ -102,6 +103,7 @@ compileModule resolver backend (ModuleSpec p d em is is2 ps xs ts es ep m f) = d
                  return $ bpDeps ++ deps1
   time <- errorFromIO getZonedTime
   path <- errorFromIO $ canonicalizePath $ p </> d
+  extra <- errorFromIO $ sequence $ map (canonicalizePath . (p</>)) ee
   -- NOTE: Making the public namespace deterministic allows freshness checks to
   -- skip checking all inputs/outputs for each dependency.
   let ns0 = StaticNamespace $ publicNamespace  $ show compilerHash ++ path
@@ -117,9 +119,9 @@ compileModule resolver backend (ModuleSpec p d em is is2 ps xs ts es ep m f) = d
   fs <- compileLanguageModule cm xa
   mf <- maybeCreateMain cm xa m
   eraseCachedData (p </> d)
-  let ps2 = map takeFileName ps
-  let xs2 = map takeFileName xs
-  let ts2 = map takeFileName ts
+  ps2 <- mapCompilerM (errorFromIO. canonicalizePath . (p </>)) ps
+  xs2 <- mapCompilerM (errorFromIO. canonicalizePath . (p </>)) xs
+  ts2 <- mapCompilerM (errorFromIO. canonicalizePath . (p </>)) ts
   let paths = map (\ns -> getCachedPath (p </> d) ns "") $ nub $ filter (not . null) $ map show $ map coNamespace fs
   paths' <- mapM (errorFromIO . canonicalizePath) paths
   s0 <- errorFromIO $ canonicalizePath $ getCachedPath (p </> d) (show ns0) ""
@@ -144,6 +146,7 @@ compileModule resolver backend (ModuleSpec p d em is is2 ps xs ts es ep m f) = d
   let cm2 = CompileMetadata {
       cmVersionHash = compilerHash,
       cmPath = path,
+      cmExtra = extra,
       cmPublicNamespace = ns0,
       cmPrivateNamespace = ns1,
       cmPublicDeps = as,
@@ -166,6 +169,7 @@ compileModule resolver backend (ModuleSpec p d em is is2 ps xs ts es ep m f) = d
   let cm2' = CompileMetadata {
       cmVersionHash = cmVersionHash cm2,
       cmPath = cmPath cm2,
+      cmExtra = cmExtra cm2,
       cmPublicNamespace = cmPublicNamespace cm2,
       cmPrivateNamespace = cmPrivateNamespace cm2,
       cmPublicDeps = cmPublicDeps cm2,
@@ -277,19 +281,19 @@ compileModule resolver backend (ModuleSpec p d em is is2 ps xs ts es ep m f) = d
       fmap (:[]) $ compileModuleMain cm2 xs2 n f2
     maybeCreateMain _ _ _ = return []
 
-createModuleTemplates :: PathIOHandler r => r -> FilePath -> FilePath ->
+createModuleTemplates :: PathIOHandler r => r -> FilePath -> FilePath -> [FilePath] ->
   [CompileMetadata] -> [CompileMetadata] -> TrackedErrorsIO ()
-createModuleTemplates resolver p d deps1 deps2 = do
-  (ps,xs,_) <- findSourceFiles p d
+createModuleTemplates resolver p d ds deps1 deps2 = do
+  (ps,xs,_) <- findSourceFiles p (d:ds)
   (LanguageModule _ _ _ cs0 ps0 ts0 cs1 ps1 ts1 _ _) <-
     fmap (createLanguageModule [] Map.empty) $ loadModuleGlobals resolver p (PublicNamespace,PrivateNamespace) ps Nothing deps1 deps2
   xs' <- zipWithContents resolver p xs
-  ds <- mapCompilerM parseInternalSource xs'
-  let ds2 = concat $ map (\(_,_,d2) -> d2) ds
+  ds2 <- mapCompilerM parseInternalSource xs'
+  let ds3 = concat $ map (\(_,_,d2) -> d2) ds2
   tm <- foldM includeNewTypes defaultCategories [cs0,cs1,ps0,ps1,ts0,ts1]
   let cs = filter isValueConcrete $ cs1++ps1++ts1
   let ca = Set.fromList $ map getCategoryName $ filter isValueConcrete cs
-  let ca' = foldr Set.delete ca $ map dcName ds2
+  let ca' = foldr Set.delete ca $ map dcName ds3
   let testingCats = Set.fromList $ map getCategoryName ts1
   ts <- fmap concat $ mapCompilerM (\n -> generate (n `Set.member` testingCats) tm n) $ Set.toList ca'
   mapCompilerM_ writeTemplate ts where

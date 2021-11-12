@@ -117,6 +117,10 @@
 * **[new]** `@value` function implementations for `immutable` categories are
   marked as `const` in C++ extensions.
 
+* **[new]** Allows modules to have additional subdirectories, specified in
+  `.zeolite-module` with the `extra_paths:` list section. This allows modules to
+  separate `.0rx` and `.0rt` files from public `.0rp` files.
+
 ### Libraries
 
 * **[breaking]** Removes iterators from `lib/util` (`iterator.0rp`) because they

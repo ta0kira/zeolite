@@ -6,7 +6,7 @@
 <language
     name="Zeolite Module"
     section="Configuration"
-    version="1.4"
+    version="1.5"
     kateversion="2.4"
     indenter="cstyle"
     style="Zeolite Module"
@@ -49,6 +49,7 @@
         <StringDetect attribute="Keyword" context="#stay" String="path:" />
         <StringDetect attribute="Keyword" context="#stay" String="private_deps:" />
         <StringDetect attribute="Keyword" context="#stay" String="public_deps:" />
+        <StringDetect attribute="Keyword" context="#stay" String="extra_paths:" />
         <StringDetect attribute="Keyword" context="#stay" String="root:" />
         <StringDetect attribute="Keyword" context="#stay" String="source:" />
       </context>

@@ -40,6 +40,7 @@ data CompileMetadata =
   CompileMetadata {
     cmVersionHash :: VersionHash,
     cmPath :: FilePath,
+    cmExtra :: [FilePath],
     cmPublicNamespace :: Namespace,
     cmPrivateNamespace :: Namespace,
     cmPublicDeps :: [FilePath],
@@ -103,6 +104,7 @@ data ModuleConfig =
   ModuleConfig {
     mcRoot :: FilePath,
     mcPath :: FilePath,
+    mcExtra :: [FilePath],
     mcExprMap :: [(MacroName,Expression SourceContext)],
     mcPublicDeps :: [FilePath],
     mcPrivateDeps :: [FilePath],
@@ -113,9 +115,10 @@ data ModuleConfig =
   deriving (Show)
 
 instance Eq ModuleConfig where
-  (ModuleConfig pA dA _ isA is2A esA epA mA) == (ModuleConfig pB dB _ isB is2B esB epB mB) =
+  (ModuleConfig pA dA eeA _ isA is2A esA epA mA) == (ModuleConfig pB dB eeB _ isB is2B esB epB mB) =
     all id [
         pA == pB,
+        eeA == eeB,
         dA == dB,
         isA == isB,
         is2A == is2B,

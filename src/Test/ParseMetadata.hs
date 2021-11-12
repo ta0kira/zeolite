@@ -39,6 +39,10 @@ hugeCompileMetadata :: CompileMetadata  -- testfiles/module-cache.txt
 hugeCompileMetadata = CompileMetadata {
     cmVersionHash = VersionHash "0123456789ABCDEFabcdef",
     cmPath = "/home/project/special",
+    cmExtra = [
+      "extra1",
+      "extra2"
+    ],
     cmPublicNamespace = StaticNamespace "public_ABCDEF",
     cmPrivateNamespace = StaticNamespace "private_ABCDEF",
     cmPublicDeps = [
@@ -126,6 +130,10 @@ hugeModuleConfig :: ModuleConfig  -- testfiles/module-config.txt
 hugeModuleConfig = ModuleConfig {
     mcRoot = "/home/projects",
     mcPath = "special",
+    mcExtra = [
+      "extra1",
+      "extra2"
+    ],
     mcExprMap = [],
     mcPublicDeps = [
       "/home/project/public-dep1",
@@ -170,6 +178,7 @@ tests = [
     checkWriteFail "bad hash" $ CompileMetadata {
       cmVersionHash = VersionHash "bad hash",
       cmPath = "/home/project/special",
+      cmExtra = [],
       cmPublicNamespace = NoNamespace,
       cmPrivateNamespace = NoNamespace,
       cmPublicDeps = [],
@@ -192,6 +201,7 @@ tests = [
     checkWriteFail "bad namespace" $ CompileMetadata {
       cmVersionHash = VersionHash "0123456789ABCDEFabcdef",
       cmPath = "/home/project/special",
+      cmExtra = [],
       cmPublicNamespace = StaticNamespace "bad namespace",
       cmPrivateNamespace = NoNamespace,
       cmPublicDeps = [],
@@ -214,6 +224,7 @@ tests = [
     checkWriteFail "bad namespace" $ CompileMetadata {
       cmVersionHash = VersionHash "0123456789ABCDEFabcdef",
       cmPath = "/home/project/special",
+      cmExtra = [],
       cmPublicNamespace = NoNamespace,
       cmPrivateNamespace = StaticNamespace "bad namespace",
       cmPublicDeps = [],
@@ -236,6 +247,7 @@ tests = [
     checkWriteFail "bad category" $ CompileMetadata {
       cmVersionHash = VersionHash "0123456789ABCDEFabcdef",
       cmPath = "/home/project/special",
+      cmExtra = [],
       cmPublicNamespace = NoNamespace,
       cmPrivateNamespace = NoNamespace,
       cmPublicDeps = [],
@@ -260,6 +272,7 @@ tests = [
     checkWriteFail "bad category" $ CompileMetadata {
       cmVersionHash = VersionHash "0123456789ABCDEFabcdef",
       cmPath = "/home/project/special",
+      cmExtra = [],
       cmPublicNamespace = NoNamespace,
       cmPrivateNamespace = NoNamespace,
       cmPublicDeps = [],
@@ -286,6 +299,7 @@ tests = [
     checkWriteFail "empty.+map" $ ModuleConfig {
       mcRoot = "/home/projects",
       mcPath = "special",
+      mcExtra = [],
       mcExprMap = [(MacroName "MACRO",Literal (StringLiteral [] "something"))],
       mcPublicDeps = [],
       mcPrivateDeps = [],

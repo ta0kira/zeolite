@@ -15,6 +15,10 @@ private_deps: [
   "/home/project/private-dep1"
   "/home/project/private-dep2"
 ]
+extra_paths: [
+  "extra1"
+  "extra2"
+]
 include_paths: [
   "extra1"
   "extra2"

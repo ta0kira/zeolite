@@ -1,5 +1,9 @@
 root: "../.."
 path: "lib/util"
+extra_paths: [
+  "lib/util/src"
+  "lib/util/test"
+]
 expression_map: [
   expression_macro {
     name: BLOCK_READ_SIZE

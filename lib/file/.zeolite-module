@@ -1,5 +1,9 @@
 root: "../.."
 path: "lib/file"
+extra_paths: [
+  "lib/file/src"
+  "lib/file/test"
+]
 public_deps: [
   "lib/util"
 ]

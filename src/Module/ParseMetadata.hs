@@ -125,6 +125,7 @@ instance ConfigFormat CompileMetadata where
   readConfig = runPermutation $ CompileMetadata
     <$> parseRequired "version_hash:"       parseHash
     <*> parseRequired "path:"               parseQuoted
+    <*> parseOptional "extra_paths:"        [] (parseList parseQuoted)
     <*> parseOptional "public_namespace:"   NoNamespace parseNamespace
     <*> parseOptional "private_namespace:"  NoNamespace parseNamespace
     <*> parseRequired "public_deps:"        (parseList parseQuoted)
@@ -142,7 +143,7 @@ instance ConfigFormat CompileMetadata where
     <*> parseRequired "libraries:"          (parseList parseQuoted)
     <*> parseRequired "link_flags:"         (parseList parseQuoted)
     <*> parseRequired "object_files:"       (parseList readConfig)
-  writeConfig (CompileMetadata h p ns1 ns2 is is2 cs1 cs2 ds1 ds2 ps xs ts hxx cxx bs ls lf os) = do
+  writeConfig (CompileMetadata h p ee ns1 ns2 is is2 cs1 cs2 ds1 ds2 ps xs ts hxx cxx bs ls lf os) = do
     validateHash h
     ns1' <- maybeShowNamespace "public_namespace:"  ns1
     ns2' <- maybeShowNamespace "private_namespace:" ns2
@@ -153,6 +154,9 @@ instance ConfigFormat CompileMetadata where
         "version_hash: " ++ show h,
         "path: " ++ show p
       ] ++ ns1' ++ ns2' ++ [
+        "extra_paths: ["
+      ] ++ indents (map show ee) ++ [
+        "]",
         "public_deps: ["
       ] ++ indents (map show is) ++ [
         "]",
@@ -275,19 +279,23 @@ instance ConfigFormat ModuleConfig where
   readConfig = runPermutation $ ModuleConfig
     <$> parseOptional "root:"           "" parseQuoted
     <*> parseRequired "path:"              parseQuoted
+    <*> parseOptional "extra_paths:"    [] (parseList parseQuoted)
     <*> parseOptional "expression_map:" [] (parseList parseExprMacro)
     <*> parseOptional "public_deps:"    [] (parseList parseQuoted)
     <*> parseOptional "private_deps:"   [] (parseList parseQuoted)
     <*> parseOptional "extra_files:"    [] (parseList readConfig)
     <*> parseOptional "include_paths:"  [] (parseList parseQuoted)
     <*> parseRequired "mode:"              readConfig
-  writeConfig (ModuleConfig p d em is is2 es ep m) = do
+  writeConfig (ModuleConfig p d ee em is is2 es ep m) = do
     es' <- fmap concat $ mapCompilerM writeConfig es
     m' <- writeConfig m
     when (not $ null em) $ compilerErrorM "Only empty expression maps are allowed when writing"
     return $ [
         "root: " ++ show p,
         "path: " ++ show d,
+        "extra_paths: ["
+      ] ++ indents (map show ee) ++ [
+        "]",
         "expression_map: [",
         -- NOTE: expression_map isn't output because that would require making
         -- all Expression serializable.

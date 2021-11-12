@@ -1,3 +1,7 @@
 root: "../.."
 path: "lib/testing"
+extra_paths: [
+  "lib/testing/src"
+  "lib/testing/test"
+]
 mode: incremental {}

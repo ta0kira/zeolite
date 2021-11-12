@@ -1,5 +1,9 @@
 root: "../.."
 path: "lib/thread"
+extra_paths: [
+  "lib/thread/src"
+  "lib/thread/test"
+]
 public_deps: [
   "lib/util"
 ]

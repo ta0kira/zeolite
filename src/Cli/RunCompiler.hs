@@ -88,6 +88,7 @@ runCompiler resolver backend (CompileOptions _ is is2 _ _ _ p (CompileFast c fn 
   let rm = ModuleConfig {
     mcRoot = "",
     mcPath = ".",
+    mcExtra = [],
     mcExprMap = [],
     mcPublicDeps = [],
     mcPrivateDeps = [],
@@ -99,6 +100,7 @@ runCompiler resolver backend (CompileOptions _ is is2 _ _ _ p (CompileFast c fn 
   let spec = ModuleSpec {
     msRoot = absolute,
     msPath = dir,
+    msExtra = [],
     msExprMap = em,
     msPublicDeps = is,
     msPrivateDeps = is2,
@@ -123,7 +125,7 @@ runCompiler resolver backend (CompileOptions _ is is2 ds _ _ p CreateTemplates f
   compilerHash = getCompilerHash backend
   compileSingle d = do
     d' <- errorFromIO $ canonicalizePath (p </> d)
-    (is',is2') <- maybeUseConfig d'
+    (ep,is',is2') <- maybeUseConfig d'
     as  <- fmap fixPaths $ mapCompilerM (resolveModule resolver d') is'
     as2 <- fmap fixPaths $ mapCompilerM (resolveModule resolver d') is2'
     isBase <- isBaseModule resolver d'
@@ -134,15 +136,15 @@ runCompiler resolver backend (CompileOptions _ is is2 ds _ _ p CreateTemplates f
                   loadPublicDeps compilerHash f Map.empty (base:as)
     deps2 <- loadPublicDeps compilerHash f (mapMetadata deps1) as2
     path <- errorFromIO $ canonicalizePath p
-    createModuleTemplates resolver path d deps1 deps2 <?? "In module \"" ++ d' ++ "\""
+    createModuleTemplates resolver path d ep deps1 deps2 <?? "In module \"" ++ d' ++ "\""
   maybeUseConfig d2 = do
     let rm = loadRecompile d2
     isError <- isCompilerErrorM rm
     if isError
-       then return (is,is2)
+       then return ([],is,is2)
        else do
-         (ModuleConfig _ _ _ is3 is4 _ _ _) <- rm
-         return (nub $ is ++ is3,nub $ is2 ++ is4)
+         (ModuleConfig p2 _ ep _ is3 is4 _ _ _) <- rm
+         return (map (p2 </>) ep,nub $ is ++ is3,nub $ is2 ++ is4)
 
 runCompiler resolver _ (CompileOptions _ is is2 ds es ep p m f) = mapM_ compileSingle ds where
   compileSingle d = do
@@ -156,6 +158,7 @@ runCompiler resolver _ (CompileOptions _ is is2 ds es ep p m f) = mapM_ compileS
     let rm = ModuleConfig {
       mcRoot = absolute,
       mcPath = d,
+      mcExtra = [],
       mcExprMap = [],
       mcPublicDeps = as,
       mcPrivateDeps = as2,
@@ -197,13 +200,14 @@ runRecompileCommon resolver backend f rec p ds = do
       if f < ForceAll && upToDate
          then compilerWarningM $ "Path " ++ d ++ " is up to date"
          else do
-           rm@(ModuleConfig p2 d2 _ is is2 es ep m) <- loadRecompile d
+           rm@(ModuleConfig p2 d2 ee _ is is2 es ep m) <- loadRecompile d
            let fixed = fixPath (d </> p2)
-           (ps,xs,ts) <- findSourceFiles fixed d2
+           (ps,xs,ts) <- findSourceFiles fixed (d2:ee)
            em <- getExprMap d rm
            let spec = ModuleSpec {
              msRoot = fixed,
              msPath = d2,
+             msExtra = ee,
              msExprMap = em,
              msPublicDeps = is,
              msPrivateDeps = is2,

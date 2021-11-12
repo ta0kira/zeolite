@@ -52,7 +52,7 @@ module Module.ProcessMetadata (
 
 import Control.Applicative ((<|>))
 import Control.Monad (when)
-import Data.List (isSuffixOf)
+import Data.List (isSuffixOf,nub)
 import Data.Maybe (isJust)
 import System.Directory
 import System.FilePath
@@ -166,18 +166,19 @@ getCachedPath p ns f = fixPath $ p </> cachedDataPath </> ns </> f
 getCacheRelativePath :: FilePath -> FilePath
 getCacheRelativePath f = ".." </> f
 
-findSourceFiles :: FilePath -> FilePath -> TrackedErrorsIO ([FilePath],[FilePath],[FilePath])
-findSourceFiles p0 p = do
-  let absolute = p0 </> p
-  isFile <- errorFromIO $ doesFileExist absolute
-  when isFile $ compilerErrorM $ "Path \"" ++ absolute ++ "\" is not a directory"
-  isDir <- errorFromIO $ doesDirectoryExist absolute
-  when (not isDir) $ compilerErrorM $ "Path \"" ++ absolute ++ "\" does not exist"
-  ds <- errorFromIO $ getDirectoryContents absolute >>= return . map (p </>)
-  let ps = filter (isSuffixOf ".0rp") ds
-  let xs = filter (isSuffixOf ".0rx") ds
-  let ts = filter (isSuffixOf ".0rt") ds
-  return (ps,xs,ts)
+findSourceFiles :: FilePath -> [FilePath] -> TrackedErrorsIO ([FilePath],[FilePath],[FilePath])
+findSourceFiles p0 = fmap (select . concat) . mapCompilerM find where
+  find p = do
+    let absolute = p0 </> p
+    isFile <- errorFromIO $ doesFileExist absolute
+    when isFile $ compilerErrorM $ "Path \"" ++ absolute ++ "\" is not a directory"
+    isDir <- errorFromIO $ doesDirectoryExist absolute
+    when (not isDir) $ compilerErrorM $ "Path \"" ++ absolute ++ "\" does not exist"
+    errorFromIO $ getDirectoryContents absolute >>= return . map (p </>)
+  select ds = (ps,xs,ts) where
+    ps = nub $ filter (isSuffixOf ".0rp") ds
+    xs = nub $ filter (isSuffixOf ".0rx") ds
+    ts = nub $ filter (isSuffixOf ".0rt") ds
 
 getExprMap :: FilePath -> ModuleConfig -> TrackedErrorsIO (ExprMap SourceContext)
 getExprMap p m = do
@@ -292,19 +293,19 @@ checkModuleVersionHash :: VersionHash -> CompileMetadata -> Bool
 checkModuleVersionHash h m = cmVersionHash m == h
 
 checkModuleFreshness :: VersionHash -> MetadataMap -> FilePath -> CompileMetadata -> TrackedErrorsIO ()
-checkModuleFreshness h ca p m@(CompileMetadata _ p2 _ _ is is2 _ _ _ _ ps xs ts hxx cxx bs ls _ os) = do
+checkModuleFreshness h ca p m@(CompileMetadata _ p2 ep _ _ is is2 _ _ _ _ ps xs ts hxx cxx bs ls _ os) = do
   time <- errorFromIO $ getModificationTime $ getCachedPath p "" metadataFilename
-  (ps2,xs2,ts2) <- findSourceFiles p ""
+  (ps2,xs2,ts2) <- findSourceFiles "" (p2:ep)
   let rs = Set.toList $ Set.fromList $ concat $ map getRequires os
   collectAllM_ $ [
       checkHash,
       checkInput time (p </> moduleFilename),
-      checkMissing ps ps2,
-      checkMissing xs xs2,
-      checkMissing ts ts2
+      mapCompilerM (errorFromIO . canonicalizePath) ps2 >>= checkMissing ps,
+      mapCompilerM (errorFromIO . canonicalizePath) xs2 >>= checkMissing xs,
+      mapCompilerM (errorFromIO . canonicalizePath) ts2 >>= checkMissing ts
     ] ++
     (map (checkDep time) $ is ++ is2) ++
-    (map (checkInput time . (p2 </>)) $ ps ++ xs) ++
+    (map (checkInput time) $ ps ++ xs) ++
     (map (checkInput time . getCachedPath p2 "") $ hxx ++ cxx) ++
     (map checkOutput bs) ++
     (map checkOutput ls) ++
@@ -337,7 +338,7 @@ checkModuleFreshness h ca p m@(CompileMetadata _ p2 _ _ is is2 _ _ _ _ ps xs ts 
       compilerErrorM $ "Required category " ++ show c ++ " is unresolved"
     checkMissing s0 s1 = do
       let missing = Set.toList $ Set.fromList s1 `Set.difference` Set.fromList s0
-      mapCompilerM_ (\f -> compilerErrorM $ "Required path \"" ++ f ++ "\" has not been compiled") missing
+      mapCompilerM_ (\f -> compilerErrorM $ "Required path \"" ++ f ++ "\" is not present in cached data") missing
     doesFileOrDirExist f2 = do
       existF <- errorFromIO $ doesFileExist f2
       if existF
