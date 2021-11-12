@@ -44,25 +44,32 @@ define SimulateRefs {
     }
   }
 
-  @type getRoutines (Bool,ReferenceState) -> (DefaultOrder<StateMachine>)
-  getRoutines (useBroken,state) {
-    if (useBroken) {
-      return Vector:create<StateMachine>()
-          .append(Routines.newSharedBroken("shared1",state))
-          .append(Routines.newWeakBroken("weak1",state))
-          .append(Routines.newWeakBroken("weak2",state))
-    } else {
-      return Vector:create<StateMachine>()
-          .append(Routines.newShared("shared1",state))
-          .append(Routines.newWeak("weak1",state))
-          .append(Routines.newWeak("weak2",state))
-    }
+  @type getRoutines (ReferenceState) -> (DefaultOrder<StateMachine>)
+  getRoutines (state) {
+    return Vector:create<StateMachine>()
+        .append(Routines.newShared("shared1",state))
+        .append(Routines.newWeak("weak1",state))
+        .append(Routines.newWeak("weak2",state))
+  }
+
+  @type getRoutinesBroken (ReferenceState) -> (DefaultOrder<StateMachine>)
+  getRoutinesBroken (state) {
+    return Vector:create<StateMachine>()
+        .append(Routines.newSharedBroken("shared1",state))
+        .append(Routines.newWeakBroken("weak1",state))
+        .append(Routines.newWeakBroken("weak2",state))
   }
 
   @type runOnce (Bool) -> (Bool)
   runOnce (useBroken) {
     ReferenceState state <- ReferenceState.new()
-    \ StateExecutor:multiplexStates(getRoutines(useBroken,state),random)
+    DefaultOrder<StateMachine> routines <- defer
+    if (useBroken) {
+      routines <- getRoutinesBroken(state)
+    } else {
+      routines <- getRoutines(state)
+    }
+    \ StateExecutor:multiplexStates(routines,random)
 
     scoped {
       optional String error <- state.getError()
