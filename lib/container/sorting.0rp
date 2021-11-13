@@ -50,4 +50,60 @@ concrete Sorting {
 
   // In-place order reversal of a random-access container.
   @category reverse<#x> ([ReadAt<#x>&WriteAt<#x>]) -> ()
+
+  // In-place stable sorting of an iterable list.
+  //
+  // Params:
+  // - #n: Node type representing the list.
+  // - #x: Element type managed by the list.
+  //
+  // Returns:
+  // - optional #n: The new head of the list after sorting.
+  //
+  // Notes:
+  // - Worst-case performance is O(n log n).
+  // - Worst-case storage is O(log n).
+  // - If the node is not the actual head, the part of the list being sorted
+  //   might become detached from the earlier part of the list.
+  @category sortList<#n,#x>
+    #x defines LessThan<#x>
+    #n requires ListNode<#n,#x>
+  (optional #n) -> (optional #n)
+
+  // In-place stable sorting of an iterable list.
+  //
+  // Params:
+  // - #n: Node type representing the list.
+  // - #x: Element type managed by the list.
+  // - #xx: Comparator type providing the LessThan<#x> comparison.
+  //
+  // Returns:
+  // - optional #n: The new head of the list after sorting.
+  //
+  // Notes:
+  // - Worst-case performance is O(n log n).
+  // - Worst-case storage is O(log n).
+  // - If the node is not the actual head, the part of the list being sorted
+  //   might become detached from the earlier part of the list.
+  //
+  // Example:
+  //
+  //   // Sort myIntContainer in reverse order. (Reversed is from lib/util.)
+  //   optional ListNode<#n,#x> newHead <- Sorting:sortListWith<?,?,Reversed<Int>>(oldHead)
+  @category sortListWith<#n,#x,#xx>
+    #xx defines LessThan<#x>
+    #n requires ListNode<#n,#x>
+  (optional #n) -> (optional #n)
+
+  // Reverses the list in place and returns the new head.
+  //
+  // Returns:
+  // - optional #n: The new head of the list after reversing.
+  //
+  // Notes:
+  // - If the node is not the actual head, the part of the list being reversed
+  //   might become detached from the earlier part of the list.
+  @category reverseList<#n,#x>
+    #n requires ListNode<#n,#x>
+  (optional #n) -> (optional #n)
 }

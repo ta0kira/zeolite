@@ -38,6 +38,36 @@ define Sorting {
       i <- i-1
     }
   }
+
+  sortList (head) {
+    return sortListWith<#n,#x,#x>(head)
+  }
+
+  sortListWith (head) {
+    optional #n oldPrev <- empty
+    return MergeSort<#n,#x,#xx>.sort(head)
+  }
+
+  reverseList (head) (head2) {
+    if (!present(head)) {
+      return empty
+    }
+    head2 <- head
+    $Hidden[head]$
+
+    scoped {
+      optional #n prev <- empty
+    } in while (true) {
+      optional #n next <- require(head2).next()
+      \ require(head2).setNext(prev)
+      prev <- head2
+      if (present(next)) {
+        head2 <- next
+      } else {
+        break
+      }
+    }
+  }
 }
 
 // Putting the params at the top level allows helpers to be called without
@@ -113,6 +143,92 @@ define HeapSort {
       #x temp <- seq.readAt(i)
       \ seq.writeAt(i,seq.readAt(j))
       \ seq.writeAt(j,temp)
+    }
+  }
+}
+
+// Putting the params at the top level allows helpers to be called without
+// needing to pass the params every time.
+concrete MergeSort<#n,#x,#xx> {
+  #xx defines LessThan<#x>
+  #n requires ListNode<#n,#x>
+
+  @type sort (optional #n) -> (optional #n)
+}
+
+define MergeSort {
+  sort (head) {
+    if (!present(head) || !present(require(head).next())) {
+      return head
+    }
+    optional #n middle <- bisect(head)
+    return merge(sort(head),sort(middle))
+  }
+
+  @type bisect (optional #n) -> (optional #n)
+  bisect (head) {
+    optional #n middle <- head
+
+    scoped {
+      optional #n front <- head
+      $Hidden[head]$
+    } in while (present(front)) {
+      $ReadOnly[middle]$
+      if (!present((front <- require(front).next())) ||
+          !present((front <- require(front).next()))) {
+        break
+      }
+    } update {
+      middle <- require(middle).next()
+    }
+
+    cleanup {
+      \ require(middle).setNext(empty)
+    } in return require(middle).next()
+  }
+
+  @type merge (optional #n,optional #n) -> (optional #n)
+  merge (left,right) (head) {
+    head <- empty
+    optional #n tail <- empty
+
+    optional #n left2  <- left
+    optional #n right2 <- right
+    $Hidden[left,right]$
+
+    while (present(left2) && present(right2)) {
+      #n append <- defer
+      if (require(left2).get() `#xx.lessThan` require(right2).get()) {
+        append <- require(left2)
+        left2 <- append.next()
+        \ append.setNext(empty)
+      } else {
+        append <- require(right2)
+        right2 <- append.next()
+        \ append.setNext(empty)
+      }
+      if (!present(head)) {
+        head <- append
+      } else {
+        \ require(tail).setNext(append)
+      }
+      tail <- append
+    }
+
+    if (present(left2)) {
+      if (!present(head)) {
+        head <- require(left2)
+      } else {
+        \ require(tail).setNext(require(left2))
+      }
+    }
+
+    if (present(right2)) {
+      if (!present(head)) {
+        head <- require(right2)
+      } else {
+        \ require(tail).setNext(require(right2))
+      }
     }
   }
 }

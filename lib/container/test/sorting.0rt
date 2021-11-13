@@ -18,6 +18,7 @@ limitations under the License.
 
 testcase "Sorting tests" {
   success
+  timeout 5
 }
 
 unittest sort {
@@ -102,6 +103,84 @@ unittest reverseEmpty {
 
   \ Sorting:reverse<?>(original)
   \ Testing.checkEquals<?>(original,expected)
+}
+
+unittest sortList {
+  ListBuilder<Int> builder <- LinkedNode<Int>.builder()
+  Vector<Int> expected <- Vector:create<Int>()
+  Int hash <- 269
+  Int size <- 137
+  $ReadOnly[hash,size]$
+
+  traverse (Counter.zeroIndexed(size) -> Int i) {
+    \ builder.append((i*hash)%size/3)
+    \ expected.append(i/3)
+  }
+
+  scoped {
+    optional LinkedNode<Int> head, _ <- builder.build()
+  } in optional LinkedNode<Int> actual <- Sorting:sortList<?,?>(head)
+
+  traverse (expected.defaultOrder() -> Int n) {
+    \ Testing.checkEquals<?>(require(actual).get(),n)
+  } update {
+    actual <- require(actual).next()
+  }
+  \ Testing.checkEquals<?>(present(actual),false)
+}
+
+unittest sortListWith {
+  ListBuilder<Int> builder <- LinkedNode<Int>.builder()
+  Vector<Int> expected <- Vector:create<Int>()
+  Int hash <- 269
+  Int size <- 137
+  $ReadOnly[hash,size]$
+
+  traverse (Counter.revZeroIndexed(size) -> Int i) {
+    \ builder.append((i*hash)%size/3)
+    \ expected.append(i/3)
+  }
+
+  scoped {
+    optional LinkedNode<Int> head, _ <- builder.build()
+  } in optional LinkedNode<Int> actual <- Sorting:sortListWith<?,?,Reversed<Int>>(head)
+
+  traverse (expected.defaultOrder() -> Int n) {
+    \ Testing.checkEquals<?>(require(actual).get(),n)
+  } update {
+    actual <- require(actual).next()
+  }
+  \ Testing.checkEquals<?>(present(actual),false)
+}
+
+unittest reverseList {
+  ListBuilder<Int> builder <- LinkedNode<Int>.builder()
+  Vector<Int> expected <- Vector:create<Int>()
+  Int size <- 101
+  $ReadOnly[size]$
+
+  traverse (Counter.zeroIndexed(size) -> Int i) {
+    \ expected.append(i)
+  }
+
+  traverse (Counter.revZeroIndexed(size) -> Int i) {
+    \ builder.append(i)
+  }
+
+  scoped {
+    optional LinkedNode<Int> head, _ <- builder.build()
+  } in optional LinkedNode<Int> reversed <- Sorting:reverseList<?,?>(head)
+
+  traverse (expected.defaultOrder() -> Int value) {
+    \ Testing.checkEquals<?>(require(reversed).get(),value)
+  } update {
+    reversed <- require(reversed).next()
+  }
+  \ Testing.checkEquals<?>(present(reversed),false)
+}
+
+unittest reverseListEmpty {
+  \ Sorting:reverseList<LinkedNode<Int>,Int>(empty)
 }
 
 concrete TestSequence {

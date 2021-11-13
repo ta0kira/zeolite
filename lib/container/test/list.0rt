@@ -1,0 +1,231 @@
+/* -----------------------------------------------------------------------------
+Copyright 2021 Kevin P. Barry
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+----------------------------------------------------------------------------- */
+
+// Author: Kevin P. Barry [ta0kira@gmail.com]
+
+testcase "basic list tests" {
+  success
+  timeout 5
+}
+
+unittest forwardTraverse {
+  optional LinkedNode<Int> head, _ <- LinkedNode<Int>.builder()
+      .append(3)
+      .append(2)
+      .append(5)
+      .append(1)
+      .append(6)
+      .append(4)
+      .build()
+
+  DefaultOrder<Int> expected <- Vector:create<Int>()
+      .append(3)
+      .append(2)
+      .append(5)
+      .append(1)
+      .append(6)
+      .append(4)
+
+  traverse (expected.defaultOrder() -> Int value) {
+    \ Testing.checkEquals<?>(require(head).get(),value)
+  } update {
+    head <- require(head).next()
+  }
+  \ Testing.checkEquals<?>(present(head),false)
+}
+
+unittest reverseTraverse {
+  _, optional LinkedNode<Int> tail <- LinkedNode<Int>.builder()
+      .append(3)
+      .append(2)
+      .append(5)
+      .append(1)
+      .append(6)
+      .append(4)
+      .build()
+
+  DefaultOrder<Int> expected <- Vector:create<Int>()
+      .append(4)
+      .append(6)
+      .append(1)
+      .append(5)
+      .append(2)
+      .append(3)
+
+  traverse (expected.defaultOrder() -> Int value) {
+    \ Testing.checkEquals<?>(require(tail).get(),value)
+  } update {
+    tail <- require(tail).prev()
+  }
+  \ Testing.checkEquals<?>(present(tail),false)
+}
+
+unittest setNext {
+  optional LinkedNode<Int> head1, _ <- LinkedNode<Int>.builder()
+      .append(3)
+      .append(2)
+      .append(5)
+      .append(1)
+      .append(6)
+      .append(4)
+      .build()
+
+  optional LinkedNode<Int> after1  <- Helper.jumpBy<?>(3,head1)
+  optional LinkedNode<Int> before1 <- require(after1).prev()
+
+  optional LinkedNode<Int> head2, _ <- LinkedNode<Int>.builder()
+      .append(13)
+      .append(12)
+      .append(15)
+      .append(11)
+      .append(16)
+      .append(14)
+      .build()
+
+  optional LinkedNode<Int> after2  <- Helper.jumpBy<?>(3,head2)
+  optional LinkedNode<Int> before2 <- require(after2).prev()
+
+  \ require(before1).setNext(after2)
+  \ Testing.checkEquals<?>(present(require(after1).prev()),false)
+  \ Testing.checkEquals<?>(require(require(before1).next()).get(),11)
+  \ Testing.checkEquals<?>(require(require(after2).prev()).get(),5)
+  \ Testing.checkEquals<?>(present(require(before2).next()),false)
+}
+
+unittest setPrev {
+  optional LinkedNode<Int> head1, _ <- LinkedNode<Int>.builder()
+      .append(3)
+      .append(2)
+      .append(5)
+      .append(1)
+      .append(6)
+      .append(4)
+      .build()
+
+  optional LinkedNode<Int> after1  <- Helper.jumpBy<?>(3,head1)
+  optional LinkedNode<Int> before1 <- require(after1).prev()
+
+  optional LinkedNode<Int> head2, _ <- LinkedNode<Int>.builder()
+      .append(13)
+      .append(12)
+      .append(15)
+      .append(11)
+      .append(16)
+      .append(14)
+      .build()
+
+  optional LinkedNode<Int> after2  <- Helper.jumpBy<?>(3,head2)
+  optional LinkedNode<Int> before2 <- require(after2).prev()
+
+  \ require(after1).setPrev(before2)
+  \ Testing.checkEquals<?>(require(require(after1).prev()).get(),15)
+  \ Testing.checkEquals<?>(present(require(before1).next()),false)
+  \ Testing.checkEquals<?>(present(require(after2).prev()),false)
+  \ Testing.checkEquals<?>(require(require(before2).next()).get(),1)
+}
+
+unittest setNextSame {
+  optional LinkedNode<Int> head, _ <- LinkedNode<Int>.builder()
+      .append(3)
+      .append(2)
+      .append(5)
+      .append(1)
+      .append(6)
+      .append(4)
+      .build()
+
+  optional LinkedNode<Int> after  <- Helper.jumpBy<?>(3,head)
+  optional LinkedNode<Int> before <- require(after).prev()
+
+  \ require(before).setNext(after)
+
+  \ Testing.checkEquals<?>(require(require(after).prev()).get(),5)
+  \ Testing.checkEquals<?>(require(require(before).next()).get(),1)
+}
+
+unittest setPrevSame {
+  optional LinkedNode<Int> head, _ <- LinkedNode<Int>.builder()
+      .append(3)
+      .append(2)
+      .append(5)
+      .append(1)
+      .append(6)
+      .append(4)
+      .build()
+
+  optional LinkedNode<Int> after  <- Helper.jumpBy<?>(3,head)
+  optional LinkedNode<Int> before <- require(after).prev()
+
+  \ require(after).setPrev(before)
+
+  \ Testing.checkEquals<?>(require(require(after).prev()).get(),5)
+  \ Testing.checkEquals<?>(require(require(before).next()).get(),1)
+}
+
+unittest setNextSelf {
+  optional LinkedNode<Int> head, _ <- LinkedNode<Int>.builder()
+      .append(3)
+      .append(2)
+      .append(5)
+      .append(1)
+      .append(6)
+      .append(4)
+      .build()
+
+  optional LinkedNode<Int> after  <- Helper.jumpBy<?>(3,head)
+  optional LinkedNode<Int> before <- require(after).prev()
+
+  \ require(before).setNext(before)
+
+  \ Testing.checkEquals<?>(present(require(after).prev()),false)
+  \ Testing.checkEquals<?>(require(require(before).prev()).get(),5)
+  \ Testing.checkEquals<?>(require(require(before).next()).get(),5)
+}
+
+unittest setPrevSelf {
+  optional LinkedNode<Int> head, _ <- LinkedNode<Int>.builder()
+      .append(3)
+      .append(2)
+      .append(5)
+      .append(1)
+      .append(6)
+      .append(4)
+      .build()
+
+  optional LinkedNode<Int> after  <- Helper.jumpBy<?>(3,head)
+  optional LinkedNode<Int> before <- require(after).prev()
+
+  \ require(after).setPrev(after)
+
+  \ Testing.checkEquals<?>(present(require(before).next()),false)
+  \ Testing.checkEquals<?>(require(require(after).prev()).get(),1)
+  \ Testing.checkEquals<?>(require(require(after).next()).get(),1)
+}
+
+concrete Helper {
+  @type jumpBy<#x>
+    #x requires Order<any>
+  (Int,optional #x) -> (optional #x)
+}
+
+define Helper {
+  jumpBy (n,x) (y) {
+    y <- x
+    traverse (Counter.zeroIndexed(n) -> _) {
+      y <- require(y).next()
+    }
+  }
+}

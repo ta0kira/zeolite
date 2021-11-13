@@ -1,0 +1,76 @@
+/* -----------------------------------------------------------------------------
+Copyright 2021 Kevin P. Barry
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+----------------------------------------------------------------------------- */
+
+// Author: Kevin P. Barry [ta0kira@gmail.com]
+
+// List element whose next element can be replaced.
+@value interface ListNode<#n|#x> {
+  refines Order<#x>
+
+  // Replace next with the provided element.
+  //
+  // Notes:
+  // - This is allowed to modify the argument, e.g., set prev if applicable.
+  // - This is *not* required to prevent cycles.
+  setNext (optional #n) -> (#self)
+}
+
+// List element that supports reverse iteration.
+@value interface DoubleNode<#n|#x> {
+  refines ListNode<#n,#x>
+
+  // Return the previous element.
+  prev () -> (optional #self)
+
+  // Replace previous with the provided element.
+  //
+  // Notes:
+  // - This is allowed to modify the argument, e.g., set next if applicable.
+  // - This is *not* required to prevent cycles.
+  setPrev (optional #n) -> (#self)
+}
+
+// Node in a doubly-linked list.
+concrete LinkedNode<#x> {
+  refines DoubleNode<LinkedNode<#x>,#x>
+
+  // Create a new node with the provided value.
+  @type new (#x) -> (#self)
+
+  // Create a new ListBuilder<#x>.
+  @type builder () -> (ListBuilder<#x>)
+}
+
+// Builder for LinkedNode.
+concrete ListBuilder<#x> {
+  refines Append<#x>
+
+  // Create a new builder.
+  @type new () -> (#self)
+
+  // Build the list.
+  //
+  // Returns:
+  // - optional LinkedNode<#x>: The head of the built list.
+  // - optional LinkedNode<#x>: The tail of the built list.
+  //
+  // Notes:
+  // - Appending new values after calling build will not invalidate the previous
+  //   head/tail, but that tail will no longer be the end.
+  // - Calling mutating functions (e.g., setNext, setPrev) on any of the
+  //   elements between the returned head/tail will invalidate the builder.
+  @value build () -> (optional LinkedNode<#x>,optional LinkedNode<#x>)
+}
