@@ -98,7 +98,8 @@ unittest setNext {
   optional LinkedNode<Int> after2  <- Helper.jumpBy<?>(3,head2)
   optional LinkedNode<Int> before2 <- require(after2).prev()
 
-  \ require(before1).setNext(after2)
+  \ Testing.checkEquals<?>(require(require(before1).setNext(after2)).get(),1)
+
   \ Testing.checkEquals<?>(present(require(after1).prev()),false)
   \ Testing.checkEquals<?>(require(require(before1).next()).get(),11)
   \ Testing.checkEquals<?>(require(require(after2).prev()).get(),5)
@@ -130,7 +131,8 @@ unittest setPrev {
   optional LinkedNode<Int> after2  <- Helper.jumpBy<?>(3,head2)
   optional LinkedNode<Int> before2 <- require(after2).prev()
 
-  \ require(after1).setPrev(before2)
+  \ Testing.checkEquals<?>(require(require(after1).setPrev(before2)).get(),5)
+
   \ Testing.checkEquals<?>(require(require(after1).prev()).get(),15)
   \ Testing.checkEquals<?>(present(require(before1).next()),false)
   \ Testing.checkEquals<?>(present(require(after2).prev()),false)

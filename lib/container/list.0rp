@@ -17,30 +17,36 @@ limitations under the License.
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
 // List element whose next element can be replaced.
-@value interface ListNode<#n|#x> {
+@value interface ListNode<|#n|#x> {
   refines Order<#x>
 
   // Replace next with the provided element.
   //
+  // Returns:
+  // - optional #n: The element being replaced as next.
+  //
   // Notes:
   // - This is allowed to modify the argument, e.g., set prev if applicable.
   // - This is *not* required to prevent cycles.
-  setNext (optional #n) -> (#self)
+  setNext (optional #n) -> (optional #n)
 }
 
 // List element that supports reverse iteration.
-@value interface DoubleNode<#n|#x> {
+@value interface DoubleNode<|#n|#x> {
   refines ListNode<#n,#x>
 
   // Return the previous element.
   prev () -> (optional #self)
 
-  // Replace previous with the provided element.
+  // Replace prev with the provided element.
+  //
+  // Returns:
+  // - optional #n: The element being replaced as prev.
   //
   // Notes:
   // - This is allowed to modify the argument, e.g., set next if applicable.
   // - This is *not* required to prevent cycles.
-  setPrev (optional #n) -> (#self)
+  setPrev (optional #n) -> (optional #n)
 }
 
 // Node in a doubly-linked list.

@@ -62,7 +62,7 @@ concrete Sorting {
   //
   // Notes:
   // - Worst-case performance is O(n log n).
-  // - Worst-case storage is O(log n).
+  // - Worst-case storage is O(1).
   // - If the node is not the actual head, the part of the list being sorted
   //   might become detached from the earlier part of the list.
   @category sortList<#n,#x>
@@ -82,7 +82,7 @@ concrete Sorting {
   //
   // Notes:
   // - Worst-case performance is O(n log n).
-  // - Worst-case storage is O(log n).
+  // - Worst-case storage is O(1).
   // - If the node is not the actual head, the part of the list being sorted
   //   might become detached from the earlier part of the list.
   //

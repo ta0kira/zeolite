@@ -57,7 +57,9 @@ define LinkedNode {
     } in return require(head)
   }
 
-  setNext (next2) {
+  setNext (next2) (old) {
+    old <- next
+    $Hidden[old]$
     if (present(next)) {
       \ require(next).setPrevBase(empty)
     }
@@ -66,10 +68,11 @@ define LinkedNode {
       \ require(next).setPrev(empty)
       \ require(next).setPrevBase(self)
     }
-    return self
   }
 
-  setPrev (prev2) {
+  setPrev (prev2) (old) {
+    old <- prev
+    $Hidden[old]$
     if (present(prev)) {
       \ require(prev).setNextBase(empty)
     }
@@ -78,7 +81,6 @@ define LinkedNode {
       \ require(prev).setNext(empty)
       \ require(prev).setNextBase(self)
     }
-    return self
   }
 
   @value setNextBase (optional LinkedNode<#x>) -> ()

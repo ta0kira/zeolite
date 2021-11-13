@@ -156,40 +156,63 @@ concrete MergeSort<#n,#x,#xx> {
 }
 
 define MergeSort {
-  sort (head) {
-    if (!present(head) || !present(require(head).next())) {
-      return head
-    }
-    optional #n middle <- bisect(require(head))
-    return merge(sort(head),sort(middle))
-  }
-
-  @type bisect (#n) -> (optional #n)
-  bisect (head) {
-    optional #n middle <- head
+  sort (head) (head2) {
+    head2 <- head
+    $Hidden[head]$
 
     scoped {
-      optional #n front <- head
-      $Hidden[head]$
-    } in while (true) {
-      $ReadOnly[middle]$
-      if (!present((front <- require(front).next())) ||
-          !present((front <- require(front).next()))) {
-        break
+      Int chunk <- 1
+      Bool dirty <- true
+    } in while (dirty) {
+      $ReadOnly[chunk]$
+      scoped {
+        optional #n next <- head2
+        head2 <- empty
+        optional #n tail <- empty
+        dirty <- false
+      } in while (present(next)) {
+        optional #n left  <- next
+        optional #n right <- splitAt(chunk,next)
+        next <- splitAt(chunk,right)
+        $Hidden[next]$
+        dirty <- dirty || present(right)
+        optional #n newHead, optional #n newTail <- merge(left,right)
+        if (!present(head2)) {
+          head2 <- newHead
+        } else {
+          \ require(tail).setNext(newHead)
+        }
+        tail <- newTail
       }
     } update {
-      middle <- require(middle).next()
+      chunk <- 2*chunk
     }
-
-    cleanup {
-      \ require(middle).setNext(empty)
-    } in return require(middle).next()
   }
 
-  @type merge (optional #n,optional #n) -> (optional #n)
-  merge (left,right) (head) {
+  @type splitAt (Int,optional #n) -> (optional #n)
+  splitAt (n,head) {
+    optional #n head2 <- head
+    $Hidden[head]$
+
+    scoped {
+      Int i <- n
+    } in while (present(head2)) {
+      if (i == 1) {
+        return require(head2).setNext(empty)
+      } else {
+        head2 <- require(head2).next()
+      }
+    } update {
+      i <- i-1
+    }
+
+    return empty
+  }
+
+  @type merge (optional #n,optional #n) -> (optional #n,optional #n)
+  merge (left,right) (head,tail) {
     head <- empty
-    optional #n tail <- empty
+    tail <- empty
 
     optional #n left2  <- left
     optional #n right2 <- right
@@ -198,11 +221,9 @@ define MergeSort {
     while (present(left2) && present(right2)) {
       #n append <- defer
       if (require(left2).get() `#xx.lessThan` require(right2).get()) {
-        append <- require(left2)
-        left2 <- append.next()
+        left2 <- (append <- require(left2)).next()
       } else {
-        append <- require(right2)
-        right2 <- append.next()
+        right2 <- (append <- require(right2)).next()
       }
       if (!present(head)) {
         head <- append
@@ -225,6 +246,15 @@ define MergeSort {
         head <- require(right2)
       } else {
         \ require(tail).setNext(require(right2))
+      }
+    }
+
+    while (present(tail)) {
+      optional #n next <- require(tail).next()
+      if (present(next)) {
+        tail <- next
+      } else {
+        break
       }
     }
   }
