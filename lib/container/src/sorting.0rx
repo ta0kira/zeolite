@@ -160,18 +160,18 @@ define MergeSort {
     if (!present(head) || !present(require(head).next())) {
       return head
     }
-    optional #n middle <- bisect(head)
+    optional #n middle <- bisect(require(head))
     return merge(sort(head),sort(middle))
   }
 
-  @type bisect (optional #n) -> (optional #n)
+  @type bisect (#n) -> (optional #n)
   bisect (head) {
     optional #n middle <- head
 
     scoped {
       optional #n front <- head
       $Hidden[head]$
-    } in while (present(front)) {
+    } in while (true) {
       $ReadOnly[middle]$
       if (!present((front <- require(front).next())) ||
           !present((front <- require(front).next()))) {
@@ -200,11 +200,9 @@ define MergeSort {
       if (require(left2).get() `#xx.lessThan` require(right2).get()) {
         append <- require(left2)
         left2 <- append.next()
-        \ append.setNext(empty)
       } else {
         append <- require(right2)
         right2 <- append.next()
-        \ append.setNext(empty)
       }
       if (!present(head)) {
         head <- append
