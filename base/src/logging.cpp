@@ -190,24 +190,6 @@ const std::vector<std::string>& ProgramArgv::GetArgs() const {
   return argv_;
 }
 
-std::string FixCsvString(const char* string) {
-  std::string fixed;
-  while (*string) {
-    switch (*string) {
-      case '\\':
-        break;
-      case '"':
-        fixed.push_back('\'');
-        break;
-      default:
-        fixed.push_back(*string);
-        break;
-    }
-    ++string;
-  }
-  return fixed;
-}
-
 unsigned int UniqueId() {
   const auto time = std::chrono::steady_clock::now().time_since_epoch();
   return (1000000009 * std::chrono::duration_cast<std::chrono::microseconds>(time).count());
@@ -236,7 +218,7 @@ void LogCallsToFile::LogCall(const char* name, const char* at) {
     const auto time = std::chrono::steady_clock::now().time_since_epoch();
     *log_file_ << std::chrono::duration_cast<std::chrono::microseconds>(time).count() << ","
                << unique_id_ << ","
-               << "\"" << FixCsvString(name) << "\"" << ","
-               << "\"" << FixCsvString(at) << "\"" << std::endl;
+               << "\"" << name << "\"" << ","
+               << "\"" << at << "\"" << std::endl;
   }
 }

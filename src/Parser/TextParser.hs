@@ -60,7 +60,7 @@ newtype SourceContext = SourceContext SourcePos deriving (Eq,Ord)
 
 instance Show SourceContext where
   show (SourceContext (SourcePos f l c)) =
-    "line " ++ show (unPos l) ++ " column " ++ show (unPos c) ++ " of " ++ "\"" ++ f ++ "\""
+    "line " ++ show (unPos l) ++ " column " ++ show (unPos c) ++ " of " ++ f
 
 getSourceContext :: TextParser SourceContext
 getSourceContext = fmap SourceContext getSourcePos
