@@ -35,6 +35,7 @@ module CompilerCxx.Code (
   noTestsOnlySourceGuard,
   onlyCode,
   onlyCodes,
+  onlyDeps,
   paramType,
   predTraceContext,
   readStoredVariable,
@@ -82,13 +83,16 @@ onlyCode :: String -> CompiledData [String]
 onlyCode = onlyCodes . (:[])
 
 onlyCodes :: [String] -> CompiledData [String]
-onlyCodes = CompiledData Set.empty
+onlyCodes = CompiledData Set.empty Set.empty
+
+onlyDeps :: Set.Set CategoryName -> CompiledData [String]
+onlyDeps d = CompiledData d Set.empty []
 
 indentCompiled :: CompiledData [String] -> CompiledData [String]
-indentCompiled (CompiledData r o) = CompiledData r $ map ("  " ++) o
+indentCompiled (CompiledData r t o) = CompiledData r t $ map ("  " ++) o
 
 clearCompiled :: CompiledData [String] -> CompiledData [String]
-clearCompiled (CompiledData r _) = CompiledData r []
+clearCompiled (CompiledData r t _) = CompiledData r t []
 
 startFunctionTracing :: CategoryName -> ScopedFunction c -> String
 startFunctionTracing t f = "TRACE_FUNCTION(" ++ show (functionDebugName t f) ++ ")"

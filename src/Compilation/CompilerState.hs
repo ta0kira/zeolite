@@ -39,6 +39,7 @@ module Compilation.CompilerState (
   checkDeferred,
   concatM,
   csAddRequired,
+  csAddTrace,
   csAddUsed,
   csAddVariable,
   csAllFilters,
@@ -148,6 +149,8 @@ class (Functor m, Monad m) => CompilerContext c m s a | a -> c s where
   ccReleaseExprMacro :: a -> [c] -> MacroName -> m a
   ccSetNoTrace :: a -> Bool -> m a
   ccGetNoTrace :: a -> m Bool
+  ccAddTrace :: a -> String -> m a
+  ccGetTraces :: a -> m [String]
 
 data MemberValue c =
   MemberValue {
@@ -354,18 +357,22 @@ csSetNoTrace t = fmap (\x -> ccSetNoTrace x t) get >>= lift >>= put
 csGetNoTrace :: CompilerContext c m s a => CompilerState a m Bool
 csGetNoTrace = fmap ccGetNoTrace get >>= lift
 
+csAddTrace :: CompilerContext c m s a => String -> CompilerState a m ()
+csAddTrace t = fmap (\x -> ccAddTrace x t) get >>= lift >>= put
+
 data CompiledData s =
   CompiledData {
     cdRequired :: Set.Set CategoryName,
+    cdTraces :: Set.Set String,
     cdOutput :: s
   }
 
 instance Semigroup s => Semigroup (CompiledData s) where
-  (CompiledData r1 s1) <> (CompiledData r2 s2) =
-    CompiledData (r1 `Set.union` r2) (s1 <> s2)
+  (CompiledData r1 t1 s1) <> (CompiledData r2 t2 s2) =
+    CompiledData (r1 `Set.union` r2) (t1 `Set.union` t2) (s1 <> s2)
 
 instance (Semigroup s, Monoid s) => Monoid (CompiledData s) where
-  mempty = CompiledData Set.empty mempty
+  mempty = CompiledData Set.empty Set.empty mempty
   mappend = (<>)
 
 runDataCompiler :: CompilerContext c m s a =>
@@ -374,8 +381,10 @@ runDataCompiler x ctx = do
   ctx' <- execStateT x ctx
   required <- ccGetRequired ctx'
   output <- ccGetOutput ctx'
-  return $ CompiledData {
+  traces <- ccGetTraces ctx'
+  return CompiledData {
       cdRequired = required,
+      cdTraces = Set.fromList traces,
       cdOutput = output
     }
 

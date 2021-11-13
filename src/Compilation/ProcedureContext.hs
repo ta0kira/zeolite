@@ -30,9 +30,10 @@ module Compilation.ProcedureContext (
 ) where
 
 import Control.Monad (foldM,when)
+import Data.List (nub)
+import Data.Maybe (fromJust,isJust)
 import Lens.Micro hiding (mapped)
 import Lens.Micro.TH
-import Data.Maybe (fromJust,isJust)
 import qualified Data.Map as Map
 import qualified Data.Set as Set
 
@@ -87,7 +88,8 @@ data ProcedureContext c =
     _pcUsedVars :: [UsedVariable c],
     _pcExprMap :: ExprMap c,
     _pcReservedMacros :: [(MacroName,[c])],
-    _pcNoTrace :: Bool
+    _pcNoTrace :: Bool,
+    _pcTraces :: [String]
   }
 
 $(makeLenses ''ProcedureContext)
@@ -292,9 +294,10 @@ instance (Show c, CollectErrorsM m) =>
     | ctx ^. pcInCleanup = return $ ctx & pcUsedVars <>~ [v]
     | otherwise          = return ctx
   ccInheritStatic ctx [] = return ctx
-  ccInheritStatic ctx cs = return $ ctx & pcReturns .~ returns & pcJumpType .~ jump & pcUsedVars .~ used & pcDeferred .~ deferred where
-    deferred = (ctx ^. pcDeferred) `followDeferred` deferred2
+  ccInheritStatic ctx cs = return $ ctx & pcReturns .~ returns & pcJumpType .~ jump & pcUsedVars .~ used & pcDeferred .~ deferred & pcTraces .~ traces where
+    traces = nub $ ctx ^. pcTraces ++ (concat $ map (^. pcTraces) cs)
     used = ctx ^. pcUsedVars ++ (concat $ map (^. pcUsedVars) cs)
+    deferred = (ctx ^. pcDeferred) `followDeferred` deferred2
     (returns,jump) = combineSeries (ctx ^. pcReturns,ctx ^. pcJumpType) (returns2,jump2)
     combineSeries (r@(ValidatePositions _),j1) (_,j2) = (r,max j1 j2)
     combineSeries (_,j1) (r@(ValidatePositions _),j2) = (r,max j1 j2)
@@ -394,6 +397,8 @@ instance (Show c, CollectErrorsM m) =>
   ccReleaseExprMacro ctx _ n = return $ ctx & pcReservedMacros %~ (filter ((/= n) . fst))
   ccSetNoTrace ctx t = return $ ctx & pcNoTrace .~ t
   ccGetNoTrace = return . (^. pcNoTrace)
+  ccAddTrace ctx t = return $ ctx & pcTraces <>~ [t]
+  ccGetTraces = return . (^. pcTraces)
 
 updateReturnVariables :: (Show c, CollectErrorsM m) =>
   (Map.Map VariableName (VariableValue c)) ->

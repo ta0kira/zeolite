@@ -84,7 +84,8 @@ getContextForInit tm em t d s = do
       _pcUsedVars = [],
       _pcExprMap = em,
       _pcReservedMacros = [],
-      _pcNoTrace = False
+      _pcNoTrace = False,
+      _pcTraces = []
     }
 
 getProcedureContext :: (Show c, CollectErrorsM m) =>
@@ -143,7 +144,8 @@ getProcedureContext (ScopeContext tm t ps ms pa fa va em)
       _pcUsedVars = [],
       _pcExprMap = em,
       _pcReservedMacros = [],
-      _pcNoTrace = False
+      _pcNoTrace = False,
+      _pcTraces = []
     }
   where
     pairOutput (PassedValue c1 t2) (OutputValue c2 n2) = return $ (n2,PassedValue (c2++c1) t2)
@@ -174,5 +176,6 @@ getMainContext tm em = return $ ProcedureContext {
     _pcUsedVars = [],
     _pcExprMap = em,
     _pcReservedMacros = [],
-    _pcNoTrace = False
+    _pcNoTrace = False,
+    _pcTraces = []
   }

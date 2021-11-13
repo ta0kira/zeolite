@@ -121,7 +121,7 @@ compileCategoryDeclaration testing ns t =
                      (cdRequired file)
                      (cdOutput file) where
     file = mconcat $ [
-        CompiledData depends [],
+        onlyDeps depends,
         onlyCodes guardTop,
         onlyCodes $ (if testing then testsOnlyCategoryGuard (getCategoryName t) else []),
         onlyCodes baseHeaderIncludes,
@@ -183,7 +183,7 @@ generateCategoryDefinition testing = common where
     singleSource = do
       let filename = sourceFilename (getCategoryName t)
       let (cf,tf,vf) = partitionByScope sfScope $ getCategoryFunctions t
-      (CompiledData req out) <- fmap (addNamespace t) $ concatM [
+      (CompiledData req _ out) <- fmap (addNamespace t) $ concatM [
           defineFunctions t cf tf vf,
           declareInternalGetters t,
           defineInterfaceCategory t,
@@ -206,7 +206,7 @@ generateCategoryDefinition testing = common where
       let maybeValue = if hasPrimitiveValue (getCategoryName t)
                           then []
                           else [defineAbstractValue t]
-      (CompiledData req out) <- fmap (addNamespace t) $ concatM $ [
+      (CompiledData req _ out) <- fmap (addNamespace t) $ concatM $ [
           defineAbstractCategory t,
           return $ declareInternalType t (length $ getCategoryParams t),
           defineAbstractType t
@@ -225,7 +225,7 @@ generateCategoryDefinition testing = common where
       let maybeValue = if hasPrimitiveValue (getCategoryName t)
                           then []
                           else [defineValueOverrides t (getCategoryFunctions t)]
-      (CompiledData req out) <- fmap (addNamespace t) $ concatM $ [
+      (CompiledData req _ out) <- fmap (addNamespace t) $ concatM $ [
           defineFunctions t cf tf vf,
           defineCategoryOverrides t (getCategoryFunctions t),
           defineTypeOverrides     t (getCategoryFunctions t)
@@ -251,7 +251,7 @@ generateCategoryDefinition testing = common where
       let maybeValue = if hasPrimitiveValue (getCategoryName t)
                           then []
                           else [defineCustomValue t vp]
-      (CompiledData req out) <- fmap (addNamespace t) $ concatM $
+      (CompiledData req _ out) <- fmap (addNamespace t) $ concatM $
         maybeGetter ++ [
           defineCustomCategory t cp,
           defineCustomType     t tp
@@ -304,7 +304,7 @@ generateCategoryDefinition testing = common where
       let cf = map fst $ psProcedures cp
       let tf = map fst $ psProcedures tp
       let vf = map fst $ psProcedures vp
-      (CompiledData req out) <- fmap (addNamespace t) $ concatM [
+      (CompiledData req _ out) <- fmap (addNamespace t) $ concatM [
           defineFunctions t cf tf vf,
           declareInternalGetters t,
           defineConcreteCategory r cf ta' em t d,
@@ -651,7 +651,7 @@ formatFunctionTypes (ScopedFunction c _ _ s as rs ps fa _) = [location,args,retu
   singleFilter (ParamFilter _ n2 f) = "  " ++ show n2 ++ " " ++ show f
 
 createMainCommon :: String -> CompiledData [String] -> CompiledData [String] -> [String]
-createMainCommon n (CompiledData req0 out0) (CompiledData req1 out1) =
+createMainCommon n (CompiledData req0 _ out0) (CompiledData req1 _ out1) =
   baseSourceIncludes ++ mainSourceIncludes ++ depIncludes (req0 `Set.union` req1) ++ out0 ++ [
       "int main(int argc, const char** argv) {",
       "  SetSignalHandler();",
@@ -677,11 +677,11 @@ generateTestFile :: (Ord c, Show c, CollectErrorsM m) =>
 generateTestFile tm em args ts = "In the creation of the test binary procedure" ??> do
   ts' <- fmap mconcat $ mapCompilerM (compileTestProcedure tm em) ts
   (include,sel) <- selectTestFromArgv1 $ map tpName ts
-  let (CompiledData req _) = ts' <> sel
+  let (CompiledData req traces _) = ts' <> sel
   let contentTop = mconcat [timeoutInclude,onlyCodes include,ts']
   let contentMain = mconcat [setTimeout,argv,callLog,sel]
   let file = testsOnlySourceGuard ++ createMainCommon "testcase" contentTop contentMain
-  return $ CompiledData req file where
+  return $ CompiledData req traces file where
     args' = map escapeChars args
     argv = onlyCodes [
         "const char* argv2[] = { \"testcase\" " ++ concat (map (", " ++) args') ++ " };",

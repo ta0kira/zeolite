@@ -105,7 +105,7 @@ compileExecutableProcedure immutable cxxType ctx
       when (not unreachable) $
         doImplicitReturn c2 <??
           "In implicit return from " ++ show n ++ formatFullContextBrace c
-    funcMergeDeps f = mconcat $ (CompiledData (Set.fromList [sfType f]) []):(map funcMergeDeps $ sfMerges f)
+    funcMergeDeps f = mconcat $ (onlyDeps (Set.fromList [sfType f])):(map funcMergeDeps $ sfMerges f)
     wrapProcedure output pt ct =
       mconcat [
           funcMergeDeps ff,
@@ -206,7 +206,9 @@ maybeSetTrace :: (Ord c, Show c, CollectErrorsM m,
   [c] -> CompilerState a m ()
 maybeSetTrace c = do
   noTrace <- csGetNoTrace
-  when (not noTrace) $ csWrite $ setTraceContext c
+  when (not noTrace) $ do
+    csWrite $ setTraceContext c
+    csAddTrace $ formatFullContext c
 
 compileStatement :: (Ord c, Show c, CollectErrorsM m,
                      CompilerContext c m [String] a) =>

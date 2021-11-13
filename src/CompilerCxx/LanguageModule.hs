@@ -183,7 +183,7 @@ compileTestMain :: (Ord c, Show c, CollectErrorsM m) =>
   m (CxxOutput,[(FunctionName,[c])])
 compileTestMain (LanguageModule ns0 ns1 ns2 cs0 ps0 ts0 cs1 ps1 ts1 _ em) args ts2 tests = do
   tm' <- tm
-  (CompiledData req main) <- generateTestFile tm' em args tests
+  (CompiledData req _ main) <- generateTestFile tm' em args tests
   let output = CxxOutput Nothing testFilename NoNamespace (psNamespace ts2 `Set.insert` Set.unions [ns0,ns1,ns2]) req main
   let tests' = map (\t -> (tpName t,tpContext t)) tests
   return (output,tests') where
