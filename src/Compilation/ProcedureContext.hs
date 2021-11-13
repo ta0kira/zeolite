@@ -398,6 +398,7 @@ instance (Show c, CollectErrorsM m) =>
   ccReleaseExprMacro ctx _ n = return $ ctx & pcReservedMacros %~ (filter ((/= n) . fst))
   ccSetNoTrace ctx t = return $ ctx & pcNoTrace .~ t
   ccGetNoTrace = return . (^. pcNoTrace)
+  ccAddTrace ctx "" = return ctx
   ccAddTrace ctx t = return $ ctx & pcTraces <>~ [t]
   ccGetTraces = return . (^. pcTraces)
 
