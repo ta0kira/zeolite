@@ -127,6 +127,10 @@
 * **[breaking]** Removes `AnonymousOrder` C++ class, previously used for
   creating iterators for C++ extensions.
 
+* **[new]** Adds output of `.zeolite-cache/traced-lines` file containing a list
+  of lines that can show up in code coverage when `--log-traces` is used in `-t`
+  mode.
+
 * **[new]** `@value` function implementations for `immutable` categories are
   marked as `const` in C++ extensions.
 

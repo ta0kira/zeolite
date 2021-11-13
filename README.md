@@ -1702,7 +1702,7 @@ option when running tests with `zeolite -t`.
     ID from the system, since that will often not be unique.
   - `"function"`: The name of the function where the line was executed.
   - `"context"`: The source-code context (e.g., file, line) of the call. The
-    context has (roughly) the same format as stack traces for crashes.
+    context has the same format as stack traces for crashes.
 
 - If a procedure uses the [`$NoTrace$` pragma](#procedure-pragmas), there will
   be no trace information in the log for that procedure. This is because the
@@ -1724,6 +1724,12 @@ option when running tests with `zeolite -t`.
   ```shell
   sed 1d trace-log.csv | cut -d, -f3,4 | grep -v 0rt | sort -u
   ```
+
+During module compilation, `zeolite` will output a file
+`.zeolite-cache/traced-lines` within the module's path. This file will contain
+one line per possible `context` in the `.csv`. The two can be compared to
+determine if any lines in the module's `.0rx` files have are not covered by the
+executed tests. Noe that `traced-lines` *does not* contain `.0rt` contexts.
 
 ## Compiler Pragmas and Macros
 
