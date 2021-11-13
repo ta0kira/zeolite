@@ -613,21 +613,21 @@ validateAssignment r f t fs = mapCompilerM_ checkWithMessage fs where
   checkFilter t1 ImmutableFilter = checkValueTypeImmutable r f (ValueType RequiredValue t1)
   checkDefinesFilter f2@(DefinesInstance n2 _) (JustTypeInstance t1) = do
     ps1' <- trDefines r t1 n2
-    checkDefinesMatch r f f2 (DefinesInstance n2 ps1')
+    checkDefinesMatch r f (DefinesInstance n2 ps1') f2 >> return ()
   checkDefinesFilter f2 (JustParamName _ n1) = do
       fs1 <- fmap (map dfType . filter isDefinesFilter) $ f `filterLookup` n1
-      (collectFirstM_ $ map (checkDefinesMatch r f f2) fs1) <!!
+      (collectFirstM_ $ map (flip (checkDefinesMatch r f) f2) fs1) <!!
         "No filters imply " ++ show n1 ++ " defines " ++ show f2
   checkDefinesFilter _ (JustInferredType n) =
     compilerErrorM $ "Inferred param " ++ show n ++ " is not allowed here"
 
 checkDefinesMatch :: (CollectErrorsM m, TypeResolver r) =>
-  r -> ParamFilters -> DefinesInstance -> DefinesInstance -> m ()
-checkDefinesMatch r f f2@(DefinesInstance n2 ps2) f1@(DefinesInstance n1 ps1)
+  r -> ParamFilters -> DefinesInstance -> DefinesInstance -> m (MergeTree InferredTypeGuess)
+checkDefinesMatch r f f1@(DefinesInstance n1 ps1) f2@(DefinesInstance n2 ps2)
   | n1 == n2 = do
     paired <- processPairs alwaysPair ps1 ps2
     variance <- trVariance r n2
-    processPairs_ (\v2 (p1,p2) -> checkGeneralMatch r f v2 p1 p2) variance (Positional paired)
+    fmap mergeAll $ processPairs (\v2 (p1,p2) -> checkGeneralMatch r f v2 p1 p2) variance (Positional paired)
   | otherwise = compilerErrorM $ "Constraint " ++ show f1 ++ " does not imply " ++ show f2
 
 validateGeneralInstance :: (CollectErrorsM m, TypeResolver r) =>

@@ -761,9 +761,7 @@ mergeDefines :: (CollectErrorsM m, TypeResolver r) =>
 mergeDefines r f = mergeObjectsM check where
   check (ValueDefine _ t1@(DefinesInstance n1 _)) (ValueDefine _ t2@(DefinesInstance n2 _))
     | n1 /= n2 = compilerErrorM $ show t1 ++ " and " ++ show t2 ++ " are incompatible"
-    | otherwise = do
-      checkDefinesMatch r f t1 t2
-      return ()
+    | otherwise = checkDefinesMatch r f t2 t1 >> return ()
 
 noDuplicateRefines :: (Show c, CollectErrorsM m) =>
   [c] -> CategoryName -> [ValueRefine c] -> m ()
@@ -1055,28 +1053,34 @@ replaceSelfFunction self ff@(ScopedFunction c n t s as rs ps fa ms) =
         f' <- replaceSelfFilter self f
         return $ ParamFilter c2 n2 f'
 
-data PatternMatch a =
-  PatternMatch {
-    pmVariance :: Variance,
-    pmData :: a,
-    pmPattern :: a
+data PatternMatch =
+  TypePattern {
+    tpVariance :: Variance,
+    tpData :: ValueType,
+    tpPattern :: ValueType
+  } |
+  DefinesPattern {
+    dpData :: TypeInstance,
+    dpPattern :: DefinesInstance
   }
 
-instance Show a => Show (PatternMatch a) where
-  show (PatternMatch Covariant     l r) = show l ++ " -> "  ++ show r
-  show (PatternMatch Contravariant l r) = show l ++ " <- "  ++ show r
-  show (PatternMatch Invariant     l r) = show l ++ " <-> " ++ show r
+instance Show PatternMatch where
+  show (TypePattern Covariant     l r) = show l ++ " -> "  ++ show r
+  show (TypePattern Contravariant l r) = show l ++ " <- "  ++ show r
+  show (TypePattern Invariant     l r) = show l ++ " <-> " ++ show r
+  show (DefinesPattern l r) = show l ++ " -> " ++ show r
 
 inferParamTypes :: (CollectErrorsM m, TypeResolver r) =>
-  r -> ParamFilters -> ParamValues -> [PatternMatch ValueType] ->
+  r -> ParamFilters -> ParamValues -> [PatternMatch] ->
   m (MergeTree InferredTypeGuess)
-inferParamTypes r f ps ts = do
-  ts2 <- mapCompilerM subAll ts
-  fmap mergeAll $ mapCompilerM matchPattern ts2 where
-    subAll (PatternMatch v t1 t2) = do
-      t2' <- uncheckedSubValueType (getValueForParam ps) t2
-      return (PatternMatch v t1 t2')
-    matchPattern (PatternMatch v t1 t2) = checkValueTypeMatch r f v t1 t2
+inferParamTypes r f ps = fmap mergeAll . mapCompilerM single where
+  single (TypePattern v t1 t2) = do
+    t2' <- uncheckedSubValueType (getValueForParam ps) t2
+    checkValueTypeMatch r f v t1 t2'
+  single (DefinesPattern t1 (DefinesInstance n ps2)) = do
+    ps3 <- trDefines r t1 n
+    ps2' <- fmap Positional $ mapCompilerM (uncheckedSubInstance (getValueForParam ps)) $ pValues ps2
+    checkDefinesMatch r f (DefinesInstance n ps3) (DefinesInstance n ps2')
 
 data GuessRange a =
   GuessRange {
@@ -1097,7 +1101,7 @@ data GuessUnion =
   }
 
 guessesFromFilters :: CollectErrorsM m =>
-  ParamFilters -> ValueType -> ValueType -> m [PatternMatch ValueType]
+  ParamFilters -> ValueType -> ValueType -> m [PatternMatch]
 guessesFromFilters fm (ValueType _ t1) (ValueType _ t2) = tryParam >>= fromFilters where
   tryParam = collectFirstM [
       matchOnlyLeaf t2 >>= return . Just,
@@ -1105,11 +1109,20 @@ guessesFromFilters fm (ValueType _ t1) (ValueType _ t2) = tryParam >>= fromFilte
     ]
   fromFilters (Just (JustParamName _ n)) =
     case n `Map.lookup` fm of
-         Just fs -> return $ concat $ map toGuess fs
+         Just fs -> fmap concat $ mapCompilerM toGuess fs
          Nothing -> return []
   fromFilters _ = return []
-  toGuess (TypeFilter FilterRequires t3) = [PatternMatch Covariant (ValueType RequiredValue t1) (ValueType RequiredValue t3)]
-  toGuess _ = []
+  toGuess (TypeFilter FilterRequires t3) =
+    return [TypePattern Covariant (ValueType RequiredValue t1) (ValueType RequiredValue t3)]
+  toGuess (DefinesFilter t3) = do
+    maybeInstance <- collectFirstM [
+        matchOnlyLeaf t1 >>= return . Just,
+        return Nothing
+      ]
+    case maybeInstance of
+         Just (JustTypeInstance t) -> return [DefinesPattern t t3]
+         _ -> return []
+  toGuess _ = return []
 
 mergeInferredTypes :: (CollectErrorsM m, TypeResolver r) =>
   r -> ParamFilters -> ParamFilters -> ParamValues -> MergeTree InferredTypeGuess -> m ParamValues

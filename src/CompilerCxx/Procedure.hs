@@ -45,6 +45,7 @@ import qualified Data.Set as Set
 
 import Base.CompilerError
 import Base.GeneralType
+import Base.Mergeable
 import Base.MergeTree
 import Base.Positional
 import Compilation.CompilerState
@@ -1024,7 +1025,7 @@ guessParamsFromArgs :: (Ord c, Show c, CollectErrorsM m, TypeResolver r) =>
   Positional ValueType -> m (Positional GeneralInstance)
 guessParamsFromArgs r fa f ps ts = do
   fm <- getFunctionFilterMap f
-  args <- processPairs (\t1 t2 -> return $ PatternMatch Covariant t1 t2) ts (fmap pvType $ sfArgs f)
+  args <- processPairs (\t1 t2 -> return $ TypePattern Covariant t1 t2) ts (fmap pvType $ sfArgs f)
   filts <- fmap concat $ processPairs (guessesFromFilters fm) ts (fmap pvType $ sfArgs f)
   pa <- fmap Map.fromList $ processPairs toInstance (fmap vpParam $ sfParams f) ps
   gs <- inferParamTypes r fa pa (args ++ filts)
@@ -1043,7 +1044,7 @@ guessParams :: (Ord c, Show c, CollectErrorsM m, TypeResolver r) =>
   r -> ParamFilters -> Positional ValueType -> Positional ParamName ->
   Positional (InstanceOrInferred c) -> Positional ValueType -> m (Positional GeneralInstance)
 guessParams r fa args params ps ts = do
-  args' <- processPairs (\t1 t2 -> return $ PatternMatch Covariant t1 t2) ts args
+  args' <- processPairs (\t1 t2 -> return $ TypePattern Covariant t1 t2) ts args
   pa <- fmap Map.fromList $ processPairs toInstance params ps
   gs <- inferParamTypes r fa pa args'
   gs' <- mergeInferredTypes r fa (Map.fromList $ zip (pValues params) (repeat [])) pa gs

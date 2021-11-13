@@ -423,3 +423,31 @@ define Type {
     fail(builder.build())
   }
 }
+
+
+testcase "dependent implicit param inferred from defines" {
+  crash
+  require "String"
+}
+
+unittest test {
+  \ Type.run()
+}
+
+concrete Type {
+  @type run () -> ()
+}
+
+define Type {
+  run () {
+    \ call<?,?>("message")
+    \ call<String,?>("message")
+  }
+
+  @type call<#x,#c>
+    #x defines LessThan<#c>
+  (#x) -> ()
+  call (value) {
+    fail(typename<#c>())
+  }
+}

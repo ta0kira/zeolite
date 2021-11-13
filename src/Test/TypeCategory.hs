@@ -1223,7 +1223,7 @@ checkInferenceCommon check tm pa is ts gs = checked <!! context where
   parsePair im v (t1,t2) = do
     t1' <- readSingle "(string)" t1
     t2' <- readSingle "(string)" t2 >>= uncheckedSubValueType (weakLookup im)
-    return (PatternMatch v t1' t2')
+    return (TypePattern v t1' t2')
   weakLookup tm2 n =
     case n `Map.lookup` tm2 of
          Just t  -> return t
