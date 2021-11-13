@@ -188,15 +188,19 @@ unittest getReverseNotFound {
 }
 
 unittest duplicate {
-  SearchTree<Int,Int> tree <- SearchTree<Int,Int>.new().set(1,1).set(2,2)
+  SearchTree<Int,Int> tree <- SearchTree<Int,Int>.new().set(1,1).set(2,2).set(3,3)
 
   SearchTree<Int,Int> copy <- tree.duplicate()
-  \ Testing.checkEquals<?>(copy.size(),2)
+  \ Testing.checkEquals<?>(copy.size(),3)
   \ Testing.checkOptional<?>(copy.get(1),1)
   \ Testing.checkOptional<?>(copy.get(2),2)
+  \ Testing.checkOptional<?>(copy.get(3),3)
 
   \ copy.remove(2)
-  \ Testing.checkEquals<?>(copy.size(),1)
-  \ Testing.checkOptional<?>(copy.get(1),1)
+  $Hidden[copy]$
+
+  \ Testing.checkEquals<?>(tree.size(),3)
+  \ Testing.checkOptional<?>(tree.get(1),1)
   \ Testing.checkOptional<?>(tree.get(2),2)
+  \ Testing.checkOptional<?>(tree.get(3),3)
 }
