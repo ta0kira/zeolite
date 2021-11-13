@@ -52,6 +52,9 @@ concrete LinkedNode<#x> {
 
   // Create a new ListBuilder<#x>.
   @type builder () -> (ListBuilder<#x>)
+
+  // Set the value held by the node.
+  @value set (#x) -> (#self)
 }
 
 // Builder for LinkedNode.

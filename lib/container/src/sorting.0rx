@@ -44,7 +44,6 @@ define Sorting {
   }
 
   sortListWith (head) {
-    optional #n oldPrev <- empty
     return MergeSort<#n,#x,#xx>.sort(head)
   }
 

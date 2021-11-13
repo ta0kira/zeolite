@@ -45,7 +45,6 @@ import qualified Data.Set as Set
 
 import Base.CompilerError
 import Base.GeneralType
-import Base.Mergeable
 import Base.MergeTree
 import Base.Positional
 import Compilation.CompilerState

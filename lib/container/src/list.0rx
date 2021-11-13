@@ -29,6 +29,11 @@ define LinkedNode {
     return value
   }
 
+  set (value2) {
+    value <- value2
+    return self
+  }
+
   builder () {
     return ListBuilder<#x>.new()
   }
