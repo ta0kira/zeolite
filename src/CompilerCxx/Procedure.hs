@@ -172,7 +172,10 @@ compileCondition ctx c e = do
   noTrace <- csGetNoTrace
   if noTrace
      then return (e',ctx')
-     else return (predTraceContext c ++ "(" ++ e' ++ ")",ctx')
+     else do
+       let c2 = getExpressionContext e
+       csAddTrace $ formatFullContext c2
+       return (predTraceContext c2 ++ "(" ++ e' ++ ")",ctx')
   where
     compile = "In condition at " ++ formatFullContext c ??> do
       (ts,e') <- compileExpression e
@@ -1244,7 +1247,9 @@ autoInsertCleanup c j ctx = do
 
 inheritRequired :: (CollectErrorsM m, CompilerContext c m [String] a) =>
   a -> CompilerState a m ()
-inheritRequired ctx = lift (ccGetRequired ctx) >>= csAddRequired
+inheritRequired ctx = do
+  lift (ccGetRequired ctx) >>= csAddRequired
+  lift (ccGetTraces ctx) >>= sequence . map csAddTrace >> return ()
 
 autoInlineOutput :: (Ord c, Show c, CollectErrorsM m, CompilerContext c m [String] a) =>
   a -> CompilerState a m ()

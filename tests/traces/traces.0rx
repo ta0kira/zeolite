@@ -21,23 +21,25 @@ concrete Test {}
 define Test {
   @type doNotExecute () -> ()
   doNotExecute () {
-    String message <- "message"
+    String message <- "message"  // TRACED
 
-    if (message.asBool()) {
-      fail(message)
+    if (message.asBool()) {  // TRACED
+      fail(message)  // TRACED
       String unreachable <- "unreachable lines should not have a trace entry"
+    } elif (false) {  // TRACED
+      String alternative <- "elif"  // TRACED
     } else {
-      String alternative <- "else"
+      String alternative <- "else"  // TRACED
     }
 
     scoped {
-      Int i <- 0
+      Int i <- 0  // TRACED
     } cleanup {
-      fail("cleanup")
-    } in while (i < 10) {
-      String repeat <- "while"
+      fail("cleanup")  // TRACED
+    } in while (i < 10) {  // TRACED
+      String repeat <- "while"  // TRACED
     } update {
-      i <- i+1
+      i <- i+1  // TRACED
     }
 
     String unreachable <- "unreachable lines should not have a trace entry"

@@ -376,6 +376,21 @@ test_example_random() {
 }
 
 
+test_traces() {
+  do_zeolite -p "$ZEOLITE_PATH" -r tests/traces -f
+  local trace_file="$ZEOLITE_PATH/tests/traces/.zeolite-cache/traced-lines"
+  local source_files=("$ZEOLITE_PATH/tests/traces/traces.0rx")
+  local expected=$(fgrep -n '// TRACED' "${source_files[@]}" | egrep -o '^[0-9]+' | sort -u)
+  local actual=$(sed -r 's/^line ([0-9]+).*/\1/' "$trace_file" | sort -u)
+  if [[ "$actual" != "$expected" ]]; then
+    show_message "Mismatch between expected and actual traced lines:"
+    echo "Expected:" $expected 1>&2
+    echo "Actual:  " $actual   1>&2
+    return 1
+  fi
+}
+
+
 run_all() {
   ZEOLITE_PATH=$(do_zeolite --get-path | grep '^/')
   echo 1>&2
@@ -410,28 +425,29 @@ run_all() {
 
 ALL_TESTS=(
   test_bad_path
-  test_check_defs
-  test_leak_check
-  test_simulate_refs
-  test_tests_only
-  test_tests_only2
-  test_tests_only3
-  test_tests_only4
-  test_module_only
-  test_module_only2
-  test_module_only3
-  test_module_only4
-  test_warn_public
-  test_self_offset
-  test_templates
-  test_show_deps
-  test_fast_static
   test_bad_system_include
-  test_global_include
+  test_check_defs
   test_example_hello
   test_example_parser
   test_example_primes
   test_example_random
+  test_fast_static
+  test_global_include
+  test_leak_check
+  test_module_only
+  test_module_only2
+  test_module_only3
+  test_module_only4
+  test_self_offset
+  test_show_deps
+  test_simulate_refs
+  test_templates
+  test_tests_only
+  test_tests_only2
+  test_tests_only3
+  test_tests_only4
+  test_traces
+  test_warn_public
 )
 
 run_all "${ALL_TESTS[@]}" 1>&2

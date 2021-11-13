@@ -364,8 +364,9 @@ instance (Show c, CollectErrorsM m) =>
       case n `Map.lookup` vs of
            Just (VariableValue c2 s@LocalScope t _) -> Map.insert n (VariableValue c2 s t (VariableReadOnly c)) vs
            _ -> vs
-  ccPushCleanup ctx ctx2 = return $ ctx & pcCleanupBlocks %~ (Just cleanup:) where
-      cleanup = CleanupBlock (ctx2 ^. pcOutput) (ctx2 ^. pcDeferred) (ctx2 ^. pcUsedVars) (ctx2 ^. pcJumpType) (ctx2 ^. pcRequiredTypes)
+  ccPushCleanup ctx ctx2 = return $ ctx & pcCleanupBlocks %~ (Just cleanup:) & pcTraces .~ traces where
+    traces = nub $ ctx ^. pcTraces ++ ctx2 ^. pcTraces
+    cleanup = CleanupBlock (ctx2 ^. pcOutput) (ctx2 ^. pcDeferred) (ctx2 ^. pcUsedVars) (ctx2 ^. pcJumpType) (ctx2 ^. pcRequiredTypes)
   ccGetCleanup ctx j = return combined where
     combined
       | j == NextStatement =
