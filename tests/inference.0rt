@@ -195,13 +195,21 @@ testcase "elimination by filter" {
 }
 
 unittest test {
-  \ Test.get<?>("value")
+  \ Test.get<?>(Type<String>.new())
+}
+
+concrete Type<#x> {
+  @type new () -> (#self)
+}
+
+define Type {
+  new () { return #self{ } }
 }
 
 concrete Test {
   @type get<#x>
     #x allows Formatted
-  (#x) -> (#x)
+  (Type<#x>) -> (Type<#x>)
 }
 
 define Test {
@@ -219,13 +227,21 @@ testcase "elimination by filter without param" {
 }
 
 unittest test {
-  \ Test.get<Formatted,?>("value")
+  \ Test.get<Formatted,?>(Type<String>.new())
+}
+
+concrete Type<#x> {
+  @type new () -> (#self)
+}
+
+define Type {
+  new () { return #self{ } }
 }
 
 concrete Test {
   @type get<#y,#x>
     #x allows #y
-  (#x) -> (#x)
+  (Type<#x>) -> (Type<#x>)
 }
 
 define Test {
@@ -244,23 +260,23 @@ testcase "elimination by filter including param" {
 }
 
 unittest test {
-  \ Test.get<?>(Type<String>.create())
+  \ Test.get<?>(Type<String>.new())
 }
 
 concrete Type<#x> {
-  @type create () -> (Type<#x>)
+  @type new () -> (#self)
 }
 
 define Type {
-  create () {
-    return Type<#x>{ }
+  new () {
+    return #self{ }
   }
 }
 
 concrete Test {
   @type get<#x>
     #x allows Type<#x>
-  (#x) -> (#x)
+  (Type<#x>) -> (Type<#x>)
 }
 
 define Test {
@@ -446,6 +462,34 @@ define Type {
 
   @type call<#x,#c>
     #x defines LessThan<#c>
+  (#x) -> ()
+  call (value) {
+    fail(typename<#c>())
+  }
+}
+
+
+testcase "dependent implicit param inferred from allows" {
+  crash
+  require "String"
+}
+
+unittest test {
+  \ Type.run()
+}
+
+concrete Type {
+  @type run () -> ()
+}
+
+define Type {
+  run () {
+    \ call<?,?>("message")
+    \ call<String,?>("message")
+  }
+
+  @type call<#x,#c>
+    #x allows #c
   (#x) -> ()
   call (value) {
     fail(typename<#c>())

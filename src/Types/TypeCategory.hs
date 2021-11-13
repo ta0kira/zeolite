@@ -1114,6 +1114,8 @@ guessesFromFilters fm (ValueType _ t1) (ValueType _ t2) = tryParam >>= fromFilte
   fromFilters _ = return []
   toGuess (TypeFilter FilterRequires t3) =
     return [TypePattern Covariant (ValueType RequiredValue t1) (ValueType RequiredValue t3)]
+  toGuess (TypeFilter FilterAllows t3) =
+    return [TypePattern Contravariant (ValueType RequiredValue t1) (ValueType RequiredValue t3)]
   toGuess (DefinesFilter t3) = do
     maybeInstance <- collectFirstM [
         matchOnlyLeaf t1 >>= return . Just,
