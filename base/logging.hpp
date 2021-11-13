@@ -118,7 +118,12 @@ class TraceContext : public capture_thread::ThreadCapture<TraceContext> {
  protected:
   virtual ~TraceContext() = default;
 
+  static inline const char* GetName() {
+    return GetCurrent() ? GetCurrent()->Name() : nullptr;
+  }
+
  private:
+  virtual const char* Name() const { return nullptr; }
   virtual void SetLocal(const char*) = 0;
   virtual void AppendTrace(TraceList& trace) const = 0;
   virtual const TraceContext* GetNext() const = 0;
@@ -131,6 +136,7 @@ class SourceContext : public TraceContext {
     : at_(nullptr), name_(name), capture_to_(this) {}
 
  private:
+  const char* Name() const final { return name_; }
   void SetLocal(const char*) final;
   void AppendTrace(TraceList& trace) const final;
   const TraceContext* GetNext() const final;

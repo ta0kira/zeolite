@@ -150,6 +150,7 @@ const TraceContext* SourceContext::GetNext() const {
 
 void CleanupContext::SetLocal(const char* at) {
   at_ = at;
+  LogCalls::MaybeLogCall(GetName(), at_);
 }
 
 void CleanupContext::AppendTrace(TraceList& trace) const {
@@ -218,7 +219,7 @@ void LogCallsToFile::LogCall(const char* name, const char* at) {
     const auto time = std::chrono::steady_clock::now().time_since_epoch();
     *log_file_ << std::chrono::duration_cast<std::chrono::microseconds>(time).count() << ","
                << unique_id_ << ","
-               << "\"" << name << "\"" << ","
+               << "\"" << (name ? name : "") << "\"" << ","
                << "\"" << at << "\"" << std::endl;
   }
 }
