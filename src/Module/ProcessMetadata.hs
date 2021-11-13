@@ -47,6 +47,7 @@ module Module.ProcessMetadata (
   sortCompiledFiles,
   writeCachedFile,
   writeMetadata,
+  writePossibleTraces,
   writeRecompile,
 ) where
 
@@ -84,6 +85,9 @@ moduleFilename = ".zeolite-module"
 
 metadataFilename :: FilePath
 metadataFilename = "compile-metadata"
+
+tracesFilename :: FilePath
+tracesFilename = "traced-lines"
 
 type MetadataMap = Map.Map FilePath CompileMetadata
 
@@ -136,6 +140,11 @@ writeRecompile p m = do
   errorFromIO $ hPutStrLn stderr $ "Updating config for \"" ++ p' ++ "\"."
   m' <- autoWriteConfig m <?? "In data for " ++ p
   errorFromIO $ writeFile f m'
+
+writePossibleTraces :: FilePath -> Set.Set String -> TrackedErrorsIO ()
+writePossibleTraces p ts = do
+  p' <- errorFromIO $ canonicalizePath p
+  writeCachedFile p' "" tracesFilename $ concat $ map (++"\n") $ Set.toList ts
 
 getRecompilePath :: FilePath -> TrackedErrorsIO FilePath
 getRecompilePath p = do
@@ -385,9 +394,9 @@ resolveObjectDeps deps p d os = resolvedCategories ++ nonCategories where
                 -- TODO: The path comparison here is sloppy.
                 (if cmPath dep == p then zip (cmPrivateCategories dep) (repeat $ cmPrivateNamespace dep) else [])
   categoriesToIds dep = map (uncurry $ CategoryIdentifier $ cmPath dep) $ getCats dep
-  cxxToId (CxxOutput (Just c) _ ns _ _ _) = CategoryIdentifier d c ns
-  cxxToId _                               = undefined
-  resolveCategory (fs,ca@(CxxOutput _ _ _ ns2 ds _)) =
+  cxxToId (CxxOutput (Just c) _ ns _ _ _ _) = CategoryIdentifier d c ns
+  cxxToId _                                 = undefined
+  resolveCategory (fs,ca@(CxxOutput _ _ _ ns2 ds _ _)) =
     (cxxToId ca,CategoryObjectFile (cxxToId ca) (filter (/= cxxToId ca) rs) fs) where
       rs = concat $ map (resolveDep categoryMap (Set.toList ns2 ++ publicNamespaces)) $ Set.toList ds
 

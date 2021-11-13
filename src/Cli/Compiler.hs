@@ -188,10 +188,12 @@ compileModule resolver backend (ModuleSpec p d ee em is is2 ps xs ts es ep m f) 
       cmLinkFlags = cmLinkFlags cm2,
       cmObjectFiles = cmObjectFiles cm2
     }
-  writeMetadata (p </> d) cm2' where
+  writeMetadata (p </> d) cm2'
+  let traces = Set.unions $ map coPossibleTraces $ hxx ++ other
+  writePossibleTraces (p </> d) traces where
     compilerHash = getCompilerHash backend
     ep' = fixPaths $ map (p </>) ep
-    writeOutputFile paths ca@(CxxOutput _ f2 ns _ _ content) = do
+    writeOutputFile paths ca@(CxxOutput _ f2 ns _ _ _ content) = do
       errorFromIO $ hPutStrLn stderr $ "Writing file " ++ f2
       writeCachedFile (p </> d) (show ns) f2 $ concat $ map (++ "\n") content
       if isSuffixOf ".cpp" f2 || isSuffixOf ".cc" f2
@@ -220,6 +222,7 @@ compileModule resolver backend (ModuleSpec p d ee em is is2 ps xs ts es ep m f) 
                                Nothing  -> NoNamespace,
             coUsesNamespace = Set.fromList [ns0,ns1],
             coUsesCategory = c `Set.delete` allDeps,
+            coPossibleTraces = Set.empty,
             coOutput = []
           }
     compileExtraSource (ns0,ns1) _ paths (OtherSource f2) = do
@@ -240,7 +243,7 @@ compileModule resolver backend (ModuleSpec p d ee em is is2 ps xs ts es ep m f) 
           fmap Just $ runCxxCommand backend command
       | isSuffixOf ".a" f2 || isSuffixOf ".o" f2 = return (Just f2)
       | otherwise = return Nothing
-    createBinary paths deps (CompileBinary n _ lm o lf) [CxxOutput _ _ _ ns2 req content] = do
+    createBinary paths deps (CompileBinary n _ lm o lf) [CxxOutput _ _ _ ns2 req _ content] = do
       f0 <- if null o
                 then errorFromIO $ canonicalizePath $ p </> d </> show n
                 else errorFromIO $ canonicalizePath $ p </> d </> o
@@ -300,7 +303,7 @@ createModuleTemplates resolver p d ds deps1 deps2 = do
     generate testing tm n = do
       (_,t) <- getConcreteCategory tm ([],n)
       generateStreamlinedTemplate testing tm t
-    writeTemplate (CxxOutput _ n _ _ _ content) = do
+    writeTemplate (CxxOutput _ n _ _ _ _ content) = do
       let n' = p </> d </> n
       exists <- errorFromIO $ doesFileExist n'
       if exists

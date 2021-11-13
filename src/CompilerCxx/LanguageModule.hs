@@ -183,8 +183,8 @@ compileTestMain :: (Ord c, Show c, CollectErrorsM m) =>
   m (CxxOutput,[(FunctionName,[c])])
 compileTestMain (LanguageModule ns0 ns1 ns2 cs0 ps0 ts0 cs1 ps1 ts1 _ em) args ts2 tests = do
   tm' <- tm
-  (CompiledData req _ main) <- generateTestFile tm' em args tests
-  let output = CxxOutput Nothing testFilename NoNamespace (psNamespace ts2 `Set.insert` Set.unions [ns0,ns1,ns2]) req main
+  (CompiledData req traces main) <- generateTestFile tm' em args tests
+  let output = CxxOutput Nothing testFilename NoNamespace (psNamespace ts2 `Set.insert` Set.unions [ns0,ns1,ns2]) req traces main
   let tests' = map (\t -> (tpName t,tpContext t)) tests
   return (output,tests') where
   tm = foldM includeNewTypes defaultCategories [cs0,cs1,ps0,ps1,ts0,ts1,psCategory ts2]
@@ -198,7 +198,7 @@ compileModuleMain (LanguageModule ns0 ns1 ns2 cs0 ps0 _ cs1 ps1 _ _ em) xa n f =
   let cs = filter (\c -> getCategoryName c == n) $ concat $ map psCategory xa
   tm'' <- includeNewTypes tm' cs
   (ns,main) <- generateMainFile tm'' em n f
-  return $ CxxOutput Nothing mainFilename NoNamespace (ns `Set.insert` Set.unions [ns0,ns1,ns2]) (Set.fromList [n]) main where
+  return $ CxxOutput Nothing mainFilename NoNamespace (ns `Set.insert` Set.unions [ns0,ns1,ns2]) (Set.fromList [n]) Set.empty main where
     tm = foldM includeNewTypes defaultCategories [cs0,cs1,ps0,ps1]
     reconcile [_] = return ()
     reconcile []  = compilerErrorM $ "No matches for main category " ++ show n ++ " ($TestsOnly$ sources excluded)"

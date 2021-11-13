@@ -205,7 +205,7 @@ runSingleTest b cl cm paths deps (f,s) = do
       let found = any (=~ r) ms
       when (found && not expected) $ compilerErrorM $ "Pattern \"" ++ r ++ "\" present in " ++ n
       when (not found && expected) $ compilerErrorM $ "Pattern \"" ++ r ++ "\" missing from " ++ n
-    createBinary (CxxOutput _ f2 _ _ _ content) timeout xx = do
+    createBinary (CxxOutput _ f2 _ _ _ _ content) timeout xx = do
       dir <- errorFromIO $ mkdtemp "/tmp/ztest_"
       errorFromIO $ hPutStrLn stderr $ "Writing temporary files to " ++ dir
       sources <- mapCompilerM (writeSingleFile dir) xx
@@ -224,7 +224,7 @@ runSingleTest b cl cm paths deps (f,s) = do
     timeoutMacro (Just t)
       | t < 0 || t > 65535 = compilerErrorM $ "Invalid testcase timeout " ++ show t ++ " => use timeout 0 for unlimited time"
       | otherwise = return [(testTimeoutMacro,Just (show t))]  -- Custom timeout.
-    writeSingleFile d ca@(CxxOutput _ f2 _ _ _ content) = do
+    writeSingleFile d ca@(CxxOutput _ f2 _ _ _ _ content) = do
       errorFromIO $ writeFile (d </> f2) $ concat $ map (++ "\n") content
       if isSuffixOf ".cpp" f2
          then return ([d </> f2],ca)

@@ -68,6 +68,7 @@ data CxxOutput =
     coNamespace :: Namespace,
     coUsesNamespace :: Set.Set Namespace,
     coUsesCategory :: Set.Set CategoryName,
+    coPossibleTraces :: Set.Set String,
     coOutput :: [String]
   }
   deriving (Show)
@@ -119,6 +120,7 @@ compileCategoryDeclaration testing ns t =
                      (getCategoryNamespace t)
                      (getCategoryNamespace t `Set.insert` ns)
                      (cdRequired file)
+                     (cdTraces file)
                      (cdOutput file) where
     file = mconcat $ [
         onlyDeps depends,
@@ -183,7 +185,7 @@ generateCategoryDefinition testing = common where
     singleSource = do
       let filename = sourceFilename (getCategoryName t)
       let (cf,tf,vf) = partitionByScope sfScope $ getCategoryFunctions t
-      (CompiledData req _ out) <- fmap (addNamespace t) $ concatM [
+      (CompiledData req traces out) <- fmap (addNamespace t) $ concatM [
           defineFunctions t cf tf vf,
           declareInternalGetters t,
           defineInterfaceCategory t,
@@ -199,6 +201,7 @@ generateCategoryDefinition testing = common where
                          (getCategoryNamespace t)
                          (Set.fromList [getCategoryNamespace t])
                          req'
+                         traces
                          (allowTestsOnly $ addSourceIncludes $ addCategoryHeader t $ addIncludes req' out)
   common (StreamlinedExtension t ns) = sequence [streamlinedHeader,streamlinedSource] where
     streamlinedHeader = do
@@ -206,7 +209,7 @@ generateCategoryDefinition testing = common where
       let maybeValue = if hasPrimitiveValue (getCategoryName t)
                           then []
                           else [defineAbstractValue t]
-      (CompiledData req _ out) <- fmap (addNamespace t) $ concatM $ [
+      (CompiledData req traces out) <- fmap (addNamespace t) $ concatM $ [
           defineAbstractCategory t,
           return $ declareInternalType t (length $ getCategoryParams t),
           defineAbstractType t
@@ -218,6 +221,7 @@ generateCategoryDefinition testing = common where
                          (getCategoryNamespace t)
                          (getCategoryNamespace t `Set.insert` ns)
                          req
+                         traces
                          (headerGuard (getCategoryName t) $ allowTestsOnly $ addTemplateIncludes $ addCategoryHeader t $ addIncludes req out)
     streamlinedSource = do
       let filename = sourceStreamlined (getCategoryName t)
@@ -225,7 +229,7 @@ generateCategoryDefinition testing = common where
       let maybeValue = if hasPrimitiveValue (getCategoryName t)
                           then []
                           else [defineValueOverrides t (getCategoryFunctions t)]
-      (CompiledData req _ out) <- fmap (addNamespace t) $ concatM $ [
+      (CompiledData req traces out) <- fmap (addNamespace t) $ concatM $ [
           defineFunctions t cf tf vf,
           defineCategoryOverrides t (getCategoryFunctions t),
           defineTypeOverrides     t (getCategoryFunctions t)
@@ -238,6 +242,7 @@ generateCategoryDefinition testing = common where
                          (getCategoryNamespace t)
                          (getCategoryNamespace t `Set.insert` ns)
                          req'
+                         traces
                          (addSourceIncludes $ addStreamlinedHeader t $ addIncludes req' out)
   common (StreamlinedTemplate t tm) = fmap (:[]) streamlinedTemplate where
     streamlinedTemplate = do
@@ -251,7 +256,7 @@ generateCategoryDefinition testing = common where
       let maybeValue = if hasPrimitiveValue (getCategoryName t)
                           then []
                           else [defineCustomValue t vp]
-      (CompiledData req _ out) <- fmap (addNamespace t) $ concatM $
+      (CompiledData req traces out) <- fmap (addNamespace t) $ concatM $
         maybeGetter ++ [
           defineCustomCategory t cp,
           defineCustomType     t tp
@@ -264,6 +269,7 @@ generateCategoryDefinition testing = common where
                          (getCategoryNamespace t)
                          (Set.fromList [getCategoryNamespace t])
                          req'
+                         traces
                          (addTemplateIncludes $ addStreamlinedHeader t $ addIncludes req' out)
     filename = templateStreamlined (getCategoryName t)
     defined = DefinedCategory {
@@ -304,7 +310,7 @@ generateCategoryDefinition testing = common where
       let cf = map fst $ psProcedures cp
       let tf = map fst $ psProcedures tp
       let vf = map fst $ psProcedures vp
-      (CompiledData req _ out) <- fmap (addNamespace t) $ concatM [
+      (CompiledData req traces out) <- fmap (addNamespace t) $ concatM [
           defineFunctions t cf tf vf,
           declareInternalGetters t,
           defineConcreteCategory r cf ta' em t d,
@@ -325,6 +331,7 @@ generateCategoryDefinition testing = common where
                          (getCategoryNamespace t)
                          (getCategoryNamespace t `Set.insert` ns)
                          req'
+                         traces
                          (allowTestsOnly $ addSourceIncludes $ addCategoryHeader t $ addIncludes req' out)
 
   defineFunctions t cf tf vf = createAllLabels where
