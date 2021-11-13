@@ -528,7 +528,7 @@ getFilterMap ps fs = do
   return $ getFilters mirrored $ zip (Set.toList pa) (repeat []) where
     pa = Set.fromList $ map vpParam ps
     maybeMirror fa@(ParamFilter c p1 (TypeFilter d p2)) = do
-      p <- collectFirstM [fmap Just $ matchOnlyLeaf p2,return Nothing]
+      p <- tryCompilerM $ matchOnlyLeaf p2
       case p of
           Just (JustParamName _ p') ->
             if p' `Set.member` pa
@@ -1103,10 +1103,7 @@ data GuessUnion =
 guessesFromFilters :: CollectErrorsM m =>
   ParamFilters -> ValueType -> ValueType -> m [PatternMatch]
 guessesFromFilters fm (ValueType _ t1) (ValueType _ t2) = tryParam >>= fromFilters where
-  tryParam = collectFirstM [
-      matchOnlyLeaf t2 >>= return . Just,
-      return Nothing
-    ]
+  tryParam = tryCompilerM $ matchOnlyLeaf t2
   fromFilters (Just (JustParamName _ n)) =
     case n `Map.lookup` fm of
          Just fs -> fmap concat $ mapCompilerM toGuess fs
@@ -1117,10 +1114,7 @@ guessesFromFilters fm (ValueType _ t1) (ValueType _ t2) = tryParam >>= fromFilte
   toGuess (TypeFilter FilterAllows t3) =
     return [TypePattern Contravariant (ValueType RequiredValue t1) (ValueType RequiredValue t3)]
   toGuess (DefinesFilter t3) = do
-    maybeInstance <- collectFirstM [
-        matchOnlyLeaf t1 >>= return . Just,
-        return Nothing
-      ]
+    maybeInstance <- tryCompilerM $ matchOnlyLeaf t1
     case maybeInstance of
          Just (JustTypeInstance t) -> return [DefinesPattern t t3]
          _ -> return []

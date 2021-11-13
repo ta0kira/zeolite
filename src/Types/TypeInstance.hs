@@ -406,7 +406,7 @@ checkGeneralMatch :: (CollectErrorsM m, TypeResolver r) =>
   GeneralInstance -> GeneralInstance -> m (MergeTree InferredTypeGuess)
 checkGeneralMatch r f v t1 t2 = message !!> result where
   result = do
-    ss <- collectFirstM [fmap Just bothSingle,return Nothing]
+    ss <- tryCompilerM bothSingle
     collectFirstM [matchInferredRight,getMatcher ss]
   message
     | v == Covariant     = "Cannot convert " ++ show t1 ++ " -> "  ++ show t2

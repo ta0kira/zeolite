@@ -41,6 +41,7 @@ module Base.CompilerError (
   mapErrorsM,
   mergeObjectsM,
   silenceErrorsM,
+  tryCompilerM,
 ) where
 
 import Control.Monad.IO.Class
@@ -112,6 +113,9 @@ mapCompilerM f = collectAllM . map f
 
 mapCompilerM_ :: CollectErrorsM m => (a -> m b) -> [a] -> m ()
 mapCompilerM_ f = collectAllM_ . map f
+
+tryCompilerM :: CollectErrorsM m => m a -> m (Maybe a)
+tryCompilerM x = collectFirstM [x >>= return . Just,return Nothing]
 
 isCompilerError :: (ErrorContextT t, ErrorContextM (t Identity)) => t Identity a -> Bool
 isCompilerError = runIdentity . isCompilerErrorT
