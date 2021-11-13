@@ -1191,7 +1191,8 @@ mergeInferredTypes r f ff ps gs0 = do
            _                 -> tryRangeUnion (ms ++ [g2]) g1 gs
     tryRangeUnion _ _ _ = return Nothing
     takeBest [gs] = return $ Map.fromList gs
-    takeBest gs = "No feasible param guesses found" !!> do
+    takeBest [] = compilerErrorM "No feasible param guesses found"
+    takeBest gs = "Unable to merge alternative param guesses" !!> do
       mapCompilerM_ showAmbiguous (zip ([1..] :: [Int]) gs)
       emptyErrorM
     showAmbiguous (n,gs) = "Param guess set " ++ show n !!>

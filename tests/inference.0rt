@@ -551,3 +551,201 @@ define Type {
     fail(typename<#c>())
   }
 }
+
+
+testcase "immutable filter excludes guess" {
+  error
+  require "#x"
+  require "guesses"
+  require "Formatted"
+  require "immutable"
+}
+
+unittest test {
+    Formatted value <- "message"
+    \ Type.call<?>(value)
+}
+
+concrete Type {
+  @type call<#x>
+    #x immutable
+    #x requires Formatted
+  (#x) -> ()
+}
+
+define Type {
+  call (value) { }
+}
+
+
+testcase "filter guess merged with arg guess" {
+  crash
+  require "String"
+  exclude "Formatted"
+}
+
+unittest test {
+    \ Type.call<?>("message")
+}
+
+concrete Type {
+  @type call<#x>
+    #x requires Formatted
+  (#x) -> ()
+}
+
+define Type {
+  call (value) {
+    fail(typename<#x>())
+  }
+}
+
+
+testcase "multiple alternative guesses" {
+  error
+  require "#x"
+  require "guesses"
+  require "Int"
+  require "String"
+}
+
+unittest test {
+  \ Test.call<?>(Type.create())
+}
+
+@value interface Base1<|#x> {}
+
+@value interface Base2<|#x> {}
+
+concrete Type {
+  refines Base1<Int>
+  refines Base2<String>
+
+  @type create () -> (Type)
+}
+
+define Type {
+  create () {
+    return #self{ }
+  }
+}
+
+concrete Test {
+  @type call<#x> ([Base1<#x>|Base2<#x>]) -> ()
+}
+
+define Test {
+  call (_) { }
+}
+
+
+testcase "unable to merge guesses" {
+  error
+  require "#x"
+  require "guesses"
+}
+
+unittest test {
+  \ Test.call<?>(Type.create())
+}
+
+@value interface Base1<#x> {}
+
+@value interface Base2<#x> {}
+
+concrete Type {
+  refines Base1<Int>
+  refines Base2<String>
+
+  @type create () -> (Type)
+}
+
+define Type {
+  create () {
+    return #self{ }
+  }
+}
+
+concrete Test {
+  @type call<#x> ([Base1<#x>&Base2<#x>]) -> ()
+}
+
+define Test {
+  call (_) { }
+}
+
+
+testcase "variance allows guesses to be merged using meta type" {
+  crash
+  require "\[Int\|String\]"
+}
+
+unittest test {
+  \ Test.call<?>(Type.create())
+}
+
+@value interface Base1<|#x> {}
+
+@value interface Base2<|#x> {}
+
+concrete Type {
+  refines Base1<Int>
+  refines Base2<String>
+
+  @type create () -> (Type)
+}
+
+define Type {
+  create () {
+    return #self{ }
+  }
+}
+
+concrete Test {
+  @type call<#x> ([Base1<#x>&Base2<#x>]) -> ()
+}
+
+define Test {
+  call (_) {
+    fail(typename<#x>())
+  }
+}
+
+
+testcase "alternative guess eliminated by filter" {
+  crash
+  require "Int"
+}
+
+unittest test {
+  \ Test.call<?>(Type.create())
+}
+
+@value interface Base1<|#x> {}
+
+@value interface Base2<|#x> {}
+
+concrete Type {
+  refines Base1<Int>
+  refines Base2<String>
+
+  @type create () -> (Type)
+}
+
+define Type {
+  create () {
+    return #self{ }
+  }
+}
+
+concrete Test {
+  @type call<#x>
+    #x requires AsChar
+  ([Base1<#x>|Base2<#x>]) -> ()
+}
+
+define Test {
+  call (_) {
+    fail(typename<#x>())
+  }
+}
