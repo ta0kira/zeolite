@@ -1687,7 +1687,7 @@ Specific things to keep in mind with `testcase`:
 ### Code Coverage
 
 As of compiler version `0.16.0.0`, you can get a log of all lines of Zeolite
-code (from `.0rx` or `.0rt` sources) with the `--log-traces`*`[filename]`*
+code (from `.0rx` or `.0rt` sources) with the `--log-traces `*`[filename]`*
 option when running tests with `zeolite -t`.
 
 - If *`[filename]`* is not an absolute path, it will be created relative to the
@@ -1725,11 +1725,11 @@ option when running tests with `zeolite -t`.
   sed 1d trace-log.csv | cut -d, -f3,4 | grep -v 0rt | sort -u
   ```
 
-During module compilation, `zeolite` will output a file
-`.zeolite-cache/traced-lines` within the module's path. This file will contain
-one line per possible `context` in the `.csv`. The two can be compared to
-determine if any lines in the module's `.0rx` files have are not covered by the
-executed tests. Noe that `traced-lines` *does not* contain `.0rt` contexts.
+As of compiler version `0.20.0.0`, `zeolite -r` will cache information about the
+possible `.0rx` lines that can show up in `--log-traces` mode. You can access
+this information using `zeolite --show-traces `*`[module path]`*. This can then
+be compared to the `"context"` field in the output `.csv` to determine if any
+code was missed by the executed tests.
 
 ## Compiler Pragmas and Macros
 

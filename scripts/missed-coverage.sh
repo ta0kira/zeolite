@@ -13,8 +13,8 @@ shift
 ZEOLITE=("$@")
 
 execute() {
-  echo "Executing:" $(printf ' %q' "$@")
-  "$@" 2>&1
+  echo "Executing:" $(printf ' %q' "$@") 1>&2
+  "$@"
 }
 
 do_zeolite() {
@@ -29,4 +29,4 @@ do_zeolite -r "$path"
 do_zeolite -t "$path" --log-traces "$coverage"
 
 cut -d, -f4,4 "$coverage" | fgrep '.0rx' | tr -d '"' | sort -u > "$lines"
-fgrep -v "$path/.zeolite-cache/traced-lines" -f "$lines" | sort -g -k2,2 | sort -s -k6,6
+do_zeolite --show-traces "$path" | grep 0rx | fgrep -v -f "$lines" | sort -g -k2,2 | sort -s -k6,6

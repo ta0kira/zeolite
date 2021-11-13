@@ -42,6 +42,7 @@ module Module.ProcessMetadata (
   loadRecompile,
   loadTestingDeps,
   mapMetadata,
+  readPossibleTraces,
   resolveCategoryDeps,
   resolveObjectDeps,
   sortCompiledFiles,
@@ -145,6 +146,12 @@ writePossibleTraces :: FilePath -> Set.Set String -> TrackedErrorsIO ()
 writePossibleTraces p ts = do
   p' <- errorFromIO $ canonicalizePath p
   writeCachedFile p' "" tracesFilename $ concat $ map (++"\n") $ Set.toList ts
+
+readPossibleTraces :: FilePath -> TrackedErrorsIO (Set.Set String)
+readPossibleTraces p = do
+  p' <- errorFromIO $ canonicalizePath p
+  c <- errorFromIO $ readFile (getCachedPath p' "" tracesFilename)
+  return $ Set.fromList $ lines c
 
 getRecompilePath :: FilePath -> TrackedErrorsIO FilePath
 getRecompilePath p = do

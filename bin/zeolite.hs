@@ -24,6 +24,7 @@ import System.Environment
 import System.Exit
 import System.IO
 import qualified Data.Map as Map
+import qualified Data.Set as Set
 
 import Base.CompilerError
 import Base.TrackedErrors
@@ -84,6 +85,19 @@ tryFastModes ("--version":os) = do
   if null os
      then exitSuccess
      else exitFailure
+tryFastModes ("--show-traces":ps) = do
+  tryZeoliteIO $ do
+    (_,backend) <- loadConfig
+    let h = getCompilerHash backend
+    mapM_ (showTraces h) ps
+  exitSuccess where
+    showTraces h p = do
+      p' <- errorFromIO $ canonicalizePath p
+      -- Not needed to show traces, but causes the error to be about the module
+      -- rather than the filename if the module hasn't been compiled.
+      _ <- loadModuleMetadata h ForceAll Map.empty p'
+      ts <- readPossibleTraces p
+      mapM_ (errorFromIO . hPutStrLn stdout) $ Set.toList ts
 tryFastModes ("--show-deps":ps) = do
   tryZeoliteIO $ do
     (_,backend) <- loadConfig
