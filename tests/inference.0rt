@@ -495,3 +495,59 @@ define Type {
     fail(typename<#c>())
   }
 }
+
+
+testcase "dependent implicit param inferred from reverse allows" {
+  crash
+  require "String"
+}
+
+unittest test {
+  \ Type.run()
+}
+
+concrete Type {
+  @type run () -> ()
+}
+
+define Type {
+  run () {
+    \ call<?,?>("message")
+    \ call<String,?>("message")
+  }
+
+  @type call<#x,#c>
+    #c allows #x
+  (#x) -> ()
+  call (value) {
+    fail(typename<#c>())
+  }
+}
+
+
+testcase "dependent implicit param inferred from reverse requires" {
+  crash
+  require "String"
+}
+
+unittest test {
+  \ Type.run()
+}
+
+concrete Type {
+  @type run () -> ()
+}
+
+define Type {
+  run () {
+    \ call<?,?>("message")
+    \ call<String,?>("message")
+  }
+
+  @type call<#x,#c>
+    #c requires #x
+  (#x) -> ()
+  call (value) {
+    fail(typename<#c>())
+  }
+}
