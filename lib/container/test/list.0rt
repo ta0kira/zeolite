@@ -215,6 +215,36 @@ unittest setPrevSelf {
   \ Testing.checkEquals<?>(require(require(after).next()).get(),1)
 }
 
+unittest duplicate {
+  optional LinkedNode<Int> head, _ <- LinkedNode<Int>.builder()
+      .append(3)
+      .append(2)
+      .append(5)
+      .append(1)
+      .append(6)
+      .append(4)
+      .build()
+
+  DefaultOrder<Int> expected <- Vector:create<Int>()
+      .append(3)
+      .append(2)
+      .append(5)
+      .append(1)
+      .append(6)
+      .append(4)
+
+  optional LinkedNode<Int> head2 <- require(head).duplicate()
+  \ require(Helper.jumpBy<?>(3,head)).set(7).setNext(empty)
+  $Hidden[head]$
+
+  traverse (expected.defaultOrder() -> Int value) {
+    \ Testing.checkEquals<?>(require(head2).get(),value)
+  } update {
+    head2 <- require(head2).next()
+  }
+  \ Testing.checkEquals<?>(present(head2),false)
+}
+
 concrete Helper {
   @type jumpBy<#x>
     #x requires Order<any>

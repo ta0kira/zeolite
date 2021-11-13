@@ -46,6 +46,17 @@ define LinkedNode {
     return prev
   }
 
+  duplicate () {
+    $Hidden[prev,next,value]$
+    ListBuilder<#x> builder <- #self.builder()
+    traverse (self -> #x value2) {
+      \ builder.append(value2)
+    }
+    scoped {
+      optional #self head, _ <- builder.build()
+    } in return require(head)
+  }
+
   setNext (next2) {
     if (present(next)) {
       \ require(next).setPrevBase(empty)

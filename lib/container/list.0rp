@@ -45,6 +45,8 @@ limitations under the License.
 
 // Node in a doubly-linked list.
 concrete LinkedNode<#x> {
+  // Duplication happens only in the forward direction.
+  refines Duplicate
   refines DoubleNode<LinkedNode<#x>,#x>
 
   // Create a new node with the provided value.
