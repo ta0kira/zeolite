@@ -68,7 +68,7 @@ concrete LinkedNode<#x> {
   @value set (#x) -> (#self)
 }
 
-// Node in a singlu-linked list.
+// Node in a singly-linked list.
 //
 // Notes:
 // - This is more efficient than LinkedNode, but lacks housekeeping when

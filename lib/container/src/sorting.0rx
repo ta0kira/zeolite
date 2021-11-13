@@ -166,17 +166,18 @@ define MergeSort {
     } in while (dirty) {
       $ReadOnly[chunk]$
       scoped {
+        optional #n tail <- empty
         optional #n next <- head2
         head2 <- empty
-        optional #n tail <- empty
         dirty <- false
       } in while (present(next)) {
         optional #n left  <- next
-        optional #n right <- splitAt(chunk,next)
-        next <- splitAt(chunk,right)
+        optional #n right <- left  `splitAt` chunk
+        next              <- right `splitAt` chunk
         $Hidden[next]$
+        $ReadOnly[left,right]$
         dirty <- dirty || present(right)
-        optional #n newHead, optional #n newTail <- merge(left,right)
+        optional #n newHead, optional #n newTail <- left `merge` right
         if (!present(head2)) {
           head2 <- newHead
         } else {
@@ -189,8 +190,8 @@ define MergeSort {
     }
   }
 
-  @type splitAt (Int,optional #n) -> (optional #n)
-  splitAt (n,head) {
+  @type splitAt (optional #n,Int) -> (optional #n)
+  splitAt (head,n) {
     optional #n head2 <- head
     $Hidden[head]$
 
