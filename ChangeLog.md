@@ -128,7 +128,7 @@
   creating iterators for C++ extensions.
 
 * **[new]** Adds `--show-traces` mode to `zeolite` to output a list of possible
-  trace contexts for `--log-traces` is used in `-t` mode.
+  trace contexts when `--log-traces` is used in `-t` mode.
 
 * **[new]** `@value` function implementations for `immutable` categories are
   marked as `const` in C++ extensions.
