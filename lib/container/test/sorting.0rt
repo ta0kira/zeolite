@@ -106,7 +106,7 @@ unittest reverseEmpty {
 }
 
 unittest sortList {
-  ListBuilder<Int> builder <- LinkedNode<Int>.builder()
+  ListBuilder<Int,LinkedNode<Int>> builder <- LinkedNode<Int>.builder()
   Vector<Int> expected <- Vector:create<Int>()
   Int hash <- 269
   Int size <- 137
@@ -129,12 +129,36 @@ unittest sortList {
   \ Testing.checkEquals<?>(present(actual),false)
 }
 
+unittest sortListSingle {
+  ListBuilder<Int,ForwardNode<Int>> builder <- ForwardNode<Int>.builder()
+  Vector<Int> expected <- Vector:create<Int>()
+  Int hash <- 269
+  Int size <- 137
+  $ReadOnly[hash,size]$
+
+  traverse (Counter.zeroIndexed(size) -> Int i) {
+    \ builder.append((i*hash)%size/3)
+    \ expected.append(i/3)
+  }
+
+  scoped {
+    optional ForwardNode<Int> head, _ <- builder.build()
+  } in optional ForwardNode<Int> actual <- Sorting:sortList<?,?>(head)
+
+  traverse (expected.defaultOrder() -> Int n) {
+    \ Testing.checkEquals<?>(require(actual).get(),n)
+  } update {
+    actual <- require(actual).next()
+  }
+  \ Testing.checkEquals<?>(present(actual),false)
+}
+
 unittest sortListEmpty {
   \ Sorting:sortList<LinkedNode<Int>,Int>(empty)
 }
 
 unittest sortListPow2 {
-  ListBuilder<Int> builder <- LinkedNode<Int>.builder()
+  ListBuilder<Int,LinkedNode<Int>> builder <- LinkedNode<Int>.builder()
   Vector<Int> expected <- Vector:create<Int>()
   Int hash <- 269
   Int size <- 256
@@ -158,7 +182,7 @@ unittest sortListPow2 {
 }
 
 unittest sortListWith {
-  ListBuilder<Int> builder <- LinkedNode<Int>.builder()
+  ListBuilder<Int,LinkedNode<Int>> builder <- LinkedNode<Int>.builder()
   Vector<Int> expected <- Vector:create<Int>()
   Int hash <- 269
   Int size <- 137
@@ -182,7 +206,7 @@ unittest sortListWith {
 }
 
 unittest reverseList {
-  ListBuilder<Int> builder <- LinkedNode<Int>.builder()
+  ListBuilder<Int,LinkedNode<Int>> builder <- LinkedNode<Int>.builder()
   Vector<Int> expected <- Vector:create<Int>()
   Int size <- 101
   $ReadOnly[size]$
@@ -198,6 +222,32 @@ unittest reverseList {
   scoped {
     optional LinkedNode<Int> head, _ <- builder.build()
   } in optional LinkedNode<Int> reversed <- Sorting:reverseList<?,?>(head)
+
+  traverse (expected.defaultOrder() -> Int value) {
+    \ Testing.checkEquals<?>(require(reversed).get(),value)
+  } update {
+    reversed <- require(reversed).next()
+  }
+  \ Testing.checkEquals<?>(present(reversed),false)
+}
+
+unittest reverseListSingle {
+  ListBuilder<Int,ForwardNode<Int>> builder <- ForwardNode<Int>.builder()
+  Vector<Int> expected <- Vector:create<Int>()
+  Int size <- 101
+  $ReadOnly[size]$
+
+  traverse (Counter.zeroIndexed(size) -> Int i) {
+    \ expected.append(i)
+  }
+
+  traverse (Counter.revZeroIndexed(size) -> Int i) {
+    \ builder.append(i)
+  }
+
+  scoped {
+    optional ForwardNode<Int> head, _ <- builder.build()
+  } in optional ForwardNode<Int> reversed <- Sorting:reverseList<?,?>(head)
 
   traverse (expected.defaultOrder() -> Int value) {
     \ Testing.checkEquals<?>(require(reversed).get(),value)

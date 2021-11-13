@@ -21,7 +21,7 @@ define LinkedNode {
   @value optional #self prev
   @value optional #self next
 
-  new (value) {
+  newNode (value) {
     return #self{ value, empty, empty }
   }
 
@@ -35,7 +35,7 @@ define LinkedNode {
   }
 
   builder () {
-    return ListBuilder<#x>.new()
+    return ListBuilder<#x,#self>.new()
   }
 
   next () {
@@ -48,7 +48,7 @@ define LinkedNode {
 
   duplicate () {
     $Hidden[prev,next,value]$
-    ListBuilder<#x> builder <- #self.builder()
+    ListBuilder<#x,#self> builder <- #self.builder()
     traverse (self -> #x value2) {
       \ builder.append(value2)
     }
@@ -94,16 +94,58 @@ define LinkedNode {
   }
 }
 
+define ForwardNode {
+  @value #x value
+  @value optional #self next
+
+  newNode (value) {
+    return #self{ value, empty }
+  }
+
+  get () {
+    return value
+  }
+
+  set (value2) {
+    value <- value2
+    return self
+  }
+
+  builder () {
+    return ListBuilder<#x,#self>.new()
+  }
+
+  next () {
+    return next
+  }
+
+  duplicate () {
+    $Hidden[next,value]$
+    ListBuilder<#x,#self> builder <- #self.builder()
+    traverse (self -> #x value2) {
+      \ builder.append(value2)
+    }
+    scoped {
+      optional #self head, _ <- builder.build()
+    } in return require(head)
+  }
+
+  setNext (next2) (old) {
+    old <- next
+    next <- next2
+  }
+}
+
 define ListBuilder {
-  @value optional LinkedNode<#x> head
-  @value optional LinkedNode<#x> tail
+  @value optional #n head
+  @value optional #n tail
 
   new () {
     return #self{ empty, empty }
   }
 
   append (value) {
-    LinkedNode<#x> node <- LinkedNode<#x>.new(value)
+    #n node <- #n.newNode(value)
     if (!present(head)) {
       head <- node
     } else {

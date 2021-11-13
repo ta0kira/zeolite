@@ -16,6 +16,11 @@ limitations under the License.
 
 // Author: Kevin P. Barry [ta0kira@gmail.com]
 
+// Factory for creating new nodes.
+@type interface NewNode<#x|> {
+  newNode (#x) -> (#self)
+}
+
 // List element whose next element can be replaced.
 @value interface ListNode<|#n|#x> {
   refines Order<#x>
@@ -51,23 +56,40 @@ limitations under the License.
 
 // Node in a doubly-linked list.
 concrete LinkedNode<#x> {
+  defines NewNode<#x>
   // Duplication happens only in the forward direction.
   refines Duplicate
   refines DoubleNode<LinkedNode<#x>,#x>
 
-  // Create a new node with the provided value.
-  @type new (#x) -> (#self)
-
-  // Create a new ListBuilder<#x>.
-  @type builder () -> (ListBuilder<#x>)
+  // Create a new builder.
+  @type builder () -> (ListBuilder<#x,#self>)
 
   // Set the value held by the node.
   @value set (#x) -> (#self)
 }
 
-// Builder for LinkedNode.
-concrete ListBuilder<#x> {
+// Node in a singlu-linked list.
+//
+// Notes:
+// - This is more efficient than LinkedNode, but lacks housekeeping when
+//   modifying the list's structure.
+concrete ForwardNode<#x> {
+  defines NewNode<#x>
+  refines Duplicate
+  refines ListNode<ForwardNode<#x>,#x>
+
+  // Create a new builder.
+  @type builder () -> (ListBuilder<#x,#self>)
+
+  // Set the value held by the node.
+  @value set (#x) -> (#self)
+}
+
+// Builder for ListNode.
+concrete ListBuilder<#x|#n> {
   refines Append<#x>
+  #n defines NewNode<#x>
+  #n requires ListNode<#n,#x>
 
   // Create a new builder.
   @type new () -> (#self)
@@ -75,13 +97,13 @@ concrete ListBuilder<#x> {
   // Build the list.
   //
   // Returns:
-  // - optional LinkedNode<#x>: The head of the built list.
-  // - optional LinkedNode<#x>: The tail of the built list.
+  // - optional #n: The head of the built list.
+  // - optional #n: The tail of the built list.
   //
   // Notes:
   // - Appending new values after calling build will not invalidate the previous
   //   head/tail, but that tail will no longer be the end.
   // - Calling mutating functions (e.g., setNext, setPrev) on any of the
   //   elements between the returned head/tail will invalidate the builder.
-  @value build () -> (optional LinkedNode<#x>,optional LinkedNode<#x>)
+  @value build () -> (optional #n,optional #n)
 }

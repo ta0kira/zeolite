@@ -148,8 +148,9 @@
 * **[breaking]** Requires the value param in `CategoricalTree` in `lib/math` to
   be `immutable`.
 
-* **[new]** Adds the `LinkedNode` linked-list type to `lib/container`, and adds
-  the `sortList`, `sortListWith`, and `reverseList` functions to `Sorting`.
+* **[new]** Adds the `LinkedNode` and `ForwardNode` linked-list types to
+  `lib/container`, and adds the `sortList`, `sortListWith`, and `reverseList`
+  functions to `Sorting`.
 
 ## 0.19.0.0  -- 2021-10-25
 
