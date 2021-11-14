@@ -133,6 +133,10 @@
 * **[new]** Adds `--show-traces` mode to `zeolite` to output a list of possible
   trace contexts when `--log-traces` is used in `-t` mode.
 
+* **[new]** Adds `--missed-lines` mode to `zeolite` to output all code lines
+  for a module that are not in a provided file that was created by
+  `--log-traces` in `-t` mode.
+
 * **[new]** `@value` function implementations for `immutable` categories are
   marked as `const` in C++ extensions.
 
