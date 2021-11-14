@@ -1369,6 +1369,17 @@ type conversion.
   execution are checked. For example, the result of `reduce<#x,#y>(value)` will
   depend on the *specific* types assigned to `#x` and `#y` upon execution.
 
+Here are a few motivating use-cases:
+
+- Allowing creation of a container that can hold objects of different types
+  while still being able to access the objects with their original types. (Also
+  see `TypeMap` in [`lib/container`][lib/container], which was actually the
+  original target use-case for the initial version of Zeolite.)
+
+- Enabling optional functionality for a parameter without using a filter. For
+  example, printing info about `value` if available using
+  `reduce<#x,Formatted>(value)` during debugging.
+
 <pre style='color:#1f1c1b;background-color:#f6f8fa;'>
 <span style='color:#644a9b;'>@value</span> <b>interface</b> <b><span style='color:#0057ae;'>AnyObject</span></b> {
   getAs&lt;<i><span style='color:#0057ae;'>#y</span></i>&gt; () -&gt; (<b>optional</b> <i><span style='color:#0057ae;'>#y</span></i>)
@@ -1944,6 +1955,7 @@ These can be used in place of language expressions.
 [initial-terminal]: https://en.wikipedia.org/wiki/Initial_and_terminal_objects
 [kate]: https://kate-editor.org/
 [lib]: https://github.com/ta0kira/zeolite/tree/master/lib
+[lib/container]: https://github.com/ta0kira/zeolite/tree/master/lib/container
 [lib/file]: https://github.com/ta0kira/zeolite/tree/master/lib/file
 [procedural]: https://en.wikipedia.org/wiki/Procedural_programming
 [oop]: https://en.wikipedia.org/wiki/Object-oriented_programming
