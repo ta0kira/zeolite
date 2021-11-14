@@ -1,5 +1,13 @@
 # Revision history for zeolite-lang
 
+## 0.20.0.1  -- 2021-11-14
+
+### Language
+
+* **[fix]** Fixes a regression where arguments ignored with `_` were not skipped
+  over when generating C++. For example, `call (_,x) { ... }` would result in
+  `x` being assigned the value that should have been ignored.
+
 ## 0.20.0.0  -- 2021-11-13
 
 ### Language

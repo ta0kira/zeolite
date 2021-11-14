@@ -152,9 +152,11 @@ compileExecutableProcedure immutable cxxType ctx
       | otherwise            = ["ReturnTuple returns(" ++ show (length $ pValues rs1) ++ ");"]
     nameParams = flip map (zip ([0..] :: [Int]) $ pValues ps1) $
       (\(i,p2) -> paramType ++ " " ++ paramName (vpParam p2) ++ " = params.At(" ++ show i ++ ");")
-    nameArgs = flip map (zip ([0..] :: [Int]) $ filter (not . isDiscardedInput . snd) $ zip (pValues as1) (pValues $ avNames as2)) $
-      (\(i,(t2,n2)) -> "const " ++ variableProxyType (pvType t2) ++ " " ++ variableName (ivName n2) ++
-                       " = " ++ writeStoredVariable (pvType t2) (UnwrappedSingle $ "args.At(" ++ show i ++ ")") ++ ";")
+    nameArgs = map nameSingleArg (zip ([0..] :: [Int]) $ zip (pValues as1) (pValues $ avNames as2))
+    nameSingleArg (i,(t2,n2))
+      | isDiscardedInput n2 = "// Arg " ++ show i ++ " (" ++ show (pvType t2) ++ ") is discarded"
+      | otherwise = "const " ++ variableProxyType (pvType t2) ++ " " ++ variableName (ivName n2) ++
+                    " = " ++ writeStoredVariable (pvType t2) (UnwrappedSingle $ "args.At(" ++ show i ++ ")") ++ ";"
     nameReturns
       | isUnnamedReturns rs2 = []
       | otherwise = map (\(i,(t2,n2)) -> nameReturn i (pvType t2) n2) (zip ([0..] :: [Int]) $ zip (pValues rs1) (pValues $ nrNames rs2))

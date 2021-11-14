@@ -712,3 +712,27 @@ define Test {
     \ #x.execute()
   }
 }
+
+
+testcase "discarded args are skipped over" {
+  success
+}
+
+unittest test {
+  \ Testing.checkEquals<?>(Value.create().call(1,"mess",2,"age"),"message")
+}
+
+concrete Value {
+  @type create () -> (Value)
+  @value call (Int,String,any,Formatted) -> (String)
+}
+
+define Value {
+  create () {
+    return Value{}
+  }
+
+  call (_,x,_,y) {
+    return x+y.formatted()
+  }
+}
