@@ -257,7 +257,7 @@ define Test {
 }
 
 
-testcase "intersection works with all immutable types" {
+testcase "union works with all immutable types" {
   compiles
 }
 
