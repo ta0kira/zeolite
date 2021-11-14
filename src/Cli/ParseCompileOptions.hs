@@ -45,6 +45,7 @@ optionHelpText = [
     "",
     "zeolite [options...] --templates [modules...]",
     "zeolite --get-path",
+    "zeolite --missed-lines [filename] [modules...]",
     "zeolite --show-deps [modules...]",
     "zeolite --show-traces [modules...]",
     "zeolite --version",
@@ -62,6 +63,7 @@ optionHelpText = [
     "Special Modes:",
     "  --templates: Only create C++ templates for undefined categories in .0rp sources.",
     "  --get-path: Show the data path and immediately exit.",
+    "  --missed-lines: List all lines missed in a log file taken from --log-traces.",
     "  --show-deps: Show category dependencies for the modules.",
     "  --show-traces: Show the possible code traces for the modules.",
     "  --version: Show the compiler version and immediately exit.",
@@ -95,6 +97,10 @@ optionHelpText = [
     "",
     "  # Execute the tests from .0rt files in mylibrary.",
     "  zeolite -t mylibrary",
+    "",
+    "  # Display the contexts of all code lines missed by tests for mylibrary.",
+    "  zeolite -t --log-traces traces.csv mylibrary",
+    "  zeolite --missed-lines traces.csv mylibrary",
     ""
   ]
 

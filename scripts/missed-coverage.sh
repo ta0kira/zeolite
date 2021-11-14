@@ -22,11 +22,8 @@ do_zeolite() {
 }
 
 coverage=$(mktemp)
-lines=$(mktemp)
-trap 'rm -f "$coverage" "$lines"' EXIT
+trap 'rm -f "$coverage"' EXIT
 
 do_zeolite -r "$path"
 do_zeolite -t "$path" --log-traces "$coverage"
-
-cut -d, -f4,4 "$coverage" | fgrep '.0rx' | tr -d '"' | sort -u > "$lines"
-do_zeolite --show-traces "$path" | grep 0rx | fgrep -v -f "$lines" | sort -g -k2,2 | sort -s -k6,6
+do_zeolite --missed-lines "$coverage" "$path" | sort -g -k2,2 | sort -s -k6,6

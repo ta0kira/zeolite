@@ -17,6 +17,8 @@ limitations under the License.
 -- Author: Kevin P. Barry [ta0kira@gmail.com]
 
 module Cli.RunCompiler (
+  TraceEntry(..),
+  parseTracesFile,
   runCompiler,
 ) where
 
@@ -37,6 +39,8 @@ import Cli.Programs
 import Module.CompileMetadata
 import Module.Paths
 import Module.ProcessMetadata
+import Parser.Common
+import Parser.TextParser
 
 
 runCompiler :: (PathIOHandler r, CompilerBackend b) => r -> b -> CompileOptions -> TrackedErrorsIO ()
@@ -175,6 +179,39 @@ runCompiler resolver _ (CompileOptions _ is is2 ds es ep p m f) = mapM_ compileS
     if isSystem
        then return i
        else resolveModule resolver p2 i
+
+data TraceEntry =
+  TraceEntry {
+    teMicroseconds :: Integer,
+    teProcess :: Integer,
+    teFunction :: String,
+    teContext :: String
+  }
+
+parseTracesFile :: (FilePath,String) -> TrackedErrorsIO [TraceEntry]
+parseTracesFile (f,s) = runTextParser (between nullParse endOfDoc tracesFile) f s where
+  tracesFile =  do
+    parseHeader
+    many parseSingle
+  parseHeader = do
+    _ <- quotedString
+    string_ ","
+    _ <- quotedString
+    string_ ","
+    _ <- quotedString
+    string_ ","
+    _ <- quotedString
+    many (char '\n' <|> char '\n') >> return ()
+  parseSingle = do
+    ms <- parseDec
+    string_ ","
+    pid <- parseDec
+    string_ ","
+    func <- quotedString
+    string_ ","
+    c <- quotedString
+    many (char '\n' <|> char '\n') >> return ()
+    return $ TraceEntry ms pid func c
 
 runRecompileCommon :: (PathIOHandler r, CompilerBackend b) => r -> b ->
   ForceMode -> Bool -> FilePath -> [FilePath] -> TrackedErrorsIO ()

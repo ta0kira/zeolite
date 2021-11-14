@@ -1718,18 +1718,29 @@ option when running tests with `zeolite -t`.
 - Check the size of the log file before attempting to open it in a desktop
   application. In many cases, it will be too large to display.
 
-  If you just want code coverage, you can try something like this, to get just
-  the unique lines executed from `.0rx` sources:
+As of compiler version `0.20.0.0`, `zeolite -r` will cache information about the
+possible `.0rx` lines that can show up in `--log-traces` mode.
+
+- You can access this information using
+`zeolite --show-traces `*`[module path]`*. This can then be compared to the
+`"context"` field in the output `.csv` to determine if any code was missed by
+the executed tests.
+
+- Alternatively, you can have `zeolite` compute the missed lines using
+  `zeolite --missed-lines `*`[filename] [module path]`*, where *`[filename]`* is
+  the file written by `--log-traces`. If a single `zeolite -t` command executed
+  tests for multiple modules, you can pass all of those modules to a single
+  `zeolite --missed-lines` call.
+
+  For example:
 
   ```shell
-  sed 1d trace-log.csv | cut -d, -f3,4 | grep -v 0rt | sort -u
-  ```
+  # Run the tests.
+  zeolite -t --log-traces traces.csv your/module1 your/module2
 
-As of compiler version `0.20.0.0`, `zeolite -r` will cache information about the
-possible `.0rx` lines that can show up in `--log-traces` mode. You can access
-this information using `zeolite --show-traces `*`[module path]`*. This can then
-be compared to the `"context"` field in the output `.csv` to determine if any
-code was missed by the executed tests.
+  # Output the line numbers missed by the tests.
+  zeolite --missed-lines traces.csv your/module1 your/module2
+  ```
 
 ## Compiler Pragmas and Macros
 
