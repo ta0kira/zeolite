@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-Copyright 2020 Kevin P. Barry
+Copyright 2020-2021 Kevin P. Barry
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -129,4 +129,232 @@ define Value {
   call () {
     return self
   }
+}
+
+
+testcase "merging of internal inherited functions works" {
+  compiles
+}
+
+@value interface Base0 {
+  call (Int) -> ()
+}
+
+@value interface Base1 {
+  call (String) -> ()
+}
+
+concrete Type {}
+
+define Type {
+  refines Base0
+  refines Base1
+
+  @value call (Formatted) -> ()
+  call (_) {}
+}
+
+
+testcase "merging of internal/public inherited functions works" {
+  compiles
+}
+
+@value interface Base0 {
+  call (Int) -> ()
+}
+
+@value interface Base1 {
+  call (String) -> ()
+}
+
+concrete Type {
+  refines Base0
+}
+
+define Type {
+  refines Base1
+
+  @value call (Formatted) -> ()
+  call (_) {}
+}
+
+
+testcase "public merge does not interfere with internal merge" {
+  compiles
+}
+
+@value interface Base0 {
+  call (Int) -> ()
+}
+
+@value interface Base1 {
+  call (String) -> ()
+}
+
+concrete Type {
+  refines Base0
+  refines Base1
+
+  @value call (Formatted) -> ()
+}
+
+define Type {
+  @value call (any) -> ()
+  call (_) {}
+}
+
+
+testcase "public function used for internal merge" {
+  compiles
+}
+
+@value interface Base0 {
+  call (Int) -> ()
+}
+
+@value interface Base1 {
+  call (String) -> ()
+}
+
+concrete Type {
+  @value call (Formatted) -> ()
+}
+
+define Type {
+  refines Base0
+  refines Base1
+
+  call (_) {}
+}
+
+
+testcase "public merge conflicts with internal merge" {
+  error
+  require "any"
+  require "Formatted"
+  require "call"
+}
+
+@value interface Base0 {
+  call (Int) -> ()
+}
+
+@value interface Base1 {
+  call (String) -> ()
+}
+
+concrete Type {
+  refines Base0
+  refines Base1
+
+  @value call (any) -> ()
+}
+
+define Type {
+  @value call (Formatted) -> ()
+  call (_) {}
+}
+
+
+testcase "public merge invalid for internal merge" {
+  error
+  require "Int"
+  require "String"
+  require "Float"
+  require "call"
+}
+
+@value interface Base0 {
+  call (Int) -> ()
+}
+
+@value interface Base1 {
+  call (String) -> ()
+}
+
+concrete Type {
+  @value call (Float) -> ()
+}
+
+define Type {
+  refines Base0
+  refines Base1
+
+  call (_) {}
+}
+
+
+testcase "public and internal merges both required" {
+  compiles
+}
+
+@value interface Base0 {
+  call (Int) -> ()
+}
+
+@value interface Base1 {
+  call (String) -> ()
+}
+
+@value interface Base2 {
+  call (Base2) -> ()
+}
+
+@value interface Base3 {
+  call (Base3) -> ()
+}
+
+concrete Type {
+  refines Base0
+  refines Base1
+
+  @value call (Formatted) -> ()
+}
+
+define Type {
+  refines Base2
+  refines Base3
+
+  @value call (any) -> ()
+  call (_) {}
+}
+
+
+testcase "public and internal merges both required but internal missing" {
+  error
+  require "Base2"
+  require "Base3"
+  require "Formatted"
+  exclude "Int"
+  exclude "String"
+}
+
+@value interface Base0 {
+  call (Int) -> ()
+}
+
+@value interface Base1 {
+  call (String) -> ()
+}
+
+@value interface Base2 {
+  call (Base2) -> ()
+}
+
+@value interface Base3 {
+  call (Base3) -> ()
+}
+
+concrete Type {
+  refines Base0
+  refines Base1
+
+  @value call (Formatted) -> ()
+}
+
+define Type {
+  refines Base2
+  refines Base3
+
+  call (_) {}
 }
