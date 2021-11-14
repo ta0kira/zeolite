@@ -156,6 +156,7 @@ data TestProcedure c =
   TestProcedure {
     tpContext :: [c],
     tpName :: FunctionName,
+    tpDisableCoverage :: Bool,
     tpProcedure :: Procedure c
   }
   deriving (Show)

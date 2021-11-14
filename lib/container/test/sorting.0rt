@@ -37,7 +37,7 @@ unittest sort {
   \ Testing.checkEquals<?>(original,expected)
 }
 
-unittest sortWith {
+unittest sortWith { $DisableCoverage$
   TestSequence original <- TestSequence.create()
   TestSequence expected <- TestSequence.create()
   Int hash <- 313
@@ -79,7 +79,7 @@ unittest reverseEvenSize {
   \ Testing.checkEquals<?>(original,expected)
 }
 
-unittest reverseOddSize {
+unittest reverseOddSize { $DisableCoverage$
   TestSequence original <- TestSequence.create()
   TestSequence expected <- TestSequence.create()
   Int size <- 101
@@ -129,7 +129,7 @@ unittest sortList {
   \ Testing.checkEquals<?>(present(actual),false)
 }
 
-unittest sortListSingle {
+unittest sortListSingle { $DisableCoverage$
   ListBuilder<Int,ForwardNode<Int>> builder <- ForwardNode<Int>.builder()
   Vector<Int> expected <- Vector:create<Int>()
   Int hash <- 269
@@ -157,7 +157,7 @@ unittest sortListEmpty {
   \ Sorting:sortList<LinkedNode<Int>,Int>(empty)
 }
 
-unittest sortListPow2 {
+unittest sortListPow2 { $DisableCoverage$
   ListBuilder<Int,LinkedNode<Int>> builder <- LinkedNode<Int>.builder()
   Vector<Int> expected <- Vector:create<Int>()
   Int hash <- 269
@@ -181,7 +181,7 @@ unittest sortListPow2 {
   \ Testing.checkEquals<?>(present(actual),false)
 }
 
-unittest sortListWith {
+unittest sortListWith { $DisableCoverage$
   ListBuilder<Int,LinkedNode<Int>> builder <- LinkedNode<Int>.builder()
   Vector<Int> expected <- Vector:create<Int>()
   Int hash <- 269
@@ -231,7 +231,7 @@ unittest reverseList {
   \ Testing.checkEquals<?>(present(reversed),false)
 }
 
-unittest reverseListSingle {
+unittest reverseListSingle { $DisableCoverage$
   ListBuilder<Int,ForwardNode<Int>> builder <- ForwardNode<Int>.builder()
   Vector<Int> expected <- Vector:create<Int>()
   Int size <- 101

@@ -45,6 +45,9 @@
 * **[fix]** Fixes `update` calls in `traverse`. Previously, the `update` was not
   called for `continue`.
 
+* **[new]** Adds `$DisableCoverage$` `unittest` pragma, to disable trace
+  collection in `--log-traces` when the `unittest` is executed.
+
 * **[new]** Updates `String.builder()` to accept `Formatted` values, rather than
   just accepting `String`.
 

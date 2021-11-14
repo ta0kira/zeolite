@@ -125,7 +125,7 @@ unittest duplicate {
   \ Testing.checkEquals<?>(tree.getWeight(2),2)
 }
 
-unittest integrationTest {
+unittest integrationTest { $DisableCoverage$
   ValidatedTree<Int> tree      <- ValidatedTree<Int>.new()
   SearchTree<Int,Int> expected <- SearchTree<Int,Int>.new()
 

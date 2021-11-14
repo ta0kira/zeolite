@@ -64,9 +64,11 @@ instance ParseFromSource (TestProcedure SourceContext) where
     kwUnittest
     n <- try sourceParser
     sepAfter (string_ "{")
+    cov <- coveragePragma <|> return False
     pp <- sourceParser
     sepAfter (string_ "}")
-    return $ TestProcedure [c] n pp
+    return $ TestProcedure [c] n cov pp where
+      coveragePragma = autoPragma "DisableCoverage" $ Left (const True)
 
 instance ParseFromSource (ArgValues SourceContext) where
   sourceParser = labeled "procedure arguments" $ do

@@ -20,7 +20,7 @@ testcase "SearchTree tests" {
   success
 }
 
-unittest integrationTest {
+unittest integrationTest { $DisableCoverage$
   ValidatedTree<Int,Int> tree <- ValidatedTree<Int,Int>.new()
   Int count <- 30
   $ReadOnly[count]$

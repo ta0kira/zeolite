@@ -238,6 +238,8 @@ class LogCalls : public capture_thread::ThreadCapture<LogCalls> {
     }
   }
 
+  static void DisableCallLogging();
+
  protected:
   virtual ~LogCalls() = default;
 

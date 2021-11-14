@@ -196,6 +196,13 @@ unsigned int UniqueId() {
   return (1000000009 * std::chrono::duration_cast<std::chrono::microseconds>(time).count());
 }
 
+static bool enable_coverage = true;
+
+// static
+void LogCalls::DisableCallLogging() {
+  enable_coverage = false;
+}
+
 LogCallsToFile::LogCallsToFile(std::string filename)
   : unique_id_(UniqueId()),
     filename_(std::move(filename)),
@@ -214,7 +221,7 @@ LogCallsToFile::LogCallsToFile(std::string filename)
 }
 
 void LogCallsToFile::LogCall(const char* name, const char* at) {
-  if (log_file_) {
+  if (log_file_ && enable_coverage) {
     std::lock_guard<std::mutex> lock(mutex_);
     const auto time = std::chrono::steady_clock::now().time_since_epoch();
     *log_file_ << std::chrono::duration_cast<std::chrono::microseconds>(time).count() << ","

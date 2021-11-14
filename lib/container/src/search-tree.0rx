@@ -65,32 +65,32 @@ define SearchTree {
 define ValidatedTree {
   @value AutoBinaryTree<SearchTreeNode<#k,#v>,#k,#v,BinaryTreeNode<#k,#v>> tree
 
-  new () {
+  new () { $NoTrace$
     return #self{ AutoBinaryTree<SearchTreeNode<#k,#v>,#k,#v,BinaryTreeNode<#k,#v>>.new() }
   }
 
-  size () {
+  size () { $NoTrace$
     return tree.size()
   }
 
-  set (k,v) {
+  set (k,v) { $NoTrace$
     \ tree.set(k,v)
     \ validate(tree.getRoot())
     return self
   }
 
-  remove (k) {
+  remove (k) { $NoTrace$
     \ tree.remove(k)
     \ validate(tree.getRoot())
     return self
   }
 
-  get (k) {
+  get (k) { $NoTrace$
     return tree.get(k)
   }
 
   @type validate (optional BinaryTreeNode<#k,#v>) -> ()
-  validate (node) {
+  validate (node) { $NoTrace$
     if (present(node)) {
       \ validateOrder(require(node))
       \ validateBalance(require(node))
@@ -98,7 +98,7 @@ define ValidatedTree {
   }
 
   @type validateOrder (BinaryTreeNode<#k,#v>) -> ()
-  validateOrder (node) {
+  validateOrder (node) { $NoTrace$
     if (present(node.getLower())) {
       if (!(require(node.getLower()).getKey() `#k.lessThan` node.getKey())) {
         fail("bad lower order")
@@ -114,7 +114,7 @@ define ValidatedTree {
   }
 
   @type validateBalance (BinaryTreeNode<#k,#v>) -> ()
-  validateBalance (node) {
+  validateBalance (node) { $NoTrace$
     scoped {
       Int balance <- 0
       if (present(node.getLower())) {

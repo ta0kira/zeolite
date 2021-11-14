@@ -1073,12 +1073,13 @@ compileMainProcedure tm em e = do
 
 compileTestProcedure :: (Ord c, Show c, CollectErrorsM m) =>
   CategoryMap c -> ExprMap c -> TestProcedure c -> m (CompiledData [String])
-compileTestProcedure tm em (TestProcedure c n p) = do
+compileTestProcedure tm em (TestProcedure c n cov p) = do
   ctx <- getMainContext tm em
   p' <- runDataCompiler compiler ctx <??
     "In unittest " ++ show n ++ formatFullContextBrace c
   return $ mconcat [
       onlyCode $ "ReturnTuple " ++ testFunctionName n ++ "() {",
+      indentCompiled handleCoverage,
       indentCompiled $ onlyCode $ startTestTracing n,
       indentCompiled p',
       indentCompiled $ onlyCode $ "return ReturnTuple();",
@@ -1087,6 +1088,9 @@ compileTestProcedure tm em (TestProcedure c n p) = do
     compiler = do
       ctx0 <- getCleanContext
       compileProcedure ctx0 p >>= put
+    handleCoverage
+      | cov       = onlyCode "LogCalls::DisableCallLogging();"
+      | otherwise = emptyCode
 
 selectTestFromArgv1 :: CollectErrorsM m => [FunctionName] -> m ([String],CompiledData [String])
 selectTestFromArgv1 fs = return (includes,allCode) where

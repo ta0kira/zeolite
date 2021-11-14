@@ -73,7 +73,7 @@ testcase "distribution sanity checks" {
   success
 }
 
-unittest exponential {
+unittest exponential { $DisableCoverage$
   Int count <- 10000
   Float lambda <- 10.0
   $ReadOnly[count,lambda]$
@@ -90,7 +90,7 @@ unittest exponential {
   \ Testing.checkBetween<?>(sum/count.asFloat(),0.9/lambda,1.1/lambda)
 }
 
-unittest gaussian {
+unittest gaussian { $DisableCoverage$
   Int count <- 10000
   Float mean <- 100.0
   Float sd <- 1.0
@@ -106,7 +106,7 @@ unittest gaussian {
   \ Testing.checkBetween<?>(sum/count.asFloat(),mean-0.1*sd,mean+0.1*sd)
 }
 
-unittest uniform {
+unittest uniform { $DisableCoverage$
   Int count <- 10000
   Float min <- -11.0
   Float max <- 5.0
@@ -130,9 +130,8 @@ testcase "distribution seed checks" {
 }
 
 unittest exponential {
-  Int count <- 10000
   Float lambda <- 10.0
-  $ReadOnly[count,lambda]$
+  $ReadOnly[lambda]$
 
   RandomExponential random1 <- RandomExponential.new(lambda)
   RandomExponential random2 <- RandomExponential.new(lambda)
@@ -150,10 +149,9 @@ unittest exponential {
 }
 
 unittest gaussian {
-  Int count <- 10000
   Float mean <- 100.0
   Float sd <- 1.0
-  $ReadOnly[count,mean,sd]$
+  $ReadOnly[mean,sd]$
 
   RandomGaussian random1 <- RandomGaussian.new(mean,sd)
   RandomGaussian random2 <- RandomGaussian.new(mean,sd)
@@ -171,10 +169,9 @@ unittest gaussian {
 }
 
 unittest uniform {
-  Int count <- 10000
   Float min <- -11.0
   Float max <- 5.0
-  $ReadOnly[count,min,max]$
+  $ReadOnly[min,max]$
 
   RandomUniform random1 <- RandomUniform.new(min,max)
   RandomUniform random2 <- RandomUniform.new(min,max)

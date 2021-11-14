@@ -84,15 +84,15 @@ define CategoricalTree {
 define ValidatedTree {
   @value AutoBinaryTree<CategoricalTreeNode<#c>,#c,Int,CategoricalSearch<#c>> tree
 
-  new () {
+  new () { $NoTrace$
     return #self{ AutoBinaryTree<CategoricalTreeNode<#c>,#c,Int,CategoricalSearch<#c>>.new() }
   }
 
-  getTotal () {
+  getTotal () { $NoTrace$
     return CategoricalTreeNode<#c>.tryTotal(tree.getRoot())
   }
 
-  setWeight (cat,size) {
+  setWeight (cat,size) { $NoTrace$
     if (size < 0) {
       fail("size must not be negative")
     } elif (size > 0) {
@@ -104,7 +104,7 @@ define ValidatedTree {
     return self
   }
 
-  getWeight (cat) {
+  getWeight (cat) { $NoTrace$
     scoped {
       optional Int size <- tree.get(cat)
     } in if (present(size)) {
@@ -114,7 +114,7 @@ define ValidatedTree {
     }
   }
 
-  locate (pos) {
+  locate (pos) { $NoTrace$
     if (pos < 0) {
       fail("position must not be negative")
     } elif (pos >= getTotal()) {
@@ -125,7 +125,7 @@ define ValidatedTree {
   }
 
   @type validateTotal (optional CategoricalSearch<#c>) -> ()
-  validateTotal (node) {
+  validateTotal (node) { $NoTrace$
     if (present(node)) {
       CategoricalSearch<#c> node2 <- require(node)
       \ validateTotal(node2.getLower())

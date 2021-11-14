@@ -73,6 +73,7 @@ of this document.
 - [Compiler Pragmas and Macros](#compiler-pragmas-and-macros)
   - [Source File Pragmas](#source-file-pragmas)
   - [Procedure Pragmas](#procedure-pragmas)
+  - [`unittest` Pragmas](#unittest-pragmas)
   - [Local Variable Rules](#local-variable-rules)
   - [Expression Macros](#expression-macros)
 - [Known Language Limitations](#known-language-limitations)
@@ -1722,9 +1723,9 @@ As of compiler version `0.20.0.0`, `zeolite -r` will cache information about the
 possible `.0rx` lines that can show up in `--log-traces` mode.
 
 - You can access this information using
-`zeolite --show-traces `*`[module path]`*. This can then be compared to the
-`"context"` field in the output `.csv` to determine if any code was missed by
-the executed tests.
+  `zeolite --show-traces `*`[module path]`*. This can then be compared to the
+  `"context"` field in the output `.csv` to determine if any code was missed by
+  the executed tests.
 
 - Alternatively, you can have `zeolite` compute the missed lines using
   `zeolite --missed-lines `*`[filename] [module path]`*, where *`[filename]`* is
@@ -1788,6 +1789,14 @@ These must occur at the very top of a function definition.
   relevant when debugging crashes. The added execution cost for the function is
   trivial; however, it increases the memory size of the value by a few bytes per
   call currently on the stack at the time it gets created.
+
+### `unittest` Pragmas
+
+These must be at the top of a `unittest` immediately following `{`.
+
+- **`$DisableCoverage$`**. (As of compiler version `0.20.0.0`.) Disables *all*
+  collection of code coverage when `--log-traces` is used. This is useful if a
+  particular unit test causes a massive number of lines to be executed.
 
 ### Local Variable Rules
 
