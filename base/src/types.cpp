@@ -53,51 +53,9 @@ const BoxedValue& ReturnTuple::At(int pos) const {
 }
 
 
-namespace {
-
-template<class P>
-static inline P* PoolTakeCommon(std::atomic_flag& flag,
-                                P*& pool, unsigned int& size) {
-  while (flag.test_and_set(std::memory_order_acquire));
-  P* const storage = pool;
-  if (storage == nullptr) {
-    flag.clear(std::memory_order_release);
-    return nullptr;
-  } else {
-    --size;
-    pool = storage->next;
-    flag.clear(std::memory_order_release);
-    storage->next = nullptr;
-    return storage;
-  }
-}
-
-template<class P>
-static inline bool PoolReturnCommon(P* storage, std::atomic_flag& flag,
-                                    P*& pool, unsigned int& size,
-                                    unsigned int limit) {
-  while (flag.test_and_set(std::memory_order_acquire));
-  P* const head = pool;
-  if (size < limit) {
-    ++size;
-    storage->next = head;
-    pool = storage;
-    flag.clear(std::memory_order_release);
-    return true;
-  } else {
-    flag.clear(std::memory_order_release);
-    return false;
-  }
-}
-
-}  // namespace
-
-
 namespace zeolite_internal {
 
-unsigned int PoolManager<BoxedValue>::pool4_size_ = 0;
-typename PoolManager<BoxedValue>::PoolEntry* PoolManager<BoxedValue>::pool4_{nullptr};
-std::atomic_flag PoolManager<BoxedValue>::pool4_flag_ = ATOMIC_FLAG_INIT;
+thread_local PoolCache<BoxedValue> PoolManager<BoxedValue>::cache4_(256);
 
 // static
 typename PoolManager<BoxedValue>::PoolEntry* PoolManager<BoxedValue>::Take(int orig_size) {
@@ -107,7 +65,7 @@ typename PoolManager<BoxedValue>::PoolEntry* PoolManager<BoxedValue>::Take(int o
     size = 4;
   }
   PoolEntry* storage = nullptr;
-  if (size == 4 && (storage = PoolTakeCommon(pool4_flag_, pool4_, pool4_size_))) {
+  if (size == 4 && (storage = cache4_.Take())) {
   } else {
     storage = new (new unsigned char[sizeof(PoolEntry) + size*sizeof(Managed)]) PoolEntry(size, nullptr);
   }
@@ -121,7 +79,7 @@ void PoolManager<BoxedValue>::Return(PoolEntry* storage, int orig_size) {
   for (int i = 0; i < orig_size; ++i) {
     storage->data()[i].~Managed();
   }
-  if (storage->size == 4 && PoolReturnCommon(storage, pool4_flag_, pool4_, pool4_size_, pool_limit_)) {
+  if (storage->size == 4 && cache4_.Return(storage)) {
     return;
   }
   storage->~PoolEntry();

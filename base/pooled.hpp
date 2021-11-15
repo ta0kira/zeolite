@@ -37,6 +37,7 @@ class PoolStorage {
   PoolStorage* next = nullptr;
 
 private:
+  template<class> friend class PoolCache;
   template<class> friend class PoolManager;
 
   inline PoolStorage(int s, PoolStorage* n) : size(s), next(n) {}
@@ -110,6 +111,53 @@ class PoolArray {
 
   int size_;
   PoolStorage<T>* array_;
+};
+
+template<class T>
+class PoolCache {
+ public:
+  PoolCache(int max) : max_(max) {}
+
+  ~PoolCache() {
+    while (pool_) {
+      --size_;
+      auto* current = pool_;
+      pool_ = pool_->next;
+      current->~PoolStorage<T>();
+      delete[] (unsigned char*) current;
+    }
+  }
+
+ private:
+  template<class> friend class PoolManager;
+
+  inline PoolStorage<T>* Take() {
+    PoolStorage<T>* const storage = pool_;
+    if (storage == nullptr) {
+      return nullptr;
+    } else {
+      --size_;
+      pool_ = storage->next;
+      storage->next = nullptr;
+      return storage;
+    }
+  }
+
+  inline bool Return(PoolStorage<T>* storage) {
+    PoolStorage<T>* const head = pool_;
+    if (size_ < max_) {
+      ++size_;
+      storage->next = head;
+      pool_ = storage;
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  PoolStorage<T>* pool_;
+  int size_ = 0;
+  const int max_;
 };
 
 }  // namespace zeolite_internal

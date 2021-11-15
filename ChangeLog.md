@@ -2,7 +2,7 @@
 
 ## 0.21.0.0  -- ????-??-??
 
-### Language
+### Compiler CLI
 
 * **[breaking]** Combines params and args in function calls into a single
   object. This breaks all C++ extensions.
@@ -21,6 +21,10 @@
     `ValueTuple`, since the latter has been removed. (Alternatively, just pass a
     custom set of arguments.)
   - `ReturnTuple` usage for returns remains unchanged.
+
+### Language
+
+* **[behavior]** More improvements in efficiency of function calls.
 
 ## 0.20.0.1  -- 2021-11-14
 

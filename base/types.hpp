@@ -19,7 +19,6 @@ limitations under the License.
 #ifndef TYPES_HPP_
 #define TYPES_HPP_
 
-#include <atomic>
 #include <cstdint>
 #include <functional>
 #include <memory>
@@ -178,14 +177,12 @@ class PoolManager<BoxedValue> {
   using Managed = PoolEntry::Managed;
 
   template<class> friend class PoolArray;
+  template<class> friend struct PoolCache;
 
   static PoolEntry* Take(int size);
   static void Return(PoolEntry* storage, int size);
 
-  static constexpr unsigned int pool_limit_ = 256;
-  static unsigned int pool4_size_;
-  static PoolEntry* pool4_;
-  static std::atomic_flag pool4_flag_;
+  static thread_local PoolCache<BoxedValue> cache4_;
 };
 
 }  // namespace zeolite_internal
